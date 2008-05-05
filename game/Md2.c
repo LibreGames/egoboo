@@ -437,6 +437,7 @@ void md2_scale_model(MD2_Model * pmd2, float scale)
 //int rip_md2_header( void )
 //{
 //  // ZZ> This function makes sure an md2 is really an md2
+//
 //  int iTmp;
 //  int* ipIntPointer;
 //
@@ -457,6 +458,7 @@ void md2_scale_model(MD2_Model * pmd2, float scale)
 //void fix_md2_normals( Uint16 modelindex )
 //{
 //  // ZZ> This function helps light not flicker so much
+//
 //  int cnt, tnc;
 //  Uint8 indexofcurrent, indexofnext, indexofnextnext, indexofnextnextnext;
 //  Uint8 indexofnextnextnextnext;
@@ -514,6 +516,7 @@ void md2_scale_model(MD2_Model * pmd2, float scale)
 //void rip_md2_commands( Uint16 modelindex )
 //{
 //  // ZZ> This function converts an md2's GL commands into our little command list thing
+//
 //  int iTmp;
 //  float fTmpu, fTmpv;
 //  int iNumVertices;
@@ -602,6 +605,7 @@ void md2_scale_model(MD2_Model * pmd2, float scale)
 //{
 //  // ZZ> This function gets frame names from the load buffer, it returns
 //  //     btrue if the name in cFrameName[] is valid
+//
 //  int iFrameOffset;
 //  int iNumVertices;
 //  int iNumFrames;
@@ -663,6 +667,7 @@ void md2_scale_model(MD2_Model * pmd2, float scale)
 //{
 //  // ZZ> This function gets frames from the load buffer and adds them to
 //  //     the indexed model
+//
 //  Uint8 cTmpx, cTmpy, cTmpz;
 //  Uint8 cTmpNormalIndex;
 //  float fRealx, fRealy, fRealz;

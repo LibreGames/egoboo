@@ -103,6 +103,7 @@ static void update_looped_sounds();
 ACTION what_action( char cTmp )
 {
   // ZZ> This function changes a letter into an action code
+
   ACTION action = ACTION_DA;
 
   switch ( toupper( cTmp ) )
@@ -158,6 +159,7 @@ void make_newloadname( char *modname, char *appendname, char *newloadname )
 //void load_global_waves( char *modname )
 //{
 //  // ZZ> This function loads the global waves
+//
 //  STRING tmploadname, newloadname;
 //  int cnt;
 //
@@ -213,6 +215,7 @@ void make_newloadname( char *modname, char *appendname, char *newloadname )
 void export_one_character( CHR_REF character, Uint16 owner, int number )
 {
   // ZZ> This function exports a character
+
   int tnc, profile;
   char fromdir[128];
   char todir[128];
@@ -357,6 +360,7 @@ void export_all_local_players( void )
 {
   // ZZ> This function saves all the local players in the
   //     PLAYERS directory
+
   int number;
   CHR_REF character, item;
   PLA_REF ipla;
@@ -404,6 +408,7 @@ void export_all_local_players( void )
 void quit_module( void )
 {
   // ZZ> This function forces a return to the menu
+
   moduleActive = bfalse;
   hostactive = bfalse;
   export_all_local_players();
@@ -459,6 +464,7 @@ int get_free_message( void )
 void display_message( SCRIPT_GLOBAL_VALUES * pg_scr, int message, CHR_REF character )
 {
   // ZZ> This function sticks a message in the display queue and sets its timer
+
   int slot, read, write, cnt;
   char *eread;
   STRING szTmp;
@@ -657,6 +663,7 @@ void display_message( SCRIPT_GLOBAL_VALUES * pg_scr, int message, CHR_REF charac
 void remove_enchant( Uint16 enchantindex )
 {
   // ZZ> This function removes a specific enchantment and adds it to the unused list
+
   CHR_REF character, overlay;
   Uint16 eve;
   Uint16 lastenchant, currentenchant;
@@ -788,6 +795,7 @@ Uint16 enchant_value_filled( Uint16 enchantindex, Uint8 valueindex )
   // ZZ> This function returns MAXENCHANT if the enchantment's target has no conflicting
   //     set values in its other enchantments.  Otherwise it returns the enchantindex
   //     of the conflicting enchantment
+
   CHR_REF character;
   Uint16 currenchant;
 
@@ -809,6 +817,7 @@ void set_enchant_value( Uint16 enchantindex, Uint8 valueindex,
                         Uint16 enchanttype )
 {
   // ZZ> This function sets and saves one of the character's stats
+
   Uint16 conflict, character;
 
 
@@ -973,6 +982,7 @@ void getadd( int MIN, int value, int MAX, int* valuetoadd )
 {
   // ZZ> This function figures out what value to add should be in order
   //     to not overflow the MIN and MAX bounds
+
   int newvalue;
 
   newvalue = value + ( *valuetoadd );
@@ -998,6 +1008,7 @@ void fgetadd( float MIN, float value, float MAX, float* valuetoadd )
 {
   // ZZ> This function figures out what value to add should be in order
   //     to not overflow the MIN and MAX bounds
+
   float newvalue;
 
 
@@ -1024,10 +1035,10 @@ void add_enchant_value( Uint16 enchantindex, Uint8 valueindex,
                         Uint16 enchanttype )
 {
   // ZZ> This function does cumulative modification to character stats
+
   int valuetoadd, newvalue;
   float fvaluetoadd, fnewvalue;
   CHR_REF character;
-
 
   character = EncList[enchantindex].target;
   valuetoadd = 0;
@@ -1172,6 +1183,7 @@ Uint16 spawn_enchant( Uint16 owner, Uint16 target,
 {
   // ZZ> This function enchants a target, returning the enchantment index or MAXENCHANT
   //     if failed
+
   Uint16 enchanttype, overlay;
   int add, cnt;
 
@@ -1347,6 +1359,7 @@ Uint16 spawn_enchant( Uint16 owner, Uint16 target,
 void load_action_names( char* loadname )
 {
   // ZZ> This function loads all of the 2 letter action names
+
   FILE* fileread;
   ACTION cnt;
   char first, second;
@@ -1384,7 +1397,6 @@ void read_setup( char* filename )
   bool_t lTempBool;
   Sint32 lTmpInt;
   char lTmpStr[24];
-
 
   lConfigSetup = OpenConfigFile( filename );
   if ( lConfigSetup == NULL )
@@ -1777,6 +1789,7 @@ void read_setup( char* filename )
 void log_madused( char *savename )
 {
   // ZZ> This is a debug function for checking model loads
+
   FILE* hFileWrite;
   int cnt;
 
@@ -1807,6 +1820,7 @@ void make_lightdirectionlookup()
   // ZZ> This function builds the lighting direction table
   //     The table is used to find which direction the light is coming
   //     from, based on the four corner vertices of a mesh tile.
+
   Uint32 cnt;
   Uint16 tl, tr, br, bl;
   int x, y;
@@ -1858,6 +1872,7 @@ int mad_calc_transvertices( MD2_Model * m )
 {
   // ZZ> This function gets the number of vertices to transform for a model...
   //     That means every one except the grip ( unconnected ) vertices
+
   int cnt, vrtcount, trans = 0;
 
   if(NULL == m) return 0;
@@ -1874,6 +1889,7 @@ int mad_calc_transvertices( MD2_Model * m )
 void make_enviro( void )
 {
   // ZZ> This function sets up the environment mapping table
+
   int cnt;
   float z;
   float x, y;
@@ -1903,6 +1919,7 @@ void make_enviro( void )
 void show_stat( Uint16 statindex )
 {
   // ZZ> This function shows the more specific stats for a character
+
   CHR_REF character;
   char gender[8];
 
@@ -1947,6 +1964,7 @@ void show_stat( Uint16 statindex )
 void check_stats()
 {
   // ZZ> This function lets the players check character stats
+
   if ( !GNet.messagemode )
   {
     if ( SDLKEYDOWN( SDLK_1 ) )  show_stat( 0 );
@@ -2065,6 +2083,7 @@ bool_t dump_screenshot()
 void add_stat( CHR_REF character )
 {
   // ZZ> This function adds a status display to the do list
+
   if ( numstat < MAXSTAT )
   {
     statlist[numstat] = character;
@@ -2077,8 +2096,8 @@ void add_stat( CHR_REF character )
 void move_to_top( CHR_REF character )
 {
   // ZZ> This function puts the character on top of the statlist
-  int cnt, oldloc;
 
+  int cnt, oldloc;
 
   // Find where it is
   oldloc = numstat;
@@ -2108,6 +2127,7 @@ void move_to_top( CHR_REF character )
 void sort_stat()
 {
   // ZZ> This function puts all of the local players on top of the statlist
+
   int cnt;
 
   for ( cnt = 0; cnt < numpla; cnt++ )
@@ -2122,6 +2142,7 @@ void sort_stat()
 void move_water( float dUpdate )
 {
   // ZZ> This function animates the water overlays
+
   int layer;
 
   for ( layer = 0; layer < MAXWATERLAYER; layer++ )
@@ -2221,6 +2242,7 @@ void set_frame( CHR_REF character, Uint16 frame, Uint8 lip )
 void reset_character_alpha( CHR_REF character )
 {
   // ZZ> This function fixes an item's transparency
+
   Uint16 enchant, mount;
 
   if ( !VALID_CHR( character ) ) return;
@@ -2330,6 +2352,7 @@ Sint32 generate_dither( PAIR * ppair, Uint16 strength_fp8 )
 void drop_money( CHR_REF character, Uint16 money )
 {
   // ZZ> This function drops some of a character's money
+
   Uint16 huns, tfives, fives, ones, cnt;
 
   if ( money > ChrList[character].money )  money = ChrList[character].money;
@@ -2387,9 +2410,9 @@ CHR_REF search_best_leader( TEAM team, CHR_REF exclude )
 void call_for_help( CHR_REF character )
 {
   // ZZ> This function issues a call for help to all allies
+
   TEAM team;
   Uint16 cnt;
-
 
   team = ChrList[character].team;
 
@@ -2418,6 +2441,7 @@ void give_experience( CHR_REF character, int amount, EXPERIENCE xptype )
 {
   // ZZ> This function gives a character experience, and pawns off level gains to
   //     another function
+
   int newamount;
   int curlevel, nextexperience;
   int number;
@@ -2514,6 +2538,7 @@ void give_team_experience( TEAM team, int amount, EXPERIENCE xptype )
 {
   // ZZ> This function gives a character experience, and pawns off level gains to
   //     another function
+
   int cnt;
 
   for ( cnt = 0; cnt < MAXCHR; cnt++ )
@@ -2526,10 +2551,10 @@ void give_team_experience( TEAM team, int amount, EXPERIENCE xptype )
 void setup_alliances( char *modname )
 {
   // ZZ> This function reads the alliance file
+
   STRING newloadname, szTemp;
   TEAM teama, teamb;
   FILE *fileread;
-
 
   // Load the file
   snprintf( newloadname, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.alliance_file );
@@ -2863,6 +2888,7 @@ void update_game( float dUpdate )
 {
   // ZZ> This function does several iterations of character movements and such
   //     to keep the game in sync.
+
   int    cnt, numdead;
 
   // Check for all local players being dead
@@ -3025,6 +3051,7 @@ void update_game( float dUpdate )
 void update_timers()
 {
   // ZZ> This function updates the game timers
+
   lstclock = allclock;
 
   if(game_single_frame)
@@ -3076,8 +3103,8 @@ void update_timers()
 void reset_teams()
 {
   // ZZ> This function makes everyone hate everyone else
-  int teama, teamb;
 
+  int teama, teamb;
 
   teama = 0;
   while ( teama < TEAM_COUNT )
@@ -3114,6 +3141,7 @@ void reset_teams()
 void reset_messages()
 {
   // ZZ> This makes messages safe to use
+
   int cnt;
 
   GMsg.total = 0;
@@ -3139,8 +3167,8 @@ void reset_messages()
 void make_randie()
 {
   // ZZ> This function makes the random number table
-  int tnc, cnt;
 
+  int tnc, cnt;
 
   // Fill in the basic values
   cnt = 0;
@@ -3172,6 +3200,7 @@ void make_randie()
 void reset_timers()
 {
   // ZZ> This function resets the timers...
+
   sttclock = SDL_GetTicks();
   allclock = 0;
   lstclock = 0;
@@ -4205,8 +4234,8 @@ Uint16 slot_to_latch( Uint16 object, SLOT s )
 void load_all_messages( char *szObjectpath, char *szObjectname, Uint16 object )
 {
   // ZZ> This function loads all of an objects messages
-  FILE *fileread;
 
+  FILE *fileread;
 
   MadList[object].msg_start = 0;
   fileread = fs_fileOpen( PRI_NONE, NULL, inherit_fname(szObjectpath, szObjectname, CData.message_file), "r" );
@@ -4239,6 +4268,7 @@ void update_looped_sounds()
 void read_input()
 {
   // ZZ> This function gets all the current player input states
+
   int cnt;
   SDL_Event evt;
 
@@ -4514,7 +4544,6 @@ bool_t chr_search_distant( SEARCH_CONTEXT * psearch, CHR_REF character, int maxd
 bool_t chr_search_block_nearest( SEARCH_CONTEXT * psearch, int block_x, int block_y, CHR_REF chra_ref, bool_t ask_items,
                                bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, bool_t seeinvisible, IDSZ idsz )
 {
-
   // ZZ> This is a good little helper
 
   float dis, xdis, ydis, zdis;

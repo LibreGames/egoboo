@@ -36,6 +36,7 @@ void sv_frameStep()
 void sv_bufferLatches( ServerState * ss )
 {
   // ZZ> This function buffers the character latches
+
   Uint32 uiTime, ichr;
 
   if ( !hostactive ) return;
@@ -61,6 +62,7 @@ void sv_bufferLatches( ServerState * ss )
 void sv_talkToRemotes( ServerState * ss )
 {
   // ZZ> This function sends the character data to all the remote machines
+
   Uint32 uiTime, ichr;
 
   if ( !hostactive || !CData.network_on ) return;
@@ -96,6 +98,7 @@ void sv_talkToRemotes( ServerState * ss )
 void sv_letPlayersJoin()
 {
   // ZZ> This function finds all the players in the game
+
   ENetEvent event;
   char hostName[64];
 
@@ -142,6 +145,7 @@ void sv_letPlayersJoin()
 int sv_hostGame()
 {
   // ZZ> This function tries to host a new session
+
   ENetAddress address;
 
   if ( CData.network_on )
@@ -348,6 +352,7 @@ bool_t sv_handlePacket( ServerState * ss, ENetEvent *event )
 void sv_unbufferLatches( ServerState * ss )
 {
   // ZZ> This function sets character latches based on player input to the host
+
   Uint32 cnt, uiTime;
 
   if ( !hostactive ) return;

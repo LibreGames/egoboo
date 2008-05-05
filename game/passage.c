@@ -40,6 +40,7 @@ SHOP   ShopList[MAXPASS];
 bool_t open_passage( Uint32 passage )
 {
   // ZZ> This function makes a passage passable
+
   int fan_x, fan_y;
   bool_t useful = bfalse, btmp;
 
@@ -66,6 +67,7 @@ bool_t break_passage( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 passage, Uint16 star
 {
   // ZZ> This function breaks the tiles of a passage if there is a character standing
   //     on 'em...  Turns the tiles into damage terrain if it reaches last frame.
+
   int fan_x, fan_y;
   Uint16 tile, endtile;
   bool_t useful = bfalse;
@@ -134,6 +136,7 @@ bool_t search_tile_in_passage( SCRIPT_GLOBAL_VALUES * pgscr, Uint32 passage, Uin
   // ZZ> This function finds the next tile in the passage, pgscr->tmpx and pgscr->tmpy
   //     must be set first, and are set on a find...  Returns btrue or bfalse
   //     depending on if it finds one or not
+
   int fan_x, fan_y;
 
   if ( passage >= passage_count ) return bfalse;
@@ -349,6 +352,7 @@ bool_t close_passage( Uint32 passage )
 void clear_passages()
 {
   // ZZ> This function clears the passage list ( for doors )
+
   passage_count = 0;
   shop_count    = 0;
 }
@@ -357,6 +361,7 @@ void clear_passages()
 Uint32 add_shop_passage( Uint16 owner, Uint32 passage )
 {
   // ZZ> This function creates a shop passage
+
   Uint32 shop_passage = MAXPASS;
 
   if ( passage < passage_count && shop_count < MAXPASS )
@@ -377,6 +382,7 @@ Uint32 add_shop_passage( Uint16 owner, Uint32 passage )
 Uint32 add_passage( int tlx, int tly, int brx, int bry, bool_t open, Uint32 mask )
 {
   // ZZ> This function creates a passage area
+
   Uint32 passage = MAXPASS;
 
   // clip the passage borders
@@ -415,6 +421,7 @@ Uint32 add_passage( int tlx, int tly, int brx, int bry, bool_t open, Uint32 mask
 void setup_passage( char *modname )
 {
   // ZZ> This function reads the passage file
+
   STRING newloadname;
   int tlx, tly, brx, bry;
   bool_t open;

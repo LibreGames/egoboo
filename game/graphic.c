@@ -201,6 +201,7 @@ void EndText()
 void release_all_textures()
 {
   // ZZ> This function clears out all of the textures
+
   int cnt;
 
   for ( cnt = 0; cnt < MAXTEXTURE; cnt++ )
@@ -224,8 +225,8 @@ void load_one_icon( char * szModname, char * szObjectname, char * szFilename )
 void prime_titleimage()
 {
   // ZZ> This function sets the title image pointers to NULL
-  int cnt;
 
+  int cnt;
   for ( cnt = 0; cnt < MAXMODULE; cnt++ )
     TxTitleImage[cnt].textureID = INVALID_TEXTURE;
 }
@@ -234,8 +235,8 @@ void prime_titleimage()
 void prime_icons()
 {
   // ZZ> This function sets the icon pointers to NULL
-  int cnt;
 
+  int cnt;
   for ( cnt = 0; cnt < MAXTEXTURE + 1; cnt++ )
   {
     //lpDDSIcon[cnt]=NULL;
@@ -263,8 +264,8 @@ void prime_icons()
 void release_all_icons()
 {
   // ZZ> This function clears out all of the icons
-  int cnt;
 
+  int cnt;
   for ( cnt = 0; cnt < MAXTEXTURE + 1; cnt++ )
     GLTexture_Release( &TxIcon[cnt] );
 
@@ -275,8 +276,8 @@ void release_all_icons()
 void release_all_titleimages()
 {
   // ZZ> This function clears out all of the title images
-  int cnt;
 
+  int cnt;
   for ( cnt = 0; cnt < MAXMODULE; cnt++ )
     GLTexture_Release( &TxTitleImage[cnt] );
 }
@@ -355,6 +356,7 @@ void debug_message( int time, const char *format, ... )
 void reset_end_text()
 {
   // ZZ> This function resets the end-module text
+
   if ( numpla > 1 )
   {
     snprintf( endtext, sizeof( endtext ), "Sadly, they were never heard from again..." );
@@ -381,6 +383,7 @@ void reset_end_text()
 void append_end_text( SCRIPT_GLOBAL_VALUES * pg_scr, int message, CHR_REF character )
 {
   // ZZ> This function appends a message to the end-module text
+
   int read, cnt;
   char *eread;
   STRING szTmp;
@@ -578,6 +581,7 @@ void append_end_text( SCRIPT_GLOBAL_VALUES * pg_scr, int message, CHR_REF charac
 void make_textureoffset( void )
 {
   // ZZ> This function sets up for moving textures
+
   int cnt;
   for ( cnt = 0; cnt < 256; cnt++ )
     textureoffset[cnt] = FP8_TO_FLOAT( cnt );
@@ -587,9 +591,6 @@ void make_textureoffset( void )
 void figure_out_what_to_draw()
 {
   // ZZ> This function determines the things that need to be drawn
-
-  // Find the render area corners
-  //project_view();
 
   // Make the render list for the mesh
   make_renderlist();
@@ -619,8 +620,6 @@ void load_basic_textures( char *modname )
 {
   // ZZ> This function loads the standard textures for a module
   // BB> In each case, try to load one stored with the module first.
-
-
 
   // Particle sprites
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, "particle.bmp" );
@@ -770,6 +769,7 @@ bool_t load_font( char* szBitmap, char* szSpacing )
 {
   // ZZ> This function loads the font bitmap and sets up the coordinates
   //     of each font on that bitmap...  Bitmap must have 16x6 fonts
+
   int cnt, y, xsize, ysize, xdiv, ydiv;
   int xstt, ystt;
   int xspacing, yspacing;
@@ -854,10 +854,10 @@ bool_t load_font( char* szBitmap, char* szSpacing )
 void make_water()
 {
   // ZZ> This function sets up water movements
+
   int layer, frame, point, mode, cnt;
   float tmp_sin, tmp_cos, tmp;
   Uint8 spek;
-
 
   layer = 0;
   while ( layer < GWater.layer_count )
@@ -930,6 +930,7 @@ void make_water()
 void read_wawalite( char *modname )
 {
   // ZZ> This function sets up water and lighting for the module
+
   FILE* fileread;
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.wawalite_file );
@@ -1109,6 +1110,7 @@ void read_wawalite( char *modname )
 void render_background( Uint16 texture )
 {
   // ZZ> This function draws the large background
+
   GLVertex vtlist[4];
   float size;
   float sinsize, cossize;
@@ -1266,6 +1268,7 @@ void render_foreground_overlay( Uint16 texture )
 void render_shadow( CHR_REF character )
 {
   // ZZ> This function draws a NIFTY shadow
+
   GLVertex v[4];
 
   float x, y;
@@ -1421,6 +1424,7 @@ void render_shadow( CHR_REF character )
 //void render_bad_shadow(CHR_REF character)
 //{
 //  // ZZ> This function draws a sprite shadow
+//
 //  GLVertex v[4];
 //  float size, x, y;
 //  Uint8 ambi;
@@ -1565,12 +1569,12 @@ void calc_chr_lighting( int x, int y, Uint16 tl, Uint16 tr, Uint16 bl, Uint16 br
 void light_characters()
 {
   // ZZ> This function figures out character lighting
+
   int cnt, tnc, x, y;
   Uint16 i0, i1, i2, i3;
   Uint16 spek, ambi;
   Uint32 vrtstart;
   Uint32 fan;
-
 
   for ( cnt = 0; cnt < numdolist; cnt++ )
   {
@@ -1661,6 +1665,7 @@ void light_characters()
 void light_particles()
 {
   // ZZ> This function figures out particle lighting
+
   int cnt;
   CHR_REF character;
 
@@ -2348,6 +2353,7 @@ void draw_scene_zreflection()
 {
   // ZZ> This function draws 3D objects
   // do all the rendering of reflections
+
   if ( CData.refon )
   {
     ATTRIB_GUARD_OPEN( inp_attrib_stack );
@@ -2472,6 +2478,7 @@ void draw_scene_zreflection()
 //void draw_scene_zreflection()
 //{
 //  // ZZ> This function draws 3D objects
+//
 //  Uint16 cnt, tnc;
 //  Uint8 trans;
 //
@@ -2764,6 +2771,7 @@ void draw_blip( COLR color, float x, float y)
 void draw_one_icon( int icontype, int x, int y, Uint8 sparkle )
 {
   // ZZ> This function draws an icon
+
   int position, blipx, blipy;
   int width, height;
   FRect tx_rect, sc_rect;
@@ -2830,6 +2838,7 @@ void draw_one_font( int fonttype, float x, float y )
 {
   // ZZ> This function draws a letter or number
   // GAC> Very nasty version for starters.  Lots of room for improvement.
+
   GLfloat dx, dy;
   FRect tx_rect, sc_rect;
 
@@ -2890,6 +2899,7 @@ void draw_map( float x, float y )
 int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
 {
   // ZZ> This function draws a bar and returns the y position for the next one
+
   int noticks;
   FRect tx_rect, sc_rect;
   int width, height;
@@ -3264,6 +3274,7 @@ int draw_status( BMFont * pfnt, CHR_REF character, int x, int y )
 {
   // ZZ> This function shows a character's icon, status and inventory
   //     The x,y coordinates are the top left point of the image to draw
+
   Uint16 item;
   char cTmp;
   char *readtext;
@@ -3446,10 +3457,9 @@ int do_status( BMFont * pfnt, int x, int y)
 void draw_text( BMFont *  pfnt )
 {
   // ZZ> This function spits out some words
+
   char text[512];
   int y, fifties, seconds, minutes;
-
-
 
   Begin2DMode();
   {
@@ -4067,6 +4077,7 @@ void load_graphics()
 //void draw_titleimage(int image, int x, int y)
 //{
 //  // ZZ> This function draws a title image on the backbuffer
+//
 //  GLfloat txWidth, txHeight;
 //
 //  if ( INVALID_TEXTURE != GLTexture_GetTextureID(&TxTitleImage[image]) )

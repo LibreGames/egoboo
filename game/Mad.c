@@ -22,11 +22,17 @@ Uint16  madloadframe;                               // Where to load next
 
 Uint16  skintoicon[MAXTEXTURE];                  // Skin to icon
 
+
+//--------------------------------------------------------------------------------------------
+
+static bool_t test_frame_name( char * szName, char letter );
+
 //--------------------------------------------------------------------------------------------
 ACTION action_number(char * szName)
 {
   // ZZ> This function returns the number of the action in cFrameName, or
   //     it returns ACTION_INVALID if it could not find a match
+
   ACTION cnt;
 
   if(NULL==szName || '\0' == szName[0] || '\0' == szName[1]) return ACTION_INVALID;
@@ -51,17 +57,22 @@ Uint16 action_frame()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t test_frame_name( char letter )
+bool_t test_frame_name( char * szName, char letter )
 {
   // ZZ> This function returns btrue if the 4th, 5th, 6th, or 7th letters
   //     of the frame name matches the input argument
-  if ( cFrameName[4] == letter ) return btrue;
-  if ( cFrameName[4] == 0 ) return bfalse;
-  if ( cFrameName[5] == letter ) return btrue;
-  if ( cFrameName[5] == 0 ) return bfalse;
-  if ( cFrameName[6] == letter ) return btrue;
-  if ( cFrameName[6] == 0 ) return bfalse;
-  if ( cFrameName[7] == letter ) return btrue;
+
+  int i;
+
+  if(NULL == szName ) return bfalse;
+
+  // max md2 frame name is 15 characters
+  for(i=4; i<15; i++)
+  {
+    if ( '\0'   == szName[i] ) break;
+    if ( letter == szName[i] ) return btrue;
+  }
+
   return bfalse;
 }
 
@@ -70,6 +81,7 @@ void action_copy_correct( Uint16 object, ACTION actiona, ACTION actionb )
 {
   // ZZ> This function makes sure both actions are valid if either of them
   //     are valid.  It will copy start and ends to mirror the valid action.
+
   if ( MadList[object].actionvalid[actiona] == MadList[object].actionvalid[actionb] )
   {
     // They are either both valid or both invalid, in either case we can't help
@@ -98,6 +110,7 @@ void action_copy_correct( Uint16 object, ACTION actiona, ACTION actionb )
 void get_walk_frame( Uint16 object, LIPT lip_trans, ACTION action )
 {
   // ZZ> This helps make walking look right
+
   int frame = 0;
   int framesinaction = MadList[object].actionend[action] - MadList[object].actionstart[action];
 
@@ -119,40 +132,33 @@ Uint16 get_framefx( char * szName )
 {
   // ZZ> This function figures out the IFrame invulnerability, and Attack, Grab, and
   //     Drop timings
+
   Uint16 fx = 0;
 
   if(NULL == szName || '\0' == szName[0] || '\0' == szName[1] ) return 0;
 
-  if ( test_frame_name( 'I' ) )
-    fx |= MADFX_INVICTUS;
-  if ( test_frame_name( 'L' ) )
+  if ( test_frame_name( szName, 'I' ) ) fx |= MADFX_INVICTUS;
+  if ( test_frame_name( szName, 'S' ) ) fx |= MADFX_STOP;
+  if ( test_frame_name( szName, 'F' ) ) fx |= MADFX_FOOTFALL;
+  if ( test_frame_name( szName, 'P' ) ) fx |= MADFX_POOF;
+
+  if ( test_frame_name( szName, 'L' ) )
   {
-    if ( test_frame_name( 'A' ) )
-      fx |= MADFX_ACTLEFT;
-    if ( test_frame_name( 'G' ) )
-      fx |= MADFX_GRABLEFT;
-    if ( test_frame_name( 'D' ) )
-      fx |= MADFX_DROPLEFT;
-    if ( test_frame_name( 'C' ) )
-      fx |= MADFX_CHARLEFT;
+    if ( test_frame_name( szName, 'A' ) ) fx |= MADFX_ACTLEFT;
+    if ( test_frame_name( szName, 'G' ) ) fx |= MADFX_GRABLEFT;
+    if ( test_frame_name( szName, 'D' ) ) fx |= MADFX_DROPLEFT;
+    if ( test_frame_name( szName, 'C' ) ) fx |= MADFX_CHARLEFT;
   }
-  if ( test_frame_name( 'R' ) )
+
+  if ( test_frame_name( szName, 'R' ) )
   {
-    if ( test_frame_name( 'A' ) )
-      fx |= MADFX_ACTRIGHT;
-    if ( test_frame_name( 'G' ) )
-      fx |= MADFX_GRABRIGHT;
-    if ( test_frame_name( 'D' ) )
-      fx |= MADFX_DROPRIGHT;
-    if ( test_frame_name( 'C' ) )
-      fx |= MADFX_CHARRIGHT;
+    if ( test_frame_name( szName, 'A' ) ) fx |= MADFX_ACTRIGHT;
+    if ( test_frame_name( szName, 'G' ) ) fx |= MADFX_GRABRIGHT;
+    if ( test_frame_name( szName, 'D' ) ) fx |= MADFX_DROPRIGHT;
+    if ( test_frame_name( szName, 'C' ) ) fx |= MADFX_CHARRIGHT;
   }
-  if ( test_frame_name( 'S' ) )
-    fx |= MADFX_STOP;
-  if ( test_frame_name( 'F' ) )
-    fx |= MADFX_FOOTFALL;
-  if ( test_frame_name( 'P' ) )
-    fx |= MADFX_POOF;
+
+
 
   return fx;
 }
@@ -161,6 +167,7 @@ Uint16 get_framefx( char * szName )
 void make_framelip( Uint16 imdl, ACTION action )
 {
   // ZZ> This helps make walking look right
+
   int frame, framesinaction;
 
   if ( MadList[imdl].actionvalid[action] )
@@ -181,6 +188,7 @@ void get_actions( Uint16 imdl )
 {
   // ZZ> This function creates the iframe lists for each action based on the
   //     name of each md2 iframe in the model
+
   ACTION      action, lastaction;
   MD2_Model * pmd2;
   MAD       * pmad;
@@ -325,6 +333,7 @@ void get_actions( Uint16 imdl )
 void make_mad_equally_lit( Uint16 model )
 {
   // ZZ> This function makes ultra low poly models look better
+
   int frame, vert;
   int iFrames, iVerts;
   MD2_Model * m;
@@ -352,6 +361,7 @@ void make_mad_equally_lit( Uint16 model )
 void load_copy_file( char * szObjectpath, char * szObjectname, Uint16 object )
 {
   // ZZ> This function copies a model's actions
+
   FILE *fileread;
   ACTION actiona, actionb;
   char szOne[16], szTwo[16];

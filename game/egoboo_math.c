@@ -506,6 +506,7 @@ void VectorClear( float v[] )
 void make_turntosin( void )
 {
   // ZZ> This function makes the lookup table for chrturn...
+
   int cnt;
 
   for ( cnt = 0; cnt < TRIGTABLE_SIZE; cnt++ )

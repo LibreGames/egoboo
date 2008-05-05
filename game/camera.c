@@ -165,6 +165,7 @@ void stdout_dump_matrix( matrix_4x4 a )
 void make_camera_matrix()
 {
   // ZZ> This function sets GCamera.mView to the camera's location and rotation
+
   vect3 worldup = {0, 0, -gravity};
 
   if ( GCamera.swingamp > 0 )
@@ -186,6 +187,7 @@ void make_camera_matrix()
 void move_camera( float dUpdate )
 {
   // ZZ> This function moves the camera
+
   int cnt, locoalive;  // Used in rts remove? -> int band,
   vect3 pos, vel, move;
   float level;
@@ -424,6 +426,7 @@ void move_camera( float dUpdate )
 void reset_camera()
 {
   // ZZ> This function makes sure the camera starts in a suitable position
+
   int cnt, save;
   float fov2;
 
@@ -476,6 +479,7 @@ void reset_camera()
 //  // ZZ> This function figures out where the corners of the view area
 //  //     go when projected onto the plane of the mesh.  Used later for
 //  //     determining which mesh fans need to be rendered
+//
 //
 //  int cnt, tnc, extra[3];
 //  float ztemp;

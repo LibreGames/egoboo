@@ -59,24 +59,28 @@ int fs_fileIsDirectory( const char *filename )
 int fs_createDirectory( const char *dirname )
 {
   // ZZ> This function makes a new directory
+
   return mkdir( dirname, 0755 );
 }
 
 int fs_removeDirectory( const char *dirname )
 {
   // ZZ> This function removes a directory
+
   return rmdir( dirname );
 }
 
 void fs_deleteFile( const char *filename )
 {
   // ZZ> This function deletes a file
+
   unlink( filename );
 }
 
 void fs_copyFile( const char *source, const char *dest )
 {
   // ZZ> This function copies a file on the local machine
+
   FILE *sourcef;
   FILE *destf;
   char buf[4096];
@@ -103,6 +107,7 @@ void fs_copyFile( const char *source, const char *dest )
 void empty_import_directory( void )
 {
   // ZZ> This function deletes all the TEMP????.OBJ subdirectories in the IMPORT directory
+
   system( "rm -rf import/temp*.obj\n" );
 }
 

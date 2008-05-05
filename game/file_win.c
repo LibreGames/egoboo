@@ -157,6 +157,7 @@ int fs_removeDirectory( const char *dirname )
 void fs_deleteFile( const char *filename )
 {
   // ZZ> This function deletes a file
+
   DeleteFile( filename );
 }
 
@@ -244,6 +245,7 @@ int DirGetAttrib( char *fromdir )
 void empty_import_directory( void )
 {
   // ZZ> This function deletes all the TEMP????.OBJ subdirectories in the IMPORT directory
+
   WIN32_FIND_DATA wfdData;
   HANDLE hFind;
   char searchName[MAX_PATH];

@@ -123,6 +123,7 @@ void insert_space( size_t position )
 {
   // ZZ> This function adds a space into the load line if there isn't one
   //     there already
+
   Uint8 cTmp, cSwap;
 
   if ( scr_intern.buffer[position] != ' ' )
@@ -146,9 +147,9 @@ void insert_space( size_t position )
 void copy_one_line( size_t write )
 {
   // ZZ> This function copies the line back to the load buffer
+
   size_t read;
   Uint8 cTmp;
-
 
   read = 0;
   cTmp = scr_intern.buffer[read];
@@ -167,9 +168,9 @@ void copy_one_line( size_t write )
 size_t load_one_line( size_t read )
 {
   // ZZ> This function loads a line into the line buffer
+
   bool_t stillgoing, foundtext;
   Uint8 cTmp;
-
 
   // Parse to start to maintain indentation
   scr_intern.line_size = 0;
@@ -243,8 +244,8 @@ size_t load_one_line( size_t read )
 size_t load_parsed_line( size_t read )
 {
   // ZZ> This function loads a line into the line buffer
-  Uint8 cTmp;
 
+  Uint8 cTmp;
 
   // Parse to start to maintain indentation
   scr_intern.line_size = 0;
@@ -277,8 +278,8 @@ void parse_null_terminate_comments()
 {
   // ZZ> This function removes comments and endline codes, replacing
   //     them with a 0
-  size_t read, write;
 
+  size_t read, write;
 
   read = 0;
   write = 0;
@@ -297,6 +298,7 @@ void parse_null_terminate_comments()
 int get_indentation()
 {
   // ZZ> This function returns the number of starting spaces in a line
+
   int cnt;
   Uint8 cTmp;
 
@@ -337,6 +339,7 @@ void fix_operators()
 {
   // ZZ> This function puts spaces around operators to seperate words
   //     better
+
   Uint32 cnt;
   Uint8 cTmp;
 
@@ -359,6 +362,7 @@ void fix_operators()
 int starts_with_capital_letter()
 {
   // ZZ> This function returns btrue if the line starts with a capital
+
   int cnt;
   Uint8 cTmp;
 
@@ -379,6 +383,7 @@ Uint32 get_high_bits()
 {
   // ZZ> This function looks at the first word and generates the high
   //     bit codes for it
+
   Uint32 highbits, indent;
 
   indent = get_indentation();
@@ -523,6 +528,7 @@ void parse_line_by_line()
 {
   // ZZ> This function removes comments and endline codes, replacing
   //     them with a 0
+
   size_t read, line;
   Uint32 highbits;
   size_t parseposition;
@@ -570,6 +576,7 @@ Uint32 jump_goto( int index )
   // ZZ> This function figures out where to jump to on a fail based on the
   //     starting location and the following code.  The starting location
   //     should always be a function code with indentation
+
   Uint32 value;
   int targetindent, indent;
 
@@ -606,10 +613,10 @@ Uint32 jump_goto( int index )
 //------------------------------------------------------------------------------
 void parse_jumps( int ainumber )
 {
-  // ZZ> This function sets up the fail jumps for the down and dirty code
+  // ZZ> This function sets up the fail jumps for the down-and-dirty code
+
   int index;
   Uint32 value, iTmp;
-
 
   index = scr_intern.script_address[ainumber];
   value = scr_intern.compiled[index];
@@ -640,6 +647,7 @@ void parse_jumps( int ainumber )
 void log_code( int ainumber, char* savename )
 {
   // ZZ> This function shows the actual code, saving it in a file
+
   int index;
   Uint32 value;
   FILE* filewrite;
@@ -664,6 +672,7 @@ void log_code( int ainumber, char* savename )
 int ai_goto_colon( int read )
 {
   // ZZ> This function goes to spot after the next colon
+
   Uint8 cTmp;
 
   cTmp = cLoadBuffer[read];
@@ -679,6 +688,7 @@ int ai_goto_colon( int read )
 void fget_code( FILE * pfile )
 {
   // ZZ> This function gets code names and other goodies
+
   char cTmp;
   int iTmp;
 
@@ -698,6 +708,7 @@ void fget_code( FILE * pfile )
 void load_ai_codes( char* loadname )
 {
   // ZZ> This function loads all of the function and variable names
+
   FILE* fileread;
 
   log_info( "load_ai_codes() - registering internal script constants\n" );
@@ -1346,6 +1357,7 @@ Uint32 load_ai_script( char * szObjectpath, char * szObjectname )
 {
   // ZZ> This function loads a script to memory and
   //     returns bfalse if it fails to do so
+
   FILE* fileread;
   Uint32 retval = MAXAI;
 
@@ -1376,6 +1388,7 @@ Uint32 load_ai_script( char * szObjectpath, char * szObjectname )
 void reset_ai_script()
 {
   // ZZ> This function starts ai loading in the right spot
+
   int cnt;
 
   scr_intern.script_index = 0;
@@ -3555,7 +3568,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       break;
 
     case F_SignalTarget:
-      // This function GOrder.s one specific character...  The target
+      // This function orders one specific character...  The target
       // Be careful in using this, always checking IDSZ first
       ChrList[pstate->target].message = pg_scr->tmpargument;
       ChrList[pstate->target].messagedata = 0;
@@ -4324,6 +4337,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 void set_operand( SCRIPT_GLOBAL_VALUES * pg_scr, Uint8 variable )
 {
   // ZZ> This function sets one of the tmp* values for scripted AI
+
   switch ( variable )
   {
     case VAR_TMP_X:
@@ -4353,6 +4367,7 @@ void set_operand( SCRIPT_GLOBAL_VALUES * pg_scr, Uint8 variable )
 void run_operand( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 {
   // ZZ> This function does the scripted arithmetic in operator,operand pairs
+
   int iTmp;
 
   CHR      * pchr = ChrList + ichr;
@@ -4872,9 +4887,9 @@ void let_character_think( CHR_REF ichr, float dUpdate )
 void let_ai_think( float dUpdate )
 {
   // ZZ> This function lets every computer controlled character do AI stuff
+
   CHR_REF character;
   bool_t allow_thinking;
-
 
   numblip = 0;
   for ( character = 0; character < MAXCHR; character++ )
@@ -4922,6 +4937,7 @@ void let_ai_think( float dUpdate )
 //void load_ai_codes(char* loadname)
 //{
 //  // ZZ> This function loads all of the function and variable names
+//
 //  FILE* fileread;
 //  int read;
 //

@@ -177,6 +177,7 @@ void stop_sound( int whichchannel )
 void load_global_waves( char *modname )
 {
   // ZZ> This function loads the global waves used in all modules
+
   STRING tmploadname, newloadname;
   Uint8 cnt;
 

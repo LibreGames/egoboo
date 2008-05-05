@@ -26,7 +26,7 @@ typedef enum dyna_mode_e
   DYNA_LOCAL,
 } DYNA_MODE;
 
-#define MAXDYNA                         8           // Number of GDyna.mic lights
+#define MAXDYNA                         8           // Number of dynamic lights
 #define MAXDYNADIST                     2700        // Leeway for offscreen lights
 
 

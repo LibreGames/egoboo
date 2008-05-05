@@ -145,6 +145,7 @@ char * undo_idsz( IDSZ idsz )
 {
   // ZZ> This function takes an integer and makes an text IDSZ out of it.
   //     It will set valueidsz to "NONE" if the idsz is 0
+
   static char value_string[5] = {"NONE"};
 
   if ( idsz == IDSZ_NONE )
@@ -167,6 +168,7 @@ char * undo_idsz( IDSZ idsz )
 IDSZ fget_idsz( FILE* fileread )
 {
   // ZZ> This function reads and returns an IDSZ tag, or IDSZ_NONE if there wasn't one
+
   char sTemp[4], cTmp;
   IDSZ idsz = IDSZ_NONE;
 
@@ -242,6 +244,7 @@ bool_t fget_pair_fp8( FILE* fileread, PAIR * ppair )
 bool_t fget_next_pair_fp8( FILE* fileread, PAIR * ppair )
 {
   // ZZ> This function reads the next damage/stat pair ( eg. 5-9 )
+
   bool_t retval = bfalse;
 
   if ( fgoto_colon_yesno( fileread ) )
@@ -296,6 +299,7 @@ bool_t fget_pair( FILE* fileread, PAIR * ppair )
 bool_t fget_next_pair( FILE* fileread, PAIR * ppair )
 {
   // ZZ> This function reads the next damage/stat pair ( eg. 5-9 )
+
   bool_t retval = bfalse;
 
   if ( fgoto_colon_yesno( fileread ) )
@@ -385,6 +389,7 @@ void fdamagf( FILE* filewrite, char* text, DAMAGE damagetype )
 {
   // ZZ> This function kinda mimics fprintf for the output of
   //     SLASH CRUSH POKE HOLY EVIL FIRE ICE ZAP statements
+
   fprintf( filewrite, text );
 
   switch ( damagetype )
@@ -457,6 +462,7 @@ void fpairof( FILE* filewrite, char* text, PAIR * ppair )
 {
   // ZZ> This function mimics fprintf in spitting out
   //     damage/stat pairs
+
   RANGE rng;
 
   fprintf( filewrite, text );
@@ -476,6 +482,7 @@ void funderf( FILE* filewrite, char* text, char* usename )
 {
   // ZZ> This function mimics fprintf in spitting out
   //     a name with underscore spaces
+
   STRING tmpstr;
 
   str_convert_spaces( tmpstr, sizeof( tmpstr ), usename );
@@ -546,10 +553,9 @@ bool_t fget_next_message( FILE* fileread )
 void fgoto_colon( FILE* fileread )
 {
   // ZZ> This function moves a file read pointer to the next colon
-  //    char cTmp;
+
   Uint32 ch = fgetc( fileread );
 
-  //    fscanf(fileread, "%c", &cTmp);
   while ( ch != ':' )
   {
     if ( ch == EOF )
@@ -567,6 +573,7 @@ bool_t fgoto_colon_yesno( FILE* fileread )
 {
   // ZZ> This function moves a file read pointer to the next colon, or it returns
   //     bfalse if there are no more
+
   char cTmp;
   bool_t bfound = bfalse;
 
@@ -587,6 +594,7 @@ bool_t fgoto_colon_yesno( FILE* fileread )
 char fget_first_letter( FILE* fileread )
 {
   // ZZ> This function returns the next non-whitespace character
+
   char cTmp = '\0';
   bool_t bfound = bfalse;
 

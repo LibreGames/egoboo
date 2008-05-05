@@ -724,6 +724,7 @@ void draw_cursor_in_window(int win)
 int get_vertex(int x, int y, int num)
 {
   // ZZ> This function gets a vertex number or -1
+
   int vert, cnt;
   Uint32 fan;
 
@@ -753,6 +754,7 @@ int get_vertex(int x, int y, int num)
 int nearest_vertex(int x, int y, float nearx, float neary)
 {
   // ZZ> This function gets a vertex number or -1
+
   int vert, bestvert, cnt;
   Uint32 fan;
   int num;
@@ -794,6 +796,7 @@ int nearest_vertex(int x, int y, float nearx, float neary)
 void weld_select()
 {
   // ZZ> This function welds the highlighted vertices
+
   int cnt, x, y, z, a;
   Uint32 vert;
 
@@ -836,8 +839,8 @@ void weld_select()
 void add_select(int vert)
 {
   // ZZ> This function highlights a vertex
-  int cnt, found;
 
+  int cnt, found;
 
   if(numselect < MAXSELECT && vert >= 0)
   {
@@ -865,6 +868,7 @@ void add_select(int vert)
 void clear_select(void)
 {
   // ZZ> This function unselects all vertices
+
   numselect = 0;
   return;
 }
@@ -873,6 +877,7 @@ void clear_select(void)
 int vert_selected(int vert)
 {
   // ZZ> This function returns btrue if the vertex has been highlighted by user
+
   int cnt;
 
   cnt = 0;
@@ -892,6 +897,7 @@ int vert_selected(int vert)
 void remove_select(int vert)
 {
   // ZZ> This function makes sure the vertex is not highlighted
+
   int cnt, stillgoing;
 
   cnt = 0;
@@ -923,9 +929,9 @@ void remove_select(int vert)
 void fan_onscreen(Uint32 fan)
 {
   // ZZ> This function flags a fan's points as being "onscreen"
+
   int cnt;
   Uint32 vert;
-
 
   vert = Mesh_Fan[fan].vrt_start;
   cnt = 0;
@@ -985,6 +991,7 @@ void draw_top_fan(int window, int fan, int x, int y)
 {
   // ZZ> This function draws the line drawing preview of the tile type...
   //     A wireframe tile from a vertex connection window
+
   Uint32 faketoreal[MAXMESHVERTICES];
   int fantype;
   int cnt, stt, end, vert;
@@ -1059,6 +1066,7 @@ void draw_side_fan(int window, int fan, int x, int y)
 {
   // ZZ> This function draws the line drawing preview of the tile type...
   //     A wireframe tile from a vertex connection window ( Side view )
+
   Uint32 faketoreal[MAXMESHVERTICES];
   int fantype;
   int cnt, stt, end, vert;
@@ -1133,6 +1141,7 @@ void draw_schematic(int window, int fantype, int x, int y)
 {
   // ZZ> This function draws the line drawing preview of the tile type...
   //     The wireframe on the left side of the screen.
+
   int cnt, stt, end;
   GLfloat * color;
 
@@ -1161,6 +1170,7 @@ void draw_schematic(int window, int fantype, int x, int y)
 void add_line(int fantype, int start, int end)
 {
   // ZZ> This function adds a line to the vertex schematic
+
   int cnt;
 
   // Make sure line isn't already in list
@@ -1191,6 +1201,7 @@ void add_line(int fantype, int start, int end)
 void free_vertices()
 {
   // ZZ> This function sets all vertices to unused
+
   int cnt;
 
   cnt = 0;
@@ -1209,6 +1220,7 @@ int get_free_vertex()
 {
   // ZZ> This function returns btrue if it can find an unused vertex, and it
   // will set atvertex to that vertex index.  bfalse otherwise.
+
   int cnt;
 
   if(numfreevertices!=0)
@@ -1237,6 +1249,7 @@ void remove_fan(int fan)
 {
   // ZZ> This function removes a fan's vertices from usage and sets the fan
   //     to not be drawn
+
   int cnt, vert;
   Uint32 numvert;
 
@@ -1259,6 +1272,7 @@ void remove_fan(int fan)
 int add_fan(int fan, int x, int y)
 {
   // ZZ> This function allocates the vertices needed for a fan
+
   int cnt;
   int numvert;
   Uint32 vertex;
@@ -1311,6 +1325,7 @@ int add_fan(int fan, int x, int y)
 void num_free_vertex()
 {
   // ZZ> This function counts the unused vertices and sets numfreevertices
+
   int cnt, num;
 
   num = 0;
@@ -1503,6 +1518,7 @@ void fix_vertices(int x, int y)
 void fix_mesh(void)
 {
   // ZZ> This function corrects corners across entire mesh
+
   int x, y;
 
   y = 0;
@@ -1526,6 +1542,7 @@ char tile_is_different(int x, int y, Uint16 tileset,
                        Uint16 tileand)
 {
   // ZZ> bfalse if of same set, btrue if different
+
   Uint32 fan;
   if(x < 0 || x >= mesh.size_x || y < 0 || y >= mesh.size_y)
   {
@@ -1552,7 +1569,6 @@ Uint16 trim_code(int x, int y, Uint16 tileset)
   //     Trimming tops of walls and floors
 
   Uint16 code;
-
 
   if(tile_is_different(x, y-1, tileset, 240))
   {
@@ -1639,7 +1655,6 @@ Uint16 wall_code(int x, int y, Uint16 tileset)
 
   Uint16 code;
 
-
   if(tile_is_different(x, y-1, tileset, 192))
   {
     // Top
@@ -1724,9 +1739,9 @@ Uint16 wall_code(int x, int y, Uint16 tileset)
 void trim_mesh_tile(Uint16 tileset, Uint16 tileand)
 {
   // ZZ> This function trims walls and floors and tops automagically
+
   Uint32 fan;
   int x, y, code;
-
 
   tileset = tileset&tileand;
   y = 0;
@@ -1762,9 +1777,9 @@ void trim_mesh_tile(Uint16 tileset, Uint16 tileand)
 void fx_mesh_tile(Uint16 tileset, Uint16 tileand, Uint8 fx)
 {
   // ZZ> This function sets the fx for a group of tiles
+
   Uint32 fan;
   int x, y;
-
 
   tileset = tileset&tileand;
   y = 0;
@@ -1789,6 +1804,7 @@ void fx_mesh_tile(Uint16 tileset, Uint16 tileand, Uint8 fx)
 void set_mesh_tile(Uint16 tiletoset)
 {
   // ZZ> This function sets one tile type to another
+
   Uint32 fan;
   int x, y;
 
@@ -1828,8 +1844,8 @@ void set_mesh_tile(Uint16 tiletoset)
 void setup_mesh(void)
 {
   // ZZ> This function makes the mesh
-  int x, y, fan, tile;
 
+  int x, y, fan, tile;
 
   free_vertices();
   printf("Mesh file not found, so creating a new one...\n");
@@ -1947,6 +1963,7 @@ void rip_tiles(SDL_Surface * bmpload)
 //void make_newloadname(char *modname, char *appendname, char *newloadname)
 //{
 //  // ZZ> This function takes some names and puts 'em together
+//
 //  int cnt, tnc;
 //  char ctmp;
 //
@@ -1976,6 +1993,7 @@ void rip_tiles(SDL_Surface * bmpload)
 void cart_load_basic_textures(char *modname)
 {
   // ZZ> This function loads the standard textures for a module
+
   char newloadname[256];
   SDL_Surface * surface;
 
@@ -2907,11 +2925,11 @@ void bound_camera(void)
 void rect_select(void)
 {
   // ZZ> This function checks the rectangular selection
+
   int cnt;
   Uint32 vert;
   int tlx, tly, brx, bry;
   int y;
-
 
   if(mouseinwinmode == WINVERTEX)
   {
@@ -2974,11 +2992,11 @@ void rect_unselect(void)
 {
   // ZZ> This function checks the rectangular selection, and removes any fans
   //     in the selection area
+
   int cnt;
   Uint32 vert;
   int tlx, tly, brx, bry;
   int y;
-
 
   if(mouseinwinmode == WINVERTEX)
   {
@@ -3686,9 +3704,9 @@ void clear_mesh()
 void three_e_mesh()
 {
   // ZZ> Replace all 3F tiles with 3E tiles...
+
   int x, y;
   Uint32 fan;
-
 
   if(mouseinwintile != INVALID_FAN)
   {
@@ -3726,6 +3744,7 @@ void toggle_fx(int fxmask)
 void ease_up_mesh(int zadd)
 {
   // ZZ> This function lifts the entire mesh
+
   int x, y, cnt;
   Uint32 fan, vert;
 

@@ -68,6 +68,7 @@ NetFileTransfer net_receiveState;
 void packet_addUnsignedByte( Uint8 uc )
 {
   // ZZ> This function appends an Uint8 to the packet
+
   Uint8* ucp;
   ucp = ( Uint8* )( &gPacket.buffer[gPacket.head] );
   *ucp = uc;
@@ -79,6 +80,7 @@ void packet_addUnsignedByte( Uint8 uc )
 void packet_addSignedByte( Sint8 sc )
 {
   // ZZ> This function appends a Sint8 to the packet
+
   Sint8* scp;
   scp = ( Sint8* )( &gPacket.buffer[gPacket.head] );
   *scp = sc;
@@ -90,6 +92,7 @@ void packet_addSignedByte( Sint8 sc )
 void packet_addUnsignedShort( Uint16 us )
 {
   // ZZ> This function appends an Uint16 to the packet
+
   Uint16* usp;
   usp = ( Uint16* )( &gPacket.buffer[gPacket.head] );
 
@@ -102,6 +105,7 @@ void packet_addUnsignedShort( Uint16 us )
 void packet_addSignedShort( Sint16 ss )
 {
   // ZZ> This function appends a Sint16 to the packet
+
   Sint16* ssp;
   ssp = ( Sint16* )( &gPacket.buffer[gPacket.head] );
 
@@ -115,6 +119,7 @@ void packet_addSignedShort( Sint16 ss )
 void packet_addUnsignedInt( Uint32 ui )
 {
   // ZZ> This function appends an Uint32 to the packet
+
   Uint32* uip;
   uip = ( Uint32* )( &gPacket.buffer[gPacket.head] );
 
@@ -128,6 +133,7 @@ void packet_addUnsignedInt( Uint32 ui )
 void packet_addSignedInt( Sint32 si )
 {
   // ZZ> This function appends a Sint32 to the packet
+
   Sint32* sip;
   sip = ( Sint32* )( &gPacket.buffer[gPacket.head] );
 
@@ -141,6 +147,7 @@ void packet_addSignedInt( Sint32 si )
 void packet_addString( char *string )
 {
   // ZZ> This function appends a null terminated string to the packet
+
   char* cp;
   char cTmp;
   int cnt;
@@ -177,6 +184,7 @@ void packet_doneReading()
 void packet_readString( char *buffer, int maxLen )
 {
   // ZZ> This function reads a null terminated string from the packet
+
   Uint8 uc;
   Uint16 outindex;
 
@@ -197,6 +205,7 @@ void packet_readString( char *buffer, int maxLen )
 Uint8 packet_readUnsignedByte()
 {
   // ZZ> This function reads an Uint8 from the packet
+
   Uint8 uc;
   uc = ( Uint8 ) net_readPacket->data[net_readLocation];
   net_readLocation++;
@@ -207,6 +216,7 @@ Uint8 packet_readUnsignedByte()
 Sint8 packet_readSignedByte()
 {
   // ZZ> This function reads a Sint8 from the packet
+
   Sint8 sc;
   sc = ( Sint8 ) net_readPacket->data[net_readLocation];
   net_readLocation++;
@@ -217,6 +227,7 @@ Sint8 packet_readSignedByte()
 Uint16 packet_readUnsignedShort()
 {
   // ZZ> This function reads an Uint16 from the packet
+
   Uint16 us;
   Uint16* usp;
   usp = ( Uint16* )( &net_readPacket->data[net_readLocation] );
@@ -231,6 +242,7 @@ Uint16 packet_readUnsignedShort()
 Uint16 packet_peekUnsignedShort()
 {
   // ZZ> This function reads an Uint16 from the packet
+
   Uint16 us;
   Uint16* usp;
   usp = ( Uint16* )( &net_readPacket->data[net_readLocation] );
@@ -244,6 +256,7 @@ Uint16 packet_peekUnsignedShort()
 Sint16 packet_readSignedShort()
 {
   // ZZ> This function reads a Sint16 from the packet
+
   Sint16 ss;
   Sint16* ssp;
   ssp = ( Sint16* )( &net_readPacket->data[net_readLocation] );
@@ -258,6 +271,7 @@ Sint16 packet_readSignedShort()
 Uint32 packet_readUnsignedInt()
 {
   // ZZ> This function reads an Uint32 from the packet
+
   Uint32 ui;
   Uint32* uip;
   uip = ( Uint32* )( &net_readPacket->data[net_readLocation] );
@@ -272,6 +286,7 @@ Uint32 packet_readUnsignedInt()
 Sint32 packet_readSignedInt()
 {
   // ZZ> This function reads a Sint32 from the packet
+
   Sint32 si;
   Sint32* sip;
   sip = ( Sint32* )( &net_readPacket->data[net_readLocation] );
@@ -286,6 +301,7 @@ Sint32 packet_readSignedInt()
 size_t packet_remainingSize()
 {
   // ZZ> This function tells if there's still data left in the packet
+
   return net_readPacket->dataLength - net_readLocation;
 }
 
@@ -295,6 +311,7 @@ size_t packet_remainingSize()
 void net_startNewPacket()
 {
   // ZZ> This function starts building a network packet
+
   gPacket.head = 0;
   gPacket.size = 0;
 }
@@ -303,6 +320,7 @@ void net_startNewPacket()
 void net_sendPacketToHost()
 {
   // ZZ> This function sends a packet to the host
+
   ENetPacket *packet = enet_packet_create( gPacket.buffer, gPacket.size, 0 );
   enet_peer_send( net_gameHost, NET_UNRELIABLE_CHANNEL, packet );
 }
@@ -311,6 +329,7 @@ void net_sendPacketToHost()
 void net_sendPacketToAllPlayers()
 {
   // ZZ> This function sends a packet to all the players
+
   ENetPacket *packet;
 
   if ( NULL == net_myHost ) return;
@@ -323,6 +342,7 @@ void net_sendPacketToAllPlayers()
 void net_sendPacketToHostGuaranteed()
 {
   // ZZ> This function sends a packet to the host
+
   ENetPacket *packet;
 
   if ( NULL == net_myHost ) return;
@@ -335,6 +355,7 @@ void net_sendPacketToHostGuaranteed()
 void net_sendPacketToAllPlayersGuaranteed()
 {
   // ZZ> This function sends a packet to all the players
+
   ENetPacket *packet;
 
   if ( NULL == net_myHost ) return;
@@ -347,6 +368,7 @@ void net_sendPacketToAllPlayersGuaranteed()
 void net_sendPacketToOnePlayerGuaranteed( int player )
 {
   // ZZ> This function sends a packet to one of the players
+
   ENetPacket *packet;
 
   if ( NULL == net_myHost ) return;
@@ -422,6 +444,7 @@ void net_copyFileToAllPlayersOld( char *source, char *dest )
   // ZZ> This function copies a file on the host to every remote computer.
   //     Packets are sent in chunks of COPYSIZE bytes.  The MAX file size
   //     that can be sent is 2 Megs ( TOTALSIZE ).
+
   FILE* fileread;
   int packetend, packetstart;
   int filesize;
@@ -547,6 +570,7 @@ void net_copyFileToHostOld( char *source, char *dest )
   // ZZ> This function copies a file on the remote to the host computer.
   //     Packets are sent in chunks of COPYSIZE bytes.  The MAX file size
   //     that can be sent is 2 Megs ( TOTALSIZE ).
+
   FILE* fileread;
   int packetend, packetstart;
   int filesize;
@@ -633,6 +657,7 @@ void net_copyFileToHostOld( char *source, char *dest )
 void net_copyDirectoryToHost( char *dirname, char *todirname )
 {
   // ZZ> This function copies all files in a directory
+
   char searchname[128];
   char fromname[128];
   char toname[128];
@@ -679,6 +704,7 @@ void net_copyDirectoryToHost( char *dirname, char *todirname )
 void net_copyDirectoryToAllPlayers( char *dirname, char *todirname )
 {
   // ZZ> This function copies all files in a directory
+
   char searchname[128];
   char fromname[128];
   char toname[128];
@@ -722,6 +748,7 @@ void net_copyDirectoryToAllPlayers( char *dirname, char *todirname )
 void net_sayHello()
 {
   // ZZ> This function lets everyone know we're here
+
   if ( CData.network_on )
   {
     if ( hostactive )
@@ -844,6 +871,7 @@ bool_t net_handlePacket( ENetEvent *event )
 void net_initialize()
 {
   // ZZ> This starts up the network and logs whatever goes on
+
   serviceon = bfalse;
   GNet.num_session = 0;
   GNet.num_service = 0;
@@ -995,10 +1023,11 @@ void net_updateFileTransfers()
 //--------------------------------------------------------------------------------------------
 void close_session()
 {
+  // ZZ> This function gets the computer out of a network game
+
   size_t i, numPeers;
   ENetEvent event;
 
-  // ZZ> This function gets the computer out of a network game
   if ( !CData.network_on ) return;
 
   if ( net_amHost )
@@ -1081,6 +1110,7 @@ int add_player( CHR_REF character, Uint16 player, Uint8 device )
 void clear_messages()
 {
   // ZZ> This function empties the message buffer
+
   int cnt;
 
   cnt = 0;
@@ -1095,6 +1125,7 @@ void clear_messages()
 void check_add( Uint8 key, char bigletter, char littleletter )
 {
   // ZZ> This function adds letters to the net message
+
   /*PORT
   if(SDLKEYDOWN(key))
   {
@@ -1129,6 +1160,7 @@ void input_net_message()
 {
   // ZZ> This function lets players communicate over network by hitting return, then
   //     typing text, then return again
+
   /*PORT
   int cnt;
   char cTmp;
@@ -1283,6 +1315,7 @@ bool_t listen_for_packets()
 {
   // ZZ> This function reads any new messages and sets the player latch and matrix needed
   //     lists...
+
   ENetEvent event;
   bool_t retval = bfalse;
 
@@ -1337,8 +1370,9 @@ bool_t listen_for_packets()
 //--------------------------------------------------------------------------------------------
 void find_open_sessions()
 {
-  /*PORT
   // ZZ> This function finds some open games to join
+
+  /*PORT
   DPSESSIONDESC2      sessionDesc;
   HRESULT             hr;
 
@@ -1373,6 +1407,7 @@ void stop_players_from_joining()
 //void send_rts_order(int x, int y, Uint8 order, Uint8 target)
 //{
 //  // ZZ> This function asks the host to order the selected characters
+//
 //  /* Uint32 what, when, whichorder, cnt;
 //
 //   if(numrtsselect > 0)

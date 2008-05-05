@@ -175,6 +175,7 @@ int find_module( char *smallname )
 void module_load( char *smallname )
 {
   // ZZ> This function loads a module
+
   STRING szModpath;
 
   beatmodule = bfalse;
@@ -274,6 +275,7 @@ void module_load( char *smallname )
 bool_t module_read_data( int modnumber, char *szLoadName )
 {
   // ZZ> This function loads the module data file
+
   FILE *fileread;
   char reference[128];
   STRING playername;
@@ -332,6 +334,7 @@ bool_t module_read_data( int modnumber, char *szLoadName )
 bool_t module_read_summary( char *szLoadName )
 {
   // ZZ> This function gets the quest description out of the module's menu file
+
   FILE *fileread;
   char szLine[160];
   int cnt;
@@ -375,6 +378,7 @@ bool_t module_read_summary( char *szLoadName )
 void load_all_objects( char * szModpath )
 {
   // ZZ> This function loads a module's objects
+
   const char *filehandle;
   FILE* fileread;
   STRING szObjectpath, szTempdir, tmpstr;
@@ -438,6 +442,7 @@ void load_all_objects( char * szModpath )
 Uint16 load_one_object( int skin_count, char * szObjectpath, char* szObjectname )
 {
   // ZZ> This function loads one iobj and returns the number of skins
+
   Uint16 iobj;
   int numskins, numicon, skin_index;
   STRING newloadname, loc_loadpath, wavename;

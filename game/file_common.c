@@ -71,6 +71,7 @@ void fs_removeDirectoryAndContents( const char *dirname )
 {
   // ZZ> This function deletes all files in a directory,
   //     and the directory itself
+
   char filePath[MAX_PATH];
   const char *fileName;
   FS_FIND_INFO fs_finfo;
@@ -105,6 +106,7 @@ void fs_removeDirectoryAndContents( const char *dirname )
 void fs_copyDirectory( const char *sourceDir, const char *destDir )
 {
   // ZZ> This function copies all files in a directory
+
   char srcPath[MAX_PATH], destPath[MAX_PATH];
   const char *fileName;
   FS_FIND_INFO fs_finfo;

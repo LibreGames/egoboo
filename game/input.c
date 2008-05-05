@@ -256,6 +256,7 @@ void reset_tags()
 int read_tag( FILE *fileread )
 {
   // ZZ> This function finds the next tag, returning btrue if it found one
+
   if ( tags.count < MAXTAG )
   {
     if ( fget_next_string( fileread, tags.data[tags.count].name, sizeof( tags.data[tags.count].name ) ) )
@@ -272,6 +273,7 @@ int read_tag( FILE *fileread )
 void read_all_tags( char *szFilename )
 {
   // ZZ> This function reads the scancode.txt file
+
   FILE* fileread;
 
   reset_tags();
@@ -291,6 +293,7 @@ int tag_value( char *string )
 {
   // ZZ> This function matches the string with its tag, and returns the value...
   //     It will return 255 if there are no matches.
+
   int cnt;
 
   for (cnt = 0; cnt < tags.count; cnt++ )
@@ -309,7 +312,8 @@ int tag_value( char *string )
 //--------------------------------------------------------------------------------------------
 void read_controls( char *szFilename )
 {
-  // ZZ> This function reads the controls.txt file
+  // ZZ> This function reads the "CONTROLS.TXT" file
+
   FILE* fileread;
   char currenttag[TAGSIZE];
   int tnc;
@@ -362,6 +366,7 @@ void read_controls( char *szFilename )
 bool_t key_is_pressed( int keycode )
 {
   // ZZ> This function returns btrue if the given control is pressed...
+
   if ( GNet.messagemode )  return bfalse;
 
   if ( keyb.state )
@@ -403,6 +408,7 @@ bool_t control_mouse_is_pressed( CONTROL control )
 bool_t control_joy_is_pressed( int joy_num, CONTROL control )
 {
   // ZZ> This function returns btrue if the given control is pressed...
+
   INPUT_TYPE it;
   bool_t retval = bfalse;
 

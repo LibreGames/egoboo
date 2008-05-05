@@ -427,6 +427,7 @@ badvertex++;
 void render_water_fan( Uint32 fan, Uint8 layer, Uint8 mode )
 {
   // ZZ> This function draws a water fan
+
   GLVertex v[MAXMESHVERTICES];
   Uint16 type;
   Uint16 commands;
@@ -669,6 +670,7 @@ void set_fan_light( int fanx, int fany, PRT_REF particle )
 {
   // ZZ> This function is a little helper, lighting the selected fan
   //     with the chosen particle
+
   vect3 dif, nrm;
   int fan, vertex, lastvertex;
   float flight, dist2;
@@ -742,7 +744,7 @@ void set_fan_light( int fanx, int fany, PRT_REF particle )
 //--------------------------------------------------------------------------------------------
 void do_dynalight()
 {
-  // ZZ> This function does GDyna.mic lighting of visible fans
+  // ZZ> This function does dynamic lighting of visible fans
 
   int cnt, lastvertex, vertex, fan, entry, fanx, fany, addx, addy;
   float light_r, light_g, light_b;
@@ -901,6 +903,7 @@ void do_dynalight()
 //void make_renderlist()
 //{
 //  // ZZ> This function figures out which mesh fans to draw
+//
 //  int cnt, fan, fanx, fany;
 //  int row, run, numrow;
 //  int xlist[4], ylist[4];

@@ -210,7 +210,6 @@ extern MAD MadList[MAXMODEL];
 
 ACTION action_number(char * szName);
 Uint16 action_frame();
-bool_t test_frame_name( char letter );
 void   action_copy_correct( Uint16 object, ACTION actiona, ACTION actionb );
 void   get_walk_frame( Uint16 object, LIPT lip_trans, ACTION action );
 Uint16 get_framefx( char * szName );

@@ -40,6 +40,7 @@ void cl_frameStep()
 int cl_joinGame( const char* hostname )
 {
   // ZZ> This function tries to join one of the sessions we found
+
   ENetAddress address;
   ENetEvent event;
 
@@ -88,6 +89,7 @@ int cl_joinGame( const char* hostname )
 void cl_talkToHost( ClientState * cs )
 {
   // ZZ> This function sends the latch packets to the host machine
+
   Uint8 player;
 
   // Start talkin'
@@ -124,6 +126,7 @@ void cl_talkToHost( ClientState * cs )
 void cl_unbufferLatches( ClientState * cs )
 {
   // ZZ> This function sets character latches based on player input to the host
+
   int    cnt;
   Uint32 uiTime, stamp;
   Sint32 dframes;
@@ -413,6 +416,7 @@ void cl_resetTimeLatches( ClientState * cs, Sint32 ichr )
 void cl_bufferLatches( ClientState * cs )
 {
   // ZZ> This function buffers the player data
+
   Uint32 player, stamp, uiTime, ichr;
 
   stamp = wldframe + 1;

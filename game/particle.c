@@ -51,8 +51,9 @@ Uint16 particletexture;                            // All in one bitmap
 //--------------------------------------------------------------------------------------------
 void make_prtlist( void )
 {
-  // ZZ> This function figures out which particles are visible, and it sets up GDyna.mic
+  // ZZ> This function figures out which particles are visible, and it sets up dynamic
   //     lighting
+
   int cnt, tnc, disx, disy, distance, slot;
 
 
@@ -119,6 +120,7 @@ void make_prtlist( void )
 void free_one_particle_no_sound( PRT_REF particle )
 {
   // ZZ> This function sticks a particle back on the free particle stack
+
   freeprtlist[numfreeprt] = particle;
   numfreeprt++;
   PrtList[particle].on = bfalse;
@@ -129,6 +131,7 @@ void free_one_particle( PRT_REF particle )
 {
   // ZZ> This function sticks a particle back on the free particle stack and
   //     plays the sound associated with the particle
+
   int child;
   if ( PrtList[particle].spawncharacterstate != SPAWN_NOCHARACTER )
   {
@@ -150,8 +153,8 @@ int get_free_particle( int force )
   // ZZ> This function gets an unused particle.  If all particles are in use
   //     and force is set, it grabs the first unimportant one.  The particle
   //     index is the return value
-  PRT_REF particle;
 
+  PRT_REF particle;
 
   // Return MAXPRT if we can't find one
   particle = MAXPRT;
@@ -191,6 +194,7 @@ PRT_REF spawn_one_particle( float intensity, vect3 pos,
                            CHR_REF characterorigin, Uint16 multispawn, CHR_REF oldtarget )
 {
   // ZZ> This function spawns a new particle, and returns the number of that particle
+
   int iprt, velocity;
   float xvel, yvel, zvel, tvel;
   int offsetfacing, newrand;
@@ -513,6 +517,7 @@ Uint32 __prthitawall( PRT_REF particle, vect3 * norm )
 void disaffirm_attached_particles( CHR_REF character )
 {
   // ZZ> This function makes sure a character has no attached particles
+
   PRT_REF particle;
   bool_t useful = bfalse;
 
@@ -541,6 +546,7 @@ void disaffirm_attached_particles( CHR_REF character )
 Uint16 number_of_attached_particles( CHR_REF character )
 {
   // ZZ> This function returns the number of particles attached to the given character
+
   Uint16 cnt, particle;
 
   cnt = 0;
@@ -559,6 +565,7 @@ Uint16 number_of_attached_particles( CHR_REF character )
 void reaffirm_attached_particles( CHR_REF character )
 {
   // ZZ> This function makes sure a character has all of it's particles
+
   Uint16 numberattached;
   PRT_REF particle;
 
@@ -613,6 +620,7 @@ void despawn_particles()
 void move_particles( float dUpdate )
 {
   // ZZ> This is the particle physics function
+
   int iprt, tnc;
   Uint32 fan;
   Uint16 facing, pip, particle;
@@ -809,6 +817,7 @@ void attach_particles()
 void free_all_particles()
 {
   // ZZ> This function resets the particle allocation lists
+
   numfreeprt = 0;
   while ( numfreeprt < MAXPRT )
   {
@@ -864,6 +873,7 @@ Uint16 terp_dir( Uint16 majordir, float dx, float dy, float dUpdate )
 void spawn_bump_particles( CHR_REF character, PRT_REF particle )
 {
   // ZZ> This function is for catching characters on fire and such
+
   int cnt;
   Sint16 x, y, z;
   int distance, bestdistance;
@@ -1009,6 +1019,7 @@ bool_t prt_is_over_water( int cnt )
 void do_weather_spawn( float dUpdate )
 {
   // ZZ> This function drops snowflakes or rain or whatever, also swings the camera
+
   PRT_REF particle;
   int cnt;
   bool_t foundone = bfalse;
@@ -1300,6 +1311,7 @@ void reset_particles( char* modname )
 
   // Load in the standard global particles ( the coins for example )
   //BAD! This should only be needed once at the start of the game, using load_global_particles
+
   piplist_count = 0;
 
   load_global_particles();

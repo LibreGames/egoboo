@@ -669,6 +669,7 @@ void render_enviromad(CHR_REF ichr, Uint8 trans)
 void render_mad( CHR_REF ichr, Uint8 trans )
 {
   // ZZ> This function picks the actual function to use
+
   Sint8 hide = CapList[ChrList[ichr].model].hidestate;
 
   if ( hide == NOHIDE || hide != ChrList[ichr].aistate.state )
@@ -692,6 +693,7 @@ void render_refmad( int ichr, Uint8 trans_fp8 )
   bool_t fog_save;
 
   // ZZ> This function draws characters reflected in the floor
+
   if ( !CapList[ChrList[ichr].model].reflect ) return;
 
   alphatmp_fp8 = trans_fp8 - zpos * 0.5f;
@@ -727,7 +729,8 @@ void render_refmad( int ichr, Uint8 trans_fp8 )
 //---------------------------------------------------------------------------------------------
 float spek_global_lighting( int rotation, int normal, vect3 lite )
 {
-  // ZZ> This function helps make_spektable
+  // ZZ> This function helps make_spektable()
+
   float fTmp, flite;
   vect3 nrm;
   float sinrot, cosrot;
@@ -752,7 +755,9 @@ float spek_global_lighting( int rotation, int normal, vect3 lite )
 //---------------------------------------------------------------------------------------------
 float spek_local_lighting( int rotation, int normal )
 {
-  // ZZ> This function helps make_spektable
+  // ZZ> This function helps make_spektable()
+
+
   float fTmp, fLite;
   vect3 nrm;
   float sinrot, cosrot;
@@ -824,6 +829,7 @@ void make_speklut()
 void make_spektable( vect3 lite )
 {
   // ZZ> This function makes a light table to fake directional lighting
+
   int cnt, tnc;
   float flight;
   vect3 loc_lite = lite;
@@ -868,6 +874,7 @@ void make_spektable( vect3 lite )
 void make_lighttospek( void )
 {
   // ZZ> This function makes a light table to fake directional lighting
+
   int cnt, tnc;
   //  Uint8 spek;
   //  float fTmp, fPow;

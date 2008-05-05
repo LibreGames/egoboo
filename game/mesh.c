@@ -51,7 +51,8 @@ bool_t allocate_bumplist(int blocks)
 //--------------------------------------------------------------------------------------------
 bool_t load_mesh( char *modname )
 {
-  // ZZ> This function loads the level.mpd file
+  // ZZ> This function loads the "LEVEL.MPD" file
+
   FILE* fileread;
   STRING newloadname;
   int itmp, cnt;
@@ -184,6 +185,7 @@ bool_t load_mesh( char *modname )
 bool_t load_mesh_fans()
 {
   // ZZ> This function loads fan types for the terrain
+
   int cnt, entry;
   int numfantype, fantype, bigfantype, vertices;
   int numcommand, command, commandsize;
@@ -305,6 +307,7 @@ void make_fanstart()
 {
   // ZZ> This function builds a look up table to ease calculating the
   //     fan number given an x,y pair
+
   int cnt;
 
   for ( cnt = 0; cnt < mesh.size_y; cnt++ )
@@ -323,6 +326,7 @@ void make_twist()
 {
   // ZZ> This function precomputes surface normals and steep hill acceleration for
   //     the mesh
+
   int cnt;
   int x, y;
   float fx, fy, fz, ftmp;
@@ -644,6 +648,7 @@ float mesh_get_level( Uint32 fan, float x, float y, bool_t waterwalk )
   // ZZ> This function returns the height of a point within a mesh fan, precise
   //     If waterwalk is nonzero and the fan is GWater.y, then the level returned is the
   //     level of the water.
+
   float z0, z1, z2, z3;         // Height of each fan corner
   float zleft, zright, zdone;   // Weighted height of each side
   float fx, fy;
@@ -681,6 +686,7 @@ float mesh_get_level( Uint32 fan, float x, float y, bool_t waterwalk )
 bool_t get_mesh_memory()
 {
   // ZZ> This function gets a load of memory for the terrain mesh
+
   Mesh_Mem.base = ( float * ) malloc( CData.maxtotalmeshvertices * BYTESFOREACHVERTEX );
   if ( Mesh_Mem.base == NULL )
     return bfalse;
@@ -923,7 +929,7 @@ bool_t mesh_check( float x, float y )
 //--------------------------------------------------------------------------------------------
 Uint32 mesh_hitawall( vect3 pos, float size_x, float size_y, Uint32 collision_bits, vect3 * nrm )
 {
-  // ZZ> This function returns nonzero if <pos.x,pos.y> is in an invalid tile
+  // ZZ> This function returns nonzero if <pos.x, pos.y> is in an invalid tile
 
   vect3 loc_pos;
   int fan_x, fan_x_min, fan_x_max, fan_y, fan_y_min, fan_y_max;

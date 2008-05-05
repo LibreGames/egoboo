@@ -148,6 +148,7 @@ void flash_character_height( CHR_REF chr_ref, Uint8 valuelow, Sint16 low,
 {
   // ZZ> This function sets a chr_ref's lighting depending on vertex height...
   //     Can make feet dark and head light...
+
   int cnt;
   Uint16 model;
   float z, flip;
@@ -197,6 +198,7 @@ void flash_character_height( CHR_REF chr_ref, Uint8 valuelow, Sint16 low,
 void flash_character( CHR_REF chr_ref, Uint8 value )
 {
   // ZZ> This function sets a chr_ref's lighting
+
   int cnt;
   Uint16 model = ChrList[chr_ref].model;
 
@@ -265,7 +267,7 @@ void add_to_dolist( CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 void order_dolist( void )
 {
-  // ZZ> This function GOrder.s the dolist based on distance from camera,
+  // ZZ> This function orders the dolist based on distance from camera,
   //     which is needed for reflections to properly clip themselves.
   //     Order from closest to farthest
 
@@ -315,6 +317,7 @@ void order_dolist( void )
 void make_dolist( void )
 {
   // ZZ> This function finds the characters that need to be drawn and puts them in the list
+
   int cnt;
   CHR_REF chr_ref;
 
@@ -348,6 +351,7 @@ void make_dolist( void )
 void keep_weapons_with_holders()
 {
   // ZZ> This function keeps weapons near their holders
+
   int cnt;
   CHR_REF chr_ref;
 
@@ -491,7 +495,8 @@ bool_t make_one_character_matrix( CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 void free_one_character( CHR_REF chr_ref )
 {
-  // ZZ> This function sticks a chr_ref back on the free chr_ref stack
+  // ZZ> This function sticks a character back on the free character stack
+
   int cnt;
 
   if ( !VALID_CHR( chr_ref ) ) return;
@@ -574,7 +579,8 @@ void free_one_character( CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 void free_inventory( CHR_REF chr_ref )
 {
-  // ZZ> This function frees every item in the chr_ref's inventory
+  // ZZ> This function frees every item in the character's inventory
+
   int cnt, next;
 
   cnt  = chr_get_nextinpack( chr_ref );
@@ -589,8 +595,8 @@ void free_inventory( CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 void attach_particle_to_character( PRT_REF particle, CHR_REF chr_ref, Uint16 vertoffset )
 {
-  // ZZ> This function sets one particle's position to be attached to a chr_ref.
-  //     It will kill the particle if the chr_ref is no longer around
+  // ZZ> This function sets one particle's position to be attached to a character.
+  //     It will kill the particle if the character is no longer around
 
   Uint16 vertex, model;
   float flip;
@@ -771,6 +777,7 @@ bool_t make_one_weapon_matrix( CHR_REF chr_ref )
 void make_character_matrices()
 {
   // ZZ> This function makes all of the character's matrices
+
   CHR_REF chr_ref;
   bool_t  bfinished;
 
@@ -821,7 +828,8 @@ void make_character_matrices()
 //--------------------------------------------------------------------------------------------
 int get_free_character()
 {
-  // ZZ> This function gets an unused chr_ref and returns its index
+  // ZZ> This function gets an unused character and returns its index
+
   CHR_REF chr_ref;
 
 
@@ -901,6 +909,7 @@ bool_t prt_search_block( SEARCH_CONTEXT * psearch, int block_x, int block_y, PRT
 void free_all_characters()
 {
   // ZZ> This function resets the character allocation list
+
   CHR_REF   chr_ref;
   CHR     * pchr;  
   bool_t    do_initialization;
@@ -1088,7 +1097,8 @@ Uint32 __chrhitawall( CHR_REF chr_ref, vect3 * norm )
 //--------------------------------------------------------------------------------------------
 void reset_character_accel( CHR_REF chr_ref )
 {
-  // ZZ> This function fixes a chr_ref's MAX acceleration
+  // ZZ> This function fixes a character's MAX acceleration
+
   Uint16 enchant;
 
   if ( !VALID_CHR( chr_ref ) ) return;
@@ -1119,6 +1129,7 @@ void reset_character_accel( CHR_REF chr_ref )
 bool_t detach_character_from_mount( CHR_REF chr_ref, bool_t ignorekurse, bool_t doshop )
 {
   // ZZ> This function drops an item
+
   Uint16 imount, iowner = MAXCHR;
   Uint16 enchant, passage;
   Uint16 cnt, price;
@@ -1305,8 +1316,9 @@ bool_t detach_character_from_mount( CHR_REF chr_ref, bool_t ignorekurse, bool_t 
 //--------------------------------------------------------------------------------------------
 bool_t attach_character_to_mount( CHR_REF chr_ref, CHR_REF mount_ref, SLOT slot )
 {
-  // ZZ> This function attaches one chr_ref to another ( the mount_ref )
+  // ZZ> This function attaches one character to another ( the mount )
   //     at either the left or right grip
+
   int tnc;
 
   // Make sure both are still around
@@ -1411,6 +1423,7 @@ CHR_REF stack_in_pack( CHR_REF item_ref, CHR_REF chr_ref )
   // ZZ> This function looks in the chraracter's pack for an item similar
   //     to the one given.  If it finds one, it returns the similar item's
   //     index number, otherwise it returns MAXCHR.
+
   Uint16 inpack, id;
   bool_t allok;
 
@@ -1540,6 +1553,7 @@ static Uint16 pack_pop_back( CHR_REF chr_ref )
 bool_t add_item_to_character_pack( CHR_REF item_ref, CHR_REF chr_ref )
 {
   // ZZ> This function puts one chr_ref inside the other's pack
+
   Uint16 newammo, istack;
 
   // Make sure both objects exist
@@ -1619,8 +1633,9 @@ bool_t add_item_to_character_pack( CHR_REF item_ref, CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 Uint16 get_item_from_character_pack( CHR_REF chr_ref, SLOT slot, bool_t ignorekurse )
 {
-  // ZZ> This function takes the last item in the chr_ref's pack and puts
+  // ZZ> This function takes the last item in the character's pack and puts
   //     it into the designated hand.  It returns the item number or MAXCHR.
+
   Uint16 item;
 
   // dose the chr_ref exist?
@@ -1664,6 +1679,7 @@ void drop_keys( CHR_REF chr_ref )
 {
   // ZZ> This function drops all keys ( [KEYA] to [KEYZ] ) that are in a chr_ref's
   //     inventory ( Not hands ).
+
   Uint16 item, lastitem, nextitem, direction, cosdir;
   IDSZ testa, testz;
 
@@ -1723,7 +1739,8 @@ void drop_keys( CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 void drop_all_items( CHR_REF chr_ref )
 {
-  // ZZ> This function drops all of a chr_ref's items
+  // ZZ> This function drops all of a character's items
+
   Uint16 item, direction, cosdir, diradd;
 
 
@@ -1768,6 +1785,7 @@ void drop_all_items( CHR_REF chr_ref )
 bool_t character_grab_stuff( CHR_REF chr_ref, SLOT slot, bool_t people )
 {
   // ZZ> This function makes the character pick up an item if there's one around
+
   vect4 posa, point;
   vect3 posb, posc;
   float dist, mindist;
@@ -2034,6 +2052,7 @@ bool_t character_grab_stuff( CHR_REF chr_ref, SLOT slot, bool_t people )
 void character_swipe( CHR_REF chr_ref, SLOT slot )
 {
   // ZZ> This function spawns an attack particle
+
   Uint16 weapon, particle, thrown;
   ACTION action;
   Uint16 tTmp;
@@ -2201,6 +2220,7 @@ void despawn_characters()
 void move_characters( float dUpdate )
 {
   // ZZ> This function handles character physics
+
   CHR_REF chr_ref, weapon, imount, item;
   Uint16 imdl;
   Uint8 twist;
@@ -3070,6 +3090,7 @@ void move_characters( float dUpdate )
 void setup_characters( char *modname )
 {
   // ZZ> This function sets up character data, loaded from "SPAWN.TXT"
+
   CHR_REF currentcharacter = MAXCHR, lastcharacter = MAXCHR, tmpchr = MAXCHR;
   int passage, content, money, level, skin, tnc, localnumber = 0;
   bool_t stat, ghost;
@@ -3270,6 +3291,7 @@ void set_one_player_latch( Uint16 player )
 {
   // ZZ> This function converts input readings to latch settings, so players can
   //     move around
+
   float newx, newy;
   Uint16 turnsin, turncos, character;
   Uint8 device;
@@ -3546,6 +3568,7 @@ void set_one_player_latch( Uint16 player )
 void set_local_latches( void )
 {
   // ZZ> This function emulates AI thinkin' by setting latches from input devices
+
   int cnt;
 
   cnt = 0;
@@ -3614,6 +3637,7 @@ void get_all_levels( void )
 void make_onwhichfan( void )
 {
   // ZZ> This function figures out which fan characters are on and sets their level
+
   CHR_REF chr_ref;
   int ripand;
 
@@ -4350,6 +4374,7 @@ bool_t prt_do_collision( CHR_REF chra_ref, PRT_REF prtb, bool_t exclude_height )
 void do_bumping( float dUpdate )
 {
   // ZZ> This function sets handles characters hitting other characters or particles
+
   CHR_REF chra_ref, chrb_ref;
   Uint32 fanblock;
   int cnt, tnc, chrinblock, prtinblock;
@@ -5160,9 +5185,9 @@ void do_bumping( float dUpdate )
 void stat_return( float dUpdate )
 {
   // ZZ> This function brings mana and life back
+
   int cnt, owner, target, eve;
   static int stat_return_counter = 0;
-
 
   // Do reload time
   cnt = 0;
@@ -5305,6 +5330,7 @@ void stat_return( float dUpdate )
 void pit_kill( float dUpdate )
 {
   // ZZ> This function kills any character in a deep pit...
+
   int cnt;
 
   if ( pitskill )
@@ -5356,6 +5382,7 @@ void pit_kill( float dUpdate )
 void reset_players()
 {
   // ZZ> This function clears the player list data
+
   int cnt;
 
   // Reset the local data stuff
@@ -5387,6 +5414,7 @@ void resize_characters( float dUpdate )
 {
   // ZZ> This function makes the characters get bigger or smaller, depending
   //     on their sizegoto and sizegototime
+
   CHR_REF chr_ref;
 
   bool_t willgetcaught;
@@ -5468,7 +5496,8 @@ void resize_characters( float dUpdate )
 //--------------------------------------------------------------------------------------------
 void export_one_character_name( char *szSaveName, CHR_REF chr_ref )
 {
-  // ZZ> This function makes the naming.txt file for the chr_ref
+  // ZZ> This function makes the "NAMING.TXT" file for the character
+
   FILE* filewrite;
   int profile;
 
@@ -5490,8 +5519,9 @@ void export_one_character_name( char *szSaveName, CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 void export_one_character_profile( char *szSaveName, CHR_REF chr_ref )
 {
-  // ZZ> This function creates a data.txt file for the given chr_ref.
+  // ZZ> This function creates a "DATA.TXT" file for the given character.
   //     it is assumed that all enchantments have been done away with
+
   FILE* filewrite;
   int profile;
   int damagetype, iskin;
@@ -5791,7 +5821,8 @@ void export_one_character_profile( char *szSaveName, CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 void export_one_character_skin( char *szSaveName, CHR_REF chr_ref )
 {
-  // ZZ> This function creates a SKIN.TXT file for the given chr_ref.
+  // ZZ> This function creates a "SKIN.TXT" file for the given character.
+
   FILE* filewrite;
   int profile;
 
@@ -5865,7 +5896,7 @@ float calc_chr_level( Uint16 object )
 //--------------------------------------------------------------------------------------------
 Uint16 object_generate_index( char *szLoadName )
 {
-  // ZZ > This reads the object slot in CData.data_file that the profile
+  // ZZ > This reads the object slot in "DATA.TXT" that the profile
   //      is assigned to.  Errors in this number may cause the program to abort
 
   FILE* fileread;
@@ -5905,7 +5936,7 @@ Uint16 object_generate_index( char *szLoadName )
 //--------------------------------------------------------------------------------------------
 Uint16 load_one_cap( char * szObjectpath, char *szObjectname, Uint16 icap )
 {
-  // ZZ> This function fills a character profile with data from CData.data_file
+  // ZZ> This function fills a character profile with data from "DATA.TXT"
 
   FILE* fileread;
   int iskin, cnt;
@@ -6249,7 +6280,7 @@ Uint16 load_one_cap( char * szObjectpath, char *szObjectname, Uint16 icap )
 //--------------------------------------------------------------------------------------------
 int get_skin( char * szObjectpath, char * szObjectname )
 {
-  // ZZ> This function reads the SKIN.TXT file...
+  // ZZ> This function reads the "SKIN.TXT" file...
 
   FILE* fileread;
   Uint8 skin;
@@ -8093,7 +8124,7 @@ void damage_character( CHR_REF chr_ref, Uint16 direction,
 //--------------------------------------------------------------------------------------------
 void kill_character( CHR_REF chr_ref, Uint16 killer )
 {
-  // ZZ> This function kills a chr_ref...  MAXCHR killer for accidental death
+  // ZZ> This function kills a character...  MAXCHR killer for accidental death
 
   Uint8 modifier;
   CHR * pchr;

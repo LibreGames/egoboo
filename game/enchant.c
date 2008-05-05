@@ -44,9 +44,9 @@ Uint16  freeenchant[MAXENCHANT];    //
 void do_enchant_spawn( float dUpdate )
 {
   // ZZ> This function lets enchantments spawn particles
+
   int cnt, tnc;
   Uint16 facing, particle, eve, character;
-
 
   cnt = 0;
   while ( cnt < MAXENCHANT )
@@ -85,6 +85,7 @@ void do_enchant_spawn( float dUpdate )
 void disenchant_character( Uint16 cnt )
 {
   // ZZ> This function removes all enchantments from a character
+
   while ( ChrList[cnt].firstenchant != MAXENCHANT )
   {
     remove_enchant( ChrList[cnt].firstenchant );
@@ -95,10 +96,10 @@ void disenchant_character( Uint16 cnt )
 void spawn_poof( CHR_REF character, Uint16 profile )
 {
   // ZZ> This function spawns a character poof
+
   Uint16 sTmp;
   Uint16 origin;
   int iTmp;
-
 
   sTmp = ChrList[character].turn_lr;
   iTmp = 0;
@@ -117,6 +118,7 @@ void spawn_poof( CHR_REF character, Uint16 profile )
 void naming_names( int profile )
 {
   // ZZ> This function generates a random name
+
   int read, write, section, mychop;
   char cTmp;
 
@@ -158,6 +160,7 @@ void naming_names( int profile )
 void read_naming( char * szModpath, char * szObjectname, int profile)
 {
   // ZZ> This function reads a naming file
+
   FILE *fileread;
   int section, chopinsection, cnt;
   char mychop[32], cTmp;
@@ -206,6 +209,7 @@ void read_naming( char * szModpath, char * szObjectname, int profile)
 void prime_names( void )
 {
   // ZZ> This function prepares the name chopper for use
+
   int cnt, tnc;
 
   numchop = 0;
@@ -228,6 +232,7 @@ void prime_names( void )
 void tilt_characters_to_terrain()
 {
   // ZZ> This function sets all of the character's starting tilt values
+
   int cnt;
   Uint8 twist;
 
@@ -635,7 +640,8 @@ CHR_REF spawn_one_character( vect3 pos, int profile, TEAM team,
 //--------------------------------------------------------------------------------------------
 void respawn_character( CHR_REF ichr )
 {
-  // ZZ> This function respawns a ichr
+  // ZZ> This function respawns a character
+
   Uint16 item, profile;
   CHR * pchr;
   CAP * pcap;
@@ -713,9 +719,9 @@ void respawn_character( CHR_REF ichr )
 Uint16 change_armor( CHR_REF character, Uint16 iskin )
 {
   // ZZ> This function changes the armor of the character
+
   Uint16 enchant, sTmp;
   int iTmp, cnt;
-
 
   // Remove armor enchantments
   enchant = ChrList[character].firstenchant;
@@ -768,6 +774,7 @@ Uint16 change_armor( CHR_REF character, Uint16 iskin )
 void change_character( CHR_REF ichr, Uint16 new_profile, Uint8 new_skin, Uint8 leavewhich )
 {
   // ZZ> This function polymorphs a character, changing stats, dropping weapons
+
   int tnc, enchant;
   Uint16 sTmp;
   CHR_REF item, imount;
@@ -979,11 +986,11 @@ void change_character( CHR_REF ichr, Uint16 new_profile, Uint8 new_skin, Uint8 l
 //--------------------------------------------------------------------------------------------
 bool_t cost_mana( CHR_REF chr_ref, int amount, Uint16 killer )
 {
-  // ZZ> This function takes mana from a chr_ref ( or gives mana ),
-  //     and returns btrue if the chr_ref had enough to pay, or bfalse
+  // ZZ> This function takes mana from a character ( or gives mana ),
+  //     and returns btrue if the character had enough to pay, or bfalse
   //     otherwise
-  int iTmp;
 
+  int iTmp;
 
   iTmp = ChrList[chr_ref].mana_fp8 - amount;
   if ( iTmp < 0 )
@@ -1015,6 +1022,7 @@ bool_t cost_mana( CHR_REF chr_ref, int amount, Uint16 killer )
 void switch_team( CHR_REF chr_ref, TEAM team )
 {
   // ZZ> This function makes a chr_ref join another team...
+
   if ( team < TEAM_COUNT )
   {
     if ( !ChrList[chr_ref].invictus )
@@ -1040,9 +1048,9 @@ void switch_team( CHR_REF chr_ref, TEAM team )
 void issue_clean( CHR_REF chr_ref )
 {
   // ZZ> This function issues a clean up order to all teammates
+
   TEAM team;
   Uint16 cnt;
-
 
   team = ChrList[chr_ref].team;
   cnt = 0;
@@ -1063,6 +1071,7 @@ int restock_ammo( CHR_REF chr_ref, IDSZ idsz )
   // ZZ> This function restocks the characters ammo, if it needs ammo and if
   //     either its parent or type idsz match the given idsz.  This
   //     function returns the amount of ammo given.
+
   int amount, model;
 
   amount = 0;
@@ -1099,6 +1108,7 @@ void signal_target( CHR_REF target_ref, Uint16 upper, Uint16 lower )
 void signal_team( CHR_REF chr_ref, Uint32 message )
 {
   // ZZ> This function issues an message for help to all teammates
+
   TEAM team;
   Uint8 counter;
   Uint16 cnt;
@@ -1120,6 +1130,7 @@ void signal_team( CHR_REF chr_ref, Uint32 message )
 void signal_idsz_index( Uint32 order, IDSZ idsz, IDSZ_INDEX index )
 {
   // ZZ> This function issues an order to all characters with the a matching special IDSZ
+
   Uint8 counter;
   Uint16 cnt, model;
 
@@ -1185,6 +1196,7 @@ void set_alerts( CHR_REF ichr, float dUpdate )
 void free_all_enchants()
 {
   // ZZ> This functions frees all of the enchantments
+
   numfreeenchant = 0;
   while ( numfreeenchant < MAXENCHANT )
   {
@@ -1218,6 +1230,7 @@ Uint32 fget_damage_modifier( FILE * fileread )
 void load_one_eve( char * szObjectpath, char * szObjectname, Uint16 profile )
 {
   // ZZ> This function loads the enchantment associated with an object
+
   FILE* fileread;
   char cTmp;
   int iTmp;
@@ -1446,6 +1459,7 @@ void load_one_eve( char * szObjectpath, char * szObjectname, Uint16 profile )
 Uint16 get_free_enchant()
 {
   // ZZ> This function returns the next free enchantment or MAXENCHANT if there are none
+
   if ( numfreeenchant > 0 )
   {
     numfreeenchant--;
@@ -1458,6 +1472,7 @@ Uint16 get_free_enchant()
 void unset_enchant_value( Uint16 enchantindex, Uint8 valueindex )
 {
   // ZZ> This function unsets a set value
+
   CHR_REF character;
 
   if ( EncList[enchantindex].setyesno[valueindex] )
@@ -1569,6 +1584,7 @@ void unset_enchant_value( Uint16 enchantindex, Uint8 valueindex )
 void remove_enchant_value( Uint16 enchantindex, Uint8 valueindex )
 {
   // ZZ> This function undoes cumulative modification to character stats
+
   float fvaluetoadd;
   int valuetoadd;
 
