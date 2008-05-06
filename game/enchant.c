@@ -547,7 +547,7 @@ CHR_REF spawn_one_character( vect3 pos, int profile, TEAM team,
   pchr->vel.z = 0;
   pchr->mapturn_lr = 32768;  // These two mean on level surface
   pchr->mapturn_ud = 32768;
-  pchr->scale = pchr->fat; // * MadList[pchr->model].scale * 4;
+  pchr->scale = pchr->fat;
 
   // AI stuff
   ai_state_new(pstate, ichr);

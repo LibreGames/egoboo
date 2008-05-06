@@ -37,18 +37,49 @@ MESH_FAN    Mesh_Fan[MAXMESHFAN];
 MESH_TILE   Mesh_Tile[MAXTILETYPE];
 MESH_MEMORY Mesh_Mem;
 
-BUMPLIST bumplist = {bfalse, 0};
+BUMPLIST bumplist = {bfalse, 0, 0 };
 
 Uint32  Mesh_Block_X[( MAXMESHSIZEY/4 ) +1];
 Uint32  Mesh_Fan_X[MAXMESHSIZEY];                         // Which fan to start a row with
 
 //--------------------------------------------------------------------------------------------
+bool_t reset_bumplist()
+{
+  int i;
+
+  if(!bumplist.allocated) return bfalse;
+
+  bumplist_clear(&bumplist);
+
+  for(i=0; i<bumplist.free_max; i++)
+  {
+    bumplist.free_lst[i] = i;
+    bumplist_node_new( bumplist.node_lst + i );
+  }
+  bumplist.free_count = bumplist.free_max;
+
+  bumplist.initialized = btrue;
+  bumplist.filled      = bfalse;
+}
+
+//--------------------------------------------------------------------------------------------
 bool_t allocate_bumplist(int blocks)
 {
-  bumplist.chr_list = calloc(MAXCHR, sizeof(BUMPLIST_NODE));
-  bumplist.prt_list = calloc(MAXPRT, sizeof(BUMPLIST_NODE));
+  bool_t retval;
+  int i;
 
-  return bumplist_allocate( &bumplist, blocks );
+  if( bumplist_allocate(&bumplist, blocks) )
+  {
+    // set up nodes and the list of free nodes
+    bumplist.free_max   =
+    bumplist.free_count = 8*(MAXCHR + MAXPRT);
+    bumplist.free_lst = calloc( bumplist.free_count, sizeof(Uint32));
+    bumplist.node_lst = calloc( bumplist.free_count, sizeof(BUMPLIST_NODE));
+
+    reset_bumplist();
+  }
+
+  return btrue;
 };
 
 //--------------------------------------------------------------------------------------------

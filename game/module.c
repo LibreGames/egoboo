@@ -41,9 +41,6 @@ static void load_all_objects( char * szModname );
 //--------------------------------------------------------------------------------------------
 void release_bumplist(void)
 {
-  FREE(bumplist.chr_list);
-  FREE(bumplist.prt_list);
-
   bumplist_renew( &bumplist );
 };
 

@@ -458,7 +458,7 @@ PRT_REF spawn_one_particle( float intensity, vect3 pos,
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 __prthitawall( PRT_REF particle, vect3 * norm )
+Uint32 prt_hitawall( PRT_REF particle, vect3 * norm )
 {
   // ZZ> This function returns nonzero if the particle hit a wall
 

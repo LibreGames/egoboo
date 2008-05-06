@@ -143,6 +143,8 @@ typedef struct mesh_tile_t
 
 extern MESH_TILE Mesh_Tile[MAXTILETYPE];
 
+#define INVALID_BUMPLIST_NODE (~(Uint32)0)
+
 typedef struct bumplist_node_t
 {
   Uint32 ref;
@@ -151,31 +153,45 @@ typedef struct bumplist_node_t
 
 typedef struct bumplist_t
 {
-  bool_t   valid;
+  bool_t   allocated;
+  bool_t   initialized;
+  bool_t   filled;
+
   Uint32   num_blocks;              // Number of collision areas
 
-  Uint16 * chr;                     // For character collisions
-  Uint16 * num_chr;                 // Number on the block
-  BUMPLIST_NODE * chr_list;         //
+  Uint32          free_count;
+  Uint32          free_max;
+  Uint32        * free_lst;
+  BUMPLIST_NODE * node_lst;
 
-  Uint16 * prt;                     // For particle collisions
-  Uint16 * num_prt;                 // Number on the block
-  BUMPLIST_NODE * prt_list;         //
+  BUMPLIST_NODE * chr_ref;                 // For character collisions
+  Uint16        * num_chr;                 // Number on the block
+
+  BUMPLIST_NODE  * prt_ref;                 // For particle collisions
+  Uint16         * num_prt;                 // Number on the block
 } BUMPLIST;
 
 INLINE const BUMPLIST * bumplist_new(BUMPLIST * b);
 INLINE const void       bumplist_delete(BUMPLIST * b);
 INLINE const BUMPLIST * bumplist_renew(BUMPLIST * b);
 INLINE const bool_t     bumplist_allocate(BUMPLIST * b, int size);
+INLINE const bool_t     bumplist_clear( BUMPLIST * b );
+
+INLINE const Uint32     bumplist_get_free(BUMPLIST * b);
 
 INLINE const bool_t     bumplist_insert_chr(BUMPLIST * b, Uint32 block, CHR_REF chr_ref);
 INLINE const bool_t     bumplist_insert_prt(BUMPLIST * b, Uint32 block, PRT_REF prt_ref);
-INLINE const CHR_REF    bumplist_get_next_chr(BUMPLIST * b, CHR_REF ichr );
-INLINE const PRT_REF    bumplist_get_next_prt(BUMPLIST * b, PRT_REF iprt );
 
-INLINE const CHR_REF    bumplist_get_chr_head(BUMPLIST * b, Uint32 block);
-INLINE const PRT_REF    bumplist_get_prt_head(BUMPLIST * b, Uint32 block);
-INLINE const bool_t     bumplist_clear( BUMPLIST * b );
+INLINE const Uint32     bumplist_get_chr_head(BUMPLIST * b, Uint32 block);
+INLINE const Uint32     bumplist_get_prt_head(BUMPLIST * b, Uint32 block);
+INLINE const Uint32     bumplist_get_chr_count(BUMPLIST * b, Uint32 block );
+INLINE const Uint32     bumplist_get_prt_count(BUMPLIST * b, Uint32 block );
+
+INLINE const Uint32     bumplist_get_next(BUMPLIST * b, Uint32 node );
+INLINE const Uint32     bumplist_get_next_prt(BUMPLIST * b, Uint32 node );
+INLINE const Uint32     bumplist_get_next_chr(BUMPLIST * b, Uint32 node );
+INLINE const Uint32     bumplist_get_ref(BUMPLIST * b, Uint32 node );
+
 
 extern BUMPLIST bumplist;
 

@@ -237,7 +237,7 @@ PRT_REF spawn_one_particle( float intensity, vect3 pos,
                            Uint16 facing, Uint16 model, Uint16 pip,
                            CHR_REF characterattach, GRIP grip, TEAM team,
                            CHR_REF characterorigin, Uint16 multispawn, CHR_REF oldtarget );
-Uint32 __prthitawall( PRT_REF particle, vect3 * norm );
+Uint32 prt_hitawall( PRT_REF particle, vect3 * norm );
 
 
 

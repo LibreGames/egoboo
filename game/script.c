@@ -1529,7 +1529,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
         if((pg_scr->tmpdistance == MOVE_CHARGE) || (pg_scr->tmpdistance == MOVE_RETREAT))
         {
-          reset_character_accel( ichr ); //Force 100% speed
+          chr_reset_accel( ichr ); //Force 100% speed
         }
 
         //Secondly we run the Compass function (If we are not in follow mode)
@@ -1733,16 +1733,16 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       break;
 
     case F_Run:
-      reset_character_accel( ichr );
+      chr_reset_accel( ichr );
       break;
 
     case F_Walk:
-      reset_character_accel( ichr );
+      chr_reset_accel( ichr );
       pchr->skin.maxaccel *= .66;
       break;
 
     case F_Sneak:
-      reset_character_accel( ichr );
+      chr_reset_accel( ichr );
       pchr->skin.maxaccel *= .33;
       break;
 
@@ -2129,7 +2129,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
         returncode = bfalse;
         if ( VALID_CHR( sTmp ) )
         {
-          if ( 0 != __chrhitawall( sTmp, NULL ) )
+          if ( 0 != chr_hitawall( sTmp, NULL ) )
           {
             ChrList[sTmp].freeme = btrue;
           }
@@ -2247,10 +2247,10 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
           PrtList[tTmp].pos.z += PipList[PrtList[tTmp].pip].zspacing.ibase;
 
           // Don't spawn in walls
-          if ( 0 != __prthitawall( tTmp, NULL ) )
+          if ( 0 != prt_hitawall( tTmp, NULL ) )
           {
             PrtList[tTmp].pos.x = pchr->pos.x;
-            if ( 0 != __prthitawall( tTmp, NULL ) )
+            if ( 0 != prt_hitawall( tTmp, NULL ) )
             {
               PrtList[tTmp].pos.y = pchr->pos.y;
             }
@@ -2483,7 +2483,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
         ChrList[sTmp].pos.x = pg_scr->tmpx;
         ChrList[sTmp].pos.y = pg_scr->tmpy;
         ChrList[sTmp].pos.z = pg_scr->tmpdistance;
-        if ( 0 != __chrhitawall( sTmp, NULL ) )
+        if ( 0 != chr_hitawall( sTmp, NULL ) )
         {
           // No it didn't...
           ChrList[sTmp].pos = ChrList[sTmp].pos_old;
@@ -3161,7 +3161,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       break;
 
     case F_SetSpeedPercent:
-      reset_character_accel( ichr );
+      chr_reset_accel( ichr );
       pchr->skin.maxaccel *= pg_scr->tmpargument / 100.0;
       break;
 
@@ -3286,7 +3286,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
         pchr->pos.x = pg_scr->tmpx;
         pchr->pos.y = pg_scr->tmpy;
-        if ( 0 != __chrhitawall( ichr, NULL ) )
+        if ( 0 != chr_hitawall( ichr, NULL ) )
         {
           // No it didn't...
           pchr->pos = pchr->pos_old;
@@ -3615,7 +3615,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
         returncode = bfalse;
         if ( VALID_CHR( sTmp ) )
         {
-          if ( 0 != __chrhitawall( sTmp, NULL ) )
+          if ( 0 != chr_hitawall( sTmp, NULL ) )
           {
             ChrList[sTmp].freeme = btrue;
           }
@@ -3641,7 +3641,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
         returncode = bfalse;
         if ( VALID_CHR( sTmp ) )
         {
-          if ( 0 != __chrhitawall( sTmp, NULL ) )
+          if ( 0 != chr_hitawall( sTmp, NULL ) )
           {
             ChrList[sTmp].freeme = btrue;
           }

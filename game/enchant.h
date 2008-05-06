@@ -127,7 +127,7 @@ typedef enum disenchant_mode_e
 
 
 void reset_character_alpha( CHR_REF character );
-void reset_character_accel( CHR_REF character );
+void chr_reset_accel( CHR_REF character );
 
 void   load_one_eve( char * szObjectpath, char * szObjectname, Uint16 profile );
 Uint16 get_free_enchant();

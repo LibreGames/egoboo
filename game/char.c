@@ -509,114 +509,18 @@ void free_one_character( CHR_REF chr_ref )
 }
 
 //--------------------------------------------------------------------------------------------
-void free_inventory( CHR_REF chr_ref )
+void chr_free_inventory( CHR_REF chr_ref )
 {
   // ZZ> This function frees every item in the character's inventory
 
-  int cnt, next;
+  int cnt;
 
   cnt  = chr_get_nextinpack( chr_ref );
   while ( cnt < MAXCHR )
   {
-    next  = chr_get_nextinpack( cnt );
     ChrList[cnt].freeme = btrue;
-    cnt = next;
+    cnt = chr_get_nextinpack( cnt );
   }
-}
-
-//--------------------------------------------------------------------------------------------
-void attach_particle_to_character( PRT_REF particle, CHR_REF chr_ref, Uint16 vertoffset )
-{
-  // ZZ> This function sets one particle's position to be attached to a character.
-  //     It will kill the particle if the character is no longer around
-
-  Uint16 vertex, model;
-  float flip;
-  GLvector point, nupoint;
-  PRT * pprt;
-  CHR * pchr;
-
-  // Check validity of attachment
-  if ( !VALID_CHR( chr_ref ) || chr_in_pack( chr_ref ) || !VALID_PRT( particle ) )
-  {
-    PrtList[particle].gopoof = btrue;
-    return;
-  }
-
-  pprt = PrtList + particle;
-  pchr = ChrList + chr_ref;
-
-  // Do we have a matrix???
-  if ( !pchr->matrixvalid )
-  {
-    // No matrix, so just wing it...
-
-    pprt->pos.x = pchr->pos.x;
-    pprt->pos.y = pchr->pos.y;
-    pprt->pos.z = pchr->pos.z;
-  }
-  else   if ( vertoffset == GRIP_ORIGIN )
-  {
-    // Transform the origin to world space
-
-    pprt->pos.x = pchr->matrix.CNV( 3, 0 );
-    pprt->pos.y = pchr->matrix.CNV( 3, 1 );
-    pprt->pos.z = pchr->matrix.CNV( 3, 2 );
-  }
-  else
-  {
-    // Transform the grip vertex position to world space
-
-    Uint32      ilast, inext;
-    MAD       * pmad;
-    MD2_Model * pmdl;
-    MD2_Frame * plast, * pnext;
-
-    model = pchr->model;
-    inext = pchr->anim.next;
-    ilast = pchr->anim.last;
-    flip  = pchr->anim.flip;
-
-    assert( MAXMODEL != VALIDATE_MDL( model ) );
-
-    pmad = MadList + model;
-    pmdl  = pmad->md2_ptr;
-    plast = md2_get_Frame(pmdl, ilast);
-    pnext = md2_get_Frame(pmdl, inext);
-
-    //handle possible invalid values
-    vertex = pmad->vertices - vertoffset;
-    if(vertoffset >= pmad->vertices)
-    {
-      vertex = pmad->vertices - GRIP_LAST;
-    }
-
-    // Calculate grip point locations with linear interpolation and other silly things
-    if ( inext == ilast )
-    {
-      point.x = plast->vertices[vertex].x;
-      point.y = plast->vertices[vertex].y;
-      point.z = plast->vertices[vertex].z;
-      point.w = 1.0f;
-    }
-    else
-    {
-      point.x = plast->vertices[vertex].x + ( pnext->vertices[vertex].x - plast->vertices[vertex].x ) * flip;
-      point.y = plast->vertices[vertex].y + ( pnext->vertices[vertex].y - plast->vertices[vertex].y ) * flip;
-      point.z = plast->vertices[vertex].z + ( pnext->vertices[vertex].z - plast->vertices[vertex].z ) * flip;
-      point.w = 1.0f;
-    }
-
-    // Do the transform
-    Transform4_Full( 1.0f, 1.0f, &(pchr->matrix), &point, &nupoint, 1 );
-
-    pprt->pos.x = nupoint.x;
-    pprt->pos.y = nupoint.y;
-    pprt->pos.z = nupoint.z;
-  }
-
-
-
 }
 
 //--------------------------------------------------------------------------------------------
@@ -786,11 +690,11 @@ bool_t prt_search_block( SEARCH_CONTEXT * psearch, int block_x, int block_y, PRT
 {
   // ZZ> This function helps find a target, returning btrue if it found a decent target
 
-  int cnt;
+  Uint32 cnt;
   Uint16 local_angle;
   CHR_REF chrb_ref;
   bool_t bfound, request_enemies = !request_friends;
-  Uint32 fanblock;
+  Uint32 fanblock, blnode_b;
   int local_distance;
 
   if( !VALID_PRT(prt_ref) ) return bfalse;
@@ -801,9 +705,12 @@ bool_t prt_search_block( SEARCH_CONTEXT * psearch, int block_x, int block_y, PRT
   fanblock = mesh_convert_block( block_x, block_y );
   if ( INVALID_FAN == fanblock ) return bfound;
 
-  chrb_ref = bumplist_get_chr_head(&bumplist, fanblock);
-  for ( cnt = 0; cnt < bumplist.num_chr[fanblock] && VALID_CHR_RANGE( chrb_ref ); cnt++, chrb_ref = bumplist_get_next_chr(&bumplist, chrb_ref) )
+    
+  for ( cnt = 0, blnode_b = bumplist_get_chr_head(&bumplist, fanblock); 
+        cnt < bumplist_get_chr_count(&bumplist, fanblock) && INVALID_BUMPLIST_NODE != blnode_b; 
+        cnt++, blnode_b = bumplist_get_next_chr(&bumplist, blnode_b) )
   {
+    chrb_ref = bumplist_get_ref(&bumplist, blnode_b);
     assert( VALID_CHR( chrb_ref ) );
 
     // don't find stupid stuff
@@ -908,7 +815,7 @@ void free_all_characters()
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 __chrhitawall( CHR_REF chr_ref, vect3 * norm )
+Uint32 chr_hitawall( CHR_REF chr_ref, vect3 * norm )
 {
   // ZZ> This function returns nonzero if the character hit a wall that the
   //     chr_ref is not allowed to cross
@@ -1027,7 +934,7 @@ Uint32 __chrhitawall( CHR_REF chr_ref, vect3 * norm )
 }
 
 //--------------------------------------------------------------------------------------------
-void reset_character_accel( CHR_REF chr_ref )
+void chr_reset_accel( CHR_REF chr_ref )
 {
   // ZZ> This function fixes a character's MAX acceleration
 
@@ -1128,7 +1035,7 @@ bool_t detach_character_from_mount( CHR_REF chr_ref, bool_t ignorekurse, bool_t 
 
 
   // Make sure it's not dropped in a wall...
-  if ( 0 != __chrhitawall( chr_ref, NULL ) )
+  if ( 0 != chr_hitawall( chr_ref, NULL ) )
   {
     ChrList[chr_ref].pos.x = ChrList[imount].pos.x;
     ChrList[chr_ref].pos.y = ChrList[imount].pos.y;
@@ -1482,7 +1389,7 @@ static Uint16 pack_pop_back( CHR_REF chr_ref )
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t add_item_to_character_pack( CHR_REF item_ref, CHR_REF chr_ref )
+bool_t pack_add_item( CHR_REF item_ref, CHR_REF chr_ref )
 {
   // ZZ> This function puts one chr_ref inside the other's pack
 
@@ -1563,7 +1470,7 @@ bool_t add_item_to_character_pack( CHR_REF item_ref, CHR_REF chr_ref )
 }
 
 //--------------------------------------------------------------------------------------------
-Uint16 get_item_from_character_pack( CHR_REF chr_ref, SLOT slot, bool_t ignorekurse )
+Uint16 pack_get_item( CHR_REF chr_ref, SLOT slot, bool_t ignorekurse )
 {
   // ZZ> This function takes the last item in the character's pack and puts
   //     it into the designated hand.  It returns the item number or MAXCHR.
@@ -1689,7 +1596,7 @@ void drop_all_items( CHR_REF chr_ref )
     diradd = (float)UINT16_SIZE / ChrList[chr_ref].numinpack;
     while ( ChrList[chr_ref].numinpack > 0 )
     {
-      item = get_item_from_character_pack( chr_ref, SLOT_NONE, !ChrList[chr_ref].alive );
+      item = pack_get_item( chr_ref, SLOT_NONE, !ChrList[chr_ref].alive );
       if ( detach_character_from_mount( item, btrue, btrue ) )
       {
         ChrList[item].hitready = btrue;
@@ -1867,7 +1774,7 @@ bool_t chr_grab_stuff( CHR_REF chr_ref, SLOT slot, bool_t people )
       else  // must be in a pack
       {
         // TODO : figure out a way to get the thing out of the pack!!
-        //        get_item_from_character_pack() won't work?
+        //        pack_get_item() won't work?
 
       };
     }
@@ -1989,7 +1896,7 @@ bool_t chr_grab_stuff( CHR_REF chr_ref, SLOT slot, bool_t people )
 }
 
 //--------------------------------------------------------------------------------------------
-void character_swipe( CHR_REF chr_ref, SLOT slot )
+void chr_swipe( CHR_REF chr_ref, SLOT slot )
 {
   // ZZ> This function spawns an attack particle
 
@@ -2084,11 +1991,11 @@ void character_swipe( CHR_REF chr_ref, SLOT slot )
             PrtList[particle].attachedtochr = MAXCHR;
 
             // Don't spawn in walls
-            if ( 0 != __prthitawall( particle, NULL ) )
+            if ( 0 != prt_hitawall( particle, NULL ) )
             {
               PrtList[particle].pos.x = ChrList[weapon].pos.x;
               PrtList[particle].pos.y = ChrList[weapon].pos.y;
-              if ( 0 != __prthitawall( particle, NULL ) )
+              if ( 0 != prt_hitawall( particle, NULL ) )
               {
                 PrtList[particle].pos.x = ChrList[chr_ref].pos.x;
                 PrtList[particle].pos.y = ChrList[chr_ref].pos.y;
@@ -2144,7 +2051,7 @@ void despawn_characters()
         detach_character_from_mount( chr_get_holdingwhich( chr_ref, _slot ), btrue, bfalse );
     };
 
-    free_inventory( chr_ref );
+    chr_free_inventory( chr_ref );
     ChrList[chr_ref].freeme = btrue;
   };
 
@@ -2536,13 +2443,13 @@ void move_characters( float dUpdate )
             else
             {
               // Put the item into the pack
-              add_item_to_character_pack( item, chr_ref );
+              pack_add_item( item, chr_ref );
             }
           }
           else
           {
             // Get a new one out and put it in hand
-            get_item_from_character_pack( chr_ref, SLOT_LEFT, bfalse );
+            pack_get_item( chr_ref, SLOT_LEFT, bfalse );
           }
 
           // Make it take a little time
@@ -2563,13 +2470,13 @@ void move_characters( float dUpdate )
             else
             {
               // Put the item into the pack
-              add_item_to_character_pack( item, chr_ref );
+              pack_add_item( item, chr_ref );
             }
           }
           else
           {
             // Get a new one out and put it in hand
-            get_item_from_character_pack( chr_ref, SLOT_RIGHT, bfalse );
+            pack_get_item( chr_ref, SLOT_RIGHT, bfalse );
           }
 
           // Make it take a little time
@@ -2884,9 +2791,9 @@ void move_characters( float dUpdate )
       {
         // Check frame effects
         if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_ACTLEFT ) )
-          character_swipe( chr_ref, SLOT_LEFT );
+          chr_swipe( chr_ref, SLOT_LEFT );
         if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_ACTRIGHT ) )
-          character_swipe( chr_ref, SLOT_RIGHT );
+          chr_swipe( chr_ref, SLOT_RIGHT );
         if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_GRABLEFT ) )
           chr_grab_stuff( chr_ref, SLOT_LEFT, bfalse );
         if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_GRABRIGHT ) )
@@ -3122,7 +3029,7 @@ void setup_characters( char *modname )
         if ( grip == GRIP_INVENTORY )
         {
           // Inventory character
-          if ( add_item_to_character_pack( lastcharacter, currentcharacter ) )
+          if ( pack_add_item( lastcharacter, currentcharacter ) )
           {
             // actually do the attachment to the inventory
             Uint16 tmpchr = chr_get_attachedto(lastcharacter);
@@ -3801,7 +3708,7 @@ void create_bumplists()
   Uint8   hidestate;
 
   // Clear the lists
-  bumplist_clear(&bumplist);
+  reset_bumplist();
 
   // Fill 'em back up
   for ( chr_ref = 0; chr_ref < MAXCHR; chr_ref++ )
@@ -3847,7 +3754,7 @@ void create_bumplists()
     bumplist_insert_prt(&bumplist, fanblock, prt_ref);
   }
 
-  bumplist.valid = btrue;
+  bumplist.filled = btrue;
 };
 
 
@@ -4315,6 +4222,7 @@ void do_bumping( float dUpdate )
 {
   // ZZ> This function sets handles characters hitting other characters or particles
 
+  Uint32  blnode_a, blnode_b;
   CHR_REF chra_ref, chrb_ref;
   Uint32 fanblock;
   int cnt, tnc, chrinblock, prtinblock;
@@ -4333,15 +4241,17 @@ void do_bumping( float dUpdate )
   // Only check each pair once
   for ( fanblock = 0; fanblock < bumplist.num_blocks; fanblock++ )
   {
-    chrinblock = bumplist.num_chr[fanblock];
-    prtinblock = bumplist.num_prt[fanblock];
+    chrinblock = bumplist_get_chr_count(&bumplist, fanblock);
+    prtinblock = bumplist_get_prt_count(&bumplist, fanblock);
 
     //// remove bad platforms
-    //for ( cnt = 0, chra_ref = bumplist_get_chr_head(&bumplist, fanblock);
-    //      cnt < chrinblock && VALID_CHR_RANGE( chra_ref );
-    //      cnt++, chra_ref = bumplist_get_next_chr( chra_ref ) )
+    //for ( cnt = 0, blnode_a = bumplist_get_chr_head(&bumplist, fanblock);
+    //      cnt < chrinblock && INVALID_BUNPLIST_NODE != blnode_a;
+    //      cnt++, blnode_a = bumplist_get_next_chr( &bumplist, blnode_a ) )
     //{
+    //  chra_ref = bumplist_get_ref(&bumplist, blnode_a);
     //  VALID_CHR( chra_ref );
+    //
     //  // detach character from invalid platforms
     //  chrb_ref  = chr_get_onwhichplatform( chra_ref );
     //  if ( VALID_CHR( chrb_ref ) )
@@ -4355,20 +4265,22 @@ void do_bumping( float dUpdate )
     //};
 
     //// do attachments
-    //for ( cnt = 0, chra_ref = bumplist_get_chr_head(&bumplist, fanblock);
-    //      cnt < chrinblock && VALID_CHR_RANGE( chra_ref );
-    //      cnt++, chra_ref = bumplist_get_next_chr( chra_ref ) )
+    //for ( cnt = 0, blnode_a = bumplist_get_chr_head(&bumplist, fanblock);
+    //      cnt < chrinblock && INVALID_BUNPLIST_NODE != blnode_a;
+    //      cnt++, blnode_a = bumplist_get_next_chr( &bumplist, blnode_a ) )
     //{
-    //  assert(VALID_CHR( chra_ref ));
+    //  chra_ref = bumplist_get_ref(&bumplist, blnode_a);
+    //  VALID_CHR( chra_ref );
     //
     //  // Do platforms (no interaction with held or mounted items)
     //  if ( chr_attached( chra_ref ) ) continue;
 
-    //  for ( chrb_ref = bumplist_get_next_chr( chra_ref ), tnc = cnt + 1;
+    //  for ( blnode_b = bumplist_get_next_chr( &bumplist, blnode_a ), tnc = cnt + 1;
     //        tnc < chrinblock && VALID_CHR_RANGE( chrb_ref );
-    //        tnc++, chrb_ref = bumplist_get_next_chr( chrb_ref ) )
+    //        tnc++, blnode_b = bumplist_get_next_chr( &bumplist, blnode_b ) )
     //  {
-    //    assert(VALID_CHR( chrb_ref ));
+    //    chrb_ref = bumplist_get_ref(&bumplist, blnode_b);
+    //    VALID_CHR( chrb_ref );
     //
     //    // do not put something on a platform that is being carried by someone
     //    if ( chr_attached( chrb_ref ) ) continue;
@@ -4407,19 +4319,21 @@ void do_bumping( float dUpdate )
     //}
 
     //// Do mounting
-    //for ( cnt = 0, chra_ref = bumplist_get_chr_head(&bumplist, fanblock);
-    //      cnt < chrinblock && VALID_CHR_RANGE( chra_ref );
-    //      cnt++, chra_ref = bumplist_get_next_chr( chra_ref ) )
+    //for ( cnt = 0, blnode_a = bumplist_get_chr_head(&bumplist, fanblock);
+    //      cnt < chrinblock && INVALID_BUNPLIST_NODE != blnode_a;
+    //      cnt++, blnode_a = bumplist_get_next_chr( &bumplist, blnode_a ) )
     //{
-    //  assert(VALID_CHR( chra_ref ));
+    //  chra_ref = bumplist_get_ref(&bumplist, blnode_a);
+    //  VALID_CHR( chra_ref );
     //
     //  if ( chr_attached( chra_ref ) ) continue;
 
-    //  for ( chrb_ref = bumplist_get_next_chr( chra_ref ), tnc = cnt + 1;
+    //  for ( blnode_b = bumplist_get_next_chr( &bumplist, blnode_a ), tnc = cnt + 1;
     //        tnc < chrinblock && VALID_CHR_RANGE( chrb_ref );
-    //        tnc++, chrb_ref = bumplist_get_next_chr( chrb_ref ) )
+    //        tnc++, blnode_b = bumplist_get_next_chr( &bumplist, blnode_b ) )
     //  {
-    //    assert(VALID_CHR( chrb_ref ));
+    //    chrb_ref = bumplist_get_ref(&bumplist, blnode_b);
+    //    VALID_CHR( chrb_ref );
     //
     //    // do not mount something that is being carried by someone
     //    if ( chr_attached( chrb_ref ) ) continue;
@@ -4482,13 +4396,14 @@ void do_bumping( float dUpdate )
     //}
 
     // do collisions
-    for ( cnt = 0, chra_ref = bumplist_get_chr_head(&bumplist, fanblock);
-          cnt < chrinblock && VALID_CHR_RANGE( chra_ref );
-          cnt++, chra_ref = bumplist_get_next_chr(&bumplist, chra_ref) )
+    for ( cnt = 0, blnode_a = bumplist_get_chr_head(&bumplist, fanblock);
+          cnt < chrinblock && INVALID_BUMPLIST_NODE != blnode_a;
+          cnt++, blnode_a = bumplist_get_next_chr( &bumplist, blnode_a ) )
     {
       float lerpa;
 
-      assert(VALID_CHR( chra_ref ));
+      chra_ref = bumplist_get_ref(&bumplist, blnode_a);
+      VALID_CHR( chra_ref );
     
       lerpa = (ChrList[chra_ref].pos.z - ChrList[chra_ref].level) / PLATTOLERANCE;
       lerpa = CLIP(lerpa, 0, 1);
@@ -4499,14 +4414,15 @@ void do_bumping( float dUpdate )
       if ( ChrList[chra_ref].bumpstrength == 0.0f ) continue;
 
       // Do collisions (but not with attached items/characers)
-      for ( chrb_ref = bumplist_get_next_chr(&bumplist, chra_ref), tnc = cnt + 1;
-            tnc < chrinblock && VALID_CHR_RANGE( chrb_ref );
-            tnc++, chrb_ref = bumplist_get_next_chr(&bumplist, chrb_ref) )
+      for ( blnode_b = bumplist_get_next_chr(&bumplist, blnode_a), tnc = cnt + 1;
+            tnc < chrinblock && INVALID_BUMPLIST_NODE != blnode_b;
+            tnc++, blnode_b = bumplist_get_next_chr( &bumplist, blnode_b ) )
       {
         CVolume cv;
         float lerpb, bumpstrength;
 
-        assert(VALID_CHR( chrb_ref ));
+        chrb_ref = bumplist_get_ref(&bumplist, blnode_b);
+        VALID_CHR( chrb_ref );
 
         bumpstrength = ChrList[chra_ref].bumpstrength * ChrList[chrb_ref].bumpstrength;
 
@@ -4752,13 +4668,14 @@ void do_bumping( float dUpdate )
     };
 
     // Now check collisions with every bump particle in same area
-    //for ( cnt = 0, chra_ref = bumplist_get_chr_head(&bumplist, fanblock);
-    //      cnt < chrinblock && VALID_CHR_RANGE( chra_ref );
-    //      cnt++, chra_ref = bumplist_get_next_chr( chra_ref ) )
+    //for ( cnt = 0, blnode_a = bumplist_get_chr_head( &bumplist, fanblock );
+    //      cnt < chrinblock && INVALID_BUNPLIST_NODE != blnode_a;
+    //      cnt++, blnode_a = bumplist_get_next_chr( &bumplist, blnode_a ) )
     //{
     //  IDSZ chridvulnerability, eveidremove;
     //  float chrbump = 1.0f;
 
+    //  chra_ref = bumplist_get_ref( &bumplist, blnode_a );
     //  assert(VALID_CHR( chra_ref ));
     //
 
@@ -4767,12 +4684,14 @@ void do_bumping( float dUpdate )
     //  chrbump = ChrList[chra_ref].bumpstrength;
 
     //  // Check for object-particle interaction
-    //  for ( tnc = 0, prtb = bumplist_get_prt_head(&bumplist, fanblock);
-    //        tnc < prtinblock && VALID_CHR_RANGE( prtb );
-    //        tnc++ , prtb = bumplist_get_next_prt( prtb ) )
+    //  for ( tnc = 0, blnode_b = bumplist_get_prt_head(&bumplist, fanblock);
+    //        tnc < prtinblock && INVALID_BUMPLIST_NODE != blnode_b;
+    //        tnc++ , blnode_b = bumplist_get_next_prt( &bumplist, blnode_b ) )
     //  {
     //    float bumpstrength, prtbump;
     //    bool_t chr_is_vulnerable;
+
+    //    prtb = bumplist_get_ref( &bumplist, blnode_b);
 
     //    CHR_REF prt_owner = prt_get_owner( prtb );
     //    CHR_REF prt_attached = prt_get_attachedtochr( prtb );
@@ -5091,12 +5010,13 @@ void do_bumping( float dUpdate )
     //}
 
     // do platform physics
-    //for ( cnt = 0, chra_ref = bumplist_get_chr_head(&bumplist, fanblock);
-    //      cnt < chrinblock && VALID_CHR_RANGE( chra_ref );
-    //      cnt++, chra_ref = bumplist_get_next_chr( chra_ref ) )
+    //for ( cnt = 0, blnode_a = bumplist_get_chr_head(&bumplist, fanblock);
+    //      cnt < chrinblock && INVALID_BUNPLIST_NODE != blnode_a;
+    //      cnt++, blnode_a = bumplist_get_next_chr( blnode_a ) )
     //{
     //  // detach character from invalid platforms
 
+    //  chra_ref = bumplist_get_ref( &bumplist, blnode_a );
     //  assert(VALID_CHR( chra_ref ));
     //
     //  chrb_ref  = chr_get_onwhichplatform( chra_ref );
@@ -5385,7 +5305,7 @@ void resize_characters( float dUpdate )
       ChrList[chr_ref].bmpdata.cv.x_max += 5;
       ChrList[chr_ref].bmpdata.cv.y_max += 5;
 
-      if ( 0 != __chrhitawall( chr_ref, NULL ) )
+      if ( 0 != chr_hitawall( chr_ref, NULL ) )
       {
         willgetcaught = btrue;
       }

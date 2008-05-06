@@ -47,11 +47,30 @@ INLINE const BUMPLIST * bumplist_renew(BUMPLIST * b);
 INLINE const bool_t     bumplist_allocate(BUMPLIST * b, int size);
 INLINE const bool_t     bumplist_insert_chr(BUMPLIST * b, Uint32 block, CHR_REF chr_ref);
 INLINE const bool_t     bumplist_insert_prt(BUMPLIST * b, Uint32 block, PRT_REF prt_ref);
-INLINE const CHR_REF    bumplist_get_next_chr(BUMPLIST * b, CHR_REF ichr );
-INLINE const PRT_REF    bumplist_get_next_prt(BUMPLIST * b, PRT_REF iprt );
-INLINE const CHR_REF    bumplist_get_chr_head(BUMPLIST * b, Uint32 block);
-INLINE const PRT_REF    bumplist_get_prt_head(BUMPLIST * b, Uint32 block);
+INLINE const Uint32     bumplist_get_next(BUMPLIST * b, Uint32 node );
+INLINE const Uint32     bumplist_get_chr_head(BUMPLIST * b, Uint32 block);
+INLINE const Uint32     bumplist_get_prt_head(BUMPLIST * b, Uint32 block);
 INLINE const bool_t     bumplist_clear( BUMPLIST * b );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+INLINE const BUMPLIST_NODE * bumplist_node_new(BUMPLIST_NODE * n)
+{
+  if(NULL == n) return NULL;
+
+  n->next = INVALID_BUMPLIST_NODE;
+  n->ref  = INVALID_BUMPLIST_NODE;
+
+  return n;
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE const Uint32 bumplist_node_get_ref(BUMPLIST_NODE * n)
+{
+  if(NULL == n) return INVALID_BUMPLIST_NODE;
+
+  return n->ref;
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -67,19 +86,23 @@ INLINE const BUMPLIST * bumplist_new(BUMPLIST * b)
 //--------------------------------------------------------------------------------------------
 INLINE const void bumplist_delete(BUMPLIST * b)
 {
-  if(NULL == b) return;
+  if(NULL == b || !b->allocated) return;
 
-  b->valid = bfalse;
+  b->allocated = bfalse;
 
   if(0 == b->num_blocks) return;
 
   b->num_blocks = 0;
 
+  b->free_count = 0;
+  FREE(b->free_lst);
+  FREE(b->node_lst);
+
   FREE(b->num_chr);
-  FREE(b->chr);
+  FREE(b->chr_ref);
 
   FREE(b->num_prt);
-  FREE(b->prt);
+  FREE(b->prt_ref);
 }
 
 //--------------------------------------------------------------------------------------------
@@ -89,6 +112,28 @@ INLINE const BUMPLIST * bumplist_renew(BUMPLIST * b)
 
   bumplist_delete(b);
   return bumplist_new(b);
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE const bool_t bumplist_clear(BUMPLIST * b)
+{
+  Uint32 i;
+
+  if(NULL == b || !b->allocated) return bfalse;
+
+  // initialize the data
+  for(i=0; i < b->num_blocks; i++)
+  {
+    b->num_chr[i] = 0;
+    b->chr_ref[i].next = INVALID_BUMPLIST_NODE;
+    b->chr_ref[i].ref  = MAXCHR;
+
+    b->num_prt[i] = 0;
+    b->prt_ref[i].next = INVALID_BUMPLIST_NODE;
+    b->prt_ref[i].ref  = MAXPRT;
+  }
+
+  return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -103,15 +148,16 @@ INLINE const bool_t bumplist_allocate(BUMPLIST * b, int size)
   else
   {
     b->num_chr = calloc(size, sizeof(Uint16));
-    b->chr     = calloc(size, sizeof(Uint16));
+    b->chr_ref = calloc(size, sizeof(BUMPLIST_NODE));
 
     b->num_prt = calloc(size, sizeof(Uint16));
-    b->prt     = calloc(size, sizeof(Uint16));
+    b->prt_ref = calloc(size, sizeof(BUMPLIST_NODE));
 
-    if(NULL != b->num_chr && NULL != b->chr && NULL != b->num_prt && NULL != b->prt)
+    if(NULL != b->num_chr && NULL != b->chr_ref && NULL != b->num_prt && NULL != b->prt_ref)
     {
-      b->valid      = btrue;
       b->num_blocks = size;
+      b->allocated  = btrue;
+      bumplist_clear(b);
     }
   }
 
@@ -119,16 +165,46 @@ INLINE const bool_t bumplist_allocate(BUMPLIST * b, int size)
 };
 
 //--------------------------------------------------------------------------------------------
+INLINE const Uint32 bumplist_get_free(BUMPLIST * b)
+{
+  if(NULL == b || b->free_count<=0) return INVALID_BUMPLIST_NODE;
+
+  b->free_count--;
+  return b->free_lst[b->free_count];
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE const bool_t bumplist_return_free(BUMPLIST * b, Uint32 ref)
+{
+  if(NULL == b || !b->initialized || ref >= b->free_max) return bfalse;
+
+  b->free_lst[b->free_count] = ref;
+  b->free_count++;
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
 INLINE const bool_t bumplist_insert_chr(BUMPLIST * b, Uint32 block, CHR_REF chr_ref)
 {
   // BB > insert a character into the bumplist at fanblock.
 
-  if(NULL == b || !b->valid) return bfalse;
+  Uint32 ref;
 
-  b->chr_list[chr_ref].ref  = chr_ref;
-  b->chr_list[chr_ref].next = b->chr[block];
+  if(NULL == b || !b->initialized) return bfalse;
 
-  b->chr[block] = chr_ref;
+  ref = bumplist_get_free(&bumplist);
+  if( INVALID_BUMPLIST_NODE == ref ) return bfalse;
+
+  // place this as the first node in the list
+  b->node_lst[ref].ref  = chr_ref;
+  b->node_lst[ref].next = b->chr_ref[block].next;
+
+  // make the list point to out new node
+  b->chr_ref[block].next = ref;
+  b->chr_ref[block].ref  = MAXCHR;
+
+  // increase the count for this block
   b->num_chr[block]++;
 
   return btrue;
@@ -139,115 +215,119 @@ INLINE const bool_t bumplist_insert_prt(BUMPLIST * b, Uint32 block, PRT_REF prt_
 {
   // BB > insert a particle into the bumplist at fanblock.
 
-  if(NULL == b || !b->valid) return bfalse;
+  Uint32 ref;
 
-  b->prt_list[prt_ref].ref  = prt_ref;
-  b->prt_list[prt_ref].next = b->prt[block];
+  if(NULL == b || !b->initialized) return bfalse;
 
-  b->prt[block] = prt_ref;
-  b->num_prt[block]++;
+  ref = bumplist_get_free(&bumplist);
+  if( INVALID_BUMPLIST_NODE == ref ) return bfalse;
+
+  // place this as the first node in the list
+  b->node_lst[ref].ref  = prt_ref;
+  b->node_lst[ref].next = b->prt_ref[block].next;
+
+  // make the list point to out new node
+  b->prt_ref[block].next = ref;
+  b->prt_ref[block].ref  = MAXPRT;
+
+  // increase the count for this block
+  b->num_chr[block]++;
 
   return btrue;
 }
 
+//--------------------------------------------------------------------------------------------
+INLINE const Uint32 bumplist_get_next( BUMPLIST * b, Uint32 node )
+{
+  if(NULL == b || !b->initialized || INVALID_BUMPLIST_NODE == node) return INVALID_BUMPLIST_NODE;
+
+  return b->node_lst[node].next;
+}
 
 //--------------------------------------------------------------------------------------------
-INLINE const CHR_REF bumplist_get_next_chr( BUMPLIST * b, CHR_REF chr_ref )
+INLINE const Uint32 bumplist_get_next_chr( BUMPLIST * b, Uint32 node )
 {
   Uint32  nodenext;
   CHR_REF bumpnext;
 
-  if(NULL == b || !b->valid) return MAXPRT;
+  if(NULL == b || !b->initialized || INVALID_BUMPLIST_NODE == node) return INVALID_BUMPLIST_NODE;
 
-  nodenext = b->chr_list[chr_ref].next;
-  bumpnext = b->chr_list[nodenext].ref;
+  nodenext = b->node_lst[node].next;
+  bumpnext = b->node_lst[nodenext].ref;
 
-  // scan until we find the next valid particle
-  while( MAXPRT != nodenext && !VALID_PRT(bumpnext) )
+  while( INVALID_BUMPLIST_NODE != nodenext && !VALID_CHR(bumpnext) )
   {
-    nodenext = b->chr_list[bumpnext].next;
-    bumpnext = b->chr_list[nodenext].ref;
+    nodenext = b->node_lst[node].next;
+    bumpnext = b->node_lst[nodenext].ref;
   }
 
-  return bumpnext;
-};
-
-//--------------------------------------------------------------------------------------------
-INLINE const PRT_REF bumplist_get_next_prt( BUMPLIST * b, PRT_REF prt_ref )
-{
-  Uint32  nodenext;
-  PRT_REF bumpnext;
-
-  if(NULL == b || !b->valid) return MAXPRT;
-
-  nodenext = b->prt_list[prt_ref].next;
-  bumpnext = b->prt_list[nodenext].ref;
-
-  // scan until we find the next valid particle
-  while( MAXPRT != nodenext && !VALID_PRT(bumpnext) )
-  {
-    nodenext = b->prt_list[bumpnext].next;
-    bumpnext = b->prt_list[nodenext].ref;
-  }
-
-  return bumpnext;
-
-};
-
-//--------------------------------------------------------------------------------------------
-INLINE const CHR_REF    bumplist_get_chr_head(BUMPLIST * b, Uint32 block)
-{
-  if(NULL == b || !b->valid) return MAXCHR;
-  if(block > b->num_blocks)  return MAXCHR;
-
-  return b->chr[block];
-};
-
-//--------------------------------------------------------------------------------------------
-INLINE const PRT_REF    bumplist_get_prt_head(BUMPLIST * b, Uint32 block)
-{
-  if(NULL == b || !b->valid) return MAXPRT;
-  if(block > b->num_blocks)  return MAXPRT;
-
-  return b->prt[block];
+  return nodenext;
 }
 
 //--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-INLINE const bool_t bumplist_clear( BUMPLIST * b )
+INLINE const Uint32 bumplist_get_next_prt( BUMPLIST * b, Uint32 node )
 {
-  Uint32 cnt;
+  Uint32  nodenext;
+  CHR_REF bumpnext;
 
-  if(NULL == b || !b->valid) return bfalse;
-  if( 0 == b->num_blocks)    return btrue;
+  if(NULL == b || !b->initialized || INVALID_BUMPLIST_NODE == node) return INVALID_BUMPLIST_NODE;
 
-  for ( cnt = 0; cnt < b->num_blocks; cnt++ )
+  nodenext = b->node_lst[node].next;
+  bumpnext = b->node_lst[nodenext].ref;
+
+  while( INVALID_BUMPLIST_NODE != nodenext && !VALID_PRT(bumpnext) )
   {
-    b->valid        = bfalse;
-
-    b->num_chr[cnt] = 0;
-    b->chr[cnt]     = MAXCHR;
-
-    b->num_prt[cnt] = 0;
-    b->prt[cnt]     = MAXPRT;
+    nodenext = b->node_lst[node].next;
+    bumpnext = b->node_lst[nodenext].ref;
   }
 
-  for ( cnt = 0; cnt < MAXCHR; cnt++ )
-  {
-    b->chr_list[cnt].next = MAXCHR;
-    b->chr_list[cnt].ref  = cnt;
-  }
+  return nodenext;
+}
 
-  for ( cnt = 0; cnt < MAXPRT; cnt++ )
-  {
-    b->prt_list[cnt].next = MAXCHR;
-    b->prt_list[cnt].ref  = cnt;
-  }
+//--------------------------------------------------------------------------------------------
+INLINE const Uint32 bumplist_get_chr_head(BUMPLIST * b, Uint32 block)
+{
+  if(NULL == b || !b->initialized) return INVALID_BUMPLIST_NODE;
+  if(block > b->num_blocks)  return INVALID_BUMPLIST_NODE;
 
-  return btrue;
-
+  return b->chr_ref[block].next;
 };
 
+//--------------------------------------------------------------------------------------------
+INLINE const Uint32 bumplist_get_prt_head(BUMPLIST * b, Uint32 block)
+{
+  if(NULL == b || !b->initialized) return INVALID_BUMPLIST_NODE;
+  if(block > b->num_blocks)  return INVALID_BUMPLIST_NODE;
+
+  return b->prt_ref[block].next;
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE const Uint32 bumplist_get_chr_count(BUMPLIST * b, Uint32 block)
+{
+  if(NULL == b || !b->initialized) return INVALID_BUMPLIST_NODE;
+  if(block > b->num_blocks)  return INVALID_BUMPLIST_NODE;
+
+  return b->num_chr[block];
+};
+
+//--------------------------------------------------------------------------------------------
+INLINE const Uint32 bumplist_get_prt_count(BUMPLIST * b, Uint32 block)
+{
+  if(NULL == b || !b->initialized) return INVALID_BUMPLIST_NODE;
+  if(block > b->num_blocks)  return INVALID_BUMPLIST_NODE;
+
+  return b->num_prt[block];
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE const Uint32 bumplist_get_ref(BUMPLIST * b, Uint32 node)
+{
+  if(NULL == b || !b->initialized) return INVALID_BUMPLIST_NODE;
+  if(node > b->free_max)    return INVALID_BUMPLIST_NODE;
+
+  return b->node_lst[node].ref;
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

@@ -2646,7 +2646,7 @@ bool_t chr_collide_mesh(CHR_REF ichr)
 
   pchr = ChrList + ichr;
 
-  if ( 0 != __chrhitawall( ichr, &norm ) )
+  if ( 0 != chr_hitawall( ichr, &norm ) )
   {
     float dotprod = DotProduct(norm, pchr->vel);
 
@@ -2708,7 +2708,7 @@ bool_t prt_collide_mesh(PRT_REF iprt)
   pip      = PrtList[iprt].pip;
   dampen   = PipList[pip].dampen;
 
-  if ( 0 != __prthitawall( iprt, &norm ) )
+  if ( 0 != prt_hitawall( iprt, &norm ) )
   {
     float dotprod = DotProduct(norm, PrtList[iprt].vel);
 
@@ -4306,11 +4306,11 @@ bool_t chr_search_block( SEARCH_CONTEXT * psearch, int block_x, int block_y, CHR
                          bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, bool_t seeinvisible, IDSZ idsz,
                          bool_t excludeid )
 {
-  // ZZ> This is a good little helper, that btrue if a suitable target was found
+  // ZZ> This is a good little helper. returns btrue if a suitable target was found
 
   int cnt;
   CHR_REF charb;
-  Uint32 fanblock;
+  Uint32 fanblock, blnode_b;
   TEAM team;
   vect3 diff;
   float dist;
@@ -4321,14 +4321,15 @@ bool_t chr_search_block( SEARCH_CONTEXT * psearch, int block_x, int block_y, CHR
   bool_t require_noitems = !ask_items;
   bool_t ballowed;
 
-  if ( !VALID_CHR( character ) || !bumplist.valid ) return bfalse;
+  if ( !VALID_CHR( character ) || !bumplist.filled ) return bfalse;
+  team     = ChrList[character].team;
 
   fanblock = mesh_convert_block( block_x, block_y );
-  team = ChrList[character].team;
-  for ( cnt = 0, charb = bumplist.chr[fanblock];
-        cnt < bumplist.num_chr[fanblock] && VALID_CHR_RANGE(charb);
-        cnt++, charb = bumplist_get_next_chr(&bumplist, charb) )
+  for ( cnt = 0, blnode_b = bumplist_get_chr_head( &bumplist, fanblock );
+        cnt < bumplist_get_chr_count(&bumplist, fanblock) && INVALID_BUMPLIST_NODE != blnode_b;
+        cnt++, blnode_b = bumplist_get_next_chr( &bumplist, blnode_b ) )
   {
+    charb = bumplist_get_ref( &bumplist, blnode_b );
     assert( VALID_CHR( charb ) );
 
     // don't find stupid stuff
@@ -4372,11 +4373,11 @@ bool_t chr_search_block( SEARCH_CONTEXT * psearch, int block_x, int block_y, CHR
       diff.z = ChrList[character].pos.z - ChrList[charb].pos.z;
 
       dist = DotProduct(diff, diff);
-      if ( psearch->initialize || dist < psearch->distance )
+      if ( psearch->initialize || dist < psearch->bestdistance )
       {
-        psearch->distance   = dist;
-        psearch->besttarget = charb;
-        psearch->initialize = bfalse;
+        psearch->bestdistance = dist;
+        psearch->besttarget   = charb;
+        psearch->initialize   = bfalse;
       }
     }
 
@@ -4483,23 +4484,25 @@ bool_t chr_search_block_nearest( SEARCH_CONTEXT * psearch, int block_x, int bloc
   int   cnt;
   TEAM    team;
   CHR_REF chrb_ref;
-  Uint32  fanblock;
+  Uint32  fanblock, blnode_b;
   bool_t require_friends =  ask_friends && !ask_enemies;
   bool_t require_enemies = !ask_friends &&  ask_enemies;
   bool_t require_alive   = !ask_dead;
   bool_t require_noitems = !ask_items;
 
   // if chra_ref is not defined, return
-  if ( !VALID_CHR( chra_ref ) || !bumplist.valid ) return bfalse;
+  if ( !VALID_CHR( chra_ref ) || !bumplist.filled ) return bfalse;
 
   // blocks that are off the mesh are not stored
   fanblock = mesh_convert_block( block_x, block_y );
 
-  team     = ChrList[chra_ref].team;
-  chrb_ref = bumplist.chr[fanblock];
-  for ( cnt = 0; cnt < bumplist.num_chr[fanblock] && VALID_CHR_RANGE( chrb_ref ); cnt++, chrb_ref = bumplist_get_next_chr(&bumplist, chrb_ref) )
+  team = ChrList[chra_ref].team;
+  for ( cnt = 0, blnode_b = bumplist_get_chr_head(&bumplist, fanblock); 
+        cnt < bumplist_get_chr_count(&bumplist, fanblock) && INVALID_BUMPLIST_NODE != blnode_b; 
+        cnt++, blnode_b = bumplist_get_next_chr(&bumplist, blnode_b) )
   {
-    assert( VALID_CHR( chrb_ref ) );
+    chrb_ref = bumplist_get_ref(&bumplist, blnode_b);
+    VALID_CHR( chrb_ref );
 
     // don't find stupid stuff
     if ( !VALID_CHR( chrb_ref ) || 0.0f == ChrList[chrb_ref].bumpstrength ) continue;
@@ -4633,3 +4636,99 @@ bool_t chr_search_wide( SEARCH_CONTEXT * psearch, CHR_REF chr_ref, bool_t ask_it
 
   return found;
 }
+
+//--------------------------------------------------------------------------------------------
+void attach_particle_to_character( PRT_REF particle, CHR_REF chr_ref, Uint16 vertoffset )
+{
+  // ZZ> This function sets one particle's position to be attached to a character.
+  //     It will kill the particle if the character is no longer around
+
+  Uint16 vertex, model;
+  float flip;
+  GLvector point, nupoint;
+  PRT * pprt;
+  CHR * pchr;
+
+  // Check validity of attachment
+  if ( !VALID_CHR( chr_ref ) || chr_in_pack( chr_ref ) || !VALID_PRT( particle ) )
+  {
+    PrtList[particle].gopoof = btrue;
+    return;
+  }
+
+  pprt = PrtList + particle;
+  pchr = ChrList + chr_ref;
+
+  // Do we have a matrix???
+  if ( !pchr->matrixvalid )
+  {
+    // No matrix, so just wing it...
+
+    pprt->pos.x = pchr->pos.x;
+    pprt->pos.y = pchr->pos.y;
+    pprt->pos.z = pchr->pos.z;
+  }
+  else   if ( vertoffset == GRIP_ORIGIN )
+  {
+    // Transform the origin to world space
+
+    pprt->pos.x = pchr->matrix.CNV( 3, 0 );
+    pprt->pos.y = pchr->matrix.CNV( 3, 1 );
+    pprt->pos.z = pchr->matrix.CNV( 3, 2 );
+  }
+  else
+  {
+    // Transform the grip vertex position to world space
+
+    Uint32      ilast, inext;
+    MAD       * pmad;
+    MD2_Model * pmdl;
+    MD2_Frame * plast, * pnext;
+
+    model = pchr->model;
+    inext = pchr->anim.next;
+    ilast = pchr->anim.last;
+    flip  = pchr->anim.flip;
+
+    assert( MAXMODEL != VALIDATE_MDL( model ) );
+
+    pmad = MadList + model;
+    pmdl  = pmad->md2_ptr;
+    plast = md2_get_Frame(pmdl, ilast);
+    pnext = md2_get_Frame(pmdl, inext);
+
+    //handle possible invalid values
+    vertex = pmad->vertices - vertoffset;
+    if(vertoffset >= pmad->vertices)
+    {
+      vertex = pmad->vertices - GRIP_LAST;
+    }
+
+    // Calculate grip point locations with linear interpolation and other silly things
+    if ( inext == ilast )
+    {
+      point.x = plast->vertices[vertex].x;
+      point.y = plast->vertices[vertex].y;
+      point.z = plast->vertices[vertex].z;
+      point.w = 1.0f;
+    }
+    else
+    {
+      point.x = plast->vertices[vertex].x + ( pnext->vertices[vertex].x - plast->vertices[vertex].x ) * flip;
+      point.y = plast->vertices[vertex].y + ( pnext->vertices[vertex].y - plast->vertices[vertex].y ) * flip;
+      point.z = plast->vertices[vertex].z + ( pnext->vertices[vertex].z - plast->vertices[vertex].z ) * flip;
+      point.w = 1.0f;
+    }
+
+    // Do the transform
+    Transform4_Full( 1.0f, 1.0f, &(pchr->matrix), &point, &nupoint, 1 );
+
+    pprt->pos.x = nupoint.x;
+    pprt->pos.y = nupoint.y;
+    pprt->pos.z = nupoint.z;
+  }
+
+
+
+}
+

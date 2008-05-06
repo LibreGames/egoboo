@@ -829,3 +829,6 @@ bool_t chr_search_block( SEARCH_CONTEXT * psearch, int block_x, int block_y, CHR
 
 bool_t chr_search_nearby( SEARCH_CONTEXT * psearch, CHR_REF character, bool_t ask_items,
                           bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, IDSZ ask_idsz );
+
+void attach_particle_to_character( PRT_REF particle, CHR_REF character, Uint16 vertoffset );
+

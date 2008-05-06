@@ -698,11 +698,11 @@ extern Uint16          chrcollisionlevel;
 
 bool_t make_one_character_matrix( CHR_REF cnt );
 void free_one_character( CHR_REF character );
-void free_inventory( CHR_REF character );
+void chr_free_inventory( CHR_REF character );
 bool_t make_one_weapon_matrix( Uint16 cnt );
 void make_character_matrices();
 int get_free_character();
-Uint32 __chrhitawall( CHR_REF character, vect3 * norm );
+Uint32 chr_hitawall( CHR_REF character, vect3 * norm );
 void play_action( CHR_REF character, ACTION action, bool_t ready );
 void set_frame( CHR_REF character, Uint16 frame, Uint8 lip );
 bool_t detach_character_from_mount( CHR_REF character, bool_t ignorekurse, bool_t doshop );
@@ -728,12 +728,12 @@ void change_character( Uint16 cnt, Uint16 profile, Uint8 skin,
 bool_t cost_mana( CHR_REF character, int amount, Uint16 killer );
 bool_t attach_character_to_mount( CHR_REF character, Uint16 mount, SLOT slot );
 CHR_REF stack_in_pack( CHR_REF item, CHR_REF character );
-bool_t add_item_to_character_pack( Uint16 item, CHR_REF character );
-Uint16 get_item_from_character_pack( CHR_REF character, SLOT slot, bool_t ignorekurse );
+bool_t pack_add_item( Uint16 item, CHR_REF character );
+Uint16 pack_get_item( CHR_REF character, SLOT slot, bool_t ignorekurse );
 void drop_keys( CHR_REF character );
 void drop_all_items( CHR_REF character );
 bool_t chr_grab_stuff( CHR_REF chara, SLOT slot, bool_t people );
-void character_swipe( Uint16 cnt, SLOT slot );
+void chr_swipe( Uint16 cnt, SLOT slot );
 void despawn_characters();
 void move_characters( float dUpdate );
 

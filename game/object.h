@@ -186,8 +186,6 @@ void flash_character_height( CHR_REF character, Uint8 valuelow, Sint16 low,
 
 void flash_character( CHR_REF character, Uint8 value );
 
-void attach_particle_to_character( PRT_REF particle, CHR_REF character, Uint16 vertoffset );
-
 void setup_particles();
 
 void spawn_bump_particles( CHR_REF character, PRT_REF particle );
