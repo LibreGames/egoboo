@@ -1,14 +1,15 @@
 #include "Mad.h"
 #include "script.h"
 #include "Log.h"
-#include "graphic.h"
 
 #include "egoboo_utility.h"
 
+#include <assert.h>
+
 #include "Md2.inl"
 #include "particle.inl"
-
-#include <assert.h>
+#include "graphic.inl"
+#include "egoboo_types.inl"
 
 MAD MadList[MAXMODEL];
 
@@ -1145,148 +1146,6 @@ bool_t mad_generate_bbox_tree(int max_level, MAD * pmad)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-BBOX_LIST * bbox_list_new(BBOX_LIST * lst)
-{
-  if(NULL == lst) return NULL;
-  memset(lst, 0, sizeof(BBOX_LIST));
-  return lst;
-}
-
-//--------------------------------------------------------------------------------------------
-BBOX_LIST * bbox_list_delete(BBOX_LIST * lst)
-{
-  if(NULL == lst) return NULL;
-
-  if( lst->count > 0 )
-  {
-    FREE(lst->list);
-  }
-
-  lst->count = 0;
-  lst->list  = NULL;
-
-  return lst;
-}
-
-//--------------------------------------------------------------------------------------------
-BBOX_LIST * bbox_list_renew(BBOX_LIST * lst)
-{
-  if(NULL == lst) return NULL;
-
-  bbox_list_delete(lst);
-  return bbox_list_new(lst);
-}
-
-//--------------------------------------------------------------------------------------------
-BBOX_LIST * bbox_list_alloc(BBOX_LIST * lst, int count)
-{
-  if(NULL == lst) return NULL;
-
-  bbox_list_delete(lst);
-
-  if(count>0)
-  {
-    lst->list = calloc(count, sizeof(AA_BBOX));
-    if(NULL != lst->list)
-    {
-      lst->count = count;
-    }
-  }
-
-  return lst;
-}
-
-//--------------------------------------------------------------------------------------------
-BBOX_LIST * bbox_list_realloc(BBOX_LIST * lst, int count)
-{
-  // check for bad list
-  if(NULL == lst) return NULL;
-
-  // check for no change in the count
-  if(count == lst->count) return lst;
-
-  // check another dumb case
-  if(count==0)
-  {
-    return bbox_list_delete(lst);
-  }
-
-
-  lst->list = realloc(lst->list, count * sizeof(AA_BBOX));
-  if(NULL == lst->list)
-  {
-    lst->count = 0;
-  }
-  else
-  {
-    lst->count = count;
-  }
-
-
-  return lst;
-}
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-BBOX_ARY * bbox_ary_new(BBOX_ARY * ary)
-{
-  if(NULL == ary) return NULL;
-  memset(ary, 0, sizeof(BBOX_ARY));
-  return ary;
-}
-
-//--------------------------------------------------------------------------------------------
-BBOX_ARY * bbox_ary_delete(BBOX_ARY * ary)
-{
-  int i;
-
-  if(NULL == ary) return NULL;
-
-  if(NULL!=ary->list)
-  {
-    for(i=0; i<ary->count; i++)
-    {
-      bbox_list_delete(ary->list + i);
-    }
-
-    FREE(ary->list);
-  }
-
-  ary->count = 0;
-  ary->list = NULL;
-
-  return ary;
-}
-
-//--------------------------------------------------------------------------------------------
-BBOX_ARY * bbox_ary_renew(BBOX_ARY * ary)
-{
-  if(NULL == ary) return NULL;
-  bbox_ary_delete(ary);
-  return bbox_ary_new(ary);
-}
-
-//--------------------------------------------------------------------------------------------
-BBOX_ARY * bbox_ary_alloc(BBOX_ARY * ary, int count)
-{
-  if(NULL == ary) return NULL;
-
-  bbox_ary_delete(ary);
-
-  if(count>0)
-  {
-    ary->list = calloc(count, sizeof(BBOX_LIST));
-    if(NULL != ary->list)
-    {
-      ary->count = count;
-    }
-  }
-
-  return ary;
-}
-
-
-//--------------------------------------------------------------------------------------------
 MAD *  mad_new(MAD * pmad)
 {
   if(NULL == pmad) return NULL;
@@ -1422,64 +1281,6 @@ void free_one_mad( Uint16 imdl )
 }
 
 //---------------------------------------------------------------------------------------------
-bool_t bbox_gl_draw(AA_BBOX * pbbox)
-{
-  vect3 * pmin, * pmax;
-
-  if(NULL == pbbox) return bfalse;
-
-  glPushMatrix();
-  {
-    pmin = &(pbbox->mins);
-    pmax = &(pbbox->maxs);
-
-    // !!!! there must be an optimized way of doing this !!!!
-
-    glBegin(GL_QUADS);
-    {
-      // Front Face
-      glVertex3f(pmin->x, pmin->y, pmax->z);
-      glVertex3f(pmax->x, pmin->y, pmax->z);
-      glVertex3f(pmax->x, pmax->y, pmax->z);
-      glVertex3f(pmin->x, pmax->y, pmax->z);
-
-      // Back Face
-      glVertex3f(pmin->x, pmin->y, pmin->z);
-      glVertex3f(pmin->x, pmax->y, pmin->z);
-      glVertex3f(pmax->x, pmax->y, pmin->z);
-      glVertex3f(pmax->x, pmin->y, pmin->z);
-
-      // Top Face
-      glVertex3f(pmin->x, pmax->y, pmin->z);
-      glVertex3f(pmin->x, pmax->y, pmax->z);
-      glVertex3f(pmax->x, pmax->y, pmax->z);
-      glVertex3f(pmax->x, pmax->y, pmin->z);
-
-      // Bottom Face
-      glVertex3f(pmin->x, pmin->y, pmin->z);
-      glVertex3f(pmax->x, pmin->y, pmin->z);
-      glVertex3f(pmax->x, pmin->y, pmax->z);
-      glVertex3f(pmin->x, pmin->y, pmax->z);
-
-      // Right face
-      glVertex3f(pmax->x, pmin->y, pmin->z);
-      glVertex3f(pmax->x, pmax->y, pmin->z);
-      glVertex3f(pmax->x, pmax->y, pmax->z);
-      glVertex3f(pmax->x, pmin->y, pmax->z);
-
-      // Left Face
-      glVertex3f(pmin->x, pmin->y, pmin->z);
-      glVertex3f(pmin->x, pmin->y, pmax->z);
-      glVertex3f(pmin->x, pmax->y, pmax->z);
-      glVertex3f(pmin->x, pmax->y, pmin->z);
-    }
-    glEnd();
-  }
-  glPopMatrix();
-
-  return btrue;
-}
-
 bool_t mad_display_bbox_ary(BBOX_ARY * pary, int level)
 {
   BBOX_LIST * plst;

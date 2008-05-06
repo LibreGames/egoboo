@@ -24,13 +24,13 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 #include "Mesh.h"
 #include "camera.h"
 
-#include "egoboo_math.h"
 #include "egoboo.h"
 
 #include <assert.h>
 
 #include "particle.inl"
 #include "char.inl"
+#include "egoboo_math.inl"
 
 typedef enum prt_ori_t
 {

@@ -20,10 +20,8 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "ogl_include.h"
-#include "graphic.h"
 #include "Log.h"
 #include "Frustum.h"
-#include "graphic.h"
 
 #include "egoboo.h"
 
@@ -31,6 +29,7 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "particle.inl"
 #include "mesh.inl"
+#include "graphic.inl"
 
 RENDERLIST renderlist;
 

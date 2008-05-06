@@ -25,12 +25,13 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 #include "Particle.h"
 #include "script.h"
 #include "menu.h"
-#include "graphic.h"
 #include "enchant.h"
 
 #include "egoboo_strutil.h"
 #include "egoboo_utility.h"
 #include "egoboo.h"
+
+#include "graphic.inl"
 
 //--------------------------------------------------------------------------------------------
 
@@ -449,7 +450,7 @@ void load_all_objects( char * szModpath )
 //--------------------------------------------------------------------------------------------
 int load_one_object( int skin_count, char * szObjectpath, char* szObjectname )
 {
-  // ZZ> This function loads one iobj and returns the number of skins
+  // ZZ> This function loads one object and returns the number of skins
 
   Uint16 iobj;
   int numskins, numicon, skin_index;
@@ -581,14 +582,13 @@ int load_one_object( int skin_count, char * szObjectpath, char* szObjectname )
     }
   }
 
-  MadList[iobj].skins = numskins;
   if ( numskins == 0 )
   {
     // If we didn't get a skin_count, set it to the water texture
+    numskins = 1;
     MadList[iobj].skinstart = TX_WATER_TOP;
-    MadList[iobj].skins = 1;
   }
-
+  MadList[iobj].skins = numskins;
 
   return numskins;
 }

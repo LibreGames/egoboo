@@ -374,14 +374,11 @@ void init_all_models();
 
 void md2_blend_vertices(CHR_REF ichr, Sint32 vrtmin, Sint32 vrtmax);
 void md2_blend_lighting(CHR_REF ichr);
-bool_t md2_calculate_bumpers(CHR_REF ichr, int level);
-bool_t prt_calculate_bumpers(PRT_REF iprt);
+
 
 typedef struct collision_volume_t CVolume;
-void cv_list_add( CVolume * cv);
-void cv_list_clear();
-void cv_list_draw();
-void draw_CVolume( CVolume * cv );
+
+
 
 
 #endif //#ifndef _PROTO_H_

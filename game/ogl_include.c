@@ -17,6 +17,8 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "ogl_include.h"
 
+#include "egoboo_math.inl"
+
 //--------------------------------------------------------------------------------------------
 // MN This probably should be replaced by a call to gluLookAt, don't see why we need to make our own...
 GLmatrix ViewMatrix( const vect3 from,     // camera location

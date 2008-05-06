@@ -13,7 +13,7 @@ INLINE const Uint32 mesh_get_fan( vect3 pos );
 INLINE const Uint32 mesh_get_block( vect3 pos );
 
 INLINE const int    mesh_bump_tile( int fan_x, int fan_y );
-INLINE const Uint32 mesh_get_tile( int fan_x, int fan_y );
+INLINE const Uint16 mesh_get_tile( int fan_x, int fan_y );
 INLINE const bool_t mesh_set_tile( int fan_x, int fan_y, Uint32 become );
 INLINE const Uint32 mesh_convert_fan( int fan_x, int fan_y );
 INLINE const Uint32 mesh_convert_block( int block_x, int block_y );
@@ -476,7 +476,7 @@ INLINE const int mesh_bump_tile( int fan_x, int fan_y )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 mesh_get_tile( int fan_x, int fan_y )
+INLINE const Uint16 mesh_get_tile( int fan_x, int fan_y )
 {
   Uint32 fan;
 

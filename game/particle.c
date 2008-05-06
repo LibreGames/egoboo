@@ -26,7 +26,6 @@
 #include "sound.h"
 #include "enchant.h"
 
-#include "egoboo_math.h"
 #include "egoboo_utility.h"
 #include "egoboo.h"
 
@@ -35,6 +34,7 @@
 #include "char.inl"
 #include "Md2.inl"
 #include "mesh.inl"
+#include "egoboo_math.inl"
 
 DYNALIGHT_LIST GDynaLight[MAXDYNA];
 PIP            PipList[MAXPRTPIP];

@@ -242,3 +242,5 @@ Uint32 __prthitawall( PRT_REF particle, vect3 * norm );
 
 
 Uint32 load_one_pip( char * szModpath, char * szObjectname, char * szFname, int override );
+
+bool_t prt_calculate_bumpers(PRT_REF iprt);

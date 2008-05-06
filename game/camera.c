@@ -23,13 +23,13 @@
 #include "Frustum.h"
 #include "log.h"
 
-#include "egoboo_math.h"
 #include "egoboo.h"
 
 #include <assert.h>
 
 #include "input.inl"
 #include "char.inl"
+#include "egoboo_math.inl"
 
 CAMERA GCamera;
 

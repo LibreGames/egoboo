@@ -27,12 +27,13 @@
 #include "Ui.h"
 #include "Menu.h"
 #include "Log.h"
-#include "input.inl"
-#include "graphic.h"
 
 #include "egoboo.h"
 
 #include <assert.h>
+
+#include "input.inl"
+#include "graphic.inl"
 
 int              loadplayer_count = 0;
 LOAD_PLAYER_INFO loadplayer[MAXLOADPLAYER];

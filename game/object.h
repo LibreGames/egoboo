@@ -3,8 +3,11 @@
 #include "egoboo_types.h"
 #include "egoboo_math.h"
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 #define MAXPROFILE 1024
 
+//--------------------------------------------------------------------------------------------
 typedef struct collision_volume_t
 {
   int   level;
@@ -15,14 +18,21 @@ typedef struct collision_volume_t
   float yx_min, yx_max;
 } CVolume;
 
+CVolume cvolume_merge(CVolume * pv1, CVolume * pv2);
+void    draw_CVolume( CVolume * cv );
+
+//--------------------------------------------------------------------------------------------
 typedef CVolume CVolume_Tree[8];
 
+//--------------------------------------------------------------------------------------------
 typedef struct bump_data_t
 {
-  Uint8 shadow;      // Size of shadow
-  Uint8 size;        // Size of bumpers
-  Uint8 sizebig;     // For octagonal bumpers
-  Uint8 height;      // Distance from head to toe
+  bool_t valid;       // is this data valid?
+
+  Uint8  shadow;      // Size of shadow
+  Uint8  size;        // Size of bumpers
+  Uint8  sizebig;     // For octagonal bumpers
+  Uint8  height;      // Distance from head to toe
 
   bool_t calc_is_platform;
   bool_t calc_is_mount;
@@ -36,7 +46,11 @@ typedef struct bump_data_t
   vect3   mids_hi, mids_lo;
 } BData;
 
+INLINE BData * bdata_new(BData * b);
+INLINE bool_t  bdata_delete(BData * b);
+INLINE BData * bdata_renew(BData * b);
 
+//--------------------------------------------------------------------------------------------
 typedef enum team_e
 {
   TEAM_EVIL            = 'E' -'A',                      // E
@@ -57,13 +71,12 @@ typedef struct team_t
 
 extern TEAM_INFO TeamList[TEAM_COUNT];
 
-
-
 #define VALID_TEAM(XX) ( ((XX)>=0) && ((XX)<TEAM_COUNT) )
 
 INLINE const CHR_REF team_get_sissy( TEAM_REF iteam );
 INLINE const CHR_REF team_get_leader( TEAM_REF iteam );
 
+//--------------------------------------------------------------------------------------------
 typedef struct vertex_data_blended_t
 {
   Uint32  frame0;
@@ -81,16 +94,15 @@ typedef struct vertex_data_blended_t
   float *Ambient;      // Lighting hack ( Ooze )
 } VData_Blended;
 
-void VData_Blended_construct(VData_Blended * v);
-void VData_Blended_destruct(VData_Blended * v);
-VData_Blended * VData_Blended_new();
-void VData_Blended_delete(VData_Blended * v);
-void VData_Blended_Allocate(VData_Blended * v, size_t verts);
-void VData_Blended_Deallocate(VData_Blended * v);
+INLINE VData_Blended * VData_Blended_new();
+INLINE void VData_Blended_delete(VData_Blended * v);
 
+INLINE void VData_Blended_construct(VData_Blended * v);
+INLINE void VData_Blended_destruct(VData_Blended * v);
+INLINE void VData_Blended_Allocate(VData_Blended * v, size_t verts);
+INLINE void VData_Blended_Deallocate(VData_Blended * v);
 
-
-
+//--------------------------------------------------------------------------------------------
 typedef enum damage_e
 {
   DAMAGE_SLASH   = 0,                          //
@@ -108,9 +120,9 @@ typedef enum damage_e
 #define DAMAGE_SHIFT         3                       // 000000xx Resistance ( 1 is common )
 #define DAMAGE_INVERT        4                       // 00000x00 Makes damage heal
 #define DAMAGE_CHARGE        8                       // 0000x000 Converts damage to mana
-#define DAMAGE_MANA         16                       // 000x0000 Makes damage deal to mana TODO
+#define DAMAGE_MANA         16                       // 000x0000 Makes damage deal to mana
 
-
+//--------------------------------------------------------------------------------------------
 typedef enum slot_e
 {
   SLOT_LEFT,
@@ -145,6 +157,12 @@ typedef enum grip_e
   GRIP_INVENTORY = GRIP_ORIGIN   // "Grip" in the object's inventory
 } GRIP;
 
+INLINE const SLOT   grip_to_slot( GRIP g );
+INLINE const GRIP   slot_to_grip( SLOT s );
+INLINE const Uint16 slot_to_latch( Uint16 object, SLOT s );
+INLINE const Uint16 slot_to_offset( SLOT s );
+
+//--------------------------------------------------------------------------------------------
 typedef struct tile_damage_t
 {
   short  parttype;
@@ -159,33 +177,26 @@ extern TILE_DAMAGE GTile_Dam;
 #define DELAY_TILESOUND 16
 #define TILEREAFFIRMAND  3
 
-SLOT grip_to_slot( GRIP g );
-GRIP slot_to_grip( SLOT s );
-Uint16 slot_to_latch( Uint16 object, SLOT s );
-Uint16 slot_to_offset( SLOT s );
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 
 void flash_character_height( CHR_REF character, Uint8 valuelow, Sint16 low,
                              Uint8 valuehigh, Sint16 high );
+
 void flash_character( CHR_REF character, Uint8 value );
 
 void attach_particle_to_character( PRT_REF particle, CHR_REF character, Uint16 vertoffset );
 
-
-void export_one_character( CHR_REF character, Uint16 owner, int number );
-void free_all_characters();
 void setup_particles();
-
 
 void spawn_bump_particles( CHR_REF character, PRT_REF particle );
 
-
-
-void disaffirm_attached_particles( CHR_REF character );
+void   disaffirm_attached_particles( CHR_REF character );
 Uint16 number_of_attached_particles( CHR_REF character );
-void reaffirm_attached_particles( CHR_REF character );
+void   reaffirm_attached_particles( CHR_REF character );
 
 void switch_team( CHR_REF character, TEAM team );
-int restock_ammo( CHR_REF character, IDSZ idsz );
+int  restock_ammo( CHR_REF character, IDSZ idsz );
 void issue_clean( CHR_REF character );
 

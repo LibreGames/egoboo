@@ -20,13 +20,16 @@
     along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "graphic.h"
 #include "Ui.h"
 #include "Log.h"
+
 #include "egoboo.h"
+
 #include <string.h>
 #include <SDL_opengl.h>
 #include <assert.h>
+
+#include "graphic.inl"
 
 GLfloat ui_active_color[]  = {0.00f, 0.00f, 0.90f, 0.60f};
 GLfloat ui_hot_color[]     = {0.54f, 0.00f, 0.00f, 1.00f};

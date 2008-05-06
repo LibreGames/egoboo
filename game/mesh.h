@@ -205,7 +205,7 @@ INLINE const bool_t mesh_fan_add_bits( int fan_x, int fan_y, Uint32 bits );
 INLINE const bool_t mesh_fan_set_bits( int fan_x, int fan_y, Uint32 bits );
 
 INLINE const int   mesh_bump_tile( int fan_x, int fan_y );
-INLINE const Uint32 mesh_get_tile( int fan_x, int fan_y );
+INLINE const Uint16 mesh_get_tile( int fan_x, int fan_y );
 INLINE const bool_t mesh_set_tile( int fan_x, int fan_y, Uint32 become );
 
 INLINE const Uint32 mesh_convert_fan( int fan_x, int fan_y );

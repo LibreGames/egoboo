@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include "egoboo_types.h"
+
 #include <SDL.h>
 #include "ogl_texture.h"
 #include "Font.h"
@@ -31,6 +33,9 @@
 
 #define TRANSCOLOR                      0           // Transparent color
 
+
+
+//--------------------------------------------------------------------------------------------
 // Global lighting stuff
 extern float                   lightspek;
 extern vect3                   lightspekdir;
@@ -82,4 +87,6 @@ void EndText( void );
 
 void Begin2DMode( void );
 void End2DMode( void );
+
+INLINE const bool_t bbox_gl_draw(AA_BBOX * pbbox);
 

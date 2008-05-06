@@ -6,8 +6,8 @@
 #include "Mad.h"
 #include "input.h"
 
-#define MAXWAY              8                       // Waypoints
-#define WAYTHRESH           128                     // Threshold for reaching waypoint
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 
 #define SPINRATE            200                     // How fast spinners spin
 #define FLYDAMPEN           .001                    // Levelling rate for flyers
@@ -68,7 +68,6 @@
 #define SEEKURSEAND         31                      // Blacking flash
 #define SEEINVISIBLE        128                     // Cutoff for invisible characters
 #define INVISIBLE           20                      // The character can't be detected
-
 
 typedef enum gender_e
 {
@@ -171,9 +170,11 @@ typedef enum idsz_index_e
 #define DAMAGE_HURT         INT_TO_FP8(  1)      // 1 point of damage == hurt
 
 
+//--------------------------------------------------------------------------------------------
 extern Uint16          numdolist;                  // How many in the list
 extern Uint16          dolist[MAXCHR];             // List of which characters to draw
 
+//--------------------------------------------------------------------------------------------
 // This is for random naming
 #define CHOPPERMODEL                    32          //
 #define MAXSECTION                      4           // T-wi-n-k...  Most of 4 sections
@@ -187,6 +188,7 @@ EXTERN char            chopdata[CHOPDATACHUNK];    // The name parts
 EXTERN Uint16          chopstart[MAXCHOP];         // The first character of each part
 EXTERN char            namingnames[MAXCAPNAMESIZE];// The name returned by the function
 
+//--------------------------------------------------------------------------------------------
 // Character profiles
 typedef struct import_info_t
 {
@@ -202,6 +204,7 @@ bool_t import_info_add(IMPORT_INFO * ii, int obj);
 
 extern IMPORT_INFO import;
 
+//--------------------------------------------------------------------------------------------
 typedef struct skin_t
 {
   Uint8         defense_fp8;                // Defense for each skin
@@ -211,6 +214,7 @@ typedef struct skin_t
   float         maxaccel;                   // Acceleration for each skin
 } SKIN;
 
+//--------------------------------------------------------------------------------------------
 typedef struct cap_t
 {
   bool_t        used;
@@ -354,11 +358,13 @@ typedef struct cap_t
 
 } CAP;
 
-extern CAP CapList[MAXCAP];
-
 #define CAP_INHERIT_IDSZ(MODEL,ID) (CapList[MODEL].idsz[IDSZ_PARENT] == (IDSZ)(ID) || CapList[MODEL].idsz[IDSZ_TYPE] == (IDSZ)(ID))
 #define CAP_INHERIT_IDSZ_RANGE(MODEL,IDMIN,IDMAX) ((CapList[MODEL].idsz[IDSZ_PARENT] >= (IDSZ)(IDMIN) && CapList[MODEL].idsz[IDSZ_PARENT] <= (IDSZ)(IDMAX)) || (CapList[MODEL].idsz[IDSZ_TYPE] >= (IDSZ)(IDMIN) && CapList[MODEL].idsz[IDSZ_TYPE] <= (IDSZ)(IDMAX)) )
 
+extern CAP CapList[MAXCAP];
+
+
+//--------------------------------------------------------------------------------------------
 typedef struct lighting_data_t
 {
   vect4   emission, diffuse, specular;
@@ -366,11 +372,7 @@ typedef struct lighting_data_t
 } LData;
 
 
-// Character data
-extern int             numfreechr;         // For allocation
-extern Uint16          freechrlist[MAXCHR];        //
-extern Uint16          chrcollisionlevel;
-
+//--------------------------------------------------------------------------------------------
 typedef struct action_info_t
 {
   bool_t  keep;      // Keep the action playing?
@@ -380,8 +382,9 @@ typedef struct action_info_t
   ACTION  next;      // Character's next    action
 } ACTION_INFO;
 
-ACTION_INFO * action_info_new( ACTION_INFO * a);
+INLINE ACTION_INFO * action_info_new( ACTION_INFO * a);
 
+//--------------------------------------------------------------------------------------------
 typedef struct animation_info_t
 {
   Uint16          next;       // Character's frame
@@ -390,7 +393,11 @@ typedef struct animation_info_t
   Uint8           lip_fp8;    // Character's low-res frame in betweening
 } ANIM_INFO;
 
-ANIM_INFO * anim_info_new( ANIM_INFO * a );
+INLINE ANIM_INFO * anim_info_new( ANIM_INFO * a );
+
+//--------------------------------------------------------------------------------------------
+#define MAXWAY              8                       // Waypoints
+#define WAYTHRESH           128                     // Threshold for reaching waypoint
 
 typedef vect2 WAYPOINT;
 
@@ -400,14 +407,14 @@ typedef struct waypoint_list_t
   WAYPOINT pos[MAXWAY];
 } WP_LIST;
 
-WP_LIST * wp_list_new(WP_LIST * w, vect3 * pos);
-bool_t    wp_list_advance(WP_LIST * wl);
-bool_t    wp_list_add(WP_LIST * wl, float x, float y);
+INLINE WP_LIST * wp_list_new(WP_LIST * w, vect3 * pos);
+INLINE bool_t    wp_list_advance(WP_LIST * wl);
+INLINE bool_t    wp_list_add(WP_LIST * wl, float x, float y);
 
-INLINE float wp_list_x( WP_LIST * wl ) { return wl->pos[wl->tail].x; };
-INLINE float wp_list_y( WP_LIST * wl ) { return wl->pos[wl->tail].y; };
+INLINE float wp_list_x( WP_LIST * wl );
+INLINE float wp_list_y( WP_LIST * wl );
 
-
+//--------------------------------------------------------------------------------------------
 typedef struct ai_state_t
 {
   Uint16          type;          // The AI script to run
@@ -433,10 +440,11 @@ typedef struct ai_state_t
   LATCH           latch;           // latches
 } AI_STATE;
 
-AI_STATE * ai_state_new(AI_STATE * a, Uint16 ichr);
-AI_STATE * ai_state_renew(AI_STATE * a, Uint16 ichr);
+INLINE AI_STATE * ai_state_new(AI_STATE * a, Uint16 ichr);
+INLINE AI_STATE * ai_state_renew(AI_STATE * a, Uint16 ichr);
 
 
+//--------------------------------------------------------------------------------------------
 typedef struct chr_terrain_light_t
 {
   vect3_ui08      ambi_fp8; // 0-255, terrain light
@@ -444,6 +452,7 @@ typedef struct chr_terrain_light_t
   vect3_ui16      turn_lr;  // Character's light rotation 0 to 65535
 } CHR_TLIGHT;
 
+//--------------------------------------------------------------------------------------------
 typedef struct chr_t
 {
   bool_t          on;              // Does it exist?
@@ -654,11 +663,38 @@ typedef struct chr_t
   // [END]  Skill Expansions
 } CHR;
 
+#define VALID_CHR_RANGE(XX) (((XX)>=0) && ((XX)<MAXCHR))
+#define VALID_CHR(XX)    ( VALID_CHR_RANGE(XX) && ChrList[XX].on )
+#define VALIDATE_CHR(XX) ( VALID_CHR(XX) ? (XX) : MAXCHR )
+
+INLINE const bool_t chr_in_pack( CHR_REF character );
+INLINE const bool_t chr_attached( CHR_REF character );
+INLINE const bool_t chr_has_inventory( CHR_REF character );
+INLINE const bool_t chr_is_invisible( CHR_REF character );
+INLINE const bool_t chr_using_slot( CHR_REF character, SLOT slot );
+
+INLINE const CHR_REF chr_get_nextinpack( CHR_REF ichr );
+INLINE const CHR_REF chr_get_onwhichplatform( CHR_REF ichr );
+INLINE const CHR_REF chr_get_inwhichpack( CHR_REF ichr );
+INLINE const CHR_REF chr_get_attachedto( CHR_REF ichr );
+INLINE const CHR_REF chr_get_holdingwhich( CHR_REF ichr, SLOT slot );
+
+INLINE const CHR_REF chr_get_aitarget( CHR_REF ichr );
+INLINE const CHR_REF chr_get_aiowner( CHR_REF ichr );
+INLINE const CHR_REF chr_get_aichild( CHR_REF ichr );
+INLINE const CHR_REF chr_get_aiattacklast( CHR_REF ichr );
+INLINE const CHR_REF chr_get_aibumplast( CHR_REF ichr );
+INLINE const CHR_REF chr_get_aihitlast( CHR_REF ichr );
+
 extern CHR ChrList[MAXCHR];
 
-void calc_cap_experience( Uint16 object );
-int calc_chr_experience( Uint16 object, float level );
-float calc_chr_level( Uint16 object );
+// Character data
+extern int             numfreechr;         // For allocation
+extern Uint16          freechrlist[MAXCHR];        //
+extern Uint16          chrcollisionlevel;
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 
 bool_t make_one_character_matrix( CHR_REF cnt );
 void free_one_character( CHR_REF character );
@@ -696,33 +732,10 @@ bool_t add_item_to_character_pack( Uint16 item, CHR_REF character );
 Uint16 get_item_from_character_pack( CHR_REF character, SLOT slot, bool_t ignorekurse );
 void drop_keys( CHR_REF character );
 void drop_all_items( CHR_REF character );
-bool_t character_grab_stuff( CHR_REF chara, SLOT slot, bool_t people );
+bool_t chr_grab_stuff( CHR_REF chara, SLOT slot, bool_t people );
 void character_swipe( Uint16 cnt, SLOT slot );
 void despawn_characters();
 void move_characters( float dUpdate );
-
-#define VALID_CHR_RANGE(XX) (((XX)>=0) && ((XX)<MAXCHR))
-#define VALID_CHR(XX)    ( VALID_CHR_RANGE(XX) && ChrList[XX].on )
-#define VALIDATE_CHR(XX) ( VALID_CHR(XX) ? (XX) : MAXCHR )
-
-INLINE const bool_t chr_in_pack( CHR_REF character );
-INLINE const bool_t chr_attached( CHR_REF character );
-INLINE const bool_t chr_has_inventory( CHR_REF character );
-INLINE const bool_t chr_is_invisible( CHR_REF character );
-INLINE const bool_t chr_using_slot( CHR_REF character, SLOT slot );
-
-INLINE const CHR_REF chr_get_nextinpack( CHR_REF ichr );
-INLINE const CHR_REF chr_get_onwhichplatform( CHR_REF ichr );
-INLINE const CHR_REF chr_get_inwhichpack( CHR_REF ichr );
-INLINE const CHR_REF chr_get_attachedto( CHR_REF ichr );
-INLINE const CHR_REF chr_get_holdingwhich( CHR_REF ichr, SLOT slot );
-
-INLINE const CHR_REF chr_get_aitarget( CHR_REF ichr );
-INLINE const CHR_REF chr_get_aiowner( CHR_REF ichr );
-INLINE const CHR_REF chr_get_aichild( CHR_REF ichr );
-INLINE const CHR_REF chr_get_aiattacklast( CHR_REF ichr );
-INLINE const CHR_REF chr_get_aibumplast( CHR_REF ichr );
-INLINE const CHR_REF chr_get_aihitlast( CHR_REF ichr );
 
 Uint16 object_generate_index( char *szLoadName );
 Uint16 load_one_cap( char * szModpath, char *szObjectname, Uint16 icap );
@@ -730,3 +743,13 @@ Uint16 load_one_cap( char * szModpath, char *szObjectname, Uint16 icap );
 bool_t chr_bdata_reinit(CHR_REF ichr, BData * pbd);
 
 int get_skin( char * szModpath, char * szObjectname );
+
+void free_all_characters();
+void export_one_character( CHR_REF character, Uint16 owner, int number );
+
+void calc_cap_experience( Uint16 object );
+int calc_chr_experience( Uint16 object, float level );
+float calc_chr_level( Uint16 object );
+
+
+bool_t chr_calculate_bumpers(CHR_REF ichr, int level);

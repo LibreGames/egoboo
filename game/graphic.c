@@ -20,8 +20,8 @@ You should have received a copy of the GNU General Public License
 along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "graphic.h"
-#include "egoboo_math.h"
+#include "graphic.inl"
+
 #include "Log.h"
 #include "Ui.h"
 #include "Menu.h"
@@ -37,6 +37,7 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 #include "particle.inl"
 #include "input.inl"
 #include "mesh.inl"
+#include "egoboo_math.inl"
 
 #include <assert.h>
 #include <stdarg.h>
@@ -4072,8 +4073,8 @@ void load_graphics()
   }
 }
 
+
 /* obsolete graphics functions */
-#if 0
 ////--------------------------------------------------------------------------------------------
 //void draw_titleimage(int image, int x, int y)
 //{
@@ -4126,4 +4127,5 @@ void load_graphics()
 //  }
 //  EndText();
 //}
-#endif
+
+

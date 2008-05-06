@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "char.inl"
+
 #include "Network.h"
 #include "Client.h"
 #include "Server.h"
@@ -27,25 +29,22 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 #include "passage.h"
 #include "Menu.h"
 #include "script.h"
-#include "cartman.h"
 
-#include "egoboo_math.h"
 #include "egoboo_strutil.h"
 #include "egoboo_utility.h"
 #include "egoboo.h"
 
 #include <assert.h>
 
+#include "object.inl"
 #include "input.inl"
 #include "particle.inl"
-#include "char.inl"
 #include "Md2.inl"
 #include "mesh.inl"
+#include "egoboo_math.inl"
 
-
-
-Uint32  cv_list_count = 0;
-CVolume cv_list[1000];
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 SLOT    _slot;
 
 Uint16  numdolist = 0;
@@ -58,7 +57,6 @@ Uint16  chrcollisionlevel = 2;
 
 TILE_DAMAGE GTile_Dam;
 
-
 CAP CapList[MAXCAP];
 CHR ChrList[MAXCHR];
 
@@ -66,86 +64,17 @@ TEAM_INFO TeamList[TEAM_COUNT];
 
 IMPORT_INFO import;
 
-void cv_list_add( CVolume * cv)
-{
-  if(NULL == cv || cv_list_count > 1000) return;
-  cv_list[cv_list_count++] = *cv;
-};
-
-void cv_list_clear()
-{
-  cv_list_count = 0;
-};
-
 //--------------------------------------------------------------------------------------------
-CVolume cvolume_merge(CVolume * pv1, CVolume * pv2)
-{
-  CVolume rv;
+Uint32  cv_list_count = 0;
+CVolume cv_list[1000];
 
-  rv.level = -1;
-
-  if(NULL==pv1 && NULL==pv2)
-  {
-    return rv;
-  }
-  else if(NULL==pv2)
-  {
-    return *pv1;
-  }
-  else if(NULL==pv1)
-  {
-    return *pv2;
-  }
-  else
-  {
-    bool_t binvalid;
-
-    // check for uninitialized volumes
-    if(-1==pv1->level && -1==pv2->level)
-    {
-      return rv;
-    }
-    else if(-1==pv1->level)
-    {
-      return *pv2;
-    }
-    else if(-1==pv2->level)
-    {
-      return *pv1;
-    };
-
-    // merge the volumes
-
-    rv.x_min = MIN(pv1->x_min, pv2->x_min);
-    rv.x_max = MAX(pv1->x_max, pv2->x_max);
-
-    rv.y_min = MIN(pv1->y_min, pv2->y_min);
-    rv.y_max = MAX(pv1->y_max, pv2->y_max);
-
-    rv.z_min = MIN(pv1->z_min, pv2->z_min);
-    rv.z_max = MAX(pv1->z_max, pv2->z_max);
-
-    rv.xy_min = MIN(pv1->xy_min, pv2->xy_min);
-    rv.xy_max = MAX(pv1->xy_max, pv2->xy_max);
-
-    rv.yx_min = MIN(pv1->yx_min, pv2->yx_min);
-    rv.yx_max = MAX(pv1->yx_max, pv2->yx_max);
-
-    // check for an invalid volume
-    binvalid = (rv.x_min >= rv.x_max) || (rv.y_min >= rv.y_max) || (rv.z_min >= rv.z_max);
-    binvalid = binvalid ||(rv.xy_min >= rv.xy_max) || (rv.yx_min >= rv.yx_max);
-
-    rv.level = binvalid ? -1 : 1;
-  }
-
-  return rv;
-}
-
-
+INLINE void cv_list_add( CVolume * cv);
+INLINE void cv_list_clear();
+INLINE void cv_list_draw();
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
+
 void flash_character_height( CHR_REF chr_ref, Uint8 valuelow, Sint16 low,
                              Uint8 valuehigh, Sint16 high )
 {
@@ -489,7 +418,7 @@ bool_t make_one_character_matrix( CHR_REF chr_ref )
   {
     // invalidate the cached bumper data
     pchr->bmpdata.cv.level = -1;
-    md2_calculate_bumpers(chr_ref, 0);
+    chr_calculate_bumpers(chr_ref, 0);
   };
 
   return pchr->matrixvalid;
@@ -501,25 +430,25 @@ void free_one_character( CHR_REF chr_ref )
   // ZZ> This function sticks a character back on the free character stack
 
   int cnt;
+  CHR * pchr;
 
   if ( !VALID_CHR( chr_ref ) ) return;
+
+  pchr = ChrList + chr_ref;
 
   log_debug( "free_one_character() - \n\tprofile == %d, CapList[profile].classname == \"%s\", index == %d\n", ChrList[chr_ref].model, CapList[ChrList[chr_ref].model].classname, chr_ref );
 
   //remove any collision volume octree
-  if(NULL != ChrList[chr_ref].bmpdata.cv_tree)
-  {
-    FREE( ChrList[chr_ref].bmpdata.cv_tree );
-  }
+  bdata_delete( &(pchr->bmpdata) );
 
   // add it to the free list
   freechrlist[numfreechr] = chr_ref;
   numfreechr++;
 
   // Remove from stat list
-  if ( ChrList[chr_ref].staton )
+  if ( pchr->staton )
   {
-    ChrList[chr_ref].staton = bfalse;
+    pchr->staton = bfalse;
     cnt = 0;
     while ( cnt < numstat )
     {
@@ -538,10 +467,10 @@ void free_one_character( CHR_REF chr_ref )
   }
 
   // Make sure everyone knows it died
-  assert( MAXMODEL != VALIDATE_MDL( ChrList[chr_ref].model ) );
-  if ( ChrList[chr_ref].alive && !CapList[ChrList[chr_ref].model].invictus )
+  assert( MAXMODEL != VALIDATE_MDL( pchr->model ) );
+  if ( pchr->alive && !CapList[pchr->model].invictus )
   {
-    TeamList[ChrList[chr_ref].baseteam].morale--;
+    TeamList[pchr->baseteam].morale--;
   }
 
   cnt = 0;
@@ -562,21 +491,21 @@ void free_one_character( CHR_REF chr_ref )
     cnt++;
   }
 
-  if ( team_get_leader( ChrList[chr_ref].team ) == chr_ref )
+  if ( team_get_leader( pchr->team ) == chr_ref )
   {
-    TeamList[ChrList[chr_ref].team].leader = MAXCHR;
+    TeamList[pchr->team].leader = MAXCHR;
   }
 
-  if( INVALID_CHANNEL != ChrList[chr_ref].loopingchannel )
+  if( INVALID_CHANNEL != pchr->loopingchannel )
   {
-    stop_sound( ChrList[chr_ref].loopingchannel );
-    ChrList[chr_ref].loopingchannel = INVALID_CHANNEL;
+    stop_sound( pchr->loopingchannel );
+    pchr->loopingchannel = INVALID_CHANNEL;
   };
 
-  ChrList[chr_ref].on = bfalse;
-  ChrList[chr_ref].alive = bfalse;
-  ChrList[chr_ref].inwhichpack = MAXCHR;
-  VData_Blended_Deallocate(&(ChrList[chr_ref].vdata));
+  pchr->on = bfalse;
+  pchr->alive = bfalse;
+  pchr->inwhichpack = MAXCHR;
+  VData_Blended_Deallocate(&(pchr->vdata));
 }
 
 //--------------------------------------------------------------------------------------------
@@ -770,7 +699,7 @@ bool_t make_one_weapon_matrix( CHR_REF chr_ref )
   if(ChrList[chr_ref].matrixvalid && recalc_bumper)
   {
     // invalidate the cached bumper data
-    md2_calculate_bumpers(chr_ref, 0);
+    chr_calculate_bumpers(chr_ref, 0);
   };
 
   return ChrList[chr_ref].matrixvalid;
@@ -928,15 +857,15 @@ void free_all_characters()
     if(do_initialization)
     {
       // initialize a non-existant collision volume octree
-      pchr->bmpdata.cv_tree = NULL;
+      bdata_new( &(pchr->bmpdata) ) ;
 
       // initialize the looping sounds
       pchr->loopingchannel = INVALID_CHANNEL;
     }
-    else if(NULL != pchr->bmpdata.cv_tree)
+    else
     {
       // remove existing collision volume octree
-      FREE( pchr->bmpdata.cv_tree );
+      bdata_renew( &(pchr->bmpdata) );
 
       // silence all looping sounds
       if( INVALID_CHANNEL != pchr->loopingchannel )
@@ -1785,7 +1714,7 @@ void drop_all_items( CHR_REF chr_ref )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t character_grab_stuff( CHR_REF chr_ref, SLOT slot, bool_t people )
+bool_t chr_grab_stuff( CHR_REF chr_ref, SLOT slot, bool_t people )
 {
   // ZZ> This function makes the character pick up an item if there's one around
 
@@ -1802,7 +1731,10 @@ bool_t character_grab_stuff( CHR_REF chr_ref, SLOT slot, bool_t people )
   Sint16 trg_strength_fp8, trg_intelligence_fp8;
   TEAM trg_team;
 
+  CHR * pchr;
+
   if ( !VALID_CHR( chr_ref ) ) return bfalse;
+  pchr = ChrList + chr_ref;
 
   model = ChrList[chr_ref].model;
   if ( !VALID_MDL( model ) ) return bfalse;
@@ -1816,39 +1748,44 @@ bool_t character_grab_stuff( CHR_REF chr_ref, SLOT slot, bool_t people )
   grip  = slot_to_grip( slot );
 
   // !!!!base the grab distance off of the character size!!!!
-  grab_width  = ( ChrList[chr_ref].bmpdata.calc_size_big + ChrList[chr_ref].bmpdata.calc_size ) / 2.0f * 1.5f;
-  grab_height = ChrList[chr_ref].bmpdata.calc_height / 2.0f * 1.5f;
+  if( !pchr->bmpdata.valid )
+  {
+    chr_calculate_bumpers(chr_ref, 0);
+  }
+
+  grab_width  = ( pchr->bmpdata.calc_size_big + pchr->bmpdata.calc_size ) / 2.0f * 1.5f;
+  grab_height = pchr->bmpdata.calc_height / 2.0f * 1.5f;
 
   // Do we have a matrix???
-  if ( ChrList[chr_ref].matrixvalid )
+  if ( pchr->matrixvalid )
   {
     // Transform the weapon grip from model to world space
-    vertex = ChrList[chr_ref].attachedgrip[0];
+    vertex = pchr->attachedgrip[0];
 
     if(0xFFFF == vertex)
     {
-      point.x = ChrList[chr_ref].pos.x;
-      point.y = ChrList[chr_ref].pos.y;
-      point.z = ChrList[chr_ref].pos.z;
+      point.x = pchr->pos.x;
+      point.y = pchr->pos.y;
+      point.z = pchr->pos.z;
       point.w = 1.0f;
     }
     else
     {
-      point.x = ChrList[chr_ref].vdata.Vertices[vertex].x;
-      point.y = ChrList[chr_ref].vdata.Vertices[vertex].y;
-      point.z = ChrList[chr_ref].vdata.Vertices[vertex].z;
+      point.x = pchr->vdata.Vertices[vertex].x;
+      point.y = pchr->vdata.Vertices[vertex].y;
+      point.z = pchr->vdata.Vertices[vertex].z;
       point.w = 1.0f;
     }
 
     // Do the transform
-    Transform4_Full( 1.0f, 1.0f, &(ChrList[chr_ref].matrix), &posa, &point, 1 );
+    Transform4_Full( 1.0f, 1.0f, &(pchr->matrix), &point, &posa, 1 );
   }
   else
   {
     // Just wing it
-    posa.x = ChrList[chr_ref].pos.x;
-    posa.y = ChrList[chr_ref].pos.y;
-    posa.z = ChrList[chr_ref].pos.z;
+    posa.x = pchr->pos.x;
+    posa.y = pchr->pos.y;
+    posa.z = pchr->pos.z;
   }
 
   // Go through all characters to find the best match
@@ -1867,7 +1804,7 @@ bool_t character_grab_stuff( CHR_REF chr_ref, SLOT slot, bool_t people )
     if ( object_ref == chr_ref || packer_ref == chr_ref || holder_ref == chr_ref ) continue;
 
     // don't mess with stuff you can't see
-    if ( !ChrList[chr_ref].canseeinvisible && chr_is_invisible( object_ref ) ) continue;
+    if ( !pchr->canseeinvisible && chr_is_invisible( object_ref ) ) continue;
 
     // if we can't pickpocket, don't mess with inventory items
     if ( !can_pickpocket && VALID_CHR( packer_ref ) ) continue;
@@ -1919,7 +1856,7 @@ bool_t character_grab_stuff( CHR_REF chr_ref, SLOT slot, bool_t people )
     if ( VALID_CHR(packer_ref) )
     {
       // check for pickpocket
-      ballowed = ChrList[chr_ref].dexterity_fp8 >= trg_intelligence_fp8 && TeamList[ChrList[chr_ref].team].hatesteam[trg_team];
+      ballowed = pchr->dexterity_fp8 >= trg_intelligence_fp8 && TeamList[pchr->team].hatesteam[trg_team];
 
       if ( !ballowed )
       {
@@ -1937,7 +1874,7 @@ bool_t character_grab_stuff( CHR_REF chr_ref, SLOT slot, bool_t people )
     else if ( VALID_CHR( holder_ref ) )
     {
       // check for stealing item from hand
-      ballowed = !ChrList[object_ref].iskursed && ChrList[chr_ref].strength_fp8 > trg_strength_fp8 && TeamList[ChrList[chr_ref].team].hatesteam[trg_team];
+      ballowed = !ChrList[object_ref].iskursed && pchr->strength_fp8 > trg_strength_fp8 && TeamList[pchr->team].hatesteam[trg_team];
 
       if ( !ballowed )
       {
@@ -1996,7 +1933,7 @@ bool_t character_grab_stuff( CHR_REF chr_ref, SLOT slot, bool_t people )
 
   if ( inshop )
   {
-    if ( ChrList[chr_ref].isitem )
+    if ( pchr->isitem )
     {
       ballowed = btrue; // As in NetHack, Pets can shop for free =]
     }
@@ -2010,10 +1947,10 @@ bool_t character_grab_stuff( CHR_REF chr_ref, SLOT slot, bool_t people )
         price *= ChrList[minchr_ref].ammo;
       }
       ChrList[owner_ref].message = price;  // Tell owner_ref how much...
-      if ( ChrList[chr_ref].money >= price )
+      if ( pchr->money >= price )
       {
         // Okay to buy
-        ChrList[chr_ref].money  -= price;  // Skin 0 cost is price
+        pchr->money  -= price;  // Skin 0 cost is price
         ChrList[owner_ref].money += price;
         if ( ChrList[owner_ref].money > MAXMONEY )  ChrList[owner_ref].money = MAXMONEY;
 
@@ -2951,13 +2888,13 @@ void move_characters( float dUpdate )
         if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_ACTRIGHT ) )
           character_swipe( chr_ref, SLOT_RIGHT );
         if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_GRABLEFT ) )
-          character_grab_stuff( chr_ref, SLOT_LEFT, bfalse );
+          chr_grab_stuff( chr_ref, SLOT_LEFT, bfalse );
         if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_GRABRIGHT ) )
-          character_grab_stuff( chr_ref, SLOT_RIGHT, bfalse );
+          chr_grab_stuff( chr_ref, SLOT_RIGHT, bfalse );
         if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_CHARLEFT ) )
-          character_grab_stuff( chr_ref, SLOT_LEFT, btrue );
+          chr_grab_stuff( chr_ref, SLOT_LEFT, btrue );
         if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_CHARRIGHT ) )
-          character_grab_stuff( chr_ref, SLOT_RIGHT, btrue );
+          chr_grab_stuff( chr_ref, SLOT_RIGHT, btrue );
         if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_DROPLEFT ) )
           detach_character_from_mount( chr_get_holdingwhich( chr_ref, SLOT_LEFT ), bfalse, btrue );
         if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_DROPRIGHT ) )
@@ -4241,13 +4178,13 @@ bool_t chr_do_collision( CHR_REF chra_ref, CHR_REF chrb_ref, bool_t exclude_heig
   // set the minimum bumper level for object a
   if(ChrList[chra_ref].bmpdata.cv.level < 1)
   {
-    md2_calculate_bumpers(chra_ref, 1);
+    chr_calculate_bumpers(chra_ref, 1);
   }
 
   // set the minimum bumper level for object b
   if(ChrList[chrb_ref].bmpdata.cv.level < 1)
   {
-    md2_calculate_bumpers(chrb_ref, 1);
+    chr_calculate_bumpers(chrb_ref, 1);
   }
 
   // find the simplest collision volume
@@ -4260,14 +4197,14 @@ bool_t chr_do_collision( CHR_REF chra_ref, CHR_REF chrb_ref, bool_t exclude_heig
     // refine the bumper
     if(ChrList[chra_ref].bmpdata.cv.level < 2)
     {
-      md2_calculate_bumpers(chra_ref, 2);
+      chr_calculate_bumpers(chra_ref, 2);
       was_refined = btrue;
     }
 
     // refine the bumper
     if(ChrList[chrb_ref].bmpdata.cv.level < 2)
     {
-      md2_calculate_bumpers(chrb_ref, 2);
+      chr_calculate_bumpers(chrb_ref, 2);
       was_refined = btrue;
     }
 
@@ -4283,14 +4220,14 @@ bool_t chr_do_collision( CHR_REF chra_ref, CHR_REF chrb_ref, bool_t exclude_heig
       // refine the bumper
       if(ChrList[chra_ref].bmpdata.cv.level < 3)
       {
-        md2_calculate_bumpers(chra_ref, 3);
+        chr_calculate_bumpers(chra_ref, 3);
         was_refined = btrue;
       }
 
       // refine the bumper
       if(ChrList[chrb_ref].bmpdata.cv.level < 3)
       {
-        md2_calculate_bumpers(chrb_ref, 3);
+        chr_calculate_bumpers(chrb_ref, 3);
         was_refined = btrue;
       }
 
@@ -4360,7 +4297,7 @@ bool_t prt_do_collision( CHR_REF chra_ref, PRT_REF prtb, bool_t exclude_height )
     // refine the bumper
     if(ChrList[chra_ref].bmpdata.cv.level < 2)
     {
-      md2_calculate_bumpers(chra_ref, 2);
+      chr_calculate_bumpers(chra_ref, 2);
       was_refined = btrue;
     }
 
@@ -6560,78 +6497,7 @@ int modify_quest_idsz( char *whichplayer, IDSZ idsz, int adjustment )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void VData_Blended_construct(VData_Blended * v)
-{
-  if(NULL == v) return;
 
-  v->Vertices = NULL;
-  v->Normals  = NULL;
-  v->Colors   = NULL;
-  v->Texture  = NULL;
-  v->Ambient  = NULL;
-
-  v->frame0 = 0;
-  v->frame1 = 0;
-  v->vrtmin = 0;
-  v->vrtmax = 0;
-  v->lerp   = 0.0f;
-  v->needs_lighting = btrue;
-}
-
-//--------------------------------------------------------------------------------------------
-void VData_Blended_destruct(VData_Blended * v)
-{
-  VData_Blended_Deallocate(v);
-};
-
-
-//--------------------------------------------------------------------------------------------
-void VData_Blended_Deallocate(VData_Blended * v)
-{
-  if(NULL == v) return;
-
-  FREE( v->Vertices );
-  FREE( v->Normals );
-  FREE( v->Colors );
-  FREE( v->Texture );
-  FREE( v->Ambient );
-}
-
-//--------------------------------------------------------------------------------------------
-VData_Blended * VData_Blended_new()
-{
-  VData_Blended * retval = calloc(sizeof(VData_Blended), 1);
-  if(NULL != retval)
-  {
-    VData_Blended_construct(retval);
-  };
-  return retval;
-};
-
-//--------------------------------------------------------------------------------------------
-void VData_Blended_delete(VData_Blended * v)
-{
-  if(NULL != v) return;
-
-  VData_Blended_destruct(v);
-  FREE(v);
-};
-
-//--------------------------------------------------------------------------------------------
-void VData_Blended_Allocate(VData_Blended * v, size_t verts)
-{
-  if(NULL == v) return;
-
-  VData_Blended_destruct(v);
-
-  v->Vertices = calloc( sizeof(vect3), verts);
-  v->Normals  = calloc( sizeof(vect3), verts);
-  v->Colors   = calloc( sizeof(vect4), verts);
-  v->Texture  = calloc( sizeof(vect2), verts);
-  v->Ambient  = calloc( sizeof(float), verts);
-}
-
-//--------------------------------------------------------------------------------------------
 bool_t chr_cvolume_reinit(CHR_REF chr_ref, CVolume * pcv)
 {
   if(!VALID_CHR(chr_ref) || NULL == pcv) return bfalse;
@@ -6668,6 +6534,7 @@ bool_t chr_bdata_reinit(CHR_REF chr_ref, BData * pbd)
 
   pbd->calc_size     = pbd->size    * ChrList[chr_ref].scale * (ChrList[chr_ref].pancakepos.x + ChrList[chr_ref].pancakepos.y) * 0.5f;
   pbd->calc_size_big = pbd->sizebig * ChrList[chr_ref].scale * (ChrList[chr_ref].pancakepos.x + ChrList[chr_ref].pancakepos.y) * 0.5f;
+  pbd->calc_height   = pbd->height  * ChrList[chr_ref].scale *  ChrList[chr_ref].pancakepos.z;
 
   chr_cvolume_reinit(chr_ref, &pbd->cv);
 
@@ -6676,7 +6543,7 @@ bool_t chr_bdata_reinit(CHR_REF chr_ref, BData * pbd)
 
 
 //--------------------------------------------------------------------------------------------
-bool_t md2_calculate_bumpers_0( CHR_REF chr_ref )
+bool_t chr_calculate_bumpers_0( CHR_REF chr_ref )
 {
   int i;
   bool_t rv = bfalse;
@@ -6700,7 +6567,7 @@ bool_t md2_calculate_bumpers_0( CHR_REF chr_ref )
 }
 
 //--------------------------------------------------------------------------------------------
-//bool_t md2_calculate_bumpers_1(CHR_REF chr_ref)
+//bool_t chr_calculate_bumpers_1(CHR_REF chr_ref)
 //{
 //  BData * bd;
 //  Uint16 imdl;
@@ -6906,7 +6773,7 @@ bool_t md2_calculate_bumpers_0( CHR_REF chr_ref )
 //
 
 //--------------------------------------------------------------------------------------------
-bool_t md2_calculate_bumpers_1(CHR_REF chr_ref)
+bool_t chr_calculate_bumpers_1(CHR_REF chr_ref)
 {
   BData * bd;
   Uint16 imdl;
@@ -6925,7 +6792,7 @@ bool_t md2_calculate_bumpers_1(CHR_REF chr_ref)
   imdl = ChrList[chr_ref].model;
   if(!VALID_MDL(imdl) || !ChrList[chr_ref].matrixvalid )
   {
-    md2_calculate_bumpers_0( chr_ref );
+    chr_calculate_bumpers_0( chr_ref );
     return bfalse;
   };
 
@@ -6947,7 +6814,7 @@ bool_t md2_calculate_bumpers_1(CHR_REF chr_ref)
   pmdl = MadList[imdl].md2_ptr;
   if(NULL == pmdl)
   {
-    md2_calculate_bumpers_0( chr_ref );
+    chr_calculate_bumpers_0( chr_ref );
     return bfalse;
   }
 
@@ -6957,7 +6824,7 @@ bool_t md2_calculate_bumpers_1(CHR_REF chr_ref)
 
   if(NULL==fl && NULL==fc)
   {
-    md2_calculate_bumpers_0( chr_ref );
+    chr_calculate_bumpers_0( chr_ref );
     return bfalse;
   };
 
@@ -7102,7 +6969,7 @@ bool_t md2_calculate_bumpers_1(CHR_REF chr_ref)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t md2_calculate_bumpers_2(CHR_REF chr_ref, vect3 * vrt_ary)
+bool_t chr_calculate_bumpers_2(CHR_REF chr_ref, vect3 * vrt_ary)
 {
   BData * bd;
   Uint16 imdl;
@@ -7120,7 +6987,7 @@ bool_t md2_calculate_bumpers_2(CHR_REF chr_ref, vect3 * vrt_ary)
   imdl = ChrList[chr_ref].model;
   if(!VALID_MDL(imdl) || !ChrList[chr_ref].matrixvalid )
   {
-    md2_calculate_bumpers_0( chr_ref );
+    chr_calculate_bumpers_0( chr_ref );
     return bfalse;
   };
 
@@ -7142,7 +7009,7 @@ bool_t md2_calculate_bumpers_2(CHR_REF chr_ref, vect3 * vrt_ary)
   pmdl = MadList[imdl].md2_ptr;
   if(NULL == pmdl)
   {
-    md2_calculate_bumpers_0( chr_ref );
+    chr_calculate_bumpers_0( chr_ref );
     return bfalse;
   }
 
@@ -7155,7 +7022,7 @@ bool_t md2_calculate_bumpers_2(CHR_REF chr_ref, vect3 * vrt_ary)
     vrt_ary = malloc(vrt_count * sizeof(vect3));
     if(NULL==vrt_ary)
     {
-      return md2_calculate_bumpers_1( chr_ref );
+      return chr_calculate_bumpers_1( chr_ref );
     }
     free_array = btrue;
   }
@@ -7228,7 +7095,7 @@ bool_t md2_calculate_bumpers_2(CHR_REF chr_ref, vect3 * vrt_ary)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t md2_calculate_bumpers_3(CHR_REF chr_ref, CVolume_Tree * cv_tree)
+bool_t chr_calculate_bumpers_3(CHR_REF chr_ref, CVolume_Tree * cv_tree)
 {
   BData * bd;
   Uint16 imdl;
@@ -7244,26 +7111,26 @@ bool_t md2_calculate_bumpers_3(CHR_REF chr_ref, CVolume_Tree * cv_tree)
   imdl = ChrList[chr_ref].model;
   if(!VALID_MDL(imdl) || !ChrList[chr_ref].matrixvalid )
   {
-    md2_calculate_bumpers_0( chr_ref );
+    chr_calculate_bumpers_0( chr_ref );
     return bfalse;
   };
 
   pmdl = MadList[imdl].md2_ptr;
   if(NULL == pmdl)
   {
-    md2_calculate_bumpers_0( chr_ref );
+    chr_calculate_bumpers_0( chr_ref );
     return bfalse;
   }
 
   // allocate the array
   vrt_count = md2_get_numVertices(pmdl);
   vrt_ary   = malloc(vrt_count * sizeof(vect3));
-  if(NULL==vrt_ary) return md2_calculate_bumpers_1( chr_ref );
+  if(NULL==vrt_ary) return chr_calculate_bumpers_1( chr_ref );
 
   // make sure that we have the correct bounds
   if(bd->cv.level < 2)
   {
-    md2_calculate_bumpers_2(chr_ref, vrt_ary);
+    chr_calculate_bumpers_2(chr_ref, vrt_ary);
   }
 
   if(NULL == cv_tree) return bfalse;
@@ -7393,7 +7260,7 @@ bool_t md2_calculate_bumpers_3(CHR_REF chr_ref, CVolume_Tree * cv_tree)
 
 
 //--------------------------------------------------------------------------------------------
-bool_t md2_calculate_bumpers(CHR_REF chr_ref, int level)
+bool_t chr_calculate_bumpers(CHR_REF chr_ref, int level)
 {
   bool_t retval = bfalse;
 
@@ -7403,7 +7270,7 @@ bool_t md2_calculate_bumpers(CHR_REF chr_ref, int level)
   {
     case 2:
       // the collision volume is an octagon, the ranges are calculated using the model's vertices
-      retval = md2_calculate_bumpers_2(chr_ref, NULL);
+      retval = chr_calculate_bumpers_2(chr_ref, NULL);
       break;
 
     case 3:
@@ -7413,159 +7280,23 @@ bool_t md2_calculate_bumpers(CHR_REF chr_ref, int level)
         {
           ChrList[chr_ref].bmpdata.cv_tree = calloc(1, sizeof(CVolume_Tree));
         };
-        retval = md2_calculate_bumpers_3(chr_ref, ChrList[chr_ref].bmpdata.cv_tree);
+        retval = chr_calculate_bumpers_3(chr_ref, ChrList[chr_ref].bmpdata.cv_tree);
       };
       break;
 
     case 1:
       // the collision volume is a simple axis-aligned bounding box, the range is calculated from the
       // md2's bounding box
-      retval = md2_calculate_bumpers_1(chr_ref);
+      retval = chr_calculate_bumpers_1(chr_ref);
 
     default:
     case 0:
       // make the simplest estimation of the bounding box using the data in data.txt
-      retval = md2_calculate_bumpers_0(chr_ref);
+      retval = chr_calculate_bumpers_0(chr_ref);
   };
 
   return retval;
 };
-
-//--------------------------------------------------------------------------------------------
-void cv_list_draw()
-{
-  Uint32 cnt;
-
-  for(cnt=0; cnt<cv_list_count; cnt++)
-  {
-    draw_CVolume( &(cv_list[cnt]) );
-  };
-}
-
-//--------------------------------------------------------------------------------------------
-WP_LIST * wp_list_new(WP_LIST * w, vect3 * pos)
-{
-  w->tail = 0;
-  w->head = 1;
-
-  if(NULL == pos)
-  {
-    w->pos[0].x = w->pos[0].y = 0;
-  }
-  else
-  {
-    w->pos[0].x = pos->x;
-    w->pos[0].y = pos->y;
-  }
-
-  return w;
-}
-
-AI_STATE * ai_state_new(AI_STATE * a, Uint16 ichr)
-{
-  int tnc;
-
-  CHR * pchr;
-  MAD * pmad;
-  CAP * pcap;
-
-  if(NULL == a) return NULL;
-
-  memset(a, 0, sizeof(AI_STATE));
-
-  if( !VALID_CHR_RANGE(ichr) ) return NULL;
-
-  pchr = ChrList + ichr;
-
-  if( !VALID_MDL_RANGE(pchr->model) ) return NULL;
-
-  pmad = MadList + pchr->model;
-  pcap = CapList + pchr->model;
-
-  a->type    = pmad->ai;
-  a->alert   = ALERT_SPAWNED;
-  a->state   = pcap->stateoverride;
-  a->content = pcap->contentoverride;
-  a->target  = ichr;
-  a->owner   = ichr;
-  a->child   = ichr;
-  a->time    = 0;
-
-  tnc = 0;
-  while ( tnc < MAXSTOR )
-  {
-    a->x[tnc] = 0;
-    a->y[tnc] = 0;
-    tnc++;
-  }
-
-  wp_list_new( &(a->wp), &(pchr->pos) );
-
-  a->morphed = bfalse;
-
-  a->latch.x = 0;
-  a->latch.y = 0;
-  a->latch.b = 0;
-  a->turnmode = TURNMODE_VELOCITY;
-
-  a->bumplast   = ichr;
-  a->attacklast = MAXCHR;
-  a->hitlast    = ichr;
-
-  a->trgvel.x = 0;
-  a->trgvel.y = 0;
-  a->trgvel.z = 0;
-
-  return a;
-};
-
-
-AI_STATE * ai_state_renew(AI_STATE * a, Uint16 ichr)
-{
-  int tnc;
-
-  if(NULL == a) return NULL;
-
-  if( !VALID_CHR_RANGE(ichr) )
-  {
-    memset(a, 0, sizeof(AI_STATE));
-    return NULL;
-  }
-
-  a->alert = ALERT_NONE;
-  a->target = ichr;
-  a->time = 0;
-  a->trgvel.x = 0;
-  a->trgvel.y = 0;
-  a->trgvel.z = 0;
-
-  return a;
-};
-
-ACTION_INFO * action_info_new( ACTION_INFO * a)
-{
-  if(NULL == a) return NULL;
-
-  a->ready = btrue;
-  a->keep  = bfalse;
-  a->loop  = bfalse;
-  a->now   = ACTION_DA;
-  a->next  = ACTION_DA;
-
-  return a;
-}
-
-ANIM_INFO * anim_info_new( ANIM_INFO * a )
-{
-  if(NULL == a) return NULL;
-
-  a->lip_fp8 = 0;
-  a->flip    = 0.0f;
-  a->next    = a->last = 0;
-
-  return a;
-};
-
 
 //--------------------------------------------------------------------------------------------
 void damage_character( CHR_REF chr_ref, Uint16 direction,
@@ -7922,51 +7653,6 @@ void kill_character( CHR_REF chr_ref, Uint16 killer )
   pchr->ismount    = bfalse;
 }
 
-//--------------------------------------------------------------------------------------------
-bool_t wp_list_advance(WP_LIST * wl)
-{
-  // BB > return value of btrue means wp_list is empty
-
-  bool_t retval = bfalse;
-
-  if(NULL == wl) return retval;
-
-  if( wl->tail != wl->head )
-  {
-    // advance the tail and let it wrap around
-    wl->tail = (wl->tail + 1) % MAXWAY;
-  }
-
-  if ( wl->tail == wl->head )
-  {
-    retval = btrue;
-  }
-
-  return retval;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t wp_list_add(WP_LIST * wl, float x, float y)
-{
-  // BB > add a point to the waypoint list. 
-  //      returns bfalse if the list is full (?or should it advance the tail?)
-
-  bool_t retval = bfalse;
-  int    test;
-
-  if(NULL == wl) return retval;
-
-  test = (wl->head + 1) % MAXWAY;
-
-  if(test == wl->tail) return bfalse;
-
-  wl->pos[wl->head].x = x;
-  wl->pos[wl->head].y = y;
-
-  wl->head = test;
-
-  return btrue;
-};
 
 //--------------------------------------------------------------------------------------------
 bool_t import_info_clear(IMPORT_INFO * ii)
@@ -7992,4 +7678,95 @@ bool_t import_info_add(IMPORT_INFO * ii, int obj)
   ii->slot_lst[obj] = obj;
 
   return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+INLINE void cv_list_add( CVolume * cv)
+{
+  if(NULL == cv || cv_list_count > 1000) return;
+
+  cv_list[cv_list_count++] = *cv;
+};
+
+//--------------------------------------------------------------------------------------------
+INLINE void cv_list_clear()
+{
+  cv_list_count = 0;
+};
+
+//--------------------------------------------------------------------------------------------
+INLINE void cv_list_draw()
+{
+  Uint32 cnt;
+
+  for(cnt=0; cnt<cv_list_count; cnt++)
+  {
+    draw_CVolume( &(cv_list[cnt]) );
+  };
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+CVolume cvolume_merge(CVolume * pv1, CVolume * pv2)
+{
+  CVolume rv;
+
+  rv.level = -1;
+
+  if(NULL==pv1 && NULL==pv2)
+  {
+    return rv;
+  }
+  else if(NULL==pv2)
+  {
+    return *pv1;
+  }
+  else if(NULL==pv1)
+  {
+    return *pv2;
+  }
+  else
+  {
+    bool_t binvalid;
+
+    // check for uninitialized volumes
+    if(-1==pv1->level && -1==pv2->level)
+    {
+      return rv;
+    }
+    else if(-1==pv1->level)
+    {
+      return *pv2;
+    }
+    else if(-1==pv2->level)
+    {
+      return *pv1;
+    };
+
+    // merge the volumes
+
+    rv.x_min = MIN(pv1->x_min, pv2->x_min);
+    rv.x_max = MAX(pv1->x_max, pv2->x_max);
+
+    rv.y_min = MIN(pv1->y_min, pv2->y_min);
+    rv.y_max = MAX(pv1->y_max, pv2->y_max);
+
+    rv.z_min = MIN(pv1->z_min, pv2->z_min);
+    rv.z_max = MAX(pv1->z_max, pv2->z_max);
+
+    rv.xy_min = MIN(pv1->xy_min, pv2->xy_min);
+    rv.xy_max = MAX(pv1->xy_max, pv2->xy_max);
+
+    rv.yx_min = MIN(pv1->yx_min, pv2->yx_min);
+    rv.yx_max = MAX(pv1->yx_max, pv2->yx_max);
+
+    // check for an invalid volume
+    binvalid = (rv.x_min >= rv.x_max) || (rv.y_min >= rv.y_max) || (rv.z_min >= rv.z_max);
+    binvalid = binvalid ||(rv.xy_min >= rv.xy_max) || (rv.yx_min >= rv.yx_max);
+
+    rv.level = binvalid ? -1 : 1;
+  }
+
+  return rv;
 }

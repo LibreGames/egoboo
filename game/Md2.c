@@ -19,11 +19,13 @@
 */
 
 #include "MD2.inl"
+
 #include "id_md2.h"
-#include "egoboo_math.h"
 #include <SDL_endian.h>    // TODO: Roll my own endian stuff so that I don't have to include
                            // SDL outside of the stuff that touches video/audio/input/etc.
                            // Not a high priority
+
+#include "egoboo_math.inl"
 
 MD2_Model* md2_load(char * szFilename, MD2_Model* mdl)
 {

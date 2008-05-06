@@ -26,6 +26,8 @@
 #include <SDL_endian.h>
 #include <SDL_types.h>
 
+typedef struct aa_bbox_t AA_BBOX;
+
 typedef struct rect_sint32_t
 {
   Sint32 left;
@@ -52,6 +54,7 @@ typedef enum bool_e
 
 typedef char STRING[256];
 
+//--------------------------------------------------------------------------------------------
 typedef Uint32 IDSZ;
 
 #ifndef MAKE_IDSZ
@@ -59,26 +62,57 @@ typedef Uint32 IDSZ;
 #endif
 
 
+//--------------------------------------------------------------------------------------------
 typedef struct pair_t
 {
   Sint32 ibase;
   Uint32 irand;
 } PAIR;
 
+//--------------------------------------------------------------------------------------------
 typedef struct range_t
 {
   float ffrom, fto;
 } RANGE;
 
+//--------------------------------------------------------------------------------------------
 typedef Uint16 CHR_REF;
 typedef Uint16 TEAM_REF;
 typedef Uint16 PRT_REF;
 typedef Uint16 PLA_REF;
 
+//--------------------------------------------------------------------------------------------
 typedef union float_int_convert_u 
 { 
   float f; 
   Uint32 i; 
 } FCONVERT;
 
-INLINE float SwapLE_float( float val );
+#if SDL_BYTEORDER != SDL_LIL_ENDIAN
+    INLINE float SwapLE_float( float val );
+#endif
+
+//--------------------------------------------------------------------------------------------
+typedef struct bbox_list_t
+{
+  int       count;
+  AA_BBOX * list;
+} BBOX_LIST;
+
+INLINE const BBOX_LIST * bbox_list_new(BBOX_LIST * lst);
+INLINE const BBOX_LIST * bbox_list_delete(BBOX_LIST * lst);
+INLINE const BBOX_LIST * bbox_list_renew(BBOX_LIST * lst);
+INLINE const BBOX_LIST * bbox_list_alloc(BBOX_LIST * lst, int count);
+INLINE const BBOX_LIST * bbox_list_realloc(BBOX_LIST * lst, int count);
+
+//--------------------------------------------------------------------------------------------
+typedef struct bbox_array_t
+{
+  int         count;
+  BBOX_LIST * list;
+} BBOX_ARY;
+
+INLINE const BBOX_ARY * bbox_ary_new(BBOX_ARY * ary);
+INLINE const BBOX_ARY * bbox_ary_delete(BBOX_ARY * ary);
+INLINE const BBOX_ARY * bbox_ary_renew(BBOX_ARY * ary);
+INLINE const BBOX_ARY * bbox_ary_alloc(BBOX_ARY * ary, int count);

@@ -1,17 +1,18 @@
 #include "cartman.h"
 
-#include "graphic.h"
-#include "input.inl"
 #include "UI.h"
 #include "Log.h"
 #include "Mesh.h"
-#include "graphic.h"
-#include "egoboo_types.inl"
+
 #include "egoboo.h"
 
 #include <stdio.h>      // For printf and such
 #include "SDL_Pixel.h"
 #include <SDL_image.h>
+
+#include "egoboo_types.inl"
+#include "graphic.inl"
+#include "input.inl"
 
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
   const Uint32 rmask = 0x000000ff;

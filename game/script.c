@@ -30,7 +30,6 @@
 #include "egoboo.h"
 #include "passage.h"
 
-#include "egoboo_math.h"
 #include "egoboo_utility.h"
 
 #include "particle.inl"
@@ -38,6 +37,7 @@
 #include "input.inl"
 #include "char.inl"
 #include "mesh.inl"
+#include "egoboo_math.inl"
 
 #define FUNCTION_FLAG_BIT 0x80000000
 #define CONSTANT_FLAG_BIT 0x80000000

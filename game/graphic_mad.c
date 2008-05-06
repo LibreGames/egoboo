@@ -20,7 +20,6 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "ogl_include.h"
-#include "graphic.h"
 #include "Mad.h"
 #include "id_md2.h"
 #include "Log.h"
@@ -33,7 +32,7 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 #include "char.inl"
 #include "Md2.inl"
 #include "input.inl"
-
+#include "graphic.inl"
 
 float sinlut[MAXLIGHTROTATION];
 float coslut[MAXLIGHTROTATION];

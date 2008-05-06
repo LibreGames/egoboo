@@ -161,10 +161,10 @@
 				RelativePath=".\egoboo_math.c">
 			</File>
 			<File
-				RelativePath=".\egoboo_strutil.c">
+				RelativePath=".\egoboo_math.inl">
 			</File>
 			<File
-				RelativePath=".\egoboo_types.c">
+				RelativePath=".\egoboo_strutil.c">
 			</File>
 			<File
 				RelativePath=".\egoboo_types.inl">
@@ -222,6 +222,9 @@
 			</File>
 			<File
 				RelativePath=".\graphic.c">
+			</File>
+			<File
+				RelativePath=".\graphic.inl">
 			</File>
 			<File
 				RelativePath=".\graphic_fan.c">
