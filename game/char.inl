@@ -134,22 +134,25 @@ INLINE const CHR_REF chr_get_onwhichplatform( CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 INLINE const CHR_REF chr_get_holdingwhich( CHR_REF chr_ref, SLOT slot )
 {
-  CHR_REF inslot;
+  
 
   if ( !VALID_CHR( chr_ref ) || slot >= SLOT_COUNT ) return MAXCHR;
 
 #if defined(_DEBUG) || !defined(NDEBUG)
-  inslot = ChrList[chr_ref].holdingwhich[slot];
-  if ( MAXCHR != inslot )
   {
-    CHR_REF holder = ChrList[inslot].attachedto;
-
-    if ( chr_ref != holder )
+    CHR_REF inslot;
+    inslot = ChrList[chr_ref].holdingwhich[slot];
+    if ( MAXCHR != inslot )
     {
-      // invalid configuration
-      assert( bfalse );
-    }
-  };
+      CHR_REF holder = ChrList[inslot].attachedto;
+
+      if ( chr_ref != holder )
+      {
+        // invalid configuration
+        assert( bfalse );
+      }
+    };
+  }
 #endif
 
   ChrList[chr_ref].holdingwhich[slot] = VALIDATE_CHR( ChrList[chr_ref].holdingwhich[slot] );
@@ -168,26 +171,28 @@ INLINE const CHR_REF chr_get_inwhichpack( CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 INLINE const CHR_REF chr_get_attachedto( CHR_REF chr_ref )
 {
-  CHR_REF holder;
-
   if ( !VALID_CHR( chr_ref ) ) return MAXCHR;
 
 #if defined(_DEBUG) || !defined(NDEBUG)
 
-  if( MAXCHR != ChrList[chr_ref].attachedto )
   {
-    SLOT slot = ChrList[chr_ref].inwhichslot;
-    if(slot != SLOT_INVENTORY)
+    CHR_REF holder;
+
+    if( MAXCHR != ChrList[chr_ref].attachedto )
     {
-      assert(SLOT_NONE != slot);
-      holder = ChrList[chr_ref].attachedto;
-      assert( ChrList[holder].holdingwhich[slot] == chr_ref );
+      SLOT slot = ChrList[chr_ref].inwhichslot;
+      if(slot != SLOT_INVENTORY)
+      {
+        assert(SLOT_NONE != slot);
+        holder = ChrList[chr_ref].attachedto;
+        assert( ChrList[holder].holdingwhich[slot] == chr_ref );
+      };
+    }
+    else
+    {
+      assert(SLOT_NONE == ChrList[chr_ref].inwhichslot);
     };
   }
-  else
-  {
-    assert(SLOT_NONE == ChrList[chr_ref].inwhichslot);
-  };
 #endif
 
   ChrList[chr_ref].attachedto = VALIDATE_CHR( ChrList[chr_ref].attachedto );
@@ -254,17 +259,18 @@ INLINE const CHR_REF chr_get_aihitlast( CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 INLINE WP_LIST * wp_list_new(WP_LIST * w, vect3 * pos)
 {
-  w->tail = 0;
-  w->head = 1;
+  w->tail = w->head = 0;
 
   if(NULL == pos)
   {
-    w->pos[0].x = w->pos[0].y = 0;
+    w->pos[w->head].x = w->pos[w->head].y = 0;
+    w->head++;
   }
   else
   {
-    w->pos[0].x = pos->x;
-    w->pos[0].y = pos->y;
+    w->pos[w->head].x = pos->x;
+    w->pos[w->head].y = pos->y;
+    w->head++;
   }
 
   return w;

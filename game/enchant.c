@@ -452,9 +452,6 @@ CHR_REF spawn_one_character( vect3 pos, int profile, TEAM team,
   pchr->isplayer = bfalse;
   pchr->islocalplayer = bfalse;
 
-  // AI stuff
-  ai_state_new(pstate, ichr);
-
   // Flags
   pchr->stickybutt = pcap->stickybutt;
   pchr->openstuff = pcap->canopenstuff;
@@ -551,6 +548,9 @@ CHR_REF spawn_one_character( vect3 pos, int profile, TEAM team,
   pchr->mapturn_lr = 32768;  // These two mean on level surface
   pchr->mapturn_ud = 32768;
   pchr->scale = pchr->fat; // * MadList[pchr->model].scale * 4;
+
+  // AI stuff
+  ai_state_new(pstate, ichr);
 
   // action stuff
   action_info_new( &(pchr->action) );
