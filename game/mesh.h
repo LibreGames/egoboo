@@ -1,6 +1,6 @@
 #pragma once
 
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 #include "egoboo_math.h"
 
 #define MAPID                           0x4470614d     // The string 'MapD'
@@ -163,19 +163,19 @@ typedef struct bumplist_t
   BUMPLIST_NODE * prt_list;         //
 } BUMPLIST;
 
-BUMPLIST * bumplist_new(BUMPLIST * b);
-void       bumplist_delete(BUMPLIST * b);
-BUMPLIST * bumplist_renew(BUMPLIST * b);
-bool_t     bumplist_allocate(BUMPLIST * b, int size);
+INLINE const BUMPLIST * bumplist_new(BUMPLIST * b);
+INLINE const void       bumplist_delete(BUMPLIST * b);
+INLINE const BUMPLIST * bumplist_renew(BUMPLIST * b);
+INLINE const bool_t     bumplist_allocate(BUMPLIST * b, int size);
 
-bool_t     bumplist_insert_chr(BUMPLIST * b, Uint32 block, CHR_REF chr_ref);
-bool_t     bumplist_insert_prt(BUMPLIST * b, Uint32 block, PRT_REF prt_ref);
-CHR_REF    bumplist_get_next_chr(BUMPLIST * b, CHR_REF ichr );
-PRT_REF    bumplist_get_next_prt(BUMPLIST * b, PRT_REF iprt );
+INLINE const bool_t     bumplist_insert_chr(BUMPLIST * b, Uint32 block, CHR_REF chr_ref);
+INLINE const bool_t     bumplist_insert_prt(BUMPLIST * b, Uint32 block, PRT_REF prt_ref);
+INLINE const CHR_REF    bumplist_get_next_chr(BUMPLIST * b, CHR_REF ichr );
+INLINE const PRT_REF    bumplist_get_next_prt(BUMPLIST * b, PRT_REF iprt );
 
-CHR_REF    bumplist_get_chr_head(BUMPLIST * b, Uint32 block);
-PRT_REF    bumplist_get_prt_head(BUMPLIST * b, Uint32 block);
-bool_t     bumplist_clear( BUMPLIST * b );
+INLINE const CHR_REF    bumplist_get_chr_head(BUMPLIST * b, Uint32 block);
+INLINE const PRT_REF    bumplist_get_prt_head(BUMPLIST * b, Uint32 block);
+INLINE const bool_t     bumplist_clear( BUMPLIST * b );
 
 extern BUMPLIST bumplist;
 
@@ -185,47 +185,51 @@ bool_t load_mesh_fans();
 void make_fanstart();
 void make_twist();
 bool_t load_mesh( char *modname );
-Uint32 mesh_get_fan( vect3 pos );
-Uint32 mesh_get_block( vect3 pos );
+
 
 bool_t mesh_calc_normal_fan( int fan, vect3 * pnrm, vect3 * ppos );
 bool_t mesh_calc_normal_pos( int fan, vect3 pos, vect3 * pnrm );
 bool_t mesh_calc_normal( vect3 pos, vect3 * pnrm );
 
-void mesh_set_colora( int fan_x, int fan_y, int color );
 
-bool_t mesh_clear_fan_bits( int fan_x, int fan_y, Uint32 bits );
-bool_t mesh_add_fan_bits( int fan_x, int fan_y, Uint32 bits );
-bool_t mesh_set_fan_bits( int fan_x, int fan_y, Uint32 bits );
-
-int mesh_bump_tile( int fan_x, int fan_y );
-Uint32 mesh_get_tile( int fan_x, int fan_y );
-bool_t mesh_set_tile( int fan_x, int fan_y, Uint32 become );
-
-Uint32 mesh_convert_fan( int fan_x, int fan_y );
-Uint32 mesh_convert_block( int block_x, int block_y );
-
-float mesh_fraction_x( float x );
-float mesh_fraction_y( float y );
-
-bool_t mesh_in_renderlist( int fan );
-void mesh_remove_renderlist( int fan );
-void mesh_add_renderlist( int fan );
-
-float mesh_clip_x( float x );
-float mesh_clip_y( float y );
-int mesh_clip_fan_x( int fan_x );
-int mesh_clip_fan_y( int fan_y );
-int mesh_clip_block_x( int block_x );
-int mesh_clip_block_y( int block_y );
-
-bool_t mesh_check( float x, float y );
 
 Uint32 mesh_hitawall( vect3 pos, float size_x, float size_y, Uint32 collision_bits, vect3 * nrm );
 
-Uint32 mesh_test_bits( int fan, Uint32 bits );
-bool_t mesh_has_some_bits( int fan, Uint32 bits );
-bool_t mesh_has_no_bits( int fan, Uint32 bits );
-bool_t mesh_has_all_bits( int fan, Uint32 bits );
+INLINE const Uint32 mesh_get_fan( vect3 pos );
+INLINE const Uint32 mesh_get_block( vect3 pos );
 
-Uint8 mesh_get_twist( int fan );
+INLINE void mesh_set_colora( int fan_x, int fan_y, int color );
+
+INLINE const bool_t mesh_fan_clear_bits( int fan_x, int fan_y, Uint32 bits );
+INLINE const bool_t mesh_fan_add_bits( int fan_x, int fan_y, Uint32 bits );
+INLINE const bool_t mesh_fan_set_bits( int fan_x, int fan_y, Uint32 bits );
+
+INLINE const int   mesh_bump_tile( int fan_x, int fan_y );
+INLINE const Uint32 mesh_get_tile( int fan_x, int fan_y );
+INLINE const bool_t mesh_set_tile( int fan_x, int fan_y, Uint32 become );
+
+INLINE const Uint32 mesh_convert_fan( int fan_x, int fan_y );
+INLINE const Uint32 mesh_convert_block( int block_x, int block_y );
+
+INLINE const float mesh_fraction_x( float x );
+INLINE const float mesh_fraction_y( float y );
+
+INLINE const bool_t mesh_fan_is_in_renderlist( int fan );
+INLINE       void   mesh_fan_remove_renderlist( int fan );
+INLINE       void   mesh_fan_add_renderlist( int fan );
+
+INLINE const float mesh_clip_x( float x );
+INLINE const float mesh_clip_y( float y );
+INLINE const int mesh_clip_fan_x( int fan_x );
+INLINE const int mesh_clip_fan_y( int fan_y );
+INLINE const int mesh_clip_block_x( int block_x );
+INLINE const int mesh_clip_block_y( int block_y );
+
+INLINE const bool_t mesh_check( float x, float y );
+
+INLINE const Uint32 mesh_test_bits( int fan, Uint32 bits );
+INLINE const bool_t mesh_has_some_bits( int fan, Uint32 bits );
+INLINE const bool_t mesh_has_no_bits( int fan, Uint32 bits );
+INLINE const bool_t mesh_has_all_bits( int fan, Uint32 bits );
+
+INLINE const Uint8 mesh_get_twist( int fan );

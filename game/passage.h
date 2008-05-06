@@ -1,6 +1,6 @@
 #pragma once
 
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 
 #define MAXPASS             256                     // Maximum number of passages ( mul 32 )
 #define NOOWNER             65535

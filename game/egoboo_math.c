@@ -21,8 +21,8 @@
 
 /**> HEADER FILES <**/
 #include "egoboo_math.h"
-#include "mesh.h"
-//#include <SDL_opengl.h>
+
+#include "mesh.inl"
 
 float turntosin[TRIGTABLE_SIZE];
 

@@ -81,3 +81,4 @@ typedef union float_int_convert_u
   Uint32 i; 
 } FCONVERT;
 
+INLINE float SwapLE_float( float val );

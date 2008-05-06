@@ -1,6 +1,6 @@
 #pragma once
 
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 #include "egoboo_math.h"
 
 #define MAXPROFILE 1024
@@ -61,10 +61,8 @@ extern TEAM_INFO TeamList[TEAM_COUNT];
 
 #define VALID_TEAM(XX) ( ((XX)>=0) && ((XX)<TEAM_COUNT) )
 
-CHR_REF team_get_sissy( TEAM_REF iteam );
-CHR_REF team_get_leader( TEAM_REF iteam );
-
-
+INLINE const CHR_REF team_get_sissy( TEAM_REF iteam );
+INLINE const CHR_REF team_get_leader( TEAM_REF iteam );
 
 typedef struct vertex_data_blended_t
 {

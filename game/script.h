@@ -1,5 +1,7 @@
 #pragma once
 
+#include "egoboo_types.h"
+
 // These are for the AI script loading/parsing routines
 extern int                     iNumAis;
 

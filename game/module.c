@@ -34,8 +34,8 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 
 //--------------------------------------------------------------------------------------------
 
-static Uint16 load_one_object( int skin, char * szObjectpath, char* szObjectname );
-static void   load_all_objects( char * szModname );
+static int  load_one_object( int skin, char * szObjectpath, char* szObjectname );
+static void load_all_objects( char * szModname );
 
 //--------------------------------------------------------------------------------------------
 void release_bumplist(void)
@@ -430,8 +430,16 @@ void load_all_objects( char * szModpath )
   filehandle = fs_findFirstFile( &fs_finfo, szObjectpath, NULL, "*.obj" );
   while ( NULL != filehandle )
   {
+    int skins_loaded;
     strcpy(tmpstr, filehandle);
-    skin += load_one_object( skin, szObjectpath, tmpstr );
+
+    skins_loaded = load_one_object( skin, szObjectpath, tmpstr );
+    if(0 == skins_loaded)
+    {
+      log_warning("load_all_objects() - Could not find object %s" SLASH_STRING "%s", szObjectpath, tmpstr);
+    }
+
+    skin += skins_loaded;
     filehandle = fs_findNextFile(&fs_finfo);
   }
 
@@ -439,7 +447,7 @@ void load_all_objects( char * szModpath )
 }
 
 //--------------------------------------------------------------------------------------------
-Uint16 load_one_object( int skin_count, char * szObjectpath, char* szObjectname )
+int load_one_object( int skin_count, char * szObjectpath, char* szObjectname )
 {
   // ZZ> This function loads one iobj and returns the number of skins
 
@@ -450,8 +458,21 @@ Uint16 load_one_object( int skin_count, char * szObjectpath, char* szObjectname 
   FILE * ftemp;
 
   // generate an index for this object
-  snprintf( newloadname, sizeof( newloadname ), "%s%s" SLASH_STRING "%s", szObjectpath, szObjectname, CData.data_file );
+  strcpy(newloadname, szObjectpath);
+  str_append_slash(newloadname, sizeof(newloadname));
+  if(NULL != szObjectname)
+  {
+    strcat(newloadname, szObjectname);
+    str_append_slash(newloadname, sizeof(newloadname));
+  }
+  strcat(newloadname, CData.data_file);
+
   iobj = object_generate_index(newloadname);
+  if(MAXMODEL == iobj)
+  {
+    // could not find the object
+    return 0;
+  }
 
   // Append a slash to the szObjectname
   strncpy( loc_loadpath, szObjectpath, sizeof( loc_loadpath ) );

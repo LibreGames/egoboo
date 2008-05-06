@@ -24,7 +24,7 @@
 #include "Client.h"
 #include "Server.h"
 #include "Log.h"
-#include "input.h"
+#include "input.inl"
 
 #include <stdio.h>
 #include <stdarg.h>

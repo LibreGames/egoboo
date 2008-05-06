@@ -207,15 +207,16 @@ typedef struct prt_t
   DYNALIGHT_PRT   dyna;
 } PRT;
 
+INLINE const CHR_REF prt_get_owner( PRT_REF iprt );
+INLINE const CHR_REF prt_get_target( PRT_REF iprt );
+INLINE const CHR_REF prt_get_attachedtochr( PRT_REF iprt );
+
 extern PRT PrtList[MAXPRT];
 
 extern Uint16          particletexture;                            // All in one bitmap
 
 #define VALID_PRT(XX) ( ((XX)>=0) && ((XX)<MAXPRT) && PrtList[XX].on )
 #define VALIDATE_PRT(XX) ( VALID_PRT(XX) ? (XX) : MAXPRT )
-
-CHR_REF prt_get_owner( PRT_REF iprt );
-CHR_REF prt_get_target( PRT_REF iprt );
 
 
 #define CALCULATE_PRT_U0(CNT)  (((.05f+(CNT&15))/16.0f)*(( float ) TxTexture[particletexture].imgW / ( float ) TxTexture[particletexture].txW))
@@ -238,8 +239,6 @@ PRT_REF spawn_one_particle( float intensity, vect3 pos,
                            CHR_REF characterorigin, Uint16 multispawn, CHR_REF oldtarget );
 Uint32 __prthitawall( PRT_REF particle, vect3 * norm );
 
-CHR_REF prt_get_owner( PRT_REF iprt );
-CHR_REF prt_get_target( PRT_REF iprt );
-CHR_REF prt_get_attachedtochr( PRT_REF iprt );
+
 
 Uint32 load_one_pip( char * szModpath, char * szObjectname, char * szFname, int override );

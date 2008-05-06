@@ -27,7 +27,7 @@
 #include "Ui.h"
 #include "Menu.h"
 #include "Log.h"
-#include "input.h"
+#include "input.inl"
 #include "graphic.h"
 
 #include "egoboo.h"

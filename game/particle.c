@@ -19,21 +19,22 @@
     along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "particle.inl"
 
-#include "particle.h"
 #include "Log.h"
-#include "mesh.h"
 #include "camera.h"
 #include "sound.h"
-#include "char.h"
 #include "enchant.h"
-#include "Md2.inl"
 
 #include "egoboo_math.h"
 #include "egoboo_utility.h"
 #include "egoboo.h"
 
 #include <assert.h>
+
+#include "char.inl"
+#include "Md2.inl"
+#include "mesh.inl"
 
 DYNALIGHT_LIST GDynaLight[MAXDYNA];
 PIP            PipList[MAXPRTPIP];
@@ -65,7 +66,7 @@ void make_prtlist( void )
     PrtList[cnt].inview = bfalse;
     if ( !VALID_PRT( cnt ) ) continue;
 
-    PrtList[cnt].inview = mesh_in_renderlist( PrtList[cnt].onwhichfan );
+    PrtList[cnt].inview = mesh_fan_is_in_renderlist( PrtList[cnt].onwhichfan );
     // Set up the lights we need
     if ( PrtList[cnt].dyna.on )
     {
@@ -1340,33 +1341,6 @@ void reset_particles( char* modname )
   }
 
 }
-
-//--------------------------------------------------------------------------------------------
-CHR_REF prt_get_owner( PRT_REF iprt )
-{
-  if ( !VALID_PRT( iprt ) ) return MAXCHR;
-
-  PrtList[iprt].owner = VALIDATE_CHR( PrtList[iprt].owner );
-  return PrtList[iprt].owner;
-};
-
-//--------------------------------------------------------------------------------------------
-CHR_REF prt_get_target( PRT_REF iprt )
-{
-  if ( !VALID_PRT( iprt ) ) return MAXCHR;
-
-  PrtList[iprt].target = VALIDATE_CHR( PrtList[iprt].target );
-  return PrtList[iprt].target;
-};
-
-//--------------------------------------------------------------------------------------------
-CHR_REF prt_get_attachedtochr( PRT_REF iprt )
-{
-  if ( !VALID_PRT( iprt ) ) return MAXCHR;
-
-  PrtList[iprt].attachedtochr = VALIDATE_CHR( PrtList[iprt].attachedtochr );
-  return PrtList[iprt].attachedtochr;
-};
 
 //--------------------------------------------------------------------------------------------
 bool_t prt_calculate_bumpers(PRT_REF iprt)

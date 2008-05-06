@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 #include "egoboo_config.h"
 
 #include <string.h>

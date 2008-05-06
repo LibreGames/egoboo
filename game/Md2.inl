@@ -18,11 +18,11 @@ typedef struct ego_md2_model_t
   MD2_GLCommand *m_commands;
 } MD2_Model;
 
-INLINE int md2_get_numVertices(MD2_Model * m)  { return m->m_numVertices; }
-INLINE int md2_get_numTexCoords(MD2_Model * m) { return m->m_numTexCoords; }
-INLINE int md2_get_numTriangles(MD2_Model * m) { return m->m_numTriangles; }
-INLINE int md2_get_numSkins(MD2_Model * m)     { return m->m_numSkins; }
-INLINE int md2_get_numFrames(MD2_Model * m)    { return m->m_numFrames; }
+INLINE const int md2_get_numVertices(MD2_Model * m)  { return m->m_numVertices; }
+INLINE const int md2_get_numTexCoords(MD2_Model * m) { return m->m_numTexCoords; }
+INLINE const int md2_get_numTriangles(MD2_Model * m) { return m->m_numTriangles; }
+INLINE const int md2_get_numSkins(MD2_Model * m)     { return m->m_numSkins; }
+INLINE const int md2_get_numFrames(MD2_Model * m)    { return m->m_numFrames; }
 
 INLINE const MD2_SkinName  *md2_get_Skin    (MD2_Model * m, int index);
 INLINE const MD2_Frame     *md2_get_Frame   (MD2_Model * m, int index);

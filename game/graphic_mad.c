@@ -21,17 +21,19 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "ogl_include.h"
 #include "graphic.h"
-#include "char.h"
 #include "Mad.h"
-#include "Md2.inl"
 #include "id_md2.h"
 #include "Log.h"
-#include "input.h"
 #include "camera.h"
 
 #include "egoboo.h"
 
 #include <assert.h>
+
+#include "char.inl"
+#include "Md2.inl"
+#include "input.inl"
+
 
 float sinlut[MAXLIGHTROTATION];
 float coslut[MAXLIGHTROTATION];

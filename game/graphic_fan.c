@@ -22,14 +22,15 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 #include "ogl_include.h"
 #include "graphic.h"
 #include "Log.h"
-#include "mesh.h"
 #include "Frustum.h"
-#include "particle.h"
 #include "graphic.h"
 
 #include "egoboo.h"
 
 #include <assert.h>
+
+#include "particle.inl"
+#include "mesh.inl"
 
 RENDERLIST renderlist;
 
@@ -634,7 +635,7 @@ void make_renderlist()
       // Put each tile in basic list
       renderlist.totl[renderlist.num_totl] = fan;
       renderlist.num_totl++;
-      mesh_add_renderlist( fan );
+      mesh_fan_add_renderlist( fan );
 
       // Put each tile
       if ( !is_noref )
@@ -657,7 +658,15 @@ void make_renderlist()
 
       if ( is_water )
       {
-        renderlist.watr[renderlist.num_watr] = fan;
+        // precalculate the "mode" variable so that we don't waste time rendering the waves
+        int tx, ty;
+
+        ty = fan / mesh.size_x;
+        tx = fan % mesh.size_x;
+
+        renderlist.watr_mode[renderlist.num_watr] = ((ty & 1) << 1) + (tx & 1);
+        renderlist.watr[renderlist.num_watr]      = fan;
+
         renderlist.num_watr++;
       }
     };
@@ -918,7 +927,7 @@ void do_dynalight()
 //  for (cnt = 0; cnt < renderlist.num_totl; cnt++)
 //  {
 //    fan = renderlist.totl[cnt];
-//    mesh_remove_renderlist(fan);
+//    mesh_fan_remove_renderlist(fan);
 //  }
 //  renderlist.num_totl = 0;
 //  renderlist.num_shine = 0;
@@ -1069,7 +1078,7 @@ void do_dynalight()
 //        // Put each tile in basic list
 //        renderlist.totl[renderlist.num_totl] = cnt;
 //        renderlist.num_totl++;
-//        mesh_add_renderlist(cnt);
+//        mesh_fan_add_renderlist(cnt);
 //
 //        // Put each tile in one other list, for shadows and relections
 //        if (!is_noref)

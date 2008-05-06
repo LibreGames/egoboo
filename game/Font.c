@@ -32,15 +32,12 @@
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <SDL_ttf.h>
+#include <assert.h>
 
-#ifndef __unix__
-#define vsnprintf _vsnprintf
-#endif
 
-BMFont bmfont;
 
-static int      fnt_count = 0;
-static TTFont * fnt_registry[256];
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 
 struct ttfont_t
 {
@@ -50,6 +47,105 @@ struct ttfont_t
   GLfloat texCoords[4];
 };
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+BMFont bmfont;
+
+static bool_t   fnt_initialized = bfalse;
+
+typedef struct fnt_registry_t
+{
+  int      count;
+  TTFont * list[256];
+} FNT_REGISTRY;
+
+static FNT_REGISTRY fnt_registry = {0};
+
+INLINE bool_t fnt_reg_init(FNT_REGISTRY * r)
+{
+  if(NULL == r) return bfalse;
+
+  assert(0 == r->count);
+  memset(r->list, 0, sizeof(FNT_REGISTRY));
+
+  return btrue;
+};
+
+INLINE bool_t fnt_reg_add(FNT_REGISTRY * r, TTFont * f)
+{
+  int i;
+
+  if(NULL == r || NULL == f || r->count >= 256) return bfalse;
+
+  // make sure there are no duplicates
+  for(i = 0; i< r->count; i++)
+  {
+    if(r->list[i] == f) return bfalse;
+  }
+
+  r->list[r->count] = f;
+  r->count++;
+
+  return btrue;
+}
+
+INLINE TTFont * fnt_reg_remove(FNT_REGISTRY * r, TTFont * f)
+{
+  bool_t   found;
+  TTFont * retval = NULL;
+  int      i;
+
+  if(NULL == r || NULL == f || r->count <= 0) return retval;
+
+  // make sure there are no duplicates
+  found = bfalse;
+  for(i = 0; i< r->count; i++)
+  {
+    if(r->list[i] == f) {found = btrue; break; }
+  }
+
+  if(found)
+  {
+    // remove the element
+    r->list[i] = r->list[r->count - 1];
+    r->list[r->count - 1] = NULL;
+    r->count--;
+
+    retval = f;
+  };
+
+  return retval;
+}
+
+INLINE bool_t fnt_reg_empty(FNT_REGISTRY * r)
+{
+  if(NULL == r || r->count <= 0) return btrue;
+  return bfalse;
+}
+
+INLINE TTFont * fnt_reg_pop(FNT_REGISTRY * r)
+{
+  TTFont * retval = NULL;
+
+  if(NULL == r || r->count <= 0) return retval;
+
+  r->count--;
+  retval = r->list[r->count];
+
+  return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+static int    powerOfTwo( int input );
+static int    copySurfaceToTexture( SDL_Surface *surface, GLuint texture, GLfloat *texCoords );
+static bool_t fnt_init();
+static void   fnt_quit(void);
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 // The next two functions are borrowed from the gl_font.c test program from SDL_ttf
 static int powerOfTwo( int input )
 {
@@ -63,7 +159,8 @@ static int powerOfTwo( int input )
   return value;
 }
 
-int copySurfaceToTexture( SDL_Surface *surface, GLuint texture, GLfloat *texCoords )
+//--------------------------------------------------------------------------------------------
+static int copySurfaceToTexture( SDL_Surface *surface, GLuint texture, GLfloat *texCoords )
 {
   int w, h;
   SDL_Surface *image;
@@ -123,47 +220,65 @@ int copySurfaceToTexture( SDL_Surface *surface, GLuint texture, GLfloat *texCoor
   return 1;
 }
 
+//--------------------------------------------------------------------------------------------
+static bool_t fnt_init()
+{
+  if(fnt_initialized) return btrue;
+
+  if ( TTF_Init() == -1 )
+  {
+    log_warning( "fnt_loadFont() - Could not initialize SDL_TTF!\n" );
+  }
+  else
+  {
+    fnt_reg_init(&fnt_registry);
+
+    atexit( fnt_quit );
+    fnt_initialized = btrue;
+  }
+
+
+  return fnt_initialized;
+};
+
+//--------------------------------------------------------------------------------------------
 static void fnt_quit(void)
 {
   // BB > automatically unregister and delete all fonts that have been opened and TTF_Quit()
 
-  int i;
   TTFont * pfnt;
   bool_t close_fonts;
 
-  close_fonts = TTF_WasInit();
+  close_fonts = fnt_initialized && TTF_WasInit();
 
-  for(i=0; i<fnt_count; i++)
+  while( !fnt_reg_empty(&fnt_registry) )
   {
-    pfnt = fnt_registry[i];
-    if(close_fonts && NULL!=pfnt->ttfFont) TTF_CloseFont(pfnt->ttfFont);
+    pfnt = fnt_reg_pop(&fnt_registry);
+    assert(NULL != pfnt);
+
+    if(close_fonts && NULL!=pfnt->ttfFont)
+    {
+      TTF_CloseFont(pfnt->ttfFont);
+    }
+
     FREE(pfnt);
-
-    fnt_registry[i] = NULL;
   }
-  fnt_count = 0;
 
-  TTF_Quit();
+  if(TTF_WasInit())
+  {
+    TTF_Quit();
+  }
 }
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 TTFont* fnt_loadFont( const char *fileName, int pointSize )
 {
   TTFont   *newFont;
   TTF_Font *ttfFont;
 
   // Make sure the TTF library was initialized
-  if ( !TTF_WasInit() )
-  {
-    if ( TTF_Init() != -1 )
-    {
-      atexit( fnt_quit );
-    }
-    else
-    {
-      log_warning( "fnt_loadFont() - Could not initialize SDL_TTF!\n" );
-      return NULL;
-    }
-  }
+  fnt_init();
 
   // Try and open the font
   ttfFont = TTF_OpenFont( fileName, pointSize );
@@ -179,46 +294,35 @@ TTFont* fnt_loadFont( const char *fileName, int pointSize )
   newFont->texture = 0;
 
   // register the font
-  fnt_registry[fnt_count++] = newFont;
+  fnt_reg_add(&fnt_registry, newFont);
 
   return newFont;
 }
 
-void fnt_freeFont( TTFont *font )
+//--------------------------------------------------------------------------------------------
+bool_t fnt_freeFont( TTFont *font )
 {
-  int i,j;
   TTFont * pfnt = NULL;
 
-  if ( NULL == font ) return;
+  if ( NULL == font ) return bfalse;
 
-  // make sure the font was registered
-  for(i=0; i<fnt_count; i++)
-  {
-    if(font == fnt_registry[i])
-    {
-      pfnt = fnt_registry[i];
+  // see if the font was registered
+  pfnt = fnt_reg_remove(&fnt_registry, font);
 
-      // remove it from the registry
-      for(j=i;j<fnt_count-1; j++)
-      {
-        fnt_registry[j] = fnt_registry[j+1];
-      }
-      fnt_registry[j] = NULL;
-
-      break;
-    }
-  }
-
-  // is it a registered font?
+  // only delete registered fonts. 
+  // if there is a valid pointer but it is not in the registry, it must be a dangling pointer
   if(NULL != pfnt)
   {
     if(NULL != pfnt->ttfFont) { TTF_CloseFont( pfnt->ttfFont); }
     glDeleteTextures( 1, &pfnt->texture );
+    FREE( font );
   }
 
-  FREE( font );
+ 
+  return (NULL != pfnt);
 }
 
+//--------------------------------------------------------------------------------------------
 void fnt_drawText( TTFont *font, int x, int y, const char *text )
 {
   SDL_Surface *textSurf;
@@ -256,6 +360,7 @@ void fnt_drawText( TTFont *font, int x, int y, const char *text )
   }
 }
 
+//--------------------------------------------------------------------------------------------
 void fnt_getTextSize( TTFont *font, const char *text, int *pwidth, int *pheight )
 {
   if ( font )
@@ -264,18 +369,19 @@ void fnt_getTextSize( TTFont *font, const char *text, int *pwidth, int *pheight 
   }
 }
 
-/** fnt_drawTextBox
- * Draws a text string into a box, splitting it into lines according to newlines in the string.
- * NOTE: Doesn't pay attention to the width/height arguments yet.
- *
- * font    - The font to draw with
- * text    - The text to draw
- * x       - The x position to start drawing at
- * y       - The y position to start drawing at
- * width   - Maximum width of the box (not implemented)
- * height  - Maximum height of the box (not implemented)
- * spacing - Amount of space to move down between lines. (usually close to your font size)
- */
+//--------------------------------------------------------------------------------------------
+// fnt_drawTextBox
+// Draws a text string into a box, splitting it into lines according to newlines in the string.
+// NOTE: Doesn't pay attention to the width/height arguments yet.
+//
+//   font    - The font to draw with
+//   text    - The text to draw
+//   x       - The x position to start drawing at
+//   y       - The y position to start drawing at
+//   width   - Maximum width of the box (not implemented)
+//   height  - Maximum height of the box (not implemented)
+//   spacing - Amount of space to move down between lines. (usually close to your font size)
+
 void fnt_drawTextBox( TTFont *font, const char *text, int x, int y,  int width, int height, int spacing )
 {
   GLint matrix_mode;
@@ -328,6 +434,7 @@ void fnt_drawTextBox( TTFont *font, const char *text, int x, int y,  int width, 
   //}
 }
 
+//--------------------------------------------------------------------------------------------
 void fnt_getTextBoxSize( TTFont *font, const char *text, int spacing, int *width, int *height )
 {
   char *buffer, *line;
@@ -355,6 +462,7 @@ void fnt_getTextBoxSize( TTFont *font, const char *text, int spacing, int *width
   FREE( buffer );
 }
 
+//--------------------------------------------------------------------------------------------
 void fnt_drawTextFormatted( TTFont * fnt, int x, int y, const char *format, ... )
 {
   va_list args;

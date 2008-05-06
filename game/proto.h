@@ -22,7 +22,7 @@
 #ifndef _PROTO_H_
 #define _PROTO_H_
 
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 #include "egoboo_math.h"
 
 #include <SDL_mixer.h> // for Mix_* stuff.

@@ -33,14 +33,10 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 #include "System.h"
 #include "id_md2.h"
 #include "Menu.h"
-#include "input.h"
 #include "graphic.h"
-#include "char.h"
-#include "particle.h"
 #include "script.h"
 #include "enchant.h"
 #include "camera.h"
-#include "Md2.inl"
 
 #include "egoboo_utility.h"
 #include "egoboo_strutil.h"
@@ -52,6 +48,10 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdio.h>
 #include <time.h>
 
+#include "input.inl"
+#include "particle.inl"
+#include "Md2.inl"
+#include "char.inl"
 
 #define RELEASE(x) if (x) {x->Release(); x=NULL;}
 
@@ -65,6 +65,8 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 
 ClockState * g_clk_state = NULL;
 
+float est_max_fps = 0.0f;
+
 char cActionName[MAXACTION][2];
 
 float        lightspek    = 0.0f;
@@ -73,6 +75,8 @@ vect3        lightspekcol = {1.0f, 1.0f, 1.0f};
 
 float        lightambi    = 0.0f;
 vect3        lightambicol = {1.0f, 1.0f, 1.0f};
+
+MESSAGE GMsg = {0,0,0,0};
 
 PROFILE_DECLARE( resize_characters );
 PROFILE_DECLARE( keep_weapons_with_holders );
@@ -94,6 +98,10 @@ PROFILE_DECLARE( animate_tiles );
 PROFILE_DECLARE( move_water );
 PROFILE_DECLARE( figure_out_what_to_draw );
 PROFILE_DECLARE( draw_main );
+
+PROFILE_DECLARE( pre_update_game );
+PROFILE_DECLARE( update_game );
+PROFILE_DECLARE( main_loop );
 
 static void update_looped_sounds();
 
@@ -3507,6 +3515,9 @@ int proc_program( int argc, char **argv )
         PROFILE_INIT( move_water );
         PROFILE_INIT( figure_out_what_to_draw );
         PROFILE_INIT( draw_main );
+        PROFILE_INIT( pre_update_game );
+        PROFILE_INIT( update_game );
+        PROFILE_INIT( main_loop );
 
         clock_frameStep( g_clk_state );
         frameDuration = clock_getFrameDuration( g_clk_state );
@@ -3635,11 +3646,12 @@ int proc_program( int argc, char **argv )
 
         // let the OS breathe
         {
-          int ms_leftover = MAX(0, UPDATESKIP - frameDuration * TICKS_PER_SEC);
-          if(ms_leftover / 4 > 0)
-          {
-            SDL_Delay( ms_leftover / 4 );
-          }
+          SDL_Delay( 1 );
+          //int ms_leftover = MAX(0, UPDATESKIP - frameDuration * TICKS_PER_SEC);
+          //if(ms_leftover / 4 > 0)
+          //{
+          //  SDL_Delay( ms_leftover / 4 );
+          //}
         }
       }
 
@@ -3674,6 +3686,17 @@ int proc_program( int argc, char **argv )
     case PROC_Finish:
       {
         log_info( "============ PROFILE =================\n" );
+        log_info( "times in microseconds\n" );
+        log_info( "======================================\n" );
+        log_info( "\tmain_loop  - %lf\n", 1e6*PROFILE_QUERY( main_loop ) );
+        log_info( "======================================\n" );
+        log_info( "break down of main loop sub-functions\n" );
+        log_info( "\tpre_update_game - %lf\n", 1e6*PROFILE_QUERY( pre_update_game ) );
+        log_info( "\tupdate_game - %lf\n", 1e6*PROFILE_QUERY( update_game ) );
+        log_info( "\tfigure_out_what_to_draw - %lf\n", 1e6*PROFILE_QUERY( figure_out_what_to_draw ) );
+        log_info( "\tdraw_main - %lf\n", 1e6*PROFILE_QUERY( draw_main ) );
+        log_info( "======================================\n" );
+        log_info( "break down of update_game() sub-functions\n" );
         log_info( "\tresize_characters - %lf\n", 1e6*PROFILE_QUERY( resize_characters ) );
         log_info( "\tkeep_weapons_with_holders - %lf\n", 1e6*PROFILE_QUERY( keep_weapons_with_holders ) );
         log_info( "\tlet_ai_think - %lf\n", 1e6*PROFILE_QUERY( let_ai_think ) );
@@ -3692,9 +3715,6 @@ int proc_program( int argc, char **argv )
         log_info( "\tpit_kill - %lf\n", 1e6*PROFILE_QUERY( pit_kill ) );
         log_info( "\tanimate_tiles - %lf\n", 1e6*PROFILE_QUERY( animate_tiles ) );
         log_info( "\tmove_water - %lf\n", 1e6*PROFILE_QUERY( move_water ) );
-        log_info( "======================================\n" );
-        log_info( "\tfigure_out_what_to_draw - %lf\n", 1e6*PROFILE_QUERY( figure_out_what_to_draw ) );
-        log_info( "\tdraw_main - %lf\n", 1e6*PROFILE_QUERY( draw_main ) );
         log_info( "======================================\n\n" );
 
         PROFILE_FREE( resize_characters );
@@ -3715,6 +3735,11 @@ int proc_program( int argc, char **argv )
         PROFILE_FREE( pit_kill );
         PROFILE_FREE( animate_tiles );
         PROFILE_FREE( move_water );
+        PROFILE_FREE( figure_out_what_to_draw );
+        PROFILE_FREE( draw_main );
+        PROFILE_FREE( pre_update_game );
+        PROFILE_FREE( update_game );
+        PROFILE_FREE( main_loop );
 
         quit_game();
       }
@@ -3780,7 +3805,11 @@ int proc_gameLoop( double frameDuration, bool_t cleanup )
 
     case PROC_Running:
       {
-        bool_t outdoors = lightspek > 0;
+        bool_t outdoors;
+
+        PROFILE_BEGIN( main_loop );
+
+        outdoors = lightspek > 0;
 
         time_current = SDL_GetTicks();
 
@@ -3908,6 +3937,7 @@ int proc_gameLoop( double frameDuration, bool_t cleanup )
           }
           else
           {
+            PROFILE_BEGIN( pre_update_game );
             check_stats();
             set_local_latches();
             update_timers();
@@ -3928,8 +3958,11 @@ int proc_gameLoop( double frameDuration, bool_t cleanup )
               // download/handle any queued packets
               listen_for_packets();
             }
+            PROFILE_END( pre_update_game );
 
+            PROFILE_BEGIN( update_game );
             update_game( EMULATEUPS / TARGETUPS );
+            PROFILE_END( update_game );
           }
 
           dUpdate -= 1.0f;
@@ -3966,6 +3999,10 @@ int proc_gameLoop( double frameDuration, bool_t cleanup )
         {
           procState = PROC_Leaving;
         }
+
+        PROFILE_END( main_loop );
+
+        est_max_fps = 0.9 * est_max_fps + 0.1 * (1.0f / PROFILE_QUERY(main_loop) );
       }
       break;
 
@@ -4292,12 +4329,12 @@ void read_input()
   }
 
   // Get immediate mode state for the rest of the game
-  read_key(&keyb);
-  read_mouse(&mous);
+  input_read_key(&keyb);
+  input_read_mouse(&mous);
 
   SDL_JoystickUpdate();
-  read_joystick(joy);
-  read_joystick(joy + 1);
+  input_read_joystick(joy);
+  input_read_joystick(joy + 1);
 
   // Joystick mask
   joy[0].latch.b = 0;

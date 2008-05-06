@@ -19,12 +19,8 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "enchant.h"
-#include "mesh.h"
-#include "char.h"
 #include "log.h"
 #include "passage.h"
-#include "particle.h"
-#include "Md2.inl"
 #include "script.h"
 
 #include "egoboo_utility.h"
@@ -32,7 +28,10 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <assert.h>
 
-SEARCH_CONTEXT _g_search;
+#include "particle.inl"
+#include "Md2.inl"
+#include "char.inl"
+#include "mesh.inl"
 
 EVE EveList[MAXEVE];
 ENC EncList[MAXENCHANT];

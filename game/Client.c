@@ -24,7 +24,7 @@
 #include "Log.h"
 #include "egoboo.h"
 #include "enet.h"
-#include "input.h"
+#include "input.inl"
 
 // Global ClientState instance
 ClientState AClientState;

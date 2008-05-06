@@ -1,11 +1,12 @@
 #include "Mad.h"
 #include "script.h"
 #include "Log.h"
-#include "Md2.inl"
-#include "particle.h"
-
 #include "graphic.h"
+
 #include "egoboo_utility.h"
+
+#include "Md2.inl"
+#include "particle.inl"
 
 #include <assert.h>
 
@@ -1292,6 +1293,9 @@ MAD *  mad_new(MAD * pmad)
 
   memset(pmad, 0, sizeof(MAD));
 
+  strcpy(pmad->name, "*NONE*");
+  pmad->used = bfalse;
+
   return pmad;
 }
 
@@ -1310,6 +1314,8 @@ MAD *  mad_delete(MAD * pmad)
   FREE(pmad->framefx);
 
   mad_delete_bbox_tree(pmad);
+
+  pmad->used = bfalse;
 
   return pmad;
 };
@@ -1351,7 +1357,10 @@ Uint16 load_one_mad( char * szObjectpath, char * szObjectname, Uint16 imdl )
 
   // Make up a name for the model...  IMPORT\TEMP0000.OBJ
   strncpy( pmad->name, szObjectpath, sizeof( pmad->name ) );
-  strncat( pmad->name, szObjectname, sizeof( pmad->name ) );
+  if(NULL != szObjectname)
+  {
+    strncat( pmad->name, szObjectname, sizeof( pmad->name ) );
+  }
 
   // Load the AI script for this object
   pmad->ai = load_ai_script( szObjectpath, szObjectname );
@@ -1407,15 +1416,12 @@ void free_one_mad( Uint16 imdl )
   // ZZ> This function loads an id md2 file, storing the converted data in the indexed model
   //    int iFileHandleRead;
 
-  MAD * pmad;
+  if( imdl > MAXMODEL || !MadList[imdl].used ) return;
 
-  if(imdl > MAXMODEL) return;
-
-  pmad = MadList + imdl;
-
-  mad_delete(pmad);
+  mad_renew(MadList + imdl);
 }
 
+//---------------------------------------------------------------------------------------------
 bool_t bbox_gl_draw(AA_BBOX * pbbox)
 {
   vect3 * pmin, * pmax;

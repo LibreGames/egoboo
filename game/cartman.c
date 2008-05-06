@@ -1,7 +1,7 @@
 #include "cartman.h"
 
 #include "graphic.h"
-#include "input.h"
+#include "input.inl"
 #include "UI.h"
 #include "Log.h"
 #include "Mesh.h"

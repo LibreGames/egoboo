@@ -24,18 +24,19 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 #include "egoboo_math.h"
 #include "Log.h"
 #include "Ui.h"
-#include "mesh.h"
 #include "Menu.h"
-#include "input.h"
 #include "camera.h"
 #include "script.h"
-#include "particle.h"
 #include "passage.h"
-#include "input.h"
 #include "Network.h"
 
 #include "egoboo_utility.h"
 #include "egoboo.h"
+
+#include "input.inl"
+#include "particle.inl"
+#include "input.inl"
+#include "mesh.inl"
 
 #include <assert.h>
 #include <stdarg.h>
@@ -291,11 +292,9 @@ void init_all_models()
   for ( cnt = 0; cnt < MAXMODEL; cnt++ )
   {
     CapList[cnt].classname[0] = '\0';
-    MadList[cnt].used = bfalse;
-    strcpy(MadList[cnt].name, "*NONE*");
-    MadList[cnt].md2_ptr = NULL;
-    MadList[cnt].framelip = NULL;
-    MadList[cnt].framefx  = NULL;
+    CapList[cnt].used         = bfalse;
+
+    mad_new(MadList + cnt);
   }
 
   madloadframe = 0;
@@ -308,12 +307,12 @@ void release_all_models()
   int cnt;
   for ( cnt = 0; cnt < MAXMODEL; cnt++ )
   {
-    CapList[cnt].classname[0] = 0;
-    MadList[cnt].used = bfalse;
-    strcpy(MadList[cnt].name, "*NONE*");
+    CapList[cnt].classname[0] = '\0';
+    CapList[cnt].used         = bfalse;
 
     free_one_mad( cnt );
   }
+
   madloadframe = 0;
 }
 
@@ -1733,7 +1732,7 @@ void render_water()
     cnt = 0;
     while ( cnt < renderlist.num_watr )
     {
-      render_water_fan( renderlist.watr[cnt], 1, (( renderlist.watr[cnt] >> GWater.shift ) &2 ) + ( renderlist.watr[cnt]&1 ) );
+      render_water_fan( renderlist.watr[cnt], 1, renderlist.watr_mode[cnt]);
       cnt++;
     }
   }
@@ -1744,7 +1743,7 @@ void render_water()
     cnt = 0;
     while ( cnt < renderlist.num_watr )
     {
-      render_water_fan( renderlist.watr[cnt], 0, (( renderlist.watr[cnt] >> GWater.shift ) &2 ) + ( renderlist.watr[cnt]&1 ) );
+      render_water_fan( renderlist.watr[cnt], 0, renderlist.watr_mode[cnt] );
       cnt++;
     }
   }
@@ -1785,7 +1784,7 @@ void render_water_lit()
     cnt = 0;
     while ( cnt < renderlist.num_watr )
     {
-      render_water_fan_lit( renderlist.watr[cnt], 1, (( renderlist.watr[cnt] >> GWater.shift ) &2 ) + ( renderlist.watr[cnt]&1 ) );
+      render_water_fan_lit( renderlist.watr[cnt], 1, renderlist.watr_mode[cnt] );
       cnt++;
     }
   }
@@ -1820,7 +1819,7 @@ void render_water_lit()
     cnt = 0;
     while ( cnt < renderlist.num_watr )
     {
-      render_water_fan_lit( renderlist.watr[cnt], 0, (( renderlist.watr[cnt] >> GWater.shift ) &2 ) + ( renderlist.watr[cnt]&1 ) );
+      render_water_fan_lit( renderlist.watr[cnt], 0, renderlist.watr_mode[cnt] );
       cnt++;
     }
   }
@@ -3487,6 +3486,8 @@ void draw_text( BMFont *  pfnt )
       CHR_REF pla_chr = pla_get_character( 0 );
 
       y += draw_string( pfnt, 0, y, NULL, "%2.3f FPS, %2.3f UPS", stabilized_fps, stabilized_ups );
+      y += draw_string( pfnt, 0, y, NULL, "estimated max FPS %2.3f", est_max_fps );
+
 
       if( CData.DevMode )
       {

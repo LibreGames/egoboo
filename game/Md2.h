@@ -93,3 +93,19 @@ void md2_deallocate(MD2_Model * m);
 
 //char * rip_md2_frame_name( MD2_Model * m, int frame );
 void md2_scale_model(MD2_Model * pmd2, float scale);
+
+INLINE const int md2_get_numVertices(MD2_Model * m);
+INLINE const int md2_get_numTexCoords(MD2_Model * m);
+INLINE const int md2_get_numTriangles(MD2_Model * m);
+INLINE const int md2_get_numSkins(MD2_Model * m);
+INLINE const int md2_get_numFrames(MD2_Model * m);
+
+INLINE const MD2_SkinName  *md2_get_SkinNames(MD2_Model * m);
+INLINE const MD2_TexCoord  *md2_get_TexCoords(MD2_Model * m);
+INLINE const MD2_Triangle  *md2_get_Triangles(MD2_Model * m);
+INLINE const MD2_Frame     *md2_get_Frames   (MD2_Model * m);
+INLINE const MD2_GLCommand *md2_get_Commands (MD2_Model * m);
+
+INLINE const MD2_SkinName  *md2_get_Skin     (MD2_Model * m, int index);
+INLINE const MD2_Frame     *md2_get_Frame    (MD2_Model * m, int index);
+INLINE const MD2_Triangle  *md2_get_Triangle (MD2_Model * m, int index);

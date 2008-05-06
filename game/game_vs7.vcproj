@@ -146,6 +146,9 @@
 				RelativePath=".\char.c">
 			</File>
 			<File
+				RelativePath=".\char.inl">
+			</File>
+			<File
 				RelativePath=".\Client.c">
 			</File>
 			<File
@@ -236,6 +239,9 @@
 				RelativePath=".\input.c">
 			</File>
 			<File
+				RelativePath=".\input.inl">
+			</File>
+			<File
 				RelativePath=".\Log.c">
 			</File>
 			<File
@@ -257,10 +263,16 @@
 				RelativePath=".\mesh.c">
 			</File>
 			<File
+				RelativePath=".\mesh.inl">
+			</File>
+			<File
 				RelativePath=".\module.c">
 			</File>
 			<File
 				RelativePath=".\network.c">
+			</File>
+			<File
+				RelativePath=".\object.inl">
 			</File>
 			<File
 				RelativePath=".\ogl_include.c">
@@ -270,6 +282,9 @@
 			</File>
 			<File
 				RelativePath=".\particle.c">
+			</File>
+			<File
+				RelativePath=".\particle.inl">
 			</File>
 			<File
 				RelativePath=".\passage.c">

@@ -21,20 +21,23 @@
 
 #include <assert.h>
 
-#include "egoboo_math.h"
 #include "script.h"
-#include "char.h"
-#include "particle.h"
 #include "Log.h"
-#include "mesh.h"
-#include "input.h"
 #include "mad.h"
 #include "passage.h"
 #include "camera.h"
 #include "enchant.h"
-#include "egoboo_utility.h"
 #include "egoboo.h"
 #include "passage.h"
+
+#include "egoboo_math.h"
+#include "egoboo_utility.h"
+
+#include "particle.inl"
+#include "object.inl"
+#include "input.inl"
+#include "char.inl"
+#include "mesh.inl"
 
 #define FUNCTION_FLAG_BIT 0x80000000
 #define CONSTANT_FLAG_BIT 0x80000000
@@ -499,9 +502,7 @@ size_t tell_code( size_t read )
     // Throw out an error code if we're loggin' 'em
     if ( '=' != cWordBuffer[0] || '\0' != cWordBuffer[1])
     {
-      assert(bfalse);
       log_message( "SCRIPT ERROR FOUND: %s (%d) - %s undefined\n", globalparsename, scr_intern.line_num, cWordBuffer );
-
       parseerror = btrue;
     }
   }

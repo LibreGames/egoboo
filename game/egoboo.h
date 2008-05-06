@@ -32,7 +32,7 @@
 
 #include "egoboo_config.h"          // system dependent configuration information
 #include "egoboo_math.h"            // vector and matrix math
-#include "egoboo_types.inl"           // Typedefs for egoboo
+#include "egoboo_types.h"           // Typedefs for egoboo
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -594,28 +594,29 @@ typedef struct search_context_t
 
 SEARCH_CONTEXT * search_new(SEARCH_CONTEXT * psearch);
 
-extern SEARCH_CONTEXT _g_search;
-
-
-
-
+extern float est_max_fps;
 
 typedef struct message_t
 {
   // Display messages
-  Uint16  timechange; // EQ( 0 );                                  //
-  Uint16  start; // EQ( 0 );                                       // The message queue
+  Uint16  timechange;                                  //
+  Uint16  start;                                       // The message queue
+
+  // Message files
+  Uint16  total;                                       // The number of messages
+  Uint32  totalindex;                                  // Where to put letter
+
+
+  // Display messages
   Sint16  time[MAXMESSAGE];                                //
   char    textdisplay[MAXMESSAGE][MESSAGESIZE];            // The displayed text
 
   // Message files
-  Uint16  total; // EQ( 0 );                                       // The number of messages
-  Uint32  totalindex; // EQ( 0 );                                  // Where to put letter
   Uint32  index[MAXTOTALMESSAGE];                   // Where it is
   char    text[MESSAGEBUFFERSIZE];                 // The text buffer
 } MESSAGE;
 
-EXTERN MESSAGE GMsg;
+extern MESSAGE GMsg;
 
 
 

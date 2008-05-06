@@ -20,12 +20,11 @@
     along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef egoboo_Font_h
-#define egoboo_Font_h
-
-#include <SDL.h>
+#pragma once
 
 #include "ogl_texture.h"
+
+#include <SDL.h>
 
 #define NUMFONTX                        16          // Number of fonts in the bitmap
 #define NUMFONTY                        6           //
@@ -52,9 +51,8 @@ extern BMFont bmfont;
 
 typedef struct ttfont_t TTFont;
 
-
 extern TTFont *fnt_loadFont( const char *fileName, int pointSize );
-extern void    fnt_freeFont( TTFont *font );
+extern bool_t  fnt_freeFont( TTFont *font );
 
 extern void  fnt_drawText( TTFont *font, int x, int y, const char *text );
 extern void  fnt_drawTextFormatted( TTFont *font, int x, int y, const char *format, ... );
@@ -62,6 +60,6 @@ extern void  fnt_drawTextBox( TTFont *font, const char *text, int x, int y, int 
 
 // Only works properly on a single line of text
 extern void  fnt_getTextSize( TTFont *font, const char *text, int *width, int *height );
+
 // Works for multiple-line strings, using the user-supplied spacing
 extern void  fnt_getTextBoxSize( TTFont *font, const char *text, int spacing, int *width, int *height );
-#endif // include guard

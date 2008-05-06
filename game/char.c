@@ -18,19 +18,14 @@ You should have received a copy of the GNU General Public License
 along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "char.h"
 #include "Network.h"
 #include "Client.h"
 #include "Server.h"
 #include "Log.h"
-#include "mesh.h"
-#include "input.h"
 #include "camera.h"
-#include "particle.h"
 #include "enchant.h"
 #include "passage.h"
 #include "Menu.h"
-#include "Md2.inl"
 #include "script.h"
 #include "cartman.h"
 
@@ -40,6 +35,14 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 #include "egoboo.h"
 
 #include <assert.h>
+
+#include "input.inl"
+#include "particle.inl"
+#include "char.inl"
+#include "Md2.inl"
+#include "mesh.inl"
+
+
 
 Uint32  cv_list_count = 0;
 CVolume cv_list[1000];
@@ -223,7 +226,7 @@ void add_to_dolist( CHR_REF chr_ref )
   if ( !VALID_CHR( chr_ref ) || ChrList[chr_ref].indolist ) return;
 
   fan = ChrList[chr_ref].onwhichfan;
-  //if ( mesh_in_renderlist( fan ) )
+  //if ( mesh_fan_remove_renderlist( fan ) )
   {
     //ChrList[chr_ref].lightspek_fp8 = Mesh[meshvrtstart[fan]].vrtl_fp8;
     dolist[numdolist] = chr_ref;
@@ -5903,11 +5906,9 @@ Uint16 object_generate_index( char *szLoadName )
   int iobj = MAXMODEL;
 
   // Open the file
-  fileread = fs_fileOpen( PRI_FAIL, "object_generate_index()", szLoadName, "r" );
+  fileread = fs_fileOpen( PRI_NONE, "object_generate_index()", szLoadName, "r" );
   if ( fileread == NULL )
   {
-    // The data file wasn't found
-    log_error( "Data.txt could not be correctly read! (%s) \n", szLoadName );
     return iobj;
   }
 
@@ -6555,241 +6556,6 @@ int modify_quest_idsz( char *whichplayer, IDSZ idsz, int adjustment )
 
   return NewQuestLevel;
 }
-
-//--------------------------------------------------------------------------------------------
-bool_t chr_attached( CHR_REF chr_ref )
-{
-  if ( !VALID_CHR( chr_ref ) ) return bfalse;
-
-  ChrList[chr_ref].attachedto = VALIDATE_CHR( ChrList[chr_ref].attachedto );
-  if(!VALID_CHR(chr_ref)) ChrList[chr_ref].inwhichslot = SLOT_NONE;
-
-  return VALID_CHR( ChrList[chr_ref].attachedto );
-};
-
-//--------------------------------------------------------------------------------------------
-bool_t chr_in_pack( CHR_REF chr_ref )
-{
-  CHR_REF inwhichpack = chr_get_inwhichpack( chr_ref );
-  return VALID_CHR( inwhichpack );
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t chr_has_inventory( CHR_REF chr_ref )
-{
-  bool_t retval = bfalse;
-  CHR_REF nextinpack = chr_get_nextinpack( chr_ref );
-
-  if ( VALID_CHR( nextinpack ) )
-  {
-    retval = btrue;
-  }
-#if defined(_DEBUG) || !defined(NDEBUG)
-  else
-  {
-    assert( ChrList[chr_ref].numinpack == 0 );
-  }
-#endif
-
-  return retval;
-};
-
-//--------------------------------------------------------------------------------------------
-bool_t chr_is_invisible( CHR_REF chr_ref )
-{
-  if ( !VALID_CHR( chr_ref ) ) return btrue;
-
-  return FP8_MUL( ChrList[chr_ref].alpha_fp8, ChrList[chr_ref].light_fp8 ) <= INVISIBLE;
-};
-
-//--------------------------------------------------------------------------------------------
-bool_t chr_using_slot( CHR_REF chr_ref, SLOT slot )
-{
-  CHR_REF inslot = chr_get_holdingwhich( chr_ref, slot );
-
-  return VALID_CHR( inslot );
-};
-
-
-//--------------------------------------------------------------------------------------------
-CHR_REF chr_get_nextinpack( CHR_REF chr_ref )
-{
-  CHR_REF nextinpack = MAXCHR;
-
-  if ( !VALID_CHR( chr_ref ) ) return MAXCHR;
-
-#if defined(_DEBUG) || !defined(NDEBUG)
-  nextinpack = ChrList[chr_ref].nextinpack;
-  if ( MAXCHR != nextinpack && !ChrList[chr_ref].on )
-  {
-    // this is an invalid configuration that may indicate a corrupted list
-    nextinpack = ChrList[nextinpack].nextinpack;
-    if ( VALID_CHR( nextinpack ) )
-    {
-      // the list is definitely corrupted
-      assert( bfalse );
-    }
-  }
-#endif
-
-  ChrList[chr_ref].nextinpack = VALIDATE_CHR( ChrList[chr_ref].nextinpack );
-  return ChrList[chr_ref].nextinpack;
-};
-
-//--------------------------------------------------------------------------------------------
-CHR_REF chr_get_onwhichplatform( CHR_REF chr_ref )
-{
-  if ( !VALID_CHR( chr_ref ) ) return MAXCHR;
-
-  ChrList[chr_ref].onwhichplatform = VALIDATE_CHR( ChrList[chr_ref].onwhichplatform );
-  return ChrList[chr_ref].onwhichplatform;
-};
-
-//--------------------------------------------------------------------------------------------
-CHR_REF chr_get_holdingwhich( CHR_REF chr_ref, SLOT slot )
-{
-  CHR_REF inslot;
-
-  if ( !VALID_CHR( chr_ref ) || slot >= SLOT_COUNT ) return MAXCHR;
-
-#if defined(_DEBUG) || !defined(NDEBUG)
-  inslot = ChrList[chr_ref].holdingwhich[slot];
-  if ( MAXCHR != inslot )
-  {
-    CHR_REF holder = ChrList[inslot].attachedto;
-
-    if ( chr_ref != holder )
-    {
-      // invalid configuration
-      assert( bfalse );
-    }
-  };
-#endif
-
-  ChrList[chr_ref].holdingwhich[slot] = VALIDATE_CHR( ChrList[chr_ref].holdingwhich[slot] );
-  return ChrList[chr_ref].holdingwhich[slot];
-};
-
-//--------------------------------------------------------------------------------------------
-CHR_REF chr_get_inwhichpack( CHR_REF chr_ref )
-{
-  if ( !VALID_CHR( chr_ref ) ) return MAXCHR;
-
-  ChrList[chr_ref].inwhichpack = VALIDATE_CHR( ChrList[chr_ref].inwhichpack );
-  return ChrList[chr_ref].inwhichpack;
-};
-
-//--------------------------------------------------------------------------------------------
-CHR_REF chr_get_attachedto( CHR_REF chr_ref )
-{
-  CHR_REF holder;
-
-  if ( !VALID_CHR( chr_ref ) ) return MAXCHR;
-
-#if defined(_DEBUG) || !defined(NDEBUG)
-
-  if( MAXCHR != ChrList[chr_ref].attachedto )
-  {
-    SLOT slot = ChrList[chr_ref].inwhichslot;
-    if(slot != SLOT_INVENTORY)
-    {
-      assert(SLOT_NONE != slot);
-      holder = ChrList[chr_ref].attachedto;
-      assert( ChrList[holder].holdingwhich[slot] == chr_ref );
-    };
-  }
-  else
-  {
-    assert(SLOT_NONE == ChrList[chr_ref].inwhichslot);
-  };
-#endif
-
-  ChrList[chr_ref].attachedto = VALIDATE_CHR( ChrList[chr_ref].attachedto );
-  if( !VALID_CHR( ChrList[chr_ref].attachedto ) ) ChrList[chr_ref].inwhichslot = SLOT_NONE;
-  return ChrList[chr_ref].attachedto;
-};
-
-//--------------------------------------------------------------------------------------------
-CHR_REF chr_get_aitarget( CHR_REF chr_ref )
-{
-  if ( !VALID_CHR( chr_ref ) ) return MAXCHR;
-
-  ChrList[chr_ref].aistate.target = VALIDATE_CHR( ChrList[chr_ref].aistate.target );
-  return ChrList[chr_ref].aistate.target;
-};
-
-//--------------------------------------------------------------------------------------------
-CHR_REF chr_get_aiowner( CHR_REF chr_ref )
-{
-  if ( !VALID_CHR( chr_ref ) ) return MAXCHR;
-
-  ChrList[chr_ref].aistate.owner = VALIDATE_CHR( ChrList[chr_ref].aistate.owner );
-  return ChrList[chr_ref].aistate.owner;
-};
-
-//--------------------------------------------------------------------------------------------
-CHR_REF chr_get_aichild( CHR_REF chr_ref )
-{
-  if ( !VALID_CHR( chr_ref ) ) return MAXCHR;
-
-  ChrList[chr_ref].aistate.child = VALIDATE_CHR( ChrList[chr_ref].aistate.child );
-  return ChrList[chr_ref].aistate.child;
-};
-
-//--------------------------------------------------------------------------------------------
-CHR_REF chr_get_aiattacklast( CHR_REF chr_ref )
-{
-  if ( !VALID_CHR( chr_ref ) ) return MAXCHR;
-
-  ChrList[chr_ref].aistate.attacklast = VALIDATE_CHR( ChrList[chr_ref].aistate.attacklast );
-  return ChrList[chr_ref].aistate.attacklast;
-};
-
-//--------------------------------------------------------------------------------------------
-CHR_REF chr_get_aibumplast( CHR_REF chr_ref )
-{
-  if ( !VALID_CHR( chr_ref ) ) return MAXCHR;
-
-  ChrList[chr_ref].aistate.bumplast = VALIDATE_CHR( ChrList[chr_ref].aistate.bumplast );
-  return ChrList[chr_ref].aistate.bumplast;
-};
-
-//--------------------------------------------------------------------------------------------
-CHR_REF chr_get_aihitlast( CHR_REF chr_ref )
-{
-  if ( !VALID_CHR( chr_ref ) ) return MAXCHR;
-
-  ChrList[chr_ref].aistate.hitlast = VALIDATE_CHR( ChrList[chr_ref].aistate.hitlast );
-  return ChrList[chr_ref].aistate.hitlast;
-};
-
-//--------------------------------------------------------------------------------------------
-CHR_REF team_get_sissy( TEAM_REF iteam )
-{
-  if ( !VALID_TEAM( iteam ) ) return MAXCHR;
-
-  TeamList[iteam].sissy = VALIDATE_CHR( TeamList[iteam].sissy );
-  return TeamList[iteam].sissy;
-};
-
-//--------------------------------------------------------------------------------------------
-CHR_REF team_get_leader( TEAM_REF iteam )
-{
-  if ( !VALID_TEAM( iteam ) ) return MAXCHR;
-
-  TeamList[iteam].leader = VALIDATE_CHR( TeamList[iteam].leader );
-  return TeamList[iteam].leader;
-};
-
-
-//--------------------------------------------------------------------------------------------
-CHR_REF pla_get_character( PLA_REF iplayer )
-{
-  if ( !VALID_PLA( iplayer ) ) return MAXCHR;
-
-  PlaList[iplayer].chr = VALIDATE_CHR( PlaList[iplayer].chr );
-  return PlaList[iplayer].chr;
-};
 
 
 //--------------------------------------------------------------------------------------------

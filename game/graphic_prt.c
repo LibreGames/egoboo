@@ -22,14 +22,15 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 #include "ogl_include.h"
 #include "Log.h"
 #include "Mesh.h"
-#include "particle.h"
 #include "camera.h"
-#include "char.h"
 
 #include "egoboo_math.h"
 #include "egoboo.h"
 
 #include <assert.h>
+
+#include "particle.inl"
+#include "char.inl"
 
 typedef enum prt_ori_t
 {

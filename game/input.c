@@ -19,7 +19,7 @@
     along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "input.h"
+#include "input.inl"
 #include "Ui.h"
 #include "Log.h"
 #include "Network.h"
@@ -90,15 +90,6 @@ typedef struct scantag_list_t
 
 SCANTAG_LIST tags;
 
-//--------------------------------------------------------------------------------------------
-typedef struct control_data_t
-{
-  Uint32 value;             // The scancode or mask
-  bool_t is_key;            // Is it a key?
-} CONTROL_DATA;
-
-CONTROL_DATA control_list[INPUT_COUNT][CONTROL_COUNT];
-
 
 //--------------------------------------------------------------------------------------------
 // Tags
@@ -125,7 +116,7 @@ void input_setup()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t read_mouse(MOUSE * pm)
+bool_t input_read_mouse(MOUSE * pm)
 {
   int x,y,b;
 
@@ -168,7 +159,7 @@ bool_t read_mouse(MOUSE * pm)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t read_key(KEYBOARD * pk)
+bool_t input_read_key(KEYBOARD * pk)
 {
   if(NULL == pk) return bfalse;
 
@@ -178,7 +169,7 @@ bool_t read_key(KEYBOARD * pk)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t read_joystick(JOYSTICK * pj)
+bool_t input_read_joystick(JOYSTICK * pj)
 {
   int button;
   float jx, jy;
@@ -225,7 +216,7 @@ bool_t read_joystick(JOYSTICK * pj)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t reset_press(KEYBOARD * pk)
+bool_t input_reset_press(KEYBOARD * pk)
 {
   // ZZ> This function resets key press information
 
@@ -362,66 +353,5 @@ void read_controls( char *szFilename )
   else log_warning( "Could not load input settings (%s)\n", szFilename );
 }
 
-//--------------------------------------------------------------------------------------------
-bool_t key_is_pressed( int keycode )
-{
-  // ZZ> This function returns btrue if the given control is pressed...
 
-  if ( GNet.messagemode )  return bfalse;
 
-  if ( keyb.state )
-    return SDLKEYDOWN( keycode );
-  else
-    return bfalse;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t control_key_is_pressed( CONTROL control )
-{
-  // ZZ> This function returns btrue if the given control is pressed...
-
-  if ( control_list[INPUT_KEYB][control].is_key )
-    return key_is_pressed( control_list[INPUT_KEYB][control].value );
-  else
-    return bfalse;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t control_mouse_is_pressed( CONTROL control )
-{
-  // ZZ> This function returns btrue if the given control is pressed...
-  bool_t retval = bfalse;
-
-  if ( control_list[INPUT_MOUS][control].is_key )
-  {
-    retval = key_is_pressed( control_list[INPUT_MOUS][control].value );
-  }
-  else
-  {
-    retval = ( mous.latch.b == control_list[INPUT_MOUS][control].value );
-  }
-
-  return retval;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t control_joy_is_pressed( int joy_num, CONTROL control )
-{
-  // ZZ> This function returns btrue if the given control is pressed...
-
-  INPUT_TYPE it;
-  bool_t retval = bfalse;
-
-  it = (joy_num == 0) ? INPUT_JOYA : INPUT_JOYB;
-
-  if ( control_list[it][control].is_key )
-  {
-    retval = key_is_pressed( control_list[it][control].value );
-  }
-  else
-  {
-    retval = ( joy[joy_num].latch.b == control_list[it][control].value );
-  }
-
-  return retval;
-}

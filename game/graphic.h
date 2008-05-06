@@ -54,6 +54,7 @@ typedef struct renderlist_t
 
   int     num_watr;                            // ..., water
   Uint32  watr[MAXMESHRENDER];                 // ..., water
+  Uint32  watr_mode[MAXMESHRENDER];
 } RENDERLIST;
 
 extern RENDERLIST renderlist;

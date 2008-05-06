@@ -1,14 +1,14 @@
 #include "egoboo_utility.h"
 
-#include "char.h"
-#include "particle.h"
 #include "Mad.h"
-#include "particle.h"
 #include "Log.h"
 
 #include "egoboo_strutil.h"
 
 #include <assert.h>
+
+#include "particle.inl"
+#include "char.inl"
 
 //--------------------------------------------------------------------------------------------
 DAMAGE fget_damage( FILE *fileread )

@@ -70,7 +70,7 @@
 #endif
 
 #undef DEBUG_ATTRIB
-#define DEBUG_MESH_NORMALS
+#undef DEBUG_MESH_NORMALS
 #undef DEBUG_CHR_NORMALS
 #undef DEBUG_BBOX
 

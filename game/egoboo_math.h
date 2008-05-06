@@ -24,7 +24,7 @@
 /**> HEADER FILES <**/
 #include <math.h>
 
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 #include "egoboo_config.h"
 
 #define HAS_SOME_BITS(XX,YY) (0 != ((XX)&(YY)))

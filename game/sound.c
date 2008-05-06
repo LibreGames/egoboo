@@ -22,10 +22,13 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 #include "sound.h"
 #include "Log.h"
 #include "camera.h"
+
 #include "egoboo_utility.h"
-#include "char.h"
-#include "particle.h"
 #include "egoboo.h"
+
+#include "particle.inl"
+#include "char.inl"
+
 
 bool_t mixeron       = bfalse;    // Is the SDL_Mixer loaded?
 bool_t musicinmemory = bfalse;    // Is the music loaded in memory?

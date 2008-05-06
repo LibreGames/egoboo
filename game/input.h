@@ -1,9 +1,11 @@
 #pragma once
 
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 
 #include <SDL.h>
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 typedef enum control_list_e
 {
   KEY_JUMP = 0,
@@ -107,7 +109,10 @@ typedef enum control_type_e
   CONTROL_CAMERA = CONTROL_MESSAGE
 } CONTROL;
 
+extern int numpla;                                 // Number of players
 
+
+//--------------------------------------------------------------------------------------------
 typedef struct latch_t
 {
   float    x;        // x value
@@ -115,9 +120,8 @@ typedef struct latch_t
   Uint32   b;        // button(s) mask
 } LATCH;
 
+//--------------------------------------------------------------------------------------------
 #define MAXPLAYER   (1<<3)                          // 2 to a power...  2^3
-
-extern int               numpla;                                 // Number of players
 
 typedef struct player_t
 {
@@ -127,11 +131,13 @@ typedef struct player_t
   Uint8             device;                   // Input device
 } PLAYER;
 
-extern PLAYER PlaList[MAXPLAYER];
-CHR_REF pla_get_character( PLA_REF iplayer );
+INLINE CHR_REF pla_get_character( PLA_REF iplayer );
 
 #define VALID_PLA(XX) ( ((XX)>=0) && ((XX)<MAXPLAYER) && PlaList[XX].valid )
 
+extern PLAYER PlaList[MAXPLAYER];
+
+//--------------------------------------------------------------------------------------------
 #define MOUSEBUTTON         4
 
 typedef struct mouse_t
@@ -149,6 +155,7 @@ typedef struct mouse_t
 
 extern MOUSE mous;
 
+//--------------------------------------------------------------------------------------------
 #define JOYBUTTON           8                       // Maximum number of joystick buttons
 
 typedef struct joystick_t
@@ -161,6 +168,7 @@ typedef struct joystick_t
 
 extern JOYSTICK joy[2];
 
+//--------------------------------------------------------------------------------------------
 // SDL specific declarations
 typedef struct keyboard_t
 {
@@ -176,21 +184,20 @@ extern KEYBOARD keyb;
 #define SDLKEYDOWN(k) (NULL!=keyb.state && 0!=keyb.state[k])
 
 
+//--------------------------------------------------------------------------------------------
 //Tags
 void read_all_tags( char *szFilename );
 void read_controls( char *szFilename );
 
-bool_t control_key_is_pressed( CONTROL control );
-bool_t control_mouse_is_pressed( CONTROL control );
-bool_t control_joy_is_pressed( int joy_num, CONTROL control );
+INLINE bool_t control_key_is_pressed( CONTROL control );
+INLINE bool_t control_mouse_is_pressed( CONTROL control );
+INLINE bool_t control_joy_is_pressed( int joy_num, CONTROL control );
 
-void input_setup();
+//--------------------------------------------------------------------------------------------
 
-bool_t read_mouse(MOUSE * pm);
+void   input_setup();
+bool_t input_reset_press(KEYBOARD * pk);
 
-bool_t read_key(KEYBOARD * pk);
-bool_t reset_press(KEYBOARD * pk);
-
-bool_t read_joystick(JOYSTICK * pj);
-
-
+bool_t input_read_mouse(MOUSE * pm);
+bool_t input_read_key(KEYBOARD * pk);
+bool_t input_read_joystick(JOYSTICK * pj);

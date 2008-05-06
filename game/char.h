@@ -705,24 +705,24 @@ void move_characters( float dUpdate );
 #define VALID_CHR(XX)    ( VALID_CHR_RANGE(XX) && ChrList[XX].on )
 #define VALIDATE_CHR(XX) ( VALID_CHR(XX) ? (XX) : MAXCHR )
 
-bool_t chr_in_pack( CHR_REF character );
-bool_t chr_attached( CHR_REF character );
-bool_t chr_has_inventory( CHR_REF character );
-bool_t chr_is_invisible( CHR_REF character );
-bool_t chr_using_slot( CHR_REF character, SLOT slot );
+INLINE const bool_t chr_in_pack( CHR_REF character );
+INLINE const bool_t chr_attached( CHR_REF character );
+INLINE const bool_t chr_has_inventory( CHR_REF character );
+INLINE const bool_t chr_is_invisible( CHR_REF character );
+INLINE const bool_t chr_using_slot( CHR_REF character, SLOT slot );
 
-CHR_REF chr_get_nextinpack( CHR_REF ichr );
-CHR_REF chr_get_onwhichplatform( CHR_REF ichr );
-CHR_REF chr_get_inwhichpack( CHR_REF ichr );
-CHR_REF chr_get_attachedto( CHR_REF ichr );
-CHR_REF chr_get_holdingwhich( CHR_REF ichr, SLOT slot );
+INLINE const CHR_REF chr_get_nextinpack( CHR_REF ichr );
+INLINE const CHR_REF chr_get_onwhichplatform( CHR_REF ichr );
+INLINE const CHR_REF chr_get_inwhichpack( CHR_REF ichr );
+INLINE const CHR_REF chr_get_attachedto( CHR_REF ichr );
+INLINE const CHR_REF chr_get_holdingwhich( CHR_REF ichr, SLOT slot );
 
-CHR_REF chr_get_aitarget( CHR_REF ichr );
-CHR_REF chr_get_aiowner( CHR_REF ichr );
-CHR_REF chr_get_aichild( CHR_REF ichr );
-CHR_REF chr_get_aiattacklast( CHR_REF ichr );
-CHR_REF chr_get_aibumplast( CHR_REF ichr );
-CHR_REF chr_get_aihitlast( CHR_REF ichr );
+INLINE const CHR_REF chr_get_aitarget( CHR_REF ichr );
+INLINE const CHR_REF chr_get_aiowner( CHR_REF ichr );
+INLINE const CHR_REF chr_get_aichild( CHR_REF ichr );
+INLINE const CHR_REF chr_get_aiattacklast( CHR_REF ichr );
+INLINE const CHR_REF chr_get_aibumplast( CHR_REF ichr );
+INLINE const CHR_REF chr_get_aihitlast( CHR_REF ichr );
 
 Uint16 object_generate_index( char *szLoadName );
 Uint16 load_one_cap( char * szModpath, char *szObjectname, Uint16 icap );

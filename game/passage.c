@@ -20,12 +20,13 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "passage.h"
-#include "mesh.h"
-#include "char.h"
 #include "script.h"
 
 #include "egoboo_utility.h"
 #include "egoboo.h"
+
+#include "char.inl"
+#include "mesh.inl"
 
 Uint32  passage_count = 0;             // Number of passages in the module
 PASSAGE PassList[MAXPASS];
@@ -52,7 +53,7 @@ bool_t open_passage( Uint32 passage )
   {
     for ( fan_x = PassList[passage].area.left; fan_x <= PassList[passage].area.right; fan_x++ )
     {
-      btmp = mesh_clear_fan_bits( fan_x, fan_y, MPDFX_IMPASS | MPDFX_WALL | PassList[passage].mask );
+      btmp = mesh_fan_clear_bits( fan_x, fan_y, MPDFX_IMPASS | MPDFX_WALL | PassList[passage].mask );
       useful = useful || btmp;
     }
   }
@@ -100,7 +101,7 @@ bool_t break_passage( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 passage, Uint16 star
           tile = mesh_bump_tile( fan_x, fan_y );
           if ( tile == endtile )
           {
-            mesh_add_fan_bits( fan_x, fan_y, meshfxor );
+            mesh_fan_add_bits( fan_x, fan_y, meshfxor );
             mesh_set_tile( fan_x, fan_y, become );
           }
         }
@@ -338,7 +339,7 @@ bool_t close_passage( Uint32 passage )
   {
     for ( fan_x = ppass->area.left; fan_x <= ppass->area.right; fan_x++ )
     {
-      btmp = mesh_add_fan_bits( fan_x, fan_y, ppass->mask );
+      btmp = mesh_fan_add_bits( fan_x, fan_y, ppass->mask );
       useful = useful || btmp;
     }
   }

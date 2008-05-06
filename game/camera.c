@@ -21,14 +21,15 @@
 
 #include "camera.h"
 #include "Frustum.h"
-#include "input.h"
-#include "char.h"
 #include "log.h"
 
 #include "egoboo_math.h"
 #include "egoboo.h"
 
 #include <assert.h>
+
+#include "input.inl"
+#include "char.inl"
 
 CAMERA GCamera;
 

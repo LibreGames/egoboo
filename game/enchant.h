@@ -1,6 +1,6 @@
 #pragma once
 
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 #include "object.h"
 
 #define MAXEVE                          MAXPROFILE  // One enchant type per model
