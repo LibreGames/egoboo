@@ -60,6 +60,8 @@ bool_t reset_bumplist()
 
   bumplist.initialized = btrue;
   bumplist.filled      = bfalse;
+
+  return btrue;
 }
 
 //--------------------------------------------------------------------------------------------

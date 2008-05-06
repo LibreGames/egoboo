@@ -686,56 +686,62 @@ int get_free_character()
 //--------------------------------------------------------------------------------------------
 bool_t prt_search_block( SEARCH_CONTEXT * psearch, int block_x, int block_y, PRT_REF prt_ref, Uint16 facing,
                          bool_t request_friends, bool_t allow_anyone, TEAM team,
-                         Uint16 donttarget, Uint16 oldtarget )
+                         CHR_REF donttarget_ref, CHR_REF oldtarget_ref )
 {
   // ZZ> This function helps find a target, returning btrue if it found a decent target
 
   Uint32 cnt;
   Uint16 local_angle;
-  CHR_REF chrb_ref;
-  bool_t bfound, request_enemies = !request_friends;
+  CHR_REF search_ref;
+  bool_t request_enemies = !request_friends;
+  bool_t bfound = bfalse;
   Uint32 fanblock, blnode_b;
   int local_distance;
 
   if( !VALID_PRT(prt_ref) ) return bfalse;
 
-  bfound = bfalse;
-
   // Current fanblock
   fanblock = mesh_convert_block( block_x, block_y );
-  if ( INVALID_FAN == fanblock ) return bfound;
+  if ( INVALID_FAN == fanblock ) return bfalse;
 
-    
   for ( cnt = 0, blnode_b = bumplist_get_chr_head(&bumplist, fanblock); 
         cnt < bumplist_get_chr_count(&bumplist, fanblock) && INVALID_BUMPLIST_NODE != blnode_b; 
         cnt++, blnode_b = bumplist_get_next_chr(&bumplist, blnode_b) )
   {
-    chrb_ref = bumplist_get_ref(&bumplist, blnode_b);
-    assert( VALID_CHR( chrb_ref ) );
+    search_ref = bumplist_get_ref(&bumplist, blnode_b);
+    assert( VALID_CHR( search_ref ) );
 
     // don't find stupid stuff
-    if ( !VALID_CHR( chrb_ref ) || 0.0f == ChrList[chrb_ref].bumpstrength ) continue;
+    if ( !VALID_CHR( search_ref ) || 0.0f == ChrList[search_ref].bumpstrength ) continue;
 
-    if ( !ChrList[chrb_ref].alive || ChrList[chrb_ref].invictus || chr_in_pack( chrb_ref ) ) continue;
+    if ( !ChrList[search_ref].alive || ChrList[search_ref].invictus || chr_in_pack( search_ref ) ) continue;
 
-    if ( chrb_ref == donttarget || chrb_ref == oldtarget ) continue;
+    if ( search_ref == donttarget_ref || search_ref == oldtarget_ref ) continue;
 
-    if ( allow_anyone || ( request_friends && !TeamList[team].hatesteam[ChrList[chrb_ref].team] ) || ( request_enemies && TeamList[team].hatesteam[ChrList[chrb_ref].team] ) )
+    if (   allow_anyone || 
+         ( request_friends && !TeamList[team].hatesteam[ChrList[search_ref].team] ) || 
+         ( request_enemies &&  TeamList[team].hatesteam[ChrList[search_ref].team] ) )
     {
-      local_distance = ABS( ChrList[chrb_ref].pos.x - PrtList[prt_ref].pos.x ) + ABS( ChrList[chrb_ref].pos.y - PrtList[prt_ref].pos.y );
-      if ( local_distance < psearch->bestdistance )
+      local_distance = ABS( ChrList[search_ref].pos.x - PrtList[prt_ref].pos.x ) + ABS( ChrList[search_ref].pos.y - PrtList[prt_ref].pos.y );
+      if ( psearch->initialize || local_distance < psearch->bestdistance )
       {
-        local_angle = facing - vec_to_turn( ChrList[chrb_ref].pos.x - PrtList[prt_ref].pos.x, ChrList[chrb_ref].pos.y - PrtList[prt_ref].pos.y );
-        if ( local_angle < psearch->bestangle || local_angle > ( 65535 - psearch->bestangle ) )
+        Uint16 test_angle;
+        local_angle = facing - vec_to_turn( ChrList[search_ref].pos.x - PrtList[prt_ref].pos.x, ChrList[search_ref].pos.y - PrtList[prt_ref].pos.y );
+
+        test_angle = local_angle;
+        if(test_angle > 32768)
+        {
+          test_angle = 65535 - test_angle;
+        }
+
+        if ( psearch->initialize || test_angle < psearch->bestangle )
         {
           bfound = btrue;
-          psearch->besttarget   = chrb_ref;
+          psearch->initialize   = bfalse;
+          psearch->besttarget   = search_ref;
           psearch->bestdistance = local_distance;
+          psearch->bestangle    = test_angle;
           psearch->useangle     = local_angle;
-          if ( local_angle  > 32767 )
-            psearch->bestangle = UINT16_SIZE - local_angle;
-          else
-            psearch->bestangle = local_angle;
         }
       }
     }

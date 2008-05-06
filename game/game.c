@@ -4258,7 +4258,7 @@ SEARCH_CONTEXT * search_new(SEARCH_CONTEXT * psearch)
 
   psearch->bestdistance = 9999999;
   psearch->besttarget   = MAXCHR;
-  psearch->bestangle    = 0;
+  psearch->bestangle    = 32768;
 
   return psearch;
 };
