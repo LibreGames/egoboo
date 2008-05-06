@@ -4304,7 +4304,7 @@ bool_t prt_search_wide( SEARCH_CONTEXT * psearch, PRT_REF iprt, Uint16 facing,
 //--------------------------------------------------------------------------------------------
 bool_t chr_search_block( SEARCH_CONTEXT * psearch, int block_x, int block_y, CHR_REF character, bool_t ask_items,
                          bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, bool_t seeinvisible, IDSZ idsz,
-                         bool_t excludeid )
+                         bool_t invert_idsz )
 {
   // ZZ> This is a good little helper. returns btrue if a suitable target was found
 
@@ -4361,9 +4361,10 @@ bool_t chr_search_block( SEARCH_CONTEXT * psearch, int block_x, int block_y, CHR
     {
       ballowed = btrue;
     }
-    else if ( CAP_INHERIT_IDSZ( ChrList[charb].model, idsz ) )
+    else
     {
-      ballowed = !excludeid;
+      bool_t found_idsz = CAP_INHERIT_IDSZ( ChrList[charb].model, idsz );
+      ballowed = (invert_idsz != found_idsz);
     }
 
     if ( ballowed )
