@@ -782,14 +782,13 @@ float spek_calc_local_lighting( Uint16 turn, vect3 nrm )
 {
   // ZZ> This function helps make_spektable
   float fTmp1, fTmp2, fLite;
-  Uint16 turn_sin, turn_cos;
+  Uint16 turn_sin;
   float sinrot, cosrot;
 
   turn_sin = turn >> 2;
-  turn_cos = ( turn_sin + TRIGTABLE_SHIFT ) & TRIGTABLE_MASK;
 
   sinrot = turntosin[turn_sin];
-  cosrot = turntosin[turn_cos];
+  cosrot = turntocos[turn_sin];
 
   fTmp1 = cosrot * nrm.x + sinrot * nrm.y;
   fTmp2 = nrm.x * nrm.x + nrm.y * nrm.y;

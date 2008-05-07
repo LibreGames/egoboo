@@ -1535,8 +1535,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
         //Secondly we run the Compass function (If we are not in follow mode)
         if(pg_scr->tmpdistance != MOVE_FOLLOW)
         {
-          sTmp = ( pg_scr->tmpturn + 16384 );
-          pg_scr->tmpx -= turntosin[( sTmp>>2 ) & TRIGTABLE_MASK] * pg_scr->tmpdistance;
+          pg_scr->tmpx -= turntocos[( pg_scr->tmpturn>>2 ) & TRIGTABLE_MASK] * pg_scr->tmpdistance;
           pg_scr->tmpy -= turntosin[( pg_scr->tmpturn>>2 ) & TRIGTABLE_MASK] * pg_scr->tmpdistance;
         }
 
@@ -1548,8 +1547,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
     case F_Compass:
       // This function changes tmpx and tmpy in a circlular manner according
       // to tmpturn and tmpdistance
-      sTmp = ( pg_scr->tmpturn + 16384 );
-      pg_scr->tmpx -= turntosin[( sTmp>>2 ) & TRIGTABLE_MASK] * pg_scr->tmpdistance;
+      pg_scr->tmpx -= turntocos[( pg_scr->tmpturn>>2 ) & TRIGTABLE_MASK] * pg_scr->tmpdistance;
       pg_scr->tmpy -= turntosin[( pg_scr->tmpturn>>2 ) & TRIGTABLE_MASK] * pg_scr->tmpdistance;
       break;
 
@@ -2136,7 +2134,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
           else
           {
             tTmp = pchr->turn_lr >> 2;
-            ChrList[sTmp].vel.x += turntosin[( tTmp+8192+TRIGTABLE_SHIFT ) & TRIGTABLE_MASK] * pg_scr->tmpdistance;
+            ChrList[sTmp].vel.x += turntocos[( tTmp+8192 ) & TRIGTABLE_MASK] * pg_scr->tmpdistance;
             ChrList[sTmp].vel.y += turntosin[( tTmp+8192 ) & TRIGTABLE_MASK] * pg_scr->tmpdistance;
             ChrList[sTmp].passage = pchr->passage;
             ChrList[sTmp].iskursed = bfalse;

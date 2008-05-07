@@ -205,7 +205,7 @@ void get_vectors( Uint16 prt, vect3 * vert, vect3 * horiz, float * dist )
 
   rotate >>= 2;
   sinsize = turntosin[rotate & TRIGTABLE_MASK];
-  cossize = turntosin[( rotate+TRIGTABLE_SHIFT ) & TRIGTABLE_MASK];
+  cossize = turntocos[rotate & TRIGTABLE_MASK];
 
   ( *horiz ).x = cossize * vector_right.x - sinsize * vector_up.x;
   ( *horiz ).y = cossize * vector_right.y - sinsize * vector_up.y;

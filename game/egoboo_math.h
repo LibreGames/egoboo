@@ -125,6 +125,7 @@ typedef union vector4_t { float v[4]; struct { float x, y, z, w; }; struct { flo
 #define TRIGTABLE_SHIFT (TRIGTABLE_SIZE>>2)       // TRIGTABLE_SIZE/4 == TWO_PI/4 == PI_OVER_2
 
 extern float turntosin[TRIGTABLE_SIZE];           // Convert chrturn>>2...  to sine
+extern float turntocos[TRIGTABLE_SIZE];           // Convert chrturn>>2...  to cosine
 
 /**> FUNCTION PROTOTYPES <**/
 void make_turntosin( void );

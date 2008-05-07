@@ -98,13 +98,13 @@ void sound_apply_mods( int channel, float intensity, vect3 snd_pos, vect3 ear_po
     // determine the volume in the left and right speakers
     if ( cp > 0 )
     {
-      vl = (1.0f + ftmp) * 0.5f;
-      vr = (1.0f - ftmp) * 0.5f;
+      vl = (1.0f - ftmp) * 0.5f;
+      vr = (1.0f + ftmp) * 0.5f;
     }
     else
     {
-      vl = (1.0f - ftmp) * 0.5f;
-      vr = (1.0f + ftmp) * 0.5f;
+      vl = (1.0f + ftmp) * 0.5f;
+      vr = (1.0f - ftmp) * 0.5f;
     }
   }
 

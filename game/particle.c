@@ -203,6 +203,7 @@ PRT_REF spawn_one_particle( float intensity, vect3 pos,
   float weight;
   Uint16 prt_target;
   PRT * pprt;
+  PIP * ppip;
   SEARCH_CONTEXT loc_search;
 
   if ( local_pip >= MAXPRTPIP )
@@ -222,10 +223,11 @@ PRT_REF spawn_one_particle( float intensity, vect3 pos,
   {
     glob_pip = local_pip;
   }
+  ppip = PipList + glob_pip;
 
 
 
-  iprt = get_free_particle( PipList[glob_pip].force );
+  iprt = get_free_particle( ppip->force );
   if ( iprt == MAXPRT )
   {
     log_debug( "WARN: spawn_one_particle() - failed to spawn : get_free_particle() returned invalid value %d\n", iprt );
@@ -254,7 +256,7 @@ PRT_REF spawn_one_particle( float intensity, vect3 pos,
   pprt->level = 0;
   pprt->team = team;
   pprt->owner = characterorigin;
-  pprt->damagetype = PipList[glob_pip].damagetype;
+  pprt->damagetype = ppip->damagetype;
   pprt->spawncharacterstate = SPAWN_NOCHARACTER;
 
 
@@ -262,14 +264,14 @@ PRT_REF spawn_one_particle( float intensity, vect3 pos,
   pprt->dyna.on = bfalse;
   if ( multispawn == 0 )
   {
-    pprt->dyna.on = ( DYNA_OFF != PipList[glob_pip].dyna.mode );
-    if ( PipList[glob_pip].dyna.mode == DYNA_LOCAL )
+    pprt->dyna.on = ( DYNA_OFF != ppip->dyna.mode );
+    if ( ppip->dyna.mode == DYNA_LOCAL )
     {
       pprt->dyna.on = bfalse;
     }
   }
-  pprt->dyna.level   = PipList[glob_pip].dyna.level * intensity;
-  pprt->dyna.falloff = PipList[glob_pip].dyna.falloff;
+  pprt->dyna.level   = ppip->dyna.level * intensity;
+  pprt->dyna.falloff = ppip->dyna.falloff;
 
 
 
@@ -282,13 +284,13 @@ PRT_REF spawn_one_particle( float intensity, vect3 pos,
   // Targeting...
   offsetfacing = 0;
   zvel = 0;
-  pos.z += generate_signed( &PipList[glob_pip].zspacing );
-  velocity = generate_unsigned( &PipList[glob_pip].xyvel );
+  pos.z += generate_signed( &ppip->zspacing );
+  velocity = generate_unsigned( &ppip->xyvel );
   pprt->target = oldtarget;
   prt_target = MAXCHR;
-  if ( PipList[glob_pip].newtargetonspawn )
+  if ( ppip->newtargetonspawn )
   {
-    if ( PipList[glob_pip].targetcaster )
+    if ( ppip->targetcaster )
     {
       // Set the target to the caster
       pprt->target = characterorigin;
@@ -300,11 +302,11 @@ PRT_REF spawn_one_particle( float intensity, vect3 pos,
       {
         // Correct facing for randomness
         newrand = FP8_DIV( PERFECTSTAT - ChrList[characterorigin].dexterity_fp8,  PERFECTSTAT );
-        offsetfacing += generate_dither( &PipList[glob_pip].facing, newrand );
+        offsetfacing += generate_dither( &ppip->facing, newrand );
       }
 
       // Find a target
-      if( prt_search_wide( search_new(&loc_search), iprt, facing, PipList[glob_pip].targetangle, PipList[glob_pip].onlydamagefriendly, bfalse, team, characterorigin, oldtarget ) )
+      if( prt_search_wide( search_new(&loc_search), iprt, facing, ppip->targetangle, ppip->onlydamagefriendly, bfalse, team, characterorigin, oldtarget ) )
       {
         pprt->target = loc_search.besttarget;
       };
@@ -314,7 +316,7 @@ PRT_REF spawn_one_particle( float intensity, vect3 pos,
       {
         offsetfacing -= loc_search.useangle;
 
-        if ( PipList[glob_pip].zaimspd != 0 )
+        if ( ppip->zaimspd != 0 )
         {
           // These aren't velocities...  This is to do aiming on the Z axis
           if ( velocity > 0 )
@@ -325,8 +327,8 @@ PRT_REF spawn_one_particle( float intensity, vect3 pos,
             if ( tvel > 0 )
             {
               zvel = ( ChrList[prt_target].pos.z + ( ChrList[prt_target].bmpdata.calc_size * 0.5f ) - pos.z ) / tvel;  // This is the zvel alteration
-              if ( zvel < - ( PipList[glob_pip].zaimspd >> 1 ) ) zvel = - ( PipList[glob_pip].zaimspd >> 1 );
-              if ( zvel > PipList[glob_pip].zaimspd ) zvel = PipList[glob_pip].zaimspd;
+              if ( zvel < - ( ppip->zaimspd >> 1 ) ) zvel = - ( ppip->zaimspd >> 1 );
+              if ( zvel > ppip->zaimspd ) zvel = ppip->zaimspd;
             }
           }
         }
@@ -334,7 +336,7 @@ PRT_REF spawn_one_particle( float intensity, vect3 pos,
     }
 
     // Does it go away?
-    if ( !VALID_CHR( prt_target ) && PipList[glob_pip].needtarget )
+    if ( !VALID_CHR( prt_target ) && ppip->needtarget )
     {
       log_debug( "WARN: spawn_one_particle() - failed to spawn : pip requires target and no target specified\n", iprt );
       free_one_particle( iprt );
@@ -342,7 +344,7 @@ PRT_REF spawn_one_particle( float intensity, vect3 pos,
     }
 
     // Start on top of target
-    if ( VALID_CHR( prt_target ) && PipList[glob_pip].startontarget )
+    if ( VALID_CHR( prt_target ) && ppip->startontarget )
     {
       pos.x = ChrList[prt_target].pos.x;
       pos.y = ChrList[prt_target].pos.y;
@@ -351,15 +353,15 @@ PRT_REF spawn_one_particle( float intensity, vect3 pos,
   else
   {
     // Correct facing for randomness
-    offsetfacing += generate_dither( &PipList[glob_pip].facing, INT_TO_FP8( 1 ) );
+    offsetfacing += generate_dither( &ppip->facing, INT_TO_FP8( 1 ) );
   }
-  facing += PipList[glob_pip].facing.ibase + offsetfacing;
+  facing += ppip->facing.ibase + offsetfacing;
   pprt->facing = facing;
   facing >>= 2;
 
   // Location data from arguments
-  newrand = generate_unsigned( &PipList[glob_pip].xyspacing );
-  pos.x += turntosin[( facing+8192+TRIGTABLE_SHIFT ) & TRIGTABLE_MASK] * newrand;
+  newrand = generate_unsigned( &ppip->xyspacing );
+  pos.x += turntocos[( facing+8192 ) & TRIGTABLE_MASK] * newrand;
   pos.y += turntosin[( facing+8192 ) & TRIGTABLE_MASK] * newrand;
 
   pos.x = mesh_clip_x( pos.x );
@@ -371,9 +373,9 @@ PRT_REF spawn_one_particle( float intensity, vect3 pos,
 
 
   // Velocity data
-  xvel = turntosin[( facing+8192+TRIGTABLE_SHIFT ) & TRIGTABLE_MASK] * velocity;
+  xvel = turntocos[( facing+8192 ) & TRIGTABLE_MASK] * velocity;
   yvel = turntosin[( facing+8192 ) & TRIGTABLE_MASK] * velocity;
-  zvel += generate_signed( &PipList[glob_pip].zvel );
+  zvel += generate_signed( &ppip->zvel );
   pprt->vel.x = xvel;
   pprt->vel.y = yvel;
   pprt->vel.z = zvel;
@@ -383,15 +385,15 @@ PRT_REF spawn_one_particle( float intensity, vect3 pos,
   pprt->pos_old.z = pprt->pos.z - pprt->vel.z;
 
   // Template values
-  pprt->bumpsize = PipList[glob_pip].bumpsize;
+  pprt->bumpsize = ppip->bumpsize;
   pprt->bumpsizebig = pprt->bumpsize + ( pprt->bumpsize >> 1 );
-  pprt->bumpheight = PipList[glob_pip].bumpheight;
-  pprt->bumpstrength = PipList[glob_pip].bumpstrength * intensity;
+  pprt->bumpheight = ppip->bumpheight;
+  pprt->bumpstrength = ppip->bumpstrength * intensity;
 
   // figure out the particle type and transparency
-  pprt->type = PipList[glob_pip].type;
+  pprt->type = ppip->type;
   pprt->alpha_fp8 = 255;
-  switch ( PipList[glob_pip].type )
+  switch ( ppip->type )
   {
     case PRTTYPE_SOLID:
       if ( intensity < 1.0f )
@@ -413,16 +415,16 @@ PRT_REF spawn_one_particle( float intensity, vect3 pos,
 
 
   // Image data
-  pprt->rotate = generate_unsigned( &PipList[glob_pip].rotate );
-  pprt->rotateadd = PipList[glob_pip].rotateadd;
-  pprt->size_fp8 = PipList[glob_pip].sizebase_fp8;
-  pprt->sizeadd_fp8 = PipList[glob_pip].sizeadd;
+  pprt->rotate = generate_unsigned( &ppip->rotate );
+  pprt->rotateadd = ppip->rotateadd;
+  pprt->size_fp8 = ppip->sizebase_fp8;
+  pprt->sizeadd_fp8 = ppip->sizeadd;
   pprt->image_fp8 = 0;
-  pprt->imageadd_fp8 = generate_unsigned( &PipList[glob_pip].imageadd );
-  pprt->imagestt_fp8 = INT_TO_FP8( PipList[glob_pip].imagebase );
-  pprt->imagemax_fp8 = INT_TO_FP8( PipList[glob_pip].numframes );
-  pprt->time = PipList[glob_pip].time;
-  if ( PipList[glob_pip].endlastframe )
+  pprt->imageadd_fp8 = generate_unsigned( &ppip->imageadd );
+  pprt->imagestt_fp8 = INT_TO_FP8( ppip->imagebase );
+  pprt->imagemax_fp8 = INT_TO_FP8( ppip->numframes );
+  pprt->time = ppip->time;
+  if ( ppip->endlastframe )
   {
     if ( pprt->imageadd_fp8 != 0 ) pprt->time = 0.0;
   }
@@ -433,12 +435,12 @@ PRT_REF spawn_one_particle( float intensity, vect3 pos,
 
 
   // Damage stuff
-  pprt->damage.ibase = PipList[glob_pip].damage_fp8.ibase * intensity;
-  pprt->damage.irand = PipList[glob_pip].damage_fp8.irand * intensity;
+  pprt->damage.ibase = ppip->damage_fp8.ibase * intensity;
+  pprt->damage.irand = ppip->damage_fp8.irand * intensity;
 
 
   // Spawning data
-  pprt->spawntime = PipList[glob_pip].contspawntime;
+  pprt->spawntime = ppip->contspawntime;
   if ( pprt->spawntime != 0 )
   {
     CHR_REF prt_attachedto = prt_get_attachedtochr( iprt );
@@ -452,7 +454,7 @@ PRT_REF spawn_one_particle( float intensity, vect3 pos,
 
 
   // Sound effect
-  play_particle_sound( intensity, iprt, PipList[glob_pip].soundspawn );
+  play_particle_sound( intensity, iprt, ppip->soundspawn );
 
   return iprt;
 }
@@ -959,7 +961,7 @@ void spawn_bump_particles( CHR_REF character, PRT_REF particle )
           facing = PrtList[particle].facing - ChrList[character].turn_lr - 16384;
           facing >>= 2;
           fsin = turntosin[facing & TRIGTABLE_MASK];
-          fcos = turntosin[( facing+TRIGTABLE_SHIFT ) & TRIGTABLE_MASK];
+          fcos = turntocos[facing & TRIGTABLE_MASK];
           y = 8192;
           x = -y * fsin;
           y = y * fcos;

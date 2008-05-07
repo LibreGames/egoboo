@@ -414,9 +414,8 @@ void move_camera( float dUpdate )
     move.y = 0;
   }
   turnsin = (( Uint16 ) GCamera.turnadd * 10 ) & TRIGTABLE_MASK;
-  turncos = ( turnsin + TRIGTABLE_SHIFT ) & TRIGTABLE_MASK;
-  GCamera.pos.x = ( move.x * turntosin[turncos] + move.y * turntosin[turnsin] ) + GCamera.trackpos.x;
-  GCamera.pos.y = ( -move.x * turntosin[turnsin] + move.y * turntosin[turncos] ) + GCamera.trackpos.y;
+  GCamera.pos.x = ( move.x * turntocos[turnsin] + move.y * turntosin[turnsin] ) + GCamera.trackpos.x;
+  GCamera.pos.y = ( -move.x * turntosin[turnsin] + move.y * turntocos[turnsin] ) + GCamera.trackpos.y;
 
   // Finish up the camera
   camera_calc_turn_lr();

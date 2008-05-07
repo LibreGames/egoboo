@@ -1128,7 +1128,7 @@ void render_background( Uint16 texture )
   v = GWater.layer[1].v;
   size = x + y + 1;
   sinsize = turntosin[( 3*2047 ) & TRIGTABLE_MASK] * size;   // why 3/8 of a turn???
-  cossize = turntosin[( 3*2047 + TRIGTABLE_SHIFT ) & TRIGTABLE_MASK] * size;   // why 3/8 of a turn???
+  cossize = turntocos[( 3*2047 ) & TRIGTABLE_MASK] * size;   // why 3/8 of a turn???
   loc_backgroundrepeat = backgroundrepeat * MIN( x / CData.scrx, y / CData.scrx );
 
 
@@ -1202,7 +1202,7 @@ void render_foreground_overlay( Uint16 texture )
   rotate = 16384 + 8192;
   rotate >>= 2;
   sinsize = turntosin[rotate & TRIGTABLE_MASK] * size;
-  cossize = turntosin[( rotate+TRIGTABLE_SHIFT ) & TRIGTABLE_MASK] * size;
+  cossize = turntocos[rotate & TRIGTABLE_MASK] * size;
 
   loc_foregroundrepeat = foregroundrepeat * MIN( x / CData.scrx, y / CData.scrx ) / 4.0;
 

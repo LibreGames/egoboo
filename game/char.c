@@ -398,9 +398,9 @@ bool_t make_one_character_matrix( CHR_REF chr_ref )
   else
   {
     pchr->matrix = ScaleXYZRotateXYZTranslate( pchr->scale * pchr->pancakepos.x, pchr->scale * pchr->pancakepos.y, pchr->scale * pchr->pancakepos.z,
-                     pchr->turn_lr >> 2,
-                     (( Uint16 )( pchr->mapturn_ud + 32768 ) ) >> 2,
-                     (( Uint16 )( pchr->mapturn_lr + 32768 ) ) >> 2,
+                     pchr->turn_lr,
+                     ( Uint16 )( pchr->mapturn_ud + 32768 ),
+                     ( Uint16 )( pchr->mapturn_lr + 32768 ),
                      pchr->pos.x, pchr->pos.y, pchr->pos.z );
 
     pchr->matrixvalid = btrue;
@@ -1099,7 +1099,7 @@ bool_t detach_character_from_mount( CHR_REF chr_ref, bool_t ignorekurse, bool_t 
   else
   {
     Uint16 sin_dir = RANDIE;
-    ChrList[chr_ref].accum_vel.x += ChrList[imount].vel.x + 0.5 * DROPXYVEL * turntosin[(( sin_dir>>2 ) + TRIGTABLE_SHIFT ) & TRIGTABLE_MASK];
+    ChrList[chr_ref].accum_vel.x += ChrList[imount].vel.x + 0.5 * DROPXYVEL * turntocos[sin_dir>>2];
     ChrList[chr_ref].accum_vel.y += ChrList[imount].vel.y + 0.5 * DROPXYVEL * turntosin[sin_dir>>2];
   }
   ChrList[chr_ref].accum_vel.z += DROPZVEL;
@@ -1565,7 +1565,7 @@ void drop_keys( CHR_REF chr_ref )
           ChrList[item].pos.x = ChrList[chr_ref].pos.x;
           ChrList[item].pos.y = ChrList[chr_ref].pos.y;
           ChrList[item].pos.z = ChrList[chr_ref].pos.z;
-          ChrList[item].accum_vel.x += turntosin[( cosdir>>2 ) & TRIGTABLE_MASK] * DROPXYVEL;
+          ChrList[item].accum_vel.x += turntocos[( direction>>2 ) & TRIGTABLE_MASK] * DROPXYVEL;
           ChrList[item].accum_vel.y += turntosin[( direction>>2 ) & TRIGTABLE_MASK] * DROPXYVEL;
           ChrList[item].accum_vel.z += DROPZVEL;
           ChrList[item].team = ChrList[item].baseteam;
@@ -1614,7 +1614,7 @@ void drop_all_items( CHR_REF chr_ref )
         ChrList[item].turn_lr = direction + 32768;
 
         cosdir = direction + 16384;
-        ChrList[item].accum_vel.x += turntosin[( cosdir>>2 ) & TRIGTABLE_MASK] * DROPXYVEL;
+        ChrList[item].accum_vel.x += turntocos[( direction>>2 ) & TRIGTABLE_MASK] * DROPXYVEL;
         ChrList[item].accum_vel.y += turntosin[( direction>>2 ) & TRIGTABLE_MASK] * DROPXYVEL;
         ChrList[item].accum_vel.z += DROPZVEL;
         ChrList[item].team = ChrList[item].baseteam;
@@ -1951,7 +1951,7 @@ void chr_swipe( CHR_REF chr_ref, SLOT slot )
         velocity = MAXTHROWVELOCITY;
       }
       tTmp = ( 0x7FFF + ChrList[chr_ref].turn_lr ) >> 2;
-      ChrList[thrown].accum_vel.x += turntosin[( tTmp+8192+TRIGTABLE_SHIFT ) & TRIGTABLE_MASK] * velocity;
+      ChrList[thrown].accum_vel.x += turntocos[( tTmp+8192 ) & TRIGTABLE_MASK] * velocity;
       ChrList[thrown].accum_vel.y += turntosin[( tTmp+8192 ) & TRIGTABLE_MASK] * velocity;
       ChrList[thrown].accum_vel.z += DROPZVEL;
       if ( ChrList[weapon].ammo <= 1 )
@@ -3184,10 +3184,9 @@ void set_one_player_latch( Uint16 player )
       }
       if ( CData.autoturncamera == 255 && control_mouse_is_pressed( CONTROL_CAMERA ) == 0 )  inputx = 0;
 
-      turncos = ((Uint16)GCamera.turn_lr) >> 2;
-      turnsin = ( turncos + TRIGTABLE_SHIFT ) & TRIGTABLE_MASK;
-      newx = ( inputx * turntosin[turncos] + inputy * turntosin[turnsin] );
-      newy = (-inputx * turntosin[turnsin] + inputy * turntosin[turncos] );
+      turnsin = ((Uint16)GCamera.turn_lr) >> 2;
+      newy = ( inputx * turntocos[turnsin] + inputy * turntosin[turnsin] );
+      newx = (-inputx * turntosin[turnsin] + inputy * turntocos[turnsin] );
     }
 
     PlaList[player].latch.x += newx * mous.cover * 5;
@@ -3245,10 +3244,9 @@ void set_one_player_latch( Uint16 player )
       }
       if ( CData.autoturncamera == 255 && !control_joy_is_pressed( 0, CONTROL_CAMERA ) )  inputx = 0;
 
-      turncos = ((Uint16)GCamera.turn_lr) >> 2;
-      turnsin = ( turncos + TRIGTABLE_SHIFT ) & TRIGTABLE_MASK;
-      newx = ( inputx * turntosin[turncos] + inputy * turntosin[turnsin] );
-      newy = ( -inputx * turntosin[turnsin] + inputy * turntosin[turncos] );
+      turnsin = ((Uint16)GCamera.turn_lr) >> 2;
+      newy = ( inputx * turntocos[turnsin] + inputy * turntosin[turnsin] );
+      newx = (-inputx * turntosin[turnsin] + inputy * turntocos[turnsin] );
     }
 
     PlaList[player].latch.x += newx * mous.cover;
@@ -3306,10 +3304,9 @@ void set_one_player_latch( Uint16 player )
       }
       if ( CData.autoturncamera == 255 && !control_joy_is_pressed( 1, CONTROL_CAMERA ) )  inputx = 0;
 
-      turncos = ((Uint16)GCamera.turn_lr) >> 2;
-      turnsin = ( turncos + TRIGTABLE_SHIFT ) & TRIGTABLE_MASK;
-      newx = ( inputx * turntosin[turncos] + inputy * turntosin[turnsin] );
-      newy = ( -inputx * turntosin[turnsin] + inputy * turntosin[turncos] );
+      turnsin = ((Uint16)GCamera.turn_lr) >> 2;
+      newy = ( inputx * turntocos[turnsin] + inputy * turntosin[turnsin] );
+      newx = (-inputx * turntosin[turnsin] + inputy * turntocos[turnsin] );
     }
 
     PlaList[player].latch.x += newx * mous.cover;
@@ -3358,6 +3355,7 @@ void set_one_player_latch( Uint16 player )
     if ( control_key_is_pressed( KEY_LEFT  ) ) inputx -= 1;
     if ( control_key_is_pressed( KEY_DOWN  ) ) inputy += 1;
     if ( control_key_is_pressed( KEY_UP    ) ) inputy -= 1;
+
     dist = inputx * inputx + inputy * inputy;
     if ( dist > 1.0 )
     {
@@ -3367,11 +3365,9 @@ void set_one_player_latch( Uint16 player )
     }
     if ( CData.autoturncamera == 255 && numlocalpla == 1 )  inputx = 0;
 
-
-    turncos = ((Uint16)GCamera.turn_lr) >> 2;
-    turnsin = ( turncos + TRIGTABLE_SHIFT ) & TRIGTABLE_MASK;
-    newx = ( inputx * turntosin[turncos]  + inputy * turntosin[turnsin] );
-    newy = ( -inputx * turntosin[turnsin] + inputy * turntosin[turncos] );
+    turnsin = ((Uint16)GCamera.turn_lr) >> 2;
+    newy = ( inputx * turntocos[turnsin] + inputy * turntosin[turnsin] );
+    newx = (-inputx * turntosin[turnsin] + inputy * turntocos[turnsin] );
 
     PlaList[player].latch.x += newx * mous.cover;
     PlaList[player].latch.y += newy * mous.cover;
@@ -4838,9 +4834,8 @@ void do_bumping( float dUpdate )
     //                panc.z = 0.25 * ABS( pvel.z ) * 2.0f / ( float )( 1 + ChrList[chra_ref].bmpdata.cv.z_max - ChrList[chra_ref].bmpdata.cv.z_min );
 
     //                rotate_sin = ChrList[chra_ref].turn_lr >> 2;
-    //                rotate_cos = ( rotate_sin + TRIGTABLE_SHIFT ) & TRIGTABLE_MASK;
 
-    //                cv = turntosin[rotate_cos];
+    //                cv = turntocos[rotate_sin];
     //                sv = turntosin[rotate_sin];
 
     //                ChrList[chra_ref].pancakevel.x = - ( panc.x * cv - panc.y * sv );

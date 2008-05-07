@@ -23,6 +23,7 @@
 #include "egoboo_math.inl"
 
 float turntosin[TRIGTABLE_SIZE];
+float turntocos[TRIGTABLE_SIZE];
 
 //--------------------------------------------------------------------------------------------
 void make_turntosin( void )
@@ -34,5 +35,6 @@ void make_turntosin( void )
   for ( cnt = 0; cnt < TRIGTABLE_SIZE; cnt++ )
   {
     turntosin[cnt] = sin(( TWO_PI * cnt ) / ( float ) TRIGTABLE_SIZE );
+    turntocos[cnt] = cos(( TWO_PI * cnt ) / ( float ) TRIGTABLE_SIZE );
   }
 }

@@ -22,10 +22,8 @@
 //---------------------------------------------------------------------------------------------
 INLINE void turn_to_vec( Uint16 turn, float * dx, float * dy )
 {
-  float rad = TURN_TO_RAD( turn );
-
-  *dx = cos( rad );
-  *dy = sin( rad );
+  *dx = -turntocos[turn>>2];
+  *dy = -turntosin[turn>>2];
 };
 
 //---------------------------------------------------------------------------------------------
@@ -48,7 +46,7 @@ INLINE vect3 Normalize( vect3 vec )
   vect3 tmp = vec;
   float len;
 
-  len = ( vec.x * vec.x + vec.y * vec.y + vec.z * vec.z );
+  len = vec.x * vec.x + vec.y * vec.y + vec.z * vec.z;
   if ( len == 0.0f )
   {
     tmp.x = tmp.y = tmp.z = 0.0f;
@@ -119,7 +117,7 @@ INLINE vect4 CrossProduct4( vect4 A, vect4 B )
 }
 
 //---------------------------------------------------------------------------------------------
-INLINE float GLDotProduct( vect4 A, vect4 B )
+INLINE float DotProduct4( vect4 A, vect4 B )
 { return ( A.x*B.x + A.y*B.y + A.z*B.z ); }
 
 //---------------------------------------------------------------------------------------------
@@ -192,6 +190,7 @@ INLINE matrix_4x4 RotateX( const float rads )
 {
   float cosine = ( float ) cos( rads );
   float sine   = ( float ) sin( rads );
+
   matrix_4x4 ret = IdentityMatrix();
   ret.CNV( 1, 1 ) =  cosine;
   ret.CNV( 2, 2 ) =  cosine;
@@ -239,17 +238,21 @@ INLINE matrix_4x4 ScaleXYZ( const float sizex, const float sizey, const float si
 //--------------------------------------------------------------------------------------------
 INLINE matrix_4x4 ScaleXYZRotateXYZTranslate( const float sizex, const float sizey, const float sizez, Uint16 turnz, Uint16 turnx, Uint16 turny, float tx, float ty, float tz )
 {
-  float cx = turntosin[( turnx+TRIGTABLE_SHIFT ) & TRIGTABLE_MASK];
-  float sx = turntosin[turnx & TRIGTABLE_MASK];
-  float cy = turntosin[( turny+TRIGTABLE_SHIFT ) & TRIGTABLE_MASK];
-  float sy = turntosin[turny & TRIGTABLE_MASK];
-  float cz = turntosin[( turnz+TRIGTABLE_SHIFT ) & TRIGTABLE_MASK];
-  float sz = turntosin[turnz & TRIGTABLE_MASK];
+  matrix_4x4 ret;
+
+  float cx = turntocos[(turnx >> 2) & TRIGTABLE_MASK];
+  float sx = turntosin[(turnx >> 2) & TRIGTABLE_MASK];
+
+  float cy = turntocos[(turny >> 2) & TRIGTABLE_MASK];
+  float sy = turntosin[(turny >> 2) & TRIGTABLE_MASK];
+
+  float cz = turntocos[(turnz >> 2) & TRIGTABLE_MASK];
+  float sz = turntosin[(turnz >> 2) & TRIGTABLE_MASK];
+
   float sxsy = sx * sy;
   float cxsy = cx * sy;
   float sxcy = sx * cy;
   float cxcy = cx * cy;
-  matrix_4x4 ret;
 
   ret.CNV( 0, 0 ) = sizex * ( cy * cz );    //0,0
   ret.CNV( 0, 1 ) = sizex * ( sxsy * cz + cx * sz );  //0,1
