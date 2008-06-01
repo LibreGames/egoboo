@@ -1,6 +1,7 @@
 #pragma once
 
 #include "char.h"
+#include "game.h"
 
 #include <assert.h>
 
@@ -8,72 +9,72 @@
 //--------------------------------------------------------------------------------------------
 
 
-INLINE const bool_t chr_in_pack( CHR_REF character );
-INLINE const bool_t chr_attached( CHR_REF character );
-INLINE const bool_t chr_has_inventory( CHR_REF character );
-INLINE const bool_t chr_is_invisible( CHR_REF character );
-INLINE const bool_t chr_using_slot( CHR_REF character, SLOT slot );
-
-INLINE const CHR_REF chr_get_nextinpack( CHR_REF ichr );
-INLINE const CHR_REF chr_get_onwhichplatform( CHR_REF ichr );
-INLINE const CHR_REF chr_get_inwhichpack( CHR_REF ichr );
-INLINE const CHR_REF chr_get_attachedto( CHR_REF ichr );
-INLINE const CHR_REF chr_get_holdingwhich( CHR_REF ichr, SLOT slot );
-
-INLINE const CHR_REF chr_get_aitarget( CHR_REF ichr );
-INLINE const CHR_REF chr_get_aiowner( CHR_REF ichr );
-INLINE const CHR_REF chr_get_aichild( CHR_REF ichr );
-INLINE const CHR_REF chr_get_aiattacklast( CHR_REF ichr );
-INLINE const CHR_REF chr_get_aibumplast( CHR_REF ichr );
-INLINE const CHR_REF chr_get_aihitlast( CHR_REF ichr );
+//INLINE const bool_t chr_in_pack( CHR_REF character );
+//INLINE const bool_t chr_attached( CHR_REF character );
+//INLINE const bool_t chr_has_inventory( CHR_REF character );
+//INLINE const bool_t chr_is_invisible( CHR_REF character );
+//INLINE const bool_t chr_using_slot( CHR_REF character, SLOT slot );
+//
+//INLINE const CHR_REF chr_get_nextinpack( CHR_REF ichr );
+//INLINE const CHR_REF chr_get_onwhichplatform( CHR_REF ichr );
+//INLINE const CHR_REF chr_get_inwhichpack( CHR_REF ichr );
+//INLINE const CHR_REF chr_get_attachedto( CHR_REF ichr );
+//INLINE const CHR_REF chr_get_holdingwhich( CHR_REF ichr, SLOT slot );
+//
+//INLINE const CHR_REF chr_get_aitarget( Chr * pchr );
+//INLINE const CHR_REF chr_get_aiowner( Chr * pchr );
+//INLINE const CHR_REF chr_get_aichild( Chr * pchr );
+//INLINE const CHR_REF chr_get_aiattacklast( Chr * pchr );
+//INLINE const CHR_REF chr_get_aibumplast( Chr * pchr );
+//INLINE const CHR_REF chr_get_aihitlast( Chr * pchr );
 
 INLINE ACTION_INFO * action_info_new( ACTION_INFO * a);
 
 INLINE ANIM_INFO * anim_info_new( ANIM_INFO * a );
 
-INLINE WP_LIST * wp_list_new(WP_LIST * w, vect3 * pos);
-INLINE bool_t    wp_list_advance(WP_LIST * wl);
-INLINE bool_t    wp_list_add(WP_LIST * wl, float x, float y);
-INLINE float     wp_list_x( WP_LIST * wl );
-INLINE float     wp_list_y( WP_LIST * wl );
+//INLINE WP_LIST * wp_list_new(WP_LIST * w, vect3 * pos);
+//INLINE bool_t    wp_list_advance(WP_LIST * wl);
+//INLINE bool_t    wp_list_add(WP_LIST * wl, float x, float y);
+//INLINE float     wp_list_x( WP_LIST * wl );
+//INLINE float     wp_list_y( WP_LIST * wl );
 
-INLINE AI_STATE * ai_state_new(AI_STATE * a, Uint16 ichr);
-INLINE AI_STATE * ai_state_renew(AI_STATE * a, Uint16 ichr);
+//INLINE AI_STATE * ai_state_new(GameState * gs, AI_STATE * a, CHR_REF ichr);
+//INLINE AI_STATE * ai_state_renew(AI_STATE * a, CHR_REF ichr);
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-INLINE const bool_t chr_attached( CHR_REF chr_ref )
+INLINE const bool_t chr_attached( Chr lst[], size_t lst_size, CHR_REF chr_ref )
 {
-  if ( !VALID_CHR( chr_ref ) ) return bfalse;
+  if ( !VALID_CHR(lst, chr_ref ) ) return bfalse;
 
-  ChrList[chr_ref].attachedto = VALIDATE_CHR( ChrList[chr_ref].attachedto );
-  if(!VALID_CHR(chr_ref)) ChrList[chr_ref].inwhichslot = SLOT_NONE;
+  lst[chr_ref].attachedto = VALIDATE_CHR(lst, lst[chr_ref].attachedto );
+  if(!VALID_CHR(lst, chr_ref)) lst[chr_ref].inwhichslot = SLOT_NONE;
 
-  return VALID_CHR( ChrList[chr_ref].attachedto );
+  return VALID_CHR(lst, lst[chr_ref].attachedto );
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t chr_in_pack( CHR_REF chr_ref )
+INLINE const bool_t chr_in_pack( Chr lst[], size_t lst_size, CHR_REF chr_ref )
 {
-  CHR_REF inwhichpack = chr_get_inwhichpack( chr_ref );
-  return VALID_CHR( inwhichpack );
+  CHR_REF inwhichpack = chr_get_inwhichpack( lst, lst_size, chr_ref );
+  return VALID_CHR(lst, inwhichpack );
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t chr_has_inventory( CHR_REF chr_ref )
+INLINE const bool_t chr_has_inventory( Chr lst[], size_t lst_size, CHR_REF chr_ref )
 {
   bool_t retval = bfalse;
-  CHR_REF nextinpack = chr_get_nextinpack( chr_ref );
+  CHR_REF nextinpack = chr_get_nextinpack( lst, lst_size, chr_ref );
 
-  if ( VALID_CHR( nextinpack ) )
+  if ( VALID_CHR(lst, nextinpack ) )
   {
     retval = btrue;
   }
 #if defined(_DEBUG) || !defined(NDEBUG)
   else
   {
-    assert( ChrList[chr_ref].numinpack == 0 );
+    assert( lst[chr_ref].numinpack == 0 );
   }
 #endif
 
@@ -81,36 +82,36 @@ INLINE const bool_t chr_has_inventory( CHR_REF chr_ref )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t chr_is_invisible( CHR_REF chr_ref )
+INLINE const bool_t chr_is_invisible( Chr lst[], size_t lst_size, CHR_REF chr_ref )
 {
-  if ( !VALID_CHR( chr_ref ) ) return btrue;
+  if ( !VALID_CHR(lst, chr_ref ) ) return btrue;
 
-  return FP8_MUL( ChrList[chr_ref].alpha_fp8, ChrList[chr_ref].light_fp8 ) <= INVISIBLE;
+  return FP8_MUL( lst[chr_ref].alpha_fp8, lst[chr_ref].light_fp8 ) <= INVISIBLE;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t chr_using_slot( CHR_REF chr_ref, SLOT slot )
+INLINE const bool_t chr_using_slot( Chr lst[], size_t lst_size, CHR_REF chr_ref, SLOT slot )
 {
-  CHR_REF inslot = chr_get_holdingwhich( chr_ref, slot );
+  CHR_REF inslot = chr_get_holdingwhich( lst, lst_size, chr_ref, slot );
 
-  return VALID_CHR( inslot );
+  return VALID_CHR(lst, inslot );
 };
 
 
 //--------------------------------------------------------------------------------------------
-INLINE const CHR_REF chr_get_nextinpack( CHR_REF chr_ref )
+INLINE const CHR_REF chr_get_nextinpack( Chr lst[], size_t lst_size, CHR_REF chr_ref )
 {
   CHR_REF nextinpack = MAXCHR;
 
-  if ( !VALID_CHR( chr_ref ) ) return MAXCHR;
+  if ( !VALID_CHR(lst, chr_ref ) ) return MAXCHR;
 
 #if defined(_DEBUG) || !defined(NDEBUG)
-  nextinpack = ChrList[chr_ref].nextinpack;
-  if ( MAXCHR != nextinpack && !ChrList[chr_ref].on )
+  nextinpack = lst[chr_ref].nextinpack;
+  if ( MAXCHR != nextinpack && !lst[chr_ref].on )
   {
     // this is an invalid configuration that may indicate a corrupted list
-    nextinpack = ChrList[nextinpack].nextinpack;
-    if ( VALID_CHR( nextinpack ) )
+    nextinpack = lst[nextinpack].nextinpack;
+    if ( VALID_CHR(lst, nextinpack ) )
     {
       // the list is definitely corrupted
       assert( bfalse );
@@ -118,33 +119,33 @@ INLINE const CHR_REF chr_get_nextinpack( CHR_REF chr_ref )
   }
 #endif
 
-  ChrList[chr_ref].nextinpack = VALIDATE_CHR( ChrList[chr_ref].nextinpack );
-  return ChrList[chr_ref].nextinpack;
+  lst[chr_ref].nextinpack = VALIDATE_CHR(lst, lst[chr_ref].nextinpack );
+  return lst[chr_ref].nextinpack;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const CHR_REF chr_get_onwhichplatform( CHR_REF chr_ref )
+INLINE const CHR_REF chr_get_onwhichplatform( Chr lst[], size_t lst_size, CHR_REF chr_ref )
 {
-  if ( !VALID_CHR( chr_ref ) ) return MAXCHR;
+  if ( !VALID_CHR(lst, chr_ref ) ) return MAXCHR;
 
-  ChrList[chr_ref].onwhichplatform = VALIDATE_CHR( ChrList[chr_ref].onwhichplatform );
-  return ChrList[chr_ref].onwhichplatform;
+  lst[chr_ref].onwhichplatform = VALIDATE_CHR(lst, lst[chr_ref].onwhichplatform );
+  return lst[chr_ref].onwhichplatform;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const CHR_REF chr_get_holdingwhich( CHR_REF chr_ref, SLOT slot )
+INLINE const CHR_REF chr_get_holdingwhich( Chr lst[], size_t lst_size, CHR_REF chr_ref, SLOT slot )
 {
   
 
-  if ( !VALID_CHR( chr_ref ) || slot >= SLOT_COUNT ) return MAXCHR;
+  if ( !VALID_CHR(lst, chr_ref ) || slot >= SLOT_COUNT ) return MAXCHR;
 
 #if defined(_DEBUG) || !defined(NDEBUG)
   {
     CHR_REF inslot;
-    inslot = ChrList[chr_ref].holdingwhich[slot];
+    inslot = lst[chr_ref].holdingwhich[slot];
     if ( MAXCHR != inslot )
     {
-      CHR_REF holder = ChrList[inslot].attachedto;
+      CHR_REF holder = lst[inslot].attachedto;
 
       if ( chr_ref != holder )
       {
@@ -155,103 +156,103 @@ INLINE const CHR_REF chr_get_holdingwhich( CHR_REF chr_ref, SLOT slot )
   }
 #endif
 
-  ChrList[chr_ref].holdingwhich[slot] = VALIDATE_CHR( ChrList[chr_ref].holdingwhich[slot] );
-  return ChrList[chr_ref].holdingwhich[slot];
+  lst[chr_ref].holdingwhich[slot] = VALIDATE_CHR(lst, lst[chr_ref].holdingwhich[slot] );
+  return lst[chr_ref].holdingwhich[slot];
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const CHR_REF chr_get_inwhichpack( CHR_REF chr_ref )
+INLINE const CHR_REF chr_get_inwhichpack( Chr lst[], size_t lst_size, CHR_REF chr_ref )
 {
-  if ( !VALID_CHR( chr_ref ) ) return MAXCHR;
+  if ( !VALID_CHR(lst, chr_ref ) ) return MAXCHR;
 
-  ChrList[chr_ref].inwhichpack = VALIDATE_CHR( ChrList[chr_ref].inwhichpack );
-  return ChrList[chr_ref].inwhichpack;
+  lst[chr_ref].inwhichpack = VALIDATE_CHR(lst, lst[chr_ref].inwhichpack );
+  return lst[chr_ref].inwhichpack;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const CHR_REF chr_get_attachedto( CHR_REF chr_ref )
+INLINE const CHR_REF chr_get_attachedto( Chr lst[], size_t lst_size, CHR_REF chr_ref )
 {
-  if ( !VALID_CHR( chr_ref ) ) return MAXCHR;
+  if ( !VALID_CHR(lst, chr_ref ) ) return MAXCHR;
 
 #if defined(_DEBUG) || !defined(NDEBUG)
 
   {
     CHR_REF holder;
 
-    if( MAXCHR != ChrList[chr_ref].attachedto )
+    if( MAXCHR != lst[chr_ref].attachedto )
     {
-      SLOT slot = ChrList[chr_ref].inwhichslot;
+      SLOT slot = lst[chr_ref].inwhichslot;
       if(slot != SLOT_INVENTORY)
       {
         assert(SLOT_NONE != slot);
-        holder = ChrList[chr_ref].attachedto;
-        assert( ChrList[holder].holdingwhich[slot] == chr_ref );
+        holder = lst[chr_ref].attachedto;
+        assert( lst[holder].holdingwhich[slot] == chr_ref );
       };
     }
     else
     {
-      assert(SLOT_NONE == ChrList[chr_ref].inwhichslot);
+      assert(SLOT_NONE == lst[chr_ref].inwhichslot);
     };
   }
 #endif
 
-  ChrList[chr_ref].attachedto = VALIDATE_CHR( ChrList[chr_ref].attachedto );
-  if( !VALID_CHR( ChrList[chr_ref].attachedto ) ) ChrList[chr_ref].inwhichslot = SLOT_NONE;
-  return ChrList[chr_ref].attachedto;
+  lst[chr_ref].attachedto = VALIDATE_CHR(lst, lst[chr_ref].attachedto );
+  if( !VALID_CHR(lst, lst[chr_ref].attachedto ) ) lst[chr_ref].inwhichslot = SLOT_NONE;
+  return lst[chr_ref].attachedto;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const CHR_REF chr_get_aitarget( CHR_REF chr_ref )
+INLINE const CHR_REF chr_get_aitarget( Chr lst[], size_t lst_size, Chr * pchr )
 {
-  if ( !VALID_CHR( chr_ref ) ) return MAXCHR;
+  if ( NULL==pchr || !pchr->on ) return MAXCHR;
 
-  ChrList[chr_ref].aistate.target = VALIDATE_CHR( ChrList[chr_ref].aistate.target );
-  return ChrList[chr_ref].aistate.target;
+  pchr->aistate.target = VALIDATE_CHR( lst, pchr->aistate.target );
+  return pchr->aistate.target;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const CHR_REF chr_get_aiowner( CHR_REF chr_ref )
+INLINE const CHR_REF chr_get_aiowner( Chr lst[], size_t lst_size, Chr * pchr )
 {
-  if ( !VALID_CHR( chr_ref ) ) return MAXCHR;
+  if ( NULL==pchr || !pchr->on ) return MAXCHR;
 
-  ChrList[chr_ref].aistate.owner = VALIDATE_CHR( ChrList[chr_ref].aistate.owner );
-  return ChrList[chr_ref].aistate.owner;
+  pchr->aistate.owner = VALIDATE_CHR(lst, pchr->aistate.owner );
+  return pchr->aistate.owner;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const CHR_REF chr_get_aichild( CHR_REF chr_ref )
+INLINE const CHR_REF chr_get_aichild( Chr lst[], size_t lst_size, Chr * pchr )
 {
-  if ( !VALID_CHR( chr_ref ) ) return MAXCHR;
+  if ( NULL==pchr || !pchr->on ) return MAXCHR;
 
-  ChrList[chr_ref].aistate.child = VALIDATE_CHR( ChrList[chr_ref].aistate.child );
-  return ChrList[chr_ref].aistate.child;
+  pchr->aistate.child = VALIDATE_CHR(lst, pchr->aistate.child );
+  return pchr->aistate.child;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const CHR_REF chr_get_aiattacklast( CHR_REF chr_ref )
+INLINE const CHR_REF chr_get_aiattacklast( Chr lst[], size_t lst_size, Chr * pchr )
 {
-  if ( !VALID_CHR( chr_ref ) ) return MAXCHR;
+  if ( NULL==pchr || !pchr->on ) return MAXCHR;
 
-  ChrList[chr_ref].aistate.attacklast = VALIDATE_CHR( ChrList[chr_ref].aistate.attacklast );
-  return ChrList[chr_ref].aistate.attacklast;
+  pchr->aistate.attacklast = VALIDATE_CHR(lst, pchr->aistate.attacklast );
+  return pchr->aistate.attacklast;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const CHR_REF chr_get_aibumplast( CHR_REF chr_ref )
+INLINE const CHR_REF chr_get_aibumplast( Chr lst[], size_t lst_size, Chr * pchr )
 {
-  if ( !VALID_CHR( chr_ref ) ) return MAXCHR;
+  if ( NULL==pchr || !pchr->on ) return MAXCHR;
 
-  ChrList[chr_ref].aistate.bumplast = VALIDATE_CHR( ChrList[chr_ref].aistate.bumplast );
-  return ChrList[chr_ref].aistate.bumplast;
+  pchr->aistate.bumplast = VALIDATE_CHR(lst, pchr->aistate.bumplast );
+  return pchr->aistate.bumplast;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const CHR_REF chr_get_aihitlast( CHR_REF chr_ref )
+INLINE const CHR_REF chr_get_aihitlast( Chr lst[], size_t lst_size, Chr * pchr )
 {
-  if ( !VALID_CHR( chr_ref ) ) return MAXCHR;
+  if ( NULL==pchr || !pchr->on ) return MAXCHR;
 
-  ChrList[chr_ref].aistate.hitlast = VALIDATE_CHR( ChrList[chr_ref].aistate.hitlast );
-  return ChrList[chr_ref].aistate.hitlast;
+  pchr->aistate.hitlast = VALIDATE_CHR(lst, pchr->aistate.hitlast );
+  return pchr->aistate.hitlast;
 };
 
 
@@ -340,26 +341,25 @@ INLINE float wp_list_y( WP_LIST * wl )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE AI_STATE * ai_state_new(AI_STATE * a, Uint16 ichr)
+INLINE AI_STATE * ai_state_new(GameState * gs, AI_STATE * a, CHR_REF ichr)
 {
   int tnc;
 
-  CHR * pchr;
-  MAD * pmad;
-  CAP * pcap;
+  Chr * pchr;
+  Mad * pmad;
+  Cap * pcap;
 
   if(NULL == a) return NULL;
 
   memset(a, 0, sizeof(AI_STATE));
 
-  if( !VALID_CHR_RANGE(ichr) ) return NULL;
-
-  pchr = ChrList + ichr;
+  if( !VALID_MDL_RANGE(ichr) ) return NULL;
+  pchr = gs->ChrList + ichr;
 
   if( !VALID_MDL_RANGE(pchr->model) ) return NULL;
 
-  pmad = MadList + pchr->model;
-  pcap = CapList + pchr->model;
+  pmad = gs->MadList + pchr->model;
+  pcap = gs->CapList + pchr->model;
 
   a->type    = pmad->ai;
   a->alert   = ALERT_SPAWNED;
@@ -490,7 +490,7 @@ INLINE void VData_Blended_Deallocate(VData_Blended * v)
 //--------------------------------------------------------------------------------------------
 INLINE VData_Blended * VData_Blended_new()
 {
-  VData_Blended * retval = calloc(sizeof(VData_Blended), 1);
+  VData_Blended * retval = (VData_Blended*)calloc(1, sizeof(VData_Blended));
   if(NULL != retval)
   {
     VData_Blended_construct(retval);
@@ -514,9 +514,9 @@ INLINE void VData_Blended_Allocate(VData_Blended * v, size_t verts)
 
   VData_Blended_destruct(v);
 
-  v->Vertices = calloc( sizeof(vect3), verts);
-  v->Normals  = calloc( sizeof(vect3), verts);
-  v->Colors   = calloc( sizeof(vect4), verts);
-  v->Texture  = calloc( sizeof(vect2), verts);
-  v->Ambient  = calloc( sizeof(float), verts);
+  v->Vertices = (vect3*)calloc( verts, sizeof(vect3));
+  v->Normals  = (vect3*)calloc( verts, sizeof(vect3));
+  v->Colors   = (vect4*)calloc( verts, sizeof(vect4));
+  v->Texture  = (vect2*)calloc( verts, sizeof(vect2));
+  v->Ambient  = (float*)calloc( verts, sizeof(float));
 }

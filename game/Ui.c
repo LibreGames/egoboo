@@ -1,24 +1,27 @@
-/* Egoboo - Ui.c
- * A basic library for implementing user interfaces, based off of Casey Muratori's
- * IMGUI.  (https://mollyrocket.com/forums/viewtopic.php?t=134)
- */
-
-/*
-    This file is part of Egoboo.
-
-    Egoboo is free software: you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Egoboo is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
-*/
+//********************************************************************************************
+//* Egoboo - Ui.c
+//*
+//* A basic library for implementing user interfaces, based off of Casey Muratori's IMGUI.
+//* (https://mollyrocket.com/forums/viewtopic.php?t=134)
+//*
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
 
 #include "Ui.h"
 #include "Log.h"
@@ -57,22 +60,38 @@ struct ui_context_t
 
 static UiContext ui_context;
 
-
-int ui_getMouseX() { return ui_context.mouseX; };
-int ui_getMouseY() { return ui_context.mouseY; };
-
 //********************************************************************************************
 // Core functions
 //********************************************************************************************
 
+static UiContext * UiContext_new(UiContext *pui)
+{
+  fprintf( stdout, "UiContext_new()\n");
+
+  if(NULL == pui) return pui;
+
+  memset( pui, 0, sizeof( ui_context ) );
+
+  pui->active = pui->hot = UI_Nothing;
+  pui->mouseVisible = btrue;
+
+  return pui;
+};
+
+
+//--------------------------------------------------------------------------------------------
+void ui_Reset()
+{
+  ui_context.active = ui_context.hot = UI_Nothing;
+};
+
+
+//--------------------------------------------------------------------------------------------
 int ui_initialize( const char *default_font, int default_font_size )
 {
-  memset( &ui_context, 0, sizeof( ui_context ) );
-  ui_context.active = ui_context.hot = UI_Nothing;
+  UiContext_new( &ui_context );
 
   ui_context.defaultFont = fnt_loadFont( default_font, default_font_size );
-
-  ui_context.mouseVisible = btrue;
 
   return 1;
 }
@@ -84,46 +103,53 @@ void ui_shutdown()
 }
 
 //--------------------------------------------------------------------------------------------
-void ui_handleSDLEvent( SDL_Event *evt )
+bool_t ui_handleSDLEvent( SDL_Event *evt )
 {
-  if ( evt )
+  bool_t handled = bfalse;
+
+  if ( NULL == evt ) return handled;
+
+
+  switch ( evt->type )
   {
-    switch ( evt->type )
-    {
-      case SDL_MOUSEBUTTONDOWN:
-        ui_context.mouseReleased = 0;
-        ui_context.mousePressed = 1;
+    case SDL_MOUSEBUTTONDOWN:
+      ui_context.mouseReleased = 0;
+      ui_context.mousePressed++;
+      handled = btrue;
+      break;
 
-        break;
+    case SDL_MOUSEBUTTONUP:
+      ui_context.mousePressed = 0;
+      ui_context.mouseReleased++;
+      handled = btrue;
+      break;
 
-      case SDL_MOUSEBUTTONUP:
-        ui_context.mousePressed = 0;
-        ui_context.mouseReleased = 1;
+    case SDL_MOUSEMOTION:
+      ui_context.mouseX = evt->motion.x;
+      ui_context.mouseY = evt->motion.y;
+      handled = btrue;
+      break;
 
-        break;
+    case SDL_ACTIVEEVENT:
+      {
+        assert(evt->active.type == SDL_ACTIVEEVENT);
 
-      case SDL_MOUSEMOTION:
-        ui_context.mouseX = evt->motion.x;
-        ui_context.mouseY = evt->motion.y;
-        break;
-
-      case SDL_ACTIVEEVENT:
+        if( evt->active.state == SDL_APPMOUSEFOCUS )
         {
-          assert(evt->active.type == SDL_ACTIVEEVENT);
-
-          if( evt->active.state == SDL_APPMOUSEFOCUS )
-          {
-            ui_context.mouseVisible = (1 == evt->active.gain);
-          };
+          ui_context.mouseVisible = (1 == evt->active.gain);
         };
-    }
+      };
+      handled = btrue;
+      break;
   }
+
+  return handled;
 }
 
 //--------------------------------------------------------------------------------------------
 bool_t ui_frame_enabled = bfalse;
 int    ui_begin_level = 0;
-void ui_beginFrame( float deltaTime )
+void ui_beginFrame()
 {
 
   SDL_Surface *screen;
@@ -235,7 +261,6 @@ void ui_setactive( ui_Widget * pw )
 //--------------------------------------------------------------------------------------------
 void ui_sethot( ui_Widget * pw )
 {
-
   if ( NULL == pw )
   {
     ui_context.hot = UI_Nothing;
@@ -465,7 +490,7 @@ void ui_drawImage( ui_Widget * pWidget )
     y1 = ( GLfloat ) GLTexture_GetImageHeight( pWidget->img ) / ( GLfloat ) GLTexture_GetTextureHeight( pWidget->img );
 
     // Draw the image
-    GLTexture_Bind( pWidget->img, TX_UNFILTERED );
+    GLTexture_Bind( pWidget->img, &gfxState );
     glColor4f( 1, 1, 1, GLTexture_GetAlpha( pWidget->img ) );
 
     glBegin( GL_QUADS );
@@ -503,7 +528,7 @@ void ui_drawTextBox( ui_Widget * pWidget, int spacing )
 
 ui_buttonValues ui_doButton( ui_Widget * pWidget )
 {
-  int result;
+  ui_buttonValues result;
   int text_w, text_h;
   int text_x, text_y;
   TTFont *font;
@@ -541,7 +566,7 @@ ui_buttonValues ui_doButton( ui_Widget * pWidget )
 //--------------------------------------------------------------------------------------------
 ui_buttonValues ui_doImageButton( ui_Widget * pWidget )
 {
-  int result;
+  ui_buttonValues result;
   ui_Widget wtmp;
 
   // Do all the logic type work for the button
@@ -564,7 +589,7 @@ ui_buttonValues ui_doImageButton( ui_Widget * pWidget )
 //--------------------------------------------------------------------------------------------
 ui_buttonValues ui_doImageButtonWithText( ui_Widget * pWidget )
 {
-  int result;
+  ui_buttonValues result;
   TTFont *font;
   int text_x, text_y;
   int text_w, text_h;
@@ -621,3 +646,9 @@ void ui_doCursor()
   EndText();
   End2DMode();
 };
+
+//--------------------------------------------------------------------------------------------
+int ui_getMouseX() { return ui_context.mouseX; };
+
+//--------------------------------------------------------------------------------------------
+int ui_getMouseY() { return ui_context.mouseY; };

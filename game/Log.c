@@ -1,23 +1,26 @@
-/* Egoboo - Log.c
- * Basic logging functionality.
- */
-
-/*
-    This file is part of Egoboo.
-
-    Egoboo is free software: you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Egoboo is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
-*/
+//********************************************************************************************
+//* Egoboo - Log.c
+//*
+//* Basic logging functionality.
+//*
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
 
 #include "Log.h"
 #include "proto.h"
@@ -28,66 +31,89 @@
 
 #define MAX_LOG_MESSAGE 1024
 
-static FILE *logFile = NULL;
-static FILE *debugFile = NULL;
-static char logBuffer[MAX_LOG_MESSAGE];
-static int  logLevel = 1;
+static FILE * _logFile = NULL;
+static char   _logBuffer[MAX_LOG_MESSAGE];
+static int    _logLevel = 1;
+static FILE * _log_getFile();
+
+static FILE *_debugFile = NULL;
+static FILE * _log_getDebugFile();
+
+
+FILE * _log_getFile()
+{
+  if ( _logFile == NULL )
+  {
+    _logFile = fopen( "log.txt", "wt" );
+  }
+
+  return _logFile;
+}
+
+FILE * _log_getDebugFile()
+{
+  if ( _debugFile == NULL )
+  {
+    _debugFile = fopen( "debug.txt", "wt" );
+  }
+
+  return _debugFile;
+}
+
+void log_init()
+{
+  _log_getFile();
+  _log_getDebugFile();
+}
+
+void log_shutdown()
+{
+  if ( _logFile != NULL )
+  {
+    fclose( _logFile );
+    _logFile = NULL;
+  }
+
+  if ( _debugFile != NULL )
+  {
+    fclose( _debugFile );
+    _debugFile = NULL;
+  }
+}
+
 
 static void writeLogMessage( const char *prefix, const char *format, va_list args )
 {
-  if ( logFile != NULL )
+  FILE * lfile = _log_getFile();
+
+  if ( lfile != NULL )
   {
-    vsnprintf( logBuffer, MAX_LOG_MESSAGE - 1, format, args );
-    fputs( prefix, logFile );
-    fputs( logBuffer, logFile );
-    fflush( logFile );
+    fputs( prefix, lfile );
+    vsnprintf( _logBuffer, MAX_LOG_MESSAGE - 1, format, args );
+    fputs( _logBuffer, lfile );
+    fflush( lfile );
   }
 }
 
 static void writeDebugMessage( const char *prefix, const char *format, va_list args )
 {
-  if ( logFile != NULL )
+  FILE * dfile = _log_getDebugFile();
+
+  if ( dfile != NULL )
   {
-    vsnprintf( logBuffer, MAX_LOG_MESSAGE - 1, format, args );
-    fputs( prefix, debugFile );
-    fputs( logBuffer, debugFile );
-    fflush( debugFile );
+    vsnprintf( _logBuffer, MAX_LOG_MESSAGE - 1, format, args );
+    fputs( prefix, dfile );
+    fputs( _logBuffer, dfile );
+    fflush( dfile );
   }
 }
 
-void log_init()
-{
-  if ( logFile == NULL )
-  {
-    logFile = fs_fileOpen( PRI_NONE, NULL, CData.log_file, "wt" );
-  }
-
-  if ( debugFile == NULL )
-  {
-    debugFile = fs_fileOpen( PRI_NONE, NULL, CData.debug_file, "wt" );
-  }
-}
-
-void log_shutdown()
-{
-  if ( logFile != NULL )
-  {
-    fs_fileClose( logFile );
-    logFile = NULL;
-  }
-
-  if ( debugFile != NULL )
-  {
-    fs_fileClose( debugFile );
-    debugFile = NULL;
-  }
-}
 
 void log_setLoggingLevel( int level )
 {
   if ( level > 0 )
   {
-    logLevel = level;
+    _logLevel = level;
   }
 }
 
@@ -104,7 +130,7 @@ void log_info( const char *format, ... )
 {
   va_list args;
 
-  if ( logLevel >= 2 )
+  if ( _logLevel >= 2 )
   {
     va_start( args, format );
     writeLogMessage( "INFO: ", format, args );
@@ -116,7 +142,7 @@ void log_warning( const char *format, ... )
 {
   va_list args;
 
-  if ( logLevel >= 1 )
+  if ( _logLevel >= 1 )
   {
     va_start( args, format );
     writeLogMessage( "WARN: ", format, args );
@@ -135,7 +161,7 @@ void log_error( const char *format, ... )
   va_end( args );
 
   //Close down various stuff and release memory
-  fflush( logFile );
+  fflush( _logFile );
   exit( -1 );
 }
 
@@ -144,13 +170,13 @@ void log_debug( const char *format, ... )
 {
   va_list args;
 
-  if ( CData.DevMode && logLevel >= 1 )
+  if ( CData.DevMode && _logLevel >= 1 )
   {
     va_start( args, format );
     writeDebugMessage( "DEBUG: ", format, args );
 
 #ifdef CONSOLE_MODE
-    vfprintf( stdout, format, args );
+//    vfprintf( stdout, format, args );
 #endif
 
     va_end( args );

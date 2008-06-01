@@ -3,6 +3,8 @@
 #include "egoboo_types.h"
 #include "egoboo_math.h"
 
+struct GameState_t;
+
 #define MAPID                           0x4470614d     // The string 'MapD'
 
 #define MAXMESHFAN                      (512*512)      // Terrain mesh size
@@ -77,9 +79,6 @@ typedef enum fan_type_t
   STAIR_NS    //  25  Twelve Faced Stair (NS)...
 } FAN_TYPE;
 
-extern Uint32  Mesh_Block_X[( MAXMESHSIZEY/4 ) +1];
-extern Uint32  Mesh_Fan_X[MAXMESHSIZEY];                         // Which fan to start a row with
-
 typedef struct mesh_info_t
 {
   bool_t  exploremode;                            // Explore mode?
@@ -88,9 +87,10 @@ typedef struct mesh_info_t
   float   edge_x;                                          // Limits !!!BAD!!!
   float   edge_y;                                          //
   Uint16  last_texture;                                    // Last texture used
-} MESH_INFO;
 
-extern MESH_INFO mesh;
+  Uint32  Block_X[( MAXMESHSIZEY/4 ) +1];
+  Uint32  Fan_X[MAXMESHSIZEY];                         // Which fan to start a row with
+} MESH_INFO;
 
 
 typedef struct mesh_fan_t
@@ -104,24 +104,30 @@ typedef struct mesh_fan_t
   AA_BBOX bbox;                               // what is the minimum extent of the fan
 } MESH_FAN;
 
-extern MESH_FAN Mesh_Fan[MAXMESHFAN];
 
-
-typedef struct mesh_memory_t
+typedef struct MeshMem_t
 {
-  float*  base;                                                 // For malloc
+  int     vrt_count;
+  void *  base;                                                 // For malloc
+
   float*  vrt_x;                                           // Vertex position
   float*  vrt_y;                                           //
   float*  vrt_z;                                           // Vertex elevation
+
   Uint8*  vrt_ar_fp8;                                           // Vertex base light
   Uint8*  vrt_ag_fp8;                                           // Vertex base light
   Uint8*  vrt_ab_fp8;                                           // Vertex base light
+
   Uint8*  vrt_lr_fp8;                                           // Vertex light
   Uint8*  vrt_lg_fp8;                                           // Vertex light
   Uint8*  vrt_lb_fp8;                                           // Vertex light
-} MESH_MEMORY;
 
-extern MESH_MEMORY Mesh_Mem;
+  int         fan_count;
+  MESH_FAN  * fanlst;
+} MeshMem;
+
+MeshMem * MeshMem_new(MeshMem * mem, int vertcount, int fancount);
+bool_t    MeshMem_delete(MeshMem * mem);
 
 typedef struct mesh_command_t
 {
@@ -134,7 +140,7 @@ typedef struct mesh_command_t
   vect2   tx[MAXMESHVERTICES];
 } MESH_COMMAND;
 
-MESH_COMMAND Mesh_Cmd[MAXMESHTYPE];
+extern MESH_COMMAND Mesh_Cmd[MAXMESHTYPE];
 
 typedef struct mesh_tile_t
 {
@@ -188,64 +194,66 @@ INLINE const Uint32     bumplist_get_chr_count(BUMPLIST * b, Uint32 block );
 INLINE const Uint32     bumplist_get_prt_count(BUMPLIST * b, Uint32 block );
 
 INLINE const Uint32     bumplist_get_next(BUMPLIST * b, Uint32 node );
-INLINE const Uint32     bumplist_get_next_prt(BUMPLIST * b, Uint32 node );
-INLINE const Uint32     bumplist_get_next_chr(BUMPLIST * b, Uint32 node );
 INLINE const Uint32     bumplist_get_ref(BUMPLIST * b, Uint32 node );
+INLINE const Uint32     bumplist_get_next_prt(struct GameState_t * gs, BUMPLIST * b, Uint32 node );
+INLINE const Uint32     bumplist_get_next_chr(struct GameState_t * gs, BUMPLIST * b, Uint32 node );
+
 
 
 extern BUMPLIST bumplist;
 
-bool_t get_mesh_memory();
-void free_mesh_memory();
 bool_t load_mesh_fans();
-void make_fanstart();
+void make_fanstart(MESH_INFO * mi);
 void make_twist();
-bool_t load_mesh( char *modname );
+bool_t load_mesh( struct GameState_t * gs, char *modname );
 
 
-bool_t mesh_calc_normal_fan( int fan, vect3 * pnrm, vect3 * ppos );
-bool_t mesh_calc_normal_pos( int fan, vect3 pos, vect3 * pnrm );
-bool_t mesh_calc_normal( vect3 pos, vect3 * pnrm );
+bool_t mesh_calc_normal_fan( struct GameState_t * gs, int fan, vect3 * pnrm, vect3 * ppos );
+bool_t mesh_calc_normal_pos( struct GameState_t * gs, int fan, vect3 pos, vect3 * pnrm );
+bool_t mesh_calc_normal( struct GameState_t * gs, vect3 pos, vect3 * pnrm );
+
+float mesh_get_level( struct GameState_t * gs, Uint32 fan, float x, float y, bool_t waterwalk );
 
 
+Uint32 mesh_hitawall( struct GameState_t * gs, vect3 pos, float size_x, float size_y, Uint32 collision_bits, vect3 * nrm );
 
-Uint32 mesh_hitawall( vect3 pos, float size_x, float size_y, Uint32 collision_bits, vect3 * nrm );
+INLINE const Uint32 mesh_get_fan( struct GameState_t * gs, vect3 pos );
+INLINE const Uint32 mesh_get_block( MESH_INFO * mi, vect3 pos );
 
-INLINE const Uint32 mesh_get_fan( vect3 pos );
-INLINE const Uint32 mesh_get_block( vect3 pos );
+INLINE void mesh_set_colora( struct GameState_t * gs, int fan_x, int fan_y, int color );
 
-INLINE void mesh_set_colora( int fan_x, int fan_y, int color );
+INLINE const bool_t mesh_fan_clear_bits( struct GameState_t * gs, int fan_x, int fan_y, Uint32 bits );
+INLINE const bool_t mesh_fan_add_bits( struct GameState_t * gs, int fan_x, int fan_y, Uint32 bits );
+INLINE const bool_t mesh_fan_set_bits( struct GameState_t * gs, int fan_x, int fan_y, Uint32 bits );
 
-INLINE const bool_t mesh_fan_clear_bits( int fan_x, int fan_y, Uint32 bits );
-INLINE const bool_t mesh_fan_add_bits( int fan_x, int fan_y, Uint32 bits );
-INLINE const bool_t mesh_fan_set_bits( int fan_x, int fan_y, Uint32 bits );
+INLINE const int   mesh_bump_tile( struct GameState_t * gs, int fan_x, int fan_y );
+INLINE const Uint16 mesh_get_tile( struct GameState_t * gs, int fan_x, int fan_y );
+INLINE const bool_t mesh_set_tile( struct GameState_t * gs, int fan_x, int fan_y, Uint32 become );
 
-INLINE const int   mesh_bump_tile( int fan_x, int fan_y );
-INLINE const Uint16 mesh_get_tile( int fan_x, int fan_y );
-INLINE const bool_t mesh_set_tile( int fan_x, int fan_y, Uint32 become );
+INLINE const Uint32 mesh_convert_fan( MESH_INFO * mi, int fan_x, int fan_y );
+INLINE const Uint32 mesh_convert_block( MESH_INFO * mi, int block_x, int block_y );
 
-INLINE const Uint32 mesh_convert_fan( int fan_x, int fan_y );
-INLINE const Uint32 mesh_convert_block( int block_x, int block_y );
+INLINE const float mesh_fraction_x( MESH_INFO * mi, float x );
+INLINE const float mesh_fraction_y( MESH_INFO * mi, float y );
 
-INLINE const float mesh_fraction_x( float x );
-INLINE const float mesh_fraction_y( float y );
+INLINE const bool_t mesh_fan_is_in_renderlist(  MESH_FAN * mf_list, int fan );
+INLINE       void   mesh_fan_remove_renderlist( MESH_FAN * mf_list, int fan );
+INLINE       void   mesh_fan_add_renderlist( MESH_FAN * mf_list, int fan );
 
-INLINE const bool_t mesh_fan_is_in_renderlist( int fan );
-INLINE       void   mesh_fan_remove_renderlist( int fan );
-INLINE       void   mesh_fan_add_renderlist( int fan );
+INLINE const float mesh_clip_x( MESH_INFO * mi, float x );
+INLINE const float mesh_clip_y( MESH_INFO * mi, float y );
+INLINE const int mesh_clip_fan_x( MESH_INFO * mi, int fan_x );
+INLINE const int mesh_clip_fan_y( MESH_INFO * mi, int fan_y );
+INLINE const int mesh_clip_block_x( MESH_INFO * mi, int block_x );
+INLINE const int mesh_clip_block_y( MESH_INFO * mi, int block_y );
 
-INLINE const float mesh_clip_x( float x );
-INLINE const float mesh_clip_y( float y );
-INLINE const int mesh_clip_fan_x( int fan_x );
-INLINE const int mesh_clip_fan_y( int fan_y );
-INLINE const int mesh_clip_block_x( int block_x );
-INLINE const int mesh_clip_block_y( int block_y );
+INLINE const bool_t mesh_check( MESH_INFO * mi, float x, float y );
 
-INLINE const bool_t mesh_check( float x, float y );
+INLINE const Uint32 mesh_test_bits( MESH_FAN * mf_list, int fan, Uint32 bits );
+INLINE const bool_t mesh_has_some_bits( MESH_FAN * mf_list, int fan, Uint32 bits );
+INLINE const bool_t mesh_has_no_bits( MESH_FAN * mf_list, int fan, Uint32 bits );
+INLINE const bool_t mesh_has_all_bits( MESH_FAN * mf_list, int fan, Uint32 bits );
 
-INLINE const Uint32 mesh_test_bits( int fan, Uint32 bits );
-INLINE const bool_t mesh_has_some_bits( int fan, Uint32 bits );
-INLINE const bool_t mesh_has_no_bits( int fan, Uint32 bits );
-INLINE const bool_t mesh_has_all_bits( int fan, Uint32 bits );
+INLINE const Uint8 mesh_get_twist( MESH_FAN * mf_list, int fan );
 
-INLINE const Uint8 mesh_get_twist( int fan );
+bool_t reset_bumplist();

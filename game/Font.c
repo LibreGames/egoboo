@@ -1,24 +1,27 @@
-/* Egoboo - TTF_Font.c
- * True-type font drawing functionality.  Uses Freetype 2 & OpenGL
- * to do it's business.
- */
-
-/*
-    This file is part of Egoboo.
-
-    Egoboo is free software: you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Egoboo is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
-*/
+//********************************************************************************************
+//* Egoboo - TTF_Font.c
+//*
+//* Code for implementing bitmapped and outline fonts.
+//* Outline fonts are currently handled through SDL_ttf
+//*
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
 
 #include "ogl_texture.h"
 #include "Font.h"
@@ -289,7 +292,7 @@ TTFont* fnt_loadFont( const char *fileName, int pointSize )
   }
 
   // Everything looks good
-  newFont = ( TTFont* ) malloc( sizeof( TTFont ) );
+  newFont = ( TTFont* ) calloc( 1, sizeof( TTFont ) );
   newFont->ttfFont = ttfFont;
   newFont->texture = 0;
 
@@ -328,36 +331,36 @@ void fnt_drawText( TTFont *font, int x, int y, const char *text )
   SDL_Surface *textSurf;
   SDL_Color color = { 0xFF, 0xFF, 0xFF, 0 };
 
-  if ( font )
+  if ( NULL == font || NULL == text || '\0' == text[0] ) return;
+
+  // Let TTF render the text
+  textSurf = TTF_RenderText_Blended( font->ttfFont, text, color );
+
+  // Does this font already have a texture?  If not, allocate it here
+  if ( font->texture == 0 )
   {
-    // Let TTF render the text
-    textSurf = TTF_RenderText_Blended( font->ttfFont, text, color );
-
-    // Does this font already have a texture?  If not, allocate it here
-    if ( font->texture == 0 )
-    {
-      glGenTextures( 1, &font->texture );
-    }
-
-    // Copy the surface to the texture
-    if ( copySurfaceToTexture( textSurf, font->texture, font->texCoords ) )
-    {
-      // And draw the darn thing
-      glBegin( GL_TRIANGLE_STRIP );
-      glTexCoord2f( font->texCoords[0], font->texCoords[1] );
-      glVertex2i( x, y );
-      glTexCoord2f( font->texCoords[2], font->texCoords[1] );
-      glVertex2i( x + textSurf->w, y );
-      glTexCoord2f( font->texCoords[0], font->texCoords[3] );
-      glVertex2i( x, y + textSurf->h );
-      glTexCoord2f( font->texCoords[2], font->texCoords[3] );
-      glVertex2i( x + textSurf->w, y + textSurf->h );
-      glEnd();
-    }
-
-    // Done with the surface
-    SDL_FreeSurface( textSurf );
+    glGenTextures( 1, &font->texture );
   }
+
+  // Copy the surface to the texture
+  if ( copySurfaceToTexture( textSurf, font->texture, font->texCoords ) )
+  {
+    // And draw the darn thing
+    glBegin( GL_TRIANGLE_STRIP );
+    glTexCoord2f( font->texCoords[0], font->texCoords[1] );
+    glVertex2i( x, y );
+    glTexCoord2f( font->texCoords[2], font->texCoords[1] );
+    glVertex2i( x + textSurf->w, y );
+    glTexCoord2f( font->texCoords[0], font->texCoords[3] );
+    glVertex2i( x, y + textSurf->h );
+    glTexCoord2f( font->texCoords[2], font->texCoords[3] );
+    glVertex2i( x + textSurf->w, y + textSurf->h );
+    glEnd();
+  }
+
+  // Done with the surface
+  SDL_FreeSurface( textSurf );
+
 }
 
 //--------------------------------------------------------------------------------------------
@@ -407,12 +410,12 @@ void fnt_drawTextBox( TTFont *font, const char *text, int x, int y,  int width, 
   //  glLoadIdentity();
   //  glOrtho( x, x + width, y + height, y, -1, 1 );
 
-  //  glViewport(x,CData.scry-y-height,width,height);
+  //  glViewport(x,gfxState.scry-y-height,width,height);
   //}
 
   // Split the passed in text into separate lines
   len = strlen( text );
-  buffer = calloc( 1, len + 1 );
+  buffer = (char*)calloc( len + 1, sizeof(char) );
   strncpy( buffer, text, len );
 
   line = strtok( buffer, "\n" );
@@ -446,7 +449,7 @@ void fnt_getTextBoxSize( TTFont *font, const char *text, int spacing, int *width
 
   // Split the passed in text into separate lines
   len = strlen( text );
-  buffer = calloc( 1, len + 1 );
+  buffer = (char*)calloc( len + 1, sizeof(char) );
   strncpy( buffer, text, len );
 
   line = strtok( buffer, "\n" );

@@ -2,6 +2,8 @@
 
 #include "egoboo_types.h"
 
+struct GameState_t;
+
 // These are for the AI script loading/parsing routines
 extern int                     iNumAis;
 
@@ -458,27 +460,23 @@ typedef enum script_variable_e
   VAR_SPAWN_DISTANCE
 } VARIABLE;
 
-typedef struct script_global_values_t
+typedef struct ScriptInfo_t
 {
-  Uint16 oldtarget;
-  Sint32 tmpx;
-  Sint32 tmpy;
-  Uint32 tmpturn;
-  Sint32 tmpdistance;
-  Sint32 tmpargument;
-  Uint32 lastindent;
-  Sint32 operationsum;
-} SCRIPT_GLOBAL_VALUES;
+  int    buffer_index;
+  Uint32 buffer[AISMAXCOMPILESIZE];
 
-extern SCRIPT_GLOBAL_VALUES _scr_globals;
+  STRING fname[MAXAI];
+  int    offset_count;
+  int    offset_stt[MAXAI];
+  int    offset_end[MAXAI];
+} ScriptInfo;
 
-bool_t  search_tile_in_passage( SCRIPT_GLOBAL_VALUES * pgscr, Uint32 passage, Uint32 tiletype );
-bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF character );
-void set_operand( SCRIPT_GLOBAL_VALUES * pg_scr, Uint8 variable );
-void run_operand( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF character );
-void let_character_think( CHR_REF character, float dUpdate );
-void let_ai_think( float dUpdate );
+retval_t let_character_think( struct GameState_t * gs, CHR_REF character, float dUpdate );
+void let_ai_think( struct GameState_t * gs, float dUpdate );
 
-void display_message( SCRIPT_GLOBAL_VALUES * pg_scr, int message, CHR_REF character );
-bool_t break_passage( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 passage, Uint16 starttile, Uint16 frames, Uint16 become, Uint32 meshfxor );
-void append_end_text( SCRIPT_GLOBAL_VALUES * pg_scr, int message, CHR_REF character );
+void append_end_text( struct GameState_t * gs, int message, CHR_REF character );
+
+
+void load_ai_codes( char* loadname );
+Uint32 load_ai_script( ScriptInfo * slist, char * szModpath, char * szObjectname );
+void reset_ai_script(struct GameState_t * gs);

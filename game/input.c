@@ -1,38 +1,38 @@
-/* Egoboo - input.c
- * Keyboard, mouse, and joystick handling code.
- */
-
-/*
-    This file is part of Egoboo.
-
-    Egoboo is free software: you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Egoboo is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
-*/
+//********************************************************************************************
+//* Egoboo - input.c
+//*
+//* Keyboard, mouse, and joystick handling code.
+//*
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
 
 #include "input.inl"
 #include "Ui.h"
 #include "Log.h"
 #include "Network.h"
+#include "Client.h"
 
 #include "egoboo_utility.h"
 #include "egoboo.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-
-int    numpla = 0;                                 // Number of players
-
-PLAYER PlaList[MAXPLAYER];
 
 MOUSE mous =
 {
@@ -354,4 +354,75 @@ void read_controls( char *szFilename )
 }
 
 
+
+//--------------------------------------------------------------------------------------------
+void input_read()
+{
+  // ZZ> This function gets all the current player input states
+
+  int cnt;
+  SDL_Event evt;
+
+  // Run through SDL's event loop to get info in the way that we want
+  // it for the Gui code
+  while ( SDL_PollEvent( &evt ) )
+  {
+    ui_handleSDLEvent( &evt );
+  }
+
+  // Get immediate mode state for the rest of the game
+  input_read_key(&keyb);
+  input_read_mouse(&mous);
+
+  SDL_JoystickUpdate();
+  input_read_joystick(joy);
+  input_read_joystick(joy + 1);
+
+  // Joystick mask
+  joy[0].latch.b = 0;
+  joy[1].latch.b = 0;
+  for ( cnt = 0; cnt < JOYBUTTON; cnt++ )
+  {
+    joy[0].latch.b |= ( joy[0].button[cnt] << cnt );
+    joy[1].latch.b |= ( joy[1].button[cnt] << cnt );
+  }
+
+  // Mouse mask
+  mous.latch.b = 0;
+  for ( cnt = 0; cnt < 4; cnt++ )
+  {
+    mous.latch.b |= ( mous.button[cnt] << cnt );
+  }
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+Player * Player_new(Player *ppla)    
+{ 
+  fprintf( stdout, "Player_new()\n");
+
+  if(NULL==ppla) return ppla; 
+
+  memset(ppla, 0, sizeof(Player));
+  ppla->used = bfalse;
+
+  return ppla; 
+};
+
+//--------------------------------------------------------------------------------------------
+bool_t   Player_delete(Player *ppla) 
+{ 
+  if(NULL==ppla) return bfalse;
+
+  ppla->used = bfalse;
+  
+  return btrue; 
+};
+
+//--------------------------------------------------------------------------------------------
+Player * Player_renew(Player *ppla)
+{
+  Player_delete(ppla);
+  return Player_new(ppla);
+};
 

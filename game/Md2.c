@@ -1,22 +1,26 @@
-/* Egoboo - Md2.c
- */
-
-/*
-    This file is part of Egoboo.
-
-    Egoboo is free software: you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Egoboo is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
-*/
+//********************************************************************************************
+//* Egoboo - Md2.c
+//*
+//* Raw model loader for ID Software's MD2 file format
+//*
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
 
 #include "MD2.inl"
 
@@ -74,14 +78,14 @@ MD2_Model* md2_load(char * szFilename, MD2_Model* mdl)
   model->m_numSkins     = header.numSkins;
   model->m_numFrames    = header.numFrames;
 
-  model->m_texCoords = calloc( sizeof(MD2_TexCoord), header.numTexCoords);
-  model->m_triangles = calloc( sizeof(MD2_Triangle), header.numTriangles);
-  model->m_skins     = calloc( sizeof(MD2_SkinName), header.numSkins);
-  model->m_frames    = calloc( sizeof(MD2_Frame),    header.numFrames);
+  model->m_texCoords = (MD2_TexCoord*)calloc( header.numTexCoords, sizeof(MD2_TexCoord) );
+  model->m_triangles = (MD2_Triangle*)calloc( header.numTriangles, sizeof(MD2_Triangle) );
+  model->m_skins     = (MD2_SkinName*)calloc( header.numSkins,     sizeof(MD2_SkinName) );
+  model->m_frames    = (MD2_Frame   *)calloc( header.numFrames ,   sizeof(MD2_Frame)    );
 
   for (i = 0;i < header.numFrames; i++)
   {
-    model->m_frames[i].vertices = calloc( sizeof(MD2_Vertex), header.numVertices);
+    model->m_frames[i].vertices = (MD2_Vertex*)calloc( header.numVertices, sizeof(MD2_Vertex) );
   }
 
   // Load the texture coordinates from the file, normalizing them as we go
@@ -213,7 +217,7 @@ MD2_Model* md2_load(char * szFilename, MD2_Model* mdl)
       }
 
       //allocate the data
-      cmd->data = calloc( sizeof(md2_gldata), cmd->command_count);
+      cmd->data = (md2_gldata*)calloc( cmd->command_count, sizeof(md2_gldata) );
 
       //read in the data
       fread(cmd->data, sizeof(md2_gldata), cmd->command_count, f);
@@ -266,7 +270,7 @@ MD2_Model* md2_load(char * szFilename, MD2_Model* mdl)
 //    return NULL;
 //  }
 //
-//  ModList[string(fileName)].elCache = model;
+//  modelCache[string(fileName)] = model;
 //  return model;
 //}
 //
@@ -294,7 +298,9 @@ void MD2_GLCommand_destruct(MD2_GLCommand * m)
 MD2_GLCommand * MD2_GLCommand_new()
 {
   MD2_GLCommand * m;
-  m = calloc(sizeof(MD2_GLCommand),1);
+  fprintf( stdout, "MD2_GLCommand_new()\n");
+
+  m = (MD2_GLCommand*)calloc(1, sizeof(MD2_GLCommand));
   MD2_GLCommand_construct(m);
   return m;
 };
@@ -302,8 +308,8 @@ MD2_GLCommand * MD2_GLCommand_new()
 MD2_GLCommand * MD2_GLCommand_new_vector(int n)
 {
   int i;
-  MD2_GLCommand * v = calloc(sizeof(MD2_GLCommand),n);
-  for(i=0; i<n; i++) MD2_GLCommand_construct(&v[i]);
+  MD2_GLCommand * v = (MD2_GLCommand*)calloc( n, sizeof(MD2_GLCommand) );
+  for(i=0; i<n; i++) MD2_GLCommand_construct(v + i);
   return v;
 }
 
@@ -318,7 +324,7 @@ void MD2_GLCommand_delete_vector(MD2_GLCommand * v, int n)
 {
   int i;
   if(NULL==v || 0 == n) return;
-  for(i=0; i<n; i++) MD2_GLCommand_destruct(&v[i]);
+  for(i=0; i<n; i++) MD2_GLCommand_destruct(v + i);
   FREE(v);
 };
 
@@ -374,16 +380,19 @@ void md2_destruct(MD2_Model * m)
 MD2_Model * md2_new()
 {
   MD2_Model * m;
-  m = calloc(sizeof(MD2_Model),1);
+
+  fprintf( stdout, "MD2_GLCommand_new()\n");
+  m = (MD2_Model*)calloc( 1, sizeof(MD2_Model) );
   md2_construct(m);
+
   return m;
 };
 
 MD2_Model * md2_new_vector(int n)
 {
   int i;
-  MD2_Model * v = calloc(sizeof(MD2_Model),n);
-  for(i=0; i<n; i++) md2_construct(&v[i]);
+  MD2_Model * v = (MD2_Model*)calloc( n, sizeof(MD2_Model) );
+  for(i=0; i<n; i++) md2_construct(v + i);
   return v;
 }
 
@@ -398,7 +407,7 @@ void md2_delete_vector(MD2_Model * v, int n)
 {
   int i;
   if(NULL==v || 0 == n) return;
-  for(i=0; i<n; i++) md2_destruct(&v[i]);
+  for(i=0; i<n; i++) md2_destruct(v + i);
   FREE(v);
 };
 
@@ -466,46 +475,46 @@ void md2_scale_model(MD2_Model * pmd2, float scale)
 //  Uint8 indexofnextnextnextnext;
 //  Uint32 frame;
 //
-//  frame = MadList[modelindex].framestart;
+//  frame = gs->MadList[modelindex].framestart;
 //  cnt = 0;
-//  while ( cnt < MadList[modelindex].vertices )
+//  while ( cnt < gs->MadList[modelindex].vertices )
 //  {
 //    tnc = 0;
-//    while ( tnc < MadList[modelindex].frames )
+//    while ( tnc < gs->MadList[modelindex].frames )
 //    {
-//      indexofcurrent = MadList[frame].vrta[cnt];
-//      indexofnext = MadList[frame+1].vrta[cnt];
-//      indexofnextnext = MadList[frame+2].vrta[cnt];
-//      indexofnextnextnext = MadList[frame+3].vrta[cnt];
-//      indexofnextnextnextnext = MadList[frame+4].vrta[cnt];
+//      indexofcurrent = gs->MadList[frame].vrta[cnt];
+//      indexofnext = gs->MadList[frame+1].vrta[cnt];
+//      indexofnextnext = gs->MadList[frame+2].vrta[cnt];
+//      indexofnextnextnext = gs->MadList[frame+3].vrta[cnt];
+//      indexofnextnextnextnext = gs->MadList[frame+4].vrta[cnt];
 //      if ( indexofcurrent == indexofnextnext && indexofnext != indexofcurrent )
 //      {
-//        MadList[frame+1].vrta[cnt] = indexofcurrent;
+//        gs->MadList[frame+1].vrta[cnt] = indexofcurrent;
 //      }
 //      if ( indexofcurrent == indexofnextnextnext )
 //      {
 //        if ( indexofnext != indexofcurrent )
 //        {
-//          MadList[frame+1].vrta[cnt] = indexofcurrent;
+//          gs->MadList[frame+1].vrta[cnt] = indexofcurrent;
 //        }
 //        if ( indexofnextnext != indexofcurrent )
 //        {
-//          MadList[frame+2].vrta[cnt] = indexofcurrent;
+//          gs->MadList[frame+2].vrta[cnt] = indexofcurrent;
 //        }
 //      }
 //      if ( indexofcurrent == indexofnextnextnextnext )
 //      {
 //        if ( indexofnext != indexofcurrent )
 //        {
-//          MadList[frame+1].vrta[cnt] = indexofcurrent;
+//          gs->MadList[frame+1].vrta[cnt] = indexofcurrent;
 //        }
 //        if ( indexofnextnext != indexofcurrent )
 //        {
-//          MadList[frame+2].vrta[cnt] = indexofcurrent;
+//          gs->MadList[frame+2].vrta[cnt] = indexofcurrent;
 //        }
 //        if ( indexofnextnextnext != indexofcurrent )
 //        {
-//          MadList[frame+3].vrta[cnt] = indexofcurrent;
+//          gs->MadList[frame+3].vrta[cnt] = indexofcurrent;
 //        }
 //      }
 //      tnc++;
@@ -566,15 +575,15 @@ void md2_scale_model(MD2_Model * pmd2, float scale)
 //      {
 //        // Fans start with a negative
 //        iNumVertices = -iNumVertices;
-//        // PORT: MadList[modelindex].commandtype[iCommandCount] = (Uint8) D3DPT_TRIANGLEFAN;
-//        MadList[modelindex].commandtype[iCommandCount] = GL_TRIANGLE_FAN;
-//        MadList[modelindex].commandsize[iCommandCount] = ( Uint8 ) iNumVertices;
+//        // PORT: gs->MadList[modelindex].commandtype[iCommandCount] = (Uint8) D3DPT_TRIANGLEFAN;
+//        gs->MadList[modelindex].commandtype[iCommandCount] = GL_TRIANGLE_FAN;
+//        gs->MadList[modelindex].commandsize[iCommandCount] = ( Uint8 ) iNumVertices;
 //      }
 //      else
 //      {
 //        // Strips start with a positive
-//        MadList[modelindex].commandtype[iCommandCount] = GL_TRIANGLE_STRIP;
-//        MadList[modelindex].commandsize[iCommandCount] = ( Uint8 ) iNumVertices;
+//        gs->MadList[modelindex].commandtype[iCommandCount] = GL_TRIANGLE_STRIP;
+//        gs->MadList[modelindex].commandsize[iCommandCount] = ( Uint8 ) iNumVertices;
 //      }
 //
 //      // Read in vertices for each command
@@ -590,16 +599,16 @@ void md2_scale_model(MD2_Model * pmd2, float scale)
 //        fTmpv = SwapLE_float( fTmpv );
 //        iTmp = SDL_SwapLE32( iTmp );
 //
-//        MadList[modelindex].commandu[entry] = fTmpu - ( .5 / 64 ); // GL doesn't align correctly
-//        MadList[modelindex].commandv[entry] = fTmpv - ( .5 / 64 ); // with D3D
-//        MadList[modelindex].commandvrt[entry] = ( Uint16 ) iTmp;
+//        gs->MadList[modelindex].commandu[entry] = fTmpu - ( .5 / 64 ); // GL doesn't align correctly
+//        gs->MadList[modelindex].commandv[entry] = fTmpv - ( .5 / 64 ); // with D3D
+//        gs->MadList[modelindex].commandvrt[entry] = ( Uint16 ) iTmp;
 //        entry++;
 //        tnc++;
 //      }
 //      iCommandCount++;
 //    }
 //  }
-//  MadList[modelindex].commands = iCommandCount;
+//  gs->MadList[modelindex].commands = iCommandCount;
 //}
 
 //---------------------------------------------------------------------------------------------
@@ -728,10 +737,10 @@ void md2_scale_model(MD2_Model * pmd2, float scale)
 //      fRealx = ( cTmpx * fScalex ) + fTranslatex;
 //      fRealy = ( cTmpy * fScaley ) + fTranslatey;
 //      fRealz = ( cTmpz * fScalez ) + fTranslatez;
-//      MadList[madloadframe].vrtx[tnc] = -fRealx * 3.5;
-//      MadList[madloadframe].vrty[tnc] = fRealy * 3.5;
-//      MadList[madloadframe].vrtz[tnc] = fRealz * 3.5;
-//      MadList[madloadframe].vrta[tnc] = cTmpNormalIndex;
+//      gs->MadList[madloadframe].vrtx[tnc] = -fRealx * 3.5;
+//      gs->MadList[madloadframe].vrty[tnc] = fRealy * 3.5;
+//      gs->MadList[madloadframe].vrtz[tnc] = fRealz * 3.5;
+//      gs->MadList[madloadframe].vrta[tnc] = cTmpNormalIndex;
 //      iFrameOffset++;
 //      tnc++;
 //    }

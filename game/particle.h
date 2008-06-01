@@ -2,6 +2,8 @@
 
 #include "object.h"
 
+struct GameState_t;
+
 #define TURNSPD                         .01         // Cutoff for turning or same direction
 
 #define SPAWN_NOCHARACTER        255                 // For particles that spawn characters...
@@ -64,8 +66,10 @@ typedef struct dynalight_pip_t
 } DYNALIGHT_PIP;
 
 // Particle profiles
-typedef struct pip_t
+typedef struct Pip_t
 {
+  bool_t          used;
+
   Uint8           force;                        // Force spawn?
   STRING          fname;
   STRING          comment;
@@ -137,10 +141,12 @@ typedef struct pip_t
   float           manadrain;                      //Reduce target mana by this amount
   float           lifedrain;                      //Reduce target mana by this amount
   bool_t          rotatewithattached;           // do attached particles rotate with the object?
-} PIP;
+} Pip;
 
-extern int piplist_count;
-extern PIP PipList[MAXPRTPIP];
+Pip * Pip_new(Pip * ppip);
+Pip * Pip_delete(Pip * ppip);
+Pip * Pip_renew(Pip * ppip);
+
 
 typedef struct dynalight_prt_t
 {
@@ -150,13 +156,7 @@ typedef struct dynalight_prt_t
   DYNA_MODE mode;                // Dynamic light on?
 } DYNALIGHT_PRT;
 
-// Particle data
-extern int             numfreeprt; // EQ( 0 );                         // For allocation
-extern PRT_REF         freeprtlist[MAXPRT];                        //
-
-
-
-typedef struct prt_t
+typedef struct Prt_t
 {
   bool_t          on;                              // Does it exist?
   Uint16          pip;                             // The part template
@@ -166,7 +166,7 @@ typedef struct prt_t
   PRTTYPE         type;                            // Transparency mode, 0-2
   Uint8           alpha_fp8;
   Uint16          facing;                          // Direction of the part
-  Uint8           team;                            // Team
+  TEAM           team;                            // Team
   vect3           pos;                             // Position
   vect3           vel;                             // Velocity
   float           level;                           // Height of tile
@@ -205,42 +205,50 @@ typedef struct prt_t
   CHR_REF         target;                          // Who it's chasing
 
   DYNALIGHT_PRT   dyna;
-} PRT;
+} Prt;
 
-INLINE const CHR_REF prt_get_owner( PRT_REF iprt );
-INLINE const CHR_REF prt_get_target( PRT_REF iprt );
-INLINE const CHR_REF prt_get_attachedtochr( PRT_REF iprt );
+Prt *  Prt_new(Prt *pprt);
+bool_t Prt_delete( Prt * pprt );
+Prt *  Prt_renew(Prt *pprt);
 
-extern PRT PrtList[MAXPRT];
+INLINE const CHR_REF prt_get_owner( struct GameState_t * gs, PRT_REF iprt );
+INLINE const CHR_REF prt_get_target( struct GameState_t * gs, PRT_REF iprt );
+INLINE const CHR_REF prt_get_attachedtochr( struct GameState_t * gs, PRT_REF iprt );
+
+void PrtList_free_one_no_sound( struct GameState_t * gs, PRT_REF particle );
+void PrtList_free_one( struct GameState_t * gs, PRT_REF particle );
+int  PrtList_get_free( struct GameState_t * gs, int force );
 
 extern Uint16          particletexture;                            // All in one bitmap
 
-#define VALID_PRT(XX) ( ((XX)>=0) && ((XX)<MAXPRT) && PrtList[XX].on )
-#define VALIDATE_PRT(XX) ( VALID_PRT(XX) ? (XX) : MAXPRT )
+#define VALID_PRT(LST, XX) ( ((XX)>=0) && ((XX)<MAXPRT) && LST[XX].on )
+#define VALIDATE_PRT(LST, XX) ( VALID_PRT(LST, XX) ? (XX) : MAXPRT )
 
 
-#define CALCULATE_PRT_U0(CNT)  (((.05f+(CNT&15))/16.0f)*(( float ) TxTexture[particletexture].imgW / ( float ) TxTexture[particletexture].txW))
-#define CALCULATE_PRT_U1(CNT)  (((.95f+(CNT&15))/16.0f)*(( float ) TxTexture[particletexture].imgW / ( float ) TxTexture[particletexture].txW))
-#define CALCULATE_PRT_V0(CNT)  (((.05f+(CNT/16))/16.0f) * ((float)TxTexture[particletexture].imgW/(float)TxTexture[particletexture].imgH)*(( float ) TxTexture[particletexture].imgH / ( float ) TxTexture[particletexture].txH))
-#define CALCULATE_PRT_V1(CNT)  (((.95f+(CNT/16))/16.0f) * ((float)TxTexture[particletexture].imgW/(float)TxTexture[particletexture].imgH)*(( float ) TxTexture[particletexture].imgH / ( float ) TxTexture[particletexture].txH))
+#define CALCULATE_PRT_U0(CNT)  (((.05f+(CNT&15))/16.0f)*(( float ) gs->TxTexture[particletexture].imgW / ( float ) gs->TxTexture[particletexture].txW))
+#define CALCULATE_PRT_U1(CNT)  (((.95f+(CNT&15))/16.0f)*(( float ) gs->TxTexture[particletexture].imgW / ( float ) gs->TxTexture[particletexture].txW))
+#define CALCULATE_PRT_V0(CNT)  (((.05f+(CNT/16))/16.0f) * ((float)gs->TxTexture[particletexture].imgW/(float)gs->TxTexture[particletexture].imgH)*(( float ) gs->TxTexture[particletexture].imgH / ( float ) gs->TxTexture[particletexture].txH))
+#define CALCULATE_PRT_V1(CNT)  (((.95f+(CNT/16))/16.0f) * ((float)gs->TxTexture[particletexture].imgW/(float)gs->TxTexture[particletexture].imgH)*(( float ) gs->TxTexture[particletexture].imgH / ( float ) gs->TxTexture[particletexture].txH))
 
 
-void free_one_particle_no_sound( PRT_REF particle );
-void play_particle_sound( float intensity, PRT_REF particle, Sint8 sound );
-void free_one_particle( PRT_REF particle );
-int get_free_particle( int force );
-void despawn_particles();
-void move_particles( float dUpdate );
-void attach_particles();
-void free_all_particles();
-PRT_REF spawn_one_particle( float intensity, vect3 pos,
+
+
+void despawn_particles( struct GameState_t * gs );
+void move_particles( struct GameState_t * gs, float dUpdate );
+void attach_particles( struct GameState_t * gs );
+PRT_REF spawn_one_particle( struct GameState_t * gs, float intensity, vect3 pos,
                            Uint16 facing, Uint16 model, Uint16 pip,
                            CHR_REF characterattach, GRIP grip, TEAM team,
                            CHR_REF characterorigin, Uint16 multispawn, CHR_REF oldtarget );
-Uint32 prt_hitawall( PRT_REF particle, vect3 * norm );
+Uint32 prt_hitawall( struct GameState_t * gs, PRT_REF particle, vect3 * norm );
 
 
 
-Uint32 load_one_pip( char * szModpath, char * szObjectname, char * szFname, int override );
+Uint32 PipList_load_one( struct GameState_t * gs, char * szModpath, char * szObjectname, char * szFname, int override );
 
-bool_t prt_calculate_bumpers(PRT_REF iprt);
+bool_t prt_calculate_bumpers(struct GameState_t * gs, PRT_REF iprt);
+
+bool_t prt_is_over_water( struct GameState_t * gs, int cnt );
+void reset_particles( struct GameState_t * gs, char* modname );
+
+void PipList_load_global( struct GameState_t * gs );

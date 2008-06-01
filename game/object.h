@@ -5,7 +5,13 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+
 #define MAXPROFILE 1024
+
+struct GameState_t;
+struct Chr_t;
+struct Prt_t;
+
 
 //--------------------------------------------------------------------------------------------
 typedef struct collision_volume_t
@@ -51,7 +57,7 @@ INLINE bool_t  bdata_delete(BData * b);
 INLINE BData * bdata_renew(BData * b);
 
 //--------------------------------------------------------------------------------------------
-typedef enum team_e
+typedef enum Team_e
 {
   TEAM_EVIL            = 'E' -'A',                      // E
   TEAM_GOOD            = 'G' -'A',                      // G
@@ -61,20 +67,22 @@ typedef enum team_e
   TEAM_COUNT                                              // Teams A-Z, +1 more for damage tiles
 } TEAM;
 
-typedef struct team_t
+typedef struct TeamInfo_t
 {
-  bool_t  hatesteam[TEAM_COUNT];     // Don't damage allies...
+  bool_t  hatesteam[TEAM_COUNT];  // Don't damage allies...
   Uint16  morale;                 // Number of characters on team
   CHR_REF leader;                 // The leader of the team
   CHR_REF sissy;                  // Whoever called for help last
-} TEAM_INFO;
+} TeamInfo;
 
-extern TEAM_INFO TeamList[TEAM_COUNT];
+TeamInfo * TeamInfo_new(TeamInfo *pteam);
+bool_t     TeamInfo_delete(TeamInfo *pteam);
+TeamInfo * TeamInfo_renew(TeamInfo *pteam);
 
-#define VALID_TEAM(XX) ( ((XX)>=0) && ((XX)<TEAM_COUNT) )
+#define VALID_TEAM_RANGE(XX) ( ((XX)>=0) && ((XX)<TEAM_COUNT) )
 
-INLINE const CHR_REF team_get_sissy( TEAM_REF iteam );
-INLINE const CHR_REF team_get_leader( TEAM_REF iteam );
+INLINE const CHR_REF team_get_sissy( struct GameState_t * gs, TEAM_REF iteam );
+INLINE const CHR_REF team_get_leader( struct GameState_t * gs, TEAM_REF iteam );
 
 //--------------------------------------------------------------------------------------------
 typedef struct vertex_data_blended_t
@@ -159,7 +167,7 @@ typedef enum grip_e
 
 INLINE const SLOT   grip_to_slot( GRIP g );
 INLINE const GRIP   slot_to_grip( SLOT s );
-INLINE const Uint16 slot_to_latch( Uint16 object, SLOT s );
+INLINE const Uint16 slot_to_latch( struct Chr_t lst[], size_t count, Uint16 object, SLOT s );
 INLINE const Uint16 slot_to_offset( SLOT s );
 
 //--------------------------------------------------------------------------------------------
@@ -181,20 +189,17 @@ extern TILE_DAMAGE GTile_Dam;
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-void flash_character_height( CHR_REF character, Uint8 valuelow, Sint16 low,
-                             Uint8 valuehigh, Sint16 high );
 
-void flash_character( CHR_REF character, Uint8 value );
+void setup_particles( struct GameState_t * gs );
 
-void setup_particles();
+void spawn_bump_particles( struct GameState_t * gs, CHR_REF character, PRT_REF particle );
 
-void spawn_bump_particles( CHR_REF character, PRT_REF particle );
+void   disaffirm_attached_particles( struct GameState_t * gs, CHR_REF character );
+Uint16 number_of_attached_particles( struct GameState_t * gs, CHR_REF character );
+void   reaffirm_attached_particles( struct GameState_t * gs, CHR_REF character );
 
-void   disaffirm_attached_particles( CHR_REF character );
-Uint16 number_of_attached_particles( CHR_REF character );
-void   reaffirm_attached_particles( CHR_REF character );
+void switch_team( struct GameState_t * gs, CHR_REF character, TEAM team );
+int  restock_ammo( struct GameState_t * gs, CHR_REF character, IDSZ idsz );
+void issue_clean( struct GameState_t * gs, CHR_REF character );
 
-void switch_team( CHR_REF character, TEAM team );
-int  restock_ammo( CHR_REF character, IDSZ idsz );
-void issue_clean( CHR_REF character );
-
+int load_one_object( struct GameState_t * gs, int skin_count, char * szObjectpath, char* szObjectname );

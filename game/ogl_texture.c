@@ -1,26 +1,31 @@
-/* Egoboo - gltexture.c
- * Loads BMP files into OpenGL textures.
- */
-
-/*
-    This file is part of Egoboo.
-
-    Egoboo is free software: you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Egoboo is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
-*/
+//********************************************************************************************
+//* Egoboo - ogl_texture.c
+//*
+//* Implements OpenGL texture loading using SDL_image.
+//*
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
 
 #include "egoboo.h" // GAC - Needed for Win32 stuff
 #include "ogl_texture.h"
+#include "graphic.h"
+
 #include <SDL_image.h>
 
 //--------------------------------------------------------------------------------------------
@@ -99,7 +104,7 @@ Uint32 GLTexture_Convert( GLenum tx_target, GLtexture *texture, SDL_Surface * im
     tmpformat.BitsPerPixel  = screen->format->BitsPerPixel;
     tmpformat.BytesPerPixel = screen->format->BytesPerPixel;
 
-    for ( i = 0; i < CData.scrz && ( tmpformat.Amask & ( 1 << i ) ) == 0; i++ );
+    for ( i = 0; i < gfxState.scrz && ( tmpformat.Amask & ( 1 << i ) ) == 0; i++ );
     if( 0 == (tmpformat.Amask & ( 1 << i )) )
     {
       // no alpha bits available
@@ -163,7 +168,7 @@ Uint32 GLTexture_Convert( GLenum tx_target, GLtexture *texture, SDL_Surface * im
   texture->texture_target =  tx_target;
 
   /* Set up some parameters for the format of the OpenGL texture */
-  GLTexture_Bind( texture, CData.texturefilter );
+  GLTexture_Bind( texture, &gfxState );
 
   /* actually create the OpenGL textures */
   if ( image->format->Aloss == 8 && tx_target == GL_TEXTURE_2D )
@@ -193,17 +198,18 @@ Uint32 GLTexture_Convert( GLenum tx_target, GLtexture *texture, SDL_Surface * im
 //--------------------------------------------------------------------------------------------
 Uint32 GLTexture_Load( GLenum tx_target, GLtexture *texture, const char *filename, Uint32 key )
 {
+  Uint32 retval;
   SDL_Surface * image;
 
   if ( NULL == texture || NULL == filename || '\0' == filename[0] ) return INVALID_TEXTURE;
 
-  // make sure the old texture has been freed
-  GLTexture_Release( texture );
-
   image = IMG_Load( filename );
   if ( NULL == image ) return INVALID_TEXTURE;
 
-  return GLTexture_Convert( tx_target, texture, image, key );
+  retval = GLTexture_Convert( tx_target, texture, image, key );
+  strncpy(texture->name, filename, sizeof(texture->name));
+
+  return retval;
 }
 
 /********************> GLTexture_GetTextureID() <*****/
@@ -263,28 +269,48 @@ void  GLTexture_Release( GLtexture *texture )
 
   /* Reset the other data */
   texture->imgH = texture->imgW = texture->txW = texture->txH  = 0;
+
+  texture->name[0] = '\0';
 }
 
 /********************> GLTexture_Release() <*****/
-void GLTexture_Bind( GLtexture *texture, int filt_type )
+void GLTexture_Bind( GLtexture *texture, GraphicState * g )
 {
-  if ( NULL == texture ) return;
+  int    filt_type, anisotropy;
+  GLenum target;
+  GLuint id;
+
+  target = GL_TEXTURE_2D;
+  id     = INVALID_TEXTURE;
+  if ( NULL != texture )
+  {
+    target = texture->texture_target;
+    id     = texture->textureID;
+  }
+
+  filt_type  = 0;
+  anisotropy = 0;
+  if(NULL != g)
+  {
+    filt_type  = g->texturefilter;
+    anisotropy = g->userAnisotropy;
+  }
 
   if ( !glIsEnabled( texture->texture_target ) )
   {
     glEnable( texture->texture_target );
   };
 
-  glBindTexture( texture->texture_target, texture->textureID );
+  glBindTexture( target, id );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
 
   if ( filt_type >= TX_ANISOTROPIC )
   {
     //Anisotropic filtered!
-    glTexParameterf( texture->texture_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-    glTexParameterf( texture->texture_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-    glTexParameterf( texture->texture_target, GL_TEXTURE_MAX_ANISOTROPY_EXT, userAnisotropy );
+    glTexParameterf( target, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+    glTexParameterf( target, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+    glTexParameterf( target, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy );
   }
   else
   {
@@ -292,38 +318,38 @@ void GLTexture_Bind( GLtexture *texture, int filt_type )
     {
         // Unfiltered
       case TX_UNFILTERED:
-        glTexParameterf( texture->texture_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-        glTexParameterf( texture->texture_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+        glTexParameterf( target, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+        glTexParameterf( target, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
         break;
 
         // Linear filtered
       case TX_LINEAR:
-        glTexParameterf( texture->texture_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-        glTexParameterf( texture->texture_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+        glTexParameterf( target, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+        glTexParameterf( target, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
         break;
 
         // Bilinear interpolation
       case TX_MIPMAP:
-        glTexParameterf( texture->texture_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST );
-        glTexParameterf( texture->texture_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+        glTexParameterf( target, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST );
+        glTexParameterf( target, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
         break;
 
         // Bilinear interpolation
       case TX_BILINEAR:
-        glTexParameterf( texture->texture_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST );
-        glTexParameterf( texture->texture_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+        glTexParameterf( target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST );
+        glTexParameterf( target, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
         break;
 
         // Trilinear filtered (quality 1)
       case TX_TRILINEAR_1:
-        glTexParameterf( texture->texture_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR );
-        glTexParameterf( texture->texture_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+        glTexParameterf( target, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR );
+        glTexParameterf( target, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
         break;
 
         // Trilinear filtered (quality 2)
       case TX_TRILINEAR_2:
-        glTexParameterf( texture->texture_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
-        glTexParameterf( texture->texture_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+        glTexParameterf( target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+        glTexParameterf( target, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
         break;
 
     };

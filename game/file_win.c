@@ -1,23 +1,26 @@
-/* Egoboo - win-file.c
- * Windows specific filesystem functions.
- */
-
-/*
-    This file is part of Egoboo.
-
-    Egoboo is free software: you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Egoboo is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
-*/
+//********************************************************************************************
+//* Egoboo - file_win.c
+//*
+//* win32 compatible file handling
+//*
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
 
 #include "egoboo_strutil.h"
 #include "egoboo.h"
@@ -35,19 +38,21 @@ typedef struct fs_find_info_win32_t
 
 FS_FIND_INFO * fs_find_info_new(FS_FIND_INFO * i)
 {
+  fprintf( stdout, "fs_find_info_new()\n");
+
   if(NULL==i) return i;
 
   i->type = FS_WIN32;
-  i->W    = calloc(1, sizeof(FS_FIND_INFO_WIN32));
+  i->W    = (FS_FIND_INFO_WIN32*)calloc(1, sizeof(FS_FIND_INFO_WIN32));
 
   return i;
 };
 
 // Paths that the game will deal with
-char win32_tempPath[MAX_PATH] = {0};
-char win32_importPath[MAX_PATH] = {0};
-char win32_savePath[MAX_PATH] = {0};
-char win32_gamePath[MAX_PATH] = {0};
+char win32_tempPath[MAX_PATH] = { '\0' };
+char win32_importPath[MAX_PATH] = { '\0' };
+char win32_savePath[MAX_PATH] = { '\0' };
+char win32_gamePath[MAX_PATH] = { '\0' };
 
 //---------------------------------------------------------------------------------------------
 //File Routines-------------------------------------------------------------------------------
@@ -100,13 +105,13 @@ void fs_init()
     if ( hFile == NULL )
     {
       // fatal error here, we can't find the game data.
-      log_message( "Failed!\n" );
+      log_info( "Failed!\n" );
       log_error( "fs_init: Could not find directory \"%s\"!\n", CData.basicdat_dir );
     }
   }
   CloseHandle( hFile );
 
-  log_message( "Succeeded!\n" );
+  log_info( "Succeeded!\n" );
   log_info( "Game directories are:\n\tGame: %s\n\tTemp: %s\n\tSave: %s\n\tImport: %s\n",
             win32_gamePath, win32_tempPath, win32_savePath, win32_importPath );
 }
@@ -177,7 +182,6 @@ HANDLE win32_hFind;
 const char *fs_findFirstFile( FS_FIND_INFO * i, const char *searchDir, const char *searchBody, const char *searchExtension )
 {
   char searchSpec[MAX_PATH];
-  size_t len;
 
   if( NULL == i || FS_WIN32 != i->type ) return NULL;
 

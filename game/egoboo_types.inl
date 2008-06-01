@@ -50,7 +50,7 @@ INLINE const BBOX_LIST * bbox_list_alloc(BBOX_LIST * lst, int count)
 
   if(count>0)
   {
-    lst->list = calloc(count, sizeof(AA_BBOX));
+    lst->list = (AA_BBOX*)calloc(count, sizeof(AA_BBOX));
     if(NULL != lst->list)
     {
       lst->count = count;
@@ -76,7 +76,7 @@ INLINE const BBOX_LIST * bbox_list_realloc(BBOX_LIST * lst, int count)
   }
 
 
-  lst->list = realloc(lst->list, count * sizeof(AA_BBOX));
+  lst->list = (AA_BBOX *)realloc(lst->list, count * sizeof(AA_BBOX));
   if(NULL == lst->list)
   {
     lst->count = 0;
@@ -139,7 +139,7 @@ INLINE const BBOX_ARY * bbox_ary_alloc(BBOX_ARY * ary, int count)
 
   if(count>0)
   {
-    ary->list = calloc(count, sizeof(BBOX_LIST));
+    ary->list = (BBOX_LIST*)calloc(count, sizeof(BBOX_LIST));
     if(NULL != ary->list)
     {
       ary->count = count;

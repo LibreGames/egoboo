@@ -1,56 +1,9 @@
 #pragma once
 
-#include "mesh.h"
+#include "Mesh.h"
 #include "char.h"
 #include "particle.h"
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-
-INLINE void mesh_set_colora( int fan_x, int fan_y, int color );
-
-INLINE const Uint32 mesh_get_fan( vect3 pos );
-INLINE const Uint32 mesh_get_block( vect3 pos );
-
-INLINE const int    mesh_bump_tile( int fan_x, int fan_y );
-INLINE const Uint16 mesh_get_tile( int fan_x, int fan_y );
-INLINE const bool_t mesh_set_tile( int fan_x, int fan_y, Uint32 become );
-INLINE const Uint32 mesh_convert_fan( int fan_x, int fan_y );
-INLINE const Uint32 mesh_convert_block( int block_x, int block_y );
-INLINE const float  mesh_fraction_x( float x );
-INLINE const float  mesh_fraction_y( float y );
-INLINE const bool_t mesh_check( float x, float y );
-INLINE const Uint32 mesh_test_bits( int fan, Uint32 bits );
-INLINE const bool_t mesh_has_some_bits( int fan, Uint32 bits );
-INLINE const bool_t mesh_has_no_bits( int fan, Uint32 bits );
-INLINE const bool_t mesh_has_all_bits( int fan, Uint32 bits );
-INLINE const Uint8  mesh_get_twist( int fan );
-
-INLINE const bool_t mesh_fan_is_in_renderlist( int fan );
-INLINE       void   mesh_fan_remove_renderlist( int fan );
-INLINE       void   mesh_fan_add_renderlist( int fan );
-
-INLINE const float  mesh_clip_x( float x );
-INLINE const float  mesh_clip_y( float y );
-INLINE const int    mesh_clip_fan_x( int fan_x );
-INLINE const int    mesh_clip_fan_y( int fan_y );
-INLINE const int    mesh_clip_block_x( int block_x );
-INLINE const int    mesh_clip_block_y( int block_y );
-
-INLINE const bool_t mesh_fan_clear_bits( int fan_x, int fan_y, Uint32 bits );
-INLINE const bool_t mesh_fan_add_bits( int fan_x, int fan_y, Uint32 bits );
-INLINE const bool_t mesh_fan_set_bits( int fan_x, int fan_y, Uint32 bits );
-
-INLINE const BUMPLIST * bumplist_new(BUMPLIST * b);
-INLINE const void       bumplist_delete(BUMPLIST * b);
-INLINE const BUMPLIST * bumplist_renew(BUMPLIST * b);
-INLINE const bool_t     bumplist_allocate(BUMPLIST * b, int size);
-INLINE const bool_t     bumplist_insert_chr(BUMPLIST * b, Uint32 block, CHR_REF chr_ref);
-INLINE const bool_t     bumplist_insert_prt(BUMPLIST * b, Uint32 block, PRT_REF prt_ref);
-INLINE const Uint32     bumplist_get_next(BUMPLIST * b, Uint32 node );
-INLINE const Uint32     bumplist_get_chr_head(BUMPLIST * b, Uint32 block);
-INLINE const Uint32     bumplist_get_prt_head(BUMPLIST * b, Uint32 block);
-INLINE const bool_t     bumplist_clear( BUMPLIST * b );
+#include "game.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -147,11 +100,11 @@ INLINE const bool_t bumplist_allocate(BUMPLIST * b, int size)
   }
   else
   {
-    b->num_chr = calloc(size, sizeof(Uint16));
-    b->chr_ref = calloc(size, sizeof(BUMPLIST_NODE));
+    b->num_chr = (Uint16       *)calloc(size, sizeof(Uint16));
+    b->chr_ref = (BUMPLIST_NODE*)calloc(size, sizeof(BUMPLIST_NODE));
 
-    b->num_prt = calloc(size, sizeof(Uint16));
-    b->prt_ref = calloc(size, sizeof(BUMPLIST_NODE));
+    b->num_prt = (Uint16       *)calloc(size, sizeof(Uint16));
+    b->prt_ref = (BUMPLIST_NODE*)calloc(size, sizeof(BUMPLIST_NODE));
 
     if(NULL != b->num_chr && NULL != b->chr_ref && NULL != b->num_prt && NULL != b->prt_ref)
     {
@@ -245,7 +198,7 @@ INLINE const Uint32 bumplist_get_next( BUMPLIST * b, Uint32 node )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 bumplist_get_next_chr( BUMPLIST * b, Uint32 node )
+INLINE const Uint32 bumplist_get_next_chr( GameState * gs, BUMPLIST * b, Uint32 node )
 {
   Uint32  nodenext;
   CHR_REF bumpnext;
@@ -255,7 +208,7 @@ INLINE const Uint32 bumplist_get_next_chr( BUMPLIST * b, Uint32 node )
   nodenext = b->node_lst[node].next;
   bumpnext = b->node_lst[nodenext].ref;
 
-  while( INVALID_BUMPLIST_NODE != nodenext && !VALID_CHR(bumpnext) )
+  while( INVALID_BUMPLIST_NODE != nodenext && !VALID_CHR(gs->ChrList, bumpnext) )
   {
     nodenext = b->node_lst[node].next;
     bumpnext = b->node_lst[nodenext].ref;
@@ -265,7 +218,7 @@ INLINE const Uint32 bumplist_get_next_chr( BUMPLIST * b, Uint32 node )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 bumplist_get_next_prt( BUMPLIST * b, Uint32 node )
+INLINE const Uint32 bumplist_get_next_prt( GameState * gs, BUMPLIST * b, Uint32 node )
 {
   Uint32  nodenext;
   CHR_REF bumpnext;
@@ -275,7 +228,7 @@ INLINE const Uint32 bumplist_get_next_prt( BUMPLIST * b, Uint32 node )
   nodenext = b->node_lst[node].next;
   bumpnext = b->node_lst[nodenext].ref;
 
-  while( INVALID_BUMPLIST_NODE != nodenext && !VALID_PRT(bumpnext) )
+  while( INVALID_BUMPLIST_NODE != nodenext && !VALID_PRT(gs->PrtList, bumpnext) )
   {
     nodenext = b->node_lst[node].next;
     bumpnext = b->node_lst[nodenext].ref;
@@ -331,114 +284,117 @@ INLINE const Uint32 bumplist_get_ref(BUMPLIST * b, Uint32 node)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_fan_is_in_renderlist( int fan )
+INLINE const bool_t mesh_fan_is_in_renderlist( MESH_FAN * mf_list, int fan )
 {
   if ( INVALID_FAN == fan ) return bfalse;
 
-  return Mesh_Fan[fan].inrenderlist;
+  return mf_list[fan].inrenderlist;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE void mesh_fan_remove_renderlist( int fan )
+INLINE void mesh_fan_remove_renderlist( MESH_FAN * mf_list, int fan )
 {
-  Mesh_Fan[fan].inrenderlist = bfalse;
+  mf_list[fan].inrenderlist = bfalse;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE void mesh_fan_add_renderlist( int fan )
+INLINE void mesh_fan_add_renderlist( MESH_FAN * mf_list, int fan )
 {
-  Mesh_Fan[fan].inrenderlist = btrue;
+  mf_list[fan].inrenderlist = btrue;
 };
 
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const float mesh_clip_x( float x )
+INLINE const float mesh_clip_x( MESH_INFO * mi, float x )
 {
   if ( x <      0.0f )  x = 0.0f;
-  if ( x > mesh.edge_x )  x = mesh.edge_x;
+  if ( x > mi->edge_x )  x = mi->edge_x;
 
   return x;
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const float mesh_clip_y( float y )
+INLINE const float mesh_clip_y( MESH_INFO * mi, float y )
 {
   if ( y <      0.0f )  y = 0.0f;
-  if ( y > mesh.edge_y )  y = mesh.edge_y;
+  if ( y > mi->edge_y )  y = mi->edge_y;
 
   return y;
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const int mesh_clip_fan_x( int ix )
+INLINE const int mesh_clip_fan_x( MESH_INFO * mi, int ix )
 {
   if ( ix < 0 )  ix = 0;
-  if ( ix > mesh.size_x - 1 )  ix = mesh.size_x - 1;
+  if ( ix > mi->size_x - 1 )  ix = mi->size_x - 1;
 
   return ix;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const int mesh_clip_fan_y( int iy )
+INLINE const int mesh_clip_fan_y( MESH_INFO * mi, int iy )
 {
   if ( iy < 0 )  iy = 0;
-  if ( iy > mesh.size_y - 1 )  iy = mesh.size_y - 1;
+  if ( iy > mi->size_y - 1 )  iy = mi->size_y - 1;
 
   return iy;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const int mesh_clip_block_x( int ix )
+INLINE const int mesh_clip_block_x( MESH_INFO * mi, int ix )
 {
   if ( ix < 0 )  ix = 0;
-  if ( ix > ( mesh.size_x >> 2 ) - 1 )  ix = ( mesh.size_x >> 2 ) - 1;
+  if ( ix > ( mi->size_x >> 2 ) - 1 )  ix = ( mi->size_x >> 2 ) - 1;
 
   return ix;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const int mesh_clip_block_y( int iy )
+INLINE const int mesh_clip_block_y( MESH_INFO * mi, int iy )
 {
   if ( iy < 0 )  iy = 0;
-  if ( iy > ( mesh.size_y >> 2 ) - 1 )  iy = ( mesh.size_y >> 2 ) - 1;
+  if ( iy > ( mi->size_y >> 2 ) - 1 )  iy = ( mi->size_y >> 2 ) - 1;
 
   return iy;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_check( float x, float y )
+INLINE const bool_t mesh_check( MESH_INFO * mi, float x, float y )
 {
-  if ( x < 0 || x > mesh.edge_x ) return bfalse;
-  if ( y < 0 || y > mesh.edge_x ) return bfalse;
+  if ( x < 0 || x > mi->edge_x ) return bfalse;
+  if ( y < 0 || y > mi->edge_x ) return bfalse;
 
   return btrue;
 }
 
 
 //--------------------------------------------------------------------------------------------
-INLINE void mesh_set_colora( int fan_x, int fan_y, int color )
+INLINE void mesh_set_colora( GameState * gs, int fan_x, int fan_y, int color )
 {
   Uint32 cnt, fan, vert, numvert;
 
-  fan = mesh_convert_fan( fan_x, fan_y );
+  MESH_INFO * mi      = &(gs->mesh);
+  MESH_FAN  * mf_list = gs->Mesh_Mem.fanlst;
+
+  fan = mesh_convert_fan( mi, fan_x, fan_y );
   if ( INVALID_FAN == fan ) return;
 
-  vert = Mesh_Fan[fan].vrt_start;
+  vert = mf_list[fan].vrt_start;
   cnt = 0;
-  numvert = Mesh_Cmd[Mesh_Fan[fan].type].vrt_count;
+  numvert = Mesh_Cmd[mf_list[fan].type].vrt_count;
   while ( cnt < numvert )
   {
-    Mesh_Mem.vrt_ar_fp8[vert] = color;
-    Mesh_Mem.vrt_ag_fp8[vert] = color;
-    Mesh_Mem.vrt_ab_fp8[vert] = color;
+    gs->Mesh_Mem.vrt_ar_fp8[vert] = color;
+    gs->Mesh_Mem.vrt_ag_fp8[vert] = color;
+    gs->Mesh_Mem.vrt_ab_fp8[vert] = color;
     vert++;
     cnt++;
   }
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 mesh_get_fan( vect3 pos )
+INLINE const Uint32 mesh_get_fan( GameState * gs, vect3 pos )
 {
   // BB > find the tile under <pos.x,pos.y>, but MAKE SURE we have the right tile.
 
@@ -447,24 +403,27 @@ INLINE const Uint32 mesh_get_fan( vect3 pos )
   int i, ix, iy;
   bool_t bfound = bfalse;
 
-  if ( !mesh_check( pos.x, pos.y ) )
+  MESH_FAN  * mf_list = gs->Mesh_Mem.fanlst;
+  MESH_INFO * mi      = &(gs->mesh);
+
+  if ( !mesh_check( mi, pos.x, pos.y ) )
     return testfan;
 
   ix = MESH_FLOAT_TO_FAN( pos.x );
   iy = MESH_FLOAT_TO_FAN( pos.y );
 
-  testfan = ix + Mesh_Fan_X[iy];
+  testfan = ix + gs->mesh.Fan_X[iy];
 
-  ivert = Mesh_Fan[testfan].vrt_start;
-  minx = maxx = Mesh_Mem.vrt_x[ivert];
-  miny = maxy = Mesh_Mem.vrt_y[ivert];
+  ivert = mf_list[testfan].vrt_start;
+  minx = maxx = gs->Mesh_Mem.vrt_x[ivert];
+  miny = maxy = gs->Mesh_Mem.vrt_y[ivert];
   for ( i = 1;i < 4;i++, ivert++ )
   {
-    minx = MIN( minx, Mesh_Mem.vrt_x[ivert] );
-    maxx = MAX( maxx, Mesh_Mem.vrt_x[ivert] );
+    minx = MIN( minx, gs->Mesh_Mem.vrt_x[ivert] );
+    maxx = MAX( maxx, gs->Mesh_Mem.vrt_x[ivert] );
 
-    miny = MIN( miny, Mesh_Mem.vrt_y[ivert] );
-    maxy = MAX( maxy, Mesh_Mem.vrt_y[ivert] );
+    miny = MIN( miny, gs->Mesh_Mem.vrt_y[ivert] );
+    maxy = MAX( maxy, gs->Mesh_Mem.vrt_y[ivert] );
   };
 
   if ( pos.x < minx ) { ix--; bfound = btrue; }
@@ -472,20 +431,20 @@ INLINE const Uint32 mesh_get_fan( vect3 pos )
   if ( pos.y < miny ) { iy--; bfound = btrue; }
   else if ( pos.y > maxy ) { iy++; bfound = btrue; }
 
-  if ( ix < 0 || iy < 0 || ix > mesh.size_x || iy > mesh.size_y )
+  if ( ix < 0 || iy < 0 || ix > mi->size_x || iy > mi->size_y )
     testfan = INVALID_FAN;
   else if ( bfound )
-    testfan = ix + Mesh_Fan_X[iy];
+    testfan = ix + gs->mesh.Fan_X[iy];
 
   return testfan;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 mesh_get_block( vect3 pos )
+INLINE const Uint32 mesh_get_block( MESH_INFO * mi, vect3 pos )
 {
   // BB > find the block under <x,y>
 
-  return mesh_convert_block( MESH_FLOAT_TO_BLOCK( pos.x ), MESH_FLOAT_TO_BLOCK( pos.y ) );
+  return mesh_convert_block( mi, MESH_FLOAT_TO_BLOCK( pos.x ), MESH_FLOAT_TO_BLOCK( pos.y ) );
 };
 
 
@@ -493,49 +452,57 @@ INLINE const Uint32 mesh_get_block( vect3 pos )
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_fan_clear_bits( int fan_x, int fan_y, Uint32 bits )
+INLINE const bool_t mesh_fan_clear_bits( GameState * gs, int fan_x, int fan_y, Uint32 bits )
 {
   bool_t retval = bfalse;
   Uint32 fan;
+  MESH_FAN  * mf_list = gs->Mesh_Mem.fanlst;
+  MESH_INFO * mi      = &(gs->mesh);
 
-  fan = mesh_convert_fan( fan_x, fan_y );
+  fan = mesh_convert_fan( mi, fan_x, fan_y );
   if ( INVALID_FAN == fan ) return retval;
 
-  retval = mesh_has_some_bits( fan, bits );
+  retval = mesh_has_some_bits( mf_list, fan, bits );
 
-  Mesh_Fan[fan].fx &= ~bits;
+  mf_list[fan].fx &= ~bits;
 
   return retval;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_fan_add_bits( int fan_x, int fan_y, Uint32 bits )
+INLINE const bool_t mesh_fan_add_bits( GameState * gs, int fan_x, int fan_y, Uint32 bits )
 {
   bool_t retval = bfalse;
   Uint32 fan;
 
-  fan = mesh_convert_fan( fan_x, fan_y );
+  MESH_FAN  * mf_list = gs->Mesh_Mem.fanlst;
+  MESH_INFO * mi      = &(gs->mesh);
+
+  fan = mesh_convert_fan( mi, fan_x, fan_y );
   if ( INVALID_FAN == fan ) return retval;
 
-  retval = MISSING_BITS( Mesh_Fan[fan].fx, bits );
+  retval = MISSING_BITS( mf_list[fan].fx, bits );
 
-  Mesh_Fan[fan].fx |= bits;
+  mf_list[fan].fx |= bits;
 
   return retval;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_fan_set_bits( int fan_x, int fan_y, Uint32 bits )
+INLINE const bool_t mesh_fan_set_bits( GameState * gs, int fan_x, int fan_y, Uint32 bits )
 {
   bool_t retval = bfalse;
   Uint32 fan;
 
-  fan = mesh_convert_fan( fan_x, fan_y );
+  MESH_FAN  * mf_list = gs->Mesh_Mem.fanlst;
+  MESH_INFO * mi      = &(gs->mesh);
+
+  fan = mesh_convert_fan( mi, fan_x, fan_y );
   if ( INVALID_FAN == fan ) return retval;
 
-  retval = ( Mesh_Fan[fan].fx != bits );
+  retval = ( mf_list[fan].fx != bits );
 
-  Mesh_Fan[fan].fx = bits;
+  mf_list[fan].fx = bits;
 
   return retval;
 };
@@ -543,41 +510,50 @@ INLINE const bool_t mesh_fan_set_bits( int fan_x, int fan_y, Uint32 bits )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const int mesh_bump_tile( int fan_x, int fan_y )
+INLINE const int mesh_bump_tile( GameState * gs, int fan_x, int fan_y )
 {
   Uint32 fan;
 
-  fan = mesh_convert_fan( fan_x, fan_y );
+  MESH_FAN  * mf_list = gs->Mesh_Mem.fanlst;
+  MESH_INFO * mi      = &(gs->mesh);
+
+  fan = mesh_convert_fan( mi, fan_x, fan_y );
   if ( INVALID_FAN == fan ) return 0;
 
-  Mesh_Fan[fan].tile++;
+  mf_list[fan].tile++;
 
-  return Mesh_Fan[fan].tile;
+  return mf_list[fan].tile;
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint16 mesh_get_tile( int fan_x, int fan_y )
+INLINE const Uint16 mesh_get_tile( GameState * gs, int fan_x, int fan_y )
 {
   Uint32 fan;
 
-  fan = mesh_convert_fan( fan_x, fan_y );
+  MESH_FAN  * mf_list = gs->Mesh_Mem.fanlst;
+  MESH_INFO * mi      = &(gs->mesh);
+
+  fan = mesh_convert_fan( mi, fan_x, fan_y );
   if ( INVALID_FAN == fan ) return INVALID_TILE;
 
-  return Mesh_Fan[fan].tile;
+  return mf_list[fan].tile;
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_set_tile( int fan_x, int fan_y, Uint32 become )
+INLINE const bool_t mesh_set_tile( GameState * gs, int fan_x, int fan_y, Uint32 become )
 {
   bool_t retval = bfalse;
   Uint32 fan;
 
-  fan = mesh_convert_fan( fan_x, fan_y );
+  MESH_FAN  * mf_list = gs->Mesh_Mem.fanlst;
+  MESH_INFO * mi      = &(gs->mesh);
+
+  fan = mesh_convert_fan( mi, fan_x, fan_y );
   if ( INVALID_FAN == fan ) return retval;
 
   if ( become != 0 )
   {
-    Mesh_Fan[fan].tile = become;
+    mf_list[fan].tile = become;
     retval = btrue;
   }
 
@@ -585,80 +561,80 @@ INLINE const bool_t mesh_set_tile( int fan_x, int fan_y, Uint32 become )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 mesh_convert_fan( int fan_x, int fan_y )
+INLINE const Uint32 mesh_convert_fan( MESH_INFO * mi, int fan_x, int fan_y )
 {
   // BB > convert <fan_x,fan_y> to a fanblock
 
-  if ( fan_x < 0 || fan_x > mesh.size_x || fan_y < 0 || fan_y > mesh.size_y ) return INVALID_FAN;
+  if ( fan_x < 0 || fan_x > mi->size_x || fan_y < 0 || fan_y > mi->size_y ) return INVALID_FAN;
 
-  return fan_x + Mesh_Fan_X[fan_y];
+  return fan_x + mi->Fan_X[fan_y];
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 mesh_convert_block( int block_x, int block_y )
+INLINE const Uint32 mesh_convert_block( MESH_INFO * mi, int block_x, int block_y )
 {
   // BB > convert <block_x,block_y> to a fanblock
 
-  if ( block_x < 0 || block_x > ( mesh.size_x >> 2 ) || block_y < 0 || block_y > ( mesh.size_y >> 2 ) ) return INVALID_FAN;
+  if ( block_x < 0 || block_x > ( mi->size_x >> 2 ) || block_y < 0 || block_y > ( mi->size_y >> 2 ) ) return INVALID_FAN;
 
-  return block_x + Mesh_Block_X[block_y];
+  return block_x + mi->Block_X[block_y];
 };
 
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 mesh_get_bits( int fan, Uint32 bits )
+INLINE const Uint32 mesh_get_bits( MESH_FAN * mf_list, int fan, Uint32 bits )
 {
   if ( INVALID_FAN == fan ) return 0;
 
-  return Mesh_Fan[fan].fx & bits;
+  return mf_list[fan].fx & bits;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_has_some_bits( int fan, Uint32 bits )
+INLINE const bool_t mesh_has_some_bits( MESH_FAN * mf_list, int fan, Uint32 bits )
 {
   if ( INVALID_FAN == fan ) return 0;
 
-  return HAS_SOME_BITS( Mesh_Fan[fan].fx, bits );
+  return HAS_SOME_BITS( mf_list[fan].fx, bits );
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_has_no_bits( int fan, Uint32 bits )
+INLINE const bool_t mesh_has_no_bits( MESH_FAN * mf_list, int fan, Uint32 bits )
 {
   if ( INVALID_FAN == fan ) return 0;
 
-  return HAS_NO_BITS( Mesh_Fan[fan].fx, bits );
+  return HAS_NO_BITS( mf_list[fan].fx, bits );
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_has_all_bits( int fan, Uint32 bits )
+INLINE const bool_t mesh_has_all_bits( MESH_FAN * mf_list, int fan, Uint32 bits )
 {
   if ( INVALID_FAN == fan ) return 0;
 
-  return HAS_ALL_BITS( Mesh_Fan[fan].fx, bits );
+  return HAS_ALL_BITS( mf_list[fan].fx, bits );
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const float mesh_fraction_x( float x )
+INLINE const float mesh_fraction_x( MESH_INFO * mi, float x )
 {
-  return x / mesh.edge_x;
+  return x / mi->edge_x;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const float mesh_fraction_y( float y )
+INLINE const float mesh_fraction_y( MESH_INFO * mi, float y )
 {
-  return y / mesh.edge_y;
+  return y / mi->edge_y;
 };
 
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint8 mesh_get_twist( int fan )
+INLINE const Uint8 mesh_get_twist( MESH_FAN * mf_list, int fan )
 {
   Uint8 retval = 0x77;
 
   if ( INVALID_FAN != fan )
   {
-    retval = Mesh_Fan[fan].twist;
+    retval = mf_list[fan].twist;
   }
 
   return retval;

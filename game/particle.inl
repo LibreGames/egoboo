@@ -2,30 +2,31 @@
 
 #include "particle.h"
 #include "char.h"
+#include "game.h"
 
 //--------------------------------------------------------------------------------------------
-const CHR_REF prt_get_owner( PRT_REF iprt )
+const CHR_REF prt_get_owner( GameState * gs, PRT_REF iprt )
 {
-  if ( !VALID_PRT( iprt ) ) return MAXCHR;
+  if ( !VALID_PRT( gs->PrtList, iprt ) ) return MAXCHR;
 
-  PrtList[iprt].owner = VALIDATE_CHR( PrtList[iprt].owner );
-  return PrtList[iprt].owner;
+  gs->PrtList[iprt].owner = VALIDATE_CHR( gs->ChrList, gs->PrtList[iprt].owner );
+  return gs->PrtList[iprt].owner;
 };
 
 //--------------------------------------------------------------------------------------------
-const CHR_REF prt_get_target( PRT_REF iprt )
+const CHR_REF prt_get_target( GameState * gs, PRT_REF iprt )
 {
-  if ( !VALID_PRT( iprt ) ) return MAXCHR;
+  if ( !VALID_PRT( gs->PrtList, iprt ) ) return MAXCHR;
 
-  PrtList[iprt].target = VALIDATE_CHR( PrtList[iprt].target );
-  return PrtList[iprt].target;
+  gs->PrtList[iprt].target = VALIDATE_CHR( gs->ChrList, gs->PrtList[iprt].target );
+  return gs->PrtList[iprt].target;
 };
 
 //--------------------------------------------------------------------------------------------
-const CHR_REF prt_get_attachedtochr( PRT_REF iprt )
+const CHR_REF prt_get_attachedtochr( GameState * gs, PRT_REF iprt )
 {
-  if ( !VALID_PRT( iprt ) ) return MAXCHR;
+  if ( !VALID_PRT( gs->PrtList, iprt ) ) return MAXCHR;
 
-  PrtList[iprt].attachedtochr = VALIDATE_CHR( PrtList[iprt].attachedtochr );
-  return PrtList[iprt].attachedtochr;
+  gs->PrtList[iprt].attachedtochr = VALIDATE_CHR( gs->ChrList, gs->PrtList[iprt].attachedtochr );
+  return gs->PrtList[iprt].attachedtochr;
 };

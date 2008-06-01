@@ -5,22 +5,24 @@
  * don't run out of oxygen.
  */
 
-/*
-    This file is part of Egoboo.
-
-    Egoboo is free software: you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Egoboo is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
-*/
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
 
 #pragma once
 
@@ -43,6 +45,8 @@
 #include <time.h>
 #include <math.h>
 
+struct GameState_t;
+
 
 
 // The following magic allows this include to work in multiple files
@@ -55,19 +59,8 @@
 #endif
 
 EXTERN const char VERSION[] EQ( "2.7.x" );   // Version of the game
-EXTERN bool_t     game_single_frame EQ( bfalse );  //Is the game paused?
-EXTERN bool_t     game_do_frame EQ( bfalse );  //Is the game paused?
-EXTERN bool_t     gamepaused EQ( bfalse );  //Is the game paused?
-EXTERN bool_t     startpause EQ( btrue );   //Pause button avalible?
 
 #define NOSPARKLE           255
-
-typedef enum respawn_mode_e
-{
-  RESPAWN_NONE = 0,
-  RESPAWN_NORMAL,
-  RESPAWN_ANYTIME
-} RESPAWN_MODE;
 
 #define DELAY_RESIZE            50                      // Time it takes to resize a character
 
@@ -193,9 +186,6 @@ typedef struct tile_animated_t
 
 EXTERN TILE_ANIMATED GTile_Anim;
 
-
-EXTERN Uint16 bookicon  EQ( 0 );                      // The first book icon
-
 #define NORTH 16384                                 // Character facings
 #define SOUTH 49152                                 //
 #define EAST 32768                                  //
@@ -214,7 +204,7 @@ typedef struct blip_t
 {
   Uint16          x;
   Uint16          y;
-  Uint8           c;
+  COLR            c;
 
   // !!! wrong, but it will work !!!
   IRect           rect;           // The blip rectangles
@@ -242,58 +232,20 @@ EXTERN float           stabilized_fps        EQ( TARGETFPS );
 EXTERN float           stabilized_fps_sum    EQ( TARGETFPS );
 EXTERN float           stabilized_fps_weight EQ( 1 );
 
-EXTERN Sint32          sttclock;                       // GetTickCount at start
-EXTERN Sint32          allclock   EQ( 0 );             // The total number of ticks so far
-EXTERN Sint32          lstclock   EQ( 0 );             // The last total of ticks so far
-EXTERN Sint32          wldclock   EQ( 0 );             // The sync clock
-EXTERN Uint32          wldframe   EQ( 0 );             // The number of frames that should have been drawn
-EXTERN Uint32          allframe   EQ( 0 );             // The total number of frames drawn so far
-EXTERN Uint8           statclock  EQ( 0 );            // For stat regeneration
-EXTERN float           pitclock   EQ( 0 );             // For pit kills
-EXTERN Uint8           pitskill   EQ( bfalse );          // Do they kill?
 
 EXTERN Uint8           outofsync  EQ( 0 );    //Is this only for RTS? Can it be removed then?
 EXTERN Uint8           parseerror EQ( 0 );    //Do we have an script error?
 
-
-
-EXTERN bool_t                    gameActive  EQ( bfalse );       // Stay in game or quit to windows?
-EXTERN bool_t                    ingameMenuActive EQ( bfalse );  // Is the in-game menu active?
-EXTERN bool_t                    moduleActive  EQ( bfalse );     // Is the control loop still going?
-
-EXTERN bool_t                    serviceon  EQ( bfalse );        // Do I need to free the interface?
-//EXTERN bool_t                    menuaneeded  EQ(bfalse);         // Give them MENUA?
-//EXTERN bool_t                    menuactive  EQ(bfalse);         // Menu running?
-EXTERN bool_t                    hostactive  EQ( bfalse );       // Hosting?
-EXTERN bool_t                    readytostart;               // Ready to hit the Start Game button?
-EXTERN bool_t                    waitingforplayers;          // Has everyone talked to the host?
-EXTERN bool_t                    somelocalpladead;            // Has someone died?
-EXTERN bool_t                    alllocalpladead;            // Has everyone died?
-EXTERN bool_t                    respawnvalid;               // Can players respawn with Spacebar?
-EXTERN bool_t                    respawnanytime;             // True if it's a small level...
-EXTERN bool_t                    exportvalid;                // Can it export?
-EXTERN bool_t                    nolocalplayers;             // Are there any local players?
-EXTERN bool_t                    beatmodule;                 // Show Module Ended text?
-
 #define DELAY_TURN 16
-EXTERN int                     playeramount;               //
-EXTERN Uint32                  seed  EQ( 0 );              // The module seed
-EXTERN char                    pickedmodule[64];           // The module load name
-EXTERN int                     pickedindex;                // The module index number
-EXTERN int                     playersready;               // Number of players ready to start
-EXTERN int                     playersloaded;              //
 
 //Networking
-EXTERN int                     localmachine  EQ( 0 );         // 0 is host, 1 is 1st remote, 2 is 2nd...
-
-EXTERN int                     localplayer_count;                  // Number of imports from this machine
+EXTERN int                     localplayer_count;                 // Number of imports from this machine
 EXTERN Uint8                   localplayer_control[16];           // For local imports
 EXTERN short                   localplayer_slot[16];              // For local imports
 
 // EWWWW. GLOBALS ARE EVIL.
 
 //Weather and water gfx
-
 typedef struct weather_info_t
 {
   bool_t    overwater; // EQ( bfalse );       // Only spawn over water?
@@ -342,8 +294,6 @@ typedef struct water_info_t
   Uint32    spek[256];             // Specular highlights
 } WATER_INFO;
 
-EXTERN  WATER_INFO GWater;
-
 EXTERN float     foregroundrepeat  EQ( 1 );     //
 EXTERN float     backgroundrepeat  EQ( 1 );     //
 
@@ -362,7 +312,6 @@ typedef struct fog_info_t
 
 EXTERN FOG_INFO GFog;
 
-#define MAXMODULE           100                     // Number of modules
 #define MAXLIGHTROTATION                256         // Number of premade light maps
 #define MAXSPEKLEVEL                    16          // Number of premade specularities
 
@@ -382,17 +331,6 @@ typedef enum tx_type_e
   TX_LAST
 } TX_TYPE;
 
-EXTERN  GLtexture       TxTexture[MAXTEXTURE];        /* All textures */
-EXTERN  GLtexture       TxIcon[MAXTEXTURE+1];       /* icons */
-EXTERN  GLtexture       TxTitleImage[MAXMODULE];      /* title images */
-EXTERN  GLtexture       TxTrim;
-EXTERN  GLtexture       TxTrimX;                                        /* trim */
-EXTERN  GLtexture       TxTrimY;                                        /* trim */
-EXTERN  GLtexture       TxBars;                                         /* status bars */
-EXTERN  GLtexture       TxBlip;                                         /* you are here texture */
-EXTERN  GLtexture       TxMap;
-
-
 
 //Texture filtering
 typedef enum tx_filters_e
@@ -409,24 +347,7 @@ typedef enum tx_filters_e
 //Anisotropic filtering - yay! :P
 #define GL_TEXTURE_MAX_ANISOTROPY_EXT 0x84FE
 #define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
-EXTERN float maxAnisotropy;          // Max anisotropic filterings (Between 1.00 and 16.00)
-EXTERN int   userAnisotropy;         // Requested anisotropic level
-EXTERN int   log2Anisotropy;         // Max levels of anisotropy
 
-EXTERN bool_t      video_mode_chaged EQ( bfalse );
-EXTERN SDL_Rect ** video_mode_list EQ( NULL );
-
-
-
-EXTERN int                     nullicon  EQ( 0 );
-EXTERN int                     keybicon  EQ( 0 );
-EXTERN int                     mousicon  EQ( 0 );
-EXTERN int                     joyaicon  EQ( 0 );
-EXTERN int                     joybicon  EQ( 0 );
-EXTERN int                     keybplayer  EQ( 0 );
-EXTERN int                     mousplayer  EQ( 0 );
-EXTERN int                     joyaplayer  EQ( 0 );
-EXTERN int                     joybplayer  EQ( 0 );
 
 //Interface stuff
 #define TRIMX 640
@@ -454,7 +375,7 @@ EXTERN Uint8                   lightdirectionlookup[UINT16_SIZE];// For lighting
 
 #define MEG              0x00100000
 #define BUFFER_SIZE     (4 * MEG)
-EXTERN Uint8             cLoadBuffer[BUFFER_SIZE];         // Where to put an MD2
+
 
 typedef struct twist_entry_t
 {
@@ -515,12 +436,6 @@ typedef enum missle_handling_e
 
 
 
-EXTERN bool_t                    localseeinvisible;
-EXTERN bool_t                    localseekurse;
-
-
-
-
 //------------------------------------
 //Particle variables
 //------------------------------------
@@ -528,45 +443,8 @@ EXTERN float           textureoffset[256];         // For moving textures
 
 
 //------------------------------------
-//Module variables
+// Physics variables
 //------------------------------------
-#define RANKSIZE 8
-#define SUMMARYLINES 8
-#define SUMMARYSIZE  80
-
-EXTERN int             globalnummodule;                            // Number of modules
-
-typedef struct mod_data_t
-{
-  char            rank[RANKSIZE];               // Number of stars
-  char            longname[32];                 // Module names
-  char            loadname[32];                 // Module load names
-  Uint8           importamount;                 // # of import characters
-  bool_t          allowexport;                  // Export characters?
-  Uint8           minplayers;                   // Number of players
-  Uint8           maxplayers;                   //
-  bool_t          monstersonly;                 // Only allow monsters
-  bool_t          respawnvalid;                 // Allow respawn
-} MOD_DATA;
-
-EXTERN MOD_DATA ModList[MAXMODULE];
-
-EXTERN int             numlines;                                   // Lines in summary
-EXTERN char            modsummaryval;
-EXTERN char            modsummary[SUMMARYLINES][SUMMARYSIZE];      // Quest description
-
-
-
-
-
-
-
-
-EXTERN char *globalname  EQ( NULL );   // For debuggin' fgoto_colon
-EXTERN char *globalparsename  EQ( NULL );  // The SCRIPT.TXT filename
-EXTERN FILE *globalparseerr  EQ( NULL );  // For debuggin' scripted AI
-EXTERN FILE *globalnetworkerr  EQ( NULL );  // For debuggin' network
-
 
 EXTERN float           hillslide  EQ( 1.00 );                                 //
 EXTERN float           slippyfriction  EQ( 1.00 );   //1.05 for Chevron          // Friction
@@ -579,52 +457,45 @@ EXTERN float           gravity  EQ(( float ) - 1.0 );                         //
 
 EXTERN char            cFrameName[16];                                     // MD2 Frame Name
 
-//AI Targeting
-
-typedef struct search_context_t
+// Display messages
+typedef struct message_element_t
 {
-  bool_t  initialize;
-  CHR_REF besttarget;                                      // For find_target
-  Uint16  bestangle;                                       //
-  Uint16  useangle;                                        //
-  int     bestdistance;
-  CHR_REF nearest;
-  float   distance;
-} SEARCH_CONTEXT;
+  Sint16    time;                                //
+  char      textdisplay[MESSAGESIZE];            // The displayed text
 
-SEARCH_CONTEXT * search_new(SEARCH_CONTEXT * psearch);
-
-extern float est_max_fps;
+} MESSAGE_ELEMENT;
 
 typedef struct message_t
 {
-  // Display messages
-  Uint16  timechange;                                  //
-  Uint16  start;                                       // The message queue
+  Uint16  start;                                         // The message queue
 
   // Message files
-  Uint16  total;                                       // The number of messages
-  Uint32  totalindex;                                  // Where to put letter
+  Uint16  total;                                         // The number of messages
+  Uint32  totalindex;                                    // Where to put letter
 
+  Uint32  index[MAXTOTALMESSAGE];                        // Where it is
+  char    text[MESSAGEBUFFERSIZE];                       // The text buffer
 
-  // Display messages
-  Sint16  time[MAXMESSAGE];                                //
-  char    textdisplay[MAXMESSAGE][MESSAGESIZE];            // The displayed text
-
-  // Message files
-  Uint32  index[MAXTOTALMESSAGE];                   // Where it is
-  char    text[MESSAGEBUFFERSIZE];                 // The text buffer
+  MESSAGE_ELEMENT list[MAXMESSAGE];
 } MESSAGE;
 
 extern MESSAGE GMsg;
 
+typedef struct net_message_t
+{
+  Uint8  delay;                 // For slowing down input
+  int    write;                 // The cursor position
+  int    writemin;              // The starting cursor position
+  char   buffer[MESSAGESIZE];   // The input message
+} NET_MESSAGE;
+
+extern NET_MESSAGE GNetMsg;
 
 
 // My lil' random number table
 #define MAXRAND 4096
 EXTERN Uint16 randie[MAXRAND];
-EXTERN Uint16 randindex;
-#define RANDIE randie[randindex]; randindex++; randindex %= MAXRAND;
+#define RANDIE(PST) randie[PST->randie_index]; PST->randie_index++; PST->randie_index %= MAXRAND;
 
 
 #define MAXENDTEXT 1024
@@ -633,11 +504,6 @@ EXTERN char endtext[MAXENDTEXT];     // The end-module text
 EXTERN int endtextwrite;
 
 
-
-// Status displays
-EXTERN int numstat  EQ( 0 );
-EXTERN Uint16 statlist[MAXSTAT];
-EXTERN Uint16 statdelay  EQ( 0 );
 EXTERN Uint32 particletrans  EQ( 0x80 );
 EXTERN Uint32 antialiastrans_fp8  EQ( 0xC0 );
 
@@ -645,14 +511,8 @@ EXTERN Uint32 antialiastrans_fp8  EQ( 0xC0 );
 //Network Stuff
 //#define CHARVEL 5.0
 
-EXTERN int               numlocalpla;                            //
-EXTERN int               numfile;                                // For network copy
-EXTERN int               numfilesent;                            // For network copy
-EXTERN int               numfileexpected;                        // For network copy
-EXTERN int               numplayerrespond;                       //
 
-
-typedef struct configurable_data_t
+typedef struct ConfigData_t
 {
   STRING basicdat_dir;
   STRING gamedat_dir;
@@ -741,7 +601,7 @@ typedef struct configurable_data_t
   //------------------------------------
   bool_t zreflect;                   // Reflection z buffering?
   int    maxtotalmeshvertices;       // of vertices
-  bool_t fullscreen;                 // Start in CData.fullscreen?
+  bool_t fullscreen;                 // Start in fullscreen?
   int    scrd;                       // Screen bit depth
   int    scrx;                       // Screen X size
   int    scry;                       // Screen Y size
@@ -755,7 +615,7 @@ typedef struct configurable_data_t
   GLenum  perspective;               // Perspective correct textures?
   bool_t  dither;                    // Dithering?
   Uint8   reffadeor;                 // 255 = Don't fade reflections
-  GLenum  shading;                   // Gourad CData.shading?
+  GLenum  shading;                   // Gourad shading?
   bool_t  antialiasing;              // Antialiasing?
   bool_t  refon;                     // Reflections?
   bool_t  shaon;                     // Shadows?
@@ -771,8 +631,8 @@ typedef struct configurable_data_t
   bool_t  vsync;                     // Wait for vertical sync?
   bool_t  gfxacceleration;           // Force OpenGL graphics acceleration?
 
-  bool_t  soundvalid;        // Allow playing of sound?
-  bool_t  musicvalid;        // Allow music and loops?
+  bool_t  allow_sound;       // Allow playing of sound?
+  bool_t  allow_music;       // Allow music and loops?
   int     musicvolume;       // The sound volume of music
   int     soundvolume;       // Volume of sounds played
   int     maxsoundchannel;   // Max number of sounds playing at the same time
@@ -780,11 +640,11 @@ typedef struct configurable_data_t
 
   Uint8 autoturncamera;           // Type of camera control...
 
-  bool_t  network_on;              // Try to connect?
+  bool_t  request_network;              // Try to connect?
   int     lag;                    // Lag tolerance
-  STRING  net_hostname;            // Name for hosting session
+  STRING  net_hosts[8];                            // Name for hosting session
   STRING  net_messagename;         // Name for messages
-  Uint8 fpson;                    // FPS displayed?
+  Uint8   fpson;                    // FPS displayed?
 
   // Debug options
   SDL_GrabMode GrabMouse;
@@ -792,43 +652,65 @@ typedef struct configurable_data_t
   bool_t DevMode;
   // Debug options
 
-} CONFIG_DATA;
+} ConfigData;
+
+char * get_config_string(ConfigData * cd, char * szin, char ** szout);
+char * get_config_string_name(ConfigData * cd, STRING * pconfig_string);
+
 
 EXTERN bool_t          usefaredge;                     // Far edge maps? (Outdoor)
 EXTERN float       doturntime;                     // Time for smooth turn
 
 EXTERN STRING      CStringTmp1, CStringTmp2;
-EXTERN CONFIG_DATA CData_default, CData;
+EXTERN ConfigData CData_default, CData;
+
+struct NetState_t;
+struct ClientState_t;
+struct ServerState_t;
 
 
-void setup_characters( char *modname );
-void read_input();
+//--------------------------------------------------------------------------------------------
+struct ClockState_t;
+
+typedef struct MachineState_t
+{
+  bool_t initialized;
+
+  struct ClockState_t * clk;
+} MachineState;
+
+MachineState * Get_MachineState(void);
+
+//--------------------------------------------------------------------------------------------
+struct ClockState_t;
+
+typedef struct GuiState_t 
+{
+  bool_t initialized;
+
+  MenuProc mnu_proc;
+
+  bool_t can_pause;          //Pause button avalible?
+  bool_t net_messagemode;
+
+  GLtexture TxBars;                                         /* status bars */
+  GLtexture TxBlip;                                         /* you are here texture */
+
+  struct ClockState_t * clk;
+  float        dUpdate;
+
+} GuiState;
+
+GuiState * Get_GuiState();
+bool_t     GuiState_shutDown();
 
 
-bool_t prt_search_block( SEARCH_CONTEXT * psearch, int block_x, int block_y, PRT_REF iprt, Uint16 facing,
-                         bool_t request_friends, bool_t allow_anyone, TEAM team,
-                         Uint16 donttarget, Uint16 oldtarget );
-bool_t prt_search_wide( SEARCH_CONTEXT * psearch, PRT_REF iprt, Uint16 facing,
-                        Uint16 targetangle, bool_t request_friends, bool_t allow_anyone,
-                        TEAM team, Uint16 donttarget, Uint16 oldtarget );
+#include "module.h"
 
-bool_t chr_search_distant( SEARCH_CONTEXT * psearch, CHR_REF character, int maxdist, bool_t ask_enemies, bool_t ask_dead );
+EXTERN char *globalname  EQ( NULL );   // For debuggin' fgoto_colon
+EXTERN char *globalparsename  EQ( NULL );  // The SCRIPT.TXT filename
 
-bool_t chr_search_block_nearest( SEARCH_CONTEXT * psearch, int block_x, int block_y, CHR_REF character, bool_t ask_items,
-                               bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, bool_t seeinvisible, IDSZ idsz );
 
-bool_t chr_search_wide_nearest( SEARCH_CONTEXT * psearch, CHR_REF character, bool_t ask_items,
-                                bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, IDSZ idsz );
-
-bool_t chr_search_wide( SEARCH_CONTEXT * psearch, CHR_REF character, bool_t ask_items,
-                        bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, IDSZ idsz, bool_t excludeid );
-
-bool_t chr_search_block( SEARCH_CONTEXT * psearch, int block_x, int block_y, CHR_REF character, bool_t ask_items,
-                         bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, bool_t seeinvisible, IDSZ idsz,
-                         bool_t excludeid );
-
-bool_t chr_search_nearby( SEARCH_CONTEXT * psearch, CHR_REF character, bool_t ask_items,
-                          bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, IDSZ ask_idsz );
-
-void attach_particle_to_character( PRT_REF particle, CHR_REF character, Uint16 vertoffset );
-
+bool_t add_quest_idsz( char *whichplayer, IDSZ idsz );
+int    modify_quest_idsz( char *whichplayer, IDSZ idsz, int adjustment );
+int    check_player_quest( char *whichplayer, IDSZ idsz );

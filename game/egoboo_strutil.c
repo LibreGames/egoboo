@@ -1,23 +1,26 @@
-/* Egoboo - egoboostrutil.c
- * String manipulation functions.  Not currently in use.
- */
-
-/*
-    This file is part of Egoboo.
-
-    Egoboo is free software: you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Egoboo is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
-*/
+//********************************************************************************************
+//* Egoboo - egoboo_strutil.c
+//*
+//* String manipulation functions.
+//*
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
 
 #include "egoboo_strutil.h"
 #include "egoboo_config.h"
@@ -133,6 +136,57 @@ char * str_convert_spaces( char *strout, size_t insize, char * strin )
   return strout;
 };
 
+
+char * str_convert_net(char * str, size_t size)
+{
+  size_t i;
+
+  if(NULL == str || '\0' == str[0]) return str;
+  if(SLASH_CHAR == NET_SLASH_CHAR) return str;
+
+  for(i=0; i < size; i++)
+  {
+    if(SLASH_CHAR == str[i])
+    {
+      str[i] = NET_SLASH_CHAR;
+    }
+  }
+
+  return str;
+}
+
+char * str_convert_sys(char * str, size_t size)
+{
+  size_t i;
+
+  if(NULL == str || '\0' == str[0]) return str;
+  if(SLASH_CHAR == NET_SLASH_CHAR) return str;
+
+  for(i=0; i < size; i++)
+  {
+    if(NET_SLASH_CHAR == str[i])
+    {
+      str[i] = SLASH_CHAR;
+    }
+  }
+
+  return str;
+}
+
+char * str_append_net_slash(char * str, size_t size)
+{
+  size_t len;
+
+  if(NULL == str || '\0' == str[0]) return str;
+
+  len = strlen( str );
+  if ( str[len-1] != '/' && str[len-1] != '\\' )
+  {
+    strncat(str, NET_SLASH_STRING, size);
+  }
+
+  return str;
+}
 
 char * str_append_slash(char * str, size_t size)
 {

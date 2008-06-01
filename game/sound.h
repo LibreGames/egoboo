@@ -1,8 +1,16 @@
 #pragma once
 
+#include "egoboo_math.h"
 #include "egoboo_types.h"
 
 #include <SDL_mixer.h>
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+
+struct GameState_t; 
+
+//------------------------------------------------------------------------------
 
 #define MAXSEQUENCE         256                     // Number of tracks in sequence
 #define MAXWAVE         16                            // Up to 16 waves per model
@@ -10,10 +18,6 @@
 #define VOLUMERATIO     7                             // Volume ratio
 
 //Sound using SDL_Mixer
-extern bool_t      mixeron;                          //Is the SDL_Mixer loaded?
-extern Mix_Chunk  *globalwave[MAXWAVE];               //All sounds loaded into memory
-//extern Mix_Chunk  *wave;                             //Used for playing one selected sound file
-//extern int         channel;                           //Which channel the current sound is using
 
 #define INVALID_SOUND   (-1)
 #define INVALID_CHANNEL (-1)
@@ -31,9 +35,54 @@ typedef enum global_sound_t
   GSOUND_COUNT = MAXWAVE
 };
 
+//------------------------------------------------------------------------------
+
+struct ConfigData_t;
+
+//------------------------------------------------------------------------------
+
 //Music using SDL_Mixer
 #define MAXPLAYLISTLENGTH 25      //Max number of different tracks loaded into memory
 
-extern bool_t     musicinmemory;                        //Is the music loaded in memory?
-extern Mix_Music *instrumenttosound[MAXPLAYLISTLENGTH]; //This is a specific music file loaded into memory
-extern int        songplaying;                          //Current song that is playing
+typedef struct sound_state_t
+{
+  bool_t      initialized;           // has SoundState_new() been run on this data?
+  bool_t      mixer_loaded;          // Is the SDL_Mixer loaded?
+  bool_t      music_loaded;          // Is the music loaded in memory?
+
+  int         channel_count;         // actual number of sound channels
+  int         buffersize;            // actual sound buffer size
+  int         frequency;
+
+  int         sound_volume;          // Volume of sounds played
+  bool_t      soundActive;
+
+  bool_t      musicActive;
+  int         music_volume;          // The sound volume of music
+  int         song_loops;
+  int         song_index;            // index of the cullrently playing song
+
+  Mix_Chunk * mc_list[MAXWAVE];            // All sounds loaded into memory
+  Mix_Music * mus_list[MAXPLAYLISTLENGTH]; //This is a specific music file loaded into memory
+
+} SoundState;
+
+SoundState * SoundState_new(SoundState * ss, struct ConfigData_t * cd);
+bool_t sound_state_synchronize(SoundState * ss, struct ConfigData_t * cd);
+
+extern SoundState sndState;
+
+//------------------------------------------------------------------------------
+
+bool_t snd_initialize(SoundState * ss, struct ConfigData_t * cd);
+bool_t snd_quit(SoundState * ss);
+
+bool_t snd_reopen(SoundState * ss);
+bool_t snd_unload_music(SoundState * ss);
+void snd_stop_music(int fadetime);
+void snd_apply_mods( int channel, float intensity, vect3 snd_pos, vect3 ear_pos, Uint16 ear_turn_lr  );
+int snd_play_sound( struct GameState_t * gs, float intensity, vect3 pos, Mix_Chunk *loadedwave, int loops, int whichobject, int soundnumber);
+void snd_stop_sound( int whichchannel );
+void snd_play_music( int songnumber, int fadetime, int loops );
+int snd_play_particle_sound( struct GameState_t * gs, float intensity, PRT_REF particle, Sint8 sound );
+

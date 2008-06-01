@@ -2,7 +2,7 @@
 
 #include "object.h"
 #include "sound.h"
-#include "mesh.h"
+#include "Mesh.h"
 #include "Mad.h"
 #include "input.h"
 
@@ -68,6 +68,15 @@
 #define SEEKURSEAND         31                      // Blacking flash
 #define SEEINVISIBLE        128                     // Cutoff for invisible characters
 #define INVISIBLE           20                      // The character can't be detected
+
+//--------------------------------------------------------------------------------------------
+
+struct Cap_t;
+struct Chr_t;
+struct GameState_t;
+
+//--------------------------------------------------------------------------------------------
+
 
 typedef enum gender_e
 {
@@ -136,7 +145,7 @@ typedef enum turnmode_e
   TURNMODE_WATCHTARGET                        // For combat intensive AI
 } TURNMODE;
 
-typedef enum experience_e
+typedef enum Experience_e
 {
   XP_FINDSECRET = 0,                           // Finding a secret
   XP_WINQUEST,                                 // Beating a module or a subquest
@@ -189,22 +198,6 @@ EXTERN Uint16          chopstart[MAXCHOP];         // The first character of eac
 EXTERN char            namingnames[MAXCAPNAMESIZE];// The name returned by the function
 
 //--------------------------------------------------------------------------------------------
-// Character profiles
-typedef struct import_info_t
-{
-  bool_t valid;                // Can it import?
-  int    object;
-  int    player;
-  int    amount;
-  Sint16 slot_lst[MAXPROFILE];
-} IMPORT_INFO;
-
-bool_t import_info_clear(IMPORT_INFO * ii);
-bool_t import_info_add(IMPORT_INFO * ii, int obj);
-
-extern IMPORT_INFO import;
-
-//--------------------------------------------------------------------------------------------
 typedef struct skin_t
 {
   Uint8         defense_fp8;                // Defense for each skin
@@ -215,15 +208,16 @@ typedef struct skin_t
 } SKIN;
 
 //--------------------------------------------------------------------------------------------
-typedef struct cap_t
+typedef struct Cap_t
 {
   bool_t        used;
+
   char          classname[MAXCAPNAMESIZE];     // Class name
   Sint8         skinoverride;                  // -1 or 0-3.. For import
   Uint8         leveloverride;                 // 0 for normal
   int           stateoverride;                 // 0 for normal
   int           contentoverride;               // 0 for normal
-  bool_t        skindressy;                    // Dressy
+  Uint16        skindressy;                    // bits for dressy skins
   float         strengthdampen;                // Strength damage factor
   Uint8         stoppedby;                     // Collision Mask
   bool_t        uniformlit;                    // Bad lighting?
@@ -314,7 +308,7 @@ typedef struct cap_t
   Uint8         gopoofprtamount;               // Poof effect
   Sint16        gopoofprtfacingadd;            //
   Uint16        gopoofprttype;                 //
-  Uint8         bludlevel;                     // Blud ( yuck )
+  BLUD_LEVEL    bludlevel;                     // Blud ( yuck )
   Uint16        bludprttype;                   //
   Sint8         footfallsound;                 // Footfall sound, -1
   Sint8         jumpsound;                     // Jump sound, -1
@@ -356,13 +350,14 @@ typedef struct cap_t
   Uint16     sectionsize[MAXSECTION];   // Number of choices, 0
   Uint16     sectionstart[MAXSECTION];  //
 
-} CAP;
+} Cap;
 
-#define CAP_INHERIT_IDSZ(MODEL,ID) (CapList[MODEL].idsz[IDSZ_PARENT] == (IDSZ)(ID) || CapList[MODEL].idsz[IDSZ_TYPE] == (IDSZ)(ID))
-#define CAP_INHERIT_IDSZ_RANGE(MODEL,IDMIN,IDMAX) ((CapList[MODEL].idsz[IDSZ_PARENT] >= (IDSZ)(IDMIN) && CapList[MODEL].idsz[IDSZ_PARENT] <= (IDSZ)(IDMAX)) || (CapList[MODEL].idsz[IDSZ_TYPE] >= (IDSZ)(IDMIN) && CapList[MODEL].idsz[IDSZ_TYPE] <= (IDSZ)(IDMAX)) )
+Cap *  Cap_new(Cap *pcap);
+bool_t Cap_delete(Cap * pcap);
+Cap *  Cap_renew(Cap *pcap);
 
-extern CAP CapList[MAXCAP];
-
+#define CAP_INHERIT_IDSZ(PGS, MODEL, ID) (PGS->CapList[MODEL].idsz[IDSZ_PARENT] == (IDSZ)(ID) || PGS->CapList[MODEL].idsz[IDSZ_TYPE] == (IDSZ)(ID))
+#define CAP_INHERIT_IDSZ_RANGE(PGS, MODEL,IDMIN,IDMAX) ((PGS->CapList[MODEL].idsz[IDSZ_PARENT] >= (IDSZ)(IDMIN) && PGS->CapList[MODEL].idsz[IDSZ_PARENT] <= (IDSZ)(IDMAX)) || (PGS->CapList[MODEL].idsz[IDSZ_TYPE] >= (IDSZ)(IDMIN) && PGS->CapList[MODEL].idsz[IDSZ_TYPE] <= (IDSZ)(IDMAX)) )
 
 //--------------------------------------------------------------------------------------------
 typedef struct lighting_data_t
@@ -438,10 +433,23 @@ typedef struct ai_state_t
   Uint32          alert;           // Alerts for AI script
   vect3           trgvel;          // target's velocity
   LATCH           latch;           // latches
+
+  // "global" variables. Any character to character messages should be sent another way
+  // there is no guarantee that scripts will be processed in any specific order!
+  Uint32 offset;
+  Uint32 lastindent;
+  Sint32 operationsum;
+
+  Uint16 oldtarget;
+  Sint32 tmpx;
+  Sint32 tmpy;
+  Uint32 tmpturn;
+  Sint32 tmpdistance;
+  Sint32 tmpargument;
 } AI_STATE;
 
-INLINE AI_STATE * ai_state_new(AI_STATE * a, Uint16 ichr);
-INLINE AI_STATE * ai_state_renew(AI_STATE * a, Uint16 ichr);
+INLINE AI_STATE * ai_state_new(struct GameState_t * gs, AI_STATE * a, CHR_REF ichr);
+INLINE AI_STATE * ai_state_renew(AI_STATE * a, CHR_REF ichr);
 
 
 //--------------------------------------------------------------------------------------------
@@ -453,12 +461,12 @@ typedef struct chr_terrain_light_t
 } CHR_TLIGHT;
 
 //--------------------------------------------------------------------------------------------
-typedef struct chr_t
+typedef struct Chr_t
 {
   bool_t          on;              // Does it exist?
   char            name[MAXCAPNAMESIZE];  // Character name
   bool_t          gopoof;          // is poof requested?
-  bool_t          freeme;          // is free_one_character() requested?
+  bool_t          freeme;          // is ChrList_free_one() requested?
 
 
   matrix_4x4      matrix;          // Character's matrix
@@ -469,8 +477,8 @@ typedef struct chr_t
 
   bool_t          alive;           // Is it alive?
 
-  bool_t          inwhichpack;     // Is it in whose inventory?
-  Uint16          nextinpack;      // Link to the next item
+  CHR_REF         inwhichpack;     // Is it in whose inventory?
+  CHR_REF         nextinpack;      // Link to the next item
   Uint8           numinpack;       // How many
 
   bool_t          openstuff;       // Can it open chests/doors?
@@ -614,8 +622,7 @@ typedef struct chr_t
   bool_t          hitready;        // Was it just dropped?
   bool_t          canbecrushed;    // Crush in a door?
   bool_t          cangrabmoney;    // Picks up coins?
-  bool_t          isplayer;        // btrue = player
-  bool_t          islocalplayer;   // btrue = local player
+  PLA_REF         whichplayer;     // not MAXPLAYER for true
 
   // enchant info
   Uint16          firstenchant;    // Linked list for enchants
@@ -643,7 +650,7 @@ typedef struct chr_t
 
   // [BEGIN] Character states that are like skill expansions
   bool_t     invictus;          // Totally invincible?
-  bool_t     waterwalk;         // Always above GWater.surfacelevel?
+  bool_t     waterwalk;         // Always above gs->water.surfacelevel?
   bool_t     iskursed;          // Can't be dropped?  Could this also mean damage debuff? Spell fizzle rate? etc.
   bool_t     canseeinvisible;   //
   bool_t     canchannel;        //
@@ -661,95 +668,105 @@ typedef struct chr_t
   bool_t     canusepoison;            // Use poison without err [POIS]
   bool_t     canread;     // Can read books and scrolls
   // [END]  Skill Expansions
-} CHR;
+} Chr;
+
+Chr * Chr_new(Chr * pchr);
+bool_t Chr_delete(Chr * pchr);
+Chr * Chr_renew(Chr * pchr);
 
 #define VALID_CHR_RANGE(XX) (((XX)>=0) && ((XX)<MAXCHR))
-#define VALID_CHR(XX)    ( VALID_CHR_RANGE(XX) && ChrList[XX].on )
-#define VALIDATE_CHR(XX) ( VALID_CHR(XX) ? (XX) : MAXCHR )
+#define VALID_CHR(LST, XX)    ( VALID_CHR_RANGE(XX) && LST[XX].on )
+#define VALIDATE_CHR(LST, XX) ( VALID_CHR(LST, XX) ? (XX) : MAXCHR )
 
-INLINE const bool_t chr_in_pack( CHR_REF character );
-INLINE const bool_t chr_attached( CHR_REF character );
-INLINE const bool_t chr_has_inventory( CHR_REF character );
-INLINE const bool_t chr_is_invisible( CHR_REF character );
-INLINE const bool_t chr_using_slot( CHR_REF character, SLOT slot );
+INLINE const bool_t chr_in_pack( Chr lst[], size_t lst_size, CHR_REF character );
+INLINE const bool_t chr_attached( Chr lst[], size_t lst_size, CHR_REF character );
+INLINE const bool_t chr_has_inventory( Chr lst[], size_t lst_size, CHR_REF character );
+INLINE const bool_t chr_is_invisible( Chr lst[], size_t lst_size, CHR_REF character );
+INLINE const bool_t chr_using_slot( Chr lst[], size_t lst_size, CHR_REF character, SLOT slot );
 
-INLINE const CHR_REF chr_get_nextinpack( CHR_REF ichr );
-INLINE const CHR_REF chr_get_onwhichplatform( CHR_REF ichr );
-INLINE const CHR_REF chr_get_inwhichpack( CHR_REF ichr );
-INLINE const CHR_REF chr_get_attachedto( CHR_REF ichr );
-INLINE const CHR_REF chr_get_holdingwhich( CHR_REF ichr, SLOT slot );
+INLINE const CHR_REF chr_get_nextinpack( Chr lst[], size_t lst_size, CHR_REF ichr );
+INLINE const CHR_REF chr_get_onwhichplatform( Chr lst[], size_t lst_size, CHR_REF ichr );
+INLINE const CHR_REF chr_get_inwhichpack( Chr lst[], size_t lst_size, CHR_REF ichr );
+INLINE const CHR_REF chr_get_attachedto( Chr lst[], size_t lst_size, CHR_REF ichr );
+INLINE const CHR_REF chr_get_holdingwhich( Chr lst[], size_t lst_size, CHR_REF ichr, SLOT slot );
 
-INLINE const CHR_REF chr_get_aitarget( CHR_REF ichr );
-INLINE const CHR_REF chr_get_aiowner( CHR_REF ichr );
-INLINE const CHR_REF chr_get_aichild( CHR_REF ichr );
-INLINE const CHR_REF chr_get_aiattacklast( CHR_REF ichr );
-INLINE const CHR_REF chr_get_aibumplast( CHR_REF ichr );
-INLINE const CHR_REF chr_get_aihitlast( CHR_REF ichr );
+INLINE const CHR_REF chr_get_aitarget( Chr lst[], size_t lst_size, Chr * pchr );
+INLINE const CHR_REF chr_get_aiowner( Chr lst[], size_t lst_size, Chr * pchr );
+INLINE const CHR_REF chr_get_aichild( Chr lst[], size_t lst_size, Chr * pchr );
+INLINE const CHR_REF chr_get_aiattacklast( Chr lst[], size_t lst_size, Chr * pchr );
+INLINE const CHR_REF chr_get_aibumplast( Chr lst[], size_t lst_size, Chr * pchr );
+INLINE const CHR_REF chr_get_aihitlast( Chr lst[], size_t lst_size, Chr * pchr );
 
-extern CHR ChrList[MAXCHR];
 
 // Character data
-extern int             numfreechr;         // For allocation
-extern Uint16          freechrlist[MAXCHR];        //
+
 extern Uint16          chrcollisionlevel;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+int ChrList_get_free( struct GameState_t * gs );
+void ChrList_free_one( struct GameState_t * gs, CHR_REF character );
 
-bool_t make_one_character_matrix( CHR_REF cnt );
-void free_one_character( CHR_REF character );
-void chr_free_inventory( CHR_REF character );
-bool_t make_one_weapon_matrix( Uint16 cnt );
-void make_character_matrices();
-int get_free_character();
-Uint32 chr_hitawall( CHR_REF character, vect3 * norm );
-void play_action( CHR_REF character, ACTION action, bool_t ready );
-void set_frame( CHR_REF character, Uint16 frame, Uint8 lip );
-bool_t detach_character_from_mount( CHR_REF character, bool_t ignorekurse, bool_t doshop );
-void drop_money( CHR_REF character, Uint16 money );
-void call_for_help( CHR_REF character );
-void give_experience( CHR_REF character, int amount, EXPERIENCE xptype );
+bool_t make_one_character_matrix( Chr chrlst[], size_t chrlst_size, Chr * cnt );
+void chr_free_inventory( Chr lst[], size_t lst_size, CHR_REF character );
+bool_t make_one_weapon_matrix( Chr chrlst[], size_t chrlst_size, Uint16 cnt );
+void make_character_matrices(Chr chrlst[], size_t chrlst_size);
 
-void damage_character( CHR_REF character, Uint16 direction,
+Uint32 chr_hitawall( struct GameState_t * gs, Chr * pchr, vect3 * norm );
+void play_action( struct GameState_t * gs, CHR_REF character, ACTION action, bool_t ready );
+void set_frame( struct GameState_t * gs, CHR_REF character, Uint16 frame, Uint8 lip );
+bool_t detach_character_from_mount( struct GameState_t * gs, CHR_REF character, bool_t ignorekurse, bool_t doshop );
+void drop_money( struct GameState_t * gs, CHR_REF character, Uint16 money );
+
+void damage_character( struct GameState_t * gs, CHR_REF character, Uint16 direction,
                        PAIR * ppair, DAMAGE damagetype, TEAM team,
                        Uint16 attacker, Uint16 effects );
-void kill_character( CHR_REF character, Uint16 killer );
-void spawn_poof( CHR_REF character, Uint16 profile );
+void kill_character( struct GameState_t * gs, CHR_REF character, Uint16 killer );
+void spawn_poof( struct GameState_t * gs, CHR_REF character, Uint16 profile );
 
 
-void tilt_characters_to_terrain();
-CHR_REF spawn_one_character( vect3 pos, int profile, TEAM team,
+void tilt_characters_to_terrain(struct GameState_t * gs);
+CHR_REF spawn_one_character( struct GameState_t * gs, vect3 pos, int profile, TEAM team,
                             Uint8 skin, Uint16 facing, char *name, Uint16 override );
 
-void respawn_character( CHR_REF character );
-Uint16 change_armor( CHR_REF character, Uint16 skin );
-void change_character( Uint16 cnt, Uint16 profile, Uint8 skin,
+void respawn_character( struct GameState_t * gs, CHR_REF character );
+Uint16 change_armor( struct GameState_t * gs, CHR_REF character, Uint16 skin );
+void change_character( struct GameState_t * gs, Uint16 cnt, Uint16 profile, Uint8 skin,
                        Uint8 leavewhich );
-bool_t cost_mana( CHR_REF character, int amount, Uint16 killer );
-bool_t attach_character_to_mount( CHR_REF character, Uint16 mount, SLOT slot );
-CHR_REF stack_in_pack( CHR_REF item, CHR_REF character );
-bool_t pack_add_item( Uint16 item, CHR_REF character );
-Uint16 pack_get_item( CHR_REF character, SLOT slot, bool_t ignorekurse );
-void drop_keys( CHR_REF character );
-void drop_all_items( CHR_REF character );
-bool_t chr_grab_stuff( CHR_REF chara, SLOT slot, bool_t people );
-void chr_swipe( Uint16 cnt, SLOT slot );
-void despawn_characters();
-void move_characters( float dUpdate );
+bool_t cost_mana( struct GameState_t * gs, CHR_REF character, int amount, Uint16 killer );
+bool_t attach_character_to_mount( struct GameState_t * gs, CHR_REF character, Uint16 mount, SLOT slot );
+CHR_REF stack_in_pack( struct GameState_t * gs, CHR_REF item, CHR_REF character );
+bool_t pack_add_item( struct GameState_t * gs, CHR_REF item, CHR_REF character );
+Uint16 pack_get_item( struct GameState_t * gs,CHR_REF character, SLOT slot, bool_t ignorekurse );
+void drop_keys( struct GameState_t * gs,CHR_REF character );
+void drop_all_items( struct GameState_t * gs,CHR_REF character );
+bool_t chr_grab_stuff( struct GameState_t * gs,CHR_REF chara, SLOT slot, bool_t people );
+void chr_swipe( struct GameState_t * gs,Uint16 cnt, SLOT slot );
+void move_characters( struct GameState_t * gs,float dUpdate );
 
-Uint16 object_generate_index( char *szLoadName );
-Uint16 load_one_cap( char * szModpath, char *szObjectname, Uint16 icap );
+Uint16 object_generate_index( struct GameState_t * gs,char *szLoadName );
 
-bool_t chr_bdata_reinit(CHR_REF ichr, BData * pbd);
+Uint16 CapList_load_one( struct GameState_t * gs, char * szModpath, char *szObjectname, Uint16 icap );
 
-int get_skin( char * szModpath, char * szObjectname );
+bool_t chr_bdata_reinit(Chr * pchr, BData * pbd);
 
-void free_all_characters();
-void export_one_character( CHR_REF character, Uint16 owner, int number );
-
-void calc_cap_experience( Uint16 object );
-int calc_chr_experience( Uint16 object, float level );
-float calc_chr_level( Uint16 object );
+int fget_skin( char * szModpath, char * szObjectname );
 
 
-bool_t chr_calculate_bumpers(CHR_REF ichr, int level);
+void calc_cap_experience( struct GameState_t * gs, Uint16 object );
+int calc_chr_experience( struct GameState_t * gs, Uint16 object, float level );
+float calc_chr_level( struct GameState_t * gs, Uint16 object );
+
+
+bool_t chr_calculate_bumpers( struct Mad_t madlst[], size_t madlst_size, Chr * pchr, int level);
+
+void flash_character_height( struct GameState_t * gs, CHR_REF character, Uint8 valuelow, Sint16 low,
+                             Uint8 valuehigh, Sint16 high );
+
+void flash_character( struct GameState_t * gs, CHR_REF character, Uint8 value );
+
+void signal_target( struct GameState_t * gs, Uint16 target, Uint16 upper, Uint16 lower );
+void signal_team( struct GameState_t * gs, CHR_REF character, Uint32 order );
+void signal_idsz_index( struct GameState_t * gs, Uint32 order, IDSZ idsz, IDSZ_INDEX index );
+
+bool_t ai_state_advance_wp(AI_STATE * a, bool_t do_atlastwaypoint);

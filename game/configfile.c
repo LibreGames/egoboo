@@ -1,23 +1,26 @@
-/* Egoboo - configfile.c
- * Configuration file loading code.
- */
-
-/*
-    This file is part of Egoboo.
-
-    Egoboo is free software: you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Egoboo is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
-*/
+//********************************************************************************************
+//* Egoboo - configfile.c
+//*
+//* Configuration file loading code.
+//*
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
 
 //---------------------------------------------------------------------
 //
@@ -214,7 +217,7 @@ Sint32 ReadConfigValue( ConfigFilePtr pConfigFile, ConfigFileValuePtr pValue )
           ungetc( lc, pConfigFile->f );
           // succesfull scan
           // allocate memory for value
-          pValue->Value = ( char * ) malloc( lLenghtName + 1 );
+          pValue->Value = (char *) calloc( lLenghtName + 1, sizeof(char) );
           // copy string
           strcpy( pValue->Value, lTempStr );
           // exit scan
@@ -282,7 +285,7 @@ Sint32 ReadConfigCommentary( ConfigFilePtr pConfigFile, ConfigFileValuePtr pValu
         if ( lc == 13 || lc == 10 || feof( pConfigFile->f ) )
         {
           // allocate memory for commentary
-          pValue->Commentary = ( char * ) malloc( lLenghtName + 1 );
+          pValue->Commentary = (char *)calloc( lLenghtName + 1, sizeof(char) );
           // copy string
           strcpy( pValue->Commentary, lTempStr );
           // exit scan
@@ -327,7 +330,7 @@ ConfigFilePtr OpenConfigFile( const char *pPath )
   lTempFile = fs_fileOpen( PRI_NONE, NULL, pPath, "rt+" );
   if ( lTempFile != NULL )
   {
-    lTempConfig = ( ConfigFilePtr ) malloc( sizeof( ConfigFile ) );
+    lTempConfig = ( ConfigFilePtr ) calloc( 1, sizeof( ConfigFile ) );
     lTempConfig->f = lTempFile;
     lTempConfig->ConfigSectionList = NULL;
     lTempConfig->CurrentSection = NULL;
@@ -344,7 +347,7 @@ ConfigFilePtr OpenConfigFile( const char *pPath )
           if ( lc == '{' )
           {
             // create first section and load name
-            lTempConfig->ConfigSectionList = ( ConfigFileSectionPtr ) malloc( sizeof( ConfigFileSection ) );
+            lTempConfig->ConfigSectionList = ( ConfigFileSectionPtr ) calloc( 1, sizeof( ConfigFileSection ) );
             memset( lTempConfig->ConfigSectionList, 0, sizeof( ConfigFileSection ) );
             lCurSection = lTempConfig->ConfigSectionList;
             ReadConfigSectionName( lTempConfig, lTempConfig->ConfigSectionList );
@@ -364,7 +367,7 @@ ConfigFilePtr OpenConfigFile( const char *pPath )
           if ( lc == '{' )
           {
             // create new section and load name
-            lCurSection->NextSection = ( ConfigFileSectionPtr ) malloc( sizeof( ConfigFileSection ) );
+            lCurSection->NextSection = ( ConfigFileSectionPtr ) calloc( 1, sizeof( ConfigFileSection ) );
             lCurSection = lCurSection->NextSection;
             memset( lCurSection, 0, sizeof( ConfigFileSection ) );
             ReadConfigSectionName( lTempConfig, lCurSection );
@@ -376,13 +379,13 @@ ConfigFilePtr OpenConfigFile( const char *pPath )
             if ( lCurValue == NULL )
             {
               // first value in section
-              lCurSection->FirstValue = ( ConfigFileValuePtr ) malloc( sizeof( ConfigFileValue ) );
+              lCurSection->FirstValue = ( ConfigFileValuePtr ) calloc( 1, sizeof( ConfigFileValue ) );
               lCurValue = lCurSection->FirstValue;
             }
             else
             {
               // link to new value
-              lCurValue->NextValue = ( ConfigFileValuePtr ) malloc( sizeof( ConfigFileValue ) );
+              lCurValue->NextValue = ( ConfigFileValuePtr ) calloc( 1, sizeof( ConfigFileValue ) );
               lCurValue = lCurValue->NextValue;
             }
             memset( lCurValue, 0, sizeof( ConfigFileValue ) );
@@ -641,14 +644,14 @@ Sint32 SetConfigValue( ConfigFilePtr pConfigFile, const char *pSection, const ch
   if (( lOK = SetConfigCurrentSection( pConfigFile, lNewSectionName ) )  == 0 )
   {
     // section doesn't exist so create it and create value
-    lTempSection = ( ConfigFileSectionPtr ) malloc( sizeof( ConfigFileValue ) );
+    lTempSection = ( ConfigFileSectionPtr ) calloc( 1, sizeof( ConfigFileValue ) );
     memset( lTempSection, 0, sizeof( ConfigFileValue ) );
     lTempSection->NextSection = pConfigFile->ConfigSectionList;
     pConfigFile->ConfigSectionList = lTempSection;
     strcpy( lTempSection->SectionName, lNewSectionName );
 
     // create the new value
-    lTempValue = ( ConfigFileValuePtr ) malloc( sizeof( ConfigFileValue ) );
+    lTempValue = ( ConfigFileValuePtr ) calloc( 1, sizeof( ConfigFileValue ) );
     memset( lTempValue, 0, sizeof( ConfigFileValue ) );
     lTempSection->FirstValue = lTempValue;
     strcpy( lTempValue->KeyName, lNewKeyName );
@@ -665,7 +668,7 @@ Sint32 SetConfigValue( ConfigFilePtr pConfigFile, const char *pSection, const ch
     if ( 0 == SetConfigCurrentValueFromCurrentSection( pConfigFile, lNewKeyName ) )
     {
       // create new value in current section
-      lTempValue = ( ConfigFileValuePtr ) malloc( sizeof( ConfigFileValue ) );
+      lTempValue = ( ConfigFileValuePtr ) calloc( 1, sizeof( ConfigFileValue ) );
       memset( lTempValue, 0, sizeof( ConfigFileValue ) );
       lTempValue->NextValue = pConfigFile->CurrentSection->FirstValue;
       pConfigFile->CurrentSection->FirstValue = lTempValue;
@@ -680,7 +683,7 @@ Sint32 SetConfigValue( ConfigFilePtr pConfigFile, const char *pSection, const ch
   if ( pConfigFile->CurrentValue->Value == NULL )
   {
     // if the stirng value doesn't exist than allocate memory for it
-    pConfigFile->CurrentValue->Value = ( char * ) malloc( lLentghtNewValue  + 1 );
+    pConfigFile->CurrentValue->Value = ( char * ) calloc( lLentghtNewValue  + 1, sizeof(char) );
     memset( pConfigFile->CurrentValue->Value, 0, lLentghtNewValue + 1 );
   }
   else
@@ -695,7 +698,7 @@ Sint32 SetConfigValue( ConfigFilePtr pConfigFile, const char *pSection, const ch
     if ( lLentghtNewValue >= lLengthValue )
     {
       FREE( pConfigFile->CurrentValue->Value );
-      pConfigFile->CurrentValue->Value = ( char * ) malloc( lLentghtNewValue  + 1 );
+      pConfigFile->CurrentValue->Value = ( char * ) calloc( lLentghtNewValue  + 1, sizeof(char) );
       memset( pConfigFile->CurrentValue->Value, 0, lLentghtNewValue + 1 );
     }
     else

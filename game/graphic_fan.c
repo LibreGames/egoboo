@@ -1,23 +1,26 @@
-/* Egoboo - graphicfan.c
-* World mesh drawing.
-*/
-
-/*
-This file is part of Egoboo.
-
-Egoboo is free software: you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Egoboo is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
-*/
+//********************************************************************************************
+//* Egoboo - graphic_fan.c
+//*
+//* MPD (world mesh) drawing.
+//*
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
 
 #include "ogl_include.h"
 #include "Log.h"
@@ -38,6 +41,8 @@ void render_fan_ref( Uint32 fan, char tex_loaded, float level )
 {
   // ZZ> This function draws a mesh fan
 
+  GameState * gs = gfxState.gs;
+
   GLVertex v[MAXMESHVERTICES];
   Uint16 commands;
   Uint16 vertices;
@@ -51,9 +56,9 @@ void render_fan_ref( Uint32 fan, char tex_loaded, float level )
   // vertex is a value from 0-15, for the meshcommandref/u/v variables
   // badvertex is a value that references the actual vertex number
 
-  Uint16 tile = Mesh_Fan[fan].tile;               // Tile
-  Uint8  fx   = Mesh_Fan[fan].fx;                 // Fx bits
-  Uint16 type = Mesh_Fan[fan].type;               // Command type ( index to points in fan )
+  Uint16 tile = gs->Mesh_Mem.fanlst[fan].tile;               // Tile
+  Uint8  fx   = gs->Mesh_Mem.fanlst[fan].fx;                 // Fx bits
+  Uint16 type = gs->Mesh_Mem.fanlst[fan].type;               // Command type ( index to points in fan )
 
   if ( tile == INVALID_TILE )
     return;
@@ -85,7 +90,7 @@ void render_fan_ref( Uint32 fan, char tex_loaded, float level )
   commands = Mesh_Cmd[type].cmd_count;   // Number of commands
 
   // Original points
-  badvertex = Mesh_Fan[fan].vrt_start;          // Get big reference value
+  badvertex = gs->Mesh_Mem.fanlst[fan].vrt_start;          // Get big reference value
 
   if ( texture != tex_loaded ) return;
 
@@ -95,18 +100,18 @@ void render_fan_ref( Uint32 fan, char tex_loaded, float level )
   for ( cnt = 0; cnt < vertices; cnt++ )
   {
     float ftmp;
-    light_flat_r += Mesh_Mem.vrt_lr_fp8[badvertex] * 0.5f;
-    light_flat_g += Mesh_Mem.vrt_lg_fp8[badvertex] * 0.5f;
-    light_flat_b += Mesh_Mem.vrt_lb_fp8[badvertex] * 0.5f;
+    light_flat_r += gs->Mesh_Mem.vrt_lr_fp8[badvertex] * 0.5f;
+    light_flat_g += gs->Mesh_Mem.vrt_lg_fp8[badvertex] * 0.5f;
+    light_flat_b += gs->Mesh_Mem.vrt_lb_fp8[badvertex] * 0.5f;
 
-    ftmp = Mesh_Mem.vrt_z[badvertex] - level;
-    v[cnt].pos.x = Mesh_Mem.vrt_x[badvertex];
-    v[cnt].pos.y = Mesh_Mem.vrt_y[badvertex];
+    ftmp = gs->Mesh_Mem.vrt_z[badvertex] - level;
+    v[cnt].pos.x = gs->Mesh_Mem.vrt_x[badvertex];
+    v[cnt].pos.y = gs->Mesh_Mem.vrt_y[badvertex];
     v[cnt].pos.z = level - ftmp;
 
-    v[cnt].col.r = FP8_TO_FLOAT( Mesh_Mem.vrt_lr_fp8[badvertex] );
-    v[cnt].col.g = FP8_TO_FLOAT( Mesh_Mem.vrt_lg_fp8[badvertex] );
-    v[cnt].col.b = FP8_TO_FLOAT( Mesh_Mem.vrt_lb_fp8[badvertex] );
+    v[cnt].col.r = FP8_TO_FLOAT( gs->Mesh_Mem.vrt_lr_fp8[badvertex] );
+    v[cnt].col.g = FP8_TO_FLOAT( gs->Mesh_Mem.vrt_lg_fp8[badvertex] );
+    v[cnt].col.b = FP8_TO_FLOAT( gs->Mesh_Mem.vrt_lb_fp8[badvertex] );
 
     badvertex++;
   }
@@ -117,16 +122,16 @@ void render_fan_ref( Uint32 fan, char tex_loaded, float level )
 
 
   // Change texture if need be
-  if ( mesh.last_texture != texture )
+  if ( gs->mesh.last_texture != texture )
   {
-    GLTexture_Bind( &TxTexture[texture], CData.texturefilter );
-    mesh.last_texture = texture;
+    GLTexture_Bind( gs->TxTexture + texture, &gfxState );
+    gs->mesh.last_texture = texture;
   }
 
   ATTRIB_PUSH( "render_fan", GL_CURRENT_BIT );
   {
     // Render each command
-    if ( CData.shading == GL_FLAT )
+    if ( gfxState.shading == GL_FLAT )
     {
       // use the average lighting
       glColor4f( FP8_TO_FLOAT( light_flat_r ), FP8_TO_FLOAT( light_flat_g ), FP8_TO_FLOAT( light_flat_b ), 1 );
@@ -176,6 +181,8 @@ void render_fan( Uint32 fan, char tex_loaded )
 {
   // ZZ> This function draws a mesh fan
 
+  GameState * gs = gfxState.gs;
+
   GLVertex v[MAXMESHVERTICES];
   Uint16 commands;
   Uint16 vertices;
@@ -190,13 +197,13 @@ void render_fan( Uint32 fan, char tex_loaded )
   // vertex is a value from 0-15, for the meshcommandref/u/v variables
   // badvertex is a value that references the actual vertex number
 
-  Uint16 tile = Mesh_Fan[fan].tile;               // Tile
-  Uint8  fx   = Mesh_Fan[fan].fx;                 // Fx bits
-  Uint16 type = Mesh_Fan[fan].type;               // Command type ( index to points in fan )
+  Uint16 tile = gs->Mesh_Mem.fanlst[fan].tile;               // Tile
+  Uint8  fx   = gs->Mesh_Mem.fanlst[fan].fx;                 // Fx bits
+  Uint16 type = gs->Mesh_Mem.fanlst[fan].type;               // Command type ( index to points in fan )
 
   if ( tile == INVALID_TILE ) return;
 
-  mesh_calc_normal_fan( fan, &nrm, &pos );
+  mesh_calc_normal_fan( gs, fan, &nrm, &pos );
 
 
   // Animate the tiles
@@ -226,7 +233,7 @@ void render_fan( Uint32 fan, char tex_loaded )
   commands = Mesh_Cmd[type].cmd_count;   // Number of commands
 
   // Original points
-  badvertex = Mesh_Fan[fan].vrt_start;   // Get big reference value
+  badvertex = gs->Mesh_Mem.fanlst[fan].vrt_start;   // Get big reference value
 
   if ( texture != tex_loaded ) return;
 
@@ -236,17 +243,17 @@ void render_fan( Uint32 fan, char tex_loaded )
   light_flat.a = 0.0f;
   for ( cnt = 0; cnt < vertices; cnt++ )
   {
-    v[cnt].pos.x = Mesh_Mem.vrt_x[badvertex];
-    v[cnt].pos.y = Mesh_Mem.vrt_y[badvertex];
-    v[cnt].pos.z = Mesh_Mem.vrt_z[badvertex];
+    v[cnt].pos.x = gs->Mesh_Mem.vrt_x[badvertex];
+    v[cnt].pos.y = gs->Mesh_Mem.vrt_y[badvertex];
+    v[cnt].pos.z = gs->Mesh_Mem.vrt_z[badvertex];
 
-    v[cnt].col.r = FP8_TO_FLOAT( Mesh_Mem.vrt_lr_fp8[badvertex] );
-    v[cnt].col.g = FP8_TO_FLOAT( Mesh_Mem.vrt_lg_fp8[badvertex] );
-    v[cnt].col.b = FP8_TO_FLOAT( Mesh_Mem.vrt_lb_fp8[badvertex] );
+    v[cnt].col.r = FP8_TO_FLOAT( gs->Mesh_Mem.vrt_lr_fp8[badvertex] );
+    v[cnt].col.g = FP8_TO_FLOAT( gs->Mesh_Mem.vrt_lg_fp8[badvertex] );
+    v[cnt].col.b = FP8_TO_FLOAT( gs->Mesh_Mem.vrt_lb_fp8[badvertex] );
     v[cnt].col.a = 1.0f;
 
 #if defined(DEBUG_MESHFX) && defined(_DEBUG)
-    if(CData.DevMode)
+    if(gfxState.DevMode)
     {
 
       if ( HAS_SOME_BITS( fx, MPDFX_WALL ) )
@@ -276,7 +283,7 @@ void render_fan( Uint32 fan, char tex_loaded )
     light_flat.a += v[cnt].col.a;
 
 #if defined(DEBUG_MESH_NORMALS) && defined(_DEBUG)
-    if(CData.DevMode)
+    if(gfxState.DevMode)
     {
       vect3 * pv3 = (vect3 *) &(v[cnt].pos.v);
       mesh_calc_normal_pos( fan, *pv3, &(v[cnt].nrm) );
@@ -295,16 +302,16 @@ void render_fan( Uint32 fan, char tex_loaded )
   };
 
   // Change texture if need be
-  if ( mesh.last_texture != texture )
+  if ( gs->mesh.last_texture != texture )
   {
-    GLTexture_Bind( &TxTexture[texture], CData.texturefilter );
-    mesh.last_texture = texture;
+    GLTexture_Bind( gs->TxTexture + texture, &gfxState );
+    gs->mesh.last_texture = texture;
   }
 
   ATTRIB_PUSH( "render_fan", GL_CURRENT_BIT );
   {
     // Render each command
-    if ( CData.shading == GL_FLAT )
+    if ( gfxState.shading == GL_FLAT )
     {
       // use the average lighting
       glColor4fv( light_flat.v );
@@ -347,7 +354,7 @@ void render_fan( Uint32 fan, char tex_loaded )
 
 
 #if defined(DEBUG_MESH_NORMALS) && defined(_DEBUG)
-    if ( CData.DevMode )
+    if ( gfxState.DevMode )
     {
       glBegin( GL_LINES );
       {
@@ -385,9 +392,9 @@ void render_fan( Uint32 fan, char tex_loaded )
 GFog.spec = 0xff000000 | (GFog.red<<16) | (GFog.grn<<8) | (GFog.blu);
 for (cnt = 0; cnt < vertices; cnt++)
 {
-v[cnt].pos.x = (float) Mesh_Mem.vrt_x[badvertex];
-v[cnt].pos.y = (float) Mesh_Mem.vrt_y[badvertex];
-v[cnt].pos.z = (float) Mesh_Mem.vrt_z[badvertex];
+v[cnt].pos.x = (float) gs->Mesh_Mem.vrt_x[badvertex];
+v[cnt].pos.y = (float) gs->Mesh_Mem.vrt_y[badvertex];
+v[cnt].pos.z = (float) gs->Mesh_Mem.vrt_z[badvertex];
 z = v[cnt].pos.z;
 
 
@@ -413,7 +420,7 @@ else
 v[cnt].dcSpecular = 0;  // No fog
 }
 
-ambi = (DWORD) Mesh_Mem.vrt_l_fp8[badvertex];
+ambi = (DWORD) gs->Mesh_Mem.vrt_l_fp8[badvertex];
 ambi = (ambi<<8)|ambi;
 ambi = (ambi<<8)|ambi;
 //                v[cnt].dcColor = ambi;
@@ -427,6 +434,8 @@ badvertex++;
 void render_water_fan( Uint32 fan, Uint8 layer, Uint8 mode )
 {
   // ZZ> This function draws a water fan
+
+  GameState * gs = gfxState.gs;
 
   GLVertex v[MAXMESHVERTICES];
   Uint16 type;
@@ -442,9 +451,9 @@ void render_water_fan( Uint32 fan, Uint8 layer, Uint8 mode )
 
   // To make life easier
   type   = 0;                              // Command type ( index to points in fan )
-  off.u  = GWater.layer[layer].u;         // Texture offsets
-  off.v  = GWater.layer[layer].v;         //
-  frame  = GWater.layer[layer].frame;     // Frame
+  off.u  = gs->water.layer[layer].u;         // Texture offsets
+  off.v  = gs->water.layer[layer].v;         //
+  frame  = gs->water.layer[layer].frame;     // Frame
 
   texture = layer + TX_WATER_TOP;        // Water starts at texture 5
   vertices = Mesh_Cmd[type].vrt_count;   // Number of vertices
@@ -452,25 +461,25 @@ void render_water_fan( Uint32 fan, Uint8 layer, Uint8 mode )
 
 
   // figure the ambient light
-  badvertex = Mesh_Fan[fan].vrt_start;          // Get big reference value
+  badvertex = gs->Mesh_Mem.fanlst[fan].vrt_start;          // Get big reference value
   for ( cnt = 0; cnt < vertices; cnt++ )
   {
-    v[cnt].pos.x = Mesh_Mem.vrt_x[badvertex];
-    v[cnt].pos.y = Mesh_Mem.vrt_y[badvertex];
-    v[cnt].pos.z = GWater.layer[layer].zadd[frame][mode][cnt] + GWater.layer[layer].z;
+    v[cnt].pos.x = gs->Mesh_Mem.vrt_x[badvertex];
+    v[cnt].pos.y = gs->Mesh_Mem.vrt_y[badvertex];
+    v[cnt].pos.z = gs->water.layer[layer].zadd[frame][mode][cnt] + gs->water.layer[layer].z;
 
-    if ( !GWater.light )
+    if ( !gs->water.light )
     {
-      v[cnt].col.r = FP8_TO_FLOAT( Mesh_Mem.vrt_lr_fp8[badvertex] );
-      v[cnt].col.g = FP8_TO_FLOAT( Mesh_Mem.vrt_lg_fp8[badvertex] );
-      v[cnt].col.b = FP8_TO_FLOAT( Mesh_Mem.vrt_lb_fp8[badvertex] );
-      v[cnt].col.a = FP8_TO_FLOAT( GWater.layer[layer].alpha_fp8 );
+      v[cnt].col.r = FP8_TO_FLOAT( gs->Mesh_Mem.vrt_lr_fp8[badvertex] );
+      v[cnt].col.g = FP8_TO_FLOAT( gs->Mesh_Mem.vrt_lg_fp8[badvertex] );
+      v[cnt].col.b = FP8_TO_FLOAT( gs->Mesh_Mem.vrt_lb_fp8[badvertex] );
+      v[cnt].col.a = FP8_TO_FLOAT( gs->water.layer[layer].alpha_fp8 );
     }
     else
     {
-      v[cnt].col.r = FP8_TO_FLOAT( FP8_MUL( Mesh_Mem.vrt_lr_fp8[badvertex], GWater.layer[layer].alpha_fp8 ) );
-      v[cnt].col.g = FP8_TO_FLOAT( FP8_MUL( Mesh_Mem.vrt_lg_fp8[badvertex], GWater.layer[layer].alpha_fp8 ) );
-      v[cnt].col.b = FP8_TO_FLOAT( FP8_MUL( Mesh_Mem.vrt_lb_fp8[badvertex], GWater.layer[layer].alpha_fp8 ) );
+      v[cnt].col.r = FP8_TO_FLOAT( FP8_MUL( gs->Mesh_Mem.vrt_lr_fp8[badvertex], gs->water.layer[layer].alpha_fp8 ) );
+      v[cnt].col.g = FP8_TO_FLOAT( FP8_MUL( gs->Mesh_Mem.vrt_lg_fp8[badvertex], gs->water.layer[layer].alpha_fp8 ) );
+      v[cnt].col.b = FP8_TO_FLOAT( FP8_MUL( gs->Mesh_Mem.vrt_lb_fp8[badvertex], gs->water.layer[layer].alpha_fp8 ) );
       v[cnt].col.a = 1.0f;
     }
 
@@ -489,7 +498,7 @@ void render_water_fan( Uint32 fan, Uint8 layer, Uint8 mode )
 
   ATTRIB_PUSH( "render_water_fan", GL_TEXTURE_BIT | GL_CURRENT_BIT );
   {
-    GLTexture_Bind( &TxTexture[texture], CData.texturefilter );
+    GLTexture_Bind( gs->TxTexture + texture, &gfxState );
 
     entry = 0;
     for ( cnt = 0; cnt < commands; cnt++ )
@@ -516,6 +525,8 @@ void render_water_fan_lit( Uint32 fan, Uint8 layer, Uint8 mode )
 {
   // ZZ> This function draws a water fan
 
+  GameState * gs = gfxState.gs;
+
   GLVertex v[MAXMESHVERTICES];
   Uint16 type;
   Uint16 commands;
@@ -535,24 +546,24 @@ void render_water_fan_lit( Uint32 fan, Uint8 layer, Uint8 mode )
 
   // To make life easier
   type  = 0;                             // Command type ( index to points in fan )
-  off.u  = GWater.layer[layer].u;         // Texture offsets
-  off.v  = GWater.layer[layer].v;         //
-  frame = GWater.layer[layer].frame;     // Frame
+  off.u  = gs->water.layer[layer].u;         // Texture offsets
+  off.v  = gs->water.layer[layer].v;         //
+  frame = gs->water.layer[layer].frame;     // Frame
 
   texture  = layer + TX_WATER_TOP;       // Water starts at texture 5
   vertices = Mesh_Cmd[type].vrt_count;   // Number of vertices
   commands = Mesh_Cmd[type].cmd_count;   // Number of commands
 
 
-  badvertex = Mesh_Fan[fan].vrt_start;          // Get big reference value
+  badvertex = gs->Mesh_Mem.fanlst[fan].vrt_start;          // Get big reference value
   for ( cnt = 0; cnt < vertices; cnt++ )
   {
-    v[cnt].pos.x = Mesh_Mem.vrt_x[badvertex];
-    v[cnt].pos.y = Mesh_Mem.vrt_y[badvertex];
-    v[cnt].pos.z = GWater.layer[layer].zadd[frame][mode][cnt] + GWater.layer[layer].z;
+    v[cnt].pos.x = gs->Mesh_Mem.vrt_x[badvertex];
+    v[cnt].pos.y = gs->Mesh_Mem.vrt_y[badvertex];
+    v[cnt].pos.z = gs->water.layer[layer].zadd[frame][mode][cnt] + gs->water.layer[layer].z;
 
     v[cnt].col.r = v[cnt].col.g = v[cnt].col.b = 1.0f;
-    v[cnt].col.a = FP8_TO_FLOAT( GWater.layer[layer].alpha_fp8 );
+    v[cnt].col.a = FP8_TO_FLOAT( gs->water.layer[layer].alpha_fp8 );
 
     badvertex++;
   };
@@ -570,10 +581,10 @@ void render_water_fan_lit( Uint32 fan, Uint8 layer, Uint8 mode )
   ATTRIB_PUSH( "render_water_fan_lit", GL_TEXTURE_BIT | GL_CURRENT_BIT );
   {
     // Change texture if need be
-    if ( mesh.last_texture != texture )
+    if ( gs->mesh.last_texture != texture )
     {
-      GLTexture_Bind( &TxTexture[texture], CData.texturefilter );
-      mesh.last_texture = texture;
+      GLTexture_Bind( gs->TxTexture + texture, &gfxState );
+      gs->mesh.last_texture = texture;
     }
 
     entry = 0;
@@ -597,62 +608,67 @@ void render_water_fan_lit( Uint32 fan, Uint8 layer, Uint8 mode )
 
 
 
-void make_renderlist()
+bool_t make_renderlist(RENDERLIST * prlst)
 {
+  GameState * gs;
   int fan, fan_count;
   bool_t inview;
   static Uint32 next_wldframe = 0;
 
+  if(NULL == prlst) return bfalse;
+
+  gs = gfxState.gs;
+
   // make a delay
-  if(wldframe < next_wldframe) return;
-  next_wldframe = wldframe + 7;
+  if(gs->wld_frame < next_wldframe) return btrue;
+  next_wldframe = gs->wld_frame + 7;
 
-  renderlist.num_totl = 0;
-  renderlist.num_shine = 0;
-  renderlist.num_reflc = 0;
-  renderlist.num_norm = 0;
-  renderlist.num_watr = 0;
+  prlst->num_totl = 0;
+  prlst->num_shine = 0;
+  prlst->num_reflc = 0;
+  prlst->num_norm = 0;
+  prlst->num_watr = 0;
 
-  fan_count = mesh.size_x * mesh.size_y;
+  fan_count = gs->mesh.size_x * gs->mesh.size_y;
   for ( fan = 0; fan < fan_count; fan++ )
   {
-    inview = Frustum_BBoxInFrustum( &gFrustum, Mesh_Fan[fan].bbox.mins.v, Mesh_Fan[fan].bbox.maxs.v );
+    inview = Frustum_BBoxInFrustum( &gFrustum, gs->Mesh_Mem.fanlst[fan].bbox.mins.v, gs->Mesh_Mem.fanlst[fan].bbox.maxs.v );
 
-    Mesh_Fan[fan].inrenderlist = bfalse;
+    gs->Mesh_Mem.fanlst[fan].inrenderlist = bfalse;
 
-    if ( inview && renderlist.num_totl < MAXMESHRENDER )
+    if ( inview && prlst->num_totl < MAXMESHRENDER )
     {
       bool_t is_shine, is_noref, is_norml, is_water;
 
-      Mesh_Fan[fan].inrenderlist = btrue;
+      gs->Mesh_Mem.fanlst[fan].inrenderlist = btrue;
 
-      is_shine = mesh_has_all_bits( fan, MPDFX_SHINY );
-      is_noref = mesh_has_all_bits( fan, MPDFX_NOREFLECT );
+      is_shine = mesh_has_all_bits( gs->Mesh_Mem.fanlst, fan, MPDFX_SHINY );
+      is_noref = mesh_has_all_bits( gs->Mesh_Mem.fanlst, fan, MPDFX_NOREFLECT );
       is_norml = !is_shine;
-      is_water = mesh_has_some_bits( fan, MPDFX_WATER );
+      is_water = mesh_has_some_bits( gs->Mesh_Mem.fanlst, fan, MPDFX_WATER );
 
       // Put each tile in basic list
-      renderlist.totl[renderlist.num_totl] = fan;
-      renderlist.num_totl++;
-      mesh_fan_add_renderlist( fan );
+      prlst->totl[prlst->num_totl] = fan;
+      prlst->num_totl++;
+      mesh_fan_add_renderlist( gs->Mesh_Mem.fanlst, fan );
 
       // Put each tile
       if ( !is_noref )
       {
-        renderlist.reflc[renderlist.num_reflc] = fan;
-        renderlist.num_reflc++;
+        prlst->reflc[prlst->num_reflc] = fan;
+        prlst->num_reflc++;
       }
 
       if ( is_shine )
       {
-        renderlist.shine[renderlist.num_shine] = fan;
-        renderlist.num_shine++;
+        prlst->shine[prlst->num_shine] = fan;
+        prlst->num_shine++;
       }
 
       if ( is_norml )
       {
-        renderlist.norm[renderlist.num_norm] = fan;
-        renderlist.num_norm++;
+        prlst->norm[prlst->num_norm] = fan;
+        prlst->num_norm++;
       }
 
       if ( is_water )
@@ -660,17 +676,18 @@ void make_renderlist()
         // precalculate the "mode" variable so that we don't waste time rendering the waves
         int tx, ty;
 
-        ty = fan / mesh.size_x;
-        tx = fan % mesh.size_x;
+        ty = fan / gs->mesh.size_x;
+        tx = fan % gs->mesh.size_x;
 
-        renderlist.watr_mode[renderlist.num_watr] = ((ty & 1) << 1) + (tx & 1);
-        renderlist.watr[renderlist.num_watr]      = fan;
+        prlst->watr_mode[prlst->num_watr] = ((ty & 1) << 1) + (tx & 1);
+        prlst->watr[prlst->num_watr]      = fan;
 
-        renderlist.num_watr++;
+        prlst->num_watr++;
       }
     };
   };
 
+  return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -685,37 +702,39 @@ void set_fan_light( int fanx, int fany, PRT_REF particle )
   float light_r, light_g, light_b;
   float light_r0, light_g0, light_b0;
 
+  GameState * gs = gfxState.gs;
 
-  if ( fanx >= 0 && fanx < mesh.size_x && fany >= 0 && fany < mesh.size_y )
+
+  if ( fanx >= 0 && fanx < gs->mesh.size_x && fany >= 0 && fany < gs->mesh.size_y )
   {
-    fan = mesh_convert_fan( fanx, fany );
-    vertex = Mesh_Fan[fan].vrt_start;
-    lastvertex = vertex + Mesh_Cmd[Mesh_Fan[fan].type].vrt_count;
+    fan = mesh_convert_fan( &(gs->mesh), fanx, fany );
+    vertex = gs->Mesh_Mem.fanlst[fan].vrt_start;
+    lastvertex = vertex + Mesh_Cmd[gs->Mesh_Mem.fanlst[fan].type].vrt_count;
     while ( vertex < lastvertex )
     {
-      light_r0 = light_r = Mesh_Mem.vrt_ar_fp8[vertex];
-      light_g0 = light_g = Mesh_Mem.vrt_ag_fp8[vertex];
-      light_b0 = light_b = Mesh_Mem.vrt_ab_fp8[vertex];
+      light_r0 = light_r = gs->Mesh_Mem.vrt_ar_fp8[vertex];
+      light_g0 = light_g = gs->Mesh_Mem.vrt_ag_fp8[vertex];
+      light_b0 = light_b = gs->Mesh_Mem.vrt_ab_fp8[vertex];
 
-      dif.x = PrtList[particle].pos.x - Mesh_Mem.vrt_x[vertex];
-      dif.y = PrtList[particle].pos.y - Mesh_Mem.vrt_y[vertex];
-      dif.z = PrtList[particle].pos.z - Mesh_Mem.vrt_z[vertex];
+      dif.x = gs->PrtList[particle].pos.x - gs->Mesh_Mem.vrt_x[vertex];
+      dif.y = gs->PrtList[particle].pos.y - gs->Mesh_Mem.vrt_y[vertex];
+      dif.z = gs->PrtList[particle].pos.z - gs->Mesh_Mem.vrt_z[vertex];
 
       dist2 = DotProduct( dif, dif );
 
-      flight = PrtList[particle].dyna.level;
-      flight *= 127 * PrtList[particle].dyna.falloff / ( 127 * PrtList[particle].dyna.falloff + dist2 );
+      flight = gs->PrtList[particle].dyna.level;
+      flight *= 127 * gs->PrtList[particle].dyna.falloff / ( 127 * gs->PrtList[particle].dyna.falloff + dist2 );
 
       if ( dist2 > 0.0f )
       {
         float ftmp, dist = sqrt( dist2 );
-        vect3 pos = {Mesh_Mem.vrt_x[vertex], Mesh_Mem.vrt_y[vertex], Mesh_Mem.vrt_z[vertex]};
+        vect3 pos = {gs->Mesh_Mem.vrt_x[vertex], gs->Mesh_Mem.vrt_y[vertex], gs->Mesh_Mem.vrt_z[vertex]};
 
         dif.x /= dist;
         dif.y /= dist;
         dif.z /= dist;
 
-        mesh_calc_normal( pos, &nrm );
+        mesh_calc_normal( gs, pos, &nrm );
 
         ftmp = DotProduct( dif, nrm );
         if ( ftmp > 0 )
@@ -732,15 +751,15 @@ void set_fan_light( int fanx, int fany, PRT_REF particle )
         light_b += 255 * flight;
       }
 
-      Mesh_Mem.vrt_lr_fp8[vertex] = 0.9 * light_r0 + 0.1 * light_r;
-      Mesh_Mem.vrt_lg_fp8[vertex] = 0.9 * light_g0 + 0.1 * light_g;
-      Mesh_Mem.vrt_lb_fp8[vertex] = 0.9 * light_b0 + 0.1 * light_b;
+      gs->Mesh_Mem.vrt_lr_fp8[vertex] = 0.9 * light_r0 + 0.1 * light_r;
+      gs->Mesh_Mem.vrt_lg_fp8[vertex] = 0.9 * light_g0 + 0.1 * light_g;
+      gs->Mesh_Mem.vrt_lb_fp8[vertex] = 0.9 * light_b0 + 0.1 * light_b;
 
-      if ( mesh.exploremode )
+      if ( gs->mesh.exploremode )
       {
-        if ( Mesh_Mem.vrt_lr_fp8[vertex] > light_r0 ) Mesh_Mem.vrt_ar_fp8[vertex] = 0.9 * Mesh_Mem.vrt_ar_fp8[vertex] + 0.1 * Mesh_Mem.vrt_lr_fp8[vertex];
-        if ( Mesh_Mem.vrt_lg_fp8[vertex] > light_g0 ) Mesh_Mem.vrt_ag_fp8[vertex] = 0.9 * Mesh_Mem.vrt_ag_fp8[vertex] + 0.1 * Mesh_Mem.vrt_lg_fp8[vertex];
-        if ( Mesh_Mem.vrt_lb_fp8[vertex] > light_b0 ) Mesh_Mem.vrt_ab_fp8[vertex] = 0.9 * Mesh_Mem.vrt_ab_fp8[vertex] + 0.1 * Mesh_Mem.vrt_lb_fp8[vertex];
+        if ( gs->Mesh_Mem.vrt_lr_fp8[vertex] > light_r0 ) gs->Mesh_Mem.vrt_ar_fp8[vertex] = 0.9 * gs->Mesh_Mem.vrt_ar_fp8[vertex] + 0.1 * gs->Mesh_Mem.vrt_lr_fp8[vertex];
+        if ( gs->Mesh_Mem.vrt_lg_fp8[vertex] > light_g0 ) gs->Mesh_Mem.vrt_ag_fp8[vertex] = 0.9 * gs->Mesh_Mem.vrt_ag_fp8[vertex] + 0.1 * gs->Mesh_Mem.vrt_lg_fp8[vertex];
+        if ( gs->Mesh_Mem.vrt_lb_fp8[vertex] > light_b0 ) gs->Mesh_Mem.vrt_ab_fp8[vertex] = 0.9 * gs->Mesh_Mem.vrt_ab_fp8[vertex] + 0.1 * gs->Mesh_Mem.vrt_lb_fp8[vertex];
       };
 
       vertex++;
@@ -754,25 +773,26 @@ void do_dynalight()
 {
   // ZZ> This function does dynamic lighting of visible fans
 
+  GameState * gs = gfxState.gs;
+
   int cnt, lastvertex, vertex, fan, entry, fanx, fany, addx, addy;
   float light_r, light_g, light_b;
   float dist2;
   vect3 dif, nrm;
 
-
   // Do each floor tile
-  if ( mesh.exploremode )
+  if ( gs->mesh.exploremode )
   {
     // Set base light level in explore mode...  Don't need to do every frame
-    if (( allframe & 7 ) == 0 )
+    if (( gs->all_frame & 7 ) == 0 )
     {
 
       for ( cnt = 0; cnt < MAXPRT; cnt++ )
       {
-        if ( !VALID_PRT( cnt ) || !PrtList[cnt].dyna.on ) continue;
+        if ( !VALID_PRT( gs->PrtList, cnt ) || !gs->PrtList[cnt].dyna.on ) continue;
 
-        fanx = MESH_FLOAT_TO_FAN( PrtList[cnt].pos.x );
-        fany = MESH_FLOAT_TO_FAN( PrtList[cnt].pos.y );
+        fanx = MESH_FLOAT_TO_FAN( gs->PrtList[cnt].pos.x );
+        fany = MESH_FLOAT_TO_FAN( gs->PrtList[cnt].pos.y );
 
         for ( addy = -DYNAFANS; addy <= DYNAFANS; addy++ )
         {
@@ -787,36 +807,36 @@ void do_dynalight()
   else
   {
     float ftmp;
-    if ( CData.shading != GL_FLAT )
+    if ( gfxState.shading != GL_FLAT )
     {
       // Add to base light level in normal mode
       entry = 0;
       while ( entry < renderlist.num_totl )
       {
         fan = renderlist.totl[entry];
-        vertex = Mesh_Fan[fan].vrt_start;
-        lastvertex = vertex + Mesh_Cmd[Mesh_Fan[fan].type].vrt_count;
+        vertex = gs->Mesh_Mem.fanlst[fan].vrt_start;
+        lastvertex = vertex + Mesh_Cmd[gs->Mesh_Mem.fanlst[fan].type].vrt_count;
         while ( vertex < lastvertex )
         {
-          vect3 pos = {Mesh_Mem.vrt_x[vertex], Mesh_Mem.vrt_y[vertex], Mesh_Mem.vrt_z[vertex]};
+          vect3 pos = {gs->Mesh_Mem.vrt_x[vertex], gs->Mesh_Mem.vrt_y[vertex], gs->Mesh_Mem.vrt_z[vertex]};
 
           // Do light particles
-          light_r = Mesh_Mem.vrt_ar_fp8[vertex];
-          light_g = Mesh_Mem.vrt_ag_fp8[vertex];
-          light_b = Mesh_Mem.vrt_ab_fp8[vertex];
+          light_r = gs->Mesh_Mem.vrt_ar_fp8[vertex];
+          light_g = gs->Mesh_Mem.vrt_ag_fp8[vertex];
+          light_b = gs->Mesh_Mem.vrt_ab_fp8[vertex];
 
-          mesh_calc_normal( pos, &nrm );
-          light_r += lightambicol.r * 255;
-          light_g += lightambicol.g * 255;
-          light_b += lightambicol.b * 255;
+          mesh_calc_normal( gs, pos, &nrm );
+          light_r += GLight.ambicol.r * 255;
+          light_g += GLight.ambicol.g * 255;
+          light_b += GLight.ambicol.b * 255;
 
 
-          ftmp = DotProduct( nrm, lightspekdir );
+          ftmp = DotProduct( nrm, GLight.spekdir );
           if ( ftmp > 0 )
           {
-            light_r += lightspekcol.r * 255 * ftmp * ftmp;
-            light_g += lightspekcol.g * 255 * ftmp * ftmp;
-            light_b += lightspekcol.b * 255 * ftmp * ftmp;
+            light_r += GLight.spekcol.r * 255 * ftmp * ftmp;
+            light_g += GLight.spekcol.g * 255 * ftmp * ftmp;
+            light_b += GLight.spekcol.b * 255 * ftmp * ftmp;
           };
 
           cnt = 0;
@@ -824,9 +844,9 @@ void do_dynalight()
           {
             float flight;
 
-            dif.x = GDynaLight[cnt].pos.x - Mesh_Mem.vrt_x[vertex];
-            dif.y = GDynaLight[cnt].pos.y - Mesh_Mem.vrt_y[vertex];
-            dif.z = GDynaLight[cnt].pos.z - Mesh_Mem.vrt_z[vertex];
+            dif.x = GDynaLight[cnt].pos.x - gs->Mesh_Mem.vrt_x[vertex];
+            dif.y = GDynaLight[cnt].pos.y - gs->Mesh_Mem.vrt_y[vertex];
+            dif.z = GDynaLight[cnt].pos.z - gs->Mesh_Mem.vrt_z[vertex];
 
             dist2 = DotProduct( dif, dif );
 
@@ -861,21 +881,21 @@ void do_dynalight()
 
           if ( light_r > 255 ) light_r = 255;
           if ( light_r <   0 ) light_r = 0;
-          Mesh_Mem.vrt_lr_fp8[vertex] = 0.9 * Mesh_Mem.vrt_lr_fp8[vertex] + 0.1 * light_r;
+          gs->Mesh_Mem.vrt_lr_fp8[vertex] = 0.9 * gs->Mesh_Mem.vrt_lr_fp8[vertex] + 0.1 * light_r;
 
           if ( light_g > 255 ) light_g = 255;
           if ( light_g <   0 ) light_g = 0;
-          Mesh_Mem.vrt_lg_fp8[vertex] = 0.9 * Mesh_Mem.vrt_lg_fp8[vertex] + 0.1 * light_g;
+          gs->Mesh_Mem.vrt_lg_fp8[vertex] = 0.9 * gs->Mesh_Mem.vrt_lg_fp8[vertex] + 0.1 * light_g;
 
           if ( light_b > 255 ) light_b = 255;
           if ( light_b <   0 ) light_b = 0;
-          Mesh_Mem.vrt_lb_fp8[vertex] = 0.9 * Mesh_Mem.vrt_lb_fp8[vertex] + 0.1 * light_b;
+          gs->Mesh_Mem.vrt_lb_fp8[vertex] = 0.9 * gs->Mesh_Mem.vrt_lb_fp8[vertex] + 0.1 * light_b;
 
-          if ( mesh.exploremode )
+          if ( gs->mesh.exploremode )
           {
-            if ( light_r > Mesh_Mem.vrt_ar_fp8[vertex] ) Mesh_Mem.vrt_ar_fp8[vertex] = 0.9 * Mesh_Mem.vrt_ar_fp8[vertex] + 0.1 * light_r;
-            if ( light_g > Mesh_Mem.vrt_ag_fp8[vertex] ) Mesh_Mem.vrt_ag_fp8[vertex] = 0.9 * Mesh_Mem.vrt_ag_fp8[vertex] + 0.1 * light_g;
-            if ( light_b > Mesh_Mem.vrt_ab_fp8[vertex] ) Mesh_Mem.vrt_ab_fp8[vertex] = 0.9 * Mesh_Mem.vrt_ab_fp8[vertex] + 0.1 * light_b;
+            if ( light_r > gs->Mesh_Mem.vrt_ar_fp8[vertex] ) gs->Mesh_Mem.vrt_ar_fp8[vertex] = 0.9 * gs->Mesh_Mem.vrt_ar_fp8[vertex] + 0.1 * light_r;
+            if ( light_g > gs->Mesh_Mem.vrt_ag_fp8[vertex] ) gs->Mesh_Mem.vrt_ag_fp8[vertex] = 0.9 * gs->Mesh_Mem.vrt_ag_fp8[vertex] + 0.1 * light_g;
+            if ( light_b > gs->Mesh_Mem.vrt_ab_fp8[vertex] ) gs->Mesh_Mem.vrt_ab_fp8[vertex] = 0.9 * gs->Mesh_Mem.vrt_ab_fp8[vertex] + 0.1 * light_b;
           }
 
           vertex++;
@@ -889,14 +909,14 @@ void do_dynalight()
       while ( entry < renderlist.num_totl )
       {
         fan = renderlist.totl[entry];
-        vertex = Mesh_Fan[fan].vrt_start;
-        lastvertex = vertex + Mesh_Cmd[Mesh_Fan[fan].type].vrt_count;
+        vertex = gs->Mesh_Mem.fanlst[fan].vrt_start;
+        lastvertex = vertex + Mesh_Cmd[gs->Mesh_Mem.fanlst[fan].type].vrt_count;
         while ( vertex < lastvertex )
         {
           // Do light particles
-          Mesh_Mem.vrt_lr_fp8[vertex] = Mesh_Mem.vrt_ar_fp8[vertex];
-          Mesh_Mem.vrt_lg_fp8[vertex] = Mesh_Mem.vrt_ag_fp8[vertex];
-          Mesh_Mem.vrt_lb_fp8[vertex] = Mesh_Mem.vrt_ab_fp8[vertex];
+          gs->Mesh_Mem.vrt_lr_fp8[vertex] = gs->Mesh_Mem.vrt_ar_fp8[vertex];
+          gs->Mesh_Mem.vrt_lg_fp8[vertex] = gs->Mesh_Mem.vrt_ag_fp8[vertex];
+          gs->Mesh_Mem.vrt_lb_fp8[vertex] = gs->Mesh_Mem.vrt_ab_fp8[vertex];
 
           vertex++;
         }
@@ -999,11 +1019,11 @@ void do_dynalight()
 //    run = MESH_INT_TO_FAN(ylist[to]);
 //    while (fany < run)
 //    {
-//      if (fany >= 0 && fany < mesh.size_y)
+//      if (fany >= 0 && fany < gs->mesh.size_y)
 //      {
 //        fanx = MESH_INT_TO_FAN(x);
 //        if (fanx < 0)  fanx = 0;
-//        if (fanx >= mesh.size_x)  fanx = mesh.size_x - 1;
+//        if (fanx >= gs->mesh.size_x)  fanx = gs->mesh.size_x - 1;
 //        fanrowstart[row] = fanx;
 //        row++;
 //      }
@@ -1034,11 +1054,11 @@ void do_dynalight()
 //    run = MESH_INT_TO_FAN(ylist[to]);
 //    while (fany < run)
 //    {
-//      if (fany >= 0 && fany < mesh.size_y)
+//      if (fany >= 0 && fany < gs->mesh.size_y)
 //      {
 //        fanx = MESH_INT_TO_FAN(x);
 //        if (fanx < 0)  fanx = 0;
-//        if (fanx >= mesh.size_x - 1)  fanx = mesh.size_x - 1;//-2
+//        if (fanx >= gs->mesh.size_x - 1)  fanx = gs->mesh.size_x - 1;//-2
 //        fanrowrun[row] = ABS(fanx - fanrowstart[row]) + 1;
 //        row++;
 //      }
@@ -1056,7 +1076,7 @@ void do_dynalight()
 //  // Fill 'em up again
 //  fany = MESH_INT_TO_FAN(ylist[0]);
 //  if (fany < 0) fany = 0;
-//  if (fany >= mesh.size_y) fany = mesh.size_y - 1;
+//  if (fany >= gs->mesh.size_y) fany = gs->mesh.size_y - 1;
 //  row = 0;
 //  while (row < numrow)
 //  {

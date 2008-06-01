@@ -1,25 +1,28 @@
-/* Egoboo - Clock.c
- * Clock & timer functionality
- * This implementation was adapted from Noel Lopis' article in
- * Game Programming Gems 4.
- */
-
-/*
-    This file is part of Egoboo.
-
-    Egoboo is free software: you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Egoboo is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
-*/
+//********************************************************************************************
+//* Egoboo - Client.c
+//*
+//* Clock & timer functionality
+//* This implementation was adapted from Noel Lopis' article in
+//* Game Programming Gems 4.
+//*
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
 
 #include "proto.h"
 #include "Clock.h"
@@ -29,11 +32,36 @@
 #include <stdlib.h>
 #include <string.h> // memcpy & memset
 
+static clock_source_ptr _clock_timeSource = NULL;
+
+static clock_source_ptr clock_getTimeSource()
+{
+  if(NULL == _clock_timeSource)
+  {
+    _clock_timeSource = sys_getTime;
+  }
+
+  return _clock_timeSource;
+};
+
+void clock_init()
+{
+  log_info( "Initializing clock services...\n" );
+
+  clock_getTimeSource();
+}
+
+void clock_shutdown()
+{
+  _clock_timeSource = NULL;
+}
+
 // Clock data
-struct clock_state_t
+struct ClockState_t
 {
   // Clock data
-  double( *timeSource )();     // Function that the clock get it's time values from
+  char * name;
+
   double sourceStartTime;  // The first value the clock receives from above function
   double sourceLastTime;  // The last value the clock received from above function
   double currentTime;   // The current time, not necessarily in sync w/ the source time
@@ -49,63 +77,82 @@ struct clock_state_t
   int frameHistoryHead;
 };
 
-static void clock_state_init( ClockState * cs )
-{
-  memset( cs, 0, sizeof( ClockState ) );
-  cs->maximumFrameTime = 0.2;
-};
 
-ClockState * clock_create_state()
+static ClockState * ClockState_new( ClockState * cs, const char * name, int size  );
+static bool_t ClockState_delete( ClockState * cs );
+
+static void   ClockState_initTime( ClockState * cs );
+static void   ClockState_setFrameHistoryWindow( ClockState * cs, int size );
+static void   ClockState_addToFrameHistory( ClockState * cs, double frame );
+static double ClockState_getExactLastFrameDuration( ClockState * cs );
+static double ClockState_guessFrameDuration( ClockState * cs );
+
+
+ClockState * ClockState_create(const char * name, int size)
 {
   ClockState * cs;
 
   cs = ( ClockState * ) calloc( 1, sizeof( ClockState ) );
-  clock_state_init( cs );
+  
+  return ClockState_new( cs, name, size );
+};
+
+bool_t ClockState_destroy( ClockState ** pcs )
+{
+  bool_t retval;
+
+  if(NULL == pcs || NULL == *pcs) return bfalse;
+
+  retval = ClockState_delete( *pcs );
+  FREE( *pcs );
+
+  return retval;
+};
+
+
+ClockState * ClockState_new( ClockState * cs, const char * name, int size )
+{
+  clock_source_ptr psrc;
+  if(NULL == cs) return cs;
+
+  if(size<0) size = 1;
+  log_info("ClockState_new() - \"%s\"\t%d buffer(s)\n", name, size);
+
+  memset( cs, 0, sizeof( ClockState ) );
+
+  cs->maximumFrameTime = 0.2;
+  cs->name = name;
+  ClockState_setFrameHistoryWindow( cs, size );
+
+  psrc = clock_getTimeSource();
+  cs->sourceStartTime = psrc();
+  cs->sourceLastTime  = cs->sourceStartTime;
 
   return cs;
 };
 
-ClockState * clock_recreate_state( ClockState * cs )
+bool_t ClockState_delete( ClockState * cs )
 {
+  if(NULL == cs) return bfalse;
+
   FREE ( cs->frameHistory );
 
-  clock_state_init( cs );
-  return cs;
+  return btrue;
 };
 
-
-void clock_free_state( ClockState * cs )
+ClockState * ClockState_renew( ClockState * cs )
 {
-  FREE ( cs->frameHistory );
-  FREE ( cs );
+  const char * name;
+  int size;
+
+  name = cs->name;
+  size = cs->frameHistorySize;
+
+  ClockState_delete(cs);
+  return ClockState_new(cs, name, size);
 };
 
-void clock_init( ClockState * cs )
-{
-  log_info( "Initializing clock services...\n" );
-
-  clock_recreate_state( cs );  // Use this to set everything to 0
-  clock_setTimeSource( cs, sys_getTime );
-  clock_setFrameHistoryWindow( cs, 1 );
-}
-
-void clock_shutdown( ClockState * cs )
-{
-  clock_free_state( cs );
-}
-
-void clock_setTimeSource( ClockState * cs, double( *timeSource )() )
-{
-  cs->timeSource = timeSource;
-
-  if ( cs->timeSource )
-  {
-    cs->sourceStartTime = cs->timeSource();
-    cs->sourceLastTime = cs->sourceStartTime;
-  }
-}
-
-void clock_setFrameHistoryWindow( ClockState * cs, int size )
+void ClockState_setFrameHistoryWindow( ClockState * cs, int size )
 {
   double *history;
   int oldSize = cs->frameHistoryWindow;
@@ -113,7 +160,7 @@ void clock_setFrameHistoryWindow( ClockState * cs, int size )
 
   // The frame history has to be at least 1
   cs->frameHistoryWindow = ( size > 1 ) ? size : 1;
-  history = ( double* ) malloc( sizeof( double ) * cs->frameHistoryWindow );
+  history = (double *)calloc( cs->frameHistoryWindow, sizeof( double ) );
 
   if (NULL == cs->frameHistory)
   {
@@ -133,12 +180,12 @@ void clock_setFrameHistoryWindow( ClockState * cs, int size )
   cs->frameHistory = history;
 }
 
-double clock_guessFrameDuration( ClockState * cs )
+double ClockState_guessFrameDuration( ClockState * cs )
 {
   int c;
   double totalTime = 0;
 
-  for ( c = 0;c < cs->frameHistorySize;c++ )
+  for ( c = 0; c < cs->frameHistorySize; c++ )
   {
     totalTime += cs->frameHistory[c];
   }
@@ -146,7 +193,7 @@ double clock_guessFrameDuration( ClockState * cs )
   return totalTime / cs->frameHistorySize;
 }
 
-void clock_addToFrameHistory( ClockState * cs, double frame )
+void ClockState_addToFrameHistory( ClockState * cs, double frame )
 {
   cs->frameHistory[cs->frameHistoryHead] = frame;
 
@@ -163,14 +210,16 @@ void clock_addToFrameHistory( ClockState * cs, double frame )
   }
 }
 
-double clock_getExactLastFrameDuration( ClockState * cs )
+double ClockState_getExactLastFrameDuration( ClockState * cs )
 {
+  clock_source_ptr psrc;
   double sourceTime;
   double timeElapsed;
 
-  if ( cs->timeSource )
+  psrc = clock_getTimeSource();
+  if ( NULL != psrc )
   {
-    sourceTime = cs->timeSource();
+    sourceTime = psrc();
   }
   else
   {
@@ -188,36 +237,36 @@ double clock_getExactLastFrameDuration( ClockState * cs )
   return timeElapsed;
 }
 
-void clock_frameStep( ClockState * cs )
+void ClockState_frameStep( ClockState * cs )
 {
-  double lastFrame = clock_getExactLastFrameDuration( cs );
-  clock_addToFrameHistory( cs, lastFrame );
+  double lastFrame = ClockState_getExactLastFrameDuration( cs );
+  ClockState_addToFrameHistory( cs, lastFrame );
 
   // This feels wrong to me; we're guessing at how long this
   // frame is going to be and accepting that as our time value.
   // I'll trust Mr. Lopis for now, but it may change.
-  cs->frameTime = clock_guessFrameDuration( cs );
+  cs->frameTime = ClockState_guessFrameDuration( cs );
   cs->currentTime += cs->frameTime;
 
   cs->frameNumber++;
 }
 
-double clock_getTime( ClockState * cs )
+double ClockState_getTime( ClockState * cs )
 {
   return cs->currentTime;
 }
 
-double clock_getFrameDuration( ClockState * cs )
+double ClockState_getFrameDuration( ClockState * cs )
 {
   return cs->frameTime;
 }
 
-Uint32 clock_getFrameNumber( ClockState * cs )
+Uint32 ClockState_getFrameNumber( ClockState * cs )
 {
   return cs->frameNumber;
 }
 
-float clock_getFrameRate( ClockState * cs )
+float ClockState_getFrameRate( ClockState * cs )
 {
   return ( float )( 1.0 / cs->frameTime );
 }

@@ -3,16 +3,11 @@
 #include "input.h"
 #include "network.h"
 #include "char.h"
+#include "game.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-INLINE CHR_REF pla_get_character( PLA_REF iplayer );
-INLINE bool_t control_key_is_pressed( CONTROL control );
-INLINE bool_t control_mouse_is_pressed( CONTROL control );
-INLINE bool_t control_joy_is_pressed( int joy_num, CONTROL control );
-
-//--------------------------------------------------------------------------------------------
 typedef struct control_data_t
 {
   Uint32 value;             // The scancode or mask
@@ -26,22 +21,13 @@ INLINE bool_t key_is_pressed( int keycode )
 {
   // ZZ> This function returns btrue if the given control is pressed...
 
-  if ( GNet.messagemode )  return bfalse;
+  if ( Get_GuiState()->net_messagemode )  return bfalse;
 
   if ( keyb.state )
     return SDLKEYDOWN( keycode );
   else
     return bfalse;
 }
-
-//--------------------------------------------------------------------------------------------
-INLINE CHR_REF pla_get_character( PLA_REF iplayer )
-{
-  if ( !VALID_PLA( iplayer ) ) return MAXCHR;
-
-  PlaList[iplayer].chr = VALIDATE_CHR( PlaList[iplayer].chr );
-  return PlaList[iplayer].chr;
-};
 
 //--------------------------------------------------------------------------------------------
 INLINE bool_t control_key_is_pressed( CONTROL control )
@@ -93,3 +79,12 @@ INLINE bool_t control_joy_is_pressed( int joy_num, CONTROL control )
 
   return retval;
 }
+
+//--------------------------------------------------------------------------------------------
+INLINE CHR_REF PlaList_get_character( GameState * gs, PLA_REF iplayer )
+{
+  if ( !VALID_PLA( gs->PlaList, iplayer ) ) return MAXCHR;
+
+  gs->PlaList[iplayer].chr_ref = VALIDATE_CHR( gs->ChrList, gs->PlaList[iplayer].chr_ref );
+  return gs->PlaList[iplayer].chr_ref;
+};

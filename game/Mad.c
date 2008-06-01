@@ -11,18 +11,12 @@
 #include "graphic.inl"
 #include "egoboo_types.inl"
 
-MAD MadList[MAXMODEL];
-
 float  spek_global[MAXLIGHTROTATION][MD2LIGHTINDICES];
 float  spek_local[MAXLIGHTROTATION][MD2LIGHTINDICES];
 float  indextoenvirox[MD2LIGHTINDICES];                    // Environment map
 float  lighttoenviroy[256];                                // Environment map
 Uint32 lighttospek[MAXSPEKLEVEL][256];                     //
 
-int     globalnumicon;                              // Number of icons
-Uint16  madloadframe;                               // Where to load next
-
-Uint16  skintoicon[MAXTEXTURE];                  // Skin to icon
 
 
 //--------------------------------------------------------------------------------------------
@@ -54,7 +48,7 @@ Uint16 action_frame()
   //     of cFrameName
 
   int number;
-  sscanf( &cFrameName[2], "%d", &number );
+  sscanf( cFrameName + 2, "%d", &number );
   return number;
 }
 
@@ -79,42 +73,42 @@ bool_t test_frame_name( char * szName, char letter )
 }
 
 //--------------------------------------------------------------------------------------------
-void action_copy_correct( Uint16 object, ACTION actiona, ACTION actionb )
+void action_copy_correct( GameState * gs, Uint16 object, ACTION actiona, ACTION actionb )
 {
   // ZZ> This function makes sure both actions are valid if either of them
   //     are valid.  It will copy start and ends to mirror the valid action.
 
-  if ( MadList[object].actionvalid[actiona] == MadList[object].actionvalid[actionb] )
+  if ( gs->MadList[object].actionvalid[actiona] == gs->MadList[object].actionvalid[actionb] )
   {
     // They are either both valid or both invalid, in either case we can't help
   }
   else
   {
     // Fix the invalid one
-    if ( !MadList[object].actionvalid[actiona] )
+    if ( !gs->MadList[object].actionvalid[actiona] )
     {
       // Fix actiona
-      MadList[object].actionvalid[actiona] = btrue;
-      MadList[object].actionstart[actiona] = MadList[object].actionstart[actionb];
-      MadList[object].actionend[actiona] = MadList[object].actionend[actionb];
+      gs->MadList[object].actionvalid[actiona] = btrue;
+      gs->MadList[object].actionstart[actiona] = gs->MadList[object].actionstart[actionb];
+      gs->MadList[object].actionend[actiona] = gs->MadList[object].actionend[actionb];
     }
     else
     {
       // Fix actionb
-      MadList[object].actionvalid[actionb] = btrue;
-      MadList[object].actionstart[actionb] = MadList[object].actionstart[actiona];
-      MadList[object].actionend[actionb] = MadList[object].actionend[actiona];
+      gs->MadList[object].actionvalid[actionb] = btrue;
+      gs->MadList[object].actionstart[actionb] = gs->MadList[object].actionstart[actiona];
+      gs->MadList[object].actionend[actionb] = gs->MadList[object].actionend[actiona];
     }
   }
 }
 
 //--------------------------------------------------------------------------------------------
-void get_walk_frame( Uint16 object, LIPT lip_trans, ACTION action )
+void get_walk_frame( GameState * gs, Uint16 object, LIPT lip_trans, ACTION action )
 {
   // ZZ> This helps make walking look right
 
   int frame = 0;
-  int framesinaction = MadList[object].actionend[action] - MadList[object].actionstart[action];
+  int framesinaction = gs->MadList[object].actionend[action] - gs->MadList[object].actionstart[action];
 
   while ( frame < 16 )
   {
@@ -124,7 +118,7 @@ void get_walk_frame( Uint16 object, LIPT lip_trans, ACTION action )
       framealong = (( float )( frame * framesinaction ) / ( float ) MAXFRAMESPERANIM ) + 2;
       framealong %= framesinaction;
     }
-    MadList[object].frameliptowalkframe[lip_trans][frame] = MadList[object].actionstart[action] + framealong;
+    gs->MadList[object].frameliptowalkframe[lip_trans][frame] = gs->MadList[object].actionstart[action] + framealong;
     frame++;
   }
 }
@@ -166,41 +160,41 @@ Uint16 get_framefx( char * szName )
 }
 
 //--------------------------------------------------------------------------------------------
-void make_framelip( Uint16 imdl, ACTION action )
+void make_framelip( GameState * gs, Uint16 imdl, ACTION action )
 {
   // ZZ> This helps make walking look right
 
   int frame, framesinaction;
 
-  if ( MadList[imdl].actionvalid[action] )
+  if ( gs->MadList[imdl].actionvalid[action] )
   {
-    framesinaction = MadList[imdl].actionend[action] - MadList[imdl].actionstart[action];
-    frame = MadList[imdl].actionstart[action];
-    while ( frame < MadList[imdl].actionend[action] )
+    framesinaction = gs->MadList[imdl].actionend[action] - gs->MadList[imdl].actionstart[action];
+    frame = gs->MadList[imdl].actionstart[action];
+    while ( frame < gs->MadList[imdl].actionend[action] )
     {
-      MadList[imdl].framelip[frame] = ( frame - MadList[imdl].actionstart[action] ) * 15 / framesinaction;
-      MadList[imdl].framelip[frame] = ( MadList[imdl].framelip[frame] ) % 16;
+      gs->MadList[imdl].framelip[frame] = ( frame - gs->MadList[imdl].actionstart[action] ) * 15 / framesinaction;
+      gs->MadList[imdl].framelip[frame] = ( gs->MadList[imdl].framelip[frame] ) % 16;
       frame++;
     }
   }
 }
 
 //--------------------------------------------------------------------------------------------
-void get_actions( Uint16 imdl )
+void get_actions( GameState * gs, Uint16 imdl )
 {
   // ZZ> This function creates the iframe lists for each action based on the
   //     name of each md2 iframe in the model
 
   ACTION      action, lastaction;
   MD2_Model * pmd2;
-  MAD       * pmad;
+  Mad       * pmad;
 
   int    iframe, framesinaction;
   int    iFrameCount;
   char * szName;
 
-  if( imdl>=MAXMODEL || !MadList[imdl].used ) return;
-  pmad = MadList + imdl;
+  if( imdl>=MAXMODEL || !gs->MadList[imdl].used ) return;
+  pmad = gs->MadList + imdl;
 
   pmd2 = pmad->md2_ptr;
   if(NULL == pmd2) return;
@@ -259,57 +253,57 @@ void get_actions( Uint16 imdl )
   }
 
   // Make sure actions are made valid if a similar one exists
-  action_copy_correct( imdl, ACTION_DA, ACTION_DB );   // All dances should be safe
-  action_copy_correct( imdl, ACTION_DB, ACTION_DC );
-  action_copy_correct( imdl, ACTION_DC, ACTION_DD );
-  action_copy_correct( imdl, ACTION_DB, ACTION_DC );
-  action_copy_correct( imdl, ACTION_DA, ACTION_DB );
-  action_copy_correct( imdl, ACTION_UA, ACTION_UB );
-  action_copy_correct( imdl, ACTION_UB, ACTION_UC );
-  action_copy_correct( imdl, ACTION_UC, ACTION_UD );
-  action_copy_correct( imdl, ACTION_TA, ACTION_TB );
-  action_copy_correct( imdl, ACTION_TC, ACTION_TD );
-  action_copy_correct( imdl, ACTION_CA, ACTION_CB );
-  action_copy_correct( imdl, ACTION_CC, ACTION_CD );
-  action_copy_correct( imdl, ACTION_SA, ACTION_SB );
-  action_copy_correct( imdl, ACTION_SC, ACTION_SD );
-  action_copy_correct( imdl, ACTION_BA, ACTION_BB );
-  action_copy_correct( imdl, ACTION_BC, ACTION_BD );
-  action_copy_correct( imdl, ACTION_LA, ACTION_LB );
-  action_copy_correct( imdl, ACTION_LC, ACTION_LD );
-  action_copy_correct( imdl, ACTION_XA, ACTION_XB );
-  action_copy_correct( imdl, ACTION_XC, ACTION_XD );
-  action_copy_correct( imdl, ACTION_FA, ACTION_FB );
-  action_copy_correct( imdl, ACTION_FC, ACTION_FD );
-  action_copy_correct( imdl, ACTION_PA, ACTION_PB );
-  action_copy_correct( imdl, ACTION_PC, ACTION_PD );
-  action_copy_correct( imdl, ACTION_ZA, ACTION_ZB );
-  action_copy_correct( imdl, ACTION_ZC, ACTION_ZD );
-  action_copy_correct( imdl, ACTION_WA, ACTION_WB );
-  action_copy_correct( imdl, ACTION_WB, ACTION_WC );
-  action_copy_correct( imdl, ACTION_WC, ACTION_WD );
-  action_copy_correct( imdl, ACTION_DA, ACTION_WD );   // All walks should be safe
-  action_copy_correct( imdl, ACTION_WC, ACTION_WD );
-  action_copy_correct( imdl, ACTION_WB, ACTION_WC );
-  action_copy_correct( imdl, ACTION_WA, ACTION_WB );
-  action_copy_correct( imdl, ACTION_JA, ACTION_JB );
-  action_copy_correct( imdl, ACTION_JB, ACTION_JC );
-  action_copy_correct( imdl, ACTION_DA, ACTION_JC );  // All jumps should be safe
-  action_copy_correct( imdl, ACTION_JB, ACTION_JC );
-  action_copy_correct( imdl, ACTION_JA, ACTION_JB );
-  action_copy_correct( imdl, ACTION_HA, ACTION_HB );
-  action_copy_correct( imdl, ACTION_HB, ACTION_HC );
-  action_copy_correct( imdl, ACTION_HC, ACTION_HD );
-  action_copy_correct( imdl, ACTION_HB, ACTION_HC );
-  action_copy_correct( imdl, ACTION_HA, ACTION_HB );
-  action_copy_correct( imdl, ACTION_KA, ACTION_KB );
-  action_copy_correct( imdl, ACTION_KB, ACTION_KC );
-  action_copy_correct( imdl, ACTION_KC, ACTION_KD );
-  action_copy_correct( imdl, ACTION_KB, ACTION_KC );
-  action_copy_correct( imdl, ACTION_KA, ACTION_KB );
-  action_copy_correct( imdl, ACTION_MH, ACTION_MI );
-  action_copy_correct( imdl, ACTION_DA, ACTION_MM );
-  action_copy_correct( imdl, ACTION_MM, ACTION_MN );
+  action_copy_correct( gs, imdl, ACTION_DA, ACTION_DB );   // All dances should be safe
+  action_copy_correct( gs, imdl, ACTION_DB, ACTION_DC );
+  action_copy_correct( gs, imdl, ACTION_DC, ACTION_DD );
+  action_copy_correct( gs, imdl, ACTION_DB, ACTION_DC );
+  action_copy_correct( gs, imdl, ACTION_DA, ACTION_DB );
+  action_copy_correct( gs, imdl, ACTION_UA, ACTION_UB );
+  action_copy_correct( gs, imdl, ACTION_UB, ACTION_UC );
+  action_copy_correct( gs, imdl, ACTION_UC, ACTION_UD );
+  action_copy_correct( gs, imdl, ACTION_TA, ACTION_TB );
+  action_copy_correct( gs, imdl, ACTION_TC, ACTION_TD );
+  action_copy_correct( gs, imdl, ACTION_CA, ACTION_CB );
+  action_copy_correct( gs, imdl, ACTION_CC, ACTION_CD );
+  action_copy_correct( gs, imdl, ACTION_SA, ACTION_SB );
+  action_copy_correct( gs, imdl, ACTION_SC, ACTION_SD );
+  action_copy_correct( gs, imdl, ACTION_BA, ACTION_BB );
+  action_copy_correct( gs, imdl, ACTION_BC, ACTION_BD );
+  action_copy_correct( gs, imdl, ACTION_LA, ACTION_LB );
+  action_copy_correct( gs, imdl, ACTION_LC, ACTION_LD );
+  action_copy_correct( gs, imdl, ACTION_XA, ACTION_XB );
+  action_copy_correct( gs, imdl, ACTION_XC, ACTION_XD );
+  action_copy_correct( gs, imdl, ACTION_FA, ACTION_FB );
+  action_copy_correct( gs, imdl, ACTION_FC, ACTION_FD );
+  action_copy_correct( gs, imdl, ACTION_PA, ACTION_PB );
+  action_copy_correct( gs, imdl, ACTION_PC, ACTION_PD );
+  action_copy_correct( gs, imdl, ACTION_ZA, ACTION_ZB );
+  action_copy_correct( gs, imdl, ACTION_ZC, ACTION_ZD );
+  action_copy_correct( gs, imdl, ACTION_WA, ACTION_WB );
+  action_copy_correct( gs, imdl, ACTION_WB, ACTION_WC );
+  action_copy_correct( gs, imdl, ACTION_WC, ACTION_WD );
+  action_copy_correct( gs, imdl, ACTION_DA, ACTION_WD );   // All walks should be safe
+  action_copy_correct( gs, imdl, ACTION_WC, ACTION_WD );
+  action_copy_correct( gs, imdl, ACTION_WB, ACTION_WC );
+  action_copy_correct( gs, imdl, ACTION_WA, ACTION_WB );
+  action_copy_correct( gs, imdl, ACTION_JA, ACTION_JB );
+  action_copy_correct( gs, imdl, ACTION_JB, ACTION_JC );
+  action_copy_correct( gs, imdl, ACTION_DA, ACTION_JC );  // All jumps should be safe
+  action_copy_correct( gs, imdl, ACTION_JB, ACTION_JC );
+  action_copy_correct( gs, imdl, ACTION_JA, ACTION_JB );
+  action_copy_correct( gs, imdl, ACTION_HA, ACTION_HB );
+  action_copy_correct( gs, imdl, ACTION_HB, ACTION_HC );
+  action_copy_correct( gs, imdl, ACTION_HC, ACTION_HD );
+  action_copy_correct( gs, imdl, ACTION_HB, ACTION_HC );
+  action_copy_correct( gs, imdl, ACTION_HA, ACTION_HB );
+  action_copy_correct( gs, imdl, ACTION_KA, ACTION_KB );
+  action_copy_correct( gs, imdl, ACTION_KB, ACTION_KC );
+  action_copy_correct( gs, imdl, ACTION_KC, ACTION_KD );
+  action_copy_correct( gs, imdl, ACTION_KB, ACTION_KC );
+  action_copy_correct( gs, imdl, ACTION_KA, ACTION_KB );
+  action_copy_correct( gs, imdl, ACTION_MH, ACTION_MI );
+  action_copy_correct( gs, imdl, ACTION_DA, ACTION_MM );
+  action_copy_correct( gs, imdl, ACTION_MM, ACTION_MN );
 
 
   // Create table for doing transition from one type of walk to another...
@@ -320,19 +314,19 @@ void get_actions( Uint16 imdl )
   }
 
   // Need to figure out how far into action each iframe is
-  make_framelip( imdl, ACTION_WA );
-  make_framelip( imdl, ACTION_WB );
-  make_framelip( imdl, ACTION_WC );
+  make_framelip( gs, imdl, ACTION_WA );
+  make_framelip( gs, imdl, ACTION_WB );
+  make_framelip( gs, imdl, ACTION_WC );
 
   // Now do the same, in reverse, for walking animations
-  get_walk_frame( imdl, LIPT_DA, ACTION_DA );
-  get_walk_frame( imdl, LIPT_WA, ACTION_WA );
-  get_walk_frame( imdl, LIPT_WB, ACTION_WB );
-  get_walk_frame( imdl, LIPT_WC, ACTION_WC );
+  get_walk_frame( gs, imdl, LIPT_DA, ACTION_DA );
+  get_walk_frame( gs, imdl, LIPT_WA, ACTION_WA );
+  get_walk_frame( gs, imdl, LIPT_WB, ACTION_WB );
+  get_walk_frame( gs, imdl, LIPT_WC, ACTION_WC );
 }
 
 //--------------------------------------------------------------------------------------------
-void make_mad_equally_lit( Uint16 model )
+void make_mad_equally_lit( GameState * gs, Uint16 model )
 {
   // ZZ> This function makes ultra low poly models look better
 
@@ -340,9 +334,9 @@ void make_mad_equally_lit( Uint16 model )
   int iFrames, iVerts;
   MD2_Model * m;
 
-  if(model > MAXMODEL || !MadList[model].used) return;
+  if(model > MAXMODEL || !gs->MadList[model].used) return;
 
-  m = MadList[model].md2_ptr;
+  m = gs->MadList[model].md2_ptr;
   if(NULL == m) return;
 
   iFrames = md2_get_numFrames(m);
@@ -360,7 +354,7 @@ void make_mad_equally_lit( Uint16 model )
 }
 
 //--------------------------------------------------------------------------------------------
-void load_copy_file( char * szObjectpath, char * szObjectname, Uint16 object )
+void load_copy_file( GameState * gs, char * szObjectpath, char * szObjectname, Uint16 object )
 {
   // ZZ> This function copies a model's actions
 
@@ -378,10 +372,10 @@ void load_copy_file( char * szObjectpath, char * szObjectname, Uint16 object )
       fget_string( fileread, szTwo, sizeof( szTwo ) );
       actionb = what_action( szTwo[0] );
 
-      action_copy_correct( object, actiona, actionb );
-      action_copy_correct( object, actiona + 1, actionb + 1 );
-      action_copy_correct( object, actiona + 2, actionb + 2 );
-      action_copy_correct( object, actiona + 3, actionb + 3 );
+      action_copy_correct( gs, object, (ACTION)(actiona + 0), (ACTION)(actionb + 0) );
+      action_copy_correct( gs, object, (ACTION)(actiona + 1), (ACTION)(actionb + 1) );
+      action_copy_correct( gs, object, (ACTION)(actiona + 2), (ACTION)(actionb + 2) );
+      action_copy_correct( gs, object, (ACTION)(actiona + 3), (ACTION)(actionb + 3) );
     }
     fs_fileClose( fileread );
   }
@@ -685,7 +679,7 @@ bool_t mad_cull_bbox_list(int max_lod, BBOX_LIST *plst, BBOX_LIST *pcull)
 
 
 //--------------------------------------------------------------------------------------------
-bool_t mad_optimize_bbox_tree(MAD * pmad)
+bool_t mad_optimize_bbox_tree(Mad * pmad)
 {
   // BB > optimize the bbox tree by culling inefficient bboxes from the more detailed lists
 
@@ -902,7 +896,7 @@ static bool_t mad_simplify_bbox_list(int max_divisions, int new_divisions, BBOX_
 
 
 //--------------------------------------------------------------------------------------------
-bool_t mad_delete_bbox_tree(MAD * pmad)
+bool_t mad_delete_bbox_tree(Mad * pmad)
 {
   int i;
 
@@ -922,7 +916,7 @@ bool_t mad_delete_bbox_tree(MAD * pmad)
 }
 
 //--------------------------------------------------------------------------------------------
-static bool_t mad_scale_bbox_tree(MAD * pmad)
+static bool_t mad_scale_bbox_tree(Mad * pmad)
 {
   // BB > scale bounding boxes to the size of the object
 
@@ -992,7 +986,7 @@ static bool_t mad_scale_bbox_tree(MAD * pmad)
 }
 
 //--------------------------------------------------------------------------------------------
-//bool_t mad_optimize_bbox_tree(int max_level, MAD * pmad)
+//bool_t mad_optimize_bbox_tree(int max_level, Mad * pmad)
 //{
 //  // BB > try to collapse some of the bounding boxes on the more detailed levels
 //
@@ -1075,7 +1069,7 @@ static bool_t mad_scale_bbox_tree(MAD * pmad)
 //}
 
 //--------------------------------------------------------------------------------------------
-bool_t mad_generate_bbox_tree(int max_level, MAD * pmad)
+bool_t mad_generate_bbox_tree(int max_level, Mad * pmad)
 {
   // BB > Make a series of progressively refined BBox lists.
   //      The list will have null nodes for every level of detail where
@@ -1095,7 +1089,7 @@ bool_t mad_generate_bbox_tree(int max_level, MAD * pmad)
 
   // read the frame count and allocate one BBOX_ARY per frame
   pmad->bbox_frames = pmad->md2_ptr->m_numFrames;
-  pmad->bbox_arrays = calloc(pmad->bbox_frames, sizeof(BBOX_ARY));
+  pmad->bbox_arrays = (BBOX_ARY*)calloc(pmad->bbox_frames, sizeof(BBOX_ARY));
 
   // go through every frame
   for(i=0; i<pmad->bbox_frames; i++)
@@ -1146,11 +1140,13 @@ bool_t mad_generate_bbox_tree(int max_level, MAD * pmad)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-MAD *  mad_new(MAD * pmad)
+Mad *  Mad_new(Mad * pmad )
 {
-  if(NULL == pmad) return NULL;
+  fprintf( stdout, "Mad_new()\n");
 
-  memset(pmad, 0, sizeof(MAD));
+  if(NULL == pmad) return pmad;
+
+  memset(pmad, 0, sizeof(Mad));
 
   strcpy(pmad->name, "*NONE*");
   pmad->used = bfalse;
@@ -1159,9 +1155,9 @@ MAD *  mad_new(MAD * pmad)
 }
 
 //--------------------------------------------------------------------------------------------
-MAD *  mad_delete(MAD * pmad)
+bool_t Mad_delete(Mad * pmad)
 {
-  if(NULL == pmad) return NULL;
+  if(NULL == pmad) return bfalse;
 
   if(NULL != pmad->md2_ptr)
   {
@@ -1176,34 +1172,31 @@ MAD *  mad_delete(MAD * pmad)
 
   pmad->used = bfalse;
 
-  return pmad;
+  return btrue;
 };
 
 //--------------------------------------------------------------------------------------------
-MAD *  mad_renew(MAD * pmad)
+Mad *  Mad_renew(Mad * pmad)
 {
-  if(NULL == pmad) return NULL;
-
-  mad_delete(pmad);
-
-  return mad_new(pmad);
+  Mad_delete(pmad);
+  return Mad_new(pmad);
 };
 
 
 //---------------------------------------------------------------------------------------------
-Uint16 load_one_mad( char * szObjectpath, char * szObjectname, Uint16 imdl )
+Uint16 MadList_load_one( GameState * gs, char * szObjectpath, char * szObjectname, Uint16 imdl )
 {
   // ZZ> This function loads an id md2 file, storing the converted data in the indexed model
   //    int iFileHandleRead;
 
   STRING szLoadname;
   int iFrames;
-  MAD * pmad;
+  Mad * pmad;
 
   if(!VALID_MDL(imdl)) return MAXMODEL;
 
   // make the notation "easier"
-  pmad = MadList + imdl;
+  pmad = gs->MadList + imdl;
 
   // Make sure we don't load over an existing model
   if ( pmad->used )
@@ -1211,8 +1204,8 @@ Uint16 load_one_mad( char * szObjectpath, char * szObjectname, Uint16 imdl )
     log_error( "Model slot %i is already used. (%s)\n", imdl, szLoadname );
   }
 
-  // make sure we have a clean MAD. More complicated because of dynamic allocation...
-  if(NULL == mad_renew(pmad)) return MAXMODEL;
+  // make sure we have a clean Mad. More complicated because of dynamic allocation...
+  if(NULL == Mad_renew(pmad)) return MAXMODEL;
 
   // Make up a name for the model...  IMPORT\TEMP0000.OBJ
   strncpy( pmad->name, szObjectpath, sizeof( pmad->name ) );
@@ -1222,7 +1215,7 @@ Uint16 load_one_mad( char * szObjectpath, char * szObjectname, Uint16 imdl )
   }
 
   // Load the AI script for this object
-  pmad->ai = load_ai_script( szObjectpath, szObjectname );
+  pmad->ai = load_ai_script( GameState_getScriptInfo(gs), szObjectpath, szObjectname );
   if ( MAXAI == pmad->ai )
   {
     // use the default script
@@ -1241,7 +1234,7 @@ Uint16 load_one_mad( char * szObjectpath, char * szObjectname, Uint16 imdl )
   md2_scale_model(pmad->md2_ptr, 4);
 
   // generate a bbox structure for each frame of the animation
-  // this is dynamically allocated, mad_delete() or mad_renew() must be called
+  // this is dynamically allocated, Mad_delete() or Mad_renew() must be called
   // to make all of that go away
   mad_generate_bbox_tree(2, pmad);
 
@@ -1251,34 +1244,64 @@ Uint16 load_one_mad( char * szObjectpath, char * szObjectname, Uint16 imdl )
 
   // allocate the extra animation data
   iFrames = md2_get_numFrames(pmad->md2_ptr);
-  pmad->framelip = calloc(sizeof(Uint8),  iFrames);
-  pmad->framefx  = calloc(sizeof(Uint16), iFrames);
+  pmad->framelip = (Uint8 *)calloc(iFrames, sizeof(Uint8 ));
+  pmad->framefx  = (Uint16*)calloc(iFrames, sizeof(Uint16));
 
   // tell everyone that we loaded correctly
   pmad->used = btrue;
 
   // Create the actions table for this object
-  get_actions( imdl );
+  get_actions( gs, imdl );
 
   // zero out the messages
-  MadList[imdl].msg_start = 0;
+  gs->MadList[imdl].msg_start = 0;
 
   // Copy entire actions to save frame space "COPY.TXT"
-  load_copy_file( szObjectpath, szObjectname, imdl );
+  load_copy_file( gs, szObjectpath, szObjectname, imdl );
 
   return imdl;
 }
 
 //---------------------------------------------------------------------------------------------
-void free_one_mad( Uint16 imdl )
+void MadList_free_one( GameState * gs, Uint16 imdl )
 {
   // ZZ> This function loads an id md2 file, storing the converted data in the indexed model
   //    int iFileHandleRead;
 
-  if( imdl > MAXMODEL || !MadList[imdl].used ) return;
+  if( imdl > MAXMODEL || !gs->MadList[imdl].used ) return;
 
-  mad_renew(MadList + imdl);
+  Mad_renew(gs->MadList + imdl);
 }
+
+
+//--------------------------------------------------------------------------------------------
+void MadList_log_used( GameState * gs, char *savename )
+{
+  // ZZ> This is a debug function for checking model loads
+
+  FILE* hFileWrite;
+  int cnt;
+
+  hFileWrite = fs_fileOpen( PRI_NONE, NULL, savename, "a" );
+  if ( NULL != hFileWrite )
+  {
+    fprintf( hFileWrite, "\n\nSlot usage for objects in last module loaded...\n" );
+    fprintf( hFileWrite, "-----------------------------------------------\n" );
+
+    cnt = 0;
+    while ( cnt < MAXMODEL )
+    {
+      fprintf( hFileWrite, "%3d %32s %s\n", cnt, gs->CapList[cnt].classname, gs->MadList[cnt].name );
+      cnt++;
+    }
+
+    fprintf( hFileWrite, "\n\nDebug info after initial spawning and loading is complete...\n" );
+    fprintf( hFileWrite, "-----------------------------------------------\n" );
+
+    fs_fileClose( hFileWrite );
+  }
+}
+
 
 //---------------------------------------------------------------------------------------------
 bool_t mad_display_bbox_ary(BBOX_ARY * pary, int level)
@@ -1311,7 +1334,7 @@ bool_t mad_display_bbox_ary(BBOX_ARY * pary, int level)
   return btrue;
 };
 
-bool_t mad_display_bbox_tree(int level, matrix_4x4 matrix, MAD * pmad, int frame1, int frame2 )
+bool_t mad_display_bbox_tree(int level, matrix_4x4 matrix, Mad * pmad, int frame1, int frame2 )
 {
   MD2_Model * pmd2;
   BBOX_ARY  * pary;
@@ -1335,7 +1358,7 @@ bool_t mad_display_bbox_tree(int level, matrix_4x4 matrix, MAD * pmad, int frame
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
     // choose a "white" texture
-    glBindTexture(GL_TEXTURE_2D, INVALID_TEXTURE);
+    GLTexture_Bind(NULL, &gfxState);
 
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();
@@ -1375,7 +1398,7 @@ bool_t mad_display_bbox_tree(int level, matrix_4x4 matrix, MAD * pmad, int frame
 }
 
 //--------------------------------------------------------------------------------------------
-void mad_clear_pips()
+void mad_clear_pips( GameState * gs )
 {
   int cnt, object;
 
@@ -1384,15 +1407,62 @@ void mad_clear_pips()
   {
     for ( cnt = 0; cnt < PRTPIP_PEROBJECT_COUNT; cnt++ )
     {
-      MadList[object].prtpip[cnt] = MAXPRTPIP;
+      gs->MadList[object].prtpip[cnt] = MAXPRTPIP;
     }
   }
+}
+
+//---------------------------------------------------------------------------------------------
+int mad_vertexconnected( MD2_Model * m, int vertex )
+{
+  // ZZ> This function returns 1 if the model vertex is connected, 0 otherwise
+
+  MD2_GLCommand * g;
+  int commands, entry;
+
+  if(NULL == m) return 0;
+
+  g = md2_get_Commands(m);
+  if(NULL == g) return 0;
+
+  for( /*nothing*/; NULL != g; g = g->next)
+  {
+    commands = g->command_count;
+    for(entry = 0; entry<commands; entry++)
+    {
+      if(g->data[entry].index == vertex)
+      {
+        return 1;
+      }
+    }
+  }
+
+  // The vertex is not used
+  return 0;
+}
+
+//---------------------------------------------------------------------------------------------
+int mad_calc_transvertices( MD2_Model * m )
+{
+  // ZZ> This function gets the number of vertices to transform for a model...
+  //     That means every one except the grip ( unconnected ) vertices
+
+  int cnt, vrtcount, trans = 0;
+
+  if(NULL == m) return 0;
+
+  vrtcount = md2_get_numVertices(m);
+
+  for ( cnt = 0; cnt < vrtcount; cnt++ )
+    trans += mad_vertexconnected( m, cnt );
+
+  return trans;
 }
 
 
 
 ////--------------------------------------------------------------------------------------------
-//bool_t mad_generate_bbox_level(int bbox_divisions, int frame, MAD * pmad)
+//bool_t mad_generate_bbox_level(int bbox_divisions, int frame, Mad * pmad)
 //{
 //  int            i, bbox_count, vrt_count;
 //  int            num_per_axis;
@@ -1407,7 +1477,7 @@ void mad_clear_pips()
 //  int            tri_count;
 //  md2_triangle * ptri_lst;
 //
-//  // check for valid MAD
+//  // check for valid Mad
 //  if(NULL == pmad) return bfalse;
 //
 //  // check for valid MD2
@@ -1650,3 +1720,4 @@ void mad_clear_pips()
 //  // deallocate the list
 //  bbox_list_delete( &bblist );
 //}
+

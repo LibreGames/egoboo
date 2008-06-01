@@ -5,11 +5,11 @@
 
 typedef enum slot_e SLOT;
 typedef enum grip_e GRIP;
-typedef enum action_e ACTION;
+typedef enum Action_e ACTION;
 typedef enum lip_transition_e LIPT;
 typedef enum damage_e DAMAGE;
-typedef enum experience_e EXPERIENCE;
-typedef enum team_e TEAM;
+typedef enum Experience_e EXPERIENCE;
+typedef enum Team_e TEAM;
 typedef enum gender_e GENDER;
 typedef enum dyna_mode_e DYNA_MODE;
 typedef enum particle_type PRTTYPE;
@@ -86,3 +86,11 @@ char   fget_first_letter( FILE* fileread );
 
 //FILE * inherit_fopen(char * szObjPath, char * szObject, char *szFname, char * mode);
 const char * inherit_fname(char * szObjPath, char * szObject, char *szFname );
+
+retval_t util_calculateCRC(char * filename, Uint32 seed, Uint32 * pCRC);
+
+Uint32 generate_unsigned( PAIR * ppair );
+Sint32 generate_signed( PAIR * ppair );
+Sint32 generate_dither( PAIR * ppair, Uint16 strength_fp8 );
+
+void make_randie();

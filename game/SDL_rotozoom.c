@@ -29,7 +29,8 @@ Zoomes 32bit RGBA/ABGR 'src' surface to 'dst' surface.
 
 int zoomSurfaceRGBA(SDL_Surface * src, SDL_Surface * dst, int smooth)
 {
-  int x, y, sx, sy, *sax, *say, *csax, *csay, csx, csy, ex, ey, t1, t2, sstep;
+  int x, y, sx, sy, csx, csy, ex, ey, t1, t2, sstep;
+  Uint32 *sax, *say, *csax, *csay;
   tColorRGBA *c00, *c01, *c10, *c11;
   tColorRGBA *sp, *csp, *dp;
   int sgap, dgap;
@@ -54,10 +55,10 @@ int zoomSurfaceRGBA(SDL_Surface * src, SDL_Surface * dst, int smooth)
   /*
   * Allocate memory for row increments
   */
-  if ((sax = (int *) malloc((dst->w + 1) * sizeof(Uint32))) == NULL) {
+  if ((sax = (Uint32 *) calloc((dst->w + 1), sizeof(Uint32))) == NULL) {
     return (-1);
   }
-  if ((say = (int *) malloc((dst->h + 1) * sizeof(Uint32))) == NULL) {
+  if ((say = (Uint32 *) calloc((dst->h + 1), sizeof(Uint32))) == NULL) {
     free(sax);
     return (-1);
   }
@@ -230,10 +231,10 @@ int zoomSurfaceY(SDL_Surface * src, SDL_Surface * dst)
   /*
   * Allocate memory for row increments
   */
-  if ((sax = (Uint32 *) malloc(dst->w * sizeof(Uint32))) == NULL) {
+  if ((sax = (Uint32 *) calloc(dst->w, sizeof(Uint32))) == NULL) {
     return (-1);
   }
-  if ((say = (Uint32 *) malloc(dst->h * sizeof(Uint32))) == NULL) {
+  if ((say = (Uint32 *) calloc(dst->h, sizeof(Uint32))) == NULL) {
     if (sax != NULL) {
       free(sax);
     }

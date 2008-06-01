@@ -1,23 +1,28 @@
-/* Egoboo - Task.c
- * This code is not currently in use.
- */
-
-/*
-    This file is part of Egoboo.
-
-    Egoboo is free software: you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Egoboo is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
-*/
+//********************************************************************************************
+//* Egoboo - Task.c
+//*
+//* Implements a pseudo-multi-threading environment.
+//* Could be used as the master control for the menu system
+//* This code is not currently in use.
+//*
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
 
 #include "Task.h"
 #include "Clock.h"
@@ -53,23 +58,21 @@ void task_register( const char *taskName, float timeInterval, TaskCallback f )
 
   if ( NULL == taskClock )
   {
-    taskClock = clock_create_state();
-    clock_init( taskClock );
+    taskClock = ClockState_create("task", -1);
   };
 
   // If the time interval is negative, treat it as 0
   if ( timeInterval < 0 ) timeInterval = 0;
 
   len = strlen( taskName ) + 1;
-  aTask = malloc( sizeof( Task ) );
-  memset( aTask, 0, sizeof( Task ) );
+  aTask = (Task*)calloc( 1, sizeof( Task ) );
 
-  aTask->name = malloc( len );
+  aTask->name = (char*)calloc( len, sizeof(char) );
   strncpy( aTask->name, taskName, len );
   aTask->func = f;
 
   aTask->interval = timeInterval;
-  aTask->timeLastCalled = ( float ) clock_getTime( taskClock );
+  aTask->timeLastCalled = ( float ) ClockState_getTime( taskClock );
 
   if ( task_list == NULL )
   {
@@ -108,8 +111,7 @@ void task_remove( const char *taskName )
 
   if ( NULL == task_list )
   {
-    clock_free_state( taskClock );
-    taskClock = NULL;
+    ClockState_destroy( &taskClock );
   }
 }
 
@@ -150,7 +152,7 @@ void task_updateAllTasks()
   double currentTime, deltaTime;
   Task *aTask;
 
-  currentTime = clock_getTime( taskClock );
+  currentTime = ClockState_getTime( taskClock );
 
   aTask = task_list;
   while ( aTask != NULL )

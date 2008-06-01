@@ -45,6 +45,9 @@
 #endif
 
 
+#define NET_SLASH_STRING "/"
+#define NET_SLASH_CHAR   '/'
+
 #ifdef WIN32
 
     // Speeds up compile times a bit.  We don't need everything in windows.h

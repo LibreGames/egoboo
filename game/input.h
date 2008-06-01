@@ -109,8 +109,7 @@ typedef enum control_type_e
   CONTROL_CAMERA = CONTROL_MESSAGE
 } CONTROL;
 
-extern int numpla;                                 // Number of players
-
+struct GameState_t;
 
 //--------------------------------------------------------------------------------------------
 typedef struct latch_t
@@ -123,19 +122,23 @@ typedef struct latch_t
 //--------------------------------------------------------------------------------------------
 #define MAXPLAYER   (1<<3)                          // 2 to a power...  2^3
 
-typedef struct player_t
+typedef struct Player_t
 {
-  bool_t            valid;                    // Player used?
-  CHR_REF           chr;                    // Which character?
+  bool_t            used;                   // Player used?
+  bool_t            is_local;
+
+  CHR_REF           chr_ref;                 // Which character?
   LATCH             latch;                   // Local latches
-  Uint8             device;                   // Input device
-} PLAYER;
+  Uint8             device;                  // Input device
+} Player;
 
-INLINE CHR_REF pla_get_character( PLA_REF iplayer );
+Player * Player_new(Player *ppla);
+bool_t   Player_delete(Player *ppla);
+Player * Player_renew(Player *ppla);
 
-#define VALID_PLA(XX) ( ((XX)>=0) && ((XX)<MAXPLAYER) && PlaList[XX].valid )
+INLINE CHR_REF PlaList_get_character( struct GameState_t * gs, PLA_REF iplayer );
 
-extern PLAYER PlaList[MAXPLAYER];
+#define VALID_PLA(LST, XX) ( ((XX)>=0) && ((XX)<MAXPLAYER) && LST[XX].used )
 
 //--------------------------------------------------------------------------------------------
 #define MOUSEBUTTON         4
@@ -193,11 +196,14 @@ INLINE bool_t control_key_is_pressed( CONTROL control );
 INLINE bool_t control_mouse_is_pressed( CONTROL control );
 INLINE bool_t control_joy_is_pressed( int joy_num, CONTROL control );
 
-//--------------------------------------------------------------------------------------------
 
+
+//--------------------------------------------------------------------------------------------
 void   input_setup();
+void   input_read();
 bool_t input_reset_press(KEYBOARD * pk);
 
 bool_t input_read_mouse(MOUSE * pm);
 bool_t input_read_key(KEYBOARD * pk);
 bool_t input_read_joystick(JOYSTICK * pj);
+

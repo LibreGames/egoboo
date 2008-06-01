@@ -1,22 +1,26 @@
-/* Egoboo - char.c
-*/
-
-/*
-This file is part of Egoboo.
-
-Egoboo is free software: you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Egoboo is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
-*/
+//********************************************************************************************
+//* Egoboo - char.c
+//*
+//* 
+//*
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
 
 #include "char.inl"
 
@@ -29,6 +33,8 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 #include "passage.h"
 #include "Menu.h"
 #include "script.h"
+#include "Mesh.h"
+#include "graphic.h"
 
 #include "egoboo_strutil.h"
 #include "egoboo_utility.h"
@@ -50,19 +56,9 @@ SLOT    _slot;
 Uint16  numdolist = 0;
 Uint16  dolist[MAXCHR];
 
-int     numfreechr = -1;         // -1 means that the characters need to initialize some data structures
-Uint16  freechrlist[MAXCHR];     //
-
 Uint16  chrcollisionlevel = 2;
 
 TILE_DAMAGE GTile_Dam;
-
-CAP CapList[MAXCAP];
-CHR ChrList[MAXCHR];
-
-TEAM_INFO TeamList[TEAM_COUNT];
-
-IMPORT_INFO import;
 
 //--------------------------------------------------------------------------------------------
 Uint32  cv_list_count = 0;
@@ -75,11 +71,17 @@ INLINE void cv_list_draw();
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-void flash_character_height( CHR_REF chr_ref, Uint8 valuelow, Sint16 low,
+void flash_character_height( GameState * gs, CHR_REF chr_ref, Uint8 valuelow, Sint16 low,
                              Uint8 valuehigh, Sint16 high )
 {
   // ZZ> This function sets a chr_ref's lighting depending on vertex height...
   //     Can make feet dark and head light...
+
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Mad  * madlst      = gs->MadList;
+  size_t madlst_size = MAXMODEL;
 
   int cnt;
   Uint16 model;
@@ -89,255 +91,134 @@ void flash_character_height( CHR_REF chr_ref, Uint8 valuelow, Sint16 low,
   MD2_Model * pmdl;
   MD2_Frame * plast, * pnext;
 
-  model = ChrList[chr_ref].model;
-  inext = ChrList[chr_ref].anim.next;
-  ilast = ChrList[chr_ref].anim.last;
-  flip = ChrList[chr_ref].anim.flip;
+  model = chrlst[chr_ref].model;
+  inext = chrlst[chr_ref].anim.next;
+  ilast = chrlst[chr_ref].anim.last;
+  flip = chrlst[chr_ref].anim.flip;
 
   assert( MAXMODEL != VALIDATE_MDL( model ) );
 
-  pmdl  = MadList[model].md2_ptr;
+  pmdl  = madlst[model].md2_ptr;
   plast = md2_get_Frame(pmdl, ilast);
   pnext = md2_get_Frame(pmdl, inext);
 
-  for ( cnt = 0; cnt < MadList[model].transvertices; cnt++ )
+  for ( cnt = 0; cnt < madlst[model].transvertices; cnt++ )
   {
     z = pnext->vertices[cnt].z + (pnext->vertices[cnt].z - plast->vertices[cnt].z) * flip;
 
     if ( z < low )
     {
-      ChrList[chr_ref].vrta_fp8[cnt].r =
-      ChrList[chr_ref].vrta_fp8[cnt].g =
-      ChrList[chr_ref].vrta_fp8[cnt].b = valuelow;
+      chrlst[chr_ref].vrta_fp8[cnt].r =
+      chrlst[chr_ref].vrta_fp8[cnt].g =
+      chrlst[chr_ref].vrta_fp8[cnt].b = valuelow;
     }
     else if ( z > high )
     {
-      ChrList[chr_ref].vrta_fp8[cnt].r =
-      ChrList[chr_ref].vrta_fp8[cnt].g =
-      ChrList[chr_ref].vrta_fp8[cnt].b = valuehigh;
+      chrlst[chr_ref].vrta_fp8[cnt].r =
+      chrlst[chr_ref].vrta_fp8[cnt].g =
+      chrlst[chr_ref].vrta_fp8[cnt].b = valuehigh;
     }
     else
     {
       float ftmp = (float)( z - low ) / (float)( high - low );
-      ChrList[chr_ref].vrta_fp8[cnt].r =
-      ChrList[chr_ref].vrta_fp8[cnt].g =
-      ChrList[chr_ref].vrta_fp8[cnt].b = valuelow + (valuehigh - valuelow) * ftmp;
+      chrlst[chr_ref].vrta_fp8[cnt].r =
+      chrlst[chr_ref].vrta_fp8[cnt].g =
+      chrlst[chr_ref].vrta_fp8[cnt].b = valuelow + (valuehigh - valuelow) * ftmp;
     }
   }
 }
 
 //--------------------------------------------------------------------------------------------
-void flash_character( CHR_REF chr_ref, Uint8 value )
+void flash_character( GameState * gs, CHR_REF chr_ref, Uint8 value )
 {
   // ZZ> This function sets a chr_ref's lighting
 
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Mad  * madlst      = gs->MadList;
+  size_t madlst_size = MAXMODEL;
+
   int cnt;
-  Uint16 model = ChrList[chr_ref].model;
+  Uint16 model = chrlst[chr_ref].model;
 
   assert( MAXMODEL != VALIDATE_MDL( model ) );
 
   cnt = 0;
-  while ( cnt < MadList[model].transvertices )
+  while ( cnt < madlst[model].transvertices )
   {
-    ChrList[chr_ref].vrta_fp8[cnt].r =
-    ChrList[chr_ref].vrta_fp8[cnt].g =
-    ChrList[chr_ref].vrta_fp8[cnt].b = value;
+    chrlst[chr_ref].vrta_fp8[cnt].r =
+    chrlst[chr_ref].vrta_fp8[cnt].g =
+    chrlst[chr_ref].vrta_fp8[cnt].b = value;
     cnt++;
   }
 }
 
 //--------------------------------------------------------------------------------------------
-void add_to_dolist( CHR_REF chr_ref )
-{
-  // This function puts a character in the list
-  int fan;
-
-  if ( !VALID_CHR( chr_ref ) || ChrList[chr_ref].indolist ) return;
-
-  fan = ChrList[chr_ref].onwhichfan;
-  //if ( mesh_fan_remove_renderlist( fan ) )
-  {
-    //ChrList[chr_ref].lightspek_fp8 = Mesh[meshvrtstart[fan]].vrtl_fp8;
-    dolist[numdolist] = chr_ref;
-    ChrList[chr_ref].indolist = btrue;
-    numdolist++;
-
-
-    // Do flashing
-    if (( allframe & ChrList[chr_ref].flashand ) == 0 && ChrList[chr_ref].flashand != DONTFLASH )
-    {
-      flash_character( chr_ref, 255 );
-    }
-    // Do blacking
-    if (( allframe&SEEKURSEAND ) == 0 && localseekurse && ChrList[chr_ref].iskursed )
-    {
-      flash_character( chr_ref, 0 );
-    }
-  }
-  //else
-  //{
-  //  Uint16 model = ChrList[chr_ref].model;
-  //  assert( MAXMODEL != VALIDATE_MDL( model ) );
-
-  //  // Double check for large/special objects
-  //  if ( CapList[model].alwaysdraw )
-  //  {
-  //    dolist[numdolist] = chr_ref;
-  //    ChrList[chr_ref].indolist = btrue;
-  //    numdolist++;
-  //  }
-  //}
-
-  // Add its weapons too
-  for ( _slot = SLOT_BEGIN; _slot < SLOT_COUNT; _slot = ( SLOT )( _slot + 1 ) )
-  {
-    add_to_dolist( chr_get_holdingwhich( chr_ref, _slot ) );
-  };
-
-}
-
-//--------------------------------------------------------------------------------------------
-void order_dolist( void )
-{
-  // ZZ> This function orders the dolist based on distance from camera,
-  //     which is needed for reflections to properly clip themselves.
-  //     Order from closest to farthest
-
-  CHR_REF chr_ref, olddolist[MAXCHR];
-  int cnt, tnc, order;
-  int dist[MAXCHR];
-
-  // Figure the distance of each
-  cnt = 0;
-  while ( cnt < numdolist )
-  {
-    chr_ref = dolist[cnt];  olddolist[cnt] = chr_ref;
-    if ( ChrList[chr_ref].light_fp8 != 255 || ChrList[chr_ref].alpha_fp8 != 255 )
-    {
-      // This makes stuff inside an invisible chr_ref visible...
-      // A key inside a Jellcube, for example
-      dist[cnt] = 0x7fffffff;
-    }
-    else
-    {
-      dist[cnt] = ABS( ChrList[chr_ref].pos.x - GCamera.pos.x ) + ABS( ChrList[chr_ref].pos.y - GCamera.pos.y );
-    }
-    cnt++;
-  }
-
-
-  // Put em in the right order
-  cnt = 0;
-  while ( cnt < numdolist )
-  {
-    chr_ref = olddolist[cnt];
-    order = 0;  // Assume this chr_ref is closest
-    tnc = 0;
-    while ( tnc < numdolist )
-    {
-      // For each one closer, increment the order
-      order += ( dist[cnt] > dist[tnc] );
-      order += ( dist[cnt] == dist[tnc] ) && ( cnt < tnc );
-      tnc++;
-    }
-    dolist[order] = chr_ref;
-    cnt++;
-  }
-}
-
-//--------------------------------------------------------------------------------------------
-void make_dolist( void )
-{
-  // ZZ> This function finds the characters that need to be drawn and puts them in the list
-
-  int cnt;
-  CHR_REF chr_ref;
-
-
-  // Remove everyone from the dolist
-  cnt = 0;
-  while ( cnt < numdolist )
-  {
-    chr_ref = dolist[cnt];
-    ChrList[chr_ref].indolist = bfalse;
-    cnt++;
-  }
-  numdolist = 0;
-
-
-  // Now fill it up again
-  cnt = 0;
-  while ( cnt < MAXCHR )
-  {
-    if ( ChrList[cnt].on && !chr_in_pack( cnt ) )
-    {
-      // Add the chr_ref
-      add_to_dolist( cnt );
-    }
-    cnt++;
-  }
-
-}
-
-//--------------------------------------------------------------------------------------------
-void keep_weapons_with_holders()
+void keep_weapons_with_holders(GameState * gs)
 {
   // ZZ> This function keeps weapons near their holders
+
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
 
   int cnt;
   CHR_REF chr_ref;
 
   // !!!BAD!!!  May need to do 3 levels of attachment...
 
-  for ( cnt = 0; cnt < MAXCHR; cnt++ )
+  for ( cnt = 0; cnt < chrlst_size; cnt++ )
   {
-    if ( !VALID_CHR( cnt ) ) continue;
+    if ( !VALID_CHR( chrlst, cnt ) ) continue;
 
-    chr_ref = chr_get_attachedto( cnt );
-    if ( !VALID_CHR( chr_ref ) )
+    chr_ref = chr_get_attachedto( chrlst, MAXCHR, cnt );
+    if ( !VALID_CHR( chrlst, chr_ref ) )
     {
       // Keep inventory with character
-      if ( !chr_in_pack( cnt ) )
+      if ( !chr_in_pack( chrlst, chrlst_size, cnt ) )
       {
-        chr_ref = chr_get_nextinpack( cnt );
-        while ( VALID_CHR( chr_ref ) )
+        chr_ref = chr_get_nextinpack( chrlst, chrlst_size, cnt );
+        while ( VALID_CHR( chrlst, chr_ref ) )
         {
-          ChrList[chr_ref].pos = ChrList[cnt].pos;
-          ChrList[chr_ref].pos_old = ChrList[cnt].pos_old;  // Copy olds to make SendMessageNear work
-          chr_ref  = chr_get_nextinpack( chr_ref );
+          chrlst[chr_ref].pos = chrlst[cnt].pos;
+          chrlst[chr_ref].pos_old = chrlst[cnt].pos_old;  // Copy olds to make SendMessageNear work
+          chr_ref  = chr_get_nextinpack( chrlst, chrlst_size, chr_ref );
         }
       }
     }
     else
     {
       // Keep in hand weapons with character
-      if ( ChrList[chr_ref].matrixvalid && ChrList[cnt].matrixvalid )
+      if ( chrlst[chr_ref].matrixvalid && chrlst[cnt].matrixvalid )
       {
-        ChrList[cnt].pos.x = ChrList[cnt].matrix.CNV( 3, 0 );
-        ChrList[cnt].pos.y = ChrList[cnt].matrix.CNV( 3, 1 );
-        ChrList[cnt].pos.z = ChrList[cnt].matrix.CNV( 3, 2 );
+        chrlst[cnt].pos.x = chrlst[cnt].matrix.CNV( 3, 0 );
+        chrlst[cnt].pos.y = chrlst[cnt].matrix.CNV( 3, 1 );
+        chrlst[cnt].pos.z = chrlst[cnt].matrix.CNV( 3, 2 );
       }
       else
       {
-        ChrList[cnt].pos.x = ChrList[chr_ref].pos.x;
-        ChrList[cnt].pos.y = ChrList[chr_ref].pos.y;
-        ChrList[cnt].pos.z = ChrList[chr_ref].pos.z;
+        chrlst[cnt].pos.x = chrlst[chr_ref].pos.x;
+        chrlst[cnt].pos.y = chrlst[chr_ref].pos.y;
+        chrlst[cnt].pos.z = chrlst[chr_ref].pos.z;
       }
-      ChrList[cnt].turn_lr = ChrList[chr_ref].turn_lr;
+      chrlst[cnt].turn_lr = chrlst[chr_ref].turn_lr;
 
       // Copy this stuff ONLY if it's a weapon, not for mounts
-      if ( ChrList[chr_ref].transferblend && ChrList[cnt].isitem )
+      if ( chrlst[chr_ref].transferblend && chrlst[cnt].isitem )
       {
-        if ( ChrList[chr_ref].alpha_fp8 != 255 )
+        if ( chrlst[chr_ref].alpha_fp8 != 255 )
         {
-          Uint16 model = ChrList[cnt].model;
+          Uint16 model = chrlst[cnt].model;
           assert( MAXMODEL != VALIDATE_MDL( model ) );
-          ChrList[cnt].alpha_fp8 = ChrList[chr_ref].alpha_fp8;
-          ChrList[cnt].bumpstrength = CapList[model].bumpstrength * FP8_TO_FLOAT( ChrList[cnt].alpha_fp8 );
+          chrlst[cnt].alpha_fp8 = chrlst[chr_ref].alpha_fp8;
+          chrlst[cnt].bumpstrength = caplst[model].bumpstrength * FP8_TO_FLOAT( chrlst[cnt].alpha_fp8 );
         }
-        if ( ChrList[chr_ref].light_fp8 != 255 )
+        if ( chrlst[chr_ref].light_fp8 != 255 )
         {
-          ChrList[cnt].light_fp8 = ChrList[chr_ref].light_fp8;
+          chrlst[cnt].light_fp8 = chrlst[chr_ref].light_fp8;
         }
       }
     }
@@ -345,20 +226,18 @@ void keep_weapons_with_holders()
 
 }
 
-
 //--------------------------------------------------------------------------------------------
-bool_t make_one_character_matrix( CHR_REF chr_ref )
+bool_t make_one_character_matrix( Chr chrlst[], size_t chrlst_size, Chr * pchr )
 {
   // ZZ> This function sets one character's matrix
 
-  CHR * pchr, * povl;
+  Chr * povl;
 
   Uint16 tnc;
   matrix_4x4 mat_old;
   bool_t recalc_bumper = bfalse;
 
-  if ( !VALID_CHR( chr_ref ) ) return bfalse;
-  pchr = ChrList + chr_ref;
+  if ( NULL == pchr || !pchr->on ) return bfalse;
 
   mat_old = pchr->matrix;
   pchr->matrixvalid = bfalse;
@@ -366,11 +245,11 @@ bool_t make_one_character_matrix( CHR_REF chr_ref )
   if ( pchr->overlay )
   {
     // Overlays are kept with their target...
-    tnc = chr_get_aitarget( chr_ref );
+    tnc = chr_get_aitarget( chrlst, chrlst_size, pchr );
 
-    if ( VALID_CHR( tnc ) )
+    if ( VALID_CHR( chrlst, tnc ) )
     {
-      povl = ChrList + tnc;
+      povl = chrlst + tnc;
 
       pchr->pos.x = povl->matrix.CNV( 3, 0 );
       pchr->pos.y = povl->matrix.CNV( 3, 1 );
@@ -418,113 +297,90 @@ bool_t make_one_character_matrix( CHR_REF chr_ref )
   {
     // invalidate the cached bumper data
     pchr->bmpdata.cv.level = -1;
-    chr_calculate_bumpers(chr_ref, 0);
   };
 
   return pchr->matrixvalid;
 }
 
 //--------------------------------------------------------------------------------------------
-void free_one_character( CHR_REF chr_ref )
+void ChrList_free_one( GameState * gs, CHR_REF chr_ref )
 {
   // ZZ> This function sticks a character back on the free character stack
 
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
+
   int cnt;
-  CHR * pchr;
+  Chr * pchr;
 
-  if ( !VALID_CHR( chr_ref ) ) return;
+  if ( !VALID_CHR( chrlst, chr_ref ) ) return;
+  pchr = chrlst + chr_ref;
 
-  pchr = ChrList + chr_ref;
-
-  log_debug( "free_one_character() - \n\tprofile == %d, CapList[profile].classname == \"%s\", index == %d\n", ChrList[chr_ref].model, CapList[ChrList[chr_ref].model].classname, chr_ref );
-
-  //remove any collision volume octree
-  bdata_delete( &(pchr->bmpdata) );
-
-  // add it to the free list
-  freechrlist[numfreechr] = chr_ref;
-  numfreechr++;
-
-  // Remove from stat list
-  if ( pchr->staton )
-  {
-    pchr->staton = bfalse;
-    cnt = 0;
-    while ( cnt < numstat )
-    {
-      if ( statlist[cnt] == chr_ref )
-      {
-        cnt++;
-        while ( cnt < numstat )
-        {
-          statlist[cnt-1] = statlist[cnt];
-          cnt++;
-        }
-        numstat--;
-      }
-      cnt++;
-    }
-  }
+  log_debug( "ChrList_free_one() - \n\tprofile == %d, caplst[profile].classname == \"%s\", index == %d\n", chrlst[chr_ref].model, caplst[chrlst[chr_ref].model].classname, chr_ref );
 
   // Make sure everyone knows it died
-  assert( MAXMODEL != VALIDATE_MDL( pchr->model ) );
-  if ( pchr->alive && !CapList[pchr->model].invictus )
-  {
-    TeamList[pchr->baseteam].morale--;
-  }
-
   cnt = 0;
-  while ( cnt < MAXCHR )
+  while ( cnt < chrlst_size )
   {
-    if ( ChrList[cnt].on )
+    if ( chrlst[cnt].on )
     {
-      if ( ChrList[cnt].aistate.target == chr_ref )
+      if ( chrlst[cnt].aistate.target == chr_ref )
       {
-        ChrList[cnt].aistate.alert |= ALERT_TARGETKILLED;
-        ChrList[cnt].aistate.target = cnt;
+        chrlst[cnt].aistate.alert |= ALERT_TARGETKILLED;
+        chrlst[cnt].aistate.target = cnt;
       }
-      if ( team_get_leader( ChrList[cnt].team ) == chr_ref )
+      if ( team_get_leader( gs, chrlst[cnt].team ) == chr_ref )
       {
-        ChrList[cnt].aistate.alert |= ALERT_LEADERKILLED;
+        chrlst[cnt].aistate.alert |= ALERT_LEADERKILLED;
       }
     }
     cnt++;
   }
 
-  if ( team_get_leader( pchr->team ) == chr_ref )
+  // fix the team
+  if ( pchr->alive && !caplst[pchr->model].invictus )
   {
-    TeamList[pchr->team].leader = MAXCHR;
+    gs->TeamList[pchr->baseteam].morale--;
+  }
+  if ( team_get_leader( gs, pchr->team ) == chr_ref )
+  {
+    gs->TeamList[pchr->team].leader = MAXCHR;
   }
 
-  if( INVALID_CHANNEL != pchr->loopingchannel )
-  {
-    stop_sound( pchr->loopingchannel );
-    pchr->loopingchannel = INVALID_CHANNEL;
-  };
+  // deallocate the character
+  Chr_delete(pchr);
 
-  pchr->on = bfalse;
-  pchr->alive = bfalse;
-  pchr->inwhichpack = MAXCHR;
-  VData_Blended_Deallocate(&(pchr->vdata));
+  // Remove from stat list
+  if ( pchr->staton )
+  {
+    remove_stat( gs, pchr );
+  }
+
+  // add it to the free list
+  gs->ChrFreeList[gs->ChrFreeList_count] = chr_ref;
+  gs->ChrFreeList_count++;
 }
 
 //--------------------------------------------------------------------------------------------
-void chr_free_inventory( CHR_REF chr_ref )
+void chr_free_inventory( Chr chrlst[], size_t chrlst_size, CHR_REF chr_ref )
 {
   // ZZ> This function frees every item in the character's inventory
 
   int cnt;
 
-  cnt  = chr_get_nextinpack( chr_ref );
-  while ( cnt < MAXCHR )
+  cnt  = chr_get_nextinpack( chrlst, chrlst_size, chr_ref );
+  while ( cnt < chrlst_size )
   {
-    ChrList[cnt].freeme = btrue;
-    cnt = chr_get_nextinpack( cnt );
+    chrlst[cnt].freeme = btrue;
+    cnt = chr_get_nextinpack( chrlst, chrlst_size, cnt );
   }
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t make_one_weapon_matrix( CHR_REF chr_ref )
+bool_t make_one_weapon_matrix( Chr chrlst[], size_t chrlst_size, CHR_REF chr_ref )
 {
   // ZZ> This function sets one weapon's matrix, based on who it's attached to
 
@@ -535,82 +391,82 @@ bool_t make_one_weapon_matrix( CHR_REF chr_ref )
   bool_t recalc_bumper = bfalse;
 
   // check this character
-  if ( !VALID_CHR( chr_ref ) )  return bfalse;
+  if ( !VALID_CHR( chrlst, chr_ref ) )  return bfalse;
 
   // invalidate the matrix
-  ChrList[chr_ref].matrixvalid = bfalse;
+  chrlst[chr_ref].matrixvalid = bfalse;
 
   // check that the mount is valid
-  mount_ref = chr_get_attachedto( chr_ref );
-  if ( !VALID_CHR( mount_ref ) )
+  mount_ref = chr_get_attachedto( chrlst, chrlst_size, chr_ref );
+  if ( !VALID_CHR( chrlst, mount_ref ) )
   {
-    ChrList[chr_ref].matrix = ZeroMatrix();
+    chrlst[chr_ref].matrix = ZeroMatrix();
     return bfalse;
   }
 
-  mat_old = ChrList[chr_ref].matrix;
+  mat_old = chrlst[chr_ref].matrix;
 
-  if(0xFFFF == ChrList[chr_ref].attachedgrip[0])
+  if(0xFFFF == chrlst[chr_ref].attachedgrip[0])
   {
     // Calculate weapon's matrix
-    ChrList[chr_ref].matrix = ScaleXYZRotateXYZTranslate( 1, 1, 1, 0, 0, ChrList[chr_ref].turn_lr + ChrList[mount_ref].turn_lr, ChrList[mount_ref].pos.x, ChrList[mount_ref].pos.y, ChrList[mount_ref].pos.z);
-    ChrList[chr_ref].matrixvalid = btrue;
+    chrlst[chr_ref].matrix = ScaleXYZRotateXYZTranslate( 1, 1, 1, 0, 0, chrlst[chr_ref].turn_lr + chrlst[mount_ref].turn_lr, chrlst[mount_ref].pos.x, chrlst[mount_ref].pos.y, chrlst[mount_ref].pos.z);
+    chrlst[chr_ref].matrixvalid = btrue;
 
-    recalc_bumper = matrix_compare_3x3(&mat_old, &(ChrList[chr_ref].matrix));
+    recalc_bumper = matrix_compare_3x3(&mat_old, &(chrlst[chr_ref].matrix));
   }
-  else if(0xFFFF == ChrList[chr_ref].attachedgrip[1])
+  else if(0xFFFF == chrlst[chr_ref].attachedgrip[1])
   {
     // do the linear interpolation
-    vertex = ChrList[chr_ref].attachedgrip[0];
-    md2_blend_vertices(mount_ref, vertex, vertex);
+    vertex = chrlst[chr_ref].attachedgrip[0];
+    md2_blend_vertices(chrlst + mount_ref, vertex, vertex);
 
     // Calculate weapon's matrix
-    ChrList[chr_ref].matrix = ScaleXYZRotateXYZTranslate( 1, 1, 1, 0, 0, ChrList[chr_ref].turn_lr + ChrList[mount_ref].turn_lr, ChrList[mount_ref].vdata.Vertices[vertex].x, ChrList[mount_ref].vdata.Vertices[vertex].y, ChrList[mount_ref].vdata.Vertices[vertex].z);
-    ChrList[chr_ref].matrixvalid = btrue;
+    chrlst[chr_ref].matrix = ScaleXYZRotateXYZTranslate( 1, 1, 1, 0, 0, chrlst[chr_ref].turn_lr + chrlst[mount_ref].turn_lr, chrlst[mount_ref].vdata.Vertices[vertex].x, chrlst[mount_ref].vdata.Vertices[vertex].y, chrlst[mount_ref].vdata.Vertices[vertex].z);
+    chrlst[chr_ref].matrixvalid = btrue;
 
-    recalc_bumper = matrix_compare_3x3(&mat_old, &(ChrList[chr_ref].matrix));
+    recalc_bumper = matrix_compare_3x3(&mat_old, &(chrlst[chr_ref].matrix));
   }
   else
   {
     GLvector point[GRIP_SIZE], nupoint[GRIP_SIZE];
 
     // do the linear interpolation
-    vertex = ChrList[chr_ref].attachedgrip[0];
-    md2_blend_vertices(mount_ref, vertex, vertex+GRIP_SIZE);
+    vertex = chrlst[chr_ref].attachedgrip[0];
+    md2_blend_vertices(chrlst + mount_ref, vertex, vertex+GRIP_SIZE);
 
     for ( cnt = 0; cnt < GRIP_SIZE; cnt++ )
     {
-      point[cnt].x = ChrList[mount_ref].vdata.Vertices[vertex+cnt].x;
-      point[cnt].y = ChrList[mount_ref].vdata.Vertices[vertex+cnt].y;
-      point[cnt].z = ChrList[mount_ref].vdata.Vertices[vertex+cnt].z;
+      point[cnt].x = chrlst[mount_ref].vdata.Vertices[vertex+cnt].x;
+      point[cnt].y = chrlst[mount_ref].vdata.Vertices[vertex+cnt].y;
+      point[cnt].z = chrlst[mount_ref].vdata.Vertices[vertex+cnt].z;
       point[cnt].w = 1.0f;
     };
 
     // Do the transform
-    Transform4_Full( 1.0f, 1.0f, &(ChrList[mount_ref].matrix), point, nupoint, GRIP_SIZE );
+    Transform4_Full( 1.0f, 1.0f, &(chrlst[mount_ref].matrix), point, nupoint, GRIP_SIZE );
 
     // Calculate weapon's matrix based on positions of grip points
     // chrscale is recomputed at time of attachment
-    ChrList[chr_ref].matrix = FourPoints( nupoint[0], nupoint[1], nupoint[2], nupoint[3], 1.0 );
-    ChrList[chr_ref].pos.x = (ChrList[chr_ref].matrix).CNV(3,0);
-    ChrList[chr_ref].pos.y = (ChrList[chr_ref].matrix).CNV(3,1);
-    ChrList[chr_ref].pos.z = (ChrList[chr_ref].matrix).CNV(3,2);
-    ChrList[chr_ref].matrixvalid = btrue;
+    chrlst[chr_ref].matrix = FourPoints( nupoint[0], nupoint[1], nupoint[2], nupoint[3], 1.0 );
+    chrlst[chr_ref].pos.x = (chrlst[chr_ref].matrix).CNV(3,0);
+    chrlst[chr_ref].pos.y = (chrlst[chr_ref].matrix).CNV(3,1);
+    chrlst[chr_ref].pos.z = (chrlst[chr_ref].matrix).CNV(3,2);
+    chrlst[chr_ref].matrixvalid = btrue;
 
-    recalc_bumper = matrix_compare_3x3(&mat_old, &(ChrList[chr_ref].matrix));
+    recalc_bumper = matrix_compare_3x3(&mat_old, &(chrlst[chr_ref].matrix));
   };
 
-  if(ChrList[chr_ref].matrixvalid && recalc_bumper)
+  if(chrlst[chr_ref].matrixvalid && recalc_bumper)
   {
     // invalidate the cached bumper data
-    chr_calculate_bumpers(chr_ref, 0);
+    chrlst[chr_ref].bmpdata.cv.level = -1;
   };
 
-  return ChrList[chr_ref].matrixvalid;
+  return chrlst[chr_ref].matrixvalid;
 }
 
 //--------------------------------------------------------------------------------------------
-void make_character_matrices()
+void make_character_matrices(Chr chrlst[], size_t chrlst_size)
 {
   // ZZ> This function makes all of the character's matrices
 
@@ -618,58 +474,59 @@ void make_character_matrices()
   bool_t  bfinished;
 
   // Forget about old matrices
-  for ( chr_ref = 0; chr_ref < MAXCHR; chr_ref++ )
+  for ( chr_ref = 0; chr_ref < chrlst_size; chr_ref++ )
   {
-    ChrList[chr_ref].matrixvalid = bfalse;
+    chrlst[chr_ref].matrixvalid = bfalse;
   }
 
   // Do base characters
-  for ( chr_ref = 0; chr_ref < MAXCHR; chr_ref++ )
+  for ( chr_ref = 0; chr_ref < chrlst_size; chr_ref++ )
   {
     CHR_REF attached_ref;
-    if ( !VALID_CHR( chr_ref ) ) continue;
+    if ( !VALID_CHR( chrlst, chr_ref ) ) continue;
 
-    attached_ref = chr_get_attachedto( chr_ref );
-    if ( VALID_CHR( attached_ref ) ) continue;  // Skip weapons for now
+    attached_ref = chr_get_attachedto( chrlst, chrlst_size, chr_ref );
+    if ( VALID_CHR( chrlst, attached_ref ) ) continue;  // Skip weapons for now
 
-    make_one_character_matrix( chr_ref );
+    make_one_character_matrix( chrlst, chrlst_size, chrlst + chr_ref );
   }
-
 
   // Do all other levels of attachment
   bfinished = bfalse;
   while ( !bfinished )
   {
     bfinished = btrue;
-    for ( chr_ref = 0; chr_ref < MAXCHR; chr_ref++ )
+    for ( chr_ref = 0; chr_ref < chrlst_size; chr_ref++ )
     {
       CHR_REF attached_ref;
-      if ( ChrList[chr_ref].matrixvalid || !VALID_CHR( chr_ref ) ) continue;
+      if ( chrlst[chr_ref].matrixvalid || !VALID_CHR( chrlst, chr_ref ) ) continue;
 
-      attached_ref = chr_get_attachedto( chr_ref );
-      if ( !VALID_CHR( attached_ref ) ) continue;
+      attached_ref = chr_get_attachedto( chrlst, chrlst_size, chr_ref );
+      if ( !VALID_CHR( chrlst, attached_ref ) ) continue;
 
-      if ( !ChrList[attached_ref].matrixvalid )
+      if ( !chrlst[attached_ref].matrixvalid )
       {
         bfinished = bfalse;
         continue;
       }
 
-      make_one_weapon_matrix( chr_ref );
+      make_one_weapon_matrix( chrlst, chrlst_size, chr_ref );
     }
   };
 
 }
 
 //--------------------------------------------------------------------------------------------
-int get_free_character()
+int ChrList_get_free( GameState * gs )
 {
   // ZZ> This function gets an unused character and returns its index
 
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
   CHR_REF chr_ref;
 
-
-  if ( numfreechr == 0 )
+  if ( gs->ChrFreeList_count == 0 )
   {
     // Return MAXCHR if we can't find one
     return MAXCHR;
@@ -677,162 +534,205 @@ int get_free_character()
   else
   {
     // Just grab the next one
-    numfreechr--;
-    chr_ref = freechrlist[numfreechr];
+    gs->ChrFreeList_count--;
+    chr_ref = gs->ChrFreeList[gs->ChrFreeList_count];
   }
   return chr_ref;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t prt_search_block( SEARCH_CONTEXT * psearch, int block_x, int block_y, PRT_REF prt_ref, Uint16 facing,
-                         bool_t request_friends, bool_t allow_anyone, TEAM team,
-                         CHR_REF donttarget_ref, CHR_REF oldtarget_ref )
+Chr * Chr_new(Chr * pchr)
 {
-  // ZZ> This function helps find a target, returning btrue if it found a decent target
+  AI_STATE * pstate;
 
-  Uint32 cnt;
-  Uint16 local_angle;
-  CHR_REF search_ref;
-  bool_t request_enemies = !request_friends;
-  bool_t bfound = bfalse;
-  Uint32 fanblock, blnode_b;
-  int local_distance;
+  fprintf( stdout, "Chr_new()\n");
 
-  if( !VALID_PRT(prt_ref) ) return bfalse;
+  if(NULL == pchr || pchr->on) return pchr;
 
-  // Current fanblock
-  fanblock = mesh_convert_block( block_x, block_y );
-  if ( INVALID_FAN == fanblock ) return bfalse;
+  // initialize the data
+  memset(pchr, 0, sizeof(Chr));
 
-  for ( cnt = 0, blnode_b = bumplist_get_chr_head(&bumplist, fanblock); 
-        cnt < bumplist_get_chr_count(&bumplist, fanblock) && INVALID_BUMPLIST_NODE != blnode_b; 
-        cnt++, blnode_b = bumplist_get_next_chr(&bumplist, blnode_b) )
+  pstate = &(pchr->aistate);
+
+  // IMPORTANT!!!
+  pchr->sparkle = NOSPARKLE;
+  pchr->missilehandler = MAXCHR;
+
+  // Set up model stuff
+  pchr->inwhichslot = SLOT_NONE;
+  pchr->inwhichpack = MAXCHR;
+  pchr->nextinpack = MAXCHR;
+  VData_Blended_construct( &(pchr->vdata) );
+
+  pchr->basemodel = MAXPROFILE;
+  pchr->stoppedby = MPDFX_WALL | MPDFX_IMPASS;
+  pchr->boretime = DELAY_BORE;
+  pchr->carefultime = DELAY_CAREFUL;
+
+  //Ready for loop sound
+  pchr->loopingchannel = INVALID_CHANNEL;
+
+  // Enchant stuff
+  pchr->firstenchant = MAXENCHANT;
+  pchr->undoenchant = MAXENCHANT;
+  pchr->canseeinvisible = bfalse;
+  pchr->canchannel = bfalse;
+
+  //Skill Expansions
+
+  // Kurse state
+
+  // Ammo
+
+  // Gender
+  pchr->gender = GEN_OTHER;
+
+  // Team stuff
+  pchr->team = TEAM_NULL;
+  pchr->baseteam = TEAM_NULL;
+
+  // Skin
+
+  // Life and Mana
+  pchr->lifecolor = 0;
+  pchr->manacolor = 1;
+
+  // SWID
+
+  // Damage
+
+  // Flags
+
+  // Jumping
+  pchr->jumpready = btrue;
+  pchr->jumpnumber = 1;
+  pchr->jumptime = DELAY_JUMP;
+
+  // Other junk
+
+  // Character size and bumping
+  pchr->fat = 1;
+  pchr->sizegoto = pchr->fat;
+  pchr->sizegototime = 0;
+
+  pchr->bumpdampen = 0.1;
+
+  // Grip info
+  pchr->inwhichslot = SLOT_NONE;
+  pchr->attachedto  = MAXCHR;
+  for ( _slot = SLOT_BEGIN; _slot < SLOT_COUNT; _slot = ( SLOT )( _slot + 1 ) )
   {
-    search_ref = bumplist_get_ref(&bumplist, blnode_b);
-    assert( VALID_CHR( search_ref ) );
-
-    // don't find stupid stuff
-    if ( !VALID_CHR( search_ref ) || 0.0f == ChrList[search_ref].bumpstrength ) continue;
-
-    if ( !ChrList[search_ref].alive || ChrList[search_ref].invictus || chr_in_pack( search_ref ) ) continue;
-
-    if ( search_ref == donttarget_ref || search_ref == oldtarget_ref ) continue;
-
-    if (   allow_anyone || 
-         ( request_friends && !TeamList[team].hatesteam[ChrList[search_ref].team] ) || 
-         ( request_enemies &&  TeamList[team].hatesteam[ChrList[search_ref].team] ) )
-    {
-      local_distance = ABS( ChrList[search_ref].pos.x - PrtList[prt_ref].pos.x ) + ABS( ChrList[search_ref].pos.y - PrtList[prt_ref].pos.y );
-      if ( psearch->initialize || local_distance < psearch->bestdistance )
-      {
-        Uint16 test_angle;
-        local_angle = facing - vec_to_turn( ChrList[search_ref].pos.x - PrtList[prt_ref].pos.x, ChrList[search_ref].pos.y - PrtList[prt_ref].pos.y );
-
-        test_angle = local_angle;
-        if(test_angle > 32768)
-        {
-          test_angle = 65535 - test_angle;
-        }
-
-        if ( psearch->initialize || test_angle < psearch->bestangle )
-        {
-          bfound = btrue;
-          psearch->initialize   = bfalse;
-          psearch->besttarget   = search_ref;
-          psearch->bestdistance = local_distance;
-          psearch->bestangle    = test_angle;
-          psearch->useangle     = local_angle;
-        }
-      }
-    }
+    pchr->holdingwhich[_slot] = MAXCHR;
   }
 
-  return bfound;
+  // Image rendering
+
+  // Movement
+  pchr->spd_sneak = 1;
+  pchr->spd_walk  = 1;
+  pchr->spd_run   = 1;
+
+  // Set up position
+
+  pchr->mapturn_lr = 32768;  // These two mean on level surface
+  pchr->mapturn_ud = 32768;
+  pchr->scale = pchr->fat;
+
+  // AI stuff
+
+  // action stuff
+  action_info_new( &(pchr->action) );
+  anim_info_new( &(pchr->anim) );
+
+  pchr->onwhichplatform = MAXCHR;
+
+  // Timers set to 0
+
+  // Money is added later
+
+  // Name the character
+  strncpy( pchr->name, "NONE", sizeof( pchr->name ) );
+
+  pchr->pancakepos.x = pchr->pancakepos.y = pchr->pancakepos.z = 1.0;
+  pchr->pancakevel.x = pchr->pancakevel.y = pchr->pancakevel.z = 0.0f;
+
+  // calculate the bumpers
+  assert(NULL == pchr->bmpdata.cv_tree);
+  chr_bdata_reinit( pchr, &(pchr->bmpdata) );
+  pchr->matrix = IdentityMatrix();
+  pchr->matrixvalid = bfalse;
+
+  // initialize a non-existant collision volume octree
+  bdata_new( &(pchr->bmpdata) );
+
+  return pchr;
 }
 
 //--------------------------------------------------------------------------------------------
-void free_all_characters()
+bool_t Chr_delete(Chr * pchr)
 {
-  // ZZ> This function resets the character allocation list
+  int i;
 
-  CHR_REF   chr_ref;
-  CHR     * pchr;  
-  bool_t    do_initialization;
+  if(NULL==pchr) return bfalse;
+  if(!pchr->on)  return btrue;
 
-  do_initialization = (-1 == numfreechr);
+  // reset some values
+  pchr->on = bfalse;
+  pchr->alive = bfalse;
+  pchr->staton = bfalse;
+  pchr->matrixvalid = bfalse;
+  pchr->model = MAXMODEL;
+  VData_Blended_Deallocate(&(pchr->vdata));
+  pchr->name[0] = '\0';
 
-  nolocalplayers = btrue;
-  numfreechr = 0;
-  while ( numfreechr < MAXCHR )
+  // invalidate pack
+  pchr->numinpack = 0;
+  pchr->inwhichpack = MAXCHR;
+  pchr->nextinpack = MAXCHR;
+
+  // invalidate attachmants
+  pchr->inwhichslot = SLOT_NONE;
+  pchr->attachedto = MAXCHR;
+  for ( i = 0; i < SLOT_COUNT; i++ )
   {
-    pchr = ChrList + numfreechr;
+    pchr->holdingwhich[i] = MAXCHR;
+  };
 
-    if(do_initialization)
-    {
-      // initialize a non-existant collision volume octree
-      bdata_new( &(pchr->bmpdata) ) ;
+  // remove existing collision volume octree
+  bdata_delete( &(pchr->bmpdata) );
 
-      // initialize the looping sounds
-      pchr->loopingchannel = INVALID_CHANNEL;
-    }
-    else
-    {
-      // remove existing collision volume octree
-      bdata_renew( &(pchr->bmpdata) );
+  // deallocate any vertex data
+  VData_Blended_Deallocate(&(pchr->vdata));
 
-      // silence all looping sounds
-      if( INVALID_CHANNEL != pchr->loopingchannel )
-      {
-        stop_sound( pchr->loopingchannel );
-        pchr->loopingchannel = INVALID_CHANNEL;
-      };
-    }
+  // silence all looping sounds
+  if( INVALID_CHANNEL != pchr->loopingchannel )
+  {
+    snd_stop_sound( pchr->loopingchannel );
+    pchr->loopingchannel = INVALID_CHANNEL;
+  };
 
-    // reset some values
-    pchr->on = bfalse;
-    pchr->alive = bfalse;
-    pchr->staton = bfalse;
-    pchr->matrixvalid = bfalse;
-    pchr->model = MAXMODEL;
-    VData_Blended_Deallocate(&(pchr->vdata));
-    pchr->name[0] = '\0';
-
-    // invalidate pack
-    pchr->numinpack = 0;
-    pchr->inwhichpack = MAXCHR;
-    pchr->nextinpack = MAXCHR;
-
-    // invalidate attachmants
-    pchr->inwhichslot = SLOT_NONE;
-    pchr->attachedto = MAXCHR;
-    for ( chr_ref = 0; chr_ref < SLOT_COUNT; chr_ref++ )
-    {
-      pchr->holdingwhich[chr_ref] = MAXCHR;
-    };
-
-
-    // set the free list
-    freechrlist[numfreechr] = numfreechr;
-    numfreechr++;
-  }
-  numpla = 0;
-  numlocalpla = 0;
-  numstat = 0;
+  return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 chr_hitawall( CHR_REF chr_ref, vect3 * norm )
+Chr * Chr_renew(Chr * pchr)
+{
+  if(NULL == pchr) return pchr;
+
+  Chr_delete(pchr);
+  return Chr_new(pchr);
+}
+
+//--------------------------------------------------------------------------------------------
+Uint32 chr_hitawall( GameState * gs, Chr * pchr, vect3 * norm )
 {
   // ZZ> This function returns nonzero if the character hit a wall that the
   //     chr_ref is not allowed to cross
 
   Uint32 retval;
   vect3  pos, size, test_norm, tmp_norm;
-  CHR * pchr;
 
-  if ( !VALID_CHR( chr_ref ) || 0.0f == ChrList[chr_ref].bumpstrength ) return 0;
-
-  pchr = ChrList + chr_ref;
+  if ( NULL == pchr || !pchr->on || 0.0f == pchr->bumpstrength ) return 0;
 
   VectorClear( tmp_norm.v );
 
@@ -844,7 +744,7 @@ Uint32 chr_hitawall( CHR_REF chr_ref, vect3 * norm )
   size.y = ( pchr->bmpdata.cv.y_max - pchr->bmpdata.cv.y_min ) * 0.5f;
   size.z = ( pchr->bmpdata.cv.z_max - pchr->bmpdata.cv.z_min ) * 0.5f;
 
-  retval = mesh_hitawall( pos, size.x, size.y, pchr->stoppedby, NULL );
+  retval = mesh_hitawall( gs, pos, size.x, size.y, pchr->stoppedby, NULL );
   test_norm.z = 0;
 
   if(0 != retval)
@@ -859,7 +759,7 @@ Uint32 chr_hitawall( CHR_REF chr_ref, vect3 * norm )
     pos2.y = pos.y - diff.y;
     pos2.z = pos.z - diff.z;
 
-    if( 0 != mesh_hitawall( pos2, size.x, size.y, pchr->stoppedby, NULL ) )
+    if( 0 != mesh_hitawall( gs, pos2, size.x, size.y, pchr->stoppedby, NULL ) )
     {
       // this is an "invalid" object. It's old position is also *inside* the wall
       // this could hapen if the object spawns inside a blocked region, if a script
@@ -881,7 +781,7 @@ Uint32 chr_hitawall( CHR_REF chr_ref, vect3 * norm )
     pos2.x = pos.x - diff.x;
     pos2.y = pos.y;
     pos2.z = pos.z;
-    if( 0 == mesh_hitawall( pos2, size.x, size.y, pchr->stoppedby, NULL ) )
+    if( 0 == mesh_hitawall( gs, pos2, size.x, size.y, pchr->stoppedby, NULL ) )
     {
       tmp_norm.x += -diff.x;
     }
@@ -890,7 +790,7 @@ Uint32 chr_hitawall( CHR_REF chr_ref, vect3 * norm )
     pos2.x = pos.x;
     pos2.y = pos.y - diff.y;
     pos2.z = pos.z;
-    if( 0 == mesh_hitawall( pos2, size.x, size.y, pchr->stoppedby, NULL ) )
+    if( 0 == mesh_hitawall( gs, pos2, size.x, size.y, pchr->stoppedby, NULL ) )
     {
       tmp_norm.y += -diff.y;
     }
@@ -935,130 +835,137 @@ Uint32 chr_hitawall( CHR_REF chr_ref, vect3 * norm )
     };
   }
 
-
   return retval;
 }
 
 //--------------------------------------------------------------------------------------------
-void chr_reset_accel( CHR_REF chr_ref )
+void chr_reset_accel( GameState * gs, CHR_REF chr_ref )
 {
   // ZZ> This function fixes a character's MAX acceleration
 
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
+
+  Enc  * enclst      = gs->EncList;
+  size_t enclst_size = MAXENCHANT;
+
   Uint16 enchant;
 
-  if ( !VALID_CHR( chr_ref ) ) return;
+  if ( !VALID_CHR( chrlst, chr_ref ) ) return;
 
   // Okay, remove all acceleration enchants
-  enchant = ChrList[chr_ref].firstenchant;
-  while ( enchant < MAXENCHANT )
+  enchant = chrlst[chr_ref].firstenchant;
+  while ( enchant < enclst_size )
   {
-    remove_enchant_value( enchant, ADDACCEL );
-    enchant = EncList[enchant].nextenchant;
+    remove_enchant_value( gs, enchant, ADDACCEL );
+    enchant = enclst[enchant].nextenchant;
   }
 
   // Set the starting value
-  assert( MAXMODEL != VALIDATE_MDL( ChrList[chr_ref].model ) );
-  ChrList[chr_ref].skin.maxaccel = CapList[ChrList[chr_ref].model].skin[ChrList[chr_ref].skin_ref % MAXSKIN].maxaccel;
+  assert( MAXMODEL != VALIDATE_MDL( chrlst[chr_ref].model ) );
+  chrlst[chr_ref].skin.maxaccel = caplst[chrlst[chr_ref].model].skin[chrlst[chr_ref].skin_ref % MAXSKIN].maxaccel;
 
   // Put the acceleration enchants back on
-  enchant = ChrList[chr_ref].firstenchant;
-  while ( enchant < MAXENCHANT )
+  enchant = chrlst[chr_ref].firstenchant;
+  while ( enchant < enclst_size )
   {
-    add_enchant_value( enchant, ADDACCEL, EncList[enchant].eve );
-    enchant = EncList[enchant].nextenchant;
+    add_enchant_value( gs, enchant, ADDACCEL, enclst[enchant].eve );
+    enchant = enclst[enchant].nextenchant;
   }
 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t detach_character_from_mount( CHR_REF chr_ref, bool_t ignorekurse, bool_t doshop )
+bool_t detach_character_from_mount( GameState * gs, CHR_REF chr_ref, bool_t ignorekurse, bool_t doshop )
 {
   // ZZ> This function drops an item
+
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
+
+  Enc  * enclst      = gs->EncList;
+  size_t enclst_size = MAXENCHANT;
 
   Uint16 imount, iowner = MAXCHR;
   Uint16 enchant, passage;
   Uint16 cnt, price;
   bool_t inshop;
 
-
-
   // Make sure the chr_ref is valid
-  if ( !VALID_CHR( chr_ref ) )
+  if ( !VALID_CHR( chrlst, chr_ref ) )
     return bfalse;
-
 
   // Make sure the chr_ref is mounted
-  imount = chr_get_attachedto( chr_ref );
-  if ( !VALID_CHR( imount ) )
+  imount = chr_get_attachedto( chrlst, chrlst_size, chr_ref );
+  if ( !VALID_CHR( chrlst, imount ) )
     return bfalse;
 
-
   // Don't allow living characters to drop kursed weapons
-  if ( !ignorekurse && ChrList[chr_ref].iskursed && ChrList[imount].alive )
+  if ( !ignorekurse && chrlst[chr_ref].iskursed && chrlst[imount].alive )
   {
-    ChrList[chr_ref].aistate.alert |= ALERT_NOTDROPPED;
+    chrlst[chr_ref].aistate.alert |= ALERT_NOTDROPPED;
     return bfalse;
   }
 
-
   // Rip 'em apart
-  _slot = ChrList[chr_ref].inwhichslot;
+  _slot = chrlst[chr_ref].inwhichslot;
   if(_slot == SLOT_INVENTORY)
   {
-    ChrList[chr_ref].attachedto = MAXCHR;
-    ChrList[chr_ref].inwhichslot = SLOT_NONE;
+    chrlst[chr_ref].attachedto = MAXCHR;
+    chrlst[chr_ref].inwhichslot = SLOT_NONE;
   }
   else
   {
     assert(_slot != SLOT_NONE);
-    assert(chr_ref == ChrList[imount].holdingwhich[_slot]);
-    ChrList[chr_ref].attachedto = MAXCHR;
-    ChrList[chr_ref].inwhichslot = SLOT_NONE;
-    ChrList[imount].holdingwhich[_slot] = MAXCHR;
+    assert(chr_ref == chrlst[imount].holdingwhich[_slot]);
+    chrlst[chr_ref].attachedto = MAXCHR;
+    chrlst[chr_ref].inwhichslot = SLOT_NONE;
+    chrlst[imount].holdingwhich[_slot] = MAXCHR;
   }
 
-
-  ChrList[chr_ref].scale = ChrList[chr_ref].fat; // * MadList[ChrList[chr_ref].model].scale * 4;
-
+  chrlst[chr_ref].scale = chrlst[chr_ref].fat; // * madlst[chrlst[chr_ref].model].scale * 4;
 
   // Run the falling animation...
-  play_action( chr_ref, ACTION_JB + ( ChrList[chr_ref].inwhichslot % 2 ), bfalse );
+  play_action( gs, chr_ref, (ACTION)(ACTION_JB + ( chrlst[chr_ref].inwhichslot % 2 )), bfalse );
 
   // Set the positions
-  if ( ChrList[chr_ref].matrixvalid )
+  if ( chrlst[chr_ref].matrixvalid )
   {
-    ChrList[chr_ref].pos.x = ChrList[chr_ref].matrix.CNV( 3, 0 );
-    ChrList[chr_ref].pos.y = ChrList[chr_ref].matrix.CNV( 3, 1 );
-    ChrList[chr_ref].pos.z = ChrList[chr_ref].matrix.CNV( 3, 2 );
+    chrlst[chr_ref].pos.x = chrlst[chr_ref].matrix.CNV( 3, 0 );
+    chrlst[chr_ref].pos.y = chrlst[chr_ref].matrix.CNV( 3, 1 );
+    chrlst[chr_ref].pos.z = chrlst[chr_ref].matrix.CNV( 3, 2 );
   }
   else
   {
-    ChrList[chr_ref].pos.x = ChrList[imount].pos.x;
-    ChrList[chr_ref].pos.y = ChrList[imount].pos.y;
-    ChrList[chr_ref].pos.z = ChrList[imount].pos.z;
+    chrlst[chr_ref].pos.x = chrlst[imount].pos.x;
+    chrlst[chr_ref].pos.y = chrlst[imount].pos.y;
+    chrlst[chr_ref].pos.z = chrlst[imount].pos.z;
   }
-
-
 
   // Make sure it's not dropped in a wall...
-  if ( 0 != chr_hitawall( chr_ref, NULL ) )
+  if ( 0 != chr_hitawall( gs, chrlst + chr_ref, NULL ) )
   {
-    ChrList[chr_ref].pos.x = ChrList[imount].pos.x;
-    ChrList[chr_ref].pos.y = ChrList[imount].pos.y;
+    chrlst[chr_ref].pos.x = chrlst[imount].pos.x;
+    chrlst[chr_ref].pos.y = chrlst[imount].pos.y;
   }
-
 
   // Check for shop passages
   inshop = bfalse;
-  if ( ChrList[chr_ref].isitem && shop_count != 0 && doshop )
+  if ( chrlst[chr_ref].isitem && gs->ShopList_count != 0 && doshop )
   {
-    for ( cnt = 0; cnt < shop_count; cnt++ )
+    for ( cnt = 0; cnt < gs->ShopList_count; cnt++ )
     {
-      passage = ShopList[cnt].passage;
+      passage = gs->ShopList[cnt].passage;
 
-      if ( passage_check_any( chr_ref, passage, NULL ) )
+      if ( passage_check_any( gs, chr_ref, passage, NULL ) )
       {
-        iowner = ShopList[passage].owner;
+        iowner = gs->ShopList[passage].owner;
         inshop = ( NOOWNER != iowner );
         break;
       }
@@ -1066,238 +973,248 @@ bool_t detach_character_from_mount( CHR_REF chr_ref, bool_t ignorekurse, bool_t 
 
     if ( doshop && inshop )
     {
-      Uint16 model = ChrList[chr_ref].model;
+      Uint16 model = chrlst[chr_ref].model;
 
       assert( MAXMODEL != VALIDATE_MDL( model ) );
 
       // Give the imount its money back, alert the shop iowner
-      price = CapList[model].skin[ChrList[chr_ref].skin_ref % MAXSKIN].cost;
-      if ( CapList[model].isstackable )
+      price = caplst[model].skin[chrlst[chr_ref].skin_ref % MAXSKIN].cost;
+      if ( caplst[model].isstackable )
       {
-        price *= ChrList[chr_ref].ammo;
+        price *= chrlst[chr_ref].ammo;
       }
-      ChrList[imount].money += price;
-      ChrList[iowner].money -= price;
-      if ( ChrList[iowner].money < 0 )  ChrList[iowner].money = 0;
-      if ( ChrList[imount].money > MAXMONEY )  ChrList[imount].money = MAXMONEY;
+      chrlst[imount].money += price;
+      chrlst[iowner].money -= price;
+      if ( chrlst[iowner].money < 0 )  chrlst[iowner].money = 0;
+      if ( chrlst[imount].money > MAXMONEY )  chrlst[imount].money = MAXMONEY;
 
-      ChrList[iowner].aistate.alert |= ALERT_SIGNALED;
-      ChrList[iowner].message = price;  // Tell iowner how much...
-      ChrList[iowner].messagedata = 0;  // 0 for buying an item
+      chrlst[iowner].aistate.alert |= ALERT_SIGNALED;
+      chrlst[iowner].message = price;  // Tell iowner how much...
+      chrlst[iowner].messagedata = 0;  // 0 for buying an item
     }
   }
 
   // Make sure it works right
-  ChrList[chr_ref].hitready = btrue;
-  ChrList[chr_ref].aistate.alert   |= ALERT_DROPPED;
+  chrlst[chr_ref].hitready = btrue;
+  chrlst[chr_ref].aistate.alert   |= ALERT_DROPPED;
   if ( inshop )
   {
     // Drop straight down to avoid theft
-    ChrList[chr_ref].vel.x = 0;
-    ChrList[chr_ref].vel.y = 0;
+    chrlst[chr_ref].vel.x = 0;
+    chrlst[chr_ref].vel.y = 0;
   }
   else
   {
-    Uint16 sin_dir = RANDIE;
-    ChrList[chr_ref].accum_vel.x += ChrList[imount].vel.x + 0.5 * DROPXYVEL * turntocos[sin_dir>>2];
-    ChrList[chr_ref].accum_vel.y += ChrList[imount].vel.y + 0.5 * DROPXYVEL * turntosin[sin_dir>>2];
+    Uint16 sin_dir = RANDIE(gs);
+    chrlst[chr_ref].accum_vel.x += chrlst[imount].vel.x + 0.5 * DROPXYVEL * turntocos[sin_dir>>2];
+    chrlst[chr_ref].accum_vel.y += chrlst[imount].vel.y + 0.5 * DROPXYVEL * turntosin[sin_dir>>2];
   }
-  ChrList[chr_ref].accum_vel.z += DROPZVEL;
-
+  chrlst[chr_ref].accum_vel.z += DROPZVEL;
 
   // Turn looping off
-  ChrList[chr_ref].action.loop = bfalse;
-
+  chrlst[chr_ref].action.loop = bfalse;
 
   // Reset the team if it is a imount
-  if ( ChrList[imount].ismount )
+  if ( chrlst[imount].ismount )
   {
-    ChrList[imount].team = ChrList[imount].baseteam;
-    ChrList[imount].aistate.alert |= ALERT_DROPPED;
+    chrlst[imount].team = chrlst[imount].baseteam;
+    chrlst[imount].aistate.alert |= ALERT_DROPPED;
   }
-  ChrList[chr_ref].team = ChrList[chr_ref].baseteam;
-  ChrList[chr_ref].aistate.alert |= ALERT_DROPPED;
-
+  chrlst[chr_ref].team = chrlst[chr_ref].baseteam;
+  chrlst[chr_ref].aistate.alert |= ALERT_DROPPED;
 
   // Reset transparency
-  if ( ChrList[chr_ref].isitem && ChrList[imount].transferblend )
+  if ( chrlst[chr_ref].isitem && chrlst[imount].transferblend )
   {
-    Uint16 model = ChrList[chr_ref].model;
+    Uint16 model = chrlst[chr_ref].model;
 
     assert( MAXMODEL != VALIDATE_MDL( model ) );
 
     // Okay, reset transparency
-    enchant = ChrList[chr_ref].firstenchant;
-    while ( enchant < MAXENCHANT )
+    enchant = chrlst[chr_ref].firstenchant;
+    while ( enchant < enclst_size )
     {
-      unset_enchant_value( enchant, SETALPHABLEND );
-      unset_enchant_value( enchant, SETLIGHTBLEND );
-      enchant = EncList[enchant].nextenchant;
+      unset_enchant_value( gs, enchant, SETALPHABLEND );
+      unset_enchant_value( gs, enchant, SETLIGHTBLEND );
+      enchant = enclst[enchant].nextenchant;
     }
 
-    ChrList[chr_ref].alpha_fp8 = CapList[model].alpha_fp8;
-    ChrList[chr_ref].bumpstrength = CapList[model].bumpstrength * FP8_TO_FLOAT( ChrList[chr_ref].alpha_fp8 );
-    ChrList[chr_ref].light_fp8 = CapList[model].light_fp8;
-    enchant = ChrList[chr_ref].firstenchant;
-    while ( enchant < MAXENCHANT )
+    chrlst[chr_ref].alpha_fp8 = caplst[model].alpha_fp8;
+    chrlst[chr_ref].bumpstrength = caplst[model].bumpstrength * FP8_TO_FLOAT( chrlst[chr_ref].alpha_fp8 );
+    chrlst[chr_ref].light_fp8 = caplst[model].light_fp8;
+    enchant = chrlst[chr_ref].firstenchant;
+    while ( enchant < enclst_size )
     {
-      set_enchant_value( enchant, SETALPHABLEND, EncList[enchant].eve );
-      set_enchant_value( enchant, SETLIGHTBLEND, EncList[enchant].eve );
-      enchant = EncList[enchant].nextenchant;
+      set_enchant_value( gs, enchant, SETALPHABLEND, enclst[enchant].eve );
+      set_enchant_value( gs, enchant, SETLIGHTBLEND, enclst[enchant].eve );
+      enchant = enclst[enchant].nextenchant;
     }
   }
 
   // Set twist
-  ChrList[chr_ref].mapturn_lr = 32768;
-  ChrList[chr_ref].mapturn_ud = 32768;
+  chrlst[chr_ref].mapturn_lr = 32768;
+  chrlst[chr_ref].mapturn_ud = 32768;
 
-  if ( ChrList[chr_ref].isplayer )
-    debug_message( 1, "dismounted %s(%s) from (%s)", ChrList[chr_ref].name, CapList[ChrList[chr_ref].model].classname, CapList[ChrList[imount].model].classname );
-
+  if ( chr_is_player(gs, chr_ref) )
+    debug_message( 1, "dismounted %s(%s) from (%s)", chrlst[chr_ref].name, caplst[chrlst[chr_ref].model].classname, caplst[chrlst[imount].model].classname );
 
   return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t attach_character_to_mount( CHR_REF chr_ref, CHR_REF mount_ref, SLOT slot )
+bool_t attach_character_to_mount( GameState * gs, CHR_REF chr_ref, CHR_REF mount_ref, SLOT slot )
 {
   // ZZ> This function attaches one character to another ( the mount )
   //     at either the left or right grip
 
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
+
+  Mad  * madlst      = gs->MadList;
+  size_t madlst_size = MAXMODEL;
+
   int tnc;
 
   // Make sure both are still around
-  if ( !VALID_CHR( chr_ref ) || !VALID_CHR( mount_ref ) )
+  if ( !VALID_CHR( chrlst, chr_ref ) || !VALID_CHR( chrlst, mount_ref ) )
     return bfalse;
 
   // the item may hit the floor if this fails
-  ChrList[chr_ref].hitready = bfalse;
+  chrlst[chr_ref].hitready = bfalse;
 
   //make sure you're not trying to mount yourself!
   if ( chr_ref == mount_ref )
     return bfalse;
 
   // make sure that neither is in someone's pack
-  if ( chr_in_pack( chr_ref ) || chr_in_pack( mount_ref ) )
+  if ( chr_in_pack( chrlst, chrlst_size, chr_ref ) || chr_in_pack( chrlst, chrlst_size, mount_ref ) )
     return bfalse;
 
   // Make sure the the slot is valid
-  assert( MAXMODEL != VALIDATE_MDL( ChrList[mount_ref].model ) );
-  if ( SLOT_NONE == slot || !CapList[ChrList[mount_ref].model].slotvalid[slot] )
+  assert( MAXMODEL != VALIDATE_MDL( chrlst[mount_ref].model ) );
+  if ( SLOT_NONE == slot || !caplst[chrlst[mount_ref].model].slotvalid[slot] )
     return bfalse;
 
   // Put 'em together
   assert(slot != SLOT_NONE);
-  ChrList[chr_ref].inwhichslot = slot;
-  ChrList[chr_ref].attachedto  = mount_ref;
-  ChrList[mount_ref].holdingwhich[slot] = chr_ref;
+  chrlst[chr_ref].inwhichslot = slot;
+  chrlst[chr_ref].attachedto  = mount_ref;
+  chrlst[mount_ref].holdingwhich[slot] = chr_ref;
 
   // handle the vertices
   {
-    Uint16 model = ChrList[mount_ref].model;
+    Uint16 model = chrlst[mount_ref].model;
     Uint16 vrtoffset = slot_to_offset( slot );
 
     assert( MAXMODEL != VALIDATE_MDL( model ) );
-    if ( MadList[model].vertices > vrtoffset && vrtoffset > 0 )
+    if ( madlst[model].vertices > vrtoffset && vrtoffset > 0 )
     {
-      tnc = MadList[model].vertices - vrtoffset;
-      ChrList[chr_ref].attachedgrip[0] = tnc;
-      ChrList[chr_ref].attachedgrip[1] = tnc + 1;
-      ChrList[chr_ref].attachedgrip[2] = tnc + 2;
-      ChrList[chr_ref].attachedgrip[3] = tnc + 3;
+      tnc = madlst[model].vertices - vrtoffset;
+      chrlst[chr_ref].attachedgrip[0] = tnc;
+      chrlst[chr_ref].attachedgrip[1] = tnc + 1;
+      chrlst[chr_ref].attachedgrip[2] = tnc + 2;
+      chrlst[chr_ref].attachedgrip[3] = tnc + 3;
     }
     else
     {
-      ChrList[chr_ref].attachedgrip[0] = MadList[model].vertices - 1;
-      ChrList[chr_ref].attachedgrip[1] = 0xFFFF;
-      ChrList[chr_ref].attachedgrip[2] = 0xFFFF;
-      ChrList[chr_ref].attachedgrip[3] = 0xFFFF;
+      chrlst[chr_ref].attachedgrip[0] = madlst[model].vertices - 1;
+      chrlst[chr_ref].attachedgrip[1] = 0xFFFF;
+      chrlst[chr_ref].attachedgrip[2] = 0xFFFF;
+      chrlst[chr_ref].attachedgrip[3] = 0xFFFF;
     }
   }
 
-  ChrList[chr_ref].jumptime = DELAY_JUMP * 4;
-
+  chrlst[chr_ref].jumptime = DELAY_JUMP * 4;
 
   // Run the held animation
-  if ( ChrList[mount_ref].bmpdata.calc_is_mount && slot == SLOT_SADDLE )
+  if ( chrlst[mount_ref].bmpdata.calc_is_mount && slot == SLOT_SADDLE )
   {
     // Riding mount_ref
-    play_action( chr_ref, ACTION_MI, btrue );
-    ChrList[chr_ref].action.loop = btrue;
+    play_action( gs, chr_ref, ACTION_MI, btrue );
+    chrlst[chr_ref].action.loop = btrue;
   }
   else
   {
-    play_action( chr_ref, ACTION_MM + slot, bfalse );
-    if ( ChrList[chr_ref].isitem )
+    play_action( gs, chr_ref, (ACTION)(ACTION_MM + slot), bfalse );
+    if ( chrlst[chr_ref].isitem )
     {
       // Item grab
-      ChrList[chr_ref].action.keep = btrue;
+      chrlst[chr_ref].action.keep = btrue;
     }
   }
 
   // Set the team
-  if ( ChrList[chr_ref].isitem )
+  if ( chrlst[chr_ref].isitem )
   {
-    ChrList[chr_ref].team = ChrList[mount_ref].team;
+    chrlst[chr_ref].team = chrlst[mount_ref].team;
     // Set the alert
-    ChrList[chr_ref].aistate.alert |= ALERT_GRABBED;
+    chrlst[chr_ref].aistate.alert |= ALERT_GRABBED;
   }
-  else if ( ChrList[mount_ref].bmpdata.calc_is_mount )
+  else if ( chrlst[mount_ref].bmpdata.calc_is_mount )
   {
-    ChrList[mount_ref].team = ChrList[chr_ref].team;
+    chrlst[mount_ref].team = chrlst[chr_ref].team;
     // Set the alert
-    if ( !ChrList[mount_ref].isitem )
+    if ( !chrlst[mount_ref].isitem )
     {
-      ChrList[mount_ref].aistate.alert |= ALERT_GRABBED;
+      chrlst[mount_ref].aistate.alert |= ALERT_GRABBED;
     }
   }
 
   // It's not gonna hit the floor
-  ChrList[chr_ref].hitready = bfalse;
+  chrlst[chr_ref].hitready = bfalse;
 
-  if ( ChrList[chr_ref].isplayer )
-    debug_message( 1, "mounted %s(%s) to (%s)", ChrList[chr_ref].name, CapList[ChrList[chr_ref].model].classname, CapList[ChrList[mount_ref].model].classname );
-
+  if ( chr_is_player(gs, chr_ref) )
+  {
+    debug_message( 1, "mounted %s(%s) to (%s)", chrlst[chr_ref].name, caplst[chrlst[chr_ref].model].classname, caplst[chrlst[mount_ref].model].classname );
+  }
 
   return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-CHR_REF stack_in_pack( CHR_REF item_ref, CHR_REF chr_ref )
+CHR_REF stack_in_pack( GameState * gs, CHR_REF item_ref, CHR_REF chr_ref )
 {
   // ZZ> This function looks in the chraracter's pack for an item similar
   //     to the one given.  If it finds one, it returns the similar item's
   //     index number, otherwise it returns MAXCHR.
 
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
+
   Uint16 inpack, id;
   bool_t allok;
 
-  Uint16 item_mdl = ChrList[item_ref].model;
+  Uint16 item_mdl = chrlst[item_ref].model;
 
   assert( MAXMODEL != VALIDATE_MDL( item_mdl ) );
 
-
-  if ( CapList[item_mdl].isstackable )
+  if ( caplst[item_mdl].isstackable )
   {
     Uint16 inpack_mdl;
 
-    inpack = chr_get_nextinpack( chr_ref );
-    inpack_mdl = ChrList[inpack].model;
+    inpack = chr_get_nextinpack( chrlst, MAXCHR, chr_ref );
+    inpack_mdl = chrlst[inpack].model;
 
     allok = bfalse;
-    while ( VALID_CHR( inpack ) && !allok )
+    while ( VALID_CHR( chrlst, inpack ) && !allok )
     {
       assert( MAXMODEL != VALIDATE_MDL( inpack_mdl ) );
 
       allok = btrue;
       if ( inpack_mdl != item_mdl )
       {
-        if ( !CapList[inpack_mdl].isstackable )
+        if ( !caplst[inpack_mdl].isstackable )
         {
           allok = bfalse;
         }
 
-        if ( ChrList[inpack].ammomax != ChrList[item_ref].ammomax )
+        if ( chrlst[inpack].ammomax != chrlst[item_ref].ammomax )
         {
           allok = bfalse;
         }
@@ -1305,7 +1222,7 @@ CHR_REF stack_in_pack( CHR_REF item_ref, CHR_REF chr_ref )
         id = 0;
         while ( id < IDSZ_COUNT && allok )
         {
-          if ( CapList[inpack_mdl].idsz[id] != CapList[item_mdl].idsz[id] )
+          if ( caplst[inpack_mdl].idsz[id] != caplst[item_mdl].idsz[id] )
           {
             allok = bfalse;
           }
@@ -1314,7 +1231,7 @@ CHR_REF stack_in_pack( CHR_REF item_ref, CHR_REF chr_ref )
       }
       if ( !allok )
       {
-        inpack = chr_get_nextinpack( inpack );
+        inpack = chr_get_nextinpack( chrlst, MAXCHR, inpack );
       }
     }
 
@@ -1328,147 +1245,153 @@ CHR_REF stack_in_pack( CHR_REF item_ref, CHR_REF chr_ref )
 }
 
 //--------------------------------------------------------------------------------------------
-static bool_t pack_push_front( CHR_REF item_ref, CHR_REF chr_ref )
+static bool_t pack_push_front( Chr chrlst[], size_t chrlst_size, CHR_REF item_ref, CHR_REF chr_ref )
 {
   // make sure the item and character are valid
-  if ( !VALID_CHR( item_ref ) || !VALID_CHR( chr_ref ) ) return bfalse;
+  if ( !VALID_CHR( chrlst, item_ref ) || !VALID_CHR( chrlst, chr_ref ) ) return bfalse;
 
   // make sure the item is free to add
-  if ( chr_attached( item_ref ) || chr_in_pack( item_ref ) ) return bfalse;
+  if ( chr_attached( chrlst, chrlst_size, item_ref ) || chr_in_pack( chrlst, chrlst_size, item_ref ) ) return bfalse;
 
   // we cannot do packs within packs, so
-  if ( chr_in_pack( chr_ref ) ) return bfalse;
+  if ( chr_in_pack( chrlst, chrlst_size, chr_ref ) ) return bfalse;
 
   // make sure there is space for the item
-  if ( ChrList[chr_ref].numinpack >= MAXNUMINPACK ) return bfalse;
+  if ( chrlst[chr_ref].numinpack >= MAXNUMINPACK ) return bfalse;
 
   // insert at the front of the list
-  ChrList[item_ref].nextinpack  = chr_get_nextinpack( chr_ref );
-  ChrList[chr_ref].nextinpack = item_ref;
-  ChrList[item_ref].inwhichpack = chr_ref;
-  ChrList[chr_ref].numinpack++;
+  chrlst[item_ref].nextinpack  = chr_get_nextinpack( chrlst, chrlst_size, chr_ref );
+  chrlst[chr_ref].nextinpack = item_ref;
+  chrlst[item_ref].inwhichpack = chr_ref;
+  chrlst[chr_ref].numinpack++;
 
   return btrue;
 };
 
 //--------------------------------------------------------------------------------------------
-static Uint16 pack_pop_back( CHR_REF chr_ref )
+static Uint16 pack_pop_back( Chr chrlst[], size_t chrlst_size, CHR_REF chr_ref )
 {
   Uint16 iitem = MAXCHR, itail = MAXCHR;
 
   // make sure the character is valid
-  if ( !VALID_CHR( chr_ref ) ) return MAXCHR;
+  if ( !VALID_CHR( chrlst, chr_ref ) ) return MAXCHR;
 
   // if character is in a pack, it has no inventory of it's own
-  if ( chr_in_pack( iitem ) ) return MAXCHR;
+  if ( chr_in_pack( chrlst, chrlst_size, iitem ) ) return MAXCHR;
 
   // make sure there is something in the pack
-  if ( !chr_has_inventory( chr_ref ) ) return MAXCHR;
+  if ( !chr_has_inventory( chrlst, chrlst_size, chr_ref ) ) return MAXCHR;
 
   // remove from the back of the list
   itail = chr_ref;
-  iitem = chr_get_nextinpack( chr_ref );
-  while ( VALID_CHR( ChrList[iitem].nextinpack ) )
+  iitem = chr_get_nextinpack( chrlst, chrlst_size, chr_ref );
+  while ( VALID_CHR( chrlst, chrlst[iitem].nextinpack ) )
   {
     // do some error checking
-    assert( 0 == ChrList[iitem].numinpack );
+    assert( 0 == chrlst[iitem].numinpack );
 
     // go to the next element
     itail = iitem;
-    iitem = chr_get_nextinpack( iitem );
+    iitem = chr_get_nextinpack( chrlst, chrlst_size, iitem );
   };
 
   // disconnect the item from the list
-  ChrList[itail].nextinpack = MAXCHR;
-  ChrList[chr_ref].numinpack--;
+  chrlst[itail].nextinpack = MAXCHR;
+  chrlst[chr_ref].numinpack--;
 
   // do some error checking
-  assert( VALID_CHR( iitem ) );
+  assert( VALID_CHR( chrlst, iitem ) );
 
   // fix the removed item
-  ChrList[iitem].numinpack   = 0;
-  ChrList[iitem].nextinpack  = MAXCHR;
-  ChrList[iitem].inwhichpack = MAXCHR;
-  ChrList[iitem].isequipped = bfalse;
+  chrlst[iitem].numinpack   = 0;
+  chrlst[iitem].nextinpack  = MAXCHR;
+  chrlst[iitem].inwhichpack = MAXCHR;
+  chrlst[iitem].isequipped = bfalse;
 
   return iitem;
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t pack_add_item( CHR_REF item_ref, CHR_REF chr_ref )
+bool_t pack_add_item( GameState * gs, CHR_REF item_ref, CHR_REF chr_ref )
 {
   // ZZ> This function puts one chr_ref inside the other's pack
+
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
 
   Uint16 newammo, istack;
 
   // Make sure both objects exist
-  if ( !VALID_CHR( chr_ref ) || !VALID_CHR( item_ref ) ) return bfalse;
+  if ( !VALID_CHR( chrlst, chr_ref ) || !VALID_CHR( chrlst, item_ref ) ) return bfalse;
 
   // Make sure neither object is in a pack
-  if ( chr_in_pack( chr_ref ) || chr_in_pack( item_ref ) ) return bfalse;
+  if ( chr_in_pack( chrlst, chrlst_size, chr_ref ) || chr_in_pack( chrlst, chrlst_size, item_ref ) ) return bfalse;
 
   // make sure we the character IS NOT an item and the item IS an item
-  if ( ChrList[chr_ref].isitem || !ChrList[item_ref].isitem ) return bfalse;
+  if ( chrlst[chr_ref].isitem || !chrlst[item_ref].isitem ) return bfalse;
 
   // make sure the item does not have an inventory of its own
-  if ( chr_has_inventory( item_ref ) ) return bfalse;
+  if ( chr_has_inventory( chrlst, chrlst_size, item_ref ) ) return bfalse;
 
-  istack = stack_in_pack( item_ref, chr_ref );
-  if ( VALID_CHR( istack ) )
+  istack = stack_in_pack( gs, item_ref, chr_ref );
+  if ( VALID_CHR( chrlst, istack ) )
   {
     // put out torches, etc.
-    disaffirm_attached_particles( item_ref );
+    disaffirm_attached_particles( gs, item_ref );
 
     // We found a similar, stackable item_ref in the pack
-    if ( ChrList[item_ref].nameknown || ChrList[istack].nameknown )
+    if ( chrlst[item_ref].nameknown || chrlst[istack].nameknown )
     {
-      ChrList[item_ref].nameknown = btrue;
-      ChrList[istack].nameknown = btrue;
+      chrlst[item_ref].nameknown = btrue;
+      chrlst[istack].nameknown = btrue;
     }
-    if ( CapList[ChrList[item_ref].model].usageknown || CapList[ChrList[istack].model].usageknown )
+    if ( caplst[chrlst[item_ref].model].usageknown || caplst[chrlst[istack].model].usageknown )
     {
-      CapList[ChrList[item_ref].model].usageknown = btrue;
-      CapList[ChrList[istack].model].usageknown = btrue;
+      caplst[chrlst[item_ref].model].usageknown = btrue;
+      caplst[chrlst[istack].model].usageknown = btrue;
     }
-    newammo = ChrList[item_ref].ammo + ChrList[istack].ammo;
-    if ( newammo <= ChrList[istack].ammomax )
+    newammo = chrlst[item_ref].ammo + chrlst[istack].ammo;
+    if ( newammo <= chrlst[istack].ammomax )
     {
       // All transfered, so kill the in hand item_ref
-      ChrList[istack].ammo = newammo;
-      detach_character_from_mount( item_ref, btrue, bfalse );
-      ChrList[item_ref].freeme = btrue;
+      chrlst[istack].ammo = newammo;
+      detach_character_from_mount( gs, item_ref, btrue, bfalse );
+      chrlst[item_ref].freeme = btrue;
     }
     else
     {
       // Only some were transfered,
-      ChrList[item_ref].ammo += ChrList[istack].ammo - ChrList[istack].ammomax;
-      ChrList[istack].ammo = ChrList[istack].ammomax;
-      ChrList[chr_ref].aistate.alert |= ALERT_TOOMUCHBAGGAGE;
+      chrlst[item_ref].ammo += chrlst[istack].ammo - chrlst[istack].ammomax;
+      chrlst[istack].ammo = chrlst[istack].ammomax;
+      chrlst[chr_ref].aistate.alert |= ALERT_TOOMUCHBAGGAGE;
     }
   }
   else
   {
     // Make sure we have room for another item_ref
-    if ( ChrList[chr_ref].numinpack >= MAXNUMINPACK )
+    if ( chrlst[chr_ref].numinpack >= MAXNUMINPACK )
     {
-      ChrList[chr_ref].aistate.alert |= ALERT_TOOMUCHBAGGAGE;
+      chrlst[chr_ref].aistate.alert |= ALERT_TOOMUCHBAGGAGE;
       return bfalse;
     }
 
     // Take the item out of hand
-    if ( detach_character_from_mount( item_ref, btrue, bfalse ) )
+    if ( detach_character_from_mount( gs, item_ref, btrue, bfalse ) )
     {
-      ChrList[item_ref].aistate.alert &= ~ALERT_DROPPED;
+      chrlst[item_ref].aistate.alert &= ~ALERT_DROPPED;
     }
 
-    if ( pack_push_front( item_ref, chr_ref ) )
+    if ( pack_push_front( chrlst, chrlst_size, item_ref, chr_ref ) )
     {
       // put out torches, etc.
-      disaffirm_attached_particles( item_ref );
-      ChrList[item_ref].aistate.alert |= ALERT_ATLASTWAYPOINT;
+      disaffirm_attached_particles( gs, item_ref );
+      chrlst[item_ref].aistate.alert |= ALERT_ATLASTWAYPOINT;
 
       // Remove the item_ref from play
-      ChrList[item_ref].hitready    = bfalse;
+      chrlst[item_ref].hitready    = bfalse;
     };
   }
 
@@ -1476,31 +1399,34 @@ bool_t pack_add_item( CHR_REF item_ref, CHR_REF chr_ref )
 }
 
 //--------------------------------------------------------------------------------------------
-Uint16 pack_get_item( CHR_REF chr_ref, SLOT slot, bool_t ignorekurse )
+Uint16 pack_get_item( GameState * gs, CHR_REF chr_ref, SLOT slot, bool_t ignorekurse )
 {
   // ZZ> This function takes the last item in the character's pack and puts
   //     it into the designated hand.  It returns the item number or MAXCHR.
 
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
   Uint16 item;
 
   // dose the chr_ref exist?
-  if ( !VALID_CHR( chr_ref ) )
+  if ( !VALID_CHR( chrlst, chr_ref ) )
     return MAXCHR;
 
   // make sure a valid inventory exists
-  if ( !chr_has_inventory( chr_ref ) )
+  if ( !chr_has_inventory( chrlst, chrlst_size, chr_ref ) )
     return MAXCHR;
 
-  item = pack_pop_back( chr_ref );
+  item = pack_pop_back( chrlst, chrlst_size, chr_ref );
 
   // Figure out what to do with it
-  if ( ChrList[item].iskursed && ChrList[item].isequipped && !ignorekurse )
+  if ( chrlst[item].iskursed && chrlst[item].isequipped && !ignorekurse )
   {
     // Flag the last item as not removed
-    ChrList[item].aistate.alert |= ALERT_NOTPUTAWAY;  // Doubles as IfNotTakenOut
+    chrlst[item].aistate.alert |= ALERT_NOTPUTAWAY;  // Doubles as IfNotTakenOut
 
     // push it back on the front of the list
-    pack_push_front( item, chr_ref );
+    pack_push_front( chrlst, chrlst_size, item, chr_ref );
 
     // return the "fail" value
     item = MAXCHR;
@@ -1508,67 +1434,68 @@ Uint16 pack_get_item( CHR_REF chr_ref, SLOT slot, bool_t ignorekurse )
   else
   {
     // Attach the item to the chr_ref's hand
-    attach_character_to_mount( item, chr_ref, slot );
+    attach_character_to_mount( gs, item, chr_ref, slot );
 
     // fix some item values
-    ChrList[item].aistate.alert &= ( ~ALERT_GRABBED );
-    ChrList[item].aistate.alert |= ALERT_TAKENOUT;
-    //ChrList[item].team   = ChrList[chr_ref].team;
+    chrlst[item].aistate.alert &= ( ~ALERT_GRABBED );
+    chrlst[item].aistate.alert |= ALERT_TAKENOUT;
+    //chrlst[item].team   = chrlst[chr_ref].team;
   }
 
   return item;
 }
 
 //--------------------------------------------------------------------------------------------
-void drop_keys( CHR_REF chr_ref )
+void drop_keys( GameState * gs, CHR_REF chr_ref )
 {
   // ZZ> This function drops all keys ( [KEYA] to [KEYZ] ) that are in a chr_ref's
   //     inventory ( Not hands ).
 
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
   Uint16 item, lastitem, nextitem, direction, cosdir;
   IDSZ testa, testz;
 
+  if ( !VALID_CHR( chrlst, chr_ref ) ) return;
 
-  if ( !VALID_CHR( chr_ref ) ) return;
-
-
-  if ( ChrList[chr_ref].pos.z > -2 ) // Don't lose keys in pits...
+  if ( chrlst[chr_ref].pos.z > -2 ) // Don't lose keys in pits...
   {
     // The IDSZs to find
     testa = MAKE_IDSZ( "KEYA" );   // [KEYA]
     testz = MAKE_IDSZ( "KEYZ" );   // [KEYZ]
 
     lastitem = chr_ref;
-    item = chr_get_nextinpack( chr_ref );
-    while ( VALID_CHR( item ) )
+    item = chr_get_nextinpack( chrlst, MAXCHR, chr_ref );
+    while ( VALID_CHR( chrlst, item ) )
     {
-      nextitem = chr_get_nextinpack( item );
+      nextitem = chr_get_nextinpack( chrlst, MAXCHR, item );
       if ( item != chr_ref ) // Should never happen...
       {
-        if ( CAP_INHERIT_IDSZ_RANGE( ChrList[item].model, testa, testz ) )
+        if ( CAP_INHERIT_IDSZ_RANGE( gs, chrlst[item].model, testa, testz ) )
         {
           // We found a key...
-          ChrList[item].inwhichpack = MAXCHR;
-          ChrList[item].isequipped = bfalse;
+          chrlst[item].inwhichpack = MAXCHR;
+          chrlst[item].isequipped = bfalse;
 
-          ChrList[lastitem].nextinpack = nextitem;
-          ChrList[item].nextinpack = MAXCHR;
-          ChrList[chr_ref].numinpack--;
+          chrlst[lastitem].nextinpack = nextitem;
+          chrlst[item].nextinpack = MAXCHR;
+          chrlst[chr_ref].numinpack--;
 
-          ChrList[item].hitready = btrue;
-          ChrList[item].aistate.alert |= ALERT_DROPPED;
+          chrlst[item].hitready = btrue;
+          chrlst[item].aistate.alert |= ALERT_DROPPED;
 
-          direction = RANDIE;
-          ChrList[item].turn_lr = direction + 32768;
+          direction = RANDIE(gs);
+          chrlst[item].turn_lr = direction + 32768;
           cosdir = direction + 16384;
-          ChrList[item].level = ChrList[chr_ref].level;
-          ChrList[item].pos.x = ChrList[chr_ref].pos.x;
-          ChrList[item].pos.y = ChrList[chr_ref].pos.y;
-          ChrList[item].pos.z = ChrList[chr_ref].pos.z;
-          ChrList[item].accum_vel.x += turntocos[( direction>>2 ) & TRIGTABLE_MASK] * DROPXYVEL;
-          ChrList[item].accum_vel.y += turntosin[( direction>>2 ) & TRIGTABLE_MASK] * DROPXYVEL;
-          ChrList[item].accum_vel.z += DROPZVEL;
-          ChrList[item].team = ChrList[item].baseteam;
+          chrlst[item].level = chrlst[chr_ref].level;
+          chrlst[item].pos.x = chrlst[chr_ref].pos.x;
+          chrlst[item].pos.y = chrlst[chr_ref].pos.y;
+          chrlst[item].pos.z = chrlst[chr_ref].pos.z;
+          chrlst[item].accum_vel.x += turntocos[( direction>>2 ) & TRIGTABLE_MASK] * DROPXYVEL;
+          chrlst[item].accum_vel.y += turntosin[( direction>>2 ) & TRIGTABLE_MASK] * DROPXYVEL;
+          chrlst[item].accum_vel.z += DROPZVEL;
+          chrlst[item].team = chrlst[item].baseteam;
         }
         else
         {
@@ -1582,42 +1509,44 @@ void drop_keys( CHR_REF chr_ref )
 }
 
 //--------------------------------------------------------------------------------------------
-void drop_all_items( CHR_REF chr_ref )
+void drop_all_items( GameState * gs, CHR_REF chr_ref )
 {
   // ZZ> This function drops all of a character's items
 
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
   Uint16 item, direction, cosdir, diradd;
 
-
-  if ( !VALID_CHR( chr_ref ) ) return;
+  if ( !VALID_CHR( chrlst, chr_ref ) ) return;
 
   for ( _slot = SLOT_BEGIN; _slot < SLOT_COUNT; _slot = ( SLOT )( _slot + 1 ) )
   {
-    detach_character_from_mount( chr_get_holdingwhich( chr_ref, _slot ), !ChrList[chr_ref].alive, bfalse );
+    detach_character_from_mount( gs, chr_get_holdingwhich( chrlst, chrlst_size, chr_ref, _slot ), !chrlst[chr_ref].alive, bfalse );
   };
 
-  if ( chr_has_inventory( chr_ref ) )
+  if ( chr_has_inventory( chrlst, chrlst_size, chr_ref ) )
   {
-    direction = ChrList[chr_ref].turn_lr + 32768;
-    diradd = (float)UINT16_SIZE / ChrList[chr_ref].numinpack;
-    while ( ChrList[chr_ref].numinpack > 0 )
+    direction = chrlst[chr_ref].turn_lr + 32768;
+    diradd = (float)UINT16_SIZE / chrlst[chr_ref].numinpack;
+    while ( chrlst[chr_ref].numinpack > 0 )
     {
-      item = pack_get_item( chr_ref, SLOT_NONE, !ChrList[chr_ref].alive );
-      if ( detach_character_from_mount( item, btrue, btrue ) )
+      item = pack_get_item( gs, chr_ref, SLOT_NONE, !chrlst[chr_ref].alive );
+      if ( detach_character_from_mount( gs, item, btrue, btrue ) )
       {
-        ChrList[item].hitready = btrue;
-        ChrList[item].aistate.alert |= ALERT_DROPPED;
-        ChrList[item].pos.x = ChrList[chr_ref].pos.x;
-        ChrList[item].pos.y = ChrList[chr_ref].pos.y;
-        ChrList[item].pos.z = ChrList[chr_ref].pos.z;
-        ChrList[item].level = ChrList[chr_ref].level;
-        ChrList[item].turn_lr = direction + 32768;
+        chrlst[item].hitready = btrue;
+        chrlst[item].aistate.alert |= ALERT_DROPPED;
+        chrlst[item].pos.x = chrlst[chr_ref].pos.x;
+        chrlst[item].pos.y = chrlst[chr_ref].pos.y;
+        chrlst[item].pos.z = chrlst[chr_ref].pos.z;
+        chrlst[item].level = chrlst[chr_ref].level;
+        chrlst[item].turn_lr = direction + 32768;
 
         cosdir = direction + 16384;
-        ChrList[item].accum_vel.x += turntocos[( direction>>2 ) & TRIGTABLE_MASK] * DROPXYVEL;
-        ChrList[item].accum_vel.y += turntosin[( direction>>2 ) & TRIGTABLE_MASK] * DROPXYVEL;
-        ChrList[item].accum_vel.z += DROPZVEL;
-        ChrList[item].team = ChrList[item].baseteam;
+        chrlst[item].accum_vel.x += turntocos[( direction>>2 ) & TRIGTABLE_MASK] * DROPXYVEL;
+        chrlst[item].accum_vel.y += turntosin[( direction>>2 ) & TRIGTABLE_MASK] * DROPXYVEL;
+        chrlst[item].accum_vel.z += DROPZVEL;
+        chrlst[item].team = chrlst[item].baseteam;
       }
 
       direction += diradd;
@@ -1627,9 +1556,15 @@ void drop_all_items( CHR_REF chr_ref )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_grab_stuff( CHR_REF chr_ref, SLOT slot, bool_t people )
+bool_t chr_grab_stuff( GameState * gs, CHR_REF chr_ref, SLOT slot, bool_t people )
 {
   // ZZ> This function makes the character pick up an item if there's one around
+
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
 
   vect4 posa, point;
   vect3 posb, posc;
@@ -1644,17 +1579,17 @@ bool_t chr_grab_stuff( CHR_REF chr_ref, SLOT slot, bool_t people )
   Sint16 trg_strength_fp8, trg_intelligence_fp8;
   TEAM trg_team;
 
-  CHR * pchr;
+  Chr * pchr;
 
-  if ( !VALID_CHR( chr_ref ) ) return bfalse;
-  pchr = ChrList + chr_ref;
+  if ( !VALID_CHR( chrlst, chr_ref ) ) return bfalse;
+  pchr = chrlst + chr_ref;
 
-  model = ChrList[chr_ref].model;
+  model = chrlst[chr_ref].model;
   if ( !VALID_MDL( model ) ) return bfalse;
 
   // Make sure the character doesn't have something already, and that it has hands
 
-  if ( chr_using_slot( chr_ref, slot ) || !CapList[model].slotvalid[slot] )
+  if ( chr_using_slot( chrlst, chrlst_size, chr_ref, slot ) || !caplst[model].slotvalid[slot] )
     return bfalse;
 
   // Make life easier
@@ -1663,7 +1598,7 @@ bool_t chr_grab_stuff( CHR_REF chr_ref, SLOT slot, bool_t people )
   // !!!!base the grab distance off of the character size!!!!
   if( !pchr->bmpdata.valid )
   {
-    chr_calculate_bumpers(chr_ref, 0);
+    chr_calculate_bumpers( gs->MadList, MAXMODEL, chrlst + chr_ref, 0);
   }
 
   grab_width  = ( pchr->bmpdata.calc_size_big + pchr->bmpdata.calc_size ) / 2.0f * 1.5f;
@@ -1702,59 +1637,59 @@ bool_t chr_grab_stuff( CHR_REF chr_ref, SLOT slot, bool_t people )
   }
 
   // Go through all characters to find the best match
-  can_disarm     = check_skills( chr_ref, MAKE_IDSZ( "DISA" ) );
-  can_pickpocket = check_skills( chr_ref, MAKE_IDSZ( "PICK" ) );
+  can_disarm     = check_skills( gs, chr_ref, MAKE_IDSZ( "DISA" ) );
+  can_pickpocket = check_skills( gs, chr_ref, MAKE_IDSZ( "PICK" ) );
   bfound = bfalse;
-  for ( object_ref = 0; object_ref < MAXCHR; object_ref++ )
+  for ( object_ref = 0; object_ref < chrlst_size; object_ref++ )
   {
     // Don't mess with stuff that doesn't exist
-    if ( !VALID_CHR( object_ref ) ) continue;
+    if ( !VALID_CHR( chrlst, object_ref ) ) continue;
 
-    holder_ref = chr_get_attachedto(object_ref);
-    packer_ref = chr_get_inwhichpack(object_ref);
+    holder_ref = chr_get_attachedto(chrlst, chrlst_size, object_ref);
+    packer_ref = chr_get_inwhichpack(chrlst, chrlst_size, object_ref);
 
     // don't mess with yourself or anything you're already holding
     if ( object_ref == chr_ref || packer_ref == chr_ref || holder_ref == chr_ref ) continue;
 
     // don't mess with stuff you can't see
-    if ( !pchr->canseeinvisible && chr_is_invisible( object_ref ) ) continue;
+    if ( !pchr->canseeinvisible && chr_is_invisible( chrlst, chrlst_size, object_ref ) ) continue;
 
     // if we can't pickpocket, don't mess with inventory items
-    if ( !can_pickpocket && VALID_CHR( packer_ref ) ) continue;
+    if ( !can_pickpocket && VALID_CHR( chrlst, packer_ref ) ) continue;
 
     // if we can't disarm, don't mess with held items
-    if ( !can_disarm && VALID_CHR( holder_ref ) ) continue;
+    if ( !can_disarm && VALID_CHR( chrlst, holder_ref ) ) continue;
 
     // if we can't grab people, don't mess with them
-    if ( !people && !ChrList[object_ref].isitem ) continue;
+    if ( !people && !chrlst[object_ref].isitem ) continue;
 
     // get the target object position
-    if ( !VALID_CHR( packer_ref ) && !VALID_CHR(holder_ref) )
+    if ( !VALID_CHR( chrlst, packer_ref ) && !VALID_CHR(chrlst, holder_ref) )
     {
-      trg_strength_fp8     = ChrList[object_ref].strength_fp8;
-      trg_intelligence_fp8 = ChrList[object_ref].intelligence_fp8;
-      trg_team             = ChrList[object_ref].team;
+      trg_strength_fp8     = chrlst[object_ref].strength_fp8;
+      trg_intelligence_fp8 = chrlst[object_ref].intelligence_fp8;
+      trg_team             = chrlst[object_ref].team;
 
-      posb = ChrList[object_ref].pos;
+      posb = chrlst[object_ref].pos;
     }
-    else if ( VALID_CHR(holder_ref) )
+    else if ( VALID_CHR(chrlst, holder_ref) )
     {
       trg_chr              = holder_ref;
-      trg_strength_fp8     = ChrList[holder_ref].strength_fp8;
-      trg_intelligence_fp8 = ChrList[holder_ref].intelligence_fp8;
+      trg_strength_fp8     = chrlst[holder_ref].strength_fp8;
+      trg_intelligence_fp8 = chrlst[holder_ref].intelligence_fp8;
 
-      trg_team = ChrList[holder_ref].team;
-      posb     = ChrList[object_ref].pos;
+      trg_team = chrlst[holder_ref].team;
+      posb     = chrlst[object_ref].pos;
     }
     else // must be in a pack
     {
       trg_chr              = packer_ref;
-      trg_strength_fp8     = ChrList[packer_ref].strength_fp8;
-      trg_intelligence_fp8 = ChrList[packer_ref].intelligence_fp8;
+      trg_strength_fp8     = chrlst[packer_ref].strength_fp8;
+      trg_intelligence_fp8 = chrlst[packer_ref].intelligence_fp8;
 
-      trg_team = ChrList[packer_ref].team;
-      posb     = ChrList[packer_ref].pos;
-      posb.z  += ChrList[packer_ref].bmpdata.calc_height / 2;
+      trg_team = chrlst[packer_ref].team;
+      posb     = chrlst[packer_ref].pos;
+      posb.z  += chrlst[packer_ref].bmpdata.calc_height / 2;
     };
 
     // First check absolute value diamond
@@ -1766,16 +1701,16 @@ bool_t chr_grab_stuff( CHR_REF chr_ref, SLOT slot, bool_t people )
     // close enough to grab ?
     if ( dist > grab_width || posc.z > grab_height ) continue;
 
-    if ( VALID_CHR(packer_ref) )
+    if ( VALID_CHR(chrlst, packer_ref) )
     {
       // check for pickpocket
-      ballowed = pchr->dexterity_fp8 >= trg_intelligence_fp8 && TeamList[pchr->team].hatesteam[trg_team];
+      ballowed = pchr->dexterity_fp8 >= trg_intelligence_fp8 && gs->TeamList[pchr->team].hatesteam[trg_team];
 
       if ( !ballowed )
       {
         // if we fail, we get attacked
-        ChrList[holder_ref].aistate.alert |= ALERT_ATTACKED;
-        ChrList[holder_ref].aistate.bumplast = chr_ref;
+        chrlst[holder_ref].aistate.alert |= ALERT_ATTACKED;
+        chrlst[holder_ref].aistate.bumplast = chr_ref;
       }
       else  // must be in a pack
       {
@@ -1784,16 +1719,16 @@ bool_t chr_grab_stuff( CHR_REF chr_ref, SLOT slot, bool_t people )
 
       };
     }
-    else if ( VALID_CHR( holder_ref ) )
+    else if ( VALID_CHR( chrlst, holder_ref ) )
     {
       // check for stealing item from hand
-      ballowed = !ChrList[object_ref].iskursed && pchr->strength_fp8 > trg_strength_fp8 && TeamList[pchr->team].hatesteam[trg_team];
+      ballowed = !chrlst[object_ref].iskursed && pchr->strength_fp8 > trg_strength_fp8 && gs->TeamList[pchr->team].hatesteam[trg_team];
 
       if ( !ballowed )
       {
         // if we fail, we get attacked
-        ChrList[holder_ref].aistate.alert |= ALERT_ATTACKED;
-        ChrList[holder_ref].aistate.bumplast = chr_ref;
+        chrlst[holder_ref].aistate.alert |= ALERT_ATTACKED;
+        chrlst[holder_ref].aistate.bumplast = chr_ref;
       }
       else
       {
@@ -1819,30 +1754,29 @@ bool_t chr_grab_stuff( CHR_REF chr_ref, SLOT slot, bool_t people )
   // Check for shop
   inshop = bfalse;
   ballowed = bfalse;
-  if ( mesh_check( ChrList[minchr_ref].pos.x, ChrList[minchr_ref].pos.y ) )
+  if ( mesh_check( (&gs->mesh), chrlst[minchr_ref].pos.x, chrlst[minchr_ref].pos.y ) )
   {
-    if ( shop_count == 0 )
+    if ( gs->ShopList_count == 0 )
     {
       ballowed = btrue;
     }
-    else if ( ChrList[minchr_ref].isitem )
+    else if ( chrlst[minchr_ref].isitem )
     {
 
       // loop through just in case there are overlapping shops with one owner_ref deceased
-      for ( cnt = 0; cnt < shop_count && !inshop; cnt++ )
+      for ( cnt = 0; cnt < gs->ShopList_count && !inshop; cnt++ )
       {
-        passage = ShopList[cnt].passage;
+        passage = gs->ShopList[cnt].passage;
 
-        if ( passage_check_any( minchr_ref, passage, NULL ) )
+        if ( passage_check_any( gs, minchr_ref, passage, NULL ) )
         {
-          owner_ref  = ShopList[passage].owner;
+          owner_ref  = gs->ShopList[passage].owner;
           inshop = ( NOOWNER != owner_ref );
         };
       };
 
     };
   }
-
 
   if ( inshop )
   {
@@ -1853,58 +1787,69 @@ bool_t chr_grab_stuff( CHR_REF chr_ref, SLOT slot, bool_t people )
     else
     {
       // Pay the shop owner_ref, or don't allow grab...
-      ChrList[owner_ref].aistate.alert |= ALERT_SIGNALED;
-      price = CapList[ChrList[minchr_ref].model].skin[ChrList[minchr_ref].skin_ref % MAXSKIN].cost;
-      if ( CapList[ChrList[minchr_ref].model].isstackable )
+      chrlst[owner_ref].aistate.alert |= ALERT_SIGNALED;
+      price = caplst[chrlst[minchr_ref].model].skin[chrlst[minchr_ref].skin_ref % MAXSKIN].cost;
+      if ( caplst[chrlst[minchr_ref].model].isstackable )
       {
-        price *= ChrList[minchr_ref].ammo;
+        price *= chrlst[minchr_ref].ammo;
       }
-      ChrList[owner_ref].message = price;  // Tell owner_ref how much...
+      chrlst[owner_ref].message = price;  // Tell owner_ref how much...
       if ( pchr->money >= price )
       {
         // Okay to buy
         pchr->money  -= price;  // Skin 0 cost is price
-        ChrList[owner_ref].money += price;
-        if ( ChrList[owner_ref].money > MAXMONEY )  ChrList[owner_ref].money = MAXMONEY;
+        chrlst[owner_ref].money += price;
+        if ( chrlst[owner_ref].money > MAXMONEY )  chrlst[owner_ref].money = MAXMONEY;
 
         ballowed = btrue;
-        ChrList[owner_ref].messagedata = 1;  // 1 for selling an item
+        chrlst[owner_ref].messagedata = 1;  // 1 for selling an item
       }
       else
       {
         // Don't allow purchase
-        ChrList[owner_ref].messagedata = 2;  // 2 for "you can't afford that"
+        chrlst[owner_ref].messagedata = 2;  // 2 for "you can't afford that"
         ballowed = bfalse;
       }
     }
   }
 
-
   if ( ballowed )
   {
     // Stick 'em together and quit
-    ballowed = attach_character_to_mount( minchr_ref, chr_ref, slot );
+    ballowed = attach_character_to_mount( gs, minchr_ref, chr_ref, slot );
     if ( ballowed && people )
     {
       // Do a bodyslam animation...  ( Be sure to drop!!! )
-      play_action( chr_ref, ACTION_MC + slot, bfalse );
+      play_action( gs, chr_ref, (ACTION)(ACTION_MC + slot), bfalse );
     };
   }
   else
   {
     // Lift the item a little and quit...
-    ChrList[minchr_ref].accum_vel.z += DROPZVEL;
-    ChrList[minchr_ref].hitready = btrue;
-    ChrList[minchr_ref].aistate.alert |= ALERT_DROPPED;
+    chrlst[minchr_ref].accum_vel.z += DROPZVEL;
+    chrlst[minchr_ref].hitready = btrue;
+    chrlst[minchr_ref].aistate.alert |= ALERT_DROPPED;
   };
 
   return ballowed;
 }
 
 //--------------------------------------------------------------------------------------------
-void chr_swipe( CHR_REF chr_ref, SLOT slot )
+void chr_swipe( GameState * gs, CHR_REF chr_ref, SLOT slot )
 {
   // ZZ> This function spawns an attack particle
+
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
+
+  Prt  * prtlst      = gs->PrtList;
+  size_t prtlst_size = MAXPRT;
+
+  Pip  * piplst      = gs->PipList;
+  size_t piplst_size = MAXPRTPIP;
 
   Uint16 weapon, particle, thrown;
   ACTION action;
@@ -1914,35 +1859,33 @@ void chr_swipe( CHR_REF chr_ref, SLOT slot )
   float velocity;
   GRIP spawngrip;
 
-
-  weapon = chr_get_holdingwhich( chr_ref, slot );
+  weapon = chr_get_holdingwhich( chrlst, chrlst_size, chr_ref, slot );
   spawngrip = GRIP_LAST;
-  action = ChrList[chr_ref].action.now;
+  action = chrlst[chr_ref].action.now;
   // See if it's an unarmed attack...
-  if ( !VALID_CHR( weapon ) )
+  if ( !VALID_CHR( chrlst, weapon ) )
   {
     weapon = chr_ref;
     spawngrip = slot_to_grip( slot );
   }
 
-
-  if ( weapon != chr_ref && (( CapList[ChrList[weapon].model].isstackable && ChrList[weapon].ammo > 1 ) || ( action >= ACTION_FA && action <= ACTION_FD ) ) )
+  if ( weapon != chr_ref && (( caplst[chrlst[weapon].model].isstackable && chrlst[weapon].ammo > 1 ) || ( action >= ACTION_FA && action <= ACTION_FD ) ) )
   {
     // Throw the weapon if it's stacked or a hurl animation
-    pos.x = ChrList[chr_ref].pos.x;
-    pos.y = ChrList[chr_ref].pos.y;
-    pos.z = ChrList[chr_ref].pos.z;
-    thrown = spawn_one_character( ChrList[chr_ref].pos, ChrList[weapon].model, ChrList[chr_ref].team, 0, ChrList[chr_ref].turn_lr, ChrList[weapon].name, MAXCHR );
-    if ( VALID_CHR( thrown ) )
+    pos.x = chrlst[chr_ref].pos.x;
+    pos.y = chrlst[chr_ref].pos.y;
+    pos.z = chrlst[chr_ref].pos.z;
+    thrown = spawn_one_character( gs, chrlst[chr_ref].pos, chrlst[weapon].model, chrlst[chr_ref].team, 0, chrlst[chr_ref].turn_lr, chrlst[weapon].name, MAXCHR );
+    if ( VALID_CHR( chrlst, thrown ) )
     {
-      ChrList[thrown].iskursed = bfalse;
-      ChrList[thrown].ammo = 1;
-      ChrList[thrown].aistate.alert |= ALERT_THROWN;
+      chrlst[thrown].iskursed = bfalse;
+      chrlst[thrown].ammo = 1;
+      chrlst[thrown].aistate.alert |= ALERT_THROWN;
 
       velocity = 0.0f;
-      if ( ChrList[chr_ref].weight >= 0.0f )
+      if ( chrlst[chr_ref].weight >= 0.0f )
       {
-        velocity = ChrList[chr_ref].strength_fp8 / ( ChrList[thrown].weight * THROWFIX );
+        velocity = chrlst[chr_ref].strength_fp8 / ( chrlst[thrown].weight * THROWFIX );
       };
 
       velocity += MINTHROWVELOCITY;
@@ -1950,129 +1893,106 @@ void chr_swipe( CHR_REF chr_ref, SLOT slot )
       {
         velocity = MAXTHROWVELOCITY;
       }
-      tTmp = ( 0x7FFF + ChrList[chr_ref].turn_lr ) >> 2;
-      ChrList[thrown].accum_vel.x += turntocos[( tTmp+8192 ) & TRIGTABLE_MASK] * velocity;
-      ChrList[thrown].accum_vel.y += turntosin[( tTmp+8192 ) & TRIGTABLE_MASK] * velocity;
-      ChrList[thrown].accum_vel.z += DROPZVEL;
-      if ( ChrList[weapon].ammo <= 1 )
+      tTmp = ( 0x7FFF + chrlst[chr_ref].turn_lr ) >> 2;
+      chrlst[thrown].accum_vel.x += turntocos[( tTmp+8192 ) & TRIGTABLE_MASK] * velocity;
+      chrlst[thrown].accum_vel.y += turntosin[( tTmp+8192 ) & TRIGTABLE_MASK] * velocity;
+      chrlst[thrown].accum_vel.z += DROPZVEL;
+      if ( chrlst[weapon].ammo <= 1 )
       {
         // Poof the item
-        detach_character_from_mount( weapon, btrue, bfalse );
-        ChrList[weapon].freeme = btrue;
+        detach_character_from_mount( gs, weapon, btrue, bfalse );
+        chrlst[weapon].freeme = btrue;
       }
       else
       {
-        ChrList[weapon].ammo--;
+        chrlst[weapon].ammo--;
       }
     }
   }
   else
   {
     // Spawn an attack particle
-    if ( ChrList[weapon].ammomax == 0 || ChrList[weapon].ammo != 0 )
+    if ( chrlst[weapon].ammomax == 0 || chrlst[weapon].ammo != 0 )
     {
-      if ( ChrList[weapon].ammo > 0 && !CapList[ChrList[weapon].model].isstackable )
+      if ( chrlst[weapon].ammo > 0 && !caplst[chrlst[weapon].model].isstackable )
       {
-        ChrList[weapon].ammo--;  // Ammo usage
+        chrlst[weapon].ammo--;  // Ammo usage
       }
 
       //HERE
-      if ( CapList[ChrList[weapon].model].attackprttype != -1 )
+      if ( caplst[chrlst[weapon].model].attackprttype != -1 )
       {
-        particle = spawn_one_particle( 1.0f, ChrList[weapon].pos, ChrList[chr_ref].turn_lr, ChrList[weapon].model, CapList[ChrList[weapon].model].attackprttype, weapon, spawngrip, ChrList[chr_ref].team, chr_ref, 0, MAXCHR );
-        if ( particle != MAXPRT )
+        particle = spawn_one_particle( gs, 1.0f, chrlst[weapon].pos, chrlst[chr_ref].turn_lr, chrlst[weapon].model, caplst[chrlst[weapon].model].attackprttype, weapon, spawngrip, chrlst[chr_ref].team, chr_ref, 0, MAXCHR );
+        if ( VALID_PRT(prtlst, particle) )
         {
-          CHR_REF prt_target = prt_get_target( particle );
+          CHR_REF prt_target = prt_get_target( gs, particle );
 
-          if ( !CapList[ChrList[weapon].model].attackattached )
+          if ( !caplst[chrlst[weapon].model].attackattached )
           {
             // Detach the particle
-            if ( !PipList[PrtList[particle].pip].startontarget || !VALID_CHR( prt_target ) )
+            if ( !piplst[prtlst[particle].pip].startontarget || !VALID_CHR( chrlst, prt_target ) )
             {
-              attach_particle_to_character( particle, weapon, spawngrip );
+              attach_particle_to_character( gs, particle, weapon, spawngrip );
 
               // Correct Z spacing base, but nothing else...
-              PrtList[particle].pos.z += PipList[PrtList[particle].pip].zspacing.ibase;
+              prtlst[particle].pos.z += piplst[prtlst[particle].pip].zspacing.ibase;
             }
-            PrtList[particle].attachedtochr = MAXCHR;
+            prtlst[particle].attachedtochr = MAXCHR;
 
             // Don't spawn in walls
-            if ( 0 != prt_hitawall( particle, NULL ) )
+            if ( 0 != prt_hitawall( gs, particle, NULL ) )
             {
-              PrtList[particle].pos.x = ChrList[weapon].pos.x;
-              PrtList[particle].pos.y = ChrList[weapon].pos.y;
-              if ( 0 != prt_hitawall( particle, NULL ) )
+              prtlst[particle].pos.x = chrlst[weapon].pos.x;
+              prtlst[particle].pos.y = chrlst[weapon].pos.y;
+              if ( 0 != prt_hitawall( gs, particle, NULL ) )
               {
-                PrtList[particle].pos.x = ChrList[chr_ref].pos.x;
-                PrtList[particle].pos.y = ChrList[chr_ref].pos.y;
+                prtlst[particle].pos.x = chrlst[chr_ref].pos.x;
+                prtlst[particle].pos.y = chrlst[chr_ref].pos.y;
               }
             }
           }
           else
           {
             // Attached particles get a strength bonus for reeling...
-            if ( PipList[PrtList[particle].pip].causeknockback ) dampen = ( REELBASE + ( ChrList[chr_ref].strength_fp8 / REEL ) ) * 4; //Extra knockback?
-            else dampen = REELBASE + ( ChrList[chr_ref].strength_fp8 / REEL );      // No, do normal
+            if ( piplst[prtlst[particle].pip].causeknockback ) dampen = ( REELBASE + ( chrlst[chr_ref].strength_fp8 / REEL ) ) * 4; //Extra knockback?
+            else dampen = REELBASE + ( chrlst[chr_ref].strength_fp8 / REEL );      // No, do normal
 
-            PrtList[particle].accum_vel.x += -(1.0f - dampen) * PrtList[particle].vel.x;
-            PrtList[particle].accum_vel.y += -(1.0f - dampen) * PrtList[particle].vel.y;
-            PrtList[particle].accum_vel.z += -(1.0f - dampen) * PrtList[particle].vel.z;
+            prtlst[particle].accum_vel.x += -(1.0f - dampen) * prtlst[particle].vel.x;
+            prtlst[particle].accum_vel.y += -(1.0f - dampen) * prtlst[particle].vel.y;
+            prtlst[particle].accum_vel.z += -(1.0f - dampen) * prtlst[particle].vel.z;
           }
 
           // Initial particles get a strength bonus, which may be 0.00
-          PrtList[particle].damage.ibase += ( ChrList[chr_ref].strength_fp8 * CapList[ChrList[weapon].model].strengthdampen );
+          prtlst[particle].damage.ibase += ( chrlst[chr_ref].strength_fp8 * caplst[chrlst[weapon].model].strengthdampen );
 
           // Initial particles get an enchantment bonus
-          PrtList[particle].damage.ibase += ChrList[weapon].damageboost;
+          prtlst[particle].damage.ibase += chrlst[weapon].damageboost;
 
           // Initial particles inherit damage type of weapon
-          PrtList[particle].damagetype = ChrList[weapon].damagetargettype;
+          prtlst[particle].damagetype = chrlst[weapon].damagetargettype;
         }
       }
     }
     else
     {
-      ChrList[weapon].ammoknown = btrue;
+      chrlst[weapon].ammoknown = btrue;
     }
   }
 }
 
 //--------------------------------------------------------------------------------------------
-void despawn_characters()
-{
-  CHR_REF chr_ref;
-
-  // poof all characters that have pending poof requests
-  for ( chr_ref = 0; chr_ref < MAXCHR; chr_ref++ )
-  {
-    if ( !VALID_CHR( chr_ref ) || !ChrList[chr_ref].gopoof ) continue;
-
-    // detach from any imount
-    detach_character_from_mount( chr_ref, btrue, bfalse );
-
-    // Drop all possesions
-    for ( _slot = SLOT_BEGIN; _slot < SLOT_COUNT; _slot = ( SLOT )( _slot + 1 ) )
-    {
-      if ( chr_using_slot( chr_ref, _slot ) )
-        detach_character_from_mount( chr_get_holdingwhich( chr_ref, _slot ), btrue, bfalse );
-    };
-
-    chr_free_inventory( chr_ref );
-    ChrList[chr_ref].freeme = btrue;
-  };
-
-  // free all characters that requested destruction last round
-  for ( chr_ref = 0; chr_ref < MAXCHR; chr_ref++ )
-  {
-    if ( !VALID_CHR( chr_ref ) || !ChrList[chr_ref].freeme ) continue;
-    free_one_character( chr_ref );
-  }
-};
-
-//--------------------------------------------------------------------------------------------
-void move_characters( float dUpdate )
+void move_characters( GameState * gs, float dUpdate )
 {
   // ZZ> This function handles character physics
+
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
+
+  Mad  * madlst      = gs->MadList;
+  size_t madlst_size = MAXMODEL;
 
   CHR_REF chr_ref, weapon, imount, item;
   Uint16 imdl;
@@ -2082,7 +2002,7 @@ void move_characters( float dUpdate )
   ACTION action;
   bool_t   ready, allowedtoattack, watchtarget, grounded, dojumptimer;
   TURNMODE loc_turnmode;
-  float ftmp, level;
+  float level;
 
   float horiz_friction, vert_friction;
   float loc_slippyfriction, loc_airfriction, loc_waterfriction, loc_noslipfriction;
@@ -2091,8 +2011,8 @@ void move_characters( float dUpdate )
   vect3 nrm = {0.0f, 0.0f, 0.0f};
 
   AI_STATE * pstate;
-  CHR * pchr;
-  MAD * pmad;
+  Chr * pchr;
+  Mad * pmad;
 
   loc_airfriction    = airfriction;
   loc_waterfriction  = waterfriction;
@@ -2101,38 +2021,38 @@ void move_characters( float dUpdate )
   loc_flydampen      = pow( FLYDAMPEN     , dUpdate );
 
   // Move every character
-  for ( chr_ref = 0; chr_ref < MAXCHR; chr_ref++ )
+  for ( chr_ref = 0; chr_ref < chrlst_size; chr_ref++ )
   {
-    if ( !VALID_CHR( chr_ref ) ) continue;
+    if ( !VALID_CHR( chrlst, chr_ref ) ) continue;
 
-    pchr = ChrList + chr_ref;
+    pchr = chrlst + chr_ref;
     pstate = &(pchr->aistate);
 
     // Character's old location
     pchr->turn_lr_old = pchr->turn_lr;
 
-    if ( chr_in_pack( chr_ref ) ) continue;
+    if ( chr_in_pack( chrlst, chrlst_size, chr_ref ) ) continue;
 
     // get the model
     imdl = VALIDATE_MDL( pchr->model );
     assert( MAXMODEL != imdl );
-    pmad = MadList + pchr->model;
+    pmad = madlst + pchr->model;
 
     // get the imount
-    imount = chr_get_attachedto(chr_ref);
+    imount = chr_get_attachedto(chrlst, chrlst_size, chr_ref);
 
     // get the level
     level = pchr->level;
 
     // TURNMODE_VELOCITY acts strange when someone is mounted on a "bucking" imount, like the gelfeet
     loc_turnmode = pstate->turnmode;
-    if ( VALID_CHR( imount ) ) loc_turnmode = TURNMODE_NONE;
+    if ( VALID_CHR( chrlst, imount ) ) loc_turnmode = TURNMODE_NONE;
 
     // make characters slide downhill
-    twist = mesh_get_twist( pchr->onwhichfan );
+    twist = mesh_get_twist( gs->Mesh_Mem.fanlst, pchr->onwhichfan );
 
     // calculate the normal GDyna.mically from the mesh coordinates
-    if ( !mesh_calc_normal( pchr->pos, &nrm ) )
+    if ( !mesh_calc_normal( gs, pchr->pos, &nrm ) )
     {
       nrm = twist_table[twist].nrm;
     };
@@ -2186,7 +2106,7 @@ void move_characters( float dUpdate )
           if ( buoy > 1.0f ) buoy = 1.0f;
         };
 
-        lerp = ( float )( GWater.surfacelevel - pchr->pos.z ) / ( float ) ( pchr->bmpdata.cv.z_max - pchr->bmpdata.cv.z_min );
+        lerp = ( float )( gs->water.surfacelevel - pchr->pos.z ) / ( float ) ( pchr->bmpdata.cv.z_max - pchr->bmpdata.cv.z_min );
         if ( lerp > 1.0f ) lerp = 1.0f;
         if ( lerp < 0.0f ) lerp = 0.0f;
 
@@ -2206,13 +2126,13 @@ void move_characters( float dUpdate )
         if ( lerp > 1.0f ) lerp = 1.0f;
         if ( lerp < 0.0f ) lerp = 0.0f;
 
-        if ( VALID_CHR( pchr->onwhichplatform ) )
+        if ( VALID_CHR( chrlst, pchr->onwhichplatform ) )
         {
           is_slippy = bfalse;
         }
         else
         {
-          is_slippy = ( INVALID_FAN != pchr->onwhichfan ) && mesh_has_some_bits( pchr->onwhichfan, MPDFX_SLIPPY );
+          is_slippy = ( INVALID_FAN != pchr->onwhichfan ) && mesh_has_some_bits( gs->Mesh_Mem.fanlst, pchr->onwhichfan, MPDFX_SLIPPY );
         }
 
         if ( is_slippy )
@@ -2251,7 +2171,7 @@ void move_characters( float dUpdate )
     if ( pchr->alive )
     {
       // Apply the latches
-      if ( !VALID_CHR( imount ) )
+      if ( !VALID_CHR( chrlst, imount ) )
       {
         // Character latches for generalized movement
         dvx = pstate->latch.x;
@@ -2328,24 +2248,24 @@ void move_characters( float dUpdate )
         };
       }
 
-      // Apply ChrList[].latch.x and ChrList[].latch.y
-      if ( !VALID_CHR( imount ) )
+      // Apply chrlst[].latch.x and chrlst[].latch.y
+      if ( !VALID_CHR( chrlst, imount ) )
       {
         // Face the target
         watchtarget = ( loc_turnmode == TURNMODE_WATCHTARGET );
         if ( watchtarget )
         {
-          CHR_REF ai_target = chr_get_aitarget( chr_ref );
-          if ( VALID_CHR( ai_target ) && chr_ref != ai_target )
+          CHR_REF ai_target = chr_get_aitarget( chrlst, MAXCHR, chrlst + chr_ref );
+          if ( VALID_CHR( chrlst, ai_target ) && chr_ref != ai_target )
           {
-            pchr->turn_lr = terp_dir( pchr->turn_lr, ChrList[ai_target].pos.x - pchr->pos.x, ChrList[ai_target].pos.y - pchr->pos.y, dUpdate * turnfactor );
+            pchr->turn_lr = terp_dir( pchr->turn_lr, chrlst[ai_target].pos.x - pchr->pos.x, chrlst[ai_target].pos.y - pchr->pos.y, dUpdate * turnfactor );
           };
         }
 
         // Get direction from ACTUAL change in velocity
         if ( loc_turnmode == TURNMODE_VELOCITY )
         {
-          if ( pchr->isplayer )
+          if ( chr_is_player(gs, chr_ref) )
             pchr->turn_lr = terp_dir( pchr->turn_lr, pstate->trgvel.x, pstate->trgvel.y, dUpdate * turnfactor );
           else
             pchr->turn_lr = terp_dir( pchr->turn_lr, pstate->trgvel.x, pstate->trgvel.y, dUpdate * turnfactor / 4.0f );
@@ -2363,7 +2283,7 @@ void move_characters( float dUpdate )
       {
         if ( HAS_SOME_BITS( pstate->latch.b, LATCHBUTTON_JUMP ) && pchr->jumptime == 0.0f )
         {
-          if ( detach_character_from_mount( chr_ref, btrue, btrue ) )
+          if ( detach_character_from_mount( gs, chr_ref, btrue, btrue ) )
           {
             pchr->jumptime = DELAY_JUMP;
             pchr->accum_vel.z += ( pchr->flyheight == 0 ) ? DISMOUNTZVEL : DISMOUNTZVELFLY;
@@ -2371,9 +2291,9 @@ void move_characters( float dUpdate )
               pchr->jumpnumber -= dUpdate;
 
             // Play the jump sound
-            if ( INVALID_SOUND != CapList[imdl].jumpsound )
+            if ( INVALID_SOUND != caplst[imdl].jumpsound )
             {
-              play_sound( 1.0f, pchr->pos, CapList[imdl].wavelist[CapList[imdl].jumpsound], 0, imdl, CapList[imdl].jumpsound );
+              snd_play_sound( gs, 1.0f, pchr->pos, caplst[imdl].wavelist[caplst[imdl].jumpsound], 0, imdl, caplst[imdl].jumpsound );
             };
           }
           else if ( pchr->jumpnumber > 0 && ( pchr->jumpready || pchr->jumpnumberreset > 1 ) )
@@ -2390,12 +2310,12 @@ void move_characters( float dUpdate )
               pchr->jumptime = DELAY_JUMP;
 
               // Set to jump animation if not doing anything better
-              if ( pchr->action.ready )    play_action( chr_ref, ACTION_JA, btrue );
+              if ( pchr->action.ready )    play_action( gs, chr_ref, ACTION_JA, btrue );
 
               // Play the jump sound (Boing!)
-              if ( INVALID_SOUND != CapList[imdl].jumpsound )
+              if ( INVALID_SOUND != caplst[imdl].jumpsound )
               {
-                play_sound( MIN( 1.0f, pchr->jump / 50.0f ), pchr->pos, CapList[imdl].wavelist[CapList[imdl].jumpsound], 0, imdl, CapList[imdl].jumpsound );
+                snd_play_sound( gs, MIN( 1.0f, pchr->jump / 50.0f ), pchr->pos, caplst[imdl].wavelist[caplst[imdl].jumpsound], 0, imdl, caplst[imdl].jumpsound );
               }
             };
 
@@ -2408,109 +2328,108 @@ void move_characters( float dUpdate )
         if ( HAS_SOME_BITS( pstate->latch.b, LATCHBUTTON_ALTLEFT ) && pchr->action.ready && pchr->reloadtime == 0 )
         {
           pchr->reloadtime = DELAY_GRAB;
-          if ( !chr_using_slot( chr_ref, SLOT_LEFT ) )
+          if ( !chr_using_slot( chrlst, chrlst_size, chr_ref, SLOT_LEFT ) )
           {
             // Grab left
-            play_action( chr_ref, ACTION_ME, bfalse );
+            play_action( gs, chr_ref, ACTION_ME, bfalse );
           }
           else
           {
             // Drop left
-            play_action( chr_ref, ACTION_MA, bfalse );
+            play_action( gs, chr_ref, ACTION_MA, bfalse );
           }
         }
 
         if ( HAS_SOME_BITS( pstate->latch.b, LATCHBUTTON_ALTRIGHT ) && pchr->action.ready && pchr->reloadtime == 0 )
         {
           pchr->reloadtime = DELAY_GRAB;
-          if ( !chr_using_slot( chr_ref, SLOT_RIGHT ) )
+          if ( !chr_using_slot( chrlst, chrlst_size, chr_ref, SLOT_RIGHT ) )
           {
             // Grab right
-            play_action( chr_ref, ACTION_MF, bfalse );
+            play_action( gs, chr_ref, ACTION_MF, bfalse );
           }
           else
           {
             // Drop right
-            play_action( chr_ref, ACTION_MB, bfalse );
+            play_action( gs, chr_ref, ACTION_MB, bfalse );
           }
         }
 
         if ( HAS_SOME_BITS( pstate->latch.b, LATCHBUTTON_PACKLEFT ) && pchr->action.ready && pchr->reloadtime == 0 )
         {
           pchr->reloadtime = DELAY_PACK;
-          item = chr_get_holdingwhich( chr_ref, SLOT_LEFT );
-          if ( VALID_CHR( item ) )
+          item = chr_get_holdingwhich( chrlst, chrlst_size, chr_ref, SLOT_LEFT );
+          if ( VALID_CHR( chrlst, item ) )
           {
-            if (( ChrList[item].iskursed || CapList[ChrList[item].model].istoobig ) && !CapList[ChrList[item].model].isequipment )
+            if (( chrlst[item].iskursed || caplst[chrlst[item].model].istoobig ) && !caplst[chrlst[item].model].isequipment )
             {
               // The item couldn't be put away
-              ChrList[item].aistate.alert |= ALERT_NOTPUTAWAY;
+              chrlst[item].aistate.alert |= ALERT_NOTPUTAWAY;
             }
             else
             {
               // Put the item into the pack
-              pack_add_item( item, chr_ref );
+              pack_add_item( gs, item, chr_ref );
             }
           }
           else
           {
             // Get a new one out and put it in hand
-            pack_get_item( chr_ref, SLOT_LEFT, bfalse );
+            pack_get_item( gs, chr_ref, SLOT_LEFT, bfalse );
           }
 
           // Make it take a little time
-          play_action( chr_ref, ACTION_MG, bfalse );
+          play_action( gs, chr_ref, ACTION_MG, bfalse );
         }
 
         if ( HAS_SOME_BITS( pstate->latch.b, LATCHBUTTON_PACKRIGHT ) && pchr->action.ready && pchr->reloadtime == 0 )
         {
           pchr->reloadtime = DELAY_PACK;
-          item = chr_get_holdingwhich( chr_ref, SLOT_RIGHT );
-          if ( VALID_CHR( item ) )
+          item = chr_get_holdingwhich( chrlst, chrlst_size, chr_ref, SLOT_RIGHT );
+          if ( VALID_CHR( chrlst, item ) )
           {
-            if (( ChrList[item].iskursed || CapList[ChrList[item].model].istoobig ) && !CapList[ChrList[item].model].isequipment )
+            if (( chrlst[item].iskursed || caplst[chrlst[item].model].istoobig ) && !caplst[chrlst[item].model].isequipment )
             {
               // The item couldn't be put away
-              ChrList[item].aistate.alert |= ALERT_NOTPUTAWAY;
+              chrlst[item].aistate.alert |= ALERT_NOTPUTAWAY;
             }
             else
             {
               // Put the item into the pack
-              pack_add_item( item, chr_ref );
+              pack_add_item( gs, item, chr_ref );
             }
           }
           else
           {
             // Get a new one out and put it in hand
-            pack_get_item( chr_ref, SLOT_RIGHT, bfalse );
+            pack_get_item( gs, chr_ref, SLOT_RIGHT, bfalse );
           }
 
           // Make it take a little time
-          play_action( chr_ref, ACTION_MG, bfalse );
+          play_action( gs,  chr_ref, ACTION_MG, bfalse );
         }
 
         if ( HAS_SOME_BITS( pstate->latch.b, LATCHBUTTON_LEFT ) && pchr->reloadtime == 0 )
         {
           // Which weapon?
-          weapon = chr_get_holdingwhich( chr_ref, SLOT_LEFT );
-          if ( !VALID_CHR( weapon ) )
+          weapon = chr_get_holdingwhich( chrlst, chrlst_size, chr_ref, SLOT_LEFT );
+          if ( !VALID_CHR( chrlst, weapon ) )
           {
             // Unarmed means character itself is the weapon
             weapon = chr_ref;
           }
-          action = CapList[ChrList[weapon].model].weaponaction;
-
+          action = caplst[chrlst[weapon].model].weaponaction;
 
           // Can it do it?
           allowedtoattack = btrue;
-          if ( !pmad->actionvalid[action] || ChrList[weapon].reloadtime > 0 ||
-               ( CapList[ChrList[weapon].model].needskillidtouse && !check_skills( chr_ref, CapList[ChrList[weapon].model].idsz[IDSZ_SKILL] ) ) )
+          if ( !pmad->actionvalid[action] || chrlst[weapon].reloadtime > 0 ||
+               ( caplst[chrlst[weapon].model].needskillidtouse && !check_skills( gs, chr_ref, caplst[chrlst[weapon].model].idsz[IDSZ_SKILL] ) ) )
           {
             allowedtoattack = bfalse;
-            if ( ChrList[weapon].reloadtime == 0 )
+            if ( chrlst[weapon].reloadtime == 0 )
             {
               // This character can't use this weapon
-              ChrList[weapon].reloadtime = 50;
+              chrlst[weapon].reloadtime = 50;
               if ( pchr->staton )
               {
                 // Tell the player that they can't use this weapon
@@ -2522,25 +2441,24 @@ void move_characters( float dUpdate )
           if ( action == ACTION_DA )
           {
             allowedtoattack = bfalse;
-            if ( ChrList[weapon].reloadtime == 0 )
+            if ( chrlst[weapon].reloadtime == 0 )
             {
-              ChrList[weapon].aistate.alert |= ALERT_USED;
+              chrlst[weapon].aistate.alert |= ALERT_USED;
             }
           }
-
 
           if ( allowedtoattack )
           {
             // Rearing imount
-            if ( VALID_CHR( imount ) )
+            if ( VALID_CHR( chrlst, imount ) )
             {
-              allowedtoattack = CapList[ChrList[imount].model].ridercanattack;
-              if ( ChrList[imount].ismount && ChrList[imount].alive && !ChrList[imount].isplayer && ChrList[imount].action.ready )
+              allowedtoattack = caplst[chrlst[imount].model].ridercanattack;
+              if ( chrlst[imount].ismount && chrlst[imount].alive && !chr_is_player(gs, imount) && chrlst[imount].action.ready )
               {
                 if (( action != ACTION_PA || !allowedtoattack ) && pchr->action.ready )
                 {
-                  play_action( imount, ( ACTION )( ACTION_UA + ( rand() &1 ) ), bfalse );
-                  ChrList[imount].aistate.alert |= ALERT_USED;
+                  play_action( gs,  imount, ( ACTION )( ACTION_UA + ( rand() &1 ) ), bfalse );
+                  chrlst[imount].aistate.alert |= ALERT_USED;
                 }
                 else
                 {
@@ -2549,27 +2467,26 @@ void move_characters( float dUpdate )
               }
             }
 
-
             // Attack button
             if ( allowedtoattack )
             {
               if ( pchr->action.ready && pmad->actionvalid[action] )
               {
                 // Check mana cost
-                if ( pchr->mana_fp8 >= ChrList[weapon].manacost || pchr->canchannel )
+                if ( pchr->mana_fp8 >= chrlst[weapon].manacost || pchr->canchannel )
                 {
-                  cost_mana( chr_ref, ChrList[weapon].manacost, weapon );
+                  cost_mana( gs, chr_ref, chrlst[weapon].manacost, weapon );
                   // Check life healing
-                  pchr->life_fp8 += ChrList[weapon].lifeheal;
+                  pchr->life_fp8 += chrlst[weapon].lifeheal;
                   if ( pchr->life_fp8 > pchr->lifemax_fp8 )  pchr->life_fp8 = pchr->lifemax_fp8;
                   ready = ( action == ACTION_PA );
                   action += rand() & 1;
-                  play_action( chr_ref, action, ready );
+                  play_action( gs,  chr_ref, action, ready );
                   if ( weapon != chr_ref )
                   {
                     // Make the weapon attack too
-                    play_action( weapon, ACTION_MJ, bfalse );
-                    ChrList[weapon].aistate.alert |= ALERT_USED;
+                    play_action( gs,  weapon, ACTION_MJ, bfalse );
+                    chrlst[weapon].aistate.alert |= ALERT_USED;
                   }
                   else
                   {
@@ -2584,25 +2501,24 @@ void move_characters( float dUpdate )
         else if ( HAS_SOME_BITS( pstate->latch.b, LATCHBUTTON_RIGHT ) && pchr->reloadtime == 0 )
         {
           // Which weapon?
-          weapon = chr_get_holdingwhich( chr_ref, SLOT_RIGHT );
-          if ( !VALID_CHR( weapon ) )
+          weapon = chr_get_holdingwhich( chrlst, chrlst_size, chr_ref, SLOT_RIGHT );
+          if ( !VALID_CHR( chrlst, weapon ) )
           {
             // Unarmed means character itself is the weapon
             weapon = chr_ref;
           }
-          action = CapList[ChrList[weapon].model].weaponaction + 2;
-
+          action = caplst[chrlst[weapon].model].weaponaction + 2;
 
           // Can it do it?
           allowedtoattack = btrue;
-          if ( !pmad->actionvalid[action] || ChrList[weapon].reloadtime > 0 ||
-               ( CapList[ChrList[weapon].model].needskillidtouse && !check_skills( chr_ref, CapList[ChrList[weapon].model].idsz[IDSZ_SKILL] ) ) )
+          if ( !pmad->actionvalid[action] || chrlst[weapon].reloadtime > 0 ||
+               ( caplst[chrlst[weapon].model].needskillidtouse && !check_skills( gs, chr_ref, caplst[chrlst[weapon].model].idsz[IDSZ_SKILL] ) ) )
           {
             allowedtoattack = bfalse;
-            if ( ChrList[weapon].reloadtime == 0 )
+            if ( chrlst[weapon].reloadtime == 0 )
             {
               // This character can't use this weapon
-              ChrList[weapon].reloadtime = 50;
+              chrlst[weapon].reloadtime = 50;
               if ( pchr->staton )
               {
                 // Tell the player that they can't use this weapon
@@ -2613,25 +2529,24 @@ void move_characters( float dUpdate )
           if ( action == ACTION_DC )
           {
             allowedtoattack = bfalse;
-            if ( ChrList[weapon].reloadtime == 0 )
+            if ( chrlst[weapon].reloadtime == 0 )
             {
-              ChrList[weapon].aistate.alert |= ALERT_USED;
+              chrlst[weapon].aistate.alert |= ALERT_USED;
             }
           }
-
 
           if ( allowedtoattack )
           {
             // Rearing imount
-            if ( VALID_CHR( imount ) )
+            if ( VALID_CHR( chrlst, imount ) )
             {
-              allowedtoattack = CapList[ChrList[imount].model].ridercanattack;
-              if ( ChrList[imount].ismount && ChrList[imount].alive && !ChrList[imount].isplayer && ChrList[imount].action.ready )
+              allowedtoattack = caplst[chrlst[imount].model].ridercanattack;
+              if ( chrlst[imount].ismount && chrlst[imount].alive && !chr_is_player(gs, imount) && chrlst[imount].action.ready )
               {
                 if (( action != ACTION_PC || !allowedtoattack ) && pchr->action.ready )
                 {
-                  play_action( imount, ( ACTION )( ACTION_UC + ( rand() &1 ) ), bfalse );
-                  ChrList[imount].aistate.alert |= ALERT_USED;
+                  play_action( gs,  imount, ( ACTION )( ACTION_UC + ( rand() &1 ) ), bfalse );
+                  chrlst[imount].aistate.alert |= ALERT_USED;
                 }
                 else
                 {
@@ -2640,27 +2555,26 @@ void move_characters( float dUpdate )
               }
             }
 
-
             // Attack button
             if ( allowedtoattack )
             {
               if ( pchr->action.ready && pmad->actionvalid[action] )
               {
                 // Check mana cost
-                if ( pchr->mana_fp8 >= ChrList[weapon].manacost || pchr->canchannel )
+                if ( pchr->mana_fp8 >= chrlst[weapon].manacost || pchr->canchannel )
                 {
-                  cost_mana( chr_ref, ChrList[weapon].manacost, weapon );
+                  cost_mana( gs, chr_ref, chrlst[weapon].manacost, weapon );
                   // Check life healing
-                  pchr->life_fp8 += ChrList[weapon].lifeheal;
+                  pchr->life_fp8 += chrlst[weapon].lifeheal;
                   if ( pchr->life_fp8 > pchr->lifemax_fp8 )  pchr->life_fp8 = pchr->lifemax_fp8;
                   ready = ( action == ACTION_PC );
                   action += rand() & 1;
-                  play_action( chr_ref, action, ready );
+                  play_action( gs,  chr_ref, action, ready );
                   if ( weapon != chr_ref )
                   {
                     // Make the weapon attack too
-                    play_action( weapon, ACTION_MJ, bfalse );
-                    ChrList[weapon].aistate.alert |= ALERT_USED;
+                    play_action( gs,  weapon, ACTION_MJ, bfalse );
+                    chrlst[weapon].aistate.alert |= ALERT_USED;
                   }
                   else
                   {
@@ -2674,8 +2588,6 @@ void move_characters( float dUpdate )
         }
       }
     }
-
-
 
     // Integrate the z direction
     if ( 0.0f != pchr->flyheight )
@@ -2702,7 +2614,7 @@ void move_characters( float dUpdate )
       if ( lerp_normal < 0.2f ) lerp_normal = 0.2f;
 
       // slippy hills make characters slide
-      if ( pchr->weight > 0 && GWater.iswater && !pchr->inwater && INVALID_FAN != pchr->onwhichfan && mesh_has_some_bits( pchr->onwhichfan, MPDFX_SLIPPY ) )
+      if ( pchr->weight > 0 && gs->water.iswater && !pchr->inwater && INVALID_FAN != pchr->onwhichfan && mesh_has_some_bits( gs->Mesh_Mem.fanlst, pchr->onwhichfan, MPDFX_SLIPPY ) )
       {
         pchr->accum_acc.x -= nrm.x * gravity * lerp_tang * hillslide;
         pchr->accum_acc.y -= nrm.y * gravity * lerp_tang * hillslide;
@@ -2742,7 +2654,7 @@ void move_characters( float dUpdate )
     if ( grounded )
     {
       // only slippy, non-flat surfaces don't allow jumps
-      if ( INVALID_FAN != pchr->onwhichfan && mesh_has_some_bits( pchr->onwhichfan, MPDFX_SLIPPY ) )
+      if ( INVALID_FAN != pchr->onwhichfan && mesh_has_some_bits( gs->Mesh_Mem.fanlst, pchr->onwhichfan, MPDFX_SLIPPY ) )
       {
         if ( !twist_table[twist].flat )
         {
@@ -2797,29 +2709,29 @@ void move_characters( float dUpdate )
       {
         // Check frame effects
         if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_ACTLEFT ) )
-          chr_swipe( chr_ref, SLOT_LEFT );
+          chr_swipe( gs, chr_ref, SLOT_LEFT );
         if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_ACTRIGHT ) )
-          chr_swipe( chr_ref, SLOT_RIGHT );
+          chr_swipe( gs, chr_ref, SLOT_RIGHT );
         if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_GRABLEFT ) )
-          chr_grab_stuff( chr_ref, SLOT_LEFT, bfalse );
+          chr_grab_stuff( gs, chr_ref, SLOT_LEFT, bfalse );
         if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_GRABRIGHT ) )
-          chr_grab_stuff( chr_ref, SLOT_RIGHT, bfalse );
+          chr_grab_stuff( gs, chr_ref, SLOT_RIGHT, bfalse );
         if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_CHARLEFT ) )
-          chr_grab_stuff( chr_ref, SLOT_LEFT, btrue );
+          chr_grab_stuff( gs, chr_ref, SLOT_LEFT, btrue );
         if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_CHARRIGHT ) )
-          chr_grab_stuff( chr_ref, SLOT_RIGHT, btrue );
+          chr_grab_stuff( gs, chr_ref, SLOT_RIGHT, btrue );
         if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_DROPLEFT ) )
-          detach_character_from_mount( chr_get_holdingwhich( chr_ref, SLOT_LEFT ), bfalse, btrue );
+          detach_character_from_mount( gs, chr_get_holdingwhich( chrlst, chrlst_size, chr_ref, SLOT_LEFT ), bfalse, btrue );
         if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_DROPRIGHT ) )
-          detach_character_from_mount( chr_get_holdingwhich( chr_ref, SLOT_RIGHT ), bfalse, btrue );
-        if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_POOF ) && !pchr->isplayer )
+          detach_character_from_mount( gs, chr_get_holdingwhich( chrlst, chrlst_size, chr_ref, SLOT_RIGHT ), bfalse, btrue );
+        if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_POOF ) && !chr_is_player(gs, chr_ref) )
           pchr->gopoof = btrue;
         if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_FOOTFALL ) )
         {
-          if ( INVALID_SOUND != CapList[imdl].footfallsound )
+          if ( INVALID_SOUND != caplst[imdl].footfallsound )
           {
-            float volume = ( ABS( pchr->vel.x ) +  ABS( pchr->vel.y ) ) / CapList[imdl].spd_sneak;
-            play_sound( MIN( 1.0f, volume ), pchr->pos, CapList[imdl].wavelist[CapList[imdl].footfallsound], 0, imdl, CapList[imdl].footfallsound );
+            float volume = ( ABS( pchr->vel.x ) +  ABS( pchr->vel.y ) ) / caplst[imdl].spd_sneak;
+            snd_play_sound( gs, MIN( 1.0f, volume ), pchr->pos, caplst[imdl].wavelist[caplst[imdl].footfallsound], 0, imdl, caplst[imdl].footfallsound );
           }
         }
       }
@@ -2847,7 +2759,7 @@ void move_characters( float dUpdate )
 
             pchr->anim.next = pmad->actionstart[pchr->action.now];
           }
-          else if ( VALID_CHR(imount) )
+          else if ( VALID_CHR(chrlst, imount) )
           {
             // See if the character is mounted...
             pchr->action.now = ACTION_MI;
@@ -2861,12 +2773,9 @@ void move_characters( float dUpdate )
 
     };
 
-
-
     // Do "Be careful!" delay
     pchr->carefultime -= dUpdate;
     if ( pchr->carefultime <= 0 ) pchr->carefultime = 0;
-
 
     // Get running, walking, sneaking, or dancing, from speed
     if ( !pchr->action.keep && !pchr->action.loop )
@@ -2936,233 +2845,42 @@ void move_characters( float dUpdate )
     }
   }
 
-
 }
 
 //--------------------------------------------------------------------------------------------
-void setup_characters( char *modname )
-{
-  // ZZ> This function sets up character data, loaded from "SPAWN.TXT"
-
-  CHR_REF currentcharacter = MAXCHR, lastcharacter = MAXCHR, tmpchr = MAXCHR;
-  int passage, content, money, level, skin, tnc, localnumber = 0;
-  bool_t stat, ghost;
-  TEAM team;
-  Uint8 cTmp;
-  char *name;
-  char itislocal;
-  STRING myname, newloadname;
-  Uint16 facing, attach;
-  Uint32 slot;
-  vect3 pos;
-  FILE *fileread;
-  GRIP grip;
-
-
-  // Turn all characters off
-  free_all_characters();
-
-
-  // Turn some back on
-  currentcharacter = MAXCHR;
-  snprintf( newloadname, sizeof( newloadname ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.spawn_file );
-  fileread = fs_fileOpen( PRI_FAIL, "setup_characters()", newloadname, "r" );
-  if ( NULL == fileread )
-  {
-    log_error( "Error loading module: %s\n", newloadname );  //Something went wrong
-    return;
-  }
-
-
-  while ( fget_next_string( fileread, myname, sizeof( myname ) ) )
-  {
-    str_convert_underscores( myname, sizeof( myname ), myname );
-
-    name = myname;
-    if ( 0 == strcmp( "NONE", myname ) )
-    {
-      // Random name
-      name = NULL;
-    }
-
-    fscanf( fileread, "%d", &slot );
-
-    fscanf( fileread, "%f%f%f", &pos.x, &pos.y, &pos.z );
-    pos.x = MESH_FAN_TO_FLOAT( pos.x );
-    pos.y = MESH_FAN_TO_FLOAT( pos.y );
-    pos.z = MESH_FAN_TO_FLOAT( pos.z );
-
-    cTmp = fget_first_letter( fileread );
-    attach = MAXCHR;
-    facing = NORTH;
-    grip = GRIP_SADDLE;
-    switch ( toupper( cTmp ) )
-    {
-      case 'N':  facing = NORTH; break;
-      case 'S':  facing = SOUTH; break;
-      case 'E':  facing = EAST; break;
-      case 'W':  facing = WEST; break;
-      case 'L':  attach = currentcharacter; grip = GRIP_LEFT;      break;
-      case 'R':  attach = currentcharacter; grip = GRIP_RIGHT;     break;
-      case 'I':  attach = currentcharacter; grip = GRIP_INVENTORY; break;
-    };
-    fscanf( fileread, "%d%d%d%d%d", &money, &skin, &passage, &content, &level );
-    stat = fget_bool( fileread );
-    ghost = fget_bool( fileread );
-    team = fget_first_letter( fileread ) - 'A';
-    if ( team > TEAM_COUNT ) team = TEAM_NULL;
-
-
-    // Spawn the character
-    tmpchr = spawn_one_character( pos, slot, team, skin, facing, name, MAXCHR );
-    if ( VALID_CHR( tmpchr ) )
-    {
-      lastcharacter = tmpchr;
-
-      ChrList[lastcharacter].money += money;
-      if ( ChrList[lastcharacter].money > MAXMONEY )  ChrList[lastcharacter].money = MAXMONEY;
-      if ( ChrList[lastcharacter].money < 0 )  ChrList[lastcharacter].money = 0;
-      ChrList[lastcharacter].aistate.content = content;
-      ChrList[lastcharacter].passage = passage;
-      if ( !VALID_CHR( attach ) )
-      {
-        // Free character
-        currentcharacter = lastcharacter;
-      }
-      else
-      {
-        // Attached character
-        if ( grip == GRIP_INVENTORY )
-        {
-          // Inventory character
-          if ( pack_add_item( lastcharacter, currentcharacter ) )
-          {
-            // actually do the attachment to the inventory
-            Uint16 tmpchr = chr_get_attachedto(lastcharacter);
-            ChrList[lastcharacter].aistate.alert |= ALERT_GRABBED;                       // Make spellbooks change
-
-            // fake that it was grabbed by the left hand
-            ChrList[lastcharacter].attachedto = VALIDATE_CHR(currentcharacter);  // Make grab work
-            ChrList[lastcharacter].inwhichslot = SLOT_INVENTORY;
-            let_character_think( lastcharacter, 1.0f );                     // Empty the grabbed messages
-
-            // restore the proper attachment and slot variables
-            ChrList[lastcharacter].attachedto = MAXCHR;                          // Fix grab
-            ChrList[lastcharacter].inwhichslot = SLOT_NONE;
-          };
-        }
-        else
-        {
-          // Wielded character
-          if ( attach_character_to_mount( lastcharacter, currentcharacter, grip_to_slot( grip ) ) )
-          {
-            let_character_think( lastcharacter, 1.0f );   // Empty the grabbed messages
-          };
-        }
-      }
-
-      // Turn on player input devices
-      if ( stat )
-      {
-        if ( import.amount == 0 )
-        {
-          if ( numstat == 0 )
-          {
-            // Single player module
-            add_player( lastcharacter, numstat, INBITS_MOUS | INBITS_KEYB | INBITS_JOYA | INBITS_JOYB );
-          };
-        }
-        else if ( numstat < import.amount )
-        {
-          // Multiplayer module
-          itislocal = bfalse;
-          tnc = 0;
-          while ( tnc < localplayer_count )
-          {
-            if ( import.slot_lst[ChrList[lastcharacter].model] == localplayer_slot[tnc] )
-            {
-              itislocal = btrue;
-              localnumber = tnc;
-              break;
-            }
-            tnc++;
-          }
-
-
-          if ( itislocal )
-          {
-            // It's a local player
-            add_player( lastcharacter, numstat, localplayer_control[localnumber] );
-          }
-          else
-          {
-            // It's a remote player
-            add_player( lastcharacter, numstat, INBITS_NONE );
-          }
-        }
-
-        // Turn on the stat display
-        add_stat( lastcharacter );
-      }
-
-      // Set the starting level
-      if ( !ChrList[lastcharacter].isplayer )
-      {
-        // Let the character gain levels
-        level -= 1;
-        while ( ChrList[lastcharacter].experiencelevel < level && ChrList[lastcharacter].experience < MAXXP )
-        {
-          give_experience( lastcharacter, 100, XP_DIRECT );
-        }
-      }
-      if ( ghost )  // Outdated, should be removed.
-      {
-        // Make the character a ghost !!!BAD!!!  Can do with enchants
-        ChrList[lastcharacter].alpha_fp8 = 128;
-        ChrList[lastcharacter].bumpstrength = CapList[ChrList[lastcharacter].model].bumpstrength * FP8_TO_FLOAT( ChrList[lastcharacter].alpha_fp8 );
-        ChrList[lastcharacter].light_fp8 = 255;
-      }
-    }
-  }
-  fs_fileClose( fileread );
-
-
-
-  clear_messages();
-
-
-  // Make sure local players are displayed first
-  sort_stat();
-
-
-  // Fix tilting trees problem
-  tilt_characters_to_terrain();
-}
-
-//--------------------------------------------------------------------------------------------
-void set_one_player_latch( Uint16 player )
+bool_t PlaList_set_latch( GameState * gs, Player * ppla )
 {
   // ZZ> This function converts input readings to latch settings, so players can
   //     move around
 
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
   float newx, newy;
-  Uint16 turnsin, turncos, character;
+  Uint16 turnsin, character;
   Uint8 device;
   float dist;
   float inputx, inputy;
 
-
   // Check to see if we need to bother
-  if ( !VALID_PLA( player ) || INBITS_NONE == PlaList[player].device ) return;
+  if(NULL == ppla || !ppla->used || INBITS_NONE == ppla->device) return bfalse;
 
   // Make life easier
-  character = pla_get_character( player );
-  device    = PlaList[player].device;
+  character = ppla->chr_ref;
+  device    = ppla->device;
+
+  if( !VALID_CHR(gs->ChrList, character) )
+  {
+    ppla->used    = bfalse;
+    ppla->chr_ref = MAXCHR;
+    ppla->device  = INBITS_NONE;
+    return bfalse;
+  }
 
   // Clear the player's latch buffers
-  PlaList[player].latch.b = 0;
-  PlaList[player].latch.x *= mous.sustain;
-  PlaList[player].latch.y *= mous.sustain;
+  ppla->latch.b = 0;
+  ppla->latch.x *= mous.sustain;
+  ppla->latch.y *= mous.sustain;
 
   // Mouse routines
   if ( HAS_SOME_BITS( device, INBITS_MOUS ) && mous.on )
@@ -3189,41 +2907,40 @@ void set_one_player_latch( Uint16 player )
       newx = (-inputx * turntosin[turnsin] + inputy * turntocos[turnsin] );
     }
 
-    PlaList[player].latch.x += newx * mous.cover * 5;
-    PlaList[player].latch.y += newy * mous.cover * 5;
+    ppla->latch.x += newx * mous.cover * 5;
+    ppla->latch.y += newy * mous.cover * 5;
 
     // Read buttons
     if ( control_mouse_is_pressed( CONTROL_JUMP ) )
     {
-      if (( respawnanytime && somelocalpladead ) || ( alllocalpladead && respawnvalid ) && VALID_CHR( character ) && !ChrList[character].alive )
+      if ((( gs->modstate.respawnanytime && gs->somepladead ) || ( gs->allpladead && gs->modstate.respawnvalid )) && VALID_CHR( chrlst, character ) && !chrlst[character].alive )
       {
-        PlaList[player].latch.b |= LATCHBUTTON_RESPAWN;
+        ppla->latch.b |= LATCHBUTTON_RESPAWN;
       }
       else
       {
-        PlaList[player].latch.b |= LATCHBUTTON_JUMP;
+        ppla->latch.b |= LATCHBUTTON_JUMP;
       }
     };
 
     if ( control_mouse_is_pressed( CONTROL_LEFT_USE ) )
-      PlaList[player].latch.b |= LATCHBUTTON_LEFT;
+      ppla->latch.b |= LATCHBUTTON_LEFT;
 
     if ( control_mouse_is_pressed( CONTROL_LEFT_GET ) )
-      PlaList[player].latch.b |= LATCHBUTTON_ALTLEFT;
+      ppla->latch.b |= LATCHBUTTON_ALTLEFT;
 
     if ( control_mouse_is_pressed( CONTROL_LEFT_PACK ) )
-      PlaList[player].latch.b |= LATCHBUTTON_PACKLEFT;
+      ppla->latch.b |= LATCHBUTTON_PACKLEFT;
 
     if ( control_mouse_is_pressed( CONTROL_RIGHT_USE ) )
-      PlaList[player].latch.b |= LATCHBUTTON_RIGHT;
+      ppla->latch.b |= LATCHBUTTON_RIGHT;
 
     if ( control_mouse_is_pressed( CONTROL_RIGHT_GET ) )
-      PlaList[player].latch.b |= LATCHBUTTON_ALTRIGHT;
+      ppla->latch.b |= LATCHBUTTON_ALTRIGHT;
 
     if ( control_mouse_is_pressed( CONTROL_RIGHT_PACK ) )
-      PlaList[player].latch.b |= LATCHBUTTON_PACKRIGHT;
+      ppla->latch.b |= LATCHBUTTON_PACKRIGHT;
   }
-
 
   // Joystick A routines
   if ( HAS_SOME_BITS( device, INBITS_JOYA ) && joy[0].on )
@@ -3249,41 +2966,40 @@ void set_one_player_latch( Uint16 player )
       newx = (-inputx * turntosin[turnsin] + inputy * turntocos[turnsin] );
     }
 
-    PlaList[player].latch.x += newx * mous.cover;
-    PlaList[player].latch.y += newy * mous.cover;
+    ppla->latch.x += newx * mous.cover;
+    ppla->latch.y += newy * mous.cover;
 
     // Read buttons
     if ( control_joy_is_pressed( 0, CONTROL_JUMP ) )
     {
-      if (( respawnanytime && somelocalpladead ) || ( alllocalpladead && respawnvalid ) && VALID_CHR( character ) && !ChrList[character].alive )
+      if ((( gs->modstate.respawnanytime && gs->somepladead ) || ( gs->allpladead && gs->modstate.respawnvalid )) && VALID_CHR( chrlst, character ) && !chrlst[character].alive )
       {
-        PlaList[player].latch.b |= LATCHBUTTON_RESPAWN;
+        ppla->latch.b |= LATCHBUTTON_RESPAWN;
       }
       else
       {
-        PlaList[player].latch.b |= LATCHBUTTON_JUMP;
+        ppla->latch.b |= LATCHBUTTON_JUMP;
       }
     }
 
     if ( control_joy_is_pressed( 0, CONTROL_LEFT_USE ) )
-      PlaList[player].latch.b |= LATCHBUTTON_LEFT;
+      ppla->latch.b |= LATCHBUTTON_LEFT;
 
     if ( control_joy_is_pressed( 0, CONTROL_LEFT_GET ) )
-      PlaList[player].latch.b |= LATCHBUTTON_ALTLEFT;
+      ppla->latch.b |= LATCHBUTTON_ALTLEFT;
 
     if ( control_joy_is_pressed( 0, CONTROL_LEFT_PACK ) )
-      PlaList[player].latch.b |= LATCHBUTTON_PACKLEFT;
+      ppla->latch.b |= LATCHBUTTON_PACKLEFT;
 
     if ( control_joy_is_pressed( 0, CONTROL_RIGHT_USE ) )
-      PlaList[player].latch.b |= LATCHBUTTON_RIGHT;
+      ppla->latch.b |= LATCHBUTTON_RIGHT;
 
     if ( control_joy_is_pressed( 0, CONTROL_RIGHT_GET ) )
-      PlaList[player].latch.b |= LATCHBUTTON_ALTRIGHT;
+      ppla->latch.b |= LATCHBUTTON_ALTRIGHT;
 
     if ( control_joy_is_pressed( 0, CONTROL_RIGHT_PACK ) )
-      PlaList[player].latch.b |= LATCHBUTTON_PACKRIGHT;
+      ppla->latch.b |= LATCHBUTTON_PACKRIGHT;
   }
-
 
   // Joystick B routines
   if ( HAS_SOME_BITS( device, INBITS_JOYB ) && joy[1].on )
@@ -3309,39 +3025,39 @@ void set_one_player_latch( Uint16 player )
       newx = (-inputx * turntosin[turnsin] + inputy * turntocos[turnsin] );
     }
 
-    PlaList[player].latch.x += newx * mous.cover;
-    PlaList[player].latch.y += newy * mous.cover;
+    ppla->latch.x += newx * mous.cover;
+    ppla->latch.y += newy * mous.cover;
 
     // Read buttons
     if ( control_joy_is_pressed( 1, CONTROL_JUMP ) )
     {
-      if (( respawnanytime && somelocalpladead ) || ( alllocalpladead && respawnvalid ) && VALID_CHR( character ) && !ChrList[character].alive )
+      if ((( gs->modstate.respawnanytime && gs->somepladead ) || ( gs->allpladead && gs->modstate.respawnvalid )) && VALID_CHR( chrlst, character ) && !chrlst[character].alive )
       {
-        PlaList[player].latch.b |= LATCHBUTTON_RESPAWN;
+        ppla->latch.b |= LATCHBUTTON_RESPAWN;
       }
       else
       {
-        PlaList[player].latch.b |= LATCHBUTTON_JUMP;
+        ppla->latch.b |= LATCHBUTTON_JUMP;
       }
     }
 
     if ( control_joy_is_pressed( 1, CONTROL_LEFT_USE ) )
-      PlaList[player].latch.b |= LATCHBUTTON_LEFT;
+      ppla->latch.b |= LATCHBUTTON_LEFT;
 
     if ( control_joy_is_pressed( 1, CONTROL_LEFT_GET ) )
-      PlaList[player].latch.b |= LATCHBUTTON_ALTLEFT;
+      ppla->latch.b |= LATCHBUTTON_ALTLEFT;
 
     if ( control_joy_is_pressed( 1, CONTROL_LEFT_PACK ) )
-      PlaList[player].latch.b |= LATCHBUTTON_PACKLEFT;
+      ppla->latch.b |= LATCHBUTTON_PACKLEFT;
 
     if ( control_joy_is_pressed( 1, CONTROL_RIGHT_USE ) )
-      PlaList[player].latch.b |= LATCHBUTTON_RIGHT;
+      ppla->latch.b |= LATCHBUTTON_RIGHT;
 
     if ( control_joy_is_pressed( 1, CONTROL_RIGHT_GET ) )
-      PlaList[player].latch.b |= LATCHBUTTON_ALTRIGHT;
+      ppla->latch.b |= LATCHBUTTON_ALTRIGHT;
 
     if ( control_joy_is_pressed( 1, CONTROL_RIGHT_PACK ) )
-      PlaList[player].latch.b |= LATCHBUTTON_PACKRIGHT;
+      ppla->latch.b |= LATCHBUTTON_PACKRIGHT;
   }
 
   // Keyboard routines
@@ -3363,58 +3079,60 @@ void set_one_player_latch( Uint16 player )
       inputx /= dist;
       inputy /= dist;
     }
-    if ( CData.autoturncamera == 255 && numlocalpla == 1 )  inputx = 0;
+    if ( CData.autoturncamera == 255 && gs->al_cs->loc_pla_count == 1 )  inputx = 0;
 
     turnsin = ((Uint16)GCamera.turn_lr) >> 2;
     newy = ( inputx * turntocos[turnsin] + inputy * turntosin[turnsin] );
     newx = (-inputx * turntosin[turnsin] + inputy * turntocos[turnsin] );
 
-    PlaList[player].latch.x += newx * mous.cover;
-    PlaList[player].latch.y += newy * mous.cover;
+    ppla->latch.x += newx * mous.cover;
+    ppla->latch.y += newy * mous.cover;
 
     // Read buttons
     if ( control_key_is_pressed( CONTROL_JUMP ) )
     {
-      if (( respawnanytime && somelocalpladead ) || ( alllocalpladead && respawnvalid ) && VALID_CHR( character ) && !ChrList[character].alive )
+      if ((( gs->modstate.respawnanytime && gs->somepladead ) || ( gs->allpladead && gs->modstate.respawnvalid )) && VALID_CHR( chrlst, character ) && !chrlst[character].alive )
       {
-        PlaList[player].latch.b |= LATCHBUTTON_RESPAWN;
+        ppla->latch.b |= LATCHBUTTON_RESPAWN;
       }
       else
       {
-        PlaList[player].latch.b |= LATCHBUTTON_JUMP;
+        ppla->latch.b |= LATCHBUTTON_JUMP;
       }
     }
 
     if ( control_key_is_pressed( CONTROL_LEFT_USE ) )
-      PlaList[player].latch.b |= LATCHBUTTON_LEFT;
+      ppla->latch.b |= LATCHBUTTON_LEFT;
 
     if ( control_key_is_pressed( CONTROL_LEFT_GET ) )
-      PlaList[player].latch.b |= LATCHBUTTON_ALTLEFT;
+      ppla->latch.b |= LATCHBUTTON_ALTLEFT;
 
     if ( control_key_is_pressed( CONTROL_LEFT_PACK ) )
-      PlaList[player].latch.b |= LATCHBUTTON_PACKLEFT;
+      ppla->latch.b |= LATCHBUTTON_PACKLEFT;
 
     if ( control_key_is_pressed( CONTROL_RIGHT_USE ) )
-      PlaList[player].latch.b |= LATCHBUTTON_RIGHT;
+      ppla->latch.b |= LATCHBUTTON_RIGHT;
 
     if ( control_key_is_pressed( CONTROL_RIGHT_GET ) )
-      PlaList[player].latch.b |= LATCHBUTTON_ALTRIGHT;
+      ppla->latch.b |= LATCHBUTTON_ALTRIGHT;
 
     if ( control_key_is_pressed( CONTROL_RIGHT_PACK ) )
-      PlaList[player].latch.b |= LATCHBUTTON_PACKRIGHT;
+      ppla->latch.b |= LATCHBUTTON_PACKRIGHT;
   }
 
-  dist = PlaList[player].latch.x * PlaList[player].latch.x + PlaList[player].latch.y * PlaList[player].latch.y;
+  dist = ppla->latch.x * ppla->latch.x + ppla->latch.y * ppla->latch.y;
   if ( dist > 1 )
   {
     dist = sqrt( dist );
-    PlaList[player].latch.x /= dist;
-    PlaList[player].latch.y /= dist;
+    ppla->latch.x /= dist;
+    ppla->latch.y /= dist;
   };
+
+  return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-void set_local_latches( void )
+void set_local_latches( GameState * gs )
 {
   // ZZ> This function emulates AI thinkin' by setting latches from input devices
 
@@ -3423,69 +3141,80 @@ void set_local_latches( void )
   cnt = 0;
   while ( cnt < MAXPLAYER )
   {
-    set_one_player_latch( cnt );
+    PlaList_set_latch( gs, gs->PlaList + cnt );
     cnt++;
   }
 }
 
 //--------------------------------------------------------------------------------------------
-float get_one_level( CHR_REF chr_ref )
+float get_one_level( GameState * gs, CHR_REF chr_ref )
 {
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
   float level;
   Uint16 platform;
 
   // return a default for invalid characters
-  if ( !VALID_CHR( chr_ref ) ) return bfalse;
+  if ( !VALID_CHR( chrlst, chr_ref ) ) return bfalse;
 
   // return the cached value for pre-calculated characters
-  if ( ChrList[chr_ref].levelvalid ) return ChrList[chr_ref].level;
+  if ( chrlst[chr_ref].levelvalid ) return chrlst[chr_ref].level;
 
   //get the base level
-  ChrList[chr_ref].onwhichfan = mesh_get_fan( ChrList[chr_ref].pos );
-  level = mesh_get_level( ChrList[chr_ref].onwhichfan, ChrList[chr_ref].pos.x, ChrList[chr_ref].pos.y, ChrList[chr_ref].waterwalk );
+  chrlst[chr_ref].onwhichfan = mesh_get_fan( gs, chrlst[chr_ref].pos );
+  level = mesh_get_level( gs, chrlst[chr_ref].onwhichfan, chrlst[chr_ref].pos.x, chrlst[chr_ref].pos.y, chrlst[chr_ref].waterwalk );
 
   // if there is a platform, choose whichever is higher
-  platform = chr_get_onwhichplatform( chr_ref );
-  if ( VALID_CHR( platform ) )
+  platform = chr_get_onwhichplatform( chrlst, chrlst_size, chr_ref );
+  if ( VALID_CHR( chrlst, platform ) )
   {
-    float ftmp = ChrList[platform].bmpdata.cv.z_max;
+    float ftmp = chrlst[platform].bmpdata.cv.z_max;
     level = MAX( level, ftmp );
   }
 
-  ChrList[chr_ref].level      = level;
-  ChrList[chr_ref].levelvalid = btrue;
+  chrlst[chr_ref].level      = level;
+  chrlst[chr_ref].levelvalid = btrue;
 
-  return ChrList[chr_ref].level;
+  return chrlst[chr_ref].level;
 };
 
 //--------------------------------------------------------------------------------------------
-void get_all_levels( void )
+void get_all_levels( GameState * gs )
 {
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
   CHR_REF chr_ref;
 
   // Initialize all the objects
-  for ( chr_ref = 0; chr_ref < MAXCHR; chr_ref++ )
+  for ( chr_ref = 0; chr_ref < chrlst_size; chr_ref++ )
   {
-    if ( !VALID_CHR( chr_ref ) ) continue;
+    if ( !VALID_CHR( chrlst, chr_ref ) ) continue;
 
-    ChrList[chr_ref].onwhichfan = INVALID_FAN;
-    ChrList[chr_ref].levelvalid = bfalse;
+    chrlst[chr_ref].onwhichfan = INVALID_FAN;
+    chrlst[chr_ref].levelvalid = bfalse;
   };
 
   // do the levels
-  for ( chr_ref = 0; chr_ref < MAXCHR; chr_ref++ )
+  for ( chr_ref = 0; chr_ref < chrlst_size; chr_ref++ )
   {
-    if ( !VALID_CHR( chr_ref ) || ChrList[chr_ref].levelvalid ) continue;
-    get_one_level( chr_ref );
+    if ( !VALID_CHR( chrlst, chr_ref ) || chrlst[chr_ref].levelvalid ) continue;
+    get_one_level( gs, chr_ref );
   }
 
 }
 
-
 //--------------------------------------------------------------------------------------------
-void make_onwhichfan( void )
+void make_onwhichfan( GameState * gs )
 {
   // ZZ> This function figures out which fan characters are on and sets their level
+
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Prt  * prtlst      = gs->PrtList;
+  size_t prtlst_size = MAXPRT;
 
   CHR_REF chr_ref;
   int ripand;
@@ -3494,119 +3223,117 @@ void make_onwhichfan( void )
   bool_t is_inwater    = bfalse;
   bool_t is_underwater = bfalse;
 
+  // Get levels every update
+  get_all_levels(gs);
 
   // Get levels every update
-  get_all_levels();
-
-  // Get levels every update
-  for ( chr_ref = 0; chr_ref < MAXCHR; chr_ref++ )
+  for ( chr_ref = 0; chr_ref < chrlst_size; chr_ref++ )
   {
-    if ( !VALID_CHR( chr_ref ) ) continue;
+    if ( !VALID_CHR( chrlst, chr_ref ) ) continue;
 
     is_inwater = is_underwater = bfalse;
     splashstrength = 0.0f;
     ripplesize = 0.0f;
-    if ( INVALID_FAN != ChrList[chr_ref].onwhichfan && mesh_has_some_bits( ChrList[chr_ref].onwhichfan, MPDFX_WATER ) )
+    if ( INVALID_FAN != chrlst[chr_ref].onwhichfan && mesh_has_some_bits( gs->Mesh_Mem.fanlst, chrlst[chr_ref].onwhichfan, MPDFX_WATER ) )
     {
-      splashstrength = ChrList[chr_ref].bmpdata.calc_size_big / 45.0f * ChrList[chr_ref].bmpdata.calc_size / 30.0f;
-      if ( ChrList[chr_ref].vel.z > 0.0f ) splashstrength *= 0.5;
-      splashstrength *= ABS( ChrList[chr_ref].vel.z ) / 10.0f;
-      splashstrength *= ChrList[chr_ref].bumpstrength;
-      if ( ChrList[chr_ref].pos.z < GWater.surfacelevel )
+      splashstrength = chrlst[chr_ref].bmpdata.calc_size_big / 45.0f * chrlst[chr_ref].bmpdata.calc_size / 30.0f;
+      if ( chrlst[chr_ref].vel.z > 0.0f ) splashstrength *= 0.5;
+      splashstrength *= ABS( chrlst[chr_ref].vel.z ) / 10.0f;
+      splashstrength *= chrlst[chr_ref].bumpstrength;
+      if ( chrlst[chr_ref].pos.z < gs->water.surfacelevel )
       {
         is_inwater = btrue;
       }
 
-      ripplesize = ( ChrList[chr_ref].bmpdata.calc_size + ChrList[chr_ref].bmpdata.calc_size_big ) * 0.5f;
-      if ( ChrList[chr_ref].bmpdata.cv.z_max < GWater.surfacelevel )
+      ripplesize = ( chrlst[chr_ref].bmpdata.calc_size + chrlst[chr_ref].bmpdata.calc_size_big ) * 0.5f;
+      if ( chrlst[chr_ref].bmpdata.cv.z_max < gs->water.surfacelevel )
       {
         is_underwater = btrue;
       }
 
       // scale the ripple strength
-      ripplestrength = - ( ChrList[chr_ref].bmpdata.cv.z_min - GWater.surfacelevel ) * ( ChrList[chr_ref].bmpdata.cv.z_max - GWater.surfacelevel );
-      ripplestrength /= 0.75f * ChrList[chr_ref].bmpdata.calc_height * ChrList[chr_ref].bmpdata.calc_height;
-      ripplestrength *= ripplesize / 37.5f * ChrList[chr_ref].bumpstrength;
+      ripplestrength = - ( chrlst[chr_ref].bmpdata.cv.z_min - gs->water.surfacelevel ) * ( chrlst[chr_ref].bmpdata.cv.z_max - gs->water.surfacelevel );
+      ripplestrength /= 0.75f * chrlst[chr_ref].bmpdata.calc_height * chrlst[chr_ref].bmpdata.calc_height;
+      ripplestrength *= ripplesize / 37.5f * chrlst[chr_ref].bumpstrength;
       ripplestrength = MAX( 0.0f, ripplestrength );
     };
 
     // splash stuff
-    if ( ChrList[chr_ref].inwater != is_inwater && splashstrength > 0.1f )
+    if ( chrlst[chr_ref].inwater != is_inwater && splashstrength > 0.1f )
     {
-      vect3 prt_pos = {ChrList[chr_ref].pos.x, ChrList[chr_ref].pos.y, GWater.surfacelevel + RAISE};
+      vect3 prt_pos = {chrlst[chr_ref].pos.x, chrlst[chr_ref].pos.y, gs->water.surfacelevel + RAISE};
       Uint16 prt_index;
 
       // Splash
-      prt_index = spawn_one_particle( splashstrength, prt_pos, 0, MAXMODEL, PRTPIP_SPLASH, MAXCHR, GRIP_LAST, TEAM_NULL, MAXCHR, 0, MAXCHR );
+      prt_index = spawn_one_particle( gs, splashstrength, prt_pos, 0, MAXMODEL, PRTPIP_SPLASH, MAXCHR, GRIP_LAST, TEAM_NULL, MAXCHR, 0, MAXCHR );
 
       // scale the size of the particle
-      PrtList[prt_index].size_fp8 *= splashstrength;
+      prtlst[prt_index].size_fp8 *= splashstrength;
 
       // scale the animation speed so that velocity appears the same
-      if ( 0 != PrtList[prt_index].imageadd_fp8 && 0 != PrtList[prt_index].sizeadd_fp8 )
+      if ( 0 != prtlst[prt_index].imageadd_fp8 && 0 != prtlst[prt_index].sizeadd_fp8 )
       {
         splashstrength = sqrt( splashstrength );
-        PrtList[prt_index].imageadd_fp8 /= splashstrength;
-        PrtList[prt_index].sizeadd_fp8  /= splashstrength;
+        prtlst[prt_index].imageadd_fp8 /= splashstrength;
+        prtlst[prt_index].sizeadd_fp8  /= splashstrength;
       }
       else
       {
-        PrtList[prt_index].imageadd_fp8 /= splashstrength;
-        PrtList[prt_index].sizeadd_fp8  /= splashstrength;
+        prtlst[prt_index].imageadd_fp8 /= splashstrength;
+        prtlst[prt_index].sizeadd_fp8  /= splashstrength;
       }
 
-
-      ChrList[chr_ref].inwater = is_inwater;
-      if ( GWater.iswater && is_inwater )
+      chrlst[chr_ref].inwater = is_inwater;
+      if ( gs->water.iswater && is_inwater )
       {
-        ChrList[chr_ref].aistate.alert |= ALERT_INWATER;
+        chrlst[chr_ref].aistate.alert |= ALERT_INWATER;
       }
     }
     else if ( is_inwater && ripplestrength > 0.0f )
     {
       // Ripples
-      ripand = ((( int ) ChrList[chr_ref].vel.x ) != 0 ) | ((( int ) ChrList[chr_ref].vel.y ) != 0 );
+      ripand = ((( int ) chrlst[chr_ref].vel.x ) != 0 ) | ((( int ) chrlst[chr_ref].vel.y ) != 0 );
       ripand = RIPPLEAND >> ripand;
-      if ( 0 == ( wldframe&ripand ) )
+      if ( 0 == ( gs->wld_frame&ripand ) )
       {
-        vect3  prt_pos = {ChrList[chr_ref].pos.x, ChrList[chr_ref].pos.y, GWater.surfacelevel};
+        vect3  prt_pos = {chrlst[chr_ref].pos.x, chrlst[chr_ref].pos.y, gs->water.surfacelevel};
         Uint16 prt_index;
 
-        prt_index = spawn_one_particle( ripplestrength, prt_pos, 0, MAXMODEL, PRTPIP_RIPPLE, MAXCHR, GRIP_LAST, TEAM_NULL, MAXCHR, 0, MAXCHR );
+        prt_index = spawn_one_particle( gs, ripplestrength, prt_pos, 0, MAXMODEL, PRTPIP_RIPPLE, MAXCHR, GRIP_LAST, TEAM_NULL, MAXCHR, 0, MAXCHR );
 
         // scale the size of the particle
-        PrtList[prt_index].size_fp8 *= ripplesize;
+        prtlst[prt_index].size_fp8 *= ripplesize;
 
         // scale the animation speed so that velocity appears the same
-        if ( 0 != PrtList[prt_index].imageadd_fp8 && 0 != PrtList[prt_index].sizeadd_fp8 )
+        if ( 0 != prtlst[prt_index].imageadd_fp8 && 0 != prtlst[prt_index].sizeadd_fp8 )
         {
           ripplesize = sqrt( ripplesize );
-          PrtList[prt_index].imageadd_fp8 /= ripplesize;
-          PrtList[prt_index].sizeadd_fp8  /= ripplesize;
+          prtlst[prt_index].imageadd_fp8 /= ripplesize;
+          prtlst[prt_index].sizeadd_fp8  /= ripplesize;
         }
         else
         {
-          PrtList[prt_index].imageadd_fp8 /= ripplesize;
-          PrtList[prt_index].sizeadd_fp8  /= ripplesize;
+          prtlst[prt_index].imageadd_fp8 /= ripplesize;
+          prtlst[prt_index].sizeadd_fp8  /= ripplesize;
         }
       }
     }
 
     // damage tile stuff
-    if ( mesh_has_some_bits( ChrList[chr_ref].onwhichfan, MPDFX_DAMAGE ) && ChrList[chr_ref].pos.z <= GWater.surfacelevel + DAMAGERAISE )
+    if ( mesh_has_some_bits( gs->Mesh_Mem.fanlst, chrlst[chr_ref].onwhichfan, MPDFX_DAMAGE ) && chrlst[chr_ref].pos.z <= gs->water.surfacelevel + DAMAGERAISE )
     {
       Uint8 loc_damagemodifier;
       CHR_REF imount;
 
       // augment the rider's damage immunity with the mount's
-      loc_damagemodifier = ChrList[chr_ref].skin.damagemodifier_fp8[GTile_Dam.type];
-      imount = chr_get_attachedto(chr_ref);
-      if ( VALID_CHR(imount) )
+      loc_damagemodifier = chrlst[chr_ref].skin.damagemodifier_fp8[GTile_Dam.type];
+      imount = chr_get_attachedto(chrlst, chrlst_size, chr_ref);
+      if ( VALID_CHR(chrlst, imount) )
       {
         Uint8 modbits1, modbits2, modshift1, modshift2;
         Uint8 tmp_damagemodifier;
 
-        tmp_damagemodifier = ChrList[imount].skin.damagemodifier_fp8[GTile_Dam.type];
+        tmp_damagemodifier = chrlst[imount].skin.damagemodifier_fp8[GTile_Dam.type];
 
         modbits1  = loc_damagemodifier & (~DAMAGE_SHIFT);
         modshift1 = loc_damagemodifier & DAMAGE_SHIFT;
@@ -3618,93 +3345,112 @@ void make_onwhichfan( void )
       }
 
       // DAMAGE_SHIFT means they're pretty well immune
-      if ( !HAS_ALL_BITS(loc_damagemodifier, DAMAGE_SHIFT ) && !ChrList[chr_ref].invictus )  
+      if ( !HAS_ALL_BITS(loc_damagemodifier, DAMAGE_SHIFT ) && !chrlst[chr_ref].invictus )  
       {
-        if ( ChrList[chr_ref].damagetime == 0 )
+        if ( chrlst[chr_ref].damagetime == 0 )
         {
           PAIR ptemp = {GTile_Dam.amount, 1};
-          damage_character( chr_ref, 32768, &ptemp, GTile_Dam.type, TEAM_DAMAGE, chr_get_aibumplast( chr_ref ), DAMFX_BLOC | DAMFX_ARMO );
-          ChrList[chr_ref].damagetime = DELAY_DAMAGETILE;
+          damage_character( gs, chr_ref, 32768, &ptemp, GTile_Dam.type, TEAM_DAMAGE, chr_get_aibumplast( chrlst, chrlst_size, chrlst + chr_ref ), DAMFX_BLOC | DAMFX_ARMO );
+          chrlst[chr_ref].damagetime = DELAY_DAMAGETILE;
         }
 
-        if ( GTile_Dam.parttype != MAXPRTPIP && ( wldframe&GTile_Dam.partand ) == 0 )
+        if ( GTile_Dam.parttype != MAXPRTPIP && ( gs->wld_frame&GTile_Dam.partand ) == 0 )
         {
-          spawn_one_particle( 1.0f, ChrList[chr_ref].pos,
+          spawn_one_particle( gs, 1.0f, chrlst[chr_ref].pos,
                               0, MAXMODEL, GTile_Dam.parttype, MAXCHR, GRIP_LAST, TEAM_NULL, MAXCHR, 0, MAXCHR );
         }
 
       }
 
-      if ( ChrList[chr_ref].reaffirmdamagetype == GTile_Dam.type )
+      if ( chrlst[chr_ref].reaffirmdamagetype == GTile_Dam.type )
       {
-        if (( wldframe&TILEREAFFIRMAND ) == 0 )
-          reaffirm_attached_particles( chr_ref );
+        if (( gs->wld_frame&TILEREAFFIRMAND ) == 0 )
+          reaffirm_attached_particles( gs, chr_ref );
       }
     }
-
 
   }
 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t remove_from_platform( CHR_REF object_ref )
+bool_t remove_from_platform( GameState * gs, CHR_REF object_ref )
 {
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
+
   Uint16 platform;
-  if ( !VALID_CHR( object_ref ) ) return bfalse;
+  if ( !VALID_CHR( chrlst, object_ref ) ) return bfalse;
 
-  platform  = chr_get_onwhichplatform( object_ref );
-  if ( !VALID_CHR( platform ) ) return bfalse;
+  platform  = chr_get_onwhichplatform( chrlst, chrlst_size, object_ref );
+  if ( !VALID_CHR( chrlst, platform ) ) return bfalse;
 
-  if ( ChrList[object_ref].weight > 0.0f )
-    ChrList[platform].weight -= ChrList[object_ref].weight;
+  if ( chrlst[object_ref].weight > 0.0f )
+    chrlst[platform].weight -= chrlst[object_ref].weight;
 
-  ChrList[object_ref].onwhichplatform = MAXCHR;
-  ChrList[object_ref].level           = ChrList[platform].level;
+  chrlst[object_ref].onwhichplatform = MAXCHR;
+  chrlst[object_ref].level           = chrlst[platform].level;
 
-  if ( ChrList[object_ref].isplayer && CData.DevMode )
+  if ( chr_is_player(gs, object_ref) && CData.DevMode )
   {
-    debug_message( 1, "removed %s(%s) from platform", ChrList[object_ref].name, CapList[ChrList[object_ref].model].classname );
+    debug_message( 1, "removed %s(%s) from platform", chrlst[object_ref].name, caplst[chrlst[object_ref].model].classname );
   }
-
 
   return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t attach_to_platform( CHR_REF object_ref, Uint16 platform )
+bool_t attach_to_platform( GameState * gs, CHR_REF object_ref, Uint16 platform )
 {
-  remove_from_platform( object_ref );
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
 
-  if ( !VALID_CHR( object_ref ) || !VALID_CHR( platform ) ) return
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
+
+  remove_from_platform( gs, object_ref );
+
+  if ( !VALID_CHR( chrlst, object_ref ) || !VALID_CHR( chrlst, platform ) ) return
       bfalse;
 
-  if ( !ChrList[platform].bmpdata.calc_is_platform )
+  if ( !chrlst[platform].bmpdata.calc_is_platform )
     return bfalse;
 
-  ChrList[object_ref].onwhichplatform  = platform;
-  if ( ChrList[object_ref].weight > 0.0f )
+  chrlst[object_ref].onwhichplatform  = platform;
+  if ( chrlst[object_ref].weight > 0.0f )
   {
-    ChrList[platform].holdingweight += ChrList[object_ref].weight;
+    chrlst[platform].holdingweight += chrlst[object_ref].weight;
   }
 
-  ChrList[object_ref].jumpready  = btrue;
-  ChrList[object_ref].jumpnumber = ChrList[object_ref].jumpnumberreset;
+  chrlst[object_ref].jumpready  = btrue;
+  chrlst[object_ref].jumpnumber = chrlst[object_ref].jumpnumberreset;
 
-  ChrList[object_ref].level = ChrList[platform].bmpdata.cv.z_max;
+  chrlst[object_ref].level = chrlst[platform].bmpdata.cv.z_max;
 
-  if ( ChrList[object_ref].isplayer )
+  if ( chr_is_player(gs, object_ref) )
   {
-    debug_message( 1, "attached %s(%s) to platform", ChrList[object_ref].name, CapList[ChrList[object_ref].model].classname );
+    debug_message( 1, "attached %s(%s) to platform", chrlst[object_ref].name, caplst[chrlst[object_ref].model].classname );
   }
 
   return btrue;
 };
 
 //--------------------------------------------------------------------------------------------
-void create_bumplists()
+void create_bumplists(GameState * gs)
 {
-  CHR_REF chr_ref, entry_ref;
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
+
+  Prt  * prtlst      = gs->PrtList;
+  size_t prtlst_size = MAXPRT;
+
+  CHR_REF chr_ref;
   PRT_REF prt_ref;
   Uint32  fanblock;
   Uint8   hidestate;
@@ -3713,28 +3459,28 @@ void create_bumplists()
   reset_bumplist();
 
   // Fill 'em back up
-  for ( chr_ref = 0; chr_ref < MAXCHR; chr_ref++ )
+  for ( chr_ref = 0; chr_ref < chrlst_size; chr_ref++ )
   {
     int ix, ix_min, ix_max;
     int iy, iy_min, iy_max;
 
     // ignore invalid characters and objects that are packed away
-    if ( !VALID_CHR( chr_ref ) || chr_in_pack( chr_ref ) || ChrList[chr_ref].gopoof ) continue;
+    if ( !VALID_CHR( chrlst, chr_ref ) || chr_in_pack( chrlst, chrlst_size, chr_ref ) || chrlst[chr_ref].gopoof ) continue;
 
     // do not include hidden objects
-    hidestate = CapList[ChrList[chr_ref].model].hidestate;
-    if ( hidestate != NOHIDE && hidestate == ChrList[chr_ref].aistate.state ) continue;
+    hidestate = caplst[chrlst[chr_ref].model].hidestate;
+    if ( hidestate != NOHIDE && hidestate == chrlst[chr_ref].aistate.state ) continue;
 
-    ix_min = MESH_FLOAT_TO_BLOCK( mesh_clip_x( ChrList[chr_ref].bmpdata.cv.x_min ) );
-    ix_max = MESH_FLOAT_TO_BLOCK( mesh_clip_x( ChrList[chr_ref].bmpdata.cv.x_max ) );
-    iy_min = MESH_FLOAT_TO_BLOCK( mesh_clip_y( ChrList[chr_ref].bmpdata.cv.y_min ) );
-    iy_max = MESH_FLOAT_TO_BLOCK( mesh_clip_y( ChrList[chr_ref].bmpdata.cv.y_max ) );
+    ix_min = MESH_FLOAT_TO_BLOCK( mesh_clip_x( &(gs->mesh), chrlst[chr_ref].bmpdata.cv.x_min ) );
+    ix_max = MESH_FLOAT_TO_BLOCK( mesh_clip_x( &(gs->mesh), chrlst[chr_ref].bmpdata.cv.x_max ) );
+    iy_min = MESH_FLOAT_TO_BLOCK( mesh_clip_y( &(gs->mesh), chrlst[chr_ref].bmpdata.cv.y_min ) );
+    iy_max = MESH_FLOAT_TO_BLOCK( mesh_clip_y( &(gs->mesh), chrlst[chr_ref].bmpdata.cv.y_max ) );
 
     for ( ix = ix_min; ix <= ix_max; ix++ )
     {
       for ( iy = iy_min; iy <= iy_max; iy++ )
       {
-        fanblock = mesh_convert_block( ix, iy );
+        fanblock = mesh_convert_block( &(gs->mesh), ix, iy );
         if ( INVALID_FAN == fanblock ) continue;
 
         // Insert before any other characters on the block
@@ -3743,13 +3489,12 @@ void create_bumplists()
     }
   };
 
-
-  for ( prt_ref = 0; prt_ref < MAXPRT; prt_ref++ )
+  for ( prt_ref = 0; prt_ref < prtlst_size; prt_ref++ )
   {
     // ignore invalid particles
-    if ( !VALID_PRT( prt_ref ) || PrtList[prt_ref].gopoof ) continue;
+    if ( !VALID_PRT( prtlst, prt_ref ) || prtlst[prt_ref].gopoof ) continue;
 
-    fanblock = mesh_get_block( PrtList[prt_ref].pos );
+    fanblock = mesh_get_block( &(gs->mesh), prtlst[prt_ref].pos );
     if ( INVALID_FAN == fanblock ) continue;
 
     // Insert before any other particles on the block
@@ -3759,7 +3504,6 @@ void create_bumplists()
   bumplist.filled = btrue;
 };
 
-
 //--------------------------------------------------------------------------------------------
 bool_t find_collision_volume( vect3 * ppa, CVolume * pva, vect3 * ppb, CVolume * pvb, bool_t exclude_vert, CVolume * pcv)
 {
@@ -3768,7 +3512,6 @@ bool_t find_collision_volume( vect3 * ppa, CVolume * pva, vect3 * ppb, CVolume *
   float ftmp;
 
   if( NULL == ppa || NULL == pva || NULL == ppb || NULL == pvb ) return bfalse;
-
 
   //---- do the preliminary collision test ----
 
@@ -3798,7 +3541,6 @@ bool_t find_collision_volume( vect3 * ppa, CVolume * pva, vect3 * ppb, CVolume *
   //---- limit the collision volume ----
 
   tmp_cv = cv;
-
 
   //=================================================================
   // treat the edges of the square bbox as line segments and clip them using the
@@ -3880,7 +3622,6 @@ bool_t find_collision_volume( vect3 * ppa, CVolume * pva, vect3 * ppb, CVolume *
       bexcluded = y_min >= y_max;
     }
 
-
     if(!bexcluded)
     {
       ftmp = cv.yx_min + cv.x_max;
@@ -3936,7 +3677,6 @@ bool_t find_collision_volume( vect3 * ppa, CVolume * pva, vect3 * ppb, CVolume *
       bexcluded = x_min >= x_max;
     }
 
-
     if(!bexcluded)
     {
       ftmp = -cv.yx_max + cv.y_min;
@@ -3965,7 +3705,6 @@ bool_t find_collision_volume( vect3 * ppa, CVolume * pva, vect3 * ppb, CVolume *
       bfound = btrue;
     }
 
-
   }
 
   //=================================================================
@@ -3989,7 +3728,6 @@ bool_t find_collision_volume( vect3 * ppa, CVolume * pva, vect3 * ppb, CVolume *
 
       bexcluded = x_min >= x_max;
     }
-
 
     if(!bexcluded)
     {
@@ -4020,7 +3758,6 @@ bool_t find_collision_volume( vect3 * ppa, CVolume * pva, vect3 * ppb, CVolume *
     }
   }
 
-
   if(NULL != pcv)
   {
     *pcv = tmp_cv;
@@ -4029,21 +3766,22 @@ bool_t find_collision_volume( vect3 * ppa, CVolume * pva, vect3 * ppb, CVolume *
   return btrue;
 }
 
-
-
 //--------------------------------------------------------------------------------------------
-bool_t chr_is_inside( CHR_REF chra_ref, float lerp, CHR_REF chrb_ref, bool_t exclude_vert )
+bool_t chr_is_inside( GameState * gs, CHR_REF chra_ref, float lerp, CHR_REF chrb_ref, bool_t exclude_vert )
 {
   // BB > Find whether an active point of chra_ref is "inside" chrb_ref's bounding volume.
   //      Abstraction of the old algorithm to see whether a character cpold be "above" another
 
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
   float ftmp;
   BData * ba, * bb;
 
-  if( !VALID_CHR(chra_ref) || !VALID_CHR(chrb_ref) ) return bfalse;
+  if( !VALID_CHR(chrlst, chra_ref) || !VALID_CHR(chrlst, chrb_ref) ) return bfalse;
 
-  ba = &(ChrList[chra_ref].bmpdata);
-  bb = &(ChrList[chrb_ref].bmpdata);
+  ba = &(chrlst[chra_ref].bmpdata);
+  bb = &(chrlst[chrb_ref].bmpdata);
 
   //---- vertical ----
   if( !exclude_vert )
@@ -4073,7 +3811,7 @@ bool_t chr_is_inside( CHR_REF chra_ref, float lerp, CHR_REF chrb_ref, bool_t exc
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_do_collision( CHR_REF chra_ref, CHR_REF chrb_ref, bool_t exclude_height, CVolume * cv)
+bool_t chr_do_collision( GameState * gs, CHR_REF chra_ref, CHR_REF chrb_ref, bool_t exclude_height, CVolume * cv)
 {
   // BB > use the bounding boxes to determine whether a collision has occurred.
   //      there are currently 3 levels of collision detection.
@@ -4082,44 +3820,47 @@ bool_t chr_do_collision( CHR_REF chra_ref, CHR_REF chrb_ref, bool_t exclude_heig
   //      level 3 - an "octree" of bounding bounding boxes calculated from the actual trianglr positions
   //  the level is chosen by the global variable chrcollisionlevel
 
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
   bool_t retval = bfalse;
 
   // set the minimum bumper level for object a
-  if(ChrList[chra_ref].bmpdata.cv.level < 1)
+  if(chrlst[chra_ref].bmpdata.cv.level < 1)
   {
-    chr_calculate_bumpers(chra_ref, 1);
+    chr_calculate_bumpers( gs->MadList, MAXMODEL, chrlst + chra_ref, 1);
   }
 
   // set the minimum bumper level for object b
-  if(ChrList[chrb_ref].bmpdata.cv.level < 1)
+  if(chrlst[chrb_ref].bmpdata.cv.level < 1)
   {
-    chr_calculate_bumpers(chrb_ref, 1);
+    chr_calculate_bumpers( gs->MadList, MAXMODEL, chrlst + chrb_ref, 1);
   }
 
   // find the simplest collision volume
-  find_collision_volume( &(ChrList[chra_ref].pos), &(ChrList[chra_ref].bmpdata.cv), &(ChrList[chrb_ref].pos), &(ChrList[chrb_ref].bmpdata.cv), exclude_height, cv);
+  find_collision_volume( &(chrlst[chra_ref].pos), &(chrlst[chra_ref].bmpdata.cv), &(chrlst[chrb_ref].pos), &(chrlst[chrb_ref].bmpdata.cv), exclude_height, cv);
 
   if ( chrcollisionlevel>1 && retval )
   {
     bool_t was_refined = bfalse;
 
     // refine the bumper
-    if(ChrList[chra_ref].bmpdata.cv.level < 2)
+    if(chrlst[chra_ref].bmpdata.cv.level < 2)
     {
-      chr_calculate_bumpers(chra_ref, 2);
+      chr_calculate_bumpers( gs->MadList, MAXMODEL, chrlst + chra_ref, 2);
       was_refined = btrue;
     }
 
     // refine the bumper
-    if(ChrList[chrb_ref].bmpdata.cv.level < 2)
+    if(chrlst[chrb_ref].bmpdata.cv.level < 2)
     {
-      chr_calculate_bumpers(chrb_ref, 2);
+      chr_calculate_bumpers( gs->MadList, MAXMODEL, chrlst + chrb_ref, 2);
       was_refined = btrue;
     }
 
     if(was_refined)
     {
-      retval = find_collision_volume( &(ChrList[chra_ref].pos), &(ChrList[chra_ref].bmpdata.cv), &(ChrList[chrb_ref].pos), &(ChrList[chrb_ref].bmpdata.cv), exclude_height, cv);
+      retval = find_collision_volume( &(chrlst[chra_ref].pos), &(chrlst[chra_ref].bmpdata.cv), &(chrlst[chrb_ref].pos), &(chrlst[chrb_ref].bmpdata.cv), exclude_height, cv);
     };
 
     if(chrcollisionlevel>2 && retval)
@@ -4127,21 +3868,21 @@ bool_t chr_do_collision( CHR_REF chra_ref, CHR_REF chrb_ref, bool_t exclude_heig
       was_refined = bfalse;
 
       // refine the bumper
-      if(ChrList[chra_ref].bmpdata.cv.level < 3)
+      if(chrlst[chra_ref].bmpdata.cv.level < 3)
       {
-        chr_calculate_bumpers(chra_ref, 3);
+        chr_calculate_bumpers( gs->MadList, MAXMODEL, chrlst + chra_ref, 3);
         was_refined = btrue;
       }
 
       // refine the bumper
-      if(ChrList[chrb_ref].bmpdata.cv.level < 3)
+      if(chrlst[chrb_ref].bmpdata.cv.level < 3)
       {
-        chr_calculate_bumpers(chrb_ref, 3);
+        chr_calculate_bumpers( gs->MadList, MAXMODEL, chrlst + chrb_ref, 3);
         was_refined = btrue;
       }
 
-      assert(NULL != ChrList[chra_ref].bmpdata.cv_tree);
-      assert(NULL != ChrList[chrb_ref].bmpdata.cv_tree);
+      assert(NULL != chrlst[chra_ref].bmpdata.cv_tree);
+      assert(NULL != chrlst[chrb_ref].bmpdata.cv_tree);
 
       if(was_refined)
       {
@@ -4153,13 +3894,13 @@ bool_t chr_do_collision( CHR_REF chra_ref, CHR_REF chrb_ref, bool_t exclude_heig
         cv3.level = -1;
         for(cnt=0; cnt<8; cnt++)
         {
-          if(-1 == (*ChrList[chra_ref].bmpdata.cv_tree)[cnt].level) continue;
+          if(-1 == (*chrlst[chra_ref].bmpdata.cv_tree)[cnt].level) continue;
 
           for(tnc=0; tnc<8; tnc++)
           {
-            if(-1 == (*ChrList[chrb_ref].bmpdata.cv_tree)[cnt].level) continue;
+            if(-1 == (*chrlst[chrb_ref].bmpdata.cv_tree)[cnt].level) continue;
 
-            loc_retval = find_collision_volume( &(ChrList[chra_ref].pos), &((*ChrList[chra_ref].bmpdata.cv_tree)[cnt]), &(ChrList[chrb_ref].pos), &((*ChrList[chrb_ref].bmpdata.cv_tree)[cnt]), exclude_height, &tmp_cv);
+            loc_retval = find_collision_volume( &(chrlst[chra_ref].pos), &((*chrlst[chra_ref].bmpdata.cv_tree)[cnt]), &(chrlst[chrb_ref].pos), &((*chrlst[chrb_ref].bmpdata.cv_tree)[cnt]), exclude_height, &tmp_cv);
 
             if(loc_retval)
             {
@@ -4195,24 +3936,27 @@ bool_t chr_do_collision( CHR_REF chra_ref, CHR_REF chrb_ref, bool_t exclude_heig
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t prt_do_collision( CHR_REF chra_ref, PRT_REF prtb, bool_t exclude_height )
+bool_t prt_do_collision( GameState * gs, CHR_REF chra_ref, PRT_REF prtb, bool_t exclude_height )
 {
-  bool_t retval = find_collision_volume( &(ChrList[chra_ref].pos), &(ChrList[chra_ref].bmpdata.cv), &(ChrList[prtb].pos), &(ChrList[prtb].bmpdata.cv), bfalse, NULL );
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  bool_t retval = find_collision_volume( &(chrlst[chra_ref].pos), &(chrlst[chra_ref].bmpdata.cv), &(chrlst[prtb].pos), &(chrlst[prtb].bmpdata.cv), bfalse, NULL );
 
   if ( retval )
   {
     bool_t was_refined = bfalse;
 
     // refine the bumper
-    if(ChrList[chra_ref].bmpdata.cv.level < 2)
+    if(chrlst[chra_ref].bmpdata.cv.level < 2)
     {
-      chr_calculate_bumpers(chra_ref, 2);
+      chr_calculate_bumpers( gs->MadList, MAXMODEL, chrlst + chra_ref, 2);
       was_refined = btrue;
     }
 
     if(was_refined)
     {
-      retval = find_collision_volume( &(ChrList[chra_ref].pos), &(ChrList[chra_ref].bmpdata.cv), &(ChrList[prtb].pos), &(ChrList[prtb].bmpdata.cv), bfalse, NULL );
+      retval = find_collision_volume( &(chrlst[chra_ref].pos), &(chrlst[chra_ref].bmpdata.cv), &(chrlst[prtb].pos), &(chrlst[prtb].bmpdata.cv), bfalse, NULL );
     };
   }
 
@@ -4220,9 +3964,12 @@ bool_t prt_do_collision( CHR_REF chra_ref, PRT_REF prtb, bool_t exclude_height )
 }
 
 //--------------------------------------------------------------------------------------------
-void do_bumping( float dUpdate )
+void do_bumping( GameState * gs, float dUpdate )
 {
   // ZZ> This function sets handles characters hitting other characters or particles
+
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
 
   Uint32  blnode_a, blnode_b;
   CHR_REF chra_ref, chrb_ref;
@@ -4236,7 +3983,7 @@ void do_bumping( float dUpdate )
   loc_platkeep   = 1.0 - loc_platascend;
   loc_platstick  = pow( platstick, 1.0 / dUpdate );
 
-  create_bumplists();
+  create_bumplists(gs);
   cv_list_clear();
 
   // Check collisions with other characters and bump particles
@@ -4252,14 +3999,14 @@ void do_bumping( float dUpdate )
     //      cnt++, blnode_a = bumplist_get_next_chr( &bumplist, blnode_a ) )
     //{
     //  chra_ref = bumplist_get_ref(&bumplist, blnode_a);
-    //  VALID_CHR( chra_ref );
+    //  VALID_CHR( chrlst, chra_ref );
     //
     //  // detach character from invalid platforms
     //  chrb_ref  = chr_get_onwhichplatform( chra_ref );
-    //  if ( VALID_CHR( chrb_ref ) )
+    //  if ( VALID_CHR( chrlst, chrb_ref ) )
     //  {
     //    if ( !chr_is_inside( chra_ref, 0.0f, chrb_ref, btrue ) ||
-    //         ChrList[chrb_ref].bmpdata.cv.z_min  > ChrList[chrb_ref].bmpdata.cv.z_max - PLATTOLERANCE )
+    //         chrlst[chrb_ref].bmpdata.cv.z_min  > chrlst[chrb_ref].bmpdata.cv.z_max - PLATTOLERANCE )
     //    {
     //      remove_from_platform( chra_ref );
     //    }
@@ -4272,7 +4019,7 @@ void do_bumping( float dUpdate )
     //      cnt++, blnode_a = bumplist_get_next_chr( &bumplist, blnode_a ) )
     //{
     //  chra_ref = bumplist_get_ref(&bumplist, blnode_a);
-    //  VALID_CHR( chra_ref );
+    //  VALID_CHR( chrlst, chra_ref );
     //
     //  // Do platforms (no interaction with held or mounted items)
     //  if ( chr_attached( chra_ref ) ) continue;
@@ -4282,21 +4029,21 @@ void do_bumping( float dUpdate )
     //        tnc++, blnode_b = bumplist_get_next_chr( &bumplist, blnode_b ) )
     //  {
     //    chrb_ref = bumplist_get_ref(&bumplist, blnode_b);
-    //    VALID_CHR( chrb_ref );
+    //    VALID_CHR( chrlst, chrb_ref );
     //
     //    // do not put something on a platform that is being carried by someone
     //    if ( chr_attached( chrb_ref ) ) continue;
 
     //    // do not consider anything that is already a item/platform combo
-    //    if ( ChrList[chra_ref].onwhichplatform == chrb_ref || ChrList[chrb_ref].onwhichplatform == chra_ref ) continue;
+    //    if ( chrlst[chra_ref].onwhichplatform == chrb_ref || chrlst[chrb_ref].onwhichplatform == chra_ref ) continue;
 
     //    if ( chr_is_inside( chra_ref, 0.0f, chrb_ref, btrue) )
     //    {
     //      // check for compatibility
-    //      if ( ChrList[chrb_ref].bmpdata.calc_is_platform )
+    //      if ( chrlst[chrb_ref].bmpdata.calc_is_platform )
     //      {
     //        // check for overlap in the z direction
-    //        if ( ChrList[chra_ref].pos.z > MAX( ChrList[chrb_ref].bmpdata.cv.z_min, ChrList[chrb_ref].bmpdata.cv.z_max - PLATTOLERANCE ) && ChrList[chra_ref].level < ChrList[chrb_ref].bmpdata.cv.z_max )
+    //        if ( chrlst[chra_ref].pos.z > MAX( chrlst[chrb_ref].bmpdata.cv.z_min, chrlst[chrb_ref].bmpdata.cv.z_max - PLATTOLERANCE ) && chrlst[chra_ref].level < chrlst[chrb_ref].bmpdata.cv.z_max )
     //        {
     //          // A is inside, coming from above
     //          attach_to_platform( chra_ref, chrb_ref );
@@ -4306,10 +4053,10 @@ void do_bumping( float dUpdate )
     //
     //    if( chr_is_inside( chrb_ref, 0.0f, chra_ref, btrue) )
     //    {
-    //      if ( ChrList[chra_ref].bmpdata.calc_is_platform )
+    //      if ( chrlst[chra_ref].bmpdata.calc_is_platform )
     //      {
     //        // check for overlap in the z direction
-    //        if ( ChrList[chrb_ref].pos.z > MAX( ChrList[chra_ref].bmpdata.cv.z_min, ChrList[chra_ref].bmpdata.cv.z_max - PLATTOLERANCE ) && ChrList[chrb_ref].level < ChrList[chra_ref].bmpdata.cv.z_max )
+    //        if ( chrlst[chrb_ref].pos.z > MAX( chrlst[chra_ref].bmpdata.cv.z_min, chrlst[chra_ref].bmpdata.cv.z_max - PLATTOLERANCE ) && chrlst[chrb_ref].level < chrlst[chra_ref].bmpdata.cv.z_max )
     //        {
     //          // A is inside, coming from above
     //          attach_to_platform( chrb_ref, chra_ref );
@@ -4326,7 +4073,7 @@ void do_bumping( float dUpdate )
     //      cnt++, blnode_a = bumplist_get_next_chr( &bumplist, blnode_a ) )
     //{
     //  chra_ref = bumplist_get_ref(&bumplist, blnode_a);
-    //  VALID_CHR( chra_ref );
+    //  VALID_CHR( chrlst, chra_ref );
     //
     //  if ( chr_attached( chra_ref ) ) continue;
 
@@ -4335,7 +4082,7 @@ void do_bumping( float dUpdate )
     //        tnc++, blnode_b = bumplist_get_next_chr( &bumplist, blnode_b ) )
     //  {
     //    chrb_ref = bumplist_get_ref(&bumplist, blnode_b);
-    //    VALID_CHR( chrb_ref );
+    //    VALID_CHR( chrlst, chrb_ref );
     //
     //    // do not mount something that is being carried by someone
     //    if ( chr_attached( chrb_ref ) ) continue;
@@ -4344,23 +4091,23 @@ void do_bumping( float dUpdate )
     //    {
 
     //      // Now see if either is on top the other like a platform
-    //      if ( ChrList[chra_ref].pos.z > ChrList[chrb_ref].bmpdata.cv.z_max - PLATTOLERANCE && ChrList[chra_ref].pos.z < ChrList[chrb_ref].bmpdata.cv.z_max + PLATTOLERANCE / 5 )
+    //      if ( chrlst[chra_ref].pos.z > chrlst[chrb_ref].bmpdata.cv.z_max - PLATTOLERANCE && chrlst[chra_ref].pos.z < chrlst[chrb_ref].bmpdata.cv.z_max + PLATTOLERANCE / 5 )
     //      {
     //        // Is A falling on B?
-    //        if ( ChrList[chra_ref].vel.z < ChrList[chrb_ref].vel.z )
+    //        if ( chrlst[chra_ref].vel.z < chrlst[chrb_ref].vel.z )
     //        {
-    //          if ( ChrList[chra_ref].flyheight == 0 && ChrList[chra_ref].alive && MadList[ChrList[chra_ref].model].actionvalid[ACTION_MI] && !ChrList[chra_ref].isitem )
+    //          if ( chrlst[chra_ref].flyheight == 0 && chrlst[chra_ref].alive && madlst[chrlst[chra_ref].model].actionvalid[ACTION_MI] && !chrlst[chra_ref].isitem )
     //          {
-    //            if ( ChrList[chrb_ref].alive && ChrList[chrb_ref].ismount && !chr_using_slot( chrb_ref, SLOT_SADDLE ) )
+    //            if ( chrlst[chrb_ref].alive && chrlst[chrb_ref].ismount && !chr_using_slot( chrb_ref, SLOT_SADDLE ) )
     //            {
     //              remove_from_platform( chra_ref );
     //              if ( !attach_character_to_mount( chra_ref, chrb_ref, SLOT_SADDLE ) )
     //              {
     //                // failed mount is a bump
-    //                ChrList[chra_ref].aistate.alert |= ALERT_BUMPED;
-    //                ChrList[chrb_ref].aistate.alert |= ALERT_BUMPED;
-    //                ChrList[chra_ref].aistate.bumplast = chrb_ref;
-    //                ChrList[chrb_ref].aistate.bumplast = chra_ref;
+    //                chrlst[chra_ref].aistate.alert |= ALERT_BUMPED;
+    //                chrlst[chrb_ref].aistate.alert |= ALERT_BUMPED;
+    //                chrlst[chra_ref].aistate.bumplast = chrb_ref;
+    //                chrlst[chrb_ref].aistate.bumplast = chra_ref;
     //              };
     //            }
     //          }
@@ -4371,23 +4118,23 @@ void do_bumping( float dUpdate )
 
     //    if( chr_is_inside( chrb_ref, 0.0f, chra_ref, btrue)   )
     //    {
-    //      if ( ChrList[chrb_ref].pos.z > ChrList[chra_ref].bmpdata.cv.z_max - PLATTOLERANCE && ChrList[chrb_ref].pos.z < ChrList[chra_ref].bmpdata.cv.z_max + PLATTOLERANCE / 5 )
+    //      if ( chrlst[chrb_ref].pos.z > chrlst[chra_ref].bmpdata.cv.z_max - PLATTOLERANCE && chrlst[chrb_ref].pos.z < chrlst[chra_ref].bmpdata.cv.z_max + PLATTOLERANCE / 5 )
     //      {
     //        // Is B falling on A?
-    //        if ( ChrList[chrb_ref].vel.z < ChrList[chra_ref].vel.z )
+    //        if ( chrlst[chrb_ref].vel.z < chrlst[chra_ref].vel.z )
     //        {
-    //          if ( ChrList[chrb_ref].flyheight == 0 && ChrList[chrb_ref].alive && MadList[ChrList[chrb_ref].model].actionvalid[ACTION_MI] && !ChrList[chrb_ref].isitem )
+    //          if ( chrlst[chrb_ref].flyheight == 0 && chrlst[chrb_ref].alive && madlst[chrlst[chrb_ref].model].actionvalid[ACTION_MI] && !chrlst[chrb_ref].isitem )
     //          {
-    //            if ( ChrList[chra_ref].alive && ChrList[chra_ref].ismount && !chr_using_slot( chra_ref, SLOT_SADDLE ) )
+    //            if ( chrlst[chra_ref].alive && chrlst[chra_ref].ismount && !chr_using_slot( chra_ref, SLOT_SADDLE ) )
     //            {
     //              remove_from_platform( chrb_ref );
     //              if ( !attach_character_to_mount( chrb_ref, chra_ref, SLOT_SADDLE ) )
     //              {
     //                // failed mount is a bump
-    //                ChrList[chra_ref].aistate.alert |= ALERT_BUMPED;
-    //                ChrList[chrb_ref].aistate.alert |= ALERT_BUMPED;
-    //                ChrList[chra_ref].aistate.bumplast = chrb_ref;
-    //                ChrList[chrb_ref].aistate.bumplast = chra_ref;
+    //                chrlst[chra_ref].aistate.alert |= ALERT_BUMPED;
+    //                chrlst[chrb_ref].aistate.alert |= ALERT_BUMPED;
+    //                chrlst[chra_ref].aistate.bumplast = chrb_ref;
+    //                chrlst[chrb_ref].aistate.bumplast = chra_ref;
     //              };
     //            };
     //          }
@@ -4400,67 +4147,67 @@ void do_bumping( float dUpdate )
     // do collisions
     for ( cnt = 0, blnode_a = bumplist_get_chr_head(&bumplist, fanblock);
           cnt < chrinblock && INVALID_BUMPLIST_NODE != blnode_a;
-          cnt++, blnode_a = bumplist_get_next_chr( &bumplist, blnode_a ) )
+          cnt++, blnode_a = bumplist_get_next_chr( gs, &bumplist, blnode_a ) )
     {
       float lerpa;
 
       chra_ref = bumplist_get_ref(&bumplist, blnode_a);
-      VALID_CHR( chra_ref );
+      VALID_CHR( chrlst, chra_ref );
     
-      lerpa = (ChrList[chra_ref].pos.z - ChrList[chra_ref].level) / PLATTOLERANCE;
+      lerpa = (chrlst[chra_ref].pos.z - chrlst[chra_ref].level) / PLATTOLERANCE;
       lerpa = CLIP(lerpa, 0, 1);
 
-      apos = ChrList[chra_ref].pos;
+      apos = chrlst[chra_ref].pos;
 
       // don't do object-object collisions if they won't feel each other
-      if ( ChrList[chra_ref].bumpstrength == 0.0f ) continue;
+      if ( chrlst[chra_ref].bumpstrength == 0.0f ) continue;
 
       // Do collisions (but not with attached items/characers)
-      for ( blnode_b = bumplist_get_next_chr(&bumplist, blnode_a), tnc = cnt + 1;
+      for ( blnode_b = bumplist_get_next_chr(gs, &bumplist, blnode_a), tnc = cnt + 1;
             tnc < chrinblock && INVALID_BUMPLIST_NODE != blnode_b;
-            tnc++, blnode_b = bumplist_get_next_chr( &bumplist, blnode_b ) )
+            tnc++, blnode_b = bumplist_get_next_chr( gs, &bumplist, blnode_b ) )
       {
         CVolume cv;
         float lerpb, bumpstrength;
 
         chrb_ref = bumplist_get_ref(&bumplist, blnode_b);
-        VALID_CHR( chrb_ref );
+        VALID_CHR( chrlst, chrb_ref );
 
-        bumpstrength = ChrList[chra_ref].bumpstrength * ChrList[chrb_ref].bumpstrength;
+        bumpstrength = chrlst[chra_ref].bumpstrength * chrlst[chrb_ref].bumpstrength;
 
         // don't do object-object collisions if they won't feel eachother
         if ( bumpstrength == 0.0f ) continue;
 
         // do not collide with something you are already holding
-        if ( chrb_ref == ChrList[chra_ref].attachedto || chra_ref == ChrList[chrb_ref].attachedto ) continue;
+        if ( chrb_ref == chrlst[chra_ref].attachedto || chra_ref == chrlst[chrb_ref].attachedto ) continue;
 
         // do not collide with a your platform
-        if ( chrb_ref == ChrList[chra_ref].onwhichplatform || chra_ref == ChrList[chrb_ref].onwhichplatform ) continue;
+        if ( chrb_ref == chrlst[chra_ref].onwhichplatform || chra_ref == chrlst[chrb_ref].onwhichplatform ) continue;
 
-        bpos = ChrList[chrb_ref].pos;
+        bpos = chrlst[chrb_ref].pos;
 
-        lerpb = (ChrList[chrb_ref].pos.z - ChrList[chrb_ref].level) / PLATTOLERANCE;
+        lerpb = (chrlst[chrb_ref].pos.z - chrlst[chrb_ref].level) / PLATTOLERANCE;
         lerpb = CLIP(lerpb, 0, 1);
 
-        if ( chr_do_collision( chra_ref, chrb_ref, bfalse, &cv) )
+        if ( chr_do_collision( gs, chra_ref, chrb_ref, bfalse, &cv) )
         {
           vect3 depth, ovlap, nrm, diffa, diffb;
-          float ftmp, dotprod, pressure;
+          float dotprod, pressure;
           float cr, m0, m1, psum, msum, udif, u0, u1, ln_cr;
           bool_t bfound;
 
           depth.x = (cv.x_max - cv.x_min);
-          ovlap.x = depth.x / MIN(ChrList[chra_ref].bmpdata.cv.x_max - ChrList[chra_ref].bmpdata.cv.x_min, ChrList[chrb_ref].bmpdata.cv.x_max - ChrList[chrb_ref].bmpdata.cv.x_min);
+          ovlap.x = depth.x / MIN(chrlst[chra_ref].bmpdata.cv.x_max - chrlst[chra_ref].bmpdata.cv.x_min, chrlst[chrb_ref].bmpdata.cv.x_max - chrlst[chrb_ref].bmpdata.cv.x_min);
           ovlap.x = CLIP(ovlap.x,-1,1);
           nrm.x = 1.0f / ovlap.x;
 
           depth.y = (cv.y_max - cv.y_min);
-          ovlap.y = depth.y / MIN(ChrList[chra_ref].bmpdata.cv.y_max - ChrList[chra_ref].bmpdata.cv.y_min, ChrList[chrb_ref].bmpdata.cv.y_max - ChrList[chrb_ref].bmpdata.cv.y_min);
+          ovlap.y = depth.y / MIN(chrlst[chra_ref].bmpdata.cv.y_max - chrlst[chra_ref].bmpdata.cv.y_min, chrlst[chrb_ref].bmpdata.cv.y_max - chrlst[chrb_ref].bmpdata.cv.y_min);
           ovlap.y = CLIP(ovlap.y,-1,1);
           nrm.y = 1.0f / ovlap.y;
 
           depth.z = (cv.z_max - cv.z_min);
-          ovlap.z = depth.z / MIN(ChrList[chra_ref].bmpdata.cv.z_max - ChrList[chra_ref].bmpdata.cv.z_min, ChrList[chrb_ref].bmpdata.cv.z_max - ChrList[chrb_ref].bmpdata.cv.z_min);
+          ovlap.z = depth.z / MIN(chrlst[chra_ref].bmpdata.cv.z_max - chrlst[chra_ref].bmpdata.cv.z_min, chrlst[chrb_ref].bmpdata.cv.z_max - chrlst[chrb_ref].bmpdata.cv.z_min);
           ovlap.z = CLIP(ovlap.z,-1,1);
           nrm.z = 1.0f / ovlap.z;
 
@@ -4470,39 +4217,39 @@ void do_bumping( float dUpdate )
 
           if(ovlap.x != 1.0)
           {
-            diffa.x = ChrList[chra_ref].bmpdata.mids_lo.x - (cv.x_max + cv.x_min) * 0.5f;
-            diffb.x = ChrList[chrb_ref].bmpdata.mids_lo.x - (cv.x_max + cv.x_min) * 0.5f;
+            diffa.x = chrlst[chra_ref].bmpdata.mids_lo.x - (cv.x_max + cv.x_min) * 0.5f;
+            diffb.x = chrlst[chrb_ref].bmpdata.mids_lo.x - (cv.x_max + cv.x_min) * 0.5f;
           }
           else
           {
-            diffa.x = ChrList[chra_ref].bmpdata.mids_lo.x - ChrList[chrb_ref].bmpdata.mids_lo.x;
+            diffa.x = chrlst[chra_ref].bmpdata.mids_lo.x - chrlst[chrb_ref].bmpdata.mids_lo.x;
             diffb.x =-diffa.x;
           }
 
           if(ovlap.y != 1.0)
           {
-            diffa.y = ChrList[chra_ref].bmpdata.mids_lo.y - (cv.y_max + cv.y_min) * 0.5f;
-            diffb.y = ChrList[chrb_ref].bmpdata.mids_lo.y - (cv.y_max + cv.y_min) * 0.5f;
+            diffa.y = chrlst[chra_ref].bmpdata.mids_lo.y - (cv.y_max + cv.y_min) * 0.5f;
+            diffb.y = chrlst[chrb_ref].bmpdata.mids_lo.y - (cv.y_max + cv.y_min) * 0.5f;
           }
           else
           {
-            diffa.y = ChrList[chra_ref].bmpdata.mids_lo.y - ChrList[chrb_ref].bmpdata.mids_lo.y;
+            diffa.y = chrlst[chra_ref].bmpdata.mids_lo.y - chrlst[chrb_ref].bmpdata.mids_lo.y;
             diffb.y =-diffa.y;
           }
 
           if(ovlap.y != 1.0)
           {
-            diffa.z = ChrList[chra_ref].bmpdata.mids_lo.z - (cv.z_max + cv.z_min) * 0.5f;
-            diffa.z += (ChrList[chra_ref].bmpdata.mids_hi.z - ChrList[chra_ref].bmpdata.mids_lo.z) * lerpa;
+            diffa.z = chrlst[chra_ref].bmpdata.mids_lo.z - (cv.z_max + cv.z_min) * 0.5f;
+            diffa.z += (chrlst[chra_ref].bmpdata.mids_hi.z - chrlst[chra_ref].bmpdata.mids_lo.z) * lerpa;
 
-            diffb.z = ChrList[chrb_ref].bmpdata.mids_lo.z - (cv.z_max + cv.z_min) * 0.5f;
-            diffb.z += (ChrList[chrb_ref].bmpdata.mids_hi.z - ChrList[chrb_ref].bmpdata.mids_lo.z) * lerpb;
+            diffb.z = chrlst[chrb_ref].bmpdata.mids_lo.z - (cv.z_max + cv.z_min) * 0.5f;
+            diffb.z += (chrlst[chrb_ref].bmpdata.mids_hi.z - chrlst[chrb_ref].bmpdata.mids_lo.z) * lerpb;
           }
           else
           {
-            diffa.z  = ChrList[chra_ref].bmpdata.mids_lo.z - ChrList[chrb_ref].bmpdata.mids_lo.z;
-            diffa.z += (ChrList[chra_ref].bmpdata.mids_hi.z - ChrList[chra_ref].bmpdata.mids_lo.z) * lerpa;
-            diffa.z -= (ChrList[chrb_ref].bmpdata.mids_hi.z - ChrList[chrb_ref].bmpdata.mids_lo.z) * lerpb;
+            diffa.z  = chrlst[chra_ref].bmpdata.mids_lo.z - chrlst[chrb_ref].bmpdata.mids_lo.z;
+            diffa.z += (chrlst[chra_ref].bmpdata.mids_hi.z - chrlst[chra_ref].bmpdata.mids_lo.z) * lerpa;
+            diffa.z -= (chrlst[chrb_ref].bmpdata.mids_hi.z - chrlst[chrb_ref].bmpdata.mids_lo.z) * lerpb;
 
             diffb.z =-diffa.z;
           }
@@ -4544,27 +4291,27 @@ void do_bumping( float dUpdate )
 
           // calculate a coefficient of restitution
           //ftmp = nrm.x * nrm.x + nrm.y * nrm.y;
-          //cr = ChrList[chrb_ref].bumpdampen * ChrList[chra_ref].bumpdampen * bumpstrength * ovlap.z * ( nrm.x * nrm.x * ovlap.x + nrm.y * nrm.y * ovlap.y ) / ftmp;
+          //cr = chrlst[chrb_ref].bumpdampen * chrlst[chra_ref].bumpdampen * bumpstrength * ovlap.z * ( nrm.x * nrm.x * ovlap.x + nrm.y * nrm.y * ovlap.y ) / ftmp;
 
           // determine a usable mass
           m0 = -1;
           m1 = -1;
-          if ( ChrList[chra_ref].weight < 0 && ChrList[chrb_ref].weight < 0 )
+          if ( chrlst[chra_ref].weight < 0 && chrlst[chrb_ref].weight < 0 )
           {
             m0 = m1 = 110.0f;
           }
-          else if (ChrList[chra_ref].weight == 0 && ChrList[chrb_ref].weight == 0)
+          else if (chrlst[chra_ref].weight == 0 && chrlst[chrb_ref].weight == 0)
           {
             m0 = m1 = 1.0f;
           }
           else
           {
-            m0 = (ChrList[chra_ref].weight == 0.0f) ? 1.0 : ChrList[chra_ref].weight;
-            m1 = (ChrList[chrb_ref].weight == 0.0f) ? 1.0 : ChrList[chrb_ref].weight;
+            m0 = (chrlst[chra_ref].weight == 0.0f) ? 1.0 : chrlst[chra_ref].weight;
+            m1 = (chrlst[chrb_ref].weight == 0.0f) ? 1.0 : chrlst[chrb_ref].weight;
           }
 
           bfound = btrue;
-          cr = ChrList[chrb_ref].bumpdampen * ChrList[chra_ref].bumpdampen;
+          cr = chrlst[chrb_ref].bumpdampen * chrlst[chra_ref].bumpdampen;
           //ln_cr = log(cr);
 
           if( m0 > 0.0f && bumpstrength > 0.0f )
@@ -4581,9 +4328,9 @@ void do_bumping( float dUpdate )
             //  gamma = 2.0f * sqrt(k);
             //}
 
-            ChrList[chra_ref].accum_acc.x += (diffa.x * k  - ChrList[chra_ref].vel.x * gamma) * bumpstrength;
-            ChrList[chra_ref].accum_acc.y += (diffa.y * k  - ChrList[chra_ref].vel.y * gamma) * bumpstrength;
-            ChrList[chra_ref].accum_acc.z += (diffa.z * k  - ChrList[chra_ref].vel.z * gamma) * bumpstrength;
+            chrlst[chra_ref].accum_acc.x += (diffa.x * k  - chrlst[chra_ref].vel.x * gamma) * bumpstrength;
+            chrlst[chra_ref].accum_acc.y += (diffa.y * k  - chrlst[chra_ref].vel.y * gamma) * bumpstrength;
+            chrlst[chra_ref].accum_acc.z += (diffa.z * k  - chrlst[chra_ref].vel.z * gamma) * bumpstrength;
           }
 
           if( m1 > 0.0f && bumpstrength > 0.0f )
@@ -4600,70 +4347,67 @@ void do_bumping( float dUpdate )
             //  gamma = 2.0f * sqrt(k);
             //}
 
-            ChrList[chrb_ref].accum_acc.x += (diffb.x * k  - ChrList[chrb_ref].vel.x * gamma) * bumpstrength;
-            ChrList[chrb_ref].accum_acc.y += (diffb.y * k  - ChrList[chrb_ref].vel.y * gamma) * bumpstrength;
-            ChrList[chrb_ref].accum_acc.z += (diffb.z * k  - ChrList[chrb_ref].vel.z * gamma) * bumpstrength;
+            chrlst[chrb_ref].accum_acc.x += (diffb.x * k  - chrlst[chrb_ref].vel.x * gamma) * bumpstrength;
+            chrlst[chrb_ref].accum_acc.y += (diffb.y * k  - chrlst[chrb_ref].vel.y * gamma) * bumpstrength;
+            chrlst[chrb_ref].accum_acc.z += (diffb.z * k  - chrlst[chrb_ref].vel.z * gamma) * bumpstrength;
           }
 
-
           //bfound = bfalse;
-          //if (( ChrList[chra_ref].bmpdata.mids_lo.x - ChrList[chrb_ref].bmpdata.mids_lo.x ) * ( ChrList[chra_ref].vel.x - ChrList[chrb_ref].vel.x ) < 0.0f )
+          //if (( chrlst[chra_ref].bmpdata.mids_lo.x - chrlst[chrb_ref].bmpdata.mids_lo.x ) * ( chrlst[chra_ref].vel.x - chrlst[chrb_ref].vel.x ) < 0.0f )
           //{
-          //  u0 = ChrList[chra_ref].vel.x;
-          //  u1 = ChrList[chrb_ref].vel.x;
+          //  u0 = chrlst[chra_ref].vel.x;
+          //  u1 = chrlst[chrb_ref].vel.x;
 
           //  psum = m0 * u0 + m1 * u1;
           //  udif = u1 - u0;
 
-          //  ChrList[chra_ref].vel.x = ( psum - m1 * udif * cr ) / msum;
-          //  ChrList[chrb_ref].vel.x = ( psum + m0 * udif * cr ) / msum;
+          //  chrlst[chra_ref].vel.x = ( psum - m1 * udif * cr ) / msum;
+          //  chrlst[chrb_ref].vel.x = ( psum + m0 * udif * cr ) / msum;
 
-          //  //ChrList[chra_ref].bmpdata.mids_lo.x -= ChrList[chra_ref].vel.x*dUpdate;
-          //  //ChrList[chrb_ref].bmpdata.mids_lo.x -= ChrList[chrb_ref].vel.x*dUpdate;
+          //  //chrlst[chra_ref].bmpdata.mids_lo.x -= chrlst[chra_ref].vel.x*dUpdate;
+          //  //chrlst[chrb_ref].bmpdata.mids_lo.x -= chrlst[chrb_ref].vel.x*dUpdate;
 
           //  bfound = btrue;
           //}
 
-
-
-          //if (( ChrList[chra_ref].bmpdata.mids_lo.y - ChrList[chrb_ref].bmpdata.mids_lo.y ) * ( ChrList[chra_ref].vel.y - ChrList[chrb_ref].vel.y ) < 0.0f )
+          //if (( chrlst[chra_ref].bmpdata.mids_lo.y - chrlst[chrb_ref].bmpdata.mids_lo.y ) * ( chrlst[chra_ref].vel.y - chrlst[chrb_ref].vel.y ) < 0.0f )
           //{
-          //  u0 = ChrList[chra_ref].vel.y;
-          //  u1 = ChrList[chrb_ref].vel.y;
+          //  u0 = chrlst[chra_ref].vel.y;
+          //  u1 = chrlst[chrb_ref].vel.y;
 
           //  psum = m0 * u0 + m1 * u1;
           //  udif = u1 - u0;
 
-          //  ChrList[chra_ref].vel.y = ( psum - m1 * udif * cr ) / msum;
-          //  ChrList[chrb_ref].vel.y = ( psum + m0 * udif * cr ) / msum;
+          //  chrlst[chra_ref].vel.y = ( psum - m1 * udif * cr ) / msum;
+          //  chrlst[chrb_ref].vel.y = ( psum + m0 * udif * cr ) / msum;
 
-          //  //ChrList[chra_ref].bmpdata.mids_lo.y -= ChrList[chra_ref].vel.y*dUpdate;
-          //  //ChrList[chrb_ref].bmpdata.mids_lo.y -= ChrList[chrb_ref].vel.y*dUpdate;
+          //  //chrlst[chra_ref].bmpdata.mids_lo.y -= chrlst[chra_ref].vel.y*dUpdate;
+          //  //chrlst[chrb_ref].bmpdata.mids_lo.y -= chrlst[chrb_ref].vel.y*dUpdate;
 
           //  bfound = btrue;
           //}
 
           //if ( ovlap.x > 0 && ovlap.z > 0 )
           //{
-          //  ChrList[chra_ref].bmpdata.mids_lo.x += m1 / ( m0 + m1 ) * ovlap.y * 0.5 * ovlap.z;
-          //  ChrList[chrb_ref].bmpdata.mids_lo.x -= m0 / ( m0 + m1 ) * ovlap.y * 0.5 * ovlap.z;
+          //  chrlst[chra_ref].bmpdata.mids_lo.x += m1 / ( m0 + m1 ) * ovlap.y * 0.5 * ovlap.z;
+          //  chrlst[chrb_ref].bmpdata.mids_lo.x -= m0 / ( m0 + m1 ) * ovlap.y * 0.5 * ovlap.z;
           //  bfound = btrue;
           //}
 
           //if ( ovlap.y > 0 && ovlap.z > 0 )
           //{
-          //  ChrList[chra_ref].bmpdata.mids_lo.y += m1 / ( m0 + m1 ) * ovlap.x * 0.5f * ovlap.z;
-          //  ChrList[chrb_ref].bmpdata.mids_lo.y -= m0 / ( m0 + m1 ) * ovlap.x * 0.5f * ovlap.z;
+          //  chrlst[chra_ref].bmpdata.mids_lo.y += m1 / ( m0 + m1 ) * ovlap.x * 0.5f * ovlap.z;
+          //  chrlst[chrb_ref].bmpdata.mids_lo.y -= m0 / ( m0 + m1 ) * ovlap.x * 0.5f * ovlap.z;
           //  bfound = btrue;
           //}
 
           if ( bfound )
           {
-            //apos = ChrList[chra_ref].pos;
-            ChrList[chra_ref].aistate.alert |= ALERT_BUMPED;
-            ChrList[chrb_ref].aistate.alert |= ALERT_BUMPED;
-            ChrList[chra_ref].aistate.bumplast = chrb_ref;
-            ChrList[chrb_ref].aistate.bumplast = chra_ref;
+            //apos = chrlst[chra_ref].pos;
+            chrlst[chra_ref].aistate.alert |= ALERT_BUMPED;
+            chrlst[chrb_ref].aistate.alert |= ALERT_BUMPED;
+            chrlst[chra_ref].aistate.bumplast = chrb_ref;
+            chrlst[chrb_ref].aistate.bumplast = chra_ref;
           };
         }
       }
@@ -4678,12 +4422,12 @@ void do_bumping( float dUpdate )
     //  float chrbump = 1.0f;
 
     //  chra_ref = bumplist_get_ref( &bumplist, blnode_a );
-    //  assert(VALID_CHR( chra_ref ));
+    //  assert(VALID_CHR( chrlst, chra_ref ));
     //
 
-    //  apos = ChrList[chra_ref].pos;
-    //  chridvulnerability = CapList[ChrList[chra_ref].model].idsz[IDSZ_VULNERABILITY];
-    //  chrbump = ChrList[chra_ref].bumpstrength;
+    //  apos = chrlst[chra_ref].pos;
+    //  chridvulnerability = caplst[chrlst[chra_ref].model].idsz[IDSZ_VULNERABILITY];
+    //  chrbump = chrlst[chra_ref].bumpstrength;
 
     //  // Check for object-particle interaction
     //  for ( tnc = 0, blnode_b = bumplist_get_prt_head(&bumplist, fanblock);
@@ -4698,12 +4442,12 @@ void do_bumping( float dUpdate )
     //    CHR_REF prt_owner = prt_get_owner( prtb );
     //    CHR_REF prt_attached = prt_get_attachedtochr( prtb );
 
-    //    pip = PrtList[prtb].pip;
-    //    bpos = PrtList[prtb].pos;
+    //    pip = prtlst[prtb].pip;
+    //    bpos = prtlst[prtb].pos;
 
-    //    chr_is_vulnerable = !ChrList[chra_ref].invictus && ( IDSZ_NONE != chridvulnerability ) && CAP_INHERIT_IDSZ( PrtList[prtb].model, chridvulnerability );
+    //    chr_is_vulnerable = !chrlst[chra_ref].invictus && ( IDSZ_NONE != chridvulnerability ) && CAP_INHERIT_IDSZ( gs,  prtlst[prtb].model, chridvulnerability );
 
-    //    prtbump = PrtList[prtb].bumpstrength;
+    //    prtbump = prtlst[prtb].bumpstrength;
     //    bumpstrength = chr_is_vulnerable ? 1.0f : chrbump * prtbump;
 
     //    if ( 0.0f == bumpstrength ) continue;
@@ -4718,32 +4462,32 @@ void do_bumping( float dUpdate )
 
     //      if ( MAXCHR != prt_get_attachedtochr( prtb ) )
     //      {
-    //        pvel.x = ( PrtList[prtb].pos.x - PrtList[prtb].pos_old.x ) / dUpdate;
-    //        pvel.y = ( PrtList[prtb].pos.y - PrtList[prtb].pos_old.y ) / dUpdate;
-    //        pvel.z = ( PrtList[prtb].pos.z - PrtList[prtb].pos_old.z ) / dUpdate;
+    //        pvel.x = ( prtlst[prtb].pos.x - prtlst[prtb].pos_old.x ) / dUpdate;
+    //        pvel.y = ( prtlst[prtb].pos.y - prtlst[prtb].pos_old.y ) / dUpdate;
+    //        pvel.z = ( prtlst[prtb].pos.z - prtlst[prtb].pos_old.z ) / dUpdate;
     //      }
     //      else
     //      {
-    //        pvel = PrtList[prtb].vel;
+    //        pvel = prtlst[prtb].vel;
     //      }
 
-    //      if ( bpos.z > ChrList[chra_ref].bmpdata.cv.z_max + pvel.z && pvel.z < 0 && ChrList[chra_ref].bmpdata.calc_is_platform && !VALID_CHR( prt_attached ) )
+    //      if ( bpos.z > chrlst[chra_ref].bmpdata.cv.z_max + pvel.z && pvel.z < 0 && chrlst[chra_ref].bmpdata.calc_is_platform && !VALID_CHR( chrlst, prt_attached ) )
     //      {
     //        // Particle is falling on A
-    //        PrtList[prtb].accum_pos.z += ChrList[chra_ref].bmpdata.cv.z_max - PrtList[prtb].pos.z;
+    //        prtlst[prtb].accum_pos.z += chrlst[chra_ref].bmpdata.cv.z_max - prtlst[prtb].pos.z;
 
-    //        PrtList[prtb].accum_vel.z = - (1.0f - PipList[pip].dampen * ChrList[chra_ref].bumpdampen) * PrtList[prtb].vel.z;
+    //        prtlst[prtb].accum_vel.z = - (1.0f - piplst[pip].dampen * chrlst[chra_ref].bumpdampen) * prtlst[prtb].vel.z;
 
-    //        PrtList[prtb].accum_acc.x += ( pvel.x - ChrList[chra_ref].vel.x ) * ( 1.0 - loc_platstick ) + ChrList[chra_ref].vel.x;
-    //        PrtList[prtb].accum_acc.y += ( pvel.y - ChrList[chra_ref].vel.y ) * ( 1.0 - loc_platstick ) + ChrList[chra_ref].vel.y;
+    //        prtlst[prtb].accum_acc.x += ( pvel.x - chrlst[chra_ref].vel.x ) * ( 1.0 - loc_platstick ) + chrlst[chra_ref].vel.x;
+    //        prtlst[prtb].accum_acc.y += ( pvel.y - chrlst[chra_ref].vel.y ) * ( 1.0 - loc_platstick ) + chrlst[chra_ref].vel.y;
     //      }
 
     //      // Check reaffirmation of particles
     //      if ( prt_attached != chra_ref )
     //      {
-    //        if ( ChrList[chra_ref].reloadtime == 0 )
+    //        if ( chrlst[chra_ref].reloadtime == 0 )
     //        {
-    //          if ( ChrList[chra_ref].reaffirmdamagetype == PrtList[prtb].damagetype && ChrList[chra_ref].damagetime == 0 )
+    //          if ( chrlst[chra_ref].reaffirmdamagetype == prtlst[prtb].damagetype && chrlst[chra_ref].damagetime == 0 )
     //          {
     //            reaffirm_attached_particles( chra_ref );
     //          }
@@ -4751,54 +4495,54 @@ void do_bumping( float dUpdate )
     //      }
 
     //      // Check for missile treatment
-    //      if (( ChrList[chra_ref].damagemodifier_fp8[PrtList[prtb].damagetype]&DAMAGE_SHIFT ) != DAMAGE_SHIFT ||
-    //            MIS_NORMAL == ChrList[chra_ref].missiletreatment  ||
-    //            VALID_CHR( prt_attached ) ||
-    //            ( prt_owner == chra_ref && !PipList[pip].friendlyfire ) ||
-    //            ( ChrList[chrmissilehandler[chra_ref]].mana_fp8 < ( ChrList[chra_ref].missilecost << 4 ) && !ChrList[chrmissilehandler[chra_ref]].canchannel ) )
+    //      if (( chrlst[chra_ref].damagemodifier_fp8[prtlst[prtb].damagetype]&DAMAGE_SHIFT ) != DAMAGE_SHIFT ||
+    //            MIS_NORMAL == chrlst[chra_ref].missiletreatment  ||
+    //            VALID_CHR( chrlst, prt_attached ) ||
+    //            ( prt_owner == chra_ref && !piplst[pip].friendlyfire ) ||
+    //            ( chrlst[chrmissilehandler[chra_ref]].mana_fp8 < ( chrlst[chra_ref].missilecost << 4 ) && !chrlst[chrmissilehandler[chra_ref]].canchannel ) )
     //      {
-    //        if (( TeamList[PrtList[prtb].team].hatesteam[ChrList[chra_ref].team] || ( PipList[pip].friendlyfire && (( chra_ref != prt_owner && chra_ref != ChrList[prt_owner].attachedto ) || PipList[pip].onlydamagefriendly ) ) ) && !ChrList[chra_ref].invictus )
+    //        if (( gs->TeamList[prtlst[prtb].team].hatesteam[chrlst[chra_ref].team] || ( piplst[pip].friendlyfire && (( chra_ref != prt_owner && chra_ref != chrlst[prt_owner].attachedto ) || piplst[pip].onlydamagefriendly ) ) ) && !chrlst[chra_ref].invictus )
     //        {
     //          spawn_bump_particles( chra_ref, prtb );  // Catch on fire
 
-    //          if (( PrtList[prtb].damage.ibase > 0 ) && ( PrtList[prtb].damage.irand > 0 ) )
+    //          if (( prtlst[prtb].damage.ibase > 0 ) && ( prtlst[prtb].damage.irand > 0 ) )
     //          {
-    //            if ( ChrList[chra_ref].damagetime == 0 && prt_attached != chra_ref && HAS_NO_BITS( PipList[pip].damfx, DAMFX_ARRO ) )
+    //            if ( chrlst[chra_ref].damagetime == 0 && prt_attached != chra_ref && HAS_NO_BITS( piplst[pip].damfx, DAMFX_ARRO ) )
     //            {
 
     //              // Normal prtb damage
-    //              if ( PipList[pip].allowpush )
+    //              if ( piplst[pip].allowpush )
     //              {
     //                float ftmp = 0.2;
 
-    //                if ( ChrList[chra_ref].weight < 0 )
+    //                if ( chrlst[chra_ref].weight < 0 )
     //                {
     //                  ftmp = 0;
     //                }
-    //                else if ( ChrList[chra_ref].weight != 0 )
+    //                else if ( chrlst[chra_ref].weight != 0 )
     //                {
-    //                  ftmp *= ( 1.0f + ChrList[chra_ref].bumpdampen ) * PrtList[prtb].weight / ChrList[chra_ref].weight;
+    //                  ftmp *= ( 1.0f + chrlst[chra_ref].bumpdampen ) * prtlst[prtb].weight / chrlst[chra_ref].weight;
     //                }
 
-    //                ChrList[chra_ref].accum_vel.x += pvel.x * ftmp;
-    //                ChrList[chra_ref].accum_vel.y += pvel.y * ftmp;
-    //                ChrList[chra_ref].accum_vel.z += pvel.z * ftmp;
+    //                chrlst[chra_ref].accum_vel.x += pvel.x * ftmp;
+    //                chrlst[chra_ref].accum_vel.y += pvel.y * ftmp;
+    //                chrlst[chra_ref].accum_vel.z += pvel.z * ftmp;
 
-    //                PrtList[prtb].accum_vel.x += -ChrList[chra_ref].bumpdampen * pvel.x - PrtList[prtb].vel.x;
-    //                PrtList[prtb].accum_vel.y += -ChrList[chra_ref].bumpdampen * pvel.y - PrtList[prtb].vel.y;
-    //                PrtList[prtb].accum_vel.z += -ChrList[chra_ref].bumpdampen * pvel.z - PrtList[prtb].vel.z;
+    //                prtlst[prtb].accum_vel.x += -chrlst[chra_ref].bumpdampen * pvel.x - prtlst[prtb].vel.x;
+    //                prtlst[prtb].accum_vel.y += -chrlst[chra_ref].bumpdampen * pvel.y - prtlst[prtb].vel.y;
+    //                prtlst[prtb].accum_vel.z += -chrlst[chra_ref].bumpdampen * pvel.z - prtlst[prtb].vel.z;
     //              }
 
     //              direction = RAD_TO_TURN( atan2( pvel.y, pvel.x ) );
-    //              direction = 32768 + ChrList[chra_ref].turn_lr - direction;
+    //              direction = 32768 + chrlst[chra_ref].turn_lr - direction;
 
     //              // Check all enchants to see if they are removed
-    //              enchant = ChrList[chra_ref].firstenchant;
+    //              enchant = chrlst[chra_ref].firstenchant;
     //              while ( enchant != MAXENCHANT )
     //              {
-    //                eveidremove = EveList[EncList[enchant].eve].removedbyidsz;
-    //                temp = EncList[enchant].nextenchant;
-    //                if ( eveidremove != IDSZ_NONE && CAP_INHERIT_IDSZ( PrtList[prtb].model, eveidremove ) )
+    //                eveidremove = gs->EveList[enclst[enchant].eve].removedbyidsz;
+    //                temp = enclst[enchant].nextenchant;
+    //                if ( eveidremove != IDSZ_NONE && CAP_INHERIT_IDSZ( gs,  prtlst[prtb].model, eveidremove ) )
     //                {
     //                  remove_enchant( enchant );
     //                }
@@ -4808,149 +4552,149 @@ void do_bumping( float dUpdate )
     //              //Apply intelligence/wisdom bonus damage for particles with the [IDAM] and [WDAM] expansions (Low ability gives penality)
     //              //+1 (256) bonus for every 4 points of intelligence and/or wisdom above 14. Below 14 gives -1 instead!
     //              //Enemy IDAM spells damage is reduced by 1% per defender's wisdom, opposite for WDAM spells
-    //              if ( PipList[pip].intdamagebonus )
+    //              if ( piplst[pip].intdamagebonus )
     //              {
-    //                PrtList[prtb].damage.ibase += (( ChrList[prt_owner].intelligence_fp8 - 3584 ) * 0.25 );    //First increase damage by the attacker
-    //                if(!ChrList[chra_ref].damagemodifier_fp8[PrtList[prtb].damagetype]&DAMAGE_INVERT || !ChrList[chra_ref].damagemodifier_fp8[PrtList[prtb].damagetype]&DAMAGE_CHARGE)
-    //                PrtList[prtb].damage.ibase -= (PrtList[prtb].damage.ibase * ( ChrList[chra_ref].wisdom_fp8 > 8 ));    //Then reduce it by defender
+    //                prtlst[prtb].damage.ibase += (( chrlst[prt_owner].intelligence_fp8 - 3584 ) * 0.25 );    //First increase damage by the attacker
+    //                if(!chrlst[chra_ref].damagemodifier_fp8[prtlst[prtb].damagetype]&DAMAGE_INVERT || !chrlst[chra_ref].damagemodifier_fp8[prtlst[prtb].damagetype]&DAMAGE_CHARGE)
+    //                prtlst[prtb].damage.ibase -= (prtlst[prtb].damage.ibase * ( chrlst[chra_ref].wisdom_fp8 > 8 ));    //Then reduce it by defender
     //              }
-    //              if ( PipList[pip].wisdamagebonus )  //Same with divine spells
+    //              if ( piplst[pip].wisdamagebonus )  //Same with divine spells
     //              {
-    //                PrtList[prtb].damage.ibase += (( ChrList[prt_owner].wisdom_fp8 - 3584 ) * 0.25 );
-    //                if(!ChrList[chra_ref].damagemodifier_fp8[PrtList[prtb].damagetype]&DAMAGE_INVERT || !ChrList[chra_ref].damagemodifier_fp8[PrtList[prtb].damagetype]&DAMAGE_CHARGE)
-    //                PrtList[prtb].damage.ibase -= (PrtList[prtb].damage.ibase * ( ChrList[chra_ref].intelligence_fp8 > 8 ));
+    //                prtlst[prtb].damage.ibase += (( chrlst[prt_owner].wisdom_fp8 - 3584 ) * 0.25 );
+    //                if(!chrlst[chra_ref].damagemodifier_fp8[prtlst[prtb].damagetype]&DAMAGE_INVERT || !chrlst[chra_ref].damagemodifier_fp8[prtlst[prtb].damagetype]&DAMAGE_CHARGE)
+    //                prtlst[prtb].damage.ibase -= (prtlst[prtb].damage.ibase * ( chrlst[chra_ref].intelligence_fp8 > 8 ));
     //              }
 
     //              //Force Pancake animation?
-    //              if ( PipList[pip].causepancake )
+    //              if ( piplst[pip].causepancake )
     //              {
     //                vect3 panc;
     //                Uint16 rotate_cos, rotate_sin;
     //                float cv, sv;
 
     //                // just a guess
-    //                panc.x = 0.25 * ABS( pvel.x ) * 2.0f / ( float )( 1 + ChrList[chra_ref].bmpdata.cv.x_max - ChrList[chra_ref].bmpdata.cv.x_min  );
-    //                panc.y = 0.25 * ABS( pvel.y ) * 2.0f / ( float )( 1 + ChrList[chra_ref].bmpdata.cv.y_max - ChrList[chra_ref].bmpdata.cv.y_min );
-    //                panc.z = 0.25 * ABS( pvel.z ) * 2.0f / ( float )( 1 + ChrList[chra_ref].bmpdata.cv.z_max - ChrList[chra_ref].bmpdata.cv.z_min );
+    //                panc.x = 0.25 * ABS( pvel.x ) * 2.0f / ( float )( 1 + chrlst[chra_ref].bmpdata.cv.x_max - chrlst[chra_ref].bmpdata.cv.x_min  );
+    //                panc.y = 0.25 * ABS( pvel.y ) * 2.0f / ( float )( 1 + chrlst[chra_ref].bmpdata.cv.y_max - chrlst[chra_ref].bmpdata.cv.y_min );
+    //                panc.z = 0.25 * ABS( pvel.z ) * 2.0f / ( float )( 1 + chrlst[chra_ref].bmpdata.cv.z_max - chrlst[chra_ref].bmpdata.cv.z_min );
 
-    //                rotate_sin = ChrList[chra_ref].turn_lr >> 2;
+    //                rotate_sin = chrlst[chra_ref].turn_lr >> 2;
 
     //                cv = turntocos[rotate_sin];
     //                sv = turntosin[rotate_sin];
 
-    //                ChrList[chra_ref].pancakevel.x = - ( panc.x * cv - panc.y * sv );
-    //                ChrList[chra_ref].pancakevel.y = - ( panc.x * sv + panc.y * cv );
-    //                ChrList[chra_ref].pancakevel.z = -panc.z;
+    //                chrlst[chra_ref].pancakevel.x = - ( panc.x * cv - panc.y * sv );
+    //                chrlst[chra_ref].pancakevel.y = - ( panc.x * sv + panc.y * cv );
+    //                chrlst[chra_ref].pancakevel.z = -panc.z;
     //              }
 
     //              // Damage the character
     //              if ( chr_is_vulnerable )
     //              {
     //                PAIR ptemp;
-    //                ptemp.ibase = PrtList[prtb].damage.ibase * 2.0f * bumpstrength;
-    //                ptemp.irand = PrtList[prtb].damage.irand * 2.0f * bumpstrength;
-    //                damage_character( chra_ref, direction, &ptemp, PrtList[prtb].damagetype, PrtList[prtb].team, prt_owner, PipList[pip].damfx );
-    //                ChrList[chra_ref].aistate.alert |= ALERT_HITVULNERABLE;
-    //                cost_mana( chra_ref, PipList[pip].manadrain*2, prt_owner );  //Do mana drain too
+    //                ptemp.ibase = prtlst[prtb].damage.ibase * 2.0f * bumpstrength;
+    //                ptemp.irand = prtlst[prtb].damage.irand * 2.0f * bumpstrength;
+    //                damage_character( chra_ref, direction, &ptemp, prtlst[prtb].damagetype, prtlst[prtb].team, prt_owner, piplst[pip].damfx );
+    //                chrlst[chra_ref].aistate.alert |= ALERT_HITVULNERABLE;
+    //                cost_mana( gs, chra_ref, piplst[pip].manadrain*2, prt_owner );  //Do mana drain too
     //              }
     //              else
     //              {
     //                PAIR ptemp;
-    //                ptemp.ibase = PrtList[prtb].damage.ibase * bumpstrength;
-    //                ptemp.irand = PrtList[prtb].damage.irand * bumpstrength;
+    //                ptemp.ibase = prtlst[prtb].damage.ibase * bumpstrength;
+    //                ptemp.irand = prtlst[prtb].damage.irand * bumpstrength;
 
-    //                damage_character( chra_ref, direction, &PrtList[prtb].damage, PrtList[prtb].damagetype, PrtList[prtb].team, prt_owner, PipList[pip].damfx );
-    //                cost_mana( chra_ref, PipList[pip].manadrain, prt_owner );  //Do mana drain too
+    //                damage_character( chra_ref, direction, &prtlst[prtb].damage, prtlst[prtb].damagetype, prtlst[prtb].team, prt_owner, piplst[pip].damfx );
+    //                cost_mana( gs, chra_ref, piplst[pip].manadrain, prt_owner );  //Do mana drain too
     //              }
 
     //              // Do confuse effects
-    //              if ( HAS_NO_BITS( MadList[ChrList[chra_ref].model].framefx[ChrList[chra_ref].anim.next], MADFX_INVICTUS ) || HAS_SOME_BITS( PipList[pip].damfx, DAMFX_BLOC ) )
+    //              if ( HAS_NO_BITS( madlst[chrlst[chra_ref].model].framefx[chrlst[chra_ref].anim.next], MADFX_INVICTUS ) || HAS_SOME_BITS( piplst[pip].damfx, DAMFX_BLOC ) )
     //              {
 
-    //                if ( PipList[pip].grogtime != 0 && CapList[ChrList[chra_ref].model].canbegrogged )
+    //                if ( piplst[pip].grogtime != 0 && caplst[chrlst[chra_ref].model].canbegrogged )
     //                {
-    //                  ChrList[chra_ref].grogtime += PipList[pip].grogtime * bumpstrength;
-    //                  if ( ChrList[chra_ref].grogtime < 0 )
+    //                  chrlst[chra_ref].grogtime += piplst[pip].grogtime * bumpstrength;
+    //                  if ( chrlst[chra_ref].grogtime < 0 )
     //                  {
-    //                    ChrList[chra_ref].grogtime = -1;
-    //                    debug_message( 1, "placing infinite grog on %s (%s)", ChrList[chra_ref].name, CapList[ChrList[chra_ref].model].classname );
+    //                    chrlst[chra_ref].grogtime = -1;
+    //                    debug_message( 1, "placing infinite grog on %s (%s)", chrlst[chra_ref].name, caplst[chrlst[chra_ref].model].classname );
     //                  }
-    //                  ChrList[chra_ref].aistate.alert |= ALERT_GROGGED;
+    //                  chrlst[chra_ref].aistate.alert |= ALERT_GROGGED;
     //                }
 
-    //                if ( PipList[pip].dazetime != 0 && CapList[ChrList[chra_ref].model].canbedazed )
+    //                if ( piplst[pip].dazetime != 0 && caplst[chrlst[chra_ref].model].canbedazed )
     //                {
-    //                  ChrList[chra_ref].dazetime += PipList[pip].dazetime * bumpstrength;
-    //                  if ( ChrList[chra_ref].dazetime < 0 )
+    //                  chrlst[chra_ref].dazetime += piplst[pip].dazetime * bumpstrength;
+    //                  if ( chrlst[chra_ref].dazetime < 0 )
     //                  {
-    //                    ChrList[chra_ref].dazetime = -1;
-    //                    debug_message( 1, "placing infinite daze on %s (%s)", ChrList[chra_ref].name, CapList[ChrList[chra_ref].model].classname );
+    //                    chrlst[chra_ref].dazetime = -1;
+    //                    debug_message( 1, "placing infinite daze on %s (%s)", chrlst[chra_ref].name, caplst[chrlst[chra_ref].model].classname );
     //                  };
-    //                  ChrList[chra_ref].aistate.alert |= ALERT_DAZED;
+    //                  chrlst[chra_ref].aistate.alert |= ALERT_DAZED;
     //                }
     //              }
 
     //              // Notify the attacker of a scored hit
-    //              if ( VALID_CHR( prt_owner ) )
+    //              if ( VALID_CHR( chrlst, prt_owner ) )
     //              {
-    //                ChrList[prt_owner].aistate.alert |= ALERT_SCOREDAHIT;
-    //                ChrList[prt_owner].aistate.hitlast = chra_ref;
+    //                chrlst[prt_owner].aistate.alert |= ALERT_SCOREDAHIT;
+    //                chrlst[prt_owner].aistate.hitlast = chra_ref;
     //              }
     //            }
 
-    //            if (( wldframe&31 ) == 0 && prt_attached == chra_ref )
+    //            if (( gs->wld_frame&31 ) == 0 && prt_attached == chra_ref )
     //            {
     //              // Attached prtb damage ( Burning )
-    //              if ( PipList[pip].xyvel.ibase == 0 )
+    //              if ( piplst[pip].xyvel.ibase == 0 )
     //              {
     //                // Make character limp
-    //                ChrList[chra_ref].vel.x = 0;
-    //                ChrList[chra_ref].vel.y = 0;
+    //                chrlst[chra_ref].vel.x = 0;
+    //                chrlst[chra_ref].vel.y = 0;
     //              }
-    //              damage_character( chra_ref, 32768, &PrtList[prtb].damage, PrtList[prtb].damagetype, PrtList[prtb].team, prt_owner, PipList[pip].damfx );
-    //              cost_mana( chra_ref, PipList[pip].manadrain, prt_owner );  //Do mana drain too
+    //              damage_character( chra_ref, 32768, &prtlst[prtb].damage, prtlst[prtb].damagetype, prtlst[prtb].team, prt_owner, piplst[pip].damfx );
+    //              cost_mana( gs, chra_ref, piplst[pip].manadrain, prt_owner );  //Do mana drain too
 
     //            }
     //          }
 
-    //          if ( PipList[pip].endbump )
+    //          if ( piplst[pip].endbump )
     //          {
-    //            if ( PipList[pip].bumpmoney )
+    //            if ( piplst[pip].bumpmoney )
     //            {
-    //              if ( ChrList[chra_ref].cangrabmoney && ChrList[chra_ref].alive && ChrList[chra_ref].damagetime == 0 && ChrList[chra_ref].money != MAXMONEY )
+    //              if ( chrlst[chra_ref].cangrabmoney && chrlst[chra_ref].alive && chrlst[chra_ref].damagetime == 0 && chrlst[chra_ref].money != MAXMONEY )
     //              {
-    //                if ( ChrList[chra_ref].ismount )
+    //                if ( chrlst[chra_ref].ismount )
     //                {
-    //                  CHR_REF irider = chr_get_holdingwhich( chra_ref, SLOT_SADDLE );
+    //                  CHR_REF irider = chr_get_holdingwhich( chrlst, chrlst_size, chra_ref, SLOT_SADDLE );
 
     //                  // Let mounts collect money for their riders
-    //                  if ( VALID_CHR( irider ) )
+    //                  if ( VALID_CHR( chrlst, irider ) )
     //                  {
-    //                    ChrList[irider].money += PipList[pip].bumpmoney;
-    //                    if ( ChrList[irider].money > MAXMONEY ) ChrList[irider].money = MAXMONEY;
-    //                    if ( ChrList[irider].money <        0 ) ChrList[irider].money = 0;
-    //                    PrtList[prtb].gopoof = btrue;
+    //                    chrlst[irider].money += piplst[pip].bumpmoney;
+    //                    if ( chrlst[irider].money > MAXMONEY ) chrlst[irider].money = MAXMONEY;
+    //                    if ( chrlst[irider].money <        0 ) chrlst[irider].money = 0;
+    //                    prtlst[prtb].gopoof = btrue;
     //                  }
     //                }
     //                else
     //                {
     //                  // Normal money collection
-    //                  ChrList[chra_ref].money += PipList[pip].bumpmoney;
-    //                  if ( ChrList[chra_ref].money > MAXMONEY ) ChrList[chra_ref].money = MAXMONEY;
-    //                  if ( ChrList[chra_ref].money < 0 ) ChrList[chra_ref].money = 0;
-    //                  PrtList[prtb].gopoof = btrue;
+    //                  chrlst[chra_ref].money += piplst[pip].bumpmoney;
+    //                  if ( chrlst[chra_ref].money > MAXMONEY ) chrlst[chra_ref].money = MAXMONEY;
+    //                  if ( chrlst[chra_ref].money < 0 ) chrlst[chra_ref].money = 0;
+    //                  prtlst[prtb].gopoof = btrue;
     //                }
     //              }
     //            }
     //            else
     //            {
     //              // Only hit one character, not several
-    //              PrtList[prtb].damage.ibase *= 1.0f - bumpstrength;
-    //              PrtList[prtb].damage.irand *= 1.0f - bumpstrength;
+    //              prtlst[prtb].damage.ibase *= 1.0f - bumpstrength;
+    //              prtlst[prtb].damage.irand *= 1.0f - bumpstrength;
 
-    //              if ( PrtList[prtb].damage.ibase == 0 && PrtList[prtb].damage.irand <= 1 )
+    //              if ( prtlst[prtb].damage.ibase == 0 && prtlst[prtb].damage.irand <= 1 )
     //              {
-    //                PrtList[prtb].gopoof = btrue;
+    //                prtlst[prtb].gopoof = btrue;
     //              };
     //            }
     //          }
@@ -4958,18 +4702,18 @@ void do_bumping( float dUpdate )
     //      }
     //      else if ( prt_owner != chra_ref )
     //      {
-    //        cost_mana( ChrList[chra_ref].missilehandler, ( ChrList[chra_ref].missilecost << 4 ), prt_owner );
+    //        cost_mana( gs, chrlst[chra_ref].missilehandler, ( chrlst[chra_ref].missilecost << 4 ), prt_owner );
 
     //        // Treat the missile
-    //        switch ( ChrList[chra_ref].missiletreatment )
+    //        switch ( chrlst[chra_ref].missiletreatment )
     //        {
     //          case MIS_DEFLECT:
     //            {
     //              // Use old position to find normal
-    //              acc.x = PrtList[prtb].pos.x - pvel.x * dUpdate;
-    //              acc.y = PrtList[prtb].pos.y - pvel.y * dUpdate;
-    //              acc.x = ChrList[chra_ref].pos.x - acc.x;
-    //              acc.y = ChrList[chra_ref].pos.y - acc.y;
+    //              acc.x = prtlst[prtb].pos.x - pvel.x * dUpdate;
+    //              acc.y = prtlst[prtb].pos.y - pvel.y * dUpdate;
+    //              acc.x = chrlst[chra_ref].pos.x - acc.x;
+    //              acc.y = chrlst[chra_ref].pos.y - acc.y;
     //              // Find size of normal
     //              scale = acc.x * acc.x + acc.y * acc.y;
     //              if ( scale > 0 )
@@ -4983,8 +4727,8 @@ void do_bumping( float dUpdate )
     //                scale = ( pvel.x * nrm.x + pvel.y * nrm.y ) * 2;
     //                acc.x = scale * nrm.x;
     //                acc.y = scale * nrm.y;
-    //                PrtList[prtb].accum_vel.x += -acc.x;
-    //                PrtList[prtb].accum_vel.y += -acc.y;
+    //                prtlst[prtb].accum_vel.x += -acc.x;
+    //                prtlst[prtb].accum_vel.y += -acc.y;
     //              }
     //            }
     //            break;
@@ -4992,17 +4736,16 @@ void do_bumping( float dUpdate )
     //          case MIS_REFLECT:
     //            {
     //              // Reflect it back in the direction it came
-    //              PrtList[prtb].accum_vel.x += -2.0f * PrtList[prtb].vel.x;
-    //              PrtList[prtb].accum_vel.y += -2.0f * PrtList[prtb].vel.y;
+    //              prtlst[prtb].accum_vel.x += -2.0f * prtlst[prtb].vel.x;
+    //              prtlst[prtb].accum_vel.y += -2.0f * prtlst[prtb].vel.y;
     //            };
     //            break;
     //        };
 
-
     //        // Change the owner of the missile
-    //        if ( !PipList[pip].homing )
+    //        if ( !piplst[pip].homing )
     //        {
-    //          PrtList[prtb].team = ChrList[chra_ref].team;
+    //          prtlst[prtb].team = chrlst[chra_ref].team;
     //          prt_owner = chra_ref;
     //        }
     //      }
@@ -5018,157 +4761,162 @@ void do_bumping( float dUpdate )
     //  // detach character from invalid platforms
 
     //  chra_ref = bumplist_get_ref( &bumplist, blnode_a );
-    //  assert(VALID_CHR( chra_ref ));
+    //  assert(VALID_CHR( chrlst, chra_ref ));
     //
     //  chrb_ref  = chr_get_onwhichplatform( chra_ref );
-    //  if ( !VALID_CHR( chrb_ref ) ) continue;
+    //  if ( !VALID_CHR( chrlst, chrb_ref ) ) continue;
 
-    //  if ( ChrList[chra_ref].pos.z < ChrList[chrb_ref].bmpdata.cv.z_max + RAISE )
+    //  if ( chrlst[chra_ref].pos.z < chrlst[chrb_ref].bmpdata.cv.z_max + RAISE )
     //  {
-    //    ChrList[chra_ref].pos.z = ChrList[chrb_ref].bmpdata.cv.z_max + RAISE;
-    //    if ( ChrList[chra_ref].vel.z < ChrList[chrb_ref].vel.z )
+    //    chrlst[chra_ref].pos.z = chrlst[chrb_ref].bmpdata.cv.z_max + RAISE;
+    //    if ( chrlst[chra_ref].vel.z < chrlst[chrb_ref].vel.z )
     //    {
-    //      ChrList[chra_ref].vel.z = - ( ChrList[chra_ref].vel.z - ChrList[chrb_ref].vel.z ) * ChrList[chra_ref].bumpdampen * ChrList[chrb_ref].bumpdampen + ChrList[chrb_ref].vel.z;
+    //      chrlst[chra_ref].vel.z = - ( chrlst[chra_ref].vel.z - chrlst[chrb_ref].vel.z ) * chrlst[chra_ref].bumpdampen * chrlst[chrb_ref].bumpdampen + chrlst[chrb_ref].vel.z;
     //    };
     //  }
 
-    //  ChrList[chra_ref].vel.x = ( ChrList[chra_ref].vel.x - ChrList[chrb_ref].vel.x ) * ( 1.0 - loc_platstick ) + ChrList[chrb_ref].vel.x;
-    //  ChrList[chra_ref].vel.y = ( ChrList[chra_ref].vel.y - ChrList[chrb_ref].vel.y ) * ( 1.0 - loc_platstick ) + ChrList[chrb_ref].vel.y;
-    //  ChrList[chra_ref].turn_lr += ( ChrList[chrb_ref].turn_lr - ChrList[chrb_ref].turn_lr_old ) * ( 1.0 - loc_platstick );
+    //  chrlst[chra_ref].vel.x = ( chrlst[chra_ref].vel.x - chrlst[chrb_ref].vel.x ) * ( 1.0 - loc_platstick ) + chrlst[chrb_ref].vel.x;
+    //  chrlst[chra_ref].vel.y = ( chrlst[chra_ref].vel.y - chrlst[chrb_ref].vel.y ) * ( 1.0 - loc_platstick ) + chrlst[chrb_ref].vel.y;
+    //  chrlst[chra_ref].turn_lr += ( chrlst[chrb_ref].turn_lr - chrlst[chrb_ref].turn_lr_old ) * ( 1.0 - loc_platstick );
     //}
-
 
   };
 }
 
-
 //--------------------------------------------------------------------------------------------
-void stat_return( float dUpdate )
+void stat_return( GameState * gs, float dUpdate )
 {
   // ZZ> This function brings mana and life back
+
+  ClientState * cs = gs->al_cs;
+
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
+
+  Enc  * enclst      = gs->EncList;
+  size_t enclst_size = MAXENCHANT;
 
   int cnt, owner, target, eve;
   static int stat_return_counter = 0;
 
   // Do reload time
   cnt = 0;
-  while ( cnt < MAXCHR )
+  while ( cnt < chrlst_size )
   {
-    ChrList[cnt].reloadtime -= dUpdate;
-    if ( ChrList[cnt].reloadtime < 0 ) ChrList[cnt].reloadtime = 0;
+    chrlst[cnt].reloadtime -= dUpdate;
+    if ( chrlst[cnt].reloadtime < 0 ) chrlst[cnt].reloadtime = 0;
     cnt++;
   }
 
-
-
   // Do stats
-  if ( statclock == ONESECOND )
+  if ( cs->stat_clock == ONESECOND )
   {
     // Reset the clock
-    statclock = 0;
+    cs->stat_clock = 0;
     stat_return_counter++;
 
     // Do all the characters
-    for ( cnt = 0; cnt < MAXCHR; cnt++ )
+    for ( cnt = 0; cnt < chrlst_size; cnt++ )
     {
-      if ( !VALID_CHR( cnt ) ) continue;
+      if ( !VALID_CHR( chrlst, cnt ) ) continue;
 
-      if ( ChrList[cnt].alive )
+      if ( chrlst[cnt].alive )
       {
-        ChrList[cnt].mana_fp8 += ChrList[cnt].manareturn_fp8 >> MANARETURNSHIFT;
-        if ( ChrList[cnt].mana_fp8 < 0 ) ChrList[cnt].mana_fp8 = 0;
-        if ( ChrList[cnt].mana_fp8 > ChrList[cnt].manamax_fp8 ) ChrList[cnt].mana_fp8 = ChrList[cnt].manamax_fp8;
+        chrlst[cnt].mana_fp8 += chrlst[cnt].manareturn_fp8 >> MANARETURNSHIFT;
+        if ( chrlst[cnt].mana_fp8 < 0 ) chrlst[cnt].mana_fp8 = 0;
+        if ( chrlst[cnt].mana_fp8 > chrlst[cnt].manamax_fp8 ) chrlst[cnt].mana_fp8 = chrlst[cnt].manamax_fp8;
 
-        ChrList[cnt].life_fp8 += ChrList[cnt].lifereturn;
-        if ( ChrList[cnt].life_fp8 < 1 ) ChrList[cnt].life_fp8 = 1;
-        if ( ChrList[cnt].life_fp8 > ChrList[cnt].lifemax_fp8 ) ChrList[cnt].life_fp8 = ChrList[cnt].lifemax_fp8;
+        chrlst[cnt].life_fp8 += chrlst[cnt].lifereturn;
+        if ( chrlst[cnt].life_fp8 < 1 ) chrlst[cnt].life_fp8 = 1;
+        if ( chrlst[cnt].life_fp8 > chrlst[cnt].lifemax_fp8 ) chrlst[cnt].life_fp8 = chrlst[cnt].lifemax_fp8;
       };
 
-      if ( ChrList[cnt].grogtime > 0 )
+      if ( chrlst[cnt].grogtime > 0 )
       {
-        ChrList[cnt].grogtime--;
-        if ( ChrList[cnt].grogtime < 0 ) ChrList[cnt].grogtime = 0;
+        chrlst[cnt].grogtime--;
+        if ( chrlst[cnt].grogtime < 0 ) chrlst[cnt].grogtime = 0;
 
-        if ( ChrList[cnt].grogtime == 0 )
+        if ( chrlst[cnt].grogtime == 0 )
         {
-          debug_message( 1, "stat_return() - removing grog on %s (%s)", ChrList[cnt].name, CapList[ChrList[cnt].model].classname );
+          debug_message( 1, "stat_return() - removing grog on %s (%s)", chrlst[cnt].name, caplst[chrlst[cnt].model].classname );
         };
       }
 
-      if ( ChrList[cnt].dazetime > 0 )
+      if ( chrlst[cnt].dazetime > 0 )
       {
-        ChrList[cnt].dazetime--;
-        if ( ChrList[cnt].dazetime < 0 ) ChrList[cnt].dazetime = 0;
-        if ( ChrList[cnt].grogtime == 0 )
+        chrlst[cnt].dazetime--;
+        if ( chrlst[cnt].dazetime < 0 ) chrlst[cnt].dazetime = 0;
+        if ( chrlst[cnt].grogtime == 0 )
         {
-          debug_message( 1, "stat_return() - removing daze on %s (%s)", ChrList[cnt].name, CapList[ChrList[cnt].model].classname );
+          debug_message( 1, "stat_return() - removing daze on %s (%s)", chrlst[cnt].name, caplst[chrlst[cnt].model].classname );
         };
       }
 
     }
 
-
     // Run through all the enchants as well
-    for ( cnt = 0; cnt < MAXENCHANT; cnt++ )
+    for ( cnt = 0; cnt < enclst_size; cnt++ )
     {
       bool_t kill_enchant = bfalse;
-      if ( !EncList[cnt].on ) continue;
+      if ( !enclst[cnt].on ) continue;
 
-      if ( EncList[cnt].time == 0 )
+      if ( enclst[cnt].time == 0 )
       {
         kill_enchant = btrue;
       };
 
-      if ( EncList[cnt].time > 0 ) EncList[cnt].time--;
+      if ( enclst[cnt].time > 0 ) enclst[cnt].time--;
 
-      owner = EncList[cnt].owner;
-      target = EncList[cnt].target;
-      eve = EncList[cnt].eve;
+      owner = enclst[cnt].owner;
+      target = enclst[cnt].target;
+      eve = enclst[cnt].eve;
 
       // Do drains
-      if ( !kill_enchant && ChrList[owner].alive )
+      if ( !kill_enchant && chrlst[owner].alive )
       {
         // Change life
-        ChrList[owner].life_fp8 += EncList[cnt].ownerlife;
-        if ( ChrList[owner].life_fp8 < 1 )
+        chrlst[owner].life_fp8 += enclst[cnt].ownerlife_fp8;
+        if ( chrlst[owner].life_fp8 < 1 )
         {
-          ChrList[owner].life_fp8 = 1;
-          kill_character( owner, target );
+          chrlst[owner].life_fp8 = 1;
+          kill_character( gs, owner, target );
         }
-        if ( ChrList[owner].life_fp8 > ChrList[owner].lifemax_fp8 )
+        if ( chrlst[owner].life_fp8 > chrlst[owner].lifemax_fp8 )
         {
-          ChrList[owner].life_fp8 = ChrList[owner].lifemax_fp8;
+          chrlst[owner].life_fp8 = chrlst[owner].lifemax_fp8;
         }
         // Change mana
-        if ( !cost_mana( owner, -EncList[cnt].ownermana, target ) && EveList[eve].endifcantpay )
+        if ( !cost_mana( gs, owner, -enclst[cnt].ownermana_fp8, target ) && gs->EveList[eve].endifcantpay )
         {
           kill_enchant = btrue;
         }
       }
-      else if ( !EveList[eve].stayifnoowner )
+      else if ( !gs->EveList[eve].stayifnoowner )
       {
         kill_enchant = btrue;
       }
 
-
-      if ( !kill_enchant && EncList[cnt].on )
+      if ( !kill_enchant && enclst[cnt].on )
       {
-        if ( ChrList[target].alive )
+        if ( chrlst[target].alive )
         {
           // Change life
-          ChrList[target].life_fp8 += EncList[cnt].targetlife;
-          if ( ChrList[target].life_fp8 < 1 )
+          chrlst[target].life_fp8 += enclst[cnt].targetlife_fp8;
+          if ( chrlst[target].life_fp8 < 1 )
           {
-            ChrList[target].life_fp8 = 1;
-            kill_character( target, owner );
+            chrlst[target].life_fp8 = 1;
+            kill_character( gs, target, owner );
           }
-          if ( ChrList[target].life_fp8 > ChrList[target].lifemax_fp8 )
+          if ( chrlst[target].life_fp8 > chrlst[target].lifemax_fp8 )
           {
-            ChrList[target].life_fp8 = ChrList[target].lifemax_fp8;
+            chrlst[target].life_fp8 = chrlst[target].lifemax_fp8;
           }
 
           // Change mana
-          if ( !cost_mana( target, -EncList[cnt].targetmana, owner ) && EveList[eve].endifcantpay )
+          if ( !cost_mana( gs, target, -enclst[cnt].targetmana_fp8, owner ) && gs->EveList[eve].endifcantpay )
           {
             kill_enchant = btrue;
           }
@@ -5181,52 +4929,59 @@ void stat_return( float dUpdate )
 
       if ( kill_enchant )
       {
-        remove_enchant( cnt );
+        remove_enchant( gs, cnt );
       };
     }
   }
 }
 
 //--------------------------------------------------------------------------------------------
-void pit_kill( float dUpdate )
+void pit_kill( GameState * gs, float dUpdate )
 {
   // ZZ> This function kills any character in a deep pit...
 
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Prt  * prtlst      = gs->PrtList;
+  size_t prtlst_size = MAXPRT;
+
+  Pip  * piplst      = gs->PipList;
+  size_t piplst_size = MAXPRTPIP;
+
+
   int cnt;
 
-  if ( pitskill )
+  if ( gs->pitskill )
   {
-    if ( pitclock > 19 )
+    if ( gs->pit_clock > 19 )
     {
-      pitclock = 0;
-
+      gs->pit_clock = 0;
 
       // Kill any particles that fell in a pit, if they die in water...
 
-      for ( cnt = 0; cnt < MAXPRT; cnt++ )
+      for ( cnt = 0; cnt < prtlst_size; cnt++ )
       {
-        if ( !VALID_PRT( cnt ) ) continue;
+        if ( !VALID_PRT( prtlst, cnt ) ) continue;
 
-        if ( PrtList[cnt].pos.z < PITDEPTH && PipList[PrtList[cnt].pip].endwater )
+        if ( prtlst[cnt].pos.z < PITDEPTH && piplst[prtlst[cnt].pip].endwater )
         {
-          PrtList[cnt].gopoof = btrue;
+          prtlst[cnt].gopoof = btrue;
         }
       }
 
-
-
       // Kill any characters that fell in a pit...
       cnt = 0;
-      while ( cnt < MAXCHR )
+      while ( cnt < chrlst_size )
       {
-        if ( ChrList[cnt].on && ChrList[cnt].alive && !chr_in_pack( cnt ) )
+        if ( chrlst[cnt].on && chrlst[cnt].alive && !chr_in_pack( chrlst, chrlst_size, cnt ) )
         {
-          if ( !ChrList[cnt].invictus && ChrList[cnt].pos.z < PITDEPTH && !chr_attached( cnt ) )
+          if ( !chrlst[cnt].invictus && chrlst[cnt].pos.z < PITDEPTH && !chr_attached( chrlst, chrlst_size, cnt ) )
           {
             // Got one!
-            kill_character( cnt, MAXCHR );
-            ChrList[cnt].vel.x = 0;
-            ChrList[cnt].vel.y = 0;
+            kill_character( gs, cnt, MAXCHR );
+            chrlst[cnt].vel.x = 0;
+            chrlst[cnt].vel.y = 0;
           }
         }
         cnt++;
@@ -5234,47 +4989,45 @@ void pit_kill( float dUpdate )
     }
     else
     {
-      pitclock += dUpdate;
+      gs->pit_clock += dUpdate;
     }
   }
 }
 
 //--------------------------------------------------------------------------------------------
-void reset_players()
+void reset_players( GameState * gs )
 {
   // ZZ> This function clears the player list data
 
-  int cnt;
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+
 
   // Reset the local data stuff
-  localseekurse = bfalse;
-  localseeinvisible = bfalse;
-  somelocalpladead = bfalse;
-  alllocalpladead = bfalse;
+  gs->al_cs->seekurse    = bfalse;
+  gs->al_cs->seeinvisible = bfalse;
+  gs->somepladead  = bfalse;
+  gs->allpladead   = bfalse;
 
   // Reset the initial player data and latches
-  cnt = 0;
-  while ( cnt < MAXPLAYER )
-  {
-    PlaList[cnt].valid = bfalse;
-    PlaList[cnt].chr = 0;
-    PlaList[cnt].latch.x = 0;
-    PlaList[cnt].latch.y = 0;
-    PlaList[cnt].latch.b = 0;
-    PlaList[cnt].device = INBITS_NONE;
-    cnt++;
-  }
-  numpla = 0;
+  PlaList_renew( gs );
 
-  cl_reset( &AClientState );
-  sv_reset( &AServerState );
+  ClientState_reset_latches( gs->al_cs );
+  ServerState_reset_latches( gs->al_ss );
 }
 
 //--------------------------------------------------------------------------------------------
-void resize_characters( float dUpdate )
+void resize_characters( GameState * gs, float dUpdate )
 {
   // ZZ> This function makes the characters get bigger or smaller, depending
   //     on their sizegoto and sizegototime
+
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
 
   CHR_REF chr_ref;
 
@@ -5283,87 +5036,89 @@ void resize_characters( float dUpdate )
 
   fkeep = pow( 0.9995, dUpdate );
 
-  for ( chr_ref = 0; chr_ref < MAXCHR; chr_ref++ )
+  for ( chr_ref = 0; chr_ref < chrlst_size; chr_ref++ )
   {
-    if ( !VALID_CHR( chr_ref ) || ChrList[chr_ref].sizegototime <= 0 ) continue;
+    if ( !VALID_CHR( chrlst, chr_ref ) || chrlst[chr_ref].sizegototime <= 0 ) continue;
 
     // Make sure it won't get caught in a wall
     willgetcaught = bfalse;
-    if ( ChrList[chr_ref].sizegoto > ChrList[chr_ref].fat )
+    if ( chrlst[chr_ref].sizegoto > chrlst[chr_ref].fat )
     {
       float x_min_save, x_max_save;
       float y_min_save, y_max_save;
 
-      x_min_save = ChrList[chr_ref].bmpdata.cv.x_min;
-      x_max_save = ChrList[chr_ref].bmpdata.cv.x_max;
+      x_min_save = chrlst[chr_ref].bmpdata.cv.x_min;
+      x_max_save = chrlst[chr_ref].bmpdata.cv.x_max;
 
-      y_min_save = ChrList[chr_ref].bmpdata.cv.y_min;
-      y_max_save = ChrList[chr_ref].bmpdata.cv.y_max;
+      y_min_save = chrlst[chr_ref].bmpdata.cv.y_min;
+      y_max_save = chrlst[chr_ref].bmpdata.cv.y_max;
 
-      ChrList[chr_ref].bmpdata.cv.x_min -= 5;
-      ChrList[chr_ref].bmpdata.cv.y_min -= 5;
+      chrlst[chr_ref].bmpdata.cv.x_min -= 5;
+      chrlst[chr_ref].bmpdata.cv.y_min -= 5;
 
-      ChrList[chr_ref].bmpdata.cv.x_max += 5;
-      ChrList[chr_ref].bmpdata.cv.y_max += 5;
+      chrlst[chr_ref].bmpdata.cv.x_max += 5;
+      chrlst[chr_ref].bmpdata.cv.y_max += 5;
 
-      if ( 0 != chr_hitawall( chr_ref, NULL ) )
+      if ( 0 != chr_hitawall( gs, chrlst + chr_ref, NULL ) )
       {
         willgetcaught = btrue;
       }
 
-      ChrList[chr_ref].bmpdata.cv.x_min = x_min_save;
-      ChrList[chr_ref].bmpdata.cv.x_max = x_max_save;
+      chrlst[chr_ref].bmpdata.cv.x_min = x_min_save;
+      chrlst[chr_ref].bmpdata.cv.x_max = x_max_save;
 
-      ChrList[chr_ref].bmpdata.cv.y_min = y_min_save;
-      ChrList[chr_ref].bmpdata.cv.y_max = y_max_save;
+      chrlst[chr_ref].bmpdata.cv.y_min = y_min_save;
+      chrlst[chr_ref].bmpdata.cv.y_max = y_max_save;
     }
-
 
     // If it is getting caught, simply halt growth until later
     if ( willgetcaught ) continue;
 
     // Figure out how big it is
-    ChrList[chr_ref].sizegototime -= dUpdate;
-    if ( ChrList[chr_ref].sizegototime < 0 )
+    chrlst[chr_ref].sizegototime -= dUpdate;
+    if ( chrlst[chr_ref].sizegototime < 0 )
     {
-      ChrList[chr_ref].sizegototime = 0;
+      chrlst[chr_ref].sizegototime = 0;
     }
 
-    if ( ChrList[chr_ref].sizegototime > 0 )
+    if ( chrlst[chr_ref].sizegototime > 0 )
     {
-      newsize = ChrList[chr_ref].fat * fkeep + ChrList[chr_ref].sizegoto * ( 1.0f - fkeep );
+      newsize = chrlst[chr_ref].fat * fkeep + chrlst[chr_ref].sizegoto * ( 1.0f - fkeep );
     }
-    else if ( ChrList[chr_ref].sizegototime <= 0 )
+    else if ( chrlst[chr_ref].sizegototime <= 0 )
     {
-      newsize = ChrList[chr_ref].fat;
+      newsize = chrlst[chr_ref].fat;
     }
 
     // Make it that big...
-    ChrList[chr_ref].fat             = newsize;
-    ChrList[chr_ref].bmpdata.shadow  = ChrList[chr_ref].bmpdata_save.shadow * newsize;
-    ChrList[chr_ref].bmpdata.size    = ChrList[chr_ref].bmpdata_save.size * newsize;
-    ChrList[chr_ref].bmpdata.sizebig = ChrList[chr_ref].bmpdata_save.sizebig * newsize;
-    ChrList[chr_ref].bmpdata.height  = ChrList[chr_ref].bmpdata_save.height * newsize;
-    ChrList[chr_ref].weight          = CapList[ChrList[chr_ref].model].weight * newsize * newsize * newsize;  // preserve density
+    chrlst[chr_ref].fat             = newsize;
+    chrlst[chr_ref].bmpdata.shadow  = chrlst[chr_ref].bmpdata_save.shadow * newsize;
+    chrlst[chr_ref].bmpdata.size    = chrlst[chr_ref].bmpdata_save.size * newsize;
+    chrlst[chr_ref].bmpdata.sizebig = chrlst[chr_ref].bmpdata_save.sizebig * newsize;
+    chrlst[chr_ref].bmpdata.height  = chrlst[chr_ref].bmpdata_save.height * newsize;
+    chrlst[chr_ref].weight          = caplst[chrlst[chr_ref].model].weight * newsize * newsize * newsize;  // preserve density
 
     // Now come up with the magic number
-    ChrList[chr_ref].scale = newsize;
+    chrlst[chr_ref].scale = newsize;
 
     // calculate the bumpers
-    make_one_character_matrix( chr_ref );
+    make_one_character_matrix( chrlst, chrlst_size, chrlst + chr_ref );
   }
 }
 
 //--------------------------------------------------------------------------------------------
-void export_one_character_name( char *szSaveName, CHR_REF chr_ref )
+void export_one_character_name( GameState * gs, char *szSaveName, CHR_REF chr_ref )
 {
   // ZZ> This function makes the "NAMING.TXT" file for the character
+
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
 
   FILE* filewrite;
   int profile;
 
   // Can it export?
-  profile = ChrList[chr_ref].model;
+  profile = chrlst[chr_ref].model;
   filewrite = fs_fileOpen( PRI_FAIL, "export_one_character_name()", szSaveName, "w" );
   if ( NULL== filewrite )
   {
@@ -5371,377 +5126,374 @@ void export_one_character_name( char *szSaveName, CHR_REF chr_ref )
       return;
   }
 
-  str_convert_spaces( ChrList[chr_ref].name, sizeof( ChrList[chr_ref].name ), ChrList[chr_ref].name );
-  fprintf( filewrite, ":%s\n", ChrList[chr_ref].name );
+  str_convert_spaces( chrlst[chr_ref].name, sizeof( chrlst[chr_ref].name ), chrlst[chr_ref].name );
+  fprintf( filewrite, ":%s\n", chrlst[chr_ref].name );
   fprintf( filewrite, ":STOP\n\n" );
   fs_fileClose( filewrite );
 }
 
 //--------------------------------------------------------------------------------------------
-void export_one_character_profile( char *szSaveName, CHR_REF chr_ref )
+void export_one_character_profile( GameState * gs, char *szSaveName, CHR_REF chr_ref )
 {
   // ZZ> This function creates a "DATA.TXT" file for the given character.
   //     it is assumed that all enchantments have been done away with
+
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
 
   FILE* filewrite;
   int profile;
   int damagetype, iskin;
   char types[10] = "SCPHEFIZ";
   char codes[4];
+  Chr * pchr;
+  Cap * pcap;
 
-  disenchant_character( chr_ref );
+  if( !VALID_CHR(chrlst, chr_ref) ) return;
+  pchr = chrlst + chr_ref;
+
+  disenchant_character( gs, chr_ref );
 
   // General stuff
-  profile = ChrList[chr_ref].model;
-
+  profile = pchr->model;
+  if( !VALID_MDL(profile) ) return;
+  pcap = caplst + profile;
 
   // Open the file
   filewrite = fs_fileOpen( PRI_NONE, NULL, szSaveName, "w" );
-  if ( filewrite )
+  if ( NULL == filewrite ) return;
+
+  // Real general data
+  fprintf( filewrite, "Slot number    : -1\n" );   // -1 signals a flexible load thing
+  funderf( filewrite, "Class name     : ", pcap->classname );
+  ftruthf( filewrite, "Uniform light  : ", pcap->uniformlit );
+  fprintf( filewrite, "Maximum ammo   : %d\n", pcap->ammomax );
+  fprintf( filewrite, "Current ammo   : %d\n", pcap->ammo );
+  fgendef( filewrite, "Gender         : ", pcap->gender );
+  fprintf( filewrite, "\n" );
+
+  // Object stats
+  fprintf( filewrite, "Life color     : %d\n", pcap->lifecolor );
+  fprintf( filewrite, "Mana color     : %d\n", pcap->manacolor );
+  fprintf( filewrite, "Life           : %4.2f\n", FP8_TO_FLOAT( pchr->lifemax_fp8 ) );
+  fpairof( filewrite, "Life up        : ", &pcap->lifeperlevel_fp8 );
+  fprintf( filewrite, "Mana           : %4.2f\n", FP8_TO_FLOAT( pchr->manamax_fp8 ) );
+  fpairof( filewrite, "Mana up        : ", &pcap->manaperlevel_fp8 );
+  fprintf( filewrite, "Mana return    : %4.2f\n", FP8_TO_FLOAT( pchr->manareturn_fp8 ) );
+  fpairof( filewrite, "Mana return up : ", &pcap->manareturnperlevel_fp8 );
+  fprintf( filewrite, "Mana flow      : %4.2f\n", FP8_TO_FLOAT( pchr->manaflow_fp8 ) );
+  fpairof( filewrite, "Mana flow up   : ", &pcap->manaflowperlevel_fp8 );
+  fprintf( filewrite, "STR            : %4.2f\n", FP8_TO_FLOAT( pchr->strength_fp8 ) );
+  fpairof( filewrite, "STR up         : ", &pcap->strengthperlevel_fp8 );
+  fprintf( filewrite, "WIS            : %4.2f\n", FP8_TO_FLOAT( pchr->wisdom_fp8 ) );
+  fpairof( filewrite, "WIS up         : ", &pcap->wisdomperlevel_fp8 );
+  fprintf( filewrite, "INT            : %4.2f\n", FP8_TO_FLOAT( pchr->intelligence_fp8 ) );
+  fpairof( filewrite, "INT up         : ", &pcap->intelligenceperlevel_fp8 );
+  fprintf( filewrite, "DEX            : %4.2f\n", FP8_TO_FLOAT( pchr->dexterity_fp8 ) );
+  fpairof( filewrite, "DEX up         : ", &pcap->dexterityperlevel_fp8 );
+  fprintf( filewrite, "\n" );
+
+  // More physical attributes
+  fprintf( filewrite, "Size           : %4.2f\n", pchr->sizegoto );
+  fprintf( filewrite, "Size up        : %4.2f\n", pcap->sizeperlevel );
+  fprintf( filewrite, "Shadow size    : %d\n", pcap->shadowsize );
+  fprintf( filewrite, "Bump size      : %d\n", pcap->bumpsize );
+  fprintf( filewrite, "Bump height    : %d\n", pcap->bumpheight );
+  fprintf( filewrite, "Bump dampen    : %4.2f\n", pcap->bumpdampen );
+  fprintf( filewrite, "Weight         : %d\n", pcap->weight < 0.0f ? 0xFF : ( Uint8 ) pcap->weight );
+  fprintf( filewrite, "Jump power     : %4.2f\n", pcap->jump );
+  fprintf( filewrite, "Jump number    : %d\n", pcap->jumpnumber );
+  fprintf( filewrite, "Sneak speed    : %d\n", pcap->spd_sneak );
+  fprintf( filewrite, "Walk speed     : %d\n", pcap->spd_walk );
+  fprintf( filewrite, "Run speed      : %d\n", pcap->spd_run );
+  fprintf( filewrite, "Fly to height  : %d\n", pcap->flyheight );
+  fprintf( filewrite, "Flashing AND   : %d\n", pcap->flashand );
+  fprintf( filewrite, "Alpha blending : %d\n", pcap->alpha_fp8 );
+  fprintf( filewrite, "Light blending : %d\n", pcap->light_fp8 );
+  ftruthf( filewrite, "Transfer blend : ", pcap->transferblend );
+  fprintf( filewrite, "Sheen          : %d\n", pcap->sheen_fp8 );
+  ftruthf( filewrite, "Phong mapping  : ", pcap->enviro );
+  fprintf( filewrite, "Texture X add  : %4.2f\n", pcap->uoffvel / (float)UINT16_SIZE );
+  fprintf( filewrite, "Texture Y add  : %4.2f\n", pcap->voffvel / (float)UINT16_SIZE );
+  ftruthf( filewrite, "Sticky butt    : ", pcap->stickybutt );
+  fprintf( filewrite, "\n" );
+
+  // Invulnerability data
+  ftruthf( filewrite, "Invictus       : ", pcap->invictus );
+  fprintf( filewrite, "NonI facing    : %d\n", pcap->nframefacing );
+  fprintf( filewrite, "NonI angle     : %d\n", pcap->nframeangle );
+  fprintf( filewrite, "I facing       : %d\n", pcap->iframefacing );
+  fprintf( filewrite, "I angle        : %d\n", pcap->iframeangle );
+  fprintf( filewrite, "\n" );
+
+  // Skin defenses
+  fprintf( filewrite, "Base defense   : " );
+  for ( iskin = 0; iskin < MAXSKIN; iskin++ ) { fprintf( filewrite, "%3d ", 255 - pcap->skin[iskin].defense_fp8 ); }
+  fprintf( filewrite, "\n" );
+
+  for ( damagetype = 0; damagetype < MAXDAMAGETYPE; damagetype++ )
   {
-    // Real general data
-    fprintf( filewrite, "Slot number    : -1\n" );   // -1 signals a flexible load thing
-    funderf( filewrite, "Class name     : ", CapList[profile].classname );
-    ftruthf( filewrite, "Uniform light  : ", CapList[profile].uniformlit );
-    fprintf( filewrite, "Maximum ammo   : %d\n", CapList[profile].ammomax );
-    fprintf( filewrite, "Current ammo   : %d\n", CapList[chr_ref].ammo );
-    fgendef( filewrite, "Gender         : ", CapList[chr_ref].gender );
+    fprintf( filewrite, "%c damage shift :", types[damagetype] );
+    for ( iskin = 0; iskin < MAXSKIN; iskin++ ) { fprintf( filewrite, "%3d ", pcap->skin[iskin].damagemodifier_fp8[damagetype]&DAMAGE_SHIFT ); };
     fprintf( filewrite, "\n" );
-
-
-
-    // Object stats
-    fprintf( filewrite, "Life color     : %d\n", CapList[chr_ref].lifecolor );
-    fprintf( filewrite, "Mana color     : %d\n", CapList[chr_ref].manacolor );
-    fprintf( filewrite, "Life           : %4.2f\n", FP8_TO_FLOAT( ChrList[chr_ref].lifemax_fp8 ) );
-    fpairof( filewrite, "Life up        : ", &CapList[profile].lifeperlevel_fp8 );
-    fprintf( filewrite, "Mana           : %4.2f\n", FP8_TO_FLOAT( ChrList[chr_ref].manamax_fp8 ) );
-    fpairof( filewrite, "Mana up        : ", &CapList[profile].manaperlevel_fp8 );
-    fprintf( filewrite, "Mana return    : %4.2f\n", FP8_TO_FLOAT( ChrList[chr_ref].manareturn_fp8 ) );
-    fpairof( filewrite, "Mana return up : ", &CapList[profile].manareturnperlevel_fp8 );
-    fprintf( filewrite, "Mana flow      : %4.2f\n", FP8_TO_FLOAT( ChrList[chr_ref].manaflow_fp8 ) );
-    fpairof( filewrite, "Mana flow up   : ", &CapList[profile].manaflowperlevel_fp8 );
-    fprintf( filewrite, "STR            : %4.2f\n", FP8_TO_FLOAT( ChrList[chr_ref].strength_fp8 ) );
-    fpairof( filewrite, "STR up         : ", &CapList[profile].strengthperlevel_fp8 );
-    fprintf( filewrite, "WIS            : %4.2f\n", FP8_TO_FLOAT( ChrList[chr_ref].wisdom_fp8 ) );
-    fpairof( filewrite, "WIS up         : ", &CapList[profile].wisdomperlevel_fp8 );
-    fprintf( filewrite, "INT            : %4.2f\n", FP8_TO_FLOAT( ChrList[chr_ref].intelligence_fp8 ) );
-    fpairof( filewrite, "INT up         : ", &CapList[profile].intelligenceperlevel_fp8 );
-    fprintf( filewrite, "DEX            : %4.2f\n", FP8_TO_FLOAT( ChrList[chr_ref].dexterity_fp8 ) );
-    fpairof( filewrite, "DEX up         : ", &CapList[profile].dexterityperlevel_fp8 );
-    fprintf( filewrite, "\n" );
-
-
-
-    // More physical attributes
-    fprintf( filewrite, "Size           : %4.2f\n", ChrList[chr_ref].sizegoto );
-    fprintf( filewrite, "Size up        : %4.2f\n", CapList[profile].sizeperlevel );
-    fprintf( filewrite, "Shadow size    : %d\n", CapList[profile].shadowsize );
-    fprintf( filewrite, "Bump size      : %d\n", CapList[profile].bumpsize );
-    fprintf( filewrite, "Bump height    : %d\n", CapList[profile].bumpheight );
-    fprintf( filewrite, "Bump dampen    : %4.2f\n", CapList[profile].bumpdampen );
-    fprintf( filewrite, "Weight         : %d\n", CapList[profile].weight < 0.0f ? 0xFF : ( Uint8 ) CapList[profile].weight );
-    fprintf( filewrite, "Jump power     : %4.2f\n", CapList[profile].jump );
-    fprintf( filewrite, "Jump number    : %d\n", CapList[profile].jumpnumber );
-    fprintf( filewrite, "Sneak speed    : %d\n", CapList[profile].spd_sneak );
-    fprintf( filewrite, "Walk speed     : %d\n", CapList[profile].spd_walk );
-    fprintf( filewrite, "Run speed      : %d\n", CapList[profile].spd_run );
-    fprintf( filewrite, "Fly to height  : %d\n", CapList[profile].flyheight );
-    fprintf( filewrite, "Flashing AND   : %d\n", CapList[profile].flashand );
-    fprintf( filewrite, "Alpha blending : %d\n", CapList[profile].alpha_fp8 );
-    fprintf( filewrite, "Light blending : %d\n", CapList[profile].light_fp8 );
-    ftruthf( filewrite, "Transfer blend : ", CapList[profile].transferblend );
-    fprintf( filewrite, "Sheen          : %d\n", CapList[profile].sheen_fp8 );
-    ftruthf( filewrite, "Phong mapping  : ", CapList[profile].enviro );
-    fprintf( filewrite, "Texture X add  : %4.2f\n", CapList[profile].uoffvel / (float)UINT16_SIZE );
-    fprintf( filewrite, "Texture Y add  : %4.2f\n", CapList[profile].voffvel / (float)UINT16_SIZE );
-    ftruthf( filewrite, "Sticky butt    : ", CapList[profile].stickybutt );
-    fprintf( filewrite, "\n" );
-
-
-
-    // Invulnerability data
-    ftruthf( filewrite, "Invictus       : ", CapList[profile].invictus );
-    fprintf( filewrite, "NonI facing    : %d\n", CapList[profile].nframefacing );
-    fprintf( filewrite, "NonI angle     : %d\n", CapList[profile].nframeangle );
-    fprintf( filewrite, "I facing       : %d\n", CapList[profile].iframefacing );
-    fprintf( filewrite, "I angle        : %d\n", CapList[profile].iframeangle );
-    fprintf( filewrite, "\n" );
-
-
-
-    // Skin defenses
-    fprintf( filewrite, "Base defense   : " );
-    for ( iskin = 0; iskin < MAXSKIN; iskin++ ) { fprintf( filewrite, "%3d ", 255 - CapList[profile].skin[iskin].defense_fp8 ); }
-    fprintf( filewrite, "\n" );
-
-    for ( damagetype = 0; damagetype < MAXDAMAGETYPE; damagetype++ )
-    {
-      fprintf( filewrite, "%c damage shift :", types[damagetype] );
-      for ( iskin = 0; iskin < MAXSKIN; iskin++ ) { fprintf( filewrite, "%3d ", CapList[profile].skin[iskin].damagemodifier_fp8[damagetype]&DAMAGE_SHIFT ); };
-      fprintf( filewrite, "\n" );
-    }
-
-    for ( damagetype = 0; damagetype < MAXDAMAGETYPE; damagetype++ )
-    {
-      fprintf( filewrite, "%c damage code  : ", types[damagetype] );
-      for ( iskin = 0; iskin < MAXSKIN; iskin++ )
-      {
-        codes[iskin] = 'F';
-        if ( CapList[profile].skin[iskin].damagemodifier_fp8[damagetype] & DAMAGE_CHARGE ) codes[iskin] = 'C';
-        if ( CapList[profile].skin[iskin].damagemodifier_fp8[damagetype] & DAMAGE_INVERT ) codes[iskin] = 'T';
-        if ( CapList[profile].skin[iskin].damagemodifier_fp8[damagetype] & DAMAGE_MANA   ) codes[iskin] = 'M';
-        fprintf( filewrite, "%3c ", codes[iskin] );
-      } 
-      fprintf( filewrite, "\n" );
-    }
-
-    fprintf( filewrite, "Acceleration   : " );
-    for ( iskin = 0; iskin < MAXSKIN; iskin++ )
-    {
-      fprintf( filewrite, "%3.0f ", CapList[profile].skin[iskin].maxaccel*80 );
-    }
-    fprintf( filewrite, "\n" );
-
-
-
-    // Experience and level data
-    fprintf( filewrite, "EXP for 2nd    : %d\n", CapList[profile].experienceforlevel[1] );
-    fprintf( filewrite, "EXP for 3rd    : %d\n", CapList[profile].experienceforlevel[2] );
-    fprintf( filewrite, "EXP for 4th    : %d\n", CapList[profile].experienceforlevel[3] );
-    fprintf( filewrite, "EXP for 5th    : %d\n", CapList[profile].experienceforlevel[4] );
-    fprintf( filewrite, "EXP for 6th    : %d\n", CapList[profile].experienceforlevel[5] );
-    fprintf( filewrite, "Starting EXP   : %d\n", CapList[chr_ref].experience );
-    fprintf( filewrite, "EXP worth      : %d\n", CapList[profile].experienceworth );
-    fprintf( filewrite, "EXP exchange   : %5.3f\n", CapList[profile].experienceexchange );
-    fprintf( filewrite, "EXPSECRET      : %4.2f\n", CapList[profile].experiencerate[0] );
-    fprintf( filewrite, "EXPQUEST       : %4.2f\n", CapList[profile].experiencerate[1] );
-    fprintf( filewrite, "EXPDARE        : %4.2f\n", CapList[profile].experiencerate[2] );
-    fprintf( filewrite, "EXPKILL        : %4.2f\n", CapList[profile].experiencerate[3] );
-    fprintf( filewrite, "EXPMURDER      : %4.2f\n", CapList[profile].experiencerate[4] );
-    fprintf( filewrite, "EXPREVENGE     : %4.2f\n", CapList[profile].experiencerate[5] );
-    fprintf( filewrite, "EXPTEAMWORK    : %4.2f\n", CapList[profile].experiencerate[6] );
-    fprintf( filewrite, "EXPROLEPLAY    : %4.2f\n", CapList[profile].experiencerate[7] );
-    fprintf( filewrite, "\n" );
-
-
-
-    // IDSZ identification tags
-    fprintf( filewrite, "IDSZ Parent    : [%s]\n", undo_idsz( CapList[profile].idsz[0] ) );
-    fprintf( filewrite, "IDSZ Type      : [%s]\n", undo_idsz( CapList[profile].idsz[1] ) );
-    fprintf( filewrite, "IDSZ Skill     : [%s]\n", undo_idsz( CapList[profile].idsz[2] ) );
-    fprintf( filewrite, "IDSZ Special   : [%s]\n", undo_idsz( CapList[profile].idsz[3] ) );
-    fprintf( filewrite, "IDSZ Hate      : [%s]\n", undo_idsz( CapList[profile].idsz[4] ) );
-    fprintf( filewrite, "IDSZ Vulnie    : [%s]\n", undo_idsz( CapList[profile].idsz[5] ) );
-    fprintf( filewrite, "\n" );
-
-
-
-    // Item and damage flags
-    ftruthf( filewrite, "Is an item     : ", CapList[profile].isitem );
-    ftruthf( filewrite, "Is a mount     : ", CapList[profile].ismount );
-    ftruthf( filewrite, "Is stackable   : ", CapList[profile].isstackable );
-    ftruthf( filewrite, "Name known     : ", CapList[chr_ref].nameknown );
-    ftruthf( filewrite, "Usage known    : ", CapList[profile].usageknown );
-    ftruthf( filewrite, "Is exportable  : ", CapList[profile].cancarrytonextmodule );
-    ftruthf( filewrite, "Requires skill : ", CapList[profile].needskillidtouse );
-    ftruthf( filewrite, "Is platform    : ", CapList[profile].isplatform );
-    ftruthf( filewrite, "Collects money : ", CapList[profile].cangrabmoney );
-    ftruthf( filewrite, "Can open stuff : ", CapList[profile].canopenstuff );
-    fprintf( filewrite, "\n" );
-
-
-
-    // Other item and damage stuff
-    fdamagf( filewrite, "Damage type    : ", CapList[profile].damagetargettype );
-    factiof( filewrite, "Attack type    : ", CapList[profile].weaponaction );
-    fprintf( filewrite, "\n" );
-
-
-
-    // Particle attachments
-    fprintf( filewrite, "Attached parts : %d\n", CapList[profile].attachedprtamount );
-    fdamagf( filewrite, "Reaffirm type  : ", CapList[profile].attachedprtreaffirmdamagetype );
-    fprintf( filewrite, "Particle type  : %d\n", CapList[profile].attachedprttype );
-    fprintf( filewrite, "\n" );
-
-
-
-    // Character hands
-    ftruthf( filewrite, "Left valid     : ", CapList[profile].slotvalid[SLOT_LEFT] );
-    ftruthf( filewrite, "Right valid    : ", CapList[profile].slotvalid[SLOT_RIGHT] );
-    fprintf( filewrite, "\n" );
-
-
-
-    // Particle spawning on attack
-    ftruthf( filewrite, "Part on weapon : ", CapList[profile].attackattached );
-    fprintf( filewrite, "Part type      : %d\n", CapList[profile].attackprttype );
-    fprintf( filewrite, "\n" );
-
-
-
-    // Particle spawning for GoPoof
-    fprintf( filewrite, "Poof amount    : %d\n", CapList[profile].gopoofprtamount );
-    fprintf( filewrite, "Facing add     : %d\n", CapList[profile].gopoofprtfacingadd );
-    fprintf( filewrite, "Part type      : %d\n", CapList[profile].gopoofprttype );
-    fprintf( filewrite, "\n" );
-
-
-
-    // Particle spawning for blud
-    ftruthf( filewrite, "Blud valid    : ", CapList[profile].bludlevel );
-    fprintf( filewrite, "Part type      : %d\n", CapList[profile].bludprttype );
-    fprintf( filewrite, "\n" );
-
-
-
-    // Extra stuff
-    ftruthf( filewrite, "Waterwalking   : ", CapList[profile].waterwalk );
-    fprintf( filewrite, "Bounce dampen  : %5.3f\n", CapList[profile].dampen );
-    fprintf( filewrite, "\n" );
-
-
-
-    // More stuff
-    fprintf( filewrite, "Life healing   : %5.3f\n", FP8_TO_FLOAT( CapList[profile].lifeheal_fp8 ) );
-    fprintf( filewrite, "Mana cost      : %5.3f\n", FP8_TO_FLOAT( CapList[profile].manacost_fp8 ) );
-    fprintf( filewrite, "Life return    : %d\n", CapList[profile].lifereturn_fp8 );
-    fprintf( filewrite, "Stopped by     : %d\n", CapList[profile].stoppedby );
-
-    for ( iskin = 0; iskin < MAXSKIN; iskin++ )
-    {
-      STRING stmp;
-      snprintf( stmp, sizeof( stmp ), "Skin %d name    : ", iskin );
-      funderf( filewrite, stmp, CapList[profile].skin[iskin].name );
-    };
-
-    for ( iskin = 0; iskin < MAXSKIN; iskin++ )
-    {
-      fprintf( filewrite, "Skin %d cost    : %d\n", iskin, CapList[profile].skin[iskin].cost );
-    };
-
-    fprintf( filewrite, "STR dampen     : %5.3f\n", CapList[profile].strengthdampen );
-    fprintf( filewrite, "\n" );
-
-
-
-    // Another memory lapse
-    ftruthf( filewrite, "No rider attak : ", btrue - CapList[profile].ridercanattack );
-    ftruthf( filewrite, "Can be dazed   : ", CapList[profile].canbedazed );
-    ftruthf( filewrite, "Can be grogged : ", CapList[profile].canbegrogged );
-    fprintf( filewrite, "NOT USED       : 0\n" );
-    fprintf( filewrite, "NOT USED       : 0\n" );
-    ftruthf( filewrite, "Can see invisi : ", CapList[profile].canseeinvisible );
-    fprintf( filewrite, "Kursed chance  : %d\n", ChrList[chr_ref].iskursed*100 );
-    fprintf( filewrite, "Footfall sound : %d\n", CapList[profile].footfallsound );
-    fprintf( filewrite, "Jump sound     : %d\n", CapList[profile].jumpsound );
-    fprintf( filewrite, "\n" );
-
-
-    // Expansions
-    fprintf( filewrite, ":[GOLD] %d\n", CapList[chr_ref].money );
-
-    if ( CapList[profile].skindressy&1 ) fprintf( filewrite, ":[DRES] 0\n" );
-    if ( CapList[profile].skindressy&2 ) fprintf( filewrite, ":[DRES] 1\n" );
-    if ( CapList[profile].skindressy&4 ) fprintf( filewrite, ":[DRES] 2\n" );
-    if ( CapList[profile].skindressy&8 ) fprintf( filewrite, ":[DRES] 3\n" );
-    if ( CapList[profile].resistbumpspawn ) fprintf( filewrite, ":[STUK] 0\n" );
-    if ( CapList[profile].istoobig ) fprintf( filewrite, ":[PACK] 0\n" );
-    if ( !CapList[profile].reflect ) fprintf( filewrite, ":[VAMP] 1\n" );
-    if ( CapList[profile].alwaysdraw ) fprintf( filewrite, ":[DRAW] 1\n" );
-    if ( CapList[profile].isranged ) fprintf( filewrite, ":[RANG] 1\n" );
-    if ( CapList[profile].hidestate != NOHIDE ) fprintf( filewrite, ":[HIDE] %d\n", CapList[profile].hidestate );
-    if ( CapList[profile].isequipment ) fprintf( filewrite, ":[EQUI] 1\n" );
-    if ( CapList[chr_ref].bumpsizebig >= CapList[chr_ref].bumpsize ) fprintf( filewrite, ":[SQUA] 1\n" );
-    if ( CapList[chr_ref].icon != CapList[profile].usageknown ) fprintf( filewrite, ":[ICON] %d\n", CapList[chr_ref].icon );
-    if ( CapList[profile].forceshadow ) fprintf( filewrite, ":[SHAD] 1\n" );
-
-    //Skill expansions
-    if ( CapList[chr_ref].canseekurse )  fprintf( filewrite, ":[CKUR] 1\n" );
-    if ( CapList[chr_ref].canusearcane ) fprintf( filewrite, ":[WMAG] 1\n" );
-    if ( CapList[chr_ref].canjoust )     fprintf( filewrite, ":[JOUS] 1\n" );
-    if ( CapList[chr_ref].canusedivine ) fprintf( filewrite, ":[HMAG] 1\n" );
-    if ( CapList[chr_ref].candisarm )    fprintf( filewrite, ":[DISA] 1\n" );
-    if ( CapList[chr_ref].canusetech )   fprintf( filewrite, ":[TECH] 1\n" );
-    if ( CapList[chr_ref].canbackstab )  fprintf( filewrite, ":[STAB] 1\n" );
-    if ( CapList[chr_ref].canuseadvancedweapons ) fprintf( filewrite, ":[AWEP] 1\n" );
-    if ( CapList[chr_ref].canusepoison ) fprintf( filewrite, ":[POIS] 1\n" );
-    if ( CapList[chr_ref].canread )  fprintf( filewrite, ":[READ] 1\n" );
-
-    //General exported chr_ref information
-    fprintf( filewrite, ":[PLAT] %d\n", CapList[profile].canuseplatforms );
-    fprintf( filewrite, ":[SKIN] %d\n", ChrList[chr_ref].skin_ref % MAXSKIN );
-    fprintf( filewrite, ":[CONT] %d\n", ChrList[chr_ref].aistate.content );
-    fprintf( filewrite, ":[STAT] %d\n", ChrList[chr_ref].aistate.state );
-    fprintf( filewrite, ":[LEVL] %d\n", ChrList[chr_ref].experiencelevel );
-    fs_fileClose( filewrite );
   }
+
+  for ( damagetype = 0; damagetype < MAXDAMAGETYPE; damagetype++ )
+  {
+    fprintf( filewrite, "%c damage code  : ", types[damagetype] );
+    for ( iskin = 0; iskin < MAXSKIN; iskin++ )
+    {
+      codes[iskin] = 'F';
+      if ( pcap->skin[iskin].damagemodifier_fp8[damagetype] & DAMAGE_CHARGE ) codes[iskin] = 'C';
+      if ( pcap->skin[iskin].damagemodifier_fp8[damagetype] & DAMAGE_INVERT ) codes[iskin] = 'T';
+      if ( pcap->skin[iskin].damagemodifier_fp8[damagetype] & DAMAGE_MANA   ) codes[iskin] = 'M';
+      fprintf( filewrite, "%3c ", codes[iskin] );
+    } 
+    fprintf( filewrite, "\n" );
+  }
+
+  fprintf( filewrite, "Acceleration   : " );
+  for ( iskin = 0; iskin < MAXSKIN; iskin++ )
+  {
+    fprintf( filewrite, "%3.0f ", pcap->skin[iskin].maxaccel*80 );
+  }
+  fprintf( filewrite, "\n" );
+
+  // Experience and level data
+  fprintf( filewrite, "EXP for 2nd    : %d\n", pcap->experienceforlevel[1] );
+  fprintf( filewrite, "EXP for 3rd    : %d\n", pcap->experienceforlevel[2] );
+  fprintf( filewrite, "EXP for 4th    : %d\n", pcap->experienceforlevel[3] );
+  fprintf( filewrite, "EXP for 5th    : %d\n", pcap->experienceforlevel[4] );
+  fprintf( filewrite, "EXP for 6th    : %d\n", pcap->experienceforlevel[5] );
+  fprintf( filewrite, "Starting EXP   : %d\n", pcap->experience );
+  fprintf( filewrite, "EXP worth      : %d\n", pcap->experienceworth );
+  fprintf( filewrite, "EXP exchange   : %5.3f\n", pcap->experienceexchange );
+  fprintf( filewrite, "EXPSECRET      : %4.2f\n", pcap->experiencerate[0] );
+  fprintf( filewrite, "EXPQUEST       : %4.2f\n", pcap->experiencerate[1] );
+  fprintf( filewrite, "EXPDARE        : %4.2f\n", pcap->experiencerate[2] );
+  fprintf( filewrite, "EXPKILL        : %4.2f\n", pcap->experiencerate[3] );
+  fprintf( filewrite, "EXPMURDER      : %4.2f\n", pcap->experiencerate[4] );
+  fprintf( filewrite, "EXPREVENGE     : %4.2f\n", pcap->experiencerate[5] );
+  fprintf( filewrite, "EXPTEAMWORK    : %4.2f\n", pcap->experiencerate[6] );
+  fprintf( filewrite, "EXPROLEPLAY    : %4.2f\n", pcap->experiencerate[7] );
+  fprintf( filewrite, "\n" );
+
+  // IDSZ identification tags
+  fprintf( filewrite, "IDSZ Parent    : [%s]\n", undo_idsz( pcap->idsz[0] ) );
+  fprintf( filewrite, "IDSZ Type      : [%s]\n", undo_idsz( pcap->idsz[1] ) );
+  fprintf( filewrite, "IDSZ Skill     : [%s]\n", undo_idsz( pcap->idsz[2] ) );
+  fprintf( filewrite, "IDSZ Special   : [%s]\n", undo_idsz( pcap->idsz[3] ) );
+  fprintf( filewrite, "IDSZ Hate      : [%s]\n", undo_idsz( pcap->idsz[4] ) );
+  fprintf( filewrite, "IDSZ Vulnie    : [%s]\n", undo_idsz( pcap->idsz[5] ) );
+  fprintf( filewrite, "\n" );
+
+  // Item and damage flags
+  ftruthf( filewrite, "Is an item     : ", pcap->isitem );
+  ftruthf( filewrite, "Is a mount     : ", pcap->ismount );
+  ftruthf( filewrite, "Is stackable   : ", pcap->isstackable );
+  ftruthf( filewrite, "Name known     : ", pcap->nameknown );
+  ftruthf( filewrite, "Usage known    : ", pcap->usageknown );
+  ftruthf( filewrite, "Is exportable  : ", pcap->cancarrytonextmodule );
+  ftruthf( filewrite, "Requires skill : ", pcap->needskillidtouse );
+  ftruthf( filewrite, "Is platform    : ", pcap->isplatform );
+  ftruthf( filewrite, "Collects money : ", pcap->cangrabmoney );
+  ftruthf( filewrite, "Can open stuff : ", pcap->canopenstuff );
+  fprintf( filewrite, "\n" );
+
+  // Other item and damage stuff
+  fdamagf( filewrite, "Damage type    : ", pcap->damagetargettype );
+  factiof( filewrite, "Attack type    : ", pcap->weaponaction );
+  fprintf( filewrite, "\n" );
+
+  // Particle attachments
+  fprintf( filewrite, "Attached parts : %d\n", pcap->attachedprtamount );
+  fdamagf( filewrite, "Reaffirm type  : ", pcap->attachedprtreaffirmdamagetype );
+  fprintf( filewrite, "Particle type  : %d\n", pcap->attachedprttype );
+  fprintf( filewrite, "\n" );
+
+  // Character hands
+  ftruthf( filewrite, "Left valid     : ", pcap->slotvalid[SLOT_LEFT] );
+  ftruthf( filewrite, "Right valid    : ", pcap->slotvalid[SLOT_RIGHT] );
+  fprintf( filewrite, "\n" );
+
+  // Particle spawning on attack
+  ftruthf( filewrite, "Part on weapon : ", pcap->attackattached );
+  fprintf( filewrite, "Part type      : %d\n", pcap->attackprttype );
+  fprintf( filewrite, "\n" );
+
+  // Particle spawning for GoPoof
+  fprintf( filewrite, "Poof amount    : %d\n", pcap->gopoofprtamount );
+  fprintf( filewrite, "Facing add     : %d\n", pcap->gopoofprtfacingadd );
+  fprintf( filewrite, "Part type      : %d\n", pcap->gopoofprttype );
+  fprintf( filewrite, "\n" );
+
+  // Particle spawning for blud
+  ftruthf( filewrite, "Blud valid    : ", BLUD_NONE != pcap->bludlevel );
+  fprintf( filewrite, "Part type      : %d\n", pcap->bludprttype );
+  fprintf( filewrite, "\n" );
+
+  // Extra stuff
+  ftruthf( filewrite, "Waterwalking   : ", pcap->waterwalk );
+  fprintf( filewrite, "Bounce dampen  : %5.3f\n", pcap->dampen );
+  fprintf( filewrite, "\n" );
+
+  // More stuff
+  fprintf( filewrite, "Life healing   : %5.3f\n", FP8_TO_FLOAT( pcap->lifeheal_fp8 ) );
+  fprintf( filewrite, "Mana cost      : %5.3f\n", FP8_TO_FLOAT( pcap->manacost_fp8 ) );
+  fprintf( filewrite, "Life return    : %d\n", pcap->lifereturn_fp8 );
+  fprintf( filewrite, "Stopped by     : %d\n", pcap->stoppedby );
+
+  for ( iskin = 0; iskin < MAXSKIN; iskin++ )
+  {
+    STRING stmp;
+    snprintf( stmp, sizeof( stmp ), "Skin %d name    : ", iskin );
+    funderf( filewrite, stmp, pcap->skin[iskin].name );
+  };
+
+  for ( iskin = 0; iskin < MAXSKIN; iskin++ )
+  {
+    fprintf( filewrite, "Skin %d cost    : %d\n", iskin, pcap->skin[iskin].cost );
+  };
+
+  fprintf( filewrite, "STR dampen     : %5.3f\n", pcap->strengthdampen );
+  fprintf( filewrite, "\n" );
+
+  // Another memory lapse
+  ftruthf( filewrite, "No rider attak : ", !pcap->ridercanattack );
+  ftruthf( filewrite, "Can be dazed   : ", pcap->canbedazed );
+  ftruthf( filewrite, "Can be grogged : ", pcap->canbegrogged );
+  fprintf( filewrite, "NOT USED       : 0\n" );
+  fprintf( filewrite, "NOT USED       : 0\n" );
+  ftruthf( filewrite, "Can see invisi : ", pcap->canseeinvisible );
+  fprintf( filewrite, "Kursed chance  : %d\n", pchr->iskursed*100 );
+  fprintf( filewrite, "Footfall sound : %d\n", pcap->footfallsound );
+  fprintf( filewrite, "Jump sound     : %d\n", pcap->jumpsound );
+  fprintf( filewrite, "\n" );
+
+  // Expansions
+  fprintf( filewrite, ":[GOLD] %d\n", pcap->money );
+
+  if ( pcap->skindressy&1 ) fprintf( filewrite, ":[DRES] 0\n" );
+  if ( pcap->skindressy&2 ) fprintf( filewrite, ":[DRES] 1\n" );
+  if ( pcap->skindressy&4 ) fprintf( filewrite, ":[DRES] 2\n" );
+  if ( pcap->skindressy&8 ) fprintf( filewrite, ":[DRES] 3\n" );
+  if ( pcap->resistbumpspawn ) fprintf( filewrite, ":[STUK] 0\n" );
+  if ( pcap->istoobig ) fprintf( filewrite, ":[PACK] 0\n" );
+  if ( !pcap->reflect ) fprintf( filewrite, ":[VAMP] 1\n" );
+  if ( pcap->alwaysdraw ) fprintf( filewrite, ":[DRAW] 1\n" );
+  if ( pcap->isranged ) fprintf( filewrite, ":[RANG] 1\n" );
+  if ( pcap->hidestate != NOHIDE ) fprintf( filewrite, ":[HIDE] %d\n", pcap->hidestate );
+  if ( pcap->isequipment ) fprintf( filewrite, ":[EQUI] 1\n" );
+  if ( pcap->bumpsizebig >= pcap->bumpsize ) fprintf( filewrite, ":[SQUA] 1\n" );
+  if ( pcap->icon != pcap->usageknown ) fprintf( filewrite, ":[ICON] %d\n", pcap->icon );
+  if ( pcap->forceshadow ) fprintf( filewrite, ":[SHAD] 1\n" );
+
+  //Skill expansions
+  if ( pcap->canseekurse )  fprintf( filewrite, ":[CKUR] 1\n" );
+  if ( pcap->canusearcane ) fprintf( filewrite, ":[WMAG] 1\n" );
+  if ( pcap->canjoust )     fprintf( filewrite, ":[JOUS] 1\n" );
+  if ( pcap->canusedivine ) fprintf( filewrite, ":[HMAG] 1\n" );
+  if ( pcap->candisarm )    fprintf( filewrite, ":[DISA] 1\n" );
+  if ( pcap->canusetech )   fprintf( filewrite, ":[TECH] 1\n" );
+  if ( pcap->canbackstab )  fprintf( filewrite, ":[STAB] 1\n" );
+  if ( pcap->canuseadvancedweapons ) fprintf( filewrite, ":[AWEP] 1\n" );
+  if ( pcap->canusepoison ) fprintf( filewrite, ":[POIS] 1\n" );
+  if ( pcap->canread )  fprintf( filewrite, ":[READ] 1\n" );
+
+  //General exported chr_ref information
+  fprintf( filewrite, ":[PLAT] %d\n", pcap->canuseplatforms );
+  fprintf( filewrite, ":[SKIN] %d\n", pchr->skin_ref % MAXSKIN );
+  fprintf( filewrite, ":[CONT] %d\n", pchr->aistate.content );
+  fprintf( filewrite, ":[STAT] %d\n", pchr->aistate.state );
+  fprintf( filewrite, ":[LEVL] %d\n", pchr->experiencelevel );
+  fs_fileClose( filewrite );
+
 }
 
 //--------------------------------------------------------------------------------------------
-void export_one_character_skin( char *szSaveName, CHR_REF chr_ref )
+void export_one_character_skin( GameState * gs, char *szSaveName, CHR_REF chr_ref )
 {
   // ZZ> This function creates a "SKIN.TXT" file for the given character.
+
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
 
   FILE* filewrite;
   int profile;
 
   // General stuff
-  profile = ChrList[chr_ref].model;
+  profile = chrlst[chr_ref].model;
 
   // Open the file
   filewrite = fs_fileOpen( PRI_NONE, NULL, szSaveName, "w" );
   if ( NULL != filewrite )
   {
     fprintf( filewrite, "This file is used only by the import menu\n" );
-    fprintf( filewrite, ": %d\n", ChrList[chr_ref].skin_ref % MAXSKIN );
+    fprintf( filewrite, ": %d\n", chrlst[chr_ref].skin_ref % MAXSKIN );
     fs_fileClose( filewrite );
   }
 }
 
 //--------------------------------------------------------------------------------------------
-void calc_cap_experience( Uint16 profile )
+void calc_cap_experience( GameState * gs, Uint16 profile )
 {
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
+
   float statdebt, statperlevel;
 
-  statdebt  = CapList[profile].life_fp8.ibase + CapList[profile].mana_fp8.ibase + CapList[profile].manareturn_fp8.ibase + CapList[profile].manaflow_fp8.ibase;
-  statdebt += CapList[profile].strength_fp8.ibase + CapList[profile].wisdom_fp8.ibase + CapList[profile].intelligence_fp8.ibase + CapList[profile].dexterity_fp8.ibase;
-  statdebt += ( CapList[profile].life_fp8.irand + CapList[profile].mana_fp8.irand + CapList[profile].manareturn_fp8.irand + CapList[profile].manaflow_fp8.irand ) * 0.5f;
-  statdebt += ( CapList[profile].strength_fp8.irand + CapList[profile].wisdom_fp8.irand + CapList[profile].intelligence_fp8.irand + CapList[profile].dexterity_fp8.irand ) * 0.5f;
+  statdebt  = caplst[profile].life_fp8.ibase + caplst[profile].mana_fp8.ibase + caplst[profile].manareturn_fp8.ibase + caplst[profile].manaflow_fp8.ibase;
+  statdebt += caplst[profile].strength_fp8.ibase + caplst[profile].wisdom_fp8.ibase + caplst[profile].intelligence_fp8.ibase + caplst[profile].dexterity_fp8.ibase;
+  statdebt += ( caplst[profile].life_fp8.irand + caplst[profile].mana_fp8.irand + caplst[profile].manareturn_fp8.irand + caplst[profile].manaflow_fp8.irand ) * 0.5f;
+  statdebt += ( caplst[profile].strength_fp8.irand + caplst[profile].wisdom_fp8.irand + caplst[profile].intelligence_fp8.irand + caplst[profile].dexterity_fp8.irand ) * 0.5f;
 
-  statperlevel  = CapList[profile].lifeperlevel_fp8.ibase + CapList[profile].manaperlevel_fp8.ibase + CapList[profile].manareturnperlevel_fp8.ibase + CapList[profile].manaflowperlevel_fp8.ibase;
-  statperlevel += CapList[profile].strengthperlevel_fp8.ibase + CapList[profile].wisdomperlevel_fp8.ibase + CapList[profile].intelligenceperlevel_fp8.ibase + CapList[profile].dexterityperlevel_fp8.ibase;
-  statperlevel += ( CapList[profile].lifeperlevel_fp8.irand + CapList[profile].manaperlevel_fp8.irand + CapList[profile].manareturnperlevel_fp8.irand + CapList[profile].manaflowperlevel_fp8.irand ) * 0.5f;
-  statperlevel += ( CapList[profile].strengthperlevel_fp8.irand + CapList[profile].wisdomperlevel_fp8.irand + CapList[profile].intelligenceperlevel_fp8.irand + CapList[profile].dexterityperlevel_fp8.irand ) * 0.5f;
+  statperlevel  = caplst[profile].lifeperlevel_fp8.ibase + caplst[profile].manaperlevel_fp8.ibase + caplst[profile].manareturnperlevel_fp8.ibase + caplst[profile].manaflowperlevel_fp8.ibase;
+  statperlevel += caplst[profile].strengthperlevel_fp8.ibase + caplst[profile].wisdomperlevel_fp8.ibase + caplst[profile].intelligenceperlevel_fp8.ibase + caplst[profile].dexterityperlevel_fp8.ibase;
+  statperlevel += ( caplst[profile].lifeperlevel_fp8.irand + caplst[profile].manaperlevel_fp8.irand + caplst[profile].manareturnperlevel_fp8.irand + caplst[profile].manaflowperlevel_fp8.irand ) * 0.5f;
+  statperlevel += ( caplst[profile].strengthperlevel_fp8.irand + caplst[profile].wisdomperlevel_fp8.irand + caplst[profile].intelligenceperlevel_fp8.irand + caplst[profile].dexterityperlevel_fp8.irand ) * 0.5f;
 
-  CapList[profile].experienceconst = 50.6f * ( FP8_TO_FLOAT( statdebt ) - 51.5 );
-  CapList[profile].experiencecoeff = 26.3f * MAX( 1, FP8_TO_FLOAT( statperlevel ) );
+  caplst[profile].experienceconst = 50.6f * ( FP8_TO_FLOAT( statdebt ) - 51.5 );
+  caplst[profile].experiencecoeff = 26.3f * MAX( 1, FP8_TO_FLOAT( statperlevel ) );
 };
 
 //--------------------------------------------------------------------------------------------
-int calc_chr_experience( Uint16 object, float level )
+int calc_chr_experience( GameState * gs, Uint16 object, float level )
 {
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
+
   Uint16 profile;
 
-  if ( !VALID_CHR( object ) ) return 0;
+  if ( !VALID_CHR( chrlst, object ) ) return 0;
 
-  profile = ChrList[object].model;
+  profile = chrlst[object].model;
 
-  return level*level*CapList[profile].experiencecoeff + CapList[profile].experienceconst + 1;
+  return level*level*caplst[profile].experiencecoeff + caplst[profile].experienceconst + 1;
 };
 
 //--------------------------------------------------------------------------------------------
-float calc_chr_level( Uint16 object )
+float calc_chr_level( GameState * gs, Uint16 object )
 {
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
+
   Uint16 profile;
   float  level;
 
-  if ( !VALID_CHR( object ) ) return 0.0f;
+  if ( !VALID_CHR( chrlst, object ) ) return 0.0f;
 
-  profile = ChrList[object].model;
+  profile = chrlst[object].model;
 
-  level = ( ChrList[object].experience - CapList[profile].experienceconst ) / CapList[profile].experiencecoeff;
+  level = ( chrlst[object].experience - caplst[profile].experienceconst ) / caplst[profile].experiencecoeff;
   if ( level <= 0.0f )
   {
     level = 0.0f;
@@ -5755,7 +5507,7 @@ float calc_chr_level( Uint16 object )
 };
 
 //--------------------------------------------------------------------------------------------
-Uint16 object_generate_index( char *szLoadName )
+Uint16 object_generate_index( GameState * gs, char *szLoadName )
 {
   // ZZ > This reads the object slot in "DATA.TXT" that the profile
   //      is assigned to.  Errors in this number may cause the program to abort
@@ -5776,13 +5528,13 @@ Uint16 object_generate_index( char *szLoadName )
   iobj = fget_next_int( fileread );
   if ( iobj < 0 )
   {
-    if ( import.object < 0 )
+    if ( gs->modstate.import.object < 0 )
     {
       log_error( "Object slot number %i is invalid. (%s) \n", iobj, szLoadName );
     }
     else
     {
-      iobj = import.object;
+      iobj = gs->modstate.import.object;
     }
   }
 
@@ -5791,11 +5543,13 @@ Uint16 object_generate_index( char *szLoadName )
   return iobj;
 }
 
-
 //--------------------------------------------------------------------------------------------
-Uint16 load_one_cap( char * szObjectpath, char *szObjectname, Uint16 icap )
+Uint16 CapList_load_one( GameState * gs, char * szObjectpath, char *szObjectname, Uint16 icap )
 {
   // ZZ> This function fills a character profile with data from "DATA.TXT"
+
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
 
   FILE* fileread;
   int iskin, cnt;
@@ -5803,11 +5557,11 @@ Uint16 load_one_cap( char * szObjectpath, char *szObjectname, Uint16 icap )
   char cTmp;
   int damagetype, level, xptype;
   IDSZ idsz;
-  CAP * pcap;
+  Cap * pcap;
   STRING szLoadname;
 
   // Open the file
-  fileread = fs_fileOpen( PRI_NONE, "load_one_cap()", inherit_fname(szObjectpath, szObjectname, CData.data_file), "r");
+  fileread = fs_fileOpen( PRI_NONE, "CapList_load_one()", inherit_fname(szObjectpath, szObjectname, CData.data_file), "r");
   if ( fileread == NULL )
   {
     // The data file wasn't found
@@ -5816,7 +5570,7 @@ Uint16 load_one_cap( char * szObjectpath, char *szObjectname, Uint16 icap )
   }
 
   // make the notation "easier"
-  pcap = CapList + icap;
+  pcap = caplst + icap;
 
   // skip over the slot information
   fget_next_int( fileread );
@@ -5897,7 +5651,6 @@ Uint16 load_one_cap( char * szObjectpath, char *szObjectname, Uint16 icap )
   pcap->voffvel = fget_next_float( fileread ) * (float)UINT16_MAX;
   pcap->stickybutt = fget_next_bool( fileread );
 
-
   // Invulnerability data
   pcap->invictus = fget_next_bool( fileread );
   pcap->nframefacing = fget_next_int( fileread );
@@ -5912,7 +5665,6 @@ Uint16 load_one_cap( char * szObjectpath, char *szObjectname, Uint16 icap )
       pcap->nframeangle = 0;
     }
   }
-
 
   // Skin defenses ( 4 skins )
   fgoto_colon( fileread );
@@ -5945,7 +5697,6 @@ Uint16 load_one_cap( char * szObjectpath, char *szObjectname, Uint16 icap )
   for ( iskin = 0; iskin < MAXSKIN; iskin++ )
     { pcap->skin[iskin].maxaccel = fget_float( fileread ) / 80.0; };
 
-
   // Experience and level data
   pcap->experienceforlevel[0] = 0;
   for ( level = 1; level < BASELEVELS; level++ )
@@ -5958,11 +5709,9 @@ Uint16 load_one_cap( char * szObjectpath, char *szObjectname, Uint16 icap )
   for ( xptype = 0; xptype < XP_COUNT; xptype++ )
     { pcap->experiencerate[xptype] = fget_next_float( fileread ) + 0.001f; }
 
-
   // IDSZ tags
   for ( cnt = 0; cnt < IDSZ_COUNT; cnt++ )
     { pcap->idsz[cnt] = fget_next_idsz( fileread ); }
-
 
   // Item and damage flags
   pcap->isitem = fget_next_bool( fileread );
@@ -5976,18 +5725,14 @@ Uint16 load_one_cap( char * szObjectpath, char *szObjectname, Uint16 icap )
   pcap->cangrabmoney = fget_next_bool( fileread );
   pcap->canopenstuff = fget_next_bool( fileread );
 
-
-
   // More item and damage stuff
   pcap->damagetargettype = fget_next_damage( fileread );
   pcap->weaponaction = fget_next_action( fileread );
-
 
   // Particle attachments
   pcap->attachedprtamount = fget_next_int( fileread );
   pcap->attachedprtreaffirmdamagetype = fget_next_damage( fileread );
   pcap->attachedprttype = fget_next_int( fileread );
-
 
   // Character hands
   pcap->slotvalid[SLOT_LEFT] = fget_next_bool( fileread );
@@ -5999,28 +5744,22 @@ Uint16 load_one_cap( char * szObjectpath, char *szObjectname, Uint16 icap )
     //pcap->slotvalid[SLOT_RIGHT]  = bfalse;
   };
 
-
-
   // Attack order ( weapon )
   pcap->attackattached = fget_next_bool( fileread );
   pcap->attackprttype = fget_next_int( fileread );
-
 
   // GoPoof
   pcap->gopoofprtamount = fget_next_int( fileread );
   pcap->gopoofprtfacingadd = fget_next_int( fileread );
   pcap->gopoofprttype = fget_next_int( fileread );
 
-
   // Blud
   pcap->bludlevel = fget_next_blud( fileread );
   pcap->bludprttype = fget_next_int( fileread );
 
-
   // Stuff I forgot
   pcap->waterwalk = fget_next_bool( fileread );
   pcap->dampen = fget_next_float( fileread );
-
 
   // More stuff I forgot
   pcap->lifeheal_fp8 = fget_next_fixed( fileread );
@@ -6036,8 +5775,6 @@ Uint16 load_one_cap( char * szObjectpath, char *szObjectname, Uint16 icap )
 
   pcap->strengthdampen = fget_next_float( fileread );
 
-
-
   // Another memory lapse
   pcap->ridercanattack = !fget_next_bool( fileread );
   pcap->canbedazed = fget_next_bool( fileread );
@@ -6049,8 +5786,6 @@ Uint16 load_one_cap( char * szObjectpath, char *szObjectname, Uint16 icap )
 
   iTmp = fget_next_int( fileread ); pcap->footfallsound = FIX_SOUND( iTmp );
   iTmp = fget_next_int( fileread ); pcap->jumpsound     = FIX_SOUND( iTmp );
-
-
 
   // Clear expansions...
   pcap->skindressy = bfalse;
@@ -6128,7 +5863,7 @@ Uint16 load_one_cap( char * szObjectpath, char *szObjectname, Uint16 icap )
 
   fs_fileClose( fileread );
 
-  calc_cap_experience( icap );
+  calc_cap_experience( gs, icap );
 
   // tell everyone that we loaded correctly
   pcap->used = btrue;
@@ -6137,7 +5872,7 @@ Uint16 load_one_cap( char * szObjectpath, char *szObjectname, Uint16 icap )
 }
 
 //--------------------------------------------------------------------------------------------
-int get_skin( char * szObjectpath, char * szObjectname )
+int fget_skin( char * szObjectpath, char * szObjectname )
 {
   // ZZ> This function reads the "SKIN.TXT" file...
 
@@ -6145,7 +5880,7 @@ int get_skin( char * szObjectpath, char * szObjectname )
   Uint8 skin;
 
   skin = 0;
-  fileread = fs_fileOpen( PRI_NONE, "get_skin()", inherit_fname(szObjectpath, szObjectname, CData.skin_file), "r" );
+  fileread = fs_fileOpen( PRI_NONE, "fget_skin()", inherit_fname(szObjectpath, szObjectname, CData.skin_file), "r" );
   if ( NULL != fileread )
   {
     skin = fget_next_int( fileread );
@@ -6156,7 +5891,7 @@ int get_skin( char * szObjectpath, char * szObjectname )
 }
 
 //--------------------------------------------------------------------------------------------
-void check_player_import()
+void check_player_import(GameState * gs)
 {
   // ZZ> This function figures out which players may be imported, and loads basic
   //     data for each
@@ -6181,19 +5916,19 @@ void check_player_import()
 
     while (loadplayer_count < MAXLOADPLAYER )
     {
-      prime_names();
+      prime_names( gs );
 
       strncpy( loadplayer[loadplayer_count].dir, foundfile, sizeof( loadplayer[loadplayer_count].dir ) );
 
-      skin = get_skin( filename, NULL );
+      skin = fget_skin( filename, NULL );
 
-      load_one_mad( filepath, NULL, loadplayer_count );
+      MadList_load_one( gs, filepath, NULL, loadplayer_count );
 
       snprintf( filename, sizeof( filename ), "icon%d.bmp", skin );
       load_one_icon( filepath, NULL, filename);
 
-      read_naming( filename, NULL, 0);
-      naming_names( 0 );
+      read_naming( gs, filename, NULL, 0);
+      naming_names( gs, 0 );
       strncpy( loadplayer[loadplayer_count].name, namingnames, sizeof( loadplayer[loadplayer_count].name ) );
 
       loadplayer_count++;
@@ -6206,25 +5941,32 @@ void check_player_import()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t check_skills( int who, Uint32 whichskill )
+bool_t check_skills( GameState * gs, int who, Uint32 whichskill )
 {
   // ZF> This checks if the specified character has the required skill. Returns btrue if true
   // and bfalse if not. Also checks Skill expansions.
+
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
+
   bool_t result = bfalse;
 
   // First check the character Skill ID matches
   // Then check for expansion skills too.
-  if ( CapList[ChrList[who].model].idsz[IDSZ_SKILL] == whichskill ) result = btrue;
-  else if ( MAKE_IDSZ( "CKUR" ) == whichskill ) result = ChrList[who].canseekurse;
-  else if ( MAKE_IDSZ( "WMAG" ) == whichskill ) result = ChrList[who].canusearcane;
-  else if ( MAKE_IDSZ( "JOUS" ) == whichskill ) result = ChrList[who].canjoust;
-  else if ( MAKE_IDSZ( "HMAG" ) == whichskill ) result = ChrList[who].canusedivine;
-  else if ( MAKE_IDSZ( "DISA" ) == whichskill ) result = ChrList[who].candisarm;
-  else if ( MAKE_IDSZ( "TECH" ) == whichskill ) result = ChrList[who].canusetech;
-  else if ( MAKE_IDSZ( "AWEP" ) == whichskill ) result = ChrList[who].canuseadvancedweapons;
-  else if ( MAKE_IDSZ( "STAB" ) == whichskill ) result = ChrList[who].canbackstab;
-  else if ( MAKE_IDSZ( "POIS" ) == whichskill ) result = ChrList[who].canusepoison;
-  else if ( MAKE_IDSZ( "READ" ) == whichskill ) result = ChrList[who].canread;
+  if ( caplst[chrlst[who].model].idsz[IDSZ_SKILL] == whichskill ) result = btrue;
+  else if ( MAKE_IDSZ( "CKUR" ) == whichskill ) result = chrlst[who].canseekurse;
+  else if ( MAKE_IDSZ( "WMAG" ) == whichskill ) result = chrlst[who].canusearcane;
+  else if ( MAKE_IDSZ( "JOUS" ) == whichskill ) result = chrlst[who].canjoust;
+  else if ( MAKE_IDSZ( "HMAG" ) == whichskill ) result = chrlst[who].canusedivine;
+  else if ( MAKE_IDSZ( "DISA" ) == whichskill ) result = chrlst[who].candisarm;
+  else if ( MAKE_IDSZ( "TECH" ) == whichskill ) result = chrlst[who].canusetech;
+  else if ( MAKE_IDSZ( "AWEP" ) == whichskill ) result = chrlst[who].canuseadvancedweapons;
+  else if ( MAKE_IDSZ( "STAB" ) == whichskill ) result = chrlst[who].canbackstab;
+  else if ( MAKE_IDSZ( "POIS" ) == whichskill ) result = chrlst[who].canusepoison;
+  else if ( MAKE_IDSZ( "READ" ) == whichskill ) result = chrlst[who].canread;
 
   return result;
 }
@@ -6266,11 +6008,11 @@ int check_player_quest( char *whichplayer, IDSZ idsz )
   return result;
 }
 
-
 //--------------------------------------------------------------------------------------------
 bool_t add_quest_idsz( char *whichplayer, IDSZ idsz )
 {
   // ZF> This function writes a IDSZ (With quest level 0) into a player quest.txt file, returns btrue if succeeded
+
   FILE *filewrite;
   STRING newloadname;
 
@@ -6415,27 +6157,26 @@ int modify_quest_idsz( char *whichplayer, IDSZ idsz, int adjustment )
   return NewQuestLevel;
 }
 
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-bool_t chr_cvolume_reinit(CHR_REF chr_ref, CVolume * pcv)
+bool_t chr_cvolume_reinit(Chr * pchr, CVolume * pcv)
 {
-  if(!VALID_CHR(chr_ref) || NULL == pcv) return bfalse;
+  if(NULL == pchr || !pchr->on || NULL == pcv) return bfalse;
 
-  pcv->x_min = ChrList[chr_ref].pos.x - ChrList[chr_ref].bmpdata.size * ChrList[chr_ref].scale * ChrList[chr_ref].pancakepos.x;
-  pcv->y_min = ChrList[chr_ref].pos.y - ChrList[chr_ref].bmpdata.size * ChrList[chr_ref].scale * ChrList[chr_ref].pancakepos.y;
-  pcv->z_min = ChrList[chr_ref].pos.z;
+  pcv->x_min = pchr->pos.x - pchr->bmpdata.size * pchr->scale * pchr->pancakepos.x;
+  pcv->y_min = pchr->pos.y - pchr->bmpdata.size * pchr->scale * pchr->pancakepos.y;
+  pcv->z_min = pchr->pos.z;
 
-  pcv->x_max = ChrList[chr_ref].pos.x + ChrList[chr_ref].bmpdata.size * ChrList[chr_ref].scale * ChrList[chr_ref].pancakepos.x;
-  pcv->y_max = ChrList[chr_ref].pos.y + ChrList[chr_ref].bmpdata.size * ChrList[chr_ref].scale * ChrList[chr_ref].pancakepos.y;
-  pcv->z_max = ChrList[chr_ref].pos.z + ChrList[chr_ref].bmpdata.height * ChrList[chr_ref].scale * ChrList[chr_ref].pancakepos.z;
+  pcv->x_max = pchr->pos.x + pchr->bmpdata.size * pchr->scale * pchr->pancakepos.x;
+  pcv->y_max = pchr->pos.y + pchr->bmpdata.size * pchr->scale * pchr->pancakepos.y;
+  pcv->z_max = pchr->pos.z + pchr->bmpdata.height * pchr->scale * pchr->pancakepos.z;
 
-  pcv->xy_min = -(ChrList[chr_ref].pos.x + ChrList[chr_ref].pos.y) - ChrList[chr_ref].bmpdata.sizebig * ChrList[chr_ref].scale * (ChrList[chr_ref].pancakepos.x + ChrList[chr_ref].pancakepos.y) * 0.5f;
-  pcv->xy_max = -(ChrList[chr_ref].pos.x + ChrList[chr_ref].pos.y) + ChrList[chr_ref].bmpdata.sizebig * ChrList[chr_ref].scale * (ChrList[chr_ref].pancakepos.x + ChrList[chr_ref].pancakepos.y) * 0.5f;
+  pcv->xy_min = -(pchr->pos.x + pchr->pos.y) - pchr->bmpdata.sizebig * pchr->scale * (pchr->pancakepos.x + pchr->pancakepos.y) * 0.5f;
+  pcv->xy_max = -(pchr->pos.x + pchr->pos.y) + pchr->bmpdata.sizebig * pchr->scale * (pchr->pancakepos.x + pchr->pancakepos.y) * 0.5f;
 
-  pcv->yx_min = -(-ChrList[chr_ref].pos.x + ChrList[chr_ref].pos.y) - ChrList[chr_ref].bmpdata.sizebig * ChrList[chr_ref].scale * (ChrList[chr_ref].pancakepos.x + ChrList[chr_ref].pancakepos.y) * 0.5f;
-  pcv->yx_max = -(-ChrList[chr_ref].pos.x + ChrList[chr_ref].pos.y) + ChrList[chr_ref].bmpdata.sizebig * ChrList[chr_ref].scale * (ChrList[chr_ref].pancakepos.x + ChrList[chr_ref].pancakepos.y) * 0.5f;
+  pcv->yx_min = -(-pchr->pos.x + pchr->pos.y) - pchr->bmpdata.sizebig * pchr->scale * (pchr->pancakepos.x + pchr->pancakepos.y) * 0.5f;
+  pcv->yx_max = -(-pchr->pos.x + pchr->pos.y) + pchr->bmpdata.sizebig * pchr->scale * (pchr->pancakepos.x + pchr->pancakepos.y) * 0.5f;
 
   pcv->level = -1;
 
@@ -6443,52 +6184,51 @@ bool_t chr_cvolume_reinit(CHR_REF chr_ref, CVolume * pcv)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_bdata_reinit(CHR_REF chr_ref, BData * pbd)
+bool_t chr_bdata_reinit(Chr * pchr, BData * pbd)
 {
-  if(!VALID_CHR(chr_ref) || NULL == pbd) return bfalse;
+  if(NULL == pchr || !pchr->on || NULL == pbd) return bfalse;
 
-  pbd->calc_is_platform   = ChrList[chr_ref].isplatform;
-  pbd->calc_is_mount      = ChrList[chr_ref].ismount;
+  pbd->calc_is_platform   = pchr->isplatform;
+  pbd->calc_is_mount      = pchr->ismount;
 
-  pbd->mids_lo = pbd->mids_hi = ChrList[chr_ref].pos;
+  pbd->mids_lo = pbd->mids_hi = pchr->pos;
   pbd->mids_hi.z += pbd->height * 0.5f;
 
-  pbd->calc_size     = pbd->size    * ChrList[chr_ref].scale * (ChrList[chr_ref].pancakepos.x + ChrList[chr_ref].pancakepos.y) * 0.5f;
-  pbd->calc_size_big = pbd->sizebig * ChrList[chr_ref].scale * (ChrList[chr_ref].pancakepos.x + ChrList[chr_ref].pancakepos.y) * 0.5f;
-  pbd->calc_height   = pbd->height  * ChrList[chr_ref].scale *  ChrList[chr_ref].pancakepos.z;
+  pbd->calc_size     = pbd->size    * pchr->scale * (pchr->pancakepos.x + pchr->pancakepos.y) * 0.5f;
+  pbd->calc_size_big = pbd->sizebig * pchr->scale * (pchr->pancakepos.x + pchr->pancakepos.y) * 0.5f;
+  pbd->calc_height   = pbd->height  * pchr->scale *  pchr->pancakepos.z;
 
-  chr_cvolume_reinit(chr_ref, &pbd->cv);
+  chr_cvolume_reinit(pchr, &pbd->cv);
 
   return btrue;
 };
 
-
 //--------------------------------------------------------------------------------------------
-bool_t chr_calculate_bumpers_0( CHR_REF chr_ref )
+bool_t chr_calculate_bumpers_0( Chr * pchr )
 {
   int i;
   bool_t rv = bfalse;
 
-  if( !VALID_CHR(chr_ref) ) return bfalse;
+  if( NULL==pchr || !pchr->on ) return bfalse;
 
   // remove any level 3 info
-  if(NULL != ChrList[chr_ref].bmpdata.cv_tree)
+  if(NULL != pchr->bmpdata.cv_tree)
   {
     for(i=0; i<8; i++)
     {
-      (*ChrList[chr_ref].bmpdata.cv_tree)[i].level = -1;
+      (*pchr->bmpdata.cv_tree)[i].level = -1;
     }
   }
 
-  rv = chr_bdata_reinit( chr_ref, &(ChrList[chr_ref].bmpdata) );
+  rv = chr_bdata_reinit( pchr, &(pchr->bmpdata) );
 
-  ChrList[chr_ref].bmpdata.cv.level = 0;
+  pchr->bmpdata.cv.level = 0;
 
   return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-//bool_t chr_calculate_bumpers_1(CHR_REF chr_ref)
+//bool_t chr_calculate_bumpers_1(GameState * gs, CHR_REF chr_ref)
 //{
 //  BData * bd;
 //  Uint16 imdl;
@@ -6501,26 +6241,26 @@ bool_t chr_calculate_bumpers_0( CHR_REF chr_ref )
 //
 //  CVolume cv;
 //
-//  if( !VALID_CHR(chr_ref) ) return bfalse;
-//  bd = &(ChrList[chr_ref].bmpdata);
+//  if( !VALID_CHR(chrlst, chr_ref) ) return bfalse;
+//  bd = &(chrlst[chr_ref].bmpdata);
 //
-//  imdl = ChrList[chr_ref].model;
-//  if(!VALID_MDL(imdl) || !ChrList[chr_ref].matrixvalid )
+//  imdl = chrlst[chr_ref].model;
+//  if(!VALID_MDL(imdl) || !chrlst[chr_ref].matrixvalid )
 //  {
 //    set_default_bump_data( chr_ref );
 //    return bfalse;
 //  };
 //
-//  pmdl = MadList[imdl].md2_ptr;
+//  pmdl = madlst[imdl].md2_ptr;
 //  if(NULL == pmdl)
 //  {
 //    set_default_bump_data( chr_ref );
 //    return bfalse;
 //  }
 //
-//  fl = md2_get_Frame(pmdl, ChrList[chr_ref].anim.last);
-//  fc = md2_get_Frame(pmdl, ChrList[chr_ref].anim.next );
-//  lerp = ChrList[chr_ref].anim.flip;
+//  fl = md2_get_Frame(pmdl, chrlst[chr_ref].anim.last);
+//  fc = md2_get_Frame(pmdl, chrlst[chr_ref].anim.next );
+//  lerp = chrlst[chr_ref].anim.flip;
 //
 //  if(NULL==fl && NULL==fc)
 //  {
@@ -6528,17 +6268,17 @@ bool_t chr_calculate_bumpers_0( CHR_REF chr_ref )
 //    return bfalse;
 //  };
 //
-//  xdir.x = (ChrList[chr_ref].matrix).CNV(0,0);
-//  xdir.y = (ChrList[chr_ref].matrix).CNV(0,1);
-//  xdir.z = (ChrList[chr_ref].matrix).CNV(0,2);
+//  xdir.x = (chrlst[chr_ref].matrix).CNV(0,0);
+//  xdir.y = (chrlst[chr_ref].matrix).CNV(0,1);
+//  xdir.z = (chrlst[chr_ref].matrix).CNV(0,2);
 //
-//  ydir.x = (ChrList[chr_ref].matrix).CNV(1,0);
-//  ydir.y = (ChrList[chr_ref].matrix).CNV(1,1);
-//  ydir.z = (ChrList[chr_ref].matrix).CNV(1,2);
+//  ydir.x = (chrlst[chr_ref].matrix).CNV(1,0);
+//  ydir.y = (chrlst[chr_ref].matrix).CNV(1,1);
+//  ydir.z = (chrlst[chr_ref].matrix).CNV(1,2);
 //
-//  zdir.x = (ChrList[chr_ref].matrix).CNV(2,0);
-//  zdir.y = (ChrList[chr_ref].matrix).CNV(2,1);
-//  zdir.z = (ChrList[chr_ref].matrix).CNV(2,2);
+//  zdir.x = (chrlst[chr_ref].matrix).CNV(2,0);
+//  zdir.y = (chrlst[chr_ref].matrix).CNV(2,1);
+//  zdir.z = (chrlst[chr_ref].matrix).CNV(2,2);
 //
 //  if(NULL==fl || lerp >= 1.0f)
 //  {
@@ -6655,25 +6395,25 @@ bool_t chr_calculate_bumpers_0( CHR_REF chr_ref )
 //  bd->calc_is_platform  = bd->calc_is_platform && (zdir.z > xdir.z) && (zdir.z > ydir.z);
 //  bd->calc_is_mount     = bd->calc_is_mount    && (zdir.z > xdir.z) && (zdir.z > ydir.z);
 //
-//  bd->cv.x_min  = cv.x_min  + ChrList[chr_ref].pos.x;
-//  bd->cv.y_min  = cv.y_min  + ChrList[chr_ref].pos.y;
-//  bd->cv.z_min  = cv.z_min  + ChrList[chr_ref].pos.z;
-//  bd->cv.xy_min = cv.xy_min + ( ChrList[chr_ref].pos.x + ChrList[chr_ref].pos.y);
-//  bd->cv.yx_min = cv.yx_min + (-ChrList[chr_ref].pos.x + ChrList[chr_ref].pos.y);
+//  bd->cv.x_min  = cv.x_min  + chrlst[chr_ref].pos.x;
+//  bd->cv.y_min  = cv.y_min  + chrlst[chr_ref].pos.y;
+//  bd->cv.z_min  = cv.z_min  + chrlst[chr_ref].pos.z;
+//  bd->cv.xy_min = cv.xy_min + ( chrlst[chr_ref].pos.x + chrlst[chr_ref].pos.y);
+//  bd->cv.yx_min = cv.yx_min + (-chrlst[chr_ref].pos.x + chrlst[chr_ref].pos.y);
 //
 //
-//  bd->cv.x_max  = cv.x_max  + ChrList[chr_ref].pos.x;
-//  bd->cv.y_max  = cv.y_max  + ChrList[chr_ref].pos.y;
-//  bd->cv.z_max  = cv.z_max  + ChrList[chr_ref].pos.z;
-//  bd->cv.xy_max = cv.xy_max + ( ChrList[chr_ref].pos.x + ChrList[chr_ref].pos.y);
-//  bd->cv.yx_max = cv.yx_max + (-ChrList[chr_ref].pos.x + ChrList[chr_ref].pos.y);
+//  bd->cv.x_max  = cv.x_max  + chrlst[chr_ref].pos.x;
+//  bd->cv.y_max  = cv.y_max  + chrlst[chr_ref].pos.y;
+//  bd->cv.z_max  = cv.z_max  + chrlst[chr_ref].pos.z;
+//  bd->cv.xy_max = cv.xy_max + ( chrlst[chr_ref].pos.x + chrlst[chr_ref].pos.y);
+//  bd->cv.yx_max = cv.yx_max + (-chrlst[chr_ref].pos.x + chrlst[chr_ref].pos.y);
 //
-//  bd->mids_lo.x = (cv.x_min + cv.x_max) * 0.5f + ChrList[chr_ref].pos.x;
-//  bd->mids_lo.y = (cv.y_min + cv.y_max) * 0.5f + ChrList[chr_ref].pos.y;
-//  bd->mids_hi.z = (cv.z_min + cv.z_max) * 0.5f + ChrList[chr_ref].pos.z;
+//  bd->mids_lo.x = (cv.x_min + cv.x_max) * 0.5f + chrlst[chr_ref].pos.x;
+//  bd->mids_lo.y = (cv.y_min + cv.y_max) * 0.5f + chrlst[chr_ref].pos.y;
+//  bd->mids_hi.z = (cv.z_min + cv.z_max) * 0.5f + chrlst[chr_ref].pos.z;
 //
 //  bd->mids_lo   = bd->mids_hi;
-//  bd->mids_lo.z = cv.z_min  + ChrList[chr_ref].pos.z;
+//  bd->mids_lo.z = cv.z_min  + chrlst[chr_ref].pos.z;
 //
 //  bd->calc_height   = bd->cv.z_max;
 //  bd->calc_size     = MAX( bd->cv.x_max, bd->cv.y_max ) - MIN( bd->cv.x_min, bd->cv.y_min );
@@ -6694,7 +6434,7 @@ bool_t chr_calculate_bumpers_0( CHR_REF chr_ref )
 //
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_calculate_bumpers_1(CHR_REF chr_ref)
+bool_t chr_calculate_bumpers_1( Mad madlst[], size_t madlst_size, Chr * pchr )
 {
   BData * bd;
   Uint16 imdl;
@@ -6707,48 +6447,47 @@ bool_t chr_calculate_bumpers_1(CHR_REF chr_ref)
 
   CVolume cv;
 
-  if( !VALID_CHR(chr_ref) ) return bfalse;
-  bd = &(ChrList[chr_ref].bmpdata);
+  if(  NULL==pchr || !pchr->on ) return bfalse;
+  bd = &(pchr->bmpdata);
 
-  imdl = ChrList[chr_ref].model;
-  if(!VALID_MDL(imdl) || !ChrList[chr_ref].matrixvalid )
+  imdl = pchr->model;
+  if(!VALID_MDL(imdl) || !pchr->matrixvalid )
   {
-    chr_calculate_bumpers_0( chr_ref );
+    chr_calculate_bumpers_0( pchr );
     return bfalse;
   };
 
-  xdir.x = (ChrList[chr_ref].matrix).CNV(0,0);
-  xdir.y = (ChrList[chr_ref].matrix).CNV(0,1);
-  xdir.z = (ChrList[chr_ref].matrix).CNV(0,2);
+  xdir.x = (pchr->matrix).CNV(0,0);
+  xdir.y = (pchr->matrix).CNV(0,1);
+  xdir.z = (pchr->matrix).CNV(0,2);
 
-  ydir.x = (ChrList[chr_ref].matrix).CNV(1,0);
-  ydir.y = (ChrList[chr_ref].matrix).CNV(1,1);
-  ydir.z = (ChrList[chr_ref].matrix).CNV(1,2);
+  ydir.x = (pchr->matrix).CNV(1,0);
+  ydir.y = (pchr->matrix).CNV(1,1);
+  ydir.z = (pchr->matrix).CNV(1,2);
 
-  zdir.x = (ChrList[chr_ref].matrix).CNV(2,0);
-  zdir.y = (ChrList[chr_ref].matrix).CNV(2,1);
-  zdir.z = (ChrList[chr_ref].matrix).CNV(2,2);
+  zdir.x = (pchr->matrix).CNV(2,0);
+  zdir.y = (pchr->matrix).CNV(2,1);
+  zdir.z = (pchr->matrix).CNV(2,2);
 
   bd->calc_is_platform  = bd->calc_is_platform && (zdir.z > xdir.z) && (zdir.z > ydir.z);
   bd->calc_is_mount     = bd->calc_is_mount    && (zdir.z > xdir.z) && (zdir.z > ydir.z);
 
-  pmdl = MadList[imdl].md2_ptr;
+  pmdl = madlst[imdl].md2_ptr;
   if(NULL == pmdl)
   {
-    chr_calculate_bumpers_0( chr_ref );
+    chr_calculate_bumpers_0( pchr );
     return bfalse;
   }
 
-  fl = md2_get_Frame(pmdl, ChrList[chr_ref].anim.last);
-  fc = md2_get_Frame(pmdl, ChrList[chr_ref].anim.next );
-  lerp = ChrList[chr_ref].anim.flip;
+  fl = md2_get_Frame(pmdl, pchr->anim.last);
+  fc = md2_get_Frame(pmdl, pchr->anim.next );
+  lerp = pchr->anim.flip;
 
   if(NULL==fl && NULL==fc)
   {
-    chr_calculate_bumpers_0( chr_ref );
+    chr_calculate_bumpers_0( pchr );
     return bfalse;
   };
-
 
   if(NULL==fl || lerp >= 1.0f)
   {
@@ -6864,12 +6603,12 @@ bool_t chr_calculate_bumpers_1(CHR_REF chr_ref)
   bd->cv.xy_max = cv.xy_max;
   bd->cv.yx_max = cv.yx_max;
 
-  bd->mids_hi.x = (bd->cv.x_min + bd->cv.x_max) * 0.5f + ChrList[chr_ref].pos.x;
-  bd->mids_hi.y = (bd->cv.y_min + bd->cv.y_max) * 0.5f + ChrList[chr_ref].pos.y;
-  bd->mids_hi.z = (bd->cv.z_min + bd->cv.z_max) * 0.5f + ChrList[chr_ref].pos.z;
+  bd->mids_hi.x = (bd->cv.x_min + bd->cv.x_max) * 0.5f + pchr->pos.x;
+  bd->mids_hi.y = (bd->cv.y_min + bd->cv.y_max) * 0.5f + pchr->pos.y;
+  bd->mids_hi.z = (bd->cv.z_min + bd->cv.z_max) * 0.5f + pchr->pos.z;
 
   bd->mids_lo   = bd->mids_hi;
-  bd->mids_lo.z = bd->cv.z_min + ChrList[chr_ref].pos.z;
+  bd->mids_lo.z = bd->cv.z_min + pchr->pos.z;
 
   bd->calc_height   = bd->cv.z_max;
   bd->calc_size     = MAX( MAX( bd->cv.x_max,  bd->cv.y_max ), - MIN( bd->cv.x_min,  bd->cv.y_min ) );
@@ -6890,7 +6629,7 @@ bool_t chr_calculate_bumpers_1(CHR_REF chr_ref)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_calculate_bumpers_2(CHR_REF chr_ref, vect3 * vrt_ary)
+bool_t chr_calculate_bumpers_2( Mad madlst[], size_t madlst_size, Chr * pchr, vect3 * vrt_ary)
 {
   BData * bd;
   Uint16 imdl;
@@ -6902,54 +6641,54 @@ bool_t chr_calculate_bumpers_2(CHR_REF chr_ref, vect3 * vrt_ary)
 
   CVolume cv;
 
-  if( !VALID_CHR(chr_ref) ) return bfalse;
-  bd = &(ChrList[chr_ref].bmpdata);
+  if(  NULL==pchr || !pchr->on ) return bfalse;
+  bd = &(pchr->bmpdata);
 
-  imdl = ChrList[chr_ref].model;
-  if(!VALID_MDL(imdl) || !ChrList[chr_ref].matrixvalid )
+  imdl = pchr->model;
+  if(!VALID_MDL(imdl) || !pchr->matrixvalid )
   {
-    chr_calculate_bumpers_0( chr_ref );
+    chr_calculate_bumpers_0( pchr );
     return bfalse;
   };
 
-  xdir.x = (ChrList[chr_ref].matrix).CNV(0,0);
-  xdir.y = (ChrList[chr_ref].matrix).CNV(0,1);
-  xdir.z = (ChrList[chr_ref].matrix).CNV(0,2);
+  xdir.x = (pchr->matrix).CNV(0,0);
+  xdir.y = (pchr->matrix).CNV(0,1);
+  xdir.z = (pchr->matrix).CNV(0,2);
 
-  ydir.x = (ChrList[chr_ref].matrix).CNV(1,0);
-  ydir.y = (ChrList[chr_ref].matrix).CNV(1,1);
-  ydir.z = (ChrList[chr_ref].matrix).CNV(1,2);
+  ydir.x = (pchr->matrix).CNV(1,0);
+  ydir.y = (pchr->matrix).CNV(1,1);
+  ydir.z = (pchr->matrix).CNV(1,2);
 
-  zdir.x = (ChrList[chr_ref].matrix).CNV(2,0);
-  zdir.y = (ChrList[chr_ref].matrix).CNV(2,1);
-  zdir.z = (ChrList[chr_ref].matrix).CNV(2,2);
+  zdir.x = (pchr->matrix).CNV(2,0);
+  zdir.y = (pchr->matrix).CNV(2,1);
+  zdir.z = (pchr->matrix).CNV(2,2);
 
   bd->calc_is_platform  = bd->calc_is_platform && (zdir.z > xdir.z) && (zdir.z > ydir.z);
   bd->calc_is_mount     = bd->calc_is_mount    && (zdir.z > xdir.z) && (zdir.z > ydir.z);
 
-  pmdl = MadList[imdl].md2_ptr;
+  pmdl = madlst[imdl].md2_ptr;
   if(NULL == pmdl)
   {
-    chr_calculate_bumpers_0( chr_ref );
+    chr_calculate_bumpers_0( pchr );
     return bfalse;
   }
 
-  md2_blend_vertices(chr_ref, -1, -1);
+  md2_blend_vertices(pchr, -1, -1);
 
   // allocate the array
   vrt_count = md2_get_numVertices(pmdl);
   if(NULL == vrt_ary)
   {
-    vrt_ary = malloc(vrt_count * sizeof(vect3));
+    vrt_ary = (vect3*)calloc(vrt_count, sizeof(vect3));
     if(NULL==vrt_ary)
     {
-      return chr_calculate_bumpers_1( chr_ref );
+      return chr_calculate_bumpers_1( madlst, madlst_size, pchr );
     }
     free_array = btrue;
   }
 
   // transform the verts all at once, to reduce function calling overhead
-  Transform3( 1.0f, 1.0f, &(ChrList[chr_ref].matrix), ChrList[chr_ref].vdata.Vertices, vrt_ary, vrt_count);
+  Transform3( 1.0f, 1.0f, &(pchr->matrix), pchr->vdata.Vertices, vrt_ary, vrt_count);
 
   cv.x_min  = cv.x_max  = vrt_ary[0].x;
   cv.y_min  = cv.y_max  = vrt_ary[0].y;
@@ -6957,7 +6696,7 @@ bool_t chr_calculate_bumpers_2(CHR_REF chr_ref, vect3 * vrt_ary)
   cv.xy_min = cv.xy_max = cv.x_min + cv.y_min;
   cv.yx_min = cv.yx_max = cv.x_min - cv.y_min;
 
-  vrt_count = MadList[imdl].transvertices;
+  vrt_count = madlst[imdl].transvertices;
   for(cnt=1; cnt<vrt_count; cnt++)
   {
     float tmp_x, tmp_y, tmp_z, tmp_xy, tmp_yx;
@@ -6985,12 +6724,12 @@ bool_t chr_calculate_bumpers_2(CHR_REF chr_ref, vect3 * vrt_ary)
 
   bd->cv = cv;
 
-  bd->mids_lo.x = (cv.x_min + cv.x_max) * 0.5f + ChrList[chr_ref].pos.x;
-  bd->mids_lo.y = (cv.y_min + cv.y_max) * 0.5f + ChrList[chr_ref].pos.y;
-  bd->mids_hi.z = (cv.z_min + cv.z_max) * 0.5f + ChrList[chr_ref].pos.z;
+  bd->mids_lo.x = (cv.x_min + cv.x_max) * 0.5f + pchr->pos.x;
+  bd->mids_lo.y = (cv.y_min + cv.y_max) * 0.5f + pchr->pos.y;
+  bd->mids_hi.z = (cv.z_min + cv.z_max) * 0.5f + pchr->pos.z;
 
   bd->mids_lo   = bd->mids_hi;
-  bd->mids_lo.z = cv.z_min + ChrList[chr_ref].pos.z;
+  bd->mids_lo.z = cv.z_min + pchr->pos.z;
 
   bd->calc_height   = bd->cv.z_max;
   bd->calc_size     = MAX( bd->cv.x_max, bd->cv.y_max ) - MIN( bd->cv.x_min, bd->cv.y_min );
@@ -7016,7 +6755,7 @@ bool_t chr_calculate_bumpers_2(CHR_REF chr_ref, vect3 * vrt_ary)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_calculate_bumpers_3(CHR_REF chr_ref, CVolume_Tree * cv_tree)
+bool_t chr_calculate_bumpers_3( Mad madlst[], size_t madlst_size, Chr * pchr, CVolume_Tree * cv_tree)
 {
   BData * bd;
   Uint16 imdl;
@@ -7026,40 +6765,40 @@ bool_t chr_calculate_bumpers_3(CHR_REF chr_ref, CVolume_Tree * cv_tree)
   vect3 * vrt_ary;
   CVolume *pcv, cv_node[8];
 
-  if( !VALID_CHR(chr_ref) ) return bfalse;
-  bd = &(ChrList[chr_ref].bmpdata);
+  if(  NULL==pchr || !pchr->on ) return bfalse;
+  bd = &(pchr->bmpdata);
 
-  imdl = ChrList[chr_ref].model;
-  if(!VALID_MDL(imdl) || !ChrList[chr_ref].matrixvalid )
+  imdl = pchr->model;
+  if(!VALID_MDL(imdl) || !pchr->matrixvalid )
   {
-    chr_calculate_bumpers_0( chr_ref );
+    chr_calculate_bumpers_0( pchr );
     return bfalse;
   };
 
-  pmdl = MadList[imdl].md2_ptr;
+  pmdl = madlst[imdl].md2_ptr;
   if(NULL == pmdl)
   {
-    chr_calculate_bumpers_0( chr_ref );
+    chr_calculate_bumpers_0( pchr );
     return bfalse;
   }
 
   // allocate the array
   vrt_count = md2_get_numVertices(pmdl);
-  vrt_ary   = malloc(vrt_count * sizeof(vect3));
-  if(NULL==vrt_ary) return chr_calculate_bumpers_1( chr_ref );
+  vrt_ary   = (vect3*)calloc(vrt_count, sizeof(vect3));
+  if(NULL==vrt_ary) return chr_calculate_bumpers_1(  madlst, madlst_size, pchr );
 
   // make sure that we have the correct bounds
   if(bd->cv.level < 2)
   {
-    chr_calculate_bumpers_2(chr_ref, vrt_ary);
+    chr_calculate_bumpers_2(  madlst, madlst_size, pchr, vrt_ary);
   }
 
   if(NULL == cv_tree) return bfalse;
 
   // transform the verts all at once, to reduce function calling overhead
-  Transform3( 1.0f, 1.0f, &(ChrList[chr_ref].matrix), ChrList[chr_ref].vdata.Vertices, vrt_ary, vrt_count);
+  Transform3( 1.0f, 1.0f, &(pchr->matrix), pchr->vdata.Vertices, vrt_ary, vrt_count);
 
-  pcv = &(ChrList[chr_ref].bmpdata.cv);
+  pcv = &(pchr->bmpdata.cv);
 
   // initialize the octree
   for(tnc=0; tnc<8; tnc++)
@@ -7179,48 +6918,47 @@ bool_t chr_calculate_bumpers_3(CHR_REF chr_ref, CVolume_Tree * cv_tree)
   return btrue;
 };
 
-
 //--------------------------------------------------------------------------------------------
-bool_t chr_calculate_bumpers(CHR_REF chr_ref, int level)
+bool_t chr_calculate_bumpers( Mad madlst[], size_t madlst_size, Chr * pchr, int level)
 {
   bool_t retval = bfalse;
 
-  if(ChrList[chr_ref].bmpdata.cv.level >= level) return btrue;
+  if(pchr->bmpdata.cv.level >= level) return btrue;
 
   switch(level)
   {
     case 2:
       // the collision volume is an octagon, the ranges are calculated using the model's vertices
-      retval = chr_calculate_bumpers_2(chr_ref, NULL);
+      retval = chr_calculate_bumpers_2( madlst, madlst_size, pchr, NULL);
       break;
 
     case 3:
       {
         // calculate the octree collision volume
-        if(NULL == ChrList[chr_ref].bmpdata.cv_tree)
+        if(NULL == pchr->bmpdata.cv_tree)
         {
-          ChrList[chr_ref].bmpdata.cv_tree = calloc(1, sizeof(CVolume_Tree));
+          pchr->bmpdata.cv_tree = (CVolume_Tree*)calloc(1, sizeof(CVolume_Tree));
         };
-        retval = chr_calculate_bumpers_3(chr_ref, ChrList[chr_ref].bmpdata.cv_tree);
+        retval = chr_calculate_bumpers_3( madlst, madlst_size, pchr, pchr->bmpdata.cv_tree);
       };
       break;
 
     case 1:
       // the collision volume is a simple axis-aligned bounding box, the range is calculated from the
       // md2's bounding box
-      retval = chr_calculate_bumpers_1(chr_ref);
+      retval = chr_calculate_bumpers_1(madlst, madlst_size, pchr);
 
     default:
     case 0:
       // make the simplest estimation of the bounding box using the data in data.txt
-      retval = chr_calculate_bumpers_0(chr_ref);
+      retval = chr_calculate_bumpers_0(pchr);
   };
 
   return retval;
 };
 
 //--------------------------------------------------------------------------------------------
-void damage_character( CHR_REF chr_ref, Uint16 direction,
+void damage_character( GameState * gs, CHR_REF chr_ref, Uint16 direction,
                        PAIR * pdam, DAMAGE damagetype, TEAM team,
                        Uint16 attacker, Uint16 effects )
 {
@@ -7230,22 +6968,31 @@ void damage_character( CHR_REF chr_ref, Uint16 direction,
   //     RIGHT if from the right, BEHIND if from the back, LEFT if from the
   //     left.
 
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
+
+  Mad  * madlst      = gs->MadList;
+  size_t madlst_size = MAXMODEL;
+
   int tnc;
   ACTION action;
   int damage, basedamage;
   Uint16 experience, model, left, right;
   AI_STATE * pstate;
-  CHR * pchr;
-  MAD * pmad;
-  CAP * pcap;
+  Chr * pchr;
+  Mad * pmad;
+  Cap * pcap;
 
-  if( !VALID_CHR(chr_ref) ) return;
+  if( !VALID_CHR(chrlst, chr_ref) ) return;
 
-  pchr   = ChrList + chr_ref;
+  pchr   = chrlst + chr_ref;
   pstate = &(pchr->aistate);
 
   if ( NULL == pdam ) return;
-  if ( pchr->isplayer && CData.DevMode ) return;
+  if ( chr_is_player(gs, chr_ref) && CData.DevMode ) return;
 
   if ( pchr->alive && pdam->ibase >= 0 && pdam->irand >= 1 )
   {
@@ -7254,7 +7001,6 @@ void damage_character( CHR_REF chr_ref, Uint16 direction,
     damage = generate_unsigned( pdam );
     basedamage = damage;
     damage >>= ( pchr->skin.damagemodifier_fp8[damagetype] & DAMAGE_SHIFT );
-
 
     // Allow charging (Invert damage to mana)
     if ( pchr->skin.damagemodifier_fp8[damagetype]&DAMAGE_CHARGE )
@@ -7278,16 +7024,13 @@ void damage_character( CHR_REF chr_ref, Uint16 direction,
       return;
     }
 
-
     // Invert damage to heal
     if ( pchr->skin.damagemodifier_fp8[damagetype]&DAMAGE_INVERT )
       damage = -damage;
 
-
     // Remember the damage type
     pstate->damagetypelast = damagetype;
     pstate->directionlast = direction;
-
 
     // Do it already
     if ( damage > 0 )
@@ -7296,8 +7039,8 @@ void damage_character( CHR_REF chr_ref, Uint16 direction,
       if ( pchr->damagetime == 0 && !pchr->invictus )
       {
         model = pchr->model;
-        pmad = MadList + model;
-        pcap = CapList + model;
+        pmad = madlst + model;
+        pcap = caplst + model;
         if ( HAS_SOME_BITS( effects, DAMFX_BLOC ) )
         {
           // Only damage if hitting from proper direction
@@ -7315,21 +7058,21 @@ void damage_character( CHR_REF chr_ref, Uint16 direction,
               if ( pchr->action.now < ACTION_PC )
               {
                 // Check left hand
-                CHR_REF iholder = chr_get_holdingwhich( chr_ref, SLOT_LEFT );
-                if ( VALID_CHR( iholder ) )
+                CHR_REF iholder = chr_get_holdingwhich( chrlst, chrlst_size, chr_ref, SLOT_LEFT );
+                if ( VALID_CHR( chrlst, iholder ) )
                 {
-                  left  = ~CapList[iholder].iframeangle;
-                  right = CapList[iholder].iframeangle;
+                  left  = ~caplst[iholder].iframeangle;
+                  right = caplst[iholder].iframeangle;
                 }
               }
               else
               {
                 // Check right hand
-                CHR_REF iholder = chr_get_holdingwhich( chr_ref, SLOT_RIGHT );
-                if ( VALID_CHR( iholder ) )
+                CHR_REF iholder = chr_get_holdingwhich( chrlst, chrlst_size, chr_ref, SLOT_RIGHT );
+                if ( VALID_CHR( chrlst, iholder ) )
                 {
-                  left  = ~CapList[iholder].iframeangle;
-                  right = CapList[iholder].iframeangle;
+                  left  = ~caplst[iholder].iframeangle;
+                  right = caplst[iholder].iframeangle;
                 }
               }
             }
@@ -7348,8 +7091,6 @@ void damage_character( CHR_REF chr_ref, Uint16 direction,
           }
         }
 
-
-
         if ( damage != 0 )
         {
           if ( HAS_SOME_BITS( effects, DAMFX_ARMO ) )
@@ -7361,17 +7102,16 @@ void damage_character( CHR_REF chr_ref, Uint16 direction,
             pchr->life_fp8 -= FP8_MUL( damage, pchr->skin.defense_fp8 );
           }
 
-
           if ( basedamage > DAMAGE_MIN )
           {
             // Call for help if below 1/2 life
             if ( pchr->life_fp8 < ( pchr->lifemax_fp8 >> 1 ) ) //Zefz: Removed, because it caused guards to attack
-              call_for_help( chr_ref );                    //when dispelling overlay spells (Faerie Light)
+              call_for_help( gs, chr_ref );                    //when dispelling overlay spells (Faerie Light)
 
             // Spawn blud particles
             if ( pcap->bludlevel > BLUD_NONE && ( damagetype < DAMAGE_HOLY || pcap->bludlevel == BLUD_ULTRA ) )
             {
-              spawn_one_particle( 1.0f, pchr->pos,
+              spawn_one_particle( gs, 1.0f, pchr->pos,
                                   pchr->turn_lr + direction, pchr->model, pcap->bludprttype,
                                   MAXCHR, GRIP_LAST, pchr->team, chr_ref, 0, MAXCHR );
             }
@@ -7396,117 +7136,116 @@ void damage_character( CHR_REF chr_ref, Uint16 direction,
             }
           }
 
-
           // Taking damage action
           action = ACTION_HA;
           if ( pchr->life_fp8 < 0 )
           {
             // Character has died
             pchr->alive = bfalse;
-            disenchant_character( chr_ref );
+            disenchant_character( gs, chr_ref );
             pchr->action.keep = btrue;
             pchr->life_fp8 = -1;
             pchr->isplatform = btrue;
             pchr->bumpdampen /= 2.0;
             action = ACTION_KA;
-            stop_sound(pchr->loopingchannel);    //Stop sound loops
+            snd_stop_sound(pchr->loopingchannel);    //Stop sound loops
             pchr->loopingchannel = -1;
             // Give kill experience
             experience = pcap->experienceworth + ( pchr->experience * pcap->experienceexchange );
-            if ( VALID_CHR( attacker ) )
+            if ( VALID_CHR( chrlst, attacker ) )
             {
               // Set target
               pstate->target = attacker;
               if ( team == TEAM_DAMAGE )  pstate->target = chr_ref;
               if ( team == TEAM_NULL )  pstate->target = chr_ref;
               // Award direct kill experience
-              if ( TeamList[ChrList[attacker].team].hatesteam[pchr->team] )
+              if ( gs->TeamList[chrlst[attacker].team].hatesteam[pchr->team] )
               {
-                give_experience( attacker, experience, XP_KILLENEMY );
+                give_experience( gs, attacker, experience, XP_KILLENEMY );
               }
 
               // Check for hated
-              if ( CAP_INHERIT_IDSZ( model, CapList[ChrList[attacker].model].idsz[IDSZ_HATE] ) )
+              if ( CAP_INHERIT_IDSZ( gs,  model, caplst[chrlst[attacker].model].idsz[IDSZ_HATE] ) )
               {
-                give_experience( attacker, experience, XP_KILLHATED );
+                give_experience( gs, attacker, experience, XP_KILLHATED );
               }
             }
 
             // Clear all shop passages that it owned...
             tnc = 0;
-            while ( tnc < shop_count )
+            while ( tnc < gs->ShopList_count )
             {
-              if ( ShopList[tnc].owner == chr_ref )
+              if ( gs->ShopList[tnc].owner == chr_ref )
               {
-                ShopList[tnc].owner = NOOWNER;
+                gs->ShopList[tnc].owner = NOOWNER;
               }
               tnc++;
             }
 
             // Let the other characters know it died
             tnc = 0;
-            while ( tnc < MAXCHR )
+            while ( tnc < chrlst_size )
             {
-              if ( ChrList[tnc].on && ChrList[tnc].alive )
+              if ( chrlst[tnc].on && chrlst[tnc].alive )
               {
-                if ( ChrList[tnc].aistate.target == chr_ref )
+                if ( chrlst[tnc].aistate.target == chr_ref )
                 {
-                  ChrList[tnc].aistate.alert |= ALERT_TARGETKILLED;
+                  chrlst[tnc].aistate.alert |= ALERT_TARGETKILLED;
                 }
-                if ( !TeamList[ChrList[tnc].team].hatesteam[team] && TeamList[ChrList[tnc].team].hatesteam[pchr->team] )
+                if ( !gs->TeamList[chrlst[tnc].team].hatesteam[team] && gs->TeamList[chrlst[tnc].team].hatesteam[pchr->team] )
                 {
                   // All allies get team experience, but only if they also hate the dead guy's team
-                  give_experience( tnc, experience, XP_TEAMKILL );
+                  give_experience( gs, tnc, experience, XP_TEAMKILL );
                 }
               }
               tnc++;
             }
 
             // Check if it was a leader
-            if ( team_get_leader( pchr->team ) == chr_ref )
+            if ( team_get_leader( gs, pchr->team ) == chr_ref )
             {
               // It was a leader, so set more alerts
               tnc = 0;
-              while ( tnc < MAXCHR )
+              while ( tnc < chrlst_size )
               {
-                if ( ChrList[tnc].on && ChrList[tnc].team == pchr->team )
+                if ( chrlst[tnc].on && chrlst[tnc].team == pchr->team )
                 {
                   // All folks on the leaders team get the alert
-                  ChrList[tnc].aistate.alert |= ALERT_LEADERKILLED;
+                  chrlst[tnc].aistate.alert |= ALERT_LEADERKILLED;
                 }
                 tnc++;
               }
 
               // The team now has no leader
-              TeamList[pchr->team].leader = search_best_leader( pchr->team, chr_ref );
+              gs->TeamList[pchr->team].leader = search_best_leader( gs, pchr->team, chr_ref );
             }
 
-            detach_character_from_mount( chr_ref, btrue, bfalse );
+            detach_character_from_mount( gs, chr_ref, btrue, bfalse );
             action += ( rand() & 3 );
-            play_action( chr_ref, action, bfalse );
+            play_action( gs,  chr_ref, action, bfalse );
 
             // Turn off all sounds if it's a player
             for ( tnc = 0; tnc < MAXWAVE; tnc++ )
             {
               //TODO Zefz: Do we need this? This makes all sounds a chr_ref makes stop when it dies...
               //           This may stop death sounds
-              //stop_sound(pchr->model);
+              //snd_stop_sound(pchr->model);
             }
 
             // Afford it one last thought if it's an AI
-            TeamList[pchr->baseteam].morale--;
+            gs->TeamList[pchr->baseteam].morale--;
             pchr->team = pchr->baseteam;
             pstate->alert = ALERT_KILLED;
             pchr->sparkle = NOSPARKLE;
             pstate->time = 1;  // No timeout...
-            let_character_think( chr_ref, 1.0f );
+            let_character_think( gs, chr_ref, 1.0f );
           }
           else
           {
             if ( basedamage > DAMAGE_MIN )
             {
               action += ( rand() & 3 );
-              play_action( chr_ref, action, bfalse );
+              play_action( gs,  chr_ref, action, bfalse );
 
               // Make the chr_ref invincible for a limited time only
               if ( HAS_NO_BITS( effects, DAMFX_TIME ) )
@@ -7517,7 +7256,7 @@ void damage_character( CHR_REF chr_ref, Uint16 direction,
         else
         {
           // Spawn a defend particle
-          spawn_one_particle( pchr->bumpstrength, pchr->pos, pchr->turn_lr, MAXMODEL, PRTPIP_DEFEND, MAXCHR, GRIP_LAST, TEAM_NULL, MAXCHR, 0, MAXCHR );
+          spawn_one_particle( gs, pchr->bumpstrength, pchr->pos, pchr->turn_lr, MAXMODEL, PRTPIP_DEFEND, MAXCHR, GRIP_LAST, TEAM_NULL, MAXCHR, 0, MAXCHR );
           pchr->damagetime = DELAY_DEFEND;
           pstate->alert |= ALERT_BLOCKED;
         }
@@ -7540,16 +7279,19 @@ void damage_character( CHR_REF chr_ref, Uint16 direction,
 }
 
 //--------------------------------------------------------------------------------------------
-void kill_character( CHR_REF chr_ref, Uint16 killer )
+void kill_character( GameState * gs, CHR_REF chr_ref, Uint16 killer )
 {
   // ZZ> This function kills a character...  MAXCHR killer for accidental death
 
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
   Uint8 modifier;
-  CHR * pchr;
+  Chr * pchr;
 
-  if( !VALID_CHR(chr_ref) ) return;
+  if( !VALID_CHR(chrlst, chr_ref) ) return;
 
-  pchr = ChrList + chr_ref;
+  pchr = chrlst + chr_ref;
 
   if ( !pchr->alive ) return;
 
@@ -7557,15 +7299,15 @@ void kill_character( CHR_REF chr_ref, Uint16 killer )
   pchr->life_fp8 = 1;
   modifier = pchr->skin.damagemodifier_fp8[DAMAGE_CRUSH];
   pchr->skin.damagemodifier_fp8[DAMAGE_CRUSH] = 1;
-  if ( VALID_CHR( killer ) )
+  if ( VALID_CHR( chrlst, killer ) )
   {
     PAIR ptemp = {512, 1};
-    damage_character( chr_ref, 0, &ptemp, DAMAGE_CRUSH, ChrList[killer].team, killer, DAMFX_ARMO | DAMFX_BLOC );
+    damage_character( gs, chr_ref, 0, &ptemp, DAMAGE_CRUSH, chrlst[killer].team, killer, DAMFX_ARMO | DAMFX_BLOC );
   }
   else
   {
     PAIR ptemp = {512, 1};
-    damage_character( chr_ref, 0, &ptemp, DAMAGE_CRUSH, TEAM_DAMAGE, chr_get_aibumplast( chr_ref ), DAMFX_ARMO | DAMFX_BLOC );
+    damage_character( gs, chr_ref, 0, &ptemp, DAMAGE_CRUSH, TEAM_DAMAGE, chr_get_aibumplast( chrlst, chrlst_size, chrlst + chr_ref ), DAMFX_ARMO | DAMFX_BLOC );
   }
   pchr->skin.damagemodifier_fp8[DAMAGE_CRUSH] = modifier;
 
@@ -7573,7 +7315,6 @@ void kill_character( CHR_REF chr_ref, Uint16 killer )
   pchr->isplatform = btrue;
   pchr->ismount    = bfalse;
 }
-
 
 //--------------------------------------------------------------------------------------------
 bool_t import_info_clear(IMPORT_INFO * ii)
@@ -7690,4 +7431,726 @@ CVolume cvolume_merge(CVolume * pv1, CVolume * pv2)
   }
 
   return rv;
+}
+
+//--------------------------------------------------------------------------------------------
+void play_action( GameState * gs, CHR_REF character, ACTION action, bool_t ready )
+{
+  // ZZ> This function starts a generic action for a character
+
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Mad  * madlst      = gs->MadList;
+  size_t madlst_size = MAXMODEL;
+
+  Chr * pchr;
+  Mad * pmad;
+
+  if(!VALID_CHR(chrlst, character)) return;
+
+  pchr = chrlst + character;
+
+  if(!VALID_MDL(pchr->model) || !madlst[pchr->model].used) return;
+
+  pmad = madlst + pchr->model;
+
+  if ( pmad->actionvalid[action] )
+  {
+    pchr->action.next  = ACTION_DA;
+    pchr->action.now   = action;
+    pchr->action.ready = ready;
+
+    pchr->anim.lip_fp8 = 0;
+    pchr->anim.flip    = 0.0f;
+    pchr->anim.last    = pchr->anim.next;
+    pchr->anim.next    = pmad->actionstart[pchr->action.now];
+  }
+
+}
+
+//--------------------------------------------------------------------------------------------
+void set_frame( GameState * gs, CHR_REF character, Uint16 frame, Uint8 lip )
+{
+  // ZZ> This function sets the frame for a character explicitly...  This is used to
+  //     rotate Tank turrets
+
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Mad  * madlst      = gs->MadList;
+  size_t madlst_size = MAXMODEL;
+
+  Uint16 start, end;
+  Chr * pchr;
+  Mad * pmad;
+
+  if(!VALID_CHR(chrlst, character)) return;
+
+  pchr = chrlst + character;
+
+  if(!VALID_MDL(pchr->model) || !madlst[pchr->model].used) return;
+
+  pmad = madlst + pchr->model;
+
+  pchr->action.next  = ACTION_DA;
+  pchr->action.now   = ACTION_DA;
+  pchr->action.ready = btrue;
+
+  pchr->anim.lip_fp8 = ( lip << 6 );
+  pchr->anim.flip    = lip * 0.25;
+
+  start = pmad->actionstart[pchr->action.now];
+  end   = pmad->actionstart[pchr->action.now];
+
+  if(start == end)
+  {
+    pchr->anim.last =
+    pchr->anim.next = start;
+  }
+  else
+  {
+    pchr->anim.last    = start + frame;
+    if(pchr->anim.last > end)
+    {
+      pchr->anim.last = (pchr->anim.last - end) % (end - start) + end;
+    };
+
+    pchr->anim.next    = pchr->anim.last + 1;
+    if(pchr->anim.next > end)
+    {
+      pchr->anim.next = (pchr->anim.next - end) % (end - start) + end;
+    };
+  }
+
+}
+
+//--------------------------------------------------------------------------------------------
+void drop_money( GameState * gs, CHR_REF character, Uint16 money )
+{
+  // ZZ> This function drops some of a character's money
+
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Uint16 huns, tfives, fives, ones, cnt;
+
+  if ( money > chrlst[character].money )  money = chrlst[character].money;
+
+  if ( money > 0 && chrlst[character].pos.z > -2 )
+  {
+    chrlst[character].money -= money;
+    huns   = money / 100;  money -= huns   * 100;
+    tfives = money /  25;  money -= tfives *  25;
+    fives  = money /   5;  money -= fives  *   5;
+    ones   = money;
+
+    for ( cnt = 0; cnt < ones; cnt++ )
+      spawn_one_particle( gs, 1.0f, chrlst[character].pos, 0, MAXMODEL, PRTPIP_COIN_001, MAXCHR, GRIP_LAST, TEAM_NULL, MAXCHR, cnt, MAXCHR );
+
+    for ( cnt = 0; cnt < fives; cnt++ )
+      spawn_one_particle( gs, 1.0f, chrlst[character].pos, 0, MAXMODEL, PRTPIP_COIN_005, MAXCHR, GRIP_LAST, TEAM_NULL, MAXCHR, cnt, MAXCHR );
+
+    for ( cnt = 0; cnt < tfives; cnt++ )
+      spawn_one_particle( gs, 1.0f, chrlst[character].pos, 0, MAXMODEL, PRTPIP_COIN_025, MAXCHR, GRIP_LAST, TEAM_NULL, MAXCHR, cnt, MAXCHR );
+
+    for ( cnt = 0; cnt < huns; cnt++ )
+      spawn_one_particle( gs, 1.0f, chrlst[character].pos, 0, MAXMODEL, PRTPIP_COIN_100, MAXCHR, GRIP_LAST, TEAM_NULL, MAXCHR, cnt, MAXCHR );
+
+    chrlst[character].damagetime = DELAY_DAMAGE;  // So it doesn't grab it again
+  }
+}
+
+//--------------------------------------------------------------------------------------------
+CHR_REF spawn_one_character( GameState * gs, vect3 pos, int profile, TEAM team,
+                            Uint8 iskin, Uint16 facing, char *name, Uint16 override )
+{
+  // ZZ> This function spawns a character and returns the character's index number
+  //     if it worked, MAXCHR otherwise
+
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
+
+  Mad  * madlst      = gs->MadList;
+  size_t madlst_size = MAXMODEL;
+
+  int ichr, tnc;
+
+  AI_STATE * pstate;
+  Chr  * pchr;
+  Cap  * pcap;
+  Mad  * pmad;
+
+  // Make sure the team is valid
+  if ( team >= TEAM_COUNT ) team %= TEAM_COUNT;
+
+  pcap = caplst + profile;
+  pmad = madlst + profile;
+
+  // Get a new character
+  if ( !pmad->used )
+  {
+    log_debug( "WARNING: spawn_one_character() - failed to spawn : model %d doesn't exist\n", profile );
+    return MAXCHR;
+  }
+
+  ichr = MAXCHR;
+  if ( VALID_CHR( chrlst, override ) )
+  {
+    ichr = ChrList_get_free( gs );
+    if ( ichr != override )
+    {
+      // Picked the wrong one, so put this one back and find the right one
+      tnc = 0;
+      while ( tnc < chrlst_size )
+      {
+        if ( gs->ChrFreeList[tnc] == override )
+        {
+          gs->ChrFreeList[tnc] = ichr;
+          tnc = MAXCHR;
+        }
+        tnc++;
+      }
+      ichr = override;
+    }
+
+    if ( MAXCHR == ichr )
+    {
+      log_debug( "WARNING: spawn_one_character() - failed to spawn : cannot find override index %d\n", override );
+      return MAXCHR;
+    }
+  }
+  else
+  {
+    ichr = ChrList_get_free( gs );
+
+    if ( MAXCHR == ichr )
+    {
+      log_debug( "WARNING: spawn_one_character() - failed to spawn : ChrList_get_free() returned invalid value %d\n", ichr );
+      return MAXCHR;
+    }
+  }
+
+  log_debug( "spawn_one_character() - profile == %d, classname == \"%s\", index == %d\n", profile, pcap->classname, ichr );
+
+  // "simplify" the notation
+  pchr   = chrlst + ichr;
+  pstate = &(pchr->aistate);
+
+  // clear any old data
+  memset(pchr, 0, sizeof(Chr));
+
+  // IMPORTANT!!!
+  pchr->indolist = bfalse;
+  pchr->isequipped = bfalse;
+  pchr->sparkle = NOSPARKLE;
+  pchr->overlay = bfalse;
+  pchr->missilehandler = ichr;
+
+  // Set up model stuff
+  pchr->on = btrue;
+  pchr->freeme = bfalse;
+  pchr->gopoof = bfalse;
+  pchr->reloadtime = 0;
+  pchr->inwhichslot = SLOT_NONE;
+  pchr->inwhichpack = MAXCHR;
+  pchr->nextinpack = MAXCHR;
+  pchr->numinpack = 0;
+  pchr->model = profile;
+  VData_Blended_construct( &(pchr->vdata) );
+  VData_Blended_Allocate( &(pchr->vdata), md2_get_numVertices(pmad->md2_ptr) );
+
+  pchr->basemodel = profile;
+  pchr->stoppedby = pcap->stoppedby;
+  pchr->lifeheal = pcap->lifeheal_fp8;
+  pchr->manacost = pcap->manacost_fp8;
+  pchr->inwater = bfalse;
+  pchr->nameknown = pcap->nameknown;
+  pchr->ammoknown = pcap->nameknown;
+  pchr->hitready = btrue;
+  pchr->boretime = DELAY_BORE;
+  pchr->carefultime = DELAY_CAREFUL;
+  pchr->canbecrushed = bfalse;
+  pchr->damageboost = 0;
+  pchr->icon = pcap->icon;
+
+  //Ready for loop sound
+  pchr->loopingchannel = -1;
+
+  // Enchant stuff
+  pchr->firstenchant = MAXENCHANT;
+  pchr->undoenchant = MAXENCHANT;
+  pchr->canseeinvisible = pcap->canseeinvisible;
+  pchr->canchannel = bfalse;
+  pchr->missiletreatment = MIS_NORMAL;
+  pchr->missilecost = 0;
+
+  //Skill Expansions
+  pchr->canseekurse = pcap->canseekurse;
+  pchr->canusedivine = pcap->canusedivine;
+  pchr->canusearcane = pcap->canusearcane;
+  pchr->candisarm = pcap->candisarm;
+  pchr->canjoust = pcap->canjoust;
+  pchr->canusetech = pcap->canusetech;
+  pchr->canusepoison = pcap->canusepoison;
+  pchr->canuseadvancedweapons = pcap->canuseadvancedweapons;
+  pchr->canbackstab = pcap->canbackstab;
+  pchr->canread = pcap->canread;
+
+  // Kurse state
+  pchr->iskursed = (( rand() % 100 ) < pcap->kursechance );
+  if ( !pcap->isitem )  pchr->iskursed = bfalse;
+
+  // Ammo
+  pchr->ammomax = pcap->ammomax;
+  pchr->ammo = pcap->ammo;
+
+  // Gender
+  pchr->gender = pcap->gender;
+  if ( pchr->gender == GEN_RANDOM )  pchr->gender = GEN_FEMALE + ( rand() & 1 );
+
+  // Team stuff
+  pchr->team = team;
+  pchr->baseteam = team;
+  pchr->messagedata = gs->TeamList[team].morale;
+  if ( !pcap->invictus )  gs->TeamList[team].morale++;
+  pchr->message = 0;
+  // Firstborn becomes the leader
+  if ( !VALID_CHR( chrlst, team_get_leader( gs, team ) ) )
+  {
+    gs->TeamList[team].leader = ichr;
+  }
+
+  // Skin
+  if ( pcap->skinoverride != NOSKINOVERRIDE )
+  {
+    iskin = pcap->skinoverride % MAXSKIN;
+  }
+  if ( iskin >= pmad->skins )
+  {
+    iskin = 0;
+    if ( pmad->skins > 1 )
+    {
+      iskin = rand() % pmad->skins;
+    }
+  }
+  pchr->skin_ref = iskin;
+
+  // Life and Mana
+  pchr->alive = btrue;
+  pchr->lifecolor = pcap->lifecolor;
+  pchr->manacolor = pcap->manacolor;
+  pchr->lifemax_fp8 = generate_unsigned( &pcap->life_fp8 );
+  pchr->life_fp8 = pchr->lifemax_fp8;
+  pchr->lifereturn = pcap->lifereturn_fp8;
+  pchr->manamax_fp8 = generate_unsigned( &pcap->mana_fp8 );
+  pchr->manaflow_fp8 = generate_unsigned( &pcap->manaflow_fp8 );
+  pchr->manareturn_fp8 = generate_unsigned( &pcap->manareturn_fp8 );  //>> MANARETURNSHIFT;
+  pchr->mana_fp8 = pchr->manamax_fp8;
+
+  // SWID
+  pchr->strength_fp8 = generate_unsigned( &pcap->strength_fp8 );
+  pchr->wisdom_fp8 = generate_unsigned( &pcap->wisdom_fp8 );
+  pchr->intelligence_fp8 = generate_unsigned( &pcap->intelligence_fp8 );
+  pchr->dexterity_fp8 = generate_unsigned( &pcap->dexterity_fp8 );
+
+  // Damage
+  pchr->skin.defense_fp8 = pcap->skin[iskin].defense_fp8;
+  pchr->reaffirmdamagetype = pcap->attachedprtreaffirmdamagetype;
+  pchr->damagetargettype = pcap->damagetargettype;
+  tnc = 0;
+  while ( tnc < MAXDAMAGETYPE )
+  {
+    pchr->skin.damagemodifier_fp8[tnc] = pcap->skin[iskin].damagemodifier_fp8[tnc];
+    tnc++;
+  }
+
+  pchr->whichplayer   = MAXPLAYER;
+
+  // Flags
+  pchr->stickybutt = pcap->stickybutt;
+  pchr->openstuff = pcap->canopenstuff;
+  pchr->transferblend = pcap->transferblend;
+  pchr->enviro = pcap->enviro;
+  pchr->waterwalk = pcap->waterwalk;
+  pchr->isplatform = pcap->isplatform;
+  pchr->isitem = pcap->isitem;
+  pchr->invictus = pcap->invictus;
+  pchr->ismount = pcap->ismount;
+  pchr->cangrabmoney = pcap->cangrabmoney;
+
+  // Jumping
+  pchr->jump = pcap->jump;
+  pchr->jumpready = btrue;
+  pchr->jumpnumber = 1;
+  pchr->jumpnumberreset = pcap->jumpnumber;
+  pchr->jumptime = DELAY_JUMP;
+
+  // Other junk
+  pchr->flyheight = pcap->flyheight;
+  pchr->skin.maxaccel = pcap->skin[iskin].maxaccel;
+  pchr->alpha_fp8 = pcap->alpha_fp8;
+  pchr->light_fp8 = pcap->light_fp8;
+  pchr->flashand = pcap->flashand;
+  pchr->sheen_fp8 = pcap->sheen_fp8;
+  pchr->dampen = pcap->dampen;
+
+  // Character size and bumping
+  pchr->fat = pcap->size;
+  pchr->sizegoto = pchr->fat;
+  pchr->sizegototime = 0;
+
+  pchr->bmpdata_save.shadow  = pcap->shadowsize;
+  pchr->bmpdata_save.size    = pcap->bumpsize;
+  pchr->bmpdata_save.sizebig = pcap->bumpsizebig;
+  pchr->bmpdata_save.height  = pcap->bumpheight;
+
+  pchr->bmpdata.shadow   = pcap->shadowsize  * pchr->fat;
+  pchr->bmpdata.size     = pcap->bumpsize    * pchr->fat;
+  pchr->bmpdata.sizebig  = pcap->bumpsizebig * pchr->fat;
+  pchr->bmpdata.height   = pcap->bumpheight  * pchr->fat;
+  pchr->bumpstrength   = pcap->bumpstrength * FP8_TO_FLOAT( pcap->alpha_fp8 );
+
+  pchr->bumpdampen = pcap->bumpdampen;
+  pchr->weight = pcap->weight * pchr->fat * pchr->fat * pchr->fat;   // preserve density
+
+  // Grip info
+  pchr->inwhichslot = SLOT_NONE;
+  pchr->attachedto = MAXCHR;
+  for ( _slot = SLOT_BEGIN; _slot < SLOT_COUNT; _slot = ( SLOT )( _slot + 1 ) )
+  {
+    pchr->holdingwhich[_slot] = MAXCHR;
+  }
+
+  // Image rendering
+  pchr->uoffset_fp8 = 0;
+  pchr->voffset_fp8 = 0;
+  pchr->uoffvel = pcap->uoffvel;
+  pchr->voffvel = pcap->voffvel;
+  pchr->redshift = 0;
+  pchr->grnshift = 0;
+  pchr->blushift = 0;
+
+  // Movement
+  pchr->spd_sneak = pcap->spd_sneak;
+  pchr->spd_walk = pcap->spd_walk;
+  pchr->spd_run = pcap->spd_run;
+
+  // Set up position
+  pchr->pos.x = pos.x;
+  pchr->pos.y = pos.y;
+  pchr->turn_lr = facing;
+  pchr->onwhichfan = mesh_get_fan( gs, pchr->pos );
+  pchr->level = mesh_get_level( gs, pchr->onwhichfan, pchr->pos.x, pchr->pos.y, pchr->waterwalk ) + RAISE;
+  if ( pos.z < pchr->level ) pos.z = pchr->level;
+  pchr->pos.z = pos.z;
+
+  pchr->stt         = pchr->pos;
+  pchr->pos_old     = pchr->pos;
+  pchr->turn_lr_old = pchr->turn_lr;
+
+  pchr->tlight.turn_lr.r = 0;
+  pchr->tlight.turn_lr.g = 0;
+  pchr->tlight.turn_lr.b = 0;
+
+  pchr->vel.x = 0;
+  pchr->vel.y = 0;
+  pchr->vel.z = 0;
+  pchr->mapturn_lr = 32768;  // These two mean on level surface
+  pchr->mapturn_ud = 32768;
+  pchr->scale = pchr->fat;
+
+  // AI stuff
+  ai_state_new(gs, pstate, ichr);
+
+  // action stuff
+  action_info_new( &(pchr->action) );
+  anim_info_new( &(pchr->anim) );
+
+  pchr->passage = 0;
+  pchr->holdingweight = 0;
+  pchr->onwhichplatform = MAXCHR;
+
+  // Timers set to 0
+  pchr->grogtime = 0.0f;
+  pchr->dazetime = 0.0f;
+
+  // Money is added later
+  pchr->money = pcap->money;
+
+  // Name the character
+  if ( name == NULL )
+  {
+    // Generate a random name
+    naming_names( gs, profile );
+    strncpy( pchr->name, namingnames, sizeof( pchr->name ) );
+  }
+  else
+  {
+    // A name has been given
+    tnc = 0;
+    while ( tnc < MAXCAPNAMESIZE - 1 )
+    {
+      pchr->name[tnc] = name[tnc];
+      tnc++;
+    }
+    pchr->name[tnc] = 0;
+  }
+
+  // Set up initial fade in lighting
+  tnc = 0;
+  while ( tnc < madlst[pchr->model].transvertices )
+  {
+    pchr->vrta_fp8[tnc].r = 0;
+    pchr->vrta_fp8[tnc].g = 0;
+    pchr->vrta_fp8[tnc].b = 0;
+    tnc++;
+  }
+
+  // Particle attachments
+  tnc = 0;
+  while ( tnc < pcap->attachedprtamount )
+  {
+    spawn_one_particle( gs, 1.0f, pchr->pos,
+                        0, pchr->model, pcap->attachedprttype,
+                        ichr, GRIP_LAST + tnc, pchr->team, ichr, tnc, MAXCHR );
+    tnc++;
+  }
+  pchr->reaffirmdamagetype = pcap->attachedprtreaffirmdamagetype;
+
+  // Experience
+  if ( pcap->leveloverride != 0 )
+  {
+    while ( pchr->experiencelevel < pcap->leveloverride )
+    {
+      give_experience( gs, ichr, 100, XP_DIRECT );
+    }
+  }
+  else
+  {
+    pchr->experience = generate_unsigned( &pcap->experience );
+    pchr->experiencelevel = calc_chr_level( gs, ichr );
+  }
+
+  pchr->pancakepos.x = pchr->pancakepos.y = pchr->pancakepos.z = 1.0;
+  pchr->pancakevel.x = pchr->pancakevel.y = pchr->pancakevel.z = 0.0f;
+
+  pchr->loopingchannel = INVALID_CHANNEL;
+
+  // calculate the bumpers
+  assert(NULL == pchr->bmpdata.cv_tree);
+  chr_bdata_reinit( pchr, &(pchr->bmpdata) );
+  make_one_character_matrix( chrlst, chrlst_size, pchr );
+
+  return ichr;
+}
+
+//--------------------------------------------------------------------------------------------
+void respawn_character( GameState * gs, CHR_REF ichr )
+{
+  // ZZ> This function respawns a character
+
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
+
+  Uint16 item, profile;
+  Chr * pchr;
+  Cap * pcap;
+  AI_STATE * pstate;
+
+  if ( !VALID_CHR( chrlst, ichr )  ) return;
+
+  pchr = chrlst + ichr;
+  pstate = &(pchr->aistate);
+
+  if( pchr->alive ) return;
+
+  profile = pchr->model;
+  pcap = caplst + profile;
+
+  spawn_poof( gs, ichr, profile );
+  disaffirm_attached_particles( gs, ichr );
+  pchr->alive = btrue;
+  pchr->boretime = DELAY_BORE;
+  pchr->carefultime = DELAY_CAREFUL;
+  pchr->life_fp8 = pchr->lifemax_fp8;
+  pchr->mana_fp8 = pchr->manamax_fp8;
+  pchr->pos.x = pchr->stt.x;
+  pchr->pos.y = pchr->stt.y;
+  pchr->pos.z = pchr->stt.z;
+  pchr->vel.x = 0;
+  pchr->vel.y = 0;
+  pchr->vel.z = 0;
+  pchr->team = pchr->baseteam;
+  pchr->canbecrushed = bfalse;
+  pchr->mapturn_lr = 32768;  // These two mean on level surface
+  pchr->mapturn_ud = 32768;
+  if ( !VALID_CHR( chrlst, team_get_leader( gs, pchr->team ) ) )  gs->TeamList[pchr->team].leader = ichr;
+  if ( !pchr->invictus )  gs->TeamList[pchr->baseteam].morale++;
+
+  action_info_new( &(pchr->action) );
+  anim_info_new( &(pchr->anim) );
+
+  pchr->isplatform = pcap->isplatform;
+  pchr->flyheight  = pcap->flyheight;
+  pchr->bumpdampen = pcap->bumpdampen;
+
+  pchr->bmpdata_save.size    = pcap->bumpsize;
+  pchr->bmpdata_save.sizebig = pcap->bumpsizebig;
+  pchr->bmpdata_save.height  = pcap->bumpheight;
+
+  pchr->bmpdata.size     = pcap->bumpsize * pchr->fat;
+  pchr->bmpdata.sizebig  = pcap->bumpsizebig * pchr->fat;
+  pchr->bmpdata.height   = pcap->bumpheight * pchr->fat;
+  pchr->bumpstrength     = pcap->bumpstrength * FP8_TO_FLOAT( pcap->alpha_fp8 );
+
+  // clear the alert and leave the state alone
+  ai_state_renew(pstate, ichr);
+
+  pchr->grogtime = 0.0f;
+  pchr->dazetime = 0.0f;
+
+  reaffirm_attached_particles( gs, ichr );
+
+  // Let worn items come back
+  item  = chr_get_nextinpack( chrlst, chrlst_size, ichr );
+  while ( VALID_CHR( chrlst, item ) )
+  {
+    if ( chrlst[item].isequipped )
+    {
+      chrlst[item].isequipped = bfalse;
+      chrlst[item].aistate.alert |= ALERT_ATLASTWAYPOINT;  // doubles as PutAway
+    }
+    item  = chr_get_nextinpack( chrlst, chrlst_size, item );
+  }
+
+}
+
+//--------------------------------------------------------------------------------------------
+void signal_target( GameState * gs, CHR_REF target_ref, Uint16 upper, Uint16 lower )
+{
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  if ( !VALID_CHR( chrlst,  target_ref ) ) return;
+
+  chrlst[target_ref].message = ( upper << 16 ) | lower;
+  chrlst[target_ref].messagedata = 0;
+  chrlst[target_ref].aistate.alert |= ALERT_SIGNALED;
+};
+
+
+//--------------------------------------------------------------------------------------------
+void signal_team( GameState * gs, CHR_REF chr_ref, Uint32 message )
+{
+  // ZZ> This function issues an message for help to all teammates
+
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  TEAM team;
+  Uint8 counter;
+  Uint16 cnt;
+
+  team = chrlst[chr_ref].team;
+  counter = 0;
+  for ( cnt = 0; cnt < MAXCHR; cnt++ )
+  {
+    if ( !VALID_CHR( chrlst,  cnt ) || chrlst[cnt].team != team ) continue;
+
+    chrlst[cnt].message = message;
+    chrlst[cnt].messagedata = counter;
+    chrlst[cnt].aistate.alert |= ALERT_SIGNALED;
+    counter++;
+  }
+}
+
+//--------------------------------------------------------------------------------------------
+void signal_idsz_index( GameState * gs, Uint32 order, IDSZ idsz, IDSZ_INDEX index )
+{
+  // ZZ> This function issues an order to all characters with the a matching special IDSZ
+
+  Cap  * caplst      = gs->CapList;
+  size_t caplst_size = MAXCAP;
+
+  Chr  * chrlst      = gs->ChrList;
+  size_t chrlst_size = MAXCHR;
+
+  Uint8 counter;
+  Uint16 cnt, model;
+
+  counter = 0;
+  for ( cnt = 0; cnt < MAXCHR; cnt++ )
+  {
+    if ( !VALID_CHR( chrlst,  cnt ) ) continue;
+
+    model = chrlst[cnt].model;
+
+    if ( caplst[model].idsz[index] != idsz ) continue;
+
+    chrlst[cnt].message        = order;
+    chrlst[cnt].messagedata    = counter;
+    chrlst[cnt].aistate.alert |= ALERT_SIGNALED;
+    counter++;
+  }
+}
+
+
+//--------------------------------------------------------------------------------------------
+bool_t ai_state_advance_wp(AI_STATE * a, bool_t do_atlastwaypoint)
+{
+  if(NULL == a) return bfalse;
+
+  a->alert |= ALERT_ATWAYPOINT;
+
+  if( wp_list_advance( &(a->wp) ) )
+  {
+    // waypoint list is at or past its end
+    if ( do_atlastwaypoint )
+    {
+      a->alert |= ALERT_ATLASTWAYPOINT;
+    }
+  }
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+Cap * Cap_new(Cap *pcap) 
+{ 
+  fprintf( stdout, "Cap_new()\n");
+
+  if(NULL==pcap) return pcap; 
+  
+  memset(pcap, 0, sizeof(Cap));
+
+  pcap->used         = bfalse;
+  pcap->classname[0] = '\0';
+  
+  return pcap; 
+};
+
+//--------------------------------------------------------------------------------------------
+bool_t Cap_delete( Cap * pcap )
+{
+  if(NULL == pcap) return bfalse;
+
+  pcap->used         = bfalse;
+  pcap->classname[0] = '\0';
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+Cap * Cap_renew(Cap *pcap)
+{
+  Cap_delete( pcap );
+  return Cap_new(pcap);
 }

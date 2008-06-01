@@ -1,27 +1,32 @@
-/* Egoboo - camera.c
- * Various functions related to how the game camera works.
- */
-
-/*
-    This file is part of Egoboo.
-
-    Egoboo is free software: you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Egoboo is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
-*/
+//********************************************************************************************
+//* Egoboo - camera.c
+//*
+//* Various functions related to how the game camera works.
+//*
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
 
 #include "camera.h"
 #include "Frustum.h"
-#include "log.h"
+#include "Log.h"
+#include "Client.h"
+#include "graphic.h"
 
 #include "egoboo.h"
 
@@ -124,13 +129,13 @@ void camera_calc_turn_lr()
 }
 
 //--------------------------------------------------------------------------------------------
-void screen_dump_matrix( matrix_4x4 a )
+void screen_dump_matrix( GameState * gs, matrix_4x4 a )
 {
   int i, j;
-  STRING buffer1 = {0};
-  STRING buffer2 = {0};
+  STRING buffer1 = { '\0' };
+  STRING buffer2 = { '\0' };
 
-  reset_messages();
+  reset_messages( gs );
   for ( j = 0; j < 4; j++ )
   {
     snprintf( buffer1, sizeof( buffer1 ), "  " );
@@ -189,11 +194,13 @@ void move_camera( float dUpdate )
 {
   // ZZ> This function moves the camera
 
+  GameState * gs = gfxState.gs;
+
   int cnt, locoalive;  // Used in rts remove? -> int band,
   vect3 pos, vel, move;
   float level;
   CHR_REF chr_ref;
-  Uint16 turnsin, turncos;
+  Uint16 turnsin;
   float ftmp;
   float fkeep, fnew;
 
@@ -219,38 +226,38 @@ void move_camera( float dUpdate )
   locoalive = 0;
   for ( cnt = 0; cnt < MAXPLAYER; cnt++ )
   {
-    if ( !VALID_PLA( cnt ) || INBITS_NONE == PlaList[cnt].device ) continue;
+    if ( !VALID_PLA(gs->PlaList,  cnt ) || INBITS_NONE == gs->PlaList[cnt].device ) continue;
 
-    chr_ref = pla_get_character( cnt );
-    if ( VALID_CHR( chr_ref ) && ChrList[chr_ref].alive )
+    chr_ref = PlaList_get_character( gs, cnt );
+    if ( VALID_CHR(gs->ChrList,  chr_ref ) && gs->ChrList[chr_ref].alive )
     {
-      CHR_REF attachedto_ref = chr_get_attachedto( chr_ref );
+      CHR_REF attachedto_ref = chr_get_attachedto( gs->ChrList, MAXCHR, chr_ref );
 
-      if ( VALID_CHR( attachedto_ref ) )
+      if ( VALID_CHR(gs->ChrList,  attachedto_ref ) )
       {
         // The chr_ref is mounted
-        pos.x += ChrList[attachedto_ref].pos.x;
-        pos.y += ChrList[attachedto_ref].pos.y;
-        pos.z += ChrList[attachedto_ref].pos.z + 0.9 * ChrList[chr_ref].bmpdata.calc_height;
+        pos.x += gs->ChrList[attachedto_ref].pos.x;
+        pos.y += gs->ChrList[attachedto_ref].pos.y;
+        pos.z += gs->ChrList[attachedto_ref].pos.z + 0.9 * gs->ChrList[chr_ref].bmpdata.calc_height;
 
-        level += ChrList[attachedto_ref].level;
+        level += gs->ChrList[attachedto_ref].level;
 
-        vel.x += ChrList[attachedto_ref].vel.x;
-        vel.y += ChrList[attachedto_ref].vel.y;
-        vel.z += ChrList[attachedto_ref].vel.z;
+        vel.x += gs->ChrList[attachedto_ref].vel.x;
+        vel.y += gs->ChrList[attachedto_ref].vel.y;
+        vel.z += gs->ChrList[attachedto_ref].vel.z;
       }
       else
       {
         // The chr_ref is on foot
-        pos.x += ChrList[chr_ref].pos.x;
-        pos.y += ChrList[chr_ref].pos.y;
-        pos.z += ChrList[chr_ref].pos.z + 0.9 * ChrList[chr_ref].bmpdata.calc_height;
+        pos.x += gs->ChrList[chr_ref].pos.x;
+        pos.y += gs->ChrList[chr_ref].pos.y;
+        pos.z += gs->ChrList[chr_ref].pos.z + 0.9 * gs->ChrList[chr_ref].bmpdata.calc_height;
 
-        level += ChrList[chr_ref].level;
+        level += gs->ChrList[chr_ref].level;
 
-        vel.x += ChrList[chr_ref].vel.x;
-        vel.y += ChrList[chr_ref].vel.y;
-        vel.z += ChrList[chr_ref].vel.z;
+        vel.x += gs->ChrList[chr_ref].vel.x;
+        vel.y += gs->ChrList[chr_ref].vel.y;
+        vel.z += gs->ChrList[chr_ref].vel.z;
       };
 
       locoalive++;
@@ -291,36 +298,36 @@ void move_camera( float dUpdate )
   GCamera.turnadd   *= fkeep;
 
   // Camera controls
-  if ( CData.autoturncamera == 255 && numlocalpla >= 1 )
+  if ( CData.autoturncamera == 255 && gs->al_cs->loc_pla_count >= 1 )
   {
     if ( mous.on && !control_mouse_is_pressed( CONTROL_CAMERA ) )
-      GCamera.turnadd -= ( mous.dlatch.x * .5 ) * dUpdate / numlocalpla;
+      GCamera.turnadd -= ( mous.dlatch.x * .5 ) * dUpdate / gs->al_cs->loc_pla_count;
 
     if ( keyb.on )
     {
       if ( control_key_is_pressed( KEY_CAMERA_LEFT ) )
-        GCamera.turnadd += CAMKEYTURN * dUpdate / numlocalpla;
+        GCamera.turnadd += CAMKEYTURN * dUpdate / gs->al_cs->loc_pla_count;
 
       if ( control_key_is_pressed( KEY_CAMERA_RIGHT ) )
-        GCamera.turnadd -= CAMKEYTURN * dUpdate / numlocalpla;
+        GCamera.turnadd -= CAMKEYTURN * dUpdate / gs->al_cs->loc_pla_count;
     };
 
 
     if ( joy[0].on && !control_joy_is_pressed( 0, CONTROL_CAMERA ) )
-      GCamera.turnadd -= joy[0].latch.x * CAMJOYTURN * dUpdate / numlocalpla;
+      GCamera.turnadd -= joy[0].latch.x * CAMJOYTURN * dUpdate / gs->al_cs->loc_pla_count;
 
     if ( joy[1].on && !control_joy_is_pressed( 1, CONTROL_CAMERA ) )
-      GCamera.turnadd -= joy[1].latch.x * CAMJOYTURN * dUpdate / numlocalpla;
+      GCamera.turnadd -= joy[1].latch.x * CAMJOYTURN * dUpdate / gs->al_cs->loc_pla_count;
   }
 
-  if ( numlocalpla >= 1 )
+  if ( gs->al_cs->loc_pla_count >= 1 )
   {
     if ( mous.on )
     {
       if ( control_mouse_is_pressed( CONTROL_CAMERA ) )
       {
-        GCamera.turnadd += ( mous.dlatch.x / 3.0 ) * dUpdate / numlocalpla;
-        GCamera.zaddgoto += ( float ) mous.dlatch.y / 3.0 * dUpdate / numlocalpla;
+        GCamera.turnadd += ( mous.dlatch.x / 3.0 ) * dUpdate / gs->al_cs->loc_pla_count;
+        GCamera.zaddgoto += ( float ) mous.dlatch.y / 3.0 * dUpdate / gs->al_cs->loc_pla_count;
         if ( GCamera.zaddgoto < MINZADD )  GCamera.zaddgoto = MINZADD;
         if ( GCamera.zaddgoto > MAXZADD )  GCamera.zaddgoto = MAXZADD;
         doturntime = DELAY_TURN;  // Sticky turn...
@@ -332,8 +339,8 @@ void move_camera( float dUpdate )
     {
       if ( control_joy_is_pressed( 0, CONTROL_CAMERA ) )
       {
-        GCamera.turnadd  += joy[0].latch.x * CAMJOYTURN * dUpdate / numlocalpla;
-        GCamera.zaddgoto += joy[0].latch.y * CAMJOYTURN * dUpdate / numlocalpla;
+        GCamera.turnadd  += joy[0].latch.x * CAMJOYTURN * dUpdate / gs->al_cs->loc_pla_count;
+        GCamera.zaddgoto += joy[0].latch.y * CAMJOYTURN * dUpdate / gs->al_cs->loc_pla_count;
         if ( GCamera.zaddgoto < MINZADD )  GCamera.zaddgoto = MINZADD;
         if ( GCamera.zaddgoto > MAXZADD )  GCamera.zaddgoto = MAXZADD;
         doturntime = DELAY_TURN;  // Sticky turn...
@@ -345,8 +352,8 @@ void move_camera( float dUpdate )
     {
       if ( control_joy_is_pressed( 1, CONTROL_CAMERA ) )
       {
-        GCamera.turnadd  += joy[1].latch.x * CAMJOYTURN * dUpdate / numlocalpla;
-        GCamera.zaddgoto += joy[1].latch.y * CAMJOYTURN * dUpdate / numlocalpla;
+        GCamera.turnadd  += joy[1].latch.x * CAMJOYTURN * dUpdate / gs->al_cs->loc_pla_count;
+        GCamera.zaddgoto += joy[1].latch.y * CAMJOYTURN * dUpdate / gs->al_cs->loc_pla_count;
         if ( GCamera.zaddgoto < MINZADD )  GCamera.zaddgoto = MINZADD;
         if ( GCamera.zaddgoto > MAXZADD )  GCamera.zaddgoto = MAXZADD;
         doturntime = DELAY_TURN;  // Sticky turn...
@@ -358,24 +365,24 @@ void move_camera( float dUpdate )
     {
       if ( control_key_is_pressed( KEY_CAMERA_LEFT ) )
       {
-        GCamera.turnadd += CAMKEYTURN * dUpdate / numlocalpla;
+        GCamera.turnadd += CAMKEYTURN * dUpdate / gs->al_cs->loc_pla_count;
         doturntime = DELAY_TURN;  // Sticky turn...
       }
 
       if ( control_key_is_pressed( KEY_CAMERA_RIGHT ) )
       {
-        GCamera.turnadd -= CAMKEYTURN * dUpdate / numlocalpla;
+        GCamera.turnadd -= CAMKEYTURN * dUpdate / gs->al_cs->loc_pla_count;
         doturntime = DELAY_TURN;  // Sticky turn...
       }
 
       if ( control_key_is_pressed( KEY_CAMERA_IN ) )
       {
-        GCamera.zaddgoto -= CAMKEYTURN * dUpdate / numlocalpla;
+        GCamera.zaddgoto -= CAMKEYTURN * dUpdate / gs->al_cs->loc_pla_count;
       }
 
       if ( control_key_is_pressed( KEY_CAMERA_OUT ) )
       {
-        GCamera.zaddgoto += CAMKEYTURN * dUpdate / numlocalpla;
+        GCamera.zaddgoto += CAMKEYTURN * dUpdate / gs->al_cs->loc_pla_count;
       }
 
       if ( GCamera.zaddgoto < MINZADD )  GCamera.zaddgoto = MINZADD;
@@ -387,15 +394,15 @@ void move_camera( float dUpdate )
   if ( CData.render_overlay )
   {
     // Do fg distance effect
-    GWater.layer[0].u += vel.x * GWater.layer[0].distx * dUpdate;
-    GWater.layer[0].v += vel.y * GWater.layer[0].disty * dUpdate;
+    gs->water.layer[0].u += vel.x * gs->water.layer[0].distx * dUpdate;
+    gs->water.layer[0].v += vel.y * gs->water.layer[0].disty * dUpdate;
   }
 
   if ( CData.render_background )
   {
     // Do bg distance effect
-    GWater.layer[1].u += vel.x * GWater.layer[1].distx * dUpdate;
-    GWater.layer[1].v += vel.y * GWater.layer[1].disty * dUpdate;
+    gs->water.layer[1].u += vel.x * gs->water.layer[1].distx * dUpdate;
+    gs->water.layer[1].v += vel.y * gs->water.layer[1].disty * dUpdate;
   }
 
   // Get ready to scroll...
@@ -429,6 +436,8 @@ void reset_camera()
 
   int cnt, save;
   float fov2;
+
+  GameState * gs = gfxState.gs;
 
   GCamera.swing = 0;
   GCamera.pos.x = 0;
@@ -477,7 +486,7 @@ void reset_camera()
 //void project_view()
 //{
 //  // ZZ> This function figures out where the corners of the view area
-//  //     go when projected onto the plane of the mesh.  Used later for
+//  //     go when projected onto the plane of the gs->mesh.  Used later for
 //  //     determining which mesh fans need to be rendered
 //
 //

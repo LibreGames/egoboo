@@ -3,29 +3,32 @@
  * IMGUI.  (https://mollyrocket.com/forums/viewtopic.php?t=134)
  */
 
-/*
-    This file is part of Egoboo.
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
 
-    Egoboo is free software: you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Egoboo is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-#ifndef egoboo_ui_h
-#define egoboo_ui_h
+#pragma once
 
 #include "Font.h"
 #include "ogl_texture.h"
+
 #include "egoboo_types.h"
+
 #include <SDL.h>
 
 #define UI_Nothing (UI_ID)(-1)
@@ -64,15 +67,16 @@ typedef struct ui_widget_t
 } ui_Widget;
 
 // Initialize or shut down the ui system
-int  ui_initialize();
+int  ui_initialize( const char *default_font, int default_font_size );
 void ui_shutdown();
 
 // Pass input data from SDL to the ui
-void ui_handleSDLEvent( SDL_Event *evt );
+bool_t ui_handleSDLEvent( SDL_Event *evt );
 
 // Allow the ui to do work that needs to be done before and after each frame
-void ui_beginFrame( float deltaTime );
+void ui_beginFrame();
 void ui_endFrame();
+void ui_Reset();
 
 // UI widget
 
@@ -85,8 +89,6 @@ ui_buttonValues  ui_doImageButtonWithText( ui_Widget * pWidget );
 // Utility functions
 void    ui_doCursor();
 int     ui_mouseInside( int x, int y, int width, int height );
-void    ui_setActive( UI_ID id );
-void    ui_setHot( UI_ID id );
 TTFont* ui_getFont();
 
 bool_t ui_copyWidget( ui_Widget * pw2, ui_Widget * pw1 );
@@ -111,6 +113,3 @@ void ui_drawTextBox( ui_Widget * pWidget, int spacing );
 
 int ui_getMouseX();
 int ui_getMouseY();
-
-
-#endif // include guard

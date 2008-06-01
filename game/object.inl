@@ -2,23 +2,24 @@
 
 #include "object.h"
 #include "char.h"
+#include "game.h"
 
 //--------------------------------------------------------------------------------------------
-INLINE const CHR_REF team_get_sissy( TEAM_REF iteam )
+INLINE const CHR_REF team_get_sissy( GameState * gs, TEAM_REF iteam )
 {
-  if ( !VALID_TEAM( iteam ) ) return MAXCHR;
+  if ( !VALID_TEAM_RANGE( iteam ) ) return MAXCHR;
 
-  TeamList[iteam].sissy = VALIDATE_CHR( TeamList[iteam].sissy );
-  return TeamList[iteam].sissy;
+  gs->TeamList[iteam].sissy = VALIDATE_CHR( gs->ChrList, gs->TeamList[iteam].sissy );
+  return gs->TeamList[iteam].sissy;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const CHR_REF team_get_leader( TEAM_REF iteam )
+INLINE const CHR_REF team_get_leader( GameState * gs, TEAM_REF iteam )
 {
-  if ( !VALID_TEAM( iteam ) ) return MAXCHR;
+  if ( !VALID_TEAM_RANGE( iteam ) ) return MAXCHR;
 
-  TeamList[iteam].leader = VALIDATE_CHR( TeamList[iteam].leader );
-  return TeamList[iteam].leader;
+  gs->TeamList[iteam].leader = VALIDATE_CHR( gs->ChrList, gs->TeamList[iteam].leader );
+  return gs->TeamList[iteam].leader;
 };
 
 //--------------------------------------------------------------------------------------------
@@ -62,7 +63,7 @@ INLINE const SLOT grip_to_slot( GRIP g )
 //--------------------------------------------------------------------------------------------
 INLINE const GRIP slot_to_grip( SLOT s )
 {
-  GRIP g = SLOT_NONE;
+  GRIP g = GRIP_ORIGIN;
 
   switch ( s )
   {
@@ -107,13 +108,13 @@ INLINE const Uint16 slot_to_offset( SLOT s )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint16 slot_to_latch( Uint16 object, SLOT s )
+INLINE const Uint16 slot_to_latch( Chr lst[], size_t count, Uint16 object, SLOT s )
 {
   Uint16 latch = LATCHBUTTON_NONE;
   bool_t in_hand = bfalse;
 
-  if ( VALID_CHR( object ) )
-    in_hand = chr_using_slot( object, s );
+  if ( VALID_CHR( lst, object ) )
+    in_hand = chr_using_slot( lst, count, object, s );
 
   switch ( s )
   {

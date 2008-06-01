@@ -1,23 +1,26 @@
-/* Egoboo - graphicmad.c
-* Character model drawing code.
-*/
-
-/*
-This file is part of Egoboo.
-
-Egoboo is free software: you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Egoboo is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
-*/
+//********************************************************************************************
+//* Egoboo - graphic_mad.c
+//*
+//* Character model drawing code.
+//*
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
 
 #include "ogl_include.h"
 #include "Mad.h"
@@ -55,11 +58,10 @@ void draw_CVolume( CVolume * cv );
 // checks to make sure that the inputs are valid.  So this function itself assumes
 // that they are valid.  User beware!
 //
-void md2_blend_vertices(CHR_REF ichr, Sint32 vrtmin, Sint32 vrtmax)
+void md2_blend_vertices(Chr * pchr, Sint32 vrtmin, Sint32 vrtmax)
 {
   MD2_Model * pmd2;
-  CHR * pchr;
-  MAD * pmad;
+  Mad * pmad;
   const MD2_Frame *pfrom, *pto;
 
   Sint32 numVertices, i;
@@ -67,12 +69,13 @@ void md2_blend_vertices(CHR_REF ichr, Sint32 vrtmin, Sint32 vrtmax)
   Uint16 imdl;
   float lerp;
 
-  if( !VALID_CHR(ichr) ) return;
-  pchr = ChrList + ichr;
+  GameState * gs = gfxState.gs;
+
+  if( NULL == pchr || !pchr->on ) return;
   imdl = pchr->model;
 
-  if( !VALID_MDL(imdl) || !MadList[imdl].used) return;
-  pmad = MadList + imdl;
+  if( !VALID_MDL(imdl) || !gs->MadList[imdl].used) return;
+  pmad = gs->MadList + imdl;
 
   pmd2 = pmad->md2_ptr;
   if(NULL == pmd2) return;
@@ -204,15 +207,17 @@ void md2_blend_vertices(CHR_REF ichr, Sint32 vrtmin, Sint32 vrtmax)
 }
 
 //---------------------------------------------------------------------------------------------
-void md2_blend_lighting(CHR_REF ichr)
+void md2_blend_lighting(Chr * pchr)
 {
+  GameState * gs = gfxState.gs;
+
   Uint16  sheen_fp8, spekularity_fp8;
   Uint16 lightnew_r, lightnew_g, lightnew_b;
   Uint16 lightold_r, lightold_g, lightold_b;
   Uint16 lightrotationr, lightrotationg, lightrotationb;
   Uint8 ambilevelr_fp8, ambilevelg_fp8, ambilevelb_fp8;
   Uint8  speklevelr_fp8, speklevelg_fp8, speklevelb_fp8;
-  Uint8  rs, gs, bs;
+  Uint8  r_sft, g_sft, b_sft;
   Uint16 trans;
   vect2  offset;
 
@@ -220,23 +225,21 @@ void md2_blend_lighting(CHR_REF ichr)
   VData_Blended * vd;
   Uint16          imdl;
   MD2_Model     * pmd2;
-  CHR           * pchr;
-  MAD           * pmad;
-  CAP           * pcap;
+  Mad           * pmad;
+  Cap           * pcap;
 
-  if( !VALID_CHR(ichr) ) return;
-  pchr = ChrList + ichr;
+  if( NULL == pchr || !pchr->on ) return;
   imdl = pchr->model;
   vd = &(pchr->vdata);
 
-  if( !VALID_MDL(imdl) || !MadList[imdl].used) return;
-  pmad = MadList + imdl;
+  if( !VALID_MDL(imdl) || !gs->MadList[imdl].used) return;
+  pmad = gs->MadList + imdl;
   pmd2 = pmad->md2_ptr;
 
   if(NULL == pmd2) return;
 
-  if( !VALID_MDL(imdl) || !CapList[imdl].used) return;
-  pcap = CapList + imdl;
+  if( !VALID_MDL(imdl) || !gs->CapList[imdl].used) return;
+  pcap = gs->CapList + imdl;
 
   sheen_fp8       = pchr->sheen_fp8;
   spekularity_fp8 = FLOAT_TO_FP8( ( float )sheen_fp8 / ( float )MAXSPEKLEVEL );
@@ -256,14 +259,14 @@ void md2_blend_lighting(CHR_REF ichr)
   offset.u = textureoffset[ FP8_TO_INT( pchr->uoffset_fp8 )];
   offset.v = textureoffset[ FP8_TO_INT( pchr->voffset_fp8 )];
 
-  rs = pchr->redshift;
-  gs = pchr->grnshift;
-  bs = pchr->blushift;
+  r_sft = pchr->redshift;
+  g_sft = pchr->grnshift;
+  b_sft = pchr->blushift;
 
   trans = pcap->alpha_fp8;
 
   numVertices = md2_get_numVertices(pmd2);
-  if(CData.shading != GL_FLAT)
+  if(gfxState.shading != GL_FLAT)
   {
 
     // mix the vertices
@@ -275,21 +278,21 @@ void md2_blend_lighting(CHR_REF ichr)
       lightnew_g = 0;
       lightnew_b = 0;
 
-      ftmp = DotProduct( vd->Normals[i], lightspekdir );
+      ftmp = DotProduct( vd->Normals[i], GLight.spekdir );
       if ( ftmp > 0.0f )
       {
-        lightnew_r += ftmp * ftmp * spekularity_fp8 * lightspekcol.r;
-        lightnew_g += ftmp * ftmp * spekularity_fp8 * lightspekcol.g;
-        lightnew_b += ftmp * ftmp * spekularity_fp8 * lightspekcol.b;
+        lightnew_r += ftmp * ftmp * spekularity_fp8 * GLight.spekcol.r;
+        lightnew_g += ftmp * ftmp * spekularity_fp8 * GLight.spekcol.g;
+        lightnew_b += ftmp * ftmp * spekularity_fp8 * GLight.spekcol.b;
       }
 
       lightnew_r += speklevelr_fp8 * spek_calc_local_lighting(lightrotationr, vd->Normals[i]);
       lightnew_g += speklevelg_fp8 * spek_calc_local_lighting(lightrotationg, vd->Normals[i]);
       lightnew_b += speklevelb_fp8 * spek_calc_local_lighting(lightrotationb, vd->Normals[i]);
 
-      lightnew_r = lighttospek[sheen_fp8][lightnew_r] + ambilevelr_fp8 + lightambicol.r * 255;
-      lightnew_g = lighttospek[sheen_fp8][lightnew_g] + ambilevelg_fp8 + lightambicol.g * 255;
-      lightnew_b = lighttospek[sheen_fp8][lightnew_b] + ambilevelb_fp8 + lightambicol.b * 255;
+      lightnew_r = lighttospek[sheen_fp8][lightnew_r] + ambilevelr_fp8 + GLight.ambicol.r * 255;
+      lightnew_g = lighttospek[sheen_fp8][lightnew_g] + ambilevelg_fp8 + GLight.ambicol.g * 255;
+      lightnew_b = lighttospek[sheen_fp8][lightnew_b] + ambilevelb_fp8 + GLight.ambicol.b * 255;
 
       lightold_r = vd->Colors[i].r;
       lightold_g = vd->Colors[i].g;
@@ -300,9 +303,9 @@ void md2_blend_lighting(CHR_REF ichr)
       vd->Colors[i].b = MIN( 255, 0.9 * lightold_b + 0.1 * lightnew_b );
       vd->Colors[i].a = 1.0f;
 
-      vd->Colors[i].r /= (float)(1 << rs) * FP8_TO_FLOAT(trans);
-      vd->Colors[i].g /= (float)(1 << gs) * FP8_TO_FLOAT(trans);
-      vd->Colors[i].b /= (float)(1 << bs) * FP8_TO_FLOAT(trans);
+      vd->Colors[i].r /= (float)(1 << r_sft) * FP8_TO_FLOAT(trans);
+      vd->Colors[i].g /= (float)(1 << g_sft) * FP8_TO_FLOAT(trans);
+      vd->Colors[i].b /= (float)(1 << b_sft) * FP8_TO_FLOAT(trans);
     }
   }
   else
@@ -314,9 +317,9 @@ void md2_blend_lighting(CHR_REF ichr)
       vd->Colors[i].b  = FP8_TO_FLOAT(ambilevelb_fp8);
       vd->Colors[i].a  = 1.0;
 
-      vd->Colors[i].r /= (float)(1 << rs) * FP8_TO_FLOAT(trans);
-      vd->Colors[i].g /= (float)(1 << gs) * FP8_TO_FLOAT(trans);
-      vd->Colors[i].b /= (float)(1 << bs) * FP8_TO_FLOAT(trans);
+      vd->Colors[i].r /= (float)(1 << r_sft) * FP8_TO_FLOAT(trans);
+      vd->Colors[i].g /= (float)(1 << g_sft) * FP8_TO_FLOAT(trans);
+      vd->Colors[i].b /= (float)(1 << b_sft) * FP8_TO_FLOAT(trans);
     };
 
   };
@@ -343,17 +346,19 @@ void draw_textured_md2_opengl(CHR_REF ichr)
   Uint32 cmd_count;
   vect2  off;
 
-  Uint16          imdl = ChrList[ichr].model;
-  VData_Blended * vd   = &(ChrList[ichr].vdata);
-  MD2_Model     * pmdl = MadList[imdl].md2_ptr;
+  GameState * gs = gfxState.gs;
 
-  md2_blend_vertices(ichr, -1, -1);
-  md2_blend_lighting(ichr);
+  Uint16          imdl = gs->ChrList[ichr].model;
+  VData_Blended * vd   = &(gs->ChrList[ichr].vdata);
+  MD2_Model     * pmdl = gs->MadList[imdl].md2_ptr;
 
-  off.u = FP8_TO_FLOAT(ChrList[ichr].uoffset_fp8);
-  off.v = FP8_TO_FLOAT(ChrList[ichr].voffset_fp8);
+  md2_blend_vertices(gs->ChrList + ichr, -1, -1);
+  md2_blend_lighting(gs->ChrList + ichr);
 
-  if(CData.shading != GL_FLAT)
+  off.u = FP8_TO_FLOAT(gs->ChrList[ichr].uoffset_fp8);
+  off.v = FP8_TO_FLOAT(gs->ChrList[ichr].voffset_fp8);
+
+  if(gfxState.shading != GL_FLAT)
   {
     glEnableClientState(GL_NORMAL_ARRAY);
     glNormalPointer(   GL_FLOAT, 0, vd->Normals[0].v);
@@ -384,14 +389,14 @@ void draw_textured_md2_opengl(CHR_REF ichr)
 
   glDisableClientState(GL_VERTEX_ARRAY);
   glDisableClientState(GL_COLOR_ARRAY);
-  if(CData.shading != GL_FLAT) glDisableClientState(GL_NORMAL_ARRAY);
+  if(gfxState.shading != GL_FLAT) glDisableClientState(GL_NORMAL_ARRAY);
 
 
 #if defined(DEBUG_CHR_NORMALS) && defined(_DEBUG)
-  if ( CData.DevMode )
+  if ( gfxState.DevMode )
   {
     int cnt;
-    int verts = MadList[imdl].transvertices;
+    int verts = gs->MadList[imdl].transvertices;
 
 
       glBegin( GL_LINES );
@@ -418,12 +423,14 @@ void draw_enviromapped_md2_opengl(CHR_REF ichr)
   const MD2_GLCommand * cmd;
   Uint32 cmd_count;
 
-  Uint16          imdl = ChrList[ichr].model;
-  VData_Blended * vd   = &(ChrList[ichr].vdata);
-  MD2_Model     * pmdl = MadList[imdl].md2_ptr;
+  GameState * gs = gfxState.gs;
 
-  md2_blend_vertices(ichr, -1, -1);
-  md2_blend_lighting(ichr);
+  Uint16          imdl = gs->ChrList[ichr].model;
+  VData_Blended * vd   = &(gs->ChrList[ichr].vdata);
+  MD2_Model     * pmdl = gs->MadList[imdl].md2_ptr;
+
+  md2_blend_vertices(gs->ChrList + ichr, -1, -1);
+  md2_blend_lighting(gs->ChrList + ichr);
 
   glEnableClientState(GL_NORMAL_ARRAY);
   glNormalPointer( GL_FLOAT, 0, vd->Normals[0].v );
@@ -459,10 +466,10 @@ void draw_enviromapped_md2_opengl(CHR_REF ichr)
   glDisableClientState(GL_NORMAL_ARRAY);
 
 #if defined(DEBUG_CHR_NORMALS) && defined(_DEBUG)
-  if ( CData.DevMode )
+  if ( gfxState.DevMode )
   {
     int cnt;
-    int verts = MadList[imdl].transvertices;
+    int verts = gs->MadList[imdl].transvertices;
 
 
       glBegin( GL_LINES );
@@ -483,37 +490,39 @@ void draw_enviromapped_md2_opengl(CHR_REF ichr)
 //--------------------------------------------------------------------------------------------
 void calc_lighting_data( CHR_REF ichr )
 {
-  Uint8  sheen_fp8       = ChrList[ichr].sheen_fp8;
-  float  spekularity_fp8 = FLOAT_TO_FP8(( float ) sheen_fp8 / ( float ) MAXSPEKLEVEL );
-  Uint16 model           = ChrList[ichr].model;
-  Uint16 texture         = ChrList[ichr].skin_ref + MadList[ChrList[ichr].model].skinstart;
+  GameState * gs = gfxState.gs;
 
-  Uint8 rs = ChrList[ichr].redshift;
-  Uint8 gs = ChrList[ichr].grnshift;
-  Uint8 bs = ChrList[ichr].blushift;
+  Uint8  sheen_fp8       = gs->ChrList[ichr].sheen_fp8;
+  float  spekularity_fp8 = FLOAT_TO_FP8(( float ) sheen_fp8 / ( float ) MAXSPEKLEVEL );
+  Uint16 model           = gs->ChrList[ichr].model;
+  Uint16 texture         = gs->ChrList[ichr].skin_ref + gs->MadList[gs->ChrList[ichr].model].skinstart;
+
+  Uint8 r_sft = gs->ChrList[ichr].redshift;
+  Uint8 g_sft = gs->ChrList[ichr].grnshift;
+  Uint8 b_sft = gs->ChrList[ichr].blushift;
 
   float ftmp;
 
 
-  ftmp = (( float )( MAXSPEKLEVEL - sheen_fp8 ) / ( float ) MAXSPEKLEVEL ) * ( FP8_TO_FLOAT( ChrList[ichr].alpha_fp8 ) );
-  ChrList[ichr].ldata.diffuse.r = ftmp * FP8_TO_FLOAT( ChrList[ichr].alpha_fp8 ) / ( float )( 1 << rs );
-  ChrList[ichr].ldata.diffuse.g = ftmp * FP8_TO_FLOAT( ChrList[ichr].alpha_fp8 ) / ( float )( 1 << gs );
-  ChrList[ichr].ldata.diffuse.b = ftmp * FP8_TO_FLOAT( ChrList[ichr].alpha_fp8 ) / ( float )( 1 << bs );
+  ftmp = (( float )( MAXSPEKLEVEL - sheen_fp8 ) / ( float ) MAXSPEKLEVEL ) * ( FP8_TO_FLOAT( gs->ChrList[ichr].alpha_fp8 ) );
+  gs->ChrList[ichr].ldata.diffuse.r = ftmp * FP8_TO_FLOAT( gs->ChrList[ichr].alpha_fp8 ) / ( float )( 1 << r_sft );
+  gs->ChrList[ichr].ldata.diffuse.g = ftmp * FP8_TO_FLOAT( gs->ChrList[ichr].alpha_fp8 ) / ( float )( 1 << g_sft );
+  gs->ChrList[ichr].ldata.diffuse.b = ftmp * FP8_TO_FLOAT( gs->ChrList[ichr].alpha_fp8 ) / ( float )( 1 << b_sft );
 
 
-  ftmp = (( float ) sheen_fp8 / ( float ) MAXSPEKLEVEL ) * ( FP8_TO_FLOAT( ChrList[ichr].alpha_fp8 ) );
-  ChrList[ichr].ldata.specular.r = ftmp / ( float )( 1 << rs );
-  ChrList[ichr].ldata.specular.g = ftmp / ( float )( 1 << gs );
-  ChrList[ichr].ldata.specular.b = ftmp / ( float )( 1 << bs );
+  ftmp = (( float ) sheen_fp8 / ( float ) MAXSPEKLEVEL ) * ( FP8_TO_FLOAT( gs->ChrList[ichr].alpha_fp8 ) );
+  gs->ChrList[ichr].ldata.specular.r = ftmp / ( float )( 1 << r_sft );
+  gs->ChrList[ichr].ldata.specular.g = ftmp / ( float )( 1 << g_sft );
+  gs->ChrList[ichr].ldata.specular.b = ftmp / ( float )( 1 << b_sft );
 
-  ChrList[ichr].ldata.shininess[0] = sheen_fp8 + 2;
+  gs->ChrList[ichr].ldata.shininess[0] = sheen_fp8 + 2;
 
-  if ( 255 != ChrList[ichr].light_fp8 )
+  if ( 255 != gs->ChrList[ichr].light_fp8 )
   {
-    ftmp = FP8_TO_FLOAT( ChrList[ichr].light_fp8 );
-    ChrList[ichr].ldata.emission.r = ftmp / ( float )( 1 << rs );
-    ChrList[ichr].ldata.emission.g = ftmp / ( float )( 1 << gs );
-    ChrList[ichr].ldata.emission.b = ftmp / ( float )( 1 << bs );
+    ftmp = FP8_TO_FLOAT( gs->ChrList[ichr].light_fp8 );
+    gs->ChrList[ichr].ldata.emission.r = ftmp / ( float )( 1 << r_sft );
+    gs->ChrList[ichr].ldata.emission.g = ftmp / ( float )( 1 << g_sft );
+    gs->ChrList[ichr].ldata.emission.b = ftmp / ( float )( 1 << b_sft );
   }
 }
 
@@ -525,35 +534,37 @@ void render_mad_lit( CHR_REF ichr )
   Uint16 texture;
   GLfloat mat_none[4] = {0,0,0,0};
 
-  if( !VALID_CHR(ichr) ) return;
+  GameState * gs = gfxState.gs;
+
+  if( !VALID_CHR(gs->ChrList, ichr) ) return;
 
   calc_lighting_data(ichr);
 
-  glMaterialfv( GL_FRONT_AND_BACK, GL_SPECULAR,  ChrList[ichr].ldata.specular.v );
-  glMaterialfv( GL_FRONT_AND_BACK, GL_SHININESS, ChrList[ichr].ldata.shininess );
+  glMaterialfv( GL_FRONT_AND_BACK, GL_SPECULAR,  gs->ChrList[ichr].ldata.specular.v );
+  glMaterialfv( GL_FRONT_AND_BACK, GL_SHININESS, gs->ChrList[ichr].ldata.shininess );
   glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT,   mat_none );
   glMaterialfv( GL_FRONT_AND_BACK, GL_DIFFUSE,   mat_none );
-  glMaterialfv( GL_FRONT_AND_BACK, GL_EMISSION,  ChrList[ichr].ldata.emission.v );
+  glMaterialfv( GL_FRONT_AND_BACK, GL_EMISSION,  gs->ChrList[ichr].ldata.emission.v );
 
   ATTRIB_PUSH( "render_mad_lit", GL_ENABLE_BIT | GL_TRANSFORM_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_CURRENT_BIT );
   {
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();
-    ChrList[ichr].matrix.CNV( 3, 2 ) += RAISE;
-    glMultMatrixf( ChrList[ichr].matrix.v );
-    ChrList[ichr].matrix.CNV( 3, 2 ) -= RAISE;
+    gs->ChrList[ichr].matrix.CNV( 3, 2 ) += RAISE;
+    glMultMatrixf( gs->ChrList[ichr].matrix.v );
+    gs->ChrList[ichr].matrix.CNV( 3, 2 ) -= RAISE;
 
     glEnable( GL_DEPTH_TEST );
     glDepthFunc( GL_LEQUAL );
 
     if (SDLKEYDOWN(SDLK_F7))
     {
-      glBindTexture(GL_TEXTURE_2D, INVALID_TEXTURE);
+      GLTexture_Bind(NULL, &gfxState);
     }
     else
     {
-      texture = ChrList[ichr].skin_ref + MadList[ChrList[ichr].model].skinstart;
-      GLTexture_Bind( &TxTexture[texture], CData.texturefilter );
+      texture = gs->ChrList[ichr].skin_ref + gs->MadList[gs->ChrList[ichr].model].skinstart;
+      GLTexture_Bind( gs->TxTexture + texture, &gfxState );
     }
 
     draw_textured_md2_opengl(ichr);
@@ -565,7 +576,7 @@ void render_mad_lit( CHR_REF ichr )
   ATTRIB_POP( "render_mad_lit" );
 
 #if defined(DEBUG_BBOX) && defined(_DEBUG)
-  if(CData.DevMode)
+  if(gfxState.DevMode)
   {
     draw_Chr_BBox(ichr);
   }
@@ -577,20 +588,22 @@ void render_mad_lit( CHR_REF ichr )
 void render_texmad(CHR_REF ichr, Uint8 trans)
 {
   Uint16 texture;
-  if(!VALID_CHR(ichr)) return;
+  GameState * gs = gfxState.gs;
 
-  texture = ChrList[ichr].skin_ref + MadList[ChrList[ichr].model].skinstart;
+  if(!VALID_CHR(gs->ChrList, ichr)) return;
 
-  md2_blend_vertices(ichr, -1, -1);
-  md2_blend_lighting(ichr);
+  texture = gs->ChrList[ichr].skin_ref + gs->MadList[gs->ChrList[ichr].model].skinstart;
+
+  md2_blend_vertices(gs->ChrList + ichr, -1, -1);
+  md2_blend_lighting(gs->ChrList + ichr);
 
   ATTRIB_PUSH( "render_texmad", GL_ENABLE_BIT | GL_TRANSFORM_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_CURRENT_BIT );
   {
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();
-    ChrList[ichr].matrix.CNV( 3, 2 ) += RAISE;
-    glMultMatrixf( ChrList[ichr].matrix.v );
-    ChrList[ichr].matrix.CNV( 3, 2 ) -= RAISE;
+    gs->ChrList[ichr].matrix.CNV( 3, 2 ) += RAISE;
+    glMultMatrixf( gs->ChrList[ichr].matrix.v );
+    gs->ChrList[ichr].matrix.CNV( 3, 2 ) -= RAISE;
 
     glEnable( GL_DEPTH_TEST );
     glDepthFunc( GL_LEQUAL );
@@ -598,11 +611,11 @@ void render_texmad(CHR_REF ichr, Uint8 trans)
     // Choose texture and matrix
     if (SDLKEYDOWN(SDLK_F7))
     {
-      glBindTexture(GL_TEXTURE_2D, INVALID_TEXTURE);
+      GLTexture_Bind(NULL, &gfxState);
     }
     else
     {
-      GLTexture_Bind( &TxTexture[texture], CData.texturefilter );
+      GLTexture_Bind( gs->TxTexture + texture, &gfxState );
     }
 
     draw_textured_md2_opengl(ichr);
@@ -613,7 +626,7 @@ void render_texmad(CHR_REF ichr, Uint8 trans)
   ATTRIB_POP( "render_texmad" );
 
 #if defined(DEBUG_BBOX) && defined(_DEBUG)
-  if(CData.DevMode)
+  if(gfxState.DevMode)
   {
     draw_Chr_BBox(ichr);
   }
@@ -625,18 +638,19 @@ void render_texmad(CHR_REF ichr, Uint8 trans)
 void render_enviromad(CHR_REF ichr, Uint8 trans)
 {
   Uint16 texture;
+  GameState * gs = gfxState.gs;
 
-  if(!VALID_CHR(ichr)) return;
+  if(!VALID_CHR(gs->ChrList, ichr)) return;
 
-  texture = ChrList[ichr].skin_ref + MadList[ChrList[ichr].model].skinstart;
+  texture = gs->ChrList[ichr].skin_ref + gs->MadList[gs->ChrList[ichr].model].skinstart;
 
   ATTRIB_PUSH( "render_enviromad", GL_TRANSFORM_BIT | GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_CURRENT_BIT | GL_TEXTURE_BIT );
   {
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();
-    ChrList[ichr].matrix.CNV( 3, 2 ) += RAISE;
-    glMultMatrixf( ChrList[ichr].matrix.v );
-    ChrList[ichr].matrix.CNV( 3, 2 ) -= RAISE;
+    gs->ChrList[ichr].matrix.CNV( 3, 2 ) += RAISE;
+    glMultMatrixf( gs->ChrList[ichr].matrix.v );
+    gs->ChrList[ichr].matrix.CNV( 3, 2 ) -= RAISE;
 
     glEnable( GL_DEPTH_TEST );
     glDepthFunc( GL_LEQUAL );
@@ -644,11 +658,11 @@ void render_enviromad(CHR_REF ichr, Uint8 trans)
     // Choose texture and matrix
     if ( SDLKEYDOWN(SDLK_F7) )
     {
-      glBindTexture(GL_TEXTURE_2D, INVALID_TEXTURE);
+      GLTexture_Bind(NULL, &gfxState);
     }
     else
     {
-      GLTexture_Bind( &TxTexture[texture], CData.texturefilter );
+      GLTexture_Bind( gs->TxTexture + texture, &gfxState );
     }
 
     glEnable( GL_TEXTURE_GEN_S );     // Enable Texture Coord Generation For S (NEW)
@@ -671,11 +685,12 @@ void render_mad( CHR_REF ichr, Uint8 trans )
 {
   // ZZ> This function picks the actual function to use
 
-  Sint8 hide = CapList[ChrList[ichr].model].hidestate;
+  GameState * gs = gfxState.gs;
+  Sint8 hide = gs->CapList[gs->ChrList[ichr].model].hidestate;
 
-  if ( hide == NOHIDE || hide != ChrList[ichr].aistate.state )
+  if ( hide == NOHIDE || hide != gs->ChrList[ichr].aistate.state )
   {
-    if ( ChrList[ichr].enviro )
+    if ( gs->ChrList[ichr].enviro )
       render_enviromad( ichr, trans );
     else
       render_texmad( ichr, trans );
@@ -685,45 +700,47 @@ void render_mad( CHR_REF ichr, Uint8 trans )
 //--------------------------------------------------------------------------------------------
 void render_refmad( int ichr, Uint8 trans_fp8 )
 {
+  GameState * gs = gfxState.gs;
+
   int alphatmp_fp8;
-  float level = ChrList[ichr].level;
-  float zpos = ( ChrList[ichr].matrix ).CNV( 3, 2 ) - level;
-  int   model = ChrList[ichr].model;
-  Uint16 lastframe = ChrList[ichr].anim.last;
+  float level = gs->ChrList[ichr].level;
+  float zpos = ( gs->ChrList[ichr].matrix ).CNV( 3, 2 ) - level;
+  int   model = gs->ChrList[ichr].model;
+  Uint16 lastframe = gs->ChrList[ichr].anim.last;
   Uint8 sheensave;
   bool_t fog_save;
 
   // ZZ> This function draws characters reflected in the floor
 
-  if ( !CapList[ChrList[ichr].model].reflect ) return;
+  if ( !gs->CapList[gs->ChrList[ichr].model].reflect ) return;
 
   alphatmp_fp8 = trans_fp8 - zpos * 0.5f;
   if ( alphatmp_fp8 <= 0 )   return;
   if ( alphatmp_fp8 > 255 ) alphatmp_fp8 = 255;
 
-  sheensave = ChrList[ichr].sheen_fp8;
-  ChrList[ichr].redshift += 1;
-  ChrList[ichr].grnshift += 1;
-  ChrList[ichr].blushift += 1;
-  ChrList[ichr].sheen_fp8 >>= 1;
-  ( ChrList[ichr].matrix ).CNV( 0, 2 ) = - ( ChrList[ichr].matrix ).CNV( 0, 2 );
-  ( ChrList[ichr].matrix ).CNV( 1, 2 ) = - ( ChrList[ichr].matrix ).CNV( 1, 2 );
-  ( ChrList[ichr].matrix ).CNV( 2, 2 ) = - ( ChrList[ichr].matrix ).CNV( 2, 2 );
-  ( ChrList[ichr].matrix ).CNV( 3, 2 ) = - ( ChrList[ichr].matrix ).CNV( 3, 2 ) + level + level;
+  sheensave = gs->ChrList[ichr].sheen_fp8;
+  gs->ChrList[ichr].redshift += 1;
+  gs->ChrList[ichr].grnshift += 1;
+  gs->ChrList[ichr].blushift += 1;
+  gs->ChrList[ichr].sheen_fp8 >>= 1;
+  ( gs->ChrList[ichr].matrix ).CNV( 0, 2 ) = - ( gs->ChrList[ichr].matrix ).CNV( 0, 2 );
+  ( gs->ChrList[ichr].matrix ).CNV( 1, 2 ) = - ( gs->ChrList[ichr].matrix ).CNV( 1, 2 );
+  ( gs->ChrList[ichr].matrix ).CNV( 2, 2 ) = - ( gs->ChrList[ichr].matrix ).CNV( 2, 2 );
+  ( gs->ChrList[ichr].matrix ).CNV( 3, 2 ) = - ( gs->ChrList[ichr].matrix ).CNV( 3, 2 ) + level + level;
   fog_save = GFog.on;
   GFog.on  = bfalse;
 
   render_mad( ichr, alphatmp_fp8 );
 
   GFog.on = fog_save;
-  ( ChrList[ichr].matrix ).CNV( 0, 2 ) = - ( ChrList[ichr].matrix ).CNV( 0, 2 );
-  ( ChrList[ichr].matrix ).CNV( 1, 2 ) = - ( ChrList[ichr].matrix ).CNV( 1, 2 );
-  ( ChrList[ichr].matrix ).CNV( 2, 2 ) = - ( ChrList[ichr].matrix ).CNV( 2, 2 );
-  ( ChrList[ichr].matrix ).CNV( 3, 2 ) = - ( ChrList[ichr].matrix ).CNV( 3, 2 ) + level + level;
-  ChrList[ichr].sheen_fp8 = sheensave;
-  ChrList[ichr].redshift -= 1;
-  ChrList[ichr].grnshift -= 1;
-  ChrList[ichr].blushift -= 1;
+  ( gs->ChrList[ichr].matrix ).CNV( 0, 2 ) = - ( gs->ChrList[ichr].matrix ).CNV( 0, 2 );
+  ( gs->ChrList[ichr].matrix ).CNV( 1, 2 ) = - ( gs->ChrList[ichr].matrix ).CNV( 1, 2 );
+  ( gs->ChrList[ichr].matrix ).CNV( 2, 2 ) = - ( gs->ChrList[ichr].matrix ).CNV( 2, 2 );
+  ( gs->ChrList[ichr].matrix ).CNV( 3, 2 ) = - ( gs->ChrList[ichr].matrix ).CNV( 3, 2 ) + level + level;
+  gs->ChrList[ichr].sheen_fp8 = sheensave;
+  gs->ChrList[ichr].redshift -= 1;
+  gs->ChrList[ichr].grnshift -= 1;
+  gs->ChrList[ichr].blushift -= 1;
 
 }
 
@@ -894,17 +911,19 @@ void make_lighttospek( void )
 //--------------------------------------------------------------------------------------------
 void draw_Chr_BBox(CHR_REF ichr)
 {
+  GameState * gs  = gfxState.gs;
+
   BData * bd;
   CVolume * cv;
   vect3 pos;
   float p1_x, p1_y;
   float p2_x, p2_y;
 
-  if( !VALID_CHR(ichr) ) return;
+  if( !VALID_CHR(gs->ChrList, ichr) ) return;
 
-  bd = &(ChrList[ichr].bmpdata);
+  bd = &(gs->ChrList[ichr].bmpdata);
   cv = &(bd->cv);
-  pos = ChrList[ichr].pos;
+  pos = gs->ChrList[ichr].pos;
 
   ATTRIB_PUSH( "draw_Chr_BBox", GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_DEPTH_BUFFER_BIT );
   {
@@ -920,7 +939,7 @@ void draw_Chr_BBox(CHR_REF ichr)
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
     // choose a "white" texture
-    glBindTexture(GL_TEXTURE_2D, INVALID_TEXTURE);
+    GLTexture_Bind(NULL, &gfxState);
 
 
 
@@ -1059,7 +1078,7 @@ void draw_CVolume( CVolume * cv )
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
     // choose a "white" texture
-    glBindTexture(GL_TEXTURE_2D, INVALID_TEXTURE);
+    GLTexture_Bind(NULL, &gfxState);
 
 
 

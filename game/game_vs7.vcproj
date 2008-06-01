@@ -35,7 +35,9 @@
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="3"
-				CompileAs="1"/>
+				CompileAs="1"
+				DisableSpecificWarnings="4100;4189"
+				ShowIncludes="FALSE"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
@@ -252,6 +254,12 @@
 			</File>
 			<File
 				RelativePath=".\MainLoop.c">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\Md2.c">
@@ -272,7 +280,22 @@
 				RelativePath=".\module.c">
 			</File>
 			<File
+				RelativePath=".\NetFile.c">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						ShowIncludes="FALSE"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath=".\network.c">
+			</File>
+			<File
+				RelativePath=".\Network.inl">
+			</File>
+			<File
+				RelativePath=".\object.c">
 			</File>
 			<File
 				RelativePath=".\object.inl">
@@ -394,6 +417,9 @@
 				RelativePath=".\Frustum.h">
 			</File>
 			<File
+				RelativePath=".\game.h">
+			</File>
+			<File
 				RelativePath=".\graphic.h">
 			</File>
 			<File
@@ -419,6 +445,12 @@
 			</File>
 			<File
 				RelativePath=".\mesh.h">
+			</File>
+			<File
+				RelativePath=".\module.h">
+			</File>
+			<File
+				RelativePath=".\NetFile.h">
 			</File>
 			<File
 				RelativePath=".\Network.h">

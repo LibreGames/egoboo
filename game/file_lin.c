@@ -1,21 +1,26 @@
-// lin-file.c
-// This does all the file managment stuff (open, close, write, copy, etc.)
-
-//
-// This file is part of Egoboo.
-//
-// Egoboo is free software: you can redistribute it and/or modify it
-// under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Egoboo is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//********************************************************************************************
+//* Egoboo - file_lin.c
+//*
+//* *nix compatible file handling
+//*
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
 
 #include "egoboo.h"
 #include <stdio.h>
@@ -34,10 +39,12 @@ typedef struct fs_find_info_lin_t
 //File Routines-----------------------------------------------------------
 FS_FIND_INFO * fs_find_info_new(FS_FIND_INFO * i)
 {
+  fprintf( stdout, "fs_find_info_new()\n");
+
   if(NULL==i) return i;
 
   i->type = FS_WIN32;
-  i->L    = calloc(1, sizeof(FS_FIND_INFO_LIN));
+  i->L    = (FS_FIND_INFO_LIN*)calloc(1, sizeof(FS_FIND_INFO_LIN));
 
   return i;
 };

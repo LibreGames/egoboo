@@ -7,7 +7,7 @@
 
 #include "utility.h"
 #include "memory.h"
-#include "time.h"
+#include "_time.h"
 #include "enet.h"
 
 static enet_uint32 timeCurrent;

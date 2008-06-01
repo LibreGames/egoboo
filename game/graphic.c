@@ -1,24 +1,27 @@
-/* Egoboo - graphic.c
-* All sorts of stuff related to drawing the game, and all sorts of other stuff
-* (such as data loading) that really should not be in here.
-*/
-
-/*
-This file is part of Egoboo.
-
-Egoboo is free software: you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Egoboo is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
-*/
+//********************************************************************************************
+//* Egoboo - graphic.c
+//*
+//* A mish-mosh of code related to drawing the game.
+//* Some code, such as data loading, should be moved elsewhere.
+//*
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
 
 #include "graphic.inl"
 
@@ -29,6 +32,8 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 #include "script.h"
 #include "passage.h"
 #include "Network.h"
+#include "Client.h"
+#include "Server.h"
 
 #include "egoboo_utility.h"
 #include "egoboo.h"
@@ -46,41 +51,86 @@ along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 #include <unistd.h>
 #endif
 
-CURSOR cursor =
-{
-  0,           //  x
-  0,           //  y
-  bfalse,      //  pressed
-  bfalse,      //  clicked
-  bfalse,      //  pending
-};
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+struct GameState_t;
+
+RENDERLIST           renderlist;
+GraphicState         gfxState;
+GLOBAL_LIGHTING_INFO GLight = {bfalse};
+static bool_t        gfx_initialized = bfalse;
+
+//--------------------------------------------------------------------------------------------
+struct Status_t;
 
 static int  draw_wrap_string( BMFont * pfnt, float x, float y, GLfloat tint[], float maxx, char * szFormat, ... );
-static int  draw_status( BMFont *  pfnt , CHR_REF character, int x, int y );
+static int  draw_status( BMFont *  pfnt , struct Status_t * pstat );
 static void draw_text( BMFont *  pfnt  );
-
-
-// Defined in egoboo.h
-SDL_Surface *displaySurface;
-bool_t gTextureOn = bfalse;
 
 void render_particles();
 
+//--------------------------------------------------------------------------------------------
+bool_t gfx_find_anisotropy( GraphicState * g )
+{
+  // BB> get the maximum anisotropy supported by the video vard
+  //     OpenGL and SDL must be loaded for this to work.
+
+  if(NULL == g) return bfalse;
+
+  g->maxAnisotropy  = 0;
+  g->log2Anisotropy = 0;
+  g->texturefilter  = TX_TRILINEAR_2;
+
+  if(!SDL_WasInit(SDL_INIT_VIDEO) || NULL==g->surface) return bfalse;
+
+  glGetFloatv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &(g->maxAnisotropy) );
+  g->log2Anisotropy = ( g->maxAnisotropy == 0 ) ? 0 : floor( log( g->maxAnisotropy + 1e-6 ) / log( 2.0f ) );
+
+  if ( g->maxAnisotropy == 0.0f && g->texturefilter >= TX_ANISOTROPIC )
+  {
+    g->texturefilter = TX_TRILINEAR_2;
+  }
+
+  return btrue;
+}
+
+bool_t gfx_initialize(GraphicState * g, ConfigData * cd)
+{
+  if(NULL == g || NULL == cd) return bfalse;
+
+  if(gfx_initialized) return btrue;
+
+  // set the graphics state
+  GraphicState_new(g, cd);
+  g->rnd_lst = &renderlist;
+  gfx_find_anisotropy(g);
+  gfx_initialized = btrue;
+
+  GLight.spek      = 0.0f;
+  GLight.spekdir.x = GLight.spekdir.y = GLight.spekdir.z = 0.0f;
+  GLight.spekcol.r = GLight.spekcol.g = GLight.spekcol.b = 1.0f;
+  GLight.ambi      = 0.0f;
+  GLight.ambicol.r = GLight.ambicol.g = GLight.ambicol.b = 1.0f;
+
+  return btrue;
+}
+
 void EnableTexturing()
 {
-  //if ( !gTextureOn )
+  //if ( !gfxState.texture_on )
   //{
   //  glEnable( GL_TEXTURE_2D );
-  //  gTextureOn = btrue;
+  //  gfxState.texture_on = btrue;
   //}
 }
 
 void DisableTexturing()
 {
-  //if ( gTextureOn )
+  //if ( gfxState.texture_on )
   //{
   //  glDisable( GL_TEXTURE_2D );
-  //  gTextureOn = bfalse;
+  //  gfxState.texture_on = bfalse;
   //}
 }
 
@@ -135,7 +185,7 @@ void Begin2DMode( void )
   glMatrixMode( GL_PROJECTION );
   glPushMatrix();
   glLoadIdentity();         // Reset The Projection Matrix
-  glOrtho( 0, CData.scrx, 0, CData.scry, 1, -1 );   // Set up an orthogonal projection
+  glOrtho( 0, gfxState.scrx, 0, gfxState.scry, 1, -1 );   // Set up an orthogonal projection
 
   glMatrixMode( GL_MODELVIEW );
   glPushMatrix();
@@ -172,7 +222,7 @@ void BeginText( GLtexture * pfnt )
   ATTRIB_GUARD_OPEN( text_begin_level );
   ATTRIB_PUSH( "BeginText", GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_TEXTURE_BIT | GL_DEPTH_BUFFER_BIT | GL_POLYGON_BIT | GL_CURRENT_BIT );
 
-  GLTexture_Bind( pfnt, CData.texturefilter );
+  GLTexture_Bind( pfnt, &gfxState );
 
   glEnable( GL_ALPHA_TEST );
   glAlphaFunc( GL_GREATER, 0 );
@@ -200,14 +250,16 @@ void EndText()
 
 
 //---------------------------------------------------------------------------------------------
-void release_all_textures()
+void release_all_textures(GameState * gs)
 {
   // ZZ> This function clears out all of the textures
 
   int cnt;
 
   for ( cnt = 0; cnt < MAXTEXTURE; cnt++ )
-    GLTexture_Release( &TxTexture[cnt] );
+  {
+    GLTexture_Release( gs->TxTexture + cnt );
+  }
 }
 
 //--------------------------------------------------------------------------------------------
@@ -216,25 +268,37 @@ void load_one_icon( char * szModname, char * szObjectname, char * szFilename )
   // ZZ> This function is used to load an icon.  Most icons are loaded
   //     without this function though...
 
-  if ( INVALID_TEXTURE != GLTexture_Load( GL_TEXTURE_2D,  &TxIcon[globalnumicon],  inherit_fname(szModname, szObjectname, szFilename), INVALID_KEY ) )
+  GameState * gs = gfxState.gs;
+
+  if ( INVALID_TEXTURE != GLTexture_Load( GL_TEXTURE_2D,  gs->TxIcon + gs->TxIcon_count,  inherit_fname(szModname, szObjectname, szFilename), INVALID_KEY ) )
   {
-    globalnumicon++;
+    gs->TxIcon_count++;
   }
 
 }
 
 //---------------------------------------------------------------------------------------------
-void prime_titleimage()
+void prime_titleimage(MOD_INFO * mi_ary, size_t mi_count)
 {
   // ZZ> This function sets the title image pointers to NULL
-
   int cnt;
-  for ( cnt = 0; cnt < MAXMODULE; cnt++ )
-    TxTitleImage[cnt].textureID = INVALID_TEXTURE;
+
+  for (cnt = 0; cnt < MAXMODULE; cnt++)
+  {
+    GLTexture_Release(TxTitleImage + cnt);
+  };
+
+  if(NULL != mi_ary && 0 != mi_count)
+  {
+    for (cnt = 0; cnt < mi_count; cnt++)
+    {
+      mi_ary[cnt].tx_title_idx = MAXMODULE;
+    };
+  }
 }
 
 //---------------------------------------------------------------------------------------------
-void prime_icons()
+void prime_icons(GameState * gs)
 {
   // ZZ> This function sets the icon pointers to NULL
 
@@ -242,36 +306,39 @@ void prime_icons()
   for ( cnt = 0; cnt < MAXTEXTURE + 1; cnt++ )
   {
     //lpDDSIcon[cnt]=NULL;
-    TxIcon[cnt].textureID = INVALID_TEXTURE;
-    skintoicon[cnt] = 0;
+    gs->TxIcon[cnt].textureID = INVALID_TEXTURE;
+    gs->skintoicon[cnt] = 0;
   }
+
   iconrect.left = 0;
   iconrect.right = 32;
   iconrect.top = 0;
   iconrect.bottom = 32;
-  globalnumicon = 0;
+  gs->TxIcon_count = 0;
 
 
-  nullicon = 0;
-  keybicon = 0;
-  mousicon = 0;
-  joyaicon = 0;
-  joybicon = 0;
-  bookicon = 0;
+  gs->nullicon = 0;
+  gs->keybicon = 0;
+  gs->mousicon = 0;
+  gs->joyaicon = 0;
+  gs->joybicon = 0;
+  gs->bookicon = 0;
 
 
 }
 
 //---------------------------------------------------------------------------------------------
-void release_all_icons()
+void release_all_icons(GameState * gs)
 {
   // ZZ> This function clears out all of the icons
 
   int cnt;
   for ( cnt = 0; cnt < MAXTEXTURE + 1; cnt++ )
-    GLTexture_Release( &TxIcon[cnt] );
+  {
+    GLTexture_Release( gs->TxIcon + cnt );
+  }
 
-  prime_icons(); /* Do we need this? */
+  prime_icons(gs); /* Do we need this? */
 }
 
 //---------------------------------------------------------------------------------------------
@@ -281,48 +348,34 @@ void release_all_titleimages()
 
   int cnt;
   for ( cnt = 0; cnt < MAXMODULE; cnt++ )
-    GLTexture_Release( &TxTitleImage[cnt] );
+    GLTexture_Release( TxTitleImage + cnt );
 }
 
 //---------------------------------------------------------------------------------------------
-void init_all_models()
+void init_all_models(GameState * gs)
 {
   // ZZ> This function initializes the models
 
-  int cnt;
-  for ( cnt = 0; cnt < MAXMODEL; cnt++ )
-  {
-    CapList[cnt].classname[0] = '\0';
-    CapList[cnt].used         = bfalse;
-
-    mad_new(MadList + cnt);
-  }
-
-  madloadframe = 0;
+  CapList_delete(gs);
+  PipList_delete(gs);
+  MadList_delete(gs);
 }
 
 //---------------------------------------------------------------------------------------------
-void release_all_models()
+void release_all_models(GameState * gs)
 {
   // ZZ> This function clears out all of the models
-  int cnt;
-  for ( cnt = 0; cnt < MAXMODEL; cnt++ )
-  {
-    CapList[cnt].classname[0] = '\0';
-    CapList[cnt].used         = bfalse;
 
-    free_one_mad( cnt );
-  }
-
-  madloadframe = 0;
+  CapList_delete(gs);
+  MadList_delete(gs);
 }
 
 //--------------------------------------------------------------------------------------------
-void release_map()
+void release_map( GameState * gs )
 {
   // ZZ> This function releases all the map images
 
-  GLTexture_Release( &TxMap );
+  GLTexture_Release( &gs->TxMap );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -337,8 +390,8 @@ static void write_debug_message( int time, const char *format, va_list args )
   vsnprintf( buffer, sizeof( buffer ) - 1, format, args );
 
   // Copy the message
-  strncpy( GMsg.textdisplay[slot], buffer, sizeof( GMsg.textdisplay[slot] ) );
-  GMsg.time[slot] = time * DELAY_MESSAGE;
+  strncpy( GMsg.list[slot].textdisplay, buffer, sizeof( GMsg.list[slot].textdisplay ) );
+  GMsg.list[slot].time = time * DELAY_MESSAGE;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -353,18 +406,18 @@ void debug_message( int time, const char *format, ... )
 
 
 //--------------------------------------------------------------------------------------------
-void reset_end_text()
+void reset_end_text( GameState * gs )
 {
   // ZZ> This function resets the end-module text
 
-  if ( numpla > 1 )
+  if ( gs->PlaList_count > 1 )
   {
     snprintf( endtext, sizeof( endtext ), "Sadly, they were never heard from again..." );
     endtextwrite = 42;  // Where to append further text
   }
   else
   {
-    if ( numpla == 0 )
+    if ( gs->PlaList_count == 0 )
     {
       // No players???
       snprintf( endtext, sizeof( endtext ), "The game has ended..." );
@@ -380,7 +433,7 @@ void reset_end_text()
 }
 
 //--------------------------------------------------------------------------------------------
-void append_end_text( SCRIPT_GLOBAL_VALUES * pg_scr, int message, CHR_REF character )
+void append_end_text( GameState * gs, int message, CHR_REF chr_ref )
 {
   // ZZ> This function appends a message to the end-module text
 
@@ -388,10 +441,20 @@ void append_end_text( SCRIPT_GLOBAL_VALUES * pg_scr, int message, CHR_REF charac
   char *eread;
   STRING szTmp;
   char cTmp, lTmp;
-  Uint16 target, owner;
 
-  target = chr_get_aitarget( character );
-  owner = chr_get_aiowner( character );
+  Uint16 target = chr_get_aitarget( gs->ChrList, MAXCHR, gs->ChrList + chr_ref );
+  Uint16 owner = chr_get_aiowner( gs->ChrList, MAXCHR, gs->ChrList + chr_ref );
+
+  Chr * pchr    = MAXCHR == chr_ref ? NULL : gs->ChrList + chr_ref;
+  AI_STATE * pstate = &(pchr->aistate);
+  Cap * pchr_cap = gs->CapList + pchr->model;
+
+  Chr * ptarget  = MAXCHR == target  ? NULL : gs->ChrList + target;
+  Cap * ptrg_cap = NULL   == ptarget ? NULL : gs->CapList + ptarget->model;
+
+  Chr * powner   = MAXCHR == owner  ? NULL : gs->ChrList + owner;
+  Cap * pown_cap = NULL   == powner ? NULL : gs->CapList + powner->model;
+
   if ( message < GMsg.total )
   {
     // Copy the message
@@ -408,105 +471,105 @@ void append_end_text( SCRIPT_GLOBAL_VALUES * pg_scr, int message, CHR_REF charac
         cTmp = GMsg.text[read];  read++;
         if ( cTmp == 'n' ) // Name
         {
-          if ( ChrList[character].nameknown )
-            strncpy( szTmp, ChrList[character].name, sizeof( STRING ) );
+          if ( pchr->nameknown )
+            strncpy( szTmp, pchr->name, sizeof( STRING ) );
           else
           {
-            lTmp = CapList[ChrList[character].model].classname[0];
+            lTmp = pchr_cap->classname[0];
             if ( lTmp == 'A' || lTmp == 'E' || lTmp == 'I' || lTmp == 'O' || lTmp == 'U' )
-              snprintf( szTmp, sizeof( szTmp ), "an %s", CapList[ChrList[character].model].classname );
+              snprintf( szTmp, sizeof( szTmp ), "an %s", pchr_cap->classname );
             else
-              snprintf( szTmp, sizeof( szTmp ), "a %s", CapList[ChrList[character].model].classname );
+              snprintf( szTmp, sizeof( szTmp ), "a %s", pchr_cap->classname );
           }
           if ( cnt == 0 && szTmp[0] == 'a' )  szTmp[0] = 'A';
         }
         if ( cTmp == 'c' ) // Class name
         {
-          eread = CapList[ChrList[character].model].classname;
+          eread = pchr_cap->classname;
         }
         if ( cTmp == 't' ) // Target name
         {
-          if ( ChrList[target].nameknown )
-            strncpy( szTmp, ChrList[target].name, sizeof( STRING ) );
+          if ( ptarget->nameknown )
+            strncpy( szTmp, ptarget->name, sizeof( STRING ) );
           else
           {
-            lTmp = CapList[ChrList[target].model].classname[0];
+            lTmp = ptrg_cap->classname[0];
             if ( lTmp == 'A' || lTmp == 'E' || lTmp == 'I' || lTmp == 'O' || lTmp == 'U' )
-              snprintf( szTmp, sizeof( szTmp ), "an %s", CapList[ChrList[target].model].classname );
+              snprintf( szTmp, sizeof( szTmp ), "an %s", ptrg_cap->classname );
             else
-              snprintf( szTmp, sizeof( szTmp ), "a %s", CapList[ChrList[target].model].classname );
+              snprintf( szTmp, sizeof( szTmp ), "a %s", ptrg_cap->classname );
           }
           if ( cnt == 0 && szTmp[0] == 'a' )  szTmp[0] = 'A';
         }
         if ( cTmp == 'o' ) // Owner name
         {
-          if ( ChrList[owner].nameknown )
-            strncpy( szTmp, ChrList[owner].name, sizeof( STRING ) );
+          if ( powner->nameknown )
+            strncpy( szTmp, powner->name, sizeof( STRING ) );
           else
           {
-            lTmp = CapList[ChrList[owner].model].classname[0];
+            lTmp = pown_cap->classname[0];
             if ( lTmp == 'A' || lTmp == 'E' || lTmp == 'I' || lTmp == 'O' || lTmp == 'U' )
-              snprintf( szTmp, sizeof( szTmp ), "an %s", CapList[ChrList[owner].model].classname );
+              snprintf( szTmp, sizeof( szTmp ), "an %s", pown_cap->classname );
             else
-              snprintf( szTmp, sizeof( szTmp ), "a %s", CapList[ChrList[owner].model].classname );
+              snprintf( szTmp, sizeof( szTmp ), "a %s", pown_cap->classname );
           }
           if ( cnt == 0 && szTmp[0] == 'a' )  szTmp[0] = 'A';
         }
         if ( cTmp == 's' ) // Target class name
         {
-          eread = CapList[ChrList[target].model].classname;
+          eread = ptrg_cap->classname;
         }
         if ( cTmp >= '0' && cTmp <= '0' + ( MAXSKIN - 1 ) )  // Target's skin name
         {
-          eread = CapList[ChrList[target].model].skin[cTmp-'0'].name;
+          eread = ptrg_cap->skin[cTmp-'0'].name;
         }
         if ( cTmp == 'd' ) // tmpdistance value
         {
-          snprintf( szTmp, sizeof( szTmp ), "%d", pg_scr->tmpdistance );
+          snprintf( szTmp, sizeof( szTmp ), "%d", pstate->tmpdistance );
         }
         if ( cTmp == 'x' ) // tmpx value
         {
-          snprintf( szTmp, sizeof( szTmp ), "%d", pg_scr->tmpx );
+          snprintf( szTmp, sizeof( szTmp ), "%d", pstate->tmpx );
         }
         if ( cTmp == 'y' ) // tmpy value
         {
-          snprintf( szTmp, sizeof( szTmp ), "%d", pg_scr->tmpy );
+          snprintf( szTmp, sizeof( szTmp ), "%d", pstate->tmpy );
         }
         if ( cTmp == 'D' ) // tmpdistance value
         {
-          snprintf( szTmp, sizeof( szTmp ), "%2d", pg_scr->tmpdistance );
+          snprintf( szTmp, sizeof( szTmp ), "%2d", pstate->tmpdistance );
         }
         if ( cTmp == 'X' ) // tmpx value
         {
-          snprintf( szTmp, sizeof( szTmp ), "%2d", pg_scr->tmpx );
+          snprintf( szTmp, sizeof( szTmp ), "%2d", pstate->tmpx );
         }
         if ( cTmp == 'Y' ) // tmpy value
         {
-          snprintf( szTmp, sizeof( szTmp ), "%2d", pg_scr->tmpy );
+          snprintf( szTmp, sizeof( szTmp ), "%2d", pstate->tmpy );
         }
         if ( cTmp == 'a' ) // Character's ammo
         {
-          if ( ChrList[character].ammoknown )
-            snprintf( szTmp, sizeof( szTmp ), "%d", ChrList[character].ammo );
+          if ( pchr->ammoknown )
+            snprintf( szTmp, sizeof( szTmp ), "%d", pchr->ammo );
           else
             snprintf( szTmp, sizeof( szTmp ), "?" );
         }
         if ( cTmp == 'k' ) // Kurse state
         {
-          if ( ChrList[character].iskursed )
+          if ( pchr->iskursed )
             snprintf( szTmp, sizeof( szTmp ), "kursed" );
           else
             snprintf( szTmp, sizeof( szTmp ), "unkursed" );
         }
         if ( cTmp == 'p' ) // Character's possessive
         {
-          if ( ChrList[character].gender == GEN_FEMALE )
+          if ( pchr->gender == GEN_FEMALE )
           {
             snprintf( szTmp, sizeof( szTmp ), "her" );
           }
           else
           {
-            if ( ChrList[character].gender == GEN_MALE )
+            if ( pchr->gender == GEN_MALE )
             {
               snprintf( szTmp, sizeof( szTmp ), "his" );
             }
@@ -518,13 +581,13 @@ void append_end_text( SCRIPT_GLOBAL_VALUES * pg_scr, int message, CHR_REF charac
         }
         if ( cTmp == 'm' ) // Character's gender
         {
-          if ( ChrList[character].gender == GEN_FEMALE )
+          if ( pchr->gender == GEN_FEMALE )
           {
             snprintf( szTmp, sizeof( szTmp ), "female " );
           }
           else
           {
-            if ( ChrList[character].gender == GEN_MALE )
+            if ( pchr->gender == GEN_MALE )
             {
               snprintf( szTmp, sizeof( szTmp ), "male " );
             }
@@ -536,13 +599,13 @@ void append_end_text( SCRIPT_GLOBAL_VALUES * pg_scr, int message, CHR_REF charac
         }
         if ( cTmp == 'g' ) // Target's possessive
         {
-          if ( ChrList[target].gender == GEN_FEMALE )
+          if ( ptarget->gender == GEN_FEMALE )
           {
             snprintf( szTmp, sizeof( szTmp ), "her" );
           }
           else
           {
-            if ( ChrList[target].gender == GEN_MALE )
+            if ( ptarget->gender == GEN_MALE )
             {
               snprintf( szTmp, sizeof( szTmp ), "his" );
             }
@@ -593,13 +656,13 @@ void figure_out_what_to_draw()
   // ZZ> This function determines the things that need to be drawn
 
   // Make the render list for the mesh
-  make_renderlist();
+  make_renderlist(&renderlist);
 
   GCamera.turn_lr_one   = GCamera.turn_lr / (float)(1<<16);
 
   // Request matrices needed for local machine
-  make_dolist();
-  order_dolist();
+  dolist_make();
+  dolist_sort();
 }
 
 //--------------------------------------------------------------------------------------------
@@ -616,17 +679,17 @@ void animate_tiles( float dUpdate )
 }
 
 //--------------------------------------------------------------------------------------------
-void load_basic_textures( char *modname )
+void load_basic_textures( GameState * gs, char *modname )
 {
   // ZZ> This function loads the standard textures for a module
   // BB> In each case, try to load one stored with the module first.
 
   // Particle sprites
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, "particle.bmp" );
-  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  &TxTexture[TX_PARTICLE], CStringTmp1, TRANSCOLOR ) )
+  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_PARTICLE, CStringTmp1, TRANSCOLOR ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.globalparticles_dir, CData.particle_bitmap );
-    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  &TxTexture[TX_PARTICLE], CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_PARTICLE, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "!!!!Particle bitmap could not be found!!!! Missing File = \"%s\"\n", CStringTmp1 );
     }
@@ -634,40 +697,40 @@ void load_basic_textures( char *modname )
 
   // Module background tiles
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.tile0_bitmap );
-  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  &TxTexture[TX_TILE_0], CStringTmp1, TRANSCOLOR ) )
+  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_0, CStringTmp1, TRANSCOLOR ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.tile0_bitmap );
-    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  &TxTexture[TX_TILE_0], CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_0, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Tile 0 could not be found. Missing File = \"%s\"\n", CData.tile0_bitmap );
     }
   };
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.tile1_bitmap );
-  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,   &TxTexture[TX_TILE_1], CStringTmp1, TRANSCOLOR ) )
+  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,   gs->TxTexture + TX_TILE_1, CStringTmp1, TRANSCOLOR ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.tile1_bitmap );
-    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  &TxTexture[TX_TILE_1], CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_1, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Tile 1 could not be found. Missing File = \"%s\"\n", CData.tile1_bitmap );
     }
   };
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.tile2_bitmap );
-  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  &TxTexture[TX_TILE_2], CStringTmp1, TRANSCOLOR ) )
+  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_2, CStringTmp1, TRANSCOLOR ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.tile2_bitmap );
-    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  &TxTexture[TX_TILE_2], CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_2, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Tile 2 could not be found. Missing File = \"%s\"\n", CData.tile2_bitmap );
     }
   };
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.tile3_bitmap );
-  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  &TxTexture[TX_TILE_3], CStringTmp1, TRANSCOLOR ) )
+  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_3, CStringTmp1, TRANSCOLOR ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.tile3_bitmap );
-    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  &TxTexture[TX_TILE_3], CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_3, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Tile 3 could not be found. Missing File = \"%s\"\n", CData.tile3_bitmap );
     }
@@ -676,10 +739,10 @@ void load_basic_textures( char *modname )
 
   // Water textures
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.watertop_bitmap );
-  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  &TxTexture[TX_WATER_TOP], CStringTmp1, INVALID_KEY ) )
+  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_WATER_TOP, CStringTmp1, INVALID_KEY ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.watertop_bitmap );
-    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  &TxTexture[TX_WATER_TOP], CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_WATER_TOP, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Water Layer 1 could not be found. Missing File = \"%s\"\n", CData.watertop_bitmap );
     }
@@ -687,10 +750,10 @@ void load_basic_textures( char *modname )
 
   // This is also used as far background
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.waterlow_bitmap );
-  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  &TxTexture[TX_WATER_LOW], CStringTmp1, INVALID_KEY ) )
+  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_WATER_LOW, CStringTmp1, INVALID_KEY ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.waterlow_bitmap );
-    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  &TxTexture[TX_WATER_LOW], CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_WATER_LOW, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Water Layer 0 could not be found. Missing File = \"%s\"\n", CData.waterlow_bitmap );
     }
@@ -700,10 +763,10 @@ void load_basic_textures( char *modname )
   // BB > this is handled differently now and is not needed
   // Texture 7 is the phong map
   //snprintf(CStringTmp1, sizeof(CStringTmp1), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.phong_bitmap);
-  //if(INVALID_TEXTURE==GLTexture_Load(GL_TEXTURE_2D,  &TxTexture[TX_PHONG], CStringTmp1, INVALID_KEY))
+  //if(INVALID_TEXTURE==GLTexture_Load(GL_TEXTURE_2D,  gs->TxTexture + TX_PHONG, CStringTmp1, INVALID_KEY))
   //{
   //  snprintf(CStringTmp1, sizeof(CStringTmp1), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.phong_bitmap);
-  //  GLTexture_Load(GL_TEXTURE_2D,  &TxTexture[TX_PHONG], CStringTmp1, TRANSCOLOR );
+  //  GLTexture_Load(GL_TEXTURE_2D,  gs->TxTexture + TX_PHONG, CStringTmp1, TRANSCOLOR );
   //  {
   //    log_warning("Phong Bitmap Layer 1 could not be found. Missing File = \"%s\"", CData.phong_bitmap);
   //  }
@@ -716,9 +779,10 @@ void load_basic_textures( char *modname )
 bool_t load_bars( char* szBitmap )
 {
   // ZZ> This function loads the status bar bitmap
+  GuiState * gui = Get_GuiState();
   int cnt;
 
-  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D, &TxBars, szBitmap, 0 ) )
+  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D, &gui->TxBars, szBitmap, 0 ) )
   {
     return bfalse;
   }
@@ -741,7 +805,7 @@ bool_t load_bars( char* szBitmap )
 }
 
 //--------------------------------------------------------------------------------------------
-void load_map( char* szModule )
+void load_map( GameState * gs, char* szModule )
 {
   // ZZ> This function loads the map bitmap and the blip bitmap
 
@@ -752,15 +816,15 @@ void load_map( char* szModule )
 
   // Load the images
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModule, CData.gamedat_dir, CData.plan_bitmap );
-  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D, &TxMap, CStringTmp1, INVALID_KEY ) )
+  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D, &gs->TxMap, CStringTmp1, INVALID_KEY ) )
     log_warning( "Cannot load map: %s\n", CStringTmp1 );
 
   // Set up the rectangles
-  mapscale = MIN(( float ) CData.scrx / 640.0f, ( float ) CData.scry / 480.0f );
+  mapscale = MIN(( float ) gfxState.scrx / 640.0f, ( float ) gfxState.scry / 480.0f );
   maprect.left   = 0;
   maprect.right  = MAPSIZE * mapscale;
-  maprect.top    = CData.scry - MAPSIZE * mapscale;
-  maprect.bottom = CData.scry;
+  maprect.top    = gfxState.scry - MAPSIZE * mapscale;
+  maprect.bottom = gfxState.scry;
 
 }
 
@@ -805,7 +869,7 @@ bool_t load_font( char* szBitmap, char* szSpacing )
 
   // Uniform font height is at the top
   yspacing = fget_next_int( fileread );
-  bmfont.offset = CData.scry - yspacing;
+  bmfont.offset = gfxState.scry - yspacing;
 
   // Mark all as unused
   for ( cnt = 0; cnt < 255; cnt++ )
@@ -851,7 +915,7 @@ bool_t load_font( char* szBitmap, char* szSpacing )
 }
 
 //--------------------------------------------------------------------------------------------
-void make_water()
+void make_water(GameState * gs)
 {
   // ZZ> This function sets up water movements
 
@@ -860,10 +924,10 @@ void make_water()
   Uint8 spek;
 
   layer = 0;
-  while ( layer < GWater.layer_count )
+  while ( layer < gs->water.layer_count )
   {
-    GWater.layer[layer].u = 0;
-    GWater.layer[layer].v = 0;
+    gs->water.layer[layer].u = 0;
+    gs->water.layer[layer].v = 0;
     frame = 0;
     while ( frame < MAXWATERFRAME )
     {
@@ -873,39 +937,39 @@ void make_water()
       {
         tmp_sin = sin(( frame * TWO_PI / MAXWATERFRAME ) + ( PI * point / WATERPOINTS ) + ( PI_OVER_TWO * layer / MAXWATERLAYER ) );
         tmp_cos = cos(( frame * TWO_PI / MAXWATERFRAME ) + ( PI * point / WATERPOINTS ) + ( PI_OVER_TWO * layer / MAXWATERLAYER ) );
-        GWater.layer[layer].zadd[frame][mode][point]  = tmp_sin * GWater.layer[layer].amp;
+        gs->water.layer[layer].zadd[frame][mode][point]  = tmp_sin * gs->water.layer[layer].amp;
       }
 
       // Now mirror and copy data to other three modes
       mode++;
-      GWater.layer[layer].zadd[frame][mode][0] = GWater.layer[layer].zadd[frame][0][1];
-      //GWater.layer[layer].color[frame][mode][0] = GWater.layer[layer].color[frame][0][1];
-      GWater.layer[layer].zadd[frame][mode][1] = GWater.layer[layer].zadd[frame][0][0];
-      //GWater.layer[layer].color[frame][mode][1] = GWater.layer[layer].color[frame][0][0];
-      GWater.layer[layer].zadd[frame][mode][2] = GWater.layer[layer].zadd[frame][0][3];
-      //GWater.layer[layer].color[frame][mode][2] = GWater.layer[layer].color[frame][0][3];
-      GWater.layer[layer].zadd[frame][mode][3] = GWater.layer[layer].zadd[frame][0][2];
-      //GWater.layer[layer].color[frame][mode][3] = GWater.layer[layer].color[frame][0][2];
+      gs->water.layer[layer].zadd[frame][mode][0] = gs->water.layer[layer].zadd[frame][0][1];
+      //gs->water.layer[layer].color[frame][mode][0] = gs->water.layer[layer].color[frame][0][1];
+      gs->water.layer[layer].zadd[frame][mode][1] = gs->water.layer[layer].zadd[frame][0][0];
+      //gs->water.layer[layer].color[frame][mode][1] = gs->water.layer[layer].color[frame][0][0];
+      gs->water.layer[layer].zadd[frame][mode][2] = gs->water.layer[layer].zadd[frame][0][3];
+      //gs->water.layer[layer].color[frame][mode][2] = gs->water.layer[layer].color[frame][0][3];
+      gs->water.layer[layer].zadd[frame][mode][3] = gs->water.layer[layer].zadd[frame][0][2];
+      //gs->water.layer[layer].color[frame][mode][3] = gs->water.layer[layer].color[frame][0][2];
       mode++;
 
-      GWater.layer[layer].zadd[frame][mode][0] = GWater.layer[layer].zadd[frame][0][3];
-      //GWater.layer[layer].color[frame][mode][0] = GWater.layer[layer].color[frame][0][3];
-      GWater.layer[layer].zadd[frame][mode][1] = GWater.layer[layer].zadd[frame][0][2];
-      //GWater.layer[layer].color[frame][mode][1] = GWater.layer[layer].color[frame][0][2];
-      GWater.layer[layer].zadd[frame][mode][2] = GWater.layer[layer].zadd[frame][0][1];
-      //GWater.layer[layer].color[frame][mode][2] = GWater.layer[layer].color[frame][0][1];
-      GWater.layer[layer].zadd[frame][mode][3] = GWater.layer[layer].zadd[frame][0][0];
-      //GWater.layer[layer].color[frame][mode][3] = GWater.layer[layer].color[frame][0][0];
+      gs->water.layer[layer].zadd[frame][mode][0] = gs->water.layer[layer].zadd[frame][0][3];
+      //gs->water.layer[layer].color[frame][mode][0] = gs->water.layer[layer].color[frame][0][3];
+      gs->water.layer[layer].zadd[frame][mode][1] = gs->water.layer[layer].zadd[frame][0][2];
+      //gs->water.layer[layer].color[frame][mode][1] = gs->water.layer[layer].color[frame][0][2];
+      gs->water.layer[layer].zadd[frame][mode][2] = gs->water.layer[layer].zadd[frame][0][1];
+      //gs->water.layer[layer].color[frame][mode][2] = gs->water.layer[layer].color[frame][0][1];
+      gs->water.layer[layer].zadd[frame][mode][3] = gs->water.layer[layer].zadd[frame][0][0];
+      //gs->water.layer[layer].color[frame][mode][3] = gs->water.layer[layer].color[frame][0][0];
       mode++;
 
-      GWater.layer[layer].zadd[frame][mode][0] = GWater.layer[layer].zadd[frame][0][2];
-      //GWater.layer[layer].color[frame][mode][0] = GWater.layer[layer].color[frame][0][2];
-      GWater.layer[layer].zadd[frame][mode][1] = GWater.layer[layer].zadd[frame][0][3];
-      //GWater.layer[layer].color[frame][mode][1] = GWater.layer[layer].color[frame][0][3];
-      GWater.layer[layer].zadd[frame][mode][2] = GWater.layer[layer].zadd[frame][0][0];
-      //GWater.layer[layer].color[frame][mode][2] = GWater.layer[layer].color[frame][0][0];
-      GWater.layer[layer].zadd[frame][mode][3] = GWater.layer[layer].zadd[frame][0][1];
-      //GWater.layer[layer].color[frame][mode][3] = GWater.layer[layer].color[frame][0][1];
+      gs->water.layer[layer].zadd[frame][mode][0] = gs->water.layer[layer].zadd[frame][0][2];
+      //gs->water.layer[layer].color[frame][mode][0] = gs->water.layer[layer].color[frame][0][2];
+      gs->water.layer[layer].zadd[frame][mode][1] = gs->water.layer[layer].zadd[frame][0][3];
+      //gs->water.layer[layer].color[frame][mode][1] = gs->water.layer[layer].color[frame][0][3];
+      gs->water.layer[layer].zadd[frame][mode][2] = gs->water.layer[layer].zadd[frame][0][0];
+      //gs->water.layer[layer].color[frame][mode][2] = gs->water.layer[layer].color[frame][0][0];
+      gs->water.layer[layer].zadd[frame][mode][3] = gs->water.layer[layer].zadd[frame][0][1];
+      //gs->water.layer[layer].color[frame][mode][3] = gs->water.layer[layer].color[frame][0][1];
       frame++;
     }
     layer++;
@@ -919,7 +983,7 @@ void make_water()
     tmp = FP8_TO_FLOAT( cnt );
     spek = 255 * tmp * tmp;
 
-    GWater.spek[cnt] = spek;
+    gs->water.spek[cnt] = spek;
 
     // [claforte] Probably need to replace this with a
     //            glColor4f( FP8_TO_FLOAT(spek), FP8_TO_FLOAT(spek), FP8_TO_FLOAT(spek), 1.0f) call:
@@ -927,7 +991,7 @@ void make_water()
 }
 
 //--------------------------------------------------------------------------------------------
-void read_wawalite( char *modname )
+void read_wawalite( GameState * gs, char *modname )
 {
   // ZZ> This function sets up water and lighting for the module
 
@@ -950,72 +1014,73 @@ void read_wawalite( char *modname )
 
 
     // Read water data first
-    GWater.layer_count = fget_next_int( fileread );
-    GWater.spekstart = fget_next_int( fileread );
-    GWater.speklevel_fp8 = fget_next_int( fileread );
-    GWater.douselevel = fget_next_int( fileread );
-    GWater.surfacelevel = fget_next_int( fileread );
-    GWater.light = fget_next_bool( fileread );
-    GWater.iswater = fget_next_bool( fileread );
-    CData.render_overlay = fget_next_bool( fileread ) && CData.overlayvalid;
-    CData.render_background = fget_next_bool( fileread ) && CData.backgroundvalid;
-    GWater.layer[0].distx = fget_next_float( fileread );
-    GWater.layer[0].disty = fget_next_float( fileread );
-    GWater.layer[1].distx = fget_next_float( fileread );
-    GWater.layer[1].disty = fget_next_float( fileread );
+    gs->water.layer_count = fget_next_int( fileread );
+    gs->water.spekstart = fget_next_int( fileread );
+    gs->water.speklevel_fp8 = fget_next_int( fileread );
+    gs->water.douselevel = fget_next_int( fileread );
+    gs->water.surfacelevel = fget_next_int( fileread );
+    gs->water.light = fget_next_bool( fileread );
+    gs->water.iswater = fget_next_bool( fileread );
+    gfxState.render_overlay    = fget_next_bool( fileread ) && CData.overlayvalid;
+    gfxState.render_background = fget_next_bool( fileread ) && CData.backgroundvalid;
+    gs->water.layer[0].distx = fget_next_float( fileread );
+    gs->water.layer[0].disty = fget_next_float( fileread );
+    gs->water.layer[1].distx = fget_next_float( fileread );
+    gs->water.layer[1].disty = fget_next_float( fileread );
     foregroundrepeat = fget_next_int( fileread );
     backgroundrepeat = fget_next_int( fileread );
 
 
-    GWater.layer[0].z = fget_next_int( fileread );
-    GWater.layer[0].alpha_fp8 = fget_next_int( fileread );
-    GWater.layer[0].frameadd = fget_next_int( fileread );
-    GWater.layer[0].lightlevel_fp8 = fget_next_int( fileread );
-    GWater.layer[0].lightadd_fp8 = fget_next_int( fileread );
-    GWater.layer[0].amp = fget_next_float( fileread );
-    GWater.layer[0].uadd = fget_next_float( fileread );
-    GWater.layer[0].vadd = fget_next_float( fileread );
+    gs->water.layer[0].z = fget_next_int( fileread );
+    gs->water.layer[0].alpha_fp8 = fget_next_int( fileread );
+    gs->water.layer[0].frameadd = fget_next_int( fileread );
+    gs->water.layer[0].lightlevel_fp8 = fget_next_int( fileread );
+    gs->water.layer[0].lightadd_fp8 = fget_next_int( fileread );
+    gs->water.layer[0].amp = fget_next_float( fileread );
+    gs->water.layer[0].uadd = fget_next_float( fileread );
+    gs->water.layer[0].vadd = fget_next_float( fileread );
 
-    GWater.layer[1].z = fget_next_int( fileread );
-    GWater.layer[1].alpha_fp8 = fget_next_int( fileread );
-    GWater.layer[1].frameadd = fget_next_int( fileread );
-    GWater.layer[1].lightlevel_fp8 = fget_next_int( fileread );
-    GWater.layer[1].lightadd_fp8 = fget_next_int( fileread );
-    GWater.layer[1].amp = fget_next_float( fileread );
-    GWater.layer[1].uadd = fget_next_float( fileread );
-    GWater.layer[1].vadd = fget_next_float( fileread );
+    gs->water.layer[1].z = fget_next_int( fileread );
+    gs->water.layer[1].alpha_fp8 = fget_next_int( fileread );
+    gs->water.layer[1].frameadd = fget_next_int( fileread );
+    gs->water.layer[1].lightlevel_fp8 = fget_next_int( fileread );
+    gs->water.layer[1].lightadd_fp8 = fget_next_int( fileread );
+    gs->water.layer[1].amp = fget_next_float( fileread );
+    gs->water.layer[1].uadd = fget_next_float( fileread );
+    gs->water.layer[1].vadd = fget_next_float( fileread );
 
-    GWater.layer[0].u = 0;
-    GWater.layer[0].v = 0;
-    GWater.layer[1].u = 0;
-    GWater.layer[1].v = 0;
-    GWater.layer[0].frame = rand() & WATERFRAMEAND;
-    GWater.layer[1].frame = rand() & WATERFRAMEAND;
+    gs->water.layer[0].u = 0;
+    gs->water.layer[0].v = 0;
+    gs->water.layer[1].u = 0;
+    gs->water.layer[1].v = 0;
+    gs->water.layer[0].frame = rand() & WATERFRAMEAND;
+    gs->water.layer[1].frame = rand() & WATERFRAMEAND;
 
     // Read light data second
-    lightspekdir.x = fget_next_float( fileread );
-    lightspekdir.y = fget_next_float( fileread );
-    lightspekdir.z = fget_next_float( fileread );
-    lightambi  = fget_next_float( fileread );
+    GLight.on        = btrue;
+    GLight.spekdir.x = fget_next_float( fileread );
+    GLight.spekdir.y = fget_next_float( fileread );
+    GLight.spekdir.z = fget_next_float( fileread );
+    GLight.ambi      = fget_next_float( fileread );
 
-    lightspek = DotProduct( lightspekdir, lightspekdir );
-    if ( 0 != lightspek )
+    GLight.spek = DotProduct( GLight.spekdir, GLight.spekdir );
+    if ( 0 != GLight.spek )
     {
-      lightspek = sqrt( lightspek );
-      lightspekdir.x /= lightspek;
-      lightspekdir.y /= lightspek;
-      lightspekdir.z /= lightspek;
+      GLight.spek = sqrt( GLight.spek );
+      GLight.spekdir.x /= GLight.spek;
+      GLight.spekdir.y /= GLight.spek;
+      GLight.spekdir.z /= GLight.spek;
 
-      lightspek *= lightambi;
+      GLight.spek *= GLight.ambi;
     }
 
-    lightspekcol.r =
-    lightspekcol.g =
-    lightspekcol.b = lightspek;
+    GLight.spekcol.r =
+    GLight.spekcol.g =
+    GLight.spekcol.b = GLight.spek;
 
-    lightambicol.r =
-    lightambicol.g =
-    lightambicol.b = lightambi;
+    GLight.ambicol.r =
+    GLight.ambicol.g =
+    GLight.ambicol.b = GLight.ambi;
 
     // Read tile data third
     hillslide = fget_next_float( fileread );
@@ -1041,7 +1106,7 @@ void read_wawalite( char *modname )
     GWeather.player = 0;
 
     // Read extra data
-    mesh.exploremode = fget_next_bool( fileread );
+    gs->mesh.exploremode = fget_next_bool( fileread );
     usefaredge = fget_next_bool( fileread );
     GCamera.swing = 0;
     GCamera.swingrate = fget_next_float( fileread );
@@ -1084,14 +1149,14 @@ void read_wawalite( char *modname )
     }
 
     // Allow slow machines to ignore the fancy stuff
-    if ( !CData.twolayerwateron && GWater.layer_count > 1 )
+    if ( !CData.twolayerwateron && gs->water.layer_count > 1 )
     {
       int iTmp;
-      GWater.layer_count = 1;
-      iTmp = GWater.layer[0].alpha_fp8;
-      iTmp = FP8_MUL( GWater.layer[1].alpha_fp8, iTmp ) + iTmp;
+      gs->water.layer_count = 1;
+      iTmp = gs->water.layer[0].alpha_fp8;
+      iTmp = FP8_MUL( gs->water.layer[1].alpha_fp8, iTmp ) + iTmp;
       if ( iTmp > 255 ) iTmp = 255;
-      GWater.layer[0].alpha_fp8 = iTmp;
+      gs->water.layer[0].alpha_fp8 = iTmp;
     }
 
 
@@ -1100,8 +1165,8 @@ void read_wawalite( char *modname )
     // Do it
     make_speklut();
     make_lighttospek();
-    make_spektable( lightspekdir );
-    make_water();
+    make_spektable( GLight.spekdir );
+    make_water( gs );
   }
 
 }
@@ -1110,6 +1175,8 @@ void read_wawalite( char *modname )
 void render_background( Uint16 texture )
 {
   // ZZ> This function draws the large background
+
+  GameState * gs = gfxState.gs;
 
   GLVertex vtlist[4];
   float size;
@@ -1121,15 +1188,15 @@ void render_background( Uint16 texture )
 
 
   // Figure out the screen coordinates of its corners
-  x = CData.scrx << 6;
-  y = CData.scry << 6;
+  x = gfxState.scrx << 6;
+  y = gfxState.scry << 6;
   z = -100;
-  u = GWater.layer[1].u;
-  v = GWater.layer[1].v;
+  u = gs->water.layer[1].u;
+  v = gs->water.layer[1].v;
   size = x + y + 1;
   sinsize = turntosin[( 3*2047 ) & TRIGTABLE_MASK] * size;   // why 3/8 of a turn???
   cossize = turntocos[( 3*2047 ) & TRIGTABLE_MASK] * size;   // why 3/8 of a turn???
-  loc_backgroundrepeat = backgroundrepeat * MIN( x / CData.scrx, y / CData.scrx );
+  loc_backgroundrepeat = backgroundrepeat * MIN( x / gfxState.scrx, y / gfxState.scrx );
 
 
   vtlist[0].pos.x = x + cossize;
@@ -1164,7 +1231,7 @@ void render_background( Uint16 texture )
 
     glDisable( GL_CULL_FACE );
 
-    GLTexture_Bind( &TxTexture[texture], CData.texturefilter );
+    GLTexture_Bind( gs->TxTexture + texture, &gfxState );
 
     glColor4f( 1.0f, 1.0f, 1.0f, 1.0f );
     glBegin( GL_TRIANGLE_FAN );
@@ -1184,6 +1251,8 @@ void render_background( Uint16 texture )
 //--------------------------------------------------------------------------------------------
 void render_foreground_overlay( Uint16 texture )
 {
+  GameState * gs = gfxState.gs;
+
   GLVertex vtlist[4];
   float size;
   float sinsize, cossize;
@@ -1193,18 +1262,18 @@ void render_foreground_overlay( Uint16 texture )
   float loc_foregroundrepeat;
 
   // Figure out the screen coordinates of its corners
-  x = CData.scrx << 6;
-  y = CData.scry << 6;
+  x = gfxState.scrx << 6;
+  y = gfxState.scry << 6;
   z = 0;
-  u = GWater.layer[1].u;
-  v = GWater.layer[1].v;
+  u = gs->water.layer[1].u;
+  v = gs->water.layer[1].v;
   size = x + y + 1;
   rotate = 16384 + 8192;
   rotate >>= 2;
   sinsize = turntosin[rotate & TRIGTABLE_MASK] * size;
   cossize = turntocos[rotate & TRIGTABLE_MASK] * size;
 
-  loc_foregroundrepeat = foregroundrepeat * MIN( x / CData.scrx, y / CData.scrx ) / 4.0;
+  loc_foregroundrepeat = foregroundrepeat * MIN( x / gfxState.scrx, y / gfxState.scrx ) / 4.0;
 
 
   vtlist[0].pos.x = x + cossize;
@@ -1249,7 +1318,7 @@ void render_foreground_overlay( Uint16 texture )
 
     glDisable( GL_CULL_FACE );
 
-    GLTexture_Bind( &TxTexture[texture], CData.texturefilter );
+    GLTexture_Bind( gs->TxTexture + texture, &gfxState );
 
     glColor4f( 1.0f, 1.0f, 1.0f, 0.5f );
     glBegin( GL_TRIANGLE_FAN );
@@ -1269,6 +1338,8 @@ void render_shadow( CHR_REF character )
 {
   // ZZ> This function draws a NIFTY shadow
 
+  GameState * gs = gfxState.gs;
+
   GLVertex v[4];
 
   float x, y;
@@ -1278,49 +1349,51 @@ void render_shadow( CHR_REF character )
   float alpha_umbra, alpha_penumbra, alpha_character, light_character;
   Sint8 hide;
   int i;
-  Uint16 chrlightambi = ChrList[character].tlight.ambi_fp8.r + ChrList[character].tlight.ambi_fp8.g + ChrList[character].tlight.ambi_fp8.b;
-  Uint16 chrlightspek = ChrList[character].tlight.spek_fp8.r + ChrList[character].tlight.spek_fp8.g + ChrList[character].tlight.spek_fp8.b;
-  float  globlightambi = lightambicol.r + lightambicol.g + lightambicol.b;
-  float  globlightspek = lightspekcol.r + lightspekcol.g + lightspekcol.b;
 
-  hide = CapList[ChrList[character].model].hidestate;
-  if ( hide != NOHIDE && hide == ChrList[character].aistate.state ) return;
+
+  Uint16 chrlightambi  = gs->ChrList[character].tlight.ambi_fp8.r + gs->ChrList[character].tlight.ambi_fp8.g + gs->ChrList[character].tlight.ambi_fp8.b;
+  Uint16 chrlightspek  = gs->ChrList[character].tlight.spek_fp8.r + gs->ChrList[character].tlight.spek_fp8.g + gs->ChrList[character].tlight.spek_fp8.b;
+  float  globlightambi = GLight.ambicol.r + GLight.ambicol.g + GLight.ambicol.b;
+  float  globlightspek = GLight.spekcol.r + GLight.spekcol.g + GLight.spekcol.b;
+
+  hide = gs->CapList[gs->ChrList[character].model].hidestate;
+  if ( hide != NOHIDE && hide == gs->ChrList[character].aistate.state ) return;
 
   // Original points
-  level = ChrList[character].level;
+  level = gs->ChrList[character].level;
   level += SHADOWRAISE;
-  height = ChrList[character].matrix.CNV( 3, 2 ) - level;
+  height = gs->ChrList[character].matrix.CNV( 3, 2 ) - level;
   if ( height < 0 ) height = 0;
 
-  tile_factor = mesh_has_some_bits( ChrList[character].onwhichfan, MPDFX_WATER ) ? 0.5 : 1.0;
+  tile_factor = mesh_has_some_bits( gs->Mesh_Mem.fanlst, gs->ChrList[character].onwhichfan, MPDFX_WATER ) ? 0.5 : 1.0;
 
-  height_factor   = MAX( MIN(( 5 * ChrList[character].bmpdata.calc_size / height ), 1 ), 0 );
+  height_factor   = MAX( MIN(( 5 * gs->ChrList[character].bmpdata.calc_size / height ), 1 ), 0 );
   ambient_factor  = ( float )( chrlightspek ) / ( float )( chrlightambi + chrlightspek );
   ambient_factor  = 0.5f * ( ambient_factor + globlightspek / ( globlightambi + globlightspek ) );
-  alpha_character = FP8_TO_FLOAT( ChrList[character].alpha_fp8 );
-  if ( ChrList[character].light_fp8 == 255 )
+  alpha_character = FP8_TO_FLOAT( gs->ChrList[character].alpha_fp8 );
+  if ( gs->ChrList[character].light_fp8 == 255 )
   {
     light_character = 1.0f;
   }
   else
   {
-    light_character = ( float ) chrlightspek / 3.0f / ( float ) ChrList[character].light_fp8;
+    light_character = ( float ) chrlightspek / 3.0f / ( float ) gs->ChrList[character].light_fp8;
     light_character =  MIN( 1, MAX( 0, light_character ) );
   };
 
 
-  size_umbra_x    = ( ChrList[character].bmpdata.cv.x_max - ChrList[character].bmpdata.cv.x_min - height / 30.0 );
-  size_umbra_y    = ( ChrList[character].bmpdata.cv.y_max - ChrList[character].bmpdata.cv.y_min - height / 30.0 );
-  size_penumbra_x = ( ChrList[character].bmpdata.cv.x_max - ChrList[character].bmpdata.cv.x_min + height / 30.0 );
-  size_penumbra_y = ( ChrList[character].bmpdata.cv.y_max - ChrList[character].bmpdata.cv.y_min + height / 30.0 );
+  size_umbra_x    = ( gs->ChrList[character].bmpdata.cv.x_max - gs->ChrList[character].bmpdata.cv.x_min - height / 30.0 );
+  size_umbra_y    = ( gs->ChrList[character].bmpdata.cv.y_max - gs->ChrList[character].bmpdata.cv.y_min - height / 30.0 );
+  size_penumbra_x = ( gs->ChrList[character].bmpdata.cv.x_max - gs->ChrList[character].bmpdata.cv.x_min + height / 30.0 );
+  size_penumbra_y = ( gs->ChrList[character].bmpdata.cv.y_max - gs->ChrList[character].bmpdata.cv.y_min + height / 30.0 );
 
   alpha_umbra    = alpha_character * height_factor * ambient_factor * light_character * tile_factor;
   alpha_penumbra = alpha_character * height_factor * ambient_factor * light_character * tile_factor;
 
   if ( FLOAT_TO_FP8( alpha_umbra ) == 0 && FLOAT_TO_FP8( alpha_penumbra ) == 0 ) return;
 
-  x = ChrList[character].matrix.CNV( 3, 0 );
-  y = ChrList[character].matrix.CNV( 3, 1 );
+  x = gs->ChrList[character].matrix.CNV( 3, 0 );
+  y = gs->ChrList[character].matrix.CNV( 3, 1 );
 
   //GOOD SHADOW
   v[0].tx.s = CALCULATE_PRT_U0( 238 );
@@ -1362,7 +1435,7 @@ void render_shadow( CHR_REF character )
       glDepthFunc( GL_LEQUAL );
 
       // Choose texture.
-      GLTexture_Bind( &TxTexture[particletexture], CData.texturefilter );
+      GLTexture_Bind( gs->TxTexture + particletexture, &gfxState );
 
       glBegin( GL_TRIANGLE_FAN );
       glColor4f( alpha_penumbra, alpha_penumbra, alpha_penumbra, 1.0 );
@@ -1405,7 +1478,7 @@ void render_shadow( CHR_REF character )
       glDepthFunc( GL_LEQUAL );
 
       // Choose texture.
-      GLTexture_Bind( &TxTexture[particletexture], CData.texturefilter );
+      GLTexture_Bind( gs->TxTexture + particletexture, &gfxState );
 
       glBegin( GL_TRIANGLE_FAN );
       glColor4f( alpha_penumbra, alpha_penumbra, alpha_penumbra, 1.0 );
@@ -1425,6 +1498,8 @@ void render_shadow( CHR_REF character )
 //{
 //  // ZZ> This function draws a sprite shadow
 //
+//  GameState * gs = gfxState.gs;
+//
 //  GLVertex v[4];
 //  float size, x, y;
 //  Uint8 ambi;
@@ -1436,22 +1511,22 @@ void render_shadow( CHR_REF character )
 //  int i;
 //
 //
-//  hide = CapList[ChrList[character].model].hidestate;
-//  if (hide == NOHIDE || hide != ChrList[character].aistate.state)
+//  hide = gs->CapList[gs->ChrList[character].model].hidestate;
+//  if (hide == NOHIDE || hide != gs->ChrList[character].aistate.state)
 //  {
 //    // Original points
-//    level = ChrList[character].level;
+//    level = gs->ChrList[character].level;
 //    level += SHADOWRAISE;
-//    height = ChrList[character].matrix.CNV(3, 2) - level;
+//    height = gs->ChrList[character].matrix.CNV(3, 2) - level;
 //    if (height > 255)  return;
 //    if (height < 0) height = 0;
-//    size = ChrList[character].bmpdata.calc_shadowsize - FP8_MUL(height, ChrList[character].bmpdata.calc_shadowsize);
+//    size = gs->ChrList[character].bmpdata.calc_shadowsize - FP8_MUL(height, gs->ChrList[character].bmpdata.calc_shadowsize);
 //    if (size < 1) return;
-//    ambi = ChrList[character].lightspek_fp8 >> 4;  // LUL >>3;
+//    ambi = gs->ChrList[character].lightspek_fp8 >> 4;  // LUL >>3;
 //    trans = ((255 - height) >> 1) + 64;
 //
-//    x = ChrList[character].matrix.CNV(3, 0);
-//    y = ChrList[character].matrix.CNV(3, 1);
+//    x = gs->ChrList[character].matrix.CNV(3, 0);
+//    y = gs->ChrList[character].matrix.CNV(3, 1);
 //    v[0].pos.x = (float) x + size;
 //    v[0].pos.y = (float) y - size;
 //    v[0].pos.z = (float) level;
@@ -1496,7 +1571,7 @@ void render_shadow( CHR_REF character )
 //      glDepthFunc(GL_LEQUAL);
 //
 //      // Choose texture.
-//      GLTexture_Bind(&TxTexture[particletexture], CData.texturefilter);
+//      GLTexture_Bind( gs->TxTexture + particletexture, &gfxState);
 //
 //      glColor4f(FP8_TO_FLOAT(ambi), FP8_TO_FLOAT(ambi), FP8_TO_FLOAT(ambi), FP8_TO_FLOAT(trans));
 //      glBegin(GL_TRIANGLE_FAN);
@@ -1576,29 +1651,31 @@ void light_characters()
   Uint32 vrtstart;
   Uint32 fan;
 
+  GameState * gs = gfxState.gs;
+
   for ( cnt = 0; cnt < numdolist; cnt++ )
   {
     tnc = dolist[cnt];
-    fan = ChrList[tnc].onwhichfan;
+    fan = gs->ChrList[tnc].onwhichfan;
 
     if(INVALID_FAN == fan) continue;
 
-    vrtstart = Mesh_Fan[ChrList[tnc].onwhichfan].vrt_start;
+    vrtstart = gs->Mesh_Mem.fanlst[gs->ChrList[tnc].onwhichfan].vrt_start;
 
-    x = ChrList[tnc].pos.x;
-    y = ChrList[tnc].pos.y;
+    x = gs->ChrList[tnc].pos.x;
+    y = gs->ChrList[tnc].pos.y;
     x = ( x & 127 ) >> 5;  // From 0 to 3
     y = ( y & 127 ) >> 5;  // From 0 to 3
 
-    i0 = Mesh_Mem.vrt_lr_fp8[vrtstart + 0];
-    i1 = Mesh_Mem.vrt_lr_fp8[vrtstart + 1];
-    i2 = Mesh_Mem.vrt_lr_fp8[vrtstart + 2];
-    i3 = Mesh_Mem.vrt_lr_fp8[vrtstart + 3];
+    i0 = gs->Mesh_Mem.vrt_lr_fp8[vrtstart + 0];
+    i1 = gs->Mesh_Mem.vrt_lr_fp8[vrtstart + 1];
+    i2 = gs->Mesh_Mem.vrt_lr_fp8[vrtstart + 2];
+    i3 = gs->Mesh_Mem.vrt_lr_fp8[vrtstart + 3];
     calc_chr_lighting( x, y, i0, i1, i2, i3, &spek, &ambi );
-    ChrList[tnc].tlight.ambi_fp8.r = ambi;
-    ChrList[tnc].tlight.spek_fp8.r = spek;
+    gs->ChrList[tnc].tlight.ambi_fp8.r = ambi;
+    gs->ChrList[tnc].tlight.spek_fp8.r = spek;
 
-    if ( !mesh.exploremode )
+    if ( !gs->mesh.exploremode )
     {
       // Look up spek direction using corners again
       i0 = (( i0 & 0xf0 ) << 8 ) & 0xf000;
@@ -1606,22 +1683,22 @@ void light_characters()
       i3 = (( i3 & 0xf0 ) << 0 ) & 0x00f0;
       i2 = (( i2 & 0xf0 ) >> 4 ) & 0x000f;
       i0 = i0 | i1 | i3 | i2;
-      ChrList[tnc].tlight.turn_lr.r = ( lightdirectionlookup[i0] << 8 );
+      gs->ChrList[tnc].tlight.turn_lr.r = ( lightdirectionlookup[i0] << 8 );
     }
     else
     {
-      ChrList[tnc].tlight.turn_lr.r = 0;
+      gs->ChrList[tnc].tlight.turn_lr.r = 0;
     }
 
-    i0 = Mesh_Mem.vrt_lg_fp8[vrtstart + 0];
-    i1 = Mesh_Mem.vrt_lg_fp8[vrtstart + 1];
-    i3 = Mesh_Mem.vrt_lg_fp8[vrtstart + 2];
-    i2 = Mesh_Mem.vrt_lg_fp8[vrtstart + 3];
+    i0 = gs->Mesh_Mem.vrt_lg_fp8[vrtstart + 0];
+    i1 = gs->Mesh_Mem.vrt_lg_fp8[vrtstart + 1];
+    i3 = gs->Mesh_Mem.vrt_lg_fp8[vrtstart + 2];
+    i2 = gs->Mesh_Mem.vrt_lg_fp8[vrtstart + 3];
     calc_chr_lighting( x, y, i0, i1, i2, i3, &spek, &ambi );
-    ChrList[tnc].tlight.ambi_fp8.g = ambi;
-    ChrList[tnc].tlight.spek_fp8.g = spek;
+    gs->ChrList[tnc].tlight.ambi_fp8.g = ambi;
+    gs->ChrList[tnc].tlight.spek_fp8.g = spek;
 
-    if ( !mesh.exploremode )
+    if ( !gs->mesh.exploremode )
     {
       // Look up spek direction using corners again
       i0 = (( i0 & 0xf0 ) << 8 ) & 0xf000;
@@ -1629,22 +1706,22 @@ void light_characters()
       i3 = (( i3 & 0xf0 ) << 0 ) & 0x00f0;
       i2 = (( i2 & 0xf0 ) >> 4 ) & 0x000f;
       i0 = i0 | i1 | i3 | i2;
-      ChrList[tnc].tlight.turn_lr.g = ( lightdirectionlookup[i0] << 8 );
+      gs->ChrList[tnc].tlight.turn_lr.g = ( lightdirectionlookup[i0] << 8 );
     }
     else
     {
-      ChrList[tnc].tlight.turn_lr.g = 0;
+      gs->ChrList[tnc].tlight.turn_lr.g = 0;
     }
 
-    i0 = Mesh_Mem.vrt_lb_fp8[vrtstart + 0];
-    i1 = Mesh_Mem.vrt_lb_fp8[vrtstart + 1];
-    i3 = Mesh_Mem.vrt_lb_fp8[vrtstart + 2];
-    i2 = Mesh_Mem.vrt_lb_fp8[vrtstart + 3];
+    i0 = gs->Mesh_Mem.vrt_lb_fp8[vrtstart + 0];
+    i1 = gs->Mesh_Mem.vrt_lb_fp8[vrtstart + 1];
+    i3 = gs->Mesh_Mem.vrt_lb_fp8[vrtstart + 2];
+    i2 = gs->Mesh_Mem.vrt_lb_fp8[vrtstart + 3];
     calc_chr_lighting( x, y, i0, i1, i2, i3, &spek, &ambi );
-    ChrList[tnc].tlight.ambi_fp8.b = ambi;
-    ChrList[tnc].tlight.spek_fp8.b = spek;
+    gs->ChrList[tnc].tlight.ambi_fp8.b = ambi;
+    gs->ChrList[tnc].tlight.spek_fp8.b = spek;
 
-    if ( !mesh.exploremode )
+    if ( !gs->mesh.exploremode )
     {
       // Look up spek direction using corners again
       i0 = (( i0 & 0xf0 ) << 8 ) & 0xf000;
@@ -1652,11 +1729,11 @@ void light_characters()
       i3 = (( i3 & 0xf0 ) << 0 ) & 0x00f0;
       i2 = (( i2 & 0xf0 ) >> 4 ) & 0x000f;
       i0 = i0 | i1 | i3 | i2;
-      ChrList[tnc].tlight.turn_lr.b = ( lightdirectionlookup[i0] << 8 );
+      gs->ChrList[tnc].tlight.turn_lr.b = ( lightdirectionlookup[i0] << 8 );
     }
     else
     {
-      ChrList[tnc].tlight.turn_lr.b = 0;
+      gs->ChrList[tnc].tlight.turn_lr.b = 0;
     }
   }
 }
@@ -1666,55 +1743,57 @@ void light_particles()
 {
   // ZZ> This function figures out particle lighting
 
+  GameState * gs = gfxState.gs;
+
   int cnt;
   CHR_REF character;
 
   for ( cnt = 0; cnt < MAXPRT; cnt++ )
   {
-    if ( !VALID_PRT( cnt ) ) continue;
+    if ( !VALID_PRT(gs->PrtList,  cnt ) ) continue;
 
-    switch ( PrtList[cnt].type )
+    switch ( gs->PrtList[cnt].type )
     {
       case PRTTYPE_LIGHT:
         {
-          float ftmp = PrtList[cnt].dyna.level * ( 127 * PrtList[cnt].dyna.falloff ) / FP8_TO_FLOAT( FP8_MUL( PrtList[cnt].size_fp8, PrtList[cnt].size_fp8 ) );
+          float ftmp = gs->PrtList[cnt].dyna.level * ( 127 * gs->PrtList[cnt].dyna.falloff ) / FP8_TO_FLOAT( FP8_MUL( gs->PrtList[cnt].size_fp8, gs->PrtList[cnt].size_fp8 ) );
           if ( ftmp > 255 ) ftmp = 255;
 
-          PrtList[cnt].lightr_fp8 =
-          PrtList[cnt].lightg_fp8 =
-          PrtList[cnt].lightb_fp8 = ftmp;
+          gs->PrtList[cnt].lightr_fp8 =
+          gs->PrtList[cnt].lightg_fp8 =
+          gs->PrtList[cnt].lightb_fp8 = ftmp;
         }
         break;
 
       case PRTTYPE_ALPHA:
       case PRTTYPE_SOLID:
         {
-          character = prt_get_attachedtochr( cnt );
-          if ( VALID_CHR( character ) )
+          character = prt_get_attachedtochr( gs, cnt );
+          if ( VALID_CHR( gs->ChrList,  character ) )
           {
-            PrtList[cnt].lightr_fp8 = ChrList[character].tlight.spek_fp8.r + ChrList[character].tlight.ambi_fp8.r;
-            PrtList[cnt].lightg_fp8 = ChrList[character].tlight.spek_fp8.g + ChrList[character].tlight.ambi_fp8.g;
-            PrtList[cnt].lightb_fp8 = ChrList[character].tlight.spek_fp8.b + ChrList[character].tlight.ambi_fp8.b;
+            gs->PrtList[cnt].lightr_fp8 = gs->ChrList[character].tlight.spek_fp8.r + gs->ChrList[character].tlight.ambi_fp8.r;
+            gs->PrtList[cnt].lightg_fp8 = gs->ChrList[character].tlight.spek_fp8.g + gs->ChrList[character].tlight.ambi_fp8.g;
+            gs->PrtList[cnt].lightb_fp8 = gs->ChrList[character].tlight.spek_fp8.b + gs->ChrList[character].tlight.ambi_fp8.b;
           }
-          else if ( INVALID_FAN != PrtList[cnt].onwhichfan )
+          else if ( INVALID_FAN != gs->PrtList[cnt].onwhichfan )
           {
-            PrtList[cnt].lightr_fp8 = Mesh_Mem.vrt_lr_fp8[Mesh_Fan[PrtList[cnt].onwhichfan].vrt_start];
-            PrtList[cnt].lightg_fp8 = Mesh_Mem.vrt_lg_fp8[Mesh_Fan[PrtList[cnt].onwhichfan].vrt_start];
-            PrtList[cnt].lightb_fp8 = Mesh_Mem.vrt_lb_fp8[Mesh_Fan[PrtList[cnt].onwhichfan].vrt_start];
+            gs->PrtList[cnt].lightr_fp8 = gs->Mesh_Mem.vrt_lr_fp8[gs->Mesh_Mem.fanlst[gs->PrtList[cnt].onwhichfan].vrt_start];
+            gs->PrtList[cnt].lightg_fp8 = gs->Mesh_Mem.vrt_lg_fp8[gs->Mesh_Mem.fanlst[gs->PrtList[cnt].onwhichfan].vrt_start];
+            gs->PrtList[cnt].lightb_fp8 = gs->Mesh_Mem.vrt_lb_fp8[gs->Mesh_Mem.fanlst[gs->PrtList[cnt].onwhichfan].vrt_start];
           }
           else
           {
-            PrtList[cnt].lightr_fp8 =
-              PrtList[cnt].lightg_fp8 =
-                PrtList[cnt].lightb_fp8 = 0;
+            gs->PrtList[cnt].lightr_fp8 =
+              gs->PrtList[cnt].lightg_fp8 =
+                gs->PrtList[cnt].lightb_fp8 = 0;
           }
         }
         break;
 
       default:
-        PrtList[cnt].lightr_fp8 =
-          PrtList[cnt].lightg_fp8 =
-            PrtList[cnt].lightb_fp8 = 0;
+        gs->PrtList[cnt].lightr_fp8 =
+          gs->PrtList[cnt].lightg_fp8 =
+            gs->PrtList[cnt].lightb_fp8 = 0;
     };
   }
 
@@ -1726,9 +1805,10 @@ void render_water()
   // ZZ> This function draws all of the water fans
 
   int cnt;
+  GameState * gs = gfxState.gs;
 
   // Bottom layer first
-  if ( !CData.render_background && GWater.layer_count > 1 )
+  if ( !gfxState.render_background && gs->water.layer_count > 1 )
   {
     cnt = 0;
     while ( cnt < renderlist.num_watr )
@@ -1739,7 +1819,7 @@ void render_water()
   }
 
   // Top layer second
-  if ( !CData.render_overlay && GWater.layer_count > 0 )
+  if ( !gfxState.render_overlay && gs->water.layer_count > 0 )
   {
     cnt = 0;
     while ( cnt < renderlist.num_watr )
@@ -1755,19 +1835,20 @@ void render_water_lit()
   // BB> This function draws the hilites for water tiles using global lighting
 
   int cnt;
+  GameState * gs = gfxState.gs;
 
   // Bottom layer first
-  if ( !CData.render_background && GWater.layer_count > 1 )
+  if ( !gfxState.render_background && gs->water.layer_count > 1 )
   {
-    float ambi_level = FP8_TO_FLOAT( GWater.layer[1].lightadd_fp8 + GWater.layer[1].lightlevel_fp8 );
-    float spek_level =  FP8_TO_FLOAT( GWater.speklevel_fp8 );
+    float ambi_level = FP8_TO_FLOAT( gs->water.layer[1].lightadd_fp8 + gs->water.layer[1].lightlevel_fp8 );
+    float spek_level =  FP8_TO_FLOAT( gs->water.speklevel_fp8 );
     float spekularity = MIN( 40, spek_level / ambi_level ) + 2;
     GLfloat mat_none[]      = {0, 0, 0, 0};
     GLfloat mat_ambient[]   = { ambi_level, ambi_level, ambi_level, 1.0 };
     GLfloat mat_diffuse[]   = { spek_level, spek_level, spek_level, 1.0 };
     GLfloat mat_shininess[] = {spekularity};
 
-    if ( GWater.light )
+    if ( gs->water.light )
     {
       // self-lit water provides its own light
       glMaterialfv( GL_FRONT_AND_BACK, GL_EMISSION, mat_ambient );
@@ -1791,10 +1872,10 @@ void render_water_lit()
   }
 
   // Top layer second
-  if ( !CData.render_overlay && GWater.layer_count > 0 )
+  if ( !gfxState.render_overlay && gs->water.layer_count > 0 )
   {
-    float ambi_level = ( GWater.layer[1].lightadd_fp8 + GWater.layer[1].lightlevel_fp8 ) / 255.0;
-    float spek_level =  FP8_TO_FLOAT( GWater.speklevel_fp8 );
+    float ambi_level = ( gs->water.layer[1].lightadd_fp8 + gs->water.layer[1].lightlevel_fp8 ) / 255.0;
+    float spek_level =  FP8_TO_FLOAT( gs->water.speklevel_fp8 );
     float spekularity = MIN( 40, spek_level / ambi_level ) + 2;
 
     GLfloat mat_none[]      = {0, 0, 0, 0};
@@ -1802,7 +1883,7 @@ void render_water_lit()
     GLfloat mat_diffuse[]   = { spek_level, spek_level, spek_level, 1.0 };
     GLfloat mat_shininess[] = {spekularity};
 
-    if ( GWater.light )
+    if ( gs->water.light )
     {
       // self-lit water provides its own light
       glMaterialfv( GL_FRONT_AND_BACK, GL_EMISSION, mat_ambient );
@@ -1832,6 +1913,8 @@ void render_good_shadows()
 {
   int cnt, tnc;
 
+  GameState * gs = gfxState.gs;
+
   // Good shadows for me
   ATTRIB_PUSH( "render_good_shadows", GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_POLYGON_BIT );
   {
@@ -1849,7 +1932,7 @@ void render_good_shadows()
     for ( cnt = 0; cnt < numdolist; cnt++ )
     {
       tnc = dolist[cnt];
-      if ( ChrList[tnc].bmpdata.shadow != 0 || CapList[ChrList[tnc].model].forceshadow && mesh_has_no_bits( ChrList[tnc].onwhichfan, MPDFX_SHINY ) )
+      if ( gs->ChrList[tnc].bmpdata.shadow != 0 || gs->CapList[gs->ChrList[tnc].model].forceshadow && mesh_has_no_bits( gs->Mesh_Mem.fanlst, gs->ChrList[tnc].onwhichfan, MPDFX_SHINY ) )
         render_shadow( tnc );
     }
   }
@@ -1860,6 +1943,8 @@ void render_good_shadows()
 //void render_bad_shadows()
 //{
 //  int cnt, tnc;
+//
+//  GameState * gs = gfxState.gs;
 //
 //  // Bad shadows
 //  ATTRIB_PUSH("render_bad_shadows", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -1875,9 +1960,9 @@ void render_good_shadows()
 //    for (cnt = 0; cnt < numdolist; cnt++)
 //    {
 //      tnc = dolist[cnt];
-//      //if(ChrList[tnc].attachedto == MAXCHR)
+//      //if(gs->ChrList[tnc].attachedto == MAXCHR)
 //      //{
-//      if (ChrList[tnc].bmpdata.calc_shadowsize != 0 || CapList[ChrList[tnc].model].forceshadow && HAS_NO_BITS(Mesh[ChrList[tnc].onwhichfan].fx, MPDFX_SHINY))
+//      if (gs->ChrList[tnc].bmpdata.calc_shadowsize != 0 || gs->CapList[gs->ChrList[tnc].model].forceshadow && HAS_NO_BITS(Mesh[gs->ChrList[tnc].onwhichfan].fx, MPDFX_SHINY))
 //        render_bad_shadow(tnc);
 //      //}
 //    }
@@ -1889,6 +1974,8 @@ void render_good_shadows()
 void render_character_reflections()
 {
   int cnt, tnc;
+
+  GameState * gs = gfxState.gs;
 
   // Render reflections of characters
   ATTRIB_PUSH( "render_character_reflections", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT );
@@ -1909,8 +1996,8 @@ void render_character_reflections()
     for ( cnt = 0; cnt < numdolist; cnt++ )
     {
       tnc = dolist[cnt];
-      if ( mesh_has_some_bits( ChrList[tnc].onwhichfan, MPDFX_SHINY ) )
-        render_refmad( tnc, ChrList[tnc].alpha_fp8 / 2 );
+      if ( mesh_has_some_bits( gs->Mesh_Mem.fanlst, gs->ChrList[tnc].onwhichfan, MPDFX_SHINY ) )
+        render_refmad( tnc, gs->ChrList[tnc].alpha_fp8 / 2 );
     }
   }
   ATTRIB_POP( "render_character_reflections" );
@@ -1920,6 +2007,8 @@ void render_character_reflections()
 //--------------------------------------------------------------------------------------------
 void render_normal_fans()
 {
+  GameState * gs = gfxState.gs;
+
   int cnt, tnc, fan, texture;
 
   ATTRIB_PUSH( "render_normal_fans", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT | GL_TEXTURE_BIT | GL_LIGHTING_BIT );
@@ -1929,8 +2018,8 @@ void render_normal_fans()
     glEnable( GL_DEPTH_TEST );
     glDepthFunc( GL_LESS );
 
-    // CData.shading stuff
-    glShadeModel( CData.shading );
+    // gfxState.shading stuff
+    glShadeModel( gfxState.shading );
 
     // alpha stuff
     glDisable( GL_BLEND );
@@ -1945,8 +2034,8 @@ void render_normal_fans()
     for ( cnt = 0; cnt < 4; cnt++ )
     {
       texture = cnt + TX_TILE_0;
-      mesh.last_texture = texture;
-      GLTexture_Bind( &TxTexture[texture], CData.texturefilter );
+      gs->mesh.last_texture = texture;
+      GLTexture_Bind( gs->TxTexture + texture, &gfxState );
       for ( tnc = 0; tnc < renderlist.num_norm; tnc++ )
       {
         fan = renderlist.norm[tnc];
@@ -1960,6 +2049,8 @@ void render_normal_fans()
 //--------------------------------------------------------------------------------------------
 void render_shiny_fans()
 {
+  GameState * gs = gfxState.gs;
+
   int cnt, tnc, fan, texture;
 
   ATTRIB_PUSH( "render_shiny_fans", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT | GL_TEXTURE_BIT | GL_LIGHTING_BIT );
@@ -1969,8 +2060,8 @@ void render_shiny_fans()
     glEnable( GL_DEPTH_TEST );
     glDepthFunc( GL_LESS );
 
-    // CData.shading stuff
-    glShadeModel( CData.shading );
+    // gfxState.shading stuff
+    glShadeModel( gfxState.shading );
 
     // alpha stuff
     glEnable( GL_BLEND );
@@ -1986,8 +2077,8 @@ void render_shiny_fans()
     for ( cnt = 0; cnt < 4; cnt++ )
     {
       texture = cnt + TX_TILE_0;
-      mesh.last_texture = texture;
-      GLTexture_Bind( &TxTexture[texture], CData.texturefilter );
+      gs->mesh.last_texture = texture;
+      GLTexture_Bind( gs->TxTexture + texture, &gfxState );
       for ( tnc = 0; tnc < renderlist.num_shine; tnc++ )
       {
         fan = renderlist.shine[tnc];
@@ -2012,8 +2103,8 @@ void render_shiny_fans()
 //    glEnable(GL_DEPTH_TEST);
 //    glDepthFunc(GL_LEQUAL);
 //
-//    // CData.shading stuff
-//    glShadeModel(CData.shading);
+//    // shading stuff
+//    glShadeModel(gfxState.shading);
 //
 //    // alpha stuff
 //    glDisable(GL_BLEND);
@@ -2028,8 +2119,8 @@ void render_shiny_fans()
 //    for (cnt = 0; cnt < 4; cnt++)
 //    {
 //      texture = cnt + TX_TILE_0;
-//      mesh.last_texture = texture;
-//      GLTexture_Bind(&TxTexture[texture], CData.texturefilter);
+//      gs->mesh.last_texture = texture;
+//      GLTexture_Bind( gs->TxTexture + texture, &gfxState);
 //      for (tnc = 0; tnc < renderlist.num_reflc; tnc++)
 //      {
 //        fan = renderlist.reflc[tnc];
@@ -2043,6 +2134,8 @@ void render_shiny_fans()
 //--------------------------------------------------------------------------------------------
 void render_reflected_fans_ref()
 {
+  GameState * gs = gfxState.gs;
+
   int cnt, tnc, fan, texture;
 
   ATTRIB_PUSH( "render_reflected_fans_ref", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT | GL_TEXTURE_BIT | GL_LIGHTING_BIT );
@@ -2052,8 +2145,8 @@ void render_reflected_fans_ref()
     glEnable( GL_DEPTH_TEST );
     glDepthFunc( GL_LEQUAL );
 
-    // CData.shading stuff
-    glShadeModel( CData.shading );
+    // gfxState.shading stuff
+    glShadeModel( gfxState.shading );
 
     // alpha stuff
     glEnable( GL_ALPHA_TEST );
@@ -2072,8 +2165,8 @@ void render_reflected_fans_ref()
     for ( cnt = 0; cnt < 4; cnt++ )
     {
       texture = cnt + TX_TILE_0;
-      mesh.last_texture = texture;
-      GLTexture_Bind( &TxTexture[texture], CData.texturefilter );
+      gs->mesh.last_texture = texture;
+      GLTexture_Bind( gs->TxTexture + texture, &gfxState );
       for ( tnc = 0; tnc < renderlist.num_shine; tnc++ )
       {
         fan = renderlist.reflc[tnc];
@@ -2097,8 +2190,8 @@ void render_reflected_fans_ref()
 //    glEnable(GL_DEPTH_TEST);
 //    glDepthFunc(GL_LEQUAL);
 //
-//    // CData.shading stuff
-//    glShadeModel(CData.shading);
+//    // gfxState.shading stuff
+//    glShadeModel(gfxState.shading);
 //
 //    // alpha stuff
 //    glEnable(GL_ALPHA_TEST);
@@ -2117,8 +2210,8 @@ void render_reflected_fans_ref()
 //    for (cnt = 0; cnt < 4; cnt++)
 //    {
 //      texture = cnt + TX_TILE_0;
-//      mesh.last_texture = texture;
-//      GLTexture_Bind(&TxTexture[texture], CData.texturefilter);
+//      gs->mesh.last_texture = texture;
+//      GLTexture_Bind( gs->TxTexture + texture, &gfxState);
 //      for (tnc = 0; tnc < renderlist.num_reflc; tnc++)
 //      {
 //        fan = renderlist.reflc[tnc];
@@ -2134,6 +2227,8 @@ void render_reflected_fans_ref()
 void render_solid_characters()
 {
   int cnt, tnc;
+
+  GameState * gs = gfxState.gs;
 
   // Render the normal characters
   ATTRIB_PUSH( "render_solid_characters", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT );
@@ -2156,7 +2251,7 @@ void render_solid_characters()
     for ( cnt = 0; cnt < numdolist; cnt++ )
     {
       tnc = dolist[cnt];
-      if ( ChrList[tnc].alpha_fp8 == 255 && ChrList[tnc].light_fp8 == 255 )
+      if ( gs->ChrList[tnc].alpha_fp8 == 255 && gs->ChrList[tnc].light_fp8 == 255 )
         render_mad( tnc, 255 );
     }
   }
@@ -2169,6 +2264,8 @@ void render_alpha_characters()
 {
   int cnt, tnc;
   Uint8 trans;
+
+  GameState * gs = gfxState.gs;
 
   // Now render the transparent characters
   ATTRIB_PUSH( "render_alpha_characters", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT );
@@ -2191,12 +2288,12 @@ void render_alpha_characters()
     for ( cnt = 0; cnt < numdolist; cnt++ )
     {
       tnc = dolist[cnt];
-      if ( ChrList[tnc].alpha_fp8 != 255 )
+      if ( gs->ChrList[tnc].alpha_fp8 != 255 )
       {
-        trans = ChrList[tnc].alpha_fp8;
+        trans = gs->ChrList[tnc].alpha_fp8;
 
-        if (( ChrList[tnc].alpha_fp8 + ChrList[tnc].light_fp8 ) < SEEINVISIBLE &&  localseeinvisible && ChrList[tnc].islocalplayer )
-          trans = SEEINVISIBLE - ChrList[tnc].light_fp8;
+        if (( gs->ChrList[tnc].alpha_fp8 + gs->ChrList[tnc].light_fp8 ) < SEEINVISIBLE &&  gs->al_cs->seeinvisible && chr_is_player(gs, tnc) && gs->PlaList[gs->ChrList[tnc].whichplayer].is_local )
+          trans = SEEINVISIBLE - gs->ChrList[tnc].light_fp8;
 
         if ( trans > 0 )
         {
@@ -2216,9 +2313,9 @@ void render_water_highlights()
 {
   ATTRIB_PUSH( "render_water_highlights", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_LIGHTING_BIT );
   {
-    GLfloat light_position[] = { 10000*lightspekdir.x, 10000*lightspekdir.y, 10000*lightspekdir.z, 1.0 };
-    GLfloat lmodel_ambient[] = { lightambicol.r, lightambicol.g, lightambicol.b, 1.0 };
-    GLfloat light_diffuse[]  = { lightspekcol.r, lightspekcol.g, lightspekcol.b, 1.0 };
+    GLfloat light_position[] = { 10000*GLight.spekdir.x, 10000*GLight.spekdir.y, 10000*GLight.spekdir.z, 1.0 };
+    GLfloat lmodel_ambient[] = { GLight.ambicol.r, GLight.ambicol.g, GLight.ambicol.b, 1.0 };
+    GLfloat light_diffuse[]  = { GLight.spekcol.r, GLight.spekcol.g, GLight.spekcol.b, 1.0 };
 
     glDepthMask( GL_FALSE );
     glEnable( GL_DEPTH_TEST );
@@ -2301,12 +2398,14 @@ void render_character_highlights()
 {
   int cnt, tnc;
 
+  GameState * gs = gfxState.gs;
+
   ATTRIB_PUSH( "render_character_highlights", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_LIGHTING_BIT | GL_POLYGON_BIT );
   {
     GLfloat light_none[]     = {0, 0, 0, 0};
-    GLfloat light_position[] = { 10000*lightspekdir.x, 10000*lightspekdir.y, 10000*lightspekdir.z, 1.0 };
-    GLfloat lmodel_ambient[] = { lightambicol.r, lightambicol.g, lightambicol.b, 1.0 };
-    GLfloat light_specular[] = { lightspekcol.r, lightspekcol.g, lightspekcol.b, 1.0 };
+    GLfloat light_position[] = { 10000*GLight.spekdir.x, 10000*GLight.spekdir.y, 10000*GLight.spekdir.z, 1.0 };
+    GLfloat lmodel_ambient[] = { GLight.ambicol.r, GLight.ambicol.g, GLight.ambicol.b, 1.0 };
+    GLfloat light_specular[] = { GLight.spekcol.r, GLight.spekcol.g, GLight.spekcol.b, 1.0 };
 
     glDisable( GL_CULL_FACE );
 
@@ -2337,7 +2436,7 @@ void render_character_highlights()
     {
       tnc = dolist[cnt];
 
-      if ( ChrList[tnc].sheen_fp8 == 0 && ChrList[tnc].light_fp8 == 255 && ChrList[tnc].alpha_fp8 == 255 ) continue;
+      if ( gs->ChrList[tnc].sheen_fp8 == 0 && gs->ChrList[tnc].light_fp8 == 255 && gs->ChrList[tnc].alpha_fp8 == 255 ) continue;
 
       render_mad_lit( tnc );
     }
@@ -2354,14 +2453,16 @@ void draw_scene_zreflection()
   // ZZ> This function draws 3D objects
   // do all the rendering of reflections
 
+  GameState * gs = gfxState.gs;
+
   if ( CData.refon )
   {
     ATTRIB_GUARD_OPEN( inp_attrib_stack );
-    render_reflected_fans_ref();
+    render_reflected_fans_ref( );
     ATTRIB_GUARD_CLOSE( inp_attrib_stack, out_attrib_stack );
 
     ATTRIB_GUARD_OPEN( inp_attrib_stack );
-    //render_sha_fans_ref();
+    //render_sha_fans_ref( );
     ATTRIB_GUARD_CLOSE( inp_attrib_stack, out_attrib_stack );
 
     ATTRIB_GUARD_OPEN( inp_attrib_stack );
@@ -2414,7 +2515,7 @@ void draw_scene_zreflection()
     render_alpha_characters();
 
     // And alpha water
-    if ( !GWater.light )
+    if ( !gs->water.light )
     {
       ATTRIB_GUARD_OPEN( inp_attrib_stack );
       render_alpha_water();
@@ -2422,7 +2523,7 @@ void draw_scene_zreflection()
     };
 
     // Do self-lit water
-    if ( GWater.light )
+    if ( gs->water.light )
     {
       ATTRIB_GUARD_OPEN( inp_attrib_stack );
       render_light_water();
@@ -2463,9 +2564,9 @@ void draw_scene_zreflection()
 
     for(i=0; i<MAXCHR; i++)
     {
-      if(!ChrList[i].on) continue;
+      if(!gs->ChrList[i].on) continue;
 
-      mad_display_bbox_tree(2, ChrList[i].matrix, MadList + ChrList[i].model, ChrList[i].anim.last, ChrList[i].anim.next );
+      mad_display_bbox_tree(2, gs->ChrList[i].matrix, gs->MadList + gs->ChrList[i].model, gs->ChrList[i].anim.last, gs->ChrList[i].anim.next );
     }
   };
 
@@ -2482,6 +2583,8 @@ void draw_scene_zreflection()
 //  Uint16 cnt, tnc;
 //  Uint8 trans;
 //
+//  GameState * gs = gfxState.gs;
+//
 //  // Clear the image if need be
 //  // PORT: I don't think this is needed if(render_background) { clear_surface(lpDDSBack); }
 //  // Zbuffer is cleared later
@@ -2494,7 +2597,7 @@ void draw_scene_zreflection()
 //  // Renfer ref
 //  glEnable(GL_ALPHA_TEST);
 //  glAlphaFunc(GL_GREATER, 0);
-//  mesh.last_texture = 0;
+//  gs->mesh.last_texture = 0;
 //  for (cnt = 0; cnt < renderlist.num_shine; cnt++)
 //    render_fan(renderlist.shine[cnt]);
 //
@@ -2518,8 +2621,8 @@ void draw_scene_zreflection()
 //    for (cnt = 0; cnt < numdolist; cnt++)
 //    {
 //      tnc = dolist[cnt];
-//      if((Mesh[ChrList[tnc].onwhichfan].fx&MPDFX_SHINY))
-//        render_refmad(tnc, ChrList[tnc].alpha_fp8&ChrList[tnc].light_fp8);
+//      if((Mesh[gs->ChrList[tnc].onwhichfan].fx&MPDFX_SHINY))
+//        render_refmad(tnc, gs->ChrList[tnc].alpha_fp8 & gs->ChrList[tnc].light_fp8);
 //    }
 //
 //    // [claforte] I think this is wrong... I think we should choose some other depth func.
@@ -2530,7 +2633,7 @@ void draw_scene_zreflection()
 //  }
 //
 //  // Render the shadow floors
-//  mesh.last_texture = 0;
+//  gs->mesh.last_texture = 0;
 //
 //  glEnable(GL_ALPHA_TEST);
 //  glAlphaFunc(GL_GREATER, 0);
@@ -2550,9 +2653,9 @@ void draw_scene_zreflection()
 //      for (cnt = 0; cnt < numdolist; cnt++)
 //      {
 //        tnc = dolist[cnt];
-//        if(ChrList[tnc].attachedto == MAXCHR)
+//        if(gs->ChrList[tnc].attachedto == MAXCHR)
 //        {
-//          if(((ChrList[tnc].light_fp8==255 && ChrList[tnc].alpha_fp8==255) || CapList[ChrList[tnc].model].forceshadow) && ChrList[tnc].bmpdata.calc_shadowsize!=0)
+//          if(((gs->ChrList[tnc].light_fp8==255 && gs->ChrList[tnc].alpha_fp8==255) || gs->CapList[gs->ChrList[tnc].model].forceshadow) && gs->ChrList[tnc].bmpdata.calc_shadowsize!=0)
 //            render_bad_shadow(tnc);
 //        }
 //      }
@@ -2570,9 +2673,9 @@ void draw_scene_zreflection()
 //      for (cnt = 0; cnt < numdolist; cnt++)
 //      {
 //        tnc = dolist[cnt];
-//        if(ChrList[tnc].attachedto == MAXCHR)
+//        if(gs->ChrList[tnc].attachedto == MAXCHR)
 //        {
-//          if(((ChrList[tnc].light_fp8==255 && ChrList[tnc].alpha_fp8==255) || CapList[ChrList[tnc].model].forceshadow) && ChrList[tnc].bmpdata.calc_shadowsize!=0)
+//          if(((gs->ChrList[tnc].light_fp8==255 && gs->ChrList[tnc].alpha_fp8==255) || gs->CapList[gs->ChrList[tnc].model].forceshadow) && gs->ChrList[tnc].bmpdata.calc_shadowsize!=0)
 //            render_shadow(tnc);
 //        }
 //      }
@@ -2597,7 +2700,7 @@ void draw_scene_zreflection()
 //    for (cnt = 0; cnt < numdolist; cnt++)
 //    {
 //      tnc = dolist[cnt];
-//      if(ChrList[tnc].alpha_fp8==255 && ChrList[tnc].light_fp8==255)
+//      if(gs->ChrList[tnc].alpha_fp8==255 && gs->ChrList[tnc].light_fp8==255)
 //        render_mad(tnc, 255);
 //    }
 //  }
@@ -2620,10 +2723,10 @@ void draw_scene_zreflection()
 //    for (cnt = 0; cnt < numdolist; cnt++)
 //    {
 //      tnc = dolist[cnt];
-//      if(ChrList[tnc].alpha_fp8!=255 && ChrList[tnc].light_fp8==255)
+//      if(gs->ChrList[tnc].alpha_fp8!=255 && gs->ChrList[tnc].light_fp8==255)
 //      {
-//        trans = ChrList[tnc].alpha_fp8;
-//        if(trans < SEEINVISIBLE && (localseeinvisible || ChrList[tnc].islocalplayer))  trans = SEEINVISIBLE;
+//        trans = gs->ChrList[tnc].alpha_fp8;
+//        if(trans < SEEINVISIBLE && (gs->al_cs->seeinvisible || gs->ChrList[tnc].islocalplayer))  trans = SEEINVISIBLE;
 //        render_mad(tnc, trans);
 //      }
 //    }
@@ -2631,7 +2734,7 @@ void draw_scene_zreflection()
 //  }
 //
 //  // And alpha water floors
-//  if(!GWater.light)
+//  if(!gs->water.light)
 //    render_water();
 //
 //  // Then do the light characters
@@ -2647,17 +2750,17 @@ void draw_scene_zreflection()
 //    for (cnt = 0; cnt < numdolist; cnt++)
 //    {
 //      tnc = dolist[cnt];
-//      if(ChrList[tnc].light_fp8!=255)
+//      if(gs->ChrList[tnc].light_fp8!=255)
 //      {
-//        trans = FP8_TO_FLOAT(FP8_MUL(ChrList[tnc].light_fp8, ChrList[tnc].alpha_fp8)) * 0.5f;
-//        if(trans < SEEINVISIBLE && (localseeinvisible || ChrList[tnc].islocalplayer))  trans = SEEINVISIBLE;
+//        trans = FP8_TO_FLOAT(FP8_MUL(gs->ChrList[tnc].light_fp8, gs->ChrList[tnc].alpha_fp8)) * 0.5f;
+//        if(trans < SEEINVISIBLE && (gs->al_cs->seeinvisible || gs->ChrList[tnc].islocalplayer))  trans = SEEINVISIBLE;
 //        render_mad(tnc, trans);
 //      }
 //    }
 //  }
 //
 //  // Do phong highlights
-//  if(CData.phongon && ChrList[tnc].sheen_fp8 > 0)
+//  if(CData.phongon && gs->ChrList[tnc].sheen_fp8 > 0)
 //  {
 //    Uint16 texturesave, envirosave;
 //
@@ -2670,20 +2773,20 @@ void draw_scene_zreflection()
 //      glEnable(GL_BLEND);
 //      glBlendFunc(GL_ONE, GL_ONE);
 //
-//      envirosave = ChrList[tnc].enviro;
-//      texturesave = ChrList[tnc].skin + MadList[ChrList[tnc].model].skinstart;
-//      ChrList[tnc].enviro = btrue;
-//      ChrList[tnc].skin + MadList[ChrList[tnc].model].skinstart = TX_PHONG;  // The phong map texture...
-//      render_enviromad(tnc, (ChrList[tnc].alpha_fp8 * spek_global[ChrList[tnc].sheen_fp8][ChrList[tnc].light_fp8]) / 2, GL_TEXTURE_2D);
-//      ChrList[tnc].skin + MadList[ChrList[tnc].model].skinstart = texturesave;
-//      ChrList[tnc].enviro = envirosave;
+//      envirosave = gs->ChrList[tnc].enviro;
+//      texturesave = gs->ChrList[tnc].skin + gs->MadList[gs->ChrList[tnc].model].skinstart;
+//      gs->ChrList[tnc].enviro = btrue;
+//      gs->ChrList[tnc].skin + gs->MadList[gs->ChrList[tnc].model].skinstart = TX_PHONG;  // The phong map texture...
+//      render_enviromad(tnc, (gs->ChrList[tnc].alpha_fp8 * spek_global[gs->ChrList[tnc].sheen_fp8][gs->ChrList[tnc].light_fp8]) / 2, GL_TEXTURE_2D);
+//      gs->ChrList[tnc].skin + gs->MadList[gs->ChrList[tnc].model].skinstart = texturesave;
+//      gs->ChrList[tnc].enviro = envirosave;
 //    };
 //    ATTRIB_POP("zref");
 //  }
 //
 //
 //  // Do light water
-//  if(GWater.light)
+//  if(gs->water.light)
 //    render_water();
 //
 //  // Turn Z buffer back on, alphablend off
@@ -2700,7 +2803,7 @@ bool_t draw_texture_box( GLtexture * ptx, FRect * tx_rect, FRect * sc_rect )
 
   if(NULL != ptx)
   {
-    GLTexture_Bind( ptx, CData.texturefilter );
+    GLTexture_Bind( ptx, &gfxState );
   }
 
   if(NULL == tx_rect)
@@ -2725,20 +2828,22 @@ void draw_blip( COLR color, float x, float y)
 {
   // ZZ> This function draws a blip
 
+  GuiState * gui = Get_GuiState();
+
   FRect tx_rect, sc_rect;
   float width, height;
 
   width  = 3.0*mapscale*0.5f;
   height = 3.0*mapscale*0.5f;
 
-  if ( x < -width || x > CData.scrx + width || y < -height || y > CData.scry + height ) return;
+  if ( x < -width || x > gfxState.scrx + width || y < -height || y > gfxState.scry + height ) return;
 
   ATTRIB_PUSH( "draw_blip", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT | GL_TEXTURE_BIT | GL_LIGHTING_BIT | GL_CURRENT_BIT );
   {
     // depth buffer stuff
     glDepthMask( GL_FALSE );
 
-    // CData.shading stuff
+    // gfxState.shading stuff
     glShadeModel( GL_FLAT );
 
     // alpha stuff
@@ -2750,19 +2855,19 @@ void draw_blip( COLR color, float x, float y)
     // backface culling
     glDisable( GL_CULL_FACE );
 
-    tx_rect.left   = (( float ) BlipList[color].rect.left   ) / ( float ) GLTexture_GetTextureWidth(&TxBlip)  + 0.01;
-    tx_rect.right  = (( float ) BlipList[color].rect.right  ) / ( float ) GLTexture_GetTextureWidth(&TxBlip)  - 0.01;
-    tx_rect.top    = (( float ) BlipList[color].rect.top    ) / ( float ) GLTexture_GetTextureHeight(&TxBlip) + 0.01;
-    tx_rect.bottom = (( float ) BlipList[color].rect.bottom ) / ( float ) GLTexture_GetTextureHeight(&TxBlip) - 0.01;
+    tx_rect.left   = (( float ) BlipList[color].rect.left   ) / ( float ) GLTexture_GetTextureWidth(&gui->TxBlip)  + 0.01;
+    tx_rect.right  = (( float ) BlipList[color].rect.right  ) / ( float ) GLTexture_GetTextureWidth(&gui->TxBlip)  - 0.01;
+    tx_rect.top    = (( float ) BlipList[color].rect.top    ) / ( float ) GLTexture_GetTextureHeight(&gui->TxBlip) + 0.01;
+    tx_rect.bottom = (( float ) BlipList[color].rect.bottom ) / ( float ) GLTexture_GetTextureHeight(&gui->TxBlip) - 0.01;
 
     sc_rect.left   = x - width;
     sc_rect.right  = x + width;
-    sc_rect.top    = CData.scry - ( y - height );
-    sc_rect.bottom = CData.scry - ( y + height );
+    sc_rect.top    = gfxState.scry - ( y - height );
+    sc_rect.bottom = gfxState.scry - ( y + height );
 
     glColor4f( 1.0f, 1.0f, 1.0f, 1.0f );
 
-    draw_texture_box(&TxBlip, &tx_rect, &sc_rect);
+    draw_texture_box(&gui->TxBlip, &tx_rect, &sc_rect);
   }
   ATTRIB_POP( "draw_blip" );
 }
@@ -2772,18 +2877,20 @@ void draw_one_icon( int icontype, int x, int y, Uint8 sparkle )
 {
   // ZZ> This function draws an icon
 
+  GameState * gs = gfxState.gs;
+
   int position, blipx, blipy;
   int width, height;
   FRect tx_rect, sc_rect;
 
-  if ( INVALID_TEXTURE == TxIcon[icontype].textureID ) return;
+  if ( INVALID_TEXTURE == gs->TxIcon[icontype].textureID ) return;
 
   ATTRIB_PUSH( "draw_one_icon", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT | GL_TEXTURE_BIT | GL_LIGHTING_BIT | GL_CURRENT_BIT );
   {
     // depth buffer stuff
     glDepthMask( GL_FALSE );
 
-    // CData.shading stuff
+    // gfxState.shading stuff
     glShadeModel( GL_FLAT );
 
     // alpha stuff
@@ -2793,43 +2900,43 @@ void draw_one_icon( int icontype, int x, int y, Uint8 sparkle )
     // backface culling
     glDisable( GL_CULL_FACE );
 
-    tx_rect.left   = (( float ) iconrect.left   ) / GLTexture_GetTextureWidth(&TxIcon[icontype]);
-    tx_rect.right  = (( float ) iconrect.right  ) / GLTexture_GetTextureWidth(&TxIcon[icontype]);
-    tx_rect.top    = (( float ) iconrect.top    ) / GLTexture_GetTextureHeight(&TxIcon[icontype]);
-    tx_rect.bottom = (( float ) iconrect.bottom ) / GLTexture_GetTextureHeight(&TxIcon[icontype]);
+    tx_rect.left   = (( float ) iconrect.left   ) / GLTexture_GetTextureWidth(gs->TxIcon + icontype);
+    tx_rect.right  = (( float ) iconrect.right  ) / GLTexture_GetTextureWidth(gs->TxIcon + icontype);
+    tx_rect.top    = (( float ) iconrect.top    ) / GLTexture_GetTextureHeight(gs->TxIcon + icontype);
+    tx_rect.bottom = (( float ) iconrect.bottom ) / GLTexture_GetTextureHeight(gs->TxIcon + icontype);
 
     width  = iconrect.right  - iconrect.left;
     height = iconrect.bottom - iconrect.top;
 
     sc_rect.left   = x;
     sc_rect.right  = x + width;
-    sc_rect.top    = CData.scry - y;
-    sc_rect.bottom = CData.scry - (y + height);
+    sc_rect.top    = gfxState.scry - y;
+    sc_rect.bottom = gfxState.scry - (y + height);
 
-    draw_texture_box( &TxIcon[icontype], &tx_rect, &sc_rect);
+    draw_texture_box( gs->TxIcon + icontype, &tx_rect, &sc_rect);
   }
   ATTRIB_POP( "draw_one_icon" );
 
   if ( sparkle != NOSPARKLE )
   {
-    position = wldframe & 31;
+    position = gs->wld_frame & 31;
     position = ( SPARKLESIZE * position >> 5 );
 
     blipx = x + SPARKLEADD + position;
     blipy = y + SPARKLEADD;
-    draw_blip( sparkle, blipx, blipy );
+    draw_blip( (COLR)sparkle, blipx, blipy );
 
     blipx = x + SPARKLEADD + SPARKLESIZE;
     blipy = y + SPARKLEADD + position;
-    draw_blip( sparkle, blipx, blipy );
+    draw_blip( (COLR)sparkle, blipx, blipy );
 
     blipx -= position;
     blipy = y + SPARKLEADD + SPARKLESIZE;
-    draw_blip( sparkle, blipx, blipy );
+    draw_blip( (COLR)sparkle, blipx, blipy );
 
     blipx = x + SPARKLEADD;
     blipy -= position;
-    draw_blip( sparkle, blipx, blipy );
+    draw_blip( (COLR)sparkle, blipx, blipy );
   }
 }
 
@@ -2852,8 +2959,8 @@ void draw_one_font( int fonttype, float x, float y )
 
   sc_rect.left   = x;
   sc_rect.right  = x + bmfont.rect[fonttype].w;
-  sc_rect.top    = CData.scry - y;
-  sc_rect.bottom = CData.scry - (y + bmfont.rect[fonttype].h);
+  sc_rect.top    = gfxState.scry - y;
+  sc_rect.bottom = gfxState.scry - (y + bmfont.rect[fonttype].h);
 
   draw_texture_box(NULL, &tx_rect, &sc_rect);
 }
@@ -2863,6 +2970,7 @@ void draw_map( float x, float y )
 {
   // ZZ> This function draws the map
 
+  GameState * gs = gfxState.gs;
   FRect tx_rect, sc_rect;
 
   ATTRIB_PUSH( "draw_map", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT | GL_TEXTURE_BIT | GL_LIGHTING_BIT );
@@ -2870,7 +2978,7 @@ void draw_map( float x, float y )
     // depth buffer stuff
     glDepthMask( GL_FALSE );
 
-    // CData.shading stuff
+    // gfxState.shading stuff
     glShadeModel( GL_FLAT );
 
     // alpha stuff
@@ -2881,16 +2989,16 @@ void draw_map( float x, float y )
     glDisable( GL_CULL_FACE );
 
     tx_rect.left   = 0.0f;
-    tx_rect.right  = (float)GLTexture_GetImageWidth(&TxMap) / (float)GLTexture_GetTextureWidth(&TxMap);
+    tx_rect.right  = (float)GLTexture_GetImageWidth(&gs->TxMap) / (float)GLTexture_GetTextureWidth(&gs->TxMap);
     tx_rect.top    = 0.0f;
-    tx_rect.bottom = (float)GLTexture_GetImageHeight(&TxMap) / (float)GLTexture_GetTextureHeight(&TxMap);
+    tx_rect.bottom = (float)GLTexture_GetImageHeight(&gs->TxMap) / (float)GLTexture_GetTextureHeight(&gs->TxMap);
 
     sc_rect.left   = x + maprect.left;
     sc_rect.right  = x + maprect.right;
     sc_rect.top    = maprect.bottom - y;
     sc_rect.bottom = maprect.top    - y;
 
-    draw_texture_box( &TxMap, &tx_rect, &sc_rect );
+    draw_texture_box( &gs->TxMap, &tx_rect, &sc_rect );
   }
   ATTRIB_POP( "draw_map" );
 }
@@ -2899,6 +3007,8 @@ void draw_map( float x, float y )
 int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
 {
   // ZZ> This function draws a bar and returns the y position for the next one
+
+  GuiState * gui = Get_GuiState();
 
   int noticks;
   FRect tx_rect, sc_rect;
@@ -2910,7 +3020,7 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
     // depth buffer stuff
     glDepthMask( GL_FALSE );
 
-    // CData.shading stuff
+    // gfxState.shading stuff
     glShadeModel( GL_FLAT );
 
     // alpha stuff
@@ -2925,21 +3035,21 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
     if ( maxticks > 0 && ticks >= 0 )
     {
       // Draw the tab
-      GLTexture_Bind( &TxBars, CData.texturefilter );
-      tx_rect.left   = ( float ) tabrect[bartype].left   / ( float ) GLTexture_GetTextureWidth( &TxBars );
-      tx_rect.right  = ( float ) tabrect[bartype].right  / ( float ) GLTexture_GetTextureWidth( &TxBars );
-      tx_rect.top    = ( float ) tabrect[bartype].top    / ( float ) GLTexture_GetTextureHeight( &TxBars );
-      tx_rect.bottom = ( float ) tabrect[bartype].bottom / ( float ) GLTexture_GetTextureHeight( &TxBars );
+      GLTexture_Bind( &gui->TxBars, &gfxState );
+      tx_rect.left   = ( float ) tabrect[bartype].left   / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
+      tx_rect.right  = ( float ) tabrect[bartype].right  / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
+      tx_rect.top    = ( float ) tabrect[bartype].top    / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
+      tx_rect.bottom = ( float ) tabrect[bartype].bottom / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
 
       width  = tabrect[bartype].right  - tabrect[bartype].left;
       height = tabrect[bartype].bottom - tabrect[bartype].top;
 
       sc_rect.left   = x;
       sc_rect.right  = x + width;
-      sc_rect.top    = CData.scry - y;
-      sc_rect.bottom = CData.scry - (y + height);
+      sc_rect.top    = gfxState.scry - y;
+      sc_rect.bottom = gfxState.scry - (y + height);
 
-      draw_texture_box(&TxBars, &tx_rect, &sc_rect);
+      draw_texture_box(&gui->TxBars, &tx_rect, &sc_rect);
 
       // Error check
       if ( maxticks > MAXTICK ) maxticks = MAXTICK;
@@ -2951,20 +3061,20 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
       {
         barrect[bartype].right = BARX;
 
-        tx_rect.left   = ( float ) barrect[bartype].left   / ( float ) GLTexture_GetTextureWidth( &TxBars );
-        tx_rect.right  = ( float ) barrect[bartype].right  / ( float ) GLTexture_GetTextureWidth( &TxBars );
-        tx_rect.top    = ( float ) barrect[bartype].top    / ( float ) GLTexture_GetTextureHeight( &TxBars );
-        tx_rect.bottom = ( float ) barrect[bartype].bottom / ( float ) GLTexture_GetTextureHeight( &TxBars );
+        tx_rect.left   = ( float ) barrect[bartype].left   / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
+        tx_rect.right  = ( float ) barrect[bartype].right  / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
+        tx_rect.top    = ( float ) barrect[bartype].top    / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
+        tx_rect.bottom = ( float ) barrect[bartype].bottom / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
 
         width  = barrect[bartype].right  - barrect[bartype].left;
         height = barrect[bartype].bottom - barrect[bartype].top;
 
         sc_rect.left   = x;
         sc_rect.right  = x + width;
-        sc_rect.top    = CData.scry - y;
-        sc_rect.bottom = CData.scry - (y + height);
+        sc_rect.top    = gfxState.scry - y;
+        sc_rect.bottom = gfxState.scry - (y + height);
 
-        draw_texture_box(&TxBars, &tx_rect, &sc_rect);
+        draw_texture_box(&gui->TxBars, &tx_rect, &sc_rect);
 
         y += BARY;
         ticks -= NUMTICK;
@@ -2978,40 +3088,40 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
         // Draw the filled ones
         barrect[bartype].right = ( ticks << 3 ) + TABX;
 
-        tx_rect.left   = ( float ) barrect[bartype].left   / ( float ) GLTexture_GetTextureWidth( &TxBars );
-        tx_rect.right  = ( float ) barrect[bartype].right  / ( float ) GLTexture_GetTextureWidth( &TxBars );
-        tx_rect.top    = ( float ) barrect[bartype].top    / ( float ) GLTexture_GetTextureHeight( &TxBars );
-        tx_rect.bottom = ( float ) barrect[bartype].bottom / ( float ) GLTexture_GetTextureHeight( &TxBars );
+        tx_rect.left   = ( float ) barrect[bartype].left   / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
+        tx_rect.right  = ( float ) barrect[bartype].right  / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
+        tx_rect.top    = ( float ) barrect[bartype].top    / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
+        tx_rect.bottom = ( float ) barrect[bartype].bottom / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
 
         width  = barrect[bartype].right  - barrect[bartype].left;
         height = barrect[bartype].bottom - barrect[bartype].top;
 
         sc_rect.left   = x;
         sc_rect.right  = x + width;
-        sc_rect.top    = CData.scry - y;
-        sc_rect.bottom = CData.scry - (y + height);
+        sc_rect.top    = gfxState.scry - y;
+        sc_rect.bottom = gfxState.scry - (y + height);
 
-        draw_texture_box(&TxBars, &tx_rect, &sc_rect);
+        draw_texture_box(&gui->TxBars, &tx_rect, &sc_rect);
 
         // Draw the empty ones
         noticks = maxticks - ticks;
         if ( noticks > ( NUMTICK - ticks ) ) noticks = ( NUMTICK - ticks );
         barrect[0].right = ( noticks << 3 ) + TABX;
 
-        tx_rect.left   = ( float ) barrect[0].left   / ( float ) GLTexture_GetTextureWidth( &TxBars );
-        tx_rect.right  = ( float ) barrect[0].right  / ( float ) GLTexture_GetTextureWidth( &TxBars );
-        tx_rect.top    = ( float ) barrect[0].top    / ( float ) GLTexture_GetTextureHeight( &TxBars );
-        tx_rect.bottom = ( float ) barrect[0].bottom / ( float ) GLTexture_GetTextureHeight( &TxBars );
+        tx_rect.left   = ( float ) barrect[0].left   / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
+        tx_rect.right  = ( float ) barrect[0].right  / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
+        tx_rect.top    = ( float ) barrect[0].top    / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
+        tx_rect.bottom = ( float ) barrect[0].bottom / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
 
         width  = barrect[0].right  - barrect[0].left;
         height = barrect[0].bottom - barrect[0].top;
 
         sc_rect.left   = x;
         sc_rect.right  = x + width;
-        sc_rect.top    = CData.scry - y;
-        sc_rect.bottom = CData.scry - (y + height);
+        sc_rect.top    = gfxState.scry - y;
+        sc_rect.bottom = gfxState.scry - (y + height);
 
-        draw_texture_box(&TxBars, &tx_rect, &sc_rect);
+        draw_texture_box(&gui->TxBars, &tx_rect, &sc_rect);
 
         maxticks -= NUMTICK;
         y += BARY;
@@ -3023,20 +3133,20 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
       {
         barrect[0].right = BARX;
 
-        tx_rect.left   = ( float ) barrect[0].left   / ( float ) GLTexture_GetTextureWidth( &TxBars );
-        tx_rect.right  = ( float ) barrect[0].right  / ( float ) GLTexture_GetTextureWidth( &TxBars );
-        tx_rect.top    = ( float ) barrect[0].top    / ( float ) GLTexture_GetTextureHeight( &TxBars );
-        tx_rect.bottom = ( float ) barrect[0].bottom / ( float ) GLTexture_GetTextureHeight( &TxBars );
+        tx_rect.left   = ( float ) barrect[0].left   / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
+        tx_rect.right  = ( float ) barrect[0].right  / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
+        tx_rect.top    = ( float ) barrect[0].top    / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
+        tx_rect.bottom = ( float ) barrect[0].bottom / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
 
         width  = barrect[0].right  - barrect[0].left;
         height = barrect[0].bottom - barrect[0].top;
 
         sc_rect.left   = x;
         sc_rect.right  = x + width;
-        sc_rect.top    = CData.scry - y;
-        sc_rect.bottom = CData.scry - (y + height);
+        sc_rect.top    = gfxState.scry - y;
+        sc_rect.bottom = gfxState.scry - (y + height);
 
-        draw_texture_box(&TxBars, &tx_rect, &sc_rect);
+        draw_texture_box(&gui->TxBars, &tx_rect, &sc_rect);
 
         y += BARY;
         maxticks -= NUMTICK;
@@ -3048,20 +3158,20 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
       {
         barrect[0].right = ( maxticks << 3 ) + TABX;
 
-        tx_rect.left   = ( float ) barrect[0].left   / ( float ) GLTexture_GetTextureWidth( &TxBars );
-        tx_rect.right  = ( float ) barrect[0].right  / ( float ) GLTexture_GetTextureWidth( &TxBars );
-        tx_rect.top    = ( float ) barrect[0].top    / ( float ) GLTexture_GetTextureHeight( &TxBars );
-        tx_rect.bottom = ( float ) barrect[0].bottom / ( float ) GLTexture_GetTextureHeight( &TxBars );
+        tx_rect.left   = ( float ) barrect[0].left   / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
+        tx_rect.right  = ( float ) barrect[0].right  / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
+        tx_rect.top    = ( float ) barrect[0].top    / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
+        tx_rect.bottom = ( float ) barrect[0].bottom / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
 
         width  = barrect[0].right  - barrect[0].left;
         height = barrect[0].bottom - barrect[0].top;
 
         sc_rect.left   = x;
         sc_rect.right  = x + width;
-        sc_rect.top    = CData.scry - y;
-        sc_rect.bottom = CData.scry - (y + height);
+        sc_rect.top    = gfxState.scry - y;
+        sc_rect.bottom = gfxState.scry - (y + height);
 
-        draw_texture_box(&TxBars, &tx_rect, &sc_rect);
+        draw_texture_box(&gui->TxBars, &tx_rect, &sc_rect);
 
         y += BARY;
       }
@@ -3270,27 +3380,53 @@ int draw_wrap_string( BMFont * pfnt, float x, float y, GLfloat tint[], float max
 }
 
 //--------------------------------------------------------------------------------------------
-int draw_status( BMFont * pfnt, CHR_REF character, int x, int y )
+int draw_status( BMFont * pfnt, Status * pstat )
 {
-  // ZZ> This function shows a character's icon, status and inventory
+  // ZZ> This function shows a ichr's icon, status and inventory
   //     The x,y coordinates are the top left point of the image to draw
 
-  Uint16 item;
+  GameState * gs = gfxState.gs;
+
+  Uint16 item, imdl;
   char cTmp;
   char *readtext;
-  int ystt = y;
+  int  ix,iy, iystt;
+  CHR_REF ichr;
+  Chr * pchr;
+  Mad * pmad;
+  Cap * pcap;
 
-  float life    = FP8_TO_FLOAT( ChrList[character].life_fp8 );
-  float lifemax = FP8_TO_FLOAT( ChrList[character].lifemax_fp8 );
-  float mana    = FP8_TO_FLOAT( ChrList[character].mana_fp8 );
-  float manamax = FP8_TO_FLOAT( ChrList[character].manamax_fp8 );
+  float life, lifemax;
+  float mana, manamax;
   int cnt;
 
-  // Write the character's first name
-  if ( ChrList[character].nameknown )
-    readtext = ChrList[character].name;
+  if(NULL == pstat) return 0;
+  ichr = pstat->chr_ref;
+  ix = pstat->pos.x;
+  iy = pstat->pos.y;
+  iystt = iy;
+
+  if( !VALID_CHR( gs->ChrList, ichr) ) return 0;
+  pchr = gs->ChrList + ichr;
+
+  imdl = pchr->model;
+  if( !VALID_MDL(imdl) ) return 0;
+
+  pmad = gs->MadList + imdl;
+  pcap = gs->CapList + imdl;
+
+
+
+  life    = FP8_TO_FLOAT( pchr->life_fp8 );
+  lifemax = FP8_TO_FLOAT( pchr->lifemax_fp8 );
+  mana    = FP8_TO_FLOAT( pchr->mana_fp8 );
+  manamax = FP8_TO_FLOAT( pchr->manamax_fp8 );
+
+  // Write the ichr's first name
+  if ( pchr->nameknown )
+    readtext = pchr->name;
   else
-    readtext = CapList[ChrList[character].model].classname;
+    readtext = pcap->classname;
 
   for ( cnt = 0; cnt < 6; cnt++ )
   {
@@ -3305,73 +3441,73 @@ int draw_status( BMFont * pfnt, CHR_REF character, int x, int y )
       generictext[cnt] = cTmp;
   }
   generictext[6] = 0;
-  y += draw_string( pfnt, x + 8, y, NULL, generictext );
+  iy += draw_string( pfnt, ix + 8, iy, NULL, generictext );
 
 
-  // Write the character's money
-  y += 8 + draw_string( pfnt, x + 8, y, NULL, "$%4d", ChrList[character].money );
+  // Write the ichr's money
+  iy += 8 + draw_string( pfnt, ix + 8, iy, NULL, "$%4d", pchr->money );
 
 
   // Draw the icons
-  draw_one_icon( skintoicon[ChrList[character].skin_ref + MadList[ChrList[character].model].skinstart], x + 40, y, ChrList[character].sparkle );
-  item = chr_get_holdingwhich( character, SLOT_LEFT );
-  if ( VALID_CHR( item ) )
+  draw_one_icon( gs->skintoicon[pchr->skin_ref + pmad->skinstart], ix + 40, iy, pchr->sparkle );
+  item = chr_get_holdingwhich( gs->ChrList, MAXCHR, ichr, SLOT_LEFT );
+  if ( VALID_CHR( gs->ChrList,  item ) )
   {
-    if ( ChrList[item].icon )
+    if ( gs->ChrList[item].icon )
     {
-      draw_one_icon( skintoicon[ChrList[item].skin_ref + MadList[ChrList[item].model].skinstart], x + 8, y, ChrList[item].sparkle );
-      if ( ChrList[item].ammomax != 0 && ChrList[item].ammoknown )
+      draw_one_icon( gs->skintoicon[gs->ChrList[item].skin_ref + gs->MadList[gs->ChrList[item].model].skinstart], ix + 8, iy, gs->ChrList[item].sparkle );
+      if ( gs->ChrList[item].ammomax != 0 && gs->ChrList[item].ammoknown )
       {
-        if ( !CapList[ChrList[item].model].isstackable || ChrList[item].ammo > 1 )
+        if ( !gs->CapList[gs->ChrList[item].model].isstackable || gs->ChrList[item].ammo > 1 )
         {
           // Show amount of ammo left
-          draw_string( pfnt, x + 8, y - 8, NULL, "%2d", ChrList[item].ammo );
+          draw_string( pfnt, ix + 8, iy - 8, NULL, "%2d", gs->ChrList[item].ammo );
         }
       }
     }
     else
-      draw_one_icon( bookicon + ( ChrList[item].money % MAXSKIN ), x + 8, y, ChrList[item].sparkle );
+      draw_one_icon( gs->bookicon + ( gs->ChrList[item].money % MAXSKIN ), ix + 8, iy, gs->ChrList[item].sparkle );
   }
   else
-    draw_one_icon( nullicon, x + 8, y, NOSPARKLE );
+    draw_one_icon( gs->nullicon, ix + 8, iy, NOSPARKLE );
 
-  item = chr_get_holdingwhich( character, SLOT_RIGHT );
-  if ( VALID_CHR( item ) )
+  item = chr_get_holdingwhich( gs->ChrList, MAXCHR, ichr, SLOT_RIGHT );
+  if ( VALID_CHR( gs->ChrList,  item ) )
   {
-    if ( ChrList[item].icon )
+    if ( gs->ChrList[item].icon )
     {
-      draw_one_icon( skintoicon[ChrList[item].skin_ref + MadList[ChrList[item].model].skinstart], x + 72, y, ChrList[item].sparkle );
-      if ( ChrList[item].ammomax != 0 && ChrList[item].ammoknown )
+      draw_one_icon( gs->skintoicon[gs->ChrList[item].skin_ref + gs->MadList[gs->ChrList[item].model].skinstart], ix + 72, iy, gs->ChrList[item].sparkle );
+      if ( gs->ChrList[item].ammomax != 0 && gs->ChrList[item].ammoknown )
       {
-        if ( !CapList[ChrList[item].model].isstackable || ChrList[item].ammo > 1 )
+        if ( !gs->CapList[gs->ChrList[item].model].isstackable || gs->ChrList[item].ammo > 1 )
         {
           // Show amount of ammo left
-          draw_string( pfnt, x + 72, y - 8, NULL, "%2d", ChrList[item].ammo );
+          draw_string( pfnt, ix + 72, iy - 8, NULL, "%2d", gs->ChrList[item].ammo );
         }
       }
     }
     else
-      draw_one_icon( bookicon + ( ChrList[item].money % MAXSKIN ), x + 72, y, ChrList[item].sparkle );
+      draw_one_icon( gs->bookicon + ( gs->ChrList[item].money % MAXSKIN ), ix + 72, iy, gs->ChrList[item].sparkle );
   }
   else
-    draw_one_icon( nullicon, x + 72, y, NOSPARKLE );
+    draw_one_icon( gs->nullicon, ix + 72, iy, NOSPARKLE );
 
-  y += 32;
+  iy += 32;
 
   // Draw the bars
-  if ( ChrList[character].alive )
+  if ( pchr->alive )
   {
-    y += draw_one_bar( ChrList[character].lifecolor, x, y, life, lifemax );
-    y += draw_one_bar( ChrList[character].manacolor, x, y, mana, manamax );
+    iy += draw_one_bar( pchr->lifecolor, ix, iy, life, lifemax );
+    iy += draw_one_bar( pchr->manacolor, ix, iy, mana, manamax );
   }
   else
   {
-    y += draw_one_bar( 0, x, y, 0, lifemax ); // Draw a black bar
-    y += draw_one_bar( 0, x, y, 0, manamax ); // Draw a black bar
+    iy += draw_one_bar( 0, ix, iy, 0, lifemax ); // Draw a black bar
+    iy += draw_one_bar( 0, ix, iy, 0, manamax ); // Draw a black bar
   };
 
 
-  return y - ystt;
+  return iy - iystt;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -3380,6 +3516,8 @@ bool_t do_map()
   PLA_REF ipla;
   CHR_REF ichr;
   int cnt;
+
+  GameState * gs = gfxState.gs;
 
   if(!mapon) return bfalse;
 
@@ -3390,16 +3528,16 @@ bool_t do_map()
     draw_blip( BlipList[cnt].c, maprect.left + BlipList[cnt].x, maprect.top + BlipList[cnt].y );
   };
 
-  if ( youarehereon && ( wldframe&8 ) )
+  if ( youarehereon && ( gs->wld_frame&8 ) )
   {
     for ( ipla = 0; ipla < MAXPLAYER; ipla++ )
     {
-      if ( !VALID_PLA( ipla ) || INBITS_NONE == PlaList[ipla].device ) continue;
+      if ( !VALID_PLA( gs->PlaList, ipla ) || INBITS_NONE == gs->PlaList[ipla].device ) continue;
 
-      ichr = pla_get_character( ipla );
-      if ( !VALID_CHR( ichr ) || !ChrList[ichr].alive ) continue;
+      ichr = PlaList_get_character( gs, ipla );
+      if ( !VALID_CHR( gs->ChrList,  ichr ) || !gs->ChrList[ichr].alive ) continue;
 
-      draw_blip( 0, maprect.left + MAPSIZE * mesh_fraction_x( ChrList[ichr].pos.x ) * mapscale, maprect.top + MAPSIZE * mesh_fraction_y( ChrList[ichr].pos.y ) * mapscale );
+      draw_blip( (COLR)0, maprect.left + MAPSIZE * mesh_fraction_x( &(gs->mesh), gs->ChrList[ichr].pos.x ) * mapscale, maprect.top + MAPSIZE * mesh_fraction_y( &(gs->mesh), gs->ChrList[ichr].pos.y ) * mapscale );
     }
   }
 
@@ -3412,6 +3550,8 @@ int do_messages( BMFont * pfnt, int x, int y )
   int cnt, tnc;
   int ystt = y;
 
+  GameState * gs = gfxState.gs;
+
   if ( NULL==pfnt || !CData.messageon ) return 0;
 
   // Display the messages
@@ -3419,14 +3559,14 @@ int do_messages( BMFont * pfnt, int x, int y )
   for ( cnt = 0; cnt < CData.maxmessage; cnt++ )
   {
     // mesages with negative times never time out!
-    if ( GMsg.time[tnc] != 0 )
+    if ( GMsg.list[tnc].time != 0 )
     {
-      y += draw_wrap_string( pfnt, x, y, NULL, CData.scrx - CData.wraptolerance - x, GMsg.textdisplay[tnc] );
+      y += draw_wrap_string( pfnt, x, y, NULL, gfxState.scrx - CData.wraptolerance - x, GMsg.list[tnc].textdisplay );
 
-      if ( GMsg.time[tnc] > 0 )
+      if ( GMsg.list[tnc].time > 0 )
       {
-        GMsg.time[tnc] -= GMsg.timechange;
-        if ( GMsg.time[tnc] < 0 ) GMsg.time[tnc] = 0;
+        GMsg.list[tnc].time -= gs->al_cs->msg_timechange;
+        if ( GMsg.list[tnc].time < 0 ) GMsg.list[tnc].time = 0;
       };
     }
     tnc++;
@@ -3437,7 +3577,7 @@ int do_messages( BMFont * pfnt, int x, int y )
 }
 
 //--------------------------------------------------------------------------------------------
-int do_status( BMFont * pfnt, int x, int y)
+int do_status( ClientState * cs, BMFont * pfnt, int x, int y)
 {
   int cnt;
   int ystt = y;
@@ -3445,9 +3585,12 @@ int do_status( BMFont * pfnt, int x, int y)
   if ( !CData.staton ) return 0;
 
 
-  for ( cnt = 0; cnt < numstat && y < CData.scry; cnt++ )
+  for ( cnt = 0; cnt < cs->StatList_count && y < gfxState.scry; cnt++ )
   {
-    y += draw_status( pfnt, statlist[cnt], x, y );
+    cs->StatList[cnt].pos.x = x;
+    cs->StatList[cnt].pos.y = y;
+
+    y += draw_status( pfnt, cs->StatList + cnt );
   };
 
   return y - ystt;
@@ -3461,15 +3604,16 @@ void draw_text( BMFont *  pfnt )
   char text[512];
   int y, fifties, seconds, minutes;
 
+  GameState * gs = gfxState.gs;
+
   Begin2DMode();
   {
     // Status bars
     y = 0;
-    y += do_status( pfnt, CData.scrx - BARX, y);
+    y += do_status( gs->al_cs, pfnt, gfxState.scrx - BARX, y);
 
     // Map display
     do_map();
-
 
     y = 0;
     if ( outofsync )
@@ -3484,17 +3628,17 @@ void draw_text( BMFont *  pfnt )
 
     if ( CData.fpson )
     {
-      CHR_REF pla_chr = pla_get_character( 0 );
+      CHR_REF pla_chr = PlaList_get_character( gs, 0 );
 
       y += draw_string( pfnt, 0, y, NULL, "%2.3f FPS, %2.3f UPS", stabilized_fps, stabilized_ups );
-      y += draw_string( pfnt, 0, y, NULL, "estimated max FPS %2.3f", est_max_fps );
+      y += draw_string( pfnt, 0, y, NULL, "estimated max FPS %2.3f", gfxState.est_max_fps );
 
 
       if( CData.DevMode )
       {
-        y += draw_string( pfnt, 0, y, NULL, "wldframe %d, wldclock %d, allclock %d", wldframe, wldclock, allclock );
-        y += draw_string( pfnt, 0, y, NULL, "<%3.2f,%3.2f,%3.2f>", ChrList[pla_chr].pos.x, ChrList[pla_chr].pos.y, ChrList[pla_chr].pos.z );
-        y += draw_string( pfnt, 0, y, NULL, "<%3.2f,%3.2f,%3.2f>", ChrList[pla_chr].vel.x, ChrList[pla_chr].vel.y, ChrList[pla_chr].vel.z );
+        y += draw_string( pfnt, 0, y, NULL, "gs->wld_frame %d, gs->wld_clock %d, gs->all_clock %d", gs->wld_frame, gs->wld_clock, gs->all_clock );
+        y += draw_string( pfnt, 0, y, NULL, "<%3.2f,%3.2f,%3.2f>", gs->ChrList[pla_chr].pos.x, gs->ChrList[pla_chr].pos.y, gs->ChrList[pla_chr].pos.z );
+        y += draw_string( pfnt, 0, y, NULL, "<%3.2f,%3.2f,%3.2f>", gs->ChrList[pla_chr].vel.x, gs->ChrList[pla_chr].vel.y, gs->ChrList[pla_chr].vel.z );
       }
     }
 
@@ -3502,25 +3646,25 @@ void draw_text( BMFont *  pfnt )
       CHR_REF ichr, iref;
       GLvector tint = {0.5, 1.0, 1.0, 1.0};
 
-      ichr = pla_get_character( 0 );
-      if( VALID_CHR( ichr) )
+      ichr = PlaList_get_character( gs, 0 );
+      if( VALID_CHR( gs->ChrList,  ichr) )
       {
-        iref = chr_get_attachedto(ichr);
-        if( VALID_CHR(iref) )
+        iref = chr_get_attachedto( gs->ChrList, MAXCHR,ichr);
+        if( VALID_CHR( gs->ChrList, iref) )
         {
-          y += draw_string( pfnt, 0, y, tint.v, "PLA0 holder == %s(%s)", ChrList[iref].name, CapList[ChrList[iref].model].classname );
+          y += draw_string( pfnt, 0, y, tint.v, "PLA0 holder == %s(%s)", gs->ChrList[iref].name, gs->CapList[gs->ChrList[iref].model].classname );
         };
 
-        iref = chr_get_inwhichpack(ichr);
-        if( VALID_CHR(iref) )
+        iref = chr_get_inwhichpack( gs->ChrList, MAXCHR,ichr);
+        if( VALID_CHR( gs->ChrList, iref) )
         {
-          y += draw_string( pfnt, 0, y, tint.v, "PLA0 packer == %s(%s)", ChrList[iref].name, CapList[ChrList[iref].model].classname );
+          y += draw_string( pfnt, 0, y, tint.v, "PLA0 packer == %s(%s)", gs->ChrList[iref].name, gs->CapList[gs->ChrList[iref].model].classname );
         };
 
-        iref = chr_get_onwhichplatform(ichr);
-        if( VALID_CHR(iref) )
+        iref = chr_get_onwhichplatform( gs->ChrList, MAXCHR,ichr);
+        if( VALID_CHR( gs->ChrList, iref) )
         {
-          y += draw_string( pfnt, 0, y, tint.v, "PLA0 platform == %s(%s)", ChrList[iref].name, CapList[ChrList[iref].model].classname );
+          y += draw_string( pfnt, 0, y, tint.v, "PLA0 platform == %s(%s)", gs->ChrList[iref].name, gs->CapList[gs->ChrList[iref].model].classname );
         };
 
       };
@@ -3559,43 +3703,62 @@ void draw_text( BMFont *  pfnt )
     }
 
 
-    // PLAYER DEBUG MODE
+    // Player DEBUG MODE
     if ( SDLKEYDOWN( SDLK_F5 ) && CData.DevMode )
     {
-      CHR_REF pla_chr = pla_get_character( 0 );
+      CHR_REF pla_chr = PlaList_get_character( gs, 0 );
 
       y += draw_string( pfnt, 0, y, NULL, "!!!DEBUG MODE-5!!!" );
       y += draw_string( pfnt, 0, y, NULL, "~CAM %f %f", GCamera.pos.x, GCamera.pos.y );
 
       y += draw_string( pfnt, 0, y, NULL, "  PLA0DEF %d %d %d %d %d %d %d %d",
-                ChrList[pla_chr].skin.damagemodifier_fp8[0]&DAMAGE_SHIFT,
-                ChrList[pla_chr].skin.damagemodifier_fp8[1]&DAMAGE_SHIFT,
-                ChrList[pla_chr].skin.damagemodifier_fp8[2]&DAMAGE_SHIFT,
-                ChrList[pla_chr].skin.damagemodifier_fp8[3]&DAMAGE_SHIFT,
-                ChrList[pla_chr].skin.damagemodifier_fp8[4]&DAMAGE_SHIFT,
-                ChrList[pla_chr].skin.damagemodifier_fp8[5]&DAMAGE_SHIFT,
-                ChrList[pla_chr].skin.damagemodifier_fp8[6]&DAMAGE_SHIFT,
-                ChrList[pla_chr].skin.damagemodifier_fp8[7]&DAMAGE_SHIFT );
+                gs->ChrList[pla_chr].skin.damagemodifier_fp8[0]&DAMAGE_SHIFT,
+                gs->ChrList[pla_chr].skin.damagemodifier_fp8[1]&DAMAGE_SHIFT,
+                gs->ChrList[pla_chr].skin.damagemodifier_fp8[2]&DAMAGE_SHIFT,
+                gs->ChrList[pla_chr].skin.damagemodifier_fp8[3]&DAMAGE_SHIFT,
+                gs->ChrList[pla_chr].skin.damagemodifier_fp8[4]&DAMAGE_SHIFT,
+                gs->ChrList[pla_chr].skin.damagemodifier_fp8[5]&DAMAGE_SHIFT,
+                gs->ChrList[pla_chr].skin.damagemodifier_fp8[6]&DAMAGE_SHIFT,
+                gs->ChrList[pla_chr].skin.damagemodifier_fp8[7]&DAMAGE_SHIFT );
 
-      y += draw_string( pfnt, 0, y, NULL, "~PLA0 %5.1f %5.1f", ChrList[pla_chr].pos.x / 128.0, ChrList[pla_chr].pos.y / 128.0  );
+      y += draw_string( pfnt, 0, y, NULL, "~PLA0 %5.1f %5.1f", gs->ChrList[pla_chr].pos.x / 128.0, gs->ChrList[pla_chr].pos.y / 128.0  );
 
-      pla_chr = pla_get_character( 1 );
-      y += draw_string( pfnt, 0, y, NULL, "~PLA1 %5.1f %5.1f", ChrList[pla_chr].pos.x / 128.0, ChrList[pla_chr].pos.y / 128.0 );
+      pla_chr = PlaList_get_character( gs, 1 );
+      y += draw_string( pfnt, 0, y, NULL, "~PLA1 %5.1f %5.1f", gs->ChrList[pla_chr].pos.x / 128.0, gs->ChrList[pla_chr].pos.y / 128.0 );
     }
 
 
     // GLOBAL DEBUG MODE
     if ( SDLKEYDOWN( SDLK_F6 ) && CData.DevMode )
     {
+      char * net_status;
+      bool_t client_running = bfalse, server_running = bfalse;
+      client_running = ClientState_Running(gs->al_cs);
+      server_running = sv_Running(gs->al_ss);
+
+      net_status = "local game";
+      if (client_running && server_running)
+      {
+        net_status = "client + server";
+      }
+      else if (client_running && !server_running)
+      {
+        net_status = "client";
+      }
+      else if (!client_running && server_running)
+      {
+        net_status = "server";
+      }
+
       // More debug information
       y += draw_string( pfnt, 0, y, NULL, "!!!DEBUG MODE-6!!!" );
-      y += draw_string( pfnt, 0, y, NULL, "~FREEPRT %d", numfreeprt );
-      y += draw_string( pfnt, 0, y, NULL, "~FREECHR %d",  numfreechr );
-      y += draw_string( pfnt, 0, y, NULL, "~MACHINE %d", localmachine );
-      y += draw_string( pfnt, 0, y, NULL, "~EXPORT %d", exportvalid );
+      y += draw_string( pfnt, 0, y, NULL, "~FREEPRT %d", gs->PrtFreeList_count );
+      y += draw_string( pfnt, 0, y, NULL, "~FREECHR %d",  gs->ChrFreeList_count );
+      y += draw_string( pfnt, 0, y, NULL, "~MACHINE %s", net_status );
+      y += draw_string( pfnt, 0, y, NULL, "~EXPORT %d", gs->modstate.exportvalid );
       y += draw_string( pfnt, 0, y, NULL, "~FOGAFF %d", GFog.affectswater );
-      y += draw_string( pfnt, 0, y, NULL, "~PASS %d" SLASH_STRING "%d", shop_count, passage_count );
-      y += draw_string( pfnt, 0, y, NULL, "~NETPLAYERS %d", GNet.num_player );
+      y += draw_string( pfnt, 0, y, NULL, "~PASS %d" SLASH_STRING "%d", gs->ShopList_count, gs->PassList_count );
+      y += draw_string( pfnt, 0, y, NULL, "~NETPLAYERS %d", gs->al_ss->num_loaded );
       y += draw_string( pfnt, 0, y, NULL, "~DAMAGEPART %d", GTile_Dam.parttype );
     }
 
@@ -3614,19 +3777,12 @@ void draw_text( BMFont *  pfnt )
     }
 
 
-    if( !ingameMenuActive && SDLKEYDOWN( SDLK_F9 ) && CData.DevMode )
-    {
-      ingameMenuActive = btrue;
-      mnu_enterMenuMode();
-    }
-
-
 
     //Draw paused text
-    if ( gamepaused && !SDLKEYDOWN( SDLK_F11 ) )
+    if ( gs->proc.Paused && !SDLKEYDOWN( SDLK_F11 ) )
     {
       snprintf( text, sizeof( text ), "GAME PAUSED" );
-      draw_string( pfnt, -90 + CData.scrx / 2, 0 + CData.scry / 2, NULL, text  );
+      draw_string( pfnt, -90 + gfxState.scrx / 2, 0 + gfxState.scry / 2, NULL, text  );
     }
 
     // TIMER
@@ -3639,21 +3795,21 @@ void draw_text( BMFont *  pfnt )
     }
 
     // WAITING TEXT
-    if ( waitingforplayers )
+    if ( gs->al_cs->waiting )
     {
-      y += draw_string( pfnt, 0, y, NULL, "Waiting for players..." );
+      y += draw_string( pfnt, 0, y, NULL, "Waiting for players... " );
     }
 
     // MODULE EXIT TEXT
-    if ( beatmodule )
+    if ( gs->modstate.beat )
     {
       y += draw_string( pfnt, 0, y, NULL, "VICTORY!  PRESS ESCAPE" );
     }
-    else if ( alllocalpladead && !respawnvalid )
+    else if ( gs->allpladead && !gs->modstate.respawnvalid )
     {
       y += draw_string( pfnt, 0, y, NULL, "PRESS ESCAPE TO QUIT" );
     }
-    else if (( alllocalpladead && respawnvalid ) || ( somelocalpladead && respawnanytime ) )
+    else if (( gs->allpladead && gs->modstate.respawnvalid ) || ( gs->somepladead && gs->modstate.respawnanytime ) )
     {
       y += draw_string( pfnt, 0, y, NULL, "JUMP TO RESPAWN" );
     }
@@ -3661,9 +3817,9 @@ void draw_text( BMFont *  pfnt )
 
 
     // Network message input
-    if ( GNet.messagemode )
+    if ( Get_GuiState()->net_messagemode )
     {
-      y += draw_wrap_string( pfnt, 0, y, NULL, CData.scrx - CData.wraptolerance, GNet.message );
+      y += draw_wrap_string( pfnt, 0, y, NULL, gfxState.scrx - CData.wraptolerance, GNetMsg.buffer );
     }
 
 
@@ -3676,6 +3832,20 @@ void draw_text( BMFont *  pfnt )
 //--------------------------------------------------------------------------------------------
 static bool_t pageflip_requested = bfalse;
 static bool_t clear_requested    = btrue;
+
+//--------------------------------------------------------------------------------------------
+bool_t query_clear()
+{
+  return clear_requested;
+};
+
+//--------------------------------------------------------------------------------------------
+bool_t query_pageflip()
+{
+  return pageflip_requested;
+};
+
+//--------------------------------------------------------------------------------------------
 bool_t request_pageflip()
 {
   bool_t retval = !pageflip_requested;
@@ -3688,10 +3858,12 @@ bool_t request_pageflip()
 bool_t do_pageflip()
 {
   bool_t retval = pageflip_requested;
+  GameState * gs = gfxState.gs;
+
   if ( pageflip_requested )
   {
     SDL_GL_SwapBuffers();
-    allframe++;
+    gs->all_frame++;
     fps_loops++;
     pageflip_requested = bfalse;
     clear_requested    = btrue;
@@ -3725,7 +3897,7 @@ void draw_scene()
   light_particles();
 
   // Render the background
-  if ( CData.render_background )
+  if ( gfxState.render_background )
   {
     render_background( TX_WATER_LOW );   // TX_WATER_LOW == 6 is the texture for waterlow.bmp
   }
@@ -3733,7 +3905,7 @@ void draw_scene()
   draw_scene_zreflection();
 
   //Foreground overlay
-  if ( CData.render_overlay )
+  if ( gfxState.render_overlay )
   {
     render_foreground_overlay( TX_WATER_TOP );   // TX_WATER_TOP ==  5 is watertop.bmp
   }
@@ -3754,85 +3926,17 @@ void draw_main( float frameDuration )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t load_one_title_image( int titleimage, char *szLoadName )
-{
-  // ZZ> This function loads a title in the specified image slot, forcing it into
-  //     system memory.  Returns btrue if it worked
-
-  return INVALID_TEXTURE != GLTexture_Load( GL_TEXTURE_2D,  &TxTitleImage[titleimage], szLoadName, INVALID_KEY );
-}
-
-//--------------------------------------------------------------------------------------------
-void load_all_menu_images()
-{
-  // ZZ> This function loads the title image for each module.  Modules without a
-  //     title are marked as invalid
-
-  char searchname[15];
-  STRING loadname;
-  const char *FileName;
-  FILE* filesave;
-
-  FS_FIND_INFO fs_finfo;
-
-  fs_find_info_new( &fs_finfo );
-
-  // Convert searchname
-  strcpy( searchname, "modules" SLASH_STRING "*.mod" );
-
-  // Log a directory list
-  filesave = fs_fileOpen( PRI_NONE, NULL, CData.modules_file, "w" );
-  if ( filesave != NULL )
-  {
-    fprintf( filesave, "This file logs all of the modules found\n" );
-    fprintf( filesave, "** Denotes an invalid module (Or locked)\n\n" );
-  }
-  else
-  {
-    log_warning( "Could not write to %s\n", CData.modules_file );
-  }
-
-  // Search for .mod directories
-  FileName = fs_findFirstFile( &fs_finfo, CData.modules_dir, NULL, "*.mod" );
-  globalnummodule = 0;
-  while ( FileName && globalnummodule < MAXMODULE )
-  {
-    strncpy( ModList[globalnummodule].loadname, FileName, sizeof( ModList[globalnummodule].loadname ) );
-    snprintf( loadname, sizeof( loadname ), "%s" SLASH_STRING "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.modules_dir, FileName, CData.gamedat_dir, CData.mnu_file );
-    if ( module_read_data( globalnummodule, loadname ) )
-    {
-      snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.modules_dir, FileName, CData.gamedat_dir, CData.title_bitmap );
-      if ( load_one_title_image( globalnummodule, CStringTmp1 ) )
-      {
-        fprintf( filesave, "%02d.  %s\n", globalnummodule, ModList[globalnummodule].longname );
-        globalnummodule++;
-      }
-      else
-      {
-        fprintf( filesave, "**.  %s\n", FileName );
-      }
-    }
-    else
-    {
-      fprintf( filesave, "**.  %s\n", FileName );
-    }
-    FileName = fs_findNextFile(&fs_finfo);
-  }
-  fs_findClose(&fs_finfo);
-  if ( filesave != NULL ) fs_fileClose( filesave );
-}
-
-//--------------------------------------------------------------------------------------------
 void load_blip_bitmap( char * modname )
 {
   //This function loads the blip bitmaps
+  GuiState * gui = Get_GuiState();
   int cnt;
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.blip_bitmap );
-  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  &TxBlip, CStringTmp1, INVALID_KEY ) )
+  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  &gui->TxBlip, CStringTmp1, INVALID_KEY ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.blip_bitmap );
-    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  &TxBlip, CStringTmp1, INVALID_KEY ) )
+    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  &gui->TxBlip, CStringTmp1, INVALID_KEY ) )
     {
       log_warning( "Blip bitmap not loaded. Missing file = \"%s\"\n", CStringTmp1 );
     }
@@ -3841,8 +3945,8 @@ void load_blip_bitmap( char * modname )
 
 
   // Set up the rectangles
-  blipwidth  = TxBlip.imgW / NUMBAR;
-  blipheight = TxBlip.imgH;
+  blipwidth  = gui->TxBlip.imgW / NUMBAR;
+  blipheight = gui->TxBlip.imgH;
   for ( cnt = 0; cnt < NUMBAR; cnt++ )
   {
     BlipList[cnt].rect.left   = ( cnt + 0 ) * blipwidth;
@@ -3861,7 +3965,6 @@ void load_menu()
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.font_bitmap );
   snprintf( CStringTmp2, sizeof( CStringTmp2 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.fontdef_file );
   load_font( CStringTmp1, CStringTmp2 );
-  //load_all_menu_images();
 }
 
 
@@ -3872,17 +3975,20 @@ void Reshape3D( int w, int h )
   glViewport( 0, 0, w, h );
 }
 
-int glinit( int argc, char **argv )
+bool_t glinit( GraphicState * g, ConfigData * cd )
 {
-  // get the maximum anisotropy fupported by the video vard
-  glGetFloatv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropy );
-  log2Anisotropy = ( maxAnisotropy == 0 ) ? 0 : floor( log( maxAnisotropy + 1e-6 ) / log( 2.0f ) );
+  if(NULL == g || NULL == cd) return bfalse;
 
-  if ( maxAnisotropy == 0.0f && CData.texturefilter >= TX_ANISOTROPIC )
+  // get the maximum anisotropy fupported by the video vard
+  glGetFloatv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &(g->maxAnisotropy) );
+  g->log2Anisotropy = ( g->maxAnisotropy == 0 ) ? 0 : floor( log( g->maxAnisotropy + 1e-6 ) / log( 2.0f ) );
+
+  if ( g->maxAnisotropy == 0.0f && g->texturefilter >= TX_ANISOTROPIC )
   {
-    CData.texturefilter = TX_TRILINEAR_2;
+    g->texturefilter = TX_TRILINEAR_2;
+    gfxState.texturefilter = g->texturefilter;
   }
-  userAnisotropy = MIN( maxAnisotropy, userAnisotropy );
+  g->userAnisotropy = MIN( g->maxAnisotropy, g->userAnisotropy );
 
   /* Depth testing stuff */
   glClearDepth( 1.0 );
@@ -3890,18 +3996,12 @@ int glinit( int argc, char **argv )
   glEnable( GL_DEPTH_TEST );
 
   //Load the current graphical settings
-  load_graphics();
+  gfx_set_mode(g);
 
-  //fill mode
-  glPolygonMode( GL_FRONT, GL_FILL );
-  glPolygonMode( GL_BACK,  GL_FILL );
-
-  /* Disable OpenGL lighting */
-  glDisable( GL_LIGHTING );
-
-  /* Backface culling */
-  glEnable( GL_CULL_FACE );  // This seems implied - DDOI
-  glCullFace( GL_BACK );
+  //Check which particle image to load
+  if      ( cd->particletype == PART_NORMAL ) strncpy( cd->particle_bitmap, "particle_normal.png" , sizeof( STRING ) );
+  else if ( cd->particletype == PART_SMOOTH ) strncpy( cd->particle_bitmap, "particle_smooth.png" , sizeof( STRING ) );
+  else if ( cd->particletype == PART_FAST  )  strncpy( cd->particle_bitmap, "particle_fast.png" , sizeof( STRING ) );
 
   // set up environment mapping
   glTexGeni( GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP );  // Set The Texture Generation Mode For S To Sphere Mapping (NEW)
@@ -3909,127 +4009,74 @@ int glinit( int argc, char **argv )
 
   EnableTexturing();  // Enable texture mapping
 
-  return 1;
+  return btrue;
 }
 
-void sdlinit( int argc, char **argv )
-{
-  int cnt, colordepth;
-  SDL_Surface *theSurface;
-  STRING strbuffer = {0};
-
-  log_info("Initializing main SDL services version %i.%i.%i... ", SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_PATCHLEVEL);
-  if ( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK ) < 0 )
-  {
-    log_message("Failed!\n");
-    log_error( "Unable to initialize SDL: %s\n", SDL_GetError() );
-  }
-  else
-  {
-    log_message("Succeeded!\n");
-  }
-
-  atexit( SDL_Quit );
-
- //Force OpenGL hardware acceleration (This must be done before video mode)
-  if(CData.gfxacceleration)
-  {
-    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-  }
-
-  // log the video driver info
-  SDL_VideoDriverName( strbuffer, 256 );
-  log_info( "Using Video Driver - %s\n", strbuffer );
-
-  colordepth = CData.scrd / 3;
-
-  /* Setup the cute windows manager icon */
-  snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.icon_bitmap );
-  theSurface = SDL_LoadBMP( CStringTmp1 );
-  if ( theSurface == NULL )
-  {
-    log_warning( "Unable to load icon (%s)\n", CStringTmp1 );
-  }
-  SDL_WM_SetIcon( theSurface, NULL );
-
-  /* Set the OpenGL Attributes */
-#ifndef __unix__
-  // Under Unix we cannot specify these, we just get whatever format
-  // the framebuffer has, specifying depths > the framebuffer one
-  // will cause SDL_SetVideoMode to fail with: "Unable to set video mode: Couldn't find matching GLX visual"
-  SDL_GL_SetAttribute( SDL_GL_RED_SIZE, colordepth );
-  SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, colordepth );
-  SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE,  colordepth );
-  SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, CData.scrd );
-#endif
-  SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
-
-  displaySurface = SDL_SetVideoMode( CData.scrx, CData.scry, CData.scrd, SDL_DOUBLEBUF | SDL_OPENGL | ( CData.fullscreen ? SDL_FULLSCREEN : 0 ) );
-  if ( displaySurface == NULL )
-  {
-    log_error( "Unable to set video mode: %s\n", SDL_GetError() );
-    exit( 1 );
-  }
-  video_mode_chaged = bfalse;
-
-  //Enable antialiasing X16
-  SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-  SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 16);
-  glEnable(GL_MULTISAMPLE_ARB);
-  //glEnable(GL_MULTISAMPLE);
-
-  ////Force OpenGL hardware acceleration
-  //if(CData.gfxacceleration)
-  //{
-  //  SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-  //}
-
-
-
-  //Grab all the available video modes
-  video_mode_list = SDL_ListModes( displaySurface->format, SDL_DOUBLEBUF | SDL_HWSURFACE | SDL_FULLSCREEN | SDL_OPENGL | SDL_HWACCEL | SDL_SRCALPHA );
-  log_info( "Detecting avalible video modes...\n" );
-  for ( cnt = 0; NULL != video_mode_list[cnt]; ++cnt )
-  {
-    log_info( "Video Mode - %d x %d\n", video_mode_list[cnt]->w, video_mode_list[cnt]->h );
-  };
-
-  // Set the window name
-  SDL_WM_SetCaption( "Egoboo", "Egoboo" );
-
-  // set the mouse cursor
-  SDL_WM_GrabInput( CData.GrabMouse );
-  //if (CData.HideMouse) SDL_ShowCursor(SDL_DISABLE);
-
-  input_setup();
-}
-
-void load_graphics()
+//--------------------------------------------------------------------------------------------
+bool_t gfx_set_mode(GraphicState * g)
 {
   //This function loads all the graphics based on the game settings
 
+  if(!gfx_initialized) return bfalse;
+
+
+  // ---- reset the SDL video mode ----
+  {
+    //Enable antialiasing X16
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 16);
+
+    //Force OpenGL hardware acceleration (This must be done before video mode)
+    if(g->gfxacceleration)
+    {
+      SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+    }
+
+    /* Set the OpenGL Attributes */
+  #ifndef __unix__
+    // Under Unix we cannot specify these, we just get whatever format
+    // the framebuffer has, specifying depths > the framebuffer one
+    // will cause SDL_SetVideoMode to fail with: "Unable to set video mode: Couldn't find matching GLX visual"
+    SDL_GL_SetAttribute( SDL_GL_RED_SIZE,   g->colordepth );
+    SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, g->colordepth );
+    SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE,  g->colordepth );
+    SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, g->scrd );
+  #endif
+    SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
+
+    g->surface = SDL_SetVideoMode( g->scrx, g->scry, g->scrd, SDL_DOUBLEBUF | SDL_OPENGL | ( g->fullscreen ? SDL_FULLSCREEN : 0 ) );
+    if ( NULL == g->surface )
+    {
+      log_error( "Unable to set video mode: %s\n", SDL_GetError() );
+      exit( 1 );
+    }
+  }
+
+  glEnable(GL_MULTISAMPLE_ARB);
+  //glEnable(GL_MULTISAMPLE);
+
   //Check if the computer graphic driver supports anisotropic filtering
-  if ( CData.texturefilter >= TX_ANISOTROPIC )
+  if ( g->texturefilter >= TX_ANISOTROPIC )
   {
     if ( 0 == strstr(( char* ) glGetString( GL_EXTENSIONS ), "GL_EXT_texture_filter_anisotropic" ) )
     {
       log_warning( "Your graphics driver does not support anisotropic filtering.\n" );
-      CData.texturefilter = TX_TRILINEAR_2; //Set filtering to trillienar instead
+      g->texturefilter = TX_TRILINEAR_2; //Set filtering to trillienar instead
     }
   }
 
-  //Enable prespective correction?
-  glHint( GL_PERSPECTIVE_CORRECTION_HINT, CData.perspective );
+  //Enable perspective correction?
+  glHint( GL_PERSPECTIVE_CORRECTION_HINT, g->perspective );
 
   //Enable dithering?
-  if ( CData.dither ) glEnable( GL_DITHER );
+  if ( g->dither ) glEnable( GL_DITHER );
   else glDisable( GL_DITHER );
 
-  //Enable gourad CData.shading? (Important!)
-  glShadeModel( CData.shading );
+  //Enable gourad g->shading? (Important!)
+  glShadeModel( g->shading );
 
-  //Enable CData.antialiasing?
-  if ( CData.antialiasing )
+  //Enable g->antialiasing?
+  if ( g->antialiasing )
   {
     glEnable( GL_LINE_SMOOTH );
     glHint( GL_LINE_SMOOTH_HINT,    GL_NICEST );
@@ -4055,13 +4102,8 @@ void load_graphics()
     glDisable( GL_POLYGON_SMOOTH );
   }
 
-  //Check which particle image to load
-  if ( CData.particletype      == PART_NORMAL ) strncpy( CData.particle_bitmap, "particle_normal.png" , sizeof( STRING ) );
-  else if ( CData.particletype == PART_SMOOTH ) strncpy( CData.particle_bitmap, "particle_smooth.png" , sizeof( STRING ) );
-  else if ( CData.particletype == PART_FAST )   strncpy( CData.particle_bitmap, "particle_fast.png" , sizeof( STRING ) );
-
   // Wait for vertical synchronization?
-  if( CData.vsync )
+  if( g->vsync )
   {
     // Fedora 7 doesn't suuport SDL_GL_SWAP_CONTROL, but we use this  nvidia extension instead.
 #if defined(__unix__)
@@ -4071,7 +4113,131 @@ void load_graphics()
       SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1);
 #endif
   }
+
+  //fill mode
+  glPolygonMode( GL_FRONT, GL_FILL );
+  glPolygonMode( GL_BACK,  GL_FILL );
+
+  /* Disable OpenGL lighting */
+  glDisable( GL_LIGHTING );
+
+  /* Backface culling */
+  glEnable( GL_CULL_FACE );  // This seems implied - DDOI
+  glCullFace( GL_BACK );
+
+  glViewport(0, 0, gfxState.surface->w, gfxState.surface->h);
+
+  return btrue;
 }
+
+//--------------------------------------------------------------------------------------------
+GraphicState * GraphicState_new(GraphicState * g, ConfigData * cd)
+{
+  fprintf( stdout, "GraphicState_new()\n");
+
+  if(NULL == g || NULL == cd) return NULL;
+
+  memset(g, 0, sizeof(GraphicState));
+
+  GraphicState_synch(g, cd);
+
+  // put a reasonable value in here
+  g->est_max_fps = 30;
+
+  return g;
+};
+
+//--------------------------------------------------------------------------------------------
+bool_t GraphicState_synch(GraphicState * g, ConfigData * cd)
+{
+  bool_t changed = bfalse;
+
+  if(NULL == g || NULL == cd) return bfalse;
+
+  g->GrabMouse = cd->GrabMouse;
+  g->HideMouse = cd->HideMouse;
+
+  g->shading            = cd->shading;          
+  g->render_overlay     = cd->render_overlay;   
+  g->render_background  = cd->render_background;
+  g->phongon            = cd->phongon;          
+
+  if(g->perspective != cd->perspective)
+  {
+    g->perspective = cd->perspective;
+    changed = btrue;
+  }
+
+  if(g->antialiasing != cd->antialiasing)
+  {
+    g->antialiasing = cd->antialiasing;
+    changed = btrue;
+  }
+
+
+  if(g->dither != cd->dither)
+  {
+    g->dither = cd->dither;
+    changed = btrue;
+  }
+
+  if(g->vsync != cd->vsync)
+  {
+    g->vsync = cd->vsync;
+    changed = btrue;
+  }
+
+  if(g->texturefilter != cd->texturefilter)
+  {
+    g->texturefilter = cd->texturefilter;
+    changed = btrue;
+  }
+
+  if(g->gfxacceleration != cd->gfxacceleration)
+  {
+    g->gfxacceleration = cd->gfxacceleration;
+    changed = btrue;
+  }
+
+  if(g->fullscreen != cd->fullscreen)
+  {
+    g->fullscreen = cd->fullscreen;
+    changed = btrue;
+  }
+
+  if(g->scrd != cd->scrd)
+  {
+    g->scrd = cd->scrd;
+    changed = btrue;
+  }
+
+  if(g->scrx != cd->scrx)
+  {
+    g->scrx = cd->scrx;
+    changed = btrue;
+  }
+
+  if(g->scry != cd->scry)
+  {
+    g->scry = cd->scry;
+    changed = btrue;
+  }
+
+  if(g->scrz != cd->scrz)
+  {
+    g->scrz = cd->scrz;
+    changed = btrue;
+  }
+
+  if(changed)
+  {
+    // to get this to work properly, you need to reload all textures!
+    gfx_set_mode(g);
+  }
+
+  return btrue;
+}
+
 
 
 /* obsolete graphics functions */
@@ -4082,50 +4248,166 @@ void load_graphics()
 //
 //  GLfloat txWidth, txHeight;
 //
-//  if ( INVALID_TEXTURE != GLTexture_GetTextureID(&TxTitleImage[image]) )
+//  if ( INVALID_TEXTURE != GLTexture_GetTextureID(TxTitleImage + image) )
 //  {
 //    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 //    Begin2DMode();
 //    glNormal3f( 0, 0, 1 ); // glNormal3f( 0, 1, 0 );
 //
 //    /* Calculate the texture width & height */
-//    txWidth = ( GLfloat )( GLTexture_GetImageWidth( &TxTitleImage[image] )/GLTexture_GetTextureWidth( &TxTitleImage[image] ) );
-//    txHeight = ( GLfloat )( GLTexture_GetImageHeight( &TxTitleImage[image] )/GLTexture_GetTextureHeight( &TxTitleImage[image] ) );
+//    txWidth = ( GLfloat )( GLTexture_GetImageWidth( TxTitleImage + image )/GLTexture_GetTextureWidth( TxTitleImage + image ) );
+//    txHeight = ( GLfloat )( GLTexture_GetImageHeight( TxTitleImage + image )/GLTexture_GetTextureHeight( TxTitleImage + image ) );
 //
 //    /* Bind the texture */
-//    GLTexture_Bind( &TxTitleImage[image], CData.texturefilter );
+//    GLTexture_Bind( TxTitleImage + image, &gfxState );
 //
 //    /* Draw the quad */
 //    glBegin( GL_QUADS );
-//    glTexCoord2f( 0, 1 ); glVertex2f( x, CData.scry - y - GLTexture_GetImageHeight( &TxTitleImage[image] ) );
-//    glTexCoord2f( txWidth, 1 ); glVertex2f( x + GLTexture_GetImageWidth( &TxTitleImage[image] ), CData.scry - y - GLTexture_GetImageHeight( &TxTitleImage[image] ) );
-//    glTexCoord2f( txWidth, 1-txHeight ); glVertex2f( x + GLTexture_GetImageWidth( &TxTitleImage[image] ), CData.scry - y );
-//    glTexCoord2f( 0, 1-txHeight ); glVertex2f( x, CData.scry - y );
+//    glTexCoord2f( 0, 1 ); glVertex2f( x, gfxState.scry - y - GLTexture_GetImageHeight( TxTitleImage + image ) );
+//    glTexCoord2f( txWidth, 1 ); glVertex2f( x + GLTexture_GetImageWidth( TxTitleImage + image ), gfxState.scry - y - GLTexture_GetImageHeight( TxTitleImage + image ) );
+//    glTexCoord2f( txWidth, 1-txHeight ); glVertex2f( x + GLTexture_GetImageWidth( TxTitleImage + image ), gfxState.scry - y );
+//    glTexCoord2f( 0, 1-txHeight ); glVertex2f( x, gfxState.scry - y );
 //    glEnd();
 //
 //    End2DMode();
 //  }
 //}
+
+
 //--------------------------------------------------------------------------------------------
-//void do_cursor()
-//{
-//  // This function implements a mouse cursor
-//  read_input();
-//
-//  cursor.x = mous.latch.x;  if ( cursor.x < 6 )  cursor.x = 6;  if ( cursor.x > CData.scrx - 16 )  cursor.x = CData.scrx - 16;
-//  cursor.y = mous.latch.y;  if ( cursor.y < 8 )  cursor.y = 8;  if ( cursor.y > CData.scry - 24 )  cursor.y = CData.scry - 24;
-//  cursor.clicked = bfalse;
-//  if ( mous.button[0] && !cursor.pressed )
-//  {
-//    cursor.clicked = btrue;
-//  }
-//  cursor.pressed = mous.button[0];
-//
-//  BeginText( &(bmfont.tex) );
-//  {
-//    draw_one_font( 95, cursor.x - 5, cursor.y - 7 );
-//  }
-//  EndText();
-//}
+void dolist_add( CHR_REF chr_ref )
+{
+  // This function puts a character in the list
+  int fan;
+
+  GameState * gs = gfxState.gs;
+
+  if ( !VALID_CHR( gs->ChrList,  chr_ref ) || gs->ChrList[chr_ref].indolist ) return;
+
+  fan = gs->ChrList[chr_ref].onwhichfan;
+  //if ( mesh_fan_remove_renderlist( fan ) )
+  {
+    //gs->ChrList[chr_ref].lightspek_fp8 = Mesh[meshvrtstart[fan]].vrtl_fp8;
+    dolist[numdolist] = chr_ref;
+    gs->ChrList[chr_ref].indolist = btrue;
+    numdolist++;
 
 
+    // Do flashing
+    if (( gs->all_frame & gs->ChrList[chr_ref].flashand ) == 0 && gs->ChrList[chr_ref].flashand != DONTFLASH )
+    {
+      flash_character( gs, chr_ref, 255 );
+    }
+    // Do blacking
+    if (( gs->all_frame&SEEKURSEAND ) == 0 && gs->al_cs->seekurse && gs->ChrList[chr_ref].iskursed )
+    {
+      flash_character( gs, chr_ref, 0 );
+    }
+  }
+  //else
+  //{
+  //  Uint16 model = gs->ChrList[chr_ref].model;
+  //  assert( MAXMODEL != VALIDATE_MDL( model ) );
+
+  //  // Double check for large/special objects
+  //  if ( gs->CapList[model].alwaysdraw )
+  //  {
+  //    dolist[numdolist] = chr_ref;
+  //    gs->ChrList[chr_ref].indolist = btrue;
+  //    numdolist++;
+  //  }
+  //}
+
+  // Add its weapons too
+  for ( _slot = SLOT_BEGIN; _slot < SLOT_COUNT; _slot = ( SLOT )( _slot + 1 ) )
+  {
+    dolist_add( chr_get_holdingwhich(  gs->ChrList, MAXCHR,chr_ref, _slot ) );
+  };
+
+}
+
+//--------------------------------------------------------------------------------------------
+void dolist_sort( void )
+{
+  // ZZ> This function orders the dolist based on distance from camera,
+  //     which is needed for reflections to properly clip themselves.
+  //     Order from closest to farthest
+
+  GameState * gs = gfxState.gs;
+
+  CHR_REF chr_ref, olddolist[MAXCHR];
+  int cnt, tnc, order;
+  int dist[MAXCHR];
+
+  // Figure the distance of each
+  cnt = 0;
+  while ( cnt < numdolist )
+  {
+    chr_ref = dolist[cnt];  olddolist[cnt] = chr_ref;
+    if ( gs->ChrList[chr_ref].light_fp8 != 255 || gs->ChrList[chr_ref].alpha_fp8 != 255 )
+    {
+      // This makes stuff inside an invisible chr_ref visible...
+      // A key inside a Jellcube, for example
+      dist[cnt] = 0x7fffffff;
+    }
+    else
+    {
+      dist[cnt] = ABS( gs->ChrList[chr_ref].pos.x - GCamera.pos.x ) + ABS( gs->ChrList[chr_ref].pos.y - GCamera.pos.y );
+    }
+    cnt++;
+  }
+
+
+  // Put em in the right order
+  cnt = 0;
+  while ( cnt < numdolist )
+  {
+    chr_ref = olddolist[cnt];
+    order = 0;  // Assume this chr_ref is closest
+    tnc = 0;
+    while ( tnc < numdolist )
+    {
+      // For each one closer, increment the order
+      order += ( dist[cnt] > dist[tnc] );
+      order += ( dist[cnt] == dist[tnc] ) && ( cnt < tnc );
+      tnc++;
+    }
+    dolist[order] = chr_ref;
+    cnt++;
+  }
+}
+
+//--------------------------------------------------------------------------------------------
+void dolist_make( void )
+{
+  // ZZ> This function finds the characters that need to be drawn and puts them in the list
+
+  GameState * gs = gfxState.gs;
+
+  int cnt;
+  CHR_REF chr_ref;
+
+  // Remove everyone from the dolist
+  cnt = 0;
+  while ( cnt < numdolist )
+  {
+    chr_ref = dolist[cnt];
+    gs->ChrList[chr_ref].indolist = bfalse;
+    cnt++;
+  }
+  numdolist = 0;
+
+
+  // Now fill it up again
+  
+  for ( cnt = 0; cnt < MAXCHR; cnt++)
+  {
+    if( !VALID_CHR(gs->ChrList, cnt) ) continue;
+
+    if ( !chr_in_pack( gs->ChrList, MAXCHR, cnt ) )
+    {
+      dolist_add( cnt );
+    }
+  }
+
+}

@@ -1,23 +1,27 @@
-/* Egoboo - Timer.c
- * This code is not currently in use.
- */
-
-/*
-    This file is part of Egoboo.
-
-    Egoboo is free software: you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Egoboo is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
-*/
+//********************************************************************************************
+//* Egoboo - Timer.c
+//*
+//* Implements a kind of alarm clock.
+//* This code is not currently in use.
+//*
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
 
 #include "Timer.h"
 #include "Clock.h"
@@ -87,7 +91,7 @@ void timer_update()
     assert( node->timer != NULL );
     if ( !node->timer->isPaused )
     {
-      node->timer->frameTime = clock_getFrameDuration( timerClock ) * node->timer->timeScale;
+      node->timer->frameTime = ClockState_getFrameDuration( timerClock ) * node->timer->timeScale;
       node->timer->currentTime += node->timer->frameTime;
     }
 
@@ -101,7 +105,7 @@ void timer_addTimer( Timer *t )
 
   if ( NULL == t ) return;
 
-  node = malloc( sizeof( TimerNode ) );
+  node = (TimerNode *)calloc( 1, sizeof( TimerNode ) );
   node->timer = t;
 
   if ( timerList )

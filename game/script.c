@@ -1,34 +1,38 @@
-/* Egoboo - script.c
- * Implements the game's scripting language.
- */
-
-/*
-   This file is part of Egoboo.
-
-   Egoboo is free software: you can redistribute it and/or modify it
-   under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   Egoboo is distributed in the hope that it will be useful, but
-   WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-   General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
-*/
+//********************************************************************************************
+//* Egoboo - script.c
+//*
+//* Implements the game's scripting language.
+//*
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
 
 #include <assert.h>
 
 #include "script.h"
 #include "Log.h"
-#include "mad.h"
+#include "Mad.h"
 #include "passage.h"
 #include "camera.h"
 #include "enchant.h"
 #include "egoboo.h"
 #include "passage.h"
+#include "Client.h"
 
 #include "egoboo_utility.h"
 
@@ -83,7 +87,9 @@
 #define GET_INDENT(XX) ( ((XX) & INDENT_BITS) >> INDENT_SHIFT )
 #define PUT_INDENT(XX) ( ((XX) << INDENT_SHIFT) & INDENT_BITS )
 
-#define IS_END(XX)
+#define IS_END(XX) ( GET_FUNCTION_BITS( XX ) == END_FUNCTION )
+
+
 typedef struct opcode_element_t
 {
   Uint8           type;
@@ -99,25 +105,40 @@ typedef struct opcode_list_t
 
 static OPCODE_LIST opcode_lst = {0};
 
-typedef struct script_internal_values_t
+typedef struct CompilerState_t
 {
-  Uint8           buffer[MAXLINESIZE];
-  size_t          load_size;
+  size_t          file_size;
+  char            file_buffer[BUFFER_SIZE];         // Where to put an MD2
+
   size_t          line_size;
+  char            line_buffer[MAXLINESIZE];
+
   int             line_num;
+  int             index;
+  int             temp;
+
+} CompilerState;
+
+static CompilerState _cstate;
 
 
-  int             opcode_index;
-  int             opcode_value_tmp;
+static bool_t run_function( GameState * gs, Uint32 value, CHR_REF character );
 
-  Uint32          compiled[AISMAXCOMPILESIZE];
-  int             script_address[MAXAI];
-  int             script_count;
-  int             script_index;
-} SCRIPT_INTERNAL_VALUES;
+static bool_t scr_break_passage( GameState * gs, AI_STATE * pstate );
+static bool_t scr_search_tile_in_passage( GameState * gs, AI_STATE * pstate );
 
-static SCRIPT_INTERNAL_VALUES scr_intern;
+static Uint32 get_high_bits();
+static size_t tell_code( size_t read );
 
+static retval_t run_operand( GameState * gs, Uint32 value, CHR_REF character );
+static retval_t set_operand( AI_STATE * pstate, ScriptInfo * slist, Uint8 variable );
+
+
+static void add_code( ScriptInfo * slist, Uint32 highbits );
+static void parse_line_by_line( ScriptInfo * slist );
+static Uint32 jump_goto( ScriptInfo * slist, int index );
+static void parse_jumps( ScriptInfo * slist, int index_stt, int index_end );
+static void log_code( ScriptInfo * slist, int ainumber, char* savename );
 
 //------------------------------------------------------------------------------
 //AI Script Routines------------------------------------------------------------
@@ -129,20 +150,20 @@ void insert_space( size_t position )
 
   Uint8 cTmp, cSwap;
 
-  if ( scr_intern.buffer[position] != ' ' )
+  if ( _cstate.line_buffer[position] != ' ' )
   {
-    cTmp = scr_intern.buffer[position];
-    scr_intern.buffer[position] = ' ';
+    cTmp = _cstate.line_buffer[position];
+    _cstate.line_buffer[position] = ' ';
     position++;
-    scr_intern.line_size++;
-    while ( position < scr_intern.line_size )
+    _cstate.line_size++;
+    while ( position < _cstate.line_size )
     {
-      cSwap = scr_intern.buffer[position];
-      scr_intern.buffer[position] = cTmp;
+      cSwap = _cstate.line_buffer[position];
+      _cstate.line_buffer[position] = cTmp;
       cTmp = cSwap;
       position++;
     }
-    scr_intern.buffer[position] = 0;
+    _cstate.line_buffer[position] = 0;
   }
 }
 
@@ -155,16 +176,16 @@ void copy_one_line( size_t write )
   Uint8 cTmp;
 
   read = 0;
-  cTmp = scr_intern.buffer[read];
+  cTmp = _cstate.line_buffer[read];
   while ( cTmp != 0 )
   {
-    cTmp = scr_intern.buffer[read];  read++;
-    cLoadBuffer[write] = cTmp;  write++;
+    cTmp = _cstate.line_buffer[read];  read++;
+    _cstate.file_buffer[write] = cTmp;  write++;
   }
 
 
 
-  scr_intern.line_num++;
+  _cstate.line_num++;
 }
 
 //------------------------------------------------------------------------------
@@ -176,52 +197,52 @@ size_t load_one_line( size_t read )
   Uint8 cTmp;
 
   // Parse to start to maintain indentation
-  scr_intern.line_size = 0;
+  _cstate.line_size = 0;
   stillgoing = btrue;
-  while ( stillgoing && read < scr_intern.load_size )
+  while ( stillgoing && read < _cstate.file_size )
   {
-    cTmp = cLoadBuffer[read];
+    cTmp = _cstate.file_buffer[read];
     stillgoing = bfalse;
     if ( cTmp == ' ' )
     {
       read++;
-      scr_intern.buffer[scr_intern.line_size] = cTmp; scr_intern.line_size++;
+      _cstate.line_buffer[_cstate.line_size] = cTmp; _cstate.line_size++;
       stillgoing = btrue;
     }
-    // scr_intern.buffer[scr_intern.line_size] = 0; // or cTmp as cTmp == 0
+    // _cstate.line_buffer[_cstate.line_size] = 0; // or cTmp as cTmp == 0
   }
 
 
   // Parse to comment or end of line
   foundtext = bfalse;
   stillgoing = btrue;
-  while ( stillgoing && read < scr_intern.load_size )
+  while ( stillgoing && read < _cstate.file_size )
   {
-    cTmp = cLoadBuffer[read];  read++;
+    cTmp = _cstate.file_buffer[read];  read++;
     if ( cTmp == '\t' )
       cTmp = ' ';
     if ( cTmp != ' ' && cTmp != 0x0d && cTmp != 0x0a &&
-         ( cTmp != '/' || cLoadBuffer[read] != '/' ) )
+         ( cTmp != '/' || _cstate.file_buffer[read] != '/' ) )
       foundtext = btrue;
-    scr_intern.buffer[scr_intern.line_size] = cTmp;
-    if ( cTmp != ' ' || ( cLoadBuffer[read] != ' ' && cLoadBuffer[read] != '\t' ) )
-      scr_intern.line_size++;
+    _cstate.line_buffer[_cstate.line_size] = cTmp;
+    if ( cTmp != ' ' || ( _cstate.file_buffer[read] != ' ' && _cstate.file_buffer[read] != '\t' ) )
+      _cstate.line_size++;
     if ( cTmp == 0x0d || cTmp == 0x0a )
       stillgoing = bfalse;
-    if ( cTmp == '/' && cLoadBuffer[read] == '/' )
+    if ( cTmp == '/' && _cstate.file_buffer[read] == '/' )
       stillgoing = bfalse;
   }
-  if ( !stillgoing ) scr_intern.line_size--;
+  if ( !stillgoing ) _cstate.line_size--;
 
-  scr_intern.buffer[scr_intern.line_size] = 0;
-  if ( scr_intern.line_size >= 1 )
+  _cstate.line_buffer[_cstate.line_size] = 0;
+  if ( _cstate.line_size >= 1 )
   {
-    if ( scr_intern.buffer[scr_intern.line_size-1] == ' ' )
+    if ( _cstate.line_buffer[_cstate.line_size-1] == ' ' )
     {
-      scr_intern.line_size--;  scr_intern.buffer[scr_intern.line_size] = 0;
+      _cstate.line_size--;  _cstate.line_buffer[_cstate.line_size] = 0;
     }
   }
-  scr_intern.line_size++;
+  _cstate.line_size++;
 
 
   // Parse to end of line
@@ -229,14 +250,14 @@ size_t load_one_line( size_t read )
   read--;
   while ( stillgoing )
   {
-    cTmp = cLoadBuffer[read];  read++;
+    cTmp = _cstate.file_buffer[read];  read++;
     if ( cTmp == 0x0a || cTmp == 0x0d )
       stillgoing = bfalse;
   }
 
   if ( !foundtext )
   {
-    scr_intern.line_size = 0;
+    _cstate.line_size = 0;
   }
 
 
@@ -251,14 +272,14 @@ size_t load_parsed_line( size_t read )
   Uint8 cTmp;
 
   // Parse to start to maintain indentation
-  scr_intern.line_size = 0;
-  cTmp = cLoadBuffer[read];
+  _cstate.line_size = 0;
+  cTmp = _cstate.file_buffer[read];
   while ( cTmp != 0 )
   {
-    scr_intern.buffer[scr_intern.line_size] = cTmp;  scr_intern.line_size++;
-    read++;  cTmp = cLoadBuffer[read];
+    _cstate.line_buffer[_cstate.line_size] = cTmp;  _cstate.line_size++;
+    read++;  cTmp = _cstate.file_buffer[read];
   }
-  scr_intern.buffer[scr_intern.line_size] = 0;
+  _cstate.line_buffer[_cstate.line_size] = 0;
   read++; // skip terminating zero for next call of load_parsed_line()
   return read;
 }
@@ -269,7 +290,7 @@ void surround_space( size_t position )
   insert_space( position + 1 );
   if ( position > 0 )
   {
-    if ( scr_intern.buffer[position-1] != ' ' )
+    if ( _cstate.line_buffer[position-1] != ' ' )
     {
       insert_space( position );
     }
@@ -286,13 +307,13 @@ void parse_null_terminate_comments()
 
   read = 0;
   write = 0;
-  while ( read < scr_intern.load_size )
+  while ( read < _cstate.file_size )
   {
     read = load_one_line( read );
-    if ( scr_intern.line_size > 2 )
+    if ( _cstate.line_size > 2 )
     {
       copy_one_line( write );
-      write += scr_intern.line_size;
+      write += _cstate.line_size;
     }
   }
 }
@@ -306,22 +327,22 @@ int get_indentation()
   Uint8 cTmp;
 
   cnt = 0;
-  cTmp = scr_intern.buffer[cnt];
+  cTmp = _cstate.line_buffer[cnt];
   while ( cTmp == ' ' )
   {
     cnt++;
-    cTmp = scr_intern.buffer[cnt];
+    cTmp = _cstate.line_buffer[cnt];
   }
 
   if( iscntrl(cTmp) )
   {
-    log_message( "SCRIPT ERROR FOUND: %s (%d) - %d illegal control code\n", globalparsename, scr_intern.line_num, cnt );
+    log_message( "SCRIPT ERROR FOUND: %s (%d) - %d illegal control code\n", globalparsename, _cstate.line_num, cnt );
     parseerror = btrue;
   }
 
   if( HAS_SOME_BITS(cnt, 0x01) )
   {
-    log_message( "SCRIPT ERROR FOUND: %s (%d) - %d odd number of spaces\n", globalparsename, scr_intern.line_num, cnt );
+    log_message( "SCRIPT ERROR FOUND: %s (%d) - %d odd number of spaces\n", globalparsename, _cstate.line_num, cnt );
     parseerror = btrue;
   };
 
@@ -329,7 +350,7 @@ int get_indentation()
 
   if ( cnt > 15 )
   {
-    log_warning( "SCRIPT ERROR FOUND: %s (%d) - %d levels of indentation\n", globalparsename, scr_intern.line_num, cnt );
+    log_warning( "SCRIPT ERROR FOUND: %s (%d) - %d levels of indentation\n", globalparsename, _cstate.line_num, cnt );
     parseerror = btrue;
     cnt = 15;
   };
@@ -347,9 +368,9 @@ void fix_operators()
   Uint8 cTmp;
 
   cnt = 0;
-  while ( cnt < scr_intern.line_size )
+  while ( cnt < _cstate.line_size )
   {
-    cTmp = scr_intern.buffer[cnt];
+    cTmp = _cstate.line_buffer[cnt];
     if ( cTmp == '+' || cTmp == '-' || cTmp == '/' || cTmp == '*' ||
          cTmp == '%' || cTmp == '>' || cTmp == '<' || cTmp == '&' ||
          cTmp == '=' )
@@ -370,11 +391,11 @@ int starts_with_capital_letter()
   Uint8 cTmp;
 
   cnt = 0;
-  cTmp = scr_intern.buffer[cnt];
+  cTmp = _cstate.line_buffer[cnt];
   while ( cTmp == ' ' )
   {
     cnt++;
-    cTmp = scr_intern.buffer[cnt];
+    cTmp = _cstate.line_buffer[cnt];
   }
   if ( cTmp >= 'A' && cTmp <= 'Z' )
     return btrue;
@@ -404,7 +425,7 @@ size_t tell_code( size_t read )
 {
   // ZZ> This function tells what code is being indexed by read, it
   //     will return the next spot to read from and stick the code number
-  //     in scr_intern.opcode_index
+  //     in _cstate.index
 
   int cnt, wordsize;
   bool_t codecorrect;
@@ -414,18 +435,18 @@ size_t tell_code( size_t read )
 
 
   // Check bounds
-  scr_intern.opcode_index = MAXCODE;
-  if ( read >= scr_intern.line_size )  return read;
+  _cstate.index = MAXCODE;
+  if ( read >= _cstate.line_size )  return read;
 
 
   // Skip spaces
-  cTmp = scr_intern.buffer[read];
+  cTmp = _cstate.line_buffer[read];
   while ( cTmp == ' ' )
   {
     read++;
-    cTmp = scr_intern.buffer[read];
+    cTmp = _cstate.line_buffer[read];
   }
-  if ( read >= scr_intern.line_size )  return read;
+  if ( read >= _cstate.line_size )  return read;
 
 
   // Load the word into the other buffer
@@ -434,7 +455,7 @@ size_t tell_code( size_t read )
   {
     cWordBuffer[wordsize] = cTmp;  wordsize++;
     read++;
-    cTmp = scr_intern.buffer[read];
+    cTmp = _cstate.line_buffer[read];
   }
   cWordBuffer[wordsize] = 0;
 
@@ -442,8 +463,8 @@ size_t tell_code( size_t read )
   // Check for numeric constant
   if ( isdigit( cWordBuffer[0] ) )
   {
-    sscanf( &cWordBuffer[0], "%d", &scr_intern.opcode_value_tmp );
-    scr_intern.opcode_index = -1;
+    sscanf( cWordBuffer + 0, "%d", &_cstate.temp );
+    _cstate.index = -1;
     return read;
   }
 
@@ -452,9 +473,9 @@ size_t tell_code( size_t read )
   idsz = IDSZ_NONE;
   if ( cWordBuffer[0] == '[' )
   {
-    idsz = MAKE_IDSZ( &cWordBuffer[1] );
-    scr_intern.opcode_value_tmp = idsz;
-    scr_intern.opcode_index = -1;
+    idsz = MAKE_IDSZ( cWordBuffer + 1 );
+    _cstate.temp = idsz;
+    _cstate.index = -1;
     return read;
   }
 
@@ -462,17 +483,17 @@ size_t tell_code( size_t read )
 
   // Compare the word to all the codes
   codecorrect = bfalse;
-  scr_intern.opcode_index = 0;
-  while ( scr_intern.opcode_index < opcode_lst.count && !codecorrect )
+  _cstate.index = 0;
+  while ( _cstate.index < opcode_lst.count && !codecorrect )
   {
     codecorrect = bfalse;
-    if ( cWordBuffer[0] == opcode_lst.opcode[scr_intern.opcode_index].name[0] && !codecorrect )
+    if ( cWordBuffer[0] == opcode_lst.opcode[_cstate.index].name[0] && !codecorrect )
     {
       codecorrect = btrue;
       cnt = 1;
       while ( cnt < wordsize )
       {
-        if ( cWordBuffer[cnt] != opcode_lst.opcode[scr_intern.opcode_index].name[cnt] )
+        if ( cWordBuffer[cnt] != opcode_lst.opcode[_cstate.index].name[cnt] )
         {
           codecorrect = bfalse;
           cnt = wordsize;
@@ -481,20 +502,20 @@ size_t tell_code( size_t read )
       }
       if ( cnt < MAXCODENAMESIZE )
       {
-        if ( opcode_lst.opcode[scr_intern.opcode_index].name[cnt] != 0 )  codecorrect = bfalse;
+        if ( opcode_lst.opcode[_cstate.index].name[cnt] != 0 )  codecorrect = bfalse;
       }
     }
-    scr_intern.opcode_index++;
+    _cstate.index++;
   }
 
   if ( codecorrect )
   {
-    scr_intern.opcode_index--;
-    scr_intern.opcode_value_tmp = opcode_lst.opcode[scr_intern.opcode_index].value;
-    if ( opcode_lst.opcode[scr_intern.opcode_index].type == 'C' )
+    _cstate.index--;
+    _cstate.temp = opcode_lst.opcode[_cstate.index].value;
+    if ( opcode_lst.opcode[_cstate.index].type == 'C' )
     {
       // Check for constants
-      scr_intern.opcode_index = -1;
+      _cstate.index = -1;
     }
   }
   else
@@ -502,7 +523,7 @@ size_t tell_code( size_t read )
     // Throw out an error code if we're loggin' 'em
     if ( '=' != cWordBuffer[0] || '\0' != cWordBuffer[1])
     {
-      log_message( "SCRIPT ERROR FOUND: %s (%d) - %s undefined\n", globalparsename, scr_intern.line_num, cWordBuffer );
+      log_message( "SCRIPT ERROR FOUND: %s (%d) - %s undefined\n", globalparsename, _cstate.line_num, cWordBuffer );
       parseerror = btrue;
     }
   }
@@ -511,21 +532,22 @@ size_t tell_code( size_t read )
 }
 
 //------------------------------------------------------------------------------
-void add_code( Uint32 highbits )
+void add_code( ScriptInfo * slist, Uint32 highbits )
 {
   Uint32 value;
 
-  if ( scr_intern.opcode_index == -1 )  highbits |= FUNCTION_FLAG_BIT;
-  if ( scr_intern.opcode_index != MAXCODE )
+  if ( _cstate.index == -1 )  highbits |= FUNCTION_FLAG_BIT;
+  if ( _cstate.index != MAXCODE )
   {
-    value = highbits | scr_intern.opcode_value_tmp;
-    scr_intern.compiled[scr_intern.script_index] = value;
-    scr_intern.script_index++;
+    value = highbits | _cstate.temp;
+
+    slist->buffer[slist->buffer_index] = value;
+    slist->buffer_index++;
   }
 }
 
 //------------------------------------------------------------------------------
-void parse_line_by_line()
+void parse_line_by_line(ScriptInfo * slist)
 {
   // ZZ> This function removes comments and endline codes, replacing
   //     them with a 0
@@ -538,41 +560,46 @@ void parse_line_by_line()
 
   line = 0;
   read = 0;
-  while ( line < scr_intern.line_num )
+  while ( line < _cstate.line_num )
   {
     read = load_parsed_line( read );
     fix_operators();
     highbits = get_high_bits();
-    parseposition = 0;
-    parseposition = tell_code( parseposition );   // VALUE
-    add_code( highbits );
-    scr_intern.opcode_value_tmp = 0;  // SKIP FOR CONTROL CODES
-    add_code( 0 );
+
+    parseposition = tell_code( 0 );   // VALUE
+    add_code( slist, highbits );
+    _cstate.temp = 0;  // SKIP FOR CONTROL CODES
+    add_code( slist, 0 );
     if ( NOT_FUNCTION( highbits ) )
     {
       parseposition = tell_code( parseposition );   // EQUALS
       parseposition = tell_code( parseposition );   // VALUE
-      add_code( 0 );
+      add_code( slist, 0 );
       operands = 1;
-      while ( parseposition < scr_intern.line_size )
+      while ( parseposition < _cstate.line_size )
       {
         parseposition = tell_code( parseposition );   // OPERATOR
-        if ( scr_intern.opcode_index == -1 ) scr_intern.opcode_index = 1;
-        else scr_intern.opcode_index = 0;
-        highbits = PUT_OP_BITS(scr_intern.opcode_value_tmp) | PUT_CONSTANT_BIT( scr_intern.opcode_index );
+        if ( _cstate.index == -1 ) _cstate.index = 1;
+        else _cstate.index = 0;
+        highbits = PUT_OP_BITS(_cstate.temp) | PUT_CONSTANT_BIT( _cstate.index );
         parseposition = tell_code( parseposition );   // VALUE
-        add_code( highbits );
-        if ( scr_intern.opcode_index != MAXCODE )
+        add_code( slist, highbits );
+        if ( _cstate.index != MAXCODE )
           operands++;
       }
-      scr_intern.compiled[scr_intern.script_index-operands-1] = operands;  // Number of operands
+
+      slist->buffer[slist->buffer_index - (operands+1)] = operands;  // Number of operands
     }
     line++;
   }
+
+  // make absolutely sure there is an END function
+  slist->buffer[slist->buffer_index] = END_FUNCTION;
+  slist->buffer_index++;
 }
 
 //------------------------------------------------------------------------------
-Uint32 jump_goto( int index )
+Uint32 jump_goto( ScriptInfo * slist, int index )
 {
   // ZZ> This function figures out where to jump to on a fail based on the
   //     starting location and the following code.  The starting location
@@ -582,12 +609,12 @@ Uint32 jump_goto( int index )
   int targetindent, indent;
 
 
-  value = scr_intern.compiled[index];  index += 2;
+  value = slist->buffer[index];  index += 2;
   targetindent = GET_INDENT( value );
   indent = 100;
   while ( indent > targetindent )
   {
-    value = scr_intern.compiled[index];
+    value = slist->buffer[index];
     indent = GET_INDENT( value );
     if ( indent > targetindent )
     {
@@ -602,7 +629,7 @@ Uint32 jump_goto( int index )
       {
         // Operations cover each operand
         index++;
-        value = scr_intern.compiled[index];
+        value = slist->buffer[index];
         index++;
         index += ( value & 255 );
       }
@@ -612,32 +639,34 @@ Uint32 jump_goto( int index )
 }
 
 //------------------------------------------------------------------------------
-void parse_jumps( int ainumber )
+void parse_jumps( ScriptInfo * slist, int index_stt, int index_end )
 {
   // ZZ> This function sets up the fail jumps for the down-and-dirty code
 
   int index;
   Uint32 value, iTmp;
 
-  index = scr_intern.script_address[ainumber];
-  value = scr_intern.compiled[index];
-  while ( GET_FUNCTION_BITS( value ) != END_FUNCTION ) // End Function
+  index = index_stt;
+  while ( index < index_end ) // End Function
   {
-    value = scr_intern.compiled[index];
+    value = slist->buffer[index];
+    if( value == END_FUNCTION ) break; // tests for END function with no indent
+
     // Was it a function
     if ( IS_FUNCTION( value ) )
     {
       // Each function needs a jump
-      iTmp = jump_goto( index );
+      iTmp = jump_goto( slist, index );
+      assert(iTmp < index_end);
       index++;
-      scr_intern.compiled[index] = iTmp;
+      slist->buffer[index] = iTmp;
       index++;
     }
     else
     {
       // Operations cover each operand
       index++;
-      iTmp = scr_intern.compiled[index];
+      iTmp = slist->buffer[index];
       index++;
       index += ( iTmp & 255 );
     }
@@ -645,7 +674,7 @@ void parse_jumps( int ainumber )
 }
 
 //------------------------------------------------------------------------------
-void log_code( int ainumber, char* savename )
+void log_code( ScriptInfo * slist, int ainumber, char* savename )
 {
   // ZZ> This function shows the actual code, saving it in a file
 
@@ -656,11 +685,11 @@ void log_code( int ainumber, char* savename )
   filewrite = fs_fileOpen( PRI_NONE, NULL, savename, "w" );
   if ( filewrite )
   {
-    index = scr_intern.script_address[ainumber];
-    value = scr_intern.compiled[index];
-    while ( GET_FUNCTION_BITS( value ) != END_FUNCTION ) // End Function
+    index = slist->offset_stt[ainumber];
+    value = slist->buffer[index];
+    while ( !IS_END( value ) ) // End Function
     {
-      value = scr_intern.compiled[index];
+      value = slist->buffer[index];
       fprintf( filewrite, "0x%08x--0x%08x\n", index, value );
       index++;
     }
@@ -676,12 +705,12 @@ int ai_goto_colon( int read )
 
   Uint8 cTmp;
 
-  cTmp = cLoadBuffer[read];
-  while ( cTmp != ':' && read < scr_intern.load_size )
+  cTmp = _cstate.file_buffer[read];
+  while ( cTmp != ':' && read < _cstate.file_size )
   {
-    read++;  cTmp = cLoadBuffer[read];
+    read++;  cTmp = _cstate.file_buffer[read];
   }
-  if ( read < scr_intern.load_size )  read++;
+  if ( read < _cstate.file_size )  read++;
   return read;
 }
 
@@ -1354,61 +1383,88 @@ void load_ai_codes( char* loadname )
 
 
 //------------------------------------------------------------------------------
-Uint32 load_ai_script( char * szObjectpath, char * szObjectname )
+Uint32 load_ai_script( ScriptInfo * slist, char * szObjectpath, char * szObjectname )
 {
   // ZZ> This function loads a script to memory and
   //     returns bfalse if it fails to do so
 
-  FILE* fileread;
-  Uint32 retval = MAXAI;
+  FILE * fileread;
+  char * loc_fname;
+  Uint32 script_idx = MAXAI;
 
-  scr_intern.line_num = 0;
-  globalparsename = szObjectname;  // For error logging in log.TXT
+  if(NULL == slist || slist->offset_count >= MAXAI) return script_idx;
 
-  fileread = fs_fileOpen(PRI_NONE, "load_ai_script()", inherit_fname(szObjectpath, szObjectname, CData.script_file), "r");
-  if ( NULL == fileread || scr_intern.script_count >= MAXAI )
-    return retval;
-
-  // Make room for the code
-  retval = scr_intern.script_count;
-  scr_intern.script_address[scr_intern.script_count] = scr_intern.script_index;
-  scr_intern.script_count++;
+  loc_fname = inherit_fname(szObjectpath, szObjectname, CData.script_file);
+  globalparsename = loc_fname; 
+  fileread = fs_fileOpen(PRI_NONE, "load_ai_script()", loc_fname, "r");
+  if ( NULL == fileread ) return script_idx;
 
   // Load into md2 load buffer
-  scr_intern.load_size = ( int ) fread( &cLoadBuffer[0], 1, MD2MAXLOADSIZE, fileread );
+  _cstate.line_num  = 0;
+  _cstate.file_size = ( int ) fread( _cstate.file_buffer, 1, MD2MAXLOADSIZE, fileread );
   fs_fileClose( fileread );
 
+  // prepare the file for compiling
   parse_null_terminate_comments();
-  parse_line_by_line();
-  parse_jumps( retval );
 
-  return retval;
+  // grab a free script index
+  script_idx = slist->offset_count;
+  slist->offset_count++;
+
+  // store some info
+  slist->offset_stt[script_idx] = slist->buffer_index;
+
+  // stage 1 of compilation
+  parse_line_by_line( slist );
+
+  // stage 2 of compilation
+  parse_jumps( slist, slist->offset_stt[script_idx], slist->buffer_index );
+
+  // store some debug info
+  strcpy(slist->fname[script_idx], loc_fname);
+  slist->offset_end[script_idx] = slist->buffer_index;
+
+
+  return script_idx;
 }
 
 //------------------------------------------------------------------------------
-void reset_ai_script()
+
+bool_t ScriptInfo_reset( ScriptInfo * si )
+{
+  if(NULL == si) return bfalse;
+
+  si->buffer_index = 0;
+  si->offset_count = 0;
+
+  return btrue;
+};
+
+//------------------------------------------------------------------------------
+void reset_ai_script(GameState * gs)
 {
   // ZZ> This function starts ai loading in the right spot
 
   int cnt;
 
-  scr_intern.script_index = 0;
-  for ( cnt = 0; cnt < MAXMODEL; cnt++ )
-    MadList[cnt].ai = 0;
+  ScriptInfo_reset( GameState_getScriptInfo(gs) );
 
-  scr_intern.script_count = 0;
+  for ( cnt = 0; cnt < MAXMODEL; cnt++ )
+  {
+    gs->MadList[cnt].ai = 0;
+  }
+
 }
 
-
 //--------------------------------------------------------------------------------------------
-bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
+bool_t run_function( GameState * gs, Uint32 value, CHR_REF ichr )
 {
   // ZZ> This function runs a script function for the AI.
   //     It returns bfalse if the script should jump over the
   //     indented code that follows
 
   // Mask out the indentation
-  OPCODE opcode = GET_OPCODE_BITS(value);
+  OPCODE opcode = (OPCODE)GET_OPCODE_BITS(value);
 
   // Assume that the function will pass, as most do
   bool_t returncode = btrue;
@@ -1419,18 +1475,20 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
   int volume;
   Uint32 test;
   STRING cTmp;
-  SEARCH_CONTEXT loc_search;
+  SearchInfo loc_search;
 
-  CHR      * pchr = ChrList + ichr;
+  ScriptInfo * slist = GameState_getScriptInfo(gs); 
+
+  Chr      * pchr = gs->ChrList + ichr;
   AI_STATE * pstate = &(pchr->aistate);
 
-  CHR_REF loc_aichild = chr_get_aichild( ichr );
-  CHR   * pchild      = ChrList + loc_aichild;
+  CHR_REF loc_aichild = chr_get_aichild( gs->ChrList, MAXCHR, gs->ChrList + ichr );
+  Chr   * pchild      = gs->ChrList + loc_aichild;
 
-  CHR_REF loc_leader  = team_get_leader( pchr->team );
+  CHR_REF loc_leader  = team_get_leader( gs, pchr->team );
 
-  MAD   * pmad        = MadList + pchr->model;
-  CAP   * pcap        = CapList + pchr->model;
+  Mad   * pmad        = gs->MadList + pchr->model;
+  Cap   * pcap        = gs->CapList + pchr->model;
 
   // Figure out which function to run
   switch ( opcode )
@@ -1477,7 +1535,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_SetContent:
       // Set the content
-      pstate->content = pg_scr->tmpargument;
+      pstate->content = pstate->tmpargument;
       break;
 
     case F_IfKilled:
@@ -1497,7 +1555,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_AddWaypoint:
       // Add a waypoint to the waypoint list
-      returncode = wp_list_add( &(pstate->wp), pg_scr->tmpx, pg_scr->tmpy);
+      returncode = wp_list_add( &(pstate->wp), pstate->tmpx, pstate->tmpy);
       break;
 
     case F_FindPath:
@@ -1508,71 +1566,71 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       //First setup the variables needed for the target waypoint
       if(pstate->target != ichr)
       {
-        if(pg_scr->tmpdistance != MOVE_FOLLOW)
+        if(pstate->tmpdistance != MOVE_FOLLOW)
         {
-          pg_scr->tmpx = ChrList[pstate->target].pos.x;
-          pg_scr->tmpy = ChrList[pstate->target].pos.y;
+          pstate->tmpx = gs->ChrList[pstate->target].pos.x;
+          pstate->tmpy = gs->ChrList[pstate->target].pos.y;
         }
         else
         {
-          pg_scr->tmpx = (rand() & 1023) - 512 + ChrList[pstate->target].pos.x;
-          pg_scr->tmpy = (rand() & 1023) - 512 + ChrList[pstate->target].pos.y;
+          pstate->tmpx = (rand() & 1023) - 512 + gs->ChrList[pstate->target].pos.x;
+          pstate->tmpy = (rand() & 1023) - 512 + gs->ChrList[pstate->target].pos.y;
         }
-        if(pg_scr->tmpdistance == MOVE_RETREAT) 
+        if(pstate->tmpdistance == MOVE_RETREAT) 
         {
-          pg_scr->tmpturn = (rand() & 32767) + pg_scr->tmpturn + 16384;
+          pstate->tmpturn = (rand() & 32767) + pstate->tmpturn + 16384;
         }
         else 
         {
-          pg_scr->tmpturn = vec_to_turn( pg_scr->tmpx - pchr->pos.x, pg_scr->tmpy - pchr->pos.y );
+          pstate->tmpturn = vec_to_turn( pstate->tmpx - pchr->pos.x, pstate->tmpy - pchr->pos.y );
         }
 
-        if((pg_scr->tmpdistance == MOVE_CHARGE) || (pg_scr->tmpdistance == MOVE_RETREAT))
+        if((pstate->tmpdistance == MOVE_CHARGE) || (pstate->tmpdistance == MOVE_RETREAT))
         {
-          chr_reset_accel( ichr ); //Force 100% speed
+          chr_reset_accel( gs, ichr ); //Force 100% speed
         }
 
         //Secondly we run the Compass function (If we are not in follow mode)
-        if(pg_scr->tmpdistance != MOVE_FOLLOW)
+        if(pstate->tmpdistance != MOVE_FOLLOW)
         {
-          pg_scr->tmpx -= turntocos[( pg_scr->tmpturn>>2 ) & TRIGTABLE_MASK] * pg_scr->tmpdistance;
-          pg_scr->tmpy -= turntosin[( pg_scr->tmpturn>>2 ) & TRIGTABLE_MASK] * pg_scr->tmpdistance;
+          pstate->tmpx -= turntocos[( pstate->tmpturn>>2 ) & TRIGTABLE_MASK] * pstate->tmpdistance;
+          pstate->tmpy -= turntosin[( pstate->tmpturn>>2 ) & TRIGTABLE_MASK] * pstate->tmpdistance;
         }
 
         //Then we add the waypoint(s), without clearing existing ones...
-        returncode = wp_list_add( &(pstate->wp), pg_scr->tmpx, pg_scr->tmpy);
+        returncode = wp_list_add( &(pstate->wp), pstate->tmpx, pstate->tmpy);
       }
       break;
 
     case F_Compass:
       // This function changes tmpx and tmpy in a circlular manner according
       // to tmpturn and tmpdistance
-      pg_scr->tmpx -= turntocos[( pg_scr->tmpturn>>2 ) & TRIGTABLE_MASK] * pg_scr->tmpdistance;
-      pg_scr->tmpy -= turntosin[( pg_scr->tmpturn>>2 ) & TRIGTABLE_MASK] * pg_scr->tmpdistance;
+      pstate->tmpx -= turntocos[( pstate->tmpturn>>2 ) & TRIGTABLE_MASK] * pstate->tmpdistance;
+      pstate->tmpy -= turntosin[( pstate->tmpturn>>2 ) & TRIGTABLE_MASK] * pstate->tmpdistance;
       break;
 
     case F_GetTargetArmorPrice:
       // This function gets the armor cost for the given skin
-      sTmp = pg_scr->tmpargument  % MAXSKIN;
-      pg_scr->tmpx = CapList[ChrList[pstate->target].model].skin[sTmp].cost;
+      sTmp = pstate->tmpargument  % MAXSKIN;
+      pstate->tmpx = gs->CapList[gs->ChrList[pstate->target].model].skin[sTmp].cost;
       break;
 
     case F_SetTime:
       // This function resets the time
-      pstate->time = pg_scr->tmpargument;
+      pstate->time = pstate->tmpargument;
       break;
 
     case F_GetContent:
       // Get the content
-      pg_scr->tmpargument = pstate->content;
+      pstate->tmpargument = pstate->content;
       break;
 
     case F_JoinTargetTeam:
       // This function allows the character to leave its own team and join another
       returncode = bfalse;
-      if ( ChrList[pstate->target].on )
+      if ( gs->ChrList[pstate->target].on )
       {
-        switch_team( ichr, ChrList[pstate->target].team );
+        switch_team( gs, ichr, gs->ChrList[pstate->target].team );
         returncode = btrue;
       }
       break;
@@ -1580,7 +1638,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
     case F_SetTargetToNearbyEnemy:
       // This function finds a nearby enemy, and proceeds only if there is one
 
-      returncode = chr_search_nearby(search_new(&loc_search), ichr, bfalse, bfalse, btrue, bfalse, IDSZ_NONE );
+      returncode = chr_search_nearby( gs, SearchInfo_new(&loc_search), ichr, bfalse, bfalse, btrue, bfalse, IDSZ_NONE );
 
       if ( returncode )
       {
@@ -1591,10 +1649,10 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_SetTargetToTargetLeftHand:
       // This function sets the target to the target's left item
-      sTmp = chr_get_holdingwhich( pstate->target, SLOT_LEFT );
+      sTmp = chr_get_holdingwhich( gs->ChrList, MAXCHR, pstate->target, SLOT_LEFT );
 
       returncode = bfalse;
-      if ( VALID_CHR( sTmp ) )
+      if ( VALID_CHR( gs->ChrList, sTmp ) )
       {
         pstate->target = sTmp;
         returncode = btrue;
@@ -1603,9 +1661,9 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_SetTargetToTargetRightHand:
       // This function sets the target to the target's right item
-      sTmp = chr_get_holdingwhich( pstate->target, SLOT_RIGHT );
+      sTmp = chr_get_holdingwhich( gs->ChrList, MAXCHR, pstate->target, SLOT_RIGHT );
       returncode = bfalse;
-      if ( VALID_CHR( sTmp ) )
+      if ( VALID_CHR( gs->ChrList, sTmp ) )
       {
         pstate->target = sTmp;
         returncode = btrue;
@@ -1616,8 +1674,8 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       {
         // This function sets the target to whoever attacked the character last,
         // failing for damage tiles
-        CHR_REF attacklast = chr_get_aiattacklast( ichr );
-        if ( VALID_CHR( attacklast ) )
+        CHR_REF attacklast = chr_get_aiattacklast( gs->ChrList, MAXCHR, gs->ChrList + ichr );
+        if ( VALID_CHR( gs->ChrList, attacklast ) )
         {
           pstate->target = attacklast;
         }
@@ -1631,17 +1689,17 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
     case F_SetTargetToWhoeverBumped:
       // This function sets the target to whoever bumped into the
       // character last.  It never fails
-      pstate->target = chr_get_aibumplast( ichr );
+      pstate->target = chr_get_aibumplast( gs->ChrList, MAXCHR, gs->ChrList + ichr );
       break;
 
     case F_SetTargetToWhoeverCalledForHelp:
       // This function sets the target to whoever needs help
-      pstate->target = team_get_sissy( pchr->team );
+      pstate->target = team_get_sissy( gs, pchr->team );
       break;
 
     case F_SetTargetToOldTarget:
       // This function reverts to the target with whom the script started
-      pstate->target = pg_scr->oldtarget;
+      pstate->target = pstate->oldtarget;
       break;
 
     case F_SetTurnModeToVelocity:
@@ -1661,16 +1719,16 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_SetBumpHeight:
       // This function changes a character's bump height
-      //pchr->bmpdata.height = pg_scr->tmpargument * pchr->fat;
-      //pchr->bmpdata_save.height = pg_scr->tmpargument;
+      //pchr->bmpdata.height = pstate->tmpargument * pchr->fat;
+      //pchr->bmpdata_save.height = pstate->tmpargument;
       break;
 
     case F_IfTargetHasID:
       // This function proceeds if ID matches tmpargument
       returncode = bfalse;
-      if ( VALID_CHR( pstate->target ) )
+      if ( VALID_CHR( gs->ChrList, pstate->target ) )
       {
-        returncode = CAP_INHERIT_IDSZ( ChrList[pstate->target].model, pg_scr->tmpargument );
+        returncode = CAP_INHERIT_IDSZ( gs,  gs->ChrList[pstate->target].model, pstate->tmpargument );
       };
       break;
 
@@ -1678,23 +1736,23 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // This function proceeds if the target has a matching item in his/her pack
       returncode = bfalse;
       // Check the pack
-      sTmp  = chr_get_nextinpack( pstate->target );
-      while ( VALID_CHR( sTmp ) )
+      sTmp  = chr_get_nextinpack( gs->ChrList, MAXCHR, pstate->target );
+      while ( VALID_CHR( gs->ChrList, sTmp ) )
       {
-        if ( CAP_INHERIT_IDSZ( ChrList[sTmp].model, pg_scr->tmpargument ) )
+        if ( CAP_INHERIT_IDSZ( gs,  gs->ChrList[sTmp].model, pstate->tmpargument ) )
         {
           returncode = btrue;
           break;
         }
-        sTmp  = chr_get_nextinpack( sTmp );
+        sTmp  = chr_get_nextinpack( gs->ChrList, MAXCHR, sTmp );
       }
 
       for ( _slot = SLOT_BEGIN; _slot < SLOT_COUNT; _slot = ( SLOT )( _slot + 1 ) )
       {
-        sTmp = chr_get_holdingwhich( pstate->target, _slot );
-        if ( VALID_CHR( sTmp ) )
+        sTmp = chr_get_holdingwhich( gs->ChrList, MAXCHR, pstate->target, _slot );
+        if ( VALID_CHR( gs->ChrList, sTmp ) )
         {
-          if ( CAP_INHERIT_IDSZ( ChrList[sTmp].model, pg_scr->tmpargument ) )
+          if ( CAP_INHERIT_IDSZ( gs,  gs->ChrList[sTmp].model, pstate->tmpargument ) )
             returncode = btrue;
         }
       }
@@ -1705,14 +1763,14 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // hand in tmpargument
       returncode = bfalse;
 
-      if ( VALID_CHR( pstate->target ) )
+      if ( VALID_CHR( gs->ChrList, pstate->target ) )
       {
         for ( _slot = SLOT_LEFT; _slot <= SLOT_RIGHT; _slot = ( SLOT )( _slot + 1 ) )
         {
-          sTmp = chr_get_holdingwhich( pstate->target, _slot );
-          if ( VALID_CHR( sTmp ) && CAP_INHERIT_IDSZ( ChrList[sTmp].model, pg_scr->tmpargument ) )
+          sTmp = chr_get_holdingwhich( gs->ChrList, MAXCHR, pstate->target, _slot );
+          if ( VALID_CHR( gs->ChrList, sTmp ) && CAP_INHERIT_IDSZ( gs,  gs->ChrList[sTmp].model, pstate->tmpargument ) )
           {
-            pg_scr->tmpargument = slot_to_latch( pstate->target, _slot );
+            pstate->tmpargument = slot_to_latch( gs->ChrList, MAXCHR, pstate->target, _slot );
             returncode = btrue;
           }
         }
@@ -1721,26 +1779,25 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_IfTargetHasSkillID:
       // This function proceeds if ID matches tmpargument
-      returncode = check_skills( pstate->target, pg_scr->tmpargument );
+      returncode = check_skills( gs, pstate->target, pstate->tmpargument );
       break;
 
     case F_Else:
       // This function fails if the last one was more indented
-      if (( pg_scr->lastindent&0x78000000 ) > ( value&0x78000000 ) )
-        returncode = bfalse;
+      returncode = (GET_INDENT( pstate->lastindent) <= GET_INDENT( value ));
       break;
 
     case F_Run:
-      chr_reset_accel( ichr );
+      chr_reset_accel( gs, ichr );
       break;
 
     case F_Walk:
-      chr_reset_accel( ichr );
+      chr_reset_accel( gs, ichr );
       pchr->skin.maxaccel *= .66;
       break;
 
     case F_Sneak:
-      chr_reset_accel( ichr );
+      chr_reset_accel( gs, ichr );
       pchr->skin.maxaccel *= .33;
       break;
 
@@ -1749,17 +1806,17 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // It will fail if the action is invalid or if the character is doing
       // something else already
       returncode = bfalse;
-      if ( pg_scr->tmpargument < MAXACTION && pchr->action.ready )
+      if ( pstate->tmpargument < MAXACTION && pchr->action.ready )
       {
-        if ( pmad->actionvalid[pg_scr->tmpargument] )
+        if ( pmad->actionvalid[pstate->tmpargument] )
         {
-          pchr->action.now = pg_scr->tmpargument;
+          pchr->action.now = pstate->tmpargument;
           pchr->action.ready = bfalse;
 
           pchr->anim.lip_fp8 = 0;
           pchr->anim.flip = 0.0f;
           pchr->anim.last = pchr->anim.next;
-          pchr->anim.next = pmad->actionstart[pg_scr->tmpargument];
+          pchr->anim.next = pmad->actionstart[pstate->tmpargument];
 
           returncode = btrue;
         }
@@ -1773,7 +1830,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_SignalTeam:
       // This function issues an order to all teammates
-      signal_team( ichr, pg_scr->tmpargument );
+      signal_team( gs, ichr, pstate->tmpargument );
       break;
 
     case F_DropWeapons:
@@ -1781,14 +1838,14 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
       for ( _slot = SLOT_BEGIN; _slot < SLOT_COUNT; _slot = ( SLOT )( _slot + 1 ) )
       {
-        sTmp = chr_get_holdingwhich( ichr, _slot );
-        if ( detach_character_from_mount( sTmp, btrue, btrue ) )
+        sTmp = chr_get_holdingwhich( gs->ChrList, MAXCHR, ichr, _slot );
+        if ( detach_character_from_mount( gs, sTmp, btrue, btrue ) )
         {
           if ( _slot == SLOT_SADDLE )
           {
-            ChrList[sTmp].vel.z     = DISMOUNTZVEL;
-            ChrList[sTmp].pos.z    += DISMOUNTZVEL;
-            ChrList[sTmp].jumptime = DELAY_JUMP;
+            gs->ChrList[sTmp].vel.z     = DISMOUNTZVEL;
+            gs->ChrList[sTmp].pos.z    += DISMOUNTZVEL;
+            gs->ChrList[sTmp].jumptime = DELAY_JUMP;
           }
         }
       };
@@ -1799,19 +1856,19 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // It will fail if the action is invalid or if the target is doing
       // something else already
       returncode = bfalse;
-      if ( ChrList[pstate->target].alive )
+      if ( gs->ChrList[pstate->target].alive )
       {
-        if ( pg_scr->tmpargument < MAXACTION && ChrList[pstate->target].action.ready )
+        if ( pstate->tmpargument < MAXACTION && gs->ChrList[pstate->target].action.ready )
         {
-          if ( MadList[ChrList[pstate->target].model].actionvalid[pg_scr->tmpargument] )
+          if ( gs->MadList[gs->ChrList[pstate->target].model].actionvalid[pstate->tmpargument] )
           {
-            ChrList[pstate->target].action.now = pg_scr->tmpargument;
-            ChrList[pstate->target].action.ready = bfalse;
+            gs->ChrList[pstate->target].action.now = pstate->tmpargument;
+            gs->ChrList[pstate->target].action.ready = bfalse;
 
-            ChrList[pstate->target].anim.lip_fp8 = 0;
-            ChrList[pstate->target].anim.flip    = 0.0f;
-            ChrList[pstate->target].anim.last    = ChrList[pstate->target].anim.next;
-            ChrList[pstate->target].anim.next    = MadList[ChrList[pstate->target].model].actionstart[pg_scr->tmpargument];
+            gs->ChrList[pstate->target].anim.lip_fp8 = 0;
+            gs->ChrList[pstate->target].anim.flip    = 0.0f;
+            gs->ChrList[pstate->target].anim.last    = gs->ChrList[pstate->target].anim.next;
+            gs->ChrList[pstate->target].anim.next    = gs->MadList[gs->ChrList[pstate->target].model].actionstart[pstate->tmpargument];
 
             returncode = btrue;
           }
@@ -1822,29 +1879,29 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
     case F_OpenPassage:
       // This function opens the passage specified by tmpargument, failing if the
       // passage was already open
-      returncode = open_passage( pg_scr->tmpargument );
+      returncode = open_passage( gs, pstate->tmpargument );
       break;
 
     case F_ClosePassage:
       // This function closes the passage specified by tmpargument, and proceeds
       // only if the passage is clear of obstructions
-      returncode = close_passage( pg_scr->tmpargument );
+      returncode = close_passage( gs, pstate->tmpargument );
       break;
 
     case F_IfPassageOpen:
       // This function proceeds only if the passage specified by tmpargument
       // is both valid and open
       returncode = bfalse;
-      if ( pg_scr->tmpargument < passage_count && pg_scr->tmpargument >= 0 )
+      if ( pstate->tmpargument < gs->PassList_count && pstate->tmpargument >= 0 )
       {
-        returncode = PassList[pg_scr->tmpargument].open;
+        returncode = gs->PassList[pstate->tmpargument].open;
       }
       break;
 
     case F_GoPoof:
       // This function flags the character to be removed from the game
       returncode = bfalse;
-      if ( !pchr->isplayer )
+      if ( !chr_is_player(gs, ichr) )
       {
         returncode = btrue;
         pchr->gopoof = btrue;
@@ -1856,11 +1913,11 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       returncode = bfalse;
       // Check the pack
       iTmp = MAXCHR;
-      tTmp = chr_get_aitarget( ichr );
-      sTmp  = chr_get_nextinpack( tTmp );
-      while ( VALID_CHR( sTmp ) )
+      tTmp = chr_get_aitarget( gs->ChrList, MAXCHR, gs->ChrList + ichr );
+      sTmp  = chr_get_nextinpack( gs->ChrList, MAXCHR, tTmp );
+      while ( VALID_CHR( gs->ChrList, sTmp ) )
       {
-        if ( CAP_INHERIT_IDSZ( ChrList[sTmp].model, pg_scr->tmpargument ) )
+        if ( CAP_INHERIT_IDSZ( gs,  gs->ChrList[sTmp].model, pstate->tmpargument ) )
         {
           returncode = btrue;
           iTmp = sTmp;
@@ -1869,20 +1926,20 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
         else
         {
           tTmp = sTmp;
-          sTmp  = chr_get_nextinpack( sTmp );
+          sTmp  = chr_get_nextinpack( gs->ChrList, MAXCHR, sTmp );
         }
       }
 
       for ( _slot = SLOT_BEGIN; _slot < SLOT_COUNT; _slot = ( SLOT )( _slot + 1 ) )
       {
-        sTmp = chr_get_holdingwhich( pstate->target, _slot );
-        if ( VALID_CHR( sTmp ) )
+        sTmp = chr_get_holdingwhich( gs->ChrList, MAXCHR, pstate->target, _slot );
+        if ( VALID_CHR( gs->ChrList, sTmp ) )
         {
-          if ( CAP_INHERIT_IDSZ( ChrList[sTmp].model, pg_scr->tmpargument ) )
+          if ( CAP_INHERIT_IDSZ( gs,  gs->ChrList[sTmp].model, pstate->tmpargument ) )
           {
             returncode = btrue;
             tTmp = MAXCHR;
-            iTmp = chr_get_holdingwhich( pstate->target, _slot );
+            iTmp = chr_get_holdingwhich( gs->ChrList, MAXCHR, pstate->target, _slot );
             break;
           }
         }
@@ -1891,27 +1948,27 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
       if ( returncode )
       {
-        if ( ChrList[iTmp].ammo <= 1 )
+        if ( gs->ChrList[iTmp].ammo <= 1 )
         {
           // Poof the item
-          if ( chr_in_pack( iTmp ) )
+          if ( chr_in_pack(gs->ChrList, MAXCHR,  iTmp ) )
           {
             // Remove from the pack
-            ChrList[tTmp].nextinpack  = chr_get_nextinpack( iTmp );
-            ChrList[pstate->target].numinpack--;
-            ChrList[iTmp].freeme = btrue;
+            gs->ChrList[tTmp].nextinpack  = chr_get_nextinpack( gs->ChrList, MAXCHR, iTmp );
+            gs->ChrList[pstate->target].numinpack--;
+            gs->ChrList[iTmp].freeme = btrue;
           }
           else
           {
             // Drop from hand
-            detach_character_from_mount( iTmp, btrue, bfalse );
-            ChrList[iTmp].freeme = btrue;
+            detach_character_from_mount( gs, iTmp, btrue, bfalse );
+            gs->ChrList[iTmp].freeme = btrue;
           }
         }
         else
         {
           // Cost one ammo
-          ChrList[iTmp].ammo--;
+          gs->ChrList[iTmp].ammo--;
         }
       }
       break;
@@ -1920,17 +1977,17 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // This function starts a new action, if it is valid for the model
       // It will fail if the action is invalid
       returncode = bfalse;
-      if ( pg_scr->tmpargument < MAXACTION )
+      if ( pstate->tmpargument < MAXACTION )
       {
-        if ( pmad->actionvalid[pg_scr->tmpargument] )
+        if ( pmad->actionvalid[pstate->tmpargument] )
         {
-          pchr->action.now   = pg_scr->tmpargument;
+          pchr->action.now   = pstate->tmpargument;
           pchr->action.ready = bfalse;
 
           pchr->anim.lip_fp8 = 0;
           pchr->anim.flip    = 0.0f;
           pchr->anim.last    = pchr->anim.next;
-          pchr->anim.next    = pmad->actionstart[pg_scr->tmpargument];
+          pchr->anim.next    = pmad->actionstart[pstate->tmpargument];
 
           returncode = btrue;
         }
@@ -1944,37 +2001,37 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_DisplayMessage:
       // This function sends a message to the players
-      display_message( pg_scr, pmad->msg_start + pg_scr->tmpargument, ichr );
+      display_message( gs,  pmad->msg_start + pstate->tmpargument, ichr );
       break;
 
     case F_CallForHelp:
       // This function issues a call for help
-      call_for_help( ichr );
+      call_for_help( gs,  ichr );
       break;
 
     case F_AddIDSZ:
       // This function adds an idsz to the module's menu.txt file
-      add_module_idsz( pickedmodule, pg_scr->tmpargument );
+      module_add_idsz( gs->mod.loadname, pstate->tmpargument );
       break;
 
     case F_SetState:
       // This function sets the character's state variable
-      pstate->state = pg_scr->tmpargument;
+      pstate->state = pstate->tmpargument;
       break;
 
     case F_GetState:
       // This function reads the character's state variable
-      pg_scr->tmpargument = pstate->state;
+      pstate->tmpargument = pstate->state;
       break;
 
     case F_IfStateIs:
       // This function fails if the character's state is inequal to tmpargument
-      returncode = ( pg_scr->tmpargument == pstate->state );
+      returncode = ( pstate->tmpargument == pstate->state );
       break;
 
     case F_IfTargetCanOpenStuff:
       // This function fails if the target can't open stuff
-      returncode = ChrList[pstate->target].openstuff;
+      returncode = gs->ChrList[pstate->target].openstuff;
       break;
 
     case F_IfGrabbed:
@@ -1991,9 +2048,9 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // This function sets the target to the character's mount or holder,
       // failing if the character has no mount or holder
       returncode = bfalse;
-      if ( chr_attached( ichr ) )
+      if ( chr_attached( gs->ChrList, MAXCHR, ichr ) )
       {
-        pstate->target = chr_get_attachedto( ichr );
+        pstate->target = chr_get_attachedto( gs->ChrList, MAXCHR, ichr );
         returncode = btrue;
       }
       break;
@@ -2002,25 +2059,25 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       {
         // This function applies little bit of love to the character's target.
         // The amount is set in tmpargument
-        PAIR ptemp = {pg_scr->tmpargument, 1};
-        damage_character( pstate->target, 0, &ptemp, pchr->damagetargettype, pchr->team, ichr, DAMFX_BLOC );
+        PAIR ptemp = {pstate->tmpargument, 1};
+        damage_character( gs, pstate->target, 0, &ptemp, pchr->damagetargettype, pchr->team, ichr, DAMFX_BLOC );
       }
       break;
 
     case F_IfXIsLessThanY:
       // Proceed only if tmpx is less than tmpy
-      returncode = ( pg_scr->tmpx < pg_scr->tmpy );
+      returncode = ( pstate->tmpx < pstate->tmpy );
       break;
 
     case F_SetWeatherTime:
       // Set the weather timer
-      GWeather.timereset = pg_scr->tmpargument;
-      GWeather.time = pg_scr->tmpargument;
+      GWeather.timereset = pstate->tmpargument;
+      GWeather.time = pstate->tmpargument;
       break;
 
     case F_GetBumpHeight:
       // Get the characters bump height
-      pg_scr->tmpargument = pchr->bmpdata.calc_height;
+      pstate->tmpargument = pchr->bmpdata.calc_height;
       break;
 
     case F_IfReaffirmed:
@@ -2035,26 +2092,26 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_IfTargetIsOnOtherTeam:
       // This function proceeds only if the target is on another team
-      returncode = ( ChrList[pstate->target].alive && ChrList[pstate->target].team != pchr->team );
+      returncode = ( gs->ChrList[pstate->target].alive && gs->ChrList[pstate->target].team != pchr->team );
       break;
 
     case F_IfTargetIsOnHatedTeam:
       // This function proceeds only if the target is on an enemy team
-      returncode = ( ChrList[pstate->target].alive && TeamList[pchr->team].hatesteam[ChrList[pstate->target].team] && !ChrList[pstate->target].invictus );
+      returncode = ( gs->ChrList[pstate->target].alive && gs->TeamList[pchr->team].hatesteam[gs->ChrList[pstate->target].team] && !gs->ChrList[pstate->target].invictus );
       break;
 
     case F_PressLatchButton:
       // This function sets the latch buttons
-      pstate->latch.b |= pg_scr->tmpargument;
+      pstate->latch.b |= pstate->tmpargument;
       break;
 
     case F_SetTargetToTargetOfLeader:
       // This function sets the character's target to the target of its leader,
       // or it fails with no change if the leader is dead
       returncode = bfalse;
-      if ( VALID_CHR( loc_leader ) )
+      if ( VALID_CHR( gs->ChrList, loc_leader ) )
       {
-        pstate->target = chr_get_aitarget( loc_leader );
+        pstate->target = chr_get_aitarget( gs->ChrList, MAXCHR, gs->ChrList + loc_leader );
         returncode = btrue;
       }
       break;
@@ -2066,49 +2123,49 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_BecomeLeader:
       // This function makes the character the team leader
-      TeamList[pchr->team].leader = ichr;
+      gs->TeamList[pchr->team].leader = ichr;
       break;
 
     case F_ChangeTargetArmor:
       // This function sets the target's armor type and returns the old type
       // as tmpargument and the new type as tmpx
-      iTmp = ChrList[pstate->target].skin_ref % MAXSKIN;
-      pg_scr->tmpx = change_armor( pstate->target, pg_scr->tmpargument );
-      pg_scr->tmpargument = iTmp;  // The character's old armor
+      iTmp = gs->ChrList[pstate->target].skin_ref % MAXSKIN;
+      pstate->tmpx = change_armor( gs, pstate->target, pstate->tmpargument );
+      pstate->tmpargument = iTmp;  // The character's old armor
       break;
 
     case F_GiveMoneyToTarget:
       // This function transfers money from the character to the target, and sets
       // tmpargument to the amount transferred
       iTmp = pchr->money;
-      tTmp = ChrList[pstate->target].money;
-      iTmp -= pg_scr->tmpargument;
-      tTmp += pg_scr->tmpargument;
-      if ( iTmp < 0 ) { tTmp += iTmp;  pg_scr->tmpargument += iTmp;  iTmp = 0; }
-      if ( tTmp < 0 ) { iTmp += tTmp;  pg_scr->tmpargument += tTmp;  tTmp = 0; }
+      tTmp = gs->ChrList[pstate->target].money;
+      iTmp -= pstate->tmpargument;
+      tTmp += pstate->tmpargument;
+      if ( iTmp < 0 ) { tTmp += iTmp;  pstate->tmpargument += iTmp;  iTmp = 0; }
+      if ( tTmp < 0 ) { iTmp += tTmp;  pstate->tmpargument += tTmp;  tTmp = 0; }
       if ( iTmp > MAXMONEY ) { iTmp = MAXMONEY; }
       if ( tTmp > MAXMONEY ) { tTmp = MAXMONEY; }
       pchr->money = iTmp;
-      ChrList[pstate->target].money = tTmp;
+      gs->ChrList[pstate->target].money = tTmp;
       break;
 
     case F_DropKeys:
-      drop_keys( ichr );
+      drop_keys( gs, ichr );
       break;
 
     case F_IfLeaderIsAlive:
       // This function fails if there is no team leader
-      returncode = VALID_CHR( loc_leader );
+      returncode = VALID_CHR( gs->ChrList, loc_leader );
       break;
 
     case F_IfTargetIsOldTarget:
       // This function returns bfalse if the target has changed
-      returncode = ( pstate->target == pg_scr->oldtarget );
+      returncode = ( pstate->target == pstate->oldtarget );
       break;
 
     case F_SetTargetToLeader:
       // This function fails if there is no team leader
-      if ( !VALID_CHR( loc_leader ) )
+      if ( !VALID_CHR( gs->ChrList, loc_leader ) )
       {
         returncode = bfalse;
       }
@@ -2120,26 +2177,26 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_SpawnCharacter:
       {
-        vect3 chr_pos = {pg_scr->tmpx, pg_scr->tmpy, 0};
+        vect3 chr_pos = {pstate->tmpx, pstate->tmpy, 0};
 
         // This function spawns a ichr, failing if x,y is invalid
-        sTmp = spawn_one_character( chr_pos, pchr->model, pchr->team, 0, pg_scr->tmpturn, NULL, MAXCHR );
+        sTmp = spawn_one_character( gs, chr_pos, pchr->model, pchr->team, 0, pstate->tmpturn, NULL, MAXCHR );
         returncode = bfalse;
-        if ( VALID_CHR( sTmp ) )
+        if ( VALID_CHR( gs->ChrList, sTmp ) )
         {
-          if ( 0 != chr_hitawall( sTmp, NULL ) )
+          if ( 0 != chr_hitawall( gs, gs->ChrList + sTmp, NULL ) )
           {
-            ChrList[sTmp].freeme = btrue;
+            gs->ChrList[sTmp].freeme = btrue;
           }
           else
           {
             tTmp = pchr->turn_lr >> 2;
-            ChrList[sTmp].vel.x += turntocos[( tTmp+8192 ) & TRIGTABLE_MASK] * pg_scr->tmpdistance;
-            ChrList[sTmp].vel.y += turntosin[( tTmp+8192 ) & TRIGTABLE_MASK] * pg_scr->tmpdistance;
-            ChrList[sTmp].passage = pchr->passage;
-            ChrList[sTmp].iskursed = bfalse;
+            gs->ChrList[sTmp].vel.x += turntocos[( tTmp+8192 ) & TRIGTABLE_MASK] * pstate->tmpdistance;
+            gs->ChrList[sTmp].vel.y += turntosin[( tTmp+8192 ) & TRIGTABLE_MASK] * pstate->tmpdistance;
+            gs->ChrList[sTmp].passage = pchr->passage;
+            gs->ChrList[sTmp].iskursed = bfalse;
             pstate->child = sTmp;
-            ChrList[sTmp].aistate.owner = pstate->owner;
+            gs->ChrList[sTmp].aistate.owner = pstate->owner;
             returncode = btrue;
           }
         }
@@ -2148,12 +2205,12 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_RespawnCharacter:
       // This function respawns the character at its starting location
-      respawn_character( ichr );
+      respawn_character( gs, ichr );
       break;
 
     case F_ChangeTile:
       // This function changes the floor image under the character
-      mesh_set_tile( MESH_FLOAT_TO_FAN( pchr->pos.x ), MESH_FLOAT_TO_FAN( pchr->pos.y ), pg_scr->tmpargument & 0xFF );
+      mesh_set_tile( gs, MESH_FLOAT_TO_FAN( pchr->pos.x ), MESH_FLOAT_TO_FAN( pchr->pos.y ), pstate->tmpargument & 0xFF );
       break;
 
     case F_IfUsed:
@@ -2163,27 +2220,27 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_DropMoney:
       // This function drops some of a character's money
-      drop_money( ichr, pg_scr->tmpargument );
+      drop_money( gs, ichr, pstate->tmpargument );
       break;
 
     case F_SetOldTarget:
       // This function sets the old target to the current target
-      pg_scr->oldtarget = chr_get_aitarget( ichr );
+      pstate->oldtarget = chr_get_aitarget( gs->ChrList, MAXCHR, gs->ChrList + ichr );
       break;
 
     case F_DetachFromHolder:
       // This function drops the ichr, failing only if it was not held
-      returncode = detach_character_from_mount( ichr, btrue, btrue );
+      returncode = detach_character_from_mount( gs, ichr, btrue, btrue );
       break;
 
     case F_IfTargetHasVulnerabilityID:
       // This function proceeds if ID matches tmpargument
-      returncode = ( CapList[ChrList[pstate->target].model].idsz[IDSZ_VULNERABILITY] == ( IDSZ ) pg_scr->tmpargument );
+      returncode = ( gs->CapList[gs->ChrList[pstate->target].model].idsz[IDSZ_VULNERABILITY] == ( IDSZ ) pstate->tmpargument );
       break;
 
     case F_CleanUp:
       // This function issues the clean up order to all teammates
-      issue_clean( ichr );
+      issue_clean( gs, ichr );
       break;
 
     case F_IfCleanedUp:
@@ -2194,63 +2251,63 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
     case F_IfSitting:
       // This function proceeds if the character is riding another
       returncode = bfalse;
-      sTmp = chr_get_attachedto( ichr );
-      if( VALID_CHR( sTmp ) )
+      sTmp = chr_get_attachedto( gs->ChrList, MAXCHR, ichr );
+      if( VALID_CHR( gs->ChrList, sTmp ) )
       {
-        returncode = (ichr == chr_get_holdingwhich(sTmp, SLOT_SADDLE));
+        returncode = (ichr == chr_get_holdingwhich(gs->ChrList, MAXCHR, sTmp, SLOT_SADDLE));
       };
       break;
 
     case F_IfTargetIsHurt:
       // This function passes only if the target is hurt and alive
       returncode = bfalse;
-      if ( VALID_CHR( pstate->target ) )
+      if ( VALID_CHR( gs->ChrList, pstate->target ) )
       {
-        returncode = ChrList[pstate->target].alive &&  ChrList[pstate->target].lifemax_fp8 > 0 && ChrList[pstate->target].life_fp8 < ChrList[pstate->target].lifemax_fp8 - DAMAGE_HURT;
+        returncode = gs->ChrList[pstate->target].alive &&  gs->ChrList[pstate->target].lifemax_fp8 > 0 && gs->ChrList[pstate->target].life_fp8 < gs->ChrList[pstate->target].lifemax_fp8 - DAMAGE_HURT;
       }
       break;
 
     case F_IfTargetIsAPlayer:
       // This function proceeds only if the target is a player ( may not be local )
-      returncode = ChrList[pstate->target].isplayer;
+      returncode = chr_is_player(gs, pstate->target);
       break;
 
     case F_PlaySound:
       // This function plays a sound
       returncode = bfalse;
-      if ( INVALID_SOUND != pg_scr->tmpargument && pchr->pos_old.z > PITNOSOUND )
+      if ( INVALID_SOUND != pstate->tmpargument && pchr->pos_old.z > PITNOSOUND )
       {
-        returncode = ( INVALID_SOUND != play_sound( 1.0f, pchr->pos_old, pcap->wavelist[pg_scr->tmpargument], 0, pchr->model, pg_scr->tmpargument) );
+        returncode = ( INVALID_SOUND != snd_play_sound( gs, 1.0f, pchr->pos_old, pcap->wavelist[pstate->tmpargument], 0, pchr->model, pstate->tmpargument) );
       }
       break;
 
     case F_SpawnParticle:
       // This function spawns a particle
       returncode = bfalse;
-      if ( VALID_CHR( ichr ) && !chr_in_pack( ichr ) )
+      if ( VALID_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, MAXCHR, ichr ) )
       {
         tTmp = ichr;
-        if ( chr_attached( ichr ) )  tTmp = chr_get_attachedto( ichr );
-        tTmp = spawn_one_particle( 1.0f, pchr->pos, pchr->turn_lr, pchr->model, pg_scr->tmpargument, ichr, pg_scr->tmpdistance, pchr->team, tTmp, 0, MAXCHR );
+        if ( chr_attached( gs->ChrList, MAXCHR, ichr ) )  tTmp = chr_get_attachedto( gs->ChrList, MAXCHR, ichr );
+        tTmp = spawn_one_particle( gs, 1.0f, pchr->pos, pchr->turn_lr, pchr->model, pstate->tmpargument, ichr, pstate->tmpdistance, pchr->team, tTmp, 0, MAXCHR );
 
-        if ( VALID_PRT( tTmp ) )
+        if ( VALID_PRT( gs->PrtList, tTmp ) )
         {
           // Detach the particle
-          attach_particle_to_character( tTmp, ichr, pg_scr->tmpdistance );
-          PrtList[tTmp].attachedtochr = MAXCHR;
+          attach_particle_to_character( gs, tTmp, ichr, pstate->tmpdistance );
+          gs->PrtList[tTmp].attachedtochr = MAXCHR;
 
           // Correct X, Y, Z spacing
-          PrtList[tTmp].pos.x += pg_scr->tmpx;
-          PrtList[tTmp].pos.y += pg_scr->tmpy;
-          PrtList[tTmp].pos.z += PipList[PrtList[tTmp].pip].zspacing.ibase;
+          gs->PrtList[tTmp].pos.x += pstate->tmpx;
+          gs->PrtList[tTmp].pos.y += pstate->tmpy;
+          gs->PrtList[tTmp].pos.z += gs->PipList[gs->PrtList[tTmp].pip].zspacing.ibase;
 
           // Don't spawn in walls
-          if ( 0 != prt_hitawall( tTmp, NULL ) )
+          if ( 0 != prt_hitawall( gs, tTmp, NULL ) )
           {
-            PrtList[tTmp].pos.x = pchr->pos.x;
-            if ( 0 != prt_hitawall( tTmp, NULL ) )
+            gs->PrtList[tTmp].pos.x = pchr->pos.x;
+            if ( 0 != prt_hitawall( gs, tTmp, NULL ) )
             {
-              PrtList[tTmp].pos.y = pchr->pos.y;
+              gs->PrtList[tTmp].pos.y = pchr->pos.y;
             }
           }
           returncode = btrue;
@@ -2260,7 +2317,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_IfTargetIsAlive:
       // This function proceeds only if the target is alive
-      returncode = ChrList[pstate->target].alive;
+      returncode = gs->ChrList[pstate->target].alive;
       break;
 
     case F_Stop:
@@ -2268,11 +2325,11 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       break;
 
     case F_DisaffirmCharacter:
-      disaffirm_attached_particles( ichr );
+      disaffirm_attached_particles( gs, ichr );
       break;
 
     case F_ReaffirmCharacter:
-      reaffirm_attached_particles( ichr );
+      reaffirm_attached_particles( gs, ichr );
       break;
 
     case F_IfTargetIsSelf:
@@ -2299,28 +2356,28 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // This function sets the target to the character's left/only grip weapon,
       // failing if there is none
       returncode = bfalse;
-      if ( chr_using_slot( ichr, SLOT_SADDLE ) )
+      if ( chr_using_slot( gs->ChrList, MAXCHR, ichr, SLOT_SADDLE ) )
       {
-        pstate->target = chr_get_holdingwhich( ichr, SLOT_SADDLE );
+        pstate->target = chr_get_holdingwhich( gs->ChrList, MAXCHR, ichr, SLOT_SADDLE );
         returncode = btrue;
       }
       break;
 
     case F_GetAttackTurn:
       // This function sets tmpturn to the direction of the last attack
-      pg_scr->tmpturn = pstate->directionlast;
+      pstate->tmpturn = pstate->directionlast;
       break;
 
     case F_GetDamageType:
       // This function gets the last type of damage
-      pg_scr->tmpargument = pstate->damagetypelast;
+      pstate->tmpargument = pstate->damagetypelast;
       break;
 
     case F_BecomeSpell:
       // This function turns the spellbook character into a spell based on its
       // content
       pchr->money = pchr->skin_ref % MAXSKIN;
-      change_character( ichr, pstate->content, 0, LEAVE_NONE );
+      change_character( gs, ichr, pstate->content, 0, LEAVE_NONE );
       pstate->content = 0;  // Reset so it doesn't mess up
       pstate->state   = 0;  // Reset so it doesn't mess up
       pstate->morphed = btrue;
@@ -2330,7 +2387,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // This function turns the spell into a spellbook, and sets the content
       // accordingly
       pstate->content = pchr->model;
-      change_character( ichr, SPELLBOOK, pchr->money % MAXSKIN, LEAVE_NONE );
+      change_character( gs, ichr, SPELLBOOK, pchr->money % MAXSKIN, LEAVE_NONE );
       pstate->state = 0;  // Reset so it doesn't burn up
       pstate->morphed = btrue;
       break;
@@ -2351,25 +2408,25 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
       returncode = bfalse;
       sTmp = pchr->message >> 20;
-      if ( VALID_CHR( sTmp ) )
+      if ( VALID_CHR( gs->ChrList, sTmp ) )
       {
         pstate->target  = sTmp;
-        pg_scr->tmpx        = (( pchr->message >> 12 ) & 0x00FF ) << 8;
-        pg_scr->tmpy        = (( pchr->message >>  4 ) & 0x00FF ) << 8;
-        pg_scr->tmpargument = pchr->message & 0x000F;
+        pstate->tmpx        = (( pchr->message >> 12 ) & 0x00FF ) << 8;
+        pstate->tmpy        = (( pchr->message >>  4 ) & 0x00FF ) << 8;
+        pstate->tmpargument = pchr->message & 0x000F;
         returncode = btrue;
       }
       break;
 
     case F_SetTargetToWhoeverWasHit:
       // This function sets the target to whoever the character hit last,
-      pstate->target = chr_get_aihitlast( ichr );
+      pstate->target = chr_get_aihitlast( gs->ChrList, MAXCHR, gs->ChrList + ichr );
       break;
 
     case F_SetTargetToWideEnemy:
       // This function finds an enemy, and proceeds only if there is one
 
-      returncode = chr_search_wide( search_new(&loc_search), ichr, bfalse, bfalse, btrue, bfalse, IDSZ_NONE, bfalse );
+      returncode = chr_search_wide( gs, SearchInfo_new(&loc_search), ichr, bfalse, bfalse, btrue, bfalse, IDSZ_NONE, bfalse );
 
       if ( returncode )
       {
@@ -2409,61 +2466,61 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_IfTargetHasSpecialID:
       // This function proceeds if ID matches tmpargument
-      returncode = ( CapList[ChrList[pstate->target].model].idsz[IDSZ_SPECIAL] == ( IDSZ ) pg_scr->tmpargument );
+      returncode = ( gs->CapList[gs->ChrList[pstate->target].model].idsz[IDSZ_SPECIAL] == ( IDSZ ) pstate->tmpargument );
       break;
 
     case F_PressTargetLatchButton:
       // This function sets the target's latch buttons
-      ChrList[pstate->target].aistate.latch.b |= pg_scr->tmpargument;
+      gs->ChrList[pstate->target].aistate.latch.b |= pstate->tmpargument;
       break;
 
     case F_IfInvisible:
       // This function passes if the character is invisible
-      returncode = chr_is_invisible( ichr );
+      returncode = chr_is_invisible( gs->ChrList, MAXCHR, ichr );
       break;
 
     case F_IfArmorIs:
       // This function passes if the character's skin is tmpargument
       tTmp = pchr->skin_ref % MAXSKIN;
-      returncode = ( tTmp == pg_scr->tmpargument );
+      returncode = ( tTmp == pstate->tmpargument );
       break;
 
     case F_GetTargetGrogTime:
       // This function returns tmpargument as the grog time, and passes if it is not 0
-      pg_scr->tmpargument = pchr->grogtime;
-      returncode = ( pg_scr->tmpargument != 0 );
+      pstate->tmpargument = pchr->grogtime;
+      returncode = ( pstate->tmpargument != 0 );
       break;
 
     case F_GetTargetDazeTime:
       // This function returns tmpargument as the daze time, and passes if it is not 0
-      pg_scr->tmpargument = pchr->dazetime;
-      returncode = ( pg_scr->tmpargument != 0 );
+      pstate->tmpargument = pchr->dazetime;
+      returncode = ( pstate->tmpargument != 0 );
       break;
 
     case F_SetDamageType:
       // This function sets the bump damage type
-      pchr->damagetargettype = pg_scr->tmpargument & ( MAXDAMAGETYPE - 1 );
+      pchr->damagetargettype = pstate->tmpargument & ( MAXDAMAGETYPE - 1 );
       break;
 
     case F_SetWaterLevel:
       // This function raises and lowers the module's water
-      fTmp = ( pg_scr->tmpargument / 10.0 ) - GWater.douselevel;
-      GWater.surfacelevel += fTmp;
-      GWater.douselevel += fTmp;
+      fTmp = ( pstate->tmpargument / 10.0 ) - gs->water.douselevel;
+      gs->water.surfacelevel += fTmp;
+      gs->water.douselevel += fTmp;
       for ( iTmp = 0; iTmp < MAXWATERLAYER; iTmp++ )
-        GWater.layer[iTmp].z += fTmp;
+        gs->water.layer[iTmp].z += fTmp;
       break;
 
     case F_EnchantTarget:
       // This function enchants the target
-      sTmp = spawn_enchant( pstate->owner, pstate->target, ichr, MAXENCHANT, MAXMODEL );
+      sTmp = spawn_enchant( gs, pstate->owner, pstate->target, ichr, MAXENCHANT, MAXMODEL );
       returncode = ( sTmp != MAXENCHANT );
       break;
 
     case F_EnchantChild:
       // This function can be used with SpawnCharacter to enchant the
       // newly spawned character
-      sTmp = spawn_enchant( pstate->owner, pstate->child, ichr, MAXENCHANT, MAXMODEL );
+      sTmp = spawn_enchant( gs, pstate->owner, pstate->child, ichr, MAXENCHANT, MAXMODEL );
       returncode = ( sTmp != MAXENCHANT );
       break;
 
@@ -2471,25 +2528,25 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // This function teleports the target to the X, Y location, failing if the
       // location is off the map or blocked. Z position is defined in tmpdistance
       returncode = bfalse;
-      if ( mesh_check( pg_scr->tmpx, pg_scr->tmpy ) )
+      if ( mesh_check( &(gs->mesh), pstate->tmpx, pstate->tmpy ) )
       {
         // Yeah!  It worked!
-        sTmp = chr_get_aitarget( ichr );
-        detach_character_from_mount( sTmp, btrue, bfalse );
-        ChrList[sTmp].pos_old = ChrList[sTmp].pos;
+        sTmp = chr_get_aitarget( gs->ChrList, MAXCHR, gs->ChrList + ichr );
+        detach_character_from_mount( gs, sTmp, btrue, bfalse );
+        gs->ChrList[sTmp].pos_old = gs->ChrList[sTmp].pos;
 
-        ChrList[sTmp].pos.x = pg_scr->tmpx;
-        ChrList[sTmp].pos.y = pg_scr->tmpy;
-        ChrList[sTmp].pos.z = pg_scr->tmpdistance;
-        if ( 0 != chr_hitawall( sTmp, NULL ) )
+        gs->ChrList[sTmp].pos.x = pstate->tmpx;
+        gs->ChrList[sTmp].pos.y = pstate->tmpy;
+        gs->ChrList[sTmp].pos.z = pstate->tmpdistance;
+        if ( 0 != chr_hitawall( gs, gs->ChrList + sTmp, NULL ) )
         {
           // No it didn't...
-          ChrList[sTmp].pos = ChrList[sTmp].pos_old;
+          gs->ChrList[sTmp].pos = gs->ChrList[sTmp].pos_old;
           returncode = bfalse;
         }
         else
         {
-          ChrList[sTmp].pos_old = ChrList[sTmp].pos;
+          gs->ChrList[sTmp].pos_old = gs->ChrList[sTmp].pos;
           returncode = btrue;
         }
       }
@@ -2498,7 +2555,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
     case F_GiveExperienceToTarget:
       // This function gives the target some experience, xptype from distance,
       // amount from argument...
-      give_experience( pstate->target, pg_scr->tmpargument, pg_scr->tmpdistance );
+      give_experience( gs, pstate->target, pstate->tmpargument, (EXPERIENCE)pstate->tmpdistance );
       break;
 
     case F_IncreaseAmmo:
@@ -2511,17 +2568,17 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_UnkurseTarget:
       // This function unkurses the target
-      ChrList[pstate->target].iskursed = bfalse;
+      gs->ChrList[pstate->target].iskursed = bfalse;
       break;
 
     case F_GiveExperienceToTargetTeam:
       // This function gives experience to everyone on the target's team
-      give_team_experience( ChrList[pstate->target].team, pg_scr->tmpargument, pg_scr->tmpdistance );
+      give_team_experience( gs, gs->ChrList[pstate->target].team, pstate->tmpargument, (EXPERIENCE)pstate->tmpdistance );
       break;
 
     case F_IfUnarmed:
       // This function proceeds if the character has no item in hand
-      returncode = !chr_using_slot( ichr, SLOT_LEFT ) && !chr_using_slot( ichr, SLOT_RIGHT );
+      returncode = !chr_using_slot( gs->ChrList, MAXCHR, ichr, SLOT_LEFT ) && !chr_using_slot( gs->ChrList, MAXCHR, ichr, SLOT_RIGHT );
       break;
 
     case F_RestockTargetAmmoIDAll:
@@ -2531,18 +2588,18 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
       for ( _slot = SLOT_LEFT; _slot <= SLOT_RIGHT; _slot = ( SLOT )( _slot + 1 ) )
       {
-        sTmp = chr_get_holdingwhich( pstate->target, _slot );
-        iTmp += restock_ammo( sTmp, pg_scr->tmpargument );
+        sTmp = chr_get_holdingwhich( gs->ChrList, MAXCHR, pstate->target, _slot );
+        iTmp += restock_ammo( gs, sTmp, pstate->tmpargument );
       }
 
-      sTmp  = chr_get_nextinpack( pstate->target );
-      while ( VALID_CHR( sTmp ) )
+      sTmp  = chr_get_nextinpack( gs->ChrList, MAXCHR, pstate->target );
+      while ( VALID_CHR( gs->ChrList, sTmp ) )
       {
-        iTmp += restock_ammo( sTmp, pg_scr->tmpargument );
-        sTmp  = chr_get_nextinpack( sTmp );
+        iTmp += restock_ammo( gs, sTmp, pstate->tmpargument );
+        sTmp  = chr_get_nextinpack( gs->ChrList, MAXCHR, sTmp );
       }
 
-      pg_scr->tmpargument = iTmp;
+      pstate->tmpargument = iTmp;
       returncode = ( iTmp != 0 );
       break;
 
@@ -2553,54 +2610,54 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
       for ( _slot = SLOT_LEFT; _slot <= SLOT_RIGHT; _slot = ( SLOT )( _slot + 1 ) )
       {
-        sTmp = chr_get_holdingwhich( pstate->target, _slot );
-        iTmp += restock_ammo( sTmp, pg_scr->tmpargument );
+        sTmp = chr_get_holdingwhich( gs->ChrList, MAXCHR, pstate->target, _slot );
+        iTmp += restock_ammo( gs, sTmp, pstate->tmpargument );
         if ( iTmp != 0 ) break;
       }
 
       if ( iTmp == 0 )
       {
-        sTmp  = chr_get_nextinpack( pstate->target );
-        while ( VALID_CHR( sTmp ) && iTmp == 0 )
+        sTmp  = chr_get_nextinpack( gs->ChrList, MAXCHR, pstate->target );
+        while ( VALID_CHR( gs->ChrList, sTmp ) && iTmp == 0 )
         {
-          iTmp += restock_ammo( sTmp, pg_scr->tmpargument );
-          sTmp  = chr_get_nextinpack( sTmp );
+          iTmp += restock_ammo( gs, sTmp, pstate->tmpargument );
+          sTmp  = chr_get_nextinpack( gs->ChrList, MAXCHR, sTmp );
         }
       }
 
-      pg_scr->tmpargument = iTmp;
+      pstate->tmpargument = iTmp;
       returncode = ( iTmp != 0 );
       break;
 
     case F_FlashTarget:
       // This function flashes the character
-      flash_character( pstate->target, 255 );
+      flash_character( gs, pstate->target, 255 );
       break;
 
     case F_SetRedShift:
       // This function alters a character's coloration
-      pchr->redshift = pg_scr->tmpargument;
+      pchr->redshift = pstate->tmpargument;
       break;
 
     case F_SetGreenShift:
       // This function alters a character's coloration
-      pchr->grnshift = pg_scr->tmpargument;
+      pchr->grnshift = pstate->tmpargument;
       break;
 
     case F_SetBlueShift:
       // This function alters a character's coloration
-      pchr->blushift = pg_scr->tmpargument;
+      pchr->blushift = pstate->tmpargument;
       break;
 
     case F_SetLight:
       // This function alters a character's transparency
-      pchr->light_fp8 = pg_scr->tmpargument;
+      pchr->light_fp8 = pstate->tmpargument;
       break;
 
     case F_SetAlpha:
       // This function alters a character's transparency
-      pchr->alpha_fp8    = pg_scr->tmpargument;
-      pchr->bumpstrength = pcap->bumpstrength * FP8_TO_FLOAT( pg_scr->tmpargument );
+      pchr->alpha_fp8    = pstate->tmpargument;
+      pchr->bumpstrength = pcap->bumpstrength * FP8_TO_FLOAT( pstate->tmpargument );
       break;
 
     case F_IfHitFromBehind:
@@ -2634,29 +2691,29 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
     case F_IfTargetIsOnSameTeam:
       // This function proceeds only if the target is on another team
       returncode = bfalse;
-      if ( ChrList[pstate->target].team == pchr->team )
+      if ( gs->ChrList[pstate->target].team == pchr->team )
         returncode = btrue;
       break;
 
     case F_KillTarget:
       // This function kills the target
-      kill_character( pstate->target, ichr );
+      kill_character( gs, pstate->target, ichr );
       break;
 
     case F_UndoEnchant:
       // This function undoes the last enchant
       returncode = ( pchr->undoenchant != MAXENCHANT );
-      remove_enchant( pchr->undoenchant );
+      remove_enchant( gs, pchr->undoenchant );
       break;
 
     case F_GetWaterLevel:
       // This function gets the douse level for the water, returning it in tmpargument
-      pg_scr->tmpargument = GWater.douselevel * 10;
+      pstate->tmpargument = gs->water.douselevel * 10;
       break;
 
     case F_CostTargetMana:
       // This function costs the target some mana
-      returncode = cost_mana( pstate->target, pg_scr->tmpargument, ichr );
+      returncode = cost_mana( gs, pstate->target, pstate->tmpargument, ichr );
       break;
 
     case F_IfTargetHasAnyID:
@@ -2664,7 +2721,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       returncode = bfalse;
       for ( tTmp = 0; tTmp < IDSZ_COUNT; tTmp++ )
       {
-        if ( CapList[ChrList[pstate->target].model].idsz[tTmp] == ( IDSZ ) pg_scr->tmpargument )
+        if ( gs->CapList[gs->ChrList[pstate->target].model].idsz[tTmp] == ( IDSZ ) pstate->tmpargument )
         {
           returncode = btrue;
           break;
@@ -2676,9 +2733,9 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // This function sets the character's bump size
       //fTmp = pchr->bmpdata.calc_size_big;
       //fTmp /= pchr->bmpdata.calc_size;  // 1.5 or 2.0
-      //pchr->bmpdata.size = pg_scr->tmpargument * pchr->fat;
+      //pchr->bmpdata.size = pstate->tmpargument * pchr->fat;
       //pchr->bmpdata.sizebig = fTmp * pchr->bmpdata.calc_size;
-      //pchr->bmpdata_save.size = pg_scr->tmpargument;
+      //pchr->bmpdata_save.size = pstate->tmpargument;
       //pchr->bmpdata_save.sizebig = fTmp * pchr->bmpdata_save.size;
       break;
 
@@ -2689,12 +2746,12 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_IfYIsLessThanX:
       // This function passes only if tmpy is less than tmpx
-      returncode = ( pg_scr->tmpy < pg_scr->tmpx );
+      returncode = ( pstate->tmpy < pstate->tmpx );
       break;
 
     case F_SetFlyHeight:
       // This function sets a character's fly height
-      pchr->flyheight = pg_scr->tmpargument;
+      pchr->flyheight = pstate->tmpargument;
       break;
 
     case F_IfBlocked:
@@ -2703,11 +2760,11 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       break;
 
     case F_IfTargetIsDefending:
-      returncode = ( ChrList[pstate->target].action.now >= ACTION_PA && ChrList[pstate->target].action.now <= ACTION_PD );
+      returncode = ( gs->ChrList[pstate->target].action.now >= ACTION_PA && gs->ChrList[pstate->target].action.now <= ACTION_PD );
       break;
 
     case F_IfTargetIsAttacking:
-      returncode = ( ChrList[pstate->target].action.now >= ACTION_UA && ChrList[pstate->target].action.now <= ACTION_FD );
+      returncode = ( gs->ChrList[pstate->target].action.now >= ACTION_UA && gs->ChrList[pstate->target].action.now <= ACTION_FD );
       break;
 
     case F_IfStateIs0:
@@ -2743,7 +2800,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       break;
 
     case F_IfContentIs:
-      returncode = ( pg_scr->tmpargument == pstate->content );
+      returncode = ( pstate->tmpargument == pstate->content );
       break;
 
     case F_SetTurnModeToWatchTarget:
@@ -2752,11 +2809,11 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       break;
 
     case F_IfStateIsNot:
-      returncode = ( pg_scr->tmpargument != pstate->state );
+      returncode = ( pstate->tmpargument != pstate->state );
       break;
 
     case F_IfXIsEqualToY:
-      returncode = ( pg_scr->tmpx == pg_scr->tmpy );
+      returncode = ( pstate->tmpx == pstate->tmpy );
       break;
 
     case F_DisplayDebugMessage:
@@ -2764,15 +2821,15 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       if( CData.DevMode )
       {
         debug_message( 1, "aistate %d, aicontent %d, target %d", pstate->state, pstate->content, pstate->target );
-        debug_message( 1, "tmpx %d, tmpy %d", pg_scr->tmpx, pg_scr->tmpy );
-        debug_message( 1, "tmpdistance %d, tmpturn %d", pg_scr->tmpdistance, pg_scr->tmpturn );
-        debug_message( 1, "tmpargument %d, selfturn %d", pg_scr->tmpargument, pchr->turn_lr );
+        debug_message( 1, "tmpx %d, tmpy %d", pstate->tmpx, pstate->tmpy );
+        debug_message( 1, "tmpdistance %d, tmpturn %d", pstate->tmpdistance, pstate->tmpturn );
+        debug_message( 1, "tmpargument %d, selfturn %d", pstate->tmpargument, pchr->turn_lr );
       }
       break;
 
     case F_BlackTarget:
       // This function makes the target flash black
-      flash_character( pstate->target, 0 );
+      flash_character( gs, pstate->target, 0 );
       break;
 
     case F_DisplayMessageNear:
@@ -2780,7 +2837,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       iTmp = ABS( pchr->pos_old.x - GCamera.trackpos.x ) + ABS( pchr->pos_old.y - GCamera.trackpos.y );
       if ( iTmp < MSGDISTANCE )
       {
-        display_message( pg_scr, pmad->msg_start + pg_scr->tmpargument, ichr );
+        display_message( gs, pmad->msg_start + pstate->tmpargument, ichr );
       }
       break;
 
@@ -2806,12 +2863,12 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
       for ( _slot = SLOT_LEFT; _slot <= SLOT_RIGHT; _slot = ( SLOT )( _slot + 1 ) )
       {
-        sTmp = chr_get_holdingwhich( ichr, _slot );
-        if ( VALID_CHR( sTmp ) )
+        sTmp = chr_get_holdingwhich( gs->ChrList, MAXCHR, ichr, _slot );
+        if ( VALID_CHR( gs->ChrList, sTmp ) )
         {
-          if ( CAP_INHERIT_IDSZ( ChrList[sTmp].model, pg_scr->tmpargument ) )
+          if ( CAP_INHERIT_IDSZ( gs,  gs->ChrList[sTmp].model, pstate->tmpargument ) )
           {
-            pg_scr->tmpargument = slot_to_latch( ichr, _slot );
+            pstate->tmpargument = slot_to_latch( gs->ChrList, MAXCHR, ichr, _slot );
             returncode = btrue;
           }
         }
@@ -2822,17 +2879,17 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // This function passes if the character is holding a ranged weapon, returning
       // the latch to press to use it.  This also checks ammo/ammoknown.
       returncode = bfalse;
-      pg_scr->tmpargument = 0;
+      pstate->tmpargument = 0;
 
       for ( _slot = SLOT_LEFT; _slot <= SLOT_RIGHT; _slot = ( SLOT )( _slot + 1 ) )
       {
-        tTmp = chr_get_holdingwhich( ichr, _slot );
-        if ( VALID_CHR( tTmp ) )
+        tTmp = chr_get_holdingwhich( gs->ChrList, MAXCHR, ichr, _slot );
+        if ( VALID_CHR( gs->ChrList, tTmp ) )
         {
-          sTmp = ChrList[tTmp].model;
-          if ( CapList[sTmp].isranged && ( ChrList[tTmp].ammomax == 0 || ( ChrList[tTmp].ammo > 0 && ChrList[tTmp].ammoknown ) ) )
+          sTmp = gs->ChrList[tTmp].model;
+          if ( gs->CapList[sTmp].isranged && ( gs->ChrList[tTmp].ammomax == 0 || ( gs->ChrList[tTmp].ammo > 0 && gs->ChrList[tTmp].ammoknown ) ) )
           {
-            pg_scr->tmpargument = slot_to_latch( ichr, _slot );
+            pstate->tmpargument = slot_to_latch( gs->ChrList, MAXCHR, ichr, _slot );
             returncode = btrue;
           }
         }
@@ -2843,16 +2900,16 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // This function passes if the character is holding a melee weapon, returning
       // the latch to press to use it
       returncode = bfalse;
-      pg_scr->tmpargument = 0;
+      pstate->tmpargument = 0;
 
       for ( _slot = SLOT_LEFT; _slot <= SLOT_RIGHT; _slot = ( SLOT )( _slot + 1 ) )
       {
-        sTmp = chr_get_holdingwhich( ichr, _slot );
-        if ( VALID_CHR( sTmp ) )
+        sTmp = chr_get_holdingwhich( gs->ChrList, MAXCHR, ichr, _slot );
+        if ( VALID_CHR( gs->ChrList, sTmp ) )
         {
-          if ( !CapList[ChrList[sTmp].model].isranged && CapList[ChrList[sTmp].model].weaponaction != ACTION_PA )
+          if ( !gs->CapList[gs->ChrList[sTmp].model].isranged && gs->CapList[gs->ChrList[sTmp].model].weaponaction != ACTION_PA )
           {
-            pg_scr->tmpargument = slot_to_latch( ichr, _slot );
+            pstate->tmpargument = slot_to_latch( gs->ChrList, MAXCHR, ichr, _slot );
             returncode = btrue;
           }
         }
@@ -2863,14 +2920,14 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // This function passes if the character is holding a shield, returning the
       // latch to press to use it
       returncode = bfalse;
-      pg_scr->tmpargument = 0;
+      pstate->tmpargument = 0;
 
       for ( _slot = SLOT_LEFT; _slot <= SLOT_RIGHT; _slot = ( SLOT )( _slot + 1 ) )
       {
-        sTmp = chr_get_holdingwhich( ichr, _slot );
-        if ( VALID_CHR( sTmp ) && CapList[ChrList[sTmp].model].weaponaction == ACTION_PA )
+        sTmp = chr_get_holdingwhich( gs->ChrList, MAXCHR, ichr, _slot );
+        if ( VALID_CHR( gs->ChrList, sTmp ) && gs->CapList[gs->ChrList[sTmp].model].weaponaction == ACTION_PA )
         {
-          pg_scr->tmpargument = slot_to_latch( ichr, _slot );
+          pstate->tmpargument = slot_to_latch( gs->ChrList, MAXCHR, ichr, _slot );
           returncode = btrue;
         }
       };
@@ -2883,7 +2940,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_IfTargetIsKursed:
       // This function passes if the target is kursed
-      returncode = ChrList[pstate->target].iskursed;
+      returncode = gs->ChrList[pstate->target].iskursed;
       break;
 
     case F_IfTargetIsDressedUp:
@@ -2895,7 +2952,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_IfOverWater:
       // This function passes if the character is on a water tile
-      returncode = mesh_has_some_bits( pchr->onwhichfan, MPDFX_WATER ) && GWater.iswater;
+      returncode = mesh_has_some_bits( gs->Mesh_Mem.fanlst, pchr->onwhichfan, MPDFX_WATER ) && gs->water.iswater;
       break;
 
     case F_IfThrown:
@@ -2917,27 +2974,27 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_StopTargetMovement:
       // This function makes the target stop moving temporarily
-      ChrList[pstate->target].vel.x = 0;
-      ChrList[pstate->target].vel.y = 0;
-      if ( ChrList[pstate->target].vel.z > 0 ) ChrList[pstate->target].vel.z = gravity;
+      gs->ChrList[pstate->target].vel.x = 0;
+      gs->ChrList[pstate->target].vel.y = 0;
+      if ( gs->ChrList[pstate->target].vel.z > 0 ) gs->ChrList[pstate->target].vel.z = gravity;
       break;
 
     case F_SetXY:
       // This function stores tmpx and tmpy in the storage array
-      pstate->x[pg_scr->tmpargument&STORAND] = pg_scr->tmpx;
-      pstate->y[pg_scr->tmpargument&STORAND] = pg_scr->tmpy;
+      pstate->x[pstate->tmpargument&STORAND] = pstate->tmpx;
+      pstate->y[pstate->tmpargument&STORAND] = pstate->tmpy;
       break;
 
     case F_GetXY:
       // This function gets previously stored data, setting tmpx and tmpy
-      pg_scr->tmpx = pstate->x[pg_scr->tmpargument&STORAND];
-      pg_scr->tmpy = pstate->y[pg_scr->tmpargument&STORAND];
+      pstate->tmpx = pstate->x[pstate->tmpargument&STORAND];
+      pstate->tmpy = pstate->y[pstate->tmpargument&STORAND];
       break;
 
     case F_AddXY:
       // This function adds tmpx and tmpy to the storage array
-      pstate->x[pg_scr->tmpargument&STORAND] += pg_scr->tmpx;
-      pstate->y[pg_scr->tmpargument&STORAND] += pg_scr->tmpy;
+      pstate->x[pstate->tmpargument&STORAND] += pstate->tmpx;
+      pstate->y[pstate->tmpargument&STORAND] += pstate->tmpy;
       break;
 
     case F_MakeAmmoKnown:
@@ -2948,37 +3005,37 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
     case F_SpawnAttachedParticle:
       // This function spawns an attached particle
       returncode = bfalse;
-      if ( VALID_CHR( ichr ) && !chr_in_pack( ichr ) )
+      if ( VALID_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, MAXCHR, ichr ) )
       {
         tTmp = ichr;
-        if ( chr_attached( ichr ) )  tTmp = chr_get_attachedto( ichr );
-        tTmp = spawn_one_particle( 1.0f, pchr->pos, pchr->turn_lr, pchr->model, pg_scr->tmpargument, ichr, pg_scr->tmpdistance, pchr->team, tTmp, 0, MAXCHR );
-        returncode = VALID_PRT( tTmp );
+        if ( chr_attached( gs->ChrList, MAXCHR, ichr ) )  tTmp = chr_get_attachedto( gs->ChrList, MAXCHR, ichr );
+        tTmp = spawn_one_particle( gs, 1.0f, pchr->pos, pchr->turn_lr, pchr->model, pstate->tmpargument, ichr, pstate->tmpdistance, pchr->team, tTmp, 0, MAXCHR );
+        returncode = VALID_PRT( gs->PrtList, tTmp );
       }
       break;
 
     case F_SpawnExactParticle:
       // This function spawns an exactly placed particle
       returncode = bfalse;
-      if ( VALID_CHR( ichr ) && !chr_in_pack( ichr ) )
+      if ( VALID_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, MAXCHR, ichr ) )
       {
-        vect3 prt_pos = {pg_scr->tmpx, pg_scr->tmpy, pg_scr->tmpdistance};
+        vect3 prt_pos = {pstate->tmpx, pstate->tmpy, pstate->tmpdistance};
         tTmp = ichr;
-        if ( chr_attached( tTmp ) )  tTmp = chr_get_attachedto( tTmp );
-        tTmp = spawn_one_particle( 1.0f, prt_pos, pchr->turn_lr, pchr->model, pg_scr->tmpargument, MAXCHR, 0, pchr->team, tTmp, 0, MAXCHR );
-        returncode = VALID_PRT( tTmp );
+        if ( chr_attached( gs->ChrList, MAXCHR, tTmp ) )  tTmp = chr_get_attachedto( gs->ChrList, MAXCHR, tTmp );
+        tTmp = spawn_one_particle( gs, 1.0f, prt_pos, pchr->turn_lr, pchr->model, pstate->tmpargument, MAXCHR, 0, pchr->team, tTmp, 0, MAXCHR );
+        returncode = VALID_PRT( gs->PrtList, tTmp );
       };
       break;
 
     case F_AccelerateTarget:
       // This function changes the target's speeds
-      ChrList[pstate->target].vel.x += pg_scr->tmpx;
-      ChrList[pstate->target].vel.y += pg_scr->tmpy;
+      gs->ChrList[pstate->target].vel.x += pstate->tmpx;
+      gs->ChrList[pstate->target].vel.y += pstate->tmpy;
       break;
 
     case F_IfDistanceIsMoreThanTurn:
       // This function proceeds tmpdistance is greater than tmpturn
-      returncode = ( pg_scr->tmpdistance > ( int ) pg_scr->tmpturn );
+      returncode = ( pstate->tmpdistance > ( int ) pstate->tmpturn );
       break;
 
     case F_IfCrushed:
@@ -2994,14 +3051,14 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
     case F_SetTargetToLowestTarget:
       // This sets the target to whatever the target is being held by,
       // The lowest in the set.  This function never fails
-      if ( VALID_CHR( pstate->target ) )
+      if ( VALID_CHR( gs->ChrList, pstate->target ) )
       {
-        CHR_REF holder   = chr_get_attachedto(pstate->target);
-        CHR_REF attached = chr_get_attachedto(holder);
-        while ( VALID_CHR(attached) )
+        CHR_REF holder   = chr_get_attachedto(gs->ChrList, MAXCHR, pstate->target);
+        CHR_REF attached = chr_get_attachedto(gs->ChrList, MAXCHR, holder);
+        while ( VALID_CHR(gs->ChrList, attached) )
         {
           holder = attached;
-          attached = chr_get_attachedto(holder);
+          attached = chr_get_attachedto(gs->ChrList, MAXCHR, holder);
         }
         pstate->target = holder;
       };
@@ -3024,11 +3081,11 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_PlaySoundLooped:
       // This function plays a looped sound
-    returncode = bfalse;
-      if ( moduleActive && (0 <= pg_scr->tmpargument) && (pchr->pos_old.z > PITNOSOUND) && (pchr->loopingchannel == INVALID_SOUND))
+      returncode = bfalse;
+      if ( !gs->modstate.Paused && (0 <= pstate->tmpargument) && (pchr->pos_old.z > PITNOSOUND) && (pchr->loopingchannel == INVALID_SOUND))
       {
         //You could use this, but right now there's no way to stop the sound later, so it's better not to start it
-        pchr->loopingchannel = play_sound( 1.0f, pchr->pos, pcap->wavelist[pg_scr->tmpargument], -1, pchr->model, pg_scr->tmpargument);
+        pchr->loopingchannel = snd_play_sound( gs, 1.0f, pchr->pos, pcap->wavelist[pstate->tmpargument], -1, pchr->model, pstate->tmpargument);
         pchr->loopingvolume = 1.0f;
       }
       break;
@@ -3037,7 +3094,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // This function stops playing a sound
       if( INVALID_CHANNEL != pchr->loopingchannel )
       {
-        stop_sound( pchr->loopingchannel );
+        snd_stop_sound( pchr->loopingchannel );
         pchr->loopingchannel = INVALID_CHANNEL;
       };
       break;
@@ -3047,7 +3104,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // the amount
       if ( pchr->alive )
       {
-        iTmp = pchr->life_fp8 + pg_scr->tmpargument;
+        iTmp = pchr->life_fp8 + pstate->tmpargument;
         if ( iTmp > pchr->lifemax_fp8 ) iTmp = pchr->lifemax_fp8;
         if ( iTmp < 1 ) iTmp = 1;
         pchr->life_fp8 = iTmp;
@@ -3062,17 +3119,17 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
     case F_IfTargetHasItemIDEquipped:
       // This function proceeds if the target has a matching item equipped
       returncode = bfalse;
-      sTmp  = chr_get_nextinpack( pstate->target );
-      while ( VALID_CHR( sTmp ) )
+      sTmp  = chr_get_nextinpack( gs->ChrList, MAXCHR, pstate->target );
+      while ( VALID_CHR( gs->ChrList, sTmp ) )
       {
-        if ( sTmp != ichr && ChrList[sTmp].isequipped && CAP_INHERIT_IDSZ( ChrList[sTmp].model, pg_scr->tmpargument ) )
+        if ( sTmp != ichr && gs->ChrList[sTmp].isequipped && CAP_INHERIT_IDSZ( gs,  gs->ChrList[sTmp].model, pstate->tmpargument ) )
         {
           returncode = btrue;
           break;
         }
         else
         {
-          sTmp  = chr_get_nextinpack( sTmp );
+          sTmp  = chr_get_nextinpack( gs->ChrList, MAXCHR, sTmp );
         }
       }
       break;
@@ -3089,31 +3146,31 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_SetFrame:
       // This function sets the character's current frame
-      sTmp = pg_scr->tmpargument & 3;
-      iTmp = pg_scr->tmpargument >> 2;
-      set_frame( ichr, iTmp, sTmp );
+      sTmp = pstate->tmpargument & 3;
+      iTmp = pstate->tmpargument >> 2;
+      set_frame( gs, ichr, iTmp, sTmp );
       break;
 
     case F_BreakPassage:
       // This function makes the tiles fall away ( turns into damage terrain )
-      returncode = break_passage( pg_scr, pg_scr->tmpargument, pg_scr->tmpturn, pg_scr->tmpdistance, pg_scr->tmpx, pg_scr->tmpy );
+      returncode = scr_break_passage( gs, pstate );
       break;
 
     case F_SetReloadTime:
       // This function makes weapons fire slower
-      pchr->reloadtime = pg_scr->tmpargument;
+      pchr->reloadtime = pstate->tmpargument;
       break;
 
     case F_SetTargetToWideBlahID:
       // This function sets the target based on the settings of tmpargument and tmpdistance
 
-      returncode = chr_search_wide( search_new(&loc_search), ichr,
-                                    HAS_SOME_BITS( pg_scr->tmpdistance, SEARCH_ITEMS   ),
-                                    HAS_SOME_BITS( pg_scr->tmpdistance, SEARCH_FRIENDS ),
-                                    HAS_SOME_BITS( pg_scr->tmpdistance, SEARCH_ENEMIES ),
-                                    HAS_SOME_BITS( pg_scr->tmpdistance, SEARCH_DEAD    ),
-                                    pg_scr->tmpargument,
-                                    HAS_SOME_BITS( pg_scr->tmpdistance, SEARCH_INVERT  ) );
+      returncode = chr_search_wide( gs, SearchInfo_new(&loc_search), ichr,
+                                    HAS_SOME_BITS( pstate->tmpdistance, SEARCH_ITEMS   ),
+                                    HAS_SOME_BITS( pstate->tmpdistance, SEARCH_FRIENDS ),
+                                    HAS_SOME_BITS( pstate->tmpdistance, SEARCH_ENEMIES ),
+                                    HAS_SOME_BITS( pstate->tmpdistance, SEARCH_DEAD    ),
+                                    pstate->tmpargument,
+                                    HAS_SOME_BITS( pstate->tmpdistance, SEARCH_INVERT  ) );
 
       if ( returncode )
       {
@@ -3124,10 +3181,10 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
     case F_PoofTarget:
       // This function makes the target go away
       returncode = bfalse;
-      if ( VALID_CHR( pstate->target ) && !ChrList[pstate->target].isplayer )
+      if ( VALID_CHR( gs->ChrList, pstate->target ) && !chr_is_player(gs, pstate->target) )
       {
         // tell target to go away
-        ChrList[pstate->target].gopoof = btrue;
+        gs->ChrList[pstate->target].gopoof = btrue;
         pstate->target = ichr;
         returncode = btrue;
       }
@@ -3137,16 +3194,16 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // This function starts a new action, if it is valid for the model
       // It will fail if the action is invalid
       returncode = bfalse;
-      if ( pg_scr->tmpargument < MAXACTION )
+      if ( pstate->tmpargument < MAXACTION )
       {
-        if ( MadList[pchild->model].actionvalid[pg_scr->tmpargument] )
+        if ( gs->MadList[pchild->model].actionvalid[pstate->tmpargument] )
         {
-          pchild->action.now = pg_scr->tmpargument;
+          pchild->action.now = pstate->tmpargument;
           pchild->action.ready = bfalse;
 
           pchild->anim.lip_fp8 = 0;
           pchild->anim.flip    = 0.0f;
-          pchild->anim.next    = MadList[pchild->model].actionstart[pg_scr->tmpargument];
+          pchild->anim.next    = gs->MadList[pchild->model].actionstart[pstate->tmpargument];
           pchild->anim.last    = pchild->anim.next;
           returncode = btrue;
         }
@@ -3155,31 +3212,31 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_SpawnPoof:
       // This function makes a lovely little poof at the character's location
-      spawn_poof( ichr, pchr->model );
+      spawn_poof( gs, ichr, pchr->model );
       break;
 
     case F_SetSpeedPercent:
-      chr_reset_accel( ichr );
-      pchr->skin.maxaccel *= pg_scr->tmpargument / 100.0;
+      chr_reset_accel( gs, ichr );
+      pchr->skin.maxaccel *= pstate->tmpargument / 100.0;
       break;
 
     case F_SetChildState:
       // This function sets the child's state
-      pchild->aistate.state = pg_scr->tmpargument;
+      pchild->aistate.state = pstate->tmpargument;
       break;
 
     case F_SpawnAttachedSizedParticle:
       // This function spawns an attached particle, then sets its size
       returncode = bfalse;
-      if ( VALID_CHR( ichr ) && !chr_in_pack( ichr ) )
+      if ( VALID_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, MAXCHR, ichr ) )
       {
         tTmp = ichr;
-        if ( chr_attached( ichr ) )  tTmp = chr_get_attachedto( ichr );
+        if ( chr_attached( gs->ChrList, MAXCHR, ichr ) )  tTmp = chr_get_attachedto( gs->ChrList, MAXCHR, ichr );
 
-        tTmp = spawn_one_particle( 1.0f, pchr->pos, pchr->turn_lr, pchr->model, pg_scr->tmpargument, ichr, pg_scr->tmpdistance, pchr->team, tTmp, 0, MAXCHR );
-        if ( VALID_PRT( tTmp ) )
+        tTmp = spawn_one_particle( gs, 1.0f, pchr->pos, pchr->turn_lr, pchr->model, pstate->tmpargument, ichr, pstate->tmpdistance, pchr->team, tTmp, 0, MAXCHR );
+        if ( VALID_PRT( gs->PrtList, tTmp ) )
         {
-          PrtList[tTmp].size_fp8 = pg_scr->tmpturn;
+          gs->PrtList[tTmp].size_fp8 = pstate->tmpturn;
           returncode = btrue;
         }
       }
@@ -3188,16 +3245,16 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
     case F_ChangeArmor:
       // This function sets the character's armor type and returns the old type
       // as tmpargument and the new type as tmpx
-      pg_scr->tmpx = pg_scr->tmpargument;
+      pstate->tmpx = pstate->tmpargument;
       iTmp = pchr->skin_ref % MAXSKIN;
-      pg_scr->tmpx = change_armor( ichr, pg_scr->tmpargument );
-      pg_scr->tmpargument = iTmp;  // The character's old armor
+      pstate->tmpx = change_armor( gs, ichr, pstate->tmpargument );
+      pstate->tmpargument = iTmp;  // The character's old armor
       break;
 
     case F_ShowTimer:
       // This function turns the timer on, using the value for tmpargument
       timeron = btrue;
-      timervalue = pg_scr->tmpargument;
+      timervalue = pstate->tmpargument;
       break;
 
     case F_IfFacingTarget:
@@ -3207,13 +3264,13 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
         float dx, dy, d2, ftmpx, ftmpy, ftmp;
 
         returncode = bfalse;
-        dx = ChrList[pstate->target].pos.x - pchr->pos.x;
-        dy = ChrList[pstate->target].pos.y - pchr->pos.y;
+        dx = gs->ChrList[pstate->target].pos.x - pchr->pos.x;
+        dy = gs->ChrList[pstate->target].pos.y - pchr->pos.y;
         d2 = dx * dx + dy * dy;
 
         if ( d2 > 0.0f )
         {
-          // use non-inverse function to get direction vec from ChrList[].turn
+          // use non-inverse function to get direction vec from gs->ChrList[].turn
           turn_to_vec( ichr, &ftmpx, &ftmpy );
 
           // calc the dotproduct
@@ -3236,23 +3293,23 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
     case F_PlaySoundVolume:
       // This function sets the volume of a sound and plays it
       returncode = bfalse;
-      if ( INVALID_SOUND != pg_scr->tmpargument && pg_scr->tmpdistance >= 0 )
+      if ( INVALID_SOUND != pstate->tmpargument && pstate->tmpdistance >= 0 )
       {
-        volume = pg_scr->tmpdistance;
-        returncode = ( INVALID_SOUND != play_sound( MIN( 1.0f, volume / 255.0f ), pchr->pos_old, pcap->wavelist[pg_scr->tmpargument], 0, pchr->model, pg_scr->tmpargument ) );
+        volume = pstate->tmpdistance;
+        returncode = ( INVALID_SOUND != snd_play_sound( gs, MIN( 1.0f, volume / 255.0f ), pchr->pos_old, pcap->wavelist[pstate->tmpargument], 0, pchr->model, pstate->tmpargument ) );
       }
       break;
 
     case F_SpawnAttachedFacedParticle:
       // This function spawns an attached particle with facing
       returncode = bfalse;
-      if ( VALID_CHR( ichr ) && !chr_in_pack( ichr ) )
+      if ( VALID_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, MAXCHR, ichr ) )
       {
         tTmp = ichr;
-        if ( chr_attached( ichr ) )  tTmp = chr_get_attachedto( ichr );
+        if ( chr_attached( gs->ChrList, MAXCHR, ichr ) )  tTmp = chr_get_attachedto( gs->ChrList, MAXCHR, ichr );
 
-        tTmp = spawn_one_particle( 1.0f, pchr->pos, pg_scr->tmpturn, pchr->model, pg_scr->tmpargument, ichr, pg_scr->tmpdistance, pchr->team, tTmp, 0, MAXCHR );
-        returncode = VALID_PRT( bfalse );
+        tTmp = spawn_one_particle( gs, 1.0f, pchr->pos, pstate->tmpturn, pchr->model, pstate->tmpargument, ichr, pstate->tmpdistance, pchr->team, tTmp, 0, MAXCHR );
+        returncode = VALID_PRT( gs->PrtList, bfalse );
       }
       break;
 
@@ -3264,7 +3321,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // This function finds an enemy, within a certain distance to the ichr, and
       // proceeds only if there is one
 
-      returncode = chr_search_distant( search_new(&loc_search), ichr, pg_scr->tmpdistance, btrue, bfalse );
+      returncode = chr_search_distant( gs, SearchInfo_new(&loc_search), ichr, pstate->tmpdistance, btrue, bfalse );
 
       if ( returncode )
       {
@@ -3276,15 +3333,15 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // This function teleports the character to the X, Y location, failing if the
       // location is off the map or blocked
       returncode = bfalse;
-      if ( mesh_check( pg_scr->tmpx, pg_scr->tmpy ) )
+      if ( mesh_check( &(gs->mesh), pstate->tmpx, pstate->tmpy ) )
       {
         // Yeah!  It worked!
-        detach_character_from_mount( ichr, btrue, bfalse );
+        detach_character_from_mount( gs, ichr, btrue, bfalse );
         pchr->pos_old = pchr->pos;
 
-        pchr->pos.x = pg_scr->tmpx;
-        pchr->pos.y = pg_scr->tmpy;
-        if ( 0 != chr_hitawall( ichr, NULL ) )
+        pchr->pos.x = pstate->tmpx;
+        pchr->pos.y = pstate->tmpy;
+        if ( 0 != chr_hitawall( gs, gs->ChrList + ichr, NULL ) )
         {
           // No it didn't...
           pchr->pos = pchr->pos_old;
@@ -3300,71 +3357,71 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_GiveStrengthToTarget:
       // Permanently boost the target's strength
-      if ( ChrList[pstate->target].alive )
+      if ( gs->ChrList[pstate->target].alive )
       {
-        iTmp = pg_scr->tmpargument;
-        getadd( 0, ChrList[pstate->target].strength_fp8, PERFECTSTAT, &iTmp );
-        ChrList[pstate->target].strength_fp8 += iTmp;
+        iTmp = pstate->tmpargument;
+        getadd( 0, gs->ChrList[pstate->target].strength_fp8, PERFECTSTAT, &iTmp );
+        gs->ChrList[pstate->target].strength_fp8 += iTmp;
       }
       break;
 
     case F_GiveWisdomToTarget:
       // Permanently boost the target's wisdom
-      if ( ChrList[pstate->target].alive )
+      if ( gs->ChrList[pstate->target].alive )
       {
-        iTmp = pg_scr->tmpargument;
-        getadd( 0, ChrList[pstate->target].wisdom_fp8, PERFECTSTAT, &iTmp );
-        ChrList[pstate->target].wisdom_fp8 += iTmp;
+        iTmp = pstate->tmpargument;
+        getadd( 0, gs->ChrList[pstate->target].wisdom_fp8, PERFECTSTAT, &iTmp );
+        gs->ChrList[pstate->target].wisdom_fp8 += iTmp;
       }
       break;
 
     case F_GiveIntelligenceToTarget:
       // Permanently boost the target's intelligence
-      if ( ChrList[pstate->target].alive )
+      if ( gs->ChrList[pstate->target].alive )
       {
-        iTmp = pg_scr->tmpargument;
-        getadd( 0, ChrList[pstate->target].intelligence_fp8, PERFECTSTAT, &iTmp );
-        ChrList[pstate->target].intelligence_fp8 += iTmp;
+        iTmp = pstate->tmpargument;
+        getadd( 0, gs->ChrList[pstate->target].intelligence_fp8, PERFECTSTAT, &iTmp );
+        gs->ChrList[pstate->target].intelligence_fp8 += iTmp;
       }
       break;
 
     case F_GiveDexterityToTarget:
       // Permanently boost the target's dexterity
-      if ( ChrList[pstate->target].alive )
+      if ( gs->ChrList[pstate->target].alive )
       {
-        iTmp = pg_scr->tmpargument;
-        getadd( 0, ChrList[pstate->target].dexterity_fp8, PERFECTSTAT, &iTmp );
-        ChrList[pstate->target].dexterity_fp8 += iTmp;
+        iTmp = pstate->tmpargument;
+        getadd( 0, gs->ChrList[pstate->target].dexterity_fp8, PERFECTSTAT, &iTmp );
+        gs->ChrList[pstate->target].dexterity_fp8 += iTmp;
       }
       break;
 
     case F_GiveLifeToTarget:
       // Permanently boost the target's life
-      if ( ChrList[pstate->target].alive )
+      if ( gs->ChrList[pstate->target].alive )
       {
-        iTmp = pg_scr->tmpargument;
-        getadd( LOWSTAT, ChrList[pstate->target].lifemax_fp8, PERFECTBIG, &iTmp );
-        ChrList[pstate->target].lifemax_fp8 += iTmp;
+        iTmp = pstate->tmpargument;
+        getadd( LOWSTAT, gs->ChrList[pstate->target].lifemax_fp8, PERFECTBIG, &iTmp );
+        gs->ChrList[pstate->target].lifemax_fp8 += iTmp;
         if ( iTmp < 0 )
         {
-          getadd( 1, ChrList[pstate->target].life_fp8, PERFECTBIG, &iTmp );
+          getadd( 1, gs->ChrList[pstate->target].life_fp8, PERFECTBIG, &iTmp );
         }
-        ChrList[pstate->target].life_fp8 += iTmp;
+        gs->ChrList[pstate->target].life_fp8 += iTmp;
       }
       break;
 
     case F_GiveManaToTarget:
       // Permanently boost the target's mana
-      if ( ChrList[pstate->target].alive )
+      if ( gs->ChrList[pstate->target].alive )
       {
-        iTmp = pg_scr->tmpargument;
-        getadd( 0, ChrList[pstate->target].manamax_fp8, PERFECTBIG, &iTmp );
-        ChrList[pstate->target].manamax_fp8 += iTmp;
+        iTmp = pstate->tmpargument;
+        getadd( 0, gs->ChrList[pstate->target].manamax_fp8, PERFECTBIG, &iTmp );
+        gs->ChrList[pstate->target].manamax_fp8 += iTmp;
         if ( iTmp < 0 )
         {
-          getadd( 0, ChrList[pstate->target].mana_fp8, PERFECTBIG, &iTmp );
+          getadd( 0, gs->ChrList[pstate->target].mana_fp8, PERFECTBIG, &iTmp );
         }
-        ChrList[pstate->target].mana_fp8 += iTmp;
+        gs->ChrList[pstate->target].mana_fp8 += iTmp;
       }
       break;
 
@@ -3383,13 +3440,13 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // Add a blip
       if ( numblip < MAXBLIP )
       {
-        if ( mesh_check( pg_scr->tmpx, pg_scr->tmpy ) )
+        if ( mesh_check( &(gs->mesh), pstate->tmpx, pstate->tmpy ) )
         {
-          if ( pg_scr->tmpargument < NUMBAR && pg_scr->tmpargument >= 0 )
+          if ( pstate->tmpargument < NUMBAR && pstate->tmpargument >= 0 )
           {
-            BlipList[numblip].x = mesh_fraction_x( pg_scr->tmpx ) * MAPSIZE * mapscale;
-            BlipList[numblip].y = mesh_fraction_y( pg_scr->tmpy ) * MAPSIZE * mapscale ;
-            BlipList[numblip].c = pg_scr->tmpargument;
+            BlipList[numblip].x = mesh_fraction_x( &(gs->mesh), pstate->tmpx ) * MAPSIZE * mapscale;
+            BlipList[numblip].y = mesh_fraction_y( &(gs->mesh), pstate->tmpy ) * MAPSIZE * mapscale ;
+            BlipList[numblip].c = pstate->tmpargument;
             numblip++;
           }
         }
@@ -3398,19 +3455,19 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_HealTarget:
       // Give some life to the target
-      if ( ChrList[pstate->target].alive )
+      if ( gs->ChrList[pstate->target].alive )
       {
-        iTmp = pg_scr->tmpargument;
-        getadd( 1, ChrList[pstate->target].life_fp8, ChrList[pstate->target].lifemax_fp8, &iTmp );
-        ChrList[pstate->target].life_fp8 += iTmp;
+        iTmp = pstate->tmpargument;
+        getadd( 1, gs->ChrList[pstate->target].life_fp8, gs->ChrList[pstate->target].lifemax_fp8, &iTmp );
+        gs->ChrList[pstate->target].life_fp8 += iTmp;
         // Check all enchants to see if they are removed
-        iTmp = ChrList[pstate->target].firstenchant;
+        iTmp = gs->ChrList[pstate->target].firstenchant;
         while ( iTmp != MAXENCHANT )
         {
-          sTmp = EncList[iTmp].nextenchant;
-          if ( MAKE_IDSZ( "HEAL" ) == EveList[EncList[iTmp].eve].removedbyidsz )
+          sTmp = gs->EncList[iTmp].nextenchant;
+          if ( MAKE_IDSZ( "HEAL" ) == gs->EveList[gs->EncList[iTmp].eve].removedbyidsz )
           {
-            remove_enchant( iTmp );
+            remove_enchant( gs, iTmp );
           }
           iTmp = sTmp;
         }
@@ -3419,11 +3476,11 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_PumpTarget:
       // Give some mana to the target
-      if ( ChrList[pstate->target].alive )
+      if ( gs->ChrList[pstate->target].alive )
       {
-        iTmp = pg_scr->tmpargument;
-        getadd( 0, ChrList[pstate->target].mana_fp8, ChrList[pstate->target].manamax_fp8, &iTmp );
-        ChrList[pstate->target].mana_fp8 += iTmp;
+        iTmp = pstate->tmpargument;
+        getadd( 0, gs->ChrList[pstate->target].mana_fp8, gs->ChrList[pstate->target].manamax_fp8, &iTmp );
+        gs->ChrList[pstate->target].mana_fp8 += iTmp;
       }
       break;
 
@@ -3442,7 +3499,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
         sTmp = btrue;
         for ( tTmp = 0; tTmp < IDSZ_COUNT; tTmp++ )
         {
-          if ( pcap->idsz[tTmp] != CapList[ChrList[iTmp].model].idsz[tTmp] )
+          if ( pcap->idsz[tTmp] != gs->CapList[gs->ChrList[iTmp].model].idsz[tTmp] )
           {
             sTmp = bfalse;
             break;
@@ -3451,7 +3508,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
         if ( sTmp )
         {
-          ChrList[iTmp].nameknown = btrue;
+          gs->ChrList[iTmp].nameknown = btrue;
         }
       }
       break;
@@ -3459,24 +3516,24 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
     case F_SpawnAttachedHolderParticle:
       // This function spawns an attached particle, attached to the holder
       returncode = bfalse;
-      if ( VALID_CHR( ichr ) && !chr_in_pack( ichr ) )
+      if ( VALID_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, MAXCHR, ichr ) )
       {
         tTmp = ichr;
-        if ( chr_attached( ichr ) )  tTmp = chr_get_attachedto( ichr );
+        if ( chr_attached( gs->ChrList, MAXCHR, ichr ) )  tTmp = chr_get_attachedto( gs->ChrList, MAXCHR, ichr );
 
-        tTmp = spawn_one_particle( 1.0f, pchr->pos, pchr->turn_lr, pchr->model, pg_scr->tmpargument, tTmp, pg_scr->tmpdistance, pchr->team, tTmp, 0, MAXCHR );
-        returncode = VALID_PRT( tTmp );
+        tTmp = spawn_one_particle( gs, 1.0f, pchr->pos, pchr->turn_lr, pchr->model, pstate->tmpargument, tTmp, pstate->tmpdistance, pchr->team, tTmp, 0, MAXCHR );
+        returncode = VALID_PRT( gs->PrtList, tTmp );
       };
       break;
 
     case F_SetTargetReloadTime:
       // This function sets the target's reload time
-      ChrList[pstate->target].reloadtime = pg_scr->tmpargument;
+      gs->ChrList[pstate->target].reloadtime = pstate->tmpargument;
       break;
 
     case F_SetFogLevel:
       // This function raises and lowers the module's fog
-      fTmp = ( pg_scr->tmpargument / 10.0 ) - GFog.top;
+      fTmp = ( pstate->tmpargument / 10.0 ) - GFog.top;
       GFog.top += fTmp;
       GFog.distance += fTmp;
       GFog.on = CData.fogallowed;
@@ -3485,19 +3542,19 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_GetFogLevel:
       // This function gets the fog level
-      pg_scr->tmpargument = GFog.top * 10;
+      pstate->tmpargument = GFog.top * 10;
       break;
 
     case F_SetFogTAD:
       // This function changes the fog color
-      GFog.red = pg_scr->tmpturn;
-      GFog.grn = pg_scr->tmpargument;
-      GFog.blu = pg_scr->tmpdistance;
+      GFog.red = pstate->tmpturn;
+      GFog.grn = pstate->tmpargument;
+      GFog.blu = pstate->tmpdistance;
       break;
 
     case F_SetFogBottomLevel:
       // This function sets the module's bottom fog level...
-      fTmp = ( pg_scr->tmpargument / 10.0 ) - GFog.bottom;
+      fTmp = ( pstate->tmpargument / 10.0 ) - GFog.bottom;
       GFog.bottom += fTmp;
       GFog.distance -= fTmp;
       GFog.on = CData.fogallowed;
@@ -3506,42 +3563,42 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_GetFogBottomLevel:
       // This function gets the fog level
-      pg_scr->tmpargument = GFog.bottom * 10;
+      pstate->tmpargument = GFog.bottom * 10;
       break;
 
     case F_CorrectActionForHand:
       // This function turns ZA into ZA, ZB, ZC, or ZD...
       // tmpargument must be set to one of the A actions beforehand...
-      if ( chr_attached( ichr ) )
+      if ( chr_attached( gs->ChrList, MAXCHR, ichr ) )
       {
         if ( pchr->inwhichslot == SLOT_RIGHT )
         {
           // C or D
-          pg_scr->tmpargument += 2;
+          pstate->tmpargument += 2;
         };
-        pg_scr->tmpargument += ( rand() & 1 );
+        pstate->tmpargument += ( rand() & 1 );
       }
       break;
 
     case F_IfTargetIsMounted:
       // This function proceeds if the target is riding a mount
       returncode = bfalse;
-      sTmp = chr_get_aitarget( ichr );
-      if ( VALID_CHR( sTmp ) )
+      sTmp = chr_get_aitarget( gs->ChrList, MAXCHR, gs->ChrList + ichr );
+      if ( VALID_CHR( gs->ChrList, sTmp ) )
       {
-        sTmp = chr_get_attachedto(sTmp);
-        if ( VALID_CHR( sTmp ) )
+        sTmp = chr_get_attachedto(gs->ChrList, MAXCHR, sTmp);
+        if ( VALID_CHR( gs->ChrList, sTmp ) )
         {
-          returncode = ChrList[sTmp].bmpdata.calc_is_mount;
+          returncode = gs->ChrList[sTmp].bmpdata.calc_is_mount;
         }
       }
       break;
 
     case F_SparkleIcon:
       // This function makes a blippie thing go around the icon
-      if ( pg_scr->tmpargument < NUMBAR && pg_scr->tmpargument > -1 )
+      if ( pstate->tmpargument < NUMBAR && pstate->tmpargument > -1 )
       {
-        pchr->sparkle = pg_scr->tmpargument;
+        pchr->sparkle = pstate->tmpargument;
       }
       break;
 
@@ -3552,33 +3609,33 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_GetTileXY:
       // This function gets the tile at x,y
-      pg_scr->tmpargument = mesh_get_tile( MESH_FLOAT_TO_FAN( pg_scr->tmpx ), MESH_FLOAT_TO_FAN( pg_scr->tmpy ) ) & 0xFF;
+      pstate->tmpargument = mesh_get_tile( gs, MESH_FLOAT_TO_FAN( pstate->tmpx ), MESH_FLOAT_TO_FAN( pstate->tmpy ) ) & 0xFF;
       break;
 
     case F_SetTileXY:
       // This function changes the tile at x,y
-      mesh_set_tile( MESH_FLOAT_TO_FAN( pg_scr->tmpx ), MESH_FLOAT_TO_FAN( pg_scr->tmpy ), pg_scr->tmpargument & 255 );
+      mesh_set_tile( gs, MESH_FLOAT_TO_FAN( pstate->tmpx ), MESH_FLOAT_TO_FAN( pstate->tmpy ), pstate->tmpargument & 255 );
       break;
 
     case F_SetShadowSize:
       // This function changes a character's shadow size
-      //pchr->bmpdata.shadow = pg_scr->tmpargument * pchr->fat;
-      //pchr->bmpdata_save.shadow = pg_scr->tmpargument;
+      //pchr->bmpdata.shadow = pstate->tmpargument * pchr->fat;
+      //pchr->bmpdata_save.shadow = pstate->tmpargument;
       break;
 
     case F_SignalTarget:
       // This function orders one specific character...  The target
       // Be careful in using this, always checking IDSZ first
-      ChrList[pstate->target].message = pg_scr->tmpargument;
-      ChrList[pstate->target].messagedata = 0;
-      ChrList[pstate->target].aistate.alert |= ALERT_SIGNALED;
+      gs->ChrList[pstate->target].message = pstate->tmpargument;
+      gs->ChrList[pstate->target].messagedata = 0;
+      gs->ChrList[pstate->target].aistate.alert |= ALERT_SIGNALED;
       break;
 
     case F_SetTargetToWhoeverIsInPassage:
       // This function lets passage rectangles be used as event triggers
-      sTmp = who_is_blocking_passage( pg_scr->tmpargument );
+      sTmp = who_is_blocking_passage( gs, pstate->tmpargument );
       returncode = bfalse;
-      if ( VALID_CHR( sTmp ) )
+      if ( VALID_CHR( gs->ChrList, sTmp ) )
       {
         pstate->target = sTmp;
         returncode = btrue;
@@ -3597,32 +3654,32 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       iTmp = pchr->undoenchant;
       if ( iTmp != MAXENCHANT )
       {
-        EncList[iTmp].ownermana = pg_scr->tmpargument;
-        EncList[iTmp].ownerlife = pg_scr->tmpdistance;
-        EncList[iTmp].targetmana = pg_scr->tmpx;
-        EncList[iTmp].targetlife = pg_scr->tmpy;
+        gs->EncList[iTmp].ownermana_fp8  = pstate->tmpargument;
+        gs->EncList[iTmp].ownerlife_fp8  = pstate->tmpdistance;
+        gs->EncList[iTmp].targetmana_fp8 = pstate->tmpx;
+        gs->EncList[iTmp].targetlife_fp8 = pstate->tmpy;
       }
       break;
 
     case F_SpawnCharacterXYZ:
       {
-        vect3 chr_pos = {pg_scr->tmpx, pg_scr->tmpy, pg_scr->tmpdistance};
+        vect3 chr_pos = {pstate->tmpx, pstate->tmpy, pstate->tmpdistance};
 
         // This function spawns a ichr, failing if x,y,z is invalid
-        sTmp = spawn_one_character( chr_pos, pchr->model, pchr->team, 0, pg_scr->tmpturn, NULL, MAXCHR );
+        sTmp = spawn_one_character( gs, chr_pos, pchr->model, pchr->team, 0, pstate->tmpturn, NULL, MAXCHR );
         returncode = bfalse;
-        if ( VALID_CHR( sTmp ) )
+        if ( VALID_CHR( gs->ChrList, sTmp ) )
         {
-          if ( 0 != chr_hitawall( sTmp, NULL ) )
+          if ( 0 != chr_hitawall( gs, gs->ChrList + sTmp, NULL ) )
           {
-            ChrList[sTmp].freeme = btrue;
+            gs->ChrList[sTmp].freeme = btrue;
           }
           else
           {
-            ChrList[sTmp].iskursed = bfalse;
+            gs->ChrList[sTmp].iskursed = bfalse;
             pstate->child = sTmp;
-            ChrList[sTmp].passage = pchr->passage;
-            ChrList[sTmp].aistate.owner = pstate->owner;
+            gs->ChrList[sTmp].passage = pchr->passage;
+            gs->ChrList[sTmp].aistate.owner = pstate->owner;
             returncode = btrue;
           }
         }
@@ -3633,22 +3690,22 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // This function spawns a character ( specific model slot ),
       // failing if x,y,z is invalid
       {
-        vect3 chr_pos = {pg_scr->tmpx, pg_scr->tmpy, pg_scr->tmpdistance};
+        vect3 chr_pos = {pstate->tmpx, pstate->tmpy, pstate->tmpdistance};
 
-        sTmp = spawn_one_character( chr_pos, pg_scr->tmpargument, pchr->team, 0, pg_scr->tmpturn, NULL, MAXCHR );
+        sTmp = spawn_one_character( gs, chr_pos, pstate->tmpargument, pchr->team, 0, pstate->tmpturn, NULL, MAXCHR );
         returncode = bfalse;
-        if ( VALID_CHR( sTmp ) )
+        if ( VALID_CHR( gs->ChrList, sTmp ) )
         {
-          if ( 0 != chr_hitawall( sTmp, NULL ) )
+          if ( 0 != chr_hitawall( gs, gs->ChrList + sTmp, NULL ) )
           {
-            ChrList[sTmp].freeme = btrue;
+            gs->ChrList[sTmp].freeme = btrue;
           }
           else
           {
-            ChrList[sTmp].iskursed = bfalse;
+            gs->ChrList[sTmp].iskursed = bfalse;
             pstate->child = sTmp;
-            ChrList[sTmp].passage = pchr->passage;
-            ChrList[sTmp].aistate.owner = pstate->owner;
+            gs->ChrList[sTmp].passage = pchr->passage;
+            gs->ChrList[sTmp].aistate.owner = pstate->owner;
             returncode = btrue;
           }
         }
@@ -3658,35 +3715,35 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
     case F_ChangeTargetClass:
       // This function changes a character's model ( specific model slot )
       returncode = bfalse;
-      if ( VALID_CHR( pstate->target ) )
+      if ( VALID_CHR( gs->ChrList, pstate->target ) )
       {
-        change_character( pstate->target, pg_scr->tmpargument, 0, LEAVE_ALL );
-        ChrList[pstate->target].aistate.morphed = btrue;
+        change_character( gs, pstate->target, pstate->tmpargument, 0, LEAVE_ALL );
+        gs->ChrList[pstate->target].aistate.morphed = btrue;
       };
       break;
 
     case F_PlayFullSound:
       // This function plays a sound loud for everyone...  Victory music
       returncode = bfalse;
-      if ( INVALID_SOUND != pg_scr->tmpargument )
+      if ( INVALID_SOUND != pstate->tmpargument )
       {
-        returncode = ( INVALID_SOUND != play_sound( 1.0f, GCamera.trackpos, pcap->wavelist[pg_scr->tmpargument], 0, pchr->model, pg_scr->tmpargument) );
+        returncode = ( INVALID_SOUND != snd_play_sound( gs, 1.0f, GCamera.trackpos, pcap->wavelist[pstate->tmpargument], 0, pchr->model, pstate->tmpargument) );
       }
       break;
 
     case F_SpawnExactChaseParticle:
       // This function spawns an exactly placed particle that chases the target
       returncode = bfalse;
-      if ( VALID_CHR( ichr ) && !chr_in_pack( ichr ) )
+      if ( VALID_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, MAXCHR, ichr ) )
       {
-        vect3 prt_pos = {pg_scr->tmpx, pg_scr->tmpy, pg_scr->tmpdistance};
+        vect3 prt_pos = {pstate->tmpx, pstate->tmpy, pstate->tmpdistance};
         tTmp = ichr;
-        if ( chr_attached( ichr ) )  tTmp = chr_get_attachedto( ichr );
+        if ( chr_attached( gs->ChrList, MAXCHR, ichr ) )  tTmp = chr_get_attachedto( gs->ChrList, MAXCHR, ichr );
 
-        tTmp = spawn_one_particle( 1.0f, prt_pos, pchr->turn_lr, pchr->model, pg_scr->tmpargument, MAXCHR, 0, pchr->team, tTmp, 0, MAXCHR );
-        if ( VALID_PRT( tTmp ) )
+        tTmp = spawn_one_particle( gs, 1.0f, prt_pos, pchr->turn_lr, pchr->model, pstate->tmpargument, MAXCHR, 0, pchr->team, tTmp, 0, MAXCHR );
+        if ( VALID_PRT( gs->PrtList, tTmp ) )
         {
-          PrtList[tTmp].target = chr_get_aitarget( ichr );
+          gs->PrtList[tTmp].target = chr_get_aitarget( gs->ChrList, MAXCHR, gs->ChrList + ichr );
           returncode = btrue;
         }
       }
@@ -3696,15 +3753,15 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // This function packs up an order, using tmpx, tmpy, tmpargument and the
       // target ( if valid ) to create a new tmpargument
       sTmp = ( pstate->target           & 0x0FFF ) << 20;
-      sTmp |= (( pg_scr->tmpx >> 8 ) & 0x00FF ) << 12;
-      sTmp |= (( pg_scr->tmpy >> 8 ) & 0x00FF ) << 4;
-      sTmp |= ( pg_scr->tmpargument & 0x000F );
-      pg_scr->tmpargument = sTmp;
+      sTmp |= (( pstate->tmpx >> 8 ) & 0x00FF ) << 12;
+      sTmp |= (( pstate->tmpy >> 8 ) & 0x00FF ) << 4;
+      sTmp |= ( pstate->tmpargument & 0x000F );
+      pstate->tmpargument = sTmp;
       break;
 
     case F_SignalSpecialID:
       // This function issues an order to all with the given special IDSZ
-      signal_idsz_index( pg_scr->tmpargument, pg_scr->tmpdistance, IDSZ_SPECIAL );
+      signal_idsz_index( gs, pstate->tmpargument, pstate->tmpdistance, IDSZ_SPECIAL );
       break;
 
     case F_UnkurseTargetInventory:
@@ -3712,51 +3769,51 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
       for ( _slot = SLOT_LEFT; _slot <= SLOT_RIGHT; _slot = ( SLOT )( _slot + 1 ) )
       {
-        sTmp = chr_get_holdingwhich( pstate->target, _slot );
-        ChrList[sTmp].iskursed = bfalse;
+        sTmp = chr_get_holdingwhich( gs->ChrList, MAXCHR, pstate->target, _slot );
+        gs->ChrList[sTmp].iskursed = bfalse;
       };
 
-      sTmp  = chr_get_nextinpack( pstate->target );
-      while ( VALID_CHR( sTmp ) )
+      sTmp  = chr_get_nextinpack( gs->ChrList, MAXCHR, pstate->target );
+      while ( VALID_CHR( gs->ChrList, sTmp ) )
       {
-        ChrList[sTmp].iskursed = bfalse;
-        sTmp  = chr_get_nextinpack( sTmp );
+        gs->ChrList[sTmp].iskursed = bfalse;
+        sTmp  = chr_get_nextinpack( gs->ChrList, MAXCHR, sTmp );
       }
       break;
 
     case F_IfTargetIsSneaking:
       // This function proceeds if the target is doing ACTION_DA or ACTION_WA
-      returncode = ( ChrList[pstate->target].action.now == ACTION_DA || ChrList[pstate->target].action.now == ACTION_WA );
+      returncode = ( gs->ChrList[pstate->target].action.now == ACTION_DA || gs->ChrList[pstate->target].action.now == ACTION_WA );
       break;
 
     case F_DropItems:
       // This function drops all of the character's items
-      drop_all_items( ichr );
+      drop_all_items( gs, ichr );
       break;
 
     case F_RespawnTarget:
       // This function respawns the target at its current location
-      sTmp = chr_get_aitarget( ichr );
-      ChrList[sTmp].pos_old = ChrList[sTmp].pos;
-      respawn_character( sTmp );
-      ChrList[sTmp].pos = ChrList[sTmp].pos_old;
+      sTmp = chr_get_aitarget( gs->ChrList, MAXCHR, gs->ChrList + ichr );
+      gs->ChrList[sTmp].pos_old = gs->ChrList[sTmp].pos;
+      respawn_character( gs, sTmp );
+      gs->ChrList[sTmp].pos = gs->ChrList[sTmp].pos_old;
       break;
 
     case F_TargetDoActionSetFrame:
       // This function starts a new action, if it is valid for the model and
       // sets the starting frame.  It will fail if the action is invalid
       returncode = bfalse;
-      if ( pg_scr->tmpargument < MAXACTION )
+      if ( pstate->tmpargument < MAXACTION )
       {
-        if ( MadList[ChrList[pstate->target].model].actionvalid[pg_scr->tmpargument] )
+        if ( gs->MadList[gs->ChrList[pstate->target].model].actionvalid[pstate->tmpargument] )
         {
-          ChrList[pstate->target].action.now = pg_scr->tmpargument;
-          ChrList[pstate->target].action.ready = bfalse;
+          gs->ChrList[pstate->target].action.now = pstate->tmpargument;
+          gs->ChrList[pstate->target].action.ready = bfalse;
 
-          ChrList[pstate->target].anim.lip_fp8 = 0;
-          ChrList[pstate->target].anim.flip    = 0.0f;
-          ChrList[pstate->target].anim.next    = MadList[ChrList[pstate->target].model].actionstart[pg_scr->tmpargument];
-          ChrList[pstate->target].anim.last    = ChrList[pstate->target].anim.next;
+          gs->ChrList[pstate->target].anim.lip_fp8 = 0;
+          gs->ChrList[pstate->target].anim.flip    = 0.0f;
+          gs->ChrList[pstate->target].anim.next    = gs->MadList[gs->ChrList[pstate->target].model].actionstart[pstate->tmpargument];
+          gs->ChrList[pstate->target].anim.last    = gs->ChrList[pstate->target].anim.next;
 
           returncode = btrue;
         }
@@ -3765,19 +3822,19 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_IfTargetCanSeeInvisible:
       // This function proceeds if the target can see invisible
-      returncode = ChrList[pstate->target].canseeinvisible;
+      returncode = gs->ChrList[pstate->target].canseeinvisible;
       break;
 
     case F_SetTargetToNearestBlahID:
       // This function finds the nearest target that meets the
       // requirements
 
-      returncode = chr_search_wide_nearest( search_new(&loc_search), ichr,
-                                            HAS_SOME_BITS( pg_scr->tmpdistance, SEARCH_ITEMS   ),
-                                            HAS_SOME_BITS( pg_scr->tmpdistance, SEARCH_FRIENDS ),
-                                            HAS_SOME_BITS( pg_scr->tmpdistance, SEARCH_ENEMIES ),
-                                            HAS_SOME_BITS( pg_scr->tmpdistance, SEARCH_DEAD    ),
-                                            pg_scr->tmpargument );
+      returncode = chr_search_wide_nearest( gs, SearchInfo_new(&loc_search), ichr,
+                                            HAS_SOME_BITS( pstate->tmpdistance, SEARCH_ITEMS   ),
+                                            HAS_SOME_BITS( pstate->tmpdistance, SEARCH_FRIENDS ),
+                                            HAS_SOME_BITS( pstate->tmpdistance, SEARCH_ENEMIES ),
+                                            HAS_SOME_BITS( pstate->tmpdistance, SEARCH_DEAD    ),
+                                            pstate->tmpargument );
       if ( returncode )
       {
         pstate->target = loc_search.nearest;
@@ -3788,7 +3845,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // This function finds the nearest target that meets the
       // requirements
 
-      returncode = chr_search_wide_nearest( search_new(&loc_search), ichr, bfalse, bfalse, btrue, bfalse, IDSZ_NONE );
+      returncode = chr_search_wide_nearest( gs, SearchInfo_new(&loc_search), ichr, bfalse, bfalse, btrue, bfalse, IDSZ_NONE );
 
       if ( returncode )
       {
@@ -3800,7 +3857,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // This function finds the nearest target that meets the
       // requirements
 
-      returncode = chr_search_wide_nearest( search_new(&loc_search), ichr, bfalse, btrue, bfalse, bfalse, IDSZ_NONE );
+      returncode = chr_search_wide_nearest( gs, SearchInfo_new(&loc_search), ichr, bfalse, btrue, bfalse, bfalse, IDSZ_NONE );
 
       if ( returncode )
       {
@@ -3812,7 +3869,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // This function finds the nearest target that meets the
       // requirements
 
-      returncode = chr_search_wide_nearest( search_new(&loc_search), ichr, bfalse, btrue, btrue, bfalse, IDSZ_NONE );
+      returncode = chr_search_wide_nearest( gs, SearchInfo_new(&loc_search), ichr, bfalse, btrue, btrue, bfalse, IDSZ_NONE );
 
       if ( returncode )
       {
@@ -3822,23 +3879,24 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_FlashPassage:
       // This function makes the passage light or dark...  For debug...
-      flash_passage( pg_scr->tmpargument, pg_scr->tmpdistance );
+      flash_passage( gs, pstate->tmpargument, pstate->tmpdistance );
       break;
 
     case F_FindTileInPassage:
       // This function finds the next tile in the passage, tmpx and tmpy are
       // required and set on return
-      returncode = search_tile_in_passage( pg_scr, pg_scr->tmpargument, pg_scr->tmpdistance );
+      returncode = scr_search_tile_in_passage( gs, pstate );
+
       break;
 
     case F_IfHeldInLeftSaddle:
       // This function proceeds if the character is in the left hand of another
       // character
       returncode = bfalse;
-      sTmp = chr_get_attachedto( ichr );
-      if ( VALID_CHR( sTmp ) )
+      sTmp = chr_get_attachedto( gs->ChrList, MAXCHR, ichr );
+      if ( VALID_CHR( gs->ChrList, sTmp ) )
       {
-        returncode = ( ChrList[sTmp].holdingwhich[SLOT_SADDLE] == ichr );
+        returncode = ( gs->ChrList[sTmp].holdingwhich[SLOT_SADDLE] == ichr );
       }
       break;
 
@@ -3849,7 +3907,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_SetChildAmmo:
       // This function sets the child's ammo
-      pchild->ammo = pg_scr->tmpargument;
+      pchild->ammo = pstate->tmpargument;
       break;
 
     case F_IfHitVulnerable:
@@ -3860,30 +3918,30 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_IfTargetIsFlying:
       // This function proceeds if the character target is flying
-      returncode = ( ChrList[pstate->target].flyheight > 0 );
+      returncode = ( gs->ChrList[pstate->target].flyheight > 0 );
       break;
 
     case F_IdentifyTarget:
       // This function reveals the target's name, ammo, and usage
       // Proceeds if the target was unknown
       returncode = bfalse;
-      sTmp = chr_get_aitarget( ichr );
-      if ( ChrList[sTmp].ammomax != 0 )  ChrList[sTmp].ammoknown = btrue;
-      if ( ChrList[sTmp].name[0] != 'B' ||
-           ChrList[sTmp].name[1] != 'l' ||
-           ChrList[sTmp].name[2] != 'a' ||
-           ChrList[sTmp].name[3] != 'h' ||
-           ChrList[sTmp].name[4] != 0 )
+      sTmp = chr_get_aitarget( gs->ChrList, MAXCHR, gs->ChrList + ichr );
+      if ( gs->ChrList[sTmp].ammomax != 0 )  gs->ChrList[sTmp].ammoknown = btrue;
+      if ( gs->ChrList[sTmp].name[0] != 'B' ||
+           gs->ChrList[sTmp].name[1] != 'l' ||
+           gs->ChrList[sTmp].name[2] != 'a' ||
+           gs->ChrList[sTmp].name[3] != 'h' ||
+           gs->ChrList[sTmp].name[4] != 0 )
       {
-        returncode = !ChrList[sTmp].nameknown;
-        ChrList[sTmp].nameknown = btrue;
+        returncode = !gs->ChrList[sTmp].nameknown;
+        gs->ChrList[sTmp].nameknown = btrue;
       }
-      CapList[ChrList[sTmp].model].usageknown = btrue;
+      gs->CapList[gs->ChrList[sTmp].model].usageknown = btrue;
       break;
 
     case F_BeatModule:
       // This function displays the Module Ended message
-      beatmodule = btrue;
+      gs->modstate.beat = btrue;
       break;
 
     case F_EndModule:
@@ -3893,17 +3951,17 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_DisableExport:
       // This function turns export off
-      exportvalid = bfalse;
+      gs->modstate.exportvalid = bfalse;
       break;
 
     case F_EnableExport:
       // This function turns export on
-      exportvalid = btrue;
+      gs->modstate.exportvalid = btrue;
       break;
 
     case F_GetTargetState:
       // This function sets tmpargument to the state of the target
-      pg_scr->tmpargument = ChrList[pstate->target].aistate.state;
+      pstate->tmpargument = gs->ChrList[pstate->target].aistate.state;
       break;
 
     case F_ClearEndText:
@@ -3914,21 +3972,21 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_AddEndText:
       // This function appends a message to the end-module text buffer
-      append_end_text( pg_scr, pmad->msg_start + pg_scr->tmpargument, ichr );
+      append_end_text( gs, pmad->msg_start + pstate->tmpargument, ichr );
       break;
 
     case F_PlayMusic:
       // This function begins playing a new track of music
-      if ( CData.musicvalid && ( songplaying != pg_scr->tmpargument ) )
+      if ( CData.allow_music && ( sndState.song_index != pstate->tmpargument ) )
       {
-        play_music( pg_scr->tmpargument, pg_scr->tmpdistance, -1 );
+        snd_play_music( pstate->tmpargument, pstate->tmpdistance, -1 );
       }
       break;
 
     case F_SetMusicPassage:
       // This function makes the given passage play music if a player enters it
       // tmpargument is the passage to set and tmpdistance is the music track to play...
-      PassList[pg_scr->tmpargument].music = pg_scr->tmpdistance;
+      gs->PassList[pstate->tmpargument].music = pstate->tmpdistance;
       break;
 
     case F_MakeCrushInvalid:
@@ -3938,28 +3996,28 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_StopMusic:
       // This function stops the interactive music
-      stop_music(1000);
+      snd_stop_music(1000);
       break;
 
     case F_FlashVariable:
       // This function makes the character flash according to tmpargument
-      flash_character( ichr, pg_scr->tmpargument );
+      flash_character( gs, ichr, pstate->tmpargument );
       break;
 
     case F_AccelerateUp:
       // This function changes the character's up down velocity
-      pchr->vel.z += pg_scr->tmpargument / 100.0;
+      pchr->vel.z += pstate->tmpargument / 100.0;
       break;
 
     case F_FlashVariableHeight:
       // This function makes the character flash, feet one color, head another...
-      flash_character_height( ichr, pg_scr->tmpturn, pg_scr->tmpx,
-                              pg_scr->tmpdistance, pg_scr->tmpy );
+      flash_character_height( gs, ichr, pstate->tmpturn, pstate->tmpx,
+                              pstate->tmpdistance, pstate->tmpy );
       break;
 
     case F_SetDamageTime:
       // This function makes the character invincible for a little while
-      pchr->damagetime = pg_scr->tmpargument;
+      pchr->damagetime = pstate->tmpargument;
       break;
 
     case F_IfStateIs8:
@@ -3995,45 +4053,48 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       break;
 
     case F_IfTargetIsAMount:
-      returncode = ChrList[pstate->target].bmpdata.calc_is_mount;
+      returncode = gs->ChrList[pstate->target].bmpdata.calc_is_mount;
       break;
 
     case F_IfTargetIsAPlatform:
-      returncode = ChrList[pstate->target].bmpdata.calc_is_platform;
+      returncode = gs->ChrList[pstate->target].bmpdata.calc_is_platform;
       break;
 
     case F_AddStat:
-      if ( !pchr->staton ) add_stat( ichr );
+      if ( !pchr->staton )
+      {
+        add_status( gs, ichr );
+      }
       break;
 
     case F_DisenchantTarget:
-      returncode = ( ChrList[pstate->target].firstenchant != MAXENCHANT );
-      disenchant_character( pstate->target );
+      returncode = ( gs->ChrList[pstate->target].firstenchant != MAXENCHANT );
+      disenchant_character( gs, pstate->target );
       break;
 
     case F_DisenchantAll:
       iTmp = 0;
       while ( iTmp < MAXENCHANT )
       {
-        remove_enchant( iTmp );
+        remove_enchant( gs, iTmp );
         iTmp++;
       }
       break;
 
     case F_SetVolumeNearestTeammate:
     //This sets the volume for the looping sounds of all the character's teammates
-    if(moduleActive && pg_scr->tmpdistance >= 0 && CData.soundvalid)
+    if( !gs->modstate.Paused && pstate->tmpdistance >= 0 && sndState.soundActive)
       {
           //Go through all teammates
           sTmp = 0;
           while(sTmp < MAXCHR)
           {
-              if(ChrList[sTmp].on && ChrList[sTmp].alive && ChrList[sTmp].team == pchr->team)
+              if(gs->ChrList[sTmp].on && gs->ChrList[sTmp].alive && gs->ChrList[sTmp].team == pchr->team)
               {
           //And set their volume to tmpdistance
-            if(pg_scr->tmpdistance >= 0 && ChrList[sTmp].loopingchannel != INVALID_SOUND)
+            if(pstate->tmpdistance >= 0 && gs->ChrList[sTmp].loopingchannel != INVALID_SOUND)
           {
-          Mix_Volume(ChrList[sTmp].loopingchannel, pg_scr->tmpdistance);
+          Mix_Volume(gs->ChrList[sTmp].loopingchannel, pstate->tmpdistance);
           }
         }
               sTmp++;
@@ -4043,7 +4104,7 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_AddShopPassage:
       // This function defines a shop area
-      add_shop_passage( ichr, pg_scr->tmpargument );
+      ShopList_add( gs, ichr, pstate->tmpargument );
       break;
 
     case F_TargetPayForArmor:
@@ -4051,53 +4112,53 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       // enough...
       // tmpx is amount needed
       // tmpy is cost of new skin
-      sTmp = chr_get_aitarget( ichr );    // The target
-      tTmp = ChrList[sTmp].model;           // The target's model
-      iTmp =  CapList[tTmp].skin[pg_scr->tmpargument % MAXSKIN].cost;
-      pg_scr->tmpy = iTmp;                // Cost of new skin
-      iTmp -= CapList[tTmp].skin[ChrList[sTmp].skin_ref % MAXSKIN].cost;   // Refund
-      if ( iTmp > ChrList[sTmp].money )
+      sTmp = chr_get_aitarget( gs->ChrList, MAXCHR, gs->ChrList + ichr );    // The target
+      tTmp = gs->ChrList[sTmp].model;           // The target's model
+      iTmp =  gs->CapList[tTmp].skin[pstate->tmpargument % MAXSKIN].cost;
+      pstate->tmpy = iTmp;                // Cost of new skin
+      iTmp -= gs->CapList[tTmp].skin[gs->ChrList[sTmp].skin_ref % MAXSKIN].cost;   // Refund
+      if ( iTmp > gs->ChrList[sTmp].money )
       {
         // Not enough...
-        pg_scr->tmpx = iTmp - ChrList[sTmp].money;  // Amount needed
+        pstate->tmpx = iTmp - gs->ChrList[sTmp].money;  // Amount needed
         returncode = bfalse;
       }
       else
       {
         // Pay for it...  Cost may be negative after refund...
-        ChrList[sTmp].money -= iTmp;
-        if ( ChrList[sTmp].money > MAXMONEY )  ChrList[sTmp].money = MAXMONEY;
-        pg_scr->tmpx = 0;
+        gs->ChrList[sTmp].money -= iTmp;
+        if ( gs->ChrList[sTmp].money > MAXMONEY )  gs->ChrList[sTmp].money = MAXMONEY;
+        pstate->tmpx = 0;
         returncode = btrue;
       }
       break;
 
     case F_JoinEvilTeam:
       // This function adds the character to the evil team...
-      switch_team( ichr, TEAM_EVIL );
+      switch_team( gs,  ichr, TEAM_EVIL );
       break;
 
     case F_JoinNullTeam:
       // This function adds the character to the null team...
-      switch_team( ichr, TEAM_NULL );
+      switch_team( gs,  ichr, TEAM_NULL );
       break;
 
     case F_JoinGoodTeam:
       // This function adds the character to the good team...
-      switch_team( ichr, TEAM_GOOD );
+      switch_team( gs,  ichr, TEAM_GOOD );
       break;
 
     case F_PitsKill:
       // This function activates pit deaths...
-      pitskill = btrue;
+      gs->pitskill = btrue;
       break;
 
     case F_SetTargetToPassageID:
       // This function finds a character who is both in the passage and who has
       // an item with the given IDSZ
-      sTmp = who_is_blocking_passage_ID( pg_scr->tmpargument, pg_scr->tmpdistance );
+      sTmp = who_is_blocking_passage_ID( gs, pstate->tmpargument, pstate->tmpdistance );
       returncode = bfalse;
-      if ( VALID_CHR( sTmp ) )
+      if ( VALID_CHR( gs->ChrList, sTmp ) )
       {
         pstate->target = sTmp;
         returncode = btrue;
@@ -4111,17 +4172,17 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_SpawnExactParticleEndSpawn:
       {
-        vect3 prt_pos = {pg_scr->tmpx, pg_scr->tmpy, pg_scr->tmpdistance};
+        vect3 prt_pos = {pstate->tmpx, pstate->tmpy, pstate->tmpdistance};
 
         // This function spawns a particle that spawns a character...
         returncode = bfalse;
         tTmp = ichr;
-        if ( chr_attached( ichr ) )  tTmp = chr_get_attachedto( ichr );
+        if ( chr_attached( gs->ChrList, MAXCHR, ichr ) )  tTmp = chr_get_attachedto( gs->ChrList, MAXCHR, ichr );
 
-        tTmp = spawn_one_particle( 1.0f, prt_pos, pchr->turn_lr, pchr->model, pg_scr->tmpargument, MAXCHR, 0, pchr->team, tTmp, 0, MAXCHR );
-        if ( VALID_PRT( tTmp ) )
+        tTmp = spawn_one_particle( gs, 1.0f, prt_pos, pchr->turn_lr, pchr->model, pstate->tmpargument, MAXCHR, 0, pchr->team, tTmp, 0, MAXCHR );
+        if ( VALID_PRT( gs->PrtList, tTmp ) )
         {
-          PrtList[tTmp].spawncharacterstate = pg_scr->tmpturn;
+          gs->PrtList[tTmp].spawncharacterstate = pstate->tmpturn;
           returncode = btrue;
         }
       }
@@ -4134,41 +4195,41 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       sTmp = pchr->model;
       if ( MAXMODEL != sTmp )
       {
-        if ( CapList[sTmp].gopoofprttype <= PRTPIP_PEROBJECT_COUNT )
+        if ( gs->CapList[sTmp].gopoofprttype <= PRTPIP_PEROBJECT_COUNT )
         {
-          sTmp = MadList[sTmp].prtpip[CapList[sTmp].gopoofprttype];
+          sTmp = gs->MadList[sTmp].prtpip[gs->CapList[sTmp].gopoofprttype];
         }
         else
         {
-          sTmp = CapList[sTmp].gopoofprttype;
+          sTmp = gs->CapList[sTmp].gopoofprttype;
         }
 
         if ( MAXPRTPIP != sTmp )
         {
           // store the base values
-          iTmp = PipList[sTmp].xyvel.ibase;
-          tTmp = PipList[sTmp].xyspacing.ibase;
-          test = PipList[sTmp].damage_fp8.ibase;
+          iTmp = gs->PipList[sTmp].xyvel.ibase;
+          tTmp = gs->PipList[sTmp].xyspacing.ibase;
+          test = gs->PipList[sTmp].damage_fp8.ibase;
 
           // set some temporary values
-          PipList[sTmp].xyvel.ibase = pg_scr->tmpx;
-          PipList[sTmp].xyspacing.ibase = pg_scr->tmpy;
-          PipList[sTmp].damage_fp8.ibase = pg_scr->tmpargument;
+          gs->PipList[sTmp].xyvel.ibase = pstate->tmpx;
+          gs->PipList[sTmp].xyspacing.ibase = pstate->tmpy;
+          gs->PipList[sTmp].damage_fp8.ibase = pstate->tmpargument;
 
           // do the poof
-          spawn_poof( ichr, pchr->model );
+          spawn_poof( gs, ichr, pchr->model );
 
           // Restore the saved values
-          PipList[sTmp].xyvel.ibase = iTmp;
-          PipList[sTmp].xyspacing.ibase = tTmp;
-          PipList[sTmp].damage_fp8.ibase = test;
+          gs->PipList[sTmp].xyvel.ibase = iTmp;
+          gs->PipList[sTmp].xyspacing.ibase = tTmp;
+          gs->PipList[sTmp].damage_fp8.ibase = test;
         };
       }
       break;
 
     case F_GiveExperienceToGoodTeam:
       // This function gives experience to everyone on the G Team
-      give_team_experience( TEAM_GOOD, pg_scr->tmpargument, pg_scr->tmpdistance );
+      give_team_experience( gs, TEAM_GOOD, pstate->tmpargument, (EXPERIENCE)pstate->tmpdistance );
       break;
 
     case F_DoNothing:
@@ -4177,12 +4238,12 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_DazeTarget:
       //This function dazes the target for a duration equal to tmpargument
-      ChrList[pstate->target].dazetime += pg_scr->tmpargument;
+      gs->ChrList[pstate->target].dazetime += pstate->tmpargument;
       break;
 
     case F_GrogTarget:
       //This function grogs the target for a duration equal to tmpargument
-      ChrList[pstate->target].grogtime += pg_scr->tmpargument;
+      gs->ChrList[pstate->target].grogtime += pstate->tmpargument;
       break;
 
     case F_IfEquipped:
@@ -4192,65 +4253,65 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
     case F_DropTargetMoney:
       // This function drops some of the target's money
-      drop_money( pstate->target, pg_scr->tmpargument );
+      drop_money( gs, pstate->target, pstate->tmpargument );
       break;
 
     case F_GetTargetContent:
       //This sets tmpargument to the current target's content value
-      pg_scr->tmpargument = ChrList[pstate->target].aistate.content;
+      pstate->tmpargument = gs->ChrList[pstate->target].aistate.content;
       break;
 
     case F_DropTargetKeys:
       //This function makes the target drops keys in inventory (Not inhand)
-      drop_keys( pstate->target );
+      drop_keys( gs, pstate->target );
       break;
 
     case F_JoinTeam:
       //This makes the character itself join a specified team (A = 0, B = 1, 23 = Z, etc.)
-      switch_team( ichr, pg_scr->tmpargument );
+      switch_team( gs,  ichr, (TEAM)pstate->tmpargument );
       break;
 
     case F_TargetJoinTeam:
       //This makes the target join a team specified in tmpargument (A = 0, 23 = Z, etc.)
-      switch_team( pstate->target, pg_scr->tmpargument );
+      switch_team( gs,  pstate->target, (TEAM)pstate->tmpargument );
       break;
 
     case F_ClearMusicPassage:
       //This clears the music for an specified passage
-      PassList[pg_scr->tmpargument].music = INVALID_SOUND;
+      gs->PassList[pstate->tmpargument].music = INVALID_SOUND;
       break;
 
 
     case F_AddQuest:
       //This function adds a quest idsz set in tmpargument into the targets quest.txt
-      if ( ChrList[pstate->target].isplayer )
+      if ( chr_is_player(gs, pstate->target) )
       {
-        snprintf( cTmp, sizeof( cTmp ), "%s.obj", ChrList[pstate->target].name );
-        returncode = add_quest_idsz( cTmp, pg_scr->tmpargument );
+        snprintf( cTmp, sizeof( cTmp ), "%s.obj", gs->ChrList[pstate->target].name );
+        returncode = add_quest_idsz( cTmp, pstate->tmpargument );
       }
       break;
 
     case F_BeatQuest:
       //This function marks a IDSZ in the targets quest.txt as beaten
       returncode = bfalse;
-      if ( ChrList[pstate->target].isplayer )
+      if ( chr_is_player(gs, pstate->target) )
       {
-        snprintf( cTmp, sizeof( cTmp ), "%s.obj", ChrList[pstate->target].name );
-        if(modify_quest_idsz( cTmp, pg_scr->tmpargument, 0 ) == -2) returncode = btrue;
+        snprintf( cTmp, sizeof( cTmp ), "%s.obj", gs->ChrList[pstate->target].name );
+        if(modify_quest_idsz( cTmp, pstate->tmpargument, 0 ) == -2) returncode = btrue;
       }
       break;
 
     case F_IfTargetHasQuest:
       //This function proceeds if the target has the unfinished quest specified in tmpargument
       //and sets tmpx to the Quest Level of the specified quest.
-      if ( ChrList[pstate->target].isplayer )
+      if ( chr_is_player(gs, pstate->target) )
       {
-        snprintf( cTmp, sizeof( cTmp ), "%s.obj", ChrList[pstate->target].name );
-        iTmp = check_player_quest( cTmp, pg_scr->tmpargument );
+        snprintf( cTmp, sizeof( cTmp ), "%s.obj", gs->ChrList[pstate->target].name );
+        iTmp = check_player_quest( cTmp, pstate->tmpargument );
         if ( iTmp > -1 )
         {
           returncode = btrue;
-          pg_scr->tmpx = iTmp;
+          pstate->tmpx = iTmp;
         }
         else returncode = bfalse;
       }
@@ -4260,25 +4321,25 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
       //This function modifies the quest level for a specific quest IDSZ
       //tmpargument specifies quest idsz and tmpdistance the adjustment (which may be negative)	
       returncode = bfalse;
-      if ( ChrList[pstate->target].isplayer && pg_scr->tmpdistance != 0 )
+      if ( chr_is_player(gs, pstate->target) && pstate->tmpdistance != 0 )
       {
-        snprintf( cTmp, sizeof( cTmp ), "%s.obj", ChrList[pstate->target].name );
-        if(modify_quest_idsz( cTmp, pg_scr->tmpargument, pg_scr->tmpdistance ) != -1) returncode = btrue;
+        snprintf( cTmp, sizeof( cTmp ), "%s.obj", gs->ChrList[pstate->target].name );
+        if(modify_quest_idsz( cTmp, pstate->tmpargument, pstate->tmpdistance ) != -1) returncode = btrue;
       }
       break;
 
     case F_IfTargetHasNotFullMana:
       //This function proceeds if the target has more than one point of mana and is alive
       returncode = bfalse;
-      if ( VALID_CHR( pstate->target ) )
+      if ( VALID_CHR( gs->ChrList, pstate->target ) )
       {
-        returncode = ChrList[pstate->target].alive && ChrList[pstate->target].manamax_fp8 > 0 && ChrList[pstate->target].mana_fp8 < ChrList[pstate->target].manamax_fp8 - DAMAGE_MIN;
+        returncode = gs->ChrList[pstate->target].alive && gs->ChrList[pstate->target].manamax_fp8 > 0 && gs->ChrList[pstate->target].mana_fp8 < gs->ChrList[pstate->target].manamax_fp8 - DAMAGE_MIN;
       };
       break;
 
     case F_IfDoingAction:
       //This function proceeds if the character is preforming the animation specified in tmpargument
-      returncode = pchr->action.now >= pg_scr->tmpargument && pchr->action.now <= pg_scr->tmpargument;
+      returncode = pchr->action.now >= pstate->tmpargument && pchr->action.now <= pstate->tmpargument;
       break;
 
     case F_IfOperatorIsLinux:
@@ -4300,26 +4361,24 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
     case F_SetCameraSwing:
       //This function sets the camera swing rate
       GCamera.swing = 0;
-      GCamera.swingrate = pg_scr->tmpargument;
-      GCamera.swingamp = pg_scr->tmpdistance;
+      GCamera.swingrate = pstate->tmpargument;
+      GCamera.swingamp = pstate->tmpdistance;
       break;
 
     case F_EnableRespawn:
       // This function turns respawn with JUMP button on
-      respawnvalid = btrue;
+      gs->modstate.respawnvalid = btrue;
       break;
 
     case F_DisableRespawn:
       // This function turns respawning with JUMP button off
-      respawnvalid = bfalse;
+      gs->modstate.respawnvalid = bfalse;
       break;
 
     case F_IfButtonPressed:
       // This proceeds if the character is a player and pressing the latch specified in tmpargument
-      returncode = HAS_SOME_BITS( pstate->latch.b, pg_scr->tmpargument ) && pchr->isplayer;
+      returncode = HAS_SOME_BITS( pstate->latch.b, pstate->tmpargument ) && chr_is_player(gs, ichr);
       break;
-
-
 
     case F_End:
       break;
@@ -4333,53 +4392,69 @@ bool_t run_function( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-void set_operand( SCRIPT_GLOBAL_VALUES * pg_scr, Uint8 variable )
+retval_t set_operand( AI_STATE * pstate, ScriptInfo * slist, Uint8 variable )
 {
   // ZZ> This function sets one of the tmp* values for scripted AI
+
+  retval_t retval = rv_succeed;
+  char * scriptname = slist->fname[pstate->type];
 
   switch ( variable )
   {
     case VAR_TMP_X:
-      pg_scr->tmpx = pg_scr->operationsum;
+      pstate->tmpx = pstate->operationsum;
       break;
 
     case VAR_TMP_Y:
-      pg_scr->tmpy = pg_scr->operationsum;
+      pstate->tmpy = pstate->operationsum;
       break;
 
     case VAR_TMP_DISTANCE:
-      pg_scr->tmpdistance = pg_scr->operationsum;
+      pstate->tmpdistance = pstate->operationsum;
       break;
 
     case VAR_TMP_TURN:
-      pg_scr->tmpturn = pg_scr->operationsum;
+      pstate->tmpturn = pstate->operationsum;
       break;
 
     case VAR_TMP_ARGUMENT:
-      pg_scr->tmpargument = pg_scr->operationsum;
+      pstate->tmpargument = pstate->operationsum;
       break;
 
+    default:
+      log_warning("set_operand() - \"%s\"(0x%x) unknown variable", scriptname, pstate->offset);
+      retval = rv_error;
+      break;
   }
+
+  return retval;
 }
 
 //--------------------------------------------------------------------------------------------
-void run_operand( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
+retval_t run_operand( GameState * gs, Uint32 value, CHR_REF ichr )
 {
   // ZZ> This function does the scripted arithmetic in operator,operand pairs
 
+  retval_t retval = rv_succeed;
   int iTmp;
 
-  CHR      * pchr = ChrList + ichr;
+  ScriptInfo * slist = GameState_getScriptInfo(gs);
+
+  Chr      * pchr = gs->ChrList + ichr;
   AI_STATE * pstate = &(pchr->aistate);
 
-  CHR_REF   loc_aitarget = chr_get_aitarget( ichr );
-  CHR     * ptarget = ChrList + loc_aitarget;
+  CHR_REF   loc_aitarget = chr_get_aitarget( gs->ChrList, MAXCHR, gs->ChrList + ichr );
+  Chr     * ptarget = gs->ChrList + loc_aitarget;
 
-  CHR_REF   loc_aiowner  = chr_get_aiowner( ichr );
-  CHR     * powner       = ChrList + loc_aiowner;
+  CHR_REF   loc_aiowner  = chr_get_aiowner( gs->ChrList, MAXCHR, gs->ChrList + ichr );
+  Chr     * powner       = gs->ChrList + loc_aiowner;
 
-  CHR_REF   loc_leader   = team_get_leader( pchr->team );
-  CHR     * pleader      = ChrList + loc_leader;
+  CHR_REF   loc_leader   = team_get_leader( gs, pchr->team );
+  Chr     * pleader      = gs->ChrList + loc_leader;
+
+  // for debugging
+  char    * scriptname = slist->fname[pchr->aistate.type];
+  Uint32    offset     = pstate->offset;
 
   // Get the operation code
   if ( IS_CONSTANT(value) )
@@ -4394,27 +4469,27 @@ void run_operand( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
     switch ( GET_VAR_BITS(value) )
     {
       case VAR_TMP_X:
-        iTmp = pg_scr->tmpx;
+        iTmp = pstate->tmpx;
         break;
 
       case VAR_TMP_Y:
-        iTmp = pg_scr->tmpy;
+        iTmp = pstate->tmpy;
         break;
 
       case VAR_TMP_DISTANCE:
-        iTmp = pg_scr->tmpdistance;
+        iTmp = pstate->tmpdistance;
         break;
 
       case VAR_TMP_TURN:
-        iTmp = pg_scr->tmpturn;
+        iTmp = pstate->tmpturn;
         break;
 
       case VAR_TMP_ARGUMENT:
-        iTmp = pg_scr->tmpargument;
+        iTmp = pstate->tmpargument;
         break;
 
       case VAR_RAND:
-        iTmp = RANDIE;
+        iTmp = RANDIE(gs);
         break;
 
       case VAR_SELF_X:
@@ -4438,7 +4513,7 @@ void run_operand( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
         break;
 
       case VAR_SELF_MORALE:
-        iTmp = TeamList[pchr->baseteam].morale;
+        iTmp = gs->TeamList[pchr->baseteam].morale;
         break;
 
       case VAR_SELF_LIFE:
@@ -4465,26 +4540,26 @@ void run_operand( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
 
       case VAR_LEADER_X:
         iTmp = pchr->pos.x;
-        if ( VALID_CHR( loc_leader ) )
+        if ( VALID_CHR( gs->ChrList, loc_leader ) )
           iTmp = pleader->pos.x;
         break;
 
       case VAR_LEADER_Y:
         iTmp = pchr->pos.y;
-        if ( VALID_CHR( loc_leader ) )
+        if ( VALID_CHR( gs->ChrList, loc_leader ) )
           iTmp = pleader->pos.y;
         break;
 
       case VAR_LEADER_DISTANCE:
         iTmp = 10000;
-        if ( VALID_CHR( loc_leader ) )
+        if ( VALID_CHR( gs->ChrList, loc_leader ) )
           iTmp = ABS(( int )( pleader->pos.x - pchr->pos.x ) ) +
                  ABS(( int )( pleader->pos.y - pchr->pos.y ) );
         break;
 
       case VAR_LEADER_TURN:
         iTmp = pchr->turn_lr;
-        if ( VALID_CHR( loc_leader ) )
+        if ( VALID_CHR( gs->ChrList, loc_leader ) )
           iTmp = pleader->turn_lr;
         break;
 
@@ -4518,11 +4593,11 @@ void run_operand( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
         break;
 
       case VAR_SELF_ID:
-        iTmp = CapList[pchr->model].idsz[IDSZ_TYPE];
+        iTmp = gs->CapList[pchr->model].idsz[IDSZ_TYPE];
         break;
 
       case VAR_SELF_HATEID:
-        iTmp = CapList[pchr->model].idsz[IDSZ_HATE];
+        iTmp = gs->CapList[pchr->model].idsz[IDSZ_HATE];
         break;
 
       case VAR_SELF_MANA:
@@ -4556,7 +4631,7 @@ void run_operand( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
         break;
 
       case VAR_TARGET_LEVEL:
-        iTmp = calc_chr_level( loc_aitarget );
+        iTmp = calc_chr_level( gs, loc_aitarget );
         break;
 
       case VAR_TARGET_SPEEDX:
@@ -4608,7 +4683,7 @@ void run_operand( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
         break;
 
       case VAR_SELF_ATTACHED:
-        iTmp = number_of_attached_particles( ichr );
+        iTmp = number_of_attached_particles( gs, ichr );
         break;
 
       case VAR_SWINGTURN:
@@ -4616,7 +4691,7 @@ void run_operand( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
         break;
 
       case VAR_XYDISTANCE:
-        iTmp = sqrt( pg_scr->tmpx * pg_scr->tmpx + pg_scr->tmpy * pg_scr->tmpy );
+        iTmp = sqrt( pstate->tmpx * pstate->tmpx + pstate->tmpy * pstate->tmpy );
         break;
 
       case VAR_SELF_Z:
@@ -4658,7 +4733,7 @@ void run_operand( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
         break;
 
       case VAR_XYTURNTO:
-        iTmp = vec_to_turn( pg_scr->tmpx - pchr->pos.x, pg_scr->tmpy - pchr->pos.y );
+        iTmp = vec_to_turn( pstate->tmpx - pchr->pos.x, pstate->tmpy - pchr->pos.y );
         break;
 
       case VAR_SELF_MONEY:
@@ -4690,7 +4765,7 @@ void run_operand( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
         break;
 
       case VAR_SELF_LEVEL:
-        iTmp = calc_chr_level( ichr );
+        iTmp = calc_chr_level( gs, ichr );
         break;
 
       case VAR_SPAWN_DISTANCE:
@@ -4699,6 +4774,10 @@ void run_operand( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
                     ( pchr->stt.z - pchr->pos.z ) * ( pchr->stt.z - pchr->pos.z ) );
         break;
 
+      default:
+        log_warning("run_operand() - \"%s\"(0x%x) unknown variable", scriptname, pstate->offset);
+        return rv_error;
+        break;
     }
   }
 
@@ -4707,151 +4786,175 @@ void run_operand( SCRIPT_GLOBAL_VALUES * pg_scr, Uint32 value, CHR_REF ichr )
   switch ( GET_OP_BITS(value) )
   {
     case OP_ADD:
-      pg_scr->operationsum += iTmp;
+      pstate->operationsum += iTmp;
       break;
 
     case OP_SUB:
-      pg_scr->operationsum -= iTmp;
+      pstate->operationsum -= iTmp;
       break;
 
     case OP_AND:
-      pg_scr->operationsum &= iTmp;
+      pstate->operationsum &= iTmp;
       break;
 
     case OP_SHR:
-      pg_scr->operationsum >>= iTmp;
+      pstate->operationsum >>= iTmp;
       break;
 
     case OP_SHL:
-      pg_scr->operationsum <<= iTmp;
+      pstate->operationsum <<= iTmp;
       break;
 
     case OP_MUL:
-      pg_scr->operationsum *= iTmp;
+      pstate->operationsum *= iTmp;
       break;
 
     case OP_DIV:
-      if ( iTmp != 0 )
+      if ( iTmp == 0 )
       {
-        pg_scr->operationsum /= iTmp;
+        log_warning("run_operand() - \"%s\"(0x%x) divide by zero", scriptname, pstate->offset);
+      }
+      else
+      {
+        pstate->operationsum /= iTmp;
       }
       break;
 
     case OP_MOD:
-      if ( iTmp != 0 )
+      if ( iTmp == 0 )
       {
-        pg_scr->operationsum %= iTmp;
+        log_warning("run_operand() - \"%s\"(0x%x) modulus using zero", scriptname, pstate->offset);
+      }
+      else
+      {
+        pstate->operationsum %= iTmp;
       }
       break;
 
+    default:
+      log_warning("run_operand() - \"%s\"(0x%x) unknown operation", scriptname, pstate->offset);
+      return rv_error;
+      break;
   }
+
+  return retval;
 }
 
 //--------------------------------------------------------------------------------------------
-void let_character_think( CHR_REF ichr, float dUpdate )
+retval_t let_character_think( GameState * gs, CHR_REF ichr, float dUpdate )
 {
   // ZZ> This function lets one ichr do AI stuff
 
-  SCRIPT_GLOBAL_VALUES g_scr;
+  Uint16   type_stt;
+  Uint32   offset_end, offset_last;
+  Uint32   opcode;
+  Uint32   iTmp;
+  bool_t   functionreturn;
+  int      operands;
+  retval_t retval = rv_succeed;
 
-  Uint16 aicode;
-  Uint32 index;
-  Uint32 value;
-  Uint32 iTmp;
-  bool_t functionreturn;
-  int operands;
-
-  CHR      * pchr   = ChrList + ichr;
-  AI_STATE * pstate = &(pchr->aistate);
-
-  memset(&g_scr, 0, sizeof(SCRIPT_GLOBAL_VALUES));
+  ScriptInfo * slist  = GameState_getScriptInfo(gs); 
+  Chr        * pchr   = gs->ChrList + ichr;
+  AI_STATE   * pstate = &(pchr->aistate);
 
   // Make life easier
-  g_scr.oldtarget = chr_get_aitarget( ichr );
-  aicode = pstate->type;
+  pstate->oldtarget = chr_get_aitarget( gs->ChrList, MAXCHR, gs->ChrList + ichr );
+  type_stt = pstate->type;
 
   // Figure out alerts that weren't already set
-  set_alerts( ichr, dUpdate );
+  set_alerts( gs, ichr, dUpdate );
 
   // Clear the button latches
-  if ( !pchr->isplayer )
+  if ( !chr_is_player(gs, ichr) )
   {
     pstate->latch.b = 0;
   }
 
-
   // Reset the target if it can't be seen
-  if ( !pchr->canseeinvisible && pchr->alive )
+  if ( !pchr->canseeinvisible && pchr->alive && ichr != pstate->oldtarget )
   {
-    if ( chr_is_invisible( ichr ) )
+    if ( chr_is_invisible( gs->ChrList, MAXCHR, ichr ) )
     {
       pstate->target = ichr;
     }
   }
 
   // Run the AI Script
-  index = scr_intern.script_address[aicode];
+  pstate->lastindent   = 0;
+  pstate->operationsum = 0;
+  pstate->offset       = slist->offset_stt[type_stt];
+  offset_last          = pstate->offset;
+  offset_end           = slist->offset_end[type_stt];
 
-  value = scr_intern.compiled[index];
-  while ( GET_FUNCTION_BITS( value ) != END_FUNCTION )  // End Function
+  while ( pstate->offset < offset_end )  // End Function
   {
-    value = scr_intern.compiled[index];
+    offset_last = pstate->offset;
+    opcode = slist->buffer[pstate->offset];
+    if( IS_END( opcode ) ) break;
 
     // Was it a function
-    if ( IS_FUNCTION( value ) )
+    if ( IS_FUNCTION( opcode ) )
     {
       // Run the function
-      functionreturn = run_function( &g_scr, value, ichr );
+      functionreturn = run_function( gs, opcode, ichr );
 
       // Get the jump code
-      index++;
-      iTmp = scr_intern.compiled[index];
+      pstate->offset++;
+      iTmp = slist->buffer[pstate->offset];
       if ( functionreturn )
       {
         // Proceed to the next function
-        index++;
+        pstate->offset++;
       }
       else
       {
         // Jump to where the jump code says to go
-        index = iTmp;
+        pstate->offset = iTmp;
       }
     }
     else
     {
       // Get the number of operands
-      index++;
-      operands = scr_intern.compiled[index];
+      pstate->offset++;
+      operands = slist->buffer[pstate->offset];
 
       // Now run the operation
-      g_scr.operationsum = 0;
-      index++;
+      pstate->operationsum = 0;
+      pstate->offset++;
       while ( operands > 0 )
       {
-        iTmp = scr_intern.compiled[index];
-        run_operand( &g_scr, iTmp, ichr );  // This sets g_scr.operationsum
+        iTmp = slist->buffer[pstate->offset];
+        if(rv_error == run_operand( gs, iTmp, ichr )) // This sets pstate->operationsum
+        {
+          return rv_error;  
+        };
         operands--;
-        index++;
+        pstate->offset++;
       }
 
       // Save the results in the register that called the arithmetic
-      set_operand( &g_scr, value );
+      if(rv_error == set_operand( pstate, slist, opcode ))
+      {
+        return rv_error;
+      };
     }
 
     // This is used by the Else function
-    g_scr.lastindent = value;
+    pstate->lastindent = GET_INDENT(opcode);
   }
 
-  // Set latches
-  if ( !pchr->isplayer && aicode != 0 )
-  {
-    CHR_REF rider = chr_get_holdingwhich( ichr, SLOT_SADDLE );
+  assert(pstate->offset <= offset_end);
 
-    if ( pchr->ismount && VALID_CHR( rider ) && !ChrList[rider].isitem )
+  // Set latches
+  if ( !chr_is_player(gs, ichr) && 0 != type_stt )
+  {
+    CHR_REF rider = chr_get_holdingwhich( gs->ChrList, MAXCHR, ichr, SLOT_SADDLE );
+
+    if ( pchr->ismount && VALID_CHR( gs->ChrList, rider ) && !gs->ChrList[rider].isitem )
     {
       // Mount
-      pstate->latch.x = ChrList[rider].aistate.latch.x;
-      pstate->latch.y = ChrList[rider].aistate.latch.y;
+      pstate->latch.x = gs->ChrList[rider].aistate.latch.x;
+      pstate->latch.y = gs->ChrList[rider].aistate.latch.y;
     }
     else
     {
@@ -4880,10 +4983,12 @@ void let_character_think( CHR_REF ichr, float dUpdate )
     pstate->alert |= ALERT_CHANGED;
     pstate->morphed = bfalse;
   };
+
+  return retval;
 }
 
 //--------------------------------------------------------------------------------------------
-void let_ai_think( float dUpdate )
+void let_ai_think( GameState * gs, float dUpdate )
 {
   // ZZ> This function lets every computer controlled character do AI stuff
 
@@ -4893,33 +4998,33 @@ void let_ai_think( float dUpdate )
   numblip = 0;
   for ( character = 0; character < MAXCHR; character++ )
   {
-    if ( !VALID_CHR( character ) ) continue;
+    if ( !VALID_CHR( gs->ChrList, character ) ) continue;
 
     allow_thinking = bfalse;
 
     // Cleaned up characters shouldn't be alert to anything else
-    if ( HAS_SOME_BITS( ChrList[character].aistate.alert, ALERT_CRUSHED ) )
+    if ( HAS_SOME_BITS( gs->ChrList[character].aistate.alert, ALERT_CRUSHED ) )
     {
-      ChrList[character].aistate.alert = ALERT_CRUSHED;
+      gs->ChrList[character].aistate.alert = ALERT_CRUSHED;
       allow_thinking = btrue;
     }
 
-    if ( HAS_SOME_BITS( ChrList[character].aistate.alert, ALERT_CLEANEDUP ) )
+    if ( HAS_SOME_BITS( gs->ChrList[character].aistate.alert, ALERT_CLEANEDUP ) )
     {
-      ChrList[character].aistate.alert = ALERT_CLEANEDUP;
+      gs->ChrList[character].aistate.alert = ALERT_CLEANEDUP;
       allow_thinking = btrue;
     };
 
     // Do not exclude items in packs. In NetHack, eggs can hatch while in your pack...
     // this may need to be handled differently. Currently dead things are thinking too much...
-    if ( !chr_in_pack( character ) || ChrList[character].alive )
+    if ( !chr_in_pack( gs->ChrList, MAXCHR, character ) || gs->ChrList[character].alive )
     {
       allow_thinking = btrue;
     }
 
     if ( allow_thinking )
     {
-      let_character_think( character, dUpdate );
+      let_character_think( gs, character, dUpdate );
     }
   }
 
@@ -4944,10 +5049,10 @@ void let_ai_think( float dUpdate )
 //  fileread = fs_fileOpen(PRI_NONE, NULL, loadname, "rb");
 //  if (NULL != fileread)
 //  {
-//    scr_intern.load_size = (int)fread(&cLoadBuffer[0], 1, MD2MAXLOADSIZE, fileread);
+//    _cstate.file_size = (int)fread(_cstate.file_buffer, 1, MD2MAXLOADSIZE, fileread);
 //    read = 0;
 //    read = ai_goto_colon(read);
-//    while (read != scr_intern.load_size)
+//    while (read != _cstate.file_size)
 //    {
 //      fget_code(read);
 //      read = ai_goto_colon(read);
@@ -4957,3 +5062,14 @@ void let_ai_think( float dUpdate )
 //  else log_warning("Could not load script AI functions or variables (%s)\n", loadname);
 //}
 
+
+
+bool_t scr_break_passage( GameState * gs, AI_STATE * pstate )
+{
+  return break_passage(gs, pstate->tmpargument, pstate->tmpturn, pstate->tmpdistance, pstate->tmpx, pstate->tmpy, &(pstate->tmpx), &(pstate->tmpy) );
+}
+
+bool_t scr_search_tile_in_passage( GameState * gs, AI_STATE * pstate )
+{
+  return search_tile_in_passage( gs, pstate->tmpargument, pstate->tmpdistance, pstate->tmpx, pstate->tmpy, &(pstate->tmpx), &(pstate->tmpy) );
+}

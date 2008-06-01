@@ -368,7 +368,7 @@ bool_t undo_pair( PAIR * ppair, RANGE * prange )
 }
 
 //--------------------------------------------------------------------------------------------
-void ftruthf( FILE* filewrite, char* text, Uint8 truth )
+void ftruthf( FILE* filewrite, char* text, bool_t truth )
 {
   // ZZ> This function kinda mimics fprintf for the output of
   //     btrue bfalse statements
@@ -894,12 +894,12 @@ const char * inherit_fname(char * szObjPath, char * szObject, char *szFname )
 {
   static STRING ret_fname;
   FILE * loc_pfile;
-  STRING loc_fname, szTemp, inherit_line;
+  STRING loc_fname, inherit_line;
   bool_t found;
 
   STRING ifile;
   STRING itype;
-  Uint32 icrc;
+  Uint32 icrc = (~(Uint32)0);
 
   FS_FIND_INFO fs_finfo;
 
@@ -1038,4 +1038,157 @@ const char * inherit_fname(char * szObjPath, char * szObject, char *szFname )
 
   return ret_fname;
 
+}
+
+//--------------------------------------------------------------------------------------------
+retval_t util_calculateCRC(char * filename, Uint32 seed, Uint32 * pCRC)
+{
+  Uint32 tmpint, tmpCRC;
+  FILE * pfile = NULL;
+
+  if( NULL==pCRC )
+  {
+    log_info("util_calculateCRC() - Called with invalid parameters.\n");
+    return rv_error;
+  }
+
+  if(NULL==filename || '\0' == filename[0])
+  {
+    log_info("util_calculateCRC() - Called null filename.\n");
+    return rv_error;
+  }
+
+  pfile = fs_fileOpen(PRI_WARN, "util_calculateCRC()", filename, "rb");
+  if(NULL==pfile)
+  {
+    return rv_fail;
+  }
+
+  log_info("NET INFO: util_calculateCRC() - \"%s\" has CRC... ", filename);
+
+  tmpCRC = seed;
+  while(!feof(pfile))
+  {
+    if( 0!= fread(&tmpint, sizeof(Uint32), 1, pfile) )
+    {
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+      tmpint = SDL_Swap32(tmpint);
+#endif
+      tmpCRC = ((tmpCRC + tmpint) * 0x0019660DL) + 0x3C6EF35FL;
+    };
+  }
+  fs_fileClose(pfile);
+
+  log_info("0x%08x\n", tmpCRC);
+
+  *pCRC = tmpCRC;
+
+  return rv_succeed;
+}
+
+//--------------------------------------------------------------------------------------------
+Uint32 generate_unsigned( PAIR * ppair )
+{
+  // ZZ> This function generates a random number
+
+  Uint32 itmp = 0;
+
+  if ( NULL != ppair )
+  {
+    itmp = ppair->ibase;
+
+    if ( ppair->irand > 1 )
+    {
+      itmp += rand() % ppair->irand;
+    }
+  }
+  else
+  {
+    itmp = rand();
+  }
+
+  return itmp;
+}
+
+//--------------------------------------------------------------------------------------------
+Sint32 generate_signed( PAIR * ppair )
+{
+  // ZZ> This function generates a random number
+
+  Sint32 itmp = 0;
+
+  if ( NULL != ppair )
+  {
+    itmp = ppair->ibase;
+
+    if ( ppair->irand > 1 )
+    {
+      itmp += rand() % ppair->irand;
+      itmp -= ppair->irand >> 1;
+    }
+  }
+  else
+  {
+    itmp = rand();
+  }
+
+  return itmp;
+}
+
+
+//--------------------------------------------------------------------------------------------
+Sint32 generate_dither( PAIR * ppair, Uint16 strength_fp8 )
+{
+  // ZZ> This function generates a random number
+
+  Sint32 itmp = 0;
+
+  if ( NULL != ppair && ppair->irand > 1 )
+  {
+    itmp = rand();
+    itmp %= ppair->irand;
+    itmp -= ppair->irand >> 1;
+
+    if ( strength_fp8 != INT_TO_FP8( 1 ) )
+    {
+      itmp *= strength_fp8;
+      itmp = FP8_TO_FLOAT( itmp );
+    };
+
+  };
+
+
+  return itmp;
+
+}
+
+
+//--------------------------------------------------------------------------------------------
+void make_randie()
+{
+  // ZZ> This function makes the random number table
+
+  int tnc, cnt;
+
+  // Fill in the basic values
+  cnt = 0;
+  while ( cnt < MAXRAND )
+  {
+    randie[cnt] = rand() << 1;
+    cnt++;
+  }
+
+
+  // Keep adjusting those values
+  tnc = 0;
+  while ( tnc < 20 )
+  {
+    cnt = 0;
+    while ( cnt < MAXRAND )
+    {
+      randie[cnt] += ( Uint16 ) rand();
+      cnt++;
+    }
+    tnc++;
+  }
 }
