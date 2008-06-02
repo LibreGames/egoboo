@@ -399,7 +399,7 @@ void input_read()
 //--------------------------------------------------------------------------------------------
 Player * Player_new(Player *ppla)    
 { 
-  fprintf( stdout, "Player_new()\n");
+  //fprintf( stdout, "Player_new()\n");
 
   if(NULL==ppla) return ppla; 
 

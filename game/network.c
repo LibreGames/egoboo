@@ -715,7 +715,7 @@ bool_t NetState_destroy(NetState ** pns)
 //--------------------------------------------------------------------------------------------
 NetState * NetState_new(NetState * ns, GameState * gs)
 {
-  fprintf( stdout, "NetState_new()\n");
+  //fprintf( stdout, "NetState_new()\n");
 
   if(NULL == ns) return ns;
   if(ns->initialized) NetState_delete(ns);
@@ -1727,7 +1727,7 @@ NetRequest * NetRequest_new(NetRequest * pr)
 {
   // do some simple initialization
 
-  fprintf( stdout, "NetRequest_new()\n");
+  //fprintf( stdout, "NetRequest_new()\n");
 
   if( NULL == pr ) return NULL;
 
@@ -2737,7 +2737,7 @@ bool_t NetHost_destroy(NetHost ** pnh)
 //--------------------------------------------------------------------------------------------
 static NetHost * NetHost_new(NetHost * nh, SDL_Callback_Ptr pcall)
 {
-  fprintf( stdout, "NetHost_new()\n");
+  //fprintf( stdout, "NetHost_new()\n");
 
   if(NULL == nh) return nh;
 

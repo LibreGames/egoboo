@@ -1142,7 +1142,7 @@ bool_t mad_generate_bbox_tree(int max_level, Mad * pmad)
 //--------------------------------------------------------------------------------------------
 Mad *  Mad_new(Mad * pmad )
 {
-  fprintf( stdout, "Mad_new()\n");
+  //fprintf( stdout, "Mad_new()\n");
 
   if(NULL == pmad) return pmad;
 

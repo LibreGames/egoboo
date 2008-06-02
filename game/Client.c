@@ -205,7 +205,7 @@ ClientState * ClientState_new(ClientState * cs, NetState * ns)
 {
   int cnt;
 
-  fprintf( stdout, "ClientState_new()\n");
+  //fprintf( stdout, "ClientState_new()\n");
 
   if(NULL == cs) return cs;
   if(cs->initialized) ClientState_delete(cs);
@@ -1449,7 +1449,7 @@ void StatList_move_to_top( Status lst[], size_t lst_size, CHR_REF character )
 //--------------------------------------------------------------------------------------------
 Status * Status_new( Status * pstat )
 {
-  fprintf( stdout, "Status_new()\n");
+  //fprintf( stdout, "Status_new()\n");
 
   if(NULL == pstat) return pstat;
 

@@ -156,14 +156,14 @@ void stdout_dump_matrix( matrix_4x4 a )
 
   for ( j = 0; j < 4; j++ )
   {
-    fprintf( stdout, "  " );
+    //fprintf( stdout, "  " );
     for ( i = 0; i < 4; i++ )
     {
-      fprintf( stdout, "%2.4f ", a.CNV( i, j ) );
+      //fprintf( stdout, "%2.4f ", a.CNV( i, j ) );
     };
-    fprintf( stdout, "\n" );
+    //fprintf( stdout, "\n" );
   }
-  fprintf( stdout, "\n" );
+  //fprintf( stdout, "\n" );
 }
 
 

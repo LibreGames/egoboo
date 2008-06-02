@@ -261,7 +261,7 @@ void issue_clean( GameState * gs, CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 TeamInfo * TeamInfo_new(TeamInfo *pteam) 
 { 
-  fprintf( stdout, "TeamInfo_new()\n");
+  //fprintf( stdout, "TeamInfo_new()\n");
 
   if(NULL==pteam) return pteam; 
   

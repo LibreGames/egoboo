@@ -266,7 +266,7 @@ SoundState * SoundState_new(SoundState * ss, ConfigData * cd)
 {
   // BB > do a raw initialization of the sound state
 
-  fprintf( stdout, "SoundState_new()\n");
+  //fprintf( stdout, "SoundState_new()\n");
 
   if(NULL == ss) return NULL;
 

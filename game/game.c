@@ -4001,7 +4001,7 @@ void update_looped_sounds( GameState * gs )
 //--------------------------------------------------------------------------------------------
 SearchInfo * SearchInfo_new(SearchInfo * psearch)
 {
-  fprintf( stdout, "SearchInfo_new()\n");
+  //fprintf( stdout, "SearchInfo_new()\n");
 
   if(NULL == psearch) return NULL;
 
@@ -4626,7 +4626,7 @@ MachineState * Get_MachineState()
 //--------------------------------------------------------------------------------------------
 MachineState * MachineState_new( MachineState * ms )
 {
-  fprintf( stdout, "MachineState_new()\n");
+  //fprintf( stdout, "MachineState_new()\n");
 
   if(NULL == ms || ms->initialized) return ms;
 
@@ -4912,6 +4912,7 @@ void despawn_particles(GameState * gs)
       spawn_one_particle( gs, 1.0f, gs->PrtList[iprt].pos,
                           facing, gs->PrtList[iprt].model, gs->PipList[pip].endspawnpip,
                           MAXCHR, GRIP_LAST, gs->PrtList[iprt].team, prt_owner, tnc, prt_target );
+
       facing += gs->PipList[pip].endspawnfacingadd;
     }
 
@@ -4992,7 +4993,7 @@ bool_t prt_search_block( GameState * gs, SearchInfo * psearch, int block_x, int 
 //--------------------------------------------------------------------------------------------
 GSStack * GSStack_new(GSStack * stk)
 {
-  fprintf( stdout, "GSStack_new()\n");
+  //fprintf( stdout, "GSStack_new()\n");
 
   if(NULL == stk || stk->initialized) return stk;
 
@@ -5935,7 +5936,7 @@ bool_t PipList_renew( GameState * gs )
 //--------------------------------------------------------------------------------------------
 ProcState * ProcState_new(ProcState * ps)
 {
-  fprintf( stdout, "ProcState_new()\n");
+  //fprintf( stdout, "ProcState_new()\n");
 
   if(NULL == ps || ps->initialized) return ps;
 
@@ -6028,7 +6029,7 @@ bool_t GuiState_shutDown()
 //--------------------------------------------------------------------------------------------
 GuiState * GuiState_new( GuiState * gui )
 {
-  fprintf( stdout, "GuiState_new()\n");
+  //fprintf( stdout, "GuiState_new()\n");
 
   if(NULL == gui || gui->initialized) return gui;
 

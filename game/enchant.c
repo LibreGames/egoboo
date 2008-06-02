@@ -123,6 +123,7 @@ void spawn_poof( GameState * gs, CHR_REF character, Uint16 profile )
     spawn_one_particle( gs, 1.0f, chrlst[character].pos_old,
                         sTmp, profile, caplst[profile].gopoofprttype,
                         MAXCHR, GRIP_LAST, chrlst[character].team, origin, iTmp, MAXCHR );
+
     sTmp += caplst[profile].gopoofprtfacingadd;
     iTmp++;
   }
@@ -604,7 +605,7 @@ bool_t cost_mana( GameState * gs, CHR_REF chr_ref, int amount, Uint16 killer )
 //--------------------------------------------------------------------------------------------
 Enc * Enc_new(Enc *penc) 
 { 
-  fprintf( stdout, "Enc_new()\n");
+  //fprintf( stdout, "Enc_new()\n");
 
   if(NULL==penc) return penc; 
 
@@ -1139,7 +1140,7 @@ void remove_enchant_value( GameState * gs, Uint16 enchantindex, Uint8 valueindex
 //--------------------------------------------------------------------------------------------
 Eve * Eve_new(Eve *peve) 
 { 
-  fprintf( stdout, "Eve_new()\n");
+  //fprintf( stdout, "Eve_new()\n");
 
   if(NULL==peve) return peve; 
 

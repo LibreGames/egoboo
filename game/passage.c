@@ -552,7 +552,7 @@ void PassList_load( GameState * gs, char *modname )
 //--------------------------------------------------------------------------------------------
 Passage * Passage_new(Passage *ppass) 
 { 
-  fprintf( stdout, "Passage_new()\n");
+  //fprintf( stdout, "Passage_new()\n");
 
   if(NULL==ppass) return ppass; 
 
@@ -588,7 +588,7 @@ Passage * Passage_renew(Passage *ppass)
 //--------------------------------------------------------------------------------------------
 Shop * Shop_new(Shop *pshop) 
 { 
-  fprintf( stdout, "Shop_new()\n");
+  //fprintf( stdout, "Shop_new()\n");
 
   if(NULL==pshop) return pshop; 
 

@@ -254,7 +254,7 @@ PRT_REF spawn_one_particle( GameState * gs, float intensity, vect3 pos,
 
 
   iprt = PrtList_get_free( gs, ppip->force );
-  if ( MAXPRT != iprt )
+  if ( MAXPRT == iprt )
   {
     log_debug( "WARN: spawn_one_particle() - failed to spawn : PrtList_get_free() returned invalid value %d\n", iprt );
     return MAXPRT;
@@ -265,7 +265,7 @@ PRT_REF spawn_one_particle( GameState * gs, float intensity, vect3 pos,
   if ( VALID_CHR( chrlst,  characterattach ) ) weight = MAX( weight, chrlst[characterattach].weight );
   prtlst[iprt].weight = weight;
 
-  //log_debug( "spawn_one_particle() - local pip == %d, global pip == %d, part == %d\n", local_pip, glob_pip, iprt);
+  log_debug( "spawn_one_particle() - local pip == %d, global pip == %d, part == %d\n", local_pip, glob_pip, iprt);
 
   // "simplify" the notation
   pprt = prtlst + iprt;
@@ -613,8 +613,7 @@ void reaffirm_attached_particles( GameState * gs, CHR_REF character )
   Prt  * prtlst      = gs->PrtList;
   size_t prtlst_size = MAXPRT;
 
-  Chr  * chrlst      = gs->ChrList;
-  size_t chrlst_size = MAXCHR;
+  Chr  * pchr        = gs->ChrList + character;
 
   Cap  * caplst      = gs->CapList;
   size_t caplst_size = MAXCAP;
@@ -623,9 +622,9 @@ void reaffirm_attached_particles( GameState * gs, CHR_REF character )
   PRT_REF particle;
 
   numberattached = number_of_attached_particles( gs, character );
-  while ( numberattached < caplst[chrlst[character].model].attachedprtamount )
+  while ( numberattached < caplst[pchr->model].attachedprtamount )
   {
-    particle = spawn_one_particle( gs, 1.0f, chrlst[character].pos, 0, chrlst[character].model, caplst[chrlst[character].model].attachedprttype, character, GRIP_LAST + numberattached, chrlst[character].team, character, numberattached, MAXCHR );
+    particle = spawn_one_particle( gs, 1.0f, pchr->pos, 0, pchr->model, caplst[pchr->model].attachedprttype, character, GRIP_LAST + numberattached, pchr->team, character, numberattached, MAXCHR );
     if ( VALID_PRT(prtlst, particle) )
     {
       attach_particle_to_character( gs, particle, character, prtlst[particle].vertoffset );
@@ -634,7 +633,7 @@ void reaffirm_attached_particles( GameState * gs, CHR_REF character )
   }
 
   // Set the alert for reaffirmation ( for exploding barrels with fire )
-  chrlst[character].aistate.alert |= ALERT_REAFFIRMED;
+  pchr->aistate.alert |= ALERT_REAFFIRMED;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1027,12 +1026,11 @@ void spawn_bump_particles( GameState * gs, CHR_REF character, PRT_REF particle )
         else
         {
           amount = ( amount * vertices ) >> 5;  // Correct amount for size of character
-          cnt = 0;
-          while ( cnt < amount )
+          
+          for ( cnt = 0; cnt < amount; cnt++ )
           {
             spawn_one_particle( gs, 1.0f, chrlst[character].pos, 0, prtlst[particle].model, piplst[pip].bumpspawnpip,
                                 character, rand() % vertices, prtlst[particle].team, prt_get_owner( gs, particle ), cnt, character );
-            cnt++;
           }
         }
       }
@@ -1425,7 +1423,7 @@ bool_t prt_calculate_bumpers(GameState * gs, PRT_REF iprt)
 //--------------------------------------------------------------------------------------------
 Prt * Prt_new(Prt *pprt) 
 { 
-  fprintf( stdout, "Prt_new()\n");
+  //fprintf( stdout, "Prt_new()\n");
 
   if(NULL==pprt) return pprt; 
   
@@ -1457,7 +1455,7 @@ Prt * Prt_renew(Prt *pprt)
 //--------------------------------------------------------------------------------------------
 Pip * Pip_new(Pip * ppip)
 {
-  fprintf( stdout, "Pip_new()\n");
+  //fprintf( stdout, "Pip_new()\n");
 
   if(NULL == ppip) return ppip;
 

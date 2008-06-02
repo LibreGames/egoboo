@@ -298,7 +298,7 @@ void MD2_GLCommand_destruct(MD2_GLCommand * m)
 MD2_GLCommand * MD2_GLCommand_new()
 {
   MD2_GLCommand * m;
-  fprintf( stdout, "MD2_GLCommand_new()\n");
+  //fprintf( stdout, "MD2_GLCommand_new()\n");
 
   m = (MD2_GLCommand*)calloc(1, sizeof(MD2_GLCommand));
   MD2_GLCommand_construct(m);
@@ -381,7 +381,7 @@ MD2_Model * md2_new()
 {
   MD2_Model * m;
 
-  fprintf( stdout, "MD2_GLCommand_new()\n");
+  //fprintf( stdout, "MD2_GLCommand_new()\n");
   m = (MD2_Model*)calloc( 1, sizeof(MD2_Model) );
   md2_construct(m);
 

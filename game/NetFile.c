@@ -240,7 +240,7 @@ bool_t NFileState_destroy(NFileState ** pnfs)
 //--------------------------------------------------------------------------------------------
 NFileState * NFileState_new(NFileState * nfs, NetState * ns)
 {
-  fprintf( stdout, "NFileState_new()\n");
+  //fprintf( stdout, "NFileState_new()\n");
 
   if(NULL == nfs || nfs->initialized) return nfs;
 
@@ -381,7 +381,7 @@ bool_t nfile_SendState_destroy(nfile_SendState ** snd)
 //--------------------------------------------------------------------------------------------
 nfile_SendState * nfile_SendState_new(nfile_SendState * snd)
 {
-  fprintf( stdout, "nfile_SendState_new()\n");
+  //fprintf( stdout, "nfile_SendState_new()\n");
 
   if(NULL == snd || snd->initialized) return snd;
 
@@ -505,7 +505,7 @@ bool_t nfile_ReceiveState_destroy(nfile_ReceiveState ** rec)
 //--------------------------------------------------------------------------------------------
 nfile_ReceiveState * nfile_ReceiveState_new(nfile_ReceiveState * rec)
 {
-  fprintf( stdout, "nfile_ReceiveState_new()\n");
+  //fprintf( stdout, "nfile_ReceiveState_new()\n");
 
   if(NULL == rec || rec->initialized) return rec;
 
@@ -1565,7 +1565,7 @@ retval_t nfhost_checkCRC(ENetPeer * peer, const char * source, Uint32 seed, Uint
 //------------------------------------------------------------------------------
 nfile_SendQueue * nfile_SendQueue_new(nfile_SendQueue * q)
 {
-  fprintf( stdout, "nfile_SendQueue_new()\n");
+  //fprintf( stdout, "nfile_SendQueue_new()\n");
 
   if(NULL == q || q->initialized) return q;
 
@@ -1602,7 +1602,7 @@ nfile_SendQueue * nfile_SendQueue_renew(nfile_SendQueue * q)
 //------------------------------------------------------------------------------
 nfile_ReceiveQueue * nfile_ReceiveQueue_new(nfile_ReceiveQueue * q)
 {
-  fprintf( stdout, "nfile_ReceiveQueue_new()\n");
+  //fprintf( stdout, "nfile_ReceiveQueue_new()\n");
 
   if(NULL == q || q->initialized) return q;
 

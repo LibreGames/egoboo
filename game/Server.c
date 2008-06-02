@@ -198,7 +198,7 @@ ServerState * ServerState_new(ServerState * ss, NetState * ns)
 {
   int cnt;
 
-  fprintf( stdout, "ServerState_new()\n");
+  //fprintf( stdout, "ServerState_new()\n");
 
   if(NULL == ss) return ss;
   if(ss->initialized) ServerState_delete(ss); 

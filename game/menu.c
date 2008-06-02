@@ -2595,8 +2595,8 @@ int mnu_RunIngame( MenuProc * mproc, GameState * gs )
   deltaTime = 0;
   if(!proc->Paused)
   {
-    deltaTime = frameTicks / UPDATESKIP;
-    mproc->dUpdate += deltaTime;
+    deltaTime = frameDuration;
+    mproc->dUpdate += frameTicks / UPDATESKIP;
   }
 
   switch ( mproc->whichMenu )
@@ -4311,7 +4311,7 @@ int mnu_doIngameInventory( GameState * gs, float deltaTime )
 
 MenuProc * MenuProc_new(MenuProc *ms)
 {
-  fprintf( stdout, "MenuProc_new()\n");
+  //fprintf( stdout, "MenuProc_new()\n");
 
   if(NULL == ms || ms->initialized) return ms;
 

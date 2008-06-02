@@ -481,7 +481,7 @@ void module_load_all_objects( GameState * gs, char * szModpath )
 //--------------------------------------------------------------------------------------------
 ModState * ModState_new(ModState * ms, MOD_INFO * mi, Uint32 seed)
 {
-  fprintf( stdout, "ModState_new()\n");
+  //fprintf( stdout, "ModState_new()\n");
 
   if(NULL == ms) return NULL;
 
@@ -730,7 +730,7 @@ MOD_SUMMARY * ModSummary_new( MOD_SUMMARY * ms )
 {
   int i;
 
-  fprintf( stdout, "ModSummary_new()\n");
+  //fprintf( stdout, "ModSummary_new()\n");
 
   if(NULL == ms) return ms;
 
@@ -768,7 +768,7 @@ MOD_INFO * ModInfo_new( MOD_INFO * pmi )
 {
   if(NULL == pmi) return pmi;
 
-  fprintf( stdout, "ModInfo_new()\n");
+  //fprintf( stdout, "ModInfo_new()\n");
 
   memset(pmi, 0, sizeof(MOD_INFO));
   pmi->tx_title_idx = MAXMODULE;

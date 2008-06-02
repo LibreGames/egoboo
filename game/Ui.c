@@ -66,7 +66,7 @@ static UiContext ui_context;
 
 static UiContext * UiContext_new(UiContext *pui)
 {
-  fprintf( stdout, "UiContext_new()\n");
+  //fprintf( stdout, "UiContext_new()\n");
 
   if(NULL == pui) return pui;
 

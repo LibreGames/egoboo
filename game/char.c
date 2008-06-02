@@ -545,7 +545,7 @@ Chr * Chr_new(Chr * pchr)
 {
   AI_STATE * pstate;
 
-  fprintf( stdout, "Chr_new()\n");
+  //fprintf( stdout, "Chr_new()\n");
 
   if(NULL == pchr || pchr->on) return pchr;
 
@@ -7911,13 +7911,10 @@ CHR_REF spawn_one_character( GameState * gs, vect3 pos, int profile, TEAM team,
   }
 
   // Particle attachments
-  tnc = 0;
-  while ( tnc < pcap->attachedprtamount )
+  for ( tnc = 0; tnc < pcap->attachedprtamount; tnc++ )
   {
-    spawn_one_particle( gs, 1.0f, pchr->pos,
-                        0, pchr->model, pcap->attachedprttype,
+    spawn_one_particle( gs, 1.0f, pchr->pos, 0, pchr->model, pcap->attachedprttype,
                         ichr, GRIP_LAST + tnc, pchr->team, ichr, tnc, MAXCHR );
-    tnc++;
   }
   pchr->reaffirmdamagetype = pcap->attachedprtreaffirmdamagetype;
 
@@ -8125,7 +8122,7 @@ bool_t ai_state_advance_wp(AI_STATE * a, bool_t do_atlastwaypoint)
 //--------------------------------------------------------------------------------------------
 Cap * Cap_new(Cap *pcap) 
 { 
-  fprintf( stdout, "Cap_new()\n");
+  //fprintf( stdout, "Cap_new()\n");
 
   if(NULL==pcap) return pcap; 
   

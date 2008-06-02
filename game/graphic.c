@@ -4133,7 +4133,7 @@ bool_t gfx_set_mode(GraphicState * g)
 //--------------------------------------------------------------------------------------------
 GraphicState * GraphicState_new(GraphicState * g, ConfigData * cd)
 {
-  fprintf( stdout, "GraphicState_new()\n");
+  //fprintf( stdout, "GraphicState_new()\n");
 
   if(NULL == g || NULL == cd) return NULL;
 

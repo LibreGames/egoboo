@@ -39,7 +39,7 @@ typedef struct fs_find_info_lin_t
 //File Routines-----------------------------------------------------------
 FS_FIND_INFO * fs_find_info_new(FS_FIND_INFO * i)
 {
-  fprintf( stdout, "fs_find_info_new()\n");
+  //fprintf( stdout, "fs_find_info_new()\n");
 
   if(NULL==i) return i;
 

@@ -93,6 +93,11 @@ static void writeLogMessage( const char *prefix, const char *format, va_list arg
     fputs( _logBuffer, lfile );
     fflush( lfile );
   }
+
+#ifdef CONSOLE_MODE
+  fprintf( stdout, prefix );
+  vfprintf( stdout, format, args );
+#endif
 }
 
 static void writeDebugMessage( const char *prefix, const char *format, va_list args )
@@ -106,6 +111,11 @@ static void writeDebugMessage( const char *prefix, const char *format, va_list a
     fputs( _logBuffer, dfile );
     fflush( dfile );
   }
+
+#ifdef CONSOLE_MODE
+  fprintf( stdout, prefix );
+  vfprintf( stdout, format, args );
+#endif
 }
 
 
@@ -174,11 +184,6 @@ void log_debug( const char *format, ... )
   {
     va_start( args, format );
     writeDebugMessage( "DEBUG: ", format, args );
-
-#ifdef CONSOLE_MODE
-//    vfprintf( stdout, format, args );
-#endif
-
     va_end( args );
   }
 
