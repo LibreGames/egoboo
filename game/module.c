@@ -44,12 +44,8 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-GLtexture TxTitleImage[MAXMODULE];      /* title images */
-
-//--------------------------------------------------------------------------------------------
-
-static void   module_load_all_objects( GameState * gs, char * szModname );
-static bool_t module_load_all_waves( SoundState * ss, char *modname );
+static void   module_load_all_objects( CGame * gs, char * szModname );
+static bool_t module_load_all_waves( CGame * gs, char *modname );
 
 //--------------------------------------------------------------------------------------------
 void release_bumplist(void)
@@ -58,7 +54,7 @@ void release_bumplist(void)
 };
 
 //--------------------------------------------------------------------------------------------
-void module_release( GameState * gs )
+void module_release( CGame * gs )
 {
   // ZZ> This function frees up memory used by the module
 
@@ -67,8 +63,8 @@ void module_release( GameState * gs )
 
   if(!ms->Active) return;
 
-  client_running = ClientState_Running(gs->al_cs);
-  server_running = sv_Running(gs->al_ss);
+  client_running = CClient_Running(gs->cl);
+  server_running = sv_Running(gs->sv);
   local_running  = !client_running && !server_running;
 
   // if the client has shut down, release all client dependent resources
@@ -205,7 +201,7 @@ int module_find( char *smallname, MOD_INFO * mi_ary, size_t mi_size )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t module_load( GameState * gs, char *smallname )
+bool_t module_load( CGame * gs, char *smallname )
 {
   // ZZ> This function loads a module
 
@@ -230,7 +226,7 @@ bool_t module_load( GameState * gs, char *smallname )
 
   load_one_icon( CData.basicdat_dir, NULL, CData.nullicon_bitmap );
 
-  module_load_all_waves( &sndState, szModpath );
+  module_load_all_waves( gs, szModpath );
 
   read_wawalite( gs, szModpath );
 
@@ -239,10 +235,10 @@ bool_t module_load( GameState * gs, char *smallname )
   load_basic_textures( gs, szModpath );
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s", szModpath, CData.gamedat_dir );
-  if ( MAXAI == load_ai_script( GameState_getScriptInfo(gs), CStringTmp1, NULL ) )
+  if ( MAXAI == load_ai_script( CGame_getScriptInfo(gs), CStringTmp1, NULL ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s", CData.basicdat_dir, CData.script_file );
-    load_ai_script( GameState_getScriptInfo(gs), CStringTmp1, NULL );
+    load_ai_script( CGame_getScriptInfo(gs), CStringTmp1, NULL );
   };
 
   release_all_models( gs );
@@ -407,7 +403,7 @@ bool_t module_read_summary( char *szLoadName, MOD_SUMMARY * ms )
 
 
 //--------------------------------------------------------------------------------------------
-void module_load_all_objects( GameState * gs, char * szModpath )
+void module_load_all_objects( CGame * gs, char * szModpath )
 {
   // ZZ> This function loads a module's objects
 
@@ -531,48 +527,50 @@ ModState * ModState_renew(ModState * ms, MOD_INFO * mi, Uint32 seed)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t module_load_all_waves( SoundState * ss, char *modname )
+bool_t module_load_all_waves( CGame * gs, char *modname )
 {
   // ZZ> This function loads the global waves used in a given modules
 
   STRING tmploadname, newloadname;
   Uint8 cnt;
 
-  if ( NULL == ss || NULL == modname || '\0' == modname[0] ) return bfalse;
+  SoundState * snd = snd_getState(gs->cd);
+
+  if ( NULL == snd || NULL == modname || '\0' == modname[0] ) return bfalse;
   
-  if( !ss->soundActive || !ss->mixer_loaded ) return bfalse;
+  if( !snd->soundActive || !snd->mixer_loaded ) return bfalse;
 
   // load in the sounds local to this module
-  snprintf( tmploadname, sizeof( tmploadname ), "%s%s" SLASH_STRING, modname, CData.gamedat_dir );
+  snprintf( tmploadname, sizeof( tmploadname ), "%s%s" SLASH_STRING, modname, gs->cd->gamedat_dir );
   for ( cnt = 0; cnt < MAXWAVE; cnt++ )
   {
     snprintf( newloadname, sizeof( newloadname ), "%ssound%d.wav", tmploadname, cnt );
-    ss->mc_list[cnt] = Mix_LoadWAV( newloadname );
+    snd->mc_list[cnt] = Mix_LoadWAV( newloadname );
   };
 
   // These sounds are always standard, but DO NOT override sounds that were loaded local to this module
-  if ( NULL == ss->mc_list[GSOUND_COINGET] )
+  if ( NULL == snd->mc_list[GSOUND_COINGET] )
   {
-    snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.globalparticles_dir, CData.coinget_sound );
-    ss->mc_list[GSOUND_COINGET] = Mix_LoadWAV( CStringTmp1 );
+    snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", gs->cd->basicdat_dir, gs->cd->globalparticles_dir, gs->cd->coinget_sound );
+    snd->mc_list[GSOUND_COINGET] = Mix_LoadWAV( CStringTmp1 );
   };
 
-  if ( NULL == ss->mc_list[GSOUND_DEFEND] )
+  if ( NULL == snd->mc_list[GSOUND_DEFEND] )
   {
-    snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.globalparticles_dir, CData.defend_sound );
-    ss->mc_list[GSOUND_DEFEND] = Mix_LoadWAV( CStringTmp1 );
+    snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", gs->cd->basicdat_dir, gs->cd->globalparticles_dir, gs->cd->defend_sound );
+    snd->mc_list[GSOUND_DEFEND] = Mix_LoadWAV( CStringTmp1 );
   }
 
-  if ( NULL == ss->mc_list[GSOUND_COINFALL] )
+  if ( NULL == snd->mc_list[GSOUND_COINFALL] )
   {
-    snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.globalparticles_dir, CData.coinfall_sound );
-    ss->mc_list[GSOUND_COINFALL] = Mix_LoadWAV( CStringTmp1 );
+    snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", gs->cd->basicdat_dir, gs->cd->globalparticles_dir, gs->cd->coinfall_sound );
+    snd->mc_list[GSOUND_COINFALL] = Mix_LoadWAV( CStringTmp1 );
   };
 
-  if ( NULL == ss->mc_list[GSOUND_LEVELUP] )
+  if ( NULL == snd->mc_list[GSOUND_LEVELUP] )
   {
-    snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.globalparticles_dir, CData.lvlup_sound );
-    ss->mc_list[GSOUND_LEVELUP] = Mix_LoadWAV( CStringTmp1 );
+    snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", gs->cd->basicdat_dir, gs->cd->globalparticles_dir, gs->cd->lvlup_sound );
+    snd->mc_list[GSOUND_LEVELUP] = Mix_LoadWAV( CStringTmp1 );
   };
 
 
@@ -597,7 +595,7 @@ bool_t module_load_all_waves( SoundState * ss, char *modname )
 }
 
 //---------------------------------------------------------------------------------------------
-void module_quit( GameState * gs )
+void module_quit( CGame * gs )
 {
   // ZZ> This function forces a return to the menu
 
@@ -606,8 +604,8 @@ void module_quit( GameState * gs )
 
   if(!ms->Active) return;
 
-  client_running = ClientState_Running(gs->al_cs);
-  server_running = sv_Running(gs->al_ss);
+  client_running = CClient_Running(gs->cl);
+  server_running = sv_Running(gs->sv);
   local_running  = !client_running && !server_running;
 
   // only export players if it makes sense
@@ -619,14 +617,14 @@ void module_quit( GameState * gs )
   if(local_running)
   {
     // reset both the client and server data
-    ClientState_renew(gs->al_cs);
-    ServerState_renew(gs->al_ss);
+    CClient_renew(gs->cl);
+    CServer_renew(gs->sv);
   }
-  else if(net_Started() && NULL != gs->al_cs)
+  else if(net_Started() && NULL != gs->cl)
   {
     // reset only the client data. let the server keep running.
-    ClientState_unjoinGame(gs->al_cs);
-    ClientState_shutDown(gs->al_cs);
+    CClient_unjoinGame(gs->cl);
+    CClient_shutDown(gs->cl);
   }
 
   // deallocate any memory
@@ -640,88 +638,6 @@ void module_quit( GameState * gs )
 
   // clear any pause state for the game
   gs->proc.Paused = bfalse;
-}
-
-
-
-//--------------------------------------------------------------------------------------------
-Uint32 module_load_one_image(int titleimage, char *szLoadName)
-{
-  // ZZ> This function loads a title in the specified image slot, forcing it into
-  //     system memory.  Returns btrue if it worked
-  Uint32 retval = MAXMODULE;
-
-  if(INVALID_TEXTURE != GLTexture_Load(GL_TEXTURE_2D,  TxTitleImage + titleimage, szLoadName, INVALID_KEY))
-  {
-    retval = titleimage;
-  }
-
-  return retval;
-}
-
-
-//--------------------------------------------------------------------------------------------
-size_t module_load_all_data(MOD_INFO * mi_ary, size_t mi_len)
-{
-  // ZZ> This function loads the title image for each module.  Modules without a
-  //     title are marked as invalid
-
-  char searchname[15];
-  STRING loadname;
-  const char *FileName;
-  FILE* filesave;
-  size_t modcount;
-
-  FS_FIND_INFO fs_finfo;
-
-  fs_find_info_new( &fs_finfo );
-
-  // Convert searchname
-  strcpy( searchname, "modules" SLASH_STRING "*.mod" );
-
-  // Log a directory list
-  filesave = fs_fileOpen( PRI_NONE, NULL, CData.modules_file, "w" );
-  if ( filesave != NULL )
-  {
-    fprintf( filesave, "This file logs all of the modules found\n" );
-    fprintf( filesave, "** Denotes an invalid module (Or locked)\n\n" );
-  }
-  else
-  {
-    log_warning( "Could not write to %s\n", CData.modules_file );
-  }
-
-  // Search for .mod directories
-  FileName = fs_findFirstFile( &fs_finfo, CData.modules_dir, NULL, "*.mod" );
-  modcount = 0;
-  while ( FileName && modcount < mi_len )
-  {
-    strncpy( mi_ary[modcount].loadname, FileName, sizeof( mi_ary[modcount].loadname ) );
-    snprintf( loadname, sizeof( loadname ), "%s" SLASH_STRING "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.modules_dir, FileName, CData.gamedat_dir, CData.mnu_file );
-    if ( module_read_data( mi_ary + modcount, loadname ) )
-    {
-      snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.modules_dir, FileName, CData.gamedat_dir, CData.title_bitmap );
-      mi_ary[modcount].tx_title_idx = module_load_one_image( modcount, CStringTmp1 );
-      if ( MAXMODULE != mi_ary[modcount].tx_title_idx )
-      {
-        fprintf( filesave, "%02d.  %s\n", modcount, mi_ary[modcount].longname );
-        modcount++;
-      }
-      else
-      {
-        fprintf( filesave, "**.  %s\n", FileName );
-      }
-    }
-    else
-    {
-      fprintf( filesave, "**.  %s\n", FileName );
-    }
-    FileName = fs_findNextFile(&fs_finfo);
-  }
-  fs_findClose(&fs_finfo);
-  if ( filesave != NULL ) fs_fileClose( filesave );
-
-  return modcount;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -792,4 +708,18 @@ MOD_INFO * ModInfo_renew( MOD_INFO * pmi )
 {
   ModInfo_delete(pmi);
   return ModInfo_new(pmi);
+}
+
+//---------------------------------------------------------------------------------------------
+void ModInfo_clear_all_titleimages( MOD_INFO * mi_ary, size_t mi_count )
+{
+  int cnt;
+
+  if(NULL == mi_ary || 0 == mi_count) return;
+
+  for (cnt = 0; cnt < mi_count; cnt++)
+  {
+    mi_ary[cnt].tx_title_idx = MAXMODULE;
+  };
+
 }

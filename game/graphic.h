@@ -27,6 +27,7 @@
 #include "ogl_texture.h"
 #include "Font.h"
 #include "Mesh.h"
+#include "menu.h"
 
 #include "egoboo_types.h"
 
@@ -41,7 +42,7 @@
 //--------------------------------------------------------------------------------------------
 
 struct ConfigData_t;
-struct GameState_t;
+struct CGame_t;
 
 //--------------------------------------------------------------------------------------------
 
@@ -124,7 +125,7 @@ typedef struct GraphicState_t
   float        est_max_fps;
 
   // the game state that we are plugged into
-  struct GameState_t  * gs;
+  struct CGame_t  * gs;
 
 } GraphicState;
 
@@ -132,6 +133,29 @@ GraphicState * GraphicState_new(GraphicState * g, struct ConfigData_t * cd);
 bool_t         GraphicState_synch(GraphicState * g, struct ConfigData_t * cd);
 
 extern GraphicState gfxState;
+
+//--------------------------------------------------------------------------------------------
+struct ClockState_t;
+
+typedef struct CGui_t 
+{
+  bool_t initialized;
+
+  MenuProc mnu_proc;
+
+  bool_t can_pause;          //Pause button avalible?
+  bool_t net_messagemode;
+
+  GLtexture TxBars;                                         /* status bars */
+  GLtexture TxBlip;                                         /* you are here texture */
+
+  struct ClockState_t * clk;
+  float                 dUpdate;
+
+} CGui;
+
+CGui * Get_CGui();
+bool_t CGui_shutDown();
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -162,8 +186,6 @@ bool_t query_pageflip();
 bool_t request_pageflip();
 bool_t do_pageflip();
 bool_t do_clear();
-
-void prime_titleimage(struct mod_data_t * mi_ary, size_t mi_count);
 
 void md2_blend_vertices(struct Chr_t * pchr, Sint32 vrtmin, Sint32 vrtmax);
 void md2_blend_lighting(struct Chr_t * pchr);

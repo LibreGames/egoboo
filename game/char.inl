@@ -38,7 +38,7 @@ INLINE ANIM_INFO * anim_info_new( ANIM_INFO * a );
 //INLINE float     wp_list_x( WP_LIST * wl );
 //INLINE float     wp_list_y( WP_LIST * wl );
 
-//INLINE AI_STATE * ai_state_new(GameState * gs, AI_STATE * a, CHR_REF ichr);
+//INLINE AI_STATE * ai_state_new(CGame * gs, AI_STATE * a, CHR_REF ichr);
 //INLINE AI_STATE * ai_state_renew(AI_STATE * a, CHR_REF ichr);
 
 //--------------------------------------------------------------------------------------------
@@ -341,7 +341,7 @@ INLINE float wp_list_y( WP_LIST * wl )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE AI_STATE * ai_state_new(GameState * gs, AI_STATE * a, CHR_REF ichr)
+INLINE AI_STATE * ai_state_new(CGame * gs, AI_STATE * a, CHR_REF ichr)
 {
   int tnc;
 

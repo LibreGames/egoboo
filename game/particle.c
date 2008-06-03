@@ -47,7 +47,7 @@ DYNALIGHT_INFO GDyna;
 Uint16 particletexture;                            // All in one bitmap
 
 //--------------------------------------------------------------------------------------------
-void make_prtlist(GameState * gs)
+void make_prtlist(CGame * gs)
 {
   // ZZ> This function figures out which particles are visible, and it sets up dynamic
   //     lighting
@@ -120,7 +120,7 @@ void make_prtlist(GameState * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-void PrtList_free_one_no_sound( GameState * gs, PRT_REF particle )
+void PrtList_free_one_no_sound( CGame * gs, PRT_REF particle )
 {
   // ZZ> This function sticks a particle back on the free particle stack
 
@@ -130,7 +130,7 @@ void PrtList_free_one_no_sound( GameState * gs, PRT_REF particle )
 }
 
 //--------------------------------------------------------------------------------------------
-void PrtList_free_one( GameState * gs, PRT_REF particle )
+void PrtList_free_one( CGame * gs, PRT_REF particle )
 {
   // ZZ> This function sticks a particle back on the free particle stack and
   //     plays the sound associated with the particle
@@ -160,7 +160,7 @@ void PrtList_free_one( GameState * gs, PRT_REF particle )
 }
 
 //--------------------------------------------------------------------------------------------
-int PrtList_get_free( GameState * gs, int force )
+int PrtList_get_free( CGame * gs, int force )
 {
   // ZZ> This function gets an unused particle.  If all particles are in use
   //     and force is set, it grabs the first unimportant one.  The particle
@@ -203,7 +203,7 @@ int PrtList_get_free( GameState * gs, int force )
 }
 
 //--------------------------------------------------------------------------------------------
-PRT_REF spawn_one_particle( GameState * gs, float intensity, vect3 pos,
+PRT_REF spawn_one_particle( CGame * gs, float intensity, vect3 pos,
                            Uint16 facing, Uint16 model, Uint16 local_pip,
                            CHR_REF characterattach, GRIP grip, TEAM team,
                            CHR_REF characterorigin, Uint16 multispawn, CHR_REF oldtarget )
@@ -265,7 +265,7 @@ PRT_REF spawn_one_particle( GameState * gs, float intensity, vect3 pos,
   if ( VALID_CHR( chrlst,  characterattach ) ) weight = MAX( weight, chrlst[characterattach].weight );
   prtlst[iprt].weight = weight;
 
-  log_debug( "spawn_one_particle() - local pip == %d, global pip == %d, part == %d\n", local_pip, glob_pip, iprt);
+  //log_debug( "spawn_one_particle() - local pip == %d, global pip == %d, part == %d\n", local_pip, glob_pip, iprt);
 
   // "simplify" the notation
   pprt = prtlst + iprt;
@@ -486,7 +486,7 @@ PRT_REF spawn_one_particle( GameState * gs, float intensity, vect3 pos,
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 prt_hitawall( GameState * gs, PRT_REF particle, vect3 * norm )
+Uint32 prt_hitawall( CGame * gs, PRT_REF particle, vect3 * norm )
 {
   // ZZ> This function returns nonzero if the particle hit a wall
 
@@ -549,7 +549,7 @@ Uint32 prt_hitawall( GameState * gs, PRT_REF particle, vect3 * norm )
 }
 
 //--------------------------------------------------------------------------------------------
-void disaffirm_attached_particles( GameState * gs, CHR_REF character )
+void disaffirm_attached_particles( CGame * gs, CHR_REF character )
 {
   // ZZ> This function makes sure a character has no attached particles
 
@@ -584,7 +584,7 @@ void disaffirm_attached_particles( GameState * gs, CHR_REF character )
 }
 
 //--------------------------------------------------------------------------------------------
-Uint16 number_of_attached_particles( GameState * gs, CHR_REF character )
+Uint16 number_of_attached_particles( CGame * gs, CHR_REF character )
 {
   // ZZ> This function returns the number of particles attached to the given character
 
@@ -606,7 +606,7 @@ Uint16 number_of_attached_particles( GameState * gs, CHR_REF character )
 }
 
 //--------------------------------------------------------------------------------------------
-void reaffirm_attached_particles( GameState * gs, CHR_REF character )
+void reaffirm_attached_particles( CGame * gs, CHR_REF character )
 {
   // ZZ> This function makes sure a character has all of it's particles
 
@@ -637,7 +637,7 @@ void reaffirm_attached_particles( GameState * gs, CHR_REF character )
 }
 
 //--------------------------------------------------------------------------------------------
-void move_particles( GameState * gs, float dUpdate )
+void move_particles( CGame * gs, float dUpdate )
 {
   // ZZ> This is the particle physics function
 
@@ -816,7 +816,7 @@ void move_particles( GameState * gs, float dUpdate )
 }
 
 //--------------------------------------------------------------------------------------------
-void attach_particles(GameState * gs)
+void attach_particles(CGame * gs)
 {
   // ZZ> This function attaches particles to their characters so everything gets
   //     drawn right
@@ -854,7 +854,7 @@ void attach_particles(GameState * gs)
 
 
 //--------------------------------------------------------------------------------------------
-void setup_particles( GameState * gs )
+void setup_particles( CGame * gs )
 {
   // ZZ> This function sets up particle data
 
@@ -896,7 +896,7 @@ Uint16 terp_dir( Uint16 majordir, float dx, float dy, float dUpdate )
 }
 
 //--------------------------------------------------------------------------------------------
-void spawn_bump_particles( GameState * gs, CHR_REF character, PRT_REF particle )
+void spawn_bump_particles( CGame * gs, CHR_REF character, PRT_REF particle )
 {
   // ZZ> This function is for catching characters on fire and such
 
@@ -1039,7 +1039,7 @@ void spawn_bump_particles( GameState * gs, CHR_REF character, PRT_REF particle )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t prt_is_over_water( GameState * gs, int cnt )
+bool_t prt_is_over_water( CGame * gs, int cnt )
 {
   // This function returns btrue if the particle is over a water tile
 
@@ -1055,7 +1055,7 @@ bool_t prt_is_over_water( GameState * gs, int cnt )
 }
 
 //--------------------------------------------------------------------------------------------
-void do_weather_spawn( GameState * gs, float dUpdate )
+void do_weather_spawn( CGame * gs, float dUpdate )
 {
   // ZZ> This function drops snowflakes or rain or whatever, also swings the camera
 
@@ -1116,7 +1116,7 @@ void do_weather_spawn( GameState * gs, float dUpdate )
 
 
 //--------------------------------------------------------------------------------------------
-Uint32 PipList_load_one( GameState * gs, char * szObjectpath, char * szObjectname, char * szFname, int override)
+Uint32 PipList_load_one( CGame * gs, char * szObjectpath, char * szObjectname, char * szFname, int override)
 {
   // ZZ> This function loads a particle template, returning MAXPRTPIP if the file wasn't
   //     found
@@ -1303,7 +1303,7 @@ Uint32 PipList_load_one( GameState * gs, char * szObjectpath, char * szObjectnam
 }
 
 //--------------------------------------------------------------------------------------------
-void PipList_load_global(GameState * gs)
+void PipList_load_global(CGame * gs)
 {
   // ZF> Load in the standard global particles ( the coins for example )
   //     This should only be needed done once at the start of the game
@@ -1351,7 +1351,7 @@ void PipList_load_global(GameState * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-void reset_particles( GameState * gs, char* modname )
+void reset_particles( CGame * gs, char* modname )
 {
   // ZZ> This resets all particle data and reads in the coin and water particles
 
@@ -1386,7 +1386,7 @@ void reset_particles( GameState * gs, char* modname )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t prt_calculate_bumpers(GameState * gs, PRT_REF iprt)
+bool_t prt_calculate_bumpers(CGame * gs, PRT_REF iprt)
 {
   Prt  * prtlst      = gs->PrtList;
   size_t prtlst_size = MAXPRT;

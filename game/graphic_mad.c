@@ -69,7 +69,7 @@ void md2_blend_vertices(Chr * pchr, Sint32 vrtmin, Sint32 vrtmax)
   Uint16 imdl;
   float lerp;
 
-  GameState * gs = gfxState.gs;
+  CGame * gs = gfxState.gs;
 
   if( NULL == pchr || !pchr->on ) return;
   imdl = pchr->model;
@@ -209,7 +209,7 @@ void md2_blend_vertices(Chr * pchr, Sint32 vrtmin, Sint32 vrtmax)
 //---------------------------------------------------------------------------------------------
 void md2_blend_lighting(Chr * pchr)
 {
-  GameState * gs = gfxState.gs;
+  CGame * gs = gfxState.gs;
 
   Uint16  sheen_fp8, spekularity_fp8;
   Uint16 lightnew_r, lightnew_g, lightnew_b;
@@ -346,7 +346,7 @@ void draw_textured_md2_opengl(CHR_REF ichr)
   Uint32 cmd_count;
   vect2  off;
 
-  GameState * gs = gfxState.gs;
+  CGame * gs = gfxState.gs;
 
   Uint16          imdl = gs->ChrList[ichr].model;
   VData_Blended * vd   = &(gs->ChrList[ichr].vdata);
@@ -361,7 +361,7 @@ void draw_textured_md2_opengl(CHR_REF ichr)
   if(gfxState.shading != GL_FLAT)
   {
     glEnableClientState(GL_NORMAL_ARRAY);
-    glNormalPointer(   GL_FLOAT, 0, vd->Normals[0].v);
+    glNormalPointer(GL_FLOAT, 0, vd->Normals[0].v);
   }
 
   glEnableClientState(GL_VERTEX_ARRAY);
@@ -423,7 +423,7 @@ void draw_enviromapped_md2_opengl(CHR_REF ichr)
   const MD2_GLCommand * cmd;
   Uint32 cmd_count;
 
-  GameState * gs = gfxState.gs;
+  CGame * gs = gfxState.gs;
 
   Uint16          imdl = gs->ChrList[ichr].model;
   VData_Blended * vd   = &(gs->ChrList[ichr].vdata);
@@ -490,7 +490,7 @@ void draw_enviromapped_md2_opengl(CHR_REF ichr)
 //--------------------------------------------------------------------------------------------
 void calc_lighting_data( CHR_REF ichr )
 {
-  GameState * gs = gfxState.gs;
+  CGame * gs = gfxState.gs;
 
   Uint8  sheen_fp8       = gs->ChrList[ichr].sheen_fp8;
   float  spekularity_fp8 = FLOAT_TO_FP8(( float ) sheen_fp8 / ( float ) MAXSPEKLEVEL );
@@ -534,7 +534,7 @@ void render_mad_lit( CHR_REF ichr )
   Uint16 texture;
   GLfloat mat_none[4] = {0,0,0,0};
 
-  GameState * gs = gfxState.gs;
+  CGame * gs = gfxState.gs;
 
   if( !VALID_CHR(gs->ChrList, ichr) ) return;
 
@@ -588,7 +588,7 @@ void render_mad_lit( CHR_REF ichr )
 void render_texmad(CHR_REF ichr, Uint8 trans)
 {
   Uint16 texture;
-  GameState * gs = gfxState.gs;
+  CGame * gs = gfxState.gs;
 
   if(!VALID_CHR(gs->ChrList, ichr)) return;
 
@@ -638,7 +638,7 @@ void render_texmad(CHR_REF ichr, Uint8 trans)
 void render_enviromad(CHR_REF ichr, Uint8 trans)
 {
   Uint16 texture;
-  GameState * gs = gfxState.gs;
+  CGame * gs = gfxState.gs;
 
   if(!VALID_CHR(gs->ChrList, ichr)) return;
 
@@ -685,7 +685,7 @@ void render_mad( CHR_REF ichr, Uint8 trans )
 {
   // ZZ> This function picks the actual function to use
 
-  GameState * gs = gfxState.gs;
+  CGame * gs = gfxState.gs;
   Sint8 hide = gs->CapList[gs->ChrList[ichr].model].hidestate;
 
   if ( hide == NOHIDE || hide != gs->ChrList[ichr].aistate.state )
@@ -700,7 +700,7 @@ void render_mad( CHR_REF ichr, Uint8 trans )
 //--------------------------------------------------------------------------------------------
 void render_refmad( int ichr, Uint8 trans_fp8 )
 {
-  GameState * gs = gfxState.gs;
+  CGame * gs = gfxState.gs;
 
   int alphatmp_fp8;
   float level = gs->ChrList[ichr].level;
@@ -911,7 +911,7 @@ void make_lighttospek( void )
 //--------------------------------------------------------------------------------------------
 void draw_Chr_BBox(CHR_REF ichr)
 {
-  GameState * gs  = gfxState.gs;
+  CGame * gs  = gfxState.gs;
 
   BData * bd;
   CVolume * cv;

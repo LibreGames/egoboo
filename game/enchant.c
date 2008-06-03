@@ -37,10 +37,14 @@
 #include "char.inl"
 #include "mesh.inl"
 
-
+static Uint16   numchop = 0;               // The number of name parts
+static Uint32   chopwrite = 0;             // The data pointer
+static char     chopdata[CHOPDATACHUNK];    // The name parts
+static Uint16   chopstart[MAXCHOP];         // The first character of each part
+STRING          namingnames;// The name returned by the function
 
 //--------------------------------------------------------------------------------------------
-void enc_spawn_particles( GameState * gs, float dUpdate )
+void enc_spawn_particles( CGame * gs, float dUpdate )
 {
   // ZZ> This function lets enchantments spawn particles
 
@@ -87,7 +91,7 @@ void enc_spawn_particles( GameState * gs, float dUpdate )
 
 
 //--------------------------------------------------------------------------------------------
-void disenchant_character( GameState * gs, Uint16 cnt )
+void disenchant_character( CGame * gs, Uint16 cnt )
 {
   // ZZ> This function removes all enchantments from a character
 
@@ -101,7 +105,7 @@ void disenchant_character( GameState * gs, Uint16 cnt )
 }
 
 //--------------------------------------------------------------------------------------------
-void spawn_poof( GameState * gs, CHR_REF character, Uint16 profile )
+void spawn_poof( CGame * gs, CHR_REF character, Uint16 profile )
 {
   // ZZ> This function spawns a character poof
 
@@ -130,7 +134,7 @@ void spawn_poof( GameState * gs, CHR_REF character, Uint16 profile )
 }
 
 //--------------------------------------------------------------------------------------------
-void naming_names( GameState * gs, int profile )
+void naming_names( CGame * gs, int profile )
 {
   // ZZ> This function generates a random name
 
@@ -142,11 +146,7 @@ void naming_names( GameState * gs, int profile )
 
   if ( caplst[profile].sectionsize[0] == 0 )
   {
-    namingnames[0] = 'B';
-    namingnames[1] = 'l';
-    namingnames[2] = 'a';
-    namingnames[3] = 'h';
-    namingnames[4] = 0;
+    strcpy(namingnames, "Blah");
   }
   else
   {
@@ -175,7 +175,7 @@ void naming_names( GameState * gs, int profile )
 }
 
 //--------------------------------------------------------------------------------------------
-void read_naming( GameState * gs, char * szModpath, char * szObjectname, int profile)
+void read_naming( CGame * gs, char * szModpath, char * szObjectname, int profile)
 {
   // ZZ> This function reads a naming file
 
@@ -227,7 +227,7 @@ void read_naming( GameState * gs, char * szModpath, char * szObjectname, int pro
 }
 
 //--------------------------------------------------------------------------------------------
-void prime_names( GameState * gs )
+void prime_names( CGame * gs )
 {
   // ZZ> This function prepares the name chopper for use
 
@@ -253,7 +253,7 @@ void prime_names( GameState * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-void tilt_characters_to_terrain(GameState * gs)
+void tilt_characters_to_terrain(CGame * gs)
 {
   // ZZ> This function sets all of the character's starting tilt values
 
@@ -279,7 +279,7 @@ void tilt_characters_to_terrain(GameState * gs)
 
 
 //--------------------------------------------------------------------------------------------
-Uint16 change_armor( GameState * gs, CHR_REF character, Uint16 iskin )
+Uint16 change_armor( CGame * gs, CHR_REF character, Uint16 iskin )
 {
   // ZZ> This function changes the armor of the character
 
@@ -343,7 +343,7 @@ Uint16 change_armor( GameState * gs, CHR_REF character, Uint16 iskin )
 }
 
 //--------------------------------------------------------------------------------------------
-void change_character( GameState * gs, CHR_REF ichr, Uint16 new_profile, Uint8 new_skin, Uint8 leavewhich )
+void change_character( CGame * gs, CHR_REF ichr, Uint16 new_profile, Uint8 new_skin, Uint8 leavewhich )
 {
   // ZZ> This function polymorphs a character, changing stats, dropping weapons
 
@@ -565,7 +565,7 @@ void change_character( GameState * gs, CHR_REF ichr, Uint16 new_profile, Uint8 n
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t cost_mana( GameState * gs, CHR_REF chr_ref, int amount, Uint16 killer )
+bool_t cost_mana( CGame * gs, CHR_REF chr_ref, int amount, Uint16 killer )
 {
   // ZZ> This function takes mana from a character ( or gives mana ),
   //     and returns btrue if the character had enough to pay, or bfalse
@@ -653,7 +653,7 @@ Uint32 fget_damage_modifier( FILE * fileread )
 };
 
 //--------------------------------------------------------------------------------------------
-void EveList_load_one( GameState * gs, char * szObjectpath, char * szObjectname, Uint16 profile )
+void EveList_load_one( CGame * gs, char * szObjectpath, char * szObjectname, Uint16 profile )
 {
   // ZZ> This function loads the enchantment associated with an object
 
@@ -888,7 +888,7 @@ void EveList_load_one( GameState * gs, char * szObjectpath, char * szObjectname,
 }
 
 //--------------------------------------------------------------------------------------------
-Uint16 EncList_get_free( GameState * gs )
+Uint16 EncList_get_free( CGame * gs )
 {
   // ZZ> This function returns the next free enchantment or MAXENCHANT if there are none
 
@@ -901,7 +901,7 @@ Uint16 EncList_get_free( GameState * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-void unset_enchant_value( GameState * gs, Uint16 enchantindex, Uint8 valueindex )
+void unset_enchant_value( CGame * gs, Uint16 enchantindex, Uint8 valueindex )
 {
   // ZZ> This function unsets a set value
 
@@ -1022,7 +1022,7 @@ void unset_enchant_value( GameState * gs, Uint16 enchantindex, Uint8 valueindex 
 }
 
 //--------------------------------------------------------------------------------------------
-void remove_enchant_value( GameState * gs, Uint16 enchantindex, Uint8 valueindex )
+void remove_enchant_value( CGame * gs, Uint16 enchantindex, Uint8 valueindex )
 {
   // ZZ> This function undoes cumulative modification to character stats
 
@@ -1168,7 +1168,7 @@ Eve * Eve_renew( Eve * peve )
 }
 
 //--------------------------------------------------------------------------------------------
-void reset_character_alpha( GameState * gs, CHR_REF character )
+void reset_character_alpha( CGame * gs, CHR_REF character )
 {
   // ZZ> This function fixes an item's transparency
 
@@ -1214,7 +1214,7 @@ void reset_character_alpha( GameState * gs, CHR_REF character )
 }
 
 //--------------------------------------------------------------------------------------------
-void remove_enchant( GameState * gs, Uint16 enchantindex )
+void remove_enchant( CGame * gs, Uint16 enchantindex )
 {
   // ZZ> This function removes a specific enchantment and adds it to the unused list
 
@@ -1357,7 +1357,7 @@ void remove_enchant( GameState * gs, Uint16 enchantindex )
 }
 
 //--------------------------------------------------------------------------------------------
-Uint16 enchant_value_filled( GameState * gs, Uint16 enchantindex, Uint8 valueindex )
+Uint16 enchant_value_filled( CGame * gs, Uint16 enchantindex, Uint8 valueindex )
 {
   // ZZ> This function returns MAXENCHANT if the enchantment's target has no conflicting
   //     set values in its other enchantments.  Otherwise it returns the enchantindex
@@ -1389,7 +1389,7 @@ Uint16 enchant_value_filled( GameState * gs, Uint16 enchantindex, Uint8 valueind
 }
 
 //--------------------------------------------------------------------------------------------
-void set_enchant_value( GameState * gs, Uint16 enchantindex, Uint8 valueindex,
+void set_enchant_value( CGame * gs, Uint16 enchantindex, Uint8 valueindex,
                         Uint16 enchanttype )
 {
   // ZZ> This function sets and saves one of the ichr's stats
@@ -1624,7 +1624,7 @@ void fgetadd( float MIN, float value, float MAX, float* valuetoadd )
 }
 
 //--------------------------------------------------------------------------------------------
-void add_enchant_value( GameState * gs, Uint16 enchantindex, Uint8 valueindex,
+void add_enchant_value( CGame * gs, Uint16 enchantindex, Uint8 valueindex,
                         Uint16 enchanttype )
 {
   // ZZ> This function does cumulative modification to character stats
@@ -1788,7 +1788,7 @@ void add_enchant_value( GameState * gs, Uint16 enchantindex, Uint8 valueindex,
 
 
 //--------------------------------------------------------------------------------------------
-Uint16 spawn_enchant( GameState * gs, Uint16 owner, Uint16 target,
+Uint16 spawn_enchant( CGame * gs, Uint16 owner, Uint16 target,
                       Uint16 spawner, ENC_REF enchantindex, Uint16 modeloptional )
 {
   // ZZ> This function enchants a target, returning the enchantment index or MAXENCHANT

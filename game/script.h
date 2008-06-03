@@ -2,7 +2,7 @@
 
 #include "egoboo_types.h"
 
-struct GameState_t;
+struct CGame_t;
 
 // These are for the AI script loading/parsing routines
 extern int                     iNumAis;
@@ -471,12 +471,12 @@ typedef struct ScriptInfo_t
   int    offset_end[MAXAI];
 } ScriptInfo;
 
-retval_t let_character_think( struct GameState_t * gs, CHR_REF character, float dUpdate );
-void let_ai_think( struct GameState_t * gs, float dUpdate );
+retval_t let_character_think( struct CGame_t * gs, CHR_REF character, float dUpdate );
+void let_ai_think( struct CGame_t * gs, float dUpdate );
 
-void append_end_text( struct GameState_t * gs, int message, CHR_REF character );
+void append_end_text( struct CGame_t * gs, int message, CHR_REF character );
 
 
 void load_ai_codes( char* loadname );
 Uint32 load_ai_script( ScriptInfo * slist, char * szModpath, char * szObjectname );
-void reset_ai_script(struct GameState_t * gs);
+void reset_ai_script(struct CGame_t * gs);

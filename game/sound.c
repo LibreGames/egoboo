@@ -35,51 +35,76 @@
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 
-SoundState sndState = { bfalse };
+SoundState _sndState = { bfalse };
 
+static SoundState * SoundState_new(SoundState * ss, struct ConfigData_t * cd);
+static bool_t SoundState_synchronize(SoundState * ss, struct ConfigData_t * cd);
+
+//------------------------------------------------------------------------------
+SoundState * snd_getState(ConfigData * cd)
+{
+  if( !_sndState.initialized)
+  {
+    snd_initialize(cd);
+  }
+
+  return &_sndState;
+}
+
+//------------------------------------------------------------------------------
+bool_t snd_synchronize(struct ConfigData_t * cd)
+{
+  SoundState * snd = snd_getState(cd);
+
+  if(NULL == snd) return bfalse;
+
+  SoundState_synchronize(snd, cd);
+
+  return btrue;
+}
 
 //------------------------------------------------------------------------------
 //This function enables the use of SDL_Mixer functions, returns btrue if success
-bool_t snd_initialize(SoundState * ss, ConfigData * cd)
+bool_t snd_initialize(ConfigData * cd)
 {
-  if(NULL == ss || NULL == cd) return bfalse;
+  if(NULL == cd) return bfalse;
 
-  SoundState_new(ss, cd);
+  SoundState_new(&_sndState, cd);
 
-  if ( !ss->mixer_loaded )
+  if ( !_sndState.mixer_loaded )
   {
     log_info( "Initializing SDL_mixer audio services version %i.%i.%i... ", MIX_MAJOR_VERSION, MIX_MINOR_VERSION, MIX_PATCHLEVEL);
 
-    sound_state_synchronize( ss, cd );
+    SoundState_synchronize( &_sndState, cd );
 
-    if( !snd_reopen(ss) )
+    if( !snd_reopen(&_sndState) )
     {
       log_message( "Failed!\n" );
       log_error( "Unable to initialize audio: %s\n", Mix_GetError() );
     }
     else 
     {
-      ss->mixer_loaded = btrue;
+      _sndState.mixer_loaded = btrue;
       log_message( "Succeeded!\n" );
     }
 
   }
   
-  return ss->mixer_loaded;
+  return _sndState.mixer_loaded;
 }
 
 //------------------------------------------------------------------------------
-bool_t snd_quit(SoundState * ss)
+bool_t snd_quit()
 {
-  if(NULL == ss) return bfalse;
+  if(NULL == &_sndState) return bfalse;
 
-  if( ss->mixer_loaded )
+  if( _sndState.mixer_loaded )
   { 
     Mix_CloseAudio();
-    ss->mixer_loaded = bfalse;
+    _sndState.mixer_loaded = bfalse;
   };
 
-  return !ss->mixer_loaded;
+  return !_sndState.mixer_loaded;
 }
 
 
@@ -96,7 +121,7 @@ void snd_apply_mods( int channel, float intensity, vect3 snd_pos, vect3 ear_pos,
   int vol_left, vol_right;
   const float reverbdistance = 128 * 2.5;
 
-  if ( !sndState.soundActive || INVALID_CHANNEL == channel ) return;
+  if ( !_sndState.soundActive || INVALID_CHANNEL == channel ) return;
 
   dist_xy2 = ( ear_pos.x - snd_pos.x ) * ( ear_pos.x - snd_pos.x ) + ( ear_pos.y - snd_pos.y ) * ( ear_pos.y - snd_pos.y );
   dist_xyz2 = dist_xy2 + ( ear_pos.z - snd_pos.z ) * ( ear_pos.z - snd_pos.z );
@@ -140,13 +165,13 @@ void snd_apply_mods( int channel, float intensity, vect3 snd_pos, vect3 ear_pos,
 };
 
 //------------------------------------------------------------------------------
-int snd_play_sound( GameState * gs, float intensity, vect3 pos, Mix_Chunk *loadedwave, int loops, int whichobject, int soundnumber)
+int snd_play_sound( CGame * gs, float intensity, vect3 pos, Mix_Chunk *loadedwave, int loops, int whichobject, int soundnumber)
 {
   // ZF> This function plays a specified sound
   // (Or returns -1 (INVALID_CHANNEL) if it failed to play the sound)
   int channel;
 
-  if( !sndState.soundActive ) return INVALID_CHANNEL;
+  if( !_sndState.soundActive ) return INVALID_CHANNEL;
 
   if ( loadedwave == NULL )
   {
@@ -176,14 +201,14 @@ int snd_play_sound( GameState * gs, float intensity, vect3 pos, Mix_Chunk *loade
 }
 
 //--------------------------------------------------------------------------------------------
-int snd_play_particle_sound( GameState * gs, float intensity, PRT_REF particle, Sint8 sound )
+int snd_play_particle_sound( CGame * gs, float intensity, PRT_REF particle, Sint8 sound )
 {
   int channel = INVALID_CHANNEL;
   Uint16 imdl;
 
   //This function plays a sound effect for a particle
   if ( INVALID_SOUND == sound ) return channel;
-  if( !sndState.soundActive ) return channel;
+  if( !_sndState.soundActive ) return channel;
 
   //Play local sound or else global (coins for example)
   imdl = gs->PrtList[particle].model;
@@ -193,7 +218,7 @@ int snd_play_particle_sound( GameState * gs, float intensity, PRT_REF particle, 
   }
   else
   {
-    channel = snd_play_sound( gs, intensity, gs->PrtList[particle].pos, sndState.mc_list[sound], 0, -sound, sound );
+    channel = snd_play_sound( gs, intensity, gs->PrtList[particle].pos, _sndState.mc_list[sound], 0, -sound, sound );
   };
 
   return channel;
@@ -206,7 +231,7 @@ void snd_stop_sound( int whichchannel )
   // ZF> This function is used for stopping a looped sound, but can be used to stop
   // a particular sound too. If whichchannel is -1, all playing channels will fade out.
 
-  if( sndState.mixer_loaded )
+  if( _sndState.mixer_loaded )
   {
     Mix_FadeOutChannel( whichchannel, 400 ); //400 ms is nice
   }
@@ -216,23 +241,23 @@ void snd_stop_sound( int whichchannel )
 //Music Stuff-------------------------------------------------------------------
 //------------------------------------------------------------------------------
 
-bool_t snd_unload_music(SoundState * ss)
+bool_t snd_unload_music()
 {
   int cnt;
 
-  if(NULL == ss) return bfalse;
-  if(!ss->music_loaded) return btrue;
+  if(NULL == &_sndState) return bfalse;
+  if(!_sndState.music_loaded) return btrue;
 
   for(cnt=0; cnt<MAXPLAYLISTLENGTH; cnt++)
   {
-    if(NULL != ss->mus_list[cnt])
+    if(NULL != _sndState.mus_list[cnt])
     {
-      Mix_FreeMusic( ss->mus_list[cnt] );
-      ss->mus_list[cnt] = NULL;
+      Mix_FreeMusic( _sndState.mus_list[cnt] );
+      _sndState.mus_list[cnt] = NULL;
     }
   }
 
-  ss->music_loaded = bfalse;
+  _sndState.music_loaded = bfalse;
 
   return btrue;
 }
@@ -243,12 +268,12 @@ bool_t snd_unload_music(SoundState * ss)
 void snd_play_music( int songnumber, int fadetime, int loops )
 {
   // ZF> This functions plays a specified track loaded into memory
-  if ( sndState.musicActive && sndState.music_loaded && sndState.song_index != songnumber)
+  if ( _sndState.musicActive && _sndState.music_loaded && _sndState.song_index != songnumber)
   {
     Mix_FadeOutMusic( fadetime );
-    Mix_PlayMusic( sndState.mus_list[songnumber], loops );
-    sndState.song_loops = loops;
-    sndState.song_index = songnumber;
+    Mix_PlayMusic( _sndState.mus_list[songnumber], loops );
+    _sndState.song_loops = loops;
+    _sndState.song_index = songnumber;
   }
 }
 
@@ -262,80 +287,56 @@ void snd_stop_music(int fadetime)
 
 
 //------------------------------------------------------------------------------
-SoundState * SoundState_new(SoundState * ss, ConfigData * cd)
-{
-  // BB > do a raw initialization of the sound state
-
-  //fprintf( stdout, "SoundState_new()\n");
-
-  if(NULL == ss) return NULL;
-
-  if( ss->initialized ) return ss;
- 
-  memset(ss, 0, sizeof(SoundState));
-
-  ss->song_index  = -1;
-  ss->initialized = btrue;
-  ss->frequency   = MIX_DEFAULT_FREQUENCY;
-
-  sound_state_synchronize(ss, cd);
-
-  return ss;
-}
-
-//------------------------------------------------------------------------------
-bool_t sound_state_synchronize(SoundState * ss, ConfigData * cd)
+bool_t SoundState_synchronize(SoundState * snd, ConfigData * cd)
 {
   // BB > update the current sound state from the config data
 
-  if(NULL == ss || NULL == cd) return bfalse;
+  if(NULL == snd || NULL == cd) return bfalse;
 
-  ss->soundActive   = cd->allow_sound;
-  ss->musicActive   = cd->allow_music;
+  snd->soundActive   = cd->allow_sound;
+  snd->musicActive   = cd->allow_music;
 
-  ss->music_volume  = cd->musicvolume;
-  ss->sound_volume  = cd->soundvolume;
+  snd->music_volume  = cd->musicvolume;
+  snd->sound_volume  = cd->soundvolume;
 
-  ss->channel_count = cd->maxsoundchannel;
-  ss->buffersize    = cd->buffersize;
+  snd->channel_count = cd->maxsoundchannel;
+  snd->buffersize    = cd->buffersize;
 
   return btrue;
 }
 
 //------------------------------------------------------------------------------
-bool_t snd_reopen(SoundState * ss)
+bool_t snd_reopen()
 {
   // BB > an attempt to automatically update the SDL_mixer state. This could probably be optimized
   //      since not everything requires restarting the mixer.
 
   bool_t paused;
 
-  if(NULL == ss) return bfalse;
-
   // ???assume that pausing and then unpausing the music will preserve the song location???
-  paused = (-1 != ss->song_index) && Mix_PausedMusic();
+  paused = (-1 != _sndState.song_index) && Mix_PausedMusic();
   Mix_PauseMusic();
 
-  if( ss->mixer_loaded )
+  if( _sndState.mixer_loaded )
   { 
     Mix_CloseAudio();
-    ss->mixer_loaded = bfalse;
+    _sndState.mixer_loaded = bfalse;
   };
 
-  ss->mixer_loaded = ( 0 == Mix_OpenAudio( ss->frequency, MIX_DEFAULT_FORMAT, 2, ss->buffersize ));
+  _sndState.mixer_loaded = ( 0 == Mix_OpenAudio( _sndState.frequency, MIX_DEFAULT_FORMAT, 2, _sndState.buffersize ));
 
-  if(ss->mixer_loaded)
+  if(_sndState.mixer_loaded)
   {
-    Mix_AllocateChannels( ss->channel_count );
-    Mix_VolumeMusic( ss->music_volume );
+    Mix_AllocateChannels( _sndState.channel_count );
+    Mix_VolumeMusic( _sndState.music_volume );
   }
 
-  if(ss->mixer_loaded && ss->musicActive)
+  if(_sndState.mixer_loaded && _sndState.musicActive)
   {
     if(paused)
     {
       // try to restart the song
-      Mix_PlayMusic( ss->mus_list[ss->song_index], ss->song_loops );
+      Mix_PlayMusic( _sndState.mus_list[_sndState.song_index], _sndState.song_loops );
     }
     else
     {
@@ -343,5 +344,28 @@ bool_t snd_reopen(SoundState * ss)
     }
   }
 
-  return ss->mixer_loaded;
+  return _sndState.mixer_loaded;
+}
+
+
+//------------------------------------------------------------------------------
+SoundState * SoundState_new(SoundState * snd, ConfigData * cd)
+{
+  // BB > do a raw initialization of the sound state
+
+  //fprintf( stdout, "SoundState_new()\n");
+
+  if(NULL == snd) return NULL;
+
+  if( snd->initialized ) return snd;
+ 
+  memset(snd, 0, sizeof(SoundState));
+
+  snd->song_index  = -1;
+  snd->initialized = btrue;
+  snd->frequency   = MIX_DEFAULT_FREQUENCY;
+
+  SoundState_synchronize(snd, cd);
+
+  return snd;
 }

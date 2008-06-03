@@ -109,7 +109,7 @@ typedef enum control_type_e
   CONTROL_CAMERA = CONTROL_MESSAGE
 } CONTROL;
 
-struct GameState_t;
+struct CGame_t;
 
 //--------------------------------------------------------------------------------------------
 typedef struct latch_t
@@ -136,7 +136,7 @@ Player * Player_new(Player *ppla);
 bool_t   Player_delete(Player *ppla);
 Player * Player_renew(Player *ppla);
 
-INLINE CHR_REF PlaList_get_character( struct GameState_t * gs, PLA_REF iplayer );
+INLINE CHR_REF PlaList_get_character( struct CGame_t * gs, PLA_REF iplayer );
 
 #define VALID_PLA(LST, XX) ( ((XX)>=0) && ((XX)<MAXPLAYER) && LST[XX].used )
 

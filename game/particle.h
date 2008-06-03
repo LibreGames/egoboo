@@ -2,7 +2,7 @@
 
 #include "object.h"
 
-struct GameState_t;
+struct CGame_t;
 
 #define TURNSPD                         .01         // Cutoff for turning or same direction
 
@@ -211,13 +211,13 @@ Prt *  Prt_new(Prt *pprt);
 bool_t Prt_delete( Prt * pprt );
 Prt *  Prt_renew(Prt *pprt);
 
-INLINE const CHR_REF prt_get_owner( struct GameState_t * gs, PRT_REF iprt );
-INLINE const CHR_REF prt_get_target( struct GameState_t * gs, PRT_REF iprt );
-INLINE const CHR_REF prt_get_attachedtochr( struct GameState_t * gs, PRT_REF iprt );
+INLINE const CHR_REF prt_get_owner( struct CGame_t * gs, PRT_REF iprt );
+INLINE const CHR_REF prt_get_target( struct CGame_t * gs, PRT_REF iprt );
+INLINE const CHR_REF prt_get_attachedtochr( struct CGame_t * gs, PRT_REF iprt );
 
-void PrtList_free_one_no_sound( struct GameState_t * gs, PRT_REF particle );
-void PrtList_free_one( struct GameState_t * gs, PRT_REF particle );
-int  PrtList_get_free( struct GameState_t * gs, int force );
+void PrtList_free_one_no_sound( struct CGame_t * gs, PRT_REF particle );
+void PrtList_free_one( struct CGame_t * gs, PRT_REF particle );
+int  PrtList_get_free( struct CGame_t * gs, int force );
 
 extern Uint16          particletexture;                            // All in one bitmap
 
@@ -233,22 +233,22 @@ extern Uint16          particletexture;                            // All in one
 
 
 
-void despawn_particles( struct GameState_t * gs );
-void move_particles( struct GameState_t * gs, float dUpdate );
-void attach_particles( struct GameState_t * gs );
-PRT_REF spawn_one_particle( struct GameState_t * gs, float intensity, vect3 pos,
+void despawn_particles( struct CGame_t * gs );
+void move_particles( struct CGame_t * gs, float dUpdate );
+void attach_particles( struct CGame_t * gs );
+PRT_REF spawn_one_particle( struct CGame_t * gs, float intensity, vect3 pos,
                            Uint16 facing, Uint16 model, Uint16 pip,
                            CHR_REF characterattach, GRIP grip, TEAM team,
                            CHR_REF characterorigin, Uint16 multispawn, CHR_REF oldtarget );
-Uint32 prt_hitawall( struct GameState_t * gs, PRT_REF particle, vect3 * norm );
+Uint32 prt_hitawall( struct CGame_t * gs, PRT_REF particle, vect3 * norm );
 
 
 
-Uint32 PipList_load_one( struct GameState_t * gs, char * szModpath, char * szObjectname, char * szFname, int override );
+Uint32 PipList_load_one( struct CGame_t * gs, char * szModpath, char * szObjectname, char * szFname, int override );
 
-bool_t prt_calculate_bumpers(struct GameState_t * gs, PRT_REF iprt);
+bool_t prt_calculate_bumpers(struct CGame_t * gs, PRT_REF iprt);
 
-bool_t prt_is_over_water( struct GameState_t * gs, int cnt );
-void reset_particles( struct GameState_t * gs, char* modname );
+bool_t prt_is_over_water( struct CGame_t * gs, int cnt );
+void reset_particles( struct CGame_t * gs, char* modname );
 
-void PipList_load_global( struct GameState_t * gs );
+void PipList_load_global( struct CGame_t * gs );

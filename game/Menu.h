@@ -24,11 +24,46 @@
 #pragma once
 
 #include "char.h"
+#include "ogl_texture.h"
+#include "module.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-struct GameState_t;
+struct CGame_t;
+
+// in C++ this would inherit from ProcState
+enum mnu_e;
+typedef struct MenuProc_t
+{
+  bool_t initialized;
+
+  // the "inherited" structure
+  ProcState proc;
+
+  // extra data for the menus
+  enum mnu_e whichMenu, lastMenu;
+  int        MenuResult;
+
+  double     dUpdate;
+
+  struct CClient_t * cl;
+  struct CServer_t * sv;
+  struct CNet_t    * net;
+
+  GLtexture TxTitleImage[MAXMODULE];      /* title images */
+
+  int selectedModule;
+  int validModules_count;
+  int validModules[MAXMODULE];
+
+} MenuProc;
+
+MenuProc * MenuProc_new(MenuProc *ms);
+bool_t     MenuProc_delete(MenuProc * ms);
+MenuProc * MenuProc_renew(MenuProc *ms);
+bool_t     MenuProc_init(MenuProc * ms);
+bool_t     MenuProc_init_ingame(MenuProc * ms);
 
 //--------------------------------------------------------------------------------------------
 // All the different menus.  yay!
@@ -61,8 +96,8 @@ enum mnu_e
 #define MAXLOADPLAYER     100
 typedef struct load_player_info_t
 {
-  char name[MAXCAPNAMESIZE];
-  char dir[16];
+  STRING name;
+  STRING dir;
 } LOAD_PLAYER_INFO;
 
 extern int              loadplayer_count;
@@ -83,5 +118,14 @@ void mnu_initial_text();
 void mnu_enterMenuMode();
 void mnu_exitMenuMode();
 
-int mnu_Run( MenuProc * ms, struct GameState_t * gs );
-int mnu_RunIngame( MenuProc * ms, struct GameState_t * gs );
+int mnu_Run( MenuProc * ms );
+int mnu_RunIngame( MenuProc * ms );
+
+Uint32 mnu_load_titleimage( MenuProc * mproc, int titleimage, char *szLoadName );
+void   mnu_free_all_titleimages(MenuProc * mproc);
+size_t mnu_load_mod_data(MenuProc * mproc, MOD_INFO * mi, size_t sz);
+
+bool_t mnu_load_cl_images(MenuProc * mproc);
+void   mnu_free_all_titleimages(MenuProc * mproc);
+void   mnu_prime_titleimage(MenuProc * mproc);
+void   mnu_prime_modules(MenuProc * mproc);

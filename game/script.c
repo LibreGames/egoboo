@@ -122,15 +122,15 @@ typedef struct CompilerState_t
 static CompilerState _cstate;
 
 
-static bool_t run_function( GameState * gs, Uint32 value, CHR_REF character );
+static bool_t run_function( CGame * gs, Uint32 value, CHR_REF character );
 
-static bool_t scr_break_passage( GameState * gs, AI_STATE * pstate );
-static bool_t scr_search_tile_in_passage( GameState * gs, AI_STATE * pstate );
+static bool_t scr_break_passage( CGame * gs, AI_STATE * pstate );
+static bool_t scr_search_tile_in_passage( CGame * gs, AI_STATE * pstate );
 
 static Uint32 get_high_bits();
 static size_t tell_code( size_t read );
 
-static retval_t run_operand( GameState * gs, Uint32 value, CHR_REF character );
+static retval_t run_operand( CGame * gs, Uint32 value, CHR_REF character );
 static retval_t set_operand( AI_STATE * pstate, ScriptInfo * slist, Uint8 variable );
 
 
@@ -1441,13 +1441,13 @@ bool_t ScriptInfo_reset( ScriptInfo * si )
 };
 
 //------------------------------------------------------------------------------
-void reset_ai_script(GameState * gs)
+void reset_ai_script(CGame * gs)
 {
   // ZZ> This function starts ai loading in the right spot
 
   int cnt;
 
-  ScriptInfo_reset( GameState_getScriptInfo(gs) );
+  ScriptInfo_reset( CGame_getScriptInfo(gs) );
 
   for ( cnt = 0; cnt < MAXMODEL; cnt++ )
   {
@@ -1457,7 +1457,7 @@ void reset_ai_script(GameState * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t run_function( GameState * gs, Uint32 value, CHR_REF ichr )
+bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
 {
   // ZZ> This function runs a script function for the AI.
   //     It returns bfalse if the script should jump over the
@@ -1477,7 +1477,7 @@ bool_t run_function( GameState * gs, Uint32 value, CHR_REF ichr )
   STRING cTmp;
   SearchInfo loc_search;
 
-  ScriptInfo * slist = GameState_getScriptInfo(gs); 
+  ScriptInfo * slist = CGame_getScriptInfo(gs); 
 
   Chr      * pchr = gs->ChrList + ichr;
   AI_STATE * pstate = &(pchr->aistate);
@@ -3977,9 +3977,13 @@ bool_t run_function( GameState * gs, Uint32 value, CHR_REF ichr )
 
     case F_PlayMusic:
       // This function begins playing a new track of music
-      if ( CData.allow_music && ( sndState.song_index != pstate->tmpargument ) )
+      if ( CData.allow_music )
       {
-        snd_play_music( pstate->tmpargument, pstate->tmpdistance, -1 );
+        SoundState * snd = snd_getState(&CData);
+        if( NULL != snd && snd->song_index != pstate->tmpargument )
+        {
+          snd_play_music( pstate->tmpargument, pstate->tmpdistance, -1 );
+        }
       }
       break;
 
@@ -4082,23 +4086,28 @@ bool_t run_function( GameState * gs, Uint32 value, CHR_REF ichr )
       break;
 
     case F_SetVolumeNearestTeammate:
-    //This sets the volume for the looping sounds of all the character's teammates
-    if( !gs->modstate.Paused && pstate->tmpdistance >= 0 && sndState.soundActive)
+      //This sets the volume for the looping sounds of all the character's teammates
+      if( !gs->modstate.Paused && pstate->tmpdistance >= 0)
       {
+        SoundState * snd = snd_getState(&CData);
+
+        if(snd->soundActive)
+        {
           //Go through all teammates
           sTmp = 0;
           while(sTmp < MAXCHR)
           {
-              if(gs->ChrList[sTmp].on && gs->ChrList[sTmp].alive && gs->ChrList[sTmp].team == pchr->team)
+            if(gs->ChrList[sTmp].on && gs->ChrList[sTmp].alive && gs->ChrList[sTmp].team == pchr->team)
+            {
+              //And set their volume to tmpdistance
+              if(pstate->tmpdistance >= 0 && gs->ChrList[sTmp].loopingchannel != INVALID_SOUND)
               {
-          //And set their volume to tmpdistance
-            if(pstate->tmpdistance >= 0 && gs->ChrList[sTmp].loopingchannel != INVALID_SOUND)
-          {
-          Mix_Volume(gs->ChrList[sTmp].loopingchannel, pstate->tmpdistance);
+                Mix_Volume(gs->ChrList[sTmp].loopingchannel, pstate->tmpdistance);
+              }
+            }
+            sTmp++;
           }
         }
-              sTmp++;
-          }
       }
       break;
 
@@ -4431,14 +4440,14 @@ retval_t set_operand( AI_STATE * pstate, ScriptInfo * slist, Uint8 variable )
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t run_operand( GameState * gs, Uint32 value, CHR_REF ichr )
+retval_t run_operand( CGame * gs, Uint32 value, CHR_REF ichr )
 {
   // ZZ> This function does the scripted arithmetic in operator,operand pairs
 
   retval_t retval = rv_succeed;
   int iTmp;
 
-  ScriptInfo * slist = GameState_getScriptInfo(gs);
+  ScriptInfo * slist = CGame_getScriptInfo(gs);
 
   Chr      * pchr = gs->ChrList + ichr;
   AI_STATE * pstate = &(pchr->aistate);
@@ -4841,7 +4850,7 @@ retval_t run_operand( GameState * gs, Uint32 value, CHR_REF ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t let_character_think( GameState * gs, CHR_REF ichr, float dUpdate )
+retval_t let_character_think( CGame * gs, CHR_REF ichr, float dUpdate )
 {
   // ZZ> This function lets one ichr do AI stuff
 
@@ -4853,9 +4862,16 @@ retval_t let_character_think( GameState * gs, CHR_REF ichr, float dUpdate )
   int      operands;
   retval_t retval = rv_succeed;
 
-  ScriptInfo * slist  = GameState_getScriptInfo(gs); 
-  Chr        * pchr   = gs->ChrList + ichr;
-  AI_STATE   * pstate = &(pchr->aistate);
+  ScriptInfo * slist;
+  Chr        * pchr;
+  AI_STATE   * pstate;
+
+  if(NULL == gs) return rv_error;
+  slist  = CGame_getScriptInfo(gs); 
+
+  if( !VALID_CHR(gs->ChrList, ichr) ) return rv_error;
+  pchr   = gs->ChrList + ichr;
+  pstate = &(pchr->aistate);
 
   // Make life easier
   pstate->oldtarget = chr_get_aitarget( gs->ChrList, MAXCHR, gs->ChrList + ichr );
@@ -4880,17 +4896,21 @@ retval_t let_character_think( GameState * gs, CHR_REF ichr, float dUpdate )
   }
 
   // Run the AI Script
+  pstate->indent       = 0;
   pstate->lastindent   = 0;
   pstate->operationsum = 0;
   pstate->offset       = slist->offset_stt[type_stt];
   offset_last          = pstate->offset;
   offset_end           = slist->offset_end[type_stt];
-
   while ( pstate->offset < offset_end )  // End Function
   {
     offset_last = pstate->offset;
     opcode = slist->buffer[pstate->offset];
     if( IS_END( opcode ) ) break;
+
+    // set the indents
+    pstate->lastindent = pstate->indent;
+    pstate->indent     = GET_INDENT(opcode);
 
     // Was it a function
     if ( IS_FUNCTION( opcode ) )
@@ -4978,7 +4998,7 @@ retval_t let_character_think( GameState * gs, CHR_REF ichr, float dUpdate )
 
   // Clear alerts for next time around
   pstate->alert = 0;
-  if ( pstate->morphed )
+  if ( pstate->morphed || pstate->type != type_stt )
   {
     pstate->alert |= ALERT_CHANGED;
     pstate->morphed = bfalse;
@@ -4988,36 +5008,37 @@ retval_t let_character_think( GameState * gs, CHR_REF ichr, float dUpdate )
 }
 
 //--------------------------------------------------------------------------------------------
-void let_ai_think( GameState * gs, float dUpdate )
+void let_ai_think( CGame * gs, float dUpdate )
 {
   // ZZ> This function lets every computer controlled character do AI stuff
 
   CHR_REF character;
   bool_t allow_thinking;
+  Chr * chrlst = gs->ChrList;
 
   numblip = 0;
   for ( character = 0; character < MAXCHR; character++ )
   {
-    if ( !VALID_CHR( gs->ChrList, character ) ) continue;
+    if ( !VALID_CHR( chrlst, character ) ) continue;
 
     allow_thinking = bfalse;
 
     // Cleaned up characters shouldn't be alert to anything else
-    if ( HAS_SOME_BITS( gs->ChrList[character].aistate.alert, ALERT_CRUSHED ) )
+    if ( HAS_SOME_BITS( chrlst[character].aistate.alert, ALERT_CRUSHED ) )
     {
-      gs->ChrList[character].aistate.alert = ALERT_CRUSHED;
+      chrlst[character].aistate.alert = ALERT_CRUSHED;
       allow_thinking = btrue;
     }
 
-    if ( HAS_SOME_BITS( gs->ChrList[character].aistate.alert, ALERT_CLEANEDUP ) )
+    if ( HAS_SOME_BITS( chrlst[character].aistate.alert, ALERT_CLEANEDUP ) )
     {
-      gs->ChrList[character].aistate.alert = ALERT_CLEANEDUP;
+      chrlst[character].aistate.alert = ALERT_CLEANEDUP;
       allow_thinking = btrue;
     };
 
     // Do not exclude items in packs. In NetHack, eggs can hatch while in your pack...
     // this may need to be handled differently. Currently dead things are thinking too much...
-    if ( !chr_in_pack( gs->ChrList, MAXCHR, character ) || gs->ChrList[character].alive )
+    if ( !chr_in_pack( chrlst, MAXCHR, character ) || chrlst[character].alive )
     {
       allow_thinking = btrue;
     }
@@ -5064,12 +5085,12 @@ void let_ai_think( GameState * gs, float dUpdate )
 
 
 
-bool_t scr_break_passage( GameState * gs, AI_STATE * pstate )
+bool_t scr_break_passage( CGame * gs, AI_STATE * pstate )
 {
   return break_passage(gs, pstate->tmpargument, pstate->tmpturn, pstate->tmpdistance, pstate->tmpx, pstate->tmpy, &(pstate->tmpx), &(pstate->tmpy) );
 }
 
-bool_t scr_search_tile_in_passage( GameState * gs, AI_STATE * pstate )
+bool_t scr_search_tile_in_passage( CGame * gs, AI_STATE * pstate )
 {
   return search_tile_in_passage( gs, pstate->tmpargument, pstate->tmpdistance, pstate->tmpx, pstate->tmpy, &(pstate->tmpx), &(pstate->tmpy) );
 }

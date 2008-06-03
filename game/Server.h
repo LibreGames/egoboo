@@ -42,13 +42,13 @@ bool_t    sv_Started();
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-typedef struct ServerState_t
+typedef struct CServer_t
 {
   bool_t initialized;
 
   // my network
-  Uint32     net_guid;
-  NetState * parent;
+  Uint32           net_guid;
+  struct CGame_t * parent;
 
   // connection to the host handling TO_HOST_* type transfers
   NetHost  * host;
@@ -77,33 +77,33 @@ typedef struct ServerState_t
   int    num_loaded;                       //
   int    num_logon;
 
-} ServerState;
+} CServer;
 
-ServerState * ServerState_create(struct NetState_t * ns);
-bool_t        ServerState_destroy(ServerState ** pss);
-ServerState * ServerState_renew(ServerState * ss);
-retval_t      ServerState_startUp(ServerState * ss);
-retval_t      ServerState_shutDown(ServerState * ss);
+CServer * CServer_create(struct CGame_t * gs);
+bool_t    CServer_destroy(CServer ** pss);
+CServer * CServer_renew(CServer * ss);
+retval_t  CServer_startUp(CServer * ss);
+retval_t  CServer_shutDown(CServer * ss);
 
-retval_t      sv_shutDown(ServerState * ss);
-bool_t        sv_Running(ServerState * ss);
+retval_t      sv_shutDown(CServer * ss);
+bool_t        sv_Running(CServer * ss);
 
-void     sv_frameStep(ServerState * ss);
+void     sv_frameStep(CServer * ss);
 
-void ServerState_reset_latches(ServerState * ss);
-void sv_talkToRemotes(ServerState * ss);
-void ServerState_bufferLatches(ServerState * ss);
-void sv_unbufferLatches(ServerState * ss);
-void ServerState_resetTimeLatches(ServerState * ss, Sint32 ichr);
+void CServer_reset_latches(CServer * ss);
+void sv_talkToRemotes(CServer * ss);
+void CServer_bufferLatches(CServer * ss);
+void sv_unbufferLatches(CServer * ss);
+void CServer_resetTimeLatches(CServer * ss, Sint32 ichr);
 
-bool_t sv_sendPacketToAllClients(ServerState * ss, SYS_PACKET * egop);
-bool_t sv_sendPacketToAllClientsGuaranteed(ServerState * ss, SYS_PACKET * egop);
+bool_t sv_sendPacketToAllClients(CServer * ss, SYS_PACKET * egop);
+bool_t sv_sendPacketToAllClientsGuaranteed(CServer * ss, SYS_PACKET * egop);
 
-bool_t sv_unhostGame(ServerState * ss);
-void   sv_letPlayersJoin(ServerState * ss);
+bool_t sv_unhostGame(CServer * ss);
+void   sv_letPlayersJoin(CServer * ss);
 
-bool_t sv_dispatchPackets(ServerState * ss);
-bool_t sv_handlePacket(ServerState * ss, ENetEvent *event);
+bool_t sv_dispatchPackets(CServer * ss);
+bool_t sv_handlePacket(CServer * ss, ENetEvent *event);
 
 // More to come...
 // int  sv_beginSinglePlayer(...)

@@ -53,21 +53,21 @@ static retval_t  _cl_startUp(void);
 static retval_t  _cl_shutDown(void);
 static int       _cl_HostCallback(void *);
 
-bool_t        ClientState_Running(ClientState * cs)  { return cl_Started() && !cs->waiting; }
+bool_t        CClient_Running(CClient * cs)  { return cl_Started() && !cs->waiting; }
 
 static int _cl_HostCallback(void *);
 
 
 //--------------------------------------------------------------------------------------------
-// private ClientState initialization
-static ClientState * ClientState_new(ClientState * cs, NetState * ns);
-static bool_t        ClientState_delete(ClientState * cs);
+// private CClient initialization
+static CClient * CClient_new(CClient * cs, CGame * gs);
+static bool_t    CClient_delete(CClient * cs);
 
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-//retval_t cl_startUp(ClientState * cs)
+//retval_t cl_startUp(CClient * cs)
 //{
 //  retval_t host_return;
 //
@@ -75,7 +75,7 @@ static bool_t        ClientState_delete(ClientState * cs);
 //
 //  if(NULL == cs)
 //  {
-//    cs = &AClientState;
+//    cs = &ACClient;
 //  }
 //
 //  host_return = NetHost_startUp(&(cs->host), NET_EGOBOO_CLIENT_PORT);
@@ -93,7 +93,7 @@ static bool_t        ClientState_delete(ClientState * cs);
 //
 ////--------------------------------------------------------------------------------------------
 //
-//retval_t cl_shutDown(ClientState * cs)
+//retval_t cl_shutDown(CClient * cs)
 //{
 //  retval_t delete_return;
 //
@@ -101,10 +101,10 @@ static bool_t        ClientState_delete(ClientState * cs);
 //
 //  if(NULL == cs)
 //  {
-//    cs = &AClientState;
+//    cs = &ACClient;
 //  }
 //
-//  delete_return = ClientState_delete(cs) ? rv_succeed : rv_fail;
+//  delete_return = CClient_delete(cs) ? rv_succeed : rv_fail;
 //
 //  cl_initialized = bfalse;
 //
@@ -113,7 +113,7 @@ static bool_t        ClientState_delete(ClientState * cs);
 //
 //--------------------------------------------------------------------------------------------
 
-retval_t ClientState_startUp(ClientState * cs)
+retval_t CClient_startUp(CClient * cs)
 {
   NetHost * cl_host;
 
@@ -122,7 +122,7 @@ retval_t ClientState_startUp(ClientState * cs)
 
   if (!net_Started())
   {
-    ClientState_shutDown(cs);
+    CClient_shutDown(cs);
     return rv_error; 
   }
 
@@ -134,30 +134,30 @@ retval_t ClientState_startUp(ClientState * cs)
   {
     // Try to create a new session
     net_logf("---------------------------------------------\n");
-    net_logf("NET INFO: ClientState_startUp() - Starting game client\n");
+    net_logf("NET INFO: CClient_startUp() - Starting game client\n");
 
     _cl_startUp();
   }
   else
   {
     net_logf("---------------------------------------------\n");
-    net_logf("NET INFO: ClientState_startUp() - Restarting game server\n");
+    net_logf("NET INFO: CClient_startUp() - Restarting game server\n");
   }
 
   // To function, the client requires the file transfer component
-  NFileState_startUp(cs->parent->nfs);
+  NFileState_startUp(cs->parent->ns->nfs);
 
   return cl_Started() ? rv_succeed : rv_fail;
 };
 
 //--------------------------------------------------------------------------------------------
-retval_t ClientState_shutDown(ClientState * cs)
+retval_t CClient_shutDown(CClient * cs)
 {
   if(NULL == cs) return rv_error;
   
   if(!cl_Started()) return rv_succeed;
 
-  net_logf("NET INFO: ClientState_shutDown() - Shutting down a game client... ");
+  net_logf("NET INFO: CClient_shutDown() - Shutting down a game client... ");
 
   // shut down the connection to the game host
   net_stopPeer( cs->gamePeer );
@@ -174,43 +174,43 @@ retval_t ClientState_shutDown(ClientState * cs)
 //
 //void cl_Quit(void)
 //{
-//  ClientState_delete(&AClientState);
+//  CClient_delete(&ACClient);
 //};
 
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ClientState * ClientState_create(NetState * ns)
+CClient * CClient_create(CGame * gs)
 {
-  ClientState * cs = (ClientState *)calloc(1, sizeof(ClientState));
-  return ClientState_new(cs, ns);
+  CClient * cs = (CClient *)calloc(1, sizeof(CClient));
+  return CClient_new(cs, gs);
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ClientState_destroy(ClientState ** pcs)
+bool_t CClient_destroy(CClient ** pcs)
 {
   bool_t retval;
 
   if(NULL == pcs || NULL == *pcs) return bfalse;
   if( !(*pcs)->initialized ) return btrue;
 
-  retval = ClientState_delete(*pcs);
+  retval = CClient_delete(*pcs);
   FREE( *pcs );
 
   return retval;
 }
 
 //--------------------------------------------------------------------------------------------
-ClientState * ClientState_new(ClientState * cs, NetState * ns)
+CClient * CClient_new(CClient * cs, CGame * gs)
 {
   int cnt;
 
-  //fprintf( stdout, "ClientState_new()\n");
+  //fprintf( stdout, "CClient_new()\n");
 
   if(NULL == cs) return cs;
-  if(cs->initialized) ClientState_delete(cs);
+  if(cs->initialized) CClient_delete(cs);
 
-  memset( cs, 0, sizeof(ClientState) );
+  memset( cs, 0, sizeof(CClient) );
 
   // only start this stuff if we are going to actually connect to the network
   if(net_Started())
@@ -220,7 +220,7 @@ ClientState * ClientState_new(ClientState * cs, NetState * ns)
     cs->net_guid = NetHost_register(cs->host, net_handlePacket, cs, cs->net_guid);
   };
 
-  cs->parent         = ns;
+  cs->parent         = gs;
   cs->gamePeer       = NULL;
   cs->logged_on      = bfalse;
   cs->selectedPlayer = -1;
@@ -231,7 +231,7 @@ ClientState * ClientState_new(ClientState * cs, NetState * ns)
     ModInfo_new(cs->rem_mod + cnt);
   };
 
-  ClientState_reset_latches(cs);
+  CClient_reset_latches(cs);
 
   cs->initialized = btrue;
 
@@ -239,7 +239,7 @@ ClientState * ClientState_new(ClientState * cs, NetState * ns)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t ClientState_delete(ClientState * cs)
+bool_t CClient_delete(CClient * cs)
 {
   if(NULL == cs) return bfalse;
 
@@ -254,16 +254,16 @@ bool_t ClientState_delete(ClientState * cs)
 }
 
 //--------------------------------------------------------------------------------------------
-ClientState * ClientState_renew(ClientState * cs)
+CClient * CClient_renew(CClient * cs)
 {
-  NetState * ns;
+  CGame * gs;
 
   if(NULL == cs) return cs;
 
-  ns = cs->parent;
+  gs = cs->parent;
 
-  ClientState_delete(cs);
-  return ClientState_new(cs, ns);
+  CClient_delete(cs);
+  return CClient_new(cs, gs);
 }
 
 //--------------------------------------------------------------------------------------------
@@ -273,7 +273,7 @@ void cl_frameStep()
 };
 
 //--------------------------------------------------------------------------------------------
-//bool_t cl_stopClient(ClientState * cs)
+//bool_t cl_stopClient(CClient * cs)
 //{
 //  NetHost * cl_host;
 //  if(NULL == cs) return bfalse;
@@ -321,7 +321,7 @@ ENetPeer * cl_startPeer(const char* hostname)
 
 
 //--------------------------------------------------------------------------------------------
-//bool_t cl_connectRemote(ClientState * cs, const char* hostname, int slot)
+//bool_t cl_connectRemote(CClient * cs, const char* hostname, int slot)
 //{
 //  // ZZ> This function tries to connect onto a server
 //
@@ -335,7 +335,7 @@ ENetPeer * cl_startPeer(const char* hostname)
 //  if(!cl_Started()) return bfalse;
 //
 //  // ensure that the cs->gamePeer is free
-//  ClientState_disconnect(cs);
+//  CClient_disconnect(cs);
 //
 //  // Now connect to the remote host
 //  cs->rem_req_peer[slot] = cl_startPeer(cs, hostname);
@@ -357,7 +357,7 @@ ENetPeer * cl_startPeer(const char* hostname)
 //};
 //
 //--------------------------------------------------------------------------------------------
-bool_t ClientState_disconnect(ClientState * cs)
+bool_t CClient_disconnect(CClient * cs)
 {
   if(NULL==cs) return bfalse;
 
@@ -378,7 +378,7 @@ bool_t ClientState_disconnect(ClientState * cs)
 
 
 //--------------------------------------------------------------------------------------------
-bool_t ClientState_connect(ClientState * cs, const char* hostname)
+bool_t CClient_connect(CClient * cs, const char* hostname)
 {
   // ZZ> This function tries to connect onto a server
 
@@ -387,33 +387,33 @@ bool_t ClientState_connect(ClientState * cs, const char* hostname)
   // throw away stupid stuff
   if(NULL == cs )
   {
-    net_logf("NET ERROR: ClientState_connect() - Called with invalid parameters.\n");
+    net_logf("NET ERROR: CClient_connect() - Called with invalid parameters.\n");
     return bfalse;
   }
 
   if( NULL == hostname || '\0' == hostname[0] )
   {
-    net_logf("NET WARN: ClientState_connect() - Called with null filename.\n");
+    net_logf("NET WARN: CClient_connect() - Called with null filename.\n");
     return bfalse;
   }
 
   // ensure a valid client host
   if(!cl_Started())
   {
-    net_logf("NET WARN: ClientState_connect() - Starting client.\n");
+    net_logf("NET WARN: CClient_connect() - Starting client.\n");
     _cl_startUp();
   }
   if(!cl_Started())
   {
-    net_logf("NET ERROR: ClientState_connect() - Cannot start client.\n");
+    net_logf("NET ERROR: CClient_connect() - Cannot start client.\n");
     return bfalse;
   }
 
   // ensure that the cs->gamePeer is not connected
-  ClientState_disconnect(cs);
+  CClient_disconnect(cs);
 
   // Now connect to the remote host
-  net_logf("NET INFO: ClientState_connect() - Attempting to open the game connection to %s:0x%04x from %s:0x%04x... ", hostname, NET_EGOBOO_SERVER_PORT, convert_host(cs->host->Host->address.host), cs->host->Host->address.port);
+  net_logf("NET INFO: CClient_connect() - Attempting to open the game connection to %s:0x%04x from %s:0x%04x... ", hostname, NET_EGOBOO_SERVER_PORT, convert_host(cs->host->Host->address.host), cs->host->Host->address.port);
 
   cs->gamePeer = cl_startPeer(hostname);
   if (NULL==cs->gamePeer)
@@ -444,7 +444,7 @@ bool_t ClientState_connect(ClientState * cs, const char* hostname)
 
 
 //--------------------------------------------------------------------------------------------
-retval_t ClientState_joinGame(ClientState * cs, const char * hostname)
+retval_t CClient_joinGame(CClient * cs, const char * hostname)
 {
   // ZZ> This function tries to join one of the sessions we found
 
@@ -457,18 +457,18 @@ retval_t ClientState_joinGame(ClientState * cs, const char * hostname)
   if(NULL == cs || NULL == hostname || '\0' == hostname[0]) return rv_fail;
 
   if ( !net_Started()  ) return rv_error;
-  if ( !ClientState_startUp(cs) ) return rv_fail;
+  if ( !CClient_startUp(cs) ) return rv_fail;
 
-  if(!ClientState_connect(cs, hostname)) return rv_error;
+  if(!CClient_connect(cs, hostname)) return rv_error;
 
   net_startNewSysPacket(&egopkt);
   sys_packet_addUint16(&egopkt, TO_HOST_LOGON);           // try to logon
   sys_packet_addString(&egopkt, CData.net_messagename);             // logon name
-  ClientState_sendPacketToHost(cs, &egopkt);
+  CClient_sendPacketToHost(cs, &egopkt);
 
   // wait up to 5 seconds for the client to respond to the request
   wait_return = net_waitForPacket(cs->host->asynch, cs->gamePeer, 5000, TO_REMOTE_LOGON, NULL);  
-  ClientState_disconnect(cs);
+  CClient_disconnect(cs);
   if(rv_fail == wait_return || rv_error == wait_return) return rv_error;
 
   stream_startRaw(&stream, buffer, sizeof(buffer));
@@ -477,7 +477,7 @@ retval_t ClientState_joinGame(ClientState * cs, const char * hostname)
   if(bfalse == stream_readUint8(&stream))
   {
     //login refused
-    ClientState_disconnect(cs);
+    CClient_disconnect(cs);
     cs->gameID = (Uint32)(-1);
     return rv_fail;
   };
@@ -489,7 +489,7 @@ retval_t ClientState_joinGame(ClientState * cs, const char * hostname)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t ClientState_unjoinGame(ClientState * cs)
+bool_t CClient_unjoinGame(CClient * cs)
 {
   NetHost * cl_host;
   SYS_PACKET egopkt;
@@ -501,33 +501,33 @@ bool_t ClientState_unjoinGame(ClientState * cs)
   if( cs->logged_on )
   {
     // send logoff messages to all the clients
-    net_logf("NET INFO: ClientState_unjoinGame() - Telling the server we are logging off.\n");
+    net_logf("NET INFO: CClient_unjoinGame() - Telling the server we are logging off.\n");
     net_startNewSysPacket(&egopkt);
     sys_packet_addUint16(&egopkt, TO_HOST_LOGOFF);
-    ClientState_sendPacketToHostGuaranteed(cs, &egopkt);
+    CClient_sendPacketToHostGuaranteed(cs, &egopkt);
 
     cs->logged_on = bfalse;
   }
 
   // close all outgoing connections
-  net_logf("NET INFO: ClientState_unjoinGame() - Disconnecting from the client host.\n");
-  ClientState_shutDown( cs );
+  net_logf("NET INFO: CClient_unjoinGame() - Disconnecting from the client host.\n");
+  CClient_shutDown( cs );
 
 
   return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-void ClientState_talkToHost(ClientState * cs)
+void CClient_talkToHost(CClient * cs)
 {
   // ZZ> This function sends the latch packets to the host machine
   Uint8 player;
   SYS_PACKET egopkt;
-  GameState * gs;
+  CGame * gs;
 
   if(!cl_Started() || !net_Started()) return;
 
-  gs = cs->parent->gs;
+  gs = cs->parent;
 
   // Start talkin'
   if (gs->wld_frame > STARTTALK && cs->loc_pla_count>0)
@@ -553,12 +553,12 @@ void ClientState_talkToHost(ClientState * cs)
     }
 
     // Send it to the host
-    ClientState_sendPacketToHost(cs, &egopkt);
+    CClient_sendPacketToHost(cs, &egopkt);
   }
 }
 
 //--------------------------------------------------------------------------------------------
-void ClientState_unbufferLatches(ClientState * cs)
+void CClient_unbufferLatches(CClient * cs)
 {
   // ZZ> This function sets character latches based on player input to the host
   int    cnt;
@@ -567,7 +567,7 @@ void ClientState_unbufferLatches(ClientState * cs)
   Chr * pchr;
   CHR_TIME_LATCH * ptl;
 
-  GameState * gs = cs->parent->gs;
+  CGame * gs = cs->parent;
 
   // Copy the latches
   stamp = gs->wld_frame;
@@ -598,9 +598,9 @@ void ClientState_unbufferLatches(ClientState * cs)
 
 
 //--------------------------------------------------------------------------------------------
-bool_t cl_handlePacket(ClientState * cs, ENetEvent *event)
+bool_t cl_handlePacket(CClient * cs, ENetEvent *event)
 {
-  GameState * gs;
+  CGame * gs;
 
   Uint16 header;
   STRING filename;   // also used for reading various strings
@@ -612,7 +612,7 @@ bool_t cl_handlePacket(ClientState * cs, ENetEvent *event)
 
   if(NULL == cs) return bfalse;
 
-  gs = cs->parent->gs;
+  gs = cs->parent;
 
   // do some error trapping
   //if(!cl_Started()) return bfalse;
@@ -638,7 +638,7 @@ bool_t cl_handlePacket(ClientState * cs, ENetEvent *event)
     cs->waiting   = btrue;
 
     // shut down the connection gracefully on this end
-    ClientState_disconnect(cs);
+    CClient_disconnect(cs);
 
     break;
 
@@ -683,7 +683,7 @@ bool_t cl_handlePacket(ClientState * cs, ENetEvent *event)
       {
         net_startNewSysPacket(&egopkt);
         sys_packet_addUint16(&egopkt, TO_HOST_MODULEBAD);
-        ClientState_sendPacketToHostGuaranteed(cs, &egopkt);
+        CClient_sendPacketToHostGuaranteed(cs, &egopkt);
       }
       else
       {
@@ -693,7 +693,7 @@ bool_t cl_handlePacket(ClientState * cs, ENetEvent *event)
         // Tell the host we're ready
         net_startNewSysPacket(&egopkt);
         sys_packet_addUint16(&egopkt, TO_HOST_MODULEOK);
-        ClientState_sendPacketToHostGuaranteed(cs, &egopkt);
+        CClient_sendPacketToHostGuaranteed(cs, &egopkt);
       }
     }
 
@@ -882,14 +882,14 @@ bool_t cl_handlePacket(ClientState * cs, ENetEvent *event)
 }
 
 //--------------------------------------------------------------------------------------------
-void ClientState_reset_latches(ClientState * cs)
+void CClient_reset_latches(CClient * cs)
 {
   int cnt;
   if(NULL==cs) return;
 
   for(cnt = 0; cnt<MAXCHR; cnt++)
   {
-    ClientState_resetTimeLatches(cs, cnt);
+    CClient_resetTimeLatches(cs, cnt);
   };
 
   cs->tlb.nextstamp = INVALID_TIMESTAMP;
@@ -898,7 +898,7 @@ void ClientState_reset_latches(ClientState * cs)
 
 
 //--------------------------------------------------------------------------------------------
-void ClientState_resetTimeLatches(ClientState * cs, Sint32 ichr)
+void CClient_resetTimeLatches(CClient * cs, Sint32 ichr)
 {
   int cnt;
   CHR_TIME_LATCH *ptl;
@@ -918,13 +918,13 @@ void ClientState_resetTimeLatches(ClientState * cs, Sint32 ichr)
 };
 
 //--------------------------------------------------------------------------------------------
-void ClientState_bufferLatches(ClientState * cs)
+void CClient_bufferLatches(CClient * cs)
 {
   // ZZ> This function buffers the player data
   Uint32 player, stamp, uiTime, ichr;
   CHR_TIME_LATCH *ptl;
 
-  GameState * gs     = cs->parent->gs;
+  CGame * gs     = cs->parent;
   Chr       * chrlst = gs->ChrList;
   Player    * plalst = gs->PlaList;
 
@@ -989,7 +989,7 @@ int _cl_HostCallback(void * data)
 }
 
 //--------------------------------------------------------------------------------------------
-//bool_t cl_dispatchPackets(ClientState * cs)
+//bool_t cl_dispatchPackets(CClient * cs)
 //{
 //  ENetEvent event;
 //  CListIn_Info cin_info, *pcin_info;
@@ -1094,7 +1094,7 @@ int _cl_HostCallback(void * data)
 //};
 
 //--------------------------------------------------------------------------------------------
-int cl_find_peer_index(ClientState * cs)
+int cl_find_peer_index(CClient * cs)
 {
   int i = -1;
 
@@ -1113,7 +1113,7 @@ int cl_find_peer_index(ClientState * cs)
 
 
 //--------------------------------------------------------------------------------------------
-bool_t cl_begin_request_module(ClientState * cs)
+bool_t cl_begin_request_module(CClient * cs)
 {
   int i;
 
@@ -1137,7 +1137,7 @@ bool_t cl_begin_request_module(ClientState * cs)
 
 
 //--------------------------------------------------------------------------------------------
-bool_t cl_end_request_module(ClientState * cs)
+bool_t cl_end_request_module(CClient * cs)
 {
   int i;
 
@@ -1162,7 +1162,7 @@ bool_t cl_end_request_module(ClientState * cs)
 
 
 //--------------------------------------------------------------------------------------------
-void cl_request_module_info(ClientState * cs)
+void cl_request_module_info(CClient * cs)
 {
   // BB > begin the asynchronous transfer of hosted module info from each of the 
   //      potential hosts
@@ -1193,7 +1193,7 @@ void cl_request_module_info(ClientState * cs)
 
 
 //--------------------------------------------------------------------------------------------
-bool_t cl_load_module_info(ClientState * cs)
+bool_t cl_load_module_info(CClient * cs)
 {
   // BB > finish downloading any module info from a given host
 
@@ -1247,7 +1247,7 @@ bool_t cl_load_module_info(ClientState * cs)
 }
 
 //--------------------------------------------------------------------------------------------
-void cl_request_module_images(ClientState * cs)
+void cl_request_module_images(CClient * cs)
 {
   // BB > send a request to the server to download the module images
   //      images will not be downloaded unless the local CRC does not match the
@@ -1320,53 +1320,21 @@ void cl_request_module_images(ClientState * cs)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t cl_load_module_images(ClientState * cs)
-{
-  // BB> This function loads the title image(s) for the modules that the client
-  //     is browsing
-
-  int cnt;
-  bool_t all_loaded = btrue;
-
-  all_loaded = btrue;
-  for(cnt=0; cnt<MAXMODULE; cnt++)
-  {
-    // check to see if the module has been loaded
-    if(MAXMODULE==cs->rem_mod[cnt].tx_title_idx && cs->rem_mod[cnt].is_hosted)
-    {
-      // see if the the file has appeared locally 
-      snprintf(CStringTmp1, sizeof(CStringTmp1), "%s/%s/%s/%s", CData.modules_dir, cs->rem_mod[cnt].loadname, CData.gamedat_dir, CData.title_bitmap);
-      cs->rem_mod[cnt].tx_title_idx = module_load_one_image(cnt, CStringTmp1);
-
-      if(MAXMODULE==cs->rem_mod[cnt].tx_title_idx)
-      {
-        all_loaded = bfalse;
-        break;
-      }
-    }
-  }
-
-  return all_loaded;
-}
-
-
-
-//--------------------------------------------------------------------------------------------
-bool_t ClientState_sendPacketToHost(ClientState * cs, SYS_PACKET * egop)
+bool_t CClient_sendPacketToHost(CClient * cs, SYS_PACKET * egop)
 {
   // ZZ> This function sends a packet to the host
 
-  net_logf("NET INFO: ClientState_sendPacketToHost()\n");
+  net_logf("NET INFO: CClient_sendPacketToHost()\n");
 
   if(NULL == cs || NULL == egop)
   {
-    net_logf("NET ERROR: ClientState_sendPacketToHost() - Called with invalid parameters.\n");
+    net_logf("NET ERROR: CClient_sendPacketToHost() - Called with invalid parameters.\n");
     return bfalse;
   }
 
   if(!cl_Started())
   {
-    net_logf("NET WARN: ClientState_sendPacketToHost() - Client is not active.\n");
+    net_logf("NET WARN: CClient_sendPacketToHost() - Client is not active.\n");
     return bfalse;
   }
 
@@ -1374,21 +1342,21 @@ bool_t ClientState_sendPacketToHost(ClientState * cs, SYS_PACKET * egop)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ClientState_sendPacketToHostGuaranteed(ClientState * cs, SYS_PACKET * egop)
+bool_t CClient_sendPacketToHostGuaranteed(CClient * cs, SYS_PACKET * egop)
 {
   // ZZ> This function sends a packet to the host
 
-  net_logf("NET INFO: ClientState_sendPacketToHostGuaranteed()\n");
+  net_logf("NET INFO: CClient_sendPacketToHostGuaranteed()\n");
 
   if(NULL == cs || NULL == egop)
   {
-    net_logf("NET ERROR: ClientState_sendPacketToHostGuaranteed() - Called with invalid parameters.\n");
+    net_logf("NET ERROR: CClient_sendPacketToHostGuaranteed() - Called with invalid parameters.\n");
     return bfalse;
   }
 
   if(!cl_Started())
   {
-    net_logf("NET WARN: ClientState_sendPacketToHostGuaranteed() - Client is not active.\n");
+    net_logf("NET WARN: CClient_sendPacketToHostGuaranteed() - Client is not active.\n");
     return bfalse;
   }
 
@@ -1481,7 +1449,7 @@ Status * Status_renew( Status * pstat )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t StatList_new( ClientState * cs )
+bool_t StatList_new( CClient * cs )
 {
   int i;
 
@@ -1497,7 +1465,7 @@ bool_t StatList_new( ClientState * cs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t StatList_delete( ClientState * cs )
+bool_t StatList_delete( CClient * cs )
 {
   int i;
 
@@ -1513,7 +1481,7 @@ bool_t StatList_delete( ClientState * cs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t StatList_renew( ClientState * cs )
+bool_t StatList_renew( CClient * cs )
 {
   int i;
 

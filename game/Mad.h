@@ -5,13 +5,17 @@
 #include "egoboo_math.h"
 #include "egoboo.h"
 
-struct GameState_t;
+struct CGame_t;
 
 #define MAXMODEL                        MAXPROFILE   // Max number of models
 //#define MD2START                        0x32504449  // MD2 files start with these four bytes
 #define MD2MAXLOADSIZE                  (512*1024)   // Don't load any models bigger than 512k
 #define EQUALLIGHTINDEX                 162          // I added an extra index to do the spikey mace...
 #define MD2LIGHTINDICES                 163          // MD2's store vertices as x,y,z,normal
+
+#define MAXLIGHTROTATION                256         // Number of premade light maps
+#define MAXSPEKLEVEL                    16          // Number of premade specularities
+
 
 extern float           spek_global[MAXLIGHTROTATION][MD2LIGHTINDICES];
 extern float           spek_local[MAXLIGHTROTATION][MD2LIGHTINDICES];
@@ -179,7 +183,7 @@ Mad *  Mad_new(Mad * pmad);
 bool_t Mad_delete(Mad *pmad);
 Mad *  Mad_renew(Mad * pmad);
 
-void   MadList_free_one( struct GameState_t * gs, Uint16 imdl );
+void   MadList_free_one( struct CGame_t * gs, Uint16 imdl );
 
 #define VALID_MDL_RANGE(XX) ( ((XX)>=0) && ((XX)<MAXMODEL) )
 #define VALID_MDL(XX)       ( VALID_MDL_RANGE(XX) )
@@ -187,20 +191,20 @@ void   MadList_free_one( struct GameState_t * gs, Uint16 imdl );
 
 ACTION action_number(char * szName);
 Uint16 action_frame();
-void   action_copy_correct( struct GameState_t * gs, Uint16 object, ACTION actiona, ACTION actionb );
-void   get_walk_frame( struct GameState_t * gs, Uint16 object, LIPT lip_trans, ACTION action );
+void   action_copy_correct( struct CGame_t * gs, Uint16 object, ACTION actiona, ACTION actionb );
+void   get_walk_frame( struct CGame_t * gs, Uint16 object, LIPT lip_trans, ACTION action );
 Uint16 get_framefx( char * szName );
-void   make_framelip( struct GameState_t * gs, Uint16 object, ACTION action );
-void   get_actions( struct GameState_t * gs, Uint16 object );
-void   make_mad_equally_lit( struct GameState_t * gs, Uint16 model );
+void   make_framelip( struct CGame_t * gs, Uint16 object, ACTION action );
+void   get_actions( struct CGame_t * gs, Uint16 object );
+void   make_mad_equally_lit( struct CGame_t * gs, Uint16 model );
 
 bool_t mad_generate_bbox_tree(int max_level, Mad * pmad);
 
 
-Uint16 MadList_load_one( struct GameState_t * gs, char * szModpath, char * szObjectname, Uint16 modelindex );
+Uint16 MadList_load_one( struct CGame_t * gs, char * szModpath, char * szObjectname, Uint16 modelindex );
 
 bool_t mad_display_bbox_tree(int level, matrix_4x4 matrix, Mad * pmad, int frame1, int frame2);
-void load_copy_file( struct GameState_t * gs, char * szModpath, char * szObjectname, Uint16 object );
+void load_copy_file( struct CGame_t * gs, char * szModpath, char * szObjectname, Uint16 object );
 
-void mad_clear_pips( struct GameState_t * gs );
-void MadList_log_used( struct GameState_t * gs, char *savename );
+void mad_clear_pips( struct CGame_t * gs );
+void MadList_log_used( struct CGame_t * gs, char *savename );

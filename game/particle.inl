@@ -5,7 +5,7 @@
 #include "game.h"
 
 //--------------------------------------------------------------------------------------------
-const CHR_REF prt_get_owner( GameState * gs, PRT_REF iprt )
+const CHR_REF prt_get_owner( CGame * gs, PRT_REF iprt )
 {
   if ( !VALID_PRT( gs->PrtList, iprt ) ) return MAXCHR;
 
@@ -14,7 +14,7 @@ const CHR_REF prt_get_owner( GameState * gs, PRT_REF iprt )
 };
 
 //--------------------------------------------------------------------------------------------
-const CHR_REF prt_get_target( GameState * gs, PRT_REF iprt )
+const CHR_REF prt_get_target( CGame * gs, PRT_REF iprt )
 {
   if ( !VALID_PRT( gs->PrtList, iprt ) ) return MAXCHR;
 
@@ -23,7 +23,7 @@ const CHR_REF prt_get_target( GameState * gs, PRT_REF iprt )
 };
 
 //--------------------------------------------------------------------------------------------
-const CHR_REF prt_get_attachedtochr( GameState * gs, PRT_REF iprt )
+const CHR_REF prt_get_attachedtochr( CGame * gs, PRT_REF iprt )
 {
   if ( !VALID_PRT( gs->PrtList, iprt ) ) return MAXCHR;
 

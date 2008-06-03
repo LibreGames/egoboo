@@ -80,7 +80,7 @@ bool_t allocate_bumplist(int blocks)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t load_mesh( GameState * gs, char *modname )
+bool_t load_mesh( CGame * gs, char *modname )
 {
   // ZZ> This function loads the "LEVEL.MPD" file
 
@@ -401,7 +401,7 @@ void make_twist()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mesh_calc_normal_fan( GameState * gs, int fan, vect3 * pnrm, vect3 * ppos )
+bool_t mesh_calc_normal_fan( CGame * gs, int fan, vect3 * pnrm, vect3 * ppos )
 {
   bool_t retval = bfalse;
   Uint32 cnt;
@@ -480,7 +480,7 @@ bool_t mesh_calc_normal_fan( GameState * gs, int fan, vect3 * pnrm, vect3 * ppos
 
 
 //--------------------------------------------------------------------------------------------
-bool_t mesh_calc_normal_pos( GameState * gs, int fan, vect3 pos, vect3 * pnrm )
+bool_t mesh_calc_normal_pos( CGame * gs, int fan, vect3 pos, vect3 * pnrm )
 {
   bool_t retval = bfalse;
   vect3 normal;
@@ -548,7 +548,7 @@ bool_t mesh_calc_normal_pos( GameState * gs, int fan, vect3 pos, vect3 * pnrm )
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t mesh_calc_normal( GameState * gs, vect3 pos, vect3 * pnrm )
+bool_t mesh_calc_normal( CGame * gs, vect3 pos, vect3 * pnrm )
 {
   bool_t retval = bfalse;
   Uint32 fan;
@@ -619,7 +619,7 @@ bool_t mesh_calc_normal( GameState * gs, vect3 pos, vect3 * pnrm )
 };
 
 //---------------------------------------------------------------------------------------------
-float mesh_get_level( GameState * gs, Uint32 fan, float x, float y, bool_t waterwalk )
+float mesh_get_level( CGame * gs, Uint32 fan, float x, float y, bool_t waterwalk )
 {
   // ZZ> This function returns the height of a point within a mesh fan, precise
   //     If waterwalk is nonzero and the fan is gs->water.y, then the level returned is the
@@ -781,7 +781,7 @@ bool_t MeshMem_delete(MeshMem * mem)
 
 
 //--------------------------------------------------------------------------------------------
-void set_fan_colorl( GameState * gs, int fan_x, int fan_y, int color )
+void set_fan_colorl( CGame * gs, int fan_x, int fan_y, int color )
 {
   Uint32 cnt, fan, vert, numvert;
 
@@ -802,7 +802,7 @@ void set_fan_colorl( GameState * gs, int fan_x, int fan_y, int color )
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 mesh_hitawall( GameState * gs, vect3 pos, float size_x, float size_y, Uint32 collision_bits, vect3 * nrm )
+Uint32 mesh_hitawall( CGame * gs, vect3 pos, float size_x, float size_y, Uint32 collision_bits, vect3 * nrm )
 {
   // ZZ> This function returns nonzero if <pos.x, pos.y> is in an invalid tile
 

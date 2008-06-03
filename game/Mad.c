@@ -73,7 +73,7 @@ bool_t test_frame_name( char * szName, char letter )
 }
 
 //--------------------------------------------------------------------------------------------
-void action_copy_correct( GameState * gs, Uint16 object, ACTION actiona, ACTION actionb )
+void action_copy_correct( CGame * gs, Uint16 object, ACTION actiona, ACTION actionb )
 {
   // ZZ> This function makes sure both actions are valid if either of them
   //     are valid.  It will copy start and ends to mirror the valid action.
@@ -103,7 +103,7 @@ void action_copy_correct( GameState * gs, Uint16 object, ACTION actiona, ACTION 
 }
 
 //--------------------------------------------------------------------------------------------
-void get_walk_frame( GameState * gs, Uint16 object, LIPT lip_trans, ACTION action )
+void get_walk_frame( CGame * gs, Uint16 object, LIPT lip_trans, ACTION action )
 {
   // ZZ> This helps make walking look right
 
@@ -160,7 +160,7 @@ Uint16 get_framefx( char * szName )
 }
 
 //--------------------------------------------------------------------------------------------
-void make_framelip( GameState * gs, Uint16 imdl, ACTION action )
+void make_framelip( CGame * gs, Uint16 imdl, ACTION action )
 {
   // ZZ> This helps make walking look right
 
@@ -180,7 +180,7 @@ void make_framelip( GameState * gs, Uint16 imdl, ACTION action )
 }
 
 //--------------------------------------------------------------------------------------------
-void get_actions( GameState * gs, Uint16 imdl )
+void get_actions( CGame * gs, Uint16 imdl )
 {
   // ZZ> This function creates the iframe lists for each action based on the
   //     name of each md2 iframe in the model
@@ -326,7 +326,7 @@ void get_actions( GameState * gs, Uint16 imdl )
 }
 
 //--------------------------------------------------------------------------------------------
-void make_mad_equally_lit( GameState * gs, Uint16 model )
+void make_mad_equally_lit( CGame * gs, Uint16 model )
 {
   // ZZ> This function makes ultra low poly models look better
 
@@ -354,7 +354,7 @@ void make_mad_equally_lit( GameState * gs, Uint16 model )
 }
 
 //--------------------------------------------------------------------------------------------
-void load_copy_file( GameState * gs, char * szObjectpath, char * szObjectname, Uint16 object )
+void load_copy_file( CGame * gs, char * szObjectpath, char * szObjectname, Uint16 object )
 {
   // ZZ> This function copies a model's actions
 
@@ -1184,7 +1184,7 @@ Mad *  Mad_renew(Mad * pmad)
 
 
 //---------------------------------------------------------------------------------------------
-Uint16 MadList_load_one( GameState * gs, char * szObjectpath, char * szObjectname, Uint16 imdl )
+Uint16 MadList_load_one( CGame * gs, char * szObjectpath, char * szObjectname, Uint16 imdl )
 {
   // ZZ> This function loads an id md2 file, storing the converted data in the indexed model
   //    int iFileHandleRead;
@@ -1215,7 +1215,7 @@ Uint16 MadList_load_one( GameState * gs, char * szObjectpath, char * szObjectnam
   }
 
   // Load the AI script for this object
-  pmad->ai = load_ai_script( GameState_getScriptInfo(gs), szObjectpath, szObjectname );
+  pmad->ai = load_ai_script( CGame_getScriptInfo(gs), szObjectpath, szObjectname );
   if ( MAXAI == pmad->ai )
   {
     // use the default script
@@ -1263,7 +1263,7 @@ Uint16 MadList_load_one( GameState * gs, char * szObjectpath, char * szObjectnam
 }
 
 //---------------------------------------------------------------------------------------------
-void MadList_free_one( GameState * gs, Uint16 imdl )
+void MadList_free_one( CGame * gs, Uint16 imdl )
 {
   // ZZ> This function loads an id md2 file, storing the converted data in the indexed model
   //    int iFileHandleRead;
@@ -1275,7 +1275,7 @@ void MadList_free_one( GameState * gs, Uint16 imdl )
 
 
 //--------------------------------------------------------------------------------------------
-void MadList_log_used( GameState * gs, char *savename )
+void MadList_log_used( CGame * gs, char *savename )
 {
   // ZZ> This is a debug function for checking model loads
 
@@ -1398,7 +1398,7 @@ bool_t mad_display_bbox_tree(int level, matrix_4x4 matrix, Mad * pmad, int frame
 }
 
 //--------------------------------------------------------------------------------------------
-void mad_clear_pips( GameState * gs )
+void mad_clear_pips( CGame * gs )
 {
   int cnt, object;
 

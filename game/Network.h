@@ -144,9 +144,9 @@ enum NetworkConstant
 
 //---------------------------------------------------------------------------------------------
 
-struct GameState_t;
-struct ClientState_t;
-struct ServerState_t;
+struct CGame_t;
+struct CClient_t;
+struct CServer_t;
 struct NFileState_t;
 
 //---------------------------------------------------------------------------------------------
@@ -342,23 +342,21 @@ bool_t NetHost_close(NetHost * nh, void * client_data);
 #define NET_REQ_SIZE 1024
 
 
-typedef struct NetState_t
+typedef struct CNet_t
 {
   bool_t initialized;
 
   // external links
-  struct GameState_t   * gs;
-  struct ClientState_t * cs;
-  struct ServerState_t * ss;
-  struct NFileState_t  * nfs;
+  struct CGame_t      * parent;
+  struct NFileState_t * nfs;
 
-} NetState;
+} CNet;
 
 
-NetState * NetState_create(struct GameState_t * gs);
-bool_t     NetState_destroy(NetState ** pns);
-bool_t     NetState_initialize(NetState * ns);
-bool_t     NetState_shutDown(NetState * ns);
+CNet * CNet_create(struct CGame_t * gs);
+bool_t CNet_destroy(CNet ** pns);
+bool_t CNet_initialize(CNet * ns);
+bool_t CNet_shutDown(CNet * ns);
 
 //------------------------------------------------------------------
 // Packet writing
@@ -409,7 +407,7 @@ retval_t net_startUp(struct ConfigData_t * cd);
 retval_t net_shutDown();
 bool_t   net_Started();
 
-bool_t     net_handlePacket(NetState * ns, ENetEvent *event);
+bool_t     net_handlePacket(CNet * ns, ENetEvent *event);
 ENetPeer * net_disconnectPeer(ENetPeer * peer, int granularity_ms, int timeout_ms);
 retval_t   net_waitForPacket(NetAsynchData * asynch_list, ENetPeer * peer, Uint32 timeout, Uint16 packet_type, size_t * data_size);
 
@@ -426,11 +424,11 @@ NetRequest * net_prepareWaitForPacket(NetAsynchData * request_list, ENetPeer ** 
 
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
-retval_t net_copyFileToAllPeers(NetState * ns, char *source, char *dest);
-retval_t net_copyFileToHost(NetState * ns, char *source, char *dest);
-retval_t net_copyDirectoryToHost(NetState * ns, char *dirname, char *todirname);
-retval_t net_copyDirectoryToAllPeers(NetState * ns, char *dirname, char *todirname);
-retval_t net_copyDirectoryToPeer(NetState * ns, ENetPeer * peer, char *dirname, char *todirname);
+retval_t net_copyFileToAllPeers(CNet * ns, char *source, char *dest);
+retval_t net_copyFileToHost(CNet * ns, char *source, char *dest);
+retval_t net_copyDirectoryToHost(CNet * ns, char *dirname, char *todirname);
+retval_t net_copyDirectoryToAllPeers(CNet * ns, char *dirname, char *todirname);
+retval_t net_copyDirectoryToPeer(CNet * ns, ENetPeer * peer, char *dirname, char *todirname);
 
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
@@ -481,13 +479,13 @@ INLINE size_t stream_remainingSize(STREAM * p);
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
 
-void    input_net_message(struct GameState_t * gs);
-void    net_sayHello(NetState * ns);
-bool_t  net_beginGame(struct GameState_t * ns);
+void    input_net_message(struct CGame_t * gs);
+void    net_sayHello(struct CGame_t * gs);
+bool_t  net_beginGame(struct CGame_t * gs);
 
-void close_session(struct NetState_t * ns);
+void close_session(struct CNet_t * ns);
 
-PLA_REF add_player(struct GameState_t * gs,  CHR_REF character, Uint8 device );
+PLA_REF add_player(struct CGame_t * gs,  CHR_REF character, Uint8 device );
 char *  convert_host(Uint32 host);
 
 char * net_crack_enet_packet_type(ENetPacket * enpkt);

@@ -8,7 +8,7 @@
 
 #define MAXPROFILE 1024
 
-struct GameState_t;
+struct CGame_t;
 struct Chr_t;
 struct Prt_t;
 
@@ -81,8 +81,8 @@ TeamInfo * TeamInfo_renew(TeamInfo *pteam);
 
 #define VALID_TEAM_RANGE(XX) ( ((XX)>=0) && ((XX)<TEAM_COUNT) )
 
-INLINE const CHR_REF team_get_sissy( struct GameState_t * gs, TEAM_REF iteam );
-INLINE const CHR_REF team_get_leader( struct GameState_t * gs, TEAM_REF iteam );
+INLINE const CHR_REF team_get_sissy( struct CGame_t * gs, TEAM_REF iteam );
+INLINE const CHR_REF team_get_leader( struct CGame_t * gs, TEAM_REF iteam );
 
 //--------------------------------------------------------------------------------------------
 typedef struct vertex_data_blended_t
@@ -190,16 +190,16 @@ extern TILE_DAMAGE GTile_Dam;
 //--------------------------------------------------------------------------------------------
 
 
-void setup_particles( struct GameState_t * gs );
+void setup_particles( struct CGame_t * gs );
 
-void spawn_bump_particles( struct GameState_t * gs, CHR_REF character, PRT_REF particle );
+void spawn_bump_particles( struct CGame_t * gs, CHR_REF character, PRT_REF particle );
 
-void   disaffirm_attached_particles( struct GameState_t * gs, CHR_REF character );
-Uint16 number_of_attached_particles( struct GameState_t * gs, CHR_REF character );
-void   reaffirm_attached_particles( struct GameState_t * gs, CHR_REF character );
+void   disaffirm_attached_particles( struct CGame_t * gs, CHR_REF character );
+Uint16 number_of_attached_particles( struct CGame_t * gs, CHR_REF character );
+void   reaffirm_attached_particles( struct CGame_t * gs, CHR_REF character );
 
-void switch_team( struct GameState_t * gs, CHR_REF character, TEAM team );
-int  restock_ammo( struct GameState_t * gs, CHR_REF character, IDSZ idsz );
-void issue_clean( struct GameState_t * gs, CHR_REF character );
+void switch_team( struct CGame_t * gs, CHR_REF character, TEAM team );
+int  restock_ammo( struct CGame_t * gs, CHR_REF character, IDSZ idsz );
+void issue_clean( struct CGame_t * gs, CHR_REF character );
 
-int load_one_object( struct GameState_t * gs, int skin_count, char * szObjectpath, char* szObjectname );
+int load_one_object( struct CGame_t * gs, int skin_count, char * szObjectpath, char* szObjectname );

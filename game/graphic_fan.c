@@ -41,7 +41,7 @@ void render_fan_ref( Uint32 fan, char tex_loaded, float level )
 {
   // ZZ> This function draws a mesh fan
 
-  GameState * gs = gfxState.gs;
+  CGame * gs = gfxState.gs;
 
   GLVertex v[MAXMESHVERTICES];
   Uint16 commands;
@@ -181,7 +181,7 @@ void render_fan( Uint32 fan, char tex_loaded )
 {
   // ZZ> This function draws a mesh fan
 
-  GameState * gs = gfxState.gs;
+  CGame * gs = gfxState.gs;
 
   GLVertex v[MAXMESHVERTICES];
   Uint16 commands;
@@ -435,7 +435,7 @@ void render_water_fan( Uint32 fan, Uint8 layer, Uint8 mode )
 {
   // ZZ> This function draws a water fan
 
-  GameState * gs = gfxState.gs;
+  CGame * gs = gfxState.gs;
 
   GLVertex v[MAXMESHVERTICES];
   Uint16 type;
@@ -525,7 +525,7 @@ void render_water_fan_lit( Uint32 fan, Uint8 layer, Uint8 mode )
 {
   // ZZ> This function draws a water fan
 
-  GameState * gs = gfxState.gs;
+  CGame * gs = gfxState.gs;
 
   GLVertex v[MAXMESHVERTICES];
   Uint16 type;
@@ -610,7 +610,7 @@ void render_water_fan_lit( Uint32 fan, Uint8 layer, Uint8 mode )
 
 bool_t make_renderlist(RENDERLIST * prlst)
 {
-  GameState * gs;
+  CGame * gs;
   int fan, fan_count;
   bool_t inview;
   static Uint32 next_wldframe = 0;
@@ -702,7 +702,7 @@ void set_fan_light( int fanx, int fany, PRT_REF particle )
   float light_r, light_g, light_b;
   float light_r0, light_g0, light_b0;
 
-  GameState * gs = gfxState.gs;
+  CGame * gs = gfxState.gs;
 
 
   if ( fanx >= 0 && fanx < gs->mesh.size_x && fany >= 0 && fany < gs->mesh.size_y )
@@ -773,7 +773,7 @@ void do_dynalight()
 {
   // ZZ> This function does dynamic lighting of visible fans
 
-  GameState * gs = gfxState.gs;
+  CGame * gs = gfxState.gs;
 
   int cnt, lastvertex, vertex, fan, entry, fanx, fany, addx, addy;
   float light_r, light_g, light_b;

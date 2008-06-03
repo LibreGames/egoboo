@@ -40,7 +40,7 @@
 
 //--------------------------------------------------------------------------------------------
 
-struct GameState_t;
+struct CGame_t;
 
 //--------------------------------------------------------------------------------------------
 typedef struct import_info_t
@@ -125,19 +125,14 @@ ModState * ModState_renew(ModState * ms, MOD_INFO * mi, Uint32 seed);
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-extern GLtexture TxTitleImage[MAXMODULE];      /* title images */
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-
-bool_t module_load( struct GameState_t * gs, char *smallname );
-void   module_release(  struct GameState_t * gs  );
-void   module_quit( struct GameState_t * gs );
+bool_t module_load( struct CGame_t * gs, char *smallname );
+void   module_release(  struct CGame_t * gs  );
+void   module_quit( struct CGame_t * gs );
 
 bool_t module_reference_matches( char *szLoadName, IDSZ idsz );
 void   module_add_idsz( char *szLoadName, IDSZ idsz );
 int    module_find( char *smallname, MOD_INFO * mi_ary, size_t mi_size );
-Uint32 module_load_one_image( int titleimage, char *szLoadName );
 bool_t module_read_data( struct mod_data_t * pmod, char *szLoadName );
 bool_t module_read_summary( char *szLoadName, MOD_SUMMARY * ms );
-size_t module_load_all_data(MOD_INFO * mi, size_t sz);
+
+void ModInfo_clear_all_titleimages( MOD_INFO * mi_ary, size_t mi_count );

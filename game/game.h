@@ -12,7 +12,10 @@
 #include "menu.h"
 #include "script.h"
 
-struct NetState_t;
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+struct CNet_t;
 struct ConfigData_t;
 struct Status_t;
 struct Chr_t;
@@ -21,6 +24,9 @@ struct GraphicState_t;
 struct script_global_values_t;
 struct GSStack_t;
 
+struct CClient_t; 
+struct CServer_t;
+
 enum Action_e;
 enum Team_e;
 enum Experience_e;
@@ -28,7 +34,7 @@ enum Experience_e;
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-typedef struct GameState_t
+typedef struct CGame_t
 {
   bool_t initialized;
 
@@ -58,13 +64,10 @@ typedef struct GameState_t
   double dFrame, dUpdate;
 
   // links to important data
-  struct NetState_t    * ns;
+  struct CNet_t    * ns;
   struct ConfigData_t  * cd;
-
-  // aliases to the NetState pointers
-  struct ClientState_t * al_cs;
-  struct ServerState_t * al_ss;
-
+  struct CClient_t     * cl;
+  struct CServer_t     * sv;
 
   // profiles
   Cap CapList[MAXCAP];
@@ -140,60 +143,60 @@ typedef struct GameState_t
   bool_t pitskill;              // Do they kill?
 
 
-} GameState;
+} CGame;
 
-GameState * GameState_create();
-bool_t GameState_destroy(GameState ** gs );
-bool_t GameState_renew(GameState * gs);
+CGame * CGame_create(struct CNet_t * net,  struct CClient_t * cl, struct CServer_t * sv);
+bool_t  CGame_destroy(CGame ** gs );
+bool_t  CGame_renew(CGame * gs);
 
-INLINE ScriptInfo * GameState_getScriptInfo(GameState * gs) { if(NULL==gs) return NULL; return &(gs->ScriptList); }
-INLINE ProcState * GameState_getProcedure(GameState * gs) { if(NULL==gs) return NULL; return &(gs->proc); }
-INLINE MenuProc  * GameState_getMenuProc(GameState * gs) { if(NULL==gs) return NULL; return &(gs->igm); }
+INLINE ScriptInfo * CGame_getScriptInfo(CGame * gs) { if(NULL==gs) return NULL; return &(gs->ScriptList); }
+INLINE ProcState *  CGame_getProcedure(CGame * gs)  { if(NULL==gs) return NULL; return &(gs->proc); }
+INLINE MenuProc  *  CGame_getMenuProc(CGame * gs)   { if(NULL==gs) return NULL; return &(gs->igm); }
 
 
-bool_t CapList_new( GameState * gs );
-bool_t CapList_delete( GameState * gs );
-bool_t CapList_renew( GameState * gs );
+bool_t CapList_new( CGame * gs );
+bool_t CapList_delete( CGame * gs );
+bool_t CapList_renew( CGame * gs );
 
-bool_t EveList_new( GameState * gs );
-bool_t EveList_delete( GameState * gs );
-bool_t EveList_renew( GameState * gs );
+bool_t EveList_new( CGame * gs );
+bool_t EveList_delete( CGame * gs );
+bool_t EveList_renew( CGame * gs );
 
-bool_t MadList_new( GameState * gs );
-bool_t MadList_delete( GameState * gs );
-bool_t MadList_renew( GameState * gs );
+bool_t MadList_new( CGame * gs );
+bool_t MadList_delete( CGame * gs );
+bool_t MadList_renew( CGame * gs );
 
-bool_t PipList_new( GameState * gs );
-bool_t PipList_delete( GameState * gs );
-bool_t PipList_renew( GameState * gs );
+bool_t PipList_new( CGame * gs );
+bool_t PipList_delete( CGame * gs );
+bool_t PipList_renew( CGame * gs );
 
-bool_t ChrList_new( GameState * gs );
-bool_t ChrList_delete( GameState * gs );
-bool_t ChrList_renew( GameState * gs );
+bool_t ChrList_new( CGame * gs );
+bool_t ChrList_delete( CGame * gs );
+bool_t ChrList_renew( CGame * gs );
 
-bool_t EncList_new( GameState * gs );
-bool_t EncList_delete( GameState * gs );
-bool_t EncList_renew( GameState * gs );
+bool_t EncList_new( CGame * gs );
+bool_t EncList_delete( CGame * gs );
+bool_t EncList_renew( CGame * gs );
 
-bool_t PrtList_new( GameState * gs );
-bool_t PrtList_delete( GameState * gs );
-bool_t PrtList_renew( GameState * gs );
+bool_t PrtList_new( CGame * gs );
+bool_t PrtList_delete( CGame * gs );
+bool_t PrtList_renew( CGame * gs );
 
-bool_t PassList_new( GameState * gs );
-bool_t PassList_delete( GameState * gs );
-bool_t PassList_renew( GameState * gs );
+bool_t PassList_new( CGame * gs );
+bool_t PassList_delete( CGame * gs );
+bool_t PassList_renew( CGame * gs );
 
-bool_t ShopList_new( GameState * gs );
-bool_t ShopList_delete( GameState * gs );
-bool_t ShopList_renew( GameState * gs );
+bool_t ShopList_new( CGame * gs );
+bool_t ShopList_delete( CGame * gs );
+bool_t ShopList_renew( CGame * gs );
 
-bool_t TeamList_new( GameState * gs );
-bool_t TeamList_delete( GameState * gs );
-bool_t TeamList_renew( GameState * gs );
+bool_t TeamList_new( CGame * gs );
+bool_t TeamList_delete( CGame * gs );
+bool_t TeamList_renew( CGame * gs );
 
-bool_t PlaList_new( GameState * gs );
-bool_t PlaList_delete( GameState * gs );
-bool_t PlaList_renew( GameState * gs );
+bool_t PlaList_new( CGame * gs );
+bool_t PlaList_delete( CGame * gs );
+bool_t PlaList_renew( CGame * gs );
 
 
 
@@ -216,10 +219,10 @@ SearchInfo * SearchInfo_new(SearchInfo * psearch);
 //--------------------------------------------------------------------------------------------
 
 void make_newloadname( char *modname, char *appendname, char *newloadname );
-void export_one_character( GameState * gs, CHR_REF character, Uint16 owner, int number );
-void export_all_local_players( GameState * gs );
+void export_one_character( CGame * gs, CHR_REF character, Uint16 owner, int number );
+void export_all_local_players( CGame * gs );
 int get_free_message(void);
-void display_message( GameState * gs, int message, CHR_REF character );
+void display_message( CGame * gs, int message, CHR_REF character );
 
 void load_action_names( char* loadname );
 void read_setup( char* filename );
@@ -230,69 +233,69 @@ void draw_chr_info();
 bool_t do_screenshot();
 void move_water( float dUpdate );
 
-CHR_REF search_best_leader( GameState * gs, enum Team_e team, CHR_REF exclude );
-void call_for_help( GameState * gs, CHR_REF character );
-void give_experience( GameState * gs, CHR_REF character, int amount, enum Experience_e xptype );
-void give_team_experience( GameState * gs, enum Team_e team, int amount, enum Experience_e xptype );
-void setup_alliances( GameState * gs, char *modname );
-void check_respawn( GameState * gs );
-void update_timers( GameState * gs );
-void reset_teams( GameState * gs );
-void reset_messages( GameState * gs );
-void reset_timers( GameState * gs );
+CHR_REF search_best_leader( CGame * gs, enum Team_e team, CHR_REF exclude );
+void call_for_help( CGame * gs, CHR_REF character );
+void give_experience( CGame * gs, CHR_REF character, int amount, enum Experience_e xptype );
+void give_team_experience( CGame * gs, enum Team_e team, int amount, enum Experience_e xptype );
+void setup_alliances( CGame * gs, char *modname );
+void check_respawn( CGame * gs );
+void update_timers( CGame * gs );
+void reset_teams( CGame * gs );
+void reset_messages( CGame * gs );
+void reset_timers( CGame * gs );
 
 void set_default_config_data(struct ConfigData_t * pcon);
 
-void load_all_messages( GameState * gs, char *szObjectpath, char *szObjectname, Uint16 object );
+void load_all_messages( CGame * gs, char *szObjectpath, char *szObjectname, Uint16 object );
 
-void attach_particle_to_character( GameState * gs, PRT_REF particle, CHR_REF chr_ref, Uint16 vertoffset );
+void attach_particle_to_character( CGame * gs, PRT_REF particle, CHR_REF chr_ref, Uint16 vertoffset );
 
-bool_t prt_search_block( GameState * gs, SearchInfo * psearch, int block_x, int block_y, PRT_REF iprt, Uint16 facing,
+bool_t prt_search_block( CGame * gs, SearchInfo * psearch, int block_x, int block_y, PRT_REF iprt, Uint16 facing,
                          bool_t request_friends, bool_t allow_anyone, enum Team_e team,
                          Uint16 donttarget, Uint16 oldtarget );
 
-bool_t prt_search_wide( GameState * gs, SearchInfo * psearch, PRT_REF iprt, Uint16 facing,
+bool_t prt_search_wide( CGame * gs, SearchInfo * psearch, PRT_REF iprt, Uint16 facing,
                         Uint16 targetangle, bool_t request_friends, bool_t allow_anyone,
                         enum Team_e team, Uint16 donttarget, Uint16 oldtarget );
 
-bool_t chr_search_distant( GameState * gs, SearchInfo * psearch, CHR_REF character, int maxdist, bool_t ask_enemies, bool_t ask_dead );
+bool_t chr_search_distant( CGame * gs, SearchInfo * psearch, CHR_REF character, int maxdist, bool_t ask_enemies, bool_t ask_dead );
 
-bool_t chr_search_block_nearest( GameState * gs, SearchInfo * psearch, int block_x, int block_y, CHR_REF character, bool_t ask_items,
+bool_t chr_search_block_nearest( CGame * gs, SearchInfo * psearch, int block_x, int block_y, CHR_REF character, bool_t ask_items,
                                bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, bool_t seeinvisible, IDSZ idsz );
 
-bool_t chr_search_wide_nearest( GameState * gs, SearchInfo * psearch, CHR_REF character, bool_t ask_items,
+bool_t chr_search_wide_nearest( CGame * gs, SearchInfo * psearch, CHR_REF character, bool_t ask_items,
                                 bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, IDSZ idsz );
 
-bool_t chr_search_wide( GameState * gs, SearchInfo * psearch, CHR_REF character, bool_t ask_items,
+bool_t chr_search_wide( CGame * gs, SearchInfo * psearch, CHR_REF character, bool_t ask_items,
                         bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, IDSZ idsz, bool_t excludeid );
 
-bool_t chr_search_block( GameState * gs, SearchInfo * psearch, int block_x, int block_y, CHR_REF character, bool_t ask_items,
+bool_t chr_search_block( CGame * gs, SearchInfo * psearch, int block_x, int block_y, CHR_REF character, bool_t ask_items,
                          bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, bool_t seeinvisible, IDSZ idsz,
                          bool_t excludeid );
 
-bool_t chr_search_nearby( GameState * gs, SearchInfo * psearch, CHR_REF character, bool_t ask_items,
+bool_t chr_search_nearby( CGame * gs, SearchInfo * psearch, CHR_REF character, bool_t ask_items,
                           bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, IDSZ ask_idsz );
 
-void release_all_models(GameState * gs);
-void init_all_models(GameState * gs);
+void release_all_models(CGame * gs);
+void init_all_models(CGame * gs);
 
-void setup_characters( GameState * gs, char *modname );
-void despawn_characters(GameState * gs);
+void setup_characters( CGame * gs, char *modname );
+void despawn_characters(CGame * gs);
 
 
 struct GSStack_t * Get_GSStack();
 
-void set_alerts( GameState * gs, CHR_REF character, float dUpdate );
+void set_alerts( CGame * gs, CHR_REF character, float dUpdate );
 
-void   print_status( GameState * gs, Uint16 statindex );
-bool_t add_status( GameState * gs, CHR_REF character );
-bool_t remove_stat( GameState * gs, struct Chr_t * pchr );
-void   sort_statlist( GameState * gs );
-
-
-bool_t reset_characters( GameState * gs );
-
-bool_t chr_is_player( GameState * gs, CHR_REF character);
+void   print_status( CGame * gs, Uint16 statindex );
+bool_t add_status( CGame * gs, CHR_REF character );
+bool_t remove_stat( CGame * gs, struct Chr_t * pchr );
+void   sort_statlist( CGame * gs );
 
 
-bool_t count_players(GameState * gs);
+bool_t reset_characters( CGame * gs );
+
+bool_t chr_is_player( CGame * gs, CHR_REF character);
+
+
+bool_t count_players(CGame * gs);

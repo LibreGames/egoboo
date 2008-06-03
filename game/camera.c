@@ -129,7 +129,7 @@ void camera_calc_turn_lr()
 }
 
 //--------------------------------------------------------------------------------------------
-void screen_dump_matrix( GameState * gs, matrix_4x4 a )
+void screen_dump_matrix( CGame * gs, matrix_4x4 a )
 {
   int i, j;
   STRING buffer1 = { '\0' };
@@ -194,7 +194,7 @@ void move_camera( float dUpdate )
 {
   // ZZ> This function moves the camera
 
-  GameState * gs = gfxState.gs;
+  CGame * gs = gfxState.gs;
 
   int cnt, locoalive;  // Used in rts remove? -> int band,
   vect3 pos, vel, move;
@@ -298,36 +298,36 @@ void move_camera( float dUpdate )
   GCamera.turnadd   *= fkeep;
 
   // Camera controls
-  if ( CData.autoturncamera == 255 && gs->al_cs->loc_pla_count >= 1 )
+  if ( CData.autoturncamera == 255 && gs->cl->loc_pla_count >= 1 )
   {
     if ( mous.on && !control_mouse_is_pressed( CONTROL_CAMERA ) )
-      GCamera.turnadd -= ( mous.dlatch.x * .5 ) * dUpdate / gs->al_cs->loc_pla_count;
+      GCamera.turnadd -= ( mous.dlatch.x * .5 ) * dUpdate / gs->cl->loc_pla_count;
 
     if ( keyb.on )
     {
       if ( control_key_is_pressed( KEY_CAMERA_LEFT ) )
-        GCamera.turnadd += CAMKEYTURN * dUpdate / gs->al_cs->loc_pla_count;
+        GCamera.turnadd += CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
 
       if ( control_key_is_pressed( KEY_CAMERA_RIGHT ) )
-        GCamera.turnadd -= CAMKEYTURN * dUpdate / gs->al_cs->loc_pla_count;
+        GCamera.turnadd -= CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
     };
 
 
     if ( joy[0].on && !control_joy_is_pressed( 0, CONTROL_CAMERA ) )
-      GCamera.turnadd -= joy[0].latch.x * CAMJOYTURN * dUpdate / gs->al_cs->loc_pla_count;
+      GCamera.turnadd -= joy[0].latch.x * CAMJOYTURN * dUpdate / gs->cl->loc_pla_count;
 
     if ( joy[1].on && !control_joy_is_pressed( 1, CONTROL_CAMERA ) )
-      GCamera.turnadd -= joy[1].latch.x * CAMJOYTURN * dUpdate / gs->al_cs->loc_pla_count;
+      GCamera.turnadd -= joy[1].latch.x * CAMJOYTURN * dUpdate / gs->cl->loc_pla_count;
   }
 
-  if ( gs->al_cs->loc_pla_count >= 1 )
+  if ( gs->cl->loc_pla_count >= 1 )
   {
     if ( mous.on )
     {
       if ( control_mouse_is_pressed( CONTROL_CAMERA ) )
       {
-        GCamera.turnadd += ( mous.dlatch.x / 3.0 ) * dUpdate / gs->al_cs->loc_pla_count;
-        GCamera.zaddgoto += ( float ) mous.dlatch.y / 3.0 * dUpdate / gs->al_cs->loc_pla_count;
+        GCamera.turnadd += ( mous.dlatch.x / 3.0 ) * dUpdate / gs->cl->loc_pla_count;
+        GCamera.zaddgoto += ( float ) mous.dlatch.y / 3.0 * dUpdate / gs->cl->loc_pla_count;
         if ( GCamera.zaddgoto < MINZADD )  GCamera.zaddgoto = MINZADD;
         if ( GCamera.zaddgoto > MAXZADD )  GCamera.zaddgoto = MAXZADD;
         doturntime = DELAY_TURN;  // Sticky turn...
@@ -339,8 +339,8 @@ void move_camera( float dUpdate )
     {
       if ( control_joy_is_pressed( 0, CONTROL_CAMERA ) )
       {
-        GCamera.turnadd  += joy[0].latch.x * CAMJOYTURN * dUpdate / gs->al_cs->loc_pla_count;
-        GCamera.zaddgoto += joy[0].latch.y * CAMJOYTURN * dUpdate / gs->al_cs->loc_pla_count;
+        GCamera.turnadd  += joy[0].latch.x * CAMJOYTURN * dUpdate / gs->cl->loc_pla_count;
+        GCamera.zaddgoto += joy[0].latch.y * CAMJOYTURN * dUpdate / gs->cl->loc_pla_count;
         if ( GCamera.zaddgoto < MINZADD )  GCamera.zaddgoto = MINZADD;
         if ( GCamera.zaddgoto > MAXZADD )  GCamera.zaddgoto = MAXZADD;
         doturntime = DELAY_TURN;  // Sticky turn...
@@ -352,8 +352,8 @@ void move_camera( float dUpdate )
     {
       if ( control_joy_is_pressed( 1, CONTROL_CAMERA ) )
       {
-        GCamera.turnadd  += joy[1].latch.x * CAMJOYTURN * dUpdate / gs->al_cs->loc_pla_count;
-        GCamera.zaddgoto += joy[1].latch.y * CAMJOYTURN * dUpdate / gs->al_cs->loc_pla_count;
+        GCamera.turnadd  += joy[1].latch.x * CAMJOYTURN * dUpdate / gs->cl->loc_pla_count;
+        GCamera.zaddgoto += joy[1].latch.y * CAMJOYTURN * dUpdate / gs->cl->loc_pla_count;
         if ( GCamera.zaddgoto < MINZADD )  GCamera.zaddgoto = MINZADD;
         if ( GCamera.zaddgoto > MAXZADD )  GCamera.zaddgoto = MAXZADD;
         doturntime = DELAY_TURN;  // Sticky turn...
@@ -365,24 +365,24 @@ void move_camera( float dUpdate )
     {
       if ( control_key_is_pressed( KEY_CAMERA_LEFT ) )
       {
-        GCamera.turnadd += CAMKEYTURN * dUpdate / gs->al_cs->loc_pla_count;
+        GCamera.turnadd += CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
         doturntime = DELAY_TURN;  // Sticky turn...
       }
 
       if ( control_key_is_pressed( KEY_CAMERA_RIGHT ) )
       {
-        GCamera.turnadd -= CAMKEYTURN * dUpdate / gs->al_cs->loc_pla_count;
+        GCamera.turnadd -= CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
         doturntime = DELAY_TURN;  // Sticky turn...
       }
 
       if ( control_key_is_pressed( KEY_CAMERA_IN ) )
       {
-        GCamera.zaddgoto -= CAMKEYTURN * dUpdate / gs->al_cs->loc_pla_count;
+        GCamera.zaddgoto -= CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
       }
 
       if ( control_key_is_pressed( KEY_CAMERA_OUT ) )
       {
-        GCamera.zaddgoto += CAMKEYTURN * dUpdate / gs->al_cs->loc_pla_count;
+        GCamera.zaddgoto += CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
       }
 
       if ( GCamera.zaddgoto < MINZADD )  GCamera.zaddgoto = MINZADD;
@@ -437,7 +437,7 @@ void reset_camera()
   int cnt, save;
   float fov2;
 
-  GameState * gs = gfxState.gs;
+  CGame * gs = gfxState.gs;
 
   GCamera.swing = 0;
   GCamera.pos.x = 0;

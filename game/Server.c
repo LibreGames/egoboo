@@ -51,16 +51,16 @@ static retval_t  _sv_shutDown(void);
 static int       _sv_HostCallback(void *);
 
 //--------------------------------------------------------------------------------------------
-bool_t sv_Running(ServerState * ss)  { return sv_Started() &&  ss->ready; }
+bool_t sv_Running(CServer * ss)  { return sv_Started() &&  ss->ready; }
 
 //--------------------------------------------------------------------------------------------
 // Server state private initialization
-static ServerState * ServerState_new(ServerState * ss, NetState * ns);
-static bool_t        ServerState_delete(ServerState * ss);
+static CServer * CServer_new(CServer * ss, CGame * gs);
+static bool_t    CServer_delete(CServer * ss);
 
 
 //--------------------------------------------------------------------------------------------
-//retval_t sv_startUp(ServerState * ss)
+//retval_t sv_startUp(CServer * ss)
 //{
 //  retval_t host_return;
 //
@@ -68,7 +68,7 @@ static bool_t        ServerState_delete(ServerState * ss);
 //
 //  if(NULL == ss)
 //  {
-//    ss = &AServerState;
+//    ss = &ACServer;
 //  }
 //
 //  // Try to create a new session
@@ -90,7 +90,7 @@ static bool_t        ServerState_delete(ServerState * ss);
 //
 ////--------------------------------------------------------------------------------------------
 //
-//retval_t sv_shutDown(ServerState * ss)
+//retval_t sv_shutDown(CServer * ss)
 //{
 //  retval_t delete_return;
 //
@@ -98,10 +98,10 @@ static bool_t        ServerState_delete(ServerState * ss);
 //
 //  if(NULL == ss)
 //  {
-//    ss = &AServerState;
+//    ss = &ACServer;
 //  }
 //
-//  delete_return = ServerState_delete(ss) ? rv_succeed : rv_fail;
+//  delete_return = CServer_delete(ss) ? rv_succeed : rv_fail;
 //
 //  sv_initialized = bfalse;
 //
@@ -109,7 +109,7 @@ static bool_t        ServerState_delete(ServerState * ss);
 //}
 
 //--------------------------------------------------------------------------------------------
-retval_t ServerState_startUp(ServerState * ss)
+retval_t CServer_startUp(CServer * ss)
 {
   // ZZ> This function tries to host a new session
 
@@ -120,7 +120,7 @@ retval_t ServerState_startUp(ServerState * ss)
 
   if (!net_Started())
   {
-    ServerState_shutDown(ss);
+    CServer_shutDown(ss);
     return rv_error; 
   }
 
@@ -132,30 +132,30 @@ retval_t ServerState_startUp(ServerState * ss)
   if(!sv_Started())
   {
     net_logf("---------------------------------------------\n");
-    net_logf("NET INFO: ServerState_startUp() - Starting game server\n");    
+    net_logf("NET INFO: CServer_startUp() - Starting game server\n");    
 
     _sv_startUp();
   }
   else
   {
     net_logf("---------------------------------------------\n");
-    net_logf("NET INFO: ServerState_startUp() - Restarting game server\n");
+    net_logf("NET INFO: CServer_startUp() - Restarting game server\n");
   }
 
   // To function, the client requires the file transfer component
-  NFileState_startUp( ss->parent->nfs );
+  NFileState_startUp( ss->parent->ns->nfs );
 
   return sv_Started() ? rv_succeed : rv_fail;
 }
 
 ////--------------------------------------------------------------------------------------------
-retval_t ServerState_shutDown(ServerState * ss)
+retval_t CServer_shutDown(CServer * ss)
 {
   if(NULL == ss) return rv_error;
  
   if(!sv_Started()) return rv_succeed;
 
-  net_logf("NET INFO: ServerState_shutDown() - Shutting down the game server... ");
+  net_logf("NET INFO: CServer_shutDown() - Shutting down the game server... ");
 
   // close all open connections to this state
   NetHost_close( sv_getHost(), ss );
@@ -168,42 +168,42 @@ retval_t ServerState_shutDown(ServerState * ss)
 //--------------------------------------------------------------------------------------------
 //void sv_Quit(void)
 //{
-//  ServerState_delete(&AServerState);
+//  CServer_delete(&ACServer);
 //}
 //
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ServerState * ServerState_create(NetState * ns)
+CServer * CServer_create(CGame * gs)
 {
-  ServerState * ss = (ServerState *)calloc(1, sizeof(ServerState));
-  return ServerState_new(ss, ns);
+  CServer * ss = (CServer *)calloc(1, sizeof(CServer));
+  return CServer_new(ss, gs);
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ServerState_destroy(ServerState ** pss)
+bool_t CServer_destroy(CServer ** pss)
 {
   bool_t retval;
 
   if(NULL == pss || NULL == *pss) return bfalse;
   if( !(*pss)->initialized ) return btrue;
 
-  retval = ServerState_delete(*pss);
+  retval = CServer_delete(*pss);
   FREE( *pss );
 
   return retval;
 }
 
 //--------------------------------------------------------------------------------------------
-ServerState * ServerState_new(ServerState * ss, NetState * ns)
+CServer * CServer_new(CServer * ss, CGame * gs)
 {
   int cnt;
 
-  //fprintf( stdout, "ServerState_new()\n");
+  //fprintf( stdout, "CServer_new()\n");
 
   if(NULL == ss) return ss;
-  if(ss->initialized) ServerState_delete(ss); 
+  if(ss->initialized) CServer_delete(ss); 
 
-  memset( ss, 0, sizeof(ServerState) );
+  memset( ss, 0, sizeof(CServer) );
 
   // only start this stuff if we are going to actually connect to the network
   if(net_Started())
@@ -213,7 +213,7 @@ ServerState * ServerState_new(ServerState * ss, NetState * ns)
     ss->net_guid = NetHost_register(ss->host, net_handlePacket, ss, ss->net_guid);
   }
 
-  ss->parent         = ns;
+  ss->parent         = gs;
   ss->ready          = bfalse;
   ss->selectedModule = -1;
   ss->num_logon      = 0;
@@ -223,7 +223,7 @@ ServerState * ServerState_new(ServerState * ss, NetState * ns)
     ModInfo_new(ss->loc_mod + cnt);
   }
 
-  ServerState_reset_latches(ss);
+  CServer_reset_latches(ss);
 
   ss->initialized = btrue;
 
@@ -231,7 +231,7 @@ ServerState * ServerState_new(ServerState * ss, NetState * ns)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ServerState_delete(ServerState * ss)
+bool_t CServer_delete(CServer * ss)
 {
   if(NULL == ss) return bfalse;
 
@@ -246,35 +246,35 @@ bool_t ServerState_delete(ServerState * ss)
 }
 
 //--------------------------------------------------------------------------------------------
-ServerState * ServerState_renew(ServerState * ss)
+CServer * CServer_renew(CServer * ss)
 {
-  NetState * ns;
+  CGame * gs;
 
   if(NULL == ss) return ss;
 
-  ns = ss->parent;
+  gs = ss->parent;
 
-  ServerState_delete(ss);
-  return ServerState_new(ss, ns);
+  CServer_delete(ss);
+  return CServer_new(ss, gs);
 }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void sv_frameStep(ServerState * ss)
+void sv_frameStep(CServer * ss)
 {
 
 }
 
 //--------------------------------------------------------------------------------------------
-void ServerState_bufferLatches(ServerState * ss)
+void CServer_bufferLatches(CServer * ss)
 {
   // ZZ> This function buffers the character latches
-  GameState * gs;
+  CGame * gs;
   Uint32 uiTime, ichr;
 
   if (NULL==ss || !sv_Started()) return;
 
-  gs = ss->parent->gs;
+  gs = ss->parent;
 
   if (gs->wld_frame > STARTTALK)
   {
@@ -294,14 +294,14 @@ void ServerState_bufferLatches(ServerState * ss)
 };
 
 //--------------------------------------------------------------------------------------------
-void sv_talkToRemotes(ServerState * ss)
+void sv_talkToRemotes(CServer * ss)
 {
   // ZZ> This function sends the character data to all the remote machines
   Uint32 uiTime, ichr;
   SYS_PACKET egopkt;
   int i,cnt,stamp;
 
-  GameState * gs = ss->parent->gs;
+  CGame * gs = ss->parent;
 
   if(!sv_Started() || !net_Started()) return;
 
@@ -356,7 +356,7 @@ void sv_talkToRemotes(ServerState * ss)
 }
 
 //--------------------------------------------------------------------------------------------
-//void sv_letPlayersJoin(ServerState * ss)
+//void sv_letPlayersJoin(CServer * ss)
 //{
 //  // ZZ> This function finds all the players in the game
 //  ENetEvent event;
@@ -430,7 +430,7 @@ void sv_talkToRemotes(ServerState * ss)
 
 
 //--------------------------------------------------------------------------------------------
-void sv_sendModuleInfoToAllPlayers(ServerState * ss)
+void sv_sendModuleInfoToAllPlayers(CServer * ss)
 {
   SYS_PACKET egopkt;
 
@@ -444,7 +444,7 @@ void sv_sendModuleInfoToAllPlayers(ServerState * ss)
 };
 
 //--------------------------------------------------------------------------------------------
-void sv_sendModuleInfoToOnePlayer(ServerState * ss, ENetPeer * peer)
+void sv_sendModuleInfoToOnePlayer(CServer * ss, ENetPeer * peer)
 {
   SYS_PACKET egopkt;
 
@@ -459,7 +459,7 @@ void sv_sendModuleInfoToOnePlayer(ServerState * ss, ENetPeer * peer)
 
 
 //--------------------------------------------------------------------------------------------
-bool_t sv_handlePacket(ServerState * ss, ENetEvent *event)
+bool_t sv_handlePacket(CServer * ss, ENetEvent *event)
 {
   Uint16 header;
   STRING filename;   // also used for reading various strings
@@ -613,10 +613,10 @@ bool_t sv_handlePacket(ServerState * ss, ENetEvent *event)
     net_logf("TO_HOST_MODULEBAD\n");
 
     // copy the selected module from the server to a client that doesn't have the module
-    if(ss->selectedModule != -1)
+    if(-1 == ss->selectedModule)
     {
       // send the directory
-      net_copyDirectoryToPeer(ss->parent, event->peer, ss->mod.loadname, ss->mod.loadname);
+      net_copyDirectoryToPeer(ss->parent->ns, event->peer, ss->mod.loadname, ss->mod.loadname);
   
       // tell it to try to find the module again
       sv_sendModuleInfoToOnePlayer(ss, event->peer);
@@ -783,11 +783,11 @@ bool_t sv_handlePacket(ServerState * ss, ENetEvent *event)
 };
 
 //--------------------------------------------------------------------------------------------
-void sv_unbufferLatches(ServerState * ss)
+void sv_unbufferLatches(CServer * ss)
 {
   // ZZ> This function sets character latches based on player input to the host
   Uint32 cnt, uiTime;
-  GameState * gs = ss->parent->gs;
+  CGame * gs = ss->parent;
 
   if(!sv_Started()) return;
 
@@ -823,14 +823,14 @@ void sv_unbufferLatches(ServerState * ss)
 }
 
 //--------------------------------------------------------------------------------------------
-void ServerState_reset_latches(ServerState * ss)
+void CServer_reset_latches(CServer * ss)
 {
   int cnt;
   if(NULL==ss) return;
 
   for(cnt = 0; cnt<MAXCHR; cnt++)
   {
-    ServerState_resetTimeLatches(ss,cnt);
+    CServer_resetTimeLatches(ss,cnt);
   };
 
   ss->tlb.nextstamp = INVALID_TIMESTAMP;
@@ -838,7 +838,7 @@ void ServerState_reset_latches(ServerState * ss)
 };
 
 //--------------------------------------------------------------------------------------------
-void ServerState_resetTimeLatches(ServerState * ss, Sint32 ichr)
+void CServer_resetTimeLatches(CServer * ss, Sint32 ichr)
 {
   int cnt;
 
@@ -860,7 +860,7 @@ void ServerState_resetTimeLatches(ServerState * ss, Sint32 ichr)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t sv_unhostGame(ServerState * ss)
+bool_t sv_unhostGame(CServer * ss)
 {
   SYS_PACKET egopkt;
   NetHost * sv_host;
@@ -932,7 +932,7 @@ int _sv_HostCallback(void * data)
 
 
 //--------------------------------------------------------------------------------------------
-//bool_t sv_dispatchPackets(ServerState * ss)
+//bool_t sv_dispatchPackets(CServer * ss)
 //{
 //  ENetEvent event;
 //  CListIn_Info cin_info, *pcin_info;
@@ -1040,7 +1040,7 @@ int _sv_HostCallback(void * data)
 //};
 //
 //--------------------------------------------------------------------------------------------
-bool_t sv_sendPacketToAllClients(ServerState * ss, SYS_PACKET * egop)
+bool_t sv_sendPacketToAllClients(CServer * ss, SYS_PACKET * egop)
 {
   // ZZ> This function sends a packet to all the players
 
@@ -1069,7 +1069,7 @@ bool_t sv_sendPacketToAllClients(ServerState * ss, SYS_PACKET * egop)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t sv_sendPacketToAllClientsGuaranteed(ServerState * ss, SYS_PACKET * egop)
+bool_t sv_sendPacketToAllClientsGuaranteed(CServer * ss, SYS_PACKET * egop)
 {
   // ZZ> This function sends a packet to all the players
 

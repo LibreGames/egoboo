@@ -198,7 +198,7 @@ INLINE const Uint32 bumplist_get_next( BUMPLIST * b, Uint32 node )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 bumplist_get_next_chr( GameState * gs, BUMPLIST * b, Uint32 node )
+INLINE const Uint32 bumplist_get_next_chr( CGame * gs, BUMPLIST * b, Uint32 node )
 {
   Uint32  nodenext;
   CHR_REF bumpnext;
@@ -218,7 +218,7 @@ INLINE const Uint32 bumplist_get_next_chr( GameState * gs, BUMPLIST * b, Uint32 
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 bumplist_get_next_prt( GameState * gs, BUMPLIST * b, Uint32 node )
+INLINE const Uint32 bumplist_get_next_prt( CGame * gs, BUMPLIST * b, Uint32 node )
 {
   Uint32  nodenext;
   CHR_REF bumpnext;
@@ -370,7 +370,7 @@ INLINE const bool_t mesh_check( MESH_INFO * mi, float x, float y )
 
 
 //--------------------------------------------------------------------------------------------
-INLINE void mesh_set_colora( GameState * gs, int fan_x, int fan_y, int color )
+INLINE void mesh_set_colora( CGame * gs, int fan_x, int fan_y, int color )
 {
   Uint32 cnt, fan, vert, numvert;
 
@@ -394,7 +394,7 @@ INLINE void mesh_set_colora( GameState * gs, int fan_x, int fan_y, int color )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 mesh_get_fan( GameState * gs, vect3 pos )
+INLINE const Uint32 mesh_get_fan( CGame * gs, vect3 pos )
 {
   // BB > find the tile under <pos.x,pos.y>, but MAKE SURE we have the right tile.
 
@@ -452,7 +452,7 @@ INLINE const Uint32 mesh_get_block( MESH_INFO * mi, vect3 pos )
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_fan_clear_bits( GameState * gs, int fan_x, int fan_y, Uint32 bits )
+INLINE const bool_t mesh_fan_clear_bits( CGame * gs, int fan_x, int fan_y, Uint32 bits )
 {
   bool_t retval = bfalse;
   Uint32 fan;
@@ -470,7 +470,7 @@ INLINE const bool_t mesh_fan_clear_bits( GameState * gs, int fan_x, int fan_y, U
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_fan_add_bits( GameState * gs, int fan_x, int fan_y, Uint32 bits )
+INLINE const bool_t mesh_fan_add_bits( CGame * gs, int fan_x, int fan_y, Uint32 bits )
 {
   bool_t retval = bfalse;
   Uint32 fan;
@@ -489,7 +489,7 @@ INLINE const bool_t mesh_fan_add_bits( GameState * gs, int fan_x, int fan_y, Uin
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_fan_set_bits( GameState * gs, int fan_x, int fan_y, Uint32 bits )
+INLINE const bool_t mesh_fan_set_bits( CGame * gs, int fan_x, int fan_y, Uint32 bits )
 {
   bool_t retval = bfalse;
   Uint32 fan;
@@ -510,7 +510,7 @@ INLINE const bool_t mesh_fan_set_bits( GameState * gs, int fan_x, int fan_y, Uin
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const int mesh_bump_tile( GameState * gs, int fan_x, int fan_y )
+INLINE const int mesh_bump_tile( CGame * gs, int fan_x, int fan_y )
 {
   Uint32 fan;
 
@@ -526,7 +526,7 @@ INLINE const int mesh_bump_tile( GameState * gs, int fan_x, int fan_y )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint16 mesh_get_tile( GameState * gs, int fan_x, int fan_y )
+INLINE const Uint16 mesh_get_tile( CGame * gs, int fan_x, int fan_y )
 {
   Uint32 fan;
 
@@ -540,7 +540,7 @@ INLINE const Uint16 mesh_get_tile( GameState * gs, int fan_x, int fan_y )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_set_tile( GameState * gs, int fan_x, int fan_y, Uint32 become )
+INLINE const bool_t mesh_set_tile( CGame * gs, int fan_x, int fan_y, Uint32 become )
 {
   bool_t retval = bfalse;
   Uint32 fan;

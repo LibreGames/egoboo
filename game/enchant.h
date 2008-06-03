@@ -6,7 +6,7 @@
 #define MAXEVE                          MAXPROFILE  // One enchant type per model
 #define MAXENCHANT                      128         // Number of enchantments
 
-struct GameState_t;
+struct CGame_t;
 
 //------------------------------------
 //Enchantment variables
@@ -122,7 +122,7 @@ Enc *  Enc_new(Enc *penc);
 bool_t Enc_delete( Enc * penc );
 Enc *  Enc_renew( Enc * penc );
 
-Uint16 EncList_get_free( struct GameState_t * gs );
+Uint16 EncList_get_free( struct CGame_t * gs );
 
 typedef enum disenchant_mode_e
 {
@@ -131,21 +131,23 @@ typedef enum disenchant_mode_e
   LEAVE_NONE,
 } DISENCHANT_MODE;
 
+extern STRING namingnames;   // The name returned by the function
 
-void reset_character_alpha( struct GameState_t * gs, CHR_REF character );
-void chr_reset_accel( struct GameState_t * gs, CHR_REF character );
 
-void   EveList_load_one( struct GameState_t * gs, char * szObjectpath, char * szObjectname, Uint16 profile );
-void   unset_enchant_value( struct GameState_t * gs, Uint16 enchantindex, Uint8 valueindex );
-void   remove_enchant_value( struct GameState_t * gs, Uint16 enchantindex, Uint8 valueindex );
+void reset_character_alpha( struct CGame_t * gs, CHR_REF character );
+void chr_reset_accel( struct CGame_t * gs, CHR_REF character );
 
-void   remove_enchant( struct GameState_t * gs, Uint16 enchantindex );
-Uint16 enchant_value_filled( struct GameState_t * gs, Uint16 enchantindex, Uint8 valueindex );
-void   set_enchant_value( struct GameState_t * gs, Uint16 enchantindex, Uint8 valueindex, Uint16 enchanttype );
+void   EveList_load_one( struct CGame_t * gs, char * szObjectpath, char * szObjectname, Uint16 profile );
+void   unset_enchant_value( struct CGame_t * gs, Uint16 enchantindex, Uint8 valueindex );
+void   remove_enchant_value( struct CGame_t * gs, Uint16 enchantindex, Uint8 valueindex );
+
+void   remove_enchant( struct CGame_t * gs, Uint16 enchantindex );
+Uint16 enchant_value_filled( struct CGame_t * gs, Uint16 enchantindex, Uint8 valueindex );
+void   set_enchant_value( struct CGame_t * gs, Uint16 enchantindex, Uint8 valueindex, Uint16 enchanttype );
 void   getadd( int min, int value, int max, int* valuetoadd );
 void   fgetadd( float min, float value, float max, float* valuetoadd );
-void   add_enchant_value( struct GameState_t * gs, Uint16 enchantindex, Uint8 valueindex, Uint16 enchanttype );
-Uint16 spawn_enchant( struct GameState_t * gs, Uint16 owner, Uint16 target, Uint16 spawner, Uint16 enchantindex, Uint16 modeloptional );
+void   add_enchant_value( struct CGame_t * gs, Uint16 enchantindex, Uint8 valueindex, Uint16 enchanttype );
+Uint16 spawn_enchant( struct CGame_t * gs, Uint16 owner, Uint16 target, Uint16 spawner, Uint16 enchantindex, Uint16 modeloptional );
 
-void enc_spawn_particles( struct GameState_t * gs, float dUpdate );
-void disenchant_character( struct GameState_t * gs, CHR_REF character );
+void enc_spawn_particles( struct CGame_t * gs, float dUpdate );
+void disenchant_character( struct CGame_t * gs, CHR_REF character );

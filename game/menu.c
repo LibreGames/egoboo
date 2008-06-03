@@ -46,23 +46,23 @@
 int              loadplayer_count = 0;
 LOAD_PLAYER_INFO loadplayer[MAXLOADPLAYER];
 
-static int mnu_doMain( float deltaTime );
-static int mnu_doSinglePlayer( float deltaTime );
-static int mnu_doChooseModule( GameState * gs, float deltaTime );
-static int mnu_doChoosePlayer( GameState * gs, float deltaTime );
-static int mnu_doOptions( float deltaTime );
-static int mnu_doAudioOptions( float deltaTime );
-static int mnu_doVideoOptions( float deltaTime );
-static int mnu_doShowResults( GameState * gs, float deltaTime );
-static int mnu_doNotImplemented( float deltaTime );
-//static int mnu_doModel(float deltaTime);
-static int mnu_doNetwork(NetState * ns, float deltaTime);
-static int mnu_doHostGame(ServerState * ss, float deltaTime);
-static int mnu_doUnhostGame(ServerState * ss, float deltaTime);
-static int mnu_doJoinGame(GameState * gs, float deltaTime);
+static int mnu_doMain( MenuProc * mproc, float deltaTime );
+static int mnu_doSinglePlayer( MenuProc * mproc, float deltaTime );
+static int mnu_doChooseModule( MenuProc * mproc, float deltaTime );
+static int mnu_doChoosePlayer( MenuProc * mproc, float deltaTime );
+static int mnu_doOptions( MenuProc * mproc, float deltaTime );
+static int mnu_doAudioOptions( MenuProc * mproc, float deltaTime );
+static int mnu_doVideoOptions( MenuProc * mproc, float deltaTime );
+static int mnu_doLaunchGame( MenuProc * mproc, float deltaTime );
+static int mnu_doNotImplemented( MenuProc * mproc, float deltaTime );
+//static int mnu_doModel(MenuProc * mproc, float deltaTime);
+static int mnu_doNetwork(MenuProc * mproc, float deltaTime);
+static int mnu_doHostGame(MenuProc * mproc, float deltaTime);
+static int mnu_doUnhostGame(MenuProc * mproc, float deltaTime);
+static int mnu_doJoinGame(MenuProc * mproc, float deltaTime);
 
-static int mnu_doIngameQuit( GameState * gs, float deltaTime );
-static int mnu_doIngameInventory( GameState * gs, float deltaTime );
+static int mnu_doIngameQuit( MenuProc * mproc, float deltaTime );
+static int mnu_doIngameInventory( MenuProc * mproc, float deltaTime );
 
 
 static int mnu_handleKeyboard(  MenuProc * mproc  );
@@ -154,7 +154,6 @@ static ui_Widget mnu_widgetList[MAXWIDGET];
 static int mnu_selectedPlayerCount = 0;
 static int mnu_selectedInput[MAXPLAYER] = {0};
 static int mnu_selectedPlayer[MAXPLAYER] = {0};
-static int mnu_selectedModule = 0;
 
 /* Variables for the model viewer in mnu_doChoosePlayer */
 static float  mnu_modelAngle = 0;
@@ -244,7 +243,6 @@ static const char * mnu_videoOptionsText[] =
   ""
 };
 
-
 /* Button position for the "easy" menus, like the main one */
 static int mnu_buttonLeft = 0;
 static int mnu_buttonTop = 0;
@@ -257,23 +255,22 @@ static TTFont *mnu_Font = NULL;
 //--------------------------------------------------------------------------------------------
 static bool_t mnu_removeSelectedPlayerInput( int player, Uint32 input );
 
-
 //--------------------------------------------------------------------------------------------
-void load_global_icons(GameState * gs)
+void load_global_icons(CGame * cl)
 {
-  gs->TxIcon_count = gs->nullicon = 0;
+  cl->TxIcon_count = cl->nullicon = 0;
   load_one_icon( CData.basicdat_dir, NULL, CData.nullicon_bitmap );
 
-  gs->TxIcon_count = gs->keybicon = 1;
+  cl->TxIcon_count = cl->keybicon = 1;
   load_one_icon( CData.basicdat_dir, NULL, CData.keybicon_bitmap );
 
-  gs->TxIcon_count = gs->mousicon = 2;
+  cl->TxIcon_count = cl->mousicon = 2;
   load_one_icon( CData.basicdat_dir, NULL, CData.mousicon_bitmap );
 
-  gs->TxIcon_count = gs->joyaicon = 3;
+  cl->TxIcon_count = cl->joyaicon = 3;
   load_one_icon( CData.basicdat_dir, NULL, CData.joyaicon_bitmap );
 
-  gs->TxIcon_count = gs->joybicon = 4;
+  cl->TxIcon_count = cl->joybicon = 4;
   load_one_icon( CData.basicdat_dir, NULL, CData.joybicon_bitmap );
 }
 
@@ -493,7 +490,7 @@ int initMenus()
 }
 
 //--------------------------------------------------------------------------------------------
-int mnu_doMain( float deltaTime )
+int mnu_doMain( MenuProc * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static GLtexture background;
@@ -623,7 +620,7 @@ int mnu_doMain( float deltaTime )
 }
 
 //--------------------------------------------------------------------------------------------
-int mnu_doSinglePlayer( float deltaTime )
+int mnu_doSinglePlayer( MenuProc * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static GLtexture background;
@@ -736,7 +733,7 @@ int mnu_doSinglePlayer( float deltaTime )
 //--------------------------------------------------------------------------------------------
 // TODO: I totally fudged the layout of this menu by adding an offset for when
 // the game isn't in 640x480.  Needs to be fixed.
-int mnu_doChooseModule( GameState * gs, float deltaTime )
+int mnu_doChooseModule( MenuProc * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static int menuChoice = 0;
@@ -744,8 +741,6 @@ int mnu_doChooseModule( GameState * gs, float deltaTime )
   static int startIndex;
   static GLtexture background;
   static ui_Widget wBackground, wCopyright, wtmp;
-  static int validModules[MAXMODULE];
-  static int numValidModules;
 
   static int moduleMenuOffsetX;
   static int moduleMenuOffsetY;
@@ -754,14 +749,27 @@ int mnu_doChooseModule( GameState * gs, float deltaTime )
   int i, j, x, y;
   char txtBuffer[128];
 
-  ServerState * ss = gs->al_ss;
+  CServer * sv;
+
+  // make sure a CClient state is defined
+  if(NULL == mproc->cl)
+  {
+    mproc->cl = CClient_create(NULL);
+  }
+
+  // make sure a CServer state is defined
+  if(NULL == mproc->sv)
+  {
+    mproc->sv = CServer_create(NULL);
+  }
+  sv = mproc->sv;
 
   switch ( menuState )
   {
     case MM_Begin:
 
       // Reload all avalible modules (Hidden ones may pop up after the player has completed one)
-      ss->loc_mod_count = module_load_all_data(ss->loc_mod, MAXMODULE);
+      sv->loc_mod_count = mnu_load_mod_data(mproc, sv->loc_mod, MAXMODULE);
 
       // Load font & background
       snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_sleepy_bitmap );
@@ -771,34 +779,32 @@ int mnu_doChooseModule( GameState * gs, float deltaTime )
       ui_initWidget( &wCopyright,  UI_Invalid, ui_getFont(), mnu_copyrightText, NULL, mnu_copyrightLeft, mnu_copyrightTop, 0, 0 );
 
       startIndex = 0;
-      mnu_selectedModule = -1;
-      gs->modtxt.val     = -2;
+      mnu_prime_modules(mproc);
+      sv->loc_modtxt.val = -2;
 
       // Find the modules that we want to allow loading for.  If mnu_startNewPlayer
       // is true, we want ones that don't allow imports (e.g. starter modules).
       // Otherwise, we want modules that allow imports
-      memset( validModules, 0, sizeof( int ) * MAXMODULE );
-      numValidModules = 0;
       if ( mnu_selectedPlayerCount > 0 )
       {
-        for ( i = 0;i < ss->loc_mod_count; i++ )
+        for ( i = 0;i < sv->loc_mod_count; i++ )
         {
-          if ( ss->loc_mod[i].importamount >= mnu_selectedPlayerCount )
+          if ( sv->loc_mod[i].importamount >= mnu_selectedPlayerCount )
           {
-            validModules[numValidModules] = i;
-            numValidModules++;
+            mproc->validModules[mproc->validModules_count] = i;
+            mproc->validModules_count++;
           }
         }
       }
       else
       {
         // Starter modules
-        for ( i = 0;i < ss->loc_mod_count; i++ )
+        for ( i = 0;i < sv->loc_mod_count; i++ )
         {
-          if ( ss->loc_mod[i].importamount == 0 && ss->loc_mod[i].maxplayers == 1 )
+          if ( sv->loc_mod[i].importamount == 0 && sv->loc_mod[i].maxplayers == 1 )
           {
-            validModules[numValidModules] = i;
-            numValidModules++;
+            mproc->validModules[mproc->validModules_count] = i;
+            mproc->validModules_count++;
           };
         }
       };
@@ -841,13 +847,13 @@ int mnu_doChooseModule( GameState * gs, float deltaTime )
       if ( BUTTON_UP == ui_doButton( mnu_widgetList + 0 ) )
       {
         startIndex--;
-        if ( startIndex < 0 ) startIndex += numValidModules;
+        if ( startIndex < 0 ) startIndex += mproc->validModules_count;
       }
 
       if ( BUTTON_UP == ui_doButton( mnu_widgetList + 1 ) )
       {
         startIndex++;
-        if ( startIndex >= numValidModules ) startIndex -= numValidModules;
+        if ( startIndex >= mproc->validModules_count ) startIndex -= mproc->validModules_count;
       }
 
       // Draw buttons for the modules that can be selected
@@ -857,12 +863,12 @@ int mnu_doChooseModule( GameState * gs, float deltaTime )
       {
         int imod;
 
-        if(numValidModules > 0)
+        if(mproc->validModules_count > 0)
         {
-          j = ( i + startIndex ) % numValidModules;
-          imod = validModules[j];
+          j = ( i + startIndex ) % mproc->validModules_count;
+          imod = mproc->validModules[j];
 
-          mnu_widgetList[4+i].img = TxTitleImage + ss->loc_mod[imod].tx_title_idx;
+          mnu_widgetList[4+i].img = mproc->TxTitleImage + sv->loc_mod[imod].tx_title_idx;
         }
         else
         {
@@ -873,7 +879,7 @@ int mnu_doChooseModule( GameState * gs, float deltaTime )
 
         if ( BUTTON_UP == ui_doImageButton( &wtmp ) )
         {
-          mnu_selectedModule = j;
+          mproc->selectedModule = j;
         }
 
         x += 138 + 20; // Width of the button, and the spacing between buttons
@@ -892,14 +898,14 @@ int mnu_doChooseModule( GameState * gs, float deltaTime )
       if ( BUTTON_UP == ui_doButton( mnu_widgetList + 3 ) )
       {
         // Signal mnu_Run to go back to the previous menu
-        mnu_selectedModule = -1;
+        mproc->selectedModule = -1;
         menuState = MM_Leaving;
       }
 
       // Draw the text description of the selected module
-      if ( mnu_selectedModule > -1 )
+      if ( mproc->selectedModule > -1 )
       {
-        MOD_INFO * mi = ss->loc_mod + validModules[mnu_selectedModule];
+        MOD_INFO * mi = sv->loc_mod + mproc->validModules[mproc->selectedModule];
 
         y = 173 + 5;
         x = 21 + 5;
@@ -939,14 +945,14 @@ int mnu_doChooseModule( GameState * gs, float deltaTime )
 
         // And finally, the summary
         snprintf( txtBuffer, sizeof( txtBuffer ), "%s" SLASH_STRING "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.modules_dir, mi->loadname, CData.gamedat_dir, CData.mnu_file );
-        if ( validModules[mnu_selectedModule] != gs->modtxt.val )
+        if ( mproc->validModules[mproc->selectedModule] != sv->loc_modtxt.val )
         {
-          if ( module_read_summary( txtBuffer, &(gs->modtxt) ) ) gs->modtxt.val = validModules[mnu_selectedModule];
+          if ( module_read_summary( txtBuffer, &(sv->loc_modtxt) ) ) sv->loc_modtxt.val = mproc->validModules[mproc->selectedModule];
         };
 
         for ( i = 0;i < SUMMARYLINES;i++ )
         {
-          fnt_drawText( mnu_Font, moduleMenuOffsetX + x, moduleMenuOffsetY + y, gs->modtxt.summary[i] );
+          fnt_drawText( mnu_Font, moduleMenuOffsetX + x, moduleMenuOffsetY + y, sv->loc_modtxt.summary[i] );
           y += 20;
         }
       }
@@ -962,20 +968,21 @@ int mnu_doChooseModule( GameState * gs, float deltaTime )
 
       menuState = MM_Begin;
 
-      if ( mnu_selectedModule == -1 )
+      if ( mproc->selectedModule == -1 )
       {
         // -1 == quit
         result = -1;
       }
       else
       {
-        mnu_selectedModule = validModules[mnu_selectedModule];
+        mproc->selectedModule = mproc->validModules[mproc->selectedModule];
 
         // Save all the module info
-        memcpy( &(gs->mod), ss->loc_mod + mnu_selectedModule, sizeof(MOD_INFO));
+        memcpy( &(sv->mod), sv->loc_mod + mproc->selectedModule, sizeof(MOD_INFO));
+        sv->selectedModule = mproc->selectedModule;
 
         //set up the ModState
-        ModState_renew( &(gs->modstate), ss->loc_mod + mnu_selectedModule, -1);
+        ModState_renew( &(sv->modstate), sv->loc_mod + mproc->selectedModule, -1);
 
         // 1 == start the game
         result = 1;
@@ -1168,7 +1175,7 @@ void import_selected_players()
 };
 
 //--------------------------------------------------------------------------------------------
-int mnu_doChoosePlayer( GameState * gs, float deltaTime )
+int mnu_doChoosePlayer( MenuProc * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static int menuChoice = 0;
@@ -1182,6 +1189,10 @@ int mnu_doChoosePlayer( GameState * gs, float deltaTime )
   int player;
   static GLtexture TxInput[4];
   static Uint32 BitsInput[4];
+
+  CGame * gs = gfxState.gs;
+  CClient * cl = mproc->cl;
+  CServer * sv = mproc->sv;
 
   switch ( menuState )
   {
@@ -1362,7 +1373,7 @@ int mnu_doChoosePlayer( GameState * gs, float deltaTime )
 
       if ( mnu_selectedPlayerCount > 0 )
       {
-        module_load_all_data(gs->al_ss->loc_mod, MAXMODULE);           // Reload all avalilable modules
+        mnu_load_mod_data(mproc, sv->loc_mod, MAXMODULE);           // Reload all avalilable modules
         import_selected_players();
         result = 1;
       }
@@ -1380,7 +1391,7 @@ int mnu_doChoosePlayer( GameState * gs, float deltaTime )
 
 
 //--------------------------------------------------------------------------------------------
-int mnu_doOptions( float deltaTime )
+int mnu_doOptions( MenuProc * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static GLtexture background;
@@ -1510,7 +1521,7 @@ int mnu_doOptions( float deltaTime )
 }
 
 //--------------------------------------------------------------------------------------------
-int mnu_doAudioOptions( float deltaTime )
+int mnu_doAudioOptions( MenuProc * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static GLtexture background;
@@ -1717,8 +1728,7 @@ int mnu_doAudioOptions( float deltaTime )
         }
         else
         {
-          Mix_CloseAudio();
-          sndState.mixer_loaded = bfalse;
+          snd_quit();
         }
 
         //If the number of sound channels changed, allocate them properly
@@ -1752,8 +1762,8 @@ int mnu_doAudioOptions( float deltaTime )
 
       // update the audio using the info from this menu
       update_options_data();
-      sound_state_synchronize(&sndState, &CData);
-      snd_reopen(&sndState);
+      snd_synchronize(&CData);
+      snd_reopen();
 
       // Set the next menu to load
       result = 1;
@@ -1765,7 +1775,7 @@ int mnu_doAudioOptions( float deltaTime )
 }
 
 //--------------------------------------------------------------------------------------------
-int mnu_doVideoOptions( float deltaTime )
+int mnu_doVideoOptions( MenuProc * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static GLtexture background;
@@ -2388,7 +2398,7 @@ int mnu_doVideoOptions( float deltaTime )
 
 
 //--------------------------------------------------------------------------------------------
-int mnu_doShowResults( GameState * gs, float deltaTime )
+int mnu_doLaunchGame( MenuProc * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static int menuChoice = 0;
@@ -2396,10 +2406,32 @@ int mnu_doShowResults( GameState * gs, float deltaTime )
   static TTFont *font;
   int x, y, i, result = 0;
 
+  CGame * gs = gfxState.gs;
+
   switch ( menuState )
   {
     case MM_Begin:
       font = ui_getFont();
+
+      if(NULL == gfxState.gs)
+      {
+        gfxState.gs = gs = CGame_create(mproc->net, mproc->cl, mproc->sv);
+      }
+
+      if(NULL != mproc->cl && -1 != mproc->cl->selectedModule)
+      {
+        memcpy( &(gs->mod), &(mproc->cl->req_mod), sizeof(MOD_INFO));
+        memcpy( &(gs->modstate), &(mproc->cl->req_modstate), sizeof(MOD_INFO));
+      }
+      else if(NULL != mproc->sv && -1 != mproc->sv->selectedModule)
+      {
+        memcpy( &(gs->mod), &(mproc->sv->mod), sizeof(MOD_INFO));
+        memcpy( &(gs->modstate), &(mproc->sv->modstate), sizeof(MOD_INFO));
+      }
+      else
+      {
+        log_error("mnu_doLaunchGame() - invalid module configuration");
+      }
 
       menuChoice = 0;
       menuState = MM_Entering;
@@ -2420,7 +2452,7 @@ int mnu_doShowResults( GameState * gs, float deltaTime )
       y = 35;
       glColor4f( 1, 1, 1, 1 );
 
-      fnt_drawTextFormatted( font, x, y, "Module selected: %s", gs->al_ss->loc_mod[mnu_selectedModule].longname );
+      fnt_drawTextFormatted( font, x, y, "Module selected: %s", gs->mod.longname );
       y += 35;
 
       if ( gs->modstate.import.valid )
@@ -2456,7 +2488,7 @@ int mnu_doShowResults( GameState * gs, float deltaTime )
 }
 
 //--------------------------------------------------------------------------------------------
-int mnu_doNotImplemented( float deltaTime )
+int mnu_doNotImplemented( MenuProc * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static int menuChoice = 0;
@@ -2521,7 +2553,7 @@ int mnu_doNotImplemented( float deltaTime )
 
 
 //--------------------------------------------------------------------------------------------
-int mnu_doNetworkOff( float deltaTime )
+int mnu_doNetworkOff( MenuProc * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static int menuChoice = 0;
@@ -2578,11 +2610,13 @@ int mnu_doNetworkOff( float deltaTime )
   return result;
 }
 //--------------------------------------------------------------------------------------------
-int mnu_RunIngame( MenuProc * mproc, GameState * gs )
+int mnu_RunIngame( MenuProc * mproc )
 {
   ProcState * proc;
   double frameDuration, frameTicks;
   float deltaTime;
+
+  CGame * gs = gfxState.gs;
 
   if(NULL == mproc || mproc->proc.Terminated) return -1;
 
@@ -2602,7 +2636,7 @@ int mnu_RunIngame( MenuProc * mproc, GameState * gs )
   switch ( mproc->whichMenu )
   {
     case mnu_Inventory:
-      mproc->MenuResult = mnu_doIngameInventory( gs, deltaTime );
+      mproc->MenuResult = mnu_doIngameInventory( mproc, deltaTime );
       if ( mproc->MenuResult != 0 )
       {
         if ( mproc->MenuResult == 1 ) proc->returnValue = -1;
@@ -2610,7 +2644,7 @@ int mnu_RunIngame( MenuProc * mproc, GameState * gs )
       break;
 
     case mnu_Quit:
-      mproc->MenuResult = mnu_doIngameQuit( gs, deltaTime );
+      mproc->MenuResult = mnu_doIngameQuit( mproc, deltaTime );
       if ( mproc->MenuResult != 0 )
       {
         if ( mproc->MenuResult == -1 ) 
@@ -2623,7 +2657,7 @@ int mnu_RunIngame( MenuProc * mproc, GameState * gs )
 
     default:
     case mnu_NotImplemented:
-      mproc->MenuResult = mnu_doNotImplemented( deltaTime );
+      mproc->MenuResult = mnu_doNotImplemented( mproc, deltaTime );
       if ( mproc->MenuResult != 0 )
       {
         proc->returnValue = -1;
@@ -2635,13 +2669,15 @@ int mnu_RunIngame( MenuProc * mproc, GameState * gs )
 
 
 //--------------------------------------------------------------------------------------------
-int mnu_Run( MenuProc * mproc, GameState * gs )
+int mnu_Run( MenuProc * mproc )
 {
   ProcState * proc;
+  CGame     * gs;
   double frameDuration, frameTicks;
 
   if(NULL == mproc || mproc->proc.Terminated) return -1;
 
+  gs   = gfxState.gs;
   proc = &(mproc->proc);
 
   ClockState_frameStep( proc->clk );
@@ -2656,7 +2692,7 @@ int mnu_Run( MenuProc * mproc, GameState * gs )
   switch ( mproc->whichMenu )
   {
     case mnu_Main:
-      mproc->MenuResult = mnu_doMain( frameDuration );
+      mproc->MenuResult = mnu_doMain( mproc, frameDuration );
       if( mnu_handleKeyboard(mproc) < 0 ) mproc->MenuResult = -1;  // handle escape 
 
       if ( mproc->MenuResult != 0 )
@@ -2673,7 +2709,7 @@ int mnu_Run( MenuProc * mproc, GameState * gs )
       break;
 
     case mnu_SinglePlayer:
-      mproc->MenuResult = mnu_doSinglePlayer( frameDuration );
+      mproc->MenuResult = mnu_doSinglePlayer( mproc, frameDuration );
       if( mnu_handleKeyboard(mproc) < 0 ) mproc->MenuResult = -1;  // handle escape 
 
       if ( mproc->MenuResult != 0 )
@@ -2695,7 +2731,7 @@ int mnu_Run( MenuProc * mproc, GameState * gs )
       break;
 
     case mnu_Network:
-      mproc->MenuResult = mnu_doNetwork( gs->ns, frameDuration);
+      mproc->MenuResult = mnu_doNetwork( mproc, frameDuration);
       if( mnu_handleKeyboard(mproc) < 0 ) mproc->MenuResult = -1;  // handle escape 
       if (mproc->MenuResult != 0)
       {
@@ -2709,7 +2745,7 @@ int mnu_Run( MenuProc * mproc, GameState * gs )
       break;
 
     case mnu_NetworkOff:
-      mproc->MenuResult = mnu_doNetworkOff(frameDuration);
+      mproc->MenuResult = mnu_doNetworkOff(mproc, frameDuration);
       if( mnu_handleKeyboard(mproc) < 0 ) mproc->MenuResult = -1;  // handle escape 
 
       if ( mproc->MenuResult != 0 )
@@ -2720,13 +2756,13 @@ int mnu_Run( MenuProc * mproc, GameState * gs )
 
     case mnu_HostGame:
       mproc->lastMenu = mnu_Network;
-      if(gs->al_ss->ready)
+      if(mproc->sv->ready)
       {
         mproc->whichMenu = mnu_UnhostGame;
       }
       else
       {
-        mproc->MenuResult = mnu_doHostGame(gs->al_ss, frameDuration);
+        mproc->MenuResult = mnu_doHostGame(mproc, frameDuration);
         if( mnu_handleKeyboard(mproc) < 0 ) mproc->MenuResult = -1;  // handle escape 
 
         if (mproc->MenuResult != 0)
@@ -2739,13 +2775,13 @@ int mnu_Run( MenuProc * mproc, GameState * gs )
           {
             mproc->whichMenu = mnu_UnhostGame;
 
-            ModState_renew( (&gs->modstate), &(gs->al_ss->mod), -1);
+            ModState_renew( (&gs->modstate), &(mproc->sv->mod), -1);
 
             if(!gs->modstate.loaded)
             {
-              log_info("SDL_main: Loading module %s... ", gs->al_ss->mod.loadname);
-              gs->modstate.loaded = module_load(gs, gs->al_ss->mod.loadname);
-              gs->al_ss->ready    = gs->modstate.loaded;
+              log_info("SDL_main: Loading module %s... ", mproc->sv->mod.loadname);
+              gs->modstate.loaded = module_load(gs, mproc->sv->mod.loadname);
+              mproc->sv->ready    = gs->modstate.loaded;
 
               if(gs->modstate.loaded)
               {
@@ -2757,9 +2793,19 @@ int mnu_Run( MenuProc * mproc, GameState * gs )
               }
             }
 
-            // start the server and the file transfer components
-            ServerState_startUp(gs->al_ss);
-            NFileState_startUp( gs->ns->nfs );
+            // ensure that there is a CNet state
+            if(NULL == mproc->net)
+            {
+              mproc->net = CNet_create(gs);
+            }
+            NFileState_startUp( mproc->net->nfs );
+
+            // ensure that there is a CServer state
+            if(NULL == mproc->sv)
+            {
+              mproc->sv = CServer_create(gs);
+            }
+            CServer_startUp(mproc->sv);
           }
         }
       }
@@ -2767,13 +2813,13 @@ int mnu_Run( MenuProc * mproc, GameState * gs )
 
     case mnu_UnhostGame:
       mproc->lastMenu = mnu_Network;
-      if(!gs->al_ss->ready)
+      if(!mproc->sv->ready)
       {
         mproc->whichMenu = mnu_HostGame;
       }
       else
       {
-        mproc->MenuResult = mnu_doUnhostGame(gs->al_ss, frameDuration);
+        mproc->MenuResult = mnu_doUnhostGame(mproc, frameDuration);
         if( mnu_handleKeyboard(mproc) < 0 ) mproc->MenuResult = -1;  // handle escape 
 
         if (mproc->MenuResult != 0)
@@ -2793,18 +2839,18 @@ int mnu_Run( MenuProc * mproc, GameState * gs )
               module_quit(gs);
               gs->modstate.loaded = bfalse;
             }
-            gs->al_ss->ready = bfalse;
+            mproc->sv->ready = bfalse;
 
-            sv_unhostGame(gs->al_ss);
+            sv_unhostGame(mproc->sv);
 
-            ServerState_shutDown(gs->al_ss);
+            CServer_shutDown(mproc->sv);
           }
         };
       };
       break;
 
     case mnu_JoinGame:
-      mproc->MenuResult = mnu_doJoinGame(gs, frameDuration);
+      mproc->MenuResult = mnu_doJoinGame(mproc, frameDuration);
       if( mnu_handleKeyboard(mproc) < 0 ) mproc->MenuResult = -1;  // handle escape 
 
       if (mproc->MenuResult != 0)
@@ -2813,9 +2859,9 @@ int mnu_Run( MenuProc * mproc, GameState * gs )
         {
           // if we exit without making a selection, shut off the client
           mproc->lastMenu = mnu_Network;
-          if(!gs->al_cs->logged_on)
+          if(!mproc->cl->logged_on)
           {
-            ClientState_shutDown(gs->al_cs);
+            CClient_shutDown(mproc->cl);
           }
           mproc->whichMenu = mproc->lastMenu;
         }
@@ -2828,12 +2874,12 @@ int mnu_Run( MenuProc * mproc, GameState * gs )
           mproc->lastMenu = mnu_Network;
           if(!gs->modstate.loaded)
           {
-            memcpy(&(gs->modstate), &(gs->al_cs->req_modstate), sizeof(ModState));
+            memcpy(&(gs->modstate), &(mproc->cl->req_modstate), sizeof(ModState));
 
-            log_info("SDL_main: Loading module %s... ", gs->al_cs->req_mod.loadname);
+            log_info("SDL_main: Loading module %s... ", mproc->cl->req_mod.loadname);
 
-            gs->modstate.loaded  = module_load(gs, gs->al_cs->req_mod.loadname);
-            gs->al_cs->waiting      = gs->modstate.loaded;
+            gs->modstate.loaded  = module_load(gs, mproc->cl->req_mod.loadname);
+            mproc->cl->waiting      = gs->modstate.loaded;
 
             if(gs->modstate.loaded)
             {
@@ -2847,7 +2893,7 @@ int mnu_Run( MenuProc * mproc, GameState * gs )
 
           gs->allpladead      = bfalse;   
 
-          ClientState_joinGame(gs->al_cs, gs->al_cs->req_host);
+          CClient_joinGame(mproc->cl, mproc->cl->req_host);
 
           mproc->whichMenu = mnu_ChoosePlayer;
         }       
@@ -2856,7 +2902,7 @@ int mnu_Run( MenuProc * mproc, GameState * gs )
       break;
 
     case mnu_ChooseModule:
-      mproc->MenuResult = mnu_doChooseModule( gs, frameDuration );
+      mproc->MenuResult = mnu_doChooseModule( mproc, frameDuration );
       if( mnu_handleKeyboard(mproc) < 0 ) mproc->MenuResult = -1;  // handle escape 
 
            if ( mproc->MenuResult == -1 ) mproc->whichMenu = mproc->lastMenu;
@@ -2864,7 +2910,7 @@ int mnu_Run( MenuProc * mproc, GameState * gs )
       break;
 
     case mnu_ChoosePlayer:
-      mproc->MenuResult = mnu_doChoosePlayer( gs, frameDuration );
+      mproc->MenuResult = mnu_doChoosePlayer( mproc, frameDuration );
       if( mnu_handleKeyboard(mproc) < 0 ) mproc->MenuResult = -1;  // handle escape 
 
       if ( mproc->MenuResult == -1 )     mproc->whichMenu = mproc->lastMenu;
@@ -2872,7 +2918,7 @@ int mnu_Run( MenuProc * mproc, GameState * gs )
       break;
 
     case mnu_Options:
-      mproc->MenuResult = mnu_doOptions( frameDuration );
+      mproc->MenuResult = mnu_doOptions( mproc, frameDuration );
       if( mnu_handleKeyboard(mproc) < 0 ) mproc->MenuResult = -1;  // handle escape 
 
       if ( mproc->MenuResult != 0 )
@@ -2886,7 +2932,7 @@ int mnu_Run( MenuProc * mproc, GameState * gs )
       break;
 
     case mnu_AudioOptions:
-      mproc->MenuResult = mnu_doAudioOptions( frameDuration );
+      mproc->MenuResult = mnu_doAudioOptions( mproc, frameDuration );
       if( mnu_handleKeyboard(mproc) < 0 ) mproc->MenuResult = -1;  // handle escape 
 
       if ( mproc->MenuResult != 0 )
@@ -2896,7 +2942,7 @@ int mnu_Run( MenuProc * mproc, GameState * gs )
       break;
 
     case mnu_VideoOptions:
-      mproc->MenuResult = mnu_doVideoOptions( frameDuration );
+      mproc->MenuResult = mnu_doVideoOptions( mproc, frameDuration );
       if( mnu_handleKeyboard(mproc) < 0 ) mproc->MenuResult = -1;  // handle escape 
 
       if ( mproc->MenuResult != 0 )
@@ -2906,7 +2952,7 @@ int mnu_Run( MenuProc * mproc, GameState * gs )
       break;
 
     case mnu_TestResults:
-      mproc->MenuResult = mnu_doShowResults( gs, frameDuration );
+      mproc->MenuResult = mnu_doLaunchGame( mproc, frameDuration );
       if( mnu_handleKeyboard(mproc) < 0 ) mproc->MenuResult = -1;  // handle escape 
 
       if ( mproc->MenuResult != 0 )
@@ -2918,7 +2964,7 @@ int mnu_Run( MenuProc * mproc, GameState * gs )
 
     default:
     case mnu_NotImplemented:
-      mproc->MenuResult = mnu_doNotImplemented( frameDuration );
+      mproc->MenuResult = mnu_doNotImplemented( mproc, frameDuration );
       if( mnu_handleKeyboard(mproc) < 0 ) mproc->MenuResult = -1;  // handle escape 
 
       if ( mproc->MenuResult != 0 )
@@ -3244,7 +3290,7 @@ void mnu_exitMenuMode()
 };
 
 //--------------------------------------------------------------------------------------------
-int mnu_doNetwork(NetState * ns, float deltaTime)
+int mnu_doNetwork(MenuProc * mproc, float deltaTime)
 {
   static int menuState = MM_Begin;
   static GLtexture background;
@@ -3360,7 +3406,7 @@ int mnu_doNetwork(NetState * ns, float deltaTime)
 }
 
 //--------------------------------------------------------------------------------------------
-int mnu_doHostGame(ServerState * ss, float deltaTime)
+int mnu_doHostGame(MenuProc * mproc, float deltaTime)
 {
   static int menuState = MM_Begin;
   static int menuChoice = 0;
@@ -3368,27 +3414,29 @@ int mnu_doHostGame(ServerState * ss, float deltaTime)
   static ui_Widget wBackground, wCopyright, wtmp;
   static int startIndex;
   static GLtexture background;
-  static int validModules[MAXMODULE];
-  static int numValidModules;
 
   static int moduleMenuOffsetX;
   static int moduleMenuOffsetY;
-
-  GameState * gs = ss->parent->gs;
 
   int result = 0;
   int i, j, x, y;
   char txtBuffer[128];
 
+  CServer * sv;
+
   if(!net_Started()) return -1;
+
+  // make sure a CServer state is defined
+  if(NULL == mproc->sv) return -1;
+  sv = mproc->sv;
 
   switch (menuState)
   {
   case MM_Begin:
 
     //Reload all avalible modules (Hidden ones may pop up after the player has completed one)
-    prime_titleimage(ss->loc_mod, MAXMODULE);
-    ss->loc_mod_count = module_load_all_data(ss->loc_mod, MAXMODULE);
+    mnu_prime_titleimage(mproc);
+    sv->loc_mod_count = mnu_load_mod_data(mproc, sv->loc_mod, MAXMODULE);
 
     // Load font & background
     snprintf(CStringTmp1, sizeof(CStringTmp1), "%s/%s/%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_sleepy_bitmap);
@@ -3398,19 +3446,16 @@ int mnu_doHostGame(ServerState * ss, float deltaTime)
     ui_initWidget( &wCopyright,  UI_Invalid, ui_getFont(), mnu_copyrightText, NULL, mnu_copyrightLeft, mnu_copyrightTop, 0, 0 );
 
     startIndex = 0;
-    mnu_selectedModule = -1;
-    ss->selectedModule = -1;
+    mnu_prime_modules(mproc);
 
     // Find the module's that we want to allow hosting for.
     // Only modules taht allow importing AND have modmaxplayers > 1
-    memset(validModules, 0, sizeof(int) * MAXMODULE);
-    numValidModules = 0;
-    for (i = 0;i < ss->loc_mod_count; i++)
+    for (i = 0; i<sv->loc_mod_count; i++)
     {
-      if (ss->loc_mod[i].importamount > 0 && ss->loc_mod[i].maxplayers > 1)
+      if (sv->loc_mod[i].importamount > 0 && sv->loc_mod[i].maxplayers > 1)
       {
-        validModules[numValidModules] = i;
-        numValidModules++;
+        mproc->validModules[mproc->validModules_count] = i;
+        mproc->validModules_count++;
       }
     }
 
@@ -3455,13 +3500,13 @@ int mnu_doHostGame(ServerState * ss, float deltaTime)
     if ( BUTTON_UP == ui_doButton( mnu_widgetList + 0 ) )
     {
       startIndex--;
-      if ( startIndex < 0 ) startIndex += numValidModules;
+      if ( startIndex < 0 ) startIndex += mproc->validModules_count;
     }
 
     if ( BUTTON_UP == ui_doButton( mnu_widgetList + 1 ) )
     {
       startIndex++;
-      if ( startIndex >= numValidModules ) startIndex -= numValidModules;
+      if ( startIndex >= mproc->validModules_count ) startIndex -= mproc->validModules_count;
     }
 
     // Clamp startIndex to 0
@@ -3474,14 +3519,14 @@ int mnu_doHostGame(ServerState * ss, float deltaTime)
       {
         int imod;
 
-        j = ( i + startIndex ) % numValidModules;
-        imod = validModules[j];
-        mnu_widgetList[4+i].img = TxTitleImage + ss->loc_mod[imod].tx_title_idx;
+        j = ( i + startIndex ) % mproc->validModules_count;
+        imod = mproc->validModules[j];
+        mnu_widgetList[4+i].img = mproc->TxTitleImage + sv->loc_mod[imod].tx_title_idx;
 
         mnu_slideButton( &wtmp, mnu_widgetList + 4+i, x, y );
         if ( BUTTON_UP == ui_doImageButton( &wtmp ) )
         {
-          mnu_selectedModule = j;
+          mproc->selectedModule = j;
         }
 
         x += 138 + 20; // Width of the button, and the spacing between buttons
@@ -3500,14 +3545,14 @@ int mnu_doHostGame(ServerState * ss, float deltaTime)
       if ( BUTTON_UP == ui_doButton( mnu_widgetList + 3 ) )
       {
         // Signal mnu_Run to go back to the previous menu
-        mnu_selectedModule = -1;
+        mproc->selectedModule = -1;
         menuState = MM_Leaving;
       }
 
       // Draw the text description of the selected module
-      if ( mnu_selectedModule > -1 )
+      if ( mproc->selectedModule > -1 )
       {
-        MOD_INFO * mi = ss->loc_mod + validModules[mnu_selectedModule];
+        MOD_INFO * mi = sv->loc_mod + mproc->validModules[mproc->selectedModule];
 
         y = 173 + 5;
         x = 21 + 5;
@@ -3547,14 +3592,14 @@ int mnu_doHostGame(ServerState * ss, float deltaTime)
 
         // And finally, the summary
         snprintf( txtBuffer, sizeof( txtBuffer ), "%s" SLASH_STRING "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.modules_dir, mi->loadname, CData.gamedat_dir, CData.mnu_file );
-        if ( validModules[mnu_selectedModule] != gs->modtxt.val )
+        if ( mproc->validModules[mproc->selectedModule] != sv->loc_modtxt.val )
         {
-          if ( module_read_summary( txtBuffer, &(gs->modtxt) ) ) gs->modtxt.val = validModules[mnu_selectedModule];
+          if ( module_read_summary( txtBuffer, &(sv->loc_modtxt) ) ) sv->loc_modtxt.val = mproc->validModules[mproc->selectedModule];
         };
 
         for ( i = 0;i < SUMMARYLINES;i++ )
         {
-          fnt_drawText( mnu_Font, moduleMenuOffsetX + x, moduleMenuOffsetY + y, gs->modtxt.summary[i] );
+          fnt_drawText( mnu_Font, moduleMenuOffsetX + x, moduleMenuOffsetY + y, sv->loc_modtxt.summary[i] );
           y += 20;
         }
       }
@@ -3571,17 +3616,19 @@ int mnu_doHostGame(ServerState * ss, float deltaTime)
     menuState = MM_Begin;
 
     // grab the selected module
-    ss->selectedModule = mnu_selectedModule;
+    
 
     // figure out what to do
-    if (ss->selectedModule == -1)
+    if (-1 == mproc->selectedModule)
     {
       result = -1;
     }
     else
     {
       // Save the module info of the picked module
-      memcpy(&(ss->mod), ss->loc_mod + validModules[ss->selectedModule], sizeof(MOD_INFO)); 
+      sv->selectedModule = mproc->selectedModule;
+      memcpy(&(sv->mod), sv->loc_mod + mproc->validModules[sv->selectedModule], sizeof(MOD_INFO)); 
+
       result = 1;
     }
 
@@ -3594,7 +3641,7 @@ int mnu_doHostGame(ServerState * ss, float deltaTime)
 }
 
 //--------------------------------------------------------------------------------------------
-int mnu_doUnhostGame(ServerState * ss, float deltaTime)
+int mnu_doUnhostGame(MenuProc * mproc, float deltaTime)
 {
   static int menuState = MM_Begin;
   static int menuChoice = 0;
@@ -3602,8 +3649,6 @@ int mnu_doUnhostGame(ServerState * ss, float deltaTime)
   static ui_Widget wBackground, wCopyright, wtmp;
   static int startIndex;
   static GLtexture background;
-  static int validModules[MAXMODULE];
-  static int numValidModules;
 
   static int moduleMenuOffsetX;
   static int moduleMenuOffsetY;
@@ -3612,27 +3657,34 @@ int mnu_doUnhostGame(ServerState * ss, float deltaTime)
   int i, x, y;
   char txtBuffer[128];
 
+  CServer * sv;
+
   if(!net_Started()) return -1;
+
+  // make sure a CServer state is defined
+  if(NULL == mproc->sv) return -1;
+  sv = mproc->sv;
 
   switch (menuState)
   {
   case MM_Begin:
     //Reload all avalible modules (Hidden ones may pop up after the player has completed one)
-    prime_titleimage(ss->loc_mod, MAXMODULE);
-    ss->loc_mod_count = module_load_all_data(ss->loc_mod, MAXMODULE);
+    mnu_prime_titleimage(mproc);
+    sv->loc_mod_count = mnu_load_mod_data(mproc, sv->loc_mod, MAXMODULE);
 
     // find the module that matches the one that is being hosted
-    numValidModules = 0;
-    mnu_selectedModule = -1;
-    ss->selectedModule = -1;
-    for (i = 0;i < ss->loc_mod_count; i++)
-    {
-      validModules[numValidModules] = i;
-      numValidModules++;
+    mproc->validModules_count = 0;
+    mproc->selectedModule = -1;
+    sv->selectedModule = -1;
 
-      if( 0 == strcmp(ss->loc_mod[i].loadname, ss->mod.loadname) )
+    for (i = 0;i < sv->loc_mod_count; i++)
+    {
+      mproc->validModules[mproc->validModules_count] = i;
+      mproc->validModules_count++;
+
+      if( 0 == strcmp(sv->loc_mod[i].loadname, sv->mod.loadname) )
       {
-        ss->selectedModule = i;
+        mproc->selectedModule = i;
       }
     };
 
@@ -3672,15 +3724,15 @@ int mnu_doUnhostGame(ServerState * ss, float deltaTime)
   
 
     // Draw buttons for the modules that can be selected
-    startIndex = ss->selectedModule;
+    startIndex = mproc->selectedModule;
     x = 93;
     y = 20;
 
     x += 138 + 20; // Width of the button, and the spacing between buttons
 
     {
-      int imod = validModules[ss->selectedModule];
-      mnu_widgetList[5].img = TxTitleImage + ss->loc_mod[imod].tx_title_idx;
+      int imod = mproc->validModules[mproc->selectedModule];
+      mnu_widgetList[5].img = mproc->TxTitleImage + sv->loc_mod[imod].tx_title_idx;
       mnu_slideButton( &wtmp, mnu_widgetList + 5, x, y );
       ui_doImageButton( &wtmp );
     }
@@ -3692,39 +3744,38 @@ int mnu_doUnhostGame(ServerState * ss, float deltaTime)
     if (ui_doButton(mnu_widgetList + 2))
     {
       // go to the next menu with this module selected
-      mnu_selectedModule = ss->selectedModule;
       menuState = MM_Leaving;
     }
 
     if (ui_doButton( mnu_widgetList + 3))
     {
       // Signal doMenu to go back to the previous menu
-      mnu_selectedModule = -1;
+      mproc->selectedModule = -1;
       menuState = MM_Leaving;
     }
 
     // Draw the text description of the selected module
-    //if (mnu_selectedModule > -1)
+    //if (mproc->selectedModule > -1)
     {
       y = 173 + 5;
       x = 21 + 5;
       glColor4f(1, 1, 1, 1);
-      fnt_drawText(mnu_Font, moduleMenuOffsetX + x, moduleMenuOffsetY + y, ss->mod.longname);
+      fnt_drawText(mnu_Font, moduleMenuOffsetX + x, moduleMenuOffsetY + y, sv->mod.longname);
       y += 20;
 
-      snprintf(txtBuffer, sizeof(txtBuffer), "Difficulty: %s", ss->mod.rank);
+      snprintf(txtBuffer, sizeof(txtBuffer), "Difficulty: %s", sv->mod.rank);
       fnt_drawText(mnu_Font, moduleMenuOffsetX + x, moduleMenuOffsetY + y, txtBuffer);
       y += 20;
 
-      if (ss->mod.maxplayers > 1)
+      if (sv->mod.maxplayers > 1)
       {
-        if (ss->mod.minplayers == ss->mod.maxplayers)
+        if (sv->mod.minplayers == sv->mod.maxplayers)
         {
-          snprintf(txtBuffer, sizeof(txtBuffer), "%d Players", ss->mod.minplayers);
+          snprintf(txtBuffer, sizeof(txtBuffer), "%d Players", sv->mod.minplayers);
         }
         else
         {
-          snprintf(txtBuffer, sizeof(txtBuffer), "%d - %d Players", ss->mod.minplayers, ss->mod.maxplayers);
+          snprintf(txtBuffer, sizeof(txtBuffer), "%d - %d Players", sv->mod.minplayers, sv->mod.maxplayers);
         }
       }
       else
@@ -3735,11 +3786,11 @@ int mnu_doUnhostGame(ServerState * ss, float deltaTime)
       y += 20;
 
       // And finally, the summary
-      snprintf(txtBuffer, sizeof(txtBuffer), "%s/%s/%s/%s", CData.modules_dir, ss->mod.loadname, CData.gamedat_dir, CData.mnu_file);
-      module_read_summary(txtBuffer, &(ss->loc_modtxt));
+      snprintf(txtBuffer, sizeof(txtBuffer), "%s/%s/%s/%s", CData.modules_dir, sv->mod.loadname, CData.gamedat_dir, CData.mnu_file);
+      module_read_summary(txtBuffer, &(sv->loc_modtxt));
       for (i = 0;i < SUMMARYLINES;i++)
       {
-        fnt_drawText(mnu_Font, moduleMenuOffsetX + x, moduleMenuOffsetY + y, ss->loc_modtxt.summary[i]);
+        fnt_drawText(mnu_Font, moduleMenuOffsetX + x, moduleMenuOffsetY + y, sv->loc_modtxt.summary[i]);
         y += 20;
       }
     }
@@ -3753,13 +3804,13 @@ int mnu_doUnhostGame(ServerState * ss, float deltaTime)
   case MM_Finish:
     GLTexture_Release(&background);
 
-    if(mnu_selectedModule == -1)
+    if(mproc->selectedModule == -1)
     {
       result = -1;
     }
     else
     {
-      ss->selectedModule = -1;
+      sv->selectedModule = -1;
       result = 1;
     };
 
@@ -3774,7 +3825,7 @@ int mnu_doUnhostGame(ServerState * ss, float deltaTime)
 }
 
 //--------------------------------------------------------------------------------------------
-int mnu_doJoinGame(GameState * gs, float deltaTime)
+int mnu_doJoinGame(MenuProc * mproc, float deltaTime)
 {
   static int menuState = MM_Begin;
   static int menuChoice = 0;
@@ -3782,8 +3833,6 @@ int mnu_doJoinGame(GameState * gs, float deltaTime)
   static ui_Widget wBackground, wCopyright, wtmp;
   static int startIndex;
   static GLtexture background;
-  static int validModules[MAXMODULE];
-  static int numValidModules;
 
   static int moduleMenuOffsetX;
   static int moduleMenuOffsetY;
@@ -3796,21 +3845,44 @@ int mnu_doJoinGame(GameState * gs, float deltaTime)
 
   SYS_PACKET egopkt;
 
-  ClientState * cs = gs->al_cs;
+  CGame   * gs;
+  CClient * cl;
 
   int result = 0;
   int i, j, x, y;
   char txtBuffer[128];
 
-  if(!net_Started()) return -1;
+  if( !net_Started() ) return -1;
+
+  gs = gfxState.gs;
+
+  // make sure a CServer state is defined
+  if(NULL == mproc->cl)
+  {
+    mproc->cl = CClient_create(gfxState.gs);
+    return -1;
+  }
+  cl = mproc->cl;
 
   switch (menuState)
   {
   case MM_Begin:
 
     // start up the file transfer and client components at this point
-    ClientState_startUp(gs->al_cs);
-    NFileState_startUp( gs->ns->nfs );
+
+    // ensure that there is a CNet state
+    if(NULL == mproc->net)
+    {
+      mproc->net = CNet_create(gs);
+    }
+    NFileState_startUp( mproc->net->nfs );
+
+    // ensure that there is a CClient state
+    if(NULL == mproc->cl)
+    {
+      mproc->cl = CClient_create(gs);
+    }
+    CClient_startUp(mproc->cl);
 
     // Load font & background
     snprintf(CStringTmp1, sizeof(CStringTmp1), "%s/%s/%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_sleepy_bitmap);
@@ -3821,16 +3893,13 @@ int mnu_doJoinGame(GameState * gs, float deltaTime)
 
     // initialize the module selection data
     startIndex = 0;
-    cs->selectedModule = -1;
-    memset(validModules, 0, sizeof(int) * MAXMODULE);
-    numValidModules = 0;
-
-    prime_titleimage(cs->rem_mod, MAXMODULE);
+    mnu_prime_modules(mproc);
+    mnu_prime_titleimage(mproc);
 
     // Grab the module info from all the servers
-    cl_begin_request_module(cs);
-    cl_request_module_images(cs);
-    cl_request_module_info(cs);
+    cl_begin_request_module(cl);
+    cl_request_module_images(cl);
+    cl_request_module_info(cl);
 
     // Figure out at what offset we want to draw the module menu.
     moduleMenuOffsetX = (gfxState.surface->w - 640) / 2;
@@ -3853,7 +3922,7 @@ int mnu_doJoinGame(GameState * gs, float deltaTime)
     x = ( gfxState.surface->w / 2 ) - ( background.imgW / 2 );
     y = gfxState.surface->h - background.imgH;
 
-    mnu_selectedModule = -1;
+    mproc->selectedModule = -1;
 
     menuChoice = 0;
     menuState = MM_Entering;
@@ -3867,23 +3936,23 @@ int mnu_doJoinGame(GameState * gs, float deltaTime)
 
     // keep trying to load the module images as long as the client is still deciding
     {
-      cl_request_module_images(cs);
-      cl_load_module_images(cs);
+      cl_request_module_images(cl);
+      mnu_load_cl_images(mproc);
     }
 
     // do the asynchronous module info download
     {
-      cl_request_module_info(cs);
-      cl_load_module_info(cs);
+      cl_request_module_info(cl);
+      cl_load_module_info(cl);
 
-      memset(validModules, 0, sizeof(int) * MAXMODULE);
-      numValidModules = 0;
-      for(i=0; i<cs->rem_mod_count; i++)
+      mnu_prime_modules(mproc);
+
+      for(i=0; i<cl->rem_mod_count; i++)
       {
-        if(cs->rem_mod[i].is_hosted)
+        if(cl->rem_mod[i].is_hosted)
         {
-          validModules[numValidModules] = i;
-          numValidModules++;
+          mproc->validModules[mproc->validModules_count] = i;
+          mproc->validModules_count++;
         }
       }
     }
@@ -3898,19 +3967,19 @@ int mnu_doJoinGame(GameState * gs, float deltaTime)
     if ( BUTTON_UP == ui_doButton( mnu_widgetList + 0 ) )
     {
       startIndex--;
-      if ( startIndex < 0 ) startIndex += numValidModules;
+      if ( startIndex < 0 ) startIndex += mproc->validModules_count;
     }
 
     if ( BUTTON_UP == ui_doButton( mnu_widgetList + 1 ) )
     {
       startIndex++;
-      if ( startIndex >= numValidModules ) startIndex -= numValidModules;
+      if ( startIndex >= mproc->validModules_count ) startIndex -= mproc->validModules_count;
     }
 
 
     // Draw buttons for the modules that can be selected
     
-    if(numValidModules > 0)
+    if(mproc->validModules_count > 0)
     {
       int imin, imax;
 
@@ -3918,12 +3987,12 @@ int mnu_doJoinGame(GameState * gs, float deltaTime)
       mnu_widgetList[5].img = NULL;
       mnu_widgetList[6].img = NULL;
 
-      if(numValidModules == 1)
+      if(mproc->validModules_count == 1)
       {
         imin = 1;
         imax = imin + 1;
       }
-      else if(numValidModules == 2)
+      else if(mproc->validModules_count == 2)
       {
         imin = 1;
         imax = imin + 2;
@@ -3941,18 +4010,18 @@ int mnu_doJoinGame(GameState * gs, float deltaTime)
 
         x = 93 + i*(138 + 20);
 
-        j = ( i + startIndex ) % numValidModules;
-        imod = validModules[j];
+        j = ( i + startIndex ) % mproc->validModules_count;
+        imod = mproc->validModules[j];
 
-        if(MAXMODULE != cs->rem_mod[imod].tx_title_idx)
+        if(MAXMODULE != cl->rem_mod[imod].tx_title_idx)
         {
-          mnu_widgetList[4+i].img = TxTitleImage + cs->rem_mod[imod].tx_title_idx;
+          mnu_widgetList[4+i].img = mproc->TxTitleImage + cl->rem_mod[imod].tx_title_idx;
         }
 
         mnu_slideButton( &wtmp, mnu_widgetList + 4+i, x, y );
         if ( BUTTON_UP == ui_doImageButton( &wtmp ) )
         {
-          mnu_selectedModule = j;
+          mproc->selectedModule = j;
         }
       }
     }
@@ -3964,21 +4033,21 @@ int mnu_doJoinGame(GameState * gs, float deltaTime)
     if (ui_doButton(mnu_widgetList + 2))
     {
       // go to the next menu with this module selected
-      cs->selectedModule = validModules[cs->selectedModule];
+      mproc->selectedModule = mproc->validModules[mproc->selectedModule];
       menuState = MM_Leaving;
     }
 
     if (ui_doButton(mnu_widgetList + 3))
     {
       // Signal doMenu to go back to the previous menu
-      cs->selectedModule = -1;
+      mproc->selectedModule = -1;
       menuState = MM_Leaving;
     }
 
     // Draw the text description of the selected module
-    if (mnu_selectedModule > -1)
+    if (mproc->selectedModule > -1)
     {
-      MOD_INFO * mi = cs->rem_mod + validModules[mnu_selectedModule];
+      MOD_INFO * mi = cl->rem_mod + mproc->validModules[mproc->selectedModule];
         y = 173 + 5;
         x = 21 + 5;
         glColor4f( 1, 1, 1, 1 );
@@ -4017,14 +4086,14 @@ int mnu_doJoinGame(GameState * gs, float deltaTime)
 
         // And finally, the summary
         snprintf( txtBuffer, sizeof( txtBuffer ), "%s" SLASH_STRING "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.modules_dir, mi->loadname, CData.gamedat_dir, CData.mnu_file );
-        if ( validModules[mnu_selectedModule] != gs->modtxt.val )
+        if ( mproc->validModules[mproc->selectedModule] != cl->rem_modtxt.val )
         {
-          if ( module_read_summary( txtBuffer, &(gs->modtxt) ) ) gs->modtxt.val = validModules[mnu_selectedModule];
+          if ( module_read_summary( txtBuffer, &(cl->rem_modtxt) ) ) cl->rem_modtxt.val = mproc->validModules[mproc->selectedModule];
         };
 
         for ( i = 0;i < SUMMARYLINES;i++ )
         {
-          fnt_drawText( mnu_Font, moduleMenuOffsetX + x, moduleMenuOffsetY + y, gs->modtxt.summary[i] );
+          fnt_drawText( mnu_Font, moduleMenuOffsetX + x, moduleMenuOffsetY + y, cl->rem_modtxt.summary[i] );
           y += 20;
         }
     }
@@ -4039,31 +4108,32 @@ int mnu_doJoinGame(GameState * gs, float deltaTime)
     GLTexture_Release(&background);
 
     // release all of the network connections
-    cl_end_request_module(cs);
+    cl_end_request_module(cl);
 
     menuState = MM_Begin;
 
-    if (cs->selectedModule == -1)
+    if (-1 == mproc->selectedModule)
     {
       result = -1;  // Back
     }
     else
     {
       // Save the module info of the picked module
-      memcpy(&cs->req_mod, &cs->rem_mod[cs->selectedModule], sizeof(MOD_INFO));
-      ModState_new(&(cs->req_modstate), &(cs->req_mod), gs->randie_index);
+      cl->selectedModule = mproc->selectedModule;
+      memcpy(&cl->req_mod, &cl->rem_mod[cl->selectedModule], sizeof(MOD_INFO));
+      ModState_new(&(cl->req_modstate), &(cl->req_mod), cl->req_seed);
 
-      if( ClientState_connect(cs, cs->rem_mod[cs->selectedModule].host) )
+      if( CClient_connect(cl, cl->rem_mod[cl->selectedModule].host) )
       {
         net_startNewSysPacket(&egopkt);
         sys_packet_addUint16(&egopkt, TO_HOST_REQUEST_MODULE);
-        sys_packet_addString(&egopkt, cs->req_mod.loadname);
-        ClientState_sendPacketToHost(cs, &egopkt);
+        sys_packet_addString(&egopkt, cl->req_mod.loadname);
+        CClient_sendPacketToHost(cl, &egopkt);
 
         // wait for up to 2 minutes to transfer needed files
         // this probably needs to be longer
-        wait_return = net_waitForPacket(cl_getHost()->asynch, cs->gamePeer, 2*60000, NET_DONE_SENDING_FILES, NULL);
-        ClientState_disconnect(cs);
+        wait_return = net_waitForPacket(cl_getHost()->asynch, cl->gamePeer, 2*60000, NET_DONE_SENDING_FILES, NULL);
+        CClient_disconnect(cl);
         if(rv_fail == wait_return || rv_error == wait_return) assert(bfalse);
 
         result = 1;
@@ -4098,7 +4168,7 @@ int mnu_handleKeyboard( MenuProc * mproc )
 };
 
 //--------------------------------------------------------------------------------------------
-int mnu_doIngameQuit( GameState * gs, float deltaTime )
+int mnu_doIngameQuit( MenuProc * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static float lerp;
@@ -4106,6 +4176,8 @@ int mnu_doIngameQuit( GameState * gs, float deltaTime )
   static char * buttons[] = { "Quit", "Continue", "" };
 
   int result = 0;
+
+  CGame * gs = gfxState.gs;
 
   switch ( menuState )
   {
@@ -4191,7 +4263,7 @@ int mnu_doIngameQuit( GameState * gs, float deltaTime )
 
 
 //--------------------------------------------------------------------------------------------
-int mnu_doIngameInventory( GameState * gs, float deltaTime )
+int mnu_doIngameInventory( MenuProc * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static float lerp;
@@ -4202,6 +4274,8 @@ int mnu_doIngameInventory( GameState * gs, float deltaTime )
   static Uint32 starttime;
   int iw, ih;
 
+  CGame   * gs = gfxState.gs;
+  CClient * cl = mproc->cl;
 
   iw = iconrect.right  - iconrect.left;
   ih = iconrect.bottom - iconrect.top;
@@ -4214,10 +4288,10 @@ int mnu_doIngameInventory( GameState * gs, float deltaTime )
 
       for(i=0, k=0; i<MAXSTAT; i++)
       {
-        offsetX = gs->al_cs->StatList[i].pos.x - 5*iw;
-        offsetY = gs->al_cs->StatList[i].pos.y;
+        offsetX = cl->StatList[i].pos.x - 5*iw;
+        offsetY = cl->StatList[i].pos.y;
 
-        ichr    = gs->al_cs->StatList[i].chr_ref;
+        ichr    = cl->StatList[i].chr_ref;
         if(!VALID_CHR(gs->ChrList, ichr)) continue;      
 
         iitem = ichr;
@@ -4309,19 +4383,23 @@ int mnu_doIngameInventory( GameState * gs, float deltaTime )
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-MenuProc * MenuProc_new(MenuProc *ms)
+MenuProc * MenuProc_new(MenuProc *mproc)
 {
   //fprintf( stdout, "MenuProc_new()\n");
 
-  if(NULL == ms || ms->initialized) return ms;
+  if(NULL == mproc || mproc->initialized) return mproc;
 
-  memset(ms, 0, sizeof(MenuProc));
+  memset(mproc, 0, sizeof(MenuProc));
 
-  ProcState_new( &(ms->proc) );
+  ProcState_new( &(mproc->proc) );
 
-  ms->initialized = btrue;
+  mproc->selectedModule     = -1;
+  mproc->validModules_count = 0;
+  memset(mproc->validModules, 0, sizeof(int) * MAXMODULE);
 
-  return ms;
+  mproc->initialized = btrue;
+
+  return mproc;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4338,6 +4416,8 @@ bool_t MenuProc_delete(MenuProc * ms)
   {
     ms->initialized = bfalse;
   }
+
+  mnu_free_all_titleimages(ms);
 
   return retval;
 }
@@ -4383,4 +4463,145 @@ bool_t MenuProc_init_ingame(MenuProc * ms)
   ms->whichMenu = mnu_Quit;
 
   return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+Uint32 mnu_load_titleimage(MenuProc * mproc, int titleimage, char *szLoadName)
+{
+  // ZZ> This function loads a title in the specified image slot, forcing it into
+  //     system memory.  Returns btrue if it worked
+  Uint32 retval = MAXMODULE;
+
+  if(INVALID_TEXTURE != GLTexture_Load(GL_TEXTURE_2D,  mproc->TxTitleImage + titleimage, szLoadName, INVALID_KEY))
+  {
+    retval = titleimage;
+  }
+
+  return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+size_t mnu_load_mod_data(MenuProc * mproc, MOD_INFO * mi_ary, size_t mi_len)
+{
+  // ZZ> This function loads the title image for each module.  Modules without a
+  //     title are marked as invalid
+
+  char searchname[15];
+  STRING loadname;
+  const char *FileName;
+  FILE* filesave;
+  size_t modcount;
+
+  FS_FIND_INFO fs_finfo;
+
+  fs_find_info_new( &fs_finfo );
+
+  // Convert searchname
+  strcpy( searchname, "modules" SLASH_STRING "*.mod" );
+
+  // Log a directory list
+  filesave = fs_fileOpen( PRI_NONE, NULL, CData.modules_file, "w" );
+  if ( filesave != NULL )
+  {
+    fprintf( filesave, "This file logs all of the modules found\n" );
+    fprintf( filesave, "** Denotes an invalid module (Or locked)\n\n" );
+  }
+  else
+  {
+    log_warning( "Could not write to %s\n", CData.modules_file );
+  }
+
+  // Search for .mod directories
+  FileName = fs_findFirstFile( &fs_finfo, CData.modules_dir, NULL, "*.mod" );
+  modcount = 0;
+  while ( FileName && modcount < mi_len )
+  {
+    strncpy( mi_ary[modcount].loadname, FileName, sizeof( mi_ary[modcount].loadname ) );
+    snprintf( loadname, sizeof( loadname ), "%s" SLASH_STRING "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.modules_dir, FileName, CData.gamedat_dir, CData.mnu_file );
+    if ( module_read_data( mi_ary + modcount, loadname ) )
+    {
+      snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.modules_dir, FileName, CData.gamedat_dir, CData.title_bitmap );
+      mi_ary[modcount].tx_title_idx = mnu_load_titleimage( mproc, modcount, CStringTmp1 );
+      if ( MAXMODULE != mi_ary[modcount].tx_title_idx )
+      {
+        fprintf( filesave, "%02d.  %s\n", modcount, mi_ary[modcount].longname );
+        modcount++;
+      }
+      else
+      {
+        fprintf( filesave, "**.  %s\n", FileName );
+      }
+    }
+    else
+    {
+      fprintf( filesave, "**.  %s\n", FileName );
+    }
+    FileName = fs_findNextFile(&fs_finfo);
+  }
+  fs_findClose(&fs_finfo);
+  if ( filesave != NULL ) fs_fileClose( filesave );
+
+  return modcount;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t mnu_load_cl_images(MenuProc *mproc)
+{
+  // BB> This function loads the title image(s) for the modules that the client
+  //     is browsing
+
+  int cnt;
+  bool_t all_loaded = btrue;
+  CClient * cl = mproc->cl;
+
+  all_loaded = btrue;
+  for(cnt=0; cnt<MAXMODULE; cnt++)
+  {
+    // check to see if the module has been loaded
+    if(MAXMODULE==cl->rem_mod[cnt].tx_title_idx && cl->rem_mod[cnt].is_hosted)
+    {
+      // see if the the file has appeared locally 
+      snprintf(CStringTmp1, sizeof(CStringTmp1), "%s/%s/%s/%s", CData.modules_dir, cl->rem_mod[cnt].loadname, CData.gamedat_dir, CData.title_bitmap);
+      cl->rem_mod[cnt].tx_title_idx = mnu_load_titleimage(mproc, cnt, CStringTmp1);
+
+      if(MAXMODULE==cl->rem_mod[cnt].tx_title_idx)
+      {
+        all_loaded = bfalse;
+        break;
+      }
+    }
+  }
+
+  return all_loaded;
+}
+
+//---------------------------------------------------------------------------------------------
+void mnu_free_all_titleimages(MenuProc * mproc)
+{
+  // ZZ> This function clears out all of the title images
+
+  int cnt;
+  for ( cnt = 0; cnt < MAXMODULE; cnt++ )
+  {
+    GLTexture_Release( mproc->TxTitleImage + cnt );
+  }
+}
+
+
+//---------------------------------------------------------------------------------------------
+void mnu_prime_modules(MenuProc * mproc)
+{
+  mproc->selectedModule     = -1;
+  mproc->validModules_count = 0;
+  memset(mproc->validModules, 0, sizeof(int) * MAXMODULE);
+
+  if(NULL != mproc->cl)
+  {
+    mproc->cl->selectedModule = -1;
+  }
+
+  if(NULL != mproc->sv)
+  {
+    mproc->sv->selectedModule = -1;
+  }
 }

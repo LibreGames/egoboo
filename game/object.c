@@ -34,7 +34,7 @@
 #include "egoboo_strutil.h"
 
 //--------------------------------------------------------------------------------------------
-int load_one_object( GameState * gs, int skin_count, char * szObjectpath, char* szObjectname )
+int load_one_object( CGame * gs, int skin_count, char * szObjectpath, char* szObjectname )
 {
   // ZZ> This function loads one object and returns the number of skins
 
@@ -175,7 +175,7 @@ int load_one_object( GameState * gs, int skin_count, char * szObjectpath, char* 
 }
 
 //--------------------------------------------------------------------------------------------
-void switch_team( GameState * gs, CHR_REF chr_ref, TEAM team )
+void switch_team( CGame * gs, CHR_REF chr_ref, TEAM team )
 {
   // ZZ> This function makes a chr_ref join another team...
 
@@ -204,7 +204,7 @@ void switch_team( GameState * gs, CHR_REF chr_ref, TEAM team )
 }
 
 //--------------------------------------------------------------------------------------------
-int restock_ammo( GameState * gs, CHR_REF chr_ref, IDSZ idsz )
+int restock_ammo( CGame * gs, CHR_REF chr_ref, IDSZ idsz )
 {
   // ZZ> This function restocks the characters ammo, if it needs ammo and if
   //     either its parent or type idsz match the given idsz.  This
@@ -232,7 +232,7 @@ int restock_ammo( GameState * gs, CHR_REF chr_ref, IDSZ idsz )
 
 
 //--------------------------------------------------------------------------------------------
-void issue_clean( GameState * gs, CHR_REF chr_ref )
+void issue_clean( CGame * gs, CHR_REF chr_ref )
 {
   // ZZ> This function issues a clean up order to all teammates
 

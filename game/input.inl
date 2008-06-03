@@ -3,6 +3,7 @@
 #include "input.h"
 #include "network.h"
 #include "char.h"
+#include "graphic.h"
 #include "game.h"
 
 //--------------------------------------------------------------------------------------------
@@ -21,7 +22,7 @@ INLINE bool_t key_is_pressed( int keycode )
 {
   // ZZ> This function returns btrue if the given control is pressed...
 
-  if ( Get_GuiState()->net_messagemode )  return bfalse;
+  if ( Get_CGui()->net_messagemode )  return bfalse;
 
   if ( keyb.state )
     return SDLKEYDOWN( keycode );
@@ -81,7 +82,7 @@ INLINE bool_t control_joy_is_pressed( int joy_num, CONTROL control )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE CHR_REF PlaList_get_character( GameState * gs, PLA_REF iplayer )
+INLINE CHR_REF PlaList_get_character( CGame * gs, PLA_REF iplayer )
 {
   if ( !VALID_PLA( gs->PlaList, iplayer ) ) return MAXCHR;
 

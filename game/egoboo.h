@@ -27,6 +27,7 @@
 #pragma once
 
 #include "proto.h"
+#include "menu.h"
 #include "configfile.h"
 #include "Md2.h"
 
@@ -45,7 +46,7 @@
 #include <time.h>
 #include <math.h>
 
-struct GameState_t;
+struct CGame_t;
 
 
 
@@ -115,8 +116,6 @@ typedef enum blud_level_e
 #define DELAY_DAMAGE          16                      // Invincibility time
 #define DELAY_DEFEND          16                      // Invincibility time
 
-#define MAXSTOR             (1<<3)                  // Storage data
-#define STORAND             (MAXSTOR-1)             //
 
 #define MAXLINESIZE         1024                    //
 
@@ -312,11 +311,6 @@ typedef struct fog_info_t
 
 EXTERN FOG_INFO GFog;
 
-#define MAXLIGHTROTATION                256         // Number of premade light maps
-#define MAXSPEKLEVEL                    16          // Number of premade specularities
-
-
-
 /*OpenGL Textures*/
 typedef enum tx_type_e
 {
@@ -427,12 +421,7 @@ typedef enum search_bits_e
 } SEARCH_BITS;
 
 
-typedef enum missle_handling_e
-{
-  MIS_NORMAL  = 0,                  //Treat missiles normally
-  MIS_DEFLECT,                      //Deflect incoming missiles
-  MIS_REFLECT                       //Reflect them back!
-} MISSLE_TYPE;
+
 
 
 
@@ -664,9 +653,9 @@ EXTERN float       doturntime;                     // Time for smooth turn
 EXTERN STRING      CStringTmp1, CStringTmp2;
 EXTERN ConfigData CData_default, CData;
 
-struct NetState_t;
-struct ClientState_t;
-struct ServerState_t;
+struct CNet_t;
+struct CClient_t;
+struct CServer_t;
 
 
 //--------------------------------------------------------------------------------------------
@@ -680,30 +669,6 @@ typedef struct MachineState_t
 } MachineState;
 
 MachineState * Get_MachineState(void);
-
-//--------------------------------------------------------------------------------------------
-struct ClockState_t;
-
-typedef struct GuiState_t 
-{
-  bool_t initialized;
-
-  MenuProc mnu_proc;
-
-  bool_t can_pause;          //Pause button avalible?
-  bool_t net_messagemode;
-
-  GLtexture TxBars;                                         /* status bars */
-  GLtexture TxBlip;                                         /* you are here texture */
-
-  struct ClockState_t * clk;
-  float        dUpdate;
-
-} GuiState;
-
-GuiState * Get_GuiState();
-bool_t     GuiState_shutDown();
-
 
 #include "module.h"
 

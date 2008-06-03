@@ -5,7 +5,7 @@
 #include "game.h"
 
 //--------------------------------------------------------------------------------------------
-INLINE const CHR_REF team_get_sissy( GameState * gs, TEAM_REF iteam )
+INLINE const CHR_REF team_get_sissy( CGame * gs, TEAM_REF iteam )
 {
   if ( !VALID_TEAM_RANGE( iteam ) ) return MAXCHR;
 
@@ -14,7 +14,7 @@ INLINE const CHR_REF team_get_sissy( GameState * gs, TEAM_REF iteam )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const CHR_REF team_get_leader( GameState * gs, TEAM_REF iteam )
+INLINE const CHR_REF team_get_leader( CGame * gs, TEAM_REF iteam )
 {
   if ( !VALID_TEAM_RANGE( iteam ) ) return MAXCHR;
 

@@ -60,13 +60,13 @@ Status * Status_renew( Status * pstat );
 
 
 //--------------------------------------------------------------------------------------------
-typedef struct ClientState_t
+typedef struct CClient_t
 {
   bool_t initialized;
 
   // my network
-  Uint32       net_guid;
-  NetState   * parent;
+  Uint32           net_guid;
+  struct CGame_t * parent;
 
   // game info
   ENetPeer   * gamePeer;
@@ -107,57 +107,57 @@ typedef struct ClientState_t
   char      req_host[MAXCAPNAMESIZE];
   MOD_INFO  req_mod;
   ModState  req_modstate;
+  Uint32    req_seed;
 
-} ClientState;
+} CClient;
 
-ClientState * ClientState_create(NetState * ns);
-bool_t        ClientState_destroy(ClientState ** pcs);
-ClientState * ClientState_renew(ClientState * cs);
-retval_t      ClientState_startUp(ClientState * cs);
-retval_t      ClientState_shutDown(ClientState * cs);
-bool_t        ClientState_Running(ClientState * cs);
-
-
-
-void ClientState_reset_latches(ClientState * cs);
-void ClientState_resetTimeLatches(ClientState * cs, Sint32 ichr);
-void ClientState_bufferLatches(ClientState * cs);
+CClient * CClient_create(struct CGame_t * gs);
+bool_t    CClient_destroy(CClient ** pcs);
+CClient * CClient_renew(CClient * cs);
+retval_t      CClient_startUp(CClient * cs);
+retval_t      CClient_shutDown(CClient * cs);
+bool_t        CClient_Running(CClient * cs);
 
 
 
-bool_t ClientState_connect(ClientState * cs, const char* hostname);
-bool_t ClientState_disconnect(ClientState * cs);
+void CClient_reset_latches(CClient * cs);
+void CClient_resetTimeLatches(CClient * cs, Sint32 ichr);
+void CClient_bufferLatches(CClient * cs);
+
+
+
+bool_t CClient_connect(CClient * cs, const char* hostname);
+bool_t CClient_disconnect(CClient * cs);
 
 ENetPeer * cl_startPeer(const char* hostname );
  
-void     ClientState_talkToHost(ClientState * cs);
-retval_t ClientState_joinGame(ClientState * cs, const char *hostname);
-bool_t   ClientState_unjoinGame(ClientState * cs);
+void     CClient_talkToHost(CClient * cs);
+retval_t CClient_joinGame(CClient * cs, const char *hostname);
+bool_t   CClient_unjoinGame(CClient * cs);
 
-bool_t ClientState_sendPacketToHost(ClientState * cs, SYS_PACKET * egop);
-bool_t ClientState_sendPacketToHostGuaranteed(ClientState * cs, SYS_PACKET * egop);
-
-
-void   ClientState_unbufferLatches(ClientState * cs);
-
-bool_t cl_begin_request_module(ClientState * cs);
-bool_t cl_end_request_module(ClientState * cs);
-
-void   cl_request_module_images(ClientState * cs);
-bool_t cl_load_module_images(ClientState * cs);
-
-void   cl_request_module_info(ClientState * cs);
-bool_t cl_load_module_info(ClientState * cs);
-
-bool_t cl_dispatchPackets(ClientState * cs);
-bool_t cl_handlePacket(ClientState * cs, ENetEvent *event);
-
-bool_t cl_count_players(ClientState * cs);
+bool_t CClient_sendPacketToHost(CClient * cs, SYS_PACKET * egop);
+bool_t CClient_sendPacketToHostGuaranteed(CClient * cs, SYS_PACKET * egop);
 
 
-bool_t StatList_new( ClientState * cs );
-bool_t StatList_delete( ClientState * cs );
-bool_t StatList_renew( ClientState * cs );
+void   CClient_unbufferLatches(CClient * cs);
+
+bool_t cl_begin_request_module(CClient * cs);
+bool_t cl_end_request_module(CClient * cs);
+
+void   cl_request_module_images(CClient * cs);
+
+void   cl_request_module_info(CClient * cs);
+bool_t cl_load_module_info(CClient * cs);
+
+bool_t cl_dispatchPackets(CClient * cs);
+bool_t cl_handlePacket(CClient * cs, ENetEvent *event);
+
+bool_t cl_count_players(CClient * cs);
+
+
+bool_t StatList_new( CClient * cs );
+bool_t StatList_delete( CClient * cs );
+bool_t StatList_renew( CClient * cs );
 size_t StatList_add( Status lst[], size_t lst_size, CHR_REF ichr );
 void   StatList_move_to_top( Status lst[], size_t lst_size, CHR_REF ichr );
 

@@ -28,11 +28,11 @@ typedef struct NFileState_t
 
   // external links
   Uint32       net_guid;
-  NetState   * parent;
+  CNet   * parent;
 
 } NFileState;
 
-NFileState * NFileState_create(NetState * ns);
+NFileState * NFileState_create(CNet * ns);
 bool_t       NFileState_destroy(NFileState ** nfs);
 retval_t     NFileState_initialize(NFileState * nfs);
 

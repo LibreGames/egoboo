@@ -171,30 +171,7 @@ ProcState * ProcState_renew(ProcState * ps);
 bool_t      ProcState_init(ProcState * ps);
 
 
-//--------------------------------------------------------------------------------------------
 
-// in C++ this would inherit from ProcState
-enum mnu_e;
-typedef struct MenuProc_t
-{
-  bool_t initialized;
-
-  // the "inherited" structure
-  ProcState proc;
-
-  // extra data for the menus
-  enum mnu_e whichMenu, lastMenu;
-  int        MenuResult;
-
-  double     dUpdate;
-
-} MenuProc;
-
-MenuProc * MenuProc_new(MenuProc *ms);
-bool_t     MenuProc_delete(MenuProc * ms);
-MenuProc * MenuProc_renew(MenuProc *ms);
-bool_t     MenuProc_init(MenuProc * ms);
-bool_t     MenuProc_init_ingame(MenuProc * ms);
 
 typedef enum respawn_mode_e
 {
@@ -205,3 +182,4 @@ typedef enum respawn_mode_e
 
 
 typedef int (SDLCALL *SDL_Callback_Ptr)(void *);
+

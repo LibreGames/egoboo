@@ -3,7 +3,7 @@
 #include "egoboo_types.h"
 #include "egoboo_math.h"
 
-struct GameState_t;
+struct CGame_t;
 
 #define MAPID                           0x4470614d     // The string 'MapD'
 
@@ -195,8 +195,8 @@ INLINE const Uint32     bumplist_get_prt_count(BUMPLIST * b, Uint32 block );
 
 INLINE const Uint32     bumplist_get_next(BUMPLIST * b, Uint32 node );
 INLINE const Uint32     bumplist_get_ref(BUMPLIST * b, Uint32 node );
-INLINE const Uint32     bumplist_get_next_prt(struct GameState_t * gs, BUMPLIST * b, Uint32 node );
-INLINE const Uint32     bumplist_get_next_chr(struct GameState_t * gs, BUMPLIST * b, Uint32 node );
+INLINE const Uint32     bumplist_get_next_prt(struct CGame_t * gs, BUMPLIST * b, Uint32 node );
+INLINE const Uint32     bumplist_get_next_chr(struct CGame_t * gs, BUMPLIST * b, Uint32 node );
 
 
 
@@ -205,30 +205,30 @@ extern BUMPLIST bumplist;
 bool_t load_mesh_fans();
 void make_fanstart(MESH_INFO * mi);
 void make_twist();
-bool_t load_mesh( struct GameState_t * gs, char *modname );
+bool_t load_mesh( struct CGame_t * gs, char *modname );
 
 
-bool_t mesh_calc_normal_fan( struct GameState_t * gs, int fan, vect3 * pnrm, vect3 * ppos );
-bool_t mesh_calc_normal_pos( struct GameState_t * gs, int fan, vect3 pos, vect3 * pnrm );
-bool_t mesh_calc_normal( struct GameState_t * gs, vect3 pos, vect3 * pnrm );
+bool_t mesh_calc_normal_fan( struct CGame_t * gs, int fan, vect3 * pnrm, vect3 * ppos );
+bool_t mesh_calc_normal_pos( struct CGame_t * gs, int fan, vect3 pos, vect3 * pnrm );
+bool_t mesh_calc_normal( struct CGame_t * gs, vect3 pos, vect3 * pnrm );
 
-float mesh_get_level( struct GameState_t * gs, Uint32 fan, float x, float y, bool_t waterwalk );
+float mesh_get_level( struct CGame_t * gs, Uint32 fan, float x, float y, bool_t waterwalk );
 
 
-Uint32 mesh_hitawall( struct GameState_t * gs, vect3 pos, float size_x, float size_y, Uint32 collision_bits, vect3 * nrm );
+Uint32 mesh_hitawall( struct CGame_t * gs, vect3 pos, float size_x, float size_y, Uint32 collision_bits, vect3 * nrm );
 
-INLINE const Uint32 mesh_get_fan( struct GameState_t * gs, vect3 pos );
+INLINE const Uint32 mesh_get_fan( struct CGame_t * gs, vect3 pos );
 INLINE const Uint32 mesh_get_block( MESH_INFO * mi, vect3 pos );
 
-INLINE void mesh_set_colora( struct GameState_t * gs, int fan_x, int fan_y, int color );
+INLINE void mesh_set_colora( struct CGame_t * gs, int fan_x, int fan_y, int color );
 
-INLINE const bool_t mesh_fan_clear_bits( struct GameState_t * gs, int fan_x, int fan_y, Uint32 bits );
-INLINE const bool_t mesh_fan_add_bits( struct GameState_t * gs, int fan_x, int fan_y, Uint32 bits );
-INLINE const bool_t mesh_fan_set_bits( struct GameState_t * gs, int fan_x, int fan_y, Uint32 bits );
+INLINE const bool_t mesh_fan_clear_bits( struct CGame_t * gs, int fan_x, int fan_y, Uint32 bits );
+INLINE const bool_t mesh_fan_add_bits( struct CGame_t * gs, int fan_x, int fan_y, Uint32 bits );
+INLINE const bool_t mesh_fan_set_bits( struct CGame_t * gs, int fan_x, int fan_y, Uint32 bits );
 
-INLINE const int   mesh_bump_tile( struct GameState_t * gs, int fan_x, int fan_y );
-INLINE const Uint16 mesh_get_tile( struct GameState_t * gs, int fan_x, int fan_y );
-INLINE const bool_t mesh_set_tile( struct GameState_t * gs, int fan_x, int fan_y, Uint32 become );
+INLINE const int   mesh_bump_tile( struct CGame_t * gs, int fan_x, int fan_y );
+INLINE const Uint16 mesh_get_tile( struct CGame_t * gs, int fan_x, int fan_y );
+INLINE const bool_t mesh_set_tile( struct CGame_t * gs, int fan_x, int fan_y, Uint32 become );
 
 INLINE const Uint32 mesh_convert_fan( MESH_INFO * mi, int fan_x, int fan_y );
 INLINE const Uint32 mesh_convert_block( MESH_INFO * mi, int block_x, int block_y );

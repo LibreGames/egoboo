@@ -28,7 +28,7 @@ static retval_t  _nfile_sendInitialize(void);
 
 //--------------------------------------------------------------------------------------------
 // NFileState private initialization
-static NFileState * NFileState_new(NFileState * nfs, NetState * ns);
+static NFileState * NFileState_new(NFileState * nfs, CNet * ns);
 static bool_t       NFileState_delete(NFileState * nfs);
 
 //--------------------------------------------------------------------------------------------
@@ -53,7 +53,7 @@ static int                   _nfile_receiveCallback(void * nfs);
 // File transfer variables & structures
 typedef struct nfile_SendInfo_t
 {
-  //NetState    * ns;
+  //CNet    * ns;
   ENetHost    * host;
   ENetPeer    * target;
 
@@ -174,7 +174,7 @@ static retval_t             nfile_ReceiveState_stopThread(nfile_ReceiveState * r
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-//retval_t nfile_startUp(NFileState * nfs, NetState * ns)
+//retval_t nfile_startUp(NFileState * nfs, CNet * ns)
 //{
 //  if(NULL == nfs) return rv_error;
 //
@@ -217,7 +217,7 @@ static retval_t             nfile_ReceiveState_stopThread(nfile_ReceiveState * r
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-NFileState * NFileState_create(NetState * ns)
+NFileState * NFileState_create(CNet * ns)
 {
   NFileState * nfs = (NFileState *)calloc(1, sizeof(NFileState));
   return NFileState_new(nfs, ns);
@@ -238,7 +238,7 @@ bool_t NFileState_destroy(NFileState ** pnfs)
 }
 
 //--------------------------------------------------------------------------------------------
-NFileState * NFileState_new(NFileState * nfs, NetState * ns)
+NFileState * NFileState_new(NFileState * nfs, CNet * ns)
 {
   //fprintf( stdout, "NFileState_new()\n");
 
@@ -934,27 +934,44 @@ retval_t nfhost_startThreads()
 }
 
 //------------------------------------------------------------------------------
-retval_t nfhost_stopThreads(NFileState * nfs)
+retval_t nfhost_stopThreads()
 {
   // BB > do cleanup when exiting the "net file" thread
 
+  nfile_SendState    * snd;
+  nfile_ReceiveState * rec;
+  NetHost * nh = nfile_getHost();
+
+
   // bad parameters
-  if(NULL == nfs || !nfs->initialized)
+  if(NULL == nh || !nh->initialized)
   {
     net_logf("NET ERROR: nfhost_stopThreads() - failed.\n");
     return rv_error;
   }
 
-  // tell the worker threads to stop, too
-  nfs->snd->nthread.KillMe = btrue;
-  nfs->rec->nthread.KillMe = btrue;
+  // tell the worker threads to stop
+  snd = _nfile_getSend();
+  nfile_SendState_delete(snd);
+  if(NULL != snd)
+  {
+    snd->nthread.KillMe = btrue;
+    snd->nthread.Paused = bfalse;
+  }
+
+  rec = _nfile_getReceive();
+  if(NULL != rec)
+  {
+    rec->nthread.KillMe = btrue;
+    rec->nthread.Paused = bfalse;
+  }
 
   // close all connections to the host
-  NetHost_close( nfs->host, nfs );
+  NetHost_close( nh, NULL );
 
   // set the thread status in the "killed" state
-  nfs->host->nthread.KillMe  = btrue;
-  nfs->host->nthread.Paused = btrue;
+  nh->nthread.KillMe = btrue;
+  nh->nthread.Paused = bfalse;
 
   return rv_succeed;
 }

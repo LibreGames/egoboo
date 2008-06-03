@@ -48,7 +48,7 @@ struct Chr_t;
 struct Status_t;
 struct Player_t;
 struct mod_data_t;
-struct GameState_t;
+struct CGame_t;
 
 void insert_space( size_t position );
 void copy_one_line( size_t write );
@@ -64,11 +64,10 @@ int ai_goto_colon( int read );
 void fget_code( FILE * pfile );
 
 ACTION what_action( char cTmp );
-void release_all_textures(struct GameState_t * gs);
+void release_all_textures(struct CGame_t * gs);
 void load_one_icon( char * szModname, char * szObjectname, char * szFilename );
 void prime_icons();
-void release_all_icons(struct GameState_t * gs);
-void release_all_titleimages();
+void release_all_icons(struct CGame_t * gs);
 void release_map();
 
 
@@ -93,19 +92,19 @@ void dolist_sort( void );
 void dolist_make( void );
 
 
-void keep_weapons_with_holders( struct GameState_t * gs );
+void keep_weapons_with_holders( struct CGame_t * gs );
 void make_prtlist();
 void debug_message( int time, const char *format, ... );
-void reset_end_text( struct GameState_t * gs );
+void reset_end_text( struct CGame_t * gs );
 
 Uint16 terp_dir( Uint16 majordir, float dx, float dy, float dUpdate );
 Uint16 terp_dir_fast( Uint16 majordir, float dx, float dy, float dUpdate );
 
 
 
-void naming_names( struct GameState_t * gs, int profile );
-void read_naming( struct GameState_t * gs, char * szModpath, char * szObjectname, int profile );
-void prime_names( struct GameState_t * gs );
+void naming_names( struct CGame_t * gs, int profile );
+void read_naming( struct CGame_t * gs, char * szModpath, char * szObjectname, int profile );
+void prime_names( struct CGame_t * gs );
 
 
 void make_textureoffset( void );
@@ -113,41 +112,41 @@ void clear_messages();
 
 
 
-bool_t PlaList_set_latch( struct GameState_t * gs, struct Player_t * player );
+bool_t PlaList_set_latch( struct CGame_t * gs, struct Player_t * player );
 
 void check_add( Uint8 key, char bigletter, char littleletter );
 void camera_calc_turn_lr();
 void make_camera_matrix();
 void figure_out_what_to_draw();
-void set_local_latches( struct GameState_t * gs );
+void set_local_latches( struct CGame_t * gs );
 void adjust_camera_angle( int height );
 void move_camera( float dUpdate );
-void make_onwhichfan( struct GameState_t * gs );
-void do_bumping( struct GameState_t * gs, float dUpdate );
+void make_onwhichfan( struct CGame_t * gs );
+void do_bumping( struct CGame_t * gs, float dUpdate );
 
-void do_weather_spawn( struct GameState_t * gs, float dUpdate );
+void do_weather_spawn( struct CGame_t * gs, float dUpdate );
 void animate_tiles( float dUpdate );
-void stat_return( struct GameState_t * gs, float dUpdate );
-void pit_kill( struct GameState_t * gs, float dUpdate );
-void reset_players( struct GameState_t * gs );
+void stat_return( struct CGame_t * gs, float dUpdate );
+void pit_kill( struct CGame_t * gs, float dUpdate );
+void reset_players( struct CGame_t * gs );
 
-void resize_characters( struct GameState_t * gs, float dUpdate );
-void load_basic_textures( struct GameState_t * gs, char *modname );
-
-
+void resize_characters( struct CGame_t * gs, float dUpdate );
+void load_basic_textures( struct CGame_t * gs, char *modname );
 
 
 
-void export_one_character_name( struct GameState_t * gs, char *szSaveName, CHR_REF character );
-void export_one_character_profile( struct GameState_t * gs, char *szSaveName, CHR_REF character );
-void export_one_character_skin( struct GameState_t * gs, char *szSaveName, CHR_REF character );
+
+
+void export_one_character_name( struct CGame_t * gs, char *szSaveName, CHR_REF character );
+void export_one_character_profile( struct CGame_t * gs, char *szSaveName, CHR_REF character );
+void export_one_character_skin( struct CGame_t * gs, char *szSaveName, CHR_REF character );
 
 
 bool_t load_bars( char* szBitmap );
-void load_map( struct GameState_t * gs, char* szModule );
+void load_map( struct CGame_t * gs, char* szModule );
 bool_t load_font( char* szBitmap, char* szSpacing );
-void make_water( struct GameState_t * gs );
-void read_wawalite( struct GameState_t * gs, char *modname );
+void make_water( struct CGame_t * gs );
+void read_wawalite( struct CGame_t * gs, char *modname );
 
 void render_prt();
 void render_shadow( CHR_REF character );
@@ -179,8 +178,8 @@ void draw_main( float );
 void load_blip_bitmap( char * modname );
 
 
-bool_t check_skills( struct GameState_t * gs, int who, Uint32 whichskill );
-void check_player_import(struct GameState_t * gs);
+bool_t check_skills( struct CGame_t * gs, int who, Uint32 whichskill );
+void check_player_import(struct CGame_t * gs);
 void reset_camera();
 
 void gltitle();
