@@ -626,7 +626,7 @@ void render_particles()
   numparticle = 0;
   for ( cnt = 0; cnt < MAXPRT; cnt++ )
   {
-    if ( !VALID_PRT( gs->PrtList, cnt ) || !gs->PrtList[cnt].inview || gs->PrtList[cnt].gopoof || gs->PrtList[cnt].size_fp8 == 0 ) continue;
+    if ( !VALID_PRT( gs->PrtList, cnt ) || /* !gs->PrtList[cnt].inview  || */ gs->PrtList[cnt].gopoof || gs->PrtList[cnt].size_fp8 == 0 ) continue;
 
     v[numparticle].pos.x = ( float ) gs->PrtList[cnt].pos.x;
     v[numparticle].pos.y = ( float ) gs->PrtList[cnt].pos.y;
@@ -660,13 +660,13 @@ void render_particles()
     render_antialias_prt( numparticle, v );
 
     // DO SOLID SPRITES FIRST
-    render_solid_prt( numparticle, v );
+    //render_solid_prt( numparticle, v );
 
     // LIGHTS DONE LAST
     render_light_prt( numparticle, v );
 
     // DO TRANSPARENT SPRITES NEXT
-    render_transparent_prt( numparticle, v );
+    //render_transparent_prt( numparticle, v );
   }
   glPopAttrib();
 

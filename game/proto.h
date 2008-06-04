@@ -65,7 +65,7 @@ void fget_code( FILE * pfile );
 
 ACTION what_action( char cTmp );
 void release_all_textures(struct CGame_t * gs);
-void load_one_icon( char * szModname, char * szObjectname, char * szFilename );
+Uint32 load_one_icon( char * szModname, char * szObjectname, char * szFilename );
 void prime_icons();
 void release_all_icons(struct CGame_t * gs);
 void release_map();

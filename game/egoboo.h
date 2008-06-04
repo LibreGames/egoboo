@@ -152,7 +152,7 @@ typedef enum blud_level_e
 #define MAXTICK                         (NUMTICK*5) // Max number of ticks to draw
 
 #define MAXTEXTURE                      512         // Max number of textures
-
+#define MAXICONTX                       MAXTEXTURE+1
 
 
 /* SDL_GetTicks() always returns milli seconds */

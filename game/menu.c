@@ -256,22 +256,15 @@ static TTFont *mnu_Font = NULL;
 static bool_t mnu_removeSelectedPlayerInput( int player, Uint32 input );
 
 //--------------------------------------------------------------------------------------------
-void load_global_icons(CGame * cl)
+void load_global_icons(CGame * gs)
 {
-  cl->TxIcon_count = cl->nullicon = 0;
-  load_one_icon( CData.basicdat_dir, NULL, CData.nullicon_bitmap );
+  release_all_icons(gs);
 
-  cl->TxIcon_count = cl->keybicon = 1;
-  load_one_icon( CData.basicdat_dir, NULL, CData.keybicon_bitmap );
-
-  cl->TxIcon_count = cl->mousicon = 2;
-  load_one_icon( CData.basicdat_dir, NULL, CData.mousicon_bitmap );
-
-  cl->TxIcon_count = cl->joyaicon = 3;
-  load_one_icon( CData.basicdat_dir, NULL, CData.joyaicon_bitmap );
-
-  cl->TxIcon_count = cl->joybicon = 4;
-  load_one_icon( CData.basicdat_dir, NULL, CData.joybicon_bitmap );
+  gs->nullicon = load_one_icon( CData.basicdat_dir, NULL, CData.nullicon_bitmap );
+  gs->keybicon = load_one_icon( CData.basicdat_dir, NULL, CData.keybicon_bitmap );
+  gs->mousicon = load_one_icon( CData.basicdat_dir, NULL, CData.mousicon_bitmap );
+  gs->joyaicon = load_one_icon( CData.basicdat_dir, NULL, CData.joyaicon_bitmap );
+  gs->joybicon = load_one_icon( CData.basicdat_dir, NULL, CData.joybicon_bitmap );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1224,9 +1217,6 @@ int mnu_doChoosePlayer( MenuProc * mproc, float deltaTime )
 
       // load information for all the players that could be imported
       check_player_import( gs );
-
-      // load icons necessary for the menu page
-      load_global_icons( gs );
 
       // set the configuration
       ui_initWidget( mnu_widgetList + 0, 0, mnu_Font, "Select Module", NULL, 40, gfxState.scry - 35*3, 200, 30 );

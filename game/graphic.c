@@ -263,18 +263,21 @@ void release_all_textures(CGame * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-void load_one_icon( char * szModname, char * szObjectname, char * szFilename )
+Uint32 load_one_icon( char * szModname, char * szObjectname, char * szFilename )
 {
   // ZZ> This function is used to load an icon.  Most icons are loaded
   //     without this function though...
 
+  Uint32 retval = MAXICONTX;
   CGame * gs = gfxState.gs;
 
   if ( INVALID_TEXTURE != GLTexture_Load( GL_TEXTURE_2D,  gs->TxIcon + gs->TxIcon_count,  inherit_fname(szModname, szObjectname, szFilename), INVALID_KEY ) )
   {
+    retval = gs->TxIcon_count;
     gs->TxIcon_count++;
   }
 
+  return retval;
 }
 
 //---------------------------------------------------------------------------------------------
@@ -303,28 +306,25 @@ void prime_icons(CGame * gs)
   // ZZ> This function sets the icon pointers to NULL
 
   int cnt;
-  for ( cnt = 0; cnt < MAXTEXTURE + 1; cnt++ )
+
+  gs->TxIcon_count = 0;
+  for ( cnt = 0; cnt < MAXICONTX; cnt++ )
   {
-    //lpDDSIcon[cnt]=NULL;
     gs->TxIcon[cnt].textureID = INVALID_TEXTURE;
-    gs->skintoicon[cnt] = 0;
+    gs->skintoicon[cnt] = MAXICONTX;
   }
 
   iconrect.left = 0;
   iconrect.right = 32;
   iconrect.top = 0;
   iconrect.bottom = 32;
-  gs->TxIcon_count = 0;
 
-
-  gs->nullicon = 0;
-  gs->keybicon = 0;
-  gs->mousicon = 0;
-  gs->joyaicon = 0;
-  gs->joybicon = 0;
-  gs->bookicon = 0;
-
-
+  gs->nullicon = MAXICONTX;
+  gs->keybicon = MAXICONTX;
+  gs->mousicon = MAXICONTX;
+  gs->joyaicon = MAXICONTX;
+  gs->joybicon = MAXICONTX;
+  gs->bookicon = MAXICONTX;
 }
 
 //---------------------------------------------------------------------------------------------
@@ -333,12 +333,13 @@ void release_all_icons(CGame * gs)
   // ZZ> This function clears out all of the icons
 
   int cnt;
-  for ( cnt = 0; cnt < MAXTEXTURE + 1; cnt++ )
+  gs->TxIcon_count = 0;
+  for ( cnt = 0; cnt < MAXICONTX; cnt++ )
   {
     GLTexture_Release( gs->TxIcon + cnt );
+    gs->TxIcon[cnt].textureID = INVALID_TEXTURE;
+    gs->skintoicon[cnt]       = MAXICONTX;
   }
-
-  prime_icons(gs); /* Do we need this? */
 }
 
 //---------------------------------------------------------------------------------------------
@@ -2875,7 +2876,7 @@ void draw_one_icon( int icontype, int x, int y, Uint8 sparkle )
   int width, height;
   FRect tx_rect, sc_rect;
 
-  if ( INVALID_TEXTURE == gs->TxIcon[icontype].textureID ) return;
+  if (MAXICONTX== icontype || INVALID_TEXTURE == gs->TxIcon[icontype].textureID ) return;
 
   ATTRIB_PUSH( "draw_one_icon", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT | GL_TEXTURE_BIT | GL_LIGHTING_BIT | GL_CURRENT_BIT );
   {
@@ -3377,20 +3378,27 @@ int draw_status( BMFont * pfnt, Status * pstat )
   // ZZ> This function shows a ichr's icon, status and inventory
   //     The x,y coordinates are the top left point of the image to draw
 
-  CGame * gs = gfxState.gs;
-
   Uint16 item, imdl;
   char cTmp;
   char *readtext;
   int  ix,iy, iystt;
   CHR_REF ichr;
+  Chr * chrlst;
+  Mad * madlst;
+
   Chr * pchr;
   Mad * pmad;
   Cap * pcap;
+  CGame * gs;
 
   float life, lifemax;
   float mana, manamax;
   int cnt;
+
+  if(NULL == gfxState.gs) return;
+  gs = gfxState.gs;
+  chrlst = gs->ChrList;
+  madlst = gs->MadList;
 
   if(NULL == pstat) return 0;
   ichr = pstat->chr_ref;
@@ -3398,16 +3406,14 @@ int draw_status( BMFont * pfnt, Status * pstat )
   iy = pstat->pos.y;
   iystt = iy;
 
-  if( !VALID_CHR( gs->ChrList, ichr) ) return 0;
-  pchr = gs->ChrList + ichr;
+  if( !VALID_CHR( chrlst, ichr) ) return 0;
+  pchr = chrlst + ichr;
 
   imdl = pchr->model;
   if( !VALID_MDL(imdl) ) return 0;
 
-  pmad = gs->MadList + imdl;
+  pmad = madlst + imdl;
   pcap = gs->CapList + imdl;
-
-
 
   life    = FP8_TO_FLOAT( pchr->life_fp8 );
   lifemax = FP8_TO_FLOAT( pchr->lifemax_fp8 );
@@ -3435,51 +3441,49 @@ int draw_status( BMFont * pfnt, Status * pstat )
   generictext[6] = 0;
   iy += draw_string( pfnt, ix + 8, iy, NULL, generictext );
 
-
-  // Write the ichr's money
+  // Write the character's money
   iy += 8 + draw_string( pfnt, ix + 8, iy, NULL, "$%4d", pchr->money );
-
 
   // Draw the icons
   draw_one_icon( gs->skintoicon[pchr->skin_ref + pmad->skinstart], ix + 40, iy, pchr->sparkle );
-  item = chr_get_holdingwhich( gs->ChrList, MAXCHR, ichr, SLOT_LEFT );
-  if ( VALID_CHR( gs->ChrList,  item ) )
+  item = chr_get_holdingwhich( chrlst, MAXCHR, ichr, SLOT_LEFT );
+  if ( VALID_CHR( chrlst,  item ) )
   {
-    if ( gs->ChrList[item].icon )
+    if ( chrlst[item].icon )
     {
-      draw_one_icon( gs->skintoicon[gs->ChrList[item].skin_ref + gs->MadList[gs->ChrList[item].model].skinstart], ix + 8, iy, gs->ChrList[item].sparkle );
-      if ( gs->ChrList[item].ammomax != 0 && gs->ChrList[item].ammoknown )
+      draw_one_icon( gs->skintoicon[chrlst[item].skin_ref + madlst[chrlst[item].model].skinstart], ix + 8, iy, chrlst[item].sparkle );
+      if ( chrlst[item].ammomax != 0 && chrlst[item].ammoknown )
       {
-        if ( !gs->CapList[gs->ChrList[item].model].isstackable || gs->ChrList[item].ammo > 1 )
+        if ( !gs->CapList[chrlst[item].model].isstackable || chrlst[item].ammo > 1 )
         {
           // Show amount of ammo left
-          draw_string( pfnt, ix + 8, iy - 8, NULL, "%2d", gs->ChrList[item].ammo );
+          draw_string( pfnt, ix + 8, iy - 8, NULL, "%2d", chrlst[item].ammo );
         }
       }
     }
     else
-      draw_one_icon( gs->bookicon + ( gs->ChrList[item].money % MAXSKIN ), ix + 8, iy, gs->ChrList[item].sparkle );
+      draw_one_icon( gs->bookicon + ( chrlst[item].money % MAXSKIN ), ix + 8, iy, chrlst[item].sparkle );
   }
   else
     draw_one_icon( gs->nullicon, ix + 8, iy, NOSPARKLE );
 
-  item = chr_get_holdingwhich( gs->ChrList, MAXCHR, ichr, SLOT_RIGHT );
-  if ( VALID_CHR( gs->ChrList,  item ) )
+  item = chr_get_holdingwhich( chrlst, MAXCHR, ichr, SLOT_RIGHT );
+  if ( VALID_CHR( chrlst,  item ) )
   {
-    if ( gs->ChrList[item].icon )
+    if ( chrlst[item].icon )
     {
-      draw_one_icon( gs->skintoicon[gs->ChrList[item].skin_ref + gs->MadList[gs->ChrList[item].model].skinstart], ix + 72, iy, gs->ChrList[item].sparkle );
-      if ( gs->ChrList[item].ammomax != 0 && gs->ChrList[item].ammoknown )
+      draw_one_icon( gs->skintoicon[chrlst[item].skin_ref + madlst[chrlst[item].model].skinstart], ix + 72, iy, chrlst[item].sparkle );
+      if ( chrlst[item].ammomax != 0 && chrlst[item].ammoknown )
       {
-        if ( !gs->CapList[gs->ChrList[item].model].isstackable || gs->ChrList[item].ammo > 1 )
+        if ( !gs->CapList[chrlst[item].model].isstackable || chrlst[item].ammo > 1 )
         {
           // Show amount of ammo left
-          draw_string( pfnt, ix + 72, iy - 8, NULL, "%2d", gs->ChrList[item].ammo );
+          draw_string( pfnt, ix + 72, iy - 8, NULL, "%2d", chrlst[item].ammo );
         }
       }
     }
     else
-      draw_one_icon( gs->bookicon + ( gs->ChrList[item].money % MAXSKIN ), ix + 72, iy, gs->ChrList[item].sparkle );
+      draw_one_icon( gs->bookicon + ( chrlst[item].money % MAXSKIN ), ix + 72, iy, chrlst[item].sparkle );
   }
   else
     draw_one_icon( gs->nullicon, ix + 72, iy, NOSPARKLE );

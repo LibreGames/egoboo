@@ -115,7 +115,7 @@ typedef struct CGame_t
   GLtexture TxTexture[MAXTEXTURE];      // All normal textures
 
   int       TxIcon_count;               // Number of icons
-  GLtexture TxIcon[MAXTEXTURE+1];       // All icon textures
+  GLtexture TxIcon[MAXICONTX];       // All icon textures
 
   GLtexture TxMap;
 

@@ -73,6 +73,7 @@ static bool_t  CGame_delete(CGame * gs);
 static bool_t  CGui_startUp();
 
 static retval_t main_doGameGraphics();
+static void     game_handleKeyboard();
 
 //---------------------------------------------------------------------------------------------
 
@@ -2462,11 +2463,11 @@ void set_default_config_data(ConfigData * pcon)
   strncpy( pcon->import_dir, "import" , sizeof( STRING ) );
   strncpy( pcon->players_dir, "players", sizeof( STRING ) );
 
-  strncpy( pcon->nullicon_bitmap, "gs->nullicon.bmp" , sizeof( STRING ) );
-  strncpy( pcon->keybicon_bitmap, "gs->keybicon.bmp" , sizeof( STRING ) );
-  strncpy( pcon->mousicon_bitmap, "gs->mousicon.bmp" , sizeof( STRING ) );
-  strncpy( pcon->joyaicon_bitmap, "gs->joyaicon.bmp" , sizeof( STRING ) );
-  strncpy( pcon->joybicon_bitmap, "gs->joybicon.bmp" , sizeof( STRING ) );
+  strncpy( pcon->nullicon_bitmap, "nullicon.bmp" , sizeof( STRING ) );
+  strncpy( pcon->keybicon_bitmap, "keybicon.bmp" , sizeof( STRING ) );
+  strncpy( pcon->mousicon_bitmap, "mousicon.bmp" , sizeof( STRING ) );
+  strncpy( pcon->joyaicon_bitmap, "joyaicon.bmp" , sizeof( STRING ) );
+  strncpy( pcon->joybicon_bitmap, "joybicon.bmp" , sizeof( STRING ) );
 
   strncpy( pcon->tile0_bitmap, "tile0.bmp" , sizeof( STRING ) );
   strncpy( pcon->tile1_bitmap, "tile1.bmp" , sizeof( STRING ) );
@@ -3003,6 +3004,8 @@ int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
         gui        = Get_CGui();               // automatically starts the CGui
         mnu_proc   = &(gui->mnu_proc);
 
+        game_handleKeyboard();
+
         no_games_active = btrue;
         for(i=0; i<stk->count; i++)
         {
@@ -3178,10 +3181,12 @@ int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
 };
 
 //--------------------------------------------------------------------------------------------
-ProcessStates game_handleKeyboard(CGame * gs, ProcessStates procIn)
+void game_handleKeyboard()
 {
-  ProcessStates procOut = procIn;
-  CGui * gui = Get_CGui();
+  CGame * gs = gfxState.gs;
+  CGui  * gui = Get_CGui();
+
+  if(NULL == gs) return;
 
   // do game pause if needed
   if (!SDLKEYDOWN(SDLK_F8))  gui->can_pause = btrue;
@@ -3192,13 +3197,11 @@ ProcessStates game_handleKeyboard(CGame * gs, ProcessStates procIn)
   }
 
   // Check for quitters
-  if ( (gs->proc.Active && SDLKEYDOWN(SDLK_ESCAPE)) || (gs->modstate.Active && gs->allpladead) )
+  if ((gs->proc.Active && SDLKEYDOWN(SDLK_ESCAPE)) || (gs->modstate.Active && gs->allpladead) )
   {
     gs->igm.proc.Active = btrue;
-    gs->igm.whichMenu  = mnu_Quit;
+    gs->igm.whichMenu   = mnu_Quit;
   }
-
-  return procOut;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -3618,8 +3621,6 @@ ProcessStates game_doRun(CGame * gs, ProcessStates procIn)
   };
 #endif
 
-  procOut = game_handleKeyboard(gs, procOut);
-
   while ( gs->dUpdate >= 1.0 )
   {
     // Do important things
@@ -3731,6 +3732,9 @@ int proc_gameLoop( ProcState * gproc, CGame * gs )
         // Start a new module
         srand( time(NULL) );
 
+        // clear out any old icons and load the global icons
+        load_global_icons( gs );
+
         // set up the MD2 models
         init_all_models(gs);
 
@@ -3755,6 +3759,7 @@ int proc_gameLoop( ProcState * gproc, CGame * gs )
         figure_out_what_to_draw();
         make_character_matrices( gs->ChrList, MAXCHR );
         attach_particles( gs );
+
 
         if ( net_Started() )
         {

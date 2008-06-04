@@ -296,9 +296,9 @@ void GLTexture_Bind( GLtexture *texture, GraphicState * g )
     anisotropy = g->userAnisotropy;
   }
 
-  if ( !glIsEnabled( texture->texture_target ) )
+  if ( !glIsEnabled( target ) )
   {
-    glEnable( texture->texture_target );
+    glEnable( target );
   };
 
   glBindTexture( target, id );
