@@ -7239,7 +7239,7 @@ void damage_character( CGame * gs, CHR_REF chr_ref, Uint16 direction,
             pstate->alert = ALERT_KILLED;
             pchr->sparkle = NOSPARKLE;
             pstate->time = 1;  // No timeout...
-            let_character_think( gs, chr_ref, 1.0f );
+            run_script( gs, chr_ref, 1.0f );
           }
           else
           {

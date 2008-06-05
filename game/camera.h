@@ -16,9 +16,8 @@
 
 typedef struct camera_t
 {
-  int       swing;           // Camera swingin'
-  int       swingrate;       //
-  float     swingamp;        //
+  bool_t    exploremode;     // Explore mode?
+
   vect3     pos;             // Camera position
   float     zoom;            // Distance from the trackee
   vect3     trackvel;        // Change in trackee position
@@ -33,6 +32,11 @@ typedef struct camera_t
   float     turnadd;         // Turning rate
   float     sustain;         // Turning rate falloff
   float     roll;            //
+
+  int       swing;           // Camera swingin'
+  int       swingrate;       //
+  float     swingamp;        //
+
   GLmatrix  mView;           // View Matrix
   GLmatrix  mProjection;     // Projection Matrix
   GLmatrix  mProjectionBig;  // Larger projection matrix for frustum culling

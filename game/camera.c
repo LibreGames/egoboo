@@ -173,6 +173,7 @@ void make_camera_matrix()
   // ZZ> This function sets GCamera.mView to the camera's location and rotation
 
   vect3 worldup = {0, 0, -gravity};
+  float dither_x, dither_y;
 
   if ( GCamera.swingamp > 0 )
   {
@@ -184,7 +185,9 @@ void make_camera_matrix()
     GCamera.mView = ViewMatrix( GCamera.pos, GCamera.trackpos, worldup, 0 );
   }
 
-  frustum_jitter_fov( 10.0f, 20000.0f, DEG_TO_RAD*FOV, 2.0f*( float ) rand() / ( float ) RAND_MAX - 1.0f, 2.0f*( float ) rand() / ( float ) RAND_MAX - 1.0f );
+  dither_x = 2.0f*( float ) rand() / ( float ) RAND_MAX - 1.0f;
+  dither_y = 2.0f*( float ) rand() / ( float ) RAND_MAX - 1.0f;
+  frustum_jitter_fov( 10.0f, 20000.0f, DEG_TO_RAD*FOV, 2*dither_x, 2*dither_y);
 
   Frustum_CalculateFrustum( &gFrustum, GCamera.mProjectionBig.v, GCamera.mView.v );
 }

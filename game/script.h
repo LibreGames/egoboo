@@ -471,8 +471,8 @@ typedef struct ScriptInfo_t
   int    offset_end[MAXAI];
 } ScriptInfo;
 
-retval_t let_character_think( struct CGame_t * gs, CHR_REF character, float dUpdate );
-void let_ai_think( struct CGame_t * gs, float dUpdate );
+retval_t run_script( struct CGame_t * gs, CHR_REF character, float dUpdate );
+void run_all_scripts( struct CGame_t * gs, float dUpdate );
 
 void append_end_text( struct CGame_t * gs, int message, CHR_REF character );
 

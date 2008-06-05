@@ -413,8 +413,9 @@ INLINE WP_LIST * wp_list_new(WP_LIST * w, vect3 * pos);
 INLINE bool_t    wp_list_advance(WP_LIST * wl);
 INLINE bool_t    wp_list_add(WP_LIST * wl, float x, float y);
 
-INLINE float wp_list_x( WP_LIST * wl );
-INLINE float wp_list_y( WP_LIST * wl );
+INLINE bool_t wp_list_empty( WP_LIST * wl );
+INLINE float  wp_list_x( WP_LIST * wl );
+INLINE float  wp_list_y( WP_LIST * wl );
 
 //--------------------------------------------------------------------------------------------
 typedef struct ai_state_t

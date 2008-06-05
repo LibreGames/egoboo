@@ -4850,7 +4850,7 @@ retval_t run_operand( CGame * gs, Uint32 value, CHR_REF ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t let_character_think( CGame * gs, CHR_REF ichr, float dUpdate )
+retval_t run_script( CGame * gs, CHR_REF ichr, float dUpdate )
 {
   // ZZ> This function lets one ichr do AI stuff
 
@@ -4874,7 +4874,7 @@ retval_t let_character_think( CGame * gs, CHR_REF ichr, float dUpdate )
   pstate = &(pchr->aistate);
 
   // Make life easier
-  pstate->oldtarget = chr_get_aitarget( gs->ChrList, MAXCHR, gs->ChrList + ichr );
+  pstate->oldtarget = chr_get_aitarget( gs->ChrList, MAXCHR, pchr );
   type_stt = pstate->type;
 
   // Figure out alerts that weren't already set
@@ -4978,20 +4978,30 @@ retval_t let_character_think( CGame * gs, CHR_REF ichr, float dUpdate )
     }
     else
     {
-      float fnum, fden;
+      
 
       // Normal AI
-      pstate->latch.x = wp_list_x( &(pstate->wp) ) - pchr->pos.x;
-      pstate->latch.y = wp_list_y( &(pstate->wp) ) - pchr->pos.y;
-
-      fnum = pstate->latch.x * pstate->latch.x + pstate->latch.y * pstate->latch.y;
-      fden = fnum + 25 * pchr->bmpdata.calc_size * pchr->bmpdata.calc_size;
-      if ( fnum > 0.0f )
+      if( wp_list_empty(&(pstate->wp)) )
       {
-        float ftmp = 1.0f / sqrt( fnum ) * fnum / fden;
-        pstate->latch.x *= ftmp;
-        pstate->latch.y *= ftmp;
+        pstate->latch.x = pstate->latch.y = 0;
       }
+      else
+      {
+        float fnum, fden;
+
+        pstate->latch.x = wp_list_x( &(pstate->wp) ) - pchr->pos.x;
+        pstate->latch.y = wp_list_y( &(pstate->wp) ) - pchr->pos.y;
+
+        fnum = pstate->latch.x * pstate->latch.x + pstate->latch.y * pstate->latch.y;
+        fden = fnum + 25 * pchr->bmpdata.calc_size * pchr->bmpdata.calc_size;
+        if ( fnum > 0.0f )
+        {
+          float ftmp = 1.0f / sqrt( fnum ) * fnum / fden;
+          pstate->latch.x *= ftmp;
+          pstate->latch.y *= ftmp;
+        }
+      };
+
     }
   }
 
@@ -5008,7 +5018,7 @@ retval_t let_character_think( CGame * gs, CHR_REF ichr, float dUpdate )
 }
 
 //--------------------------------------------------------------------------------------------
-void let_ai_think( CGame * gs, float dUpdate )
+void run_all_scripts( CGame * gs, float dUpdate )
 {
   // ZZ> This function lets every computer controlled character do AI stuff
 
@@ -5045,7 +5055,7 @@ void let_ai_think( CGame * gs, float dUpdate )
 
     if ( allow_thinking )
     {
-      let_character_think( gs, character, dUpdate );
+      run_script( gs, character, dUpdate );
     }
   }
 

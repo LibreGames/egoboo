@@ -96,7 +96,7 @@ CGui   _gui_state = { bfalse };
 
 PROFILE_DECLARE( resize_characters );
 PROFILE_DECLARE( keep_weapons_with_holders );
-PROFILE_DECLARE( let_ai_think );
+PROFILE_DECLARE( run_all_scripts );
 PROFILE_DECLARE( do_weather_spawn );
 PROFILE_DECLARE( enc_spawn_particles );
 PROFILE_DECLARE( CClient_unbufferLatches );
@@ -2804,7 +2804,7 @@ int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
 
         PROFILE_INIT( resize_characters );
         PROFILE_INIT( keep_weapons_with_holders );
-        PROFILE_INIT( let_ai_think );
+        PROFILE_INIT( run_all_scripts );
         PROFILE_INIT( do_weather_spawn );
         PROFILE_INIT( enc_spawn_particles );
         PROFILE_INIT( CClient_unbufferLatches );
@@ -2962,11 +2962,11 @@ int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
         log_info( "break down of update_game() sub-functions\n" );
         log_info( "\tresize_characters - %lf\n", 1e6*PROFILE_QUERY( resize_characters ) );
         log_info( "\tkeep_weapons_with_holders - %lf\n", 1e6*PROFILE_QUERY( keep_weapons_with_holders ) );
-        log_info( "\tlet_ai_think - %lf\n", 1e6*PROFILE_QUERY( let_ai_think ) );
+        log_info( "\trun_all_scripts - %lf\n", 1e6*PROFILE_QUERY( run_all_scripts ) );
         log_info( "\tdo_weather_spawn - %lf\n", 1e6*PROFILE_QUERY( do_weather_spawn ) );
         log_info( "\tdo_enchant_spawn - %lf\n", 1e6*PROFILE_QUERY( enc_spawn_particles ) );
-        log_info( "\tcl_unbufferLatches - %lf\n", 1e6*PROFILE_QUERY( CClient_unbufferLatches ) );
-        log_info( "\tsv_unbufferLatches - %lf\n", 1e6*PROFILE_QUERY( CServer_unbufferLatches ) );
+        log_info( "\tCClient_unbufferLatches - %lf\n", 1e6*PROFILE_QUERY( CClient_unbufferLatches ) );
+        log_info( "\tCServer_unbufferLatches - %lf\n", 1e6*PROFILE_QUERY( CServer_unbufferLatches ) );
         log_info( "\tcheck_respawn - %lf\n", 1e6*PROFILE_QUERY( check_respawn ) );
         log_info( "\tmove_characters - %lf\n", 1e6*PROFILE_QUERY( move_characters ) );
         log_info( "\tmove_particles - %lf\n", 1e6*PROFILE_QUERY( move_particles ) );
@@ -2982,7 +2982,7 @@ int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
 
         PROFILE_FREE( resize_characters );
         PROFILE_FREE( keep_weapons_with_holders );
-        PROFILE_FREE( let_ai_think );
+        PROFILE_FREE( run_all_scripts );
         PROFILE_FREE( do_weather_spawn );
         PROFILE_FREE( enc_spawn_particles );
         PROFILE_FREE( CClient_unbufferLatches );
@@ -3103,7 +3103,7 @@ void cl_update_game(CGame * gs, float dUpdate, Uint32 * rand_idx)
     keep_weapons_with_holders( gs );                  // client-ish function
     PROFILE_END( keep_weapons_with_holders );
 
-    // unbuffer the updated latches after let_ai_think() and before move_characters()
+    // unbuffer the updated latches after run_all_scripts() and before move_characters()
     PROFILE_BEGIN( CClient_unbufferLatches );
     CClient_unbufferLatches( gs->cl );              // client function
     PROFILE_END( CClient_unbufferLatches );
@@ -3228,9 +3228,9 @@ void sv_update_game(CGame * gs, float dUpdate, Uint32 * rand_idx)
     keep_weapons_with_holders( gs );                  // client-ish function
     PROFILE_END( keep_weapons_with_holders );
 
-    PROFILE_BEGIN( let_ai_think );
-    let_ai_think( gs, dUpdate );                      // server function
-    PROFILE_END( let_ai_think );
+    PROFILE_BEGIN( run_all_scripts );
+    run_all_scripts( gs, dUpdate );                      // server function
+    PROFILE_END( run_all_scripts );
 
     PROFILE_BEGIN( do_weather_spawn );
     do_weather_spawn( gs, dUpdate );                       // server function
@@ -3240,7 +3240,7 @@ void sv_update_game(CGame * gs, float dUpdate, Uint32 * rand_idx)
     enc_spawn_particles( gs, dUpdate );                       // server function
     PROFILE_END( enc_spawn_particles );
 
-    // unbuffer the updated latches after let_ai_think() and before move_characters()
+    // unbuffer the updated latches after run_all_scripts() and before move_characters()
     PROFILE_BEGIN( CServer_unbufferLatches );
     CServer_unbufferLatches( gs->sv );              // server function
     PROFILE_END( CServer_unbufferLatches );
@@ -3328,9 +3328,9 @@ void update_game(CGame * gs, float dUpdate, Uint32 * rand_idx)
     keep_weapons_with_holders( gs );                  // client-ish function
     PROFILE_END( keep_weapons_with_holders );
 
-    PROFILE_BEGIN( let_ai_think );
-    let_ai_think( gs, dUpdate );                      // server function
-    PROFILE_END( let_ai_think );
+    PROFILE_BEGIN( run_all_scripts );
+    run_all_scripts( gs, dUpdate );                      // server function
+    PROFILE_END( run_all_scripts );
 
     PROFILE_BEGIN( do_weather_spawn );
     do_weather_spawn( gs, dUpdate );                       // server function
@@ -3340,7 +3340,7 @@ void update_game(CGame * gs, float dUpdate, Uint32 * rand_idx)
     enc_spawn_particles( gs, dUpdate );                       // server function
     PROFILE_END( enc_spawn_particles );
 
-    // unbuffer the updated latches after let_ai_think() and before move_characters()
+    // unbuffer the updated latches after run_all_scripts() and before move_characters()
     PROFILE_BEGIN( CClient_unbufferLatches );
     CClient_unbufferLatches( cs );              // client function
     PROFILE_END( CClient_unbufferLatches );
@@ -4621,7 +4621,7 @@ void setup_characters( CGame * gs, char *modname )
             // fake that it was grabbed by the left hand
             gs->ChrList[lastcharacter].attachedto = VALIDATE_CHR(gs->ChrList, currentcharacter);  // Make grab work
             gs->ChrList[lastcharacter].inwhichslot = SLOT_INVENTORY;
-            let_character_think( gs, lastcharacter, 1.0f );                     // Empty the grabbed messages
+            run_script( gs, lastcharacter, 1.0f );                     // Empty the grabbed messages
 
             // restore the proper attachment and slot variables
             gs->ChrList[lastcharacter].attachedto = MAXCHR;                          // Fix grab
@@ -4633,7 +4633,7 @@ void setup_characters( CGame * gs, char *modname )
           // Wielded character
           if ( attach_character_to_mount( gs, lastcharacter, currentcharacter, grip_to_slot( grip ) ) )
           {
-            let_character_think( gs, lastcharacter, 1.0f );   // Empty the grabbed messages
+            run_script( gs, lastcharacter, 1.0f );   // Empty the grabbed messages
           };
         }
       }
