@@ -441,7 +441,7 @@ INLINE ANIM_INFO * anim_info_new( ANIM_INFO * a )
 {
   if(NULL == a) return NULL;
 
-  a->lip_fp8 = 0;
+  a->ilip = 0;
   a->flip    = 0.0f;
   a->next    = a->last = 0;
 

@@ -424,7 +424,7 @@ PRT_REF spawn_one_particle( CGame * gs, float intensity, vect3 pos,
     case PRTTYPE_SOLID:
       if ( intensity < 1.0f )
       {
-        pprt->type  = PRTTYPE_ALPHA;
+        pprt->type      = PRTTYPE_ALPHA;
         pprt->alpha_fp8 = FLOAT_TO_FP8(intensity);
       }
       break;
@@ -434,7 +434,7 @@ PRT_REF spawn_one_particle( CGame * gs, float intensity, vect3 pos,
       break;
 
     case PRTTYPE_ALPHA:
-      pprt->alpha_fp8 = particletrans * intensity;
+      pprt->alpha_fp8 = particletrans_fp8 * intensity;
       break;
   };
 

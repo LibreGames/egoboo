@@ -164,9 +164,9 @@ typedef struct Prt_t
   CHR_REF         attachedtochr;                   // For torch flame
   Uint16          vertoffset;                      // The vertex it's on (counting backward from max vertex)
   PRTTYPE         type;                            // Transparency mode, 0-2
-  Uint8           alpha_fp8;
+  Uint16          alpha_fp8;
   Uint16          facing;                          // Direction of the part
-  TEAM           team;                            // Team
+  TEAM            team;                            // Team
   vect3           pos;                             // Position
   vect3           vel;                             // Velocity
   float           level;                           // Height of tile
@@ -182,12 +182,12 @@ typedef struct Prt_t
   Sint16          sizeadd_fp8;                     // Change in size
   bool_t          inview;                          // Render this one?
   Uint32          image_fp8;                       // Which image
-  Uint32          imageadd_fp8;                        // Animation rate
-  Uint32          imagemax_fp8;                        // End of image loop
+  Uint32          imageadd_fp8;                    // Animation rate
+  Uint32          imagemax_fp8;                    // End of image loop
   Uint32          imagestt_fp8;                    // Start of image loop
-  Uint8           lightr_fp8;                           // Light level
-  Uint8           lightg_fp8;                           // Light level
-  Uint8           lightb_fp8;                           // Light level
+  Uint16          lightr_fp8;                      // Light level
+  Uint16          lightg_fp8;                      // Light level
+  Uint16          lightb_fp8;                      // Light level
   float           time;                            // Duration of particle
   bool_t          gopoof;                          // Are we gone?
   float           spawntime;                       // Time until spawn

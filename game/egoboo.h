@@ -257,9 +257,9 @@ EXTERN WEATHER_INFO GWeather;
 
 typedef struct water_layer_t
 {
-  Uint8     lightlevel_fp8; // General light amount (0-63)
-  Uint8     lightadd_fp8;   // Ambient light amount (0-63)
-  Uint8     alpha_fp8;      // Transparency
+  Uint16    lightlevel_fp8; // General light amount (0-63)
+  Uint16    lightadd_fp8;   // Ambient light amount (0-63)
+  Uint16    alpha_fp8;      // Transparency
 
   float     u;              // Coordinates of texture
   float     v;              //
@@ -486,7 +486,7 @@ EXTERN char endtext[MAXENDTEXT];     // The end-module text
 EXTERN int endtextwrite;
 
 
-EXTERN Uint32 particletrans  EQ( 0x80 );
+EXTERN Uint32 particletrans_fp8  EQ( 0x80 );
 EXTERN Uint32 antialiastrans_fp8  EQ( 0xC0 );
 
 

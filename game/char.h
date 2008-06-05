@@ -270,8 +270,8 @@ typedef struct Cap_t
   Uint8         spd_run;                        // Run threshold
   Uint8         flyheight;                     // Fly height
   Uint8         flashand;                      // Flashing rate
-  Uint8         alpha_fp8;                     // Transparency
-  Uint8         light_fp8;                     // Light blending
+  Uint16        alpha_fp8;                     // Transparency
+  Uint16        light_fp8;                     // Light blending
   bool_t        transferblend;                 // Transfer blending to rider/weapons
   Uint8         sheen_fp8;                     // How shiny it is ( 0-15 )
   bool_t        enviro;                        // Phong map this baby?
@@ -392,7 +392,7 @@ typedef struct animation_info_t
   Uint16          next;       // Character's frame
   Uint16          last;       // Character's last frame
   float           flip;
-  Uint8           lip_fp8;    // Character's low-res frame in betweening
+  Uint8           ilip;    // Character's low-res frame in betweening
 } ANIM_INFO;
 
 INLINE ANIM_INFO * anim_info_new( ANIM_INFO * a );
@@ -568,8 +568,8 @@ typedef struct Chr_t
   CHR_TLIGHT      tlight;                 // terrain lighting info
   VData_Blended   vdata;                  // pre-processed per-vertex lighting data
   LData           ldata;                  // pre-processed matrial parameters
-  Uint8           alpha_fp8;                 // 255 = Solid, 0 = Invisible
-  Uint8           light_fp8;                 // 1 = Light, 0 = Normal
+  Uint16          alpha_fp8;                 // 255 = Solid, 0 = Invisible
+  Uint16          light_fp8;                 // 1 = Light, 0 = Normal
   Uint8           flashand;                  // 1,3,7,15,31 = Flash, 255 = Don't
   Uint8           sheen_fp8;           // 0-15, how shiny it is
   bool_t          transferblend;       // Give transparency to weapons?

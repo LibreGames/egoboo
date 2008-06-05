@@ -1813,7 +1813,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
           pchr->action.now = pstate->tmpargument;
           pchr->action.ready = bfalse;
 
-          pchr->anim.lip_fp8 = 0;
+          pchr->anim.ilip = 0;
           pchr->anim.flip = 0.0f;
           pchr->anim.last = pchr->anim.next;
           pchr->anim.next = pmad->actionstart[pstate->tmpargument];
@@ -1865,7 +1865,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
             gs->ChrList[pstate->target].action.now = pstate->tmpargument;
             gs->ChrList[pstate->target].action.ready = bfalse;
 
-            gs->ChrList[pstate->target].anim.lip_fp8 = 0;
+            gs->ChrList[pstate->target].anim.ilip = 0;
             gs->ChrList[pstate->target].anim.flip    = 0.0f;
             gs->ChrList[pstate->target].anim.last    = gs->ChrList[pstate->target].anim.next;
             gs->ChrList[pstate->target].anim.next    = gs->MadList[gs->ChrList[pstate->target].model].actionstart[pstate->tmpargument];
@@ -1984,7 +1984,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
           pchr->action.now   = pstate->tmpargument;
           pchr->action.ready = bfalse;
 
-          pchr->anim.lip_fp8 = 0;
+          pchr->anim.ilip = 0;
           pchr->anim.flip    = 0.0f;
           pchr->anim.last    = pchr->anim.next;
           pchr->anim.next    = pmad->actionstart[pstate->tmpargument];
@@ -3201,7 +3201,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
           pchild->action.now = pstate->tmpargument;
           pchild->action.ready = bfalse;
 
-          pchild->anim.lip_fp8 = 0;
+          pchild->anim.ilip = 0;
           pchild->anim.flip    = 0.0f;
           pchild->anim.next    = gs->MadList[pchild->model].actionstart[pstate->tmpargument];
           pchild->anim.last    = pchild->anim.next;
@@ -3810,7 +3810,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
           gs->ChrList[pstate->target].action.now = pstate->tmpargument;
           gs->ChrList[pstate->target].action.ready = bfalse;
 
-          gs->ChrList[pstate->target].anim.lip_fp8 = 0;
+          gs->ChrList[pstate->target].anim.ilip = 0;
           gs->ChrList[pstate->target].anim.flip    = 0.0f;
           gs->ChrList[pstate->target].anim.next    = gs->MadList[gs->ChrList[pstate->target].model].actionstart[pstate->tmpargument];
           gs->ChrList[pstate->target].anim.last    = gs->ChrList[pstate->target].anim.next;

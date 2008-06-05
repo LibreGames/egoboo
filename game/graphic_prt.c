@@ -64,6 +64,9 @@ int particle_orientation[256] =
 };
 
 //--------------------------------------------------------------------------------------------
+bool_t calc_billboard( CGame * gs, GLVertex vrtlst[], GLVertex * vert, float size, Uint16 image);
+
+//--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 extern void Begin3DMode();
 
@@ -265,38 +268,11 @@ void render_antialias_prt( Uint32 vrtcount, GLVertex * vrtlist )
         // Figure out the sprite's size based on distance
         size = FP8_TO_FLOAT( gs->PrtList[prt].size_fp8 ) * 0.25f * 1.1f;  // [claforte] Fudge the value.
 
-        // Calculate the position of the four corners of the billboard
-        // used to display the particle.
-        vtlist[0].pos.x = vrtlist[cnt].pos.x + (( -vrtlist[cnt].rt.x - vrtlist[cnt].up.x ) * size );
-        vtlist[0].pos.y = vrtlist[cnt].pos.y + (( -vrtlist[cnt].rt.y - vrtlist[cnt].up.y ) * size );
-        vtlist[0].pos.z = vrtlist[cnt].pos.z + (( -vrtlist[cnt].rt.z - vrtlist[cnt].up.z ) * size );
-
-        vtlist[1].pos.x = vrtlist[cnt].pos.x + (( vrtlist[cnt].rt.x - vrtlist[cnt].up.x ) * size );
-        vtlist[1].pos.y = vrtlist[cnt].pos.y + (( vrtlist[cnt].rt.y - vrtlist[cnt].up.y ) * size );
-        vtlist[1].pos.z = vrtlist[cnt].pos.z + (( vrtlist[cnt].rt.z - vrtlist[cnt].up.z ) * size );
-
-        vtlist[2].pos.x = vrtlist[cnt].pos.x + (( vrtlist[cnt].rt.x + vrtlist[cnt].up.x ) * size );
-        vtlist[2].pos.y = vrtlist[cnt].pos.y + (( vrtlist[cnt].rt.y + vrtlist[cnt].up.y ) * size );
-        vtlist[2].pos.z = vrtlist[cnt].pos.z + (( vrtlist[cnt].rt.z + vrtlist[cnt].up.z ) * size );
-
-        vtlist[3].pos.x = vrtlist[cnt].pos.x + (( -vrtlist[cnt].rt.x + vrtlist[cnt].up.x ) * size );
-        vtlist[3].pos.y = vrtlist[cnt].pos.y + (( -vrtlist[cnt].rt.y + vrtlist[cnt].up.y ) * size );
-        vtlist[3].pos.z = vrtlist[cnt].pos.z + (( -vrtlist[cnt].rt.z + vrtlist[cnt].up.z ) * size );
-
         // Fill in the rest of the data
         image = FP8_TO_FLOAT( gs->PrtList[prt].image_fp8 + gs->PrtList[prt].imagestt_fp8 );
 
-        vtlist[0].tx.s = CALCULATE_PRT_U0( image );
-        vtlist[0].tx.t = CALCULATE_PRT_V0( image );
-
-        vtlist[1].tx.s = CALCULATE_PRT_U1( image );
-        vtlist[1].tx.t = CALCULATE_PRT_V0( image );
-
-        vtlist[2].tx.s = CALCULATE_PRT_U1( image );
-        vtlist[2].tx.t = CALCULATE_PRT_V1( image );
-
-        vtlist[3].tx.s = CALCULATE_PRT_U0( image );
-        vtlist[3].tx.t = CALCULATE_PRT_V1( image );
+        // Create the billboard vertices for this particle.
+        calc_billboard(gs, vtlist, vrtlist + cnt, size, image);
 
         // Go on and draw it
         glBegin( GL_TRIANGLE_FAN );
@@ -353,38 +329,11 @@ void render_solid_prt( Uint32 vrtcount, GLVertex * vrtlist )
         // [claforte] Fudge the value.
         size = FP8_TO_FLOAT( gs->PrtList[prt].size_fp8 ) * 0.25f;
 
-        // Calculate the position of the four corners of the billboard
-        // used to display the particle.
-        vtlist[0].pos.x = vrtlist[cnt].pos.x + (( -vrtlist[cnt].rt.x - vrtlist[cnt].up.x ) * size );
-        vtlist[0].pos.y = vrtlist[cnt].pos.y + (( -vrtlist[cnt].rt.y - vrtlist[cnt].up.y ) * size );
-        vtlist[0].pos.z = vrtlist[cnt].pos.z + (( -vrtlist[cnt].rt.z - vrtlist[cnt].up.z ) * size );
-
-        vtlist[1].pos.x = vrtlist[cnt].pos.x + (( vrtlist[cnt].rt.x - vrtlist[cnt].up.x ) * size );
-        vtlist[1].pos.y = vrtlist[cnt].pos.y + (( vrtlist[cnt].rt.y - vrtlist[cnt].up.y ) * size );
-        vtlist[1].pos.z = vrtlist[cnt].pos.z + (( vrtlist[cnt].rt.z - vrtlist[cnt].up.z ) * size );
-
-        vtlist[2].pos.x = vrtlist[cnt].pos.x + (( vrtlist[cnt].rt.x + vrtlist[cnt].up.x ) * size );
-        vtlist[2].pos.y = vrtlist[cnt].pos.y + (( vrtlist[cnt].rt.y + vrtlist[cnt].up.y ) * size );
-        vtlist[2].pos.z = vrtlist[cnt].pos.z + (( vrtlist[cnt].rt.z + vrtlist[cnt].up.z ) * size );
-
-        vtlist[3].pos.x = vrtlist[cnt].pos.x + (( -vrtlist[cnt].rt.x + vrtlist[cnt].up.x ) * size );
-        vtlist[3].pos.y = vrtlist[cnt].pos.y + (( -vrtlist[cnt].rt.y + vrtlist[cnt].up.y ) * size );
-        vtlist[3].pos.z = vrtlist[cnt].pos.z + (( -vrtlist[cnt].rt.z + vrtlist[cnt].up.z ) * size );
-
         // Fill in the rest of the data
         image = FP8_TO_FLOAT( gs->PrtList[prt].image_fp8 + gs->PrtList[prt].imagestt_fp8 );
 
-        vtlist[0].tx.s = CALCULATE_PRT_U0( image );
-        vtlist[0].tx.t = CALCULATE_PRT_V0( image );
-
-        vtlist[1].tx.s = CALCULATE_PRT_U1( image );
-        vtlist[1].tx.t = CALCULATE_PRT_V0( image );
-
-        vtlist[2].tx.s = CALCULATE_PRT_U1( image );
-        vtlist[2].tx.t = CALCULATE_PRT_V1( image );
-
-        vtlist[3].tx.s = CALCULATE_PRT_U0( image );
-        vtlist[3].tx.t = CALCULATE_PRT_V1( image );
+        // Create the billboard vertices for this particle.
+        calc_billboard(gs, vtlist, vrtlist + cnt, size, image);
 
         glBegin( GL_TRIANGLE_FAN );
         glColor4fv( color_component.v );
@@ -439,38 +388,11 @@ void render_transparent_prt( Uint32 vrtcount, GLVertex * vrtlist )
         // Figure out the sprite's size based on distance
         size = FP8_TO_FLOAT( gs->PrtList[prt].size_fp8 ) * 0.5f;  // [claforte] Fudge the value.
 
-        // Calculate the position of the four corners of the billboard
-        // used to display the particle.
-        vtlist[0].pos.x = vrtlist[cnt].pos.x + (( -vrtlist[cnt].rt.x - vrtlist[cnt].up.x ) * size );
-        vtlist[0].pos.y = vrtlist[cnt].pos.y + (( -vrtlist[cnt].rt.y - vrtlist[cnt].up.y ) * size );
-        vtlist[0].pos.z = vrtlist[cnt].pos.z + (( -vrtlist[cnt].rt.z - vrtlist[cnt].up.z ) * size );
-
-        vtlist[1].pos.x = vrtlist[cnt].pos.x + (( vrtlist[cnt].rt.x - vrtlist[cnt].up.x ) * size );
-        vtlist[1].pos.y = vrtlist[cnt].pos.y + (( vrtlist[cnt].rt.y - vrtlist[cnt].up.y ) * size );
-        vtlist[1].pos.z = vrtlist[cnt].pos.z + (( vrtlist[cnt].rt.z - vrtlist[cnt].up.z ) * size );
-
-        vtlist[2].pos.x = vrtlist[cnt].pos.x + (( vrtlist[cnt].rt.x + vrtlist[cnt].up.x ) * size );
-        vtlist[2].pos.y = vrtlist[cnt].pos.y + (( vrtlist[cnt].rt.y + vrtlist[cnt].up.y ) * size );
-        vtlist[2].pos.z = vrtlist[cnt].pos.z + (( vrtlist[cnt].rt.z + vrtlist[cnt].up.z ) * size );
-
-        vtlist[3].pos.x = vrtlist[cnt].pos.x + (( -vrtlist[cnt].rt.x + vrtlist[cnt].up.x ) * size );
-        vtlist[3].pos.y = vrtlist[cnt].pos.y + (( -vrtlist[cnt].rt.y + vrtlist[cnt].up.y ) * size );
-        vtlist[3].pos.z = vrtlist[cnt].pos.z + (( -vrtlist[cnt].rt.z + vrtlist[cnt].up.z ) * size );
-
         // Fill in the rest of the data
         image = FP8_TO_FLOAT( gs->PrtList[prt].image_fp8 + gs->PrtList[prt].imagestt_fp8 );
 
-        vtlist[0].tx.s = CALCULATE_PRT_U0( image );
-        vtlist[0].tx.t = CALCULATE_PRT_V0( image );
-
-        vtlist[1].tx.s = CALCULATE_PRT_U1( image );
-        vtlist[1].tx.t = CALCULATE_PRT_V0( image );
-
-        vtlist[2].tx.s = CALCULATE_PRT_U1( image );
-        vtlist[2].tx.t = CALCULATE_PRT_V1( image );
-
-        vtlist[3].tx.s = CALCULATE_PRT_U0( image );
-        vtlist[3].tx.t = CALCULATE_PRT_V1( image );
+        // Create the billboard vertices for this particle.
+        calc_billboard(gs, vtlist, vrtlist + cnt, size, image);
 
         // Go on and draw it
         glBegin( GL_TRIANGLE_FAN );
@@ -487,13 +409,76 @@ void render_transparent_prt( Uint32 vrtcount, GLVertex * vrtlist )
   glPopAttrib();
 };
 
+
+//--------------------------------------------------------------------------------------------
+bool_t calc_billboard(CGame * gs, GLVertex vrtlst[], GLVertex * vert, float size, Uint16 image)
+{
+  if(NULL == vrtlst || NULL == vert) return bfalse;
+
+  if(0==size)
+  {
+    vrtlst[0].pos.x = vert->pos.x;
+    vrtlst[0].pos.y = vert->pos.y;
+    vrtlst[0].pos.z = vert->pos.z;
+
+    vrtlst[1].pos.x = vert->pos.x;
+    vrtlst[1].pos.y = vert->pos.y;
+    vrtlst[1].pos.z = vert->pos.z;
+
+    vrtlst[2].pos.x = vert->pos.x;
+    vrtlst[2].pos.y = vert->pos.y;
+    vrtlst[2].pos.z = vert->pos.z;
+
+    vrtlst[3].pos.x = vert->pos.x;
+    vrtlst[3].pos.y = vert->pos.y;
+    vrtlst[3].pos.z = vert->pos.z;
+  }
+  else
+  {
+    vrtlst[0].pos.x = vert->pos.x + (-vert->rt.x - vert->up.x ) * size;
+    vrtlst[0].pos.y = vert->pos.y + (-vert->rt.y - vert->up.y ) * size;
+    vrtlst[0].pos.z = vert->pos.z + (-vert->rt.z - vert->up.z ) * size;
+
+    vrtlst[1].pos.x = vert->pos.x + ( vert->rt.x - vert->up.x ) * size;
+    vrtlst[1].pos.y = vert->pos.y + ( vert->rt.y - vert->up.y ) * size;
+    vrtlst[1].pos.z = vert->pos.z + ( vert->rt.z - vert->up.z ) * size;
+
+    vrtlst[2].pos.x = vert->pos.x + ( vert->rt.x + vert->up.x ) * size;
+    vrtlst[2].pos.y = vert->pos.y + ( vert->rt.y + vert->up.y ) * size;
+    vrtlst[2].pos.z = vert->pos.z + ( vert->rt.z + vert->up.z ) * size;
+
+    vrtlst[3].pos.x = vert->pos.x + (-vert->rt.x + vert->up.x ) * size;
+    vrtlst[3].pos.y = vert->pos.y + (-vert->rt.y + vert->up.y ) * size;
+    vrtlst[3].pos.z = vert->pos.z + (-vert->rt.z + vert->up.z ) * size;
+  }
+
+  vrtlst[0].tx.s = CALCULATE_PRT_U0( image );
+  vrtlst[0].tx.t = CALCULATE_PRT_V0( image );
+
+  vrtlst[1].tx.s = CALCULATE_PRT_U1( image );
+  vrtlst[1].tx.t = CALCULATE_PRT_V0( image );
+
+  vrtlst[2].tx.s = CALCULATE_PRT_U1( image );
+  vrtlst[2].tx.t = CALCULATE_PRT_V1( image );
+
+  vrtlst[3].tx.s = CALCULATE_PRT_U0( image );
+  vrtlst[3].tx.t = CALCULATE_PRT_V1( image );
+
+  return 0!=size;
+}
+
 //--------------------------------------------------------------------------------------------
 void render_light_prt( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  CGame *gs = gfxState.gs; 
+  CGame *gs = gfxState.gs;
+  Prt   *pprt;
 
   GLVertex vtlist[4];
-  Uint16 cnt, prt, chr, pip;
+  GLvector color_component;
+  Uint16 cnt;
+  PRT_REF prt;
+  CHR_REF chr;
+  PIP_REF pip;
   Uint16 image;
   float size;
   int i;
@@ -509,67 +494,43 @@ void render_light_prt( Uint32 vrtcount, GLVertex * vrtlist )
     glBlendFunc( GL_ONE, GL_ONE );
 
 
-
-
     for ( cnt = 0; cnt < vrtcount; cnt++ )
     {
       // Get the index from the color slot
       prt = ( Uint16 ) vrtlist[cnt].color;
+      if( !VALID_PRT(gs->PrtList, prt) ) continue;
+      pprt = gs->PrtList + prt;
+
       chr = prt_get_attachedtochr( gs, prt );
-      pip = gs->PrtList[prt].pip;
+      pip = pprt->pip;
 
       // Draw lights this round
-      if ( gs->PrtList[prt].type != PRTTYPE_LIGHT ) continue;
+      if ( pprt->type != PRTTYPE_LIGHT || 0 == pprt->alpha_fp8) continue;
 
+      color_component.r =
+      color_component.g = 
+      color_component.b = FP8_TO_FLOAT( pprt->alpha_fp8 );
+      color_component.a = 1.0f;
+
+      // [claforte] Fudge the value.
+      size = FP8_TO_FLOAT( gs->PrtList[prt].size_fp8 ) * 0.5f;
+
+      // Fill in the rest of the data
+      image = FP8_TO_FLOAT( pprt->image_fp8 + pprt->imagestt_fp8 );
+
+      // Create the billboard vertices for this particle.
+      calc_billboard(gs, vtlist, vrtlist + cnt, size, image);
+
+      // Go on and draw it
+      glBegin( GL_TRIANGLE_FAN );
+      glColor4fv( color_component.v );
+      for ( i = 0; i < 4; i++ )
       {
-        GLvector color_component = {FP8_TO_FLOAT( gs->PrtList[prt].alpha_fp8 ), FP8_TO_FLOAT( gs->PrtList[prt].alpha_fp8 ), FP8_TO_FLOAT( gs->PrtList[prt].alpha_fp8 ), 1.0f};
-
-        // [claforte] Fudge the value.
-        size = FP8_TO_FLOAT( gs->PrtList[prt].size_fp8 ) * 0.5f;
-
-        // Calculate the position of the four corners of the billboard
-        // used to display the particle.
-        vtlist[0].pos.x = vrtlist[cnt].pos.x + (( -vrtlist[cnt].rt.x - vrtlist[cnt].up.x ) * size );
-        vtlist[0].pos.y = vrtlist[cnt].pos.y + (( -vrtlist[cnt].rt.y - vrtlist[cnt].up.y ) * size );
-        vtlist[0].pos.z = vrtlist[cnt].pos.z + (( -vrtlist[cnt].rt.z - vrtlist[cnt].up.z ) * size );
-
-        vtlist[1].pos.x = vrtlist[cnt].pos.x + (( vrtlist[cnt].rt.x - vrtlist[cnt].up.x ) * size );
-        vtlist[1].pos.y = vrtlist[cnt].pos.y + (( vrtlist[cnt].rt.y - vrtlist[cnt].up.y ) * size );
-        vtlist[1].pos.z = vrtlist[cnt].pos.z + (( vrtlist[cnt].rt.z - vrtlist[cnt].up.z ) * size );
-
-        vtlist[2].pos.x = vrtlist[cnt].pos.x + (( vrtlist[cnt].rt.x + vrtlist[cnt].up.x ) * size );
-        vtlist[2].pos.y = vrtlist[cnt].pos.y + (( vrtlist[cnt].rt.y + vrtlist[cnt].up.y ) * size );
-        vtlist[2].pos.z = vrtlist[cnt].pos.z + (( vrtlist[cnt].rt.z + vrtlist[cnt].up.z ) * size );
-
-        vtlist[3].pos.x = vrtlist[cnt].pos.x + (( -vrtlist[cnt].rt.x + vrtlist[cnt].up.x ) * size );
-        vtlist[3].pos.y = vrtlist[cnt].pos.y + (( -vrtlist[cnt].rt.y + vrtlist[cnt].up.y ) * size );
-        vtlist[3].pos.z = vrtlist[cnt].pos.z + (( -vrtlist[cnt].rt.z + vrtlist[cnt].up.z ) * size );
-
-        // Fill in the rest of the data
-        image = FP8_TO_FLOAT( gs->PrtList[prt].image_fp8 + gs->PrtList[prt].imagestt_fp8 );
-
-        vtlist[0].tx.s = CALCULATE_PRT_U0( image );
-        vtlist[0].tx.t = CALCULATE_PRT_V0( image );
-
-        vtlist[1].tx.s = CALCULATE_PRT_U1( image );
-        vtlist[1].tx.t = CALCULATE_PRT_V0( image );
-
-        vtlist[2].tx.s = CALCULATE_PRT_U1( image );
-        vtlist[2].tx.t = CALCULATE_PRT_V1( image );
-
-        vtlist[3].tx.s = CALCULATE_PRT_U0( image );
-        vtlist[3].tx.t = CALCULATE_PRT_V1( image );
-
-        // Go on and draw it
-        glBegin( GL_TRIANGLE_FAN );
-        glColor4fv( color_component.v );
-        for ( i = 0; i < 4; i++ )
-        {
-          glTexCoord2fv( vtlist[i].tx._v );
-          glVertex3fv( vtlist[i].pos.v );
-        }
-        glEnd();
+        glTexCoord2fv( vtlist[i].tx._v );
+        glVertex3fv( vtlist[i].pos.v );
       }
+      glEnd();
+
     }
   }
   glPopAttrib();
@@ -708,44 +669,16 @@ void render_antialias_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
       if ( gs->PrtList[prt].type != PRTTYPE_SOLID ) continue;
 
       {
-
         GLvector color_component = {FP8_TO_FLOAT( gs->PrtList[prt].lightr_fp8 ), FP8_TO_FLOAT( gs->PrtList[prt].lightg_fp8 ), FP8_TO_FLOAT( gs->PrtList[prt].lightb_fp8 ), FP8_TO_FLOAT( antialiastrans_fp8 ) };
 
         // Figure out the sprite's size based on distance
         size = FP8_TO_FLOAT( gs->PrtList[prt].size_fp8 ) * 0.25f * 1.1f;  // [claforte] Fudge the value.
 
-        // Calculate the position of the four corners of the billboard
-        // used to display the particle.
-        vtlist[0].pos.x = vrtlist[cnt].pos.x + (( -vrtlist[cnt].rt.x - vrtlist[cnt].up.x ) * size );
-        vtlist[0].pos.y = vrtlist[cnt].pos.y + (( -vrtlist[cnt].rt.y - vrtlist[cnt].up.y ) * size );
-        vtlist[0].pos.z = vrtlist[cnt].pos.z + (( -vrtlist[cnt].rt.z - vrtlist[cnt].up.z ) * size );
-
-        vtlist[1].pos.x = vrtlist[cnt].pos.x + (( vrtlist[cnt].rt.x - vrtlist[cnt].up.x ) * size );
-        vtlist[1].pos.y = vrtlist[cnt].pos.y + (( vrtlist[cnt].rt.y - vrtlist[cnt].up.y ) * size );
-        vtlist[1].pos.z = vrtlist[cnt].pos.z + (( vrtlist[cnt].rt.z - vrtlist[cnt].up.z ) * size );
-
-        vtlist[2].pos.x = vrtlist[cnt].pos.x + (( vrtlist[cnt].rt.x + vrtlist[cnt].up.x ) * size );
-        vtlist[2].pos.y = vrtlist[cnt].pos.y + (( vrtlist[cnt].rt.y + vrtlist[cnt].up.y ) * size );
-        vtlist[2].pos.z = vrtlist[cnt].pos.z + (( vrtlist[cnt].rt.z + vrtlist[cnt].up.z ) * size );
-
-        vtlist[3].pos.x = vrtlist[cnt].pos.x + (( -vrtlist[cnt].rt.x + vrtlist[cnt].up.x ) * size );
-        vtlist[3].pos.y = vrtlist[cnt].pos.y + (( -vrtlist[cnt].rt.y + vrtlist[cnt].up.y ) * size );
-        vtlist[3].pos.z = vrtlist[cnt].pos.z + (( -vrtlist[cnt].rt.z + vrtlist[cnt].up.z ) * size );
-
         // Fill in the rest of the data
         image = FP8_TO_FLOAT( gs->PrtList[prt].image_fp8 + gs->PrtList[prt].imagestt_fp8 );
 
-        vtlist[0].tx.s = CALCULATE_PRT_U0( image );
-        vtlist[0].tx.t = CALCULATE_PRT_V0( image );
-
-        vtlist[1].tx.s = CALCULATE_PRT_U1( image );
-        vtlist[1].tx.t = CALCULATE_PRT_V0( image );
-
-        vtlist[2].tx.s = CALCULATE_PRT_U1( image );
-        vtlist[2].tx.t = CALCULATE_PRT_V1( image );
-
-        vtlist[3].tx.s = CALCULATE_PRT_U0( image );
-        vtlist[3].tx.t = CALCULATE_PRT_V1( image );
+        // Create the billboard vertices for this particle.
+        calc_billboard(gs, vtlist, vrtlist + cnt, size, image);
 
         // Go on and draw it
         glBegin( GL_TRIANGLE_FAN );
@@ -760,6 +693,7 @@ void render_antialias_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
     }
   }
   glPopAttrib();
+
 };
 
 //--------------------------------------------------------------------------------------------
@@ -801,38 +735,11 @@ void render_solid_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
         // [claforte] Fudge the value.
         size = FP8_TO_FLOAT( gs->PrtList[prt].size_fp8 ) * 0.25f;
 
-        // Calculate the position of the four corners of the billboard
-        // used to display the particle.
-        vtlist[0].pos.x = vrtlist[cnt].pos.x + (( -vrtlist[cnt].rt.x - vrtlist[cnt].up.x ) * size );
-        vtlist[0].pos.y = vrtlist[cnt].pos.y + (( -vrtlist[cnt].rt.y - vrtlist[cnt].up.y ) * size );
-        vtlist[0].pos.z = vrtlist[cnt].pos.z + (( -vrtlist[cnt].rt.z - vrtlist[cnt].up.z ) * size );
-
-        vtlist[1].pos.x = vrtlist[cnt].pos.x + (( vrtlist[cnt].rt.x - vrtlist[cnt].up.x ) * size );
-        vtlist[1].pos.y = vrtlist[cnt].pos.y + (( vrtlist[cnt].rt.y - vrtlist[cnt].up.y ) * size );
-        vtlist[1].pos.z = vrtlist[cnt].pos.z + (( vrtlist[cnt].rt.z - vrtlist[cnt].up.z ) * size );
-
-        vtlist[2].pos.x = vrtlist[cnt].pos.x + (( vrtlist[cnt].rt.x + vrtlist[cnt].up.x ) * size );
-        vtlist[2].pos.y = vrtlist[cnt].pos.y + (( vrtlist[cnt].rt.y + vrtlist[cnt].up.y ) * size );
-        vtlist[2].pos.z = vrtlist[cnt].pos.z + (( vrtlist[cnt].rt.z + vrtlist[cnt].up.z ) * size );
-
-        vtlist[3].pos.x = vrtlist[cnt].pos.x + (( -vrtlist[cnt].rt.x + vrtlist[cnt].up.x ) * size );
-        vtlist[3].pos.y = vrtlist[cnt].pos.y + (( -vrtlist[cnt].rt.y + vrtlist[cnt].up.y ) * size );
-        vtlist[3].pos.z = vrtlist[cnt].pos.z + (( -vrtlist[cnt].rt.z + vrtlist[cnt].up.z ) * size );
-
         // Fill in the rest of the data
         image = FP8_TO_FLOAT( gs->PrtList[prt].image_fp8 + gs->PrtList[prt].imagestt_fp8 );
 
-        vtlist[0].tx.s = CALCULATE_PRT_U0( image );
-        vtlist[0].tx.t = CALCULATE_PRT_V0( image );
-
-        vtlist[1].tx.s = CALCULATE_PRT_U1( image );
-        vtlist[1].tx.t = CALCULATE_PRT_V0( image );
-
-        vtlist[2].tx.s = CALCULATE_PRT_U1( image );
-        vtlist[2].tx.t = CALCULATE_PRT_V1( image );
-
-        vtlist[3].tx.s = CALCULATE_PRT_U0( image );
-        vtlist[3].tx.t = CALCULATE_PRT_V1( image );
+        // Create the billboard vertices for this particle.
+        calc_billboard(gs, vtlist, vrtlist + cnt, size, image);
 
         glBegin( GL_TRIANGLE_FAN );
         glColor4fv( color_component.v );
@@ -889,38 +796,11 @@ void render_transparent_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
         // Figure out the sprite's size based on distance
         size = FP8_TO_FLOAT( gs->PrtList[prt].size_fp8 ) * 0.25f;  // [claforte] Fudge the value.
 
-        // Calculate the position of the four corners of the billboard
-        // used to display the particle.
-        vtlist[0].pos.x = vrtlist[cnt].pos.x + (( -vrtlist[cnt].rt.x - vrtlist[cnt].up.x ) * size );
-        vtlist[0].pos.y = vrtlist[cnt].pos.y + (( -vrtlist[cnt].rt.y - vrtlist[cnt].up.y ) * size );
-        vtlist[0].pos.z = vrtlist[cnt].pos.z + (( -vrtlist[cnt].rt.z - vrtlist[cnt].up.z ) * size );
-
-        vtlist[1].pos.x = vrtlist[cnt].pos.x + (( vrtlist[cnt].rt.x - vrtlist[cnt].up.x ) * size );
-        vtlist[1].pos.y = vrtlist[cnt].pos.y + (( vrtlist[cnt].rt.y - vrtlist[cnt].up.y ) * size );
-        vtlist[1].pos.z = vrtlist[cnt].pos.z + (( vrtlist[cnt].rt.z - vrtlist[cnt].up.z ) * size );
-
-        vtlist[2].pos.x = vrtlist[cnt].pos.x + (( vrtlist[cnt].rt.x + vrtlist[cnt].up.x ) * size );
-        vtlist[2].pos.y = vrtlist[cnt].pos.y + (( vrtlist[cnt].rt.y + vrtlist[cnt].up.y ) * size );
-        vtlist[2].pos.z = vrtlist[cnt].pos.z + (( vrtlist[cnt].rt.z + vrtlist[cnt].up.z ) * size );
-
-        vtlist[3].pos.x = vrtlist[cnt].pos.x + (( -vrtlist[cnt].rt.x + vrtlist[cnt].up.x ) * size );
-        vtlist[3].pos.y = vrtlist[cnt].pos.y + (( -vrtlist[cnt].rt.y + vrtlist[cnt].up.y ) * size );
-        vtlist[3].pos.z = vrtlist[cnt].pos.z + (( -vrtlist[cnt].rt.z + vrtlist[cnt].up.z ) * size );
-
         // Fill in the rest of the data
         image = FP8_TO_FLOAT( gs->PrtList[prt].image_fp8 + gs->PrtList[prt].imagestt_fp8 );
 
-        vtlist[0].tx.s = CALCULATE_PRT_U0( image );
-        vtlist[0].tx.t = CALCULATE_PRT_V0( image );
-
-        vtlist[1].tx.s = CALCULATE_PRT_U1( image );
-        vtlist[1].tx.t = CALCULATE_PRT_V0( image );
-
-        vtlist[2].tx.s = CALCULATE_PRT_U1( image );
-        vtlist[2].tx.t = CALCULATE_PRT_V1( image );
-
-        vtlist[3].tx.s = CALCULATE_PRT_U0( image );
-        vtlist[3].tx.t = CALCULATE_PRT_V1( image );
+        // Create the billboard vertices for this particle.
+        calc_billboard(gs, vtlist, vrtlist + cnt, size, image);
 
         // Go on and draw it
         glBegin( GL_TRIANGLE_FAN );
@@ -975,38 +855,11 @@ void render_light_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
       // [claforte] Fudge the value.
       size = FP8_TO_FLOAT( gs->PrtList[prt].size_fp8 ) * 0.5f;
 
-      // Calculate the position of the four corners of the billboard
-      // used to display the particle.
-      vtlist[0].pos.x = vrtlist[cnt].pos.x + (( -vrtlist[cnt].rt.x - vrtlist[cnt].up.x ) * size );
-      vtlist[0].pos.y = vrtlist[cnt].pos.y + (( -vrtlist[cnt].rt.y - vrtlist[cnt].up.y ) * size );
-      vtlist[0].pos.z = vrtlist[cnt].pos.z + (( -vrtlist[cnt].rt.z - vrtlist[cnt].up.z ) * size );
-
-      vtlist[1].pos.x = vrtlist[cnt].pos.x + (( vrtlist[cnt].rt.x - vrtlist[cnt].up.x ) * size );
-      vtlist[1].pos.y = vrtlist[cnt].pos.y + (( vrtlist[cnt].rt.y - vrtlist[cnt].up.y ) * size );
-      vtlist[1].pos.z = vrtlist[cnt].pos.z + (( vrtlist[cnt].rt.z - vrtlist[cnt].up.z ) * size );
-
-      vtlist[2].pos.x = vrtlist[cnt].pos.x + (( vrtlist[cnt].rt.x + vrtlist[cnt].up.x ) * size );
-      vtlist[2].pos.y = vrtlist[cnt].pos.y + (( vrtlist[cnt].rt.y + vrtlist[cnt].up.y ) * size );
-      vtlist[2].pos.z = vrtlist[cnt].pos.z + (( vrtlist[cnt].rt.z + vrtlist[cnt].up.z ) * size );
-
-      vtlist[3].pos.x = vrtlist[cnt].pos.x + (( -vrtlist[cnt].rt.x + vrtlist[cnt].up.x ) * size );
-      vtlist[3].pos.y = vrtlist[cnt].pos.y + (( -vrtlist[cnt].rt.y + vrtlist[cnt].up.y ) * size );
-      vtlist[3].pos.z = vrtlist[cnt].pos.z + (( -vrtlist[cnt].rt.z + vrtlist[cnt].up.z ) * size );
-
       // Fill in the rest of the data
       image = FP8_TO_FLOAT( gs->PrtList[prt].image_fp8 + gs->PrtList[prt].imagestt_fp8 );
 
-      vtlist[0].tx.s = CALCULATE_PRT_U0( image );
-      vtlist[0].tx.t = CALCULATE_PRT_V0( image );
-
-      vtlist[1].tx.s = CALCULATE_PRT_U1( image );
-      vtlist[1].tx.t = CALCULATE_PRT_V0( image );
-
-      vtlist[2].tx.s = CALCULATE_PRT_U1( image );
-      vtlist[2].tx.t = CALCULATE_PRT_V1( image );
-
-      vtlist[3].tx.s = CALCULATE_PRT_U0( image );
-      vtlist[3].tx.t = CALCULATE_PRT_V1( image );
+      // Create the billboard vertices for this particle.
+      calc_billboard(gs, vtlist, vrtlist + cnt, size, image);
 
       // Go on and draw it
       glBegin( GL_TRIANGLE_FAN );

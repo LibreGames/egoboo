@@ -2702,10 +2702,10 @@ void move_characters( CGame * gs, float dUpdate )
     {
       // convert flip into lip
       pchr->anim.flip -= 0.25f;
-      pchr->anim.lip_fp8 += 64;
+      pchr->anim.ilip += 64;
 
       // handle the mad fx
-      if ( pchr->anim.lip_fp8 == 192 )
+      if ( pchr->anim.ilip == 192 )
       {
         // Check frame effects
         if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_ACTLEFT ) )
@@ -2737,7 +2737,7 @@ void move_characters( CGame * gs, float dUpdate )
       }
 
       // change frames
-      if ( pchr->anim.lip_fp8 == 0 )
+      if ( pchr->anim.ilip == 0 )
       {
         // Change frames
         pchr->anim.last = pchr->anim.next;
@@ -2781,7 +2781,7 @@ void move_characters( CGame * gs, float dUpdate )
     if ( !pchr->action.keep && !pchr->action.loop )
     {
       framelip = pmad->framelip[pchr->anim.next];  // 0 - 15...  Way through animation
-      if ( pchr->action.ready && pchr->anim.lip_fp8 == 0 && grounded && pchr->flyheight == 0 && ( framelip&7 ) < 2 )
+      if ( pchr->action.ready && pchr->anim.ilip == 0 && grounded && pchr->flyheight == 0 && ( framelip&7 ) < 2 )
       {
         // Do the motion stuff
         speed = ABS( pchr->vel.x ) + ABS( pchr->vel.y );
@@ -7461,7 +7461,7 @@ void play_action( CGame * gs, CHR_REF character, ACTION action, bool_t ready )
     pchr->action.now   = action;
     pchr->action.ready = ready;
 
-    pchr->anim.lip_fp8 = 0;
+    pchr->anim.ilip = 0;
     pchr->anim.flip    = 0.0f;
     pchr->anim.last    = pchr->anim.next;
     pchr->anim.next    = pmad->actionstart[pchr->action.now];
@@ -7497,7 +7497,7 @@ void set_frame( CGame * gs, CHR_REF character, Uint16 frame, Uint8 lip )
   pchr->action.now   = ACTION_DA;
   pchr->action.ready = btrue;
 
-  pchr->anim.lip_fp8 = ( lip << 6 );
+  pchr->anim.ilip = ( lip << 6 );
   pchr->anim.flip    = lip * 0.25;
 
   start = pmad->actionstart[pchr->action.now];

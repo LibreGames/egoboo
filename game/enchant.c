@@ -1964,7 +1964,7 @@ Uint16 spawn_enchant( CGame * gs, Uint16 owner, Uint16 target,
       if ( gs->MadList[chrlst[overlay].model].actionvalid[ACTION_MJ] )
       {
         chrlst[overlay].action.now = ACTION_MJ;
-        chrlst[overlay].anim.lip_fp8 = 0;
+        chrlst[overlay].anim.ilip = 0;
         chrlst[overlay].anim.flip = 0.0f;
         chrlst[overlay].anim.next = gs->MadList[chrlst[overlay].model].actionstart[ACTION_MJ];
         chrlst[overlay].anim.last = chrlst[overlay].anim.next;

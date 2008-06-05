@@ -215,8 +215,8 @@ void md2_blend_lighting(Chr * pchr)
   Uint16 lightnew_r, lightnew_g, lightnew_b;
   Uint16 lightold_r, lightold_g, lightold_b;
   Uint16 lightrotationr, lightrotationg, lightrotationb;
-  Uint8 ambilevelr_fp8, ambilevelg_fp8, ambilevelb_fp8;
-  Uint8  speklevelr_fp8, speklevelg_fp8, speklevelb_fp8;
+  Uint16 ambilevelr_fp8, ambilevelg_fp8, ambilevelb_fp8;
+  Uint16  speklevelr_fp8, speklevelg_fp8, speklevelb_fp8;
   Uint8  r_sft, g_sft, b_sft;
   Uint16 trans;
   vect2  offset;
@@ -492,8 +492,8 @@ void calc_lighting_data( CHR_REF ichr )
 {
   CGame * gs = gfxState.gs;
 
-  Uint8  sheen_fp8       = gs->ChrList[ichr].sheen_fp8;
-  float  spekularity_fp8 = FLOAT_TO_FP8(( float ) sheen_fp8 / ( float ) MAXSPEKLEVEL );
+  Uint16 sheen_fp8       = gs->ChrList[ichr].sheen_fp8;
+  Uint16 spekularity_fp8 = FLOAT_TO_FP8(( float ) sheen_fp8 / ( float ) MAXSPEKLEVEL );
   Uint16 model           = gs->ChrList[ichr].model;
   Uint16 texture         = gs->ChrList[ichr].skin_ref + gs->MadList[gs->ChrList[ichr].model].skinstart;
 
@@ -698,7 +698,7 @@ void render_mad( CHR_REF ichr, Uint8 trans )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_refmad( int ichr, Uint8 trans_fp8 )
+void render_refmad( int ichr, Uint16 trans_fp8 )
 {
   CGame * gs = gfxState.gs;
 
