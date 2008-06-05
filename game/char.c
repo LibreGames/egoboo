@@ -5902,6 +5902,7 @@ void check_player_import(CGame * gs)
   const char *foundfile;
   FS_FIND_INFO fs_finfo;
 
+
   // Set up...
   loadplayer_count = 0;
 

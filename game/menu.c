@@ -1170,14 +1170,25 @@ int mnu_doChoosePlayer( MenuProc * mproc, float deltaTime )
   int player;
   static GLtexture TxInput[4];
   static Uint32 BitsInput[4];
+  static bool_t created_game = bfalse;
 
-  CGame * gs = gfxState.gs;
+  CGame   * gs = gfxState.gs;
   CClient * cl = mproc->cl;
   CServer * sv = mproc->sv;
+
+
 
   switch ( menuState )
   {
     case MM_Begin:
+
+      if(NULL == gs)
+      {
+        gs = gfxState.gs = CGame_create(mproc->net, NULL, NULL);
+        gs->proc.Active = bfalse;
+        created_game = btrue;
+      }
+
       mnu_selectedPlayerCount = 0;
       mnu_selectedPlayer[0] = 0;
 
@@ -1210,8 +1221,8 @@ int mnu_doChoosePlayer( MenuProc * mproc, float deltaTime )
       ui_initWidget( mnu_widgetList + 0, 0, mnu_Font, "Select Module", NULL, 40, gfxState.scry - 35*3, 200, 30 );
       ui_initWidget( mnu_widgetList + 1, 1, mnu_Font, "Back", NULL, 40, gfxState.scry - 35*2, 200, 30 );
 
-    ui_initWidget(mnu_widgetList + 0, 0, mnu_Font, "Select Module", NULL, 40, 350, 200, 30);
-    ui_initWidget(mnu_widgetList + 1, 1, mnu_Font, "Back", NULL, 40, 385, 200, 30);
+      ui_initWidget(mnu_widgetList + 0, 0, mnu_Font, "Select Module", NULL, 40, 350, 200, 30);
+      ui_initWidget(mnu_widgetList + 1, 1, mnu_Font, "Back", NULL, 40, 385, 200, 30);
 
       // initialize the selction buttons
       numVertical   = ( gfxState.scry - 35 * 4 - 20 ) / 47;
@@ -1237,6 +1248,7 @@ int mnu_doChoosePlayer( MenuProc * mproc, float deltaTime )
         }
       x += 180;
       };
+
 
       menuChoice = 0;
       menuState = MM_Entering;
@@ -1351,12 +1363,20 @@ int mnu_doChoosePlayer( MenuProc * mproc, float deltaTime )
 
       if ( mnu_selectedPlayerCount > 0 )
       {
+        if(NULL == sv) { sv = gs->sv = mproc->sv = CServer_create(gs); }
+
         mnu_load_mod_data(mproc, sv->loc_mod, MAXMODULE);           // Reload all avalilable modules
         import_selected_players();
+
+        gs->ns = mproc->net;
+        gs->cl = mproc->cl;
+        gs->sv = mproc->sv;
+
         result = 1;
       }
       else
       {
+        if(created_game) gs->proc.KillMe = btrue;
         result = bquit ? -1 : 1;
       }
       ui_Reset();
@@ -2394,6 +2414,14 @@ int mnu_doLaunchGame( MenuProc * mproc, float deltaTime )
       if(NULL == gfxState.gs)
       {
         gfxState.gs = gs = CGame_create(mproc->net, mproc->cl, mproc->sv);
+      }
+      else
+      {
+        // make sure the game has the correct information
+        // destroy any extra info
+        if(gs->ns != mproc->net) { CNet_destroy(&(gs->ns)); gs->ns = mproc->net; if(NULL!=gs->ns) gs->ns->parent = gs;}
+        if(gs->cl != mproc->cl ) { CNet_destroy(&(gs->cl)); gs->cl = mproc->cl;  if(NULL!=gs->cl) gs->cl->parent = gs;}
+        if(gs->sv != mproc->sv ) { CNet_destroy(&(gs->sv)); gs->sv = mproc->sv;  if(NULL!=gs->sv) gs->sv->parent = gs;}
       }
 
       if(NULL != mproc->cl && -1 != mproc->cl->selectedModule)

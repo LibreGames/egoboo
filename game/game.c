@@ -2504,6 +2504,7 @@ retval_t main_doGameGraphics()
   CGame * gs = gfxState.gs;
 
   if(NULL == gs) return rv_error;
+  if( !gs->proc.Active ) { gs->dFrame = 0; return rv_succeed; };
 
   move_camera( UPDATESCALE );
 

@@ -412,7 +412,8 @@ INLINE const Uint32 mesh_get_fan( CGame * gs, vect3 pos )
   ix = MESH_FLOAT_TO_FAN( pos.x );
   iy = MESH_FLOAT_TO_FAN( pos.y );
 
-  testfan = ix + gs->mesh.Fan_X[iy];
+  testfan = mesh_convert_fan( &(gs->mesh), ix, iy );
+  if(INVALID_FAN == testfan) return testfan;
 
   ivert = mf_list[testfan].vrt_start;
   minx = maxx = gs->Mesh_Mem.vrt_x[ivert];
@@ -428,13 +429,11 @@ INLINE const Uint32 mesh_get_fan( CGame * gs, vect3 pos )
 
   if ( pos.x < minx ) { ix--; bfound = btrue; }
   else if ( pos.x > maxx ) { ix++; bfound = btrue; }
+
   if ( pos.y < miny ) { iy--; bfound = btrue; }
   else if ( pos.y > maxy ) { iy++; bfound = btrue; }
 
-  if ( ix < 0 || iy < 0 || ix > mi->size_x || iy > mi->size_y )
-    testfan = INVALID_FAN;
-  else if ( bfound )
-    testfan = ix + gs->mesh.Fan_X[iy];
+  testfan = mesh_convert_fan( &(gs->mesh), ix, iy );
 
   return testfan;
 };
@@ -565,7 +564,7 @@ INLINE const Uint32 mesh_convert_fan( MESH_INFO * mi, int fan_x, int fan_y )
 {
   // BB > convert <fan_x,fan_y> to a fanblock
 
-  if ( fan_x < 0 || fan_x > mi->size_x || fan_y < 0 || fan_y > mi->size_y ) return INVALID_FAN;
+  if ( fan_x < 0 || fan_x >= mi->size_x || fan_y < 0 || fan_y >= mi->size_y ) return INVALID_FAN;
 
   return fan_x + mi->Fan_X[fan_y];
 };

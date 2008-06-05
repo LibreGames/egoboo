@@ -1138,6 +1138,7 @@ Uint32 PipList_load_one( CGame * gs, char * szObjectpath, char * szObjectname, c
   if(override > 0)
   {
     ipip = override;
+    gs->PipList_count = MAX(gs->PipList_count, override);
   }
   else
   {
@@ -1260,7 +1261,7 @@ Uint32 PipList_load_one( CGame * gs, char * szObjectpath, char * szObjectname, c
   pip->manadrain = fget_next_fixed( fileread );   //Mana drain (Mana damage)
   pip->lifedrain = fget_next_fixed( fileread );   //Life drain (Life steal)
 
-
+  pip->used = btrue;
 
   // Clear expansions...
   pip->zaimspd     = 0;
