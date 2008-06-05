@@ -783,7 +783,7 @@ bool_t sv_handlePacket(CServer * ss, ENetEvent *event)
 };
 
 //--------------------------------------------------------------------------------------------
-void sv_unbufferLatches(CServer * ss)
+void CServer_unbufferLatches(CServer * ss)
 {
   // ZZ> This function sets character latches based on player input to the host
   Uint32 cnt, uiTime;

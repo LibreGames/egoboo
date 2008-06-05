@@ -454,9 +454,8 @@ typedef struct message_element_t
 
 } MESSAGE_ELEMENT;
 
-typedef struct message_t
+typedef struct MessageData_t
 {
-  Uint16  start;                                         // The message queue
 
   // Message files
   Uint16  total;                                         // The number of messages
@@ -464,22 +463,16 @@ typedef struct message_t
 
   Uint32  index[MAXTOTALMESSAGE];                        // Where it is
   char    text[MESSAGEBUFFERSIZE];                       // The text buffer
+} MessageData;
 
-  MESSAGE_ELEMENT list[MAXMESSAGE];
-} MESSAGE;
-
-extern MESSAGE GMsg;
-
-typedef struct net_message_t
+typedef struct MessageQueue_t
 {
-  Uint8  delay;                 // For slowing down input
-  int    write;                 // The cursor position
-  int    writemin;              // The starting cursor position
-  char   buffer[MESSAGESIZE];   // The input message
-} NET_MESSAGE;
+  int             count;
 
-extern NET_MESSAGE GNetMsg;
-
+  Uint16          start;
+  MESSAGE_ELEMENT list[MAXMESSAGE];
+  float           timechange;
+} MessageQueue;
 
 // My lil' random number table
 #define MAXRAND 4096

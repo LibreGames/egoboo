@@ -256,18 +256,6 @@ static TTFont *mnu_Font = NULL;
 static bool_t mnu_removeSelectedPlayerInput( int player, Uint32 input );
 
 //--------------------------------------------------------------------------------------------
-void load_global_icons(CGame * gs)
-{
-  release_all_icons(gs);
-
-  gs->nullicon = load_one_icon( CData.basicdat_dir, NULL, CData.nullicon_bitmap );
-  gs->keybicon = load_one_icon( CData.basicdat_dir, NULL, CData.keybicon_bitmap );
-  gs->mousicon = load_one_icon( CData.basicdat_dir, NULL, CData.mousicon_bitmap );
-  gs->joyaicon = load_one_icon( CData.basicdat_dir, NULL, CData.joyaicon_bitmap );
-  gs->joybicon = load_one_icon( CData.basicdat_dir, NULL, CData.joybicon_bitmap );
-}
-
-//--------------------------------------------------------------------------------------------
 static void init_options_data()
 {
   // Audio
@@ -2367,7 +2355,7 @@ int mnu_doVideoOptions( MenuProc * mproc, float deltaTime )
 
       // Force the program to modify the graphics
       // to get this to work properly, you need to reload all textures!
-      GraphicState_synch(&gfxState, &CData);
+      CGraphics_synch(&gfxState, &CData);
       gfx_set_mode(&gfxState); 
 
       // reset the auto-formatting for the menus

@@ -82,7 +82,7 @@ extern GLOBAL_LIGHTING_INFO GLight;
 
 //--------------------------------------------------------------------------------------------
 
-typedef struct GraphicState_t
+typedef struct CGraphics_t
 {
   // JF - Added so that the video mode might be determined outside of the graphics code
   SDL_Surface * surface;
@@ -120,19 +120,19 @@ typedef struct GraphicState_t
 
   SDL_Rect **   video_mode_list;
 
-  RENDERLIST * rnd_lst;
+  RENDERLIST *  rnd_lst;
 
-  float        est_max_fps;
+  float         est_max_fps;
 
   // the game state that we are plugged into
   struct CGame_t  * gs;
 
-} GraphicState;
+} CGraphics;
 
-GraphicState * GraphicState_new(GraphicState * g, struct ConfigData_t * cd);
-bool_t         GraphicState_synch(GraphicState * g, struct ConfigData_t * cd);
+CGraphics * CGraphics_new(CGraphics * g, struct ConfigData_t * cd);
+bool_t         CGraphics_synch(CGraphics * g, struct ConfigData_t * cd);
 
-extern GraphicState gfxState;
+extern CGraphics gfxState;
 
 //--------------------------------------------------------------------------------------------
 struct ClockState_t;
@@ -144,7 +144,6 @@ typedef struct CGui_t
   MenuProc mnu_proc;
 
   bool_t can_pause;          //Pause button avalible?
-  bool_t net_messagemode;
 
   GLtexture TxBars;                                         /* status bars */
   GLtexture TxBlip;                                         /* you are here texture */
@@ -152,9 +151,10 @@ typedef struct CGui_t
   struct ClockState_t * clk;
   float                 dUpdate;
 
+  MessageQueue msgQueue;
 } CGui;
 
-CGui * Get_CGui();
+CGui * gui_getState();
 bool_t CGui_shutDown();
 
 //--------------------------------------------------------------------------------------------
@@ -162,8 +162,8 @@ bool_t CGui_shutDown();
 struct mod_data_t;
 struct Chr_t;
 
-bool_t glinit(  GraphicState * g, struct ConfigData_t * cd  );
-bool_t gfx_initialize(GraphicState * g, struct ConfigData_t * cd);
+bool_t glinit(  CGraphics * g, struct ConfigData_t * cd  );
+bool_t gfx_initialize(CGraphics * g, struct ConfigData_t * cd);
 
 int draw_string( BMFont * pfnt, float x, float y, GLfloat tint[], char * szFormat, ... );
 bool_t draw_texture_box( GLtexture * ptx, FRect * tx_rect, FRect * sc_rect );
@@ -176,8 +176,8 @@ void End2DMode( void );
 
 INLINE const bool_t bbox_gl_draw(AA_BBOX * pbbox);
 
-bool_t gfx_set_mode(GraphicState * g);
-bool_t gfx_find_anisotropy( GraphicState * g );
+bool_t gfx_set_mode(CGraphics * g);
+bool_t gfx_find_anisotropy( CGraphics * g );
 
 bool_t make_renderlist(RENDERLIST * prlst);
 

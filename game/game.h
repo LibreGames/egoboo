@@ -20,7 +20,7 @@ struct ConfigData_t;
 struct Status_t;
 struct Chr_t;
 struct SoundState_t;
-struct GraphicState_t;
+struct CGraphics_t;
 struct script_global_values_t;
 struct GSStack_t;
 
@@ -107,6 +107,8 @@ typedef struct CGame_t
   int    PlaList_count;                                 // Number of players
   Player PlaList[MAXPLAYER];
 
+  // messages
+  MessageData MsgList;
 
   // script values
   ScriptInfo ScriptList;
@@ -218,11 +220,11 @@ SearchInfo * SearchInfo_new(SearchInfo * psearch);
 
 //--------------------------------------------------------------------------------------------
 
-void make_newloadname( char *modname, char *appendname, char *newloadname );
-void export_one_character( CGame * gs, CHR_REF character, Uint16 owner, int number );
-void export_all_local_players( CGame * gs );
-int get_free_message(void);
-void display_message( CGame * gs, int message, CHR_REF character );
+void   make_newloadname( char *modname, char *appendname, char *newloadname );
+void   export_one_character( CGame * gs, CHR_REF character, Uint16 owner, int number );
+void   export_all_local_players( CGame * gs );
+int    MessageQueue_get_free(MessageQueue * mq);
+bool_t display_message( CGame * gs, int message, CHR_REF chr_ref );
 
 void load_action_names( char* loadname );
 void read_setup( char* filename );
@@ -299,3 +301,7 @@ bool_t chr_is_player( CGame * gs, CHR_REF character);
 
 
 bool_t count_players(CGame * gs);
+void clear_message_queue(MessageQueue * q);
+void clear_messages( MessageData * md);
+
+void load_global_icons(CGame * gs);

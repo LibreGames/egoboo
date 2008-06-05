@@ -93,7 +93,7 @@ void     sv_frameStep(CServer * ss);
 void CServer_reset_latches(CServer * ss);
 void sv_talkToRemotes(CServer * ss);
 void CServer_bufferLatches(CServer * ss);
-void sv_unbufferLatches(CServer * ss);
+void CServer_unbufferLatches(CServer * ss);
 void CServer_resetTimeLatches(CServer * ss, Sint32 ichr);
 
 bool_t sv_sendPacketToAllClients(CServer * ss, SYS_PACKET * egop);

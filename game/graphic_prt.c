@@ -660,13 +660,13 @@ void render_particles()
     render_antialias_prt( numparticle, v );
 
     // DO SOLID SPRITES FIRST
-    //render_solid_prt( numparticle, v );
+    render_solid_prt( numparticle, v );
 
     // LIGHTS DONE LAST
     render_light_prt( numparticle, v );
 
     // DO TRANSPARENT SPRITES NEXT
-    //render_transparent_prt( numparticle, v );
+    render_transparent_prt( numparticle, v );
   }
   glPopAttrib();
 

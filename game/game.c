@@ -91,8 +91,7 @@ static void     game_handleKeyboard();
 
 char cActionName[MAXACTION][2];
 
-MESSAGE     GMsg = {0,0};
-NET_MESSAGE GNetMsg = {20,0,0,{'\0'}};
+KeyboardBuffer GNetMsg = {20,0,0,{'\0'}};
 CGui   _gui_state = { bfalse };
 
 PROFILE_DECLARE( resize_characters );
@@ -101,7 +100,7 @@ PROFILE_DECLARE( let_ai_think );
 PROFILE_DECLARE( do_weather_spawn );
 PROFILE_DECLARE( enc_spawn_particles );
 PROFILE_DECLARE( CClient_unbufferLatches );
-PROFILE_DECLARE( sv_unbufferLatches );
+PROFILE_DECLARE( CServer_unbufferLatches );
 PROFILE_DECLARE( check_respawn );
 PROFILE_DECLARE( move_characters );
 PROFILE_DECLARE( move_particles );
@@ -155,7 +154,7 @@ GSStack * Get_GSStack()
 static void update_looped_sounds( CGame * gs );
 static bool_t load_all_music_sounds(ConfigData * cd);
 
-static void sdlinit( GraphicState * g );
+static void sdlinit( CGraphics * g );
 
 static void update_game(CGame * gs, float dFrame, Uint32 * rand_idx);
 static void memory_cleanUp(void);
@@ -368,8 +367,8 @@ void export_one_character( CGame * gs, CHR_REF character, Uint16 owner, int numb
 
 
     // Copy all of the misc. data files
-    snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "%s", fromdir, CData.message_file );   /*MESSAGE.TXT*/
-    snprintf( tofile, sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.message_file );   /*MESSAGE.TXT*/
+    snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "%s", fromdir, CData.message_file );   /*MessageData.TXT*/
+    snprintf( tofile, sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.message_file );   /*MessageData.TXT*/
     fs_copyFile( fromfile, tofile );
 
     snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "tris.md2", fromdir );    /*TRIS.MD2*/
@@ -503,18 +502,30 @@ void quit_game( CGame * gs )
 
 
 //--------------------------------------------------------------------------------------------
-int get_free_message(void)
+int MessageQueue_get_free(MessageQueue * mq)
 {
-  // This function finds the best message to use
-  // Pick the first one
-  int tnc = GMsg.start;
-  GMsg.start++;
-  GMsg.start = GMsg.start % CData.maxmessage;
+  // BB > This function finds the first free message
+
+  int cnt, tnc;
+  bool_t found = bfalse;
+
+  tnc = CData.maxmessage;
+  for(cnt=0; cnt<CData.maxmessage && !found; cnt++)
+  {
+    if(mq->list[tnc].time <= 0)
+    {
+      tnc = mq->start;
+      found = btrue;
+    }
+
+    mq->start = (mq->start + 1) % CData.maxmessage;
+  }
+
   return tnc;
 }
 
 //--------------------------------------------------------------------------------------------
-void display_message( CGame * gs, int message, CHR_REF chr_ref )
+bool_t display_message( CGame * gs, int message, CHR_REF chr_ref )
 {
   // ZZ> This function sticks a message in the display queue and sets its timer
 
@@ -538,17 +549,24 @@ void display_message( CGame * gs, int message, CHR_REF chr_ref )
   Chr * powner   = MAXCHR == owner  ? NULL : gs->ChrList + owner;
   Cap * pown_cap = NULL   == powner ? NULL : gs->CapList + powner->model;
 
+  MessageData  * msglst = &(gs->MsgList);
+  CGui         * gui    = gui_getState();
+  MessageQueue * mq     = &(gui->msgQueue);
+  MESSAGE_ELEMENT * msg;
 
-  if ( message >= GMsg.total ) return;
+  if ( message >= msglst->total ) return bfalse;
 
-  slot = get_free_message();
-  GMsg.list[slot].time = DELAY_MESSAGE;
+  slot = MessageQueue_get_free( mq );
+  if(CData.maxmessage == slot) return bfalse;
+
+  msg = mq->list + slot;
+  msg->time = DELAY_MESSAGE;
 
   // Copy the message
-  read = GMsg.index[message];
+  read = msglst->index[message];
   cnt = 0;
   write = 0;
-  cTmp = GMsg.text[read];  read++;
+  cTmp = msglst->text[read];  read++;
   while ( cTmp != 0 )
   {
     if ( cTmp == '%' )
@@ -556,7 +574,7 @@ void display_message( CGame * gs, int message, CHR_REF chr_ref )
       // Escape sequence
       eread = szTmp;
       szTmp[0] = 0;
-      cTmp = GMsg.text[read];  read++;
+      cTmp = msglst->text[read];  read++;
       if ( cTmp == 'n' ) // Name
       {
         if ( pchr->nameknown )
@@ -706,7 +724,7 @@ void display_message( CGame * gs, int message, CHR_REF chr_ref )
       cTmp = *eread;  eread++;
       while ( cTmp != 0 && write < MESSAGESIZE - 1 )
       {
-        GMsg.list[slot].textdisplay[write] = cTmp;
+        msg->textdisplay[write] = cTmp;
         cTmp = *eread;  eread++;
         write++;
       }
@@ -716,15 +734,16 @@ void display_message( CGame * gs, int message, CHR_REF chr_ref )
       // Copy the letter
       if ( write < MESSAGESIZE - 1 )
       {
-        GMsg.list[slot].textdisplay[write] = cTmp;
+        msg->textdisplay[write] = cTmp;
         write++;
       }
     }
-    cTmp = GMsg.text[read];  read++;
+    cTmp = msglst->text[read];  read++;
     cnt++;
   }
-  GMsg.list[slot].textdisplay[write] = 0;
+  msg->textdisplay[write] = 0;
 
+  return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1277,7 +1296,7 @@ void draw_chr_info( CGame * gs )
   Status * lst      = gs->cl->StatList;
   size_t   lst_size = gs->cl->StatList_count;
 
-  if ( !Get_CGui()->net_messagemode )
+  if ( !keyb.mode )
   {
     for(cnt=0; cnt<8; cnt++)
     {
@@ -1306,6 +1325,7 @@ void draw_chr_info( CGame * gs )
   }
 }
 
+//--------------------------------------------------------------------------------------------
 bool_t do_screenshot()
 {
   // dumps the current screen (GL context) to a new bitmap file
@@ -1979,168 +1999,6 @@ void do_integration(CGame * gs, float dFrame)
 
 };
 
-////--------------------------------------------------------------------------------------------
-//void update_game( float dUpdate )
-//{
-//  // ZZ> This function does several iterations of character movements and such
-//  //     to keep the game in sync.
-//
-//  int    cnt, numdead;
-//
-//  // Check for all local players being dead
-//  gs->allpladead  = bfalse;
-//  gs->somepladead = bfalse;
-//  gs->cl->seeinvisible = bfalse;
-//  gs->cl->seekurse = bfalse;
-//  numdead = 0;
-//  for ( cnt = 0; cnt < MAXPLAYER; cnt++ )
-//  {
-//    CHR_REF ichr;
-//    if ( !VALID_PLA( gs->PlaList,  cnt ) || INBITS_NONE == gs->PlaList[cnt].device ) continue;
-//
-//    ichr = PlaList_get_character( gs->PlaList, gs->PlaList_count, cnt );
-//    if ( !VALID_CHR( gs->ChrList, ichr ) ) continue;
-//
-//    if ( !gs->ChrList[ichr].alive && gs->ChrList[ichr].islocalplayer )
-//    {
-//      numdead++;
-//    };
-//
-//    if ( gs->ChrList[ichr].canseeinvisible )
-//    {
-//      gs->cl->seeinvisible = btrue;
-//    }
-//
-//    if ( gs->ChrList[ichr].canseekurse )
-//    {
-//      gs->cl->seekurse = btrue;
-//    }
-//
-//  };
-//
-//  gs->somepladead = ( numdead > 0 );
-//  gs->allpladead  = ( numdead >= gs->cl->loc_pla_count );
-//
-//  // This is the main game loop
-//  gs->cl->msg_timechange = 0;
-//
-//  // [claforte Jan 6th 2001]
-//  // TODO: Put that back in place once GNet.working is functional.
-//  // Important stuff to keep in sync
-//  while (( gs->wld_clock < gs->all_clock ) && ( ACClient.tlb.numtimes > 0 ) )
-//  {
-//    srand( gs->sv->rand_idx );
-//
-//    PROFILE_BEGIN( resize_characters );
-//    resize_characters( dUpdate );
-//    PROFILE_END( resize_characters );
-//
-//    PROFILE_BEGIN( keep_weapons_with_holders );
-//    keep_weapons_with_holders();
-//    PROFILE_END( keep_weapons_with_holders );
-//
-//    PROFILE_BEGIN( let_ai_think );
-//    let_ai_think( dUpdate );
-//    PROFILE_END( let_ai_think );
-//
-//    PROFILE_BEGIN( do_weather_spawn );
-//    do_weather_spawn( dUpdate );
-//    PROFILE_END( do_weather_spawn );
-//
-//    PROFILE_BEGIN( enc_spawn_particles );
-//    enc_spawn_particles( dUpdate );
-//    PROFILE_END( enc_spawn_particles );
-//
-//    // unbuffer the updated latches after let_ai_think() and before move_characters()
-//    PROFILE_BEGIN( CClient_unbufferLatches );
-//    CClient_unbufferLatches( gs->cl );
-//    PROFILE_END( CClient_unbufferLatches );
-//
-//    PROFILE_BEGIN( sv_unbufferLatches );
-//    sv_unbufferLatches( gs->sv );
-//    PROFILE_END( sv_unbufferLatches );
-//
-//
-//    PROFILE_BEGIN( check_respawn );
-//    check_respawn();
-//    despawn_characters();
-//    despawn_particles();
-//    PROFILE_END( check_respawn );
-//
-//    PROFILE_BEGIN( make_onwhichfan );
-//    make_onwhichfan();
-//    PROFILE_END( make_onwhichfan );
-//
-//    begin_integration();
-//    {
-//      PROFILE_BEGIN( move_characters );
-//      move_characters( dUpdate );
-//      PROFILE_END( move_characters );
-//
-//      PROFILE_BEGIN( move_particles );
-//      move_particles( dUpdate );
-//      PROFILE_END( move_particles );
-//
-//      PROFILE_BEGIN( attach_particles );
-//      attach_particles();
-//      PROFILE_END( attach_particles );
-//
-//      PROFILE_BEGIN( do_bumping );
-//      do_bumping( dUpdate );
-//      PROFILE_END( do_bumping );
-//
-//    }
-//    do_integration(dUpdate);
-//
-//    PROFILE_BEGIN( make_character_matrices );
-//    make_character_matrices();
-//    PROFILE_END( make_character_matrices );
-//
-//    PROFILE_BEGIN( stat_return );
-//    stat_return( dUpdate );
-//    PROFILE_END( stat_return );
-//
-//    PROFILE_BEGIN( pit_kill );
-//    pit_kill( dUpdate );
-//    PROFILE_END( pit_kill );
-//
-//    // Generate the new seed
-//    gs->sv->rand_idx += * (( Uint32* ) & kMd2Normals[gs->wld_frame&127][0] );
-//    gs->sv->rand_idx += * (( Uint32* ) & kMd2Normals[gs->sv->rand_idx&127][1] );
-//
-//    // Stuff for which sync doesn't matter
-//    PROFILE_BEGIN( animate_tiles );
-//    animate_tiles( dUpdate );
-//    PROFILE_END( animate_tiles );
-//
-//    PROFILE_BEGIN( move_water );
-//    move_water( dUpdate );
-//    PROFILE_END( move_water );
-//
-//    // Timers
-//    gs->wld_clock += UPDATESKIP;
-//    gs->wld_frame++;
-//    gs->cl->msg_timechange++;
-//    if ( Stat_delay > 0 )  Stat_delay--;
-//    cs->stat_clock++;
-//  }
-//
-//  {
-//    if ( gs->cl->tlb.numtimes == 0 )
-//    {
-//      // The remote ran out of messages, and is now twiddling its thumbs...
-//      // Make it go slower so it doesn't happen again
-//      gs->wld_clock += UPDATESKIP / 4.0f;
-//    }
-//    else if ( !cl_Started() && gs->cl->tlb.numtimes > 3 )
-//    {
-//      // The host has too many messages, and is probably experiencing control
-//      // CData.lag...  Speed it up so it gets closer to sync
-//      gs->wld_clock -= UPDATESKIP / 4.0f;
-//    }
-//  }
-//}
-//
 //--------------------------------------------------------------------------------------------
 void update_timers(CGame * gs)
 {
@@ -2220,7 +2078,6 @@ void reset_teams(CGame * gs)
     teama++;
   }
 
-
   // Keep the null team neutral
   teama = 0;
   while ( teama < TEAM_COUNT )
@@ -2235,26 +2092,10 @@ void reset_teams(CGame * gs)
 void reset_messages(CGame * gs)
 {
   // ZZ> This makes messages safe to use
-
-  int cnt;
-
-  GMsg.total = 0;
-  GMsg.totalindex = 0;
-  gs->cl->msg_timechange = 0;
-  GMsg.start = 0;
-  cnt = 0;
-  while ( cnt < MAXMESSAGE )
-  {
-    GMsg.list[cnt].time = 0;
-    cnt++;
-  }
-  cnt = 0;
-  while ( cnt < MAXTOTALMESSAGE )
-  {
-    GMsg.index[cnt] = 0;
-    cnt++;
-  }
-  GMsg.text[0] = 0;
+  CGui * gui = gui_getState();
+  
+  clear_messages( &(gs->MsgList) );
+  clear_message_queue( &(gui->msgQueue) );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2751,7 +2592,7 @@ retval_t main_doGraphics()
   double frameDuration, frameTicks;
   bool_t do_menu_frame = bfalse;
 
-  gui = Get_CGui();
+  gui = gui_getState();
   if (NULL == gui) return rv_error;
   mnu_proc = &(gui->mnu_proc);
 
@@ -2957,7 +2798,7 @@ int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
         CGui     * gui;
         MenuProc     * mnu_proc;
 
-        gui        = Get_CGui();               // automatically starts the CGui
+        gui        = gui_getState();               // automatically starts the CGui
         mnu_proc   = &(gui->mnu_proc);
 
         PROFILE_INIT( resize_characters );
@@ -2966,7 +2807,7 @@ int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
         PROFILE_INIT( do_weather_spawn );
         PROFILE_INIT( enc_spawn_particles );
         PROFILE_INIT( CClient_unbufferLatches );
-        PROFILE_INIT( sv_unbufferLatches );
+        PROFILE_INIT( CServer_unbufferLatches );
         PROFILE_INIT( check_respawn );
         PROFILE_INIT( move_characters );
         PROFILE_INIT( move_particles );
@@ -3001,7 +2842,7 @@ int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
 
         PROFILE_BEGIN( main_loop );
 
-        gui        = Get_CGui();               // automatically starts the CGui
+        gui        = gui_getState();               // automatically starts the CGui
         mnu_proc   = &(gui->mnu_proc);
 
         game_handleKeyboard();
@@ -3065,7 +2906,7 @@ int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
         MenuProc     * mnu_proc;
         bool_t all_games_finished;
 
-        gui        = Get_CGui();               // automatically starts the CGui
+        gui        = gui_getState();               // automatically starts the CGui
         mnu_proc   = &(gui->mnu_proc);
 
         ClockState_frameStep( mach_state->clk );
@@ -3124,7 +2965,7 @@ int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
         log_info( "\tdo_weather_spawn - %lf\n", 1e6*PROFILE_QUERY( do_weather_spawn ) );
         log_info( "\tdo_enchant_spawn - %lf\n", 1e6*PROFILE_QUERY( enc_spawn_particles ) );
         log_info( "\tcl_unbufferLatches - %lf\n", 1e6*PROFILE_QUERY( CClient_unbufferLatches ) );
-        log_info( "\tsv_unbufferLatches - %lf\n", 1e6*PROFILE_QUERY( sv_unbufferLatches ) );
+        log_info( "\tsv_unbufferLatches - %lf\n", 1e6*PROFILE_QUERY( CServer_unbufferLatches ) );
         log_info( "\tcheck_respawn - %lf\n", 1e6*PROFILE_QUERY( check_respawn ) );
         log_info( "\tmove_characters - %lf\n", 1e6*PROFILE_QUERY( move_characters ) );
         log_info( "\tmove_particles - %lf\n", 1e6*PROFILE_QUERY( move_particles ) );
@@ -3144,7 +2985,7 @@ int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
         PROFILE_FREE( do_weather_spawn );
         PROFILE_FREE( enc_spawn_particles );
         PROFILE_FREE( CClient_unbufferLatches );
-        PROFILE_FREE( sv_unbufferLatches );
+        PROFILE_FREE( CServer_unbufferLatches );
         PROFILE_FREE( check_respawn );
         PROFILE_FREE( move_characters );
         PROFILE_FREE( move_particles );
@@ -3184,7 +3025,7 @@ int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
 void game_handleKeyboard()
 {
   CGame * gs = gfxState.gs;
-  CGui  * gui = Get_CGui();
+  CGui  * gui = gui_getState();
 
   if(NULL == gs) return;
 
@@ -3210,10 +3051,10 @@ void game_handleIO(CGame * gs)
   set_local_latches( gs );                   // client function
 
   // NETWORK PORT
-  if(net_Started())
+  //if(net_Started())
   {
     // buffer the existing latches
-    input_net_message(gs);        // client function
+    do_chat_input();        // client function
   }
 
   // this needs to be done even if the network is not on
@@ -3236,13 +3077,15 @@ void cl_update_game(CGame * gs, float dUpdate, Uint32 * rand_idx)
   //     to keep the game in sync.
   int cnt;
 
+  CGui * gui = gui_getState();
+
   // exactly one iteration
   RANDIE(gs);
 
   count_players(gs);
 
   // This is the main game loop
-  gs->cl->msg_timechange = 0;
+  gui->msgQueue.timechange = 0;
 
   // [claforte Jan 6th 2001]
   // TODO: Put that back in place once networking is functional.
@@ -3330,7 +3173,7 @@ void cl_update_game(CGame * gs, float dUpdate, Uint32 * rand_idx)
     gs->wld_clock += FRAMESKIP;
     gs->wld_frame++;
 
-    gs->cl->msg_timechange++;
+    gui->msgQueue.timechange += dUpdate;
 
     for(cnt=0; cnt<MAXSTAT; cnt++)
     {
@@ -3397,9 +3240,9 @@ void sv_update_game(CGame * gs, float dUpdate, Uint32 * rand_idx)
     PROFILE_END( enc_spawn_particles );
 
     // unbuffer the updated latches after let_ai_think() and before move_characters()
-    PROFILE_BEGIN( sv_unbufferLatches );
-    sv_unbufferLatches( gs->sv );              // server function
-    PROFILE_END( sv_unbufferLatches );
+    PROFILE_BEGIN( CServer_unbufferLatches );
+    CServer_unbufferLatches( gs->sv );              // server function
+    PROFILE_END( CServer_unbufferLatches );
 
     PROFILE_BEGIN( make_onwhichfan );
     make_onwhichfan( gs );                      // client/server function
@@ -3456,6 +3299,7 @@ void update_game(CGame * gs, float dUpdate, Uint32 * rand_idx)
   //     to keep the game in sync.
 
   int cnt;
+  CGui    * gui = gui_getState();
   CClient * cs = gs->cl;
   CServer * ss = gs->sv;
 
@@ -3464,7 +3308,7 @@ void update_game(CGame * gs, float dUpdate, Uint32 * rand_idx)
   count_players(gs);
 
   // This is the main game loop
-  cs->msg_timechange = 0;
+  gui->msgQueue.timechange = 0;
 
   // [claforte Jan 6th 2001]
   // TODO: Put that back in place once networking is functional.
@@ -3500,9 +3344,9 @@ void update_game(CGame * gs, float dUpdate, Uint32 * rand_idx)
     CClient_unbufferLatches( cs );              // client function
     PROFILE_END( CClient_unbufferLatches );
 
-    PROFILE_BEGIN( sv_unbufferLatches );
-    sv_unbufferLatches( ss );              // server function
-    PROFILE_END( sv_unbufferLatches );
+    PROFILE_BEGIN( CServer_unbufferLatches );
+    CServer_unbufferLatches( ss );              // server function
+    PROFILE_END( CServer_unbufferLatches );
 
     PROFILE_BEGIN( check_respawn );
     check_respawn( gs );                         // client function
@@ -3568,7 +3412,7 @@ void update_game(CGame * gs, float dUpdate, Uint32 * rand_idx)
     gs->wld_clock += FRAMESKIP;
     gs->wld_frame++;
 
-    cs->msg_timechange++;
+    gui->msgQueue.timechange += dUpdate;
 
     for(cnt=0; cnt<MAXSTAT; cnt++)
     {
@@ -3693,7 +3537,7 @@ int proc_gameLoop( ProcState * gproc, CGame * gs )
 {
   // if we are being told to exit, jump to PROC_Leaving
   double frameDuration, frameTicks;  
-  CGui * gui = Get_CGui();
+  CGui * gui = gui_getState();
 
   if(NULL == gproc || gproc->Terminated)
   {
@@ -3764,8 +3608,8 @@ int proc_gameLoop( ProcState * gproc, CGame * gs )
         if ( net_Started() )
         {
           log_info( "SDL_main: Loading module %s...\n", gs->mod.loadname );
-          gui->net_messagemode = bfalse;
-          GNetMsg.delay = 20;
+          keyb.mode = bfalse;
+          keyb.delay = 20;
           net_sayHello( gs );
         }
       }
@@ -3982,13 +3826,14 @@ void load_all_messages( CGame * gs, char *szObjectpath, char *szObjectname, Uint
   // ZZ> This function loads all of an objects messages
 
   FILE *fileread;
+  MessageData * msglst = &(gs->MsgList);
 
   gs->MadList[object].msg_start = 0;
   fileread = fs_fileOpen( PRI_NONE, NULL, inherit_fname(szObjectpath, szObjectname, CData.message_file), "r" );
   if ( NULL != fileread )
   {
-    gs->MadList[object].msg_start = GMsg.total;
-    while ( fget_next_message( fileread ) ) {};
+    gs->MadList[object].msg_start = msglst->total;
+    while ( fget_next_message( fileread, &(gs->MsgList) ) ) {};
 
     fs_fileClose( fileread );
   }
@@ -4542,7 +4387,7 @@ bool_t load_all_music_sounds(ConfigData * cd)
 }
 
 //--------------------------------------------------------------------------------------------
-void sdlinit( GraphicState * g )
+void sdlinit( CGraphics * g )
 {
   int cnt;
   SDL_Surface *theSurface;
@@ -4856,10 +4701,7 @@ void setup_characters( CGame * gs, char *modname )
   }
   fs_fileClose( fileread );
 
-
-
-  clear_messages();
-
+  reset_messages( gs );
 
   // Make sure local players are displayed first
   sort_statlist( gs );
@@ -6034,7 +5876,7 @@ static CGui * CGui_new( CGui * g );
 static bool_t     CGui_delete( CGui * g );
 
 //--------------------------------------------------------------------------------------------
-CGui * Get_CGui()
+CGui * gui_getState()
 {
   if(!_gui_state.initialized)
   {
@@ -6047,7 +5889,7 @@ CGui * Get_CGui()
 //--------------------------------------------------------------------------------------------
 bool_t CGui_startUp()
 {
-  Get_CGui();
+  gui_getState();
 
   return _gui_state.initialized;
 }
@@ -6071,9 +5913,6 @@ CGui * CGui_new( CGui * gui )
 
   //Pause button avalible?
   gui->can_pause = btrue;  
-
-  // not in message mode
-  gui->net_messagemode = bfalse;
 
   // initialize the textures
   gui->TxBars.textureID = INVALID_TEXTURE;
@@ -6169,4 +6008,49 @@ bool_t count_players(CGame * gs)
   gs->allpladead  = ( numdead >= cs->loc_pla_count + ss->rem_pla_count );
 
   return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+void clear_message_queue(MessageQueue * q)
+{
+  // ZZ> This function empties the message queue
+
+  int cnt;
+
+  q->count = 0;
+  for (cnt = 0; cnt < MAXMESSAGE; cnt++)
+  {
+    q->list[cnt].time = 0;
+  }
+
+  q->timechange = 0;
+  q->start = 0;
+}
+
+//--------------------------------------------------------------------------------------------
+void clear_messages( MessageData * md)
+{
+  int cnt;
+
+  md->total = 0;
+  md->totalindex = 0;
+
+  for ( cnt = 0; cnt < MAXTOTALMESSAGE; cnt++ )
+  {
+    md->index[cnt] = 0;
+  }
+
+  md->text[0] = '\0';
+}
+
+//--------------------------------------------------------------------------------------------
+void load_global_icons(CGame * gs)
+{
+  release_all_icons(gs);
+
+  gs->nullicon = load_one_icon( CData.basicdat_dir, NULL, CData.nullicon_bitmap );
+  gs->keybicon = load_one_icon( CData.basicdat_dir, NULL, CData.keybicon_bitmap );
+  gs->mousicon = load_one_icon( CData.basicdat_dir, NULL, CData.mousicon_bitmap );
+  gs->joyaicon = load_one_icon( CData.basicdat_dir, NULL, CData.joyaicon_bitmap );
+  gs->joybicon = load_one_icon( CData.basicdat_dir, NULL, CData.joybicon_bitmap );
 }

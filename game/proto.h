@@ -49,6 +49,7 @@ struct Status_t;
 struct Player_t;
 struct mod_data_t;
 struct CGame_t;
+struct KeyboardBuffer_t;
 
 void insert_space( size_t position );
 void copy_one_line( size_t write );
@@ -92,10 +93,10 @@ void dolist_sort( void );
 void dolist_make( void );
 
 
-void keep_weapons_with_holders( struct CGame_t * gs );
-void make_prtlist();
-void debug_message( int time, const char *format, ... );
-void reset_end_text( struct CGame_t * gs );
+void   keep_weapons_with_holders( struct CGame_t * gs );
+void   make_prtlist();
+bool_t debug_message( int time, const char *format, ... );
+void   reset_end_text( struct CGame_t * gs );
 
 Uint16 terp_dir( Uint16 majordir, float dx, float dy, float dUpdate );
 Uint16 terp_dir_fast( Uint16 majordir, float dx, float dy, float dUpdate );
@@ -108,7 +109,6 @@ void prime_names( struct CGame_t * gs );
 
 
 void make_textureoffset( void );
-void clear_messages();
 
 
 

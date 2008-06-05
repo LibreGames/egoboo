@@ -6,6 +6,8 @@
 #include "graphic.h"
 #include "game.h"
 
+extern KeyboardBuffer _keybuff;
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
@@ -22,7 +24,7 @@ INLINE bool_t key_is_pressed( int keycode )
 {
   // ZZ> This function returns btrue if the given control is pressed...
 
-  if ( Get_CGui()->net_messagemode )  return bfalse;
+  if ( keyb.mode )  return bfalse;
 
   if ( keyb.state )
     return SDLKEYDOWN( keycode );

@@ -78,7 +78,6 @@ typedef struct CClient_t
   // local states
   Status StatList[MAXSTAT];
   size_t StatList_count;
-  Uint16 msg_timechange;
   Uint8  stat_clock;                        // For stat regeneration
 
   Uint32 loc_pla_count;

@@ -31,8 +31,14 @@
 #include "egoboo_utility.h"
 #include "egoboo.h"
 
+// The SDL virtual key values are the ASCII values of a 102-key qwerty keyboard
+// SDL does not automatically translate the shift key.
+char _shiftvals[SDLK_LAST];
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+
+KeyboardBuffer _keybuff;
 
 MOUSE mous =
 {
@@ -66,9 +72,16 @@ JOYSTICK joy[2] =
 KEYBOARD keyb =
 {
   btrue,            //  on
+  bfalse,           // mode
+  20,               // delay
+
   NULL,             //  state
   {0.0f, 0.0f, 0}   // latch
 };
+
+//--------------------------------------------------------------------------------------------
+KeyboardBuffer * KeyboardBuffer_getState() { return &_keybuff; };
+void             input_init_keybuffer();
 
 //--------------------------------------------------------------------------------------------
 
@@ -113,6 +126,12 @@ void input_setup()
     joy[1].on = (NULL != joy[1].sdl_device);
   }
 
+  input_init_keybuffer();
+  memset( &_keybuff, 0, sizeof(KeyboardBuffer));
+
+  // I would love a way to enable and disable this, but there is no
+  // SDL_DisableKeyRepeat() function
+  SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL); 
 }
 
 //--------------------------------------------------------------------------------------------
@@ -353,7 +372,86 @@ void read_controls( char *szFilename )
   else log_warning( "Could not load input settings (%s)\n", szFilename );
 }
 
+//--------------------------------------------------------------------------------------------
+bool_t input_handleSDLEvent(SDL_Event * evt)
+{
+  bool_t handled = bfalse;
 
+  switch ( evt->type )
+  {
+    case SDL_KEYDOWN:
+
+      // kandle the keyboard input here, where it is a lot easier!
+      if(evt->key.keysym.sym == SDLK_RETURN || evt->key.keysym.sym == SDLK_KP_ENTER)
+      {
+        // flip the mode
+        keyb.mode = !keyb.mode;
+
+        // we are done if the keybuffer is not empty and the mode
+        // just changed to "off"
+        _keybuff.done = ((_keybuff.write-_keybuff.writemin)>0) && !keyb.mode;
+
+        if(keyb.mode)
+        {
+          int len;
+
+          // reset the buffer
+          _keybuff.write    = 0;
+          _keybuff.writemin = 0;
+
+          // Copy the name
+          strncpy(_keybuff.buffer, CData.net_messagename, sizeof(STRING));
+          strcat(_keybuff.buffer, "> ");
+          len = strlen(_keybuff.buffer);
+
+          _keybuff.write    = len;
+          _keybuff.writemin = len;
+        }
+      }
+      else if(keyb.mode && _keybuff.write < sizeof(STRING)-4)
+      {
+        if(evt->key.keysym.sym == SDLK_BACKSPACE)
+        {
+          int minpos = MAX(0, _keybuff.writemin);
+
+          _keybuff.write--; if(_keybuff.write <= minpos) _keybuff.write = minpos;
+        }
+        else
+        {
+          Uint32 mod = evt->key.keysym.mod;
+          int    sym = evt->key.keysym.sym;
+          bool_t altkeys = HAS_SOME_BITS(mod, KMOD_CTRL|KMOD_ALT);
+          bool_t shifted = HAS_SOME_BITS(mod, KMOD_SHIFT) && !altkeys;
+          bool_t caps    = HAS_SOME_BITS(mod, KMOD_CAPS) && !altkeys;
+
+          // do not accept control or alt modified keystrokes
+          if(!altkeys && sym<256 && isprint(sym))
+          {
+            if(shifted)
+            {
+              _keybuff.buffer[_keybuff.write++] = _shiftvals[sym];
+            }
+            else if(caps)
+            {
+              _keybuff.buffer[_keybuff.write++] = toupper(sym);
+            }
+            else if(!altkeys)
+            {
+              _keybuff.buffer[_keybuff.write++] = sym;
+            }
+          }
+        };
+
+        _keybuff.buffer[_keybuff.write] = '\0';
+      }
+      handled = btrue;
+      break;
+
+  }
+
+
+  return handled;
+}
 
 //--------------------------------------------------------------------------------------------
 void input_read()
@@ -367,7 +465,10 @@ void input_read()
   // it for the Gui code
   while ( SDL_PollEvent( &evt ) )
   {
-    ui_handleSDLEvent( &evt );
+    bool_t handled = bfalse;
+
+    if(!handled) handled = ui_handleSDLEvent( &evt );
+    if(!handled) handled = input_handleSDLEvent( &evt );
   }
 
   // Get immediate mode state for the rest of the game
@@ -426,3 +527,38 @@ Player * Player_renew(Player *ppla)
   return Player_new(ppla);
 };
 
+//--------------------------------------------------------------------------------------------
+void input_init_keybuffer()
+{
+  int i;
+
+  // do the default ASCII upper case
+  for(i=0; i<SDLK_LAST; i++)
+  {
+    _shiftvals[i] = toupper(i);
+  }
+
+  // do some special cases
+  _shiftvals[SDLK_1]            = '!';
+  _shiftvals[SDLK_2]            = '@';
+  _shiftvals[SDLK_3]            = '#';
+  _shiftvals[SDLK_4]            = '$';
+  _shiftvals[SDLK_5]            = '%';
+  _shiftvals[SDLK_6]            = '^';
+  _shiftvals[SDLK_7]            = '&';
+  _shiftvals[SDLK_8]            = '*';
+  _shiftvals[SDLK_9]            = '(';
+  _shiftvals[SDLK_0]            = ')';
+  _shiftvals[SDLK_QUOTE]        = '\"';
+  _shiftvals[SDLK_SPACE]        = ' ';
+  _shiftvals[SDLK_SEMICOLON]    = ':';
+  _shiftvals[SDLK_PERIOD]       = '>';
+  _shiftvals[SDLK_COMMA]        = '<';
+  _shiftvals[SDLK_BACKQUOTE]    = '`';
+  _shiftvals[SDLK_MINUS]        = '_';
+  _shiftvals[SDLK_EQUALS]       = '+';
+  _shiftvals[SDLK_LEFTBRACKET]  = '{';
+  _shiftvals[SDLK_RIGHTBRACKET] = '}';
+  _shiftvals[SDLK_BACKSLASH]    = '|';
+  _shiftvals[SDLK_SLASH]        = '?';
+}

@@ -57,7 +57,7 @@
 struct CGame_t;
 
 RENDERLIST           renderlist;
-GraphicState         gfxState;
+CGraphics         gfxState;
 GLOBAL_LIGHTING_INFO GLight = {bfalse};
 static bool_t        gfx_initialized = bfalse;
 
@@ -71,7 +71,7 @@ static void draw_text( BMFont *  pfnt  );
 void render_particles();
 
 //--------------------------------------------------------------------------------------------
-bool_t gfx_find_anisotropy( GraphicState * g )
+bool_t gfx_find_anisotropy( CGraphics * g )
 {
   // BB> get the maximum anisotropy supported by the video vard
   //     OpenGL and SDL must be loaded for this to work.
@@ -95,14 +95,14 @@ bool_t gfx_find_anisotropy( GraphicState * g )
   return btrue;
 }
 
-bool_t gfx_initialize(GraphicState * g, ConfigData * cd)
+bool_t gfx_initialize(CGraphics * g, ConfigData * cd)
 {
   if(NULL == g || NULL == cd) return bfalse;
 
   if(gfx_initialized) return btrue;
 
   // set the graphics state
-  GraphicState_new(g, cd);
+  CGraphics_new(g, cd);
   g->rnd_lst = &renderlist;
   gfx_find_anisotropy(g);
   gfx_initialized = btrue;
@@ -370,29 +370,44 @@ void release_map( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-static void write_debug_message( int time, const char *format, va_list args )
+static bool_t write_debug_message( int time, const char *format, va_list args )
 {
   // ZZ> This function sticks a message in the display queue and sets its timer
 
   STRING buffer;
-  int slot = get_free_message();
+
+  CGui            * gui = gui_getState();
+  MessageQueue    * mq  = &(gui->msgQueue);
+  MESSAGE_ELEMENT * msg;
+
+  int slot = MessageQueue_get_free(mq);
+  if(CData.maxmessage == slot) return bfalse;
+
+  msg = mq->list + slot;
 
   // print the formatted messafe into the buffer
   vsnprintf( buffer, sizeof( buffer ) - 1, format, args );
 
   // Copy the message
-  strncpy( GMsg.list[slot].textdisplay, buffer, sizeof( GMsg.list[slot].textdisplay ) );
-  GMsg.list[slot].time = time * DELAY_MESSAGE;
+  strncpy( msg->textdisplay, buffer, sizeof( msg->textdisplay ) );
+  msg->time = time * DELAY_MESSAGE;
+
+  return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-void debug_message( int time, const char *format, ... )
+bool_t debug_message( int time, const char *format, ... )
 {
+  bool_t retval;
   va_list args;
 
+  if(NULL == format || '\0' == format[0]) return bfalse;
+
   va_start( args, format );
-  write_debug_message( time, format, args );
+  retval = write_debug_message( time, format, args );
   va_end( args );
+
+  return retval;
 };
 
 
@@ -446,12 +461,12 @@ void append_end_text( CGame * gs, int message, CHR_REF chr_ref )
   Chr * powner   = MAXCHR == owner  ? NULL : gs->ChrList + owner;
   Cap * pown_cap = NULL   == powner ? NULL : gs->CapList + powner->model;
 
-  if ( message < GMsg.total )
+  if ( message < gs->MsgList.total )
   {
     // Copy the message
-    read = GMsg.index[message];
+    read = gs->MsgList.index[message];
     cnt = 0;
-    cTmp = GMsg.text[read];  read++;
+    cTmp = gs->MsgList.text[read];  read++;
     while ( cTmp != 0 )
     {
       if ( cTmp == '%' )
@@ -459,7 +474,7 @@ void append_end_text( CGame * gs, int message, CHR_REF chr_ref )
         // Escape sequence
         eread = szTmp;
         szTmp[0] = 0;
-        cTmp = GMsg.text[read];  read++;
+        cTmp = gs->MsgList.text[read];  read++;
         if ( cTmp == 'n' ) // Name
         {
           if ( pchr->nameknown )
@@ -624,7 +639,7 @@ void append_end_text( CGame * gs, int message, CHR_REF chr_ref )
           endtextwrite++;
         }
       }
-      cTmp = GMsg.text[read];  read++;
+      cTmp = gs->MsgList.text[read];  read++;
       cnt++;
     }
   }
@@ -772,7 +787,7 @@ void load_basic_textures( CGame * gs, char *modname )
 bool_t load_bars( char* szBitmap )
 {
   // ZZ> This function loads the status bar bitmap
-  CGui * gui = Get_CGui();
+  CGui * gui = gui_getState();
   int cnt;
 
   if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D, &gui->TxBars, szBitmap, 0 ) )
@@ -819,92 +834,6 @@ void load_map( CGame * gs, char* szModule )
   maprect.top    = gfxState.scry - MAPSIZE * mapscale;
   maprect.bottom = gfxState.scry;
 
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t load_font( char* szBitmap, char* szSpacing )
-{
-  // ZZ> This function loads the font bitmap and sets up the coordinates
-  //     of each font on that bitmap...  Bitmap must have 16x6 fonts
-
-  int cnt, y, xsize, ysize, xdiv, ydiv;
-  int xstt, ystt;
-  int xspacing, yspacing;
-  Uint8 cTmp;
-  FILE *fileread;
-
-
-  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D, &(bmfont.tex), szBitmap, 0 ) ) return bfalse;
-
-
-  // Clear out the conversion table
-  for ( cnt = 0; cnt < 256; cnt++ )
-    bmfont.ascii_table[cnt] = 0;
-
-
-  // Get the size of the bitmap
-  xsize = GLTexture_GetImageWidth( &(bmfont.tex) );
-  ysize = GLTexture_GetImageHeight( &(bmfont.tex) );
-  if ( xsize == 0 || ysize == 0 )
-    log_warning( "Bad font size! (basicdat" SLASH_STRING "%s) - X size: %i , Y size: %i\n", szBitmap, xsize, ysize );
-
-
-  // Figure out the general size of each font
-  ydiv = ysize / NUMFONTY;
-  xdiv = xsize / NUMFONTX;
-
-
-  // Figure out where each font is and its spacing
-  fileread = fs_fileOpen( PRI_NONE, NULL, szSpacing, "r" );
-  if ( fileread == NULL ) return bfalse;
-
-  globalname = szSpacing;
-
-  // Uniform font height is at the top
-  yspacing = fget_next_int( fileread );
-  bmfont.offset = gfxState.scry - yspacing;
-
-  // Mark all as unused
-  for ( cnt = 0; cnt < 255; cnt++ )
-    bmfont.ascii_table[cnt] = 255;
-
-
-  cnt = 0;
-  y = 0;
-  xstt = 0;
-  ystt = 0;
-  while ( cnt < 255 && fgoto_colon_yesno( fileread ) )
-  {
-    cTmp = fgetc( fileread );
-    xspacing = fget_int( fileread );
-    if ( bmfont.ascii_table[cTmp] == 255 )
-    {
-      bmfont.ascii_table[cTmp] = cnt;
-    }
-
-    if ( xstt + xspacing + 1 >= xsize )
-    {
-      xstt = 0;
-      ystt += yspacing;
-    }
-
-    bmfont.rect[cnt].x = xstt;
-    bmfont.rect[cnt].w = xspacing;
-    bmfont.rect[cnt].y = ystt;
-    bmfont.rect[cnt].h = yspacing - 1;
-    bmfont.spacing_x[cnt] = xspacing;
-
-    xstt += xspacing + 1;
-
-    cnt++;
-  }
-  fs_fileClose( fileread );
-
-
-  // Space between lines
-  bmfont.spacing_y = ( yspacing >> 1 ) + FONTADD;
-
-  return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2821,7 +2750,7 @@ void draw_blip( COLR color, float x, float y)
 {
   // ZZ> This function draws a blip
 
-  CGui * gui = Get_CGui();
+  CGui * gui = gui_getState();
 
   FRect tx_rect, sc_rect;
   float width, height;
@@ -2934,21 +2863,109 @@ void draw_one_icon( int icontype, int x, int y, Uint8 sparkle )
 }
 
 //--------------------------------------------------------------------------------------------
+bool_t load_font( char* szBitmap, char* szSpacing )
+{
+  // ZZ> This function loads the font bitmap and sets up the coordinates
+  //     of each font on that bitmap...  Bitmap must have 16x6 fonts
+
+  int cnt, y, xsize, ysize, xdiv, ydiv;
+  int xstt, ystt;
+  int xspacing, yspacing;
+  Uint8 cTmp;
+  FILE *fileread;
+
+
+  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D, &(bmfont.tex), szBitmap, 0 ) ) return bfalse;
+
+
+  // Clear out the conversion table
+  for ( cnt = 0; cnt < 256; cnt++ )
+    bmfont.ascii_table[cnt] = 0;
+
+
+  // Get the size of the bitmap
+  xsize = GLTexture_GetImageWidth( &(bmfont.tex) );
+  ysize = GLTexture_GetImageHeight( &(bmfont.tex) );
+  if ( xsize == 0 || ysize == 0 )
+    log_warning( "Bad font size! (basicdat" SLASH_STRING "%s) - X size: %i , Y size: %i\n", szBitmap, xsize, ysize );
+
+
+  // Figure out the general size of each font
+  ydiv = ysize / NUMFONTY;
+  xdiv = xsize / NUMFONTX;
+
+
+  // Figure out where each font is and its spacing
+  fileread = fs_fileOpen( PRI_NONE, NULL, szSpacing, "r" );
+  if ( fileread == NULL ) return bfalse;
+
+  globalname = szSpacing;
+
+  // Uniform font height is at the top
+  yspacing = fget_next_int( fileread );
+  bmfont.offset = gfxState.scry - yspacing;
+
+  // Mark all as unused
+  for ( cnt = 0; cnt < 255; cnt++ )
+    bmfont.ascii_table[cnt] = 255;
+
+
+  cnt = 0;
+  y = 0;
+  xstt = 0;
+  ystt = 0;
+  while ( cnt < 255 && fgoto_colon_yesno( fileread ) )
+  {
+    cTmp = fgetc( fileread );
+    xspacing = fget_int( fileread );
+    if ( bmfont.ascii_table[cTmp] == 255 )
+    {
+      bmfont.ascii_table[cTmp] = cnt;
+    }
+
+    if ( xstt + xspacing + 1 >= xsize )
+    {
+      xstt = 0;
+      ystt += yspacing;
+    }
+
+    bmfont.rect[cnt].x = xstt;
+    bmfont.rect[cnt].w = xspacing;
+    bmfont.rect[cnt].y = ystt;
+    bmfont.rect[cnt].h = yspacing - 1;
+    bmfont.spacing_x[cnt] = xspacing;
+
+    xstt += xspacing + 1;
+
+    cnt++;
+  }
+  fs_fileClose( fileread );
+
+
+  // Space between lines
+  bmfont.spacing_y = ( yspacing >> 1 ) + FONTADD;
+
+  return btrue;
+}
+
+
+//--------------------------------------------------------------------------------------------
 void draw_one_font( int fonttype, float x, float y )
 {
   // ZZ> This function draws a letter or number
   // GAC> Very nasty version for starters.  Lots of room for improvement.
 
-  GLfloat dx, dy;
+  GLfloat dx, dy, border;
   FRect tx_rect, sc_rect;
 
-  dx = 2.0 / 512;
-  dy = 1.0 / 256;
+  dx = 2.0f / 512.0f;
+  dy = 1.0f / 256.0f;
+  border = 1.0f / 512.0f;
 
-  tx_rect.left   = bmfont.rect[fonttype].x * dx + 0.001f;
-  tx_rect.right  = ( bmfont.rect[fonttype].x + bmfont.rect[fonttype].w ) * dx - 0.001f;
-  tx_rect.top    = bmfont.rect[fonttype].y * dy + 0.001f;
-  tx_rect.bottom = ( bmfont.rect[fonttype].y + bmfont.rect[fonttype].h ) * dy;
+  tx_rect.left   = bmfont.rect[fonttype].x * dx + border;
+  tx_rect.right  = ( bmfont.rect[fonttype].x + bmfont.rect[fonttype].w ) * dx - border;
+  tx_rect.top    = bmfont.rect[fonttype].y * dy + border;
+  tx_rect.bottom = ( bmfont.rect[fonttype].y + bmfont.rect[fonttype].h ) * dy - border;
 
   sc_rect.left   = x;
   sc_rect.right  = x + bmfont.rect[fonttype].w;
@@ -3001,7 +3018,7 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
 {
   // ZZ> This function draws a bar and returns the y position for the next one
 
-  CGui * gui = Get_CGui();
+  CGui * gui = gui_getState();
 
   int noticks;
   FRect tx_rect, sc_rect;
@@ -3395,7 +3412,7 @@ int draw_status( BMFont * pfnt, Status * pstat )
   float mana, manamax;
   int cnt;
 
-  if(NULL == gfxState.gs) return;
+  if(NULL == gfxState.gs) return 0;
   gs = gfxState.gs;
   chrlst = gs->ChrList;
   madlst = gs->MadList;
@@ -3546,28 +3563,35 @@ int do_messages( BMFont * pfnt, int x, int y )
   int cnt, tnc;
   int ystt = y;
 
-  CGame * gs = gfxState.gs;
+  CGame * gs  = gfxState.gs;
+  CGui  * gui = gui_getState();
+  MessageQueue * mq = &(gui->msgQueue);
+  MESSAGE_ELEMENT * msg;
 
   if ( NULL==pfnt || !CData.messageon ) return 0;
 
   // Display the messages
-  tnc = GMsg.start;
+  tnc = mq->start;
   for ( cnt = 0; cnt < CData.maxmessage; cnt++ )
   {
-    // mesages with negative times never time out!
-    if ( GMsg.list[tnc].time != 0 )
-    {
-      y += draw_wrap_string( pfnt, x, y, NULL, gfxState.scrx - CData.wraptolerance - x, GMsg.list[tnc].textdisplay );
+    msg = mq->list + tnc;
 
-      if ( GMsg.list[tnc].time > 0 )
+    // mesages with negative times never time out!
+    if ( msg->time != 0 )
+    {
+      y += draw_wrap_string( pfnt, x, y, NULL, gfxState.scrx - CData.wraptolerance - x, msg->textdisplay );
+
+      if ( msg->time > 0 )
       {
-        GMsg.list[tnc].time -= gs->cl->msg_timechange;
-        if ( GMsg.list[tnc].time < 0 ) GMsg.list[tnc].time = 0;
+        msg->time -= mq->timechange;
+        if ( msg->time < 0 ) msg->time = 0;
       };
     }
     tnc++;
     tnc %= CData.maxmessage;
   }
+
+  mq->timechange = 0;
 
   return y - ystt;
 }
@@ -3600,7 +3624,9 @@ void draw_text( BMFont *  pfnt )
   char text[512];
   int y, fifties, seconds, minutes;
 
-  CGame * gs = gfxState.gs;
+  KeyboardBuffer * kbuffer = KeyboardBuffer_getState();
+  CGame * gs  = gfxState.gs;
+  CGui  * gui = gui_getState();
 
   Begin2DMode();
   {
@@ -3813,9 +3839,9 @@ void draw_text( BMFont *  pfnt )
 
 
     // Network message input
-    if ( Get_CGui()->net_messagemode )
+    if ( keyb.mode )
     {
-      y += draw_wrap_string( pfnt, 0, y, NULL, gfxState.scrx - CData.wraptolerance, GNetMsg.buffer );
+      y += draw_wrap_string( pfnt, 0, y, NULL, gfxState.scrx - CData.wraptolerance, kbuffer->buffer );
     }
 
 
@@ -3925,7 +3951,7 @@ void draw_main( float frameDuration )
 void load_blip_bitmap( char * modname )
 {
   //This function loads the blip bitmaps
-  CGui * gui = Get_CGui();
+  CGui * gui = gui_getState();
   int cnt;
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.blip_bitmap );
@@ -3971,7 +3997,7 @@ void Reshape3D( int w, int h )
   glViewport( 0, 0, w, h );
 }
 
-bool_t glinit( GraphicState * g, ConfigData * cd )
+bool_t glinit( CGraphics * g, ConfigData * cd )
 {
   if(NULL == g || NULL == cd) return bfalse;
 
@@ -4009,7 +4035,7 @@ bool_t glinit( GraphicState * g, ConfigData * cd )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t gfx_set_mode(GraphicState * g)
+bool_t gfx_set_mode(CGraphics * g)
 {
   //This function loads all the graphics based on the game settings
 
@@ -4127,15 +4153,15 @@ bool_t gfx_set_mode(GraphicState * g)
 }
 
 //--------------------------------------------------------------------------------------------
-GraphicState * GraphicState_new(GraphicState * g, ConfigData * cd)
+CGraphics * CGraphics_new(CGraphics * g, ConfigData * cd)
 {
-  //fprintf( stdout, "GraphicState_new()\n");
+  //fprintf( stdout, "CGraphics_new()\n");
 
   if(NULL == g || NULL == cd) return NULL;
 
-  memset(g, 0, sizeof(GraphicState));
+  memset(g, 0, sizeof(CGraphics));
 
-  GraphicState_synch(g, cd);
+  CGraphics_synch(g, cd);
 
   // put a reasonable value in here
   g->est_max_fps = 30;
@@ -4144,7 +4170,7 @@ GraphicState * GraphicState_new(GraphicState * g, ConfigData * cd)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t GraphicState_synch(GraphicState * g, ConfigData * cd)
+bool_t CGraphics_synch(CGraphics * g, ConfigData * cd)
 {
   bool_t changed = bfalse;
 

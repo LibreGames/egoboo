@@ -34,6 +34,7 @@
 #include "NetFile.h"
 #include "game.h"
 #include "graphic.h"
+#include "input.h"
 
 #include "egoboo_utility.h"
 #include "egoboo_strutil.h"
@@ -1520,212 +1521,102 @@ PLA_REF add_player(CGame * gs, CHR_REF chr_ref, Uint8 device)
 }
 
 //--------------------------------------------------------------------------------------------
-void clear_messages()
-{
-  // ZZ> This function empties the message buffer
-  int cnt;
-
-  cnt = 0;
-  while (cnt < MAXMESSAGE)
-  {
-    GMsg.list[cnt].time = 0;
-    cnt++;
-  }
-}
-
-//--------------------------------------------------------------------------------------------
 void check_add(Uint8 key, char bigletter, char littleletter)
 {
   // ZZ> This function adds letters to the net message
+  KeyboardBuffer * kbuffer = KeyboardBuffer_getState();
 
   if(SDLKEYDOWN(key))
   {
-    if(GNetMsg.write < MESSAGESIZE-2)
+    if(kbuffer->write < MESSAGESIZE-2)
     {
       if(SDLKEYDOWN(SDLK_LSHIFT) || SDLKEYDOWN(SDLK_RSHIFT))
       {
-        GNetMsg.buffer[GNetMsg.write] = bigletter;
+        kbuffer->buffer[kbuffer->write] = bigletter;
       }
       else
       {
-        GNetMsg.buffer[GNetMsg.write] = littleletter;
+        kbuffer->buffer[kbuffer->write] = littleletter;
       }
-      GNetMsg.write++;
-      GNetMsg.buffer[GNetMsg.write]   = '?'; // The flashing input cursor
-      GNetMsg.buffer[GNetMsg.write+1] = '\0';
+      kbuffer->write++;
+      kbuffer->buffer[kbuffer->write]   = '?'; // The flashing input cursor
+      kbuffer->buffer[kbuffer->write+1] = '\0';
     }
   }
 
 }
 
 //--------------------------------------------------------------------------------------------
-void input_net_message(CGame * gs)
+net_send_chat(CGame *gs, KeyboardBuffer * kbuffer)
+{
+  SYS_PACKET egopkt;
+  NetHost * cl_host, *sv_host;
+
+  CServer * sv = gs->sv;
+  CClient * cl = gs->cl;
+
+  sv_host = sv_getHost();
+  cl_host = cl_getHost();
+
+  // Yes, so send it
+  kbuffer->buffer[kbuffer->write] = 0;
+  if(sv_host->nthread.Active || cl_host->nthread.Active)
+  {
+    net_startNewSysPacket(&egopkt);
+    sys_packet_addUint16(&egopkt, TO_ANY_TEXT);
+    sys_packet_addString(&egopkt, kbuffer->buffer);
+    if(sv_host->nthread.Active && !cl_host->nthread.Active)
+    {
+      sv_sendPacketToAllClients(sv, &egopkt);
+    }
+    else
+    {
+      CClient_sendPacketToHost(cl, &egopkt);
+    };
+  }
+}
+
+//--------------------------------------------------------------------------------------------
+void do_chat_input()
 {
   // ZZ> This function lets players communicate over network by hitting return, then
   //     typing text, then return again
 
   int cnt;
   char cTmp;
-  SYS_PACKET egopkt;
-  CGui * gui   = Get_CGui();
-  CNet * ns    = gs->ns;
-  CServer * sv = gs->sv;
-  CClient * cl = gs->cl;
 
+  KeyboardBuffer * kbuffer = KeyboardBuffer_getState();
 
-  if(gui->net_messagemode)
+  if(keyb.mode)
   {
-    // Add new letters
-    check_add(SDLK_a, 'A', 'a');
-    check_add(SDLK_b, 'B', 'b');
-    check_add(SDLK_c, 'C', 'c');
-    check_add(SDLK_d, 'D', 'd');
-    check_add(SDLK_e, 'E', 'e');
-    check_add(SDLK_f, 'F', 'f');
-    check_add(SDLK_g, 'G', 'g');
-    check_add(SDLK_h, 'H', 'h');
-    check_add(SDLK_i, 'I', 'i');
-    check_add(SDLK_j, 'J', 'j');
-    check_add(SDLK_k, 'K', 'k');
-    check_add(SDLK_l, 'L', 'l');
-    check_add(SDLK_m, 'M', 'm');
-    check_add(SDLK_n, 'N', 'n');
-    check_add(SDLK_o, 'O', 'o');
-    check_add(SDLK_p, 'P', 'p');
-    check_add(SDLK_q, 'Q', 'q');
-    check_add(SDLK_r, 'R', 'r');
-    check_add(SDLK_s, 'S', 's');
-    check_add(SDLK_t, 'T', 't');
-    check_add(SDLK_u, 'U', 'u');
-    check_add(SDLK_v, 'V', 'v');
-    check_add(SDLK_w, 'W', 'w');
-    check_add(SDLK_x, 'X', 'x');
-    check_add(SDLK_y, 'Y', 'y');
-    check_add(SDLK_z, 'Z', 'z');
-
-
-    check_add(SDLK_1, '!', '1');
-    check_add(SDLK_2, '@', '2');
-    check_add(SDLK_3, '#', '3');
-    check_add(SDLK_4, '$', '4');
-    check_add(SDLK_5, '%', '5');
-    check_add(SDLK_6, '^', '6');
-    check_add(SDLK_7, '&', '7');
-    check_add(SDLK_8, '*', '8');
-    check_add(SDLK_9, '(', '9');
-    check_add(SDLK_0, ')', '0');
-
-
-    check_add(SDLK_QUOTE, 34, 39);
-    check_add(SDLK_SPACE,      ' ', ' ');
-    check_add(SDLK_SEMICOLON,  ':', ';');
-    check_add(SDLK_PERIOD,     '>', '.');
-    check_add(SDLK_COMMA,      '<', ',');
-    check_add(SDLK_BACKQUOTE,  '`', '`');
-    check_add(SDLK_MINUS,      '_', '-');
-    check_add(SDLK_EQUALS,     '+', '=');
-    check_add(SDLK_LEFTBRACKET, '{', '[');
-    check_add(SDLK_RIGHTBRACKET,'}', ']');
-    check_add(SDLK_BACKSLASH,  '|', '\\');
-    check_add(SDLK_SLASH,      '?', '/');
-
-
-
     // Make cursor flash
-    if(GNetMsg.write < MESSAGESIZE-1)
+    if(kbuffer->write < sizeof(STRING)-4)
     {
-      if((gs->wld_frame & 7) == 0)
+      if((keyb.delay & 7) == 0)
       {
-        GNetMsg.buffer[GNetMsg.write] = '#';
+        kbuffer->buffer[kbuffer->write+0] = 'x';
+        kbuffer->buffer[kbuffer->write+1] = '\0';
       }
       else
       {
-        GNetMsg.buffer[GNetMsg.write] = '+';
+        kbuffer->buffer[kbuffer->write+0] = '+';
+        kbuffer->buffer[kbuffer->write+1] = '\0';
       }
-    }
-
-
-    // Check backspace and return
-    if(GNetMsg.delay == 0)
-    {
-      if(SDLKEYDOWN(SDLK_BACKSPACE))
-      {
-        if(GNetMsg.write < MESSAGESIZE)  GNetMsg.buffer[GNetMsg.write] = 0;
-        if(GNetMsg.write > GNetMsg.writemin) GNetMsg.write--;
-        GNetMsg.delay = 3;
-      }
-
-
-      // Ship out the message
-      if(SDLKEYDOWN(SDLK_RETURN))
-      {
-        // Is it long enough to bother?
-        if(GNetMsg.write > 0)
-        {
-          NetHost * cl_host, *sv_host;
-
-          sv_host = sv_getHost();
-          cl_host = cl_getHost();
-
-          // Yes, so send it
-          GNetMsg.buffer[GNetMsg.write] = 0;
-          if(sv_host->nthread.Active || cl_host->nthread.Active)
-          {
-            net_startNewSysPacket(&egopkt);
-            sys_packet_addUint16(&egopkt, TO_ANY_TEXT);
-            sys_packet_addString(&egopkt, GNetMsg.buffer);
-            if(sv_host->nthread.Active && !cl_host->nthread.Active)
-            {
-              sv_sendPacketToAllClients(sv, &egopkt);
-            }
-            else
-            {
-              CClient_sendPacketToHost(cl, &egopkt);
-            };
-          }
-        }
-        gui->net_messagemode = bfalse;
-        GNetMsg.delay = 20;
-      }
-    }
-    else
-    {
-      GNetMsg.delay--;
     }
   }
-  else
+
+
+
+  if(kbuffer->done)
   {
-    // Input a new message?
-    if(GNetMsg.delay == 0)
+    if(net_Started())
     {
-      if(SDLKEYDOWN(SDLK_RETURN))
-      {
-        // Copy the name
-        cnt = 0;
-        cTmp = CData.net_messagename[cnt];
-        while(cTmp != 0 && cnt < 64)
-        {
-          GNetMsg.buffer[cnt] = cTmp;
-          cnt++;
-          cTmp = CData.net_messagename[cnt];
-        }
-        GNetMsg.buffer[cnt] = '>';  cnt++;
-        GNetMsg.buffer[cnt] = ' ';  cnt++;
-        GNetMsg.buffer[cnt] = '?';
-        GNetMsg.buffer[cnt+1] = 0;
-        GNetMsg.write = cnt;
-        GNetMsg.writemin = cnt;
+      net_send_chat( gfxState.gs, kbuffer );
+    }
 
-        gui->net_messagemode = btrue;
-        GNetMsg.delay = 20;
-      }
-    }
-    else
-    {
-      GNetMsg.delay--;
-    }
+    debug_message(1, kbuffer->buffer);
+    kbuffer->done = bfalse;
   }
-
 }
 
 //--------------------------------------------------------------------------------------------

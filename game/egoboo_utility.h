@@ -18,6 +18,8 @@ typedef enum respawn_mode_e RESPAWN_MODE;
 typedef enum idsz_index_e IDSZ_INDEX;
 typedef enum color_e COLR;
 
+struct MessageData_t;
+
 bool_t undo_pair_fp8( PAIR * ppair, RANGE * prange );
 bool_t fget_pair_fp8( FILE* fileread, PAIR * ppair );
 bool_t fget_next_pair_fp8( FILE* fileread, PAIR * ppair );
@@ -76,8 +78,8 @@ void fgendef( FILE* filewrite, char* text, GENDER gender );
 void fpairof( FILE* filewrite, char* text, PAIR * ppair );
 void funderf( FILE* filewrite, char* text, char* usename );
 
-bool_t fget_message( FILE* fileread );
-bool_t fget_next_message( FILE* fileread );
+bool_t fget_message( FILE* fileread, struct MessageData_t * msglst  );
+bool_t fget_next_message( FILE* fileread, struct MessageData_t * msglst );
 
 void   fgoto_colon( FILE* fileread );
 bool_t fgoto_colon_yesno( FILE* fileread );

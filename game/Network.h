@@ -479,7 +479,7 @@ INLINE size_t stream_remainingSize(STREAM * p);
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
 
-void    input_net_message(struct CGame_t * gs);
+void    do_chat_input();
 void    net_sayHello(struct CGame_t * gs);
 bool_t  net_beginGame(struct CGame_t * gs);
 

@@ -490,7 +490,7 @@ void funderf( FILE* filewrite, char* text, char* usename )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t fget_message( FILE* fileread )
+bool_t fget_message( FILE* fileread, MessageData * msglst )
 {
   // ZZ> This function loads a string into the message buffer, making sure it
   //     is null terminated.
@@ -502,30 +502,30 @@ bool_t fget_message( FILE* fileread )
 
   if ( feof( fileread ) ) return retval;
 
-  if ( GMsg.total >= MAXTOTALMESSAGE ) return retval;
+  if ( msglst->total >= MAXTOTALMESSAGE ) return retval;
 
-  if ( GMsg.totalindex >= MESSAGEBUFFERSIZE )
+  if ( msglst->totalindex >= MESSAGEBUFFERSIZE )
   {
-    GMsg.totalindex = MESSAGEBUFFERSIZE - 1;
+    msglst->totalindex = MESSAGEBUFFERSIZE - 1;
   }
 
   // a zero return value from fscanf() means that no fields were filled
   if ( 0 != fscanf( fileread, "%s", szTmp ) )
   {
-    GMsg.index[GMsg.total] = GMsg.totalindex;
+    msglst->index[msglst->total] = msglst->totalindex;
     szTmp[255] = 0;
     cTmp = szTmp[0];
     cnt = 1;
-    while ( cTmp != 0 && GMsg.totalindex < MESSAGEBUFFERSIZE - 1 )
+    while ( cTmp != 0 && msglst->totalindex < MESSAGEBUFFERSIZE - 1 )
     {
       if ( cTmp == '_' )  cTmp = ' ';
-      GMsg.text[GMsg.totalindex] = cTmp;
-      GMsg.totalindex++;
+      msglst->text[msglst->totalindex] = cTmp;
+      msglst->totalindex++;
       cTmp = szTmp[cnt];
       cnt++;
     }
-    GMsg.text[GMsg.totalindex] = 0;  GMsg.totalindex++;
-    GMsg.total++;
+    msglst->text[msglst->totalindex] = 0;  msglst->totalindex++;
+    msglst->total++;
 
     retval = btrue;
   };
@@ -534,7 +534,7 @@ bool_t fget_message( FILE* fileread )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t fget_next_message( FILE* fileread )
+bool_t fget_next_message( FILE* fileread, MessageData * msglst )
 {
   // ZZ> This function loads a string into the message buffer, making sure it
   //     is null terminated.
@@ -543,7 +543,7 @@ bool_t fget_next_message( FILE* fileread )
 
   if ( fgoto_colon_yesno( fileread ) )
   {
-    retval = fget_message( fileread );
+    retval = fget_message( fileread, msglst );
   };
 
   return retval;

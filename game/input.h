@@ -175,9 +175,10 @@ extern JOYSTICK joy[2];
 // SDL specific declarations
 typedef struct keyboard_t
 {
-  //char     buffer[256];        // Keyboard key states
-  //char     press[256];         // Keyboard new hits
-  bool_t   on ;                // Is the keyboard alive?
+  bool_t   on;                 // Is the keyboard alive?
+  bool_t   mode;
+  Uint8    delay;              // For slowing down chat input
+
   Uint8   *state;
   LATCH    latch;
 } KEYBOARD;
@@ -197,6 +198,14 @@ INLINE bool_t control_mouse_is_pressed( CONTROL control );
 INLINE bool_t control_joy_is_pressed( int joy_num, CONTROL control );
 
 
+//--------------------------------------------------------------------------------------------
+typedef struct KeyboardBuffer_t
+{
+  bool_t done;
+  int    write;                 // The cursor position
+  int    writemin;              // The starting cursor position
+  STRING buffer;                // The input message
+} KeyboardBuffer;
 
 //--------------------------------------------------------------------------------------------
 void   input_setup();
@@ -207,3 +216,4 @@ bool_t input_read_mouse(MOUSE * pm);
 bool_t input_read_key(KEYBOARD * pk);
 bool_t input_read_joystick(JOYSTICK * pj);
 
+KeyboardBuffer * KeyboardBuffer_getState();

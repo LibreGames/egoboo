@@ -274,7 +274,7 @@ void  GLTexture_Release( GLtexture *texture )
 }
 
 /********************> GLTexture_Release() <*****/
-void GLTexture_Bind( GLtexture *texture, GraphicState * g )
+void GLTexture_Bind( GLtexture *texture, CGraphics * g )
 {
   int    filt_type, anisotropy;
   GLenum target;
