@@ -192,7 +192,7 @@ bool_t input_read_joystick(JOYSTICK * pj)
 {
   int button;
   float jx, jy;
-  const float jthresh = .5;
+  const float jthresh = .25;
 
   if(NULL == pj) return bfalse;
 
@@ -207,21 +207,20 @@ bool_t input_read_joystick(JOYSTICK * pj)
     return (NULL != pj->sdl_device);
   };
 
-  jx = ((Sint16)(SDL_JoystickGetAxis( pj->sdl_device, 0 ) >> 8)) / ( float )( 0xFF );
-  jy = ((Sint16)(SDL_JoystickGetAxis( pj->sdl_device, 1 ) >> 8)) / ( float )( 0xFF );
+  jx = (Sint16)SDL_JoystickGetAxis( pj->sdl_device, 0 ) / (float)(1<<15);
+  jy = (Sint16)SDL_JoystickGetAxis( pj->sdl_device, 1 ) / (float)(1<<15);
 
-  pj->latch.x = 0.0f;
-  pj->latch.y = 0.0f;
-  if ( ABS( jx ) + ABS( jy ) > 0.0f )
+  pj->latch.x = jx;
+  pj->latch.y = jy;
+  if ( ABS( jx ) + ABS( jy ) >= jthresh )
   {
-    pj->latch.x = jx;
-    pj->latch.y = jy;
+    float jr2, r2;
 
-    jx = sqrt(( jx * jx + jy * jy ) * 0.5f );
-    jy = ( jx - jthresh * jx / ( jthresh + fabs( jx ) ) ) * ( jthresh + 1.0f );
+    r2 = jx * jx + jy * jy;
+    jr2 = max( 0 , r2-jthresh*jthresh) / (1.0f - jthresh*jthresh);
 
-    pj->latch.x *= jy / jx / sqrt( 2.0f );
-    pj->latch.y *= jy / jx / sqrt( 2.0f );
+    pj->latch.x *= jr2 / r2;
+    pj->latch.y *= jr2 / r2;
   }
 
   button = SDL_JoystickNumButtons( pj->sdl_device );
