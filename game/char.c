@@ -543,11 +543,14 @@ int ChrList_get_free( CGame * gs )
 //--------------------------------------------------------------------------------------------
 Chr * Chr_new(Chr * pchr)
 {
+  // BB > initialize the Chr data structure with safe values
+
   AI_STATE * pstate;
 
   //fprintf( stdout, "Chr_new()\n");
 
-  if(NULL == pchr || pchr->on) return pchr;
+  if(NULL == pchr) return pchr;
+  if(pchr->on) Chr_delete(pchr);
 
   // initialize the data
   memset(pchr, 0, sizeof(Chr));
@@ -557,12 +560,15 @@ Chr * Chr_new(Chr * pchr)
   // IMPORTANT!!!
   pchr->sparkle = NOSPARKLE;
   pchr->missilehandler = MAXCHR;
+  pchr->missiletreatment = MIS_NORMAL;
 
   // Set up model stuff
   pchr->inwhichslot = SLOT_NONE;
   pchr->inwhichpack = MAXCHR;
   pchr->nextinpack = MAXCHR;
   VData_Blended_construct( &(pchr->vdata) );
+
+  pchr->whichplayer   = MAXPLAYER;
 
   pchr->basemodel = MAXPROFILE;
   pchr->stoppedby = MPDFX_WALL | MPDFX_IMPASS;
@@ -655,6 +661,8 @@ Chr * Chr_new(Chr * pchr)
 
   pchr->pancakepos.x = pchr->pancakepos.y = pchr->pancakepos.z = 1.0;
   pchr->pancakevel.x = pchr->pancakevel.y = pchr->pancakevel.z = 0.0f;
+
+  pchr->loopingchannel = INVALID_CHANNEL;
 
   // calculate the bumpers
   assert(NULL == pchr->bmpdata.cv_tree);
@@ -7641,53 +7649,30 @@ CHR_REF spawn_one_character( CGame * gs, vect3 pos, int profile, TEAM team,
   pchr   = chrlst + ichr;
   pstate = &(pchr->aistate);
 
-  // clear any old data
-  memset(pchr, 0, sizeof(Chr));
+  // use Chr_new() to do a lot of the raw initialization
+  // any values that are bfalse, 0, or NULL can be skipped
+  pchr = Chr_new(pchr);
+  if(NULL == pchr) return MAXCHR;
 
   // IMPORTANT!!!
-  pchr->indolist = bfalse;
-  pchr->isequipped = bfalse;
-  pchr->sparkle = NOSPARKLE;
-  pchr->overlay = bfalse;
   pchr->missilehandler = ichr;
 
   // Set up model stuff
   pchr->on = btrue;
-  pchr->freeme = bfalse;
-  pchr->gopoof = bfalse;
-  pchr->reloadtime = 0;
-  pchr->inwhichslot = SLOT_NONE;
-  pchr->inwhichpack = MAXCHR;
-  pchr->nextinpack = MAXCHR;
-  pchr->numinpack = 0;
   pchr->model = profile;
-  VData_Blended_construct( &(pchr->vdata) );
   VData_Blended_Allocate( &(pchr->vdata), md2_get_numVertices(pmad->md2_ptr) );
 
   pchr->basemodel = profile;
   pchr->stoppedby = pcap->stoppedby;
   pchr->lifeheal = pcap->lifeheal_fp8;
   pchr->manacost = pcap->manacost_fp8;
-  pchr->inwater = bfalse;
   pchr->nameknown = pcap->nameknown;
   pchr->ammoknown = pcap->nameknown;
   pchr->hitready = btrue;
-  pchr->boretime = DELAY_BORE;
-  pchr->carefultime = DELAY_CAREFUL;
-  pchr->canbecrushed = bfalse;
-  pchr->damageboost = 0;
   pchr->icon = pcap->icon;
 
-  //Ready for loop sound
-  pchr->loopingchannel = -1;
-
   // Enchant stuff
-  pchr->firstenchant = MAXENCHANT;
-  pchr->undoenchant = MAXENCHANT;
   pchr->canseeinvisible = pcap->canseeinvisible;
-  pchr->canchannel = bfalse;
-  pchr->missiletreatment = MIS_NORMAL;
-  pchr->missilecost = 0;
 
   //Skill Expansions
   pchr->canseekurse = pcap->canseekurse;
@@ -7769,8 +7754,6 @@ CHR_REF spawn_one_character( CGame * gs, vect3 pos, int profile, TEAM team,
     tnc++;
   }
 
-  pchr->whichplayer   = MAXPLAYER;
-
   // Flags
   pchr->stickybutt = pcap->stickybutt;
   pchr->openstuff = pcap->canopenstuff;
@@ -7785,10 +7768,7 @@ CHR_REF spawn_one_character( CGame * gs, vect3 pos, int profile, TEAM team,
 
   // Jumping
   pchr->jump = pcap->jump;
-  pchr->jumpready = btrue;
-  pchr->jumpnumber = 1;
   pchr->jumpnumberreset = pcap->jumpnumber;
-  pchr->jumptime = DELAY_JUMP;
 
   // Other junk
   pchr->flyheight = pcap->flyheight;
@@ -7802,7 +7782,6 @@ CHR_REF spawn_one_character( CGame * gs, vect3 pos, int profile, TEAM team,
   // Character size and bumping
   pchr->fat = pcap->size;
   pchr->sizegoto = pchr->fat;
-  pchr->sizegototime = 0;
 
   pchr->bmpdata_save.shadow  = pcap->shadowsize;
   pchr->bmpdata_save.size    = pcap->bumpsize;
@@ -7813,32 +7792,19 @@ CHR_REF spawn_one_character( CGame * gs, vect3 pos, int profile, TEAM team,
   pchr->bmpdata.size     = pcap->bumpsize    * pchr->fat;
   pchr->bmpdata.sizebig  = pcap->bumpsizebig * pchr->fat;
   pchr->bmpdata.height   = pcap->bumpheight  * pchr->fat;
-  pchr->bumpstrength   = pcap->bumpstrength * FP8_TO_FLOAT( pcap->alpha_fp8 );
+  pchr->bumpstrength     = pcap->bumpstrength * FP8_TO_FLOAT( pcap->alpha_fp8 );
 
   pchr->bumpdampen = pcap->bumpdampen;
   pchr->weight = pcap->weight * pchr->fat * pchr->fat * pchr->fat;   // preserve density
 
-  // Grip info
-  pchr->inwhichslot = SLOT_NONE;
-  pchr->attachedto = MAXCHR;
-  for ( _slot = SLOT_BEGIN; _slot < SLOT_COUNT; _slot = ( SLOT )( _slot + 1 ) )
-  {
-    pchr->holdingwhich[_slot] = MAXCHR;
-  }
-
   // Image rendering
-  pchr->uoffset_fp8 = 0;
-  pchr->voffset_fp8 = 0;
   pchr->uoffvel = pcap->uoffvel;
   pchr->voffvel = pcap->voffvel;
-  pchr->redshift = 0;
-  pchr->grnshift = 0;
-  pchr->blushift = 0;
 
   // Movement
   pchr->spd_sneak = pcap->spd_sneak;
-  pchr->spd_walk = pcap->spd_walk;
-  pchr->spd_run = pcap->spd_run;
+  pchr->spd_walk  = pcap->spd_walk;
+  pchr->spd_run   = pcap->spd_run;
 
   // Set up position
   pchr->pos.x = pos.x;
@@ -7853,31 +7819,10 @@ CHR_REF spawn_one_character( CGame * gs, vect3 pos, int profile, TEAM team,
   pchr->pos_old     = pchr->pos;
   pchr->turn_lr_old = pchr->turn_lr;
 
-  pchr->tlight.turn_lr.r = 0;
-  pchr->tlight.turn_lr.g = 0;
-  pchr->tlight.turn_lr.b = 0;
-
-  pchr->vel.x = 0;
-  pchr->vel.y = 0;
-  pchr->vel.z = 0;
-  pchr->mapturn_lr = 32768;  // These two mean on level surface
-  pchr->mapturn_ud = 32768;
   pchr->scale = pchr->fat;
 
   // AI stuff
   ai_state_new(gs, pstate, ichr);
-
-  // action stuff
-  action_info_new( &(pchr->action) );
-  anim_info_new( &(pchr->anim) );
-
-  pchr->passage = 0;
-  pchr->holdingweight = 0;
-  pchr->onwhichplatform = MAXCHR;
-
-  // Timers set to 0
-  pchr->grogtime = 0.0f;
-  pchr->dazetime = 0.0f;
 
   // Money is added later
   pchr->money = pcap->money;
@@ -7899,16 +7844,6 @@ CHR_REF spawn_one_character( CGame * gs, vect3 pos, int profile, TEAM team,
       tnc++;
     }
     pchr->name[tnc] = 0;
-  }
-
-  // Set up initial fade in lighting
-  tnc = 0;
-  while ( tnc < madlst[pchr->model].transvertices )
-  {
-    pchr->vrta_fp8[tnc].r = 0;
-    pchr->vrta_fp8[tnc].g = 0;
-    pchr->vrta_fp8[tnc].b = 0;
-    tnc++;
   }
 
   // Particle attachments
@@ -7933,14 +7868,8 @@ CHR_REF spawn_one_character( CGame * gs, vect3 pos, int profile, TEAM team,
     pchr->experiencelevel = calc_chr_level( gs, ichr );
   }
 
-  pchr->pancakepos.x = pchr->pancakepos.y = pchr->pancakepos.z = 1.0;
-  pchr->pancakevel.x = pchr->pancakevel.y = pchr->pancakevel.z = 0.0f;
-
-  pchr->loopingchannel = INVALID_CHANNEL;
-
   // calculate the bumpers
   assert(NULL == pchr->bmpdata.cv_tree);
-  chr_bdata_reinit( pchr, &(pchr->bmpdata) );
   make_one_character_matrix( chrlst, chrlst_size, pchr );
 
   return ichr;
@@ -8103,7 +8032,7 @@ void signal_idsz_index( CGame * gs, Uint32 order, IDSZ idsz, IDSZ_INDEX index )
 //--------------------------------------------------------------------------------------------
 bool_t ai_state_advance_wp(AI_STATE * a, bool_t do_atlastwaypoint)
 {
-  if(NULL == a) return bfalse;
+  if(NULL == a || wp_list_empty(&(a->wp)) ) return bfalse;
 
   a->alert |= ALERT_ATWAYPOINT;
 

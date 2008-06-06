@@ -1511,6 +1511,10 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
     case F_IfAtLastWaypoint:
       // Proceed only if the character reached its last waypoint
       returncode = HAS_SOME_BITS( pstate->alert, ALERT_ATLASTWAYPOINT );
+
+      // TODO: should this be
+      //returncode = wp_list_empty( &(pstate->wp) );
+      // TODO: then we could separate PUTAWAY from ATLASTWAYPOINT
       break;
 
     case F_IfAttacked:
@@ -1550,12 +1554,20 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
 
     case F_ClearWaypoints:
       // Clear out all waypoints
-      wp_list_new( &(pstate->wp), &(pchr->pos) );
+      {
+        bool_t btemp = !wp_list_empty(&(pstate->wp));
+        wp_list_new( &(pstate->wp), &(pchr->pos) );
+        if(btemp)
+        {
+          pstate->alert |= ALERT_ATLASTWAYPOINT;
+        }
+      }
       break;
 
     case F_AddWaypoint:
       // Add a waypoint to the waypoint list
       returncode = wp_list_add( &(pstate->wp), pstate->tmpx, pstate->tmpy);
+      if(returncode) pstate->alert &= ~ALERT_ATLASTWAYPOINT;
       break;
 
     case F_FindPath:
@@ -1599,6 +1611,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
 
         //Then we add the waypoint(s), without clearing existing ones...
         returncode = wp_list_add( &(pstate->wp), pstate->tmpx, pstate->tmpy);
+        if(returncode) pstate->alert &= ~ALERT_ATLASTWAYPOINT;
       }
       break;
 
@@ -1784,7 +1797,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
 
     case F_Else:
       // This function fails if the last one was more indented
-      returncode = (GET_INDENT( pstate->lastindent) <= GET_INDENT( value ));
+      returncode = (pstate->lastindent <= GET_INDENT( value ));
       break;
 
     case F_Run:
@@ -3725,7 +3738,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
     case F_PlayFullSound:
       // This function plays a sound loud for everyone...  Victory music
       returncode = bfalse;
-      if ( INVALID_SOUND != pstate->tmpargument )
+      if (pstate->tmpargument>=0 && pstate->tmpargument!=MAXWAVE )
       {
         returncode = ( INVALID_SOUND != snd_play_sound( gs, 1.0f, GCamera.trackpos, pcap->wavelist[pstate->tmpargument], 0, pchr->model, pstate->tmpargument) );
       }
@@ -4573,16 +4586,37 @@ retval_t run_operand( CGame * gs, Uint32 value, CHR_REF ichr )
         break;
 
       case VAR_GOTO_X:
-        iTmp = wp_list_x( &(pstate->wp) );
+        if( wp_list_empty( &(pstate->wp) ) )
+        {
+          iTmp = pchr->pos.x;
+        }
+        else
+        {
+          iTmp = wp_list_x( &(pstate->wp) );
+        }
         break;
 
       case VAR_GOTO_Y:
-        iTmp = wp_list_y( &(pstate->wp) );
+        if( wp_list_empty( &(pstate->wp) ) )
+        {
+          iTmp = pchr->pos.y;
+        }
+        else
+        {
+          iTmp = wp_list_y( &(pstate->wp) );
+        }
         break;
 
       case VAR_GOTO_DISTANCE:
-        iTmp = ABS(( int )( wp_list_x( &(pstate->wp) ) - pchr->pos.x ) ) +
-               ABS(( int )( wp_list_y( &(pstate->wp) ) - pchr->pos.y ) );
+        if( wp_list_empty( &(pstate->wp) ) )
+        {
+          iTmp = 0;
+        }
+        else
+        {
+          iTmp = ABS(( int )( wp_list_x( &(pstate->wp) ) - pchr->pos.x ) ) +
+                ABS(( int )( wp_list_y( &(pstate->wp) ) - pchr->pos.y ) );
+        }
         break;
 
       case VAR_TARGET_TURNTO:

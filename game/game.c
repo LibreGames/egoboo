@@ -4540,6 +4540,8 @@ void setup_characters( CGame * gs, char *modname )
   FILE *fileread;
   GRIP grip;
 
+  CGui * gui = gui_getState();
+
   // Turn some back on
   currentcharacter = MAXCHR;
   snprintf( newloadname, sizeof( newloadname ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.spawn_file );
@@ -4702,11 +4704,11 @@ void setup_characters( CGame * gs, char *modname )
   }
   fs_fileClose( fileread );
 
-  reset_messages( gs );
+  // clear out any junk messages that are being displayed
+  clear_message_queue( &(gui->msgQueue) );
 
   // Make sure local players are displayed first
   sort_statlist( gs );
-
 
   // Fix tilting trees problem
   tilt_characters_to_terrain(gs);

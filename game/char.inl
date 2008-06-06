@@ -273,22 +273,12 @@ INLINE bool_t wp_list_advance(WP_LIST * wl)
 {
   // BB > return value of btrue means wp_list is empty
 
-  bool_t retval = bfalse;
+  if(NULL == wl || wp_list_empty(wl)) return bfalse;
 
-  if(NULL == wl) return retval;
+  // advance the tail and let it wrap around
+  wl->tail = (wl->tail + 1) % MAXWAY;
 
-  if( wl->tail != wl->head )
-  {
-    // advance the tail and let it wrap around
-    wl->tail = (wl->tail + 1) % MAXWAY;
-  }
-
-  if ( wl->tail == wl->head )
-  {
-    retval = btrue;
-  }
-
-  return retval;
+  return wp_list_empty(wl);
 }
 
 //--------------------------------------------------------------------------------------------
