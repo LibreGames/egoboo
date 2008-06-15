@@ -27,6 +27,10 @@ struct Mad_t;
 
 #define MAXVERTICES                    1024         // Max number of points in a model
 
+#define MAXSTOR             (1<<4)                  // Storage data
+#define STORAND             (MAXSTOR-1)             //
+
+
 #define DELAY_BORE                        (rand()&255)+120
 #define DELAY_CAREFUL                     50
 #define REEL                            7600.0      // Dampen for melee knock back
@@ -70,9 +74,6 @@ struct Mad_t;
 #define SEEKURSEAND         31                      // Blacking flash
 #define SEEINVISIBLE        128                     // Cutoff for invisible characters
 #define INVISIBLE           20                      // The character can't be detected
-
-#define MAXSTOR             (1<<3)                  // Storage data
-#define STORAND             (MAXSTOR-1)             //
 
 typedef enum missle_handling_e
 {

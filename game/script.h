@@ -369,7 +369,8 @@ typedef enum script_opcode_e
   F_SetCameraSwing,					          	//
   F_EnableRespawn,					          	//
   F_DisableRespawn,					          	//
-  F_IfButtonPressed				          		//
+  F_IfButtonPressed,
+  F_IfHolderScoredAHit					// Scripted AI functions (v1.10)
 } OPCODE;
 
 typedef enum script_operation_e
@@ -457,7 +458,9 @@ typedef enum script_variable_e
   VAR_TARGET_MONEY,
   VAR_TARGET_TURNAWAY,
   VAR_SELF_LEVEL,
-  VAR_SPAWN_DISTANCE
+  VAR_SPAWN_DISTANCE,
+  VAR_TARGET_MAX_LIFE,
+  VAR_SELF_CONTENT
 } VARIABLE;
 
 typedef struct ScriptInfo_t

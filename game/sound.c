@@ -169,7 +169,7 @@ int snd_play_sound( CGame * gs, float intensity, vect3 pos, Mix_Chunk *loadedwav
 {
   // ZF> This function plays a specified sound
   // (Or returns -1 (INVALID_CHANNEL) if it failed to play the sound)
-  int channel;
+  Sint8 channel;
 
   if( !_sndState.soundActive ) return INVALID_CHANNEL;
 

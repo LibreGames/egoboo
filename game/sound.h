@@ -12,7 +12,6 @@ struct CGame_t;
 
 //------------------------------------------------------------------------------
 
-#define MAXSEQUENCE         256                     // Number of tracks in sequence
 #define MAXWAVE         16                            // Up to 16 waves per model
 #define VOLMIN          -4000                         // Minumum Volume level
 #define VOLUMERATIO     7                             // Volume ratio
@@ -31,7 +30,7 @@ typedef enum global_sound_t
   GSOUND_WEATHER,                  // 2 - Weather Effect
   GSOUND_SPLASH,                   // 3 - Hit Water tile (Splash)
   GSOUND_COINFALL,                 // 4 - Coin falls on ground
-  GSOUND_LEVELUP,				           // 5 - Level up sound
+  GSOUND_LEVELUP,				   // 5 - Level up sound
   GSOUND_COUNT = MAXWAVE
 };
 

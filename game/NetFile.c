@@ -1018,7 +1018,7 @@ int nfhost_HostCallback(void * data)
   }
 
   net_logf("NET INFO: nfhost_HostCallback() thread - terminating... ");
-  retval = nfhost_stopThreads();
+  //retval = nfhost_stopThreads();         DEBUG: Missing a argument for call
   if(rv_error == retval)
   {
     net_logf("Error!\n");

@@ -2,6 +2,7 @@
 
 #include "egoboo_config.h"
 #include "egoboo_types.h"
+#include "egoboo_math.h"
 
 #ifndef INLINE
 #error

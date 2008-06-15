@@ -5984,13 +5984,13 @@ bool_t check_skills( CGame * gs, int who, Uint32 whichskill )
 int check_player_quest( char *whichplayer, IDSZ idsz )
 {
   // ZF> This function checks if the specified player has the IDSZ in his or her quest.txt
-  // and returns the quest level of that specific quest (Or -2 if it is not found, -1 if it is finished)
+  // and returns the quest level of that specific quest (Or NOQUEST if it is not found, QUESTBEATEN if it is finished)
 
   FILE *fileread;
   STRING newloadname;
   IDSZ newidsz;
   bool_t foundidsz = bfalse;
-  Sint8 result = -2;
+  Sint8 result = NOQUEST;
   Sint8 iTmp;
 
   //Always return "true" for [NONE] IDSZ checks
@@ -6026,7 +6026,7 @@ bool_t add_quest_idsz( char *whichplayer, IDSZ idsz )
   STRING newloadname;
 
   // Only add quest IDSZ if it doesnt have it already
-  if (check_player_quest(whichplayer, idsz) >= -1) return bfalse;
+  if (check_player_quest(whichplayer, idsz) >= QUESTBEATEN) return bfalse;
 
   // Try to open the file in read and append mode
   snprintf( newloadname, sizeof( newloadname ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.players_dir, whichplayer, CData.quest_file );
@@ -6040,6 +6040,7 @@ bool_t add_quest_idsz( char *whichplayer, IDSZ idsz )
 }
 
 //--------------------------------------------------------------------------------------------
+//TODO: This should be moved to file_common.c
 bool_t fcopy_line(FILE * fileread, FILE * filewrite)
 {
   // BB > copy a line of arbitrary length, in chunks of length
@@ -6061,18 +6062,19 @@ bool_t fcopy_line(FILE * fileread, FILE * filewrite)
   return btrue;
 };
 
+
 //--------------------------------------------------------------------------------------------
 int modify_quest_idsz( char *whichplayer, IDSZ idsz, int adjustment )
 {
   // ZF> This function increases or decreases a Quest IDSZ quest level by the amount determined in
   //     adjustment. It then returns the current quest level it now has.
-  //     It returns -2 if failed and if the adjustment is 0, the quest is marked as beaten...
+  //     It returns NOQUEST if failed and if the adjustment is 0, the quest is marked as beaten...
 
   FILE *filewrite, *fileread;
   STRING newloadname, copybuffer;
   bool_t foundidsz = bfalse;
   IDSZ newidsz;
-  Sint8 NewQuestLevel = -2, QuestLevel;
+  Sint8 NewQuestLevel = NOQUEST, QuestLevel;
 
   // Try to open the file in read/write mode
   snprintf( newloadname, sizeof( newloadname ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.players_dir, whichplayer, CData.quest_file );
@@ -6088,8 +6090,7 @@ int modify_quest_idsz( char *whichplayer, IDSZ idsz, int adjustment )
     {
       foundidsz = btrue;
       QuestLevel = fget_int( fileread );
-
-      if ( QuestLevel == -1 )					//Quest is already finished, do not modify
+      if ( QuestLevel == QUESTBEATEN )		//Quest is already finished, do not modify
       {
         fs_fileClose( fileread );
         return NewQuestLevel;

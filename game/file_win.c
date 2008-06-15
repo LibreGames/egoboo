@@ -105,13 +105,13 @@ void fs_init()
     if ( hFile == NULL )
     {
       // fatal error here, we can't find the game data.
-      log_info( "Failed!\n" );
+      log_message( "Failed!\n" );
       log_error( "fs_init: Could not find directory \"%s\"!\n", CData.basicdat_dir );
     }
   }
   CloseHandle( hFile );
 
-  log_info( "Succeeded!\n" );
+  log_message( "Succeeded!\n" );
   log_info( "Game directories are:\n\tGame: %s\n\tTemp: %s\n\tSave: %s\n\tImport: %s\n",
             win32_gamePath, win32_tempPath, win32_savePath, win32_importPath );
 }

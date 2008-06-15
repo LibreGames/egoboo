@@ -830,6 +830,8 @@ void load_ai_codes( char* loadname )
   REGISTER_OPCODE( opcode_lst, 'V', VAR_TARGET_TURNAWAY, "targetturnfrom" );   // 069
   REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_LEVEL,      "selflevel" );   // 070
   REGISTER_OPCODE( opcode_lst, 'V', VAR_SPAWN_DISTANCE,  "selfspawndistance" );   // 070
+  REGISTER_OPCODE( opcode_lst, 'V', VAR_TARGET_MAX_LIFE, "targetmaxlife" );   // 070
+  REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_CONTENT,    "selfcontent" );   // 070
 
   // register internal constants
   REGISTER_OPCODE( opcode_lst, 'C', LATCHBUTTON_LEFT, "LATCHLEFT" );
@@ -1329,6 +1331,7 @@ void load_ai_codes( char* loadname )
   REGISTER_FUNCTION( opcode_lst, EnableRespawn);
   REGISTER_FUNCTION( opcode_lst, DisableRespawn);
   REGISTER_FUNCTION( opcode_lst, IfButtonPressed);
+  REGISTER_FUNCTION( opcode_lst, IfHolderScoredAHit);
 
 
   // register all the function !!!ALIASES!!!
@@ -4330,7 +4333,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       {
         snprintf( cTmp, sizeof( cTmp ), "%s.obj", gs->ChrList[pstate->target].name );
         iTmp = check_player_quest( cTmp, pstate->tmpargument );
-        if ( iTmp > -1 )
+        if ( iTmp > QUESTBEATEN )
         {
           returncode = btrue;
           pstate->tmpx = iTmp;
@@ -4401,6 +4404,19 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       // This proceeds if the character is a player and pressing the latch specified in tmpargument
       returncode = HAS_SOME_BITS( pstate->latch.b, pstate->tmpargument ) && chr_is_player(gs, ichr);
       break;
+
+    case F_IfHolderScoredAHit:
+      // Proceed only if the character holder scored a hit
+	  returncode = bfalse;
+	  sTmp = chr_get_attachedto( gs->ChrList, MAXCHR, ichr );
+      
+	  if ( chr_attached( gs->ChrList, MAXCHR, ichr ) )
+	  {
+		pstate->tmpargument = HAS_SOME_BITS( gs->ChrList[pstate->target].aistate.alert,ALERT_SCOREDAHIT );
+        returncode = btrue;
+	  }
+      break;
+
 
     case F_End:
       break;
@@ -4817,10 +4833,19 @@ retval_t run_operand( CGame * gs, Uint32 value, CHR_REF ichr )
                     ( pchr->stt.z - pchr->pos.z ) * ( pchr->stt.z - pchr->pos.z ) );
         break;
 
+	  case VAR_TARGET_MAX_LIFE:
+        iTmp = ptarget->lifemax_fp8;
+        break;
+
+	  case VAR_SELF_CONTENT:
+        iTmp = pstate->content;
+        break;
+
       default:
-        log_warning("run_operand() - \"%s\"(0x%x) unknown variable", scriptname, pstate->offset);
+        log_warning("run_operand() - \"%s\"(0x%x) unknown variable\n", scriptname, pstate->offset);
         return rv_error;
         break;
+
     }
   }
 

@@ -2733,7 +2733,7 @@ int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
         memcpy(&CData, &CData_default, sizeof(ConfigData));
 
         // start initializing the various subsystems
-        log_message( "Starting Egoboo %s...\n", VERSION );
+        log_info( "proc_mainLoop() - Starting Egoboo %s...\n", VERSION );
 
         // make sure the arrays are initialized to some specific initial value
         memset(BlipList, 0, MAXBLIP * sizeof(BLIP));
@@ -3588,11 +3588,11 @@ int proc_gameLoop( ProcState * gproc, CGame * gs )
         log_info( "proc_gameLoop() - Loading module %s... ", gs->mod.loadname);
         if( mod_return )
         {
-          log_info("Succeeded!\n");
+          log_message("Succeeded!\n");
         }
         else
         {
-          log_info("Failed!\n");
+          log_message("Failed!\n");
           gproc->KillMe = btrue;
           gproc->returnValue = 0;
           return gproc->returnValue;

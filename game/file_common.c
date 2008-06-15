@@ -141,6 +141,29 @@ void fs_copyDirectory( const char *sourceDir, const char *destDir )
 }
 
 //--------------------------------------------------------------------------------------------
+/*bool_t fcopy_line(FILE * fileread, FILE * filewrite)
+{
+  // BB > copy a line of arbitrary length, in chunks of length
+  //      sizeof(linebuffer)
+
+  char linebuffer[64];
+
+  if(NULL == fileread || NULL == filewrite) return bfalse;
+  if( feof(fileread) || feof(filewrite) ) return bfalse;
+
+  fgets(linebuffer, sizeof(linebuffer), fileread);
+  fputs(linebuffer, filewrite);
+  while( strlen(linebuffer) == sizeof(linebuffer) )
+  {
+    fgets(linebuffer, sizeof(linebuffer), fileread);
+    fputs(linebuffer, filewrite);
+  }
+
+  return btrue;
+};*/
+
+
+//--------------------------------------------------------------------------------------------
 FILE * fs_fileOpen( PRIORITY priority, const char * src, const char * fname, const char * mode )
 {
   // BB > an alias to the standard fopen() command.  Allows proper logging of

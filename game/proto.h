@@ -269,5 +269,4 @@ typedef struct collision_volume_t CVolume;
 
 
 
-
 #endif //#ifndef _PROTO_H_

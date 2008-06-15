@@ -103,6 +103,10 @@ typedef enum blud_level_e
 
 #define SPELLBOOK           127                     // The spellbook model TODO: change this badly thing
 
+
+#define NOQUEST             -2						// Quest not found
+#define QUESTBEATEN         -1                      // Quest is beaten
+
 #define MAXSTAT             16                      // Maximum status displays
 
 #define MAXMESSAGE          6                       // Number of messages
@@ -121,13 +125,6 @@ typedef enum blud_level_e
 
 
 #define IDSZ_NONE            MAKE_IDSZ("NONE")       // [NONE]
-
-
-
-
-
-
-
 
 
 
@@ -344,15 +341,11 @@ typedef enum tx_filters_e
 
 
 //Interface stuff
-#define TRIMX 640
-#define TRIMY 480
-
 EXTERN IRect                    iconrect;                   // The 32x32 icon rectangle
 EXTERN IRect                    trimrect;                   // The menu trim rectangle
 
 
 EXTERN IRect                    tabrect[NUMBAR];            // The tab rectangles
-
 EXTERN IRect                    barrect[NUMBAR];            // The bar rectangles
 
 EXTERN Uint16                   blipwidth;

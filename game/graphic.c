@@ -136,7 +136,7 @@ void DisableTexturing()
 
 
 
-// This needs work
+//TODO: This needs work
 static GLint threeDmode_begin_level = 0;
 void Begin3DMode()
 {
@@ -284,7 +284,6 @@ Uint32 load_one_icon( char * szModname, char * szObjectname, char * szFilename )
 void mnu_prime_titleimage(MenuProc * mproc)
 {
   // ZZ> This function sets the title image pointers to NULL
-  int cnt;
 
   mnu_free_all_titleimages(mproc);
 
