@@ -300,31 +300,6 @@ typedef union float_int_convert_u
 #endif
 
 //--------------------------------------------------------------------------------------------
-typedef struct bbox_list_t
-{
-  int       count;
-  AA_BBOX * list;
-} BBOX_LIST;
-
-INLINE const BBOX_LIST * bbox_list_new(BBOX_LIST * lst);
-INLINE const BBOX_LIST * bbox_list_delete(BBOX_LIST * lst);
-INLINE const BBOX_LIST * bbox_list_renew(BBOX_LIST * lst);
-INLINE const BBOX_LIST * bbox_list_alloc(BBOX_LIST * lst, int count);
-INLINE const BBOX_LIST * bbox_list_realloc(BBOX_LIST * lst, int count);
-
-//--------------------------------------------------------------------------------------------
-typedef struct bbox_array_t
-{
-  int         count;
-  BBOX_LIST * list;
-} BBOX_ARY;
-
-INLINE const BBOX_ARY * bbox_ary_new(BBOX_ARY * ary);
-INLINE const BBOX_ARY * bbox_ary_delete(BBOX_ARY * ary);
-INLINE const BBOX_ARY * bbox_ary_renew(BBOX_ARY * ary);
-INLINE const BBOX_ARY * bbox_ary_alloc(BBOX_ARY * ary, int count);
-
-//--------------------------------------------------------------------------------------------
 
 enum ProcessStates_e;
 struct ClockState_t;
@@ -362,5 +337,34 @@ typedef enum respawn_mode_e
   RESPAWN_ANYTIME
 } RESPAWN_MODE;
 
+
+
 typedef int (SDLCALL *SDL_Callback_Ptr)(void *);
+
+
+// a hash type for "efficiently" storing data
+typedef struct HashNode_t
+{
+  bool_t initialized;
+  struct HashNode_t * next;
+  void * data;
+} HashNode;
+
+INLINE HashNode * HashNode_create(void * data);
+INLINE bool_t          HashNode_destroy(HashNode **);
+INLINE HashNode * HashNode_insert_after (HashNode lst[], HashNode * n);
+INLINE HashNode * HashNode_insert_before(HashNode lst[], HashNode * n);
+INLINE HashNode * HashNode_remove_after (HashNode lst[]);
+INLINE HashNode * HashNode_remove       (HashNode lst[]);
+
+typedef struct HashList_t
+{
+  int              allocated;
+  int           *  subcount;
+  HashNode ** sublist;
+} HashList;
+
+INLINE HashList * HashList_create(int size);
+INLINE bool_t     HashList_destroy(HashList **);
+
 

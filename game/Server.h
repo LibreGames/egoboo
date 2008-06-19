@@ -29,7 +29,7 @@
 #include "char.h"
 #include "input.h"
 
-#include "egoboo_types.h"
+#include "egoboo_types.inl"
 #include "egoboo.h"
 
 #include <enet.h>

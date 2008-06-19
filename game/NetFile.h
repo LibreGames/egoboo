@@ -2,7 +2,7 @@
 
 #include "network.h"
 
-#include "egoboo_types.h"
+#include "egoboo_types.inl"
 
 
 //--------------------------------------------------------------------------------------------

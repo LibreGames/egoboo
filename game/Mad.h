@@ -2,7 +2,7 @@
 
 #include "object.h"
 
-#include "egoboo_math.h"
+#include "egoboo_math.inl"
 #include "egoboo.h"
 
 struct CGame_t;

@@ -25,7 +25,7 @@
 #pragma once
 
 #include "ogl_texture.h"
-#include "egoboo_types.h"
+#include "egoboo_types.inl"
 
 
 //--------------------------------------------------------------------------------------------

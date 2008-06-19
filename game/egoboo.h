@@ -34,8 +34,8 @@
 #include "ogl_texture.h"        // OpenGL texture loader
 
 #include "egoboo_config.h"          // system dependent configuration information
-#include "egoboo_math.h"            // vector and matrix math
-#include "egoboo_types.h"           // Typedefs for egoboo
+#include "egoboo_math.inl"            // vector and matrix math
+#include "egoboo_types.inl"           // Typedefs for egoboo
 
 #include <stdlib.h>
 #include <stdarg.h>

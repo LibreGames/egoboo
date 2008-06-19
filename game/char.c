@@ -50,6 +50,15 @@
 #include "mesh.inl"
 #include "egoboo_math.inl"
 
+// pair-wise collision data
+typedef struct CoData_t
+{
+  CHR_REF chra, chrb;
+  PRT_REF prtb;
+} CoData;
+
+HashList * CoList;
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
@@ -4065,6 +4074,34 @@ bool_t chr_is_inside( CGame * gs, CHR_REF chra_ref, float lerp, CHR_REF chrb_ref
 }
 
 //--------------------------------------------------------------------------------------------
+bool_t chr_detect_collision( CGame * gs, CHR_REF chra_ref, CHR_REF chrb_ref, bool_t exclude_height, CVolume * cv)
+{
+  // BB > use the bounding boxes to estimate whether a collision has occurred.
+
+  PChr chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
+
+  bool_t retval = bfalse;
+
+  // set the minimum bumper level for object a
+  if(chrlst[chra_ref].bmpdata.cv.lod < 0)
+  {
+    chr_calculate_bumpers( gs, chrlst + chra_ref, 0);
+  }
+
+  // set the minimum bumper level for object b
+  if(chrlst[chrb_ref].bmpdata.cv.lod < 0)
+  {
+    chr_calculate_bumpers( gs, chrlst + chrb_ref, 0);
+  }
+
+  // find the simplest collision volume
+  return find_collision_volume( &(chrlst[chra_ref].pos), &(chrlst[chra_ref].bmpdata.cv), &(chrlst[chrb_ref].pos), &(chrlst[chrb_ref].bmpdata.cv), exclude_height, cv);
+}
+
+
+
+//--------------------------------------------------------------------------------------------
 bool_t chr_do_collision( CGame * gs, CHR_REF chra_ref, CHR_REF chrb_ref, bool_t exclude_height, CVolume * cv)
 {
   // BB > use the bounding boxes to determine whether a collision has occurred.
@@ -4190,6 +4227,15 @@ bool_t chr_do_collision( CGame * gs, CHR_REF chra_ref, CHR_REF chrb_ref, bool_t 
 }
 
 //--------------------------------------------------------------------------------------------
+bool_t prt_detect_collision( CGame * gs, CHR_REF chra_ref, PRT_REF prtb, bool_t exclude_height )
+{
+  PChr chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
+
+  PPrt prtlst = gs->PrtList;
+
+  return find_collision_volume( &(chrlst[chra_ref].pos), &(chrlst[chra_ref].bmpdata.cv), &(prtlst[prtb].pos), &(prtlst[prtb].bmpdata.cv), bfalse, NULL );
+}
 bool_t prt_do_collision( CGame * gs, CHR_REF chra_ref, PRT_REF prtb, bool_t exclude_height )
 {
   PChr chrlst      = gs->ChrList;
@@ -4224,20 +4270,34 @@ void do_bumping( CGame * gs, float dUpdate )
 {
   // ZZ> This function sets handles characters hitting other characters or particles
 
-  PChr chrlst      = gs->ChrList;
+  PChr chrlst        = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
+
+  PPrt prtlst        = gs->PrtList;
+  size_t prtlst_size = PRTLST_COUNT;
+
 
   Uint32  blnode_a, blnode_b;
   CHR_REF chra_ref, chrb_ref;
   Uint32 fanblock;
   int cnt, tnc, chrinblock, prtinblock;
   vect3 apos, bpos;
+  int    cdata_count = 0;
+  CoData cdata[512];
 
   float loc_platkeep, loc_platascend, loc_platstick;
 
   loc_platascend = pow( PLATASCEND, 1.0 / dUpdate );
   loc_platkeep   = 1.0 - loc_platascend;
   loc_platstick  = pow( gs->phys.platstick, 1.0 / dUpdate );
+
+  // create a collision hash table that can keep track of 512
+  // binary collisions per frame
+  if(NULL == CoList)
+  {
+    CoList = HashList_create(512);
+    assert(NULL != CoList);
+  }
 
   create_bumplists(gs);
   cv_list_clear();
@@ -4249,172 +4309,165 @@ void do_bumping( CGame * gs, float dUpdate )
     chrinblock = bumplist_get_chr_count(&bumplist, fanblock);
     prtinblock = bumplist_get_prt_count(&bumplist, fanblock);
 
-    //// remove bad platforms
-    //for ( cnt = 0, blnode_a = bumplist_get_chr_head(&bumplist, fanblock);
-    //      cnt < chrinblock && INVALID_BUNPLIST_NODE != blnode_a;
-    //      cnt++, blnode_a = bumplist_get_next_chr( &bumplist, blnode_a ) )
-    //{
-    //  chra_ref = bumplist_get_ref(&bumplist, blnode_a);
-    //  VALID_CHR( chrlst, chra_ref );
-    //
-    //  // detach character from invalid platforms
-    //  chrb_ref  = chr_get_onwhichplatform( chra_ref );
-    //  if ( VALID_CHR( chrlst, chrb_ref ) )
-    //  {
-    //    if ( !chr_is_inside( chra_ref, 0.0f, chrb_ref, btrue ) ||
-    //         chrlst[chrb_ref].bmpdata.cv.z_min  > chrlst[chrb_ref].bmpdata.cv.z_max - PLATTOLERANCE )
-    //    {
-    //      remove_from_platform( chra_ref );
-    //    }
-    //  }
-    //};
-
-    //// do attachments
-    //for ( cnt = 0, blnode_a = bumplist_get_chr_head(&bumplist, fanblock);
-    //      cnt < chrinblock && INVALID_BUNPLIST_NODE != blnode_a;
-    //      cnt++, blnode_a = bumplist_get_next_chr( &bumplist, blnode_a ) )
-    //{
-    //  chra_ref = bumplist_get_ref(&bumplist, blnode_a);
-    //  VALID_CHR( chrlst, chra_ref );
-    //
-    //  // Do platforms (no interaction with held or mounted items)
-    //  if ( chr_attached( chra_ref ) ) continue;
-
-    //  for ( blnode_b = bumplist_get_next_chr( &bumplist, blnode_a ), tnc = cnt + 1;
-    //        tnc < chrinblock && VALID_CHR_RANGE( chrb_ref );
-    //        tnc++, blnode_b = bumplist_get_next_chr( &bumplist, blnode_b ) )
-    //  {
-    //    chrb_ref = bumplist_get_ref(&bumplist, blnode_b);
-    //    VALID_CHR( chrlst, chrb_ref );
-    //
-    //    // do not put something on a platform that is being carried by someone
-    //    if ( chr_attached( chrb_ref ) ) continue;
-
-    //    // do not consider anything that is already a item/platform combo
-    //    if ( chrlst[chra_ref].onwhichplatform == chrb_ref || chrlst[chrb_ref].onwhichplatform == chra_ref ) continue;
-
-    //    if ( chr_is_inside( chra_ref, 0.0f, chrb_ref, btrue) )
-    //    {
-    //      // check for compatibility
-    //      if ( chrlst[chrb_ref].bmpdata.calc_is_platform )
-    //      {
-    //        // check for overlap in the z direction
-    //        if ( chrlst[chra_ref].pos.z > MAX( chrlst[chrb_ref].bmpdata.cv.z_min, chrlst[chrb_ref].bmpdata.cv.z_max - PLATTOLERANCE ) && chrlst[chra_ref].level < chrlst[chrb_ref].bmpdata.cv.z_max )
-    //        {
-    //          // A is inside, coming from above
-    //          attach_to_platform( chra_ref, chrb_ref );
-    //        }
-    //      }
-    //    }
-    //
-    //    if( chr_is_inside( chrb_ref, 0.0f, chra_ref, btrue) )
-    //    {
-    //      if ( chrlst[chra_ref].bmpdata.calc_is_platform )
-    //      {
-    //        // check for overlap in the z direction
-    //        if ( chrlst[chrb_ref].pos.z > MAX( chrlst[chra_ref].bmpdata.cv.z_min, chrlst[chra_ref].bmpdata.cv.z_max - PLATTOLERANCE ) && chrlst[chrb_ref].level < chrlst[chra_ref].bmpdata.cv.z_max )
-    //        {
-    //          // A is inside, coming from above
-    //          attach_to_platform( chrb_ref, chra_ref );
-    //        }
-    //      }
-    //    }
-
-    //  }
-    //}
-
-    //// Do mounting
-    //for ( cnt = 0, blnode_a = bumplist_get_chr_head(&bumplist, fanblock);
-    //      cnt < chrinblock && INVALID_BUNPLIST_NODE != blnode_a;
-    //      cnt++, blnode_a = bumplist_get_next_chr( &bumplist, blnode_a ) )
-    //{
-    //  chra_ref = bumplist_get_ref(&bumplist, blnode_a);
-    //  VALID_CHR( chrlst, chra_ref );
-    //
-    //  if ( chr_attached( chra_ref ) ) continue;
-
-    //  for ( blnode_b = bumplist_get_next_chr( &bumplist, blnode_a ), tnc = cnt + 1;
-    //        tnc < chrinblock && VALID_CHR_RANGE( chrb_ref );
-    //        tnc++, blnode_b = bumplist_get_next_chr( &bumplist, blnode_b ) )
-    //  {
-    //    chrb_ref = bumplist_get_ref(&bumplist, blnode_b);
-    //    VALID_CHR( chrlst, chrb_ref );
-    //
-    //    // do not mount something that is being carried by someone
-    //    if ( chr_attached( chrb_ref ) ) continue;
-
-    //    if ( chr_is_inside( chra_ref, 0.0f, chrb_ref, btrue)   )
-    //    {
-
-    //      // Now see if either is on top the other like a platform
-    //      if ( chrlst[chra_ref].pos.z > chrlst[chrb_ref].bmpdata.cv.z_max - PLATTOLERANCE && chrlst[chra_ref].pos.z < chrlst[chrb_ref].bmpdata.cv.z_max + PLATTOLERANCE / 5 )
-    //      {
-    //        // Is A falling on B?
-    //        if ( chrlst[chra_ref].vel.z < chrlst[chrb_ref].vel.z )
-    //        {
-    //          if ( chrlst[chra_ref].flyheight == 0 && chrlst[chra_ref].alive && ChrList_getPMad(gs, chra_ref)->actionvalid[ACTION_MI] && !chrlst[chra_ref].prop.isitem )
-    //          {
-    //            if ( chrlst[chrb_ref].alive && chrlst[chrb_ref].prop.ismount && !chr_using_slot( chrb_ref, SLOT_SADDLE ) )
-    //            {
-    //              remove_from_platform( chra_ref );
-    //              if ( !attach_character_to_mount( chra_ref, chrb_ref, SLOT_SADDLE ) )
-    //              {
-    //                // failed mount is a bump
-    //                chrlst[chra_ref].aistate.alert |= ALERT_BUMPED;
-    //                chrlst[chrb_ref].aistate.alert |= ALERT_BUMPED;
-    //                chrlst[chra_ref].aistate.bumplast = chrb_ref;
-    //                chrlst[chrb_ref].aistate.bumplast = chra_ref;
-    //              };
-    //            }
-    //          }
-    //        }
-    //      }
-
-    //    }
-
-    //    if( chr_is_inside( chrb_ref, 0.0f, chra_ref, btrue)   )
-    //    {
-    //      if ( chrlst[chrb_ref].pos.z > chrlst[chra_ref].bmpdata.cv.z_max - PLATTOLERANCE && chrlst[chrb_ref].pos.z < chrlst[chra_ref].bmpdata.cv.z_max + PLATTOLERANCE / 5 )
-    //      {
-    //        // Is B falling on A?
-    //        if ( chrlst[chrb_ref].vel.z < chrlst[chra_ref].vel.z )
-    //        {
-    //          if ( chrlst[chrb_ref].flyheight == 0 && chrlst[chrb_ref].alive && ChrList_getPMad(gs, chrb_ref)->actionvalid[ACTION_MI] && !chrlst[chrb_ref].prop.isitem )
-    //          {
-    //            if ( chrlst[chra_ref].alive && chrlst[chra_ref].prop.ismount && !chr_using_slot( chra_ref, SLOT_SADDLE ) )
-    //            {
-    //              remove_from_platform( chrb_ref );
-    //              if ( !attach_character_to_mount( chrb_ref, chra_ref, SLOT_SADDLE ) )
-    //              {
-    //                // failed mount is a bump
-    //                chrlst[chra_ref].aistate.alert |= ALERT_BUMPED;
-    //                chrlst[chrb_ref].aistate.alert |= ALERT_BUMPED;
-    //                chrlst[chra_ref].aistate.bumplast = chrb_ref;
-    //                chrlst[chrb_ref].aistate.bumplast = chra_ref;
-    //              };
-    //            };
-    //          }
-    //        }
-    //      }
-    //    }
-    //  }
-    //}
-
-    // do collisions
+    // remove bad platforms
     for ( cnt = 0, blnode_a = bumplist_get_chr_head(&bumplist, fanblock);
           cnt < chrinblock && INVALID_BUMPLIST_NODE != blnode_a;
           cnt++, blnode_a = bumplist_get_next_chr( gs, &bumplist, blnode_a ) )
     {
-      float lerpa;
-
       chra_ref = bumplist_get_ref(&bumplist, blnode_a);
       VALID_CHR( chrlst, chra_ref );
     
-      lerpa = (chrlst[chra_ref].pos.z - chrlst[chra_ref].level) / PLATTOLERANCE;
-      lerpa = CLIP(lerpa, 0, 1);
+      // detach character from invalid platforms
+      chrb_ref  = chr_get_onwhichplatform( chrlst, chrlst_size, chra_ref );
+      if ( VALID_CHR( chrlst, chrb_ref ) )
+      {
+        if ( !chr_is_inside( gs, chra_ref, 0.0f, chrb_ref, btrue ) ||
+             chrlst[chrb_ref].bmpdata.cv.z_min  > chrlst[chrb_ref].bmpdata.cv.z_max - PLATTOLERANCE )
+        {
+          remove_from_platform( gs, chra_ref );
+        }
+      }
+    };
 
-      apos = chrlst[chra_ref].pos;
+    // do attachments
+    for ( cnt = 0, blnode_a = bumplist_get_chr_head(&bumplist, fanblock);
+          cnt < chrinblock && INVALID_BUMPLIST_NODE != blnode_a;
+          cnt++, blnode_a = bumplist_get_next_chr( gs, &bumplist, blnode_a ) )
+    {
+      chra_ref = bumplist_get_ref(&bumplist, blnode_a);
+      VALID_CHR( chrlst, chra_ref );
+    
+      // Do platforms (no interaction with held or mounted items)
+      if ( chr_attached( chrlst, chrlst_size, chra_ref ) ) continue;
 
+      for ( blnode_b = bumplist_get_next_chr( gs, &bumplist, blnode_a ), tnc = cnt + 1;
+            tnc < chrinblock && VALID_CHR_RANGE( chrb_ref );
+            tnc++, blnode_b = bumplist_get_next_chr( gs, &bumplist, blnode_b ) )
+      {
+        chrb_ref = bumplist_get_ref(&bumplist, blnode_b);
+        VALID_CHR( chrlst, chrb_ref );
+    
+        // do not put something on a platform that is being carried by someone
+        if ( chr_attached( chrlst, chrlst_size, chrb_ref ) ) continue;
+
+        // do not consider anything that is already a item/platform combo
+        if ( chrlst[chra_ref].onwhichplatform == chrb_ref || chrlst[chrb_ref].onwhichplatform == chra_ref ) continue;
+
+        if ( chr_is_inside( gs, chra_ref, 0.0f, chrb_ref, btrue) )
+        {
+          // check for compatibility
+          if ( chrlst[chrb_ref].bmpdata.calc_is_platform )
+          {
+            // check for overlap in the z direction
+            if ( chrlst[chra_ref].pos.z > MAX( chrlst[chrb_ref].bmpdata.cv.z_min, chrlst[chrb_ref].bmpdata.cv.z_max - PLATTOLERANCE ) && chrlst[chra_ref].level < chrlst[chrb_ref].bmpdata.cv.z_max )
+            {
+              // A is inside, coming from above
+              attach_to_platform( gs, chra_ref, chrb_ref );
+            }
+          }
+        }
+    
+        if( chr_is_inside( gs, chrb_ref, 0.0f, chra_ref, btrue) )
+        {
+          if ( chrlst[chra_ref].bmpdata.calc_is_platform )
+          {
+            // check for overlap in the z direction
+            if ( chrlst[chrb_ref].pos.z > MAX( chrlst[chra_ref].bmpdata.cv.z_min, chrlst[chra_ref].bmpdata.cv.z_max - PLATTOLERANCE ) && chrlst[chrb_ref].level < chrlst[chra_ref].bmpdata.cv.z_max )
+            {
+              // A is inside, coming from above
+              attach_to_platform( gs, chrb_ref, chra_ref );
+            }
+          }
+        }
+
+      }
+    }
+
+    // Do mounting
+    for ( cnt = 0, blnode_a = bumplist_get_chr_head(&bumplist, fanblock);
+          cnt < chrinblock && INVALID_BUMPLIST_NODE != blnode_a;
+          cnt++, blnode_a = bumplist_get_next_chr( gs, &bumplist, blnode_a ) )
+    {
+      chra_ref = bumplist_get_ref(&bumplist, blnode_a);
+      VALID_CHR( chrlst, chra_ref );
+    
+      if ( chr_attached( chrlst, chrlst_size, chra_ref ) ) continue;
+
+      for ( blnode_b = bumplist_get_next_chr( gs, &bumplist, blnode_a ), tnc = cnt + 1;
+            tnc < chrinblock && VALID_CHR_RANGE( chrb_ref );
+            tnc++, blnode_b = bumplist_get_next_chr( gs, &bumplist, blnode_b ) )
+      {
+        chrb_ref = bumplist_get_ref(&bumplist, blnode_b);
+        VALID_CHR( chrlst, chrb_ref );
+    
+        // do not mount something that is being carried by someone
+        if ( chr_attached( chrlst, chrlst_size, chrb_ref ) ) continue;
+
+        if ( chr_is_inside( gs, chra_ref, 0.0f, chrb_ref, btrue)   )
+        {
+
+          // Now see if either is on top the other like a platform
+          if ( chrlst[chra_ref].pos.z > chrlst[chrb_ref].bmpdata.cv.z_max - PLATTOLERANCE && chrlst[chra_ref].pos.z < chrlst[chrb_ref].bmpdata.cv.z_max + PLATTOLERANCE / 5 )
+          {
+            // Is A falling on B?
+            if ( chrlst[chra_ref].vel.z < chrlst[chrb_ref].vel.z )
+            {
+              if ( chrlst[chra_ref].flyheight == 0 && chrlst[chra_ref].alive && ChrList_getPMad(gs, chra_ref)->actionvalid[ACTION_MI] && !chrlst[chra_ref].prop.isitem )
+              {
+                if ( chrlst[chrb_ref].alive && chrlst[chrb_ref].prop.ismount && !chr_using_slot( chrlst, chrlst_size, chrb_ref, SLOT_SADDLE ) )
+                {
+                  remove_from_platform( gs, chra_ref );
+                  if ( !attach_character_to_mount( gs, chra_ref, chrb_ref, SLOT_SADDLE ) )
+                  {
+                    // failed mount is a bump
+                    chrlst[chra_ref].aistate.alert |= ALERT_BUMPED;
+                    chrlst[chrb_ref].aistate.alert |= ALERT_BUMPED;
+                    chrlst[chra_ref].aistate.bumplast = chrb_ref;
+                    chrlst[chrb_ref].aistate.bumplast = chra_ref;
+                  };
+                }
+              }
+            }
+          }
+
+        }
+
+        if( chr_is_inside( gs, chrb_ref, 0.0f, chra_ref, btrue)   )
+        {
+          if ( chrlst[chrb_ref].pos.z > chrlst[chra_ref].bmpdata.cv.z_max - PLATTOLERANCE && chrlst[chrb_ref].pos.z < chrlst[chra_ref].bmpdata.cv.z_max + PLATTOLERANCE / 5 )
+          {
+            // Is B falling on A?
+            if ( chrlst[chrb_ref].vel.z < chrlst[chra_ref].vel.z )
+            {
+              if ( chrlst[chrb_ref].flyheight == 0 && chrlst[chrb_ref].alive && ChrList_getPMad(gs, chrb_ref)->actionvalid[ACTION_MI] && !chrlst[chrb_ref].prop.isitem )
+              {
+                if ( chrlst[chra_ref].alive && chrlst[chra_ref].prop.ismount && !chr_using_slot( chrlst, chrlst_size, chra_ref, SLOT_SADDLE ) )
+                {
+                  remove_from_platform( gs, chrb_ref );
+                  if ( !attach_character_to_mount( gs, chrb_ref, chra_ref, SLOT_SADDLE ) )
+                  {
+                    // failed mount is a bump
+                    chrlst[chra_ref].aistate.alert |= ALERT_BUMPED;
+                    chrlst[chrb_ref].aistate.alert |= ALERT_BUMPED;
+                    chrlst[chra_ref].aistate.bumplast = chrb_ref;
+                    chrlst[chrb_ref].aistate.bumplast = chra_ref;
+                  };
+                };
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // detect and save character-character collisions
+    for ( cnt = 0, blnode_a = bumplist_get_chr_head(&bumplist, fanblock);
+          cnt < chrinblock && INVALID_BUMPLIST_NODE != blnode_a;
+          cnt++, blnode_a = bumplist_get_next_chr( gs, &bumplist, blnode_a ) )
+    {
+      chra_ref = bumplist_get_ref(&bumplist, blnode_a);
+      if(!VALID_CHR( chrlst, chra_ref ) ) continue;
+    
       // don't do object-object collisions if they won't feel each other
       if ( chrlst[chra_ref].bumpstrength == 0.0f ) continue;
 
@@ -4423,11 +4476,10 @@ void do_bumping( CGame * gs, float dUpdate )
             tnc < chrinblock && INVALID_BUMPLIST_NODE != blnode_b;
             tnc++, blnode_b = bumplist_get_next_chr( gs, &bumplist, blnode_b ) )
       {
-        CVolume cv;
-        float lerpb, bumpstrength;
+        float bumpstrength;
 
         chrb_ref = bumplist_get_ref(&bumplist, blnode_b);
-        VALID_CHR( chrlst, chrb_ref );
+        if( !VALID_CHR( chrlst, chrb_ref ) ) continue;
 
         bumpstrength = chrlst[chra_ref].bumpstrength * chrlst[chrb_ref].bumpstrength;
 
@@ -4440,238 +4492,412 @@ void do_bumping( CGame * gs, float dUpdate )
         // do not collide with a your platform
         if ( chrb_ref == chrlst[chra_ref].onwhichplatform || chra_ref == chrlst[chrb_ref].onwhichplatform ) continue;
 
-        bpos = chrlst[chrb_ref].pos;
-
-        lerpb = (chrlst[chrb_ref].pos.z - chrlst[chrb_ref].level) / PLATTOLERANCE;
-        lerpb = CLIP(lerpb, 0, 1);
-
-        if ( chr_do_collision( gs, chra_ref, chrb_ref, bfalse, &cv) )
+        if ( chr_detect_collision( gs, chra_ref, chrb_ref, bfalse, NULL) )
         {
-          vect3 depth, ovlap, nrm, diffa, diffb;
-          float dotprod, pressure;
-          float cr, m0, m1, psum, msum, udif, u0, u1, ln_cr;
-          bool_t bfound;
+          HashNode * n;
+          CoData   * d;
+          bool_t found;
+          int    count;
+          Uint8 hashval = 0;
+          
+          // create a hash that is order-independent and will 
+          hashval = REF_TO_INT(chra_ref) * REF_TO_INT(chrb_ref) * 0x0111 + 0x006E;
 
-          depth.x = (cv.x_max - cv.x_min);
-          ovlap.x = depth.x / MIN(chrlst[chra_ref].bmpdata.cv.x_max - chrlst[chra_ref].bmpdata.cv.x_min, chrlst[chrb_ref].bmpdata.cv.x_max - chrlst[chrb_ref].bmpdata.cv.x_min);
-          ovlap.x = CLIP(ovlap.x,-1,1);
-          nrm.x = 1.0f / ovlap.x;
-
-          depth.y = (cv.y_max - cv.y_min);
-          ovlap.y = depth.y / MIN(chrlst[chra_ref].bmpdata.cv.y_max - chrlst[chra_ref].bmpdata.cv.y_min, chrlst[chrb_ref].bmpdata.cv.y_max - chrlst[chrb_ref].bmpdata.cv.y_min);
-          ovlap.y = CLIP(ovlap.y,-1,1);
-          nrm.y = 1.0f / ovlap.y;
-
-          depth.z = (cv.z_max - cv.z_min);
-          ovlap.z = depth.z / MIN(chrlst[chra_ref].bmpdata.cv.z_max - chrlst[chra_ref].bmpdata.cv.z_min, chrlst[chrb_ref].bmpdata.cv.z_max - chrlst[chrb_ref].bmpdata.cv.z_min);
-          ovlap.z = CLIP(ovlap.z,-1,1);
-          nrm.z = 1.0f / ovlap.z;
-
-          nrm = Normalize(nrm);
-
-          pressure = (depth.x / 30.0f) * (depth.y / 30.0f) * (depth.z / 30.0f);
-
-          if(ovlap.x != 1.0)
+          found = bfalse;
+          count = CoList->subcount[hashval];
+          if( count > 0)
           {
-            diffa.x = chrlst[chra_ref].bmpdata.mids_lo.x - (cv.x_max + cv.x_min) * 0.5f;
-            diffb.x = chrlst[chrb_ref].bmpdata.mids_lo.x - (cv.x_max + cv.x_min) * 0.5f;
-          }
-          else
-          {
-            diffa.x = chrlst[chra_ref].bmpdata.mids_lo.x - chrlst[chrb_ref].bmpdata.mids_lo.x;
-            diffb.x =-diffa.x;
+            int i ;
+
+            // this hash already exists. check to see if the binary collision exists, too
+            n = CoList->sublist[hashval];
+            for(i = 0; i<count; i++)
+            {
+              d = (CoData *)(n->data);
+              if(d->chra == chra_ref && d->chrb == chrb_ref)
+              {
+                found = btrue;
+                break;
+              }
+            }
           }
 
-          if(ovlap.y != 1.0)
+
+          // insert this collision
+          if(!found)
           {
-            diffa.y = chrlst[chra_ref].bmpdata.mids_lo.y - (cv.y_max + cv.y_min) * 0.5f;
-            diffb.y = chrlst[chrb_ref].bmpdata.mids_lo.y - (cv.y_max + cv.y_min) * 0.5f;
+            // pick a free collision data
+            d = cdata + cdata_count;
+            cdata_count++;
+
+            // fill it in
+            d->chra = chra_ref;
+            d->chrb = chrb_ref;
+            d->prtb = INVALID_PRT;
+
+            // generate a new hash node
+            n = HashNode_create( d );
+
+            // insert the node
+            CoList->subcount[hashval]++;
+            CoList->sublist[hashval] = HashNode_insert_before(CoList->sublist[hashval], n);
           }
-          else
-          {
-            diffa.y = chrlst[chra_ref].bmpdata.mids_lo.y - chrlst[chrb_ref].bmpdata.mids_lo.y;
-            diffb.y =-diffa.y;
-          }
-
-          if(ovlap.y != 1.0)
-          {
-            diffa.z = chrlst[chra_ref].bmpdata.mids_lo.z - (cv.z_max + cv.z_min) * 0.5f;
-            diffa.z += (chrlst[chra_ref].bmpdata.mids_hi.z - chrlst[chra_ref].bmpdata.mids_lo.z) * lerpa;
-
-            diffb.z = chrlst[chrb_ref].bmpdata.mids_lo.z - (cv.z_max + cv.z_min) * 0.5f;
-            diffb.z += (chrlst[chrb_ref].bmpdata.mids_hi.z - chrlst[chrb_ref].bmpdata.mids_lo.z) * lerpb;
-          }
-          else
-          {
-            diffa.z  = chrlst[chra_ref].bmpdata.mids_lo.z - chrlst[chrb_ref].bmpdata.mids_lo.z;
-            diffa.z += (chrlst[chra_ref].bmpdata.mids_hi.z - chrlst[chra_ref].bmpdata.mids_lo.z) * lerpa;
-            diffa.z -= (chrlst[chrb_ref].bmpdata.mids_hi.z - chrlst[chrb_ref].bmpdata.mids_lo.z) * lerpb;
-
-            diffb.z =-diffa.z;
-          }
-
-          diffa = Normalize(diffa);
-          diffb = Normalize(diffb);
-
-          if(diffa.x < 0) nrm.x *= -1.0f;
-          if(diffa.y < 0) nrm.y *= -1.0f;
-          if(diffa.z < 0) nrm.z *= -1.0f;
-
-          dotprod = DotProduct(diffa, nrm);
-          if(dotprod != 0.0f)
-          {
-            diffa.x = pressure * dotprod * nrm.x;
-            diffa.y = pressure * dotprod * nrm.y;
-            diffa.z = pressure * dotprod * nrm.z;
-          }
-          else
-          {
-            diffa.x = pressure * nrm.x;
-            diffa.y = pressure * nrm.y;
-            diffa.z = pressure * nrm.z;
-          };
-
-          dotprod = DotProduct(diffb, nrm);
-          if(dotprod != 0.0f)
-          {
-            diffb.x = pressure * dotprod * nrm.x;
-            diffb.y = pressure * dotprod * nrm.y;
-            diffb.z = pressure * dotprod * nrm.z;
-          }
-          else
-          {
-            diffb.x = - pressure * nrm.x;
-            diffb.y = - pressure * nrm.y;
-            diffb.z = - pressure * nrm.z;
-          };
-
-          // calculate a coefficient of restitution
-          //ftmp = nrm.x * nrm.x + nrm.y * nrm.y;
-          //cr = chrlst[chrb_ref].bumpdampen * chrlst[chra_ref].bumpdampen * bumpstrength * ovlap.z * ( nrm.x * nrm.x * ovlap.x + nrm.y * nrm.y * ovlap.y ) / ftmp;
-
-          // determine a usable mass
-          m0 = -1;
-          m1 = -1;
-          if ( chrlst[chra_ref].weight < 0 && chrlst[chrb_ref].weight < 0 )
-          {
-            m0 = m1 = 110.0f;
-          }
-          else if (chrlst[chra_ref].weight == 0 && chrlst[chrb_ref].weight == 0)
-          {
-            m0 = m1 = 1.0f;
-          }
-          else
-          {
-            m0 = (chrlst[chra_ref].weight == 0.0f) ? 1.0 : chrlst[chra_ref].weight;
-            m1 = (chrlst[chrb_ref].weight == 0.0f) ? 1.0 : chrlst[chrb_ref].weight;
-          }
-
-          bfound = btrue;
-          cr = chrlst[chrb_ref].bumpdampen * chrlst[chra_ref].bumpdampen;
-          //ln_cr = log(cr);
-
-          if( m0 > 0.0f && bumpstrength > 0.0f )
-          {
-            float k = 250.0f / m0;
-            float gamma = 0.5f * (1.0f - cr) * (1.0f - cr);
-
-            //if(cr != 0.0f)
-            //{
-            //  gamma = 2.0f * ABS(ln_cr) * sqrt( k / (ln_cr*ln_cr + PI*PI) );
-            //}
-            //else
-            //{
-            //  gamma = 2.0f * sqrt(k);
-            //}
-
-            chrlst[chra_ref].accum.acc.x += (diffa.x * k  - chrlst[chra_ref].vel.x * gamma) * bumpstrength;
-            chrlst[chra_ref].accum.acc.y += (diffa.y * k  - chrlst[chra_ref].vel.y * gamma) * bumpstrength;
-            chrlst[chra_ref].accum.acc.z += (diffa.z * k  - chrlst[chra_ref].vel.z * gamma) * bumpstrength;
-          }
-
-          if( m1 > 0.0f && bumpstrength > 0.0f )
-          {
-            float k = 250.0f / m1;
-            float gamma = 0.5f * (1.0f - cr) * (1.0f - cr);
-
-            //if(cr != 0.0f)
-            //{
-            //  gamma = 2.0f * ABS(ln_cr) * sqrt( k / (ln_cr*ln_cr + PI*PI) );
-            //}
-            //else
-            //{
-            //  gamma = 2.0f * sqrt(k);
-            //}
-
-            chrlst[chrb_ref].accum.acc.x += (diffb.x * k  - chrlst[chrb_ref].vel.x * gamma) * bumpstrength;
-            chrlst[chrb_ref].accum.acc.y += (diffb.y * k  - chrlst[chrb_ref].vel.y * gamma) * bumpstrength;
-            chrlst[chrb_ref].accum.acc.z += (diffb.z * k  - chrlst[chrb_ref].vel.z * gamma) * bumpstrength;
-          }
-
-          //bfound = bfalse;
-          //if (( chrlst[chra_ref].bmpdata.mids_lo.x - chrlst[chrb_ref].bmpdata.mids_lo.x ) * ( chrlst[chra_ref].vel.x - chrlst[chrb_ref].vel.x ) < 0.0f )
-          //{
-          //  u0 = chrlst[chra_ref].vel.x;
-          //  u1 = chrlst[chrb_ref].vel.x;
-
-          //  psum = m0 * u0 + m1 * u1;
-          //  udif = u1 - u0;
-
-          //  chrlst[chra_ref].vel.x = ( psum - m1 * udif * cr ) / msum;
-          //  chrlst[chrb_ref].vel.x = ( psum + m0 * udif * cr ) / msum;
-
-          //  //chrlst[chra_ref].bmpdata.mids_lo.x -= chrlst[chra_ref].vel.x*dUpdate;
-          //  //chrlst[chrb_ref].bmpdata.mids_lo.x -= chrlst[chrb_ref].vel.x*dUpdate;
-
-          //  bfound = btrue;
-          //}
-
-          //if (( chrlst[chra_ref].bmpdata.mids_lo.y - chrlst[chrb_ref].bmpdata.mids_lo.y ) * ( chrlst[chra_ref].vel.y - chrlst[chrb_ref].vel.y ) < 0.0f )
-          //{
-          //  u0 = chrlst[chra_ref].vel.y;
-          //  u1 = chrlst[chrb_ref].vel.y;
-
-          //  psum = m0 * u0 + m1 * u1;
-          //  udif = u1 - u0;
-
-          //  chrlst[chra_ref].vel.y = ( psum - m1 * udif * cr ) / msum;
-          //  chrlst[chrb_ref].vel.y = ( psum + m0 * udif * cr ) / msum;
-
-          //  //chrlst[chra_ref].bmpdata.mids_lo.y -= chrlst[chra_ref].vel.y*dUpdate;
-          //  //chrlst[chrb_ref].bmpdata.mids_lo.y -= chrlst[chrb_ref].vel.y*dUpdate;
-
-          //  bfound = btrue;
-          //}
-
-          //if ( ovlap.x > 0 && ovlap.z > 0 )
-          //{
-          //  chrlst[chra_ref].bmpdata.mids_lo.x += m1 / ( m0 + m1 ) * ovlap.y * 0.5 * ovlap.z;
-          //  chrlst[chrb_ref].bmpdata.mids_lo.x -= m0 / ( m0 + m1 ) * ovlap.y * 0.5 * ovlap.z;
-          //  bfound = btrue;
-          //}
-
-          //if ( ovlap.y > 0 && ovlap.z > 0 )
-          //{
-          //  chrlst[chra_ref].bmpdata.mids_lo.y += m1 / ( m0 + m1 ) * ovlap.x * 0.5f * ovlap.z;
-          //  chrlst[chrb_ref].bmpdata.mids_lo.y -= m0 / ( m0 + m1 ) * ovlap.x * 0.5f * ovlap.z;
-          //  bfound = btrue;
-          //}
-
-          if ( bfound )
-          {
-            //apos = chrlst[chra_ref].pos;
-            chrlst[chra_ref].aistate.alert |= ALERT_BUMPED;
-            chrlst[chrb_ref].aistate.alert |= ALERT_BUMPED;
-            chrlst[chra_ref].aistate.bumplast = chrb_ref;
-            chrlst[chrb_ref].aistate.bumplast = chra_ref;
-          };
         }
       }
-    };
+    }
+
+    // detect and save character-particle collisions
+    for ( cnt = 0, blnode_a = bumplist_get_chr_head( &bumplist, fanblock );
+          cnt < chrinblock && INVALID_BUMPLIST_NODE != blnode_a;
+          cnt++, blnode_a = bumplist_get_next_chr( gs, &bumplist, blnode_a ) )
+    {
+      IDSZ chridvulnerability;
+      float chrbump = 1.0f;
+      PRT_REF prtb;
+
+      chra_ref = bumplist_get_ref( &bumplist, blnode_a );
+      assert(VALID_CHR( chrlst, chra_ref ));
+    
+      chridvulnerability = ChrList_getPCap(gs, chra_ref)->idsz[IDSZ_VULNERABILITY];
+      chrbump = chrlst[chra_ref].bumpstrength;
+
+      // Check for object-particle interaction
+      for ( tnc = 0, blnode_b = bumplist_get_prt_head(&bumplist, fanblock);
+            tnc < prtinblock && INVALID_BUMPLIST_NODE != blnode_b;
+            tnc++ , blnode_b = bumplist_get_next_prt( gs, &bumplist, blnode_b ) )
+      {
+        float bumpstrength, prtbump;
+        bool_t chr_is_vulnerable;
+
+        prtb = bumplist_get_ref( &bumplist, blnode_b);
+
+        chr_is_vulnerable = !chrlst[chra_ref].prop.invictus && ( IDSZ_NONE != chridvulnerability ) && CAP_INHERIT_IDSZ( gs,  prtlst[prtb].model, chridvulnerability );
+
+        prtbump = prtlst[prtb].bumpstrength;
+        bumpstrength = chr_is_vulnerable ? 1.0f : chrbump * prtbump;
+
+        if ( 0.0f == bumpstrength ) continue;
+
+        if ( prt_detect_collision( gs, chra_ref, prtb, bfalse ) )
+        {
+          HashNode * n;
+          CoData   * d;
+          bool_t found;
+          int    count;
+          Uint8 hashval = 0;
+          
+          // create a hash that is order-independent and will 
+          hashval = REF_TO_INT(chra_ref) * REF_TO_INT(prtb) * 0x0111 + 0x006E;
+
+          found = bfalse;
+          count = CoList->subcount[hashval];
+          if( count > 0)
+          {
+            int i ;
+
+            // this hash already exists. check to see if the binary collision exists, too
+            n = CoList->sublist[hashval];
+            for(i = 0; i<count; i++)
+            {
+              d = (CoData *)(n->data);
+              if(d->chra == chra_ref && d->prtb == prtb)
+              {
+                found = btrue;
+                break;
+              }
+            }
+          }
+
+
+          // insert this collision
+          if(!found)
+          {
+            // pick a free collision data
+            d = cdata + cdata_count;
+            cdata_count++;
+
+            // fill it in
+            d->chra = chra_ref;
+            d->chrb = INVALID_CHR;
+            d->prtb = prtb;
+
+            // generate a new hash node
+            n = HashNode_create( d );
+
+            // insert the node
+            CoList->subcount[hashval]++;
+            CoList->sublist[hashval] = HashNode_insert_before(CoList->sublist[hashval], n);
+          }
+        }
+      }
+    }
+
+
+    // process the saved interactions
+    //for ( cnt = 0, blnode_a = bumplist_get_chr_head(&bumplist, fanblock);
+    //      cnt < chrinblock && INVALID_BUMPLIST_NODE != blnode_a;
+    //      cnt++, blnode_a = bumplist_get_next_chr( gs, &bumplist, blnode_a ) )
+    //{
+    //  chra_ref = bumplist_get_ref(&bumplist, blnode_a);
+    //  if( !VALID_CHR( chrlst, chra_ref ) ) continue;;
+    //
+    //  // don't do object-object collisions if they won't feel each other
+    //  if ( chrlst[chra_ref].bumpstrength == 0.0f ) continue;
+
+    //  // Do collisions (but not with attached items/characers)
+    //  for ( blnode_b = bumplist_get_next_chr(gs, &bumplist, blnode_a), tnc = cnt + 1;
+    //        tnc < chrinblock && INVALID_BUMPLIST_NODE != blnode_b;
+    //        tnc++, blnode_b = bumplist_get_next_chr( gs, &bumplist, blnode_b ) )
+    //  {
+    //    CVolume cv;
+    //    float lerpb, bumpstrength;
+
+    //    chrb_ref = bumplist_get_ref(&bumplist, blnode_b);
+    //    if( !VALID_CHR( chrlst, chrb_ref )) continue;
+
+    //    bumpstrength = chrlst[chra_ref].bumpstrength * chrlst[chrb_ref].bumpstrength;
+
+    //    // don't do object-object collisions if they won't feel eachother
+    //    if ( bumpstrength == 0.0f ) continue;
+
+    //    // do not collide with something you are already holding
+    //    if ( chrb_ref == chrlst[chra_ref].attachedto || chra_ref == chrlst[chrb_ref].attachedto ) continue;
+
+    //    // do not collide with a your platform
+    //    if ( chrb_ref == chrlst[chra_ref].onwhichplatform || chra_ref == chrlst[chrb_ref].onwhichplatform ) continue;
+
+    //    bpos = chrlst[chrb_ref].pos;
+
+    //    lerpb = (chrlst[chrb_ref].pos.z - chrlst[chrb_ref].level) / PLATTOLERANCE;
+    //    lerpb = CLIP(lerpb, 0, 1);
+
+    //    if ( chr_do_collision( gs, chra_ref, chrb_ref, bfalse, &cv) )
+    //    {
+    //      vect3 depth, ovlap, nrm, diffa, diffb;
+    //      float dotprod, pressure;
+    //      float cr, m0, m1, psum, msum, udif, u0, u1, ln_cr;
+    //      bool_t bfound;
+
+    //      depth.x = (cv.x_max - cv.x_min);
+    //      ovlap.x = depth.x / MIN(chrlst[chra_ref].bmpdata.cv.x_max - chrlst[chra_ref].bmpdata.cv.x_min, chrlst[chrb_ref].bmpdata.cv.x_max - chrlst[chrb_ref].bmpdata.cv.x_min);
+    //      ovlap.x = CLIP(ovlap.x,-1,1);
+    //      nrm.x = 1.0f / ovlap.x;
+
+    //      depth.y = (cv.y_max - cv.y_min);
+    //      ovlap.y = depth.y / MIN(chrlst[chra_ref].bmpdata.cv.y_max - chrlst[chra_ref].bmpdata.cv.y_min, chrlst[chrb_ref].bmpdata.cv.y_max - chrlst[chrb_ref].bmpdata.cv.y_min);
+    //      ovlap.y = CLIP(ovlap.y,-1,1);
+    //      nrm.y = 1.0f / ovlap.y;
+
+    //      depth.z = (cv.z_max - cv.z_min);
+    //      ovlap.z = depth.z / MIN(chrlst[chra_ref].bmpdata.cv.z_max - chrlst[chra_ref].bmpdata.cv.z_min, chrlst[chrb_ref].bmpdata.cv.z_max - chrlst[chrb_ref].bmpdata.cv.z_min);
+    //      ovlap.z = CLIP(ovlap.z,-1,1);
+    //      nrm.z = 1.0f / ovlap.z;
+
+    //      nrm = Normalize(nrm);
+
+    //      pressure = (depth.x / 30.0f) * (depth.y / 30.0f) * (depth.z / 30.0f);
+
+    //      if(ovlap.x != 1.0)
+    //      {
+    //        diffa.x = chrlst[chra_ref].bmpdata.mids_lo.x - (cv.x_max + cv.x_min) * 0.5f;
+    //        diffb.x = chrlst[chrb_ref].bmpdata.mids_lo.x - (cv.x_max + cv.x_min) * 0.5f;
+    //      }
+    //      else
+    //      {
+    //        diffa.x = chrlst[chra_ref].bmpdata.mids_lo.x - chrlst[chrb_ref].bmpdata.mids_lo.x;
+    //        diffb.x =-diffa.x;
+    //      }
+
+    //      if(ovlap.y != 1.0)
+    //      {
+    //        diffa.y = chrlst[chra_ref].bmpdata.mids_lo.y - (cv.y_max + cv.y_min) * 0.5f;
+    //        diffb.y = chrlst[chrb_ref].bmpdata.mids_lo.y - (cv.y_max + cv.y_min) * 0.5f;
+    //      }
+    //      else
+    //      {
+    //        diffa.y = chrlst[chra_ref].bmpdata.mids_lo.y - chrlst[chrb_ref].bmpdata.mids_lo.y;
+    //        diffb.y =-diffa.y;
+    //      }
+
+    //      if(ovlap.y != 1.0)
+    //      {
+    //        diffa.z = chrlst[chra_ref].bmpdata.mids_lo.z - (cv.z_max + cv.z_min) * 0.5f;
+    //        diffa.z += (chrlst[chra_ref].bmpdata.mids_hi.z - chrlst[chra_ref].bmpdata.mids_lo.z) * lerpa;
+
+    //        diffb.z = chrlst[chrb_ref].bmpdata.mids_lo.z - (cv.z_max + cv.z_min) * 0.5f;
+    //        diffb.z += (chrlst[chrb_ref].bmpdata.mids_hi.z - chrlst[chrb_ref].bmpdata.mids_lo.z) * lerpb;
+    //      }
+    //      else
+    //      {
+    //        diffa.z  = chrlst[chra_ref].bmpdata.mids_lo.z - chrlst[chrb_ref].bmpdata.mids_lo.z;
+    //        diffa.z += (chrlst[chra_ref].bmpdata.mids_hi.z - chrlst[chra_ref].bmpdata.mids_lo.z) * lerpa;
+    //        diffa.z -= (chrlst[chrb_ref].bmpdata.mids_hi.z - chrlst[chrb_ref].bmpdata.mids_lo.z) * lerpb;
+
+    //        diffb.z =-diffa.z;
+    //      }
+
+    //      diffa = Normalize(diffa);
+    //      diffb = Normalize(diffb);
+
+    //      if(diffa.x < 0) nrm.x *= -1.0f;
+    //      if(diffa.y < 0) nrm.y *= -1.0f;
+    //      if(diffa.z < 0) nrm.z *= -1.0f;
+
+    //      dotprod = DotProduct(diffa, nrm);
+    //      if(dotprod != 0.0f)
+    //      {
+    //        diffa.x = pressure * dotprod * nrm.x;
+    //        diffa.y = pressure * dotprod * nrm.y;
+    //        diffa.z = pressure * dotprod * nrm.z;
+    //      }
+    //      else
+    //      {
+    //        diffa.x = pressure * nrm.x;
+    //        diffa.y = pressure * nrm.y;
+    //        diffa.z = pressure * nrm.z;
+    //      };
+
+    //      dotprod = DotProduct(diffb, nrm);
+    //      if(dotprod != 0.0f)
+    //      {
+    //        diffb.x = pressure * dotprod * nrm.x;
+    //        diffb.y = pressure * dotprod * nrm.y;
+    //        diffb.z = pressure * dotprod * nrm.z;
+    //      }
+    //      else
+    //      {
+    //        diffb.x = - pressure * nrm.x;
+    //        diffb.y = - pressure * nrm.y;
+    //        diffb.z = - pressure * nrm.z;
+    //      };
+
+    //      // calculate a coefficient of restitution
+    //      //ftmp = nrm.x * nrm.x + nrm.y * nrm.y;
+    //      //cr = chrlst[chrb_ref].bumpdampen * chrlst[chra_ref].bumpdampen * bumpstrength * ovlap.z * ( nrm.x * nrm.x * ovlap.x + nrm.y * nrm.y * ovlap.y ) / ftmp;
+
+    //      // determine a usable mass
+    //      m0 = -1;
+    //      m1 = -1;
+    //      if ( chrlst[chra_ref].weight < 0 && chrlst[chrb_ref].weight < 0 )
+    //      {
+    //        m0 = m1 = 110.0f;
+    //      }
+    //      else if (chrlst[chra_ref].weight == 0 && chrlst[chrb_ref].weight == 0)
+    //      {
+    //        m0 = m1 = 1.0f;
+    //      }
+    //      else
+    //      {
+    //        m0 = (chrlst[chra_ref].weight == 0.0f) ? 1.0 : chrlst[chra_ref].weight;
+    //        m1 = (chrlst[chrb_ref].weight == 0.0f) ? 1.0 : chrlst[chrb_ref].weight;
+    //      }
+
+    //      bfound = btrue;
+    //      cr = chrlst[chrb_ref].bumpdampen * chrlst[chra_ref].bumpdampen;
+    //      //ln_cr = log(cr);
+
+    //      if( m0 > 0.0f && bumpstrength > 0.0f )
+    //      {
+    //        float k = 250.0f / m0;
+    //        float gamma = 0.5f * (1.0f - cr) * (1.0f - cr);
+
+    //        //if(cr != 0.0f)
+    //        //{
+    //        //  gamma = 2.0f * ABS(ln_cr) * sqrt( k / (ln_cr*ln_cr + PI*PI) );
+    //        //}
+    //        //else
+    //        //{
+    //        //  gamma = 2.0f * sqrt(k);
+    //        //}
+
+    //        chrlst[chra_ref].accum.acc.x += (diffa.x * k  - chrlst[chra_ref].vel.x * gamma) * bumpstrength;
+    //        chrlst[chra_ref].accum.acc.y += (diffa.y * k  - chrlst[chra_ref].vel.y * gamma) * bumpstrength;
+    //        chrlst[chra_ref].accum.acc.z += (diffa.z * k  - chrlst[chra_ref].vel.z * gamma) * bumpstrength;
+    //      }
+
+    //      if( m1 > 0.0f && bumpstrength > 0.0f )
+    //      {
+    //        float k = 250.0f / m1;
+    //        float gamma = 0.5f * (1.0f - cr) * (1.0f - cr);
+
+    //        //if(cr != 0.0f)
+    //        //{
+    //        //  gamma = 2.0f * ABS(ln_cr) * sqrt( k / (ln_cr*ln_cr + PI*PI) );
+    //        //}
+    //        //else
+    //        //{
+    //        //  gamma = 2.0f * sqrt(k);
+    //        //}
+
+    //        chrlst[chrb_ref].accum.acc.x += (diffb.x * k  - chrlst[chrb_ref].vel.x * gamma) * bumpstrength;
+    //        chrlst[chrb_ref].accum.acc.y += (diffb.y * k  - chrlst[chrb_ref].vel.y * gamma) * bumpstrength;
+    //        chrlst[chrb_ref].accum.acc.z += (diffb.z * k  - chrlst[chrb_ref].vel.z * gamma) * bumpstrength;
+    //      }
+
+    //      //bfound = bfalse;
+    //      //if (( chrlst[chra_ref].bmpdata.mids_lo.x - chrlst[chrb_ref].bmpdata.mids_lo.x ) * ( chrlst[chra_ref].vel.x - chrlst[chrb_ref].vel.x ) < 0.0f )
+    //      //{
+    //      //  u0 = chrlst[chra_ref].vel.x;
+    //      //  u1 = chrlst[chrb_ref].vel.x;
+
+    //      //  psum = m0 * u0 + m1 * u1;
+    //      //  udif = u1 - u0;
+
+    //      //  chrlst[chra_ref].vel.x = ( psum - m1 * udif * cr ) / msum;
+    //      //  chrlst[chrb_ref].vel.x = ( psum + m0 * udif * cr ) / msum;
+
+    //      //  //chrlst[chra_ref].bmpdata.mids_lo.x -= chrlst[chra_ref].vel.x*dUpdate;
+    //      //  //chrlst[chrb_ref].bmpdata.mids_lo.x -= chrlst[chrb_ref].vel.x*dUpdate;
+
+    //      //  bfound = btrue;
+    //      //}
+
+    //      //if (( chrlst[chra_ref].bmpdata.mids_lo.y - chrlst[chrb_ref].bmpdata.mids_lo.y ) * ( chrlst[chra_ref].vel.y - chrlst[chrb_ref].vel.y ) < 0.0f )
+    //      //{
+    //      //  u0 = chrlst[chra_ref].vel.y;
+    //      //  u1 = chrlst[chrb_ref].vel.y;
+
+    //      //  psum = m0 * u0 + m1 * u1;
+    //      //  udif = u1 - u0;
+
+    //      //  chrlst[chra_ref].vel.y = ( psum - m1 * udif * cr ) / msum;
+    //      //  chrlst[chrb_ref].vel.y = ( psum + m0 * udif * cr ) / msum;
+
+    //      //  //chrlst[chra_ref].bmpdata.mids_lo.y -= chrlst[chra_ref].vel.y*dUpdate;
+    //      //  //chrlst[chrb_ref].bmpdata.mids_lo.y -= chrlst[chrb_ref].vel.y*dUpdate;
+
+    //      //  bfound = btrue;
+    //      //}
+
+    //      //if ( ovlap.x > 0 && ovlap.z > 0 )
+    //      //{
+    //      //  chrlst[chra_ref].bmpdata.mids_lo.x += m1 / ( m0 + m1 ) * ovlap.y * 0.5 * ovlap.z;
+    //      //  chrlst[chrb_ref].bmpdata.mids_lo.x -= m0 / ( m0 + m1 ) * ovlap.y * 0.5 * ovlap.z;
+    //      //  bfound = btrue;
+    //      //}
+
+    //      //if ( ovlap.y > 0 && ovlap.z > 0 )
+    //      //{
+    //      //  chrlst[chra_ref].bmpdata.mids_lo.y += m1 / ( m0 + m1 ) * ovlap.x * 0.5f * ovlap.z;
+    //      //  chrlst[chrb_ref].bmpdata.mids_lo.y -= m0 / ( m0 + m1 ) * ovlap.x * 0.5f * ovlap.z;
+    //      //  bfound = btrue;
+    //      //}
+
+    //      if ( bfound )
+    //      {
+    //        //apos = chrlst[chra_ref].pos;
+    //        chrlst[chra_ref].aistate.alert |= ALERT_BUMPED;
+    //        chrlst[chrb_ref].aistate.alert |= ALERT_BUMPED;
+    //        chrlst[chra_ref].aistate.bumplast = chrb_ref;
+    //        chrlst[chrb_ref].aistate.bumplast = chra_ref;
+    //      };
+    //    }
+    //  }
+    //};
 
     // Now check collisions with every bump particle in same area
     //for ( cnt = 0, blnode_a = bumplist_get_chr_head( &bumplist, fanblock );
-    //      cnt < chrinblock && INVALID_BUNPLIST_NODE != blnode_a;
+    //      cnt < chrinblock && INVALID_BUMPLIST_NODE != blnode_a;
     //      cnt++, blnode_a = bumplist_get_next_chr( &bumplist, blnode_a ) )
     //{
     //  IDSZ chridvulnerability, eveidremove;
@@ -5010,31 +5236,31 @@ void do_bumping( CGame * gs, float dUpdate )
     //}
 
     // do platform physics
-    //for ( cnt = 0, blnode_a = bumplist_get_chr_head(&bumplist, fanblock);
-    //      cnt < chrinblock && INVALID_BUNPLIST_NODE != blnode_a;
-    //      cnt++, blnode_a = bumplist_get_next_chr( blnode_a ) )
-    //{
-    //  // detach character from invalid platforms
+    for ( cnt = 0, blnode_a = bumplist_get_chr_head(&bumplist, fanblock);
+          cnt < chrinblock && INVALID_BUMPLIST_NODE != blnode_a;
+          cnt++, blnode_a = bumplist_get_next_chr( gs, &bumplist, blnode_a ) )
+    {
+      // detach character from invalid platforms
 
-    //  chra_ref = bumplist_get_ref( &bumplist, blnode_a );
-    //  assert(VALID_CHR( chrlst, chra_ref ));
-    //
-    //  chrb_ref  = chr_get_onwhichplatform( chra_ref );
-    //  if ( !VALID_CHR( chrlst, chrb_ref ) ) continue;
+      chra_ref = bumplist_get_ref( &bumplist, blnode_a );
+      assert(VALID_CHR( chrlst, chra_ref ));
+    
+      chrb_ref  = chr_get_onwhichplatform( chrlst, chrlst_size, chra_ref );
+      if ( !VALID_CHR( chrlst, chrb_ref ) ) continue;
 
-    //  if ( chrlst[chra_ref].pos.z < chrlst[chrb_ref].bmpdata.cv.z_max + RAISE )
-    //  {
-    //    chrlst[chra_ref].pos.z = chrlst[chrb_ref].bmpdata.cv.z_max + RAISE;
-    //    if ( chrlst[chra_ref].vel.z < chrlst[chrb_ref].vel.z )
-    //    {
-    //      chrlst[chra_ref].vel.z = - ( chrlst[chra_ref].vel.z - chrlst[chrb_ref].vel.z ) * chrlst[chra_ref].bumpdampen * chrlst[chrb_ref].bumpdampen + chrlst[chrb_ref].vel.z;
-    //    };
-    //  }
+      if ( chrlst[chra_ref].pos.z < chrlst[chrb_ref].bmpdata.cv.z_max + RAISE )
+      {
+        chrlst[chra_ref].pos.z = chrlst[chrb_ref].bmpdata.cv.z_max + RAISE;
+        if ( chrlst[chra_ref].vel.z < chrlst[chrb_ref].vel.z )
+        {
+          chrlst[chra_ref].vel.z = - ( chrlst[chra_ref].vel.z - chrlst[chrb_ref].vel.z ) * chrlst[chra_ref].bumpdampen * chrlst[chrb_ref].bumpdampen + chrlst[chrb_ref].vel.z;
+        };
+      }
 
-    //  chrlst[chra_ref].vel.x = ( chrlst[chra_ref].vel.x - chrlst[chrb_ref].vel.x ) * ( 1.0 - loc_platstick ) + chrlst[chrb_ref].vel.x;
-    //  chrlst[chra_ref].vel.y = ( chrlst[chra_ref].vel.y - chrlst[chrb_ref].vel.y ) * ( 1.0 - loc_platstick ) + chrlst[chrb_ref].vel.y;
-    //  chrlst[chra_ref].turn_lr += ( chrlst[chrb_ref].turn_lr - chrlst[chrb_ref].turn_lr_old ) * ( 1.0 - loc_platstick );
-    //}
+      chrlst[chra_ref].vel.x = ( chrlst[chra_ref].vel.x - chrlst[chrb_ref].vel.x ) * ( 1.0 - loc_platstick ) + chrlst[chrb_ref].vel.x;
+      chrlst[chra_ref].vel.y = ( chrlst[chra_ref].vel.y - chrlst[chrb_ref].vel.y ) * ( 1.0 - loc_platstick ) + chrlst[chrb_ref].vel.y;
+      chrlst[chra_ref].turn_lr += ( chrlst[chrb_ref].turn_lr - chrlst[chrb_ref].turn_lr_old ) * ( 1.0 - loc_platstick );
+    }
 
   };
 }

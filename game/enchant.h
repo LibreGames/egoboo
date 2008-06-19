@@ -1,6 +1,6 @@
 #pragma once
 
-#include "egoboo_types.h"
+#include "egoboo_types.inl"
 #include "object.h"
 
 #define EVELST_COUNT                          OBJLST_COUNT  // One enchant type per model

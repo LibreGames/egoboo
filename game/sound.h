@@ -1,7 +1,7 @@
 #pragma once
 
-#include "egoboo_math.h"
-#include "egoboo_types.h"
+#include "egoboo_math.inl"
+#include "egoboo_types.inl"
 
 #include <SDL_mixer.h>
 

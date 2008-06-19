@@ -28,7 +28,7 @@
 #include "Network.h"
 #include "char.h"
 
-#include "egoboo_types.h"
+#include "egoboo_types.inl"
 #include "egoboo.h"
 
 //--------------------------------------------------------------------------------------------

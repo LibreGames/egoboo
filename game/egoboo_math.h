@@ -26,7 +26,7 @@
 /**> HEADER FILES <**/
 #include <math.h>
 
-#include "egoboo_types.h"
+#include "egoboo_types.inl"
 #include "egoboo_config.h"
 
 #define HAS_SOME_BITS(XX,YY) (0 != ((XX)&(YY)))
@@ -187,6 +187,31 @@ typedef struct aa_bbox_t
   vect3  mins;
   vect3  maxs;
 } AA_BBOX;
+
+//--------------------------------------------------------------------------------------------
+typedef struct bbox_list_t
+{
+  int       count;
+  AA_BBOX * list;
+} BBOX_LIST;
+
+INLINE const BBOX_LIST * bbox_list_new(BBOX_LIST * lst);
+INLINE const BBOX_LIST * bbox_list_delete(BBOX_LIST * lst);
+INLINE const BBOX_LIST * bbox_list_renew(BBOX_LIST * lst);
+INLINE const BBOX_LIST * bbox_list_alloc(BBOX_LIST * lst, int count);
+INLINE const BBOX_LIST * bbox_list_realloc(BBOX_LIST * lst, int count);
+
+//--------------------------------------------------------------------------------------------
+typedef struct bbox_array_t
+{
+  int         count;
+  BBOX_LIST * list;
+} BBOX_ARY;
+
+INLINE const BBOX_ARY * bbox_ary_new(BBOX_ARY * ary);
+INLINE const BBOX_ARY * bbox_ary_delete(BBOX_ARY * ary);
+INLINE const BBOX_ARY * bbox_ary_renew(BBOX_ARY * ary);
+INLINE const BBOX_ARY * bbox_ary_alloc(BBOX_ARY * ary, int count);
 
 //--------------------------------------------------------------------------------------------
 typedef struct CPhysAccum_t
