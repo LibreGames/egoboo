@@ -63,6 +63,10 @@
 
 static MachineState _macState = { bfalse };
 
+WEATHER_INFO GWeather;
+
+//---------------------------------------------------------------------------------------------
+
 static MachineState * MachineState_new( MachineState * ms );
 static bool_t         MachineState_delete( MachineState * ms );
 
@@ -74,6 +78,7 @@ static bool_t  CGui_startUp();
 
 static retval_t main_doGameGraphics();
 static void     game_handleKeyboard();
+
 
 //---------------------------------------------------------------------------------------------
 
@@ -290,35 +295,70 @@ void make_newloadname( char *modname, char *appendname, char *newloadname )
 //
 //
 //---------------------------------------------------------------------------------------------
-void export_one_character( CGame * gs, CHR_REF character, Uint16 owner, int number )
+void export_one_character( CGame * gs, CHR_REF ichr, CHR_REF iowner, int number )
 {
-  // ZZ> This function exports a character
+  // ZZ> This function exports a ichr
 
-  int tnc, profile;
-  char fromdir[128];
-  char todir[128];
-  char fromfile[128];
-  char tofile[128];
-  char todirname[16];
-  char todirfullname[64];
+  int tnc;
+  STRING fromdir;
+  STRING todir;
+  STRING fromfile;
+  STRING tofile;
+  STRING todirname;
+  STRING todirfullname;
+
+  PChr chrlst     = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
+
+  PObj objlst     = gs->ObjList;
+  size_t  objlst_size = OBJLST_COUNT;
+
+  //PCap caplst      = gs->CapList;
+  //size_t caplst_size = CAPLST_COUNT;
+
+  //PMad madlst      = gs->MadList;
+  //size_t madlst_size = MADLST_COUNT;
+
+  OBJ_REF iobj;
+  CObj  * pobj;
+
+  //CAP_REF icap;
+  CCap  * pcap;
+
+  //MAD_REF imad;
+  CMad  * pmad;
+
+  CChr * pchr;
+
+  if( !VALID_CHR(chrlst, ichr) ) return;
+  pchr = ChrList_getPChr(gs, ichr);
+
+  iobj = ChrList_getRObj(gs, ichr);
+  if( INVALID_OBJ == iobj ) return;
+  pobj = gs->ObjList + iobj;
+
+  pcap = ChrList_getPCap(gs, ichr);
+  if(NULL == pcap) return;
+
+  pmad = ChrList_getPMad(gs, ichr);
+  if(NULL == pmad) return;
 
   // Don't export enchants
-  disenchant_character( gs, character );
+  disenchant_character( gs, ichr );
 
-  profile = gs->ChrList[character].model;
-  if (( gs->CapList[profile].cancarrytonextmodule || !gs->CapList[profile].isitem ) && gs->modstate.exportvalid )
+  if (( pcap->cancarrytonextmodule || !pcap->prop.isitem ) && gs->modstate.exportvalid )
   {
     STRING tmpname;
     // TWINK_BO.OBJ
     snprintf( todirname, sizeof( todirname ), "%s" SLASH_STRING, CData.players_dir );
 
-    str_convert_spaces( todirname, sizeof( tmpname ), gs->ChrList[owner].name );
+    str_convert_spaces( todirname, sizeof( tmpname ), chrlst[iowner].name );
     strncat( todirname, ".obj", sizeof( tmpname ) );
 
-    // Is it a character or an item?
-    if ( owner != character )
+    // Is it a ichr or an item?
+    if ( iowner != ichr )
     {
-      // Item is a subdirectory of the owner directory...
+      // Item is a subdirectory of the iowner directory...
       snprintf( todirfullname, sizeof( todirfullname ), "%s" SLASH_STRING "%d.obj", todirname, number );
     }
     else
@@ -332,10 +372,10 @@ void export_one_character( CGame * gs, CHR_REF character, Uint16 owner, int numb
     snprintf( todir, sizeof( todir ), "%s" SLASH_STRING "%s", CData.players_dir, todirfullname );
 
     // modules/advent.mod/objects/advent.obj
-    strncpy( fromdir, gs->MadList[profile].name, sizeof( fromdir ) );
+    strncpy( fromdir, pobj->name, sizeof( fromdir ) );
 
     // Delete all the old items
-    if ( owner == character )
+    if ( iowner == ichr )
     {
       tnc = 0;
       while ( tnc < 8 )
@@ -353,17 +393,17 @@ void export_one_character( CGame * gs, CHR_REF character, Uint16 owner, int numb
 
     // Build the DATA.TXT file
     snprintf( tofile, sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.data_file );    /*DATA.TXT*/
-    export_one_character_profile( gs, tofile, character );
+    export_one_character_profile( gs, tofile, ichr );
 
 
     // Build the SKIN.TXT file
     snprintf( tofile, sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.skin_file );    /*SKIN.TXT*/
-    export_one_character_skin( gs, tofile, character );
+    export_one_character_skin( gs, tofile, ichr );
 
 
     // Build the NAMING.TXT file
     snprintf( tofile, sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.naming_file );    /*NAMING.TXT*/
-    export_one_character_name( gs, tofile, character );
+    export_one_character_name( gs, tofile, ichr );
 
 
     // Copy all of the misc. data files
@@ -446,7 +486,7 @@ void export_all_local_players( CGame * gs )
   // Check each player
   if ( !gs->modstate.exportvalid ) return;
 
-  for ( ipla = 0; ipla < MAXPLAYER; ipla++ )
+  for ( ipla = 0; ipla < PLALST_COUNT; ipla++ )
   {
     if ( !VALID_PLA( gs->PlaList,  ipla ) || INBITS_NONE == gs->PlaList[ipla].device ) continue;
 
@@ -460,8 +500,8 @@ void export_all_local_players( CGame * gs )
     // Export all held items
     for ( _slot = SLOT_BEGIN; _slot < SLOT_COUNT; _slot = ( SLOT )( _slot + 1 ) )
     {
-      item = chr_get_holdingwhich( gs->ChrList, MAXCHR, character, _slot );
-      if ( VALID_CHR( gs->ChrList, item ) && gs->ChrList[item].isitem )
+      item = chr_get_holdingwhich( gs->ChrList, CHRLST_COUNT, character, _slot );
+      if ( VALID_CHR( gs->ChrList, item ) && gs->ChrList[item].prop.isitem )
       {
         SLOT loc_slot = (_slot == SLOT_SADDLE ? _slot : SLOT_LEFT);
         export_one_character( gs, item, character, loc_slot );
@@ -470,11 +510,11 @@ void export_all_local_players( CGame * gs )
 
     // Export the inventory
     number = 3;
-    item  = chr_get_nextinpack( gs->ChrList, MAXCHR, character );
+    item  = chr_get_nextinpack( gs->ChrList, CHRLST_COUNT, character );
     while ( VALID_CHR( gs->ChrList, item ) )
     {
-      if ( gs->ChrList[item].isitem ) export_one_character( gs, item, character, number );
-      item  = chr_get_nextinpack( gs->ChrList, MAXCHR, item );
+      if ( gs->ChrList[item].prop.isitem ) export_one_character( gs, item, character, number );
+      item  = chr_get_nextinpack( gs->ChrList, CHRLST_COUNT, item );
       number++;
     }
 
@@ -525,34 +565,247 @@ int MessageQueue_get_free(MessageQueue * mq)
 }
 
 //--------------------------------------------------------------------------------------------
+bool_t decode_escape_sequence( CGame * gs, char * buffer, size_t buffer_size, const char * message, CHR_REF chr_ref )
+{
+  // BB> expands escape sequences
+
+  STRING szTmp;
+  char lTmp;
+  
+  CHR_REF target = chr_get_aitarget( gs->ChrList, CHRLST_COUNT, gs->ChrList + chr_ref );
+  CHR_REF owner  = chr_get_aiowner( gs->ChrList, CHRLST_COUNT, gs->ChrList + chr_ref );
+
+  CChr * pchr    = ChrList_getPChr(gs, chr_ref);
+  AI_STATE * pstate = &(pchr->aistate);
+  CCap * pchr_cap = ChrList_getPCap(gs, chr_ref);
+
+  CChr * ptarget  = ChrList_getPChr(gs, target);
+  CCap * ptrg_cap = ChrList_getPCap(gs, target);
+
+  CChr * powner   = ChrList_getPChr(gs, owner);
+  CCap * pown_cap = ChrList_getPCap(gs, owner);
+
+  char * dst_pos, * src_pos;
+  char * dst_end;
+
+  dst_pos = buffer;
+  dst_end = buffer + buffer_size - 1;
+  src_pos = message;
+  while(dst_pos < dst_end && '\0' != *src_pos)
+  {
+    while('%' != *src_pos && '\0' != *src_pos && dst_pos < dst_end)
+    {
+      *dst_pos++ = *src_pos++;
+    }
+
+    if('%' != *src_pos) { *dst_pos = '\0'; break; }
+
+    // go to teh escape character
+    src_pos++;
+
+    if ( *src_pos >= '0' && *src_pos <= '0' + ( MAXSKIN - 1 ) )  // Target's skin name
+    {
+      strncpy( szTmp, ptrg_cap->skin[*src_pos-'0'].name, sizeof( STRING ) );
+    }
+    else
+    {
+      switch(*src_pos)
+      {
+      case 'n': // Name
+        {
+          if ( pchr->prop.nameknown )
+            strncpy( szTmp, pchr->name, sizeof( STRING ) );
+          else
+          {
+            lTmp = pchr_cap->classname[0];
+            if ( lTmp == 'A' || lTmp == 'E' || lTmp == 'I' || lTmp == 'O' || lTmp == 'U' )
+              snprintf( szTmp, sizeof( szTmp ), "an %s", pchr_cap->classname );
+            else
+              snprintf( szTmp, sizeof( szTmp ), "a %s", pchr_cap->classname );
+          }
+          if ( (dst_pos == buffer) && szTmp[0] == 'a' )  szTmp[0] = 'A';
+        }
+        break;
+
+      case 'c': // Class name
+        {
+          strncpy( szTmp, pchr_cap->classname, sizeof(szTmp));
+        }
+        break;
+
+      case 't': // Target name
+        {
+          if ( ptarget->prop.nameknown )
+            strncpy( szTmp, ptarget->name, sizeof( STRING ) );
+          else
+          {
+            lTmp = ptrg_cap->classname[0];
+            if ( lTmp == 'A' || lTmp == 'E' || lTmp == 'I' || lTmp == 'O' || lTmp == 'U' )
+              snprintf( szTmp, sizeof( szTmp ), "an %s", ptrg_cap->classname );
+            else
+              snprintf( szTmp, sizeof( szTmp ), "a %s", ptrg_cap->classname );
+          }
+          if ( (dst_pos == buffer) && szTmp[0] == 'a' )  szTmp[0] = 'A';
+        }
+        break;
+
+      case 'o': // Owner name
+        {
+          if ( powner->prop.nameknown )
+            strncpy( szTmp, powner->name, sizeof( STRING ) );
+          else
+          {
+            lTmp = pown_cap->classname[0];
+            if ( lTmp == 'A' || lTmp == 'E' || lTmp == 'I' || lTmp == 'O' || lTmp == 'U' )
+              snprintf( szTmp, sizeof( szTmp ), "an %s", pown_cap->classname );
+            else
+              snprintf( szTmp, sizeof( szTmp ), "a %s", pown_cap->classname );
+          }
+          if ( (dst_pos == buffer) && szTmp[0] == 'a' )  szTmp[0] = 'A';
+        }
+        break;
+
+      case 's': // Target class name
+        {
+          strncpy( szTmp, ptrg_cap->classname, sizeof(szTmp));
+        }
+        break;
+
+      case 'd': // tmpdistance value
+        {
+          snprintf( szTmp, sizeof( szTmp ), "%d", pstate->tmpdistance );
+        }
+        break;
+
+      case 'x': // tmpx value
+        {
+          snprintf( szTmp, sizeof( szTmp ), "%d", pstate->tmpx );
+        }
+        break;
+
+      case 'y': // tmpy value
+        {
+          snprintf( szTmp, sizeof( szTmp ), "%d", pstate->tmpy );
+        }
+        break;
+
+      case 'D': // tmpdistance value
+        {
+          snprintf( szTmp, sizeof( szTmp ), "%2d", pstate->tmpdistance );
+        }
+        break;
+
+      case 'X': // tmpx value
+        {
+          snprintf( szTmp, sizeof( szTmp ), "%2d", pstate->tmpx );
+        }
+        break;
+
+      case 'Y': // tmpy value
+        {
+          snprintf( szTmp, sizeof( szTmp ), "%2d", pstate->tmpy );
+        }
+        break;
+
+      case 'a': // Character's ammo
+        {
+          if ( pchr->ammoknown )
+            snprintf( szTmp, sizeof( szTmp ), "%d", pchr->ammo );
+          else
+            snprintf( szTmp, sizeof( szTmp ), "?" );
+        }
+        break;
+
+      case 'k': // Kurse state
+        {
+          if ( pchr->prop.iskursed )
+            snprintf( szTmp, sizeof( szTmp ), "kursed" );
+          else
+            snprintf( szTmp, sizeof( szTmp ), "unkursed" );
+        }
+        break;
+
+      case 'p': // Character's possessive
+        {
+          if ( pchr->gender == GEN_FEMALE )
+          {
+            snprintf( szTmp, sizeof( szTmp ), "her" );
+          }
+          else
+          {
+            if ( pchr->gender == GEN_MALE )
+            {
+              snprintf( szTmp, sizeof( szTmp ), "his" );
+            }
+            else
+            {
+              snprintf( szTmp, sizeof( szTmp ), "its" );
+            }
+          }
+        }
+        break;
+
+      case 'm': // Character's gender
+        {
+          if ( pchr->gender == GEN_FEMALE )
+          {
+            snprintf( szTmp, sizeof( szTmp ), "female " );
+          }
+          else
+          {
+            if ( pchr->gender == GEN_MALE )
+            {
+              snprintf( szTmp, sizeof( szTmp ), "male " );
+            }
+            else
+            {
+              snprintf( szTmp, sizeof( szTmp ), " " );
+            }
+          }
+        }
+        break;
+
+      case 'g': // Target's possessive
+        {
+          if ( ptarget->gender == GEN_FEMALE )
+          {
+            snprintf( szTmp, sizeof( szTmp ), "her" );
+          }
+          else
+          {
+            if ( ptarget->gender == GEN_MALE )
+            {
+              snprintf( szTmp, sizeof( szTmp ), "his" );
+            }
+            else
+            {
+              snprintf( szTmp, sizeof( szTmp ), "its" );
+            }
+          }
+        }
+
+      }
+    }
+
+    dst_pos += snprintf(dst_pos, (size_t)(dst_end-dst_pos), szTmp); 
+  }
+
+  return btrue;
+}
+
+
+//--------------------------------------------------------------------------------------------
 bool_t display_message( CGame * gs, int message, CHR_REF chr_ref )
 {
   // ZZ> This function sticks a message in the display queue and sets its timer
 
-  int slot, read, write, cnt;
-  char *eread;
-  STRING szTmp;
-  char cTmp, lTmp;
-  
-  ScriptInfo * slist = CGame_getScriptInfo(gs);
-
-  CHR_REF target = chr_get_aitarget( gs->ChrList, MAXCHR, gs->ChrList + chr_ref );
-  CHR_REF owner  = chr_get_aiowner( gs->ChrList, MAXCHR, gs->ChrList + chr_ref );
-
-  Chr * pchr    = MAXCHR == chr_ref ? NULL : gs->ChrList + chr_ref;
-  AI_STATE * pstate = &(pchr->aistate);
-  Cap * pchr_cap = gs->CapList + pchr->model;
-
-  Chr * ptarget  = MAXCHR == target  ? NULL : gs->ChrList + target;
-  Cap * ptrg_cap = NULL   == ptarget ? NULL : gs->CapList + ptarget->model;
-
-  Chr * powner   = MAXCHR == owner  ? NULL : gs->ChrList + owner;
-  Cap * pown_cap = NULL   == powner ? NULL : gs->CapList + powner->model;
+  int slot;
 
   MessageData  * msglst = &(gs->MsgList);
   CGui         * gui    = gui_getState();
   MessageQueue * mq     = &(gui->msgQueue);
   MESSAGE_ELEMENT * msg;
+  char * message_src;
 
   if ( message >= msglst->total ) return bfalse;
 
@@ -560,188 +813,11 @@ bool_t display_message( CGame * gs, int message, CHR_REF chr_ref )
   if(CData.maxmessage == slot) return bfalse;
 
   msg = mq->list + slot;
-  msg->time = DELAY_MESSAGE;
 
   // Copy the message
-  read = msglst->index[message];
-  cnt = 0;
-  write = 0;
-  cTmp = msglst->text[read];  read++;
-  while ( cTmp != 0 )
-  {
-    if ( cTmp == '%' )
-    {
-      // Escape sequence
-      eread = szTmp;
-      szTmp[0] = 0;
-      cTmp = msglst->text[read];  read++;
-      if ( cTmp == 'n' ) // Name
-      {
-        if ( pchr->nameknown )
-          strncpy( szTmp, pchr->name, sizeof( STRING ) );
-        else
-        {
-          lTmp = pchr_cap->classname[0];
-          if ( lTmp == 'A' || lTmp == 'E' || lTmp == 'I' || lTmp == 'O' || lTmp == 'U' )
-            snprintf( szTmp, sizeof( szTmp ), "an %s", pchr_cap->classname );
-          else
-            snprintf( szTmp, sizeof( szTmp ), "a %s", pchr_cap->classname );
-        }
-        if ( cnt == 0 && szTmp[0] == 'a' )  szTmp[0] = 'A';
-      }
-      if ( cTmp == 'c' ) // Class name
-      {
-        eread = pchr_cap->classname;
-      }
-      if ( cTmp == 't' ) // Target name
-      {
-        if ( ptarget->nameknown )
-          strncpy( szTmp, ptarget->name, sizeof( STRING ) );
-        else
-        {
-          lTmp = ptrg_cap->classname[0];
-          if ( lTmp == 'A' || lTmp == 'E' || lTmp == 'I' || lTmp == 'O' || lTmp == 'U' )
-            snprintf( szTmp, sizeof( szTmp ), "an %s", ptrg_cap->classname );
-          else
-            snprintf( szTmp, sizeof( szTmp ), "a %s", ptrg_cap->classname );
-        }
-        if ( cnt == 0 && szTmp[0] == 'a' )  szTmp[0] = 'A';
-      }
-      if ( cTmp == 'o' ) // Owner name
-      {
-        if ( powner->nameknown )
-          strncpy( szTmp, powner->name, sizeof( STRING ) );
-        else
-        {
-          lTmp = pown_cap->classname[0];
-          if ( lTmp == 'A' || lTmp == 'E' || lTmp == 'I' || lTmp == 'O' || lTmp == 'U' )
-            snprintf( szTmp, sizeof( szTmp ), "an %s", pown_cap->classname );
-          else
-            snprintf( szTmp, sizeof( szTmp ), "a %s", pown_cap->classname );
-        }
-        if ( cnt == 0 && szTmp[0] == 'a' )  szTmp[0] = 'A';
-      }
-      if ( cTmp == 's' ) // Target class name
-      {
-        eread = ptrg_cap->classname;
-      }
-      if ( cTmp >= '0' && cTmp <= '0' + ( MAXSKIN - 1 ) )  // Target's skin name
-      {
-        eread = ptrg_cap->skin[cTmp-'0'].name;
-      }
-      if ( cTmp == 'd' ) // tmpdistance value
-      {
-        snprintf( szTmp, sizeof( szTmp ), "%d", pstate->tmpdistance );
-      }
-      if ( cTmp == 'x' ) // tmpx value
-      {
-        snprintf( szTmp, sizeof( szTmp ), "%d", pstate->tmpx );
-      }
-      if ( cTmp == 'y' ) // tmpy value
-      {
-        snprintf( szTmp, sizeof( szTmp ), "%d", pstate->tmpy );
-      }
-      if ( cTmp == 'D' ) // tmpdistance value
-      {
-        snprintf( szTmp, sizeof( szTmp ), "%2d", pstate->tmpdistance );
-      }
-      if ( cTmp == 'X' ) // tmpx value
-      {
-        snprintf( szTmp, sizeof( szTmp ), "%2d", pstate->tmpx );
-      }
-      if ( cTmp == 'Y' ) // tmpy value
-      {
-        snprintf( szTmp, sizeof( szTmp ), "%2d", pstate->tmpy );
-      }
-      if ( cTmp == 'a' ) // Character's ammo
-      {
-        if ( pchr->ammoknown )
-          snprintf( szTmp, sizeof( szTmp ), "%d", pchr->ammo );
-        else
-          snprintf( szTmp, sizeof( szTmp ), "?" );
-      }
-      if ( cTmp == 'k' ) // Kurse state
-      {
-        if ( pchr->iskursed )
-          snprintf( szTmp, sizeof( szTmp ), "kursed" );
-        else
-          snprintf( szTmp, sizeof( szTmp ), "unkursed" );
-      }
-      if ( cTmp == 'p' ) // Character's possessive
-      {
-        if ( pchr->gender == GEN_FEMALE )
-        {
-          snprintf( szTmp, sizeof( szTmp ), "her" );
-        }
-        else
-        {
-          if ( pchr->gender == GEN_MALE )
-          {
-            snprintf( szTmp, sizeof( szTmp ), "his" );
-          }
-          else
-          {
-            snprintf( szTmp, sizeof( szTmp ), "its" );
-          }
-        }
-      }
-      if ( cTmp == 'm' ) // Character's gender
-      {
-        if ( pchr->gender == GEN_FEMALE )
-        {
-          snprintf( szTmp, sizeof( szTmp ), "female " );
-        }
-        else
-        {
-          if ( pchr->gender == GEN_MALE )
-          {
-            snprintf( szTmp, sizeof( szTmp ), "male " );
-          }
-          else
-          {
-            snprintf( szTmp, sizeof( szTmp ), " " );
-          }
-        }
-      }
-      if ( cTmp == 'g' ) // Target's possessive
-      {
-        if ( ptarget->gender == GEN_FEMALE )
-        {
-          snprintf( szTmp, sizeof( szTmp ), "her" );
-        }
-        else
-        {
-          if ( ptarget->gender == GEN_MALE )
-          {
-            snprintf( szTmp, sizeof( szTmp ), "his" );
-          }
-          else
-          {
-            snprintf( szTmp, sizeof( szTmp ), "its" );
-          }
-        }
-      }
-      cTmp = *eread;  eread++;
-      while ( cTmp != 0 && write < MESSAGESIZE - 1 )
-      {
-        msg->textdisplay[write] = cTmp;
-        cTmp = *eread;  eread++;
-        write++;
-      }
-    }
-    else
-    {
-      // Copy the letter
-      if ( write < MESSAGESIZE - 1 )
-      {
-        msg->textdisplay[write] = cTmp;
-        write++;
-      }
-    }
-    cTmp = msglst->text[read];  read++;
-    cnt++;
-  }
-  msg->textdisplay[write] = 0;
+  message_src = msglst->text + msglst->index[message];
+  decode_escape_sequence(gs, msg->textdisplay, sizeof(msg->textdisplay), message_src, chr_ref);
+  msg->time = DELAY_MESSAGE;  
 
   return btrue;
 }
@@ -1270,16 +1346,16 @@ void print_status( CGame * gs, Uint16 statindex )
           case GEN_FEMALE: snprintf( gender, sizeof( gender ), "Female" ); break;
         };
 
-        debug_message( 1, " %s %s", gender, gs->CapList[gs->ChrList[character].model].classname );
+        debug_message( 1, " %s %s", gender, ChrList_getPCap(gs, character)->classname );
       }
       else
       {
-        debug_message( 1, " Dead %s", gs->CapList[gs->ChrList[character].model].classname );
+        debug_message( 1, " Dead %s", ChrList_getPCap(gs, character)->classname );
       }
 
       // Stats
-      debug_message( 1, " STR:%2.1f ~WIS:%2.1f ~INT:%2.1f", FP8_TO_FLOAT( gs->ChrList[character].strength_fp8 ), FP8_TO_FLOAT( gs->ChrList[character].wisdom_fp8 ), FP8_TO_FLOAT( gs->ChrList[character].intelligence_fp8 ) );
-      debug_message( 1, " DEX:%2.1f ~LVL:%4.1f ~DEF:%2.1f", FP8_TO_FLOAT( gs->ChrList[character].dexterity_fp8 ), calc_chr_level( gs, character ), FP8_TO_FLOAT( gs->ChrList[character].skin.defense_fp8 ) );
+      debug_message( 1, " STR:%2.1f ~WIS:%2.1f ~INT:%2.1f", FP8_TO_FLOAT( gs->ChrList[character].stats.strength_fp8 ), FP8_TO_FLOAT( gs->ChrList[character].stats.wisdom_fp8 ), FP8_TO_FLOAT( gs->ChrList[character].stats.intelligence_fp8 ) );
+      debug_message( 1, " DEX:%2.1f ~LVL:%4.1f ~DEF:%2.1f", FP8_TO_FLOAT( gs->ChrList[character].stats.dexterity_fp8 ), calc_chr_level( gs, character ), FP8_TO_FLOAT( gs->ChrList[character].skin.defense_fp8 ) );
 
       lst[statindex].delay = 10;
     }
@@ -1306,12 +1382,13 @@ void draw_chr_info( CGame * gs )
     // Debug cheat codes (Gives xp to stat characters)
     if ( CData.DevMode && SDLKEYDOWN( SDLK_x ) )
     {
-      for(cnt=0; cnt<8; cnt++)
+      PLA_REF pla_cnt;
+      for(pla_cnt=0; pla_cnt<MIN(8,PLALST_COUNT); pla_cnt++)
       {
-        if ( SDLKEYDOWN( SDLK_1 + cnt ) && cnt<lst_size && VALID_CHR( gs->ChrList, gs->PlaList[0].chr_ref ) )
+        if ( SDLKEYDOWN( SDLK_1 + pla_cnt ) && pla_cnt<lst_size && VALID_CHR( gs->ChrList, gs->PlaList[pla_cnt].chr_ref ) )
         {
-          give_experience( gs, gs->PlaList[cnt].chr_ref, 25, XP_DIRECT ); 
-          lst[cnt].delay = 0;
+          give_experience( gs, gs->PlaList[pla_cnt].chr_ref, 25, XP_DIRECT ); 
+          lst[ REF_TO_INT(pla_cnt) ].delay = 0;
         }
       }
     }
@@ -1397,8 +1474,8 @@ bool_t add_status( CGame * gs, CHR_REF character )
   // ZZ> This function adds a status display to the do list
 
   bool_t was_added;
-  int old_size = gs->cl->StatList_count;
-  int new_size;
+  size_t old_size = gs->cl->StatList_count;
+  size_t new_size;
 
   // try to add the character
   new_size = StatList_add( gs->cl->StatList, gs->cl->StatList_count, character );
@@ -1413,7 +1490,7 @@ bool_t add_status( CGame * gs, CHR_REF character )
 
 
 //--------------------------------------------------------------------------------------------
-bool_t remove_stat( CGame * gs, Chr * pchr )
+bool_t remove_stat( CGame * gs, CChr * pchr )
 {
   int i, icount;
   bool_t bfound;
@@ -1458,16 +1535,16 @@ void sort_statlist( CGame * gs )
 {
   // ZZ> This function puts all of the local players on top of the statlst
 
-  int cnt;
+  PLA_REF pla_cnt;
 
   Status * statlst      = gs->cl->StatList;
   size_t   statlst_size = gs->cl->StatList_count;
 
-  for ( cnt = 0; cnt < gs->PlaList_count; cnt++ )
+  for ( pla_cnt = 0; pla_cnt < gs->PlaList_count; pla_cnt++ )
   {
-    if ( !VALID_PLA( gs->PlaList,  cnt ) || INBITS_NONE == gs->PlaList[cnt].device ) continue;
+    if ( !VALID_PLA( gs->PlaList,  pla_cnt ) || INBITS_NONE == gs->PlaList[pla_cnt].device ) continue;
 
-    StatList_move_to_top( statlst, statlst_size, gs->PlaList[cnt].chr_ref );
+    StatList_move_to_top( statlst, statlst_size, gs->PlaList[pla_cnt].chr_ref );
   }
 }
 
@@ -1492,28 +1569,29 @@ void move_water( float dUpdate )
 }
 
 //--------------------------------------------------------------------------------------------
-CHR_REF search_best_leader( CGame * gs, TEAM team, CHR_REF exclude )
+CHR_REF search_best_leader( CGame * gs, TEAM_REF team, CHR_REF exclude )
 {
   // BB > find the best (most experienced) character other than the sissy to be a team leader
-  CHR_REF cnt;
-  Uint16  best_leader = MAXCHR;
+
+  CHR_REF chr_cnt;
+  CHR_REF best_leader = INVALID_CHR;
   int     best_experience = 0;
   bool_t  bfound = bfalse;
-  Uint16  exclude_sissy = team_get_sissy( gs, team );
+  CHR_REF exclude_sissy = team_get_sissy( gs, team );
 
-  for ( cnt = 0; cnt < MAXCHR; cnt++ )
+  for ( chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++ )
   {
-    if ( !VALID_CHR( gs->ChrList, cnt ) || cnt == exclude || cnt == exclude_sissy || gs->ChrList[cnt].team != team ) continue;
+    if ( !VALID_CHR( gs->ChrList, chr_cnt ) || chr_cnt == exclude || chr_cnt == exclude_sissy || gs->ChrList[chr_cnt].team != team ) continue;
 
-    if ( !bfound || gs->ChrList[cnt].experience > best_experience )
+    if ( !bfound || gs->ChrList[chr_cnt].experience > best_experience )
     {
-      best_leader     = cnt;
-      best_experience = gs->ChrList[cnt].experience;
+      best_leader     = chr_cnt;
+      best_experience = gs->ChrList[chr_cnt].experience;
       bfound = btrue;
     }
   }
 
-  return bfound ? best_leader : MAXCHR;
+  return bfound ? best_leader : INVALID_CHR;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1521,8 +1599,8 @@ void call_for_help( CGame * gs, CHR_REF character )
 {
   // ZZ> This function issues a call for help to all allies
 
-  TEAM team;
-  Uint16 cnt;
+  TEAM_REF team;
+  CHR_REF chr_cnt;
 
   team = gs->ChrList[character].team;
 
@@ -1533,12 +1611,12 @@ void call_for_help( CGame * gs, CHR_REF character )
 
 
   // send the help message
-  for ( cnt = 0; cnt < MAXCHR; cnt++ )
+  for ( chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++ )
   {
-    if ( !VALID_CHR( gs->ChrList, cnt ) || cnt == character ) continue;
-    if ( !gs->TeamList[gs->ChrList[cnt].baseteam].hatesteam[team] )
+    if ( !VALID_CHR( gs->ChrList, chr_cnt ) || chr_cnt == character ) continue;
+    if ( !gs->TeamList[gs->ChrList[chr_cnt].baseteam].hatesteam[REF_TO_INT(team)] )
     {
-      gs->ChrList[cnt].aistate.alert |= ALERT_CALLEDFORHELP;
+      gs->ChrList[chr_cnt].aistate.alert |= ALERT_CALLEDFORHELP;
     };
   }
 
@@ -1555,109 +1633,113 @@ void give_experience( CGame * gs, CHR_REF character, int amount, EXPERIENCE xpty
   int newamount;
   int curlevel, nextexperience;
   int number;
-  int profile;
+  OBJ_REF iobj;
   SoundState * snd;
+  CChr * pchr;
+  CCap * pcap;
 
 
   // Figure out how much experience to give
-  profile = gs->ChrList[character].model;
+  pchr = ChrList_getPChr(gs, character);
+  pcap = ChrList_getPCap(gs, character);
+  iobj = pchr->model;
   newamount = amount;
   if ( xptype < XP_COUNT )
   {
-    newamount = amount * gs->CapList[profile].experiencerate[xptype];
+    newamount = amount * pcap->experiencerate[xptype];
   }
-  newamount += gs->ChrList[character].experience;
+  newamount += pchr->experience;
   if ( newamount > MAXXP )  newamount = MAXXP;
-  gs->ChrList[character].experience = newamount;
+  pchr->experience = newamount;
 
 
   // Do level ups and stat changes
-  curlevel       = gs->ChrList[character].experiencelevel;
-  nextexperience = gs->CapList[profile].experiencecoeff * ( curlevel + 1 ) * ( curlevel + 1 ) + gs->CapList[profile].experienceconst;
-  while ( gs->ChrList[character].experience >= nextexperience )
+  curlevel       = pchr->experiencelevel;
+  nextexperience = pcap->experiencecoeff * ( curlevel + 1 ) * ( curlevel + 1 ) + pcap->experienceconst;
+  while ( pchr->experience >= nextexperience )
   {
     // The character is ready to advance...
     if ( chr_is_player(gs, character) )
     {
       snd = snd_getState(gs->cd);
-      debug_message( 1, "%s gained a level!!!", gs->ChrList[character].name );
-      snd_play_sound(gs, 1.0f, gs->ChrList[character].pos, snd->mc_list[GSOUND_LEVELUP], 0, character, GSOUND_LEVELUP);
+      debug_message( 1, "%s gained a level!!!", pchr->name );
+      snd_play_sound(gs, 1.0f, pchr->pos, snd->mc_list[GSOUND_LEVELUP], 0, INVALID_OBJ, GSOUND_LEVELUP);
     }
-    gs->ChrList[character].experiencelevel++;
+    pchr->experiencelevel++;
 
     // Size
-    if (( gs->ChrList[character].sizegoto + gs->CapList[profile].sizeperlevel ) < 1 + ( gs->CapList[profile].sizeperlevel*10 ) ) gs->ChrList[character].sizegoto += gs->CapList[profile].sizeperlevel;
-    gs->ChrList[character].sizegototime += DELAY_RESIZE * 100;
+    if (( pchr->sizegoto + pcap->sizeperlevel ) < 1 + ( pcap->sizeperlevel*10 ) ) pchr->sizegoto += pcap->sizeperlevel;
+    pchr->sizegototime += DELAY_RESIZE * 100;
 
     // Strength
-    number = generate_unsigned( &gs->CapList[profile].strengthperlevel_fp8 );
-    number += gs->ChrList[character].strength_fp8;
+    number = generate_unsigned( &pcap->statdata.strengthperlevel_fp8 );
+    number += pchr->stats.strength_fp8;
     if ( number > PERFECTSTAT ) number = PERFECTSTAT;
-    gs->ChrList[character].strength_fp8 = number;
+    pchr->stats.strength_fp8 = number;
 
     // Wisdom
-    number = generate_unsigned( &gs->CapList[profile].wisdomperlevel_fp8 );
-    number += gs->ChrList[character].wisdom_fp8;
+    number = generate_unsigned( &pcap->statdata.wisdomperlevel_fp8 );
+    number += pchr->stats.wisdom_fp8;
     if ( number > PERFECTSTAT ) number = PERFECTSTAT;
-    gs->ChrList[character].wisdom_fp8 = number;
+    pchr->stats.wisdom_fp8 = number;
 
     // Intelligence
-    number = generate_unsigned( &gs->CapList[profile].intelligenceperlevel_fp8 );
-    number += gs->ChrList[character].intelligence_fp8;
+    number = generate_unsigned( &pcap->statdata.intelligenceperlevel_fp8 );
+    number += pchr->stats.intelligence_fp8;
     if ( number > PERFECTSTAT ) number = PERFECTSTAT;
-    gs->ChrList[character].intelligence_fp8 = number;
+    pchr->stats.intelligence_fp8 = number;
 
     // Dexterity
-    number = generate_unsigned( &gs->CapList[profile].dexterityperlevel_fp8 );
-    number += gs->ChrList[character].dexterity_fp8;
+    number = generate_unsigned( &pcap->statdata.dexterityperlevel_fp8 );
+    number += pchr->stats.dexterity_fp8;
     if ( number > PERFECTSTAT ) number = PERFECTSTAT;
-    gs->ChrList[character].dexterity_fp8 = number;
+    pchr->stats.dexterity_fp8 = number;
 
     // Life
-    number = generate_unsigned( &gs->CapList[profile].lifeperlevel_fp8 );
-    number += gs->ChrList[character].lifemax_fp8;
+    number = generate_unsigned( &pcap->statdata.lifeperlevel_fp8 );
+    number += pchr->stats.lifemax_fp8;
     if ( number > PERFECTBIG ) number = PERFECTBIG;
-    gs->ChrList[character].life_fp8 += ( number - gs->ChrList[character].lifemax_fp8 );
-    gs->ChrList[character].lifemax_fp8 = number;
+    pchr->stats.life_fp8 += ( number - pchr->stats.lifemax_fp8 );
+    pchr->stats.lifemax_fp8 = number;
 
     // Mana
-    number = generate_unsigned( &gs->CapList[profile].manaperlevel_fp8 );
-    number += gs->ChrList[character].manamax_fp8;
+    number = generate_unsigned( &pcap->statdata.manaperlevel_fp8 );
+    number += pchr->stats.manamax_fp8;
     if ( number > PERFECTBIG ) number = PERFECTBIG;
-    gs->ChrList[character].mana_fp8 += ( number - gs->ChrList[character].manamax_fp8 );
-    gs->ChrList[character].manamax_fp8 = number;
+    pchr->stats.mana_fp8 += ( number - pchr->stats.manamax_fp8 );
+    pchr->stats.manamax_fp8 = number;
 
     // Mana Return
-    number = generate_unsigned( &gs->CapList[profile].manareturnperlevel_fp8 );
-    number += gs->ChrList[character].manareturn_fp8;
+    number = generate_unsigned( &pcap->statdata.manareturnperlevel_fp8 );
+    number += pchr->stats.manareturn_fp8;
     if ( number > PERFECTSTAT ) number = PERFECTSTAT;
-    gs->ChrList[character].manareturn_fp8 = number;
+    pchr->stats.manareturn_fp8 = number;
 
     // Mana Flow
-    number = generate_unsigned( &gs->CapList[profile].manaflowperlevel_fp8 );
-    number += gs->ChrList[character].manaflow_fp8;
+    number = generate_unsigned( &pcap->statdata.manaflowperlevel_fp8 );
+    number += pchr->stats.manaflow_fp8;
     if ( number > PERFECTSTAT ) number = PERFECTSTAT;
-    gs->ChrList[character].manaflow_fp8 = number;
+    pchr->stats.manaflow_fp8 = number;
 
-    curlevel       = gs->ChrList[character].experiencelevel;
-    nextexperience = gs->CapList[profile].experiencecoeff * ( curlevel + 1 ) * ( curlevel + 1 ) + gs->CapList[profile].experienceconst;
+    curlevel       = pchr->experiencelevel;
+    nextexperience = pcap->experiencecoeff * ( curlevel + 1 ) * ( curlevel + 1 ) + pcap->experienceconst;
   }
 }
 
 
 //--------------------------------------------------------------------------------------------
-void give_team_experience( CGame * gs, TEAM team, int amount, EXPERIENCE xptype )
+void give_team_experience( CGame * gs, TEAM_REF team, int amount, EXPERIENCE xptype )
 {
   // ZZ> This function gives a character experience, and pawns off level gains to
   //     another function
 
-  int cnt;
+  CHR_REF chr_cnt;
 
-  for ( cnt = 0; cnt < MAXCHR; cnt++ )
+  for ( chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++ )
   {
-    if ( gs->ChrList[cnt].team == team && gs->ChrList[cnt].on )
+    if ( gs->ChrList[chr_cnt].team == team && gs->ChrList[chr_cnt].on )
     {
-      give_experience( gs, cnt, amount, xptype );
+      give_experience( gs, chr_cnt, amount, xptype );
     }
   }
 }
@@ -1669,7 +1751,7 @@ void setup_alliances( CGame * gs, char *modname )
   // ZZ> This function reads the alliance file
 
   STRING newloadname, szTemp;
-  TEAM teama, teamb;
+  TEAM_REF teama, teamb;
   FILE *fileread;
 
   // Load the file
@@ -1684,7 +1766,7 @@ void setup_alliances( CGame * gs, char *modname )
       fget_string( fileread, szTemp, sizeof( szTemp ) );
       teamb = ( szTemp[0] - 'A' ) % TEAM_COUNT;
 
-      gs->TeamList[teama].hatesteam[teamb] = bfalse;
+      gs->TeamList[teama].hatesteam[REF_TO_INT(teamb)] = bfalse;
     }
     fs_fileClose( fileread );
   }
@@ -1695,21 +1777,21 @@ void setup_alliances( CGame * gs, char *modname )
 //--------------------------------------------------------------------------------------------
 void check_respawn( CGame * gs )
 {
-  int cnt;
+  CHR_REF chr_cnt;
 
-  for ( cnt = 0; cnt < MAXCHR; cnt++ )
+  for ( chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++ )
   {
     // Let players respawn
-    if ( gs->modstate.respawnvalid && !gs->ChrList[cnt].alive && HAS_SOME_BITS( gs->ChrList[cnt].aistate.latch.b, LATCHBUTTON_RESPAWN ) )
+    if ( gs->modstate.respawnvalid && !gs->ChrList[chr_cnt].alive && HAS_SOME_BITS( gs->ChrList[chr_cnt].aistate.latch.b, LATCHBUTTON_RESPAWN ) )
     {
-      respawn_character( gs, cnt );
-      gs->TeamList[gs->ChrList[cnt].team].leader = cnt;
-      gs->ChrList[cnt].aistate.alert |= ALERT_CLEANEDUP;
+      respawn_character( gs, chr_cnt );
+      gs->TeamList[gs->ChrList[chr_cnt].team].leader = chr_cnt;
+      gs->ChrList[chr_cnt].aistate.alert |= ALERT_CLEANEDUP;
 
       // Cost some experience for doing this...
-      gs->ChrList[cnt].experience *= EXPKEEP;
+      gs->ChrList[chr_cnt].experience *= EXPKEEP;
     }
-    gs->ChrList[cnt].aistate.latch.b &= ~LATCHBUTTON_RESPAWN;
+    gs->ChrList[chr_cnt].aistate.latch.b &= ~LATCHBUTTON_RESPAWN;
   }
 
 };
@@ -1719,25 +1801,26 @@ void check_respawn( CGame * gs )
 //--------------------------------------------------------------------------------------------
 void begin_integration( CGame * gs )
 {
-  int cnt;
+  CHR_REF chr_cnt;
+  PRT_REF prt_cnt;
 
-  for( cnt=0; cnt<MAXCHR; cnt++)
+  for( chr_cnt=0; chr_cnt<CHRLST_COUNT; chr_cnt++)
   {
-    if( !gs->ChrList[cnt].on ) continue;
+    if( !gs->ChrList[chr_cnt].on ) continue;
 
-    VectorClear( gs->ChrList[cnt].accum_acc.v );
-    VectorClear( gs->ChrList[cnt].accum_vel.v );
-    VectorClear( gs->ChrList[cnt].accum_pos.v );
+    VectorClear( gs->ChrList[chr_cnt].accum.acc.v );
+    VectorClear( gs->ChrList[chr_cnt].accum.vel.v );
+    VectorClear( gs->ChrList[chr_cnt].accum.pos.v );
   };
 
-  for( cnt=0; cnt<MAXPRT; cnt++)
+  for( prt_cnt=0; prt_cnt<PRTLST_COUNT; prt_cnt++)
   {
-    if( !gs->PrtList[cnt].on ) continue;
+    if( !gs->PrtList[prt_cnt].on ) continue;
 
-    VectorClear( gs->PrtList[cnt].accum_acc.v );
-    VectorClear( gs->PrtList[cnt].accum_vel.v );
-    VectorClear( gs->PrtList[cnt].accum_pos.v );
-    prt_calculate_bumpers(gs, cnt);
+    VectorClear( gs->PrtList[prt_cnt].accum.acc.v );
+    VectorClear( gs->PrtList[prt_cnt].accum.vel.v );
+    VectorClear( gs->PrtList[prt_cnt].accum.pos.v );
+    prt_calculate_bumpers(gs, prt_cnt);
   };
 
 };
@@ -1748,7 +1831,7 @@ bool_t chr_collide_mesh(CGame * gs, CHR_REF ichr)
   float meshlevel;
   vect3 norm;
   bool_t hitmesh = bfalse;
-  Chr * pchr;
+  CChr * pchr;
 
   if( !VALID_CHR( gs->ChrList, ichr ) ) return hitmesh;
 
@@ -1761,33 +1844,33 @@ bool_t chr_collide_mesh(CGame * gs, CHR_REF ichr)
     if(dotprod < 0.0f)
     {
       // do the reflection
-      pchr->accum_vel.x += -(1.0f + pchr->dampen) * dotprod * norm.x - pchr->vel.x;
-      pchr->accum_vel.y += -(1.0f + pchr->dampen) * dotprod * norm.y - pchr->vel.y;
-      pchr->accum_vel.z += -(1.0f + pchr->dampen) * dotprod * norm.z - pchr->vel.z;
+      pchr->accum.vel.x += -(1.0f + pchr->dampen) * dotprod * norm.x - pchr->vel.x;
+      pchr->accum.vel.y += -(1.0f + pchr->dampen) * dotprod * norm.y - pchr->vel.y;
+      pchr->accum.vel.z += -(1.0f + pchr->dampen) * dotprod * norm.z - pchr->vel.z;
 
       // if there is reflection, go back to the last valid position
-      if( 0.0f != norm.x ) pchr->accum_pos.x += pchr->pos_old.x - pchr->pos.x;
-      if( 0.0f != norm.y ) pchr->accum_pos.y += pchr->pos_old.y - pchr->pos.y;
-      if( 0.0f != norm.z ) pchr->accum_pos.z += pchr->pos_old.z - pchr->pos.z;
+      if( 0.0f != norm.x ) pchr->accum.pos.x += pchr->pos_old.x - pchr->pos.x;
+      if( 0.0f != norm.y ) pchr->accum.pos.y += pchr->pos_old.y - pchr->pos.y;
+      if( 0.0f != norm.z ) pchr->accum.pos.z += pchr->pos_old.z - pchr->pos.z;
 
       hitmesh = btrue;
     };
   }
 
-  meshlevel = mesh_get_level( gs, pchr->onwhichfan, pchr->pos.x, pchr->pos.y, gs->CapList[pchr->model].waterwalk );
+  meshlevel = mesh_get_level( gs, pchr->onwhichfan, pchr->pos.x, pchr->pos.y, ChrList_getPCap(gs, ichr)->prop.waterwalk );
   if( pchr->pos.z < meshlevel )
   {
     hitmesh = btrue;
 
-    pchr->accum_pos.z += meshlevel + 0.001f - pchr->pos.z;
+    pchr->accum.pos.z += meshlevel + 0.001f - pchr->pos.z;
 
     if ( pchr->vel.z < -STOPBOUNCING )
     {
-      pchr->accum_vel.z += -pchr->vel.z * ( 1.0f + pchr->dampen );
+      pchr->accum.vel.z += -pchr->vel.z * ( 1.0f + pchr->dampen );
     }
     else if ( pchr->vel.z < STOPBOUNCING )
     {
-      pchr->accum_vel.z += -pchr->vel.z;
+      pchr->accum.vel.z += -pchr->vel.z;
     }
 
     if ( pchr->hitready )
@@ -1807,7 +1890,7 @@ bool_t prt_collide_mesh(CGame * gs, PRT_REF iprt)
   CHR_REF attached;
   vect3 norm;
   bool_t hitmesh = bfalse;
-  Uint16 pip;
+  PIP_REF pip;
 
   if( !VALID_PRT( gs->PrtList, iprt) ) return hitmesh;
 
@@ -1838,9 +1921,9 @@ bool_t prt_collide_mesh(CGame * gs, PRT_REF iprt)
 
         // do the reflection
         dotprodN = DotProduct(norm, gs->PrtList[iprt].vel);
-        gs->PrtList[iprt].accum_vel.x += -(1.0f + dampen) * dotprodN * norm.x - gs->PrtList[iprt].vel.x;
-        gs->PrtList[iprt].accum_vel.y += -(1.0f + dampen) * dotprodN * norm.y - gs->PrtList[iprt].vel.y;
-        gs->PrtList[iprt].accum_vel.z += -(1.0f + dampen) * dotprodN * norm.z - gs->PrtList[iprt].vel.z;
+        gs->PrtList[iprt].accum.vel.x += -(1.0f + dampen) * dotprodN * norm.x - gs->PrtList[iprt].vel.x;
+        gs->PrtList[iprt].accum.vel.y += -(1.0f + dampen) * dotprodN * norm.y - gs->PrtList[iprt].vel.y;
+        gs->PrtList[iprt].accum.vel.z += -(1.0f + dampen) * dotprodN * norm.z - gs->PrtList[iprt].vel.z;
 
         // Change facing
         // determine how much the billboarded particle should rotate on reflection from
@@ -1875,15 +1958,15 @@ bool_t prt_collide_mesh(CGame * gs, PRT_REF iprt)
       }
 
       // if there is reflection, go back to the last valid position
-      if( 0.0f != norm.x ) gs->PrtList[iprt].accum_pos.x += gs->PrtList[iprt].pos_old.x - gs->PrtList[iprt].pos.x;
-      if( 0.0f != norm.y ) gs->PrtList[iprt].accum_pos.y += gs->PrtList[iprt].pos_old.y - gs->PrtList[iprt].pos.y;
-      if( 0.0f != norm.z ) gs->PrtList[iprt].accum_pos.z += gs->PrtList[iprt].pos_old.z - gs->PrtList[iprt].pos.z;
+      if( 0.0f != norm.x ) gs->PrtList[iprt].accum.pos.x += gs->PrtList[iprt].pos_old.x - gs->PrtList[iprt].pos.x;
+      if( 0.0f != norm.y ) gs->PrtList[iprt].accum.pos.y += gs->PrtList[iprt].pos_old.y - gs->PrtList[iprt].pos.y;
+      if( 0.0f != norm.z ) gs->PrtList[iprt].accum.pos.z += gs->PrtList[iprt].pos_old.z - gs->PrtList[iprt].pos.z;
 
       hitmesh = btrue;
     };
   }
 
-  meshlevel = mesh_get_level( gs, gs->PrtList[iprt].onwhichfan, gs->PrtList[iprt].pos.x, gs->PrtList[iprt].pos.y, gs->CapList[gs->PrtList[iprt].model].waterwalk );
+  meshlevel = mesh_get_level( gs, gs->PrtList[iprt].onwhichfan, gs->PrtList[iprt].pos.x, gs->PrtList[iprt].pos.y, bfalse );
   if( gs->PrtList[iprt].pos.z < meshlevel )
   {
     hitmesh = btrue;
@@ -1899,15 +1982,15 @@ bool_t prt_collide_mesh(CGame * gs, PRT_REF iprt)
     }
     else if( !VALID_CHR( gs->ChrList, attached ) )
     {
-      gs->PrtList[iprt].accum_pos.z += meshlevel + 0.001f - gs->PrtList[iprt].pos.z;
+      gs->PrtList[iprt].accum.pos.z += meshlevel + 0.001f - gs->PrtList[iprt].pos.z;
 
       if ( gs->PrtList[iprt].vel.z < -STOPBOUNCING )
       {
-        gs->PrtList[iprt].accum_vel.z -= gs->PrtList[iprt].vel.z * ( 1.0f + dampen );
+        gs->PrtList[iprt].accum.vel.z -= gs->PrtList[iprt].vel.z * ( 1.0f + dampen );
       }
       else if ( gs->PrtList[iprt].vel.z < STOPBOUNCING )
       {
-        gs->PrtList[iprt].accum_vel.z -= gs->PrtList[iprt].vel.z;
+        gs->PrtList[iprt].accum.vel.z -= gs->PrtList[iprt].vel.z;
       }
     };
 
@@ -1921,77 +2004,79 @@ bool_t prt_collide_mesh(CGame * gs, PRT_REF iprt)
 //--------------------------------------------------------------------------------------------
 void do_integration(CGame * gs, float dFrame)
 {
-  int cnt, tnc;
+  int tnc;
+  CHR_REF chr_cnt;
+  PRT_REF prt_cnt;
 
-  for( cnt=0; cnt<MAXCHR; cnt++)
+  for( chr_cnt=0; chr_cnt<CHRLST_COUNT; chr_cnt++)
   {
-    if( !gs->ChrList[cnt].on ) continue;
+    if( !gs->ChrList[chr_cnt].on ) continue;
 
-    gs->ChrList[cnt].pos_old = gs->ChrList[cnt].pos;
+    gs->ChrList[chr_cnt].pos_old = gs->ChrList[chr_cnt].pos;
 
-    gs->ChrList[cnt].pos.x += gs->ChrList[cnt].vel.x * dFrame + gs->ChrList[cnt].accum_pos.x;
-    gs->ChrList[cnt].pos.y += gs->ChrList[cnt].vel.y * dFrame + gs->ChrList[cnt].accum_pos.y;
-    gs->ChrList[cnt].pos.z += gs->ChrList[cnt].vel.z * dFrame + gs->ChrList[cnt].accum_pos.z;
+    gs->ChrList[chr_cnt].pos.x += gs->ChrList[chr_cnt].vel.x * dFrame + gs->ChrList[chr_cnt].accum.pos.x;
+    gs->ChrList[chr_cnt].pos.y += gs->ChrList[chr_cnt].vel.y * dFrame + gs->ChrList[chr_cnt].accum.pos.y;
+    gs->ChrList[chr_cnt].pos.z += gs->ChrList[chr_cnt].vel.z * dFrame + gs->ChrList[chr_cnt].accum.pos.z;
 
-    gs->ChrList[cnt].vel.x += gs->ChrList[cnt].accum_acc.x * dFrame + gs->ChrList[cnt].accum_vel.x;
-    gs->ChrList[cnt].vel.y += gs->ChrList[cnt].accum_acc.y * dFrame + gs->ChrList[cnt].accum_vel.y;
-    gs->ChrList[cnt].vel.z += gs->ChrList[cnt].accum_acc.z * dFrame + gs->ChrList[cnt].accum_vel.z;
+    gs->ChrList[chr_cnt].vel.x += gs->ChrList[chr_cnt].accum.acc.x * dFrame + gs->ChrList[chr_cnt].accum.vel.x;
+    gs->ChrList[chr_cnt].vel.y += gs->ChrList[chr_cnt].accum.acc.y * dFrame + gs->ChrList[chr_cnt].accum.vel.y;
+    gs->ChrList[chr_cnt].vel.z += gs->ChrList[chr_cnt].accum.acc.z * dFrame + gs->ChrList[chr_cnt].accum.vel.z;
 
-    VectorClear( gs->ChrList[cnt].accum_acc.v );
-    VectorClear( gs->ChrList[cnt].accum_vel.v );
-    VectorClear( gs->ChrList[cnt].accum_pos.v );
+    VectorClear( gs->ChrList[chr_cnt].accum.acc.v );
+    VectorClear( gs->ChrList[chr_cnt].accum.vel.v );
+    VectorClear( gs->ChrList[chr_cnt].accum.pos.v );
 
     // iterate through the integration routine until you force the new position to be valid
     // should only ever go through the loop twice
     tnc = 0;
-    while( tnc < 20 && chr_collide_mesh(gs, cnt) )
+    while( tnc < 20 && chr_collide_mesh(gs, chr_cnt) )
     {
-      gs->ChrList[cnt].pos.x += gs->ChrList[cnt].accum_pos.x;
-      gs->ChrList[cnt].pos.y += gs->ChrList[cnt].accum_pos.y;
-      gs->ChrList[cnt].pos.z += gs->ChrList[cnt].accum_pos.z;
+      gs->ChrList[chr_cnt].pos.x += gs->ChrList[chr_cnt].accum.pos.x;
+      gs->ChrList[chr_cnt].pos.y += gs->ChrList[chr_cnt].accum.pos.y;
+      gs->ChrList[chr_cnt].pos.z += gs->ChrList[chr_cnt].accum.pos.z;
 
-      gs->ChrList[cnt].vel.x += gs->ChrList[cnt].accum_vel.x;
-      gs->ChrList[cnt].vel.y += gs->ChrList[cnt].accum_vel.y;
-      gs->ChrList[cnt].vel.z += gs->ChrList[cnt].accum_vel.z;
+      gs->ChrList[chr_cnt].vel.x += gs->ChrList[chr_cnt].accum.vel.x;
+      gs->ChrList[chr_cnt].vel.y += gs->ChrList[chr_cnt].accum.vel.y;
+      gs->ChrList[chr_cnt].vel.z += gs->ChrList[chr_cnt].accum.vel.z;
 
-      VectorClear( gs->ChrList[cnt].accum_acc.v );
-      VectorClear( gs->ChrList[cnt].accum_vel.v );
-      VectorClear( gs->ChrList[cnt].accum_pos.v );
+      VectorClear( gs->ChrList[chr_cnt].accum.acc.v );
+      VectorClear( gs->ChrList[chr_cnt].accum.vel.v );
+      VectorClear( gs->ChrList[chr_cnt].accum.pos.v );
 
       tnc++;
     };
   };
 
-  for( cnt=0; cnt<MAXPRT; cnt++)
+  for( prt_cnt=0; prt_cnt<PRTLST_COUNT; prt_cnt++)
   {
-    if( !gs->PrtList[cnt].on ) continue;
+    if( !gs->PrtList[prt_cnt].on ) continue;
 
-    gs->PrtList[cnt].pos_old = gs->PrtList[cnt].pos;
+    gs->PrtList[prt_cnt].pos_old = gs->PrtList[prt_cnt].pos;
 
-    gs->PrtList[cnt].pos.x += gs->PrtList[cnt].vel.x * dFrame + gs->PrtList[cnt].accum_pos.x;
-    gs->PrtList[cnt].pos.y += gs->PrtList[cnt].vel.y * dFrame + gs->PrtList[cnt].accum_pos.y;
-    gs->PrtList[cnt].pos.z += gs->PrtList[cnt].vel.z * dFrame + gs->PrtList[cnt].accum_pos.z;
+    gs->PrtList[prt_cnt].pos.x += gs->PrtList[prt_cnt].vel.x * dFrame + gs->PrtList[prt_cnt].accum.pos.x;
+    gs->PrtList[prt_cnt].pos.y += gs->PrtList[prt_cnt].vel.y * dFrame + gs->PrtList[prt_cnt].accum.pos.y;
+    gs->PrtList[prt_cnt].pos.z += gs->PrtList[prt_cnt].vel.z * dFrame + gs->PrtList[prt_cnt].accum.pos.z;
 
-    gs->PrtList[cnt].vel.x += gs->PrtList[cnt].accum_acc.x * dFrame + gs->PrtList[cnt].accum_vel.x;
-    gs->PrtList[cnt].vel.y += gs->PrtList[cnt].accum_acc.y * dFrame + gs->PrtList[cnt].accum_vel.y;
-    gs->PrtList[cnt].vel.z += gs->PrtList[cnt].accum_acc.z * dFrame + gs->PrtList[cnt].accum_vel.z;
+    gs->PrtList[prt_cnt].vel.x += gs->PrtList[prt_cnt].accum.acc.x * dFrame + gs->PrtList[prt_cnt].accum.vel.x;
+    gs->PrtList[prt_cnt].vel.y += gs->PrtList[prt_cnt].accum.acc.y * dFrame + gs->PrtList[prt_cnt].accum.vel.y;
+    gs->PrtList[prt_cnt].vel.z += gs->PrtList[prt_cnt].accum.acc.z * dFrame + gs->PrtList[prt_cnt].accum.vel.z;
 
     // iterate through the integration routine until you force the new position to be valid
     // should only ever go through the loop twice
     tnc = 0;
-    while( tnc < 20 && prt_collide_mesh(gs, cnt) )
+    while( tnc < 20 && prt_collide_mesh(gs, prt_cnt) )
     {
-      gs->PrtList[cnt].pos.x += gs->PrtList[cnt].accum_pos.x;
-      gs->PrtList[cnt].pos.y += gs->PrtList[cnt].accum_pos.y;
-      gs->PrtList[cnt].pos.z += gs->PrtList[cnt].accum_pos.z;
+      gs->PrtList[prt_cnt].pos.x += gs->PrtList[prt_cnt].accum.pos.x;
+      gs->PrtList[prt_cnt].pos.y += gs->PrtList[prt_cnt].accum.pos.y;
+      gs->PrtList[prt_cnt].pos.z += gs->PrtList[prt_cnt].accum.pos.z;
 
-      gs->PrtList[cnt].vel.x += gs->PrtList[cnt].accum_vel.x;
-      gs->PrtList[cnt].vel.y += gs->PrtList[cnt].accum_vel.y;
-      gs->PrtList[cnt].vel.z += gs->PrtList[cnt].accum_vel.z;
+      gs->PrtList[prt_cnt].vel.x += gs->PrtList[prt_cnt].accum.vel.x;
+      gs->PrtList[prt_cnt].vel.y += gs->PrtList[prt_cnt].accum.vel.y;
+      gs->PrtList[prt_cnt].vel.z += gs->PrtList[prt_cnt].accum.vel.z;
 
-      VectorClear( gs->PrtList[cnt].accum_acc.v );
-      VectorClear( gs->PrtList[cnt].accum_vel.v );
-      VectorClear( gs->PrtList[cnt].accum_pos.v );
+      VectorClear( gs->PrtList[prt_cnt].accum.acc.v );
+      VectorClear( gs->PrtList[prt_cnt].accum.vel.v );
+      VectorClear( gs->PrtList[prt_cnt].accum.pos.v );
 
       tnc++;
     }
@@ -2056,7 +2141,7 @@ void reset_teams(CGame * gs)
 {
   // ZZ> This function makes everyone hate everyone else
 
-  int teama, teamb;
+  TEAM_REF teama, teamb;
 
   teama = 0;
   while ( teama < TEAM_COUNT )
@@ -2065,14 +2150,14 @@ void reset_teams(CGame * gs)
     teamb = 0;
     while ( teamb < TEAM_COUNT )
     {
-      gs->TeamList[teama].hatesteam[teamb] = btrue;
+      gs->TeamList[teama].hatesteam[REF_TO_INT(teamb)] = btrue;
       teamb++;
     }
     // Make the team like itself
-    gs->TeamList[teama].hatesteam[teama] = bfalse;
+    gs->TeamList[teama].hatesteam[REF_TO_INT(teama)] = bfalse;
 
     // Set defaults
-    gs->TeamList[teama].leader = MAXCHR;
+    gs->TeamList[teama].leader = INVALID_CHR;
     gs->TeamList[teama].sissy = 0;
     gs->TeamList[teama].morale = 0;
     teama++;
@@ -2083,7 +2168,7 @@ void reset_teams(CGame * gs)
   while ( teama < TEAM_COUNT )
   {
     gs->TeamList[teama].hatesteam[TEAM_NULL] = bfalse;
-    gs->TeamList[TEAM_NULL].hatesteam[teama] = bfalse;
+    gs->TeamList[TEAM_REF(TEAM_NULL)].hatesteam[REF_TO_INT(teama)] = bfalse;
     teama++;
   }
 }
@@ -2448,9 +2533,15 @@ void main_handleKeyboard()
 {
   CGame * gs   = gfxState.gs;
   ProcState * gproc = CGame_getProcedure(gs);
+  bool_t control, alt, shift, mod;
+
+  control = (SDLKEYDOWN(SDLK_RCTRL) || SDLKEYDOWN(SDLK_LCTRL));
+  alt     = (SDLKEYDOWN(SDLK_RALT) || SDLKEYDOWN(SDLK_LALT));
+  shift   = (SDLKEYDOWN(SDLK_RSHIFT) || SDLKEYDOWN(SDLK_LSHIFT));
+  mod     = control || alt || shift;
 
   // do screenshot
-  if ( SDLKEYDOWN( SDLK_F11 ) )
+  if ( SDLKEYDOWN( SDLK_F11 ) && !mod )
   {
     if(!do_screenshot())
     {
@@ -2460,7 +2551,7 @@ void main_handleKeyboard()
   }
 
   // do in-game-menu
-  if(SDLKEYDOWN(SDLK_F9) && CData.DevMode)
+  if(SDLKEYDOWN(SDLK_F9) && !mod && CData.DevMode)
   {
     gs->igm.proc.Active = btrue;
     gs->igm.whichMenu   = mnu_Inventory;
@@ -2470,6 +2561,13 @@ void main_handleKeyboard()
     mous.on = bfalse;
   }
 
+  // force the module to be beaten
+  if(SDLKEYDOWN(SDLK_F9) && control && CData.DevMode)
+  {
+    gs->modstate.beat = btrue;
+    gproc->State = PROC_Leaving;
+  }
+
   // do frame step in single-frame mode
   if(NULL != gs)
   {
@@ -2477,7 +2575,7 @@ void main_handleKeyboard()
     {
       gs->Do_frame = bfalse;
     }
-    else if( SDLKEYDOWN( SDLK_F10 ) )
+    else if( SDLKEYDOWN( SDLK_F10 ) && !mod )
     {
       keyb.state[SDLK_F10] = 0;
       gs->Do_frame = btrue;
@@ -2485,9 +2583,9 @@ void main_handleKeyboard()
   }
 
   //Pressed panic button
-  if ( SDLKEYDOWN( SDLK_q ) && SDLKEYDOWN( SDLK_LCTRL ) )
+  if ( SDLKEYDOWN( SDLK_q )  && control )
   {
-    log_info( "User pressed escape button (LCTRL+Q)... Quitting game gracefully.\n" );
+    log_info( "User pressed escape button (CTRL+Q)... Quitting game gracefully.\n" );
     gproc->State = PROC_Leaving;
 
     // <BB> memory_cleanUp() should be kept in PROC_Finish, so that we can make sure to deallocate
@@ -3027,19 +3125,25 @@ void game_handleKeyboard()
 {
   CGame * gs = gfxState.gs;
   CGui  * gui = gui_getState();
+  bool_t control, alt, shift, mod;
 
   if(NULL == gs) return;
 
+  control = (SDLKEYDOWN(SDLK_RCTRL) || SDLKEYDOWN(SDLK_LCTRL));
+  alt     = (SDLKEYDOWN(SDLK_RALT) || SDLKEYDOWN(SDLK_LALT));
+  shift   = (SDLKEYDOWN(SDLK_RSHIFT) || SDLKEYDOWN(SDLK_LSHIFT));
+  mod     = control || alt || shift;
+
   // do game pause if needed
-  if (!SDLKEYDOWN(SDLK_F8))  gui->can_pause = btrue;
-  if (SDLKEYDOWN(SDLK_F8) && gs->proc.Active && keyb.on && gui->can_pause)
+  if (!SDLKEYDOWN(SDLK_F8) && !mod)  gui->can_pause = btrue;
+  if (SDLKEYDOWN(SDLK_F8) && !mod && gs->proc.Active && keyb.on && gui->can_pause)
   {
     gs->proc.Paused = !gs->proc.Paused;
     gui->can_pause = bfalse;
   }
 
   // Check for quitters
-  if ((gs->proc.Active && SDLKEYDOWN(SDLK_ESCAPE)) || (gs->modstate.Active && gs->allpladead) )
+  if ((gs->proc.Active && SDLKEYDOWN(SDLK_ESCAPE) && !mod) || (gs->modstate.Active && gs->allpladead) )
   {
     gs->igm.proc.Active = btrue;
     gs->igm.whichMenu   = mnu_Quit;
@@ -3141,7 +3245,7 @@ void cl_update_game(CGame * gs, float dUpdate, Uint32 * rand_idx)
     do_integration(gs, dUpdate);
 
     PROFILE_BEGIN( make_character_matrices );
-    make_character_matrices( gs->ChrList, MAXCHR );                // client function
+    make_character_matrices( gs );                // client function
     PROFILE_END( make_character_matrices );
 
     PROFILE_BEGIN( stat_return );
@@ -3381,7 +3485,7 @@ void update_game(CGame * gs, float dUpdate, Uint32 * rand_idx)
     do_integration(gs, dUpdate);
 
     PROFILE_BEGIN( make_character_matrices );
-    make_character_matrices( gs->ChrList, MAXCHR );                // client function
+    make_character_matrices( gs );                // client function
     PROFILE_END( make_character_matrices );
 
     PROFILE_BEGIN( stat_return );
@@ -3584,7 +3688,7 @@ int proc_gameLoop( ProcState * gproc, CGame * gs )
         init_all_models(gs);
 
         log_info( "proc_gameLoop() - Starting to load module %s.\n", gs->mod.loadname);
-        mod_return = module_load( gs, gs->mod.loadname );
+        mod_return = module_load( gs, gs->mod.loadname ) ? rv_succeed : rv_fail;
         log_info( "proc_gameLoop() - Loading module %s... ", gs->mod.loadname);
         if( mod_return )
         {
@@ -3602,7 +3706,8 @@ int proc_gameLoop( ProcState * gproc, CGame * gs )
         reset_camera();
         reset_timers( gs );
         figure_out_what_to_draw();
-        make_character_matrices( gs->ChrList, MAXCHR );
+        make_character_matrices( gs );
+        recalc_character_bumpers( gs );
         attach_particles( gs );
 
 
@@ -3650,7 +3755,7 @@ int proc_gameLoop( ProcState * gproc, CGame * gs )
       else
       {
         PROFILE_BEGIN( main_loop );
-        gproc->State = game_doRun(gs, gproc->State);
+        game_doRun(gs, gproc->State);
         PROFILE_END( main_loop );
 
         gfxState.est_max_fps = 0.9 * gfxState.est_max_fps + 0.1 * (1.0f / PROFILE_QUERY(main_loop) );
@@ -3822,22 +3927,25 @@ int SDL_main( int argc, char **argv )
 }
 
 //--------------------------------------------------------------------------------------------
-void load_all_messages( CGame * gs, char *szObjectpath, char *szObjectname, Uint16 object )
+int load_all_messages( CGame * gs, const char *szObjectpath, const char *szObjectname )
 {
   // ZZ> This function loads all of an objects messages
 
+  int retval;
   FILE *fileread;
   MessageData * msglst = &(gs->MsgList);
 
-  gs->MadList[object].msg_start = 0;
+  retval = 0;
   fileread = fs_fileOpen( PRI_NONE, NULL, inherit_fname(szObjectpath, szObjectname, CData.message_file), "r" );
   if ( NULL != fileread )
   {
-    gs->MadList[object].msg_start = msglst->total;
+    retval = msglst->total;
     while ( fget_next_message( fileread, &(gs->MsgList) ) ) {};
 
     fs_fileClose( fileread );
   }
+
+  return retval;
 }
 
 
@@ -3846,7 +3954,7 @@ void update_looped_sounds( CGame * gs )
 {
   CHR_REF ichr;
 
-  for(ichr=0; ichr<MAXCHR; ichr++)
+  for(ichr=0; ichr<CHRLST_COUNT; ichr++)
   {
     if( !gs->ChrList[ichr].on || INVALID_CHANNEL == gs->ChrList[ichr].loopingchannel ) continue;
 
@@ -3866,7 +3974,7 @@ SearchInfo * SearchInfo_new(SearchInfo * psearch)
   psearch->initialize = btrue;
 
   psearch->bestdistance = 9999999;
-  psearch->besttarget   = MAXCHR;
+  psearch->besttarget   = INVALID_CHR;
   psearch->bestangle    = 32768;
 
   return psearch;
@@ -3875,7 +3983,7 @@ SearchInfo * SearchInfo_new(SearchInfo * psearch)
 //--------------------------------------------------------------------------------------------
 bool_t prt_search_wide( CGame * gs, SearchInfo * psearch, PRT_REF iprt, Uint16 facing,
                         Uint16 targetangle, bool_t request_friends, bool_t allow_anyone,
-                        TEAM team, Uint16 donttarget, Uint16 oldtarget )
+                        TEAM_REF team, CHR_REF donttarget, CHR_REF oldtarget )
 {
   // This function finds the best target for the given parameters
 
@@ -3920,7 +4028,7 @@ bool_t chr_search_block( CGame * gs, SearchInfo * psearch, int block_x, int bloc
   int cnt;
   CHR_REF charb;
   Uint32 fanblock, blnode_b;
-  TEAM team;
+  TEAM_REF team;
   vect3 diff;
   float dist;
 
@@ -3951,19 +4059,19 @@ bool_t chr_search_block( CGame * gs, SearchInfo * psearch, int block_x, int bloc
     if ( gs->ChrList[character].attachedto == charb || gs->ChrList[character].inwhichpack == charb ) continue;
 
     // don't find anything you can't see
-    if (( !seeinvisible && chr_is_invisible( gs->ChrList, MAXCHR, charb ) ) || chr_in_pack( gs->ChrList, MAXCHR, charb ) ) continue;
+    if (( !seeinvisible && chr_is_invisible( gs->ChrList, CHRLST_COUNT, charb ) ) || chr_in_pack( gs->ChrList, CHRLST_COUNT, charb ) ) continue;
 
     // if we need to find friends, don't find enemies
-    if ( require_friends && gs->TeamList[team].hatesteam[gs->ChrList[charb].team] ) continue;
+    if ( require_friends && gs->TeamList[team].hatesteam[gs->ChrList[charb].REF_TO_INT(team)] ) continue;
 
     // if we need to find enemies, don't find friends or invictus
-    if ( require_enemies && ( !gs->TeamList[team].hatesteam[gs->ChrList[charb].team] || gs->ChrList[charb].invictus ) ) continue;
+    if ( require_enemies && ( !gs->TeamList[team].hatesteam[gs->ChrList[charb].REF_TO_INT(team)] || gs->ChrList[charb].prop.invictus ) ) continue;
 
     // if we require being alive, don't accept dead things
     if ( require_alive && !gs->ChrList[charb].alive ) continue;
 
     // if we require not an item, don't accept items
-    if ( require_noitems && gs->ChrList[charb].isitem ) continue;
+    if ( require_noitems && gs->ChrList[charb].prop.isitem ) continue;
 
     ballowed = bfalse;
     if ( IDSZ_NONE == idsz )
@@ -3972,7 +4080,7 @@ bool_t chr_search_block( CGame * gs, SearchInfo * psearch, int block_x, int bloc
     }
     else
     {
-      bool_t found_idsz = CAP_INHERIT_IDSZ( gs,  gs->ChrList[charb].model, idsz );
+      bool_t found_idsz = CAP_INHERIT_IDSZ( gs, ChrList_getRCap(gs, charb), idsz );
       ballowed = (invert_idsz != found_idsz);
     }
 
@@ -4005,13 +4113,13 @@ bool_t chr_search_nearby( CGame * gs, SearchInfo * psearch, CHR_REF character, b
   int ix,ix_min,ix_max, iy,iy_min,iy_max;
   bool_t seeinvisible;
 
-  if ( !VALID_CHR( gs->ChrList, character ) || chr_in_pack( gs->ChrList, MAXCHR, character ) ) return bfalse;
+  if ( !VALID_CHR( gs->ChrList, character ) || chr_in_pack( gs->ChrList, CHRLST_COUNT, character ) ) return bfalse;
 
   // initialize the search
   SearchInfo_new(psearch);
 
   // grab seeinvisible from the character
-  seeinvisible = gs->ChrList[character].canseeinvisible;
+  seeinvisible = gs->ChrList[character].prop.canseeinvisible;
 
   // Current fanblock
   ix_min = MESH_FLOAT_TO_BLOCK( mesh_clip_x( &(gs->mesh), gs->ChrList[character].bmpdata.cv.x_min ) );
@@ -4029,7 +4137,7 @@ bool_t chr_search_nearby( CGame * gs, SearchInfo * psearch, CHR_REF character, b
 
   if ( psearch->besttarget==character )
   {
-    psearch->besttarget = MAXCHR;
+    psearch->besttarget = INVALID_CHR;
   }
 
   return VALID_CHR( gs->ChrList, psearch->besttarget);
@@ -4042,9 +4150,10 @@ bool_t chr_search_distant( CGame * gs, SearchInfo * psearch, CHR_REF character, 
   //     maxdist should be the square of the actual distance you want to use
   //     as the cutoff...
 
-  int charb, xdist, ydist, zdist;
+  CHR_REF charb;
+  int xdist, ydist, zdist;
   bool_t require_alive = !ask_dead;
-  TEAM team;
+  TEAM_REF team;
 
   if ( !VALID_CHR( gs->ChrList, character ) ) return bfalse;
 
@@ -4052,7 +4161,7 @@ bool_t chr_search_distant( CGame * gs, SearchInfo * psearch, CHR_REF character, 
 
   team = gs->ChrList[character].team;
   psearch->bestdistance = maxdist;
-  for ( charb = 0; charb < MAXCHR; charb++ )
+  for ( charb = 0; charb < CHRLST_COUNT; charb++ )
   {
     // don't find stupid items
     if ( !VALID_CHR( gs->ChrList, charb ) || 0.0f == gs->ChrList[charb].bumpstrength ) continue;
@@ -4061,13 +4170,13 @@ bool_t chr_search_distant( CGame * gs, SearchInfo * psearch, CHR_REF character, 
     if ( character == charb || gs->ChrList[charb].attachedto == character || gs->ChrList[charb].inwhichpack == character ) continue;
 
     // don't find thigs you can't see
-    if (( !gs->ChrList[character].canseeinvisible && chr_is_invisible( gs->ChrList, MAXCHR, charb ) ) || chr_in_pack( gs->ChrList, MAXCHR, charb ) ) continue;
+    if (( !gs->ChrList[character].prop.canseeinvisible && chr_is_invisible( gs->ChrList, CHRLST_COUNT, charb ) ) || chr_in_pack( gs->ChrList, CHRLST_COUNT, charb ) ) continue;
 
     // don't find dead things if not asked for
-    if ( require_alive && ( !gs->ChrList[charb].alive || gs->ChrList[charb].isitem ) ) continue;
+    if ( require_alive && ( !gs->ChrList[charb].alive || gs->ChrList[charb].prop.isitem ) ) continue;
 
     // don't find enemies unless asked for
-    if ( ask_enemies && ( !gs->TeamList[team].hatesteam[gs->ChrList[charb].team] || gs->ChrList[charb].invictus ) ) continue;
+    if ( ask_enemies && ( !gs->TeamList[team].hatesteam[gs->ChrList[charb].REF_TO_INT(team)] || gs->ChrList[charb].prop.invictus ) ) continue;
 
     xdist = gs->ChrList[charb].pos.x - gs->ChrList[character].pos.x;
     ydist = gs->ChrList[charb].pos.y - gs->ChrList[character].pos.y;
@@ -4092,7 +4201,7 @@ bool_t chr_search_block_nearest( CGame * gs, SearchInfo * psearch, int block_x, 
 
   float dis, xdis, ydis, zdis;
   int   cnt;
-  TEAM    team;
+  TEAM_REF    team;
   CHR_REF chrb_ref;
   Uint32  fanblock, blnode_b;
   bool_t require_friends =  ask_friends && !ask_enemies;
@@ -4124,21 +4233,21 @@ bool_t chr_search_block_nearest( CGame * gs, SearchInfo * psearch, int block_x, 
     if ( gs->ChrList[chra_ref].attachedto == chrb_ref || gs->ChrList[chra_ref].inwhichpack == chrb_ref ) continue;
 
     // don't find anything you can't see
-    if (( !seeinvisible && chr_is_invisible( gs->ChrList, MAXCHR, chrb_ref ) ) || chr_in_pack( gs->ChrList, MAXCHR, chrb_ref ) ) continue;
+    if (( !seeinvisible && chr_is_invisible( gs->ChrList, CHRLST_COUNT, chrb_ref ) ) || chr_in_pack( gs->ChrList, CHRLST_COUNT, chrb_ref ) ) continue;
 
     // if we need to find friends, don't find enemies
-    if ( require_friends && gs->TeamList[team].hatesteam[gs->ChrList[chrb_ref].team] ) continue;
+    if ( require_friends && gs->TeamList[team].hatesteam[gs->ChrList[chrb_ref].REF_TO_INT(team)] ) continue;
 
     // if we need to find enemies, don't find friends or invictus
-    if ( require_enemies && ( !gs->TeamList[team].hatesteam[gs->ChrList[chrb_ref].team] || gs->ChrList[chrb_ref].invictus ) ) continue;
+    if ( require_enemies && ( !gs->TeamList[team].hatesteam[gs->ChrList[chrb_ref].REF_TO_INT(team)] || gs->ChrList[chrb_ref].prop.invictus ) ) continue;
 
     // if we require being alive, don't accept dead things
     if ( require_alive && !gs->ChrList[chrb_ref].alive ) continue;
 
     // if we require not an item, don't accept items
-    if ( require_noitems && gs->ChrList[chrb_ref].isitem ) continue;
+    if ( require_noitems && gs->ChrList[chrb_ref].prop.isitem ) continue;
 
-    if ( IDSZ_NONE == idsz || CAP_INHERIT_IDSZ( gs,  gs->ChrList[chrb_ref].model, idsz ) )
+    if ( IDSZ_NONE == idsz || CAP_INHERIT_IDSZ( gs,  ChrList_getRCap(gs, chrb_ref), idsz ) )
     {
       xdis = gs->ChrList[chra_ref].pos.x - gs->ChrList[chrb_ref].pos.x;
       ydis = gs->ChrList[chra_ref].pos.y - gs->ChrList[chrb_ref].pos.y;
@@ -4163,10 +4272,10 @@ bool_t chr_search_block_nearest( CGame * gs, SearchInfo * psearch, int block_x, 
 bool_t chr_search_wide_nearest( CGame * gs, SearchInfo * psearch, CHR_REF chr_ref, bool_t ask_items,
                                  bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, IDSZ idsz )
 {
-  // ZZ> This function finds an target, or it returns MAXCHR if it can't find one
+  // ZZ> This function finds an target, or it returns CHRLST_COUNT if it can't find one
 
   int x, y;
-  bool_t seeinvisible = gs->ChrList[chr_ref].canseeinvisible;
+  bool_t seeinvisible = gs->ChrList[chr_ref].prop.canseeinvisible;
 
   if ( !VALID_CHR( gs->ChrList, chr_ref ) ) return bfalse;
 
@@ -4196,7 +4305,7 @@ bool_t chr_search_wide_nearest( CGame * gs, SearchInfo * psearch, CHR_REF chr_re
   };
 
   if ( psearch->nearest == chr_ref )
-    psearch->nearest = MAXCHR;
+    psearch->nearest = INVALID_CHR;
 
   return VALID_CHR( gs->ChrList, psearch->nearest);
 }
@@ -4211,13 +4320,13 @@ bool_t chr_search_wide( CGame * gs, SearchInfo * psearch, CHR_REF chr_ref, bool_
   bool_t  seeinvisible;
   bool_t  found;
 
-  if ( !VALID_CHR( gs->ChrList, chr_ref ) ) return MAXCHR;
+  if ( !VALID_CHR( gs->ChrList, chr_ref ) ) return bfalse;
 
   // make sure the search context is clear
   SearchInfo_new(psearch);
 
   // get seeinvisible from the chr_ref
-  seeinvisible = gs->ChrList[chr_ref].canseeinvisible;
+  seeinvisible = gs->ChrList[chr_ref].prop.canseeinvisible;
 
   // Current fanblock
   ix = MESH_FLOAT_TO_BLOCK( gs->ChrList[chr_ref].pos.x );
@@ -4253,24 +4362,52 @@ void attach_particle_to_character( CGame * gs, PRT_REF particle, CHR_REF chr_ref
   // ZZ> This function sets one particle's position to be attached to a character.
   //     It will kill the particle if the character is no longer around
 
-  Uint16 vertex, model;
+  Uint16 vertex;
   float flip;
   GLvector point, nupoint;
-  Prt * pprt;
-  Chr * pchr;
+
+  bool_t prt_valid;
+
+  PChr chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;  
+
+  PPrt prtlst      = gs->PrtList;
+  size_t prtlst_size = PRTLST_COUNT;
+
+  CPrt * pprt;
+  CChr * pchr;
+
+  prt_valid = btrue;
+  if ( !VALID_CHR( chrlst, chr_ref ) )
+  {
+    pchr = NULL;
+    prt_valid = bfalse;
+  }
+  else
+  {
+    pchr = ChrList_getPChr(gs, chr_ref);
+  }
+
+  if ( !VALID_PRT( prtlst, particle ) )
+  {
+    pprt = NULL;
+    prt_valid = bfalse;
+  }
+  else
+  {
+    pprt = prtlst + particle;
+  }
+
 
   // Check validity of attachment
-  if ( !VALID_CHR( gs->ChrList, chr_ref ) || chr_in_pack( gs->ChrList, MAXCHR, chr_ref ) || !VALID_PRT( gs->PrtList,  particle ) )
+  if ( !prt_valid || chr_in_pack( chrlst, CHRLST_COUNT, chr_ref ) )
   {
-    gs->PrtList[particle].gopoof = btrue;
+    pprt->gopoof = btrue;
     return;
   }
 
-  pprt = gs->PrtList + particle;
-  pchr = gs->ChrList + chr_ref;
-
   // Do we have a matrix???
-  if ( !pchr->matrixvalid )
+  if ( !pchr->matrix_valid )
   {
     // No matrix, so just wing it...
 
@@ -4290,19 +4427,16 @@ void attach_particle_to_character( CGame * gs, PRT_REF particle, CHR_REF chr_ref
   {
     // Transform the grip vertex position to world space
 
-    Uint32      ilast, inext;
-    Mad       * pmad;
-    MD2_Model * pmdl;
-    MD2_Frame * plast, * pnext;
+    CMad * pmad = ChrList_getPMad(gs, chr_ref);
 
-    model = pchr->model;
+    Uint32      ilast, inext;
+    MD2_Model * pmdl;
+    const MD2_Frame * plast, * pnext;
+
     inext = pchr->anim.next;
     ilast = pchr->anim.last;
     flip  = pchr->anim.flip;
 
-    assert( MAXMODEL != VALIDATE_MDL( model ) );
-
-    pmad = gs->MadList + model;
     pmdl  = pmad->md2_ptr;
     plast = md2_get_Frame(pmdl, ilast);
     pnext = md2_get_Frame(pmdl, inext);
@@ -4336,6 +4470,8 @@ void attach_particle_to_character( CGame * gs, PRT_REF particle, CHR_REF chr_ref
     pprt->pos.x = nupoint.x;
     pprt->pos.y = nupoint.y;
     pprt->pos.z = nupoint.z;
+
+
   }
 
 
@@ -4358,7 +4494,7 @@ bool_t load_all_music_sounds(ConfigData * cd)
   // reset the music
   if(snd->music_loaded)
   {
-    snd_unload_music(snd);
+    snd_unload_music();
   }
 
   //Open the playlist listing all music files
@@ -4526,15 +4662,16 @@ void setup_characters( CGame * gs, char *modname )
 {
   // ZZ> This function sets up character data, loaded from "SPAWN.TXT"
 
-  CHR_REF currentcharacter = MAXCHR, lastcharacter = MAXCHR, tmpchr = MAXCHR;
+  CHR_REF currentcharacter = INVALID_CHR, lastcharacter = INVALID_CHR, tmpchr = INVALID_CHR;
   int passage, content, money, level, skin, tnc, localnumber = 0;
   bool_t stat, ghost;
-  TEAM team;
+  TEAM_REF team;
   Uint8 cTmp;
   char *name;
   bool_t itislocal;
   STRING myname, newloadname;
-  Uint16 facing, attach;
+  Uint16 facing;
+  CHR_REF attach;
   Uint32 slot;
   vect3 pos;
   FILE *fileread;
@@ -4543,7 +4680,7 @@ void setup_characters( CGame * gs, char *modname )
   CGui * gui = gui_getState();
 
   // Turn some back on
-  currentcharacter = MAXCHR;
+  currentcharacter = INVALID_CHR;
   snprintf( newloadname, sizeof( newloadname ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.spawn_file );
   fileread = fs_fileOpen( PRI_WARN, "setup_characters()", newloadname, "r" );
   if ( NULL == fileread )
@@ -4572,7 +4709,7 @@ void setup_characters( CGame * gs, char *modname )
     pos.z = MESH_FAN_TO_FLOAT( pos.z );
 
     cTmp = fget_first_letter( fileread );
-    attach = MAXCHR;
+    attach = INVALID_CHR;
     facing = NORTH;
     grip = GRIP_SADDLE;
     switch ( toupper( cTmp ) )
@@ -4593,7 +4730,7 @@ void setup_characters( CGame * gs, char *modname )
 
 
     // Spawn the character
-    tmpchr = spawn_one_character( gs, pos, slot, team, skin, facing, name, MAXCHR );
+    tmpchr = spawn_one_character( gs, pos, OBJ_REF(slot), team, skin, facing, name, INVALID_CHR );
     if ( VALID_CHR( gs->ChrList, tmpchr ) )
     {
       lastcharacter = tmpchr;
@@ -4617,7 +4754,7 @@ void setup_characters( CGame * gs, char *modname )
           if ( pack_add_item( gs, lastcharacter, currentcharacter ) )
           {
             // actually do the attachment to the inventory
-            Uint16 tmpchr = chr_get_attachedto(gs->ChrList, MAXCHR, lastcharacter);
+            CHR_REF tmpchr = chr_get_attachedto(gs->ChrList, CHRLST_COUNT, lastcharacter);
             gs->ChrList[lastcharacter].aistate.alert |= ALERT_GRABBED;                       // Make spellbooks change
 
             // fake that it was grabbed by the left hand
@@ -4626,7 +4763,7 @@ void setup_characters( CGame * gs, char *modname )
             run_script( gs, lastcharacter, 1.0f );                     // Empty the grabbed messages
 
             // restore the proper attachment and slot variables
-            gs->ChrList[lastcharacter].attachedto = MAXCHR;                          // Fix grab
+            gs->ChrList[lastcharacter].attachedto = INVALID_CHR;                          // Fix grab
             gs->ChrList[lastcharacter].inwhichslot = SLOT_NONE;
           };
         }
@@ -4658,7 +4795,7 @@ void setup_characters( CGame * gs, char *modname )
           tnc = 0;
           while ( tnc < localplayer_count )
           {
-            if ( gs->modstate.import.slot_lst[gs->ChrList[lastcharacter].model] == localplayer_slot[tnc] )
+            if ( gs->modstate.import.slot_lst[REF_TO_INT(gs->ChrList[lastcharacter].model)] == localplayer_slot[tnc] )
             {
               itislocal = btrue;
               localnumber = tnc;
@@ -4697,7 +4834,7 @@ void setup_characters( CGame * gs, char *modname )
       {
         // Make the character a ghost !!!BAD!!!  Can do with enchants
         gs->ChrList[lastcharacter].alpha_fp8 = 128;
-        gs->ChrList[lastcharacter].bumpstrength = gs->CapList[gs->ChrList[lastcharacter].model].bumpstrength * FP8_TO_FLOAT( gs->ChrList[lastcharacter].alpha_fp8 );
+        gs->ChrList[lastcharacter].bumpstrength = ChrList_getPCap(gs, lastcharacter)->bumpstrength * FP8_TO_FLOAT( gs->ChrList[lastcharacter].alpha_fp8 );
         gs->ChrList[lastcharacter].light_fp8 = 255;
       }
     }
@@ -4710,6 +4847,9 @@ void setup_characters( CGame * gs, char *modname )
   // Make sure local players are displayed first
   sort_statlist( gs );
 
+  // make sure that a basic bounding box is calculated for every object
+  recalc_character_bumpers(gs);
+
   // Fix tilting trees problem
   tilt_characters_to_terrain(gs);
 }
@@ -4720,7 +4860,7 @@ void despawn_characters(CGame * gs)
   CHR_REF chr_ref;
 
   // poof all characters that have pending poof requests
-  for ( chr_ref = 0; chr_ref < MAXCHR; chr_ref++ )
+  for ( chr_ref = 0; chr_ref < CHRLST_COUNT; chr_ref++ )
   {
     if ( !VALID_CHR( gs->ChrList, chr_ref ) || !gs->ChrList[chr_ref].gopoof ) continue;
 
@@ -4730,16 +4870,16 @@ void despawn_characters(CGame * gs)
     // Drop all possesions
     for ( _slot = SLOT_BEGIN; _slot < SLOT_COUNT; _slot = ( SLOT )( _slot + 1 ) )
     {
-      if ( chr_using_slot( gs->ChrList, MAXCHR, chr_ref, _slot ) )
-        detach_character_from_mount( gs, chr_get_holdingwhich( gs->ChrList, MAXCHR, chr_ref, _slot ), btrue, bfalse );
+      if ( chr_using_slot( gs->ChrList, CHRLST_COUNT, chr_ref, _slot ) )
+        detach_character_from_mount( gs, chr_get_holdingwhich( gs->ChrList, CHRLST_COUNT, chr_ref, _slot ), btrue, bfalse );
     };
 
-    chr_free_inventory( gs->ChrList, MAXCHR, chr_ref );
+    chr_free_inventory( gs->ChrList, CHRLST_COUNT, chr_ref );
     gs->ChrList[chr_ref].freeme = btrue;
   };
 
   // free all characters that requested destruction last round
-  for ( chr_ref = 0; chr_ref < MAXCHR; chr_ref++ )
+  for ( chr_ref = 0; chr_ref < CHRLST_COUNT; chr_ref++ )
   {
     if ( !VALID_CHR( gs->ChrList, chr_ref ) || !gs->ChrList[chr_ref].freeme ) continue;
     ChrList_free_one( gs, chr_ref );
@@ -4750,41 +4890,48 @@ void despawn_characters(CGame * gs)
 //--------------------------------------------------------------------------------------------
 void despawn_particles(CGame * gs)
 {
-  int iprt, tnc;
-  Uint16 facing, pip;
+  int tnc;
+  Uint16 facing;
+  PRT_REF iprt;
+  PIP_REF pip;
   CHR_REF prt_target, prt_owner, prt_attachedto;
-  Prt * prtlst = gs->PrtList;
-  Pip * piplst = gs->PipList;
+
+  PPrt prtlst = gs->PrtList;
+  PPip piplst = gs->PipList;
+  CPrt * pprt;
 
   // actually destroy all particles that requested destruction last time through the loop
-  for ( iprt = 0; iprt < MAXPRT; iprt++ )
+  for ( iprt = 0; iprt < PRTLST_COUNT; iprt++ )
   {
-    if ( !VALID_PRT( prtlst,  iprt ) || !prtlst[iprt].gopoof ) continue;
-
+    if ( !VALID_PRT( prtlst,  iprt ) ) continue;
+    pprt = prtlst + iprt;
+      
+    if( !pprt->gopoof ) continue;
+    
     // To make it easier
-    pip = prtlst[iprt].pip;
-    facing = prtlst[iprt].facing;
+    pip = pprt->pip;
+    facing = pprt->facing;
     prt_target = prt_get_target( gs, iprt );
     prt_owner = prt_get_owner( gs, iprt );
     prt_attachedto = prt_get_attachedtochr( gs, iprt );
 
     for ( tnc = 0; tnc < piplst[pip].endspawnamount; tnc++ )
     {
-      spawn_one_particle( gs, 1.0f, prtlst[iprt].pos,
-                          facing, prtlst[iprt].model, piplst[pip].endspawnpip,
-                          MAXCHR, GRIP_LAST, prtlst[iprt].team, prt_owner, tnc, prt_target );
+      spawn_one_particle( gs, 1.0f, pprt->pos,
+                          facing, pprt->model, piplst[pip].endspawnpip,
+                          INVALID_CHR, GRIP_LAST, pprt->team, prt_owner, tnc, prt_target );
 
       facing += piplst[pip].endspawnfacingadd;
     }
 
-    PrtList_free_one( gs, iprt );
+    end_one_particle( gs, iprt );
   }
 
 };
 
 //--------------------------------------------------------------------------------------------
 bool_t prt_search_block( CGame * gs, SearchInfo * psearch, int block_x, int block_y, PRT_REF prt_ref, Uint16 facing,
-                         bool_t request_friends, bool_t allow_anyone, TEAM team,
+                         bool_t request_friends, bool_t allow_anyone, TEAM_REF team,
                          CHR_REF donttarget_ref, CHR_REF oldtarget_ref )
 {
   // ZZ> This function helps find a target, returning btrue if it found a decent target
@@ -4813,13 +4960,13 @@ bool_t prt_search_block( CGame * gs, SearchInfo * psearch, int block_x, int bloc
     // don't find stupid stuff
     if ( !VALID_CHR( gs->ChrList, search_ref ) || 0.0f == gs->ChrList[search_ref].bumpstrength ) continue;
 
-    if ( !gs->ChrList[search_ref].alive || gs->ChrList[search_ref].invictus || chr_in_pack( gs->ChrList, MAXCHR, search_ref ) ) continue;
+    if ( !gs->ChrList[search_ref].alive || gs->ChrList[search_ref].prop.invictus || chr_in_pack( gs->ChrList, CHRLST_COUNT, search_ref ) ) continue;
 
     if ( search_ref == donttarget_ref || search_ref == oldtarget_ref ) continue;
 
     if (   allow_anyone || 
-         ( request_friends && !gs->TeamList[team].hatesteam[gs->ChrList[search_ref].team] ) || 
-         ( request_enemies &&  gs->TeamList[team].hatesteam[gs->ChrList[search_ref].team] ) )
+         ( request_friends && !gs->TeamList[team].hatesteam[gs->ChrList[search_ref].REF_TO_INT(team)] ) || 
+         ( request_enemies &&  gs->TeamList[team].hatesteam[gs->ChrList[search_ref].REF_TO_INT(team)] ) )
     {
       local_distance = ABS( gs->ChrList[search_ref].pos.x - gs->PrtList[prt_ref].pos.x ) + ABS( gs->ChrList[search_ref].pos.y - gs->PrtList[prt_ref].pos.y );
       if ( psearch->initialize || local_distance < psearch->bestdistance )
@@ -5156,27 +5303,24 @@ void set_alerts( CGame * gs, CHR_REF ichr, float dUpdate )
 {
   // ZZ> This function polls some alert conditions
 
-  Cap  * caplst      = gs->CapList;
-  size_t caplst_size = MAXCAP;
+  PCap caplst      = gs->CapList;
+  size_t caplst_size = CAPLST_COUNT;
 
-  Chr  * chrlst      = gs->ChrList;
-  size_t chrlst_size = MAXCHR;
+  PChr chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
 
   AI_STATE * pstate;
-  Chr      * pchr;
+  CChr      * pchr;
 
   if( !VALID_CHR( chrlst, ichr) ) return;
 
-  pchr   = chrlst + ichr;
+  pchr   = ChrList_getPChr(gs, ichr);
   pstate = &(pchr->aistate);
-
-  pstate->time -= dUpdate;
-  if ( pstate->time < 0 ) pstate->time = 0.0f;
 
   if ( ABS( pchr->pos.x - wp_list_x(&(pstate->wp)) ) < WAYTHRESH &&
        ABS( pchr->pos.y - wp_list_y(&(pstate->wp)) ) < WAYTHRESH )
   {
-    ai_state_advance_wp(pstate, !caplst[pchr->model].isequipment);
+    ai_state_advance_wp(pstate, !ChrList_getPCap(gs, ichr)->prop.isequipment);
   }
 }
 
@@ -5313,13 +5457,13 @@ bool_t PassList_renew( CGame * gs )
 //--------------------------------------------------------------------------------------------
 bool_t CapList_new( CGame * gs )
 {
-  int i;
+  CAP_REF icap;
 
   if(NULL == gs || !gs->initialized) return bfalse;
 
-  for(i=0; i<MAXPASS; i++)
+  for(icap=0; icap<CAPLST_COUNT; icap++)
   {
-    Cap_new(gs->CapList + i);
+    Cap_new(gs->CapList + icap);
   };
 
   return btrue;
@@ -5328,13 +5472,13 @@ bool_t CapList_new( CGame * gs )
 //--------------------------------------------------------------------------------------------
 bool_t CapList_delete( CGame * gs )
 {
-  int i;
+  CAP_REF icap;
 
   if(NULL == gs || !gs->initialized) return bfalse;
 
-  for(i=0; i<MAXPASS; i++)
+  for(icap=0; icap<MAXPASS; icap++)
   {
-    Cap_delete(gs->CapList + i);
+    Cap_delete(gs->CapList + icap);
   };
 
   return btrue;
@@ -5343,13 +5487,13 @@ bool_t CapList_delete( CGame * gs )
 //--------------------------------------------------------------------------------------------
 bool_t CapList_renew( CGame * gs )
 {
-  int i;
+  CAP_REF icap;
 
   if(NULL == gs || !gs->initialized) return bfalse;
 
-  for(i=0; i<MAXPASS; i++)
+  for(icap=0; icap<MAXPASS; icap++)
   {
-    Cap_renew(gs->CapList + i);
+    Cap_renew(gs->CapList + icap);
   };
 
   return btrue;
@@ -5359,11 +5503,11 @@ bool_t CapList_renew( CGame * gs )
 //--------------------------------------------------------------------------------------------
 bool_t MadList_new( CGame * gs )
 {
-  int i;
+  MAD_REF imad;
 
-  for(i=0; i<MAXMODEL; i++)
+  for(imad=0; imad<MADLST_COUNT; imad++)
   {
-    Mad_new(gs->MadList + i);
+    Mad_new(gs->MadList + imad);
   }
 
   return btrue;
@@ -5372,13 +5516,13 @@ bool_t MadList_new( CGame * gs )
 //--------------------------------------------------------------------------------------------
 bool_t MadList_delete( CGame * gs )
 {
-  int i;
+  MAD_REF imad;
 
-  for(i=0; i<MAXMODEL; i++)
+  for(imad=0; imad<MADLST_COUNT; imad++)
   {
-    if(!gs->MadList[i].used) continue;
+    if(!gs->MadList[imad].used) continue;
 
-    Mad_delete(gs->MadList + i);
+    Mad_delete(gs->MadList + imad);
   }
 
   return btrue;
@@ -5387,13 +5531,13 @@ bool_t MadList_delete( CGame * gs )
 //--------------------------------------------------------------------------------------------
 bool_t MadList_renew( CGame * gs )
 {
-  int i;
+  MAD_REF imad;
 
-  for(i=0; i<MAXMODEL; i++)
+  for(imad=0; imad<MADLST_COUNT; imad++)
   {
-    if(!gs->MadList[i].used) continue;
+    if(!gs->MadList[imad].used) continue;
 
-    Mad_renew(gs->MadList + i);
+    Mad_renew(gs->MadList + imad);
   }
 
   return btrue;
@@ -5409,18 +5553,17 @@ bool_t EncList_new( CGame * gs )
 {
   // ZZ> This functions frees all of the enchantments
 
-  int cnt;
+  ENC_REF enc_cnt;
 
   if(NULL == gs || !gs->initialized) return bfalse;
 
   gs->EncFreeList_count = 0;
-  for ( cnt = 0; cnt < MAXENCHANT; cnt++ )
+  for ( enc_cnt = 0; enc_cnt < ENCLST_COUNT; enc_cnt++ )
   {
-    Enc_new( gs->EncList + cnt );
-
-    gs->EncFreeList_count = cnt;
-    gs->EncFreeList[cnt] = cnt;
+    CEnc_new( gs->EncList + enc_cnt );
+    gs->EncFreeList[REF_TO_INT(enc_cnt)] = REF_TO_INT(enc_cnt);
   }
+  gs->EncFreeList_count = ENCLST_COUNT;
 
   return btrue;
 }
@@ -5430,18 +5573,17 @@ bool_t EncList_delete( CGame * gs )
 {
   // ZZ> This functions frees all of the enchantments
 
-  int cnt;
+  ENC_REF enc_cnt;
 
   if(NULL == gs || !gs->initialized) return bfalse;
 
   gs->EncFreeList_count = 0;
-  for ( cnt = 0; cnt < MAXENCHANT; cnt++ )
+  for ( enc_cnt = 0; enc_cnt < ENCLST_COUNT; enc_cnt++ )
   {
-    Enc_delete( gs->EncList + cnt );
-
-    gs->EncFreeList_count = cnt;
-    gs->EncFreeList[cnt] = cnt;
+    CEnc_delete( gs->EncList + enc_cnt );
+    gs->EncFreeList[REF_TO_INT(enc_cnt)] = REF_TO_INT(enc_cnt);
   }
+  gs->EncFreeList_count = ENCLST_COUNT;
 
   return btrue;
 }
@@ -5451,18 +5593,17 @@ bool_t EncList_renew( CGame * gs )
 {
   // ZZ> This functions frees all of the enchantments
 
-  int cnt;
+  ENC_REF enc_cnt;
 
   if(NULL == gs || !gs->initialized) return bfalse;
 
   gs->EncFreeList_count = 0;
-  for ( cnt = 0; cnt < MAXENCHANT; cnt++ )
+  for ( enc_cnt = 0; enc_cnt < ENCLST_COUNT; enc_cnt++ )
   {
-    Enc_renew( gs->EncList + cnt );
-
-    gs->EncFreeList_count = cnt;
-    gs->EncFreeList[cnt] = cnt;
+    CEnc_renew( gs->EncList + enc_cnt );
+    gs->EncFreeList[REF_TO_INT(enc_cnt)] = REF_TO_INT(enc_cnt);
   }
+  gs->EncFreeList_count = ENCLST_COUNT;
 
   return btrue;
 }
@@ -5473,7 +5614,7 @@ bool_t PlaList_new( CGame * gs )
 {
   // ZZ> This functions frees all of the plahantments
 
-  int cnt;
+  PLA_REF pla_cnt;
 
   if(NULL == gs || !gs->initialized) return bfalse;
 
@@ -5481,9 +5622,9 @@ bool_t PlaList_new( CGame * gs )
   gs->cl->loc_pla_count  = 0;
   gs->cl->StatList_count = 0;
 
-  for ( cnt = 0; cnt < MAXENCHANT; cnt++ )
+  for ( pla_cnt = 0; pla_cnt < ENCLST_COUNT; pla_cnt++ )
   {
-    Player_new( gs->PlaList + cnt );
+    Player_new( gs->PlaList + pla_cnt );
   }
 
   return btrue;
@@ -5494,7 +5635,7 @@ bool_t PlaList_delete( CGame * gs )
 {
   // ZZ> This functions frees all of the plahantments
 
-  int cnt;
+  PLA_REF pla_cnt;
 
   if(NULL == gs || !gs->initialized) return bfalse;
 
@@ -5505,9 +5646,9 @@ bool_t PlaList_delete( CGame * gs )
     gs->cl->StatList_count = 0;
   };
 
-  for ( cnt = 0; cnt < MAXENCHANT; cnt++ )
+  for ( pla_cnt = 0; pla_cnt < ENCLST_COUNT; pla_cnt++ )
   {
-    Player_delete( gs->PlaList + cnt );
+    Player_delete( gs->PlaList + pla_cnt );
   }
 
   return btrue;
@@ -5518,7 +5659,7 @@ bool_t PlaList_renew( CGame * gs )
 {
   // ZZ> This functions frees all of the plahantments
 
-  int cnt;
+  PLA_REF pla_cnt;
 
   if(NULL == gs || !gs->initialized) return bfalse;
 
@@ -5526,9 +5667,9 @@ bool_t PlaList_renew( CGame * gs )
   gs->cl->loc_pla_count  = 0;
   gs->cl->StatList_count = 0;
 
-  for ( cnt = 0; cnt < MAXPLAYER; cnt++ )
+  for ( pla_cnt = 0; pla_cnt < PLALST_COUNT; pla_cnt++ )
   {
-    Player_renew( gs->PlaList + cnt );
+    Player_renew( gs->PlaList + pla_cnt );
   }
 
   return btrue;
@@ -5540,16 +5681,15 @@ bool_t PlaList_renew( CGame * gs )
 //--------------------------------------------------------------------------------------------
 bool_t ChrList_new( CGame * gs )
 {
-  int cnt;
+  CHR_REF chr_cnt;
   if(NULL == gs || !gs->initialized) return bfalse;
 
-  for(cnt=0; cnt<MAXCHR; cnt++)
+  for(chr_cnt=0; chr_cnt<CHRLST_COUNT; chr_cnt++)
   {
-    Chr_new( gs->ChrList + cnt );
-
-    gs->ChrFreeList_count = cnt;
-    gs->ChrFreeList[cnt]  = cnt;
+    Chr_new( gs->ChrList + chr_cnt );
+    gs->ChrFreeList[REF_TO_INT(chr_cnt)]  = REF_TO_INT(chr_cnt);
   }
+  gs->ChrFreeList_count = CHRLST_COUNT;
 
   return btrue;
 }
@@ -5557,16 +5697,15 @@ bool_t ChrList_new( CGame * gs )
 //--------------------------------------------------------------------------------------------
 bool_t ChrList_delete(CGame * gs)
 {
-  int cnt;
+  CHR_REF chr_cnt;
   if(NULL == gs || !gs->initialized) return bfalse;
 
-  for(cnt=0; cnt<MAXCHR; cnt++)
+  for(chr_cnt=0; chr_cnt<CHRLST_COUNT; chr_cnt++)
   {
-    Chr_delete( gs->ChrList + cnt );
-
-    gs->ChrFreeList_count = cnt;
-    gs->ChrFreeList[cnt]  = cnt;
+    Chr_delete( gs->ChrList + chr_cnt );
+    gs->ChrFreeList[REF_TO_INT(chr_cnt)]  = REF_TO_INT(chr_cnt);
   }
+  gs->ChrFreeList_count = CHRLST_COUNT;
 
   return btrue;
 }
@@ -5574,16 +5713,16 @@ bool_t ChrList_delete(CGame * gs)
 //--------------------------------------------------------------------------------------------
 bool_t ChrList_renew( CGame * gs )
 {
-  int cnt;
+  CHR_REF chr_cnt;
   if(NULL == gs || !gs->initialized) return bfalse;
 
-  for(cnt=0; cnt<MAXCHR; cnt++)
+  for(chr_cnt=0; chr_cnt<CHRLST_COUNT; chr_cnt++)
   {
-    Chr_renew( gs->ChrList + cnt );
+    Chr_renew( gs->ChrList + chr_cnt );
 
-    gs->ChrFreeList_count = cnt;
-    gs->ChrFreeList[cnt]  = cnt;
+    gs->ChrFreeList[REF_TO_INT(chr_cnt)]  = REF_TO_INT(chr_cnt);
   }
+  gs->ChrFreeList_count = CHRLST_COUNT;
 
   return btrue;
 }
@@ -5592,13 +5731,13 @@ bool_t ChrList_renew( CGame * gs )
 //--------------------------------------------------------------------------------------------
 bool_t EveList_new( CGame * gs )
 {
-  int cnt;
+  EVE_REF ieve;
 
   if(NULL == gs || !gs->initialized) return bfalse;
 
-  for(cnt = 0; cnt<MAXEVE; cnt++)
+  for(ieve = 0; ieve<EVELST_COUNT; ieve++)
   {
-    Eve_new( gs->EveList + cnt );
+    Eve_new( gs->EveList + ieve );
   };
 
   return btrue;
@@ -5607,13 +5746,13 @@ bool_t EveList_new( CGame * gs )
 //--------------------------------------------------------------------------------------------
 bool_t EveList_delete( CGame * gs )
 {
-  int cnt;
+  EVE_REF ieve;
 
   if(NULL == gs || !gs->initialized) return bfalse;
 
-  for(cnt = 0; cnt<MAXEVE; cnt++)
+  for(ieve = 0; ieve<EVELST_COUNT; ieve++)
   {
-    Eve_delete( gs->EveList + cnt );
+    Eve_delete( gs->EveList + ieve );
   };
 
   return btrue;
@@ -5622,13 +5761,13 @@ bool_t EveList_delete( CGame * gs )
 //--------------------------------------------------------------------------------------------
 bool_t EveList_renew( CGame * gs )
 {
-  int cnt;
+  EVE_REF ieve;
 
   if(NULL == gs || !gs->initialized) return bfalse;
 
-  for(cnt = 0; cnt<MAXEVE; cnt++)
+  for(ieve = 0; ieve<EVELST_COUNT; ieve++)
   {
-    Eve_renew( gs->EveList + cnt );
+    Eve_renew( gs->EveList + ieve );
   };
 
   return btrue;
@@ -5640,16 +5779,18 @@ bool_t PrtList_new( CGame * gs )
 {
   // ZZ> This function resets the particle allocation lists
 
-  int cnt;
+  PRT_REF iprt;
   if(NULL == gs) return bfalse;
 
-  for ( cnt = 0; cnt < MAXPRT; cnt++ )
-  {
-    Prt_new(gs->PrtList + cnt);
+  log_debug( "INFO: PrtList_new()\n");  
 
-    gs->PrtFreeList_count = cnt;
-    gs->PrtFreeList[cnt] = cnt;
+  for ( iprt = 0; iprt < PRTLST_COUNT; iprt++ )
+  {
+    Prt_new(gs->PrtList + iprt);
+
+    gs->PrtFreeList[REF_TO_INT(iprt)] = REF_TO_INT(iprt);
   }
+  gs->PrtFreeList_count = PRTLST_COUNT;
 
   return btrue;
 }
@@ -5659,16 +5800,18 @@ bool_t PrtList_delete( CGame * gs )
 {
   // ZZ> This function resets the particle allocation lists
 
-  int cnt;
+  PRT_REF iprt;
   if(NULL == gs) return bfalse;
 
-  for ( cnt = 0; cnt < MAXPRT; cnt++ )
-  {
-    Prt_delete(gs->PrtList + cnt);
+  log_debug( "INFO: PrtList_delete()\n");
 
-    gs->PrtFreeList_count = cnt;
-    gs->PrtFreeList[cnt] = cnt;
+  for ( iprt = 0; iprt < PRTLST_COUNT; iprt++ )
+  {
+    Prt_delete(gs->PrtList + iprt);
+
+    gs->PrtFreeList[REF_TO_INT(iprt)] = REF_TO_INT(iprt);
   }
+  gs->PrtFreeList_count = PRTLST_COUNT;
 
   return btrue;
 }
@@ -5679,16 +5822,18 @@ bool_t PrtList_renew( CGame * gs )
 {
   // ZZ> This function resets the particle allocation lists
 
-  int cnt;
+  PRT_REF iprt;
   if(NULL == gs) return bfalse;
 
-  for ( cnt = 0; cnt < MAXPRT; cnt++ )
-  {
-    Prt_renew(gs->PrtList + cnt);
+  log_debug( "INFO: PrtList_renew()\n");
 
-    gs->PrtFreeList_count = cnt;
-    gs->PrtFreeList[cnt] = cnt;
+  for ( iprt = 0; iprt < PRTLST_COUNT; iprt++ )
+  {
+    Prt_renew(gs->PrtList + iprt);
+
+    gs->PrtFreeList[REF_TO_INT(iprt)] = REF_TO_INT(iprt);
   }
+  gs->PrtFreeList_count = PRTLST_COUNT;
 
   return btrue;
 }
@@ -5697,13 +5842,13 @@ bool_t PrtList_renew( CGame * gs )
 //--------------------------------------------------------------------------------------------
 bool_t TeamList_new( CGame * gs )
 {
-  int cnt;
+  TEAM_REF iteam;
 
   if(NULL == gs || !gs->initialized) return bfalse;
 
-  for(cnt = 0; cnt<TEAM_COUNT; cnt++)
+  for(iteam = 0; iteam<TEAM_COUNT; iteam++)
   {
-    TeamInfo_new( gs->TeamList + cnt );
+    CTeam_new( gs->TeamList + iteam );
   };
 
   return btrue;
@@ -5712,13 +5857,13 @@ bool_t TeamList_new( CGame * gs )
 //--------------------------------------------------------------------------------------------
 bool_t TeamList_delete( CGame * gs )
 {
-  int cnt;
+  TEAM_REF iteam;
 
   if(NULL == gs || !gs->initialized) return bfalse;
 
-  for(cnt = 0; cnt<TEAM_COUNT; cnt++)
+  for(iteam = 0; iteam<TEAM_COUNT; iteam++)
   {
-    TeamInfo_delete( gs->TeamList + cnt );
+    CTeam_delete( gs->TeamList + iteam );
   };
 
   return btrue;
@@ -5727,13 +5872,13 @@ bool_t TeamList_delete( CGame * gs )
 //--------------------------------------------------------------------------------------------
 bool_t TeamList_renew( CGame * gs )
 {
-  int cnt;
+  TEAM_REF iteam;
 
   if(NULL == gs || !gs->initialized) return bfalse;
 
-  for(cnt = 0; cnt<TEAM_COUNT; cnt++)
+  for(iteam = 0; iteam<TEAM_COUNT; iteam++)
   {
-    TeamInfo_renew( gs->TeamList + cnt );
+    CTeam_renew( gs->TeamList + iteam );
   };
 
   return btrue;
@@ -5759,14 +5904,14 @@ bool_t reset_characters( CGame * gs )
 //--------------------------------------------------------------------------------------------
 bool_t PipList_new( CGame * gs )
 {
-  int cnt;
+  PIP_REF ipip;
 
   if(NULL == gs || !gs->initialized) return bfalse;
 
   gs->PipList_count = 0;
-  for(cnt = 0; cnt<MAXPRTPIP; cnt++)
+  for(ipip = 0; ipip<PIPLST_COUNT; ipip++)
   {
-    Pip_new( gs->PipList + cnt );
+    Pip_new( gs->PipList + ipip );
   };
 
   return btrue;
@@ -5775,14 +5920,14 @@ bool_t PipList_new( CGame * gs )
 //--------------------------------------------------------------------------------------------
 bool_t PipList_delete( CGame * gs )
 {
-  int cnt;
+  PIP_REF ipip;
 
   if(NULL == gs || !gs->initialized) return bfalse;
 
   gs->PipList_count = 0;
-  for(cnt = 0; cnt<MAXPRTPIP; cnt++)
+  for(ipip = 0; ipip<PIPLST_COUNT; ipip++)
   {
-    Pip_delete( gs->PipList + cnt );
+    Pip_delete( gs->PipList + ipip );
   };
 
   return btrue;
@@ -5791,14 +5936,14 @@ bool_t PipList_delete( CGame * gs )
 //--------------------------------------------------------------------------------------------
 bool_t PipList_renew( CGame * gs )
 {
-  int cnt;
+  PIP_REF ipip;
 
   if(NULL == gs || !gs->initialized) return bfalse;
 
   gs->PipList_count = 0;
-  for(cnt = 0; cnt<MAXPRTPIP; cnt++)
+  for(ipip = 0; ipip<PIPLST_COUNT; ipip++)
   {
-    Pip_renew( gs->PipList + cnt );
+    Pip_renew( gs->PipList + ipip );
   };
 
   PipList_load_global(gs);
@@ -5954,9 +6099,11 @@ bool_t chr_is_player( CGame * gs, CHR_REF character)
 //--------------------------------------------------------------------------------------------
 bool_t count_players(CGame * gs)
 {
-  int cnt, ichr, numdead;
-  Player * plalist;
-  Chr    * chrlist;
+  int numdead;
+  PLA_REF pla_cnt;
+  CHR_REF ichr;
+  PPla plalist;
+  PChr chrlist;
   CClient * cs;
   CServer * ss;
 
@@ -5975,11 +6122,11 @@ bool_t count_players(CGame * gs)
   cs->loc_pla_count = 0;
   ss->rem_pla_count = 0;
   numdead = 0;
-  for (cnt = 0; cnt < MAXPLAYER; cnt++)
+  for (pla_cnt = 0; pla_cnt < PLALST_COUNT; pla_cnt++)
   {
-    if( !VALID_PLA(plalist, cnt) ) continue;
+    if( !VALID_PLA(plalist, pla_cnt) ) continue;
 
-    if( INBITS_NONE == plalist[cnt].device )
+    if( INBITS_NONE == plalist[pla_cnt].device )
     {
       ss->rem_pla_count++;
     }
@@ -5988,7 +6135,7 @@ bool_t count_players(CGame * gs)
       cs->loc_pla_count++;
     }
 
-    ichr = PlaList_get_character( gs, cnt );
+    ichr = PlaList_get_character( gs, pla_cnt );
     if ( !VALID_CHR( chrlist, ichr ) ) continue;
 
     if ( !chrlist[ichr].alive )
@@ -5996,12 +6143,12 @@ bool_t count_players(CGame * gs)
       numdead++;
     };
 
-    if ( chrlist[ichr].canseeinvisible )
+    if ( chrlist[ichr].prop.canseeinvisible )
     {
       cs->seeinvisible = btrue;
     }
 
-    if ( chrlist[ichr].canseekurse )
+    if ( chrlist[ichr].prop.canseekurse )
     {
       cs->seekurse = btrue;
     }
@@ -6056,4 +6203,148 @@ void load_global_icons(CGame * gs)
   gs->mousicon = load_one_icon( CData.basicdat_dir, NULL, CData.mousicon_bitmap );
   gs->joyaicon = load_one_icon( CData.basicdat_dir, NULL, CData.joyaicon_bitmap );
   gs->joybicon = load_one_icon( CData.basicdat_dir, NULL, CData.joybicon_bitmap );
+}
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+CPhysicsData * CPhysicsData_new(CPhysicsData * phys)
+{
+  if(NULL == phys) return phys;
+
+  if(phys->initialized) CPhysicsData_delete(phys);
+
+  phys->hillslide       = 1.00f;
+  phys->slippyfriction  = 1.00f;   //1.05 for Chevron
+  phys->airfriction     = 0.95f;
+  phys->waterfriction   = 0.85f;
+  phys->noslipfriction  = 0.95f;
+  phys->platstick       = 0.04f;
+  phys->gravity         =-1.00f;
+
+  phys->initialized;
+
+  return phys;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t CPhysicsData_delete(CPhysicsData * phys)
+{
+  if(NULL == phys || !phys->initialized) return bfalse;
+
+  phys->initialized = bfalse;
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+CPhysicsData * CPhysicsData_renew(CPhysicsData * phys)
+{
+  CPhysicsData_delete(phys);
+  return CPhysicsData_new(phys);
+}
+
+//--------------------------------------------------------------------------------------------
+
+void recalc_character_bumpers( CGame * gs )
+{
+  CHR_REF chr_ref;
+
+  for(chr_ref = 0; chr_ref<CHRLST_COUNT; chr_ref++)
+  {
+    if( !VALID_CHR(gs->ChrList, chr_ref) ) continue;
+
+    chr_calculate_bumpers( gs, gs->ChrList + chr_ref, 0);
+  };
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t ObjList_new( CGame * gs )
+{
+  OBJ_REF iobj;
+  if(NULL == gs || !gs->initialized) return bfalse;
+
+  for(iobj=0; iobj<OBJLST_COUNT; iobj++)
+  {
+    CProfile_new( gs->ObjList + iobj );
+
+    gs->ObjFreeList[REF_TO_INT(iobj)]  = REF_TO_INT(iobj);
+  }
+  gs->ObjFreeList_count = OBJLST_COUNT;
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t ObjList_delete(CGame * gs)
+{
+  OBJ_REF iobj;
+  if(NULL == gs || !gs->initialized) return bfalse;
+
+  for(iobj=0; iobj<OBJLST_COUNT; iobj++)
+  {
+    CProfile_delete( gs->ObjList + iobj );
+
+    gs->ObjFreeList[REF_TO_INT(iobj)]  = REF_TO_INT(iobj);
+  }
+  gs->ObjFreeList_count = OBJLST_COUNT;
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t ObjList_renew( CGame * gs )
+{
+  OBJ_REF iobj;
+  if(NULL == gs || !gs->initialized) return bfalse;
+
+  for(iobj=0; iobj<OBJLST_COUNT; iobj++)
+  {
+    CProfile_renew( gs->ObjList + iobj );
+
+    gs->ObjFreeList[REF_TO_INT(iobj)]  = REF_TO_INT(iobj);
+  }
+  gs->ObjFreeList_count = OBJLST_COUNT;
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+OBJ_REF ObjList_get_free( CGame * gs, OBJ_REF request )
+{
+  int i;
+  OBJ_REF retval = INVALID_OBJ;
+
+  if(NULL == gs || !gs->initialized) return INVALID_OBJ;
+
+  if(INVALID_OBJ == request)
+  {
+    // request is not specified. just give them the next one
+    if(gs->ObjFreeList_count>0)
+    {
+      gs->ObjFreeList_count--;
+      retval = gs->ObjFreeList[gs->ObjFreeList_count];
+    }
+  }
+  else
+  {
+    // search for the requested reference in the free list
+    for(i=0; i<gs->ObjFreeList_count; i++)
+    {
+      if(gs->ObjFreeList[i] == request)
+      {
+        // found it, so pop it off the list
+        gs->ObjFreeList[i] = gs->ObjFreeList[gs->ObjFreeList_count-1];
+        gs->ObjFreeList_count--;
+      }
+    }
+
+    retval = request;
+  }
+
+  // initialize the data
+  CProfile_new(gs->ObjList + request);
+
+  return retval;
 }

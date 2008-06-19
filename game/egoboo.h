@@ -67,13 +67,8 @@ EXTERN const char VERSION[] EQ( "2.7.x" );   // Version of the game
 
 
 
-EXTERN Uint16  endtextindex[8];
-
 #define MAXIMPORT           (32*9)                  // Number of subdirs in IMPORT directory
-
-
 #define EXPKEEP 0.85                                // Experience to keep when respawning
-
 #define NOHIDE              127                     // Don't hide
 
 typedef enum damage_effects_bits_e
@@ -237,20 +232,9 @@ EXTERN Uint8           parseerror EQ( 0 );    //Do we have an script error?
 //Networking
 EXTERN int                     localplayer_count;                 // Number of imports from this machine
 EXTERN Uint8                   localplayer_control[16];           // For local imports
-EXTERN short                   localplayer_slot[16];              // For local imports
+EXTERN OBJ_REF                 localplayer_slot[16];              // For local imports
 
 // EWWWW. GLOBALS ARE EVIL.
-
-//Weather and water gfx
-typedef struct weather_info_t
-{
-  bool_t    overwater; // EQ( bfalse );       // Only spawn over water?
-  int       timereset; // EQ( 10 );          // Rate at which weather particles spawn
-  float     time; // EQ( 0 );                // 0 is no weather
-  int       player;
-} WEATHER_INFO;
-
-EXTERN WEATHER_INFO GWeather;
 
 typedef struct water_layer_t
 {
@@ -428,13 +412,23 @@ EXTERN float           textureoffset[256];         // For moving textures
 // Physics variables
 //------------------------------------
 
-EXTERN float           hillslide  EQ( 1.00 );                                 //
-EXTERN float           slippyfriction  EQ( 1.00 );   //1.05 for Chevron          // Friction
-EXTERN float           airfriction  EQ( .95 );                                //
-EXTERN float           waterfriction  EQ( .85 );                              //
-EXTERN float           noslipfriction  EQ( 0.95 );                            //
-EXTERN float           platstick  EQ( .040 );                                 //
-EXTERN float           gravity  EQ(( float ) - 1.0 );                         // Gravitational accel
+typedef struct CPhysicsData_t
+{
+  bool_t   initialized;
+
+  float    hillslide;                 // Friction
+  float    slippyfriction;            //
+  float    airfriction;               //
+  float    waterfriction;             //
+  float    noslipfriction;            //
+  float    platstick;                 //
+
+  float    gravity;                   // Gravitational accel
+} CPhysicsData;
+
+CPhysicsData * CPhysicsData_new(CPhysicsData * phys);
+bool_t         CPhysicsData_delete(CPhysicsData * phys);
+CPhysicsData * CPhysicsData_renew(CPhysicsData * phys);
 
 
 EXTERN char            cFrameName[16];                                     // MD2 Frame Name
@@ -471,12 +465,6 @@ typedef struct MessageQueue_t
 #define MAXRAND 4096
 EXTERN Uint16 randie[MAXRAND];
 #define RANDIE(PST) randie[PST->randie_index]; PST->randie_index++; PST->randie_index %= MAXRAND;
-
-
-#define MAXENDTEXT 1024
-EXTERN char generictext[80];         // Use for whatever purpose
-EXTERN char endtext[MAXENDTEXT];     // The end-module text
-EXTERN int endtextwrite;
 
 
 EXTERN Uint32 particletrans_fp8  EQ( 0x80 );

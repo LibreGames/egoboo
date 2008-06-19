@@ -69,7 +69,7 @@ bool_t allocate_bumplist(int blocks)
   {
     // set up nodes and the list of free nodes
     bumplist.free_max   =
-    bumplist.free_count = 8*(MAXCHR + MAXPRT);
+    bumplist.free_count = 8*(CHRLST_COUNT + PRTLST_COUNT);
     bumplist.free_lst = (Uint32       *)calloc( bumplist.free_count, sizeof(Uint32));
     bumplist.node_lst = (BUMPLIST_NODE*)calloc( bumplist.free_count, sizeof(BUMPLIST_NODE));
 
@@ -453,7 +453,7 @@ bool_t mesh_calc_normal_fan( CGame * gs, int fan, vect3 * pnrm, vect3 * ppos )
     normal.z =  dx * dy * MESH_FAN_TO_FLOAT( 1 );
 
     // orient the normal in the proper direction
-    if ( normal.z*gravity > 0.0f )
+    if ( normal.z*gs->phys.gravity > 0.0f )
     {
       normal.x *= -1.0f;
       normal.y *= -1.0f;
@@ -526,7 +526,7 @@ bool_t mesh_calc_normal_pos( CGame * gs, int fan, vect3 pos, vect3 * pnrm )
     normal.z =  dx * dy * MESH_FAN_TO_FLOAT( 1 );
 
     // orient the normal in the proper direction
-    if ( normal.z*gravity > 0.0f )
+    if ( normal.z*gs->phys.gravity > 0.0f )
     {
       normal.x *= -1.0f;
       normal.y *= -1.0f;
@@ -596,7 +596,7 @@ bool_t mesh_calc_normal( CGame * gs, vect3 pos, vect3 * pnrm )
     normal.z =  dx * dy * MESH_FAN_TO_FLOAT( 1 );
 
     // orient the normal in the proper direction
-    if ( normal.z*gravity > 0.0f )
+    if ( normal.z*gs->phys.gravity > 0.0f )
     {
       normal.x *= -1.0f;
       normal.y *= -1.0f;
@@ -736,7 +736,7 @@ static bool_t MeshMem_alloc_fans(MeshMem * mem, int fancount)
   MeshMem_dealloc_fans(mem);
 
   mem->fan_count = 0;
-  mem->fanlst = calloc( fancount, sizeof(MESH_FAN) );
+  mem->fanlst = (MESH_FAN*)calloc( fancount, sizeof(MESH_FAN) );
   if ( NULL == mem->fanlst ) return bfalse;
 
   mem->fan_count  = fancount;
@@ -838,7 +838,7 @@ Uint32 mesh_hitawall( CGame * gs, vect3 pos, float size_x, float size_y, Uint32 
         bits = gs->Mesh_Mem.fanlst[ fan ].fx;
         pass |= bits;
 
-        if(0 != (bits & collision_bits) && NULL != nrm)
+        if( HAS_SOME_BITS(bits, collision_bits) && NULL != nrm)
         {
           //level = mesh_get_level(fan, loc_pos.x, loc_pos.y, bfalse);
 
@@ -857,11 +857,11 @@ Uint32 mesh_hitawall( CGame * gs, vect3 pos, float size_x, float size_y, Uint32 
     };
   };
 
-  if(0 != (pass & collision_bits) && NULL != nrm)
+  if( HAS_SOME_BITS(pass, collision_bits) && NULL != nrm)
   {
     *nrm = Normalize(*nrm);
   }
 
-  return pass & collision_bits;
+  return HAS_SOME_BITS(pass, collision_bits);
 }
 

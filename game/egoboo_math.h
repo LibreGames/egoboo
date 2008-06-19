@@ -187,3 +187,11 @@ typedef struct aa_bbox_t
   vect3  mins;
   vect3  maxs;
 } AA_BBOX;
+
+//--------------------------------------------------------------------------------------------
+typedef struct CPhysAccum_t
+{
+  vect3           acc;
+  vect3           vel;
+  vect3           pos;
+} CPhysAccum;

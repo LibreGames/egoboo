@@ -387,7 +387,7 @@ typedef struct time_latch_t
 {
   bool_t valid;
   Uint32 stamp;
-  LATCH  latch;
+  CLatch  latch;
 } TIME_LATCH;
 
 typedef TIME_LATCH CHR_TIME_LATCH[MAXLAG];
@@ -396,7 +396,7 @@ typedef struct time_latch_buffer_t
 {
   Uint32 numtimes;
   Uint32 nextstamp;                    // Expected timestamp
-  CHR_TIME_LATCH buffer[MAXCHR];
+  CHR_TIME_LATCH buffer[CHRLST_COUNT];
 } TIME_LATCH_BUFFER;
 
 //---------------------------------------------------------------------------------------------
@@ -456,8 +456,8 @@ INLINE void sys_packet_addUint16(SYS_PACKET * egop, Uint16 us);
 INLINE void sys_packet_addSint16(SYS_PACKET * egop, Sint16 ss);
 INLINE void sys_packet_addUint32(SYS_PACKET * egop, Uint32 ui);
 INLINE void sys_packet_addSint32(SYS_PACKET * egop, Sint32 si);
-INLINE void sys_packet_addFString(SYS_PACKET * egop, char *format, ...);
-INLINE void sys_packet_addString(SYS_PACKET * egop, char *string);
+INLINE void sys_packet_addFString(SYS_PACKET * egop, const char *format, ...);
+INLINE void sys_packet_addString(SYS_PACKET * egop, const char *string);
 
 INLINE bool_t stream_startFile(STREAM * pwrapper, FILE * pfile);
 INLINE bool_t stream_startRaw(STREAM * pwrapper, Uint8 * buffer, size_t buffer_size);

@@ -160,7 +160,7 @@ bool_t CGui_shutDown();
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 struct mod_data_t;
-struct Chr_t;
+struct CChr_t;
 
 bool_t glinit(  CGraphics * g, struct ConfigData_t * cd  );
 bool_t gfx_initialize(CGraphics * g, struct ConfigData_t * cd);
@@ -187,5 +187,7 @@ bool_t request_pageflip();
 bool_t do_pageflip();
 bool_t do_clear();
 
-void md2_blend_vertices(struct Chr_t * pchr, Sint32 vrtmin, Sint32 vrtmax);
-void md2_blend_lighting(struct Chr_t * pchr);
+void md2_blend_vertices(struct CChr_t * pchr, Sint32 vrtmin, Sint32 vrtmax);
+void md2_blend_lighting(struct CChr_t * pchr);
+
+void prime_icons( struct CGame_t * gs);

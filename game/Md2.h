@@ -87,7 +87,7 @@ void md2_delete(MD2_Model * m);
 void md2_delete_vector(MD2_Model * v, int n);
 
 
-MD2_Model * md2_load(char * szFilename, MD2_Model* m);
+MD2_Model * md2_load(const char * szFilename, MD2_Model* m);
 
 void md2_deallocate(MD2_Model * m);
 

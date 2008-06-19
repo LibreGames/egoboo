@@ -79,11 +79,11 @@ INLINE const bool_t bumplist_clear(BUMPLIST * b)
   {
     b->num_chr[i] = 0;
     b->chr_ref[i].next = INVALID_BUMPLIST_NODE;
-    b->chr_ref[i].ref  = MAXCHR;
+    b->chr_ref[i].ref  = REF_TO_INT(INVALID_CHR);
 
     b->num_prt[i] = 0;
     b->prt_ref[i].next = INVALID_BUMPLIST_NODE;
-    b->prt_ref[i].ref  = MAXPRT;
+    b->prt_ref[i].ref  = REF_TO_INT(INVALID_PRT);
   }
 
   return btrue;
@@ -150,12 +150,12 @@ INLINE const bool_t bumplist_insert_chr(BUMPLIST * b, Uint32 block, CHR_REF chr_
   if( INVALID_BUMPLIST_NODE == ref ) return bfalse;
 
   // place this as the first node in the list
-  b->node_lst[ref].ref  = chr_ref;
+  b->node_lst[ref].ref  = REF_TO_INT(chr_ref);
   b->node_lst[ref].next = b->chr_ref[block].next;
 
   // make the list point to out new node
   b->chr_ref[block].next = ref;
-  b->chr_ref[block].ref  = MAXCHR;
+  b->chr_ref[block].ref  = REF_TO_INT(INVALID_CHR);
 
   // increase the count for this block
   b->num_chr[block]++;
@@ -176,12 +176,12 @@ INLINE const bool_t bumplist_insert_prt(BUMPLIST * b, Uint32 block, PRT_REF prt_
   if( INVALID_BUMPLIST_NODE == ref ) return bfalse;
 
   // place this as the first node in the list
-  b->node_lst[ref].ref  = prt_ref;
+  b->node_lst[ref].ref  = REF_TO_INT(prt_ref);
   b->node_lst[ref].next = b->prt_ref[block].next;
 
   // make the list point to out new node
   b->prt_ref[block].next = ref;
-  b->prt_ref[block].ref  = MAXPRT;
+  b->prt_ref[block].ref  = REF_TO_INT(INVALID_PRT);
 
   // increase the count for this block
   b->num_chr[block]++;
@@ -221,7 +221,7 @@ INLINE const Uint32 bumplist_get_next_chr( CGame * gs, BUMPLIST * b, Uint32 node
 INLINE const Uint32 bumplist_get_next_prt( CGame * gs, BUMPLIST * b, Uint32 node )
 {
   Uint32  nodenext;
-  CHR_REF bumpnext;
+  PRT_REF bumpnext;
 
   if(NULL == b || !b->initialized || INVALID_BUMPLIST_NODE == node) return INVALID_BUMPLIST_NODE;
 
@@ -363,11 +363,19 @@ INLINE const int mesh_clip_block_y( MESH_INFO * mi, int iy )
 INLINE const bool_t mesh_check( MESH_INFO * mi, float x, float y )
 {
   if ( x < 0 || x > mi->edge_x ) return bfalse;
-  if ( y < 0 || y > mi->edge_x ) return bfalse;
+  if ( y < 0 || y > mi->edge_y ) return bfalse;
 
   return btrue;
 }
 
+//--------------------------------------------------------------------------------------------
+INLINE const bool_t mesh_check_fan( MESH_INFO * mi, int fan_x, int fan_y )
+{
+  if ( fan_x < 0 || fan_x >= mi->size_x ) return bfalse;
+  if ( fan_y < 0 || fan_y >= mi->size_y ) return bfalse;
+
+  return btrue;
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE void mesh_set_colora( CGame * gs, int fan_x, int fan_y, int color )

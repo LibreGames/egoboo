@@ -253,7 +253,7 @@ void render_fan( Uint32 fan, char tex_loaded )
     v[cnt].col.a = 1.0f;
 
 #if defined(DEBUG_MESHFX) && defined(_DEBUG)
-    if(gfxState.DevMode)
+    if(CData.DevMode)
     {
 
       if ( HAS_SOME_BITS( fx, MPDFX_WALL ) )
@@ -283,10 +283,10 @@ void render_fan( Uint32 fan, char tex_loaded )
     light_flat.a += v[cnt].col.a;
 
 #if defined(DEBUG_MESH_NORMALS) && defined(_DEBUG)
-    if(gfxState.DevMode)
+    if(CData.DevMode)
     {
       vect3 * pv3 = (vect3 *) &(v[cnt].pos.v);
-      mesh_calc_normal_pos( fan, *pv3, &(v[cnt].nrm) );
+      mesh_calc_normal_pos( gs, fan, *pv3, &(v[cnt].nrm) );
     }
 #endif
 
@@ -354,7 +354,7 @@ void render_fan( Uint32 fan, char tex_loaded )
 
 
 #if defined(DEBUG_MESH_NORMALS) && defined(_DEBUG)
-    if ( gfxState.DevMode )
+    if ( CData.DevMode )
     {
       glBegin( GL_LINES );
       {
@@ -775,6 +775,7 @@ void do_dynalight()
 
   CGame * gs = gfxState.gs;
 
+  PRT_REF prt_cnt;
   int cnt, lastvertex, vertex, fan, entry, fanx, fany, addx, addy;
   float light_r, light_g, light_b;
   float dist2;
@@ -787,18 +788,18 @@ void do_dynalight()
     if (( gs->all_frame & 7 ) == 0 )
     {
 
-      for ( cnt = 0; cnt < MAXPRT; cnt++ )
+      for ( prt_cnt = 0; prt_cnt < PRTLST_COUNT; prt_cnt++ )
       {
-        if ( !VALID_PRT( gs->PrtList, cnt ) || !gs->PrtList[cnt].dyna.on ) continue;
+        if ( !VALID_PRT( gs->PrtList, prt_cnt ) || !gs->PrtList[prt_cnt].dyna.on ) continue;
 
-        fanx = MESH_FLOAT_TO_FAN( gs->PrtList[cnt].pos.x );
-        fany = MESH_FLOAT_TO_FAN( gs->PrtList[cnt].pos.y );
+        fanx = MESH_FLOAT_TO_FAN( gs->PrtList[prt_cnt].pos.x );
+        fany = MESH_FLOAT_TO_FAN( gs->PrtList[prt_cnt].pos.y );
 
         for ( addy = -DYNAFANS; addy <= DYNAFANS; addy++ )
         {
           for ( addx = -DYNAFANS; addx <= DYNAFANS; addx++ )
           {
-            set_fan_light( fanx + addx, fany + addy, cnt );
+            set_fan_light( fanx + addx, fany + addy, prt_cnt );
           }
         }
       }

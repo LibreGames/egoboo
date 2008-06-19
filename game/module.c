@@ -219,10 +219,10 @@ bool_t module_load( CGame * gs, char *smallname )
   reset_characters(gs);
   reset_teams( gs );
   reset_messages( gs );
-  prime_names( gs );
+  naming_prime( gs );
   reset_particles( gs, szModpath );
   reset_ai_script( gs );
-  mad_clear_pips( gs );
+  obj_clear_pips( gs );
 
   load_one_icon( CData.basicdat_dir, NULL, CData.nullicon_bitmap );
 
@@ -235,7 +235,7 @@ bool_t module_load( CGame * gs, char *smallname )
   load_basic_textures( gs, szModpath );
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s", szModpath, CData.gamedat_dir );
-  if ( MAXAI == load_ai_script( CGame_getScriptInfo(gs), CStringTmp1, NULL ) )
+  if ( AILST_COUNT == load_ai_script( CGame_getScriptInfo(gs), CStringTmp1, NULL ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s", CData.basicdat_dir, CData.script_file );
     load_ai_script( CGame_getScriptInfo(gs), CStringTmp1, NULL );
@@ -293,7 +293,7 @@ bool_t module_load( CGame * gs, char *smallname )
   if ( CData.DevMode )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.debug_file );
-    MadList_log_used( gs, CData.debug_file );
+    ObjList_log_used( gs, CData.debug_file );
   };
 
   return btrue;
@@ -342,14 +342,8 @@ bool_t module_read_data( MOD_INFO * pmod, char *szLoadName )
     pmod->maxplayers   = fget_next_int( fileread );
     pmod->respawnmode  = fget_next_respawn( fileread );
     pmod->rts_control  = fget_next_bool( fileread ) ;
-    fget_next_string( fileread, generictext, sizeof( generictext ) );
-    iTmp = 0;
-    while ( iTmp < RANKSIZE - 1 )
-    {
-      pmod->rank[iTmp] = generictext[iTmp];
-      iTmp++;
-    }
-    pmod->rank[iTmp] = 0;
+    fget_next_string( fileread, pmod->rank, sizeof( pmod->rank ) );
+    pmod->rank[RANKSIZE] = '\0';
 
     // Read the expansions
     return btrue;
@@ -435,7 +429,7 @@ void module_load_all_objects( CGame * gs, char * szModpath )
       // Load it...
       gs->modstate.import.player = cnt / 9;
 
-      import_info_add( &(gs->modstate.import), cnt);
+      import_info_add( &(gs->modstate.import), OBJ_REF(cnt) );
 
       skin += load_one_object( gs, skin, CData.import_dir, objectname );
     }
@@ -451,7 +445,7 @@ void module_load_all_objects( CGame * gs, char * szModpath )
 
 
   // Search for .obj directories and load them
-  gs->modstate.import.object = -100;
+  gs->modstate.import.object = INVALID_OBJ;
   snprintf( szObjectpath, sizeof( szObjectpath ), "%s%s" SLASH_STRING, szModpath, CData.objects_dir );
 
   filehandle = fs_findFirstFile( &fs_finfo, szObjectpath, NULL, "*.obj" );
@@ -603,6 +597,8 @@ void module_quit( CGame * gs )
   ModState * ms = &(gs->modstate);
 
   if(!ms->Active) return;
+
+  reset_end_text(gs);
 
   client_running = CClient_Running(gs->cl);
   server_running = sv_Running(gs->sv);

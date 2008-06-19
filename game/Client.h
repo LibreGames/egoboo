@@ -46,10 +46,10 @@ typedef struct Status_t
 {
   bool_t on;
 
-  Uint16  delay;
-  Uint16  chr_ref;
-  vect2   pos;
-  float   y_pos;
+  Uint16   delay;
+  CHR_REF  chr_ref;
+  vect2    pos;
+  float    y_pos;
 } Status;
 
 Status * Status_new( Status * pstat );
@@ -120,7 +120,7 @@ bool_t        CClient_Running(CClient * cs);
 
 
 void CClient_reset_latches(CClient * cs);
-void CClient_resetTimeLatches(CClient * cs, Sint32 ichr);
+void CClient_resetTimeLatches(CClient * cs, CHR_REF ichr);
 void CClient_bufferLatches(CClient * cs);
 
 

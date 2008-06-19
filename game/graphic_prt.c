@@ -44,7 +44,7 @@ typedef enum prt_ori_t
   ori_b
 } PRT_ORI;
 
-int particle_orientation[256] =
+PRT_ORI particle_orientation[256] =
 {
   ori_b, ori_b, ori_v, ori_v, ori_b, ori_b, ori_b, ori_b, ori_v, ori_b, ori_v, ori_b, ori_b, ori_v, ori_b, ori_b,
   ori_v, ori_v, ori_v, ori_v, ori_v, ori_v, ori_v, ori_v, ori_v, ori_v, ori_v, ori_v, ori_v, ori_v, ori_v, ori_v,
@@ -74,12 +74,12 @@ GLint prt_attrib_open;
 GLint prt_attrib_close;
 
 
-void get_vectors( Uint16 prt, vect3 * vert, vect3 * horiz, float * dist )
+void get_vectors( PRT_REF prt, vect3 * vert, vect3 * horiz, float * dist )
 {
   CGame * gs = gfxState.gs;
 
   CHR_REF chr;
-  Uint16 pip;
+  PIP_REF pip;
   float cossize, sinsize;
   Uint16 rotate;
   vect3 vector_right, vector_up;
@@ -87,23 +87,26 @@ void get_vectors( Uint16 prt, vect3 * vert, vect3 * horiz, float * dist )
   vect3 vect_out;
 
   PRT_ORI ori;
-  Uint32 image;
+  Uint32  image;
 
-  if ( !VALID_PRT( gs->PrtList, prt ) ) return;
+  CPrt * pprt = PrtList_getPPrt(gs, prt);
+  CPip * ppip = PrtList_getPPip(gs, prt);
+
+  if ( NULL == pprt ) return;
 
   assert( NULL != vert  );
   assert( NULL != horiz );
   assert( NULL != dist  );
 
   chr = prt_get_attachedtochr( gs, prt );
-  pip = gs->PrtList[prt].pip;
+  pip = pprt->pip;
 
   rotate = 0;
-  image = FP8_TO_INT( gs->PrtList[prt].image_fp8 + gs->PrtList[prt].imagestt_fp8 );
+  image = FP8_TO_INT( pprt->image_fp8 + pprt->imagestt_fp8 );
   ori = particle_orientation[image];
 
   // if the velocity is zero, convert the projectile to a billboard
-  if (( ori == ori_p ) && ABS( gs->PrtList[prt].vel.x ) + ABS( gs->PrtList[prt].vel.y ) + ABS( gs->PrtList[prt].vel.z ) < 0.1 )
+  if (( ori == ori_p ) && ABS( pprt->vel.x ) + ABS( pprt->vel.y ) + ABS( pprt->vel.z ) < 0.1 )
   {
     ori = ori_b;
     rotate += 16384;
@@ -113,9 +116,9 @@ void get_vectors( Uint16 prt, vect3 * vert, vect3 * horiz, float * dist )
   vec1.y = 0;
   vec1.z = 1;
 
-  vec2.x = GCamera.pos.x - gs->PrtList[prt].pos.x;
-  vec2.y = GCamera.pos.y - gs->PrtList[prt].pos.y;
-  vec2.z = GCamera.pos.z - gs->PrtList[prt].pos.z;
+  vec2.x = GCamera.pos.x - pprt->pos.x;
+  vec2.y = GCamera.pos.y - pprt->pos.y;
+  vec2.z = GCamera.pos.z - pprt->pos.z;
 
   vect_out.x = GCamera.mView.v[ 2];
   vect_out.y = GCamera.mView.v[ 6];
@@ -131,7 +134,7 @@ void get_vectors( Uint16 prt, vect3 * vert, vect3 * horiz, float * dist )
         vector_right = Normalize( CrossProduct( vec1, vec2 ) );
         vector_up    = vec1;
 
-        rotate += gs->PrtList[prt].rotate + 8192;
+        rotate += pprt->rotate + 8192;
       };
       break;
 
@@ -141,7 +144,7 @@ void get_vectors( Uint16 prt, vect3 * vert, vect3 * horiz, float * dist )
         vector_right = Normalize( CrossProduct( vec1, vec2 ) );
         vector_up    = Normalize( CrossProduct( vec1, vector_right ) );
 
-        rotate += gs->PrtList[prt].rotate - 24576;
+        rotate += pprt->rotate - 24576;
       };
       break;
 
@@ -152,17 +155,17 @@ void get_vectors( Uint16 prt, vect3 * vert, vect3 * horiz, float * dist )
 
         CHR_REF prt_target = prt_get_target( gs, prt );
 
-        if ( ABS( gs->PrtList[prt].vel.x ) + ABS( gs->PrtList[prt].vel.y ) + ABS( gs->PrtList[prt].vel.z ) > 0.0f )
+        if ( ABS( pprt->vel.x ) + ABS( pprt->vel.y ) + ABS( pprt->vel.z ) > 0.0f )
         {
-          vec_vel.x = gs->PrtList[prt].vel.x;
-          vec_vel.y = gs->PrtList[prt].vel.y;
-          vec_vel.z = gs->PrtList[prt].vel.z;
+          vec_vel.x = pprt->vel.x;
+          vec_vel.y = pprt->vel.y;
+          vec_vel.z = pprt->vel.z;
         }
         else if ( VALID_CHR( gs->ChrList,  prt_target ) && VALID_CHR( gs->ChrList,  prt_target ) )
         {
-          vec_vel.x = gs->ChrList[prt_target].pos.x - gs->PrtList[prt].pos.x;
-          vec_vel.y = gs->ChrList[prt_target].pos.y - gs->PrtList[prt].pos.y;
-          vec_vel.z = gs->ChrList[prt_target].pos.z - gs->PrtList[prt].pos.z;
+          vec_vel.x = gs->ChrList[prt_target].pos.x - pprt->pos.x;
+          vec_vel.y = gs->ChrList[prt_target].pos.y - pprt->pos.y;
+          vec_vel.z = gs->ChrList[prt_target].pos.z - pprt->pos.z;
         }
         else
         {
@@ -171,9 +174,9 @@ void get_vectors( Uint16 prt, vect3 * vert, vect3 * horiz, float * dist )
           vec_vel.z = 1;
         };
 
-        vec2.x = GCamera.pos.x - gs->PrtList[prt].pos.x;
-        vec2.y = GCamera.pos.y - gs->PrtList[prt].pos.y;
-        vec2.z = GCamera.pos.z - gs->PrtList[prt].pos.z;
+        vec2.x = GCamera.pos.x - pprt->pos.x;
+        vec2.y = GCamera.pos.y - pprt->pos.y;
+        vec2.z = GCamera.pos.z - pprt->pos.z;
 
         vec1 = Normalize( vec_vel );
         vec3 = CrossProduct( vec1, Normalize( vec2 ) );
@@ -181,7 +184,7 @@ void get_vectors( Uint16 prt, vect3 * vert, vect3 * horiz, float * dist )
         vector_right = vec3;
         vector_up    = vec1;
 
-        rotate += gs->PrtList[prt].rotate - 8192;
+        rotate += pprt->rotate - 8192;
       }
       break;
 
@@ -201,7 +204,7 @@ void get_vectors( Uint16 prt, vect3 * vert, vect3 * horiz, float * dist )
         vector_right = Normalize( CrossProduct( vec1, vec2 ) );
         vector_up    = Normalize( CrossProduct( vector_right, vec2 ) );
 
-        rotate += gs->PrtList[prt].rotate - 24576;
+        rotate += pprt->rotate - 24576;
       };
 
       break;
@@ -232,7 +235,10 @@ void render_antialias_prt( Uint32 vrtcount, GLVertex * vrtlist )
   CGame *gs = gfxState.gs; 
 
   GLVertex vtlist[4];
-  Uint16 cnt, prt, chr, pip;
+  Uint16 cnt;
+  PRT_REF prt;
+  CHR_REF chr;
+  PIP_REF pip;
   Uint16 image;
   float size;
   int i;
@@ -296,7 +302,10 @@ void render_solid_prt( Uint32 vrtcount, GLVertex * vrtlist )
   CGame *gs = gfxState.gs; 
 
   GLVertex vtlist[4];
-  Uint16 cnt, prt, chr, pip;
+  Uint16 cnt;
+  PRT_REF prt;
+  CHR_REF chr;
+  PIP_REF pip;
   Uint16 image;
   float size;
   int i;
@@ -354,7 +363,10 @@ void render_transparent_prt( Uint32 vrtcount, GLVertex * vrtlist )
   CGame *gs = gfxState.gs; 
 
   GLVertex vtlist[4];
-  Uint16 cnt, prt, chr, pip;
+  Uint16 cnt;
+  PRT_REF prt;
+  CHR_REF chr;
+  PIP_REF pip;
   Uint16 image;
   float size;
   int i;
@@ -471,7 +483,7 @@ bool_t calc_billboard(CGame * gs, GLVertex vrtlst[], GLVertex * vert, float size
 void render_light_prt( Uint32 vrtcount, GLVertex * vrtlist )
 {
   CGame *gs = gfxState.gs;
-  Prt   *pprt;
+  CPrt   *pprt;
 
   GLVertex vtlist[4];
   GLvector color_component;
@@ -578,26 +590,27 @@ void render_particles()
 
   CGame *gs = gfxState.gs; 
 
-  GLVertex v[MAXPRT];
-  Uint16 cnt, numparticle;
+  GLVertex v[PRTLST_COUNT];
+  Uint16 numparticle;
+  PRT_REF prt_cnt;
 
   if ( INVALID_TEXTURE == GLTexture_GetTextureID( gs->TxTexture + particletexture ) ) return;
 
   // Original points
   numparticle = 0;
-  for ( cnt = 0; cnt < MAXPRT; cnt++ )
+  for ( prt_cnt = 0; prt_cnt < PRTLST_COUNT; prt_cnt++ )
   {
-    if ( !VALID_PRT( gs->PrtList, cnt ) || /* !gs->PrtList[cnt].inview  || */ gs->PrtList[cnt].gopoof || gs->PrtList[cnt].size_fp8 == 0 ) continue;
+    if ( !VALID_PRT( gs->PrtList, prt_cnt ) || /* !gs->PrtList[prt_cnt].inview  || */ gs->PrtList[prt_cnt].gopoof || gs->PrtList[prt_cnt].size_fp8 == 0 ) continue;
 
-    v[numparticle].pos.x = ( float ) gs->PrtList[cnt].pos.x;
-    v[numparticle].pos.y = ( float ) gs->PrtList[cnt].pos.y;
-    v[numparticle].pos.z = ( float ) gs->PrtList[cnt].pos.z;
+    v[numparticle].pos.x = ( float ) gs->PrtList[prt_cnt].pos.x;
+    v[numparticle].pos.y = ( float ) gs->PrtList[prt_cnt].pos.y;
+    v[numparticle].pos.z = ( float ) gs->PrtList[prt_cnt].pos.z;
 
     // !!!!!PRE CALCULATE the billboard vectors so you only have to do it ONCE!!!!!!!
-    get_vectors( cnt, &v[numparticle].up, &v[numparticle].rt, &v[numparticle].col.r );
+    get_vectors( prt_cnt, &v[numparticle].up, &v[numparticle].rt, &v[numparticle].col.r );
 
     // [claforte] Aaron did a horrible hack here. Fix that ASAP.
-    v[numparticle].color = cnt;  // Store an index in the color slot...
+    v[numparticle].color = REF_TO_INT(prt_cnt);  // Store an index in the color slot...
     numparticle++;
   }
 
@@ -639,7 +652,10 @@ void render_antialias_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
   CGame *gs = gfxState.gs; 
 
   GLVertex vtlist[4];
-  Uint16 cnt, prt, chr, pip;
+  Uint16 cnt;
+  PRT_REF prt;
+  CHR_REF chr;
+  PIP_REF pip;
   Uint16 image;
   float size;
   int i;
@@ -702,7 +718,10 @@ void render_solid_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
   CGame *gs = gfxState.gs; 
 
   GLVertex vtlist[4];
-  Uint16 cnt, prt, chr, pip;
+  Uint16 cnt;
+  PRT_REF prt;
+  CHR_REF chr;
+  PIP_REF pip;
   Uint16 image;
   float size;
   int i;
@@ -761,7 +780,10 @@ void render_transparent_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
   CGame *gs = gfxState.gs; 
 
   GLVertex vtlist[4];
-  Uint16 cnt, prt, chr, pip;
+  Uint16 cnt;
+  PRT_REF prt;
+  CHR_REF chr;
+  PIP_REF pip;
   Uint16 image;
   float size;
   int i;
@@ -824,7 +846,10 @@ void render_light_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
   CGame *gs = gfxState.gs; 
 
   GLVertex vtlist[4];
-  Uint16 cnt, prt, chr, pip;
+  Uint16 cnt;
+  PRT_REF prt;
+  CHR_REF chr;
+  PIP_REF pip;
   Uint16 image;
   float size;
   int i;
@@ -842,10 +867,11 @@ void render_light_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 
     for ( cnt = 0; cnt < vrtcount; cnt++ )
     {
-      GLvector color_component = { FP8_TO_FLOAT( gs->PrtList[cnt].alpha_fp8 ), FP8_TO_FLOAT( gs->PrtList[cnt].alpha_fp8 ), FP8_TO_FLOAT( gs->PrtList[cnt].alpha_fp8 ), 1.0f};
-
+      GLvector color_component;
       // Get the index from the color slot
       prt = ( Uint16 ) vrtlist[cnt].color;
+      color_component.r = color_component.g = color_component.b = FP8_TO_FLOAT( gs->PrtList[prt].alpha_fp8 );
+      color_component.a = 1.0f;
       chr = prt_get_attachedtochr( gs, prt );
       pip = gs->PrtList[prt].pip;
 
@@ -883,8 +909,9 @@ void render_particle_reflections()
 
   CGame *gs = gfxState.gs; 
 
-  GLVertex v[MAXPRT];
-  Uint16 cnt, numparticle;
+  GLVertex v[PRTLST_COUNT];
+  Uint16 numparticle;
+  PRT_REF prt_cnt;
   float level;
 
   if ( INVALID_TEXTURE == GLTexture_GetTextureID( gs->TxTexture + particletexture ) )
@@ -892,21 +919,21 @@ void render_particle_reflections()
 
   // Original points
   numparticle = 0;
-  for ( cnt = 0; cnt < MAXPRT; cnt++ )
+  for ( prt_cnt = 0; prt_cnt < PRTLST_COUNT; prt_cnt++ )
   {
-    if ( !VALID_PRT( gs->PrtList, cnt ) || !gs->PrtList[cnt].inview || gs->PrtList[cnt].size_fp8 == 0 ) continue;
+    if ( !VALID_PRT( gs->PrtList, prt_cnt ) || !gs->PrtList[prt_cnt].inview || gs->PrtList[prt_cnt].size_fp8 == 0 ) continue;
 
-    if ( mesh_has_some_bits( gs->Mesh_Mem.fanlst, gs->PrtList[cnt].onwhichfan, MPDFX_SHINY ) )
+    if ( mesh_has_some_bits( gs->Mesh_Mem.fanlst, gs->PrtList[prt_cnt].onwhichfan, MPDFX_SHINY ) )
     {
-      level = gs->PrtList[cnt].level;
-      v[numparticle].pos.x = gs->PrtList[cnt].pos.x;
-      v[numparticle].pos.y = gs->PrtList[cnt].pos.y;
-      v[numparticle].pos.z = level + level - gs->PrtList[cnt].pos.z;
+      level = gs->PrtList[prt_cnt].level;
+      v[numparticle].pos.x = gs->PrtList[prt_cnt].pos.x;
+      v[numparticle].pos.y = gs->PrtList[prt_cnt].pos.y;
+      v[numparticle].pos.z = level + level - gs->PrtList[prt_cnt].pos.z;
 
       // !!!!!PRE CALCULATE the billboard vectors so you only have to do it ONCE!!!!!!!
-      get_vectors( cnt, &v[numparticle].up, &v[numparticle].rt, &v[numparticle].col.r );
+      get_vectors( prt_cnt, &v[numparticle].up, &v[numparticle].rt, &v[numparticle].col.r );
 
-      v[numparticle].color = cnt;  // Store an index in the color slot...
+      v[numparticle].color = REF_TO_INT(prt_cnt);  // Store an index in the color slot...
       numparticle++;
     }
   }

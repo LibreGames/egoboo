@@ -52,28 +52,29 @@ void make_prtlist(CGame * gs)
   // ZZ> This function figures out which particles are visible, and it sets up dynamic
   //     lighting
 
-  Prt  * prtlst      = gs->PrtList;
-  size_t prtlst_size = MAXPRT;
+  PPrt prtlst      = gs->PrtList;
+  size_t prtlst_size = PRTLST_COUNT;
 
-  Pip  * piplst      = gs->PipList;
-  size_t piplst_size = MAXPRTPIP;
+  PPip piplst      = gs->PipList;
+  size_t piplst_size = PIPLST_COUNT;
 
-  int cnt, tnc, disx, disy, distance, slot;
+  int tnc, disx, disy, distance, slot;
+  PRT_REF prt_cnt;
 
   // Don't really make a list, just set to visible or not
   GDyna.count = 0;
   GDyna.distancetobeat = MAXDYNADIST;
-  for ( cnt = 0; cnt < prtlst_size; cnt++ )
+  for ( prt_cnt = 0; prt_cnt < prtlst_size; prt_cnt++ )
   {
-    prtlst[cnt].inview = bfalse;
-    if ( !VALID_PRT( prtlst,  cnt ) ) continue;
+    prtlst[prt_cnt].inview = bfalse;
+    if ( !VALID_PRT( prtlst,  prt_cnt ) ) continue;
 
-    prtlst[cnt].inview = mesh_fan_is_in_renderlist( gs->Mesh_Mem.fanlst, prtlst[cnt].onwhichfan );
+    prtlst[prt_cnt].inview = mesh_fan_is_in_renderlist( gs->Mesh_Mem.fanlst, prtlst[prt_cnt].onwhichfan );
     // Set up the lights we need
-    if ( prtlst[cnt].dyna.on )
+    if ( prtlst[prt_cnt].dyna.on )
     {
-      disx = ABS( prtlst[cnt].pos.x - GCamera.trackpos.x );
-      disy = ABS( prtlst[cnt].pos.y - GCamera.trackpos.y );
+      disx = ABS( prtlst[prt_cnt].pos.x - GCamera.trackpos.x );
+      disy = ABS( prtlst[prt_cnt].pos.y - GCamera.trackpos.y );
       distance = disx + disy;
       if ( distance < GDyna.distancetobeat )
       {
@@ -108,156 +109,191 @@ void make_prtlist(CGame * gs)
             }
           }
         }
-        GDynaLight[slot].pos.x = prtlst[cnt].pos.x;
-        GDynaLight[slot].pos.y = prtlst[cnt].pos.y;
-        GDynaLight[slot].pos.z = prtlst[cnt].pos.z;
-        GDynaLight[slot].level = prtlst[cnt].dyna.level;
-        GDynaLight[slot].falloff = prtlst[cnt].dyna.falloff;
+        GDynaLight[slot].pos.x = prtlst[prt_cnt].pos.x;
+        GDynaLight[slot].pos.y = prtlst[prt_cnt].pos.y;
+        GDynaLight[slot].pos.z = prtlst[prt_cnt].pos.z;
+        GDynaLight[slot].level = prtlst[prt_cnt].dyna.level;
+        GDynaLight[slot].falloff = prtlst[prt_cnt].dyna.falloff;
       }
     }
 
   }
-}
-
-//--------------------------------------------------------------------------------------------
-void PrtList_free_one_no_sound( CGame * gs, PRT_REF particle )
-{
-  // ZZ> This function sticks a particle back on the free particle stack
-
-  gs->PrtFreeList[gs->PrtFreeList_count] = particle;
-  gs->PrtFreeList_count++;
-  gs->PrtList[particle].on = bfalse;
 }
 
 //--------------------------------------------------------------------------------------------
 void PrtList_free_one( CGame * gs, PRT_REF particle )
 {
-  // ZZ> This function sticks a particle back on the free particle stack and
-  //     plays the sound associated with the particle
+  // ZZ> This function sticks a particle back on the free particle stack
 
-  Chr  * chrlst      = gs->ChrList;
-  size_t chrlst_size = MAXCHR;
+  // already deleted
+  if(!VALID_PRT(gs->PrtList, particle)) return;
 
-  Prt  * prtlst      = gs->PrtList;
-  size_t prtlst_size = MAXPRT;
+  gs->PrtFreeList[gs->PrtFreeList_count] = particle;
+  gs->PrtFreeList_count++;
 
-  Pip  * piplst      = gs->PipList;
-  size_t piplst_size = MAXPRTPIP;
+  gs->PrtList[particle].on = bfalse;
 
-  int child;
-  if ( prtlst[particle].spawncharacterstate != SPAWN_NOCHARACTER )
-  {
-    child = spawn_one_character( gs, prtlst[particle].pos, prtlst[particle].model, prtlst[particle].team, 0, prtlst[particle].facing, NULL, MAXCHR );
-    if ( VALID_CHR( chrlst,  child ) )
-    {
-      chrlst[child].aistate.state = prtlst[particle].spawncharacterstate;
-      chrlst[child].aistate.owner = prt_get_owner( gs, particle );
-    }
-  }
-  snd_play_particle_sound( gs, 1.0f, particle, piplst[prtlst[particle].pip].soundend );
-
-  PrtList_free_one_no_sound( gs, particle );
+  log_debug("INFO: PrtList_free_one() - PrtFreeList_count == %d\n", gs->PrtFreeList_count);
 }
 
 //--------------------------------------------------------------------------------------------
-int PrtList_get_free( CGame * gs, int force )
+void end_one_particle( CGame * gs, PRT_REF particle )
+{
+  // ZZ> This function sticks a particle back on the free particle stack and
+  //     plays the sound associated with the particle
+
+  PChr chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
+
+  PPrt prtlst      = gs->PrtList;
+  size_t prtlst_size = PRTLST_COUNT;
+
+  PPip piplst      = gs->PipList;
+  size_t piplst_size = PIPLST_COUNT;
+
+  CHR_REF child;
+
+  CPrt * pprt = PrtList_getPPrt(gs, particle);
+  if(NULL == pprt) return;
+
+  if ( pprt->spawncharacterstate != SPAWN_NOCHARACTER )
+  {
+    child = spawn_one_character( gs, pprt->pos, pprt->model, pprt->team, 0, pprt->facing, NULL, INVALID_CHR );
+    if ( VALID_CHR( chrlst,  child ) )
+    {
+      chrlst[child].aistate.state = pprt->spawncharacterstate;
+      chrlst[child].aistate.owner = prt_get_owner( gs, particle );
+    }
+  }
+  snd_play_particle_sound( gs, 1.0f, particle, piplst[pprt->pip].soundend );
+
+  PrtList_free_one( gs, particle );
+}
+
+//--------------------------------------------------------------------------------------------
+PRT_REF PrtList_get_free( CGame * gs, bool_t is_critical )
 {
   // ZZ> This function gets an unused particle.  If all particles are in use
-  //     and force is set, it grabs the first unimportant one.  The particle
+  //     and is_critical is set, it grabs the first unimportant one.  The particle
   //     index is the return value
+  //
+  //     Reserve PRTLST_COUNT / 4 particles for critical particles
 
-  Prt  * prtlst      = gs->PrtList;
-  size_t prtlst_size = MAXPRT;
+  PPrt prtlst        = gs->PrtList;
+  size_t prtlst_size = PRTLST_COUNT;
 
   PRT_REF particle;
 
-  // Return MAXPRT if we can't find one
-  particle = MAXPRT;
-  if ( gs->PrtFreeList_count == 0 )
+  // Return INALID_PRT if we can't find one
+  particle = INVALID_PRT;
+
+  if ( gs->PrtFreeList_count > PRTLST_COUNT / 4 )
   {
-    if ( force )
-    {
-      // Gotta find one, so go through the list
-      particle = 0;
-      while ( particle < MAXPRT )
-      {
-        if ( prtlst[particle].bumpsize == 0 )
-        {
-          // Found one
-          return particle;
-        }
-        particle++;
-      }
-    }
+    // Just grab the next one
+    gs->PrtFreeList_count--;
+    particle = gs->PrtFreeList[gs->PrtFreeList_count];
   }
-  else
+
+  if(INVALID_PRT == particle && is_critical)
   {
-    if ( force || gs->PrtFreeList_count > ( MAXPRT / 4 ) )
+    if ( gs->PrtFreeList_count > 0 )
     {
       // Just grab the next one
       gs->PrtFreeList_count--;
       particle = gs->PrtFreeList[gs->PrtFreeList_count];
     }
+    else
+    {
+      // Gotta find one, so go through the list
+      for( particle = 0; particle < PRTLST_COUNT; particle++ )
+      {
+        if ( prtlst[particle].bumpsize == 0 || prtlst[particle].bumpstrength == 0.0f )
+        {
+          // Found one
+          break;
+        }
+      }
+    }
   }
+
+  log_debug("INFO: PrtList_get_free() - PrtFreeList_count == %d\n", gs->PrtFreeList_count);
+
   return particle;
 }
 
 //--------------------------------------------------------------------------------------------
 PRT_REF spawn_one_particle( CGame * gs, float intensity, vect3 pos,
-                           Uint16 facing, Uint16 model, Uint16 local_pip,
-                           CHR_REF characterattach, GRIP grip, TEAM team,
+                           Uint16 facing, OBJ_REF iobj, PIP_REF local_pip,
+                           CHR_REF characterattach, Uint32 offset, TEAM_REF team,
                            CHR_REF characterorigin, Uint16 multispawn, CHR_REF oldtarget )
 {
   // ZZ> This function spawns a new particle, and returns the number of that particle
 
-  Prt  * prtlst      = gs->PrtList;
-  size_t prtlst_size = MAXPRT;
+  PObj objlst     = gs->ObjList;
+  size_t  objlst_size = OBJLST_COUNT;
 
-  Pip  * piplst      = gs->PipList;
-  size_t piplst_size = MAXPRTPIP;
+  PPrt prtlst      = gs->PrtList;
+  size_t prtlst_size = PRTLST_COUNT;
 
-  Chr  * chrlst      = gs->ChrList;
-  size_t chrlst_size = MAXCHR;
+  PPip piplst      = gs->PipList;
+  size_t piplst_size = PIPLST_COUNT;
 
-  Mad  * madlst      = gs->MadList;
-  size_t madlst_size = MAXMODEL;
+  PChr chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
 
-  int iprt, velocity;
-  float xvel, yvel, zvel, tvel;
+  PMad madlst      = gs->MadList;
+  size_t madlst_size = MADLST_COUNT;
+
+  PRT_REF iprt;
+  float velocity, xvel, yvel, zvel, tvel;
   int offsetfacing, newrand;
-  Uint16 glob_pip = MAXPRTPIP;
+  PIP_REF glob_pip = INVALID_PIP;
   float weight;
-  Uint16 prt_target;
-  Prt * pprt;
-  Pip * ppip;
+  CHR_REF prt_target;
+  CPrt * pprt;
+  CPip * ppip;
   SearchInfo loc_search;
 
-  if ( local_pip >= MAXPRTPIP )
-  {
-    log_debug( "WARN: spawn_one_particle() - failed to spawn : local_pip == %d is an invalid value\n", local_pip );
-    return MAXPRT;
-  }
+  // assume the worst
+  glob_pip = INVALID_PIP;
 
   // Convert from local local_pip to global local_pip
-  if ( model < MAXMODEL && local_pip < PRTPIP_PEROBJECT_COUNT )
+  if ( local_pip < PRTPIP_PEROBJECT_COUNT )
   {
-    glob_pip = madlst[model].prtpip[local_pip];
+    CObj * pobj = ObjList_getPObj(gs, iobj);
+    if(NULL != pobj)
+    {
+      glob_pip = pobj->prtpip[REF_TO_INT(local_pip)];
+    }
   }
 
   // assume we were given a global local_pip
-  if ( MAXPRTPIP == glob_pip )
+  if ( INVALID_PIP == glob_pip )
   {
     glob_pip = local_pip;
+  }
+
+  if ( !VALID_PIP(piplst, glob_pip) )
+  {
+    log_debug( "WARN: spawn_one_particle() - failed to spawn : local_pip == %d is an invalid value\n", local_pip );
+    return INVALID_PRT;
   }
   ppip = piplst + glob_pip;
 
 
-
   iprt = PrtList_get_free( gs, ppip->force );
-  if ( MAXPRT == iprt )
+  if ( INVALID_PRT == iprt )
   {
-    log_debug( "WARN: spawn_one_particle() - failed to spawn : PrtList_get_free() returned invalid value %d\n", iprt );
-    return MAXPRT;
+    if(ppip->force)
+    {
+      log_debug( "WARN: spawn_one_particle() failed to spawn - PrtList_get_free() returned %d, PrtFreeList_count == %d\n", REF_TO_INT(iprt), gs->PrtFreeList_count );
+    }
+    else
+    {
+      log_debug( "WARN: spawn_one_particle() failed to spawn - possible particle overflow. PrtFreeList_count == %d \n", gs->PrtFreeList_count  );
+    }
+
+    return INVALID_PRT;
   }
 
   weight = 1.0f;
@@ -266,18 +302,20 @@ PRT_REF spawn_one_particle( CGame * gs, float intensity, vect3 pos,
   prtlst[iprt].weight = weight;
 
   //log_debug( "spawn_one_particle() - local pip == %d, global pip == %d, part == %d\n", local_pip, glob_pip, iprt);
+  log_debug( "spawn_one_particle() - part == %d, free ==  %d\n", REF_TO_INT(iprt), gs->PrtFreeList_count);
+
 
   // "simplify" the notation
   pprt = prtlst + iprt;
 
   // clear any old data
-  memset(pprt, 0, sizeof(Prt));
+  memset(pprt, 0, sizeof(CPrt));
 
   // Necessary data for any part
   pprt->on = btrue;
   pprt->gopoof = bfalse;
   pprt->pip = glob_pip;
-  pprt->model = model;
+  pprt->model = iobj;
   pprt->inview = bfalse;
   pprt->level = 0;
   pprt->team = team;
@@ -301,9 +339,9 @@ PRT_REF spawn_one_particle( CGame * gs, float intensity, vect3 pos,
 
 
 
-  // Set character attachments ( characterattach==MAXCHR means none )
+  // Set character attachments ( characterattach==INVALID_CHR means none )
   pprt->attachedtochr = characterattach;
-  pprt->vertoffset = grip;
+  pprt->vertoffset = offset;
 
 
 
@@ -313,7 +351,7 @@ PRT_REF spawn_one_particle( CGame * gs, float intensity, vect3 pos,
   pos.z += generate_signed( &ppip->zspacing );
   velocity = generate_unsigned( &ppip->xyvel );
   pprt->target = oldtarget;
-  prt_target = MAXCHR;
+  prt_target = INVALID_CHR;
   if ( ppip->newtargetonspawn )
   {
     if ( ppip->targetcaster )
@@ -324,10 +362,10 @@ PRT_REF spawn_one_particle( CGame * gs, float intensity, vect3 pos,
     else
     {
       // Correct facing for dexterity...
-      if ( chrlst[characterorigin].dexterity_fp8 < PERFECTSTAT )
+      if ( chrlst[characterorigin].stats.dexterity_fp8 < PERFECTSTAT )
       {
         // Correct facing for randomness
-        newrand = FP8_DIV( PERFECTSTAT - chrlst[characterorigin].dexterity_fp8,  PERFECTSTAT );
+        newrand = FP8_DIV( PERFECTSTAT - chrlst[characterorigin].stats.dexterity_fp8,  PERFECTSTAT );
         offsetfacing += generate_dither( &ppip->facing, newrand );
       }
 
@@ -365,8 +403,8 @@ PRT_REF spawn_one_particle( CGame * gs, float intensity, vect3 pos,
     if ( !VALID_CHR( chrlst,  prt_target ) && ppip->needtarget )
     {
       log_debug( "WARN: spawn_one_particle() - failed to spawn : pip requires target and no target specified\n", iprt );
-      PrtList_free_one( gs, iprt );
-      return MAXPRT;
+      end_one_particle( gs, iprt );
+      return INVALID_PRT;
     }
 
     // Start on top of target
@@ -490,11 +528,11 @@ Uint32 prt_hitawall( CGame * gs, PRT_REF particle, vect3 * norm )
 {
   // ZZ> This function returns nonzero if the particle hit a wall
 
-  Prt  * prtlst      = gs->PrtList;
-  size_t prtlst_size = MAXPRT;
+  PPrt prtlst      = gs->PrtList;
+  size_t prtlst_size = PRTLST_COUNT;
 
-  Pip  * piplst      = gs->PipList;
-  size_t piplst_size = MAXPRTPIP;
+  PPip piplst      = gs->PipList;
+  size_t piplst_size = PIPLST_COUNT;
 
   Uint32 retval, collision_bits;
 
@@ -553,11 +591,11 @@ void disaffirm_attached_particles( CGame * gs, CHR_REF character )
 {
   // ZZ> This function makes sure a character has no attached particles
 
-  Prt  * prtlst      = gs->PrtList;
-  size_t prtlst_size = MAXPRT;
+  PPrt prtlst      = gs->PrtList;
+  size_t prtlst_size = PRTLST_COUNT;
 
-  Chr  * chrlst      = gs->ChrList;
-  size_t chrlst_size = MAXCHR;
+  PChr chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
 
   PRT_REF particle;
   bool_t useful = bfalse;
@@ -571,7 +609,7 @@ void disaffirm_attached_particles( CGame * gs, CHR_REF character )
     if ( prt_get_attachedtochr( gs, particle ) == character )
     {
       prtlst[particle].gopoof        = btrue;
-      prtlst[particle].attachedtochr = MAXCHR;
+      prtlst[particle].attachedtochr = INVALID_CHR;
       useful = btrue;
     }
   }
@@ -588,10 +626,11 @@ Uint16 number_of_attached_particles( CGame * gs, CHR_REF character )
 {
   // ZZ> This function returns the number of particles attached to the given character
 
-  Prt  * prtlst      = gs->PrtList;
-  size_t prtlst_size = MAXPRT;
+  PPrt prtlst      = gs->PrtList;
+  size_t prtlst_size = PRTLST_COUNT;
 
-  Uint16 cnt, particle;
+  int     cnt;
+  PRT_REF particle;
 
   cnt = 0;
   for ( particle = 0; particle < prtlst_size; particle++ )
@@ -610,21 +649,21 @@ void reaffirm_attached_particles( CGame * gs, CHR_REF character )
 {
   // ZZ> This function makes sure a character has all of it's particles
 
-  Prt  * prtlst      = gs->PrtList;
-  size_t prtlst_size = MAXPRT;
+  PPrt prtlst      = gs->PrtList;
+  size_t prtlst_size = PRTLST_COUNT;
 
-  Chr  * pchr        = gs->ChrList + character;
+  CChr  * pchr        = gs->ChrList + character;
 
-  Cap  * caplst      = gs->CapList;
-  size_t caplst_size = MAXCAP;
+  PCap caplst      = gs->CapList;
+  size_t caplst_size = CAPLST_COUNT;
 
   Uint16 numberattached;
   PRT_REF particle;
 
   numberattached = number_of_attached_particles( gs, character );
-  while ( numberattached < caplst[pchr->model].attachedprtamount )
+  while ( numberattached < ChrList_getPCap(gs, character)->attachedprtamount )
   {
-    particle = spawn_one_particle( gs, 1.0f, pchr->pos, 0, pchr->model, caplst[pchr->model].attachedprttype, character, GRIP_LAST + numberattached, pchr->team, character, numberattached, MAXCHR );
+    particle = spawn_one_particle( gs, 1.0f, pchr->pos, 0, pchr->model, ChrList_getPCap(gs, character)->attachedprttype, character, (GRIP)(GRIP_LAST + numberattached), pchr->team, character, numberattached, INVALID_CHR );
     if ( VALID_PRT(prtlst, particle) )
     {
       attach_particle_to_character( gs, particle, character, prtlst[particle].vertoffset );
@@ -641,114 +680,119 @@ void move_particles( CGame * gs, float dUpdate )
 {
   // ZZ> This is the particle physics function
 
-  Prt  * prtlst      = gs->PrtList;
-  size_t prtlst_size = MAXPRT;
+  PPrt prtlst      = gs->PrtList;
+  size_t prtlst_size = PRTLST_COUNT;
 
-  Pip  * piplst      = gs->PipList;
-  size_t piplst_size = MAXPRTPIP;
+  PPip piplst      = gs->PipList;
+  size_t piplst_size = PIPLST_COUNT;
 
-  Chr  * chrlst      = gs->ChrList;
-  size_t chrlst_size = MAXCHR;
+  PChr chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
 
-  int iprt, tnc;
+  PRT_REF iprt;
+  int tnc;
   Uint32 fan;
-  Uint16 facing, pip, particle;
+  Uint16 facing;
+  PIP_REF pip;
+  PRT_REF particle;
   float level;
   CHR_REF prt_target, prt_owner, prt_attachedto;
+  CPrt * pprt;
 
   float loc_noslipfriction, loc_homingfriction, loc_homingaccel;
 
-  loc_noslipfriction = pow( noslipfriction, dUpdate );
+  loc_noslipfriction = pow( gs->phys.noslipfriction, dUpdate );
 
   for ( iprt = 0; iprt < prtlst_size; iprt++ )
   {
     if ( !VALID_PRT( prtlst,  iprt ) ) continue;
+    pprt = prtlst + iprt;
 
     prt_target     = prt_get_target( gs, iprt );
     prt_owner      = prt_get_owner( gs, iprt );
     prt_attachedto = prt_get_attachedtochr( gs, iprt );
 
-    prtlst[iprt].pos_old = prtlst[iprt].pos;
+   pprt->pos_old =pprt->pos;
 
-    prtlst[iprt].onwhichfan = INVALID_FAN;
-    prtlst[iprt].level = 0;
-    fan = mesh_get_fan( gs, prtlst[iprt].pos );
-    prtlst[iprt].onwhichfan = fan;
-    prtlst[iprt].level = ( INVALID_FAN == fan ) ? 0 : mesh_get_level( gs, fan, prtlst[iprt].pos.x, prtlst[iprt].pos.y, bfalse );
+   pprt->onwhichfan = INVALID_FAN;
+   pprt->level = 0;
+    fan = mesh_get_fan( gs,pprt->pos );
+   pprt->onwhichfan = fan;
+   pprt->level = ( INVALID_FAN == fan ) ? 0 : mesh_get_level( gs, fan,pprt->pos.x,pprt->pos.y, bfalse );
 
     // To make it easier
-    pip = prtlst[iprt].pip;
+    pip =pprt->pip;
 
     loc_homingfriction = pow( piplst[pip].homingfriction, dUpdate );
     loc_homingaccel    = piplst[pip].homingaccel;
 
     // Animate particle
-    prtlst[iprt].image_fp8 += prtlst[iprt].imageadd_fp8 * dUpdate;
-    if ( prtlst[iprt].image_fp8 >= prtlst[iprt].imagemax_fp8 )
+   pprt->image_fp8 +=pprt->imageadd_fp8 * dUpdate;
+    if (pprt->image_fp8 >=pprt->imagemax_fp8 )
     {
       if ( piplst[pip].endlastframe )
       {
-        prtlst[iprt].image_fp8 = prtlst[iprt].imagemax_fp8 - INT_TO_FP8( 1 );
-        prtlst[iprt].gopoof    = btrue;
+       pprt->image_fp8 =pprt->imagemax_fp8 - INT_TO_FP8( 1 );
+       pprt->gopoof    = btrue;
       }
-      else if ( prtlst[iprt].imagemax_fp8 > 0 )
+      else if (pprt->imagemax_fp8 > 0 )
       {
         // if the prtlst[].image_fp8 is a fraction of an image over prtlst[].imagemax_fp8,
         // keep the fraction
-        prtlst[iprt].image_fp8 %= prtlst[iprt].imagemax_fp8;
+       pprt->image_fp8 %=pprt->imagemax_fp8;
       }
       else
       {
         // a strange case
-        prtlst[iprt].image_fp8 = 0;
+       pprt->image_fp8 = 0;
       }
     };
 
-    prtlst[iprt].rotate += prtlst[iprt].rotateadd * dUpdate;
-    prtlst[iprt].size_fp8 = ( prtlst[iprt].size_fp8 + prtlst[iprt].sizeadd_fp8 < 0 ) ? 0 : prtlst[iprt].size_fp8 + prtlst[iprt].sizeadd_fp8;
+   pprt->rotate +=pprt->rotateadd * dUpdate;
+   pprt->size_fp8 = (pprt->size_fp8 +pprt->sizeadd_fp8 < 0 ) ? 0 :pprt->size_fp8 +pprt->sizeadd_fp8;
 
     // Change dyna light values
-    prtlst[iprt].dyna.level   += piplst[pip].dyna.leveladd * dUpdate;
-    prtlst[iprt].dyna.falloff += piplst[pip].dyna.falloffadd * dUpdate;
+   pprt->dyna.level   += piplst[pip].dyna.leveladd * dUpdate;
+   pprt->dyna.falloff += piplst[pip].dyna.falloffadd * dUpdate;
 
 
     // Make it sit on the floor...  Shift is there to correct for sprite size
-    level = prtlst[iprt].level + FP8_TO_FLOAT( prtlst[iprt].size_fp8 ) * 0.5f;
+    level =pprt->level + FP8_TO_FLOAT(pprt->size_fp8 ) * 0.5f;
 
     // do interaction with the floor
-    if(  !VALID_CHR( chrlst,  prt_attachedto ) && prtlst[iprt].pos.z > level )
+    if(  !VALID_CHR( chrlst,  prt_attachedto ) &&pprt->pos.z > level )
     {
-      float lerp = ( prtlst[iprt].pos.z - ( prtlst[iprt].level + PLATTOLERANCE ) ) / ( float ) PLATTOLERANCE;
+      float lerp = (pprt->pos.z - (pprt->level + PLATTOLERANCE ) ) / ( float ) PLATTOLERANCE;
       if ( lerp < 0.2f ) lerp = 0.2f;
       if ( lerp > 1.0f ) lerp = 1.0f;
 
-      prtlst[iprt].accum_acc.z += gravity * lerp;
+     pprt->accum.acc.z += gs->phys.gravity * lerp;
 
-      prtlst[iprt].accum_acc.x -= ( 1.0f - noslipfriction ) * lerp * prtlst[iprt].vel.x;
-      prtlst[iprt].accum_acc.y -= ( 1.0f - noslipfriction ) * lerp * prtlst[iprt].vel.y;
+     pprt->accum.acc.x -= ( 1.0f - gs->phys.noslipfriction ) * lerp *pprt->vel.x;
+     pprt->accum.acc.y -= ( 1.0f - gs->phys.noslipfriction ) * lerp *pprt->vel.y;
     }
 
     // Do speed limit on Z
-    if ( prtlst[iprt].vel.z < -piplst[pip].spdlimit )  prtlst[iprt].accum_vel.z += -piplst[pip].spdlimit - prtlst[iprt].vel.z;
+    if (pprt->vel.z < -piplst[pip].spdlimit ) pprt->accum.vel.z += -piplst[pip].spdlimit -pprt->vel.z;
 
     // Do homing
     if ( piplst[pip].homing && VALID_CHR( chrlst,  prt_target ) )
     {
       if ( !chrlst[prt_target].alive )
       {
-        prtlst[iprt].gopoof = btrue;
+       pprt->gopoof = btrue;
       }
       else
       {
         if ( !VALID_CHR( chrlst,  prt_attachedto ) )
         {
-          prtlst[iprt].accum_acc.x += -(1.0f-loc_homingfriction) * prtlst[iprt].vel.x;
-          prtlst[iprt].accum_acc.y += -(1.0f-loc_homingfriction) * prtlst[iprt].vel.y;
-          prtlst[iprt].accum_acc.z += -(1.0f-loc_homingfriction) * prtlst[iprt].vel.z;
+         pprt->accum.acc.x += -(1.0f-loc_homingfriction) *pprt->vel.x;
+         pprt->accum.acc.y += -(1.0f-loc_homingfriction) *pprt->vel.y;
+         pprt->accum.acc.z += -(1.0f-loc_homingfriction) *pprt->vel.z;
 
-          prtlst[iprt].accum_acc.x += ( chrlst[prt_target].pos.x - prtlst[iprt].pos.x ) * loc_homingaccel * 4.0f;
-          prtlst[iprt].accum_acc.y += ( chrlst[prt_target].pos.y - prtlst[iprt].pos.y ) * loc_homingaccel * 4.0f;
-          prtlst[iprt].accum_acc.z += ( chrlst[prt_target].pos.z + ( chrlst[prt_target].bmpdata.calc_height * 0.5f ) - prtlst[iprt].pos.z ) * loc_homingaccel * 4.0f;
+         pprt->accum.acc.x += ( chrlst[prt_target].pos.x -pprt->pos.x ) * loc_homingaccel * 4.0f;
+         pprt->accum.acc.y += ( chrlst[prt_target].pos.y -pprt->pos.y ) * loc_homingaccel * 4.0f;
+         pprt->accum.acc.z += ( chrlst[prt_target].pos.z + ( chrlst[prt_target].bmpdata.calc_height * 0.5f ) -pprt->pos.z ) * loc_homingaccel * 4.0f;
         }
       }
     }
@@ -757,23 +801,23 @@ void move_particles( CGame * gs, float dUpdate )
     // Spawn new particles if continually spawning
     if ( piplst[pip].contspawnamount > 0.0f )
     {
-      prtlst[iprt].spawntime -= dUpdate;
-      if ( prtlst[iprt].spawntime <= 0.0f )
+     pprt->spawntime -= dUpdate;
+      if (pprt->spawntime <= 0.0f )
       {
-        prtlst[iprt].spawntime = piplst[pip].contspawntime;
-        facing = prtlst[iprt].facing;
+       pprt->spawntime = piplst[pip].contspawntime;
+        facing =pprt->facing;
         
         for ( tnc = 0; tnc < piplst[pip].contspawnamount; tnc++ )
         {
-          particle = spawn_one_particle( gs, 1.0f, prtlst[iprt].pos,
-                                         facing, prtlst[iprt].model, piplst[pip].contspawnpip,
-                                         MAXCHR, GRIP_LAST, prtlst[iprt].team, prt_get_owner( gs, iprt ), tnc, prt_target );
+          particle = spawn_one_particle( gs, 1.0f, pprt->pos,
+                                         facing, pprt->model, piplst[pip].contspawnpip,
+                                         INVALID_CHR, GRIP_LAST, pprt->team, prt_get_owner( gs, iprt ), tnc, prt_target );
 
           if ( VALID_PRT(prtlst, particle) && 0 != piplst[prtlst[iprt].pip].facingadd)
           {
             // Hack to fix velocity
-            prtlst[particle].vel.x += prtlst[iprt].vel.x;
-            prtlst[particle].vel.y += prtlst[iprt].vel.y;
+            prtlst[particle].vel.x +=pprt->vel.x;
+            prtlst[particle].vel.y +=pprt->vel.y;
           }
 
           facing += piplst[pip].contspawnfacingadd;
@@ -783,12 +827,12 @@ void move_particles( CGame * gs, float dUpdate )
 
 
     // Check underwater
-    if ( prtlst[iprt].pos.z < gs->water.douselevel && mesh_has_some_bits( gs->Mesh_Mem.fanlst, prtlst[iprt].onwhichfan, MPDFX_WATER ) && piplst[pip].endwater )
+    if (pprt->pos.z < gs->water.douselevel && mesh_has_some_bits( gs->Mesh_Mem.fanlst,pprt->onwhichfan, MPDFX_WATER ) && piplst[pip].endwater )
     {
-      vect3 prt_pos = {prtlst[iprt].pos.x, prtlst[iprt].pos.y, gs->water.surfacelevel};
+      vect3 prt_pos = {prtlst[iprt].pos.x,pprt->pos.y, gs->water.surfacelevel};
 
       // Splash for particles is just a ripple
-      spawn_one_particle( gs, 1.0f, prt_pos, 0, MAXMODEL, PRTPIP_RIPPLE, MAXCHR, GRIP_LAST, TEAM_NULL, MAXCHR, 0, MAXCHR );
+      spawn_one_particle( gs, 1.0f, prt_pos, 0, INVALID_OBJ, PIP_REF(PRTPIP_RIPPLE), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, 0, INVALID_CHR );
 
 
       // Check for disaffirming character
@@ -799,18 +843,18 @@ void move_particles( CGame * gs, float dUpdate )
       }
       else
       {
-        prtlst[iprt].gopoof = btrue;
+       pprt->gopoof = btrue;
       }
     }
 
     // Down the particle timer
-    if ( prtlst[iprt].time > 0.0f )
+    if (pprt->time > 0.0f )
     {
-      prtlst[iprt].time -= dUpdate;
-      if ( prtlst[iprt].time <= 0.0f ) prtlst[iprt].gopoof = btrue;
+     pprt->time -= dUpdate;
+      if (pprt->time <= 0.0f )pprt->gopoof = btrue;
     };
 
-    prtlst[iprt].facing += piplst[pip].facingadd * dUpdate;
+   pprt->facing += piplst[pip].facingadd * dUpdate;
   }
 
 }
@@ -821,33 +865,33 @@ void attach_particles(CGame * gs)
   // ZZ> This function attaches particles to their characters so everything gets
   //     drawn right
 
-  int cnt;
+  PRT_REF prt_cnt;
 
-  Prt  * prtlst      = gs->PrtList;
-  size_t prtlst_size = MAXPRT;
+  PPrt prtlst      = gs->PrtList;
+  size_t prtlst_size = PRTLST_COUNT;
 
-  Pip  * piplst      = gs->PipList;
-  size_t piplst_size = MAXPRTPIP;
+  PPip piplst      = gs->PipList;
+  size_t piplst_size = PIPLST_COUNT;
 
-  Chr  * chrlst      = gs->ChrList;
-  size_t chrlst_size = MAXCHR;
+  PChr chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
 
-  for ( cnt = 0; cnt < prtlst_size; cnt++ )
+  for ( prt_cnt = 0; prt_cnt < prtlst_size; prt_cnt++ )
   {
     CHR_REF prt_attachedto;
 
-    if ( !VALID_PRT( prtlst,  cnt ) ) continue;
+    if ( !VALID_PRT( prtlst,  prt_cnt ) ) continue;
 
-    prt_attachedto = prt_get_attachedtochr( gs, cnt );
+    prt_attachedto = prt_get_attachedtochr( gs, prt_cnt );
 
     if ( !VALID_CHR( chrlst,  prt_attachedto ) ) continue;
 
-    attach_particle_to_character( gs, cnt, prt_attachedto, prtlst[cnt].vertoffset );
+    attach_particle_to_character( gs, prt_cnt, prt_attachedto, prtlst[prt_cnt].vertoffset );
 
     // Correct facing so swords knock characters in the right direction...
-    if ( HAS_SOME_BITS( piplst[prtlst[cnt].pip].damfx, DAMFX_TURN ) )
+    if ( HAS_SOME_BITS( piplst[prtlst[prt_cnt].pip].damfx, DAMFX_TURN ) )
     {
-      prtlst[cnt].facing = chrlst[prt_attachedto].turn_lr;
+      prtlst[prt_cnt].facing = chrlst[prt_attachedto].turn_lr;
     }
   }
 }
@@ -900,75 +944,103 @@ void spawn_bump_particles( CGame * gs, CHR_REF character, PRT_REF particle )
 {
   // ZZ> This function is for catching characters on fire and such
 
-  Prt  * prtlst      = gs->PrtList;
-  size_t prtlst_size = MAXPRT;
-
-  Pip  * piplst      = gs->PipList;
-  size_t piplst_size = MAXPRTPIP;
-
-  Chr  * chrlst      = gs->ChrList;
-  size_t chrlst_size = MAXCHR;
-
-  Mad  * madlst      = gs->MadList;
-  size_t madlst_size = MAXMODEL;
-
-  Cap  * caplst      = gs->CapList;
-  size_t caplst_size = MAXCAP;
-
   int cnt;
   Sint16 x, y, z;
   int distance, bestdistance;
   Uint16 facing, bestvertex;
   Uint16 amount;
-  Uint16 pip;
   Uint16 vertices;
-  Uint16 direction, left, right, model;
+  Uint16 direction, left, right;
   float fsin, fcos;
 
-  pip = prtlst[particle].pip;
-  amount = piplst[pip].bumpspawnamount;
+  PObj objlst     = gs->ObjList;
+  size_t  objlst_size = OBJLST_COUNT;
 
+  PPrt prtlst      = gs->PrtList;
+  size_t prtlst_size = PRTLST_COUNT;
 
-  if ( amount != 0 || piplst[pip].spawnenchant )
+  PPip piplst      = gs->PipList;
+  size_t piplst_size = PIPLST_COUNT;
+
+  PChr chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
+
+  PMad madlst      = gs->MadList;
+  size_t madlst_size = MADLST_COUNT;
+
+  PCap caplst      = gs->CapList;
+  size_t caplst_size = CAPLST_COUNT;
+
+  CChr * pchr;
+  CPrt  * pprt;
+
+  OBJ_REF iobj;
+  CObj  * pobj;
+
+  CMad  * pmad;
+  CCap  * pcap;
+  CPip  * ppip;
+
+  if(!VALID_CHR(chrlst, character)) return;
+  pchr = ChrList_getPChr(gs, character);
+
+  if(!VALID_PRT(prtlst, particle)) return;
+  pprt = prtlst + particle;
+
+  ppip = PrtList_getPPip(gs, particle);
+  if(NULL == ppip) return;
+
+  iobj = pchr->model = VALIDATE_OBJ(objlst, pchr->model);
+  if(INVALID_OBJ == iobj) return;
+  pobj = gs->ObjList + iobj;
+
+  pmad = ObjList_getPMad(gs, iobj);
+  if(NULL == pmad) return;
+
+  pcap = ObjList_getPCap(gs, iobj);
+  if(NULL == pcap) return;
+
+  amount = ppip->bumpspawnamount;
+  if ( amount != 0 || ppip->spawnenchant )
   {
     // Only damage if hitting from proper direction
-    model = chrlst[character].model;
-    vertices = madlst[model].vertices;
-    direction = chrlst[character].turn_lr - vec_to_turn( -prtlst[particle].vel.x, -prtlst[particle].vel.y );
-    if ( HAS_SOME_BITS( madlst[chrlst[character].model].framefx[chrlst[character].anim.next], MADFX_INVICTUS ) )
+    vertices = pmad->vertices;
+    direction = pchr->turn_lr - vec_to_turn( -pprt->vel.x, -pprt->vel.y );
+    if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_INVICTUS ) )
     {
       // I Frame
-      if ( HAS_SOME_BITS( piplst[pip].damfx, DAMFX_BLOC ) )
+      if ( HAS_SOME_BITS( ppip->damfx, DAMFX_BLOC ) )
       {
         left  = UINT16_MAX;
         right = 0;
       }
       else
       {
-        direction -= caplst[model].iframefacing;
-        left = ( ~caplst[model].iframeangle );
-        right = caplst[model].iframeangle;
+        direction -= pcap->iframefacing;
+        left = ( ~pcap->iframeangle );
+        right = pcap->iframeangle;
       }
     }
     else
     {
       // N Frame
-      direction -= caplst[model].nframefacing;
-      left = ( ~caplst[model].nframeangle );
-      right = caplst[model].nframeangle;
+      direction -= pcap->nframefacing;
+      left = ( ~pcap->nframeangle );
+      right = pcap->nframeangle;
     }
+
     // Check that direction
     if ( direction <= left && direction >= right )
     {
       // Spawn new enchantments
-      if ( piplst[pip].spawnenchant )
+      if ( ppip->spawnenchant )
       {
-        spawn_enchant( gs, prt_get_owner( gs, particle ), character, MAXCHR, MAXENCHANT, prtlst[particle].model );
+        spawn_one_enchant( gs, prt_get_owner( gs, particle ), character, INVALID_CHR, INVALID_ENC, pprt->model );
       }
 
       // Spawn particles
-      if ( amount != 0 && !caplst[chrlst[character].model].resistbumpspawn && !chrlst[character].invictus &&
-           vertices != 0 && ( chrlst[character].skin.damagemodifier_fp8[prtlst[particle].damagetype]&DAMAGE_SHIFT ) != DAMAGE_SHIFT )
+      if ( amount != 0 && !pcap->prop.resistbumpspawn && !pchr->prop.invictus &&
+           vertices != 0 && ( pchr->skin.damagemodifier_fp8[pprt->damagetype]&DAMAGE_SHIFT ) != DAMAGE_SHIFT )
       {
         if ( amount == 1 )
         {
@@ -977,25 +1049,22 @@ void spawn_bump_particles( CGame * gs, CHR_REF character, PRT_REF particle )
 
           Uint32 ilast, inext;
           MD2_Model * pmdl;
-          MD2_Frame * plast, * pnext;
+          const MD2_Frame * plast, * pnext;
           float flip;
 
-          model = chrlst[character].model;
-          inext = chrlst[character].anim.next;
-          ilast = chrlst[character].anim.last;
-          flip = chrlst[character].anim.flip;
+          inext = pchr->anim.next;
+          ilast = pchr->anim.last;
+          flip  = pchr->anim.flip;
 
-          assert( MAXMODEL != VALIDATE_MDL( model ) );
-
-          pmdl  = madlst[model].md2_ptr;
+          pmdl  = pmad->md2_ptr;
           plast = md2_get_Frame(pmdl, ilast);
           pnext = md2_get_Frame(pmdl, inext);
 
           bestvertex = 0;
           bestdistance = 9999999;
 
-          z =  prtlst[particle].pos.z - ( chrlst[character].pos.z + RAISE );
-          facing = prtlst[particle].facing - chrlst[character].turn_lr - 16384;
+          z =  pprt->pos.z - ( pchr->pos.z + RAISE );
+          facing = pprt->facing - pchr->turn_lr - 16384;
           facing >>= 2;
           fsin = turntosin[facing & TRIGTABLE_MASK];
           fcos = turntocos[facing & TRIGTABLE_MASK];
@@ -1020,8 +1089,8 @@ void spawn_bump_particles( CGame * gs, CHR_REF character, PRT_REF particle )
 
           }
 
-          spawn_one_particle( gs, 1.0f, chrlst[character].pos, 0, prtlst[particle].model, piplst[pip].bumpspawnpip,
-                              character, bestvertex + 1, prtlst[particle].team, prt_get_owner( gs, particle ), cnt, character );
+          spawn_one_particle( gs, 1.0f, pchr->pos, 0, pprt->model, ppip->bumpspawnpip,
+                              character, (GRIP)(bestvertex + 1), pprt->team, prt_get_owner( gs, particle ), cnt, character );
         }
         else
         {
@@ -1029,8 +1098,8 @@ void spawn_bump_particles( CGame * gs, CHR_REF character, PRT_REF particle )
           
           for ( cnt = 0; cnt < amount; cnt++ )
           {
-            spawn_one_particle( gs, 1.0f, chrlst[character].pos, 0, prtlst[particle].model, piplst[pip].bumpspawnpip,
-                                character, rand() % vertices, prtlst[particle].team, prt_get_owner( gs, particle ), cnt, character );
+            spawn_one_particle( gs, 1.0f, pchr->pos, 0, pprt->model, ppip->bumpspawnpip,
+                                character, (GRIP)(rand() % vertices), pprt->team, prt_get_owner( gs, particle ), cnt, character );
           }
         }
       }
@@ -1039,15 +1108,15 @@ void spawn_bump_particles( CGame * gs, CHR_REF character, PRT_REF particle )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t prt_is_over_water( CGame * gs, int cnt )
+bool_t prt_is_over_water( CGame * gs, PRT_REF prt_cnt )
 {
   // This function returns btrue if the particle is over a water tile
 
   Uint32 fan;
 
-  if ( VALID_PRT(gs->PrtList, cnt) )
+  if ( VALID_PRT(gs->PrtList, prt_cnt) )
   {
-    fan = mesh_get_fan( gs, gs->PrtList[cnt].pos );
+    fan = mesh_get_fan( gs, gs->PrtList[prt_cnt].pos );
     if ( mesh_has_some_bits( gs->Mesh_Mem.fanlst, fan, MPDFX_WATER ) )  return ( INVALID_FAN != fan );
   }
 
@@ -1059,12 +1128,12 @@ void do_weather_spawn( CGame * gs, float dUpdate )
 {
   // ZZ> This function drops snowflakes or rain or whatever, also swings the camera
 
-  Chr  * chrlst      = gs->ChrList;
-  size_t chrlst_size = MAXCHR;
+  PChr chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
 
 
   PRT_REF particle;
-  int cnt;
+  PRT_REF cnt;
   bool_t foundone = bfalse;
 
   if ( GWeather.time > 0 )
@@ -1078,16 +1147,15 @@ void do_weather_spawn( CGame * gs, float dUpdate )
 
       // Find a valid player
       foundone = bfalse;
-      cnt = 0;
-      while ( cnt < MAXPLAYER )
+      
+      for ( cnt = 0; cnt < PLALST_COUNT; cnt++ )
       {
-        GWeather.player = ( GWeather.player + 1 ) % MAXPLAYER;
+        GWeather.player = PLA_REF( ( GWeather.REF_TO_INT(player) + 1 ) % PLALST_COUNT );
         if ( VALID_PLA( gs->PlaList, GWeather.player ) )
         {
           foundone = btrue;
-          cnt = MAXPLAYER;
+          break;
         }
-        cnt++;
       }
     }
 
@@ -1096,16 +1164,16 @@ void do_weather_spawn( CGame * gs, float dUpdate )
     if ( foundone )
     {
       // Yes, but is the character valid?
-      cnt = PlaList_get_character( gs, GWeather.player );
-      if ( VALID_CHR( chrlst, cnt ) && !chr_in_pack( chrlst, chrlst_size, cnt ) )
+      CHR_REF chr_cnt = PlaList_get_character( gs, GWeather.player );
+      if ( VALID_CHR( chrlst, chr_cnt ) && !chr_in_pack( chrlst, chrlst_size, chr_cnt ) )
       {
         // Yes, so spawn over that character
-        particle = spawn_one_particle( gs, 1.0f, chrlst[cnt].pos, 0, MAXMODEL, PRTPIP_WEATHER_1, MAXCHR, GRIP_LAST, TEAM_NULL, MAXCHR, 0, MAXCHR );
+        particle = spawn_one_particle( gs, 1.0f, chrlst[chr_cnt].pos, 0, INVALID_OBJ, PIP_REF(PRTPIP_WEATHER_1), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, 0, INVALID_CHR );
         if ( VALID_PRT(gs->PrtList, particle) )
         {
           if ( GWeather.overwater && !prt_is_over_water( gs, particle ) )
           {
-            PrtList_free_one_no_sound( gs, particle );
+            PrtList_free_one( gs, particle );
           }
         }
       }
@@ -1116,29 +1184,29 @@ void do_weather_spawn( CGame * gs, float dUpdate )
 
 
 //--------------------------------------------------------------------------------------------
-Uint32 PipList_load_one( CGame * gs, char * szObjectpath, char * szObjectname, char * szFname, int override)
+PIP_REF PipList_load_one( CGame * gs, const char * szObjectpath, const char * szObjectname, const char * szFname, PIP_REF override)
 {
-  // ZZ> This function loads a particle template, returning MAXPRTPIP if the file wasn't
+  // ZZ> This function loads a particle template, returning PIPLST_COUNT if the file wasn't
   //     found
 
-  Pip  * piplst      = gs->PipList;
-  size_t piplst_size = MAXPRTPIP;
+  PPip piplst      = gs->PipList;
+  size_t piplst_size = PIPLST_COUNT;
 
   const char * fname;
   FILE* fileread;
   IDSZ idsz;
   int iTmp;
-  Pip * pip;
-  Uint32 ipip = MAXPRTPIP;
+  CPip * pip;
+  PIP_REF ipip = INVALID_PIP;
 
   fname = inherit_fname(szObjectpath, szObjectname, szFname);
   fileread = fs_fileOpen( PRI_NONE, NULL, fname, "r" );
   if ( NULL == fileread ) return ipip;
 
-  if(override > 0)
+  if(INVALID_PIP != override)
   {
     ipip = override;
-    gs->PipList_count = MAX(gs->PipList_count, override);
+    gs->PipList_count = MAX(gs->PipList_count, REF_TO_INT(override));
   }
   else
   {
@@ -1286,7 +1354,7 @@ Uint32 PipList_load_one( CGame * gs, char * szObjectpath, char * szObjectname, c
     else if ( MAKE_IDSZ( "ZSPD" ) == idsz )  pip->zaimspd = iTmp;
     else if ( MAKE_IDSZ( "FSND" ) == idsz )  pip->soundfloor = FIX_SOUND( iTmp );
     else if ( MAKE_IDSZ( "WSND" ) == idsz )  pip->soundwall = FIX_SOUND( iTmp );
-    else if ( MAKE_IDSZ( "WEND" ) == idsz )  pip->endwall = 0 != iTmp;
+    else if ( MAKE_IDSZ( "WEND" ) == idsz )  pip->endwall = INT_TO_BOOL(iTmp);
     else if ( MAKE_IDSZ( "ARMO" ) == idsz )  pip->damfx |= DAMFX_ARMO;
     else if ( MAKE_IDSZ( "BLOC" ) == idsz )  pip->damfx |= DAMFX_BLOC;
     else if ( MAKE_IDSZ( "ARRO" ) == idsz )  pip->damfx |= DAMFX_ARRO;
@@ -1294,8 +1362,8 @@ Uint32 PipList_load_one( CGame * gs, char * szObjectpath, char * szObjectname, c
     else if ( MAKE_IDSZ( "PUSH" ) == idsz )  pip->allowpush = INT_TO_BOOL( iTmp );
     else if ( MAKE_IDSZ( "DLEV" ) == idsz )  pip->dyna.leveladd = iTmp / 1000.0;
     else if ( MAKE_IDSZ( "DRAD" ) == idsz )  pip->dyna.falloffadd = iTmp / 1000.0;
-    else if ( MAKE_IDSZ( "IDAM" ) == idsz )  pip->intdamagebonus = 0 != iTmp;
-    else if ( MAKE_IDSZ( "WDAM" ) == idsz )  pip->wisdamagebonus = 0 != iTmp;
+    else if ( MAKE_IDSZ( "IDAM" ) == idsz )  pip->intdamagebonus = INT_TO_BOOL(iTmp);
+    else if ( MAKE_IDSZ( "WDAM" ) == idsz )  pip->wisdamagebonus = INT_TO_BOOL(iTmp);
   }
 
   fs_fileClose( fileread );
@@ -1313,35 +1381,35 @@ void PipList_load_global(CGame * gs)
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING, CData.basicdat_dir, CData.globalparticles_dir );
 
   //Defend particle
-  if ( MAXPRTPIP == PipList_load_one( gs, CStringTmp1, NULL, CData.defend_file, PRTPIP_DEFEND ) )
+  if ( INVALID_PIP == PipList_load_one( gs, CStringTmp1, NULL, CData.defend_file, PIP_REF(PRTPIP_DEFEND) ) )
   {
     log_message("Failed!\n");
     log_error( "Data file was not found! (%s)\n", CStringTmp1 );
   }
 
   //Money 1
-  if ( MAXPRTPIP == PipList_load_one( gs, CStringTmp1, NULL, CData.money1_file, PRTPIP_COIN_001 ) )
+  if ( INVALID_PIP == PipList_load_one( gs, CStringTmp1, NULL, CData.money1_file, PIP_REF(PRTPIP_COIN_001) ) )
   {
     log_message("Failed!\n");
     log_error( "Data file was not found! (%s)\n", CStringTmp1 );
   }
 
   //Money 5
-  if ( MAXPRTPIP == PipList_load_one( gs, CStringTmp1, NULL, CData.money5_file, PRTPIP_COIN_005 ) )
+  if ( INVALID_PIP == PipList_load_one( gs, CStringTmp1, NULL, CData.money5_file, PIP_REF(PRTPIP_COIN_005) ) )
   {
     log_message("Failed!\n");
     log_error( "Data file was not found! (%s)\n", CStringTmp1 );
   }
 
   //Money 25
-  if ( MAXPRTPIP == PipList_load_one( gs, CStringTmp1, NULL, CData.money25_file, PRTPIP_COIN_025 ) )
+  if ( INVALID_PIP == PipList_load_one( gs, CStringTmp1, NULL, CData.money25_file, PIP_REF(PRTPIP_COIN_025) ) )
   {
     log_message("Failed!\n");
     log_error( "Data file was not found! (%s)\n", CStringTmp1 );
   }
 
   //Money 100
-  if ( MAXPRTPIP == PipList_load_one( gs, CStringTmp1, NULL, CData.money100_file, PRTPIP_COIN_100 ) )
+  if ( INVALID_PIP == PipList_load_one( gs, CStringTmp1, NULL, CData.money100_file, PIP_REF(PRTPIP_COIN_100) ) )
   {
     log_message("Failed!\n");
     log_error( "Data file was not found! (%s)\n", CStringTmp1 );
@@ -1364,22 +1432,22 @@ void reset_particles( CGame * gs, char* modname )
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING, modname, CData.gamedat_dir);
 
   //Load module specific information
-  if ( MAXPRTPIP == PipList_load_one( gs, CStringTmp1, NULL, CData.weather1_file, PRTPIP_WEATHER_1 ) )
+  if ( INVALID_PIP == PipList_load_one( gs, CStringTmp1, NULL, CData.weather1_file, PIP_REF(PRTPIP_WEATHER_1) ) )
   {
     log_error( "Data file was not found! (%s)\n", CStringTmp1 );
   }
 
-  if ( MAXPRTPIP == PipList_load_one( gs, CStringTmp1, NULL, CData.weather2_file, PRTPIP_WEATHER_2 ) )
+  if ( INVALID_PIP == PipList_load_one( gs, CStringTmp1, NULL, CData.weather2_file, PIP_REF(PRTPIP_WEATHER_2) ) )
   {
     log_error( "Data file was not found! (%s)\n", CStringTmp1 );
   }
 
-  if ( MAXPRTPIP == PipList_load_one( gs, CStringTmp1, NULL, CData.splash_file, PRTPIP_SPLASH ) )
+  if ( INVALID_PIP == PipList_load_one( gs, CStringTmp1, NULL, CData.splash_file, PIP_REF(PRTPIP_SPLASH) ) )
   {
     log_error( "Data file was not found! (%s)\n", CStringTmp1 );
   }
 
-  if ( MAXPRTPIP == PipList_load_one( gs, CStringTmp1, NULL, CData.ripple_file, PRTPIP_RIPPLE ) )
+  if ( INVALID_PIP == PipList_load_one( gs, CStringTmp1, NULL, CData.ripple_file, PIP_REF(PRTPIP_RIPPLE) ) )
   {
     log_error( "Data file was not found! (%s)\n", CStringTmp1 );
   }
@@ -1389,8 +1457,8 @@ void reset_particles( CGame * gs, char* modname )
 //--------------------------------------------------------------------------------------------
 bool_t prt_calculate_bumpers(CGame * gs, PRT_REF iprt)
 {
-  Prt  * prtlst      = gs->PrtList;
-  size_t prtlst_size = MAXPRT;
+  PPrt prtlst      = gs->PrtList;
+  size_t prtlst_size = PRTLST_COUNT;
 
   float ftmp;
 
@@ -1422,20 +1490,20 @@ bool_t prt_calculate_bumpers(CGame * gs, PRT_REF iprt)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-Prt * Prt_new(Prt *pprt) 
+CPrt * Prt_new(CPrt *pprt) 
 { 
   //fprintf( stdout, "Prt_new()\n");
 
   if(NULL==pprt) return pprt; 
   
-  memset(pprt, 0, sizeof(Prt)); 
+  memset(pprt, 0, sizeof(CPrt)); 
   pprt->on = bfalse;
   
   return pprt; 
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t Prt_delete( Prt * pprt )
+bool_t Prt_delete( CPrt * pprt )
 { 
   if(NULL == pprt) return bfalse;
 
@@ -1445,7 +1513,7 @@ bool_t Prt_delete( Prt * pprt )
 }
 
 //--------------------------------------------------------------------------------------------
-Prt * Prt_renew(Prt *pprt)
+CPrt * Prt_renew(CPrt *pprt)
 {
   Prt_delete(pprt);
   return Prt_new(pprt);
@@ -1454,13 +1522,13 @@ Prt * Prt_renew(Prt *pprt)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-Pip * Pip_new(Pip * ppip)
+CPip * Pip_new(CPip * ppip)
 {
   //fprintf( stdout, "Pip_new()\n");
 
   if(NULL == ppip) return ppip;
 
-  memset(ppip, 0, sizeof(Pip));
+  memset(ppip, 0, sizeof(CPip));
   ppip->used = bfalse;
 
   ppip->soundspawn = INVALID_SOUND;                   // Beginning sound
@@ -1472,7 +1540,7 @@ Pip * Pip_new(Pip * ppip)
 }
 
 //--------------------------------------------------------------------------------------------
-Pip * Pip_delete(Pip * ppip)
+CPip * Pip_delete(CPip * ppip)
 {
   if(NULL == ppip) return ppip;
 
@@ -1484,8 +1552,112 @@ Pip * Pip_delete(Pip * ppip)
   return ppip;
 }
 //--------------------------------------------------------------------------------------------
-Pip * Pip_renew(Pip * ppip)
+CPip * Pip_renew(CPip * ppip)
 {
   Pip_delete(ppip);
   return Pip_new(ppip);
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+OBJ_REF PrtList_getRObj(CGame * gs, PRT_REF iprt)
+{
+  CPrt * pprt;
+
+  pprt = PrtList_getPPrt(gs, iprt);
+  if(NULL == pprt) return INVALID_OBJ;
+
+  pprt->model = VALIDATE_OBJ(gs->ObjList, pprt->model);
+  return pprt->model;
+}
+
+//--------------------------------------------------------------------------------------------
+PIP_REF PrtList_getRPip(CGame * gs, PRT_REF iprt)
+{
+  CPrt * pprt;
+
+  pprt = PrtList_getPPrt(gs, iprt);
+  if(NULL == pprt) return INVALID_PIP;
+
+  pprt->pip = VALIDATE_PIP(gs->ObjList, pprt->pip);
+  return pprt->pip;
+}
+
+//--------------------------------------------------------------------------------------------
+CAP_REF PrtList_getRCap(CGame * gs, PRT_REF iprt)
+{
+  OBJ_REF iobj;
+
+  iobj = PrtList_getRObj(gs, iprt);
+  if(INVALID_OBJ == iobj) return INVALID_CAP;
+
+  return ObjList_getRCap(gs, iobj);
+}
+
+//--------------------------------------------------------------------------------------------
+MAD_REF PrtList_getRMad(CGame * gs, PRT_REF iprt)
+{
+  OBJ_REF iobj;
+
+  iobj = PrtList_getRObj(gs, iprt);
+  if(INVALID_OBJ == iobj) return INVALID_MAD;
+
+  return ObjList_getRMad(gs, iobj);
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+CPrt * PrtList_getPPrt(CGame * gs, PRT_REF iprt)
+{
+  if(!VALID_PRT(gs->PrtList, iprt)) return NULL;
+
+  return gs->PrtList + iprt;
+}
+
+//--------------------------------------------------------------------------------------------
+CObj * PrtList_getPObj(CGame * gs, PRT_REF iprt)
+{
+  OBJ_REF iobj;
+
+  iobj = PrtList_getRObj(gs, iprt);
+  if(INVALID_OBJ == iobj) return NULL;
+
+  return ObjList_getPObj(gs, iobj);
+}
+
+//--------------------------------------------------------------------------------------------
+CCap * PrtList_getPCap(CGame * gs, PRT_REF iprt)
+{
+  OBJ_REF iobj;
+
+  iobj = PrtList_getRObj(gs, iprt);
+  if(INVALID_OBJ == iobj) return NULL;
+
+  return ObjList_getPCap(gs, iobj);
+}
+
+//--------------------------------------------------------------------------------------------
+CMad * PrtList_getPMad(CGame * gs, PRT_REF iprt)
+{
+  OBJ_REF iobj;
+
+  iobj = PrtList_getRObj(gs, iprt);
+  if(INVALID_OBJ == iobj) return NULL;
+
+  return ObjList_getPMad(gs, iobj);
+}
+
+//--------------------------------------------------------------------------------------------
+CPip * PrtList_getPPip(CGame * gs, PRT_REF iprt)
+{
+  CPrt * pprt;
+
+  pprt = PrtList_getPPrt(gs, iprt);
+  if(NULL == pprt) return NULL;
+
+  pprt->pip = VALIDATE_PIP(gs->PipList, pprt->pip);
+  if(INVALID_PIP == pprt->pip) return NULL;
+
+  return gs->PipList + pprt->pip;
 }

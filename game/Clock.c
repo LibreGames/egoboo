@@ -30,7 +30,7 @@
 #include "Log.h"
 #include <stddef.h>
 #include <stdlib.h>
-#include <string.h> // memcpy & memset
+#include <memory.h>
 
 static clock_source_ptr _clock_timeSource = NULL;
 

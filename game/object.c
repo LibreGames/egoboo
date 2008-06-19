@@ -29,19 +29,24 @@
 #include "mad.h"
 #include "enchant.h"
 #include "game.h"
+#include "Log.h"
 
 #include "egoboo_utility.h"
 #include "egoboo_strutil.h"
 
 //--------------------------------------------------------------------------------------------
-int load_one_object( CGame * gs, int skin_count, char * szObjectpath, char* szObjectname )
+int load_one_object( CGame * gs, int skin_count, const char * szObjectpath, char* szObjectname )
 {
   // ZZ> This function loads one object and returns the number of skins
 
-  Uint16 iobj;
   int numskins, TxIcon_count, skin_index;
   STRING newloadname, loc_loadpath, wavename;
   int cnt;
+
+  PObj objlst = gs->ObjList;
+
+  OBJ_REF iobj;
+  CObj  * pobj;
 
   // generate an index for this object
   strcpy(newloadname, szObjectpath);
@@ -53,11 +58,30 @@ int load_one_object( CGame * gs, int skin_count, char * szObjectpath, char* szOb
   }
   strcat(newloadname, CData.data_file);
 
-  iobj = object_generate_index(gs, newloadname);
-  if(MAXMODEL == iobj)
+  // grab the requested object
   {
-    // could not find the object
-    return 0;
+    iobj = object_generate_index(gs, newloadname);
+    if(INVALID_OBJ == iobj)
+    {
+      // could not find the object
+      return 0;
+    }
+
+    iobj = ObjList_get_free(gs, iobj);
+    if(INVALID_OBJ == iobj)
+    {
+      // could not find the object
+      return 0;
+    }
+
+    pobj = gs->ObjList +  iobj;
+
+    // Make up a name for the model...  IMPORT\TEMP0000.OBJ
+    strncpy( pobj->name, szObjectpath, sizeof( pobj->name ) );
+    if(NULL != szObjectname)
+    {
+      strncat( pobj->name, szObjectname, sizeof( pobj->name ) );
+    }
   }
 
   // Append a slash to the szObjectname
@@ -67,42 +91,50 @@ int load_one_object( CGame * gs, int skin_count, char * szObjectpath, char* szOb
   str_append_slash( loc_loadpath, sizeof( loc_loadpath ) );
 
   // Load the iobj data file
-  CapList_load_one( gs, szObjectpath, szObjectname, iobj );
+  pobj->cap = CapList_load_one( gs, szObjectpath, szObjectname, CAP_REF(REF_TO_INT(iobj)) );
+
+  // Load the AI script for this object
+  pobj->ai = load_ai_script( CGame_getScriptInfo(gs), szObjectpath, szObjectname );
+  if ( AILST_COUNT == pobj->ai )
+  {
+    // use the default script
+    pobj->ai = 0;
+  }
 
   // load the model data
-  MadList_load_one( gs, szObjectpath, szObjectname, iobj );
+  pobj->mad = MadList_load_one( gs, szObjectpath, szObjectname, MAD_REF(REF_TO_INT(iobj)) );
 
   // Fix lighting if need be
-  if ( gs->CapList[iobj].uniformlit )
+  if ( gs->CapList[pobj->cap].uniformlit )
   {
-    make_mad_equally_lit( gs, iobj );
+    make_mad_equally_lit( gs, pobj->mad );
   }
 
   // Load the messages for this object
-  load_all_messages( gs, szObjectpath, szObjectname, iobj );
+  pobj->msg_start = load_all_messages( gs, szObjectpath, szObjectname );
 
   // Load the random naming table for this object
-  read_naming( gs, szObjectpath, szObjectname, iobj );
+  naming_read( gs, szObjectpath, szObjectname, pobj );
 
   // Load the particles for this object
   for ( cnt = 0; cnt < PRTPIP_PEROBJECT_COUNT; cnt++ )
   {
     snprintf( newloadname, sizeof( newloadname ), "part%d.txt", cnt );
-    gs->MadList[iobj].prtpip[cnt] = PipList_load_one( gs, szObjectpath, szObjectname, newloadname, -1 );
+    pobj->prtpip[cnt] = PipList_load_one( gs, szObjectpath, szObjectname, newloadname, INVALID_PIP );
   }
 
   // Load the waves for this object
   for ( cnt = 0; cnt < MAXWAVE; cnt++ )
   {
     snprintf( wavename, sizeof( wavename ), "sound%d.wav", cnt );
-    gs->CapList[iobj].wavelist[cnt] = Mix_LoadWAV( inherit_fname(szObjectpath, szObjectname, wavename) );
+    pobj->wavelist[cnt] = Mix_LoadWAV( inherit_fname(szObjectpath, szObjectname, wavename) );
   }
 
   // Load the enchantment for this object
-  EveList_load_one( gs, szObjectpath, szObjectname, iobj );
+  pobj->eve = EveList_load_one( gs, szObjectpath, szObjectname, EVE_REF(REF_TO_INT(iobj)) );
 
   // Load the skins and icons
-  gs->MadList[iobj].skinstart = skin_count;
+  pobj->skinstart = skin_count;
   numskins = 0;
   TxIcon_count = 0;
   for ( skin_index = 0; skin_index < MAXSKIN; skin_index++ )
@@ -167,30 +199,32 @@ int load_one_object( CGame * gs, int skin_count, char * szObjectpath, char* szOb
   {
     // If we didn't get a skin_count, set it to the water texture
     numskins = 1;
-    gs->MadList[iobj].skinstart = TX_WATER_TOP;
+    pobj->skinstart = TX_WATER_TOP;
   }
-  gs->MadList[iobj].skins = numskins;
+  pobj->skins = numskins;
+
+  pobj->used = btrue;
 
   return numskins;
 }
 
 //--------------------------------------------------------------------------------------------
-void switch_team( CGame * gs, CHR_REF chr_ref, TEAM team )
+void switch_team( CGame * gs, CHR_REF chr_ref, TEAM_REF team )
 {
   // ZZ> This function makes a chr_ref join another team...
 
-  Chr  * chrlst      = gs->ChrList;
-  size_t chrlst_size = MAXCHR;
+  PChr chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
 
   if ( team < TEAM_COUNT )
   {
-    if ( !chrlst[chr_ref].invictus )
+    if ( !chrlst[chr_ref].prop.invictus )
     {
       gs->TeamList[chrlst[chr_ref].baseteam].morale--;
       gs->TeamList[team].morale++;
     }
-    if (( !chrlst[chr_ref].ismount || !chr_using_slot( chrlst, MAXCHR, chr_ref, SLOT_SADDLE ) ) &&
-        ( !chrlst[chr_ref].isitem  || !chr_attached( chrlst, MAXCHR, chr_ref ) ) )
+    if (( !chrlst[chr_ref].prop.ismount || !chr_using_slot( chrlst, CHRLST_COUNT, chr_ref, SLOT_SADDLE ) ) &&
+        ( !chrlst[chr_ref].prop.isitem  || !chr_attached( chrlst, CHRLST_COUNT, chr_ref ) ) )
     {
       chrlst[chr_ref].team = team;
     }
@@ -210,15 +244,18 @@ int restock_ammo( CGame * gs, CHR_REF chr_ref, IDSZ idsz )
   //     either its parent or type idsz match the given idsz.  This
   //     function returns the amount of ammo given.
 
-  Chr  * chrlst      = gs->ChrList;
-  size_t chrlst_size = MAXCHR;
-  int amount, model;
+  PChr chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
+  int amount;
+  OBJ_REF model;
+  CAP_REF icap;
 
   amount = 0;
   if ( VALID_CHR(chrlst, chr_ref) )
   {
     model = chrlst[chr_ref].model;
-    if ( CAP_INHERIT_IDSZ( gs,  model, idsz ) )
+    icap = gs->ObjList[model].cap;
+    if ( CAP_INHERIT_IDSZ( gs, icap, idsz ) )
     {
       if ( chrlst[chr_ref].ammo < chrlst[chr_ref].ammomax )
       {
@@ -236,22 +273,21 @@ void issue_clean( CGame * gs, CHR_REF chr_ref )
 {
   // ZZ> This function issues a clean up order to all teammates
 
-  TEAM team;
-  Uint16 cnt;
+  TEAM_REF team;
+  CHR_REF chr_cnt;
 
-  Chr  * chrlst      = gs->ChrList;
-  size_t chrlst_size = MAXCHR;
+  PChr chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
 
   team = chrlst[chr_ref].team;
-  cnt = 0;
-  while ( cnt < MAXCHR )
+  
+  for ( chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++ )
   {
-    if ( chrlst[cnt].team == team && !chrlst[cnt].alive )
+    if ( chrlst[chr_cnt].team == team && !chrlst[chr_cnt].alive )
     {
-      chrlst[cnt].aistate.time = 2;  // Don't let it think too much...
-      chrlst[cnt].aistate.alert = ALERT_CLEANEDUP;
+      chrlst[chr_cnt].aistate.time  = 2;  // Don't let it think too much...
+      chrlst[chr_cnt].aistate.alert = ALERT_CLEANEDUP;
     }
-    cnt++;
   }
 }
 
@@ -259,30 +295,264 @@ void issue_clean( CGame * gs, CHR_REF chr_ref )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-TeamInfo * TeamInfo_new(TeamInfo *pteam) 
+CTeam * CTeam_new(CTeam *pteam) 
 { 
-  //fprintf( stdout, "TeamInfo_new()\n");
+  //fprintf( stdout, "CTeam_new()\n");
 
   if(NULL==pteam) return pteam; 
   
-  memset(pteam, 0, sizeof(TeamInfo)); 
+  memset(pteam, 0, sizeof(CTeam)); 
   
   return pteam; 
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t TeamInfo_delete(TeamInfo *pteam) 
+bool_t CTeam_delete(CTeam *pteam) 
 { 
   if(NULL==pteam) return bfalse; 
 
-  memset(pteam, 0, sizeof(TeamInfo)); 
+  memset(pteam, 0, sizeof(CTeam)); 
    
   return btrue; 
 };
 
 //--------------------------------------------------------------------------------------------
-TeamInfo * TeamInfo_renew(TeamInfo *pteam) 
+CTeam * CTeam_renew(CTeam *pteam) 
 { 
-  TeamInfo_delete(pteam);
-  return TeamInfo_new(pteam);
+  CTeam_delete(pteam);
+  return CTeam_new(pteam);
 };
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+void ObjList_free_one( CGame * gs, OBJ_REF obj_ref )
+{
+  // BB> This function sticks a profile back on the free profile stack
+
+  PObj   objlst      = gs->ObjList;
+  size_t objlst_size = OBJLST_COUNT;
+
+  PCap    caplst      = gs->CapList;
+  size_t  caplst_size = CAPLST_COUNT;
+
+  CObj * pobj;
+
+  pobj = ObjList_getPObj(gs, obj_ref);
+  if(NULL == pobj) return;
+
+  log_debug( "ObjList_free_one() - \n\tprofile == %d, caplst[pobj->cap].classname == \"%s\"", obj_ref, caplst[pobj->cap].classname );
+
+  // deallocate the character
+  CProfile_delete(pobj);
+
+  // add it to the free list
+  gs->ObjFreeList[gs->ObjFreeList_count] = obj_ref;
+  gs->ObjFreeList_count++;
+}
+
+
+CProfile * CProfile_new(CProfile * p)
+{
+  int cnt;
+
+  if(NULL == p) return p;
+  if(p->initialized) CProfile_delete(p);
+
+  memset(p, 0, sizeof(CProfile));
+
+  strcpy(p->name, "*NONE*");
+
+  p->eve = INVALID_EVE;
+  p->cap = INVALID_CAP;
+  p->mad = INVALID_MAD;
+  p->ai  = AILST_COUNT;                              // AI for this model
+
+  for(cnt=0; cnt<PRTPIP_PEROBJECT_COUNT; cnt++)
+  {
+    p->prtpip[cnt] = INVALID_PIP;
+  }
+
+  p->initialized = btrue;
+
+  return p;
+}
+
+bool_t CProfile_delete(CProfile * p)
+{
+  if(NULL == p) return bfalse;
+  if(!p->initialized) return btrue;
+
+  p->initialized = bfalse;
+
+  return btrue;
+}
+
+CProfile * CProfile_renew(CProfile * p)
+{
+  CProfile_delete(p);
+  return CProfile_new(p);
+}
+
+//--------------------------------------------------------------------------------------------
+void obj_clear_pips( CGame * gs )
+{
+  int cnt;
+  OBJ_REF object;
+
+  // Now clear out the local pips
+  for ( object = 0; object < OBJLST_COUNT; object++ )
+  {
+    for ( cnt = 0; cnt < PRTPIP_PEROBJECT_COUNT; cnt++ )
+    {
+      gs->ObjList[object].prtpip[cnt] = INVALID_PIP;
+    }
+  }
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+CObj * ObjList_getPObj(CGame * gs, OBJ_REF iobj)
+{
+  if ( !VALID_OBJ( gs->ObjList, iobj ) ) return NULL;
+  
+  return gs->ObjList + iobj;
+}
+
+//--------------------------------------------------------------------------------------------
+CEve * ObjList_getPEve(CGame * gs, OBJ_REF iobj)
+{
+  CObj * pobj = ObjList_getPObj(gs, iobj);
+  if(NULL == pobj) return NULL;
+
+  pobj->eve = VALIDATE_EVE(gs->EveList, pobj->eve);
+  if(!VALID_EVE(gs->EveList, pobj->eve)) return NULL;
+  
+  return gs->EveList + pobj->eve;
+}
+
+//--------------------------------------------------------------------------------------------
+CCap * ObjList_getPCap(CGame * gs, OBJ_REF iobj)
+{
+  CObj * pobj = ObjList_getPObj(gs, iobj);
+  if(NULL == pobj) return NULL;
+
+  pobj->cap = VALIDATE_CAP(gs->CapList, pobj->cap);
+  if(!VALID_CAP(gs->CapList, pobj->cap)) return NULL;
+  
+  return gs->CapList + pobj->cap;
+}
+
+//--------------------------------------------------------------------------------------------
+CMad * ObjList_getPMad(CGame * gs, OBJ_REF iobj)
+{
+  CObj * pobj = ObjList_getPObj(gs, iobj);
+  if(NULL == pobj) return NULL;
+
+  pobj->mad = VALIDATE_MAD(gs->MadList, pobj->mad);
+  if(!VALID_MAD(gs->MadList, pobj->mad)) return NULL;
+  
+  return gs->MadList + pobj->mad;
+}
+
+//--------------------------------------------------------------------------------------------
+CPip * ObjList_getPPip(CGame * gs, OBJ_REF iobj, int i)
+{
+  CObj * pobj = ObjList_getPObj(gs, iobj);
+  if(NULL == pobj) return NULL;
+
+  pobj->prtpip[i] = VALIDATE_PIP(gs->PipList, pobj->prtpip[i]);
+  if(!VALID_PIP(gs->PipList, pobj->prtpip[i])) return NULL;
+  
+  return gs->PipList + pobj->prtpip[i];
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+EVE_REF ObjList_getREve(CGame * gs, OBJ_REF iobj)
+{
+  CObj * pobj = ObjList_getPObj(gs, iobj);
+  if(NULL == pobj) return INVALID_EVE;
+
+  pobj->eve = VALIDATE_EVE(gs->EveList, pobj->eve);
+  return pobj->eve;
+}
+
+//--------------------------------------------------------------------------------------------
+CAP_REF ObjList_getRCap(CGame * gs, OBJ_REF iobj)
+{
+  CObj * pobj = ObjList_getPObj(gs, iobj);
+  if(NULL == pobj) return INVALID_CAP;
+
+  pobj->cap = VALIDATE_CAP(gs->CapList, pobj->cap);
+  return pobj->cap;
+}
+
+//--------------------------------------------------------------------------------------------
+MAD_REF ObjList_getRMad(CGame * gs, OBJ_REF iobj)
+{
+  CObj * pobj = ObjList_getPObj(gs, iobj);
+  if(NULL == pobj) return INVALID_MAD;
+
+  pobj->mad = VALIDATE_MAD(gs->MadList, pobj->mad);
+  return pobj->mad;
+}
+
+//--------------------------------------------------------------------------------------------
+PIP_REF ObjList_getRPip(CGame * gs, OBJ_REF iobj, int i)
+{
+  CObj * pobj = ObjList_getPObj(gs, iobj);
+  if(NULL == pobj) return INVALID_PIP;
+
+  pobj->prtpip[i] = VALIDATE_PIP(gs->PipList, pobj->prtpip[i]);
+
+  return pobj->prtpip[i];
+
+}
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+void ObjList_log_used( CGame * gs, char *savename )
+{
+  // ZZ> This is a debug function for checking model loads
+
+  FILE* hFileWrite;
+  OBJ_REF obj_cnt;
+
+  hFileWrite = fs_fileOpen( PRI_NONE, NULL, savename, "a" );
+  if ( NULL != hFileWrite )
+  {
+    fprintf( hFileWrite, "\n\nSlot usage for objects in last module loaded...\n" );
+    fprintf( hFileWrite, "-----------------------------------------------\n" );
+
+    
+    for ( obj_cnt = 0; obj_cnt < OBJLST_COUNT; obj_cnt++ )
+    {
+      CCap * pcap;
+      CMad * pmad;
+      if( !gs->ObjList[obj_cnt].used ) continue;
+
+      pcap = ObjList_getPCap(gs, obj_cnt);
+      pmad = ObjList_getPMad(gs, obj_cnt);
+
+      if(NULL != pcap && NULL != pmad)
+      {
+        fprintf( hFileWrite, "%3d %32s %s\n", REF_TO_INT(obj_cnt), pcap->classname, pmad->name );
+      }
+      else if(NULL != pcap)
+      {
+        fprintf( hFileWrite, "%3d %32s ?\n", REF_TO_INT(obj_cnt), pcap->classname );
+      }
+      else if(NULL != pmad)
+      {
+        fprintf( hFileWrite, "%3d ? %s\n", REF_TO_INT(obj_cnt), pmad->name );
+      }
+    }
+
+    fprintf( hFileWrite, "\n\nDebug info after initial spawning and loading is complete...\n" );
+    fprintf( hFileWrite, "-----------------------------------------------\n" );
+
+    fs_fileClose( hFileWrite );
+  }
+}

@@ -422,9 +422,9 @@ INLINE void Transform3_Full( float pre_scale, float post_scale, matrix_4x4 *pMat
   pdst = pDestV;
   for (cnt = 0; cnt < NumVertor; cnt++, psrc++, pdst++)
   {
-    pdst->x = psrc->x * pMatrix->v[0] + psrc->y * pMatrix->v[4] + psrc->z * pMatrix->v[ 8] + pMatrix->v[12];
-    pdst->y = psrc->x * pMatrix->v[1] + psrc->y * pMatrix->v[5] + psrc->z * pMatrix->v[ 9] + pMatrix->v[13];
-    pdst->z = psrc->x * pMatrix->v[2] + psrc->y * pMatrix->v[6] + psrc->z * pMatrix->v[10] + pMatrix->v[14];
+    pdst->x = psrc->x * pMatrix->v[0] + psrc->y * pMatrix->v[4] + psrc->z * pMatrix->v[ 8];
+    pdst->y = psrc->x * pMatrix->v[1] + psrc->y * pMatrix->v[5] + psrc->z * pMatrix->v[ 9];
+    pdst->z = psrc->x * pMatrix->v[2] + psrc->y * pMatrix->v[6] + psrc->z * pMatrix->v[10];
 
     if(1.0f != pre_scale)
     {

@@ -521,7 +521,7 @@ bool_t CClient_unjoinGame(CClient * cs)
 void CClient_talkToHost(CClient * cs)
 {
   // ZZ> This function sends the latch packets to the host machine
-  Uint8 player;
+  PLA_REF player;
   SYS_PACKET egopkt;
   CGame * gs;
 
@@ -532,7 +532,7 @@ void CClient_talkToHost(CClient * cs)
   // Start talkin'
   if (gs->wld_frame > STARTTALK && cs->loc_pla_count>0)
   {
-    Uint32 ichr;
+    CHR_REF ichr;
     Uint32 stamp = gs->wld_frame;
     Uint32 time = (stamp + 1) & LAGAND;
 
@@ -540,16 +540,16 @@ void CClient_talkToHost(CClient * cs)
     sys_packet_addUint16(&egopkt, TO_HOST_LATCH);     // The message header
     sys_packet_addUint32(&egopkt, stamp);
 
-    for (player = 0; player < MAXPLAYER; player++)
+    for (player = 0; player < PLALST_COUNT; player++)
     {
       // Find the local players
       if (!gs->PlaList[player].used || INBITS_NONE==gs->PlaList[player].device) continue;
 
       ichr = gs->PlaList[player].chr_ref;
-      sys_packet_addUint16(&egopkt, ichr);                                   // The character index
-      sys_packet_addUint8(&egopkt, cs->tlb.buffer[ichr][time].latch.b);         // Player button states
-      sys_packet_addSint16 (&egopkt, cs->tlb.buffer[ichr][time].latch.x*SHORTLATCH);    // Player motion
-      sys_packet_addSint16 (&egopkt, cs->tlb.buffer[ichr][time].latch.y*SHORTLATCH);    // Player motion
+      sys_packet_addUint16(&egopkt, REF_TO_INT(ichr));                                   // The character index
+      sys_packet_addUint8(&egopkt, cs->tlb.buffer[REF_TO_INT(ichr)][time].latch.b);         // CPlayer button states
+      sys_packet_addSint16 (&egopkt, cs->tlb.buffer[REF_TO_INT(ichr)][time].latch.x*SHORTLATCH);    // CPlayer motion
+      sys_packet_addSint16 (&egopkt, cs->tlb.buffer[REF_TO_INT(ichr)][time].latch.y*SHORTLATCH);    // CPlayer motion
     }
 
     // Send it to the host
@@ -561,10 +561,10 @@ void CClient_talkToHost(CClient * cs)
 void CClient_unbufferLatches(CClient * cs)
 {
   // ZZ> This function sets character latches based on player input to the host
-  int    cnt;
-  Uint32 uiTime, stamp;
-  Sint32 dframes;
-  Chr * pchr;
+  CHR_REF chr_cnt;
+  Uint32  uiTime, stamp;
+  Sint32  dframes;
+  CChr  * pchr;
   CHR_TIME_LATCH * ptl;
 
   CGame * gs = cs->parent;
@@ -572,11 +572,11 @@ void CClient_unbufferLatches(CClient * cs)
   // Copy the latches
   stamp = gs->wld_frame;
   uiTime  = stamp & LAGAND;
-  for (cnt = 0; cnt < MAXCHR; cnt++)
+  for (chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++)
   {
-    if(!gs->ChrList[cnt].on) continue;
-    pchr = gs->ChrList + cnt;
-    ptl = cs->tlb.buffer + cnt;
+    if(!gs->ChrList[chr_cnt].on) continue;
+    pchr = gs->ChrList + chr_cnt;
+    ptl = cs->tlb.buffer + REF_TO_INT(chr_cnt);
 
     if(!(*ptl)[uiTime].valid) continue;
     if(INVALID_TIMESTAMP == (*ptl)[uiTime].stamp) continue;
@@ -842,7 +842,7 @@ bool_t cl_handlePacket(CClient * cs, ENetEvent *event)
       // Remember that we got it
       cs->tlb.numtimes++;
 
-      for(ichr=0; ichr<MAXCHR; ichr++)
+      for(ichr=0; ichr<CHRLST_COUNT; ichr++)
       {
         cs->tlb.buffer[ichr][uiTime].stamp = INVALID_TIMESTAMP;
         cs->tlb.buffer[ichr][uiTime].valid = bfalse;
@@ -884,12 +884,12 @@ bool_t cl_handlePacket(CClient * cs, ENetEvent *event)
 //--------------------------------------------------------------------------------------------
 void CClient_reset_latches(CClient * cs)
 {
-  int cnt;
+  CHR_REF chr_cnt;
   if(NULL==cs) return;
 
-  for(cnt = 0; cnt<MAXCHR; cnt++)
+  for(chr_cnt = 0; chr_cnt<CHRLST_COUNT; chr_cnt++)
   {
-    CClient_resetTimeLatches(cs, cnt);
+    CClient_resetTimeLatches(cs, chr_cnt);
   };
 
   cs->tlb.nextstamp = INVALID_TIMESTAMP;
@@ -898,22 +898,21 @@ void CClient_reset_latches(CClient * cs)
 
 
 //--------------------------------------------------------------------------------------------
-void CClient_resetTimeLatches(CClient * cs, Sint32 ichr)
+void CClient_resetTimeLatches(CClient * cs, CHR_REF ichr)
 {
   int cnt;
   CHR_TIME_LATCH *ptl;
 
   if(NULL==cs) return;
   if( !VALID_CHR_RANGE(ichr) ) return;
-  ptl = cs->tlb.buffer + ichr;
+  ptl = cs->tlb.buffer + REF_TO_INT(ichr);
 
   for(cnt=0; cnt < MAXLAG; cnt++)
   {
     (*ptl)[cnt].valid   = bfalse;
     (*ptl)[cnt].stamp   = INVALID_TIMESTAMP;
-    (*ptl)[cnt].latch.x = 0;
-    (*ptl)[cnt].latch.y = 0;
-    (*ptl)[cnt].latch.b = 0;
+
+    CLatch_clear( &((*ptl)[cnt].latch) );
   }
 };
 
@@ -921,22 +920,24 @@ void CClient_resetTimeLatches(CClient * cs, Sint32 ichr)
 void CClient_bufferLatches(CClient * cs)
 {
   // ZZ> This function buffers the player data
-  Uint32 player, stamp, uiTime, ichr;
+  Uint32 stamp, uiTime;
+  PLA_REF player;
+  CHR_REF ichr;
   CHR_TIME_LATCH *ptl;
 
   CGame * gs     = cs->parent;
-  Chr       * chrlst = gs->ChrList;
-  Player    * plalst = gs->PlaList;
+  PChr chrlst = gs->ChrList;
+  PPla plalst = gs->PlaList;
 
   stamp = gs->wld_frame + 1;
   uiTime = stamp & LAGAND;
-  for (player = 0; player < MAXPLAYER; player++)
+  for (player = 0; player < PLALST_COUNT; player++)
   {
     if (!VALID_PLA(plalst, player)) continue;
     ichr = plalst[player].chr_ref;
 
     if( !VALID_CHR(chrlst, ichr) ) continue;
-    ptl = cs->tlb.buffer + ichr;
+    ptl = cs->tlb.buffer + REF_TO_INT(ichr);
 
     (*ptl)[uiTime].valid   = btrue;
     (*ptl)[uiTime].stamp   = stamp;
@@ -1237,7 +1238,7 @@ bool_t cl_load_module_info(CClient * cs)
     mi->maxplayers   = stream_readUint8(&stream);                 //
     mi->monstersonly = (0 != stream_readUint8(&stream));          // Only allow monsters
     mi->rts_control  = (0 != stream_readUint8(&stream));          // Real Time Stragedy?
-    mi->respawnmode  = stream_readUint8(&stream);                 // Allow respawn
+    mi->respawnmode  = (RESPAWN_MODE)stream_readUint8(&stream);   // Allow respawn
     stream_done(&stream);
 
     NetRequest_release( req );
@@ -1424,7 +1425,7 @@ Status * Status_new( Status * pstat )
   memset(pstat, 0, sizeof(Status));
 
   pstat->on      = bfalse;
-  pstat->chr_ref = MAXCHR;
+  pstat->chr_ref = INVALID_CHR;
   pstat->delay   = 10; 
 
   return pstat;

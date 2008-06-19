@@ -198,11 +198,7 @@ bool_t input_read_joystick(JOYSTICK * pj)
 
   if (!pj->on || NULL == pj->sdl_device )
   {
-    pj->latch.x = pj->latch.y = 0.0f;
-    pj->latch.b = 0;
-
-    joy[1].latch.x = joy[1].latch.y = 0.0f;
-    joy[1].latch.b = 0;
+    CLatch_clear( &(pj->latch) );
 
     return (NULL != pj->sdl_device);
   };
@@ -217,7 +213,7 @@ bool_t input_read_joystick(JOYSTICK * pj)
     float jr2, r2;
 
     r2 = jx * jx + jy * jy;
-    jr2 = max( 0 , r2-jthresh*jthresh) / (1.0f - jthresh*jthresh);
+    jr2 = MAX( 0 , r2-jthresh*jthresh) / (1.0f - jthresh*jthresh);
 
     pj->latch.x *= jr2 / r2;
     pj->latch.y *= jr2 / r2;
@@ -497,20 +493,20 @@ void input_read()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-Player * Player_new(Player *ppla)    
+CPlayer * Player_new(CPlayer *ppla)    
 { 
   //fprintf( stdout, "Player_new()\n");
 
   if(NULL==ppla) return ppla; 
 
-  memset(ppla, 0, sizeof(Player));
+  memset(ppla, 0, sizeof(CPlayer));
   ppla->used = bfalse;
 
   return ppla; 
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t   Player_delete(Player *ppla) 
+bool_t   Player_delete(CPlayer *ppla) 
 { 
   if(NULL==ppla) return bfalse;
 
@@ -520,7 +516,7 @@ bool_t   Player_delete(Player *ppla)
 };
 
 //--------------------------------------------------------------------------------------------
-Player * Player_renew(Player *ppla)
+CPlayer * Player_renew(CPlayer *ppla)
 {
   Player_delete(ppla);
   return Player_new(ppla);

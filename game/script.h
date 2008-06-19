@@ -10,10 +10,10 @@ extern int                     iNumAis;
 #define PITNOSOUND          -256                    // Stop sound at bottom of pits...
 #define MSGDISTANCE         2000                 // Range for SendMessageNear
 
-#define MAXAI               129                     //
+#define AILST_COUNT               129                     //
 #define MAXCODE             1024                    // Number of lines in AICODES.TXT
 #define MAXCODENAMESIZE     64                      //
-#define AISMAXCOMPILESIZE   (MAXAI*MAXCODE)         // For parsing AI scripts
+#define AISMAXCOMPILESIZE   (AILST_COUNT*MAXCODE)         // For parsing AI scripts
 
 typedef enum script_opcode_e
 {
@@ -468,10 +468,10 @@ typedef struct ScriptInfo_t
   int    buffer_index;
   Uint32 buffer[AISMAXCOMPILESIZE];
 
-  STRING fname[MAXAI];
+  STRING fname[AILST_COUNT];
   int    offset_count;
-  int    offset_stt[MAXAI];
-  int    offset_end[MAXAI];
+  int    offset_stt[AILST_COUNT];
+  int    offset_end[AILST_COUNT];
 } ScriptInfo;
 
 retval_t run_script( struct CGame_t * gs, CHR_REF character, float dUpdate );
@@ -481,5 +481,5 @@ void append_end_text( struct CGame_t * gs, int message, CHR_REF character );
 
 
 void load_ai_codes( char* loadname );
-Uint32 load_ai_script( ScriptInfo * slist, char * szModpath, char * szObjectname );
+Uint32 load_ai_script( ScriptInfo * slist, const char * szModpath, const char * szObjectname );
 void reset_ai_script(struct CGame_t * gs);

@@ -58,7 +58,7 @@ typedef struct CServer_t
   Uint32 rand_idx;
 
   // a copy of all the character latches
-  LATCH  latch[MAXCHR];
+  CLatch  latch[CHRLST_COUNT];
 
   // the buffered latches that have been stored on the server
   TIME_LATCH_BUFFER tlb;
@@ -94,7 +94,7 @@ void CServer_reset_latches(CServer * ss);
 void sv_talkToRemotes(CServer * ss);
 void CServer_bufferLatches(CServer * ss);
 void CServer_unbufferLatches(CServer * ss);
-void CServer_resetTimeLatches(CServer * ss, Sint32 ichr);
+void CServer_resetTimeLatches(CServer * ss, CHR_REF ichr);
 
 bool_t sv_sendPacketToAllClients(CServer * ss, SYS_PACKET * egop);
 bool_t sv_sendPacketToAllClientsGuaranteed(CServer * ss, SYS_PACKET * egop);

@@ -282,7 +282,7 @@ void CServer_bufferLatches(CServer * ss)
 
     // Now pretend the host got the packet...
     uiTime = uiTime & LAGAND;
-    for (ichr = 0; ichr < MAXCHR; ichr++)
+    for (ichr = 0; ichr < CHRLST_COUNT; ichr++)
     {
       ss->tlb.buffer[ichr][uiTime].latch.b = ss->latch[ichr].b;
       ss->tlb.buffer[ichr][uiTime].latch.x = ((Sint32)(ss->latch[ichr].x*SHORTLATCH)) / SHORTLATCH;
@@ -297,7 +297,8 @@ void CServer_bufferLatches(CServer * ss)
 void sv_talkToRemotes(CServer * ss)
 {
   // ZZ> This function sends the character data to all the remote machines
-  Uint32 uiTime, ichr;
+  Uint32 uiTime;
+  CHR_REF ichr;
   SYS_PACKET egopkt;
   int i,cnt,stamp;
 
@@ -322,23 +323,23 @@ void sv_talkToRemotes(CServer * ss)
 
       // test all player latches...
       cnt = 0;
-      for (ichr=0; ichr<MAXCHR; ichr++)
+      for (ichr=0; ichr<CHRLST_COUNT; ichr++)
       {
         // do not look at characters that aren't on
         if (!gs->ChrList[ichr].on) continue;
 
         // do not look at invalid latches
-        if(!ss->tlb.buffer[ichr][uiTime].valid) continue;
+        if(!ss->tlb.buffer[REF_TO_INT(ichr)][uiTime].valid) continue;
 
         // do not send "future" latches
-        if(ss->tlb.buffer[ichr][uiTime].stamp <= uiTime)
+        if(ss->tlb.buffer[REF_TO_INT(ichr)][uiTime].stamp <= uiTime)
         {
-          sys_packet_addUint16(&egopkt, ichr);                                // The character index
-          sys_packet_addUint8(&egopkt, ss->tlb.buffer[ichr][uiTime].latch.b);         // Player button states
-          sys_packet_addSint16(&egopkt, ss->tlb.buffer[ichr][uiTime].latch.x*SHORTLATCH);    // Player motion
-          sys_packet_addSint16(&egopkt, ss->tlb.buffer[ichr][uiTime].latch.y*SHORTLATCH);    // Player motion
+          sys_packet_addUint16(&egopkt, REF_TO_INT(ichr));                                // The character index
+          sys_packet_addUint8(&egopkt, ss->tlb.buffer[REF_TO_INT(ichr)][uiTime].latch.b);         // CPlayer button states
+          sys_packet_addSint16(&egopkt, ss->tlb.buffer[REF_TO_INT(ichr)][uiTime].latch.x*SHORTLATCH);    // CPlayer motion
+          sys_packet_addSint16(&egopkt, ss->tlb.buffer[REF_TO_INT(ichr)][uiTime].latch.y*SHORTLATCH);    // CPlayer motion
 
-          ss->tlb.buffer[ichr][uiTime].valid = bfalse;
+          ss->tlb.buffer[REF_TO_INT(ichr)][uiTime].valid = bfalse;
 
           cnt++;
         }
@@ -786,36 +787,37 @@ bool_t sv_handlePacket(CServer * ss, ENetEvent *event)
 void CServer_unbufferLatches(CServer * ss)
 {
   // ZZ> This function sets character latches based on player input to the host
-  Uint32 cnt, uiTime;
+  CHR_REF chr_cnt;
+  Uint32  uiTime;
   CGame * gs = ss->parent;
 
   if(!sv_Started()) return;
 
   // Copy the latches
   uiTime = gs->wld_frame & LAGAND;
-  for (cnt = 0; cnt < MAXCHR; cnt++)
+  for (chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++)
   {
-    if(!gs->ChrList[cnt].on) continue;
-    if(!ss->tlb.buffer[cnt][uiTime].valid) continue;
-    if(INVALID_TIMESTAMP == ss->tlb.buffer[cnt][uiTime].stamp) continue;
+    if(!gs->ChrList[chr_cnt].on) continue;
+    if(!ss->tlb.buffer[REF_TO_INT(chr_cnt)][uiTime].valid) continue;
+    if(INVALID_TIMESTAMP == ss->tlb.buffer[REF_TO_INT(chr_cnt)][uiTime].stamp) continue;
 
-    ss->latch[cnt].x = ss->tlb.buffer[cnt][uiTime].latch.x;
-    ss->latch[cnt].y = ss->tlb.buffer[cnt][uiTime].latch.y;
-    ss->latch[cnt].b = ss->tlb.buffer[cnt][uiTime].latch.b;
+    ss->latch[REF_TO_INT(chr_cnt)].x = ss->tlb.buffer[REF_TO_INT(chr_cnt)][uiTime].latch.x;
+    ss->latch[REF_TO_INT(chr_cnt)].y = ss->tlb.buffer[REF_TO_INT(chr_cnt)][uiTime].latch.y;
+    ss->latch[REF_TO_INT(chr_cnt)].b = ss->tlb.buffer[REF_TO_INT(chr_cnt)][uiTime].latch.b;
 
     // Let players respawn
-    if (gs->modstate.respawnvalid && (gs->ChrList[cnt].aistate.latch.b & LATCHBUTTON_RESPAWN))
+    if (gs->modstate.respawnvalid && (gs->ChrList[chr_cnt].aistate.latch.b & LATCHBUTTON_RESPAWN))
     {
-      if (!gs->ChrList[cnt].alive)
+      if (!gs->ChrList[chr_cnt].alive)
       {
-        respawn_character(gs, cnt);
-        gs->TeamList[gs->ChrList[cnt].team].leader = cnt;
-        gs->ChrList[cnt].aistate.alert |= ALERT_CLEANEDUP;
+        respawn_character(gs, chr_cnt);
+        gs->TeamList[gs->ChrList[chr_cnt].team].leader = chr_cnt;
+        gs->ChrList[chr_cnt].aistate.alert |= ALERT_CLEANEDUP;
 
         // Cost some experience for doing this...  Never lose a level
-        gs->ChrList[cnt].experience = gs->ChrList[cnt].experience * EXPKEEP;
+        gs->ChrList[chr_cnt].experience = gs->ChrList[chr_cnt].experience * EXPKEEP;
       }
-      ss->latch[cnt].b &= ~LATCHBUTTON_RESPAWN;
+      ss->latch[REF_TO_INT(chr_cnt)].b &= ~LATCHBUTTON_RESPAWN;
     }
 
   }
@@ -825,12 +827,12 @@ void CServer_unbufferLatches(CServer * ss)
 //--------------------------------------------------------------------------------------------
 void CServer_reset_latches(CServer * ss)
 {
-  int cnt;
+  CHR_REF chr_cnt;
   if(NULL==ss) return;
 
-  for(cnt = 0; cnt<MAXCHR; cnt++)
+  for(chr_cnt = 0; chr_cnt<CHRLST_COUNT; chr_cnt++)
   {
-    CServer_resetTimeLatches(ss,cnt);
+    CServer_resetTimeLatches(ss,chr_cnt);
   };
 
   ss->tlb.nextstamp = INVALID_TIMESTAMP;
@@ -838,24 +840,22 @@ void CServer_reset_latches(CServer * ss)
 };
 
 //--------------------------------------------------------------------------------------------
-void CServer_resetTimeLatches(CServer * ss, Sint32 ichr)
+void CServer_resetTimeLatches(CServer * ss, CHR_REF ichr)
 {
-  int cnt;
+  int cnt, chr_val;
 
   if(NULL==ss) return;
-  if(ichr<0 || ichr>=MAXCHR) return;
 
-  ss->latch[ichr].x = 0;
-  ss->latch[ichr].y = 0;
-  ss->latch[ichr].b = 0;
+  chr_val = REF_TO_INT(ichr);
+
+  CLatch_clear( ss->latch + chr_val );
 
   for(cnt=0; cnt < MAXLAG; cnt++)
   {
-    ss->tlb.buffer[ichr][cnt].valid   = bfalse;
-    ss->tlb.buffer[ichr][cnt].stamp   = INVALID_TIMESTAMP;
-    ss->tlb.buffer[ichr][cnt].latch.x = 0;
-    ss->tlb.buffer[ichr][cnt].latch.y = 0;
-    ss->tlb.buffer[ichr][cnt].latch.b = 0;
+    ss->tlb.buffer[chr_val][cnt].valid   = bfalse;
+    ss->tlb.buffer[chr_val][cnt].stamp   = INVALID_TIMESTAMP;
+
+    CLatch_clear( &(ss->tlb.buffer[chr_val][cnt].latch) );
   }
 };
 

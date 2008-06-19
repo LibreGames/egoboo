@@ -283,7 +283,7 @@ retval_t NetHost_dispatch( NetHost * nh )
         // if we trust pointers, we could actually call
         // (*pc->handler_ptr)(pc->handler_data, &event)
         
-        if(!net_handlePacket(pc->handler_data, &event))
+        if(!net_handlePacket( (CNet *)pc->handler_data, &event))
         {
           net_logf("NET WARNING: NetHost_dispatch() - Unhandled packet\n");
         }
@@ -347,7 +347,7 @@ retval_t NetHost_dispatch( NetHost * nh )
     enet_host_flush(nh->Host);
   }
 
-  return btrue;
+  return rv_succeed;
 };
 
 //--------------------------------------------------------------------------------------------
@@ -914,7 +914,7 @@ bool_t net_sendSysPacketToPeerGuaranteed(ENetPeer *peer, SYS_PACKET * egop)
 retval_t net_copyFileToPeer(CNet * ns, ENetPeer * peer, char *source, char *dest)
 {
   // JF> This function queues up files to send to all the hosts.
-  //     TODO: Deal with having to send to up to MAXPLAYER players...
+  //     TODO: Deal with having to send to up to PLALST_COUNT players...
 
   if( NULL == ns || NULL == peer ) return rv_error;
 
@@ -939,7 +939,7 @@ retval_t net_copyFileToPeer(CNet * ns, ENetPeer * peer, char *source, char *dest
 retval_t net_copyFileToAllPeers(CNet * ns, char *source, char *dest)
 {
   // JF> This function queues up files to send to all the hosts.
-  //     TODO: Deal with having to send to up to MAXPLAYER players...
+  //     TODO: Deal with having to send to up to PLALST_COUNT players...
   
   if(NULL == ns)
   {
@@ -1480,13 +1480,17 @@ PLA_REF add_player(CGame * gs, CHR_REF chr_ref, Uint8 device)
   // ZZ> This function adds a pla_ref, returning bfalse if it fails, btrue otherwise
 
   PLA_REF pla_ref;
-  Player * pla;
-  Chr    * chr;
+  CPlayer * pla;
+  CChr    * chr;
 
-  if(NULL == gs || gs->PlaList_count + 1 >= MAXPLAYER ) return MAXPLAYER;
+  if(NULL == gs || gs->PlaList_count + 1 >= PLALST_COUNT ) return INVALID_PLA;
 
-  if( !VALID_CHR(gs->ChrList, chr_ref) ) return MAXPLAYER;
+  if( !VALID_CHR(gs->ChrList, chr_ref) ) return INVALID_PLA;
   chr = gs->ChrList + chr_ref;
+
+  // find the average spawn level of the characters
+  // kludge to find the "floor level" of the dungeon for the reflective floors
+  gs->PlaList_level = (gs->PlaList_level * gs->PlaList_count + chr->level) / (gs->PlaList_count + 1);
 
   pla_ref = gs->PlaList_count;
   gs->PlaList_count++;
@@ -1498,9 +1502,7 @@ PLA_REF add_player(CGame * gs, CHR_REF chr_ref, Uint8 device)
   pla->chr_ref = chr_ref;
   pla->used = btrue;
   pla->device = device;
-  pla->latch.x = 0;
-  pla->latch.y = 0;
-  pla->latch.b = 0; 
+  CLatch_clear( &(pla->latch) );
 
   CClient_resetTimeLatches(gs->cl, chr_ref);
   CServer_resetTimeLatches(gs->sv, chr_ref);
@@ -1547,7 +1549,7 @@ void check_add(Uint8 key, char bigletter, char littleletter)
 }
 
 //--------------------------------------------------------------------------------------------
-net_send_chat(CGame *gs, KeyboardBuffer * kbuffer)
+void net_send_chat(CGame *gs, KeyboardBuffer * kbuffer)
 {
   SYS_PACKET egopkt;
   NetHost * cl_host, *sv_host;

@@ -8,8 +8,8 @@ struct CGame_t;
 
 #define SPAWN_NOCHARACTER        255                 // For particles that spawn characters...
 
-#define MAXPRTPIP           1024                    // Particle templates
-#define MAXPRT              512         // Max number of particles
+#define PIPLST_COUNT           1024                    // Particle templates
+#define PRTLST_COUNT              512         // Max number of particles
 
 #define DYNAFANS  12
 #define MAXFALLOFF 1400
@@ -66,11 +66,11 @@ typedef struct dynalight_pip_t
 } DYNALIGHT_PIP;
 
 // Particle profiles
-typedef struct Pip_t
+typedef struct CPip_t
 {
   bool_t          used;
 
-  Uint8           force;                        // Force spawn?
+  bool_t          force;                        // Force spawn?
   STRING          fname;
   STRING          comment;
   PRTTYPE         type;                         // Transparency mode
@@ -104,12 +104,12 @@ typedef struct Pip_t
   Uint16          contspawntime;                // Spawn timer
   Uint8           contspawnamount;              // Spawn amount
   Uint16          contspawnfacingadd;           // Spawn in circle
-  Uint16          contspawnpip;                 // Spawn type ( local )
+  PIP_REF         contspawnpip;                 // Spawn type ( local )
   Uint8           endspawnamount;               // Spawn amount
   Uint16          endspawnfacingadd;            // Spawn in circle
-  Uint16          endspawnpip;                  // Spawn type ( local )
+  PIP_REF         endspawnpip;                  // Spawn type ( local )
   Uint8           bumpspawnamount;              // Spawn amount
-  Uint16          bumpspawnpip;                 // Spawn type ( global )
+  PIP_REF         bumpspawnpip;                 // Spawn type ( global )
   DYNALIGHT_PIP   dyna;                         // Dynalight info
   Uint16          dazetime;                     // Daze
   Uint16          grogtime;                     // Drunkeness
@@ -141,11 +141,23 @@ typedef struct Pip_t
   float           manadrain;                      //Reduce target mana by this amount
   float           lifedrain;                      //Reduce target mana by this amount
   bool_t          rotatewithattached;           // do attached particles rotate with the object?
-} Pip;
+} CPip;
 
-Pip * Pip_new(Pip * ppip);
-Pip * Pip_delete(Pip * ppip);
-Pip * Pip_renew(Pip * ppip);
+#ifdef __cplusplus
+  typedef TList<CPip_t, PIPLST_COUNT> PipList_t;
+  typedef TPList<CPip_t, PIPLST_COUNT> PPip;
+#else
+  typedef CPip PipList_t[PIPLST_COUNT];
+  typedef CPip * PPip;
+#endif
+
+CPip * Pip_new(CPip * ppip);
+CPip * Pip_delete(CPip * ppip);
+CPip * Pip_renew(CPip * ppip);
+
+#define VALID_PIP_RANGE(XX) (((XX)>=0) && ((XX)<PIPLST_COUNT))
+#define VALID_PIP(LST, XX)    ( VALID_PIP_RANGE(XX) && LST[XX].used )
+#define VALIDATE_PIP(LST, XX) ( VALID_PIP(LST, XX) ? (XX) : (INVALID_PIP) )
 
 
 typedef struct dynalight_prt_t
@@ -156,24 +168,23 @@ typedef struct dynalight_prt_t
   DYNA_MODE mode;                // Dynamic light on?
 } DYNALIGHT_PRT;
 
-typedef struct Prt_t
+typedef struct CPrt_t
 {
   bool_t          on;                              // Does it exist?
-  Uint16          pip;                             // The part template
-  Uint16          model;                           // Pip spawn model
+
+  PIP_REF         pip;                             // The part template
+  OBJ_REF         model;                           // CPip spawn model
   CHR_REF         attachedtochr;                   // For torch flame
   Uint16          vertoffset;                      // The vertex it's on (counting backward from max vertex)
   PRTTYPE         type;                            // Transparency mode, 0-2
   Uint16          alpha_fp8;
   Uint16          facing;                          // Direction of the part
-  TEAM            team;                            // Team
+  TEAM_REF        team;                            // Team
   vect3           pos;                             // Position
   vect3           vel;                             // Velocity
   float           level;                           // Height of tile
   vect3           pos_old;                         // Position
-  vect3           accum_acc;                       //
-  vect3           accum_vel;                       //
-  vect3           accum_pos;                       //
+  CPhysAccum      accum;                       //
   Uint8           spawncharacterstate;             //
   Uint16          rotate;                          // Rotation direction
   Sint16          rotateadd;                       // Rotation rate
@@ -205,24 +216,43 @@ typedef struct Prt_t
   CHR_REF         target;                          // Who it's chasing
 
   DYNALIGHT_PRT   dyna;
-} Prt;
+} CPrt;
 
-Prt *  Prt_new(Prt *pprt);
-bool_t Prt_delete( Prt * pprt );
-Prt *  Prt_renew(Prt *pprt);
+#ifdef __cplusplus
+  typedef TList<CPrt_t, PRTLST_COUNT> PrtList_t;
+  typedef TPList<CPrt_t, PRTLST_COUNT> PPrt;
+#else
+  typedef CPrt PrtList_t[PRTLST_COUNT];
+  typedef CPrt * PPrt;
+#endif
 
-INLINE const CHR_REF prt_get_owner( struct CGame_t * gs, PRT_REF iprt );
-INLINE const CHR_REF prt_get_target( struct CGame_t * gs, PRT_REF iprt );
-INLINE const CHR_REF prt_get_attachedtochr( struct CGame_t * gs, PRT_REF iprt );
 
-void PrtList_free_one_no_sound( struct CGame_t * gs, PRT_REF particle );
-void PrtList_free_one( struct CGame_t * gs, PRT_REF particle );
-int  PrtList_get_free( struct CGame_t * gs, int force );
+CPrt * Prt_new   ( CPrt * pprt );
+bool_t Prt_delete( CPrt * pprt );
+CPrt * Prt_renew ( CPrt * pprt );
+
+INLINE CHR_REF prt_get_owner( struct CGame_t * gs, PRT_REF iprt );
+INLINE CHR_REF prt_get_target( struct CGame_t * gs, PRT_REF iprt );
+INLINE CHR_REF prt_get_attachedtochr( struct CGame_t * gs, PRT_REF iprt );
+
+void    PrtList_free_one( struct CGame_t * gs, PRT_REF particle );
+void    end_one_particle( struct CGame_t * gs, PRT_REF particle );
+PRT_REF PrtList_get_free( struct CGame_t * gs, bool_t is_critical );
+
+struct CPrt_t *     PrtList_getPPrt(struct CGame_t * gs, PRT_REF iprt);
+struct CProfile_t * PrtList_getPObj(struct CGame_t * gs, PRT_REF iprt);
+struct CPip_t *     PrtList_getPPip(struct CGame_t * gs, PRT_REF iprt);
+struct CCap_t *     PrtList_getPCap(struct CGame_t * gs, PRT_REF iprt);
+
+OBJ_REF PrtList_getRObj(struct CGame_t * gs, PRT_REF iprt);
+PIP_REF PrtList_getRPip(struct CGame_t * gs, PRT_REF iprt);
+CAP_REF PrtList_getRCap(struct CGame_t * gs, PRT_REF iprt);
+MAD_REF PrtList_getRMad(struct CGame_t * gs, PRT_REF iprt);
 
 extern Uint16          particletexture;                            // All in one bitmap
 
-#define VALID_PRT(LST, XX) ( ((XX)>=0) && ((XX)<MAXPRT) && LST[XX].on )
-#define VALIDATE_PRT(LST, XX) ( VALID_PRT(LST, XX) ? (XX) : MAXPRT )
+#define VALID_PRT(LST, XX) ( ((XX)>=0) && ((XX)<PRTLST_COUNT) && LST[XX].on )
+#define VALIDATE_PRT(LST, XX) ( VALID_PRT(LST, XX) ? (XX) : (INVALID_PRT) )
 
 
 #define CALCULATE_PRT_U0(CNT)  (((.05f+(CNT&15))/16.0f)*(( float ) gs->TxTexture[particletexture].imgW / ( float ) gs->TxTexture[particletexture].txW))
@@ -237,18 +267,19 @@ void despawn_particles( struct CGame_t * gs );
 void move_particles( struct CGame_t * gs, float dUpdate );
 void attach_particles( struct CGame_t * gs );
 PRT_REF spawn_one_particle( struct CGame_t * gs, float intensity, vect3 pos,
-                           Uint16 facing, Uint16 model, Uint16 pip,
-                           CHR_REF characterattach, GRIP grip, TEAM team,
+                           Uint16 facing, OBJ_REF model, PIP_REF pip,
+                           CHR_REF characterattach, Uint32 offset, TEAM_REF team,
                            CHR_REF characterorigin, Uint16 multispawn, CHR_REF oldtarget );
+
 Uint32 prt_hitawall( struct CGame_t * gs, PRT_REF particle, vect3 * norm );
 
 
 
-Uint32 PipList_load_one( struct CGame_t * gs, char * szModpath, char * szObjectname, char * szFname, int override );
+PIP_REF PipList_load_one( struct CGame_t * gs, const char * szModpath, const char * szObjectname, const char * szFname, PIP_REF override );
 
 bool_t prt_calculate_bumpers(struct CGame_t * gs, PRT_REF iprt);
 
-bool_t prt_is_over_water( struct CGame_t * gs, int cnt );
+bool_t prt_is_over_water( struct CGame_t * gs, PRT_REF cnt );
 void reset_particles( struct CGame_t * gs, char* modname );
 
 void PipList_load_global( struct CGame_t * gs );

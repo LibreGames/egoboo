@@ -31,7 +31,7 @@
 
 #include "egoboo_math.inl"
 
-MD2_Model* md2_load(char * szFilename, MD2_Model* mdl)
+MD2_Model* md2_load(const char * szFilename, MD2_Model* mdl)
 {
   FILE * f;
   md2_header header;
@@ -426,12 +426,12 @@ void md2_scale_model(MD2_Model * pmd2, float scale)
 
   for(cnt=0; cnt<num_frames; cnt++)
   {
-    pframe = pmd2->m_frames + cnt;
+    pframe = (MD2_Frame *)(pmd2->m_frames + cnt);
 
     for(i=0; i<3; i++)
     {
-      pframe->bbmax[i]    *= scale;
-      pframe->bbmin[i]    *= scale;
+      pframe->bbmax[i] *= scale;
+      pframe->bbmin[i] *= scale;
     }
 
     for(tnc=0; tnc<num_verts; tnc++)
@@ -621,7 +621,7 @@ void md2_scale_model(MD2_Model * pmd2, float scale)
 //  int iNumVertices;
 //  int iNumFrames;
 //  int cnt;
-//  MD2_Frame * pFrame;
+//  const MD2_Frame * pFrame;
 //  char      * pFrameName;
 //  bool_t foundname;
 //
@@ -707,7 +707,7 @@ void md2_scale_model(MD2_Model * pmd2, float scale)
 //
 //  for( cnt = 0; cnt < iNumFrames; cnt++ )
 //  {
-//    MD2_Frame * = MD2_Frame(m, cnt);
+//    const MD2_Frame * = MD2_Frame(m, cnt);
 //
 //    fScalex = fpFloatPointer[iFrameOffset]; iFrameOffset++;
 //    fScaley = fpFloatPointer[iFrameOffset]; iFrameOffset++;

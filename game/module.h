@@ -47,19 +47,19 @@ typedef struct import_info_t
 {
   bool_t valid;                // Can it import?
 
-  int    object;
-  int    player;
+  OBJ_REF object;
+  int     player;
 
-  int    amount;
-  int    min_pla;
-  int    max_pla;
+  int     amount;
+  int     min_pla;
+  int     max_pla;
 
-  Sint16 slot_lst[1024];
+  OBJ_REF slot_lst[1024];
 
 } IMPORT_INFO;
 
 bool_t import_info_clear(IMPORT_INFO * ii);
-bool_t import_info_add(IMPORT_INFO * ii, int obj);
+bool_t import_info_add(IMPORT_INFO * ii, OBJ_REF obj);
 
 //--------------------------------------------------------------------------------------------
 

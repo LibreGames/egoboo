@@ -263,7 +263,7 @@ void release_all_textures(CGame * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 load_one_icon( char * szModname, char * szObjectname, char * szFilename )
+Uint32 load_one_icon( char * szModname, const char * szObjectname, char * szFilename )
 {
   // ZZ> This function is used to load an icon.  Most icons are loaded
   //     without this function though...
@@ -417,22 +417,19 @@ void reset_end_text( CGame * gs )
 
   if ( gs->PlaList_count > 1 )
   {
-    snprintf( endtext, sizeof( endtext ), "Sadly, they were never heard from again..." );
-    endtextwrite = 42;  // Where to append further text
+    snprintf( gs->endtext, sizeof( gs->endtext ), "Sadly, they were never heard from again..." );
   }
   else
   {
     if ( gs->PlaList_count == 0 )
     {
       // No players???
-      snprintf( endtext, sizeof( endtext ), "The game has ended..." );
-      endtextwrite = 21;
+      snprintf( gs->endtext, sizeof( gs->endtext ), "The game has ended..." );
     }
     else
     {
       // One player
-      snprintf( endtext, sizeof( endtext ), "Sadly, no trace was ever found..." );
-      endtextwrite = 33;  // Where to append further text
+      snprintf( gs->endtext, sizeof( gs->endtext ), "Sadly, no trace was ever found..." );
     }
   }
 }
@@ -442,207 +439,12 @@ void append_end_text( CGame * gs, int message, CHR_REF chr_ref )
 {
   // ZZ> This function appends a message to the end-module text
 
-  int read, cnt;
-  char *eread;
-  STRING szTmp;
-  char cTmp, lTmp;
+  char * message_src;
 
-  Uint16 target = chr_get_aitarget( gs->ChrList, MAXCHR, gs->ChrList + chr_ref );
-  Uint16 owner = chr_get_aiowner( gs->ChrList, MAXCHR, gs->ChrList + chr_ref );
-
-  Chr * pchr    = MAXCHR == chr_ref ? NULL : gs->ChrList + chr_ref;
-  AI_STATE * pstate = &(pchr->aistate);
-  Cap * pchr_cap = gs->CapList + pchr->model;
-
-  Chr * ptarget  = MAXCHR == target  ? NULL : gs->ChrList + target;
-  Cap * ptrg_cap = NULL   == ptarget ? NULL : gs->CapList + ptarget->model;
-
-  Chr * powner   = MAXCHR == owner  ? NULL : gs->ChrList + owner;
-  Cap * pown_cap = NULL   == powner ? NULL : gs->CapList + powner->model;
-
-  if ( message < gs->MsgList.total )
-  {
-    // Copy the message
-    read = gs->MsgList.index[message];
-    cnt = 0;
-    cTmp = gs->MsgList.text[read];  read++;
-    while ( cTmp != 0 )
-    {
-      if ( cTmp == '%' )
-      {
-        // Escape sequence
-        eread = szTmp;
-        szTmp[0] = 0;
-        cTmp = gs->MsgList.text[read];  read++;
-        if ( cTmp == 'n' ) // Name
-        {
-          if ( pchr->nameknown )
-            strncpy( szTmp, pchr->name, sizeof( STRING ) );
-          else
-          {
-            lTmp = pchr_cap->classname[0];
-            if ( lTmp == 'A' || lTmp == 'E' || lTmp == 'I' || lTmp == 'O' || lTmp == 'U' )
-              snprintf( szTmp, sizeof( szTmp ), "an %s", pchr_cap->classname );
-            else
-              snprintf( szTmp, sizeof( szTmp ), "a %s", pchr_cap->classname );
-          }
-          if ( cnt == 0 && szTmp[0] == 'a' )  szTmp[0] = 'A';
-        }
-        if ( cTmp == 'c' ) // Class name
-        {
-          eread = pchr_cap->classname;
-        }
-        if ( cTmp == 't' ) // Target name
-        {
-          if ( ptarget->nameknown )
-            strncpy( szTmp, ptarget->name, sizeof( STRING ) );
-          else
-          {
-            lTmp = ptrg_cap->classname[0];
-            if ( lTmp == 'A' || lTmp == 'E' || lTmp == 'I' || lTmp == 'O' || lTmp == 'U' )
-              snprintf( szTmp, sizeof( szTmp ), "an %s", ptrg_cap->classname );
-            else
-              snprintf( szTmp, sizeof( szTmp ), "a %s", ptrg_cap->classname );
-          }
-          if ( cnt == 0 && szTmp[0] == 'a' )  szTmp[0] = 'A';
-        }
-        if ( cTmp == 'o' ) // Owner name
-        {
-          if ( powner->nameknown )
-            strncpy( szTmp, powner->name, sizeof( STRING ) );
-          else
-          {
-            lTmp = pown_cap->classname[0];
-            if ( lTmp == 'A' || lTmp == 'E' || lTmp == 'I' || lTmp == 'O' || lTmp == 'U' )
-              snprintf( szTmp, sizeof( szTmp ), "an %s", pown_cap->classname );
-            else
-              snprintf( szTmp, sizeof( szTmp ), "a %s", pown_cap->classname );
-          }
-          if ( cnt == 0 && szTmp[0] == 'a' )  szTmp[0] = 'A';
-        }
-        if ( cTmp == 's' ) // Target class name
-        {
-          eread = ptrg_cap->classname;
-        }
-        if ( cTmp >= '0' && cTmp <= '0' + ( MAXSKIN - 1 ) )  // Target's skin name
-        {
-          eread = ptrg_cap->skin[cTmp-'0'].name;
-        }
-        if ( cTmp == 'd' ) // tmpdistance value
-        {
-          snprintf( szTmp, sizeof( szTmp ), "%d", pstate->tmpdistance );
-        }
-        if ( cTmp == 'x' ) // tmpx value
-        {
-          snprintf( szTmp, sizeof( szTmp ), "%d", pstate->tmpx );
-        }
-        if ( cTmp == 'y' ) // tmpy value
-        {
-          snprintf( szTmp, sizeof( szTmp ), "%d", pstate->tmpy );
-        }
-        if ( cTmp == 'D' ) // tmpdistance value
-        {
-          snprintf( szTmp, sizeof( szTmp ), "%2d", pstate->tmpdistance );
-        }
-        if ( cTmp == 'X' ) // tmpx value
-        {
-          snprintf( szTmp, sizeof( szTmp ), "%2d", pstate->tmpx );
-        }
-        if ( cTmp == 'Y' ) // tmpy value
-        {
-          snprintf( szTmp, sizeof( szTmp ), "%2d", pstate->tmpy );
-        }
-        if ( cTmp == 'a' ) // Character's ammo
-        {
-          if ( pchr->ammoknown )
-            snprintf( szTmp, sizeof( szTmp ), "%d", pchr->ammo );
-          else
-            snprintf( szTmp, sizeof( szTmp ), "?" );
-        }
-        if ( cTmp == 'k' ) // Kurse state
-        {
-          if ( pchr->iskursed )
-            snprintf( szTmp, sizeof( szTmp ), "kursed" );
-          else
-            snprintf( szTmp, sizeof( szTmp ), "unkursed" );
-        }
-        if ( cTmp == 'p' ) // Character's possessive
-        {
-          if ( pchr->gender == GEN_FEMALE )
-          {
-            snprintf( szTmp, sizeof( szTmp ), "her" );
-          }
-          else
-          {
-            if ( pchr->gender == GEN_MALE )
-            {
-              snprintf( szTmp, sizeof( szTmp ), "his" );
-            }
-            else
-            {
-              snprintf( szTmp, sizeof( szTmp ), "its" );
-            }
-          }
-        }
-        if ( cTmp == 'm' ) // Character's gender
-        {
-          if ( pchr->gender == GEN_FEMALE )
-          {
-            snprintf( szTmp, sizeof( szTmp ), "female " );
-          }
-          else
-          {
-            if ( pchr->gender == GEN_MALE )
-            {
-              snprintf( szTmp, sizeof( szTmp ), "male " );
-            }
-            else
-            {
-              snprintf( szTmp, sizeof( szTmp ), " " );
-            }
-          }
-        }
-        if ( cTmp == 'g' ) // Target's possessive
-        {
-          if ( ptarget->gender == GEN_FEMALE )
-          {
-            snprintf( szTmp, sizeof( szTmp ), "her" );
-          }
-          else
-          {
-            if ( ptarget->gender == GEN_MALE )
-            {
-              snprintf( szTmp, sizeof( szTmp ), "his" );
-            }
-            else
-            {
-              snprintf( szTmp, sizeof( szTmp ), "its" );
-            }
-          }
-        }
-        // Copy the generated text
-        cTmp = *eread;  eread++;
-        while ( cTmp != 0 && endtextwrite < MAXENDTEXT - 1 )
-        {
-          endtext[endtextwrite] = cTmp;
-          cTmp = *eread;  eread++;
-          endtextwrite++;
-        }
-      }
-      else
-      {
-        // Copy the letter
-        if ( endtextwrite < MAXENDTEXT - 1 )
-        {
-          endtext[endtextwrite] = cTmp;
-          endtextwrite++;
-        }
-      }
-      cTmp = gs->MsgList.text[read];  read++;
-      cnt++;
-    }
-  }
-  endtext[endtextwrite] = 0;
+  if ( message < gs->MsgList.total ) return;
+  
+  message_src = gs->MsgList.text + gs->MsgList.index[message];
+  decode_escape_sequence(gs, gs->endtext, sizeof(gs->endtext), message_src, chr_ref);
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1004,15 +806,15 @@ void read_wawalite( CGame * gs, char *modname )
     GLight.ambicol.b = GLight.ambi;
 
     // Read tile data third
-    hillslide = fget_next_float( fileread );
-    slippyfriction = fget_next_float( fileread );
-    airfriction = fget_next_float( fileread );
-    waterfriction = fget_next_float( fileread );
-    noslipfriction = fget_next_float( fileread );
-    gravity = fget_next_float( fileread );
-    slippyfriction = MAX( slippyfriction, sqrt( noslipfriction ) );
-    airfriction    = MAX( airfriction,    sqrt( slippyfriction ) );
-    waterfriction  = MIN( waterfriction,  pow( airfriction, 4.0f ) );
+    gs->phys.hillslide = fget_next_float( fileread );
+    gs->phys.slippyfriction = fget_next_float( fileread );
+    gs->phys.airfriction = fget_next_float( fileread );
+    gs->phys.waterfriction = fget_next_float( fileread );
+    gs->phys.noslipfriction = fget_next_float( fileread );
+    gs->phys.gravity = fget_next_float( fileread );
+    gs->phys.slippyfriction = MAX( gs->phys.slippyfriction, sqrt( gs->phys.noslipfriction ) );
+    gs->phys.airfriction    = MAX( gs->phys.airfriction,    sqrt( gs->phys.slippyfriction ) );
+    gs->phys.waterfriction  = MIN( gs->phys.waterfriction,  pow( gs->phys.airfriction, 4.0f ) );
 
     GTile_Anim.updateand = fget_next_int( fileread );
     GTile_Anim.frameand = fget_next_int( fileread );
@@ -1043,7 +845,7 @@ void read_wawalite( CGame * gs, char *modname )
     GFog.red = 255;
     GFog.grn = 255;
     GFog.blu = 255;
-    GTile_Dam.parttype = MAXPRTPIP;
+    GTile_Dam.parttype = INVALID_PIP;
     GTile_Dam.partand = 255;
     GTile_Dam.sound = INVALID_SOUND;
 
@@ -1148,7 +950,8 @@ void render_background( Uint16 texture )
   ATTRIB_PUSH( "render_background", GL_ENABLE_BIT | GL_LIGHTING_BIT | GL_DEPTH_BUFFER_BIT | GL_TEXTURE_BIT | GL_CURRENT_BIT | GL_POLYGON_BIT );
   {
     glShadeModel( GL_FLAT );  // Flat shade this
-    glDepthMask( GL_ALWAYS );
+    glDepthMask( GL_FALSE );
+    glDepthFunc( GL_ALWAYS );
 
     glDisable( GL_CULL_FACE );
 
@@ -1277,7 +1080,7 @@ void render_shadow( CHR_REF character )
   float  globlightambi = GLight.ambicol.r + GLight.ambicol.g + GLight.ambicol.b;
   float  globlightspek = GLight.spekcol.r + GLight.spekcol.g + GLight.spekcol.b;
 
-  hide = gs->CapList[gs->ChrList[character].model].hidestate;
+  hide = ChrList_getPCap(gs, character)->hidestate;
   if ( hide != NOHIDE && hide == gs->ChrList[character].aistate.state ) return;
 
   // Original points
@@ -1432,7 +1235,7 @@ void render_shadow( CHR_REF character )
 //  int i;
 //
 //
-//  hide = gs->CapList[gs->ChrList[character].model].hidestate;
+//  hide = ChrList_getPCap(gs, character)->hidestate;
 //  if (hide == NOHIDE || hide != gs->ChrList[character].aistate.state)
 //  {
 //    // Original points
@@ -1566,7 +1369,8 @@ void light_characters()
 {
   // ZZ> This function figures out character lighting
 
-  int cnt, tnc, x, y;
+  int cnt, x, y;
+  CHR_REF chr_tnc;
   Uint16 i0, i1, i2, i3;
   Uint16 spek, ambi;
   Uint32 vrtstart;
@@ -1576,15 +1380,15 @@ void light_characters()
 
   for ( cnt = 0; cnt < numdolist; cnt++ )
   {
-    tnc = dolist[cnt];
-    fan = gs->ChrList[tnc].onwhichfan;
+    chr_tnc = dolist[cnt];
+    fan = gs->ChrList[chr_tnc].onwhichfan;
 
     if(INVALID_FAN == fan) continue;
 
-    vrtstart = gs->Mesh_Mem.fanlst[gs->ChrList[tnc].onwhichfan].vrt_start;
+    vrtstart = gs->Mesh_Mem.fanlst[gs->ChrList[chr_tnc].onwhichfan].vrt_start;
 
-    x = gs->ChrList[tnc].pos.x;
-    y = gs->ChrList[tnc].pos.y;
+    x = gs->ChrList[chr_tnc].pos.x;
+    y = gs->ChrList[chr_tnc].pos.y;
     x = ( x & 127 ) >> 5;  // From 0 to 3
     y = ( y & 127 ) >> 5;  // From 0 to 3
 
@@ -1593,8 +1397,8 @@ void light_characters()
     i2 = gs->Mesh_Mem.vrt_lr_fp8[vrtstart + 2];
     i3 = gs->Mesh_Mem.vrt_lr_fp8[vrtstart + 3];
     calc_chr_lighting( x, y, i0, i1, i2, i3, &spek, &ambi );
-    gs->ChrList[tnc].tlight.ambi_fp8.r = ambi;
-    gs->ChrList[tnc].tlight.spek_fp8.r = spek;
+    gs->ChrList[chr_tnc].tlight.ambi_fp8.r = ambi;
+    gs->ChrList[chr_tnc].tlight.spek_fp8.r = spek;
 
     if ( !gs->mesh.exploremode )
     {
@@ -1604,11 +1408,11 @@ void light_characters()
       i3 = (( i3 & 0xf0 ) << 0 ) & 0x00f0;
       i2 = (( i2 & 0xf0 ) >> 4 ) & 0x000f;
       i0 = i0 | i1 | i3 | i2;
-      gs->ChrList[tnc].tlight.turn_lr.r = ( lightdirectionlookup[i0] << 8 );
+      gs->ChrList[chr_tnc].tlight.turn_lr.r = ( lightdirectionlookup[i0] << 8 );
     }
     else
     {
-      gs->ChrList[tnc].tlight.turn_lr.r = 0;
+      gs->ChrList[chr_tnc].tlight.turn_lr.r = 0;
     }
 
     i0 = gs->Mesh_Mem.vrt_lg_fp8[vrtstart + 0];
@@ -1616,8 +1420,8 @@ void light_characters()
     i3 = gs->Mesh_Mem.vrt_lg_fp8[vrtstart + 2];
     i2 = gs->Mesh_Mem.vrt_lg_fp8[vrtstart + 3];
     calc_chr_lighting( x, y, i0, i1, i2, i3, &spek, &ambi );
-    gs->ChrList[tnc].tlight.ambi_fp8.g = ambi;
-    gs->ChrList[tnc].tlight.spek_fp8.g = spek;
+    gs->ChrList[chr_tnc].tlight.ambi_fp8.g = ambi;
+    gs->ChrList[chr_tnc].tlight.spek_fp8.g = spek;
 
     if ( !gs->mesh.exploremode )
     {
@@ -1627,11 +1431,11 @@ void light_characters()
       i3 = (( i3 & 0xf0 ) << 0 ) & 0x00f0;
       i2 = (( i2 & 0xf0 ) >> 4 ) & 0x000f;
       i0 = i0 | i1 | i3 | i2;
-      gs->ChrList[tnc].tlight.turn_lr.g = ( lightdirectionlookup[i0] << 8 );
+      gs->ChrList[chr_tnc].tlight.turn_lr.g = ( lightdirectionlookup[i0] << 8 );
     }
     else
     {
-      gs->ChrList[tnc].tlight.turn_lr.g = 0;
+      gs->ChrList[chr_tnc].tlight.turn_lr.g = 0;
     }
 
     i0 = gs->Mesh_Mem.vrt_lb_fp8[vrtstart + 0];
@@ -1639,8 +1443,8 @@ void light_characters()
     i3 = gs->Mesh_Mem.vrt_lb_fp8[vrtstart + 2];
     i2 = gs->Mesh_Mem.vrt_lb_fp8[vrtstart + 3];
     calc_chr_lighting( x, y, i0, i1, i2, i3, &spek, &ambi );
-    gs->ChrList[tnc].tlight.ambi_fp8.b = ambi;
-    gs->ChrList[tnc].tlight.spek_fp8.b = spek;
+    gs->ChrList[chr_tnc].tlight.ambi_fp8.b = ambi;
+    gs->ChrList[chr_tnc].tlight.spek_fp8.b = spek;
 
     if ( !gs->mesh.exploremode )
     {
@@ -1650,11 +1454,11 @@ void light_characters()
       i3 = (( i3 & 0xf0 ) << 0 ) & 0x00f0;
       i2 = (( i2 & 0xf0 ) >> 4 ) & 0x000f;
       i0 = i0 | i1 | i3 | i2;
-      gs->ChrList[tnc].tlight.turn_lr.b = ( lightdirectionlookup[i0] << 8 );
+      gs->ChrList[chr_tnc].tlight.turn_lr.b = ( lightdirectionlookup[i0] << 8 );
     }
     else
     {
-      gs->ChrList[tnc].tlight.turn_lr.b = 0;
+      gs->ChrList[chr_tnc].tlight.turn_lr.b = 0;
     }
   }
 }
@@ -1666,55 +1470,55 @@ void light_particles()
 
   CGame * gs = gfxState.gs;
 
-  int cnt;
+  PRT_REF prt_cnt;
   CHR_REF character;
 
-  for ( cnt = 0; cnt < MAXPRT; cnt++ )
+  for ( prt_cnt = 0; prt_cnt < PRTLST_COUNT; prt_cnt++ )
   {
-    if ( !VALID_PRT(gs->PrtList,  cnt ) ) continue;
+    if ( !VALID_PRT(gs->PrtList,  prt_cnt ) ) continue;
 
-    switch ( gs->PrtList[cnt].type )
+    switch ( gs->PrtList[prt_cnt].type )
     {
       case PRTTYPE_LIGHT:
         {
-          float ftmp = gs->PrtList[cnt].dyna.level * ( 127 * gs->PrtList[cnt].dyna.falloff ) / FP8_TO_FLOAT( FP8_MUL( gs->PrtList[cnt].size_fp8, gs->PrtList[cnt].size_fp8 ) );
+          float ftmp = gs->PrtList[prt_cnt].dyna.level * ( 127 * gs->PrtList[prt_cnt].dyna.falloff ) / FP8_TO_FLOAT( FP8_MUL( gs->PrtList[prt_cnt].size_fp8, gs->PrtList[prt_cnt].size_fp8 ) );
           if ( ftmp > 255 ) ftmp = 255;
 
-          gs->PrtList[cnt].lightr_fp8 =
-          gs->PrtList[cnt].lightg_fp8 =
-          gs->PrtList[cnt].lightb_fp8 = ftmp;
+          gs->PrtList[prt_cnt].lightr_fp8 =
+          gs->PrtList[prt_cnt].lightg_fp8 =
+          gs->PrtList[prt_cnt].lightb_fp8 = ftmp;
         }
         break;
 
       case PRTTYPE_ALPHA:
       case PRTTYPE_SOLID:
         {
-          character = prt_get_attachedtochr( gs, cnt );
+          character = prt_get_attachedtochr( gs, prt_cnt );
           if ( VALID_CHR( gs->ChrList,  character ) )
           {
-            gs->PrtList[cnt].lightr_fp8 = gs->ChrList[character].tlight.spek_fp8.r + gs->ChrList[character].tlight.ambi_fp8.r;
-            gs->PrtList[cnt].lightg_fp8 = gs->ChrList[character].tlight.spek_fp8.g + gs->ChrList[character].tlight.ambi_fp8.g;
-            gs->PrtList[cnt].lightb_fp8 = gs->ChrList[character].tlight.spek_fp8.b + gs->ChrList[character].tlight.ambi_fp8.b;
+            gs->PrtList[prt_cnt].lightr_fp8 = gs->ChrList[character].tlight.spek_fp8.r + gs->ChrList[character].tlight.ambi_fp8.r;
+            gs->PrtList[prt_cnt].lightg_fp8 = gs->ChrList[character].tlight.spek_fp8.g + gs->ChrList[character].tlight.ambi_fp8.g;
+            gs->PrtList[prt_cnt].lightb_fp8 = gs->ChrList[character].tlight.spek_fp8.b + gs->ChrList[character].tlight.ambi_fp8.b;
           }
-          else if ( INVALID_FAN != gs->PrtList[cnt].onwhichfan )
+          else if ( INVALID_FAN != gs->PrtList[prt_cnt].onwhichfan )
           {
-            gs->PrtList[cnt].lightr_fp8 = gs->Mesh_Mem.vrt_lr_fp8[gs->Mesh_Mem.fanlst[gs->PrtList[cnt].onwhichfan].vrt_start];
-            gs->PrtList[cnt].lightg_fp8 = gs->Mesh_Mem.vrt_lg_fp8[gs->Mesh_Mem.fanlst[gs->PrtList[cnt].onwhichfan].vrt_start];
-            gs->PrtList[cnt].lightb_fp8 = gs->Mesh_Mem.vrt_lb_fp8[gs->Mesh_Mem.fanlst[gs->PrtList[cnt].onwhichfan].vrt_start];
+            gs->PrtList[prt_cnt].lightr_fp8 = gs->Mesh_Mem.vrt_lr_fp8[gs->Mesh_Mem.fanlst[gs->PrtList[prt_cnt].onwhichfan].vrt_start];
+            gs->PrtList[prt_cnt].lightg_fp8 = gs->Mesh_Mem.vrt_lg_fp8[gs->Mesh_Mem.fanlst[gs->PrtList[prt_cnt].onwhichfan].vrt_start];
+            gs->PrtList[prt_cnt].lightb_fp8 = gs->Mesh_Mem.vrt_lb_fp8[gs->Mesh_Mem.fanlst[gs->PrtList[prt_cnt].onwhichfan].vrt_start];
           }
           else
           {
-            gs->PrtList[cnt].lightr_fp8 =
-              gs->PrtList[cnt].lightg_fp8 =
-                gs->PrtList[cnt].lightb_fp8 = 0;
+            gs->PrtList[prt_cnt].lightr_fp8 =
+              gs->PrtList[prt_cnt].lightg_fp8 =
+                gs->PrtList[prt_cnt].lightb_fp8 = 0;
           }
         }
         break;
 
       default:
-        gs->PrtList[cnt].lightr_fp8 =
-          gs->PrtList[cnt].lightg_fp8 =
-            gs->PrtList[cnt].lightb_fp8 = 0;
+        gs->PrtList[prt_cnt].lightr_fp8 =
+          gs->PrtList[prt_cnt].lightg_fp8 =
+            gs->PrtList[prt_cnt].lightb_fp8 = 0;
     };
   }
 
@@ -1832,7 +1636,8 @@ void render_water_lit()
 //--------------------------------------------------------------------------------------------
 void render_good_shadows()
 {
-  int cnt, tnc;
+  int cnt;
+  CHR_REF chr_tnc;
 
   CGame * gs = gfxState.gs;
 
@@ -1852,9 +1657,9 @@ void render_good_shadows()
 
     for ( cnt = 0; cnt < numdolist; cnt++ )
     {
-      tnc = dolist[cnt];
-      if ( gs->ChrList[tnc].bmpdata.shadow != 0 || gs->CapList[gs->ChrList[tnc].model].forceshadow && mesh_has_no_bits( gs->Mesh_Mem.fanlst, gs->ChrList[tnc].onwhichfan, MPDFX_SHINY ) )
-        render_shadow( tnc );
+      chr_tnc = dolist[cnt];
+      if ( gs->ChrList[chr_tnc].bmpdata.shadow != 0 || ChrList_getPCap(gs, chr_tnc)->prop.forceshadow && mesh_has_no_bits( gs->Mesh_Mem.fanlst, gs->ChrList[chr_tnc].onwhichfan, MPDFX_SHINY ) )
+        render_shadow( chr_tnc );
     }
   }
   ATTRIB_POP( "render_good_shadows" );
@@ -1863,7 +1668,8 @@ void render_good_shadows()
 //--------------------------------------------------------------------------------------------
 //void render_bad_shadows()
 //{
-//  int cnt, tnc;
+//  int cnt;
+//  CHR_REF chr_tnc;
 //
 //  CGame * gs = gfxState.gs;
 //
@@ -1880,11 +1686,11 @@ void render_good_shadows()
 //
 //    for (cnt = 0; cnt < numdolist; cnt++)
 //    {
-//      tnc = dolist[cnt];
-//      //if(gs->ChrList[tnc].attachedto == MAXCHR)
+//      chr_tnc = dolist[cnt];
+//      //if(gs->ChrList[chr_tnc].attachedto == INVALID_CHR)
 //      //{
-//      if (gs->ChrList[tnc].bmpdata.calc_shadowsize != 0 || gs->CapList[gs->ChrList[tnc].model].forceshadow && HAS_NO_BITS(Mesh[gs->ChrList[tnc].onwhichfan].fx, MPDFX_SHINY))
-//        render_bad_shadow(tnc);
+//      if (gs->ChrList[chr_tnc].bmpdata.calc_shadowsize != 0 || ChrList_getPCap(gs, chr_tnc)->prop.forceshadow && HAS_NO_BITS(Mesh[gs->ChrList[chr_tnc].onwhichfan].fx, MPDFX_SHINY))
+//        render_bad_shadow(chr_tnc);
 //      //}
 //    }
 //  }
@@ -1894,7 +1700,8 @@ void render_good_shadows()
 //--------------------------------------------------------------------------------------------
 void render_character_reflections()
 {
-  int cnt, tnc;
+  int cnt;
+  CHR_REF chr_tnc;
 
   CGame * gs = gfxState.gs;
 
@@ -1916,9 +1723,9 @@ void render_character_reflections()
 
     for ( cnt = 0; cnt < numdolist; cnt++ )
     {
-      tnc = dolist[cnt];
-      if ( mesh_has_some_bits( gs->Mesh_Mem.fanlst, gs->ChrList[tnc].onwhichfan, MPDFX_SHINY ) )
-        render_refmad( tnc, gs->ChrList[tnc].alpha_fp8 / 2 );
+      chr_tnc = dolist[cnt];
+      if ( mesh_has_some_bits( gs->Mesh_Mem.fanlst, gs->ChrList[chr_tnc].onwhichfan, MPDFX_SHINY ) )
+        render_refmad( chr_tnc, gs->ChrList[chr_tnc].alpha_fp8 / 2 );
     }
   }
   ATTRIB_POP( "render_character_reflections" );
@@ -2091,7 +1898,7 @@ void render_reflected_fans_ref()
       for ( tnc = 0; tnc < renderlist.num_shine; tnc++ )
       {
         fan = renderlist.reflc[tnc];
-        render_fan_ref( fan, texture, GCamera.tracklevel );
+        render_fan_ref( fan, texture, gs->PlaList_level );
       };
     }
   }
@@ -2136,7 +1943,7 @@ void render_reflected_fans_ref()
 //      for (tnc = 0; tnc < renderlist.num_reflc; tnc++)
 //      {
 //        fan = renderlist.reflc[tnc];
-//        render_fan_ref(fan, texture, GCamera.tracklevel);
+//        render_fan_ref(fan, texture, gs->PlaList_level);
 //      };
 //    }
 //
@@ -2147,7 +1954,8 @@ void render_reflected_fans_ref()
 //--------------------------------------------------------------------------------------------
 void render_solid_characters()
 {
-  int cnt, tnc;
+  int cnt;
+  CHR_REF chr_tnc;
 
   CGame * gs = gfxState.gs;
 
@@ -2171,9 +1979,9 @@ void render_solid_characters()
 
     for ( cnt = 0; cnt < numdolist; cnt++ )
     {
-      tnc = dolist[cnt];
-      if ( gs->ChrList[tnc].alpha_fp8 == 255 && gs->ChrList[tnc].light_fp8 == 255 )
-        render_mad( tnc, 255 );
+      chr_tnc = dolist[cnt];
+      if ( gs->ChrList[chr_tnc].alpha_fp8 == 255 && gs->ChrList[chr_tnc].light_fp8 == 255 )
+        render_mad( chr_tnc, 255 );
     }
   }
   ATTRIB_POP( "render_solid_characters" );
@@ -2183,7 +1991,8 @@ void render_solid_characters()
 //--------------------------------------------------------------------------------------------
 void render_alpha_characters()
 {
-  int cnt, tnc;
+  int cnt;
+  CHR_REF chr_tnc;
   Uint8 trans;
 
   CGame * gs = gfxState.gs;
@@ -2208,17 +2017,17 @@ void render_alpha_characters()
 
     for ( cnt = 0; cnt < numdolist; cnt++ )
     {
-      tnc = dolist[cnt];
-      if ( gs->ChrList[tnc].alpha_fp8 != 255 )
+      chr_tnc = dolist[cnt];
+      if ( gs->ChrList[chr_tnc].alpha_fp8 != 255 )
       {
-        trans = gs->ChrList[tnc].alpha_fp8;
+        trans = gs->ChrList[chr_tnc].alpha_fp8;
 
-        if (( gs->ChrList[tnc].alpha_fp8 + gs->ChrList[tnc].light_fp8 ) < SEEINVISIBLE &&  gs->cl->seeinvisible && chr_is_player(gs, tnc) && gs->PlaList[gs->ChrList[tnc].whichplayer].is_local )
-          trans = SEEINVISIBLE - gs->ChrList[tnc].light_fp8;
+        if (( gs->ChrList[chr_tnc].alpha_fp8 + gs->ChrList[chr_tnc].light_fp8 ) < SEEINVISIBLE &&  gs->cl->seeinvisible && chr_is_player(gs, chr_tnc) && gs->PlaList[gs->ChrList[chr_tnc].whichplayer].is_local )
+          trans = SEEINVISIBLE - gs->ChrList[chr_tnc].light_fp8;
 
         if ( trans > 0 )
         {
-          render_mad( tnc, trans );
+          render_mad( chr_tnc, trans );
         };
       }
     }
@@ -2317,7 +2126,8 @@ void render_light_water()
 //--------------------------------------------------------------------------------------------
 void render_character_highlights()
 {
-  int cnt, tnc;
+  int cnt;
+  CHR_REF chr_tnc;
 
   CGame * gs = gfxState.gs;
 
@@ -2355,11 +2165,11 @@ void render_character_highlights()
 
     for ( cnt = 0; cnt < numdolist; cnt++ )
     {
-      tnc = dolist[cnt];
+      chr_tnc = dolist[cnt];
 
-      if ( gs->ChrList[tnc].sheen_fp8 == 0 && gs->ChrList[tnc].light_fp8 == 255 && gs->ChrList[tnc].alpha_fp8 == 255 ) continue;
+      if ( gs->ChrList[chr_tnc].sheen_fp8 == 0 && gs->ChrList[chr_tnc].light_fp8 == 255 && gs->ChrList[chr_tnc].alpha_fp8 == 255 ) continue;
 
-      render_mad_lit( tnc );
+      render_mad_lit( chr_tnc );
     }
 
     glDisable( GL_LIGHT0 );
@@ -2478,243 +2288,22 @@ void draw_scene_zreflection()
 
 #endif
 
-#if defined(DEBUG_BBOX) && defined(_DEBUG)
-  if(CData.DevMode)
-  {
-    int i;
-
-    for(i=0; i<MAXCHR; i++)
-    {
-      if(!gs->ChrList[i].on) continue;
-
-      mad_display_bbox_tree(2, gs->ChrList[i].matrix, gs->MadList + gs->ChrList[i].model, gs->ChrList[i].anim.last, gs->ChrList[i].anim.next );
-    }
-  };
-
-#endif
+//#if defined(DEBUG_BBOX) && defined(_DEBUG)
+//  if(CData.DevMode)
+//  {
+//    int i;
+//
+//    for(i=0; i<CHRLST_COUNT; i++)
+//    {
+//      if( !VALID_CHR(gs->ChrList, i) ) continue;
+//
+//      mad_display_bbox_tree(2, gs->ChrList[i].matrix, gs->MadList + gs->ChrList[i].model, gs->ChrList[i].anim.last, gs->ChrList[i].anim.next );
+//    }
+//  };
+//#endif
 
 };
 
-
-//--------------------------------------------------------------------------------------------
-//void draw_scene_zreflection()
-//{
-//  // ZZ> This function draws 3D objects
-//
-//  Uint16 cnt, tnc;
-//  Uint8 trans;
-//
-//  CGame * gs = gfxState.gs;
-//
-//  // Clear the image if need be
-//  // PORT: I don't think this is needed if(render_background) { clear_surface(lpDDSBack); }
-//  // Zbuffer is cleared later
-//
-//  // Render the reflective floors
-//  glDisable(GL_DEPTH_TEST);
-//  glDepthMask(GL_FALSE);
-//  glDisable(GL_BLEND);
-//
-//  // Renfer ref
-//  glEnable(GL_ALPHA_TEST);
-//  glAlphaFunc(GL_GREATER, 0);
-//  gs->mesh.last_texture = 0;
-//  for (cnt = 0; cnt < renderlist.num_shine; cnt++)
-//    render_fan(renderlist.shine[cnt]);
-//
-//  // Renfer sha
-//  // BAD: DRAW SHADOW STUFF TOO
-//  glEnable(GL_ALPHA_TEST);
-//  glAlphaFunc(GL_GREATER, 0);
-//  for (cnt = 0; cnt < renderlist.num_reflc; cnt++)
-//    render_fan(renderlist.reflc[cnt]);
-//
-//  glEnable(GL_DEPTH_TEST);
-//  glDepthMask(GL_TRUE);
-//  if(CData.refon)
-//  {
-//    // Render reflections of characters
-//    glFrontFace(GL_CCW);
-//    glEnable(GL_BLEND);
-//    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-//    glDepthFunc(GL_LEQUAL);
-//
-//    for (cnt = 0; cnt < numdolist; cnt++)
-//    {
-//      tnc = dolist[cnt];
-//      if((Mesh[gs->ChrList[tnc].onwhichfan].fx&MPDFX_SHINY))
-//        render_refmad(tnc, gs->ChrList[tnc].alpha_fp8 & gs->ChrList[tnc].light_fp8);
-//    }
-//
-//    // [claforte] I think this is wrong... I think we should choose some other depth func.
-//    glDepthFunc(GL_ALWAYS);
-//
-//    // Render the reflected sprites
-//    render_particle_reflections();
-//  }
-//
-//  // Render the shadow floors
-//  gs->mesh.last_texture = 0;
-//
-//  glEnable(GL_ALPHA_TEST);
-//  glAlphaFunc(GL_GREATER, 0);
-//  for (cnt = 0; cnt < renderlist.num_reflc; cnt++)
-//    render_fan(renderlist.reflc[cnt]);
-//
-//  // Render the shadows
-//  if (CData.shaon)
-//  {
-//    if (CData.shasprite)
-//    {
-//      // Bad shadows
-//      glDepthMask(GL_FALSE);
-//      glEnable(GL_BLEND);
-//      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//
-//      for (cnt = 0; cnt < numdolist; cnt++)
-//      {
-//        tnc = dolist[cnt];
-//        if(gs->ChrList[tnc].attachedto == MAXCHR)
-//        {
-//          if(((gs->ChrList[tnc].light_fp8==255 && gs->ChrList[tnc].alpha_fp8==255) || gs->CapList[gs->ChrList[tnc].model].forceshadow) && gs->ChrList[tnc].bmpdata.calc_shadowsize!=0)
-//            render_bad_shadow(tnc);
-//        }
-//      }
-//      glDisable(GL_BLEND);
-//      glDepthMask(GL_TRUE);
-//    }
-//    else
-//    {
-//      // Good shadows for me
-//      glDepthMask(GL_FALSE);
-//      glDepthFunc(GL_LEQUAL);
-//      glEnable(GL_BLEND);
-//      glBlendFunc(GL_SRC_COLOR, GL_ZERO);
-//
-//      for (cnt = 0; cnt < numdolist; cnt++)
-//      {
-//        tnc = dolist[cnt];
-//        if(gs->ChrList[tnc].attachedto == MAXCHR)
-//        {
-//          if(((gs->ChrList[tnc].light_fp8==255 && gs->ChrList[tnc].alpha_fp8==255) || gs->CapList[gs->ChrList[tnc].model].forceshadow) && gs->ChrList[tnc].bmpdata.calc_shadowsize!=0)
-//            render_shadow(tnc);
-//        }
-//      }
-//
-//      glDisable(GL_BLEND);
-//      glDepthMask ( GL_TRUE );
-//    }
-//  }
-//
-//  // Render the normal characters
-//  ATTRIB_PUSH("zref",GL_ENABLE_BIT|GL_DEPTH_BUFFER_BIT);
-//  {
-//    glDepthMask ( GL_TRUE );
-//    glEnable(GL_DEPTH_TEST);
-//    glDepthFunc(GL_LESS);
-//
-//    glDisable(GL_BLEND);
-//
-//    glEnable(GL_ALPHA_TEST);
-//    glAlphaFunc(GL_GREATER, 0);
-//
-//    for (cnt = 0; cnt < numdolist; cnt++)
-//    {
-//      tnc = dolist[cnt];
-//      if(gs->ChrList[tnc].alpha_fp8==255 && gs->ChrList[tnc].light_fp8==255)
-//        render_mad(tnc, 255);
-//    }
-//  }
-//  ATTRIB_POP("zref");
-//
-//  //// Render the sprites
-//  glDepthMask ( GL_FALSE );
-//  glEnable(GL_BLEND);
-//
-//  // Now render the transparent characters
-//  glPushAttrib(GL_ENABLE_BIT|GL_DEPTH_BUFFER_BIT);
-//  {
-//    glDepthMask ( GL_FALSE );
-//    glEnable(GL_DEPTH_TEST);
-//    glDepthFunc(GL_LEQUAL);
-//
-//    glEnable(GL_BLEND);
-//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_COLOR);
-//
-//    for (cnt = 0; cnt < numdolist; cnt++)
-//    {
-//      tnc = dolist[cnt];
-//      if(gs->ChrList[tnc].alpha_fp8!=255 && gs->ChrList[tnc].light_fp8==255)
-//      {
-//        trans = gs->ChrList[tnc].alpha_fp8;
-//        if(trans < SEEINVISIBLE && (gs->cl->seeinvisible || gs->ChrList[tnc].islocalplayer))  trans = SEEINVISIBLE;
-//        render_mad(tnc, trans);
-//      }
-//    }
-//
-//  }
-//
-//  // And alpha water floors
-//  if(!gs->water.light)
-//    render_water();
-//
-//  // Then do the light characters
-//  glPushAttrib(GL_ENABLE_BIT|GL_DEPTH_BUFFER_BIT);
-//  {
-//    glDepthMask ( GL_FALSE );
-//    glEnable(GL_DEPTH_TEST);
-//    glDepthFunc(GL_LEQUAL);
-//
-//    glEnable(GL_BLEND);
-//    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-//
-//    for (cnt = 0; cnt < numdolist; cnt++)
-//    {
-//      tnc = dolist[cnt];
-//      if(gs->ChrList[tnc].light_fp8!=255)
-//      {
-//        trans = FP8_TO_FLOAT(FP8_MUL(gs->ChrList[tnc].light_fp8, gs->ChrList[tnc].alpha_fp8)) * 0.5f;
-//        if(trans < SEEINVISIBLE && (gs->cl->seeinvisible || gs->ChrList[tnc].islocalplayer))  trans = SEEINVISIBLE;
-//        render_mad(tnc, trans);
-//      }
-//    }
-//  }
-//
-//  // Do phong highlights
-//  if(CData.phongon && gs->ChrList[tnc].sheen_fp8 > 0)
-//  {
-//    Uint16 texturesave, envirosave;
-//
-//    ATTRIB_PUSH("zref", GL_ENABLE_BIT|GL_DEPTH_BUFFER_BIT);
-//    {
-//      glDepthMask ( GL_FALSE );
-//      glEnable(GL_DEPTH_TEST);
-//      glDepthFunc(GL_LEQUAL);
-//
-//      glEnable(GL_BLEND);
-//      glBlendFunc(GL_ONE, GL_ONE);
-//
-//      envirosave = gs->ChrList[tnc].enviro;
-//      texturesave = gs->ChrList[tnc].skin + gs->MadList[gs->ChrList[tnc].model].skinstart;
-//      gs->ChrList[tnc].enviro = btrue;
-//      gs->ChrList[tnc].skin + gs->MadList[gs->ChrList[tnc].model].skinstart = TX_PHONG;  // The phong map texture...
-//      render_enviromad(tnc, (gs->ChrList[tnc].alpha_fp8 * spek_global[gs->ChrList[tnc].sheen_fp8][gs->ChrList[tnc].light_fp8]) / 2, GL_TEXTURE_2D);
-//      gs->ChrList[tnc].skin + gs->MadList[gs->ChrList[tnc].model].skinstart = texturesave;
-//      gs->ChrList[tnc].enviro = envirosave;
-//    };
-//    ATTRIB_POP("zref");
-//  }
-//
-//
-//  // Do light water
-//  if(gs->water.light)
-//    render_water();
-//
-//  // Turn Z buffer back on, alphablend off
-//  render_particles();
-//
-//  // Done rendering
-//};
 
 bool_t draw_texture_box( GLtexture * ptx, FRect * tx_rect, FRect * sc_rect )
 {
@@ -3394,27 +2983,36 @@ int draw_status( BMFont * pfnt, Status * pstat )
   // ZZ> This function shows a ichr's icon, status and inventory
   //     The x,y coordinates are the top left point of the image to draw
 
-  Uint16 item, imdl;
+  STRING szTmp;
   char cTmp;
   char *readtext;
   int  ix,iy, iystt;
-  CHR_REF ichr;
-  Chr * chrlst;
-  Mad * madlst;
-
-  Chr * pchr;
-  Mad * pmad;
-  Cap * pcap;
-  CGame * gs;
-
   float life, lifemax;
   float mana, manamax;
   int cnt;
+  CHR_REF item;
+
+  PObj objlst;
+  PChr chrlst;
+
+  CGame * gs;
+
+  CHR_REF ichr;
+  CChr * pchr;
+
+  OBJ_REF iobj;
+  CObj * pobj;
+  CMad * pmad;
+  CCap * pcap;
+
+
 
   if(NULL == gfxState.gs) return 0;
   gs = gfxState.gs;
+  objlst = gs->ObjList;
   chrlst = gs->ChrList;
-  madlst = gs->MadList;
+  //madlst = gs->MadList;
+  //caplst = gs->CapList;
 
   if(NULL == pstat) return 0;
   ichr = pstat->chr_ref;
@@ -3422,22 +3020,26 @@ int draw_status( BMFont * pfnt, Status * pstat )
   iy = pstat->pos.y;
   iystt = iy;
 
-  if( !VALID_CHR( chrlst, ichr) ) return 0;
-  pchr = chrlst + ichr;
+  pchr = ChrList_getPChr(gs, ichr);
+  if( NULL == pchr ) return 0;
 
-  imdl = pchr->model;
-  if( !VALID_MDL(imdl) ) return 0;
+  iobj = ChrList_getRObj(gs, ichr);
+  if( INVALID_OBJ == iobj ) return 0;
+  pobj = gs->ObjList + iobj;
 
-  pmad = madlst + imdl;
-  pcap = gs->CapList + imdl;
+  pmad = ChrList_getPMad(gs, ichr);
+  if(NULL == pmad) return 0;
 
-  life    = FP8_TO_FLOAT( pchr->life_fp8 );
-  lifemax = FP8_TO_FLOAT( pchr->lifemax_fp8 );
-  mana    = FP8_TO_FLOAT( pchr->mana_fp8 );
-  manamax = FP8_TO_FLOAT( pchr->manamax_fp8 );
+  pcap = ChrList_getPCap(gs, ichr);
+  if(NULL == pcap) return 0;
+
+  life    = FP8_TO_FLOAT( pchr->stats.life_fp8 );
+  lifemax = FP8_TO_FLOAT( pchr->stats.lifemax_fp8 );
+  mana    = FP8_TO_FLOAT( pchr->stats.mana_fp8 );
+  manamax = FP8_TO_FLOAT( pchr->stats.manamax_fp8 );
 
   // Write the ichr's first name
-  if ( pchr->nameknown )
+  if ( pchr->prop.nameknown )
     readtext = pchr->name;
   else
     readtext = pcap->classname;
@@ -3447,54 +3049,62 @@ int draw_status( BMFont * pfnt, Status * pstat )
     cTmp = readtext[cnt];
     if ( cTmp == ' ' || cTmp == 0 )
     {
-      generictext[cnt] = 0;
+      szTmp[cnt] = 0;
       break;
 
     }
     else
-      generictext[cnt] = cTmp;
+      szTmp[cnt] = cTmp;
   }
-  generictext[6] = 0;
-  iy += draw_string( pfnt, ix + 8, iy, NULL, generictext );
+  szTmp[6] = 0;
+  iy += draw_string( pfnt, ix + 8, iy, NULL, szTmp );
 
   // Write the character's money
   iy += 8 + draw_string( pfnt, ix + 8, iy, NULL, "$%4d", pchr->money );
 
   // Draw the icons
-  draw_one_icon( gs->skintoicon[pchr->skin_ref + pmad->skinstart], ix + 40, iy, pchr->sparkle );
-  item = chr_get_holdingwhich( chrlst, MAXCHR, ichr, SLOT_LEFT );
-  if ( VALID_CHR( chrlst,  item ) )
+  draw_one_icon( gs->skintoicon[pchr->skin_ref + pobj->skinstart], ix + 40, iy, pchr->sparkle );
+  item = chr_get_holdingwhich( chrlst, CHRLST_COUNT, ichr, SLOT_LEFT );
+  if ( VALID_CHR( chrlst,  item ) && VALID_OBJ( objlst, chrlst[item].model) )
   {
-    if ( chrlst[item].icon )
+    CChr * tmppchr = ChrList_getPChr(gs, item);
+    CObj * tmppobj = ChrList_getPObj(gs, item);
+    CCap * tmppcap = ChrList_getPCap(gs, item);
+
+    if ( tmppchr->prop.icon )
     {
-      draw_one_icon( gs->skintoicon[chrlst[item].skin_ref + madlst[chrlst[item].model].skinstart], ix + 8, iy, chrlst[item].sparkle );
-      if ( chrlst[item].ammomax != 0 && chrlst[item].ammoknown )
+      draw_one_icon( gs->skintoicon[tmppchr->skin_ref + tmppobj->skinstart], ix + 8, iy, tmppchr->sparkle );
+      if ( tmppchr->ammomax != 0 && tmppchr->ammoknown )
       {
-        if ( !gs->CapList[chrlst[item].model].isstackable || chrlst[item].ammo > 1 )
+        if ( !tmppcap->prop.isstackable || tmppchr->ammo > 1 )
         {
           // Show amount of ammo left
-          draw_string( pfnt, ix + 8, iy - 8, NULL, "%2d", chrlst[item].ammo );
+          draw_string( pfnt, ix + 8, iy - 8, NULL, "%2d", tmppchr->ammo );
         }
       }
     }
     else
-      draw_one_icon( gs->bookicon + ( chrlst[item].money % MAXSKIN ), ix + 8, iy, chrlst[item].sparkle );
+      draw_one_icon( gs->bookicon + ( tmppchr->money % MAXSKIN ), ix + 8, iy, tmppchr->sparkle );
   }
   else
     draw_one_icon( gs->nullicon, ix + 8, iy, NOSPARKLE );
 
-  item = chr_get_holdingwhich( chrlst, MAXCHR, ichr, SLOT_RIGHT );
-  if ( VALID_CHR( chrlst,  item ) )
+  item = chr_get_holdingwhich( chrlst, CHRLST_COUNT, ichr, SLOT_RIGHT );
+  if ( VALID_CHR( chrlst,  item ) && VALID_OBJ( objlst, chrlst[item].model) )
   {
-    if ( chrlst[item].icon )
+    CChr * tmppchr = ChrList_getPChr(gs, item);
+    CObj * tmppobj = ChrList_getPObj(gs, item);
+    CCap * tmppcap = ChrList_getPCap(gs, item);
+
+    if ( tmppchr->prop.icon )
     {
-      draw_one_icon( gs->skintoicon[chrlst[item].skin_ref + madlst[chrlst[item].model].skinstart], ix + 72, iy, chrlst[item].sparkle );
-      if ( chrlst[item].ammomax != 0 && chrlst[item].ammoknown )
+      draw_one_icon( gs->skintoicon[tmppchr->skin_ref + tmppobj->skinstart], ix + 8, iy, tmppchr->sparkle );
+      if ( tmppchr->ammomax != 0 && tmppchr->ammoknown )
       {
-        if ( !gs->CapList[chrlst[item].model].isstackable || chrlst[item].ammo > 1 )
+        if ( !tmppcap->prop.isstackable || tmppchr->ammo > 1 )
         {
           // Show amount of ammo left
-          draw_string( pfnt, ix + 72, iy - 8, NULL, "%2d", chrlst[item].ammo );
+         draw_string( pfnt, ix + 72, iy - 8, NULL, "%2d", tmppchr->ammo );
         }
       }
     }
@@ -3542,7 +3152,7 @@ bool_t do_map()
 
   if ( youarehereon && ( gs->wld_frame&8 ) )
   {
-    for ( ipla = 0; ipla < MAXPLAYER; ipla++ )
+    for ( ipla = 0; ipla < PLALST_COUNT; ipla++ )
     {
       if ( !VALID_PLA( gs->PlaList, ipla ) || INBITS_NONE == gs->PlaList[ipla].device ) continue;
 
@@ -3649,7 +3259,7 @@ void draw_text( BMFont *  pfnt )
 
     if ( CData.fpson )
     {
-      CHR_REF pla_chr = PlaList_get_character( gs, 0 );
+      CHR_REF pla_chr = PlaList_get_character( gs, PLA_REF(0) );
 
       y += draw_string( pfnt, 0, y, NULL, "%2.3f FPS, %2.3f UPS", stabilized_fps, stabilized_ups );
       y += draw_string( pfnt, 0, y, NULL, "estimated max FPS %2.3f", gfxState.est_max_fps );
@@ -3667,25 +3277,25 @@ void draw_text( BMFont *  pfnt )
       CHR_REF ichr, iref;
       GLvector tint = {0.5, 1.0, 1.0, 1.0};
 
-      ichr = PlaList_get_character( gs, 0 );
+      ichr = PlaList_get_character( gs, PLA_REF(0) );
       if( VALID_CHR( gs->ChrList,  ichr) )
       {
-        iref = chr_get_attachedto( gs->ChrList, MAXCHR,ichr);
+        iref = chr_get_attachedto( gs->ChrList, CHRLST_COUNT,ichr);
         if( VALID_CHR( gs->ChrList, iref) )
         {
-          y += draw_string( pfnt, 0, y, tint.v, "PLA0 holder == %s(%s)", gs->ChrList[iref].name, gs->CapList[gs->ChrList[iref].model].classname );
+          y += draw_string( pfnt, 0, y, tint.v, "PLA0 holder == %s(%s)", gs->ChrList[iref].name, ChrList_getPCap(gs, iref)->classname );
         };
 
-        iref = chr_get_inwhichpack( gs->ChrList, MAXCHR,ichr);
+        iref = chr_get_inwhichpack( gs->ChrList, CHRLST_COUNT,ichr);
         if( VALID_CHR( gs->ChrList, iref) )
         {
-          y += draw_string( pfnt, 0, y, tint.v, "PLA0 packer == %s(%s)", gs->ChrList[iref].name, gs->CapList[gs->ChrList[iref].model].classname );
+          y += draw_string( pfnt, 0, y, tint.v, "PLA0 packer == %s(%s)", gs->ChrList[iref].name, ChrList_getPCap(gs, iref)->classname );
         };
 
-        iref = chr_get_onwhichplatform( gs->ChrList, MAXCHR,ichr);
+        iref = chr_get_onwhichplatform( gs->ChrList, CHRLST_COUNT,ichr);
         if( VALID_CHR( gs->ChrList, iref) )
         {
-          y += draw_string( pfnt, 0, y, tint.v, "PLA0 platform == %s(%s)", gs->ChrList[iref].name, gs->CapList[gs->ChrList[iref].model].classname );
+          y += draw_string( pfnt, 0, y, tint.v, "PLA0 platform == %s(%s)", gs->ChrList[iref].name, ChrList_getPCap(gs, iref)->classname );
         };
 
       };
@@ -3724,10 +3334,10 @@ void draw_text( BMFont *  pfnt )
     }
 
 
-    // Player DEBUG MODE
+    // CPlayer DEBUG MODE
     if ( SDLKEYDOWN( SDLK_F5 ) && CData.DevMode )
     {
-      CHR_REF pla_chr = PlaList_get_character( gs, 0 );
+      CHR_REF pla_chr = PlaList_get_character( gs, PLA_REF(0) );
 
       y += draw_string( pfnt, 0, y, NULL, "!!!DEBUG MODE-5!!!" );
       y += draw_string( pfnt, 0, y, NULL, "~CAM %f %f", GCamera.pos.x, GCamera.pos.y );
@@ -3744,7 +3354,7 @@ void draw_text( BMFont *  pfnt )
 
       y += draw_string( pfnt, 0, y, NULL, "~PLA0 %5.1f %5.1f", gs->ChrList[pla_chr].pos.x / 128.0, gs->ChrList[pla_chr].pos.y / 128.0  );
 
-      pla_chr = PlaList_get_character( gs, 1 );
+      pla_chr = PlaList_get_character( gs, PLA_REF(1) );
       y += draw_string( pfnt, 0, y, NULL, "~PLA1 %5.1f %5.1f", gs->ChrList[pla_chr].pos.x / 128.0, gs->ChrList[pla_chr].pos.y / 128.0 );
     }
 
@@ -4320,18 +3930,18 @@ void dolist_add( CHR_REF chr_ref )
       flash_character( gs, chr_ref, 255 );
     }
     // Do blacking
-    if (( gs->all_frame&SEEKURSEAND ) == 0 && gs->cl->seekurse && gs->ChrList[chr_ref].iskursed )
+    if (( gs->all_frame&SEEKURSEAND ) == 0 && gs->cl->seekurse && gs->ChrList[chr_ref].prop.iskursed )
     {
       flash_character( gs, chr_ref, 0 );
     }
   }
   //else
   //{
-  //  Uint16 model = gs->ChrList[chr_ref].model;
-  //  assert( MAXMODEL != VALIDATE_MDL( model ) );
+  //  OBJ_REF model = gs->ChrList[chr_ref].model;
+  //  assert( MADLST_COUNT != VALIDATE_MDL( model ) );
 
   //  // Double check for large/special objects
-  //  if ( gs->CapList[model].alwaysdraw )
+  //  if ( gs->CapList[model].prop.alwaysdraw )
   //  {
   //    dolist[numdolist] = chr_ref;
   //    gs->ChrList[chr_ref].indolist = btrue;
@@ -4342,7 +3952,7 @@ void dolist_add( CHR_REF chr_ref )
   // Add its weapons too
   for ( _slot = SLOT_BEGIN; _slot < SLOT_COUNT; _slot = ( SLOT )( _slot + 1 ) )
   {
-    dolist_add( chr_get_holdingwhich(  gs->ChrList, MAXCHR,chr_ref, _slot ) );
+    dolist_add( chr_get_holdingwhich(  gs->ChrList, CHRLST_COUNT, chr_ref, _slot ) );
   };
 
 }
@@ -4356,9 +3966,9 @@ void dolist_sort( void )
 
   CGame * gs = gfxState.gs;
 
-  CHR_REF chr_ref, olddolist[MAXCHR];
+  CHR_REF chr_ref, olddolist[CHRLST_COUNT];
   int cnt, tnc, order;
-  int dist[MAXCHR];
+  int dist[CHRLST_COUNT];
 
   // Figure the distance of each
   cnt = 0;
@@ -4406,7 +4016,8 @@ void dolist_make( void )
   CGame * gs = gfxState.gs;
 
   int cnt;
-  CHR_REF chr_ref;
+  CHR_REF chr_ref, chr_cnt;
+
 
   // Remove everyone from the dolist
   cnt = 0;
@@ -4420,14 +4031,13 @@ void dolist_make( void )
 
 
   // Now fill it up again
-  
-  for ( cnt = 0; cnt < MAXCHR; cnt++)
+  for ( chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++)
   {
-    if( !VALID_CHR(gs->ChrList, cnt) ) continue;
+    if( !VALID_CHR(gs->ChrList, chr_cnt) ) continue;
 
-    if ( !chr_in_pack( gs->ChrList, MAXCHR, cnt ) )
+    if ( !chr_in_pack( gs->ChrList, CHRLST_COUNT, chr_cnt ) )
     {
-      dolist_add( cnt );
+      dolist_add( chr_cnt );
     }
   }
 

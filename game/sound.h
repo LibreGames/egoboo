@@ -12,7 +12,6 @@ struct CGame_t;
 
 //------------------------------------------------------------------------------
 
-#define MAXWAVE         16                            // Up to 16 waves per model
 #define VOLMIN          -4000                         // Minumum Volume level
 #define VOLUMERATIO     7                             // Volume ratio
 
@@ -31,7 +30,7 @@ typedef enum global_sound_t
   GSOUND_SPLASH,                   // 3 - Hit Water tile (Splash)
   GSOUND_COINFALL,                 // 4 - Coin falls on ground
   GSOUND_LEVELUP,				   // 5 - Level up sound
-  GSOUND_COUNT = MAXWAVE
+  GSOUND_COUNT                     // no more global sounds above this
 };
 
 //------------------------------------------------------------------------------
@@ -41,7 +40,7 @@ struct ConfigData_t;
 //------------------------------------------------------------------------------
 
 //Music using SDL_Mixer
-#define MAXPLAYLISTLENGTH 25      //Max number of different tracks loaded into memory
+#define MAXPLAYLISTLENGTH   25      // Max number of different tracks loaded into memory
 
 typedef struct sound_state_t
 {
@@ -61,8 +60,8 @@ typedef struct sound_state_t
   int         song_loops;
   int         song_index;            // index of the cullrently playing song
 
-  Mix_Chunk * mc_list[MAXWAVE];            // All sounds loaded into memory
-  Mix_Music * mus_list[MAXPLAYLISTLENGTH]; //This is a specific music file loaded into memory
+  Mix_Chunk * mc_list[GSOUND_COUNT];       // All sounds loaded into memory
+  Mix_Music * mus_list[MAXPLAYLISTLENGTH]; // This is a specific music file loaded into memory
 
 } SoundState;
 
@@ -79,7 +78,7 @@ bool_t snd_reopen();
 bool_t snd_unload_music();
 void snd_stop_music(int fadetime);
 void snd_apply_mods( int channel, float intensity, vect3 snd_pos, vect3 ear_pos, Uint16 ear_turn_lr  );
-int snd_play_sound( struct CGame_t * gs, float intensity, vect3 pos, Mix_Chunk *loadedwave, int loops, int whichobject, int soundnumber);
+int snd_play_sound( struct CGame_t * gs, float intensity, vect3 pos, Mix_Chunk *loadedwave, int loops, OBJ_REF whichobject, int soundnumber);
 void snd_stop_sound( int whichchannel );
 void snd_play_music( int songnumber, int fadetime, int loops );
 int snd_play_particle_sound( struct CGame_t * gs, float intensity, PRT_REF particle, Sint8 sound );

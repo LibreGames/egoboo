@@ -87,7 +87,7 @@ char   fget_first_letter( FILE* fileread );
 
 
 //FILE * inherit_fopen(char * szObjPath, char * szObject, char *szFname, char * mode);
-const char * inherit_fname(char * szObjPath, char * szObject, char *szFname );
+const char * inherit_fname(const char * szObjPath, const char * szObject, const char *szFname );
 
 retval_t util_calculateCRC(char * filename, Uint32 seed, Uint32 * pCRC);
 

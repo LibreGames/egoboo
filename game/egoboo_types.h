@@ -46,19 +46,21 @@ typedef struct rect_float_t
   float bottom;
 } FRect;
 
-//typedef bool bool_t;
+#ifdef __cplusplus
+  typedef bool bool_t;
 
-//enum bool_e
-//{
-//  btrue  = true,
-//  bfalse = false
-//};
-
-typedef enum bool_e
-{
-  btrue  = ( 1 == 1 ),
-  bfalse = ( !btrue )
-} bool_t;
+  enum bool_e
+  {
+    btrue  = true,
+    bfalse = false
+  };
+#else
+  typedef enum bool_e
+  {
+    btrue  = ( 1 == 1 ),
+    bfalse = ( !btrue )
+  } bool_t;
+#endif
 
 typedef enum retval_e
 {
@@ -93,7 +95,139 @@ typedef struct range_t
   float ffrom, fto;
 } RANGE;
 
-//--------------------------------------------------------------------------------------------
+
+#ifdef __cplusplus
+
+#define OBJLST_COUNT              1024
+#define EVELST_COUNT              OBJLST_COUNT  // One enchant type per model
+#define ENCLST_COUNT          128         // Number of enchantments
+#define CAPLST_COUNT              OBJLST_COUNT
+#define CHRLST_COUNT              350         // Max number of characters
+#define MADLST_COUNT              OBJLST_COUNT   // Max number of models
+#define PIPLST_COUNT           1024                    // Particle templates
+#define PRTLST_COUNT              512         // Max number of particles
+
+struct CCap_t;
+struct CChr_t;
+struct CPip_t;
+struct CPrt_t;
+struct CEve_t;
+struct CEnc_t;
+struct CTeam_t;
+struct CPlayer_t;
+struct CMad_t;
+struct CProfile_t;
+
+template <typename _ty, unsigned _sz> struct TPList;
+
+template <typename _ty, unsigned _sz> 
+struct TList
+{
+  struct Handle 
+  { 
+    typedef size_t htype;
+
+    size_t val; 
+    explicit Handle(size_t v = _sz) { val = v; };
+
+    bool operator == (htype v) { return val == v; };
+    bool operator != (htype v) { return val != v; };
+    bool operator >= (htype v) { return val >= v; };
+    bool operator <= (htype v) { return val <= v; };
+    bool operator >  (htype v) { return val > v; };
+    bool operator <  (htype v) { return val < v; };
+
+    bool operator == (Handle v) { return val == v.val; };
+    bool operator != (Handle v) { return val != v.val; };
+    bool operator >= (Handle v) { return val >= v.val; };
+    bool operator <= (Handle v) { return val <= v.val; };
+    bool operator >  (Handle v) { return val >  v.val; };
+    bool operator <  (Handle v) { return val <  v.val; };
+
+    Handle & operator = (htype  v) { val = v; return *this; };
+    Handle & operator = (Handle v) { val = v.val; return *this; };
+
+    Handle & operator ++ () { ++val; return *this; }
+    Handle & operator -- () { --val; return *this; }
+
+    Handle & operator ++ (int) { val++; return *this; }
+    Handle & operator -- (int) { val--; return *this; }
+  };
+
+  static Handle INVALID;
+
+  size_t sz;
+  _ty  * data;
+
+  TList() { sz = _sz; data = calloc(sz, sizeof(_ty)); }
+  ~TList() { free(data); }
+
+  _ty & operator [] (Handle i) { return data[i.val]; }
+  _ty * operator +  (Handle i) { return data + i.val; }
+
+  operator TPList<_ty, _sz> () { TPList<_ty, _sz> tmp; tmp.plist = (TPList<_ty, _sz>::myplist)this; return tmp; }
+};
+
+template <typename _ty, unsigned _sz> 
+struct TPList
+{
+  typedef typename TList<_ty, _sz>::Handle myref;
+  typedef typename TList<_ty, _sz>      mylist;
+  typedef typename TList<_ty, _sz>    * myplist;
+
+  myplist plist;
+
+  _ty & operator [] (typename myref i) { return (*plist)[i]; };
+  _ty * operator +  (typename myref i) { return (*plist) + i; };
+
+  operator typename myplist ()  { return plist; };
+  operator typename mylist & () { return *plist; };
+};
+
+//-----------------------------------------
+
+#define CAP_REF TList<CCap_t, CAPLST_COUNT>::Handle
+#define CHR_REF TList<CChr_t, CHRLST_COUNT>::Handle
+
+#define PIP_REF TList<CPip_t, PIPLST_COUNT>::Handle
+#define PRT_REF TList<CPrt_t, PRTLST_COUNT>::Handle
+
+#define EVE_REF TList<CEve_t, EVELST_COUNT>::Handle
+#define ENC_REF TList<CEnc_t, ENCLST_COUNT>::Handle
+
+#define TEAM_REF TList<CTeam_t, TEAM_COUNT>::Handle
+#define PLA_REF  TList<CPlayer_t, PLALST_COUNT>::Handle
+
+#define MAD_REF TList<CMad_t, MADLST_COUNT>::Handle
+
+#define OBJ_REF TList<CProfile_t, OBJLST_COUNT>::Handle
+
+typedef Uint16 AI_REF;
+typedef Uint16 PASS_REF;
+typedef Uint16 SHOP_REF;
+
+#define INVALID_CAP TList<CCap_t, CAPLST_COUNT>::INVALID
+#define INVALID_CHR TList<CChr_t, CHRLST_COUNT>::INVALID
+
+#define INVALID_PIP TList<CPip_t, PIPLST_COUNT>::INVALID
+#define INVALID_PRT TList<CPrt_t, PRTLST_COUNT>::INVALID
+
+#define INVALID_EVE TList<CEve_t, EVELST_COUNT>::INVALID
+#define INVALID_ENC TList<CEnc_t, ENCLST_COUNT>::INVALID
+
+#define INVALID_TEAM TList<CTeam_t, TEAM_COUNT>::INVALID
+#define INVALID_PLA  TList<CPlayer_t, PLALST_COUNT>::INVALID
+
+#define INVALID_MAD TList<CMad_t, MADLST_COUNT>::INVALID
+
+#define INVALID_OBJ TList<CProfile_t, OBJLST_COUNT>::INVALID
+
+#define INVALID_AI  AILST_COUNT
+
+#define REF_TO_INT(XX) XX.val
+
+#else
+
 typedef Uint16 CAP_REF;
 typedef Uint16 CHR_REF;
 
@@ -105,6 +239,54 @@ typedef Uint16 ENC_REF;
 
 typedef Uint16 TEAM_REF;
 typedef Uint16 PLA_REF;
+
+typedef Uint16 MAD_REF;
+typedef Uint16 AI_REF;
+typedef Uint16 OBJ_REF;
+
+typedef Uint16 PASS_REF;
+typedef Uint16 SHOP_REF;
+
+
+#define INVALID_CAP CAPLST_COUNT
+#define INVALID_CHR CHRLST_COUNT
+
+#define INVALID_PIP PIPLST_COUNT
+#define INVALID_PRT PRTLST_COUNT
+
+#define INVALID_EVE EVELST_COUNT
+#define INVALID_ENC ENCLST_COUNT
+
+#define INVALID_TEAM TEAM_COUNT
+#define INVALID_PLA PLALST_COUNT
+
+#define INVALID_MAD MADLST_COUNT
+#define INVALID_AI  AILST_COUNT
+#define INVALID_OBJ OBJLST_COUNT
+
+#define CAP_REF(XX) (CAP_REF)(XX)
+#define CHR_REF(XX) (CHR_REF)(XX)
+
+#define PIP_REF(XX) (PIP_REF)(XX)
+#define PRT_REF(XX) (PRT_REF)(XX)
+
+#define EVE_REF(XX) (EVE_REF)(XX)
+#define ENC_REF(XX) (ENC_REF)(XX)
+
+#define TEAM_REF(XX) (TEAM_REF)(XX)
+#define PLA_REF(XX) (PLA_REF)(XX)
+
+#define MAD_REF(XX) (MAD_REF)(XX)
+#define AI_REF(XX) (AI_REF)(XX)
+#define OBJ_REF(XX) (OBJ_REF)(XX)
+
+#define PASS_REF(XX) (PASS_REF)(XX)
+#define SHOP_REF(XX) (SHOP_REF)(XX)
+
+#define REF_TO_INT(XX) XX
+#endif
+
+
 
 //--------------------------------------------------------------------------------------------
 typedef union float_int_convert_u 
@@ -179,7 +361,6 @@ typedef enum respawn_mode_e
   RESPAWN_NORMAL,
   RESPAWN_ANYTIME
 } RESPAWN_MODE;
-
 
 typedef int (SDLCALL *SDL_Callback_Ptr)(void *);
 

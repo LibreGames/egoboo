@@ -112,46 +112,58 @@ typedef enum control_type_e
 struct CGame_t;
 
 //--------------------------------------------------------------------------------------------
-typedef struct latch_t
+typedef struct CLatch_t
 {
   float    x;        // x value
   float    y;        // y value
   Uint32   b;        // button(s) mask
-} LATCH;
+} CLatch;
+
+INLINE bool_t CLatch_clear(CLatch * pl) { if(NULL == pl) return bfalse; memset(pl, 0, sizeof(CLatch)); return btrue; }
+
+
 
 //--------------------------------------------------------------------------------------------
-#define MAXPLAYER   (1<<3)                          // 2 to a power...  2^3
+#define PLALST_COUNT   (1<<3)                          // 2 to a power...  2^3
 
-typedef struct Player_t
+typedef struct CPlayer_t
 {
-  bool_t            used;                   // Player used?
+  bool_t            used;                   // CPlayer used?
   bool_t            is_local;
 
   CHR_REF           chr_ref;                 // Which character?
-  LATCH             latch;                   // Local latches
+  CLatch             latch;                   // Local latches
   Uint8             device;                  // Input device
-} Player;
+} CPlayer;
 
-Player * Player_new(Player *ppla);
-bool_t   Player_delete(Player *ppla);
-Player * Player_renew(Player *ppla);
+#ifdef __cplusplus
+  typedef TList<CPlayer_t, PLALST_COUNT> PlaList_t;
+  typedef TPList<CPlayer_t, PLALST_COUNT> PPla;
+#else
+  typedef CPlayer PlaList_t[PLALST_COUNT];
+  typedef CPlayer * PPla;
+#endif
+
+CPlayer * Player_new(CPlayer *ppla);
+bool_t   Player_delete(CPlayer *ppla);
+CPlayer * Player_renew(CPlayer *ppla);
 
 INLINE CHR_REF PlaList_get_character( struct CGame_t * gs, PLA_REF iplayer );
 
-#define VALID_PLA(LST, XX) ( ((XX)>=0) && ((XX)<MAXPLAYER) && LST[XX].used )
+#define VALID_PLA(LST, XX) ( ((XX)>=0) && ((XX)<PLALST_COUNT) && LST[XX].used )
 
 //--------------------------------------------------------------------------------------------
 #define MOUSEBUTTON         4
 
 typedef struct mouse_t
 {
-  bool_t   on;                   // Is the mouse alive?
+  bool_t   on;                   // Is the mouse live?
   float    sense;                // Sensitivity threshold
   float    sustain;              // Falloff rate for old movement
   float    cover;                // For falloff
-  LATCH    latch;
-  LATCH    latch_old;            // For sustain
-  LATCH    dlatch;
+  CLatch    latch;
+  CLatch    latch_old;            // For sustain
+  CLatch    dlatch;
   Sint32   z;                    // Mouse wheel movement counter
   Uint8    button[MOUSEBUTTON];  // Mouse button states
 } MOUSE;
@@ -164,8 +176,8 @@ extern MOUSE mous;
 typedef struct joystick_t
 {
   SDL_Joystick *sdl_device;
-  bool_t        on;                     // Is the holy joystick alive?
-  LATCH         latch;                  //
+  bool_t        on;                     // Is the holy joystick live?
+  CLatch         latch;                  //
   Uint8         button[JOYBUTTON];      //
 } JOYSTICK;
 
@@ -175,12 +187,12 @@ extern JOYSTICK joy[2];
 // SDL specific declarations
 typedef struct keyboard_t
 {
-  bool_t   on;                 // Is the keyboard alive?
+  bool_t   on;                 // Is the keyboard live?
   bool_t   mode;
   Uint8    delay;              // For slowing down chat input
 
   Uint8   *state;
-  LATCH    latch;
+  CLatch    latch;
 } KEYBOARD;
 
 extern KEYBOARD keyb;

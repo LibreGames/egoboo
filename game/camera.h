@@ -37,6 +37,11 @@ typedef struct camera_t
   int       swingrate;       //
   float     swingamp;        //
 
+  // for floor reflections
+  float     tracklevel_stt;
+  bool_t    tracklevel_stt_valid;
+
+
   GLmatrix  mView;           // View Matrix
   GLmatrix  mProjection;     // Projection Matrix
   GLmatrix  mProjectionBig;  // Larger projection matrix for frustum culling

@@ -77,7 +77,7 @@ bool_t snd_initialize(ConfigData * cd)
 
     SoundState_synchronize( &_sndState, cd );
 
-    if( !snd_reopen(&_sndState) )
+    if( !snd_reopen() )
     {
       log_message( "Failed!\n" );
       log_error( "Unable to initialize audio: %s\n", Mix_GetError() );
@@ -165,7 +165,7 @@ void snd_apply_mods( int channel, float intensity, vect3 snd_pos, vect3 ear_pos,
 };
 
 //------------------------------------------------------------------------------
-int snd_play_sound( CGame * gs, float intensity, vect3 pos, Mix_Chunk *loadedwave, int loops, int whichobject, int soundnumber)
+int snd_play_sound( CGame * gs, float intensity, vect3 pos, Mix_Chunk *loadedwave, int loops, OBJ_REF whichobject, int soundnumber)
 {
   // ZF> This function plays a specified sound
   // (Or returns -1 (INVALID_CHANNEL) if it failed to play the sound)
@@ -175,7 +175,7 @@ int snd_play_sound( CGame * gs, float intensity, vect3 pos, Mix_Chunk *loadedwav
 
   if ( loadedwave == NULL )
   {
-    log_warning( "Sound file not correctly loaded (Not found?) - Object \"%s\" is trying to play sound%i.wav\n", gs->CapList[gs->ChrList[whichobject].model].classname, soundnumber );
+    log_warning( "Sound file not correctly loaded (Not found?) - Object \"%s\" is trying to play sound%i.wav\n", ObjList_getPCap(gs, whichobject)->classname, soundnumber );
     return INVALID_CHANNEL;
   }
 
@@ -185,11 +185,11 @@ int snd_play_sound( CGame * gs, float intensity, vect3 pos, Mix_Chunk *loadedwav
   {
     if(whichobject < 0)
     {
-      log_warning( "All sound channels are currently in use. Global sound %d NOT playing\n", -whichobject );
+      log_warning( "All sound channels are currently in use. Global sound %d NOT playing\n", REF_TO_INT(whichobject) );
     }
     else
     {
-      log_warning( "All sound channels are currently in use. Sound is NOT playing - Object \"%s\" is trying to play sound%i.wav\n", gs->CapList[gs->ChrList[whichobject].model].classname, soundnumber );
+      log_warning( "All sound channels are currently in use. Sound is NOT playing - Object \"%s\" is trying to play sound%i.wav\n", ObjList_getPCap(gs, whichobject)->classname, soundnumber );
     };
   }
   else
@@ -204,21 +204,21 @@ int snd_play_sound( CGame * gs, float intensity, vect3 pos, Mix_Chunk *loadedwav
 int snd_play_particle_sound( CGame * gs, float intensity, PRT_REF particle, Sint8 sound )
 {
   int channel = INVALID_CHANNEL;
-  Uint16 imdl;
+  OBJ_REF iobj;
 
   //This function plays a sound effect for a particle
   if ( INVALID_SOUND == sound ) return channel;
   if( !_sndState.soundActive ) return channel;
 
   //Play local sound or else global (coins for example)
-  imdl = gs->PrtList[particle].model;
-  if ( VALID_MDL(imdl) )
+  iobj = gs->PrtList[particle].model;
+  if ( VALID_OBJ(gs->ObjList, iobj) )
   {
-    channel = snd_play_sound( gs, intensity, gs->PrtList[particle].pos, gs->CapList[imdl].wavelist[sound], 0, imdl, sound );
+    channel = snd_play_sound( gs, intensity, gs->PrtList[particle].pos, gs->ObjList[iobj].wavelist[sound], 0, iobj, sound );
   }
-  else
+  else if(sound < GSOUND_COUNT)
   {
-    channel = snd_play_sound( gs, intensity, gs->PrtList[particle].pos, _sndState.mc_list[sound], 0, -sound, sound );
+    channel = snd_play_sound( gs, intensity, gs->PrtList[particle].pos, _sndState.mc_list[sound], 0, INVALID_OBJ, sound );
   };
 
   return channel;

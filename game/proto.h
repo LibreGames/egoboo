@@ -44,9 +44,9 @@ typedef enum respawn_mode_e RESPAWN_MODE;
 typedef enum idsz_index_e IDSZ_INDEX;
 typedef enum color_e COLR;
 
-struct Chr_t;
+struct CChr_t;
 struct Status_t;
-struct Player_t;
+struct CPlayer_t;
 struct mod_data_t;
 struct CGame_t;
 struct KeyboardBuffer_t;
@@ -66,8 +66,7 @@ void fget_code( FILE * pfile );
 
 ACTION what_action( char cTmp );
 void release_all_textures(struct CGame_t * gs);
-Uint32 load_one_icon( char * szModname, char * szObjectname, char * szFilename );
-void prime_icons();
+Uint32 load_one_icon( char * szModname, const char * szObjectname, char * szFilename );
 void release_all_icons(struct CGame_t * gs);
 void release_map();
 
@@ -102,17 +101,11 @@ Uint16 terp_dir( Uint16 majordir, float dx, float dy, float dUpdate );
 Uint16 terp_dir_fast( Uint16 majordir, float dx, float dy, float dUpdate );
 
 
-
-void naming_names( struct CGame_t * gs, int profile );
-void read_naming( struct CGame_t * gs, char * szModpath, char * szObjectname, int profile );
-void prime_names( struct CGame_t * gs );
-
-
 void make_textureoffset( void );
 
 
 
-bool_t PlaList_set_latch( struct CGame_t * gs, struct Player_t * player );
+bool_t PlaList_set_latch( struct CGame_t * gs, struct CPlayer_t * player );
 
 void check_add( Uint8 key, char bigletter, char littleletter );
 void camera_calc_turn_lr();
@@ -158,7 +151,7 @@ void render_water_fan( Uint32 fan, Uint8 layer, Uint8 mode );
 void render_enviromad( CHR_REF character, Uint8 trans );
 void render_texmad( CHR_REF character, Uint8 trans );
 void render_mad( CHR_REF character, Uint8 trans );
-void render_refmad( int tnc, Uint8 trans );
+void render_refmad( CHR_REF tnc, Uint16 trans );
 void light_characters();
 void light_particles();
 void set_fan_light( int fanx, int fany, PRT_REF particle );
@@ -178,7 +171,7 @@ void draw_main( float );
 void load_blip_bitmap( char * modname );
 
 
-bool_t check_skills( struct CGame_t * gs, int who, Uint32 whichskill );
+bool_t check_skills( struct CGame_t * gs, CHR_REF who, Uint32 whichskill );
 void check_player_import(struct CGame_t * gs);
 void reset_camera();
 

@@ -890,7 +890,7 @@ bool_t fget_next_string( FILE* fileread, char *szLine, size_t lnLine )
 }
 
 //--------------------------------------------------------------------------------------------
-const char * inherit_fname(char * szObjPath, char * szObject, char *szFname )
+const char * inherit_fname(const char * szObjPath, const char * szObject, const char *szFname )
 {
   static STRING ret_fname;
   FILE * loc_pfile;
@@ -1192,3 +1192,7 @@ void make_randie()
     tnc++;
   }
 }
+
+
+
+

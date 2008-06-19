@@ -7,7 +7,7 @@
 
 struct CGame_t;
 
-#define MAXMODEL                        MAXPROFILE   // Max number of models
+#define MADLST_COUNT                        OBJLST_COUNT   // Max number of models
 //#define MD2START                        0x32504449  // MD2 files start with these four bytes
 #define MD2MAXLOADSIZE                  (512*1024)   // Don't load any models bigger than 512k
 #define EQUALLIGHTINDEX                 162          // I added an extra index to do the spikey mace...
@@ -136,19 +136,6 @@ typedef enum lip_transition_e
   LIPT_COUNT
 } LIPT;
 
-typedef enum prtpip_t
-{
-  PRTPIP_COIN_001 = 0,                  // Coins are the first particles loaded
-  PRTPIP_COIN_005,                      //
-  PRTPIP_COIN_025,                      //
-  PRTPIP_COIN_100,                      //
-  PRTPIP_WEATHER_1,                     // Weather particles
-  PRTPIP_WEATHER_2,                     // Weather particle finish
-  PRTPIP_SPLASH,                        // Water effects are next
-  PRTPIP_RIPPLE,                        //
-  PRTPIP_DEFEND,                        // Defend particle
-  PRTPIP_PEROBJECT_COUNT                //
-} PRTPIP;
 
 //------------------------------------
 //Model stuff
@@ -156,55 +143,60 @@ typedef enum prtpip_t
 
 #define MAXFRAMESPERANIM 16
 
-typedef struct Mad_t
+typedef struct CMad_t
 {
-  bool_t          used;                          // Model slot
-  STRING          name;                          // Model name
+  bool_t          used;
+
+  // debugging
+  STRING          name;
+
   MD2_Model *     md2_ptr;                          // Md2 model pointer
-  Uint16          skins;                         // Number of skins
-  Uint16          skinstart;                     // Starting skin of model
-  Uint16          msg_start;                      // The first message
   Uint16          vertices;                      // Number of vertices
   Uint16          transvertices;                 // Number to transform
   Uint8  *        framelip;                      // 0-15, How far into action is each frame
   Uint16 *        framefx;                       // Invincibility, Spawning
   Uint16          frameliptowalkframe[LIPT_COUNT][MAXFRAMESPERANIM];    // For walk animations
-  Uint16          ai;                            // AI for each model
   bool_t          actionvalid[MAXACTION];        // bfalse if not valid
   Uint16          actionstart[MAXACTION];        // First frame of anim
   Uint16          actionend[MAXACTION];          // One past last frame
-  Uint16          prtpip[PRTPIP_PEROBJECT_COUNT];    // Local particles
 
   int             bbox_frames;
   BBOX_ARY *      bbox_arrays;
-} Mad;
+} CMad;
 
-Mad *  Mad_new(Mad * pmad);
-bool_t Mad_delete(Mad *pmad);
-Mad *  Mad_renew(Mad * pmad);
+#ifdef __cplusplus
+  typedef TList<CMad_t, MADLST_COUNT> MadList_t;
+  typedef TPList<CMad_t, MADLST_COUNT> PMad;
+#else
+  typedef CMad MadList_t[MADLST_COUNT];
+  typedef CMad * PMad;
+#endif
+
+CMad *  Mad_new(CMad * pmad);
+bool_t  Mad_delete(CMad *pmad);
+CMad *  Mad_renew(CMad * pmad);
 
 void   MadList_free_one( struct CGame_t * gs, Uint16 imdl );
 
-#define VALID_MDL_RANGE(XX) ( ((XX)>=0) && ((XX)<MAXMODEL) )
-#define VALID_MDL(XX)       ( VALID_MDL_RANGE(XX) )
-#define VALIDATE_MDL(XX)    ( VALID_MDL(XX) ? (XX) : MAXMODEL )
+#define VALID_MAD_RANGE(XX) ( ((XX)>=0) && ((XX)<MADLST_COUNT) )
+#define VALID_MAD(LST, XX)  ( VALID_MAD_RANGE(XX) && NULL != LST[XX].md2_ptr)
+#define VALIDATE_MAD(LST,XX)    ( VALID_MAD(LST, XX) ? (XX) : (INVALID_MAD) )
 
 ACTION action_number(char * szName);
 Uint16 action_frame();
-void   action_copy_correct( struct CGame_t * gs, Uint16 object, ACTION actiona, ACTION actionb );
-void   get_walk_frame( struct CGame_t * gs, Uint16 object, LIPT lip_trans, ACTION action );
+void   action_copy_correct( struct CGame_t * gs, MAD_REF object, ACTION actiona, ACTION actionb );
+void   get_walk_frame( struct CGame_t * gs, MAD_REF object, LIPT lip_trans, ACTION action );
 Uint16 get_framefx( char * szName );
-void   make_framelip( struct CGame_t * gs, Uint16 object, ACTION action );
-void   get_actions( struct CGame_t * gs, Uint16 object );
-void   make_mad_equally_lit( struct CGame_t * gs, Uint16 model );
+void   make_framelip( struct CGame_t * gs, MAD_REF object, ACTION action );
+void   get_actions( struct CGame_t * gs, MAD_REF object );
+void   make_mad_equally_lit( struct CGame_t * gs, MAD_REF model );
 
-bool_t mad_generate_bbox_tree(int max_level, Mad * pmad);
+bool_t mad_generate_bbox_tree(int max_level, CMad * pmad);
 
 
-Uint16 MadList_load_one( struct CGame_t * gs, char * szModpath, char * szObjectname, Uint16 modelindex );
+MAD_REF MadList_load_one( struct CGame_t * gs, const char * szModpath, const char * szObjectname, MAD_REF irequest );
 
-bool_t mad_display_bbox_tree(int level, matrix_4x4 matrix, Mad * pmad, int frame1, int frame2);
-void load_copy_file( struct CGame_t * gs, char * szModpath, char * szObjectname, Uint16 object );
+bool_t mad_display_bbox_tree(int level, matrix_4x4 matrix, CMad * pmad, int frame1, int frame2);
+void load_copy_file( struct CGame_t * gs, const char * szModpath, const char * szObjectname, MAD_REF object );
 
-void mad_clear_pips( struct CGame_t * gs );
-void MadList_log_used( struct CGame_t * gs, char *savename );
+void ObjList_log_used( struct CGame_t * gs, char *savename );

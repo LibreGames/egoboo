@@ -18,7 +18,7 @@
 struct CNet_t;
 struct ConfigData_t;
 struct Status_t;
-struct Chr_t;
+struct CChr_t;
 struct SoundState_t;
 struct CGraphics_t;
 struct script_global_values_t;
@@ -31,8 +31,25 @@ enum Action_e;
 enum Team_e;
 enum Experience_e;
 
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+// This is for random naming
+#define CHOPPERMODEL                    32          //
+#define MAXCHOP                         (OBJLST_COUNT*CHOPPERMODEL)
+#define CHOPSIZE                        8
+#define CHOPDATACHUNK                   (MAXCHOP*CHOPSIZE)
+
+typedef struct ChopData_t
+{
+  Uint16   count;                  // The number of name parts
+  Uint32   write;                  // The data pointer
+  char     text[CHOPDATACHUNK];    // The name parts
+  Uint16   start[MAXCHOP];         // The first character of each part
+} ChopData;
+
+//--------------------------------------------------------------------------------------------
+#define MAXENDTEXT 1024
 
 typedef struct CGame_t
 {
@@ -58,7 +75,11 @@ typedef struct CGame_t
   MESH_INFO   mesh;
   MeshMem     Mesh_Mem;
 
+  // water and lighting info
   WATER_INFO water;
+
+  // physics info
+  CPhysicsData phys;
 
   // game loop variables
   double dFrame, dUpdate;
@@ -69,28 +90,32 @@ typedef struct CGame_t
   struct CClient_t     * cl;
   struct CServer_t     * sv;
 
+  int      ObjFreeList_count;
+  OBJ_REF  ObjFreeList[CHRLST_COUNT];
+  ObjList_t ObjList;
+
   // profiles
-  Cap CapList[MAXCAP];
-  Eve EveList[MAXEVE];
-  Mad MadList[MAXMODEL];
+  CapList_t CapList;
+  EveList_t EveList;
+  MadList_t MadList;
 
   int PipList_count;
-  Pip PipList[MAXPRTPIP];
+  PipList_t PipList;
 
   // character data
-  int     ChrFreeList_count;
-  CHR_REF ChrFreeList[MAXCHR];
-  Chr     ChrList[MAXCHR];
+  int       ChrFreeList_count;
+  CHR_REF   ChrFreeList[CHRLST_COUNT];
+  ChrList_t ChrList;
 
   // enchant data
-  int     EncFreeList_count;
-  ENC_REF EncFreeList[MAXENCHANT];
-  Enc     EncList[MAXENCHANT];
+  int       EncFreeList_count;
+  ENC_REF   EncFreeList[ENCLST_COUNT];
+  EncList_t EncList;
 
   // particle data
-  int     PrtFreeList_count;
-  PRT_REF PrtFreeList[MAXPRT];
-  Prt     PrtList[MAXPRT];
+  int       PrtFreeList_count;
+  PRT_REF   PrtFreeList[PRTLST_COUNT];
+  PrtList_t PrtList;
 
   // passage data
   Uint32  PassList_count;
@@ -101,11 +126,12 @@ typedef struct CGame_t
   Shop   ShopList[MAXPASS];
 
   // team data
-  TeamInfo TeamList[TEAM_COUNT];
+  TeamList_t TeamList;
 
   // local variables
+  float  PlaList_level;
   int    PlaList_count;                                 // Number of players
-  Player PlaList[MAXPLAYER];
+  PlaList_t PlaList;
 
   // messages
   MessageData MsgList;
@@ -144,6 +170,9 @@ typedef struct CGame_t
   float  pit_clock;             // For pit kills
   bool_t pitskill;              // Do they kill?
 
+  char endtext[MAXENDTEXT];     // The end-module text
+
+  ChopData chop;
 
 } CGame;
 
@@ -219,6 +248,18 @@ typedef struct SearchInfo_t
 SearchInfo * SearchInfo_new(SearchInfo * psearch);
 
 //--------------------------------------------------------------------------------------------
+//Weather and water gfx
+typedef struct weather_info_t
+{
+  bool_t    overwater; // EQ( bfalse );       // Only spawn over water?
+  int       timereset; // EQ( 10 );          // Rate at which weather particles spawn
+  float     time; // EQ( 0 );                // 0 is no weather
+  PLA_REF   player;
+} WEATHER_INFO;
+
+extern WEATHER_INFO GWeather;
+
+//--------------------------------------------------------------------------------------------
 
 void   make_newloadname( char *modname, char *appendname, char *newloadname );
 void   export_one_character( CGame * gs, CHR_REF character, Uint16 owner, int number );
@@ -235,10 +276,10 @@ void draw_chr_info();
 bool_t do_screenshot();
 void move_water( float dUpdate );
 
-CHR_REF search_best_leader( CGame * gs, enum Team_e team, CHR_REF exclude );
+CHR_REF search_best_leader( CGame * gs, TEAM_REF team, CHR_REF exclude );
 void call_for_help( CGame * gs, CHR_REF character );
 void give_experience( CGame * gs, CHR_REF character, int amount, enum Experience_e xptype );
-void give_team_experience( CGame * gs, enum Team_e team, int amount, enum Experience_e xptype );
+void give_team_experience( CGame * gs, TEAM_REF team, int amount, enum Experience_e xptype );
 void setup_alliances( CGame * gs, char *modname );
 void check_respawn( CGame * gs );
 void update_timers( CGame * gs );
@@ -248,17 +289,17 @@ void reset_timers( CGame * gs );
 
 void set_default_config_data(struct ConfigData_t * pcon);
 
-void load_all_messages( CGame * gs, char *szObjectpath, char *szObjectname, Uint16 object );
+int load_all_messages( CGame * gs, const char *szObjectpath, const char *szObjectname );
 
 void attach_particle_to_character( CGame * gs, PRT_REF particle, CHR_REF chr_ref, Uint16 vertoffset );
 
 bool_t prt_search_block( CGame * gs, SearchInfo * psearch, int block_x, int block_y, PRT_REF iprt, Uint16 facing,
-                         bool_t request_friends, bool_t allow_anyone, enum Team_e team,
-                         Uint16 donttarget, Uint16 oldtarget );
+                         bool_t request_friends, bool_t allow_anyone, TEAM_REF team,
+                         CHR_REF donttarget, CHR_REF oldtarget );
 
 bool_t prt_search_wide( CGame * gs, SearchInfo * psearch, PRT_REF iprt, Uint16 facing,
                         Uint16 targetangle, bool_t request_friends, bool_t allow_anyone,
-                        enum Team_e team, Uint16 donttarget, Uint16 oldtarget );
+                        TEAM_REF team, CHR_REF donttarget, CHR_REF oldtarget );
 
 bool_t chr_search_distant( CGame * gs, SearchInfo * psearch, CHR_REF character, int maxdist, bool_t ask_enemies, bool_t ask_dead );
 
@@ -291,7 +332,7 @@ void set_alerts( CGame * gs, CHR_REF character, float dUpdate );
 
 void   print_status( CGame * gs, Uint16 statindex );
 bool_t add_status( CGame * gs, CHR_REF character );
-bool_t remove_stat( CGame * gs, struct Chr_t * pchr );
+bool_t remove_stat( CGame * gs, struct CChr_t * pchr );
 void   sort_statlist( CGame * gs );
 
 
@@ -305,3 +346,11 @@ void clear_message_queue(MessageQueue * q);
 void clear_messages( MessageData * md);
 
 void load_global_icons(CGame * gs);
+
+void recalc_character_bumpers( CGame * gs );
+
+char * naming_generate( CGame * gs, CObj * pobj );
+void naming_read( struct CGame_t * gs, const char * szModpath, const char * szObjectname, CObj * pobj);
+void naming_prime( struct CGame_t * gs );
+
+bool_t decode_escape_sequence( CGame * gs, char * buffer, size_t buffer_size, const char * message, CHR_REF chr_ref );

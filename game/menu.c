@@ -152,8 +152,8 @@ static int       mnu_widgetCount;
 static ui_Widget mnu_widgetList[MAXWIDGET];
 
 static int mnu_selectedPlayerCount = 0;
-static int mnu_selectedInput[MAXPLAYER] = {0};
-static int mnu_selectedPlayer[MAXPLAYER] = {0};
+static int mnu_selectedInput[PLALST_COUNT] = {0};
+static PLA_REF mnu_selectedPlayer[PLALST_COUNT];
 
 /* Variables for the model viewer in mnu_doChoosePlayer */
 static float  mnu_modelAngle = 0;
@@ -182,8 +182,8 @@ static const char *mnu_mainMenuButtons[] =
 
 static const char *mnu_singlePlayerButtons[] =
 {
-  "New Player",
-  "Load Saved Player",
+  "New CPlayer",
+  "Load Saved CPlayer",
   "Back",
   ""
 };
@@ -253,7 +253,7 @@ static bool_t mnu_startNewPlayer = bfalse;
 static TTFont *mnu_Font = NULL;
 
 //--------------------------------------------------------------------------------------------
-static bool_t mnu_removeSelectedPlayerInput( int player, Uint32 input );
+static bool_t mnu_removeSelectedPlayerInput( PLA_REF player, Uint32 input );
 
 //--------------------------------------------------------------------------------------------
 static void init_options_data()
@@ -977,12 +977,12 @@ int mnu_doChooseModule( MenuProc * mproc, float deltaTime )
 }
 
 //--------------------------------------------------------------------------------------------
-static bool_t mnu_checkSelectedPlayer( int player )
+static bool_t mnu_checkSelectedPlayer( PLA_REF player )
 {
   int i;
   if ( player < 0 || player > loadplayer_count ) return bfalse;
 
-  for ( i = 0; i < MAXPLAYER && i < mnu_selectedPlayerCount; i++ )
+  for ( i = 0; i < PLALST_COUNT && i < mnu_selectedPlayerCount; i++ )
   {
     if ( mnu_selectedPlayer[i] == player ) return btrue;
   }
@@ -991,26 +991,26 @@ static bool_t mnu_checkSelectedPlayer( int player )
 };
 
 //--------------------------------------------------------------------------------------------
-static Uint32 mnu_getSelectedPlayer( int player )
+static PLA_REF mnu_getSelectedPlayer( PLA_REF player )
 {
-  Sint32 i;
-  if ( player < 0 || player > loadplayer_count ) return bfalse;
+  PLA_REF ipla;
+  if ( player < 0 || player > loadplayer_count ) return INVALID_PLA;
 
-  for ( i = 0; i < MAXPLAYER && i < mnu_selectedPlayerCount; i++ )
+  for ( ipla = 0; ipla < PLALST_COUNT && ipla < mnu_selectedPlayerCount; ipla++ )
   {
-    if ( mnu_selectedPlayer[i] == player ) return i;
+    if ( mnu_selectedPlayer[ REF_TO_INT(ipla) ] == player ) return ipla;
   }
 
-  return MAXPLAYER;
+  return INVALID_PLA;
 };
 
 //--------------------------------------------------------------------------------------------
-static bool_t mnu_addSelectedPlayer( int player )
+static bool_t mnu_addSelectedPlayer( PLA_REF player )
 {
-  if ( player < 0 || player > loadplayer_count || mnu_selectedPlayerCount >= MAXPLAYER ) return bfalse;
+  if ( player < 0 || player > loadplayer_count || mnu_selectedPlayerCount >= PLALST_COUNT ) return bfalse;
   if ( mnu_checkSelectedPlayer( player ) ) return bfalse;
 
-  mnu_selectedPlayer[mnu_selectedPlayerCount] = player;
+  mnu_selectedPlayer[mnu_selectedPlayerCount] = REF_TO_INT(player);
   mnu_selectedInput[mnu_selectedPlayerCount]  = INBITS_NONE;
   mnu_selectedPlayerCount++;
 
@@ -1018,7 +1018,7 @@ static bool_t mnu_addSelectedPlayer( int player )
 };
 
 //--------------------------------------------------------------------------------------------
-static bool_t mnu_removeSelectedPlayer( int player )
+static bool_t mnu_removeSelectedPlayer( PLA_REF player )
 {
   int i;
   bool_t found = bfalse;
@@ -1034,7 +1034,7 @@ static bool_t mnu_removeSelectedPlayer( int player )
   }
   else
   {
-    for ( i = 0; i < MAXPLAYER && i < mnu_selectedPlayerCount; i++ )
+    for ( i = 0; i < PLALST_COUNT && i < mnu_selectedPlayerCount; i++ )
     {
       if ( mnu_selectedPlayer[i] == player )
       {
@@ -1046,7 +1046,7 @@ static bool_t mnu_removeSelectedPlayer( int player )
     if ( found )
     {
       i++;
-      for ( /* nothing */; i < MAXPLAYER && i < mnu_selectedPlayerCount; i++ )
+      for ( /* nothing */; i < PLALST_COUNT && i < mnu_selectedPlayerCount; i++ )
       {
         mnu_selectedPlayer[i-1] = mnu_selectedPlayer[i];
       }
@@ -1100,11 +1100,11 @@ static bool_t mnu_addSelectedPlayerInput( PLA_REF player, Uint32 input )
 };
 
 //--------------------------------------------------------------------------------------------
-static bool_t mnu_removeSelectedPlayerInput( int player, Uint32 input )
+static bool_t mnu_removeSelectedPlayerInput( PLA_REF player, Uint32 input )
 {
   int i;
 
-  for ( i = 0; i < MAXPLAYER && i < mnu_selectedPlayerCount; i++ )
+  for ( i = 0; i < PLALST_COUNT && i < mnu_selectedPlayerCount; i++ )
   {
     if ( mnu_selectedPlayer[i] == player )
     {
@@ -1125,7 +1125,8 @@ void import_selected_players()
   // ZZ > Build the import directory
 
   char srcDir[64], destDir[64];
-  int i, iplayer;
+  int i;
+  PLA_REF iplayer;
 
   // clear out the old directory
   empty_import_directory();
@@ -1140,14 +1141,14 @@ void import_selected_players()
     localplayer_slot[localplayer_count]    = 9 * localplayer_count;
 
     // Copy the character to the import directory
-    snprintf( srcDir,  sizeof( srcDir ),  "%s" SLASH_STRING "%s", CData.players_dir, loadplayer[iplayer].dir );
+    snprintf( srcDir,  sizeof( srcDir ),  "%s" SLASH_STRING "%s", CData.players_dir, loadplayer[REF_TO_INT(iplayer)].dir );
     snprintf( destDir, sizeof( destDir ), "%s" SLASH_STRING "temp%04d.obj", CData.import_dir, localplayer_slot[localplayer_count] );
     fs_copyDirectory( srcDir, destDir );
 
     // Copy all of the character's items to the import directory
     for ( i = 0; i < 8; i++ )
     {
-      snprintf( srcDir, sizeof( srcDir ), "%s" SLASH_STRING "%s" SLASH_STRING "%d.obj", CData.players_dir, loadplayer[iplayer].dir, i );
+      snprintf( srcDir, sizeof( srcDir ), "%s" SLASH_STRING "%s" SLASH_STRING "%d.obj", CData.players_dir, loadplayer[REF_TO_INT(iplayer)].dir, i );
       snprintf( destDir, sizeof( destDir ), "%s" SLASH_STRING "temp%04d.obj", CData.import_dir, localplayer_slot[localplayer_count] + i + 1 );
 
       fs_copyDirectory( srcDir, destDir );
@@ -1167,7 +1168,7 @@ int mnu_doChoosePlayer( MenuProc * mproc, float deltaTime )
   int result = 0;
   static int numVertical, numHorizontal;
   int i, j, k, m, x, y;
-  int player;
+  PLA_REF player;
   static GLtexture TxInput[4];
   static Uint32 BitsInput[4];
   static bool_t created_game = bfalse;
@@ -1275,14 +1276,14 @@ int mnu_doChoosePlayer( MenuProc * mproc, float deltaTime )
       {
         for ( j = 0; j < numVertical && player < loadplayer_count; j++, player++ )
         {
-          Uint32 splayer;
+          PLA_REF splayer;
 
-          mnu_widgetList[m].img  = gs->TxIcon + player;
-          mnu_widgetList[m].text = loadplayer[player].name;
+          mnu_widgetList[m].img  = gs->TxIcon + REF_TO_INT(player);
+          mnu_widgetList[m].text = loadplayer[REF_TO_INT(player)].name;
 
           splayer = mnu_getSelectedPlayer( player );
 
-          if ( MAXPLAYER != splayer )
+          if ( INVALID_PLA != splayer )
           {
             mnu_widgetList[m].state |= UI_BITS_CLICKED;
           }
@@ -1311,11 +1312,11 @@ int mnu_doChoosePlayer( MenuProc * mproc, float deltaTime )
           for ( k = 0; k < 4; k++, m++ )
           {
             // make the button states reflect the chosen input devices
-            if ( MAXPLAYER == splayer || 0 == ( mnu_selectedInput[splayer] & BitsInput[k] ) )
+            if ( INVALID_PLA == splayer || 0 == ( mnu_selectedInput[ REF_TO_INT(splayer) ] & BitsInput[k] ) )
             {
               mnu_widgetList[m].state &= ~UI_BITS_CLICKED;
             }
-            else if ( 0 != ( mnu_selectedInput[splayer] & BitsInput[k] ) )
+            else if ( 0 != ( mnu_selectedInput[REF_TO_INT(splayer)] & BitsInput[k] ) )
             {
               mnu_widgetList[m].state |= UI_BITS_CLICKED;
             }
@@ -1325,10 +1326,10 @@ int mnu_doChoosePlayer( MenuProc * mproc, float deltaTime )
               if ( 0 != ( mnu_widgetList[m].state & UI_BITS_CLICKED ) )
               {
                 // button has become clicked
-                if ( MAXPLAYER == splayer ) mnu_addSelectedPlayer( player );
+                if ( INVALID_PLA == splayer ) mnu_addSelectedPlayer( player );
                 mnu_addSelectedPlayerInput( player, BitsInput[k] );
               }
-              else if ( MAXPLAYER != splayer && 0 == ( mnu_widgetList[m].state & UI_BITS_CLICKED ) )
+              else if ( INVALID_PLA != splayer && 0 == ( mnu_widgetList[m].state & UI_BITS_CLICKED ) )
               {
                 // button has become unclicked
                 mnu_removeSelectedPlayerInput( player, BitsInput[k] );
@@ -2420,8 +2421,8 @@ int mnu_doLaunchGame( MenuProc * mproc, float deltaTime )
         // make sure the game has the correct information
         // destroy any extra info
         if(gs->ns != mproc->net) { CNet_destroy(&(gs->ns)); gs->ns = mproc->net; if(NULL!=gs->ns) gs->ns->parent = gs;}
-        if(gs->cl != mproc->cl ) { CNet_destroy(&(gs->cl)); gs->cl = mproc->cl;  if(NULL!=gs->cl) gs->cl->parent = gs;}
-        if(gs->sv != mproc->sv ) { CNet_destroy(&(gs->sv)); gs->sv = mproc->sv;  if(NULL!=gs->sv) gs->sv->parent = gs;}
+        if(gs->cl != mproc->cl ) { CClient_destroy(&(gs->cl)); gs->cl = mproc->cl;  if(NULL!=gs->cl) gs->cl->parent = gs;}
+        if(gs->sv != mproc->sv ) { CServer_destroy(&(gs->sv)); gs->sv = mproc->sv;  if(NULL!=gs->sv) gs->sv->parent = gs;}
       }
 
       if(NULL != mproc->cl && -1 != mproc->cl->selectedModule)
@@ -2465,7 +2466,7 @@ int mnu_doLaunchGame( MenuProc * mproc, float deltaTime )
       {
         for ( i = 0; i < mnu_selectedPlayerCount; i++ )
         {
-          fnt_drawTextFormatted( font, x, y, "Player selected: %s", loadplayer[mnu_selectedPlayer[i]].name );
+          fnt_drawTextFormatted( font, x, y, "CPlayer selected: %s", loadplayer[REF_TO_INT(mnu_selectedPlayer[i])].name );
           y += 35;
         };
       }
@@ -4163,9 +4164,15 @@ int mnu_doJoinGame(MenuProc * mproc, float deltaTime)
 int mnu_handleKeyboard( MenuProc * mproc )
 {
   int retval = 0;
+  bool_t control, alt, shift, mod;
+
+  control = (SDLKEYDOWN(SDLK_RCTRL) || SDLKEYDOWN(SDLK_LCTRL));
+  alt     = (SDLKEYDOWN(SDLK_RALT) || SDLKEYDOWN(SDLK_LALT));
+  shift   = (SDLKEYDOWN(SDLK_RSHIFT) || SDLKEYDOWN(SDLK_LSHIFT));
+  mod     = control || alt || shift;
 
   // Check for quitters
-  if ( SDLKEYDOWN( SDLK_ESCAPE ) && !mproc->proc.Paused  )
+  if ( SDLKEYDOWN( SDLK_ESCAPE ) && !mod && !mproc->proc.Paused  )
   {
     retval = -1;
   }
@@ -4275,7 +4282,9 @@ int mnu_doIngameInventory( MenuProc * mproc, float deltaTime )
   static float lerp;
   static int menuChoice = 0;
   int i,j,k;
-  Uint16 ichr, imdl, itex, iitem;
+  Uint16 itex;
+  OBJ_REF iobj;
+  CHR_REF ichr, iitem;
   int result = 0, offsetX, offsetY;
   static Uint32 starttime;
   int iw, ih;
@@ -4306,10 +4315,10 @@ int mnu_doIngameInventory( MenuProc * mproc, float deltaTime )
           iitem = gs->ChrList[iitem].nextinpack;
           if(!VALID_CHR(gs->ChrList, iitem)) break; 
 
-          imdl = gs->ChrList[iitem].model;
-          if(!VALID_MDL(imdl)) break;  
+          iobj = gs->ChrList[iitem].model;
+          if(!VALID_OBJ(gs->ObjList, iobj)) break;  
 
-          itex = gs->skintoicon[gs->ChrList[iitem].skin_ref + gs->MadList[imdl].skinstart];
+          itex = gs->skintoicon[gs->ChrList[iitem].skin_ref + gs->ObjList[iobj].skinstart];
           ui_initWidget( mnu_widgetList + k, k, mnu_Font, NULL, gs->TxIcon + itex, offsetX + iw*j, offsetY, iw, ih );
 
           k++;

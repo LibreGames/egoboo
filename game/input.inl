@@ -86,7 +86,7 @@ INLINE bool_t control_joy_is_pressed( int joy_num, CONTROL control )
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF PlaList_get_character( CGame * gs, PLA_REF iplayer )
 {
-  if ( !VALID_PLA( gs->PlaList, iplayer ) ) return MAXCHR;
+  if ( !VALID_PLA( gs->PlaList, iplayer ) ) return INVALID_CHR;
 
   gs->PlaList[iplayer].chr_ref = VALIDATE_CHR( gs->ChrList, gs->PlaList[iplayer].chr_ref );
   return gs->PlaList[iplayer].chr_ref;

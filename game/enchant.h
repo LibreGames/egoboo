@@ -3,8 +3,8 @@
 #include "egoboo_types.h"
 #include "object.h"
 
-#define MAXEVE                          MAXPROFILE  // One enchant type per model
-#define MAXENCHANT                      128         // Number of enchantments
+#define EVELST_COUNT                          OBJLST_COUNT  // One enchant type per model
+#define ENCLST_COUNT                      128         // Number of enchantments
 
 struct CGame_t;
 
@@ -61,7 +61,7 @@ typedef enum eve_add_e
   EVE_ADD_COUNT      // Number of adds
 } EVE_ADD;
 
-typedef struct Eve_t
+typedef struct CEve_t
 {
   bool_t          used;                        // Enchant.txt loaded?
 
@@ -87,21 +87,36 @@ typedef struct Eve_t
   Uint16          contspawntime;               // Spawn timer
   Uint8           contspawnamount;             // Spawn amount
   Uint16          contspawnfacingadd;          // Spawn in circle
-  Uint16          contspawnpip;                // Spawn type ( local )
+  PIP_REF         contspawnpip;                // Spawn type ( local )
   Sint8           endsound;                    // Sound on end (-1 for none)
   Uint16          frequency;                   // Sound frequency
   Uint16          overlay;                     // Spawn an overlay?
   bool_t          canseekurse;                 // Allow target to see kurses?
-} Eve;
+} CEve;
 
-Eve *  Eve_new(Eve *peve);
-bool_t Eve_delete( Eve * peve );
-Eve *  Eve_renew( Eve * peve );
+#ifdef __cplusplus
+  typedef TList<CEve_t, EVELST_COUNT> EveList_t;
+  typedef TPList<CEve_t, EVELST_COUNT> PEve;
+#else
+  typedef CEve EveList_t[EVELST_COUNT];
+  typedef CEve * PEve;
+#endif
 
-typedef struct Enc_t
+CEve *  Eve_new(CEve *peve);
+bool_t Eve_delete( CEve * peve );
+CEve *  Eve_renew( CEve * peve );
+
+#define VALID_EVE_RANGE(XX) (((XX)>=0) && ((XX)<EVELST_COUNT))
+#define VALID_EVE(LST, XX)    ( VALID_EVE_RANGE(XX) && LST[XX].used )
+#define VALIDATE_EVE(LST, XX) ( VALID_EVE(LST, XX) ? (XX) : (INVALID_EVE) )
+
+typedef struct CEnc_t
 {
   bool_t          on;                      // Enchantment on
-  EVE_REF         eve;                     // The type
+
+  OBJ_REF         profile;                 // The profile that the eve came from
+  EVE_REF         eve;                     // The eve
+
   CHR_REF         target;                  // Who it enchants
   ENC_REF         nextenchant;             // Next in the list
   CHR_REF         owner;                   // Who cast the enchant
@@ -116,13 +131,25 @@ typedef struct Enc_t
   Sint16          addsave[EVE_ADD_COUNT];  // The value to take away
   Sint16          time;                    // Time before end
   float           spawntime;               // Time before spawn
-} Enc;
+} CEnc;
 
-Enc *  Enc_new(Enc *penc);
-bool_t Enc_delete( Enc * penc );
-Enc *  Enc_renew( Enc * penc );
+#ifdef __cplusplus
+  typedef TList<CEnc_t, ENCLST_COUNT> EncList_t;
+  typedef TPList<CEnc_t, ENCLST_COUNT> PEnc;
+#else
+  typedef CEnc EncList_t[ENCLST_COUNT];
+  typedef CEnc * PEnc;
+#endif
 
-Uint16 EncList_get_free( struct CGame_t * gs );
+CEnc *  CEnc_new(CEnc *penc);
+bool_t CEnc_delete( CEnc * penc );
+CEnc *  CEnc_renew( CEnc * penc );
+
+ENC_REF EncList_get_free( struct CGame_t * gs, ENC_REF irequest);
+
+#define VALID_ENC_RANGE(XX) (((XX)>=0) && ((XX)<ENCLST_COUNT))
+#define VALID_ENC(LST, XX)    ( VALID_ENC_RANGE(XX) && LST[XX].on )
+#define VALIDATE_ENC(LST, XX) ( VALID_ENC(LST, XX) ? (XX) : (INVALID_ENC) )
 
 typedef enum disenchant_mode_e
 {
@@ -137,17 +164,17 @@ extern STRING namingnames;   // The name returned by the function
 void reset_character_alpha( struct CGame_t * gs, CHR_REF character );
 void chr_reset_accel( struct CGame_t * gs, CHR_REF character );
 
-void   EveList_load_one( struct CGame_t * gs, char * szObjectpath, char * szObjectname, Uint16 profile );
-void   unset_enchant_value( struct CGame_t * gs, Uint16 enchantindex, Uint8 valueindex );
-void   remove_enchant_value( struct CGame_t * gs, Uint16 enchantindex, Uint8 valueindex );
+EVE_REF EveList_load_one( struct CGame_t * gs, const char * szObjectpath, const char * szObjectname, EVE_REF irequest );
+void    unset_enchant_value( struct CGame_t * gs, ENC_REF enchantindex, Uint8 valueindex );
+void    remove_enchant_value( struct CGame_t * gs, ENC_REF enchantindex, Uint8 valueindex );
 
-void   remove_enchant( struct CGame_t * gs, Uint16 enchantindex );
-Uint16 enchant_value_filled( struct CGame_t * gs, Uint16 enchantindex, Uint8 valueindex );
-void   set_enchant_value( struct CGame_t * gs, Uint16 enchantindex, Uint8 valueindex, Uint16 enchanttype );
+void   remove_enchant( struct CGame_t * gs, ENC_REF enchantindex );
+ENC_REF enchant_value_filled( struct CGame_t * gs, ENC_REF enchantindex, Uint8 valueindex );
+void   set_enchant_value( struct CGame_t * gs, ENC_REF enchantindex, Uint8 valueindex, EVE_REF enchanttype );
 void   getadd( int min, int value, int max, int* valuetoadd );
 void   fgetadd( float min, float value, float max, float* valuetoadd );
-void   add_enchant_value( struct CGame_t * gs, Uint16 enchantindex, Uint8 valueindex, Uint16 enchanttype );
-Uint16 spawn_enchant( struct CGame_t * gs, Uint16 owner, Uint16 target, Uint16 spawner, Uint16 enchantindex, Uint16 modeloptional );
+void   add_enchant_value( struct CGame_t * gs, ENC_REF enchantindex, Uint8 valueindex, EVE_REF enchanttype );
+ENC_REF spawn_one_enchant( struct CGame_t * gs, CHR_REF owner, CHR_REF target, CHR_REF spawner, ENC_REF enchantindex, OBJ_REF modeloptional );
 
 void enc_spawn_particles( struct CGame_t * gs, float dUpdate );
 void disenchant_character( struct CGame_t * gs, CHR_REF character );

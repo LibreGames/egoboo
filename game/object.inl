@@ -5,18 +5,18 @@
 #include "game.h"
 
 //--------------------------------------------------------------------------------------------
-INLINE const CHR_REF team_get_sissy( CGame * gs, TEAM_REF iteam )
+INLINE CHR_REF team_get_sissy( CGame * gs, TEAM_REF iteam )
 {
-  if ( !VALID_TEAM_RANGE( iteam ) ) return MAXCHR;
+  if ( !VALID_TEAM_RANGE( iteam ) ) return INVALID_CHR;
 
   gs->TeamList[iteam].sissy = VALIDATE_CHR( gs->ChrList, gs->TeamList[iteam].sissy );
   return gs->TeamList[iteam].sissy;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const CHR_REF team_get_leader( CGame * gs, TEAM_REF iteam )
+INLINE CHR_REF team_get_leader( CGame * gs, TEAM_REF iteam )
 {
-  if ( !VALID_TEAM_RANGE( iteam ) ) return MAXCHR;
+  if ( !VALID_TEAM_RANGE( iteam ) ) return INVALID_CHR;
 
   gs->TeamList[iteam].leader = VALIDATE_CHR( gs->ChrList, gs->TeamList[iteam].leader );
   return gs->TeamList[iteam].leader;
@@ -44,7 +44,7 @@ INLINE const SLOT grip_to_slot( GRIP g )
 
       if ( 0 == ( g % GRIP_SIZE ) )
       {
-        s = ( g / GRIP_SIZE ) - 1;
+        s = (SLOT)(( g / GRIP_SIZE ) - 1);
         if ( s <  0          ) s = SLOT_NONE;
         if ( s >= SLOT_COUNT ) s = SLOT_NONE;
       }
@@ -77,7 +77,7 @@ INLINE const GRIP slot_to_grip( SLOT s )
     default:
       //try to do this mathematically
 
-      g = (s + 1) * GRIP_SIZE;
+      g = (GRIP)((s + 1) * GRIP_SIZE);
       if ( g > GRIP_RIGHT ) g = GRIP_ORIGIN;
   }
 
@@ -108,7 +108,7 @@ INLINE const Uint16 slot_to_offset( SLOT s )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint16 slot_to_latch( Chr lst[], size_t count, Uint16 object, SLOT s )
+INLINE const Uint16 slot_to_latch( PChr lst, size_t count, CHR_REF object, SLOT s )
 {
   Uint16 latch = LATCHBUTTON_NONE;
   bool_t in_hand = bfalse;
@@ -129,7 +129,7 @@ INLINE const Uint16 slot_to_latch( Chr lst[], size_t count, Uint16 object, SLOT 
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE BData * bdata_new(BData * b)
+INLINE BData * BData_new(BData * b)
 {
   if(NULL == b) return NULL;
 
@@ -140,7 +140,7 @@ INLINE BData * bdata_new(BData * b)
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t bdata_delete(BData * b)
+INLINE bool_t BData_delete(BData * b)
 {
   if(NULL == b || !b->valid) return bfalse;
 
@@ -151,10 +151,10 @@ INLINE bool_t bdata_delete(BData * b)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE BData * bdata_renew(BData * b)
+INLINE BData * BData_renew(BData * b)
 {
   if(NULL==b) return NULL;
 
-  bdata_delete(b);
-  return bdata_new(b);
+  BData_delete(b);
+  return BData_new(b);
 }

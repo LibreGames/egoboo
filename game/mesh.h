@@ -248,6 +248,7 @@ INLINE const int mesh_clip_block_x( MESH_INFO * mi, int block_x );
 INLINE const int mesh_clip_block_y( MESH_INFO * mi, int block_y );
 
 INLINE const bool_t mesh_check( MESH_INFO * mi, float x, float y );
+INLINE const bool_t mesh_check_fan( MESH_INFO * mi, int fan_x, int fan_y );
 
 INLINE const Uint32 mesh_test_bits( MESH_FAN * mf_list, int fan, Uint32 bits );
 INLINE const bool_t mesh_has_some_bits( MESH_FAN * mf_list, int fan, Uint32 bits );

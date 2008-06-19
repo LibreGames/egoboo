@@ -172,7 +172,8 @@ void make_camera_matrix()
 {
   // ZZ> This function sets GCamera.mView to the camera's location and rotation
 
-  vect3 worldup = {0, 0, -gravity};
+  CGame * gs = gfxState.gs;
+  vect3 worldup = {0, 0, -gs->phys.gravity};
   float dither_x, dither_y;
 
   if ( GCamera.swingamp > 0 )
@@ -187,7 +188,7 @@ void make_camera_matrix()
 
   dither_x = 2.0f*( float ) rand() / ( float ) RAND_MAX - 1.0f;
   dither_y = 2.0f*( float ) rand() / ( float ) RAND_MAX - 1.0f;
-  frustum_jitter_fov( 10.0f, 20000.0f, DEG_TO_RAD*FOV, 2*dither_x, 2*dither_y);
+  frustum_jitter_fov( 10.0f, 20000.0f, DEG_TO_RAD*FOV, dither_x, dither_y);
 
   Frustum_CalculateFrustum( &gFrustum, GCamera.mProjectionBig.v, GCamera.mView.v );
 }
@@ -199,7 +200,8 @@ void move_camera( float dUpdate )
 
   CGame * gs = gfxState.gs;
 
-  int cnt, locoalive;  // Used in rts remove? -> int band,
+  PLA_REF pla_cnt;
+  int locoalive;  // Used in rts remove? -> int band,
   vect3 pos, vel, move;
   float level;
   CHR_REF chr_ref;
@@ -227,14 +229,14 @@ void move_camera( float dUpdate )
   vel.x = vel.y = vel.z = 0;
   level = 0;
   locoalive = 0;
-  for ( cnt = 0; cnt < MAXPLAYER; cnt++ )
+  for ( pla_cnt = 0; pla_cnt < PLALST_COUNT; pla_cnt++ )
   {
-    if ( !VALID_PLA(gs->PlaList,  cnt ) || INBITS_NONE == gs->PlaList[cnt].device ) continue;
+    if ( !VALID_PLA(gs->PlaList,  pla_cnt ) || INBITS_NONE == gs->PlaList[pla_cnt].device ) continue;
 
-    chr_ref = PlaList_get_character( gs, cnt );
+    chr_ref = PlaList_get_character( gs, pla_cnt );
     if ( VALID_CHR(gs->ChrList,  chr_ref ) && gs->ChrList[chr_ref].alive )
     {
-      CHR_REF attachedto_ref = chr_get_attachedto( gs->ChrList, MAXCHR, chr_ref );
+      CHR_REF attachedto_ref = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, chr_ref );
 
       if ( VALID_CHR(gs->ChrList,  attachedto_ref ) )
       {
@@ -308,18 +310,18 @@ void move_camera( float dUpdate )
 
     if ( keyb.on )
     {
-      if ( control_key_is_pressed( KEY_CAMERA_LEFT ) )
+      if ( control_key_is_pressed( (CONTROL)KEY_CAMERA_LEFT ) )
         GCamera.turnadd += CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
 
-      if ( control_key_is_pressed( KEY_CAMERA_RIGHT ) )
+      if ( control_key_is_pressed( (CONTROL)KEY_CAMERA_RIGHT ) )
         GCamera.turnadd -= CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
     };
 
 
-    if ( joy[0].on && !control_joy_is_pressed( 0, CONTROL_CAMERA ) )
+    if ( joy[0].on && !control_joy_is_pressed( 0, (CONTROL)CONTROL_CAMERA ) )
       GCamera.turnadd -= joy[0].latch.x * CAMJOYTURN * dUpdate / gs->cl->loc_pla_count;
 
-    if ( joy[1].on && !control_joy_is_pressed( 1, CONTROL_CAMERA ) )
+    if ( joy[1].on && !control_joy_is_pressed( 1, (CONTROL)CONTROL_CAMERA ) )
       GCamera.turnadd -= joy[1].latch.x * CAMJOYTURN * dUpdate / gs->cl->loc_pla_count;
   }
 
@@ -366,24 +368,24 @@ void move_camera( float dUpdate )
     // Keyboard camera controls
     if ( keyb.on )
     {
-      if ( control_key_is_pressed( KEY_CAMERA_LEFT ) )
+      if ( control_key_is_pressed( (CONTROL)KEY_CAMERA_LEFT ) )
       {
         GCamera.turnadd += CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
         doturntime = DELAY_TURN;  // Sticky turn...
       }
 
-      if ( control_key_is_pressed( KEY_CAMERA_RIGHT ) )
+      if ( control_key_is_pressed( (CONTROL)KEY_CAMERA_RIGHT ) )
       {
         GCamera.turnadd -= CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
         doturntime = DELAY_TURN;  // Sticky turn...
       }
 
-      if ( control_key_is_pressed( KEY_CAMERA_IN ) )
+      if ( control_key_is_pressed( (CONTROL)KEY_CAMERA_IN ) )
       {
         GCamera.zaddgoto -= CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
       }
 
-      if ( control_key_is_pressed( KEY_CAMERA_OUT ) )
+      if ( control_key_is_pressed( (CONTROL)KEY_CAMERA_OUT ) )
       {
         GCamera.zaddgoto += CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
       }
