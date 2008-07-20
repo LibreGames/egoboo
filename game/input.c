@@ -497,20 +497,28 @@ CPlayer * Player_new(CPlayer *ppla)
 { 
   //fprintf( stdout, "Player_new()\n");
 
-  if(NULL==ppla) return ppla; 
+  if(NULL ==ppla) return ppla; 
 
   memset(ppla, 0, sizeof(CPlayer));
-  ppla->used = bfalse;
 
+  EKEY_PNEW( ppla, CPlayer );
+
+  ppla->chr_ref = INVALID_CHR;
+  ppla->Active = bfalse;
+  
   return ppla; 
 };
 
 //--------------------------------------------------------------------------------------------
 bool_t   Player_delete(CPlayer *ppla) 
 { 
-  if(NULL==ppla) return bfalse;
+  if(NULL ==ppla) return bfalse;
 
-  ppla->used = bfalse;
+  if( !EKEY_PVALID(ppla) ) return btrue;
+
+  EKEY_PINVALIDATE(ppla);
+
+  ppla->Active = bfalse;
   
   return btrue; 
 };

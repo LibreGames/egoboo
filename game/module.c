@@ -48,9 +48,9 @@ static void   module_load_all_objects( CGame * gs, char * szModname );
 static bool_t module_load_all_waves( CGame * gs, char *modname );
 
 //--------------------------------------------------------------------------------------------
-void release_bumplist(void)
+void release_bumplist(MESH_INFO * pmesh)
 {
-  bumplist_renew( &bumplist );
+  bumplist_renew( &(pmesh->bumplist) );
 };
 
 //--------------------------------------------------------------------------------------------
@@ -60,6 +60,7 @@ void module_release( CGame * gs )
 
   bool_t client_running = bfalse, server_running = bfalse, local_running = bfalse;
   ModState * ms = &(gs->modstate);
+  MESH_INFO * mi = &(gs->mesh);
 
   if(!ms->Active) return;
 
@@ -77,8 +78,8 @@ void module_release( CGame * gs )
   // if the server has shut down, release all server dependent resources
   if(local_running || !server_running)
   {
-    release_map();
-    release_bumplist();
+    release_map(gs);
+    release_bumplist( &(mi->bumplist) );
   }
 
   if(local_running)
@@ -207,7 +208,7 @@ bool_t module_load( CGame * gs, char *smallname )
 
   STRING szModpath;
 
-  if(NULL == gs || NULL == smallname || '\0' == smallname[0]) return bfalse;
+  if(!EKEY_PVALID(gs) || NULL == smallname || '\0' == smallname[0]) return bfalse;
 
   gs->modstate.beat = bfalse;
   timeron = bfalse;
@@ -475,7 +476,11 @@ ModState * ModState_new(ModState * ms, MOD_INFO * mi, Uint32 seed)
 
   if(NULL == ms) return NULL;
 
+  ModState_delete( ms );
+
   memset(ms, 0, sizeof(ModState));
+
+  EKEY_PNEW(ms, ModState);
 
   // initialize the the non-zero, non NULL, non-false values
   ms->seed            = seed;
@@ -493,8 +498,6 @@ ModState * ModState_new(ModState * ms, MOD_INFO * mi, Uint32 seed)
     ms->respawnanytime = (RESPAWN_ANYTIME == mi->respawnmode);
   };
 
-  ms->initialized = btrue;
-
   return ms;
 };
 
@@ -503,12 +506,12 @@ ModState * ModState_new(ModState * ms, MOD_INFO * mi, Uint32 seed)
 bool_t ModState_delete(ModState * ms)
 {
   if(NULL == ms) return bfalse;
-  if(!ms->initialized) return btrue;
+  if( !EKEY_PVALID(ms) ) return btrue;
+
+  EKEY_PINVALIDATE(ms);
 
   ms->Active = bfalse;
   ms->Paused = btrue;
-
-  ms->initialized = bfalse;
 
   return btrue;
 }
@@ -646,6 +649,12 @@ MOD_SUMMARY * ModSummary_new( MOD_SUMMARY * ms )
 
   if(NULL == ms) return ms;
 
+  ModSummary_delete( ms );
+
+  memset( ms, 0, sizeof(MOD_SUMMARY) );
+
+  EKEY_PNEW( ms, ModSummary );
+
   ms->numlines = 0;
   for(i=0; i<SUMMARYLINES; i++)
   {
@@ -659,6 +668,9 @@ MOD_SUMMARY * ModSummary_new( MOD_SUMMARY * ms )
 bool_t ModSummary_delete( MOD_SUMMARY * ms )
 {
   if(NULL == ms) return bfalse;
+  if( !EKEY_PVALID(ms) ) return btrue;
+
+  EKEY_PINVALIDATE(ms);
 
   ms->numlines = 0;
 
@@ -680,9 +692,14 @@ MOD_INFO * ModInfo_new( MOD_INFO * pmi )
 {
   if(NULL == pmi) return pmi;
 
+  ModInfo_delete( pmi );
+
   //fprintf( stdout, "ModInfo_new()\n");
 
   memset(pmi, 0, sizeof(MOD_INFO));
+
+  EKEY_PNEW( pmi, MOD_INFO );
+
   pmi->tx_title_idx = MAXMODULE;
 
   return pmi;
@@ -692,8 +709,10 @@ MOD_INFO * ModInfo_new( MOD_INFO * pmi )
 bool_t ModInfo_delete( MOD_INFO * pmi )
 {
   if(NULL == pmi) return bfalse;
+  if( !EKEY_PVALID(pmi) ) return btrue;
 
-  memset(pmi, 0, sizeof(MOD_INFO));
+  EKEY_PINVALIDATE(pmi);
+
   pmi->tx_title_idx = MAXMODULE;
 
   return btrue;

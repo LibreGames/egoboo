@@ -68,7 +68,8 @@ typedef struct dynalight_pip_t
 // Particle profiles
 typedef struct CPip_t
 {
-  bool_t          used;
+  egoboo_key      ekey;
+  bool_t          Loaded;
 
   bool_t          force;                        // Force spawn?
   STRING          fname;
@@ -152,12 +153,13 @@ typedef struct CPip_t
 #endif
 
 CPip * Pip_new(CPip * ppip);
-CPip * Pip_delete(CPip * ppip);
+bool_t Pip_delete(CPip * ppip);
 CPip * Pip_renew(CPip * ppip);
 
 #define VALID_PIP_RANGE(XX) (((XX)>=0) && ((XX)<PIPLST_COUNT))
-#define VALID_PIP(LST, XX)    ( VALID_PIP_RANGE(XX) && LST[XX].used )
+#define VALID_PIP(LST, XX)    ( VALID_PIP_RANGE(XX) && EKEY_VALID(LST[XX]) )
 #define VALIDATE_PIP(LST, XX) ( VALID_PIP(LST, XX) ? (XX) : (INVALID_PIP) )
+#define LOADED_PIP(LST, XX)   ( VALID_PIP(LST, XX) && LST[XX].Loaded )
 
 
 typedef struct dynalight_prt_t
@@ -168,9 +170,41 @@ typedef struct dynalight_prt_t
   DYNA_MODE mode;                // Dynamic light on?
 } DYNALIGHT_PRT;
 
+typedef struct prt_spawn_info_t
+{
+  egoboo_key ekey;
+
+  struct CGame_t * gs;
+  Uint32 seed;
+  OBJ_REF iobj;
+  PIP_REF ipip;
+  PRT_REF iprt;
+
+  float    intensity;
+  vect3    pos;
+  vect3    vel;
+  Uint16   facing;
+  CHR_REF  characterattach;
+  Uint32   offset;
+  TEAM_REF team;
+  CHR_REF  characterorigin;
+  Uint16   multispawn;
+  CHR_REF oldtarget;
+} prt_spawn_info;
+
+prt_spawn_info * prt_spawn_info_new(prt_spawn_info * psi, struct CGame_t * gs);
+bool_t           prt_spawn_info_delete(prt_spawn_info * psi);
+
 typedef struct CPrt_t
 {
-  bool_t          on;                              // Does it exist?
+  egoboo_key      ekey;
+  bool_t          reserved;         // Is it going to be used?
+  bool_t          req_active;      // Are we going to auto-activate ASAP?
+  bool_t          active;          // is it currently on?
+  bool_t          gopoof;          // Is poof requested?
+  bool_t          freeme;          // Is PrtList_free_one() requested?
+
+  prt_spawn_info  spinfo;
 
   PIP_REF         pip;                             // The part template
   OBJ_REF         model;                           // CPip spawn model
@@ -180,11 +214,12 @@ typedef struct CPrt_t
   Uint16          alpha_fp8;
   Uint16          facing;                          // Direction of the part
   TEAM_REF        team;                            // Team
-  vect3           pos;                             // Position
-  vect3           vel;                             // Velocity
-  float           level;                           // Height of tile
-  vect3           pos_old;                         // Position
+
   CPhysAccum      accum;                       //
+  COrientation    ori;
+  COrientation    ori_old;
+
+  float           level;                           // Height of tile
   Uint8           spawncharacterstate;             //
   Uint16          rotate;                          // Rotation direction
   Sint16          rotateadd;                       // Rotation rate
@@ -200,7 +235,6 @@ typedef struct CPrt_t
   Uint16          lightg_fp8;                      // Light level
   Uint16          lightb_fp8;                      // Light level
   float           time;                            // Duration of particle
-  bool_t          gopoof;                          // Are we gone?
   float           spawntime;                       // Time until spawn
   Uint8           bumpsize;                        // Size of bumpers
   Uint8           bumpsizebig;                     //
@@ -251,8 +285,13 @@ MAD_REF PrtList_getRMad(struct CGame_t * gs, PRT_REF iprt);
 
 extern Uint16          particletexture;                            // All in one bitmap
 
-#define VALID_PRT(LST, XX) ( ((XX)>=0) && ((XX)<PRTLST_COUNT) && LST[XX].on )
+#define VALID_PRT_RANGE(XX)   (((XX)>=0) && ((XX)<PRTLST_COUNT))
+#define VALID_PRT(LST, XX)    ( VALID_PRT_RANGE(XX) && EKEY_VALID(LST[XX]) )
 #define VALIDATE_PRT(LST, XX) ( VALID_PRT(LST, XX) ? (XX) : (INVALID_PRT) )
+#define RESERVED_PRT(LST, XX) ( VALID_PRT(LST, XX) && LST[XX].reserved && !LST[XX].active   )
+#define ACTIVE_PRT(LST, XX)   ( VALID_PRT(LST, XX) && LST[XX].active   && !LST[XX].reserved )
+#define PENDING_PRT(LST, XX)  ( VALID_PRT(LST, XX) && (LST[XX].active || LST[XX].req_active) && !LST[XX].reserved )
+
 
 
 #define CALCULATE_PRT_U0(CNT)  (((.05f+(CNT&15))/16.0f)*(( float ) gs->TxTexture[particletexture].imgW / ( float ) gs->TxTexture[particletexture].txW))
@@ -260,16 +299,15 @@ extern Uint16          particletexture;                            // All in one
 #define CALCULATE_PRT_V0(CNT)  (((.05f+(CNT/16))/16.0f) * ((float)gs->TxTexture[particletexture].imgW/(float)gs->TxTexture[particletexture].imgH)*(( float ) gs->TxTexture[particletexture].imgH / ( float ) gs->TxTexture[particletexture].txH))
 #define CALCULATE_PRT_V1(CNT)  (((.95f+(CNT/16))/16.0f) * ((float)gs->TxTexture[particletexture].imgW/(float)gs->TxTexture[particletexture].imgH)*(( float ) gs->TxTexture[particletexture].imgH / ( float ) gs->TxTexture[particletexture].txH))
 
-
-
-
-void despawn_particles( struct CGame_t * gs );
+void PrtList_resynch( struct CGame_t * gs );
 void move_particles( struct CGame_t * gs, float dUpdate );
 void attach_particles( struct CGame_t * gs );
-PRT_REF spawn_one_particle( struct CGame_t * gs, float intensity, vect3 pos,
+PRT_REF prt_spawn_info_init( prt_spawn_info * psi, struct CGame_t * gs, float intensity, vect3 pos,
                            Uint16 facing, OBJ_REF model, PIP_REF pip,
                            CHR_REF characterattach, Uint32 offset, TEAM_REF team,
-                           CHR_REF characterorigin, Uint16 multispawn, CHR_REF oldtarget );
+                           CHR_REF characterorigin, Uint16 multispawn, CHR_REF oldtarget);
+
+PRT_REF req_spawn_one_particle( prt_spawn_info si );
 
 Uint32 prt_hitawall( struct CGame_t * gs, PRT_REF particle, vect3 * norm );
 

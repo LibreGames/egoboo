@@ -83,7 +83,7 @@ void fs_removeDirectoryAndContents( const char *dirname )
 
   // List all the files in the directory
   fileName = fs_findFirstFile( &fs_finfo, dirname, NULL, "*" );
-  while ( fileName != NULL )
+  while ( NULL != fileName  )
   {
     // Ignore files that start with a ., like .svn for example.
     if ( fileName[0] != '.' )
@@ -118,7 +118,7 @@ void fs_copyDirectory( const char *sourceDir, const char *destDir )
 
   // List all the files in the directory
   fileName = fs_findFirstFile( &fs_finfo, sourceDir, NULL, "*" );
-  if ( fileName != NULL )
+  if ( NULL != fileName  )
   {
     // Make sure the destination directory exists
     fs_createDirectory( destDir );
@@ -135,7 +135,7 @@ void fs_copyDirectory( const char *sourceDir, const char *destDir )
 
       fileName = fs_findNextFile(&fs_finfo);
     }
-    while ( fileName != NULL );
+    while ( NULL != fileName  );
   }
   fs_findClose(&fs_finfo);
 }

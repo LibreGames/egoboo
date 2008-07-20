@@ -31,7 +31,7 @@ ACTION action_number(char * szName)
 
   ACTION cnt;
 
-  if(NULL==szName || '\0' == szName[0] || '\0' == szName[1]) return ACTION_INVALID;
+  if(NULL ==szName || '\0' == szName[0] || '\0' == szName[1]) return ACTION_INVALID;
 
   for ( cnt = 0; cnt < MAXACTION; cnt++ )
   {
@@ -80,7 +80,7 @@ void action_copy_correct( CGame * gs, MAD_REF imad, ACTION actiona, ACTION actio
 
   CMad * pmad;
 
-  if( !VALID_MAD(gs->MadList, imad) ) return;
+  if( !LOADED_MAD(gs->MadList, imad) ) return;
   pmad = gs->MadList + imad;
 
   if ( pmad->actionvalid[actiona] == pmad->actionvalid[actionb] )
@@ -116,7 +116,7 @@ void get_walk_frame( CGame * gs, MAD_REF imad, LIPT lip_trans, ACTION action )
   int frame = 0;
   int framesinaction = 0;
 
-  if( !VALID_MAD(gs->MadList, imad) ) return;
+  if( !LOADED_MAD(gs->MadList, imad) ) return;
   pmad = gs->MadList + imad;
 
   framesinaction = pmad->actionend[action] - pmad->actionstart[action];
@@ -178,7 +178,7 @@ void make_framelip( CGame * gs, MAD_REF imad, ACTION action )
   CMad * pmad;
   int frame, framesinaction;
 
-  if( !VALID_MAD(gs->MadList, imad) ) return;
+  if( !LOADED_MAD(gs->MadList, imad) ) return;
   pmad = gs->MadList + imad;
 
   if ( pmad->actionvalid[action] )
@@ -345,12 +345,14 @@ void make_mad_equally_lit( CGame * gs, MAD_REF imad )
 
   int frame, vert;
   int iFrames, iVerts;
+  CMad * pmad;
   MD2_Model * m;
 
-  if( !VALID_MAD(gs->MadList, imad) ) return;
+  if( !LOADED_MAD(gs->MadList, imad) ) return;
+  pmad = gs->MadList + imad;
 
-  m = gs->MadList[imad].md2_ptr;
-  if(NULL == m) return;
+  if(NULL == pmad->md2_ptr) return;
+  m = pmad->md2_ptr;
 
   iFrames = md2_get_numFrames(m);
   iVerts  = md2_get_numVertices(m);
@@ -945,7 +947,7 @@ static bool_t mad_scale_bbox_tree(CMad * pmad)
 
   vect3 diff, origin;
 
-  if(NULL==pmad) return bfalse;
+  if(NULL ==pmad) return bfalse;
   pmd2 = pmad->md2_ptr;
 
   if(0 == pmad->bbox_frames || NULL == pmad->bbox_arrays) return bfalse;
@@ -1015,7 +1017,7 @@ static bool_t mad_scale_bbox_tree(CMad * pmad)
 //
 //  vect3 diff, origin;
 //
-//  if(NULL==pmad) return bfalse;
+//  if(NULL ==pmad) return bfalse;
 //  pmd2 = pmad->md2_ptr;
 //
 //  if(0 == pmad->bbox_frames || NULL == pmad->bbox_arrays) return bfalse;
@@ -1153,7 +1155,7 @@ bool_t mad_generate_bbox_tree(int max_level, CMad * pmad)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CMad *  Mad_new(CMad * pmad )
+CMad * Mad_new(CMad * pmad )
 {
   //fprintf( stdout, "Mad_new()\n");
 
@@ -1161,7 +1163,7 @@ CMad *  Mad_new(CMad * pmad )
 
   memset(pmad, 0, sizeof(CMad));
 
-  pmad->used = bfalse;
+  EKEY_PNEW(pmad, CMad);
 
   return pmad;
 }
@@ -1170,6 +1172,10 @@ CMad *  Mad_new(CMad * pmad )
 bool_t Mad_delete(CMad * pmad)
 {
   if(NULL == pmad) return bfalse;
+
+  if( !EKEY_PVALID(pmad) ) return btrue;
+
+  EKEY_PINVALIDATE(pmad);
 
   if(NULL != pmad->md2_ptr)
   {
@@ -1182,7 +1188,7 @@ bool_t Mad_delete(CMad * pmad)
 
   mad_delete_bbox_tree(pmad);
 
-  pmad->used = bfalse;
+  pmad->Loaded = bfalse;
 
   return btrue;
 };
@@ -1201,7 +1207,6 @@ MAD_REF MadList_load_one( CGame * gs, const char * szObjectpath, const char * sz
   // ZZ> This function loads an id md2 file, storing the converted data in the indexed model
   //    int iFileHandleRead;
 
-  STRING szLoadname;
   int iFrames;
   CMad * pmad;
 
@@ -1211,6 +1216,15 @@ MAD_REF MadList_load_one( CGame * gs, const char * szObjectpath, const char * sz
   if( !VALID_MAD_RANGE(imad) ) return INVALID_MAD;
   pmad = gs->MadList + imad;
 
+  // Make sure we don't load over an existing model
+  if( EKEY_PVALID(pmad) && pmad->Loaded )
+  {
+    log_error( "Model template (mad) %i is already used. (%s%s)\n", imad, szObjectpath, szObjectname );
+  }
+
+  // initialize the model template
+  Mad_new(pmad);
+
   // Make up a name for the mad...  IMPORT\TEMP0000.OBJ
   strncpy( pmad->name, szObjectpath, sizeof( pmad->name ) );
   if(NULL != szObjectname)
@@ -1218,12 +1232,7 @@ MAD_REF MadList_load_one( CGame * gs, const char * szObjectpath, const char * sz
     strncat( pmad->name, szObjectname, sizeof( pmad->name ) );
   }
 
-  // Make sure we don't load over an existing model
-  if ( pmad->used )
-  {
-    log_error( "Model slot %i is already used. (%s)\n", imad, szLoadname );
-  }
-
+  
   // make sure we have a clean CMad. More complicated because of dynamic allocation...
   if(NULL == Mad_renew(pmad)) return INVALID_MAD;
 
@@ -1253,7 +1262,7 @@ MAD_REF MadList_load_one( CGame * gs, const char * szObjectpath, const char * sz
   pmad->framefx  = (Uint16*)calloc(iFrames, sizeof(Uint16));
 
   // tell everyone that we loaded correctly
-  pmad->used = btrue;
+  pmad->Loaded = btrue;
 
   // Create the actions table for this object
   get_actions( gs, imad );

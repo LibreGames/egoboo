@@ -36,7 +36,7 @@ struct CGame_t;
 enum mnu_e;
 typedef struct MenuProc_t
 {
-  bool_t initialized;
+  egoboo_key ekey;
 
   // the "inherited" structure
   ProcState proc;

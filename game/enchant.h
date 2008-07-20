@@ -1,6 +1,6 @@
 #pragma once
 
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 #include "object.h"
 
 #define EVELST_COUNT                          OBJLST_COUNT  // One enchant type per model
@@ -63,7 +63,8 @@ typedef enum eve_add_e
 
 typedef struct CEve_t
 {
-  bool_t          used;                        // Enchant.txt loaded?
+  egoboo_key      ekey;
+  bool_t          Loaded;                      // Enchant.txt loaded?
 
   bool_t          override;                    // Override other enchants?
   bool_t          removeoverridden;            // Remove other enchants?
@@ -107,12 +108,40 @@ bool_t Eve_delete( CEve * peve );
 CEve *  Eve_renew( CEve * peve );
 
 #define VALID_EVE_RANGE(XX) (((XX)>=0) && ((XX)<EVELST_COUNT))
-#define VALID_EVE(LST, XX)    ( VALID_EVE_RANGE(XX) && LST[XX].used )
+#define VALID_EVE(LST, XX)    ( VALID_EVE_RANGE(XX) && EKEY_VALID(LST[XX]) )
 #define VALIDATE_EVE(LST, XX) ( VALID_EVE(LST, XX) ? (XX) : (INVALID_EVE) )
+#define LOADED_EVE(LST, XX)  ( VALID_EVE(LST, XX) && LST[XX].Loaded )
+
+typedef struct enc_spawn_info_t
+{
+  egoboo_key ekey;
+  struct CGame_t * gs;
+
+  Uint32 seed;
+  ENC_REF ienc;
+
+  CHR_REF owner;
+  CHR_REF target;
+  CHR_REF spawner;
+  ENC_REF enchantindex;
+  OBJ_REF iobj;
+  EVE_REF ieve;
+
+} enc_spawn_info;
+
+enc_spawn_info * enc_spawn_info_new(enc_spawn_info * psi, struct CGame_t * gs);
 
 typedef struct CEnc_t
 {
-  bool_t          on;                      // Enchantment on
+  egoboo_key      ekey;
+
+  bool_t          reserved;         // Is it going to be used?
+  bool_t          req_active;      // Are we going to auto-activate ASAP?
+  bool_t          active;          // Is it currently on?
+  bool_t          gopoof;          // Is poof requested?
+  bool_t          freeme;          // Is EncList_free_one() requested?
+
+  enc_spawn_info  spinfo;
 
   OBJ_REF         profile;                 // The profile that the eve came from
   EVE_REF         eve;                     // The eve
@@ -142,14 +171,20 @@ typedef struct CEnc_t
 #endif
 
 CEnc *  CEnc_new(CEnc *penc);
-bool_t CEnc_delete( CEnc * penc );
+bool_t  CEnc_delete( CEnc * penc );
 CEnc *  CEnc_renew( CEnc * penc );
 
 ENC_REF EncList_get_free( struct CGame_t * gs, ENC_REF irequest);
 
-#define VALID_ENC_RANGE(XX) (((XX)>=0) && ((XX)<ENCLST_COUNT))
-#define VALID_ENC(LST, XX)    ( VALID_ENC_RANGE(XX) && LST[XX].on )
+#define VALID_ENC_RANGE(XX)   (((XX)>=0) && ((XX)<ENCLST_COUNT))
+#define VALID_ENC(LST, XX)    ( VALID_ENC_RANGE(XX) && EKEY_VALID(LST[XX]) )
 #define VALIDATE_ENC(LST, XX) ( VALID_ENC(LST, XX) ? (XX) : (INVALID_ENC) )
+#define RESERVED_ENC(LST, XX) ( VALID_ENC(LST, XX) && LST[XX].reserved && !LST[XX].active   )
+#define ACTIVE_ENC(LST, XX)   ( VALID_ENC(LST, XX) && LST[XX].active   && !LST[XX].reserved )
+#define PENDING_ENC(LST, XX)  ( VALID_ENC(LST, XX) && (LST[XX].active || LST[XX].req_active) && !LST[XX].reserved )
+
+
+void EncList_resynch( struct CGame_t * gs );
 
 typedef enum disenchant_mode_e
 {
@@ -174,7 +209,11 @@ void   set_enchant_value( struct CGame_t * gs, ENC_REF enchantindex, Uint8 value
 void   getadd( int min, int value, int max, int* valuetoadd );
 void   fgetadd( float min, float value, float max, float* valuetoadd );
 void   add_enchant_value( struct CGame_t * gs, ENC_REF enchantindex, Uint8 valueindex, EVE_REF enchanttype );
-ENC_REF spawn_one_enchant( struct CGame_t * gs, CHR_REF owner, CHR_REF target, CHR_REF spawner, ENC_REF enchantindex, OBJ_REF modeloptional );
+
+
+
+ENC_REF enc_spawn_info_init( enc_spawn_info * psi, struct CGame_t * gs, CHR_REF owner, CHR_REF target, CHR_REF spawner, ENC_REF enchantindex, OBJ_REF modeloptional );
+ENC_REF req_spawn_one_enchant( enc_spawn_info si );
 
 void enc_spawn_particles( struct CGame_t * gs, float dUpdate );
 void disenchant_character( struct CGame_t * gs, CHR_REF character );

@@ -185,7 +185,7 @@ static int copySurfaceToTexture( SDL_Surface *surface, GLuint texture, GLfloat *
   image = SDL_CreateRGBSurface( SDL_SWSURFACE, w, h, 32, 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff );
 #endif
 
-  if ( image == NULL )
+  if ( NULL == image  )
   {
     return 0;
   }
@@ -259,7 +259,7 @@ static void fnt_quit(void)
     pfnt = fnt_reg_pop(&fnt_registry);
     assert(NULL != pfnt);
 
-    if(close_fonts && NULL!=pfnt->ttfFont)
+    if(close_fonts && NULL !=pfnt->ttfFont)
     {
       TTF_CloseFont(pfnt->ttfFont);
     }
@@ -419,7 +419,7 @@ void fnt_drawTextBox( TTFont *font, const char *text, int x, int y,  int width, 
   strncpy( buffer, text, len );
 
   line = strtok( buffer, "\n" );
-  while ( line != NULL )
+  while ( NULL != line  )
   {
     fnt_drawText( font, x, y, line );
     y += spacing;
@@ -454,7 +454,7 @@ void fnt_getTextBoxSize( TTFont *font, const char *text, int spacing, int *width
 
   line = strtok( buffer, "\n" );
   *width = *height = 0;
-  while ( line != NULL )
+  while ( NULL != line  )
   {
     TTF_SizeText( font->ttfFont, line, &tmp_w, &tmp_h );
     *width = ( *width > tmp_w ) ? *width : tmp_w;

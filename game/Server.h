@@ -29,7 +29,7 @@
 #include "char.h"
 #include "input.h"
 
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 #include "egoboo.h"
 
 #include <enet.h>
@@ -44,7 +44,7 @@ bool_t    sv_Started();
 //--------------------------------------------------------------------------------------------
 typedef struct CServer_t
 {
-  bool_t initialized;
+  egoboo_key ekey;
 
   // my network
   Uint32           net_guid;
@@ -65,7 +65,7 @@ typedef struct CServer_t
 
   // local module parameters
   int         selectedModule;
-  int         loc_mod_count;
+  size_t      loc_mod_count;
   MOD_INFO    loc_mod[MAXMODULE];
   MOD_SUMMARY loc_modtxt;
 
@@ -111,3 +111,4 @@ bool_t sv_handlePacket(CServer * ss, ENetEvent *event);
 // int  sv_loadModule(...)
 
 
+bool_t sv_send_chr_setup( CServer * ss, chr_spawn_info * si );

@@ -73,7 +73,7 @@ void md2_blend_vertices(CChr * pchr, Sint32 vrtmin, Sint32 vrtmax)
 
   CGame * gs = gfxState.gs;
 
-  if( NULL == pchr || !pchr->on ) return;
+  if( !EKEY_PVALID(pchr) ) return;
 
   iobj = pchr->model = VALIDATE_OBJ(gs->ObjList, pchr->model);
   if( INVALID_OBJ == iobj) return;
@@ -114,9 +114,9 @@ void md2_blend_vertices(CChr * pchr, Sint32 vrtmin, Sint32 vrtmax)
   off.v = FP8_TO_FLOAT(pchr->voffset_fp8);
 
   // do some error trapping
-  if(NULL==pfrom && NULL==pto) return;
-  else if(NULL==pfrom) lerp = 1.0f;
-  else if(NULL==pto  ) lerp = 0.0f;
+  if(NULL ==pfrom && NULL ==pto) return;
+  else if(NULL ==pfrom) lerp = 1.0f;
+  else if(NULL ==pto  ) lerp = 0.0f;
   else if(pfrom==pto  ) lerp = 0.0f;
 
   // do the interpolating
@@ -142,8 +142,8 @@ void md2_blend_vertices(CChr * pchr, Sint32 vrtmin, Sint32 vrtmax)
       if(pchr->enviro)
       {
         pchr->vdata.Texture[i].s  = off.u + CLIP((1-pchr->vdata.Normals[i].z)/2.0f,0,1);
-        pchr->vdata.Texture[i].t  = off.v + atan2(pchr->vdata.Normals[i].y, pchr->vdata.Normals[i].x)*INV_TWO_PI - pchr->turn_lr/(float)(1<<16);
-        pchr->vdata.Texture[i].t -= atan2(pchr->pos.y-GCamera.pos.y, pchr->pos.x-GCamera.pos.x)*INV_TWO_PI;
+        pchr->vdata.Texture[i].t  = off.v + atan2(pchr->vdata.Normals[i].y, pchr->vdata.Normals[i].x)*INV_TWO_PI - pchr->ori.turn_lr/(float)(1<<16);
+        pchr->vdata.Texture[i].t -= atan2(pchr->ori.pos.y-GCamera.pos.y, pchr->ori.pos.x-GCamera.pos.x)*INV_TWO_PI;
       };
     }
   }
@@ -167,8 +167,8 @@ void md2_blend_vertices(CChr * pchr, Sint32 vrtmin, Sint32 vrtmax)
       if(pchr->enviro)
       {
         pchr->vdata.Texture[i].s  = off.u + CLIP((1-pchr->vdata.Normals[i].z)/2.0f,0,1);
-        pchr->vdata.Texture[i].t  = off.v + atan2(pchr->vdata.Normals[i].y, pchr->vdata.Normals[i].x )*INV_TWO_PI - pchr->turn_lr/(float)(1<<16);
-        pchr->vdata.Texture[i].t -= atan2(pchr->pos.y-GCamera.pos.y, pchr->pos.x-GCamera.pos.x )*INV_TWO_PI;
+        pchr->vdata.Texture[i].t  = off.v + atan2(pchr->vdata.Normals[i].y, pchr->vdata.Normals[i].x )*INV_TWO_PI - pchr->ori.turn_lr/(float)(1<<16);
+        pchr->vdata.Texture[i].t -= atan2(pchr->ori.pos.y-GCamera.pos.y, pchr->ori.pos.x-GCamera.pos.x )*INV_TWO_PI;
       };
     }
   }
@@ -192,8 +192,8 @@ void md2_blend_vertices(CChr * pchr, Sint32 vrtmin, Sint32 vrtmax)
       if(pchr->enviro)
       {
         pchr->vdata.Texture[i].s  = off.u + CLIP((1-pchr->vdata.Normals[i].z)/2.0f,0,1);
-        pchr->vdata.Texture[i].t  = off.v + atan2(pchr->vdata.Normals[i].y, pchr->vdata.Normals[i].x)*INV_TWO_PI - pchr->turn_lr/(float)(1<<16);
-        pchr->vdata.Texture[i].t -= atan2(pchr->pos.y-GCamera.pos.y, pchr->pos.x-GCamera.pos.x)*INV_TWO_PI;
+        pchr->vdata.Texture[i].t  = off.v + atan2(pchr->vdata.Normals[i].y, pchr->vdata.Normals[i].x)*INV_TWO_PI - pchr->ori.turn_lr/(float)(1<<16);
+        pchr->vdata.Texture[i].t -= atan2(pchr->ori.pos.y-GCamera.pos.y, pchr->ori.pos.x-GCamera.pos.x)*INV_TWO_PI;
       };
     }
   }
@@ -237,7 +237,7 @@ void md2_blend_lighting(CChr * pchr)
 
   CCap          * pcap;
 
-  if( NULL == pchr || !pchr->on ) return;
+  if( !EKEY_PVALID(pchr) ) return;
   vd = &(pchr->vdata);
 
   // only calculate the lighting if it is "needed"
@@ -261,9 +261,9 @@ void md2_blend_lighting(CChr * pchr)
   sheen_fp8       = pchr->sheen_fp8;
   spekularity_fp8 = FLOAT_TO_FP8( ( float )sheen_fp8 / ( float )MAXSPEKLEVEL );
 
-  lightrotationr = pchr->turn_lr + pchr->tlight.turn_lr.r;
-  lightrotationg = pchr->turn_lr + pchr->tlight.turn_lr.g;
-  lightrotationb = pchr->turn_lr + pchr->tlight.turn_lr.b;
+  lightrotationr = pchr->ori.turn_lr + pchr->tlight.turn_lr.r;
+  lightrotationg = pchr->ori.turn_lr + pchr->tlight.turn_lr.g;
+  lightrotationb = pchr->ori.turn_lr + pchr->tlight.turn_lr.b;
 
   ambilevelr_fp8 = pchr->tlight.ambi_fp8.r;
   ambilevelg_fp8 = pchr->tlight.ambi_fp8.g;
@@ -391,7 +391,7 @@ void draw_textured_md2_opengl(CHR_REF ichr)
 
 
     cmd  = md2_get_Commands(pmd2);
-    for (/*nothing */; NULL!=cmd; cmd = cmd->next)
+    for (/*nothing */; NULL !=cmd; cmd = cmd->next)
     {
       Uint32 i;
       glBegin(cmd->gl_mode);
@@ -464,7 +464,7 @@ void draw_enviromapped_md2_opengl(CHR_REF ichr)
 
 
     cmd = md2_get_Commands(pmd2);
-    for (/*nothing */; NULL!=cmd; cmd = cmd->next)
+    for (/*nothing */; NULL !=cmd; cmd = cmd->next)
     {
       Uint32 i;
       glBegin(cmd->gl_mode);
@@ -553,7 +553,7 @@ void render_mad_lit( CHR_REF ichr )
 
   CGame * gs = gfxState.gs;
 
-  if( !VALID_CHR(gs->ChrList, ichr) ) return;
+  if( !ACTIVE_CHR(gs->ChrList, ichr) ) return;
   pchr = gs->ChrList + ichr;
 
   calc_lighting_data(gs, pchr);
@@ -608,7 +608,7 @@ void render_texmad(CHR_REF ichr, Uint8 trans)
   Uint16 texture;
   CGame * gs = gfxState.gs;
 
-  if(!VALID_CHR(gs->ChrList, ichr)) return;
+  if(!ACTIVE_CHR(gs->ChrList, ichr)) return;
   pchr = gs->ChrList + ichr;
 
   texture = pchr->skin_ref + gs->ObjList[pchr->model].skinstart;
@@ -659,7 +659,7 @@ void render_enviromad(CHR_REF ichr, Uint8 trans)
   Uint16 texture;
   CGame * gs = gfxState.gs;
 
-  if(!VALID_CHR(gs->ChrList, ichr)) return;
+  if(!ACTIVE_CHR(gs->ChrList, ichr)) return;
 
   texture = gs->ChrList[ichr].skin_ref + gs->ObjList[gs->ChrList[ichr].model].skinstart;
 
@@ -709,13 +709,21 @@ void render_mad( CHR_REF ichr, Uint8 trans )
   CCap  * pcap = ChrList_getPCap(gs, ichr);
   Sint8   hide = pcap->hidestate;
 
-  if ( hide == NOHIDE || hide != pchr->aistate.state )
-  {
-    if ( pchr->enviro )
-      render_enviromad( ichr, trans );
-    else
-      render_texmad( ichr, trans );
-  }
+  // 100% transparent items are not drawn
+  if(trans == 0) return;
+
+  // items that are in packs are not drawn
+  if(INVALID_CHR != pchr->inwhichpack) return;
+
+  // hidden items are not drawn
+  if(hide != NOHIDE && hide == pchr->aistate.state) return; 
+
+  // dispatch the drawing to the correct routine
+  if ( pchr->enviro )
+    render_enviromad( ichr, trans );
+  else
+    render_texmad( ichr, trans );
+
 }
 
 //--------------------------------------------------------------------------------------------
@@ -940,7 +948,7 @@ void chr_draw_BBox(CHR_REF ichr)
   CChr * pchr;
   BData * bd;
 
-  if( !VALID_CHR(gs->ChrList, ichr) ) return;
+  if( !ACTIVE_CHR(gs->ChrList, ichr) ) return;
   pchr = gs->ChrList + ichr;
   bd = &(pchr->bmpdata);
 
@@ -964,151 +972,4 @@ void chr_draw_BBox(CHR_REF ichr)
 };
 
 
-
-//--------------------------------------------------------------------------------------------
-bool_t CVolume_draw( CVolume * cv, bool_t draw_square, bool_t draw_diamond  )
-{
-  bool_t retval = bfalse;
-
-  if(NULL == cv) return bfalse;
-
-  ATTRIB_PUSH( "CVolume_draw", GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_DEPTH_BUFFER_BIT );
-  {
-    // don't write into the depth buffer
-    glDepthMask( GL_FALSE );
-    glEnable(GL_DEPTH_TEST);
-
-    // fix the poorly chosen normals...
-    glDisable( GL_CULL_FACE );
-
-    // make them transparent
-    glEnable(GL_BLEND);
-    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-
-    // choose a "white" texture
-    GLTexture_Bind(NULL, &gfxState);
-
-    //------------------------------------------------
-    // DIAGONAL BBOX
-
-    if(cv->lod > 1 && draw_diamond)
-    {
-      float p1_x, p1_y;
-      float p2_x, p2_y;
-
-      glColor4f(0.5, 1, 1, 0.1);
-
-      p1_x = 0.5f * (cv->xy_max - cv->yx_max);
-      p1_y = 0.5f * (cv->xy_max + cv->yx_max);
-      p2_x = 0.5f * (cv->xy_max - cv->yx_min);
-      p2_y = 0.5f * (cv->xy_max + cv->yx_min);
-
-      glBegin(GL_QUADS);
-        glVertex3f(p1_x, p1_y, cv->z_min);
-        glVertex3f(p2_x, p2_y, cv->z_min);
-        glVertex3f(p2_x, p2_y, cv->z_max);
-        glVertex3f(p1_x, p1_y, cv->z_max);
-      glEnd();
-
-      p1_x = 0.5f * (cv->xy_max - cv->yx_min);
-      p1_y = 0.5f * (cv->xy_max + cv->yx_min);
-      p2_x = 0.5f * (cv->xy_min - cv->yx_min);
-      p2_y = 0.5f * (cv->xy_min + cv->yx_min);
-
-      glBegin(GL_QUADS);
-        glVertex3f(p1_x, p1_y, cv->z_min);
-        glVertex3f(p2_x, p2_y, cv->z_min);
-        glVertex3f(p2_x, p2_y, cv->z_max);
-        glVertex3f(p1_x, p1_y, cv->z_max);
-      glEnd();
-
-      p1_x = 0.5f * (cv->xy_min - cv->yx_min);
-      p1_y = 0.5f * (cv->xy_min + cv->yx_min);
-      p2_x = 0.5f * (cv->xy_min - cv->yx_max);
-      p2_y = 0.5f * (cv->xy_min + cv->yx_max);
-
-      glBegin(GL_QUADS);
-        glVertex3f(p1_x, p1_y, cv->z_min);
-        glVertex3f(p2_x, p2_y, cv->z_min);
-        glVertex3f(p2_x, p2_y, cv->z_max);
-        glVertex3f(p1_x, p1_y, cv->z_max);
-      glEnd();
-
-      p1_x = 0.5f * (cv->xy_min - cv->yx_max);
-      p1_y = 0.5f * (cv->xy_min + cv->yx_max);
-      p2_x = 0.5f * (cv->xy_max - cv->yx_max);
-      p2_y = 0.5f * (cv->xy_max + cv->yx_max);
-
-      glBegin(GL_QUADS);
-        glVertex3f(p1_x, p1_y, cv->z_min);
-        glVertex3f(p2_x, p2_y, cv->z_min);
-        glVertex3f(p2_x, p2_y, cv->z_max);
-        glVertex3f(p1_x, p1_y, cv->z_max);
-      glEnd();
-
-      retval = btrue;
-    }
-
-    //------------------------------------------------
-    // SQUARE BBOX
-    if(draw_square)
-    {
-      glColor4f(1, 0.5, 1, 0.1);
-
-      // XZ FACE, min Y
-      glBegin(GL_QUADS);
-        glVertex3f(cv->x_min, cv->y_min, cv->z_min);
-        glVertex3f(cv->x_min, cv->y_min, cv->z_max);
-        glVertex3f(cv->x_max, cv->y_min, cv->z_max);
-        glVertex3f(cv->x_max, cv->y_min, cv->z_min);
-      glEnd();
-
-      // YZ FACE, min X
-      glBegin(GL_QUADS);
-        glVertex3f(cv->x_min, cv->y_min, cv->z_min);
-        glVertex3f(cv->x_min, cv->y_min, cv->z_max);
-        glVertex3f(cv->x_min, cv->y_max, cv->z_max);
-        glVertex3f(cv->x_min, cv->y_max, cv->z_min);
-      glEnd();
-
-      // XZ FACE, max Y
-      glBegin(GL_QUADS);
-        glVertex3f(cv->x_min, cv->y_max, cv->z_min);
-        glVertex3f(cv->x_min, cv->y_max, cv->z_max);
-        glVertex3f(cv->x_max, cv->y_max, cv->z_max);
-        glVertex3f(cv->x_max, cv->y_max, cv->z_min);
-      glEnd();
-
-      // YZ FACE, max X
-      glBegin(GL_QUADS);
-        glVertex3f(cv->x_max, cv->y_min, cv->z_min);
-        glVertex3f(cv->x_max, cv->y_min, cv->z_max);
-        glVertex3f(cv->x_max, cv->y_max, cv->z_max);
-        glVertex3f(cv->x_max, cv->y_max, cv->z_min);
-      glEnd();
-
-      // XY FACE, min Z
-      glBegin(GL_QUADS);
-        glVertex3f(cv->x_min, cv->y_min, cv->z_min);
-        glVertex3f(cv->x_min, cv->y_max, cv->z_min);
-        glVertex3f(cv->x_max, cv->y_max, cv->z_min);
-        glVertex3f(cv->x_max, cv->y_min, cv->z_min);
-      glEnd();
-
-      // XY FACE, max Z
-      glBegin(GL_QUADS);
-        glVertex3f(cv->x_min, cv->y_min, cv->z_max);
-        glVertex3f(cv->x_min, cv->y_max, cv->z_max);
-        glVertex3f(cv->x_max, cv->y_max, cv->z_max);
-        glVertex3f(cv->x_max, cv->y_min, cv->z_max);
-      glEnd();
-
-      retval = btrue;
-    }
-
-  }
-  ATTRIB_POP( "CVolume_draw" );
-
-  return retval;
-};
 

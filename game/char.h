@@ -32,10 +32,10 @@ struct CMad_t;
 #define MAXVERTICES                    1024         // Max number of points in a model
 
 #define MAXSTOR             (1<<4)                  // Storage data
-#define STORAND             (MAXSTOR-1)             //
+#define STOR_AND             (MAXSTOR-1)             //
 
 
-#define DELAY_BORE                        (rand()&255)+120
+#define DELAY_BORE(PRAND)               (IRAND(PRAND, 8) + 120)
 #define DELAY_CAREFUL                     50
 #define REEL                            7600.0      // Dampen for melee knock back
 #define REELBASE                        .35         //
@@ -246,6 +246,8 @@ typedef struct skin_t
 //--------------------------------------------------------------------------------------------
 typedef struct CProperties_t
 {
+  egoboo_key ekey;
+
   // [BEGIN] Character template parameters that are like Skill Expansions
   bool_t        istoobig;                      // Can't be put in pack
   bool_t        reflect;                       // Draw the reflection
@@ -293,39 +295,49 @@ typedef struct CProperties_t
 
 } CProperties;
 
+CProperties * CProperties_new( CProperties * p);
+bool_t        CProperties_init( CProperties * p );
+
+
+
 //--------------------------------------------------------------------------------------------
 typedef struct CStatData_t
 {
-  // life
-  PAIR          life_fp8;                      // Life
-  PAIR          lifeperlevel_fp8;              //
+
+  // LIFE
+  PAIR          life_pair;                      // Life
+  PAIR          lifeperlevel_pair;              //
   Sint16        lifereturn_fp8;                //
   Uint16        lifeheal_fp8;                  //
 
-  // mana
-  PAIR          mana_fp8;                      // Mana
-  PAIR          manaperlevel_fp8;              //
-  PAIR          manareturn_fp8;                //
-  PAIR          manareturnperlevel_fp8;        //
-  PAIR          manaflow_fp8;                  //
-  PAIR          manaflowperlevel_fp8;          //
+  // MANA
+  PAIR          mana_pair;                      // Mana
+  PAIR          manaperlevel_pair;              //
+  PAIR          manareturn_pair;                //
+  PAIR          manareturnperlevel_pair;        //
+  PAIR          manaflow_pair;                  //
+  PAIR          manaflowperlevel_pair;          //
 
   // SWID
-  PAIR          strength_fp8;                  // Strength
-  PAIR          strengthperlevel_fp8;          //
-  PAIR          wisdom_fp8;                    // Wisdom
-  PAIR          wisdomperlevel_fp8;            //
-  PAIR          intelligence_fp8;              // Intlligence
-  PAIR          intelligenceperlevel_fp8;      //
-  PAIR          dexterity_fp8;                 // Dexterity
-  PAIR          dexterityperlevel_fp8;         //
+  PAIR          strength_pair;                  // Strength
+  PAIR          strengthperlevel_pair;          //
+
+  PAIR          wisdom_pair;                    // Wisdom
+  PAIR          wisdomperlevel_pair;            //
+
+  PAIR          intelligence_pair;              // Intlligence
+  PAIR          intelligenceperlevel_pair;      //
+
+  PAIR          dexterity_pair;                 // Dexterity
+  PAIR          dexterityperlevel_pair;         //
 
 } CStatData;
 
 //--------------------------------------------------------------------------------------------
 typedef struct CCap_t
 {
-  bool_t        used;
+  egoboo_key    ekey;
+  bool_t        Loaded;
 
   char          classname[MAXCAPNAMESIZE];     // Class name
   Sint8         skinoverride;                  // -1 or 0-3.. For import
@@ -424,9 +436,10 @@ CCap *  Cap_renew(CCap *pcap);
 #define CAP_INHERIT_IDSZ(PGS, MODEL, ID) (PGS->CapList[MODEL].idsz[IDSZ_PARENT] == (IDSZ)(ID) || PGS->CapList[MODEL].idsz[IDSZ_TYPE] == (IDSZ)(ID))
 #define CAP_INHERIT_IDSZ_RANGE(PGS, MODEL,IDMIN,IDMAX) ((PGS->CapList[MODEL].idsz[IDSZ_PARENT] >= (IDSZ)(IDMIN) && PGS->CapList[MODEL].idsz[IDSZ_PARENT] <= (IDSZ)(IDMAX)) || (PGS->CapList[MODEL].idsz[IDSZ_TYPE] >= (IDSZ)(IDMIN) && PGS->CapList[MODEL].idsz[IDSZ_TYPE] <= (IDSZ)(IDMAX)) )
 
-#define VALID_CAP_RANGE(XX) (((XX)>=0) && ((XX)<CAPLST_COUNT))
-#define VALID_CAP(LST, XX)    ( VALID_CAP_RANGE(XX) && LST[XX].used )
+#define VALID_CAP_RANGE(XX)   (((XX)>=0) && ((XX)<CAPLST_COUNT))
+#define VALID_CAP(LST, XX)    ( VALID_CAP_RANGE(XX) && EKEY_VALID(LST[XX]) )
 #define VALIDATE_CAP(LST, XX) ( VALID_CAP(LST, XX) ? (XX) : (INVALID_CAP) )
+#define LOADED_CAP(LST, XX)   ( VALID_CAP(LST, XX) && LST[XX].Loaded )
 
 //--------------------------------------------------------------------------------------------
 typedef struct lighting_data_t
@@ -485,6 +498,8 @@ bool_t wp_list_prune(WP_LIST * wl);
 //--------------------------------------------------------------------------------------------
 typedef struct ai_state_t
 {
+  egoboo_key ekey;
+
   Uint16          type;          // The AI script to run
 
   // some ai state variables 
@@ -513,7 +528,7 @@ typedef struct ai_state_t
   DAMAGE          damagetypelast;  // Last damage type
   TURNMODE        turnmode;        // Turning mode
   vect3           trgvel;          // target's velocity
-  CLatch           latch;           // latches
+  CLatch          latch;           // latches
 
   // "global" variables. Any character to character messages should be sent another way
   // there is no guarantee that scripts will be processed in any specific order!
@@ -529,8 +544,10 @@ typedef struct ai_state_t
   Sint32 tmpargument;
 } AI_STATE;
 
-INLINE AI_STATE * ai_state_new(struct CGame_t * gs, AI_STATE * a, CHR_REF ichr);
-INLINE AI_STATE * ai_state_renew(AI_STATE * a, CHR_REF ichr);
+INLINE AI_STATE * ai_state_new(AI_STATE * a);
+INLINE bool_t     ai_state_delete(AI_STATE * a);
+INLINE AI_STATE * ai_state_init(struct CGame_t * gs, AI_STATE * a, CHR_REF ichr);
+INLINE AI_STATE * ai_state_reinit(AI_STATE * a, CHR_REF ichr);
 
 
 //--------------------------------------------------------------------------------------------
@@ -565,12 +582,77 @@ typedef struct CStats_t
 } CStats;
 
 //--------------------------------------------------------------------------------------------
+typedef struct chr_spawn_info_t
+{
+  egoboo_key ekey;
+
+  struct CGame_t * gs;       // this is the game state that this character belongs to;
+  Uint32 seed;               // the value of gs->randie_seed at the time of character creation
+
+  // this is the net ID of the owner of this character (for net play)
+  Uint32 net_id;
+
+  // this is the ID number that has been reserverd for this object
+  CHR_REF  ichr;
+
+  // the generic spawn information
+  vect3    pos;
+  vect3    vel;
+  OBJ_REF  iobj;
+  TEAM_REF iteam;
+  Uint8    iskin;
+  Uint16   facing;
+  SLOT     slot;
+  STRING   name;
+  CHR_REF  ioverride;
+
+  Sint32   money;
+  int      content;
+  PASS_REF passage;
+  int      level;
+  bool_t   stat;
+  bool_t   ghost;
+} chr_spawn_info;
+
+chr_spawn_info * chr_spawn_info_new(chr_spawn_info * psi, struct CGame_t * gs );
+bool_t           chr_spawn_info_init( chr_spawn_info * psi, vect3 pos, vect3 vel, 
+                                      OBJ_REF iobj, TEAM_REF team, Uint8 skin, Uint16 facing, 
+                                      const char *name, CHR_REF override );
+//--------------------------------------------------------------------------------------------
+typedef struct chr_spawn_queue_t
+{
+  egoboo_key ekey;
+  int head, tail;
+
+  size_t           data_size;
+  chr_spawn_info * data;
+} chr_spawn_queue;
+
+chr_spawn_queue * chr_spawn_queue_new(chr_spawn_queue * q, int size);
+bool_t            chr_spawn_queue_delete(chr_spawn_queue * q);
+chr_spawn_info  * chr_spawn_queue_pop(chr_spawn_queue * q);
+bool_t            chr_spawn_queue_push(chr_spawn_queue * q, chr_spawn_info * psi );
+
+//--------------------------------------------------------------------------------------------
+typedef struct CSignal_t
+{
+  Uint32 type;  // The type of this message
+  Uint32 data;  // The message data (i.e. the rank of the character or something)
+} CSignal;
+
+//--------------------------------------------------------------------------------------------
 typedef struct CChr_t
 {
-  bool_t          on;              // Does it exist?
+  egoboo_key      ekey;
+  bool_t          reserved;        // Is it going to be used?
+  bool_t          req_active;      // Are we going to auto-activate ASAP?
+  bool_t          active;          // Is it currently on?
+  bool_t          gopoof;          // Is poof requested?
+  bool_t          freeme;          // Is ChrList_free_one() requested?
+
+  chr_spawn_info  spinfo;
+
   char            name[MAXCAPNAMESIZE];  // Character name
-  bool_t          gopoof;          // is poof requested?
-  bool_t          freeme;          // is ChrList_free_one() requested?
 
 
   matrix_4x4      matrix;          // Character's matrix
@@ -602,14 +684,9 @@ typedef struct CChr_t
   bool_t          staton;          // Display stats?
 
   // position info
-  vect3           stt;             // Starting position
-  vect3           pos;             // Character's position
-  Uint16          turn_lr;   // Character's rotation 0 to 65535
-  vect3           vel;             // Character's velocity
-  vect3           pos_old;         // Character's last position
-  Uint16          turn_lr_old;     //
-  Uint16          mapturn_lr;       //
-  Uint16          mapturn_ud;       //
+  COrientation    ori;
+  COrientation    ori_old;
+
 
   // physics info
   CPhysAccum      accum;
@@ -640,8 +717,9 @@ typedef struct CChr_t
   ACTION_INFO     action;
   ANIM_INFO       anim;
 
-  TEAM_REF        team;            // Character's team
-  TEAM_REF        baseteam;        // Character's starting team
+  TEAM_REF        team;             // Character's team
+  Uint32          team_rank;        // Character's rank on the team
+  TEAM_REF        team_base;        // Character's starting team
 
   // lighting info
   vect3_ui08      vrta_fp8[MAXVERTICES];  // Lighting hack ( Ooze )
@@ -683,8 +761,7 @@ typedef struct CChr_t
 
   Uint8           passage;         // The passage associated with this character
 
-  Uint32          message;           // The last order given the character
-  Uint8           messagedata;       // The rank of the character on the order chain
+  CSignal         message;         // The last message given the character
 
   CHR_REF         onwhichplatform; // What are we standing on?
   Uint16          holdingweight;   // For weighted buttons
@@ -758,9 +835,12 @@ PIP_REF ChrList_getRPip(struct CGame_t * gs, CHR_REF ichr, int i);
 
 
 
-#define VALID_CHR_RANGE(XX) (((XX)>=0) && ((XX)<CHRLST_COUNT))
-#define VALID_CHR(LST, XX)    ( VALID_CHR_RANGE(XX) && LST[XX].on )
+#define VALID_CHR_RANGE(XX)   (((XX)>=0) && ((XX)<CHRLST_COUNT))
+#define VALID_CHR(LST, XX)    ( VALID_CHR_RANGE(XX) && EKEY_VALID(LST[XX]) )
 #define VALIDATE_CHR(LST, XX) ( VALID_CHR(LST, XX) ? (XX) : (INVALID_CHR) )
+#define RESERVED_CHR(LST, XX) ( VALID_CHR(LST, XX) && LST[XX].reserved && !LST[XX].active   )
+#define ACTIVE_CHR(LST, XX)   ( VALID_CHR(LST, XX) && LST[XX].active   && !LST[XX].reserved )
+#define PENDING_CHR(LST, XX)  ( VALID_CHR(LST, XX) && (LST[XX].active || LST[XX].req_active) && !LST[XX].reserved )
 
 INLINE bool_t chr_in_pack( PChr lst, size_t lst_size, CHR_REF character );
 INLINE bool_t chr_attached( PChr lst, size_t lst_size, CHR_REF character );
@@ -796,6 +876,7 @@ extern Uint16          chrcollisionlevel;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+CHR_REF ChrList_reserve( chr_spawn_info * psi );
 CHR_REF ChrList_get_free( struct CGame_t * gs, CHR_REF irequest );
 void ChrList_free_one( struct CGame_t * gs, CHR_REF character );
 
@@ -817,9 +898,10 @@ void kill_character( struct CGame_t * gs, CHR_REF character, CHR_REF killer );
 void spawn_poof( struct CGame_t * gs, CHR_REF character, OBJ_REF profile );
 
 
+void tilt_character(struct CGame_t * gs, CHR_REF ichr);
 void tilt_characters_to_terrain(struct CGame_t * gs);
-CHR_REF spawn_one_character( struct CGame_t * gs, vect3 pos, OBJ_REF iobj, TEAM_REF team,
-                            Uint8 skin, Uint16 facing, char *name, CHR_REF override );
+
+
 
 void respawn_character( struct CGame_t * gs, CHR_REF character );
 Uint16 change_armor( struct CGame_t * gs, CHR_REF character, Uint16 skin );
@@ -827,9 +909,11 @@ void change_character( struct CGame_t * gs, CHR_REF cnt, OBJ_REF profile, Uint8 
                        Uint8 leavewhich );
 bool_t cost_mana( struct CGame_t * gs, CHR_REF character, int amount, CHR_REF killer );
 bool_t attach_character_to_mount( struct CGame_t * gs, CHR_REF character, CHR_REF mount, SLOT slot );
-CHR_REF stack_in_pack( struct CGame_t * gs, CHR_REF item, CHR_REF character );
-bool_t pack_add_item( struct CGame_t * gs, CHR_REF item, CHR_REF character );
+
+CHR_REF pack_find_stack( struct CGame_t * gs, CHR_REF item_ref, CHR_REF pack_chr_ref );
+bool_t  pack_add_item( struct CGame_t * gs, CHR_REF item_ref, CHR_REF pack_chr_ref );
 CHR_REF pack_get_item( struct CGame_t * gs,CHR_REF character, SLOT slot, bool_t ignorekurse );
+
 void drop_keys( struct CGame_t * gs,CHR_REF character );
 void drop_all_items( struct CGame_t * gs,CHR_REF character );
 bool_t chr_grab_stuff( struct CGame_t * gs,CHR_REF chara, SLOT slot, bool_t people );
@@ -857,8 +941,17 @@ void flash_character_height( struct CGame_t * gs, CHR_REF character, Uint8 value
 
 void flash_character( struct CGame_t * gs, CHR_REF character, Uint8 value );
 
-void signal_target( struct CGame_t * gs, CHR_REF target, Uint16 upper, Uint16 lower );
+void signal_target( struct CGame_t * gs, Uint32 priority, CHR_REF target, Uint16 upper, Uint16 lower );
 void signal_team( struct CGame_t * gs, CHR_REF character, Uint32 order );
-void signal_idsz_index( struct CGame_t * gs, Uint32 order, IDSZ idsz, IDSZ_INDEX index );
+void signal_idsz_index( struct CGame_t * gs, Uint32 priority, Uint32 order, IDSZ idsz, IDSZ_INDEX index );
 
 bool_t ai_state_advance_wp(AI_STATE * a, bool_t do_atlastwaypoint);
+
+#define CHR_MAX_COLLISIONS 512
+extern int chr_collisions;
+
+CHR_REF chr_spawn( struct CGame_t * gs,  vect3 pos, vect3 vel, OBJ_REF iobj, TEAM_REF team,
+                   Uint8 skin, Uint16 facing, const char *name, CHR_REF override );
+
+CHR_REF force_chr_spawn( chr_spawn_info si );
+bool_t  activate_chr_spawn( struct CGame_t * gs, CHR_REF ichr );

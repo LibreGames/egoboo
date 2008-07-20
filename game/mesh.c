@@ -37,43 +37,47 @@
 MESH_TILE    Mesh_Tile[MAXTILETYPE];
 MESH_COMMAND Mesh_Cmd[MAXMESHTYPE];
 
-BUMPLIST bumplist = {bfalse, 0, 0 };
-
 
 //--------------------------------------------------------------------------------------------
-bool_t reset_bumplist()
+bool_t reset_bumplist(MESH_INFO * pmesh)
 {
   int i;
 
-  if(!bumplist.allocated) return bfalse;
+  BUMPLIST  * pbump  = &(pmesh->bumplist);
 
-  bumplist_clear(&bumplist);
+  if(!pbump->allocated) return bfalse;
 
-  for(i=0; i<bumplist.free_max; i++)
+  bumplist_clear(pbump);
+
+  for(i=0; i<pbump->free_max; i++)
   {
-    bumplist.free_lst[i] = i;
-    bumplist_node_new( bumplist.node_lst + i );
+    pbump->free_lst[i] = i;
+    bumplist_node_new( pbump->node_lst + i );
   }
-  bumplist.free_count = bumplist.free_max;
+  pbump->free_count = pbump->free_max;
 
-  bumplist.initialized = btrue;
-  bumplist.filled      = bfalse;
+  //pbump->initialized = btrue;
+  pbump->filled      = bfalse;
 
   return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t allocate_bumplist(int blocks)
+bool_t allocate_bumplist(MESH_INFO * pmesh, int blocks)
 {
-  if( bumplist_allocate(&bumplist, blocks) )
+  BUMPLIST * pbump  = &(pmesh->bumplist);
+
+  if(!EKEY_PVALID(pbump)) bumplist_new(pbump);
+
+  if( bumplist_allocate(pbump, blocks) )
   {
     // set up nodes and the list of free nodes
-    bumplist.free_max   =
-    bumplist.free_count = 8*(CHRLST_COUNT + PRTLST_COUNT);
-    bumplist.free_lst = (Uint32       *)calloc( bumplist.free_count, sizeof(Uint32));
-    bumplist.node_lst = (BUMPLIST_NODE*)calloc( bumplist.free_count, sizeof(BUMPLIST_NODE));
+    pbump->free_max   =
+    pbump->free_count = 8*(CHRLST_COUNT + PRTLST_COUNT);
+    pbump->free_lst = (Uint32       *)calloc( pbump->free_count, sizeof(Uint32));
+    pbump->node_lst = (BUMPLIST_NODE*)calloc( pbump->free_count, sizeof(BUMPLIST_NODE));
 
-    reset_bumplist();
+    reset_bumplist(pmesh);
   }
 
   return btrue;
@@ -119,7 +123,7 @@ bool_t load_mesh( CGame * gs, char *modname )
   mi->edge_y = mi->size_y * 128;
 
   // allocate the bumplist
-  allocate_bumplist( ( mi->size_x >> 2 ) * ( mi->size_y >> 2 ) );  
+  allocate_bumplist( mi, ( mi->size_x >> 2 ) * ( mi->size_y >> 2 ) );  
 
   // Load fan data
   for ( fan = 0; fan < numfan;  fan++)
@@ -661,7 +665,7 @@ float mesh_get_level( CGame * gs, Uint32 fan, float x, float y, bool_t waterwalk
 //--------------------------------------------------------------------------------------------
 static bool_t MeshMem_dealloc_verts(MeshMem * mem)
 {
-  if(NULL==mem) return bfalse;
+  if(NULL ==mem) return bfalse;
 
   FREE ( mem->base );
 
@@ -716,7 +720,7 @@ static bool_t MeshMem_alloc_verts(MeshMem * mem, int vertcount)
 //--------------------------------------------------------------------------------------------
 static bool_t MeshMem_dealloc_fans(MeshMem * mem)
 {
-  if(NULL==mem) return bfalse;
+  if(NULL ==mem) return bfalse;
 
   FREE ( mem->fanlst );
 
@@ -751,14 +755,15 @@ MeshMem * MeshMem_new(MeshMem * mem, int vertcount, int fancount)
 
   if(NULL == mem) return mem;
 
+  MeshMem_delete( mem );
+
+  memset( mem, 0, sizeof(MeshMem) );
+
+  EKEY_PNEW( mem, MeshMem );
 
   if(fancount <0) fancount  = MAXMESHFAN;
 
-  if(vertcount == 0 && fancount == 0)
-  {
-    MeshMem_delete(mem);
-  }
-  else
+  if(vertcount >= 0 || fancount >= 0)
   {
     MeshMem_alloc_verts(mem, vertcount);
     MeshMem_alloc_fans (mem, fancount );
@@ -771,6 +776,9 @@ MeshMem * MeshMem_new(MeshMem * mem, int vertcount, int fancount)
 bool_t MeshMem_delete(MeshMem * mem)
 {
   if(NULL == mem) return bfalse;
+  if( !EKEY_PVALID(mem) ) return btrue;
+
+  EKEY_PINVALIDATE(mem);
 
   MeshMem_dealloc_verts( mem );
   MeshMem_dealloc_fans ( mem );

@@ -57,6 +57,8 @@ bool_t        CClient_Running(CClient * cs)  { return cl_Started() && !cs->waiti
 
 static int _cl_HostCallback(void *);
 
+bool_t cl_handle_chr_spawn(CClient * cs, ENetEvent *event);
+
 
 //--------------------------------------------------------------------------------------------
 // private CClient initialization
@@ -192,7 +194,7 @@ bool_t CClient_destroy(CClient ** pcs)
   bool_t retval;
 
   if(NULL == pcs || NULL == *pcs) return bfalse;
-  if( !(*pcs)->initialized ) return btrue;
+  if( !EKEY_PVALID( (*pcs) ) ) return btrue;
 
   retval = CClient_delete(*pcs);
   FREE( *pcs );
@@ -208,9 +210,12 @@ CClient * CClient_new(CClient * cs, CGame * gs)
   //fprintf( stdout, "CClient_new()\n");
 
   if(NULL == cs) return cs;
-  if(cs->initialized) CClient_delete(cs);
+  
+  CClient_delete(cs);
 
   memset( cs, 0, sizeof(CClient) );
+
+  EKEY_PNEW(cs, CClient);
 
   // only start this stuff if we are going to actually connect to the network
   if(net_Started())
@@ -233,7 +238,7 @@ CClient * CClient_new(CClient * cs, CGame * gs)
 
   CClient_reset_latches(cs);
 
-  cs->initialized = btrue;
+  chr_spawn_queue_new(&(cs->chr_queue), 256);
 
   return cs;
 };
@@ -243,12 +248,14 @@ bool_t CClient_delete(CClient * cs)
 {
   if(NULL == cs) return bfalse;
 
-  if(!cs->initialized) return btrue;
+  if(!EKEY_PVALID(cs)) return btrue;
+
+  EKEY_PINVALIDATE(cs);
 
   net_removeService(cs->net_guid);
   NetHost_unregister(cs->host, cs->net_guid);
 
-  cs->initialized = bfalse;
+  chr_spawn_queue_delete(&(cs->chr_queue));
 
   return btrue;
 }
@@ -311,7 +318,7 @@ ENetPeer * cl_startPeer(const char* hostname)
   cs_host = cl_getHost();
   peer = net_startPeerByName(cs_host->Host, hostname, NET_EGOBOO_SERVER_PORT);
 
-  if (NULL==peer)
+  if (NULL ==peer)
   {
     net_logf("NET INFO: cl_startPeer() - Cannot open channel to host.\n");
   }
@@ -339,7 +346,7 @@ ENetPeer * cl_startPeer(const char* hostname)
 //
 //  // Now connect to the remote host
 //  cs->rem_req_peer[slot] = cl_startPeer(cs, hostname);
-//  if (NULL==cs->rem_req_peer[slot])
+//  if (NULL ==cs->rem_req_peer[slot])
 //  {
 //    net_logf("NET INFO: cl_connectRemote() - Cannot open channel to host.\n");
 //    return bfalse;
@@ -359,7 +366,7 @@ ENetPeer * cl_startPeer(const char* hostname)
 //--------------------------------------------------------------------------------------------
 bool_t CClient_disconnect(CClient * cs)
 {
-  if(NULL==cs) return bfalse;
+  if(NULL ==cs) return bfalse;
 
   SDL_Delay(200);
 
@@ -416,7 +423,7 @@ bool_t CClient_connect(CClient * cs, const char* hostname)
   net_logf("NET INFO: CClient_connect() - Attempting to open the game connection to %s:0x%04x from %s:0x%04x... ", hostname, NET_EGOBOO_SERVER_PORT, convert_host(cs->host->Host->address.host), cs->host->Host->address.port);
 
   cs->gamePeer = cl_startPeer(hostname);
-  if (NULL==cs->gamePeer)
+  if (NULL ==cs->gamePeer)
   {
     net_logf("Failed!\n");
     return bfalse;
@@ -494,7 +501,7 @@ bool_t CClient_unjoinGame(CClient * cs)
   NetHost * cl_host;
   SYS_PACKET egopkt;
 
-  if(NULL==cs || !cl_Started()) return bfalse;
+  if(NULL ==cs || !cl_Started()) return bfalse;
 
   cl_host = cl_getHost();
 
@@ -543,7 +550,7 @@ void CClient_talkToHost(CClient * cs)
     for (player = 0; player < PLALST_COUNT; player++)
     {
       // Find the local players
-      if (!gs->PlaList[player].used || INBITS_NONE==gs->PlaList[player].device) continue;
+      if (!gs->PlaList[player].Active || INBITS_NONE==gs->PlaList[player].device) continue;
 
       ichr = gs->PlaList[player].chr_ref;
       sys_packet_addUint16(&egopkt, REF_TO_INT(ichr));                                   // The character index
@@ -574,7 +581,8 @@ void CClient_unbufferLatches(CClient * cs)
   uiTime  = stamp & LAGAND;
   for (chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++)
   {
-    if(!gs->ChrList[chr_cnt].on) continue;
+    if( !ACTIVE_CHR(gs->ChrList, chr_cnt) ) continue;
+
     pchr = gs->ChrList + chr_cnt;
     ptl = cs->tlb.buffer + REF_TO_INT(chr_cnt);
 
@@ -594,8 +602,6 @@ void CClient_unbufferLatches(CClient * cs)
   }
   cs->tlb.numtimes--;
 }
-
-
 
 //--------------------------------------------------------------------------------------------
 bool_t cl_handlePacket(CClient * cs, ENetEvent *event)
@@ -628,6 +634,10 @@ bool_t cl_handlePacket(CClient * cs, ENetEvent *event)
   retval = btrue;
   switch (header)
   {
+
+  case TO_REMOTE_CHR_SPAWN:
+    cl_handle_chr_spawn(cs, event);
+    break;
 
   case TO_REMOTE_KICK:
     // we were kicked from the server
@@ -885,7 +895,7 @@ bool_t cl_handlePacket(CClient * cs, ENetEvent *event)
 void CClient_reset_latches(CClient * cs)
 {
   CHR_REF chr_cnt;
-  if(NULL==cs) return;
+  if(NULL ==cs) return;
 
   for(chr_cnt = 0; chr_cnt<CHRLST_COUNT; chr_cnt++)
   {
@@ -903,7 +913,7 @@ void CClient_resetTimeLatches(CClient * cs, CHR_REF ichr)
   int cnt;
   CHR_TIME_LATCH *ptl;
 
-  if(NULL==cs) return;
+  if(NULL ==cs) return;
   if( !VALID_CHR_RANGE(ichr) ) return;
   ptl = cs->tlb.buffer + REF_TO_INT(ichr);
 
@@ -936,7 +946,7 @@ void CClient_bufferLatches(CClient * cs)
     if (!VALID_PLA(plalst, player)) continue;
     ichr = plalst[player].chr_ref;
 
-    if( !VALID_CHR(chrlst, ichr) ) continue;
+    if( !ACTIVE_CHR(chrlst, ichr) ) continue;
     ptl = cs->tlb.buffer + REF_TO_INT(ichr);
 
     (*ptl)[uiTime].valid   = btrue;
@@ -969,7 +979,7 @@ int _cl_HostCallback(void * data)
   net_logf("NET INFO: _cl_HostCallback() thread - starting normally.\n");
 
   nthread = &(cl_host->nthread);
-  while(NULL!=cl_host && !nthread->KillMe)
+  while(NULL !=cl_host && !nthread->KillMe)
   {
     // the client host could be removed/deleted at any time
     cl_host = cl_getHost();
@@ -998,7 +1008,7 @@ int _cl_HostCallback(void * data)
 //  NetRequest * prequest;
 //  size_t copy_size;
 //
-//  if(NULL==cs || !cl_Started()) return bfalse;
+//  if(NULL ==cs || !cl_Started()) return bfalse;
 //
 //  while (enet_host_service(cs->host->Host, &event, 0) > 0)
 //  {
@@ -1422,7 +1432,11 @@ Status * Status_new( Status * pstat )
 
   if(NULL == pstat) return pstat;
 
+  Status_delete( pstat );
+
   memset(pstat, 0, sizeof(Status));
+
+  EKEY_PNEW( pstat, Status );
 
   pstat->on      = bfalse;
   pstat->chr_ref = INVALID_CHR;
@@ -1435,6 +1449,10 @@ Status * Status_new( Status * pstat )
 bool_t   Status_delete( Status * pstat )
 {
   if(NULL == pstat) return bfalse;
+
+  if(!EKEY_PVALID(pstat))  return btrue;
+
+  EKEY_PINVALIDATE( pstat );
 
   pstat->on = bfalse;
 
@@ -1454,7 +1472,7 @@ bool_t StatList_new( CClient * cs )
 {
   int i;
 
-  if(NULL == cs || !cs->initialized) return bfalse;
+  if(!EKEY_PVALID(cs)) return bfalse;
 
   cs->StatList_count = 0;
   for(i=0; i<MAXSTAT; i++)
@@ -1470,7 +1488,7 @@ bool_t StatList_delete( CClient * cs )
 {
   int i;
 
-  if(NULL == cs || !cs->initialized) return bfalse;
+  if(!EKEY_PVALID(cs)) return bfalse;
 
   cs->StatList_count = 0;
   for(i=0; i<MAXSTAT; i++)
@@ -1486,7 +1504,7 @@ bool_t StatList_renew( CClient * cs )
 {
   int i;
 
-  if(NULL == cs || !cs->initialized) return bfalse;
+  if(!EKEY_PVALID(cs)) return bfalse;
 
   cs->StatList_count = 0;
   for(i=0; i<MAXSTAT; i++)
@@ -1559,3 +1577,58 @@ retval_t _cl_shutDown(void)
 
 //------------------------------------------------------------------------------
 bool_t cl_Started()  { return (NULL != _cl_host) && _cl_host->nthread.Active; }
+
+
+//------------------------------------------------------------------------------
+bool_t cl_handle_chr_spawn(CClient * cs, ENetEvent *event)
+{
+  STREAM stream;
+  chr_spawn_info si;
+  NET_PACKET netpkt;
+  Uint16 ui16;
+
+  if(NULL == cs || !CClient_Running(cs)) return bfalse;
+
+  // send the setup data
+  stream_startENet(&stream, event->packet);
+
+  ui16 = net_packet_readUint16(&netpkt);
+  assert(TO_REMOTE_CHR_SPAWN == ui16);
+
+  chr_spawn_info_new( &si, cs->parent );
+
+  si.seed   = stream_readUint32(&stream);
+  si.net_id = stream_readUint32(&stream);
+  si.ichr   = stream_readUint32(&stream);
+
+  // convert 16.16 to pos fixed point
+  si.pos.x = stream_readSint32(&stream) / (float)(1<<16);
+  si.pos.y = stream_readSint32(&stream) / (float)(1<<16);
+  si.pos.z = stream_readSint32(&stream) / (float)(1<<16);
+
+  // convert 16.16 to vel fixed point
+  si.vel.x = stream_readSint32(&stream) / (float)(1<<16);
+  si.vel.y = stream_readSint32(&stream) / (float)(1<<16);
+  si.vel.z = stream_readSint32(&stream) / (float)(1<<16);
+
+  si.iobj   = stream_readUint32(&stream);
+  si.iteam  = stream_readUint32(&stream);
+  si.iskin  = stream_readUint8 (&stream);
+  si.facing = stream_readUint16(&stream);
+  si.slot   = stream_readUint8 (&stream);
+  stream_readString(&stream, si.name, sizeof(si.name));
+  si.ioverride = stream_readUint32(&stream);
+
+  si.money   = stream_readSint32(&stream);
+  si.content = stream_readSint32(&stream);
+  si.passage = stream_readUint32(&stream);
+  si.level   = stream_readSint32(&stream);
+  si.stat    = stream_readSint8 (&stream);
+  si.ghost   = stream_readSint8 (&stream);
+
+  // add this info to the queue
+  chr_spawn_queue_push( &(cs->chr_queue), &si );
+
+  return btrue;
+
+}

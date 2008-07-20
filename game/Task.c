@@ -51,7 +51,7 @@ void task_register( const char *taskName, float timeInterval, TaskCallback f )
   Task *aTask;
   size_t len;
 
-  if ( taskName == NULL || f == NULL )
+  if ( NULL == taskName  || NULL == f  )
   {
     return;
   }
@@ -74,7 +74,7 @@ void task_register( const char *taskName, float timeInterval, TaskCallback f )
   aTask->interval = timeInterval;
   aTask->timeLastCalled = ( float ) ClockState_getTime( taskClock );
 
-  if ( task_list == NULL )
+  if ( NULL == task_list  )
   {
     task_list = aTask;
   }
@@ -93,7 +93,7 @@ void task_remove( const char *taskName )
   Task *aTask;
 
   aTask = task_list;
-  while ( aTask != NULL )
+  while ( NULL != aTask  )
   {
     if ( strcmp( taskName, aTask->name ) == 0 )
     {
@@ -120,7 +120,7 @@ void task_pause( const char *taskName )
   Task *aTask;
 
   aTask = task_list;
-  while ( aTask != NULL )
+  while ( NULL != aTask  )
   {
     if ( strcmp( taskName, aTask->name ) == 0 )
     {
@@ -136,7 +136,7 @@ void task_play( const char *taskName )
   Task *aTask;
 
   aTask = task_list;
-  while ( aTask != NULL )
+  while ( NULL != aTask  )
   {
     if ( strcmp( taskName, aTask->name ) == 0 )
     {
@@ -155,7 +155,7 @@ void task_updateAllTasks()
   currentTime = ClockState_getTime( taskClock );
 
   aTask = task_list;
-  while ( aTask != NULL )
+  while ( NULL != aTask  )
   {
     if ( aTask->paused )
     {

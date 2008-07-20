@@ -2,7 +2,7 @@
 
 #include "object.h"
 
-#include "egoboo_math.inl"
+#include "egoboo_math.h"
 #include "egoboo.h"
 
 struct CGame_t;
@@ -145,7 +145,8 @@ typedef enum lip_transition_e
 
 typedef struct CMad_t
 {
-  bool_t          used;
+  egoboo_key      ekey;
+  bool_t          Loaded;
 
   // debugging
   STRING          name;
@@ -179,8 +180,9 @@ CMad *  Mad_renew(CMad * pmad);
 void   MadList_free_one( struct CGame_t * gs, Uint16 imdl );
 
 #define VALID_MAD_RANGE(XX) ( ((XX)>=0) && ((XX)<MADLST_COUNT) )
-#define VALID_MAD(LST, XX)  ( VALID_MAD_RANGE(XX) && NULL != LST[XX].md2_ptr)
-#define VALIDATE_MAD(LST,XX)    ( VALID_MAD(LST, XX) ? (XX) : (INVALID_MAD) )
+#define VALID_MAD(LST, XX)   ( VALID_MAD_RANGE(XX) && EKEY_VALID(LST[XX]) )
+#define VALIDATE_MAD(LST,XX) ( VALID_MAD(LST, XX) ? (XX) : (INVALID_MAD) )
+#define LOADED_MAD(LST, XX)  ( VALID_MAD(LST, XX) && LST[XX].Loaded )
 
 ACTION action_number(char * szName);
 Uint16 action_frame();

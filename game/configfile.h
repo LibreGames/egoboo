@@ -25,7 +25,7 @@
 #ifndef _CONFIGFILE_H_
 #define _CONFIGFILE_H_
 
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 
 #include <stdio.h>
 #include <stdlib.h>

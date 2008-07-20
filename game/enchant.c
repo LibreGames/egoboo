@@ -66,8 +66,9 @@ void enc_spawn_particles( CGame * gs, float dUpdate )
 
   for ( enc_cnt = 0; enc_cnt < enclst_size; enc_cnt++ )
   {
+    prt_spawn_info si;
     CEnc * penc = enclst + enc_cnt;
-    if ( !penc->on ) continue;
+    if ( !penc->active ) continue;
 
     iobj = penc->profile = VALIDATE_OBJ(gs->ObjList, penc->profile);
     if( INVALID_OBJ == iobj ) continue;
@@ -83,14 +84,16 @@ void enc_spawn_particles( CGame * gs, float dUpdate )
     if ( penc->spawntime > 0 ) continue;
 
     target_ref = penc->target = VALIDATE_CHR(chrlst, penc->target);
-    if( !VALID_CHR(chrlst, target_ref) ) continue;
+    if( !ACTIVE_CHR(chrlst, target_ref) ) continue;
 
     penc->spawntime = peve->contspawntime;
-    facing = chrlst[target_ref].turn_lr;
+    facing = chrlst[target_ref].ori.turn_lr;
     for ( tnc = 0; tnc < peve->contspawnamount; tnc++)
     {
-      spawn_one_particle( gs, 1.0f, chrlst[target_ref].pos, facing, iobj, peve->contspawnpip,
+      prt_spawn_info_init( &si, gs, 1.0f, chrlst[target_ref].ori.pos, facing, iobj, peve->contspawnpip,
         INVALID_CHR, GRIP_LAST, chrlst[penc->owner].team, penc->owner, tnc, INVALID_CHR );
+
+      req_spawn_one_particle( si );
 
       facing += peve->contspawnfacingadd;
     }
@@ -107,7 +110,7 @@ void disenchant_character( CGame * gs, CHR_REF cnt )
   PChr chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  while ( chrlst[cnt].firstenchant != INVALID_ENC )
+  while ( INVALID_ENC != chrlst[cnt].firstenchant )
   {
     remove_enchant( gs, chrlst[cnt].firstenchant );
   }
@@ -121,22 +124,24 @@ void spawn_poof( CGame * gs, CHR_REF character, OBJ_REF profile )
   PChr chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
+  prt_spawn_info si;
   Uint16 sTmp;
   CHR_REF origin;
   int iTmp;
   CChr * pchr;
   CCap * pcap = ObjList_getPCap(gs, profile);
 
-
-  sTmp = chrlst[character].turn_lr;
+  sTmp = chrlst[character].ori.turn_lr;
   iTmp = 0;
   origin = chr_get_aiowner( chrlst, CHRLST_COUNT, chrlst + character );
   pchr = ChrList_getPChr(gs, origin);
   while ( iTmp < pcap->gopoofprtamount )
   {
-    spawn_one_particle( gs, 1.0f, pchr->pos_old,
+    prt_spawn_info_init( &si, gs, 1.0f, pchr->ori_old.pos,
                         sTmp, profile, pcap->gopoofprttype,
                         INVALID_CHR, GRIP_LAST, pchr->team, origin, iTmp, INVALID_CHR );
+
+    req_spawn_one_particle( si );
 
     sTmp += pcap->gopoofprtfacingadd;
     iTmp++;
@@ -149,6 +154,7 @@ char * naming_generate( CGame * gs, CObj * pobj )
   // ZZ> This function generates a random name
 
   static STRING name; // The name returned by the function
+  Uint32 loc_rand;
 
   size_t  objlst_size = OBJLST_COUNT;
 
@@ -159,13 +165,14 @@ char * naming_generate( CGame * gs, CObj * pobj )
 
   if ( 0 == pobj->sectionsize[0] ) return name;
 
+  loc_rand = gs->randie_index;
   write = 0;
   section = 0;
   while ( section < MAXSECTION )
   {
     if ( pobj->sectionsize[section] != 0 )
     {
-      mychop = pobj->sectionstart[section] + ( rand() % pobj->sectionsize[section] );
+      mychop = pobj->sectionstart[section] + RAND(&loc_rand, 0, pobj->sectionsize[section]);
       read = gs->chop.start[mychop];
       cTmp = gs->chop.text[read];
       while ( cTmp != 0 && write < MAXCAPNAMESIZE - 1 )
@@ -263,12 +270,25 @@ void naming_prime( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
+void tilt_character(CGame * gs, CHR_REF ichr)
+{
+  CChr * pchr = ChrList_getPChr(gs, ichr);
+  if(NULL == pchr) return;
+
+  if ( pchr->prop.stickybutt && INVALID_FAN != pchr->onwhichfan)
+  {
+    Uint8 twist = mesh_get_twist( gs->Mesh_Mem.fanlst, pchr->onwhichfan );
+    pchr->ori.mapturn_lr = twist_table[twist].lr;
+    pchr->ori.mapturn_ud = twist_table[twist].ud;
+  }
+}
+
+//--------------------------------------------------------------------------------------------
 void tilt_characters_to_terrain(CGame * gs)
 {
   // ZZ> This function sets all of the character's starting tilt values
 
   CHR_REF chr_cnt;
-  Uint8 twist;
 
   PChr chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -278,12 +298,7 @@ void tilt_characters_to_terrain(CGame * gs)
   {
     if( !VALID_CHR(chrlst, chr_cnt) ) continue;
 
-    if ( chrlst[chr_cnt].prop.stickybutt && INVALID_FAN != chrlst[chr_cnt].onwhichfan)
-    {
-      twist = mesh_get_twist( gs->Mesh_Mem.fanlst, chrlst[chr_cnt].onwhichfan );
-      chrlst[chr_cnt].mapturn_lr = twist_table[twist].lr;
-      chrlst[chr_cnt].mapturn_ud = twist_table[twist].ud;
-    }
+    tilt_character(gs, chr_cnt);
   }
 }
 
@@ -309,7 +324,7 @@ Uint16 change_armor( CGame * gs, CHR_REF character, Uint16 iskin )
 
   // Remove armor enchantments
   enchant = chrlst[character].firstenchant;
-  while ( enchant != INVALID_ENC )
+  while ( INVALID_ENC != enchant )
   {
     for ( cnt = SETSLASHMODIFIER; cnt <= SETZAPMODIFIER; cnt++ )
     {
@@ -342,7 +357,7 @@ Uint16 change_armor( CGame * gs, CHR_REF character, Uint16 iskin )
   // These should really be done in reverse order ( Start with last enchant ), but
   // I don't care at this point !!!BAD!!!
   enchant = chrlst[character].firstenchant;
-  while ( enchant != INVALID_ENC )
+  while ( INVALID_ENC != enchant )
   {
     for ( cnt = SETSLASHMODIFIER; cnt <= SETZAPMODIFIER; cnt++ )
     {
@@ -384,7 +399,7 @@ void change_character( CGame * gs, CHR_REF ichr, OBJ_REF new_profile, Uint8 new_
   CMad * pmad;
   CCap * pcap;
 
-  if( !VALID_CHR( chrlst, ichr) ) return;
+  if( !ACTIVE_CHR( chrlst, ichr) ) return;
   pchr = ChrList_getPChr(gs, ichr);
 
   pobj = ObjList_getPObj(gs, new_profile);
@@ -422,9 +437,9 @@ void change_character( CGame * gs, CHR_REF ichr, OBJ_REF new_profile, Uint8 new_
       {
         // Remove all enchantments except top one
         enchant = pchr->firstenchant;
-        if ( enchant != INVALID_ENC )
+        if ( INVALID_ENC != enchant )
         {
-          while ( enclst[enchant].nextenchant != INVALID_ENC )
+          while ( INVALID_ENC != enclst[enchant].nextenchant )
           {
             remove_enchant( gs, enclst[enchant].nextenchant );
           }
@@ -497,7 +512,7 @@ void change_character( CGame * gs, CHR_REF ichr, OBJ_REF new_profile, Uint8 new_
 
   // Character scales...  Magic numbers
   imount = chr_get_attachedto( chrlst, CHRLST_COUNT, ichr );
-  if ( VALID_CHR( chrlst,  imount ) )
+  if ( ACTIVE_CHR( chrlst,  imount ) )
   {
     CMad * tmppmad;
     Uint16 vrtoffset = slot_to_offset( pchr->inwhichslot );
@@ -532,7 +547,7 @@ void change_character( CGame * gs, CHR_REF ichr, OBJ_REF new_profile, Uint8 new_
   for ( _slot = SLOT_BEGIN; _slot < SLOT_COUNT; _slot = ( SLOT )( _slot + 1 ) )
   {
     item = chr_get_holdingwhich( chrlst, CHRLST_COUNT, ichr, _slot );
-    if ( VALID_CHR( chrlst,  item ) )
+    if ( ACTIVE_CHR( chrlst,  item ) )
     {
       int i, grip_offset;
       int vrtcount = pmad->vertices;
@@ -634,10 +649,15 @@ CEnc * CEnc_new(CEnc *penc)
 { 
   //fprintf( stdout, "CEnc_new()\n");
 
-  if(NULL==penc) return penc; 
+  if(NULL ==penc) return penc; 
+
+  CEnc_delete( penc );
 
   memset(penc, 0, sizeof(CEnc));
-  penc->on = bfalse;
+
+  EKEY_PNEW( penc, CEnc );
+
+  penc->active = bfalse;
 
   return penc; 
 };
@@ -646,8 +666,11 @@ CEnc * CEnc_new(CEnc *penc)
 bool_t CEnc_delete( CEnc * penc)
 {
   if(NULL == penc) return bfalse;
+  if(!EKEY_PVALID(penc))  return btrue;
 
-  penc->on = bfalse;
+  EKEY_PINVALIDATE( penc );
+
+  penc->active = bfalse;
 
   return btrue;
 }
@@ -701,7 +724,17 @@ EVE_REF EveList_load_one( CGame * gs, const char * szObjectpath, const char * sz
   
   if(!VALID_EVE_RANGE(irequest)) return INVALID_EVE;
   ieve = irequest;
+
+  // Make sure we don't load over an existing model
+  if( LOADED_EVE(evelst, ieve) )
+  {
+    log_error( "Enchant template (eve) %i is already used. (%s%s)\n", ieve, szObjectpath, szObjectname );
+  }
+
   peve = evelst + ieve;
+
+  // initialize the model template
+  Eve_new(peve);
 
   globalname = szObjectname;
   fileread = fs_fileOpen( PRI_NONE, NULL, inherit_fname(szObjectpath, szObjectname, CData.enchant_file), "r" );
@@ -912,10 +945,10 @@ EVE_REF EveList_load_one( CGame * gs, const char * szObjectpath, const char * sz
     else if ( MAKE_IDSZ( "CKUR" ) == idsz )  peve->canseekurse = INT_TO_BOOL(iTmp);
   }
 
-  peve->used = btrue;
-
   // All done ( finally )
   fs_fileClose( fileread );
+
+  peve->Loaded = btrue;
 
   return ieve;
 }
@@ -928,7 +961,7 @@ ENC_REF EncList_get_free( CGame * gs, ENC_REF irequest )
   int i;
   ENC_REF retval = INVALID_ENC;
 
-  if(NULL == gs || !gs->initialized) return INVALID_ENC;
+  if(!EKEY_PVALID(gs)) return INVALID_ENC;
 
   if(INVALID_ENC == irequest)
   {
@@ -1108,7 +1141,7 @@ void remove_enchant_value( CGame * gs, ENC_REF enchantindex, Uint8 valueindex )
   penc = enclst + enchantindex;
   character = penc->target;
 
-  if( !VALID_CHR( chrlst, character) ) return;
+  if( !ACTIVE_CHR( chrlst, character) ) return;
   pchr = ChrList_getPChr(gs, character);
 
   switch ( valueindex )
@@ -1206,10 +1239,13 @@ CEve * Eve_new(CEve *peve)
 { 
   //fprintf( stdout, "Eve_new()\n");
 
-  if(NULL==peve) return peve; 
+  if(NULL == peve) return peve; 
+
+  Eve_delete(peve);
 
   memset(peve, 0, sizeof(CEve)); 
-  peve->used = bfalse;
+
+  EKEY_PNEW( peve, CEve );
 
   return peve; 
 };
@@ -1218,8 +1254,11 @@ CEve * Eve_new(CEve *peve)
 bool_t Eve_delete( CEve * peve )
 {
   if(NULL == peve) return bfalse;
+  if(!EKEY_PVALID(peve))  return btrue;
 
-  peve->used = bfalse;
+  EKEY_PINVALIDATE( peve );
+
+  peve->Loaded = bfalse;
 
   return btrue;
 }
@@ -1253,16 +1292,16 @@ void reset_character_alpha( CGame * gs, CHR_REF character )
   CChr * pchr;
   CCap * pcap;
 
-  if ( !VALID_CHR( chrlst,  character ) ) return;
+  if ( !ACTIVE_CHR( chrlst,  character ) ) return;
   pchr = ChrList_getPChr(gs, character);
   pcap = ChrList_getPCap(gs, character);
 
   mount = chr_get_attachedto( chrlst, CHRLST_COUNT, character );
-  if ( VALID_CHR( chrlst,  mount ) && pchr->prop.isitem && chrlst[mount].transferblend )
+  if ( ACTIVE_CHR( chrlst,  mount ) && pchr->prop.isitem && chrlst[mount].transferblend )
   {
     // Okay, reset transparency
     enchant = pchr->firstenchant;
-    while ( enchant != INVALID_ENC )
+    while ( INVALID_ENC != enchant )
     {
       unset_enchant_value( gs, enchant, SETALPHABLEND );
       unset_enchant_value( gs, enchant, SETLIGHTBLEND );
@@ -1273,7 +1312,7 @@ void reset_character_alpha( CGame * gs, CHR_REF character )
     pchr->bumpstrength = pcap->bumpstrength * FP8_TO_FLOAT( pchr->alpha_fp8 );
     pchr->light_fp8    = pcap->light_fp8;
     enchant = pchr->firstenchant;
-    while ( enchant != INVALID_ENC )
+    while ( INVALID_ENC != enchant )
     {
       set_enchant_value( gs, enchant, SETALPHABLEND, enclst[enchant].eve );
       set_enchant_value( gs, enchant, SETLIGHTBLEND, enclst[enchant].eve );
@@ -1334,7 +1373,7 @@ void remove_enchant( CGame * gs, ENC_REF enchantindex )
 
   // Unsparkle the spellbook
   character = penc->spawner;
-  if ( VALID_CHR( chrlst,  character ) )
+  if ( ACTIVE_CHR( chrlst,  character ) )
   {
     chrlst[character].sparkle = NOSPARKLE;
     // Make the spawner unable to undo the enchantment
@@ -1349,10 +1388,10 @@ void remove_enchant( CGame * gs, ENC_REF enchantindex )
   character = penc->target;
   if ( INVALID_SOUND != peve->endsound )
   {
-    snd_play_sound( gs, 1.0f, chrlst[character].pos_old, pobj->wavelist[peve->endsound], 0, iobj, peve->endsound );
+    snd_play_sound( gs, 1.0f, chrlst[character].ori_old.pos, pobj->wavelist[peve->endsound], 0, iobj, peve->endsound );
   };
 
-  // Unset enchant values, doing morph last (opposite order to spawn_one_enchant)
+  // Unset enchant values, doing morph last (opposite order to enc_spawn_info_init)
   unset_enchant_value( gs, enchantindex, SETCHANNEL );
   for ( cnt = SETCOSTFOREACHMISSILE; cnt >= SETCOSTFOREACHMISSILE; cnt-- )
   {
@@ -1407,15 +1446,15 @@ void remove_enchant( CGame * gs, ENC_REF enchantindex )
   // Check to see if the character dies
   if ( peve->killonend )
   {
-    if ( chrlst[character].prop.invictus )  gs->TeamList[chrlst[character].baseteam].morale++;
+    if ( chrlst[character].prop.invictus )  gs->TeamList[chrlst[character].team_base].morale++;
     chrlst[character].prop.invictus = bfalse;
     kill_character( gs, character, INVALID_CHR );
   }
   // Kill overlay too...
   overlay = penc->overlay;
-  if ( VALID_CHR(chrlst, overlay) )
+  if ( ACTIVE_CHR(chrlst, overlay) )
   {
-    if ( chrlst[overlay].prop.invictus )  gs->TeamList[chrlst[overlay].baseteam].morale++;
+    if ( chrlst[overlay].prop.invictus )  gs->TeamList[chrlst[overlay].team_base].morale++;
     chrlst[overlay].prop.invictus = bfalse;
     kill_character( gs, overlay, INVALID_CHR );
   }
@@ -1423,7 +1462,7 @@ void remove_enchant( CGame * gs, ENC_REF enchantindex )
 
 
   // Now get rid of it
-  penc->on = bfalse;
+  penc->active = bfalse;
   gs->EncFreeList[gs->EncFreeList_count] = enchantindex;
   gs->EncFreeList_count++;
 
@@ -1468,10 +1507,10 @@ ENC_REF enchant_value_filled( CGame * gs, ENC_REF enchantindex, Uint8 valueindex
   penc = enclst + enchantindex;
 
   character = penc->target = VALIDATE_CHR(chrlst, penc->target);
-  if( !VALID_CHR(chrlst, character) ) return INVALID_ENC;
+  if( !ACTIVE_CHR(chrlst, character) ) return INVALID_ENC;
 
   currenchant = chrlst[character].firstenchant;
-  while ( currenchant != INVALID_ENC )
+  while ( INVALID_ENC != currenchant )
   {
     if ( enclst[currenchant].setyesno[valueindex] )
     {
@@ -1514,10 +1553,10 @@ void set_enchant_value( CGame * gs, ENC_REF enchantindex, Uint8 valueindex,
   if ( peve->setyesno[valueindex] )
   {
     conflict = enchant_value_filled( gs, enchantindex, valueindex );
-    if ( conflict == INVALID_ENC || peve->override )
+    if ( INVALID_ENC == conflict || peve->override )
     {
       // Check for multiple enchantments
-      if ( conflict != INVALID_ENC )
+      if ( INVALID_ENC != conflict )
       {
         // Multiple enchantments aren't allowed for sets
         if ( peve->removeoverridden )
@@ -1621,7 +1660,7 @@ void set_enchant_value( CGame * gs, ENC_REF enchantindex, Uint8 valueindex,
 
         case SETFLYTOHEIGHT:
           penc->setsave[valueindex] = pchr->flyheight;
-          if ( pchr->flyheight == 0 && pchr->pos.z > -2 )
+          if ( pchr->flyheight == 0 && pchr->ori.pos.z > -2 )
           {
             pchr->flyheight = peve->setvalue[valueindex];
           }
@@ -1746,7 +1785,7 @@ void add_enchant_value( CGame * gs, ENC_REF enchantindex, Uint8 valueindex,
 
 
   ichr = penc->target;
-  if( !VALID_CHR( chrlst, ichr) ) return;
+  if( !ACTIVE_CHR( chrlst, ichr) ) return;
   pchr = ChrList_getPChr(gs, ichr);
 
   valuetoadd = 0;
@@ -1884,17 +1923,35 @@ void add_enchant_value( CGame * gs, ENC_REF enchantindex, Uint8 valueindex,
   penc->addsave[valueindex] = valuetoadd;  // Save the value for undo
 }
 
+//--------------------------------------------------------------------------------------------
+enc_spawn_info * enc_spawn_info_new(enc_spawn_info * psi, CGame * gs)
+{
+  if(NULL == psi) return psi;
+
+  memset(psi, 0, sizeof(enc_spawn_info));
+
+  EKEY_PNEW( psi, enc_spawn_info );
+
+  psi->gs = gs;
+  psi->seed = (NULL==gs) ? -time(NULL) : gs->randie_index;
+
+  psi->ienc = INVALID_ENC;
+  psi->owner = INVALID_CHR;
+  psi->target = INVALID_CHR;
+  psi->spawner = INVALID_CHR;
+  psi->enchantindex = INVALID_ENC;
+  psi->iobj = INVALID_OBJ;
+  psi->ieve = INVALID_EVE;
+
+  return psi;
+}
 
 //--------------------------------------------------------------------------------------------
-ENC_REF spawn_one_enchant( CGame * gs, CHR_REF owner, CHR_REF target,
-                         CHR_REF spawner, ENC_REF ienc_request, OBJ_REF iobj_optional )
+ENC_REF enc_spawn_info_init( enc_spawn_info * psi, CGame * gs, CHR_REF owner, CHR_REF target,
+                         CHR_REF spawner, ENC_REF enc_request, OBJ_REF obj_optional )
 {
   // ZZ> This function enchants a target, returning the enchantment index or INVALID_ENC
   //     if failed
-
-  OBJ_REF iobj;
-
-  ENC_REF enc_ref = INVALID_ENC;
 
   PEve evelst      = gs->EveList;
   size_t evelst_size = EVELST_COUNT;
@@ -1905,59 +1962,34 @@ ENC_REF spawn_one_enchant( CGame * gs, CHR_REF owner, CHR_REF target,
   PChr chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  CEnc * penc;
   CEve * peve;
-  CObj * pobj;
 
-  EVE_REF ieve;
-  CHR_REF overlay;
-  int add, cnt;
+  if(NULL == psi) return INVALID_ENC;
 
+  enc_spawn_info_new(psi, gs);
+  
   // grab the correct profile
-  iobj = INVALID_OBJ;
-  if ( INVALID_OBJ != iobj_optional )
+  psi->iobj = INVALID_OBJ;
+  if ( INVALID_OBJ != obj_optional )
   {
     // The enchantment type is given explicitly
-    iobj = iobj_optional = VALIDATE_OBJ(gs->ObjList, iobj_optional);
+    psi->iobj = VALIDATE_OBJ(gs->ObjList, obj_optional);
   }
   
-  if(INVALID_OBJ == iobj)
+  if(INVALID_OBJ == psi->iobj)
   {
     // The enchantment type is given by the spawner
-    iobj = chrlst[spawner].model = VALIDATE_OBJ(gs->ObjList, chrlst[spawner].model);
+    psi->iobj = ChrList_getRObj(gs, spawner);
   }
-  if( INVALID_OBJ == iobj ) return enc_ref;
-  pobj = ObjList_getPObj(gs, iobj);
+  if( INVALID_OBJ == psi->iobj ) return INVALID_ENC;
 
-  // Target and owner must both be alive and on and valid
-  if ( VALID_CHR(chrlst, target) )
-  {
-    if ( !VALID_CHR( chrlst,  target ) || !chrlst[target].alive )
-      return enc_ref;
-  }
-  else
-  {
-    // Invalid target
-    return enc_ref;
-  }
-
-  if ( VALID_CHR(chrlst, owner) )
-  {
-    if ( !VALID_CHR( chrlst, owner ) || !chrlst[owner].alive )
-      return enc_ref;
-  }
-  else
-  {
-    // Invalid target
-    return enc_ref;
-  }
-
-  ieve = ObjList_getREve(gs, iobj);
-  if ( INVALID_EVE == ieve ) return enc_ref;
-  peve = evelst + ieve;
+  // grab the correct eve
+  psi->ieve = ObjList_getREve(gs, psi->iobj);
+  if ( INVALID_EVE == psi->ieve ) return INVALID_ENC;
+  peve = evelst + psi->ieve;
 
   // do some extra work if a specific enchant index is not requested
-  if ( INVALID_ENC == ienc_request )
+  if ( INVALID_ENC == enc_request )
   {
     // Should it choose an inhand item?
     if ( peve->retarget )
@@ -1976,7 +2008,7 @@ ENC_REF spawn_one_enchant( CGame * gs, CHR_REF owner, CHR_REF target,
         }
       };
 
-      if ( !bfound ) return enc_ref;
+      if ( !bfound ) return INVALID_ENC;
 
       target = chr_get_holdingwhich( chrlst, CHRLST_COUNT, target, best_slot );
     }
@@ -1987,7 +2019,7 @@ ENC_REF spawn_one_enchant( CGame * gs, CHR_REF owner, CHR_REF target,
     {
       if (( chrlst[target].skin.damagemodifier_fp8[peve->dontdamagetype]&7 ) >= 3 )   // Invert | Shift = 7
       {
-        return enc_ref;
+        return INVALID_ENC;
       }
     }
 
@@ -1995,27 +2027,70 @@ ENC_REF spawn_one_enchant( CGame * gs, CHR_REF owner, CHR_REF target,
     {
       if ( chrlst[target].damagetargettype != peve->onlydamagetype )
       {
-        return enc_ref;
+        return INVALID_ENC;
       }
     }
 
   }
 
+  // Owner must both be alive and active
+  if ( !ACTIVE_CHR( chrlst, owner ) || !chrlst[owner].alive )
+  {
+    // Invalid owner
+    return INVALID_ENC;
+  }
+  psi->owner = owner;
 
-  enc_ref = EncList_get_free(gs, ienc_request);
-  if(INVALID_ENC == enc_ref) return INVALID_ENC;
-  penc = enclst + enc_ref;
+  // Target must both be alive and active
+  if ( !ACTIVE_CHR(chrlst, target) || !chrlst[target].alive )
+  {
+    // Invalid target
+    return INVALID_ENC;
+  }
+   psi->target = target;
+
+  // do this absolutely last so that we will not need to free it if we hit a snag
+  psi->ienc = EncList_get_free(gs, enc_request);
+  if(INVALID_ENC == psi->ienc) return INVALID_ENC;
+
+  return psi->ienc;
+}
+
+
+//--------------------------------------------------------------------------------------------
+ENC_REF req_spawn_one_enchant( enc_spawn_info si )
+{
+  // ZZ> This function enchants a si.target, returning the enchantment index or INVALID_ENC
+  //     if failed
+
+  PEve evelst = si.gs->EveList;
+  PEnc enclst = si.gs->EncList;
+  PChr chrlst = si.gs->ChrList;
+  PObj objlst = si.gs->ObjList;
+
+  CEnc * penc;
+  CEve * peve;
+  CObj * pobj;
+
+  int add, cnt;
+
+  // grab the correct enchant
+  if( !VALID_ENC(enclst, si.ienc) ) return INVALID_ENC;
+  penc = enclst + si.ienc;
+
+  // grab the correct profile
+  if( !VALID_OBJ(objlst, si.iobj) ) return INVALID_ENC;
+  pobj = ObjList_getPObj(si.gs, si.iobj);
+
+  // grab the correct eve
+  si.ieve = ObjList_getREve(si.gs, si.iobj);
+  if ( !VALID_OBJ(objlst, si.ieve)  ) return INVALID_ENC;
+  peve = ObjList_getPEve(si.gs, si.ieve);
 
   // Make a new one
-  penc->on = btrue;
-  penc->target = target;
-  penc->owner = owner;
-  penc->spawner = spawner;
-  if ( VALID_CHR(chrlst, spawner) )
-  {
-    chrlst[spawner].undoenchant = enc_ref;
-  }
-  penc->eve            = ieve;
+  penc->target         = si.target;
+  penc->owner          = si.owner;
+  penc->eve            = si.ieve;
   penc->time           = peve->time;
   penc->spawntime      = 1;
   penc->ownermana_fp8  = peve->ownermana_fp8;
@@ -2023,57 +2098,94 @@ ENC_REF spawn_one_enchant( CGame * gs, CHR_REF owner, CHR_REF target,
   penc->targetmana_fp8 = peve->targetmana_fp8;
   penc->targetlife_fp8 = peve->targetlife_fp8;
 
-  // Add it as first in the list
-  penc->nextenchant = chrlst[target].firstenchant;
-  chrlst[target].firstenchant      = enc_ref;
-
+  // link it to the spawner
+  if ( ACTIVE_CHR(chrlst, si.spawner) )
+  {
+    chrlst[si.spawner].undoenchant = si.ienc;
+    penc->spawner = si.spawner;
+  }
+  else
+  {
+    penc->spawner = INVALID_CHR;
+  }
 
   // Now set all of the specific values, morph first
-  set_enchant_value( gs, enc_ref, SETMORPH, ieve );
+  set_enchant_value( si.gs, si.ienc, SETMORPH, si.ieve );
   for ( cnt = SETDAMAGETYPE; cnt <= SETCOSTFOREACHMISSILE; cnt++ )
   {
-    set_enchant_value( gs, enc_ref, cnt, ieve );
+    set_enchant_value( si.gs, si.ienc, cnt, si.ieve );
   }
-  set_enchant_value( gs, enc_ref, SETCHANNEL, ieve );
+  set_enchant_value( si.gs, si.ienc, SETCHANNEL, si.ieve );
 
 
   // Now do all of the stat adds
   add = 0;
   while ( add < EVE_ADD_COUNT )
   {
-    add_enchant_value( gs, enc_ref, add, ieve );
+    add_enchant_value( si.gs, si.ienc, add, si.ieve );
     add++;
   }
 
-  //Enchant to allow see kurses?
-  chrlst[target].prop.canseekurse = chrlst[target].prop.canseekurse || evelst[ieve].canseekurse;
+  penc->reserved = btrue;
 
+  return si.ienc;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t activate_enchant(CEnc * penc)
+{
+  PEve evelst;
+  PEnc enclst;
+  PChr chrlst;
+
+  CGame * gs;
+  ENC_REF ienc;
+  CEve * peve;
+  CChr * ptarget;
+
+  if( EKEY_PVALID(penc) || penc->active ) return bfalse;
+
+  gs   = penc->spinfo.gs;
+
+  evelst = gs->EveList;
+  enclst = gs->EncList;
+  chrlst = gs->ChrList;
+
+  ienc    = penc->spinfo.ienc;
+  peve    = evelst + penc->eve;
+  ptarget = chrlst + penc->target;
+
+  // Link the enchant into tthe target's list
+  penc->nextenchant = ptarget->firstenchant;
+  ptarget->firstenchant      = ienc;
+
+  //Enchant to allow see kurses?
+  ptarget->prop.canseekurse = ptarget->prop.canseekurse || peve->canseekurse;
 
   // Create an overlay character?
   penc->overlay = INVALID_CHR;
   if ( peve->overlay )
   {
-    overlay = spawn_one_character( gs, chrlst[target].pos, iobj, chrlst[target].team, 0, chrlst[target].turn_lr, NULL, INVALID_CHR );
-    if ( VALID_CHR(chrlst, overlay) )
+    penc->overlay = chr_spawn( gs, ptarget->ori.pos, ptarget->ori.vel, penc->spinfo.iobj, ptarget->team, 0, ptarget->ori.turn_lr, NULL, INVALID_CHR );
+    if ( VALID_CHR(chrlst, penc->overlay) )
     {
       CChr * povl;
-      CMad * pomad;
+      CMad * povl_mad;
 
-      penc->overlay = overlay;  // Kill this character on end...
-      povl = ChrList_getPChr(gs, overlay);
-      pomad = ChrList_getPMad(gs, overlay);
+      povl = ChrList_getPChr(gs, penc->overlay);
+      povl_mad = ChrList_getPMad(gs, penc->overlay);
 
-      povl->aistate.target = target;
-      povl->aistate.state = peve->overlay;
-      povl->overlay = btrue;
+      povl->aistate.target = penc->target;
+      povl->aistate.state  = peve->overlay;
+      povl->overlay        = btrue;
 
       // Start out with ActionMJ...  Object activated
-      if ( pomad->actionvalid[ACTION_MJ] )
+      if ( povl_mad->actionvalid[ACTION_MJ] )
       {
         povl->action.now = ACTION_MJ;
         povl->anim.ilip = 0;
         povl->anim.flip = 0.0f;
-        povl->anim.next = pomad->actionstart[ACTION_MJ];
+        povl->anim.next = povl_mad->actionstart[ACTION_MJ];
         povl->anim.last = povl->anim.next;
         povl->action.ready = bfalse;
       }
@@ -2082,6 +2194,29 @@ ENC_REF spawn_one_enchant( CGame * gs, CHR_REF owner, CHR_REF target,
     }
   }
 
+  penc->active = btrue;
 
-  return enc_ref;
+  return btrue;
+
+}
+
+//--------------------------------------------------------------------------------------------
+void EncList_resynch( CGame * gs )
+{
+  ENC_REF ienc;
+  CEnc  * penc;
+  PEnc enclst = gs->EncList;
+  size_t enclst_size = ENCLST_COUNT;
+
+  // turn on all enchants requested in the last turn
+  for(ienc = 0; ienc < enclst_size; ienc++)
+  {
+    if( !PENDING_ENC(enclst, ienc) ) continue;
+    penc = enclst + ienc;
+
+    penc->req_active = bfalse;
+    penc->reserved   = bfalse;
+
+    penc->active = btrue;
+  }
 }

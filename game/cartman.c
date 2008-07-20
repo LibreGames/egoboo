@@ -617,7 +617,7 @@ GLtexture * tiny_tile_at(int x, int y)
   }
 
   fan = mesh_convert_fan(x, y);
-  if(gs->Mesh_Mem.fanlst[fan].tile==INVALID_FAN)
+  if(INVALID_FAN == gs->Mesh_Mem.fanlst[fan].tile)
   {
     return NULL;
   }
@@ -1356,7 +1356,7 @@ GLtexture * tile_at(int x, int y)
   }
 
   fan = mesh_convert_fan(x, y);
-  if(gs->Mesh_Mem.fanlst[fan].tile==INVALID_FAN)
+  if(INVALID_FAN == gs->Mesh_Mem.fanlst[fan].tile)
   {
     return NULL;
   }
@@ -1824,10 +1824,10 @@ void set_mesh_tile(Uint16 tiletoset)
           gs->Mesh_Mem.fanlst[fan].tile=mouseinwintile;
           break;
         case 1:
-          gs->Mesh_Mem.fanlst[fan].tile=(mouseinwintile&0xfffe)+(rand()&1);
+          gs->Mesh_Mem.fanlst[fan].tile=(mouseinwintile&0xfffe)+IRAND(1);
           break;
         case 2:
-          gs->Mesh_Mem.fanlst[fan].tile=(mouseinwintile&0xfffc)+(rand()&3);
+          gs->Mesh_Mem.fanlst[fan].tile=(mouseinwintile&0xfffc)+IRAND(2);
           break;
         case 3:
           gs->Mesh_Mem.fanlst[fan].tile=(mouseinwintile&0xfff0)+(rand()&6);
@@ -3166,7 +3166,7 @@ void jitter_select()
   while(cnt < numselect)
   {
     vert = select[cnt];
-    move_vert(vert, (rand()%3)-1, (rand()%3)-1, 0);
+    move_vert(vert, IRAND(2)-1, IRAND(2)-1, 0);
     cnt++;
   }
   return;
@@ -3194,7 +3194,7 @@ void jitter_mesh()
         clear_select();
         add_select(vert);
         //        srand(gs->Mesh_Mem.vrt_x[vert]+gs->Mesh_Mem.vrt_y[vert]+dunframe);
-        move_select((rand()&7)-3,(rand()&7)-3,(rand()&63)-32);
+        move_select(IRAND(3)-3,IRAND(3)-3,IRAND(6)-32);
         vert = gs->Mesh_Mem.vrt_next[vert];
         cnt++;
       }
@@ -3430,10 +3430,10 @@ void flatten_mesh()
 //          gs->Mesh_Mem.fanlst[mouseinwinonfan].tile=mouseinwintile;
 //          break;
 //        case 1:
-//          gs->Mesh_Mem.fanlst[mouseinwinonfan].tile=(mouseinwintile&0xfffe)+(rand()&1);
+//          gs->Mesh_Mem.fanlst[mouseinwinonfan].tile=(mouseinwintile&0xfffe)+IRAND(1);
 //          break;
 //        case 2:
-//          gs->Mesh_Mem.fanlst[mouseinwinonfan].tile=(mouseinwintile&0xfffc)+(rand()&3);
+//          gs->Mesh_Mem.fanlst[mouseinwinonfan].tile=(mouseinwintile&0xfffc)+IRAND(2);
 //          break;
 //        case 3:
 //          gs->Mesh_Mem.fanlst[mouseinwinonfan].tile=(mouseinwintile&0xfff0)+(rand()&6);
@@ -3630,7 +3630,7 @@ void clear_mesh()
   Uint32 fan;
 
 
-  if(mouseinwintile != INVALID_FAN)
+  if(INVALID_FAN != mouseinwintile)
   {
     y = 0;
     while(y < gs->mesh.size_y)
@@ -3646,22 +3646,22 @@ void clear_mesh()
           gs->Mesh_Mem.fanlst[fan].tile=mouseinwintile;
           break;
         case 1:
-          gs->Mesh_Mem.fanlst[fan].tile=(mouseinwintile&0xfffe)+(rand()&1);
+          gs->Mesh_Mem.fanlst[fan].tile = (mouseinwintile&0xfffe) + IRAND(1);
           break;
         case 2:
           if(mouseinwintype >= 32)
-            gs->Mesh_Mem.fanlst[fan].tile=(mouseinwintile&0xfff8)+(rand()&6);
+            gs->Mesh_Mem.fanlst[fan].tile = (mouseinwintile&0xfff8)+(rand()&6);
           else
-            gs->Mesh_Mem.fanlst[fan].tile=(mouseinwintile&0xfffc)+(rand()&3);
+            gs->Mesh_Mem.fanlst[fan].tile = (mouseinwintile&0xfffc)+IRAND(2);
           break;
         case 3:
           gs->Mesh_Mem.fanlst[fan].tile=(mouseinwintile&0xfff0)+(rand()&6);
           break;
         }
         gs->Mesh_Mem.fanlst[fan].type=mouseinwintype;
-        if(mouseinwintype<=1) gs->Mesh_Mem.fanlst[fan].type = rand()&1;
+        if(mouseinwintype<=1) gs->Mesh_Mem.fanlst[fan].type = IRAND(1);
         if(mouseinwintype == 32 || mouseinwintype == 33)
-          gs->Mesh_Mem.fanlst[fan].type = 32 + (rand()&1);
+          gs->Mesh_Mem.fanlst[fan].type = 32 + IRAND(1);
         add_fan(fan, x*31, y*31);
         x++;
       }
@@ -3679,7 +3679,7 @@ void three_e_mesh()
   int x, y;
   Uint32 fan;
 
-  if(mouseinwintile != INVALID_FAN)
+  if(INVALID_FAN != mouseinwintile)
   {
     y = 0;
     while(y < gs->mesh.size_y)

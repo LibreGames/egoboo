@@ -26,7 +26,7 @@
 #pragma once
 
 #include <SDL_types.h>
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 
 struct ClockState_t;
 

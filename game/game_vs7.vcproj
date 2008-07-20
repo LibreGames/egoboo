@@ -22,6 +22,7 @@
 				Optimization="0"
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)\enet&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;_CONSOLE"
+				GeneratePreprocessedFile="0"
 				MinimalRebuild="FALSE"
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="FALSE"
@@ -167,6 +168,9 @@
 			</File>
 			<File
 				RelativePath=".\egoboo_math.inl">
+			</File>
+			<File
+				RelativePath=".\egoboo_rpc.c">
 			</File>
 			<File
 				RelativePath=".\egoboo_strutil.c">
@@ -319,6 +323,12 @@
 				RelativePath=".\passage.c">
 			</File>
 			<File
+				RelativePath=".\Physics.c">
+			</File>
+			<File
+				RelativePath=".\Physics.inl">
+			</File>
+			<File
 				RelativePath=".\script.c">
 			</File>
 			<File
@@ -405,6 +415,9 @@
 				RelativePath=".\egoboo_math.h">
 			</File>
 			<File
+				RelativePath=".\egoboo_rpc.h">
+			</File>
+			<File
 				RelativePath=".\egoboo_strutil.h">
 			</File>
 			<File
@@ -475,6 +488,9 @@
 			</File>
 			<File
 				RelativePath=".\passage.h">
+			</File>
+			<File
+				RelativePath=".\Physics.h">
 			</File>
 			<File
 				RelativePath=".\proto.h">

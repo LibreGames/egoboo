@@ -43,7 +43,7 @@ static bool_t SoundState_synchronize(SoundState * ss, struct ConfigData_t * cd);
 //------------------------------------------------------------------------------
 SoundState * snd_getState(ConfigData * cd)
 {
-  if( !_sndState.initialized)
+  if( !EKEY_VALID(_sndState) )
   {
     snd_initialize(cd);
   }
@@ -173,7 +173,7 @@ int snd_play_sound( CGame * gs, float intensity, vect3 pos, Mix_Chunk *loadedwav
 
   if( !_sndState.soundActive ) return INVALID_CHANNEL;
 
-  if ( loadedwave == NULL )
+  if ( NULL == loadedwave  )
   {
     log_warning( "Sound file not correctly loaded (Not found?) - Object \"%s\" is trying to play sound%i.wav\n", ObjList_getPCap(gs, whichobject)->classname, soundnumber );
     return INVALID_CHANNEL;
@@ -214,11 +214,11 @@ int snd_play_particle_sound( CGame * gs, float intensity, PRT_REF particle, Sint
   iobj = gs->PrtList[particle].model;
   if ( VALID_OBJ(gs->ObjList, iobj) )
   {
-    channel = snd_play_sound( gs, intensity, gs->PrtList[particle].pos, gs->ObjList[iobj].wavelist[sound], 0, iobj, sound );
+    channel = snd_play_sound( gs, intensity, gs->PrtList[particle].ori.pos, gs->ObjList[iobj].wavelist[sound], 0, iobj, sound );
   }
   else if(sound < GSOUND_COUNT)
   {
-    channel = snd_play_sound( gs, intensity, gs->PrtList[particle].pos, _sndState.mc_list[sound], 0, INVALID_OBJ, sound );
+    channel = snd_play_sound( gs, intensity, gs->PrtList[particle].ori.pos, _sndState.mc_list[sound], 0, INVALID_OBJ, sound );
   };
 
   return channel;
@@ -349,6 +349,18 @@ bool_t snd_reopen()
 
 
 //------------------------------------------------------------------------------
+bool_t SoundState_delete(SoundState * snd)
+{
+  if(NULL == snd) return bfalse;
+
+  if( !EKEY_PVALID(snd) ) return btrue;
+
+  EKEY_PINVALIDATE(snd);
+
+  return btrue;
+}
+
+//------------------------------------------------------------------------------
 SoundState * SoundState_new(SoundState * snd, ConfigData * cd)
 {
   // BB > do a raw initialization of the sound state
@@ -357,12 +369,13 @@ SoundState * SoundState_new(SoundState * snd, ConfigData * cd)
 
   if(NULL == snd) return NULL;
 
-  if( snd->initialized ) return snd;
+  SoundState_delete(snd);
  
   memset(snd, 0, sizeof(SoundState));
 
+  EKEY_PNEW(snd, SoundState);
+
   snd->song_index  = -1;
-  snd->initialized = btrue;
   snd->frequency   = MIX_DEFAULT_FREQUENCY;
 
   SoundState_synchronize(snd, cd);

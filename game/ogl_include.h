@@ -1,7 +1,7 @@
 #pragma once
 
 #include <SDL_opengl.h>
-#include "egoboo_math.inl"
+#include "egoboo_math.h"
 
 #ifndef EGOBOO_CONFIG
 #    error Somehow, egoboo_config.h is not included in this file...

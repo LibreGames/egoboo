@@ -113,7 +113,7 @@ INLINE const Uint16 slot_to_latch( PChr lst, size_t count, CHR_REF object, SLOT 
   Uint16 latch = LATCHBUTTON_NONE;
   bool_t in_hand = bfalse;
 
-  if ( VALID_CHR( lst, object ) )
+  if ( ACTIVE_CHR( lst, object ) )
     in_hand = chr_using_slot( lst, count, object, s );
 
   switch ( s )
@@ -153,7 +153,7 @@ INLINE bool_t BData_delete(BData * b)
 //--------------------------------------------------------------------------------------------
 INLINE BData * BData_renew(BData * b)
 {
-  if(NULL==b) return NULL;
+  if(NULL ==b) return NULL;
 
   BData_delete(b);
   return BData_new(b);

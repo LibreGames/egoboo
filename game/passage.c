@@ -78,23 +78,23 @@ bool_t break_passage( CGame * gs, PASS_REF passage, Uint16 starttile, Uint16 fra
   endtile = starttile + frames - 1;
   for ( character = 0; character < CHRLST_COUNT; character++ )
   {
-    if ( !VALID_CHR( gs->ChrList,  character ) || chr_in_pack( gs->ChrList, CHRLST_COUNT, character ) ) continue;
+    if ( !ACTIVE_CHR( gs->ChrList,  character ) || chr_in_pack( gs->ChrList, CHRLST_COUNT, character ) ) continue;
     pchr = gs->ChrList + character;
 
-    if ( pchr->weight > 20 && pchr->flyheight == 0 && pchr->pos.z < ( pchr->level + 20 ) && !chr_attached( gs->ChrList, CHRLST_COUNT, character ) )
+    if ( pchr->weight > 20 && pchr->flyheight == 0 && pchr->ori.pos.z < ( pchr->level + 20 ) && !chr_attached( gs->ChrList, CHRLST_COUNT, character ) )
     {
       if ( passage_check( gs, character, passage, NULL ) )
       {
-        fan_x = MESH_FLOAT_TO_FAN( pchr->pos.x );
-        fan_y = MESH_FLOAT_TO_FAN( pchr->pos.y );
+        fan_x = MESH_FLOAT_TO_FAN( pchr->ori.pos.x );
+        fan_y = MESH_FLOAT_TO_FAN( pchr->ori.pos.y );
 
         // The character is in the passage, so might need to break...
         tile =  mesh_get_tile( gs, fan_x, fan_y );
         if ( tile >= starttile && tile < endtile )
         {
           // Remember where the hit occured...
-          if(NULL != pix) *pix = pchr->pos.x;
-          if(NULL != piy) *piy = pchr->pos.y;
+          if(NULL != pix) *pix = pchr->ori.pos.x;
+          if(NULL != piy) *piy = pchr->ori.pos.y;
           useful = btrue;
 
           // Change the tile
@@ -182,7 +182,7 @@ CHR_REF who_is_blocking_passage( CGame * gs, PASS_REF passage )
   foundother = INVALID_CHR;
   for ( character = 0; character < CHRLST_COUNT; character++ )
   {
-    if ( !VALID_CHR( gs->ChrList,  character ) || chr_in_pack( gs->ChrList, CHRLST_COUNT, character ) ) continue;
+    if ( !ACTIVE_CHR( gs->ChrList,  character ) || chr_in_pack( gs->ChrList, CHRLST_COUNT, character ) ) continue;
 
     if ( passage_check_any( gs, character, passage, NULL ) )
     {
@@ -220,7 +220,7 @@ void check_passage_music(CGame * gs)
     // Look at each character
     for ( character = 0; character < CHRLST_COUNT; character++ )
     {
-      if ( !VALID_CHR( gs->ChrList,  character ) || chr_in_pack( gs->ChrList, CHRLST_COUNT, character ) || !chr_is_player(gs, character) ) continue;
+      if ( !ACTIVE_CHR( gs->ChrList,  character ) || chr_in_pack( gs->ChrList, CHRLST_COUNT, character ) || !chr_is_player(gs, character) ) continue;
 
       if ( passage_check_any( gs, character, passage, NULL ) )
       {
@@ -244,7 +244,7 @@ CHR_REF who_is_blocking_passage_ID( CGame * gs, PASS_REF passage, IDSZ idsz )
   // Look at each character
   for ( character = 0; character < CHRLST_COUNT; character++ )
   {
-    if ( !VALID_CHR( gs->ChrList, character ) || chr_in_pack( gs->ChrList, CHRLST_COUNT, character ) ) continue;
+    if ( !ACTIVE_CHR( gs->ChrList, character ) || chr_in_pack( gs->ChrList, CHRLST_COUNT, character ) ) continue;
 
     if ( !gs->ChrList[character].prop.isitem && gs->ChrList[character].alive )
     {
@@ -254,7 +254,7 @@ CHR_REF who_is_blocking_passage_ID( CGame * gs, PASS_REF passage, IDSZ idsz )
 
         // Check the pack
         sTmp  = chr_get_nextinpack( gs->ChrList, CHRLST_COUNT, character );
-        while ( VALID_CHR( gs->ChrList,  sTmp ) )
+        while ( ACTIVE_CHR( gs->ChrList,  sTmp ) )
         {
           if ( CAP_INHERIT_IDSZ( gs, ChrList_getRCap(gs, sTmp), idsz ) )
           {
@@ -267,7 +267,7 @@ CHR_REF who_is_blocking_passage_ID( CGame * gs, PASS_REF passage, IDSZ idsz )
         for ( _slot = SLOT_BEGIN; _slot < SLOT_COUNT; _slot = ( SLOT )( _slot + 1 ) )
         {
           sTmp = chr_get_holdingwhich( gs->ChrList, CHRLST_COUNT, character, _slot );
-          if ( VALID_CHR( gs->ChrList,  sTmp ) && CAP_INHERIT_IDSZ( gs,  ChrList_getRCap(gs, sTmp), idsz ) )
+          if ( ACTIVE_CHR( gs->ChrList,  sTmp ) && CAP_INHERIT_IDSZ( gs,  ChrList_getRCap(gs, sTmp), idsz ) )
           {
             // It has the item...
             return character;
@@ -308,7 +308,7 @@ bool_t close_passage( CGame * gs, Uint32 passage )
     numcrushed = 0;
     for ( character = 0; character < CHRLST_COUNT; character++ )
     {
-      if ( !VALID_CHR( gs->ChrList,  character ) ) continue;
+      if ( !ACTIVE_CHR( gs->ChrList,  character ) ) continue;
 
       if ( passage_check( gs, character, passage, NULL ) )
       {
@@ -369,7 +369,7 @@ bool_t passage_check_all( CGame * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powne
   float y_min, y_max;
   bool_t retval = bfalse;
 
-  if ( !VALID_CHR( gs->ChrList,  ichr ) || pass >= gs->PassList_count ) return retval;
+  if ( !ACTIVE_CHR( gs->ChrList,  ichr ) || pass >= gs->PassList_count ) return retval;
 
   x_min = gs->ChrList[ichr].bmpdata.cv.x_min;
   x_max = gs->ChrList[ichr].bmpdata.cv.x_max;
@@ -382,7 +382,7 @@ bool_t passage_check_all( CGame * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powne
 
   if ( retval )
   {
-    signal_target( gs, gs->PassList[pass].owner, MESSAGE_ENTERPASSAGE, REF_TO_INT(ichr) );
+    signal_target( gs, 0, gs->PassList[pass].owner, SIGNAL_ENTERPASSAGE, REF_TO_INT(ichr) );
 
     if ( NULL != powner )
     {
@@ -401,7 +401,7 @@ bool_t passage_check_any( CGame * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powne
   float x_min, x_max;
   float y_min, y_max;
 
-  if ( !VALID_CHR( gs->ChrList,  ichr ) || pass >= gs->PassList_count ) return bfalse;
+  if ( !ACTIVE_CHR( gs->ChrList,  ichr ) || pass >= gs->PassList_count ) return bfalse;
 
   x_min = gs->ChrList[ichr].bmpdata.cv.x_min;
   x_max = gs->ChrList[ichr].bmpdata.cv.x_max;
@@ -412,7 +412,7 @@ bool_t passage_check_any( CGame * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powne
   if ( x_max < MESH_FAN_TO_INT( gs->PassList[pass].area.left ) || x_min > MESH_FAN_TO_INT( gs->PassList[pass].area.right + 1 ) ) return bfalse;
   if ( y_max < MESH_FAN_TO_INT( gs->PassList[pass].area.top ) || y_min > MESH_FAN_TO_INT( gs->PassList[pass].area.bottom + 1 ) ) return bfalse;
 
-  signal_target( gs, gs->PassList[pass].owner, MESSAGE_ENTERPASSAGE, REF_TO_INT(ichr) );
+  signal_target( gs, 0, gs->PassList[pass].owner, SIGNAL_ENTERPASSAGE, REF_TO_INT(ichr) );
 
   if ( NULL != powner )
   {
@@ -429,14 +429,14 @@ bool_t passage_check( CGame * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powner )
 
   bool_t retval = bfalse;
 
-  if ( !VALID_CHR( gs->ChrList,  ichr ) || pass >= gs->PassList_count ) return retval;
+  if ( !ACTIVE_CHR( gs->ChrList,  ichr ) || pass >= gs->PassList_count ) return retval;
 
-  retval = ( gs->ChrList[ichr].pos.x > MESH_FAN_TO_INT( gs->PassList[pass].area.left ) && gs->ChrList[ichr].pos.x < MESH_FAN_TO_INT( gs->PassList[pass].area.right + 1 ) ) &&
-           ( gs->ChrList[ichr].pos.y > MESH_FAN_TO_INT( gs->PassList[pass].area.top ) && gs->ChrList[ichr].pos.y < MESH_FAN_TO_INT( gs->PassList[pass].area.bottom + 1 ) );
+  retval = ( gs->ChrList[ichr].ori.pos.x > MESH_FAN_TO_INT( gs->PassList[pass].area.left ) && gs->ChrList[ichr].ori.pos.x < MESH_FAN_TO_INT( gs->PassList[pass].area.right + 1 ) ) &&
+           ( gs->ChrList[ichr].ori.pos.y > MESH_FAN_TO_INT( gs->PassList[pass].area.top ) && gs->ChrList[ichr].ori.pos.y < MESH_FAN_TO_INT( gs->PassList[pass].area.bottom + 1 ) );
 
   if ( retval )
   {
-    signal_target( gs, gs->PassList[pass].owner, MESSAGE_ENTERPASSAGE, REF_TO_INT(ichr) );
+    signal_target( gs, 0, gs->PassList[pass].owner, SIGNAL_ENTERPASSAGE, REF_TO_INT(ichr) );
 
     if ( NULL != powner )
     {
@@ -451,9 +451,9 @@ Uint32 ShopList_add( CGame * gs, CHR_REF owner, PASS_REF passage )
 {
   // ZZ> This function creates a shop passage
 
-  Uint32 shop_passage = MAXPASS;
+  Uint32 shop_passage = INVALID_PASS;
 
-  if ( passage < gs->PassList_count && gs->ShopList_count < MAXPASS )
+  if ( passage < gs->PassList_count && gs->ShopList_count < PASSLST_COUNT )
   {
     shop_passage = gs->ShopList_count;
 
@@ -472,7 +472,7 @@ Uint32 PassList_add( CGame * gs, int tlx, int tly, int brx, int bry, bool_t open
 {
   // ZZ> This function creates a passage area
 
-  Uint32 passage = MAXPASS;
+  Uint32 passage = PASSLST_COUNT;
 
   // clip the passage borders
   tlx = mesh_clip_fan_x( &(gs->mesh), tlx );
@@ -481,7 +481,7 @@ Uint32 PassList_add( CGame * gs, int tlx, int tly, int brx, int bry, bool_t open
   brx = mesh_clip_fan_x( &(gs->mesh), brx );
   bry = mesh_clip_fan_x( &(gs->mesh), bry );
 
-  if ( gs->PassList_count < MAXPASS )
+  if ( gs->PassList_count < PASSLST_COUNT )
   {
     passage = gs->PassList_count;
     gs->PassList_count++;
@@ -556,9 +556,13 @@ Passage * Passage_new(Passage *ppass)
 { 
   //fprintf( stdout, "Passage_new()\n");
 
-  if(NULL==ppass) return ppass; 
+  if(NULL ==ppass) return ppass;
+
+  Passage_delete( ppass );
 
   memset(ppass, 0, sizeof(Passage)); 
+
+  EKEY_PNEW( ppass, Passage );
 
   ppass->music = INVALID_SOUND;
   ppass->open  = btrue;
@@ -570,7 +574,10 @@ Passage * Passage_new(Passage *ppass)
 //--------------------------------------------------------------------------------------------
 bool_t Passage_delete(Passage *ppass) 
 { 
-  if(NULL==ppass) return bfalse; 
+  if(NULL ==ppass) return bfalse; 
+  if(!EKEY_PVALID( ppass )) return btrue;
+
+  EKEY_PINVALIDATE(ppass);
 
   ppass->music = INVALID_SOUND;
   ppass->open  = btrue;
@@ -592,9 +599,15 @@ Shop * Shop_new(Shop *pshop)
 { 
   //fprintf( stdout, "Shop_new()\n");
 
-  if(NULL==pshop) return pshop; 
+  if(NULL ==pshop) return pshop;
 
-  pshop->passage = MAXPASS; 
+  Shop_delete( pshop );
+
+  memset( pshop, 0, sizeof(Shop) );
+
+  EKEY_PNEW( pshop, Shop );
+
+  pshop->passage = INVALID_PASS; 
   pshop->owner   = INVALID_CHR; 
 
   return pshop; 
@@ -603,9 +616,12 @@ Shop * Shop_new(Shop *pshop)
 //--------------------------------------------------------------------------------------------
 bool_t Shop_delete(Shop *pshop) 
 { 
-  if(NULL==pshop) return bfalse; 
+  if(NULL ==pshop) return bfalse; 
+  if(!EKEY_PVALID( pshop )) return btrue;
 
-  pshop->passage = MAXPASS; 
+  EKEY_PINVALIDATE(pshop);
+
+  pshop->passage = INVALID_PASS; 
   pshop->owner   = INVALID_CHR; 
 
   return btrue; 

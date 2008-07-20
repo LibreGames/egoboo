@@ -233,36 +233,37 @@ void move_camera( float dUpdate )
   {
     if ( !VALID_PLA(gs->PlaList,  pla_cnt ) || INBITS_NONE == gs->PlaList[pla_cnt].device ) continue;
 
-    chr_ref = PlaList_get_character( gs, pla_cnt );
+    chr_ref = PlaList_getRChr( gs, pla_cnt );
     if ( VALID_CHR(gs->ChrList,  chr_ref ) && gs->ChrList[chr_ref].alive )
     {
-      CHR_REF attachedto_ref = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, chr_ref );
+      CHR_REF attachedto_ref  = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, chr_ref );
+      CHR_REF inwhichpack_ref = chr_get_inwhichpack( gs->ChrList, CHRLST_COUNT, chr_ref );
 
       if ( VALID_CHR(gs->ChrList,  attachedto_ref ) )
       {
         // The chr_ref is mounted
-        pos.x += gs->ChrList[attachedto_ref].pos.x;
-        pos.y += gs->ChrList[attachedto_ref].pos.y;
-        pos.z += gs->ChrList[attachedto_ref].pos.z + 0.9 * gs->ChrList[chr_ref].bmpdata.calc_height;
+        pos.x += gs->ChrList[attachedto_ref].ori.pos.x;
+        pos.y += gs->ChrList[attachedto_ref].ori.pos.y;
+        pos.z += gs->ChrList[attachedto_ref].ori.pos.z + 0.9 * gs->ChrList[chr_ref].bmpdata.calc_height;
 
         level += gs->ChrList[attachedto_ref].level;
 
-        vel.x += gs->ChrList[attachedto_ref].vel.x;
-        vel.y += gs->ChrList[attachedto_ref].vel.y;
-        vel.z += gs->ChrList[attachedto_ref].vel.z;
+        vel.x += gs->ChrList[attachedto_ref].ori.vel.x;
+        vel.y += gs->ChrList[attachedto_ref].ori.vel.y;
+        vel.z += gs->ChrList[attachedto_ref].ori.vel.z;
       }
-      else
+      else if ( !VALID_CHR(gs->ChrList, inwhichpack_ref ) )
       {
         // The chr_ref is on foot
-        pos.x += gs->ChrList[chr_ref].pos.x;
-        pos.y += gs->ChrList[chr_ref].pos.y;
-        pos.z += gs->ChrList[chr_ref].pos.z + 0.9 * gs->ChrList[chr_ref].bmpdata.calc_height;
+        pos.x += gs->ChrList[chr_ref].ori.pos.x;
+        pos.y += gs->ChrList[chr_ref].ori.pos.y;
+        pos.z += gs->ChrList[chr_ref].ori.pos.z + 0.9 * gs->ChrList[chr_ref].bmpdata.calc_height;
 
         level += gs->ChrList[chr_ref].level;
 
-        vel.x += gs->ChrList[chr_ref].vel.x;
-        vel.y += gs->ChrList[chr_ref].vel.y;
-        vel.z += gs->ChrList[chr_ref].vel.z;
+        vel.x += gs->ChrList[chr_ref].ori.vel.x;
+        vel.y += gs->ChrList[chr_ref].ori.vel.y;
+        vel.z += gs->ChrList[chr_ref].ori.vel.z;
       };
 
       locoalive++;

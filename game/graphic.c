@@ -82,7 +82,7 @@ bool_t gfx_find_anisotropy( CGraphics * g )
   g->log2Anisotropy = 0;
   g->texturefilter  = TX_TRILINEAR_2;
 
-  if(!SDL_WasInit(SDL_INIT_VIDEO) || NULL==g->surface) return bfalse;
+  if(!SDL_WasInit(SDL_INIT_VIDEO) || NULL ==g->surface) return bfalse;
 
   glGetFloatv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &(g->maxAnisotropy) );
   g->log2Anisotropy = ( g->maxAnisotropy == 0 ) ? 0 : floor( log( g->maxAnisotropy + 1e-6 ) / log( 2.0f ) );
@@ -719,11 +719,14 @@ void read_wawalite( CGame * gs, char *modname )
   // ZZ> This function sets up water and lighting for the module
 
   FILE* fileread;
+  Uint32 loc_rand;
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.wawalite_file );
   fileread = fs_fileOpen( PRI_NONE, NULL, CStringTmp1, "r" );
   if ( NULL != fileread )
   {
+    loc_rand = gs->randie_index;
+
     fgoto_colon( fileread );
     //  !!!BAD!!!
     //  Random map...
@@ -776,8 +779,8 @@ void read_wawalite( CGame * gs, char *modname )
     gs->water.layer[0].v = 0;
     gs->water.layer[1].u = 0;
     gs->water.layer[1].v = 0;
-    gs->water.layer[0].frame = rand() & WATERFRAMEAND;
-    gs->water.layer[1].frame = rand() & WATERFRAMEAND;
+    gs->water.layer[0].frame = RAND( &loc_rand, 0, WATERFRAMEAND );
+    gs->water.layer[1].frame = RAND( &loc_rand, 0, WATERFRAMEAND );
 
     // Read light data second
     GLight.on        = btrue;
@@ -1156,7 +1159,9 @@ void render_shadow( CHR_REF character )
       glBlendFunc( GL_ZERO, GL_ONE_MINUS_SRC_COLOR );
 
       glDepthMask( GL_FALSE );
-      glDepthFunc( GL_LEQUAL );
+
+      glEnable( GL_DEPTH_TEST );
+      glDepthFunc( GL_LESS );
 
       // Choose texture.
       GLTexture_Bind( gs->TxTexture + particletexture, &gfxState );
@@ -1216,100 +1221,6 @@ void render_shadow( CHR_REF character )
     ATTRIB_POP( "render_shadow" );
   };
 };
-
-//--------------------------------------------------------------------------------------------
-//void render_bad_shadow(CHR_REF character)
-//{
-//  // ZZ> This function draws a sprite shadow
-//
-//  CGame * gs = gfxState.gs;
-//
-//  GLVertex v[4];
-//  float size, x, y;
-//  Uint8 ambi;
-//  //DWORD light;
-//  float level; //, z;
-//  int height;
-//  Sint8 hide;
-//  Uint8 trans;
-//  int i;
-//
-//
-//  hide = ChrList_getPCap(gs, character)->hidestate;
-//  if (hide == NOHIDE || hide != gs->ChrList[character].aistate.state)
-//  {
-//    // Original points
-//    level = gs->ChrList[character].level;
-//    level += SHADOWRAISE;
-//    height = gs->ChrList[character].matrix.CNV(3, 2) - level;
-//    if (height > 255)  return;
-//    if (height < 0) height = 0;
-//    size = gs->ChrList[character].bmpdata.calc_shadowsize - FP8_MUL(height, gs->ChrList[character].bmpdata.calc_shadowsize);
-//    if (size < 1) return;
-//    ambi = gs->ChrList[character].lightspek_fp8 >> 4;  // LUL >>3;
-//    trans = ((255 - height) >> 1) + 64;
-//
-//    x = gs->ChrList[character].matrix.CNV(3, 0);
-//    y = gs->ChrList[character].matrix.CNV(3, 1);
-//    v[0].pos.x = (float) x + size;
-//    v[0].pos.y = (float) y - size;
-//    v[0].pos.z = (float) level;
-//
-//    v[1].pos.x = (float) x + size;
-//    v[1].pos.y = (float) y + size;
-//    v[1].pos.z = (float) level;
-//
-//    v[2].pos.x = (float) x - size;
-//    v[2].pos.y = (float) y + size;
-//    v[2].pos.z = (float) level;
-//
-//    v[3].pos.x = (float) x - size;
-//    v[3].pos.y = (float) y - size;
-//    v[3].pos.z = (float) level;
-//
-//
-//    v[0].s = CALCULATE_PRT_U0(236);
-//    v[0].t = CALCULATE_PRT_V0(236);
-//
-//    v[1].s = CALCULATE_PRT_U1(253);
-//    v[1].t = CALCULATE_PRT_V0(236);
-//
-//    v[2].s = CALCULATE_PRT_U1(253);
-//    v[2].t = CALCULATE_PRT_V1(253);
-//
-//    v[3].s = CALCULATE_PRT_U0(236);
-//    v[3].t = CALCULATE_PRT_V1(253);
-//
-//    ATTRIB_PUSH("render_bad_shadow", GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_TEXTURE_BIT | GL_CURRENT_BIT);
-//    {
-//
-//      glDisable(GL_CULL_FACE);
-//
-//      //glEnable(GL_ALPHA_TEST);
-//      //glAlphaFunc(GL_GREATER, 0);
-//
-//      glEnable(GL_BLEND);
-//      glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-//
-//      glDepthMask(GL_FALSE);
-//      glDepthFunc(GL_LEQUAL);
-//
-//      // Choose texture.
-//      GLTexture_Bind( gs->TxTexture + particletexture, &gfxState);
-//
-//      glColor4f(FP8_TO_FLOAT(ambi), FP8_TO_FLOAT(ambi), FP8_TO_FLOAT(ambi), FP8_TO_FLOAT(trans));
-//      glBegin(GL_TRIANGLE_FAN);
-//      for (i = 0; i < 4; i++)
-//      {
-//        glTexCoord2f(v[i].s, v[i].t);
-//        glVertex3fv(v[i].pos.v);
-//      }
-//      glEnd();
-//    }
-//    ATTRIB_POP("render_bad_shadow");
-//  }
-//}
-//
 
 //--------------------------------------------------------------------------------------------
 void calc_chr_lighting( int x, int y, Uint16 tl, Uint16 tr, Uint16 bl, Uint16 br, Uint16 * spek, Uint16 * ambi )
@@ -1387,8 +1298,8 @@ void light_characters()
 
     vrtstart = gs->Mesh_Mem.fanlst[gs->ChrList[chr_tnc].onwhichfan].vrt_start;
 
-    x = gs->ChrList[chr_tnc].pos.x;
-    y = gs->ChrList[chr_tnc].pos.y;
+    x = gs->ChrList[chr_tnc].ori.pos.x;
+    y = gs->ChrList[chr_tnc].ori.pos.y;
     x = ( x & 127 ) >> 5;  // From 0 to 3
     y = ( y & 127 ) >> 5;  // From 0 to 3
 
@@ -1475,7 +1386,7 @@ void light_particles()
 
   for ( prt_cnt = 0; prt_cnt < PRTLST_COUNT; prt_cnt++ )
   {
-    if ( !VALID_PRT(gs->PrtList,  prt_cnt ) ) continue;
+    if ( !ACTIVE_PRT(gs->PrtList,  prt_cnt ) ) continue;
 
     switch ( gs->PrtList[prt_cnt].type )
     {
@@ -1494,7 +1405,7 @@ void light_particles()
       case PRTTYPE_SOLID:
         {
           character = prt_get_attachedtochr( gs, prt_cnt );
-          if ( VALID_CHR( gs->ChrList,  character ) )
+          if ( ACTIVE_CHR( gs->ChrList,  character ) )
           {
             gs->PrtList[prt_cnt].lightr_fp8 = gs->ChrList[character].tlight.spek_fp8.r + gs->ChrList[character].tlight.ambi_fp8.r;
             gs->PrtList[prt_cnt].lightg_fp8 = gs->ChrList[character].tlight.spek_fp8.g + gs->ChrList[character].tlight.ambi_fp8.g;
@@ -1658,44 +1569,12 @@ void render_good_shadows()
     for ( cnt = 0; cnt < numdolist; cnt++ )
     {
       chr_tnc = dolist[cnt];
-      if ( gs->ChrList[chr_tnc].bmpdata.shadow != 0 || ChrList_getPCap(gs, chr_tnc)->prop.forceshadow && mesh_has_no_bits( gs->Mesh_Mem.fanlst, gs->ChrList[chr_tnc].onwhichfan, MPDFX_SHINY ) )
+      if ( gs->ChrList[chr_tnc].bmpdata.shadow != 0 || gs->ChrList[chr_tnc].prop.forceshadow && mesh_has_no_bits( gs->Mesh_Mem.fanlst, gs->ChrList[chr_tnc].onwhichfan, MPDFX_SHINY ) )
         render_shadow( chr_tnc );
     }
   }
   ATTRIB_POP( "render_good_shadows" );
 }
-
-//--------------------------------------------------------------------------------------------
-//void render_bad_shadows()
-//{
-//  int cnt;
-//  CHR_REF chr_tnc;
-//
-//  CGame * gs = gfxState.gs;
-//
-//  // Bad shadows
-//  ATTRIB_PUSH("render_bad_shadows", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-//  {
-//    glDepthMask(GL_FALSE);
-//
-//    glEnable(GL_ALPHA_TEST);
-//    glAlphaFunc(GL_GREATER, 0);
-//
-//    glEnable(GL_BLEND);
-//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//
-//    for (cnt = 0; cnt < numdolist; cnt++)
-//    {
-//      chr_tnc = dolist[cnt];
-//      //if(gs->ChrList[chr_tnc].attachedto == INVALID_CHR)
-//      //{
-//      if (gs->ChrList[chr_tnc].bmpdata.calc_shadowsize != 0 || ChrList_getPCap(gs, chr_tnc)->prop.forceshadow && HAS_NO_BITS(Mesh[gs->ChrList[chr_tnc].onwhichfan].fx, MPDFX_SHINY))
-//        render_bad_shadow(chr_tnc);
-//      //}
-//    }
-//  }
-//  ATTRIB_POP("render_bad_shadows");
-//}
 
 //--------------------------------------------------------------------------------------------
 void render_character_reflections()
@@ -1817,48 +1696,6 @@ void render_shiny_fans()
   ATTRIB_POP( "render_shiny_fans" );
 };
 
-
-//--------------------------------------------------------------------------------------------
-//void render_reflected_fans()
-//{
-//  int cnt, tnc, fan, texture;
-//
-//  // Render the shadow floors
-//  ATTRIB_PUSH("render_reflected_fans", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT | GL_TEXTURE_BIT | GL_LIGHTING_BIT);
-//  {
-//    // depth buffer stuff
-//    glDepthMask(GL_TRUE);
-//    glEnable(GL_DEPTH_TEST);
-//    glDepthFunc(GL_LEQUAL);
-//
-//    // shading stuff
-//    glShadeModel(gfxState.shading);
-//
-//    // alpha stuff
-//    glDisable(GL_BLEND);
-//    glEnable(GL_ALPHA_TEST);
-//    glAlphaFunc(GL_GREATER, 0);
-//
-//    // backface culling
-//    glEnable(GL_CULL_FACE);
-//    glFrontFace(GL_CW);
-//    glCullFace(GL_BACK);
-//
-//    for (cnt = 0; cnt < 4; cnt++)
-//    {
-//      texture = cnt + TX_TILE_0;
-//      gs->mesh.last_texture = texture;
-//      GLTexture_Bind( gs->TxTexture + texture, &gfxState);
-//      for (tnc = 0; tnc < renderlist.num_reflc; tnc++)
-//      {
-//        fan = renderlist.reflc[tnc];
-//        render_fan(fan, texture);
-//      };
-//    }
-//  }
-//  ATTRIB_POP("render_reflected_fans");
-//};
-//
 //--------------------------------------------------------------------------------------------
 void render_reflected_fans_ref()
 {
@@ -1905,52 +1742,6 @@ void render_reflected_fans_ref()
   ATTRIB_POP( "render_reflected_fans_ref" );
 };
 
-//--------------------------------------------------------------------------------------------
-//void render_sha_fans_ref()
-//{
-//  int cnt, tnc, fan, texture;
-//
-//  // Render the shadow floors
-//  ATTRIB_PUSH("render_sha_fans_ref", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT | GL_TEXTURE_BIT | GL_LIGHTING_BIT);
-//  {
-//    // depth buffer stuff
-//    glDepthMask(GL_TRUE);
-//    glEnable(GL_DEPTH_TEST);
-//    glDepthFunc(GL_LEQUAL);
-//
-//    // gfxState.shading stuff
-//    glShadeModel(gfxState.shading);
-//
-//    // alpha stuff
-//    glEnable(GL_ALPHA_TEST);
-//    glAlphaFunc(GL_GREATER, 0);
-//
-//    glEnable(GL_BLEND);
-//    glBlendFunc(GL_ONE, GL_ONE);
-//    glEnable(GL_ALPHA_TEST);
-//    glAlphaFunc(GL_GREATER, 0);
-//
-//    // backface culling
-//    glEnable(GL_CULL_FACE);
-//    glFrontFace(GL_CCW);
-//    glCullFace(GL_BACK);
-//
-//    for (cnt = 0; cnt < 4; cnt++)
-//    {
-//      texture = cnt + TX_TILE_0;
-//      gs->mesh.last_texture = texture;
-//      GLTexture_Bind( gs->TxTexture + texture, &gfxState);
-//      for (tnc = 0; tnc < renderlist.num_reflc; tnc++)
-//      {
-//        fan = renderlist.reflc[tnc];
-//        render_fan_ref(fan, texture, gs->PlaList_level);
-//      };
-//    }
-//
-//  }
-//  ATTRIB_POP("render_sha_fans_ref");
-//};
-//
 //--------------------------------------------------------------------------------------------
 void render_solid_characters()
 {
@@ -2025,10 +1816,7 @@ void render_alpha_characters()
         if (( gs->ChrList[chr_tnc].alpha_fp8 + gs->ChrList[chr_tnc].light_fp8 ) < SEEINVISIBLE &&  gs->cl->seeinvisible && chr_is_player(gs, chr_tnc) && gs->PlaList[gs->ChrList[chr_tnc].whichplayer].is_local )
           trans = SEEINVISIBLE - gs->ChrList[chr_tnc].light_fp8;
 
-        if ( trans > 0 )
-        {
-          render_mad( chr_tnc, trans );
-        };
+        render_mad( chr_tnc, trans );
       }
     }
 
@@ -2295,7 +2083,7 @@ void draw_scene_zreflection()
 //
 //    for(i=0; i<CHRLST_COUNT; i++)
 //    {
-//      if( !VALID_CHR(gs->ChrList, i) ) continue;
+//      if( !ACTIVE_CHR(gs->ChrList, i) ) continue;
 //
 //      mad_display_bbox_tree(2, gs->ChrList[i].matrix, gs->MadList + gs->ChrList[i].model, gs->ChrList[i].anim.last, gs->ChrList[i].anim.next );
 //    }
@@ -2485,7 +2273,7 @@ bool_t load_font( char* szBitmap, char* szSpacing )
 
   // Figure out where each font is and its spacing
   fileread = fs_fileOpen( PRI_NONE, NULL, szSpacing, "r" );
-  if ( fileread == NULL ) return bfalse;
+  if ( NULL == fileread  ) return bfalse;
 
   globalname = szSpacing;
 
@@ -2790,7 +2578,7 @@ int draw_string( BMFont * pfnt, float x, float y, GLfloat tint[], char * szForma
   va_list args;
   int cnt = 1;
 
-  if(NULL==pfnt || NULL == szFormat) return 0;
+  if(NULL ==pfnt || NULL == szFormat) return 0;
 
   // write the string to the buffer
   va_start( args, szFormat );
@@ -3065,7 +2853,7 @@ int draw_status( BMFont * pfnt, Status * pstat )
   // Draw the icons
   draw_one_icon( gs->skintoicon[pchr->skin_ref + pobj->skinstart], ix + 40, iy, pchr->sparkle );
   item = chr_get_holdingwhich( chrlst, CHRLST_COUNT, ichr, SLOT_LEFT );
-  if ( VALID_CHR( chrlst,  item ) && VALID_OBJ( objlst, chrlst[item].model) )
+  if ( ACTIVE_CHR( chrlst,  item ) && VALID_OBJ( objlst, chrlst[item].model) )
   {
     CChr * tmppchr = ChrList_getPChr(gs, item);
     CObj * tmppobj = ChrList_getPObj(gs, item);
@@ -3090,7 +2878,7 @@ int draw_status( BMFont * pfnt, Status * pstat )
     draw_one_icon( gs->nullicon, ix + 8, iy, NOSPARKLE );
 
   item = chr_get_holdingwhich( chrlst, CHRLST_COUNT, ichr, SLOT_RIGHT );
-  if ( VALID_CHR( chrlst,  item ) && VALID_OBJ( objlst, chrlst[item].model) )
+  if ( ACTIVE_CHR( chrlst,  item ) && VALID_OBJ( objlst, chrlst[item].model) )
   {
     CChr * tmppchr = ChrList_getPChr(gs, item);
     CObj * tmppobj = ChrList_getPObj(gs, item);
@@ -3156,10 +2944,10 @@ bool_t do_map()
     {
       if ( !VALID_PLA( gs->PlaList, ipla ) || INBITS_NONE == gs->PlaList[ipla].device ) continue;
 
-      ichr = PlaList_get_character( gs, ipla );
-      if ( !VALID_CHR( gs->ChrList,  ichr ) || !gs->ChrList[ichr].alive ) continue;
+      ichr = PlaList_getRChr( gs, ipla );
+      if ( !ACTIVE_CHR( gs->ChrList,  ichr ) || !gs->ChrList[ichr].alive ) continue;
 
-      draw_blip( (COLR)0, maprect.left + MAPSIZE * mesh_fraction_x( &(gs->mesh), gs->ChrList[ichr].pos.x ) * mapscale, maprect.top + MAPSIZE * mesh_fraction_y( &(gs->mesh), gs->ChrList[ichr].pos.y ) * mapscale );
+      draw_blip( (COLR)0, maprect.left + MAPSIZE * mesh_fraction_x( &(gs->mesh), gs->ChrList[ichr].ori.pos.x ) * mapscale, maprect.top + MAPSIZE * mesh_fraction_y( &(gs->mesh), gs->ChrList[ichr].ori.pos.y ) * mapscale );
     }
   }
 
@@ -3177,7 +2965,7 @@ int do_messages( BMFont * pfnt, int x, int y )
   MessageQueue * mq = &(gui->msgQueue);
   MESSAGE_ELEMENT * msg;
 
-  if ( NULL==pfnt || !CData.messageon ) return 0;
+  if ( NULL ==pfnt || !CData.messageon ) return 0;
 
   // Display the messages
   tnc = mq->start;
@@ -3259,17 +3047,17 @@ void draw_text( BMFont *  pfnt )
 
     if ( CData.fpson )
     {
-      CHR_REF pla_chr = PlaList_get_character( gs, PLA_REF(0) );
+      CHR_REF pla_chr = PlaList_getRChr( gs, PLA_REF(0) );
 
       y += draw_string( pfnt, 0, y, NULL, "%2.3f FPS, %2.3f UPS", stabilized_fps, stabilized_ups );
       y += draw_string( pfnt, 0, y, NULL, "estimated max FPS %2.3f", gfxState.est_max_fps );
-
+      y += draw_string( pfnt, 0, y, NULL, "character collision frac %1.3f", (float)chr_collisions / (float)CHR_MAX_COLLISIONS );
 
       if( CData.DevMode )
       {
         y += draw_string( pfnt, 0, y, NULL, "wld_frame %d, gs->wld_clock %d, all_clock %d", gs->wld_frame, gs->wld_clock, gs->all_clock );
-        y += draw_string( pfnt, 0, y, NULL, "<%3.2f,%3.2f,%3.2f>", gs->ChrList[pla_chr].pos.x, gs->ChrList[pla_chr].pos.y, gs->ChrList[pla_chr].pos.z );
-        y += draw_string( pfnt, 0, y, NULL, "<%3.2f,%3.2f,%3.2f>", gs->ChrList[pla_chr].vel.x, gs->ChrList[pla_chr].vel.y, gs->ChrList[pla_chr].vel.z );
+        y += draw_string( pfnt, 0, y, NULL, "<%3.2f,%3.2f,%3.2f>", gs->ChrList[pla_chr].ori.pos.x, gs->ChrList[pla_chr].ori.pos.y, gs->ChrList[pla_chr].ori.pos.z );
+        y += draw_string( pfnt, 0, y, NULL, "<%3.2f,%3.2f,%3.2f>", gs->ChrList[pla_chr].ori.vel.x, gs->ChrList[pla_chr].ori.vel.y, gs->ChrList[pla_chr].ori.vel.z );
       }
     }
 
@@ -3277,23 +3065,23 @@ void draw_text( BMFont *  pfnt )
       CHR_REF ichr, iref;
       GLvector tint = {0.5, 1.0, 1.0, 1.0};
 
-      ichr = PlaList_get_character( gs, PLA_REF(0) );
-      if( VALID_CHR( gs->ChrList,  ichr) )
+      ichr = PlaList_getRChr( gs, PLA_REF(0) );
+      if( ACTIVE_CHR( gs->ChrList,  ichr) )
       {
         iref = chr_get_attachedto( gs->ChrList, CHRLST_COUNT,ichr);
-        if( VALID_CHR( gs->ChrList, iref) )
+        if( ACTIVE_CHR( gs->ChrList, iref) )
         {
           y += draw_string( pfnt, 0, y, tint.v, "PLA0 holder == %s(%s)", gs->ChrList[iref].name, ChrList_getPCap(gs, iref)->classname );
         };
 
         iref = chr_get_inwhichpack( gs->ChrList, CHRLST_COUNT,ichr);
-        if( VALID_CHR( gs->ChrList, iref) )
+        if( ACTIVE_CHR( gs->ChrList, iref) )
         {
           y += draw_string( pfnt, 0, y, tint.v, "PLA0 packer == %s(%s)", gs->ChrList[iref].name, ChrList_getPCap(gs, iref)->classname );
         };
 
         iref = chr_get_onwhichplatform( gs->ChrList, CHRLST_COUNT,ichr);
-        if( VALID_CHR( gs->ChrList, iref) )
+        if( ACTIVE_CHR( gs->ChrList, iref) )
         {
           y += draw_string( pfnt, 0, y, tint.v, "PLA0 platform == %s(%s)", gs->ChrList[iref].name, ChrList_getPCap(gs, iref)->classname );
         };
@@ -3337,7 +3125,7 @@ void draw_text( BMFont *  pfnt )
     // CPlayer DEBUG MODE
     if ( SDLKEYDOWN( SDLK_F5 ) && CData.DevMode )
     {
-      CHR_REF pla_chr = PlaList_get_character( gs, PLA_REF(0) );
+      CHR_REF pla_chr = PlaList_getRChr( gs, PLA_REF(0) );
 
       y += draw_string( pfnt, 0, y, NULL, "!!!DEBUG MODE-5!!!" );
       y += draw_string( pfnt, 0, y, NULL, "~CAM %f %f", GCamera.pos.x, GCamera.pos.y );
@@ -3352,10 +3140,10 @@ void draw_text( BMFont *  pfnt )
                 gs->ChrList[pla_chr].skin.damagemodifier_fp8[6]&DAMAGE_SHIFT,
                 gs->ChrList[pla_chr].skin.damagemodifier_fp8[7]&DAMAGE_SHIFT );
 
-      y += draw_string( pfnt, 0, y, NULL, "~PLA0 %5.1f %5.1f", gs->ChrList[pla_chr].pos.x / 128.0, gs->ChrList[pla_chr].pos.y / 128.0  );
+      y += draw_string( pfnt, 0, y, NULL, "~PLA0 %5.1f %5.1f", gs->ChrList[pla_chr].ori.pos.x / 128.0, gs->ChrList[pla_chr].ori.pos.y / 128.0  );
 
-      pla_chr = PlaList_get_character( gs, PLA_REF(1) );
-      y += draw_string( pfnt, 0, y, NULL, "~PLA1 %5.1f %5.1f", gs->ChrList[pla_chr].pos.x / 128.0, gs->ChrList[pla_chr].pos.y / 128.0 );
+      pla_chr = PlaList_getRChr( gs, PLA_REF(1) );
+      y += draw_string( pfnt, 0, y, NULL, "~PLA1 %5.1f %5.1f", gs->ChrList[pla_chr].ori.pos.x / 128.0, gs->ChrList[pla_chr].ori.pos.y / 128.0 );
     }
 
 
@@ -3762,13 +3550,30 @@ bool_t gfx_set_mode(CGraphics * g)
 }
 
 //--------------------------------------------------------------------------------------------
+bool_t CGraphics_delete(CGraphics * g)
+{
+  if(NULL == g) return bfalse;
+  if( !EKEY_PVALID(g) ) return btrue;
+
+  EKEY_PINVALIDATE(g);
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
 CGraphics * CGraphics_new(CGraphics * g, ConfigData * cd)
 {
   //fprintf( stdout, "CGraphics_new()\n");
 
-  if(NULL == g || NULL == cd) return NULL;
+  if(NULL == g) return g;
+
+  CGraphics_delete( g );
 
   memset(g, 0, sizeof(CGraphics));
+
+  if( NULL == cd ) return NULL;
+
+  EKEY_PNEW( g, CGraphics );
 
   CGraphics_synch(g, cd);
 
@@ -3913,7 +3718,7 @@ void dolist_add( CHR_REF chr_ref )
 
   CGame * gs = gfxState.gs;
 
-  if ( !VALID_CHR( gs->ChrList,  chr_ref ) || gs->ChrList[chr_ref].indolist ) return;
+  if ( !ACTIVE_CHR( gs->ChrList,  chr_ref ) || gs->ChrList[chr_ref].indolist ) return;
 
   fan = gs->ChrList[chr_ref].onwhichfan;
   //if ( mesh_fan_remove_renderlist( fan ) )
@@ -3983,7 +3788,7 @@ void dolist_sort( void )
     }
     else
     {
-      dist[cnt] = ABS( gs->ChrList[chr_ref].pos.x - GCamera.pos.x ) + ABS( gs->ChrList[chr_ref].pos.y - GCamera.pos.y );
+      dist[cnt] = ABS( gs->ChrList[chr_ref].ori.pos.x - GCamera.pos.x ) + ABS( gs->ChrList[chr_ref].ori.pos.y - GCamera.pos.y );
     }
     cnt++;
   }
@@ -4033,7 +3838,7 @@ void dolist_make( void )
   // Now fill it up again
   for ( chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++)
   {
-    if( !VALID_CHR(gs->ChrList, chr_cnt) ) continue;
+    if( !ACTIVE_CHR(gs->ChrList, chr_cnt) ) continue;
 
     if ( !chr_in_pack( gs->ChrList, CHRLST_COUNT, chr_cnt ) )
     {
@@ -4042,3 +3847,368 @@ void dolist_make( void )
   }
 
 }
+
+//--------------------------------------------------------------------------------------------
+bool_t CVolume_draw( CVolume * cv, bool_t draw_square, bool_t draw_diamond  )
+{
+  bool_t retval = bfalse;
+
+  if(NULL == cv) return bfalse;
+
+  ATTRIB_PUSH( "CVolume_draw", GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_DEPTH_BUFFER_BIT );
+  {
+    // don't write into the depth buffer
+    glDepthMask( GL_FALSE );
+    glEnable(GL_DEPTH_TEST);
+
+    // fix the poorly chosen normals...
+    glDisable( GL_CULL_FACE );
+
+    // make them transparent
+    glEnable(GL_BLEND);
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+    // choose a "white" texture
+    GLTexture_Bind(NULL, &gfxState);
+
+    //------------------------------------------------
+    // DIAGONAL BBOX
+
+    if(cv->lod > 1 && draw_diamond)
+    {
+      float p1_x, p1_y;
+      float p2_x, p2_y;
+
+      glColor4f(0.5, 1, 1, 0.1);
+
+      p1_x = 0.5f * (cv->xy_max - cv->yx_max);
+      p1_y = 0.5f * (cv->xy_max + cv->yx_max);
+      p2_x = 0.5f * (cv->xy_max - cv->yx_min);
+      p2_y = 0.5f * (cv->xy_max + cv->yx_min);
+
+      glBegin(GL_QUADS);
+        glVertex3f(p1_x, p1_y, cv->z_min);
+        glVertex3f(p2_x, p2_y, cv->z_min);
+        glVertex3f(p2_x, p2_y, cv->z_max);
+        glVertex3f(p1_x, p1_y, cv->z_max);
+      glEnd();
+
+      p1_x = 0.5f * (cv->xy_max - cv->yx_min);
+      p1_y = 0.5f * (cv->xy_max + cv->yx_min);
+      p2_x = 0.5f * (cv->xy_min - cv->yx_min);
+      p2_y = 0.5f * (cv->xy_min + cv->yx_min);
+
+      glBegin(GL_QUADS);
+        glVertex3f(p1_x, p1_y, cv->z_min);
+        glVertex3f(p2_x, p2_y, cv->z_min);
+        glVertex3f(p2_x, p2_y, cv->z_max);
+        glVertex3f(p1_x, p1_y, cv->z_max);
+      glEnd();
+
+      p1_x = 0.5f * (cv->xy_min - cv->yx_min);
+      p1_y = 0.5f * (cv->xy_min + cv->yx_min);
+      p2_x = 0.5f * (cv->xy_min - cv->yx_max);
+      p2_y = 0.5f * (cv->xy_min + cv->yx_max);
+
+      glBegin(GL_QUADS);
+        glVertex3f(p1_x, p1_y, cv->z_min);
+        glVertex3f(p2_x, p2_y, cv->z_min);
+        glVertex3f(p2_x, p2_y, cv->z_max);
+        glVertex3f(p1_x, p1_y, cv->z_max);
+      glEnd();
+
+      p1_x = 0.5f * (cv->xy_min - cv->yx_max);
+      p1_y = 0.5f * (cv->xy_min + cv->yx_max);
+      p2_x = 0.5f * (cv->xy_max - cv->yx_max);
+      p2_y = 0.5f * (cv->xy_max + cv->yx_max);
+
+      glBegin(GL_QUADS);
+        glVertex3f(p1_x, p1_y, cv->z_min);
+        glVertex3f(p2_x, p2_y, cv->z_min);
+        glVertex3f(p2_x, p2_y, cv->z_max);
+        glVertex3f(p1_x, p1_y, cv->z_max);
+      glEnd();
+
+      retval = btrue;
+    }
+
+    //------------------------------------------------
+    // SQUARE BBOX
+    if(draw_square)
+    {
+      glColor4f(1, 0.5, 1, 0.1);
+
+      // XZ FACE, min Y
+      glBegin(GL_QUADS);
+        glVertex3f(cv->x_min, cv->y_min, cv->z_min);
+        glVertex3f(cv->x_min, cv->y_min, cv->z_max);
+        glVertex3f(cv->x_max, cv->y_min, cv->z_max);
+        glVertex3f(cv->x_max, cv->y_min, cv->z_min);
+      glEnd();
+
+      // YZ FACE, min X
+      glBegin(GL_QUADS);
+        glVertex3f(cv->x_min, cv->y_min, cv->z_min);
+        glVertex3f(cv->x_min, cv->y_min, cv->z_max);
+        glVertex3f(cv->x_min, cv->y_max, cv->z_max);
+        glVertex3f(cv->x_min, cv->y_max, cv->z_min);
+      glEnd();
+
+      // XZ FACE, max Y
+      glBegin(GL_QUADS);
+        glVertex3f(cv->x_min, cv->y_max, cv->z_min);
+        glVertex3f(cv->x_min, cv->y_max, cv->z_max);
+        glVertex3f(cv->x_max, cv->y_max, cv->z_max);
+        glVertex3f(cv->x_max, cv->y_max, cv->z_min);
+      glEnd();
+
+      // YZ FACE, max X
+      glBegin(GL_QUADS);
+        glVertex3f(cv->x_max, cv->y_min, cv->z_min);
+        glVertex3f(cv->x_max, cv->y_min, cv->z_max);
+        glVertex3f(cv->x_max, cv->y_max, cv->z_max);
+        glVertex3f(cv->x_max, cv->y_max, cv->z_min);
+      glEnd();
+
+      // XY FACE, min Z
+      glBegin(GL_QUADS);
+        glVertex3f(cv->x_min, cv->y_min, cv->z_min);
+        glVertex3f(cv->x_min, cv->y_max, cv->z_min);
+        glVertex3f(cv->x_max, cv->y_max, cv->z_min);
+        glVertex3f(cv->x_max, cv->y_min, cv->z_min);
+      glEnd();
+
+      // XY FACE, max Z
+      glBegin(GL_QUADS);
+        glVertex3f(cv->x_min, cv->y_min, cv->z_max);
+        glVertex3f(cv->x_min, cv->y_max, cv->z_max);
+        glVertex3f(cv->x_max, cv->y_max, cv->z_max);
+        glVertex3f(cv->x_max, cv->y_min, cv->z_max);
+      glEnd();
+
+      retval = btrue;
+    }
+
+  }
+  ATTRIB_POP( "CVolume_draw" );
+
+  return retval;
+};
+
+
+
+//--------------------------------------------------------------------------------------------
+//void render_bad_shadow(CHR_REF character)
+//{
+//  // ZZ> This function draws a sprite shadow
+//
+//  CGame * gs = gfxState.gs;
+//
+//  GLVertex v[4];
+//  float size, x, y;
+//  Uint8 ambi;
+//  //DWORD light;
+//  float level; //, z;
+//  int height;
+//  Sint8 hide;
+//  Uint8 trans;
+//  int i;
+//
+//
+//  hide = ChrList_getPCap(gs, character)->hidestate;
+//  if (hide == NOHIDE || hide != gs->ChrList[character].aistate.state)
+//  {
+//    // Original points
+//    level = gs->ChrList[character].level;
+//    level += SHADOWRAISE;
+//    height = gs->ChrList[character].matrix.CNV(3, 2) - level;
+//    if (height > 255)  return;
+//    if (height < 0) height = 0;
+//    size = gs->ChrList[character].bmpdata.calc_shadowsize - FP8_MUL(height, gs->ChrList[character].bmpdata.calc_shadowsize);
+//    if (size < 1) return;
+//    ambi = gs->ChrList[character].lightspek_fp8 >> 4;  // LUL >>3;
+//    trans = ((255 - height) >> 1) + 64;
+//
+//    x = gs->ChrList[character].matrix.CNV(3, 0);
+//    y = gs->ChrList[character].matrix.CNV(3, 1);
+//    v[0].pos.x = (float) x + size;
+//    v[0].pos.y = (float) y - size;
+//    v[0].pos.z = (float) level;
+//
+//    v[1].pos.x = (float) x + size;
+//    v[1].pos.y = (float) y + size;
+//    v[1].pos.z = (float) level;
+//
+//    v[2].pos.x = (float) x - size;
+//    v[2].pos.y = (float) y + size;
+//    v[2].pos.z = (float) level;
+//
+//    v[3].pos.x = (float) x - size;
+//    v[3].pos.y = (float) y - size;
+//    v[3].pos.z = (float) level;
+//
+//
+//    v[0].s = CALCULATE_PRT_U0(236);
+//    v[0].t = CALCULATE_PRT_V0(236);
+//
+//    v[1].s = CALCULATE_PRT_U1(253);
+//    v[1].t = CALCULATE_PRT_V0(236);
+//
+//    v[2].s = CALCULATE_PRT_U1(253);
+//    v[2].t = CALCULATE_PRT_V1(253);
+//
+//    v[3].s = CALCULATE_PRT_U0(236);
+//    v[3].t = CALCULATE_PRT_V1(253);
+//
+//    ATTRIB_PUSH("render_bad_shadow", GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_TEXTURE_BIT | GL_CURRENT_BIT);
+//    {
+//
+//      glDisable(GL_CULL_FACE);
+//
+//      //glEnable(GL_ALPHA_TEST);
+//      //glAlphaFunc(GL_GREATER, 0);
+//
+//      glEnable(GL_BLEND);
+//      glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+//
+//      glDepthMask(GL_FALSE);
+//      glDepthFunc(GL_LEQUAL);
+//
+//      // Choose texture.
+//      GLTexture_Bind( gs->TxTexture + particletexture, &gfxState);
+//
+//      glColor4f(FP8_TO_FLOAT(ambi), FP8_TO_FLOAT(ambi), FP8_TO_FLOAT(ambi), FP8_TO_FLOAT(trans));
+//      glBegin(GL_TRIANGLE_FAN);
+//      for (i = 0; i < 4; i++)
+//      {
+//        glTexCoord2f(v[i].s, v[i].t);
+//        glVertex3fv(v[i].pos.v);
+//      }
+//      glEnd();
+//    }
+//    ATTRIB_POP("render_bad_shadow");
+//  }
+//}
+//
+
+//--------------------------------------------------------------------------------------------
+//void render_bad_shadows()
+//{
+//  int cnt;
+//  CHR_REF chr_tnc;
+//
+//  CGame * gs = gfxState.gs;
+//
+//  // Bad shadows
+//  ATTRIB_PUSH("render_bad_shadows", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+//  {
+//    glDepthMask(GL_FALSE);
+//
+//    glEnable(GL_ALPHA_TEST);
+//    glAlphaFunc(GL_GREATER, 0);
+//
+//    glEnable(GL_BLEND);
+//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//
+//    for (cnt = 0; cnt < numdolist; cnt++)
+//    {
+//      chr_tnc = dolist[cnt];
+//      //if(INVALID_CHR == gs->ChrList[chr_tnc].attachedto )
+//      //{
+//      if (gs->ChrList[chr_tnc].bmpdata.calc_shadowsize != 0 || chrlst[chr_tnc].prop.forceshadow && HAS_NO_BITS(Mesh[gs->ChrList[chr_tnc].onwhichfan].fx, MPDFX_SHINY))
+//        render_bad_shadow(chr_tnc);
+//      //}
+//    }
+//  }
+//  ATTRIB_POP("render_bad_shadows");
+//}
+
+//--------------------------------------------------------------------------------------------
+//void render_reflected_fans()
+//{
+//  int cnt, tnc, fan, texture;
+//
+//  // Render the shadow floors
+//  ATTRIB_PUSH("render_reflected_fans", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT | GL_TEXTURE_BIT | GL_LIGHTING_BIT);
+//  {
+//    // depth buffer stuff
+//    glDepthMask(GL_TRUE);
+//    glEnable(GL_DEPTH_TEST);
+//    glDepthFunc(GL_LEQUAL);
+//
+//    // shading stuff
+//    glShadeModel(gfxState.shading);
+//
+//    // alpha stuff
+//    glDisable(GL_BLEND);
+//    glEnable(GL_ALPHA_TEST);
+//    glAlphaFunc(GL_GREATER, 0);
+//
+//    // backface culling
+//    glEnable(GL_CULL_FACE);
+//    glFrontFace(GL_CW);
+//    glCullFace(GL_BACK);
+//
+//    for (cnt = 0; cnt < 4; cnt++)
+//    {
+//      texture = cnt + TX_TILE_0;
+//      gs->mesh.last_texture = texture;
+//      GLTexture_Bind( gs->TxTexture + texture, &gfxState);
+//      for (tnc = 0; tnc < renderlist.num_reflc; tnc++)
+//      {
+//        fan = renderlist.reflc[tnc];
+//        render_fan(fan, texture);
+//      };
+//    }
+//  }
+//  ATTRIB_POP("render_reflected_fans");
+//};
+//
+
+//--------------------------------------------------------------------------------------------
+//void render_sha_fans_ref()
+//{
+//  int cnt, tnc, fan, texture;
+//
+//  // Render the shadow floors
+//  ATTRIB_PUSH("render_sha_fans_ref", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT | GL_TEXTURE_BIT | GL_LIGHTING_BIT);
+//  {
+//    // depth buffer stuff
+//    glDepthMask(GL_TRUE);
+//    glEnable(GL_DEPTH_TEST);
+//    glDepthFunc(GL_LEQUAL);
+//
+//    // gfxState.shading stuff
+//    glShadeModel(gfxState.shading);
+//
+//    // alpha stuff
+//    glEnable(GL_ALPHA_TEST);
+//    glAlphaFunc(GL_GREATER, 0);
+//
+//    glEnable(GL_BLEND);
+//    glBlendFunc(GL_ONE, GL_ONE);
+//    glEnable(GL_ALPHA_TEST);
+//    glAlphaFunc(GL_GREATER, 0);
+//
+//    // backface culling
+//    glEnable(GL_CULL_FACE);
+//    glFrontFace(GL_CCW);
+//    glCullFace(GL_BACK);
+//
+//    for (cnt = 0; cnt < 4; cnt++)
+//    {
+//      texture = cnt + TX_TILE_0;
+//      gs->mesh.last_texture = texture;
+//      GLTexture_Bind( gs->TxTexture + texture, &gfxState);
+//      for (tnc = 0; tnc < renderlist.num_reflc; tnc++)
+//      {
+//        fan = renderlist.reflc[tnc];
+//        render_fan_ref(fan, texture, gs->PlaList_level);
+//      };
+//    }
+//
+//  }
+//  ATTRIB_POP("render_sha_fans_ref");
+//};
+//
+

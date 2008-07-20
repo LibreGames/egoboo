@@ -33,8 +33,8 @@ static ClockState * tickerClock = NULL;
 
 void ticker_initWithInterval( Ticker *ticker, double interval )
 {
-  assert( ticker != NULL && "ticker_initWithInterval: NULL ticker passed!" );
-  if ( ticker == NULL || interval <= 0 ) return;
+  assert( NULL != ticker  && "ticker_initWithInterval: NULL ticker passed!" );
+  if ( NULL == ticker  || interval <= 0 ) return;
 
   if ( NULL == tickerClock )
   {
@@ -55,8 +55,8 @@ void ticker_initWithFrequency( Ticker *ticker, int freq )
 void ticker_update( Ticker *ticker )
 {
   double deltaTime, currentTime;
-  assert( ticker != NULL && "ticker_update: NULL ticker passed!" );
-  if ( ticker == NULL ) return;
+  assert( NULL != ticker  && "ticker_update: NULL ticker passed!" );
+  if ( NULL == ticker  ) return;
 
   currentTime = ClockState_getTime( tickerClock );
   deltaTime = currentTime - ticker->lastTime;
@@ -74,8 +74,8 @@ int ticker_tick( Ticker *ticker )
 {
   int numTicks;
 
-  assert( ticker != NULL && "ticker_tick: NULL ticker passed!" );
-  if ( ticker == NULL ) return 0;
+  assert( NULL != ticker  && "ticker_tick: NULL ticker passed!" );
+  if ( NULL == ticker  ) return 0;
 
   numTicks = ticker->numTicks;
   ticker->numTicks--;

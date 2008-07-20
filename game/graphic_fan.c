@@ -60,7 +60,7 @@ void render_fan_ref( Uint32 fan, char tex_loaded, float level )
   Uint8  fx   = gs->Mesh_Mem.fanlst[fan].fx;                 // Fx bits
   Uint16 type = gs->Mesh_Mem.fanlst[fan].type;               // Command type ( index to points in fan )
 
-  if ( tile == INVALID_TILE )
+  if ( INVALID_TILE == tile )
     return;
 
   // Animate the tiles
@@ -201,7 +201,7 @@ void render_fan( Uint32 fan, char tex_loaded )
   Uint8  fx   = gs->Mesh_Mem.fanlst[fan].fx;                 // Fx bits
   Uint16 type = gs->Mesh_Mem.fanlst[fan].type;               // Command type ( index to points in fan )
 
-  if ( tile == INVALID_TILE ) return;
+  if ( INVALID_TILE == tile ) return;
 
   mesh_calc_normal_fan( gs, fan, &nrm, &pos );
 
@@ -716,9 +716,9 @@ void set_fan_light( int fanx, int fany, PRT_REF particle )
       light_g0 = light_g = gs->Mesh_Mem.vrt_ag_fp8[vertex];
       light_b0 = light_b = gs->Mesh_Mem.vrt_ab_fp8[vertex];
 
-      dif.x = gs->PrtList[particle].pos.x - gs->Mesh_Mem.vrt_x[vertex];
-      dif.y = gs->PrtList[particle].pos.y - gs->Mesh_Mem.vrt_y[vertex];
-      dif.z = gs->PrtList[particle].pos.z - gs->Mesh_Mem.vrt_z[vertex];
+      dif.x = gs->PrtList[particle].ori.pos.x - gs->Mesh_Mem.vrt_x[vertex];
+      dif.y = gs->PrtList[particle].ori.pos.y - gs->Mesh_Mem.vrt_y[vertex];
+      dif.z = gs->PrtList[particle].ori.pos.z - gs->Mesh_Mem.vrt_z[vertex];
 
       dist2 = DotProduct( dif, dif );
 
@@ -790,10 +790,10 @@ void do_dynalight()
 
       for ( prt_cnt = 0; prt_cnt < PRTLST_COUNT; prt_cnt++ )
       {
-        if ( !VALID_PRT( gs->PrtList, prt_cnt ) || !gs->PrtList[prt_cnt].dyna.on ) continue;
+        if ( !ACTIVE_PRT( gs->PrtList, prt_cnt ) || !gs->PrtList[prt_cnt].dyna.on ) continue;
 
-        fanx = MESH_FLOAT_TO_FAN( gs->PrtList[prt_cnt].pos.x );
-        fany = MESH_FLOAT_TO_FAN( gs->PrtList[prt_cnt].pos.y );
+        fanx = MESH_FLOAT_TO_FAN( gs->PrtList[prt_cnt].ori.pos.x );
+        fany = MESH_FLOAT_TO_FAN( gs->PrtList[prt_cnt].ori.pos.y );
 
         for ( addy = -DYNAFANS; addy <= DYNAFANS; addy++ )
         {

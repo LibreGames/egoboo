@@ -128,6 +128,127 @@ INLINE float DotProduct4( vect4 A, vect4 B )
 { return ( A.x*B.x + A.y*B.y + A.z*B.z ); }
 
 //---------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------
+INLINE quaternion QuatConjugate(quaternion q1)
+{
+  quaternion q2;
+
+  q2.x = -q1.x;
+  q2.y = -q1.y;
+  q2.z = -q1.z;
+  q2.w =  q1.w;
+
+  return q2;
+}
+
+//---------------------------------------------------------------------------------------------
+INLINE quaternion QuatNormalize(quaternion q1)
+{
+  quaternion q2;
+  float len2;
+
+  len2 = q1.x*q1.x + q1.y*q1.y + q1.z*q1.z + q1.w*q1.w;
+  if(0.0f == len2)
+  {
+    q2.x = q2.y = q2.z = q2.w = 0.0f;
+  }
+  else
+  {
+    float len = sqrt(len2);
+    q2.x = q1.x / len;
+    q2.y = q1.y / len;
+    q2.z = q1.z / len;
+    q2.w = q1.w / len;
+  }
+
+  return q2;
+}
+
+//---------------------------------------------------------------------------------------------
+INLINE quaternion QuatMultiply(quaternion q1, quaternion q2)
+{
+  quaternion q3;
+
+  q3.x = (q1.x*q2.w + q1.w*q2.x) + (q1.y*q2.z - q1.z*q2.y);
+  q3.y = (q1.y*q2.w + q1.w*q2.y) + (q1.z*q2.x - q1.x*q2.z);
+  q3.z = (q1.z*q2.w + q1.w*q2.z) + (q1.x*q2.y - q1.y*q2.x);
+  q3.w = q1.w*q2.w - q1.x*q2.x - q1.y*q2.y - q1.z*q2.z;
+
+  return q3;
+}
+
+//---------------------------------------------------------------------------------------------
+INLINE quaternion QuatDotprod(quaternion q1, quaternion q2)
+{
+  quaternion q3;
+
+  q3.x = (q1.x*q2.w - q1.w*q2.x) - (q1.y*q2.z - q1.z*q2.y);
+  q3.y = (q1.y*q2.w - q1.w*q2.y) - (q1.z*q2.x - q1.x*q2.z);
+  q3.z = (q1.z*q2.w - q1.w*q2.z) - (q1.x*q2.y - q1.y*q2.x);
+  q3.w = q1.w*q2.w + q1.x*q2.x + q1.y*q2.y + q1.z*q2.z;
+
+  return q3;
+}
+
+//---------------------------------------------------------------------------------------------
+INLINE quaternion QuatTransform(quaternion q1, quaternion q2, quaternion q3)
+{
+  quaternion qtmp;
+
+  qtmp = QuatDotprod(q2,q3);
+  qtmp = QuatMultiply(q1,qtmp);
+
+  return qtmp;
+}
+
+//---------------------------------------------------------------------------------------------
+INLINE quaternion QuatConvert(matrix_4x4 m)
+{
+  quaternion quat = {0,0,0,1};
+  float  tr, s, s2;
+  int    i, j, k;
+  int nxt[3] = {1, 2, 0};
+
+  tr = m.CNV(0,0) + m.CNV(1, 1) + m.CNV(2, 2);
+
+  // check the diagonal
+  if (tr > 0.0) 
+  {
+    s = sqrt (tr + 1.0);
+    quat.w = s / 2.0;
+    s = 0.5 / s;
+    quat.x = (m.CNV(2, 1) - m.CNV(1, 2)) * s;
+    quat.y = (m.CNV(0, 2) - m.CNV(2, 0)) * s;
+    quat.z = (m.CNV(1, 0) - m.CNV(0, 1)) * s;
+  } 
+  else 
+  {		
+    // diagonal is negative
+    i = 0;
+    if (m.CNV(1, 1) > m.CNV(0, 0)) i = 1;
+    if (m.CNV(2, 2) > m.CNV(i, i)) i = 2;
+    j = nxt[i];
+    k = nxt[j];
+
+    s2 = 1.0 + m.CNV(i, i) - m.CNV(j, j) - m.CNV(k, k);
+    if(s2 <= 0.0f) return quat;
+
+    s = sqrt(s2);
+
+    quat.v[i] = s * 0.5f;
+
+    s = 0.5f / s;
+    quat.v[3] = (m.CNV(k, j) - m.CNV(j, k)) * s;
+    quat.v[j] = (m.CNV(j, i) + m.CNV(i, j)) * s;
+    quat.v[k] = (m.CNV(k, i) + m.CNV(i, k)) * s;
+  }
+
+  return quat;
+}
+
+
+//---------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------
 INLINE matrix_4x4 IdentityMatrix()
 {
   matrix_4x4 tmp;
@@ -320,6 +441,36 @@ INLINE matrix_4x4 FourPoints( vect4 ori, vect4 wid, vect4 frw, vect4 up, float s
   tmp.CNV( 3, 1 ) = ori.y;       //3,1
   tmp.CNV( 3, 2 ) = ori.z;       //3,2
   tmp.CNV( 3, 3 ) = 1;       //3,3
+
+  return tmp;
+}
+
+//----------------------------------------------------
+INLINE matrix_4x4 MatrixConvert(quaternion q)
+{
+  matrix_4x4 tmp;
+
+  q = QuatNormalize(q);
+
+  tmp.CNV(0,0) = 1.0f - 2.0f*(q.y*q.y + q.z*q.z);
+  tmp.CNV(0,1) =        2.0f*(q.x*q.y + q.w*q.z);
+  tmp.CNV(0,2) =        2.0f*(q.x*q.z - q.w*q.y);
+  tmp.CNV(0,3) = 0.0f;
+
+  tmp.CNV(1,0) =        2.0f*(q.x*q.y - q.w*q.z);
+  tmp.CNV(1,1) = 1.0f - 2.0f*(q.x*q.x + q.z*q.z);
+  tmp.CNV(1,2) =        2.0f*(q.w*q.x + q.y*q.z);
+  tmp.CNV(1,3) = 0.0f;
+
+  tmp.CNV(2,0) =        2.0f*(q.w*q.y + q.x*q.z);
+  tmp.CNV(2,1) =        2.0f*(q.y*q.z - q.w*q.x);
+  tmp.CNV(2,2) = 1.0f - 2.0f*(q.x*q.x + q.y*q.y);
+  tmp.CNV(2,3) = 0.0f;
+
+  tmp.CNV(3,0) = 0.0f;
+  tmp.CNV(3,1) = 0.0f;
+  tmp.CNV(3,2) = 0.0f;
+  tmp.CNV(3,3) = 1.0f;
 
   return tmp;
 }
@@ -618,7 +769,7 @@ INLINE const BBOX_ARY * bbox_ary_delete(BBOX_ARY * ary)
 
   if(NULL == ary) return NULL;
 
-  if(NULL!=ary->list)
+  if(NULL !=ary->list)
   {
     for(i=0; i<ary->count; i++)
     {
@@ -659,4 +810,14 @@ INLINE const BBOX_ARY * bbox_ary_alloc(BBOX_ARY * ary, int count)
   }
 
   return ary;
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE Uint32 ego_rand(Uint32 * seed)
+{
+  if(NULL == seed) return rand();
+
+  *seed = 0x19660D * (*seed) + 0x3C6EF35F;
+
+  return *seed;
 }

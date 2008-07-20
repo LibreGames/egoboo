@@ -2,7 +2,7 @@
 
 #include "network.h"
 
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 
 
 //--------------------------------------------------------------------------------------------
@@ -18,7 +18,7 @@ NetHost * nfile_getHost();
 
 typedef struct NFileState_t
 {
-  bool_t initialized;
+  egoboo_key ekey;
 
   // info for handling NET_* type transfers
   Uint32                       crc_seed;

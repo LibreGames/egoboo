@@ -21,7 +21,7 @@
 //*
 //********************************************************************************************
 
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 
 #ifndef Egoboo_id_md2_h
 #define Egoboo_id_md2_h

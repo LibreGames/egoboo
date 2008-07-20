@@ -29,7 +29,7 @@
 #include "Mesh.h"
 #include "menu.h"
 
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 
 #include <SDL.h>
 
@@ -84,6 +84,8 @@ extern GLOBAL_LIGHTING_INFO GLight;
 
 typedef struct CGraphics_t
 {
+  egoboo_key ekey;
+
   // JF - Added so that the video mode might be determined outside of the graphics code
   SDL_Surface * surface;
 
@@ -139,7 +141,7 @@ struct ClockState_t;
 
 typedef struct CGui_t 
 {
-  bool_t initialized;
+  egoboo_key ekey;
 
   MenuProc mnu_proc;
 

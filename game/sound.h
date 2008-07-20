@@ -1,7 +1,7 @@
 #pragma once
 
-#include "egoboo_math.inl"
-#include "egoboo_types.inl"
+#include "egoboo_math.h"
+#include "egoboo_types.h"
 
 #include <SDL_mixer.h>
 
@@ -44,7 +44,7 @@ struct ConfigData_t;
 
 typedef struct sound_state_t
 {
-  bool_t      initialized;           // has SoundState_new() been run on this data?
+  egoboo_key  ekey;                  // egoboo_key valid if SoundState_new() been run on this data
   bool_t      mixer_loaded;          // Is the SDL_Mixer loaded?
   bool_t      music_loaded;          // Is the music loaded in memory?
 

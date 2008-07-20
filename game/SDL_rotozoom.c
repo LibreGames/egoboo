@@ -602,8 +602,7 @@ SDL_Surface *rotozoomSurface(SDL_Surface * src, double angle, double zoom, int s
   /*
   * Sanity check
   */
-  if (src == NULL)
-    return (NULL);
+  if (NULL == src) return src;
 
   /*
   * Determine if source surface is 32bit or 8bit
@@ -848,8 +847,7 @@ SDL_Surface *zoomSurface(SDL_Surface * src, double zoomx, double zoomy, int smoo
   /*
   * Sanity check
   */
-  if (src == NULL)
-    return (NULL);
+  if (NULL == src) return src;
 
   /*
   * Determine if source surface is 32bit or 8bit

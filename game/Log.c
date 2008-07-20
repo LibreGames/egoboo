@@ -42,7 +42,7 @@ static FILE * _log_getDebugFile();
 
 FILE * _log_getFile()
 {
-  if ( _logFile == NULL )
+  if ( NULL == _logFile  )
   {
     _logFile = fopen( "log.txt", "wt" );
   }
@@ -52,7 +52,7 @@ FILE * _log_getFile()
 
 FILE * _log_getDebugFile()
 {
-  if ( _debugFile == NULL )
+  if ( NULL == _debugFile  )
   {
     _debugFile = fopen( "debug.txt", "wt" );
   }
@@ -68,13 +68,13 @@ void log_init()
 
 void log_shutdown()
 {
-  if ( _logFile != NULL )
+  if ( NULL != _logFile  )
   {
     fclose( _logFile );
     _logFile = NULL;
   }
 
-  if ( _debugFile != NULL )
+  if ( NULL != _debugFile  )
   {
     fclose( _debugFile );
     _debugFile = NULL;
@@ -86,7 +86,7 @@ static void writeLogMessage( const char *prefix, const char *format, va_list arg
 {
   FILE * lfile = _log_getFile();
 
-  if ( lfile != NULL )
+  if ( NULL != lfile  )
   {
     fputs( prefix, lfile );
     vsnprintf( _logBuffer, MAX_LOG_MESSAGE - 1, format, args );
@@ -104,7 +104,7 @@ static void writeDebugMessage( const char *prefix, const char *format, va_list a
 {
   FILE * dfile = _log_getDebugFile();
 
-  if ( dfile != NULL )
+  if ( NULL != dfile  )
   {
     vsnprintf( _logBuffer, MAX_LOG_MESSAGE - 1, format, args );
     fputs( prefix, dfile );

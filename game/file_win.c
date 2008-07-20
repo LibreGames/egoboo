@@ -40,7 +40,7 @@ FS_FIND_INFO * fs_find_info_new(FS_FIND_INFO * i)
 {
   //fprintf( stdout, "fs_find_info_new()\n");
 
-  if(NULL==i) return i;
+  if(NULL ==i) return i;
 
   i->type = FS_WIN32;
   i->W    = (FS_FIND_INFO_WIN32*)calloc(1, sizeof(FS_FIND_INFO_WIN32));
@@ -89,7 +89,7 @@ void fs_init()
   strncpy( basicdatPath, CData.basicdat_dir, MAX_PATH );
   hFile = CreateFile( basicdatPath, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                       OPEN_EXISTING, 0, NULL );
-  if ( hFile == NULL )
+  if ( NULL == hFile  )
   {
     // didn't find the basicdat directory, give the executable's directory
     // a try next
@@ -102,7 +102,7 @@ void fs_init()
     hFile = CreateFile( basicdatPath, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                         OPEN_EXISTING, 0, NULL );
 
-    if ( hFile == NULL )
+    if ( NULL == hFile  )
     {
       // fatal error here, we can't find the game data.
       log_message( "Failed!\n" );
@@ -188,19 +188,19 @@ const char *fs_findFirstFile( FS_FIND_INFO * i, const char *searchDir, const cha
   strncpy( searchSpec, searchDir, MAX_PATH );
   str_append_slash( searchSpec, MAX_PATH );
 
-  if ( searchBody != NULL )
+  if ( NULL != searchBody  )
   {
     _snprintf( searchSpec, MAX_PATH, "%s%s", searchSpec, searchBody );
   }
 
-  if ( searchExtension != NULL )
+  if ( NULL != searchExtension  )
   {
     _snprintf( searchSpec, MAX_PATH, "%s%s", searchSpec, searchExtension );
   }
 
 
   i->W->win32_hFind = FindFirstFile( searchSpec, &(i->W->win32_wfdData) );
-  if ( i->W->win32_hFind == INVALID_HANDLE_VALUE )
+  if ( INVALID_HANDLE_VALUE == i->W->win32_hFind )
   {
     return NULL;
   }
@@ -214,7 +214,7 @@ const char *fs_findNextFile( FS_FIND_INFO * i )
 {
   if(NULL == i || FS_WIN32 != i->type) return NULL;
 
-  if ( i->W->win32_hFind == NULL || i->W->win32_hFind == INVALID_HANDLE_VALUE )
+  if ( NULL == i->W->win32_hFind || INVALID_HANDLE_VALUE == i->W->win32_hFind )
   {
     return NULL;
   }
@@ -259,7 +259,7 @@ void empty_import_directory( void )
   // List all the files in the directory
   _snprintf( searchName, MAX_PATH, "import" SLASH_STRING "*.obj" );
   hFind = FindFirstFile( searchName, &wfdData );
-  while ( hFind != NULL && hFind != INVALID_HANDLE_VALUE )
+  while ( NULL != hFind  && INVALID_HANDLE_VALUE != hFind )
   {
     fileName = wfdData.cFileName;
     // Ignore files that start with a ., like .svn for example.

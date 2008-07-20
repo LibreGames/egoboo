@@ -21,7 +21,7 @@ INLINE bool_t packet_readString(NET_PACKET * p, char *buffer, int maxLen)
 {
   // ZZ> This function reads a null terminated string from the packet
 
-  if(NULL==p) return bfalse;
+  if(NULL ==p) return bfalse;
 
   return stream_readString(&(p->wrapper), buffer, maxLen);
 }
@@ -30,7 +30,7 @@ INLINE bool_t packet_readString(NET_PACKET * p, char *buffer, int maxLen)
 INLINE Uint8 net_packet_readUint8(NET_PACKET * p)
 {
   // ZZ> This function reads an Uint8 from the packet
-  if(NULL==p) return 0;
+  if(NULL ==p) return 0;
 
   return stream_readUint8(&(p->wrapper));
 }
@@ -39,7 +39,7 @@ INLINE Uint8 net_packet_readUint8(NET_PACKET * p)
 INLINE Sint8 net_packet_readSint8(NET_PACKET * p)
 {
   // ZZ> This function reads a Sint8 from the packet
-  if(NULL==p) return 0;
+  if(NULL ==p) return 0;
 
   return stream_readSint8(&(p->wrapper));
 }
@@ -48,7 +48,7 @@ INLINE Sint8 net_packet_readSint8(NET_PACKET * p)
 INLINE Uint16 net_packet_readUint16(NET_PACKET * p)
 {
   // ZZ> This function reads an Uint16 from the packet
-  if(NULL==p) return 0;
+  if(NULL ==p) return 0;
 
   return stream_readUint16(&(p->wrapper));
 }
@@ -57,7 +57,7 @@ INLINE Uint16 net_packet_readUint16(NET_PACKET * p)
 INLINE Uint16 net_packet_peekUint16(NET_PACKET * p)
 {
   // ZZ> This function reads an Uint16 from the packet
-  if(NULL==p) return 0;
+  if(NULL ==p) return 0;
 
   return stream_peekUint16(&(p->wrapper));
 }
@@ -66,7 +66,7 @@ INLINE Uint16 net_packet_peekUint16(NET_PACKET * p)
 INLINE Sint16 net_packet_readSint16(NET_PACKET * p)
 {
   // ZZ> This function reads a Sint16 from the packet
-  if(NULL==p) return 0;
+  if(NULL ==p) return 0;
 
   return stream_readSint16(&(p->wrapper));
 }
@@ -75,7 +75,7 @@ INLINE Sint16 net_packet_readSint16(NET_PACKET * p)
 INLINE Uint32 net_packet_readUint32(NET_PACKET * p)
 {
   // ZZ> This function reads an Uint32 from the packet
-  if(NULL==p) return 0;
+  if(NULL ==p) return 0;
 
   return stream_readUint32(&(p->wrapper));
 }
@@ -84,7 +84,7 @@ INLINE Uint32 net_packet_readUint32(NET_PACKET * p)
 INLINE Sint32 net_packet_readSint32(NET_PACKET * p)
 {
   // ZZ> This function reads a Sint32 from the packet
-  if(NULL==p) return 0;
+  if(NULL ==p) return 0;
 
   return stream_readSint32(&(p->wrapper));
 }
@@ -93,7 +93,7 @@ INLINE Sint32 net_packet_readSint32(NET_PACKET * p)
 INLINE size_t net_packet_remainingSize(NET_PACKET * p)
 {
   // ZZ> This function tells if there's still data left in the packet
-  if(NULL==p) return 0;
+  if(NULL ==p) return 0;
 
   return stream_remainingSize(&(p->wrapper));
 }
@@ -211,7 +211,7 @@ INLINE void sys_packet_addString(SYS_PACKET * egop, const char *string)
 //--------------------------------------------------------------------------------------------
 INLINE static bool_t stream_reset(STREAM * pwrapper)
 {
-  if(NULL==pwrapper) return bfalse;
+  if(NULL ==pwrapper) return bfalse;
 
   memset(pwrapper, 0, sizeof(STREAM));
   return btrue;
@@ -222,7 +222,7 @@ INLINE bool_t stream_startFile(STREAM * pwrapper, FILE * pfile)
 {
   fpos_t pos;
 
-  if(NULL==pwrapper || NULL==pfile || feof(pfile)) return bfalse;
+  if(NULL ==pwrapper || NULL ==pfile || feof(pfile)) return bfalse;
 
   stream_reset(pwrapper);
 
@@ -245,7 +245,7 @@ INLINE bool_t stream_startFile(STREAM * pwrapper, FILE * pfile)
 //--------------------------------------------------------------------------------------------
 INLINE bool_t stream_startRaw(STREAM * pwrapper, Uint8 * buffer, size_t buffer_size)
 {
-  if(NULL==pwrapper || NULL==buffer || 0==buffer_size) return bfalse;
+  if(NULL ==pwrapper || NULL ==buffer || 0==buffer_size) return bfalse;
 
   stream_reset(pwrapper);
   pwrapper->data         = buffer;
@@ -258,7 +258,7 @@ INLINE bool_t stream_startRaw(STREAM * pwrapper, Uint8 * buffer, size_t buffer_s
 //--------------------------------------------------------------------------------------------
 INLINE bool_t stream_startLocal(STREAM * pwrapper, SYS_PACKET * pegopkt)
 {
-  if(NULL==pwrapper || NULL==pegopkt) return bfalse;
+  if(NULL ==pwrapper || NULL ==pegopkt) return bfalse;
 
   stream_reset(pwrapper);
   pwrapper->data         = pegopkt->buffer;
@@ -271,7 +271,7 @@ INLINE bool_t stream_startLocal(STREAM * pwrapper, SYS_PACKET * pegopkt)
 //--------------------------------------------------------------------------------------------
 INLINE bool_t stream_startENet(STREAM * pwrapper, ENetPacket * packet)
 {
-  if(NULL==pwrapper || NULL==packet) return bfalse;
+  if(NULL ==pwrapper || NULL ==packet) return bfalse;
 
   stream_reset(pwrapper);
   pwrapper->data         = packet->data;
@@ -284,7 +284,7 @@ INLINE bool_t stream_startENet(STREAM * pwrapper, ENetPacket * packet)
 //--------------------------------------------------------------------------------------------
 INLINE bool_t stream_startRemote(STREAM * pwrapper, NET_PACKET * pnetpkt)
 {
-  if(NULL==pwrapper || NULL==pnetpkt) return bfalse;
+  if(NULL ==pwrapper || NULL ==pnetpkt) return bfalse;
 
   stream_reset(pwrapper);
   pwrapper->data         = pnetpkt->pkt->data;
@@ -306,7 +306,7 @@ INLINE bool_t stream_readString(STREAM * p, char *buffer, int maxLen)
   // ZZ> This function reads a NULL terminated string from the packet
   size_t copy_length;
 
-  if(NULL==p) return bfalse;
+  if(NULL ==p) return bfalse;
   if(p->data_size==0 && maxLen==0) return btrue;
   if(p->data_size==0 && maxLen>0)
   {

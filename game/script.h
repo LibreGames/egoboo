@@ -1,6 +1,6 @@
 #pragma once
 
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 
 struct CGame_t;
 
@@ -10,7 +10,7 @@ extern int                     iNumAis;
 #define PITNOSOUND          -256                    // Stop sound at bottom of pits...
 #define MSGDISTANCE         2000                 // Range for SendMessageNear
 
-#define AILST_COUNT               129                     //
+#define AILST_COUNT         129                     //
 #define MAXCODE             1024                    // Number of lines in AICODES.TXT
 #define MAXCODENAMESIZE     64                      //
 #define AISMAXCOMPILESIZE   (AILST_COUNT*MAXCODE)         // For parsing AI scripts

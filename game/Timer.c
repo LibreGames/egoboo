@@ -44,7 +44,7 @@ static TimerNode *findTimer( Timer *t )
 {
   TimerNode *node = timerList;
 
-  while ( node != NULL )
+  while ( NULL != node  )
   {
     if ( node->timer == t )
     {
@@ -70,7 +70,7 @@ void timer_shutdown()
 
   // Clear out the list o' timers
   node = timerList;
-  while ( node != NULL )
+  while ( NULL != node  )
   {
     next = node->next;
     if( NULL != node ) { free(node); node = NULL; };
@@ -86,9 +86,9 @@ void timer_update()
   TimerNode *node;
 
   node = timerList;
-  while ( node != NULL )
+  while ( NULL != node  )
   {
-    assert( node->timer != NULL );
+    assert( NULL != node->timer );
     if ( !node->timer->isPaused )
     {
       node->timer->frameTime = ClockState_getFrameDuration( timerClock ) * node->timer->timeScale;
@@ -136,7 +136,7 @@ void timer_removeTimer( Timer *t )
     if ( node == timerList )
     {
       // Is this the only node in the list?
-      if ( timerList->next == NULL )
+      if ( NULL == timerList->next )
       {
         // yup
         timerList = NULL;

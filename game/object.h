@@ -1,7 +1,8 @@
 #pragma once
 
-#include "egoboo_types.inl"
-#include "egoboo_math.inl"
+#include "egoboo_types.h"
+#include "egoboo_math.h"
+#include "Physics.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -35,8 +36,8 @@ typedef enum prtpip_t
 //--------------------------------------------------------------------------------------------
 typedef struct CProfile_t
 {
-  bool_t          initialized;
-  bool_t          used;                          // is it loaded?
+  egoboo_key      ekey;
+  bool_t          Active;                          // is it loaded?
 
   // debug info
   STRING          name;                          // Model name
@@ -96,28 +97,9 @@ MAD_REF ObjList_getRAi (struct CGame_t * gs, OBJ_REF obj);
 PIP_REF ObjList_getRPip(struct CGame_t * gs, OBJ_REF iobj, int i);
 
 #define VALID_OBJ_RANGE(XX) (((XX)>=0) && ((XX)<OBJLST_COUNT))
-#define VALID_OBJ(LST, XX)    ( VALID_OBJ_RANGE(XX) && LST[XX].used )
+#define VALID_OBJ(LST, XX)    ( VALID_OBJ_RANGE(XX) && EKEY_VALID(LST[XX]) )
 #define VALIDATE_OBJ(LST, XX) ( VALID_OBJ(LST, XX) ? (XX) : (INVALID_OBJ) )
 
-
-//--------------------------------------------------------------------------------------------
-typedef struct collision_volume_t
-{
-  int   lod;
-  float x_min, x_max;
-  float y_min, y_max;
-  float z_min, z_max;
-  float xy_min, xy_max;
-  float yx_min, yx_max;
-} CVolume;
-
-CVolume CVolume_merge(CVolume * pv1, CVolume * pv2);
-CVolume CVolume_intersect(CVolume * pv1, CVolume * pv2);
-bool_t  CVolume_draw( CVolume * cv, bool_t draw_square, bool_t draw_diamond );
-
-
-//--------------------------------------------------------------------------------------------
-typedef struct CVolume_Tree_t { CVolume leaf[8]; } CVolume_Tree;
 
 //--------------------------------------------------------------------------------------------
 typedef struct bump_data_t
@@ -158,6 +140,7 @@ typedef enum Team_e
 
 typedef struct CTeam_t
 {
+  egoboo_key ekey;
   bool_t  hatesteam[TEAM_COUNT];  // Don't damage allies...
   Uint16  morale;                 // Number of characters on team
   CHR_REF leader;                 // The leader of the team

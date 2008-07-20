@@ -30,7 +30,7 @@ void str_trim( char *pStr )
 {
   Sint32 DebPos, EndPos, CurPos;
 
-  if ( pStr == NULL )
+  if ( NULL == pStr  )
   {
     return;
   }

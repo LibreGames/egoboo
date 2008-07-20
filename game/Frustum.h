@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 
 typedef float frustum_data_t[6][4];
 

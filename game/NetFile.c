@@ -65,7 +65,7 @@ typedef struct nfile_SendInfo_t
 // File transfer queue
 typedef struct nfile_SendQueue_t
 {
-  bool_t initialized;
+  egoboo_key ekey;
 
   int numTransfers;
   nfile_SendInfo transferStates[NET_MAX_FILE_TRANSFERS];
@@ -103,7 +103,7 @@ static bool_t nfile_ReceiveInfo_dealloc( nfile_ReceiveInfo * nri);
 // File transfer queue
 typedef struct nfile_ReceiveQueue_t
 {
-  bool_t initialized;
+  egoboo_key ekey;
 
   int numTransfers;
   nfile_ReceiveInfo transferStates[NET_MAX_FILE_TRANSFERS];
@@ -121,7 +121,7 @@ nfile_ReceiveQueue * nfile_ReceiveQueue_renew(nfile_ReceiveQueue * q);
 
 typedef struct nfile_SendState_t
 {
-  bool_t        initialized;
+  egoboo_key ekey;
 
   // the file queue
   nfile_SendQueue queue;
@@ -150,7 +150,7 @@ static retval_t          _nfile_Receive_initialize();
 
 typedef struct nfile_ReceiveState_t
 {
-  bool_t     initialized;
+  egoboo_key ekey;
 
   // the file queue
   nfile_ReceiveQueue queue;
@@ -229,7 +229,7 @@ bool_t NFileState_destroy(NFileState ** pnfs)
   bool_t retval;
 
   if(NULL == pnfs || NULL == *pnfs) return bfalse;
-  if( !(*pnfs)->initialized ) return btrue;
+  if( !EKEY_PVALID((*pnfs)) ) return btrue;
 
   retval = NFileState_delete(*pnfs);
   FREE( *pnfs );
@@ -242,11 +242,13 @@ NFileState * NFileState_new(NFileState * nfs, CNet * ns)
 {
   //fprintf( stdout, "NFileState_new()\n");
 
-  if(NULL == nfs || nfs->initialized) return nfs;
+  if(NULL == nfs) return nfs;
 
-  if(nfs->initialized) NFileState_delete(nfs);
+  NFileState_delete(nfs);
 
   memset( nfs, 0, sizeof(NFileState) );
+
+  EKEY_PNEW( nfs, NFileState );
 
   if(net_Started())
   {
@@ -257,8 +259,6 @@ NFileState * NFileState_new(NFileState * nfs, CNet * ns)
 
   nfs->parent = ns;
 
-  nfs->initialized = btrue;
-
   return nfs;
 }
 
@@ -266,16 +266,15 @@ NFileState * NFileState_new(NFileState * nfs, CNet * ns)
 bool_t NFileState_delete(NFileState * nfs)
 {
   if(NULL == nfs) return bfalse;
+  if(!EKEY_PVALID(nfs)) return btrue;
 
-  if(!nfs->initialized) return btrue;
+  EKEY_PINVALIDATE(nfs);
 
   net_removeService(nfs->net_guid);
   NetHost_unregister(nfs->host, nfs->net_guid);
 
   nfile_SendState_delete( nfs->snd );
   nfile_ReceiveState_delete( nfs->rec );
-
-  nfs->initialized = bfalse;
 
   return btrue;
 }
@@ -289,7 +288,7 @@ retval_t NFileState_initialize(NFileState * nfs)
   nfile_ReceiveState * loc_rec;
 
   if(NULL == nfs) return rv_error;
-  if(nfs->initialized) return rv_succeed;
+  if(EKEY_PVALID(nfs)) return rv_succeed;
 
   //---- initialize the net file transfer host
   nh = nfile_getHost();
@@ -311,7 +310,7 @@ retval_t NFileState_startUp(NFileState * nfs)
   //      If it has not been initialized, initialize it.
   //      If it was initialized, restart everything.
 
-  if(NULL == nfs || !nfs->initialized) return rv_error;
+  if(!EKEY_PVALID(nfs)) return rv_error;
 
   // if the network is not on, don't bother
   if (!net_Started())
@@ -339,7 +338,7 @@ retval_t NFileState_shutDown(NFileState * nfs)
 {
   // BB > Shut or pause the NFileState. 
 
-  if(NULL == nfs || !nfs->initialized) return rv_error;
+  if( !EKEY_PVALID(nfs) ) return rv_error;
 
   net_logf("NET INFO: NFileState_shutDown() - Shutting down network file server... ");
 
@@ -369,7 +368,7 @@ bool_t nfile_SendState_destroy(nfile_SendState ** snd)
   bool_t retval;
 
   if(NULL == snd || NULL == (*snd) ) return bfalse;
-  if( !(*snd)->initialized) return btrue;
+  if( !EKEY_PVALID((*snd)) ) return btrue;
 
   retval = nfile_SendState_delete(*snd);
 
@@ -383,14 +382,16 @@ nfile_SendState * nfile_SendState_new(nfile_SendState * snd)
 {
   //fprintf( stdout, "nfile_SendState_new()\n");
 
-  if(NULL == snd || snd->initialized) return snd;
+  if(NULL == snd) return snd;
+
+  nfile_SendState_delete( snd );
 
   memset(snd, 0, sizeof(nfile_SendState));
 
+  EKEY_PNEW( snd, nfile_SendState );
+
   NetThread_new( &(snd->nthread), _nfile_sendCallback);
   nfile_SendQueue_new( &(snd->queue) );
-
-  snd->initialized = btrue;
 
   return snd;
 }
@@ -400,15 +401,15 @@ bool_t nfile_SendState_delete(nfile_SendState * snd)
 {
   if(NULL == snd) return bfalse;
   
-  if(!snd->initialized) return btrue;
+  if(!EKEY_PVALID(snd)) return btrue;
+
+  EKEY_PINVALIDATE(snd);
 
   // terminate the thread (not nicely)
   SDL_KillThread(snd->nthread.Thread);
 
   // delete (and auto-deallocate) the queue
   nfile_SendQueue_delete( &(snd->queue) );
-
-  snd->initialized = bfalse;
 
   return btrue;
 }
@@ -420,7 +421,7 @@ retval_t nfile_SendState_initialize(nfile_SendState * snd)
 
   if(NULL == snd) return rv_error;
 
-  if(!snd->initialized)
+  if(!EKEY_PVALID(snd))
   {
     nfile_SendState_new( snd );
   };
@@ -444,7 +445,7 @@ retval_t nfile_SendState_startUp(nfile_SendState * snd)
 
   nh = nfile_getHost();
 
-  if(!snd->initialized)
+  if(!EKEY_PVALID(snd))
   {
     nfile_SendState_new(snd);
     nfile_SendState_initialize(snd);
@@ -472,7 +473,7 @@ retval_t nfile_SendState_startUp(nfile_SendState * snd)
 //--------------------------------------------------------------------------------------------
 retval_t nfile_SendState_shutDown(nfile_SendState * snd)
 {
-  if(NULL == snd || !snd->initialized) return rv_error;
+  if( !EKEY_PVALID(snd) ) return rv_error;
 
   snd->nthread.Paused = btrue;
 
@@ -493,11 +494,13 @@ bool_t nfile_ReceiveState_destroy(nfile_ReceiveState ** rec)
   bool_t retval;
 
   if(NULL == rec || NULL == (*rec) ) return bfalse;
-  if( !(*rec)->initialized) return btrue;
+  if( !EKEY_PVALID( (*rec) ) ) return btrue;
 
   retval = nfile_ReceiveState_delete(*rec);
 
   FREE( *rec );
+
+  EKEY_PINVALIDATE( (*rec) );
 
   return retval;
 }
@@ -507,14 +510,16 @@ nfile_ReceiveState * nfile_ReceiveState_new(nfile_ReceiveState * rec)
 {
   //fprintf( stdout, "nfile_ReceiveState_new()\n");
 
-  if(NULL == rec || rec->initialized) return rec;
+  if(NULL == rec) return rec;
+
+  nfile_ReceiveState_delete(rec);
 
   memset(rec, 0, sizeof(nfile_ReceiveState));
 
+  EKEY_PNEW(rec, nfile_ReceiveState);
+
   NetThread_new( &(rec->nthread), _nfile_receiveCallback);
   nfile_ReceiveQueue_new( &(rec->queue) );
-
-  rec->initialized = btrue;
 
   return rec;
 }
@@ -523,16 +528,15 @@ nfile_ReceiveState * nfile_ReceiveState_new(nfile_ReceiveState * rec)
 bool_t nfile_ReceiveState_delete(nfile_ReceiveState * rec)
 {
   if(NULL == rec) return bfalse;
-  
-  if(!rec->initialized) return btrue;
+  if(!EKEY_PVALID(rec)) return btrue;
+
+  EKEY_PINVALIDATE(rec);
 
   // terminate the thread (not nicely)
   SDL_KillThread(rec->nthread.Thread);
 
   // delete (and auto-deallocate) the queue
   nfile_ReceiveQueue_delete( &(rec->queue) );
-
-  rec->initialized = bfalse;
 
   return btrue;
 }
@@ -544,7 +548,7 @@ retval_t nfile_ReceiveState_initialize(nfile_ReceiveState * rec)
 
   if(NULL == rec) return rv_error;
 
-  if(!rec->initialized)
+  if(!EKEY_PVALID(rec))
   {
     nfile_ReceiveState_new( rec );
   };
@@ -561,7 +565,7 @@ retval_t nfile_ReceiveState_startUp(nfile_ReceiveState * rec)
 {
   if(NULL == rec) return rv_error;
 
-  if(!rec->initialized)
+  if(!EKEY_PVALID(rec))
   {
     nfile_ReceiveState_new(rec);
     nfile_ReceiveState_initialize(rec);
@@ -589,7 +593,7 @@ retval_t nfile_ReceiveState_startUp(nfile_ReceiveState * rec)
 //--------------------------------------------------------------------------------------------
 retval_t nfile_ReceiveState_shutDown(nfile_ReceiveState * rec)
 {
-  if(NULL == rec || !rec->initialized) return rv_error;
+  if( !EKEY_PVALID(rec) ) return rv_error;
 
   rec->nthread.Paused = btrue;
 
@@ -657,7 +661,7 @@ retval_t nfile_ReceiveQueue_add(NFileState * nfs, ENetEvent * event, char * dest
   }
 
   queue = &(nfs->rec->queue);
-  if( NULL == queue || !queue->initialized )
+  if( !EKEY_PVALID(queue ) )
   {
     net_logf("NET ERROR: nfile_SendQueue_add() - Invalid queue.\n");
     return rv_error;
@@ -702,7 +706,7 @@ retval_t nfile_ReceiveQueue_add(NFileState * nfs, ENetEvent * event, char * dest
 //  NetRequest * prequest;
 //  size_t copy_size;
 //
-//  if(NULL==nh->Host) return bfalse;
+//  if(NULL ==nh->Host) return bfalse;
 //
 //  while (enet_host_service(nh->Host, &event, 0) > 0)
 //  {
@@ -803,7 +807,7 @@ retval_t nfile_ReceiveQueue_add(NFileState * nfs, ENetEvent * event, char * dest
 //--------------------------------------------------------------------------------------------
 int  net_pendingFileTransfers(nfile_SendQueue * queue)
 {
-  if(NULL == queue || !queue->initialized) return 0;
+  if(!EKEY_PVALID(queue )) return 0;
 
   return queue->numTransfers;
 }
@@ -944,7 +948,7 @@ retval_t nfhost_stopThreads()
 
 
   // bad parameters
-  if(NULL == nh || !nh->initialized)
+  if(!EKEY_PVALID(nh))
   {
     net_logf("NET ERROR: nfhost_stopThreads() - failed.\n");
     return rv_error;
@@ -1003,7 +1007,7 @@ int nfhost_HostCallback(void * data)
   net_logf("Success!\n");
 
   nthread = &(nf_host->nthread);
-  while(NULL!=nf_host && !nthread->KillMe)
+  while(NULL !=nf_host && !nthread->KillMe)
   {
     nf_host = nfile_getHost();
     nthread = &(nf_host->nthread);
@@ -1072,7 +1076,7 @@ retval_t nfile_SendState_stopThread(nfile_SendState * snd)
   // BB > do cleanup when exiting a "send file" worker thread
 
   // bad parameters
-  if(NULL == snd || !snd->initialized)
+  if( !EKEY_PVALID(snd) )
   {
     net_logf("NET ERROR: nfile_SendState_stopThread() - failed.\n");
     return rv_error;
@@ -1122,7 +1126,7 @@ retval_t nfile_ReceiveState_stopThread(nfile_ReceiveState * rec)
   // BB > do cleanup when exiting a "receive file" worker thread
 
   // bad parameters
-  if(NULL == rec || !rec->initialized)
+  if( !EKEY_PVALID(rec) )
   {
     net_logf("NET ERROR: nfile_ReceiveState_stopThread() - failed.\n");
     return rv_error;
@@ -1169,7 +1173,7 @@ int _nfile_sendCallback(void * data)
   net_logf("Success!\n");
 
   queue = &(sfs->queue);
-  if(NULL == queue || !queue->initialized)
+  if(!EKEY_PVALID(queue ))
   {
     net_logf("NET ERROR: _nfile_sendCallback() - Thread terminated because of invalid data.\n");
 
@@ -1337,7 +1341,7 @@ int _nfile_receiveCallback(void * data)
   net_logf("Success!\n");
 
   queue = &(rfs->queue);
-  if(NULL == queue || !queue->initialized)
+  if(!EKEY_PVALID(queue ))
   {
     net_logf("NET ERROR: _nfile_receiveCallback() - Thread terminated because of invalid data.\n");
 
@@ -1469,7 +1473,7 @@ retval_t nfile_SendQueue_add(NFileState * nfs, ENetAddress * target_address, cha
   }
 
   queue = &(nfs->snd->queue);
-  if( NULL == queue || !queue->initialized )
+  if( !EKEY_PVALID(queue ) )
   {
     net_logf("NET ERROR: nfile_SendQueue_add() - Invalid queue.\n");
     return rv_error;
@@ -1584,11 +1588,11 @@ nfile_SendQueue * nfile_SendQueue_new(nfile_SendQueue * q)
 {
   //fprintf( stdout, "nfile_SendQueue_new()\n");
 
-  if(NULL == q || q->initialized) return q;
+  if(NULL == q || EKEY_PVALID(q)) return q;
 
   memset(q, 0, sizeof(nfile_SendQueue));
 
-  q->initialized = btrue;
+  EKEY_PNEW(q, nfile_SendQueue);
 
   return q;
 };
@@ -1598,13 +1602,13 @@ bool_t nfile_SendQueue_delete(nfile_SendQueue * q)
 {
   if(NULL == q) return bfalse;
 
-  if(!q->initialized) return btrue;
+  if(!EKEY_PVALID(q)) return btrue;
+
+  EKEY_PINVALIDATE(q);
 
   // reset the queue
   q->numTransfers = 0;
   q->TransferHead = q->TransferTail = 0;
-
-  q->initialized = bfalse;
 
   return btrue;
 }
@@ -1621,11 +1625,13 @@ nfile_ReceiveQueue * nfile_ReceiveQueue_new(nfile_ReceiveQueue * q)
 {
   //fprintf( stdout, "nfile_ReceiveQueue_new()\n");
 
-  if(NULL == q || q->initialized) return q;
+  if(NULL == q) return q;
+
+  nfile_ReceiveQueue_delete(q);
 
   memset(q, 0, sizeof(nfile_ReceiveQueue));
 
-  q->initialized = btrue;
+  EKEY_PNEW(q, nfile_ReceiveQueue);
 
   return q;
 };
@@ -1635,13 +1641,13 @@ bool_t nfile_ReceiveQueue_delete(nfile_ReceiveQueue * q)
 {
   if(NULL == q) return bfalse;
 
-  if(!q->initialized) return btrue;
+  if(!EKEY_PVALID(q)) return btrue;
+
+  EKEY_PINVALIDATE(q);
 
   // reset the queue
   q->numTransfers = 0;
   q->TransferHead = q->TransferTail = 0;
-
-  q->initialized = bfalse;
 
   return btrue;
 }

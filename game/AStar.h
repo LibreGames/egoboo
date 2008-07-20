@@ -4,7 +4,7 @@
 // A very ugly implementation of the AStar pathfinding agorithm
 // Lots of room for improvement
 
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 
 struct CGame_t;
 

@@ -234,7 +234,7 @@ retval_t NetHost_dispatch( NetHost * nh )
   char hostName[64] = { '\0' };
   size_t copy_size;
 
-  if(NULL==nh || !nh->initialized) return rv_fail;
+  if( !EKEY_PVALID(nh) ) return rv_fail;
 
   nthread = &(nh->nthread);
   if(nthread->Terminated || nthread->KillMe) return rv_error;
@@ -356,11 +356,11 @@ CListOut_Info * CListOut_Info_new(CListOut_Info *info)
 {
   if(NULL == info) return info;
   
-  if(info->initialized) CListOut_Info_delete(info);
+  CListOut_Info_delete(info);
 
   memset(info, 0, sizeof(CListOut_Info));
 
-  info->initialized = btrue;
+  EKEY_PNEW(info, CListOut_Info);
 
   return info;
 }
@@ -369,13 +369,14 @@ CListOut_Info * CListOut_Info_new(CListOut_Info *info)
 bool_t CListOut_Info_delete(CListOut_Info * info)
 {
   if(NULL == info) return bfalse;
-  if(!info->initialized) return btrue;
+  if( !EKEY_PVALID(info) ) return btrue;
+
+  EKEY_PINVALIDATE( info );
 
   enet_peer_disconnect(info->peer);
 
   memset(info, 0, sizeof(CListOut_Info));
 
-  info->initialized = bfalse;
   return btrue;
 }
 
@@ -405,7 +406,7 @@ bool_t CListOut_prune(CListOut * co)
     while(imax > imin)
     {
       j = imax - 1;
-      if(co->Clients[j].initialized) break;
+      if( EKEY_VALID( co->Clients[j] ) ) break;
       imax--;
     }
 
@@ -413,7 +414,7 @@ bool_t CListOut_prune(CListOut * co)
 
     while(imin < imax)
     {
-      if(!co->Clients[j].initialized) break;
+      if(!EKEY_VALID( co->Clients[j] ) ) break;
       imin++;
     }
 
@@ -591,7 +592,7 @@ retval_t net_shutDown()
   //sv_shutDown();
   //nfile_shutDown();
 
-  if(NULL!=net_logfile)
+  if(NULL !=net_logfile)
   {
     fclose(net_logfile);
     net_logfile = NULL;
@@ -672,7 +673,7 @@ retval_t net_shutDown()
 //
 //  CNet_delete(ns);
 //
-//  if(NULL!=net_logfile)
+//  if(NULL !=net_logfile)
 //  {
 //    fclose(net_logfile);
 //    net_logfile = NULL;
@@ -688,7 +689,7 @@ retval_t net_shutDown()
 ////--------------------------------------------------------------------------------------------
 //bool_t net_Started(CNet * ns)
 //{
-//  return _net_initialized && ns->initialized;
+//  return _net_initialized && EKEY_PVALID( ns );
 //}
 //
 
@@ -706,7 +707,7 @@ bool_t CNet_destroy(CNet ** pns)
   bool_t retval;
 
   if(NULL == pns || NULL == *pns) return bfalse;
-  if( !(*pns)->initialized ) return btrue;
+  if( !EKEY_PVALID( (*pns) ) ) return btrue;
 
   retval = CNet_delete(*pns);
   FREE( *pns );
@@ -720,9 +721,12 @@ CNet * CNet_new(CNet * ns, CGame * gs)
   //fprintf( stdout, "CNet_new()\n");
 
   if(NULL == ns) return ns;
-  if(ns->initialized) CNet_delete(ns);
+
+  CNet_delete(ns);
 
   memset(ns, 0, sizeof(CNet));
+
+  EKEY_PNEW(ns, CNet);
 
   ns->parent = gs;
 
@@ -732,7 +736,7 @@ CNet * CNet_new(CNet * ns, CGame * gs)
     ns->nfs = NFileState_create(ns);
   };
 
-  ns->initialized = btrue;
+
 
   return ns;
 }
@@ -741,14 +745,14 @@ CNet * CNet_new(CNet * ns, CGame * gs)
 bool_t CNet_delete(CNet * ns)
 {
   if(NULL == ns) return bfalse;
-  if(!ns->initialized) return btrue;
+  if(!EKEY_PVALID( ns )) return btrue;
+
+  EKEY_PINVALIDATE( ns );
 
   NFileState_destroy(  &(ns->nfs) );
 
   // let the thread kill itself
   net_logf("NET INFO: CNet_delete(): deleting all CNet services.\n");
-
-  ns->initialized = bfalse;
 
   return btrue;
 }
@@ -792,7 +796,7 @@ bool_t CNet_delete(CNet * ns)
 bool_t CNet_shutDown(CNet * ns)
 {
   if(NULL == ns ) return bfalse;
-  if(!ns->initialized) return btrue;
+  if(!EKEY_PVALID( ns )) return btrue;
 
   //CClient_shutDown(ns->parent->cl);
   //CServer_shutDown(ns->parent->sv);
@@ -808,7 +812,7 @@ bool_t net_sendSysPacketToPeer(ENetPeer *peer, SYS_PACKET * egop)
   // JF> This funciton sends a packet to a given peer, with guaranteed delivery
     ENetPacket *packet;
 
-  if(NULL==peer || NULL == egop)
+  if(NULL ==peer || NULL == egop)
   {
     net_logf("NET ERROR: net_sendSysPacketToPeerGuaranteed() - Called with invalid parameters.\n");
     return bfalse;
@@ -841,7 +845,7 @@ bool_t net_sendSysPacketToPeerGuaranteed(ENetPeer *peer, SYS_PACKET * egop)
   // JF> This funciton sends a packet to a given peer, with guaranteed delivery
     ENetPacket *packet;
 
-  if(NULL==peer || NULL == egop)
+  if(NULL ==peer || NULL == egop)
   {
     net_logf("NET ERROR: net_sendSysPacketToPeerGuaranteed() - Called with invalid parameters.\n");
     return bfalse;
@@ -877,7 +881,7 @@ bool_t net_sendSysPacketToPeerGuaranteed(ENetPeer *peer, SYS_PACKET * egop)
 //  CServer  * ss = ns->parent->sv;
 //  CClient  * cs = ns->parent->cl;
 //
-//  if(NULL==ns)
+//  if(NULL ==ns)
 //  {
 //    net_logf("NET WARNING: Net callback thread - unable to start.\n");
 //    return bfalse;
@@ -1044,13 +1048,13 @@ retval_t net_copyDirectoryToHost(CNet * ns, char *dirname, char *todirname)
   // Search for all files
   snprintf(searchname, sizeof(searchname), "%s/*", dirname);
   searchResult = fs_findFirstFile(fs_find_info_new(&fnd_info), dirname, NULL, NULL);
-  if (searchResult != NULL)
+  if ( NULL != searchResult )
   {
     // Make the new directory
     net_copyFileToHost(ns, dirname, todirname);
 
     // Copy each file
-    while (searchResult != NULL)
+    while ( NULL != searchResult )
     {
       // If a file begins with a dot, assume it's something
       // that we don't want to copy.  This keeps repository
@@ -1088,13 +1092,13 @@ retval_t net_copyDirectoryToAllPeers(CNet * ns, char *dirname, char *todirname)
   // Search for all files
   snprintf(searchname, sizeof(searchname), "%s/*.*", dirname);
   searchResult = fs_findFirstFile(fs_find_info_new(&fnd_info), dirname, NULL, NULL);
-  if (searchResult != NULL)
+  if ( NULL != searchResult )
   {
     // Make the new directory
     net_copyFileToAllPeers(ns, dirname, todirname);
 
     // Copy each file
-    while (searchResult != NULL)
+    while ( NULL != searchResult )
     {
       // If a file begins with a dot, assume it's something
       // that we don't want to copy.  This keeps repository
@@ -1131,14 +1135,14 @@ retval_t net_copyDirectoryToPeer(CNet * ns, ENetPeer * peer, char *dirname, char
   // Search for all files
   snprintf(searchname, sizeof(searchname), "%s/*.*", dirname);
   searchResult = fs_findFirstFile(fs_find_info_new(&fnd_info), dirname, NULL, NULL);
-  if (searchResult != NULL)
+  if ( NULL != searchResult )
   {
     // Make the new directory
     retval = net_copyFileToPeer(ns, peer, dirname, todirname);
     if(rv_error == retval) return retval;
 
     // Copy each file
-    while (searchResult != NULL)
+    while ( NULL != searchResult )
     {
       // If a file begins with a dot, assume it's something
       // that we don't want to copy.  This keeps repository
@@ -1204,7 +1208,7 @@ bool_t localize_filename(char * szin, char * szout)
 {
   char * ptmp;
   size_t len;
-  if(NULL==szin || NULL==szout) return bfalse;
+  if(NULL ==szin || NULL ==szout) return bfalse;
 
   // scan through the string and localize every part of the string beginning with '@'
   *szout = '\0';
@@ -1213,7 +1217,7 @@ bool_t localize_filename(char * szin, char * szout)
     if('@' == *szin)
     {
       ptmp = get_config_string(&CData, szin+1, &szin);
-      if(NULL!=ptmp)
+      if(NULL !=ptmp)
       {
         len = strlen(ptmp);
         strcpy(szout, ptmp);
@@ -1452,7 +1456,7 @@ bool_t net_beginGame(struct CGame_t * gs)
   NetHost *cl_host, * sv_host;
   bool_t retval = btrue;
 
-  if(NULL==gs) return bfalse;
+  if(NULL ==gs) return bfalse;
 
   // try to host a game
   sv_host = sv_getHost();
@@ -1483,7 +1487,7 @@ PLA_REF add_player(CGame * gs, CHR_REF chr_ref, Uint8 device)
   CPlayer * pla;
   CChr    * chr;
 
-  if(NULL == gs || gs->PlaList_count + 1 >= PLALST_COUNT ) return INVALID_PLA;
+  if( !EKEY_PVALID(gs) || gs->PlaList_count + 1 >= PLALST_COUNT ) return INVALID_PLA;
 
   if( !VALID_CHR(gs->ChrList, chr_ref) ) return INVALID_PLA;
   chr = gs->ChrList + chr_ref;
@@ -1500,7 +1504,7 @@ PLA_REF add_player(CGame * gs, CHR_REF chr_ref, Uint8 device)
 
   chr->whichplayer = pla_ref;
   pla->chr_ref = chr_ref;
-  pla->used = btrue;
+  pla->Active = btrue;
   pla->device = device;
   CLatch_clear( &(pla->latch) );
 
@@ -1623,13 +1627,30 @@ void do_chat_input()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+bool_t NetRequest_delete(NetRequest * pr)
+{
+  if( NULL == pr ) return bfalse;
+  if( !EKEY_PVALID(pr) ) return btrue;
+
+  EKEY_PINVALIDATE( pr );
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
 NetRequest * NetRequest_new(NetRequest * pr)
 {
   // do some simple initialization
 
   //fprintf( stdout, "NetRequest_new()\n");
 
-  if( NULL == pr ) return NULL;
+  if( NULL == pr ) return pr;
+
+  NetRequest_delete( pr );
+
+  memset( pr, 0, sizeof(NetRequest) );
+
+  EKEY_PNEW( pr, NetRequest );
 
   pr->received = bfalse;
   pr->data_size = 0;
@@ -1642,7 +1663,7 @@ NetRequest * NetRequest_new(NetRequest * pr)
 int NetRequest_getFreeIndex(NetAsynchData * asynch_list, size_t asynch_count)
 {
   int index;
-  if(NULL==asynch_list || 0 == asynch_count) return -1;
+  if(NULL ==asynch_list || 0 == asynch_count) return -1;
 
   for(index=0; index<asynch_count; index++)
   {
@@ -1659,7 +1680,7 @@ int NetRequest_getFreeIndex(NetAsynchData * asynch_list, size_t asynch_count)
 NetRequest * NetRequest_getFree(NetAsynchData * asynch_list, size_t asynch_count)
 {
   int index;
-  if(NULL==asynch_list || 0 == asynch_count) return NULL;
+  if(NULL ==asynch_list || 0 == asynch_count) return NULL;
 
   for(index=0; index<asynch_count; index++)
   {
@@ -1675,14 +1696,14 @@ NetRequest * NetRequest_getFree(NetAsynchData * asynch_list, size_t asynch_count
 //--------------------------------------------------------------------------------------------
 bool_t NetRequest_test(NetRequest * prequest)
 {
-  if(NULL==prequest) return bfalse;
+  if(NULL ==prequest) return bfalse;
   return prequest->received;
 };
 
 //--------------------------------------------------------------------------------------------
 bool_t NetRequest_release(NetRequest * prequest)
 {
-  if(NULL==prequest) return bfalse;
+  if(NULL ==prequest) return bfalse;
   prequest->waiting  = bfalse;
   prequest->received = bfalse;
 
@@ -1701,7 +1722,7 @@ NetRequest * NetRequest_check(NetAsynchData * asynch_list, size_t asynch_count, 
   int index;
   NetRequest * retval = NULL;
   NET_PACKET       npkt;
-  if(NULL==asynch_list || 0 == asynch_count || NULL==pevent) return NULL;
+  if(NULL ==asynch_list || 0 == asynch_count || NULL ==pevent) return NULL;
 
   for(index=0; index<asynch_count; index++)
   {
@@ -1716,7 +1737,7 @@ NetRequest * NetRequest_check(NetAsynchData * asynch_list, size_t asynch_count, 
 
     // grab the first one that fits out requirements
     if(NULL != retval) continue;
-    if(NULL==pevent->packet || pevent->packet->dataLength == 0) continue;
+    if(NULL ==pevent->packet || pevent->packet->dataLength == 0) continue;
 
     net_packet_startReading(&npkt, pevent->packet);
 
@@ -1782,7 +1803,7 @@ retval_t net_loopWaitForPacket(NetRequest * prequest, Uint32 granularity, size_t
     };
   }
 
-  if(NULL!=data_size)
+  if(NULL !=data_size)
   {
     *data_size = prequest->data_size;
   }
@@ -1799,7 +1820,7 @@ retval_t net_waitForPacket(NetAsynchData * asynch_list, ENetPeer * peer, Uint32 
 
   // can use &peer, because the stack variable cannot change while we are waiting
   prequest = net_prepareWaitForPacket(asynch_list, &peer, timeout, packet_type);
-  if(NULL==prequest) return rv_error;
+  if(NULL ==prequest) return rv_error;
 
   wait_return = net_loopWaitForPacket(prequest, 10, data_size);
   while(rv_waiting == wait_return)
@@ -1816,7 +1837,7 @@ static void net_writeLogMessage(FILE * logFile, const char *format, va_list args
 {
   static char logBuffer[MAX_NET_LOG_MESSAGE];
 
-  if (logFile != NULL)
+  if ( NULL != logFile )
   {
     vsnprintf(logBuffer, MAX_NET_LOG_MESSAGE - 1, format, args);
     fprintf(stdout, logBuffer);
@@ -1845,7 +1866,7 @@ ENetPeer * net_disconnectPeer(ENetPeer * peer, int granularity_ms, int timeout_m
 {
   int cnt, steps;
 
-  if( NULL==peer ) return peer;
+  if( NULL ==peer ) return peer;
 
   if(granularity_ms <= 0) granularity_ms = timeout_ms;
   if(timeout_ms <= granularity_ms) timeout_ms = granularity_ms;
@@ -1901,7 +1922,7 @@ ENetPeer * net_startPeer(ENetHost * host, ENetAddress * address )
   peer = enet_host_connect(host, address, NET_EGOBOO_NUM_CHANNELS);
 
   // print out some diagnostics
-  if (NULL==peer)
+  if (NULL ==peer)
   {
     net_logf("Failed! Cannot open channel.\n");
   }
@@ -1973,7 +1994,7 @@ ENetPeer * net_startPeerByName(ENetHost * host, const char* connect_name, const 
   // Now connect to the remote host
   peer = net_startPeer(host, &address);
 
-  if (NULL==peer)
+  if (NULL ==peer)
   {
     net_logf("NET INFO: net_startPeerByName() - Cannot open channel.\n");
   }
@@ -2046,7 +2067,7 @@ bool_t net_sendSysPacketToAllPeers(ENetHost * host, SYS_PACKET * egop)
   // BB> This function wraps the enet_host_broadcast() command
   ENetPacket *packet;
 
-  if(NULL==host || NULL == egop)
+  if(NULL ==host || NULL == egop)
   {
     net_logf("NET ERROR: net_sendSysPacketToAllPeers() - Called with invalid parameters.\n");
     return bfalse;
@@ -2078,7 +2099,7 @@ bool_t net_sendSysPacketToAllPeersGuaranteed(ENetHost * host, SYS_PACKET * egop)
   // BB> This function wraps the enet_host_broadcast() command for the guaranteed channel
   ENetPacket *packet;
 
-  if(NULL==host || NULL == egop)
+  if(NULL ==host || NULL == egop)
   {
     net_logf("NET ERROR: net_sendSysPacketToAllPeersGuaranteed() - Called with invalid parameters.\n");
     return bfalse;
@@ -2398,7 +2419,11 @@ CListIn_Client * CListIn_Client_new(CListIn_Client * cli, EventHandler_Ptr handl
 {
   if(NULL == cli) return cli;
 
-  if(cli->initialized) CListIn_Client_delete(cli);
+  // get rid of any old stuff
+  CListIn_Client_delete(cli);
+
+  // initialize the key
+  EKEY_PNEW( cli, CListIn_Client );
 
   if((~(Uint32)0) == net_guid)
   {
@@ -2409,8 +2434,6 @@ CListIn_Client * CListIn_Client_new(CListIn_Client * cli, EventHandler_Ptr handl
   cli->handler_ptr  = handler;
   cli->handler_data = data;
 
-  cli->initialized = btrue;
-
   return cli;
 }
 
@@ -2418,11 +2441,11 @@ CListIn_Client * CListIn_Client_new(CListIn_Client * cli, EventHandler_Ptr handl
 bool_t CListIn_Client_delete(CListIn_Client * cli)
 {
   if(NULL == cli) return bfalse;
-  if(cli->initialized) return btrue;
+  if( !EKEY_PVALID(cli) ) return btrue;
+
+  EKEY_PINVALIDATE(cli);
 
   memset(cli, 0, sizeof(CListIn_Client));
-
-  cli->initialized = bfalse;
 
   return btrue;
 }
@@ -2626,7 +2649,7 @@ bool_t NetHost_destroy(NetHost ** pnh)
 {
   bool_t retval;
 
-  if(NULL == pnh || NULL == *pnh || !(*pnh)->initialized) return bfalse;
+  if(NULL == pnh || NULL == *pnh || !EKEY_PVALID( (*pnh) ) ) return bfalse;
   
   retval = NetHost_delete(*pnh);
   FREE(*pnh);
@@ -2641,11 +2664,15 @@ static NetHost * NetHost_new(NetHost * nh, SDL_Callback_Ptr pcall)
 
   if(NULL == nh) return nh;
 
+  NetHost_delete( nh );
+
   memset(nh, 0, sizeof(NetHost));
+
+  EKEY_PNEW( nh, NetHost );
 
   NetThread_new( &(nh->nthread), pcall);
 
-  nh->initialized = btrue;
+
 
   return nh;
 }
@@ -2654,10 +2681,12 @@ static NetHost * NetHost_new(NetHost * nh, SDL_Callback_Ptr pcall)
 static bool_t NetHost_delete(NetHost * nh)
 {
  if(NULL == nh) return bfalse;
- if( !nh->initialized ) return btrue;
+  if( !EKEY_PVALID(nh) ) return btrue;
 
   // Close all connections "politely"
   NetHost_close(nh, NULL);
+
+  EKEY_PINVALIDATE(nh);
 
   // Close the host. 
   // Technically, this will close the connections, but it is rude... :P
@@ -2665,12 +2694,10 @@ static bool_t NetHost_delete(NetHost * nh)
   {
     enet_host_destroy(nh->Host);
     nh->Host = NULL;
-  }  
+  }
 
   // erase all the info
   memset(nh, 0, sizeof(NetHost));
-
-  nh->initialized = bfalse;
 
   return btrue;
 };
@@ -2694,7 +2721,7 @@ retval_t NetHost_startUp( NetHost * nh, Uint16 port )
 {
   ENetAddress address;
 
-  if(NULL == nh || !nh->initialized) return rv_error;
+  if(!EKEY_PVALID( nh )) return rv_error;
 
   // need to increment the references even if the state is not active
   nh->references++;
@@ -2709,7 +2736,7 @@ retval_t NetHost_startUp( NetHost * nh, Uint16 port )
     address.host = ENET_HOST_ANY;
     address.port = port;
     nh->Host = enet_host_create(&address, MAXCONNECTION, 0, 0);
-    if (nh->Host == NULL)
+    if (NULL == nh->Host)
     {
       net_logf("Failed!\n");
     }
@@ -2733,7 +2760,7 @@ retval_t NetHost_startUp( NetHost * nh, Uint16 port )
 //--------------------------------------------------------------------------------------------
 retval_t NetHost_shutDown( NetHost * nh )
 {
-  if(NULL == nh || !nh->initialized) return rv_error;
+  if(!EKEY_PVALID( nh )) return rv_error;
 
   // need to decrement the referenced even if the state is not active
   nh->references--;
@@ -2763,7 +2790,7 @@ bool_t NetThread_destroy(NetThread ** pnt)
   bool_t retval;
 
   if(NULL == pnt || NULL == *pnt) return bfalse;
-  if( !(*pnt)->initialized ) return btrue;
+  if( !EKEY_PVALID( (*pnt) ) ) return btrue;
 
   retval = NetThread_delete(*pnt);
   FREE( *pnt );
@@ -2776,9 +2803,11 @@ NetThread * NetThread_new(NetThread * nt, SDL_Callback_Ptr pcall)
 {
   if(NULL == nt) return nt;
 
-  if(nt->initialized) NetThread_delete(nt);
+  NetThread_delete(nt);
 
   memset( nt, 0, sizeof(NetThread) );
+
+  EKEY_PNEW( nt, NetThread );
 
   // Intial state is "Terminated."
   // Use NetThread_start() to actually start the thread
@@ -2794,7 +2823,9 @@ NetThread * NetThread_new(NetThread * nt, SDL_Callback_Ptr pcall)
 bool_t NetThread_delete(NetThread * nt)
 {
   if(NULL == nt) return bfalse;
-  if(!nt->initialized) return btrue;
+  if(!EKEY_PVALID( nt )) return btrue;
+
+  EKEY_PINVALIDATE(nt);
 
   if(nt->Terminated)
   {
@@ -2817,7 +2848,7 @@ bool_t NetThread_delete(NetThread * nt)
 //--------------------------------------------------------------------------------------------
 bool_t NetThread_start(NetThread * nt)
 {
-  if(NULL == nt || !nt->initialized) return bfalse;
+  if(!EKEY_PVALID( nt )) return bfalse;
 
   // if a callback is specified, start a SDL thread
   if(NULL == nt->Thread && NULL != nt->Callback)
@@ -2846,7 +2877,7 @@ bool_t NetThread_start(NetThread * nt)
 //--------------------------------------------------------------------------------------------
 bool_t NetThread_stop(NetThread * nt)
 {
-  if(NULL == nt || !nt->initialized) return bfalse;
+  if(!EKEY_PVALID( nt )) return bfalse;
   if(!NetThread_started(nt)) return bfalse;
 
   nt->KillMe = btrue;
@@ -2877,7 +2908,7 @@ bool_t NetThread_unpause(NetThread * nt)
 //--------------------------------------------------------------------------------------------
 bool_t NetThread_started(NetThread * nt)
 {
-  if(NULL == nt || !nt->initialized) return bfalse;
+  if(!EKEY_PVALID( nt )) return bfalse;
 
   if(nt->Terminated) return bfalse;
 

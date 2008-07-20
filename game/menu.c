@@ -963,7 +963,7 @@ int mnu_doChooseModule( MenuProc * mproc, float deltaTime )
         sv->selectedModule = mproc->selectedModule;
 
         //set up the ModState
-        ModState_renew( &(sv->modstate), sv->loc_mod + mproc->selectedModule, -1);
+        ModState_renew( &(sv->modstate), sv->loc_mod + mproc->selectedModule, (Uint32)(~0));
 
         // 1 == start the game
         result = 1;
@@ -1183,7 +1183,7 @@ int mnu_doChoosePlayer( MenuProc * mproc, float deltaTime )
   {
     case MM_Begin:
 
-      if(NULL == gs)
+      if( !EKEY_PVALID(gs) )
       {
         gs = gfxState.gs = CGame_create(mproc->net, NULL, NULL);
         gs->proc.Active = bfalse;
@@ -2420,9 +2420,9 @@ int mnu_doLaunchGame( MenuProc * mproc, float deltaTime )
       {
         // make sure the game has the correct information
         // destroy any extra info
-        if(gs->ns != mproc->net) { CNet_destroy(&(gs->ns)); gs->ns = mproc->net; if(NULL!=gs->ns) gs->ns->parent = gs;}
-        if(gs->cl != mproc->cl ) { CClient_destroy(&(gs->cl)); gs->cl = mproc->cl;  if(NULL!=gs->cl) gs->cl->parent = gs;}
-        if(gs->sv != mproc->sv ) { CServer_destroy(&(gs->sv)); gs->sv = mproc->sv;  if(NULL!=gs->sv) gs->sv->parent = gs;}
+        if(gs->ns != mproc->net) { CNet_destroy(&(gs->ns)); gs->ns = mproc->net; if(NULL !=gs->ns) gs->ns->parent = gs;}
+        if(gs->cl != mproc->cl ) { CClient_destroy(&(gs->cl)); gs->cl = mproc->cl;  if(NULL !=gs->cl) gs->cl->parent = gs;}
+        if(gs->sv != mproc->sv ) { CServer_destroy(&(gs->sv)); gs->sv = mproc->sv;  if(NULL !=gs->sv) gs->sv->parent = gs;}
       }
 
       if(NULL != mproc->cl && -1 != mproc->cl->selectedModule)
@@ -2782,7 +2782,7 @@ int mnu_Run( MenuProc * mproc )
           {
             mproc->whichMenu = mnu_UnhostGame;
 
-            ModState_renew( (&gs->modstate), &(mproc->sv->mod), -1);
+            ModState_renew( (&gs->modstate), &(mproc->sv->mod), (Uint32)(~0));
 
             if(!gs->modstate.loaded)
             {
@@ -4307,13 +4307,13 @@ int mnu_doIngameInventory( MenuProc * mproc, float deltaTime )
         offsetY = cl->StatList[i].pos.y;
 
         ichr    = cl->StatList[i].chr_ref;
-        if(!VALID_CHR(gs->ChrList, ichr)) continue;      
+        if(!ACTIVE_CHR(gs->ChrList, ichr)) continue;      
 
         iitem = ichr;
         for(j=0; j<gs->ChrList[ichr].numinpack; j++)
         {
           iitem = gs->ChrList[iitem].nextinpack;
-          if(!VALID_CHR(gs->ChrList, iitem)) break; 
+          if(!ACTIVE_CHR(gs->ChrList, iitem)) break; 
 
           iobj = gs->ChrList[iitem].model;
           if(!VALID_OBJ(gs->ObjList, iobj)) break;  
@@ -4402,17 +4402,19 @@ MenuProc * MenuProc_new(MenuProc *mproc)
 {
   //fprintf( stdout, "MenuProc_new()\n");
 
-  if(NULL == mproc || mproc->initialized) return mproc;
+  if(NULL == mproc) return mproc;
+
+  MenuProc_delete( mproc );
 
   memset(mproc, 0, sizeof(MenuProc));
+
+  EKEY_PNEW( mproc, MenuProc );
 
   ProcState_new( &(mproc->proc) );
 
   mproc->selectedModule     = -1;
   mproc->validModules_count = 0;
   memset(mproc->validModules, 0, sizeof(int) * MAXMODULE);
-
-  mproc->initialized = btrue;
 
   return mproc;
 }
@@ -4423,14 +4425,11 @@ bool_t MenuProc_delete(MenuProc * ms)
   bool_t retval = bfalse;
 
   if(NULL == ms) return bfalse;
-  if(!ms->initialized) return btrue;
+  if(!EKEY_PVALID(ms)) return btrue;
+
+  EKEY_PINVALIDATE(ms);
 
   retval = ProcState_delete(&(ms->proc));
-
-  if( !ms->proc.initialized )
-  {
-    ms->initialized = bfalse;
-  }
 
   mnu_free_all_titleimages(ms);
 
@@ -4449,7 +4448,7 @@ bool_t MenuProc_init(MenuProc * ms)
 {
   if(NULL == ms) return bfalse;
 
-  if(!ms->initialized)
+  if(!EKEY_PVALID(ms))
   {
     MenuProc_new(ms);
   }
@@ -4467,7 +4466,7 @@ bool_t MenuProc_init_ingame(MenuProc * ms)
 {
   if(NULL == ms) return bfalse;
 
-  if(!ms->initialized)
+  if(!EKEY_PVALID(ms))
   {
     MenuProc_new(ms);
   }
@@ -4516,7 +4515,7 @@ size_t mnu_load_mod_data(MenuProc * mproc, MOD_INFO * mi_ary, size_t mi_len)
 
   // Log a directory list
   filesave = fs_fileOpen( PRI_NONE, NULL, CData.modules_file, "w" );
-  if ( filesave != NULL )
+  if ( NULL != filesave  )
   {
     fprintf( filesave, "This file logs all of the modules found\n" );
     fprintf( filesave, "** Denotes an invalid module (Or locked)\n\n" );
@@ -4554,7 +4553,7 @@ size_t mnu_load_mod_data(MenuProc * mproc, MOD_INFO * mi_ary, size_t mi_len)
     FileName = fs_findNextFile(&fs_finfo);
   }
   fs_findClose(&fs_finfo);
-  if ( filesave != NULL ) fs_fileClose( filesave );
+  if ( NULL != filesave  ) fs_fileClose( filesave );
 
   return modcount;
 }

@@ -26,7 +26,7 @@
 /**> HEADER FILES <**/
 #include <math.h>
 
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 #include "egoboo_config.h"
 
 #define HAS_SOME_BITS(XX,YY) (0 != ((XX)&(YY)))
@@ -119,6 +119,7 @@ typedef union vector3_t { float v[3]; struct { float x, y, z; }; struct { float 
 typedef union vector3_ui08_t { Uint8 v[3]; struct { Uint8 x, y, z; }; struct { Uint8 r, g, b; }; } vect3_ui08;
 typedef union vector3_ui16_t { Uint16 v[3]; struct { Uint16 x, y, z; }; struct { Uint16 r, g, b; }; } vect3_ui16;
 typedef union vector4_t { float v[4]; struct { float x, y, z, w; }; struct { float r, g, b, a; }; } vect4;
+typedef vect4 quaternion;
 #pragma pack(pop)
 
 /**> GLOBAL VARIABLES <**/
@@ -134,17 +135,27 @@ void make_turntosin( void );
 matrix_4x4 ViewMatrix( const vect3 from, const vect3 at, const vect3 world_up, const float roll );
 matrix_4x4 ProjectionMatrix( const float near_plane, const float far_plane, const float fov );
 
-/**> INLINE FUNCTION PROTOTYPES <**/
+/**> 3 component vector <**/
 INLINE vect3 VSub        ( vect3 A, vect3 B );
 INLINE vect3 Normalize   ( vect3 A );
 INLINE vect3 CrossProduct( vect3 A, vect3 B );
 INLINE float DotProduct  ( vect3 A, vect3 B );
 
+/**> 4 component vector <**/
 INLINE vect4 VSub4        ( vect4 A, vect4 B );
 INLINE vect4 Normalize4   ( vect4 A );
 INLINE vect4 CrossProduct4( vect4 A, vect4 B );
 INLINE float DotProduct4  ( vect4 A, vect4 B );
 
+/**> quaternion <**/
+INLINE quaternion QuatConjugate(quaternion q1);
+INLINE quaternion QuatNormalize(quaternion q1);
+INLINE quaternion QuatMultiply(quaternion q1, quaternion q2);
+INLINE quaternion QuatDotprod(quaternion q1, quaternion q2);
+INLINE quaternion QuatTransform(quaternion q1, quaternion q2, quaternion q3);
+INLINE quaternion QuatConvert(matrix_4x4 m);
+
+/**> 4x4 matrix <**/
 INLINE matrix_4x4 IdentityMatrix( void );
 INLINE matrix_4x4 ZeroMatrix( void );
 INLINE matrix_4x4 MatrixTranspose( const matrix_4x4 a );
@@ -156,6 +167,7 @@ INLINE matrix_4x4 RotateZ( const float rads );
 INLINE matrix_4x4 ScaleXYZ( const float sizex, const float sizey, const float sizez );
 INLINE matrix_4x4 ScaleXYZRotateXYZTranslate( const float sizex, const float sizey, const float sizez, Uint16 turnz, Uint16 turnx, Uint16 turny, float tx, float ty, float tz );
 INLINE matrix_4x4 FourPoints( vect4 ori, vect4 wid, vect4 forw, vect4 up, float scale );
+INLINE matrix_4x4 MatrixConvert(quaternion q1);
 
 INLINE void Transform4_Full( float pre_scale, float post_scale, matrix_4x4 *pMatrix, vect4 pSourceV[], vect4 pDestV[], Uint32 NumVertor );
 INLINE void Transform4( float pre_scale, float post_scale, matrix_4x4 *pMatrix, vect4 pSourceV[], vect4 pDestV[], Uint32 NumVertor );
@@ -213,10 +225,4 @@ INLINE const BBOX_ARY * bbox_ary_delete(BBOX_ARY * ary);
 INLINE const BBOX_ARY * bbox_ary_renew(BBOX_ARY * ary);
 INLINE const BBOX_ARY * bbox_ary_alloc(BBOX_ARY * ary, int count);
 
-//--------------------------------------------------------------------------------------------
-typedef struct CPhysAccum_t
-{
-  vect3           acc;
-  vect3           vel;
-  vect3           pos;
-} CPhysAccum;
+INLINE Uint32 ego_rand(Uint32 * seed);

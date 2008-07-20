@@ -75,7 +75,7 @@
 void ConvertToKeyCharacters( char *pStr )
 {
 
-  if ( pStr == NULL )
+  if ( NULL == pStr  )
   {
     return;
   }
@@ -328,7 +328,7 @@ ConfigFilePtr OpenConfigFile( const char *pPath )
   char     lc;
 
   lTempFile = fs_fileOpen( PRI_NONE, NULL, pPath, "rt+" );
-  if ( lTempFile != NULL )
+  if ( NULL != lTempFile  )
   {
     lTempConfig = ( ConfigFilePtr ) calloc( 1, sizeof( ConfigFile ) );
     lTempConfig->f = lTempFile;
@@ -376,7 +376,7 @@ ConfigFilePtr OpenConfigFile( const char *pPath )
           else if ( lc == '[' )
           {
             // create new value in current section and load key name
-            if ( lCurValue == NULL )
+            if ( NULL == lCurValue  )
             {
               // first value in section
               lCurSection->FirstValue = ( ConfigFileValuePtr ) calloc( 1, sizeof( ConfigFileValue ) );
@@ -452,14 +452,15 @@ ConfigFilePtr OpenConfigFile( const char *pPath )
 long SetConfigCurrentSection( ConfigFilePtr pConfigFile, const char *pSection )
 {
   long lFound = 0;
-  if ( pConfigFile == NULL || pSection == NULL )
+  if ( NULL == pConfigFile  || NULL == pSection  )
   {
     return 0;
   }
-  if ( pConfigFile->CurrentSection == NULL )
+
+  if ( NULL == pConfigFile->CurrentSection )
   {
     pConfigFile->CurrentSection = pConfigFile->ConfigSectionList;
-    while ( 0 == lFound && ( pConfigFile->CurrentSection != NULL ) )
+    while ( 0 == lFound && ( NULL != pConfigFile->CurrentSection ) )
     {
       if ( strcmp( pConfigFile->CurrentSection->SectionName, pSection ) == 0 )
       {
@@ -480,7 +481,7 @@ long SetConfigCurrentSection( ConfigFilePtr pConfigFile, const char *pSection )
     else
     {
       pConfigFile->CurrentSection = pConfigFile->ConfigSectionList;
-      while ( 0 == lFound && ( pConfigFile->CurrentSection != NULL ) )
+      while ( 0 == lFound && ( NULL != pConfigFile->CurrentSection) )
       {
         if ( strcmp( pConfigFile->CurrentSection->SectionName, pSection ) == 0 )
         {
@@ -504,18 +505,15 @@ long SetConfigCurrentSection( ConfigFilePtr pConfigFile, const char *pSection )
 Sint32 SetConfigCurrentValueFromCurrentSection( ConfigFilePtr pConfigFile, const char *pKey )
 {
   Sint32 lFound = 0;
-  if ( pConfigFile == NULL || pKey == NULL )
-  {
-    return 0;
-  }
-  if ( pConfigFile->CurrentSection == NULL )
+
+  if ( NULL == pKey || NULL == pConfigFile  || NULL == pConfigFile->CurrentSection )
   {
     return 0;
   }
 
   // search for a value->KeyName = pKey in current section
   pConfigFile->CurrentValue = pConfigFile->CurrentSection->FirstValue;
-  while ( 0 == lFound && ( pConfigFile->CurrentValue != NULL ) )
+  while ( 0 == lFound && ( NULL != pConfigFile->CurrentValue ) )
   {
     if ( strcmp( pConfigFile->CurrentValue->KeyName, pKey ) == 0 )
     {
@@ -553,7 +551,7 @@ Sint32 SetConfigCurrentValue( ConfigFilePtr pConfigFile, const char *pSection, c
 Sint32 GetConfigValue( ConfigFilePtr pConfigFile, const char *pSection, const char *pKey, char *pValue,
                        Sint32 pValueBufferLength )
 {
-  if ( pConfigFile == NULL || pValue == NULL || pSection == NULL || pKey == NULL || pValueBufferLength <= 0 )
+  if ( NULL == pConfigFile  || NULL == pValue  || NULL == pSection  || NULL == pKey  || pValueBufferLength <= 0 )
   {
     return 0;
   }
@@ -626,11 +624,11 @@ Sint32 SetConfigValue( ConfigFilePtr pConfigFile, const char *pSection, const ch
   char     lNewSectionName[MAX_CONFIG_SECTION_LENGTH];
   char     lNewKeyName[MAX_CONFIG_KEY_LENGTH];
 
-  if ( pConfigFile == NULL )
+  if ( NULL == pConfigFile  )
   {
     return 0;
   }
-  if ( pValue == NULL || pSection == NULL || pKey == NULL )
+  if ( NULL == pValue  || NULL == pSection  || NULL == pKey  )
   {
     return 0;
   }
@@ -680,7 +678,7 @@ Sint32 SetConfigValue( ConfigFilePtr pConfigFile, const char *pSection, const ch
   }
 
   lLentghtNewValue = ( Sint32 ) strlen( pValue );
-  if ( pConfigFile->CurrentValue->Value == NULL )
+  if ( NULL == pConfigFile->CurrentValue->Value )
   {
     // if the stirng value doesn't exist than allocate memory for it
     pConfigFile->CurrentValue->Value = ( char * ) calloc( lLentghtNewValue  + 1, sizeof(char) );
@@ -747,21 +745,23 @@ void CloseConfigFile( ConfigFilePtr pConfigFile )
   ConfigFileSectionPtr lTempSection, lDoomedSection;
   ConfigFileValuePtr   lTempValue, lDoomedValue;
 
-  if ( pConfigFile == NULL )
+  if ( NULL == pConfigFile  )
   {
     return;
   }
-  if ( pConfigFile->f != NULL )
+
+  if ( NULL != pConfigFile->f )
   {
     fs_fileClose( pConfigFile->f );
   }
+
   // delete all sections form the ConfigFile
   lTempSection = pConfigFile->ConfigSectionList;
-  while ( lTempSection != NULL )
+  while ( NULL != lTempSection  )
   {
     // delete all values form the current section
     lTempValue = lTempSection->FirstValue;
-    while ( lTempValue != NULL )
+    while ( NULL != lTempValue  )
     {
       FREE ( lTempValue->Value );
       FREE ( lTempValue->Commentary );
@@ -782,7 +782,7 @@ Sint32 SaveConfigValue( FILE *pFile, ConfigFileValuePtr pValue )
 {
   Sint32 lPos = 0;
 
-  if ( pValue->Value != NULL )
+  if ( NULL != pValue->Value )
   {
     fputc( '"', pFile );
     while ( pValue->Value[lPos] != 0 )
@@ -806,11 +806,7 @@ void SaveConfigFile( ConfigFilePtr pConfigFile )
   ConfigFileSectionPtr lTempSection;
   ConfigFileValuePtr   lTempValue;
 
-  if ( pConfigFile == NULL )
-  {
-    return;
-  }
-  if ( pConfigFile->f == NULL )
+  if ( NULL == pConfigFile || NULL == pConfigFile->f  )
   {
     return;
   }
@@ -819,19 +815,19 @@ void SaveConfigFile( ConfigFilePtr pConfigFile )
   // rewrite the file
   rewind( pConfigFile->f );
   // saves all sections
-  while ( lTempSection != NULL )
+  while ( NULL != lTempSection  )
   {
     fprintf( pConfigFile->f, "{%s}\n", lTempSection->SectionName );
     // saves all values form the current section
     lTempValue = lTempSection->FirstValue;
-    while ( lTempValue != NULL )
+    while ( NULL != lTempValue  )
     {
       fprintf( pConfigFile->f, "[%s] : ", lTempValue->KeyName );
-      if ( lTempValue->Value != NULL )
+      if ( NULL != lTempValue->Value )
       {
         SaveConfigValue( pConfigFile->f, lTempValue );
       }
-      if ( lTempValue->Commentary != NULL )
+      if ( NULL != lTempValue->Commentary )
       {
         fprintf( pConfigFile->f, " // %s", lTempValue->Commentary );
       }
@@ -850,11 +846,11 @@ Sint32 SaveConfigFileAs( ConfigFilePtr pConfigFile, const char *pPath )
   FILE *lFileTemp;
 
   lFileTemp = fs_fileOpen( PRI_NONE, NULL, pPath, "wt" );
-  if ( lFileTemp == NULL )
+  if ( NULL == lFileTemp  )
   {
     return 0;
   }
-  if ( pConfigFile->f != NULL )
+  if ( NULL != pConfigFile->f )
   {
     fs_fileClose( pConfigFile->f );
   }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 #include "egoboo_config.h"
 
 typedef enum slot_e SLOT;
@@ -91,8 +91,9 @@ const char * inherit_fname(const char * szObjPath, const char * szObject, const 
 
 retval_t util_calculateCRC(char * filename, Uint32 seed, Uint32 * pCRC);
 
-Uint32 generate_unsigned( PAIR * ppair );
-Sint32 generate_signed( PAIR * ppair );
-Sint32 generate_dither( PAIR * ppair, Uint16 strength_fp8 );
+Uint32 generate_unsigned( Uint32 * pseed, PAIR * ppair );
+Sint32 generate_signed( Uint32 * pseed, PAIR * ppair );
+Sint32 generate_dither( Uint32 * pseed, PAIR * ppair, Uint16 strength_fp8 );
 
 void make_randie();
+

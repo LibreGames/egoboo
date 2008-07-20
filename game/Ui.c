@@ -286,7 +286,7 @@ void ui_sethot( ui_Widget * pw )
 //--------------------------------------------------------------------------------------------
 TTFont* ui_getFont()
 {
-  return ( ui_context.activeFont != NULL ) ? ui_context.activeFont : ui_context.defaultFont;
+  return ( NULL != ui_context.activeFont ) ? ui_context.activeFont : ui_context.defaultFont;
 }
 
 //--------------------------------------------------------------------------------------------

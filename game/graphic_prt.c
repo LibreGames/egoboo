@@ -106,7 +106,7 @@ void get_vectors( PRT_REF prt, vect3 * vert, vect3 * horiz, float * dist )
   ori = particle_orientation[image];
 
   // if the velocity is zero, convert the projectile to a billboard
-  if (( ori == ori_p ) && ABS( pprt->vel.x ) + ABS( pprt->vel.y ) + ABS( pprt->vel.z ) < 0.1 )
+  if (( ori == ori_p ) && ABS( pprt->ori.vel.x ) + ABS( pprt->ori.vel.y ) + ABS( pprt->ori.vel.z ) < 0.1 )
   {
     ori = ori_b;
     rotate += 16384;
@@ -116,9 +116,9 @@ void get_vectors( PRT_REF prt, vect3 * vert, vect3 * horiz, float * dist )
   vec1.y = 0;
   vec1.z = 1;
 
-  vec2.x = GCamera.pos.x - pprt->pos.x;
-  vec2.y = GCamera.pos.y - pprt->pos.y;
-  vec2.z = GCamera.pos.z - pprt->pos.z;
+  vec2.x = GCamera.pos.x - pprt->ori.pos.x;
+  vec2.y = GCamera.pos.y - pprt->ori.pos.y;
+  vec2.z = GCamera.pos.z - pprt->ori.pos.z;
 
   vect_out.x = GCamera.mView.v[ 2];
   vect_out.y = GCamera.mView.v[ 6];
@@ -155,17 +155,17 @@ void get_vectors( PRT_REF prt, vect3 * vert, vect3 * horiz, float * dist )
 
         CHR_REF prt_target = prt_get_target( gs, prt );
 
-        if ( ABS( pprt->vel.x ) + ABS( pprt->vel.y ) + ABS( pprt->vel.z ) > 0.0f )
+        if ( ABS( pprt->ori.vel.x ) + ABS( pprt->ori.vel.y ) + ABS( pprt->ori.vel.z ) > 0.0f )
         {
-          vec_vel.x = pprt->vel.x;
-          vec_vel.y = pprt->vel.y;
-          vec_vel.z = pprt->vel.z;
+          vec_vel.x = pprt->ori.vel.x;
+          vec_vel.y = pprt->ori.vel.y;
+          vec_vel.z = pprt->ori.vel.z;
         }
-        else if ( VALID_CHR( gs->ChrList,  prt_target ) && VALID_CHR( gs->ChrList,  prt_target ) )
+        else if ( ACTIVE_CHR( gs->ChrList,  prt_target ) && ACTIVE_CHR( gs->ChrList,  prt_target ) )
         {
-          vec_vel.x = gs->ChrList[prt_target].pos.x - pprt->pos.x;
-          vec_vel.y = gs->ChrList[prt_target].pos.y - pprt->pos.y;
-          vec_vel.z = gs->ChrList[prt_target].pos.z - pprt->pos.z;
+          vec_vel.x = gs->ChrList[prt_target].ori.pos.x - pprt->ori.pos.x;
+          vec_vel.y = gs->ChrList[prt_target].ori.pos.y - pprt->ori.pos.y;
+          vec_vel.z = gs->ChrList[prt_target].ori.pos.z - pprt->ori.pos.z;
         }
         else
         {
@@ -174,9 +174,9 @@ void get_vectors( PRT_REF prt, vect3 * vert, vect3 * horiz, float * dist )
           vec_vel.z = 1;
         };
 
-        vec2.x = GCamera.pos.x - pprt->pos.x;
-        vec2.y = GCamera.pos.y - pprt->pos.y;
-        vec2.z = GCamera.pos.z - pprt->pos.z;
+        vec2.x = GCamera.pos.x - pprt->ori.pos.x;
+        vec2.y = GCamera.pos.y - pprt->ori.pos.y;
+        vec2.z = GCamera.pos.z - pprt->ori.pos.z;
 
         vec1 = Normalize( vec_vel );
         vec3 = CrossProduct( vec1, Normalize( vec2 ) );
@@ -210,9 +210,9 @@ void get_vectors( PRT_REF prt, vect3 * vert, vect3 * horiz, float * dist )
       break;
   };
 
-  if ( VALID_CHR( gs->ChrList,  chr ) && gs->PipList[pip].rotatewithattached )
+  if ( ACTIVE_CHR( gs->ChrList,  chr ) && gs->PipList[pip].rotatewithattached )
   {
-    rotate += gs->ChrList[chr].turn_lr;
+    rotate += gs->ChrList[chr].ori.turn_lr;
   }
 
   rotate >>= 2;
@@ -314,6 +314,7 @@ void render_solid_prt( Uint32 vrtcount, GLVertex * vrtlist )
   {
     // Render each particle that was on
     glDepthMask( GL_TRUE );
+
     glEnable( GL_DEPTH_TEST );
     glDepthFunc( GL_LEQUAL );
 
@@ -374,8 +375,9 @@ void render_transparent_prt( Uint32 vrtcount, GLVertex * vrtlist )
   ATTRIB_PUSH( "render_transparent_prt", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_LIGHTING_BIT | GL_CURRENT_BIT );
   {
     glDepthMask( GL_FALSE );
+
     glEnable( GL_DEPTH_TEST );
-    glDepthFunc( GL_LESS );
+    glDepthFunc( GL_LEQUAL );
 
     glEnable( GL_ALPHA_TEST );
     glAlphaFunc( GL_GREATER, 0 );
@@ -510,7 +512,7 @@ void render_light_prt( Uint32 vrtcount, GLVertex * vrtlist )
     {
       // Get the index from the color slot
       prt = ( Uint16 ) vrtlist[cnt].color;
-      if( !VALID_PRT(gs->PrtList, prt) ) continue;
+      if( !ACTIVE_PRT(gs->PrtList, prt) ) continue;
       pprt = gs->PrtList + prt;
 
       chr = prt_get_attachedtochr( gs, prt );
@@ -600,11 +602,11 @@ void render_particles()
   numparticle = 0;
   for ( prt_cnt = 0; prt_cnt < PRTLST_COUNT; prt_cnt++ )
   {
-    if ( !VALID_PRT( gs->PrtList, prt_cnt ) || /* !gs->PrtList[prt_cnt].inview  || */ gs->PrtList[prt_cnt].gopoof || gs->PrtList[prt_cnt].size_fp8 == 0 ) continue;
+    if ( !ACTIVE_PRT( gs->PrtList, prt_cnt ) || /* !gs->PrtList[prt_cnt].inview  || */ gs->PrtList[prt_cnt].gopoof || gs->PrtList[prt_cnt].size_fp8 == 0 ) continue;
 
-    v[numparticle].pos.x = ( float ) gs->PrtList[prt_cnt].pos.x;
-    v[numparticle].pos.y = ( float ) gs->PrtList[prt_cnt].pos.y;
-    v[numparticle].pos.z = ( float ) gs->PrtList[prt_cnt].pos.z;
+    v[numparticle].pos.x = ( float ) gs->PrtList[prt_cnt].ori.pos.x;
+    v[numparticle].pos.y = ( float ) gs->PrtList[prt_cnt].ori.pos.y;
+    v[numparticle].pos.z = ( float ) gs->PrtList[prt_cnt].ori.pos.z;
 
     // !!!!!PRE CALCULATE the billboard vectors so you only have to do it ONCE!!!!!!!
     get_vectors( prt_cnt, &v[numparticle].up, &v[numparticle].rt, &v[numparticle].col.r );
@@ -730,6 +732,7 @@ void render_solid_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
   {
     // Render each particle that was on
     glDepthMask( GL_TRUE );
+
     glEnable( GL_DEPTH_TEST );
     glDepthFunc( GL_LEQUAL );
 
@@ -800,7 +803,6 @@ void render_transparent_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 
     glEnable( GL_BLEND );
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-
 
     for ( cnt = 0; cnt < vrtcount; cnt++ )
     {
@@ -921,14 +923,14 @@ void render_particle_reflections()
   numparticle = 0;
   for ( prt_cnt = 0; prt_cnt < PRTLST_COUNT; prt_cnt++ )
   {
-    if ( !VALID_PRT( gs->PrtList, prt_cnt ) || !gs->PrtList[prt_cnt].inview || gs->PrtList[prt_cnt].size_fp8 == 0 ) continue;
+    if ( !ACTIVE_PRT( gs->PrtList, prt_cnt ) || !gs->PrtList[prt_cnt].inview || gs->PrtList[prt_cnt].size_fp8 == 0 ) continue;
 
     if ( mesh_has_some_bits( gs->Mesh_Mem.fanlst, gs->PrtList[prt_cnt].onwhichfan, MPDFX_SHINY ) )
     {
       level = gs->PrtList[prt_cnt].level;
-      v[numparticle].pos.x = gs->PrtList[prt_cnt].pos.x;
-      v[numparticle].pos.y = gs->PrtList[prt_cnt].pos.y;
-      v[numparticle].pos.z = level + level - gs->PrtList[prt_cnt].pos.z;
+      v[numparticle].pos.x = gs->PrtList[prt_cnt].ori.pos.x;
+      v[numparticle].pos.y = gs->PrtList[prt_cnt].ori.pos.y;
+      v[numparticle].pos.z = level + level - gs->PrtList[prt_cnt].ori.pos.z;
 
       // !!!!!PRE CALCULATE the billboard vectors so you only have to do it ONCE!!!!!!!
       get_vectors( prt_cnt, &v[numparticle].up, &v[numparticle].rt, &v[numparticle].col.r );

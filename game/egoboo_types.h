@@ -28,24 +28,8 @@
 #include <SDL_endian.h>
 #include <SDL_types.h>
 
-typedef struct aa_bbox_t AA_BBOX;
-
-typedef struct rect_sint32_t
-{
-  Sint32 left;
-  Sint32 right;
-  Sint32 top;
-  Sint32 bottom;
-} IRect;
-
-typedef struct rect_float_t
-{
-  float left;
-  float right;
-  float top;
-  float bottom;
-} FRect;
-
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 #ifdef __cplusplus
   typedef bool bool_t;
 
@@ -70,9 +54,114 @@ typedef enum retval_e
   rv_waiting  = 2
 } retval_t;
 
-
-
 typedef char STRING[256];
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+typedef struct egoboo_key_t
+{
+  Uint32 v1, v2;
+  bool_t dynamic;
+  Uint32 data_type;
+  void * pdata;
+} egoboo_key;
+
+INLINE egoboo_key * egoboo_key_create(Uint32 itype, void * pdata);
+INLINE bool_t       egoboo_key_destroy(egoboo_key ** pkey);
+INLINE egoboo_key * egoboo_key_new(egoboo_key * pkey, Uint32 itype, void * pdata);
+INLINE bool_t       egoboo_key_validate(egoboo_key * pkey);
+INLINE bool_t       egoboo_key_invalidate(egoboo_key * pkey);
+INLINE bool_t       egoboo_key_valid(egoboo_key * pkey);
+INLINE void *       egoboo_key_get_data(egoboo_key * pkey, Uint32 type);
+
+#define EKEY_NEW(XX,YY) egoboo_key_new( &(XX.ekey), ekey_##YY, &(XX) )
+#define EKEY_PNEW(XX,YY) egoboo_key_new( &(XX->ekey), ekey_##YY, XX )
+
+#define EKEY_INVALIDATE(XX) egoboo_key_invalidate( &(XX.ekey) )
+#define EKEY_PINVALIDATE(XX) egoboo_key_invalidate( &(XX->ekey) )
+
+#define EKEY_VALID(XX) egoboo_key_valid(&(XX.ekey))
+#define EKEY_PVALID(XX) ((NULL != (XX)) && egoboo_key_valid(&(XX->ekey)) )
+
+
+enum
+{
+  ekey_HashNode,
+  ekey_CCap,
+  ekey_CChr,
+  ekey_CClient,
+  ekey_CEnc,
+  ekey_CEve,
+  ekey_CGame,
+  ekey_CMad,
+  ekey_CNet,
+  ekey_CPip,
+  ekey_CPrt,
+  ekey_CPlayer,
+  ekey_CProfile,
+  ekey_CServer,
+  ekey_chr_spawn_info,
+  ekey_enc_spawn_info,
+  ekey_prt_spawn_info,
+  ekey_CListIn_Client,
+  ekey_CListOut_Info,
+  ekey_NetHost,
+  ekey_CPhysicsData,
+  ekey_GSStack,
+  ekey_CGui,
+  ekey_ProcState,
+  ekey_MachineState,
+  ekey_ModState,
+  ekey_nfile_ReceiveQueue,
+  ekey_nfile_ReceiveState,
+  ekey_nfile_SendState,
+  ekey_nfile_SendQueue,
+  ekey_NFileState,
+  ekey_SoundState,
+  ekey_MenuProc,
+  ekey_CChrEnviro,
+  ekey_CGraphics,
+  ekey_chr_setup_info,
+  ekey_CProperties,
+  ekey_CTeam,
+  ekey_MeshMem,
+  ekey_MOD_INFO,
+  ekey_ModSummary,
+  ekey_NetRequest,
+  ekey_NetThread,
+  ekey_Passage,
+  ekey_Shop,
+  ekey_Status,
+  ekey_chr_spawn_queue,
+  ekey_AI_STATE,
+  ekey_CList,
+  ekey_BUMPLIST,
+  ekey_BSP_node,
+  ekey_BSP_leaf,
+  ekey_BSP_tree
+};
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+typedef struct aa_bbox_t AA_BBOX;
+
+typedef struct rect_sint32_t
+{
+  Sint32 left;
+  Sint32 right;
+  Sint32 top;
+  Sint32 bottom;
+} IRect;
+
+typedef struct rect_float_t
+{
+  float left;
+  float right;
+  float top;
+  float bottom;
+} FRect;
+
+
 
 //--------------------------------------------------------------------------------------------
 typedef Uint32 IDSZ;
@@ -98,6 +187,8 @@ typedef struct range_t
 
 #ifdef __cplusplus
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 #define OBJLST_COUNT              1024
 #define EVELST_COUNT              OBJLST_COUNT  // One enchant type per model
 #define ENCLST_COUNT          128         // Number of enchantments
@@ -228,6 +319,19 @@ typedef Uint16 SHOP_REF;
 
 #else
 
+//typedef struct CList_t
+//{
+//  egoboo_key ekey;
+//  size_t     count;
+//  size_t     size;
+//  void     * data;
+//} CList;
+//
+//INLINE CList * CList_new(CList * lst, size_t count, size_t size);
+//INLINE bool_t  CList_delete(CList * lst);
+//INLINE void  * CList_getData(CList * lst, int index);
+
+
 typedef Uint16 CAP_REF;
 typedef Uint16 CHR_REF;
 
@@ -263,6 +367,7 @@ typedef Uint16 SHOP_REF;
 #define INVALID_MAD MADLST_COUNT
 #define INVALID_AI  AILST_COUNT
 #define INVALID_OBJ OBJLST_COUNT
+#define INVALID_PASS PASSLST_COUNT
 
 #define CAP_REF(XX) (CAP_REF)(XX)
 #define CHR_REF(XX) (CHR_REF)(XX)
@@ -306,7 +411,7 @@ struct ClockState_t;
 
 typedef struct ProcState_t
 {
-  bool_t        initialized;
+  egoboo_key ekey;
 
   // process variables
   enum ProcessStates_e State;              // what are we doing now?
@@ -345,7 +450,7 @@ typedef int (SDLCALL *SDL_Callback_Ptr)(void *);
 // a hash type for "efficiently" storing data
 typedef struct HashNode_t
 {
-  bool_t initialized;
+  egoboo_key ekey;
   struct HashNode_t * next;
   void * data;
 } HashNode;
@@ -368,3 +473,47 @@ INLINE HashList * HashList_create(int size);
 INLINE bool_t     HashList_destroy(HashList **);
 
 
+typedef struct BSP_node_t
+{
+  egoboo_key ekey;
+
+  struct BSP_leaf_t  * next;
+  void               * data;
+} BSP_node;
+
+INLINE BSP_node * BSP_node_new( BSP_node * t, void * data );
+INLINE bool_t     BSP_node_delete( BSP_node * t );
+
+typedef struct BSP_leaf_t
+{
+  egoboo_key ekey;
+
+  struct BSP_leaf_t  * parent;
+  size_t               child_count;
+  struct BSP_leaf_t ** children;
+  BSP_node           * nodes;
+} BSP_leaf;
+
+INLINE BSP_leaf * BSP_leaf_new( BSP_leaf * L, int size );
+INLINE bool_t     BSP_leaf_delete( BSP_leaf * L );
+INLINE bool_t     BSP_leaf_insert( BSP_leaf * L, BSP_node * n );
+
+
+typedef struct BSP_tree_t
+{
+  egoboo_key ekey;
+
+  int dimensions;
+  int depth;
+
+  int        leaf_count;
+  BSP_leaf * leaf_list;
+
+  BSP_leaf * root;
+
+} BSP_tree;
+
+INLINE BSP_tree * BSP_tree_new( BSP_tree * t, Sint32 dim, Sint32 depth);
+INLINE bool_t     BSP_tree_delete( BSP_tree * t );
+
+INLINE Sint32 BSP_tree_count_nodes(Sint32 dim, Sint32 depth);

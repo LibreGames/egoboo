@@ -1,9 +1,58 @@
 #pragma once
 
-#include "egoboo_types.inl"
-#include "egoboo_math.inl"
+#include "egoboo_types.h"
+#include "egoboo_math.h"
 
 struct CGame_t;
+
+#define INVALID_BUMPLIST_NODE (~(Uint32)0)
+
+typedef struct bumplist_node_t
+{
+  Uint32 ref;
+  Uint32 next; 
+} BUMPLIST_NODE;
+
+typedef struct bumplist_t
+{
+  egoboo_key ekey;  
+  bool_t     allocated;
+  bool_t     filled;
+
+  Uint32   num_blocks;              // Number of collision areas
+
+  Uint32          free_count;
+  Uint32          free_max;
+  Uint32        * free_lst;
+  BUMPLIST_NODE * node_lst;
+
+  BUMPLIST_NODE * chr_ref;                 // For character collisions
+  Uint16        * num_chr;                 // Number on the block
+
+  BUMPLIST_NODE  * prt_ref;                 // For particle collisions
+  Uint16         * num_prt;                 // Number on the block
+} BUMPLIST;
+
+INLINE const BUMPLIST * bumplist_new(BUMPLIST * b);
+INLINE const bool_t     bumplist_delete(BUMPLIST * b);
+INLINE const BUMPLIST * bumplist_renew(BUMPLIST * b);
+INLINE const bool_t     bumplist_allocate(BUMPLIST * b, int size);
+INLINE const bool_t     bumplist_clear( BUMPLIST * b );
+
+INLINE const Uint32     bumplist_get_free(BUMPLIST * b);
+
+INLINE const bool_t     bumplist_insert_chr(BUMPLIST * b, Uint32 block, CHR_REF chr_ref);
+INLINE const bool_t     bumplist_insert_prt(BUMPLIST * b, Uint32 block, PRT_REF prt_ref);
+
+INLINE const Uint32     bumplist_get_chr_head(BUMPLIST * b, Uint32 block);
+INLINE const Uint32     bumplist_get_prt_head(BUMPLIST * b, Uint32 block);
+INLINE const Uint32     bumplist_get_chr_count(BUMPLIST * b, Uint32 block );
+INLINE const Uint32     bumplist_get_prt_count(BUMPLIST * b, Uint32 block );
+
+INLINE const Uint32     bumplist_get_next(BUMPLIST * b, Uint32 node );
+INLINE const Uint32     bumplist_get_ref(BUMPLIST * b, Uint32 node );
+INLINE const Uint32     bumplist_get_next_prt(struct CGame_t * gs, BUMPLIST * b, Uint32 node );
+INLINE const Uint32     bumplist_get_next_chr(struct CGame_t * gs, BUMPLIST * b, Uint32 node );
 
 #define MAPID                           0x4470614d     // The string 'MapD'
 
@@ -17,8 +66,8 @@ struct CGame_t;
 #define MAXMESHCOMMANDSIZE              32             // Max trigs in each command
 #define MAXTILETYPE                     (64*4)         // Max number of tile images
 #define MAXMESHRENDER                   (1024*8)       // Max number of tiles to draw
-#define INVALID_TILE                    (~(Uint16)0)   // Don't draw the fansquare if tile = this
-#define INVALID_FAN                     (~(Uint32)0)   // Character not on a fan ( maybe )
+#define INVALID_TILE                    ((Uint16)(~(Uint16)0))   // Don't draw the fansquare if tile = this
+#define INVALID_FAN                     ((Uint32)(~(Uint32)0))   // Character not on a fan ( maybe )
 
 #define FAN_BITS 7
 #define MESH_FAN_TO_INT(XX)    ( (XX) << FAN_BITS )
@@ -90,6 +139,8 @@ typedef struct mesh_info_t
 
   Uint32  Block_X[( MAXMESHSIZEY/4 ) +1];
   Uint32  Fan_X[MAXMESHSIZEY];                         // Which fan to start a row with
+
+  BUMPLIST bumplist;
 } MESH_INFO;
 
 
@@ -107,6 +158,8 @@ typedef struct mesh_fan_t
 
 typedef struct MeshMem_t
 {
+  egoboo_key ekey;
+
   int     vrt_count;
   void *  base;                                                 // For malloc
 
@@ -148,59 +201,6 @@ typedef struct mesh_tile_t
 } MESH_TILE;
 
 extern MESH_TILE Mesh_Tile[MAXTILETYPE];
-
-#define INVALID_BUMPLIST_NODE (~(Uint32)0)
-
-typedef struct bumplist_node_t
-{
-  Uint32 ref;
-  Uint32 next; 
-} BUMPLIST_NODE;
-
-typedef struct bumplist_t
-{
-  bool_t   allocated;
-  bool_t   initialized;
-  bool_t   filled;
-
-  Uint32   num_blocks;              // Number of collision areas
-
-  Uint32          free_count;
-  Uint32          free_max;
-  Uint32        * free_lst;
-  BUMPLIST_NODE * node_lst;
-
-  BUMPLIST_NODE * chr_ref;                 // For character collisions
-  Uint16        * num_chr;                 // Number on the block
-
-  BUMPLIST_NODE  * prt_ref;                 // For particle collisions
-  Uint16         * num_prt;                 // Number on the block
-} BUMPLIST;
-
-INLINE const BUMPLIST * bumplist_new(BUMPLIST * b);
-INLINE const void       bumplist_delete(BUMPLIST * b);
-INLINE const BUMPLIST * bumplist_renew(BUMPLIST * b);
-INLINE const bool_t     bumplist_allocate(BUMPLIST * b, int size);
-INLINE const bool_t     bumplist_clear( BUMPLIST * b );
-
-INLINE const Uint32     bumplist_get_free(BUMPLIST * b);
-
-INLINE const bool_t     bumplist_insert_chr(BUMPLIST * b, Uint32 block, CHR_REF chr_ref);
-INLINE const bool_t     bumplist_insert_prt(BUMPLIST * b, Uint32 block, PRT_REF prt_ref);
-
-INLINE const Uint32     bumplist_get_chr_head(BUMPLIST * b, Uint32 block);
-INLINE const Uint32     bumplist_get_prt_head(BUMPLIST * b, Uint32 block);
-INLINE const Uint32     bumplist_get_chr_count(BUMPLIST * b, Uint32 block );
-INLINE const Uint32     bumplist_get_prt_count(BUMPLIST * b, Uint32 block );
-
-INLINE const Uint32     bumplist_get_next(BUMPLIST * b, Uint32 node );
-INLINE const Uint32     bumplist_get_ref(BUMPLIST * b, Uint32 node );
-INLINE const Uint32     bumplist_get_next_prt(struct CGame_t * gs, BUMPLIST * b, Uint32 node );
-INLINE const Uint32     bumplist_get_next_chr(struct CGame_t * gs, BUMPLIST * b, Uint32 node );
-
-
-
-extern BUMPLIST bumplist;
 
 bool_t load_mesh_fans();
 void make_fanstart(MESH_INFO * mi);
@@ -257,4 +257,4 @@ INLINE const bool_t mesh_has_all_bits( MESH_FAN * mf_list, int fan, Uint32 bits 
 
 INLINE const Uint8 mesh_get_twist( MESH_FAN * mf_list, int fan );
 
-bool_t reset_bumplist();
+bool_t reset_bumplist(MESH_INFO * pmesh);

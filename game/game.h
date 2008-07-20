@@ -53,9 +53,9 @@ typedef struct ChopData_t
 
 typedef struct CGame_t
 {
-  bool_t initialized;
+  egoboo_key ekey;
 
-  ProcState proc;
+  ProcState  proc;
 
   bool_t Single_frame;       // Is the game in single frame mode?
   bool_t Do_frame;           // Tell the game to process one frame
@@ -119,11 +119,11 @@ typedef struct CGame_t
 
   // passage data
   Uint32  PassList_count;
-  Passage PassList[MAXPASS];
+  Passage PassList[PASSLST_COUNT];
 
   // shop data
   Uint16 ShopList_count;
-  Shop   ShopList[MAXPASS];
+  Shop   ShopList[PASSLST_COUNT];
 
   // team data
   TeamList_t TeamList;
@@ -180,9 +180,9 @@ CGame * CGame_create(struct CNet_t * net,  struct CClient_t * cl, struct CServer
 bool_t  CGame_destroy(CGame ** gs );
 bool_t  CGame_renew(CGame * gs);
 
-INLINE ScriptInfo * CGame_getScriptInfo(CGame * gs) { if(NULL==gs) return NULL; return &(gs->ScriptList); }
-INLINE ProcState *  CGame_getProcedure(CGame * gs)  { if(NULL==gs) return NULL; return &(gs->proc); }
-INLINE MenuProc  *  CGame_getMenuProc(CGame * gs)   { if(NULL==gs) return NULL; return &(gs->igm); }
+INLINE ScriptInfo * CGame_getScriptInfo(CGame * gs) { if(NULL ==gs) return NULL; return &(gs->ScriptList); }
+INLINE ProcState *  CGame_getProcedure(CGame * gs)  { if(NULL ==gs) return NULL; return &(gs->proc); }
+INLINE MenuProc  *  CGame_getMenuProc(CGame * gs)   { if(NULL ==gs) return NULL; return &(gs->igm); }
 
 
 bool_t CapList_new( CGame * gs );
@@ -323,7 +323,7 @@ void release_all_models(CGame * gs);
 void init_all_models(CGame * gs);
 
 void setup_characters( CGame * gs, char *modname );
-void despawn_characters(CGame * gs);
+void ChrList_resynch(CGame * gs);
 
 
 struct GSStack_t * Get_GSStack();

@@ -31,20 +31,27 @@ INLINE const BUMPLIST * bumplist_new(BUMPLIST * b)
 {
   if(NULL == b) return NULL;
 
+  bumplist_delete(b);
+
   memset(b, 0, sizeof(BUMPLIST));
+
+  EKEY_PNEW(b, BUMPLIST);
 
   return b;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const void bumplist_delete(BUMPLIST * b)
+INLINE const bool_t bumplist_delete(BUMPLIST * b)
 {
-  if(NULL == b || !b->allocated) return;
+  if(NULL == b) return bfalse;
 
+  if(!EKEY_PVALID(b)) return btrue;
+  EKEY_PINVALIDATE(b);
+
+  if(!b->allocated) return btrue;
   b->allocated = bfalse;
 
-  if(0 == b->num_blocks) return;
-
+  if(0 == b->num_blocks) return btrue;
   b->num_blocks = 0;
 
   b->free_count = 0;
@@ -56,6 +63,8 @@ INLINE const void bumplist_delete(BUMPLIST * b)
 
   FREE(b->num_prt);
   FREE(b->prt_ref);
+
+  return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -72,7 +81,7 @@ INLINE const bool_t bumplist_clear(BUMPLIST * b)
 {
   Uint32 i;
 
-  if(NULL == b || !b->allocated) return bfalse;
+  if( !EKEY_PVALID(b) || !b->allocated) return bfalse;
 
   // initialize the data
   for(i=0; i < b->num_blocks; i++)
@@ -129,7 +138,7 @@ INLINE const Uint32 bumplist_get_free(BUMPLIST * b)
 //--------------------------------------------------------------------------------------------
 INLINE const bool_t bumplist_return_free(BUMPLIST * b, Uint32 ref)
 {
-  if(NULL == b || !b->initialized || ref >= b->free_max) return bfalse;
+  if(!EKEY_PVALID(b) || ref >= b->free_max) return bfalse;
 
   b->free_lst[b->free_count] = ref;
   b->free_count++;
@@ -144,16 +153,16 @@ INLINE const bool_t bumplist_insert_chr(BUMPLIST * b, Uint32 block, CHR_REF chr_
 
   Uint32 ref;
 
-  if(NULL == b || !b->initialized) return bfalse;
+  if(!EKEY_PVALID(b)) return bfalse;
 
-  ref = bumplist_get_free(&bumplist);
+  ref = bumplist_get_free(b);
   if( INVALID_BUMPLIST_NODE == ref ) return bfalse;
 
   // place this as the first node in the list
   b->node_lst[ref].ref  = REF_TO_INT(chr_ref);
   b->node_lst[ref].next = b->chr_ref[block].next;
 
-  // make the list point to out new node
+  // make the list point to our new node
   b->chr_ref[block].next = ref;
   b->chr_ref[block].ref  = REF_TO_INT(INVALID_CHR);
 
@@ -170,9 +179,9 @@ INLINE const bool_t bumplist_insert_prt(BUMPLIST * b, Uint32 block, PRT_REF prt_
 
   Uint32 ref;
 
-  if(NULL == b || !b->initialized) return bfalse;
+  if(!EKEY_PVALID(b)) return bfalse;
 
-  ref = bumplist_get_free(&bumplist);
+  ref = bumplist_get_free(b);
   if( INVALID_BUMPLIST_NODE == ref ) return bfalse;
 
   // place this as the first node in the list
@@ -192,7 +201,7 @@ INLINE const bool_t bumplist_insert_prt(BUMPLIST * b, Uint32 block, PRT_REF prt_
 //--------------------------------------------------------------------------------------------
 INLINE const Uint32 bumplist_get_next( BUMPLIST * b, Uint32 node )
 {
-  if(NULL == b || !b->initialized || INVALID_BUMPLIST_NODE == node) return INVALID_BUMPLIST_NODE;
+  if(!EKEY_PVALID(b) || INVALID_BUMPLIST_NODE == node) return INVALID_BUMPLIST_NODE;
 
   return b->node_lst[node].next;
 }
@@ -203,12 +212,12 @@ INLINE const Uint32 bumplist_get_next_chr( CGame * gs, BUMPLIST * b, Uint32 node
   Uint32  nodenext;
   CHR_REF bumpnext;
 
-  if(NULL == b || !b->initialized || INVALID_BUMPLIST_NODE == node) return INVALID_BUMPLIST_NODE;
+  if(!EKEY_PVALID(b) || INVALID_BUMPLIST_NODE == node) return INVALID_BUMPLIST_NODE;
 
   nodenext = b->node_lst[node].next;
   bumpnext = b->node_lst[nodenext].ref;
 
-  while( INVALID_BUMPLIST_NODE != nodenext && !VALID_CHR(gs->ChrList, bumpnext) )
+  while( INVALID_BUMPLIST_NODE != nodenext && !ACTIVE_CHR(gs->ChrList, bumpnext) )
   {
     nodenext = b->node_lst[node].next;
     bumpnext = b->node_lst[nodenext].ref;
@@ -223,12 +232,12 @@ INLINE const Uint32 bumplist_get_next_prt( CGame * gs, BUMPLIST * b, Uint32 node
   Uint32  nodenext;
   PRT_REF bumpnext;
 
-  if(NULL == b || !b->initialized || INVALID_BUMPLIST_NODE == node) return INVALID_BUMPLIST_NODE;
+  if(!EKEY_PVALID(b) || INVALID_BUMPLIST_NODE == node) return INVALID_BUMPLIST_NODE;
 
   nodenext = b->node_lst[node].next;
   bumpnext = b->node_lst[nodenext].ref;
 
-  while( INVALID_BUMPLIST_NODE != nodenext && !VALID_PRT(gs->PrtList, bumpnext) )
+  while( INVALID_BUMPLIST_NODE != nodenext && !ACTIVE_PRT(gs->PrtList, bumpnext) )
   {
     nodenext = b->node_lst[node].next;
     bumpnext = b->node_lst[nodenext].ref;
@@ -240,7 +249,7 @@ INLINE const Uint32 bumplist_get_next_prt( CGame * gs, BUMPLIST * b, Uint32 node
 //--------------------------------------------------------------------------------------------
 INLINE const Uint32 bumplist_get_chr_head(BUMPLIST * b, Uint32 block)
 {
-  if(NULL == b || !b->initialized) return INVALID_BUMPLIST_NODE;
+  if(!EKEY_PVALID(b)) return INVALID_BUMPLIST_NODE;
   if(block > b->num_blocks)  return INVALID_BUMPLIST_NODE;
 
   return b->chr_ref[block].next;
@@ -249,7 +258,7 @@ INLINE const Uint32 bumplist_get_chr_head(BUMPLIST * b, Uint32 block)
 //--------------------------------------------------------------------------------------------
 INLINE const Uint32 bumplist_get_prt_head(BUMPLIST * b, Uint32 block)
 {
-  if(NULL == b || !b->initialized) return INVALID_BUMPLIST_NODE;
+  if(!EKEY_PVALID(b)) return INVALID_BUMPLIST_NODE;
   if(block > b->num_blocks)  return INVALID_BUMPLIST_NODE;
 
   return b->prt_ref[block].next;
@@ -258,7 +267,7 @@ INLINE const Uint32 bumplist_get_prt_head(BUMPLIST * b, Uint32 block)
 //--------------------------------------------------------------------------------------------
 INLINE const Uint32 bumplist_get_chr_count(BUMPLIST * b, Uint32 block)
 {
-  if(NULL == b || !b->initialized) return INVALID_BUMPLIST_NODE;
+  if(!EKEY_PVALID(b)) return INVALID_BUMPLIST_NODE;
   if(block > b->num_blocks)  return INVALID_BUMPLIST_NODE;
 
   return b->num_chr[block];
@@ -267,7 +276,7 @@ INLINE const Uint32 bumplist_get_chr_count(BUMPLIST * b, Uint32 block)
 //--------------------------------------------------------------------------------------------
 INLINE const Uint32 bumplist_get_prt_count(BUMPLIST * b, Uint32 block)
 {
-  if(NULL == b || !b->initialized) return INVALID_BUMPLIST_NODE;
+  if(!EKEY_PVALID(b)) return INVALID_BUMPLIST_NODE;
   if(block > b->num_blocks)  return INVALID_BUMPLIST_NODE;
 
   return b->num_prt[block];
@@ -276,7 +285,7 @@ INLINE const Uint32 bumplist_get_prt_count(BUMPLIST * b, Uint32 block)
 //--------------------------------------------------------------------------------------------
 INLINE const Uint32 bumplist_get_ref(BUMPLIST * b, Uint32 node)
 {
-  if(NULL == b || !b->initialized) return INVALID_BUMPLIST_NODE;
+  if(!EKEY_PVALID(b)) return INVALID_BUMPLIST_NODE;
   if(node > b->free_max)    return INVALID_BUMPLIST_NODE;
 
   return b->node_lst[node].ref;

@@ -1,15 +1,17 @@
 #pragma once
 
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 
 struct CGame_t;
 
-#define MAXPASS             256                     // Maximum number of passages ( mul 32 )
+#define PASSLST_COUNT             256                     // Maximum number of passages ( mul 32 )
 #define NOOWNER             INVALID_CHR
 
 //Passages
 typedef struct Passage_t
 {
+  egoboo_key ekey;
+
   IRect   area;            // Passage positions
   int     music;           // Music track appointed to the specific passage
   Uint32  mask;
@@ -23,6 +25,7 @@ Passage * Passage_renew(Passage *ppass);
 
 typedef struct Shop_t
 {
+  egoboo_key ekey;
   PASS_REF passage;  // The passage number
   CHR_REF  owner;    // Who gets the gold?
 } Shop;

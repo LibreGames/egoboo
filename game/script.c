@@ -1397,7 +1397,7 @@ Uint32 load_ai_script( ScriptInfo * slist, const char * szObjectpath, const char
   char * loc_fname;
   Uint32 script_idx = AILST_COUNT;
 
-  if(NULL == slist || slist->offset_count >= AILST_COUNT) return script_idx;
+  if(NULL == slist || slist->offset_count >= AILST_COUNT) return AILST_COUNT;
 
   loc_fname = inherit_fname(szObjectpath, szObjectname, CData.script_file);
   globalparsename = loc_fname; 
@@ -1481,6 +1481,9 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
   Uint32 test;
   STRING cTmp;
   SearchInfo loc_search;
+  Uint32 loc_rand;
+  prt_spawn_info prt_si;
+  enc_spawn_info enc_si;
 
   CHR_REF tmpchr, tmpchr1, tmpchr2, tmpchr3;
   PRT_REF tmpprt;
@@ -1502,6 +1505,8 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
 
   CMad  * pmad = ChrList_getPMad(gs, ichr);
   CCap  * pcap = ChrList_getPCap(gs, ichr);
+
+  loc_rand = gs->randie_index;
 
   // Figure out which function to run
   switch ( opcode )
@@ -1570,7 +1575,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       {
         bool_t btemp = !wp_list_empty(&(pstate->wp));
         wp_list_clear( &(pstate->wp) );
-        wp_list_add( &(pstate->wp), pchr->pos.x, pchr->pos.y );
+        wp_list_add( &(pstate->wp), pchr->ori.pos.x, pchr->ori.pos.y );
         if(btemp)
         {
           pstate->alert |= ALERT_ATLASTWAYPOINT;
@@ -1593,11 +1598,11 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
         int src_ix, src_iy; 
         int dst_ix, dst_iy;
 
-        src_ix = MESH_FLOAT_TO_FAN(pchr->pos.x);
-        src_iy = MESH_FLOAT_TO_FAN(pchr->pos.y);
+        src_ix = MESH_FLOAT_TO_FAN(pchr->ori.pos.x);
+        src_iy = MESH_FLOAT_TO_FAN(pchr->ori.pos.y);
 
-        dst_ix = MESH_FLOAT_TO_FAN(ptarget->pos.x);
-        dst_iy = MESH_FLOAT_TO_FAN(ptarget->pos.y);
+        dst_ix = MESH_FLOAT_TO_FAN(ptarget->ori.pos.x);
+        dst_iy = MESH_FLOAT_TO_FAN(ptarget->ori.pos.y);
 
         if(src_ix != dst_ix && src_iy != dst_iy)
         {
@@ -1647,22 +1652,22 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
             {
               if(pstate->tmpdistance != MOVE_FOLLOW)
               {
-                pstate->tmpx = ptarget->pos.x;
-                pstate->tmpy = ptarget->pos.y;
+                pstate->tmpx = ptarget->ori.pos.x;
+                pstate->tmpy = ptarget->ori.pos.y;
               }
               else
               {
-                pstate->tmpx = (rand() & 1023) - 512 + ptarget->pos.x;
-                pstate->tmpy = (rand() & 1023) - 512 + ptarget->pos.y;
+                pstate->tmpx = FRAND(&loc_rand) * 512 + ptarget->ori.pos.x;
+                pstate->tmpy = FRAND(&loc_rand) * 512 + ptarget->ori.pos.y;
               }
 
               if(pstate->tmpdistance == MOVE_RETREAT) 
               {
-                pstate->tmpturn = (rand() & 32767) + pstate->tmpturn + 16384;
+                pstate->tmpturn = (IRAND(&loc_rand, 15) + 16384) + pstate->tmpturn;
               }
               else 
               {
-                pstate->tmpturn = vec_to_turn( pstate->tmpx - pchr->pos.x, pstate->tmpy - pchr->pos.y );
+                pstate->tmpturn = vec_to_turn( pstate->tmpx - pchr->ori.pos.x, pstate->tmpy - pchr->ori.pos.y );
               }
 
               //Secondly we run the Compass function (If we are not in follow mode)
@@ -1712,7 +1717,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
     case F_JoinTargetTeam:
       // This function allows the character to leave its own team and join another
       returncode = bfalse;
-      if ( ptarget->on )
+      if ( EKEY_PVALID(ptarget) )
       {
         switch_team( gs, ichr, ptarget->team );
         returncode = btrue;
@@ -1737,7 +1742,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
         tmpchr = chr_get_holdingwhich( gs->ChrList, CHRLST_COUNT, pstate->target, SLOT_LEFT );
 
         returncode = bfalse;
-        if ( VALID_CHR( gs->ChrList, tmpchr ) )
+        if ( ACTIVE_CHR( gs->ChrList, tmpchr ) )
         {
           pstate->target = tmpchr;
           returncode = btrue;
@@ -1750,7 +1755,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
         // This function sets the target to the target's right item
         tmpchr = chr_get_holdingwhich( gs->ChrList, CHRLST_COUNT, pstate->target, SLOT_RIGHT );
         returncode = bfalse;
-        if ( VALID_CHR( gs->ChrList, tmpchr ) )
+        if ( ACTIVE_CHR( gs->ChrList, tmpchr ) )
         {
           pstate->target = tmpchr;
           returncode = btrue;
@@ -1763,7 +1768,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
         // This function sets the target to whoever attacked the character last,
         // failing for damage tiles
         CHR_REF attacklast = chr_get_aiattacklast( gs->ChrList, CHRLST_COUNT, gs->ChrList + ichr );
-        if ( VALID_CHR( gs->ChrList, attacklast ) )
+        if ( ACTIVE_CHR( gs->ChrList, attacklast ) )
         {
           pstate->target = attacklast;
         }
@@ -1814,7 +1819,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
     case F_IfTargetHasID:
       // This function proceeds if ID matches tmpargument
       returncode = bfalse;
-      if ( VALID_CHR( gs->ChrList, pstate->target ) )
+      if ( ACTIVE_CHR( gs->ChrList, pstate->target ) )
       {
         returncode = CAP_INHERIT_IDSZ( gs,  ChrList_getRCap(gs, loc_target), pstate->tmpargument );
       };
@@ -1826,7 +1831,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       {
         // Check the pack
         tmpchr  = chr_get_nextinpack( gs->ChrList, CHRLST_COUNT, pstate->target );
-        while ( VALID_CHR( gs->ChrList, tmpchr ) )
+        while ( ACTIVE_CHR( gs->ChrList, tmpchr ) )
         {
           if ( CAP_INHERIT_IDSZ( gs,  ChrList_getRCap(gs, tmpchr), pstate->tmpargument ) )
           {
@@ -1839,7 +1844,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
         for ( _slot = SLOT_BEGIN; _slot < SLOT_COUNT; _slot = ( SLOT )( _slot + 1 ) )
         {
           tmpchr = chr_get_holdingwhich( gs->ChrList, CHRLST_COUNT, pstate->target, _slot );
-          if ( VALID_CHR( gs->ChrList, tmpchr ) )
+          if ( ACTIVE_CHR( gs->ChrList, tmpchr ) )
           {
             if ( CAP_INHERIT_IDSZ( gs,  ChrList_getRCap(gs, tmpchr), pstate->tmpargument ) )
               returncode = btrue;
@@ -1853,12 +1858,12 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       // hand in tmpargument
       returncode = bfalse;
 
-      if ( VALID_CHR( gs->ChrList, pstate->target ) )
+      if ( ACTIVE_CHR( gs->ChrList, pstate->target ) )
       {
         for ( _slot = SLOT_LEFT; _slot <= SLOT_RIGHT; _slot = ( SLOT )( _slot + 1 ) )
         {
           tmpchr = chr_get_holdingwhich( gs->ChrList, CHRLST_COUNT, pstate->target, _slot );
-          if ( VALID_CHR( gs->ChrList, tmpchr ) && CAP_INHERIT_IDSZ( gs, ChrList_getRCap(gs, tmpchr), pstate->tmpargument ) )
+          if ( ACTIVE_CHR( gs->ChrList, tmpchr ) && CAP_INHERIT_IDSZ( gs, ChrList_getRCap(gs, tmpchr), pstate->tmpargument ) )
           {
             pstate->tmpargument = slot_to_latch( gs->ChrList, CHRLST_COUNT, pstate->target, _slot );
             returncode = btrue;
@@ -1933,9 +1938,9 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
         {
           if ( _slot == SLOT_SADDLE )
           {
-            gs->ChrList[tmpchr].vel.z     = DISMOUNTZVEL;
-            gs->ChrList[tmpchr].pos.z    += DISMOUNTZVEL;
-            gs->ChrList[tmpchr].jumptime = DELAY_JUMP;
+            gs->ChrList[tmpchr].ori.vel.z  = DISMOUNTZVEL;
+            gs->ChrList[tmpchr].ori.pos.z += DISMOUNTZVEL;
+            gs->ChrList[tmpchr].jumptime   = DELAY_JUMP;
           }
         }
       };
@@ -2006,7 +2011,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
         tmpchr1 = INVALID_CHR;
         tmpchr2 = chr_get_aitarget( gs->ChrList, CHRLST_COUNT, gs->ChrList + ichr );
         tmpchr3 = chr_get_nextinpack( gs->ChrList, CHRLST_COUNT, tmpchr2 );
-        while ( VALID_CHR( gs->ChrList, tmpchr3 ) )
+        while ( ACTIVE_CHR( gs->ChrList, tmpchr3 ) )
         {
           if ( CAP_INHERIT_IDSZ( gs,  ChrList_getRCap(gs, tmpchr3), pstate->tmpargument ) )
           {
@@ -2024,7 +2029,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
         for ( _slot = SLOT_BEGIN; _slot < SLOT_COUNT; _slot = ( SLOT )( _slot + 1 ) )
         {
           tmpchr3 = chr_get_holdingwhich( gs->ChrList, CHRLST_COUNT, pstate->target, _slot );
-          if ( VALID_CHR( gs->ChrList, tmpchr3 ) )
+          if ( ACTIVE_CHR( gs->ChrList, tmpchr3 ) )
           {
             if ( CAP_INHERIT_IDSZ( gs,  ChrList_getRCap(gs, tmpchr3), pstate->tmpargument ) )
             {
@@ -2201,7 +2206,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       // This function sets the character's target to the target of its leader,
       // or it fails with no change if the leader is dead
       returncode = bfalse;
-      if ( VALID_CHR( gs->ChrList, loc_leader ) )
+      if ( ACTIVE_CHR( gs->ChrList, loc_leader ) )
       {
         pstate->target = chr_get_aitarget( gs->ChrList, CHRLST_COUNT, gs->ChrList + loc_leader );
         returncode = btrue;
@@ -2247,7 +2252,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
 
     case F_IfLeaderIsAlive:
       // This function fails if there is no team leader
-      returncode = VALID_CHR( gs->ChrList, loc_leader );
+      returncode = ACTIVE_CHR( gs->ChrList, loc_leader );
       break;
 
     case F_IfTargetIsOldTarget:
@@ -2257,7 +2262,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
 
     case F_SetTargetToLeader:
       // This function fails if there is no team leader
-      if ( !VALID_CHR( gs->ChrList, loc_leader ) )
+      if ( !ACTIVE_CHR( gs->ChrList, loc_leader ) )
       {
         returncode = bfalse;
       }
@@ -2270,10 +2275,15 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
     case F_SpawnCharacter:
       {
         vect3 chr_pos = {pstate->tmpx, pstate->tmpy, 0};
+        vect3 chr_vel = {0,0,0};
+
+        tTmp = pchr->ori.turn_lr >> 2;
+        chr_vel.x = turntocos[( tTmp+8192 ) & TRIGTABLE_MASK] * pstate->tmpdistance;
+        chr_vel.y = turntosin[( tTmp+8192 ) & TRIGTABLE_MASK] * pstate->tmpdistance;
 
         // This function spawns a ichr, failing if x,y is invalid
-        tmpchr = spawn_one_character( gs, chr_pos, pchr->model, pchr->team, 0, pstate->tmpturn, NULL, INVALID_CHR );
         returncode = bfalse;
+        tmpchr = chr_spawn( gs, chr_pos, chr_vel, pchr->model, pchr->team, 0, pstate->tmpturn, NULL, INVALID_CHR );
         if ( VALID_CHR( gs->ChrList, tmpchr ) )
         {
           if ( 0 != chr_hitawall( gs, gs->ChrList + tmpchr, NULL ) )
@@ -2282,13 +2292,12 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
           }
           else
           {
-            tTmp = pchr->turn_lr >> 2;
-            gs->ChrList[tmpchr].vel.x += turntocos[( tTmp+8192 ) & TRIGTABLE_MASK] * pstate->tmpdistance;
-            gs->ChrList[tmpchr].vel.y += turntosin[( tTmp+8192 ) & TRIGTABLE_MASK] * pstate->tmpdistance;
-            gs->ChrList[tmpchr].passage = pchr->passage;
+            gs->ChrList[tmpchr].passage       = pchr->passage;
             gs->ChrList[tmpchr].prop.iskursed = bfalse;
-            pstate->child = tmpchr;
+
+            pstate->child                     = tmpchr;
             gs->ChrList[tmpchr].aistate.owner = pstate->owner;
+
             returncode = btrue;
           }
         }
@@ -2302,7 +2311,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
 
     case F_ChangeTile:
       // This function changes the floor image under the character
-      mesh_set_tile( gs, MESH_FLOAT_TO_FAN( pchr->pos.x ), MESH_FLOAT_TO_FAN( pchr->pos.y ), pstate->tmpargument & 0xFF );
+      mesh_set_tile( gs, MESH_FLOAT_TO_FAN( pchr->ori.pos.x ), MESH_FLOAT_TO_FAN( pchr->ori.pos.y ), pstate->tmpargument & 0xFF );
       break;
 
     case F_IfUsed:
@@ -2345,7 +2354,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       returncode = bfalse;
       {
         tmpchr = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, ichr );
-        if( VALID_CHR( gs->ChrList, tmpchr ) )
+        if( ACTIVE_CHR( gs->ChrList, tmpchr ) )
         {
           returncode = (ichr == chr_get_holdingwhich(gs->ChrList, CHRLST_COUNT, tmpchr, SLOT_SADDLE));
         };
@@ -2355,7 +2364,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
     case F_IfTargetIsHurt:
       // This function passes only if the target is hurt and alive
       returncode = bfalse;
-      if ( VALID_CHR( gs->ChrList, pstate->target ) )
+      if ( ACTIVE_CHR( gs->ChrList, pstate->target ) )
       {
         returncode = ptarget->alive &&  ptarget->stats.lifemax_fp8 > 0 && ptarget->stats.life_fp8 < ptarget->stats.lifemax_fp8 - DAMAGE_HURT;
       }
@@ -2369,39 +2378,40 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
     case F_PlaySound:
       // This function plays a sound
       returncode = bfalse;
-      if ( INVALID_SOUND != pstate->tmpargument && pchr->pos_old.z > PITNOSOUND )
+      if ( INVALID_SOUND != pstate->tmpargument && pchr->ori_old.pos.z > PITNOSOUND )
       {
-        returncode = ( INVALID_SOUND != snd_play_sound( gs, 1.0f, pchr->pos_old, pobj->wavelist[pstate->tmpargument], 0, pchr->model, pstate->tmpargument) );
+        returncode = ( INVALID_SOUND != snd_play_sound( gs, 1.0f, pchr->ori_old.pos, pobj->wavelist[pstate->tmpargument], 0, pchr->model, pstate->tmpargument) );
       }
       break;
 
     case F_SpawnParticle:
       // This function spawns a particle
       returncode = bfalse;
-      if ( VALID_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, CHRLST_COUNT, ichr ) )
+      if ( ACTIVE_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, CHRLST_COUNT, ichr ) )
       {
         tmpchr = ichr;
         if ( chr_attached( gs->ChrList, CHRLST_COUNT, ichr ) )  tmpchr = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, ichr );
 
-        tmpprt = spawn_one_particle( gs, 1.0f, pchr->pos, pchr->turn_lr, pchr->model, PIP_REF(pstate->tmpargument), ichr, (GRIP)pstate->tmpdistance, pchr->team, tmpchr, 0, INVALID_CHR );
-        if ( VALID_PRT( gs->PrtList, tmpprt ) )
+        prt_spawn_info_init( &prt_si, gs, 1.0f, pchr->ori.pos, pchr->ori.turn_lr, pchr->model, PIP_REF(pstate->tmpargument), ichr, (GRIP)pstate->tmpdistance, pchr->team, tmpchr, 0, INVALID_CHR );
+        tmpprt = req_spawn_one_particle( prt_si );
+        if ( RESERVED_PRT( gs->PrtList, tmpprt ) )
         {
           // Detach the particle
           attach_particle_to_character( gs, tmpprt, ichr, pstate->tmpdistance );
           gs->PrtList[tmpprt].attachedtochr = INVALID_CHR;
 
           // Correct X, Y, Z spacing
-          gs->PrtList[tmpprt].pos.x += pstate->tmpx;
-          gs->PrtList[tmpprt].pos.y += pstate->tmpy;
-          gs->PrtList[tmpprt].pos.z += gs->PipList[gs->PrtList[tmpprt].pip].zspacing.ibase;
+          gs->PrtList[tmpprt].ori.pos.x += pstate->tmpx;
+          gs->PrtList[tmpprt].ori.pos.y += pstate->tmpy;
+          gs->PrtList[tmpprt].ori.pos.z += gs->PipList[gs->PrtList[tmpprt].pip].zspacing.ibase;
 
           // Don't spawn in walls
           if ( 0 != prt_hitawall( gs, tmpprt, NULL ) )
           {
-            gs->PrtList[tmpprt].pos.x = pchr->pos.x;
+            gs->PrtList[tmpprt].ori.pos.x = pchr->ori.pos.x;
             if ( 0 != prt_hitawall( gs, tmpprt, NULL ) )
             {
-              gs->PrtList[tmpprt].pos.y = pchr->pos.y;
+              gs->PrtList[tmpprt].ori.pos.y = pchr->ori.pos.y;
             }
           }
           returncode = btrue;
@@ -2502,13 +2512,13 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
 
       returncode = bfalse;
       {
-        tmpchr = CHR_REF(pchr->message >> 20);
-        if ( VALID_CHR( gs->ChrList, tmpchr ) )
+        tmpchr = CHR_REF(pchr->message.data >> 20);
+        if ( ACTIVE_CHR( gs->ChrList, tmpchr ) )
         {
           pstate->target      = tmpchr;
-          pstate->tmpx        = (( pchr->message >> 12 ) & 0x00FF ) << 8;
-          pstate->tmpy        = (( pchr->message >>  4 ) & 0x00FF ) << 8;
-          pstate->tmpargument = pchr->message & 0x000F;
+          pstate->tmpx        = (( pchr->message.data >> 12 ) & 0x00FF ) << 8;
+          pstate->tmpy        = (( pchr->message.data >>  4 ) & 0x00FF ) << 8;
+          pstate->tmpargument = pchr->message.data & 0x000F;
           returncode = btrue;
         }
       }
@@ -2610,8 +2620,10 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
     case F_EnchantTarget:
       // This function enchants the target
       {
-        ENC_REF tmpenc = spawn_one_enchant( gs, pstate->owner, pstate->target, ichr, INVALID_ENC, INVALID_OBJ );
-        returncode = ( tmpenc != INVALID_ENC );
+        ENC_REF tmpenc;
+        enc_spawn_info_init( &enc_si, gs, pstate->owner, pstate->target, ichr, INVALID_ENC, INVALID_OBJ );
+        tmpenc = req_spawn_one_enchant( enc_si );
+        returncode = ( INVALID_ENC != tmpenc );
       }
       break;
 
@@ -2619,8 +2631,10 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       // This function can be used with SpawnCharacter to enchant the
       // newly spawned character
       {
-        ENC_REF tmpenc = spawn_one_enchant( gs, pstate->owner, pstate->child, ichr, INVALID_ENC, INVALID_OBJ );
-        returncode = ( tmpenc != INVALID_ENC );
+        ENC_REF tmpenc;
+        enc_spawn_info_init( &enc_si, gs, pstate->owner, pstate->child, ichr, INVALID_ENC, INVALID_OBJ );
+        tmpenc = req_spawn_one_enchant( enc_si );
+        returncode = ( INVALID_ENC != tmpenc );
       }
       break;
 
@@ -2633,20 +2647,20 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
         // Yeah!  It worked!
         tmpchr = chr_get_aitarget( gs->ChrList, CHRLST_COUNT, gs->ChrList + ichr );
         detach_character_from_mount( gs, tmpchr, btrue, bfalse );
-        gs->ChrList[tmpchr].pos_old = gs->ChrList[tmpchr].pos;
+        gs->ChrList[tmpchr].ori_old.pos = gs->ChrList[tmpchr].ori.pos;
 
-        gs->ChrList[tmpchr].pos.x = pstate->tmpx;
-        gs->ChrList[tmpchr].pos.y = pstate->tmpy;
-        gs->ChrList[tmpchr].pos.z = pstate->tmpdistance;
+        gs->ChrList[tmpchr].ori.pos.x = pstate->tmpx;
+        gs->ChrList[tmpchr].ori.pos.y = pstate->tmpy;
+        gs->ChrList[tmpchr].ori.pos.z = pstate->tmpdistance;
         if ( 0 != chr_hitawall( gs, gs->ChrList + tmpchr, NULL ) )
         {
           // No it didn't...
-          gs->ChrList[tmpchr].pos = gs->ChrList[tmpchr].pos_old;
+          gs->ChrList[tmpchr].ori.pos = gs->ChrList[tmpchr].ori_old.pos;
           returncode = bfalse;
         }
         else
         {
-          gs->ChrList[tmpchr].pos_old = gs->ChrList[tmpchr].pos;
+          gs->ChrList[tmpchr].ori_old.pos = gs->ChrList[tmpchr].ori.pos;
           returncode = btrue;
         }
       }
@@ -2696,7 +2710,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
         }
 
         tmpchr  = chr_get_nextinpack( gs->ChrList, CHRLST_COUNT, pstate->target );
-        while ( VALID_CHR( gs->ChrList, tmpchr ) )
+        while ( ACTIVE_CHR( gs->ChrList, tmpchr ) )
         {
           iTmp += restock_ammo( gs, tmpchr, pstate->tmpargument );
           tmpchr = chr_get_nextinpack( gs->ChrList, CHRLST_COUNT, tmpchr );
@@ -2722,7 +2736,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       if ( iTmp == 0 )
       {
         tmpchr  = chr_get_nextinpack( gs->ChrList, CHRLST_COUNT, pstate->target );
-        while ( VALID_CHR( gs->ChrList, tmpchr ) && iTmp == 0 )
+        while ( ACTIVE_CHR( gs->ChrList, tmpchr ) && iTmp == 0 )
         {
           iTmp += restock_ammo( gs, tmpchr, pstate->tmpargument );
           tmpchr  = chr_get_nextinpack( gs->ChrList, CHRLST_COUNT, tmpchr );
@@ -2806,7 +2820,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
 
     case F_UndoEnchant:
       // This function undoes the last enchant
-      returncode = ( pchr->undoenchant != INVALID_ENC );
+      returncode = ( INVALID_ENC != pchr->undoenchant );
       remove_enchant( gs, pchr->undoenchant );
       break;
 
@@ -2928,7 +2942,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
         debug_message( 1, "aistate %d, aicontent %d, target %d", pstate->state, pstate->content, pstate->target );
         debug_message( 1, "tmpx %d, tmpy %d", pstate->tmpx, pstate->tmpy );
         debug_message( 1, "tmpdistance %d, tmpturn %d", pstate->tmpdistance, pstate->tmpturn );
-        debug_message( 1, "tmpargument %d, selfturn %d", pstate->tmpargument, pchr->turn_lr );
+        debug_message( 1, "tmpargument %d, selfturn %d", pstate->tmpargument, pchr->ori.turn_lr );
       }
       break;
 
@@ -2939,7 +2953,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
 
     case F_DisplayMessageNear:
       // This function sends a message if the camera is in the nearby area.
-      iTmp = ABS( pchr->pos_old.x - GCamera.trackpos.x ) + ABS( pchr->pos_old.y - GCamera.trackpos.y );
+      iTmp = ABS( pchr->ori_old.pos.x - GCamera.trackpos.x ) + ABS( pchr->ori_old.pos.y - GCamera.trackpos.y );
       if ( iTmp < MSGDISTANCE )
       {
         display_message( gs, pobj->msg_start + pstate->tmpargument, ichr );
@@ -2969,7 +2983,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       for ( _slot = SLOT_LEFT; _slot <= SLOT_RIGHT; _slot = ( SLOT )( _slot + 1 ) )
       {
         tmpchr = chr_get_holdingwhich( gs->ChrList, CHRLST_COUNT, ichr, _slot );
-        if ( VALID_CHR( gs->ChrList, tmpchr ) )
+        if ( ACTIVE_CHR( gs->ChrList, tmpchr ) )
         {
           if ( CAP_INHERIT_IDSZ( gs, ChrList_getRCap(gs, tmpchr), pstate->tmpargument ) )
           {
@@ -2989,9 +3003,9 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       for ( _slot = SLOT_LEFT; _slot <= SLOT_RIGHT; _slot = ( SLOT )( _slot + 1 ) )
       {
         tmpchr = chr_get_holdingwhich( gs->ChrList, CHRLST_COUNT, ichr, _slot );
-        if ( VALID_CHR( gs->ChrList, tmpchr ) )
+        if ( ACTIVE_CHR( gs->ChrList, tmpchr ) )
         {
-          if ( ChrList_getPCap(gs, tmpchr)->prop.isranged && ( gs->ChrList[tmpchr].ammomax == 0 || ( gs->ChrList[tmpchr].ammo > 0 && gs->ChrList[tmpchr].ammoknown ) ) )
+          if ( gs->ChrList[tmpchr].prop.isranged && ( gs->ChrList[tmpchr].ammomax == 0 || ( gs->ChrList[tmpchr].ammo > 0 && gs->ChrList[tmpchr].ammoknown ) ) )
           {
             pstate->tmpargument = slot_to_latch( gs->ChrList, CHRLST_COUNT, ichr, _slot );
             returncode = btrue;
@@ -3009,9 +3023,9 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       for ( _slot = SLOT_LEFT; _slot <= SLOT_RIGHT; _slot = ( SLOT )( _slot + 1 ) )
       {
         tmpchr = chr_get_holdingwhich( gs->ChrList, CHRLST_COUNT, ichr, _slot );
-        if ( VALID_CHR( gs->ChrList, tmpchr ) )
+        if ( ACTIVE_CHR( gs->ChrList, tmpchr ) )
         {
-          if ( !ChrList_getPCap(gs, tmpchr)->prop.isranged && ChrList_getPCap(gs, tmpchr)->weaponaction != ACTION_PA )
+          if ( !gs->ChrList[tmpchr].prop.isranged && ChrList_getPCap(gs, tmpchr)->weaponaction != ACTION_PA )
           {
             pstate->tmpargument = slot_to_latch( gs->ChrList, CHRLST_COUNT, ichr, _slot );
             returncode = btrue;
@@ -3029,7 +3043,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       for ( _slot = SLOT_LEFT; _slot <= SLOT_RIGHT; _slot = ( SLOT )( _slot + 1 ) )
       {
         tmpchr = chr_get_holdingwhich( gs->ChrList, CHRLST_COUNT, ichr, _slot );
-        if ( VALID_CHR( gs->ChrList, tmpchr ) && ChrList_getPCap(gs, tmpchr)->weaponaction == ACTION_PA )
+        if ( ACTIVE_CHR( gs->ChrList, tmpchr ) && ChrList_getPCap(gs, tmpchr)->weaponaction == ACTION_PA )
         {
           pstate->tmpargument = slot_to_latch( gs->ChrList, CHRLST_COUNT, ichr, _slot );
           returncode = btrue;
@@ -3078,27 +3092,27 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
 
     case F_StopTargetMovement:
       // This function makes the target stop moving temporarily
-      ptarget->vel.x = 0;
-      ptarget->vel.y = 0;
-      if ( ptarget->vel.z > 0 ) ptarget->vel.z = gs->phys.gravity;
+      ptarget->ori.vel.x = 0;
+      ptarget->ori.vel.y = 0;
+      if ( ptarget->ori.vel.z > 0 ) ptarget->ori.vel.z = gs->phys.gravity;
       break;
 
     case F_SetXY:
       // This function stores tmpx and tmpy in the storage array
-      pstate->x[pstate->tmpargument&STORAND] = pstate->tmpx;
-      pstate->y[pstate->tmpargument&STORAND] = pstate->tmpy;
+      pstate->x[pstate->tmpargument&STOR_AND] = pstate->tmpx;
+      pstate->y[pstate->tmpargument&STOR_AND] = pstate->tmpy;
       break;
 
     case F_GetXY:
       // This function gets previously stored data, setting tmpx and tmpy
-      pstate->tmpx = pstate->x[pstate->tmpargument&STORAND];
-      pstate->tmpy = pstate->y[pstate->tmpargument&STORAND];
+      pstate->tmpx = pstate->x[pstate->tmpargument&STOR_AND];
+      pstate->tmpy = pstate->y[pstate->tmpargument&STOR_AND];
       break;
 
     case F_AddXY:
       // This function adds tmpx and tmpy to the storage array
-      pstate->x[pstate->tmpargument&STORAND] += pstate->tmpx;
-      pstate->y[pstate->tmpargument&STORAND] += pstate->tmpy;
+      pstate->x[pstate->tmpargument&STOR_AND] += pstate->tmpx;
+      pstate->y[pstate->tmpargument&STOR_AND] += pstate->tmpy;
       break;
 
     case F_MakeAmmoKnown:
@@ -3109,33 +3123,35 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
     case F_SpawnAttachedParticle:
       // This function spawns an attached particle
       returncode = bfalse;
-      if ( VALID_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, CHRLST_COUNT, ichr ) )
+      if ( ACTIVE_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, CHRLST_COUNT, ichr ) )
       {
         tmpchr = ichr;
         if ( chr_attached( gs->ChrList, CHRLST_COUNT, ichr ) )  tmpchr = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, ichr );
-        tmpprt = spawn_one_particle( gs, 1.0f, pchr->pos, pchr->turn_lr, pchr->model, PIP_REF(pstate->tmpargument), ichr, (GRIP)pstate->tmpdistance, pchr->team, tmpchr, 0, INVALID_CHR );
-        returncode = VALID_PRT( gs->PrtList, tmpprt );
+        prt_spawn_info_init( &prt_si, gs, 1.0f, pchr->ori.pos, pchr->ori.turn_lr, pchr->model, PIP_REF(pstate->tmpargument), ichr, (GRIP)pstate->tmpdistance, pchr->team, tmpchr, 0, INVALID_CHR );
+        tmpprt = req_spawn_one_particle( prt_si );
+        returncode = RESERVED_PRT( gs->PrtList, tmpprt );
       }
       break;
 
     case F_SpawnExactParticle:
       // This function spawns an exactly placed particle
       returncode = bfalse;
-      if ( VALID_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, CHRLST_COUNT, ichr ) )
+      if ( ACTIVE_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, CHRLST_COUNT, ichr ) )
       {
         vect3 prt_pos = {pstate->tmpx, pstate->tmpy, pstate->tmpdistance};
         tmpchr = ichr;
         if ( chr_attached( gs->ChrList, CHRLST_COUNT, tmpchr ) )  tmpchr = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, tmpchr );
 
-        tmpprt = spawn_one_particle( gs, 1.0f, prt_pos, pchr->turn_lr, pchr->model, PIP_REF(pstate->tmpargument), INVALID_CHR, (GRIP)0, pchr->team, tmpchr, 0, INVALID_CHR );
-        returncode = VALID_PRT( gs->PrtList, tmpprt );
+        prt_spawn_info_init( &prt_si, gs, 1.0f, prt_pos, pchr->ori.turn_lr, pchr->model, PIP_REF(pstate->tmpargument), INVALID_CHR, (GRIP)0, pchr->team, tmpchr, 0, INVALID_CHR );
+        tmpprt = req_spawn_one_particle( prt_si );
+        returncode = RESERVED_PRT( gs->PrtList, tmpprt );
       };
       break;
 
     case F_AccelerateTarget:
       // This function changes the target's speeds
-      ptarget->vel.x += pstate->tmpx;
-      ptarget->vel.y += pstate->tmpy;
+      ptarget->ori.vel.x += pstate->tmpx;
+      ptarget->ori.vel.y += pstate->tmpy;
       break;
 
     case F_IfDistanceIsMoreThanTurn:
@@ -3156,11 +3172,11 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
     case F_SetTargetToLowestTarget:
       // This sets the target to whatever the target is being held by,
       // The lowest in the set.  This function never fails
-      if ( VALID_CHR( gs->ChrList, pstate->target ) )
+      if ( ACTIVE_CHR( gs->ChrList, pstate->target ) )
       {
         CHR_REF holder   = chr_get_attachedto(gs->ChrList, CHRLST_COUNT, pstate->target);
         CHR_REF attached = chr_get_attachedto(gs->ChrList, CHRLST_COUNT, holder);
-        while ( VALID_CHR(gs->ChrList, attached) )
+        while ( ACTIVE_CHR(gs->ChrList, attached) )
         {
           holder = attached;
           attached = chr_get_attachedto(gs->ChrList, CHRLST_COUNT, holder);
@@ -3187,10 +3203,10 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
     case F_PlaySoundLooped:
       // This function plays a looped sound
       returncode = bfalse;
-      if ( !gs->modstate.Paused && (0 <= pstate->tmpargument) && (pchr->pos_old.z > PITNOSOUND) && (pchr->loopingchannel == INVALID_SOUND))
+      if ( !gs->modstate.Paused && (0 <= pstate->tmpargument) && (pchr->ori_old.pos.z > PITNOSOUND) && (INVALID_SOUND == pchr->loopingchannel))
       {
         //You could use this, but right now there's no way to stop the sound later, so it's better not to start it
-        pchr->loopingchannel = snd_play_sound( gs, 1.0f, pchr->pos, pobj->wavelist[pstate->tmpargument], 0, pchr->model, pstate->tmpargument);
+        pchr->loopingchannel = snd_play_sound( gs, 1.0f, pchr->ori.pos, pobj->wavelist[pstate->tmpargument], 0, pchr->model, pstate->tmpargument);
         pchr->loopingvolume = 1.0f;
       }
       break;
@@ -3226,7 +3242,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       returncode = bfalse;
       {
         tmpchr  = chr_get_nextinpack( gs->ChrList, CHRLST_COUNT, pstate->target );
-        while ( VALID_CHR( gs->ChrList, tmpchr ) )
+        while ( ACTIVE_CHR( gs->ChrList, tmpchr ) )
         {
           if ( tmpchr != ichr && gs->ChrList[tmpchr].isequipped && CAP_INHERIT_IDSZ( gs,  ChrList_getRCap(gs, tmpchr), pstate->tmpargument ) )
           {
@@ -3288,7 +3304,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
     case F_PoofTarget:
       // This function makes the target go away
       returncode = bfalse;
-      if ( VALID_CHR( gs->ChrList, pstate->target ) && !chr_is_player(gs, pstate->target) )
+      if ( ACTIVE_CHR( gs->ChrList, pstate->target ) && !chr_is_player(gs, pstate->target) )
       {
         // tell target to go away
         ptarget->gopoof = btrue;
@@ -3335,13 +3351,14 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
     case F_SpawnAttachedSizedParticle:
       // This function spawns an attached particle, then sets its size
       returncode = bfalse;
-      if ( VALID_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, CHRLST_COUNT, ichr ) )
+      if ( ACTIVE_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, CHRLST_COUNT, ichr ) )
       {
         tmpchr = ichr;
         if ( chr_attached( gs->ChrList, CHRLST_COUNT, ichr ) )  tmpchr = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, ichr );
 
-        tmpprt = spawn_one_particle( gs, 1.0f, pchr->pos, pchr->turn_lr, pchr->model, PIP_REF(pstate->tmpargument), ichr, (GRIP)pstate->tmpdistance, pchr->team, tmpchr, 0, INVALID_CHR );
-        if ( VALID_PRT( gs->PrtList, tmpprt ) )
+        prt_spawn_info_init( &prt_si, gs, 1.0f, pchr->ori.pos, pchr->ori.turn_lr, pchr->model, PIP_REF(pstate->tmpargument), ichr, (GRIP)pstate->tmpdistance, pchr->team, tmpchr, 0, INVALID_CHR );
+        tmpprt = req_spawn_one_particle( prt_si );
+        if ( RESERVED_PRT( gs->PrtList, tmpprt ) )
         {
           gs->PrtList[tmpprt].size_fp8 = pstate->tmpturn;
           returncode = btrue;
@@ -3371,14 +3388,14 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
         float dx, dy, d2, ftmpx, ftmpy, ftmp;
 
         returncode = bfalse;
-        dx = ptarget->pos.x - pchr->pos.x;
-        dy = ptarget->pos.y - pchr->pos.y;
+        dx = ptarget->ori.pos.x - pchr->ori.pos.x;
+        dy = ptarget->ori.pos.y - pchr->ori.pos.y;
         d2 = dx * dx + dy * dy;
 
         if ( d2 > 0.0f )
         {
           // use non-inverse function to get direction vec from gs->ChrList[].turn
-          turn_to_vec( pchr->turn_lr, &ftmpx, &ftmpy );
+          turn_to_vec( pchr->ori.turn_lr, &ftmpx, &ftmpy );
 
           // calc the dotproduct
           ftmp = ( dx * ftmpx + dy * ftmpy );
@@ -3403,20 +3420,21 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       if ( INVALID_SOUND != pstate->tmpargument && pstate->tmpdistance >= 0 )
       {
         volume = pstate->tmpdistance;
-        returncode = ( INVALID_SOUND != snd_play_sound( gs, MIN( 1.0f, volume / 255.0f ), pchr->pos_old, pobj->wavelist[pstate->tmpargument], 0, pchr->model, pstate->tmpargument ) );
+        returncode = ( INVALID_SOUND != snd_play_sound( gs, MIN( 1.0f, volume / 255.0f ), pchr->ori_old.pos, pobj->wavelist[pstate->tmpargument], 0, pchr->model, pstate->tmpargument ) );
       }
       break;
 
     case F_SpawnAttachedFacedParticle:
       // This function spawns an attached particle with facing
       returncode = bfalse;
-      if ( VALID_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, CHRLST_COUNT, ichr ) )
+      if ( ACTIVE_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, CHRLST_COUNT, ichr ) )
       {
         tmpchr = ichr;
         if ( chr_attached( gs->ChrList, CHRLST_COUNT, ichr ) )  tmpchr = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, ichr );
 
-        tmpprt = spawn_one_particle( gs, 1.0f, pchr->pos, pstate->tmpturn, pchr->model, PIP_REF(pstate->tmpargument), ichr, (GRIP)pstate->tmpdistance, pchr->team, tmpchr, 0, INVALID_CHR );
-        returncode = VALID_PRT( gs->PrtList, tmpprt );
+        prt_spawn_info_init( &prt_si, gs, 1.0f, pchr->ori.pos, pstate->tmpturn, pchr->model, PIP_REF(pstate->tmpargument), ichr, (GRIP)pstate->tmpdistance, pchr->team, tmpchr, 0, INVALID_CHR );
+        tmpprt = req_spawn_one_particle( prt_si );
+        returncode = RESERVED_PRT( gs->PrtList, tmpprt );
       }
       break;
 
@@ -3444,19 +3462,19 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       {
         // Yeah!  It worked!
         detach_character_from_mount( gs, ichr, btrue, bfalse );
-        pchr->pos_old = pchr->pos;
+        pchr->ori_old.pos = pchr->ori.pos;
 
-        pchr->pos.x = pstate->tmpx;
-        pchr->pos.y = pstate->tmpy;
+        pchr->ori.pos.x = pstate->tmpx;
+        pchr->ori.pos.y = pstate->tmpy;
         if ( 0 != chr_hitawall( gs, gs->ChrList + ichr, NULL ) )
         {
           // No it didn't...
-          pchr->pos = pchr->pos_old;
+          pchr->ori.pos = pchr->ori_old.pos;
           returncode = bfalse;
         }
         else
         {
-          pchr->pos_old = pchr->pos;
+          pchr->ori_old.pos = pchr->ori.pos;
           returncode = btrue;
         }
       }
@@ -3628,13 +3646,14 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
     case F_SpawnAttachedHolderParticle:
       // This function spawns an attached particle, attached to the holder
       returncode = bfalse;
-      if ( VALID_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, CHRLST_COUNT, ichr ) )
+      if ( ACTIVE_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, CHRLST_COUNT, ichr ) )
       {
         tmpchr = ichr;
         if ( chr_attached( gs->ChrList, CHRLST_COUNT, ichr ) )  tmpchr = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, ichr );
 
-        tmpprt = spawn_one_particle( gs, 1.0f, pchr->pos, pchr->turn_lr, pchr->model, PIP_REF(pstate->tmpargument), tmpchr, (GRIP)pstate->tmpdistance, pchr->team, tmpchr, 0, INVALID_CHR );
-        returncode = VALID_PRT( gs->PrtList, tmpprt );
+        prt_spawn_info_init( &prt_si, gs, 1.0f, pchr->ori.pos, pchr->ori.turn_lr, pchr->model, PIP_REF(pstate->tmpargument), tmpchr, (GRIP)pstate->tmpdistance, pchr->team, tmpchr, 0, INVALID_CHR );
+        tmpprt = req_spawn_one_particle( prt_si );
+        returncode = RESERVED_PRT( gs->PrtList, tmpprt );
       };
       break;
 
@@ -3688,7 +3707,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
           // C or D
           pstate->tmpargument += 2;
         };
-        pstate->tmpargument += ( rand() & 1 );
+        pstate->tmpargument += IRAND(&loc_rand, 1);
       }
       break;
 
@@ -3697,10 +3716,10 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       returncode = bfalse;
       {
         tmpchr = chr_get_aitarget( gs->ChrList, CHRLST_COUNT, gs->ChrList + ichr );
-        if ( VALID_CHR( gs->ChrList, tmpchr ) )
+        if ( ACTIVE_CHR( gs->ChrList, tmpchr ) )
         {
           tmpchr = chr_get_attachedto(gs->ChrList, CHRLST_COUNT, tmpchr);
-          if ( VALID_CHR( gs->ChrList, tmpchr ) )
+          if ( ACTIVE_CHR( gs->ChrList, tmpchr ) )
           {
             returncode = gs->ChrList[tmpchr].bmpdata.calc_is_mount;
           }
@@ -3740,8 +3759,8 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
     case F_SignalTarget:
       // This function orders one specific character...  The target
       // Be careful in using this, always checking IDSZ first
-      ptarget->message = pstate->tmpargument;
-      ptarget->messagedata = 0;
+      ptarget->message.type = pstate->tmpargument;
+      ptarget->message.data = 0;
       ptarget->aistate.alert |= ALERT_SIGNALED;
       break;
 
@@ -3750,7 +3769,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       {
         tmpchr = who_is_blocking_passage( gs, pstate->tmpargument );
         returncode = bfalse;
-        if ( VALID_CHR( gs->ChrList, tmpchr ) )
+        if ( ACTIVE_CHR( gs->ChrList, tmpchr ) )
         {
           pstate->target = tmpchr;
           returncode = btrue;
@@ -3769,7 +3788,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       // This function sets the boost values for the last enchantment
       {
         ENC_REF tmpenc = pchr->undoenchant;
-        if ( tmpenc != INVALID_ENC )
+        if ( INVALID_ENC != tmpenc )
         {
           gs->EncList[tmpenc].ownermana_fp8  = pstate->tmpargument;
           gs->EncList[tmpenc].ownerlife_fp8  = pstate->tmpdistance;
@@ -3782,10 +3801,11 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
     case F_SpawnCharacterXYZ:
       {
         vect3 chr_pos = {pstate->tmpx, pstate->tmpy, pstate->tmpdistance};
+        vect3 chr_vel = {0,0,0};
 
         // This function spawns a ichr, failing if x,y,z is invalid
-        tmpchr = spawn_one_character( gs, chr_pos, pchr->model, pchr->team, 0, pstate->tmpturn, NULL, INVALID_CHR );
         returncode = bfalse;
+        tmpchr = chr_spawn( gs, chr_pos, chr_vel, pchr->model, pchr->team, 0, pstate->tmpturn, NULL, INVALID_CHR );
         if ( VALID_CHR( gs->ChrList, tmpchr ) )
         {
           if ( 0 != chr_hitawall( gs, gs->ChrList + tmpchr, NULL ) )
@@ -3795,9 +3815,11 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
           else
           {
             gs->ChrList[tmpchr].prop.iskursed = bfalse;
-            pstate->child = tmpchr;
-            gs->ChrList[tmpchr].passage = pchr->passage;
+            gs->ChrList[tmpchr].passage       = pchr->passage;
+
+            pstate->child                     = tmpchr;
             gs->ChrList[tmpchr].aistate.owner = pstate->owner;
+
             returncode = btrue;
           }
         }
@@ -3809,9 +3831,10 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       // failing if x,y,z is invalid
       {
         vect3 chr_pos = {pstate->tmpx, pstate->tmpy, pstate->tmpdistance};
+        vect3 chr_vel = {0,0,0};
 
-        tmpchr = spawn_one_character( gs, chr_pos, OBJ_REF(pstate->tmpargument), pchr->team, 0, pstate->tmpturn, NULL, INVALID_CHR );
         returncode = bfalse;
+        tmpchr = chr_spawn( gs, chr_pos, chr_vel, OBJ_REF(pstate->tmpargument), pchr->team, 0, pstate->tmpturn, NULL, INVALID_CHR );
         if ( VALID_CHR( gs->ChrList, tmpchr ) )
         {
           if ( 0 != chr_hitawall( gs, gs->ChrList + tmpchr, NULL ) )
@@ -3821,9 +3844,11 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
           else
           {
             gs->ChrList[tmpchr].prop.iskursed = bfalse;
-            pstate->child = tmpchr;
-            gs->ChrList[tmpchr].passage = pchr->passage;
+            gs->ChrList[tmpchr].passage       = pchr->passage;
+
+            pstate->child                     = tmpchr;
             gs->ChrList[tmpchr].aistate.owner = pstate->owner;
+
             returncode = btrue;
           }
         }
@@ -3833,7 +3858,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
     case F_ChangeTargetClass:
       // This function changes a character's model ( specific model slot )
       returncode = bfalse;
-      if ( VALID_CHR( gs->ChrList, pstate->target ) )
+      if ( ACTIVE_CHR( gs->ChrList, pstate->target ) )
       {
         change_character( gs, pstate->target, OBJ_REF(pstate->tmpargument), 0, LEAVE_ALL );
         ptarget->aistate.morphed = btrue;
@@ -3852,14 +3877,15 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
     case F_SpawnExactChaseParticle:
       // This function spawns an exactly placed particle that chases the target
       returncode = bfalse;
-      if ( VALID_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, CHRLST_COUNT, ichr ) )
+      if ( ACTIVE_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, CHRLST_COUNT, ichr ) )
       {
         vect3 prt_pos = {pstate->tmpx, pstate->tmpy, pstate->tmpdistance};
         tmpchr = ichr;
         if ( chr_attached( gs->ChrList, CHRLST_COUNT, ichr ) )  tmpchr = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, ichr );
 
-        tmpprt = spawn_one_particle( gs, 1.0f, prt_pos, pchr->turn_lr, pchr->model, PIP_REF(pstate->tmpargument), INVALID_CHR, (GRIP)0, pchr->team, tmpchr, 0, INVALID_CHR );
-        if ( VALID_PRT( gs->PrtList, tmpprt ) )
+        prt_spawn_info_init( &prt_si, gs, 1.0f, prt_pos, pchr->ori.turn_lr, pchr->model, PIP_REF(pstate->tmpargument), INVALID_CHR, (GRIP)0, pchr->team, tmpchr, 0, INVALID_CHR );
+        tmpprt = req_spawn_one_particle( prt_si );
+        if ( RESERVED_PRT( gs->PrtList, tmpprt ) )
         {
           gs->PrtList[tmpprt].target = chr_get_aitarget( gs->ChrList, CHRLST_COUNT, gs->ChrList + ichr );
           returncode = btrue;
@@ -3879,7 +3905,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
 
     case F_SignalSpecialID:
       // This function issues an order to all with the given special IDSZ
-      signal_idsz_index( gs, pstate->tmpargument, pstate->tmpdistance, IDSZ_SPECIAL );
+      signal_idsz_index( gs, pchr->team_rank, pstate->tmpargument, pstate->tmpdistance, IDSZ_SPECIAL );
       break;
 
     case F_UnkurseTargetInventory:
@@ -3894,7 +3920,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
         };
 
         tmpchr  = chr_get_nextinpack( gs->ChrList, CHRLST_COUNT, pstate->target );
-        while ( VALID_CHR( gs->ChrList, tmpchr ) )
+        while ( ACTIVE_CHR( gs->ChrList, tmpchr ) )
         {
           gs->ChrList[tmpchr].prop.iskursed = bfalse;
           tmpchr  = chr_get_nextinpack( gs->ChrList, CHRLST_COUNT, tmpchr );
@@ -3916,9 +3942,9 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       // This function respawns the target at its current location
       {
         tmpchr = chr_get_aitarget( gs->ChrList, CHRLST_COUNT, gs->ChrList + ichr );
-        gs->ChrList[tmpchr].pos_old = gs->ChrList[tmpchr].pos;
+        gs->ChrList[tmpchr].ori_old.pos = gs->ChrList[tmpchr].ori.pos;
         respawn_character( gs, tmpchr );
-        gs->ChrList[tmpchr].pos = gs->ChrList[tmpchr].pos_old;
+        gs->ChrList[tmpchr].ori.pos = gs->ChrList[tmpchr].ori_old.pos;
       }
       break;
 
@@ -4018,7 +4044,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       returncode = bfalse;
       {
         tmpchr = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, ichr );
-        if ( VALID_CHR( gs->ChrList, tmpchr ) )
+        if ( ACTIVE_CHR( gs->ChrList, tmpchr ) )
         {
           returncode = ( gs->ChrList[tmpchr].holdingwhich[SLOT_SADDLE] == ichr );
         }
@@ -4058,7 +4084,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
           returncode = !gs->ChrList[tmpchr].prop.nameknown;
           gs->ChrList[tmpchr].prop.nameknown = btrue;
         }
-        ChrList_getPCap(gs, tmpchr)->prop.usageknown = btrue;
+        gs->ChrList[tmpchr].prop.usageknown = btrue;
       }
       break;
 
@@ -4132,7 +4158,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
 
     case F_AccelerateUp:
       // This function changes the character's up down velocity
-      pchr->vel.z += pstate->tmpargument / 100.0;
+      pchr->ori.vel.z += pstate->tmpargument / 100.0;
       break;
 
     case F_FlashVariableHeight:
@@ -4194,7 +4220,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       break;
 
     case F_DisenchantTarget:
-      returncode = ( ptarget->firstenchant != INVALID_ENC );
+      returncode = ( INVALID_ENC != ptarget->firstenchant );
       disenchant_character( gs, pstate->target );
       break;
 
@@ -4220,10 +4246,12 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
           tmpchr;
           for(tmpchr = 0; tmpchr < CHRLST_COUNT; tmpchr++)
           {
-            if(gs->ChrList[tmpchr].on && gs->ChrList[tmpchr].alive && gs->ChrList[tmpchr].team == pchr->team)
+            if(!ACTIVE_CHR(gs->ChrList, tmpchr) ) continue;
+
+            if(gs->ChrList[tmpchr].alive && gs->ChrList[tmpchr].team == pchr->team)
             {
               //And set their volume to tmpdistance
-              if(pstate->tmpdistance >= 0 && gs->ChrList[tmpchr].loopingchannel != INVALID_SOUND)
+              if( pstate->tmpdistance >= 0 && INVALID_SOUND != gs->ChrList[tmpchr].loopingchannel )
               {
                 Mix_Volume(gs->ChrList[tmpchr].loopingchannel, pstate->tmpdistance);
               }
@@ -4293,7 +4321,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       {
         tmpchr = who_is_blocking_passage_ID( gs, pstate->tmpargument, pstate->tmpdistance );
         returncode = bfalse;
-        if ( VALID_CHR( gs->ChrList, tmpchr ) )
+        if ( ACTIVE_CHR( gs->ChrList, tmpchr ) )
         {
           pstate->target = tmpchr;
           returncode = btrue;
@@ -4315,8 +4343,9 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
         tmpchr = ichr;
         if ( chr_attached( gs->ChrList, CHRLST_COUNT, ichr ) )  tmpchr = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, ichr );
 
-        tmpprt = spawn_one_particle( gs, 1.0f, prt_pos, pchr->turn_lr, pchr->model, PIP_REF(pstate->tmpargument), INVALID_CHR, (GRIP)0, pchr->team, tmpchr, 0, INVALID_CHR );
-        if ( VALID_PRT( gs->PrtList, tmpprt ) )
+        prt_spawn_info_init( &prt_si, gs, 1.0f, prt_pos, pchr->ori.turn_lr, pchr->model, PIP_REF(pstate->tmpargument), INVALID_CHR, (GRIP)0, pchr->team, tmpchr, 0, INVALID_CHR );
+        tmpprt = req_spawn_one_particle( prt_si );
+        if ( RESERVED_PRT( gs->PrtList, tmpprt ) )
         {
           gs->PrtList[tmpprt].spawncharacterstate = pstate->tmpturn;
           returncode = btrue;
@@ -4331,7 +4360,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       {
         PIP_REF tmp_ipip;
         CAP_REF tmp_icap = ChrList_getRCap(gs, ichr);
-        if ( VALID_CAP(gs->CapList, tmp_icap) )
+        if ( LOADED_CAP(gs->CapList, tmp_icap) )
         {
           CCap * tmp_pcap = ChrList_getPCap(gs, ichr);
           if ( tmp_pcap->gopoofprttype <= PRTPIP_PEROBJECT_COUNT )
@@ -4471,7 +4500,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
     case F_IfTargetHasNotFullMana:
       //This function proceeds if the target has more than one point of mana and is alive
       returncode = bfalse;
-      if ( VALID_CHR( gs->ChrList, pstate->target ) )
+      if ( ACTIVE_CHR( gs->ChrList, pstate->target ) )
       {
         returncode = ptarget->alive && ptarget->stats.manamax_fp8 > 0 && ptarget->stats.mana_fp8 < ptarget->stats.manamax_fp8 - DAMAGE_MIN;
       };
@@ -4666,31 +4695,31 @@ retval_t run_operand( CGame * gs, Uint32 value, CHR_REF ichr )
         break;
 
       case VAR_RAND:
-        iTmp = RANDIE(gs);
+        iTmp = RANDIE(gs->randie_index);
         break;
 
       case VAR_SELF_X:
-        iTmp = pchr->pos.x;
+        iTmp = pchr->ori.pos.x;
         break;
 
       case VAR_SELF_Y:
-        iTmp = pchr->pos.y;
+        iTmp = pchr->ori.pos.y;
         break;
 
       case VAR_SELF_TURN:
-        iTmp = pchr->turn_lr;
+        iTmp = pchr->ori.turn_lr;
         break;
 
       case VAR_SELF_COUNTER:
-        iTmp = pchr->messagedata;
+        iTmp = pchr->team_rank;
         break;
 
       case VAR_SELF_ORDER:
-        iTmp = pchr->message;
+        iTmp = pchr->message.data;
         break;
 
       case VAR_SELF_MORALE:
-        iTmp = gs->TeamList[pchr->baseteam].morale;
+        iTmp = gs->TeamList[pchr->team_base].morale;
         break;
 
       case VAR_SELF_LIFE:
@@ -4698,56 +4727,56 @@ retval_t run_operand( CGame * gs, Uint32 value, CHR_REF ichr )
         break;
 
       case VAR_TARGET_X:
-        iTmp = ptarget->pos.x;
+        iTmp = ptarget->ori.pos.x;
         break;
 
       case VAR_TARGET_Y:
-        iTmp = ptarget->pos.y;
+        iTmp = ptarget->ori.pos.y;
         break;
 
       case VAR_TARGET_DISTANCE:
         iTmp = 0;
         if(NULL != ptarget)
         {
-          iTmp = sqrt(( ptarget->pos.x - pchr->pos.x ) * ( ptarget->pos.x - pchr->pos.x ) +
-                      ( ptarget->pos.y - pchr->pos.y ) * ( ptarget->pos.y - pchr->pos.y ) +
-                      ( ptarget->pos.z - pchr->pos.z ) * ( ptarget->pos.z - pchr->pos.z ) );
+          iTmp = sqrt(( ptarget->ori.pos.x - pchr->ori.pos.x ) * ( ptarget->ori.pos.x - pchr->ori.pos.x ) +
+                      ( ptarget->ori.pos.y - pchr->ori.pos.y ) * ( ptarget->ori.pos.y - pchr->ori.pos.y ) +
+                      ( ptarget->ori.pos.z - pchr->ori.pos.z ) * ( ptarget->ori.pos.z - pchr->ori.pos.z ) );
         }
         break;
 
       case VAR_TARGET_TURN:
-        iTmp = ptarget->turn_lr;
+        iTmp = ptarget->ori.turn_lr;
         break;
 
       case VAR_LEADER_X:
-        iTmp = pchr->pos.x;
-        if ( VALID_CHR( gs->ChrList, loc_leader ) )
-          iTmp = pleader->pos.x;
+        iTmp = pchr->ori.pos.x;
+        if ( ACTIVE_CHR( gs->ChrList, loc_leader ) )
+          iTmp = pleader->ori.pos.x;
         break;
 
       case VAR_LEADER_Y:
-        iTmp = pchr->pos.y;
-        if ( VALID_CHR( gs->ChrList, loc_leader ) )
-          iTmp = pleader->pos.y;
+        iTmp = pchr->ori.pos.y;
+        if ( ACTIVE_CHR( gs->ChrList, loc_leader ) )
+          iTmp = pleader->ori.pos.y;
         break;
 
       case VAR_LEADER_DISTANCE:
         iTmp = 10000;
-        if ( VALID_CHR( gs->ChrList, loc_leader ) )
-          iTmp = ABS(( int )( pleader->pos.x - pchr->pos.x ) ) +
-                 ABS(( int )( pleader->pos.y - pchr->pos.y ) );
+        if ( ACTIVE_CHR( gs->ChrList, loc_leader ) )
+          iTmp = ABS(( int )( pleader->ori.pos.x - pchr->ori.pos.x ) ) +
+                 ABS(( int )( pleader->ori.pos.y - pchr->ori.pos.y ) );
         break;
 
       case VAR_LEADER_TURN:
-        iTmp = pchr->turn_lr;
-        if ( VALID_CHR( gs->ChrList, loc_leader ) )
-          iTmp = pleader->turn_lr;
+        iTmp = pchr->ori.turn_lr;
+        if ( ACTIVE_CHR( gs->ChrList, loc_leader ) )
+          iTmp = pleader->ori.turn_lr;
         break;
 
       case VAR_GOTO_X:
         if( wp_list_empty( &(pstate->wp) ) )
         {
-          iTmp = pchr->pos.x;
+          iTmp = pchr->ori.pos.x;
         }
         else
         {
@@ -4758,7 +4787,7 @@ retval_t run_operand( CGame * gs, Uint32 value, CHR_REF ichr )
       case VAR_GOTO_Y:
         if( wp_list_empty( &(pstate->wp) ) )
         {
-          iTmp = pchr->pos.y;
+          iTmp = pchr->ori.pos.y;
         }
         else
         {
@@ -4773,13 +4802,13 @@ retval_t run_operand( CGame * gs, Uint32 value, CHR_REF ichr )
         }
         else
         {
-          iTmp = ABS(( int )( wp_list_x( &(pstate->wp) ) - pchr->pos.x ) ) +
-                ABS(( int )( wp_list_y( &(pstate->wp) ) - pchr->pos.y ) );
+          iTmp = ABS(( int )( wp_list_x( &(pstate->wp) ) - pchr->ori.pos.x ) ) +
+                ABS(( int )( wp_list_y( &(pstate->wp) ) - pchr->ori.pos.y ) );
         }
         break;
 
       case VAR_TARGET_TURNTO:
-        iTmp = vec_to_turn( ptarget->pos.x - pchr->pos.x, ptarget->pos.y - pchr->pos.y );
+        iTmp = vec_to_turn( ptarget->ori.pos.x - pchr->ori.pos.x, ptarget->ori.pos.y - pchr->ori.pos.y );
         break;
 
       case VAR_PASSAGE:
@@ -4791,7 +4820,7 @@ retval_t run_operand( CGame * gs, Uint32 value, CHR_REF ichr )
         break;
 
       case VAR_SELF_ALTITUDE:
-        iTmp = pchr->pos.z - pchr->level;
+        iTmp = pchr->ori.pos.z - pchr->level;
         break;
 
       case VAR_SELF_ID:
@@ -4837,23 +4866,23 @@ retval_t run_operand( CGame * gs, Uint32 value, CHR_REF ichr )
         break;
 
       case VAR_TARGET_SPEEDX:
-        iTmp = ptarget->vel.x;
+        iTmp = ptarget->ori.vel.x;
         break;
 
       case VAR_TARGET_SPEEDY:
-        iTmp = ptarget->vel.y;
+        iTmp = ptarget->ori.vel.y;
         break;
 
       case VAR_TARGET_SPEEDZ:
-        iTmp = ptarget->vel.z;
+        iTmp = ptarget->ori.vel.z;
         break;
 
       case VAR_SELF_SPAWNX:
-        iTmp = pchr->stt.x;
+        iTmp = pchr->spinfo.pos.x;
         break;
 
       case VAR_SELF_SPAWNY:
-        iTmp = pchr->stt.y;
+        iTmp = pchr->spinfo.pos.y;
         break;
 
       case VAR_SELF_STATE:
@@ -4897,15 +4926,15 @@ retval_t run_operand( CGame * gs, Uint32 value, CHR_REF ichr )
         break;
 
       case VAR_SELF_Z:
-        iTmp = pchr->pos.z;
+        iTmp = pchr->ori.pos.z;
         break;
 
       case VAR_TARGET_ALTITUDE:
-        iTmp = ptarget->pos.z - ptarget->level;
+        iTmp = ptarget->ori.pos.z - ptarget->level;
         break;
 
       case VAR_TARGET_Z:
-        iTmp = ptarget->pos.z;
+        iTmp = ptarget->ori.pos.z;
         break;
 
       case VAR_SELF_INDEX:
@@ -4913,29 +4942,29 @@ retval_t run_operand( CGame * gs, Uint32 value, CHR_REF ichr )
         break;
 
       case VAR_OWNER_X:
-        iTmp = powner->pos.x;
+        iTmp = powner->ori.pos.x;
         break;
 
       case VAR_OWNER_Y:
-        iTmp = powner->pos.y;
+        iTmp = powner->ori.pos.y;
         break;
 
       case VAR_OWNER_TURN:
-        iTmp = powner->turn_lr;
+        iTmp = powner->ori.turn_lr;
         break;
 
       case VAR_OWNER_DISTANCE:
-        iTmp = sqrt(( powner->pos.x - pchr->pos.x ) * ( powner->pos.x - pchr->pos.x ) +
-                    ( powner->pos.y - pchr->pos.y ) * ( powner->pos.y - pchr->pos.y ) +
-                    ( powner->pos.z - pchr->pos.z ) * ( powner->pos.z - pchr->pos.z ) );
+        iTmp = sqrt(( powner->ori.pos.x - pchr->ori.pos.x ) * ( powner->ori.pos.x - pchr->ori.pos.x ) +
+                    ( powner->ori.pos.y - pchr->ori.pos.y ) * ( powner->ori.pos.y - pchr->ori.pos.y ) +
+                    ( powner->ori.pos.z - pchr->ori.pos.z ) * ( powner->ori.pos.z - pchr->ori.pos.z ) );
         break;
 
       case VAR_OWNER_TURNTO:
-        iTmp = vec_to_turn( powner->pos.x - pchr->pos.x, powner->pos.y - pchr->pos.y );
+        iTmp = vec_to_turn( powner->ori.pos.x - pchr->ori.pos.x, powner->ori.pos.y - pchr->ori.pos.y );
         break;
 
       case VAR_XYTURNTO:
-        iTmp = vec_to_turn( pstate->tmpx - pchr->pos.x, pstate->tmpy - pchr->pos.y );
+        iTmp = vec_to_turn( pstate->tmpx - pchr->ori.pos.x, pstate->tmpy - pchr->ori.pos.y );
         break;
 
       case VAR_SELF_MONEY:
@@ -4963,7 +4992,7 @@ retval_t run_operand( CGame * gs, Uint32 value, CHR_REF ichr )
         break;
 
       case VAR_TARGET_TURNAWAY:
-        iTmp = vec_to_turn( pchr->pos.x - ptarget->pos.x, pchr->pos.y - ptarget->pos.y );
+        iTmp = vec_to_turn( pchr->ori.pos.x - ptarget->ori.pos.x, pchr->ori.pos.y - ptarget->ori.pos.y );
         break;
 
       case VAR_SELF_LEVEL:
@@ -4971,9 +5000,9 @@ retval_t run_operand( CGame * gs, Uint32 value, CHR_REF ichr )
         break;
 
       case VAR_SPAWN_DISTANCE:
-        iTmp = sqrt(( pchr->stt.x - pchr->pos.x ) * ( pchr->stt.x - pchr->pos.x ) +
-                    ( pchr->stt.y - pchr->pos.y ) * ( pchr->stt.y - pchr->pos.y ) +
-                    ( pchr->stt.z - pchr->pos.z ) * ( pchr->stt.z - pchr->pos.z ) );
+        iTmp = sqrt(( pchr->spinfo.pos.x - pchr->ori.pos.x ) * ( pchr->spinfo.pos.x - pchr->ori.pos.x ) +
+                    ( pchr->spinfo.pos.y - pchr->ori.pos.y ) * ( pchr->spinfo.pos.y - pchr->ori.pos.y ) +
+                    ( pchr->spinfo.pos.z - pchr->ori.pos.z ) * ( pchr->spinfo.pos.z - pchr->ori.pos.z ) );
         break;
 
 	  case VAR_TARGET_MAX_LIFE:
@@ -5068,10 +5097,10 @@ retval_t run_script( CGame * gs, CHR_REF ichr, float dUpdate )
   CChr        * pchr;
   AI_STATE    * pstate;
 
-  if(NULL == gs) return rv_error;
+  if( !EKEY_PVALID(gs) ) return rv_error;
   slist  = CGame_getScriptInfo(gs); 
 
-  if( !VALID_CHR(gs->ChrList, ichr) ) return rv_error;
+  if( !ACTIVE_CHR(gs->ChrList, ichr) ) return rv_error;
   pchr   = gs->ChrList + ichr;
   pstate = &(pchr->aistate);
 
@@ -5095,13 +5124,13 @@ retval_t run_script( CGame * gs, CHR_REF ichr, float dUpdate )
 
   // make sure that all of the ai "pointers" are valid
   // if a "pointer" is not valid, make it point to the character
-  if( !VALID_CHR(gs->ChrList, pstate->target)     ) pstate->target     = ichr;
-  if( !VALID_CHR(gs->ChrList, pstate->oldtarget)  ) pstate->oldtarget  = ichr;
-  if( !VALID_CHR(gs->ChrList, pstate->owner)      ) pstate->owner      = ichr;
-  if( !VALID_CHR(gs->ChrList, pstate->child)      ) pstate->child      = ichr;
-  if( !VALID_CHR(gs->ChrList, pstate->bumplast)   ) pstate->bumplast   = ichr;
-  if( !VALID_CHR(gs->ChrList, pstate->attacklast) ) pstate->attacklast = ichr;
-  if( !VALID_CHR(gs->ChrList, pstate->hitlast)    ) pstate->hitlast    = ichr;
+  if( !ACTIVE_CHR(gs->ChrList, pstate->target)     ) pstate->target     = ichr;
+  if( !ACTIVE_CHR(gs->ChrList, pstate->oldtarget)  ) pstate->oldtarget  = ichr;
+  if( !ACTIVE_CHR(gs->ChrList, pstate->owner)      ) pstate->owner      = ichr;
+  if( !ACTIVE_CHR(gs->ChrList, pstate->child)      ) pstate->child      = ichr;
+  if( !ACTIVE_CHR(gs->ChrList, pstate->bumplast)   ) pstate->bumplast   = ichr;
+  if( !ACTIVE_CHR(gs->ChrList, pstate->attacklast) ) pstate->attacklast = ichr;
+  if( !ACTIVE_CHR(gs->ChrList, pstate->hitlast)    ) pstate->hitlast    = ichr;
 
   // Reset the target if it can't be seen
   if ( !pchr->prop.canseeinvisible && pchr->alive && ichr != pstate->oldtarget )
@@ -5187,7 +5216,7 @@ retval_t run_script( CGame * gs, CHR_REF ichr, float dUpdate )
   {
     CHR_REF rider = chr_get_holdingwhich( gs->ChrList, CHRLST_COUNT, ichr, SLOT_SADDLE );
 
-    if ( pchr->prop.ismount && VALID_CHR( gs->ChrList, rider ) && !gs->ChrList[rider].prop.isitem )
+    if ( pchr->prop.ismount && ACTIVE_CHR( gs->ChrList, rider ) && !gs->ChrList[rider].prop.isitem )
     {
       // Mount
       pstate->latch.x = gs->ChrList[rider].aistate.latch.x;
@@ -5206,8 +5235,8 @@ retval_t run_script( CGame * gs, CHR_REF ichr, float dUpdate )
       {
         float fnum, fden;
 
-        pstate->latch.x = wp_list_x( &(pstate->wp) ) - pchr->pos.x;
-        pstate->latch.y = wp_list_y( &(pstate->wp) ) - pchr->pos.y;
+        pstate->latch.x = wp_list_x( &(pstate->wp) ) - pchr->ori.pos.x;
+        pstate->latch.y = wp_list_y( &(pstate->wp) ) - pchr->ori.pos.y;
 
         fnum = pstate->latch.x * pstate->latch.x + pstate->latch.y * pstate->latch.y;
         fden = fnum + 25 * pchr->bmpdata.calc_size * pchr->bmpdata.calc_size;
@@ -5246,7 +5275,7 @@ void run_all_scripts( CGame * gs, float dUpdate )
   numblip = 0;
   for ( character = 0; character < CHRLST_COUNT; character++ )
   {
-    if ( !VALID_CHR( chrlst, character ) ) continue;
+    if ( !ACTIVE_CHR( chrlst, character ) ) continue;
 
     allow_thinking = bfalse;
 

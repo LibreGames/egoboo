@@ -1,6 +1,6 @@
 #pragma once
 
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 
 #include <SDL.h>
 
@@ -128,11 +128,13 @@ INLINE bool_t CLatch_clear(CLatch * pl) { if(NULL == pl) return bfalse; memset(p
 
 typedef struct CPlayer_t
 {
-  bool_t            used;                   // CPlayer used?
+  egoboo_key        ekey;
+  bool_t            Active;
+
   bool_t            is_local;
 
   CHR_REF           chr_ref;                 // Which character?
-  CLatch             latch;                   // Local latches
+  CLatch            latch;                   // Local latches
   Uint8             device;                  // Input device
 } CPlayer;
 
@@ -145,12 +147,12 @@ typedef struct CPlayer_t
 #endif
 
 CPlayer * Player_new(CPlayer *ppla);
-bool_t   Player_delete(CPlayer *ppla);
+bool_t    Player_delete(CPlayer *ppla);
 CPlayer * Player_renew(CPlayer *ppla);
 
-INLINE CHR_REF PlaList_get_character( struct CGame_t * gs, PLA_REF iplayer );
+INLINE CHR_REF PlaList_getRChr( struct CGame_t * gs, PLA_REF iplayer );
 
-#define VALID_PLA(LST, XX) ( ((XX)>=0) && ((XX)<PLALST_COUNT) && LST[XX].used )
+#define VALID_PLA(LST, XX) ( ((XX)>=0) && ((XX)<PLALST_COUNT) && LST[XX].Active )
 
 //--------------------------------------------------------------------------------------------
 #define MOUSEBUTTON         4
@@ -197,7 +199,7 @@ typedef struct keyboard_t
 
 extern KEYBOARD keyb;
 
-#define SDLKEYDOWN(k) (NULL!=keyb.state && 0!=keyb.state[k])
+#define SDLKEYDOWN(k) (NULL !=keyb.state && 0!=keyb.state[k])
 
 
 //--------------------------------------------------------------------------------------------

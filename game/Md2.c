@@ -41,7 +41,7 @@ MD2_Model* md2_load(const char * szFilename, MD2_Model* mdl)
 
   // Open up the file, and make sure it's a MD2 model
   f = fopen(szFilename, "rb");
-  if (f == NULL) return NULL;
+  if ( NULL == f ) return NULL;
 
   fread(&header, sizeof(header), 1, f);
 
@@ -71,7 +71,7 @@ MD2_Model* md2_load(const char * szFilename, MD2_Model* mdl)
   }
 
   // Allocate a MD2_Model to hold all this stuff
-  model = (NULL==mdl) ? md2_new() : mdl;
+  model = (NULL ==mdl) ? md2_new() : mdl;
   model->m_numVertices  = header.numVertices;
   model->m_numTexCoords = header.numTexCoords;
   model->m_numTriangles = header.numTriangles;
@@ -264,7 +264,7 @@ MD2_Model* md2_load(const char * szFilename, MD2_Model* mdl)
 //
 //  // No?  Try loading it
 //  MD2_Model *model = md2_load(MD2_Model * m, fileName, mdl);
-//  if (model == NULL)
+//  if ( NULL == model )
 //  {
 //    // no luck
 //    return NULL;
@@ -284,9 +284,9 @@ void MD2_GLCommand_construct(MD2_GLCommand * m)
 
 void MD2_GLCommand_destruct(MD2_GLCommand * m)
 {
-  if(NULL==m) return;
+  if(NULL ==m) return;
 
-  if(NULL!=m->next)
+  if(NULL !=m->next)
   {
     MD2_GLCommand_delete(m->next);
     m->next = NULL;
@@ -315,7 +315,7 @@ MD2_GLCommand * MD2_GLCommand_new_vector(int n)
 
 void MD2_GLCommand_delete(MD2_GLCommand * m)
 {
-  if(NULL==m) return;
+  if(NULL ==m) return;
   MD2_GLCommand_destruct(m);
   FREE(m);
 };
@@ -323,7 +323,7 @@ void MD2_GLCommand_delete(MD2_GLCommand * m)
 void MD2_GLCommand_delete_vector(MD2_GLCommand * v, int n)
 {
   int i;
-  if(NULL==v || 0 == n) return;
+  if(NULL ==v || 0 == n) return;
   for(i=0; i<n; i++) MD2_GLCommand_destruct(v + i);
   FREE(v);
 };
@@ -355,7 +355,7 @@ void md2_deallocate(MD2_Model * m)
   FREE(m->m_triangles);
   m->m_numTriangles = 0;
 
-  if(m->m_frames != NULL)
+  if( NULL != m->m_frames )
   {
     int i;
     for(i = 0;i < m->m_numFrames; i++)
@@ -373,7 +373,7 @@ void md2_deallocate(MD2_Model * m)
 
 void md2_destruct(MD2_Model * m)
 {
-  if(NULL==m) return;
+  if(NULL ==m) return;
   md2_deallocate(m);
 }
 
@@ -398,7 +398,7 @@ MD2_Model * md2_new_vector(int n)
 
 void md2_delete(MD2_Model * m)
 {
-  if(NULL==m) return;
+  if(NULL ==m) return;
   md2_destruct(m);
   FREE(m);
 };
@@ -406,7 +406,7 @@ void md2_delete(MD2_Model * m)
 void md2_delete_vector(MD2_Model * v, int n)
 {
   int i;
-  if(NULL==v || 0 == n) return;
+  if(NULL ==v || 0 == n) return;
   for(i=0; i<n; i++) md2_destruct(v + i);
   FREE(v);
 };

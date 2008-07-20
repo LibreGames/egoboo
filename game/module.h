@@ -25,7 +25,7 @@
 #pragma once
 
 #include "ogl_texture.h"
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 
 
 //--------------------------------------------------------------------------------------------
@@ -65,6 +65,8 @@ bool_t import_info_add(IMPORT_INFO * ii, OBJ_REF obj);
 
 typedef struct mod_data_t
 {
+  egoboo_key ekey;
+
   char            rank[RANKSIZE];               // Number of stars
   char            longname[32];                 // Module names
   char            loadname[32];                 // Module load names
@@ -89,6 +91,7 @@ MOD_INFO * ModInfo_renew( MOD_INFO * pmi );
 //--------------------------------------------------------------------------------------------
 typedef struct module_summary_t
 {
+  egoboo_key ekey;
   int    numlines;                                   // Lines in summary
   char   val;
   char   summary[SUMMARYLINES][SUMMARYSIZE];      // Quest description
@@ -101,7 +104,7 @@ MOD_SUMMARY * ModSummary_renew( MOD_SUMMARY * ms );
 //--------------------------------------------------------------------------------------------
 typedef struct ModState_t
 {
-  bool_t initialized;
+  egoboo_key ekey;
 
   bool_t Active;                     // Is the control loop still going?
   bool_t Paused;                     // Is the control loop paused?

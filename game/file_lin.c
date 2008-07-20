@@ -41,7 +41,7 @@ FS_FIND_INFO * fs_find_info_new(FS_FIND_INFO * i)
 {
   //fprintf( stdout, "fs_find_info_new()\n");
 
-  if(NULL==i) return i;
+  if(NULL ==i) return i;
 
   i->type = FS_WIN32;
   i->L    = (FS_FIND_INFO_LIN*)calloc(1, sizeof(FS_FIND_INFO_LIN));

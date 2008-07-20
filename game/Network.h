@@ -91,7 +91,8 @@ enum network_packet_types_e
   TO_REMOTE_DIR           = 0x13E2,
   TO_REMOTE_RTS           = 0x4817,
   TO_REMOTE_START         = 0x27AF,
-  TO_REMOTE_FILE_COUNT      = 0x81B9,
+  TO_REMOTE_FILE_COUNT    = 0x81B9,
+  TO_REMOTE_CHR_SPAWN     = 0x9840,
 
 
   NET_CHECK_CRC           = 0x88CF,  // Someone is asking us to check the CRC of a certain file
@@ -99,7 +100,7 @@ enum network_packet_types_e
   NET_SEND_CRC            = 0xA0E1,  // Someone is sending us a CRC
   NET_TRANSFER_FILE       = 0x16B5,  // Packet contains a file.
   NET_REQUEST_FILE        = 0x9ABF,  // Someone has asked us to send them a file
-  NET_TRANSFER_ACK         = 0x2B22,  // Acknowledgement packet for a file send
+  NET_TRANSFER_ACK        = 0x2B22,  // Acknowledgement packet for a file send
   NET_CREATE_DIRECTORY    = 0xCFC9,  // Tell the peer to create the named directory
   NET_DONE_SENDING_FILES  = 0xCB08,  // Sent when there are no more files to send.
   NET_NUM_FILES_TO_SEND   = 0x9E40,  // Let the other person know how many files you're sending
@@ -118,7 +119,7 @@ enum network_packet_types_e
   //XXXX                    = ,
   //XXXX                    = ,
   //XXXX                    = ,
-  //XXXX                    = 0x9840,
+  //XXXX                    = ,
   //XXXX                    = 0xB312,
   //XXXX                    = 0x9D13,
   //XXXX                    = 0xEB6C,
@@ -154,7 +155,7 @@ struct NFileState_t;
 
 typedef struct NetThread_t
 {
-  bool_t       initialized;
+  egoboo_key ekey;
 
   // thread status
   bool_t Active;             // Keep looping or quit?
@@ -188,6 +189,8 @@ struct NetAsynchData_t;
 
 typedef struct PacketRequest_t
 {
+  egoboo_key ekey;
+
   bool_t       waiting, received;
   Uint32       starttimestamp, expiretimestamp;
   ENetAddress  address;
@@ -221,7 +224,7 @@ typedef struct NetAsynchData_t
 
 typedef struct CListOut_Info_t
 {
-  bool_t     initialized;
+  egoboo_key ekey;
 
   void     * client_data;
   ENetPeer * peer;
@@ -262,7 +265,7 @@ typedef struct CListIn_Info_t
 
 typedef struct CListIn_Client_t
 {
-  bool_t             initialized;
+  egoboo_key ekey;
 
   Uint32             guid;
   void             * handler_data;
@@ -299,7 +302,7 @@ CListIn_Client * CListIn_find(CListIn * cli, Uint32 id);
 
 typedef struct NetHost_t
 {
-  bool_t           initialized;
+  egoboo_key       ekey;
   int              references;
 
   ENetHost       * Host;
@@ -344,7 +347,7 @@ bool_t NetHost_close(NetHost * nh, void * client_data);
 
 typedef struct CNet_t
 {
-  bool_t initialized;
+  egoboo_key ekey;
 
   // external links
   struct CGame_t      * parent;

@@ -34,8 +34,8 @@
 #include "ogl_texture.h"        // OpenGL texture loader
 
 #include "egoboo_config.h"          // system dependent configuration information
-#include "egoboo_math.inl"            // vector and matrix math
-#include "egoboo_types.inl"           // Typedefs for egoboo
+#include "egoboo_math.h"            // vector and matrix math
+#include "egoboo_types.h"           // Typedefs for egoboo
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -358,15 +358,24 @@ typedef struct twist_entry_t
 
 EXTERN TWIST_ENTRY twist_table[256];
 
-typedef enum order_t
+typedef enum ORDER_e
 {
-  MESSAGE_MOVE    = 0,
+  MESSAGE_SIGNAL = 0,
+  MESSAGE_MOVE = 1,
   MESSAGE_ATTACK,
   MESSAGE_ASSIST,
   MESSAGE_STAND,
-  MESSAGE_TERRAIN,
-  MESSAGE_ENTERPASSAGE
+  MESSAGE_TERRAIN
 } ORDER;
+
+typedef enum SIGNAL_e
+{
+  SIGNAL_BUY     = 0,
+  SIGNAL_SELL,
+  SIGNAL_REJECT,
+  SIGNAL_ENTERPASSAGE,
+} SIGNAL;
+
 
 typedef enum color_e
 {
@@ -408,29 +417,6 @@ typedef enum search_bits_e
 EXTERN float           textureoffset[256];         // For moving textures
 
 
-//------------------------------------
-// Physics variables
-//------------------------------------
-
-typedef struct CPhysicsData_t
-{
-  bool_t   initialized;
-
-  float    hillslide;                 // Friction
-  float    slippyfriction;            //
-  float    airfriction;               //
-  float    waterfriction;             //
-  float    noslipfriction;            //
-  float    platstick;                 //
-
-  float    gravity;                   // Gravitational accel
-} CPhysicsData;
-
-CPhysicsData * CPhysicsData_new(CPhysicsData * phys);
-bool_t         CPhysicsData_delete(CPhysicsData * phys);
-CPhysicsData * CPhysicsData_renew(CPhysicsData * phys);
-
-
 EXTERN char            cFrameName[16];                                     // MD2 Frame Name
 
 // Display messages
@@ -464,7 +450,11 @@ typedef struct MessageQueue_t
 // My lil' random number table
 #define MAXRAND 4096
 EXTERN Uint16 randie[MAXRAND];
-#define RANDIE(PST) randie[PST->randie_index]; PST->randie_index++; PST->randie_index %= MAXRAND;
+
+#define RANDIE(IND) randie[IND]; IND++; IND %= MAXRAND;
+#define FRAND(PSEED) ( 2.0f*( float ) ego_rand(PSEED) / ( float ) (1 << 16) / ( float ) (1 << 16) - 1.0f )
+#define RAND(PSEED, MINVAL, MAXVAL) ((((ego_rand(PSEED) >> 16) * (MAXVAL-MINVAL)) >> 16)  + MINVAL)
+#define IRAND(PSEED, BITS) ( ego_rand(PSEED) & ((1<<BITS)-1) )
 
 
 EXTERN Uint32 particletrans_fp8  EQ( 0x80 );
@@ -637,7 +627,7 @@ struct ClockState_t;
 
 typedef struct MachineState_t
 {
-  bool_t initialized;
+  egoboo_key ekey;
 
   struct ClockState_t * clk;
 } MachineState;

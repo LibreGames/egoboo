@@ -1046,20 +1046,20 @@ retval_t util_calculateCRC(char * filename, Uint32 seed, Uint32 * pCRC)
   Uint32 tmpint, tmpCRC;
   FILE * pfile = NULL;
 
-  if( NULL==pCRC )
+  if( NULL ==pCRC )
   {
     log_info("util_calculateCRC() - Called with invalid parameters.\n");
     return rv_error;
   }
 
-  if(NULL==filename || '\0' == filename[0])
+  if(NULL ==filename || '\0' == filename[0])
   {
     log_info("util_calculateCRC() - Called null filename.\n");
     return rv_error;
   }
 
   pfile = fs_fileOpen(PRI_WARN, "util_calculateCRC()", filename, "rb");
-  if(NULL==pfile)
+  if(NULL ==pfile)
   {
     return rv_fail;
   }
@@ -1087,7 +1087,7 @@ retval_t util_calculateCRC(char * filename, Uint32 seed, Uint32 * pCRC)
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 generate_unsigned( PAIR * ppair )
+Uint32 generate_unsigned( Uint32 * seed, PAIR * ppair )
 {
   // ZZ> This function generates a random number
 
@@ -1099,19 +1099,19 @@ Uint32 generate_unsigned( PAIR * ppair )
 
     if ( ppair->irand > 1 )
     {
-      itmp += rand() % ppair->irand;
+      itmp += ego_rand(seed) % ppair->irand;
     }
   }
   else
   {
-    itmp = rand();
+    itmp = ego_rand(seed);
   }
 
   return itmp;
 }
 
 //--------------------------------------------------------------------------------------------
-Sint32 generate_signed( PAIR * ppair )
+Sint32 generate_signed( Uint32 * seed, PAIR * ppair )
 {
   // ZZ> This function generates a random number
 
@@ -1123,13 +1123,13 @@ Sint32 generate_signed( PAIR * ppair )
 
     if ( ppair->irand > 1 )
     {
-      itmp += rand() % ppair->irand;
+      itmp += ego_rand(seed) % ppair->irand;
       itmp -= ppair->irand >> 1;
     }
   }
   else
   {
-    itmp = rand();
+    itmp = ego_rand(seed);
   }
 
   return itmp;
@@ -1137,7 +1137,7 @@ Sint32 generate_signed( PAIR * ppair )
 
 
 //--------------------------------------------------------------------------------------------
-Sint32 generate_dither( PAIR * ppair, Uint16 strength_fp8 )
+Sint32 generate_dither( Uint32 * seed, PAIR * ppair, Uint16 strength_fp8 )
 {
   // ZZ> This function generates a random number
 
@@ -1145,7 +1145,7 @@ Sint32 generate_dither( PAIR * ppair, Uint16 strength_fp8 )
 
   if ( NULL != ppair && ppair->irand > 1 )
   {
-    itmp = rand();
+    itmp = ego_rand(seed);
     itmp %= ppair->irand;
     itmp -= ppair->irand >> 1;
 
@@ -1169,6 +1169,9 @@ void make_randie()
   // ZZ> This function makes the random number table
 
   int tnc, cnt;
+
+  // seed the random number generator
+  srand( time(NULL) );
 
   // Fill in the basic values
   cnt = 0;

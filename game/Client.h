@@ -28,7 +28,7 @@
 #include "Network.h"
 #include "char.h"
 
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
 #include "egoboo.h"
 
 //--------------------------------------------------------------------------------------------
@@ -44,6 +44,8 @@ bool_t    cl_Started();
 // Status displays
 typedef struct Status_t
 {
+  egoboo_key ekey;
+
   bool_t on;
 
   Uint16   delay;
@@ -62,7 +64,7 @@ Status * Status_renew( Status * pstat );
 //--------------------------------------------------------------------------------------------
 typedef struct CClient_t
 {
-  bool_t initialized;
+  egoboo_key      ekey;
 
   // my network
   Uint32           net_guid;
@@ -107,6 +109,8 @@ typedef struct CClient_t
   MOD_INFO  req_mod;
   ModState  req_modstate;
   Uint32    req_seed;
+
+  chr_spawn_queue chr_queue;
 
 } CClient;
 

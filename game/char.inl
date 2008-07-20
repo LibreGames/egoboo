@@ -37,19 +37,19 @@ INLINE ANIM_INFO * anim_info_new( ANIM_INFO * a );
 
 INLINE bool_t chr_attached( PChr lst, size_t lst_size, CHR_REF chr_ref )
 {
-  if ( !VALID_CHR(lst, chr_ref ) ) return bfalse;
+  if ( !ACTIVE_CHR(lst, chr_ref ) ) return bfalse;
 
   lst[chr_ref].attachedto = VALIDATE_CHR(lst, lst[chr_ref].attachedto );
-  if(!VALID_CHR(lst, chr_ref)) lst[chr_ref].inwhichslot = SLOT_NONE;
+  if(!ACTIVE_CHR(lst, chr_ref)) lst[chr_ref].inwhichslot = SLOT_NONE;
 
-  return VALID_CHR(lst, lst[chr_ref].attachedto );
+  return ACTIVE_CHR(lst, lst[chr_ref].attachedto );
 };
 
 //--------------------------------------------------------------------------------------------
 INLINE bool_t chr_in_pack( PChr lst, size_t lst_size, CHR_REF chr_ref )
 {
   CHR_REF inwhichpack = chr_get_inwhichpack( lst, lst_size, chr_ref );
-  return VALID_CHR(lst, inwhichpack );
+  return ACTIVE_CHR(lst, inwhichpack );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -58,7 +58,7 @@ INLINE bool_t chr_has_inventory( PChr lst, size_t lst_size, CHR_REF chr_ref )
   bool_t retval = bfalse;
   CHR_REF nextinpack = chr_get_nextinpack( lst, lst_size, chr_ref );
 
-  if ( VALID_CHR(lst, nextinpack ) )
+  if ( ACTIVE_CHR(lst, nextinpack ) )
   {
     retval = btrue;
   }
@@ -75,7 +75,7 @@ INLINE bool_t chr_has_inventory( PChr lst, size_t lst_size, CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 INLINE bool_t chr_is_invisible( PChr lst, size_t lst_size, CHR_REF chr_ref )
 {
-  if ( !VALID_CHR(lst, chr_ref ) ) return btrue;
+  if ( !ACTIVE_CHR(lst, chr_ref ) ) return btrue;
 
   return FP8_MUL( lst[chr_ref].alpha_fp8, lst[chr_ref].light_fp8 ) <= INVISIBLE;
 };
@@ -85,7 +85,7 @@ INLINE bool_t chr_using_slot( PChr lst, size_t lst_size, CHR_REF chr_ref, SLOT s
 {
   CHR_REF inslot = chr_get_holdingwhich( lst, lst_size, chr_ref, slot );
 
-  return VALID_CHR(lst, inslot );
+  return ACTIVE_CHR(lst, inslot );
 };
 
 
@@ -94,15 +94,15 @@ INLINE CHR_REF chr_get_nextinpack( PChr lst, size_t lst_size, CHR_REF chr_ref )
 {
   CHR_REF nextinpack = INVALID_CHR;
 
-  if ( !VALID_CHR(lst, chr_ref ) ) return INVALID_CHR;
+  if ( !ACTIVE_CHR(lst, chr_ref ) ) return INVALID_CHR;
 
 #if defined(_DEBUG) || !defined(NDEBUG)
   nextinpack = lst[chr_ref].nextinpack;
-  if ( INVALID_CHR != nextinpack && !lst[chr_ref].on )
+  if ( INVALID_CHR != nextinpack && !ACTIVE_CHR(lst, chr_ref) )
   {
     // this is an invalid configuration that may indicate a corrupted list
     nextinpack = lst[nextinpack].nextinpack;
-    if ( VALID_CHR(lst, nextinpack ) )
+    if ( ACTIVE_CHR(lst, nextinpack ) )
     {
       // the list is definitely corrupted
       assert( bfalse );
@@ -117,7 +117,7 @@ INLINE CHR_REF chr_get_nextinpack( PChr lst, size_t lst_size, CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF chr_get_onwhichplatform( PChr lst, size_t lst_size, CHR_REF chr_ref )
 {
-  if ( !VALID_CHR(lst, chr_ref ) ) return INVALID_CHR;
+  if ( !ACTIVE_CHR(lst, chr_ref ) ) return INVALID_CHR;
 
   lst[chr_ref].onwhichplatform = VALIDATE_CHR(lst, lst[chr_ref].onwhichplatform );
   return lst[chr_ref].onwhichplatform;
@@ -128,7 +128,7 @@ INLINE CHR_REF chr_get_holdingwhich( PChr lst, size_t lst_size, CHR_REF chr_ref,
 {
   
 
-  if ( !VALID_CHR(lst, chr_ref ) || slot >= SLOT_COUNT ) return INVALID_CHR;
+  if ( !ACTIVE_CHR(lst, chr_ref ) || slot >= SLOT_COUNT ) return INVALID_CHR;
 
 #if defined(_DEBUG) || !defined(NDEBUG)
   {
@@ -154,7 +154,7 @@ INLINE CHR_REF chr_get_holdingwhich( PChr lst, size_t lst_size, CHR_REF chr_ref,
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF chr_get_inwhichpack( PChr lst, size_t lst_size, CHR_REF chr_ref )
 {
-  if ( !VALID_CHR(lst, chr_ref ) ) return INVALID_CHR;
+  if ( !ACTIVE_CHR(lst, chr_ref ) ) return INVALID_CHR;
 
   lst[chr_ref].inwhichpack = VALIDATE_CHR(lst, lst[chr_ref].inwhichpack );
   return lst[chr_ref].inwhichpack;
@@ -163,7 +163,7 @@ INLINE CHR_REF chr_get_inwhichpack( PChr lst, size_t lst_size, CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF chr_get_attachedto( PChr lst, size_t lst_size, CHR_REF chr_ref )
 {
-  if ( !VALID_CHR(lst, chr_ref ) ) return INVALID_CHR;
+  if ( !ACTIVE_CHR(lst, chr_ref ) ) return INVALID_CHR;
 
 #if defined(_DEBUG) || !defined(NDEBUG)
 
@@ -188,14 +188,14 @@ INLINE CHR_REF chr_get_attachedto( PChr lst, size_t lst_size, CHR_REF chr_ref )
 #endif
 
   lst[chr_ref].attachedto = VALIDATE_CHR(lst, lst[chr_ref].attachedto );
-  if( !VALID_CHR(lst, lst[chr_ref].attachedto ) ) lst[chr_ref].inwhichslot = SLOT_NONE;
+  if( !ACTIVE_CHR(lst, lst[chr_ref].attachedto ) ) lst[chr_ref].inwhichslot = SLOT_NONE;
   return lst[chr_ref].attachedto;
 };
 
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF chr_get_aitarget( PChr lst, size_t lst_size, CChr * pchr )
 {
-  if ( NULL==pchr || !pchr->on ) return INVALID_CHR;
+  if ( !EKEY_PVALID(pchr) ) return INVALID_CHR;
 
   pchr->aistate.target = VALIDATE_CHR( lst, pchr->aistate.target );
   return pchr->aistate.target;
@@ -204,7 +204,7 @@ INLINE CHR_REF chr_get_aitarget( PChr lst, size_t lst_size, CChr * pchr )
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF chr_get_aiowner( PChr lst, size_t lst_size, CChr * pchr )
 {
-  if ( NULL==pchr || !pchr->on ) return INVALID_CHR;
+  if ( !EKEY_PVALID(pchr) ) return INVALID_CHR;
 
   pchr->aistate.owner = VALIDATE_CHR(lst, pchr->aistate.owner );
   return pchr->aistate.owner;
@@ -213,7 +213,7 @@ INLINE CHR_REF chr_get_aiowner( PChr lst, size_t lst_size, CChr * pchr )
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF chr_get_aichild( PChr lst, size_t lst_size, CChr * pchr )
 {
-  if ( NULL==pchr || !pchr->on ) return INVALID_CHR;
+  if ( !EKEY_PVALID(pchr) ) return INVALID_CHR;
 
   pchr->aistate.child = VALIDATE_CHR(lst, pchr->aistate.child );
   return pchr->aistate.child;
@@ -222,7 +222,7 @@ INLINE CHR_REF chr_get_aichild( PChr lst, size_t lst_size, CChr * pchr )
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF chr_get_aiattacklast( PChr lst, size_t lst_size, CChr * pchr )
 {
-  if ( NULL==pchr || !pchr->on ) return INVALID_CHR;
+  if ( !EKEY_PVALID(pchr) ) return INVALID_CHR;
 
   pchr->aistate.attacklast = VALIDATE_CHR(lst, pchr->aistate.attacklast );
   return pchr->aistate.attacklast;
@@ -231,7 +231,7 @@ INLINE CHR_REF chr_get_aiattacklast( PChr lst, size_t lst_size, CChr * pchr )
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF chr_get_aibumplast( PChr lst, size_t lst_size, CChr * pchr )
 {
-  if ( NULL==pchr || !pchr->on ) return INVALID_CHR;
+  if ( !EKEY_PVALID(pchr) ) return INVALID_CHR;
 
   pchr->aistate.bumplast = VALIDATE_CHR(lst, pchr->aistate.bumplast );
   return pchr->aistate.bumplast;
@@ -240,7 +240,7 @@ INLINE CHR_REF chr_get_aibumplast( PChr lst, size_t lst_size, CChr * pchr )
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF chr_get_aihitlast( PChr lst, size_t lst_size, CChr * pchr )
 {
-  if ( NULL==pchr || !pchr->on ) return INVALID_CHR;
+  if ( !EKEY_PVALID(pchr) ) return INVALID_CHR;
 
   pchr->aistate.hitlast = VALIDATE_CHR(lst, pchr->aistate.hitlast );
   return pchr->aistate.hitlast;
@@ -340,7 +340,48 @@ INLINE float wp_list_y( WP_LIST * wl )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE AI_STATE * ai_state_new(CGame * gs, AI_STATE * a, CHR_REF ichr)
+INLINE bool_t ai_state_delete(AI_STATE * a)
+{
+  if(NULL == a) return bfalse;
+  if(!EKEY_PVALID(a)) return btrue;
+
+  EKEY_PINVALIDATE( a );
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE AI_STATE * ai_state_new(AI_STATE * a)
+{
+  if(NULL == a) return NULL;
+
+  ai_state_delete(a);
+
+  memset(a, 0, sizeof(AI_STATE));
+
+  EKEY_PNEW(a, AI_STATE);
+
+  a->type = AILST_COUNT;          // The AI script to run
+
+  // "pointers" to various external data
+  a->target     = INVALID_CHR;       // Who the AI is after
+  a->oldtarget  = INVALID_CHR;       // The target the last time the script was run
+  a->owner      = INVALID_CHR;       // The character's owner
+  a->child      = INVALID_CHR;       // The character's child
+  a->bumplast   = INVALID_CHR;       // Last character it was bumped by
+  a->attacklast = INVALID_CHR;       // Last character it was attacked by
+  a->hitlast    = INVALID_CHR;       // Last character it hit
+
+  // other random stuff
+  a->turnmode       = TURNMODE_VELOCITY;        // Turning mode
+
+  CLatch_clear( &(a->latch) );
+
+  return a;
+};
+
+//--------------------------------------------------------------------------------------------
+INLINE AI_STATE * ai_state_init(CGame * gs, AI_STATE * a, CHR_REF ichr)
 {
   int tnc;
 
@@ -349,9 +390,7 @@ INLINE AI_STATE * ai_state_new(CGame * gs, AI_STATE * a, CHR_REF ichr)
   CMad * pmad;
   CCap * pcap;
 
-  if(NULL == a) return NULL;
-
-  memset(a, 0, sizeof(AI_STATE));
+  if( !EKEY_PVALID(a) ) return NULL;
 
   if( !VALID_CHR(gs->ChrList, ichr) ) return NULL;
   pchr = gs->ChrList + ichr;
@@ -360,10 +399,10 @@ INLINE AI_STATE * ai_state_new(CGame * gs, AI_STATE * a, CHR_REF ichr)
   if( !VALID_OBJ(gs->ObjList, pchr->model) ) return NULL;
   pobj = gs->ObjList + pchr->model;
 
-  if( !VALID_MAD(gs->MadList, pobj->mad) ) return NULL;
+  if( !LOADED_MAD(gs->MadList, pobj->mad) ) return NULL;
   pmad = gs->MadList + pobj->mad;
 
-  if( !VALID_CAP(gs->CapList, pobj->cap) ) return NULL;
+  if( !LOADED_CAP(gs->CapList, pobj->cap) ) return NULL;
   pcap = gs->CapList + pobj->cap;
 
   a->type    = pobj->ai;
@@ -372,7 +411,7 @@ INLINE AI_STATE * ai_state_new(CGame * gs, AI_STATE * a, CHR_REF ichr)
   a->content = pcap->contentoverride;
   a->target  = ichr;
   a->owner   = ichr;
-  a->child   = ichr;
+  a->child   = INVALID_CHR;
   a->time    = 0;
 
   tnc = 0;
@@ -383,7 +422,7 @@ INLINE AI_STATE * ai_state_new(CGame * gs, AI_STATE * a, CHR_REF ichr)
     tnc++;
   }
 
-  wp_list_new( &(a->wp), &(pchr->pos) );
+  wp_list_new( &(a->wp), &(pchr->ori.pos) );
 
   a->morphed = bfalse;
 
@@ -403,15 +442,9 @@ INLINE AI_STATE * ai_state_new(CGame * gs, AI_STATE * a, CHR_REF ichr)
 
 
 //--------------------------------------------------------------------------------------------
-INLINE AI_STATE * ai_state_renew(AI_STATE * a, CHR_REF ichr)
+INLINE AI_STATE * ai_state_reinit(AI_STATE * a, CHR_REF ichr)
 {
-  if(NULL == a) return NULL;
-
-  if( !VALID_CHR_RANGE(ichr) )
-  {
-    memset(a, 0, sizeof(AI_STATE));
-    return NULL;
-  }
+  if( !EKEY_PVALID(a) ) return NULL;
 
   a->alert = ALERT_NONE;
   a->target = ichr;

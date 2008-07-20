@@ -203,7 +203,7 @@ int load_one_object( CGame * gs, int skin_count, const char * szObjectpath, char
   }
   pobj->skins = numskins;
 
-  pobj->used = btrue;
+  pobj->Active = btrue;
 
   return numskins;
 }
@@ -220,7 +220,7 @@ void switch_team( CGame * gs, CHR_REF chr_ref, TEAM_REF team )
   {
     if ( !chrlst[chr_ref].prop.invictus )
     {
-      gs->TeamList[chrlst[chr_ref].baseteam].morale--;
+      gs->TeamList[chrlst[chr_ref].team_base].morale--;
       gs->TeamList[team].morale++;
     }
     if (( !chrlst[chr_ref].prop.ismount || !chr_using_slot( chrlst, CHRLST_COUNT, chr_ref, SLOT_SADDLE ) ) &&
@@ -229,8 +229,8 @@ void switch_team( CGame * gs, CHR_REF chr_ref, TEAM_REF team )
       chrlst[chr_ref].team = team;
     }
 
-    chrlst[chr_ref].baseteam = team;
-    if ( !VALID_CHR( chrlst, team_get_leader( gs, team ) ) )
+    chrlst[chr_ref].team_base = team;
+    if ( !ACTIVE_CHR( chrlst, team_get_leader( gs, team ) ) )
     {
       gs->TeamList[team].leader = chr_ref;
     }
@@ -251,7 +251,7 @@ int restock_ammo( CGame * gs, CHR_REF chr_ref, IDSZ idsz )
   CAP_REF icap;
 
   amount = 0;
-  if ( VALID_CHR(chrlst, chr_ref) )
+  if ( ACTIVE_CHR(chrlst, chr_ref) )
   {
     model = chrlst[chr_ref].model;
     icap = gs->ObjList[model].cap;
@@ -299,9 +299,14 @@ CTeam * CTeam_new(CTeam *pteam)
 { 
   //fprintf( stdout, "CTeam_new()\n");
 
-  if(NULL==pteam) return pteam; 
+  if(NULL ==pteam) return pteam; 
+
+  CTeam_delete( pteam );
   
-  memset(pteam, 0, sizeof(CTeam)); 
+  memset(pteam, 0, sizeof(CTeam));
+
+  EKEY_PNEW( pteam, CTeam );
+
   
   return pteam; 
 };
@@ -309,7 +314,10 @@ CTeam * CTeam_new(CTeam *pteam)
 //--------------------------------------------------------------------------------------------
 bool_t CTeam_delete(CTeam *pteam) 
 { 
-  if(NULL==pteam) return bfalse; 
+  if(NULL ==pteam) return bfalse; 
+  if(!EKEY_PVALID( pteam )) return btrue;
+
+  EKEY_PINVALIDATE(pteam);
 
   memset(pteam, 0, sizeof(CTeam)); 
    
@@ -357,9 +365,12 @@ CProfile * CProfile_new(CProfile * p)
   int cnt;
 
   if(NULL == p) return p;
-  if(p->initialized) CProfile_delete(p);
+
+  CProfile_delete(p);
 
   memset(p, 0, sizeof(CProfile));
+
+  EKEY_PNEW(p, CProfile);
 
   strcpy(p->name, "*NONE*");
 
@@ -373,17 +384,15 @@ CProfile * CProfile_new(CProfile * p)
     p->prtpip[cnt] = INVALID_PIP;
   }
 
-  p->initialized = btrue;
-
   return p;
 }
 
 bool_t CProfile_delete(CProfile * p)
 {
   if(NULL == p) return bfalse;
-  if(!p->initialized) return btrue;
+  if( !EKEY_PVALID(p) ) return btrue;
 
-  p->initialized = bfalse;
+  EKEY_PINVALIDATE(p);
 
   return btrue;
 }
@@ -531,7 +540,7 @@ void ObjList_log_used( CGame * gs, char *savename )
     {
       CCap * pcap;
       CMad * pmad;
-      if( !gs->ObjList[obj_cnt].used ) continue;
+      if( !gs->ObjList[obj_cnt].Active ) continue;
 
       pcap = ObjList_getPCap(gs, obj_cnt);
       pmad = ObjList_getPMad(gs, obj_cnt);

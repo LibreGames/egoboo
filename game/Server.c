@@ -185,7 +185,7 @@ bool_t CServer_destroy(CServer ** pss)
   bool_t retval;
 
   if(NULL == pss || NULL == *pss) return bfalse;
-  if( !(*pss)->initialized ) return btrue;
+  if( !EKEY_PVALID((*pss)) ) return btrue;
 
   retval = CServer_delete(*pss);
   FREE( *pss );
@@ -201,9 +201,11 @@ CServer * CServer_new(CServer * ss, CGame * gs)
   //fprintf( stdout, "CServer_new()\n");
 
   if(NULL == ss) return ss;
-  if(ss->initialized) CServer_delete(ss); 
+  CServer_delete(ss); 
 
   memset( ss, 0, sizeof(CServer) );
+
+  EKEY_PNEW(ss, CServer);
 
   // only start this stuff if we are going to actually connect to the network
   if(net_Started())
@@ -225,8 +227,6 @@ CServer * CServer_new(CServer * ss, CGame * gs)
 
   CServer_reset_latches(ss);
 
-  ss->initialized = btrue;
-
   return ss;
 }
 
@@ -234,13 +234,12 @@ CServer * CServer_new(CServer * ss, CGame * gs)
 bool_t CServer_delete(CServer * ss)
 {
   if(NULL == ss) return bfalse;
+  if(!EKEY_PVALID(ss)) return btrue;
 
-  if(!ss->initialized) return btrue;
+  EKEY_PINVALIDATE(ss);
 
   net_removeService(ss->net_guid);
   NetHost_unregister(ss->host, ss->net_guid);
-
-  ss->initialized = bfalse;
 
   return btrue;
 }
@@ -272,7 +271,7 @@ void CServer_bufferLatches(CServer * ss)
   CGame * gs;
   Uint32 uiTime, ichr;
 
-  if (NULL==ss || !sv_Started()) return;
+  if (NULL ==ss || !sv_Started()) return;
 
   gs = ss->parent;
 
@@ -326,7 +325,7 @@ void sv_talkToRemotes(CServer * ss)
       for (ichr=0; ichr<CHRLST_COUNT; ichr++)
       {
         // do not look at characters that aren't on
-        if (!gs->ChrList[ichr].on) continue;
+        if ( !ACTIVE_CHR(gs->ChrList, ichr) ) continue;
 
         // do not look at invalid latches
         if(!ss->tlb.buffer[REF_TO_INT(ichr)][uiTime].valid) continue;
@@ -363,7 +362,7 @@ void sv_talkToRemotes(CServer * ss)
 //  ENetEvent event;
 //  char hostName[64];
 //
-//  // Check all pending events for players joining
+//  // Check all reserved events for players joining
 //  while (enet_host_service(sv_host->Host, &event, 0) > 0)
 //  {
 //    switch (event.type)
@@ -797,7 +796,7 @@ void CServer_unbufferLatches(CServer * ss)
   uiTime = gs->wld_frame & LAGAND;
   for (chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++)
   {
-    if(!gs->ChrList[chr_cnt].on) continue;
+    if( !ACTIVE_CHR(gs->ChrList, chr_cnt) ) continue;
     if(!ss->tlb.buffer[REF_TO_INT(chr_cnt)][uiTime].valid) continue;
     if(INVALID_TIMESTAMP == ss->tlb.buffer[REF_TO_INT(chr_cnt)][uiTime].stamp) continue;
 
@@ -828,7 +827,7 @@ void CServer_unbufferLatches(CServer * ss)
 void CServer_reset_latches(CServer * ss)
 {
   CHR_REF chr_cnt;
-  if(NULL==ss) return;
+  if(NULL ==ss) return;
 
   for(chr_cnt = 0; chr_cnt<CHRLST_COUNT; chr_cnt++)
   {
@@ -844,7 +843,7 @@ void CServer_resetTimeLatches(CServer * ss, CHR_REF ichr)
 {
   int cnt, chr_val;
 
-  if(NULL==ss) return;
+  if(NULL ==ss) return;
 
   chr_val = REF_TO_INT(ichr);
 
@@ -910,7 +909,7 @@ int _sv_HostCallback(void * data)
 
   sv_host = sv_getHost();
   nthread = &(sv_host->nthread);
-  while(NULL!=sv_host && !nthread->KillMe)
+  while(NULL !=sv_host && !nthread->KillMe)
   {
     // the server host could be removed/deleted at any time
     sv_host = sv_getHost();
@@ -941,7 +940,7 @@ int _sv_HostCallback(void * data)
 //  size_t copy_size;
 //  NetHost * sv_host;
 //
-//  if(NULL==ss || !sv_Started(ss)) return bfalse;
+//  if(NULL ==ss || !sv_Started(ss)) return bfalse;
 //
 //  sv_host = sv_getHost();
 //
@@ -1159,3 +1158,48 @@ retval_t _sv_shutDown(void)
 
 //------------------------------------------------------------------------------
 bool_t sv_Started()  { return (NULL != _sv_host) && _sv_host->nthread.Active; }
+
+//------------------------------------------------------------------------------
+bool_t sv_send_chr_setup( CServer * ss, chr_spawn_info * psi )
+{
+  SYS_PACKET egopkt;
+
+  if( !EKEY_PVALID(psi) || !sv_Running(ss) ) return bfalse;
+
+  // send the setup data
+  net_startNewSysPacket(&egopkt);
+
+  sys_packet_addUint16(&egopkt, TO_REMOTE_CHR_SPAWN);
+  sys_packet_addUint32(&egopkt, psi->seed);
+  sys_packet_addUint32(&egopkt, psi->net_id);
+  sys_packet_addUint32(&egopkt, psi->ichr);
+
+  // convert pos to 16.16 fixed point
+  sys_packet_addSint32(&egopkt, psi->pos.x * (1<<16) );
+  sys_packet_addSint32(&egopkt, psi->pos.y * (1<<16) );
+  sys_packet_addSint32(&egopkt, psi->pos.z * (1<<16) );
+
+  // convert vel to 16.16 fixed point
+  sys_packet_addSint32(&egopkt, psi->vel.x * (1<<16) );
+  sys_packet_addSint32(&egopkt, psi->vel.y * (1<<16) );
+  sys_packet_addSint32(&egopkt, psi->vel.z * (1<<16) );
+
+  sys_packet_addUint32(&egopkt, psi->iobj   );
+  sys_packet_addUint32(&egopkt, psi->iteam  );
+  sys_packet_addUint8 (&egopkt, psi->iskin  );
+  sys_packet_addUint16(&egopkt, psi->facing );
+  sys_packet_addUint8 (&egopkt, psi->slot   );
+  sys_packet_addString(&egopkt, psi->name   );
+  sys_packet_addUint32(&egopkt, psi->ioverride   );
+
+  sys_packet_addSint32(&egopkt, psi->money   );
+  sys_packet_addSint32(&egopkt, psi->content );
+  sys_packet_addUint32(&egopkt, psi->passage );
+  sys_packet_addSint32(&egopkt, psi->level   );
+  sys_packet_addSint8 (&egopkt, psi->stat    );
+  sys_packet_addSint8 (&egopkt, psi->ghost   );
+
+  sv_sendPacketToAllClientsGuaranteed(ss, &egopkt);
+
+  return btrue;
+}
