@@ -33,7 +33,7 @@
 #include "passage.h"
 #include "Menu.h"
 #include "script.h"
-#include "Mesh.h"
+#include "mesh.h"
 #include "graphic.h"
 #include "Mad.h"
 

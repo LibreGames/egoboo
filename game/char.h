@@ -2,7 +2,7 @@
 
 #include "object.h"
 #include "sound.h"
-#include "Mesh.h"
+#include "mesh.h"
 #include "Mad.h"
 #include "input.h"
 

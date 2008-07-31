@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Mesh.h"
+#include "mesh.h"
 #include "char.h"
 #include "particle.h"
 #include "game.h"

@@ -26,7 +26,7 @@
 #include "graphic.h"
 #include "particle.h"
 #include "char.h"
-#include "mad.h"
+#include "Mad.h"
 #include "enchant.h"
 #include "game.h"
 #include "Log.h"

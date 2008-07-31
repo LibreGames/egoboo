@@ -1,7 +1,7 @@
 #pragma once
 
 #include "input.h"
-#include "network.h"
+#include "Network.h"
 #include "char.h"
 #include "graphic.h"
 #include "game.h"

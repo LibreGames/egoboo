@@ -2,7 +2,7 @@
 
 #include "UI.h"
 #include "Log.h"
-#include "Mesh.h"
+#include "mesh.h"
 
 #include "egoboo.h"
 

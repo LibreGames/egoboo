@@ -25,7 +25,7 @@
 #include "module.h"
 #include "Log.h"
 #include "sound.h"
-#include "Mesh.h"
+#include "mesh.h"
 #include "Particle.h"
 #include "script.h"
 #include "menu.h"

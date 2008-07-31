@@ -1,6 +1,6 @@
 #pragma once
 
-#include "network.h"
+#include "Network.h"
 
 #include "egoboo_types.h"
 

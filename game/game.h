@@ -6,7 +6,7 @@
 #include "object.h"
 #include "char.h"
 #include "particle.h"
-#include "mad.h"
+#include "Mad.h"
 #include "enchant.h"
 #include "passage.h"
 #include "menu.h"
