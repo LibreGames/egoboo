@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Network.h"
-#include <stdio.h>
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -221,7 +220,7 @@ INLINE static bool_t stream_reset(STREAM * pwrapper)
 //--------------------------------------------------------------------------------------------
 INLINE bool_t stream_startFile(STREAM * pwrapper, FILE * pfile)
 {
-  fpos_t pos;
+  long pos;
 
   if(NULL ==pwrapper || NULL ==pfile || feof(pfile)) return bfalse;
 
