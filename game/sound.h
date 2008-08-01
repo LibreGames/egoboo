@@ -22,14 +22,14 @@ struct CGame_t;
 
 #define FIX_SOUND(XX) ((((XX)<0) || ((XX)>=MAXWAVE)) ? INVALID_SOUND : (XX))
 
-typedef enum global_sound_t
+enum global_sound_t
 {
   GSOUND_COINGET = 0,              // 0 - Pick up coin
   GSOUND_DEFEND,                   // 1 - Defend clank
   GSOUND_WEATHER,                  // 2 - Weather Effect
   GSOUND_SPLASH,                   // 3 - Hit Water tile (Splash)
   GSOUND_COINFALL,                 // 4 - Coin falls on ground
-  GSOUND_LEVELUP,				   // 5 - Level up sound
+  GSOUND_LEVELUP,				           // 5 - Level up sound
   GSOUND_COUNT                     // no more global sounds above this
 };
 

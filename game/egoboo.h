@@ -27,7 +27,7 @@
 #pragma once
 
 #include "proto.h"
-#include "menu.h"
+#include "Menu.h"
 #include "configfile.h"
 #include "Md2.h"
 

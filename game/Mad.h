@@ -24,7 +24,7 @@ extern float           lighttoenviroy[256];                                // En
 extern Uint32          lighttospek[MAXSPEKLEVEL][256];                     //
 
 // This stuff is for actions
-typedef enum Action_e
+enum Action_e
 {
   ACTION_DA = 0,        // :DA Dance ( Standing still )
   ACTION_DB,            // :DB Dance ( Bored )

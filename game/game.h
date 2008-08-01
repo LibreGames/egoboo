@@ -9,7 +9,7 @@
 #include "Mad.h"
 #include "enchant.h"
 #include "passage.h"
-#include "menu.h"
+#include "Menu.h"
 #include "script.h"
 
 //--------------------------------------------------------------------------------------------
@@ -177,6 +177,7 @@ struct CGame_t
 
 };
 typedef struct CGame_t CGame;
+
 CGame * CGame_create(struct CNet_t * net,  struct CClient_t * cl, struct CServer_t * sv);
 bool_t  CGame_destroy(CGame ** gs );
 bool_t  CGame_renew(CGame * gs);

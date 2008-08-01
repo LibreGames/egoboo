@@ -28,7 +28,7 @@
 #include "mesh.h"
 #include "Particle.h"
 #include "script.h"
-#include "menu.h"
+#include "Menu.h"
 #include "enchant.h"
 #include "object.h"
 #include "Client.h"

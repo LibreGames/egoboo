@@ -27,7 +27,7 @@
 #include "ogl_texture.h"
 #include "Font.h"
 #include "mesh.h"
-#include "menu.h"
+#include "Menu.h"
 
 #include "egoboo_types.h"
 
