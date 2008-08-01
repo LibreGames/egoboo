@@ -22,7 +22,7 @@
 //*
 //********************************************************************************************
 
-#include "MD2.inl"
+#include "Md2.inl"
 
 #include "id_md2.h"
 #include <SDL_endian.h>    // TODO: Roll my own endian stuff so that I don't have to include

@@ -26,7 +26,7 @@
 #include "Log.h"
 #include "sound.h"
 #include "mesh.h"
-#include "Particle.h"
+#include "particle.h"
 #include "script.h"
 #include "Menu.h"
 #include "enchant.h"

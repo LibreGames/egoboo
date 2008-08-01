@@ -40,7 +40,7 @@
 #include "camera.h"
 #include "sound.h"
 #include "object.inl"
-#include "network.inl"
+#include "Network.inl"
 
 #include "egoboo_rpc.h"
 #include "egoboo_utility.h"
