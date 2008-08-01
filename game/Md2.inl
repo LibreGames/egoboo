@@ -2,23 +2,6 @@
 
 #include "Md2.h"
 
-struct ego_md2_model_t
-{
-  int m_numVertices;
-  int m_numTexCoords;
-  int m_numTriangles;
-  int m_numSkins;
-  int m_numFrames;
-  int m_numCommands;
-
-  MD2_SkinName  *m_skins;
-  MD2_TexCoord  *m_texCoords;
-  MD2_Triangle  *m_triangles;
-  MD2_Frame     *m_frames;
-  MD2_GLCommand *m_commands;
-};
-typedef struct ego_md2_model_t MD2_Model;
-
 INLINE const int md2_get_numVertices(MD2_Model * m)  { return m->m_numVertices; }
 INLINE const int md2_get_numTexCoords(MD2_Model * m) { return m->m_numTexCoords; }
 INLINE const int md2_get_numTriangles(MD2_Model * m) { return m->m_numTriangles; }

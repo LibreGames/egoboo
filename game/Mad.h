@@ -4,6 +4,7 @@
 
 #include "egoboo_math.h"
 #include "egoboo.h"
+#include "Md2.h"
 
 struct CGame_t;
 

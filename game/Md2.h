@@ -75,7 +75,22 @@ void MD2_GLCommand_delete(MD2_GLCommand * m);
 void MD2_GLCommand_delete_vector(MD2_GLCommand * v, int n);
 
 
-struct ego_md2_model_t;
+struct ego_md2_model_t
+{
+  int m_numVertices;
+  int m_numTexCoords;
+  int m_numTriangles;
+  int m_numSkins;
+  int m_numFrames;
+  int m_numCommands;
+
+  MD2_SkinName  *m_skins;
+  MD2_TexCoord  *m_texCoords;
+  MD2_Triangle  *m_triangles;
+  MD2_Frame     *m_frames;
+  MD2_GLCommand *m_commands;
+};
+typedef struct ego_md2_model_t MD2_Model;
 
 void md2_construct(struct ego_md2_model_t * m);
 void md2_destruct(struct ego_md2_model_t * m);
