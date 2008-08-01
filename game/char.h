@@ -80,6 +80,7 @@ struct CMad_t;
 #define INVISIBLE           20                      // The character can't be detected
 
 enum blud_level_e;
+enum Action_e;
 
 enum missle_handling_e
 {

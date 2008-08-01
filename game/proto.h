@@ -259,10 +259,10 @@ char * str_convert_underscores( char *strout, size_t insize, char * strin );
 
 
 // MD2 Stuff
-typedef struct ego_md2_model_t MD2_Model;
+struct ego_md2_model_t;
 
-int mad_vertexconnected( MD2_Model * m, int vertex );
-int mad_calc_transvertices( MD2_Model * m );
+int mad_vertexconnected( struct ego_md2_model_t * m, int vertex );
+int mad_calc_transvertices( struct ego_md2_model_t * m );
 
 
 
