@@ -1,4 +1,5 @@
 #include "egoboo_rpc.h"
+
 #include "game.h"
 
 // this is the implementation for the RPC ("remote procedure call") functions that are necessary for the

@@ -31,6 +31,8 @@
 
 #include "egoboo_math.inl"
 
+#include <stdio.h>
+
 MD2_Model* md2_load(const char * szFilename, MD2_Model* mdl)
 {
   FILE * f;

@@ -1,12 +1,10 @@
 #pragma once
 
 #include "object.h"
-#include "sound.h"
-#include "mesh.h"
-#include "Mad.h"
 #include "input.h"
+#include "Mad.h"
 
-struct CMad_t;
+#include "egoboo_utility.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -79,8 +77,7 @@ struct CMad_t;
 #define SEEINVISIBLE        128                     // Cutoff for invisible characters
 #define INVISIBLE           20                      // The character can't be detected
 
-enum blud_level_e;
-enum Action_e;
+BLUD_LEVEL;
 
 enum missle_handling_e
 {
@@ -409,7 +406,7 @@ struct CCap_t
   bool_t        cancarrytonextmodule;          // Take it with you?
   bool_t        needskillidtouse;              // Check IDSZ first?
   DAMAGE        damagetargettype;              // For AI DamageTarget
-  enum Action_e weaponaction;                  // Animation needed to swing
+  ACTION        weaponaction;                  // Animation needed to swing
   bool_t        slotvalid[SLOT_COUNT];         // Left/Right hands valid
   bool_t        attackattached;                //
   PIP_REF       attackprttype;                 //
@@ -419,7 +416,7 @@ struct CCap_t
   Uint8         gopoofprtamount;               // Poof effect
   Sint16        gopoofprtfacingadd;            //
   PIP_REF       gopoofprttype;                 //
-  enum blud_level_e    bludlevel;                     // Blud ( yuck )
+  BLUD_LEVEL    bludlevel;                     // Blud ( yuck )
   PIP_REF       bludprttype;                   //
   Sint8         footfallsound;                 // Footfall sound, -1
   Sint8         jumpsound;                     // Jump sound, -1
@@ -456,8 +453,8 @@ CCap *  Cap_renew(CCap *pcap);
 //--------------------------------------------------------------------------------------------
 struct lighting_data_t
 {
-  vect4   emission, diffuse, specular;
-  GLfloat shininess[1];
+  vect4 emission, diffuse, specular;
+  float shininess[1];
 };
 
 typedef struct lighting_data_t LData;
@@ -467,8 +464,8 @@ struct action_info_t
   bool_t  keep;      // Keep the action playing?
   bool_t  loop;      // Loop it too?
   bool_t  ready;     // Ready to play a new one?
-  enum Action_e  now;       // Character's current action
-  enum Action_e  next;      // Character's next    action
+  ACTION  now;       // Character's current action
+  ACTION  next;      // Character's next    action
 };
 typedef struct action_info_t ACTION_INFO;
 
@@ -848,7 +845,7 @@ CChr * Chr_renew(CChr * pchr);
 struct CChr_t * ChrList_getPChr(struct CGame_t * gs, CHR_REF ichr);
 struct CProfile_t * ChrList_getPObj(struct CGame_t * gs, CHR_REF ichr);
 struct CCap_t * ChrList_getPCap(struct CGame_t * gs, CHR_REF ichr);
-struct CMad_t * ChrList_getPMad(struct CGame_t * gs, CHR_REF ichr);
+CMad * ChrList_getPMad(struct CGame_t * gs, CHR_REF ichr);
 struct CPip_t * ChrList_getPPip(struct CGame_t * gs, CHR_REF ichr, int i);
 
 OBJ_REF ChrList_getRObj(struct CGame_t * gs, CHR_REF ichr);
@@ -909,7 +906,7 @@ bool_t make_one_weapon_matrix( ChrList_t chrlst, size_t chrlst_size, Uint16 cnt 
 void make_character_matrices( struct CGame_t * gs );
 
 Uint32 chr_hitawall( struct CGame_t * gs, CChr * pchr, vect3 * norm );
-void play_action( struct CGame_t * gs, CHR_REF character, enum Action_e action, bool_t ready );
+void play_action( struct CGame_t * gs, CHR_REF character, ACTION action, bool_t ready );
 void set_frame( struct CGame_t * gs, CHR_REF character, Uint16 frame, Uint8 lip );
 bool_t detach_character_from_mount( struct CGame_t * gs, CHR_REF character, bool_t ignorekurse, bool_t doshop );
 void drop_money( struct CGame_t * gs, CHR_REF character, Uint16 money );

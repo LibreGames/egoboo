@@ -46,7 +46,8 @@ GLmatrix ViewMatrix( const vect3 from,     // camera location
 
     if ( roll > .001 )
     {
-      glMultMatrixf( RotateZ( roll ).v );
+      matrix_4x4 stupid_intermediate_matrix = RotateZ( roll );
+      glMultMatrixf( stupid_intermediate_matrix.v );
     }
 
     gluLookAt( from.x, from.y, from.z, at.x, at.y, at.z, world_up.x, world_up.y, world_up.z );

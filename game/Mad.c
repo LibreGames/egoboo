@@ -1,4 +1,5 @@
 #include "Mad.h"
+
 #include "script.h"
 #include "Log.h"
 

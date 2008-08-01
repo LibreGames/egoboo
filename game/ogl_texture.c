@@ -21,9 +21,9 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+#include "ogl_texture.h"
 
 #include "egoboo.h" // GAC - Needed for Win32 stuff
-#include "ogl_texture.h"
 #include "graphic.h"
 
 #include <SDL_image.h>

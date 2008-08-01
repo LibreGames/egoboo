@@ -21,10 +21,11 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+#include "System.h"
 
 #include "proto.h"
 #include "Log.h"
-#include "System.h"
+
 #include <windows.h>
 
 double win32_secondsPerTick = 0;

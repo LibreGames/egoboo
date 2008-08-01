@@ -34,6 +34,7 @@
 #include "Network.h"
 #include "Client.h"
 #include "Server.h"
+#include "sound.h"
 
 #include "egoboo_utility.h"
 #include "egoboo.h"

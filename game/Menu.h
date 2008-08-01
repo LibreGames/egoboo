@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include "char.h"
 #include "ogl_texture.h"
+#include "egoboo_types.h"
 #include "module.h"
 
 //--------------------------------------------------------------------------------------------

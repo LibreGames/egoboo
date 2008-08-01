@@ -26,15 +26,16 @@
 // New menu code
 //********************************************************************************************
 
+#include "Menu.h"
 
 #include "Ui.h"
-#include "Menu.h"
 #include "Log.h"
 #include "Network.h"
 #include "Server.h"
 #include "Client.h"
 #include "NetFile.h"
 #include "Clock.h"
+#include "sound.h"
 
 #include "egoboo.h"
 

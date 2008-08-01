@@ -35,7 +35,7 @@
 #include "script.h"
 #include "mesh.h"
 #include "graphic.h"
-#include "Mad.h"
+#include "sound.h"
 
 #include "egoboo_strutil.h"
 #include "egoboo_utility.h"

@@ -415,34 +415,6 @@ EXTERN float           textureoffset[256];         // For moving textures
 
 EXTERN char            cFrameName[16];                                     // MD2 Frame Name
 
-// Display messages
-typedef struct message_element_t
-{
-  Sint16    time;                                //
-  char      textdisplay[MESSAGESIZE];            // The displayed text
-
-} MESSAGE_ELEMENT;
-
-typedef struct MessageData_t
-{
-
-  // Message files
-  Uint16  total;                                         // The number of messages
-  Uint32  totalindex;                                    // Where to put letter
-
-  Uint32  index[MAXTOTALMESSAGE];                        // Where it is
-  char    text[MESSAGEBUFFERSIZE];                       // The text buffer
-} MessageData;
-
-typedef struct MessageQueue_t
-{
-  int             count;
-
-  Uint16          start;
-  MESSAGE_ELEMENT list[MAXMESSAGE];
-  float           timechange;
-} MessageQueue;
-
 // My lil' random number table
 #define MAXRAND 4096
 EXTERN Uint16 randie[MAXRAND];

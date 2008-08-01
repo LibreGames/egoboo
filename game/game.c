@@ -26,6 +26,7 @@
 #define DECLARE_GLOBALS
 
 #include "game.h"
+
 #include "Ui.h"
 #include "Font.h"
 #include "Clock.h"

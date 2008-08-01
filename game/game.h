@@ -3,12 +3,11 @@
 #include "input.h"
 #include "module.h"
 
-#include "object.h"
 #include "char.h"
 #include "particle.h"
-#include "Mad.h"
 #include "enchant.h"
 #include "passage.h"
+#include "mesh.h"
 #include "Menu.h"
 #include "script.h"
 
@@ -48,6 +47,37 @@ struct ChopData_t
   Uint16   start[MAXCHOP];         // The first character of each part
 };
 typedef struct ChopData_t ChopData;
+
+//--------------------------------------------------------------------------------------------
+// Display messages
+struct message_element_t
+{
+  Sint16    time;                                //
+  char      textdisplay[MESSAGESIZE];            // The displayed text
+
+};
+typedef struct message_element_t MESSAGE_ELEMENT;
+
+struct MessageData_t
+{
+  // Message files
+  Uint16  total;                                         // The number of messages
+  Uint32  totalindex;                                    // Where to put letter
+
+  Uint32  index[MAXTOTALMESSAGE];                        // Where it is
+  char    text[MESSAGEBUFFERSIZE];                       // The text buffer
+};
+typedef struct MessageData_t MessageData;
+
+struct MessageQueue_t
+{
+  int             count;
+
+  Uint16          start;
+  MESSAGE_ELEMENT list[MAXMESSAGE];
+  float           timechange;
+};
+typedef struct MessageQueue_t MessageQueue;
 
 //--------------------------------------------------------------------------------------------
 #define MAXENDTEXT 1024

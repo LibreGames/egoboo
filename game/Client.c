@@ -27,6 +27,7 @@
 //********************************************************************************************
 
 #include "Client.h"
+
 #include "Network.h"
 #include "Log.h"
 #include "NetFile.h"

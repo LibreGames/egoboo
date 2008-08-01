@@ -23,6 +23,7 @@
 //********************************************************************************************
 
 #include "object.inl"
+
 #include "graphic.h"
 #include "particle.h"
 #include "char.h"

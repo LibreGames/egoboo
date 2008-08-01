@@ -28,6 +28,7 @@
 #include "Font.h"
 #include "mesh.h"
 #include "Menu.h"
+#include "game.h"
 
 #include "egoboo_types.h"
 

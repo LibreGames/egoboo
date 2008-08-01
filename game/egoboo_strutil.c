@@ -23,6 +23,7 @@
 //********************************************************************************************
 
 #include "egoboo_strutil.h"
+
 #include "egoboo_config.h"
 
 // str_trim remove all space and tabs in the beginning and at the end of the string

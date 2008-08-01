@@ -24,8 +24,8 @@
 //*
 //********************************************************************************************
 
-#include "proto.h"
 #include "Clock.h"
+
 #include "System.h"
 #include "Log.h"
 #include <stddef.h>

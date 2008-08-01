@@ -25,6 +25,7 @@
 //********************************************************************************************
 
 #include "Ticker.h"
+
 #include "Clock.h"
 #include <assert.h>
 #include <stddef.h>

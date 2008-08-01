@@ -22,9 +22,9 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+#include "Font.h"
 
 #include "ogl_texture.h"
-#include "Font.h"
 #include "Log.h"
 #include "egoboo.h"
 

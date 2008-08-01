@@ -25,6 +25,7 @@
 #include <assert.h>
 
 #include "script.h"
+
 #include "Log.h"
 #include "Mad.h"
 #include "passage.h"
@@ -34,6 +35,7 @@
 #include "passage.h"
 #include "Client.h"
 #include "AStar.h"
+#include "sound.h"
 
 #include "egoboo_utility.h"
 
