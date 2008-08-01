@@ -27,7 +27,7 @@
 typedef matrix_4x4 GLmatrix;
 typedef vect4      GLvector;
 
-typedef struct ogl_vertex_t
+struct ogl_vertex_t
 {
   GLvector pos;
   GLvector col;
@@ -37,4 +37,5 @@ typedef struct ogl_vertex_t
   vect3 nrm;
   vect3 up;
   vect3 rt;
-} GLVertex;
+};
+typedef struct ogl_vertex_t GLVertex;

@@ -70,20 +70,22 @@ static int mnu_handleKeyboard(  MenuProc * mproc  );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-typedef enum mnu_states_e
+enum mnu_states_e
 {
   MM_Begin,
   MM_Entering,
   MM_Running,
   MM_Leaving,
   MM_Finish,
-} MenuProcs;
+};
+
+typedef enum mnu_states_e MenuProcs;
 
 
 
 //--------------------------------------------------------------------------------------------
 
-typedef struct options_data_t
+struct options_data_t
 {
   // Audio
   STRING sz_maxsoundchannel;
@@ -136,7 +138,9 @@ typedef struct options_data_t
   Uint8   autoturncamera;             // Type of camera control...
   bool_t  vsync;                      // Wait for vertical sync?
   bool_t  gfxacceleration;            // Force OpenGL GFX acceleration?
-} OPTIONS_DATA;
+};
+
+typedef struct options_data_t OPTIONS_DATA;
 
 OPTIONS_DATA OData;
 
@@ -372,11 +376,14 @@ bool_t mnu_slideButton( ui_Widget * pw2, ui_Widget * pw1, float dx, float dy )
 struct slidy_button_state_t
 {
   float lerp;
-  int top;
-  int left;
+  int   top;
+  int   left;
+
+  int         button_count;
   ui_Widget * button_list;
-  int        button_count;
-} SlidyButtonState;
+};
+
+struct slidy_button_state_t SlidyButtonState;
 
 //--------------------------------------------------------------------------------------------
 int mnu_initWidgetsList( ui_Widget wlist[], int wmax, const char * text[] )

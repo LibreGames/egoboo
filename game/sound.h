@@ -42,7 +42,7 @@ struct ConfigData_t;
 //Music using SDL_Mixer
 #define MAXPLAYLISTLENGTH   25      // Max number of different tracks loaded into memory
 
-typedef struct sound_state_t
+struct sound_state_t
 {
   egoboo_key  ekey;                  // egoboo_key valid if SoundState_new() been run on this data
   bool_t      mixer_loaded;          // Is the SDL_Mixer loaded?
@@ -63,7 +63,8 @@ typedef struct sound_state_t
   Mix_Chunk * mc_list[GSOUND_COUNT];       // All sounds loaded into memory
   Mix_Music * mus_list[MAXPLAYLISTLENGTH]; // This is a specific music file loaded into memory
 
-} SoundState;
+};
+typedef struct sound_state_t SoundState;
 
 extern SoundState sndState;
 

@@ -6,11 +6,12 @@
 
 typedef float frustum_data_t[6][4];
 
-typedef struct frustum_t
+struct frustum_t
 {
   // This holds the A B C and D values for each side of our frustum.
   frustum_data_t planes;
-} Frustum;
+};
+typedef struct frustum_t Frustum;
 
 extern Frustum gFrustum;
 

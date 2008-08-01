@@ -30,19 +30,21 @@
 #include <SDL_mixer.h> // for Mix_* stuff.
 #include <SDL_opengl.h>
 
-typedef enum slot_e SLOT;
-typedef enum grip_e GRIP;
-typedef enum Action_e ACTION;
-typedef enum lip_transition_e LIPT;
-typedef enum damage_e DAMAGE;
-typedef enum Experience_e EXPERIENCE;
-typedef enum Team_e TEAM;
-typedef enum gender_e GENDER;
-typedef enum particle_type PRTTYPE;
-typedef enum blud_level_e BLUD_LEVEL;
-typedef enum respawn_mode_e RESPAWN_MODE;
-typedef enum idsz_index_e IDSZ_INDEX;
-typedef enum color_e COLR;
+#include <stdio.h>
+
+enum slot_e;
+enum grip_e;
+enum Action_e;
+enum lip_transition_e;
+enum damage_e;
+enum Experience_e;
+enum Team_e;
+enum gender_e;
+enum particle_type;
+enum blud_level_e;
+enum respawn_mode_e;
+enum idsz_index_e;
+enum color_e;
 
 struct CChr_t;
 struct Status_t;
@@ -64,7 +66,7 @@ int starts_with_capital_letter();
 int ai_goto_colon( int read );
 void fget_code( FILE * pfile );
 
-ACTION what_action( char cTmp );
+enum Action_e what_action( char cTmp );
 void release_all_textures(struct CGame_t * gs);
 Uint32 load_one_icon( char * szModname, const char * szObjectname, char * szFilename );
 void release_all_icons(struct CGame_t * gs);
@@ -158,7 +160,7 @@ void set_fan_light( int fanx, int fany, PRT_REF particle );
 void do_dynalight();
 void render_water();
 void draw_scene_zreflection();
-void draw_blip( COLR color, float x, float y );
+void draw_blip( enum color_e color, float x, float y );
 void draw_one_icon( int icontype, int x, int y, Uint8 sparkle );
 void draw_one_font( int fonttype, float x, float y );
 void draw_map( float x, float y );
@@ -180,12 +182,13 @@ void gltitle();
 //---------------------------------------------------------------------------------------------
 // Filesystem functions
 
-typedef enum priority_e
+enum priority_e
 {
   PRI_NONE = 0,
   PRI_WARN,
   PRI_FAIL
-} PRIORITY;
+};
+typedef enum priority_e PRIORITY;
 
 void fs_init();
 const char *fs_getTempDirectory();
@@ -206,30 +209,33 @@ void empty_import_directory();
 int  DirGetAttrib( char *fromdir );
 
 // Enumerate directory contents
-typedef enum fs_type_e
+enum fs_type_e
 {
   FS_UNKNOWN = -1,
   FS_WIN32 = 0,
   FS_LIN,
   FS_MAC
-} FS_TYPE;
+};
+typedef enum fs_type_e FS_TYPE;
 
-typedef struct fs_find_info_win32_t FS_FIND_INFO_WIN32;
-typedef struct fs_find_info_lin_t   FS_FIND_INFO_LIN;
-typedef struct fs_find_info_mac_t   FS_FIND_INFO_MAC;
+struct fs_find_info_win32_t;
+struct fs_find_info_lin_t;
+struct fs_find_info_mac_t;
 
-typedef struct fs_find_info_t
+struct fs_find_info_t
 {
   FS_TYPE type;
 
   union
   {
-    FS_FIND_INFO_WIN32 * W;
-    FS_FIND_INFO_LIN   * L;
-    FS_FIND_INFO_MAC   * M;
+    struct fs_find_info_win32_t * W;
+    struct fs_find_info_lin_t   * L;
+    struct fs_find_info_mac_t   * M;
   };
 
-} FS_FIND_INFO;
+};
+
+typedef struct fs_find_info_t FS_FIND_INFO;
 
 FS_FIND_INFO * fs_find_info_new(FS_FIND_INFO * i);
 bool_t         fs_find_info_delete(FS_FIND_INFO * i);
@@ -257,8 +263,6 @@ typedef struct ego_md2_model_t MD2_Model;
 
 int mad_vertexconnected( MD2_Model * m, int vertex );
 int mad_calc_transvertices( MD2_Model * m );
-
-typedef struct collision_volume_t CVolume;
 
 
 

@@ -33,7 +33,7 @@
 #define NUMFONT                         (NUMFONTX*NUMFONTY)
 #define FONTADD                         4           // Gap between letters
 
-typedef struct bmfont_t
+struct bmfont_t
 {
   GLtexture tex;                    // ogl texture
   int       offset;                 // Line up fonts from top of screen
@@ -41,7 +41,8 @@ typedef struct bmfont_t
   Uint8     spacing_x[NUMFONT];     // The spacing stuff
   Uint8     spacing_y;              //
   Uint8     ascii_table[256];       // Conversion table
-} BMFont;
+};
+typedef struct bmfont_t BMFont;
 
 extern BMFont bmfont;
 
@@ -53,15 +54,15 @@ extern BMFont bmfont;
 
 typedef struct ttfont_t TTFont;
 
-extern TTFont *fnt_loadFont( const char *fileName, int pointSize );
-extern bool_t  fnt_freeFont( TTFont *font );
+extern struct ttfont_t *fnt_loadFont( const char *fileName, int pointSize );
+extern bool_t  fnt_freeFont( struct ttfont_t *font );
 
-extern void  fnt_drawText( TTFont *font, int x, int y, const char *text );
-extern void  fnt_drawTextFormatted( TTFont *font, int x, int y, const char *format, ... );
-extern void  fnt_drawTextBox( TTFont *font, const char *text, int x, int y, int width, int height, int spacing );
+extern void  fnt_drawText( struct ttfont_t *font, int x, int y, const char *text );
+extern void  fnt_drawTextFormatted( struct ttfont_t *font, int x, int y, const char *format, ... );
+extern void  fnt_drawTextBox( struct ttfont_t *font, const char *text, int x, int y, int width, int height, int spacing );
 
 // Only works properly on a single line of text
-extern void  fnt_getTextSize( TTFont *font, const char *text, int *width, int *height );
+extern void  fnt_getTextSize( struct ttfont_t *font, const char *text, int *width, int *height );
 
 // Works for multiple-line strings, using the user-supplied spacing
-extern void  fnt_getTextBoxSize( TTFont *font, const char *text, int spacing, int *width, int *height );
+extern void  fnt_getTextBoxSize( struct ttfont_t *font, const char *text, int spacing, int *width, int *height );

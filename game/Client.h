@@ -42,7 +42,7 @@ bool_t    cl_Started();
 //--------------------------------------------------------------------------------------------
 
 // Status displays
-typedef struct Status_t
+struct Status_t
 {
   egoboo_key ekey;
 
@@ -52,7 +52,8 @@ typedef struct Status_t
   CHR_REF  chr_ref;
   vect2    pos;
   float    y_pos;
-} Status;
+};
+typedef struct Status_t Status;
 
 Status * Status_new( Status * pstat );
 bool_t   Status_delete( Status * pstat );
@@ -62,7 +63,7 @@ Status * Status_renew( Status * pstat );
 
 
 //--------------------------------------------------------------------------------------------
-typedef struct CClient_t
+struct CClient_t
 {
   egoboo_key      ekey;
 
@@ -112,7 +113,8 @@ typedef struct CClient_t
 
   chr_spawn_queue chr_queue;
 
-} CClient;
+};
+typedef struct CClient_t CClient;
 
 CClient * CClient_create(struct CGame_t * gs);
 bool_t    CClient_destroy(CClient ** pcs);

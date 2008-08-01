@@ -89,17 +89,21 @@ void             input_init_keybuffer();
 #define MAXTAG              128                     // Number of tags in scancode.txt
 #define TAGSIZE             32                      // Size of each tag
 
-typedef struct scancode_data_t
+struct scancode_data_t
 {
   char   name[TAGSIZE];             // Scancode names
   Uint32 value;                     // Scancode values
-} SCANCODE_DATA;
+};
 
-typedef struct scantag_list_t
+typedef struct scancode_data_t SCANCODE_DATA;
+
+struct scantag_list_t
 {
   int           count;
   SCANCODE_DATA data[MAXTAG];
-} SCANTAG_LIST;
+};
+
+typedef struct scantag_list_t SCANTAG_LIST;
 
 SCANTAG_LIST tags;
 

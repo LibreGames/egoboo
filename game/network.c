@@ -61,13 +61,15 @@ static void _net_Quit(void);
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-typedef struct NetService_Info_t
+struct NetService_Info_t
 {
   int       references;
   NetHost * host;
   void    * data;
   Uint32    guid;
-} NetService_Info;
+};
+
+typedef struct NetService_Info_t NetService_Info;
 
 static int             _net_service_count = 0;
 static NetService_Info _net_service_list[MAXSERVICE];

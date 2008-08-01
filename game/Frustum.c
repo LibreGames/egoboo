@@ -18,7 +18,7 @@
 
 // We create an enum of the sides so we don't have to call each side 0 or 1.
 // This way it makes it more understandable and readable when dealing with frustum sides.
-typedef enum frustum_side_e
+enum frustum_side_e
 {
   RIGHT = 0,  // The RIGHT side of the frustum
   LEFT = 1,  // The LEFT  side of the frustum
@@ -26,18 +26,21 @@ typedef enum frustum_side_e
   TOP  = 3,  // The TOP side of the frustum
   BACK = 4,  // The BACK side of the frustum
   FRONT = 5   // The FRONT side of the frustum
-} FrustumSide;
+};
+
+typedef enum frustum_side_e FrustumSide;
 
 // Like above, instead of saying a number for the ABC and D of the plane, we
 // want to be more descriptive.
-typedef enum plane_data_t
+enum plane_data_t
 {
   A = 0,    // The X value of the plane's normal
   B = 1,    // The Y value of the plane's normal
   C = 2,    // The Z value of the plane's normal
   D = 3    // The distance the plane is from the origin
-} PlaneData;
+};
 
+typedef enum plane_data_t PlaneData;
 
 Frustum gFrustum;
 

@@ -14,7 +14,7 @@
 
 //Camera control stuff
 
-typedef struct camera_t
+struct camera_t
 {
   bool_t    exploremode;     // Explore mode?
 
@@ -45,7 +45,9 @@ typedef struct camera_t
   GLmatrix  mView;           // View Matrix
   GLmatrix  mProjection;     // Projection Matrix
   GLmatrix  mProjectionBig;  // Larger projection matrix for frustum culling
-} CAMERA;
+};
+
+typedef struct camera_t CAMERA;
 
 extern CAMERA GCamera;
 

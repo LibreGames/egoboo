@@ -29,11 +29,36 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+enum mnu_e
+{
+  mnu_NotImplemented,
+  mnu_Main,
+  mnu_SinglePlayer,
+  mnu_MultiPlayer,
+  mnu_Network,
+  mnu_HostGame,
+  mnu_UnhostGame,
+  mnu_JoinGame,
+  mnu_ChooseModule,
+  mnu_ChoosePlayer,
+  mnu_TestResults,
+  mnu_Options,
+  mnu_VideoOptions,
+  mnu_AudioOptions,
+  mnu_InputOptions,
+  mnu_NewPlayer,
+  mnu_LoadPlayer,
+  mnu_NetworkOff,
+  mnu_Inventory,
+  mnu_Quit
+};
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 
 struct CGame_t;
 
 // in C++ this would inherit from ProcState
-enum mnu_e;
 typedef struct MenuProc_t
 {
   egoboo_key ekey;
@@ -67,30 +92,6 @@ bool_t     MenuProc_init_ingame(MenuProc * ms);
 
 //--------------------------------------------------------------------------------------------
 // All the different menus.  yay!
-
-enum mnu_e
-{
-  mnu_NotImplemented,
-  mnu_Main,
-  mnu_SinglePlayer,
-  mnu_MultiPlayer,
-  mnu_Network,
-  mnu_HostGame,
-  mnu_UnhostGame,
-  mnu_JoinGame,
-  mnu_ChooseModule,
-  mnu_ChoosePlayer,
-  mnu_TestResults,
-  mnu_Options,
-  mnu_VideoOptions,
-  mnu_AudioOptions,
-  mnu_InputOptions,
-  mnu_NewPlayer,
-  mnu_LoadPlayer,
-  mnu_NetworkOff,
-  mnu_Inventory,
-  mnu_Quit
-};
 
 //Input player control
 #define MAXLOADPLAYER     100

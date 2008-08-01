@@ -39,32 +39,35 @@
     bfalse = false
   };
 #else
-  typedef enum bool_e
+  enum bool_e
   {
     btrue  = ( 1 == 1 ),
     bfalse = ( !btrue )
-  } bool_t;
+  };
+  typedef enum bool_e bool_t;
 #endif
 
-typedef enum retval_e
+enum retval_e
 {
   rv_error    = -1,
   rv_fail     = bfalse,
   rv_succeed  = btrue,
   rv_waiting  = 2
-} retval_t;
+};
+typedef enum retval_e retval_t;
 
 typedef char STRING[256];
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-typedef struct egoboo_key_t
+struct egoboo_key_t
 {
   Uint32 v1, v2;
   bool_t dynamic;
   Uint32 data_type;
   void * pdata;
-} egoboo_key;
+};
+typedef struct egoboo_key_t egoboo_key;
 
 INLINE egoboo_key * egoboo_key_create(Uint32 itype, void * pdata);
 INLINE bool_t       egoboo_key_destroy(egoboo_key ** pkey);
@@ -143,24 +146,23 @@ enum
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-typedef struct aa_bbox_t AA_BBOX;
-
-typedef struct rect_sint32_t
+struct rect_sint32_t
 {
   Sint32 left;
   Sint32 right;
   Sint32 top;
   Sint32 bottom;
-} IRect;
+};
+typedef struct rect_sint32_t IRect;
 
-typedef struct rect_float_t
+struct rect_float_t
 {
   float left;
   float right;
   float top;
   float bottom;
-} FRect;
-
+};
+typedef struct rect_float_t FRect;
 
 
 //--------------------------------------------------------------------------------------------
@@ -172,18 +174,18 @@ typedef Uint32 IDSZ;
 
 
 //--------------------------------------------------------------------------------------------
-typedef struct pair_t
+struct pair_t
 {
   Sint32 ibase;
   Uint32 irand;
-} PAIR;
-
+};
+typedef struct pair_t PAIR;
 //--------------------------------------------------------------------------------------------
-typedef struct range_t
+struct range_t
 {
   float ffrom, fto;
-} RANGE;
-
+};
+typedef struct range_t RANGE;
 
 #ifdef __cplusplus
 
@@ -394,38 +396,50 @@ typedef Uint16 SHOP_REF;
 
 
 //--------------------------------------------------------------------------------------------
-typedef union float_int_convert_u 
+union float_int_convert_u 
 { 
   float f; 
   Uint32 i; 
-} FCONVERT;
+};
+
+typedef union float_int_convert_u FCONVERT;
 
 #if SDL_BYTEORDER != SDL_LIL_ENDIAN
     INLINE float SwapLE_float( float val );
 #endif
 
 //--------------------------------------------------------------------------------------------
+enum ProcessStates_e
+{
+  PROC_Begin,
+  PROC_Entering,
+  PROC_Running,
+  PROC_Leaving,
+  PROC_Finish,
+};
 
-enum ProcessStates_e;
+typedef enum ProcessStates_e ProcessStates;
+
+//--------------------------------------------------------------------------------------------
 struct ClockState_t;
 
-typedef struct ProcState_t
+struct ProcState_t
 {
   egoboo_key ekey;
 
   // process variables
-  enum ProcessStates_e State;              // what are we doing now?
-  bool_t               Active;             // Keep looping or quit?
-  bool_t               Paused;             // Is it paused?
-  bool_t               KillMe;             // someone requested that we terminate!
-  bool_t               Terminated;         // We are completely done.
+  ProcessStates State;              // what are we doing now?
+  bool_t        Active;             // Keep looping or quit?
+  bool_t        Paused;             // Is it paused?
+  bool_t        KillMe;             // someone requested that we terminate!
+  bool_t        Terminated;         // We are completely done.
 
   // each process has its own clock
   struct ClockState_t * clk;
 
-  int                  returnValue;
-
-} ProcState;
+  int           returnValue;
+};
+typedef struct ProcState_t ProcState;
 
 ProcState * ProcState_new(ProcState * ps);
 bool_t      ProcState_delete(ProcState * ps);
@@ -435,25 +449,25 @@ bool_t      ProcState_init(ProcState * ps);
 
 
 
-typedef enum respawn_mode_e
+enum respawn_mode_e
 {
   RESPAWN_NONE = 0,
   RESPAWN_NORMAL,
   RESPAWN_ANYTIME
-} RESPAWN_MODE;
-
-
+};
+typedef enum respawn_mode_e RESPAWN_MODE;
 
 typedef int (SDLCALL *SDL_Callback_Ptr)(void *);
 
 
 // a hash type for "efficiently" storing data
-typedef struct HashNode_t
+struct HashNode_t
 {
   egoboo_key ekey;
   struct HashNode_t * next;
   void * data;
-} HashNode;
+};
+typedef struct HashNode_t HashNode;
 
 INLINE HashNode * HashNode_create(void * data);
 INLINE bool_t          HashNode_destroy(HashNode **);
@@ -462,29 +476,31 @@ INLINE HashNode * HashNode_insert_before(HashNode lst[], HashNode * n);
 INLINE HashNode * HashNode_remove_after (HashNode lst[]);
 INLINE HashNode * HashNode_remove       (HashNode lst[]);
 
-typedef struct HashList_t
+struct HashList_t
 {
-  int              allocated;
-  int           *  subcount;
+  int         allocated;
+  int      *  subcount;
   HashNode ** sublist;
-} HashList;
+};
+typedef struct HashList_t HashList;
 
 INLINE HashList * HashList_create(int size);
 INLINE bool_t     HashList_destroy(HashList **);
 
 
-typedef struct BSP_node_t
+struct BSP_node_t
 {
   egoboo_key ekey;
 
-  struct BSP_leaf_t  * next;
+  struct BSP_node_t  * next;
   void               * data;
-} BSP_node;
+};
+typedef struct BSP_node_t BSP_node;
 
 INLINE BSP_node * BSP_node_new( BSP_node * t, void * data );
 INLINE bool_t     BSP_node_delete( BSP_node * t );
 
-typedef struct BSP_leaf_t
+struct BSP_leaf_t
 {
   egoboo_key ekey;
 
@@ -492,14 +508,15 @@ typedef struct BSP_leaf_t
   size_t               child_count;
   struct BSP_leaf_t ** children;
   BSP_node           * nodes;
-} BSP_leaf;
+};
+typedef struct BSP_leaf_t BSP_leaf;
 
 INLINE BSP_leaf * BSP_leaf_new( BSP_leaf * L, int size );
 INLINE bool_t     BSP_leaf_delete( BSP_leaf * L );
 INLINE bool_t     BSP_leaf_insert( BSP_leaf * L, BSP_node * n );
 
 
-typedef struct BSP_tree_t
+struct BSP_tree_t
 {
   egoboo_key ekey;
 
@@ -511,7 +528,8 @@ typedef struct BSP_tree_t
 
   BSP_leaf * root;
 
-} BSP_tree;
+};
+typedef struct BSP_tree_t BSP_tree;
 
 INLINE BSP_tree * BSP_tree_new( BSP_tree * t, Sint32 dim, Sint32 depth);
 INLINE bool_t     BSP_tree_delete( BSP_tree * t );

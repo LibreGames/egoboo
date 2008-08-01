@@ -25,12 +25,13 @@
 #ifndef egoboo_Ticker_h
 #define egoboo_Ticker_h
 
-typedef struct ticker_t
+struct ticker_t
 {
   double lastTime;
   double tickInterval;
   int numTicks;
-}Ticker;
+};
+typedef struct ticker_t Ticker;
 
 extern void ticker_initWithInterval( Ticker *ticker, double interval );
 extern void ticker_initWithFrequency( Ticker *ticker, int freq );

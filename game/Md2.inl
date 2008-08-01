@@ -2,7 +2,7 @@
 
 #include "Md2.h"
 
-typedef struct ego_md2_model_t
+struct ego_md2_model_t
 {
   int m_numVertices;
   int m_numTexCoords;
@@ -16,7 +16,8 @@ typedef struct ego_md2_model_t
   MD2_Triangle  *m_triangles;
   MD2_Frame     *m_frames;
   MD2_GLCommand *m_commands;
-} MD2_Model;
+};
+typedef struct ego_md2_model_t MD2_Model;
 
 INLINE const int md2_get_numVertices(MD2_Model * m)  { return m->m_numVertices; }
 INLINE const int md2_get_numTexCoords(MD2_Model * m) { return m->m_numTexCoords; }

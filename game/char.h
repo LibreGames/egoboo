@@ -79,14 +79,18 @@ struct CMad_t;
 #define SEEINVISIBLE        128                     // Cutoff for invisible characters
 #define INVISIBLE           20                      // The character can't be detected
 
-typedef enum missle_handling_e
+enum blud_level_e;
+
+enum missle_handling_e
 {
   MIS_NORMAL  = 0,                  //Treat missiles normally
   MIS_DEFLECT,                      //Deflect incoming missiles
   MIS_REFLECT                       //Reflect them back!
-} MISSLE_TYPE;
+};
+typedef enum missle_handling_e MISSLE_TYPE;
 
-typedef enum slot_e
+
+enum slot_e
 {
   SLOT_LEFT,
   SLOT_RIGHT,
@@ -99,11 +103,12 @@ typedef enum slot_e
   // aliases
   SLOT_BEGIN = SLOT_LEFT,
   SLOT_COUNT = SLOT_INVENTORY
-} SLOT;
+};
+typedef enum slot_e SLOT;
 
 extern SLOT _slot;
 
-typedef enum grip_e
+enum grip_e
 {
   GRIP_ORIGIN   = 0,                                  // Grip at mount's origin
   GRIP_LAST     = 1,                                  // Grip at mount's last vertex
@@ -116,7 +121,8 @@ typedef enum grip_e
   // Aliases
   GRIP_SADDLE    = GRIP_LEFT,    // Grip at mount's "saddle" (== left hand for now)
   GRIP_INVENTORY = GRIP_ORIGIN   // "Grip" in the object's inventory
-} GRIP;
+};
+typedef enum grip_e GRIP;
 
 
 //--------------------------------------------------------------------------------------------
@@ -126,17 +132,16 @@ struct CChr_t;
 struct CGame_t;
 
 //--------------------------------------------------------------------------------------------
-
-
-typedef enum gender_e
+enum gender_e
 {
   GEN_FEMALE = 0,
   GEN_MALE,
   GEN_OTHER,
   GEN_RANDOM,
-} GENDER;
+};
+typedef enum gender_e GENDER;
 
-typedef enum latch_button_e
+enum latch_button_e
 {
   LATCHBUTTON_NONE      =      0,
   LATCHBUTTON_LEFT      = 1 << 0,                    // Character button presses
@@ -147,9 +152,10 @@ typedef enum latch_button_e
   LATCHBUTTON_PACKLEFT  = 1 << 5,                    // ( Packs are for inventory cycle )
   LATCHBUTTON_PACKRIGHT = 1 << 6,                    //
   LATCHBUTTON_RESPAWN   = 1 << 7                     //
-} LATCHBUTTON_BITS;
+};
+typedef enum latch_button_e LATCHBUTTON_BITS;
 
-typedef enum alert_bits_e
+enum alert_bits_e
 {
   ALERT_NONE                       =       0,
   ALERT_SPAWNED                    = 1 <<  0,
@@ -184,18 +190,20 @@ typedef enum alert_bits_e
   ALERT_CRUSHED                    = 1 << 29,
   ALERT_NOTPUTAWAY                 = 1 << 30,
   ALERT_TAKENOUT                   = 1 << 31
-} ALERT_BITS;
+};
+typedef enum alert_bits_e ALERT_BITS;
 
-typedef enum turnmode_e
+enum turnmode_e
 {
   TURNMODE_NONE     = 0,
   TURNMODE_VELOCITY,                      // Character gets rotation from velocity
   TURNMODE_WATCH,                             // For watch towers
   TURNMODE_SPIN,                              // For spinning objects
   TURNMODE_WATCHTARGET                        // For combat intensive AI
-} TURNMODE;
+};
+typedef enum turnmode_e TURNMODE;
 
-typedef enum Experience_e
+enum Experience_e
 {
   XP_FINDSECRET = 0,                           // Finding a secret
   XP_WINQUEST,                                 // Beating a module or a subquest
@@ -207,9 +215,10 @@ typedef enum Experience_e
   XP_TALKGOOD,                                 // Talk good, er...  I mean well
   XP_COUNT,                                    // Number of ways to get experience
   XP_DIRECT     = 255                          // No modification
-} EXPERIENCE;
+};
+typedef enum Experience_e EXPERIENCE;
 
-typedef enum idsz_index_e
+enum idsz_index_e
 {
   IDSZ_PARENT = 0,                             // Parent index
   IDSZ_TYPE,                                   // Self index
@@ -218,7 +227,8 @@ typedef enum idsz_index_e
   IDSZ_HATE,                                   // Hate index
   IDSZ_VULNERABILITY,                          // Vulnerability index
   IDSZ_COUNT                                   // ID strings per character
-} IDSZ_INDEX;
+};
+typedef enum idsz_index_e IDSZ_INDEX;
 
 #define MAXNUMINPACK        6                       // Max number of items to carry in pack
 #define LOWSTAT             INT_TO_FP8(  1)      // Worst...
@@ -234,17 +244,17 @@ extern Uint16          numdolist;                  // How many in the list
 extern CHR_REF         dolist[CHRLST_COUNT];             // List of which characters to draw
 
 //--------------------------------------------------------------------------------------------
-typedef struct skin_t
+struct skin_t
 {
   Uint8         defense_fp8;                // Defense for each skin
   char          name[MAXCAPNAMESIZE];   // Skin name
   Uint16        cost;                   // Store prices
   Uint8         damagemodifier_fp8[MAXDAMAGETYPE];
   float         maxaccel;                   // Acceleration for each skin
-} SKIN;
-
+};
+typedef struct skin_t SKIN;
 //--------------------------------------------------------------------------------------------
-typedef struct CProperties_t
+struct CProperties_t
 {
   egoboo_key ekey;
 
@@ -293,15 +303,15 @@ typedef struct CProperties_t
   bool_t     canread;                 // Can read books and scrolls [READ]
   // [END] Skill Expansions
 
-} CProperties;
-
+};
+typedef struct CProperties_t CProperties;
 CProperties * CProperties_new( CProperties * p);
 bool_t        CProperties_init( CProperties * p );
 
 
 
 //--------------------------------------------------------------------------------------------
-typedef struct CStatData_t
+struct CStatData_t
 {
 
   // LIFE
@@ -331,10 +341,10 @@ typedef struct CStatData_t
   PAIR          dexterity_pair;                 // Dexterity
   PAIR          dexterityperlevel_pair;         //
 
-} CStatData;
-
+};
+typedef struct CStatData_t CStatData;
 //--------------------------------------------------------------------------------------------
-typedef struct CCap_t
+struct CCap_t
 {
   egoboo_key    ekey;
   bool_t        Loaded;
@@ -398,7 +408,7 @@ typedef struct CCap_t
   bool_t        cancarrytonextmodule;          // Take it with you?
   bool_t        needskillidtouse;              // Check IDSZ first?
   DAMAGE        damagetargettype;              // For AI DamageTarget
-  ACTION        weaponaction;                  // Animation needed to swing
+  enum Action_e weaponaction;                  // Animation needed to swing
   bool_t        slotvalid[SLOT_COUNT];         // Left/Right hands valid
   bool_t        attackattached;                //
   PIP_REF       attackprttype;                 //
@@ -408,7 +418,7 @@ typedef struct CCap_t
   Uint8         gopoofprtamount;               // Poof effect
   Sint16        gopoofprtfacingadd;            //
   PIP_REF       gopoofprttype;                 //
-  BLUD_LEVEL    bludlevel;                     // Blud ( yuck )
+  enum blud_level_e    bludlevel;                     // Blud ( yuck )
   PIP_REF       bludprttype;                   //
   Sint8         footfallsound;                 // Footfall sound, -1
   Sint8         jumpsound;                     // Jump sound, -1
@@ -419,7 +429,8 @@ typedef struct CCap_t
 
   CProperties   prop;
 
-} CCap;
+};
+typedef struct CCap_t CCap;
 
 #ifdef __cplusplus
   typedef TList<CCap_t, CAPLST_COUNT> CapList_t;
@@ -442,33 +453,35 @@ CCap *  Cap_renew(CCap *pcap);
 #define LOADED_CAP(LST, XX)   ( VALID_CAP(LST, XX) && LST[XX].Loaded )
 
 //--------------------------------------------------------------------------------------------
-typedef struct lighting_data_t
+struct lighting_data_t
 {
   vect4   emission, diffuse, specular;
   GLfloat shininess[1];
-} LData;
+};
 
-
+typedef struct lighting_data_t LData;
 //--------------------------------------------------------------------------------------------
-typedef struct action_info_t
+struct action_info_t
 {
   bool_t  keep;      // Keep the action playing?
   bool_t  loop;      // Loop it too?
   bool_t  ready;     // Ready to play a new one?
-  ACTION  now;       // Character's current action
-  ACTION  next;      // Character's next    action
-} ACTION_INFO;
+  enum Action_e  now;       // Character's current action
+  enum Action_e  next;      // Character's next    action
+};
+typedef struct action_info_t ACTION_INFO;
 
 INLINE ACTION_INFO * action_info_new( ACTION_INFO * a);
 
 //--------------------------------------------------------------------------------------------
-typedef struct animation_info_t
+struct animation_info_t
 {
   Uint16          next;       // Character's frame
   Uint16          last;       // Character's last frame
   float           flip;
   Uint8           ilip;    // Character's low-res frame in betweening
-} ANIM_INFO;
+};
+typedef struct animation_info_t ANIM_INFO;
 
 INLINE ANIM_INFO * anim_info_new( ANIM_INFO * a );
 
@@ -478,11 +491,12 @@ INLINE ANIM_INFO * anim_info_new( ANIM_INFO * a );
 
 typedef vect2 WAYPOINT;
 
-typedef struct waypoint_list_t
+struct waypoint_list_t
 {
   int      head, tail;
   WAYPOINT pos[MAXWAY];
-} WP_LIST;
+};
+typedef struct waypoint_list_t WP_LIST;
 
 INLINE WP_LIST * wp_list_new(WP_LIST * w, vect3 * pos);
 INLINE bool_t    wp_list_clear(WP_LIST * w);
@@ -496,7 +510,7 @@ INLINE float  wp_list_y( WP_LIST * wl );
 bool_t wp_list_prune(WP_LIST * wl);
 
 //--------------------------------------------------------------------------------------------
-typedef struct ai_state_t
+struct ai_state_t
 {
   egoboo_key ekey;
 
@@ -525,7 +539,7 @@ typedef struct ai_state_t
 
   // other random stuff
   Uint16          directionlast;   // Direction of last attack/healing
-  DAMAGE          damagetypelast;  // Last damage type
+  DAMAGE                 damagetypelast;  // Last damage type
   TURNMODE        turnmode;        // Turning mode
   vect3           trgvel;          // target's velocity
   CLatch          latch;           // latches
@@ -542,7 +556,8 @@ typedef struct ai_state_t
   Uint32 tmpturn;
   Sint32 tmpdistance;
   Sint32 tmpargument;
-} AI_STATE;
+};
+typedef struct ai_state_t AI_STATE;
 
 INLINE AI_STATE * ai_state_new(AI_STATE * a);
 INLINE bool_t     ai_state_delete(AI_STATE * a);
@@ -551,16 +566,17 @@ INLINE AI_STATE * ai_state_reinit(AI_STATE * a, CHR_REF ichr);
 
 
 //--------------------------------------------------------------------------------------------
-typedef struct chr_terrain_light_t
+struct chr_terrain_light_t
 {
   vect3_ui08      ambi_fp8; // 0-255, terrain light
   vect3_ui08      spek_fp8; // 0-255, terrain light
   vect3_ui16      turn_lr;  // Character's light rotation 0 to 65535
-} CHR_TLIGHT;
+};
 
+typedef struct chr_terrain_light_t CHR_TLIGHT;
 
 //--------------------------------------------------------------------------------------------
-typedef struct CStats_t
+struct CStats_t
 {
   // life
   Sint16  life_fp8;            // Life stuff
@@ -579,10 +595,11 @@ typedef struct CStats_t
   Sint16  wisdom_fp8;          // Wisdom
   Sint16  intelligence_fp8;    // Intelligence
   Sint16  dexterity_fp8;       // Dexterity
-} CStats;
+};
+typedef struct CStats_t CStats;
 
 //--------------------------------------------------------------------------------------------
-typedef struct chr_spawn_info_t
+struct chr_spawn_info_t
 {
   egoboo_key ekey;
 
@@ -612,21 +629,24 @@ typedef struct chr_spawn_info_t
   int      level;
   bool_t   stat;
   bool_t   ghost;
-} chr_spawn_info;
+};
+
+typedef struct chr_spawn_info_t chr_spawn_info;
 
 chr_spawn_info * chr_spawn_info_new(chr_spawn_info * psi, struct CGame_t * gs );
 bool_t           chr_spawn_info_init( chr_spawn_info * psi, vect3 pos, vect3 vel, 
                                       OBJ_REF iobj, TEAM_REF team, Uint8 skin, Uint16 facing, 
                                       const char *name, CHR_REF override );
 //--------------------------------------------------------------------------------------------
-typedef struct chr_spawn_queue_t
+struct chr_spawn_queue_t
 {
   egoboo_key ekey;
   int head, tail;
 
   size_t           data_size;
   chr_spawn_info * data;
-} chr_spawn_queue;
+};
+typedef struct chr_spawn_queue_t chr_spawn_queue;
 
 chr_spawn_queue * chr_spawn_queue_new(chr_spawn_queue * q, int size);
 bool_t            chr_spawn_queue_delete(chr_spawn_queue * q);
@@ -634,14 +654,15 @@ chr_spawn_info  * chr_spawn_queue_pop(chr_spawn_queue * q);
 bool_t            chr_spawn_queue_push(chr_spawn_queue * q, chr_spawn_info * psi );
 
 //--------------------------------------------------------------------------------------------
-typedef struct CSignal_t
+struct CSignal_t
 {
   Uint32 type;  // The type of this message
   Uint32 data;  // The message data (i.e. the rank of the character or something)
-} CSignal;
+};
+typedef struct CSignal_t CSignal;
 
 //--------------------------------------------------------------------------------------------
-typedef struct CChr_t
+struct CChr_t
 {
   egoboo_key      ekey;
   bool_t          reserved;        // Is it going to be used?
@@ -750,8 +771,8 @@ typedef struct CChr_t
   Uint8           spd_walk;         // Walking if above this speed
   Uint8           spd_run;          // Running if above this speed
 
-  DAMAGE          damagetargettype;   // Type of damage for AI DamageTarget
-  DAMAGE          reaffirmdamagetype; // For relighting torches
+  DAMAGE                 damagetargettype;   // Type of damage for AI DamageTarget
+  DAMAGE                 reaffirmdamagetype; // For relighting torches
   float           damagetime;         // Invincibility timer
 
   Uint16          skin_ref;           // which skin
@@ -808,7 +829,8 @@ typedef struct CChr_t
 
   
   CProperties   prop;                // all character properties
-} CChr;
+};
+typedef struct CChr_t CChr;
 
 #ifdef __cplusplus
   typedef TList<CChr_t, CHRLST_COUNT> ChrList_t;
@@ -886,13 +908,13 @@ bool_t make_one_weapon_matrix( ChrList_t chrlst, size_t chrlst_size, Uint16 cnt 
 void make_character_matrices( struct CGame_t * gs );
 
 Uint32 chr_hitawall( struct CGame_t * gs, CChr * pchr, vect3 * norm );
-void play_action( struct CGame_t * gs, CHR_REF character, ACTION action, bool_t ready );
+void play_action( struct CGame_t * gs, CHR_REF character, enum Action_e action, bool_t ready );
 void set_frame( struct CGame_t * gs, CHR_REF character, Uint16 frame, Uint8 lip );
 bool_t detach_character_from_mount( struct CGame_t * gs, CHR_REF character, bool_t ignorekurse, bool_t doshop );
 void drop_money( struct CGame_t * gs, CHR_REF character, Uint16 money );
 
 void damage_character( struct CGame_t * gs, CHR_REF character, Uint16 direction,
-                       PAIR * ppair, DAMAGE damagetype, TEAM_REF team,
+                       PAIR * ppair, DAMAGE        damagetype, TEAM_REF team,
                        CHR_REF attacker, Uint16 effects );
 void kill_character( struct CGame_t * gs, CHR_REF character, CHR_REF killer );
 void spawn_poof( struct CGame_t * gs, CHR_REF character, OBJ_REF profile );

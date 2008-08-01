@@ -113,13 +113,13 @@
 
 /**> DATA STRUCTURES <**/
 #pragma pack(push,1)
-typedef struct matrix_4x4_t { float v[16]; } matrix_4x4;
-typedef union vector2_t { float _v[2]; struct { float x, y; }; struct { float u, v; }; struct { float s, t; }; } vect2;
-typedef union vector3_t { float v[3]; struct { float x, y, z; }; struct { float r, g, b; }; } vect3;
-typedef union vector3_ui08_t { Uint8 v[3]; struct { Uint8 x, y, z; }; struct { Uint8 r, g, b; }; } vect3_ui08;
-typedef union vector3_ui16_t { Uint16 v[3]; struct { Uint16 x, y, z; }; struct { Uint16 r, g, b; }; } vect3_ui16;
-typedef union vector4_t { float v[4]; struct { float x, y, z, w; }; struct { float r, g, b, a; }; } vect4;
-typedef vect4 quaternion;
+  typedef struct matrix_4x4_t { float v[16]; } matrix_4x4;
+  typedef union vector2_t { float _v[2]; struct { float x, y; }; struct { float u, v; }; struct { float s, t; }; } vect2;
+  typedef union vector3_t { float v[3]; struct { float x, y, z; }; struct { float r, g, b; }; } vect3;
+  typedef union vector3_ui08_t { Uint8 v[3]; struct { Uint8 x, y, z; }; struct { Uint8 r, g, b; }; } vect3_ui08;
+  typedef union vector3_ui16_t { Uint16 v[3]; struct { Uint16 x, y, z; }; struct { Uint16 r, g, b; }; } vect3_ui16;
+  typedef union vector4_t { float v[4]; struct { float x, y, z, w; }; struct { float r, g, b, a; }; } vect4;
+  typedef vect4 quaternion;
 #pragma pack(pop)
 
 /**> GLOBAL VARIABLES <**/
@@ -187,7 +187,7 @@ INLINE bool_t matrix_compare_3x3(matrix_4x4 * pm1, matrix_4x4 * pm2);
 
 
 //--------------------------------------------------------------------------------------------
-typedef struct aa_bbox_t
+struct aa_bbox_t
 {
   int    sub_used;
   float  weight;
@@ -198,14 +198,17 @@ typedef struct aa_bbox_t
 
   vect3  mins;
   vect3  maxs;
-} AA_BBOX;
+};
+
+typedef struct aa_bbox_t AA_BBOX;
 
 //--------------------------------------------------------------------------------------------
-typedef struct bbox_list_t
+struct bbox_list_t
 {
   int       count;
   AA_BBOX * list;
-} BBOX_LIST;
+};
+typedef struct bbox_list_t BBOX_LIST;
 
 INLINE const BBOX_LIST * bbox_list_new(BBOX_LIST * lst);
 INLINE const BBOX_LIST * bbox_list_delete(BBOX_LIST * lst);
@@ -214,11 +217,12 @@ INLINE const BBOX_LIST * bbox_list_alloc(BBOX_LIST * lst, int count);
 INLINE const BBOX_LIST * bbox_list_realloc(BBOX_LIST * lst, int count);
 
 //--------------------------------------------------------------------------------------------
-typedef struct bbox_array_t
+struct bbox_array_t
 {
   int         count;
   BBOX_LIST * list;
-} BBOX_ARY;
+};
+typedef struct bbox_array_t BBOX_ARY;
 
 INLINE const BBOX_ARY * bbox_ary_new(BBOX_ARY * ary);
 INLINE const BBOX_ARY * bbox_ary_delete(BBOX_ARY * ary);

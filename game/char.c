@@ -54,11 +54,13 @@
 #include "egoboo_types.inl"
 
 // pair-wise collision data
-typedef struct CoData_t
+struct CoData_t
 {
   CHR_REF chra, chrb;
   PRT_REF prtb;
-} CoData;
+};
+
+typedef struct CoData_t CoData;
 
 HashList * CoList;
 
@@ -70,7 +72,7 @@ static CHR_REF _chr_spawn( chr_spawn_info si, bool_t activate );
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-typedef struct CChrEnvironment_t
+struct CChrEnvironment_t
 {
   egoboo_key ekey;
 
@@ -91,7 +93,9 @@ typedef struct CChrEnvironment_t
 
   CPhysicsData phys;
 
-} CChrEnviro;
+};
+
+typedef struct CChrEnvironment_t CChrEnviro;
 
 CChrEnviro * CChrEnviro_new( CChrEnviro * cphys, CPhysicsData * gphys);
 bool_t       CChrEnviro_delete( CChrEnviro * cphys );

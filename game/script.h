@@ -15,7 +15,7 @@ extern int                     iNumAis;
 #define MAXCODENAMESIZE     64                      //
 #define AISMAXCOMPILESIZE   (AILST_COUNT*MAXCODE)         // For parsing AI scripts
 
-typedef enum script_opcode_e
+enum script_opcode_e
 {
   F_IfSpawned = 0, // 0                     // Scripted AI functions (v0.10)
   F_IfTimeOut, // 1
@@ -371,9 +371,10 @@ typedef enum script_opcode_e
   F_DisableRespawn,					          	//
   F_IfButtonPressed,
   F_IfHolderScoredAHit					// Scripted AI functions (v1.10)
-} OPCODE;
+};
+typedef enum script_opcode_e OPCODE;
 
-typedef enum script_operation_e
+enum script_operation_e
 {
   OP_ADD = 0,     // +
   OP_SUB,         // -
@@ -383,9 +384,10 @@ typedef enum script_operation_e
   OP_MUL,         // *
   OP_DIV,         // /
   OP_MOD          // %
-} OPERATION;
+};
+typedef enum script_operation_e OPERATION;
 
-typedef enum script_variable_e
+enum script_variable_e
 {
   VAR_TMP_X = 0,
   VAR_TMP_Y,
@@ -461,9 +463,10 @@ typedef enum script_variable_e
   VAR_SPAWN_DISTANCE,
   VAR_TARGET_MAX_LIFE,
   VAR_SELF_CONTENT
-} VARIABLE;
+};
+typedef enum script_variable_e VARIABLE;
 
-typedef struct ScriptInfo_t
+struct ScriptInfo_t
 {
   int    buffer_index;
   Uint32 buffer[AISMAXCOMPILESIZE];
@@ -472,7 +475,8 @@ typedef struct ScriptInfo_t
   int    offset_count;
   int    offset_stt[AILST_COUNT];
   int    offset_end[AILST_COUNT];
-} ScriptInfo;
+};
+typedef struct ScriptInfo_t ScriptInfo;
 
 retval_t run_script( struct CGame_t * gs, CHR_REF character, float dUpdate );
 void run_all_scripts( struct CGame_t * gs, float dUpdate );

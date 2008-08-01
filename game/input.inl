@@ -11,11 +11,13 @@ extern KeyboardBuffer _keybuff;
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-typedef struct control_data_t
+struct control_data_t
 {
   Uint32 value;             // The scancode or mask
   bool_t is_key;            // Is it a key?
-} CONTROL_DATA;
+};
+
+typedef struct control_data_t CONTROL_DATA;
 
 CONTROL_DATA control_list[INPUT_COUNT][CONTROL_COUNT];
 

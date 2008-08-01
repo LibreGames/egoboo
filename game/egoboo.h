@@ -61,6 +61,17 @@ struct CGame_t;
 
 EXTERN const char VERSION[] EQ( "2.7.x" );   // Version of the game
 
+enum color_e
+{
+  COLR_WHITE = 0,
+  COLR_RED,
+  COLR_YELLOW,
+  COLR_GREEN,
+  COLR_BLUE,
+  COLR_PURPLE
+};
+typedef enum color_e COLR;
+
 #define NOSPARKLE           255
 
 #define DELAY_RESIZE            50                      // Time it takes to resize a character
@@ -82,22 +93,17 @@ typedef enum damage_effects_bits_e
 } DAMFX_BITS;
 
 //Particle Texture Types
-typedef enum part_type
+enum part_type
 {
   PART_NORMAL,
   PART_SMOOTH,
   PART_FAST
-} PART_TYPE;
+};
+typedef enum part_type PART_TYPE;
 
-typedef enum blud_level_e
-{
-  BLUD_NONE = 0,
-  BLUD_NORMAL,
-  BLUD_ULTRA                         // This makes any damage draw blud
-} BLUD_LEVEL;
+
 
 #define SPELLBOOK           127                     // The spellbook model TODO: change this badly thing
-
 
 #define NOQUEST             -2						// Quest not found
 #define QUESTBEATEN         -1                      // Quest is beaten
@@ -195,7 +201,7 @@ typedef struct blip_t
 {
   Uint16          x;
   Uint16          y;
-  COLR            c;
+  COLR    c;
 
   // !!! wrong, but it will work !!!
   IRect           rect;           // The blip rectangles
@@ -376,16 +382,6 @@ typedef enum SIGNAL_e
   SIGNAL_ENTERPASSAGE,
 } SIGNAL;
 
-
-typedef enum color_e
-{
-  COLOR_WHITE = 0,
-  COLOR_RED,
-  COLOR_YELLOW,
-  COLOR_GREEN,
-  COLOR_BLUE,
-  COLOR_PURPLE
-} COLOR;
 
 typedef enum move_t
 {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "egoboo_types.h"
+#include "egoboo_utility.h"
 #include "egoboo_math.h"
 #include "Physics.h"
 
@@ -191,7 +192,7 @@ INLINE void VData_Blended_Allocate(VData_Blended * v, size_t verts);
 INLINE void VData_Blended_Deallocate(VData_Blended * v);
 
 //--------------------------------------------------------------------------------------------
-typedef enum damage_e
+enum damage_e
 {
   DAMAGE_SLASH   = 0,                          //
   DAMAGE_CRUSH,                                //
@@ -203,7 +204,8 @@ typedef enum damage_e
   DAMAGE_ZAP,                                  //
   MAXDAMAGETYPE,                              // Damage types
   DAMAGE_NULL     = 255,                       //
-} DAMAGE;
+};
+typedef enum damage_e DAMAGE;
 
 #define DAMAGE_SHIFT         3                       // 000000xx Resistance ( 1 is common )
 #define DAMAGE_INVERT        4                       // 00000x00 Makes damage heal

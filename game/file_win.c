@@ -30,11 +30,13 @@
 #include <shlobj.h>
 #include <shlwapi.h>
 
-typedef struct fs_find_info_win32_t
+struct fs_find_info_win32_t
 {
   WIN32_FIND_DATA win32_wfdData;
   HANDLE          win32_hFind;
-} FS_FIND_INFO_WIN32;
+};
+
+typedef struct fs_find_info_win32_t FS_FIND_INFO_WIN32;
 
 FS_FIND_INFO * fs_find_info_new(FS_FIND_INFO * i)
 {

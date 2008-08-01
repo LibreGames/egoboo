@@ -42,7 +42,7 @@ bool_t    sv_Started();
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-typedef struct CServer_t
+struct CServer_t
 {
   egoboo_key ekey;
 
@@ -77,7 +77,8 @@ typedef struct CServer_t
   int    num_loaded;                       //
   int    num_logon;
 
-} CServer;
+};
+typedef struct CServer_t CServer;
 
 CServer * CServer_create(struct CGame_t * gs);
 bool_t    CServer_destroy(CServer ** pss);

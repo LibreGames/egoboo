@@ -107,11 +107,12 @@ typedef enum Action_e
   ACTION_ST = ACTION_DA,
 
   ACTION_INVALID        = 0xffff                // Action not valid for this character
-} ACTION;
+};
+typedef enum Action_e ACTION;
 
 extern char cActionName[MAXACTION][2];                  // Two letter name code
 
-typedef enum mad_effects_bits_e
+enum mad_effects_bits_e
 {
   MADFX_INVICTUS       = 1 <<  0,                    // I  Invincible
   MADFX_ACTLEFT        = 1 <<  1,                    // AL Activate left item
@@ -125,17 +126,18 @@ typedef enum mad_effects_bits_e
   MADFX_CHARLEFT       = 1 <<  9,                    // CL Grab left/Grab only character
   MADFX_CHARRIGHT      = 1 << 10,                    // CR Grab right character
   MADFX_POOF           = 1 << 11                     // P  Poof
-} MADFX_BITS;
+};
+typedef enum mad_effects_bits_e MADFX_BITS;
 
-typedef enum lip_transition_e
+enum lip_transition_e
 {
   LIPT_DA = 0,                                  // For smooth transitions 'tween
   LIPT_WA,                                      //   walking rates
   LIPT_WB,                                      //
   LIPT_WC,                                      //
   LIPT_COUNT
-} LIPT;
-
+};
+typedef enum lip_transition_e LIPT;
 
 //------------------------------------
 //Model stuff
@@ -143,7 +145,7 @@ typedef enum lip_transition_e
 
 #define MAXFRAMESPERANIM 16
 
-typedef struct CMad_t
+struct CMad_t
 {
   egoboo_key      ekey;
   bool_t          Loaded;
@@ -163,7 +165,8 @@ typedef struct CMad_t
 
   int             bbox_frames;
   BBOX_ARY *      bbox_arrays;
-} CMad;
+};
+typedef struct CMad_t CMad;
 
 #ifdef __cplusplus
   typedef TList<CMad_t, MADLST_COUNT> MadList_t;

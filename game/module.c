@@ -79,7 +79,7 @@ void module_release( CGame * gs )
   if(local_running || !server_running)
   {
     release_map(gs);
-    release_bumplist( &(mi->bumplist) );
+    release_bumplist( mi );
   }
 
   if(local_running)

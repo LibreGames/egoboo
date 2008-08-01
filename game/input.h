@@ -6,7 +6,7 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-typedef enum control_list_e
+enum control_list_e
 {
   KEY_JUMP = 0,
   KEY_LEFT_USE,
@@ -64,29 +64,31 @@ typedef enum control_list_e
   JOA_LAST = JOB_FIRST,
   JOB_LAST = CONTROL_LIST_COUNT
 
-} CONTROL_LIST;
+};
+typedef enum control_list_e CONTROL_LIST;
 
-typedef enum input_type_e
+enum input_type_e
 {
   INPUT_MOUS = 0,
   INPUT_KEYB,
   INPUT_JOYA,
   INPUT_JOYB,
   INPUT_COUNT
-} INPUT_TYPE;
+};
+typedef enum input_type_e INPUT_TYPE;
 
-typedef enum input_bits_e
+enum input_bits_e
 {
   INBITS_NONE  =               0,                         //
   INBITS_MOUS  = 1 << INPUT_MOUS,                         // Input devices
   INBITS_KEYB  = 1 << INPUT_KEYB,                         //
   INBITS_JOYA  = 1 << INPUT_JOYA,                         //
   INBITS_JOYB  = 1 << INPUT_JOYB                          //
-} INPUT_BITS;
+};
+typedef enum input_bits_e INPUT_BITS;
 
 
-
-typedef enum control_type_e
+enum control_type_e
 {
   CONTROL_JUMP = 0,
   CONTROL_LEFT_USE,
@@ -107,17 +109,19 @@ typedef enum control_type_e
   CONTROL_COUNT,
 
   CONTROL_CAMERA = CONTROL_MESSAGE
-} CONTROL;
+};
+typedef enum control_type_e CONTROL;
 
 struct CGame_t;
 
 //--------------------------------------------------------------------------------------------
-typedef struct CLatch_t
+struct CLatch_t
 {
   float    x;        // x value
   float    y;        // y value
   Uint32   b;        // button(s) mask
-} CLatch;
+};
+typedef struct CLatch_t CLatch;
 
 INLINE bool_t CLatch_clear(CLatch * pl) { if(NULL == pl) return bfalse; memset(pl, 0, sizeof(CLatch)); return btrue; }
 
@@ -126,7 +130,7 @@ INLINE bool_t CLatch_clear(CLatch * pl) { if(NULL == pl) return bfalse; memset(p
 //--------------------------------------------------------------------------------------------
 #define PLALST_COUNT   (1<<3)                          // 2 to a power...  2^3
 
-typedef struct CPlayer_t
+struct CPlayer_t
 {
   egoboo_key        ekey;
   bool_t            Active;
@@ -136,7 +140,8 @@ typedef struct CPlayer_t
   CHR_REF           chr_ref;                 // Which character?
   CLatch            latch;                   // Local latches
   Uint8             device;                  // Input device
-} CPlayer;
+};
+typedef struct CPlayer_t CPlayer;
 
 #ifdef __cplusplus
   typedef TList<CPlayer_t, PLALST_COUNT> PlaList_t;
@@ -157,7 +162,7 @@ INLINE CHR_REF PlaList_getRChr( struct CGame_t * gs, PLA_REF iplayer );
 //--------------------------------------------------------------------------------------------
 #define MOUSEBUTTON         4
 
-typedef struct mouse_t
+struct mouse_t
 {
   bool_t   on;                   // Is the mouse live?
   float    sense;                // Sensitivity threshold
@@ -168,26 +173,28 @@ typedef struct mouse_t
   CLatch    dlatch;
   Sint32   z;                    // Mouse wheel movement counter
   Uint8    button[MOUSEBUTTON];  // Mouse button states
-} MOUSE;
+};
+typedef struct mouse_t MOUSE;
 
 extern MOUSE mous;
 
 //--------------------------------------------------------------------------------------------
 #define JOYBUTTON           8                       // Maximum number of joystick buttons
 
-typedef struct joystick_t
+struct joystick_t
 {
   SDL_Joystick *sdl_device;
   bool_t        on;                     // Is the holy joystick live?
   CLatch         latch;                  //
   Uint8         button[JOYBUTTON];      //
-} JOYSTICK;
+};
+typedef struct joystick_t JOYSTICK;
 
 extern JOYSTICK joy[2];
 
 //--------------------------------------------------------------------------------------------
 // SDL specific declarations
-typedef struct keyboard_t
+struct keyboard_t
 {
   bool_t   on;                 // Is the keyboard live?
   bool_t   mode;
@@ -195,7 +202,8 @@ typedef struct keyboard_t
 
   Uint8   *state;
   CLatch    latch;
-} KEYBOARD;
+};
+typedef struct keyboard_t KEYBOARD;
 
 extern KEYBOARD keyb;
 
@@ -213,13 +221,14 @@ INLINE bool_t control_joy_is_pressed( int joy_num, CONTROL control );
 
 
 //--------------------------------------------------------------------------------------------
-typedef struct KeyboardBuffer_t
+struct KeyboardBuffer_t
 {
   bool_t done;
   int    write;                 // The cursor position
   int    writemin;              // The starting cursor position
   STRING buffer;                // The input message
-} KeyboardBuffer;
+};
+typedef struct KeyboardBuffer_t KeyboardBuffer;
 
 //--------------------------------------------------------------------------------------------
 void   input_setup();

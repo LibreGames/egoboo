@@ -45,8 +45,7 @@ struct ConfigData_t;
 struct CGame_t;
 
 //--------------------------------------------------------------------------------------------
-
-typedef struct renderlist_t
+struct renderlist_t
 {
   int     num_totl;                            // Number to render, total
   Uint32  totl[MAXMESHRENDER];                 // List of which to render, total
@@ -63,12 +62,12 @@ typedef struct renderlist_t
   int     num_watr;                            // ..., water
   Uint32  watr[MAXMESHRENDER];                 // ..., water
   Uint32  watr_mode[MAXMESHRENDER];
-} RENDERLIST;
-
+};
+typedef struct renderlist_t RENDERLIST;
 
 //--------------------------------------------------------------------------------------------
 // Global lighting stuff
-typedef struct global_lighting_info_t
+struct global_lighting_info_t
 {
   bool_t on;
   float  spek;
@@ -76,13 +75,13 @@ typedef struct global_lighting_info_t
   vect3  spekcol;
   float  ambi;
   vect3  ambicol;
-} GLOBAL_LIGHTING_INFO;
+};
+typedef struct global_lighting_info_t GLOBAL_LIGHTING_INFO;
 
 extern GLOBAL_LIGHTING_INFO GLight;
 
 //--------------------------------------------------------------------------------------------
-
-typedef struct CGraphics_t
+struct CGraphics_t
 {
   egoboo_key ekey;
 
@@ -129,10 +128,11 @@ typedef struct CGraphics_t
   // the game state that we are plugged into
   struct CGame_t  * gs;
 
-} CGraphics;
+};
+typedef struct CGraphics_t CGraphics;
 
 CGraphics * CGraphics_new(CGraphics * g, struct ConfigData_t * cd);
-bool_t         CGraphics_synch(CGraphics * g, struct ConfigData_t * cd);
+bool_t      CGraphics_synch(CGraphics * g, struct ConfigData_t * cd);
 
 extern CGraphics gfxState;
 

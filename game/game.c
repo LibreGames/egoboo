@@ -127,12 +127,14 @@ PROFILE_DECLARE( main_loop );
 
 // When operating as a server, there may be a need to host multiple games
 // this "stack" holds all valid game states
-typedef struct GSStack_t
+struct GSStack_t
 {
   egoboo_key  ekey;
   int         count;
   CGame * data[256];
-} GSStack;
+};
+
+typedef struct GSStack_t GSStack;
 
 static GSStack _gs_stack = { bfalse };
 
@@ -2530,15 +2532,6 @@ void set_default_config_data(ConfigData * pcon)
 
 //--------------------------------------------------------------------------------------------
 
-typedef enum ProcessStates_e
-{
-  PROC_Begin,
-  PROC_Entering,
-  PROC_Running,
-  PROC_Leaving,
-  PROC_Finish,
-} ProcessStates;
-
 int proc_mainLoop( ProcState * ego_proc, int argc, char **argv );
 int proc_gameLoop( ProcState * gproc, CGame * gs);
 int proc_menuLoop( MenuProc  * mproc );
@@ -4743,7 +4736,7 @@ bool_t fget_next_chr_spawn_info(CGame * gs, FILE * pfile, chr_spawn_info * psi)
 }
 
 //--------------------------------------------------------------------------------------------
-typedef struct chr_setup_info_t
+struct chr_setup_info_t
 {
   egoboo_key ekey;
 
@@ -4752,7 +4745,9 @@ typedef struct chr_setup_info_t
   CHR_REF last_item;
   int tnc, localnumber;
 
-} chr_setup_info;
+};
+
+typedef struct chr_setup_info_t chr_setup_info;
 
 bool_t chr_setup_info_delete(chr_setup_info * pi)
 {

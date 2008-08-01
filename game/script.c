@@ -91,22 +91,26 @@
 #define IS_END(XX) ( GET_FUNCTION_BITS( XX ) == END_FUNCTION )
 
 
-typedef struct opcode_element_t
+struct opcode_element_t
 {
   Uint8           type;
   Uint32          value;
   char            name[MAXCODENAMESIZE];
-} OPCODE_ELEMENT;
+};
 
-typedef struct opcode_list_t
+typedef struct opcode_element_t OPCODE_ELEMENT;
+
+struct opcode_list_t
 {
   int            count;
   OPCODE_ELEMENT opcode[MAXCODE];
-} OPCODE_LIST;
+};
+
+typedef struct opcode_list_t OPCODE_LIST;
 
 static OPCODE_LIST opcode_lst = {0};
 
-typedef struct CompilerState_t
+struct CompilerState_t
 {
   size_t          file_size;
   char            file_buffer[BUFFER_SIZE];         // Where to put an MD2
@@ -118,7 +122,9 @@ typedef struct CompilerState_t
   int             index;
   int             temp;
 
-} CompilerState;
+};
+
+typedef struct CompilerState_t CompilerState;
 
 static CompilerState _cstate;
 
@@ -949,12 +955,12 @@ void load_ai_codes( char* loadname )
   REGISTER_OPCODE( opcode_lst, 'C', GRIP_ORIGIN, "SPAWNORIGIN" );
   REGISTER_OPCODE( opcode_lst, 'C', GRIP_LAST,   "SPAWNLAST" );
 
-  REGISTER_OPCODE( opcode_lst, 'C', COLOR_WHITE,  "WHITE" );
-  REGISTER_OPCODE( opcode_lst, 'C', COLOR_RED,    "RED" );
-  REGISTER_OPCODE( opcode_lst, 'C', COLOR_YELLOW, "YELLOW" );
-  REGISTER_OPCODE( opcode_lst, 'C', COLOR_GREEN,  "GREEN" );
-  REGISTER_OPCODE( opcode_lst, 'C', COLOR_BLUE,   "BLUE" );
-  REGISTER_OPCODE( opcode_lst, 'C', COLOR_PURPLE, "PURPLE" );
+  REGISTER_OPCODE( opcode_lst, 'C', COLR_WHITE,  "WHITE" );
+  REGISTER_OPCODE( opcode_lst, 'C', COLR_RED,    "RED" );
+  REGISTER_OPCODE( opcode_lst, 'C', COLR_YELLOW, "YELLOW" );
+  REGISTER_OPCODE( opcode_lst, 'C', COLR_GREEN,  "GREEN" );
+  REGISTER_OPCODE( opcode_lst, 'C', COLR_BLUE,   "BLUE" );
+  REGISTER_OPCODE( opcode_lst, 'C', COLR_PURPLE, "PURPLE" );
 
   REGISTER_OPCODE( opcode_lst, 'C', MOVE_MELEE,    "MOVEMELEE" );
   REGISTER_OPCODE( opcode_lst, 'C', MOVE_RANGED,   "MOVERANGED" );

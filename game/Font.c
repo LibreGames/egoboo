@@ -57,11 +57,13 @@ BMFont bmfont;
 
 static bool_t   fnt_initialized = bfalse;
 
-typedef struct fnt_registry_t
+struct fnt_registry_t
 {
   int      count;
   TTFont * list[256];
-} FNT_REGISTRY;
+};
+
+typedef struct fnt_registry_t FNT_REGISTRY;
 
 static FNT_REGISTRY fnt_registry = {0};
 

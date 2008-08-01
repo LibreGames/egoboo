@@ -359,7 +359,7 @@ INLINE BSP_node * BSP_node_new( BSP_node * n, void * data )
 {
   if(NULL == n) return n;
 
-  BSP_leaf_delete( n );
+  BSP_node_delete( n );
 
   memset(n, 0, sizeof(BSP_node));
 
@@ -581,7 +581,7 @@ INLINE bool_t BSP_tree_insert( BSP_tree * t, BSP_leaf * L, BSP_node * n, int ind
   if( index >= 0 && NULL != L->children[index])
   {
     // inserting a node into the child
-    return BSP_leaf_insert(L->children + index, n);
+    return BSP_leaf_insert(L->children[index], n);
   }
 
   if(index < 0 || NULL == t->leaf_list)
@@ -602,7 +602,7 @@ INLINE bool_t BSP_tree_insert( BSP_tree * t, BSP_leaf * L, BSP_node * n, int ind
 
     BSP_leaf_new( L->children[index], 2 << t->dimensions );
 
-    return BSP_leaf_insert(L->children + index, n);
+    return BSP_leaf_insert(L->children[index], n);
   }
 
   // something went wrong

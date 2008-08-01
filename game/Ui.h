@@ -38,12 +38,13 @@ typedef struct ui_context_t UiContext;
 typedef Uint32 UI_ID;
 
 
-typedef enum ui_button_values_e
+enum ui_button_values_e
 {
   BUTTON_NOCHANGE = 0,
   BUTTON_DOWN,
   BUTTON_UP
-} ui_buttonValues;
+};
+typedef enum ui_button_values_e ui_buttonValues;
 
 enum ui_button_bits_e
 {
@@ -53,7 +54,7 @@ enum ui_button_bits_e
 };
 
 
-typedef struct ui_widget_t
+struct ui_widget_t
 {
   UI_ID      id;
   TTFont    *pfont;
@@ -64,7 +65,8 @@ typedef struct ui_widget_t
   int        width;
   int        height;
   Uint32 mask, state, timeout;
-} ui_Widget;
+};
+typedef struct ui_widget_t ui_Widget;
 
 // Initialize or shut down the ui system
 int  ui_initialize( const char *default_font, int default_font_size );

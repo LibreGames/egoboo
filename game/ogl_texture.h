@@ -34,7 +34,7 @@
 #define INVALID_KEY     (~(Uint32)0)
 
 /**> DATA STRUCTURE: GLtexture <**/
-typedef struct ogl_texture_t
+struct ogl_texture_t
 {
   char    name[256];
   GLuint  textureID;    /* The OpenGL texture number */
@@ -43,8 +43,8 @@ typedef struct ogl_texture_t
   GLsizei txH,  txW;     /* the height/width of the the OpenGL texture (must be a power of two) */
   GLfloat alpha;      /* the alpha for the texture */
   GLenum  texture_target;
-} GLtexture;
-
+};
+typedef struct ogl_texture_t GLtexture;
 
 /**> FUNCTION PROTOTYPES: GLtexture <**/
 Uint32  GLTexture_Convert( GLenum tx_target, GLtexture *texture, SDL_Surface * image, Uint32 key );

@@ -29,11 +29,13 @@
 #include <stdlib.h>
 #include <assert.h>
 
-typedef struct timer_node_t
+struct timer_node_t
 {
   Timer *timer;
   struct timer_node_t *previous, *next;
-} TimerNode;
+};
+
+typedef struct timer_node_t TimerNode;
 
 static ClockState *timerClock = NULL;
 static TimerNode  *timerList = NULL;

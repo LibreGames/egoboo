@@ -12,13 +12,15 @@ struct CGame_t;
 // A* pathfinding --------------------------------------------------------------
 //------------------------------------------------------------------------------
 
-typedef struct AStar_Node_t
+struct AStar_Node_t
 {
   float  weight;
   bool_t closeme;
   int    ix, iy;
   int    parent_ix, parent_iy;
-} AStar_Node;
+};
+
+typedef struct AStar_Node_t AStar_Node;
 
 bool_t AStar_open(int buffer_size);
 bool_t AStar_close();

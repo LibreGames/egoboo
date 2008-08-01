@@ -8,7 +8,7 @@ struct CGame_t;
 #define NOOWNER             INVALID_CHR
 
 //Passages
-typedef struct Passage_t
+struct Passage_t
 {
   egoboo_key ekey;
 
@@ -17,18 +17,20 @@ typedef struct Passage_t
   Uint32  mask;
   bool_t  open;            // Is the passage open?
   CHR_REF owner;           // Who controls the passage?
-} Passage;
+};
+typedef struct Passage_t Passage;
 
 Passage * Passage_new(Passage *ppass);
 bool_t    Passage_delete(Passage *ppass);
 Passage * Passage_renew(Passage *ppass);
 
-typedef struct Shop_t
+struct Shop_t
 {
   egoboo_key ekey;
   PASS_REF passage;  // The passage number
   CHR_REF  owner;    // Who gets the gold?
-} Shop;
+};
+typedef struct Shop_t Shop;
 
 Shop * Shop_new(Shop *pshop);
 bool_t Shop_delete(Shop *pshop);

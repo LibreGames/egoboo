@@ -28,13 +28,15 @@
 /* For ClockState */
 #include "Clock.h"
 
-typedef struct timer_t
+struct timer_t
 {
   double currentTime;
   double frameTime;
   float timeScale;
   int isPaused;
-} Timer;
+};
+
+typedef struct timer_t Timer;
 
 void timer_init( ClockState * cs );   // Initialize the timer code
 void timer_shutdown(); // Turn off the timer code

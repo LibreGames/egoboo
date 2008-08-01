@@ -12,7 +12,7 @@ struct CGame_t;
 //Enchantment variables
 //------------------------------------
 
-typedef enum eve_set_e
+enum eve_set_e
 {
   SETDAMAGETYPE           = 0,
   SETNUMBEROFJUMPS,
@@ -38,9 +38,10 @@ typedef enum eve_set_e
   SETMORPH,                //Morph character?
   SETCHANNEL,               //Can channel life as mana?
   EVE_SET_COUNT
-} EVE_SET;
+};
+typedef enum eve_set_e EVE_SET;
 
-typedef enum eve_add_e
+enum eve_add_e
 {
   ADDJUMPPOWER = 0,
   ADDBUMPDAMPEN,
@@ -59,9 +60,10 @@ typedef enum eve_add_e
   ADDINTELLIGENCE,
   ADDDEXTERITY,
   EVE_ADD_COUNT      // Number of adds
-} EVE_ADD;
+};
+typedef enum eve_add_e EVE_ADD;
 
-typedef struct CEve_t
+struct CEve_t
 {
   egoboo_key      ekey;
   bool_t          Loaded;                      // Enchant.txt loaded?
@@ -93,7 +95,8 @@ typedef struct CEve_t
   Uint16          frequency;                   // Sound frequency
   Uint16          overlay;                     // Spawn an overlay?
   bool_t          canseekurse;                 // Allow target to see kurses?
-} CEve;
+};
+typedef struct CEve_t CEve;
 
 #ifdef __cplusplus
   typedef TList<CEve_t, EVELST_COUNT> EveList_t;
@@ -112,7 +115,7 @@ CEve *  Eve_renew( CEve * peve );
 #define VALIDATE_EVE(LST, XX) ( VALID_EVE(LST, XX) ? (XX) : (INVALID_EVE) )
 #define LOADED_EVE(LST, XX)  ( VALID_EVE(LST, XX) && LST[XX].Loaded )
 
-typedef struct enc_spawn_info_t
+struct enc_spawn_info_t
 {
   egoboo_key ekey;
   struct CGame_t * gs;
@@ -127,7 +130,8 @@ typedef struct enc_spawn_info_t
   OBJ_REF iobj;
   EVE_REF ieve;
 
-} enc_spawn_info;
+};
+typedef struct enc_spawn_info_t enc_spawn_info;
 
 enc_spawn_info * enc_spawn_info_new(enc_spawn_info * psi, struct CGame_t * gs);
 
@@ -186,12 +190,13 @@ ENC_REF EncList_get_free( struct CGame_t * gs, ENC_REF irequest);
 
 void EncList_resynch( struct CGame_t * gs );
 
-typedef enum disenchant_mode_e
+enum disenchant_mode_e
 {
   LEAVE_ALL   = 0,
   LEAVE_FIRST,
   LEAVE_NONE,
-} DISENCHANT_MODE;
+};
+typedef enum disenchant_mode_e DISENCHANT_MODE;
 
 extern STRING namingnames;   // The name returned by the function
 

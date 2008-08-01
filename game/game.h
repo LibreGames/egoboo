@@ -40,18 +40,19 @@ enum Experience_e;
 #define CHOPSIZE                        8
 #define CHOPDATACHUNK                   (MAXCHOP*CHOPSIZE)
 
-typedef struct ChopData_t
+struct ChopData_t
 {
   Uint16   count;                  // The number of name parts
   Uint32   write;                  // The data pointer
   char     text[CHOPDATACHUNK];    // The name parts
   Uint16   start[MAXCHOP];         // The first character of each part
-} ChopData;
+};
+typedef struct ChopData_t ChopData;
 
 //--------------------------------------------------------------------------------------------
 #define MAXENDTEXT 1024
 
-typedef struct CGame_t
+struct CGame_t
 {
   egoboo_key ekey;
 
@@ -174,8 +175,8 @@ typedef struct CGame_t
 
   ChopData chop;
 
-} CGame;
-
+};
+typedef struct CGame_t CGame;
 CGame * CGame_create(struct CNet_t * net,  struct CClient_t * cl, struct CServer_t * sv);
 bool_t  CGame_destroy(CGame ** gs );
 bool_t  CGame_renew(CGame * gs);
@@ -232,9 +233,7 @@ bool_t PlaList_renew( CGame * gs );
 
 
 //--------------------------------------------------------------------------------------------
-
-
-typedef struct SearchInfo_t
+struct SearchInfo_t
 {
   bool_t  initialize;
   CHR_REF besttarget;                                      // For find_target
@@ -243,19 +242,21 @@ typedef struct SearchInfo_t
   int     bestdistance;
   CHR_REF nearest;
   float   distance;
-} SearchInfo;
+};
+typedef struct SearchInfo_t SearchInfo;
 
 SearchInfo * SearchInfo_new(SearchInfo * psearch);
 
 //--------------------------------------------------------------------------------------------
 //Weather and water gfx
-typedef struct weather_info_t
+struct weather_info_t
 {
   bool_t    overwater; // EQ( bfalse );       // Only spawn over water?
   int       timereset; // EQ( 10 );          // Rate at which weather particles spawn
   float     time; // EQ( 0 );                // 0 is no weather
   PLA_REF   player;
-} WEATHER_INFO;
+};
+typedef struct weather_info_t WEATHER_INFO;
 
 extern WEATHER_INFO GWeather;
 

@@ -31,7 +31,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-typedef struct task_t
+struct task_t
 {
   char *name;
   TaskCallback func;
@@ -41,7 +41,9 @@ typedef struct task_t
   char paused;
 
   struct task_t *previous, *next;
-}Task;
+};
+
+typedef struct task_t Task;
 
 Task *task_list = NULL;
 ClockState * taskClock = NULL;

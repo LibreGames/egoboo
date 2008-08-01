@@ -36,13 +36,15 @@
 #include "char.inl"
 #include "egoboo_math.inl"
 
-typedef enum prt_ori_t
+enum prt_ori_t
 {
-  ori_v,
-  ori_h,
-  ori_p,
-  ori_b
-} PRT_ORI;
+  ori_v,  // vertical
+  ori_h,  // horizontal
+  ori_p,  // ?? can't remember (arrow) ??
+  ori_b   // billboard
+};
+
+typedef enum prt_ori_t PRT_ORI;
 
 PRT_ORI particle_orientation[256] =
 {

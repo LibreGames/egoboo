@@ -14,19 +14,21 @@ struct CGame_t;
 #define DYNAFANS  12
 #define MAXFALLOFF 1400
 
-typedef enum particle_type
+enum particle_type
 {
   PRTTYPE_LIGHT = 0,                         // Magic effect particle
   PRTTYPE_SOLID,                             // Sprite particle
   PRTTYPE_ALPHA,                             // Smoke particle
-} PRTTYPE;
+};
+typedef enum particle_type PRTTYPE;
 
-typedef enum dyna_mode_e
+enum dyna_mode_e
 {
   DYNA_OFF = 0,
   DYNA_ON,
   DYNA_LOCAL,
-} DYNA_MODE;
+};
+typedef enum dyna_mode_e DYNA_MODE;
 
 #define MAXDYNA                         8           // Number of dynamic lights
 #define MAXDYNADIST                     2700        // Leeway for offscreen lights
@@ -46,16 +48,17 @@ extern DYNALIGHT_INFO GDyna;
   float level;   /* Light level    */ \
   float falloff; /* Light falloff  */
 
-typedef struct dynalight_list_t
+struct dynalight_list_t
 {
   DYNALIGHT_MEMBERS
   vect3  pos;        // Light position
   int distance;      // The distances
-} DYNALIGHT_LIST;
+};
+typedef struct dynalight_list_t DYNALIGHT_LIST;
 
 extern DYNALIGHT_LIST GDynaLight[MAXDYNA];
 
-typedef struct dynalight_pip_t
+struct dynalight_pip_t
 {
   DYNALIGHT_MEMBERS
 
@@ -63,10 +66,11 @@ typedef struct dynalight_pip_t
   DYNA_MODE mode;                // Dynamic light on?
   float     leveladd;            // Dyna light changes
   float     falloffadd;          //
-} DYNALIGHT_PIP;
+};
+typedef struct dynalight_pip_t DYNALIGHT_PIP;
 
 // Particle profiles
-typedef struct CPip_t
+struct CPip_t
 {
   egoboo_key      ekey;
   bool_t          Loaded;
@@ -142,7 +146,8 @@ typedef struct CPip_t
   float           manadrain;                      //Reduce target mana by this amount
   float           lifedrain;                      //Reduce target mana by this amount
   bool_t          rotatewithattached;           // do attached particles rotate with the object?
-} CPip;
+};
+typedef struct CPip_t CPip;
 
 #ifdef __cplusplus
   typedef TList<CPip_t, PIPLST_COUNT> PipList_t;
@@ -162,15 +167,16 @@ CPip * Pip_renew(CPip * ppip);
 #define LOADED_PIP(LST, XX)   ( VALID_PIP(LST, XX) && LST[XX].Loaded )
 
 
-typedef struct dynalight_prt_t
+struct dynalight_prt_t
 {
   DYNALIGHT_MEMBERS
 
   bool_t    on;                  // Dynamic light?
   DYNA_MODE mode;                // Dynamic light on?
-} DYNALIGHT_PRT;
+};
+typedef struct dynalight_prt_t DYNALIGHT_PRT;
 
-typedef struct prt_spawn_info_t
+struct prt_spawn_info_t
 {
   egoboo_key ekey;
 
@@ -190,12 +196,13 @@ typedef struct prt_spawn_info_t
   CHR_REF  characterorigin;
   Uint16   multispawn;
   CHR_REF oldtarget;
-} prt_spawn_info;
+};
+typedef struct prt_spawn_info_t prt_spawn_info;
 
 prt_spawn_info * prt_spawn_info_new(prt_spawn_info * psi, struct CGame_t * gs);
 bool_t           prt_spawn_info_delete(prt_spawn_info * psi);
 
-typedef struct CPrt_t
+struct CPrt_t
 {
   egoboo_key      ekey;
   bool_t          reserved;         // Is it going to be used?
@@ -250,8 +257,8 @@ typedef struct CPrt_t
   CHR_REF         target;                          // Who it's chasing
 
   DYNALIGHT_PRT   dyna;
-} CPrt;
-
+};
+typedef struct CPrt_t CPrt;
 #ifdef __cplusplus
   typedef TList<CPrt_t, PRTLST_COUNT> PrtList_t;
   typedef TPList<CPrt_t, PRTLST_COUNT> PPrt;

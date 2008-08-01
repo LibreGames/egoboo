@@ -35,37 +35,36 @@
 #include <memory.h>
 
 #pragma pack(push,1)
-typedef struct ego_md2_vertex_t
-{
-  float x, y, z;
-  unsigned normal;  // index to id-normal array
-} MD2_Vertex;
+  typedef struct ego_md2_vertex_t
+  {
+    float x, y, z;
+    unsigned normal;  // index to id-normal array
+  } MD2_Vertex;
 
-typedef struct ego_md2_texcoord_t
-{
-  float s, t;
-} MD2_TexCoord;
+  typedef struct ego_md2_texcoord_t
+  {
+    float s, t;
+  } MD2_TexCoord;
 
-typedef struct ego_md2_frame_t
-{
-  char name[16];
-  float bbmin[3], bbmax[3];    // axis-aligned bounding box limits
-  MD2_Vertex *vertices;
-} MD2_Frame;
+  typedef struct ego_md2_frame_t
+  {
+    char name[16];
+    float bbmin[3], bbmax[3];    // axis-aligned bounding box limits
+    MD2_Vertex *vertices;
+  } MD2_Frame;
 #pragma pack(pop)
 
 typedef md2_triangle MD2_Triangle;
 typedef md2_skinname MD2_SkinName;
 
-typedef struct ego_md2_glcommand_t MD2_GLCommand;
-
 struct ego_md2_glcommand_t
 {
-  MD2_GLCommand * next;
+  struct ego_md2_glcommand_t * next;
   GLenum          gl_mode;
   signed int      command_count;
   md2_gldata    * data;
 };
+typedef struct ego_md2_glcommand_t MD2_GLCommand;
 
 void MD2_GLCommand_construct(MD2_GLCommand * m);
 void MD2_GLCommand_destruct(MD2_GLCommand * m);
@@ -76,38 +75,38 @@ void MD2_GLCommand_delete(MD2_GLCommand * m);
 void MD2_GLCommand_delete_vector(MD2_GLCommand * v, int n);
 
 
-typedef struct ego_md2_model_t MD2_Model;
+struct ego_md2_model_t;
 
-void md2_construct(MD2_Model * m);
-void md2_destruct(MD2_Model * m);
+void md2_construct(struct ego_md2_model_t * m);
+void md2_destruct(struct ego_md2_model_t * m);
 
-MD2_Model * md2_new();
-MD2_Model * md2_new_vector(int n);
-void md2_delete(MD2_Model * m);
-void md2_delete_vector(MD2_Model * v, int n);
-
-
-MD2_Model * md2_load(const char * szFilename, MD2_Model* m);
-
-void md2_deallocate(MD2_Model * m);
+struct ego_md2_model_t * md2_new();
+struct ego_md2_model_t * md2_new_vector(int n);
+void md2_delete(struct ego_md2_model_t * m);
+void md2_delete_vector(struct ego_md2_model_t * v, int n);
 
 
+struct ego_md2_model_t * md2_load(const char * szFilename, struct ego_md2_model_t* m);
 
-//char * rip_md2_frame_name( MD2_Model * m, int frame );
-void md2_scale_model(MD2_Model * pmd2, float scale);
+void md2_deallocate(struct ego_md2_model_t * m);
 
-INLINE const int md2_get_numVertices(MD2_Model * m);
-INLINE const int md2_get_numTexCoords(MD2_Model * m);
-INLINE const int md2_get_numTriangles(MD2_Model * m);
-INLINE const int md2_get_numSkins(MD2_Model * m);
-INLINE const int md2_get_numFrames(MD2_Model * m);
 
-INLINE const MD2_SkinName  *md2_get_SkinNames(MD2_Model * m);
-INLINE const MD2_TexCoord  *md2_get_TexCoords(MD2_Model * m);
-INLINE const MD2_Triangle  *md2_get_Triangles(MD2_Model * m);
-INLINE const MD2_Frame     *md2_get_Frames   (MD2_Model * m);
-INLINE const MD2_GLCommand *md2_get_Commands (MD2_Model * m);
 
-INLINE const MD2_SkinName  *md2_get_Skin     (MD2_Model * m, int index);
-INLINE const MD2_Frame     *md2_get_Frame    (MD2_Model * m, int index);
-INLINE const MD2_Triangle  *md2_get_Triangle (MD2_Model * m, int index);
+//char * rip_md2_frame_name( struct ego_md2_model_t * m, int frame );
+void md2_scale_model(struct ego_md2_model_t * pmd2, float scale);
+
+INLINE const int md2_get_numVertices(struct ego_md2_model_t * m);
+INLINE const int md2_get_numTexCoords(struct ego_md2_model_t * m);
+INLINE const int md2_get_numTriangles(struct ego_md2_model_t * m);
+INLINE const int md2_get_numSkins(struct ego_md2_model_t * m);
+INLINE const int md2_get_numFrames(struct ego_md2_model_t * m);
+
+INLINE const MD2_SkinName  *md2_get_SkinNames(struct ego_md2_model_t * m);
+INLINE const MD2_TexCoord  *md2_get_TexCoords(struct ego_md2_model_t * m);
+INLINE const MD2_Triangle  *md2_get_Triangles(struct ego_md2_model_t * m);
+INLINE const MD2_Frame     *md2_get_Frames   (struct ego_md2_model_t * m);
+INLINE const MD2_GLCommand *md2_get_Commands (struct ego_md2_model_t * m);
+
+INLINE const MD2_SkinName  *md2_get_Skin     (struct ego_md2_model_t * m, int index);
+INLINE const MD2_Frame     *md2_get_Frame    (struct ego_md2_model_t * m, int index);
+INLINE const MD2_Triangle  *md2_get_Triangle (struct ego_md2_model_t * m, int index);

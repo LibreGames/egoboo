@@ -142,7 +142,8 @@ char * str_convert_net(char * str, size_t size)
   size_t i;
 
   if(NULL == str || '\0' == str[0]) return str;
-  if(SLASH_CHAR == NET_SLASH_CHAR) return str;
+
+#if !(SLASH_CHAR == NET_SLASH_CHAR)
 
   for(i=0; i < size; i++)
   {
@@ -151,6 +152,7 @@ char * str_convert_net(char * str, size_t size)
       str[i] = NET_SLASH_CHAR;
     }
   }
+#endif
 
   return str;
 }
@@ -160,8 +162,8 @@ char * str_convert_sys(char * str, size_t size)
   size_t i;
 
   if(NULL == str || '\0' == str[0]) return str;
-  if(SLASH_CHAR == NET_SLASH_CHAR) return str;
 
+#if !(SLASH_CHAR == NET_SLASH_CHAR)
   for(i=0; i < size; i++)
   {
     if(NET_SLASH_CHAR == str[i])
@@ -169,6 +171,7 @@ char * str_convert_sys(char * str, size_t size)
       str[i] = SLASH_CHAR;
     }
   }
+#endif
 
   return str;
 }

@@ -46,12 +46,11 @@ SOURCES=camera.c\
 
 
 OBJECTS=$(SOURCES:%.c=%.o)
-
-CFLAGS=`sdl-config --cflags` -I../enet/include
+CFLAGS=`sdl-config --cflags` -I../enet -IC:/SDKs/SDL_mixer-1.2.8  -IC:/SDKs/SDL-1.2.13/include -IC:/SDKs/SDL_ttf-2.0.9
 LDFLAGS=`sdl-config --libs` -L../enet -lopengl32 -lglu32 -lenet -lSDL_ttf -lws2_32 -lshlwapi -lshfolder -lshell32
 
 $(TARGET): $(OBJECTS)
-	$(CC) -o $(TARGET) $(OBJECTS) $(CFLAGS) $(LDFLAGS)
+	$(CC) > tmp.txt -o $(TARGET) $(OBJECTS) $(CFLAGS) $(LDFLAGS) 
 
 clean:
 	-rm -f $(TARGET) $(OBJECTS)

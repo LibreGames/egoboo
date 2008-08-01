@@ -51,7 +51,7 @@ static int                   _nfile_receiveCallback(void * nfs);
 //--------------------------------------------------------------------------------------------
 
 // File transfer variables & structures
-typedef struct nfile_SendInfo_t
+struct nfile_SendInfo_t
 {
   //CNet    * ns;
   ENetHost    * host;
@@ -59,11 +59,13 @@ typedef struct nfile_SendInfo_t
 
   char      sourceName[NET_MAX_FILE_NAME];
   char      destName[NET_MAX_FILE_NAME];
-} nfile_SendInfo;
+};
+
+typedef struct nfile_SendInfo_t nfile_SendInfo;
 
 //--------------------------------------------------------------------------------------------
 // File transfer queue
-typedef struct nfile_SendQueue_t
+struct nfile_SendQueue_t
 {
   egoboo_key ekey;
 
@@ -73,7 +75,9 @@ typedef struct nfile_SendQueue_t
   int TransferHead; // Queue indices
   int TransferTail;
 
-} nfile_SendQueue;
+};
+
+typedef struct nfile_SendQueue_t nfile_SendQueue;
 
 nfile_SendQueue * nfile_SendQueue_new(nfile_SendQueue * q);
 bool_t            nfile_SendQueue_delete(nfile_SendQueue * q);
@@ -85,7 +89,7 @@ retval_t nfile_SendQueue_add(NFileState * ns, ENetAddress * target_address, char
 //--------------------------------------------------------------------------------------------
 
 // File transfer variables & structures
-typedef struct nfile_ReceiveInfo_t
+struct nfile_ReceiveInfo_t
 {
   bool_t     allocated;
 
@@ -95,13 +99,15 @@ typedef struct nfile_ReceiveInfo_t
   char       destName[NET_MAX_FILE_NAME];
 
   size_t     buffer_size;
-} nfile_ReceiveInfo;
+};
+
+typedef struct nfile_ReceiveInfo_t nfile_ReceiveInfo;
 
 static bool_t nfile_ReceiveInfo_alloc( nfile_ReceiveInfo * nri, size_t size);
 static bool_t nfile_ReceiveInfo_dealloc( nfile_ReceiveInfo * nri);
 
 // File transfer queue
-typedef struct nfile_ReceiveQueue_t
+struct nfile_ReceiveQueue_t
 {
   egoboo_key ekey;
 
@@ -111,7 +117,9 @@ typedef struct nfile_ReceiveQueue_t
   int TransferHead; // Queue indices
   int TransferTail;
 
-} nfile_ReceiveQueue;
+};
+
+typedef struct nfile_ReceiveQueue_t nfile_ReceiveQueue;
 
 nfile_ReceiveQueue * nfile_ReceiveQueue_new(nfile_ReceiveQueue * q);
 bool_t               nfile_ReceiveQueue_delete(nfile_ReceiveQueue * q);
@@ -119,7 +127,7 @@ nfile_ReceiveQueue * nfile_ReceiveQueue_renew(nfile_ReceiveQueue * q);
 
 //--------------------------------------------------------------------------------------------
 
-typedef struct nfile_SendState_t
+struct nfile_SendState_t
 {
   egoboo_key ekey;
 
@@ -132,7 +140,9 @@ typedef struct nfile_SendState_t
   // thread info
   NetThread nthread;
 
-} nfile_SendState;
+};
+
+typedef struct nfile_SendState_t nfile_SendState;
 
 static nfile_SendState * nfile_SendState_create();
 static bool_t            nfile_SendState_destroy(nfile_SendState ** snd);
@@ -148,7 +158,7 @@ static retval_t          nfile_SendState_stopThread(nfile_SendState * snd);
 static retval_t          _nfile_Receive_initialize();
 //--------------------------------------------------------------------------------------------
 
-typedef struct nfile_ReceiveState_t
+struct nfile_ReceiveState_t
 {
   egoboo_key ekey;
 
@@ -158,7 +168,9 @@ typedef struct nfile_ReceiveState_t
   // thread info
   NetThread nthread;
 
-} nfile_ReceiveState;
+};
+
+typedef struct nfile_ReceiveState_t nfile_ReceiveState;
 
 static nfile_ReceiveState * nfile_ReceiveState_create();
 static bool_t               nfile_ReceiveState_destroy(nfile_ReceiveState ** rec);
