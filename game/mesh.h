@@ -194,7 +194,7 @@ typedef struct mesh_command_t
 
   Uint8   vrt_count;                  // Number of vertices
   Uint8   ref[MAXMESHVERTICES];       // Lighting references
-  vect2   tx[MAXMESHVERTICES];
+  vect2   tx[MAXMESHVERTICES];        // Relative texture coordinates
 } MESH_COMMAND;
 
 extern MESH_COMMAND Mesh_Cmd[MAXMESHTYPE];
