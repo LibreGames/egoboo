@@ -123,7 +123,7 @@ void empty_import_directory( void )
 
 
 // Read the first directory entry
-const char *fs_findFirstFile(FS_FIND_INFO * i, const char *searchPath, const char *searchBody, const char *searchExtension )
+const char *fs_findFirstFile(FS_FIND_INFO * i, const char *searchDir, const char *searchBody, const char *searchExtension )
 {
   char pattern[PATH_MAX];
   char *last_slash;
@@ -133,14 +133,14 @@ const char *fs_findFirstFile(FS_FIND_INFO * i, const char *searchPath, const cha
   else
     snprintf( pattern, PATH_MAX, "%s" SLASH_STRING "*", searchDir );
 
-  last_find_glob.gl_offs = 0;
-  glob( pattern, GLOB_NOSORT, NULL, &last_find_glob );
+  i->L->last_find_glob.gl_offs = 0;
+  glob( pattern, GLOB_NOSORT, NULL, &i->L->last_find_glob );
 
-  if ( !last_find_glob.gl_pathc )
+  if ( !i->L->last_find_glob.gl_pathc )
     return NULL;
 
-  glob_find_index = 0;
-  last_slash = strrchr( last_find_glob.gl_pathv[glob_find_index], '/' );
+  i->L->glob_find_index = 0;
+  last_slash = strrchr( i->L->last_find_glob.gl_pathv[i->L->glob_find_index], '/' );
 
   if ( last_slash )
     return last_slash + 1;
@@ -153,11 +153,11 @@ const char *fs_findNextFile( FS_FIND_INFO * i )
 {
   char *last_slash;
 
-  ++glob_find_index;
-  if ( glob_find_index >= last_find_glob.gl_pathc )
+  ++i->L->glob_find_index;
+  if ( i->L->glob_find_index >= i->L->last_find_glob.gl_pathc )
     return NULL;
 
-  last_slash = strrchr( last_find_glob.gl_pathv[glob_find_index], '/' );
+  last_slash = strrchr( i->L->last_find_glob.gl_pathv[i->L->glob_find_index], '/' );
 
   if ( last_slash )
     return last_slash + 1;

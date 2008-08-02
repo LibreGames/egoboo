@@ -160,7 +160,7 @@ struct mesh_fan_t
 };
 typedef struct mesh_fan_t MESH_FAN;
 
-typedef struct MeshMem_t
+struct MeshMem_t
 {
   egoboo_key ekey;
 
@@ -181,12 +181,13 @@ typedef struct MeshMem_t
 
   int         fan_count;
   MESH_FAN  * fanlst;
-} MeshMem;
+};
+typedef struct MeshMem_t MeshMem;
 
 MeshMem * MeshMem_new(MeshMem * mem, int vertcount, int fancount);
 bool_t    MeshMem_delete(MeshMem * mem);
 
-typedef struct mesh_command_t
+struct mesh_command_t
 {
   Uint8   cmd_count;                  // Number of commands
   Uint8   cmd_size[MAXMESHCOMMAND];   // Entries in each command
@@ -195,7 +196,8 @@ typedef struct mesh_command_t
   Uint8   vrt_count;                  // Number of vertices
   Uint8   ref[MAXMESHVERTICES];       // Lighting references
   vect2   tx[MAXMESHVERTICES];        // Relative texture coordinates
-} MESH_COMMAND;
+};
+typedef struct mesh_command_t MESH_COMMAND;
 
 extern MESH_COMMAND Mesh_Cmd[MAXMESHTYPE];
 
