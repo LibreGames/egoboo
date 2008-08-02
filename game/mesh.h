@@ -7,13 +7,14 @@ struct CGame_t;
 
 #define INVALID_BUMPLIST_NODE (~(Uint32)0)
 
-typedef struct bumplist_node_t
+struct bumplist_node_t
 {
   Uint32 ref;
   Uint32 next; 
-} BUMPLIST_NODE;
+};
+typedef struct bumplist_node_t BUMPLIST_NODE;
 
-typedef struct bumplist_t
+struct bumplist_t
 {
   egoboo_key ekey;  
   bool_t     allocated;
@@ -31,7 +32,8 @@ typedef struct bumplist_t
 
   BUMPLIST_NODE  * prt_ref;                 // For particle collisions
   Uint16         * num_prt;                 // Number on the block
-} BUMPLIST;
+};
+typedef struct bumplist_t BUMPLIST;
 
 INLINE const BUMPLIST * bumplist_new(BUMPLIST * b);
 INLINE const bool_t     bumplist_delete(BUMPLIST * b);
@@ -81,7 +83,7 @@ INLINE const Uint32     bumplist_get_next_chr(struct CGame_t * gs, BUMPLIST * b,
 #define MESH_BLOCK_TO_FLOAT(XX)  ( (float)(XX) * (float)(1<<BLOCK_BITS) )
 #define MESH_FLOAT_TO_BLOCK(XX)  ( (XX) / (float)(1<<BLOCK_BITS))
 
-typedef enum mpd_effect_bits_e
+enum mpd_effect_bits_e
 {
   MPDFX_REF                     =      0,         // 0 This tile is drawn 1st
   MPDFX_NOREFLECT               = 1 << 0,         // 0 This tile IS reflected in the floors
@@ -92,13 +94,14 @@ typedef enum mpd_effect_bits_e
   MPDFX_IMPASS                  = 1 << 5,         // 5 Impassable
   MPDFX_DAMAGE                  = 1 << 6,         // 6 Damage
   MPDFX_SLIPPY                  = 1 << 7          // 7 Ice or normal
-} MPDFX_BITS;
+};
+typedef enum mpd_effect_bits_e MPDFX_BITS;
 
 #define SLOPE                           800     // Slope increments for terrain normals
 #define SLIDE                           .04         // Acceleration for steep hills
 #define SLIDEFIX                        .08         // To make almost flat surfaces flat
 
-typedef enum fan_type_t
+enum fan_type_t
 {
   GROUND_1,  //  0  Two Faced Ground...
   GROUND_2,   //  1  Two Faced Ground...
@@ -126,9 +129,10 @@ typedef enum fan_type_t
   ALCOVE_SEN, //  23  Twelve Faced Wall (SEN)...
   STAIR_WE,   //  24  Twelve Faced Stair (WE)...
   STAIR_NS    //  25  Twelve Faced Stair (NS)...
-} FAN_TYPE;
+};
+typedef enum fan_type_t FAN_TYPE;
 
-typedef struct mesh_info_t
+struct mesh_info_t
 {
   bool_t  exploremode;                            // Explore mode?
   int     size_x;                                          // Size in fansquares
@@ -141,10 +145,10 @@ typedef struct mesh_info_t
   Uint32  Fan_X[MAXMESHSIZEY];                         // Which fan to start a row with
 
   BUMPLIST bumplist;
-} MESH_INFO;
+};
+typedef struct mesh_info_t MESH_INFO;
 
-
-typedef struct mesh_fan_t
+struct mesh_fan_t
 {
   Uint8   type;                               // Command type
   Uint8   fx;                                 // Special effects flags
@@ -153,8 +157,8 @@ typedef struct mesh_fan_t
   Uint16  tile;                               // Get texture from this
   Uint32  vrt_start;                          // Which vertex to start at
   AA_BBOX bbox;                               // what is the minimum extent of the fan
-} MESH_FAN;
-
+};
+typedef struct mesh_fan_t MESH_FAN;
 
 typedef struct MeshMem_t
 {
