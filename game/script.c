@@ -2660,6 +2660,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
         gs->ChrList[tmpchr].ori.pos.x = pstate->tmpx;
         gs->ChrList[tmpchr].ori.pos.y = pstate->tmpy;
         gs->ChrList[tmpchr].ori.pos.z = pstate->tmpdistance;
+		gs->ChrList[tmpchr].ori.turn_lr = pstate->tmpturn;
         if ( 0 != chr_hitawall( gs, gs->ChrList + tmpchr, NULL ) )
         {
           // No it didn't...
@@ -4560,7 +4561,6 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
     case F_IfHolderScoredAHit:
       // Proceed only if the character holder scored a hit
       returncode = bfalse;
-      sTmp = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, ichr );
 
       if ( chr_attached( gs->ChrList, CHRLST_COUNT, ichr ) )
       {
