@@ -492,8 +492,9 @@ struct BSP_node_t
 {
   egoboo_key ekey;
 
-  struct BSP_node_t  * next;
-  void               * data;
+  struct BSP_node_t * next;
+  int                 data_type;
+  void              * data;
 };
 typedef struct BSP_node_t BSP_node;
 
@@ -527,7 +528,6 @@ struct BSP_tree_t
   BSP_leaf * leaf_list;
 
   BSP_leaf * root;
-
 };
 typedef struct BSP_tree_t BSP_tree;
 

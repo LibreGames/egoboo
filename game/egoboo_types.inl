@@ -355,7 +355,7 @@ INLINE void * egoboo_key_get_data(egoboo_key * pkey, Uint32 type)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE BSP_node * BSP_node_new( BSP_node * n, void * data )
+INLINE BSP_node * BSP_node_new( BSP_node * n, void * data, int type )
 {
   if(NULL == n) return n;
 
@@ -365,7 +365,8 @@ INLINE BSP_node * BSP_node_new( BSP_node * n, void * data )
 
   if(NULL == data) return n;
 
-  n->data = data;
+  n->data_type = type;
+  n->data      = data;
 
   EKEY_PNEW( n, BSP_node );
 
@@ -380,7 +381,8 @@ INLINE bool_t BSP_node_delete( BSP_node * n )
   if( NULL == n ) return bfalse;
   if( !EKEY_PVALID(n) ) return btrue;
 
-  n->data = NULL;
+  n->data_type = -1;
+  n->data      = NULL;
 
   EKEY_PINVALIDATE( n );
 

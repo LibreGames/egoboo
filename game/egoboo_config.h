@@ -17,7 +17,7 @@
 #if defined(_MSC_VER)
 
     // In MS visual C, the "inline" keyword seems to be depreciated. Must to be promoted to "_inline" of "__inline"
-#    define INLINE __inline  
+#    define INLINE __inline
 
     // Turn off warnings that we don't care about.
 
