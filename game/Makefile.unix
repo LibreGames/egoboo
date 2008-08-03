@@ -1,16 +1,13 @@
 # note if you change the prefix also update egoboo.sh
 PREFIX = /usr
 
-# Too many troubles. Skipping for now.
-#	cartman.c
-
 EGO_SRC := \
 	AStar.c camera.c char.c Client.c Clock.c configfile.c egoboo_math.c egoboo_rpc.c \
 	egoboo_strutil.c egoboo_types.c egoboo_utility.c enchant.c file_common.c file_lin.c \
 	Font.c Frustum.c game.c graphic.c graphic_fan.c graphic_mad.c graphic_prt.c id_normals.c input.c \
-	Log.c Mad.c MainLoop.c Md2.c menu.c mesh.c module.c NetFile.c network.c object.c ogl_include.c \
+	Log.c Mad.c Md2.c menu.c mesh.c module.c NetFile.c network.c object.c ogl_include.c \
 	ogl_texture.c particle.c passage.c Physics.c script.c SDL_GetPixel.c SDL_PutPixel.c SDL_rotozoom.c \
-	Server.c sound.c System_lin.c Task.c test_sdl.c Ticker.c Timer.c Ui.c
+	Server.c sound.c System_lin.c Task.c Ticker.c Timer.c Ui.c
 
 EGO_OBJ := $(EGO_SRC:.c=.o)
 
@@ -35,7 +32,7 @@ EGO_BIN := egoboo
 
 all: test_sdl $(EGO_BIN)
 
-test_sdl.o: test_sdl.c
+test_sdl.o: test/test_sdl.c
 	$(CC) $(CFLAGS) -o $@ -c $^ || make blurb_abort
 test_sdl: test_sdl.o
 	$(CC) -o $@ $^ $(LDFLAGS) || make blurb_abort

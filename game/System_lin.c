@@ -1,15 +1,12 @@
 #include "System.h"
 
-#include <stdio.h> /* for NULL */
-#include <time.h>
+#include <SDL.h>
 
 static double startuptime;
 
 void sys_initialize()
 {
-  struct timeval now;
-  gettimeofday( &now, NULL );
-  startuptime = now.tv_sec + now.tv_usec / 1000000.0;
+	startuptime = SDL_GetTicks() * 1000000.0;
 }
 
 void sys_shutdown()
@@ -18,9 +15,7 @@ void sys_shutdown()
 
 double sys_getTime()
 {
-  struct timeval now;
-  gettimeofday( &now, NULL );
-  return now.tv_sec + now.tv_usec / 1000000.0 - startuptime;
+	startuptime = SDL_GetTicks() * 1000000.0 - startuptime;
 }
 
 int sys_frameStep()

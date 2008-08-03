@@ -77,8 +77,6 @@
 #define SEEINVISIBLE        128                     // Cutoff for invisible characters
 #define INVISIBLE           20                      // The character can't be detected
 
-BLUD_LEVEL;
-
 enum missle_handling_e
 {
   MIS_NORMAL  = 0,                  //Treat missiles normally
