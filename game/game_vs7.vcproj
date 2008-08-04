@@ -43,7 +43,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="SDL_image.lib SDL.lib SDLmain.lib SDL_ttf.lib SDL_mixer.lib opengl32.lib glu32.lib ws2_32.lib shlwapi.lib shell32.lib $(NOINHERIT)"
+				AdditionalDependencies="SDL_image.lib SDL.lib SDLmain.lib SDL_ttf.lib SDL_mixer.lib opengl32.lib glu32.lib ws2_32.lib shlwapi.lib Winmm.lib"
 				OutputFile="$(OutDir)/Egoboo2x.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories=""
@@ -104,7 +104,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="SDL.lib SDLmain.lib SDL_ttf.lib SDL_mixer.lib SDL_image.lib opengl32.lib glu32.lib ws2_32.lib Winmm.lib shlwapi.lib SHFolder.lib Shell32.lib"
+				AdditionalDependencies="SDL.lib SDLmain.lib SDL_ttf.lib SDL_mixer.lib SDL_image.lib opengl32.lib glu32.lib ws2_32.lib Winmm.lib shlwapi.lib"
 				OutputFile="$(OutDir)/Egoboo2x.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories=""
