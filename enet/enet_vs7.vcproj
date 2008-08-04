@@ -20,7 +20,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(ProjectDir)include"
+				AdditionalIncludeDirectories="$(ProjectDir)\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="FALSE"
 				BasicRuntimeChecks="3"
@@ -74,7 +74,7 @@
 				EnableIntrinsicFunctions="TRUE"
 				FavorSizeOrSpeed="1"
 				OptimizeForProcessor="3"
-				AdditionalIncludeDirectories="$(ProjectDir)include"
+				AdditionalIncludeDirectories="$(ProjectDir)\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_DEPRECATE"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
@@ -115,6 +115,9 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
+				RelativePath=".\callbacks.c">
+			</File>
+			<File
 				RelativePath=".\host.c">
 			</File>
 			<File
@@ -144,31 +147,31 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
-				RelativePath=".\_time.h">
+				RelativePath=".\include\_time.h">
 			</File>
 			<File
-				RelativePath=".\enet.h">
+				RelativePath=".\include\enet.h">
 			</File>
 			<File
-				RelativePath=".\list.h">
+				RelativePath=".\include\list.h">
 			</File>
 			<File
-				RelativePath=".\memory.h">
+				RelativePath=".\include\memory.h">
 			</File>
 			<File
-				RelativePath=".\protocol.h">
+				RelativePath=".\include\protocol.h">
 			</File>
 			<File
-				RelativePath=".\types.h">
+				RelativePath=".\include\types.h">
 			</File>
 			<File
-				RelativePath=".\unix.h">
+				RelativePath=".\include\unix.h">
 			</File>
 			<File
-				RelativePath=".\utility.h">
+				RelativePath=".\include\utility.h">
 			</File>
 			<File
-				RelativePath=".\win32.h">
+				RelativePath=".\include\win32.h">
 			</File>
 		</Filter>
 	</Files>
