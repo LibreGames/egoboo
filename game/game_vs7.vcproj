@@ -20,7 +20,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)\enet&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)\enet\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;_CONSOLE"
 				GeneratePreprocessedFile="0"
 				MinimalRebuild="FALSE"
@@ -89,7 +89,7 @@
 				FavorSizeOrSpeed="1"
 				OptimizeForProcessor="3"
 				OptimizeForWindowsApplication="TRUE"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)\enet&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)\enet\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE"
 				RuntimeLibrary="2"
 				BufferSecurityCheck="FALSE"
@@ -258,15 +258,6 @@
 			</File>
 			<File
 				RelativePath=".\Mad.c">
-			</File>
-			<File
-				RelativePath=".\MainLoop.c">
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="TRUE">
-					<Tool
-						Name="VCCLCompilerTool"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\Md2.c">

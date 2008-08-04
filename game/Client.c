@@ -38,7 +38,7 @@
 
 #include "Network.inl"
 
-#include <enet.h>
+#include <enet/enet.h>
 #include <assert.h>
 
 //--------------------------------------------------------------------------------------------

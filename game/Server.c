@@ -33,7 +33,7 @@
 #include "NetFile.h"
 #include "game.h"
 
-#include <enet.h>
+#include <enet/enet.h>
 #include <assert.h>
 
 #include "Network.inl"

@@ -146,6 +146,18 @@
 			</File>
 			<File
 				RelativePath=".\unix.c">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\win32.c">
@@ -159,9 +171,6 @@
 				RelativePath=".\include\enet\callbacks.h">
 			</File>
 			<File
-				RelativePath=".\include\enet\_time.h">
-			</File>
-			<File
 				RelativePath=".\include\enet\enet.h">
 			</File>
 			<File
@@ -172,6 +181,9 @@
 			</File>
 			<File
 				RelativePath=".\include\enet\protocol.h">
+			</File>
+			<File
+				RelativePath=".\include\enet\time.h">
 			</File>
 			<File
 				RelativePath=".\include\enet\types.h">

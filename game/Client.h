@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include <enet.h>
+#include <enet/enet.h>
 #include "Network.h"
 
 #include "egoboo_types.h"

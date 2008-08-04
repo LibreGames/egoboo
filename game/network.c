@@ -375,7 +375,7 @@ bool_t CListOut_Info_delete(CListOut_Info * info)
 
   EKEY_PINVALIDATE( info );
 
-  enet_peer_disconnect(info->peer);
+  enet_peer_disconnect(info->peer, 0);
 
   memset(info, 0, sizeof(CListOut_Info));
 
@@ -1888,7 +1888,7 @@ ENetPeer * net_disconnectPeer(ENetPeer * peer, int granularity_ms, int timeout_m
   if(ENET_PEER_STATE_DISCONNECTED != peer->state)
   {
     // force the thing to reset immediately
-    enet_peer_disconnect_now(peer);
+    enet_peer_disconnect_now(peer, 0);
   }
 
   return NULL;
@@ -2016,11 +2016,7 @@ ENetPeer * net_stopPeer(ENetPeer * peer)
 
   net_logf("NET INFO: net_stopPeer() - Stopping connection %s:0x%04x... ", convert_host(peer->address.host), peer->address.port);
 
-#ifdef ENET11
    enet_peer_disconnect(peer, 0);
-#else
-   enet_peer_disconnect(peer);
-#endif
 
   // print out some diagnostics
 

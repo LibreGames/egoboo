@@ -1,5 +1,5 @@
 #include <stdio.h> /* for NULL */
-#include <time.h>
+#include <sys/time.h>
 
 static double startuptime;
 

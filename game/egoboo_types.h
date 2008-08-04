@@ -498,7 +498,7 @@ struct BSP_node_t
 };
 typedef struct BSP_node_t BSP_node;
 
-INLINE BSP_node * BSP_node_new( BSP_node * t, void * data );
+INLINE BSP_node * BSP_node_new( BSP_node * t, void * data, int type );
 INLINE bool_t     BSP_node_delete( BSP_node * t );
 
 struct BSP_leaf_t

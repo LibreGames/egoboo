@@ -28,7 +28,7 @@
 
 #include "egoboo.h"
 
-#include <enet.h>
+#include <enet/enet.h>
 #include <SDL_thread.h>
 
 //---------------------------------------------------------------------------------------------
