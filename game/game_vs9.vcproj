@@ -571,7 +571,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\menu.c"
+				RelativePath=".\Menu.c"
 				>
 			</File>
 			<File
@@ -587,7 +587,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\network.c"
+				RelativePath=".\Network.c"
 				>
 			</File>
 			<File

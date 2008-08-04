@@ -285,7 +285,7 @@
 				RelativePath=".\Md2.c">
 			</File>
 			<File
-				RelativePath=".\menu.c">
+				RelativePath=".\Menu.c">
 			</File>
 			<File
 				RelativePath=".\mesh.c">
@@ -294,7 +294,7 @@
 				RelativePath=".\module.c">
 			</File>
 			<File
-				RelativePath=".\network.c">
+				RelativePath=".\Network.c">
 			</File>
 			<File
 				RelativePath=".\ogl_texture.c">

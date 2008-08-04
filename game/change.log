@@ -260,10 +260,10 @@
 	* Changed many upper-case or capitalized filenames to lower-case.
 	* Fixed a potential format-string problem in char.c
 	* Added a new global "pending_click", which is set to TRUE when a click
-	event is emitted by SDL.  See menu.c for use.  (really, this is a hack,
+	event is emitted by SDL.  See Menu.c for use.  (really, this is a hack,
 	but it fits better with the rest of the code than doing this the
 	"right way")  It is set by read_input in input.c.
-	* Changed copy_directory_to_host to copy_directory in menu.c.  This will
+	* Changed copy_directory_to_host to copy_directory in Menu.c.  This will
 	have to be undone when the network code is ported, but for now it allows
 	imports to work.
 
@@ -414,7 +414,7 @@
 	* Updated the scancode list (scancode.txt) for SDL.
 	* Temporarily forced networkon to FALSE.
 	* Temporarily forced autoturncamera to FALSE.
-	* Minor clean-up of game.c and network.c
+	* Minor clean-up of game.c and Network.c
 
 2001-01-07 Dan Olson <theoddone@quakefiles.com>
 	* Partial fix of bad alpha on models

@@ -5,7 +5,7 @@ EGO_SRC := \
 	AStar.c camera.c char.c Client.c Clock.c configfile.c egoboo_math.c egoboo_rpc.c \
 	egoboo_strutil.c egoboo_types.c egoboo_utility.c enchant.c file_common.c file_lin.c \
 	Font.c Frustum.c game.c graphic.c graphic_fan.c graphic_mad.c graphic_prt.c id_normals.c input.c \
-	Log.c Mad.c Md2.c menu.c mesh.c module.c NetFile.c network.c object.c ogl_include.c \
+	Log.c Mad.c Md2.c Menu.c mesh.c module.c NetFile.c Network.c object.c ogl_include.c \
 	ogl_texture.c particle.c passage.c Physics.c script.c SDL_GetPixel.c SDL_PutPixel.c SDL_rotozoom.c \
 	Server.c sound.c System_lin.c Task.c Ticker.c Timer.c Ui.c
 

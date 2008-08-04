@@ -1,5 +1,5 @@
 //********************************************************************************************
-//* Egoboo - menu.c
+//* Egoboo - Menu.c
 //*
 //* Implements the main menu tree, using the code in Ui.
 //*

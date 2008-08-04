@@ -266,7 +266,7 @@
 				RelativePath=".\Md2.inl">
 			</File>
 			<File
-				RelativePath=".\menu.c">
+				RelativePath=".\Menu.c">
 			</File>
 			<File
 				RelativePath=".\mesh.c">
@@ -287,7 +287,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\network.c">
+				RelativePath=".\Network.c">
 			</File>
 			<File
 				RelativePath=".\Network.inl">

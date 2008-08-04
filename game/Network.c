@@ -1,5 +1,5 @@
 //********************************************************************************************
-//* Egoboo - network.c
+//* Egoboo - Network.c
 //*
 //* This module implements the basic network functions that are used by
 //* the modules that implement file transfers and network play

@@ -24,10 +24,10 @@ SOURCES=camera.c\
 	Log.c\
 	MainLoop.c\
 	Md2.c\
-	menu.c\
+	Menu.c\
 	mesh.c\
 	module.c\
-	network.c\
+	Network.c\
 	ogl_include.c\
 	ogl_texture.c\
 	particle.c\

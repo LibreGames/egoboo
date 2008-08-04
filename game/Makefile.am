@@ -60,7 +60,7 @@ egoboo_2_7_7_SOURCES = \
 	Md2.h       \
 	Md2.inl       \
 	Menu.h       \
-	menu.c       \
+	Menu.c       \
 	mesh.c       \
 	mesh.h       \
 	mesh.inl       \
@@ -70,7 +70,7 @@ egoboo_2_7_7_SOURCES = \
 	NetFile.h       \
 	Network.h       \
 	Network.inl       \
-	network.c       \
+	Network.c       \
 	object.c       \
 	object.h       \
 	object.inl       \
