@@ -29,7 +29,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(ProjectDir)\include"
+				AdditionalIncludeDirectories="$(ProjectDir)\include\enet"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="FALSE"
 				BasicRuntimeChecks="3"
@@ -83,7 +83,7 @@
 				EnableIntrinsicFunctions="TRUE"
 				FavorSizeOrSpeed="1"
 				OptimizeForProcessor="3"
-				AdditionalIncludeDirectories="$(ProjectDir)\include"
+				AdditionalIncludeDirectories="$(ProjectDir)\include\enet"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_DEPRECATE"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
@@ -156,31 +156,34 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
-				RelativePath=".\include\_time.h">
+				RelativePath=".\include\enet\callbacks.h">
 			</File>
 			<File
-				RelativePath=".\include\enet.h">
+				RelativePath=".\include\enet\_time.h">
 			</File>
 			<File
-				RelativePath=".\include\list.h">
+				RelativePath=".\include\enet\enet.h">
 			</File>
 			<File
-				RelativePath=".\include\memory.h">
+				RelativePath=".\include\enet\list.h">
 			</File>
 			<File
-				RelativePath=".\include\protocol.h">
+				RelativePath=".\include\enet\memory.h">
 			</File>
 			<File
-				RelativePath=".\include\types.h">
+				RelativePath=".\include\enet\protocol.h">
 			</File>
 			<File
-				RelativePath=".\include\unix.h">
+				RelativePath=".\include\enet\types.h">
 			</File>
 			<File
-				RelativePath=".\include\utility.h">
+				RelativePath=".\include\enet\unix.h">
 			</File>
 			<File
-				RelativePath=".\include\win32.h">
+				RelativePath=".\include\enet\utility.h">
+			</File>
+			<File
+				RelativePath=".\include\enet\win32.h">
 			</File>
 		</Filter>
 	</Files>
