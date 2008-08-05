@@ -47,6 +47,15 @@
 int              loadplayer_count = 0;
 LOAD_PLAYER_INFO loadplayer[MAXLOADPLAYER];
 
+static retval_t   MenuProc_ensure_server(MenuProc * ms, struct CGame_t * gs);
+static retval_t   MenuProc_ensure_client(MenuProc * ms, struct CGame_t * gs);
+static retval_t   MenuProc_ensure_network(MenuProc * ms, struct CGame_t * gs);
+
+static retval_t   MenuProc_start_server(MenuProc * ms, struct CGame_t * gs);
+static retval_t   MenuProc_start_client(MenuProc * ms, struct CGame_t * gs);
+static retval_t   MenuProc_start_network(MenuProc * ms, struct CGame_t * gs);
+static retval_t   MenuProc_start_netfile(MenuProc * ms, struct CGame_t * gs);
+
 static int mnu_doMain( MenuProc * mproc, float deltaTime );
 static int mnu_doSinglePlayer( MenuProc * mproc, float deltaTime );
 static int mnu_doChooseModule( MenuProc * mproc, float deltaTime );
@@ -68,7 +77,8 @@ static int mnu_doIngameInventory( MenuProc * mproc, float deltaTime );
 
 static int mnu_handleKeyboard(  MenuProc * mproc  );
 
-
+static retval_t mnu_upload_game_info(CGame * gs, MenuProc * ms);
+static retval_t mnu_ensure_game(MenuProc * mproc, struct CGame_t ** optional);
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 enum mnu_states_e
@@ -1366,7 +1376,8 @@ int mnu_doChoosePlayer( MenuProc * mproc, float deltaTime )
 
       if ( mnu_selectedPlayerCount > 0 )
       {
-        if(NULL == sv) { sv = gs->sv = mproc->sv = CServer_create(gs); }
+        MenuProc_ensure_server(mproc, gs);
+        if(NULL != mproc->sv) { sv = gs->sv = mproc->sv; }
 
         mnu_load_mod_data(mproc, sv->loc_mod, MAXMODULE);           // Reload all avalilable modules
         import_selected_players();
@@ -2422,9 +2433,7 @@ int mnu_doLaunchGame( MenuProc * mproc, float deltaTime )
       {
         // make sure the game has the correct information
         // destroy any extra info
-        if(gs->ns != mproc->net) { CNet_destroy(&(gs->ns)); gs->ns = mproc->net; if(NULL !=gs->ns) gs->ns->parent = gs;}
-        if(gs->cl != mproc->cl ) { CClient_destroy(&(gs->cl)); gs->cl = mproc->cl;  if(NULL !=gs->cl) gs->cl->parent = gs;}
-        if(gs->sv != mproc->sv ) { CServer_destroy(&(gs->sv)); gs->sv = mproc->sv;  if(NULL !=gs->sv) gs->sv->parent = gs;}
+        assert( rv_succeed == mnu_upload_game_info(gs, mproc) );
       }
 
       if(NULL != mproc->cl && -1 != mproc->cl->selectedModule)
@@ -2806,17 +2815,11 @@ int mnu_Run( MenuProc * mproc )
               }
             }
 
-            // ensure that there is a network
-            MenuProc_ensure_network(mproc, gs);
+            // make sure the NetFile server is running
+            MenuProc_start_netfile(mproc, gs);
 
-            // start up NetFile
-            NFileState_startUp( mproc->net->nfs );
-
-            // ensure that there is a server
-            MenuProc_ensure_server(mproc, gs);
-
-            // start up the server
-            CServer_startUp(mproc->sv);
+            // make sure the server module is running
+            MenuProc_start_server(mproc, gs);
           }
         }
       }
@@ -3887,17 +3890,11 @@ int mnu_doJoinGame(MenuProc * mproc, float deltaTime)
 
     // start up the file transfer and client components at this point
 
-    // ensure that there is a CNet state
-    MenuProc_ensure_network(mproc, gs);
+    // make sure that the NetFile server is running
+    MenuProc_start_netfile(mproc, gs);
 
-    // start up NetFile
-    NFileState_startUp( mproc->net->nfs );
-
-    // ensure that there is a client
-    MenuProc_ensure_client(mproc, gs);
-
-    // start the client
-    CClient_startUp(mproc->cl);
+    // make sure that the client module is running
+    MenuProc_start_client(mproc, gs);
 
     // Load font & background
     snprintf(CStringTmp1, sizeof(CStringTmp1), "%s/%s/%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_sleepy_bitmap);
@@ -4510,6 +4507,59 @@ retval_t   MenuProc_ensure_network(MenuProc * ms, CGame * gs)
   return  (NULL != ms->net) ? rv_succeed : rv_error;
 };
 
+
+//--------------------------------------------------------------------------------------------
+retval_t   MenuProc_start_server(MenuProc * ms, CGame * gs)
+{
+  retval_t ret;
+
+  // ensure that there is a server
+  ret = MenuProc_ensure_server(ms, gs);
+  if(rv_succeed != ret) return ret;
+
+  // start up the server
+  ret = CServer_startUp(ms->sv);
+
+  return ret;
+}
+
+//--------------------------------------------------------------------------------------------
+retval_t   MenuProc_start_client(MenuProc * ms, CGame * gs)
+{
+  retval_t ret;
+
+  // ensure that there is a server
+  ret = MenuProc_ensure_client(ms, gs);
+  if(rv_succeed != ret) return ret;
+
+  // start up the server
+  ret = CClient_startUp(ms->cl);
+
+  return ret;
+}
+
+//--------------------------------------------------------------------------------------------
+retval_t   MenuProc_start_network(MenuProc * ms, CGame * gs)
+{
+  assert( bfalse );
+  return rv_fail;
+}
+
+//--------------------------------------------------------------------------------------------
+retval_t   MenuProc_start_netfile(MenuProc * ms, CGame * gs)
+{
+  retval_t ret;
+
+  // ensure that there is a network
+  ret = MenuProc_ensure_network(ms, gs);
+  if(rv_succeed != ret) return ret;
+
+  // start up NetFile
+  ret = NFileState_startUp( ms->net->nfs );
+
+  return ret;
+};
+
 //--------------------------------------------------------------------------------------------
 bool_t MenuProc_init_ingame(MenuProc * ms)
 {
@@ -4705,3 +4755,34 @@ retval_t mnu_ensure_game(MenuProc * mproc, CGame ** optional)
 
   return is_valid ? rv_succeed : rv_error;
 }
+
+//---------------------------------------------------------------------------------------------
+retval_t mnu_upload_game_info(CGame * gs, MenuProc * ms)
+{
+  // BB register the various networking states with the given game state
+
+  if( !EKEY_PVALID(gs) || !EKEY_PVALID(ms)) return rv_fail;
+
+  if(gs->ns != ms->net) 
+  { 
+    CNet_destroy(&(gs->ns)); 
+    gs->ns = ms->net; 
+    if(NULL !=gs->ns) gs->ns->parent = gs;
+  }
+
+  if(gs->cl != ms->cl )
+  { 
+    CClient_destroy(&(gs->cl)); 
+    gs->cl = ms->cl;  
+    if(NULL !=gs->cl) gs->cl->parent = gs;
+  }
+
+  if(gs->sv != ms->sv ) 
+  { 
+    CServer_destroy(&(gs->sv)); 
+    gs->sv = ms->sv;  
+    if(NULL !=gs->sv) gs->sv->parent = gs;
+  }
+
+  return rv_succeed;
+};

@@ -90,11 +90,6 @@ MenuProc * MenuProc_renew(MenuProc *ms);
 bool_t     MenuProc_init(MenuProc * ms);
 bool_t     MenuProc_init_ingame(MenuProc * ms);
 
-retval_t   MenuProc_ensure_server(MenuProc * ms, struct CGame_t * gs);
-retval_t   MenuProc_ensure_client(MenuProc * ms, struct CGame_t * gs);
-retval_t   MenuProc_ensure_network(MenuProc * ms, struct CGame_t * gs);
-
-
 //--------------------------------------------------------------------------------------------
 // All the different menus.  yay!
 
@@ -135,5 +130,3 @@ bool_t mnu_load_cl_images(MenuProc * mproc);
 void   mnu_free_all_titleimages(MenuProc * mproc);
 void   mnu_prime_titleimage(MenuProc * mproc);
 void   mnu_prime_modules(MenuProc * mproc);
-
-retval_t mnu_ensure_game(MenuProc * mproc, struct CGame_t ** optional);

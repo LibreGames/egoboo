@@ -8524,16 +8524,16 @@ CHR_REF _chr_spawn( chr_spawn_info si, bool_t activate )
   pchr->jumpnumberreset = pcap->jumpnumber;
 
   // Other junk
-  pchr->flyheight = pcap->flyheight;
+  pchr->flyheight     = pcap->flyheight;
   pchr->skin.maxaccel = pcap->skin[si.iskin].maxaccel;
-  pchr->alpha_fp8 = pcap->alpha_fp8;
-  pchr->light_fp8 = pcap->light_fp8;
-  pchr->flashand = pcap->flashand;
-  pchr->sheen_fp8 = pcap->sheen_fp8;
-  pchr->dampen = pcap->dampen;
+  pchr->alpha_fp8     = pcap->alpha_fp8;
+  pchr->light_fp8     = pcap->light_fp8;
+  pchr->flashand      = pcap->flashand;
+  pchr->sheen_fp8     = pcap->sheen_fp8;
+  pchr->dampen        = pcap->dampen;
 
   // Character size and bumping
-  pchr->fat = pcap->size;
+  pchr->fat      = pcap->size;
   pchr->sizegoto = pchr->fat;
 
   pchr->bmpdata_save.shadow  = pcap->shadowsize;
@@ -8548,7 +8548,7 @@ CHR_REF _chr_spawn( chr_spawn_info si, bool_t activate )
   pchr->bumpstrength     = pcap->bumpstrength * FP8_TO_FLOAT( pcap->alpha_fp8 );
 
   pchr->bumpdampen = pcap->bumpdampen;
-  pchr->weight = pcap->weight * pchr->fat * pchr->fat * pchr->fat;   // preserve density
+  pchr->weight     = pcap->weight * pchr->fat * pchr->fat * pchr->fat;   // preserve density
 
   // Image rendering
   pchr->uoffvel = pcap->uoffvel;

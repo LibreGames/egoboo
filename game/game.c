@@ -1540,9 +1540,13 @@ void sort_statlist( CGame * gs )
   // ZZ> This function puts all of the local players on top of the statlst
 
   PLA_REF pla_cnt;
+  Status * statlst;
+  size_t   statlst_size;
 
-  Status * statlst      = gs->cl->StatList;
-  size_t   statlst_size = gs->cl->StatList_count;
+  if( !EKEY_PVALID(gs) || NULL == gs->cl) return;
+
+  statlst      = gs->cl->StatList;
+  statlst_size = gs->cl->StatList_count;
 
   for ( pla_cnt = 0; pla_cnt < gs->PlaList_count; pla_cnt++ )
   {
@@ -4708,7 +4712,10 @@ bool_t fget_next_chr_spawn_info(CGame * gs, FILE * pfile, chr_spawn_info * psi)
   psi->iobj = OBJ_REF(slot);
 
   // the position info
-  fscanf( pfile, "%f%f%f", &pos.x, &pos.y, &pos.z );
+  pos.x = fget_float( pfile );
+  pos.y = fget_float( pfile );
+  pos.z = fget_float( pfile );
+
   psi->pos.x = MESH_FAN_TO_FLOAT( pos.x );
   psi->pos.y = MESH_FAN_TO_FLOAT( pos.y );
   psi->pos.z = MESH_FAN_TO_FLOAT( pos.z );
@@ -4727,9 +4734,13 @@ bool_t fget_next_chr_spawn_info(CGame * gs, FILE * pfile, chr_spawn_info * psi)
   };
 
   // misc info
-  fscanf( pfile, "%d %d %d %d %d", &psi->money, &psi->iskin, &psi->passage, &psi->content, &psi->level );
-  psi->stat = fget_bool( pfile );
-  psi->ghost = fget_bool( pfile );
+  psi->money   = fget_int( pfile );
+  psi->iskin   = fget_int( pfile );
+  psi->passage = fget_int( pfile );
+  psi->content = fget_int( pfile );
+  psi->level   = fget_int( pfile );
+  psi->stat    = fget_bool( pfile );
+  psi->ghost   = fget_bool( pfile );
 
   // team info
   psi->iteam = TEAM_REF( fget_first_letter( pfile ) - 'A' );
@@ -4859,14 +4870,21 @@ bool_t do_setup_chracter(chr_setup_info * pinfo, chr_spawn_info * psi)
   }
 
   // Set the starting level
-  if ( !chr_is_player(pinfo->gs, pinfo->last_item) )
+  if ( psi->level > 0 )
   {
-    // Let the character gain levels
-    psi->level -= 1;
-    while ( pitem->experiencelevel < psi->level && pitem->experience < MAXXP )
+    CCap * pcap = ChrList_getPCap(gs, pinfo->last_chr);
+
+    // make sure that the character/item CAN level
+    if( NULL!=pcap && pcap->experiencecoeff > 0)
     {
-      give_experience( pinfo->gs, pinfo->last_item, 100, XP_DIRECT );
+      // Let the character gain levels
+      psi->level -= 1;
+      while ( pitem->experiencelevel < psi->level && pitem->experience < MAXXP )
+      {
+        give_experience( pinfo->gs, pinfo->last_chr, 100, XP_DIRECT );
+      }
     }
+
   }
 
   if ( psi->ghost )  // Outdated, should be removed.
