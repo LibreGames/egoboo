@@ -741,16 +741,10 @@ int mnu_doChooseModule( MenuProc * mproc, float deltaTime )
   CServer * sv;
 
   // make sure a CClient state is defined
-  if(NULL == mproc->cl)
-  {
-    mproc->cl = CClient_create(NULL);
-  }
+  MenuProc_ensure_client(mproc, NULL);
 
   // make sure a CServer state is defined
-  if(NULL == mproc->sv)
-  {
-    mproc->sv = CServer_create(NULL);
-  }
+  MenuProc_ensure_server(mproc, NULL);
   sv = mproc->sv;
 
   switch ( menuState )
@@ -1193,7 +1187,7 @@ int mnu_doChoosePlayer( MenuProc * mproc, float deltaTime )
 
       if( !EKEY_PVALID(gs) )
       {
-        gs = gfxState.gs = CGame_create(mproc->net, NULL, NULL);
+        mnu_ensure_game(mproc, &gs);
         gs->proc.Active = bfalse;
         created_game = btrue;
       }
@@ -2422,7 +2416,7 @@ int mnu_doLaunchGame( MenuProc * mproc, float deltaTime )
 
       if(NULL == gfxState.gs)
       {
-        gfxState.gs = gs = CGame_create(mproc->net, mproc->cl, mproc->sv);
+        mnu_ensure_game(mproc, &gs);
       }
       else
       {
@@ -2771,7 +2765,8 @@ int mnu_Run( MenuProc * mproc )
 
     case mnu_HostGame:
       mproc->lastMenu = mnu_Network;
-      if(mproc->sv->ready)
+
+      if(NULL!=mproc->sv && mproc->sv->ready)
       {
         mproc->whichMenu = mnu_UnhostGame;
       }
@@ -2789,6 +2784,9 @@ int mnu_Run( MenuProc * mproc )
           else  if (mproc->MenuResult == 1)
           {
             mproc->whichMenu = mnu_UnhostGame;
+
+            // make sure we have a valid game
+            mnu_ensure_game(mproc, &gs);
 
             ModState_renew( (&gs->modstate), &(mproc->sv->mod), (Uint32)(~0));
 
@@ -2808,18 +2806,16 @@ int mnu_Run( MenuProc * mproc )
               }
             }
 
-            // ensure that there is a CNet state
-            if(NULL == mproc->net)
-            {
-              mproc->net = CNet_create(gs);
-            }
+            // ensure that there is a network
+            MenuProc_ensure_network(mproc, gs);
+
+            // start up NetFile
             NFileState_startUp( mproc->net->nfs );
 
-            // ensure that there is a CServer state
-            if(NULL == mproc->sv)
-            {
-              mproc->sv = CServer_create(gs);
-            }
+            // ensure that there is a server
+            MenuProc_ensure_server(mproc, gs);
+
+            // start up the server
             CServer_startUp(mproc->sv);
           }
         }
@@ -2848,6 +2844,9 @@ int mnu_Run( MenuProc * mproc )
           else if (mproc->MenuResult == 1)
           {
             mproc->whichMenu = mnu_HostGame;
+
+            // make sure we have a valid game
+            mnu_ensure_game(mproc, &gs);
 
             if(!gs->modstate.loaded)
             {
@@ -2887,6 +2886,10 @@ int mnu_Run( MenuProc * mproc )
         else if (mproc->MenuResult == 1)
         {
           mproc->lastMenu = mnu_Network;
+
+          // make sure we have a valid game
+          mnu_ensure_game(mproc, &gs);
+
           if(!gs->modstate.loaded)
           {
             memcpy(&(gs->modstate), &(mproc->cl->req_modstate), sizeof(ModState));
@@ -3442,7 +3445,7 @@ int mnu_doHostGame(MenuProc * mproc, float deltaTime)
   if(!net_Started()) return -1;
 
   // make sure a CServer state is defined
-  if(NULL == mproc->sv) return -1;
+  if(rv_succeed != MenuProc_ensure_server(mproc, NULL)) return -1;
   sv = mproc->sv;
 
   switch (menuState)
@@ -3872,9 +3875,8 @@ int mnu_doJoinGame(MenuProc * mproc, float deltaTime)
   gs = gfxState.gs;
 
   // make sure a CServer state is defined
-  if(NULL == mproc->cl)
+  if( rv_succeed != MenuProc_ensure_client(mproc, gfxState.gs) )
   {
-    mproc->cl = CClient_create(gfxState.gs);
     return -1;
   }
   cl = mproc->cl;
@@ -3886,17 +3888,15 @@ int mnu_doJoinGame(MenuProc * mproc, float deltaTime)
     // start up the file transfer and client components at this point
 
     // ensure that there is a CNet state
-    if(NULL == mproc->net)
-    {
-      mproc->net = CNet_create(gs);
-    }
+    MenuProc_ensure_network(mproc, gs);
+
+    // start up NetFile
     NFileState_startUp( mproc->net->nfs );
 
-    // ensure that there is a CClient state
-    if(NULL == mproc->cl)
-    {
-      mproc->cl = CClient_create(gs);
-    }
+    // ensure that there is a client
+    MenuProc_ensure_client(mproc, gs);
+
+    // start the client
     CClient_startUp(mproc->cl);
 
     // Load font & background
@@ -4269,7 +4269,7 @@ int mnu_doIngameQuit( MenuProc * mproc, float deltaTime )
 
       // Set the next menu to load
       result = menuChoice;
-      if(-1 == result)
+      if(NULL != gs && -1 == result)
       {
         gs->proc.KillMe = btrue;
       }
@@ -4299,6 +4299,8 @@ int mnu_doIngameInventory( MenuProc * mproc, float deltaTime )
 
   CGame   * gs = gfxState.gs;
   CClient * cl = mproc->cl;
+
+  if( !EKEY_PVALID(gs) ) return -1;
 
   iw = iconrect.right  - iconrect.left;
   ih = iconrect.bottom - iconrect.top;
@@ -4470,6 +4472,45 @@ bool_t MenuProc_init(MenuProc * ms)
 }
 
 //--------------------------------------------------------------------------------------------
+retval_t MenuProc_ensure_server(MenuProc * ms, CGame * gs)
+{
+  if( !EKEY_PVALID(ms) ) return rv_fail;
+
+  if( !EKEY_PVALID(ms->sv) )
+  {
+    ms->sv = CServer_create(gfxState.gs);
+  }
+
+  return (NULL != ms->sv) ? rv_succeed : rv_error;
+};
+
+//--------------------------------------------------------------------------------------------
+retval_t   MenuProc_ensure_client(MenuProc * ms, CGame * gs)
+{
+  if( !EKEY_PVALID(ms) ) return rv_fail;
+
+  if( !EKEY_PVALID(ms->cl) )
+  {
+    ms->cl = CClient_create(gs);
+  }
+
+  return  (NULL != ms->cl) ? rv_succeed : rv_error;
+};
+
+//--------------------------------------------------------------------------------------------
+retval_t   MenuProc_ensure_network(MenuProc * ms, CGame * gs)
+{
+  if( !EKEY_PVALID(ms) ) return rv_fail;
+
+  if( !EKEY_PVALID(ms->net) )
+  {
+    ms->net = CNet_create(gs);
+  }
+
+  return  (NULL != ms->net) ? rv_succeed : rv_error;
+};
+
+//--------------------------------------------------------------------------------------------
 bool_t MenuProc_init_ingame(MenuProc * ms)
 {
   if(NULL == ms) return bfalse;
@@ -4626,4 +4667,41 @@ void mnu_prime_modules(MenuProc * mproc)
   {
     mproc->sv->selectedModule = -1;
   }
+}
+
+//---------------------------------------------------------------------------------------------
+retval_t mnu_ensure_game(MenuProc * mproc, CGame ** optional)
+{
+  bool_t  is_valid = bfalse;
+  CGame * ptmp     = NULL;
+
+  // make sure that we have a CGame somewhere
+  if(NULL != optional) ptmp = *optional;
+  if(NULL == ptmp    ) ptmp = gfxState.gs;
+  if(NULL == ptmp    )
+  {
+    // create a new game
+    CNet    * net = NULL;
+    CClient * cl  = NULL;
+    CServer * sv  = NULL;
+
+    if( EKEY_PVALID(mproc) )
+    {
+      net = mproc->net;
+      cl  = mproc->cl;
+      sv  = mproc->sv;
+    }
+
+    ptmp = CGame_create(net, cl, sv);
+  }
+
+  // make sure that CGame is known
+  is_valid = EKEY_PVALID(ptmp);
+  if( is_valid )
+  {
+    if(NULL != optional    ) *optional   = ptmp;
+    if(NULL == gfxState.gs ) gfxState.gs = ptmp;
+  }
+
+  return is_valid ? rv_succeed : rv_error;
 }

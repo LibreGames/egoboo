@@ -1645,9 +1645,11 @@ void give_experience( CGame * gs, CHR_REF character, int amount, EXPERIENCE xpty
 
   loc_rand = gs->randie_index;
 
-
   // Figure out how much experience to give
   pchr = ChrList_getPChr(gs, character);
+  if(NULL == pchr) 
+    return;
+
   pcap = ChrList_getPCap(gs, character);
   iobj = ChrList_getRObj(gs, character);
   newamount = amount;
@@ -5876,8 +5878,11 @@ bool_t PlaList_new( CGame * gs )
   if(!EKEY_PVALID(gs)) return bfalse;
 
   gs->PlaList_count      = 0;
-  gs->cl->loc_pla_count  = 0;
-  gs->cl->StatList_count = 0;
+  if(NULL != gs->cl)
+  {
+    gs->cl->loc_pla_count  = 0;
+    gs->cl->StatList_count = 0;
+  };
 
   for ( pla_cnt = 0; pla_cnt < ENCLST_COUNT; pla_cnt++ )
   {
@@ -5921,8 +5926,11 @@ bool_t PlaList_renew( CGame * gs )
   if(!EKEY_PVALID(gs)) return bfalse;
 
   gs->PlaList_count      = 0;
-  gs->cl->loc_pla_count  = 0;
-  gs->cl->StatList_count = 0;
+  if(NULL != gs->cl)
+  {
+    gs->cl->loc_pla_count  = 0;
+    gs->cl->StatList_count = 0;
+  }
 
   for ( pla_cnt = 0; pla_cnt < PLALST_COUNT; pla_cnt++ )
   {

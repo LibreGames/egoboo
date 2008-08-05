@@ -5604,8 +5604,11 @@ void reset_players( CGame * gs )
 
 
   // Reset the local data stuff
-  gs->cl->seekurse    = bfalse;
-  gs->cl->seeinvisible = bfalse;
+  if(NULL != gs->cl)
+  {
+    gs->cl->seekurse    = bfalse;
+    gs->cl->seeinvisible = bfalse;
+  }
   gs->somepladead  = bfalse;
   gs->allpladead   = bfalse;
 
