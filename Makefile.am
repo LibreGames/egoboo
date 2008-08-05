@@ -7,12 +7,11 @@ SUBDIRS =  \
 
 egoboodocdir = ${prefix}/doc/egoboo
 egoboodoc_DATA = \
-	README\
-	COPYING\
-	AUTHORS\
-	ChangeLog\
-	INSTALL\
-	NEWS
+	README.Windows\
+	README.Linux\
+	BUGS\
+	TODO\
+	game/change.log
 
 EXTRA_DIST = $(egoboodoc_DATA)
 

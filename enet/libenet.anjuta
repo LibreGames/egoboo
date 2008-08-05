@@ -13,7 +13,7 @@
 	<plugin name="Symbol Browser"
             url="http://anjuta.org/plugins/"
             mandatory="yes">
-                <require group="Anjuta Plugin"
+		<require group="Anjuta Plugin"
                  attribute="Interfaces"
                  value="IAnjutaSymbolManager"/>
 	</plugin>
@@ -26,6 +26,13 @@
 		<require group="Build"
                  attribute="Supported-Build-Types"
                  value="make"/>
+	</plugin>
+	<plugin name="Task Manager"
+            url="http://anjuta.org/plugins/"
+            mandatory="no">
+		<require group="Anjuta Plugin"
+                 attribute="Interfaces"
+                 value="IAnjutaTodo"/>
 	</plugin>
 	<plugin name="Debug Manager"
             url="http://anjuta.org/plugins/"
