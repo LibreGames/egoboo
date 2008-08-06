@@ -4,6 +4,7 @@
 #include "egoboo_math.h"
 
 struct CGame_t;
+struct water_info_t;
 
 #define INVALID_BUMPLIST_NODE (~(Uint32)0)
 
@@ -218,12 +219,12 @@ bool_t mesh_calc_normal_fan( struct CGame_t * gs, int fan, vect3 * pnrm, vect3 *
 bool_t mesh_calc_normal_pos( struct CGame_t * gs, int fan, vect3 pos, vect3 * pnrm );
 bool_t mesh_calc_normal( struct CGame_t * gs, vect3 pos, vect3 * pnrm );
 
-float mesh_get_level( struct CGame_t * gs, Uint32 fan, float x, float y, bool_t waterwalk );
+float mesh_get_level( MeshMem * mm, Uint32 fan, float x, float y, bool_t waterwalk, struct water_info_t * wi );
 
 
 Uint32 mesh_hitawall( struct CGame_t * gs, vect3 pos, float size_x, float size_y, Uint32 collision_bits, vect3 * nrm );
 
-INLINE const Uint32 mesh_get_fan( struct CGame_t * gs, vect3 pos );
+INLINE const Uint32 mesh_get_fan( MESH_INFO * mi, MeshMem * mm, vect3 pos );
 INLINE const Uint32 mesh_get_block( MESH_INFO * mi, vect3 pos );
 
 INLINE void mesh_set_colora( struct CGame_t * gs, int fan_x, int fan_y, int color );

@@ -1,18 +1,18 @@
 #include "cartman.h"
 
-#include "Ui.h"
-#include "Log.h"
-#include "mesh.h"
+#include "../Ui.h"
+#include "../Log.h"
+#include "../mesh.h"
 
-#include "egoboo.h"
+#include "../egoboo.h"
 
 #include <stdio.h>      // For printf and such
-#include "SDL_Pixel.h"
+#include "../SDL_Pixel.h"
 #include <SDL_image.h>
 
-#include "egoboo_types.inl"
-#include "graphic.inl"
-#include "input.inl"
+#include "../egoboo_types.inl"
+#include "../graphic.inl"
+#include "../input.inl"
 
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
   const Uint32 rmask = 0x000000ff;
@@ -139,9 +139,25 @@ cart_select_list cselect_lst = {0};
 float    debugx = -1;    // Blargh
 float    debugy = -1;    //
 
+#define MAXWIN 8                 // Number of windows
+struct cart_window_info_t
+{
+  GLtexture tx;     // Window images
+  bool_t    on;       // Draw it?
+  int       borderx; // Window border size
+  int       bordery; //
+  SDL_Rect  rect;    // Window size
+  Uint16    mode;     // Window display mode
+};
+typedef struct cart_window_info_t cart_window_info;
+
+cart_window_info cwindow_info[MAXWIN];
+
 struct cart_mouse_info_t
 {
-  int      data;    // More mouse data
+  int                data;    // More mouse data
+  cart_window_info * w;
+
   int      x;       //
   int      y;       //
   Uint16   mode;    // Window mode
@@ -154,7 +170,7 @@ struct cart_mouse_info_t
   int      recty;   //
   Uint8    fx;      //
 };
-typedef cart_mouse_info_t cart_mouse_info;
+typedef struct cart_mouse_info_t cart_mouse_info;
 
 cart_mouse_info cmouse_info = 
 {
@@ -172,27 +188,9 @@ cart_mouse_info cmouse_info =
   MPDFX_NOREFLECT // fx      
 };
 
-#define MAXWIN 8                 // Number of windows
-struct cart_window_info_t
-{
-  GLtexture tx;     // Window images
-  bool_t    on;       // Draw it?
-  int       borderx; // Window border size
-  int       bordery; //
-  SDL_Rect  rect;    // Window size
-  Uint16    mode;     // Window display mode
-};
-typedef cart_window_info_t cart_window_info;
-
-cart_window_info cwindow_info[MAXWIN];
-
 int    colordepth = 8;    // 256 colors
 int    keydelay = 0;    //
 
-
-Uint32 atvertex = 0;      // Current vertex check for new
-Uint32 numfreevertices = 0;    // Number of free vertices
-float  meshedgez;      //
 
 struct cart_fan_lines_t
 {
@@ -200,16 +198,29 @@ struct cart_fan_lines_t
   Uint8  linestart[MAXMESHLINE];
   Uint8  lineend[MAXMESHLINE];
 };
-typedef cart_fan_lines_t cart_fan_lines;
-cart_fan_lines cfan_lines = {0};
+typedef struct cart_fan_lines_t cart_fan_lines;
+cart_fan_lines cfan_lines[MAXMESHTYPE];
+
+struct cart_vert_extra_t
+{
+  Uint32 free_count;    // Number of free vertices
+  Uint32 index;        // Current vertex check for new
+
+  Uint32 next[MAXTOTALMESHVERTICES]; // Next vertex in fan
+};
+typedef struct cart_vert_extra_t cart_vert_extra;
 
 struct cart_mesh_t
 {
   MESH_INFO * mi;
   MeshMem   * mm;
+  cart_vert_extra xvrt;
+
+  float  edgez;      //
+  Uint32 seed;
 };
 typedef struct cart_mesh_t cart_mesh;
-cart_mesh cmesh = {NULL, NULL};
+cart_mesh c_mesh = {NULL, NULL, {0, 0} };
 
 //------------------------------------------------------------------------------
 GLfloat * make_color(Uint8 r, Uint8 g, Uint8 b)
@@ -418,7 +429,7 @@ bool_t fan_is_floor(cart_mesh * cmsh, float x, float y)
   Uint32 fan;
   vect3 pos = {x,y,0};
 
-  fan = mesh_get_fan( pos );
+  fan = mesh_get_fan( cmsh->mi, cmsh->mm, pos );
   if( INVALID_FAN != fan )
   {
     return mesh_has_no_bits(cmsh->mm->fanlst, fan, MPDFX_WALL | MPDFX_IMPASS);
@@ -435,10 +446,10 @@ void set_barrier_height(cart_mesh * cmsh, cart_mouse_info * m, int x, int y)
   float bestprox, prox, tprox, scale;
   vect3 pos = {x,y,0};
 
-  fan = mesh_get_fan(pos);
+  fan = mesh_get_fan( cmsh->mi, cmsh->mm, pos );
   if(fan != -1)
   {
-    if( mesh_has_some_bits( fan, MPDFX_WALL ) )
+    if( mesh_has_some_bits( cmsh->mm->fanlst, fan, MPDFX_WALL ) )
     {
       type = cmsh->mm->fanlst[fan].type;
       noedges = btrue;
@@ -449,25 +460,25 @@ void set_barrier_height(cart_mesh * cmsh, cart_mouse_info * m, int x, int y)
         bestprox = 2*(NEARHI-NEARLOW)/3.0;
         if(fan_is_floor(cmsh, x+1, y))
         {
-          prox = NEARHI-Mesh_Cmd[type].u[cnt];
+          prox = NEARHI-Mesh_Cmd[type].tx[cnt].u;
           if(prox < bestprox) bestprox = prox;
           noedges = bfalse;
         }
         if(fan_is_floor(cmsh, x, y+1))
         {
-          prox = NEARHI-Mesh_Cmd[type].v[cnt];
+          prox = NEARHI-Mesh_Cmd[type].tx[cnt].v;
           if(prox < bestprox) bestprox = prox;
           noedges = bfalse;
         }
         if(fan_is_floor(cmsh, x-1, y))
         {
-          prox = Mesh_Cmd[type].u[cnt]-NEARLOW;
+          prox = Mesh_Cmd[type].tx[cnt].u-NEARLOW;
           if(prox < bestprox) bestprox = prox;
           noedges = bfalse;
         }
         if(fan_is_floor(cmsh, x, y-1))
         {
-          prox = Mesh_Cmd[type].v[cnt]-NEARLOW;
+          prox = Mesh_Cmd[type].tx[cnt].v-NEARLOW;
           if(prox < bestprox) bestprox = prox;
           noedges = bfalse;
         }
@@ -476,39 +487,39 @@ void set_barrier_height(cart_mesh * cmsh, cart_mouse_info * m, int x, int y)
           // Surrounded by walls on all 4 sides, but it may be a corner piece
           if(fan_is_floor(cmsh, x+1, y+1))
           {
-            prox = NEARHI-Mesh_Cmd[type].u[cnt];
-            tprox = NEARHI-Mesh_Cmd[type].v[cnt];
+            prox = NEARHI-Mesh_Cmd[type].tx[cnt].u;
+            tprox = NEARHI-Mesh_Cmd[type].tx[cnt].v;
             if(tprox > prox) prox = tprox;
             if(prox < bestprox) bestprox = prox;
           }
           if(fan_is_floor(cmsh, x+1, y-1))
           {
-            prox = NEARHI-Mesh_Cmd[type].u[cnt];
-            tprox = Mesh_Cmd[type].v[cnt]-NEARLOW;
+            prox = NEARHI-Mesh_Cmd[type].tx[cnt].u;
+            tprox = Mesh_Cmd[type].tx[cnt].v-NEARLOW;
             if(tprox > prox) prox = tprox;
             if(prox < bestprox) bestprox = prox;
           }
           if(fan_is_floor(cmsh, x-1, y+1))
           {
-            prox = Mesh_Cmd[type].u[cnt]-NEARLOW;
-            tprox = NEARHI-Mesh_Cmd[type].v[cnt];
+            prox = Mesh_Cmd[type].tx[cnt].u-NEARLOW;
+            tprox = NEARHI-Mesh_Cmd[type].tx[cnt].v;
             if(tprox > prox) prox = tprox;
             if(prox < bestprox) bestprox = prox;
           }
           if(fan_is_floor(cmsh, x-1, y-1))
           {
-            prox = Mesh_Cmd[type].u[cnt]-NEARLOW;
-            tprox = Mesh_Cmd[type].v[cnt]-NEARLOW;
+            prox = Mesh_Cmd[type].tx[cnt].u-NEARLOW;
+            tprox = Mesh_Cmd[type].tx[cnt].v-NEARLOW;
             if(tprox > prox) prox = tprox;
             if(prox < bestprox) bestprox = prox;
           }
         }
         scale = cwindow_info[m->data].rect.h-(m->y/FOURNUM);
         bestprox = bestprox*scale*BARRIERHEIGHT/cwindow_info[m->data].rect.h;
-        if(bestprox > meshedgez) bestprox = meshedgez;
+        if(bestprox > cmsh->edgez) bestprox = cmsh->edgez;
         if(bestprox < 0) bestprox = 0;
         cmsh->mm->vrt_z[vert] = bestprox;
-        vert = cmsh->mm->vrt_next[vert];
+        vert = cmsh->xvrt.next[vert];
         cnt++;
       }
     }
@@ -516,7 +527,7 @@ void set_barrier_height(cart_mesh * cmsh, cart_mouse_info * m, int x, int y)
 }
 
 //------------------------------------------------------------------------------
-void fix_walls(cart_mesh * cmsh)
+void fix_walls(cart_mesh * cmsh, cart_mouse_info * m)
 {
   int x, y;
 
@@ -526,7 +537,7 @@ void fix_walls(cart_mesh * cmsh)
     x = 0;
     while(x < cmsh->mi->size_x)
     {
-      set_barrier_height(cmsh, x, y);
+      set_barrier_height(cmsh, m, x, y);
       x++;
     }
     y++;
@@ -547,7 +558,7 @@ void impass_edges(cart_mesh * cmsh, int amount)
     {
       if(dist_from_edge(cmsh, x, y) < amount)
       {
-        fan = mesh_convert_fan(x, y);
+        fan = mesh_convert_fan(cmsh->mi, x, y);
         cmsh->mm->fanlst[fan].fx |= MPDFX_IMPASS;
       }
       x++;
@@ -575,17 +586,17 @@ Uint8 get_twist(int x, int y)
 }
 
 //------------------------------------------------------------------------------
-Uint8 get_fan_twist(MeshMem * mm, Uint32 fan)
+Uint8 get_fan_twist(cart_mesh * cmsh, Uint32 fan)
 {
   int zx, zy, vt0, vt1, vt2, vt3;
   Uint8 twist;
 
-  vt0 = mm->fanlst[fan].vrt_start;
-  vt1 = mm->vrt_next[vt0];
-  vt2 = mm->vrt_next[vt1];
-  vt3 = mm->vrt_next[vt2];
-  zx = (mm->vrt_z[vt0]+mm->vrt_z[vt3]-mm->vrt_z[vt1]-mm->vrt_z[vt2])/SLOPE;
-  zy = (mm->vrt_z[vt2]+mm->vrt_z[vt3]-mm->vrt_z[vt0]-mm->vrt_z[vt1])/SLOPE;
+  vt0 = cmsh->mm->fanlst[fan].vrt_start;
+  vt1 = cmsh->xvrt.next[vt0];
+  vt2 = cmsh->xvrt.next[vt1];
+  vt3 = cmsh->xvrt.next[vt2];
+  zx = (cmsh->mm->vrt_z[vt0]+cmsh->mm->vrt_z[vt3]-cmsh->mm->vrt_z[vt1]-cmsh->mm->vrt_z[vt2])/SLOPE;
+  zy = (cmsh->mm->vrt_z[vt2]+cmsh->mm->vrt_z[vt3]-cmsh->mm->vrt_z[vt0]-cmsh->mm->vrt_z[vt1])/SLOPE;
   twist = get_twist(zx, zy);
 
 
@@ -633,13 +644,13 @@ void make_hitemap(cart_mesh * cmsh)
     {
       vect3 pos = {x,y,0};
 
-      level=(mesh_get_level(mesh_get_fan(pos), x, y, bfalse)*255/meshedgez);  // level is 0 to 255
+      level=(mesh_get_level(cmsh->mm, mesh_get_fan(cmsh->mi, cmsh->mm, pos), x, y, bfalse, NULL)*255/cmsh->edgez);  // level is 0 to 255
       if(level > 252) level = 252;
-      fan = Mesh[pixy>>2].fanstart+(pixx>>2);
+      fan = mesh_convert_fan(cmsh->mi, pixx>>2, pixy>>2);
 
-      if( mesh_has_all_bits(fan, MPDFX_WALL | MPDFX_IMPASS) ) level = 255;   // Both
-      else if( mesh_has_all_bits(fan, MPDFX_WALL)   ) level = 253;         // Wall
-      else if( mesh_has_all_bits(fan, MPDFX_IMPASS) ) level = 254;         // Impass
+      if( mesh_has_all_bits(cmsh->mm->fanlst, fan, MPDFX_WALL | MPDFX_IMPASS) ) level = 255;   // Both
+      else if( mesh_has_all_bits(cmsh->mm->fanlst, fan, MPDFX_WALL)   ) level = 253;         // Wall
+      else if( mesh_has_all_bits(cmsh->mm->fanlst, fan, MPDFX_IMPASS) ) level = 254;         // Impass
 
       SDL_PutPixel(cbmp_lst.hitemap, pixx, pixy, level);
 
@@ -665,7 +676,7 @@ GLtexture * tiny_tile_at(cart_mesh * cmsh, int x, int y)
     return retval;
   }
 
-  fan = mesh_convert_fan(x, y);
+  fan = mesh_convert_fan(cmsh->mi, x, y);
   if(INVALID_FAN == cmsh->mm->fanlst[fan].tile)
   {
     return NULL;
@@ -711,11 +722,11 @@ GLtexture * tiny_tile_at(cart_mesh * cmsh, int x, int y)
 void make_planmap(cart_mesh * cmsh)
 {
   int x, y, putx, puty;
-  SDL_Surface* cbmp_lst.temp;
+  SDL_Surface* bmp_temp;
 
 
-  cbmp_lst.temp = SDL_CreateRGBSurface(SDL_SWSURFACE, 64, 64, 32, rmask, gmask, bmask, amask);
-  if(!cbmp_lst.temp)  return;
+  bmp_temp = SDL_CreateRGBSurface(SDL_SWSURFACE, 64, 64, 32, rmask, gmask, bmask, amask);
+  if(!bmp_temp)  return;
 
   if(NULL != cbmp_lst.hitemap) SDL_FreeSurface(cbmp_lst.hitemap);
   cbmp_lst.hitemap = SDL_CreateRGBSurface(SDL_SWSURFACE, cmsh->mi->size_x*TINYX, cmsh->mi->size_y*TINYY, 32, rmask, gmask, bmask, amask);
@@ -743,11 +754,11 @@ void make_planmap(cart_mesh * cmsh)
   }
 
 
-  SDL_BlitSurface(cbmp_lst.hitemap, &cbmp_lst.hitemap->clip_rect, cbmp_lst.temp, &cbmp_lst.temp->clip_rect);
+  SDL_BlitSurface(cbmp_lst.hitemap, &cbmp_lst.hitemap->clip_rect, bmp_temp, &bmp_temp->clip_rect);
 
   SDL_FreeSurface(cbmp_lst.hitemap);
 
-  cbmp_lst.hitemap = cbmp_lst.temp;
+  cbmp_lst.hitemap = bmp_temp;
 }
 
 //------------------------------------------------------------------------------
@@ -757,7 +768,7 @@ void draw_cursor_in_window(cart_mouse_info * m, cart_window_info * w)
 
   if(m->data!=-1)
   {
-    if(w->on && win != m->data)
+    if(w->on && w != m->w)
     {
       if((cwindow_info[m->data].mode&WINSIDE) == (w->mode&WINSIDE))
       {
@@ -781,14 +792,14 @@ int get_vertex(cart_mesh * cmsh, int x, int y, int num)
   vert = -1;
   if(x>=0 && y>=0 && x<cmsh->mi->size_x && y<cmsh->mi->size_y)
   {
-    fan = mesh_convert_fan(x, y);
+    fan = mesh_convert_fan(cmsh->mi, x, y);
     if(Mesh_Cmd[cmsh->mm->fanlst[fan].type].vrt_count>num)
     {
       vert = cmsh->mm->fanlst[fan].vrt_start;
       cnt = 0;
       while(cnt < num)
       {
-        vert = cmsh->mm->vrt_next[vert];
+        vert = cmsh->xvrt.next[vert];
         if(vert==-1)
         {
           log_error("BAD GET_VERTEX NUMBER(2nd), %d at %d, %d...\n" "%d VERTICES ALLOWED...\n\n", num, x, y , Mesh_Cmd[cmsh->mm->fanlst[fan].type].vrt_count);
@@ -814,13 +825,13 @@ int nearest_vertex(cart_mesh * cmsh, int x, int y, float nearx, float neary)
   bestvert = -1;
   if(x>=0 && y>=0 && x<cmsh->mi->size_x && y<cmsh->mi->size_y)
   {
-    fan = mesh_convert_fan(x, y);
+    fan = mesh_convert_fan(cmsh->mi, x, y);
     num = Mesh_Cmd[cmsh->mm->fanlst[fan].type].vrt_count;
     vert = cmsh->mm->fanlst[fan].vrt_start;
-    vert = cmsh->mm->vrt_next[vert];
-    vert = cmsh->mm->vrt_next[vert];
-    vert = cmsh->mm->vrt_next[vert];
-    vert = cmsh->mm->vrt_next[vert];
+    vert = cmsh->xvrt.next[vert];
+    vert = cmsh->xvrt.next[vert];
+    vert = cmsh->xvrt.next[vert];
+    vert = cmsh->xvrt.next[vert];
     bestprox = 9000;
     cnt = 4;
     while(cnt < num)
@@ -835,7 +846,7 @@ int nearest_vertex(cart_mesh * cmsh, int x, int y, float nearx, float neary)
         bestvert = vert;
         bestprox = prox;
       }
-      vert = cmsh->mm->vrt_next[vert];
+      vert = cmsh->xvrt.next[vert];
       cnt++;
     }
   }
@@ -847,15 +858,13 @@ void weld_select(MeshMem * mm, cart_select_list * csel)
 {
   // ZZ> This function welds the highlighted vertices
 
-  int cnt, x, y, z, a;
+  int cnt, x, y, z, ar, ag, ab;
   Uint32 vert;
 
   if(csel->count > 1)
   {
-    x = 0;
-    y = 0;
-    z = 0;
-    a = 0;
+    x =  y = z = 0;
+    ar = ag = ab = 0;
     cnt = 0;
     while(cnt < csel->count)
     {
@@ -863,14 +872,18 @@ void weld_select(MeshMem * mm, cart_select_list * csel)
       x+= mm->vrt_x[vert];
       y+= mm->vrt_y[vert];
       z+= mm->vrt_z[vert];
-      a+= mm->vrt_a[vert];
+      ar+= mm->vrt_ar_fp8[vert];
+      ag+= mm->vrt_ag_fp8[vert];
+      ab+= mm->vrt_ab_fp8[vert];
       cnt++;
     }
     x+=cnt>>1;  y+=cnt>>1;
     x /= csel->count;
     y /= csel->count;
     z /= csel->count;
-    a /= csel->count;
+    ar /= csel->count;
+    ag /= csel->count;
+    ab /= csel->count;
     cnt = 0;
     while(cnt < csel->count)
     {
@@ -878,7 +891,9 @@ void weld_select(MeshMem * mm, cart_select_list * csel)
        mm->vrt_x[vert]=x;
        mm->vrt_y[vert]=y;
        mm->vrt_z[vert]=z;
-       mm->vrt_a[vert]=a;
+       mm->vrt_ar_fp8[vert]=ar;
+       mm->vrt_ag_fp8[vert]=ag;
+       mm->vrt_ab_fp8[vert]=ab;
       cnt++;
     }
   }
@@ -976,19 +991,19 @@ void remove_select(cart_select_list * csel, int vert)
 }
 
 //------------------------------------------------------------------------------
-void fan_onscreen(MeshMem * mm, Uint32 fan)
+void fan_onscreen(cart_mesh * cmsh, Uint32 fan)
 {
   // ZZ> This function flags a fan's points as being "onscreen"
 
   int cnt;
   Uint32 vert;
 
-  vert = mm->fanlst[fan].vrt_start;
+  vert = cmsh->mm->fanlst[fan].vrt_start;
   cnt = 0;
-  while(cnt < Mesh_Cmd[mm->fanlst[fan].type].vrt_count)
+  while(cnt < Mesh_Cmd[cmsh->mm->fanlst[fan].type].vrt_count)
   {
     cpoint_lst.data[cpoint_lst.count] = vert;  cpoint_lst.count++;
-    vert = mm->vrt_next[vert];
+    vert = cmsh->xvrt.next[vert];
     cnt++;
   }
   return;
@@ -1022,7 +1037,7 @@ void make_onscreen( cart_mesh * cmsh )
       {
         if(mapx>=0 && mapx<cmsh->mi->size_x)
         {
-          fan = mesh_convert_fan(mapx, mapy);
+          fan = mesh_convert_fan(cmsh->mi, mapx, mapy);
           fan_onscreen(cmsh->mm, fan);
         }
         mapx++;
@@ -1037,7 +1052,7 @@ void make_onscreen( cart_mesh * cmsh )
 }
 
 //------------------------------------------------------------------------------
-void draw_top_fan(MeshMem * mm, cart_window_info * w, int fan, int x, int y)
+void draw_top_fan(cart_mesh * cmsh, cart_window_info * w, int fan, int x, int y)
 {
   // ZZ> This function draws the line drawing preview of the tile type...
   //     A wireframe tile from a vertex connection window
@@ -1050,19 +1065,19 @@ void draw_top_fan(MeshMem * mm, cart_window_info * w, int fan, int x, int y)
 
   set_window_viewport( w );
 
-  fantype = mm->fanlst[fan].type;
+  fantype = cmsh->mm->fanlst[fan].type;
   color = make_color(16, 16, 31);
   if(fantype>=MAXMESHTYPE/2)
   {
     color = make_color(31, 16, 16);
   }
 
-  vert = mm->fanlst[fan].vrt_start;
+  vert = cmsh->mm->fanlst[fan].vrt_start;
   cnt = 0;
   while(cnt < Mesh_Cmd[fantype].vrt_count)
   {
     faketoreal[cnt] = vert;
-    vert = mm->vrt_next[vert];
+    vert = cmsh->xvrt.next[vert];
     cnt++;
   }
 
@@ -1075,8 +1090,8 @@ void draw_top_fan(MeshMem * mm, cart_window_info * w, int fan, int x, int y)
     stt = faketoreal[cfan_lines[fantype].linestart[cnt]];
     end = faketoreal[cfan_lines[fantype].lineend[cnt]];
 
-    glVertex2f(mm->vrt_x[stt]+x, mm->vrt_y[stt]+y);
-    glVertex2f(mm->vrt_x[end]+x, mm->vrt_y[end]+y);
+    glVertex2f(cmsh->mm->vrt_x[stt]+x, cmsh->mm->vrt_y[stt]+y);
+    glVertex2f(cmsh->mm->vrt_x[end]+x, cmsh->mm->vrt_y[end]+y);
 
     cnt++;
   }
@@ -1088,20 +1103,20 @@ void draw_top_fan(MeshMem * mm, cart_window_info * w, int fan, int x, int y)
   while(cnt < Mesh_Cmd[fantype].vrt_count)
   {
     vert = faketoreal[cnt];
-    size = (mm->vrt_z[vert] * 16.0f)/(meshedgez+1);
-    if(mm->vrt_z[vert] >= 0)
+    size = (cmsh->mm->vrt_z[vert] * 16.0f)/(cmsh->edgez+1);
+    if(cmsh->mm->vrt_z[vert] >= 0)
     {
-      if(vert_selected(csel, vert))
+      if(vert_selected(&cselect_lst, vert))
       {
         draw_blit_sprite(NULL, cimg_lst.pointon + size,
-          mm->vrt_x[vert]+x-(cimg_lst.pointon[size].txW>>1),
-          mm->vrt_y[vert]+y-(cimg_lst.pointon[size].txH>>1));
+          cmsh->mm->vrt_x[vert]+x-(cimg_lst.pointon[size].txW>>1),
+          cmsh->mm->vrt_y[vert]+y-(cimg_lst.pointon[size].txH>>1));
       }
       else
       {
         draw_blit_sprite(NULL, cimg_lst.point + size,
-          mm->vrt_x[vert]+x-(cimg_lst.point[size].txW>>1),
-          mm->vrt_y[vert]+y-(cimg_lst.point[size].txH>>1));
+          cmsh->mm->vrt_x[vert]+x-(cimg_lst.point[size].txW>>1),
+          cmsh->mm->vrt_y[vert]+y-(cimg_lst.point[size].txH>>1));
       }
     }
     cnt++;
@@ -1112,7 +1127,7 @@ void draw_top_fan(MeshMem * mm, cart_window_info * w, int fan, int x, int y)
 }
 
 //------------------------------------------------------------------------------
-void draw_side_fan(MeshMem * mm, cart_window_info * w, int fan, int x, int y)
+void draw_side_fan(cart_mesh * cmsh, cart_window_info * w, int fan, int x, int y)
 {
   // ZZ> This function draws the line drawing preview of the tile type...
   //     A wireframe tile from a vertex connection window ( Side view )
@@ -1125,19 +1140,19 @@ void draw_side_fan(MeshMem * mm, cart_window_info * w, int fan, int x, int y)
 
   set_window_viewport( w );
 
-  fantype = mm->fanlst[fan].type;
+  fantype = cmsh->mm->fanlst[fan].type;
   color = make_color(16, 16, 31);
   if(fantype>=MAXMESHTYPE/2)
   {
     color = make_color(31, 16, 16);
   }
 
-  vert = mm->fanlst[fan].vrt_start;
+  vert = cmsh->mm->fanlst[fan].vrt_start;
   cnt = 0;
   while(cnt < Mesh_Cmd[fantype].vrt_count)
   {
     faketoreal[cnt] = vert;
-    vert = mm->vrt_next[vert];
+    vert = cmsh->xvrt.next[vert];
     cnt++;
   }
 
@@ -1149,10 +1164,10 @@ void draw_side_fan(MeshMem * mm, cart_window_info * w, int fan, int x, int y)
   {
     stt = faketoreal[cfan_lines[fantype].linestart[cnt]];
     end = faketoreal[cfan_lines[fantype].lineend[cnt]];
-    if(mm->vrt_z[stt] >= 0 && mm->vrt_z[end] >= 0)
+    if(cmsh->mm->vrt_z[stt] >= 0 && cmsh->mm->vrt_z[end] >= 0)
     {
-      glVertex2f( mm->vrt_x[stt]+x, -(mm->vrt_z[stt] / 16.0f)+y );
-      glVertex2f( mm->vrt_x[end]+x, -(mm->vrt_z[end] / 16.0f)+y );
+      glVertex2f( cmsh->mm->vrt_x[stt]+x, -(cmsh->mm->vrt_z[stt] / 16.0f)+y );
+      glVertex2f( cmsh->mm->vrt_x[end]+x, -(cmsh->mm->vrt_z[end] / 16.0f)+y );
     }
     cnt++;
   }
@@ -1164,19 +1179,19 @@ void draw_side_fan(MeshMem * mm, cart_window_info * w, int fan, int x, int y)
   while(cnt < Mesh_Cmd[fantype].vrt_count)
   {
     vert = faketoreal[cnt];
-    if(mm->vrt_z[vert] >= 0)
+    if(cmsh->mm->vrt_z[vert] >= 0)
     {
-      if(vert_selected(csel, vert))
+      if(vert_selected(&cselect_lst, vert))
       {
         draw_blit_sprite(w, cimg_lst.pointon + size,
-          mm->vrt_x[vert]+x-(cimg_lst.pointon[size].txW>>1),
-          -(mm->vrt_z[vert] / 16.0f)+y-(cimg_lst.pointon[size].txH>>1));
+          cmsh->mm->vrt_x[vert]+x-(cimg_lst.pointon[size].txW>>1),
+          -(cmsh->mm->vrt_z[vert] / 16.0f)+y-(cimg_lst.pointon[size].txH>>1));
       }
       else
       {
         draw_blit_sprite(w, cimg_lst.point + size,
-          mm->vrt_x[vert]+x-(cimg_lst.point[size].txW>>1),
-          -(mm->vrt_z[vert] / 16.0f)+y-(cimg_lst.point[size].txH>>1));
+          cmsh->mm->vrt_x[vert]+x-(cimg_lst.point[size].txW>>1),
+          -(cmsh->mm->vrt_z[vert] / 16.0f)+y-(cimg_lst.point[size].txH>>1));
       }
     }
     cnt++;
@@ -1206,8 +1221,8 @@ void draw_schematic(MeshMem * mm, cart_mouse_info * m, cart_window_info * w, int
     stt = cfan_lines[fantype].linestart[cnt];
     end = cfan_lines[fantype].lineend[cnt];
 
-    glVertex2f( Mesh_Cmd[fantype].u[stt]+x, Mesh_Cmd[fantype].v[stt]+y );
-    glVertex2f( Mesh_Cmd[fantype].u[end]+x, Mesh_Cmd[fantype].v[end]+y );
+    glVertex2f( Mesh_Cmd[fantype].tx[stt].u+x, Mesh_Cmd[fantype].tx[stt].v+y );
+    glVertex2f( Mesh_Cmd[fantype].tx[end].u+x, Mesh_Cmd[fantype].tx[end].v+y );
 
     cnt++;
   }
@@ -1248,7 +1263,7 @@ void add_line(cart_fan_lines * clines, int fantype, int start, int end)
 
 
 //------------------------------------------------------------------------------
-void free_vertices(MeshMem * mm)
+void free_vertices(cart_mesh * cmsh)
 {
   // ZZ> This function sets all vertices to unused
 
@@ -1257,37 +1272,37 @@ void free_vertices(MeshMem * mm)
   cnt = 0;
   while(cnt < MAXTOTALMESHVERTICES)
   {
-    mm->vrt_a[cnt] = VERTEXUNUSED;
+    cmsh->mm->vrt_ar_fp8[cnt] = VERTEXUNUSED;
     cnt++;
   }
-  atvertex = 0;
-  numfreevertices = MAXTOTALMESHVERTICES;
+  cmsh->xvrt.index = 0;
+  cmsh->xvrt.free_count = MAXTOTALMESHVERTICES;
   return;
 }
 
 //------------------------------------------------------------------------------
-int get_free_vertex(MeshMem * mm)
+int get_free_vertex(cart_mesh * cmsh)
 {
   // ZZ> This function returns btrue if it can find an unused vertex, and it
-  // will set atvertex to that vertex index.  bfalse otherwise.
+  // will set cmsh->xvrt.index to that vertex index.  bfalse otherwise.
 
   int cnt;
 
-  if(numfreevertices!=0)
+  if(cmsh->xvrt.free_count!=0)
   {
     cnt = 0;
-    while(cnt < MAXTOTALMESHVERTICES && mm->vrt_a[atvertex]!=VERTEXUNUSED)
+    while(cnt < MAXTOTALMESHVERTICES && cmsh->mm->vrt_ar_fp8[cmsh->xvrt.index]!=VERTEXUNUSED)
     {
-      atvertex++;
-      if(atvertex == MAXTOTALMESHVERTICES)
+      cmsh->xvrt.index++;
+      if(cmsh->xvrt.index == MAXTOTALMESHVERTICES)
       {
-        atvertex = 0;
+        cmsh->xvrt.index = 0;
       }
       cnt++;
     }
-    if(mm->vrt_a[atvertex]==VERTEXUNUSED)
+    if(cmsh->mm->vrt_ar_fp8[cmsh->xvrt.index]==VERTEXUNUSED)
     {
-      mm->vrt_a[atvertex]=60;
+      cmsh->mm->vrt_ar_fp8[cmsh->xvrt.index]=60;
       return btrue;
     }
   }
@@ -1295,7 +1310,7 @@ int get_free_vertex(MeshMem * mm)
 }
 
 //------------------------------------------------------------------------------
-void remove_fan(MeshMem * mm, int fan)
+void remove_fan(cart_mesh * cmsh, int fan)
 {
   // ZZ> This function removes a fan's vertices from usage and sets the fan
   //     to not be drawn
@@ -1304,22 +1319,22 @@ void remove_fan(MeshMem * mm, int fan)
   Uint32 numvert;
 
 
-  numvert = Mesh_Cmd[mm->fanlst[fan].type].vrt_count;
-  vert = mm->fanlst[fan].vrt_start;
+  numvert = Mesh_Cmd[cmsh->mm->fanlst[fan].type].vrt_count;
+  vert = cmsh->mm->fanlst[fan].vrt_start;
   cnt = 0;
   while(cnt < numvert)
   {
-    mm->vrt_a[vert] = VERTEXUNUSED;
-    numfreevertices++;
-    vert = mm->vrt_next[vert];
+    cmsh->mm->vrt_ar_fp8[vert] = VERTEXUNUSED;
+    cmsh->xvrt.free_count++;
+    vert = cmsh->xvrt.next[vert];
     cnt++;
   }
-  mm->fanlst[fan].type = 0;
-  mm->fanlst[fan].fx = MPDFX_NOREFLECT;
+  cmsh->mm->fanlst[fan].type = 0;
+  cmsh->mm->fanlst[fan].fx = MPDFX_NOREFLECT;
 }
 
 //------------------------------------------------------------------------------
-int add_fan(MeshMem * mm, int fan, int x, int y)
+int add_fan(cart_mesh *cmsh, int fan, int x, int y)
 {
   // ZZ> This function allocates the vertices needed for a fan
 
@@ -1329,10 +1344,10 @@ int add_fan(MeshMem * mm, int fan, int x, int y)
   Uint32 vertexlist[17];
 
 
-  numvert = Mesh_Cmd[mm->fanlst[fan].type].vrt_count;
-  if(numfreevertices >= numvert)
+  numvert = Mesh_Cmd[cmsh->mm->fanlst[fan].type].vrt_count;
+  if(cmsh->xvrt.free_count >= numvert)
   {
-    mm->fanlst[fan].fx = MPDFX_NOREFLECT;
+    cmsh->mm->fanlst[fan].fx = MPDFX_NOREFLECT;
     cnt = 0;
     while(cnt < numvert)
     {
@@ -1343,12 +1358,12 @@ int add_fan(MeshMem * mm, int fan, int x, int y)
         cnt = 0;
         while(cnt < numvert)
         {
-          Mesh[vertexlist[cnt]].vrta=60;
+          cmsh->mm->vrt_ar_fp8[cnt] = 60;
           cnt++;
         }
         return bfalse;
       }
-      vertexlist[cnt] = atvertex;
+      vertexlist[cnt] = cmsh->xvrt.index;
       cnt++;
     }
     vertexlist[cnt] = CHAINEND;
@@ -1358,23 +1373,23 @@ int add_fan(MeshMem * mm, int fan, int x, int y)
     while(cnt < numvert)
     {
       vertex = vertexlist[cnt];
-      mm->vrt_x[vertex] = x + (Mesh_Cmd[mm->fanlst[fan].type].tx[cnt].u / 4.0f);
-      mm->vrt_y[vertex] = y + (Mesh_Cmd[mm->fanlst[fan].type].tx[cnt].v / 4.0f);
-      mm->vrt_z[vertex] = 0;
-      mm->vrt_next[vertex] = vertexlist[cnt+1];
+      cmsh->mm->vrt_x[vertex] = x + (Mesh_Cmd[cmsh->mm->fanlst[fan].type].tx[cnt].u / 4.0f);
+      cmsh->mm->vrt_y[vertex] = y + (Mesh_Cmd[cmsh->mm->fanlst[fan].type].tx[cnt].v / 4.0f);
+      cmsh->mm->vrt_z[vertex] = 0;
+      cmsh->xvrt.next[vertex] = vertexlist[cnt+1];
       cnt++;
     }
-    mm->fanlst[fan].vrt_start = vertexlist[0];
-    numfreevertices-=numvert;
+    cmsh->mm->fanlst[fan].vrt_start = vertexlist[0];
+    cmsh->xvrt.free_count-=numvert;
     return btrue;
   }
   return bfalse;
 }
 
 //------------------------------------------------------------------------------
-void num_free_vertex(MeshMem * mm)
+void num_free_vertex(cart_mesh * cmsh)
 {
-  // ZZ> This function counts the unused vertices and sets numfreevertices
+  // ZZ> This function counts the unused vertices and sets cmsh->xvrt.free_count
 
   int cnt, num;
 
@@ -1382,13 +1397,13 @@ void num_free_vertex(MeshMem * mm)
   cnt = 0;
   while(cnt < MAXTOTALMESHVERTICES)
   {
-    if(mm->vrt_a[cnt]==VERTEXUNUSED)
+    if(cmsh->mm->vrt_ar_fp8[cnt]==VERTEXUNUSED)
     {
       num++;
     }
     cnt++;
   }
-  numfreevertices=num;
+  cmsh->xvrt.free_count=num;
 }
 
 //------------------------------------------------------------------------------
@@ -1404,7 +1419,7 @@ GLtexture * tile_at(cart_mesh * cmsh, int x, int y)
     return retval;
   }
 
-  fan = mesh_convert_fan(x, y);
+  fan = mesh_convert_fan(cmsh->mi, x, y);
   if(INVALID_FAN == cmsh->mm->fanlst[fan].tile)
   {
     return NULL;
@@ -1455,7 +1470,7 @@ int fan_at(cart_mesh * cmsh, int x, int y)
     return INVALID_FAN;
   }
 
-  fan = mesh_convert_fan(x, y);
+  fan = mesh_convert_fan(cmsh->mi, x, y);
   return fan;
 }
 
@@ -1526,25 +1541,25 @@ void weld_cnt(cart_mesh * cmsh, int x, int y, int cnt, Uint32 fan)
 {
   cart_select_list tlst = {0};
 
-  if(Mesh_Cmd[cmsh->fanlst[fan].type].tx[cnt].u < NEARLOW+1 ||
-     Mesh_Cmd[cmsh->fanlst[fan].type].tx[cnt].v < NEARLOW+1 ||
-     Mesh_Cmd[cmsh->fanlst[fan].type].tx[cnt].u > NEARHI-1 ||
-     Mesh_Cmd[cmsh->fanlst[fan].type].tx[cnt].v > NEARHI-1)
+  if(Mesh_Cmd[cmsh->mm->fanlst[fan].type].tx[cnt].u < NEARLOW+1 ||
+     Mesh_Cmd[cmsh->mm->fanlst[fan].type].tx[cnt].v < NEARLOW+1 ||
+     Mesh_Cmd[cmsh->mm->fanlst[fan].type].tx[cnt].u > NEARHI-1 ||
+     Mesh_Cmd[cmsh->mm->fanlst[fan].type].tx[cnt].v > NEARHI-1)
   {
     clear_select(&tlst);
     add_select(&tlst, get_vertex(cmsh, x, y, cnt));
 
-    if(Mesh_Cmd[cmsh->fanlst[fan].type].tx[cnt].u < NEARLOW+1)
-      add_select(&tlst, nearest_vertex(cmsh, x-1, y, NEARHI, Mesh_Cmd[cmsh->fanlst[fan].type].tx[cnt].v));
+    if(Mesh_Cmd[cmsh->mm->fanlst[fan].type].tx[cnt].u < NEARLOW+1)
+      add_select(&tlst, nearest_vertex(cmsh, x-1, y, NEARHI, Mesh_Cmd[cmsh->mm->fanlst[fan].type].tx[cnt].v));
 
-    if(Mesh_Cmd[cmsh->fanlst[fan].type].tx[cnt].v < NEARLOW+1)
-      add_select(&tlst, nearest_vertex(cmsh, x, y-1, Mesh_Cmd[cmsh->fanlst[fan].type].tx[cnt].u, NEARHI));
+    if(Mesh_Cmd[cmsh->mm->fanlst[fan].type].tx[cnt].v < NEARLOW+1)
+      add_select(&tlst, nearest_vertex(cmsh, x, y-1, Mesh_Cmd[cmsh->mm->fanlst[fan].type].tx[cnt].u, NEARHI));
 
-    if(Mesh_Cmd[cmsh->fanlst[fan].type].tx[cnt].u > NEARHI-1)
-      add_select(&tlst, nearest_vertex(cmsh, x+1, y, NEARLOW, Mesh_Cmd[cmsh->fanlst[fan].type].tx[cnt].v));
+    if(Mesh_Cmd[cmsh->mm->fanlst[fan].type].tx[cnt].u > NEARHI-1)
+      add_select(&tlst, nearest_vertex(cmsh, x+1, y, NEARLOW, Mesh_Cmd[cmsh->mm->fanlst[fan].type].tx[cnt].v));
 
-    if(Mesh_Cmd[cmsh->fanlst[fan].type].tx[cnt].v > NEARHI-1)
-      add_select(&tlst, nearest_vertex(cmsh, x, y+1, Mesh_Cmd[cmsh->fanlst[fan].type].tx[cnt].u, NEARLOW));
+    if(Mesh_Cmd[cmsh->mm->fanlst[fan].type].tx[cnt].v > NEARHI-1)
+      add_select(&tlst, nearest_vertex(cmsh, x, y+1, Mesh_Cmd[cmsh->mm->fanlst[fan].type].tx[cnt].u, NEARLOW));
 
     weld_select(cmsh->mm, &tlst);
     clear_select(&tlst);
@@ -1574,7 +1589,7 @@ void fix_vertices(cart_mesh * cmsh, int x, int y)
   fix_corners(cmsh, x, y);
   fan = mesh_convert_fan(cmsh->mi, x, y);
   cnt = 4;
-  while(cnt < Mesh_Cmd[mm->fanlst[fan].type].vrt_count)
+  while(cnt < Mesh_Cmd[cmsh->mm->fanlst[fan].type].vrt_count)
   {
     weld_cnt(cmsh, x, y, cnt, fan);
     cnt++;
@@ -1616,7 +1631,7 @@ char tile_is_different(cart_mesh * cmsh, int x, int y, Uint16 tileset,
     return bfalse;
   }
 
-  fan = mesh_convert_fan(x, y);
+  fan = mesh_convert_fan(cmsh->mi, x, y);
   if(tileand == 192)
   {
     if(cmsh->mm->fanlst[fan].tile >= 48) return bfalse;
@@ -1630,7 +1645,7 @@ char tile_is_different(cart_mesh * cmsh, int x, int y, Uint16 tileset,
 }
 
 //------------------------------------------------------------------------------
-Uint16 trim_code(MeshMem * mm, int x, int y, Uint16 tileset)
+Uint16 trim_code(cart_mesh * cmsh, int x, int y, Uint16 tileset)
 {
   // ZZ> This function returns the standard tile set value thing...  For
   //     Trimming tops of walls and floors
@@ -1715,7 +1730,7 @@ Uint16 trim_code(MeshMem * mm, int x, int y, Uint16 tileset)
 }
 
 //------------------------------------------------------------------------------
-Uint16 wall_code(MeshMem * mm, int x, int y, Uint16 tileset)
+Uint16 wall_code(cart_mesh * cmsh, int x, int y, Uint16 tileset)
 {
   // ZZ> This function returns the standard tile set value thing...  For
   //     Trimming tops of walls and floors
@@ -1817,7 +1832,7 @@ void trim_mesh_tile(cart_mesh * cmsh, Uint16 tileset, Uint16 tileand)
     x = 0;
     while(x < cmsh->mi->size_x)
     {
-      fan = mesh_convert_fan(x, y);
+      fan = mesh_convert_fan(cmsh->mi, x, y);
       if((cmsh->mm->fanlst[fan].tile&tileand) == tileset)
       {
         if(tileand == 192)
@@ -1855,7 +1870,7 @@ void fx_mesh_tile(cart_mesh * cmsh, Uint16 tileset, Uint16 tileand, Uint8 fx)
     x = 0;
     while(x < cmsh->mi->size_x)
     {
-      fan = mesh_convert_fan(x, y);
+      fan = mesh_convert_fan(cmsh->mi, x, y);
       if((cmsh->mm->fanlst[fan].tile&tileand) == tileset)
       {
         cmsh->mm->fanlst[fan].fx = fx;
@@ -1881,7 +1896,7 @@ void set_mesh_tile(cart_mesh * cmsh, cart_mouse_info * m, Uint16 tiletoset)
     x = 0;
     while(x < cmsh->mi->size_x)
     {
-      fan = mesh_convert_fan(x, y);
+      fan = mesh_convert_fan(cmsh->mi, x, y);
       if(cmsh->mm->fanlst[fan].tile == tiletoset)
       {
         switch(m->presser)
@@ -1890,10 +1905,10 @@ void set_mesh_tile(cart_mesh * cmsh, cart_mouse_info * m, Uint16 tiletoset)
           cmsh->mm->fanlst[fan].tile=m->tile;
           break;
         case 1:
-          cmsh->mm->fanlst[fan].tile=(m->tile&0xfffe)+IRAND(1);
+          cmsh->mm->fanlst[fan].tile=(m->tile&0xfffe)+IRAND(&(cmsh->seed), 1);
           break;
         case 2:
-          cmsh->mm->fanlst[fan].tile=(m->tile&0xfffc)+IRAND(2);
+          cmsh->mm->fanlst[fan].tile=(m->tile&0xfffc)+IRAND(&(cmsh->seed), 2);
           break;
         case 3:
           cmsh->mm->fanlst[fan].tile=(m->tile&0xfff0)+(rand()&6);
@@ -1922,7 +1937,7 @@ void setup_mesh(cart_mesh * cmsh)
   scanf("%d", &cmsh->mi->size_y);
   cmsh->mi->edge_x = (cmsh->mi->size_x*SMALLX)-1;
   cmsh->mi->edge_y = (cmsh->mi->size_y*SMALLY)-1;
-  meshedgez = 180<<4;
+  cmsh->edgez = 180<<4;
 
 
   fan = 0;
@@ -1945,18 +1960,18 @@ void setup_mesh(cart_mesh * cmsh)
     y++;
   }
 
-  make_fanstart();
+  make_fanstart(cmsh->mi);
   fix_mesh(cmsh);
 }
 
 //------------------------------------------------------------------------------
 void rip_small_tiles(SDL_Surface * bmpload)
 {
-  SDL_Surface *cbmp_lst.small, *cbmp_lst.tiny;
+  SDL_Surface *bmp_small, *bmp_tiny;
   int x, y;
 
-  cbmp_lst.small = SDL_CreateRGBSurface(SDL_SWSURFACE, SMALLX, SMALLY, 32, rmask, gmask, bmask, amask);
-  cbmp_lst.tiny  = SDL_CreateRGBSurface(SDL_SWSURFACE, TINYX, TINYY, 32, rmask, gmask, bmask, amask);
+  bmp_small = SDL_CreateRGBSurface(SDL_SWSURFACE, SMALLX, SMALLY, 32, rmask, gmask, bmask, amask);
+  bmp_tiny  = SDL_CreateRGBSurface(SDL_SWSURFACE, TINYX, TINYY, 32, rmask, gmask, bmask, amask);
 
 
   y = 0;
@@ -1967,11 +1982,11 @@ void rip_small_tiles(SDL_Surface * bmpload)
     {
       SDL_Rect src = {x, y, TINYX, TINYY};
 
-      SDL_BlitSurface(bmpload, &src, cbmp_lst.small, &cbmp_lst.small->clip_rect);
-      GLTexture_Convert( GL_TEXTURE_2D, cbmp_lst.smalltile + numsmalltile, cbmp_lst.small, INVALID_KEY);
+      SDL_BlitSurface(bmpload, &src, bmp_small, &bmp_small->clip_rect);
+      GLTexture_Convert( GL_TEXTURE_2D, cbmp_lst.smalltile + numsmalltile, bmp_small, INVALID_KEY);
 
-      SDL_BlitSurface(bmpload, &src, cbmp_lst.tiny, &cbmp_lst.tiny->clip_rect);
-      GLTexture_Convert( GL_TEXTURE_2D, cbmp_lst.tinysmalltile + numsmalltile, cbmp_lst.tiny, INVALID_KEY);
+      SDL_BlitSurface(bmpload, &src, bmp_tiny, &bmp_tiny->clip_rect);
+      GLTexture_Convert( GL_TEXTURE_2D, cbmp_lst.tinysmalltile + numsmalltile, bmp_tiny, INVALID_KEY);
 
       numsmalltile++;
       x+=32;
@@ -1979,8 +1994,8 @@ void rip_small_tiles(SDL_Surface * bmpload)
     y+=32;
   }
 
-  SDL_FreeSurface(cbmp_lst.small);
-  SDL_FreeSurface(cbmp_lst.tiny);
+  SDL_FreeSurface(bmp_small);
+  SDL_FreeSurface(bmp_tiny);
 
   return;
 }
@@ -1988,11 +2003,11 @@ void rip_small_tiles(SDL_Surface * bmpload)
 //------------------------------------------------------------------------------
 void rip_big_tiles(SDL_Surface* bmpload)
 {
-  SDL_Surface *cbmp_lst.small, *cbmp_lst.tiny;
+  SDL_Surface *bmp_small, *bmp_tiny;
   int x, y;
 
-  cbmp_lst.small = SDL_CreateRGBSurface(SDL_SWSURFACE, SMALLX, SMALLY, 32, rmask, gmask, bmask, amask);
-  cbmp_lst.tiny  = SDL_CreateRGBSurface(SDL_SWSURFACE, TINYX, TINYY, 32, rmask, gmask, bmask, amask);
+  bmp_small = SDL_CreateRGBSurface(SDL_SWSURFACE, SMALLX, SMALLY, 32, rmask, gmask, bmask, amask);
+  bmp_tiny  = SDL_CreateRGBSurface(SDL_SWSURFACE, TINYX, TINYY, 32, rmask, gmask, bmask, amask);
 
   y = 0;
   while(y < 256)
@@ -2002,19 +2017,19 @@ void rip_big_tiles(SDL_Surface* bmpload)
     {
       SDL_Rect src = {x, y, x + BIGX, y + BIGY};
 
-      SDL_BlitSurface(bmpload, &src, cbmp_lst.small, &cbmp_lst.small->clip_rect);
-      GLTexture_Convert(GL_TEXTURE_2D, cbmp_lst.bigtile + numbigtile, cbmp_lst.small, INVALID_KEY);
+      SDL_BlitSurface(bmpload, &src, bmp_small, &bmp_small->clip_rect);
+      GLTexture_Convert(GL_TEXTURE_2D, cbmp_lst.bigtile + numbigtile, bmp_small, INVALID_KEY);
 
-      SDL_BlitSurface(bmpload, &src, cbmp_lst.tiny, &cbmp_lst.tiny->clip_rect);
-      GLTexture_Convert(GL_TEXTURE_2D, cbmp_lst.tinybigtile + numbigtile, cbmp_lst.tiny, INVALID_KEY);
+      SDL_BlitSurface(bmpload, &src, bmp_tiny, &bmp_tiny->clip_rect);
+      GLTexture_Convert(GL_TEXTURE_2D, cbmp_lst.tinybigtile + numbigtile, bmp_tiny, INVALID_KEY);
 
       numbigtile++;
       x+=32;
     }
     y+=32;
   }
-  SDL_FreeSurface(cbmp_lst.small);
-  SDL_FreeSurface(cbmp_lst.tiny);
+  SDL_FreeSurface(bmp_small);
+  SDL_FreeSurface(bmp_tiny);
 
   return;
 }
@@ -2076,14 +2091,14 @@ int count_vertices(cart_mesh * cmsh)
     x = 0;
     while(x < cmsh->mi->size_x)
     {
-      fan = mesh_convert_fan(x, y);
+      fan = mesh_convert_fan(cmsh->mi, x, y);
       num = Mesh_Cmd[cmsh->mm->fanlst[fan].type].vrt_count;
       vert = cmsh->mm->fanlst[fan].vrt_start;
       cnt = 0;
       while(cnt < num)
       {
         totalvert++;
-        vert = cmsh->mm->vrt_next[vert];
+        vert = cmsh->xvrt.next[vert];
         cnt++;
       }
       x++;
@@ -2134,7 +2149,7 @@ void save_mesh(cart_mesh * cmsh, char *modname)
   {
     itmp=MAPID;  SAVE;
     //    This didn't work for some reason...
-    //    itmp=MAXTOTALMESHVERTICES-numfreevertices;  SAVE;
+    //    itmp=MAXTOTALMESHVERTICES-cmsh->xvrt.free_count;  SAVE;
     itmp = count_vertices(cmsh);  SAVE;
     itmp=cmsh->mi->size_x;  SAVE;
     itmp=cmsh->mi->size_y;  SAVE;
@@ -2146,7 +2161,7 @@ void save_mesh(cart_mesh * cmsh, char *modname)
       x = 0;
       while(x < cmsh->mi->size_x)
       {
-        fan = mesh_convert_fan(x, y);
+        fan = mesh_convert_fan(cmsh->mi, x, y);
         itmp = (cmsh->mm->fanlst[fan].type<<24)+(cmsh->mm->fanlst[fan].fx<<16)+cmsh->mm->fanlst[fan].tile;  SAVE;
         x++;
       }
@@ -2160,7 +2175,7 @@ void save_mesh(cart_mesh * cmsh, char *modname)
       x = 0;
       while(x < cmsh->mi->size_x)
       {
-        fan = mesh_convert_fan(x, y);
+        fan = mesh_convert_fan(cmsh->mi, x, y);
         ctmp = cmsh->mm->fanlst[fan].twist;  numwritten+=fwrite(&ctmp, 1, 1, filewrite);
         numattempt++;
         x++;
@@ -2175,14 +2190,14 @@ void save_mesh(cart_mesh * cmsh, char *modname)
       x = 0;
       while(x < cmsh->mi->size_x)
       {
-        fan = mesh_convert_fan(x, y);
+        fan = mesh_convert_fan(cmsh->mi, x, y);
         num = Mesh_Cmd[cmsh->mm->fanlst[fan].type].vrt_count;
         vert = cmsh->mm->fanlst[fan].vrt_start;
         cnt = 0;
         while(cnt < num)
         {
           ftmp = cmsh->mm->vrt_x[vert]*FIXNUM;  SAVEF;
-          vert = cmsh->mm->vrt_next[vert];
+          vert = cmsh->xvrt.next[vert];
           cnt++;
         }
         x++;
@@ -2197,14 +2212,14 @@ void save_mesh(cart_mesh * cmsh, char *modname)
       x = 0;
       while(x < cmsh->mi->size_x)
       {
-        fan = mesh_convert_fan(x, y);
+        fan = mesh_convert_fan(cmsh->mi, x, y);
         num = Mesh_Cmd[cmsh->mm->fanlst[fan].type].vrt_count;
         vert = cmsh->mm->fanlst[fan].vrt_start;
         cnt = 0;
         while(cnt < num)
         {
           ftmp = cmsh->mm->vrt_y[vert]*FIXNUM;  SAVEF;
-          vert = cmsh->mm->vrt_next[vert];
+          vert = cmsh->xvrt.next[vert];
           cnt++;
         }
         x++;
@@ -2219,14 +2234,14 @@ void save_mesh(cart_mesh * cmsh, char *modname)
       x = 0;
       while(x < cmsh->mi->size_x)
       {
-        fan = mesh_convert_fan(x, y);
+        fan = mesh_convert_fan(cmsh->mi, x, y);
         num = Mesh_Cmd[cmsh->mm->fanlst[fan].type].vrt_count;
         vert = cmsh->mm->fanlst[fan].vrt_start;
         cnt = 0;
         while(cnt < num)
         {
           ftmp = cmsh->mm->vrt_z[vert]*FIXNUM;  SAVEF;
-          vert = cmsh->mm->vrt_next[vert];
+          vert = cmsh->xvrt.next[vert];
           cnt++;
         }
         x++;
@@ -2242,15 +2257,15 @@ void save_mesh(cart_mesh * cmsh, char *modname)
       x = 0;
       while(x < cmsh->mi->size_x)
       {
-        fan = mesh_convert_fan(x, y);
+        fan = mesh_convert_fan(cmsh->mi, x, y);
         num = Mesh_Cmd[cmsh->mm->fanlst[fan].type].vrt_count;
         vert = cmsh->mm->fanlst[fan].vrt_start;
         cnt = 0;
         while(cnt < num)
         {
-          ctmp = cmsh->mm->vrt_a[vert];  numwritten+=fwrite(&ctmp, 1, 1, filewrite);
+          ctmp = cmsh->mm->vrt_ar_fp8[vert];  numwritten+=fwrite(&ctmp, 1, 1, filewrite);
           numattempt++;
-          vert = cmsh->mm->vrt_next[vert];
+          vert = cmsh->xvrt.next[vert];
           cnt++;
         }
         x++;
@@ -2281,7 +2296,7 @@ void move_select(cart_mesh * cmsh, cart_select_list * csel, int x, int y, int z)
     if(newy<0)  y=0-cmsh->mm->vrt_y[vert];
     if(newy>cmsh->mi->edge_y) y=cmsh->mi->edge_y-cmsh->mm->vrt_y[vert];
     if(newz<0)  z=0-cmsh->mm->vrt_z[vert];
-    if(newz>meshedgez) z=meshedgez-cmsh->mm->vrt_z[vert];
+    if(newz>cmsh->edgez) z=cmsh->edgez-cmsh->mm->vrt_z[vert];
     cnt++;
   }
 
@@ -2301,7 +2316,7 @@ void move_select(cart_mesh * cmsh, cart_select_list * csel, int x, int y, int z)
     if(newy<0)  newy=0;
     if(newy>cmsh->mi->edge_y)  newy=cmsh->mi->edge_y;
     if(newz<0)  newz=0;
-    if(newz>meshedgez)  newz=meshedgez;
+    if(newz>cmsh->edgez)  newz=cmsh->edgez;
 
 
     cmsh->mm->vrt_x[vert]=newx;
@@ -2342,7 +2357,7 @@ void move_mesh_z(cart_mesh * cmsh, int z, Uint16 tiletype, Uint16 tileand)
     x = 0;
     while(x < cmsh->mi->size_x)
     {
-      fan = mesh_convert_fan(x, y);
+      fan = mesh_convert_fan(cmsh->mi, x, y);
       if((cmsh->mm->fanlst[fan].tile&tileand) == tiletype)
       {
         vert = cmsh->mm->fanlst[fan].vrt_start;
@@ -2352,9 +2367,9 @@ void move_mesh_z(cart_mesh * cmsh, int z, Uint16 tiletype, Uint16 tileand)
         {
           newz = cmsh->mm->vrt_z[vert]+z;
           if(newz<0)  newz=0;
-          if(newz>meshedgez) newz=meshedgez;
+          if(newz>cmsh->edgez) newz=cmsh->edgez;
           cmsh->mm->vrt_z[vert] = newz;
-          vert = cmsh->mm->vrt_next[vert];
+          vert = cmsh->xvrt.next[vert];
           cnt++;
         }
       }
@@ -2381,7 +2396,7 @@ void move_vert(cart_mesh * cmsh, int vert, int x, int y, int z)
   if(newy<0)  newy=0;
   if(newy>cmsh->mi->edge_y)  newy=cmsh->mi->edge_y;
   if(newz<0)  newz=0;
-  if(newz>meshedgez)  newz=meshedgez;
+  if(newz>cmsh->edgez)  newz=cmsh->edgez;
 
 
   cmsh->mm->vrt_x[vert]=newx;
@@ -2393,7 +2408,7 @@ void move_vert(cart_mesh * cmsh, int vert, int x, int y, int z)
 }
 
 //------------------------------------------------------------------------------
-void raise_mesh(MeshMem * mm, int x, int y, int amount, int size)
+void raise_mesh(cart_mesh * cmsh, int x, int y, int amount, int size)
 {
   int disx, disy, dis, cnt, newamount;
   Uint32 vert;
@@ -2403,8 +2418,8 @@ void raise_mesh(MeshMem * mm, int x, int y, int amount, int size)
   while(cnt < cpoint_lst.count)
   {
     vert = cpoint_lst.data[cnt];
-    disx = mm->vrt_x[vert]-(x/FOURNUM);
-    disy = mm->vrt_y[vert]-(y/FOURNUM);
+    disx = cmsh->mm->vrt_x[vert]-(x/FOURNUM);
+    disy = cmsh->mm->vrt_y[vert]-(y/FOURNUM);
     dis = sqrt(disx*disx+disy*disy);
 
 
@@ -2439,7 +2454,7 @@ void cart_load_module(cart_mesh * cmsh, char *modname)
 }
 
 //------------------------------------------------------------------------------
-void render_tile_window(cart_window_info * w)
+void render_tile_window(cart_window_info * w, cart_mesh * cmsh )
 {
   GLtexture *bmptile;
   int x, y, xstt, ystt, cntx, cnty, numx, numy, mapx, mapy, mapxstt, mapystt;
@@ -2586,7 +2601,7 @@ void render_vertex_window(cart_window_info * w, cart_mouse_info * m, cart_mesh *
       {
         if(mapx>=0 && mapx<cmsh->mi->size_x)
         {
-          fan = mesh_convert_fan(mapx, mapy);
+          fan = mesh_convert_fan(cmsh->mi, mapx, mapy);
           draw_top_fan(cmsh->mm, w, fan, x, y);
         }
         mapx++;
@@ -2600,7 +2615,7 @@ void render_vertex_window(cart_window_info * w, cart_mouse_info * m, cart_mesh *
 
   if(m->rect && m->mode==WINVERTEX)
   {
-    draw_rect(w, make_color(16+(gs->wld_frame&15), 16+(gs->wld_frame&15), 0),
+    draw_rect(w, make_color(16 /* + (gs->wld_frame&15) */, 16 /* + (gs->wld_frame&15) */, 0),
       (m->rectx/FOURNUM)+x, (m->recty/FOURNUM)+y,
       (m->x/FOURNUM)+x, (m->y/FOURNUM)+y );
   }
@@ -2646,7 +2661,7 @@ void render_side_window(cart_window_info * w, cart_mouse_info * m, cart_mesh * c
       {
         if(mapx>=0 && mapx<cmsh->mi->size_x)
         {
-          fan = mesh_convert_fan(mapx, mapy);
+          fan = mesh_convert_fan(cmsh->mi, mapx, mapy);
           draw_side_fan(cmsh->mm, w, fan, x, y);
         }
         mapx++;
@@ -2659,7 +2674,7 @@ void render_side_window(cart_window_info * w, cart_mouse_info * m, cart_mesh * c
 
   if(m->rect && m->mode==WINSIDE)
   {
-    draw_rect(w, make_color(16+(gs->wld_frame&15), 16+(gs->wld_frame&15), 0),
+    draw_rect(w, make_color(16 /* + (gs->wld_frame&15) */, 16 /* + (gs->wld_frame&15) */, 0),
       (m->rectx/FOURNUM)+x, (m->y/FOURNUM), (m->x/FOURNUM)+x, (m->recty/FOURNUM) );
   }
 
@@ -2668,7 +2683,7 @@ void render_side_window(cart_window_info * w, cart_mouse_info * m, cart_mesh * c
 }
 
 //------------------------------------------------------------------------------
-void render_window(cart_window_info * w, cart_mesh * cmsh)
+void render_window(cart_window_info * w, cart_mesh * cmsh, cart_mouse_info * m)
 {
 
   make_onscreen(cmsh);
@@ -2676,7 +2691,7 @@ void render_window(cart_window_info * w, cart_mesh * cmsh)
   {
     if(w->mode&WINTILE)
     {
-      render_tile_window(w);
+      render_tile_window(w, cmsh);
     }
     else
     {
@@ -2699,7 +2714,7 @@ void render_window(cart_window_info * w, cart_mesh * cmsh)
       render_side_window(w, m, cmsh);
     }
 
-    draw_cursor_in_window(w);
+    draw_cursor_in_window(m, w);
   }
 
   return;
@@ -2722,13 +2737,13 @@ void load_window(cart_window_info * w, char *loadname, int x, int y, int bx, int
 }
 
 //------------------------------------------------------------------------------
-void render_all_windows(cart_mesh * cmsh)
+void render_all_windows(cart_mesh * cmsh, cart_mouse_info * m)
 {
   int cnt;
   cnt = 0;
   while(cnt < MAXWIN)
   {
-    render_window(cwindow_info + cnt, cmsh);
+    render_window(cwindow_info + cnt, cmsh, m);
     cnt++;
   }
   return;
@@ -2956,9 +2971,9 @@ int set_vrta(cart_mesh * cmsh, Uint32 vert)
   // Directional light
   brx = x+64;
   bry = y+64;
-  brz = mesh_get_level(mesh_get_fan(pos), brx, y, bfalse) +
-    mesh_get_level(mesh_get_fan(pos), x, bry, bfalse) +
-    mesh_get_level(mesh_get_fan(pos), x+46, y+46, bfalse);
+  brz = mesh_get_level( cmsh->mm, mesh_get_fan(cmsh->mm, cmsh->mi, pos), brx, y, bfalse, NULL) +
+        mesh_get_level( cmsh->mm, mesh_get_fan(cmsh->mm, cmsh->mi, pos), x, bry, bfalse, NULL) +
+        mesh_get_level( cmsh->mm, mesh_get_fan(cmsh->mm, cmsh->mi, pos), x+46, y+46, bfalse, NULL);
   if(z < -128) z = -128;
   if(brz < -128) brz = -128;
   deltaz = z+z+z-brz;
@@ -2988,7 +3003,7 @@ int set_vrta(cart_mesh * cmsh, Uint32 vert)
   newa+=ambi;
   if(newa <= 0) newa = 1;
   if(newa > 255) newa = 255;
-  cmsh->mm->vrt_a[vert]=newa;
+  cmsh->mm->vrt_ar_fp8[vert]=newa;
 
 
 
@@ -2998,7 +3013,7 @@ int set_vrta(cart_mesh * cmsh, Uint32 vert)
   {
     newa = newa*dist/FADEBORDER;
     if(newa==VERTEXUNUSED)  newa=1;
-    cmsh->mm->vrt_a[vert]=newa;
+    cmsh->mm->vrt_ar_fp8[vert]=newa;
   }
 
 
@@ -3018,14 +3033,14 @@ void calc_vrta(cart_mesh * cmsh)
     x = 0;
     while(x < cmsh->mi->size_x)
     {
-      fan = mesh_convert_fan(x, y);
+      fan = mesh_convert_fan(cmsh->mi, x, y);
       vert = cmsh->mm->fanlst[fan].vrt_start;
       num = Mesh_Cmd[cmsh->mm->fanlst[fan].type].vrt_count;
       cnt = 0;
       while(cnt < num)
       {
         set_vrta(cmsh, vert);
-        vert = cmsh->mm->vrt_next[vert];
+        vert = cmsh->xvrt.next[vert];
         cnt++;
       }
       x++;
@@ -3048,14 +3063,14 @@ void level_vrtz(cart_mesh * cmsh)
     x = 0;
     while(x < cmsh->mi->size_x)
     {
-      fan = mesh_convert_fan(x, y);
+      fan = mesh_convert_fan(cmsh->mi, x, y);
       vert = cmsh->mm->fanlst[fan].vrt_start;
       num = Mesh_Cmd[cmsh->mm->fanlst[fan].type].vrt_count;
       cnt = 0;
       while(cnt < num)
       {
         cmsh->mm->vrt_z[vert] = 0;
-        vert = cmsh->mm->vrt_next[vert];
+        vert = cmsh->xvrt.next[vert];
         cnt++;
       }
       x++;
@@ -3075,7 +3090,7 @@ void jitter_select(cart_mesh * cmsh, cart_select_list * csel)
   while(cnt < csel->count)
   {
     vert = csel->data[cnt];
-    move_vert(cmsh, vert, IRAND(2)-1, IRAND(2)-1, 0);
+    move_vert(cmsh, vert, IRAND(&(cmsh->seed), 2)-1, IRAND(&(cmsh->seed), 2)-1, 0);
     cnt++;
   }
   return;
@@ -3096,7 +3111,7 @@ void jitter_mesh(cart_mesh * cmsh)
     x = 0;
     while(x < cmsh->mi->size_x)
     {
-      fan = mesh_convert_fan(x, y);
+      fan = mesh_convert_fan(cmsh->mi, x, y);
       vert = cmsh->mm->fanlst[fan].vrt_start;
       num = Mesh_Cmd[cmsh->mm->fanlst[fan].type].vrt_count;
       cnt = 0;
@@ -3106,8 +3121,8 @@ void jitter_mesh(cart_mesh * cmsh)
         add_select(&tsel, vert);
 
         //        srand(cmsh->mm->vrt_x[vert]+cmsh->mm->vrt_y[vert]+dunframe);
-        move_select(cmsh, &tsel, IRAND(3)-3, IRAND(3)-3, IRAND(6)-32);
-        vert = cmsh->mm->vrt_next[vert];
+        move_select(cmsh, &tsel, IRAND(&(cmsh->seed), 3)-3, IRAND(&(cmsh->seed), 3)-3, IRAND(&(cmsh->seed), 6)-32);
+        vert = cmsh->xvrt.next[vert];
         cnt++;
       }
       x++;
@@ -3128,14 +3143,14 @@ void flatten_mesh(cart_mesh * cmsh, cart_mouse_info * m)
 
   height = (780 - m->y) * 4;
   if(height < 0)  height = 0;
-  if(height > meshedgez) height = meshedgez;
+  if(height > cmsh->edgez) height = cmsh->edgez;
   y = 0;
   while(y < cmsh->mi->size_y)
   {
     x = 0;
     while(x < cmsh->mi->size_x)
     {
-      fan = mesh_convert_fan(x, y);
+      fan = mesh_convert_fan(cmsh->mi, x, y);
       vert = cmsh->mm->fanlst[fan].vrt_start;
       num = Mesh_Cmd[cmsh->mm->fanlst[fan].type].vrt_count;
       cnt = 0;
@@ -3144,14 +3159,14 @@ void flatten_mesh(cart_mesh * cmsh, cart_mouse_info * m)
         if(cmsh->mm->vrt_z[vert] > height - 50)
           if(cmsh->mm->vrt_z[vert] < height + 50)
             cmsh->mm->vrt_z[vert] = height;
-        vert = cmsh->mm->vrt_next[vert];
+        vert = cmsh->xvrt.next[vert];
         cnt++;
       }
       x++;
     }
     y++;
   }
-  clear_select(csel);
+  clear_select(&cselect_lst);
   return;
 }
 
@@ -3171,7 +3186,7 @@ void clear_mesh(cart_mesh * cmsh, cart_mouse_info * m)
       x = 0;
       while(x < cmsh->mi->size_x)
       {
-        fan = mesh_convert_fan(x, y);
+        fan = mesh_convert_fan(cmsh->mi, x, y);
         remove_fan(cmsh->mm, fan);
         switch(m->presser)
         {
@@ -3179,22 +3194,22 @@ void clear_mesh(cart_mesh * cmsh, cart_mouse_info * m)
           cmsh->mm->fanlst[fan].tile=m->tile;
           break;
         case 1:
-          cmsh->mm->fanlst[fan].tile = (m->tile&0xfffe) + IRAND(1);
+          cmsh->mm->fanlst[fan].tile = (m->tile&0xfffe) + IRAND(&(cmsh->seed), 1);
           break;
         case 2:
           if(m->type >= 32)
             cmsh->mm->fanlst[fan].tile = (m->tile&0xfff8)+(rand()&6);
           else
-            cmsh->mm->fanlst[fan].tile = (m->tile&0xfffc)+IRAND(2);
+            cmsh->mm->fanlst[fan].tile = (m->tile&0xfffc)+IRAND(&(cmsh->seed), 2);
           break;
         case 3:
           cmsh->mm->fanlst[fan].tile=(m->tile&0xfff0)+(rand()&6);
           break;
         }
         cmsh->mm->fanlst[fan].type=m->type;
-        if(m->type<=1) cmsh->mm->fanlst[fan].type = IRAND(1);
+        if(m->type<=1) cmsh->mm->fanlst[fan].type = IRAND(&(cmsh->seed), 1);
         if(m->type == 32 || m->type == 33)
-          cmsh->mm->fanlst[fan].type = 32 + IRAND(1);
+          cmsh->mm->fanlst[fan].type = 32 + IRAND(&(cmsh->seed), 1);
         add_fan(cmsh->mm, fan, x*31, y*31);
         x++;
       }
@@ -3220,7 +3235,7 @@ void three_e_mesh(cart_mesh * cmsh, cart_mouse_info * m)
       x = 0;
       while(x < cmsh->mi->size_x)
       {
-        fan = mesh_convert_fan(x, y);
+        fan = mesh_convert_fan(cmsh->mi, x, y);
         if(cmsh->mm->fanlst[fan].tile==0x3F)  cmsh->mm->fanlst[fan].tile=0x3E;
         x++;
       }
@@ -3250,13 +3265,13 @@ void ease_up_mesh(cart_mesh * cmsh, int zadd)
     x = 0;
     while(x < cmsh->mi->size_x)
     {
-      fan = mesh_convert_fan(x, y);
+      fan = mesh_convert_fan(cmsh->mi, x, y);
       vert = cmsh->mm->fanlst[fan].vrt_start;
       cnt = 0;
       while(cnt < Mesh_Cmd[cmsh->mm->fanlst[fan].type].vrt_count)
       {
         move_vert(cmsh, vert, 0, 0, zadd);
-        vert = cmsh->mm->vrt_next[vert];
+        vert = cmsh->xvrt.next[vert];
         cnt++;
       }
       x++;
@@ -3279,7 +3294,7 @@ void select_connected(cart_mesh * cmsh, cart_select_list * csel)
     x = 0;
     while(x < cmsh->mi->size_x)
     {
-      fan = mesh_convert_fan(x, y);
+      fan = mesh_convert_fan(cmsh->mi, x, y);
       selectfan = bfalse;
       totalvert = Mesh_Cmd[cmsh->mm->fanlst[fan].type].vrt_count;
       cnt = 0;
@@ -3298,7 +3313,7 @@ void select_connected(cart_mesh * cmsh, cart_select_list * csel)
           tnc++;
         }
         if(found) selectfan = btrue;
-        vert = cmsh->mm->vrt_next[vert];
+        vert = cmsh->xvrt.next[vert];
         cnt++;
       }
       if(selectfan)
@@ -3308,7 +3323,7 @@ void select_connected(cart_mesh * cmsh, cart_select_list * csel)
         while(cnt < totalvert)
         {
           add_select(csel, vert);
-          vert = cmsh->mm->vrt_next[vert];
+          vert = cmsh->xvrt.next[vert];
           cnt++;
         }
       }
@@ -3381,7 +3396,7 @@ void check_keys(cart_mesh * cmsh, cart_mouse_info * m, char *modname)
     }
     if(SDLKEYDOWN(SDLK_z))
     {
-      set_mesh_tile(cmsh, cmsh->mm->fanlst[m->onfan].tile);
+      set_mesh_tile(cmsh, m, cmsh->mm->fanlst[m->onfan].tile);
       keydelay=KEYDELAY;
     }
     if(SDLKEYDOWN(SDLK_LSHIFT))
@@ -3419,7 +3434,7 @@ void check_keys(cart_mesh * cmsh, cart_mouse_info * m, char *modname)
     }
     if(SDLKEYDOWN(SDLK_LEFTBRACKET) || SDLKEYDOWN(SDLK_RIGHTBRACKET))
     {
-      select_connected(cmsh, c&select_lst);
+      select_connected(cmsh, &cselect_lst);
     }
     if(SDLKEYDOWN(SDLK_8))
     {
@@ -3446,13 +3461,13 @@ void check_keys(cart_mesh * cmsh, cart_mouse_info * m, char *modname)
     }
     if(SDLKEYDOWN(SDLK_SPACE))
     {
-      weld_select(cmsh->mm, csel);
+      weld_select(cmsh->mm, &cselect_lst);
       keydelay=KEYDELAY;
     }
     if(SDLKEYDOWN(SDLK_INSERT))
     {
       m->type = (m->type-1) % MAXMESHTYPE;
-      while(cmesh_lines[m->type].numline==0)
+      while(cfan_lines[m->type].numline==0)
       {
         m->type = (m->type-1) % MAXMESHTYPE;
       }
@@ -3461,7 +3476,7 @@ void check_keys(cart_mesh * cmsh, cart_mouse_info * m, char *modname)
     if(SDLKEYDOWN(SDLK_BACKSPACE))
     {
       m->type = (m->type+1) % MAXMESHTYPE;
-      while(cmesh_lines[m->type].numline==0)
+      while(cfan_lines[m->type].numline==0)
       {
         m->type = (m->type+1) % MAXMESHTYPE;
       }
@@ -3557,25 +3572,25 @@ void check_keys(cart_mesh * cmsh, cart_mouse_info * m, char *modname)
 //
 //  col = make_color(31, 31, 31);      // White color
 //  loc = make_color(3, 3, 3);        // Gray color
-//  cbmp_lst.temp = SDL_CreateRGBSurface(SDL_SWSURFACE, 8, 8, 32, rmask, gmask, bmask, amask);
+//  bmp_temp = SDL_CreateRGBSurface(SDL_SWSURFACE, 8, 8, 32, rmask, gmask, bmask, amask);
 //
 //  // Simple triangle
 //  draw_line(NULL, loc, 0, 0, 0, 7, );
 //  y = 1;
 //  while(y < 8)
 //  {
-//    _putpixel(cbmp_lst.temp, 0, y, loc);
+//    _putpixel(bmp_temp, 0, y, loc);
 //    x = 1;
 //    while(x < 8)
 //    {
-//      if(x < 8-y) _putpixel(cbmp_lst.temp, x, y, col);
-//      else _putpixel(cbmp_lst.temp, x, y, 0);
+//      if(x < 8-y) _putpixel(bmp_temp, x, y, col);
+//      else _putpixel(bmp_temp, x, y, 0);
 //      x++;
 //    }
 //    y++;
 //  }
-//  cimg_lst.cursor = get_rle_sprite(cbmp_lst.temp);
-//  GLTexture_Release(&cbmp_lst.temp);
+//  cimg_lst.cursor = get_rle_sprite(bmp_temp);
+//  GLTexture_Release(&bmp_temp);
 //
 //
 //  return;
@@ -3585,38 +3600,38 @@ void check_keys(cart_mesh * cmsh, cart_mouse_info * m, char *modname)
 void load_img(void)
 {
   int cnt;
-  SDL_Surface *cbmp_lst.other, *cbmp_lst.temp;
+  SDL_Surface *bmp_other, *bmp_temp;
 
 
-  cbmp_lst.temp = IMG_Load("point.pcx");
+  bmp_temp = IMG_Load("point.pcx");
   cnt = 0;
   while(cnt < 16)
   {
-    cbmp_lst.other = SDL_CreateRGBSurface(SDL_SWSURFACE, (cnt>>1)+4, ((cnt+1)>>1)+4, 32, rmask, gmask, bmask, amask);
-    SDL_BlitSurface(cbmp_lst.temp, &cbmp_lst.temp->clip_rect, cbmp_lst.other, &cbmp_lst.other->clip_rect);
+    bmp_other = SDL_CreateRGBSurface(SDL_SWSURFACE, (cnt>>1)+4, ((cnt+1)>>1)+4, 32, rmask, gmask, bmask, amask);
+    SDL_BlitSurface(bmp_temp, &bmp_temp->clip_rect, bmp_other, &bmp_other->clip_rect);
 
-    GLTexture_Convert( GL_TEXTURE_2D, cimg_lst.point + cnt, cbmp_lst.other, INVALID_KEY);
+    GLTexture_Convert( GL_TEXTURE_2D, cimg_lst.point + cnt, bmp_other, INVALID_KEY);
 
-    SDL_FreeSurface( cbmp_lst.other );
+    SDL_FreeSurface( bmp_other );
 
     cnt++;
   }
-  SDL_FreeSurface(cbmp_lst.temp);
+  SDL_FreeSurface(bmp_temp);
 
-  cbmp_lst.temp = IMG_Load("pointon.pcx");
+  bmp_temp = IMG_Load("pointon.pcx");
   cnt = 0;
   while(cnt < 16)
   {
-    cbmp_lst.other = SDL_CreateRGBSurface(SDL_SWSURFACE, (cnt>>1)+4, ((cnt+1)>>1)+4, 32, rmask, gmask, bmask, amask);
-    SDL_BlitSurface(cbmp_lst.temp, &cbmp_lst.temp->clip_rect, cbmp_lst.other, &cbmp_lst.other->clip_rect);
+    bmp_other = SDL_CreateRGBSurface(SDL_SWSURFACE, (cnt>>1)+4, ((cnt+1)>>1)+4, 32, rmask, gmask, bmask, amask);
+    SDL_BlitSurface(bmp_temp, &bmp_temp->clip_rect, bmp_other, &bmp_other->clip_rect);
 
-    GLTexture_Convert( GL_TEXTURE_2D, cimg_lst.pointon + cnt , cbmp_lst.other, INVALID_KEY);
+    GLTexture_Convert( GL_TEXTURE_2D, cimg_lst.pointon + cnt , bmp_other, INVALID_KEY);
 
-    SDL_FreeSurface( cbmp_lst.other );
+    SDL_FreeSurface( bmp_other );
 
     cnt++;
   }
-  SDL_FreeSurface( cbmp_lst.temp );
+  SDL_FreeSurface( bmp_temp );
 
   GLTexture_Load( GL_TEXTURE_2D, &cimg_lst.ref,     "ref.pcx",     INVALID_KEY);
   GLTexture_Load( GL_TEXTURE_2D, &cimg_lst.drawref, "drawref.pcx", INVALID_KEY);
@@ -3631,7 +3646,7 @@ void load_img(void)
 }
 
 //------------------------------------------------------------------------------
-void draw_lotsa_stuff(cart_mouse_info * m)
+void draw_lotsa_stuff(cart_mouse_info * m, cart_mesh *cmsh)
 {
   int x, y, cnt, todo, tile, add;
 
@@ -3655,7 +3670,7 @@ void draw_lotsa_stuff(cart_mouse_info * m)
 
 
   // Vertices left
-  draw_string( &bmfont,  0, OUTY-56, make_color(31, 31, 31), "Vertices %d", numfreevertices);
+  draw_string( &bmfont,  0, OUTY-56, make_color(31, 31, 31), "Vertices %d", cmsh->xvrt.free_count);
 
 
   // Misc data
@@ -3811,7 +3826,7 @@ void cart_draw_main(void)
   draw_slider(20, 250, 39, 350, &ambicut,       0, ambi);
   draw_slider(40, 250, 59, 350, &direct,        0, 100);
   draw_slider(60, 250, 79, 350, &brushamount, -50,  50);
-  draw_lotsa_stuff(m);
+  draw_lotsa_stuff(&cmouse_info, &c_mesh);
 
   return;
 }
@@ -3831,12 +3846,12 @@ int cartman(char * modulename)
   load_all_windows();          // Load windows
   load_img();            // Load other images
   load_mesh_fans();          // Get fan data
-  cart_load_module(&cmesh, modulename);        // Load the module
-  render_all_windows(&cmesh);          // Create basic windows
+  cart_load_module(&c_mesh, modulename);        // Load the module
+  render_all_windows(&c_mesh, &cmouse_info);          // Create basic windows
 
   while(!SDLKEYDOWN(SDLK_ESCAPE) && !SDLKEYDOWN(SDLK_F1))      // Main loop
   {
-    render_all_windows(&cmesh);
+    render_all_windows(&c_mesh, &cmouse_info);
     cart_draw_main();
   }
 
@@ -3882,7 +3897,7 @@ int cartman(char * modulename)
 //
 //  if((y>>7) >= cmsh->mi->size_y || (x>>7) >= cmsh->mi->size_x)
 //    return 0;
-//  fan = Mesh[y>>7].fanstart+(x>>7);
+//  fan = mesh_convert_fan(cmsh->mi, x>>7, y>>7);
 //  x = x&127;
 //  y = y&127;
 //  z0 = cmsh->mm->vrt__start[cmsh->mm->fanlst[fan]+0].vrtz;
@@ -3938,8 +3953,8 @@ int cartman(char * modulename)
 //    numfan = cmsh->mi->size_x*cmsh->mi->size_y;
 //    cmsh->mi->edge_x = (cmsh->mi->size_x*SMALLX)-1;
 //    cmsh->mi->edge_y = (cmsh->mi->size_y*SMALLY)-1;
-//    meshedgez = 180<<4;
-//    numfreevertices = MAXTOTALMESHVERTICES-numvert;
+//    cmsh->edgez = 180<<4;
+//    cmsh->xvrt.free_count = MAXTOTALMESHVERTICES-numvert;
 //
 //
 //    // Load fan data
@@ -4009,17 +4024,17 @@ int cartman(char * modulename)
 //      x = 0;
 //      while(x < cmsh->mi->size_x)
 //      {
-//        fan = mesh_convert_fan(x, y);
+//        fan = mesh_convert_fan(cmsh->mi, x, y);
 //        num = Mesh_Cmd[cmsh->mm->fanlst[fan].type].vrt_count;
 //        cmsh->mm->fanlst[fan].vrt_start = vert;
 //        cnt = 0;
 //        while(cnt < num)
 //        {
-//          cmsh->mm->vrt_next[vert] = vert+1;
+//          cmsh->xvrt.next[vert] = vert+1;
 //          vert++;
 //          cnt++;
 //        }
-//        cmsh->mm->vrt_next[vert-1] = CHAINEND;
+//        cmsh->xvrt.next[vert-1] = CHAINEND;
 //        x++;
 //      }
 //      y++;
@@ -4132,7 +4147,7 @@ int cartman(char * modulename)
 //  }
 //  if(SDLKEYDOWN(SDLK_q))
 //  {
-//    fix_walls(cmsh);
+//    fix_walls(cmsh, m);
 //  }
 //
 //
@@ -4171,7 +4186,7 @@ int cartman(char * modulename)
 //    debugy = cmsh->mi->y/128.0;
 //    x = cmsh->mi->x>>7;
 //    y = cmsh->mi->y>>7;
-//    cmsh->mi->onfan = mesh_convert_fan(x, y);
+//    cmsh->mi->onfan = mesh_convert_fan(cmsh->mi, x, y);
 //
 //
 //    if(!SDLKEYDOWN(SDLK_k))
@@ -4198,11 +4213,11 @@ int cartman(char * modulename)
 //          // Save corner heights
 //          vert = cmsh->mm->fanlst[cmsh->mi->onfan].vrt_start;
 //          tl = cmsh->mm->vrt_z[vert];
-//          vert = cmsh->mm->vrt_next[vert];
+//          vert = cmsh->xvrt.next[vert];
 //          tr = cmsh->mm->vrt_z[vert];
-//          vert = cmsh->mm->vrt_next[vert];
+//          vert = cmsh->xvrt.next[vert];
 //          br = cmsh->mm->vrt_z[vert];
-//          vert = cmsh->mm->vrt_next[vert];
+//          vert = cmsh->xvrt.next[vert];
 //          bl = cmsh->mm->vrt_z[vert];
 //        }
 //        remove_fan(cmsh->mm, cmsh->mi->onfan);
@@ -4213,10 +4228,10 @@ int cartman(char * modulename)
 //          cmsh->mm->fanlst[cmsh->mi->onfan].tile=cmsh->mi->tile;
 //          break;
 //        case 1:
-//          cmsh->mm->fanlst[cmsh->mi->onfan].tile=(cmsh->mi->tile&0xfffe)+IRAND(1);
+//          cmsh->mm->fanlst[cmsh->mi->onfan].tile=(cmsh->mi->tile&0xfffe)+IRAND(&(cmsh->seed), 1);
 //          break;
 //        case 2:
-//          cmsh->mm->fanlst[cmsh->mi->onfan].tile=(cmsh->mi->tile&0xfffc)+IRAND(2);
+//          cmsh->mm->fanlst[cmsh->mi->onfan].tile=(cmsh->mi->tile&0xfffc)+IRAND(&(cmsh->seed), 2);
 //          break;
 //        case 3:
 //          cmsh->mm->fanlst[cmsh->mi->onfan].tile=(cmsh->mi->tile&0xfff0)+(rand()&6);
@@ -4232,11 +4247,11 @@ int cartman(char * modulename)
 //          // Return corner heights
 //          vert = cmsh->mm->fanlst[cmsh->mi->onfan].vrt_start;
 //          cmsh->mm->vrt_z[vert] = tl;
-//          vert = cmsh->mm->vrt_next[vert];
+//          vert = cmsh->xvrt.next[vert];
 //          cmsh->mm->vrt_z[vert] = tr;
-//          vert = cmsh->mm->vrt_next[vert];
+//          vert = cmsh->xvrt.next[vert];
 //          cmsh->mm->vrt_z[vert] = br;
-//          vert = cmsh->mm->vrt_next[vert];
+//          vert = cmsh->xvrt.next[vert];
 //          cmsh->mm->vrt_z[vert] = bl;
 //        }
 //      }
@@ -4276,7 +4291,7 @@ int cartman(char * modulename)
 //    debugy = m->y/128.0;
 //    x = m->x>>7;
 //    y = m->y>>7;
-//    m->onfan = mesh_convert_fan(x, y);
+//    m->onfan = mesh_convert_fan(cmsh->mi, x, y);
 //
 //
 //    if(mous.latch.b&1)

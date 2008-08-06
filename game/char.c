@@ -3426,8 +3426,8 @@ float get_one_level( CGame * gs, CHR_REF chr_ref )
   if ( chrlst[chr_ref].levelvalid ) return chrlst[chr_ref].level;
 
   //get the base level
-  chrlst[chr_ref].onwhichfan = mesh_get_fan( gs, chrlst[chr_ref].ori.pos );
-  level = mesh_get_level( gs, chrlst[chr_ref].onwhichfan, chrlst[chr_ref].ori.pos.x, chrlst[chr_ref].ori.pos.y, chrlst[chr_ref].prop.waterwalk );
+  chrlst[chr_ref].onwhichfan = mesh_get_fan( &(gs->mesh), &(gs->Mesh_Mem), chrlst[chr_ref].ori.pos );
+  level = mesh_get_level( &(gs->Mesh_Mem), chrlst[chr_ref].onwhichfan, chrlst[chr_ref].ori.pos.x, chrlst[chr_ref].ori.pos.y, chrlst[chr_ref].prop.waterwalk, &(gs->water) );
 
   // if there is a platform, choose whichever is higher
   platform = chr_get_onwhichplatform( chrlst, chrlst_size, chr_ref );
@@ -8564,8 +8564,8 @@ CHR_REF _chr_spawn( chr_spawn_info si, bool_t activate )
   pchr->ori.pos.x   = si.pos.x;
   pchr->ori.pos.y   = si.pos.y;
   pchr->ori.turn_lr = si.facing;
-  pchr->onwhichfan = mesh_get_fan( si.gs, pchr->ori.pos );
-  pchr->level = mesh_get_level( si.gs, pchr->onwhichfan, pchr->ori.pos.x, pchr->ori.pos.y, pchr->prop.waterwalk ) + RAISE;
+  pchr->onwhichfan = mesh_get_fan( &(si.gs->mesh), &(si.gs->Mesh_Mem), pchr->ori.pos );
+  pchr->level = mesh_get_level( &(si.gs->Mesh_Mem), pchr->onwhichfan, pchr->ori.pos.x, pchr->ori.pos.y, pchr->prop.waterwalk, &(si.gs->water) ) + RAISE;
   if ( si.pos.z < pchr->level ) si.pos.z = pchr->level;
   pchr->ori.pos.z = si.pos.z;
 

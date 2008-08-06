@@ -411,7 +411,7 @@ INLINE void mesh_set_colora( CGame * gs, int fan_x, int fan_y, int color )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 mesh_get_fan( CGame * gs, vect3 pos )
+INLINE const Uint32 mesh_get_fan( MESH_INFO * mi, MeshMem * mm, vect3 pos )
 {
   // BB > find the tile under <pos.x,pos.y>, but MAKE SURE we have the right tile.
 
@@ -420,8 +420,7 @@ INLINE const Uint32 mesh_get_fan( CGame * gs, vect3 pos )
   int i, ix, iy;
   bool_t bfound = bfalse;
 
-  MESH_FAN  * mf_list = gs->Mesh_Mem.fanlst;
-  MESH_INFO * mi      = &(gs->mesh);
+  MESH_FAN  * mf_list = mm->fanlst;
 
   if ( !mesh_check( mi, pos.x, pos.y ) )
     return testfan;
@@ -429,19 +428,19 @@ INLINE const Uint32 mesh_get_fan( CGame * gs, vect3 pos )
   ix = MESH_FLOAT_TO_FAN( pos.x );
   iy = MESH_FLOAT_TO_FAN( pos.y );
 
-  testfan = mesh_convert_fan( &(gs->mesh), ix, iy );
+  testfan = mesh_convert_fan( mi, ix, iy );
   if(INVALID_FAN == testfan) return testfan;
 
   ivert = mf_list[testfan].vrt_start;
-  minx = maxx = gs->Mesh_Mem.vrt_x[ivert];
-  miny = maxy = gs->Mesh_Mem.vrt_y[ivert];
+  minx = maxx = mm->vrt_x[ivert];
+  miny = maxy = mm->vrt_y[ivert];
   for ( i = 1;i < 4;i++, ivert++ )
   {
-    minx = MIN( minx, gs->Mesh_Mem.vrt_x[ivert] );
-    maxx = MAX( maxx, gs->Mesh_Mem.vrt_x[ivert] );
+    minx = MIN( minx, mm->vrt_x[ivert] );
+    maxx = MAX( maxx, mm->vrt_x[ivert] );
 
-    miny = MIN( miny, gs->Mesh_Mem.vrt_y[ivert] );
-    maxy = MAX( maxy, gs->Mesh_Mem.vrt_y[ivert] );
+    miny = MIN( miny, mm->vrt_y[ivert] );
+    maxy = MAX( maxy, mm->vrt_y[ivert] );
   };
 
   if ( pos.x < minx ) { ix--; bfound = btrue; }
@@ -450,7 +449,7 @@ INLINE const Uint32 mesh_get_fan( CGame * gs, vect3 pos )
   if ( pos.y < miny ) { iy--; bfound = btrue; }
   else if ( pos.y > maxy ) { iy++; bfound = btrue; }
 
-  testfan = mesh_convert_fan( &(gs->mesh), ix, iy );
+  testfan = mesh_convert_fan( mi, ix, iy );
 
   return testfan;
 };

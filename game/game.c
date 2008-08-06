@@ -1873,7 +1873,7 @@ bool_t chr_collide_mesh(CGame * gs, CHR_REF ichr)
     };
   }
 
-  meshlevel = mesh_get_level( gs, pchr->onwhichfan, pchr->ori.pos.x, pchr->ori.pos.y, gs->ChrList[ichr].prop.waterwalk );
+  meshlevel = mesh_get_level( &(gs->Mesh_Mem), pchr->onwhichfan, pchr->ori.pos.x, pchr->ori.pos.y, gs->ChrList[ichr].prop.waterwalk, &(gs->water) );
   if( pchr->ori.pos.z < meshlevel )
   {
     hitmesh = btrue;
@@ -1983,7 +1983,7 @@ bool_t prt_collide_mesh(CGame * gs, PRT_REF iprt)
     };
   }
 
-  meshlevel = mesh_get_level( gs, gs->PrtList[iprt].onwhichfan, gs->PrtList[iprt].ori.pos.x, gs->PrtList[iprt].ori.pos.y, bfalse );
+  meshlevel = mesh_get_level( &(gs->Mesh_Mem), gs->PrtList[iprt].onwhichfan, gs->PrtList[iprt].ori.pos.x, gs->PrtList[iprt].ori.pos.y, bfalse, &(gs->water) );
   if( gs->PrtList[iprt].ori.pos.z < meshlevel )
   {
     hitmesh = btrue;

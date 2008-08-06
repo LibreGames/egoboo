@@ -558,7 +558,7 @@ bool_t mesh_calc_normal( CGame * gs, vect3 pos, vect3 * pnrm )
   Uint32 fan;
   vect3 normal;
 
-  fan = mesh_get_fan( gs, pos );
+  fan = mesh_get_fan( &(gs->mesh), &(gs->Mesh_Mem), pos );
   if ( INVALID_FAN == fan )
   {
     normal.x = 0.0f;
@@ -623,10 +623,10 @@ bool_t mesh_calc_normal( CGame * gs, vect3 pos, vect3 * pnrm )
 };
 
 //---------------------------------------------------------------------------------------------
-float mesh_get_level( CGame * gs, Uint32 fan, float x, float y, bool_t waterwalk )
+float mesh_get_level( MeshMem * mm, Uint32 fan, float x, float y, bool_t waterwalk, WATER_INFO * wi )
 {
   // ZZ> This function returns the height of a point within a mesh fan, precise
-  //     If waterwalk is nonzero and the fan is gs->water.y, then the level returned is the
+  //     If waterwalk is nonzero and the fan is wi->y, then the level returned is the
   //     level of the water.
 
   float z0, z1, z2, z3;         // Height of each fan corner
@@ -642,10 +642,10 @@ float mesh_get_level( CGame * gs, Uint32 fan, float x, float y, bool_t waterwalk
   fy = y - (( int ) y );
 
 
-  z0 = gs->Mesh_Mem.vrt_z[gs->Mesh_Mem.fanlst[fan].vrt_start + 0];
-  z1 = gs->Mesh_Mem.vrt_z[gs->Mesh_Mem.fanlst[fan].vrt_start + 1];
-  z2 = gs->Mesh_Mem.vrt_z[gs->Mesh_Mem.fanlst[fan].vrt_start + 2];
-  z3 = gs->Mesh_Mem.vrt_z[gs->Mesh_Mem.fanlst[fan].vrt_start + 3];
+  z0 = mm->vrt_z[mm->fanlst[fan].vrt_start + 0];
+  z1 = mm->vrt_z[mm->fanlst[fan].vrt_start + 1];
+  z2 = mm->vrt_z[mm->fanlst[fan].vrt_start + 2];
+  z3 = mm->vrt_z[mm->fanlst[fan].vrt_start + 3];
 
   zleft = ( z0 * ( 1.0f - fy ) + z3 * fy );
   zright = ( z1 * ( 1.0f - fy ) + z2 * fy );
@@ -653,9 +653,9 @@ float mesh_get_level( CGame * gs, Uint32 fan, float x, float y, bool_t waterwalk
 
   if ( waterwalk )
   {
-    if ( gs->water.surfacelevel > zdone && mesh_has_some_bits( gs->Mesh_Mem.fanlst, fan, MPDFX_WATER ) && gs->water.iswater )
+    if ( NULL!=wi && wi->surfacelevel > zdone && mesh_has_some_bits( mm->fanlst, fan, MPDFX_WATER ) && wi->iswater )
     {
-      return gs->water.surfacelevel;
+      return wi->surfacelevel;
     }
   }
 
@@ -840,7 +840,7 @@ Uint32 mesh_hitawall( CGame * gs, vect3 pos, float size_x, float size_y, Uint32 
       loc_pos.y = MESH_FAN_TO_INT( fan_y ) + ( 1 << 6 );
       loc_pos.z = pos.z;
 
-      fan = mesh_get_fan( gs, loc_pos );
+      fan = mesh_get_fan( &(gs->mesh), &(gs->Mesh_Mem), loc_pos );
       if ( INVALID_FAN != fan )
       {
         bits = gs->Mesh_Mem.fanlst[ fan ].fx;

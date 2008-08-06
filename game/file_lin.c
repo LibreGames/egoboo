@@ -168,5 +168,5 @@ void fs_findClose(FS_FIND_INFO * i)
 {
   globfree( &(i->L->last_find_glob) );
 
-  fs_file_info_delete(i);
+  fs_find_info_delete(i);
 }

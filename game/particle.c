@@ -549,7 +549,7 @@ PRT_REF req_spawn_one_particle( prt_spawn_info si )
 
 
   // Set onwhichfan...
-  pprt->onwhichfan = mesh_get_fan( si.gs, pprt->ori.pos );
+  pprt->onwhichfan = mesh_get_fan( &(si.gs->mesh), &(si.gs->Mesh_Mem), pprt->ori.pos );
 
 
   // Damage stuff
@@ -772,9 +772,9 @@ void move_particles( CGame * gs, float dUpdate )
 
    pprt->onwhichfan = INVALID_FAN;
    pprt->level = 0;
-    fan = mesh_get_fan( gs,pprt->ori.pos );
+    fan = mesh_get_fan( &(gs->mesh), &(gs->Mesh_Mem), pprt->ori.pos );
    pprt->onwhichfan = fan;
-   pprt->level = ( INVALID_FAN == fan ) ? 0 : mesh_get_level( gs, fan,pprt->ori.pos.x,pprt->ori.pos.y, bfalse );
+   pprt->level = ( INVALID_FAN == fan ) ? 0 : mesh_get_level( &(gs->Mesh_Mem), fan,pprt->ori.pos.x,pprt->ori.pos.y, bfalse, &(gs->water) );
 
     // To make it easier
     pip =pprt->pip;
@@ -1187,7 +1187,7 @@ bool_t prt_is_over_water( CGame * gs, PRT_REF prt_cnt )
 
   if ( ACTIVE_PRT(gs->PrtList, prt_cnt) )
   {
-    fan = mesh_get_fan( gs, gs->PrtList[prt_cnt].ori.pos );
+    fan = mesh_get_fan( &(gs->mesh), &(gs->Mesh_Mem), gs->PrtList[prt_cnt].ori.pos );
     if ( mesh_has_some_bits( gs->Mesh_Mem.fanlst, fan, MPDFX_WATER ) )  return ( INVALID_FAN != fan );
   }
 
