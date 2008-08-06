@@ -359,7 +359,7 @@ typedef struct CNet_t
 CNet * CNet_create(struct CGame_t * gs);
 bool_t CNet_destroy(CNet ** pns);
 bool_t CNet_initialize(CNet * ns);
-bool_t CNet_shutDown(CNet * ns);
+//bool_t CNet_shutDown(CNet * ns);
 
 //------------------------------------------------------------------
 // Packet writing

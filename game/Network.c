@@ -52,7 +52,7 @@
 //--------------------------------------------------------------------------------------------
 
 // network status
-static bool_t       _net_initialized       = bfalse;
+static bool_t       _enet_initialized       = bfalse;
 static bool_t       _net_registered_atexit = bfalse;
 static FILE       * net_logfile           = NULL;
 
@@ -508,15 +508,17 @@ bool_t CListOut_remove(CListOut * co, ENetPeer * peer)
 void _net_Quit(void)
 {
   // shut down all network services
+  // I guess can't be left for the  _xx_Quit() functions because
+  // they certainly need to be shut down before enet is shut down
   sv_quitHost();
   cl_quitHost();
   nfile_quitHost();
 
   // really shut down Enet
-  if(_net_initialized)
+  if(_enet_initialized)
   {
     enet_deinitialize();
-    _net_initialized = bfalse;
+    _enet_initialized = bfalse;
   }
 
   // close the logfile
@@ -530,7 +532,7 @@ void _net_Quit(void)
 //--------------------------------------------------------------------------------------------
 bool_t net_Started()
 {
-  return _net_initialized;
+  return _enet_initialized;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -540,7 +542,7 @@ retval_t net_startUp(ConfigData * cd)
 
   bool_t request_network = bfalse;
 
-  if(_net_initialized) return rv_succeed;
+  if(_enet_initialized) return rv_succeed;
 
   // open the log file
   net_logfile = fopen("net.txt", "w");
@@ -554,19 +556,19 @@ retval_t net_startUp(ConfigData * cd)
     if (0 != enet_initialize())
     {
       net_logf("Failed!\n");
-      _net_initialized = bfalse;
+      _enet_initialized = bfalse;
     }
     else
     {
       net_logf("Succeeded!\n");
-      _net_initialized = btrue;
+      _enet_initialized = btrue;
     }
   }
   else
   {
     // We're not doing networking this time...
     net_logf("NET INFO: net_startUp() - Networking not enabled.\n");
-    _net_initialized = bfalse;
+    _enet_initialized = bfalse;
   }
 
   // only do this once
@@ -580,7 +582,7 @@ retval_t net_startUp(ConfigData * cd)
   _net_service_count = 0;
   memset(_net_service_list, 0, MAXSERVICE * sizeof(NetService_Info));
 
-  return _net_initialized ? rv_succeed : rv_fail;
+  return _enet_initialized ? rv_succeed : rv_fail;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -588,7 +590,7 @@ retval_t net_shutDown()
 {
   net_logf("NET INFO: net_shutDown: Turning off networking.\n");
 
-  if(!_net_initialized) return rv_error;
+  if(!_enet_initialized) return rv_error;
 
   //cl_shutDown();
   //sv_shutDown();
@@ -606,7 +608,7 @@ retval_t net_shutDown()
 
   enet_deinitialize();
 
-  _net_initialized = bfalse;
+  _enet_initialized = bfalse;
 
   return rv_succeed;
 }
@@ -618,7 +620,7 @@ retval_t net_shutDown()
 //
 //  if(NULL == ns) return rv_error;
 //
-//  if(_net_initialized) return rv_succeed;
+//  if(_enet_initialized) return rv_succeed;
 //
 //  // initialize the network state
 //  CNet_new(ns);
@@ -635,19 +637,19 @@ retval_t net_shutDown()
 //    if (0 != enet_initialize())
 //    {
 //      net_logf("Failed!\n");
-//      _net_initialized = bfalse;
+//      _enet_initialized = bfalse;
 //    }
 //    else
 //    {
 //      net_logf("Succeeded!\n");
-//      _net_initialized = btrue;
+//      _enet_initialized = btrue;
 //    }
 //  }
 //  else
 //  {
 //    // We're not doing networking this time...
 //    net_logf("NET INFO: net_startUp() - Networking not enabled.\n");
-//    _net_initialized = bfalse;
+//    _enet_initialized = bfalse;
 //  }
 //
 //  // only do this once
@@ -657,7 +659,7 @@ retval_t net_shutDown()
 //    _net_registered_atexit = btrue;
 //  };
 //
-//  return _net_initialized ? rv_succeed : rv_fail;
+//  return _enet_initialized ? rv_succeed : rv_fail;
 //}
 //
 //
@@ -667,7 +669,7 @@ retval_t net_shutDown()
 //{
 //  net_logf("NET INFO: net_shutDown: Turning off networking.\n");
 //
-//  if(!_net_initialized) return rv_error;
+//  if(!_enet_initialized) return rv_error;
 //
 //  cl_shutDown( ns->parent->cl );
 //  sv_shutDown( ns->parent->sv );
@@ -683,7 +685,7 @@ retval_t net_shutDown()
 //
 //  enet_deinitialize();
 //
-//  _net_initialized = bfalse;
+//  _enet_initialized = bfalse;
 //
 //  return rv_succeed;
 //}
@@ -691,7 +693,7 @@ retval_t net_shutDown()
 ////--------------------------------------------------------------------------------------------
 //bool_t net_Started(CNet * ns)
 //{
-//  return _net_initialized && EKEY_PVALID( ns );
+//  return _enet_initialized && EKEY_PVALID( ns );
 //}
 //
 
@@ -737,8 +739,6 @@ CNet * CNet_new(CNet * ns, CGame * gs)
   {
     ns->nfs = NFileState_create(ns);
   };
-
-
 
   return ns;
 }
@@ -795,17 +795,17 @@ bool_t CNet_delete(CNet * ns)
 //}
 
 //--------------------------------------------------------------------------------------------
-bool_t CNet_shutDown(CNet * ns)
-{
-  if(NULL == ns ) return bfalse;
-  if(!EKEY_PVALID( ns )) return btrue;
-
-  //CClient_shutDown(ns->parent->cl);
-  //CServer_shutDown(ns->parent->sv);
-  NFileState_shutDown(ns->nfs);
-
-  return btrue;
-}
+//bool_t CNet_shutDown(CNet * ns)
+//{
+//  if(NULL == ns ) return bfalse;
+//  if(!EKEY_PVALID( ns )) return btrue;
+//
+//  //CClient_shutDown(ns->parent->cl);
+//  //CServer_shutDown(ns->parent->sv);
+//  NFileState_shutDown(ns->nfs);
+//
+//  return btrue;
+//}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -1176,7 +1176,7 @@ void net_sayHello(CGame * gs)
   CClient * cl = gs->cl;
   CServer * sv = gs->sv;
 
-  if (!_net_initialized)
+  if (!_enet_initialized)
   {
     cl->waiting = bfalse;
     sv->ready   = btrue;
@@ -1250,7 +1250,7 @@ bool_t net_handlePacket(CNet * ns, ENetEvent *event)
 
   net_logf("NET INFO: net_handlePacket: Received \n");
 
-  //if(!_net_initialized) return bfalse;
+  //if(!_enet_initialized) return bfalse;
 
   if(cl_handlePacket(cl, event)) return btrue;
   if(sv_handlePacket(sv, event)) return btrue;
@@ -1441,7 +1441,7 @@ void close_session(CNet * ns)
   CClient * cl = ns->parent->cl;
   CServer * sv = ns->parent->sv;
 
-  if ( !_net_initialized ) return;
+  if ( !_enet_initialized ) return;
 
   sv_unhostGame(sv);
   CClient_unjoinGame(cl);
@@ -2226,7 +2226,7 @@ bool_t net_sendSysPacketToAllPeersGuaranteed(ENetHost * host, SYS_PACKET * egop)
 //  char cTmp;
 //  SYS_PACKET egopkt;
 //
-//  if(!_net_initialized  || !sv_host->nthread.Active || !svStarted(ns->parent->sv)) return;
+//  if(!_enet_initialized  || !sv_host->nthread.Active || !svStarted(ns->parent->sv)) return;
 //
 //  net_logf("NET INFO: net_copyFileToAllPeers: %s, %s\n", source, dest);
 //

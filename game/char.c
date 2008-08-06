@@ -1184,7 +1184,7 @@ bool_t attach_character_to_mount( CGame * gs, CHR_REF chr_ref, CHR_REF mount_ref
   pchr = ChrList_getPChr(gs, chr_ref);
   if(NULL == pchr) return bfalse;
 
-  if( !ACTIVE_CHR( chrlst, mount_ref ) ) return bfalse;
+  if( !PENDING_CHR( chrlst, mount_ref ) ) return bfalse;
   pmount = ChrList_getPChr(gs, mount_ref);
 
 
