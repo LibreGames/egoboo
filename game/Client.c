@@ -121,12 +121,20 @@ retval_t CClient_startUp(CClient * cs)
   NetHost * cl_host;
 
   // error trap bad inputs
-  if ( NULL == cs || NULL == cs->parent ) return rv_error;
+  if ( !EKEY_PVALID(cs) || !EKEY_PVALID(cs->parent) ) return rv_error;
 
-  if (!net_Started())
+  if(net_Started())
+  {
+    // only start this stuff if we are going to actually connect to the network
+
+    cs->host     = cl_getHost();
+    cs->net_guid = net_addService(cs->host, cs);
+    cs->net_guid = NetHost_register(cs->host, net_handlePacket, cs, cs->net_guid);
+  }
+  else
   {
     CClient_shutDown(cs);
-    return rv_error; 
+    return rv_error;
   }
 
   // return btrue if the client is already started
@@ -157,7 +165,7 @@ retval_t CClient_startUp(CClient * cs)
 retval_t CClient_shutDown(CClient * cs)
 {
   if(NULL == cs) return rv_error;
-  
+
   if(!cl_Started()) return rv_succeed;
 
   net_logf("NET INFO: CClient_shutDown() - Shutting down a game client... ");
@@ -211,20 +219,12 @@ CClient * CClient_new(CClient * cs, CGame * gs)
   //fprintf( stdout, "CClient_new()\n");
 
   if(NULL == cs) return cs;
-  
+
   CClient_delete(cs);
 
   memset( cs, 0, sizeof(CClient) );
 
   EKEY_PNEW(cs, CClient);
-
-  // only start this stuff if we are going to actually connect to the network
-  if(net_Started())
-  {
-    cs->host     = cl_getHost();
-    cs->net_guid = net_addService(cs->host, cs);
-    cs->net_guid = NetHost_register(cs->host, net_handlePacket, cs, cs->net_guid);
-  };
 
   cs->parent         = gs;
   cs->gamePeer       = NULL;
@@ -475,7 +475,7 @@ retval_t CClient_joinGame(CClient * cs, const char * hostname)
   CClient_sendPacketToHost(cs, &egopkt);
 
   // wait up to 5 seconds for the client to respond to the request
-  wait_return = net_waitForPacket(cs->host->asynch, cs->gamePeer, 5000, TO_REMOTE_LOGON, NULL);  
+  wait_return = net_waitForPacket(cs->host->asynch, cs->gamePeer, 5000, TO_REMOTE_LOGON, NULL);
   CClient_disconnect(cs);
   if(rv_fail == wait_return || rv_error == wait_return) return rv_error;
 
@@ -654,7 +654,7 @@ bool_t cl_handlePacket(CClient * cs, ENetEvent *event)
     break;
 
   case TO_REMOTE_LOGON:
-    
+
     // someone has sent a message saying we are logged on
 
     net_logf("TO_REMOTE_LOGON\n");
@@ -969,7 +969,7 @@ int _cl_HostCallback(void * data)
 
   // the client host is passed as the original argument
   cl_host = (NetHost *)data;
-  
+
   // fail to start
   if(NULL == cl_host)
   {
@@ -1016,7 +1016,7 @@ int _cl_HostCallback(void * data)
 //
 //    net_logf("--------------------------------------------------\n");
 //    net_logf("NET INFO: cl_dispatchPackets() - Received event... ");
-//    if(!cl_Started()) 
+//    if(!cl_Started())
 //    {
 //      net_logf("Ignored\n");
 //      continue;
@@ -1073,7 +1073,7 @@ int _cl_HostCallback(void * data)
 //
 //      // link the player info to the event.peer->data field
 //      event.peer->data = &(pcin_info->Slot);
-// 
+//
 //      break;
 //
 //    case ENET_EVENT_TYPE_DISCONNECT:
@@ -1176,7 +1176,7 @@ bool_t cl_end_request_module(CClient * cs)
 //--------------------------------------------------------------------------------------------
 void cl_request_module_info(CClient * cs)
 {
-  // BB > begin the asynchronous transfer of hosted module info from each of the 
+  // BB > begin the asynchronous transfer of hosted module info from each of the
   //      potential hosts
 
   int i;
@@ -1328,7 +1328,7 @@ void cl_request_module_images(CClient * cs)
     cs->rem_req_image[i] = btrue;
   }
 
- 
+
 };
 
 //--------------------------------------------------------------------------------------------
@@ -1441,7 +1441,7 @@ Status * Status_new( Status * pstat )
 
   pstat->on      = bfalse;
   pstat->chr_ref = INVALID_CHR;
-  pstat->delay   = 10; 
+  pstat->delay   = 10;
 
   return pstat;
 }
@@ -1532,8 +1532,8 @@ NetHost * cl_getHost()
 }
 
 //------------------------------------------------------------------------------
-retval_t _cl_Initialize() 
-{ 
+retval_t _cl_Initialize()
+{
   if( NULL != _cl_host) return rv_succeed;
 
   _cl_host = NetHost_create( _cl_HostCallback );
@@ -1548,8 +1548,15 @@ retval_t _cl_Initialize()
 }
 
 //------------------------------------------------------------------------------
+void cl_quitHost()
+{
+  NetHost_shutDown(_cl_host);
+  NetHost_destroy( &_cl_host );
+};
+
+//------------------------------------------------------------------------------
 void _cl_Quit(void)
-{ 
+{
   if( !_cl_atexit_registered ) return;
   if( NULL == _cl_host ) return;
 
@@ -1570,10 +1577,9 @@ retval_t _cl_startUp(void)
 //------------------------------------------------------------------------------
 retval_t _cl_shutDown(void)
 {
-  NetHost * nh = cl_getHost();
-  if(NULL == nh) return rv_fail;
+  if(NULL == _cl_host) return rv_fail;
 
-  return NetHost_shutDown(nh);
+  return NetHost_shutDown(_cl_host);
 }
 
 //------------------------------------------------------------------------------

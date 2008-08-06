@@ -111,7 +111,7 @@ struct CGraphics_t
   GLenum        shading;                    // current shading type
   bool_t        vsync;                      // current vsync flag
   bool_t        phongon;                    // current phongon flag
-  
+
   bool_t        render_overlay;              // current overlayvalid flag
   bool_t        render_background;           // current overlayvalid flag
   bool_t        render_fog;                  // current fogallowed flag
@@ -140,7 +140,7 @@ extern CGraphics gfxState;
 //--------------------------------------------------------------------------------------------
 struct ClockState_t;
 
-typedef struct CGui_t 
+typedef struct CGui_t
 {
   egoboo_key ekey;
 

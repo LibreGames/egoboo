@@ -212,7 +212,7 @@ INLINE quaternion QuatConvert(matrix_4x4 m)
   tr = m.CNV(0,0) + m.CNV(1, 1) + m.CNV(2, 2);
 
   // check the diagonal
-  if (tr > 0.0) 
+  if (tr > 0.0)
   {
     s = sqrt (tr + 1.0);
     quat.w = s / 2.0;
@@ -220,8 +220,8 @@ INLINE quaternion QuatConvert(matrix_4x4 m)
     quat.x = (m.CNV(2, 1) - m.CNV(1, 2)) * s;
     quat.y = (m.CNV(0, 2) - m.CNV(2, 0)) * s;
     quat.z = (m.CNV(1, 0) - m.CNV(0, 1)) * s;
-  } 
-  else 
+  }
+  else
   {		
     // diagonal is negative
     i = 0;
@@ -481,7 +481,7 @@ INLINE void Transform4_Full( float pre_scale, float post_scale, matrix_4x4 *pMat
   Uint32   cnt;
   vect4 *psrc, *pdst;
 
-  psrc = pSourceV; 
+  psrc = pSourceV;
   pdst = pDestV;
   for (cnt = 0; cnt < NumVertor; cnt++, psrc++, pdst++)
   {
@@ -528,7 +528,7 @@ INLINE void Transform4( float pre_scale, float post_scale, matrix_4x4 *pMatrix, 
   vect4 *psrc, *pdst;
   float scale = pre_scale * post_scale;
 
-  psrc = pSourceV; 
+  psrc = pSourceV;
   pdst = pDestV;
   for (cnt = 0; cnt < NumVertor; cnt++, psrc++, pdst++)
   {
@@ -552,7 +552,7 @@ INLINE void Translate4( matrix_4x4 *pMatrix, vect4 pSourceV[], vect4 pDestV[], U
   Uint32   cnt;
   vect4 *psrc, *pdst;
 
-  psrc = pSourceV; 
+  psrc = pSourceV;
   pdst = pDestV;
   for (cnt = 0; cnt < NumVertor; cnt++, psrc++, pdst++)
   {
@@ -569,7 +569,7 @@ INLINE void Transform3_Full( float pre_scale, float post_scale, matrix_4x4 *pMat
   Uint32   cnt;
   vect3 *psrc, *pdst;
 
-  psrc = pSourceV; 
+  psrc = pSourceV;
   pdst = pDestV;
   for (cnt = 0; cnt < NumVertor; cnt++, psrc++, pdst++)
   {
@@ -605,7 +605,7 @@ INLINE void Transform3( float pre_scale, float post_scale, matrix_4x4 *pMatrix, 
   vect3 *psrc, *pdst;
   float scale = pre_scale * post_scale;
 
-  psrc = pSourceV; 
+  psrc = pSourceV;
   pdst = pDestV;
   for (cnt = 0; cnt < NumVertor; cnt++, psrc++, pdst++)
   {
@@ -628,7 +628,7 @@ INLINE void Translate3( matrix_4x4 *pMatrix, vect3 pSourceV[], vect3 pDestV[], U
   Uint32 cnt;
   vect3 *psrc, *pdst;
 
-  psrc = pSourceV; 
+  psrc = pSourceV;
   pdst = pDestV;
   for (cnt = 0; cnt < NumVertor; cnt++, psrc++, pdst++)
   {

@@ -512,7 +512,7 @@ struct ai_state_t
 
   Uint16          type;          // The AI script to run
 
-  // some ai state variables 
+  // some ai state variables
   int             state;         // Short term memory for AI
   Uint32          alert;         // Alerts for AI script
   float           time;          // AI Timer
@@ -630,8 +630,8 @@ struct chr_spawn_info_t
 typedef struct chr_spawn_info_t chr_spawn_info;
 
 chr_spawn_info * chr_spawn_info_new(chr_spawn_info * psi, struct CGame_t * gs );
-bool_t           chr_spawn_info_init( chr_spawn_info * psi, vect3 pos, vect3 vel, 
-                                      OBJ_REF iobj, TEAM_REF team, Uint8 skin, Uint16 facing, 
+bool_t           chr_spawn_info_init( chr_spawn_info * psi, vect3 pos, vect3 vel,
+                                      OBJ_REF iobj, TEAM_REF team, Uint8 skin, Uint16 facing,
                                       const char *name, CHR_REF override );
 //--------------------------------------------------------------------------------------------
 struct chr_spawn_queue_t
@@ -823,7 +823,7 @@ struct CChr_t
   Sint8           loopingchannel;    // Channel number of the loop so
   float           loopingvolume;     // Sound volume of the channel
 
-  
+
   CProperties   prop;                // all character properties
 };
 typedef struct CChr_t CChr;

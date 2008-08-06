@@ -176,7 +176,7 @@ void * net_getService(Uint32 id)
 
 
 //--------------------------------------------------------------------------------------------
-// for identifying network connections 
+// for identifying network connections
 static Uint32 _CListIn_guid = 0;
 
 //--------------------------------------------------------------------------------------------
@@ -223,8 +223,8 @@ bool_t NetHost_unregister(NetHost * nh, Uint32 id)
 //--------------------------------------------------------------------------------------------
 retval_t NetHost_dispatch( NetHost * nh )
 {
-  // BB > Handle an ENet event. 
-  //      If we received a packet, send it to the correct location 
+  // BB > Handle an ENet event.
+  //      If we received a packet, send it to the correct location
 
   NetThread  * nthread;
   NetRequest * prequest;
@@ -240,13 +240,13 @@ retval_t NetHost_dispatch( NetHost * nh )
 
   nthread = &(nh->nthread);
   if(nthread->Terminated || nthread->KillMe) return rv_error;
-  if(!nthread->Active) return rv_waiting; 
+  if(!nthread->Active) return rv_waiting;
 
   while ( enet_host_service(nh->Host, &event, 0) > 0 )
   {
     net_logf("--------------------------------------------------\n");
     net_logf("NET INFO: NetHost_dispatch() - Received event... ");
-    if(!nthread->Active) 
+    if(!nthread->Active)
     {
       net_logf("Ignored\n");
       continue;
@@ -284,7 +284,7 @@ retval_t NetHost_dispatch( NetHost * nh )
 
         // if we trust pointers, we could actually call
         // (*pc->handler_ptr)(pc->handler_data, &event)
-        
+
         if(!net_handlePacket( (CNet *)pc->handler_data, &event))
         {
           net_logf("NET WARNING: NetHost_dispatch() - Unhandled packet\n");
@@ -300,7 +300,7 @@ retval_t NetHost_dispatch( NetHost * nh )
       cin_info.Address     = event.peer->address;
       cin_info.Hostname[0] = '\0';
       cin_info.Name[0]     = '\0';
-      
+
       // grab the ID of the service the remote wants to connect to
       stream_startENet(&tmpstream, event.packet);
       id = stream_readUint32(&tmpstream);
@@ -321,7 +321,7 @@ retval_t NetHost_dispatch( NetHost * nh )
 
       // link the player info to the event.peer->data field
       event.peer->data = &(pcin_info->Slot);
- 
+
       break;
 
     case ENET_EVENT_TYPE_DISCONNECT:
@@ -357,7 +357,7 @@ retval_t NetHost_dispatch( NetHost * nh )
 CListOut_Info * CListOut_Info_new(CListOut_Info *info)
 {
   if(NULL == info) return info;
-  
+
   CListOut_Info_delete(info);
 
   memset(info, 0, sizeof(CListOut_Info));
@@ -442,7 +442,7 @@ ENetPeer * CListOut_add(CListOut * co, ENetHost * host, ENetAddress * address, v
 
   for(i=0; i<co->Count; i++)
   {
-    if( (address->host == co->Clients[i].peer->address.host) && 
+    if( (address->host == co->Clients[i].peer->address.host) &&
         (address->port == co->Clients[i].peer->address.port))
     {
       co->References[i]++;
@@ -479,7 +479,7 @@ bool_t CListOut_remove(CListOut * co, ENetPeer * peer)
   j = -1;
   for(i=0; i<co->Count; i++)
   {
-    if( (peer->address.host == co->Clients[i].peer->address.host) && 
+    if( (peer->address.host == co->Clients[i].peer->address.host) &&
         (peer->address.port == co->Clients[i].peer->address.port))
     {
       j = i;
@@ -508,9 +508,9 @@ bool_t CListOut_remove(CListOut * co, ENetPeer * peer)
 void _net_Quit(void)
 {
   // shut down all network services
-  NetHost_shutDown( sv_getHost() );
-  NetHost_shutDown( cl_getHost() );
-  NetHost_shutDown( nfile_getHost() );
+  sv_quitHost();
+  cl_quitHost();
+  nfile_quitHost();
 
   // really shut down Enet
   if(_net_initialized)
@@ -895,7 +895,7 @@ bool_t net_sendSysPacketToPeerGuaranteed(ENetPeer *peer, SYS_PACKET * egop)
 //  {
 //    if(!ns->pause_me)
 //    {
-//      // do a *_dispatchPackets() call for each 
+//      // do a *_dispatchPackets() call for each
 //      // ENetHost that can be active
 //
 //      // do the server stuff (if any)
@@ -946,7 +946,7 @@ retval_t net_copyFileToAllPeers(CNet * ns, char *source, char *dest)
 {
   // JF> This function queues up files to send to all the hosts.
   //     TODO: Deal with having to send to up to PLALST_COUNT players...
-  
+
   if(NULL == ns)
   {
     net_logf("NET ERROR: net_copyFileToAllPeers() - Called with invalid parameters.\n");
@@ -1029,7 +1029,7 @@ retval_t net_copyFileToHost(CNet * ns, char *source, char *dest)
     return rv_succeed;
   }
 
-  net_logf("NET INFO: net_copyFileToHost() - Copy %s:%04x:\"%s\" to %s:%04x:\"%s\".\n", 
+  net_logf("NET INFO: net_copyFileToHost() - Copy %s:%04x:\"%s\" to %s:%04x:\"%s\".\n",
     convert_host(cl_host->Host->address.host), cl_host->Host->address.port, source,
     convert_host(ns->parent->cl->gamePeer->address.host), ns->parent->cl->gamePeer->address.port, dest);
 
@@ -1171,7 +1171,7 @@ retval_t net_copyDirectoryToPeer(CNet * ns, ENetPeer * peer, char *dirname, char
 //--------------------------------------------------------------------------------------------
 void net_sayHello(CGame * gs)
 {
-  // ZZ> This function lets everyone know we're here 
+  // ZZ> This function lets everyone know we're here
 
   CClient * cl = gs->cl;
   CServer * sv = gs->sv;
@@ -1191,7 +1191,7 @@ void net_sayHello(CGame * gs)
     {
       net_logf("NET INFO: net_sayHello: Server saying hello.\n");
     }
-    
+
     cl_host = cl_getHost();
     if (cl_host->nthread.Active)
     {
@@ -1282,7 +1282,7 @@ bool_t net_handlePacket(CNet * ns, ENetEvent *event)
 
       CRCseed = net_packet_readUint32(&netpkt);
       packet_readString(&netpkt, filename, 256);
-      
+
       // Acknowledge that we got the request file
       net_startNewSysPacket(&egopkt);
       sys_packet_addUint16(&egopkt, NET_ACKNOWLEDGE_CRC);
@@ -1315,7 +1315,7 @@ bool_t net_handlePacket(CNet * ns, ENetEvent *event)
   case NET_REQUEST_FILE:
     {
       // crack the incoming packet so we can localize the location of the file to this machine
-  
+
       STRING remote_filename = { '\0' }, local_filename = { '\0' }, temp = { '\0' };
 
       // read the remote filename
@@ -1339,7 +1339,7 @@ bool_t net_handlePacket(CNet * ns, ENetEvent *event)
   case TO_HOST_REQUEST_MODULE:
     {
       // The other computer is requesting all the files for the module
-  
+
       STRING remote_filename = { '\0' }, module_filename = { '\0' }, module_path = { '\0' }, temp = { '\0' };
 
       net_logf("TO_HOST_REQUEST_MODULE\n");
@@ -1470,7 +1470,7 @@ bool_t net_beginGame(struct CGame_t * gs)
 
   // try to join a hosted game
   cl_host = cl_getHost();
-  if(retval && cl_host->nthread.Active) 
+  if(retval && cl_host->nthread.Active)
   {
     bool_t bool_tmp = (rv_succeed == CClient_joinGame(gs->cl, gs->cd->net_hosts[0]));
     retval = retval && bool_tmp;
@@ -1791,7 +1791,7 @@ NetRequest * net_prepareWaitForPacket(NetAsynchData * asynch_list, ENetPeer ** p
 //--------------------------------------------------------------------------------------------
 retval_t net_loopWaitForPacket(NetRequest * prequest, Uint32 granularity, size_t * data_size)
 {
-  if(prequest->waiting && !prequest->received) 
+  if(prequest->waiting && !prequest->received)
   {
     //if(SDL_GetTicks() >= prequest->expiretimestamp)
     //{
@@ -1800,8 +1800,8 @@ retval_t net_loopWaitForPacket(NetRequest * prequest, Uint32 granularity, size_t
     //}
     //else
     {
-      SDL_Delay(granularity); 
-      return rv_waiting; 
+      SDL_Delay(granularity);
+      return rv_waiting;
     };
   }
 
@@ -1932,7 +1932,7 @@ ENetPeer * net_startPeer(ENetHost * host, ENetAddress * address )
   {
     switch(peer->state)
     {
-      case ENET_PEER_STATE_DISCONNECTED: 
+      case ENET_PEER_STATE_DISCONNECTED:
         net_logf("Failed! Connection refused?\n");
         break;
 
@@ -1983,7 +1983,7 @@ ENetPeer * net_startPeerByName(ENetHost * host, const char* connect_name, const 
     net_logf("NET INFO: net_startPeerByName() - Invalid function call.\n" );
     return peer;
   }
- 
+
   net_logf("NET INFO: net_startPeerByName() - Attempting to connect to %s:0x%04x through %s:0x%04x\n", connect_name, NET_EGOBOO_SERVER_PORT, convert_host(host->address.host), host->address.port);
 
   // determine the net address of the conection
@@ -2022,7 +2022,7 @@ ENetPeer * net_stopPeer(ENetPeer * peer)
 
   switch(peer->state)
   {
-    case ENET_PEER_STATE_DISCONNECTED: 
+    case ENET_PEER_STATE_DISCONNECTED:
       net_logf("Succeeded!\n");
       break;
 
@@ -2592,7 +2592,7 @@ bool_t CListIn_remove(CListIn * ci, ENetPeer * peer)
 
   if(slot < MAXCONNECTION)
   {
-    net_logf("NET INFO: CListIn_remove() - Connection is closing in socket %d \"%s\" (%s:%04x)\n", 
+    net_logf("NET INFO: CListIn_remove() - Connection is closing in socket %d \"%s\" (%s:%04x)\n",
       slot,  ci->Info[slot].Hostname,  convert_host(ci->Info[slot].Address.host), ci->Info[slot].Address.port);
 
     // found the connection
@@ -2635,9 +2635,9 @@ CListIn_Client * CListIn_find(CListIn * cli, Uint32 id)
 NetHost * NetHost_create(SDL_Callback_Ptr pcall)
 {
   NetHost * nh;
-  
+
   if(!CData.request_network) return NULL;
-  
+
   nh = (NetHost *)calloc(1, sizeof(NetHost));
   return NetHost_new(nh, pcall);
 }
@@ -2648,7 +2648,7 @@ bool_t NetHost_destroy(NetHost ** pnh)
   bool_t retval;
 
   if(NULL == pnh || NULL == *pnh || !EKEY_PVALID( (*pnh) ) ) return bfalse;
-  
+
   retval = NetHost_delete(*pnh);
   FREE(*pnh);
 
@@ -2686,7 +2686,7 @@ static bool_t NetHost_delete(NetHost * nh)
 
   EKEY_PINVALIDATE(nh);
 
-  // Close the host. 
+  // Close the host.
   // Technically, this will close the connections, but it is rude... :P
   if(NULL != nh->Host)
   {
@@ -2749,7 +2749,7 @@ retval_t NetHost_startUp( NetHost * nh, Uint16 port )
   }
 
   nh->nthread.Active = (NULL != nh->Host);
-  
+
   return nh->nthread.Active ? rv_succeed : rv_fail;
 }
 

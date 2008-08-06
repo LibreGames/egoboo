@@ -73,7 +73,7 @@ bool_t break_passage( CGame * gs, PASS_REF passage, Uint16 starttile, Uint16 fra
   CHR_REF character;
   CChr * pchr;
 
-  ScriptInfo * slist = CGame_getScriptInfo(gs); 
+  ScriptInfo * slist = CGame_getScriptInfo(gs);
 
   if ( passage >= gs->PassList_count ) return useful;
 
@@ -142,7 +142,7 @@ bool_t search_tile_in_passage( CGame * gs, PASS_REF passage, Uint32 tiletype, Si
 
   int fan_x, fan_y;
 
-  ScriptInfo * slist = CGame_getScriptInfo(gs); 
+  ScriptInfo * slist = CGame_getScriptInfo(gs);
 
   if ( passage >= gs->PassList_count ) return bfalse;
 
@@ -554,29 +554,29 @@ void PassList_load( CGame * gs, char *modname )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-Passage * Passage_new(Passage *ppass) 
-{ 
+Passage * Passage_new(Passage *ppass)
+{
   //fprintf( stdout, "Passage_new()\n");
 
   if(NULL ==ppass) return ppass;
 
   Passage_delete( ppass );
 
-  memset(ppass, 0, sizeof(Passage)); 
+  memset(ppass, 0, sizeof(Passage));
 
   EKEY_PNEW( ppass, Passage );
 
   ppass->music = INVALID_SOUND;
   ppass->open  = btrue;
   ppass->owner = INVALID_CHR;
-  
-  return ppass; 
+
+  return ppass;
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t Passage_delete(Passage *ppass) 
-{ 
-  if(NULL ==ppass) return bfalse; 
+bool_t Passage_delete(Passage *ppass)
+{
+  if(NULL ==ppass) return bfalse;
   if(!EKEY_PVALID( ppass )) return btrue;
 
   EKEY_PINVALIDATE(ppass);
@@ -584,21 +584,21 @@ bool_t Passage_delete(Passage *ppass)
   ppass->music = INVALID_SOUND;
   ppass->open  = btrue;
   ppass->owner = INVALID_CHR;
-  
-  return btrue; 
+
+  return btrue;
 };
 
 //--------------------------------------------------------------------------------------------
-Passage * Passage_renew(Passage *ppass) 
-{ 
+Passage * Passage_renew(Passage *ppass)
+{
   Passage_delete(ppass);
   return Passage_new(ppass);
 };
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-Shop * Shop_new(Shop *pshop) 
-{ 
+Shop * Shop_new(Shop *pshop)
+{
   //fprintf( stdout, "Shop_new()\n");
 
   if(NULL ==pshop) return pshop;
@@ -609,29 +609,29 @@ Shop * Shop_new(Shop *pshop)
 
   EKEY_PNEW( pshop, Shop );
 
-  pshop->passage = INVALID_PASS; 
-  pshop->owner   = INVALID_CHR; 
+  pshop->passage = INVALID_PASS;
+  pshop->owner   = INVALID_CHR;
 
-  return pshop; 
+  return pshop;
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t Shop_delete(Shop *pshop) 
-{ 
-  if(NULL ==pshop) return bfalse; 
+bool_t Shop_delete(Shop *pshop)
+{
+  if(NULL ==pshop) return bfalse;
   if(!EKEY_PVALID( pshop )) return btrue;
 
   EKEY_PINVALIDATE(pshop);
 
-  pshop->passage = INVALID_PASS; 
-  pshop->owner   = INVALID_CHR; 
+  pshop->passage = INVALID_PASS;
+  pshop->owner   = INVALID_CHR;
 
-  return btrue; 
+  return btrue;
 };
 
 //--------------------------------------------------------------------------------------------
-Shop * Shop_renew(Shop *pshop) 
-{ 
+Shop * Shop_renew(Shop *pshop)
+{
   Shop_delete(pshop);
   return Shop_new(pshop);
 };

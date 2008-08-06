@@ -23,7 +23,7 @@ struct CGraphics_t;
 struct script_global_values_t;
 struct GSStack_t;
 
-struct CClient_t; 
+struct CClient_t;
 struct CServer_t;
 
 enum Action_e;
@@ -215,6 +215,10 @@ bool_t  CGame_renew(CGame * gs);
 INLINE ScriptInfo * CGame_getScriptInfo(CGame * gs) { if(NULL ==gs) return NULL; return &(gs->ScriptList); }
 INLINE ProcState *  CGame_getProcedure(CGame * gs)  { if(NULL ==gs) return NULL; return &(gs->proc); }
 INLINE MenuProc  *  CGame_getMenuProc(CGame * gs)   { if(NULL ==gs) return NULL; return &(gs->igm); }
+
+retval_t CGame_registerNetwork( CGame * gs, struct CNet_t    * net, bool_t destroy );
+retval_t CGame_registerClient ( CGame * gs, struct CClient_t * cl,  bool_t destroy  );
+retval_t CGame_registerServer ( CGame * gs, struct CServer_t * sv,  bool_t destroy  );
 
 
 bool_t CapList_new( CGame * gs );

@@ -281,7 +281,7 @@ void issue_clean( CGame * gs, CHR_REF chr_ref )
   size_t chrlst_size = CHRLST_COUNT;
 
   team = chrlst[chr_ref].team;
-  
+
   for ( chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++ )
   {
     if ( chrlst[chr_cnt].team == team && !chrlst[chr_cnt].alive )
@@ -296,38 +296,38 @@ void issue_clean( CGame * gs, CHR_REF chr_ref )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CTeam * CTeam_new(CTeam *pteam) 
-{ 
+CTeam * CTeam_new(CTeam *pteam)
+{
   //fprintf( stdout, "CTeam_new()\n");
 
-  if(NULL ==pteam) return pteam; 
+  if(NULL ==pteam) return pteam;
 
   CTeam_delete( pteam );
-  
+
   memset(pteam, 0, sizeof(CTeam));
 
   EKEY_PNEW( pteam, CTeam );
 
-  
-  return pteam; 
+
+  return pteam;
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t CTeam_delete(CTeam *pteam) 
-{ 
-  if(NULL ==pteam) return bfalse; 
+bool_t CTeam_delete(CTeam *pteam)
+{
+  if(NULL ==pteam) return bfalse;
   if(!EKEY_PVALID( pteam )) return btrue;
 
   EKEY_PINVALIDATE(pteam);
 
-  memset(pteam, 0, sizeof(CTeam)); 
-   
-  return btrue; 
+  memset(pteam, 0, sizeof(CTeam));
+
+  return btrue;
 };
 
 //--------------------------------------------------------------------------------------------
-CTeam * CTeam_renew(CTeam *pteam) 
-{ 
+CTeam * CTeam_renew(CTeam *pteam)
+{
   CTeam_delete(pteam);
   return CTeam_new(pteam);
 };
@@ -425,7 +425,7 @@ void obj_clear_pips( CGame * gs )
 CObj * ObjList_getPObj(CGame * gs, OBJ_REF iobj)
 {
   if ( !VALID_OBJ( gs->ObjList, iobj ) ) return NULL;
-  
+
   return gs->ObjList + iobj;
 }
 
@@ -437,7 +437,7 @@ CEve * ObjList_getPEve(CGame * gs, OBJ_REF iobj)
 
   pobj->eve = VALIDATE_EVE(gs->EveList, pobj->eve);
   if(!VALID_EVE(gs->EveList, pobj->eve)) return NULL;
-  
+
   return gs->EveList + pobj->eve;
 }
 
@@ -449,7 +449,7 @@ CCap * ObjList_getPCap(CGame * gs, OBJ_REF iobj)
 
   pobj->cap = VALIDATE_CAP(gs->CapList, pobj->cap);
   if(!VALID_CAP(gs->CapList, pobj->cap)) return NULL;
-  
+
   return gs->CapList + pobj->cap;
 }
 
@@ -461,7 +461,7 @@ CMad * ObjList_getPMad(CGame * gs, OBJ_REF iobj)
 
   pobj->mad = VALIDATE_MAD(gs->MadList, pobj->mad);
   if(!VALID_MAD(gs->MadList, pobj->mad)) return NULL;
-  
+
   return gs->MadList + pobj->mad;
 }
 
@@ -473,7 +473,7 @@ CPip * ObjList_getPPip(CGame * gs, OBJ_REF iobj, int i)
 
   pobj->prtpip[i] = VALIDATE_PIP(gs->PipList, pobj->prtpip[i]);
   if(!VALID_PIP(gs->PipList, pobj->prtpip[i])) return NULL;
-  
+
   return gs->PipList + pobj->prtpip[i];
 }
 
@@ -536,7 +536,7 @@ void ObjList_log_used( CGame * gs, char *savename )
     fprintf( hFileWrite, "\n\nSlot usage for objects in last module loaded...\n" );
     fprintf( hFileWrite, "-----------------------------------------------\n" );
 
-    
+
     for ( obj_cnt = 0; obj_cnt < OBJLST_COUNT; obj_cnt++ )
     {
       CCap * pcap;

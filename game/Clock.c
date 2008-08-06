@@ -93,7 +93,7 @@ ClockState * ClockState_create(const char * name, int size)
   ClockState * cs;
 
   cs = ( ClockState * ) calloc( 1, sizeof( ClockState ) );
-  
+
   return ClockState_new( cs, name, size );
 };
 

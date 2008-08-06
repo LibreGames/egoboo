@@ -118,12 +118,12 @@ bool_t load_mesh( CGame * gs, char *modname )
 
   // wait until fanlist is allocated!
   mf_list = mem->fanlst;
-  
+
   mi->edge_x = mi->size_x * 128;
   mi->edge_y = mi->size_y * 128;
 
   // allocate the bumplist
-  allocate_bumplist( mi, ( mi->size_x >> 2 ) * ( mi->size_y >> 2 ) );  
+  allocate_bumplist( mi, ( mi->size_x >> 2 ) * ( mi->size_y >> 2 ) );
 
   // Load fan data
   for ( fan = 0; fan < numfan;  fan++)
@@ -166,7 +166,7 @@ bool_t load_mesh( CGame * gs, char *modname )
   }
 
   // Load vertex lighting data
-  
+
   for ( cnt = 0; cnt < numvert; cnt++ )
   {
     fread( &itmp, 1, 1, fileread );
@@ -252,9 +252,9 @@ bool_t load_mesh_fans()
   for ( /* nothing */; fantype < numfantype; fantype++, bigfantype++ )
   {
     vertices                       =
-    Mesh_Cmd[   fantype].vrt_count = 
+    Mesh_Cmd[   fantype].vrt_count =
     Mesh_Cmd[bigfantype].vrt_count = fget_next_int( fileread );  // Dupe
-    
+
     for ( cnt = 0; cnt < vertices; cnt++ )
     {
       Mesh_Cmd[   fantype].ref[cnt] =
@@ -267,7 +267,7 @@ bool_t load_mesh_fans()
       Mesh_Cmd[bigfantype].tx[cnt].v = fget_next_float( fileread );
     }
 
-    numcommand                     = 
+    numcommand                     =
     Mesh_Cmd[   fantype].cmd_count =
     Mesh_Cmd[bigfantype].cmd_count = fget_next_int( fileread );  // Dupe
 
@@ -279,7 +279,7 @@ bool_t load_mesh_fans()
 
       for ( cnt = 0; cnt < commandsize; cnt++ )
       {
-        Mesh_Cmd[   fantype].vrt[entry] = 
+        Mesh_Cmd[   fantype].vrt[entry] =
         Mesh_Cmd[bigfantype].vrt[entry] = fget_next_int( fileread );  // Dupe
         entry++;
       }
@@ -291,9 +291,9 @@ bool_t load_mesh_fans()
 
 
   // Correct silly Cartman 32-pixel-wide textures to Egoboo's 256 pixel wide textures
-  
+
   for ( cnt = 0; cnt < MAXMESHTYPE / 2; cnt++ )
-  {    
+  {
     for ( entry = 0; entry < Mesh_Cmd[cnt].vrt_count; entry++ )
     {
       Mesh_Cmd[cnt].tx[entry].u = ( TX_FUDGE + Mesh_Cmd[cnt].tx[entry].u * ( 31.0f - TX_FUDGE ) ) / 256.0f;
@@ -841,7 +841,7 @@ Uint32 mesh_hitawall( CGame * gs, vect3 pos, float size_x, float size_y, Uint32 
       loc_pos.z = pos.z;
 
       fan = mesh_get_fan( gs, loc_pos );
-      if ( INVALID_FAN != fan ) 
+      if ( INVALID_FAN != fan )
       {
         bits = gs->Mesh_Mem.fanlst[ fan ].fx;
         pass |= bits;

@@ -535,7 +535,7 @@ bool_t module_load_all_waves( CGame * gs, char *modname )
   SoundState * snd = snd_getState(gs->cd);
 
   if ( NULL == snd || NULL == modname || '\0' == modname[0] ) return bfalse;
-  
+
   if( !snd->soundActive || !snd->mixer_loaded ) return bfalse;
 
   // load in the sounds local to this module
@@ -631,7 +631,7 @@ void module_quit( CGame * gs )
   module_release( gs );
 
   // Stop all sounds that are playing
-  snd_stop_sound( -1 ); 
+  snd_stop_sound( -1 );
 
   // officiallly tell the game that we are offline
   ms->Active = bfalse;

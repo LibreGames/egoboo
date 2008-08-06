@@ -51,9 +51,9 @@
 #ifdef WIN32
 
     // Speeds up compile times a bit.  We don't need everything in windows.h
-#    define WIN32_LEAN_AND_MEAN 
+#    define WIN32_LEAN_AND_MEAN
 
-    // special win32 macro that lets windows know that you are going to be 
+    // special win32 macro that lets windows know that you are going to be
     // starting from a console.  This is useful because you can get real-time
     // output to the screen, just by using printf()!
 #    ifdef _CONSOLE

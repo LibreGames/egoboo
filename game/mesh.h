@@ -10,13 +10,13 @@ struct CGame_t;
 struct bumplist_node_t
 {
   Uint32 ref;
-  Uint32 next; 
+  Uint32 next;
 };
 typedef struct bumplist_node_t BUMPLIST_NODE;
 
 struct bumplist_t
 {
-  egoboo_key ekey;  
+  egoboo_key ekey;
   bool_t     allocated;
   bool_t     filled;
 

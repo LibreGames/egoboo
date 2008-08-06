@@ -126,7 +126,7 @@ INLINE CHR_REF chr_get_onwhichplatform( PChr lst, size_t lst_size, CHR_REF chr_r
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF chr_get_holdingwhich( PChr lst, size_t lst_size, CHR_REF chr_ref, SLOT slot )
 {
-  
+
 
   if ( !ACTIVE_CHR(lst, chr_ref ) || slot >= SLOT_COUNT ) return INVALID_CHR;
 
@@ -294,7 +294,7 @@ INLINE bool_t wp_list_advance(WP_LIST * wl)
 //--------------------------------------------------------------------------------------------
 INLINE bool_t wp_list_add(WP_LIST * wl, float x, float y)
 {
-  // BB > add a point to the waypoint list. 
+  // BB > add a point to the waypoint list.
   //      returns bfalse if the list is full (?or should it advance the tail?)
 
   bool_t retval = bfalse;
@@ -323,19 +323,19 @@ INLINE bool_t wp_list_empty( WP_LIST * wl )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE float wp_list_x( WP_LIST * wl ) 
-{ 
+INLINE float wp_list_x( WP_LIST * wl )
+{
   if(NULL == wl) return 0.0f;
 
-  return wl->pos[wl->tail].x; 
+  return wl->pos[wl->tail].x;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE float wp_list_y( WP_LIST * wl ) 
-{ 
-  if(NULL == wl) return 0.0f; 
+INLINE float wp_list_y( WP_LIST * wl )
+{
+  if(NULL == wl) return 0.0f;
 
-  return wl->pos[wl->tail].y; 
+  return wl->pos[wl->tail].y;
 };
 
 //--------------------------------------------------------------------------------------------

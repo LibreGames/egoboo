@@ -122,7 +122,7 @@ retval_t CServer_startUp(CServer * ss)
   if (!net_Started())
   {
     CServer_shutDown(ss);
-    return rv_error; 
+    return rv_error;
   }
 
   // return btrue if the server is already started
@@ -133,7 +133,7 @@ retval_t CServer_startUp(CServer * ss)
   if(!sv_Started())
   {
     net_logf("---------------------------------------------\n");
-    net_logf("NET INFO: CServer_startUp() - Starting game server\n");    
+    net_logf("NET INFO: CServer_startUp() - Starting game server\n");
 
     _sv_startUp();
   }
@@ -153,7 +153,7 @@ retval_t CServer_startUp(CServer * ss)
 retval_t CServer_shutDown(CServer * ss)
 {
   if(NULL == ss) return rv_error;
- 
+
   if(!sv_Started()) return rv_succeed;
 
   net_logf("NET INFO: CServer_shutDown() - Shutting down the game server... ");
@@ -202,7 +202,7 @@ CServer * CServer_new(CServer * ss, CGame * gs)
   //fprintf( stdout, "CServer_new()\n");
 
   if(NULL == ss) return ss;
-  CServer_delete(ss); 
+  CServer_delete(ss);
 
   memset( ss, 0, sizeof(CServer) );
 
@@ -319,7 +319,7 @@ void sv_talkToRemotes(CServer * ss)
       // Send a message to all players
       net_startNewSysPacket(&egopkt);
       sys_packet_addUint16(&egopkt, TO_REMOTE_LATCH);                       // The message header
-      sys_packet_addUint32(&egopkt, stamp);  
+      sys_packet_addUint32(&egopkt, stamp);
 
       // test all player latches...
       cnt = 0;
@@ -513,7 +513,7 @@ bool_t sv_handlePacket(CServer * ss, ENetEvent *event)
         {
           found = btrue;
           break;
-        } 
+        }
       }
 
       net_startNewSysPacket(&egopkt);
@@ -618,7 +618,7 @@ bool_t sv_handlePacket(CServer * ss, ENetEvent *event)
     {
       // send the directory
       net_copyDirectoryToPeer(ss->parent->ns, event->peer, ss->mod.loadname, ss->mod.loadname);
-  
+
       // tell it to try to find the module again
       sv_sendModuleInfoToOnePlayer(ss, event->peer);
     }
@@ -949,7 +949,7 @@ int _sv_HostCallback(void * data)
 //  {
 //    net_logf("--------------------------------------------------\n");
 //    net_logf("NET INFO: sv_dispatchPackets() - Received event... ");
-//    if(!sv_Started()) 
+//    if(!sv_Started())
 //    {
 //      net_logf("Ignored\n");
 //      continue;
@@ -1006,7 +1006,7 @@ int _sv_HostCallback(void * data)
 //
 //      // link the player info to the event.peer->data field
 //      event.peer->data = &(pcin_info->Slot);
-// 
+//
 //      break;
 //
 //    case ENET_EVENT_TYPE_DISCONNECT:
@@ -1113,8 +1113,8 @@ NetHost * sv_getHost()
 }
 
 //------------------------------------------------------------------------------
-retval_t _sv_Initialize() 
-{ 
+retval_t _sv_Initialize()
+{
   if( NULL != _sv_host) return rv_succeed;
 
   _sv_host = NetHost_create( _sv_HostCallback );
@@ -1129,14 +1129,19 @@ retval_t _sv_Initialize()
 }
 
 //------------------------------------------------------------------------------
+void sv_quitHost()
+{
+  NetHost_shutDown( _sv_host );
+  NetHost_destroy( &_sv_host );
+};
+
+//------------------------------------------------------------------------------
 void _sv_Quit(void)
-{ 
+{
   if( !_sv_atexit_registered ) return;
   if( NULL == _sv_host ) return;
 
-  _sv_shutDown();
-
-  NetHost_destroy( &_sv_host );
+  sv_quitHost();
 }
 
 //------------------------------------------------------------------------------
@@ -1151,10 +1156,9 @@ retval_t _sv_startUp(void)
 //------------------------------------------------------------------------------
 retval_t _sv_shutDown(void)
 {
-  NetHost * nh = sv_getHost();
-  if(NULL == nh) return rv_fail;
+  if(NULL == _sv_host) return rv_fail;
 
-  return NetHost_shutDown(nh);
+  return NetHost_shutDown(_sv_host);
 }
 
 //------------------------------------------------------------------------------

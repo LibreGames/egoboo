@@ -35,7 +35,7 @@ INLINE bool_t HashNode_delete(HashNode * n)
 
   n->data        = NULL;
   egoboo_key_invalidate(&(n->ekey));
-  
+
   return btrue;
 }
 
@@ -47,8 +47,8 @@ INLINE HashNode * HashNode_new(HashNode * n, void * data)
 
   memset(n, 0, sizeof(HashNode));
 
-  EKEY_PNEW( n, HashNode );  
-  
+  EKEY_PNEW( n, HashNode );
+
   n->data = data;
 
   return n;
@@ -192,7 +192,7 @@ INLINE bool_t     HashList_delete(HashList * lst)
   if(NULL == lst) return bfalse;
 
   HashList_deallocate(lst);
-  
+
   return btrue;
 }
 //--------------------------------------------------------------------------------------------
@@ -248,7 +248,7 @@ INLINE bool_t egoboo_key_destroy(egoboo_key ** ppkey)
   // BB > de-initialize the key and free it if necessary
 
   if( NULL == ppkey || NULL == *ppkey) return bfalse;
-  
+
   if( !egoboo_key_invalidate( *ppkey ) ) return bfalse;
 
   // do the actual freeing. make sure never to free memory that is on the stack.

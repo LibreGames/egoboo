@@ -35,6 +35,7 @@
 // Globally accesible client module functions
 
 NetHost * cl_getHost();
+void      cl_quitHost();
 bool_t    cl_Started();
 
 //--------------------------------------------------------------------------------------------
@@ -104,7 +105,7 @@ struct CClient_t
   bool_t       rem_req_info [MAXNETPLAYER];
   bool_t       rem_req_image[MAXNETPLAYER];
 
-  // client information about desired local module 
+  // client information about desired local module
   char      req_host[MAXCAPNAMESIZE];
   MOD_INFO  req_mod;
   ModState  req_modstate;
@@ -118,9 +119,9 @@ typedef struct CClient_t CClient;
 CClient * CClient_create(struct CGame_t * gs);
 bool_t    CClient_destroy(CClient ** pcs);
 CClient * CClient_renew(CClient * cs);
-retval_t      CClient_startUp(CClient * cs);
-retval_t      CClient_shutDown(CClient * cs);
-bool_t        CClient_Running(CClient * cs);
+retval_t  CClient_startUp(CClient * cs);
+retval_t  CClient_shutDown(CClient * cs);
+bool_t    CClient_Running(CClient * cs);
 
 
 
@@ -133,8 +134,8 @@ void CClient_bufferLatches(CClient * cs);
 bool_t CClient_connect(CClient * cs, const char* hostname);
 bool_t CClient_disconnect(CClient * cs);
 
-ENetPeer * cl_startPeer(const char* hostname );
- 
+ENetPeer * cl_startPeer( const char* hostname );
+
 void     CClient_talkToHost(CClient * cs);
 retval_t CClient_joinGame(CClient * cs, const char *hostname);
 bool_t   CClient_unjoinGame(CClient * cs);

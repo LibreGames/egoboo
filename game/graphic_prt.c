@@ -234,7 +234,7 @@ void get_vectors( PRT_REF prt, vect3 * vert, vect3 * horiz, float * dist )
 //--------------------------------------------------------------------------------------------
 void render_antialias_prt( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  CGame *gs = gfxState.gs; 
+  CGame *gs = gfxState.gs;
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -301,7 +301,7 @@ void render_antialias_prt( Uint32 vrtcount, GLVertex * vrtlist )
 //--------------------------------------------------------------------------------------------
 void render_solid_prt( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  CGame *gs = gfxState.gs; 
+  CGame *gs = gfxState.gs;
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -363,7 +363,7 @@ void render_solid_prt( Uint32 vrtcount, GLVertex * vrtlist )
 //--------------------------------------------------------------------------------------------
 void render_transparent_prt( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  CGame *gs = gfxState.gs; 
+  CGame *gs = gfxState.gs;
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -524,7 +524,7 @@ void render_light_prt( Uint32 vrtcount, GLVertex * vrtlist )
       if ( pprt->type != PRTTYPE_LIGHT || 0 == pprt->alpha_fp8) continue;
 
       color_component.r =
-      color_component.g = 
+      color_component.g =
       color_component.b = FP8_TO_FLOAT( pprt->alpha_fp8 );
       color_component.a = 1.0f;
 
@@ -592,7 +592,7 @@ void render_particles()
 {
   // ZZ> This function draws the sprites for particle systems
 
-  CGame *gs = gfxState.gs; 
+  CGame *gs = gfxState.gs;
 
   GLVertex v[PRTLST_COUNT];
   Uint16 numparticle;
@@ -653,7 +653,7 @@ void render_particles()
 //--------------------------------------------------------------------------------------------
 void render_antialias_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  CGame *gs = gfxState.gs; 
+  CGame *gs = gfxState.gs;
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -719,7 +719,7 @@ void render_antialias_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 //--------------------------------------------------------------------------------------------
 void render_solid_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  CGame *gs = gfxState.gs; 
+  CGame *gs = gfxState.gs;
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -782,7 +782,7 @@ void render_solid_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 //--------------------------------------------------------------------------------------------
 void render_transparent_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  CGame *gs = gfxState.gs; 
+  CGame *gs = gfxState.gs;
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -847,7 +847,7 @@ void render_transparent_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 //--------------------------------------------------------------------------------------------
 void render_light_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  CGame *gs = gfxState.gs; 
+  CGame *gs = gfxState.gs;
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -911,7 +911,7 @@ void render_particle_reflections()
 {
   // ZZ> This function draws the sprites for particle systems
 
-  CGame *gs = gfxState.gs; 
+  CGame *gs = gfxState.gs;
 
   GLVertex v[PRTLST_COUNT];
   Uint16 numparticle;

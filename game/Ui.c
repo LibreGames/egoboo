@@ -543,7 +543,7 @@ ui_buttonValues ui_doButton( ui_Widget * pWidget )
   // And then draw the pWidget->text that goes on top of the button
   font = pWidget->pfont;
   if(NULL == font) { font = ui_getFont(); };
-  
+
   if ( NULL != font && NULL != pWidget->text )
   {
     // find the pWidget->width & pWidget->height of the pWidget->text to be drawn, so that it can be centered inside

@@ -83,14 +83,14 @@ bool_t snd_initialize(ConfigData * cd)
       log_message( "Failed!\n" );
       log_error( "Unable to initialize audio: %s\n", Mix_GetError() );
     }
-    else 
+    else
     {
       _sndState.mixer_loaded = btrue;
       log_message( "Succeeded!\n" );
     }
 
   }
-  
+
   return _sndState.mixer_loaded;
 }
 
@@ -100,7 +100,7 @@ bool_t snd_quit()
   if(NULL == &_sndState) return bfalse;
 
   if( _sndState.mixer_loaded )
-  { 
+  {
     Mix_CloseAudio();
     _sndState.mixer_loaded = bfalse;
   };
@@ -319,7 +319,7 @@ bool_t snd_reopen()
   Mix_PauseMusic();
 
   if( _sndState.mixer_loaded )
-  { 
+  {
     Mix_CloseAudio();
     _sndState.mixer_loaded = bfalse;
   };
@@ -371,7 +371,7 @@ SoundState * SoundState_new(SoundState * snd, ConfigData * cd)
   if(NULL == snd) return NULL;
 
   SoundState_delete(snd);
- 
+
   memset(snd, 0, sizeof(SoundState));
 
   EKEY_PNEW(snd, SoundState);

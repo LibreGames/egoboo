@@ -318,7 +318,7 @@ retval_t NFileState_initialize(NFileState * nfs)
 //--------------------------------------------------------------------------------------------
 retval_t NFileState_startUp(NFileState * nfs)
 {
-  // BB > Start the NFileState. 
+  // BB > Start the NFileState.
   //      If it has not been initialized, initialize it.
   //      If it was initialized, restart everything.
 
@@ -328,7 +328,7 @@ retval_t NFileState_startUp(NFileState * nfs)
   if (!net_Started())
   {
     NFileState_shutDown(nfs);
-    return rv_error; 
+    return rv_error;
   }
 
   // make sure that the host is actually Active
@@ -348,7 +348,7 @@ retval_t NFileState_startUp(NFileState * nfs)
 //--------------------------------------------------------------------------------------------
 retval_t NFileState_shutDown(NFileState * nfs)
 {
-  // BB > Shut or pause the NFileState. 
+  // BB > Shut or pause the NFileState.
 
   if( !EKEY_PVALID(nfs) ) return rv_error;
 
@@ -412,7 +412,7 @@ nfile_SendState * nfile_SendState_new(nfile_SendState * snd)
 bool_t nfile_SendState_delete(nfile_SendState * snd)
 {
   if(NULL == snd) return bfalse;
-  
+
   if(!EKEY_PVALID(snd)) return btrue;
 
   EKEY_PINVALIDATE(snd);
@@ -724,7 +724,7 @@ retval_t nfile_ReceiveQueue_add(NFileState * nfs, ENetEvent * event, char * dest
 //  {
 //    net_logf("--------------------------------------------------\n");
 //    net_logf("NET INFO: nfile_dispatchPackets() - Received event... ");
-//    if(!nh->nthread.Active) 
+//    if(!nh->nthread.Active)
 //    {
 //      net_logf("Ignored\n");
 //      continue;
@@ -781,7 +781,7 @@ retval_t nfile_ReceiveQueue_add(NFileState * nfs, ENetEvent * event, char * dest
 //
 //      // link the player info to the event.peer->data field
 //      event.peer->data = &(pcin_info->Slot);
-// 
+//
 //      break;
 //
 //    case ENET_EVENT_TYPE_DISCONNECT:
@@ -1078,7 +1078,7 @@ retval_t nfile_SendState_startThread(nfile_SendState * snd)
 
   snd->nthread.Paused = !thread_valid;
   snd->nthread.KillMe  = !thread_valid;
-  
+
   return thread_valid ? rv_succeed : rv_fail;
 }
 
@@ -1093,7 +1093,7 @@ retval_t nfile_SendState_stopThread(nfile_SendState * snd)
     net_logf("NET ERROR: nfile_SendState_stopThread() - failed.\n");
     return rv_error;
   }
-  
+
   // flush the queue of any unfinished files
   nfile_SendQueue_renew( &(snd->queue) );
 
@@ -1128,7 +1128,7 @@ retval_t nfile_ReceiveState_startThread(nfile_ReceiveState * rec)
 
   rec->nthread.Paused = !thread_valid;
   rec->nthread.KillMe  = !thread_valid;
-  
+
   return thread_valid ? rv_succeed : rv_fail;
 }
 
@@ -1143,7 +1143,7 @@ retval_t nfile_ReceiveState_stopThread(nfile_ReceiveState * rec)
     net_logf("NET ERROR: nfile_ReceiveState_stopThread() - failed.\n");
     return rv_error;
   }
-  
+
   // flush the queue of any unfinished files
   nfile_ReceiveQueue_renew( &(rec->queue) );
 
@@ -1171,7 +1171,7 @@ int _nfile_sendCallback(void * data)
 
   // try to start
   net_logf("NET INFO: _nfile_sendCallback() thread - starting... ");
-  retval = nfile_SendState_startThread(sfs);   
+  retval = nfile_SendState_startThread(sfs);
   if(rv_error == retval)
   {
     net_logf("Error!\n");
@@ -1225,7 +1225,7 @@ int _nfile_sendCallback(void * data)
 
       net_logf("NET INFO: _nfile_sendCallback() - Waiting for confirmation... ");
       wait_return = net_waitForPacket(nh->asynch, state->target, 5000, NET_TRANSFER_ACK, NULL);
-      if(rv_fail == wait_return || rv_error == wait_return) 
+      if(rv_fail == wait_return || rv_error == wait_return)
       {
         net_logf("Timed out!\n");
 
@@ -1239,7 +1239,7 @@ int _nfile_sendCallback(void * data)
 
         // Advance the queue->TransferHead
         advance_head = bfalse;
-      } 
+      }
 
     }
     else
@@ -1270,7 +1270,7 @@ int _nfile_sendCallback(void * data)
           // file is sent
           net_logf("NET INFO: _nfile_sendCallback() - File sent. Waiting for confirmation... ");
           wait_return = net_waitForPacket(nh->asynch, state->target, 5000, NET_TRANSFER_ACK, NULL);
-          if(rv_fail == wait_return || rv_error == wait_return) 
+          if(rv_fail == wait_return || rv_error == wait_return)
           {
             net_logf("Timed out!\n");
 
@@ -1284,7 +1284,7 @@ int _nfile_sendCallback(void * data)
 
             // Advance the queue->TransferHead
             advance_head = bfalse;
-          } 
+          }
         }
       }
 
@@ -1375,7 +1375,7 @@ int _nfile_receiveCallback(void * data)
     switch(state->event_type)
     {
       case NET_CREATE_DIRECTORY:
-        
+
         net_logf("NET INFO: _nfile_receiveCallback() - NET_CREATE_DIRECTORY \"%s\"... ", state->destName);
 
         // convert the slashes in the directory name something valid on this system
@@ -1386,7 +1386,7 @@ int _nfile_receiveCallback(void * data)
           // Try to create the directory
           succeed = (0 != fs_createDirectory( state->destName ));
         }
-        
+
         if(succeed)
         {
           net_logf("Succeeded!");
@@ -1500,7 +1500,7 @@ retval_t nfile_SendQueue_add(NFileState * nfs, ENetAddress * target_address, cha
   }
 
   net_logf("--------------------------------------------------\n");
-  net_logf("NET INFO: nfile_SendQueue_add() - Adding file transfer from %s:%04x:\"%s\" to %s:%04x:\"%s\".\n", 
+  net_logf("NET INFO: nfile_SendQueue_add() - Adding file transfer from %s:%04x:\"%s\" to %s:%04x:\"%s\".\n",
     convert_host(nfs->host->Host->address.host), nfs->host->Host->address.port, source,
     convert_host(target_address->host), target_address->port, dest);
 
@@ -1508,7 +1508,7 @@ retval_t nfile_SendQueue_add(NFileState * nfs, ENetAddress * target_address, cha
   state = queue->transferStates + queue->TransferTail;
   assert(state->sourceName[0] == 0);
 
-  state->host   = nfs->host->Host; 
+  state->host   = nfs->host->Host;
   state->target = enet_host_connect(state->host, target_address, NET_EGOBOO_NUM_CHANNELS);
   strncpy(state->sourceName, source, NET_MAX_FILE_NAME);
   strncpy(state->destName,   dest,   NET_MAX_FILE_NAME);
@@ -1566,7 +1566,7 @@ retval_t nfhost_checkCRC(ENetPeer * peer, const char * source, Uint32 seed, Uint
   // wait up to 5 seconds for the client to respond to the request
   net_logf("NET INFO: nfhost_checkCRC() - Waiting for acknowledgement of remote CRC...\n");
   wait_return = net_waitForPacket(nh->asynch, peer, 5000, NET_ACKNOWLEDGE_CRC, NULL);
-  if(rv_fail == wait_return || rv_error == wait_return) 
+  if(rv_fail == wait_return || rv_error == wait_return)
   {
     net_logf("Timed out!\n");
     net_KickOnePlayer(peer);
@@ -1577,7 +1577,7 @@ retval_t nfhost_checkCRC(ENetPeer * peer, const char * source, Uint32 seed, Uint
   // After the request is acknowledged, wait up to 30 seconds for the CRC to be returned
   net_logf("NET INFO: nfhost_checkCRC() - Waiting for CRC... ");
   wait_return = net_waitForPacket(nh->asynch, peer, 30000, NET_SEND_CRC, NULL);
-  if(rv_fail == wait_return || rv_error == wait_return) 
+  if(rv_fail == wait_return || rv_error == wait_return)
   {
     net_logf("Timed out!\n");
     net_KickOnePlayer(peer);
@@ -1687,8 +1687,8 @@ NetHost * nfile_getHost()
 }
 
 //------------------------------------------------------------------------------
-retval_t _nfile_Initialize() 
-{ 
+retval_t _nfile_Initialize()
+{
   if( NULL != _nfile_host) return rv_succeed;
 
   _nfile_host = NetHost_create( nfhost_HostCallback );
@@ -1703,8 +1703,15 @@ retval_t _nfile_Initialize()
 }
 
 //------------------------------------------------------------------------------
+void nfile_quitHost()
+{
+  NetHost_shutDown( _nfile_host );
+  NetHost_destroy( &_nfile_host );
+};
+
+//------------------------------------------------------------------------------
 void _nfile_Quit(void)
-{ 
+{
   if( !_nfile_atexit_registered ) return;
   if( NULL == _nfile_host ) return;
 
@@ -1715,6 +1722,7 @@ void _nfile_Quit(void)
   nfile_ReceiveState_destroy( &_nfile_rec );
 
   // sestroy the host
+  _nfhost_shutDown();
   NetHost_destroy( &_nfile_host );
 }
 
@@ -1732,10 +1740,9 @@ retval_t _nfile_startUp(void)
 //------------------------------------------------------------------------------
 retval_t _nfhost_shutDown(void)
 {
-  NetHost * nh = nfile_getHost();
-  if(NULL == nh) return rv_fail;
+  if(NULL == _nfile_host) return rv_fail;
 
-  return NetHost_shutDown(nh);
+  return NetHost_shutDown(_nfile_host);
 }
 
 //------------------------------------------------------------------------------
@@ -1756,8 +1763,8 @@ nfile_SendState * _nfile_getSend()
 }
 
 //------------------------------------------------------------------------------
-retval_t _nfile_Send_initialize() 
-{ 
+retval_t _nfile_Send_initialize()
+{
   if( NULL != _nfile_snd) return rv_succeed;
 
   _nfile_snd = nfile_SendState_create();
@@ -1804,8 +1811,8 @@ nfile_ReceiveState * _nfile_getReceive()
 }
 
 //------------------------------------------------------------------------------
-retval_t _nfile_Receive_initialize() 
-{ 
+retval_t _nfile_Receive_initialize()
+{
   NetHost * nh;
   if( NULL != _nfile_rec) return rv_succeed;
 

@@ -904,7 +904,7 @@ const char * inherit_fname(const char * szObjPath, const char * szObject, const 
   FS_FIND_INFO fs_finfo;
 
   fs_find_info_new( &fs_finfo );
- 
+
   // blank the static string
   ret_fname[0] = '\0';
 

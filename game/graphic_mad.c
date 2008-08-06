@@ -716,7 +716,7 @@ void render_mad( CHR_REF ichr, Uint8 trans )
   if(INVALID_CHR != pchr->inwhichpack) return;
 
   // hidden items are not drawn
-  if(hide != NOHIDE && hide == pchr->aistate.state) return; 
+  if(hide != NOHIDE && hide == pchr->aistate.state) return;
 
   // dispatch the drawing to the correct routine
   if ( pchr->enviro )

@@ -213,14 +213,14 @@ struct CProfile_t;
 
 template <typename _ty, unsigned _sz> struct TPList;
 
-template <typename _ty, unsigned _sz> 
+template <typename _ty, unsigned _sz>
 struct TList
 {
-  struct Handle 
-  { 
+  struct Handle
+  {
     typedef size_t htype;
 
-    size_t val; 
+    size_t val;
     explicit Handle(size_t v = _sz) { val = v; };
 
     bool operator == (htype v) { return val == v; };
@@ -261,7 +261,7 @@ struct TList
   operator TPList<_ty, _sz> () { TPList<_ty, _sz> tmp; tmp.plist = (TPList<_ty, _sz>::myplist)this; return tmp; }
 };
 
-template <typename _ty, unsigned _sz> 
+template <typename _ty, unsigned _sz>
 struct TPList
 {
   typedef typename TList<_ty, _sz>::Handle myref;
@@ -396,10 +396,10 @@ typedef Uint16 SHOP_REF;
 
 
 //--------------------------------------------------------------------------------------------
-union float_int_convert_u 
-{ 
-  float f; 
-  Uint32 i; 
+union float_int_convert_u
+{
+  float f;
+  Uint32 i;
 };
 
 typedef union float_int_convert_u FCONVERT;

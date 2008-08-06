@@ -1,7 +1,7 @@
 //********************************************************************************************
 //* Egoboo - enchant.c
 //*
-//* 
+//*
 //*
 //********************************************************************************************
 //*
@@ -295,7 +295,7 @@ void tilt_characters_to_terrain(CGame * gs)
   PChr chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  
+
   for ( chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++ )
   {
     if( !VALID_CHR(chrlst, chr_cnt) ) continue;
@@ -406,7 +406,7 @@ void change_character( CGame * gs, CHR_REF ichr, OBJ_REF new_profile, Uint8 new_
 
   pobj = ObjList_getPObj(gs, new_profile);
   if ( NULL == pobj ) return;
-  
+
   pmad = ObjList_getPMad(gs, new_profile);
   if( NULL == pmad ) return;
 
@@ -647,11 +647,11 @@ bool_t cost_mana( CGame * gs, CHR_REF chr_ref, int amount, Uint16 killer )
 }
 
 //--------------------------------------------------------------------------------------------
-CEnc * CEnc_new(CEnc *penc) 
-{ 
+CEnc * CEnc_new(CEnc *penc)
+{
   //fprintf( stdout, "CEnc_new()\n");
 
-  if(NULL ==penc) return penc; 
+  if(NULL ==penc) return penc;
 
   CEnc_delete( penc );
 
@@ -661,7 +661,7 @@ CEnc * CEnc_new(CEnc *penc)
 
   penc->active = bfalse;
 
-  return penc; 
+  return penc;
 };
 
 //--------------------------------------------------------------------------------------------
@@ -723,7 +723,7 @@ EVE_REF EveList_load_one( CGame * gs, const char * szObjectpath, const char * sz
 
   EVE_REF  ieve;
   CEve   * peve;
-  
+
   if(!VALID_EVE_RANGE(irequest)) return INVALID_EVE;
   ieve = irequest;
 
@@ -1237,19 +1237,19 @@ void remove_enchant_value( CGame * gs, ENC_REF enchantindex, Uint8 valueindex )
 }
 
 //--------------------------------------------------------------------------------------------
-CEve * Eve_new(CEve *peve) 
-{ 
+CEve * Eve_new(CEve *peve)
+{
   //fprintf( stdout, "Eve_new()\n");
 
-  if(NULL == peve) return peve; 
+  if(NULL == peve) return peve;
 
   Eve_delete(peve);
 
-  memset(peve, 0, sizeof(CEve)); 
+  memset(peve, 0, sizeof(CEve));
 
   EKEY_PNEW( peve, CEve );
 
-  return peve; 
+  return peve;
 };
 
 //--------------------------------------------------------------------------------------------
@@ -1403,7 +1403,7 @@ void remove_enchant( CGame * gs, ENC_REF enchantindex )
 
 
   // Remove all of the cumulative values
-  
+
   for ( add = 0; add < EVE_ADD_COUNT; add++ )
   {
     remove_enchant_value( gs, enchantindex, add );
@@ -1969,7 +1969,7 @@ ENC_REF enc_spawn_info_init( enc_spawn_info * psi, CGame * gs, CHR_REF owner, CH
   if(NULL == psi) return INVALID_ENC;
 
   enc_spawn_info_new(psi, gs);
-  
+
   // grab the correct profile
   psi->iobj = INVALID_OBJ;
   if ( INVALID_OBJ != obj_optional )
@@ -1977,7 +1977,7 @@ ENC_REF enc_spawn_info_init( enc_spawn_info * psi, CGame * gs, CHR_REF owner, CH
     // The enchantment type is given explicitly
     psi->iobj = VALIDATE_OBJ(gs->ObjList, obj_optional);
   }
-  
+
   if(INVALID_OBJ == psi->iobj)
   {
     // The enchantment type is given by the spawner

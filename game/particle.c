@@ -869,7 +869,7 @@ void move_particles( CGame * gs, float dUpdate )
         {
           prt_spawn_info_init( &si, gs, 1.0f, pprt->ori.pos,
             facing, pprt->model, piplst[pip].contspawnpip,
-            INVALID_CHR, GRIP_LAST, pprt->team, prt_get_owner( gs, iprt ), 
+            INVALID_CHR, GRIP_LAST, pprt->team, prt_get_owner( gs, iprt ),
             tnc, prt_target );
 
           particle = req_spawn_one_particle( si );
@@ -1165,7 +1165,7 @@ void spawn_bump_particles( CGame * gs, CHR_REF character, PRT_REF particle )
         {
           prt_spawn_info si;
           amount = ( amount * vertices ) >> 5;  // Correct amount for size of character
-          
+
           for ( cnt = 0; cnt < amount; cnt++ )
           {
             prt_spawn_info_init( &si, gs, 1.0f, pchr->ori.pos, 0, pprt->model, ppip->bumpspawnpip,
@@ -1218,7 +1218,7 @@ void do_weather_spawn( CGame * gs, float dUpdate )
 
       // Find a valid player
       foundone = bfalse;
-      
+
       for ( cnt = 0; cnt < PLALST_COUNT; cnt++ )
       {
         GWeather.player = PLA_REF( ( GWeather.REF_TO_INT(player) + 1 ) % PLALST_COUNT );
@@ -1572,15 +1572,15 @@ bool_t prt_calculate_bumpers(CGame * gs, PRT_REF iprt)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CPrt * Prt_new(CPrt *pprt) 
-{ 
+CPrt * Prt_new(CPrt *pprt)
+{
   //fprintf( stdout, "Prt_new()\n");
 
-  if(NULL ==pprt) return pprt; 
+  if(NULL ==pprt) return pprt;
 
   Prt_delete( pprt );
-  
-  memset(pprt, 0, sizeof(CPrt)); 
+
+  memset(pprt, 0, sizeof(CPrt));
 
   EKEY_PNEW( pprt, CPrt );
 
@@ -1610,13 +1610,13 @@ CPrt * Prt_new(CPrt *pprt)
   // assume solid particle
   pprt->type = PRTTYPE_SOLID;
   pprt->alpha_fp8 = 255;
-  
-  return pprt; 
+
+  return pprt;
 };
 
 //--------------------------------------------------------------------------------------------
 bool_t Prt_delete( CPrt * pprt )
-{ 
+{
   if(NULL == pprt) return bfalse;
 
   if( !EKEY_PVALID(pprt) ) return btrue;

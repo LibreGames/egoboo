@@ -156,7 +156,7 @@ GSStack * Get_GSStack()
     GSStack_new(&_gs_stack);
   }
 
-  return &_gs_stack; 
+  return &_gs_stack;
 };
 
 //---------------------------------------------------------------------------------------------
@@ -575,7 +575,7 @@ bool_t decode_escape_sequence( CGame * gs, char * buffer, size_t buffer_size, co
 
   STRING szTmp;
   char lTmp;
-  
+
   CHR_REF target = chr_get_aitarget( gs->ChrList, CHRLST_COUNT, gs->ChrList + chr_ref );
   CHR_REF owner  = chr_get_aiowner( gs->ChrList, CHRLST_COUNT, gs->ChrList + chr_ref );
 
@@ -791,7 +791,7 @@ bool_t decode_escape_sequence( CGame * gs, char * buffer, size_t buffer_size, co
       }
     }
 
-    dst_pos += snprintf(dst_pos, (size_t)(dst_end-dst_pos), szTmp); 
+    dst_pos += snprintf(dst_pos, (size_t)(dst_end-dst_pos), szTmp);
   }
 
   return btrue;
@@ -821,7 +821,7 @@ bool_t display_message( CGame * gs, int message, CHR_REF chr_ref )
   // Copy the message
   message_src = msglst->text + msglst->index[message];
   decode_escape_sequence(gs, msg->textdisplay, sizeof(msg->textdisplay), message_src, chr_ref);
-  msg->time = DELAY_MESSAGE;  
+  msg->time = DELAY_MESSAGE;
 
   return btrue;
 }
@@ -1391,7 +1391,7 @@ void draw_chr_info( CGame * gs )
       {
         if ( SDLKEYDOWN( SDLK_1 + pla_cnt ) && pla_cnt<lst_size && ACTIVE_CHR( gs->ChrList, gs->PlaList[pla_cnt].chr_ref ) )
         {
-          give_experience( gs, gs->PlaList[pla_cnt].chr_ref, 25, XP_DIRECT ); 
+          give_experience( gs, gs->PlaList[pla_cnt].chr_ref, 25, XP_DIRECT );
           lst[ REF_TO_INT(pla_cnt) ].delay = 0;
         }
       }
@@ -1651,7 +1651,7 @@ void give_experience( CGame * gs, CHR_REF character, int amount, EXPERIENCE xpty
 
   // Figure out how much experience to give
   pchr = ChrList_getPChr(gs, character);
-  if(NULL == pchr) 
+  if(NULL == pchr)
     return;
 
   pcap = ChrList_getPCap(gs, character);
@@ -2045,7 +2045,7 @@ void do_integration(CGame * gs, float dFrame)
 
     // iterate through the integration routine until you force the new position to be valid
     // should only ever go through the loop twice
-    
+
     collide = bfalse;
     for( tnc = 0; tnc < 20; tnc++ )
     {
@@ -2202,7 +2202,7 @@ void reset_messages(CGame * gs)
 {
   // ZZ> This makes messages safe to use
   CGui * gui = gui_getState();
-  
+
   clear_messages( &(gs->MsgList) );
   clear_message_queue( &(gui->msgQueue) );
 }
@@ -3054,7 +3054,7 @@ int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
             all_games_finished = all_games_finished && !gs->proc.Terminated;
           };
         }
-        
+
         if ( all_games_finished && mnu_proc->proc.Terminated ) ego_proc->State = PROC_Finish;
       }
       break;
@@ -3187,7 +3187,7 @@ void game_handleIO(CGame * gs)
     // upload the information
     CClient_talkToHost(gs->cl);        // client function
     sv_talkToRemotes(gs->sv);     // server function
-  } 
+  }
 };
 
 //--------------------------------------------------------------------------------------------
@@ -3295,7 +3295,7 @@ void cl_update_game(CGame * gs, float dUpdate, Uint32 * rand_idx)
 
     for(cnt=0; cnt<MAXSTAT; cnt++)
     {
-      if (gs->cl->StatList[cnt].delay > 0)  
+      if (gs->cl->StatList[cnt].delay > 0)
       {
         gs->cl->StatList[cnt].delay--;
       }
@@ -3530,7 +3530,7 @@ void update_game(CGame * gs, float dUpdate, Uint32 * rand_idx)
 
     for(cnt=0; cnt<MAXSTAT; cnt++)
     {
-      if (cs->StatList[cnt].delay > 0)  
+      if (cs->StatList[cnt].delay > 0)
       {
         cs->StatList[cnt].delay--;
       }
@@ -3650,7 +3650,7 @@ ProcessStates game_doRun(CGame * gs, ProcessStates procIn)
 int proc_gameLoop( ProcState * gproc, CGame * gs )
 {
   // if we are being told to exit, jump to PROC_Leaving
-  double frameDuration, frameTicks;  
+  double frameDuration, frameTicks;
   CGui * gui = gui_getState();
 
   if(NULL == gproc || gproc->Terminated)
@@ -3659,7 +3659,7 @@ int proc_gameLoop( ProcState * gproc, CGame * gs )
     return gproc->returnValue;
   }
 
-  if(gproc->KillMe && gproc->State < PROC_Leaving) 
+  if(gproc->KillMe && gproc->State < PROC_Leaving)
   {
     gproc->Active = btrue;
     gproc->Paused = bfalse;
@@ -3720,7 +3720,7 @@ int proc_gameLoop( ProcState * gproc, CGame * gs )
         attach_particles( gs );
 
 
-        if ( net_Started() )
+        if ( CClient_Running(gs->cl) || sv_Running(gs->sv) )
         {
           log_info( "SDL_main: Loading module %s...\n", gs->mod.loadname );
           keyb.mode = bfalse;
@@ -3797,7 +3797,7 @@ int proc_gameLoop( ProcState * gproc, CGame * gs )
 
 //--------------------------------------------------------------------------------------------
 int proc_menuLoop( MenuProc  * mproc )
-{ 
+{
   CGame * gs;
   ProcState * proc;
 
@@ -3998,7 +3998,7 @@ bool_t prt_search_wide( CGame * gs, SearchInfo * psearch, PRT_REF iprt, Uint16 f
   // This function finds the best target for the given parameters
 
   int block_x, block_y;
-  
+
   if( !ACTIVE_PRT( gs->PrtList, iprt) ) return bfalse;
 
   block_x = MESH_FLOAT_TO_BLOCK( gs->PrtList[iprt].ori.pos.x );
@@ -4233,8 +4233,8 @@ bool_t chr_search_block_nearest( CGame * gs, SearchInfo * psearch, int block_x, 
   fanblock = mesh_convert_block( &(gs->mesh), block_x, block_y );
 
   team = gs->ChrList[chra_ref].team;
-  for ( cnt = 0, blnode_b = bumplist_get_chr_head(pbump, fanblock); 
-        cnt < bumplist_get_chr_count(pbump, fanblock) && INVALID_BUMPLIST_NODE != blnode_b; 
+  for ( cnt = 0, blnode_b = bumplist_get_chr_head(pbump, fanblock);
+        cnt < bumplist_get_chr_count(pbump, fanblock) && INVALID_BUMPLIST_NODE != blnode_b;
         cnt++, blnode_b = bumplist_get_next_chr(gs, pbump, blnode_b) )
   {
     chrb_ref = bumplist_get_ref(pbump, blnode_b);
@@ -4386,7 +4386,7 @@ void attach_particle_to_character( CGame * gs, PRT_REF particle, CHR_REF chr_ref
   bool_t prt_valid;
 
   PChr chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;  
+  size_t chrlst_size = CHRLST_COUNT;
 
   PPrt prtlst      = gs->PrtList;
   size_t prtlst_size = PRTLST_COUNT;
@@ -4856,7 +4856,7 @@ bool_t do_setup_chracter(chr_setup_info * pinfo, chr_spawn_info * psi)
     chrlst[pinfo->last_chr].holdingwhich[SLOT_LEFT] = itmp;
     pitem->inwhichslot  = SLOT_NONE;
     pitem->attachedto   = INVALID_CHR;
-    
+
     // actually insert intot the inventory
     pack_add_item( pinfo->gs, pinfo->last_item, pinfo->last_chr );
   }
@@ -5161,9 +5161,9 @@ void PrtList_resynch(CGame * gs)
 
     if ( !ACTIVE_PRT( prtlst,  iprt ) ) continue;
     pprt = prtlst + iprt;
-      
+
     if( !pprt->gopoof ) continue;
-    
+
     // To make it easier
     pip = pprt->pip;
     facing = pprt->facing;
@@ -5223,8 +5223,8 @@ bool_t prt_search_block( CGame * gs, SearchInfo * psearch, int block_x, int bloc
   fanblock = mesh_convert_block( &(gs->mesh), block_x, block_y );
   if ( INVALID_FAN == fanblock ) return bfalse;
 
-  for ( cnt = 0, blnode_b = bumplist_get_chr_head(pbump, fanblock); 
-        cnt < bumplist_get_chr_count(pbump, fanblock) && INVALID_BUMPLIST_NODE != blnode_b; 
+  for ( cnt = 0, blnode_b = bumplist_get_chr_head(pbump, fanblock);
+        cnt < bumplist_get_chr_count(pbump, fanblock) && INVALID_BUMPLIST_NODE != blnode_b;
         cnt++, blnode_b = bumplist_get_next_chr(gs, pbump, blnode_b) )
   {
     search_ref = bumplist_get_ref(pbump, blnode_b);
@@ -5237,8 +5237,8 @@ bool_t prt_search_block( CGame * gs, SearchInfo * psearch, int block_x, int bloc
 
     if ( search_ref == donttarget_ref || search_ref == oldtarget_ref ) continue;
 
-    if (   allow_anyone || 
-         ( request_friends && !gs->TeamList[team].hatesteam[gs->ChrList[search_ref].REF_TO_INT(team)] ) || 
+    if (   allow_anyone ||
+         ( request_friends && !gs->TeamList[team].hatesteam[gs->ChrList[search_ref].REF_TO_INT(team)] ) ||
          ( request_enemies &&  gs->TeamList[team].hatesteam[gs->ChrList[search_ref].REF_TO_INT(team)] ) )
     {
       local_distance = ABS( gs->ChrList[search_ref].ori.pos.x - gs->PrtList[prt_ref].ori.pos.x ) + ABS( gs->ChrList[search_ref].ori.pos.y - gs->PrtList[prt_ref].ori.pos.y );
@@ -5607,12 +5607,12 @@ void set_alerts( CGame * gs, CHR_REF ichr, float dUpdate )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CGame * CGame_create(CNet * net, CClient * cl, CServer * sv)  
-{ 
+CGame * CGame_create(CNet * net, CClient * cl, CServer * sv)
+{
   GSStack   * stk;
   CGame * ret;
 
-  ret = CGame_new( (CGame*)calloc(1, sizeof(CGame)), net, cl, sv ); 
+  ret = CGame_new( (CGame*)calloc(1, sizeof(CGame)), net, cl, sv );
 
   // automatically link it into the game state stack
   stk = Get_GSStack();
@@ -5622,12 +5622,58 @@ CGame * CGame_create(CNet * net, CClient * cl, CServer * sv)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t CGame_destroy(CGame ** gs ) 
-{ 
-  bool_t ret = CGame_delete(*gs); 
+bool_t CGame_destroy(CGame ** gs )
+{
+  bool_t ret = CGame_delete(*gs);
   FREE(*gs);
-  return ret; 
+  return ret;
 };
+
+//--------------------------------------------------------------------------------------------
+retval_t CGame_registerNetwork( CGame * gs, CNet * net, bool_t destroy )
+{
+  if( !EKEY_PVALID(gs) ) return rv_fail;
+
+  if(gs->ns != net )
+  {
+    if(destroy) CNet_destroy( &(gs->ns) );
+    gs->ns = net;
+    if(NULL !=gs->ns) gs->ns->parent = gs;
+  }
+
+  return rv_succeed;
+}
+
+//--------------------------------------------------------------------------------------------
+retval_t CGame_registerClient ( CGame * gs, CClient * cl, bool_t destroy  )
+{
+  if( !EKEY_PVALID(gs) ) return rv_fail;
+
+  if(gs->cl != cl )
+  {
+    if(destroy) CClient_destroy( &(gs->cl) );
+    gs->cl = cl;
+    if(NULL !=gs->cl) gs->cl->parent = gs;
+  }
+
+  return rv_succeed;
+}
+
+//--------------------------------------------------------------------------------------------
+retval_t CGame_registerServer ( CGame * gs, CServer * sv, bool_t destroy )
+{
+  if( !EKEY_PVALID(gs) ) return rv_fail;
+
+  if(gs->sv != sv )
+  {
+    if(destroy) CServer_destroy( &(gs->sv) );
+    gs->sv = sv;
+    if(NULL !=gs->sv) gs->sv->parent = gs;
+  }
+
+  return rv_succeed;
+}
+
 
 
 //--------------------------------------------------------------------------------------------
@@ -6065,7 +6111,7 @@ bool_t PrtList_new( CGame * gs )
   PRT_REF iprt;
   if( !EKEY_PVALID(gs) ) return bfalse;
 
-  log_debug( "INFO: PrtList_new()\n");  
+  log_debug( "INFO: PrtList_new()\n");
 
   for ( iprt = 0; iprt < PRTLST_COUNT; iprt++ )
   {
@@ -6350,7 +6396,7 @@ CGui * CGui_new( CGui * gui )
   MenuProc_init( &(gui->mnu_proc) );
 
   //Pause button avalible?
-  gui->can_pause = btrue;  
+  gui->can_pause = btrue;
 
   // initialize the textures
   gui->TxBars.textureID = INVALID_TEXTURE;
@@ -6599,3 +6645,4 @@ OBJ_REF ObjList_get_free( CGame * gs, OBJ_REF request )
 
   return retval;
 }
+

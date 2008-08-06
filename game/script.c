@@ -1408,7 +1408,7 @@ Uint32 load_ai_script( ScriptInfo * slist, const char * szObjectpath, const char
   if(NULL == slist || slist->offset_count >= AILST_COUNT) return AILST_COUNT;
 
   loc_fname = inherit_fname(szObjectpath, szObjectname, CData.script_file);
-  globalparsename = loc_fname; 
+  globalparsename = loc_fname;
   fileread = fs_fileOpen(PRI_NONE, "load_ai_script()", loc_fname, "r");
   if ( NULL == fileread ) return script_idx;
 
@@ -1496,7 +1496,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
   CHR_REF tmpchr, tmpchr1, tmpchr2, tmpchr3;
   PRT_REF tmpprt;
 
-  ScriptInfo * slist = CGame_getScriptInfo(gs); 
+  ScriptInfo * slist = CGame_getScriptInfo(gs);
 
   CChr     * pchr = gs->ChrList + ichr;
   AI_STATE * pstate = &(pchr->aistate);
@@ -1603,7 +1603,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
         // And only proceeds if the target is not the character himself
         // !!!BAD!!! Todo: Only adds one straight waypoint...
 
-        int src_ix, src_iy; 
+        int src_ix, src_iy;
         int dst_ix, dst_iy;
 
         src_ix = MESH_FLOAT_TO_FAN(pchr->ori.pos.x);
@@ -1669,11 +1669,11 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
                 pstate->tmpy = FRAND(&loc_rand) * 512 + ptarget->ori.pos.y;
               }
 
-              if(pstate->tmpdistance == MOVE_RETREAT) 
+              if(pstate->tmpdistance == MOVE_RETREAT)
               {
                 pstate->tmpturn = (IRAND(&loc_rand, 15) + 16384) + pstate->tmpturn;
               }
-              else 
+              else
               {
                 pstate->tmpturn = vec_to_turn( pstate->tmpx - pchr->ori.pos.x, pstate->tmpy - pchr->ori.pos.y );
               }
@@ -4281,7 +4281,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       // tmpx is amount needed
       // tmpy is cost of new skin
       {
-        CAP_REF tmp_icap; 
+        CAP_REF tmp_icap;
         tmpchr = chr_get_aitarget( gs->ChrList, CHRLST_COUNT, gs->ChrList + ichr );    // The target
         tmp_icap = ChrList_getRCap(gs, tmpchr);                                     // The target's model
         iTmp =  gs->CapList[tmp_icap].skin[pstate->tmpargument % MAXSKIN].cost;
@@ -4636,15 +4636,15 @@ retval_t run_operand( CGame * gs, Uint32 value, CHR_REF ichr )
   AI_STATE * pstate = &(pchr->aistate);
 
   CHR_REF   loc_aitarget;
-  CChr    * ptarget;     
+  CChr    * ptarget;
   CCap    * ptarget_cap;
 
   CHR_REF   loc_aiowner;
-  CChr    * powner;     
-  CCap    * powner_cap; 
+  CChr    * powner;
+  CCap    * powner_cap;
 
   CHR_REF   loc_leader;
-  CChr    * pleader;   
+  CChr    * pleader;
   CCap    * pleader_cap;
 
   // for debugging
@@ -4653,19 +4653,19 @@ retval_t run_operand( CGame * gs, Uint32 value, CHR_REF ichr )
 
 
   loc_aitarget = chr_get_aitarget( gs->ChrList, CHRLST_COUNT, gs->ChrList + ichr );
-  if(INVALID_CHR == loc_aitarget) 
+  if(INVALID_CHR == loc_aitarget)
     loc_aitarget = ichr;
   ptarget     = ChrList_getPChr(gs, loc_aitarget);
   ptarget_cap = ChrList_getPCap(gs, loc_aitarget);
 
   loc_aiowner  = chr_get_aiowner( gs->ChrList, CHRLST_COUNT, gs->ChrList + ichr );
-  if(INVALID_CHR == loc_aiowner) 
+  if(INVALID_CHR == loc_aiowner)
     loc_aiowner = ichr;
   powner       = ChrList_getPChr(gs, loc_aiowner);
   powner_cap   = ChrList_getPCap(gs, loc_aiowner);
 
   loc_leader   = team_get_leader( gs, pchr->team );
-  if(INVALID_CHR == loc_leader) 
+  if(INVALID_CHR == loc_leader)
     loc_leader = ichr;
   pleader      = ChrList_getPChr(gs, loc_leader);
   pleader_cap  = ChrList_getPCap(gs, loc_leader);
@@ -5106,7 +5106,7 @@ retval_t run_script( CGame * gs, CHR_REF ichr, float dUpdate )
   AI_STATE    * pstate;
 
   if( !EKEY_PVALID(gs) ) return rv_error;
-  slist  = CGame_getScriptInfo(gs); 
+  slist  = CGame_getScriptInfo(gs);
 
   if( !ACTIVE_CHR(gs->ChrList, ichr) ) return rv_error;
   pchr   = gs->ChrList + ichr;
@@ -5124,7 +5124,7 @@ retval_t run_script( CGame * gs, CHR_REF ichr, float dUpdate )
   set_alerts( gs, ichr, dUpdate );
 
   // Clear the button latches
-  
+
   if ( !chr_is_player(gs, ichr) )
   {
     pstate->latch.b = 0;
@@ -5200,7 +5200,7 @@ retval_t run_script( CGame * gs, CHR_REF ichr, float dUpdate )
         iTmp = slist->buffer[pstate->offset];
         if(rv_error == run_operand( gs, iTmp, ichr )) // This sets pstate->operationsum
         {
-          return rv_error;  
+          return rv_error;
         };
         operands--;
         pstate->offset++;
@@ -5232,7 +5232,7 @@ retval_t run_script( CGame * gs, CHR_REF ichr, float dUpdate )
     }
     else
     {
-      
+
 
       // Normal AI
       if( wp_list_empty(&(pstate->wp)) )

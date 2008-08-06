@@ -419,7 +419,7 @@ void md2_scale_model(MD2_Model * pmd2, float scale)
 {
   // BB > scale every vertex in the md2 by the given amount
 
-  int cnt, tnc, i; 
+  int cnt, tnc, i;
   int num_frames, num_verts;
   MD2_Frame * pframe;
 

@@ -443,7 +443,7 @@ void append_end_text( CGame * gs, int message, CHR_REF chr_ref )
   char * message_src;
 
   if ( message < gs->MsgList.total ) return;
-  
+
   message_src = gs->MsgList.text + gs->MsgList.index[message];
   decode_escape_sequence(gs, gs->endtext, sizeof(gs->endtext), message_src, chr_ref);
 }
@@ -3594,10 +3594,10 @@ bool_t CGraphics_synch(CGraphics * g, ConfigData * cd)
   g->GrabMouse = cd->GrabMouse;
   g->HideMouse = cd->HideMouse;
 
-  g->shading            = cd->shading;          
-  g->render_overlay     = cd->render_overlay;   
+  g->shading            = cd->shading;
+  g->render_overlay     = cd->render_overlay;
   g->render_background  = cd->render_background;
-  g->phongon            = cd->phongon;          
+  g->phongon            = cd->phongon;
 
   if(g->perspective != cd->perspective)
   {

@@ -314,7 +314,7 @@ bool_t fnt_freeFont( TTFont *font )
   // see if the font was registered
   pfnt = fnt_reg_remove(&fnt_registry, font);
 
-  // only delete registered fonts. 
+  // only delete registered fonts.
   // if there is a valid pointer but it is not in the registry, it must be a dangling pointer
   if(NULL != pfnt)
   {
@@ -323,7 +323,7 @@ bool_t fnt_freeFont( TTFont *font )
     FREE( font );
   }
 
- 
+
   return (NULL != pfnt);
 }
 

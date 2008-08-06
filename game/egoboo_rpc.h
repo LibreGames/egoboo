@@ -19,7 +19,7 @@ void snd_enc_spawn( enc_spawn_info si );
 void rec_enc_spawn( enc_spawn_info si );
 
 
-// Because of the way that egoboo is set up there are several modifications to these objects that 
+// Because of the way that egoboo is set up there are several modifications to these objects that
 // get applied after they are spawned
 
 void snd_prt_mod_XX( PRT_REF prt, int val );

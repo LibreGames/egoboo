@@ -136,7 +136,7 @@ void input_setup()
 
   // I would love a way to enable and disable this, but there is no
   // SDL_DisableKeyRepeat() function
-  SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL); 
+  SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 }
 
 //--------------------------------------------------------------------------------------------
@@ -498,11 +498,11 @@ void input_read()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CPlayer * Player_new(CPlayer *ppla)    
-{ 
+CPlayer * Player_new(CPlayer *ppla)
+{
   //fprintf( stdout, "Player_new()\n");
 
-  if(NULL ==ppla) return ppla; 
+  if(NULL ==ppla) return ppla;
 
   memset(ppla, 0, sizeof(CPlayer));
 
@@ -510,13 +510,13 @@ CPlayer * Player_new(CPlayer *ppla)
 
   ppla->chr_ref = INVALID_CHR;
   ppla->Active = bfalse;
-  
-  return ppla; 
+
+  return ppla;
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t   Player_delete(CPlayer *ppla) 
-{ 
+bool_t   Player_delete(CPlayer *ppla)
+{
   if(NULL ==ppla) return bfalse;
 
   if( !EKEY_PVALID(ppla) ) return btrue;
@@ -524,8 +524,8 @@ bool_t   Player_delete(CPlayer *ppla)
   EKEY_PINVALIDATE(ppla);
 
   ppla->Active = bfalse;
-  
-  return btrue; 
+
+  return btrue;
 };
 
 //--------------------------------------------------------------------------------------------

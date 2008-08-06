@@ -1,7 +1,7 @@
 //********************************************************************************************
 //* Egoboo - char.c
 //*
-//* 
+//*
 //*
 //********************************************************************************************
 //*
@@ -206,7 +206,7 @@ void flash_character( CGame * gs, CHR_REF chr_ref, Uint8 value )
 
   pmad = ChrList_getPMad(gs, chr_ref);
   if(NULL == pmad) return;
-  
+
   for ( cnt = 0; cnt < pmad->transvertices; cnt++ )
   {
     pchr->vrta_fp8[cnt].r =
@@ -385,7 +385,7 @@ void ChrList_free_one( CGame * gs, CHR_REF chr_ref )
 
   log_debug( "ChrList_free_one() - \n\tprofile == %d, pcap->classname == \"%s\", index == %d\n", pchr->model, pcap->classname, chr_ref );
 
-  // Make sure everyone knows it died  
+  // Make sure everyone knows it died
   for ( chr_cnt = 0; chr_cnt < chrlst_size; chr_cnt++ )
   {
     CChr * ptmp = ChrList_getPChr(gs, chr_cnt);
@@ -1183,7 +1183,7 @@ bool_t attach_character_to_mount( CGame * gs, CHR_REF chr_ref, CHR_REF mount_ref
   // Make sure both are still around
   pchr = ChrList_getPChr(gs, chr_ref);
   if(NULL == pchr) return bfalse;
-  
+
   if( !ACTIVE_CHR( chrlst, mount_ref ) ) return bfalse;
   pmount = ChrList_getPChr(gs, mount_ref);
 
@@ -2017,7 +2017,7 @@ void chr_swipe( CGame * gs, CHR_REF ichr, SLOT slot )
   {
     // Throw the weapon if it's stacked or a hurl animation
 
-    ithrown = chr_spawn( gs, pchr->ori.pos, pchr->ori.vel, pweapon->model, pchr->team, 0, pchr->ori.turn_lr, pweapon->name, INVALID_CHR ); 
+    ithrown = chr_spawn( gs, pchr->ori.pos, pchr->ori.vel, pweapon->model, pchr->team, 0, pchr->ori.turn_lr, pweapon->name, INVALID_CHR );
     if ( VALID_CHR(gs->ChrList, ithrown) )
     {
       float velocity;
@@ -2129,9 +2129,9 @@ void chr_swipe( CGame * gs, CHR_REF ichr, SLOT slot )
     pweapon->ammoknown = btrue;
   }
 
-    
 
-   
+
+
 }
 //--------------------------------------------------------------------------------------------
 bool_t chr_do_animation( CGame * gs, float dUpdate, CHR_REF chr_ref, CChrEnviro * enviro, Uint32 * prand )
@@ -2145,7 +2145,7 @@ bool_t chr_do_animation( CGame * gs, float dUpdate, CHR_REF chr_ref, CChrEnviro 
   AI_STATE * pstate;
   OBJ_REF iobj;
   CHR_REF imount;
- 
+
   Uint8 speed, framelip;
 
   PChr chrlst      = gs->ChrList;
@@ -2155,11 +2155,11 @@ bool_t chr_do_animation( CGame * gs, float dUpdate, CHR_REF chr_ref, CChrEnviro 
   pchr = ChrList_getPChr(gs, chr_ref);
   if(NULL == pchr) return bfalse;
   pstate = &(pchr->aistate);
-  
+
   iobj = ChrList_getRObj(gs, chr_ref);
   if(INVALID_OBJ == iobj) return bfalse;
   pobj = gs->ObjList + iobj;
-  
+
   pmad = ChrList_getPMad(gs, chr_ref);
   if(NULL == pmad) return bfalse;
 
@@ -2381,7 +2381,7 @@ bool_t chr_do_environment(CGame * gs, CChr * pchr, CChrEnviro * enviro)
   enviro->traction       = 0;
   enviro->horiz_friction = 0;
   enviro->vert_friction  = 0;
-  wt = 0.0f;  
+  wt = 0.0f;
   if ( enviro->inwater )
   {
     // we are partialy under water
@@ -2541,7 +2541,7 @@ bool_t chr_do_latches( CGame * gs, CHR_REF ichr, CChrEnviro * enviro, float dUpd
 
   paccum  = &(pchr->accum);
   pstate  = &(pchr->aistate);
-  
+
   iobj = ChrList_getRObj(gs, ichr);
   if( INVALID_OBJ == iobj ) return bfalse;
   pobj = gs->ObjList + iobj;
@@ -3091,7 +3091,7 @@ void move_characters( CGame * gs, float dUpdate )
     chr_do_latches( gs, chr_ref, &enviro, dUpdate);
 
     chr_do_physics(  gs, pchr, &enviro, dUpdate );
-    
+
     chr_do_animation(gs, dUpdate, chr_ref, &enviro, &loc_rand);
 
 
@@ -3624,7 +3624,7 @@ void make_onwhichfan( CGame * gs )
       }
 
       // DAMAGE_SHIFT means they're pretty well immune
-      if ( !HAS_ALL_BITS(loc_damagemodifier, DAMAGE_SHIFT ) && !chrlst[chr_ref].prop.invictus )  
+      if ( !HAS_ALL_BITS(loc_damagemodifier, DAMAGE_SHIFT ) && !chrlst[chr_ref].prop.invictus )
       {
         prt_spawn_info si;
 
@@ -4379,7 +4379,7 @@ void do_bumping( CGame * gs, float dUpdate )
   {
     pchra = ChrList_getPChr(gs, ichra);
     if(NULL == pchra) continue;
-  
+
     // detach character from invalid platforms
     ichrb  = chr_get_onwhichplatform( chrlst, chrlst_size, ichra );
     pchrb = ChrList_getPChr(gs, ichrb);
@@ -4443,7 +4443,7 @@ void do_bumping( CGame * gs, float dUpdate )
 
           // create a hash that is order-independent
           hashval = (REF_TO_INT(ichra)* 0x0111 + 0x006E) + (REF_TO_INT(ichrb)* 0x0111 + 0x006E);
-          hashval &= 0xFF; 
+          hashval &= 0xFF;
 
           found = bfalse;
           count = CoList->subcount[hashval];
@@ -4597,7 +4597,7 @@ void do_bumping( CGame * gs, float dUpdate )
       ichra = d->chra;
       pchra = ChrList_getPChr(gs, ichra);
       if(NULL == pchra) continue;
-    
+
       // Do platforms (no interaction with held or mounted items)
       if ( chr_attached( chrlst, chrlst_size, ichra ) ) continue;
 
@@ -4645,7 +4645,7 @@ void do_bumping( CGame * gs, float dUpdate )
     }
   }
 
-     
+
   // Do mounting
   for ( cnt = 0; cnt < CoList->allocated; cnt++ )
   {
@@ -5402,7 +5402,7 @@ void stat_return( CGame * gs, float dUpdate )
   static int stat_return_counter = 0;
 
   // Do reload time
-  
+
   for ( chr_cnt = 0; chr_cnt < chrlst_size; chr_cnt++ )
   {
     chrlst[chr_cnt].reloadtime -= dUpdate;
@@ -5570,7 +5570,7 @@ void pit_kill( CGame * gs, float dUpdate )
       }
 
       // Kill any characters that fell in a pit...
-      
+
       for ( chr_cnt = 0; chr_cnt < chrlst_size; chr_cnt++ )
       {
         if( !ACTIVE_CHR(chrlst, chr_cnt) ) continue;
@@ -5866,7 +5866,7 @@ void export_one_character_profile( CGame * gs, char *szSaveName, CHR_REF ichr )
       if ( pcap->skin[iskin].damagemodifier_fp8[damagetype] & DAMAGE_INVERT ) codes[iskin] = 'T';
       if ( pcap->skin[iskin].damagemodifier_fp8[damagetype] & DAMAGE_MANA   ) codes[iskin] = 'M';
       fprintf( filewrite, "%3c ", codes[iskin] );
-    } 
+    }
     fprintf( filewrite, "\n" );
   }
 
@@ -6751,7 +6751,7 @@ int modify_quest_idsz( char *whichplayer, IDSZ idsz, int adjustment )
         // modify it
         if ( newidsz == idsz )
         {
-          if(adjustment == 0) 
+          if(adjustment == 0)
           {
             QuestLevel = -1;
           }
@@ -7091,7 +7091,7 @@ bool_t chr_calculate_bumpers_1( CGame * gs, CChr * pchr )
     chr_calculate_bumpers_0( pchr );
     return bfalse;
   }
-  
+
 
   pmdl = pmad->md2_ptr;
   if( NULL == pmdl )
@@ -7307,7 +7307,7 @@ bool_t chr_calculate_bumpers_2( CGame * gs, CChr * pchr, vect3 * vrt_ary)
     chr_calculate_bumpers_0( pchr );
     return bfalse;
   }
-  
+
 
   pmdl = pmad->md2_ptr;
   if( NULL == pmdl )
@@ -7453,7 +7453,7 @@ bool_t chr_calculate_bumpers_3( CGame * gs, CChr * pchr, CVolume_Tree * cv_tree)
     chr_calculate_bumpers_0( pchr );
     return bfalse;
   }
-  
+
 
   pmdl = pmad->md2_ptr;
   if( NULL == pmdl )
@@ -7887,7 +7887,7 @@ void damage_character( CGame * gs, CHR_REF chr_ref, Uint16 direction,
             }
 
             // Let the other characters know it died
-            
+
             for ( chr_tnc = 0; chr_tnc < chrlst_size; chr_tnc++ )
             {
               if(!ACTIVE_CHR(chrlst, chr_tnc)) continue;
@@ -7910,7 +7910,7 @@ void damage_character( CGame * gs, CHR_REF chr_ref, Uint16 direction,
             if ( team_get_leader( gs, pchr->team ) == chr_ref )
             {
               // It was a leader, so set more alerts
-              
+
               for ( chr_tnc = 0; chr_tnc < chrlst_size; chr_tnc++ )
               {
                 if( !ACTIVE_CHR(chrlst, chr_tnc) ) continue;
@@ -7920,7 +7920,7 @@ void damage_character( CGame * gs, CHR_REF chr_ref, Uint16 direction,
                   // All folks on the leaders team get the alert
                   chrlst[chr_tnc].aistate.alert |= ALERT_LEADERKILLED;
                 }
-                
+
               }
 
               // The team now has no leader
@@ -8044,7 +8044,7 @@ bool_t import_info_clear(IMPORT_INFO * ii)
 bool_t import_info_add(IMPORT_INFO * ii, OBJ_REF obj)
 {
   if(NULL == ii || !VALID_OBJ_RANGE(obj)) return bfalse;
-  
+
   ii->object = obj;
   ii->slot_lst[REF_TO_INT(obj)] = obj;
 
@@ -8295,7 +8295,7 @@ CHR_REF ChrList_reserve(chr_spawn_info * psi)
     log_debug( "WARNING: chr_spawn_info_init() - invalid request : profile %d doesn't exist\n", REF_TO_INT(psi->iobj) );
     return INVALID_CHR;
   }
-  
+
   pcap = ObjList_getPCap(gs, psi->iobj);
   if( NULL == pcap )
   {
@@ -8304,7 +8304,7 @@ CHR_REF ChrList_reserve(chr_spawn_info * psi)
   }
 
   pmad = ObjList_getPMad(gs, psi->iobj);
-  if( NULL == pmad ) 
+  if( NULL == pmad )
   {
     log_debug( "WARNING: chr_spawn_info_init() - invalid request : character profile (mad) doesn't exist\n" );
     return INVALID_CHR;
@@ -8375,7 +8375,7 @@ bool_t chr_create_stats( Uint32 * pseed, CStats * pstats, CStatData * pdata)
 //--------------------------------------------------------------------------------------------
 CHR_REF _chr_spawn( chr_spawn_info si, bool_t activate )
 {
-  // ZZ> This function initializes a CChr data structure in the "reserved" state, 
+  // ZZ> This function initializes a CChr data structure in the "reserved" state,
   //     if the chr_spawn_info is valid.
   //     On success, it returns the index, otherwise INVALID_CHR.
 
@@ -8410,7 +8410,7 @@ CHR_REF _chr_spawn( chr_spawn_info si, bool_t activate )
     log_debug( "WARNING: req_chr_spawn_one() - failed to spawn : profile %d doesn't exist\n", REF_TO_INT(si.iobj) );
     return INVALID_CHR;
   }
-  
+
   pcap = ObjList_getPCap(si.gs, si.iobj);
   if( NULL == pcap )
   {
@@ -8419,7 +8419,7 @@ CHR_REF _chr_spawn( chr_spawn_info si, bool_t activate )
   }
 
   pmad = ObjList_getPMad(si.gs, si.iobj);
-  if( NULL == pmad ) 
+  if( NULL == pmad )
   {
     log_debug( "WARNING: req_chr_spawn_one() - failed to spawn : character profile (mad) doesn't exist\n" );
     return INVALID_CHR;
@@ -8441,7 +8441,7 @@ CHR_REF _chr_spawn( chr_spawn_info si, bool_t activate )
   // copy the spawn info for any "respawn" command
   pchr->spinfo = si;
 
-  // copy the seed value 
+  // copy the seed value
   loc_rand = si.seed;
 
   // IMPORTANT!!!
@@ -8830,14 +8830,14 @@ bool_t ai_state_advance_wp(AI_STATE * a, bool_t do_atlastwaypoint)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CCap * Cap_new(CCap *pcap) 
-{ 
+CCap * Cap_new(CCap *pcap)
+{
   //fprintf( stdout, "Cap_new()\n");
 
-  if(NULL == pcap) return pcap; 
+  if(NULL == pcap) return pcap;
 
   Cap_delete( pcap );
-  
+
   memset(pcap, 0, sizeof(CCap));
 
   EKEY_PNEW( pcap, CCap );
@@ -8852,8 +8852,8 @@ CCap * Cap_new(CCap *pcap)
   //pcap->contentoverride = 0;
   //pcap->stateoverride = 0;
   //pcap->leveloverride = 0;
-  
-  return pcap; 
+
+  return pcap;
 };
 
 //--------------------------------------------------------------------------------------------
@@ -9337,7 +9337,7 @@ bool_t CChrEnviro_synch( CChrEnviro * enviro )
 //
 //  pchr->model = VALIDATE_OBJ(gs->ObjList, pchr->model);
 //  if(!VALID_OBJ(gs->ObjList, pchr->model)) return NULL;
-//  
+//
 //  return gs->ObjList + pchr->model;
 //}
 //
@@ -9421,7 +9421,7 @@ bool_t wp_list_prune(WP_LIST * wl)
       i = (i + 1) % MAXWAY;
     };
 
-    // make sure long runs of waypoints aren't eliminated willy-nilly 
+    // make sure long runs of waypoints aren't eliminated willy-nilly
     i = i1 = wl->tail;
     while(i != wl->head)
     {
@@ -9935,7 +9935,7 @@ CObj * ChrList_getPObj(CGame * gs, CHR_REF ichr)
 
   pchr->model = VALIDATE_OBJ(gs->ObjList, pchr->model);
   if(!VALID_OBJ(gs->ObjList, pchr->model)) return NULL;
-  
+
   return gs->ObjList + pchr->model;
 }
 

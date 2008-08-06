@@ -238,7 +238,7 @@ bool_t AStar_prepare_path(CGame * gs, Uint32 stoppedby, int src_ix, int src_iy, 
           tmp_fan = mesh_convert_fan( mi, tmp_node.ix, tmp_node.iy );
 
           // is the test node on the mesh?
-          if( INVALID_FAN == tmp_fan ) 
+          if( INVALID_FAN == tmp_fan )
           {
             deadend_count++;
             continue;
@@ -252,19 +252,19 @@ bool_t AStar_prepare_path(CGame * gs, Uint32 stoppedby, int src_ix, int src_iy, 
             deadend_count++;
             continue;
           }
-          
+
           // TODO: I need to check for collisions with static objects, like trees
 
 
           // is this already in the closed list?
-          if( AStar_closed_find( &tmp_node ) > 0 ) 
+          if( AStar_closed_find( &tmp_node ) > 0 )
           {
             deadend_count++;
             continue;
           }
 
           // is this already in the open list?
-          if( AStar_open_find( &tmp_node ) > 0 ) 
+          if( AStar_open_find( &tmp_node ) > 0 )
           {
             deadend_count++;
             continue;
@@ -282,7 +282,7 @@ bool_t AStar_prepare_path(CGame * gs, Uint32 stoppedby, int src_ix, int src_iy, 
 
       if(deadend_count == 8)
       {
-        // this node is no longer active. 
+        // this node is no longer active.
         // move it to the closed list so that we do not get any loops
         popen->closeme = btrue;
       }
@@ -422,7 +422,7 @@ int AStar_Node_list_prune(AStar_Node buffer[], int buffer_size)
       eliminate_lst[i] = bfalse;
     }
 
-    
+
     for(i = i1 = i2 = 0; i<buffer_size; i++)
     {
       if(i != i1 && i1 != i2)
@@ -442,7 +442,7 @@ int AStar_Node_list_prune(AStar_Node buffer[], int buffer_size)
       i1 = i;
     };
 
-    // make sure long runs of waypoints aren't eliminated willy-nilly     
+    // make sure long runs of waypoints aren't eliminated willy-nilly
     for(i = i1 = 0; i < buffer_size; i++)
     {
 

@@ -1233,7 +1233,7 @@ MAD_REF MadList_load_one( CGame * gs, const char * szObjectpath, const char * sz
     strncat( pmad->name, szObjectname, sizeof( pmad->name ) );
   }
 
-  
+
   // make sure we have a clean CMad. More complicated because of dynamic allocation...
   if(NULL == Mad_renew(pmad)) return INVALID_MAD;
 
