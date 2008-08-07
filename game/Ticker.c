@@ -30,9 +30,9 @@
 #include <assert.h>
 #include <stddef.h>
 
-static ClockState * tickerClock = NULL;
+static ClockState_t * tickerClock = NULL;
 
-void ticker_initWithInterval( Ticker *ticker, double interval )
+void ticker_initWithInterval( Ticker_t *ticker, double interval )
 {
   assert( NULL != ticker  && "ticker_initWithInterval: NULL ticker passed!" );
   if ( NULL == ticker  || interval <= 0 ) return;
@@ -47,13 +47,13 @@ void ticker_initWithInterval( Ticker *ticker, double interval )
   ticker->tickInterval = interval;
 }
 
-void ticker_initWithFrequency( Ticker *ticker, int freq )
+void ticker_initWithFrequency( Ticker_t *ticker, int freq )
 {
   double interval = 1.0 / freq;
   ticker_initWithInterval( ticker, interval );
 }
 
-void ticker_update( Ticker *ticker )
+void ticker_update( Ticker_t *ticker )
 {
   double deltaTime, currentTime;
   assert( NULL != ticker  && "ticker_update: NULL ticker passed!" );
@@ -71,7 +71,7 @@ void ticker_update( Ticker *ticker )
   }
 }
 
-int ticker_tick( Ticker *ticker )
+int ticker_tick( Ticker_t *ticker )
 {
   int numTicks;
 

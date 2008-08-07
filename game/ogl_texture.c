@@ -201,7 +201,7 @@ Uint32 GLTexture_Load( GLenum tx_target, GLtexture *texture, const char *filenam
   Uint32 retval;
   SDL_Surface * image;
 
-  if ( NULL == texture || NULL == filename || '\0' == filename[0] ) return INVALID_TEXTURE;
+  if ( NULL == texture ||  !VALID_CSTR(filename)  ) return INVALID_TEXTURE;
 
   image = IMG_Load( filename );
   if ( NULL == image ) return INVALID_TEXTURE;
@@ -270,11 +270,11 @@ void  GLTexture_Release( GLtexture *texture )
   /* Reset the other data */
   texture->imgH = texture->imgW = texture->txW = texture->txH  = 0;
 
-  texture->name[0] = '\0';
+  texture->name[0] = EOS;
 }
 
 /********************> GLTexture_Release() <*****/
-void GLTexture_Bind( GLtexture *texture, CGraphics * g )
+void GLTexture_Bind( GLtexture *texture, Graphics_t * g )
 {
   int    filt_type, anisotropy;
   GLenum target;

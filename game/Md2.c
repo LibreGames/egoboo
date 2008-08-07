@@ -33,12 +33,12 @@
 
 #include <stdio.h>
 
-MD2_Model* md2_load(const char * szFilename, MD2_Model* mdl)
+MD2_Model_t* md2_load(const char * szFilename, MD2_Model_t* mdl)
 {
   FILE * f;
   md2_header header;
   int i, v;
-  MD2_Model *model;
+  MD2_Model_t *model;
   int bfound;
 
   // Open up the file, and make sure it's a MD2 model
@@ -72,7 +72,7 @@ MD2_Model* md2_load(const char * szFilename, MD2_Model* mdl)
     return NULL;
   }
 
-  // Allocate a MD2_Model to hold all this stuff
+  // Allocate a MD2_Model_t to hold all this stuff
   model = (NULL ==mdl) ? md2_new() : mdl;
   model->m_numVertices  = header.numVertices;
   model->m_numTexCoords = header.numTexCoords;
@@ -80,14 +80,14 @@ MD2_Model* md2_load(const char * szFilename, MD2_Model* mdl)
   model->m_numSkins     = header.numSkins;
   model->m_numFrames    = header.numFrames;
 
-  model->m_texCoords = (MD2_TexCoord*)calloc( header.numTexCoords, sizeof(MD2_TexCoord) );
-  model->m_triangles = (MD2_Triangle*)calloc( header.numTriangles, sizeof(MD2_Triangle) );
-  model->m_skins     = (MD2_SkinName*)calloc( header.numSkins,     sizeof(MD2_SkinName) );
-  model->m_frames    = (MD2_Frame   *)calloc( header.numFrames ,   sizeof(MD2_Frame)    );
+  model->m_texCoords = (MD2_TexCoord_t*)calloc( header.numTexCoords, sizeof(MD2_TexCoord_t) );
+  model->m_triangles = (MD2_Triangle_t*)calloc( header.numTriangles, sizeof(MD2_Triangle_t) );
+  model->m_skins     = (MD2_SkinName_t*)calloc( header.numSkins,     sizeof(MD2_SkinName_t) );
+  model->m_frames    = (MD2_Frame_t   *)calloc( header.numFrames ,   sizeof(MD2_Frame_t)    );
 
   for (i = 0;i < header.numFrames; i++)
   {
-    model->m_frames[i].vertices = (MD2_Vertex*)calloc( header.numVertices, sizeof(MD2_Vertex) );
+    model->m_frames[i].vertices = (MD2_Vertex_t*)calloc( header.numVertices, sizeof(MD2_Vertex_t) );
   }
 
   // Load the texture coordinates from the file, normalizing them as we go
@@ -189,7 +189,7 @@ MD2_Model* md2_load(const char * szFilename, MD2_Model* mdl)
   if(header.numGlCommands > 0)
   {
     Uint32          cmd_cnt = 0;
-    MD2_GLCommand * cmd     = NULL;
+    MD2_GLCommand_t * cmd     = NULL;
     fseek(f, header.offsetGlCommands, SEEK_SET);
 
     //count the commands
@@ -252,7 +252,7 @@ MD2_Model* md2_load(const char * szFilename, MD2_Model* mdl)
 
 
 
-//MD2_Model* MD2_Manager::loadFromFile(const char *fileName, MD2_Model* mdl)
+//MD2_Model_t* MD2_Manager::loadFromFile(const char *fileName, MD2_Model_t* mdl)
 //{
 //  // ignore garbage input
 //  if (!fileName || !fileName[0]) return NULL;
@@ -265,7 +265,7 @@ MD2_Model* md2_load(const char * szFilename, MD2_Model* mdl)
 //  }
 //
 //  // No?  Try loading it
-//  MD2_Model *model = md2_load(MD2_Model * m, fileName, mdl);
+//  MD2_Model_t *model = md2_load(MD2_Model_t * m, fileName, mdl);
 //  if ( NULL == model )
 //  {
 //    // no luck
@@ -278,13 +278,13 @@ MD2_Model* md2_load(const char * szFilename, MD2_Model* mdl)
 //
 
 
-void MD2_GLCommand_construct(MD2_GLCommand * m)
+void MD2_GLCommand_construct(MD2_GLCommand_t * m)
 {
   m->next = NULL;
   m->data = NULL;
 };
 
-void MD2_GLCommand_destruct(MD2_GLCommand * m)
+void MD2_GLCommand_destruct(MD2_GLCommand_t * m)
 {
   if(NULL ==m) return;
 
@@ -297,32 +297,32 @@ void MD2_GLCommand_destruct(MD2_GLCommand * m)
   FREE(m->data);
 };
 
-MD2_GLCommand * MD2_GLCommand_new()
+MD2_GLCommand_t * MD2_GLCommand_new()
 {
-  MD2_GLCommand * m;
+  MD2_GLCommand_t * m;
   //fprintf( stdout, "MD2_GLCommand_new()\n");
 
-  m = (MD2_GLCommand*)calloc(1, sizeof(MD2_GLCommand));
+  m = (MD2_GLCommand_t*)calloc(1, sizeof(MD2_GLCommand_t));
   MD2_GLCommand_construct(m);
   return m;
 };
 
-MD2_GLCommand * MD2_GLCommand_new_vector(int n)
+MD2_GLCommand_t * MD2_GLCommand_new_vector(int n)
 {
   int i;
-  MD2_GLCommand * v = (MD2_GLCommand*)calloc( n, sizeof(MD2_GLCommand) );
+  MD2_GLCommand_t * v = (MD2_GLCommand_t*)calloc( n, sizeof(MD2_GLCommand_t) );
   for(i=0; i<n; i++) MD2_GLCommand_construct(v + i);
   return v;
 }
 
-void MD2_GLCommand_delete(MD2_GLCommand * m)
+void MD2_GLCommand_delete(MD2_GLCommand_t * m)
 {
   if(NULL ==m) return;
   MD2_GLCommand_destruct(m);
   FREE(m);
 };
 
-void MD2_GLCommand_delete_vector(MD2_GLCommand * v, int n)
+void MD2_GLCommand_delete_vector(MD2_GLCommand_t * v, int n)
 {
   int i;
   if(NULL ==v || 0 == n) return;
@@ -331,7 +331,7 @@ void MD2_GLCommand_delete_vector(MD2_GLCommand * v, int n)
 };
 
 
-void md2_construct(MD2_Model * m)
+void md2_construct(MD2_Model_t * m)
 {
   m->m_numVertices  = 0;
   m->m_numTexCoords = 0;
@@ -346,7 +346,7 @@ void md2_construct(MD2_Model * m)
   m->m_commands  = NULL;
 }
 
-void md2_deallocate(MD2_Model * m)
+void md2_deallocate(MD2_Model_t * m)
 {
   FREE( m->m_skins );
   m->m_numSkins = 0;
@@ -373,39 +373,39 @@ void md2_deallocate(MD2_Model * m)
 
 };
 
-void md2_destruct(MD2_Model * m)
+void md2_destruct(MD2_Model_t * m)
 {
   if(NULL ==m) return;
   md2_deallocate(m);
 }
 
-MD2_Model * md2_new()
+MD2_Model_t * md2_new()
 {
-  MD2_Model * m;
+  MD2_Model_t * m;
 
   //fprintf( stdout, "MD2_GLCommand_new()\n");
-  m = (MD2_Model*)calloc( 1, sizeof(MD2_Model) );
+  m = (MD2_Model_t*)calloc( 1, sizeof(MD2_Model_t) );
   md2_construct(m);
 
   return m;
 };
 
-MD2_Model * md2_new_vector(int n)
+MD2_Model_t * md2_new_vector(int n)
 {
   int i;
-  MD2_Model * v = (MD2_Model*)calloc( n, sizeof(MD2_Model) );
+  MD2_Model_t * v = (MD2_Model_t*)calloc( n, sizeof(MD2_Model_t) );
   for(i=0; i<n; i++) md2_construct(v + i);
   return v;
 }
 
-void md2_delete(MD2_Model * m)
+void md2_delete(MD2_Model_t * m)
 {
   if(NULL ==m) return;
   md2_destruct(m);
   FREE(m);
 };
 
-void md2_delete_vector(MD2_Model * v, int n)
+void md2_delete_vector(MD2_Model_t * v, int n)
 {
   int i;
   if(NULL ==v || 0 == n) return;
@@ -415,20 +415,20 @@ void md2_delete_vector(MD2_Model * v, int n)
 
 
 //---------------------------------------------------------------------------------------------
-void md2_scale_model(MD2_Model * pmd2, float scale)
+void md2_scale_model(MD2_Model_t * pmd2, float scale)
 {
   // BB > scale every vertex in the md2 by the given amount
 
   int cnt, tnc, i;
   int num_frames, num_verts;
-  MD2_Frame * pframe;
+  MD2_Frame_t * pframe;
 
   num_frames = pmd2->m_numFrames;
   num_verts  = pmd2->m_numVertices;
 
   for(cnt=0; cnt<num_frames; cnt++)
   {
-    pframe = (MD2_Frame *)(pmd2->m_frames + cnt);
+    pframe = (MD2_Frame_t *)(pmd2->m_frames + cnt);
 
     for(i=0; i<3; i++)
     {
@@ -614,7 +614,7 @@ void md2_scale_model(MD2_Model * pmd2, float scale)
 //}
 
 //---------------------------------------------------------------------------------------------
-//char * rip_md2_frame_name( MD2_Model * m, int frame )
+//char * rip_md2_frame_name( MD2_Model_t * m, int frame )
 //{
 //  // ZZ> This function gets frame names from the load buffer, it returns
 //  //     btrue if the name in cFrameName[] is valid
@@ -623,7 +623,7 @@ void md2_scale_model(MD2_Model * pmd2, float scale)
 //  int iNumVertices;
 //  int iNumFrames;
 //  int cnt;
-//  const MD2_Frame * pFrame;
+//  const MD2_Frame_t * pFrame;
 //  char      * pFrameName;
 //  bool_t foundname;
 //
@@ -676,7 +676,7 @@ void md2_scale_model(MD2_Model * pmd2, float scale)
 //}
 
 //---------------------------------------------------------------------------------------------
-//void rip_md2_frames( MD2_Model * m )
+//void rip_md2_frames( MD2_Model_t * m )
 //{
 //  // ZZ> This function gets frames from the load buffer and adds them to
 //  //     the indexed model
@@ -709,7 +709,7 @@ void md2_scale_model(MD2_Model * pmd2, float scale)
 //
 //  for( cnt = 0; cnt < iNumFrames; cnt++ )
 //  {
-//    const MD2_Frame * = MD2_Frame(m, cnt);
+//    const MD2_Frame_t * = MD2_Frame_t(m, cnt);
 //
 //    fScalex = fpFloatPointer[iFrameOffset]; iFrameOffset++;
 //    fScaley = fpFloatPointer[iFrameOffset]; iFrameOffset++;

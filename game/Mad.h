@@ -6,7 +6,7 @@
 #include "egoboo.h"
 #include "Md2.h"
 
-struct CGame_t;
+struct sGame;
 
 #define MADLST_COUNT                        OBJLST_COUNT   // Max number of models
 //#define MD2START                        0x32504449  // MD2 files start with these four bytes
@@ -25,7 +25,7 @@ extern float           lighttoenviroy[256];                                // En
 extern Uint32          lighttospek[MAXSPEKLEVEL][256];                     //
 
 // This stuff is for actions
-enum Action_e
+enum e_Action
 {
   ACTION_DA = 0,        // :DA Dance ( Standing still )
   ACTION_DB,            // :DB Dance ( Bored )
@@ -109,11 +109,11 @@ enum Action_e
 
   ACTION_INVALID        = 0xffff                // Action not valid for this character
 };
-typedef enum Action_e ACTION;
+typedef enum e_Action ACTION;
 
 extern char cActionName[MAXACTION][2];                  // Two letter name code
 
-enum mad_effects_bits_e
+enum e_mad_effects_bits
 {
   MADFX_INVICTUS       = 1 <<  0,                    // I  Invincible
   MADFX_ACTLEFT        = 1 <<  1,                    // AL Activate left item
@@ -128,9 +128,9 @@ enum mad_effects_bits_e
   MADFX_CHARRIGHT      = 1 << 10,                    // CR Grab right character
   MADFX_POOF           = 1 << 11                     // P  Poof
 };
-typedef enum mad_effects_bits_e MADFX_BITS;
+typedef enum e_mad_effects_bits MADFX_BITS;
 
-enum lip_transition_e
+enum e_lip_transition
 {
   LIPT_DA = 0,                                  // For smooth transitions 'tween
   LIPT_WA,                                      //   walking rates
@@ -138,7 +138,7 @@ enum lip_transition_e
   LIPT_WC,                                      //
   LIPT_COUNT
 };
-typedef enum lip_transition_e LIPT;
+typedef enum e_lip_transition LIPT;
 
 //------------------------------------
 //Model stuff
@@ -146,15 +146,15 @@ typedef enum lip_transition_e LIPT;
 
 #define MAXFRAMESPERANIM 16
 
-struct CMad_t
+struct sMad
 {
-  egoboo_key      ekey;
+  egoboo_key_t      ekey;
   bool_t          Loaded;
 
   // debugging
   STRING          name;
 
-  MD2_Model *     md2_ptr;                          // Md2 model pointer
+  MD2_Model_t *     md2_ptr;                          // Md2 model pointer
   Uint16          vertices;                      // Number of vertices
   Uint16          transvertices;                 // Number to transform
   Uint8  *        framelip;                      // 0-15, How far into action is each frame
@@ -167,21 +167,21 @@ struct CMad_t
   int             bbox_frames;
   BBOX_ARY *      bbox_arrays;
 };
-typedef struct CMad_t CMad;
+typedef struct sMad Mad_t;
 
 #ifdef __cplusplus
-  typedef TList<CMad_t, MADLST_COUNT> MadList_t;
-  typedef TPList<CMad_t, MADLST_COUNT> PMad;
+  typedef TList<sMad, MADLST_COUNT> MadList_t;
+  typedef TPList<sMad, MADLST_COUNT> PMad_t;
 #else
-  typedef CMad MadList_t[MADLST_COUNT];
-  typedef CMad * PMad;
+  typedef Mad_t MadList_t[MADLST_COUNT];
+  typedef Mad_t * PMad_t;
 #endif
 
-CMad *  Mad_new(CMad * pmad);
-bool_t  Mad_delete(CMad *pmad);
-CMad *  Mad_renew(CMad * pmad);
+Mad_t *  Mad_new(Mad_t * pmad);
+bool_t  Mad_delete(Mad_t *pmad);
+Mad_t *  Mad_renew(Mad_t * pmad);
 
-void   MadList_free_one( struct CGame_t * gs, Uint16 imdl );
+void   MadList_free_one( struct sGame * gs, Uint16 imdl );
 
 #define VALID_MAD_RANGE(XX) ( ((XX)>=0) && ((XX)<MADLST_COUNT) )
 #define VALID_MAD(LST, XX)   ( VALID_MAD_RANGE(XX) && EKEY_VALID(LST[XX]) )
@@ -190,19 +190,19 @@ void   MadList_free_one( struct CGame_t * gs, Uint16 imdl );
 
 ACTION action_number(char * szName);
 Uint16 action_frame();
-void   action_copy_correct( struct CGame_t * gs, MAD_REF object, ACTION actiona, ACTION actionb );
-void   get_walk_frame( struct CGame_t * gs, MAD_REF object, LIPT lip_trans, ACTION action );
+void   action_copy_correct( struct sGame * gs, MAD_REF object, ACTION actiona, ACTION actionb );
+void   get_walk_frame( struct sGame * gs, MAD_REF object, LIPT lip_trans, ACTION action );
 Uint16 get_framefx( char * szName );
-void   make_framelip( struct CGame_t * gs, MAD_REF object, ACTION action );
-void   get_actions( struct CGame_t * gs, MAD_REF object );
-void   make_mad_equally_lit( struct CGame_t * gs, MAD_REF model );
+void   make_framelip( struct sGame * gs, MAD_REF object, ACTION action );
+void   get_actions( struct sGame * gs, MAD_REF object );
+void   make_mad_equally_lit( struct sGame * gs, MAD_REF model );
 
-bool_t mad_generate_bbox_tree(int max_level, CMad * pmad);
+bool_t mad_generate_bbox_tree(int max_level, Mad_t * pmad);
 
 
-MAD_REF MadList_load_one( struct CGame_t * gs, const char * szModpath, const char * szObjectname, MAD_REF irequest );
+MAD_REF MadList_load_one( struct sGame * gs, const char * szModpath, const char * szObjectname, MAD_REF irequest );
 
-bool_t mad_display_bbox_tree(int level, matrix_4x4 matrix, CMad * pmad, int frame1, int frame2);
-void load_copy_file( struct CGame_t * gs, const char * szModpath, const char * szObjectname, MAD_REF object );
+bool_t mad_display_bbox_tree(int level, matrix_4x4 matrix, Mad_t * pmad, int frame1, int frame2);
+void load_copy_file( struct sGame * gs, const char * szModpath, const char * szObjectname, MAD_REF object );
 
-void ObjList_log_used( struct CGame_t * gs, char *savename );
+void ObjList_log_used( struct sGame * gs, char *savename );

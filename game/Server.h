@@ -38,28 +38,28 @@
 //--------------------------------------------------------------------------------------------
 
 bool_t    sv_Started();
-NetHost * sv_getHost();
+NetHost_t * sv_getHost();
 void      sv_quitHost();
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct CServer_t
+struct sServer
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
   // my network
   Uint32           net_guid;
-  struct CGame_t * parent;
+  struct sGame * parent;
 
   // connection to the host handling TO_HOST_* type transfers
-  NetHost  * host;
+  NetHost_t  * host;
 
   // server states
   bool_t ready;                             // Ready to hit the Start Game button?
   Uint32 rand_idx;
 
   // a copy of all the character latches
-  CLatch  latch[CHRLST_COUNT];
+  Latch_t  latch[CHRLST_COUNT];
 
   // the buffered latches that have been stored on the server
   TIME_LATCH_BUFFER tlb;
@@ -68,44 +68,44 @@ struct CServer_t
   int         selectedModule;
   size_t      loc_mod_count;
   MOD_INFO    loc_mod[MAXMODULE];
-  MOD_SUMMARY loc_modtxt;
+  ModSummary_t loc_modtxt;
 
   // Selected module parameters. Store them here just in case.
   MOD_INFO  mod;
-  ModState  modstate;
+  ModState_t  modstate;
 
   int    rem_pla_count;
   int    num_loaded;                       //
   int    num_logon;
 
 };
-typedef struct CServer_t CServer;
+typedef struct sServer Server_t;
 
-CServer * CServer_create(struct CGame_t * gs);
-bool_t    CServer_destroy(CServer ** pss);
-CServer * CServer_renew(CServer * ss);
-retval_t  CServer_startUp(CServer * ss);
-retval_t  CServer_shutDown(CServer * ss);
+Server_t * CServer_create(struct sGame * gs);
+bool_t    CServer_destroy(Server_t ** pss);
+Server_t * CServer_renew(Server_t * ss);
+retval_t  CServer_startUp(Server_t * ss);
+retval_t  CServer_shutDown(Server_t * ss);
 
-retval_t      sv_shutDown(CServer * ss);
-bool_t        sv_Running(CServer * ss);
+retval_t      sv_shutDown(Server_t * ss);
+bool_t        sv_Running(Server_t * ss);
 
-void     sv_frameStep(CServer * ss);
+void     sv_frameStep(Server_t * ss);
 
-void CServer_reset_latches(CServer * ss);
-void sv_talkToRemotes(CServer * ss);
-void CServer_bufferLatches(CServer * ss);
-void CServer_unbufferLatches(CServer * ss);
-void CServer_resetTimeLatches(CServer * ss, CHR_REF ichr);
+void CServer_reset_latches(Server_t * ss);
+void sv_talkToRemotes(Server_t * ss);
+void CServer_bufferLatches(Server_t * ss);
+void CServer_unbufferLatches(Server_t * ss);
+void CServer_resetTimeLatches(Server_t * ss, CHR_REF ichr);
 
-bool_t sv_sendPacketToAllClients(CServer * ss, SYS_PACKET * egop);
-bool_t sv_sendPacketToAllClientsGuaranteed(CServer * ss, SYS_PACKET * egop);
+bool_t sv_sendPacketToAllClients(Server_t * ss, SYS_PACKET * egop);
+bool_t sv_sendPacketToAllClientsGuaranteed(Server_t * ss, SYS_PACKET * egop);
 
-bool_t sv_unhostGame(CServer * ss);
-void   sv_letPlayersJoin(CServer * ss);
+bool_t sv_unhostGame(Server_t * ss);
+void   sv_letPlayersJoin(Server_t * ss);
 
-bool_t sv_dispatchPackets(CServer * ss);
-bool_t sv_handlePacket(CServer * ss, ENetEvent *event);
+bool_t sv_dispatchPackets(Server_t * ss);
+bool_t sv_handlePacket(Server_t * ss, ENetEvent *event);
 
 // More to come...
 // int  sv_beginSinglePlayer(...)
@@ -113,4 +113,4 @@ bool_t sv_handlePacket(CServer * ss, ENetEvent *event);
 // int  sv_loadModule(...)
 
 
-bool_t sv_send_chr_setup( CServer * ss, chr_spawn_info * si );
+bool_t sv_send_chr_setup( Server_t * ss, CHR_SPAWN_INFO * si );

@@ -28,7 +28,7 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE bool_t HashNode_delete(HashNode * n)
+INLINE bool_t HashNode_delete(HashNode_t * n)
 {
   if(NULL == n) return bfalse;
   if( !EKEY_PVALID( n ) ) return btrue;
@@ -40,14 +40,14 @@ INLINE bool_t HashNode_delete(HashNode * n)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE HashNode * HashNode_new(HashNode * n, void * data)
+INLINE HashNode_t * HashNode_new(HashNode_t * n, void * data)
 {
   if(NULL == n) return n;
   if( !EKEY_PVALID( n ) ) HashNode_delete(n);
 
-  memset(n, 0, sizeof(HashNode));
+  memset(n, 0, sizeof(HashNode_t));
 
-  EKEY_PNEW( n, HashNode );
+  EKEY_PNEW( n, HashNode_t );
 
   n->data = data;
 
@@ -55,16 +55,16 @@ INLINE HashNode * HashNode_new(HashNode * n, void * data)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE HashNode * HashNode_create(void * data)
+INLINE HashNode_t * HashNode_create(void * data)
 {
-  HashNode * n = calloc(1, sizeof(HashNode));
+  HashNode_t * n = calloc(1, sizeof(HashNode_t));
   if(NULL == n) return n;
 
   return HashNode_new(n, data);
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t HashNode_destroy(HashNode ** pn)
+INLINE bool_t HashNode_destroy(HashNode_t ** pn)
 {
   bool_t retval = bfalse;
 
@@ -78,7 +78,7 @@ INLINE bool_t HashNode_destroy(HashNode ** pn)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE HashNode * HashNode_insert_after(HashNode lst[], HashNode * n)
+INLINE HashNode_t * HashNode_insert_after(HashNode_t lst[], HashNode_t * n)
 {
   if( NULL == n ) return lst;
   n->next = NULL;
@@ -92,7 +92,7 @@ INLINE HashNode * HashNode_insert_after(HashNode lst[], HashNode * n)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE HashNode * HashNode_insert_before(HashNode lst[], HashNode * n)
+INLINE HashNode_t * HashNode_insert_before(HashNode_t lst[], HashNode_t * n)
 {
   if( NULL == n ) return lst;
   n->next = NULL;
@@ -105,9 +105,9 @@ INLINE HashNode * HashNode_insert_before(HashNode lst[], HashNode * n)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE HashNode * HashNode_remove_after(HashNode lst[])
+INLINE HashNode_t * HashNode_remove_after(HashNode_t lst[])
 {
-  HashNode * n;
+  HashNode_t * n;
 
   if(NULL == lst) return NULL;
 
@@ -121,9 +121,9 @@ INLINE HashNode * HashNode_remove_after(HashNode lst[])
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE HashNode * HashNode_remove(HashNode lst[])
+INLINE HashNode_t * HashNode_remove(HashNode_t lst[])
 {
-  HashNode * n;
+  HashNode_t * n;
 
   if(NULL == lst) return NULL;
 
@@ -138,7 +138,7 @@ INLINE HashNode * HashNode_remove(HashNode lst[])
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE bool_t HashList_deallocate(HashList * lst)
+INLINE bool_t HashList_deallocate(HashList_t * lst)
 {
   if(NULL == lst) return bfalse;
   if(0 == lst->allocated) return btrue;
@@ -151,7 +151,7 @@ INLINE bool_t HashList_deallocate(HashList * lst)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t HashList_allocate(HashList * lst, int size)
+INLINE bool_t HashList_allocate(HashList_t * lst, int size)
 {
   if(NULL == lst) return bfalse;
 
@@ -163,7 +163,7 @@ INLINE bool_t HashList_allocate(HashList * lst, int size)
     return bfalse;
   }
 
-  lst->sublist = calloc(size, sizeof(HashNode *));
+  lst->sublist = calloc(size, sizeof(HashNode_t *));
   if(NULL == lst->sublist)
   {
     FREE(lst->subcount);
@@ -176,7 +176,7 @@ INLINE bool_t HashList_allocate(HashList * lst, int size)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE HashList * HashList_new(HashList * lst, int size)
+INLINE HashList_t * HashList_new(HashList_t * lst, int size)
 {
   if(NULL == lst) return NULL;
 
@@ -187,7 +187,7 @@ INLINE HashList * HashList_new(HashList * lst, int size)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t     HashList_delete(HashList * lst)
+INLINE bool_t     HashList_delete(HashList_t * lst)
 {
   if(NULL == lst) return bfalse;
 
@@ -196,16 +196,16 @@ INLINE bool_t     HashList_delete(HashList * lst)
   return btrue;
 }
 //--------------------------------------------------------------------------------------------
-INLINE HashList * HashList_create(int size)
+INLINE HashList_t * HashList_create(int size)
 {
-  HashList * lst = calloc(1, sizeof(HashList));
+  HashList_t * lst = calloc(1, sizeof(HashList_t));
   if(NULL == lst) return lst;
 
   return HashList_new(lst, size);
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t HashList_destroy(HashList ** plst)
+INLINE bool_t HashList_destroy(HashList_t ** plst)
 {
   bool_t retval = bfalse;
 
@@ -222,11 +222,11 @@ INLINE bool_t HashList_destroy(HashList ** plst)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE egoboo_key * egoboo_key_create(Uint32 itype, void * pdata)
+INLINE egoboo_key_t * egoboo_key_create(Uint32 itype, void * pdata)
 {
   // BB > dynamically allocate and initialize a new key
 
-  egoboo_key * ptmp, * pkey = calloc(1, sizeof(egoboo_key));
+  egoboo_key_t * ptmp, * pkey = calloc(1, sizeof(egoboo_key_t));
   if(NULL == pkey) return pkey;
 
   // initialize the key
@@ -243,7 +243,7 @@ INLINE egoboo_key * egoboo_key_create(Uint32 itype, void * pdata)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t egoboo_key_destroy(egoboo_key ** ppkey)
+INLINE bool_t egoboo_key_destroy(egoboo_key_t ** ppkey)
 {
   // BB > de-initialize the key and free it if necessary
 
@@ -261,14 +261,14 @@ INLINE bool_t egoboo_key_destroy(egoboo_key ** ppkey)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE egoboo_key * egoboo_key_new(egoboo_key * pkey, Uint32 itype, void * pdata)
+INLINE egoboo_key_t * egoboo_key_new(egoboo_key_t * pkey, Uint32 itype, void * pdata)
 {
   // BB > initialize the key
 
   if(NULL == pkey) return pkey;
 
   // initialize the key. pkey->dynamic is automatically set to bfalse
-  memset(pkey, 0, sizeof(egoboo_key));
+  memset(pkey, 0, sizeof(egoboo_key_t));
 
   // set the proper values
   if( egoboo_key_validate(pkey) )
@@ -281,7 +281,7 @@ INLINE egoboo_key * egoboo_key_new(egoboo_key * pkey, Uint32 itype, void * pdata
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t egoboo_key_validate(egoboo_key * pkey)
+INLINE bool_t egoboo_key_validate(egoboo_key_t * pkey)
 {
   // BB > de-initialize the key
 
@@ -299,7 +299,7 @@ INLINE bool_t egoboo_key_validate(egoboo_key * pkey)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t egoboo_key_invalidate(egoboo_key * pkey)
+INLINE bool_t egoboo_key_invalidate(egoboo_key_t * pkey)
 {
   // BB > de-initialize the key
 
@@ -314,7 +314,7 @@ INLINE bool_t egoboo_key_invalidate(egoboo_key * pkey)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t egoboo_key_valid(egoboo_key * pkey)
+INLINE bool_t egoboo_key_valid(egoboo_key_t * pkey)
 {
   // BB > verify that a "key" is valid.
 
@@ -335,7 +335,7 @@ INLINE bool_t egoboo_key_valid(egoboo_key * pkey)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE void * egoboo_key_get_data(egoboo_key * pkey, Uint32 type)
+INLINE void * egoboo_key_get_data(egoboo_key_t * pkey, Uint32 type)
 {
   // BB > grab the data associated with the key, if and only if the key is valid and the
   //      data type matches the key data
@@ -355,26 +355,26 @@ INLINE void * egoboo_key_get_data(egoboo_key * pkey, Uint32 type)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE BSP_node * BSP_node_new( BSP_node * n, void * data, int type )
+INLINE BSP_node_t * BSP_node_new( BSP_node_t * n, void * data, int type )
 {
   if(NULL == n) return n;
 
   BSP_node_delete( n );
 
-  memset(n, 0, sizeof(BSP_node));
+  memset(n, 0, sizeof(BSP_node_t));
 
   if(NULL == data) return n;
 
   n->data_type = type;
   n->data      = data;
 
-  EKEY_PNEW( n, BSP_node );
+  EKEY_PNEW( n, BSP_node_t );
 
   return n;
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t BSP_node_delete( BSP_node * n )
+INLINE bool_t BSP_node_delete( BSP_node_t * n )
 {
   bool_t retval;
 
@@ -392,27 +392,27 @@ INLINE bool_t BSP_node_delete( BSP_node * n )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE BSP_leaf * BSP_leaf_new( BSP_leaf * L, int count )
+INLINE BSP_leaf_t * BSP_leaf_new( BSP_leaf_t * L, int count )
 {
   if(NULL == L) return L;
 
   BSP_leaf_delete( L );
 
-  memset(L, 0, sizeof(BSP_leaf));
+  memset(L, 0, sizeof(BSP_leaf_t));
 
-  L->children = calloc(count, sizeof(BSP_leaf*));
+  L->children = calloc(count, sizeof(BSP_leaf_t*));
   if(NULL != L->children)
   {
     L->child_count = count;
   }
 
-  EKEY_PNEW( L, BSP_leaf );
+  EKEY_PNEW( L, BSP_leaf_t );
 
   return L;
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t BSP_leaf_delete( BSP_leaf * L )
+INLINE bool_t BSP_leaf_delete( BSP_leaf_t * L )
 {
   bool_t retval;
 
@@ -428,7 +428,7 @@ INLINE bool_t BSP_leaf_delete( BSP_leaf * L )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t BSP_leaf_insert( BSP_leaf * L, BSP_node * n )
+INLINE bool_t BSP_leaf_insert( BSP_leaf_t * L, BSP_node_t * n )
 {
   if( !EKEY_PVALID(L) || !EKEY_PVALID(n) ) return bfalse;
 
@@ -440,7 +440,7 @@ INLINE bool_t BSP_leaf_insert( BSP_leaf * L, BSP_node * n )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE bool_t BSP_tree_allocate( BSP_tree * t, size_t count, size_t children )
+INLINE bool_t BSP_tree_allocate( BSP_tree_t * t, size_t count, size_t children )
 {
   int i;
 
@@ -448,7 +448,7 @@ INLINE bool_t BSP_tree_allocate( BSP_tree * t, size_t count, size_t children )
   if(NULL != t->leaf_list || t->leaf_count > 0) return bfalse;
 
   // allocate the nodes
-  t->leaf_list = calloc(count, sizeof(BSP_leaf));
+  t->leaf_list = calloc(count, sizeof(BSP_leaf_t));
   if(NULL == t->leaf_list) return bfalse;
 
   // initialize the nodes
@@ -462,7 +462,7 @@ INLINE bool_t BSP_tree_allocate( BSP_tree * t, size_t count, size_t children )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t BSP_tree_deallocate( BSP_tree * t )
+INLINE bool_t BSP_tree_deallocate( BSP_tree_t * t )
 {
   int i;
 
@@ -483,7 +483,7 @@ INLINE bool_t BSP_tree_deallocate( BSP_tree * t )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t BSP_tree_construct(BSP_tree * t)
+INLINE bool_t BSP_tree_construct(BSP_tree_t * t)
 {
   int i, j, k;
   int children, current_node;
@@ -516,7 +516,7 @@ INLINE bool_t BSP_tree_construct(BSP_tree * t)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE BSP_tree * BSP_tree_new( BSP_tree * t, Sint32 dim, Sint32 depth)
+INLINE BSP_tree_t * BSP_tree_new( BSP_tree_t * t, Sint32 dim, Sint32 depth)
 {
   Sint32 count, children;
 
@@ -524,7 +524,7 @@ INLINE BSP_tree * BSP_tree_new( BSP_tree * t, Sint32 dim, Sint32 depth)
 
   BSP_tree_delete( t );
 
-  memset(t, 0, sizeof(BSP_tree));
+  memset(t, 0, sizeof(BSP_tree_t));
 
   count = BSP_tree_count_nodes(dim, depth);
   if(count < 0) return t;
@@ -535,7 +535,7 @@ INLINE BSP_tree * BSP_tree_new( BSP_tree * t, Sint32 dim, Sint32 depth)
   t->dimensions = dim;
   t->depth      = depth;
 
-  EKEY_PNEW( t, BSP_tree );
+  EKEY_PNEW( t, BSP_tree_t );
 
   BSP_tree_construct(t);
 
@@ -543,7 +543,7 @@ INLINE BSP_tree * BSP_tree_new( BSP_tree * t, Sint32 dim, Sint32 depth)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t BSP_tree_delete( BSP_tree * t )
+INLINE bool_t BSP_tree_delete( BSP_tree_t * t )
 {
   bool_t retval;
 
@@ -575,7 +575,7 @@ INLINE Sint32 BSP_tree_count_nodes(Sint32 dim, Sint32 depth)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t BSP_tree_insert( BSP_tree * t, BSP_leaf * L, BSP_node * n, int index )
+INLINE bool_t BSP_tree_insert( BSP_tree_t * t, BSP_leaf_t * L, BSP_node_t * n, int index )
 {
   if( !EKEY_PVALID(t) || !EKEY_PVALID(L) || !EKEY_PVALID(n) ) return bfalse;
   if(index > 0 || index > L->child_count) return bfalse;
@@ -596,7 +596,7 @@ INLINE bool_t BSP_tree_insert( BSP_tree * t, BSP_leaf * L, BSP_node * n, int ind
   else
   {
     // the requested L->children[index] slot is empty. grab a pre-allocated
-    // BSP_leaf from the free list in the BSP_tree structure an insert it in
+    // BSP_leaf_t from the free list in the BSP_tree_t structure an insert it in
     // this child node
 
     L->children[index] = t->leaf_list;

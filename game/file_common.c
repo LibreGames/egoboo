@@ -173,11 +173,11 @@ FILE * fs_fileOpen( PRIORITY priority, const char * src, const char * fname, con
 
   if ( NULL == src ) src = "";
 
-  if ( NULL == fname || '\0' == fname[0] )
+  if (  !VALID_CSTR(fname)  )
   {
     log_warning( "%s - fs_fileOpen() - invalid file name\n", src );
   }
-  else if ( NULL == mode || '\0' == mode[0] )
+  else if (  !VALID_CSTR(mode)  )
   {
     log_warning( "%s - fs_fileOpen() - invalid file mode\n", src );
   }

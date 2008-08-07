@@ -2,9 +2,9 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CVolume CVolume_merge(CVolume * pv1, CVolume * pv2)
+CVolume_t CVolume_merge(CVolume_t * pv1, CVolume_t * pv2)
 {
-  CVolume rv;
+  CVolume_t rv;
 
   rv.lod = -1;
 
@@ -66,9 +66,9 @@ CVolume CVolume_merge(CVolume * pv1, CVolume * pv2)
 }
 
 //--------------------------------------------------------------------------------------------
-CVolume CVolume_intersect(CVolume * pv1, CVolume * pv2)
+CVolume_t CVolume_intersect(CVolume_t * pv1, CVolume_t * pv2)
 {
-  CVolume rv;
+  CVolume_t rv;
 
   rv.lod = -1;
 
@@ -143,7 +143,7 @@ CVolume CVolume_intersect(CVolume * pv1, CVolume * pv2)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CPhysAccum_clear(CPhysAccum * paccum)
+bool_t CPhysAccum_clear(PhysAccum_t * paccum)
 {
   if(NULL == paccum) return bfalse;
 
@@ -155,7 +155,7 @@ bool_t CPhysAccum_clear(CPhysAccum * paccum)
 }
 
 //--------------------------------------------------------------------------------------------
-void phys_integrate(COrientation * pori, COrientation * pori_old, CPhysAccum * paccum, float dFrame)
+void phys_integrate(Orientation_t * pori, Orientation_t * pori_old, PhysAccum_t * paccum, float dFrame)
 {
   float diff;
 

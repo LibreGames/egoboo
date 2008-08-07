@@ -33,7 +33,7 @@
 #define NUMFONT                         (NUMFONTX*NUMFONTY)
 #define FONTADD                         4           // Gap between letters
 
-struct bmfont_t
+struct sBMFont
 {
   GLtexture tex;                    // ogl texture
   int       offset;                 // Line up fonts from top of screen
@@ -42,9 +42,9 @@ struct bmfont_t
   Uint8     spacing_y;              //
   Uint8     ascii_table[256];       // Conversion table
 };
-typedef struct bmfont_t BMFont;
+typedef struct sBMFont BMFont_t;
 
-extern BMFont bmfont;
+extern BMFont_t bmfont;
 
 #define FNT_NUM_FONT_CHARACTERS 94
 #define FNT_SMALL_FONT_SIZE 12
@@ -52,17 +52,17 @@ extern BMFont bmfont;
 #define FNT_LARGE_FONT_SIZE 20
 #define FNT_MAX_FONTS 8
 
-typedef struct ttfont_t TTFont;
+typedef struct sTTFont TTFont_t;
 
-extern struct ttfont_t *fnt_loadFont( const char *fileName, int pointSize );
-extern bool_t  fnt_freeFont( struct ttfont_t *font );
+extern struct sTTFont *fnt_loadFont( const char *fileName, int pointSize );
+extern bool_t  fnt_freeFont( struct sTTFont *font );
 
-extern void  fnt_drawText( struct ttfont_t *font, int x, int y, const char *text );
-extern void  fnt_drawTextFormatted( struct ttfont_t *font, int x, int y, const char *format, ... );
-extern void  fnt_drawTextBox( struct ttfont_t *font, const char *text, int x, int y, int width, int height, int spacing );
+extern void  fnt_drawText( struct sTTFont *font, int x, int y, const char *text );
+extern void  fnt_drawTextFormatted( struct sTTFont *font, int x, int y, const char *format, ... );
+extern void  fnt_drawTextBox( struct sTTFont *font, const char *text, int x, int y, int width, int height, int spacing );
 
 // Only works properly on a single line of text
-extern void  fnt_getTextSize( struct ttfont_t *font, const char *text, int *width, int *height );
+extern void  fnt_getTextSize( struct sTTFont *font, const char *text, int *width, int *height );
 
 // Works for multiple-line strings, using the user-supplied spacing
-extern void  fnt_getTextBoxSize( struct ttfont_t *font, const char *text, int spacing, int *width, int *height );
+extern void  fnt_getTextBoxSize( struct sTTFont *font, const char *text, int spacing, int *width, int *height );

@@ -8,15 +8,15 @@
 #include <time.h>
 
 
-struct nfile_SendState_t;
-struct nfile_ReceiveState_t;
+struct s_nfile_SendState;
+struct s_nfile_ReceiveState;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // the nfile module info
 
 static bool_t    _nfile_atexit_registered = bfalse;
-static NetHost * _nfile_host = NULL;
+static NetHost_t * _nfile_host = NULL;
 
 static retval_t  _nfile_Initialize(void);
 static void      _nfile_Quit(void);
@@ -27,9 +27,9 @@ static retval_t  _nfile_sendInitialize(void);
 
 
 //--------------------------------------------------------------------------------------------
-// NFileState private initialization
-static NFileState * NFileState_new(NFileState * nfs, CNet * ns);
-static bool_t       NFileState_delete(NFileState * nfs);
+// NFileState_t private initialization
+static NFileState_t * NFileState_new(NFileState_t * nfs, Net_t * ns);
+static bool_t       NFileState_delete(NFileState_t * nfs);
 
 //--------------------------------------------------------------------------------------------
 static int nfhost_HostCallback(void *);
@@ -37,13 +37,13 @@ static retval_t nfhost_startThreads();
 static retval_t nfhost_stopThreads();
 
 //--------------------------------------------------------------------------------------------
-static struct nfile_SendState_t * _nfile_snd  = NULL;
-struct nfile_SendState_t * _nfile_getSend();
+static struct s_nfile_SendState * _nfile_snd  = NULL;
+struct s_nfile_SendState * _nfile_getSend();
 static retval_t           _nfile_Send_initialize();
 static int                _nfile_sendCallback(void * snd);
 
-static struct nfile_ReceiveState_t * _nfile_rec  = NULL;
-struct nfile_ReceiveState_t * _nfile_getReceive();
+static struct s_nfile_ReceiveState * _nfile_rec  = NULL;
+struct s_nfile_ReceiveState * _nfile_getReceive();
 static retval_t              _nfile_Receive_initialize();
 static int                   _nfile_receiveCallback(void * nfs);
 
@@ -51,9 +51,9 @@ static int                   _nfile_receiveCallback(void * nfs);
 //--------------------------------------------------------------------------------------------
 
 // File transfer variables & structures
-struct nfile_SendInfo_t
+struct s_nfile_SendInfo
 {
-  //CNet    * ns;
+  //Net_t    * ns;
   ENetHost    * host;
   ENetPeer    * target;
 
@@ -61,35 +61,35 @@ struct nfile_SendInfo_t
   char      destName[NET_MAX_FILE_NAME];
 };
 
-typedef struct nfile_SendInfo_t nfile_SendInfo;
+typedef struct s_nfile_SendInfo nfile_SendInfo_t;
 
 //--------------------------------------------------------------------------------------------
 // File transfer queue
-struct nfile_SendQueue_t
+struct s_nfile_SendQueue
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
   int numTransfers;
-  nfile_SendInfo transferStates[NET_MAX_FILE_TRANSFERS];
+  nfile_SendInfo_t transferStates[NET_MAX_FILE_TRANSFERS];
 
   int TransferHead; // Queue indices
   int TransferTail;
 
 };
 
-typedef struct nfile_SendQueue_t nfile_SendQueue;
+typedef struct s_nfile_SendQueue nfile_SendQueue_t;
 
-nfile_SendQueue * nfile_SendQueue_new(nfile_SendQueue * q);
-bool_t            nfile_SendQueue_delete(nfile_SendQueue * q);
-nfile_SendQueue * nfile_SendQueue_renew(nfile_SendQueue * q);
+nfile_SendQueue_t * nfile_SendQueue_new(nfile_SendQueue_t * q);
+bool_t            nfile_SendQueue_delete(nfile_SendQueue_t * q);
+nfile_SendQueue_t * nfile_SendQueue_renew(nfile_SendQueue_t * q);
 
 
-retval_t nfile_SendQueue_add(NFileState * ns, ENetAddress * target_address, char *source, char *dest);
+retval_t nfile_SendQueue_add(NFileState_t * ns, ENetAddress * target_address, char *source, char *dest);
 
 //--------------------------------------------------------------------------------------------
 
 // File transfer variables & structures
-struct nfile_ReceiveInfo_t
+struct s_nfile_ReceiveInfo
 {
   bool_t     allocated;
 
@@ -101,99 +101,99 @@ struct nfile_ReceiveInfo_t
   size_t     buffer_size;
 };
 
-typedef struct nfile_ReceiveInfo_t nfile_ReceiveInfo;
+typedef struct s_nfile_ReceiveInfo nfile_ReceiveInfo_t;
 
-static bool_t nfile_ReceiveInfo_alloc( nfile_ReceiveInfo * nri, size_t size);
-static bool_t nfile_ReceiveInfo_dealloc( nfile_ReceiveInfo * nri);
+static bool_t nfile_ReceiveInfo_alloc( nfile_ReceiveInfo_t * nri, size_t size);
+static bool_t nfile_ReceiveInfo_dealloc( nfile_ReceiveInfo_t * nri);
 
 // File transfer queue
-struct nfile_ReceiveQueue_t
+struct s_nfile_ReceiveQueue
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
   int numTransfers;
-  nfile_ReceiveInfo transferStates[NET_MAX_FILE_TRANSFERS];
+  nfile_ReceiveInfo_t transferStates[NET_MAX_FILE_TRANSFERS];
 
   int TransferHead; // Queue indices
   int TransferTail;
 
 };
 
-typedef struct nfile_ReceiveQueue_t nfile_ReceiveQueue;
+typedef struct s_nfile_ReceiveQueue nfile_ReceiveQueue_t;
 
-nfile_ReceiveQueue * nfile_ReceiveQueue_new(nfile_ReceiveQueue * q);
-bool_t               nfile_ReceiveQueue_delete(nfile_ReceiveQueue * q);
-nfile_ReceiveQueue * nfile_ReceiveQueue_renew(nfile_ReceiveQueue * q);
+nfile_ReceiveQueue_t * nfile_ReceiveQueue_new(nfile_ReceiveQueue_t * q);
+bool_t               nfile_ReceiveQueue_delete(nfile_ReceiveQueue_t * q);
+nfile_ReceiveQueue_t * nfile_ReceiveQueue_renew(nfile_ReceiveQueue_t * q);
 
 //--------------------------------------------------------------------------------------------
 
-struct nfile_SendState_t
+struct s_nfile_SendState
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
   // the file queue
-  nfile_SendQueue queue;
+  nfile_SendQueue_t queue;
 
   // other data
   Uint32 crc_seed;
 
   // thread info
-  NetThread nthread;
+  NetThread_t nthread;
 
 };
 
-typedef struct nfile_SendState_t nfile_SendState;
+typedef struct s_nfile_SendState nfile_SendState_t;
 
-static nfile_SendState * nfile_SendState_create();
-static bool_t            nfile_SendState_destroy(nfile_SendState ** snd);
+static nfile_SendState_t * nfile_SendState_create();
+static bool_t            nfile_SendState_destroy(nfile_SendState_t ** snd);
 
-static nfile_SendState * nfile_SendState_new(nfile_SendState * snd);
-static bool_t            nfile_SendState_delete(nfile_SendState * snd);
-static retval_t          nfile_SendState_initialize(nfile_SendState * snd);
-static retval_t          nfile_SendState_startUp(nfile_SendState * snd);
-static retval_t          nfile_SendState_shutDown(nfile_SendState * snd);
-static retval_t          nfile_SendState_startThread(nfile_SendState * snd);
-static retval_t          nfile_SendState_stopThread(nfile_SendState * snd);
+static nfile_SendState_t * nfile_SendState_new(nfile_SendState_t * snd);
+static bool_t            nfile_SendState_delete(nfile_SendState_t * snd);
+static retval_t          nfile_SendState_initialize(nfile_SendState_t * snd);
+static retval_t          nfile_SendState_startUp(nfile_SendState_t * snd);
+static retval_t          nfile_SendState_shutDown(nfile_SendState_t * snd);
+static retval_t          nfile_SendState_startThread(nfile_SendState_t * snd);
+static retval_t          nfile_SendState_stopThread(nfile_SendState_t * snd);
 
 static retval_t          _nfile_Receive_initialize();
 //--------------------------------------------------------------------------------------------
 
-struct nfile_ReceiveState_t
+struct s_nfile_ReceiveState
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
   // the file queue
-  nfile_ReceiveQueue queue;
+  nfile_ReceiveQueue_t queue;
 
   // thread info
-  NetThread nthread;
+  NetThread_t nthread;
 
 };
 
-typedef struct nfile_ReceiveState_t nfile_ReceiveState;
+typedef struct s_nfile_ReceiveState nfile_ReceiveState_t;
 
-static nfile_ReceiveState * nfile_ReceiveState_create();
-static bool_t               nfile_ReceiveState_destroy(nfile_ReceiveState ** rec);
+static nfile_ReceiveState_t * nfile_ReceiveState_create();
+static bool_t               nfile_ReceiveState_destroy(nfile_ReceiveState_t ** rec);
 
-static nfile_ReceiveState * nfile_ReceiveState_new(nfile_ReceiveState * rec);
-static bool_t               nfile_ReceiveState_delete(nfile_ReceiveState * rec);
-static retval_t             nfile_ReceiveState_initialize(nfile_ReceiveState * rec);
-static retval_t             nfile_ReceiveState_startUp(nfile_ReceiveState * rec);
-static retval_t             nfile_ReceiveState_shutDown(nfile_ReceiveState * rec);
-static retval_t             nfile_ReceiveState_startThread(nfile_ReceiveState * rec);
-static retval_t             nfile_ReceiveState_stopThread(nfile_ReceiveState * rec);
+static nfile_ReceiveState_t * nfile_ReceiveState_new(nfile_ReceiveState_t * rec);
+static bool_t               nfile_ReceiveState_delete(nfile_ReceiveState_t * rec);
+static retval_t             nfile_ReceiveState_initialize(nfile_ReceiveState_t * rec);
+static retval_t             nfile_ReceiveState_startUp(nfile_ReceiveState_t * rec);
+static retval_t             nfile_ReceiveState_shutDown(nfile_ReceiveState_t * rec);
+static retval_t             nfile_ReceiveState_startThread(nfile_ReceiveState_t * rec);
+static retval_t             nfile_ReceiveState_stopThread(nfile_ReceiveState_t * rec);
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-//retval_t nfile_startUp(NFileState * nfs, CNet * ns)
+//retval_t nfile_startUp(NFileState_t * nfs, Net_t * ns)
 //{
 //  if(NULL == nfs) return rv_error;
 //
 //  if(nfile_initialized) return rv_succeed;
 //
 //  NFileState_new(nfs);
-//  nfile_initialized = (rv_succeed == NFileState_initialize(nfs, ns, &nfile_SendState, &nfile_ReceiveState));
+//  nfile_initialized = (rv_succeed == NFileState_initialize(nfs, ns, &nfile_SendState_t, &nfile_ReceiveState_t));
 //
 //  if(!nfile_atexit_registered)
 //  {
@@ -229,14 +229,14 @@ static retval_t             nfile_ReceiveState_stopThread(nfile_ReceiveState * r
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-NFileState * NFileState_create(CNet * ns)
+NFileState_t * NFileState_create(Net_t * ns)
 {
-  NFileState * nfs = (NFileState *)calloc(1, sizeof(NFileState));
+  NFileState_t * nfs = (NFileState_t *)calloc(1, sizeof(NFileState_t));
   return NFileState_new(nfs, ns);
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t NFileState_destroy(NFileState ** pnfs)
+bool_t NFileState_destroy(NFileState_t ** pnfs)
 {
   bool_t retval;
 
@@ -250,7 +250,7 @@ bool_t NFileState_destroy(NFileState ** pnfs)
 }
 
 //--------------------------------------------------------------------------------------------
-NFileState * NFileState_new(NFileState * nfs, CNet * ns)
+NFileState_t * NFileState_new(NFileState_t * nfs, Net_t * ns)
 {
   //fprintf( stdout, "NFileState_new()\n");
 
@@ -258,9 +258,9 @@ NFileState * NFileState_new(NFileState * nfs, CNet * ns)
 
   NFileState_delete(nfs);
 
-  memset( nfs, 0, sizeof(NFileState) );
+  memset( nfs, 0, sizeof(NFileState_t) );
 
-  EKEY_PNEW( nfs, NFileState );
+  EKEY_PNEW( nfs, NFileState_t );
 
   if(net_Started())
   {
@@ -275,7 +275,7 @@ NFileState * NFileState_new(NFileState * nfs, CNet * ns)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t NFileState_delete(NFileState * nfs)
+bool_t NFileState_delete(NFileState_t * nfs)
 {
   if(NULL == nfs) return bfalse;
   if(!EKEY_PVALID(nfs)) return btrue;
@@ -293,11 +293,11 @@ bool_t NFileState_delete(NFileState * nfs)
 
 
 //--------------------------------------------------------------------------------------------
-retval_t NFileState_initialize(NFileState * nfs)
+retval_t NFileState_initialize(NFileState_t * nfs)
 {
-  NetHost           * nh;
-  nfile_SendState    * loc_snd;
-  nfile_ReceiveState * loc_rec;
+  NetHost_t           * nh;
+  nfile_SendState_t    * loc_snd;
+  nfile_ReceiveState_t * loc_rec;
 
   if(NULL == nfs) return rv_error;
   if(EKEY_PVALID(nfs)) return rv_succeed;
@@ -316,9 +316,9 @@ retval_t NFileState_initialize(NFileState * nfs)
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t NFileState_startUp(NFileState * nfs)
+retval_t NFileState_startUp(NFileState_t * nfs)
 {
-  // BB > Start the NFileState.
+  // BB > Start the NFileState_t.
   //      If it has not been initialized, initialize it.
   //      If it was initialized, restart everything.
 
@@ -346,9 +346,9 @@ retval_t NFileState_startUp(NFileState * nfs)
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t NFileState_shutDown(NFileState * nfs)
+retval_t NFileState_shutDown(NFileState_t * nfs)
 {
-  // BB > Shut or pause the NFileState.
+  // BB > Shut or pause the NFileState_t.
 
   if( !EKEY_PVALID(nfs) ) return rv_error;
 
@@ -368,14 +368,14 @@ retval_t NFileState_shutDown(NFileState * nfs)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-nfile_SendState * nfile_SendState_create()
+nfile_SendState_t * nfile_SendState_create()
 {
-  nfile_SendState * snd = (nfile_SendState *)calloc(1, sizeof(nfile_SendState));
+  nfile_SendState_t * snd = (nfile_SendState_t *)calloc(1, sizeof(nfile_SendState_t));
   return nfile_SendState_new( snd );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t nfile_SendState_destroy(nfile_SendState ** snd)
+bool_t nfile_SendState_destroy(nfile_SendState_t ** snd)
 {
   bool_t retval;
 
@@ -390,7 +390,7 @@ bool_t nfile_SendState_destroy(nfile_SendState ** snd)
 }
 
 //--------------------------------------------------------------------------------------------
-nfile_SendState * nfile_SendState_new(nfile_SendState * snd)
+nfile_SendState_t * nfile_SendState_new(nfile_SendState_t * snd)
 {
   //fprintf( stdout, "nfile_SendState_new()\n");
 
@@ -398,9 +398,9 @@ nfile_SendState * nfile_SendState_new(nfile_SendState * snd)
 
   nfile_SendState_delete( snd );
 
-  memset(snd, 0, sizeof(nfile_SendState));
+  memset(snd, 0, sizeof(nfile_SendState_t));
 
-  EKEY_PNEW( snd, nfile_SendState );
+  EKEY_PNEW( snd, nfile_SendState_t );
 
   NetThread_new( &(snd->nthread), _nfile_sendCallback);
   nfile_SendQueue_new( &(snd->queue) );
@@ -409,7 +409,7 @@ nfile_SendState * nfile_SendState_new(nfile_SendState * snd)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t nfile_SendState_delete(nfile_SendState * snd)
+bool_t nfile_SendState_delete(nfile_SendState_t * snd)
 {
   if(NULL == snd) return bfalse;
 
@@ -427,9 +427,9 @@ bool_t nfile_SendState_delete(nfile_SendState * snd)
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t nfile_SendState_initialize(nfile_SendState * snd)
+retval_t nfile_SendState_initialize(nfile_SendState_t * snd)
 {
-  // BB> initializes an instance of nfile_SendState
+  // BB> initializes an instance of nfile_SendState_t
 
   if(NULL == snd) return rv_error;
 
@@ -449,9 +449,9 @@ retval_t nfile_SendState_initialize(nfile_SendState * snd)
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t nfile_SendState_startUp(nfile_SendState * snd)
+retval_t nfile_SendState_startUp(nfile_SendState_t * snd)
 {
-  NetHost * nh;
+  NetHost_t * nh;
 
   if(NULL == snd) return rv_error;
 
@@ -483,7 +483,7 @@ retval_t nfile_SendState_startUp(nfile_SendState * snd)
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t nfile_SendState_shutDown(nfile_SendState * snd)
+retval_t nfile_SendState_shutDown(nfile_SendState_t * snd)
 {
   if( !EKEY_PVALID(snd) ) return rv_error;
 
@@ -494,14 +494,14 @@ retval_t nfile_SendState_shutDown(nfile_SendState * snd)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-nfile_ReceiveState * nfile_ReceiveState_create()
+nfile_ReceiveState_t * nfile_ReceiveState_create()
 {
-  nfile_ReceiveState * rec = (nfile_ReceiveState *)calloc(1, sizeof(nfile_ReceiveState));
+  nfile_ReceiveState_t * rec = (nfile_ReceiveState_t *)calloc(1, sizeof(nfile_ReceiveState_t));
   return nfile_ReceiveState_new( rec);
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t nfile_ReceiveState_destroy(nfile_ReceiveState ** rec)
+bool_t nfile_ReceiveState_destroy(nfile_ReceiveState_t ** rec)
 {
   bool_t retval;
 
@@ -518,7 +518,7 @@ bool_t nfile_ReceiveState_destroy(nfile_ReceiveState ** rec)
 }
 
 //--------------------------------------------------------------------------------------------
-nfile_ReceiveState * nfile_ReceiveState_new(nfile_ReceiveState * rec)
+nfile_ReceiveState_t * nfile_ReceiveState_new(nfile_ReceiveState_t * rec)
 {
   //fprintf( stdout, "nfile_ReceiveState_new()\n");
 
@@ -526,9 +526,9 @@ nfile_ReceiveState * nfile_ReceiveState_new(nfile_ReceiveState * rec)
 
   nfile_ReceiveState_delete(rec);
 
-  memset(rec, 0, sizeof(nfile_ReceiveState));
+  memset(rec, 0, sizeof(nfile_ReceiveState_t));
 
-  EKEY_PNEW(rec, nfile_ReceiveState);
+  EKEY_PNEW(rec, nfile_ReceiveState_t);
 
   NetThread_new( &(rec->nthread), _nfile_receiveCallback);
   nfile_ReceiveQueue_new( &(rec->queue) );
@@ -537,7 +537,7 @@ nfile_ReceiveState * nfile_ReceiveState_new(nfile_ReceiveState * rec)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t nfile_ReceiveState_delete(nfile_ReceiveState * rec)
+bool_t nfile_ReceiveState_delete(nfile_ReceiveState_t * rec)
 {
   if(NULL == rec) return bfalse;
   if(!EKEY_PVALID(rec)) return btrue;
@@ -554,9 +554,9 @@ bool_t nfile_ReceiveState_delete(nfile_ReceiveState * rec)
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t nfile_ReceiveState_initialize(nfile_ReceiveState * rec)
+retval_t nfile_ReceiveState_initialize(nfile_ReceiveState_t * rec)
 {
-  // BB> initializes an instance of nfile_ReceiveState
+  // BB> initializes an instance of nfile_ReceiveState_t
 
   if(NULL == rec) return rv_error;
 
@@ -573,7 +573,7 @@ retval_t nfile_ReceiveState_initialize(nfile_ReceiveState * rec)
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t nfile_ReceiveState_startUp(nfile_ReceiveState * rec)
+retval_t nfile_ReceiveState_startUp(nfile_ReceiveState_t * rec)
 {
   if(NULL == rec) return rv_error;
 
@@ -603,7 +603,7 @@ retval_t nfile_ReceiveState_startUp(nfile_ReceiveState * rec)
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t nfile_ReceiveState_shutDown(nfile_ReceiveState * rec)
+retval_t nfile_ReceiveState_shutDown(nfile_ReceiveState_t * rec)
 {
   if( !EKEY_PVALID(rec) ) return rv_error;
 
@@ -614,7 +614,7 @@ retval_t nfile_ReceiveState_shutDown(nfile_ReceiveState * rec)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t nfile_ReceiveInfo_alloc( nfile_ReceiveInfo * nri, size_t size)
+bool_t nfile_ReceiveInfo_alloc( nfile_ReceiveInfo_t * nri, size_t size)
 {
   bool_t retval = bfalse;
 
@@ -642,7 +642,7 @@ bool_t nfile_ReceiveInfo_alloc( nfile_ReceiveInfo * nri, size_t size)
   return retval;
 }
 
-bool_t nfile_ReceiveInfo_dealloc( nfile_ReceiveInfo * nri)
+bool_t nfile_ReceiveInfo_dealloc( nfile_ReceiveInfo_t * nri)
 {
   if(NULL == nri) return bfalse;
   if(!nri->allocated) return btrue;
@@ -654,11 +654,11 @@ bool_t nfile_ReceiveInfo_dealloc( nfile_ReceiveInfo * nri)
   return btrue;
 }
 
-retval_t nfile_ReceiveQueue_add(NFileState * nfs, ENetEvent * event, char * dest)
+retval_t nfile_ReceiveQueue_add(NFileState_t * nfs, ENetEvent * event, char * dest)
 {
   int temp_tail;
-  nfile_ReceiveQueue * queue = NULL;
-  nfile_ReceiveInfo  * state = NULL;
+  nfile_ReceiveQueue_t * queue = NULL;
+  nfile_ReceiveInfo_t  * state = NULL;
 
   if(NULL == nfs || NULL == event)
   {
@@ -666,7 +666,7 @@ retval_t nfile_ReceiveQueue_add(NFileState * nfs, ENetEvent * event, char * dest
     return rv_error;
   }
 
-  if(NULL == dest || '\0' == dest[0])
+  if( !VALID_CSTR(dest) )
   {
     net_logf("NET ERROR: nfile_ReceiveQueue_add() - null destination file string.\n");
     return rv_error;
@@ -692,7 +692,7 @@ retval_t nfile_ReceiveQueue_add(NFileState * nfs, ENetEvent * event, char * dest
 
   // TransferTail should already be pointed at an open slot in the queue.
   state = queue->transferStates + queue->TransferTail;
-  assert(state->destName[0] == '\0');
+  assert(state->destName[0] == EOS);
 
   // initialize the state
   nfile_ReceiveInfo_alloc(state, event->packet->dataLength);
@@ -710,12 +710,12 @@ retval_t nfile_ReceiveQueue_add(NFileState * nfs, ENetEvent * event, char * dest
 }
 
 //--------------------------------------------------------------------------------------------
-//bool_t nfile_dispatchPackets(NetHost * nh)
+//bool_t nfile_dispatchPackets(NetHost_t * nh)
 //{
 //  ENetEvent event;
-//  CListIn_Info cin_info, *pcin_info;
-//  char hostName[64] = { '\0' };
-//  NetRequest * prequest;
+//  CListIn_Info_t cin_info, *pcin_info;
+//  char hostName[64] = { EOS };
+//  PacketRequest_t * prequest;
 //  size_t copy_size;
 //
 //  if(NULL ==nh->Host) return bfalse;
@@ -763,8 +763,8 @@ retval_t nfile_ReceiveQueue_add(NFileState * nfs, ENetEvent * event, char * dest
 //      net_logf("ENET_EVENT_TYPE_CONNECT\n");
 //
 //      cin_info.Address = event.peer->address;
-//      cin_info.Hostname[0] = '\0';
-//      cin_info.Name[0] = '\0';
+//      cin_info.Hostname[0] = EOS;
+//      cin_info.Name[0] = EOS;
 //
 //      // Look up the hostname the player is connecting from
 //      //enet_address_get_host(&event.peer->address, hostName, 64);
@@ -817,7 +817,7 @@ retval_t nfile_ReceiveQueue_add(NFileState * nfs, ENetEvent * event, char * dest
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-int  net_pendingFileTransfers(nfile_SendQueue * queue)
+int  net_pendingFileTransfers(nfile_SendQueue_t * queue)
 {
   if(!EKEY_PVALID(queue )) return 0;
 
@@ -825,7 +825,7 @@ int  net_pendingFileTransfers(nfile_SendQueue * queue)
 }
 
 //------------------------------------------------------------------------------
-static retval_t net_doFileTransfer(nfile_SendInfo *state)
+static retval_t net_doFileTransfer(nfile_SendInfo_t *state)
 {
   ENetPacket *packet;
   size_t nameLen, fileSize;
@@ -912,7 +912,7 @@ retval_t nfhost_startThreads()
   // BB > start the main packet hosting thread and
   //      start the worker threads
 
-  NetHost * nh;
+  NetHost_t * nh;
   retval_t retval, snd_return, rec_return;
 
   // fail to start
@@ -954,9 +954,9 @@ retval_t nfhost_stopThreads()
 {
   // BB > do cleanup when exiting the "net file" thread
 
-  nfile_SendState    * snd;
-  nfile_ReceiveState * rec;
-  NetHost * nh = nfile_getHost();
+  nfile_SendState_t    * snd;
+  nfile_ReceiveState_t * rec;
+  NetHost_t * nh = nfile_getHost();
 
 
   // bad parameters
@@ -995,13 +995,13 @@ retval_t nfhost_stopThreads()
 //--------------------------------------------------------------------------------------------
 int nfhost_HostCallback(void * data)
 {
-  NetHost   * nf_host;
-  NetThread * nthread;
+  NetHost_t   * nf_host;
+  NetThread_t * nthread;
   retval_t   dispatch_return;
 
   retval_t retval;
 
-  nf_host = (NetHost *)data;
+  nf_host = (NetHost_t *)data;
 
   // try to start
   net_logf("NET INFO: nfhost_HostCallback() thread - starting... ");
@@ -1056,7 +1056,7 @@ int nfhost_HostCallback(void * data)
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 
-retval_t nfile_SendState_startThread(nfile_SendState * snd)
+retval_t nfile_SendState_startThread(nfile_SendState_t * snd)
 {
   // BB > start the "send file" worker thread
 
@@ -1083,7 +1083,7 @@ retval_t nfile_SendState_startThread(nfile_SendState * snd)
 }
 
 //------------------------------------------------------------------------------
-retval_t nfile_SendState_stopThread(nfile_SendState * snd)
+retval_t nfile_SendState_stopThread(nfile_SendState_t * snd)
 {
   // BB > do cleanup when exiting a "send file" worker thread
 
@@ -1106,7 +1106,7 @@ retval_t nfile_SendState_stopThread(nfile_SendState * snd)
 
 
 //------------------------------------------------------------------------------
-retval_t nfile_ReceiveState_startThread(nfile_ReceiveState * rec)
+retval_t nfile_ReceiveState_startThread(nfile_ReceiveState_t * rec)
 {
   // BB > start the "send file" worker thread
 
@@ -1133,7 +1133,7 @@ retval_t nfile_ReceiveState_startThread(nfile_ReceiveState * rec)
 }
 
 //------------------------------------------------------------------------------
-retval_t nfile_ReceiveState_stopThread(nfile_ReceiveState * rec)
+retval_t nfile_ReceiveState_stopThread(nfile_ReceiveState_t * rec)
 {
   // BB > do cleanup when exiting a "receive file" worker thread
 
@@ -1157,17 +1157,17 @@ retval_t nfile_ReceiveState_stopThread(nfile_ReceiveState * rec)
 //------------------------------------------------------------------------------
 int _nfile_sendCallback(void * data)
 {
-  NetHost        * nh;
-  nfile_SendState * sfs;
-  nfile_SendQueue * queue;
-  nfile_SendInfo *state;
+  NetHost_t        * nh;
+  nfile_SendState_t * sfs;
+  nfile_SendQueue_t * queue;
+  nfile_SendInfo_t *state;
   SYS_PACKET egopkt;
   int rand_idx;
   Uint32 CRC;
   retval_t retval, wait_return;
   bool_t advance_head = bfalse;
 
-  sfs = (nfile_SendState *)data;
+  sfs = (nfile_SendState_t *)data;
 
   // try to start
   net_logf("NET INFO: _nfile_sendCallback() thread - starting... ");
@@ -1213,7 +1213,7 @@ int _nfile_sendCallback(void * data)
     if (fs_fileIsDirectory(state->sourceName))
     {
       // grab the host
-      NetHost * nh  = nfile_getHost();
+      NetHost_t * nh  = nfile_getHost();
 
       // Tell the target to create a directory
       net_logf("NET INFO: net_updateFileTranfers: Creating directory %s on target... ", state->destName);
@@ -1291,7 +1291,7 @@ int _nfile_sendCallback(void * data)
       if(advance_head)
       {
         // update transfer queue state
-        memset(state, 0, sizeof(nfile_SendInfo));
+        memset(state, 0, sizeof(nfile_SendInfo_t));
         queue->TransferHead++;
         queue->numTransfers--;
         if (queue->TransferHead >= NET_MAX_FILE_TRANSFERS)
@@ -1326,16 +1326,16 @@ int _nfile_sendCallback(void * data)
 //------------------------------------------------------------------------------
 int _nfile_receiveCallback(void * data)
 {
-  nfile_ReceiveState * rfs;
-  nfile_ReceiveQueue * queue;
-  nfile_ReceiveInfo  * state;
+  nfile_ReceiveState_t * rfs;
+  nfile_ReceiveQueue_t * queue;
+  nfile_ReceiveInfo_t  * state;
   FILE *file;
   SYS_PACKET egopkt;
   bool_t succeed;
-  bool_t handled;
+  bool_t handled = bfalse;
   retval_t retval;
 
-  rfs = (nfile_ReceiveState *)data;
+  rfs = (nfile_ReceiveState_t *)data;
 
   // try to start
   net_logf("NET INFO: _nfile_receiveCallback() thread - starting... ");
@@ -1460,11 +1460,11 @@ int _nfile_receiveCallback(void * data)
 
 
 //------------------------------------------------------------------------------
-retval_t nfile_SendQueue_add(NFileState * nfs, ENetAddress * target_address, char *source, char *dest)
+retval_t nfile_SendQueue_add(NFileState_t * nfs, ENetAddress * target_address, char *source, char *dest)
 {
   int temp_tail;
-  nfile_SendQueue * queue = NULL;
-  nfile_SendInfo  * state = NULL;
+  nfile_SendQueue_t * queue = NULL;
+  nfile_SendInfo_t  * state = NULL;
 
   if( NULL == nfs || NULL == nfs->host->Host )
   {
@@ -1472,13 +1472,13 @@ retval_t nfile_SendQueue_add(NFileState * nfs, ENetAddress * target_address, cha
     return rv_error;
   }
 
-  if(NULL == source || '\0' == source[0])
+  if( !VALID_CSTR(source) )
   {
     net_logf("NET ERROR: nfile_SendQueue_add() - null source file.\n");
     return rv_error;
   }
 
-  if(NULL == dest || '\0' == dest[0])
+  if( !VALID_CSTR(dest) )
   {
     net_logf("NET ERROR: nfile_SendQueue_add() - null dest file.\n");
     return rv_error;
@@ -1526,7 +1526,7 @@ retval_t nfile_SendQueue_add(NFileState * nfs, ENetAddress * target_address, cha
 //--------------------------------------------------------------------------------------------
 retval_t nfhost_checkCRC(ENetPeer * peer, const char * source, Uint32 seed, Uint32 CRC)
 {
-  NetHost * nh;
+  NetHost_t * nh;
   Uint8  buffer[NET_REQ_SIZE];
   SYS_PACKET egopkt;
   Uint32* usp, temp_CRC = 0;
@@ -1538,7 +1538,7 @@ retval_t nfhost_checkCRC(ENetPeer * peer, const char * source, Uint32 seed, Uint
     return rv_error;
   }
 
-  if(NULL == source || '\0' == source[0])
+  if( !VALID_CSTR(source) )
   {
     net_logf("NET ERROR: nfhost_checkCRC() - null source file.\n");
     return rv_error;
@@ -1596,21 +1596,21 @@ retval_t nfhost_checkCRC(ENetPeer * peer, const char * source, Uint32 seed, Uint
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
-nfile_SendQueue * nfile_SendQueue_new(nfile_SendQueue * q)
+nfile_SendQueue_t * nfile_SendQueue_new(nfile_SendQueue_t * q)
 {
   //fprintf( stdout, "nfile_SendQueue_new()\n");
 
   if(NULL == q || EKEY_PVALID(q)) return q;
 
-  memset(q, 0, sizeof(nfile_SendQueue));
+  memset(q, 0, sizeof(nfile_SendQueue_t));
 
-  EKEY_PNEW(q, nfile_SendQueue);
+  EKEY_PNEW(q, nfile_SendQueue_t);
 
   return q;
 };
 
 //------------------------------------------------------------------------------
-bool_t nfile_SendQueue_delete(nfile_SendQueue * q)
+bool_t nfile_SendQueue_delete(nfile_SendQueue_t * q)
 {
   if(NULL == q) return bfalse;
 
@@ -1626,14 +1626,14 @@ bool_t nfile_SendQueue_delete(nfile_SendQueue * q)
 }
 
 //------------------------------------------------------------------------------
-nfile_SendQueue * nfile_SendQueue_renew(nfile_SendQueue * q)
+nfile_SendQueue_t * nfile_SendQueue_renew(nfile_SendQueue_t * q)
 {
   nfile_SendQueue_delete(q);
   return nfile_SendQueue_new(q);
 }
 
 //------------------------------------------------------------------------------
-nfile_ReceiveQueue * nfile_ReceiveQueue_new(nfile_ReceiveQueue * q)
+nfile_ReceiveQueue_t * nfile_ReceiveQueue_new(nfile_ReceiveQueue_t * q)
 {
   //fprintf( stdout, "nfile_ReceiveQueue_new()\n");
 
@@ -1641,15 +1641,15 @@ nfile_ReceiveQueue * nfile_ReceiveQueue_new(nfile_ReceiveQueue * q)
 
   nfile_ReceiveQueue_delete(q);
 
-  memset(q, 0, sizeof(nfile_ReceiveQueue));
+  memset(q, 0, sizeof(nfile_ReceiveQueue_t));
 
-  EKEY_PNEW(q, nfile_ReceiveQueue);
+  EKEY_PNEW(q, nfile_ReceiveQueue_t);
 
   return q;
 };
 
 //------------------------------------------------------------------------------
-bool_t nfile_ReceiveQueue_delete(nfile_ReceiveQueue * q)
+bool_t nfile_ReceiveQueue_delete(nfile_ReceiveQueue_t * q)
 {
   if(NULL == q) return bfalse;
 
@@ -1665,7 +1665,7 @@ bool_t nfile_ReceiveQueue_delete(nfile_ReceiveQueue * q)
 }
 
 //------------------------------------------------------------------------------
-nfile_ReceiveQueue * nfile_ReceiveQueue_renew(nfile_ReceiveQueue * q)
+nfile_ReceiveQueue_t * nfile_ReceiveQueue_renew(nfile_ReceiveQueue_t * q)
 {
   nfile_ReceiveQueue_delete(q);
   return nfile_ReceiveQueue_new(q);
@@ -1674,8 +1674,8 @@ nfile_ReceiveQueue * nfile_ReceiveQueue_renew(nfile_ReceiveQueue * q)
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
-// nfile module NetHost singleton management
-NetHost * nfile_getHost()
+// nfile module NetHost_t singleton management
+NetHost_t * nfile_getHost()
 {
   // make sure the host exists
   if(NULL == _nfile_host)
@@ -1729,7 +1729,7 @@ void _nfile_Quit(void)
 //------------------------------------------------------------------------------
 retval_t _nfile_startUp(void)
 {
-  NetHost * nh = nfile_getHost();
+  NetHost_t * nh = nfile_getHost();
   if(NULL == nh) return rv_fail;
 
   NetHost_startUp(nh, NET_EGOBOO_NETWORK_PORT);
@@ -1750,8 +1750,8 @@ bool_t nfile_Started()  { return (NULL != _nfile_host) && _nfile_host->nthread.A
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
-// nfile module nfile_SendState singleton management
-nfile_SendState * _nfile_getSend()
+// nfile module nfile_SendState_t singleton management
+nfile_SendState_t * _nfile_getSend()
 {
   // make sure the host exists
   if(NULL == _nfile_snd)
@@ -1776,7 +1776,7 @@ retval_t _nfile_Send_initialize()
 ////------------------------------------------------------------------------------
 //retval_t _nfile_SendState_startUp(void)
 //{
-//  nfile_SendState * snd = _nfile_getSend();
+//  nfile_SendState_t * snd = _nfile_getSend();
 //  if(NULL == snd) return rv_fail;
 //
 //  NetHost_startUp(snd, NET_EGOBOO_NETWORK_PORT);
@@ -1787,7 +1787,7 @@ retval_t _nfile_Send_initialize()
 ////------------------------------------------------------------------------------
 //retval_t _nfhost_shutDown(void)
 //{
-//  nfile_SendState * snd = nfile_getHost();
+//  nfile_SendState_t * snd = nfile_getHost();
 //  if(NULL == snd) return rv_fail;
 //
 //  return NetHost_shutDown(snd);
@@ -1798,8 +1798,8 @@ bool_t nfile_SendStarted()  { return (NULL != _nfile_snd) && _nfile_snd->nthread
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
-// nfile module nfile_ReceiveState singleton management
-nfile_ReceiveState * _nfile_getReceive()
+// nfile module nfile_ReceiveState_t singleton management
+nfile_ReceiveState_t * _nfile_getReceive()
 {
   // make sure the host exists
   if(NULL == _nfile_rec)
@@ -1813,7 +1813,7 @@ nfile_ReceiveState * _nfile_getReceive()
 //------------------------------------------------------------------------------
 retval_t _nfile_Receive_initialize()
 {
-  NetHost * nh;
+  NetHost_t * nh;
   if( NULL != _nfile_rec) return rv_succeed;
 
   nh = nfile_getHost();
@@ -1828,7 +1828,7 @@ retval_t _nfile_Receive_initialize()
 ////------------------------------------------------------------------------------
 //retval_t _nfile_ReceiveState_startUp(void)
 //{
-//  nfile_ReceiveState * rec = _nfile_getReceive();
+//  nfile_ReceiveState_t * rec = _nfile_getReceive();
 //  if(NULL == rec) return rv_fail;
 //
 //  NetHost_startUp(rec, NET_EGOBOO_NETWORK_PORT);
@@ -1839,7 +1839,7 @@ retval_t _nfile_Receive_initialize()
 ////------------------------------------------------------------------------------
 //retval_t _nfhost_shutDown(void)
 //{
-//  nfile_ReceiveState * rec = nfile_getHost();
+//  nfile_ReceiveState_t * rec = nfile_getHost();
 //  if(NULL == rec) return rv_fail;
 //
 //  return NetHost_shutDown(rec);

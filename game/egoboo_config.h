@@ -48,6 +48,12 @@
 #define NET_SLASH_STRING "/"
 #define NET_SLASH_CHAR   '/'
 
+// end-of-string character. assume standard null terminated string
+#define EOS '\0'
+
+#define EMPTY_CSTR(PSTR) ((NULL!=PSTR) && (EOS == PSTR[0]))
+#define VALID_CSTR(PSTR) ((NULL!=PSTR) && (EOS != PSTR[0]))
+
 #ifdef WIN32
 
     // Speeds up compile times a bit.  We don't need everything in windows.h

@@ -1,4 +1,4 @@
-/* Egoboo - Task.h
+/* Egoboo - Task_t.h
  * This code is not currently in use.
  */
 

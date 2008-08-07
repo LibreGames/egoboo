@@ -36,7 +36,7 @@
 #include "char.inl"
 #include "egoboo_math.inl"
 
-enum prt_ori_t
+enum e_prt_ori
 {
   ori_v,  // vertical
   ori_h,  // horizontal
@@ -44,7 +44,7 @@ enum prt_ori_t
   ori_b   // billboard
 };
 
-typedef enum prt_ori_t PRT_ORI;
+typedef enum e_prt_ori PRT_ORI;
 
 PRT_ORI particle_orientation[256] =
 {
@@ -66,7 +66,7 @@ PRT_ORI particle_orientation[256] =
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t calc_billboard( CGame * gs, GLVertex vrtlst[], GLVertex * vert, float size, Uint16 image);
+bool_t calc_billboard( Game_t * gs, GLVertex vrtlst[], GLVertex * vert, float size, Uint16 image);
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -78,7 +78,7 @@ GLint prt_attrib_close;
 
 void get_vectors( PRT_REF prt, vect3 * vert, vect3 * horiz, float * dist )
 {
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   CHR_REF chr;
   PIP_REF pip;
@@ -91,8 +91,8 @@ void get_vectors( PRT_REF prt, vect3 * vert, vect3 * horiz, float * dist )
   PRT_ORI ori;
   Uint32  image;
 
-  CPrt * pprt = PrtList_getPPrt(gs, prt);
-  CPip * ppip = PrtList_getPPip(gs, prt);
+  Prt_t * pprt = PrtList_getPPrt(gs, prt);
+  Pip_t * ppip = PrtList_getPPip(gs, prt);
 
   if ( NULL == pprt ) return;
 
@@ -234,7 +234,7 @@ void get_vectors( PRT_REF prt, vect3 * vert, vect3 * horiz, float * dist )
 //--------------------------------------------------------------------------------------------
 void render_antialias_prt( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  CGame *gs = gfxState.gs;
+  Game_t *gs = gfxState.gs;
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -301,7 +301,7 @@ void render_antialias_prt( Uint32 vrtcount, GLVertex * vrtlist )
 //--------------------------------------------------------------------------------------------
 void render_solid_prt( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  CGame *gs = gfxState.gs;
+  Game_t *gs = gfxState.gs;
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -363,7 +363,7 @@ void render_solid_prt( Uint32 vrtcount, GLVertex * vrtlist )
 //--------------------------------------------------------------------------------------------
 void render_transparent_prt( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  CGame *gs = gfxState.gs;
+  Game_t *gs = gfxState.gs;
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -427,7 +427,7 @@ void render_transparent_prt( Uint32 vrtcount, GLVertex * vrtlist )
 
 
 //--------------------------------------------------------------------------------------------
-bool_t calc_billboard(CGame * gs, GLVertex vrtlst[], GLVertex * vert, float size, Uint16 image)
+bool_t calc_billboard(Game_t * gs, GLVertex vrtlst[], GLVertex * vert, float size, Uint16 image)
 {
   if(NULL == vrtlst || NULL == vert) return bfalse;
 
@@ -486,8 +486,8 @@ bool_t calc_billboard(CGame * gs, GLVertex vrtlst[], GLVertex * vert, float size
 //--------------------------------------------------------------------------------------------
 void render_light_prt( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  CGame *gs = gfxState.gs;
-  CPrt   *pprt;
+  Game_t *gs = gfxState.gs;
+  Prt_t   *pprt;
 
   GLVertex vtlist[4];
   GLvector color_component;
@@ -592,7 +592,7 @@ void render_particles()
 {
   // ZZ> This function draws the sprites for particle systems
 
-  CGame *gs = gfxState.gs;
+  Game_t *gs = gfxState.gs;
 
   GLVertex v[PRTLST_COUNT];
   Uint16 numparticle;
@@ -653,7 +653,7 @@ void render_particles()
 //--------------------------------------------------------------------------------------------
 void render_antialias_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  CGame *gs = gfxState.gs;
+  Game_t *gs = gfxState.gs;
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -719,7 +719,7 @@ void render_antialias_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 //--------------------------------------------------------------------------------------------
 void render_solid_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  CGame *gs = gfxState.gs;
+  Game_t *gs = gfxState.gs;
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -782,7 +782,7 @@ void render_solid_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 //--------------------------------------------------------------------------------------------
 void render_transparent_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  CGame *gs = gfxState.gs;
+  Game_t *gs = gfxState.gs;
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -847,7 +847,7 @@ void render_transparent_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 //--------------------------------------------------------------------------------------------
 void render_light_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  CGame *gs = gfxState.gs;
+  Game_t *gs = gfxState.gs;
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -911,7 +911,8 @@ void render_particle_reflections()
 {
   // ZZ> This function draws the sprites for particle systems
 
-  CGame *gs = gfxState.gs;
+  Game_t * gs    = gfxState.gs;
+  Mesh_t * pmesh = Game_getMesh(gs);
 
   GLVertex v[PRTLST_COUNT];
   Uint16 numparticle;
@@ -927,7 +928,7 @@ void render_particle_reflections()
   {
     if ( !ACTIVE_PRT( gs->PrtList, prt_cnt ) || !gs->PrtList[prt_cnt].inview || gs->PrtList[prt_cnt].size_fp8 == 0 ) continue;
 
-    if ( mesh_has_some_bits( gs->Mesh_Mem.fanlst, gs->PrtList[prt_cnt].onwhichfan, MPDFX_SHINY ) )
+    if ( mesh_has_some_bits( pmesh->Mem.tilelst, gs->PrtList[prt_cnt].onwhichfan, MPDFX_SHINY ) )
     {
       level = gs->PrtList[prt_cnt].level;
       v[numparticle].pos.x = gs->PrtList[prt_cnt].ori.pos.x;

@@ -6,18 +6,18 @@
 #include "graphic.h"
 #include "game.h"
 
-extern KeyboardBuffer _keybuff;
+extern KeyboardBuffer_t _keybuff;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-struct control_data_t
+struct s_control_data
 {
   Uint32 value;             // The scancode or mask
   bool_t is_key;            // Is it a key?
 };
 
-typedef struct control_data_t CONTROL_DATA;
+typedef struct s_control_data CONTROL_DATA;
 
 CONTROL_DATA control_list[INPUT_COUNT][CONTROL_COUNT];
 
@@ -86,7 +86,7 @@ INLINE bool_t control_joy_is_pressed( int joy_num, CONTROL control )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE CHR_REF PlaList_getRChr( CGame * gs, PLA_REF iplayer )
+INLINE CHR_REF PlaList_getRChr( Game_t * gs, PLA_REF iplayer )
 {
   if ( !VALID_PLA( gs->PlaList, iplayer ) ) return INVALID_CHR;
 

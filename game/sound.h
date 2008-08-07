@@ -8,7 +8,7 @@
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 
-struct CGame_t;
+struct sGame;
 
 //------------------------------------------------------------------------------
 
@@ -22,7 +22,7 @@ struct CGame_t;
 
 #define FIX_SOUND(XX) ((((XX)<0) || ((XX)>=MAXWAVE)) ? INVALID_SOUND : (XX))
 
-enum global_sound_t
+enum e_global_sound
 {
   GSOUND_COINGET = 0,              // 0 - Pick up coin
   GSOUND_DEFEND,                   // 1 - Defend clank
@@ -35,16 +35,16 @@ enum global_sound_t
 
 //------------------------------------------------------------------------------
 
-struct ConfigData_t;
+struct sConfigData;
 
 //------------------------------------------------------------------------------
 
 //Music using SDL_Mixer
 #define MAXPLAYLISTLENGTH   25      // Max number of different tracks loaded into memory
 
-struct sound_state_t
+struct sSoundState
 {
-  egoboo_key  ekey;                  // egoboo_key valid if SoundState_new() been run on this data
+  egoboo_key_t  ekey;                  // egoboo_key_t valid if SoundState_new() been run on this data
   bool_t      mixer_loaded;          // Is the SDL_Mixer loaded?
   bool_t      music_loaded;          // Is the music loaded in memory?
 
@@ -64,23 +64,23 @@ struct sound_state_t
   Mix_Music * mus_list[MAXPLAYLISTLENGTH]; // This is a specific music file loaded into memory
 
 };
-typedef struct sound_state_t SoundState;
+typedef struct sSoundState SoundState_t;
 
-extern SoundState sndState;
+extern SoundState_t sndState;
 
 //------------------------------------------------------------------------------
 
-bool_t snd_initialize(struct ConfigData_t * cd);
+bool_t snd_initialize(struct sConfigData * cd);
 bool_t snd_quit();
-bool_t snd_synchronize(struct ConfigData_t * cd);
-SoundState * snd_getState(struct ConfigData_t * cd);
+bool_t snd_synchronize(struct sConfigData * cd);
+SoundState_t * snd_getState(struct sConfigData * cd);
 
 bool_t snd_reopen();
 bool_t snd_unload_music();
 void snd_stop_music(int fadetime);
 void snd_apply_mods( int channel, float intensity, vect3 snd_pos, vect3 ear_pos, Uint16 ear_turn_lr  );
-int snd_play_sound( struct CGame_t * gs, float intensity, vect3 pos, Mix_Chunk *loadedwave, int loops, OBJ_REF whichobject, int soundnumber);
+int snd_play_sound( struct sGame * gs, float intensity, vect3 pos, Mix_Chunk *loadedwave, int loops, OBJ_REF whichobject, int soundnumber);
 void snd_stop_sound( int whichchannel );
 void snd_play_music( int songnumber, int fadetime, int loops );
-int snd_play_particle_sound( struct CGame_t * gs, float intensity, PRT_REF particle, Sint8 sound );
+int snd_play_particle_sound( struct sGame * gs, float intensity, PRT_REF particle, Sint8 sound );
 

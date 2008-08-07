@@ -33,17 +33,15 @@
 #include "particle.inl"
 #include "egoboo_types.inl"
 
-
-MESH_TILE    Mesh_Tile[MAXTILETYPE];
-MESH_COMMAND Mesh_Cmd[MAXMESHTYPE];
-
+TILE_TXBOX       gTileTxBox[MAXTILETYPE];
+TileDictionary_t gTileDict;
 
 //--------------------------------------------------------------------------------------------
-bool_t reset_bumplist(MESH_INFO * pmesh)
+bool_t reset_bumplist(MeshInfo_t * mi)
 {
   int i;
 
-  BUMPLIST  * pbump  = &(pmesh->bumplist);
+  BUMPLIST  * pbump  = &(mi->bumplist);
 
   if(!pbump->allocated) return bfalse;
 
@@ -63,9 +61,9 @@ bool_t reset_bumplist(MESH_INFO * pmesh)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t allocate_bumplist(MESH_INFO * pmesh, int blocks)
+bool_t allocate_bumplist(MeshInfo_t * mi, int blocks)
 {
-  BUMPLIST * pbump  = &(pmesh->bumplist);
+  BUMPLIST * pbump  = &(mi->bumplist);
 
   if(!EKEY_PVALID(pbump)) bumplist_new(pbump);
 
@@ -77,14 +75,14 @@ bool_t allocate_bumplist(MESH_INFO * pmesh, int blocks)
     pbump->free_lst = (Uint32       *)calloc( pbump->free_count, sizeof(Uint32));
     pbump->node_lst = (BUMPLIST_NODE*)calloc( pbump->free_count, sizeof(BUMPLIST_NODE));
 
-    reset_bumplist(pmesh);
+    reset_bumplist(mi);
   }
 
   return btrue;
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t load_mesh( CGame * gs, char *modname )
+bool_t load_mesh( Game_t * gs, char *modname )
 {
   // ZZ> This function loads the "LEVEL.MPD" file
 
@@ -96,9 +94,10 @@ bool_t load_mesh( CGame * gs, char *modname )
   int numvert, numfan;
   int vert, vrt;
 
-  MeshMem   * mem     = &(gs->Mesh_Mem);
-  MESH_INFO * mi      = &(gs->mesh);
-  MESH_FAN  * mf_list;
+  Mesh_t      * pmesh   = Game_getMesh(gs);
+  MeshMem_t   * mem     = &(pmesh->Mem);
+  MeshInfo_t  * mi      = &(pmesh->Info);
+  MeshTile_t  * mf_list;
 
   snprintf( newloadname, sizeof( newloadname ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.mesh_file );
   fileread = fs_fileOpen( PRI_NONE, NULL, newloadname, "rb" );
@@ -117,7 +116,7 @@ bool_t load_mesh( CGame * gs, char *modname )
   }
 
   // wait until fanlist is allocated!
-  mf_list = mem->fanlst;
+  mf_list = mem->tilelst;
 
   mi->edge_x = mi->size_x * 128;
   mi->edge_y = mi->size_y * 128;
@@ -185,9 +184,9 @@ bool_t load_mesh( CGame * gs, char *modname )
   make_fanstart( mi );
 
   vert = 0;
-  for ( fan = 0; fan < mem->fan_count; fan++ )
+  for ( fan = 0; fan < mem->tile_count; fan++ )
   {
-    int vrtcount = Mesh_Cmd[mf_list[fan].type].vrt_count;
+    int vrtcount = pmesh->TileDict[mf_list[fan].type].vrt_count;
     int vrtstart = vert;
 
     mf_list[fan].vrt_start = vrtstart;
@@ -216,7 +215,7 @@ bool_t load_mesh( CGame * gs, char *modname )
 //--------------------------------------------------------------------------------------------
 #define TX_FUDGE 0.5f
 
-bool_t load_mesh_fans()
+bool_t load_mesh_fans(TileDictionary_t * pdict)
 {
   // ZZ> This function loads fan types for the terrain
 
@@ -229,8 +228,8 @@ bool_t load_mesh_fans()
   entry = 0;
   while ( entry < MAXMESHTYPE )
   {
-    Mesh_Cmd[entry].vrt_count = 0;
-    Mesh_Cmd[entry].cmd_count = 0;
+    (*pdict)[entry].vrt_count = 0;
+    (*pdict)[entry].cmd_count = 0;
     entry++;
   }
 
@@ -252,35 +251,35 @@ bool_t load_mesh_fans()
   for ( /* nothing */; fantype < numfantype; fantype++, bigfantype++ )
   {
     vertices                       =
-    Mesh_Cmd[   fantype].vrt_count =
-    Mesh_Cmd[bigfantype].vrt_count = fget_next_int( fileread );  // Dupe
+    (*pdict)[   fantype].vrt_count =
+    (*pdict)[bigfantype].vrt_count = fget_next_int( fileread );  // Dupe
 
     for ( cnt = 0; cnt < vertices; cnt++ )
     {
-      Mesh_Cmd[   fantype].ref[cnt] =
-      Mesh_Cmd[bigfantype].ref[cnt] = fget_next_int( fileread );
+      (*pdict)[   fantype].ref[cnt] =
+      (*pdict)[bigfantype].ref[cnt] = fget_next_int( fileread );
 
-      Mesh_Cmd[   fantype].tx[cnt].u =
-      Mesh_Cmd[bigfantype].tx[cnt].u = fget_next_float( fileread );
+      (*pdict)[   fantype].tx[cnt].u =
+      (*pdict)[bigfantype].tx[cnt].u = fget_next_float( fileread );
 
-      Mesh_Cmd[   fantype].tx[cnt].v =
-      Mesh_Cmd[bigfantype].tx[cnt].v = fget_next_float( fileread );
+      (*pdict)[   fantype].tx[cnt].v =
+      (*pdict)[bigfantype].tx[cnt].v = fget_next_float( fileread );
     }
 
     numcommand                     =
-    Mesh_Cmd[   fantype].cmd_count =
-    Mesh_Cmd[bigfantype].cmd_count = fget_next_int( fileread );  // Dupe
+    (*pdict)[   fantype].cmd_count =
+    (*pdict)[bigfantype].cmd_count = fget_next_int( fileread );  // Dupe
 
     for ( entry = 0, command = 0; command < numcommand; command++ )
     {
       commandsize                            =
-      Mesh_Cmd[   fantype].cmd_size[command] =
-      Mesh_Cmd[bigfantype].cmd_size[command] = fget_next_int( fileread );  // Dupe
+      (*pdict)[   fantype].cmd_size[command] =
+      (*pdict)[bigfantype].cmd_size[command] = fget_next_int( fileread );  // Dupe
 
       for ( cnt = 0; cnt < commandsize; cnt++ )
       {
-        Mesh_Cmd[   fantype].vrt[entry] =
-        Mesh_Cmd[bigfantype].vrt[entry] = fget_next_int( fileread );  // Dupe
+        (*pdict)[   fantype].vrt[entry] =
+        (*pdict)[bigfantype].vrt[entry] = fget_next_int( fileread );  // Dupe
         entry++;
       }
     }
@@ -294,34 +293,34 @@ bool_t load_mesh_fans()
 
   for ( cnt = 0; cnt < MAXMESHTYPE / 2; cnt++ )
   {
-    for ( entry = 0; entry < Mesh_Cmd[cnt].vrt_count; entry++ )
+    for ( entry = 0; entry < (*pdict)[cnt].vrt_count; entry++ )
     {
-      Mesh_Cmd[cnt].tx[entry].u = ( TX_FUDGE + Mesh_Cmd[cnt].tx[entry].u * ( 31.0f - TX_FUDGE ) ) / 256.0f;
-      Mesh_Cmd[cnt].tx[entry].v = ( TX_FUDGE + Mesh_Cmd[cnt].tx[entry].v * ( 31.0f - TX_FUDGE ) ) / 256.0f;
+      (*pdict)[cnt].tx[entry].u = ( TX_FUDGE + (*pdict)[cnt].tx[entry].u * ( 31.0f - TX_FUDGE ) ) / 256.0f;
+      (*pdict)[cnt].tx[entry].v = ( TX_FUDGE + (*pdict)[cnt].tx[entry].v * ( 31.0f - TX_FUDGE ) ) / 256.0f;
     }
 
     // blank the unused values
     for ( /* nothing */; entry < MAXMESHVERTICES; entry++ )
     {
-      Mesh_Cmd[cnt].tx[entry].u = -1.0f;
-      Mesh_Cmd[cnt].tx[entry].v = -1.0f;
+      (*pdict)[cnt].tx[entry].u = -1.0f;
+      (*pdict)[cnt].tx[entry].v = -1.0f;
     }
   }
 
   // Correct silly Cartman 64-pixel-wide textures to Egoboo's 256 pixel wide textures
   for ( cnt = MAXMESHTYPE / 2; cnt < MAXMESHTYPE; cnt++ )
   {
-    for ( entry = 0; entry < Mesh_Cmd[cnt].vrt_count; entry++ )
+    for ( entry = 0; entry < (*pdict)[cnt].vrt_count; entry++ )
     {
-      Mesh_Cmd[cnt].tx[entry].u = ( TX_FUDGE  + Mesh_Cmd[cnt].tx[entry].u * ( 63.0f - TX_FUDGE ) ) / 256.0f;
-      Mesh_Cmd[cnt].tx[entry].v = ( TX_FUDGE  + Mesh_Cmd[cnt].tx[entry].v * ( 63.0f - TX_FUDGE ) ) / 256.0f;
+      (*pdict)[cnt].tx[entry].u = ( TX_FUDGE  + (*pdict)[cnt].tx[entry].u * ( 63.0f - TX_FUDGE ) ) / 256.0f;
+      (*pdict)[cnt].tx[entry].v = ( TX_FUDGE  + (*pdict)[cnt].tx[entry].v * ( 63.0f - TX_FUDGE ) ) / 256.0f;
     }
 
     // blank the unused values
     for ( /* nothing */; entry < MAXMESHVERTICES; entry++ )
     {
-      Mesh_Cmd[cnt].tx[entry].u = -1.0f;
-      Mesh_Cmd[cnt].tx[entry].v = -1.0f;
+      (*pdict)[cnt].tx[entry].u = -1.0f;
+      (*pdict)[cnt].tx[entry].v = -1.0f;
     }
   }
 
@@ -329,15 +328,15 @@ bool_t load_mesh_fans()
   // 64 tiles per texture, 4 textures
   for ( cnt = 0; cnt < MAXTILETYPE; cnt++ )
   {
-    Mesh_Tile[cnt].off.u = ( ( cnt >> 0 ) & 7 ) / 8.0f;
-    Mesh_Tile[cnt].off.v = ( ( cnt >> 3 ) & 7 ) / 8.0f;
+    gTileTxBox[cnt].off.u = ( ( cnt >> 0 ) & 7 ) / 8.0f;
+    gTileTxBox[cnt].off.v = ( ( cnt >> 3 ) & 7 ) / 8.0f;
   }
 
   return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-void make_fanstart(MESH_INFO * mi)
+void make_fanstart(MeshInfo_t * mi)
 {
   // ZZ> This function builds a look up table to ease calculating the
   //     fan number given an x,y pair
@@ -405,11 +404,13 @@ void make_twist()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mesh_calc_normal_fan( CGame * gs, int fan, vect3 * pnrm, vect3 * ppos )
+bool_t mesh_calc_normal_fan( Mesh_t * pmesh, PhysicsData_t * phys, int fan, vect3 * pnrm, vect3 * ppos )
 {
   bool_t retval = bfalse;
   Uint32 cnt;
   vect3 normal, position;
+
+  MeshMem_t * mm = &(pmesh->Mem);
 
   if ( INVALID_TILE == fan )
   {
@@ -423,29 +424,29 @@ bool_t mesh_calc_normal_fan( CGame * gs, int fan, vect3 * pnrm, vect3 * ppos )
   {
     float dzdx, dzdy, dx, dy;
     float z0, z1, z2, z3;
-    int vrtstart = gs->Mesh_Mem.fanlst[fan].vrt_start;
+    int vrtstart = mm->tilelst[fan].vrt_start;
 
     VectorClear( position.v );
     for ( cnt = 0; cnt < 4; cnt++ )
     {
-      position.x += gs->Mesh_Mem.vrt_x[vrtstart + cnt];
-      position.y += gs->Mesh_Mem.vrt_y[vrtstart + cnt];
-      position.z += gs->Mesh_Mem.vrt_z[vrtstart + cnt];
+      position.x += mm->vrt_x[vrtstart + cnt];
+      position.y += mm->vrt_y[vrtstart + cnt];
+      position.z += mm->vrt_z[vrtstart + cnt];
     };
     position.x /= 4.0f;
     position.y /= 4.0f;
     position.z /= 4.0f;
 
     dx = 1;
-    if ( gs->Mesh_Mem.vrt_x[vrtstart + 0] > gs->Mesh_Mem.vrt_x[vrtstart + 1] ) dx = -1;
+    if ( mm->vrt_x[vrtstart + 0] > mm->vrt_x[vrtstart + 1] ) dx = -1;
 
     dy = 1;
-    if ( gs->Mesh_Mem.vrt_y[vrtstart + 0] > gs->Mesh_Mem.vrt_y[vrtstart + 3] ) dy = -1;
+    if ( mm->vrt_y[vrtstart + 0] > mm->vrt_y[vrtstart + 3] ) dy = -1;
 
-    z0 = gs->Mesh_Mem.vrt_z[vrtstart + 0];
-    z1 = gs->Mesh_Mem.vrt_z[vrtstart + 1];
-    z2 = gs->Mesh_Mem.vrt_z[vrtstart + 2];
-    z3 = gs->Mesh_Mem.vrt_z[vrtstart + 3];
+    z0 = mm->vrt_z[vrtstart + 0];
+    z1 = mm->vrt_z[vrtstart + 1];
+    z2 = mm->vrt_z[vrtstart + 2];
+    z3 = mm->vrt_z[vrtstart + 3];
 
     // find the derivatives of the height function used to find level
     dzdx = 0.5f * ( z1 - z0 + z2 - z3 );
@@ -457,7 +458,7 @@ bool_t mesh_calc_normal_fan( CGame * gs, int fan, vect3 * pnrm, vect3 * ppos )
     normal.z =  dx * dy * MESH_FAN_TO_FLOAT( 1 );
 
     // orient the normal in the proper direction
-    if ( normal.z*gs->phys.gravity > 0.0f )
+    if ( normal.z * phys->gravity > 0.0f )
     {
       normal.x *= -1.0f;
       normal.y *= -1.0f;
@@ -484,10 +485,12 @@ bool_t mesh_calc_normal_fan( CGame * gs, int fan, vect3 * pnrm, vect3 * ppos )
 
 
 //--------------------------------------------------------------------------------------------
-bool_t mesh_calc_normal_pos( CGame * gs, int fan, vect3 pos, vect3 * pnrm )
+bool_t mesh_calc_normal_pos( Mesh_t * pmesh, PhysicsData_t * phys, int fan, vect3 pos, vect3 * pnrm )
 {
   bool_t retval = bfalse;
   vect3 normal;
+
+  MeshMem_t * mm = &(pmesh->Mem);
 
   if ( INVALID_TILE == fan )
   {
@@ -500,18 +503,18 @@ bool_t mesh_calc_normal_pos( CGame * gs, int fan, vect3 pos, vect3 * pnrm )
     float dzdx, dzdy, dx, dy;
     float z0, z1, z2, z3;
     float fx, fy;
-    int vrtstart = gs->Mesh_Mem.fanlst[fan].vrt_start;
+    int vrtstart = mm->tilelst[fan].vrt_start;
 
     dx = 1;
-    if ( gs->Mesh_Mem.vrt_x[vrtstart + 0] > gs->Mesh_Mem.vrt_x[vrtstart + 1] ) dx = -1;
+    if ( mm->vrt_x[vrtstart + 0] > mm->vrt_x[vrtstart + 1] ) dx = -1;
 
     dy = 1;
-    if ( gs->Mesh_Mem.vrt_y[vrtstart + 0] > gs->Mesh_Mem.vrt_y[vrtstart + 3] ) dy = -1;
+    if ( mm->vrt_y[vrtstart + 0] > mm->vrt_y[vrtstart + 3] ) dy = -1;
 
-    z0 = gs->Mesh_Mem.vrt_z[vrtstart + 0];
-    z1 = gs->Mesh_Mem.vrt_z[vrtstart + 1];
-    z2 = gs->Mesh_Mem.vrt_z[vrtstart + 2];
-    z3 = gs->Mesh_Mem.vrt_z[vrtstart + 3];
+    z0 = mm->vrt_z[vrtstart + 0];
+    z1 = mm->vrt_z[vrtstart + 1];
+    z2 = mm->vrt_z[vrtstart + 2];
+    z3 = mm->vrt_z[vrtstart + 3];
 
     pos.x = MESH_FLOAT_TO_FAN( pos.x );
     pos.y = MESH_FLOAT_TO_FAN( pos.y );
@@ -530,7 +533,7 @@ bool_t mesh_calc_normal_pos( CGame * gs, int fan, vect3 pos, vect3 * pnrm )
     normal.z =  dx * dy * MESH_FAN_TO_FLOAT( 1 );
 
     // orient the normal in the proper direction
-    if ( normal.z*gs->phys.gravity > 0.0f )
+    if ( normal.z*phys->gravity > 0.0f )
     {
       normal.x *= -1.0f;
       normal.y *= -1.0f;
@@ -552,13 +555,15 @@ bool_t mesh_calc_normal_pos( CGame * gs, int fan, vect3 pos, vect3 * pnrm )
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t mesh_calc_normal( CGame * gs, vect3 pos, vect3 * pnrm )
+bool_t mesh_calc_normal( Mesh_t * pmesh, PhysicsData_t * phys, vect3 pos, vect3 * pnrm )
 {
   bool_t retval = bfalse;
   Uint32 fan;
   vect3 normal;
 
-  fan = mesh_get_fan( &(gs->mesh), &(gs->Mesh_Mem), pos );
+  MeshMem_t * mm = &(pmesh->Mem);
+
+  fan = mesh_get_fan( pmesh, pos );
   if ( INVALID_FAN == fan )
   {
     normal.x = 0.0f;
@@ -570,18 +575,18 @@ bool_t mesh_calc_normal( CGame * gs, vect3 pos, vect3 * pnrm )
     float dzdx, dzdy, dx, dy;
     float z0, z1, z2, z3;
     float fx, fy;
-    int vrtstart = gs->Mesh_Mem.fanlst[fan].vrt_start;
+    int vrtstart = mm->tilelst[fan].vrt_start;
 
     dx = 1;
-    if ( gs->Mesh_Mem.vrt_x[vrtstart + 0] > gs->Mesh_Mem.vrt_x[vrtstart + 1] ) dx = -1;
+    if ( mm->vrt_x[vrtstart + 0] > mm->vrt_x[vrtstart + 1] ) dx = -1;
 
     dy = 1;
-    if ( gs->Mesh_Mem.vrt_y[vrtstart + 0] > gs->Mesh_Mem.vrt_y[vrtstart + 3] ) dy = -1;
+    if ( mm->vrt_y[vrtstart + 0] > mm->vrt_y[vrtstart + 3] ) dy = -1;
 
-    z0 = gs->Mesh_Mem.vrt_z[vrtstart + 0];
-    z1 = gs->Mesh_Mem.vrt_z[vrtstart + 1];
-    z2 = gs->Mesh_Mem.vrt_z[vrtstart + 2];
-    z3 = gs->Mesh_Mem.vrt_z[vrtstart + 3];
+    z0 = mm->vrt_z[vrtstart + 0];
+    z1 = mm->vrt_z[vrtstart + 1];
+    z2 = mm->vrt_z[vrtstart + 2];
+    z3 = mm->vrt_z[vrtstart + 3];
 
     pos.x = MESH_FLOAT_TO_FAN( pos.x );
     pos.y = MESH_FLOAT_TO_FAN( pos.y );
@@ -600,7 +605,7 @@ bool_t mesh_calc_normal( CGame * gs, vect3 pos, vect3 * pnrm )
     normal.z =  dx * dy * MESH_FAN_TO_FLOAT( 1 );
 
     // orient the normal in the proper direction
-    if ( normal.z*gs->phys.gravity > 0.0f )
+    if ( normal.z * phys->gravity > 0.0f )
     {
       normal.x *= -1.0f;
       normal.y *= -1.0f;
@@ -623,7 +628,7 @@ bool_t mesh_calc_normal( CGame * gs, vect3 pos, vect3 * pnrm )
 };
 
 //---------------------------------------------------------------------------------------------
-float mesh_get_level( MeshMem * mm, Uint32 fan, float x, float y, bool_t waterwalk, WATER_INFO * wi )
+float mesh_get_level( MeshMem_t * mm, Uint32 fan, float x, float y, bool_t waterwalk, WATER_INFO * wi )
 {
   // ZZ> This function returns the height of a point within a mesh fan, precise
   //     If waterwalk is nonzero and the fan is wi->y, then the level returned is the
@@ -642,10 +647,10 @@ float mesh_get_level( MeshMem * mm, Uint32 fan, float x, float y, bool_t waterwa
   fy = y - (( int ) y );
 
 
-  z0 = mm->vrt_z[mm->fanlst[fan].vrt_start + 0];
-  z1 = mm->vrt_z[mm->fanlst[fan].vrt_start + 1];
-  z2 = mm->vrt_z[mm->fanlst[fan].vrt_start + 2];
-  z3 = mm->vrt_z[mm->fanlst[fan].vrt_start + 3];
+  z0 = mm->vrt_z[mm->tilelst[fan].vrt_start + 0];
+  z1 = mm->vrt_z[mm->tilelst[fan].vrt_start + 1];
+  z2 = mm->vrt_z[mm->tilelst[fan].vrt_start + 2];
+  z3 = mm->vrt_z[mm->tilelst[fan].vrt_start + 3];
 
   zleft = ( z0 * ( 1.0f - fy ) + z3 * fy );
   zright = ( z1 * ( 1.0f - fy ) + z2 * fy );
@@ -653,7 +658,7 @@ float mesh_get_level( MeshMem * mm, Uint32 fan, float x, float y, bool_t waterwa
 
   if ( waterwalk )
   {
-    if ( NULL!=wi && wi->surfacelevel > zdone && mesh_has_some_bits( mm->fanlst, fan, MPDFX_WATER ) && wi->iswater )
+    if ( NULL!=wi && wi->surfacelevel > zdone && mesh_has_some_bits( mm->tilelst, fan, MPDFX_WATER ) && wi->iswater )
     {
       return wi->surfacelevel;
     }
@@ -663,7 +668,7 @@ float mesh_get_level( MeshMem * mm, Uint32 fan, float x, float y, bool_t waterwa
 }
 
 //--------------------------------------------------------------------------------------------
-static bool_t MeshMem_dealloc_verts(MeshMem * mem)
+static bool_t MeshMem_dealloc_verts(MeshMem_t * mem)
 {
   if(NULL ==mem) return bfalse;
 
@@ -687,7 +692,7 @@ static bool_t MeshMem_dealloc_verts(MeshMem * mem)
 }
 
 //--------------------------------------------------------------------------------------------
-static bool_t MeshMem_alloc_verts(MeshMem * mem, int vertcount)
+static bool_t MeshMem_alloc_verts(MeshMem_t * mem, int vertcount)
 {
   if(NULL == mem || 0 == vertcount) return bfalse;
 
@@ -718,38 +723,38 @@ static bool_t MeshMem_alloc_verts(MeshMem * mem, int vertcount)
 }
 
 //--------------------------------------------------------------------------------------------
-static bool_t MeshMem_dealloc_fans(MeshMem * mem)
+static bool_t MeshMem_dealloc_fans(MeshMem_t * mem)
 {
   if(NULL ==mem) return bfalse;
 
-  FREE ( mem->fanlst );
+  FREE ( mem->tilelst );
 
-  mem->fan_count  = 0;
+  mem->tile_count  = 0;
 
   return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-static bool_t MeshMem_alloc_fans(MeshMem * mem, int fancount)
+static bool_t MeshMem_alloc_fans(MeshMem_t * mem, int fancount)
 {
   if(NULL == mem || 0 == fancount) return bfalse;
 
   if(fancount<0) fancount = MAXMESHFAN;
-  if(mem->fan_count > fancount) return btrue;
+  if(mem->tile_count > fancount) return btrue;
 
   MeshMem_dealloc_fans(mem);
 
-  mem->fan_count = 0;
-  mem->fanlst = (MESH_FAN*)calloc( fancount, sizeof(MESH_FAN) );
-  if ( NULL == mem->fanlst ) return bfalse;
+  mem->tile_count = 0;
+  mem->tilelst = (MeshTile_t*)calloc( fancount, sizeof(MeshTile_t) );
+  if ( NULL == mem->tilelst ) return bfalse;
 
-  mem->fan_count  = fancount;
+  mem->tile_count  = fancount;
 
   return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-MeshMem * MeshMem_new(MeshMem * mem, int vertcount, int fancount)
+MeshMem_t * MeshMem_new(MeshMem_t * mem, int vertcount, int fancount)
 {
   // ZZ> This function gets a load of memory for the terrain mesh
 
@@ -757,9 +762,9 @@ MeshMem * MeshMem_new(MeshMem * mem, int vertcount, int fancount)
 
   MeshMem_delete( mem );
 
-  memset( mem, 0, sizeof(MeshMem) );
+  memset( mem, 0, sizeof(MeshMem_t) );
 
-  EKEY_PNEW( mem, MeshMem );
+  EKEY_PNEW( mem, MeshMem_t );
 
   if(fancount <0) fancount  = MAXMESHFAN;
 
@@ -773,7 +778,7 @@ MeshMem * MeshMem_new(MeshMem * mem, int vertcount, int fancount)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t MeshMem_delete(MeshMem * mem)
+bool_t MeshMem_delete(MeshMem_t * mem)
 {
   if(NULL == mem) return bfalse;
   if( !EKEY_PVALID(mem) ) return btrue;
@@ -789,28 +794,30 @@ bool_t MeshMem_delete(MeshMem * mem)
 
 
 //--------------------------------------------------------------------------------------------
-void set_fan_colorl( CGame * gs, int fan_x, int fan_y, int color )
+void set_fan_colorl( Game_t * gs, int fan_x, int fan_y, int color )
 {
   Uint32 cnt, fan, vert, numvert;
 
-  fan = mesh_convert_fan( &(gs->mesh), fan_x, fan_y );
+  Mesh_t * pmesh = Game_getMesh(gs);
+
+  fan = mesh_convert_fan( &(pmesh->Info), fan_x, fan_y );
   if ( INVALID_FAN == fan ) return;
 
-  vert = gs->Mesh_Mem.fanlst[fan].vrt_start;
+  vert = pmesh->Mem.tilelst[fan].vrt_start;
   cnt = 0;
-  numvert = Mesh_Cmd[gs->Mesh_Mem.fanlst[fan].type].vrt_count;
+  numvert = pmesh->TileDict[pmesh->Mem.tilelst[fan].type].vrt_count;
   while ( cnt < numvert )
   {
-    gs->Mesh_Mem.vrt_lr_fp8[vert] = color;
-    gs->Mesh_Mem.vrt_lg_fp8[vert] = color;
-    gs->Mesh_Mem.vrt_lb_fp8[vert] = color;
+    pmesh->Mem.vrt_lr_fp8[vert] = color;
+    pmesh->Mem.vrt_lg_fp8[vert] = color;
+    pmesh->Mem.vrt_lb_fp8[vert] = color;
     vert++;
     cnt++;
   }
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 mesh_hitawall( CGame * gs, vect3 pos, float size_x, float size_y, Uint32 collision_bits, vect3 * nrm )
+Uint32 mesh_hitawall( Mesh_t * pmesh, vect3 pos, float size_x, float size_y, Uint32 collision_bits, vect3 * nrm )
 {
   // ZZ> This function returns nonzero if <pos.x, pos.y> is in an invalid tile
 
@@ -840,10 +847,10 @@ Uint32 mesh_hitawall( CGame * gs, vect3 pos, float size_x, float size_y, Uint32 
       loc_pos.y = MESH_FAN_TO_INT( fan_y ) + ( 1 << 6 );
       loc_pos.z = pos.z;
 
-      fan = mesh_get_fan( &(gs->mesh), &(gs->Mesh_Mem), loc_pos );
+      fan = mesh_get_fan( pmesh, loc_pos );
       if ( INVALID_FAN != fan )
       {
-        bits = gs->Mesh_Mem.fanlst[ fan ].fx;
+        bits = pmesh->Mem.tilelst[ fan ].fx;
         pass |= bits;
 
         if( HAS_SOME_BITS(bits, collision_bits) && NULL != nrm)
@@ -856,9 +863,9 @@ Uint32 mesh_hitawall( CGame * gs, vect3 pos, float size_x, float size_y, Uint32 
           //if(lerp>0)
           {
             lerp = 1.0f;
-            nrm->x += lerp * twist_table[ gs->Mesh_Mem.fanlst[ fan ].twist ].nrm.x;
-            nrm->y += lerp * twist_table[ gs->Mesh_Mem.fanlst[ fan ].twist ].nrm.y;
-            nrm->z += lerp * twist_table[ gs->Mesh_Mem.fanlst[ fan ].twist ].nrm.z;
+            nrm->x += lerp * twist_table[ pmesh->Mem.tilelst[ fan ].twist ].nrm.x;
+            nrm->y += lerp * twist_table[ pmesh->Mem.tilelst[ fan ].twist ].nrm.y;
+            nrm->z += lerp * twist_table[ pmesh->Mem.tilelst[ fan ].twist ].nrm.z;
           }
         }
       }

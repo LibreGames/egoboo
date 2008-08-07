@@ -14,7 +14,7 @@
 
 //Camera control stuff
 
-struct camera_t
+struct sCamera
 {
   bool_t    exploremode;     // Explore mode?
 
@@ -47,9 +47,9 @@ struct camera_t
   GLmatrix  mProjectionBig;  // Larger projection matrix for frustum culling
 };
 
-typedef struct camera_t CAMERA;
+typedef struct sCamera Camera_t;
 
-extern CAMERA GCamera;
+extern Camera_t GCamera;
 
 extern float                   cornerx[4];                 // Render area corners
 extern float                   cornery[4];                 //

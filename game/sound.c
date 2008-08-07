@@ -36,13 +36,13 @@
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 
-SoundState _sndState = { bfalse };
+SoundState_t _sndState = { bfalse };
 
-static SoundState * SoundState_new(SoundState * ss, struct ConfigData_t * cd);
-static bool_t SoundState_synchronize(SoundState * ss, struct ConfigData_t * cd);
+static SoundState_t * SoundState_new(SoundState_t * ss, struct sConfigData * cd);
+static bool_t SoundState_synchronize(SoundState_t * ss, struct sConfigData * cd);
 
 //------------------------------------------------------------------------------
-SoundState * snd_getState(ConfigData * cd)
+SoundState_t * snd_getState(ConfigData_t * cd)
 {
   if( !EKEY_VALID(_sndState) )
   {
@@ -53,9 +53,9 @@ SoundState * snd_getState(ConfigData * cd)
 }
 
 //------------------------------------------------------------------------------
-bool_t snd_synchronize(struct ConfigData_t * cd)
+bool_t snd_synchronize(struct sConfigData * cd)
 {
-  SoundState * snd = snd_getState(cd);
+  SoundState_t * snd = snd_getState(cd);
 
   if(NULL == snd) return bfalse;
 
@@ -66,7 +66,7 @@ bool_t snd_synchronize(struct ConfigData_t * cd)
 
 //------------------------------------------------------------------------------
 //This function enables the use of SDL_Mixer functions, returns btrue if success
-bool_t snd_initialize(ConfigData * cd)
+bool_t snd_initialize(ConfigData_t * cd)
 {
   if(NULL == cd) return bfalse;
 
@@ -166,7 +166,7 @@ void snd_apply_mods( int channel, float intensity, vect3 snd_pos, vect3 ear_pos,
 };
 
 //------------------------------------------------------------------------------
-int snd_play_sound( CGame * gs, float intensity, vect3 pos, Mix_Chunk *loadedwave, int loops, OBJ_REF whichobject, int soundnumber)
+int snd_play_sound( Game_t * gs, float intensity, vect3 pos, Mix_Chunk *loadedwave, int loops, OBJ_REF whichobject, int soundnumber)
 {
   // ZF> This function plays a specified sound
   // (Or returns -1 (INVALID_CHANNEL) if it failed to play the sound)
@@ -202,7 +202,7 @@ int snd_play_sound( CGame * gs, float intensity, vect3 pos, Mix_Chunk *loadedwav
 }
 
 //--------------------------------------------------------------------------------------------
-int snd_play_particle_sound( CGame * gs, float intensity, PRT_REF particle, Sint8 sound )
+int snd_play_particle_sound( Game_t * gs, float intensity, PRT_REF particle, Sint8 sound )
 {
   int channel = INVALID_CHANNEL;
   OBJ_REF iobj;
@@ -288,7 +288,7 @@ void snd_stop_music(int fadetime)
 
 
 //------------------------------------------------------------------------------
-bool_t SoundState_synchronize(SoundState * snd, ConfigData * cd)
+bool_t SoundState_synchronize(SoundState_t * snd, ConfigData_t * cd)
 {
   // BB > update the current sound state from the config data
 
@@ -350,7 +350,7 @@ bool_t snd_reopen()
 
 
 //------------------------------------------------------------------------------
-bool_t SoundState_delete(SoundState * snd)
+bool_t SoundState_delete(SoundState_t * snd)
 {
   if(NULL == snd) return bfalse;
 
@@ -362,7 +362,7 @@ bool_t SoundState_delete(SoundState * snd)
 }
 
 //------------------------------------------------------------------------------
-SoundState * SoundState_new(SoundState * snd, ConfigData * cd)
+SoundState_t * SoundState_new(SoundState_t * snd, ConfigData_t * cd)
 {
   // BB > do a raw initialization of the sound state
 
@@ -372,9 +372,9 @@ SoundState * SoundState_new(SoundState * snd, ConfigData * cd)
 
   SoundState_delete(snd);
 
-  memset(snd, 0, sizeof(SoundState));
+  memset(snd, 0, sizeof(SoundState_t));
 
-  EKEY_PNEW(snd, SoundState);
+  EKEY_PNEW(snd, SoundState_t);
 
   snd->song_index  = -1;
   snd->frequency   = MIX_DEFAULT_FREQUENCY;

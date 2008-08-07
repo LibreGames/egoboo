@@ -46,7 +46,7 @@
 // the cl module info
 
 static bool_t    _cl_atexit_registered = bfalse;
-static NetHost * _cl_host = NULL;
+static NetHost_t * _cl_host = NULL;
 
 static retval_t  _cl_Initialize(void);
 static void      _cl_Quit(void);
@@ -54,23 +54,23 @@ static retval_t  _cl_startUp(void);
 static retval_t  _cl_shutDown(void);
 static int       _cl_HostCallback(void *);
 
-bool_t        CClient_Running(CClient * cs)  { return cl_Started() && !cs->waiting; }
+bool_t        CClient_Running(Client_t * cs)  { return cl_Started() && !cs->waiting; }
 
 static int _cl_HostCallback(void *);
 
-bool_t cl_handle_chr_spawn(CClient * cs, ENetEvent *event);
+bool_t cl_handle_chr_spawn(Client_t * cs, ENetEvent *event);
 
 
 //--------------------------------------------------------------------------------------------
-// private CClient initialization
-static CClient * CClient_new(CClient * cs, CGame * gs);
-static bool_t    CClient_delete(CClient * cs);
+// private Client_t initialization
+static Client_t * CClient_new(Client_t * cs, Game_t * gs);
+static bool_t    CClient_delete(Client_t * cs);
 
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-//retval_t cl_startUp(CClient * cs)
+//retval_t cl_startUp(Client_t * cs)
 //{
 //  retval_t host_return;
 //
@@ -96,7 +96,7 @@ static bool_t    CClient_delete(CClient * cs);
 //
 ////--------------------------------------------------------------------------------------------
 //
-//retval_t cl_shutDown(CClient * cs)
+//retval_t cl_shutDown(Client_t * cs)
 //{
 //  retval_t delete_return;
 //
@@ -116,9 +116,9 @@ static bool_t    CClient_delete(CClient * cs);
 //
 //--------------------------------------------------------------------------------------------
 
-retval_t CClient_startUp(CClient * cs)
+retval_t CClient_startUp(Client_t * cs)
 {
-  NetHost * cl_host;
+  NetHost_t * cl_host;
 
   // error trap bad inputs
   if ( !EKEY_PVALID(cs) || !EKEY_PVALID(cs->parent) ) return rv_error;
@@ -162,7 +162,7 @@ retval_t CClient_startUp(CClient * cs)
 };
 
 //--------------------------------------------------------------------------------------------
-retval_t CClient_shutDown(CClient * cs)
+retval_t CClient_shutDown(Client_t * cs)
 {
   if(NULL == cs) return rv_error;
 
@@ -191,14 +191,14 @@ retval_t CClient_shutDown(CClient * cs)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CClient * CClient_create(CGame * gs)
+Client_t * CClient_create(Game_t * gs)
 {
-  CClient * cs = (CClient *)calloc(1, sizeof(CClient));
+  Client_t * cs = (Client_t *)calloc(1, sizeof(Client_t));
   return CClient_new(cs, gs);
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CClient_destroy(CClient ** pcs)
+bool_t CClient_destroy(Client_t ** pcs)
 {
   bool_t retval;
 
@@ -212,7 +212,7 @@ bool_t CClient_destroy(CClient ** pcs)
 }
 
 //--------------------------------------------------------------------------------------------
-CClient * CClient_new(CClient * cs, CGame * gs)
+Client_t * CClient_new(Client_t * cs, Game_t * gs)
 {
   int cnt;
 
@@ -222,9 +222,9 @@ CClient * CClient_new(CClient * cs, CGame * gs)
 
   CClient_delete(cs);
 
-  memset( cs, 0, sizeof(CClient) );
+  memset( cs, 0, sizeof(Client_t) );
 
-  EKEY_PNEW(cs, CClient);
+  EKEY_PNEW(cs, Client_t);
 
   cs->parent         = gs;
   cs->gamePeer       = NULL;
@@ -245,7 +245,7 @@ CClient * CClient_new(CClient * cs, CGame * gs)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t CClient_delete(CClient * cs)
+bool_t CClient_delete(Client_t * cs)
 {
   if(NULL == cs) return bfalse;
 
@@ -262,9 +262,9 @@ bool_t CClient_delete(CClient * cs)
 }
 
 //--------------------------------------------------------------------------------------------
-CClient * CClient_renew(CClient * cs)
+Client_t * CClient_renew(Client_t * cs)
 {
-  CGame * gs;
+  Game_t * gs;
 
   if(NULL == cs) return cs;
 
@@ -281,9 +281,9 @@ void cl_frameStep()
 };
 
 //--------------------------------------------------------------------------------------------
-//bool_t cl_stopClient(CClient * cs)
+//bool_t cl_stopClient(Client_t * cs)
 //{
-//  NetHost * cl_host;
+//  NetHost_t * cl_host;
 //  if(NULL == cs) return bfalse;
 //  if (!net_Started()) return bfalse;
 //  if(cl_Started()) return btrue;
@@ -307,7 +307,7 @@ ENetPeer * cl_startPeer(const char* hostname)
   // BB > start the peer connection process, do not wait for confirmation
 
   ENetPeer * peer;
-  NetHost  * cs_host;
+  NetHost_t  * cs_host;
 
   // ensure a valid cs->host->Host
   if( !cl_Started() )
@@ -329,7 +329,7 @@ ENetPeer * cl_startPeer(const char* hostname)
 
 
 //--------------------------------------------------------------------------------------------
-//bool_t cl_connectRemote(CClient * cs, const char* hostname, int slot)
+//bool_t cl_connectRemote(Client_t * cs, const char* hostname, int slot)
 //{
 //  // ZZ> This function tries to connect onto a server
 //
@@ -365,7 +365,7 @@ ENetPeer * cl_startPeer(const char* hostname)
 //};
 //
 //--------------------------------------------------------------------------------------------
-bool_t CClient_disconnect(CClient * cs)
+bool_t CClient_disconnect(Client_t * cs)
 {
   if(NULL ==cs) return bfalse;
 
@@ -386,7 +386,7 @@ bool_t CClient_disconnect(CClient * cs)
 
 
 //--------------------------------------------------------------------------------------------
-bool_t CClient_connect(CClient * cs, const char* hostname)
+bool_t CClient_connect(Client_t * cs, const char* hostname)
 {
   // ZZ> This function tries to connect onto a server
 
@@ -399,7 +399,7 @@ bool_t CClient_connect(CClient * cs, const char* hostname)
     return bfalse;
   }
 
-  if( NULL == hostname || '\0' == hostname[0] )
+  if(  !VALID_CSTR(hostname)  )
   {
     net_logf("NET WARN: CClient_connect() - Called with null filename.\n");
     return bfalse;
@@ -452,7 +452,7 @@ bool_t CClient_connect(CClient * cs, const char* hostname)
 
 
 //--------------------------------------------------------------------------------------------
-retval_t CClient_joinGame(CClient * cs, const char * hostname)
+retval_t CClient_joinGame(Client_t * cs, const char * hostname)
 {
   // ZZ> This function tries to join one of the sessions we found
 
@@ -462,7 +462,7 @@ retval_t CClient_joinGame(CClient * cs, const char * hostname)
   Uint8    buffer[NET_REQ_SIZE];
 
   // throw away stupid stuff
-  if(NULL == cs || NULL == hostname || '\0' == hostname[0]) return rv_fail;
+  if(NULL == cs ||  !VALID_CSTR(hostname) ) return rv_fail;
 
   if ( !net_Started()  ) return rv_error;
   if ( !CClient_startUp(cs) ) return rv_fail;
@@ -497,9 +497,9 @@ retval_t CClient_joinGame(CClient * cs, const char * hostname)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t CClient_unjoinGame(CClient * cs)
+bool_t CClient_unjoinGame(Client_t * cs)
 {
-  NetHost * cl_host;
+  NetHost_t * cl_host;
   SYS_PACKET egopkt;
 
   if(NULL ==cs || !cl_Started()) return bfalse;
@@ -526,12 +526,12 @@ bool_t CClient_unjoinGame(CClient * cs)
 }
 
 //--------------------------------------------------------------------------------------------
-void CClient_talkToHost(CClient * cs)
+void CClient_talkToHost(Client_t * cs)
 {
   // ZZ> This function sends the latch packets to the host machine
   PLA_REF player;
   SYS_PACKET egopkt;
-  CGame * gs;
+  Game_t * gs;
 
   if(!cl_Started() || !net_Started()) return;
 
@@ -555,9 +555,9 @@ void CClient_talkToHost(CClient * cs)
 
       ichr = gs->PlaList[player].chr_ref;
       sys_packet_addUint16(&egopkt, REF_TO_INT(ichr));                                   // The character index
-      sys_packet_addUint8(&egopkt, cs->tlb.buffer[REF_TO_INT(ichr)][time].latch.b);         // CPlayer button states
-      sys_packet_addSint16 (&egopkt, cs->tlb.buffer[REF_TO_INT(ichr)][time].latch.x*SHORTLATCH);    // CPlayer motion
-      sys_packet_addSint16 (&egopkt, cs->tlb.buffer[REF_TO_INT(ichr)][time].latch.y*SHORTLATCH);    // CPlayer motion
+      sys_packet_addUint8(&egopkt, cs->tlb.buffer[REF_TO_INT(ichr)][time].latch.b);         // Player_t button states
+      sys_packet_addSint16 (&egopkt, cs->tlb.buffer[REF_TO_INT(ichr)][time].latch.x*SHORTLATCH);    // Player_t motion
+      sys_packet_addSint16 (&egopkt, cs->tlb.buffer[REF_TO_INT(ichr)][time].latch.y*SHORTLATCH);    // Player_t motion
     }
 
     // Send it to the host
@@ -566,16 +566,16 @@ void CClient_talkToHost(CClient * cs)
 }
 
 //--------------------------------------------------------------------------------------------
-void CClient_unbufferLatches(CClient * cs)
+void CClient_unbufferLatches(Client_t * cs)
 {
   // ZZ> This function sets character latches based on player input to the host
   CHR_REF chr_cnt;
   Uint32  uiTime, stamp;
   Sint32  dframes;
-  CChr  * pchr;
+  Chr_t  * pchr;
   CHR_TIME_LATCH * ptl;
 
-  CGame * gs = cs->parent;
+  Game_t * gs = cs->parent;
 
   // Copy the latches
   stamp = gs->wld_frame;
@@ -605,9 +605,9 @@ void CClient_unbufferLatches(CClient * cs)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t cl_handlePacket(CClient * cs, ENetEvent *event)
+bool_t cl_handlePacket(Client_t * cs, ENetEvent *event)
 {
-  CGame * gs;
+  Game_t * gs;
 
   Uint16 header;
   STRING filename;   // also used for reading various strings
@@ -893,7 +893,7 @@ bool_t cl_handlePacket(CClient * cs, ENetEvent *event)
 }
 
 //--------------------------------------------------------------------------------------------
-void CClient_reset_latches(CClient * cs)
+void CClient_reset_latches(Client_t * cs)
 {
   CHR_REF chr_cnt;
   if(NULL ==cs) return;
@@ -909,7 +909,7 @@ void CClient_reset_latches(CClient * cs)
 
 
 //--------------------------------------------------------------------------------------------
-void CClient_resetTimeLatches(CClient * cs, CHR_REF ichr)
+void CClient_resetTimeLatches(Client_t * cs, CHR_REF ichr)
 {
   int cnt;
   CHR_TIME_LATCH *ptl;
@@ -928,7 +928,7 @@ void CClient_resetTimeLatches(CClient * cs, CHR_REF ichr)
 };
 
 //--------------------------------------------------------------------------------------------
-void CClient_bufferLatches(CClient * cs)
+void CClient_bufferLatches(Client_t * cs)
 {
   // ZZ> This function buffers the player data
   Uint32 stamp, uiTime;
@@ -936,9 +936,9 @@ void CClient_bufferLatches(CClient * cs)
   CHR_REF ichr;
   CHR_TIME_LATCH *ptl;
 
-  CGame * gs     = cs->parent;
-  PChr chrlst = gs->ChrList;
-  PPla plalst = gs->PlaList;
+  Game_t * gs     = cs->parent;
+  PChr_t chrlst = gs->ChrList;
+  PPla_t plalst = gs->PlaList;
 
   stamp = gs->wld_frame + 1;
   uiTime = stamp & LAGAND;
@@ -963,12 +963,12 @@ void CClient_bufferLatches(CClient * cs)
 //--------------------------------------------------------------------------------------------
 int _cl_HostCallback(void * data)
 {
-  NetHost     * cl_host;
-  NetThread   * nthread;
+  NetHost_t     * cl_host;
+  NetThread_t   * nthread;
   retval_t      dispatch_return;
 
   // the client host is passed as the original argument
-  cl_host = (NetHost *)data;
+  cl_host = (NetHost_t *)data;
 
   // fail to start
   if(NULL == cl_host)
@@ -1001,12 +1001,12 @@ int _cl_HostCallback(void * data)
 }
 
 //--------------------------------------------------------------------------------------------
-//bool_t cl_dispatchPackets(CClient * cs)
+//bool_t cl_dispatchPackets(Client_t * cs)
 //{
 //  ENetEvent event;
-//  CListIn_Info cin_info, *pcin_info;
-//  char hostName[64] = { '\0' };
-//  NetRequest * prequest;
+//  CListIn_Info_t cin_info, *pcin_info;
+//  char hostName[64] = { EOS };
+//  PacketRequest_t * prequest;
 //  size_t copy_size;
 //
 //  if(NULL ==cs || !cl_Started()) return bfalse;
@@ -1055,8 +1055,8 @@ int _cl_HostCallback(void * data)
 //      net_logf("ENET_EVENT_TYPE_CONNECT\n");
 //
 //      cin_info.Address = event.peer->address;
-//      cin_info.Hostname[0] = '\0';
-//      cin_info.Name[0] = '\0';
+//      cin_info.Hostname[0] = EOS;
+//      cin_info.Name[0] = EOS;
 //
 //      // Look up the hostname the player is connecting from
 //      //enet_address_get_host(&event.peer->address, hostName, 64);
@@ -1106,7 +1106,7 @@ int _cl_HostCallback(void * data)
 //};
 
 //--------------------------------------------------------------------------------------------
-int cl_find_peer_index(CClient * cs)
+int cl_find_peer_index(Client_t * cs)
 {
   int i = -1;
 
@@ -1125,7 +1125,7 @@ int cl_find_peer_index(CClient * cs)
 
 
 //--------------------------------------------------------------------------------------------
-bool_t cl_begin_request_module(CClient * cs)
+bool_t cl_begin_request_module(Client_t * cs)
 {
   int i;
 
@@ -1138,7 +1138,7 @@ bool_t cl_begin_request_module(CClient * cs)
     cs->rem_req_info[i]  = bfalse;
     cs->rem_req_peer[i]  = NULL;
 
-    if('\0' != CData.net_hosts[i][0])
+    if(EOS != CData.net_hosts[i][0])
     {
       cs->rem_req_peer[i] = cl_startPeer(CData.net_hosts[i]);
     }
@@ -1149,7 +1149,7 @@ bool_t cl_begin_request_module(CClient * cs)
 
 
 //--------------------------------------------------------------------------------------------
-bool_t cl_end_request_module(CClient * cs)
+bool_t cl_end_request_module(Client_t * cs)
 {
   int i;
 
@@ -1174,7 +1174,7 @@ bool_t cl_end_request_module(CClient * cs)
 
 
 //--------------------------------------------------------------------------------------------
-void cl_request_module_info(CClient * cs)
+void cl_request_module_info(Client_t * cs)
 {
   // BB > begin the asynchronous transfer of hosted module info from each of the
   //      potential hosts
@@ -1205,13 +1205,13 @@ void cl_request_module_info(CClient * cs)
 
 
 //--------------------------------------------------------------------------------------------
-bool_t cl_load_module_info(CClient * cs)
+bool_t cl_load_module_info(Client_t * cs)
 {
   // BB > finish downloading any module info from a given host
 
   STREAM stream;
   MOD_INFO * mi;
-  NetRequest * req;
+  PacketRequest_t * req;
   bool_t none_waiting;
   int i;
 
@@ -1259,7 +1259,7 @@ bool_t cl_load_module_info(CClient * cs)
 }
 
 //--------------------------------------------------------------------------------------------
-void cl_request_module_images(CClient * cs)
+void cl_request_module_images(Client_t * cs)
 {
   // BB > send a request to the server to download the module images
   //      images will not be downloaded unless the local CRC does not match the
@@ -1272,7 +1272,7 @@ void cl_request_module_images(CClient * cs)
   // request the module info when/if the connection opens
   for (i = 0; i < MAXNETPLAYER; i++)
   {
-    STRING fname_temp = { '\0' };
+    STRING fname_temp = { EOS };
 
     if(NULL == cs->rem_req_peer[i]) continue;
     if(ENET_PEER_STATE_CONNECTED != cs->rem_req_peer[i]->state) continue;
@@ -1332,7 +1332,7 @@ void cl_request_module_images(CClient * cs)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t CClient_sendPacketToHost(CClient * cs, SYS_PACKET * egop)
+bool_t CClient_sendPacketToHost(Client_t * cs, SYS_PACKET * egop)
 {
   // ZZ> This function sends a packet to the host
 
@@ -1354,7 +1354,7 @@ bool_t CClient_sendPacketToHost(CClient * cs, SYS_PACKET * egop)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CClient_sendPacketToHostGuaranteed(CClient * cs, SYS_PACKET * egop)
+bool_t CClient_sendPacketToHostGuaranteed(Client_t * cs, SYS_PACKET * egop)
 {
   // ZZ> This function sends a packet to the host
 
@@ -1376,7 +1376,7 @@ bool_t CClient_sendPacketToHostGuaranteed(CClient * cs, SYS_PACKET * egop)
 }
 
 //--------------------------------------------------------------------------------------------
-size_t StatList_add( Status lst[], size_t lst_size, CHR_REF ichr )
+size_t StatList_add( Status_t lst[], size_t lst_size, CHR_REF ichr )
 {
   if ( lst_size < MAXSTAT )
   {
@@ -1390,11 +1390,12 @@ size_t StatList_add( Status lst[], size_t lst_size, CHR_REF ichr )
 };
 
 //--------------------------------------------------------------------------------------------
-void StatList_move_to_top( Status lst[], size_t lst_size, CHR_REF character )
+void StatList_move_to_top( Status_t lst[], size_t lst_size, CHR_REF character )
 {
   // ZZ> This function puts the character on top of the lst
 
-  int cnt, oldloc;
+  int cnt;
+  size_t oldloc;
 
   // Find where it is
   oldloc = lst_size;
@@ -1416,7 +1417,7 @@ void StatList_move_to_top( Status lst[], size_t lst_size, CHR_REF character )
     while ( oldloc > 0 )
     {
       oldloc--;
-      memcpy(lst + (oldloc+1),  lst + oldloc, sizeof(Status));
+      memcpy(lst + (oldloc+1),  lst + oldloc, sizeof(Status_t));
     }
     // Put the character in the top slot
     lst[0].chr_ref = character;
@@ -1427,7 +1428,7 @@ void StatList_move_to_top( Status lst[], size_t lst_size, CHR_REF character )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-Status * Status_new( Status * pstat )
+Status_t * Status_new( Status_t * pstat )
 {
   //fprintf( stdout, "Status_new()\n");
 
@@ -1435,9 +1436,9 @@ Status * Status_new( Status * pstat )
 
   Status_delete( pstat );
 
-  memset(pstat, 0, sizeof(Status));
+  memset(pstat, 0, sizeof(Status_t));
 
-  EKEY_PNEW( pstat, Status );
+  EKEY_PNEW( pstat, Status_t );
 
   pstat->on      = bfalse;
   pstat->chr_ref = INVALID_CHR;
@@ -1447,7 +1448,7 @@ Status * Status_new( Status * pstat )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t   Status_delete( Status * pstat )
+bool_t   Status_delete( Status_t * pstat )
 {
   if(NULL == pstat) return bfalse;
 
@@ -1461,7 +1462,7 @@ bool_t   Status_delete( Status * pstat )
 }
 
 //--------------------------------------------------------------------------------------------
-Status * Status_renew( Status * pstat )
+Status_t * Status_renew( Status_t * pstat )
 {
   Status_delete(pstat);
   return Status_new(pstat);
@@ -1469,7 +1470,7 @@ Status * Status_renew( Status * pstat )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t StatList_new( CClient * cs )
+bool_t StatList_new( Client_t * cs )
 {
   int i;
 
@@ -1485,7 +1486,7 @@ bool_t StatList_new( CClient * cs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t StatList_delete( CClient * cs )
+bool_t StatList_delete( Client_t * cs )
 {
   int i;
 
@@ -1501,7 +1502,7 @@ bool_t StatList_delete( CClient * cs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t StatList_renew( CClient * cs )
+bool_t StatList_renew( Client_t * cs )
 {
   int i;
 
@@ -1519,8 +1520,8 @@ bool_t StatList_renew( CClient * cs )
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
-// cl module NetHost singleton management
-NetHost * cl_getHost()
+// cl module NetHost_t singleton management
+NetHost_t * cl_getHost()
 {
   // make sure the host exists
   if(NULL == _cl_host)
@@ -1568,7 +1569,7 @@ void _cl_Quit(void)
 //------------------------------------------------------------------------------
 retval_t _cl_startUp(void)
 {
-  NetHost * nh = cl_getHost();
+  NetHost_t * nh = cl_getHost();
   if(NULL == nh) return rv_fail;
 
   return NetHost_startUp(nh, NET_EGOBOO_CLIENT_PORT);
@@ -1587,10 +1588,10 @@ bool_t cl_Started()  { return (NULL != _cl_host) && _cl_host->nthread.Active; }
 
 
 //------------------------------------------------------------------------------
-bool_t cl_handle_chr_spawn(CClient * cs, ENetEvent *event)
+bool_t cl_handle_chr_spawn(Client_t * cs, ENetEvent *event)
 {
   STREAM stream;
-  chr_spawn_info si;
+  CHR_SPAWN_INFO si;
   NET_PACKET netpkt;
   Uint16 ui16;
 

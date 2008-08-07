@@ -5,7 +5,7 @@
 #include "game.h"
 
 //--------------------------------------------------------------------------------------------
-INLINE CHR_REF team_get_sissy( CGame * gs, TEAM_REF iteam )
+INLINE CHR_REF team_get_sissy( Game_t * gs, TEAM_REF iteam )
 {
   if ( !VALID_TEAM_RANGE( iteam ) ) return INVALID_CHR;
 
@@ -14,7 +14,7 @@ INLINE CHR_REF team_get_sissy( CGame * gs, TEAM_REF iteam )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE CHR_REF team_get_leader( CGame * gs, TEAM_REF iteam )
+INLINE CHR_REF team_get_leader( Game_t * gs, TEAM_REF iteam )
 {
   if ( !VALID_TEAM_RANGE( iteam ) ) return INVALID_CHR;
 
@@ -108,7 +108,7 @@ INLINE const Uint16 slot_to_offset( SLOT s )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint16 slot_to_latch( PChr lst, size_t count, CHR_REF object, SLOT s )
+INLINE const Uint16 slot_to_latch( PChr_t lst, size_t count, CHR_REF object, SLOT s )
 {
   Uint16 latch = LATCHBUTTON_NONE;
   bool_t in_hand = bfalse;
@@ -129,18 +129,18 @@ INLINE const Uint16 slot_to_latch( PChr lst, size_t count, CHR_REF object, SLOT 
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE BData * BData_new(BData * b)
+INLINE BData_t * BData_new(BData_t * b)
 {
   if(NULL == b) return NULL;
 
-  memset(b, 0, sizeof(BData));
+  memset(b, 0, sizeof(BData_t));
   b->valid = bfalse;
 
   return b;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t BData_delete(BData * b)
+INLINE bool_t BData_delete(BData_t * b)
 {
   if(NULL == b || !b->valid) return bfalse;
 
@@ -151,7 +151,7 @@ INLINE bool_t BData_delete(BData * b)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE BData * BData_renew(BData * b)
+INLINE BData_t * BData_renew(BData_t * b)
 {
   if(NULL ==b) return NULL;
 

@@ -42,7 +42,7 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-struct ttfont_t
+struct sTTFont
 {
   TTF_Font *ttfFont;
 
@@ -53,17 +53,17 @@ struct ttfont_t
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-BMFont bmfont;
+BMFont_t bmfont;
 
 static bool_t   fnt_initialized = bfalse;
 
-struct fnt_registry_t
+struct s_fnt_registry
 {
   int      count;
-  TTFont * list[256];
+  TTFont_t * list[256];
 };
 
-typedef struct fnt_registry_t FNT_REGISTRY;
+typedef struct s_fnt_registry FNT_REGISTRY;
 
 static FNT_REGISTRY fnt_registry = {0};
 
@@ -77,7 +77,7 @@ INLINE bool_t fnt_reg_init(FNT_REGISTRY * r)
   return btrue;
 };
 
-INLINE bool_t fnt_reg_add(FNT_REGISTRY * r, TTFont * f)
+INLINE bool_t fnt_reg_add(FNT_REGISTRY * r, TTFont_t * f)
 {
   int i;
 
@@ -95,10 +95,10 @@ INLINE bool_t fnt_reg_add(FNT_REGISTRY * r, TTFont * f)
   return btrue;
 }
 
-INLINE TTFont * fnt_reg_remove(FNT_REGISTRY * r, TTFont * f)
+INLINE TTFont_t * fnt_reg_remove(FNT_REGISTRY * r, TTFont_t * f)
 {
   bool_t   found;
-  TTFont * retval = NULL;
+  TTFont_t * retval = NULL;
   int      i;
 
   if(NULL == r || NULL == f || r->count <= 0) return retval;
@@ -129,9 +129,9 @@ INLINE bool_t fnt_reg_empty(FNT_REGISTRY * r)
   return bfalse;
 }
 
-INLINE TTFont * fnt_reg_pop(FNT_REGISTRY * r)
+INLINE TTFont_t * fnt_reg_pop(FNT_REGISTRY * r)
 {
-  TTFont * retval = NULL;
+  TTFont_t * retval = NULL;
 
   if(NULL == r || r->count <= 0) return retval;
 
@@ -251,7 +251,7 @@ static void fnt_quit(void)
 {
   // BB > automatically unregister and delete all fonts that have been opened and TTF_Quit()
 
-  TTFont * pfnt;
+  TTFont_t * pfnt;
   bool_t close_fonts;
 
   close_fonts = fnt_initialized && TTF_WasInit();
@@ -277,9 +277,9 @@ static void fnt_quit(void)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-TTFont* fnt_loadFont( const char *fileName, int pointSize )
+TTFont_t* fnt_loadFont( const char *fileName, int pointSize )
 {
-  TTFont   *newFont;
+  TTFont_t   *newFont;
   TTF_Font *ttfFont;
 
   // Make sure the TTF library was initialized
@@ -294,7 +294,7 @@ TTFont* fnt_loadFont( const char *fileName, int pointSize )
   }
 
   // Everything looks good
-  newFont = ( TTFont* ) calloc( 1, sizeof( TTFont ) );
+  newFont = ( TTFont_t* ) calloc( 1, sizeof( TTFont_t ) );
   newFont->ttfFont = ttfFont;
   newFont->texture = 0;
 
@@ -305,9 +305,9 @@ TTFont* fnt_loadFont( const char *fileName, int pointSize )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t fnt_freeFont( TTFont *font )
+bool_t fnt_freeFont( TTFont_t *font )
 {
-  TTFont * pfnt = NULL;
+  TTFont_t * pfnt = NULL;
 
   if ( NULL == font ) return bfalse;
 
@@ -328,12 +328,12 @@ bool_t fnt_freeFont( TTFont *font )
 }
 
 //--------------------------------------------------------------------------------------------
-void fnt_drawText( TTFont *font, int x, int y, const char *text )
+void fnt_drawText( TTFont_t *font, int x, int y, const char *text )
 {
   SDL_Surface *textSurf;
   SDL_Color color = { 0xFF, 0xFF, 0xFF, 0 };
 
-  if ( NULL == font || NULL == text || '\0' == text[0] ) return;
+  if ( NULL == font ||  !VALID_CSTR(text)  ) return;
 
   // Let TTF render the text
   textSurf = TTF_RenderText_Blended( font->ttfFont, text, color );
@@ -366,7 +366,7 @@ void fnt_drawText( TTFont *font, int x, int y, const char *text )
 }
 
 //--------------------------------------------------------------------------------------------
-void fnt_getTextSize( TTFont *font, const char *text, int *pwidth, int *pheight )
+void fnt_getTextSize( TTFont_t *font, const char *text, int *pwidth, int *pheight )
 {
   if ( font )
   {
@@ -387,7 +387,7 @@ void fnt_getTextSize( TTFont *font, const char *text, int *pwidth, int *pheight 
 //   height  - Maximum height of the box (not implemented)
 //   spacing - Amount of space to move down between lines. (usually close to your font size)
 
-void fnt_drawTextBox( TTFont *font, const char *text, int x, int y,  int width, int height, int spacing )
+void fnt_drawTextBox( TTFont_t *font, const char *text, int x, int y,  int width, int height, int spacing )
 {
   GLint matrix_mode;
   GLint viewport_save[4];
@@ -397,7 +397,7 @@ void fnt_drawTextBox( TTFont *font, const char *text, int x, int y,  int width, 
   if ( NULL == font ) return;
 
   // If text is empty, there's nothing to draw
-  if ( NULL == text || '\0' == text[0] ) return;
+  if (  !VALID_CSTR(text)  ) return;
 
   //if(0 != width && 0 != height)
   //{
@@ -440,14 +440,14 @@ void fnt_drawTextBox( TTFont *font, const char *text, int x, int y,  int width, 
 }
 
 //--------------------------------------------------------------------------------------------
-void fnt_getTextBoxSize( TTFont *font, const char *text, int spacing, int *width, int *height )
+void fnt_getTextBoxSize( TTFont_t *font, const char *text, int spacing, int *width, int *height )
 {
   char *buffer, *line;
   size_t len;
   int tmp_w, tmp_h;
 
   if ( NULL == font ) return;
-  if ( NULL == text || '\0' == text[0] ) return;
+  if (  !VALID_CSTR(text)  ) return;
 
   // Split the passed in text into separate lines
   len = strlen( text );
@@ -468,7 +468,7 @@ void fnt_getTextBoxSize( TTFont *font, const char *text, int spacing, int *width
 }
 
 //--------------------------------------------------------------------------------------------
-void fnt_drawTextFormatted( TTFont * fnt, int x, int y, const char *format, ... )
+void fnt_drawTextFormatted( TTFont_t * fnt, int x, int y, const char *format, ... )
 {
   va_list args;
   char buffer[256];

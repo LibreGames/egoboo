@@ -31,22 +31,22 @@
 
 #include <SDL.h>
 
-#define UI_Nothing (UI_ID)(-1)
-#define UI_Invalid (UI_ID)(-2)
+#define UI_Nothing (ui_id_t)(-1)
+#define UI_Invalid (ui_id_t)(-2)
 
-typedef struct ui_context_t UiContext;
-typedef Uint32 UI_ID;
+typedef struct s_ui_Context ui_Context_t;
+typedef Uint32 ui_id_t;
 
 
-enum ui_button_values_e
+enum e_ui_button_values
 {
   BUTTON_NOCHANGE = 0,
   BUTTON_DOWN,
   BUTTON_UP
 };
-typedef enum ui_button_values_e ui_buttonValues;
+typedef enum e_ui_button_values ui_buttonValues;
 
-enum ui_button_bits_e
+enum e_ui_button_bits
 {
   UI_BITS_NONE      = 0,
   UI_BITS_MOUSEOVER = 1 << 0,
@@ -54,10 +54,10 @@ enum ui_button_bits_e
 };
 
 
-struct ui_widget_t
+struct s_ui_Widget
 {
-  UI_ID      id;
-  TTFont    *pfont;
+  ui_id_t      id;
+  TTFont_t    *pfont;
   char      *text;
   GLtexture *img;
   int        x;
@@ -66,7 +66,7 @@ struct ui_widget_t
   int        height;
   Uint32 mask, state, timeout;
 };
-typedef struct ui_widget_t ui_Widget;
+typedef struct s_ui_Widget ui_Widget_t;
 
 // Initialize or shut down the ui system
 int  ui_initialize( const char *default_font, int default_font_size );
@@ -83,22 +83,22 @@ void ui_Reset();
 // UI widget
 
 // UI controls
-ui_buttonValues  ui_doButton( ui_Widget * pWidget );
-ui_buttonValues  ui_doImageButton( ui_Widget * pWidget );
-ui_buttonValues  ui_doImageButtonWithText( ui_Widget * pWidget );
-//int  ui_doTextBox(ui_Widget * pWidget);
+ui_buttonValues  ui_doButton( ui_Widget_t * pWidget );
+ui_buttonValues  ui_doImageButton( ui_Widget_t * pWidget );
+ui_buttonValues  ui_doImageButtonWithText( ui_Widget_t * pWidget );
+//int  ui_doTextBox(ui_Widget_t * pWidget);
 
 // Utility functions
 void    ui_doCursor();
 int     ui_mouseInside( int x, int y, int width, int height );
-TTFont* ui_getFont();
+TTFont_t* ui_getFont();
 
-bool_t ui_copyWidget( ui_Widget * pw2, ui_Widget * pw1 );
-bool_t ui_shrinkWidget( ui_Widget * pw2, ui_Widget * pw1, int pixels );
-bool_t ui_initWidget( ui_Widget * pw, UI_ID id, TTFont * pfont, const char *text, GLtexture *img, int x, int y, int width, int height );
-bool_t ui_widgetAddMask( ui_Widget * pw, Uint32 mbits );
-bool_t ui_widgetRemoveMask( ui_Widget * pw, Uint32 mbits );
-bool_t ui_widgetSetMask( ui_Widget * pw, Uint32 mbits );
+bool_t ui_copyWidget( ui_Widget_t * pw2, ui_Widget_t * pw1 );
+bool_t ui_shrinkWidget( ui_Widget_t * pw2, ui_Widget_t * pw1, int pixels );
+bool_t ui_initWidget( ui_Widget_t * pw, ui_id_t id, TTFont_t * pfont, const char *text, GLtexture *img, int x, int y, int width, int height );
+bool_t ui_widgetAddMask( ui_Widget_t * pw, Uint32 mbits );
+bool_t ui_widgetRemoveMask( ui_Widget_t * pw, Uint32 mbits );
+bool_t ui_widgetSetMask( ui_Widget_t * pw, Uint32 mbits );
 
 /*****************************************************************************/
 // Most users won't need to worry about stuff below here; it's mostly for
@@ -106,12 +106,12 @@ bool_t ui_widgetSetMask( ui_Widget * pw, Uint32 mbits );
 /*****************************************************************************/
 
 // Behaviors
-ui_buttonValues ui_buttonBehavior( ui_Widget * pWidget );
+ui_buttonValues ui_buttonBehavior( ui_Widget_t * pWidget );
 
 // Drawing
-void ui_drawButton( ui_Widget * pWidget );
-void ui_drawImage( ui_Widget * pWidget );
-void ui_drawTextBox( ui_Widget * pWidget, int spacing );
+void ui_drawButton( ui_Widget_t * pWidget );
+void ui_drawImage( ui_Widget_t * pWidget );
+void ui_drawTextBox( ui_Widget_t * pWidget, int spacing );
 
 int ui_getMouseX();
 int ui_getMouseY();

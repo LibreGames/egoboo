@@ -43,11 +43,11 @@ GLfloat ui_active_color2[] = {0.00f, 0.45f, 0.45f, 0.60f};
 GLfloat ui_hot_color2[]    = {0.00f, 0.28f, 0.28f, 1.00f};
 GLfloat ui_normal_color2[] = {0.33f, 0.00f, 0.33f, 0.60f};
 
-struct ui_context_t
+struct s_ui_Context
 {
   // Tracking control focus stuff
-  UI_ID active;
-  UI_ID hot;
+  ui_id_t active;
+  ui_id_t hot;
 
   // Basic mouse state
   int mouseX, mouseY;
@@ -55,17 +55,17 @@ struct ui_context_t
   int mousePressed;
   bool_t mouseVisible;
 
-  TTFont *defaultFont;
-  TTFont *activeFont;
+  TTFont_t *defaultFont;
+  TTFont_t *activeFont;
 };
 
-static UiContext ui_context;
+static ui_Context_t ui_context;
 
 //********************************************************************************************
 // Core functions
 //********************************************************************************************
 
-static UiContext * UiContext_new(UiContext *pui)
+static ui_Context_t * UiContext_new(ui_Context_t *pui)
 {
   //fprintf( stdout, "UiContext_new()\n");
 
@@ -240,7 +240,7 @@ int ui_mouseInside( int x, int y, int width, int height )
 }
 
 //--------------------------------------------------------------------------------------------
-void ui_setactive( ui_Widget * pw )
+void ui_setactive( ui_Widget_t * pw )
 {
   if ( NULL == pw )
   {
@@ -260,7 +260,7 @@ void ui_setactive( ui_Widget * pw )
 }
 
 //--------------------------------------------------------------------------------------------
-void ui_sethot( ui_Widget * pw )
+void ui_sethot( ui_Widget_t * pw )
 {
   if ( NULL == pw )
   {
@@ -285,20 +285,20 @@ void ui_sethot( ui_Widget * pw )
 }
 
 //--------------------------------------------------------------------------------------------
-TTFont* ui_getFont()
+TTFont_t* ui_getFont()
 {
   return ( NULL != ui_context.activeFont ) ? ui_context.activeFont : ui_context.defaultFont;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_copyWidget( ui_Widget * pw2, ui_Widget * pw1 )
+bool_t ui_copyWidget( ui_Widget_t * pw2, ui_Widget_t * pw1 )
 {
   if ( NULL == pw2 || NULL == pw1 ) return bfalse;
-  return NULL != memcpy( pw2, pw1, sizeof( ui_Widget ) );
+  return NULL != memcpy( pw2, pw1, sizeof( ui_Widget_t ) );
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_shrinkWidget( ui_Widget * pw2, ui_Widget * pw1, int pixels )
+bool_t ui_shrinkWidget( ui_Widget_t * pw2, ui_Widget_t * pw1, int pixels )
 {
   if ( NULL == pw2 || NULL == pw1 ) return bfalse;
 
@@ -316,7 +316,7 @@ bool_t ui_shrinkWidget( ui_Widget * pw2, ui_Widget * pw1, int pixels )
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_initWidget( ui_Widget * pw, UI_ID id, TTFont * pfont, const char *text, GLtexture *img, int x, int y, int width, int height )
+bool_t ui_initWidget( ui_Widget_t * pw, ui_id_t id, TTFont_t * pfont, const char *text, GLtexture *img, int x, int y, int width, int height )
 {
   if ( NULL == pw ) return bfalse;
 
@@ -336,7 +336,7 @@ bool_t ui_initWidget( ui_Widget * pw, UI_ID id, TTFont * pfont, const char *text
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_widgetAddMask( ui_Widget * pw, Uint32 mbits )
+bool_t ui_widgetAddMask( ui_Widget_t * pw, Uint32 mbits )
 {
   if ( NULL == pw ) return bfalse;
 
@@ -347,7 +347,7 @@ bool_t ui_widgetAddMask( ui_Widget * pw, Uint32 mbits )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_widgetRemoveMask( ui_Widget * pw, Uint32 mbits )
+bool_t ui_widgetRemoveMask( ui_Widget_t * pw, Uint32 mbits )
 {
   if ( NULL == pw ) return bfalse;
 
@@ -358,7 +358,7 @@ bool_t ui_widgetRemoveMask( ui_Widget * pw, Uint32 mbits )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_widgetSetMask( ui_Widget * pw, Uint32 mbits )
+bool_t ui_widgetSetMask( ui_Widget_t * pw, Uint32 mbits )
 {
   if ( NULL == pw ) return bfalse;
 
@@ -373,7 +373,7 @@ bool_t ui_widgetSetMask( ui_Widget * pw, Uint32 mbits )
 // Behaviors
 //********************************************************************************************
 
-ui_buttonValues ui_buttonBehavior( ui_Widget * pWidget )
+ui_buttonValues ui_buttonBehavior( ui_Widget_t * pWidget )
 {
   ui_buttonValues result = BUTTON_NOCHANGE;
 
@@ -412,7 +412,7 @@ ui_buttonValues ui_buttonBehavior( ui_Widget * pWidget )
 // Drawing
 //********************************************************************************************
 
-void ui_drawButton( ui_Widget * pWidget )
+void ui_drawButton( ui_Widget_t * pWidget )
 {
   bool_t bactive, bhot;
   if ( !ui_frame_enabled ) return;
@@ -466,7 +466,7 @@ void ui_drawButton( ui_Widget * pWidget )
 }
 
 //--------------------------------------------------------------------------------------------
-void ui_drawImage( ui_Widget * pWidget )
+void ui_drawImage( ui_Widget_t * pWidget )
 {
   int w, h;
   float x1, y1;
@@ -517,9 +517,9 @@ void ui_drawImage( ui_Widget * pWidget )
  * pWidget->height  - Maximum pWidget->height of the box (not implemented)
  * spacing - Amount of space to move down between lines. (usually close to your font size)
  */
-void ui_drawTextBox( ui_Widget * pWidget, int spacing )
+void ui_drawTextBox( ui_Widget_t * pWidget, int spacing )
 {
-  TTFont *font = ui_getFont();
+  TTFont_t *font = ui_getFont();
   fnt_drawTextBox( font, pWidget->text, pWidget->x, pWidget->y, pWidget->width, pWidget->height, spacing );
 }
 
@@ -527,12 +527,12 @@ void ui_drawTextBox( ui_Widget * pWidget, int spacing )
 // Controls
 //********************************************************************************************
 
-ui_buttonValues ui_doButton( ui_Widget * pWidget )
+ui_buttonValues ui_doButton( ui_Widget_t * pWidget )
 {
   ui_buttonValues result;
   int text_w, text_h;
   int text_x, text_y;
-  TTFont *font;
+  TTFont_t *font;
 
   // Do all the logic type work for the button
   result = ui_buttonBehavior( pWidget );
@@ -565,10 +565,10 @@ ui_buttonValues ui_doButton( ui_Widget * pWidget )
 }
 
 //--------------------------------------------------------------------------------------------
-ui_buttonValues ui_doImageButton( ui_Widget * pWidget )
+ui_buttonValues ui_doImageButton( ui_Widget_t * pWidget )
 {
   ui_buttonValues result;
-  ui_Widget wtmp;
+  ui_Widget_t wtmp;
 
   // Do all the logic type work for the button
   result = ui_buttonBehavior( pWidget );
@@ -588,13 +588,13 @@ ui_buttonValues ui_doImageButton( ui_Widget * pWidget )
 }
 
 //--------------------------------------------------------------------------------------------
-ui_buttonValues ui_doImageButtonWithText( ui_Widget * pWidget )
+ui_buttonValues ui_doImageButtonWithText( ui_Widget_t * pWidget )
 {
   ui_buttonValues result;
-  TTFont *font;
+  TTFont_t *font;
   int text_x, text_y;
   int text_w, text_h;
-  ui_Widget wtmp;
+  ui_Widget_t wtmp;
 
   // Do all the logic type work for the button
   result = ui_buttonBehavior( pWidget );

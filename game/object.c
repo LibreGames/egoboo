@@ -36,7 +36,7 @@
 #include "egoboo_strutil.h"
 
 //--------------------------------------------------------------------------------------------
-int load_one_object( CGame * gs, int skin_count, const char * szObjectpath, char* szObjectname )
+int load_one_object( Game_t * gs, int skin_count, const char * szObjectpath, char* szObjectname )
 {
   // ZZ> This function loads one object and returns the number of skins
 
@@ -44,10 +44,10 @@ int load_one_object( CGame * gs, int skin_count, const char * szObjectpath, char
   STRING newloadname, loc_loadpath, wavename;
   int cnt;
 
-  PObj objlst = gs->ObjList;
+  PObj_t objlst = gs->ObjList;
 
   OBJ_REF iobj;
-  CObj  * pobj;
+  Obj_t  * pobj;
 
   // generate an index for this object
   strcpy(newloadname, szObjectpath);
@@ -95,7 +95,7 @@ int load_one_object( CGame * gs, int skin_count, const char * szObjectpath, char
   pobj->cap = CapList_load_one( gs, szObjectpath, szObjectname, CAP_REF(REF_TO_INT(iobj)) );
 
   // Load the AI script for this object
-  pobj->ai = load_ai_script( CGame_getScriptInfo(gs), szObjectpath, szObjectname );
+  pobj->ai = load_ai_script( Game_getScriptInfo(gs), szObjectpath, szObjectname );
   if ( AILST_COUNT == pobj->ai )
   {
     // use the default script
@@ -210,11 +210,11 @@ int load_one_object( CGame * gs, int skin_count, const char * szObjectpath, char
 }
 
 //--------------------------------------------------------------------------------------------
-void switch_team( CGame * gs, CHR_REF chr_ref, TEAM_REF team )
+void switch_team( Game_t * gs, CHR_REF chr_ref, TEAM_REF team )
 {
   // ZZ> This function makes a chr_ref join another team...
 
-  PChr chrlst      = gs->ChrList;
+  PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
   if ( team < TEAM_COUNT )
@@ -239,13 +239,13 @@ void switch_team( CGame * gs, CHR_REF chr_ref, TEAM_REF team )
 }
 
 //--------------------------------------------------------------------------------------------
-int restock_ammo( CGame * gs, CHR_REF chr_ref, IDSZ idsz )
+int restock_ammo( Game_t * gs, CHR_REF chr_ref, IDSZ idsz )
 {
   // ZZ> This function restocks the characters ammo, if it needs ammo and if
   //     either its parent or type idsz match the given idsz.  This
   //     function returns the amount of ammo given.
 
-  PChr chrlst      = gs->ChrList;
+  PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
   int amount;
   OBJ_REF model;
@@ -270,14 +270,14 @@ int restock_ammo( CGame * gs, CHR_REF chr_ref, IDSZ idsz )
 
 
 //--------------------------------------------------------------------------------------------
-void issue_clean( CGame * gs, CHR_REF chr_ref )
+void issue_clean( Game_t * gs, CHR_REF chr_ref )
 {
   // ZZ> This function issues a clean up order to all teammates
 
   TEAM_REF team;
   CHR_REF chr_cnt;
 
-  PChr chrlst      = gs->ChrList;
+  PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
   team = chrlst[chr_ref].team;
@@ -296,7 +296,7 @@ void issue_clean( CGame * gs, CHR_REF chr_ref )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CTeam * CTeam_new(CTeam *pteam)
+Team_t * CTeam_new(Team_t *pteam)
 {
   //fprintf( stdout, "CTeam_new()\n");
 
@@ -304,29 +304,29 @@ CTeam * CTeam_new(CTeam *pteam)
 
   CTeam_delete( pteam );
 
-  memset(pteam, 0, sizeof(CTeam));
+  memset(pteam, 0, sizeof(Team_t));
 
-  EKEY_PNEW( pteam, CTeam );
+  EKEY_PNEW( pteam, Team_t );
 
 
   return pteam;
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t CTeam_delete(CTeam *pteam)
+bool_t CTeam_delete(Team_t *pteam)
 {
   if(NULL ==pteam) return bfalse;
   if(!EKEY_PVALID( pteam )) return btrue;
 
   EKEY_PINVALIDATE(pteam);
 
-  memset(pteam, 0, sizeof(CTeam));
+  memset(pteam, 0, sizeof(Team_t));
 
   return btrue;
 };
 
 //--------------------------------------------------------------------------------------------
-CTeam * CTeam_renew(CTeam *pteam)
+Team_t * CTeam_renew(Team_t *pteam)
 {
   CTeam_delete(pteam);
   return CTeam_new(pteam);
@@ -335,17 +335,17 @@ CTeam * CTeam_renew(CTeam *pteam)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void ObjList_free_one( CGame * gs, OBJ_REF obj_ref )
+void ObjList_free_one( Game_t * gs, OBJ_REF obj_ref )
 {
   // BB> This function sticks a profile back on the free profile stack
 
-  PObj   objlst      = gs->ObjList;
+  PObj_t   objlst      = gs->ObjList;
   size_t objlst_size = OBJLST_COUNT;
 
-  PCap    caplst      = gs->CapList;
+  PCap_t    caplst      = gs->CapList;
   size_t  caplst_size = CAPLST_COUNT;
 
-  CObj * pobj;
+  Obj_t * pobj;
 
   pobj = ObjList_getPObj(gs, obj_ref);
   if(NULL == pobj) return;
@@ -361,7 +361,7 @@ void ObjList_free_one( CGame * gs, OBJ_REF obj_ref )
 }
 
 
-CProfile * CProfile_new(CProfile * p)
+Profile_t * CProfile_new(Profile_t * p)
 {
   int cnt;
 
@@ -369,9 +369,9 @@ CProfile * CProfile_new(CProfile * p)
 
   CProfile_delete(p);
 
-  memset(p, 0, sizeof(CProfile));
+  memset(p, 0, sizeof(Profile_t));
 
-  EKEY_PNEW(p, CProfile);
+  EKEY_PNEW(p, Profile_t);
 
   strcpy(p->name, "*NONE*");
 
@@ -388,7 +388,7 @@ CProfile * CProfile_new(CProfile * p)
   return p;
 }
 
-bool_t CProfile_delete(CProfile * p)
+bool_t CProfile_delete(Profile_t * p)
 {
   if(NULL == p) return bfalse;
   if( !EKEY_PVALID(p) ) return btrue;
@@ -398,14 +398,14 @@ bool_t CProfile_delete(CProfile * p)
   return btrue;
 }
 
-CProfile * CProfile_renew(CProfile * p)
+Profile_t * CProfile_renew(Profile_t * p)
 {
   CProfile_delete(p);
   return CProfile_new(p);
 }
 
 //--------------------------------------------------------------------------------------------
-void obj_clear_pips( CGame * gs )
+void obj_clear_pips( Game_t * gs )
 {
   int cnt;
   OBJ_REF object;
@@ -422,7 +422,7 @@ void obj_clear_pips( CGame * gs )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CObj * ObjList_getPObj(CGame * gs, OBJ_REF iobj)
+Obj_t * ObjList_getPObj(Game_t * gs, OBJ_REF iobj)
 {
   if ( !VALID_OBJ( gs->ObjList, iobj ) ) return NULL;
 
@@ -430,9 +430,9 @@ CObj * ObjList_getPObj(CGame * gs, OBJ_REF iobj)
 }
 
 //--------------------------------------------------------------------------------------------
-CEve * ObjList_getPEve(CGame * gs, OBJ_REF iobj)
+Eve_t * ObjList_getPEve(Game_t * gs, OBJ_REF iobj)
 {
-  CObj * pobj = ObjList_getPObj(gs, iobj);
+  Obj_t * pobj = ObjList_getPObj(gs, iobj);
   if(NULL == pobj) return NULL;
 
   pobj->eve = VALIDATE_EVE(gs->EveList, pobj->eve);
@@ -442,9 +442,9 @@ CEve * ObjList_getPEve(CGame * gs, OBJ_REF iobj)
 }
 
 //--------------------------------------------------------------------------------------------
-CCap * ObjList_getPCap(CGame * gs, OBJ_REF iobj)
+Cap_t * ObjList_getPCap(Game_t * gs, OBJ_REF iobj)
 {
-  CObj * pobj = ObjList_getPObj(gs, iobj);
+  Obj_t * pobj = ObjList_getPObj(gs, iobj);
   if(NULL == pobj) return NULL;
 
   pobj->cap = VALIDATE_CAP(gs->CapList, pobj->cap);
@@ -454,9 +454,9 @@ CCap * ObjList_getPCap(CGame * gs, OBJ_REF iobj)
 }
 
 //--------------------------------------------------------------------------------------------
-CMad * ObjList_getPMad(CGame * gs, OBJ_REF iobj)
+Mad_t * ObjList_getPMad(Game_t * gs, OBJ_REF iobj)
 {
-  CObj * pobj = ObjList_getPObj(gs, iobj);
+  Obj_t * pobj = ObjList_getPObj(gs, iobj);
   if(NULL == pobj) return NULL;
 
   pobj->mad = VALIDATE_MAD(gs->MadList, pobj->mad);
@@ -466,9 +466,9 @@ CMad * ObjList_getPMad(CGame * gs, OBJ_REF iobj)
 }
 
 //--------------------------------------------------------------------------------------------
-CPip * ObjList_getPPip(CGame * gs, OBJ_REF iobj, int i)
+Pip_t * ObjList_getPPip(Game_t * gs, OBJ_REF iobj, int i)
 {
-  CObj * pobj = ObjList_getPObj(gs, iobj);
+  Obj_t * pobj = ObjList_getPObj(gs, iobj);
   if(NULL == pobj) return NULL;
 
   pobj->prtpip[i] = VALIDATE_PIP(gs->PipList, pobj->prtpip[i]);
@@ -479,9 +479,9 @@ CPip * ObjList_getPPip(CGame * gs, OBJ_REF iobj, int i)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-EVE_REF ObjList_getREve(CGame * gs, OBJ_REF iobj)
+EVE_REF ObjList_getREve(Game_t * gs, OBJ_REF iobj)
 {
-  CObj * pobj = ObjList_getPObj(gs, iobj);
+  Obj_t * pobj = ObjList_getPObj(gs, iobj);
   if(NULL == pobj) return INVALID_EVE;
 
   pobj->eve = VALIDATE_EVE(gs->EveList, pobj->eve);
@@ -489,9 +489,9 @@ EVE_REF ObjList_getREve(CGame * gs, OBJ_REF iobj)
 }
 
 //--------------------------------------------------------------------------------------------
-CAP_REF ObjList_getRCap(CGame * gs, OBJ_REF iobj)
+CAP_REF ObjList_getRCap(Game_t * gs, OBJ_REF iobj)
 {
-  CObj * pobj = ObjList_getPObj(gs, iobj);
+  Obj_t * pobj = ObjList_getPObj(gs, iobj);
   if(NULL == pobj) return INVALID_CAP;
 
   pobj->cap = VALIDATE_CAP(gs->CapList, pobj->cap);
@@ -499,9 +499,9 @@ CAP_REF ObjList_getRCap(CGame * gs, OBJ_REF iobj)
 }
 
 //--------------------------------------------------------------------------------------------
-MAD_REF ObjList_getRMad(CGame * gs, OBJ_REF iobj)
+MAD_REF ObjList_getRMad(Game_t * gs, OBJ_REF iobj)
 {
-  CObj * pobj = ObjList_getPObj(gs, iobj);
+  Obj_t * pobj = ObjList_getPObj(gs, iobj);
   if(NULL == pobj) return INVALID_MAD;
 
   pobj->mad = VALIDATE_MAD(gs->MadList, pobj->mad);
@@ -509,9 +509,9 @@ MAD_REF ObjList_getRMad(CGame * gs, OBJ_REF iobj)
 }
 
 //--------------------------------------------------------------------------------------------
-PIP_REF ObjList_getRPip(CGame * gs, OBJ_REF iobj, int i)
+PIP_REF ObjList_getRPip(Game_t * gs, OBJ_REF iobj, int i)
 {
-  CObj * pobj = ObjList_getPObj(gs, iobj);
+  Obj_t * pobj = ObjList_getPObj(gs, iobj);
   if(NULL == pobj) return INVALID_PIP;
 
   pobj->prtpip[i] = VALIDATE_PIP(gs->PipList, pobj->prtpip[i]);
@@ -523,7 +523,7 @@ PIP_REF ObjList_getRPip(CGame * gs, OBJ_REF iobj, int i)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void ObjList_log_used( CGame * gs, char *savename )
+void ObjList_log_used( Game_t * gs, char *savename )
 {
   // ZZ> This is a debug function for checking model loads
 
@@ -539,8 +539,8 @@ void ObjList_log_used( CGame * gs, char *savename )
 
     for ( obj_cnt = 0; obj_cnt < OBJLST_COUNT; obj_cnt++ )
     {
-      CCap * pcap;
-      CMad * pmad;
+      Cap_t * pcap;
+      Mad_t * pmad;
       if( !gs->ObjList[obj_cnt].Active ) continue;
 
       pcap = ObjList_getPCap(gs, obj_cnt);

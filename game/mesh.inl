@@ -207,7 +207,7 @@ INLINE const Uint32 bumplist_get_next( BUMPLIST * b, Uint32 node )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 bumplist_get_next_chr( CGame * gs, BUMPLIST * b, Uint32 node )
+INLINE const Uint32 bumplist_get_next_chr( Game_t * gs, BUMPLIST * b, Uint32 node )
 {
   Uint32  nodenext;
   CHR_REF bumpnext;
@@ -227,7 +227,7 @@ INLINE const Uint32 bumplist_get_next_chr( CGame * gs, BUMPLIST * b, Uint32 node
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 bumplist_get_next_prt( CGame * gs, BUMPLIST * b, Uint32 node )
+INLINE const Uint32 bumplist_get_next_prt( Game_t * gs, BUMPLIST * b, Uint32 node )
 {
   Uint32  nodenext;
   PRT_REF bumpnext;
@@ -293,7 +293,7 @@ INLINE const Uint32 bumplist_get_ref(BUMPLIST * b, Uint32 node)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_fan_is_in_renderlist( MESH_FAN * mf_list, int fan )
+INLINE const bool_t mesh_fan_is_in_renderlist( MeshTile_t * mf_list, int fan )
 {
   if ( INVALID_FAN == fan ) return bfalse;
 
@@ -301,13 +301,13 @@ INLINE const bool_t mesh_fan_is_in_renderlist( MESH_FAN * mf_list, int fan )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE void mesh_fan_remove_renderlist( MESH_FAN * mf_list, int fan )
+INLINE void mesh_fan_remove_renderlist( MeshTile_t * mf_list, int fan )
 {
   mf_list[fan].inrenderlist = bfalse;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE void mesh_fan_add_renderlist( MESH_FAN * mf_list, int fan )
+INLINE void mesh_fan_add_renderlist( MeshTile_t * mf_list, int fan )
 {
   mf_list[fan].inrenderlist = btrue;
 };
@@ -315,7 +315,7 @@ INLINE void mesh_fan_add_renderlist( MESH_FAN * mf_list, int fan )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const float mesh_clip_x( MESH_INFO * mi, float x )
+INLINE const float mesh_clip_x( MeshInfo_t * mi, float x )
 {
   if ( x <      0.0f )  x = 0.0f;
   if ( x > mi->edge_x )  x = mi->edge_x;
@@ -324,7 +324,7 @@ INLINE const float mesh_clip_x( MESH_INFO * mi, float x )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const float mesh_clip_y( MESH_INFO * mi, float y )
+INLINE const float mesh_clip_y( MeshInfo_t * mi, float y )
 {
   if ( y <      0.0f )  y = 0.0f;
   if ( y > mi->edge_y )  y = mi->edge_y;
@@ -333,7 +333,7 @@ INLINE const float mesh_clip_y( MESH_INFO * mi, float y )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const int mesh_clip_fan_x( MESH_INFO * mi, int ix )
+INLINE const int mesh_clip_fan_x( MeshInfo_t * mi, int ix )
 {
   if ( ix < 0 )  ix = 0;
   if ( ix > mi->size_x - 1 )  ix = mi->size_x - 1;
@@ -342,7 +342,7 @@ INLINE const int mesh_clip_fan_x( MESH_INFO * mi, int ix )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const int mesh_clip_fan_y( MESH_INFO * mi, int iy )
+INLINE const int mesh_clip_fan_y( MeshInfo_t * mi, int iy )
 {
   if ( iy < 0 )  iy = 0;
   if ( iy > mi->size_y - 1 )  iy = mi->size_y - 1;
@@ -351,7 +351,7 @@ INLINE const int mesh_clip_fan_y( MESH_INFO * mi, int iy )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const int mesh_clip_block_x( MESH_INFO * mi, int ix )
+INLINE const int mesh_clip_block_x( MeshInfo_t * mi, int ix )
 {
   if ( ix < 0 )  ix = 0;
   if ( ix > ( mi->size_x >> 2 ) - 1 )  ix = ( mi->size_x >> 2 ) - 1;
@@ -360,7 +360,7 @@ INLINE const int mesh_clip_block_x( MESH_INFO * mi, int ix )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const int mesh_clip_block_y( MESH_INFO * mi, int iy )
+INLINE const int mesh_clip_block_y( MeshInfo_t * mi, int iy )
 {
   if ( iy < 0 )  iy = 0;
   if ( iy > ( mi->size_y >> 2 ) - 1 )  iy = ( mi->size_y >> 2 ) - 1;
@@ -369,7 +369,7 @@ INLINE const int mesh_clip_block_y( MESH_INFO * mi, int iy )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_check( MESH_INFO * mi, float x, float y )
+INLINE const bool_t mesh_check( MeshInfo_t * mi, float x, float y )
 {
   if ( x < 0 || x > mi->edge_x ) return bfalse;
   if ( y < 0 || y > mi->edge_y ) return bfalse;
@@ -378,7 +378,7 @@ INLINE const bool_t mesh_check( MESH_INFO * mi, float x, float y )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_check_fan( MESH_INFO * mi, int fan_x, int fan_y )
+INLINE const bool_t mesh_check_fan( MeshInfo_t * mi, int fan_x, int fan_y )
 {
   if ( fan_x < 0 || fan_x >= mi->size_x ) return bfalse;
   if ( fan_y < 0 || fan_y >= mi->size_y ) return bfalse;
@@ -387,31 +387,31 @@ INLINE const bool_t mesh_check_fan( MESH_INFO * mi, int fan_x, int fan_y )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE void mesh_set_colora( CGame * gs, int fan_x, int fan_y, int color )
+INLINE void mesh_set_colora( Mesh_t * pmesh, int fan_x, int fan_y, int color )
 {
   Uint32 cnt, fan, vert, numvert;
 
-  MESH_INFO * mi      = &(gs->mesh);
-  MESH_FAN  * mf_list = gs->Mesh_Mem.fanlst;
+  MeshInfo_t * mi      = &(pmesh->Info);
+  MeshTile_t * mf_list = pmesh->Mem.tilelst;
 
   fan = mesh_convert_fan( mi, fan_x, fan_y );
   if ( INVALID_FAN == fan ) return;
 
   vert = mf_list[fan].vrt_start;
   cnt = 0;
-  numvert = Mesh_Cmd[mf_list[fan].type].vrt_count;
+  numvert = pmesh->TileDict[mf_list[fan].type].vrt_count;
   while ( cnt < numvert )
   {
-    gs->Mesh_Mem.vrt_ar_fp8[vert] = color;
-    gs->Mesh_Mem.vrt_ag_fp8[vert] = color;
-    gs->Mesh_Mem.vrt_ab_fp8[vert] = color;
+    pmesh->Mem.vrt_ar_fp8[vert] = color;
+    pmesh->Mem.vrt_ag_fp8[vert] = color;
+    pmesh->Mem.vrt_ab_fp8[vert] = color;
     vert++;
     cnt++;
   }
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 mesh_get_fan( MESH_INFO * mi, MeshMem * mm, vect3 pos )
+INLINE const Uint32 mesh_get_fan( Mesh_t * pmesh, vect3 pos )
 {
   // BB > find the tile under <pos.x,pos.y>, but MAKE SURE we have the right tile.
 
@@ -420,7 +420,9 @@ INLINE const Uint32 mesh_get_fan( MESH_INFO * mi, MeshMem * mm, vect3 pos )
   int i, ix, iy;
   bool_t bfound = bfalse;
 
-  MESH_FAN  * mf_list = mm->fanlst;
+  MeshInfo_t  * mi      = &(pmesh->Info);
+  MeshMem_t   * mm      = &(pmesh->Mem);
+  MeshTile_t  * mf_list = mm->tilelst;
 
   if ( !mesh_check( mi, pos.x, pos.y ) )
     return testfan;
@@ -455,7 +457,7 @@ INLINE const Uint32 mesh_get_fan( MESH_INFO * mi, MeshMem * mm, vect3 pos )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 mesh_get_block( MESH_INFO * mi, vect3 pos )
+INLINE const Uint32 mesh_get_block( MeshInfo_t * mi, vect3 pos )
 {
   // BB > find the block under <x,y>
 
@@ -467,12 +469,13 @@ INLINE const Uint32 mesh_get_block( MESH_INFO * mi, vect3 pos )
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_fan_clear_bits( CGame * gs, int fan_x, int fan_y, Uint32 bits )
+INLINE const bool_t mesh_fan_clear_bits( Mesh_t * pmesh, int fan_x, int fan_y, Uint32 bits )
 {
   bool_t retval = bfalse;
   Uint32 fan;
-  MESH_FAN  * mf_list = gs->Mesh_Mem.fanlst;
-  MESH_INFO * mi      = &(gs->mesh);
+
+  MeshTile_t  * mf_list = pmesh->Mem.tilelst;
+  MeshInfo_t  * mi      = &(pmesh->Info);
 
   fan = mesh_convert_fan( mi, fan_x, fan_y );
   if ( INVALID_FAN == fan ) return retval;
@@ -485,13 +488,13 @@ INLINE const bool_t mesh_fan_clear_bits( CGame * gs, int fan_x, int fan_y, Uint3
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_fan_add_bits( CGame * gs, int fan_x, int fan_y, Uint32 bits )
+INLINE const bool_t mesh_fan_add_bits( Mesh_t * pmesh, int fan_x, int fan_y, Uint32 bits )
 {
   bool_t retval = bfalse;
   Uint32 fan;
 
-  MESH_FAN  * mf_list = gs->Mesh_Mem.fanlst;
-  MESH_INFO * mi      = &(gs->mesh);
+  MeshTile_t  * mf_list = pmesh->Mem.tilelst;
+  MeshInfo_t * mi      = &(pmesh->Info);
 
   fan = mesh_convert_fan( mi, fan_x, fan_y );
   if ( INVALID_FAN == fan ) return retval;
@@ -504,13 +507,13 @@ INLINE const bool_t mesh_fan_add_bits( CGame * gs, int fan_x, int fan_y, Uint32 
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_fan_set_bits( CGame * gs, int fan_x, int fan_y, Uint32 bits )
+INLINE const bool_t mesh_fan_set_bits( Mesh_t * pmesh, int fan_x, int fan_y, Uint32 bits )
 {
   bool_t retval = bfalse;
   Uint32 fan;
 
-  MESH_FAN  * mf_list = gs->Mesh_Mem.fanlst;
-  MESH_INFO * mi      = &(gs->mesh);
+  MeshTile_t  * mf_list = pmesh->Mem.tilelst;
+  MeshInfo_t * mi      = &(pmesh->Info);
 
   fan = mesh_convert_fan( mi, fan_x, fan_y );
   if ( INVALID_FAN == fan ) return retval;
@@ -525,12 +528,12 @@ INLINE const bool_t mesh_fan_set_bits( CGame * gs, int fan_x, int fan_y, Uint32 
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const int mesh_bump_tile( CGame * gs, int fan_x, int fan_y )
+INLINE const int mesh_bump_tile( Mesh_t * pmesh, int fan_x, int fan_y )
 {
   Uint32 fan;
 
-  MESH_FAN  * mf_list = gs->Mesh_Mem.fanlst;
-  MESH_INFO * mi      = &(gs->mesh);
+  MeshTile_t  * mf_list = pmesh->Mem.tilelst;
+  MeshInfo_t * mi      = &(pmesh->Info);
 
   fan = mesh_convert_fan( mi, fan_x, fan_y );
   if ( INVALID_FAN == fan ) return 0;
@@ -541,12 +544,12 @@ INLINE const int mesh_bump_tile( CGame * gs, int fan_x, int fan_y )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint16 mesh_get_tile( CGame * gs, int fan_x, int fan_y )
+INLINE const Uint16 mesh_get_tile( Mesh_t * pmesh, int fan_x, int fan_y )
 {
   Uint32 fan;
 
-  MESH_FAN  * mf_list = gs->Mesh_Mem.fanlst;
-  MESH_INFO * mi      = &(gs->mesh);
+  MeshTile_t * mf_list = pmesh->Mem.tilelst;
+  MeshInfo_t * mi       = &(pmesh->Info);
 
   fan = mesh_convert_fan( mi, fan_x, fan_y );
   if ( INVALID_FAN == fan ) return INVALID_TILE;
@@ -555,13 +558,13 @@ INLINE const Uint16 mesh_get_tile( CGame * gs, int fan_x, int fan_y )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_set_tile( CGame * gs, int fan_x, int fan_y, Uint32 become )
+INLINE const bool_t mesh_set_tile( Mesh_t * pmesh, int fan_x, int fan_y, Uint32 become )
 {
   bool_t retval = bfalse;
   Uint32 fan;
 
-  MESH_FAN  * mf_list = gs->Mesh_Mem.fanlst;
-  MESH_INFO * mi      = &(gs->mesh);
+  MeshTile_t  * mf_list = pmesh->Mem.tilelst;
+  MeshInfo_t * mi      = &(pmesh->Info);
 
   fan = mesh_convert_fan( mi, fan_x, fan_y );
   if ( INVALID_FAN == fan ) return retval;
@@ -576,7 +579,7 @@ INLINE const bool_t mesh_set_tile( CGame * gs, int fan_x, int fan_y, Uint32 beco
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 mesh_convert_fan( MESH_INFO * mi, int fan_x, int fan_y )
+INLINE const Uint32 mesh_convert_fan( MeshInfo_t * mi, int fan_x, int fan_y )
 {
   // BB > convert <fan_x,fan_y> to a fanblock
 
@@ -586,7 +589,7 @@ INLINE const Uint32 mesh_convert_fan( MESH_INFO * mi, int fan_x, int fan_y )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 mesh_convert_block( MESH_INFO * mi, int block_x, int block_y )
+INLINE const Uint32 mesh_convert_block( MeshInfo_t * mi, int block_x, int block_y )
 {
   // BB > convert <block_x,block_y> to a fanblock
 
@@ -598,7 +601,7 @@ INLINE const Uint32 mesh_convert_block( MESH_INFO * mi, int block_x, int block_y
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 mesh_get_bits( MESH_FAN * mf_list, int fan, Uint32 bits )
+INLINE const Uint32 mesh_get_bits( MeshTile_t * mf_list, int fan, Uint32 bits )
 {
   if ( INVALID_FAN == fan ) return 0;
 
@@ -606,7 +609,7 @@ INLINE const Uint32 mesh_get_bits( MESH_FAN * mf_list, int fan, Uint32 bits )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_has_some_bits( MESH_FAN * mf_list, int fan, Uint32 bits )
+INLINE const bool_t mesh_has_some_bits( MeshTile_t * mf_list, int fan, Uint32 bits )
 {
   if ( INVALID_FAN == fan ) return 0;
 
@@ -614,7 +617,7 @@ INLINE const bool_t mesh_has_some_bits( MESH_FAN * mf_list, int fan, Uint32 bits
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_has_no_bits( MESH_FAN * mf_list, int fan, Uint32 bits )
+INLINE const bool_t mesh_has_no_bits( MeshTile_t * mf_list, int fan, Uint32 bits )
 {
   if ( INVALID_FAN == fan ) return 0;
 
@@ -622,7 +625,7 @@ INLINE const bool_t mesh_has_no_bits( MESH_FAN * mf_list, int fan, Uint32 bits )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_has_all_bits( MESH_FAN * mf_list, int fan, Uint32 bits )
+INLINE const bool_t mesh_has_all_bits( MeshTile_t * mf_list, int fan, Uint32 bits )
 {
   if ( INVALID_FAN == fan ) return 0;
 
@@ -630,20 +633,20 @@ INLINE const bool_t mesh_has_all_bits( MESH_FAN * mf_list, int fan, Uint32 bits 
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const float mesh_fraction_x( MESH_INFO * mi, float x )
+INLINE const float mesh_fraction_x( MeshInfo_t * mi, float x )
 {
   return x / mi->edge_x;
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const float mesh_fraction_y( MESH_INFO * mi, float y )
+INLINE const float mesh_fraction_y( MeshInfo_t * mi, float y )
 {
   return y / mi->edge_y;
 };
 
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint8 mesh_get_twist( MESH_FAN * mf_list, int fan )
+INLINE const Uint8 mesh_get_twist( MeshTile_t * mf_list, int fan )
 {
   Uint8 retval = 0x77;
 
@@ -653,4 +656,26 @@ INLINE const Uint8 mesh_get_twist( MESH_FAN * mf_list, int fan )
   }
 
   return retval;
+};
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+INLINE Mesh_t * Mesh_new( Mesh_t * pmesh ) 
+{ 
+  memset( pmesh, 0, sizeof(Mesh_t) );
+
+  MeshMem_new(&(pmesh->Mem), 0, 0 ); 
+  memcpy( pmesh->TileDict, gTileDict, sizeof(TileDictionary_t)); 
+
+  return pmesh;
+};
+
+INLINE bool_t Mesh_delete( Mesh_t * pmesh ) 
+{
+  if(NULL == pmesh) return bfalse;
+
+  MeshMem_delete(&(pmesh->Mem));				                       //Free the mesh memory
+  memset( pmesh->TileDict, 0, sizeof(pmesh->TileDict) );
+
+  return bfalse;
 };

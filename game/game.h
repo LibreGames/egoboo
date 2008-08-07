@@ -14,21 +14,21 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-struct CNet_t;
-struct ConfigData_t;
-struct Status_t;
-struct CChr_t;
+struct sNet;
+struct sConfigData;
+struct sStatus;
+struct sChr;
 struct SoundState_t;
-struct CGraphics_t;
+struct sGraphics;
 struct script_global_values_t;
-struct GSStack_t;
+struct sGSStack;
 
-struct CClient_t;
-struct CServer_t;
+struct sClient;
+struct sServer;
 
-enum Action_e;
-enum Team_e;
-enum Experience_e;
+enum e_Action;
+enum e_Team;
+enum e_Experience;
 
 
 //--------------------------------------------------------------------------------------------
@@ -39,26 +39,26 @@ enum Experience_e;
 #define CHOPSIZE                        8
 #define CHOPDATACHUNK                   (MAXCHOP*CHOPSIZE)
 
-struct ChopData_t
+struct sChopData
 {
   Uint16   count;                  // The number of name parts
   Uint32   write;                  // The data pointer
   char     text[CHOPDATACHUNK];    // The name parts
   Uint16   start[MAXCHOP];         // The first character of each part
 };
-typedef struct ChopData_t ChopData;
+typedef struct sChopData ChopData_t;
 
 //--------------------------------------------------------------------------------------------
 // Display messages
-struct message_element_t
+struct s_message_element
 {
   Sint16    time;                                //
   char      textdisplay[MESSAGESIZE];            // The displayed text
 
 };
-typedef struct message_element_t MESSAGE_ELEMENT;
+typedef struct s_message_element MESSAGE_ELEMENT;
 
-struct MessageData_t
+struct sMessageData
 {
   // Message files
   Uint16  total;                                         // The number of messages
@@ -67,9 +67,9 @@ struct MessageData_t
   Uint32  index[MAXTOTALMESSAGE];                        // Where it is
   char    text[MESSAGEBUFFERSIZE];                       // The text buffer
 };
-typedef struct MessageData_t MessageData;
+typedef struct sMessageData MessageData_t;
 
-struct MessageQueue_t
+struct sMessageQueue
 {
   int             count;
 
@@ -77,49 +77,48 @@ struct MessageQueue_t
   MESSAGE_ELEMENT list[MAXMESSAGE];
   float           timechange;
 };
-typedef struct MessageQueue_t MessageQueue;
+typedef struct sMessageQueue MessageQueue_t;
 
 //--------------------------------------------------------------------------------------------
 #define MAXENDTEXT 1024
 
-struct CGame_t
+struct sGame
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
-  ProcState  proc;
+  ProcState_t  proc;
 
   bool_t Single_frame;       // Is the game in single frame mode?
   bool_t Do_frame;           // Tell the game to process one frame
 
   // in-game menu stuff
-  MenuProc igm;
+  MenuProc_t igm;
 
   // random stuff
   Uint32 randie_index;       // The current index of the random number table
 
   // module parameters
   MOD_INFO    mod;
-  ModState    modstate;
-  MOD_SUMMARY modtxt;
+  ModState_t    modstate;
+  ModSummary_t modtxt;
 
-  // mgame-specific module stuff
-  MESH_INFO   mesh;
-  MeshMem     Mesh_Mem;
+  // game-specific module stuff
+  Mesh_t        Mesh;
 
   // water and lighting info
-  WATER_INFO water;
+  WATER_INFO    water;
 
   // physics info
-  CPhysicsData phys;
+  PhysicsData_t phys;
 
   // game loop variables
   double dFrame, dUpdate;
 
   // links to important data
-  struct CNet_t    * ns;
-  struct ConfigData_t  * cd;
-  struct CClient_t     * cl;
-  struct CServer_t     * sv;
+  struct sNet    * ns;
+  struct sConfigData  * cd;
+  struct sClient     * cl;
+  struct sServer     * sv;
 
   int      ObjFreeList_count;
   OBJ_REF  ObjFreeList[CHRLST_COUNT];
@@ -150,11 +149,11 @@ struct CGame_t
 
   // passage data
   Uint32  PassList_count;
-  Passage PassList[PASSLST_COUNT];
+  Passage_t PassList[PASSLST_COUNT];
 
   // shop data
   Uint16 ShopList_count;
-  Shop   ShopList[PASSLST_COUNT];
+  Shop_t   ShopList[PASSLST_COUNT];
 
   // team data
   TeamList_t TeamList;
@@ -165,10 +164,15 @@ struct CGame_t
   PlaList_t PlaList;
 
   // messages
-  MessageData MsgList;
+  MessageData_t MsgList;
 
   // script values
-  ScriptInfo ScriptList;
+  ScriptInfo_t ScriptList;
+
+  // dynamic lighting info
+  int          DLightList_distancetobeat;      // The number to beat
+  int          DLightList_count;               // Number of dynamic lights
+  DLightList_t DLightList;
 
   // local texture info
   GLtexture TxTexture[MAXTEXTURE];      // All normal textures
@@ -203,72 +207,73 @@ struct CGame_t
 
   char endtext[MAXENDTEXT];     // The end-module text
 
-  ChopData chop;
+  ChopData_t chop;
 
 };
-typedef struct CGame_t CGame;
+typedef struct sGame Game_t;
 
-CGame * CGame_create(struct CNet_t * net,  struct CClient_t * cl, struct CServer_t * sv);
-bool_t  CGame_destroy(CGame ** gs );
-bool_t  CGame_renew(CGame * gs);
+Game_t * Game_create(struct sNet * net,  struct sClient * cl, struct sServer * sv);
+bool_t   Game_destroy(Game_t ** gs );
+bool_t   Game_renew(Game_t * gs);
 
-INLINE ScriptInfo * CGame_getScriptInfo(CGame * gs) { if(NULL ==gs) return NULL; return &(gs->ScriptList); }
-INLINE ProcState *  CGame_getProcedure(CGame * gs)  { if(NULL ==gs) return NULL; return &(gs->proc); }
-INLINE MenuProc  *  CGame_getMenuProc(CGame * gs)   { if(NULL ==gs) return NULL; return &(gs->igm); }
+INLINE ScriptInfo_t * Game_getScriptInfo(Game_t * gs) { if(NULL ==gs) return NULL; return &(gs->ScriptList); }
+INLINE ProcState_t  * Game_getProcedure(Game_t * gs)  { if(NULL ==gs) return NULL; return &(gs->proc); }
+INLINE MenuProc_t   * Game_getMenuProc(Game_t * gs)   { if(NULL ==gs) return NULL; return &(gs->igm); }
+INLINE Mesh_t       * Game_getMesh(Game_t * gs)       { if(NULL ==gs) return NULL; return &(gs->Mesh); }
 
-retval_t CGame_registerNetwork( CGame * gs, struct CNet_t    * net, bool_t destroy );
-retval_t CGame_registerClient ( CGame * gs, struct CClient_t * cl,  bool_t destroy  );
-retval_t CGame_registerServer ( CGame * gs, struct CServer_t * sv,  bool_t destroy  );
+retval_t Game_registerNetwork( Game_t * gs, struct sNet    * net, bool_t destroy );
+retval_t Game_registerClient ( Game_t * gs, struct sClient * cl,  bool_t destroy  );
+retval_t Game_registerServer ( Game_t * gs, struct sServer * sv,  bool_t destroy  );
 
 
-bool_t CapList_new( CGame * gs );
-bool_t CapList_delete( CGame * gs );
-bool_t CapList_renew( CGame * gs );
+bool_t CapList_new( Game_t * gs );
+bool_t CapList_delete( Game_t * gs );
+bool_t CapList_renew( Game_t * gs );
 
-bool_t EveList_new( CGame * gs );
-bool_t EveList_delete( CGame * gs );
-bool_t EveList_renew( CGame * gs );
+bool_t EveList_new( Game_t * gs );
+bool_t EveList_delete( Game_t * gs );
+bool_t EveList_renew( Game_t * gs );
 
-bool_t MadList_new( CGame * gs );
-bool_t MadList_delete( CGame * gs );
-bool_t MadList_renew( CGame * gs );
+bool_t MadList_new( Game_t * gs );
+bool_t MadList_delete( Game_t * gs );
+bool_t MadList_renew( Game_t * gs );
 
-bool_t PipList_new( CGame * gs );
-bool_t PipList_delete( CGame * gs );
-bool_t PipList_renew( CGame * gs );
+bool_t PipList_new( Game_t * gs );
+bool_t PipList_delete( Game_t * gs );
+bool_t PipList_renew( Game_t * gs );
 
-bool_t ChrList_new( CGame * gs );
-bool_t ChrList_delete( CGame * gs );
-bool_t ChrList_renew( CGame * gs );
+bool_t ChrList_new( Game_t * gs );
+bool_t ChrList_delete( Game_t * gs );
+bool_t ChrList_renew( Game_t * gs );
 
-bool_t EncList_new( CGame * gs );
-bool_t EncList_delete( CGame * gs );
-bool_t EncList_renew( CGame * gs );
+bool_t EncList_new( Game_t * gs );
+bool_t EncList_delete( Game_t * gs );
+bool_t EncList_renew( Game_t * gs );
 
-bool_t PrtList_new( CGame * gs );
-bool_t PrtList_delete( CGame * gs );
-bool_t PrtList_renew( CGame * gs );
+bool_t PrtList_new( Game_t * gs );
+bool_t PrtList_delete( Game_t * gs );
+bool_t PrtList_renew( Game_t * gs );
 
-bool_t PassList_new( CGame * gs );
-bool_t PassList_delete( CGame * gs );
-bool_t PassList_renew( CGame * gs );
+bool_t PassList_new( Game_t * gs );
+bool_t PassList_delete( Game_t * gs );
+bool_t PassList_renew( Game_t * gs );
 
-bool_t ShopList_new( CGame * gs );
-bool_t ShopList_delete( CGame * gs );
-bool_t ShopList_renew( CGame * gs );
+bool_t ShopList_new( Game_t * gs );
+bool_t ShopList_delete( Game_t * gs );
+bool_t ShopList_renew( Game_t * gs );
 
-bool_t TeamList_new( CGame * gs );
-bool_t TeamList_delete( CGame * gs );
-bool_t TeamList_renew( CGame * gs );
+bool_t TeamList_new( Game_t * gs );
+bool_t TeamList_delete( Game_t * gs );
+bool_t TeamList_renew( Game_t * gs );
 
-bool_t PlaList_new( CGame * gs );
-bool_t PlaList_delete( CGame * gs );
-bool_t PlaList_renew( CGame * gs );
+bool_t PlaList_new( Game_t * gs );
+bool_t PlaList_delete( Game_t * gs );
+bool_t PlaList_renew( Game_t * gs );
 
 
 
 //--------------------------------------------------------------------------------------------
-struct SearchInfo_t
+struct sSearchInfo
 {
   bool_t  initialize;
   CHR_REF besttarget;                                      // For find_target
@@ -278,30 +283,30 @@ struct SearchInfo_t
   CHR_REF nearest;
   float   distance;
 };
-typedef struct SearchInfo_t SearchInfo;
+typedef struct sSearchInfo SearchInfo_t;
 
-SearchInfo * SearchInfo_new(SearchInfo * psearch);
+SearchInfo_t * SearchInfo_new(SearchInfo_t * psearch);
 
 //--------------------------------------------------------------------------------------------
 //Weather and water gfx
-struct weather_info_t
+struct s_weather_info
 {
   bool_t    overwater; // EQ( bfalse );       // Only spawn over water?
   int       timereset; // EQ( 10 );          // Rate at which weather particles spawn
   float     time; // EQ( 0 );                // 0 is no weather
   PLA_REF   player;
 };
-typedef struct weather_info_t WEATHER_INFO;
+typedef struct s_weather_info WEATHER_INFO;
 
 extern WEATHER_INFO GWeather;
 
 //--------------------------------------------------------------------------------------------
 
 void   make_newloadname( char *modname, char *appendname, char *newloadname );
-void   export_one_character( CGame * gs, CHR_REF character, Uint16 owner, int number );
-void   export_all_local_players( CGame * gs );
-int    MessageQueue_get_free(MessageQueue * mq);
-bool_t display_message( CGame * gs, int message, CHR_REF chr_ref );
+void   export_one_character( Game_t * gs, CHR_REF character, Uint16 owner, int number );
+void   export_all_local_players( Game_t * gs );
+int    MessageQueue_get_free(MessageQueue_t * mq);
+bool_t display_message( Game_t * gs, int message, CHR_REF chr_ref );
 
 void load_action_names( char* loadname );
 void read_setup( char* filename );
@@ -312,81 +317,81 @@ void draw_chr_info();
 bool_t do_screenshot();
 void move_water( float dUpdate );
 
-CHR_REF search_best_leader( CGame * gs, TEAM_REF team, CHR_REF exclude );
-void call_for_help( CGame * gs, CHR_REF character );
-void give_experience( CGame * gs, CHR_REF character, int amount, enum Experience_e xptype );
-void give_team_experience( CGame * gs, TEAM_REF team, int amount, enum Experience_e xptype );
-void setup_alliances( CGame * gs, char *modname );
-void check_respawn( CGame * gs );
-void update_timers( CGame * gs );
-void reset_teams( CGame * gs );
-void reset_messages( CGame * gs );
-void reset_timers( CGame * gs );
+CHR_REF search_best_leader( Game_t * gs, TEAM_REF team, CHR_REF exclude );
+void call_for_help( Game_t * gs, CHR_REF character );
+void give_experience( Game_t * gs, CHR_REF character, int amount, enum e_Experience xptype );
+void give_team_experience( Game_t * gs, TEAM_REF team, int amount, enum e_Experience xptype );
+void setup_alliances( Game_t * gs, char *modname );
+void check_respawn( Game_t * gs );
+void update_timers( Game_t * gs );
+void reset_teams( Game_t * gs );
+void reset_messages( Game_t * gs );
+void reset_timers( Game_t * gs );
 
-void set_default_config_data(struct ConfigData_t * pcon);
+void set_default_config_data(struct sConfigData * pcon);
 
-int load_all_messages( CGame * gs, const char *szObjectpath, const char *szObjectname );
+int load_all_messages( Game_t * gs, const char *szObjectpath, const char *szObjectname );
 
-void attach_particle_to_character( CGame * gs, PRT_REF particle, CHR_REF chr_ref, Uint16 vertoffset );
+void attach_particle_to_character( Game_t * gs, PRT_REF particle, CHR_REF chr_ref, Uint16 vertoffset );
 
-bool_t prt_search_block( CGame * gs, SearchInfo * psearch, int block_x, int block_y, PRT_REF iprt, Uint16 facing,
+bool_t prt_search_block( Game_t * gs, SearchInfo_t * psearch, int block_x, int block_y, PRT_REF iprt, Uint16 facing,
                          bool_t request_friends, bool_t allow_anyone, TEAM_REF team,
                          CHR_REF donttarget, CHR_REF oldtarget );
 
-bool_t prt_search_wide( CGame * gs, SearchInfo * psearch, PRT_REF iprt, Uint16 facing,
+bool_t prt_search_wide( Game_t * gs, SearchInfo_t * psearch, PRT_REF iprt, Uint16 facing,
                         Uint16 targetangle, bool_t request_friends, bool_t allow_anyone,
                         TEAM_REF team, CHR_REF donttarget, CHR_REF oldtarget );
 
-bool_t chr_search_distant( CGame * gs, SearchInfo * psearch, CHR_REF character, int maxdist, bool_t ask_enemies, bool_t ask_dead );
+bool_t chr_search_distant( Game_t * gs, SearchInfo_t * psearch, CHR_REF character, int maxdist, bool_t ask_enemies, bool_t ask_dead );
 
-bool_t chr_search_block_nearest( CGame * gs, SearchInfo * psearch, int block_x, int block_y, CHR_REF character, bool_t ask_items,
+bool_t chr_search_block_nearest( Game_t * gs, SearchInfo_t * psearch, int block_x, int block_y, CHR_REF character, bool_t ask_items,
                                bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, bool_t seeinvisible, IDSZ idsz );
 
-bool_t chr_search_wide_nearest( CGame * gs, SearchInfo * psearch, CHR_REF character, bool_t ask_items,
+bool_t chr_search_wide_nearest( Game_t * gs, SearchInfo_t * psearch, CHR_REF character, bool_t ask_items,
                                 bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, IDSZ idsz );
 
-bool_t chr_search_wide( CGame * gs, SearchInfo * psearch, CHR_REF character, bool_t ask_items,
+bool_t chr_search_wide( Game_t * gs, SearchInfo_t * psearch, CHR_REF character, bool_t ask_items,
                         bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, IDSZ idsz, bool_t excludeid );
 
-bool_t chr_search_block( CGame * gs, SearchInfo * psearch, int block_x, int block_y, CHR_REF character, bool_t ask_items,
+bool_t chr_search_block( Game_t * gs, SearchInfo_t * psearch, int block_x, int block_y, CHR_REF character, bool_t ask_items,
                          bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, bool_t seeinvisible, IDSZ idsz,
                          bool_t excludeid );
 
-bool_t chr_search_nearby( CGame * gs, SearchInfo * psearch, CHR_REF character, bool_t ask_items,
+bool_t chr_search_nearby( Game_t * gs, SearchInfo_t * psearch, CHR_REF character, bool_t ask_items,
                           bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, IDSZ ask_idsz );
 
-void release_all_models(CGame * gs);
-void init_all_models(CGame * gs);
+void release_all_models(Game_t * gs);
+void init_all_models(Game_t * gs);
 
-void setup_characters( CGame * gs, char *modname );
-void ChrList_resynch(CGame * gs);
-
-
-struct GSStack_t * Get_GSStack();
-
-void set_alerts( CGame * gs, CHR_REF character, float dUpdate );
-
-void   print_status( CGame * gs, Uint16 statindex );
-bool_t add_status( CGame * gs, CHR_REF character );
-bool_t remove_stat( CGame * gs, struct CChr_t * pchr );
-void   sort_statlist( CGame * gs );
+void setup_characters( Game_t * gs, char *modname );
+void ChrList_resynch(Game_t * gs);
 
 
-bool_t reset_characters( CGame * gs );
+struct sGSStack * Get_GSStack();
 
-bool_t chr_is_player( CGame * gs, CHR_REF character);
+void set_alerts( Game_t * gs, CHR_REF character, float dUpdate );
+
+void   print_status( Game_t * gs, Uint16 statindex );
+bool_t add_status( Game_t * gs, CHR_REF character );
+bool_t remove_stat( Game_t * gs, struct sChr * pchr );
+void   sort_statlist( Game_t * gs );
 
 
-bool_t count_players(CGame * gs);
-void clear_message_queue(MessageQueue * q);
-void clear_messages( MessageData * md);
+bool_t reset_characters( Game_t * gs );
 
-void load_global_icons(CGame * gs);
+bool_t chr_is_player( Game_t * gs, CHR_REF character);
 
-void recalc_character_bumpers( CGame * gs );
 
-char * naming_generate( CGame * gs, CObj * pobj );
-void naming_read( struct CGame_t * gs, const char * szModpath, const char * szObjectname, CObj * pobj);
-void naming_prime( struct CGame_t * gs );
+bool_t count_players(Game_t * gs);
+void clear_message_queue(MessageQueue_t * q);
+void clear_messages( MessageData_t * md);
 
-bool_t decode_escape_sequence( CGame * gs, char * buffer, size_t buffer_size, const char * message, CHR_REF chr_ref );
+void load_global_icons(Game_t * gs);
+
+void recalc_character_bumpers( Game_t * gs );
+
+char * naming_generate( Game_t * gs, Obj_t * pobj );
+void naming_read( struct sGame * gs, const char * szModpath, const char * szObjectname, Obj_t * pobj);
+void naming_prime( struct sGame * gs );
+
+bool_t decode_escape_sequence( Game_t * gs, char * buffer, size_t buffer_size, const char * message, CHR_REF chr_ref );

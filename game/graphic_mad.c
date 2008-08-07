@@ -57,21 +57,21 @@ void   chr_draw_BBox(CHR_REF ichr);
 // checks to make sure that the inputs are valid.  So this function itself assumes
 // that they are valid.  User beware!
 //
-void md2_blend_vertices(CChr * pchr, Sint32 vrtmin, Sint32 vrtmax)
+void md2_blend_vertices(Chr_t * pchr, Sint32 vrtmin, Sint32 vrtmax)
 {
-  MD2_Model * pmd2;
-  const MD2_Frame *pfrom, *pto;
+  MD2_Model_t * pmd2;
+  const MD2_Frame_t *pfrom, *pto;
 
   Sint32 numVertices, i;
   vect2  off;
   float lerp;
 
   OBJ_REF iobj;
-  CObj  * pobj;
+  Obj_t  * pobj;
 
-  CMad  * pmad;
+  Mad_t  * pmad;
 
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   if( !EKEY_PVALID(pchr) ) return;
 
@@ -212,9 +212,9 @@ void md2_blend_vertices(CChr * pchr, Sint32 vrtmin, Sint32 vrtmax)
 }
 
 //---------------------------------------------------------------------------------------------
-void md2_blend_lighting(CChr * pchr)
+void md2_blend_lighting(Chr_t * pchr)
 {
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   Uint16  sheen_fp8, spekularity_fp8;
   Uint16 lightnew_r, lightnew_g, lightnew_b;
@@ -227,15 +227,15 @@ void md2_blend_lighting(CChr * pchr)
   vect2  offset;
 
   Uint32 i, numVertices;
-  VData_Blended * vd;
+  VData_Blended_t * vd;
 
   OBJ_REF         iobj;
-  CObj          * pobj;
+  Obj_t          * pobj;
 
-  CMad          * pmad;
-  MD2_Model     * pmd2;
+  Mad_t          * pmad;
+  MD2_Model_t     * pmd2;
 
-  CCap          * pcap;
+  Cap_t          * pcap;
 
   if( !EKEY_PVALID(pchr) ) return;
   vd = &(pchr->vdata);
@@ -355,20 +355,20 @@ void md2_blend_lighting(CChr * pchr)
 */
 
 //--------------------------------------------------------------------------------------------
-// Draws a JF::MD2_Model in the new format
+// Draws a JF::MD2_Model_t in the new format
 // using OpenGL commands in the MD2 for acceleration
 void draw_textured_md2_opengl(CHR_REF ichr)
 {
-  const MD2_GLCommand * cmd;
+  const MD2_GLCommand_t * cmd;
   Uint32 cmd_count;
   vect2  off;
 
-  CGame * gs   = gfxState.gs;
-  CChr  * pchr = ChrList_getPChr(gs, ichr);
-  CMad  * pmad = ChrList_getPMad(gs, ichr);
+  Game_t * gs   = gfxState.gs;
+  Chr_t  * pchr = ChrList_getPChr(gs, ichr);
+  Mad_t  * pmad = ChrList_getPMad(gs, ichr);
 
-  VData_Blended * vd   = &(pchr->vdata);
-  MD2_Model     * pmd2 = pmad->md2_ptr;
+  VData_Blended_t * vd   = &(pchr->vdata);
+  MD2_Model_t     * pmd2 = pmad->md2_ptr;
 
   md2_blend_vertices(pchr, -1, -1);
   md2_blend_lighting(pchr);
@@ -432,19 +432,19 @@ void draw_textured_md2_opengl(CHR_REF ichr)
 }
 
 //--------------------------------------------------------------------------------------------
-// Draws a JF::MD2_Model in the new format
+// Draws a JF::MD2_Model_t in the new format
 // using OpenGL commands in the MD2 for acceleration
 void draw_enviromapped_md2_opengl(CHR_REF ichr)
 {
-  const MD2_GLCommand * cmd;
+  const MD2_GLCommand_t * cmd;
   Uint32 cmd_count;
 
-  CGame * gs    = gfxState.gs;
-  CChr  * pchr = ChrList_getPChr(gs, ichr);
-  CMad  * pmad = ChrList_getPMad(gs, ichr);
+  Game_t * gs    = gfxState.gs;
+  Chr_t  * pchr = ChrList_getPChr(gs, ichr);
+  Mad_t  * pmad = ChrList_getPMad(gs, ichr);
 
-  VData_Blended * vd   = &(pchr->vdata);
-  MD2_Model     * pmd2 = pmad->md2_ptr;
+  VData_Blended_t * vd   = &(pchr->vdata);
+  MD2_Model_t     * pmd2 = pmad->md2_ptr;
 
   md2_blend_vertices(pchr, -1, -1);
   md2_blend_lighting(pchr);
@@ -506,9 +506,9 @@ void draw_enviromapped_md2_opengl(CHR_REF ichr)
 }
 
 //--------------------------------------------------------------------------------------------
-void calc_lighting_data( CGame * gs, CChr * pchr )
+void calc_lighting_data( Game_t * gs, Chr_t * pchr )
 {
-  LData * pldata = &(pchr->ldata);
+  LData_t * pldata = &(pchr->ldata);
 
   Uint16 sheen_fp8       = pchr->sheen_fp8;
   Uint16 spekularity_fp8 = FLOAT_TO_FP8(( float ) sheen_fp8 / ( float ) MAXSPEKLEVEL );
@@ -547,11 +547,11 @@ void render_mad_lit( CHR_REF ichr )
 {
   // ZZ> This function draws an environment mapped model
 
-  CChr * pchr;
+  Chr_t * pchr;
   Uint16 texture;
   GLfloat mat_none[4] = {0,0,0,0};
 
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   if( !ACTIVE_CHR(gs->ChrList, ichr) ) return;
   pchr = gs->ChrList + ichr;
@@ -604,9 +604,9 @@ void render_mad_lit( CHR_REF ichr )
 //--------------------------------------------------------------------------------------------
 void render_texmad(CHR_REF ichr, Uint8 trans)
 {
-  CChr * pchr;
+  Chr_t * pchr;
   Uint16 texture;
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   if(!ACTIVE_CHR(gs->ChrList, ichr)) return;
   pchr = gs->ChrList + ichr;
@@ -657,7 +657,7 @@ void render_texmad(CHR_REF ichr, Uint8 trans)
 void render_enviromad(CHR_REF ichr, Uint8 trans)
 {
   Uint16 texture;
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   if(!ACTIVE_CHR(gs->ChrList, ichr)) return;
 
@@ -704,9 +704,9 @@ void render_mad( CHR_REF ichr, Uint8 trans )
 {
   // ZZ> This function picks the actual function to use
 
-  CGame * gs   = gfxState.gs;
-  CChr  * pchr = ChrList_getPChr(gs, ichr);
-  CCap  * pcap = ChrList_getPCap(gs, ichr);
+  Game_t * gs   = gfxState.gs;
+  Chr_t  * pchr = ChrList_getPChr(gs, ichr);
+  Cap_t  * pcap = ChrList_getPCap(gs, ichr);
   Sint8   hide = pcap->hidestate;
 
   // 100% transparent items are not drawn
@@ -731,9 +731,9 @@ void render_refmad( CHR_REF ichr, Uint16 trans_fp8 )
 {
   // ZZ> This function draws characters reflected in the floor
 
-  CGame * gs   = gfxState.gs;
-  CChr  * pchr = ChrList_getPChr(gs, ichr);
-  CCap  * pcap = ChrList_getPCap(gs, ichr);
+  Game_t * gs   = gfxState.gs;
+  Chr_t  * pchr = ChrList_getPChr(gs, ichr);
+  Cap_t  * pcap = ChrList_getPCap(gs, ichr);
 
   int alphatmp_fp8;
   float level = pchr->level;
@@ -943,10 +943,10 @@ void make_lighttospek( void )
 //--------------------------------------------------------------------------------------------
 void chr_draw_BBox(CHR_REF ichr)
 {
-  CGame * gs  = gfxState.gs;
+  Game_t * gs  = gfxState.gs;
 
-  CChr * pchr;
-  BData * bd;
+  Chr_t * pchr;
+  BData_t * bd;
 
   if( !ACTIVE_CHR(gs->ChrList, ichr) ) return;
   pchr = gs->ChrList + ichr;

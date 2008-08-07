@@ -5,29 +5,29 @@
 
 #include <stdio.h>
 
-enum blud_level_e
+enum e_blud_level
 {
   BLUD_NONE = 0,
   BLUD_NORMAL,
   BLUD_ULTRA                         // This makes any damage draw blud
 };
-typedef enum blud_level_e BLUD_LEVEL;
+typedef enum e_blud_level BLUD_LEVEL;
 
-enum slot_e;
-enum grip_e;
-enum Action_e;
-enum lip_transition_e;
-enum damage_e;
-enum Experience_e;
-enum Team_e;
-enum gender_e;
-enum dyna_mode_e;
-enum particle_type;
-enum respawn_mode_e;
-enum idsz_index_e;
-enum color_e;
+enum e_slot;
+enum e_grip;
+enum e_Action;
+enum e_lip_transition;
+enum e_damage;
+enum e_Experience;
+enum e_Team;
+enum e_gender;
+enum e_dyna_mode;
+enum e_particle_alpha_type;
+enum e_respawn_mode;
+enum e_idsz_index;
+enum e_color;
 
-struct MessageData_t;
+struct sMessageData;
 
 bool_t undo_pair_fp8( PAIR * ppair, RANGE * prange );
 bool_t fget_pair_fp8( FILE* fileread, PAIR * ppair );
@@ -53,20 +53,20 @@ Uint16 fget_next_fixed( FILE* fileread );
 bool_t fget_bool( FILE* fileread );
 bool_t fget_next_bool( FILE* fileread );
 
-enum gender_e fget_gender( FILE* fileread );
-enum gender_e fget_next_gender( FILE* fileread );
+enum e_gender fget_gender( FILE* fileread );
+enum e_gender fget_next_gender( FILE* fileread );
 
-enum damage_e fget_damage( FILE *fileread );
-enum damage_e fget_next_damage( FILE *fileread );
+enum e_damage fget_damage( FILE *fileread );
+enum e_damage fget_next_damage( FILE *fileread );
 
-enum blud_level_e fget_blud( FILE *fileread );
-enum blud_level_e fget_next_blud( FILE *fileread );
+enum e_blud_level fget_blud( FILE *fileread );
+enum e_blud_level fget_next_blud( FILE *fileread );
 
 RESPAWN_MODE fget_respawn( FILE *fileread );
 RESPAWN_MODE fget_next_respawn( FILE *fileread );
 
-enum dyna_mode_e fget_dynamode( FILE *fileread );
-enum dyna_mode_e fget_next_dynamode( FILE *fileread );
+enum e_dyna_mode fget_dynamode( FILE *fileread );
+enum e_dyna_mode fget_next_dynamode( FILE *fileread );
 
 bool_t fget_name( FILE* fileread, char *szName, size_t lnName );
 bool_t fget_next_name( FILE* fileread, char *szName, size_t lnName );
@@ -74,21 +74,21 @@ bool_t fget_next_name( FILE* fileread, char *szName, size_t lnName );
 bool_t fget_string( FILE* fileread, char *szLine, size_t lnLine );
 bool_t fget_next_string( FILE* fileread, char *szLine, size_t lnLine );
 
-enum particle_type fget_prttype( FILE * fileread );
-enum particle_type fget_next_prttype( FILE * fileread );
+enum e_particle_alpha_type fget_prttype( FILE * fileread );
+enum e_particle_alpha_type fget_next_prttype( FILE * fileread );
 
-enum Action_e fget_action( FILE* fileread );
-enum Action_e fget_next_action( FILE* fileread );
+enum e_Action fget_action( FILE* fileread );
+enum e_Action fget_next_action( FILE* fileread );
 
 void ftruthf( FILE* filewrite, char* text, bool_t truth );
-void fdamagf( FILE* filewrite, char* text, enum damage_e damagetype );
-void factiof( FILE* filewrite, char* text, enum Action_e action );
-void fgendef( FILE* filewrite, char* text, enum gender_e gender );
+void fdamagf( FILE* filewrite, char* text, enum e_damage damagetype );
+void factiof( FILE* filewrite, char* text, enum e_Action action );
+void fgendef( FILE* filewrite, char* text, enum e_gender gender );
 void fpairof( FILE* filewrite, char* text, PAIR * ppair );
 void funderf( FILE* filewrite, char* text, char* usename );
 
-bool_t fget_message( FILE* fileread, struct MessageData_t * msglst  );
-bool_t fget_next_message( FILE* fileread, struct MessageData_t * msglst );
+bool_t fget_message( FILE* fileread, struct sMessageData * msglst  );
+bool_t fget_next_message( FILE* fileread, struct sMessageData * msglst );
 
 void   fgoto_colon( FILE* fileread );
 bool_t fgoto_colon_yesno( FILE* fileread );

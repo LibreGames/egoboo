@@ -32,7 +32,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-struct task_t
+struct sTask
 {
   char *name;
   TaskCallback func;
@@ -41,17 +41,17 @@ struct task_t
   double timeLastCalled;
   char paused;
 
-  struct task_t *previous, *next;
+  struct sTask *previous, *next;
 };
 
-typedef struct task_t Task;
+typedef struct sTask Task_t;
 
-Task *task_list = NULL;
-ClockState * taskClock = NULL;
+Task_t *task_list = NULL;
+ClockState_t * taskClock = NULL;
 
 void task_register( const char *taskName, float timeInterval, TaskCallback f )
 {
-  Task *aTask;
+  Task_t *aTask;
   size_t len;
 
   if ( NULL == taskName  || NULL == f  )
@@ -68,7 +68,7 @@ void task_register( const char *taskName, float timeInterval, TaskCallback f )
   if ( timeInterval < 0 ) timeInterval = 0;
 
   len = strlen( taskName ) + 1;
-  aTask = (Task*)calloc( 1, sizeof( Task ) );
+  aTask = (Task_t*)calloc( 1, sizeof( Task_t ) );
 
   aTask->name = (char*)calloc( len, sizeof(char) );
   strncpy( aTask->name, taskName, len );
@@ -93,7 +93,7 @@ void task_register( const char *taskName, float timeInterval, TaskCallback f )
 
 void task_remove( const char *taskName )
 {
-  Task *aTask;
+  Task_t *aTask;
 
   aTask = task_list;
   while ( NULL != aTask  )
@@ -120,7 +120,7 @@ void task_remove( const char *taskName )
 
 void task_pause( const char *taskName )
 {
-  Task *aTask;
+  Task_t *aTask;
 
   aTask = task_list;
   while ( NULL != aTask  )
@@ -136,7 +136,7 @@ void task_pause( const char *taskName )
 
 void task_play( const char *taskName )
 {
-  Task *aTask;
+  Task_t *aTask;
 
   aTask = task_list;
   while ( NULL != aTask  )
@@ -153,7 +153,7 @@ void task_play( const char *taskName )
 void task_updateAllTasks()
 {
   double currentTime, deltaTime;
-  Task *aTask;
+  Task_t *aTask;
 
   currentTime = ClockState_getTime( taskClock );
 

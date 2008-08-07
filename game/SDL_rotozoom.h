@@ -29,7 +29,7 @@ extern "C" {
 
   /* ---- Structures */
 
-  typedef struct tColorRGBA {
+  typedef struct ColorRGBA {
     Uint8 r;
     Uint8 g;
     Uint8 b;

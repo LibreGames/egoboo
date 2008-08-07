@@ -34,10 +34,10 @@
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
 
-struct ConfigData_t;
+struct sConfigData;
 
 // the type of a function that can process an ENetEvent
-typedef retval_t (*EventHandler_Ptr) (void * data, ENetEvent * event);
+typedef retval_t (*EventHandler_Ptr_t) (void * data, ENetEvent * event);
 
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
@@ -63,7 +63,7 @@ typedef retval_t (*EventHandler_Ptr) (void * data, ENetEvent * event);
 
 // these values for the message headers were generated using a ~15 bit linear congruential
 // generator.  They should be relatively good choices that are free from any bias...
-enum network_packet_types_e
+enum e_network_packet_types
 {
   TO_ANY_TEXT             = 0x1D66,
 
@@ -131,7 +131,7 @@ enum network_packet_types_e
 };
 
 // Networking constants
-enum NetworkConstant
+enum e_NetworkConstant
 {
   NET_UNRELIABLE_CHANNEL  = 0,
   NET_GUARANTEED_CHANNEL  = 1,
@@ -145,17 +145,17 @@ enum NetworkConstant
 
 //---------------------------------------------------------------------------------------------
 
-struct CGame_t;
-struct CClient_t;
-struct CServer_t;
-struct NFileState_t;
+struct sGame;
+struct sClient;
+struct sServer;
+struct sNFileState;
 
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
 
-typedef struct NetThread_t
+struct sNetThread
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
   // thread status
   bool_t Active;             // Keep looping or quit?
@@ -167,16 +167,17 @@ typedef struct NetThread_t
   SDL_Thread     * Thread;
   SDL_Callback_Ptr Callback;
 
-} NetThread;
+} ;
+typedef struct sNetThread NetThread_t;
 
-NetThread * NetThread_create(SDL_Callback_Ptr pcall);
-bool_t      NetThread_destroy(NetThread ** pnt);
-NetThread * NetThread_new(NetThread * nt, SDL_Callback_Ptr pcall);
-bool_t      NetThread_delete(NetThread * nt);
-bool_t      NetThread_started(NetThread * nt);
-bool_t      NetThread_stop(NetThread * nt);
-bool_t      NetThread_pause(NetThread * nt);
-bool_t      NetThread_unpause(NetThread * nt);
+NetThread_t * NetThread_create(SDL_Callback_Ptr pcall);
+bool_t        NetThread_destroy(NetThread_t ** pnt);
+NetThread_t * NetThread_new(NetThread_t * nt, SDL_Callback_Ptr pcall);
+bool_t        NetThread_delete(NetThread_t * nt);
+bool_t        NetThread_started(NetThread_t * nt);
+bool_t        NetThread_stop(NetThread_t * nt);
+bool_t        NetThread_pause(NetThread_t * nt);
+bool_t        NetThread_unpause(NetThread_t * nt);
 
 
 //---------------------------------------------------------------------------------------------
@@ -185,11 +186,11 @@ bool_t      NetThread_unpause(NetThread * nt);
 
 #define REQEST_BUFFER_SIZE 1024
 
-struct NetAsynchData_t;
+struct sNetAsynchData;
 
-typedef struct PacketRequest_t
+struct sPacketRequest
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
   bool_t       waiting, received;
   Uint32       starttimestamp, expiretimestamp;
@@ -198,23 +199,25 @@ typedef struct PacketRequest_t
   size_t       data_size;
   void        *data;
   ENetPeer   **peer;
-} NetRequest;
+};
+typedef struct sPacketRequest PacketRequest_t;
 
-NetRequest * NetRequest_new(NetRequest * pr);
-NetRequest * NetRequest_check(struct NetAsynchData_t * prlist, size_t prcount, ENetEvent * pevent);
-NetRequest * NetRequest_getFree(struct NetAsynchData_t * prlist, size_t prcount);
-int          NetRequest_getFreeIndex(struct NetAsynchData_t * prlist, size_t prcount);
+PacketRequest_t * NetRequest_new(PacketRequest_t * pr);
+PacketRequest_t * NetRequest_check(struct sNetAsynchData * prlist, size_t prcount, ENetEvent * pevent);
+PacketRequest_t * NetRequest_getFree(struct sNetAsynchData * prlist, size_t prcount);
+int               NetRequest_getFreeIndex(struct sNetAsynchData * prlist, size_t prcount);
 
-bool_t NetRequest_test(NetRequest * prequest);
-bool_t NetRequest_release(NetRequest * prequest);
+bool_t NetRequest_test(PacketRequest_t * prequest);
+bool_t NetRequest_release(PacketRequest_t * prequest);
 
 typedef Uint8 NetRequestBuff[REQEST_BUFFER_SIZE];
 
-typedef struct NetAsynchData_t
+struct sNetAsynchData
 {
-  NetRequest     req;
+  PacketRequest_t     req;
   NetRequestBuff buf;
-} NetAsynchData;
+};
+typedef struct sNetAsynchData NetAsynchData_t;
 
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
@@ -222,34 +225,37 @@ typedef struct NetAsynchData_t
 
 #define MAXCONNECTION 16
 
-typedef struct CListOut_Info_t
+struct sCListOut_Info
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
   void     * client_data;
   ENetPeer * peer;
-} CListOut_Info;
+};
+typedef struct sCListOut_Info CListOut_Info_t;
 
-CListOut_Info * CListOut_Info_new(CListOut_Info *);
-bool_t          CListOut_Info_delete(CListOut_Info *);
+CListOut_Info_t * CListOut_Info_new(CListOut_Info_t *);
+bool_t            CListOut_Info_delete(CListOut_Info_t *);
 
 
-typedef struct connection_list_out_t
+// definition of the outgoing connection list
+struct sCListOut
 {
   // outgoing channels
   int           Count;
   int           References[MAXCONNECTION];
-  CListOut_Info Clients[MAXCONNECTION];
-} CListOut;
+  CListOut_Info_t Clients[MAXCONNECTION];
+};
+typedef struct sCListOut CListOut_t;
 
-bool_t     CListOut_prune(CListOut * co);
-ENetPeer * CListOut_add(CListOut * co, ENetHost * host, ENetAddress * address, void * client_data);
-bool_t     CListOut_remove(CListOut * co, ENetPeer * peer);
-void       CListOut_close(CListOut * clo, void * client_data);
+bool_t     CListOut_prune(CListOut_t * co);
+ENetPeer * CListOut_add(CListOut_t * co, ENetHost * host, ENetAddress * address, void * client_data);
+bool_t     CListOut_remove(CListOut_t * co, ENetPeer * peer);
+void       CListOut_close(CListOut_t * clo, void * client_data);
 
 //---------------------------------------------------------------------------------------------
 
-typedef struct CListIn_Info_t
+struct sCListIn_Info
 {
   char          Name[NETNAMESIZE];       // logon/screen name
   char          Hostname[NETNAMESIZE];   // Net name of connected machine
@@ -260,39 +266,42 @@ typedef struct CListIn_Info_t
   // handler_ptr will normally point to something like sv_handlePacket()
   // This data needs to be established when the connection is opened
   void             * handler_data;
-  EventHandler_Ptr   handler_ptr;
-} CListIn_Info;
+  EventHandler_Ptr_t   handler_ptr;
+};
+typedef struct sCListIn_Info CListIn_Info_t;
 
-typedef struct CListIn_Client_t
+struct sCListIn_Client
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
   Uint32             guid;
   void             * handler_data;
-  EventHandler_Ptr   handler_ptr;
-} CListIn_Client;
+  EventHandler_Ptr_t   handler_ptr;
+};
+typedef struct sCListIn_Client CListIn_Client_t;
 
-CListIn_Client * CListIn_Client_new(CListIn_Client * cli, EventHandler_Ptr handler, void * data, Uint32 net_guid);
-bool_t           CListIn_Client_delete(CListIn_Client * cli);
+CListIn_Client_t * CListIn_Client_new(CListIn_Client_t * cli, EventHandler_Ptr_t handler, void * data, Uint32 net_guid);
+bool_t           CListIn_Client_delete(CListIn_Client_t * cli);
 
 
-typedef struct CListIn_t
+struct sCListIn
 {
   int            Count;
-  CListIn_Info   Info[MAXCONNECTION];
+  CListIn_Info_t   Info[MAXCONNECTION];
 
   int            Client_count;
-  CListIn_Client ClientLst[MAXCONNECTION];
-} CListIn;
+  CListIn_Client_t ClientLst[MAXCONNECTION];
+};
+typedef struct sCListIn CListIn_t;
 
-bool_t           CListIn_prune(CListIn * ci);
-CListIn_Info *   CListIn_add(CListIn * ci, CListIn_Info * info);
-bool_t           CListIn_remove(CListIn * ci, ENetPeer * peer);
+bool_t           CListIn_prune(CListIn_t * ci);
+CListIn_Info_t * CListIn_add(CListIn_t * ci, CListIn_Info_t * info);
+bool_t           CListIn_remove(CListIn_t * ci, ENetPeer * peer);
 
-CListIn_Client * CListIn_add_client(CListIn * ci, EventHandler_Ptr handler, void * data, Uint32 net_guid);
-bool_t           CListIn_remove_client(CListIn * ci, Uint32 id);
-void             CListIn_close_client(CListIn * cli, void * client_data);
-CListIn_Client * CListIn_find(CListIn * cli, Uint32 id);
+CListIn_Client_t * CListIn_add_client(CListIn_t * ci, EventHandler_Ptr_t handler, void * data, Uint32 net_guid);
+bool_t           CListIn_remove_client(CListIn_t * ci, Uint32 id);
+void             CListIn_close_client(CListIn_t * cli, void * client_data);
+CListIn_Client_t * CListIn_find(CListIn_t * cli, Uint32 id);
 
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
@@ -300,43 +309,44 @@ CListIn_Client * CListIn_find(CListIn * cli, Uint32 id);
 
 #define NETHOST_REQ_COUNT   32
 
-typedef struct NetHost_t
+struct sNetHost
 {
-  egoboo_key       ekey;
+  egoboo_key_t       ekey;
   int              references;
 
   ENetHost       * Host;
 
-  NetThread        nthread;
+  NetThread_t        nthread;
 
   // outgoing channels
-  CListOut cout;
+  CListOut_t cout;
 
   // incomming channels
-  CListIn  cin;
+  CListIn_t  cin;
 
   // data for handling asynchronous transfers
-  NetAsynchData asynch[NETHOST_REQ_COUNT];
+  NetAsynchData_t asynch[NETHOST_REQ_COUNT];
 
-} NetHost;
+};
+typedef struct sNetHost NetHost_t;
 
-// create/destroy and instance of the NetHost
-NetHost * NetHost_create(SDL_Callback_Ptr pcall);
-bool_t    NetHost_destroy(NetHost ** pnh );
+// create/destroy and instance of the NetHost_t
+NetHost_t * NetHost_create(SDL_Callback_Ptr pcall);
+bool_t    NetHost_destroy(NetHost_t ** pnh );
 
-// start and stop the NetHost
-retval_t  NetHost_startUp( NetHost * nh, Uint16 port );
-retval_t  NetHost_shutDown( NetHost * nh );
+// start and stop the NetHost_t
+retval_t  NetHost_startUp( NetHost_t * nh, Uint16 port );
+retval_t  NetHost_shutDown( NetHost_t * nh );
 
-// register a client with the NetHost so we can dispatch incoming packets to it
-Uint32 NetHost_register(NetHost * nh, EventHandler_Ptr client_handler, void * client_data, Uint32 net_guid);
-bool_t NetHost_unregister(NetHost * nh, Uint32 id);
+// register a client with the NetHost_t so we can dispatch incoming packets to it
+Uint32 NetHost_register(NetHost_t * nh, EventHandler_Ptr_t client_handler, void * client_data, Uint32 net_guid);
+bool_t NetHost_unregister(NetHost_t * nh, Uint32 id);
 
 // route packets to the correct client
-retval_t NetHost_dispatch( NetHost * nh );
+retval_t NetHost_dispatch( NetHost_t * nh );
 
 // close a connection, given connection data
-bool_t NetHost_close(NetHost * nh, void * client_data);
+bool_t NetHost_close(NetHost_t * nh, void * client_data);
 
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
@@ -345,74 +355,80 @@ bool_t NetHost_close(NetHost * nh, void * client_data);
 #define NET_REQ_SIZE 1024
 
 
-typedef struct CNet_t
+struct sNet
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
   // external links
-  struct CGame_t      * parent;
-  struct NFileState_t * nfs;
+  struct sGame      * parent;
+  struct sNFileState * nfs;
 
-} CNet;
+};
+typedef struct sNet Net_t;
 
-
-CNet * CNet_create(struct CGame_t * gs);
-bool_t CNet_destroy(CNet ** pns);
-bool_t CNet_initialize(CNet * ns);
-//bool_t CNet_shutDown(CNet * ns);
+Net_t * CNet_create(struct sGame * gs);
+bool_t CNet_destroy(Net_t ** pns);
+bool_t CNet_initialize(Net_t * ns);
+//bool_t CNet_shutDown(Net_t * ns);
 
 //------------------------------------------------------------------
 // Packet writing
-typedef struct local_packet_t
+struct s_local_packet
 {
   Uint32 head;                             // The write head
   Uint32 size;                             // The size of the packet
   Uint8  buffer[MAXSENDSIZE];              // The data packet
-} SYS_PACKET;
+};
+typedef struct s_local_packet SYS_PACKET;
 
 //------------------------------------------------------------------
-typedef struct stream_t
+struct s_stream
 {
   FILE  * pfile;
   Uint8 * data;
   size_t data_size, readLocation;
-} STREAM;
+};
+typedef struct s_stream STREAM;
 
 //------------------------------------------------------------------
-typedef struct remote_packet_t
+struct s_remote_packet
 {
   ENetPacket * pkt;
   STREAM wrapper;
-} NET_PACKET;
+};
+typedef struct s_remote_packet NET_PACKET;
 
 //------------------------------------------------------------------
-typedef struct time_latch_t
+struct s_time_latch
 {
   bool_t valid;
   Uint32 stamp;
-  CLatch  latch;
-} TIME_LATCH;
+  Latch_t  latch;
+};
+typedef struct s_time_latch TIME_LATCH;
 
 typedef TIME_LATCH CHR_TIME_LATCH[MAXLAG];
 
-typedef struct time_latch_buffer_t
+//---------------------------------------------------------------------------------------------
+struct s_time_latch_buffer
 {
   Uint32 numtimes;
   Uint32 nextstamp;                    // Expected timestamp
   CHR_TIME_LATCH buffer[CHRLST_COUNT];
-} TIME_LATCH_BUFFER;
+};
+typedef struct s_time_latch_buffer TIME_LATCH_BUFFER;
 
 //---------------------------------------------------------------------------------------------
 // Networking functions
 //---------------------------------------------------------------------------------------------
 
-retval_t net_startUp(struct ConfigData_t * cd);
+retval_t net_startUp(struct sConfigData * cd);
 retval_t net_shutDown();
 bool_t   net_Started();
 
-bool_t     net_handlePacket(CNet * ns, ENetEvent *event);
+bool_t     net_handlePacket(Net_t * ns, ENetEvent *event);
 ENetPeer * net_disconnectPeer(ENetPeer * peer, int granularity_ms, int timeout_ms);
-retval_t   net_waitForPacket(NetAsynchData * asynch_list, ENetPeer * peer, Uint32 timeout, Uint16 packet_type, size_t * data_size);
+retval_t   net_waitForPacket(NetAsynchData_t * asynch_list, ENetPeer * peer, Uint32 timeout, Uint16 packet_type, size_t * data_size);
 
 ENetPeer * net_startPeer(ENetHost * host, ENetAddress * address );
 ENetPeer * net_startPeerByName(ENetHost * host, const char* connect_name, const int connect_port );
@@ -423,15 +439,15 @@ void net_logf(const char *format, ...);
 bool_t net_sendSysPacketToAllPeers(ENetHost * host, SYS_PACKET * egop);
 bool_t net_sendSysPacketToAllPeersGuaranteed(ENetHost * host, SYS_PACKET * egop);
 
-NetRequest * net_prepareWaitForPacket(NetAsynchData * request_list, ENetPeer ** peer, Uint32 timeout, Uint16 packet_type);
+PacketRequest_t * net_prepareWaitForPacket(NetAsynchData_t * request_list, ENetPeer ** peer, Uint32 timeout, Uint16 packet_type);
 
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
-retval_t net_copyFileToAllPeers(CNet * ns, char *source, char *dest);
-retval_t net_copyFileToHost(CNet * ns, char *source, char *dest);
-retval_t net_copyDirectoryToHost(CNet * ns, char *dirname, char *todirname);
-retval_t net_copyDirectoryToAllPeers(CNet * ns, char *dirname, char *todirname);
-retval_t net_copyDirectoryToPeer(CNet * ns, ENetPeer * peer, char *dirname, char *todirname);
+retval_t net_copyFileToAllPeers(Net_t * ns, char *source, char *dest);
+retval_t net_copyFileToHost(Net_t * ns, char *source, char *dest);
+retval_t net_copyDirectoryToHost(Net_t * ns, char *dirname, char *todirname);
+retval_t net_copyDirectoryToAllPeers(Net_t * ns, char *dirname, char *todirname);
+retval_t net_copyDirectoryToPeer(Net_t * ns, ENetPeer * peer, char *dirname, char *todirname);
 
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
@@ -483,12 +499,12 @@ INLINE size_t stream_remainingSize(STREAM * p);
 //---------------------------------------------------------------------------------------------
 
 void    do_chat_input();
-void    net_sayHello(struct CGame_t * gs);
-bool_t  net_beginGame(struct CGame_t * gs);
+void    net_sayHello(struct sGame * gs);
+bool_t  net_beginGame(struct sGame * gs);
 
-void close_session(struct CNet_t * ns);
+void close_session(struct sNet * ns);
 
-PLA_REF add_player(struct CGame_t * gs,  CHR_REF character, Uint8 device );
+PLA_REF add_player(struct sGame * gs,  CHR_REF character, Uint8 device );
 char *  convert_host(Uint32 host);
 
 char * net_crack_enet_packet_type(ENetPacket * enpkt);
@@ -497,5 +513,5 @@ char * net_crack_sys_packet_type(SYS_PACKET * enpkt);
 void net_KickOnePlayer(ENetPeer * peer);
 
 void     * net_getService(Uint32 id);
-Uint32     net_addService(NetHost * host, void * data);
+Uint32     net_addService(NetHost_t * host, void * data);
 bool_t     net_removeService(Uint32 id);

@@ -39,7 +39,7 @@ char _shiftvals[SDLK_LAST];
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-KeyboardBuffer _keybuff;
+KeyboardBuffer_t _keybuff;
 
 MOUSE mous =
 {
@@ -81,7 +81,7 @@ KEYBOARD keyb =
 };
 
 //--------------------------------------------------------------------------------------------
-KeyboardBuffer * KeyboardBuffer_getState() { return &_keybuff; };
+KeyboardBuffer_t * KeyboardBuffer_getState() { return &_keybuff; };
 void             input_init_keybuffer();
 
 //--------------------------------------------------------------------------------------------
@@ -90,21 +90,21 @@ void             input_init_keybuffer();
 #define MAXTAG              128                     // Number of tags in scancode.txt
 #define TAGSIZE             32                      // Size of each tag
 
-struct scancode_data_t
+struct s_scancode_data
 {
   char   name[TAGSIZE];             // Scancode names
   Uint32 value;                     // Scancode values
 };
 
-typedef struct scancode_data_t SCANCODE_DATA;
+typedef struct s_scancode_data SCANCODE_DATA;
 
-struct scantag_list_t
+struct s_scantag_list
 {
   int           count;
   SCANCODE_DATA data[MAXTAG];
 };
 
-typedef struct scantag_list_t SCANTAG_LIST;
+typedef struct s_scantag_list SCANTAG_LIST;
 
 SCANTAG_LIST tags;
 
@@ -132,7 +132,7 @@ void input_setup()
   }
 
   input_init_keybuffer();
-  memset( &_keybuff, 0, sizeof(KeyboardBuffer));
+  memset( &_keybuff, 0, sizeof(KeyboardBuffer_t));
 
   // I would love a way to enable and disable this, but there is no
   // SDL_DisableKeyRepeat() function
@@ -442,7 +442,7 @@ bool_t input_handleSDLEvent(SDL_Event * evt)
           }
         };
 
-        _keybuff.buffer[_keybuff.write] = '\0';
+        _keybuff.buffer[_keybuff.write] = EOS;
       }
       handled = btrue;
       break;
@@ -498,15 +498,15 @@ void input_read()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CPlayer * Player_new(CPlayer *ppla)
+Player_t * Player_new(Player_t *ppla)
 {
   //fprintf( stdout, "Player_new()\n");
 
   if(NULL ==ppla) return ppla;
 
-  memset(ppla, 0, sizeof(CPlayer));
+  memset(ppla, 0, sizeof(Player_t));
 
-  EKEY_PNEW( ppla, CPlayer );
+  EKEY_PNEW( ppla, Player_t );
 
   ppla->chr_ref = INVALID_CHR;
   ppla->Active = bfalse;
@@ -515,7 +515,7 @@ CPlayer * Player_new(CPlayer *ppla)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t   Player_delete(CPlayer *ppla)
+bool_t   Player_delete(Player_t *ppla)
 {
   if(NULL ==ppla) return bfalse;
 
@@ -529,7 +529,7 @@ bool_t   Player_delete(CPlayer *ppla)
 };
 
 //--------------------------------------------------------------------------------------------
-CPlayer * Player_renew(CPlayer *ppla)
+Player_t * Player_renew(Player_t *ppla)
 {
   Player_delete(ppla);
   return Player_new(ppla);

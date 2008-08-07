@@ -35,54 +35,54 @@
 #define MAX_CONFIG_VALUE_LENGTH   256
 #define MAX_CONFIG_COMMENTARY_LENGTH 256
 
-typedef struct configfile_value_t
+typedef struct sConfigFileValue
 {
   char KeyName[MAX_CONFIG_KEY_LENGTH];
   char *Value;
   char *Commentary;
-  struct configfile_value_t *NextValue;
-} ConfigFileValue, *ConfigFileValuePtr;
+  struct sConfigFileValue *NextValue;
+} ConfigFileValue_t, *ConfigFileValuePtr_t;
 
-typedef struct configfile_section_t
+typedef struct sConfigFileSection
 {
   char SectionName[MAX_CONFIG_SECTION_LENGTH];
-  struct configfile_section_t *NextSection;
-  ConfigFileValuePtr FirstValue;
-} ConfigFileSection, *ConfigFileSectionPtr;
+  struct sConfigFileSection *NextSection;
+  ConfigFileValuePtr_t FirstValue;
+} ConfigFileSection_t, *ConfigFileSectionPtr_t;
 
-typedef struct config_file_t
+typedef struct sConfigFile
 {
   FILE *f;
-  ConfigFileSectionPtr ConfigSectionList;
+  ConfigFileSectionPtr_t ConfigSectionList;
 
-  ConfigFileSectionPtr CurrentSection;
-  ConfigFileValuePtr  CurrentValue;
-} ConfigFile, *ConfigFilePtr;
+  ConfigFileSectionPtr_t CurrentSection;
+  ConfigFileValuePtr_t  CurrentValue;
+} ConfigFile_t, *ConfigFilePtr_t;
 
 
 // util
 void ConvertToKeyCharacters( char *pStr );
 
 //
-ConfigFilePtr OpenConfigFile( const char *pPath );
+ConfigFilePtr_t OpenConfigFile( const char *pPath );
 
 //
-Sint32 GetConfigValue( ConfigFilePtr pConfigFile, const char *pSection, const char *pKey, char *pValue, Sint32 pValueBufferLength );
-Sint32 GetConfigBooleanValue( ConfigFilePtr pConfigFile, const char *pSection, const char *pKey, bool_t *pBool );
-Sint32 GetConfigIntValue( ConfigFilePtr pConfigFile, const char *pSection, const char *pKey, Sint32 *pInt );
+Sint32 GetConfigValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, char *pValue, Sint32 pValueBufferLength );
+Sint32 GetConfigBooleanValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, bool_t *pBool );
+Sint32 GetConfigIntValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, Sint32 *pInt );
 
 //
-Sint32 SetConfigValue( ConfigFilePtr pConfigFile, const char *pSection, const char *pKey, const char *pValue );
-Sint32 SetConfigBooleanValue( ConfigFilePtr pConfigFile, const char *pSection, const char *pKey, bool_t pBool );
-Sint32 SetConfigIntValue( ConfigFilePtr pConfigFile, const char *pSection, const char *pKey, int pInt );
-Sint32 SetConfigFloatValue( ConfigFilePtr pConfigFile, const char *pSection, const char *pKey, float pFloat );
+Sint32 SetConfigValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, const char *pValue );
+Sint32 SetConfigBooleanValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, bool_t pBool );
+Sint32 SetConfigIntValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, int pInt );
+Sint32 SetConfigFloatValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, float pFloat );
 
 //
-void CloseConfigFile( ConfigFilePtr pConfigFile );
+void CloseConfigFile( ConfigFilePtr_t pConfigFile );
 
 //
-void SaveConfigFile( ConfigFilePtr pConfigFile );
-Sint32 SaveConfigFileAs( ConfigFilePtr pConfigFile, const char *pPath );
+void SaveConfigFile( ConfigFilePtr_t pConfigFile );
+Sint32 SaveConfigFileAs( ConfigFilePtr_t pConfigFile, const char *pPath );
 
 
 #endif // #ifndef _CONFIGFILE_H_

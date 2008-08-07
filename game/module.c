@@ -45,23 +45,25 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-static void   module_load_all_objects( CGame * gs, char * szModname );
-static bool_t module_load_all_waves( CGame * gs, char *modname );
+static void   module_load_all_objects( Game_t * gs, char * szModname );
+static bool_t module_load_all_waves( Game_t * gs, char *modname );
 
 //--------------------------------------------------------------------------------------------
-void release_bumplist(MESH_INFO * pmesh)
+void release_bumplist(MeshInfo_t * mi)
 {
-  bumplist_renew( &(pmesh->bumplist) );
+  bumplist_renew( &(mi->bumplist) );
 };
 
 //--------------------------------------------------------------------------------------------
-void module_release( CGame * gs )
+void module_release( Game_t * gs )
 {
   // ZZ> This function frees up memory used by the module
 
   bool_t client_running = bfalse, server_running = bfalse, local_running = bfalse;
-  ModState * ms = &(gs->modstate);
-  MESH_INFO * mi = &(gs->mesh);
+
+  Mesh_t     * pmesh = Game_getMesh(gs);
+  ModState_t * ms    = &(gs->modstate);
+  MeshInfo_t * mi    = &(pmesh->Info);
 
   if(!ms->Active) return;
 
@@ -203,13 +205,13 @@ int module_find( char *smallname, MOD_INFO * mi_ary, size_t mi_size )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t module_load( CGame * gs, char *smallname )
+bool_t module_load( Game_t * gs, char *smallname )
 {
   // ZZ> This function loads a module
 
   STRING szModpath;
 
-  if(!EKEY_PVALID(gs) || NULL == smallname || '\0' == smallname[0]) return bfalse;
+  if(!EKEY_PVALID(gs) ||  !VALID_CSTR(smallname) ) return bfalse;
 
   gs->modstate.beat = bfalse;
   timeron = bfalse;
@@ -237,10 +239,10 @@ bool_t module_load( CGame * gs, char *smallname )
   load_basic_textures( gs, szModpath );
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s", szModpath, CData.gamedat_dir );
-  if ( AILST_COUNT == load_ai_script( CGame_getScriptInfo(gs), CStringTmp1, NULL ) )
+  if ( AILST_COUNT == load_ai_script( Game_getScriptInfo(gs), CStringTmp1, NULL ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s", CData.basicdat_dir, CData.script_file );
-    load_ai_script( CGame_getScriptInfo(gs), CStringTmp1, NULL );
+    load_ai_script( Game_getScriptInfo(gs), CStringTmp1, NULL );
   };
 
   release_all_models( gs );
@@ -251,7 +253,7 @@ bool_t module_load( CGame * gs, char *smallname )
 
   if ( !load_mesh( gs, szModpath ) )
   {
-    log_error( "Load problems with the gs->mesh.\n" );
+    log_error( "Load problems with the pmesh->Info.\n" );
   }
 
   setup_particles( gs );
@@ -345,7 +347,7 @@ bool_t module_read_data( MOD_INFO * pmod, char *szLoadName )
     pmod->respawnmode  = fget_next_respawn( fileread );
     pmod->rts_control  = fget_next_bool( fileread ) ;
     fget_next_string( fileread, pmod->rank, sizeof( pmod->rank ) );
-    pmod->rank[RANKSIZE] = '\0';
+    pmod->rank[RANKSIZE] = EOS;
 
     // Read the expansions
     return btrue;
@@ -355,7 +357,7 @@ bool_t module_read_data( MOD_INFO * pmod, char *szLoadName )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t module_read_summary( char *szLoadName, MOD_SUMMARY * ms )
+bool_t module_read_summary( char *szLoadName, ModSummary_t * ms )
 {
   // ZZ> This function gets the quest description out of the module's menu file
 
@@ -399,7 +401,7 @@ bool_t module_read_summary( char *szLoadName, MOD_SUMMARY * ms )
 
 
 //--------------------------------------------------------------------------------------------
-void module_load_all_objects( CGame * gs, char * szModpath )
+void module_load_all_objects( Game_t * gs, char * szModpath )
 {
   // ZZ> This function loads a module's objects
 
@@ -471,7 +473,7 @@ void module_load_all_objects( CGame * gs, char * szModpath )
 
 
 //--------------------------------------------------------------------------------------------
-ModState * ModState_new(ModState * ms, MOD_INFO * mi, Uint32 seed)
+ModState_t * ModState_new(ModState_t * ms, MOD_INFO * mi, Uint32 seed)
 {
   //fprintf( stdout, "ModState_new()\n");
 
@@ -479,9 +481,9 @@ ModState * ModState_new(ModState * ms, MOD_INFO * mi, Uint32 seed)
 
   ModState_delete( ms );
 
-  memset(ms, 0, sizeof(ModState));
+  memset(ms, 0, sizeof(ModState_t));
 
-  EKEY_PNEW(ms, ModState);
+  EKEY_PNEW(ms, ModState_t);
 
   // initialize the the non-zero, non NULL, non-false values
   ms->seed            = seed;
@@ -504,7 +506,7 @@ ModState * ModState_new(ModState * ms, MOD_INFO * mi, Uint32 seed)
 
 
 //--------------------------------------------------------------------------------------------
-bool_t ModState_delete(ModState * ms)
+bool_t ModState_delete(ModState_t * ms)
 {
   if(NULL == ms) return bfalse;
   if( !EKEY_PVALID(ms) ) return btrue;
@@ -518,23 +520,23 @@ bool_t ModState_delete(ModState * ms)
 }
 
 //--------------------------------------------------------------------------------------------
-ModState * ModState_renew(ModState * ms, MOD_INFO * mi, Uint32 seed)
+ModState_t * ModState_renew(ModState_t * ms, MOD_INFO * mi, Uint32 seed)
 {
   ModState_delete(ms);
   return ModState_new(ms, mi, seed);
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t module_load_all_waves( CGame * gs, char *modname )
+bool_t module_load_all_waves( Game_t * gs, char *modname )
 {
   // ZZ> This function loads the global waves used in a given modules
 
   STRING tmploadname, newloadname;
   Uint8 cnt;
 
-  SoundState * snd = snd_getState(gs->cd);
+  SoundState_t * snd = snd_getState(gs->cd);
 
-  if ( NULL == snd || NULL == modname || '\0' == modname[0] ) return bfalse;
+  if ( NULL == snd ||  !VALID_CSTR(modname)  ) return bfalse;
 
   if( !snd->soundActive || !snd->mixer_loaded ) return bfalse;
 
@@ -593,12 +595,12 @@ bool_t module_load_all_waves( CGame * gs, char *modname )
 }
 
 //---------------------------------------------------------------------------------------------
-void module_quit( CGame * gs )
+void module_quit( Game_t * gs )
 {
   // ZZ> This function forces a return to the menu
 
   bool_t client_running = bfalse, server_running = bfalse, local_running = bfalse;
-  ModState * ms = &(gs->modstate);
+  ModState_t * ms = &(gs->modstate);
 
   if(!ms->Active) return;
 
@@ -642,7 +644,7 @@ void module_quit( CGame * gs )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-MOD_SUMMARY * ModSummary_new( MOD_SUMMARY * ms )
+ModSummary_t * ModSummary_new( ModSummary_t * ms )
 {
   int i;
 
@@ -652,21 +654,21 @@ MOD_SUMMARY * ModSummary_new( MOD_SUMMARY * ms )
 
   ModSummary_delete( ms );
 
-  memset( ms, 0, sizeof(MOD_SUMMARY) );
+  memset( ms, 0, sizeof(ModSummary_t) );
 
-  EKEY_PNEW( ms, ModSummary );
+  EKEY_PNEW( ms, ModSummary_t );
 
   ms->numlines = 0;
   for(i=0; i<SUMMARYLINES; i++)
   {
-    ms->summary[i][0] = '\0';
+    ms->summary[i][0] = EOS;
   }
 
   return ms;
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t ModSummary_delete( MOD_SUMMARY * ms )
+bool_t ModSummary_delete( ModSummary_t * ms )
 {
   if(NULL == ms) return bfalse;
   if( !EKEY_PVALID(ms) ) return btrue;
@@ -679,7 +681,7 @@ bool_t ModSummary_delete( MOD_SUMMARY * ms )
 }
 
 //--------------------------------------------------------------------------------------------
-MOD_SUMMARY * ModSummary_renew( MOD_SUMMARY * ms )
+ModSummary_t * ModSummary_renew( ModSummary_t * ms )
 {
   ModSummary_delete(ms);
 
@@ -738,4 +740,27 @@ void ModInfo_clear_all_titleimages( MOD_INFO * mi_ary, size_t mi_count )
     mi_ary[cnt].tx_title_idx = MAXMODULE;
   };
 
+}
+
+
+//---------------------------------------------------------------------------------------------
+bool_t module_read_egomap_extra( Game_t * gs, const char * szModPath )
+{
+  FILE * ftmp;
+  STRING fname;
+  
+  if( !VALID_CSTR(szModPath) ) return bfalse;
+
+  // create the filename
+  strncpy(fname, szModPath, sizeof(STRING));
+  str_append_slash(fname, sizeof(STRING));
+  strcat(fname, "EgoMapExtra.txt");
+
+  // open the file
+  ftmp = fs_fileOpen( PRI_NONE, NULL, fname, "r" );
+  if(NULL == ftmp) return bfalse;
+
+
+
+  return bfalse;
 }

@@ -31,7 +31,6 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-
 #define RANKSIZE 8
 #define SUMMARYLINES 8
 #define SUMMARYSIZE  80
@@ -40,10 +39,10 @@
 
 //--------------------------------------------------------------------------------------------
 
-struct CGame_t;
+struct sGame;
 
 //--------------------------------------------------------------------------------------------
-typedef struct import_info_t
+struct s_import_info
 {
   bool_t valid;                // Can it import?
 
@@ -56,16 +55,17 @@ typedef struct import_info_t
 
   OBJ_REF slot_lst[1024];
 
-} IMPORT_INFO;
+};
+typedef struct s_import_info IMPORT_INFO;
 
 bool_t import_info_clear(IMPORT_INFO * ii);
 bool_t import_info_add(IMPORT_INFO * ii, OBJ_REF obj);
 
 //--------------------------------------------------------------------------------------------
 
-typedef struct mod_data_t
+typedef struct s_mod_info
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
   char            rank[RANKSIZE];               // Number of stars
   char            longname[32];                 // Module names
@@ -85,26 +85,28 @@ typedef struct mod_data_t
 } MOD_INFO;
 
 MOD_INFO * ModInfo_new( MOD_INFO * pmi );
-bool_t ModInfo_delete( MOD_INFO * pmi );
+bool_t     ModInfo_delete( MOD_INFO * pmi );
 MOD_INFO * ModInfo_renew( MOD_INFO * pmi );
 
 //--------------------------------------------------------------------------------------------
-typedef struct module_summary_t
+struct s_ModSummary
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
+
   int    numlines;                                   // Lines in summary
   char   val;
   char   summary[SUMMARYLINES][SUMMARYSIZE];      // Quest description
-} MOD_SUMMARY;
+};
+typedef struct s_ModSummary ModSummary_t;
 
-MOD_SUMMARY * ModSummary_new( MOD_SUMMARY * ms );
-bool_t        ModSummary_delete( MOD_SUMMARY * ms );
-MOD_SUMMARY * ModSummary_renew( MOD_SUMMARY * ms );
+ModSummary_t * ModSummary_new( ModSummary_t * ms );
+bool_t        ModSummary_delete( ModSummary_t * ms );
+ModSummary_t * ModSummary_renew( ModSummary_t * ms );
 
 //--------------------------------------------------------------------------------------------
-typedef struct ModState_t
+struct sModState
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
   bool_t Active;                     // Is the control loop still going?
   bool_t Paused;                     // Is the control loop paused?
@@ -119,23 +121,25 @@ typedef struct ModState_t
 
   IMPORT_INFO import;
 
-} ModState;
+};
+typedef struct sModState ModState_t;
 
-ModState * ModState_new(ModState * ms, MOD_INFO * mi, Uint32 seed);
-bool_t     ModState_delete(ModState * ms);
-ModState * ModState_renew(ModState * ms, MOD_INFO * mi, Uint32 seed);
+ModState_t * ModState_new(ModState_t * ms, MOD_INFO * mi, Uint32 seed);
+bool_t       ModState_delete(ModState_t * ms);
+ModState_t * ModState_renew(ModState_t * ms, MOD_INFO * mi, Uint32 seed);
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-bool_t module_load( struct CGame_t * gs, char *smallname );
-void   module_release(  struct CGame_t * gs  );
-void   module_quit( struct CGame_t * gs );
+bool_t module_load( struct sGame * gs, char *smallname );
+void   module_release(  struct sGame * gs  );
+void   module_quit( struct sGame * gs );
 
 bool_t module_reference_matches( char *szLoadName, IDSZ idsz );
 void   module_add_idsz( char *szLoadName, IDSZ idsz );
 int    module_find( char *smallname, MOD_INFO * mi_ary, size_t mi_size );
-bool_t module_read_data( struct mod_data_t * pmod, char *szLoadName );
-bool_t module_read_summary( char *szLoadName, MOD_SUMMARY * ms );
+bool_t module_read_data( struct s_mod_info * pmod, char *szLoadName );
+bool_t module_read_summary( char *szLoadName, ModSummary_t * ms );
 
 void ModInfo_clear_all_titleimages( MOD_INFO * mi_ary, size_t mi_count );
+

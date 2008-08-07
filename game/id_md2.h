@@ -85,7 +85,7 @@ typedef struct id_md2_gldata_t
 } md2_gldata;
 #pragma pack(pop)
 
-enum id_md2_constant_e
+enum e_id_md2_constant
 {
   MD2_MAX_TRIANGLES = 4096,
   MD2_MAX_VERTICES = 2048,

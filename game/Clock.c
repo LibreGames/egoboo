@@ -32,9 +32,9 @@
 #include <stdlib.h>
 #include <memory.h>
 
-static clock_source_ptr _clock_timeSource = NULL;
+static clock_source_ptr_t _clock_timeSource = NULL;
 
-static clock_source_ptr clock_getTimeSource()
+static clock_source_ptr_t clock_getTimeSource()
 {
   if(NULL == _clock_timeSource)
   {
@@ -57,7 +57,7 @@ void clock_shutdown()
 }
 
 // Clock data
-struct ClockState_t
+struct sClockState
 {
   // Clock data
   char * name;
@@ -78,26 +78,26 @@ struct ClockState_t
 };
 
 
-static ClockState * ClockState_new( ClockState * cs, const char * name, int size  );
-static bool_t ClockState_delete( ClockState * cs );
+static ClockState_t * ClockState_new( ClockState_t * cs, const char * name, int size  );
+static bool_t ClockState_delete( ClockState_t * cs );
 
-static void   ClockState_initTime( ClockState * cs );
-static void   ClockState_setFrameHistoryWindow( ClockState * cs, int size );
-static void   ClockState_addToFrameHistory( ClockState * cs, double frame );
-static double ClockState_getExactLastFrameDuration( ClockState * cs );
-static double ClockState_guessFrameDuration( ClockState * cs );
+static void   ClockState_initTime( ClockState_t * cs );
+static void   ClockState_setFrameHistoryWindow( ClockState_t * cs, int size );
+static void   ClockState_addToFrameHistory( ClockState_t * cs, double frame );
+static double ClockState_getExactLastFrameDuration( ClockState_t * cs );
+static double ClockState_guessFrameDuration( ClockState_t * cs );
 
 
-ClockState * ClockState_create(const char * name, int size)
+ClockState_t * ClockState_create(const char * name, int size)
 {
-  ClockState * cs;
+  ClockState_t * cs;
 
-  cs = ( ClockState * ) calloc( 1, sizeof( ClockState ) );
+  cs = ( ClockState_t * ) calloc( 1, sizeof( ClockState_t ) );
 
   return ClockState_new( cs, name, size );
 };
 
-bool_t ClockState_destroy( ClockState ** pcs )
+bool_t ClockState_destroy( ClockState_t ** pcs )
 {
   bool_t retval;
 
@@ -110,15 +110,15 @@ bool_t ClockState_destroy( ClockState ** pcs )
 };
 
 
-ClockState * ClockState_new( ClockState * cs, const char * name, int size )
+ClockState_t * ClockState_new( ClockState_t * cs, const char * name, int size )
 {
-  clock_source_ptr psrc;
+  clock_source_ptr_t psrc;
   if(NULL == cs) return cs;
 
   if(size<0) size = 1;
   log_info("ClockState_new() - \"%s\"\t%d buffer(s)\n", name, size);
 
-  memset( cs, 0, sizeof( ClockState ) );
+  memset( cs, 0, sizeof( ClockState_t ) );
 
   cs->maximumFrameTime = 0.2;
   cs->name = name;
@@ -131,7 +131,7 @@ ClockState * ClockState_new( ClockState * cs, const char * name, int size )
   return cs;
 };
 
-bool_t ClockState_delete( ClockState * cs )
+bool_t ClockState_delete( ClockState_t * cs )
 {
   if(NULL == cs) return bfalse;
 
@@ -140,7 +140,7 @@ bool_t ClockState_delete( ClockState * cs )
   return btrue;
 };
 
-ClockState * ClockState_renew( ClockState * cs )
+ClockState_t * ClockState_renew( ClockState_t * cs )
 {
   const char * name;
   int size;
@@ -152,7 +152,7 @@ ClockState * ClockState_renew( ClockState * cs )
   return ClockState_new(cs, name, size);
 };
 
-void ClockState_setFrameHistoryWindow( ClockState * cs, int size )
+void ClockState_setFrameHistoryWindow( ClockState_t * cs, int size )
 {
   double *history;
   int oldSize = cs->frameHistoryWindow;
@@ -180,7 +180,7 @@ void ClockState_setFrameHistoryWindow( ClockState * cs, int size )
   cs->frameHistory = history;
 }
 
-double ClockState_guessFrameDuration( ClockState * cs )
+double ClockState_guessFrameDuration( ClockState_t * cs )
 {
   int c;
   double totalTime = 0;
@@ -193,7 +193,7 @@ double ClockState_guessFrameDuration( ClockState * cs )
   return totalTime / cs->frameHistorySize;
 }
 
-void ClockState_addToFrameHistory( ClockState * cs, double frame )
+void ClockState_addToFrameHistory( ClockState_t * cs, double frame )
 {
   cs->frameHistory[cs->frameHistoryHead] = frame;
 
@@ -210,9 +210,9 @@ void ClockState_addToFrameHistory( ClockState * cs, double frame )
   }
 }
 
-double ClockState_getExactLastFrameDuration( ClockState * cs )
+double ClockState_getExactLastFrameDuration( ClockState_t * cs )
 {
-  clock_source_ptr psrc;
+  clock_source_ptr_t psrc;
   double sourceTime;
   double timeElapsed;
 
@@ -237,7 +237,7 @@ double ClockState_getExactLastFrameDuration( ClockState * cs )
   return timeElapsed;
 }
 
-void ClockState_frameStep( ClockState * cs )
+void ClockState_frameStep( ClockState_t * cs )
 {
   double lastFrame = ClockState_getExactLastFrameDuration( cs );
   ClockState_addToFrameHistory( cs, lastFrame );
@@ -251,22 +251,22 @@ void ClockState_frameStep( ClockState * cs )
   cs->frameNumber++;
 }
 
-double ClockState_getTime( ClockState * cs )
+double ClockState_getTime( ClockState_t * cs )
 {
   return cs->currentTime;
 }
 
-double ClockState_getFrameDuration( ClockState * cs )
+double ClockState_getFrameDuration( ClockState_t * cs )
 {
   return cs->frameTime;
 }
 
-Uint32 ClockState_getFrameNumber( ClockState * cs )
+Uint32 ClockState_getFrameNumber( ClockState_t * cs )
 {
   return cs->frameNumber;
 }
 
-float ClockState_getFrameRate( ClockState * cs )
+float ClockState_getFrameRate( ClockState_t * cs )
 {
   return ( float )( 1.0 / cs->frameTime );
 }

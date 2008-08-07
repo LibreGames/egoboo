@@ -30,13 +30,13 @@
 #include <shlobj.h>
 #include <shlwapi.h>
 
-struct fs_find_info_win32_t
+struct s_fs_find_info_win32
 {
   WIN32_FIND_DATA win32_wfdData;
   HANDLE          win32_hFind;
 };
 
-typedef struct fs_find_info_win32_t FS_FIND_INFO_WIN32;
+typedef struct s_fs_find_info_win32 FS_FIND_INFO_WIN32;
 
 FS_FIND_INFO * fs_find_info_new(FS_FIND_INFO * i)
 {
@@ -51,10 +51,10 @@ FS_FIND_INFO * fs_find_info_new(FS_FIND_INFO * i)
 };
 
 // Paths that the game will deal with
-char win32_tempPath[MAX_PATH] = { '\0' };
-char win32_importPath[MAX_PATH] = { '\0' };
-char win32_savePath[MAX_PATH] = { '\0' };
-char win32_gamePath[MAX_PATH] = { '\0' };
+char win32_tempPath[MAX_PATH] = { EOS };
+char win32_importPath[MAX_PATH] = { EOS };
+char win32_savePath[MAX_PATH] = { EOS };
+char win32_gamePath[MAX_PATH] = { EOS };
 
 //---------------------------------------------------------------------------------------------
 //File Routines-------------------------------------------------------------------------------

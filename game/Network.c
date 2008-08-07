@@ -61,18 +61,17 @@ static void _net_Quit(void);
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct NetService_Info_t
+struct sNetService_Info
 {
   int       references;
-  NetHost * host;
+  NetHost_t * host;
   void    * data;
   Uint32    guid;
 };
+typedef struct sNetService_Info NetService_Info_t;
 
-typedef struct NetService_Info_t NetService_Info;
-
-static int             _net_service_count = 0;
-static NetService_Info _net_service_list[MAXSERVICE];
+static int               _net_service_count = 0;
+static NetService_Info_t _net_service_list[MAXSERVICE];
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -89,7 +88,7 @@ Uint32 net_nextGUID()
 };
 
 //--------------------------------------------------------------------------------------------
-Uint32 net_addService(NetHost * host, void * data)
+Uint32 net_addService(NetHost_t * host, void * data)
 {
   int i;
   Uint32 id;
@@ -147,7 +146,7 @@ bool_t net_removeService(Uint32 id)
     {
       int last = _net_service_count - 1;
 
-      memmove(_net_service_list + i, _net_service_list + last, sizeof(NetService_Info));
+      memmove(_net_service_list + i, _net_service_list + last, sizeof(NetService_Info_t));
 
       _net_service_count--;
     }
@@ -180,28 +179,28 @@ void * net_getService(Uint32 id)
 static Uint32 _CListIn_guid = 0;
 
 //--------------------------------------------------------------------------------------------
-// private CNet initialization
-static CNet * CNet_new(CNet * ns, CGame * gs);
-static bool_t     CNet_delete(CNet * ns);
+// private Net_t initialization
+static Net_t * CNet_new(Net_t * ns, Game_t * gs);
+static bool_t     CNet_delete(Net_t * ns);
 
 //--------------------------------------------------------------------------------------------
-// private NetHost initialization
-static NetHost * NetHost_new(NetHost * nh, SDL_Callback_Ptr pcall);
-static bool_t    NetHost_delete(NetHost * nh);
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-
-static retval_t net_loopWaitForPacket(NetRequest * prequest, Uint32 granularity, size_t * data_size);
-
+// private NetHost_t initialization
+static NetHost_t * NetHost_new(NetHost_t * nh, SDL_Callback_Ptr pcall);
+static bool_t    NetHost_delete(NetHost_t * nh);
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-Uint32 NetHost_register(NetHost * nh, EventHandler_Ptr client_handler, void * client_data, Uint32 net_guid)
+static retval_t net_loopWaitForPacket(PacketRequest_t * prequest, Uint32 granularity, size_t * data_size);
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+Uint32 NetHost_register(NetHost_t * nh, EventHandler_Ptr_t client_handler, void * client_data, Uint32 net_guid)
 {
   Uint32 id = (~(Uint32)0);
-  CListIn_Client * cli;
+  CListIn_Client_t * cli;
 
   if(NULL == nh) return id;
 
@@ -213,7 +212,7 @@ Uint32 NetHost_register(NetHost * nh, EventHandler_Ptr client_handler, void * cl
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t NetHost_unregister(NetHost * nh, Uint32 id)
+bool_t NetHost_unregister(NetHost_t * nh, Uint32 id)
 {
   if(NULL == nh) return bfalse;
 
@@ -221,19 +220,19 @@ bool_t NetHost_unregister(NetHost * nh, Uint32 id)
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t NetHost_dispatch( NetHost * nh )
+retval_t NetHost_dispatch( NetHost_t * nh )
 {
   // BB > Handle an ENet event.
   //      If we received a packet, send it to the correct location
 
-  NetThread  * nthread;
-  NetRequest * prequest;
+  NetThread_t  * nthread;
+  PacketRequest_t * prequest;
   Uint32 id;
 
   ENetEvent event;
   STREAM    tmpstream;
-  CListIn_Info cin_info, *pcin_info;
-  char hostName[64] = { '\0' };
+  CListIn_Info_t cin_info, *pcin_info;
+  char hostName[64] = { EOS };
   size_t copy_size;
 
   if( !EKEY_PVALID(nh) ) return rv_fail;
@@ -275,7 +274,7 @@ retval_t NetHost_dispatch( NetHost * nh )
       }
       else
       {
-        CListIn_Client * pc;
+        CListIn_Client_t * pc;
 
         stream_startENet(&tmpstream, event.packet);
         id = stream_readUint32(&tmpstream);
@@ -285,7 +284,7 @@ retval_t NetHost_dispatch( NetHost * nh )
         // if we trust pointers, we could actually call
         // (*pc->handler_ptr)(pc->handler_data, &event)
 
-        if(!net_handlePacket( (CNet *)pc->handler_data, &event))
+        if(!net_handlePacket( (Net_t *)pc->handler_data, &event))
         {
           net_logf("NET WARNING: NetHost_dispatch() - Unhandled packet\n");
         }
@@ -298,8 +297,8 @@ retval_t NetHost_dispatch( NetHost * nh )
       net_logf("ENET_EVENT_TYPE_CONNECT\n");
 
       cin_info.Address     = event.peer->address;
-      cin_info.Hostname[0] = '\0';
-      cin_info.Name[0]     = '\0';
+      cin_info.Hostname[0] = EOS;
+      cin_info.Name[0]     = EOS;
 
       // grab the ID of the service the remote wants to connect to
       stream_startENet(&tmpstream, event.packet);
@@ -354,21 +353,21 @@ retval_t NetHost_dispatch( NetHost * nh )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CListOut_Info * CListOut_Info_new(CListOut_Info *info)
+CListOut_Info_t * CListOut_Info_new(CListOut_Info_t *info)
 {
   if(NULL == info) return info;
 
   CListOut_Info_delete(info);
 
-  memset(info, 0, sizeof(CListOut_Info));
+  memset(info, 0, sizeof(CListOut_Info_t));
 
-  EKEY_PNEW(info, CListOut_Info);
+  EKEY_PNEW(info, CListOut_Info_t);
 
   return info;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CListOut_Info_delete(CListOut_Info * info)
+bool_t CListOut_Info_delete(CListOut_Info_t * info)
 {
   if(NULL == info) return bfalse;
   if( !EKEY_PVALID(info) ) return btrue;
@@ -377,14 +376,14 @@ bool_t CListOut_Info_delete(CListOut_Info * info)
 
   enet_peer_disconnect(info->peer, 0);
 
-  memset(info, 0, sizeof(CListOut_Info));
+  memset(info, 0, sizeof(CListOut_Info_t));
 
   return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t CListOut_prune(CListOut * co)
+bool_t CListOut_prune(CListOut_t * co)
 {
   int imin, imax, j;
 
@@ -422,7 +421,7 @@ bool_t CListOut_prune(CListOut * co)
 
     if(imin == imax) break;
 
-    memcpy(co->Clients + imin, co->Clients + imax, sizeof(CListOut_Info));
+    memcpy(co->Clients + imin, co->Clients + imax, sizeof(CListOut_Info_t));
     memcpy(co->References + imin, co->References + imax, sizeof(int));
 
     imax--;
@@ -435,7 +434,7 @@ bool_t CListOut_prune(CListOut * co)
 
 
 //--------------------------------------------------------------------------------------------
-ENetPeer * CListOut_add(CListOut * co, ENetHost * host, ENetAddress * address, void * client_data)
+ENetPeer * CListOut_add(CListOut_t * co, ENetHost * host, ENetAddress * address, void * client_data)
 {
   int i;
   ENetPeer * retval = NULL;
@@ -470,7 +469,7 @@ ENetPeer * CListOut_add(CListOut * co, ENetHost * host, ENetAddress * address, v
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CListOut_remove(CListOut * co, ENetPeer * peer)
+bool_t CListOut_remove(CListOut_t * co, ENetPeer * peer)
 {
   int i, j;
 
@@ -536,7 +535,7 @@ bool_t net_Started()
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t net_startUp(ConfigData * cd)
+retval_t net_startUp(ConfigData_t * cd)
 {
   // ZZ> This starts up the network and logs whatever goes on
 
@@ -580,7 +579,7 @@ retval_t net_startUp(ConfigData * cd)
 
   // reset the registered services
   _net_service_count = 0;
-  memset(_net_service_list, 0, MAXSERVICE * sizeof(NetService_Info));
+  memset(_net_service_list, 0, MAXSERVICE * sizeof(NetService_Info_t));
 
   return _enet_initialized ? rv_succeed : rv_fail;
 }
@@ -604,7 +603,7 @@ retval_t net_shutDown()
 
   // reset the registered services
   _net_service_count = 0;
-  memset(_net_service_list, 0, MAXSERVICE * sizeof(NetService_Info));
+  memset(_net_service_list, 0, MAXSERVICE * sizeof(NetService_Info_t));
 
   enet_deinitialize();
 
@@ -614,7 +613,7 @@ retval_t net_shutDown()
 }
 
 //--------------------------------------------------------------------------------------------
-//retval_t net_startUp(CNet * ns, CGame * gs)
+//retval_t net_startUp(Net_t * ns, Game_t * gs)
 //{
 //  // ZZ> This starts up the network and logs whatever goes on
 //
@@ -665,7 +664,7 @@ retval_t net_shutDown()
 //
 //
 ////--------------------------------------------------------------------------------------------
-//retval_t net_shutDown(CNet * ns)
+//retval_t net_shutDown(Net_t * ns)
 //{
 //  net_logf("NET INFO: net_shutDown: Turning off networking.\n");
 //
@@ -691,7 +690,7 @@ retval_t net_shutDown()
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//bool_t net_Started(CNet * ns)
+//bool_t net_Started(Net_t * ns)
 //{
 //  return _enet_initialized && EKEY_PVALID( ns );
 //}
@@ -699,14 +698,14 @@ retval_t net_shutDown()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CNet * CNet_create(CGame * gs)
+Net_t * CNet_create(Game_t * gs)
 {
-  CNet * ns = (CNet *)calloc(1, sizeof(CNet));
+  Net_t * ns = (Net_t *)calloc(1, sizeof(Net_t));
   return CNet_new(ns, gs);
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CNet_destroy(CNet ** pns)
+bool_t CNet_destroy(Net_t ** pns)
 {
   bool_t retval;
 
@@ -720,7 +719,7 @@ bool_t CNet_destroy(CNet ** pns)
 }
 
 //--------------------------------------------------------------------------------------------
-CNet * CNet_new(CNet * ns, CGame * gs)
+Net_t * CNet_new(Net_t * ns, Game_t * gs)
 {
   //fprintf( stdout, "CNet_new()\n");
 
@@ -728,9 +727,9 @@ CNet * CNet_new(CNet * ns, CGame * gs)
 
   CNet_delete(ns);
 
-  memset(ns, 0, sizeof(CNet));
+  memset(ns, 0, sizeof(Net_t));
 
-  EKEY_PNEW(ns, CNet);
+  EKEY_PNEW(ns, Net_t);
 
   ns->parent = gs;
 
@@ -744,7 +743,7 @@ CNet * CNet_new(CNet * ns, CGame * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CNet_delete(CNet * ns)
+bool_t CNet_delete(Net_t * ns)
 {
   if(NULL == ns) return bfalse;
   if(!EKEY_PVALID( ns )) return btrue;
@@ -754,15 +753,15 @@ bool_t CNet_delete(CNet * ns)
   NFileState_destroy(  &(ns->nfs) );
 
   // let the thread kill itself
-  net_logf("NET INFO: CNet_delete(): deleting all CNet services.\n");
+  net_logf("NET INFO: CNet_delete(): deleting all Net_t services.\n");
 
   return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-//bool_t CNet_initialize(CNet * ns, CClient * cs, CServer * ss, NFileState * nfs, struct CGame_t * gs)
+//bool_t CNet_initialize(Net_t * ns, Client_t * cs, Server_t * ss, NFileState_t * nfs, struct sGame * gs)
 //{
-//  // BB> This connects the CNet to the outside world
+//  // BB> This connects the Net_t to the outside world
 //
 //  // Link us with the client state
 //  ns->parent->cl = cs;
@@ -795,7 +794,7 @@ bool_t CNet_delete(CNet * ns)
 //}
 
 //--------------------------------------------------------------------------------------------
-//bool_t CNet_shutDown(CNet * ns)
+//bool_t CNet_shutDown(Net_t * ns)
 //{
 //  if(NULL == ns ) return bfalse;
 //  if(!EKEY_PVALID( ns )) return btrue;
@@ -879,9 +878,9 @@ bool_t net_sendSysPacketToPeerGuaranteed(ENetPeer *peer, SYS_PACKET * egop)
 //--------------------------------------------------------------------------------------------
 //int net_Callback(void * data)
 //{
-//  CNet * ns = (CNet *)data;
-//  CServer  * ss = ns->parent->sv;
-//  CClient  * cs = ns->parent->cl;
+//  Net_t * ns = (Net_t *)data;
+//  Server_t  * ss = ns->parent->sv;
+//  Client_t  * cs = ns->parent->cl;
 //
 //  if(NULL ==ns)
 //  {
@@ -917,20 +916,20 @@ bool_t net_sendSysPacketToPeerGuaranteed(ENetPeer *peer, SYS_PACKET * egop)
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
-retval_t net_copyFileToPeer(CNet * ns, ENetPeer * peer, char *source, char *dest)
+retval_t net_copyFileToPeer(Net_t * ns, ENetPeer * peer, char *source, char *dest)
 {
   // JF> This function queues up files to send to all the hosts.
   //     TODO: Deal with having to send to up to PLALST_COUNT players...
 
   if( NULL == ns || NULL == peer ) return rv_error;
 
-  if(NULL == source || '\0' == source[0])
+  if( !VALID_CSTR(source) )
   {
     net_logf("NET ERROR: net_copyFileToPeer() - null source file.\n");
     return rv_error;
   }
 
-  if(NULL == dest || '\0' == dest[0])
+  if( !VALID_CSTR(dest) )
   {
     net_logf("NET ERROR: net_copyFileToPeer() - null dest file.\n");
     return rv_error;
@@ -942,7 +941,7 @@ retval_t net_copyFileToPeer(CNet * ns, ENetPeer * peer, char *source, char *dest
 
 
 //------------------------------------------------------------------------------
-retval_t net_copyFileToAllPeers(CNet * ns, char *source, char *dest)
+retval_t net_copyFileToAllPeers(Net_t * ns, char *source, char *dest)
 {
   // JF> This function queues up files to send to all the hosts.
   //     TODO: Deal with having to send to up to PLALST_COUNT players...
@@ -953,13 +952,13 @@ retval_t net_copyFileToAllPeers(CNet * ns, char *source, char *dest)
     return rv_error;
   }
 
-  if(NULL == source || '\0' == source[0])
+  if( !VALID_CSTR(source) )
   {
     net_logf("NET ERROR: net_copyFileToAllPeers() - null source file.\n");
     return rv_error;
   }
 
-  if(NULL == dest || '\0' == dest[0])
+  if( !VALID_CSTR(dest) )
   {
     net_logf("NET ERROR: net_copyFileToAllPeers() - null dest file.\n");
     return rv_error;
@@ -978,11 +977,11 @@ retval_t net_copyFileToAllPeers(CNet * ns, char *source, char *dest)
 
 
 //------------------------------------------------------------------------------
-retval_t net_copyFileToHost(CNet * ns, char *source, char *dest)
+retval_t net_copyFileToHost(Net_t * ns, char *source, char *dest)
 {
   // JF> New function merely queues up a new file to be sent
 
-  NetHost * cl_host, * sv_host;
+  NetHost_t * cl_host, * sv_host;
 
   if(NULL == ns || NULL == ns->parent  || NULL == ns->parent->sv)
   {
@@ -990,13 +989,13 @@ retval_t net_copyFileToHost(CNet * ns, char *source, char *dest)
     return rv_error;
   }
 
-  if(NULL == source || '\0' == source[0])
+  if( !VALID_CSTR(source) )
   {
     net_logf("NET ERROR: net_copyFileToHost() - null source file.\n");
     return rv_error;
   }
 
-  if(NULL == dest || '\0' == dest[0])
+  if( !VALID_CSTR(dest) )
   {
     net_logf("NET ERROR: net_copyFileToHost() - null dest file.\n");
     return rv_error;
@@ -1038,7 +1037,7 @@ retval_t net_copyFileToHost(CNet * ns, char *source, char *dest)
 
 
 //--------------------------------------------------------------------------------------------
-retval_t net_copyDirectoryToHost(CNet * ns, char *dirname, char *todirname)
+retval_t net_copyDirectoryToHost(Net_t * ns, char *dirname, char *todirname)
 {
   // ZZ> This function copies all files in a directory
   STRING searchname, fromname, toname;
@@ -1048,7 +1047,7 @@ retval_t net_copyDirectoryToHost(CNet * ns, char *dirname, char *todirname)
   net_logf("NET INFO: net_copyDirectoryToHost: %s, %s\n", dirname, todirname);
 
   // Search for all files
-  snprintf(searchname, sizeof(searchname), "%s/*", dirname);
+  snprintf(searchname, sizeof(searchname), "%s" SLASH_STRING "*", dirname);
   searchResult = fs_findFirstFile(fs_find_info_new(&fnd_info), dirname, NULL, NULL);
   if ( NULL != searchResult )
   {
@@ -1062,15 +1061,15 @@ retval_t net_copyDirectoryToHost(CNet * ns, char *dirname, char *todirname)
       // that we don't want to copy.  This keeps repository
       // directories, /., and /.. from being copied
       // Also avoid copying directories in general.
-      snprintf(fromname, sizeof(fromname), "%s/%s", dirname, searchResult);
+      snprintf(fromname, sizeof(fromname), "%s" SLASH_STRING "%s", dirname, searchResult);
       if (searchResult[0] == '.' || fs_fileIsDirectory(fromname))
       {
         searchResult = fs_findNextFile(&fnd_info);
         continue;
       }
 
-      snprintf(fromname, sizeof(fromname), "%s/%s", dirname, searchResult);
-      snprintf(toname, sizeof(toname), "%s/%s", todirname, searchResult);
+      snprintf(fromname, sizeof(fromname), "%s" SLASH_STRING "%s", dirname, searchResult);
+      snprintf(toname, sizeof(toname), "%s" NET_SLASH_STRING "%s", todirname, searchResult);
 
       net_copyFileToHost(ns, fromname, toname);
       searchResult = fs_findNextFile(&fnd_info);
@@ -1083,7 +1082,7 @@ retval_t net_copyDirectoryToHost(CNet * ns, char *dirname, char *todirname)
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t net_copyDirectoryToAllPeers(CNet * ns, char *dirname, char *todirname)
+retval_t net_copyDirectoryToAllPeers(Net_t * ns, char *dirname, char *todirname)
 {
   // ZZ> This function copies all files in a directory
   STRING searchname, fromname, toname;
@@ -1092,7 +1091,7 @@ retval_t net_copyDirectoryToAllPeers(CNet * ns, char *dirname, char *todirname)
 
   net_logf("NET INFO: net_copyDirectoryToAllPeers: %s, %s\n", dirname, todirname);
   // Search for all files
-  snprintf(searchname, sizeof(searchname), "%s/*.*", dirname);
+  snprintf(searchname, sizeof(searchname), "%s" SLASH_STRING "*.*", dirname);
   searchResult = fs_findFirstFile(fs_find_info_new(&fnd_info), dirname, NULL, NULL);
   if ( NULL != searchResult )
   {
@@ -1111,8 +1110,8 @@ retval_t net_copyDirectoryToAllPeers(CNet * ns, char *dirname, char *todirname)
         continue;
       }
 
-      snprintf(fromname, sizeof(fromname), "%s/%s", dirname, searchResult);
-      snprintf(toname, sizeof(toname), "%s/%s", todirname, searchResult);
+      snprintf(fromname, sizeof(fromname), "%s" SLASH_STRING "%s", dirname, searchResult);
+      snprintf(toname, sizeof(toname), "%s" NET_SLASH_STRING "%s", todirname, searchResult);
       net_copyFileToAllPeers(ns, fromname, toname);
 
       searchResult = fs_findNextFile(&fnd_info);
@@ -1124,7 +1123,7 @@ retval_t net_copyDirectoryToAllPeers(CNet * ns, char *dirname, char *todirname)
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t net_copyDirectoryToPeer(CNet * ns, ENetPeer * peer, char *dirname, char *todirname)
+retval_t net_copyDirectoryToPeer(Net_t * ns, ENetPeer * peer, char *dirname, char *todirname)
 {
   // ZZ> This function copies all files in a directory
   STRING searchname, fromname, toname;
@@ -1135,7 +1134,7 @@ retval_t net_copyDirectoryToPeer(CNet * ns, ENetPeer * peer, char *dirname, char
   net_logf("NET INFO: net_copyDirectoryToOnePlayers: %s, %s\n", dirname, todirname);
 
   // Search for all files
-  snprintf(searchname, sizeof(searchname), "%s/*.*", dirname);
+  snprintf(searchname, sizeof(searchname), "%s" SLASH_STRING "*.*", dirname);
   searchResult = fs_findFirstFile(fs_find_info_new(&fnd_info), dirname, NULL, NULL);
   if ( NULL != searchResult )
   {
@@ -1155,8 +1154,8 @@ retval_t net_copyDirectoryToPeer(CNet * ns, ENetPeer * peer, char *dirname, char
         continue;
       }
 
-      snprintf(fromname, sizeof(fromname), "%s/%s", dirname, searchResult);
-      snprintf(toname, sizeof(toname), "%s/%s", todirname, searchResult);
+      snprintf(fromname, sizeof(fromname), "%s" SLASH_STRING "%s", dirname, searchResult);
+      snprintf(toname, sizeof(toname), "%s" NET_SLASH_STRING "%s", todirname, searchResult);
       retval = net_copyFileToPeer(ns, peer, fromname, toname);
       if(rv_error == retval) return retval;
 
@@ -1169,12 +1168,12 @@ retval_t net_copyDirectoryToPeer(CNet * ns, ENetPeer * peer, char *dirname, char
 }
 
 //--------------------------------------------------------------------------------------------
-void net_sayHello(CGame * gs)
+void net_sayHello(Game_t * gs)
 {
   // ZZ> This function lets everyone know we're here
 
-  CClient * cl = gs->cl;
-  CServer * sv = gs->sv;
+  Client_t * cl = gs->cl;
+  Server_t * sv = gs->sv;
 
   if (!_enet_initialized)
   {
@@ -1183,7 +1182,7 @@ void net_sayHello(CGame * gs)
   }
   else
   {
-    NetHost * cl_host, * sv_host;
+    NetHost_t * cl_host, * sv_host;
 
     // a given machine can be BOTH server and client at the moment
     sv_host = sv_getHost();
@@ -1213,7 +1212,7 @@ bool_t localize_filename(char * szin, char * szout)
   if(NULL ==szin || NULL ==szout) return bfalse;
 
   // scan through the string and localize every part of the string beginning with '@'
-  *szout = '\0';
+  *szout = EOS;
   while(*szin != 0)
   {
     if('@' == *szin)
@@ -1236,7 +1235,7 @@ bool_t localize_filename(char * szin, char * szout)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t net_handlePacket(CNet * ns, ENetEvent *event)
+bool_t net_handlePacket(Net_t * ns, ENetEvent *event)
 {
   Uint16 header;
   STRING filename, local_filename;   // also used for reading various strings
@@ -1245,8 +1244,8 @@ bool_t net_handlePacket(CNet * ns, ENetEvent *event)
   SYS_PACKET egopkt;
   NET_PACKET netpkt;
 
-  CClient * cl = ns->parent->cl;
-  CServer * sv = ns->parent->sv;
+  Client_t * cl = ns->parent->cl;
+  Server_t * sv = ns->parent->sv;
 
   net_logf("NET INFO: net_handlePacket: Received \n");
 
@@ -1316,7 +1315,7 @@ bool_t net_handlePacket(CNet * ns, ENetEvent *event)
     {
       // crack the incoming packet so we can localize the location of the file to this machine
 
-      STRING remote_filename = { '\0' }, local_filename = { '\0' }, temp = { '\0' };
+      STRING remote_filename = { EOS }, local_filename = { EOS }, temp = { EOS };
 
       // read the remote filename
       packet_readString(&netpkt, temp, sizeof(temp));
@@ -1340,7 +1339,7 @@ bool_t net_handlePacket(CNet * ns, ENetEvent *event)
     {
       // The other computer is requesting all the files for the module
 
-      STRING remote_filename = { '\0' }, module_filename = { '\0' }, module_path = { '\0' }, temp = { '\0' };
+      STRING remote_filename = { EOS }, module_filename = { EOS }, module_path = { EOS }, temp = { EOS };
 
       net_logf("TO_HOST_REQUEST_MODULE\n");
 
@@ -1352,8 +1351,8 @@ bool_t net_handlePacket(CNet * ns, ENetEvent *event)
       //sys_packet_addUint16(&egopkt, TO_CLIENT_ACKNOWLEDGE_REQUEST_MODULE);
       //net_sendSysPacketToPeerGuaranteed(event->peer, &egopkt);
 
-      snprintf(module_filename, sizeof(module_filename), "%s/%s", CData.modules_dir, temp);
-      snprintf(remote_filename, sizeof(remote_filename), "@modules_dir/%s", module_filename);
+      snprintf(module_filename, sizeof(module_filename), "%s" SLASH_STRING "%s", CData.modules_dir, temp);
+      snprintf(remote_filename, sizeof(remote_filename), "@modules_dir" NET_SLASH_STRING "%s", module_filename);
 
       net_copyDirectoryToPeer(ns, event->peer, module_filename, remote_filename);
 
@@ -1434,12 +1433,12 @@ bool_t net_handlePacket(CNet * ns, ENetEvent *event)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void close_session(CNet * ns)
+void close_session(Net_t * ns)
 {
   // ZZ> This function gets the computer out of a network game
 
-  CClient * cl = ns->parent->cl;
-  CServer * sv = ns->parent->sv;
+  Client_t * cl = ns->parent->cl;
+  Server_t * sv = ns->parent->sv;
 
   if ( !_enet_initialized ) return;
 
@@ -1453,9 +1452,9 @@ void close_session(CNet * ns)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t net_beginGame(struct CGame_t * gs)
+bool_t net_beginGame(struct sGame * gs)
 {
-  NetHost *cl_host, * sv_host;
+  NetHost_t *cl_host, * sv_host;
   bool_t retval = btrue;
 
   if(NULL ==gs) return bfalse;
@@ -1481,13 +1480,13 @@ bool_t net_beginGame(struct CGame_t * gs)
 
 
 //--------------------------------------------------------------------------------------------
-PLA_REF add_player(CGame * gs, CHR_REF chr_ref, Uint8 device)
+PLA_REF add_player(Game_t * gs, CHR_REF chr_ref, Uint8 device)
 {
   // ZZ> This function adds a pla_ref, returning bfalse if it fails, btrue otherwise
 
   PLA_REF pla_ref;
-  CPlayer * pla;
-  CChr    * chr;
+  Player_t * pla;
+  Chr_t    * chr;
 
   if( !EKEY_PVALID(gs) || gs->PlaList_count + 1 >= PLALST_COUNT ) return INVALID_PLA;
 
@@ -1532,7 +1531,7 @@ PLA_REF add_player(CGame * gs, CHR_REF chr_ref, Uint8 device)
 void check_add(Uint8 key, char bigletter, char littleletter)
 {
   // ZZ> This function adds letters to the net message
-  KeyboardBuffer * kbuffer = KeyboardBuffer_getState();
+  KeyboardBuffer_t * kbuffer = KeyboardBuffer_getState();
 
   if(SDLKEYDOWN(key))
   {
@@ -1548,20 +1547,20 @@ void check_add(Uint8 key, char bigletter, char littleletter)
       }
       kbuffer->write++;
       kbuffer->buffer[kbuffer->write]   = '?'; // The flashing input cursor
-      kbuffer->buffer[kbuffer->write+1] = '\0';
+      kbuffer->buffer[kbuffer->write+1] = EOS;
     }
   }
 
 }
 
 //--------------------------------------------------------------------------------------------
-void net_send_chat(CGame *gs, KeyboardBuffer * kbuffer)
+void net_send_chat(Game_t *gs, KeyboardBuffer_t * kbuffer)
 {
   SYS_PACKET egopkt;
-  NetHost * cl_host, *sv_host;
+  NetHost_t * cl_host, *sv_host;
 
-  CServer * sv = gs->sv;
-  CClient * cl = gs->cl;
+  Server_t * sv = gs->sv;
+  Client_t * cl = gs->cl;
 
   sv_host = sv_getHost();
   cl_host = cl_getHost();
@@ -1593,7 +1592,7 @@ void do_chat_input()
   int cnt;
   char cTmp;
 
-  KeyboardBuffer * kbuffer = KeyboardBuffer_getState();
+  KeyboardBuffer_t * kbuffer = KeyboardBuffer_getState();
 
   if(keyb.mode)
   {
@@ -1603,12 +1602,12 @@ void do_chat_input()
       if((keyb.delay & 7) == 0)
       {
         kbuffer->buffer[kbuffer->write+0] = 'x';
-        kbuffer->buffer[kbuffer->write+1] = '\0';
+        kbuffer->buffer[kbuffer->write+1] = EOS;
       }
       else
       {
         kbuffer->buffer[kbuffer->write+0] = '+';
-        kbuffer->buffer[kbuffer->write+1] = '\0';
+        kbuffer->buffer[kbuffer->write+1] = EOS;
       }
     }
   }
@@ -1629,7 +1628,7 @@ void do_chat_input()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t NetRequest_delete(NetRequest * pr)
+bool_t NetRequest_delete(PacketRequest_t * pr)
 {
   if( NULL == pr ) return bfalse;
   if( !EKEY_PVALID(pr) ) return btrue;
@@ -1640,7 +1639,7 @@ bool_t NetRequest_delete(NetRequest * pr)
 }
 
 //--------------------------------------------------------------------------------------------
-NetRequest * NetRequest_new(NetRequest * pr)
+PacketRequest_t * NetRequest_new(PacketRequest_t * pr)
 {
   // do some simple initialization
 
@@ -1650,9 +1649,9 @@ NetRequest * NetRequest_new(NetRequest * pr)
 
   NetRequest_delete( pr );
 
-  memset( pr, 0, sizeof(NetRequest) );
+  memset( pr, 0, sizeof(PacketRequest_t) );
 
-  EKEY_PNEW( pr, NetRequest );
+  EKEY_PNEW( pr, PacketRequest_t );
 
   pr->received = bfalse;
   pr->data_size = 0;
@@ -1662,7 +1661,7 @@ NetRequest * NetRequest_new(NetRequest * pr)
 }
 
 //--------------------------------------------------------------------------------------------
-int NetRequest_getFreeIndex(NetAsynchData * asynch_list, size_t asynch_count)
+int NetRequest_getFreeIndex(NetAsynchData_t * asynch_list, size_t asynch_count)
 {
   int index;
   if(NULL ==asynch_list || 0 == asynch_count) return -1;
@@ -1679,7 +1678,7 @@ int NetRequest_getFreeIndex(NetAsynchData * asynch_list, size_t asynch_count)
 };
 
 //--------------------------------------------------------------------------------------------
-NetRequest * NetRequest_getFree(NetAsynchData * asynch_list, size_t asynch_count)
+PacketRequest_t * NetRequest_getFree(NetAsynchData_t * asynch_list, size_t asynch_count)
 {
   int index;
   if(NULL ==asynch_list || 0 == asynch_count) return NULL;
@@ -1696,14 +1695,14 @@ NetRequest * NetRequest_getFree(NetAsynchData * asynch_list, size_t asynch_count
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t NetRequest_test(NetRequest * prequest)
+bool_t NetRequest_test(PacketRequest_t * prequest)
 {
   if(NULL ==prequest) return bfalse;
   return prequest->received;
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t NetRequest_release(NetRequest * prequest)
+bool_t NetRequest_release(PacketRequest_t * prequest)
 {
   if(NULL ==prequest) return bfalse;
   prequest->waiting  = bfalse;
@@ -1719,10 +1718,10 @@ bool_t NetRequest_release(NetRequest * prequest)
 
 
 //--------------------------------------------------------------------------------------------
-NetRequest * NetRequest_check(NetAsynchData * asynch_list, size_t asynch_count, ENetEvent * pevent)
+PacketRequest_t * NetRequest_check(NetAsynchData_t * asynch_list, size_t asynch_count, ENetEvent * pevent)
 {
   int index;
-  NetRequest * retval = NULL;
+  PacketRequest_t * retval = NULL;
   NET_PACKET       npkt;
   if(NULL ==asynch_list || 0 == asynch_count || NULL ==pevent) return NULL;
 
@@ -1755,9 +1754,9 @@ NetRequest * NetRequest_check(NetAsynchData * asynch_list, size_t asynch_count, 
 };
 
 //--------------------------------------------------------------------------------------------
-NetRequest * net_prepareWaitForPacket(NetAsynchData * asynch_list, ENetPeer ** peer, Uint32 timeout, Uint16 packet_type)
+PacketRequest_t * net_prepareWaitForPacket(NetAsynchData_t * asynch_list, ENetPeer ** peer, Uint32 timeout, Uint16 packet_type)
 {
-  NetRequest * prequest;
+  PacketRequest_t * prequest;
   Uint8 * pbuffer;
   int index;
 
@@ -1789,7 +1788,7 @@ NetRequest * net_prepareWaitForPacket(NetAsynchData * asynch_list, ENetPeer ** p
 };
 
 //--------------------------------------------------------------------------------------------
-retval_t net_loopWaitForPacket(NetRequest * prequest, Uint32 granularity, size_t * data_size)
+retval_t net_loopWaitForPacket(PacketRequest_t * prequest, Uint32 granularity, size_t * data_size)
 {
   if(prequest->waiting && !prequest->received)
   {
@@ -1815,9 +1814,9 @@ retval_t net_loopWaitForPacket(NetRequest * prequest, Uint32 granularity, size_t
 };
 
 //--------------------------------------------------------------------------------------------
-retval_t net_waitForPacket(NetAsynchData * asynch_list, ENetPeer * peer, Uint32 timeout, Uint16 packet_type, size_t * data_size)
+retval_t net_waitForPacket(NetAsynchData_t * asynch_list, ENetPeer * peer, Uint32 timeout, Uint16 packet_type, size_t * data_size)
 {
-  NetRequest * prequest;
+  PacketRequest_t * prequest;
   retval_t wait_return;
 
   // can use &peer, because the stack variable cannot change while we are waiting
@@ -1978,7 +1977,7 @@ ENetPeer * net_startPeerByName(ENetHost * host, const char* connect_name, const 
   ENetAddress address;
   ENetPeer * peer = NULL;
 
-  if(NULL == host || NULL == connect_name || '\0' == connect_name[0])
+  if(NULL == host || !VALID_CSTR(connect_name) )
   {
     net_logf("NET INFO: net_startPeerByName() - Invalid function call.\n" );
     return peer;
@@ -2125,7 +2124,7 @@ bool_t net_sendSysPacketToAllPeersGuaranteed(ENetHost * host, SYS_PACKET * egop)
 }
 
 //------------------------------------------------------------------------------
-//void net_copyFileToHostOld(CNet * ns, char *source, char *dest)
+//void net_copyFileToHostOld(Net_t * ns, char *source, char *dest)
 //{
 //  // ZZ> This function copies a file on the remote to the host computer.
 //  //     Packets are sent in chunks of COPYSIZE bytes.  The MAX file size
@@ -2214,7 +2213,7 @@ bool_t net_sendSysPacketToAllPeersGuaranteed(ENetHost * host, SYS_PACKET * egop)
 //}
 //
 //------------------------------------------------------------------------------
-//void net_copyFileToAllPlayersOld(CNet * ns, char *source, char *dest)
+//void net_copyFileToAllPlayersOld(Net_t * ns, char *source, char *dest)
 //{
 //  // ZZ> This function copies a file on the host to every remote computer.
 //  //     Packets are sent in chunks of COPYSIZE bytes.  The MAX file size
@@ -2374,7 +2373,7 @@ void net_KickOnePlayer(ENetPeer * peer)
 };
 
 //--------------------------------------------------------------------------------------------
-void CListOut_close(CListOut * co, void * client_data)
+void CListOut_close(CListOut_t * co, void * client_data)
 {
   int i;
 
@@ -2413,7 +2412,7 @@ void CListOut_close(CListOut * co, void * client_data)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CListIn_Client * CListIn_Client_new(CListIn_Client * cli, EventHandler_Ptr handler, void * data, Uint32 net_guid)
+CListIn_Client_t * CListIn_Client_new(CListIn_Client_t * cli, EventHandler_Ptr_t handler, void * data, Uint32 net_guid)
 {
   if(NULL == cli) return cli;
 
@@ -2421,7 +2420,7 @@ CListIn_Client * CListIn_Client_new(CListIn_Client * cli, EventHandler_Ptr handl
   CListIn_Client_delete(cli);
 
   // initialize the key
-  EKEY_PNEW( cli, CListIn_Client );
+  EKEY_PNEW( cli, CListIn_Client_t );
 
   if((~(Uint32)0) == net_guid)
   {
@@ -2436,14 +2435,14 @@ CListIn_Client * CListIn_Client_new(CListIn_Client * cli, EventHandler_Ptr handl
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CListIn_Client_delete(CListIn_Client * cli)
+bool_t CListIn_Client_delete(CListIn_Client_t * cli)
 {
   if(NULL == cli) return bfalse;
   if( !EKEY_PVALID(cli) ) return btrue;
 
   EKEY_PINVALIDATE(cli);
 
-  memset(cli, 0, sizeof(CListIn_Client));
+  memset(cli, 0, sizeof(CListIn_Client_t));
 
   return btrue;
 }
@@ -2451,9 +2450,9 @@ bool_t CListIn_Client_delete(CListIn_Client * cli)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CListIn_Client * CListIn_add_client(CListIn * cli, EventHandler_Ptr handler, void * data, Uint32 net_guid)
+CListIn_Client_t * CListIn_add_client(CListIn_t * cli, EventHandler_Ptr_t handler, void * data, Uint32 net_guid)
 {
-  CListIn_Client * retval;
+  CListIn_Client_t * retval;
   int i, cnt;
   bool_t found;
 
@@ -2490,7 +2489,7 @@ CListIn_Client * CListIn_add_client(CListIn * cli, EventHandler_Ptr handler, voi
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CListIn_remove_client(CListIn * cli, Uint32 net_guid)
+bool_t CListIn_remove_client(CListIn_t * cli, Uint32 net_guid)
 {
   bool_t found;
   int i, cnt;
@@ -2505,7 +2504,7 @@ bool_t CListIn_remove_client(CListIn * cli, Uint32 net_guid)
     if(cli->ClientLst[i].guid == net_guid)
     {
       // found a match. remove it.
-      memmove(cli->ClientLst + i, cli->ClientLst + cnt - 1, sizeof(CListIn_Client));
+      memmove(cli->ClientLst + i, cli->ClientLst + cnt - 1, sizeof(CListIn_Client_t));
       cli->Client_count = cnt-1;
       found = btrue;
       break;
@@ -2516,14 +2515,14 @@ bool_t CListIn_remove_client(CListIn * cli, Uint32 net_guid)
 }
 
 //--------------------------------------------------------------------------------------------
-void CListIn_close_client(CListIn * cli, void * client_data)
+void CListIn_close_client(CListIn_t * cli, void * client_data)
 {
   int i, cnt;
 
   if(NULL == client_data)
   {
     // remove all clients
-    memset(cli->ClientLst, 0, MAXCONNECTION*sizeof(CListIn_Client));
+    memset(cli->ClientLst, 0, MAXCONNECTION*sizeof(CListIn_Client_t));
   }
   else
   {
@@ -2534,7 +2533,7 @@ void CListIn_close_client(CListIn * cli, void * client_data)
       if(cli->ClientLst[i].handler_data == client_data)
       {
         // found a match. remove it.
-        memmove(cli->ClientLst + i, cli->ClientLst + cnt - 1, sizeof(CListIn_Client));
+        memmove(cli->ClientLst + i, cli->ClientLst + cnt - 1, sizeof(CListIn_Client_t));
         cli->Client_count = cnt-1;
         break;
       }
@@ -2545,11 +2544,11 @@ void CListIn_close_client(CListIn * cli, void * client_data)
 
 
 //--------------------------------------------------------------------------------------------
-CListIn_Info * CListIn_add(CListIn * ci, CListIn_Info * info)
+CListIn_Info_t * CListIn_add(CListIn_t * ci, CListIn_Info_t * info)
 {
   int cnt;
 
-  CListIn_Info * retval = NULL;
+  CListIn_Info_t * retval = NULL;
 
   if(NULL == ci || NULL == info) return retval;
 
@@ -2567,7 +2566,7 @@ CListIn_Info * CListIn_add(CListIn * ci, CListIn_Info * info)
       retval = ci->Info + cnt;
 
       // set the important player indo
-      memcpy(retval, info, sizeof(CListIn_Info));
+      memcpy(retval, info, sizeof(CListIn_Info_t));
 
       retval->Slot = cnt;
 
@@ -2581,7 +2580,7 @@ CListIn_Info * CListIn_add(CListIn * ci, CListIn_Info * info)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CListIn_remove(CListIn * ci, ENetPeer * peer)
+bool_t CListIn_remove(CListIn_t * ci, ENetPeer * peer)
 {
   int slot;
   bool_t retval = bfalse;
@@ -2600,8 +2599,8 @@ bool_t CListIn_remove(CListIn * ci, ENetPeer * peer)
 
     ci->Info[slot].Address.host = 0;
     ci->Info[slot].Address.port = 0;
-    ci->Info[slot].Hostname[0]  = '\0';
-    ci->Info[slot].Name[0]      = '\0';
+    ci->Info[slot].Hostname[0]  = EOS;
+    ci->Info[slot].Name[0]      = EOS;
 
     retval = btrue;
   }
@@ -2610,9 +2609,9 @@ bool_t CListIn_remove(CListIn * ci, ENetPeer * peer)
 }
 
 //--------------------------------------------------------------------------------------------
-CListIn_Client * CListIn_find(CListIn * cli, Uint32 id)
+CListIn_Client_t * CListIn_find(CListIn_t * cli, Uint32 id)
 {
-  CListIn_Client * retval = NULL;
+  CListIn_Client_t * retval = NULL;
   int i, cnt;
 
   if(NULL == cli || 0 == cli->Client_count) return retval;
@@ -2632,18 +2631,18 @@ CListIn_Client * CListIn_find(CListIn * cli, Uint32 id)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-NetHost * NetHost_create(SDL_Callback_Ptr pcall)
+NetHost_t * NetHost_create(SDL_Callback_Ptr pcall)
 {
-  NetHost * nh;
+  NetHost_t * nh;
 
   if(!CData.request_network) return NULL;
 
-  nh = (NetHost *)calloc(1, sizeof(NetHost));
+  nh = (NetHost_t *)calloc(1, sizeof(NetHost_t));
   return NetHost_new(nh, pcall);
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t NetHost_destroy(NetHost ** pnh)
+bool_t NetHost_destroy(NetHost_t ** pnh)
 {
   bool_t retval;
 
@@ -2656,7 +2655,7 @@ bool_t NetHost_destroy(NetHost ** pnh)
 }
 
 //--------------------------------------------------------------------------------------------
-static NetHost * NetHost_new(NetHost * nh, SDL_Callback_Ptr pcall)
+static NetHost_t * NetHost_new(NetHost_t * nh, SDL_Callback_Ptr pcall)
 {
   //fprintf( stdout, "NetHost_new()\n");
 
@@ -2664,9 +2663,9 @@ static NetHost * NetHost_new(NetHost * nh, SDL_Callback_Ptr pcall)
 
   NetHost_delete( nh );
 
-  memset(nh, 0, sizeof(NetHost));
+  memset(nh, 0, sizeof(NetHost_t));
 
-  EKEY_PNEW( nh, NetHost );
+  EKEY_PNEW( nh, NetHost_t );
 
   NetThread_new( &(nh->nthread), pcall);
 
@@ -2676,7 +2675,7 @@ static NetHost * NetHost_new(NetHost * nh, SDL_Callback_Ptr pcall)
 }
 
 //--------------------------------------------------------------------------------------------
-static bool_t NetHost_delete(NetHost * nh)
+static bool_t NetHost_delete(NetHost_t * nh)
 {
  if(NULL == nh) return bfalse;
   if( !EKEY_PVALID(nh) ) return btrue;
@@ -2695,14 +2694,14 @@ static bool_t NetHost_delete(NetHost * nh)
   }
 
   // erase all the info
-  memset(nh, 0, sizeof(NetHost));
+  memset(nh, 0, sizeof(NetHost_t));
 
   return btrue;
 };
 
 
 //--------------------------------------------------------------------------------------------
-bool_t NetHost_close(NetHost * nh, void * client_data)
+bool_t NetHost_close(NetHost_t * nh, void * client_data)
 {
   if(NULL == nh) return bfalse;
 
@@ -2715,7 +2714,7 @@ bool_t NetHost_close(NetHost * nh, void * client_data)
 
 
 //--------------------------------------------------------------------------------------------
-retval_t NetHost_startUp( NetHost * nh, Uint16 port )
+retval_t NetHost_startUp( NetHost_t * nh, Uint16 port )
 {
   ENetAddress address;
 
@@ -2756,7 +2755,7 @@ retval_t NetHost_startUp( NetHost * nh, Uint16 port )
 
 
 //--------------------------------------------------------------------------------------------
-retval_t NetHost_shutDown( NetHost * nh )
+retval_t NetHost_shutDown( NetHost_t * nh )
 {
   if(!EKEY_PVALID( nh )) return rv_error;
 
@@ -2776,14 +2775,14 @@ retval_t NetHost_shutDown( NetHost * nh )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-NetThread * NetThread_create(SDL_Callback_Ptr pcall)
+NetThread_t * NetThread_create(SDL_Callback_Ptr pcall)
 {
-  NetThread * nt = (NetThread *)calloc(1, sizeof(NetThread));
+  NetThread_t * nt = (NetThread_t *)calloc(1, sizeof(NetThread_t));
   return NetThread_new(nt,pcall);
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t NetThread_destroy(NetThread ** pnt)
+bool_t NetThread_destroy(NetThread_t ** pnt)
 {
   bool_t retval;
 
@@ -2797,15 +2796,15 @@ bool_t NetThread_destroy(NetThread ** pnt)
 }
 
 //--------------------------------------------------------------------------------------------
-NetThread * NetThread_new(NetThread * nt, SDL_Callback_Ptr pcall)
+NetThread_t * NetThread_new(NetThread_t * nt, SDL_Callback_Ptr pcall)
 {
   if(NULL == nt) return nt;
 
   NetThread_delete(nt);
 
-  memset( nt, 0, sizeof(NetThread) );
+  memset( nt, 0, sizeof(NetThread_t) );
 
-  EKEY_PNEW( nt, NetThread );
+  EKEY_PNEW( nt, NetThread_t );
 
   // Intial state is "Terminated."
   // Use NetThread_start() to actually start the thread
@@ -2818,7 +2817,7 @@ NetThread * NetThread_new(NetThread * nt, SDL_Callback_Ptr pcall)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t NetThread_delete(NetThread * nt)
+bool_t NetThread_delete(NetThread_t * nt)
 {
   if(NULL == nt) return bfalse;
   if(!EKEY_PVALID( nt )) return btrue;
@@ -2844,7 +2843,7 @@ bool_t NetThread_delete(NetThread * nt)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t NetThread_start(NetThread * nt)
+bool_t NetThread_start(NetThread_t * nt)
 {
   if(!EKEY_PVALID( nt )) return bfalse;
 
@@ -2856,7 +2855,7 @@ bool_t NetThread_start(NetThread * nt)
 
   if(NULL != nt->Callback)
   {
-    // the NetThread is only set to active if the SDL_Thread is active
+    // the NetThread_t is only set to active if the SDL_Thread is active
     nt->Active     = (NULL != nt->Thread);
     nt->Terminated = !nt->Active;
     nt->Paused     = bfalse;
@@ -2873,7 +2872,7 @@ bool_t NetThread_start(NetThread * nt)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t NetThread_stop(NetThread * nt)
+bool_t NetThread_stop(NetThread_t * nt)
 {
   if(!EKEY_PVALID( nt )) return bfalse;
   if(!NetThread_started(nt)) return bfalse;
@@ -2884,7 +2883,7 @@ bool_t NetThread_stop(NetThread * nt)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t NetThread_pause(NetThread * nt)
+bool_t NetThread_pause(NetThread_t * nt)
 {
   if(!NetThread_started(nt)) return bfalse;
 
@@ -2894,7 +2893,7 @@ bool_t NetThread_pause(NetThread * nt)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t NetThread_unpause(NetThread * nt)
+bool_t NetThread_unpause(NetThread_t * nt)
 {
   if(!NetThread_started(nt)) return bfalse;
 
@@ -2904,7 +2903,7 @@ bool_t NetThread_unpause(NetThread * nt)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t NetThread_started(NetThread * nt)
+bool_t NetThread_started(NetThread_t * nt)
 {
   if(!EKEY_PVALID( nt )) return bfalse;
 

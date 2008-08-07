@@ -29,7 +29,7 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-enum mnu_e
+enum e_mnu
 {
   mnu_NotImplemented,
   mnu_Main,
@@ -56,25 +56,25 @@ enum mnu_e
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-struct CGame_t;
+struct sGame;
 
-// in C++ this would inherit from ProcState
-typedef struct MenuProc_t
+// in C++ this would inherit from ProcState_t
+struct sMenuProc
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
   // the "inherited" structure
-  ProcState proc;
+  ProcState_t proc;
 
   // extra data for the menus
-  enum mnu_e whichMenu, lastMenu;
+  enum e_mnu whichMenu, lastMenu;
   int        MenuResult;
 
   double     dUpdate;
 
-  struct CClient_t * cl;
-  struct CServer_t * sv;
-  struct CNet_t    * net;
+  struct sClient * cl;
+  struct sServer * sv;
+  struct sNet    * net;
 
   GLtexture TxTitleImage[MAXMODULE];      /* title images */
 
@@ -82,24 +82,26 @@ typedef struct MenuProc_t
   int validModules_count;
   int validModules[MAXMODULE];
 
-} MenuProc;
+};
+typedef struct sMenuProc MenuProc_t;
 
-MenuProc * MenuProc_new(MenuProc *ms);
-bool_t     MenuProc_delete(MenuProc * ms);
-MenuProc * MenuProc_renew(MenuProc *ms);
-bool_t     MenuProc_init(MenuProc * ms);
-bool_t     MenuProc_init_ingame(MenuProc * ms);
+MenuProc_t * MenuProc_new(MenuProc_t *ms);
+bool_t       MenuProc_delete(MenuProc_t * ms);
+MenuProc_t * MenuProc_renew(MenuProc_t *ms);
+bool_t       MenuProc_init(MenuProc_t * ms);
+bool_t       MenuProc_init_ingame(MenuProc_t * ms);
 
 //--------------------------------------------------------------------------------------------
 // All the different menus.  yay!
 
 //Input player control
 #define MAXLOADPLAYER     100
-typedef struct load_player_info_t
+struct s_load_player_info
 {
   STRING name;
   STRING dir;
-} LOAD_PLAYER_INFO;
+};
+typedef struct s_load_player_info LOAD_PLAYER_INFO;
 
 extern int              loadplayer_count;
 extern LOAD_PLAYER_INFO loadplayer[MAXLOADPLAYER];
@@ -119,14 +121,14 @@ void mnu_initial_text();
 void mnu_enterMenuMode();
 void mnu_exitMenuMode();
 
-int mnu_Run( MenuProc * ms );
-int mnu_RunIngame( MenuProc * ms );
+int mnu_Run( MenuProc_t * ms );
+int mnu_RunIngame( MenuProc_t * ms );
 
-Uint32 mnu_load_titleimage( MenuProc * mproc, int titleimage, char *szLoadName );
-void   mnu_free_all_titleimages(MenuProc * mproc);
-size_t mnu_load_mod_data(MenuProc * mproc, MOD_INFO * mi, size_t sz);
+Uint32 mnu_load_titleimage( MenuProc_t * mproc, int titleimage, char *szLoadName );
+void   mnu_free_all_titleimages(MenuProc_t * mproc);
+size_t mnu_load_mod_data(MenuProc_t * mproc, MOD_INFO * mi, size_t sz);
 
-bool_t mnu_load_cl_images(MenuProc * mproc);
-void   mnu_free_all_titleimages(MenuProc * mproc);
-void   mnu_prime_titleimage(MenuProc * mproc);
-void   mnu_prime_modules(MenuProc * mproc);
+bool_t mnu_load_cl_images(MenuProc_t * mproc);
+void   mnu_free_all_titleimages(MenuProc_t * mproc);
+void   mnu_prime_titleimage(MenuProc_t * mproc);
+void   mnu_prime_modules(MenuProc_t * mproc);

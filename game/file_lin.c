@@ -30,11 +30,13 @@
 #include <sys/stat.h>
 #include <sys/dir.h>
 
-typedef struct fs_find_info_lin_t
+struct s_fs_find_info_lin
 {
   glob_t last_find_glob;
   size_t glob_find_index;
-} FS_FIND_INFO_LIN;
+};
+
+typedef struct s_fs_find_info_lin FS_FIND_INFO_LIN;
 
 //File Routines-----------------------------------------------------------
 FS_FIND_INFO * fs_find_info_new(FS_FIND_INFO * i)

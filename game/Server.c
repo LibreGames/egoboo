@@ -43,7 +43,7 @@
 // the sv module info
 
 static bool_t    _sv_atexit_registered = bfalse;
-static NetHost * _sv_host = NULL;
+static NetHost_t * _sv_host = NULL;
 
 static retval_t  _sv_Initialize(void);
 static void      _sv_Quit(void);
@@ -52,16 +52,16 @@ static retval_t  _sv_shutDown(void);
 static int       _sv_HostCallback(void *);
 
 //--------------------------------------------------------------------------------------------
-bool_t sv_Running(CServer * ss)  { return sv_Started() &&  ss->ready; }
+bool_t sv_Running(Server_t * ss)  { return sv_Started() &&  ss->ready; }
 
 //--------------------------------------------------------------------------------------------
 // Server state private initialization
-static CServer * CServer_new(CServer * ss, CGame * gs);
-static bool_t    CServer_delete(CServer * ss);
+static Server_t * CServer_new(Server_t * ss, Game_t * gs);
+static bool_t    CServer_delete(Server_t * ss);
 
 
 //--------------------------------------------------------------------------------------------
-//retval_t sv_startUp(CServer * ss)
+//retval_t sv_startUp(Server_t * ss)
 //{
 //  retval_t host_return;
 //
@@ -91,7 +91,7 @@ static bool_t    CServer_delete(CServer * ss);
 //
 ////--------------------------------------------------------------------------------------------
 //
-//retval_t sv_shutDown(CServer * ss)
+//retval_t sv_shutDown(Server_t * ss)
 //{
 //  retval_t delete_return;
 //
@@ -110,11 +110,11 @@ static bool_t    CServer_delete(CServer * ss);
 //}
 
 //--------------------------------------------------------------------------------------------
-retval_t CServer_startUp(CServer * ss)
+retval_t CServer_startUp(Server_t * ss)
 {
   // ZZ> This function tries to host a new session
 
-  NetHost * sv_host;
+  NetHost_t * sv_host;
 
   // trap bad server states
   if(NULL == ss || NULL == ss->parent) return rv_error;
@@ -150,7 +150,7 @@ retval_t CServer_startUp(CServer * ss)
 }
 
 ////--------------------------------------------------------------------------------------------
-retval_t CServer_shutDown(CServer * ss)
+retval_t CServer_shutDown(Server_t * ss)
 {
   if(NULL == ss) return rv_error;
 
@@ -174,14 +174,14 @@ retval_t CServer_shutDown(CServer * ss)
 //
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CServer * CServer_create(CGame * gs)
+Server_t * CServer_create(Game_t * gs)
 {
-  CServer * ss = (CServer *)calloc(1, sizeof(CServer));
+  Server_t * ss = (Server_t *)calloc(1, sizeof(Server_t));
   return CServer_new(ss, gs);
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CServer_destroy(CServer ** pss)
+bool_t CServer_destroy(Server_t ** pss)
 {
   bool_t retval;
 
@@ -195,7 +195,7 @@ bool_t CServer_destroy(CServer ** pss)
 }
 
 //--------------------------------------------------------------------------------------------
-CServer * CServer_new(CServer * ss, CGame * gs)
+Server_t * CServer_new(Server_t * ss, Game_t * gs)
 {
   int cnt;
 
@@ -204,9 +204,9 @@ CServer * CServer_new(CServer * ss, CGame * gs)
   if(NULL == ss) return ss;
   CServer_delete(ss);
 
-  memset( ss, 0, sizeof(CServer) );
+  memset( ss, 0, sizeof(Server_t) );
 
-  EKEY_PNEW(ss, CServer);
+  EKEY_PNEW(ss, Server_t);
 
   // only start this stuff if we are going to actually connect to the network
   if(net_Started())
@@ -232,7 +232,7 @@ CServer * CServer_new(CServer * ss, CGame * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CServer_delete(CServer * ss)
+bool_t CServer_delete(Server_t * ss)
 {
   if(NULL == ss) return bfalse;
   if(!EKEY_PVALID(ss)) return btrue;
@@ -246,9 +246,9 @@ bool_t CServer_delete(CServer * ss)
 }
 
 //--------------------------------------------------------------------------------------------
-CServer * CServer_renew(CServer * ss)
+Server_t * CServer_renew(Server_t * ss)
 {
-  CGame * gs;
+  Game_t * gs;
 
   if(NULL == ss) return ss;
 
@@ -260,16 +260,16 @@ CServer * CServer_renew(CServer * ss)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void sv_frameStep(CServer * ss)
+void sv_frameStep(Server_t * ss)
 {
 
 }
 
 //--------------------------------------------------------------------------------------------
-void CServer_bufferLatches(CServer * ss)
+void CServer_bufferLatches(Server_t * ss)
 {
   // ZZ> This function buffers the character latches
-  CGame * gs;
+  Game_t * gs;
   Uint32 uiTime, ichr;
 
   if (NULL ==ss || !sv_Started()) return;
@@ -294,7 +294,7 @@ void CServer_bufferLatches(CServer * ss)
 };
 
 //--------------------------------------------------------------------------------------------
-void sv_talkToRemotes(CServer * ss)
+void sv_talkToRemotes(Server_t * ss)
 {
   // ZZ> This function sends the character data to all the remote machines
   Uint32 uiTime;
@@ -302,7 +302,7 @@ void sv_talkToRemotes(CServer * ss)
   SYS_PACKET egopkt;
   int i,cnt,stamp;
 
-  CGame * gs = ss->parent;
+  Game_t * gs = ss->parent;
 
   if(!sv_Started() || !net_Started()) return;
 
@@ -335,9 +335,9 @@ void sv_talkToRemotes(CServer * ss)
         if(ss->tlb.buffer[REF_TO_INT(ichr)][uiTime].stamp <= uiTime)
         {
           sys_packet_addUint16(&egopkt, REF_TO_INT(ichr));                                // The character index
-          sys_packet_addUint8(&egopkt, ss->tlb.buffer[REF_TO_INT(ichr)][uiTime].latch.b);         // CPlayer button states
-          sys_packet_addSint16(&egopkt, ss->tlb.buffer[REF_TO_INT(ichr)][uiTime].latch.x*SHORTLATCH);    // CPlayer motion
-          sys_packet_addSint16(&egopkt, ss->tlb.buffer[REF_TO_INT(ichr)][uiTime].latch.y*SHORTLATCH);    // CPlayer motion
+          sys_packet_addUint8(&egopkt, ss->tlb.buffer[REF_TO_INT(ichr)][uiTime].latch.b);         // Player_t button states
+          sys_packet_addSint16(&egopkt, ss->tlb.buffer[REF_TO_INT(ichr)][uiTime].latch.x*SHORTLATCH);    // Player_t motion
+          sys_packet_addSint16(&egopkt, ss->tlb.buffer[REF_TO_INT(ichr)][uiTime].latch.y*SHORTLATCH);    // Player_t motion
 
           ss->tlb.buffer[REF_TO_INT(ichr)][uiTime].valid = bfalse;
 
@@ -357,7 +357,7 @@ void sv_talkToRemotes(CServer * ss)
 }
 
 //--------------------------------------------------------------------------------------------
-//void sv_letPlayersJoin(CServer * ss)
+//void sv_letPlayersJoin(Server_t * ss)
 //{
 //  // ZZ> This function finds all the players in the game
 //  ENetEvent event;
@@ -383,7 +383,7 @@ void sv_talkToRemotes(CServer * ss)
 //
 //        for(cnt=0; cnt<MAXNETPLAYER; cnt++)
 //        {
-//          if('\0' == sv_host->Hostname[cnt][0] )
+//          if( EMPTY_CSTR(sv_host->Hostname[cnt]) )
 //          {
 //            // found an empty connection
 //            sv_host->Connection_count++;
@@ -416,7 +416,7 @@ void sv_talkToRemotes(CServer * ss)
 //          {
 //            // found the connection
 //            sv_host->Connection_count--;
-//            sv_host->Hostname[cnt][0] = '\0';
+//            sv_host->Hostname[cnt][0] = EOS;
 //            break;
 //          }
 //        }
@@ -431,7 +431,7 @@ void sv_talkToRemotes(CServer * ss)
 
 
 //--------------------------------------------------------------------------------------------
-void sv_sendModuleInfoToAllPlayers(CServer * ss)
+void sv_sendModuleInfoToAllPlayers(Server_t * ss)
 {
   SYS_PACKET egopkt;
 
@@ -445,7 +445,7 @@ void sv_sendModuleInfoToAllPlayers(CServer * ss)
 };
 
 //--------------------------------------------------------------------------------------------
-void sv_sendModuleInfoToOnePlayer(CServer * ss, ENetPeer * peer)
+void sv_sendModuleInfoToOnePlayer(Server_t * ss, ENetPeer * peer)
 {
   SYS_PACKET egopkt;
 
@@ -460,7 +460,7 @@ void sv_sendModuleInfoToOnePlayer(CServer * ss, ENetPeer * peer)
 
 
 //--------------------------------------------------------------------------------------------
-bool_t sv_handlePacket(CServer * ss, ENetEvent *event)
+bool_t sv_handlePacket(Server_t * ss, ENetEvent *event)
 {
   Uint16 header;
   STRING filename;   // also used for reading various strings
@@ -474,7 +474,7 @@ bool_t sv_handlePacket(CServer * ss, ENetEvent *event)
 
   bool_t retval = bfalse;
 
-  NetHost * sv_host = sv_getHost();
+  NetHost_t * sv_host = sv_getHost();
 
   // do some error trapping
   //if(!sv_Started()) return bfalse;
@@ -495,7 +495,7 @@ bool_t sv_handlePacket(CServer * ss, ENetEvent *event)
     {
       bool_t found;
       int cnt, tnc;
-      CListIn * cli;
+      CListIn_t * cli;
 
       net_logf("TO_HOST_LOGON\n");
 
@@ -507,7 +507,7 @@ bool_t sv_handlePacket(CServer * ss, ENetEvent *event)
       found = bfalse;
       for(cnt=0, tnc=0; cnt<MAXCONNECTION && tnc<ss->num_logon; cnt++)
       {
-        if('\0' != cli->Info[cnt].Name[0]) tnc++;
+        if(EOS != cli->Info[cnt].Name[0]) tnc++;
 
         if(0==strncmp(cli->Info[cnt].Name, filename, sizeof(cli->Info[cnt].Name)))
         {
@@ -543,7 +543,7 @@ bool_t sv_handlePacket(CServer * ss, ENetEvent *event)
     {
       bool_t found;
       Uint8  index;
-      CListIn * cli;
+      CListIn_t * cli;
 
       net_logf("TO_HOST_LOGOFF\n");
 
@@ -557,7 +557,7 @@ bool_t sv_handlePacket(CServer * ss, ENetEvent *event)
       if( index<MAXCONNECTION && ss->num_logon>0 &&
           0==strncmp(cli->Info[index].Name, filename, sizeof(cli->Info[index].Name)) )
       {
-        cli->Info[index].Name[0] = '\0';
+        cli->Info[index].Name[0] = EOS;
         ss->num_logon--;
       };
 
@@ -784,12 +784,12 @@ bool_t sv_handlePacket(CServer * ss, ENetEvent *event)
 };
 
 //--------------------------------------------------------------------------------------------
-void CServer_unbufferLatches(CServer * ss)
+void CServer_unbufferLatches(Server_t * ss)
 {
   // ZZ> This function sets character latches based on player input to the host
   CHR_REF chr_cnt;
   Uint32  uiTime;
-  CGame * gs = ss->parent;
+  Game_t * gs = ss->parent;
 
   if(!sv_Started()) return;
 
@@ -825,7 +825,7 @@ void CServer_unbufferLatches(CServer * ss)
 }
 
 //--------------------------------------------------------------------------------------------
-void CServer_reset_latches(CServer * ss)
+void CServer_reset_latches(Server_t * ss)
 {
   CHR_REF chr_cnt;
   if(NULL ==ss) return;
@@ -840,7 +840,7 @@ void CServer_reset_latches(CServer * ss)
 };
 
 //--------------------------------------------------------------------------------------------
-void CServer_resetTimeLatches(CServer * ss, CHR_REF ichr)
+void CServer_resetTimeLatches(Server_t * ss, CHR_REF ichr)
 {
   int cnt, chr_val;
 
@@ -860,10 +860,10 @@ void CServer_resetTimeLatches(CServer * ss, CHR_REF ichr)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t sv_unhostGame(CServer * ss)
+bool_t sv_unhostGame(Server_t * ss)
 {
   SYS_PACKET egopkt;
-  NetHost * sv_host;
+  NetHost_t * sv_host;
 
   if(NULL == ss || !sv_Started()) return bfalse;
 
@@ -893,11 +893,11 @@ bool_t sv_unhostGame(CServer * ss)
 //--------------------------------------------------------------------------------------------
 int _sv_HostCallback(void * data)
 {
-  NetHost     * sv_host;
-  NetThread   * nthread;
+  NetHost_t     * sv_host;
+  NetThread_t   * nthread;
   retval_t      dispatch_return;
 
-  sv_host = (NetHost *)data;
+  sv_host = (NetHost_t *)data;
 
   // fail to start
   if(NULL == sv_host)
@@ -932,14 +932,14 @@ int _sv_HostCallback(void * data)
 
 
 //--------------------------------------------------------------------------------------------
-//bool_t sv_dispatchPackets(CServer * ss)
+//bool_t sv_dispatchPackets(Server_t * ss)
 //{
 //  ENetEvent event;
-//  CListIn_Info cin_info, *pcin_info;
-//  char hostName[64] = { '\0' };
-//  NetRequest * prequest;
+//  CListIn_Info_t cin_info, *pcin_info;
+//  char hostName[64] = { EOS };
+//  PacketRequest_t * prequest;
 //  size_t copy_size;
-//  NetHost * sv_host;
+//  NetHost_t * sv_host;
 //
 //  if(NULL ==ss || !sv_Started(ss)) return bfalse;
 //
@@ -988,8 +988,8 @@ int _sv_HostCallback(void * data)
 //      net_logf("ENET_EVENT_TYPE_CONNECT\n");
 //
 //      cin_info.Address = event.peer->address;
-//      cin_info.Hostname[0] = '\0';
-//      cin_info.Name[0] = '\0';
+//      cin_info.Hostname[0] = EOS;
+//      cin_info.Name[0] = EOS;
 //
 //      // Look up the hostname the player is connecting from
 //      //enet_address_get_host(&event.peer->address, hostName, 64);
@@ -1040,11 +1040,11 @@ int _sv_HostCallback(void * data)
 //};
 //
 //--------------------------------------------------------------------------------------------
-bool_t sv_sendPacketToAllClients(CServer * ss, SYS_PACKET * egop)
+bool_t sv_sendPacketToAllClients(Server_t * ss, SYS_PACKET * egop)
 {
   // ZZ> This function sends a packet to all the players
 
-  NetHost * sv_host;
+  NetHost_t * sv_host;
 
   if(NULL == ss || NULL == egop)
   {
@@ -1069,11 +1069,11 @@ bool_t sv_sendPacketToAllClients(CServer * ss, SYS_PACKET * egop)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t sv_sendPacketToAllClientsGuaranteed(CServer * ss, SYS_PACKET * egop)
+bool_t sv_sendPacketToAllClientsGuaranteed(Server_t * ss, SYS_PACKET * egop)
 {
   // ZZ> This function sends a packet to all the players
 
-  NetHost * sv_host;
+  NetHost_t * sv_host;
 
   if(NULL == ss || NULL == egop)
   {
@@ -1100,8 +1100,8 @@ bool_t sv_sendPacketToAllClientsGuaranteed(CServer * ss, SYS_PACKET * egop)
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
-// sv module NetHost singleton management
-NetHost * sv_getHost()
+// sv module NetHost_t singleton management
+NetHost_t * sv_getHost()
 {
   // make sure the host exists
   if(NULL == _sv_host)
@@ -1147,7 +1147,7 @@ void _sv_Quit(void)
 //------------------------------------------------------------------------------
 retval_t _sv_startUp(void)
 {
-  NetHost * nh = sv_getHost();
+  NetHost_t * nh = sv_getHost();
   if(NULL == nh) return rv_fail;
 
   return NetHost_startUp(nh, NET_EGOBOO_SERVER_PORT);
@@ -1165,7 +1165,7 @@ retval_t _sv_shutDown(void)
 bool_t sv_Started()  { return (NULL != _sv_host) && _sv_host->nthread.Active; }
 
 //------------------------------------------------------------------------------
-bool_t sv_send_chr_setup( CServer * ss, chr_spawn_info * psi )
+bool_t sv_send_chr_setup( Server_t * ss, CHR_SPAWN_INFO * psi )
 {
   SYS_PACKET egopkt;
 

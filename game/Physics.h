@@ -4,7 +4,7 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct COrientation_t
+struct sOrientation
 {
   vect3           pos;             // position
   vect3           vel;             // velocity
@@ -18,23 +18,23 @@ struct COrientation_t
   Uint16          mapturn_ud;      // rotation about y-axis, rotation 0 to 65535, 32768 is no rotation
 
 };
-typedef struct COrientation_t COrientation;
+typedef struct sOrientation Orientation_t;
 
 //--------------------------------------------------------------------------------------------
-struct CPhysAccum_t
+struct sPhysAccum
 {
   vect3           acc;
   vect3           vel;
   vect3           pos;
 };
-typedef struct CPhysAccum_t CPhysAccum;
+typedef struct sPhysAccum PhysAccum_t;
 
-bool_t CPhysAccum_clear(CPhysAccum * paccum);
+bool_t CPhysAccum_clear(PhysAccum_t * paccum);
 
 //--------------------------------------------------------------------------------------------
-struct CPhysicsData_t
+struct sPhysicsData
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
   float    hillslide;                 // Friction
   float    slippyfriction;            //
@@ -45,14 +45,15 @@ struct CPhysicsData_t
 
   float    gravity;                   // Gravitational accel
 };
-typedef struct CPhysicsData_t CPhysicsData;
+typedef struct sPhysicsData PhysicsData_t;
 
-INLINE CPhysicsData * CPhysicsData_new(CPhysicsData * phys);
-INLINE bool_t         CPhysicsData_delete(CPhysicsData * phys);
-INLINE CPhysicsData * CPhysicsData_renew(CPhysicsData * phys);
+INLINE PhysicsData_t * CPhysicsData_new(PhysicsData_t * phys);
+INLINE bool_t          CPhysicsData_delete(PhysicsData_t * phys);
+INLINE PhysicsData_t * CPhysicsData_renew(PhysicsData_t * phys);
 
 //--------------------------------------------------------------------------------------------
-struct collision_volume_t
+// collision volume difinition
+struct sCVolume
 {
   int   lod;
   float x_min, x_max;
@@ -61,17 +62,17 @@ struct collision_volume_t
   float xy_min, xy_max;
   float yx_min, yx_max;
 };
-typedef struct collision_volume_t CVolume;
+typedef struct sCVolume CVolume_t;
 
-CVolume CVolume_merge(CVolume * pv1, CVolume * pv2);
-CVolume CVolume_intersect(CVolume * pv1, CVolume * pv2);
-bool_t  CVolume_draw( CVolume * cv, bool_t draw_square, bool_t draw_diamond );
+CVolume_t CVolume_merge(CVolume_t * pv1, CVolume_t * pv2);
+CVolume_t CVolume_intersect(CVolume_t * pv1, CVolume_t * pv2);
+bool_t    CVolume_draw( CVolume_t * cv, bool_t draw_square, bool_t draw_diamond );
 
-
-//--------------------------------------------------------------------------------------------
-struct CVolume_Tree_t { CVolume leaf[8]; };
-typedef struct CVolume_Tree_t CVolume_Tree;
 
 //--------------------------------------------------------------------------------------------
+struct sCVolume_Tree { CVolume_t leaf[8]; };
+typedef struct sCVolume_Tree CVolume_Tree_t;
+
 //--------------------------------------------------------------------------------------------
-void phys_integrate(COrientation * pori, COrientation * pori_old, CPhysAccum * paccum, float dFrame);
+//--------------------------------------------------------------------------------------------
+void phys_integrate(Orientation_t * pori, Orientation_t * pori_old, PhysAccum_t * paccum, float dFrame);

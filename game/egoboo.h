@@ -46,7 +46,7 @@
 #include <time.h>
 #include <math.h>
 
-struct CGame_t;
+struct sGame;
 
 
 
@@ -61,7 +61,7 @@ struct CGame_t;
 
 EXTERN const char VERSION[] EQ( "2.7.x" );   // Version of the game
 
-enum color_e
+enum e_color
 {
   COLR_WHITE = 0,
   COLR_RED,
@@ -70,7 +70,7 @@ enum color_e
   COLR_BLUE,
   COLR_PURPLE
 };
-typedef enum color_e COLR;
+typedef enum e_color COLR;
 
 #define NOSPARKLE           255
 
@@ -82,7 +82,7 @@ typedef enum color_e COLR;
 #define EXPKEEP 0.85                                // Experience to keep when respawning
 #define NOHIDE              127                     // Don't hide
 
-typedef enum damage_effects_bits_e
+typedef enum e_damage_effects_bits
 {
   DAMFX_NONE           = 0,                       // Damage effects
   DAMFX_ARMO           = 1 << 0,                  // Armor piercing
@@ -93,13 +93,13 @@ typedef enum damage_effects_bits_e
 } DAMFX_BITS;
 
 //Particle Texture Types
-enum part_type
+enum e_part_type
 {
   PART_NORMAL,
   PART_SMOOTH,
   PART_FAST
 };
-typedef enum part_type PART_TYPE;
+typedef enum e_part_type PART_TYPE;
 
 
 
@@ -170,7 +170,7 @@ typedef enum part_type PART_TYPE;
 #define STOPBOUNCINGPART                1.0f         // To make particles stop bouncing
 
 
-typedef struct tile_animated_t
+struct s_tile_animated
 {
   int    updateand; //  EQ( 7 );                        // New tile every 7 frames
   Uint16 frameand; //  EQ( 3 );              // Only 4 frames
@@ -179,7 +179,8 @@ typedef struct tile_animated_t
   Uint16 bigbaseand; //  EQ( 0xfff8 );       //
   float  framefloat; //  EQ( 0 );              // Current frame
   Uint16 frameadd; //  EQ( 0 );              // Current frame
-} TILE_ANIMATED;
+};
+typedef struct s_tile_animated TILE_ANIMATED;
 
 EXTERN TILE_ANIMATED GTile_Anim;
 
@@ -197,14 +198,14 @@ EXTERN TILE_ANIMATED GTile_Anim;
 //Minimap stuff
 #define MAXBLIP     32     //Max number of blips displayed on the map
 EXTERN Uint16          numblip  EQ( 0 );
-typedef struct blip_t
+typedef struct s_blip
 {
   Uint16          x;
   Uint16          y;
   COLR    c;
 
   // !!! wrong, but it will work !!!
-  IRect           rect;           // The blip rectangles
+  IRect_t           rect;           // The blip rectangles
 } BLIP;
 
 EXTERN BLIP BlipList[MAXBLIP];
@@ -214,7 +215,7 @@ EXTERN Uint8           youarehereon  EQ( bfalse );
 
 
 EXTERN Uint8           timeron     EQ( bfalse );      // Game timer displayed?
-EXTERN Uint32          timervalue  EQ( 0 );           // Timer time ( 50ths of a second )
+EXTERN Uint32          timervalue  EQ( 0 );           // Timer_t time ( 50ths of a second )
 
 
 EXTERN Sint32          ups_clock             EQ( 0 );             // The number of ticks this second
@@ -242,7 +243,7 @@ EXTERN OBJ_REF                 localplayer_slot[16];              // For local i
 
 // EWWWW. GLOBALS ARE EVIL.
 
-typedef struct water_layer_t
+struct s_water_layer
 {
   Uint16    lightlevel_fp8; // General light amount (0-63)
   Uint16    lightadd_fp8;   // Ambient light amount (0-63)
@@ -262,9 +263,10 @@ typedef struct water_layer_t
 
   float     distx;          // For distant backgrounds
   float     disty;          //
-} WATER_LAYER;
+};
+typedef struct s_water_layer WATER_LAYER;
 
-typedef struct water_info_t
+struct s_water_info
 {
   Uint8     shift ; // EQ( 3 );
   float     surfacelevel; // EQ( 0 );          // Surface level for water striders
@@ -278,13 +280,14 @@ typedef struct water_info_t
   WATER_LAYER layer[MAXWATERLAYER];
 
   Uint32    spek[256];             // Specular highlights
-} WATER_INFO;
+};
+typedef struct s_water_info WATER_INFO;
 
 EXTERN float     foregroundrepeat  EQ( 1 );     //
 EXTERN float     backgroundrepeat  EQ( 1 );     //
 
 //Fog stuff
-typedef struct fog_info_t
+struct s_fog_info
 {
   bool_t          on; // EQ( bfalse );            // Do ground fog?
   float           bottom; // EQ( 0.0 );          //
@@ -294,12 +297,13 @@ typedef struct fog_info_t
   Uint8           grn; // EQ( 255 );             //
   Uint8           blu; // EQ( 255 );             //
   bool_t          affectswater;
-} FOG_INFO;
+};
+typedef struct s_fog_info FOG_INFO;
 
 EXTERN FOG_INFO GFog;
 
 /*OpenGL Textures*/
-typedef enum tx_type_e
+typedef enum e_tx_type
 {
   TX_PARTICLE = 0,
   TX_TILE_0,
@@ -314,7 +318,7 @@ typedef enum tx_type_e
 
 
 //Texture filtering
-typedef enum tx_filters_e
+typedef enum e_tx_filters
 {
   TX_UNFILTERED,
   TX_LINEAR,
@@ -331,18 +335,18 @@ typedef enum tx_filters_e
 
 
 //Interface stuff
-EXTERN IRect                    iconrect;                   // The 32x32 icon rectangle
-EXTERN IRect                    trimrect;                   // The menu trim rectangle
+EXTERN IRect_t                    iconrect;                   // The 32x32 icon rectangle
+EXTERN IRect_t                    trimrect;                   // The menu trim rectangle
 
 
-EXTERN IRect                    tabrect[NUMBAR];            // The tab rectangles
-EXTERN IRect                    barrect[NUMBAR];            // The bar rectangles
+EXTERN IRect_t                    tabrect[NUMBAR];            // The tab rectangles
+EXTERN IRect_t                    barrect[NUMBAR];            // The bar rectangles
 
 EXTERN Uint16                   blipwidth;
 EXTERN Uint16                   blipheight;
 
 EXTERN float                    mapscale EQ( 1.0 );
-EXTERN IRect                    maprect;                    // The map rectangle
+EXTERN IRect_t                    maprect;                    // The map rectangle
 
 #define SPARKLESIZE 28
 #define SPARKLEADD 2
@@ -354,17 +358,18 @@ EXTERN Uint8                   lightdirectionlookup[UINT16_SIZE];// For lighting
 #define BUFFER_SIZE     (4 * MEG)
 
 
-typedef struct twist_entry_t
+struct s_twist_entry
 {
   Uint32       lr;           // For surface normal of mesh
   Uint32       ud;           //
   vect3        nrm;          // For sliding down steep hills
   bool_t       flat;         //
-} TWIST_ENTRY;
+};
+typedef struct s_twist_entry TWIST_ENTRY;
 
 EXTERN TWIST_ENTRY twist_table[256];
 
-typedef enum ORDER_e
+typedef enum e_ORDER
 {
   MESSAGE_SIGNAL = 0,
   MESSAGE_MOVE = 1,
@@ -374,7 +379,7 @@ typedef enum ORDER_e
   MESSAGE_TERRAIN
 } ORDER;
 
-typedef enum SIGNAL_e
+typedef enum e_SIGNAL
 {
   SIGNAL_BUY     = 0,
   SIGNAL_SELL,
@@ -383,7 +388,7 @@ typedef enum SIGNAL_e
 } SIGNAL;
 
 
-typedef enum move_t
+typedef enum e_move
 {
   MOVE_MELEE = 300,
   MOVE_RANGED = -600,
@@ -393,7 +398,7 @@ typedef enum move_t
   MOVE_FOLLOW = 0
 } MOVE;
 
-typedef enum search_bits_e
+typedef enum e_search_bits
 {
   SEARCH_DEAD      = 1 << 0,
   SEARCH_ENEMIES   = 1 << 1,
@@ -433,7 +438,7 @@ EXTERN Uint32 antialiastrans_fp8  EQ( 0xC0 );
 //#define CHARVEL 5.0
 
 
-typedef struct ConfigData_t
+struct sConfigData
 {
   STRING basicdat_dir;
   STRING gamedat_dir;
@@ -529,7 +534,7 @@ typedef struct ConfigData_t
   int    scrz;                       // Screen z-buffer depth ( 8 unsupported )
   int    maxmessage;                 //
   bool_t messageon;                  // Messages?
-  int    wraptolerance;              // Status bar
+  int    wraptolerance;              // Status_t bar
   bool_t  staton;                    // Draw the status bars?
   bool_t  render_overlay;            // Draw overlay?
   bool_t  render_background;         // Do we render the water as a background?
@@ -573,34 +578,36 @@ typedef struct ConfigData_t
   bool_t DevMode;
   // Debug options
 
-} ConfigData;
+};
+typedef struct sConfigData ConfigData_t;
 
-char * get_config_string(ConfigData * cd, char * szin, char ** szout);
-char * get_config_string_name(ConfigData * cd, STRING * pconfig_string);
+char * get_config_string(ConfigData_t * cd, char * szin, char ** szout);
+char * get_config_string_name(ConfigData_t * cd, STRING * pconfig_string);
 
 
 EXTERN bool_t          usefaredge;                     // Far edge maps? (Outdoor)
 EXTERN float       doturntime;                     // Time for smooth turn
 
 EXTERN STRING      CStringTmp1, CStringTmp2;
-EXTERN ConfigData CData_default, CData;
+EXTERN ConfigData_t CData_default, CData;
 
-struct CNet_t;
-struct CClient_t;
-struct CServer_t;
+struct sNet;
+struct sClient;
+struct sServer;
 
 
 //--------------------------------------------------------------------------------------------
-struct ClockState_t;
+struct sClockState;
 
-typedef struct MachineState_t
+struct sMachineState
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
-  struct ClockState_t * clk;
-} MachineState;
+  struct sClockState * clk;
+};
+typedef struct sMachineState MachineState_t;
 
-MachineState * Get_MachineState(void);
+MachineState_t * Get_MachineState(void);
 
 #include "module.h"
 

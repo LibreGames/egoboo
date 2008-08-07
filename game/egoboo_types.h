@@ -33,49 +33,49 @@
 #ifdef __cplusplus
   typedef bool bool_t;
 
-  enum bool_e
+  enum e_bool
   {
     btrue  = true,
     bfalse = false
   };
 #else
-  enum bool_e
+  enum e_bool
   {
     btrue  = ( 1 == 1 ),
     bfalse = ( !btrue )
   };
-  typedef enum bool_e bool_t;
+  typedef enum e_bool bool_t;
 #endif
 
-enum retval_e
+enum e_retval
 {
   rv_error    = -1,
   rv_fail     = bfalse,
   rv_succeed  = btrue,
   rv_waiting  = 2
 };
-typedef enum retval_e retval_t;
+typedef enum e_retval retval_t;
 
 typedef char STRING[256];
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct egoboo_key_t
+struct s_egoboo_key
 {
   Uint32 v1, v2;
   bool_t dynamic;
   Uint32 data_type;
   void * pdata;
 };
-typedef struct egoboo_key_t egoboo_key;
+typedef struct s_egoboo_key egoboo_key_t;
 
-INLINE egoboo_key * egoboo_key_create(Uint32 itype, void * pdata);
-INLINE bool_t       egoboo_key_destroy(egoboo_key ** pkey);
-INLINE egoboo_key * egoboo_key_new(egoboo_key * pkey, Uint32 itype, void * pdata);
-INLINE bool_t       egoboo_key_validate(egoboo_key * pkey);
-INLINE bool_t       egoboo_key_invalidate(egoboo_key * pkey);
-INLINE bool_t       egoboo_key_valid(egoboo_key * pkey);
-INLINE void *       egoboo_key_get_data(egoboo_key * pkey, Uint32 type);
+INLINE egoboo_key_t * egoboo_key_create(Uint32 itype, void * pdata);
+INLINE bool_t       egoboo_key_destroy(egoboo_key_t ** pkey);
+INLINE egoboo_key_t * egoboo_key_new(egoboo_key_t * pkey, Uint32 itype, void * pdata);
+INLINE bool_t       egoboo_key_validate(egoboo_key_t * pkey);
+INLINE bool_t       egoboo_key_invalidate(egoboo_key_t * pkey);
+INLINE bool_t       egoboo_key_valid(egoboo_key_t * pkey);
+INLINE void *       egoboo_key_get_data(egoboo_key_t * pkey, Uint32 type);
 
 #define EKEY_NEW(XX,YY) egoboo_key_new( &(XX.ekey), ekey_##YY, &(XX) )
 #define EKEY_PNEW(XX,YY) egoboo_key_new( &(XX->ekey), ekey_##YY, XX )
@@ -87,82 +87,82 @@ INLINE void *       egoboo_key_get_data(egoboo_key * pkey, Uint32 type);
 #define EKEY_PVALID(XX) ((NULL != (XX)) && egoboo_key_valid(&(XX->ekey)) )
 
 
-enum
+enum e_ekey_list
 {
-  ekey_HashNode,
-  ekey_CCap,
-  ekey_CChr,
-  ekey_CClient,
-  ekey_CEnc,
-  ekey_CEve,
-  ekey_CGame,
-  ekey_CMad,
-  ekey_CNet,
-  ekey_CPip,
-  ekey_CPrt,
-  ekey_CPlayer,
-  ekey_CProfile,
-  ekey_CServer,
-  ekey_chr_spawn_info,
-  ekey_enc_spawn_info,
-  ekey_prt_spawn_info,
-  ekey_CListIn_Client,
-  ekey_CListOut_Info,
-  ekey_NetHost,
-  ekey_CPhysicsData,
-  ekey_GSStack,
-  ekey_CGui,
-  ekey_ProcState,
-  ekey_MachineState,
-  ekey_ModState,
-  ekey_nfile_ReceiveQueue,
-  ekey_nfile_ReceiveState,
-  ekey_nfile_SendState,
-  ekey_nfile_SendQueue,
-  ekey_NFileState,
-  ekey_SoundState,
-  ekey_MenuProc,
-  ekey_CChrEnviro,
-  ekey_CGraphics,
-  ekey_chr_setup_info,
-  ekey_CProperties,
-  ekey_CTeam,
-  ekey_MeshMem,
+  ekey_HashNode_t,
+  ekey_Cap_t,
+  ekey_Chr_t,
+  ekey_Client_t,
+  ekey_Enc_t,
+  ekey_Eve_t,
+  ekey_Game_t,
+  ekey_Mad_t,
+  ekey_Net_t,
+  ekey_Pip_t,
+  ekey_Prt_t,
+  ekey_Player_t,
+  ekey_Profile_t,
+  ekey_Server_t,
+  ekey_CHR_SPAWN_INFO,
+  ekey_ENC_SPAWN_INFO,
+  ekey_PRT_SPAWN_INFO,
+  ekey_CListIn_Client_t,
+  ekey_CListOut_Info_t,
+  ekey_NetHost_t,
+  ekey_PhysicsData_t,
+  ekey_GSStack_t,
+  ekey_Gui_t,
+  ekey_ProcState_t,
+  ekey_MachineState_t,
+  ekey_ModState_t,
+  ekey_nfile_ReceiveQueue_t,
+  ekey_nfile_ReceiveState_t,
+  ekey_nfile_SendState_t,
+  ekey_nfile_SendQueue_t,
+  ekey_NFileState_t,
+  ekey_SoundState_t,
+  ekey_MenuProc_t,
+  ekey_ChrEnviro_t,
+  ekey_Graphics_t,
+  ekey_CHR_SETUP_INFO,
+  ekey_Properties_t,
+  ekey_Team_t,
+  ekey_MeshMem_t,
   ekey_MOD_INFO,
-  ekey_ModSummary,
-  ekey_NetRequest,
-  ekey_NetThread,
-  ekey_Passage,
-  ekey_Shop,
-  ekey_Status,
-  ekey_chr_spawn_queue,
+  ekey_ModSummary_t,
+  ekey_PacketRequest_t,
+  ekey_NetThread_t,
+  ekey_Passage_t,
+  ekey_Shop_t,
+  ekey_Status_t,
+  ekey_CHR_SPAWN_QUEUE,
   ekey_AI_STATE,
-  ekey_CList,
+  ekey_List_t,
   ekey_BUMPLIST,
-  ekey_BSP_node,
-  ekey_BSP_leaf,
-  ekey_BSP_tree
+  ekey_BSP_node_t,
+  ekey_BSP_leaf_t,
+  ekey_BSP_tree_t
 };
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct rect_sint32_t
+struct s_rect_sint32
 {
   Sint32 left;
   Sint32 right;
   Sint32 top;
   Sint32 bottom;
 };
-typedef struct rect_sint32_t IRect;
+typedef struct s_rect_sint32 IRect_t;
 
-struct rect_float_t
+struct s_rect_float
 {
   float left;
   float right;
   float top;
   float bottom;
 };
-typedef struct rect_float_t FRect;
+typedef struct s_rect_float FRect_t;
 
 
 //--------------------------------------------------------------------------------------------
@@ -174,18 +174,18 @@ typedef Uint32 IDSZ;
 
 
 //--------------------------------------------------------------------------------------------
-struct pair_t
+struct s_pair
 {
   Sint32 ibase;
   Uint32 irand;
 };
-typedef struct pair_t PAIR;
+typedef struct s_pair PAIR;
 //--------------------------------------------------------------------------------------------
-struct range_t
+struct s_range
 {
   float ffrom, fto;
 };
-typedef struct range_t RANGE;
+typedef struct s_range RANGE;
 
 #ifdef __cplusplus
 
@@ -200,16 +200,16 @@ typedef struct range_t RANGE;
 #define PIPLST_COUNT           1024                    // Particle templates
 #define PRTLST_COUNT              512         // Max number of particles
 
-struct CCap_t;
-struct CChr_t;
-struct CPip_t;
-struct CPrt_t;
-struct CEve_t;
-struct CEnc_t;
-struct CTeam_t;
-struct CPlayer_t;
-struct CMad_t;
-struct CProfile_t;
+struct sCap;
+struct sChr;
+struct sPip;
+struct sPrt;
+struct sEve;
+struct sEnc;
+struct sTeam;
+struct sPlayer;
+struct sMad;
+struct sProfile;
 
 template <typename _ty, unsigned _sz> struct TPList;
 
@@ -279,41 +279,41 @@ struct TPList
 
 //-----------------------------------------
 
-#define CAP_REF TList<CCap_t, CAPLST_COUNT>::Handle
-#define CHR_REF TList<CChr_t, CHRLST_COUNT>::Handle
+#define CAP_REF TList<sCap, CAPLST_COUNT>::Handle
+#define CHR_REF TList<sChr, CHRLST_COUNT>::Handle
 
-#define PIP_REF TList<CPip_t, PIPLST_COUNT>::Handle
-#define PRT_REF TList<CPrt_t, PRTLST_COUNT>::Handle
+#define PIP_REF TList<sPip, PIPLST_COUNT>::Handle
+#define PRT_REF TList<sPrt, PRTLST_COUNT>::Handle
 
-#define EVE_REF TList<CEve_t, EVELST_COUNT>::Handle
-#define ENC_REF TList<CEnc_t, ENCLST_COUNT>::Handle
+#define EVE_REF TList<sEve, EVELST_COUNT>::Handle
+#define ENC_REF TList<sEnc, ENCLST_COUNT>::Handle
 
-#define TEAM_REF TList<CTeam_t, TEAM_COUNT>::Handle
-#define PLA_REF  TList<CPlayer_t, PLALST_COUNT>::Handle
+#define TEAM_REF TList<sTeam, TEAM_COUNT>::Handle
+#define PLA_REF  TList<sPlayer, PLALST_COUNT>::Handle
 
-#define MAD_REF TList<CMad_t, MADLST_COUNT>::Handle
+#define MAD_REF TList<sMad, MADLST_COUNT>::Handle
 
-#define OBJ_REF TList<CProfile_t, OBJLST_COUNT>::Handle
+#define OBJ_REF TList<sProfile, OBJLST_COUNT>::Handle
 
 typedef Uint16 AI_REF;
 typedef Uint16 PASS_REF;
 typedef Uint16 SHOP_REF;
 
-#define INVALID_CAP TList<CCap_t, CAPLST_COUNT>::INVALID
-#define INVALID_CHR TList<CChr_t, CHRLST_COUNT>::INVALID
+#define INVALID_CAP TList<sCap, CAPLST_COUNT>::INVALID
+#define INVALID_CHR TList<sChr, CHRLST_COUNT>::INVALID
 
-#define INVALID_PIP TList<CPip_t, PIPLST_COUNT>::INVALID
-#define INVALID_PRT TList<CPrt_t, PRTLST_COUNT>::INVALID
+#define INVALID_PIP TList<sPip, PIPLST_COUNT>::INVALID
+#define INVALID_PRT TList<sPrt, PRTLST_COUNT>::INVALID
 
-#define INVALID_EVE TList<CEve_t, EVELST_COUNT>::INVALID
-#define INVALID_ENC TList<CEnc_t, ENCLST_COUNT>::INVALID
+#define INVALID_EVE TList<sEve, EVELST_COUNT>::INVALID
+#define INVALID_ENC TList<sEnc, ENCLST_COUNT>::INVALID
 
-#define INVALID_TEAM TList<CTeam_t, TEAM_COUNT>::INVALID
-#define INVALID_PLA  TList<CPlayer_t, PLALST_COUNT>::INVALID
+#define INVALID_TEAM TList<sTeam, TEAM_COUNT>::INVALID
+#define INVALID_PLA  TList<sPlayer, PLALST_COUNT>::INVALID
 
-#define INVALID_MAD TList<CMad_t, MADLST_COUNT>::INVALID
+#define INVALID_MAD TList<sMad, MADLST_COUNT>::INVALID
 
-#define INVALID_OBJ TList<CProfile_t, OBJLST_COUNT>::INVALID
+#define INVALID_OBJ TList<sProfile, OBJLST_COUNT>::INVALID
 
 #define INVALID_AI  AILST_COUNT
 
@@ -323,7 +323,7 @@ typedef Uint16 SHOP_REF;
 
 //typedef struct CList_t
 //{
-//  egoboo_key ekey;
+//  egoboo_key_t ekey;
 //  size_t     count;
 //  size_t     size;
 //  void     * data;
@@ -396,20 +396,20 @@ typedef Uint16 SHOP_REF;
 
 
 //--------------------------------------------------------------------------------------------
-union float_int_convert_u
+union u_float_int_convert
 {
   float f;
   Uint32 i;
 };
 
-typedef union float_int_convert_u FCONVERT;
+typedef union u_float_int_convert FCONVERT;
 
 #if SDL_BYTEORDER != SDL_LIL_ENDIAN
     INLINE float SwapLE_float( float val );
 #endif
 
 //--------------------------------------------------------------------------------------------
-enum ProcessStates_e
+enum e_ProcessStates
 {
   PROC_Begin,
   PROC_Entering,
@@ -418,14 +418,14 @@ enum ProcessStates_e
   PROC_Finish,
 };
 
-typedef enum ProcessStates_e ProcessStates;
+typedef enum e_ProcessStates ProcessStates;
 
 //--------------------------------------------------------------------------------------------
-struct ClockState_t;
+struct sClockState;
 
-struct ProcState_t
+struct sProcState
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
   // process variables
   ProcessStates State;              // what are we doing now?
@@ -435,103 +435,103 @@ struct ProcState_t
   bool_t        Terminated;         // We are completely done.
 
   // each process has its own clock
-  struct ClockState_t * clk;
+  struct sClockState * clk;
 
   int           returnValue;
 };
-typedef struct ProcState_t ProcState;
+typedef struct sProcState ProcState_t;
 
-ProcState * ProcState_new(ProcState * ps);
-bool_t      ProcState_delete(ProcState * ps);
-ProcState * ProcState_renew(ProcState * ps);
-bool_t      ProcState_init(ProcState * ps);
-
-
+ProcState_t * ProcState_new(ProcState_t * ps);
+bool_t        ProcState_delete(ProcState_t * ps);
+ProcState_t * ProcState_renew(ProcState_t * ps);
+bool_t        ProcState_init(ProcState_t * ps);
 
 
-enum respawn_mode_e
+
+
+enum e_respawn_mode
 {
   RESPAWN_NONE = 0,
   RESPAWN_NORMAL,
   RESPAWN_ANYTIME
 };
-typedef enum respawn_mode_e RESPAWN_MODE;
+typedef enum e_respawn_mode RESPAWN_MODE;
 
 typedef int (SDLCALL *SDL_Callback_Ptr)(void *);
 
 
 // a hash type for "efficiently" storing data
-struct HashNode_t
+struct sHashNode
 {
-  egoboo_key ekey;
-  struct HashNode_t * next;
+  egoboo_key_t ekey;
+  struct sHashNode * next;
   void * data;
 };
-typedef struct HashNode_t HashNode;
+typedef struct sHashNode HashNode_t;
 
-INLINE HashNode * HashNode_create(void * data);
-INLINE bool_t          HashNode_destroy(HashNode **);
-INLINE HashNode * HashNode_insert_after (HashNode lst[], HashNode * n);
-INLINE HashNode * HashNode_insert_before(HashNode lst[], HashNode * n);
-INLINE HashNode * HashNode_remove_after (HashNode lst[]);
-INLINE HashNode * HashNode_remove       (HashNode lst[]);
+INLINE HashNode_t * HashNode_create(void * data);
+INLINE bool_t       HashNode_destroy(HashNode_t **);
+INLINE HashNode_t * HashNode_insert_after (HashNode_t lst[], HashNode_t * n);
+INLINE HashNode_t * HashNode_insert_before(HashNode_t lst[], HashNode_t * n);
+INLINE HashNode_t * HashNode_remove_after (HashNode_t lst[]);
+INLINE HashNode_t * HashNode_remove       (HashNode_t lst[]);
 
-struct HashList_t
+struct sHashList
 {
   int         allocated;
   int      *  subcount;
-  HashNode ** sublist;
+  HashNode_t ** sublist;
 };
-typedef struct HashList_t HashList;
+typedef struct sHashList HashList_t;
 
-INLINE HashList * HashList_create(int size);
-INLINE bool_t     HashList_destroy(HashList **);
+INLINE HashList_t * HashList_create(int size);
+INLINE bool_t     HashList_destroy(HashList_t **);
 
 
-struct BSP_node_t
+struct sBSP_node
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
-  struct BSP_node_t * next;
+  struct sBSP_node * next;
   int                 data_type;
   void              * data;
 };
-typedef struct BSP_node_t BSP_node;
+typedef struct sBSP_node BSP_node_t;
 
-INLINE BSP_node * BSP_node_new( BSP_node * t, void * data, int type );
-INLINE bool_t     BSP_node_delete( BSP_node * t );
+INLINE BSP_node_t * BSP_node_new( BSP_node_t * t, void * data, int type );
+INLINE bool_t     BSP_node_delete( BSP_node_t * t );
 
-struct BSP_leaf_t
+struct sBSP_leaf
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
-  struct BSP_leaf_t  * parent;
+  struct sBSP_leaf  * parent;
   size_t               child_count;
-  struct BSP_leaf_t ** children;
-  BSP_node           * nodes;
+  struct sBSP_leaf ** children;
+  BSP_node_t           * nodes;
 };
-typedef struct BSP_leaf_t BSP_leaf;
+typedef struct sBSP_leaf BSP_leaf_t;
 
-INLINE BSP_leaf * BSP_leaf_new( BSP_leaf * L, int size );
-INLINE bool_t     BSP_leaf_delete( BSP_leaf * L );
-INLINE bool_t     BSP_leaf_insert( BSP_leaf * L, BSP_node * n );
+INLINE BSP_leaf_t * BSP_leaf_new( BSP_leaf_t * L, int size );
+INLINE bool_t       BSP_leaf_delete( BSP_leaf_t * L );
+INLINE bool_t       BSP_leaf_insert( BSP_leaf_t * L, BSP_node_t * n );
 
 
-struct BSP_tree_t
+struct sBSP_tree
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
   int dimensions;
   int depth;
 
   int        leaf_count;
-  BSP_leaf * leaf_list;
+  BSP_leaf_t * leaf_list;
 
-  BSP_leaf * root;
+  BSP_leaf_t * root;
 };
-typedef struct BSP_tree_t BSP_tree;
+typedef struct sBSP_tree BSP_tree_t;
 
-INLINE BSP_tree * BSP_tree_new( BSP_tree * t, Sint32 dim, Sint32 depth);
-INLINE bool_t     BSP_tree_delete( BSP_tree * t );
+INLINE BSP_tree_t * BSP_tree_new( BSP_tree_t * t, Sint32 dim, Sint32 depth);
+INLINE bool_t     BSP_tree_delete( BSP_tree_t * t );
 
 INLINE Sint32 BSP_tree_count_nodes(Sint32 dim, Sint32 depth);

@@ -152,9 +152,6 @@
 				RelativePath=".\char.c">
 			</File>
 			<File
-				RelativePath=".\char.inl">
-			</File>
-			<File
 				RelativePath=".\Client.c">
 			</File>
 			<File
@@ -167,16 +164,10 @@
 				RelativePath=".\egoboo_math.c">
 			</File>
 			<File
-				RelativePath=".\egoboo_math.inl">
-			</File>
-			<File
 				RelativePath=".\egoboo_rpc.c">
 			</File>
 			<File
 				RelativePath=".\egoboo_strutil.c">
-			</File>
-			<File
-				RelativePath=".\egoboo_types.inl">
 			</File>
 			<File
 				RelativePath=".\egoboo_utility.c">
@@ -233,9 +224,6 @@
 				RelativePath=".\graphic.c">
 			</File>
 			<File
-				RelativePath=".\graphic.inl">
-			</File>
-			<File
 				RelativePath=".\graphic_fan.c">
 			</File>
 			<File
@@ -251,9 +239,6 @@
 				RelativePath=".\input.c">
 			</File>
 			<File
-				RelativePath=".\input.inl">
-			</File>
-			<File
 				RelativePath=".\Log.c">
 			</File>
 			<File
@@ -263,16 +248,10 @@
 				RelativePath=".\Md2.c">
 			</File>
 			<File
-				RelativePath=".\Md2.inl">
-			</File>
-			<File
 				RelativePath=".\Menu.c">
 			</File>
 			<File
 				RelativePath=".\mesh.c">
-			</File>
-			<File
-				RelativePath=".\mesh.inl">
 			</File>
 			<File
 				RelativePath=".\module.c">
@@ -290,13 +269,7 @@
 				RelativePath=".\Network.c">
 			</File>
 			<File
-				RelativePath=".\Network.inl">
-			</File>
-			<File
 				RelativePath=".\object.c">
-			</File>
-			<File
-				RelativePath=".\object.inl">
 			</File>
 			<File
 				RelativePath=".\ogl_include.c">
@@ -308,16 +281,10 @@
 				RelativePath=".\particle.c">
 			</File>
 			<File
-				RelativePath=".\particle.inl">
-			</File>
-			<File
 				RelativePath=".\passage.c">
 			</File>
 			<File
 				RelativePath=".\Physics.c">
-			</File>
-			<File
-				RelativePath=".\Physics.inl">
 			</File>
 			<File
 				RelativePath=".\script.c">
@@ -583,6 +550,43 @@
 					<Tool
 						Name="VCResourceCompilerTool"/>
 				</FileConfiguration>
+			</File>
+		</Filter>
+		<Filter
+			Name="Inline Files"
+			Filter="">
+			<File
+				RelativePath=".\char.inl">
+			</File>
+			<File
+				RelativePath=".\egoboo_math.inl">
+			</File>
+			<File
+				RelativePath=".\egoboo_types.inl">
+			</File>
+			<File
+				RelativePath=".\graphic.inl">
+			</File>
+			<File
+				RelativePath=".\input.inl">
+			</File>
+			<File
+				RelativePath=".\Md2.inl">
+			</File>
+			<File
+				RelativePath=".\mesh.inl">
+			</File>
+			<File
+				RelativePath=".\Network.inl">
+			</File>
+			<File
+				RelativePath=".\object.inl">
+			</File>
+			<File
+				RelativePath=".\particle.inl">
+			</File>
+			<File
+				RelativePath=".\Physics.inl">
 			</File>
 		</Filter>
 		<File

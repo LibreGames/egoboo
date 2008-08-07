@@ -30,22 +30,22 @@
 #include <stdlib.h>
 #include <assert.h>
 
-struct timer_node_t
+struct sTimerNode
 {
-  Timer *timer;
-  struct timer_node_t *previous, *next;
+  Timer_t *timer;
+  struct sTimerNode *previous, *next;
 };
 
-typedef struct timer_node_t TimerNode;
+typedef struct sTimerNode TimerNode_t;
 
-static ClockState *timerClock = NULL;
-static TimerNode  *timerList = NULL;
-static TimerNode  *timerListEnd = NULL;
+static ClockState_t *timerClock = NULL;
+static TimerNode_t  *timerList = NULL;
+static TimerNode_t  *timerListEnd = NULL;
 static int timersInUse = 0;
 
-static TimerNode *findTimer( Timer *t )
+static TimerNode_t *findTimer( Timer_t *t )
 {
-  TimerNode *node = timerList;
+  TimerNode_t *node = timerList;
 
   while ( NULL != node  )
   {
@@ -59,7 +59,7 @@ static TimerNode *findTimer( Timer *t )
   return NULL;
 }
 
-void timer_init( ClockState * cs )
+void timer_init( ClockState_t * cs )
 {
   // Just set some basic stuff
   timerClock  = cs;
@@ -69,7 +69,7 @@ void timer_init( ClockState * cs )
 
 void timer_shutdown()
 {
-  TimerNode *node, *next;
+  TimerNode_t *node, *next;
 
   // Clear out the list o' timers
   node = timerList;
@@ -86,7 +86,7 @@ void timer_shutdown()
 
 void timer_update()
 {
-  TimerNode *node;
+  TimerNode_t *node;
 
   node = timerList;
   while ( NULL != node  )
@@ -102,13 +102,13 @@ void timer_update()
   }
 }
 
-void timer_addTimer( Timer *t )
+void timer_addTimer( Timer_t *t )
 {
-  TimerNode *node;
+  TimerNode_t *node;
 
   if ( NULL == t ) return;
 
-  node = (TimerNode *)calloc( 1, sizeof( TimerNode ) );
+  node = (TimerNode_t *)calloc( 1, sizeof( TimerNode_t ) );
   node->timer = t;
 
   if ( timerList )
@@ -127,9 +127,9 @@ void timer_addTimer( Timer *t )
   timersInUse++;
 }
 
-void timer_removeTimer( Timer *t )
+void timer_removeTimer( Timer_t *t )
 {
-  TimerNode *node;
+  TimerNode_t *node;
 
   if ( NULL == t ) return;
 

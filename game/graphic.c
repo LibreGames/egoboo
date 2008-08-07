@@ -55,24 +55,24 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-struct CGame_t;
+struct sGame;
 
 RENDERLIST           renderlist;
-CGraphics         gfxState;
+Graphics_t         gfxState;
 GLOBAL_LIGHTING_INFO GLight = {bfalse};
 static bool_t        gfx_initialized = bfalse;
 
 //--------------------------------------------------------------------------------------------
-struct Status_t;
+struct sStatus;
 
-static int  draw_wrap_string( BMFont * pfnt, float x, float y, GLfloat tint[], float maxx, char * szFormat, ... );
-static int  draw_status( BMFont *  pfnt , struct Status_t * pstat );
-static void draw_text( BMFont *  pfnt  );
+static int  draw_wrap_string( BMFont_t * pfnt, float x, float y, GLfloat tint[], float maxx, char * szFormat, ... );
+static int  draw_status( BMFont_t *  pfnt , struct sStatus * pstat );
+static void draw_text( BMFont_t *  pfnt  );
 
 void render_particles();
 
 //--------------------------------------------------------------------------------------------
-bool_t gfx_find_anisotropy( CGraphics * g )
+bool_t gfx_find_anisotropy( Graphics_t * g )
 {
   // BB> get the maximum anisotropy supported by the video vard
   //     OpenGL and SDL must be loaded for this to work.
@@ -96,7 +96,7 @@ bool_t gfx_find_anisotropy( CGraphics * g )
   return btrue;
 }
 
-bool_t gfx_initialize(CGraphics * g, ConfigData * cd)
+bool_t gfx_initialize(Graphics_t * g, ConfigData_t * cd)
 {
   if(NULL == g || NULL == cd) return bfalse;
 
@@ -251,7 +251,7 @@ void EndText()
 
 
 //---------------------------------------------------------------------------------------------
-void release_all_textures(CGame * gs)
+void release_all_textures(Game_t * gs)
 {
   // ZZ> This function clears out all of the textures
 
@@ -270,7 +270,7 @@ Uint32 load_one_icon( char * szModname, const char * szObjectname, char * szFile
   //     without this function though...
 
   Uint32 retval = MAXICONTX;
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   if ( INVALID_TEXTURE != GLTexture_Load( GL_TEXTURE_2D,  gs->TxIcon + gs->TxIcon_count,  inherit_fname(szModname, szObjectname, szFilename), INVALID_KEY ) )
   {
@@ -282,7 +282,7 @@ Uint32 load_one_icon( char * szModname, const char * szObjectname, char * szFile
 }
 
 //---------------------------------------------------------------------------------------------
-void mnu_prime_titleimage(MenuProc * mproc)
+void mnu_prime_titleimage(MenuProc_t * mproc)
 {
   // ZZ> This function sets the title image pointers to NULL
 
@@ -301,7 +301,7 @@ void mnu_prime_titleimage(MenuProc * mproc)
 }
 
 //---------------------------------------------------------------------------------------------
-void prime_icons(CGame * gs)
+void prime_icons(Game_t * gs)
 {
   // ZZ> This function sets the icon pointers to NULL
 
@@ -328,7 +328,7 @@ void prime_icons(CGame * gs)
 }
 
 //---------------------------------------------------------------------------------------------
-void release_all_icons(CGame * gs)
+void release_all_icons(Game_t * gs)
 {
   // ZZ> This function clears out all of the icons
 
@@ -343,7 +343,7 @@ void release_all_icons(CGame * gs)
 }
 
 //---------------------------------------------------------------------------------------------
-void init_all_models(CGame * gs)
+void init_all_models(Game_t * gs)
 {
   // ZZ> This function initializes the models
 
@@ -353,7 +353,7 @@ void init_all_models(CGame * gs)
 }
 
 //---------------------------------------------------------------------------------------------
-void release_all_models(CGame * gs)
+void release_all_models(Game_t * gs)
 {
   // ZZ> This function clears out all of the models
 
@@ -362,7 +362,7 @@ void release_all_models(CGame * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-void release_map( CGame * gs )
+void release_map( Game_t * gs )
 {
   // ZZ> This function releases all the map images
 
@@ -376,8 +376,8 @@ static bool_t write_debug_message( int time, const char *format, va_list args )
 
   STRING buffer;
 
-  CGui            * gui = gui_getState();
-  MessageQueue    * mq  = &(gui->msgQueue);
+  Gui_t            * gui = gui_getState();
+  MessageQueue_t    * mq  = &(gui->msgQueue);
   MESSAGE_ELEMENT * msg;
 
   int slot = MessageQueue_get_free(mq);
@@ -401,7 +401,7 @@ bool_t debug_message( int time, const char *format, ... )
   bool_t retval;
   va_list args;
 
-  if(NULL == format || '\0' == format[0]) return bfalse;
+  if( !VALID_CSTR(format) ) return bfalse;
 
   va_start( args, format );
   retval = write_debug_message( time, format, args );
@@ -412,7 +412,7 @@ bool_t debug_message( int time, const char *format, ... )
 
 
 //--------------------------------------------------------------------------------------------
-void reset_end_text( CGame * gs )
+void reset_end_text( Game_t * gs )
 {
   // ZZ> This function resets the end-module text
 
@@ -436,7 +436,7 @@ void reset_end_text( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-void append_end_text( CGame * gs, int message, CHR_REF chr_ref )
+void append_end_text( Game_t * gs, int message, CHR_REF chr_ref )
 {
   // ZZ> This function appends a message to the end-module text
 
@@ -489,7 +489,7 @@ void animate_tiles( float dUpdate )
 }
 
 //--------------------------------------------------------------------------------------------
-void load_basic_textures( CGame * gs, char *modname )
+void load_basic_textures( Game_t * gs, char *modname )
 {
   // ZZ> This function loads the standard textures for a module
   // BB> In each case, try to load one stored with the module first.
@@ -589,7 +589,7 @@ void load_basic_textures( CGame * gs, char *modname )
 bool_t load_bars( char* szBitmap )
 {
   // ZZ> This function loads the status bar bitmap
-  CGui * gui = gui_getState();
+  Gui_t * gui = gui_getState();
   int cnt;
 
   if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D, &gui->TxBars, szBitmap, 0 ) )
@@ -615,7 +615,7 @@ bool_t load_bars( char* szBitmap )
 }
 
 //--------------------------------------------------------------------------------------------
-void load_map( CGame * gs, char* szModule )
+void load_map( Game_t * gs, char* szModule )
 {
   // ZZ> This function loads the map bitmap and the blip bitmap
 
@@ -639,7 +639,7 @@ void load_map( CGame * gs, char* szModule )
 }
 
 //--------------------------------------------------------------------------------------------
-void make_water(CGame * gs)
+void make_water(Game_t * gs)
 {
   // ZZ> This function sets up water movements
 
@@ -715,12 +715,14 @@ void make_water(CGame * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-void read_wawalite( CGame * gs, char *modname )
+void read_wawalite( Game_t * gs, char *modname )
 {
   // ZZ> This function sets up water and lighting for the module
 
   FILE* fileread;
   Uint32 loc_rand;
+
+  Mesh_t * pmesh = Game_getMesh(gs);
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.wawalite_file );
   fileread = fs_fileOpen( PRI_NONE, NULL, CStringTmp1, "r" );
@@ -833,7 +835,7 @@ void read_wawalite( CGame * gs, char *modname )
     GWeather.player = 0;
 
     // Read extra data
-    gs->mesh.exploremode = fget_next_bool( fileread );
+    pmesh->Info.exploremode = fget_next_bool( fileread );
     usefaredge = fget_next_bool( fileread );
     GCamera.swing = 0;
     GCamera.swingrate = fget_next_float( fileread );
@@ -903,7 +905,7 @@ void render_background( Uint16 texture )
 {
   // ZZ> This function draws the large background
 
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   GLVertex vtlist[4];
   float size;
@@ -979,7 +981,7 @@ void render_background( Uint16 texture )
 //--------------------------------------------------------------------------------------------
 void render_foreground_overlay( Uint16 texture )
 {
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   GLVertex vtlist[4];
   float size;
@@ -1066,7 +1068,8 @@ void render_shadow( CHR_REF character )
 {
   // ZZ> This function draws a NIFTY shadow
 
-  CGame * gs = gfxState.gs;
+  Game_t * gs    = gfxState.gs;
+  Mesh_t * pmesh = Game_getMesh(gs);
 
   GLVertex v[4];
 
@@ -1093,7 +1096,7 @@ void render_shadow( CHR_REF character )
   height = gs->ChrList[character].matrix.CNV( 3, 2 ) - level;
   if ( height < 0 ) height = 0;
 
-  tile_factor = mesh_has_some_bits( gs->Mesh_Mem.fanlst, gs->ChrList[character].onwhichfan, MPDFX_WATER ) ? 0.5 : 1.0;
+  tile_factor = mesh_has_some_bits( pmesh->Mem.tilelst, gs->ChrList[character].onwhichfan, MPDFX_WATER ) ? 0.5 : 1.0;
 
   height_factor   = MAX( MIN(( 5 * gs->ChrList[character].bmpdata.calc_size / height ), 1 ), 0 );
   ambient_factor  = ( float )( chrlightspek ) / ( float )( chrlightambi + chrlightspek );
@@ -1288,7 +1291,8 @@ void light_characters()
   Uint32 vrtstart;
   Uint32 fan;
 
-  CGame * gs = gfxState.gs;
+  Game_t * gs    = gfxState.gs;
+  Mesh_t * pmesh = Game_getMesh(gs);
 
   for ( cnt = 0; cnt < numdolist; cnt++ )
   {
@@ -1297,22 +1301,22 @@ void light_characters()
 
     if(INVALID_FAN == fan) continue;
 
-    vrtstart = gs->Mesh_Mem.fanlst[gs->ChrList[chr_tnc].onwhichfan].vrt_start;
+    vrtstart = pmesh->Mem.tilelst[gs->ChrList[chr_tnc].onwhichfan].vrt_start;
 
     x = gs->ChrList[chr_tnc].ori.pos.x;
     y = gs->ChrList[chr_tnc].ori.pos.y;
     x = ( x & 127 ) >> 5;  // From 0 to 3
     y = ( y & 127 ) >> 5;  // From 0 to 3
 
-    i0 = gs->Mesh_Mem.vrt_lr_fp8[vrtstart + 0];
-    i1 = gs->Mesh_Mem.vrt_lr_fp8[vrtstart + 1];
-    i2 = gs->Mesh_Mem.vrt_lr_fp8[vrtstart + 2];
-    i3 = gs->Mesh_Mem.vrt_lr_fp8[vrtstart + 3];
+    i0 = pmesh->Mem.vrt_lr_fp8[vrtstart + 0];
+    i1 = pmesh->Mem.vrt_lr_fp8[vrtstart + 1];
+    i2 = pmesh->Mem.vrt_lr_fp8[vrtstart + 2];
+    i3 = pmesh->Mem.vrt_lr_fp8[vrtstart + 3];
     calc_chr_lighting( x, y, i0, i1, i2, i3, &spek, &ambi );
     gs->ChrList[chr_tnc].tlight.ambi_fp8.r = ambi;
     gs->ChrList[chr_tnc].tlight.spek_fp8.r = spek;
 
-    if ( !gs->mesh.exploremode )
+    if ( !pmesh->Info.exploremode )
     {
       // Look up spek direction using corners again
       i0 = (( i0 & 0xf0 ) << 8 ) & 0xf000;
@@ -1327,15 +1331,15 @@ void light_characters()
       gs->ChrList[chr_tnc].tlight.turn_lr.r = 0;
     }
 
-    i0 = gs->Mesh_Mem.vrt_lg_fp8[vrtstart + 0];
-    i1 = gs->Mesh_Mem.vrt_lg_fp8[vrtstart + 1];
-    i3 = gs->Mesh_Mem.vrt_lg_fp8[vrtstart + 2];
-    i2 = gs->Mesh_Mem.vrt_lg_fp8[vrtstart + 3];
+    i0 = pmesh->Mem.vrt_lg_fp8[vrtstart + 0];
+    i1 = pmesh->Mem.vrt_lg_fp8[vrtstart + 1];
+    i3 = pmesh->Mem.vrt_lg_fp8[vrtstart + 2];
+    i2 = pmesh->Mem.vrt_lg_fp8[vrtstart + 3];
     calc_chr_lighting( x, y, i0, i1, i2, i3, &spek, &ambi );
     gs->ChrList[chr_tnc].tlight.ambi_fp8.g = ambi;
     gs->ChrList[chr_tnc].tlight.spek_fp8.g = spek;
 
-    if ( !gs->mesh.exploremode )
+    if ( !pmesh->Info.exploremode )
     {
       // Look up spek direction using corners again
       i0 = (( i0 & 0xf0 ) << 8 ) & 0xf000;
@@ -1350,15 +1354,15 @@ void light_characters()
       gs->ChrList[chr_tnc].tlight.turn_lr.g = 0;
     }
 
-    i0 = gs->Mesh_Mem.vrt_lb_fp8[vrtstart + 0];
-    i1 = gs->Mesh_Mem.vrt_lb_fp8[vrtstart + 1];
-    i3 = gs->Mesh_Mem.vrt_lb_fp8[vrtstart + 2];
-    i2 = gs->Mesh_Mem.vrt_lb_fp8[vrtstart + 3];
+    i0 = pmesh->Mem.vrt_lb_fp8[vrtstart + 0];
+    i1 = pmesh->Mem.vrt_lb_fp8[vrtstart + 1];
+    i3 = pmesh->Mem.vrt_lb_fp8[vrtstart + 2];
+    i2 = pmesh->Mem.vrt_lb_fp8[vrtstart + 3];
     calc_chr_lighting( x, y, i0, i1, i2, i3, &spek, &ambi );
     gs->ChrList[chr_tnc].tlight.ambi_fp8.b = ambi;
     gs->ChrList[chr_tnc].tlight.spek_fp8.b = spek;
 
-    if ( !gs->mesh.exploremode )
+    if ( !pmesh->Info.exploremode )
     {
       // Look up spek direction using corners again
       i0 = (( i0 & 0xf0 ) << 8 ) & 0xf000;
@@ -1380,7 +1384,8 @@ void light_particles()
 {
   // ZZ> This function figures out particle lighting
 
-  CGame * gs = gfxState.gs;
+  Game_t * gs    = gfxState.gs;
+  Mesh_t * pmesh = Game_getMesh(gs);
 
   PRT_REF prt_cnt;
   CHR_REF character;
@@ -1414,9 +1419,9 @@ void light_particles()
           }
           else if ( INVALID_FAN != gs->PrtList[prt_cnt].onwhichfan )
           {
-            gs->PrtList[prt_cnt].lightr_fp8 = gs->Mesh_Mem.vrt_lr_fp8[gs->Mesh_Mem.fanlst[gs->PrtList[prt_cnt].onwhichfan].vrt_start];
-            gs->PrtList[prt_cnt].lightg_fp8 = gs->Mesh_Mem.vrt_lg_fp8[gs->Mesh_Mem.fanlst[gs->PrtList[prt_cnt].onwhichfan].vrt_start];
-            gs->PrtList[prt_cnt].lightb_fp8 = gs->Mesh_Mem.vrt_lb_fp8[gs->Mesh_Mem.fanlst[gs->PrtList[prt_cnt].onwhichfan].vrt_start];
+            gs->PrtList[prt_cnt].lightr_fp8 = pmesh->Mem.vrt_lr_fp8[pmesh->Mem.tilelst[gs->PrtList[prt_cnt].onwhichfan].vrt_start];
+            gs->PrtList[prt_cnt].lightg_fp8 = pmesh->Mem.vrt_lg_fp8[pmesh->Mem.tilelst[gs->PrtList[prt_cnt].onwhichfan].vrt_start];
+            gs->PrtList[prt_cnt].lightb_fp8 = pmesh->Mem.vrt_lb_fp8[pmesh->Mem.tilelst[gs->PrtList[prt_cnt].onwhichfan].vrt_start];
           }
           else
           {
@@ -1442,7 +1447,7 @@ void render_water()
   // ZZ> This function draws all of the water fans
 
   int cnt;
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   // Bottom layer first
   if ( !gfxState.render_background && gs->water.layer_count > 1 )
@@ -1472,7 +1477,7 @@ void render_water_lit()
   // BB> This function draws the hilites for water tiles using global lighting
 
   int cnt;
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   // Bottom layer first
   if ( !gfxState.render_background && gs->water.layer_count > 1 )
@@ -1551,7 +1556,8 @@ void render_good_shadows()
   int cnt;
   CHR_REF chr_tnc;
 
-  CGame * gs = gfxState.gs;
+  Game_t * gs    = gfxState.gs;
+  Mesh_t * pmesh = Game_getMesh(gs);
 
   // Good shadows for me
   ATTRIB_PUSH( "render_good_shadows", GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_POLYGON_BIT );
@@ -1570,7 +1576,7 @@ void render_good_shadows()
     for ( cnt = 0; cnt < numdolist; cnt++ )
     {
       chr_tnc = dolist[cnt];
-      if ( gs->ChrList[chr_tnc].bmpdata.shadow != 0 || gs->ChrList[chr_tnc].prop.forceshadow && mesh_has_no_bits( gs->Mesh_Mem.fanlst, gs->ChrList[chr_tnc].onwhichfan, MPDFX_SHINY ) )
+      if ( gs->ChrList[chr_tnc].bmpdata.shadow != 0 || gs->ChrList[chr_tnc].prop.forceshadow && mesh_has_no_bits( pmesh->Mem.tilelst, gs->ChrList[chr_tnc].onwhichfan, MPDFX_SHINY ) )
         render_shadow( chr_tnc );
     }
   }
@@ -1583,7 +1589,8 @@ void render_character_reflections()
   int cnt;
   CHR_REF chr_tnc;
 
-  CGame * gs = gfxState.gs;
+  Game_t * gs    = gfxState.gs;
+  Mesh_t * pmesh = Game_getMesh(gs);
 
   // Render reflections of characters
   ATTRIB_PUSH( "render_character_reflections", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT );
@@ -1604,7 +1611,7 @@ void render_character_reflections()
     for ( cnt = 0; cnt < numdolist; cnt++ )
     {
       chr_tnc = dolist[cnt];
-      if ( mesh_has_some_bits( gs->Mesh_Mem.fanlst, gs->ChrList[chr_tnc].onwhichfan, MPDFX_SHINY ) )
+      if ( mesh_has_some_bits( pmesh->Mem.tilelst, gs->ChrList[chr_tnc].onwhichfan, MPDFX_SHINY ) )
         render_refmad( chr_tnc, gs->ChrList[chr_tnc].alpha_fp8 / 2 );
     }
   }
@@ -1615,7 +1622,8 @@ void render_character_reflections()
 //--------------------------------------------------------------------------------------------
 void render_normal_fans()
 {
-  CGame * gs = gfxState.gs;
+  Game_t * gs    = gfxState.gs;
+  Mesh_t * pmesh = Game_getMesh(gs);
 
   int cnt, tnc, fan, texture;
 
@@ -1642,7 +1650,7 @@ void render_normal_fans()
     for ( cnt = 0; cnt < 4; cnt++ )
     {
       texture = cnt + TX_TILE_0;
-      gs->mesh.last_texture = texture;
+      pmesh->Info.last_texture = texture;
       GLTexture_Bind( gs->TxTexture + texture, &gfxState );
       for ( tnc = 0; tnc < renderlist.num_norm; tnc++ )
       {
@@ -1657,7 +1665,8 @@ void render_normal_fans()
 //--------------------------------------------------------------------------------------------
 void render_shiny_fans()
 {
-  CGame * gs = gfxState.gs;
+  Game_t * gs    = gfxState.gs;
+  Mesh_t * pmesh = Game_getMesh(gs);
 
   int cnt, tnc, fan, texture;
 
@@ -1685,7 +1694,7 @@ void render_shiny_fans()
     for ( cnt = 0; cnt < 4; cnt++ )
     {
       texture = cnt + TX_TILE_0;
-      gs->mesh.last_texture = texture;
+      pmesh->Info.last_texture = texture;
       GLTexture_Bind( gs->TxTexture + texture, &gfxState );
       for ( tnc = 0; tnc < renderlist.num_shine; tnc++ )
       {
@@ -1700,7 +1709,8 @@ void render_shiny_fans()
 //--------------------------------------------------------------------------------------------
 void render_reflected_fans_ref()
 {
-  CGame * gs = gfxState.gs;
+  Game_t * gs    = gfxState.gs;
+  Mesh_t * pmesh = Game_getMesh(gs);
 
   int cnt, tnc, fan, texture;
 
@@ -1731,7 +1741,7 @@ void render_reflected_fans_ref()
     for ( cnt = 0; cnt < 4; cnt++ )
     {
       texture = cnt + TX_TILE_0;
-      gs->mesh.last_texture = texture;
+      pmesh->Info.last_texture = texture;
       GLTexture_Bind( gs->TxTexture + texture, &gfxState );
       for ( tnc = 0; tnc < renderlist.num_shine; tnc++ )
       {
@@ -1749,7 +1759,7 @@ void render_solid_characters()
   int cnt;
   CHR_REF chr_tnc;
 
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   // Render the normal characters
   ATTRIB_PUSH( "render_solid_characters", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT );
@@ -1787,7 +1797,7 @@ void render_alpha_characters()
   CHR_REF chr_tnc;
   Uint8 trans;
 
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   // Now render the transparent characters
   ATTRIB_PUSH( "render_alpha_characters", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT );
@@ -1918,7 +1928,7 @@ void render_character_highlights()
   int cnt;
   CHR_REF chr_tnc;
 
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   ATTRIB_PUSH( "render_character_highlights", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_LIGHTING_BIT | GL_POLYGON_BIT );
   {
@@ -1973,7 +1983,7 @@ void draw_scene_zreflection()
   // ZZ> This function draws 3D objects
   // do all the rendering of reflections
 
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   if ( CData.refon )
   {
@@ -2094,9 +2104,9 @@ void draw_scene_zreflection()
 };
 
 
-bool_t draw_texture_box( GLtexture * ptx, FRect * tx_rect, FRect * sc_rect )
+bool_t draw_texture_box( GLtexture * ptx, FRect_t * tx_rect, FRect_t * sc_rect )
 {
-  FRect rtmp;
+  FRect_t rtmp;
 
   if( NULL == sc_rect ) return bfalse;
 
@@ -2127,9 +2137,9 @@ void draw_blip( COLR color, float x, float y)
 {
   // ZZ> This function draws a blip
 
-  CGui * gui = gui_getState();
+  Gui_t * gui = gui_getState();
 
-  FRect tx_rect, sc_rect;
+  FRect_t tx_rect, sc_rect;
   float width, height;
 
   width  = 3.0*mapscale*0.5f;
@@ -2176,11 +2186,11 @@ void draw_one_icon( int icontype, int x, int y, Uint8 sparkle )
 {
   // ZZ> This function draws an icon
 
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   int position, blipx, blipy;
   int width, height;
-  FRect tx_rect, sc_rect;
+  FRect_t tx_rect, sc_rect;
 
   if (MAXICONTX== icontype || INVALID_TEXTURE == gs->TxIcon[icontype].textureID ) return;
 
@@ -2333,7 +2343,7 @@ void draw_one_font( int fonttype, float x, float y )
   // GAC> Very nasty version for starters.  Lots of room for improvement.
 
   GLfloat dx, dy, border;
-  FRect tx_rect, sc_rect;
+  FRect_t tx_rect, sc_rect;
 
   dx = 2.0f / 512.0f;
   dy = 1.0f / 256.0f;
@@ -2357,8 +2367,8 @@ void draw_map( float x, float y )
 {
   // ZZ> This function draws the map
 
-  CGame * gs = gfxState.gs;
-  FRect tx_rect, sc_rect;
+  Game_t * gs = gfxState.gs;
+  FRect_t tx_rect, sc_rect;
 
   ATTRIB_PUSH( "draw_map", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT | GL_TEXTURE_BIT | GL_LIGHTING_BIT );
   {
@@ -2395,10 +2405,10 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
 {
   // ZZ> This function draws a bar and returns the y position for the next one
 
-  CGui * gui = gui_getState();
+  Gui_t * gui = gui_getState();
 
   int noticks;
-  FRect tx_rect, sc_rect;
+  FRect_t tx_rect, sc_rect;
   int width, height;
   int ystt = y;
 
@@ -2570,7 +2580,7 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
 }
 
 //--------------------------------------------------------------------------------------------
-int draw_string( BMFont * pfnt, float x, float y, GLfloat tint[], char * szFormat, ... )
+int draw_string( BMFont_t * pfnt, float x, float y, GLfloat tint[], char * szFormat, ... )
 {
   // ZZ> This function spits a line of null terminated text onto the backbuffer
   char cTmp;
@@ -2669,7 +2679,7 @@ int length_of_word( char *szText )
 }
 
 //--------------------------------------------------------------------------------------------
-int draw_wrap_string( BMFont * pfnt, float x, float y, GLfloat tint[], float maxx, char * szFormat, ... )
+int draw_wrap_string( BMFont_t * pfnt, float x, float y, GLfloat tint[], float maxx, char * szFormat, ... )
 {
   // ZZ> This function spits a line of null terminated text onto the backbuffer,
   //     wrapping over the right side and returning the new y value
@@ -2767,7 +2777,7 @@ int draw_wrap_string( BMFont * pfnt, float x, float y, GLfloat tint[], float max
 }
 
 //--------------------------------------------------------------------------------------------
-int draw_status( BMFont * pfnt, Status * pstat )
+int draw_status( BMFont_t * pfnt, Status_t * pstat )
 {
   // ZZ> This function shows a ichr's icon, status and inventory
   //     The x,y coordinates are the top left point of the image to draw
@@ -2781,18 +2791,18 @@ int draw_status( BMFont * pfnt, Status * pstat )
   int cnt;
   CHR_REF item;
 
-  PObj objlst;
-  PChr chrlst;
+  PObj_t objlst;
+  PChr_t chrlst;
 
-  CGame * gs;
+  Game_t * gs;
 
   CHR_REF ichr;
-  CChr * pchr;
+  Chr_t * pchr;
 
   OBJ_REF iobj;
-  CObj * pobj;
-  CMad * pmad;
-  CCap * pcap;
+  Obj_t * pobj;
+  Mad_t * pmad;
+  Cap_t * pcap;
 
 
 
@@ -2856,9 +2866,9 @@ int draw_status( BMFont * pfnt, Status * pstat )
   item = chr_get_holdingwhich( chrlst, CHRLST_COUNT, ichr, SLOT_LEFT );
   if ( ACTIVE_CHR( chrlst,  item ) && VALID_OBJ( objlst, chrlst[item].model) )
   {
-    CChr * tmppchr = ChrList_getPChr(gs, item);
-    CObj * tmppobj = ChrList_getPObj(gs, item);
-    CCap * tmppcap = ChrList_getPCap(gs, item);
+    Chr_t * tmppchr = ChrList_getPChr(gs, item);
+    Obj_t * tmppobj = ChrList_getPObj(gs, item);
+    Cap_t * tmppcap = ChrList_getPCap(gs, item);
 
     if ( tmppchr->prop.icon )
     {
@@ -2881,9 +2891,9 @@ int draw_status( BMFont * pfnt, Status * pstat )
   item = chr_get_holdingwhich( chrlst, CHRLST_COUNT, ichr, SLOT_RIGHT );
   if ( ACTIVE_CHR( chrlst,  item ) && VALID_OBJ( objlst, chrlst[item].model) )
   {
-    CChr * tmppchr = ChrList_getPChr(gs, item);
-    CObj * tmppobj = ChrList_getPObj(gs, item);
-    CCap * tmppcap = ChrList_getPCap(gs, item);
+    Chr_t * tmppchr = ChrList_getPChr(gs, item);
+    Obj_t * tmppobj = ChrList_getPObj(gs, item);
+    Cap_t * tmppcap = ChrList_getPCap(gs, item);
 
     if ( tmppchr->prop.icon )
     {
@@ -2928,7 +2938,8 @@ bool_t do_map()
   CHR_REF ichr;
   int cnt;
 
-  CGame * gs = gfxState.gs;
+  Game_t * gs    = gfxState.gs;
+  Mesh_t * pmesh = Game_getMesh(gs);
 
   if(!mapon) return bfalse;
 
@@ -2948,7 +2959,7 @@ bool_t do_map()
       ichr = PlaList_getRChr( gs, ipla );
       if ( !ACTIVE_CHR( gs->ChrList,  ichr ) || !gs->ChrList[ichr].alive ) continue;
 
-      draw_blip( (COLR)0, maprect.left + MAPSIZE * mesh_fraction_x( &(gs->mesh), gs->ChrList[ichr].ori.pos.x ) * mapscale, maprect.top + MAPSIZE * mesh_fraction_y( &(gs->mesh), gs->ChrList[ichr].ori.pos.y ) * mapscale );
+      draw_blip( (COLR)0, maprect.left + MAPSIZE * mesh_fraction_x( &(pmesh->Info), gs->ChrList[ichr].ori.pos.x ) * mapscale, maprect.top + MAPSIZE * mesh_fraction_y( &(pmesh->Info), gs->ChrList[ichr].ori.pos.y ) * mapscale );
     }
   }
 
@@ -2956,14 +2967,14 @@ bool_t do_map()
 }
 
 //--------------------------------------------------------------------------------------------
-int do_messages( BMFont * pfnt, int x, int y )
+int do_messages( BMFont_t * pfnt, int x, int y )
 {
   int cnt, tnc;
   int ystt = y;
 
-  CGame * gs  = gfxState.gs;
-  CGui  * gui = gui_getState();
-  MessageQueue * mq = &(gui->msgQueue);
+  Game_t * gs  = gfxState.gs;
+  Gui_t  * gui = gui_getState();
+  MessageQueue_t * mq = &(gui->msgQueue);
   MESSAGE_ELEMENT * msg;
 
   if ( NULL ==pfnt || !CData.messageon ) return 0;
@@ -2995,7 +3006,7 @@ int do_messages( BMFont * pfnt, int x, int y )
 }
 
 //--------------------------------------------------------------------------------------------
-int do_status( CClient * cs, BMFont * pfnt, int x, int y)
+int do_status( Client_t * cs, BMFont_t * pfnt, int x, int y)
 {
   int cnt;
   int ystt = y;
@@ -3015,20 +3026,20 @@ int do_status( CClient * cs, BMFont * pfnt, int x, int y)
 };
 
 //--------------------------------------------------------------------------------------------
-void draw_text( BMFont *  pfnt )
+void draw_text( BMFont_t *  pfnt )
 {
   // ZZ> This function spits out some words
 
   char text[512];
   int y, fifties, seconds, minutes;
 
-  KeyboardBuffer * kbuffer = KeyboardBuffer_getState();
-  CGame * gs  = gfxState.gs;
-  CGui  * gui = gui_getState();
+  KeyboardBuffer_t * kbuffer = KeyboardBuffer_getState();
+  Game_t * gs  = gfxState.gs;
+  Gui_t  * gui = gui_getState();
 
   Begin2DMode();
   {
-    // Status bars
+    // Status_t bars
     y = 0;
     y += do_status( gs->cl, pfnt, gfxState.scrx - BARX, y);
 
@@ -3123,7 +3134,7 @@ void draw_text( BMFont *  pfnt )
     }
 
 
-    // CPlayer DEBUG MODE
+    // Player_t DEBUG MODE
     if ( SDLKEYDOWN( SDLK_F5 ) && CData.DevMode )
     {
       CHR_REF pla_chr = PlaList_getRChr( gs, PLA_REF(0) );
@@ -3182,7 +3193,7 @@ void draw_text( BMFont *  pfnt )
       y += draw_string( pfnt, 0, y, NULL, "~DAMAGEPART %d", GTile_Dam.parttype );
     }
 
-    // CAMERA DEBUG MODE
+    // Camera_t DEBUG MODE
     if ( SDLKEYDOWN( SDLK_F7 ) && CData.DevMode )
     {
       // White debug mode
@@ -3278,7 +3289,7 @@ bool_t request_pageflip()
 bool_t do_pageflip()
 {
   bool_t retval = pageflip_requested;
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   if ( pageflip_requested )
   {
@@ -3349,7 +3360,7 @@ void draw_main( float frameDuration )
 void load_blip_bitmap( char * modname )
 {
   //This function loads the blip bitmaps
-  CGui * gui = gui_getState();
+  Gui_t * gui = gui_getState();
   int cnt;
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.blip_bitmap );
@@ -3395,7 +3406,7 @@ void Reshape3D( int w, int h )
   glViewport( 0, 0, w, h );
 }
 
-bool_t glinit( CGraphics * g, ConfigData * cd )
+bool_t glinit( Graphics_t * g, ConfigData_t * cd )
 {
   if(NULL == g || NULL == cd) return bfalse;
 
@@ -3433,7 +3444,7 @@ bool_t glinit( CGraphics * g, ConfigData * cd )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t gfx_set_mode(CGraphics * g)
+bool_t gfx_set_mode(Graphics_t * g)
 {
   //This function loads all the graphics based on the game settings
 
@@ -3551,7 +3562,7 @@ bool_t gfx_set_mode(CGraphics * g)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CGraphics_delete(CGraphics * g)
+bool_t CGraphics_delete(Graphics_t * g)
 {
   if(NULL == g) return bfalse;
   if( !EKEY_PVALID(g) ) return btrue;
@@ -3562,7 +3573,7 @@ bool_t CGraphics_delete(CGraphics * g)
 }
 
 //--------------------------------------------------------------------------------------------
-CGraphics * CGraphics_new(CGraphics * g, ConfigData * cd)
+Graphics_t * CGraphics_new(Graphics_t * g, ConfigData_t * cd)
 {
   //fprintf( stdout, "CGraphics_new()\n");
 
@@ -3570,11 +3581,11 @@ CGraphics * CGraphics_new(CGraphics * g, ConfigData * cd)
 
   CGraphics_delete( g );
 
-  memset(g, 0, sizeof(CGraphics));
+  memset(g, 0, sizeof(Graphics_t));
 
   if( NULL == cd ) return NULL;
 
-  EKEY_PNEW( g, CGraphics );
+  EKEY_PNEW( g, Graphics_t );
 
   CGraphics_synch(g, cd);
 
@@ -3585,7 +3596,7 @@ CGraphics * CGraphics_new(CGraphics * g, ConfigData * cd)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t CGraphics_synch(CGraphics * g, ConfigData * cd)
+bool_t CGraphics_synch(Graphics_t * g, ConfigData_t * cd)
 {
   bool_t changed = bfalse;
 
@@ -3717,7 +3728,7 @@ void dolist_add( CHR_REF chr_ref )
   // This function puts a character in the list
   int fan;
 
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   if ( !ACTIVE_CHR( gs->ChrList,  chr_ref ) || gs->ChrList[chr_ref].indolist ) return;
 
@@ -3770,7 +3781,7 @@ void dolist_sort( void )
   //     which is needed for reflections to properly clip themselves.
   //     Order from closest to farthest
 
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   CHR_REF chr_ref, olddolist[CHRLST_COUNT];
   int cnt, tnc, order;
@@ -3819,7 +3830,7 @@ void dolist_make( void )
 {
   // ZZ> This function finds the characters that need to be drawn and puts them in the list
 
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   int cnt;
   CHR_REF chr_ref, chr_cnt;
@@ -3850,7 +3861,7 @@ void dolist_make( void )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CVolume_draw( CVolume * cv, bool_t draw_square, bool_t draw_diamond  )
+bool_t CVolume_draw( CVolume_t * cv, bool_t draw_square, bool_t draw_diamond  )
 {
   bool_t retval = bfalse;
 
@@ -4003,7 +4014,7 @@ bool_t CVolume_draw( CVolume * cv, bool_t draw_square, bool_t draw_diamond  )
 //{
 //  // ZZ> This function draws a sprite shadow
 //
-//  CGame * gs = gfxState.gs;
+//  Game_t * gs = gfxState.gs;
 //
 //  GLVertex v[4];
 //  float size, x, y;
@@ -4098,7 +4109,7 @@ bool_t CVolume_draw( CVolume * cv, bool_t draw_square, bool_t draw_diamond  )
 //  int cnt;
 //  CHR_REF chr_tnc;
 //
-//  CGame * gs = gfxState.gs;
+//  Game_t * gs = gfxState.gs;
 //
 //  // Bad shadows
 //  ATTRIB_PUSH("render_bad_shadows", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -4153,7 +4164,7 @@ bool_t CVolume_draw( CVolume * cv, bool_t draw_square, bool_t draw_diamond  )
 //    for (cnt = 0; cnt < 4; cnt++)
 //    {
 //      texture = cnt + TX_TILE_0;
-//      gs->mesh.last_texture = texture;
+//      pmesh->Info.last_texture = texture;
 //      GLTexture_Bind( gs->TxTexture + texture, &gfxState);
 //      for (tnc = 0; tnc < renderlist.num_reflc; tnc++)
 //      {
@@ -4199,7 +4210,7 @@ bool_t CVolume_draw( CVolume * cv, bool_t draw_square, bool_t draw_diamond  )
 //    for (cnt = 0; cnt < 4; cnt++)
 //    {
 //      texture = cnt + TX_TILE_0;
-//      gs->mesh.last_texture = texture;
+//      pmesh->Info.last_texture = texture;
 //      GLTexture_Bind( gs->TxTexture + texture, &gfxState);
 //      for (tnc = 0; tnc < renderlist.num_reflc; tnc++)
 //      {

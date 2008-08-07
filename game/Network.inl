@@ -310,7 +310,7 @@ INLINE bool_t stream_readString(STREAM * p, char *buffer, int maxLen)
   if(p->data_size==0 && maxLen==0) return btrue;
   if(p->data_size==0 && maxLen>0)
   {
-    buffer[0] = '\0';
+    buffer[0] = EOS;
     return btrue;
   };
 

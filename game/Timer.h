@@ -1,4 +1,4 @@
-/* Egoboo - Timer.h
+/* Egoboo - Timer_t.h
  * This code is not currently in use.
  */
 
@@ -25,24 +25,23 @@
 #ifndef Egoboo_Timer_h
 #define Egoboo_Timer_h
 
-/* For ClockState */
+/* For ClockState_t */
 #include "Clock.h"
 
-struct timer_t
+struct sTimer
 {
   double currentTime;
   double frameTime;
   float timeScale;
   int isPaused;
 };
+typedef struct sTimer Timer_t;
 
-typedef struct timer_t Timer;
-
-void timer_init( ClockState * cs );   // Initialize the timer code
+void timer_init( ClockState_t * cs );   // Initialize the timer code
 void timer_shutdown(); // Turn off the timer code
 void timer_update(); // Update all registered timers
 
-void timer_addTimer( Timer *t );   // Add a timer for the system to watch
-void timer_removeTimer( Timer *t );  // Tell the system to stop watching this timer
+void timer_addTimer( Timer_t *t );   // Add a timer for the system to watch
+void timer_removeTimer( Timer_t *t );  // Tell the system to stop watching this timer
 
 #endif // include guard

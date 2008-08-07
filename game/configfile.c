@@ -26,9 +26,9 @@
 //
 // ConfigFile.c
 //
-// - All functions to manage a ConfigFile
+// - All functions to manage a ConfigFile_t
 //
-//  A ConfigFile contains sections which themselves contains values.
+//  A ConfigFile_t contains sections which themselves contains values.
 // A section name is contained between "{}" Ex: {Section Name}
 //
 // A value has a Key, a string value and an optional commentary.
@@ -38,7 +38,7 @@
 //  The commentary follows the string value on the same line and
 // begins with "//"
 //
-// Exemple of a ConfigFile:
+// Exemple of a ConfigFile_t:
 // {Section 1}
 // [Key1] : "TRUE" // This is a commentary
 // [Key2] : "Hello ""MAN""" // this will become : Hello "MAN"
@@ -85,7 +85,7 @@ void ConvertToKeyCharacters( char *pStr )
 
 
 // PassOverConfigCommentary reads the pConfigFile's file until the end of a line.
-Sint32 PassOverConfigCommentary( ConfigFilePtr pConfigFile )
+Sint32 PassOverConfigCommentary( ConfigFilePtr_t pConfigFile )
 {
   char lc;
 
@@ -103,7 +103,7 @@ Sint32 PassOverConfigCommentary( ConfigFilePtr pConfigFile )
 //
 // if the string is longer than MAX_CONFIG_SECTION_LENGTH, the string is truncated
 //
-Sint32 ReadConfigSectionName( ConfigFilePtr pConfigFile, ConfigFileSectionPtr pSection )
+Sint32 ReadConfigSectionName( ConfigFilePtr_t pConfigFile, ConfigFileSectionPtr_t pSection )
 {
   Sint32 lLenghtName = 0;
   char lc;
@@ -132,7 +132,7 @@ Sint32 ReadConfigSectionName( ConfigFilePtr pConfigFile, ConfigFileSectionPtr pS
 //
 // if the string is longuer than MAX_CONFIG_KEY_LENGTH, the string is truncated
 //
-long ReadConfigKeyName( ConfigFilePtr pConfigFile, ConfigFileValuePtr pValue )
+long ReadConfigKeyName( ConfigFilePtr_t pConfigFile, ConfigFileValuePtr_t pValue )
 {
   Sint32 lLenghtName = 0;
   char lc;
@@ -161,7 +161,7 @@ long ReadConfigKeyName( ConfigFilePtr pConfigFile, ConfigFileValuePtr pValue )
 //
 // The memory for pValue->Value is allocated here.
 //
-Sint32 ReadConfigValue( ConfigFilePtr pConfigFile, ConfigFileValuePtr pValue )
+Sint32 ReadConfigValue( ConfigFilePtr_t pConfigFile, ConfigFileValuePtr_t pValue )
 {
   static char lTempStr[MAX_CONFIG_VALUE_LENGTH];
   char lc;
@@ -241,7 +241,7 @@ Sint32 ReadConfigValue( ConfigFilePtr pConfigFile, ConfigFileValuePtr pValue )
 //
 // The memory for pValue->Commentary is allocated here.
 //
-Sint32 ReadConfigCommentary( ConfigFilePtr pConfigFile, ConfigFileValuePtr pValue )
+Sint32 ReadConfigCommentary( ConfigFilePtr_t pConfigFile, ConfigFileValuePtr_t pValue )
 {
   static char lTempStr[MAX_CONFIG_COMMENTARY_LENGTH];
   char lc;
@@ -312,17 +312,17 @@ Sint32 ReadConfigCommentary( ConfigFilePtr pConfigFile, ConfigFileValuePtr pValu
   return lLenghtName;
 }
 
-// OpenConfigFile opens a ConfigFile for reading values.
+// OpenConfigFile opens a ConfigFile_t for reading values.
 //
 // If the path doesn't exist, OpenConfigFile returns NULL.
-// OpenConfigFile allocates the memory for the ConfigFile. To
+// OpenConfigFile allocates the memory for the ConfigFile_t. To
 // deallocate the memory, use CloseConfigFile
-ConfigFilePtr OpenConfigFile( const char *pPath )
+ConfigFilePtr_t OpenConfigFile( const char *pPath )
 {
-  ConfigFilePtr   lTempConfig = NULL;
+  ConfigFilePtr_t   lTempConfig = NULL;
   FILE     *lTempFile;
-  ConfigFileSectionPtr lCurSection = NULL;
-  ConfigFileValuePtr  lCurValue = NULL;
+  ConfigFileSectionPtr_t lCurSection = NULL;
+  ConfigFileValuePtr_t  lCurValue = NULL;
   Sint32      lError = 0;
   Sint32      lState = 0;
   char     lc;
@@ -330,7 +330,7 @@ ConfigFilePtr OpenConfigFile( const char *pPath )
   lTempFile = fs_fileOpen( PRI_NONE, NULL, pPath, "rt+" );
   if ( NULL != lTempFile  )
   {
-    lTempConfig = ( ConfigFilePtr ) calloc( 1, sizeof( ConfigFile ) );
+    lTempConfig = ( ConfigFilePtr_t ) calloc( 1, sizeof( ConfigFile_t ) );
     lTempConfig->f = lTempFile;
     lTempConfig->ConfigSectionList = NULL;
     lTempConfig->CurrentSection = NULL;
@@ -347,8 +347,8 @@ ConfigFilePtr OpenConfigFile( const char *pPath )
           if ( lc == '{' )
           {
             // create first section and load name
-            lTempConfig->ConfigSectionList = ( ConfigFileSectionPtr ) calloc( 1, sizeof( ConfigFileSection ) );
-            memset( lTempConfig->ConfigSectionList, 0, sizeof( ConfigFileSection ) );
+            lTempConfig->ConfigSectionList = ( ConfigFileSectionPtr_t ) calloc( 1, sizeof( ConfigFileSection_t ) );
+            memset( lTempConfig->ConfigSectionList, 0, sizeof( ConfigFileSection_t ) );
             lCurSection = lTempConfig->ConfigSectionList;
             ReadConfigSectionName( lTempConfig, lTempConfig->ConfigSectionList );
             lCurValue = NULL; // just to be safe
@@ -367,9 +367,9 @@ ConfigFilePtr OpenConfigFile( const char *pPath )
           if ( lc == '{' )
           {
             // create new section and load name
-            lCurSection->NextSection = ( ConfigFileSectionPtr ) calloc( 1, sizeof( ConfigFileSection ) );
+            lCurSection->NextSection = ( ConfigFileSectionPtr_t ) calloc( 1, sizeof( ConfigFileSection_t ) );
             lCurSection = lCurSection->NextSection;
-            memset( lCurSection, 0, sizeof( ConfigFileSection ) );
+            memset( lCurSection, 0, sizeof( ConfigFileSection_t ) );
             ReadConfigSectionName( lTempConfig, lCurSection );
             lCurValue = NULL;
           }
@@ -379,16 +379,16 @@ ConfigFilePtr OpenConfigFile( const char *pPath )
             if ( NULL == lCurValue  )
             {
               // first value in section
-              lCurSection->FirstValue = ( ConfigFileValuePtr ) calloc( 1, sizeof( ConfigFileValue ) );
+              lCurSection->FirstValue = ( ConfigFileValuePtr_t ) calloc( 1, sizeof( ConfigFileValue_t ) );
               lCurValue = lCurSection->FirstValue;
             }
             else
             {
               // link to new value
-              lCurValue->NextValue = ( ConfigFileValuePtr ) calloc( 1, sizeof( ConfigFileValue ) );
+              lCurValue->NextValue = ( ConfigFileValuePtr_t ) calloc( 1, sizeof( ConfigFileValue_t ) );
               lCurValue = lCurValue->NextValue;
             }
-            memset( lCurValue, 0, sizeof( ConfigFileValue ) );
+            memset( lCurValue, 0, sizeof( ConfigFileValue_t ) );
             ReadConfigKeyName( lTempConfig, lCurValue );
 
             // state change : get value
@@ -449,7 +449,7 @@ ConfigFilePtr OpenConfigFile( const char *pPath )
 // Set the current section of pConfigFile to the one specified by pSection
 // If the section doesn't exist, the current section is set to NULL and the
 // function returns 0, otherwise the it returns 1.
-long SetConfigCurrentSection( ConfigFilePtr pConfigFile, const char *pSection )
+long SetConfigCurrentSection( ConfigFilePtr_t pConfigFile, const char *pSection )
 {
   long lFound = 0;
   if ( NULL == pConfigFile  || NULL == pSection  )
@@ -502,7 +502,7 @@ long SetConfigCurrentSection( ConfigFilePtr pConfigFile, const char *pSection )
 //
 // If a value is found, the function returns 1, otherwise the function returns 0
 // and CurrentValue is set to NULL.
-Sint32 SetConfigCurrentValueFromCurrentSection( ConfigFilePtr pConfigFile, const char *pKey )
+Sint32 SetConfigCurrentValueFromCurrentSection( ConfigFilePtr_t pConfigFile, const char *pKey )
 {
   Sint32 lFound = 0;
 
@@ -530,7 +530,7 @@ Sint32 SetConfigCurrentValueFromCurrentSection( ConfigFilePtr pConfigFile, const
 // SetConfigCurrentValue set the current value of pConfigFile to the one specified by
 // pSection and pKey
 // Returns 0 if failed
-Sint32 SetConfigCurrentValue( ConfigFilePtr pConfigFile, const char *pSection, const char *pKey )
+Sint32 SetConfigCurrentValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey )
 {
   Sint32 lFound = 0;
   // search for section
@@ -548,7 +548,7 @@ Sint32 SetConfigCurrentValue( ConfigFilePtr pConfigFile, const char *pSection, c
 // If the value is found, the value is copied in pValue and the function returns 1.
 // If the length of pValue is less than the length of the string value, the string is truncated.
 // If the value isn't found, the function returns 0.
-Sint32 GetConfigValue( ConfigFilePtr pConfigFile, const char *pSection, const char *pKey, char *pValue,
+Sint32 GetConfigValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, char *pValue,
                        Sint32 pValueBufferLength )
 {
   if ( NULL == pConfigFile  || NULL == pValue  || NULL == pSection  || NULL == pKey  || pValueBufferLength <= 0 )
@@ -574,7 +574,7 @@ Sint32 GetConfigValue( ConfigFilePtr pConfigFile, const char *pSection, const ch
 
 // GetConfigBooleanValue set to true or false pBool. If the function can't find the value, it
 // returns 0. If the value can't be identified as true or false, the default is false.
-Sint32 GetConfigBooleanValue( ConfigFilePtr pConfigFile, const char *pSection, const char *pKey, bool_t *pBool )
+Sint32 GetConfigBooleanValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, bool_t *pBool )
 {
   char lBoolStr[16];
   Sint32 lRet;
@@ -598,7 +598,7 @@ Sint32 GetConfigBooleanValue( ConfigFilePtr pConfigFile, const char *pSection, c
 
 // GetConfigIntValue set pInt. If the function can't find the value, it
 // returns 0.
-Sint32 GetConfigIntValue( ConfigFilePtr pConfigFile, const char *pSection, const char *pKey, Sint32 *pInt )
+Sint32 GetConfigIntValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, Sint32 *pInt )
 {
   char lIntStr[24];
   Sint32 lRet;
@@ -615,10 +615,10 @@ Sint32 GetConfigIntValue( ConfigFilePtr pConfigFile, const char *pSection, const
 
 // SetConfigValue set the value specified by pSection and pKey. If the value
 // doesn't exist, it is created
-Sint32 SetConfigValue( ConfigFilePtr pConfigFile, const char *pSection, const char *pKey, const char *pValue )
+Sint32 SetConfigValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, const char *pValue )
 {
-  ConfigFileSectionPtr lTempSection = NULL;
-  ConfigFileValuePtr  lTempValue = NULL;
+  ConfigFileSectionPtr_t lTempSection = NULL;
+  ConfigFileValuePtr_t  lTempValue = NULL;
   Sint32 lOK = 0;
   Sint32 lLentghtNewValue, lLengthValue;
   char     lNewSectionName[MAX_CONFIG_SECTION_LENGTH];
@@ -642,15 +642,15 @@ Sint32 SetConfigValue( ConfigFilePtr pConfigFile, const char *pSection, const ch
   if (( lOK = SetConfigCurrentSection( pConfigFile, lNewSectionName ) )  == 0 )
   {
     // section doesn't exist so create it and create value
-    lTempSection = ( ConfigFileSectionPtr ) calloc( 1, sizeof( ConfigFileValue ) );
-    memset( lTempSection, 0, sizeof( ConfigFileValue ) );
+    lTempSection = ( ConfigFileSectionPtr_t ) calloc( 1, sizeof( ConfigFileValue_t ) );
+    memset( lTempSection, 0, sizeof( ConfigFileValue_t ) );
     lTempSection->NextSection = pConfigFile->ConfigSectionList;
     pConfigFile->ConfigSectionList = lTempSection;
     strcpy( lTempSection->SectionName, lNewSectionName );
 
     // create the new value
-    lTempValue = ( ConfigFileValuePtr ) calloc( 1, sizeof( ConfigFileValue ) );
-    memset( lTempValue, 0, sizeof( ConfigFileValue ) );
+    lTempValue = ( ConfigFileValuePtr_t ) calloc( 1, sizeof( ConfigFileValue_t ) );
+    memset( lTempValue, 0, sizeof( ConfigFileValue_t ) );
     lTempSection->FirstValue = lTempValue;
     strcpy( lTempValue->KeyName, lNewKeyName );
 
@@ -666,8 +666,8 @@ Sint32 SetConfigValue( ConfigFilePtr pConfigFile, const char *pSection, const ch
     if ( 0 == SetConfigCurrentValueFromCurrentSection( pConfigFile, lNewKeyName ) )
     {
       // create new value in current section
-      lTempValue = ( ConfigFileValuePtr ) calloc( 1, sizeof( ConfigFileValue ) );
-      memset( lTempValue, 0, sizeof( ConfigFileValue ) );
+      lTempValue = ( ConfigFileValuePtr_t ) calloc( 1, sizeof( ConfigFileValue_t ) );
+      memset( lTempValue, 0, sizeof( ConfigFileValue_t ) );
       lTempValue->NextValue = pConfigFile->CurrentSection->FirstValue;
       pConfigFile->CurrentSection->FirstValue = lTempValue;
       strcpy( lTempValue->KeyName, lNewKeyName );
@@ -709,7 +709,7 @@ Sint32 SetConfigValue( ConfigFilePtr pConfigFile, const char *pSection, const ch
 }
 
 // SetConfigBooleanValue saves a boolean in a value specified by pSection and pKey
-Sint32 SetConfigBooleanValue( ConfigFilePtr pConfigFile, const char *pSection, const char *pKey, bool_t pBool )
+Sint32 SetConfigBooleanValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, bool_t pBool )
 {
   if ( pBool )
   {
@@ -722,7 +722,7 @@ Sint32 SetConfigBooleanValue( ConfigFilePtr pConfigFile, const char *pSection, c
 }
 
 // SetConfigIntValue saves an integer in a value specified by pSection and pKey
-Sint32 SetConfigIntValue( ConfigFilePtr pConfigFile, const char *pSection, const char *pKey, int pInt )
+Sint32 SetConfigIntValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, int pInt )
 {
   static char lIntStr[16];
 
@@ -731,7 +731,7 @@ Sint32 SetConfigIntValue( ConfigFilePtr pConfigFile, const char *pSection, const
 }
 
 // SetConfigFloatValue saves a float in a value specified by pSection and pKey
-Sint32 SetConfigFloatValue( ConfigFilePtr pConfigFile, const char *pSection, const char *pKey, float pFloat )
+Sint32 SetConfigFloatValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, float pFloat )
 {
   static char lFloatStr[16];
 
@@ -739,11 +739,11 @@ Sint32 SetConfigFloatValue( ConfigFilePtr pConfigFile, const char *pSection, con
   return SetConfigValue( pConfigFile, pSection, pKey, lFloatStr );
 }
 
-// CloseConfigFile close the ConfigFile and deallocate all its memory.
-void CloseConfigFile( ConfigFilePtr pConfigFile )
+// CloseConfigFile close the ConfigFile_t and deallocate all its memory.
+void CloseConfigFile( ConfigFilePtr_t pConfigFile )
 {
-  ConfigFileSectionPtr lTempSection, lDoomedSection;
-  ConfigFileValuePtr   lTempValue, lDoomedValue;
+  ConfigFileSectionPtr_t lTempSection, lDoomedSection;
+  ConfigFileValuePtr_t   lTempValue, lDoomedValue;
 
   if ( NULL == pConfigFile  )
   {
@@ -755,7 +755,7 @@ void CloseConfigFile( ConfigFilePtr pConfigFile )
     fs_fileClose( pConfigFile->f );
   }
 
-  // delete all sections form the ConfigFile
+  // delete all sections form the ConfigFile_t
   lTempSection = pConfigFile->ConfigSectionList;
   while ( NULL != lTempSection  )
   {
@@ -778,7 +778,7 @@ void CloseConfigFile( ConfigFilePtr pConfigFile )
 
 // SaveConfigValue saves the value from pValue at the current position
 // of the pConfigFile file. The '"' are doubled.
-Sint32 SaveConfigValue( FILE *pFile, ConfigFileValuePtr pValue )
+Sint32 SaveConfigValue( FILE *pFile, ConfigFileValuePtr_t pValue )
 {
   Sint32 lPos = 0;
 
@@ -801,10 +801,10 @@ Sint32 SaveConfigValue( FILE *pFile, ConfigFileValuePtr pValue )
 }
 
 // SaveConfigFile
-void SaveConfigFile( ConfigFilePtr pConfigFile )
+void SaveConfigFile( ConfigFilePtr_t pConfigFile )
 {
-  ConfigFileSectionPtr lTempSection;
-  ConfigFileValuePtr   lTempValue;
+  ConfigFileSectionPtr_t lTempSection;
+  ConfigFileValuePtr_t   lTempValue;
 
   if ( NULL == pConfigFile || NULL == pConfigFile->f  )
   {
@@ -841,7 +841,7 @@ void SaveConfigFile( ConfigFilePtr pConfigFile )
 
 // SaveConfigFileAs saves pConfigFile at pPath
 // pConfigFile's file is close and set to the new file
-Sint32 SaveConfigFileAs( ConfigFilePtr pConfigFile, const char *pPath )
+Sint32 SaveConfigFileAs( ConfigFilePtr_t pConfigFile, const char *pPath )
 {
   FILE *lFileTemp;
 

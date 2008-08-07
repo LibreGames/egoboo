@@ -32,26 +32,26 @@
 
 #include <stdio.h>
 
-enum slot_e;
-enum grip_e;
-enum Action_e;
-enum lip_transition_e;
-enum damage_e;
-enum Experience_e;
-enum Team_e;
-enum gender_e;
-enum particle_type;
-enum blud_level_e;
-enum respawn_mode_e;
-enum idsz_index_e;
-enum color_e;
+enum e_slot;
+enum e_grip;
+enum e_Action;
+enum e_lip_transition;
+enum e_damage;
+enum e_Experience;
+enum e_Team;
+enum e_gender;
+enum e_particle_alpha_type;
+enum e_blud_level;
+enum e_respawn_mode;
+enum e_idsz_index;
+enum e_color;
 
-struct CChr_t;
-struct Status_t;
-struct CPlayer_t;
-struct mod_data_t;
-struct CGame_t;
-struct KeyboardBuffer_t;
+struct sChr;
+struct sStatus;
+struct sPlayer;
+struct s_mod_info;
+struct sGame;
+struct sKeyboardBuffer;
 
 void insert_space( size_t position );
 void copy_one_line( size_t write );
@@ -66,10 +66,10 @@ int starts_with_capital_letter();
 int ai_goto_colon( int read );
 void fget_code( FILE * pfile );
 
-enum Action_e what_action( char cTmp );
-void release_all_textures(struct CGame_t * gs);
+enum e_Action what_action( char cTmp );
+void release_all_textures(struct sGame * gs);
 Uint32 load_one_icon( char * szModname, const char * szObjectname, char * szFilename );
-void release_all_icons(struct CGame_t * gs);
+void release_all_icons(struct sGame * gs);
 void release_map();
 
 
@@ -94,10 +94,10 @@ void dolist_sort( void );
 void dolist_make( void );
 
 
-void   keep_weapons_with_holders( struct CGame_t * gs );
+void   keep_weapons_with_holders( struct sGame * gs );
 void   make_prtlist();
 bool_t debug_message( int time, const char *format, ... );
-void   reset_end_text( struct CGame_t * gs );
+void   reset_end_text( struct sGame * gs );
 
 Uint16 terp_dir( Uint16 majordir, float dx, float dy, float dUpdate );
 Uint16 terp_dir_fast( Uint16 majordir, float dx, float dy, float dUpdate );
@@ -107,41 +107,41 @@ void make_textureoffset( void );
 
 
 
-bool_t PlaList_set_latch( struct CGame_t * gs, struct CPlayer_t * player );
+bool_t PlaList_set_latch( struct sGame * gs, struct sPlayer * player );
 
 void check_add( Uint8 key, char bigletter, char littleletter );
 void camera_calc_turn_lr();
 void make_camera_matrix();
 void figure_out_what_to_draw();
-void set_local_latches( struct CGame_t * gs );
+void set_local_latches( struct sGame * gs );
 void adjust_camera_angle( int height );
 void move_camera( float dUpdate );
-void make_onwhichfan( struct CGame_t * gs );
-void do_bumping( struct CGame_t * gs, float dUpdate );
+void make_onwhichfan( struct sGame * gs );
+void do_bumping( struct sGame * gs, float dUpdate );
 
-void do_weather_spawn( struct CGame_t * gs, float dUpdate );
+void do_weather_spawn( struct sGame * gs, float dUpdate );
 void animate_tiles( float dUpdate );
-void stat_return( struct CGame_t * gs, float dUpdate );
-void pit_kill( struct CGame_t * gs, float dUpdate );
-void reset_players( struct CGame_t * gs );
+void stat_return( struct sGame * gs, float dUpdate );
+void pit_kill( struct sGame * gs, float dUpdate );
+void reset_players( struct sGame * gs );
 
-void resize_characters( struct CGame_t * gs, float dUpdate );
-void load_basic_textures( struct CGame_t * gs, char *modname );
-
-
+void resize_characters( struct sGame * gs, float dUpdate );
+void load_basic_textures( struct sGame * gs, char *modname );
 
 
 
-void export_one_character_name( struct CGame_t * gs, char *szSaveName, CHR_REF character );
-void export_one_character_profile( struct CGame_t * gs, char *szSaveName, CHR_REF character );
-void export_one_character_skin( struct CGame_t * gs, char *szSaveName, CHR_REF character );
+
+
+void export_one_character_name( struct sGame * gs, char *szSaveName, CHR_REF character );
+void export_one_character_profile( struct sGame * gs, char *szSaveName, CHR_REF character );
+void export_one_character_skin( struct sGame * gs, char *szSaveName, CHR_REF character );
 
 
 bool_t load_bars( char* szBitmap );
-void load_map( struct CGame_t * gs, char* szModule );
+void load_map( struct sGame * gs, char* szModule );
 bool_t load_font( char* szBitmap, char* szSpacing );
-void make_water( struct CGame_t * gs );
-void read_wawalite( struct CGame_t * gs, char *modname );
+void make_water( struct sGame * gs );
+void read_wawalite( struct sGame * gs, char *modname );
 
 void render_prt();
 void render_shadow( CHR_REF character );
@@ -160,7 +160,7 @@ void set_fan_light( int fanx, int fany, PRT_REF particle );
 void do_dynalight();
 void render_water();
 void draw_scene_zreflection();
-void draw_blip( enum color_e color, float x, float y );
+void draw_blip( enum e_color color, float x, float y );
 void draw_one_icon( int icontype, int x, int y, Uint8 sparkle );
 void draw_one_font( int fonttype, float x, float y );
 void draw_map( float x, float y );
@@ -173,8 +173,8 @@ void draw_main( float );
 void load_blip_bitmap( char * modname );
 
 
-bool_t check_skills( struct CGame_t * gs, CHR_REF who, Uint32 whichskill );
-void check_player_import(struct CGame_t * gs);
+bool_t check_skills( struct sGame * gs, CHR_REF who, Uint32 whichskill );
+void check_player_import(struct sGame * gs);
 void reset_camera();
 
 void gltitle();
@@ -182,13 +182,13 @@ void gltitle();
 //---------------------------------------------------------------------------------------------
 // Filesystem functions
 
-enum priority_e
+enum e_priority
 {
   PRI_NONE = 0,
   PRI_WARN,
   PRI_FAIL
 };
-typedef enum priority_e PRIORITY;
+typedef enum e_priority PRIORITY;
 
 void fs_init();
 const char *fs_getTempDirectory();
@@ -209,33 +209,33 @@ void empty_import_directory();
 int  DirGetAttrib( char *fromdir );
 
 // Enumerate directory contents
-enum fs_type_e
+enum e_fs_type
 {
   FS_UNKNOWN = -1,
   FS_WIN32 = 0,
   FS_LIN,
   FS_MAC
 };
-typedef enum fs_type_e FS_TYPE;
+typedef enum e_fs_type FS_TYPE;
 
-struct fs_find_info_win32_t;
-struct fs_find_info_lin_t;
+struct s_fs_find_info_win32;
+struct s_fs_find_info_lin;
 struct fs_find_info_mac_t;
 
-struct fs_find_info_t
+struct s_fs_find_info
 {
   FS_TYPE type;
 
   union
   {
-    struct fs_find_info_win32_t * W;
-    struct fs_find_info_lin_t   * L;
+    struct s_fs_find_info_win32 * W;
+    struct s_fs_find_info_lin   * L;
     struct fs_find_info_mac_t   * M;
   };
 
 };
 
-typedef struct fs_find_info_t FS_FIND_INFO;
+typedef struct s_fs_find_info FS_FIND_INFO;
 
 FS_FIND_INFO * fs_find_info_new(FS_FIND_INFO * i);
 bool_t         fs_find_info_delete(FS_FIND_INFO * i);
@@ -259,10 +259,10 @@ char * str_convert_underscores( char *strout, size_t insize, char * strin );
 
 
 // MD2 Stuff
-struct ego_md2_model_t;
+struct s_ego_md2_model;
 
-int mad_vertexconnected( struct ego_md2_model_t * m, int vertex );
-int mad_calc_transvertices( struct ego_md2_model_t * m );
+int mad_vertexconnected( struct s_ego_md2_model * m, int vertex );
+int mad_calc_transvertices( struct s_ego_md2_model * m );
 
 
 

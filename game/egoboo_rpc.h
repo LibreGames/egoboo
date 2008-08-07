@@ -8,15 +8,15 @@
 // client/server networking
 
 // the spawning is the most important thing that must be handled through RPCs
-void snd_prt_spawn( prt_spawn_info si );
-void rec_prt_spawn( prt_spawn_info si );
+void snd_prt_spawn( PRT_SPAWN_INFO si );
+void rec_prt_spawn( PRT_SPAWN_INFO si );
 
-void snd_chr_spawn( chr_spawn_info si );
-void rec_chr_spawn( chr_spawn_info si );
+void snd_chr_spawn( CHR_SPAWN_INFO si );
+void rec_chr_spawn( CHR_SPAWN_INFO si );
 
 
-void snd_enc_spawn( enc_spawn_info si );
-void rec_enc_spawn( enc_spawn_info si );
+void snd_enc_spawn( ENC_SPAWN_INFO si );
+void rec_enc_spawn( ENC_SPAWN_INFO si );
 
 
 // Because of the way that egoboo is set up there are several modifications to these objects that

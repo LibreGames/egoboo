@@ -4,15 +4,15 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE CPhysicsData * CPhysicsData_new(CPhysicsData * phys)
+INLINE PhysicsData_t * CPhysicsData_new(PhysicsData_t * phys)
 {
   if(NULL == phys) return phys;
 
   CPhysicsData_delete(phys);
 
-  memset(phys, 0, sizeof(CPhysicsData));
+  memset(phys, 0, sizeof(PhysicsData_t));
 
-  EKEY_PNEW(phys, CPhysicsData);
+  EKEY_PNEW(phys, PhysicsData_t);
 
   phys->hillslide       = 1.00f;
   phys->slippyfriction  = 1.00f;   //1.05 for Chevron
@@ -26,7 +26,7 @@ INLINE CPhysicsData * CPhysicsData_new(CPhysicsData * phys)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t CPhysicsData_delete(CPhysicsData * phys)
+INLINE bool_t CPhysicsData_delete(PhysicsData_t * phys)
 {
   if(NULL == phys) return bfalse;
   if( !EKEY_PVALID(phys) ) return btrue;
@@ -37,7 +37,7 @@ INLINE bool_t CPhysicsData_delete(CPhysicsData * phys)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE CPhysicsData * CPhysicsData_renew(CPhysicsData * phys)
+INLINE PhysicsData_t * CPhysicsData_renew(PhysicsData_t * phys)
 {
   CPhysicsData_delete(phys);
   return CPhysicsData_new(phys);

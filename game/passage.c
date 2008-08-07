@@ -36,22 +36,23 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t open_passage( CGame * gs, PASS_REF passage )
+bool_t open_passage( Game_t * gs, PASS_REF passage )
 {
   // ZZ> This function makes a passage passable
 
   int fan_x, fan_y;
   bool_t useful = bfalse, btmp;
 
-  if ( passage >= gs->PassList_count ) return bfalse;
+  Mesh_t * pmesh = Game_getMesh(gs);
 
+  if ( passage >= gs->PassList_count ) return bfalse;
   useful = !gs->PassList[passage].open;
 
   for ( fan_y = gs->PassList[passage].area.top; fan_y <= gs->PassList[passage].area.bottom; fan_y++ )
   {
     for ( fan_x = gs->PassList[passage].area.left; fan_x <= gs->PassList[passage].area.right; fan_x++ )
     {
-      btmp = mesh_fan_clear_bits( gs, fan_x, fan_y, MPDFX_IMPASS | MPDFX_WALL | gs->PassList[passage].mask );
+      btmp = mesh_fan_clear_bits( pmesh, fan_x, fan_y, MPDFX_IMPASS | MPDFX_WALL | gs->PassList[passage].mask );
       useful = useful || btmp;
     }
   }
@@ -62,7 +63,7 @@ bool_t open_passage( CGame * gs, PASS_REF passage )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t break_passage( CGame * gs, PASS_REF passage, Uint16 starttile, Uint16 frames, Uint16 become, Uint32 meshfxor, Sint32 *pix, Sint32 *piy )
+bool_t break_passage( Game_t * gs, PASS_REF passage, Uint16 starttile, Uint16 frames, Uint16 become, Uint32 meshfxor, Sint32 *pix, Sint32 *piy )
 {
   // ZZ> This function breaks the tiles of a passage if there is a character standing
   //     on 'em...  Turns the tiles into damage terrain if it reaches last frame.
@@ -71,9 +72,10 @@ bool_t break_passage( CGame * gs, PASS_REF passage, Uint16 starttile, Uint16 fra
   Uint16 tile, endtile;
   bool_t useful = bfalse;
   CHR_REF character;
-  CChr * pchr;
+  Chr_t * pchr;
 
-  ScriptInfo * slist = CGame_getScriptInfo(gs);
+  ScriptInfo_t * slist = Game_getScriptInfo(gs);
+  Mesh_t       * pmesh = Game_getMesh(gs);
 
   if ( passage >= gs->PassList_count ) return useful;
 
@@ -91,7 +93,7 @@ bool_t break_passage( CGame * gs, PASS_REF passage, Uint16 starttile, Uint16 fra
         fan_y = MESH_FLOAT_TO_FAN( pchr->ori.pos.y );
 
         // The character is in the passage, so might need to break...
-        tile =  mesh_get_tile( gs, fan_x, fan_y );
+        tile =  mesh_get_tile( pmesh, fan_x, fan_y );
         if ( tile >= starttile && tile < endtile )
         {
           // Remember where the hit occured...
@@ -100,11 +102,11 @@ bool_t break_passage( CGame * gs, PASS_REF passage, Uint16 starttile, Uint16 fra
           useful = btrue;
 
           // Change the tile
-          tile = mesh_bump_tile( gs, fan_x, fan_y );
+          tile = mesh_bump_tile( pmesh, fan_x, fan_y );
           if ( tile == endtile )
           {
-            mesh_fan_add_bits( gs, fan_x, fan_y, meshfxor );
-            mesh_set_tile( gs, fan_x, fan_y, become );
+            mesh_fan_add_bits( pmesh, fan_x, fan_y, meshfxor );
+            mesh_set_tile( pmesh, fan_x, fan_y, become );
           }
         }
       }
@@ -115,11 +117,13 @@ bool_t break_passage( CGame * gs, PASS_REF passage, Uint16 starttile, Uint16 fra
 }
 
 //--------------------------------------------------------------------------------------------
-void flash_passage( CGame * gs, PASS_REF passage, Uint8 color )
+void flash_passage( Game_t * gs, PASS_REF passage, Uint8 color )
 {
   // ZZ> This function makes a passage flash white
 
   int fan_x, fan_y;
+
+  Mesh_t * pmesh = Game_getMesh(gs);
 
   if ( passage >= gs->PassList_count ) return;
 
@@ -127,14 +131,14 @@ void flash_passage( CGame * gs, PASS_REF passage, Uint8 color )
   {
     for ( fan_x = gs->PassList[passage].area.left; fan_x <= gs->PassList[passage].area.right; fan_x++ )
     {
-      mesh_set_colora( gs, fan_x, fan_y, color );
+      mesh_set_colora( pmesh, fan_x, fan_y, color );
     }
   }
 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t search_tile_in_passage( CGame * gs, PASS_REF passage, Uint32 tiletype, Sint32 tmpx, Sint32 tmpy, Sint32 * pix, Sint32 * piy )
+bool_t search_tile_in_passage( Game_t * gs, PASS_REF passage, Uint32 tiletype, Sint32 tmpx, Sint32 tmpy, Sint32 * pix, Sint32 * piy )
 {
   // ZZ> This function finds the next tile in the passage, slist->tmpx and slist->tmpy
   //     must be set first, and are set on a find...  Returns btrue or bfalse
@@ -142,7 +146,8 @@ bool_t search_tile_in_passage( CGame * gs, PASS_REF passage, Uint32 tiletype, Si
 
   int fan_x, fan_y;
 
-  ScriptInfo * slist = CGame_getScriptInfo(gs);
+  ScriptInfo_t * slist = Game_getScriptInfo(gs);
+  Mesh_t       * pmesh = Game_getMesh(gs);
 
   if ( passage >= gs->PassList_count ) return bfalse;
 
@@ -157,7 +162,7 @@ bool_t search_tile_in_passage( CGame * gs, PASS_REF passage, Uint32 tiletype, Si
   {
     for ( /*nothing*/; fan_x <= gs->PassList[passage].area.right; fan_x++ )
     {
-      if ( tiletype == mesh_get_tile( gs, fan_x, fan_y ) )
+      if ( tiletype == mesh_get_tile( pmesh, fan_x, fan_y ) )
       {
         if(NULL != pix) *pix = MESH_FAN_TO_INT( fan_x ) + ( 1 << 6 );
         if(NULL != piy) *piy = MESH_FAN_TO_INT( fan_y ) + ( 1 << 6 );
@@ -170,7 +175,7 @@ bool_t search_tile_in_passage( CGame * gs, PASS_REF passage, Uint32 tiletype, Si
 }
 
 //--------------------------------------------------------------------------------------------
-CHR_REF who_is_blocking_passage( CGame * gs, PASS_REF passage )
+CHR_REF who_is_blocking_passage( Game_t * gs, PASS_REF passage )
 {
   // ZZ> This function returns CHRLST_COUNT if there is no character in the passage,
   //     otherwise the index of the first character found is returned...
@@ -206,7 +211,7 @@ CHR_REF who_is_blocking_passage( CGame * gs, PASS_REF passage )
 }
 
 //--------------------------------------------------------------------------------------------
-void check_passage_music(CGame * gs)
+void check_passage_music(Game_t * gs)
 {
   //This function checks all passages if there is a player in it, if it is, it plays a specified
   //song set in by the AI script functions
@@ -234,7 +239,7 @@ void check_passage_music(CGame * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-CHR_REF who_is_blocking_passage_ID( CGame * gs, PASS_REF passage, IDSZ idsz )
+CHR_REF who_is_blocking_passage_ID( Game_t * gs, PASS_REF passage, IDSZ idsz )
 {
   // ZZ> This function returns CHRLST_COUNT if there is no character in the passage who
   //     have an item with the given ID.  Otherwise, the index of the first character
@@ -284,7 +289,7 @@ CHR_REF who_is_blocking_passage_ID( CGame * gs, PASS_REF passage, IDSZ idsz )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t close_passage( CGame * gs, Uint32 passage )
+bool_t close_passage( Game_t * gs, Uint32 passage )
 {
   // ZZ> This function makes a passage impassable, and returns btrue if it isn't blocked
 
@@ -293,7 +298,9 @@ bool_t close_passage( CGame * gs, Uint32 passage )
   Uint16 numcrushed;
   CHR_REF crushedcharacters[CHRLST_COUNT];
   bool_t useful = bfalse, btmp;
-  Passage * ppass;
+  Passage_t * ppass;
+
+  Mesh_t * pmesh = Game_getMesh(gs);
 
   if ( passage >= gs->PassList_count )
     return bfalse;
@@ -343,7 +350,7 @@ bool_t close_passage( CGame * gs, Uint32 passage )
   {
     for ( fan_x = ppass->area.left; fan_x <= ppass->area.right; fan_x++ )
     {
-      btmp = mesh_fan_add_bits( gs, fan_x, fan_y, ppass->mask );
+      btmp = mesh_fan_add_bits( pmesh, fan_x, fan_y, ppass->mask );
       useful = useful || btmp;
     }
   }
@@ -354,7 +361,7 @@ bool_t close_passage( CGame * gs, Uint32 passage )
 }
 
 //--------------------------------------------------------------------------------------------
-void clear_passages(CGame * gs)
+void clear_passages(Game_t * gs)
 {
   // ZZ> This function clears the passage list ( for doors )
 
@@ -363,7 +370,7 @@ void clear_passages(CGame * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t passage_check_all( CGame * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powner )
+bool_t passage_check_all( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powner )
 {
   // BB > character ichr is completely inside passage pass
 
@@ -396,7 +403,7 @@ bool_t passage_check_all( CGame * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powne
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t passage_check_any( CGame * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powner )
+bool_t passage_check_any( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powner )
 {
   // BB > character ichr is partially inside passage pass
 
@@ -425,7 +432,7 @@ bool_t passage_check_any( CGame * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powne
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t passage_check( CGame * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powner )
+bool_t passage_check( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powner )
 {
   // BB > character ichr's center is inside passage pass
 
@@ -449,7 +456,7 @@ bool_t passage_check( CGame * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powner )
   return retval;
 };
 //--------------------------------------------------------------------------------------------
-Uint32 ShopList_add( CGame * gs, CHR_REF owner, PASS_REF passage )
+Uint32 ShopList_add( Game_t * gs, CHR_REF owner, PASS_REF passage )
 {
   // ZZ> This function creates a shop passage
 
@@ -470,18 +477,19 @@ Uint32 ShopList_add( CGame * gs, CHR_REF owner, PASS_REF passage )
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 PassList_add( CGame * gs, int tlx, int tly, int brx, int bry, bool_t open, Uint32 mask )
+Uint32 PassList_add( Game_t * gs, int tlx, int tly, int brx, int bry, bool_t open, Uint32 mask )
 {
   // ZZ> This function creates a passage area
 
-  Uint32 passage = PASSLST_COUNT;
+  Uint32   passage = PASSLST_COUNT;
+  Mesh_t * pmesh = Game_getMesh(gs);
 
   // clip the passage borders
-  tlx = mesh_clip_fan_x( &(gs->mesh), tlx );
-  tly = mesh_clip_fan_x( &(gs->mesh), tly );
+  tlx = mesh_clip_fan_x( &(pmesh->Info), tlx );
+  tly = mesh_clip_fan_x( &(pmesh->Info), tly );
 
-  brx = mesh_clip_fan_x( &(gs->mesh), brx );
-  bry = mesh_clip_fan_x( &(gs->mesh), bry );
+  brx = mesh_clip_fan_x( &(pmesh->Info), brx );
+  bry = mesh_clip_fan_x( &(pmesh->Info), bry );
 
   if ( gs->PassList_count < PASSLST_COUNT )
   {
@@ -509,7 +517,7 @@ Uint32 PassList_add( CGame * gs, int tlx, int tly, int brx, int bry, bool_t open
 }
 
 //--------------------------------------------------------------------------------------------
-void PassList_load( CGame * gs, char *modname )
+void PassList_load( Game_t * gs, char *modname )
 {
   // ZZ> This function reads the passage file
 
@@ -554,7 +562,7 @@ void PassList_load( CGame * gs, char *modname )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-Passage * Passage_new(Passage *ppass)
+Passage_t * Passage_new(Passage_t *ppass)
 {
   //fprintf( stdout, "Passage_new()\n");
 
@@ -562,9 +570,9 @@ Passage * Passage_new(Passage *ppass)
 
   Passage_delete( ppass );
 
-  memset(ppass, 0, sizeof(Passage));
+  memset(ppass, 0, sizeof(Passage_t));
 
-  EKEY_PNEW( ppass, Passage );
+  EKEY_PNEW( ppass, Passage_t );
 
   ppass->music = INVALID_SOUND;
   ppass->open  = btrue;
@@ -574,7 +582,7 @@ Passage * Passage_new(Passage *ppass)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t Passage_delete(Passage *ppass)
+bool_t Passage_delete(Passage_t *ppass)
 {
   if(NULL ==ppass) return bfalse;
   if(!EKEY_PVALID( ppass )) return btrue;
@@ -589,7 +597,7 @@ bool_t Passage_delete(Passage *ppass)
 };
 
 //--------------------------------------------------------------------------------------------
-Passage * Passage_renew(Passage *ppass)
+Passage_t * Passage_renew(Passage_t *ppass)
 {
   Passage_delete(ppass);
   return Passage_new(ppass);
@@ -597,7 +605,7 @@ Passage * Passage_renew(Passage *ppass)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-Shop * Shop_new(Shop *pshop)
+Shop_t * Shop_new(Shop_t *pshop)
 {
   //fprintf( stdout, "Shop_new()\n");
 
@@ -605,9 +613,9 @@ Shop * Shop_new(Shop *pshop)
 
   Shop_delete( pshop );
 
-  memset( pshop, 0, sizeof(Shop) );
+  memset( pshop, 0, sizeof(Shop_t) );
 
-  EKEY_PNEW( pshop, Shop );
+  EKEY_PNEW( pshop, Shop_t );
 
   pshop->passage = INVALID_PASS;
   pshop->owner   = INVALID_CHR;
@@ -616,7 +624,7 @@ Shop * Shop_new(Shop *pshop)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t Shop_delete(Shop *pshop)
+bool_t Shop_delete(Shop_t *pshop)
 {
   if(NULL ==pshop) return bfalse;
   if(!EKEY_PVALID( pshop )) return btrue;
@@ -630,7 +638,7 @@ bool_t Shop_delete(Shop *pshop)
 };
 
 //--------------------------------------------------------------------------------------------
-Shop * Shop_renew(Shop *pshop)
+Shop_t * Shop_renew(Shop_t *pshop)
 {
   Shop_delete(pshop);
   return Shop_new(pshop);

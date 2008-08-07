@@ -93,26 +93,24 @@
 #define IS_END(XX) ( GET_FUNCTION_BITS( XX ) == END_FUNCTION )
 
 
-struct opcode_element_t
+struct s_opcode_element
 {
   Uint8           type;
   Uint32          value;
   char            name[MAXCODENAMESIZE];
 };
+typedef struct s_opcode_element OPCODE_ELEMENT;
 
-typedef struct opcode_element_t OPCODE_ELEMENT;
-
-struct opcode_list_t
+struct s_opcode_list
 {
   int            count;
   OPCODE_ELEMENT opcode[MAXCODE];
 };
-
-typedef struct opcode_list_t OPCODE_LIST;
+typedef struct s_opcode_list OPCODE_LIST;
 
 static OPCODE_LIST opcode_lst = {0};
 
-struct CompilerState_t
+struct sCompilerState
 {
   size_t          file_size;
   char            file_buffer[BUFFER_SIZE];         // Where to put an MD2
@@ -126,28 +124,28 @@ struct CompilerState_t
 
 };
 
-typedef struct CompilerState_t CompilerState;
+typedef struct sCompilerState CompilerState_t;
 
-static CompilerState _cstate;
+static CompilerState_t _cstate;
 
 
-static bool_t run_function( CGame * gs, Uint32 value, CHR_REF character );
+static bool_t run_function( Game_t * gs, Uint32 value, CHR_REF character );
 
-static bool_t scr_break_passage( CGame * gs, AI_STATE * pstate );
-static bool_t scr_search_tile_in_passage( CGame * gs, AI_STATE * pstate );
+static bool_t scr_break_passage( Game_t * gs, AI_STATE * pstate );
+static bool_t scr_search_tile_in_passage( Game_t * gs, AI_STATE * pstate );
 
 static Uint32 get_high_bits();
 static size_t tell_code( size_t read );
 
-static retval_t run_operand( CGame * gs, Uint32 value, CHR_REF character );
-static retval_t set_operand( AI_STATE * pstate, ScriptInfo * slist, Uint8 variable );
+static retval_t run_operand( Game_t * gs, Uint32 value, CHR_REF character );
+static retval_t set_operand( AI_STATE * pstate, ScriptInfo_t * slist, Uint8 variable );
 
 
-static void add_code( ScriptInfo * slist, Uint32 highbits );
-static void parse_line_by_line( ScriptInfo * slist );
-static Uint32 jump_goto( ScriptInfo * slist, int index );
-static void parse_jumps( ScriptInfo * slist, int index_stt, int index_end );
-static void log_code( ScriptInfo * slist, int ainumber, char* savename );
+static void add_code( ScriptInfo_t * slist, Uint32 highbits );
+static void parse_line_by_line( ScriptInfo_t * slist );
+static Uint32 jump_goto( ScriptInfo_t * slist, int index );
+static void parse_jumps( ScriptInfo_t * slist, int index_stt, int index_end );
+static void log_code( ScriptInfo_t * slist, int ainumber, char* savename );
 
 
 //------------------------------------------------------------------------------
@@ -461,7 +459,7 @@ size_t tell_code( size_t read )
 
   // Load the word into the other buffer
   wordsize = 0;
-  while ( !isspace( cTmp ) && '\0' != cTmp )
+  while ( !isspace( cTmp ) && EOS != cTmp )
   {
     cWordBuffer[wordsize] = cTmp;  wordsize++;
     read++;
@@ -531,7 +529,7 @@ size_t tell_code( size_t read )
   else
   {
     // Throw out an error code if we're loggin' 'em
-    if ( '=' != cWordBuffer[0] || '\0' != cWordBuffer[1])
+    if ( '=' != cWordBuffer[0] || EOS != cWordBuffer[1])
     {
       log_message( "SCRIPT ERROR FOUND: %s (%d) - %s undefined\n", globalparsename, _cstate.line_num, cWordBuffer );
       parseerror = btrue;
@@ -542,7 +540,7 @@ size_t tell_code( size_t read )
 }
 
 //------------------------------------------------------------------------------
-void add_code( ScriptInfo * slist, Uint32 highbits )
+void add_code( ScriptInfo_t * slist, Uint32 highbits )
 {
   Uint32 value;
 
@@ -557,7 +555,7 @@ void add_code( ScriptInfo * slist, Uint32 highbits )
 }
 
 //------------------------------------------------------------------------------
-void parse_line_by_line(ScriptInfo * slist)
+void parse_line_by_line(ScriptInfo_t * slist)
 {
   // ZZ> This function removes comments and endline codes, replacing
   //     them with a 0
@@ -609,7 +607,7 @@ void parse_line_by_line(ScriptInfo * slist)
 }
 
 //------------------------------------------------------------------------------
-Uint32 jump_goto( ScriptInfo * slist, int index )
+Uint32 jump_goto( ScriptInfo_t * slist, int index )
 {
   // ZZ> This function figures out where to jump to on a fail based on the
   //     starting location and the following code.  The starting location
@@ -649,7 +647,7 @@ Uint32 jump_goto( ScriptInfo * slist, int index )
 }
 
 //------------------------------------------------------------------------------
-void parse_jumps( ScriptInfo * slist, int index_stt, int index_end )
+void parse_jumps( ScriptInfo_t * slist, int index_stt, int index_end )
 {
   // ZZ> This function sets up the fail jumps for the down-and-dirty code
 
@@ -684,7 +682,7 @@ void parse_jumps( ScriptInfo * slist, int index_stt, int index_end )
 }
 
 //------------------------------------------------------------------------------
-void log_code( ScriptInfo * slist, int ainumber, char* savename )
+void log_code( ScriptInfo_t * slist, int ainumber, char* savename )
 {
   // ZZ> This function shows the actual code, saving it in a file
 
@@ -1396,7 +1394,7 @@ void load_ai_codes( char* loadname )
 
 
 //------------------------------------------------------------------------------
-Uint32 load_ai_script( ScriptInfo * slist, const char * szObjectpath, const char * szObjectname )
+Uint32 load_ai_script( ScriptInfo_t * slist, const char * szObjectpath, const char * szObjectname )
 {
   // ZZ> This function loads a script to memory and
   //     returns bfalse if it fails to do so
@@ -1443,7 +1441,7 @@ Uint32 load_ai_script( ScriptInfo * slist, const char * szObjectpath, const char
 
 //------------------------------------------------------------------------------
 
-bool_t ScriptInfo_reset( ScriptInfo * si )
+bool_t ScriptInfo_reset( ScriptInfo_t * si )
 {
   if(NULL == si) return bfalse;
 
@@ -1454,13 +1452,13 @@ bool_t ScriptInfo_reset( ScriptInfo * si )
 };
 
 //------------------------------------------------------------------------------
-void reset_ai_script(CGame * gs)
+void reset_ai_script(Game_t * gs)
 {
   // ZZ> This function starts ai loading in the right spot
 
   OBJ_REF obj_cnt;
 
-  ScriptInfo_reset( CGame_getScriptInfo(gs) );
+  ScriptInfo_reset( Game_getScriptInfo(gs) );
 
   for ( obj_cnt = 0; obj_cnt < MADLST_COUNT; obj_cnt++ )
   {
@@ -1470,7 +1468,7 @@ void reset_ai_script(CGame * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
+bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 {
   // ZZ> This function runs a script function for the AI.
   //     It returns bfalse if the script should jump over the
@@ -1488,31 +1486,33 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
   int volume;
   Uint32 test;
   STRING cTmp;
-  SearchInfo loc_search;
+  SearchInfo_t loc_search;
   Uint32 loc_rand;
-  prt_spawn_info prt_si;
-  enc_spawn_info enc_si;
+  PRT_SPAWN_INFO prt_si;
+  ENC_SPAWN_INFO enc_si;
 
   CHR_REF tmpchr, tmpchr1, tmpchr2, tmpchr3;
   PRT_REF tmpprt;
 
-  ScriptInfo * slist = CGame_getScriptInfo(gs);
+  ScriptInfo_t * slist = Game_getScriptInfo(gs);
 
-  CChr     * pchr = gs->ChrList + ichr;
+  Chr_t     * pchr = gs->ChrList + ichr;
   AI_STATE * pstate = &(pchr->aistate);
 
-  CObj     * pobj = gs->ObjList + pchr->model;
+  Obj_t     * pobj = gs->ObjList + pchr->model;
 
   CHR_REF loc_aichild = chr_get_aichild( gs->ChrList, CHRLST_COUNT, gs->ChrList + ichr );
-  CChr   * pchild     = gs->ChrList + loc_aichild;
+  Chr_t   * pchild     = gs->ChrList + loc_aichild;
 
   CHR_REF loc_target = chr_get_aitarget( gs->ChrList, CHRLST_COUNT, gs->ChrList + ichr );
-  CChr   * ptarget   = gs->ChrList + loc_target;
+  Chr_t   * ptarget   = gs->ChrList + loc_target;
 
   CHR_REF loc_leader  = team_get_leader( gs, pchr->team );
 
-  CMad  * pmad = ChrList_getPMad(gs, ichr);
-  CCap  * pcap = ChrList_getPCap(gs, ichr);
+  Mad_t  * pmad = ChrList_getPMad(gs, ichr);
+  Cap_t  * pcap = ChrList_getPCap(gs, ichr);
+
+  Mesh_t * pmesh = Game_getMesh(gs);
 
   loc_rand = gs->randie_index;
 
@@ -1623,7 +1623,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
 
           if( try_astar && AStar_prepare_path(gs, pchr->stoppedby, src_ix, src_iy, dst_ix, dst_iy) )
           {
-            AStar_Node nbuffer[4*MAXWAY + 1];
+            AStar_Node_t nbuffer[4*MAXWAY + 1];
             int        nbuffer_size = 4*MAXWAY + 1;
 
             nbuffer_size = AStar_get_path(src_ix, src_iy, nbuffer, nbuffer_size);
@@ -2319,7 +2319,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
 
     case F_ChangeTile:
       // This function changes the floor image under the character
-      mesh_set_tile( gs, MESH_FLOAT_TO_FAN( pchr->ori.pos.x ), MESH_FLOAT_TO_FAN( pchr->ori.pos.y ), pstate->tmpargument & 0xFF );
+      mesh_set_tile( Game_getMesh(gs), MESH_FLOAT_TO_FAN( pchr->ori.pos.x ), MESH_FLOAT_TO_FAN( pchr->ori.pos.y ), pstate->tmpargument & 0xFF );
       break;
 
     case F_IfUsed:
@@ -2650,7 +2650,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       // This function teleports the target to the X, Y location, failing if the
       // location is off the map or blocked. Z position is defined in tmpdistance
       returncode = bfalse;
-      if ( mesh_check( &(gs->mesh), pstate->tmpx, pstate->tmpy ) )
+      if ( mesh_check( &(pmesh->Info), pstate->tmpx, pstate->tmpy ) )
       {
         // Yeah!  It worked!
         tmpchr = chr_get_aitarget( gs->ChrList, CHRLST_COUNT, gs->ChrList + ichr );
@@ -2848,7 +2848,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       returncode = bfalse;
       for ( tTmp = 0; tTmp < IDSZ_COUNT; tTmp++ )
       {
-        CCap * trg_cap = ChrList_getPCap(gs, loc_target);
+        Cap_t * trg_cap = ChrList_getPCap(gs, loc_target);
         if ( NULL != trg_cap && trg_cap->idsz[tTmp] == ( IDSZ ) pstate->tmpargument )
         {
           returncode = btrue;
@@ -3079,7 +3079,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
 
     case F_IfOverWater:
       // This function passes if the character is on a water tile
-      returncode = mesh_has_some_bits( gs->Mesh_Mem.fanlst, pchr->onwhichfan, MPDFX_WATER ) && gs->water.iswater;
+      returncode = mesh_has_some_bits( pmesh->Mem.tilelst, pchr->onwhichfan, MPDFX_WATER ) && gs->water.iswater;
       break;
 
     case F_IfThrown:
@@ -3467,7 +3467,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       // This function teleports the character to the X, Y location, failing if the
       // location is off the map or blocked
       returncode = bfalse;
-      if ( mesh_check( &(gs->mesh), pstate->tmpx, pstate->tmpy ) )
+      if ( mesh_check( &(pmesh->Info), pstate->tmpx, pstate->tmpy ) )
       {
         // Yeah!  It worked!
         detach_character_from_mount( gs, ichr, btrue, bfalse );
@@ -3574,12 +3574,12 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       // Add a blip
       if ( numblip < MAXBLIP )
       {
-        if ( mesh_check( &(gs->mesh), pstate->tmpx, pstate->tmpy ) )
+        if ( mesh_check( &(pmesh->Info), pstate->tmpx, pstate->tmpy ) )
         {
           if ( pstate->tmpargument < NUMBAR && pstate->tmpargument >= 0 )
           {
-            BlipList[numblip].x = mesh_fraction_x( &(gs->mesh), pstate->tmpx ) * MAPSIZE * mapscale;
-            BlipList[numblip].y = mesh_fraction_y( &(gs->mesh), pstate->tmpy ) * MAPSIZE * mapscale ;
+            BlipList[numblip].x = mesh_fraction_x( &(pmesh->Info), pstate->tmpx ) * MAPSIZE * mapscale;
+            BlipList[numblip].y = mesh_fraction_y( &(pmesh->Info), pstate->tmpy ) * MAPSIZE * mapscale ;
             BlipList[numblip].c = (COLR)pstate->tmpargument;
             numblip++;
           }
@@ -3751,12 +3751,12 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
 
     case F_GetTileXY:
       // This function gets the tile at x,y
-      pstate->tmpargument = mesh_get_tile( gs, MESH_FLOAT_TO_FAN( pstate->tmpx ), MESH_FLOAT_TO_FAN( pstate->tmpy ) ) & 0xFF;
+      pstate->tmpargument = mesh_get_tile( pmesh, MESH_FLOAT_TO_FAN( pstate->tmpx ), MESH_FLOAT_TO_FAN( pstate->tmpy ) ) & 0xFF;
       break;
 
     case F_SetTileXY:
       // This function changes the tile at x,y
-      mesh_set_tile( gs, MESH_FLOAT_TO_FAN( pstate->tmpx ), MESH_FLOAT_TO_FAN( pstate->tmpy ), pstate->tmpargument & 255 );
+      mesh_set_tile( pmesh, MESH_FLOAT_TO_FAN( pstate->tmpx ), MESH_FLOAT_TO_FAN( pstate->tmpy ), pstate->tmpargument & 255 );
       break;
 
     case F_SetShadowSize:
@@ -4124,7 +4124,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
 
     case F_ClearEndText:
       // This function empties the end-module text buffer
-      gs->endtext[0]   = '\0';
+      gs->endtext[0]   = EOS;
       break;
 
     case F_AddEndText:
@@ -4136,7 +4136,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       // This function begins playing a new track of music
       if ( CData.allow_music )
       {
-        SoundState * snd = snd_getState(&CData);
+        SoundState_t * snd = snd_getState(&CData);
         if( NULL != snd && snd->song_index != pstate->tmpargument )
         {
           snd_play_music( pstate->tmpargument, pstate->tmpdistance, -1 );
@@ -4247,7 +4247,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       //This sets the volume for the looping sounds of all the character's teammates
       if( !gs->modstate.Paused && pstate->tmpdistance >= 0)
       {
-        SoundState * snd = snd_getState(&CData);
+        SoundState_t * snd = snd_getState(&CData);
 
         if(snd->soundActive)
         {
@@ -4371,7 +4371,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
         CAP_REF tmp_icap = ChrList_getRCap(gs, ichr);
         if ( LOADED_CAP(gs->CapList, tmp_icap) )
         {
-          CCap * tmp_pcap = ChrList_getPCap(gs, ichr);
+          Cap_t * tmp_pcap = ChrList_getPCap(gs, ichr);
           if ( tmp_pcap->gopoofprttype <= PRTPIP_PEROBJECT_COUNT )
           {
             tmp_ipip = ChrList_getRPip(gs, ichr, REF_TO_INT(tmp_pcap->gopoofprttype) );
@@ -4524,9 +4524,9 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
       //This function proceeds if the computer is running a UNIX OS
 
       #ifdef __unix__
-        returncode = btrue;    //CPlayer running Linux
+        returncode = btrue;    //Player_t running Linux
       #else
-        returncode = bfalse;    //CPlayer running something else.
+        returncode = bfalse;    //Player_t running something else.
       #endif
 
       break;
@@ -4582,7 +4582,7 @@ bool_t run_function( CGame * gs, Uint32 value, CHR_REF ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t set_operand( AI_STATE * pstate, ScriptInfo * slist, Uint8 variable )
+retval_t set_operand( AI_STATE * pstate, ScriptInfo_t * slist, Uint8 variable )
 {
   // ZZ> This function sets one of the tmp* values for scripted AI
 
@@ -4621,31 +4621,31 @@ retval_t set_operand( AI_STATE * pstate, ScriptInfo * slist, Uint8 variable )
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t run_operand( CGame * gs, Uint32 value, CHR_REF ichr )
+retval_t run_operand( Game_t * gs, Uint32 value, CHR_REF ichr )
 {
   // ZZ> This function does the scripted arithmetic in operator,operand pairs
 
   retval_t retval = rv_succeed;
   int iTmp;
 
-  ScriptInfo * slist = CGame_getScriptInfo(gs);
+  ScriptInfo_t * slist = Game_getScriptInfo(gs);
 
-  CChr * pchr = ChrList_getPChr(gs, ichr);
-  CCap * pcap = ChrList_getPCap(gs, ichr);
+  Chr_t * pchr = ChrList_getPChr(gs, ichr);
+  Cap_t * pcap = ChrList_getPCap(gs, ichr);
 
   AI_STATE * pstate = &(pchr->aistate);
 
   CHR_REF   loc_aitarget;
-  CChr    * ptarget;
-  CCap    * ptarget_cap;
+  Chr_t    * ptarget;
+  Cap_t    * ptarget_cap;
 
   CHR_REF   loc_aiowner;
-  CChr    * powner;
-  CCap    * powner_cap;
+  Chr_t    * powner;
+  Cap_t    * powner_cap;
 
   CHR_REF   loc_leader;
-  CChr    * pleader;
-  CCap    * pleader_cap;
+  Chr_t    * pleader;
+  Cap_t    * pleader_cap;
 
   // for debugging
   char    * scriptname = slist->fname[pchr->aistate.type];
@@ -5089,7 +5089,7 @@ retval_t run_operand( CGame * gs, Uint32 value, CHR_REF ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t run_script( CGame * gs, CHR_REF ichr, float dUpdate )
+retval_t run_script( Game_t * gs, CHR_REF ichr, float dUpdate )
 {
   // ZZ> This function lets one ichr do AI stuff
 
@@ -5101,12 +5101,12 @@ retval_t run_script( CGame * gs, CHR_REF ichr, float dUpdate )
   int      operands;
   retval_t retval = rv_succeed;
 
-  ScriptInfo  * slist;
-  CChr        * pchr;
+  ScriptInfo_t  * slist;
+  Chr_t        * pchr;
   AI_STATE    * pstate;
 
   if( !EKEY_PVALID(gs) ) return rv_error;
-  slist  = CGame_getScriptInfo(gs);
+  slist  = Game_getScriptInfo(gs);
 
   if( !ACTIVE_CHR(gs->ChrList, ichr) ) return rv_error;
   pchr   = gs->ChrList + ichr;
@@ -5272,13 +5272,13 @@ retval_t run_script( CGame * gs, CHR_REF ichr, float dUpdate )
 }
 
 //--------------------------------------------------------------------------------------------
-void run_all_scripts( CGame * gs, float dUpdate )
+void run_all_scripts( Game_t * gs, float dUpdate )
 {
   // ZZ> This function lets every computer controlled character do AI stuff
 
   CHR_REF character;
   bool_t allow_thinking;
-  PChr chrlst = gs->ChrList;
+  PChr_t chrlst = gs->ChrList;
 
   numblip = 0;
   for ( character = 0; character < CHRLST_COUNT; character++ )
@@ -5349,12 +5349,12 @@ void run_all_scripts( CGame * gs, float dUpdate )
 
 
 
-bool_t scr_break_passage( CGame * gs, AI_STATE * pstate )
+bool_t scr_break_passage( Game_t * gs, AI_STATE * pstate )
 {
   return break_passage(gs, pstate->tmpargument, pstate->tmpturn, pstate->tmpdistance, pstate->tmpx, pstate->tmpy, &(pstate->tmpx), &(pstate->tmpy) );
 }
 
-bool_t scr_search_tile_in_passage( CGame * gs, AI_STATE * pstate )
+bool_t scr_search_tile_in_passage( Game_t * gs, AI_STATE * pstate )
 {
   return search_tile_in_passage( gs, pstate->tmpargument, pstate->tmpdistance, pstate->tmpx, pstate->tmpy, &(pstate->tmpx), &(pstate->tmpy) );
 }

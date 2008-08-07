@@ -3,21 +3,22 @@
 #include "egoboo_types.h"
 #include "egoboo_math.h"
 
-struct CGame_t;
-struct water_info_t;
+struct sGame;
+struct s_water_info;
+struct sPhysicsData;
 
 #define INVALID_BUMPLIST_NODE (~(Uint32)0)
 
-struct bumplist_node_t
+struct s_bumplist_node
 {
   Uint32 ref;
   Uint32 next;
 };
-typedef struct bumplist_node_t BUMPLIST_NODE;
+typedef struct s_bumplist_node BUMPLIST_NODE;
 
-struct bumplist_t
+struct s_bumplist
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
   bool_t     allocated;
   bool_t     filled;
 
@@ -34,7 +35,7 @@ struct bumplist_t
   BUMPLIST_NODE  * prt_ref;                 // For particle collisions
   Uint16         * num_prt;                 // Number on the block
 };
-typedef struct bumplist_t BUMPLIST;
+typedef struct s_bumplist BUMPLIST;
 
 INLINE const BUMPLIST * bumplist_new(BUMPLIST * b);
 INLINE const bool_t     bumplist_delete(BUMPLIST * b);
@@ -54,8 +55,8 @@ INLINE const Uint32     bumplist_get_prt_count(BUMPLIST * b, Uint32 block );
 
 INLINE const Uint32     bumplist_get_next(BUMPLIST * b, Uint32 node );
 INLINE const Uint32     bumplist_get_ref(BUMPLIST * b, Uint32 node );
-INLINE const Uint32     bumplist_get_next_prt(struct CGame_t * gs, BUMPLIST * b, Uint32 node );
-INLINE const Uint32     bumplist_get_next_chr(struct CGame_t * gs, BUMPLIST * b, Uint32 node );
+INLINE const Uint32     bumplist_get_next_prt(struct sGame * gs, BUMPLIST * b, Uint32 node );
+INLINE const Uint32     bumplist_get_next_chr(struct sGame * gs, BUMPLIST * b, Uint32 node );
 
 #define MAPID                           0x4470614d     // The string 'MapD'
 
@@ -84,7 +85,7 @@ INLINE const Uint32     bumplist_get_next_chr(struct CGame_t * gs, BUMPLIST * b,
 #define MESH_BLOCK_TO_FLOAT(XX)  ( (float)(XX) * (float)(1<<BLOCK_BITS) )
 #define MESH_FLOAT_TO_BLOCK(XX)  ( (XX) / (float)(1<<BLOCK_BITS))
 
-enum mpd_effect_bits_e
+enum e_mpd_effect_bits
 {
   MPDFX_REF                     =      0,         // 0 This tile is drawn 1st
   MPDFX_NOREFLECT               = 1 << 0,         // 0 This tile IS reflected in the floors
@@ -96,13 +97,13 @@ enum mpd_effect_bits_e
   MPDFX_DAMAGE                  = 1 << 6,         // 6 Damage
   MPDFX_SLIPPY                  = 1 << 7          // 7 Ice or normal
 };
-typedef enum mpd_effect_bits_e MPDFX_BITS;
+typedef enum e_mpd_effect_bits MPDFX_BITS;
 
 #define SLOPE                           800     // Slope increments for terrain normals
 #define SLIDE                           .04         // Acceleration for steep hills
 #define SLIDEFIX                        .08         // To make almost flat surfaces flat
 
-enum fan_type_t
+enum e_fan_type
 {
   GROUND_1,  //  0  Two Faced Ground...
   GROUND_2,   //  1  Two Faced Ground...
@@ -131,9 +132,9 @@ enum fan_type_t
   STAIR_WE,   //  24  Twelve Faced Stair (WE)...
   STAIR_NS    //  25  Twelve Faced Stair (NS)...
 };
-typedef enum fan_type_t FAN_TYPE;
+typedef enum e_fan_type FAN_TYPE;
 
-struct mesh_info_t
+struct sMeshInfo
 {
   bool_t  exploremode;                            // Explore mode?
   int     size_x;                                          // Size in fansquares
@@ -147,9 +148,9 @@ struct mesh_info_t
 
   BUMPLIST bumplist;
 };
-typedef struct mesh_info_t MESH_INFO;
+typedef struct sMeshInfo MeshInfo_t;
 
-struct mesh_fan_t
+struct sMeshTile
 {
   Uint8   type;                               // Command type
   Uint8   fx;                                 // Special effects flags
@@ -159,11 +160,11 @@ struct mesh_fan_t
   Uint32  vrt_start;                          // Which vertex to start at
   AA_BBOX bbox;                               // what is the minimum extent of the fan
 };
-typedef struct mesh_fan_t MESH_FAN;
+typedef struct sMeshTile MeshTile_t;
 
-struct MeshMem_t
+struct sMeshMem
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
   int     vrt_count;
   void *  base;                                                 // For malloc
@@ -180,15 +181,15 @@ struct MeshMem_t
   Uint8*  vrt_lg_fp8;                                           // Vertex light
   Uint8*  vrt_lb_fp8;                                           // Vertex light
 
-  int         fan_count;
-  MESH_FAN  * fanlst;
+  int         tile_count;
+  MeshTile_t  * tilelst;
 };
-typedef struct MeshMem_t MeshMem;
+typedef struct sMeshMem MeshMem_t;
 
-MeshMem * MeshMem_new(MeshMem * mem, int vertcount, int fancount);
-bool_t    MeshMem_delete(MeshMem * mem);
+MeshMem_t * MeshMem_new(MeshMem_t * mem, int vertcount, int fancount);
+bool_t      MeshMem_delete(MeshMem_t * mem);
 
-struct mesh_command_t
+struct sTileDefinition
 {
   Uint8   cmd_count;                  // Number of commands
   Uint8   cmd_size[MAXMESHCOMMAND];   // Entries in each command
@@ -198,70 +199,85 @@ struct mesh_command_t
   Uint8   ref[MAXMESHVERTICES];       // Lighting references
   vect2   tx[MAXMESHVERTICES];        // Relative texture coordinates
 };
-typedef struct mesh_command_t MESH_COMMAND;
+typedef struct sTileDefinition TileDefinition_t;
 
-extern MESH_COMMAND Mesh_Cmd[MAXMESHTYPE];
+typedef TileDefinition_t TileDictionary_t[MAXMESHTYPE];
 
-typedef struct mesh_tile_t
+extern TileDictionary_t gTileDict;
+
+// an encapsulating structore for the mesh
+struct sMesh
+{
+  MeshInfo_t       Info;
+  MeshMem_t        Mem;
+  TileDictionary_t TileDict;
+};
+typedef struct sMesh Mesh_t;
+
+INLINE Mesh_t * Mesh_new( Mesh_t * pmesh );
+INLINE bool_t   Mesh_delete( Mesh_t * pmesh );
+
+struct s_mesh_tile_txbox
 {
   vect2   off;                          // Tile texture offset
-} MESH_TILE;
+};
+typedef struct s_mesh_tile_txbox TILE_TXBOX;
 
-extern MESH_TILE Mesh_Tile[MAXTILETYPE];
+extern TILE_TXBOX gTileTxBox[MAXTILETYPE];
 
-bool_t load_mesh_fans();
-void make_fanstart(MESH_INFO * mi);
+bool_t load_mesh_fans(TileDictionary_t * pdict);
+void make_fanstart(MeshInfo_t * mi);
 void make_twist();
-bool_t load_mesh( struct CGame_t * gs, char *modname );
+bool_t load_mesh( struct sGame * gs, char *modname );
 
 
-bool_t mesh_calc_normal_fan( struct CGame_t * gs, int fan, vect3 * pnrm, vect3 * ppos );
-bool_t mesh_calc_normal_pos( struct CGame_t * gs, int fan, vect3 pos, vect3 * pnrm );
-bool_t mesh_calc_normal( struct CGame_t * gs, vect3 pos, vect3 * pnrm );
+bool_t mesh_calc_normal_fan( Mesh_t * pmesh, struct sPhysicsData * phys, int fan, vect3 * pnrm, vect3 * ppos );
+bool_t mesh_calc_normal_pos( Mesh_t * pmesh, struct sPhysicsData * phys, int fan, vect3 pos, vect3 * pnrm );
+bool_t mesh_calc_normal( Mesh_t * pmesh, struct sPhysicsData * phys, vect3 pos, vect3 * pnrm );
 
-float mesh_get_level( MeshMem * mm, Uint32 fan, float x, float y, bool_t waterwalk, struct water_info_t * wi );
+float mesh_get_level( MeshMem_t * mm, Uint32 fan, float x, float y, bool_t waterwalk, struct s_water_info * wi );
 
 
-Uint32 mesh_hitawall( struct CGame_t * gs, vect3 pos, float size_x, float size_y, Uint32 collision_bits, vect3 * nrm );
+Uint32 mesh_hitawall( Mesh_t * pmesh, vect3 pos, float size_x, float size_y, Uint32 collision_bits, vect3 * nrm );
 
-INLINE const Uint32 mesh_get_fan( MESH_INFO * mi, MeshMem * mm, vect3 pos );
-INLINE const Uint32 mesh_get_block( MESH_INFO * mi, vect3 pos );
+INLINE const Uint32 mesh_get_fan( Mesh_t * pmesh, vect3 pos );
+INLINE const Uint32 mesh_get_block( MeshInfo_t * mi, vect3 pos );
 
-INLINE void mesh_set_colora( struct CGame_t * gs, int fan_x, int fan_y, int color );
+INLINE void mesh_set_colora( Mesh_t * pmesh, int fan_x, int fan_y, int color );
 
-INLINE const bool_t mesh_fan_clear_bits( struct CGame_t * gs, int fan_x, int fan_y, Uint32 bits );
-INLINE const bool_t mesh_fan_add_bits( struct CGame_t * gs, int fan_x, int fan_y, Uint32 bits );
-INLINE const bool_t mesh_fan_set_bits( struct CGame_t * gs, int fan_x, int fan_y, Uint32 bits );
+INLINE const bool_t mesh_fan_clear_bits( Mesh_t * pmesh,  int fan_x, int fan_y, Uint32 bits );
+INLINE const bool_t mesh_fan_add_bits( Mesh_t * pmesh,  int fan_x, int fan_y, Uint32 bits );
+INLINE const bool_t mesh_fan_set_bits( Mesh_t * pmesh, int fan_x, int fan_y, Uint32 bits );
 
-INLINE const int   mesh_bump_tile( struct CGame_t * gs, int fan_x, int fan_y );
-INLINE const Uint16 mesh_get_tile( struct CGame_t * gs, int fan_x, int fan_y );
-INLINE const bool_t mesh_set_tile( struct CGame_t * gs, int fan_x, int fan_y, Uint32 become );
+INLINE const int   mesh_bump_tile( Mesh_t * pmesh, int fan_x, int fan_y );
+INLINE const Uint16 mesh_get_tile( Mesh_t * pmesh, int fan_x, int fan_y );
+INLINE const bool_t mesh_set_tile( Mesh_t * pmesh, int fan_x, int fan_y, Uint32 become );
 
-INLINE const Uint32 mesh_convert_fan( MESH_INFO * mi, int fan_x, int fan_y );
-INLINE const Uint32 mesh_convert_block( MESH_INFO * mi, int block_x, int block_y );
+INLINE const Uint32 mesh_convert_fan( MeshInfo_t * mi, int fan_x, int fan_y );
+INLINE const Uint32 mesh_convert_block( MeshInfo_t * mi, int block_x, int block_y );
 
-INLINE const float mesh_fraction_x( MESH_INFO * mi, float x );
-INLINE const float mesh_fraction_y( MESH_INFO * mi, float y );
+INLINE const float mesh_fraction_x( MeshInfo_t * mi, float x );
+INLINE const float mesh_fraction_y( MeshInfo_t * mi, float y );
 
-INLINE const bool_t mesh_fan_is_in_renderlist(  MESH_FAN * mf_list, int fan );
-INLINE       void   mesh_fan_remove_renderlist( MESH_FAN * mf_list, int fan );
-INLINE       void   mesh_fan_add_renderlist( MESH_FAN * mf_list, int fan );
+INLINE const bool_t mesh_fan_is_in_renderlist(  MeshTile_t * mf_list, int fan );
+INLINE       void   mesh_fan_remove_renderlist( MeshTile_t * mf_list, int fan );
+INLINE       void   mesh_fan_add_renderlist( MeshTile_t * mf_list, int fan );
 
-INLINE const float mesh_clip_x( MESH_INFO * mi, float x );
-INLINE const float mesh_clip_y( MESH_INFO * mi, float y );
-INLINE const int mesh_clip_fan_x( MESH_INFO * mi, int fan_x );
-INLINE const int mesh_clip_fan_y( MESH_INFO * mi, int fan_y );
-INLINE const int mesh_clip_block_x( MESH_INFO * mi, int block_x );
-INLINE const int mesh_clip_block_y( MESH_INFO * mi, int block_y );
+INLINE const float mesh_clip_x( MeshInfo_t * mi, float x );
+INLINE const float mesh_clip_y( MeshInfo_t * mi, float y );
+INLINE const int mesh_clip_fan_x( MeshInfo_t * mi, int fan_x );
+INLINE const int mesh_clip_fan_y( MeshInfo_t * mi, int fan_y );
+INLINE const int mesh_clip_block_x( MeshInfo_t * mi, int block_x );
+INLINE const int mesh_clip_block_y( MeshInfo_t * mi, int block_y );
 
-INLINE const bool_t mesh_check( MESH_INFO * mi, float x, float y );
-INLINE const bool_t mesh_check_fan( MESH_INFO * mi, int fan_x, int fan_y );
+INLINE const bool_t mesh_check( MeshInfo_t * mi, float x, float y );
+INLINE const bool_t mesh_check_fan( MeshInfo_t * mi, int fan_x, int fan_y );
 
-INLINE const Uint32 mesh_test_bits( MESH_FAN * mf_list, int fan, Uint32 bits );
-INLINE const bool_t mesh_has_some_bits( MESH_FAN * mf_list, int fan, Uint32 bits );
-INLINE const bool_t mesh_has_no_bits( MESH_FAN * mf_list, int fan, Uint32 bits );
-INLINE const bool_t mesh_has_all_bits( MESH_FAN * mf_list, int fan, Uint32 bits );
+INLINE const Uint32 mesh_test_bits( MeshTile_t * mf_list, int fan, Uint32 bits );
+INLINE const bool_t mesh_has_some_bits( MeshTile_t * mf_list, int fan, Uint32 bits );
+INLINE const bool_t mesh_has_no_bits( MeshTile_t * mf_list, int fan, Uint32 bits );
+INLINE const bool_t mesh_has_all_bits( MeshTile_t * mf_list, int fan, Uint32 bits );
 
-INLINE const Uint8 mesh_get_twist( MESH_FAN * mf_list, int fan );
+INLINE const Uint8 mesh_get_twist( MeshTile_t * mf_list, int fan );
 
-bool_t reset_bumplist(MESH_INFO * pmesh);
+bool_t reset_bumplist(MeshInfo_t * mi);

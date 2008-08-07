@@ -40,7 +40,7 @@
 #include "mesh.inl"
 
 //--------------------------------------------------------------------------------------------
-void enc_spawn_particles( CGame * gs, float dUpdate )
+void enc_spawn_particles( Game_t * gs, float dUpdate )
 {
   // ZZ> This function lets enchantments spawn particles
 
@@ -49,27 +49,27 @@ void enc_spawn_particles( CGame * gs, float dUpdate )
   Uint16 facing;
   CHR_REF target_ref;
 
-  PObj objlst     = gs->ObjList;
+  PObj_t objlst     = gs->ObjList;
   size_t  objlst_size = OBJLST_COUNT;
 
-  PEve evelst      = gs->EveList;
+  PEve_t evelst      = gs->EveList;
   size_t evelst_size = EVELST_COUNT;
 
   PEnc enclst      = gs->EncList;
   size_t enclst_size = ENCLST_COUNT;
 
-  PChr chrlst      = gs->ChrList;
+  PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
   OBJ_REF iobj;
-  CObj  * pobj;
+  Obj_t  * pobj;
 
-  CEve  * peve;
+  Eve_t  * peve;
 
   for ( enc_cnt = 0; enc_cnt < enclst_size; enc_cnt++ )
   {
-    prt_spawn_info si;
-    CEnc * penc = enclst + enc_cnt;
+    PRT_SPAWN_INFO si;
+    Enc_t * penc = enclst + enc_cnt;
     if ( !penc->active ) continue;
 
     iobj = penc->profile = VALIDATE_OBJ(gs->ObjList, penc->profile);
@@ -105,11 +105,11 @@ void enc_spawn_particles( CGame * gs, float dUpdate )
 
 
 //--------------------------------------------------------------------------------------------
-void disenchant_character( CGame * gs, CHR_REF cnt )
+void disenchant_character( Game_t * gs, CHR_REF cnt )
 {
   // ZZ> This function removes all enchantments from a character
 
-  PChr chrlst      = gs->ChrList;
+  PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
   while ( INVALID_ENC != chrlst[cnt].firstenchant )
@@ -119,19 +119,19 @@ void disenchant_character( CGame * gs, CHR_REF cnt )
 }
 
 //--------------------------------------------------------------------------------------------
-void spawn_poof( CGame * gs, CHR_REF character, OBJ_REF profile )
+void spawn_poof( Game_t * gs, CHR_REF character, OBJ_REF profile )
 {
   // ZZ> This function spawns a character poof
 
-  PChr chrlst      = gs->ChrList;
+  PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  prt_spawn_info si;
+  PRT_SPAWN_INFO si;
   Uint16 sTmp;
   CHR_REF origin;
   int iTmp;
-  CChr * pchr;
-  CCap * pcap = ObjList_getPCap(gs, profile);
+  Chr_t * pchr;
+  Cap_t * pcap = ObjList_getPCap(gs, profile);
 
   sTmp = chrlst[character].ori.turn_lr;
   iTmp = 0;
@@ -151,7 +151,7 @@ void spawn_poof( CGame * gs, CHR_REF character, OBJ_REF profile )
 }
 
 //--------------------------------------------------------------------------------------------
-char * naming_generate( CGame * gs, CObj * pobj )
+char * naming_generate( Game_t * gs, Obj_t * pobj )
 {
   // ZZ> This function generates a random name
 
@@ -194,13 +194,13 @@ char * naming_generate( CGame * gs, CObj * pobj )
 }
 
 //--------------------------------------------------------------------------------------------
-void naming_read( CGame * gs, const char * szModpath, const char * szObjectname, CObj * pobj)
+void naming_read( Game_t * gs, const char * szModpath, const char * szObjectname, Obj_t * pobj)
 {
   // ZZ> This function reads a naming file
 
-  PObj objlst     = gs->ObjList;
+  PObj_t objlst     = gs->ObjList;
   size_t  objlst_size = OBJLST_COUNT;
-  ChopData * pchop;
+  ChopData_t * pchop;
 
   FILE *fileread;
   int section, chopinsection, cnt;
@@ -249,11 +249,11 @@ void naming_read( CGame * gs, const char * szModpath, const char * szObjectname,
 }
 
 //--------------------------------------------------------------------------------------------
-void naming_prime( CGame * gs )
+void naming_prime( Game_t * gs )
 {
   // ZZ> This function prepares the name chopper for use
 
-  PObj objlst     = gs->ObjList;
+  PObj_t objlst     = gs->ObjList;
   size_t  objlst_size = OBJLST_COUNT;
 
   OBJ_REF obj_cnt;
@@ -272,27 +272,29 @@ void naming_prime( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-void tilt_character(CGame * gs, CHR_REF ichr)
+void tilt_character(Game_t * gs, CHR_REF ichr)
 {
-  CChr * pchr = ChrList_getPChr(gs, ichr);
+  Chr_t * pchr = ChrList_getPChr(gs, ichr);
+  Mesh_t * pmesh = Game_getMesh(gs);
+
   if(NULL == pchr) return;
 
   if ( pchr->prop.stickybutt && INVALID_FAN != pchr->onwhichfan)
   {
-    Uint8 twist = mesh_get_twist( gs->Mesh_Mem.fanlst, pchr->onwhichfan );
+    Uint8 twist = mesh_get_twist( pmesh->Mem.tilelst, pchr->onwhichfan );
     pchr->ori.mapturn_lr = twist_table[twist].lr;
     pchr->ori.mapturn_ud = twist_table[twist].ud;
   }
 }
 
 //--------------------------------------------------------------------------------------------
-void tilt_characters_to_terrain(CGame * gs)
+void tilt_characters_to_terrain(Game_t * gs)
 {
   // ZZ> This function sets all of the character's starting tilt values
 
   CHR_REF chr_cnt;
 
-  PChr chrlst      = gs->ChrList;
+  PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
 
@@ -306,23 +308,23 @@ void tilt_characters_to_terrain(CGame * gs)
 
 
 //--------------------------------------------------------------------------------------------
-Uint16 change_armor( CGame * gs, CHR_REF character, Uint16 iskin )
+Uint16 change_armor( Game_t * gs, CHR_REF character, Uint16 iskin )
 {
   // ZZ> This function changes the armor of the character
 
   PEnc enclst      = gs->EncList;
   size_t enclst_size = ENCLST_COUNT;
 
-  PCap caplst      = gs->CapList;
+  PCap_t caplst      = gs->CapList;
   size_t caplst_size = CAPLST_COUNT;
 
-  PChr chrlst      = gs->ChrList;
+  PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
   ENC_REF enchant;
   OBJ_REF sTmp;
   int iTmp, cnt;
-  CCap * pcap;
+  Cap_t * pcap;
 
   // Remove armor enchantments
   enchant = chrlst[character].firstenchant;
@@ -374,32 +376,32 @@ Uint16 change_armor( CGame * gs, CHR_REF character, Uint16 iskin )
 }
 
 //--------------------------------------------------------------------------------------------
-void change_character( CGame * gs, CHR_REF ichr, OBJ_REF new_profile, Uint8 new_skin, Uint8 leavewhich )
+void change_character( Game_t * gs, CHR_REF ichr, OBJ_REF new_profile, Uint8 new_skin, Uint8 leavewhich )
 {
   // ZZ> This function polymorphs a character, changing stats, dropping weapons
 
-  PChr chrlst      = gs->ChrList;
+  PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  PObj objlst     = gs->ObjList;
+  PObj_t objlst     = gs->ObjList;
   size_t  objlst_size = OBJLST_COUNT;
 
   PEnc enclst      = gs->EncList;
   size_t enclst_size = ENCLST_COUNT;
 
-  PMad madlst      = gs->MadList;
+  PMad_t madlst      = gs->MadList;
   size_t madlst_size = MADLST_COUNT;
 
-  PCap caplst      = gs->CapList;
+  PCap_t caplst      = gs->CapList;
   size_t caplst_size = CAPLST_COUNT;
 
   int tnc;
   ENC_REF enchant;
   CHR_REF sTmp, item, imount;
-  CChr * pchr;
-  CObj * pobj;
-  CMad * pmad;
-  CCap * pcap;
+  Chr_t * pchr;
+  Obj_t * pobj;
+  Mad_t * pmad;
+  Cap_t * pcap;
 
   if( !ACTIVE_CHR( chrlst, ichr) ) return;
   pchr = ChrList_getPChr(gs, ichr);
@@ -516,7 +518,7 @@ void change_character( CGame * gs, CHR_REF ichr, OBJ_REF new_profile, Uint8 new_
   imount = chr_get_attachedto( chrlst, CHRLST_COUNT, ichr );
   if ( ACTIVE_CHR( chrlst,  imount ) )
   {
-    CMad * tmppmad;
+    Mad_t * tmppmad;
     Uint16 vrtoffset = slot_to_offset( pchr->inwhichslot );
 
     tmppmad = ChrList_getPMad(gs, imount);
@@ -609,13 +611,13 @@ void change_character( CGame * gs, CHR_REF ichr, OBJ_REF new_profile, Uint8 new_
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t cost_mana( CGame * gs, CHR_REF chr_ref, int amount, Uint16 killer )
+bool_t cost_mana( Game_t * gs, CHR_REF chr_ref, int amount, Uint16 killer )
 {
   // ZZ> This function takes mana from a character ( or gives mana ),
   //     and returns btrue if the character had enough to pay, or bfalse
   //     otherwise
 
-  PChr chrlst      = gs->ChrList;
+  PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
   int iTmp;
@@ -647,7 +649,7 @@ bool_t cost_mana( CGame * gs, CHR_REF chr_ref, int amount, Uint16 killer )
 }
 
 //--------------------------------------------------------------------------------------------
-CEnc * CEnc_new(CEnc *penc)
+Enc_t * CEnc_new(Enc_t *penc)
 {
   //fprintf( stdout, "CEnc_new()\n");
 
@@ -655,9 +657,9 @@ CEnc * CEnc_new(CEnc *penc)
 
   CEnc_delete( penc );
 
-  memset(penc, 0, sizeof(CEnc));
+  memset(penc, 0, sizeof(Enc_t));
 
-  EKEY_PNEW( penc, CEnc );
+  EKEY_PNEW( penc, Enc_t );
 
   penc->active = bfalse;
 
@@ -665,7 +667,7 @@ CEnc * CEnc_new(CEnc *penc)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t CEnc_delete( CEnc * penc)
+bool_t CEnc_delete( Enc_t * penc)
 {
   if(NULL == penc) return bfalse;
   if(!EKEY_PVALID(penc))  return btrue;
@@ -678,7 +680,7 @@ bool_t CEnc_delete( CEnc * penc)
 }
 
 //--------------------------------------------------------------------------------------------
-CEnc * CEnc_renew( CEnc * penc )
+Enc_t * CEnc_renew( Enc_t * penc )
 {
   CEnc_delete( penc );
   return CEnc_new( penc );
@@ -705,7 +707,7 @@ Uint32 fget_damage_modifier( FILE * fileread )
 };
 
 //--------------------------------------------------------------------------------------------
-EVE_REF EveList_load_one( CGame * gs, const char * szObjectpath, const char * szObjectname, EVE_REF irequest )
+EVE_REF EveList_load_one( Game_t * gs, const char * szObjectpath, const char * szObjectname, EVE_REF irequest )
 {
   // ZZ> This function loads the enchantment associated with an object
 
@@ -715,14 +717,14 @@ EVE_REF EveList_load_one( CGame * gs, const char * szObjectpath, const char * sz
   int num;
   IDSZ idsz;
 
-  PObj objlst     = gs->ObjList;
+  PObj_t objlst     = gs->ObjList;
   size_t  objlst_size = OBJLST_COUNT;
 
-  PEve evelst      = gs->EveList;
+  PEve_t evelst      = gs->EveList;
   size_t evelst_size = EVELST_COUNT;
 
   EVE_REF  ieve;
-  CEve   * peve;
+  Eve_t   * peve;
 
   if(!VALID_EVE_RANGE(irequest)) return INVALID_EVE;
   ieve = irequest;
@@ -956,7 +958,7 @@ EVE_REF EveList_load_one( CGame * gs, const char * szObjectpath, const char * sz
 }
 
 //--------------------------------------------------------------------------------------------
-ENC_REF EncList_get_free( CGame * gs, ENC_REF irequest )
+ENC_REF EncList_get_free( Game_t * gs, ENC_REF irequest )
 {
   // ZZ> This function returns the next free enchantment or ENCLST_COUNT if there are none
 
@@ -1000,17 +1002,17 @@ ENC_REF EncList_get_free( CGame * gs, ENC_REF irequest )
 }
 
 //--------------------------------------------------------------------------------------------
-void unset_enchant_value( CGame * gs, ENC_REF enchantindex, Uint8 valueindex )
+void unset_enchant_value( Game_t * gs, ENC_REF enchantindex, Uint8 valueindex )
 {
   // ZZ> This function unsets a set value
 
-  PEve evelst      = gs->EveList;
+  PEve_t evelst      = gs->EveList;
   size_t evelst_size = EVELST_COUNT;
 
   PEnc enclst      = gs->EncList;
   size_t enclst_size = ENCLST_COUNT;
 
-  PChr chrlst      = gs->ChrList;
+  PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
   CHR_REF character;
@@ -1121,24 +1123,24 @@ void unset_enchant_value( CGame * gs, ENC_REF enchantindex, Uint8 valueindex )
 }
 
 //--------------------------------------------------------------------------------------------
-void remove_enchant_value( CGame * gs, ENC_REF enchantindex, Uint8 valueindex )
+void remove_enchant_value( Game_t * gs, ENC_REF enchantindex, Uint8 valueindex )
 {
   // ZZ> This function undoes cumulative modification to character stats
 
-  PEve evelst      = gs->EveList;
+  PEve_t evelst      = gs->EveList;
   size_t evelst_size = EVELST_COUNT;
 
   PEnc enclst      = gs->EncList;
   size_t enclst_size = ENCLST_COUNT;
 
-  PChr chrlst      = gs->ChrList;
+  PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
   float fvaluetoadd;
   int valuetoadd;
   CHR_REF character;
-  CChr * pchr;
-  CEnc * penc;
+  Chr_t * pchr;
+  Enc_t * penc;
 
   penc = enclst + enchantindex;
   character = penc->target;
@@ -1237,7 +1239,7 @@ void remove_enchant_value( CGame * gs, ENC_REF enchantindex, Uint8 valueindex )
 }
 
 //--------------------------------------------------------------------------------------------
-CEve * Eve_new(CEve *peve)
+Eve_t * Eve_new(Eve_t *peve)
 {
   //fprintf( stdout, "Eve_new()\n");
 
@@ -1245,15 +1247,15 @@ CEve * Eve_new(CEve *peve)
 
   Eve_delete(peve);
 
-  memset(peve, 0, sizeof(CEve));
+  memset(peve, 0, sizeof(Eve_t));
 
-  EKEY_PNEW( peve, CEve );
+  EKEY_PNEW( peve, Eve_t );
 
   return peve;
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t Eve_delete( CEve * peve )
+bool_t Eve_delete( Eve_t * peve )
 {
   if(NULL == peve) return bfalse;
   if(!EKEY_PVALID(peve))  return btrue;
@@ -1266,33 +1268,33 @@ bool_t Eve_delete( CEve * peve )
 }
 
 //--------------------------------------------------------------------------------------------
-CEve * Eve_renew( CEve * peve )
+Eve_t * Eve_renew( Eve_t * peve )
 {
   Eve_delete( peve );
   return Eve_new( peve );
 }
 
 //--------------------------------------------------------------------------------------------
-void reset_character_alpha( CGame * gs, CHR_REF character )
+void reset_character_alpha( Game_t * gs, CHR_REF character )
 {
   // ZZ> This function fixes an item's transparency
 
-  PEve evelst      = gs->EveList;
+  PEve_t evelst      = gs->EveList;
   size_t evelst_size = EVELST_COUNT;
 
   PEnc enclst      = gs->EncList;
   size_t enclst_size = ENCLST_COUNT;
 
-  PCap caplst      = gs->CapList;
+  PCap_t caplst      = gs->CapList;
   size_t caplst_size = CAPLST_COUNT;
 
-  PChr chrlst      = gs->ChrList;
+  PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
   ENC_REF enchant;
   CHR_REF mount;
-  CChr * pchr;
-  CCap * pcap;
+  Chr_t * pchr;
+  Cap_t * pcap;
 
   if ( !ACTIVE_CHR( chrlst,  character ) ) return;
   pchr = ChrList_getPChr(gs, character);
@@ -1325,41 +1327,41 @@ void reset_character_alpha( CGame * gs, CHR_REF character )
 }
 
 //--------------------------------------------------------------------------------------------
-void remove_enchant( CGame * gs, ENC_REF enchantindex )
+void remove_enchant( Game_t * gs, ENC_REF enchantindex )
 {
   // ZZ> This function removes a specific enchantment and adds it to the unused list
 
   int add, cnt;
 
-  PObj objlst     = gs->ObjList;
+  PObj_t objlst     = gs->ObjList;
   size_t  objlst_size = OBJLST_COUNT;
 
-  PEve evelst      = gs->EveList;
+  PEve_t evelst      = gs->EveList;
   size_t evelst_size = EVELST_COUNT;
 
   PEnc enclst      = gs->EncList;
   size_t enclst_size = ENCLST_COUNT;
 
-  PCap caplst      = gs->CapList;
+  PCap_t caplst      = gs->CapList;
   size_t caplst_size = CAPLST_COUNT;
 
-  PChr chrlst      = gs->ChrList;
+  PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
   CHR_REF character, overlay;
   ENC_REF lastenchant, currentenchant;
 
-  CObj * pobj;
+  Obj_t * pobj;
 
   OBJ_REF iobj;
-  CEnc  * penc;
+  Enc_t  * penc;
 
-  CEve  * peve;
-  CCap * pcap;
+  Eve_t  * peve;
+  Cap_t * pcap;
 
-  ScriptInfo g_scr;
+  ScriptInfo_t g_scr;
 
-  memset(&g_scr, 0, sizeof(ScriptInfo));
+  memset(&g_scr, 0, sizeof(ScriptInfo_t));
 
   if ( !VALID_ENC(enclst, enchantindex) ) return;
   penc = enclst + enchantindex;
@@ -1485,25 +1487,25 @@ void remove_enchant( CGame * gs, ENC_REF enchantindex )
 }
 
 //--------------------------------------------------------------------------------------------
-ENC_REF enchant_value_filled( CGame * gs, ENC_REF enchantindex, Uint8 valueindex )
+ENC_REF enchant_value_filled( Game_t * gs, ENC_REF enchantindex, Uint8 valueindex )
 {
   // ZZ> This function returns INVALID_ENC if the enchantment's target has no conflicting
   //     set values in its other enchantments.  Otherwise it returns the enchantindex
   //     of the conflicting enchantment
 
-  PEve evelst      = gs->EveList;
+  PEve_t evelst      = gs->EveList;
   size_t evelst_size = EVELST_COUNT;
 
   PEnc enclst      = gs->EncList;
   size_t enclst_size = ENCLST_COUNT;
 
-  PChr chrlst      = gs->ChrList;
+  PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
   CHR_REF character;
   ENC_REF currenchant;
 
-  CEnc * penc;
+  Enc_t * penc;
 
   if( !VALID_ENC(enclst, enchantindex) ) return INVALID_ENC;
   penc = enclst + enchantindex;
@@ -1525,30 +1527,30 @@ ENC_REF enchant_value_filled( CGame * gs, ENC_REF enchantindex, Uint8 valueindex
 }
 
 //--------------------------------------------------------------------------------------------
-void set_enchant_value( CGame * gs, ENC_REF enchantindex, Uint8 valueindex,
+void set_enchant_value( Game_t * gs, ENC_REF enchantindex, Uint8 valueindex,
                         EVE_REF enchanttype )
 {
   // ZZ> This function sets and saves one of the ichr's stats
 
-  PEve evelst      = gs->EveList;
+  PEve_t evelst      = gs->EveList;
   size_t evelst_size = EVELST_COUNT;
 
   PEnc enclst      = gs->EncList;
   size_t enclst_size = ENCLST_COUNT;
 
-  PCap caplst      = gs->CapList;
+  PCap_t caplst      = gs->CapList;
   size_t caplst_size = CAPLST_COUNT;
 
-  PChr chrlst      = gs->ChrList;
+  PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
   ENC_REF conflict;
   CHR_REF ichr;
 
-  CEve * peve = evelst + enchanttype;
-  CEnc * penc = enclst + enchantindex;
-  CChr * pchr;
-  CCap * pcap;
+  Eve_t * peve = evelst + enchanttype;
+  Enc_t * penc = enclst + enchantindex;
+  Chr_t * pchr;
+  Cap_t * pcap;
 
 
   penc->setyesno[valueindex] = bfalse;
@@ -1763,27 +1765,27 @@ void fgetadd( float MIN, float value, float MAX, float* valuetoadd )
 }
 
 //--------------------------------------------------------------------------------------------
-void add_enchant_value( CGame * gs, ENC_REF enchantindex, Uint8 valueindex,
+void add_enchant_value( Game_t * gs, ENC_REF enchantindex, Uint8 valueindex,
                         EVE_REF enchanttype )
 {
   // ZZ> This function does cumulative modification to character stats
 
-  PEve evelst      = gs->EveList;
+  PEve_t evelst      = gs->EveList;
   size_t evelst_size = EVELST_COUNT;
 
   PEnc enclst      = gs->EncList;
   size_t enclst_size = ENCLST_COUNT;
 
-  PChr chrlst      = gs->ChrList;
+  PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
   int valuetoadd, newvalue;
   float fvaluetoadd, fnewvalue;
   CHR_REF ichr;
 
-  CChr * pchr;
-  CEve * peve = evelst + enchanttype;
-  CEnc * penc = enclst + enchantindex;
+  Chr_t * pchr;
+  Eve_t * peve = evelst + enchanttype;
+  Enc_t * penc = enclst + enchantindex;
 
 
   ichr = penc->target;
@@ -1926,13 +1928,13 @@ void add_enchant_value( CGame * gs, ENC_REF enchantindex, Uint8 valueindex,
 }
 
 //--------------------------------------------------------------------------------------------
-enc_spawn_info * enc_spawn_info_new(enc_spawn_info * psi, CGame * gs)
+ENC_SPAWN_INFO * enc_spawn_info_new(ENC_SPAWN_INFO * psi, Game_t * gs)
 {
   if(NULL == psi) return psi;
 
-  memset(psi, 0, sizeof(enc_spawn_info));
+  memset(psi, 0, sizeof(ENC_SPAWN_INFO));
 
-  EKEY_PNEW( psi, enc_spawn_info );
+  EKEY_PNEW( psi, ENC_SPAWN_INFO );
 
   psi->gs = gs;
   psi->seed = (NULL==gs) ? -time(NULL) : gs->randie_index;
@@ -1949,22 +1951,22 @@ enc_spawn_info * enc_spawn_info_new(enc_spawn_info * psi, CGame * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-ENC_REF enc_spawn_info_init( enc_spawn_info * psi, CGame * gs, CHR_REF owner, CHR_REF target,
+ENC_REF enc_spawn_info_init( ENC_SPAWN_INFO * psi, Game_t * gs, CHR_REF owner, CHR_REF target,
                          CHR_REF spawner, ENC_REF enc_request, OBJ_REF obj_optional )
 {
   // ZZ> This function enchants a target, returning the enchantment index or INVALID_ENC
   //     if failed
 
-  PEve evelst      = gs->EveList;
+  PEve_t evelst      = gs->EveList;
   size_t evelst_size = EVELST_COUNT;
 
   PEnc enclst      = gs->EncList;
   size_t enclst_size = ENCLST_COUNT;
 
-  PChr chrlst      = gs->ChrList;
+  PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  CEve * peve;
+  Eve_t * peve;
 
   if(NULL == psi) return INVALID_ENC;
 
@@ -2060,19 +2062,19 @@ ENC_REF enc_spawn_info_init( enc_spawn_info * psi, CGame * gs, CHR_REF owner, CH
 
 
 //--------------------------------------------------------------------------------------------
-ENC_REF req_spawn_one_enchant( enc_spawn_info si )
+ENC_REF req_spawn_one_enchant( ENC_SPAWN_INFO si )
 {
   // ZZ> This function enchants a si.target, returning the enchantment index or INVALID_ENC
   //     if failed
 
-  PEve evelst = si.gs->EveList;
+  PEve_t evelst = si.gs->EveList;
   PEnc enclst = si.gs->EncList;
-  PChr chrlst = si.gs->ChrList;
-  PObj objlst = si.gs->ObjList;
+  PChr_t chrlst = si.gs->ChrList;
+  PObj_t objlst = si.gs->ObjList;
 
-  CEnc * penc;
-  CEve * peve;
-  CObj * pobj;
+  Enc_t * penc;
+  Eve_t * peve;
+  Obj_t * pobj;
 
   int add, cnt;
 
@@ -2134,16 +2136,16 @@ ENC_REF req_spawn_one_enchant( enc_spawn_info si )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t activate_enchant(CEnc * penc)
+bool_t activate_enchant(Enc_t * penc)
 {
-  PEve evelst;
+  PEve_t evelst;
   PEnc enclst;
-  PChr chrlst;
+  PChr_t chrlst;
 
-  CGame * gs;
+  Game_t * gs;
   ENC_REF ienc;
-  CEve * peve;
-  CChr * ptarget;
+  Eve_t * peve;
+  Chr_t * ptarget;
 
   if( EKEY_PVALID(penc) || penc->active ) return bfalse;
 
@@ -2171,8 +2173,8 @@ bool_t activate_enchant(CEnc * penc)
     penc->overlay = chr_spawn( gs, ptarget->ori.pos, ptarget->ori.vel, penc->spinfo.iobj, ptarget->team, 0, ptarget->ori.turn_lr, NULL, INVALID_CHR );
     if ( VALID_CHR(chrlst, penc->overlay) )
     {
-      CChr * povl;
-      CMad * povl_mad;
+      Chr_t * povl;
+      Mad_t * povl_mad;
 
       povl = ChrList_getPChr(gs, penc->overlay);
       povl_mad = ChrList_getPMad(gs, penc->overlay);
@@ -2203,10 +2205,10 @@ bool_t activate_enchant(CEnc * penc)
 }
 
 //--------------------------------------------------------------------------------------------
-void EncList_resynch( CGame * gs )
+void EncList_resynch( Game_t * gs )
 {
   ENC_REF ienc;
-  CEnc  * penc;
+  Enc_t  * penc;
   PEnc enclst = gs->EncList;
   size_t enclst_size = ENCLST_COUNT;
 

@@ -37,7 +37,7 @@
 #include "char.inl"
 #include "egoboo_math.inl"
 
-CAMERA GCamera;
+Camera_t GCamera;
 
 //--------------------------------------------------------------------------------------------
 void ortho_jitter( GLfloat xoff, GLfloat yoff )
@@ -130,11 +130,11 @@ void camera_calc_turn_lr()
 }
 
 //--------------------------------------------------------------------------------------------
-void screen_dump_matrix( CGame * gs, matrix_4x4 a )
+void screen_dump_matrix( Game_t * gs, matrix_4x4 a )
 {
   int i, j;
-  STRING buffer1 = { '\0' };
-  STRING buffer2 = { '\0' };
+  STRING buffer1 = { EOS };
+  STRING buffer2 = { EOS };
 
   reset_messages( gs );
   for ( j = 0; j < 4; j++ )
@@ -146,7 +146,7 @@ void screen_dump_matrix( CGame * gs, matrix_4x4 a )
       strncat( buffer1, buffer2, sizeof( buffer1 ) );
     };
     debug_message( 1, buffer1 );
-    buffer1[0] = '\0';
+    buffer1[0] = EOS;
   }
 }
 
@@ -173,7 +173,7 @@ void make_camera_matrix()
 {
   // ZZ> This function sets GCamera.mView to the camera's location and rotation
 
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
   vect3 worldup = {0, 0, -gs->phys.gravity};
   float dither_x, dither_y;
 
@@ -199,7 +199,7 @@ void move_camera( float dUpdate )
 {
   // ZZ> This function moves the camera
 
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   PLA_REF pla_cnt;
   int locoalive;  // Used in rts remove? -> int band,
@@ -444,7 +444,7 @@ void reset_camera()
   int cnt, save;
   float fov2;
 
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   GCamera.swing = 0;
   GCamera.pos.x = 0;
@@ -493,7 +493,7 @@ void reset_camera()
 //void project_view()
 //{
 //  // ZZ> This function figures out where the corners of the view area
-//  //     go when projected onto the plane of the gs->mesh.  Used later for
+//  //     go when projected onto the plane of the pmesh->Info.  Used later for
 //  //     determining which mesh fans need to be rendered
 //
 //

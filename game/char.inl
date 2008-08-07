@@ -21,12 +21,12 @@
 //INLINE CHR_REF chr_get_attachedto( CHR_REF ichr );
 //INLINE CHR_REF chr_get_holdingwhich( CHR_REF ichr, SLOT slot );
 //
-//INLINE CHR_REF chr_get_aitarget( CChr * pchr );
-//INLINE CHR_REF chr_get_aiowner( CChr * pchr );
-//INLINE CHR_REF chr_get_aichild( CChr * pchr );
-//INLINE CHR_REF chr_get_aiattacklast( CChr * pchr );
-//INLINE CHR_REF chr_get_aibumplast( CChr * pchr );
-//INLINE CHR_REF chr_get_aihitlast( CChr * pchr );
+//INLINE CHR_REF chr_get_aitarget( Chr_t * pchr );
+//INLINE CHR_REF chr_get_aiowner( Chr_t * pchr );
+//INLINE CHR_REF chr_get_aichild( Chr_t * pchr );
+//INLINE CHR_REF chr_get_aiattacklast( Chr_t * pchr );
+//INLINE CHR_REF chr_get_aibumplast( Chr_t * pchr );
+//INLINE CHR_REF chr_get_aihitlast( Chr_t * pchr );
 
 INLINE ACTION_INFO * action_info_new( ACTION_INFO * a);
 
@@ -35,7 +35,7 @@ INLINE ANIM_INFO * anim_info_new( ANIM_INFO * a );
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-INLINE bool_t chr_attached( PChr lst, size_t lst_size, CHR_REF chr_ref )
+INLINE bool_t chr_attached( PChr_t lst, size_t lst_size, CHR_REF chr_ref )
 {
   if ( !ACTIVE_CHR(lst, chr_ref ) ) return bfalse;
 
@@ -46,14 +46,14 @@ INLINE bool_t chr_attached( PChr lst, size_t lst_size, CHR_REF chr_ref )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t chr_in_pack( PChr lst, size_t lst_size, CHR_REF chr_ref )
+INLINE bool_t chr_in_pack( PChr_t lst, size_t lst_size, CHR_REF chr_ref )
 {
   CHR_REF inwhichpack = chr_get_inwhichpack( lst, lst_size, chr_ref );
   return ACTIVE_CHR(lst, inwhichpack );
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t chr_has_inventory( PChr lst, size_t lst_size, CHR_REF chr_ref )
+INLINE bool_t chr_has_inventory( PChr_t lst, size_t lst_size, CHR_REF chr_ref )
 {
   bool_t retval = bfalse;
   CHR_REF nextinpack = chr_get_nextinpack( lst, lst_size, chr_ref );
@@ -73,7 +73,7 @@ INLINE bool_t chr_has_inventory( PChr lst, size_t lst_size, CHR_REF chr_ref )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t chr_is_invisible( PChr lst, size_t lst_size, CHR_REF chr_ref )
+INLINE bool_t chr_is_invisible( PChr_t lst, size_t lst_size, CHR_REF chr_ref )
 {
   if ( !ACTIVE_CHR(lst, chr_ref ) ) return btrue;
 
@@ -81,7 +81,7 @@ INLINE bool_t chr_is_invisible( PChr lst, size_t lst_size, CHR_REF chr_ref )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t chr_using_slot( PChr lst, size_t lst_size, CHR_REF chr_ref, SLOT slot )
+INLINE bool_t chr_using_slot( PChr_t lst, size_t lst_size, CHR_REF chr_ref, SLOT slot )
 {
   CHR_REF inslot = chr_get_holdingwhich( lst, lst_size, chr_ref, slot );
 
@@ -90,7 +90,7 @@ INLINE bool_t chr_using_slot( PChr lst, size_t lst_size, CHR_REF chr_ref, SLOT s
 
 
 //--------------------------------------------------------------------------------------------
-INLINE CHR_REF chr_get_nextinpack( PChr lst, size_t lst_size, CHR_REF chr_ref )
+INLINE CHR_REF chr_get_nextinpack( PChr_t lst, size_t lst_size, CHR_REF chr_ref )
 {
   CHR_REF nextinpack = INVALID_CHR;
 
@@ -115,7 +115,7 @@ INLINE CHR_REF chr_get_nextinpack( PChr lst, size_t lst_size, CHR_REF chr_ref )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE CHR_REF chr_get_onwhichplatform( PChr lst, size_t lst_size, CHR_REF chr_ref )
+INLINE CHR_REF chr_get_onwhichplatform( PChr_t lst, size_t lst_size, CHR_REF chr_ref )
 {
   if ( !ACTIVE_CHR(lst, chr_ref ) ) return INVALID_CHR;
 
@@ -124,7 +124,7 @@ INLINE CHR_REF chr_get_onwhichplatform( PChr lst, size_t lst_size, CHR_REF chr_r
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE CHR_REF chr_get_holdingwhich( PChr lst, size_t lst_size, CHR_REF chr_ref, SLOT slot )
+INLINE CHR_REF chr_get_holdingwhich( PChr_t lst, size_t lst_size, CHR_REF chr_ref, SLOT slot )
 {
 
 
@@ -152,7 +152,7 @@ INLINE CHR_REF chr_get_holdingwhich( PChr lst, size_t lst_size, CHR_REF chr_ref,
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE CHR_REF chr_get_inwhichpack( PChr lst, size_t lst_size, CHR_REF chr_ref )
+INLINE CHR_REF chr_get_inwhichpack( PChr_t lst, size_t lst_size, CHR_REF chr_ref )
 {
   if ( !ACTIVE_CHR(lst, chr_ref ) ) return INVALID_CHR;
 
@@ -161,7 +161,7 @@ INLINE CHR_REF chr_get_inwhichpack( PChr lst, size_t lst_size, CHR_REF chr_ref )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE CHR_REF chr_get_attachedto( PChr lst, size_t lst_size, CHR_REF chr_ref )
+INLINE CHR_REF chr_get_attachedto( PChr_t lst, size_t lst_size, CHR_REF chr_ref )
 {
   if ( !ACTIVE_CHR(lst, chr_ref ) ) return INVALID_CHR;
 
@@ -193,7 +193,7 @@ INLINE CHR_REF chr_get_attachedto( PChr lst, size_t lst_size, CHR_REF chr_ref )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE CHR_REF chr_get_aitarget( PChr lst, size_t lst_size, CChr * pchr )
+INLINE CHR_REF chr_get_aitarget( PChr_t lst, size_t lst_size, Chr_t * pchr )
 {
   if ( !EKEY_PVALID(pchr) ) return INVALID_CHR;
 
@@ -202,7 +202,7 @@ INLINE CHR_REF chr_get_aitarget( PChr lst, size_t lst_size, CChr * pchr )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE CHR_REF chr_get_aiowner( PChr lst, size_t lst_size, CChr * pchr )
+INLINE CHR_REF chr_get_aiowner( PChr_t lst, size_t lst_size, Chr_t * pchr )
 {
   if ( !EKEY_PVALID(pchr) ) return INVALID_CHR;
 
@@ -211,7 +211,7 @@ INLINE CHR_REF chr_get_aiowner( PChr lst, size_t lst_size, CChr * pchr )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE CHR_REF chr_get_aichild( PChr lst, size_t lst_size, CChr * pchr )
+INLINE CHR_REF chr_get_aichild( PChr_t lst, size_t lst_size, Chr_t * pchr )
 {
   if ( !EKEY_PVALID(pchr) ) return INVALID_CHR;
 
@@ -220,7 +220,7 @@ INLINE CHR_REF chr_get_aichild( PChr lst, size_t lst_size, CChr * pchr )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE CHR_REF chr_get_aiattacklast( PChr lst, size_t lst_size, CChr * pchr )
+INLINE CHR_REF chr_get_aiattacklast( PChr_t lst, size_t lst_size, Chr_t * pchr )
 {
   if ( !EKEY_PVALID(pchr) ) return INVALID_CHR;
 
@@ -229,7 +229,7 @@ INLINE CHR_REF chr_get_aiattacklast( PChr lst, size_t lst_size, CChr * pchr )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE CHR_REF chr_get_aibumplast( PChr lst, size_t lst_size, CChr * pchr )
+INLINE CHR_REF chr_get_aibumplast( PChr_t lst, size_t lst_size, Chr_t * pchr )
 {
   if ( !EKEY_PVALID(pchr) ) return INVALID_CHR;
 
@@ -238,7 +238,7 @@ INLINE CHR_REF chr_get_aibumplast( PChr lst, size_t lst_size, CChr * pchr )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE CHR_REF chr_get_aihitlast( PChr lst, size_t lst_size, CChr * pchr )
+INLINE CHR_REF chr_get_aihitlast( PChr_t lst, size_t lst_size, Chr_t * pchr )
 {
   if ( !EKEY_PVALID(pchr) ) return INVALID_CHR;
 
@@ -381,14 +381,14 @@ INLINE AI_STATE * ai_state_new(AI_STATE * a)
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE AI_STATE * ai_state_init(CGame * gs, AI_STATE * a, CHR_REF ichr)
+INLINE AI_STATE * ai_state_init(Game_t * gs, AI_STATE * a, CHR_REF ichr)
 {
   int tnc;
 
-  CObj * pobj;
-  CChr * pchr;
-  CMad * pmad;
-  CCap * pcap;
+  Obj_t * pobj;
+  Chr_t * pchr;
+  Mad_t * pmad;
+  Cap_t * pcap;
 
   if( !EKEY_PVALID(a) ) return NULL;
 
@@ -486,7 +486,7 @@ INLINE ANIM_INFO * anim_info_new( ANIM_INFO * a )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE void VData_Blended_construct(VData_Blended * v)
+INLINE void VData_Blended_construct(VData_Blended_t * v)
 {
   if(NULL == v) return;
 
@@ -505,14 +505,14 @@ INLINE void VData_Blended_construct(VData_Blended * v)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE void VData_Blended_destruct(VData_Blended * v)
+INLINE void VData_Blended_destruct(VData_Blended_t * v)
 {
   VData_Blended_Deallocate(v);
 };
 
 
 //--------------------------------------------------------------------------------------------
-INLINE void VData_Blended_Deallocate(VData_Blended * v)
+INLINE void VData_Blended_Deallocate(VData_Blended_t * v)
 {
   if(NULL == v) return;
 
@@ -524,9 +524,9 @@ INLINE void VData_Blended_Deallocate(VData_Blended * v)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE VData_Blended * VData_Blended_new()
+INLINE VData_Blended_t * VData_Blended_new()
 {
-  VData_Blended * retval = (VData_Blended*)calloc(1, sizeof(VData_Blended));
+  VData_Blended_t * retval = (VData_Blended_t*)calloc(1, sizeof(VData_Blended_t));
   if(NULL != retval)
   {
     VData_Blended_construct(retval);
@@ -535,7 +535,7 @@ INLINE VData_Blended * VData_Blended_new()
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE void VData_Blended_delete(VData_Blended * v)
+INLINE void VData_Blended_delete(VData_Blended_t * v)
 {
   if(NULL != v) return;
 
@@ -544,7 +544,7 @@ INLINE void VData_Blended_delete(VData_Blended * v)
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE void VData_Blended_Allocate(VData_Blended * v, size_t verts)
+INLINE void VData_Blended_Allocate(VData_Blended_t * v, size_t verts)
 {
   if(NULL == v) return;
 

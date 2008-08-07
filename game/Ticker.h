@@ -1,4 +1,4 @@
-/* Egoboo - Ticker.h
+/* Egoboo - Ticker_t.h
  * This code is not currently in use.
  */
 
@@ -25,18 +25,18 @@
 #ifndef egoboo_Ticker_h
 #define egoboo_Ticker_h
 
-struct ticker_t
+struct sTicker
 {
   double lastTime;
   double tickInterval;
   int numTicks;
 };
-typedef struct ticker_t Ticker;
+typedef struct sTicker Ticker_t;
 
-extern void ticker_initWithInterval( Ticker *ticker, double interval );
-extern void ticker_initWithFrequency( Ticker *ticker, int freq );
+extern void ticker_initWithInterval( Ticker_t *ticker, double interval );
+extern void ticker_initWithFrequency( Ticker_t *ticker, int freq );
 
-extern void ticker_update( Ticker *ticker );
-extern int  ticker_tick( Ticker *ticker );
+extern void ticker_update( Ticker_t *ticker );
+extern int  ticker_tick( Ticker_t *ticker );
 
 #endif // include guard

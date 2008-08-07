@@ -34,17 +34,17 @@
 //--------------------------------------------------------------------------------------------
 // Globally accesible client module functions
 
-NetHost * cl_getHost();
+NetHost_t * cl_getHost();
 void      cl_quitHost();
 bool_t    cl_Started();
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-// Status displays
-struct Status_t
+// Status_t displays
+struct sStatus
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
   bool_t on;
 
@@ -53,33 +53,33 @@ struct Status_t
   vect2    pos;
   float    y_pos;
 };
-typedef struct Status_t Status;
+typedef struct sStatus Status_t;
 
-Status * Status_new( Status * pstat );
-bool_t   Status_delete( Status * pstat );
-Status * Status_renew( Status * pstat );
+Status_t * Status_new( Status_t * pstat );
+bool_t   Status_delete( Status_t * pstat );
+Status_t * Status_renew( Status_t * pstat );
 
 
 
 
 //--------------------------------------------------------------------------------------------
-struct CClient_t
+struct sClient
 {
-  egoboo_key      ekey;
+  egoboo_key_t      ekey;
 
   // my network
   Uint32           net_guid;
-  struct CGame_t * parent;
+  struct sGame * parent;
 
   // game info
   ENetPeer   * gamePeer;
   Uint32       gameID;
 
   // connection to the host handling TO_REMOTE_* type transfers
-  NetHost  * host;
+  NetHost_t  * host;
 
   // local states
-  Status StatList[MAXSTAT];
+  Status_t StatList[MAXSTAT];
   size_t StatList_count;
   Uint8  stat_clock;                        // For stat regeneration
 
@@ -98,7 +98,7 @@ struct CClient_t
   // client information about remote modules
   int          rem_mod_count;
   MOD_INFO     rem_mod[MAXMODULE];
-  MOD_SUMMARY  rem_modtxt;
+  ModSummary_t  rem_modtxt;
 
   // info needed to request module info from the host(s)
   ENetPeer *   rem_req_peer [MAXNETPLAYER];
@@ -108,63 +108,63 @@ struct CClient_t
   // client information about desired local module
   char      req_host[MAXCAPNAMESIZE];
   MOD_INFO  req_mod;
-  ModState  req_modstate;
+  ModState_t  req_modstate;
   Uint32    req_seed;
 
-  chr_spawn_queue chr_queue;
+  CHR_SPAWN_QUEUE chr_queue;
 
 };
-typedef struct CClient_t CClient;
+typedef struct sClient Client_t;
 
-CClient * CClient_create(struct CGame_t * gs);
-bool_t    CClient_destroy(CClient ** pcs);
-CClient * CClient_renew(CClient * cs);
-retval_t  CClient_startUp(CClient * cs);
-retval_t  CClient_shutDown(CClient * cs);
-bool_t    CClient_Running(CClient * cs);
-
-
-
-void CClient_reset_latches(CClient * cs);
-void CClient_resetTimeLatches(CClient * cs, CHR_REF ichr);
-void CClient_bufferLatches(CClient * cs);
+Client_t * CClient_create(struct sGame * gs);
+bool_t    CClient_destroy(Client_t ** pcs);
+Client_t * CClient_renew(Client_t * cs);
+retval_t  CClient_startUp(Client_t * cs);
+retval_t  CClient_shutDown(Client_t * cs);
+bool_t    CClient_Running(Client_t * cs);
 
 
 
-bool_t CClient_connect(CClient * cs, const char* hostname);
-bool_t CClient_disconnect(CClient * cs);
+void CClient_reset_latches(Client_t * cs);
+void CClient_resetTimeLatches(Client_t * cs, CHR_REF ichr);
+void CClient_bufferLatches(Client_t * cs);
+
+
+
+bool_t CClient_connect(Client_t * cs, const char* hostname);
+bool_t CClient_disconnect(Client_t * cs);
 
 ENetPeer * cl_startPeer( const char* hostname );
 
-void     CClient_talkToHost(CClient * cs);
-retval_t CClient_joinGame(CClient * cs, const char *hostname);
-bool_t   CClient_unjoinGame(CClient * cs);
+void     CClient_talkToHost(Client_t * cs);
+retval_t CClient_joinGame(Client_t * cs, const char *hostname);
+bool_t   CClient_unjoinGame(Client_t * cs);
 
-bool_t CClient_sendPacketToHost(CClient * cs, SYS_PACKET * egop);
-bool_t CClient_sendPacketToHostGuaranteed(CClient * cs, SYS_PACKET * egop);
-
-
-void   CClient_unbufferLatches(CClient * cs);
-
-bool_t cl_begin_request_module(CClient * cs);
-bool_t cl_end_request_module(CClient * cs);
-
-void   cl_request_module_images(CClient * cs);
-
-void   cl_request_module_info(CClient * cs);
-bool_t cl_load_module_info(CClient * cs);
-
-bool_t cl_dispatchPackets(CClient * cs);
-bool_t cl_handlePacket(CClient * cs, ENetEvent *event);
-
-bool_t cl_count_players(CClient * cs);
+bool_t CClient_sendPacketToHost(Client_t * cs, SYS_PACKET * egop);
+bool_t CClient_sendPacketToHostGuaranteed(Client_t * cs, SYS_PACKET * egop);
 
 
-bool_t StatList_new( CClient * cs );
-bool_t StatList_delete( CClient * cs );
-bool_t StatList_renew( CClient * cs );
-size_t StatList_add( Status lst[], size_t lst_size, CHR_REF ichr );
-void   StatList_move_to_top( Status lst[], size_t lst_size, CHR_REF ichr );
+void   CClient_unbufferLatches(Client_t * cs);
+
+bool_t cl_begin_request_module(Client_t * cs);
+bool_t cl_end_request_module(Client_t * cs);
+
+void   cl_request_module_images(Client_t * cs);
+
+void   cl_request_module_info(Client_t * cs);
+bool_t cl_load_module_info(Client_t * cs);
+
+bool_t cl_dispatchPackets(Client_t * cs);
+bool_t cl_handlePacket(Client_t * cs, ENetEvent *event);
+
+bool_t cl_count_players(Client_t * cs);
+
+
+bool_t StatList_new( Client_t * cs );
+bool_t StatList_delete( Client_t * cs );
+bool_t StatList_renew( Client_t * cs );
+size_t StatList_add( Status_t lst[], size_t lst_size, CHR_REF ichr );
+void   StatList_move_to_top( Status_t lst[], size_t lst_size, CHR_REF ichr );
 
 // Much more to come...
 //int  cl_connectToServer(...);

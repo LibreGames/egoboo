@@ -58,9 +58,9 @@ void    GLTexture_SetAlpha( GLtexture *texture, GLfloat alpha );
 GLfloat GLTexture_GetAlpha( GLtexture *texture );
 void    GLTexture_Release( GLtexture *texture );
 
-struct CGraphics_t;
+struct sGraphics;
 
-void    GLTexture_Bind( GLtexture * texture, struct CGraphics_t * g );
+void    GLTexture_Bind( GLtexture * texture, struct sGraphics * g );
 
 
 #endif

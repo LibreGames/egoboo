@@ -187,7 +187,7 @@ INLINE bool_t matrix_compare_3x3(matrix_4x4 * pm1, matrix_4x4 * pm2);
 
 
 //--------------------------------------------------------------------------------------------
-struct aa_bbox_t
+struct s_aa_bbox
 {
   int    sub_used;
   float  weight;
@@ -200,15 +200,15 @@ struct aa_bbox_t
   vect3  maxs;
 };
 
-typedef struct aa_bbox_t AA_BBOX;
+typedef struct s_aa_bbox AA_BBOX;
 
 //--------------------------------------------------------------------------------------------
-struct bbox_list_t
+struct s_bbox_list
 {
   int       count;
   AA_BBOX * list;
 };
-typedef struct bbox_list_t BBOX_LIST;
+typedef struct s_bbox_list BBOX_LIST;
 
 INLINE const BBOX_LIST * bbox_list_new(BBOX_LIST * lst);
 INLINE const BBOX_LIST * bbox_list_delete(BBOX_LIST * lst);
@@ -217,12 +217,12 @@ INLINE const BBOX_LIST * bbox_list_alloc(BBOX_LIST * lst, int count);
 INLINE const BBOX_LIST * bbox_list_realloc(BBOX_LIST * lst, int count);
 
 //--------------------------------------------------------------------------------------------
-struct bbox_array_t
+struct s_bbox_array
 {
   int         count;
   BBOX_LIST * list;
 };
-typedef struct bbox_array_t BBOX_ARY;
+typedef struct s_bbox_array BBOX_ARY;
 
 INLINE const BBOX_ARY * bbox_ary_new(BBOX_ARY * ary);
 INLINE const BBOX_ARY * bbox_ary_delete(BBOX_ARY * ary);

@@ -2,7 +2,7 @@
 
 #include "egoboo_types.h"
 
-struct CGame_t;
+struct sGame;
 
 // These are for the AI script loading/parsing routines
 extern int                     iNumAis;
@@ -15,7 +15,7 @@ extern int                     iNumAis;
 #define MAXCODENAMESIZE     64                      //
 #define AISMAXCOMPILESIZE   (AILST_COUNT*MAXCODE)         // For parsing AI scripts
 
-enum script_opcode_e
+enum e_script_opcode
 {
   F_IfSpawned = 0, // 0                     // Scripted AI functions (v0.10)
   F_IfTimeOut, // 1
@@ -372,9 +372,9 @@ enum script_opcode_e
   F_IfButtonPressed,
   F_IfHolderScoredAHit					// Scripted AI functions (v1.10)
 };
-typedef enum script_opcode_e OPCODE;
+typedef enum e_script_opcode OPCODE;
 
-enum script_operation_e
+enum e_script_operation
 {
   OP_ADD = 0,     // +
   OP_SUB,         // -
@@ -385,9 +385,9 @@ enum script_operation_e
   OP_DIV,         // /
   OP_MOD          // %
 };
-typedef enum script_operation_e OPERATION;
+typedef enum e_script_operation OPERATION;
 
-enum script_variable_e
+enum e_script_variable
 {
   VAR_TMP_X = 0,
   VAR_TMP_Y,
@@ -464,9 +464,9 @@ enum script_variable_e
   VAR_TARGET_MAX_LIFE,
   VAR_SELF_CONTENT
 };
-typedef enum script_variable_e VARIABLE;
+typedef enum e_script_variable VARIABLE;
 
-struct ScriptInfo_t
+struct sScriptInfo
 {
   int    buffer_index;
   Uint32 buffer[AISMAXCOMPILESIZE];
@@ -476,14 +476,14 @@ struct ScriptInfo_t
   int    offset_stt[AILST_COUNT];
   int    offset_end[AILST_COUNT];
 };
-typedef struct ScriptInfo_t ScriptInfo;
+typedef struct sScriptInfo ScriptInfo_t;
 
-retval_t run_script( struct CGame_t * gs, CHR_REF character, float dUpdate );
-void run_all_scripts( struct CGame_t * gs, float dUpdate );
+retval_t run_script( struct sGame * gs, CHR_REF character, float dUpdate );
+void run_all_scripts( struct sGame * gs, float dUpdate );
 
-void append_end_text( struct CGame_t * gs, int message, CHR_REF character );
+void append_end_text( struct sGame * gs, int message, CHR_REF character );
 
 
 void load_ai_codes( char* loadname );
-Uint32 load_ai_script( ScriptInfo * slist, const char * szModpath, const char * szObjectname );
-void reset_ai_script(struct CGame_t * gs);
+Uint32 load_ai_script( ScriptInfo_t * slist, const char * szModpath, const char * szObjectname );
+void reset_ai_script(struct sGame * gs);

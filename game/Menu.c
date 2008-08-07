@@ -47,42 +47,42 @@
 int              loadplayer_count = 0;
 LOAD_PLAYER_INFO loadplayer[MAXLOADPLAYER];
 
-static retval_t   MenuProc_ensure_server(MenuProc * ms, struct CGame_t * gs);
-static retval_t   MenuProc_ensure_client(MenuProc * ms, struct CGame_t * gs);
-static retval_t   MenuProc_ensure_network(MenuProc * ms, struct CGame_t * gs);
+static retval_t   MenuProc_ensure_server(MenuProc_t * ms, struct sGame * gs);
+static retval_t   MenuProc_ensure_client(MenuProc_t * ms, struct sGame * gs);
+static retval_t   MenuProc_ensure_network(MenuProc_t * ms, struct sGame * gs);
 
-static retval_t   MenuProc_start_server(MenuProc * ms, struct CGame_t * gs);
-static retval_t   MenuProc_start_client(MenuProc * ms, struct CGame_t * gs);
-static retval_t   MenuProc_start_network(MenuProc * ms, struct CGame_t * gs);
-static retval_t   MenuProc_start_netfile(MenuProc * ms, struct CGame_t * gs);
+static retval_t   MenuProc_start_server(MenuProc_t * ms, struct sGame * gs);
+static retval_t   MenuProc_start_client(MenuProc_t * ms, struct sGame * gs);
+static retval_t   MenuProc_start_network(MenuProc_t * ms, struct sGame * gs);
+static retval_t   MenuProc_start_netfile(MenuProc_t * ms, struct sGame * gs);
 
-static int mnu_doMain( MenuProc * mproc, float deltaTime );
-static int mnu_doSinglePlayer( MenuProc * mproc, float deltaTime );
-static int mnu_doChooseModule( MenuProc * mproc, float deltaTime );
-static int mnu_doChoosePlayer( MenuProc * mproc, float deltaTime );
-static int mnu_doOptions( MenuProc * mproc, float deltaTime );
-static int mnu_doAudioOptions( MenuProc * mproc, float deltaTime );
-static int mnu_doVideoOptions( MenuProc * mproc, float deltaTime );
-static int mnu_doLaunchGame( MenuProc * mproc, float deltaTime );
-static int mnu_doNotImplemented( MenuProc * mproc, float deltaTime );
-//static int mnu_doModel(MenuProc * mproc, float deltaTime);
-static int mnu_doNetwork(MenuProc * mproc, float deltaTime);
-static int mnu_doHostGame(MenuProc * mproc, float deltaTime);
-static int mnu_doUnhostGame(MenuProc * mproc, float deltaTime);
-static int mnu_doJoinGame(MenuProc * mproc, float deltaTime);
+static int mnu_doMain( MenuProc_t * mproc, float deltaTime );
+static int mnu_doSinglePlayer( MenuProc_t * mproc, float deltaTime );
+static int mnu_doChooseModule( MenuProc_t * mproc, float deltaTime );
+static int mnu_doChoosePlayer( MenuProc_t * mproc, float deltaTime );
+static int mnu_doOptions( MenuProc_t * mproc, float deltaTime );
+static int mnu_doAudioOptions( MenuProc_t * mproc, float deltaTime );
+static int mnu_doVideoOptions( MenuProc_t * mproc, float deltaTime );
+static int mnu_doLaunchGame( MenuProc_t * mproc, float deltaTime );
+static int mnu_doNotImplemented( MenuProc_t * mproc, float deltaTime );
+//static int mnu_doModel(MenuProc_t * mproc, float deltaTime);
+static int mnu_doNetwork(MenuProc_t * mproc, float deltaTime);
+static int mnu_doHostGame(MenuProc_t * mproc, float deltaTime);
+static int mnu_doUnhostGame(MenuProc_t * mproc, float deltaTime);
+static int mnu_doJoinGame(MenuProc_t * mproc, float deltaTime);
 
-static int mnu_doIngameQuit( MenuProc * mproc, float deltaTime );
-static int mnu_doIngameInventory( MenuProc * mproc, float deltaTime );
+static int mnu_doIngameQuit( MenuProc_t * mproc, float deltaTime );
+static int mnu_doIngameInventory( MenuProc_t * mproc, float deltaTime );
 
 
-static int mnu_handleKeyboard(  MenuProc * mproc  );
+static int mnu_handleKeyboard(  MenuProc_t * mproc  );
 
-static retval_t mnu_upload_game_info(CGame * gs, MenuProc * ms);
-static retval_t mnu_ensure_game(MenuProc * mproc, struct CGame_t ** optional);
+static retval_t mnu_upload_game_info(Game_t * gs, MenuProc_t * ms);
+static retval_t mnu_ensure_game(MenuProc_t * mproc, struct sGame ** optional);
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-enum mnu_states_e
+enum e_mnu_states
 {
   MM_Begin,
   MM_Entering,
@@ -91,13 +91,13 @@ enum mnu_states_e
   MM_Finish,
 };
 
-typedef enum mnu_states_e MenuProcs;
+typedef enum e_mnu_states MenuProcs;
 
 
 
 //--------------------------------------------------------------------------------------------
 
-struct options_data_t
+struct s_options_data
 {
   // Audio
   STRING sz_maxsoundchannel;
@@ -127,7 +127,7 @@ struct options_data_t
   int     scrz;                  // Screen z-buffer depth ( 8 unsupported )
   int     maxmessage;    //
   bool_t  messageon;           // Messages?
-  int     wraptolerance;      // Status bar
+  int     wraptolerance;      // Status_t bar
   bool_t  staton;             // Draw the status bars?
   bool_t  render_overlay;     //Draw overlay?
   bool_t  render_background;  // Do we render the water as a background?
@@ -152,20 +152,20 @@ struct options_data_t
   bool_t  gfxacceleration;            // Force OpenGL GFX acceleration?
 };
 
-typedef struct options_data_t OPTIONS_DATA;
+typedef struct s_options_data OPTIONS_DATA;
 
 OPTIONS_DATA OData;
 
 // TEMPORARY!
 #define NET_DONE_SENDING_FILES 10009
 #define NET_NUM_FILES_TO_SEND  10010
-static STRING mnu_filternamebuffer    = { '\0' };
-static STRING mnu_display_mode_buffer = { '\0' };
+static STRING mnu_filternamebuffer    = { EOS };
+static STRING mnu_display_mode_buffer = { EOS };
 static int    mnu_display_mode_index = 0;
 
 #define MAXWIDGET 100
 static int       mnu_widgetCount;
-static ui_Widget mnu_widgetList[MAXWIDGET];
+static ui_Widget_t mnu_widgetList[MAXWIDGET];
 
 static int mnu_selectedPlayerCount = 0;
 static int mnu_selectedInput[PLALST_COUNT] = {0};
@@ -198,8 +198,8 @@ static const char *mnu_mainMenuButtons[] =
 
 static const char *mnu_singlePlayerButtons[] =
 {
-  "New CPlayer",
-  "Load Saved CPlayer",
+  "New Player_t",
+  "Load Saved Player_t",
   "Back",
   ""
 };
@@ -266,7 +266,7 @@ static int mnu_buttonTop = 0;
 static bool_t mnu_startNewPlayer = bfalse;
 
 /* The font used for drawing text.  It's smaller than the button font */
-static TTFont *mnu_Font = NULL;
+static TTFont_t *mnu_Font = NULL;
 
 //--------------------------------------------------------------------------------------------
 static bool_t mnu_removeSelectedPlayerInput( PLA_REF player, Uint32 input );
@@ -275,10 +275,10 @@ static bool_t mnu_removeSelectedPlayerInput( PLA_REF player, Uint32 input );
 static void init_options_data()
 {
   // Audio
-  OData.sz_maxsoundchannel[0] = '\0';
-  OData.sz_buffersize[0]      = '\0';
-  OData.sz_soundvolume[0]     = '\0';
-  OData.sz_musicvolume[0]     = '\0';
+  OData.sz_maxsoundchannel[0] = EOS;
+  OData.sz_buffersize[0]      = EOS;
+  OData.sz_soundvolume[0]     = EOS;
+  OData.sz_musicvolume[0]     = EOS;
 
   OData.allow_sound = CData.allow_sound;
   OData.soundvolume = CData.soundvolume;
@@ -289,9 +289,9 @@ static void init_options_data()
   OData.musicvolume = CData.musicvolume;
 
   // VIDEO
-  OData.sz_maxmessage[0] = '\0';
-  OData.sz_scrd[0]       = '\0';
-  OData.sz_scrz[0]       = '\0';
+  OData.sz_maxmessage[0] = EOS;
+  OData.sz_scrd[0]       = EOS;
+  OData.sz_scrz[0]       = EOS;
 
   OData.zreflect = CData.zreflect;
   OData.maxtotalmeshvertices = CData.maxtotalmeshvertices;
@@ -372,7 +372,7 @@ static void update_options_data()
 
 
 //--------------------------------------------------------------------------------------------
-bool_t mnu_slideButton( ui_Widget * pw2, ui_Widget * pw1, float dx, float dy )
+bool_t mnu_slideButton( ui_Widget_t * pw2, ui_Widget_t * pw1, float dx, float dy )
 {
   if ( NULL == pw2 || NULL == pw1 ) return bfalse;
   if ( !ui_copyWidget( pw2, pw1 ) ) return bfalse;
@@ -385,24 +385,24 @@ bool_t mnu_slideButton( ui_Widget * pw2, ui_Widget * pw1, float dx, float dy )
 
 //--------------------------------------------------------------------------------------------
 // "Slidy" buttons used in some of the menus.  They're shiny.
-struct slidy_button_state_t
+struct sSlidyButtonState
 {
   float lerp;
   int   top;
   int   left;
 
   int         button_count;
-  ui_Widget * button_list;
+  ui_Widget_t * button_list;
 };
 
-struct slidy_button_state_t SlidyButtonState;
+struct sSlidyButtonState SlidyButtonState_t;
 
 //--------------------------------------------------------------------------------------------
-int mnu_initWidgetsList( ui_Widget wlist[], int wmax, const char * text[] )
+int mnu_initWidgetsList( ui_Widget_t wlist[], int wmax, const char * text[] )
 {
   int i, cnt;
   cnt = 0;
-  for ( i = 0; i < wmax && '\0' != text[i][0]; i++, cnt++ )
+  for ( i = 0; i < wmax && EOS != text[i][0]; i++, cnt++ )
   {
     ui_initWidget( wlist + i, i, mnu_Font, text[i], NULL, mnu_buttonLeft, mnu_buttonTop + ( i * 35 ), 200, 30 );
   };
@@ -411,32 +411,32 @@ int mnu_initWidgetsList( ui_Widget wlist[], int wmax, const char * text[] )
 };
 
 //--------------------------------------------------------------------------------------------
-static void initSlidyButtons( float lerp, ui_Widget * buttons, int count )
+static void initSlidyButtons( float lerp, ui_Widget_t * buttons, int count )
 {
-  SlidyButtonState.lerp         = lerp;
-  SlidyButtonState.button_list  = buttons;
-  SlidyButtonState.button_count = count;
+  SlidyButtonState_t.lerp         = lerp;
+  SlidyButtonState_t.button_list  = buttons;
+  SlidyButtonState_t.button_count = count;
 }
 
 //--------------------------------------------------------------------------------------------
 static void mnu_updateSlidyButtons( float deltaTime )
 {
-  SlidyButtonState.lerp += ( deltaTime * 1.5f );
+  SlidyButtonState_t.lerp += ( deltaTime * 1.5f );
 }
 
 //--------------------------------------------------------------------------------------------
 static void mnu_drawSlidyButtons()
 {
   int i;
-  ui_Widget wtmp;
+  ui_Widget_t wtmp;
 
-  for ( i = 0; i < SlidyButtonState.button_count;  i++ )
+  for ( i = 0; i < SlidyButtonState_t.button_count;  i++ )
   {
     float dx;
 
-    dx = - ( 360 - i * 35 )  * SlidyButtonState.lerp;
+    dx = - ( 360 - i * 35 )  * SlidyButtonState_t.lerp;
 
-    mnu_slideButton( &wtmp, &SlidyButtonState.button_list[i], dx, 0 );
+    mnu_slideButton( &wtmp, &SlidyButtonState_t.button_list[i], dx, 0 );
     ui_doButton( &wtmp );
   }
 }
@@ -490,11 +490,11 @@ int initMenus()
 }
 
 //--------------------------------------------------------------------------------------------
-int mnu_doMain( MenuProc * mproc, float deltaTime )
+int mnu_doMain( MenuProc_t * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static GLtexture background;
-  static ui_Widget wBackground, wCopyright;
+  static ui_Widget_t wBackground, wCopyright;
   static float lerp;
   static int menuChoice = 0;
 
@@ -522,7 +522,7 @@ int mnu_doMain( MenuProc * mproc, float deltaTime )
       // do buttons sliding in animation, and background fading in
       // background
 
-      glColor4f( 1, 1, 1, 1 - SlidyButtonState.lerp );
+      glColor4f( 1, 1, 1, 1 - SlidyButtonState_t.lerp );
       ui_drawImage( &wBackground );
 
       // "Copyright" text
@@ -532,7 +532,7 @@ int mnu_doMain( MenuProc * mproc, float deltaTime )
       mnu_updateSlidyButtons( -deltaTime );
 
       // Let lerp wind down relative to the time elapsed
-      if ( SlidyButtonState.lerp <= 0.0f )
+      if ( SlidyButtonState_t.lerp <= 0.0f )
       {
         menuState = MM_Running;
       }
@@ -590,7 +590,7 @@ int mnu_doMain( MenuProc * mproc, float deltaTime )
     case MM_Leaving:
       // Do buttons sliding out and background fading
       // Do the same stuff as in MM_Entering, but backwards
-      glColor4f( 1, 1, 1, 1 - SlidyButtonState.lerp );
+      glColor4f( 1, 1, 1, 1 - SlidyButtonState_t.lerp );
       ui_drawImage( &wBackground );
 
       // "Copyright" text
@@ -599,7 +599,7 @@ int mnu_doMain( MenuProc * mproc, float deltaTime )
       // Buttons
       mnu_drawSlidyButtons();
       mnu_updateSlidyButtons( deltaTime );
-      if ( SlidyButtonState.lerp >= 1.0f )
+      if ( SlidyButtonState_t.lerp >= 1.0f )
       {
         menuState = MM_Finish;
       }
@@ -621,11 +621,11 @@ int mnu_doMain( MenuProc * mproc, float deltaTime )
 }
 
 //--------------------------------------------------------------------------------------------
-int mnu_doSinglePlayer( MenuProc * mproc, float deltaTime )
+int mnu_doSinglePlayer( MenuProc_t * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static GLtexture background;
-  static ui_Widget wBackground, wCopyright;
+  static ui_Widget_t wBackground, wCopyright;
   static int menuChoice;
   int result = 0;
 
@@ -648,7 +648,7 @@ int mnu_doSinglePlayer( MenuProc * mproc, float deltaTime )
       break;
 
     case MM_Entering:
-      glColor4f( 1, 1, 1, 1 - SlidyButtonState.lerp );
+      glColor4f( 1, 1, 1, 1 - SlidyButtonState_t.lerp );
 
       // Draw the background image
       ui_drawImage( &wBackground );
@@ -659,7 +659,7 @@ int mnu_doSinglePlayer( MenuProc * mproc, float deltaTime )
       mnu_drawSlidyButtons();
       mnu_updateSlidyButtons( -deltaTime );
 
-      if ( SlidyButtonState.lerp <= 0.0f )
+      if ( SlidyButtonState_t.lerp <= 0.0f )
         menuState = MM_Running;
 
       break;
@@ -700,7 +700,7 @@ int mnu_doSinglePlayer( MenuProc * mproc, float deltaTime )
     case MM_Leaving:
       // Do buttons sliding out and background fading
       // Do the same stuff as in MM_Entering, but backwards
-      glColor4f( 1, 1, 1, 1 - SlidyButtonState.lerp );
+      glColor4f( 1, 1, 1, 1 - SlidyButtonState_t.lerp );
       ui_drawImage( &wBackground );
 
       // "Copyright" text
@@ -709,7 +709,7 @@ int mnu_doSinglePlayer( MenuProc * mproc, float deltaTime )
       mnu_drawSlidyButtons();
       mnu_updateSlidyButtons( deltaTime );
 
-      if ( SlidyButtonState.lerp >= 1.0f )
+      if ( SlidyButtonState_t.lerp >= 1.0f )
       {
         menuState = MM_Finish;
       }
@@ -735,14 +735,14 @@ int mnu_doSinglePlayer( MenuProc * mproc, float deltaTime )
 //--------------------------------------------------------------------------------------------
 // TODO: I totally fudged the layout of this menu by adding an offset for when
 // the game isn't in 640x480.  Needs to be fixed.
-int mnu_doChooseModule( MenuProc * mproc, float deltaTime )
+int mnu_doChooseModule( MenuProc_t * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static int menuChoice = 0;
 
   static int startIndex;
   static GLtexture background;
-  static ui_Widget wBackground, wCopyright, wtmp;
+  static ui_Widget_t wBackground, wCopyright, wtmp;
 
   static int moduleMenuOffsetX;
   static int moduleMenuOffsetY;
@@ -751,12 +751,12 @@ int mnu_doChooseModule( MenuProc * mproc, float deltaTime )
   int i, j, x, y;
   char txtBuffer[128];
 
-  CServer * sv;
+  Server_t * sv;
 
-  //// make sure a CClient state is defined
+  //// make sure a Client_t state is defined
   //MenuProc_ensure_client(mproc, NULL);
 
-  // make sure a CServer state is defined
+  // make sure a Server_t state is defined
   MenuProc_ensure_server(mproc, NULL);
   sv = mproc->sv;
 
@@ -978,7 +978,7 @@ int mnu_doChooseModule( MenuProc * mproc, float deltaTime )
         memcpy( &(sv->mod), sv->loc_mod + mproc->selectedModule, sizeof(MOD_INFO));
         sv->selectedModule = mproc->selectedModule;
 
-        //set up the ModState
+        //set up the ModState_t
         ModState_renew( &(sv->modstate), sv->loc_mod + mproc->selectedModule, (Uint32)(~0));
 
         // 1 == start the game
@@ -1173,13 +1173,13 @@ void import_selected_players()
 };
 
 //--------------------------------------------------------------------------------------------
-int mnu_doChoosePlayer( MenuProc * mproc, float deltaTime )
+int mnu_doChoosePlayer( MenuProc_t * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static int menuChoice = 0;
 
   static GLtexture background;
-  static ui_Widget wBackground, wCopyright, wtmp;
+  static ui_Widget_t wBackground, wCopyright, wtmp;
   static bool_t bquit = bfalse;
   int result = 0;
   static int numVertical, numHorizontal;
@@ -1189,9 +1189,9 @@ int mnu_doChoosePlayer( MenuProc * mproc, float deltaTime )
   static Uint32 BitsInput[4];
   static bool_t created_game = bfalse;
 
-  CGame   * gs = gfxState.gs;
-  CClient * cl = mproc->cl;
-  CServer * sv = mproc->sv;
+  Game_t   * gs = gfxState.gs;
+  Client_t * cl = mproc->cl;
+  Server_t * sv = mproc->sv;
 
   switch ( menuState )
   {
@@ -1404,11 +1404,11 @@ int mnu_doChoosePlayer( MenuProc * mproc, float deltaTime )
 
 
 //--------------------------------------------------------------------------------------------
-int mnu_doOptions( MenuProc * mproc, float deltaTime )
+int mnu_doOptions( MenuProc_t * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static GLtexture background;
-  static ui_Widget wBackground, wCopyright;
+  static ui_Widget_t wBackground, wCopyright;
   static float lerp;
   static int menuChoice = 0;
 
@@ -1441,7 +1441,7 @@ int mnu_doOptions( MenuProc * mproc, float deltaTime )
       // background
 
       //Draw the background
-      glColor4f( 1, 1, 1, 1 - SlidyButtonState.lerp );
+      glColor4f( 1, 1, 1, 1 - SlidyButtonState_t.lerp );
       ui_drawImage( &wBackground );
 
       // "Copyright" text
@@ -1451,7 +1451,7 @@ int mnu_doOptions( MenuProc * mproc, float deltaTime )
       mnu_updateSlidyButtons( -deltaTime );
 
       // Let lerp wind down relative to the time elapsed
-      if ( SlidyButtonState.lerp <= 0.0f )
+      if ( SlidyButtonState_t.lerp <= 0.0f )
       {
         menuState = MM_Running;
       }
@@ -1503,7 +1503,7 @@ int mnu_doOptions( MenuProc * mproc, float deltaTime )
     case MM_Leaving:
       // Do buttons sliding out and background fading
       // Do the same stuff as in MM_Entering, but backwards
-      glColor4f( 1, 1, 1, 1 - SlidyButtonState.lerp );
+      glColor4f( 1, 1, 1, 1 - SlidyButtonState_t.lerp );
       ui_drawImage( &wBackground );
 
       // "Options" text
@@ -1512,7 +1512,7 @@ int mnu_doOptions( MenuProc * mproc, float deltaTime )
       // Buttons
       mnu_drawSlidyButtons();
       mnu_updateSlidyButtons( deltaTime );
-      if ( SlidyButtonState.lerp >= 1.0f )
+      if ( SlidyButtonState_t.lerp >= 1.0f )
       {
         menuState = MM_Finish;
       }
@@ -1536,11 +1536,11 @@ int mnu_doOptions( MenuProc * mproc, float deltaTime )
 }
 
 //--------------------------------------------------------------------------------------------
-int mnu_doAudioOptions( MenuProc * mproc, float deltaTime )
+int mnu_doAudioOptions( MenuProc_t * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static GLtexture background;
-  static ui_Widget wBackground, wCopyright;
+  static ui_Widget_t wBackground, wCopyright;
   static float lerp;
   static int menuChoice = 0;
 
@@ -1573,7 +1573,7 @@ int mnu_doAudioOptions( MenuProc * mproc, float deltaTime )
     case MM_Entering:
       // do buttons sliding in animation, and background fading in
       // background
-      glColor4f( 1, 1, 1, 1 - SlidyButtonState.lerp );
+      glColor4f( 1, 1, 1, 1 - SlidyButtonState_t.lerp );
 
       //Draw the background
       ui_drawImage( &wBackground );
@@ -1765,7 +1765,7 @@ int mnu_doAudioOptions( MenuProc * mproc, float deltaTime )
     case MM_Leaving:
       // Do buttons sliding out and background fading
       // Do the same stuff as in MM_Entering, but backwards
-      glColor4f( 1, 1, 1, 1 - SlidyButtonState.lerp );
+      glColor4f( 1, 1, 1, 1 - SlidyButtonState_t.lerp );
       ui_drawImage( &wBackground );
 
       //Fall trough
@@ -1792,11 +1792,11 @@ int mnu_doAudioOptions( MenuProc * mproc, float deltaTime )
 }
 
 //--------------------------------------------------------------------------------------------
-int mnu_doVideoOptions( MenuProc * mproc, float deltaTime )
+int mnu_doVideoOptions( MenuProc_t * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static GLtexture background;
-  static ui_Widget wBackground, wCopyright;
+  static ui_Widget_t wBackground, wCopyright;
   static float lerp;
   static int menuChoice = 0;
   static STRING button_txt;
@@ -1862,7 +1862,7 @@ int mnu_doVideoOptions( MenuProc * mproc, float deltaTime )
     case MM_Entering:
       // do buttons sliding in animation, and background fading in
       // background
-      glColor4f( 1, 1, 1, 1 - SlidyButtonState.lerp );
+      glColor4f( 1, 1, 1, 1 - SlidyButtonState_t.lerp );
 
       //Draw the background
       ui_drawImage( &wBackground );
@@ -2376,7 +2376,7 @@ int mnu_doVideoOptions( MenuProc * mproc, float deltaTime )
     case MM_Leaving:
       // Do buttons sliding out and background fading
       // Do the same stuff as in MM_Entering, but backwards
-      glColor4f( 1, 1, 1, 1 - SlidyButtonState.lerp );
+      glColor4f( 1, 1, 1, 1 - SlidyButtonState_t.lerp );
       ui_drawImage( &wBackground );
 
       // "Options" text
@@ -2417,15 +2417,15 @@ int mnu_doVideoOptions( MenuProc * mproc, float deltaTime )
 
 
 //--------------------------------------------------------------------------------------------
-int mnu_doLaunchGame( MenuProc * mproc, float deltaTime )
+int mnu_doLaunchGame( MenuProc_t * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static int menuChoice = 0;
 
-  static TTFont *font;
+  static TTFont_t *font;
   int x, y, i, result = 0;
 
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   switch ( menuState )
   {
@@ -2486,7 +2486,7 @@ int mnu_doLaunchGame( MenuProc * mproc, float deltaTime )
       {
         for ( i = 0; i < mnu_selectedPlayerCount; i++ )
         {
-          fnt_drawTextFormatted( font, x, y, "CPlayer selected: %s", loadplayer[REF_TO_INT(mnu_selectedPlayer[i])].name );
+          fnt_drawTextFormatted( font, x, y, "Player_t selected: %s", loadplayer[REF_TO_INT(mnu_selectedPlayer[i])].name );
           y += 35;
         };
       }
@@ -2516,7 +2516,7 @@ int mnu_doLaunchGame( MenuProc * mproc, float deltaTime )
 }
 
 //--------------------------------------------------------------------------------------------
-int mnu_doNotImplemented( MenuProc * mproc, float deltaTime )
+int mnu_doNotImplemented( MenuProc_t * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static int menuChoice = 0;
@@ -2583,7 +2583,7 @@ int mnu_doNotImplemented( MenuProc * mproc, float deltaTime )
 
 
 //--------------------------------------------------------------------------------------------
-int mnu_doNetworkOff( MenuProc * mproc, float deltaTime )
+int mnu_doNetworkOff( MenuProc_t * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static int menuChoice = 0;
@@ -2642,13 +2642,13 @@ int mnu_doNetworkOff( MenuProc * mproc, float deltaTime )
   return result;
 }
 //--------------------------------------------------------------------------------------------
-int mnu_RunIngame( MenuProc * mproc )
+int mnu_RunIngame( MenuProc_t * mproc )
 {
-  ProcState * proc;
+  ProcState_t * proc;
   double frameDuration, frameTicks;
   float deltaTime;
 
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   if(NULL == mproc || mproc->proc.Terminated) return -1;
 
@@ -2701,10 +2701,10 @@ int mnu_RunIngame( MenuProc * mproc )
 
 
 //--------------------------------------------------------------------------------------------
-int mnu_Run( MenuProc * mproc )
+int mnu_Run( MenuProc_t * mproc )
 {
-  ProcState * proc;
-  CGame     * gs;
+  ProcState_t * proc;
+  Game_t     * gs;
   double frameDuration, frameTicks;
 
   if(NULL == mproc || mproc->proc.Terminated) return -1;
@@ -2909,7 +2909,7 @@ int mnu_Run( MenuProc * mproc )
 
           if(!gs->modstate.loaded)
           {
-            memcpy(&(gs->modstate), &(mproc->cl->req_modstate), sizeof(ModState));
+            memcpy(&(gs->modstate), &(mproc->cl->req_modstate), sizeof(ModState_t));
 
             log_info("SDL_main: Loading module %s... ", mproc->cl->req_mod.loadname);
 
@@ -3196,7 +3196,7 @@ void mnu_saveSettings()
     snprintf( write, sizeof( write ), "[MAX_SOUND_CHANNEL] : \"%i\"\n", OData.maxsoundchannel );
     fputs( write, setupfile );
 
-    /*CAMERA PART*/
+    /*Camera_t PART*/
     snprintf( write, sizeof( write ), "\n{CONTROL}\n" );
     fputs( write, setupfile );
 
@@ -3325,11 +3325,11 @@ void mnu_exitMenuMode()
 };
 
 //--------------------------------------------------------------------------------------------
-int mnu_doNetwork(MenuProc * mproc, float deltaTime)
+int mnu_doNetwork(MenuProc_t * mproc, float deltaTime)
 {
   static int menuState = MM_Begin;
   static GLtexture background;
-  static ui_Widget wBackground, wCopyright;
+  static ui_Widget_t wBackground, wCopyright;
   static float lerp;
   static int menuChoice = 0;
   int result = 0;
@@ -3342,7 +3342,7 @@ int mnu_doNetwork(MenuProc * mproc, float deltaTime)
     printf("mnu_doNetwork()\n");
 
     // set up menu variables
-    snprintf(CStringTmp1, sizeof(CStringTmp1), "%s/%s/%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_main_bitmap);
+    snprintf(CStringTmp1, sizeof(CStringTmp1), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_main_bitmap);
     GLTexture_Load(GL_TEXTURE_2D, &background, CStringTmp1, INVALID_TEXTURE);
     ui_initWidget( &wBackground, UI_Invalid, ui_getFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
 
@@ -3357,7 +3357,7 @@ int mnu_doNetwork(MenuProc * mproc, float deltaTime)
   case MM_Entering:
     // do buttons sliding in animation, and background fading in
     // background
-    glColor4f(1, 1, 1, 1 - SlidyButtonState.lerp);
+    glColor4f(1, 1, 1, 1 - SlidyButtonState_t.lerp);
     ui_initWidget( &wBackground, UI_Invalid, ui_getFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
 
     // "Copyright" text
@@ -3367,7 +3367,7 @@ int mnu_doNetwork(MenuProc * mproc, float deltaTime)
     mnu_updateSlidyButtons(-deltaTime);
 
     // Let lerp wind down relative to the time elapsed
-    if (SlidyButtonState.lerp <= 0.0f)
+    if (SlidyButtonState_t.lerp <= 0.0f)
     {
       menuState = MM_Running;
     }
@@ -3412,7 +3412,7 @@ int mnu_doNetwork(MenuProc * mproc, float deltaTime)
   case MM_Leaving:
     // Do buttons sliding out and background fading
     // Do the same stuff as in MM_Entering, but backwards
-    glColor4f(1, 1, 1, 1 - SlidyButtonState.lerp);
+    glColor4f(1, 1, 1, 1 - SlidyButtonState_t.lerp);
     ui_drawImage( &wBackground );
 
     // "Copyright" text
@@ -3421,7 +3421,7 @@ int mnu_doNetwork(MenuProc * mproc, float deltaTime)
     // Buttons
     mnu_drawSlidyButtons();
     mnu_updateSlidyButtons(deltaTime);
-    if (SlidyButtonState.lerp >= 1.0f)
+    if (SlidyButtonState_t.lerp >= 1.0f)
     {
       menuState = MM_Finish;
     }
@@ -3443,12 +3443,12 @@ int mnu_doNetwork(MenuProc * mproc, float deltaTime)
 }
 
 //--------------------------------------------------------------------------------------------
-int mnu_doHostGame(MenuProc * mproc, float deltaTime)
+int mnu_doHostGame(MenuProc_t * mproc, float deltaTime)
 {
   static int menuState = MM_Begin;
   static int menuChoice = 0;
 
-  static ui_Widget wBackground, wCopyright, wtmp;
+  static ui_Widget_t wBackground, wCopyright, wtmp;
   static int startIndex;
   static GLtexture background;
 
@@ -3459,11 +3459,11 @@ int mnu_doHostGame(MenuProc * mproc, float deltaTime)
   int i, j, x, y;
   char txtBuffer[128];
 
-  CServer * sv;
+  Server_t * sv;
 
   if(!net_Started()) return -1;
 
-  // make sure a CServer state is defined
+  // make sure a Server_t state is defined
   if(rv_succeed != MenuProc_ensure_server(mproc, NULL)) return -1;
   sv = mproc->sv;
 
@@ -3477,7 +3477,7 @@ int mnu_doHostGame(MenuProc * mproc, float deltaTime)
     sv->loc_mod_count = mnu_load_mod_data(mproc, sv->loc_mod, MAXMODULE);
 
     // Load font & background
-    snprintf(CStringTmp1, sizeof(CStringTmp1), "%s/%s/%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_sleepy_bitmap);
+    snprintf(CStringTmp1, sizeof(CStringTmp1), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_sleepy_bitmap);
     GLTexture_Load(GL_TEXTURE_2D, &background, CStringTmp1, INVALID_KEY);
 
     ui_initWidget( &wBackground, UI_Invalid, ui_getFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
@@ -3679,12 +3679,12 @@ int mnu_doHostGame(MenuProc * mproc, float deltaTime)
 }
 
 //--------------------------------------------------------------------------------------------
-int mnu_doUnhostGame(MenuProc * mproc, float deltaTime)
+int mnu_doUnhostGame(MenuProc_t * mproc, float deltaTime)
 {
   static int menuState = MM_Begin;
   static int menuChoice = 0;
 
-  static ui_Widget wBackground, wCopyright, wtmp;
+  static ui_Widget_t wBackground, wCopyright, wtmp;
   static int startIndex;
   static GLtexture background;
 
@@ -3695,11 +3695,11 @@ int mnu_doUnhostGame(MenuProc * mproc, float deltaTime)
   int i, x, y;
   char txtBuffer[128];
 
-  CServer * sv;
+  Server_t * sv;
 
   if(!net_Started()) return -1;
 
-  // make sure a CServer state is defined
+  // make sure a Server_t state is defined
   if(NULL == mproc->sv) return -1;
   sv = mproc->sv;
 
@@ -3729,7 +3729,7 @@ int mnu_doUnhostGame(MenuProc * mproc, float deltaTime)
     };
 
     // Load font & background
-    snprintf(CStringTmp1, sizeof(CStringTmp1), "%s/%s/%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_sleepy_bitmap);
+    snprintf(CStringTmp1, sizeof(CStringTmp1), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_sleepy_bitmap);
     GLTexture_Load(GL_TEXTURE_2D, &background, CStringTmp1, INVALID_KEY);
     ui_initWidget( &wBackground, UI_Invalid, ui_getFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
 
@@ -3826,7 +3826,7 @@ int mnu_doUnhostGame(MenuProc * mproc, float deltaTime)
       y += 20;
 
       // And finally, the summary
-      snprintf(txtBuffer, sizeof(txtBuffer), "%s/%s/%s/%s", CData.modules_dir, sv->mod.loadname, CData.gamedat_dir, CData.mnu_file);
+      snprintf(txtBuffer, sizeof(txtBuffer), "%s" SLASH_STRING "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.modules_dir, sv->mod.loadname, CData.gamedat_dir, CData.mnu_file);
       module_read_summary(txtBuffer, &(sv->loc_modtxt));
       for (i = 0;i < SUMMARYLINES;i++)
       {
@@ -3865,12 +3865,12 @@ int mnu_doUnhostGame(MenuProc * mproc, float deltaTime)
 }
 
 //--------------------------------------------------------------------------------------------
-int mnu_doJoinGame(MenuProc * mproc, float deltaTime)
+int mnu_doJoinGame(MenuProc_t * mproc, float deltaTime)
 {
   static int menuState = MM_Begin;
   static int menuChoice = 0;
 
-  static ui_Widget wBackground, wCopyright, wtmp;
+  static ui_Widget_t wBackground, wCopyright, wtmp;
   static int startIndex;
   static GLtexture background;
 
@@ -3885,8 +3885,8 @@ int mnu_doJoinGame(MenuProc * mproc, float deltaTime)
 
   SYS_PACKET egopkt;
 
-  CGame   * gs;
-  CClient * cl;
+  Game_t   * gs;
+  Client_t * cl;
 
   int result = 0;
   int i, j, x, y;
@@ -3896,7 +3896,7 @@ int mnu_doJoinGame(MenuProc * mproc, float deltaTime)
 
   gs = gfxState.gs;
 
-  // make sure a CServer state is defined
+  // make sure a Server_t state is defined
   if( rv_succeed != MenuProc_ensure_client(mproc, gfxState.gs) )
   {
     return -1;
@@ -3918,7 +3918,7 @@ int mnu_doJoinGame(MenuProc * mproc, float deltaTime)
     MenuProc_start_client(mproc, gs);
 
     // Load font & background
-    snprintf(CStringTmp1, sizeof(CStringTmp1), "%s/%s/%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_sleepy_bitmap);
+    snprintf(CStringTmp1, sizeof(CStringTmp1), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_sleepy_bitmap);
     GLTexture_Load(GL_TEXTURE_2D, &background, CStringTmp1, INVALID_KEY);
 
     ui_initWidget( &wBackground, UI_Invalid, ui_getFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
@@ -4187,7 +4187,7 @@ int mnu_doJoinGame(MenuProc * mproc, float deltaTime)
 }
 
 //--------------------------------------------------------------------------------------------
-int mnu_handleKeyboard( MenuProc * mproc )
+int mnu_handleKeyboard( MenuProc_t * mproc )
 {
   int retval = 0;
   bool_t control, alt, shift, mod;
@@ -4207,7 +4207,7 @@ int mnu_handleKeyboard( MenuProc * mproc )
 };
 
 //--------------------------------------------------------------------------------------------
-int mnu_doIngameQuit( MenuProc * mproc, float deltaTime )
+int mnu_doIngameQuit( MenuProc_t * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static float lerp;
@@ -4216,7 +4216,7 @@ int mnu_doIngameQuit( MenuProc * mproc, float deltaTime )
 
   int result = 0;
 
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   switch ( menuState )
   {
@@ -4239,7 +4239,7 @@ int mnu_doIngameQuit( MenuProc * mproc, float deltaTime )
       mnu_updateSlidyButtons( -deltaTime );
 
       // Let lerp wind down relative to the time elapsed
-      if ( SlidyButtonState.lerp <= 0.0f )
+      if ( SlidyButtonState_t.lerp <= 0.0f )
       {
         menuState = MM_Running;
       }
@@ -4278,7 +4278,7 @@ int mnu_doIngameQuit( MenuProc * mproc, float deltaTime )
       // Buttons
       mnu_drawSlidyButtons();
       mnu_updateSlidyButtons( deltaTime );
-      if ( SlidyButtonState.lerp >= 1.0f )
+      if ( SlidyButtonState_t.lerp >= 1.0f )
       {
         menuState = MM_Finish;
       }
@@ -4304,7 +4304,7 @@ int mnu_doIngameQuit( MenuProc * mproc, float deltaTime )
 
 
 //--------------------------------------------------------------------------------------------
-int mnu_doIngameInventory( MenuProc * mproc, float deltaTime )
+int mnu_doIngameInventory( MenuProc_t * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
   static float lerp;
@@ -4317,8 +4317,8 @@ int mnu_doIngameInventory( MenuProc * mproc, float deltaTime )
   static Uint32 starttime;
   int iw, ih;
 
-  CGame   * gs = gfxState.gs;
-  CClient * cl = mproc->cl;
+  Game_t   * gs = gfxState.gs;
+  Client_t * cl = mproc->cl;
 
   if( !EKEY_PVALID(gs) ) return -1;
 
@@ -4374,7 +4374,7 @@ int mnu_doIngameInventory( MenuProc * mproc, float deltaTime )
       mnu_updateSlidyButtons( -deltaTime );
 
       // Let lerp wind down relative to the time elapsed
-      if ( SlidyButtonState.lerp <= 0.0f )
+      if ( SlidyButtonState_t.lerp <= 0.0f )
       {
         menuState = MM_Running;
       }
@@ -4405,7 +4405,7 @@ int mnu_doIngameInventory( MenuProc * mproc, float deltaTime )
       // Buttons
       mnu_drawSlidyButtons();
       mnu_updateSlidyButtons( deltaTime );
-      if ( SlidyButtonState.lerp >= 1.0f )
+      if ( SlidyButtonState_t.lerp >= 1.0f )
       {
         menuState = MM_Finish;
       }
@@ -4430,7 +4430,7 @@ int mnu_doIngameInventory( MenuProc * mproc, float deltaTime )
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-MenuProc * MenuProc_new(MenuProc *mproc)
+MenuProc_t * MenuProc_new(MenuProc_t *mproc)
 {
   //fprintf( stdout, "MenuProc_new()\n");
 
@@ -4438,9 +4438,9 @@ MenuProc * MenuProc_new(MenuProc *mproc)
 
   MenuProc_delete( mproc );
 
-  memset(mproc, 0, sizeof(MenuProc));
+  memset(mproc, 0, sizeof(MenuProc_t));
 
-  EKEY_PNEW( mproc, MenuProc );
+  EKEY_PNEW( mproc, MenuProc_t );
 
   ProcState_new( &(mproc->proc) );
 
@@ -4452,7 +4452,7 @@ MenuProc * MenuProc_new(MenuProc *mproc)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t MenuProc_delete(MenuProc * ms)
+bool_t MenuProc_delete(MenuProc_t * ms)
 {
   bool_t retval = bfalse;
 
@@ -4469,14 +4469,14 @@ bool_t MenuProc_delete(MenuProc * ms)
 }
 
 //--------------------------------------------------------------------------------------------
-MenuProc * MenuProc_renew(MenuProc *ms)
+MenuProc_t * MenuProc_renew(MenuProc_t *ms)
 {
   MenuProc_delete(ms);
   return MenuProc_new(ms);
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t MenuProc_init(MenuProc * ms)
+bool_t MenuProc_init(MenuProc_t * ms)
 {
   if(NULL == ms) return bfalse;
 
@@ -4494,7 +4494,7 @@ bool_t MenuProc_init(MenuProc * ms)
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t MenuProc_ensure_server(MenuProc * ms, CGame * gs)
+retval_t MenuProc_ensure_server(MenuProc_t * ms, Game_t * gs)
 {
   if( !EKEY_PVALID(ms) ) return rv_fail;
 
@@ -4507,7 +4507,7 @@ retval_t MenuProc_ensure_server(MenuProc * ms, CGame * gs)
 };
 
 //--------------------------------------------------------------------------------------------
-retval_t   MenuProc_ensure_client(MenuProc * ms, CGame * gs)
+retval_t   MenuProc_ensure_client(MenuProc_t * ms, Game_t * gs)
 {
   if( !EKEY_PVALID(ms) ) return rv_fail;
 
@@ -4520,7 +4520,7 @@ retval_t   MenuProc_ensure_client(MenuProc * ms, CGame * gs)
 };
 
 //--------------------------------------------------------------------------------------------
-retval_t   MenuProc_ensure_network(MenuProc * ms, CGame * gs)
+retval_t   MenuProc_ensure_network(MenuProc_t * ms, Game_t * gs)
 {
   if( !EKEY_PVALID(ms) ) return rv_fail;
 
@@ -4534,7 +4534,7 @@ retval_t   MenuProc_ensure_network(MenuProc * ms, CGame * gs)
 
 
 //--------------------------------------------------------------------------------------------
-retval_t   MenuProc_start_server(MenuProc * ms, CGame * gs)
+retval_t   MenuProc_start_server(MenuProc_t * ms, Game_t * gs)
 {
   retval_t ret;
 
@@ -4549,7 +4549,7 @@ retval_t   MenuProc_start_server(MenuProc * ms, CGame * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t   MenuProc_start_client(MenuProc * ms, CGame * gs)
+retval_t   MenuProc_start_client(MenuProc_t * ms, Game_t * gs)
 {
   retval_t ret;
 
@@ -4564,14 +4564,14 @@ retval_t   MenuProc_start_client(MenuProc * ms, CGame * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t   MenuProc_start_network(MenuProc * ms, CGame * gs)
+retval_t   MenuProc_start_network(MenuProc_t * ms, Game_t * gs)
 {
   assert( bfalse );
   return rv_fail;
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t   MenuProc_start_netfile(MenuProc * ms, CGame * gs)
+retval_t   MenuProc_start_netfile(MenuProc_t * ms, Game_t * gs)
 {
   retval_t ret;
 
@@ -4586,7 +4586,7 @@ retval_t   MenuProc_start_netfile(MenuProc * ms, CGame * gs)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t MenuProc_init_ingame(MenuProc * ms)
+bool_t MenuProc_init_ingame(MenuProc_t * ms)
 {
   if(NULL == ms) return bfalse;
 
@@ -4604,7 +4604,7 @@ bool_t MenuProc_init_ingame(MenuProc * ms)
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 mnu_load_titleimage(MenuProc * mproc, int titleimage, char *szLoadName)
+Uint32 mnu_load_titleimage(MenuProc_t * mproc, int titleimage, char *szLoadName)
 {
   // ZZ> This function loads a title in the specified image slot, forcing it into
   //     system memory.  Returns btrue if it worked
@@ -4619,7 +4619,7 @@ Uint32 mnu_load_titleimage(MenuProc * mproc, int titleimage, char *szLoadName)
 }
 
 //--------------------------------------------------------------------------------------------
-size_t mnu_load_mod_data(MenuProc * mproc, MOD_INFO * mi_ary, size_t mi_len)
+size_t mnu_load_mod_data(MenuProc_t * mproc, MOD_INFO * mi_ary, size_t mi_len)
 {
   // ZZ> This function loads the title image for each module.  Modules without a
   //     title are marked as invalid
@@ -4683,14 +4683,14 @@ size_t mnu_load_mod_data(MenuProc * mproc, MOD_INFO * mi_ary, size_t mi_len)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mnu_load_cl_images(MenuProc *mproc)
+bool_t mnu_load_cl_images(MenuProc_t *mproc)
 {
   // BB> This function loads the title image(s) for the modules that the client
   //     is browsing
 
   int cnt;
   bool_t all_loaded = btrue;
-  CClient * cl = mproc->cl;
+  Client_t * cl = mproc->cl;
 
   all_loaded = btrue;
   for(cnt=0; cnt<MAXMODULE; cnt++)
@@ -4699,7 +4699,7 @@ bool_t mnu_load_cl_images(MenuProc *mproc)
     if(MAXMODULE==cl->rem_mod[cnt].tx_title_idx && cl->rem_mod[cnt].is_hosted)
     {
       // see if the the file has appeared locally
-      snprintf(CStringTmp1, sizeof(CStringTmp1), "%s/%s/%s/%s", CData.modules_dir, cl->rem_mod[cnt].loadname, CData.gamedat_dir, CData.title_bitmap);
+      snprintf(CStringTmp1, sizeof(CStringTmp1), "%s" SLASH_STRING "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.modules_dir, cl->rem_mod[cnt].loadname, CData.gamedat_dir, CData.title_bitmap);
       cl->rem_mod[cnt].tx_title_idx = mnu_load_titleimage(mproc, cnt, CStringTmp1);
 
       if(MAXMODULE==cl->rem_mod[cnt].tx_title_idx)
@@ -4714,7 +4714,7 @@ bool_t mnu_load_cl_images(MenuProc *mproc)
 }
 
 //---------------------------------------------------------------------------------------------
-void mnu_free_all_titleimages(MenuProc * mproc)
+void mnu_free_all_titleimages(MenuProc_t * mproc)
 {
   // ZZ> This function clears out all of the title images
 
@@ -4727,7 +4727,7 @@ void mnu_free_all_titleimages(MenuProc * mproc)
 
 
 //---------------------------------------------------------------------------------------------
-void mnu_prime_modules(MenuProc * mproc)
+void mnu_prime_modules(MenuProc_t * mproc)
 {
   mproc->selectedModule     = -1;
   mproc->validModules_count = 0;
@@ -4745,20 +4745,20 @@ void mnu_prime_modules(MenuProc * mproc)
 }
 
 //---------------------------------------------------------------------------------------------
-retval_t mnu_ensure_game(MenuProc * mproc, CGame ** optional)
+retval_t mnu_ensure_game(MenuProc_t * mproc, Game_t ** optional)
 {
   bool_t  is_valid = bfalse;
-  CGame * ptmp     = NULL;
+  Game_t * ptmp     = NULL;
 
-  // make sure that we have a CGame somewhere
+  // make sure that we have a Game_t somewhere
   if(NULL != optional) ptmp = *optional;
   if(NULL == ptmp    ) ptmp = gfxState.gs;
   if(NULL == ptmp    )
   {
     // create a new game
-    CNet    * net = NULL;
-    CClient * cl  = NULL;
-    CServer * sv  = NULL;
+    Net_t    * net = NULL;
+    Client_t * cl  = NULL;
+    Server_t * sv  = NULL;
 
     if( EKEY_PVALID(mproc) )
     {
@@ -4767,10 +4767,10 @@ retval_t mnu_ensure_game(MenuProc * mproc, CGame ** optional)
       sv  = mproc->sv;
     }
 
-    ptmp = CGame_create(net, cl, sv);
+    ptmp = Game_create(net, cl, sv);
   }
 
-  // make sure that CGame is known
+  // make sure that Game_t is known
   is_valid = EKEY_PVALID(ptmp);
   if( is_valid )
   {
@@ -4782,15 +4782,15 @@ retval_t mnu_ensure_game(MenuProc * mproc, CGame ** optional)
 }
 
 //---------------------------------------------------------------------------------------------
-retval_t mnu_upload_game_info(CGame * gs, MenuProc * ms)
+retval_t mnu_upload_game_info(Game_t * gs, MenuProc_t * ms)
 {
   // BB > register the various networking modules with the given game
 
   if( !EKEY_PVALID(gs) || !EKEY_PVALID(ms)) return rv_fail;
 
-  CGame_registerNetwork( gs, ms->net, btrue );
-  CGame_registerClient ( gs, ms->cl,  btrue );
-  CGame_registerServer ( gs, ms->sv,  btrue );
+  Game_registerNetwork( gs, ms->net, btrue );
+  Game_registerClient ( gs, ms->cl,  btrue );
+  Game_registerServer ( gs, ms->sv,  btrue );
 
   return rv_succeed;
 };

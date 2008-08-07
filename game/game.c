@@ -40,8 +40,10 @@
 #include "enchant.h"
 #include "camera.h"
 #include "sound.h"
+
 #include "object.inl"
 #include "Network.inl"
+#include "mesh.inl"
 
 #include "egoboo_rpc.h"
 #include "egoboo_utility.h"
@@ -63,18 +65,18 @@
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
 
-static MachineState _macState = { bfalse };
+static MachineState_t _macState = { bfalse };
 
 WEATHER_INFO GWeather;
 
 //---------------------------------------------------------------------------------------------
 
-static MachineState * MachineState_new( MachineState * ms );
-static bool_t         MachineState_delete( MachineState * ms );
+static MachineState_t * MachineState_new( MachineState_t * ms );
+static bool_t         MachineState_delete( MachineState_t * ms );
 
 
-static CGame * CGame_new(CGame * gs, CNet * net, CClient * cl, CServer * sv);
-static bool_t  CGame_delete(CGame * gs);
+static Game_t * Game_new(Game_t * gs, Net_t * net, Client_t * cl, Server_t * sv);
+static bool_t  Game_delete(Game_t * gs);
 
 static bool_t  CGui_startUp();
 
@@ -86,7 +88,7 @@ static void     game_handleKeyboard();
 
 #define RELEASE(x) if (x) {x->Release(); x=NULL;}
 
-#define PROFILE_DECLARE(XX) ClockState * clkstate_##XX = NULL; double clkcount_##XX = 0.0; double clktime_##XX = 0.0;
+#define PROFILE_DECLARE(XX) ClockState_t * clkstate_##XX = NULL; double clkcount_##XX = 0.0; double clktime_##XX = 0.0;
 #define PROFILE_INIT(XX)    { clkstate_##XX  = ClockState_create(#XX, -1); }
 #define PROFILE_FREE(XX)    { ClockState_destroy(&(clkstate_##XX)); }
 #define PROFILE_QUERY(XX)   ( (double)clktime_##XX / (double)clkcount_##XX )
@@ -98,8 +100,8 @@ static void     game_handleKeyboard();
 
 char cActionName[MAXACTION][2];
 
-KeyboardBuffer GNetMsg = {20,0,0,{'\0'}};
-CGui   _gui_state = { bfalse };
+KeyboardBuffer_t GNetMsg = {20,0,0,{EOS}};
+Gui_t   _gui_state = { bfalse };
 
 PROFILE_DECLARE( resize_characters );
 PROFILE_DECLARE( keep_weapons_with_holders );
@@ -128,25 +130,25 @@ PROFILE_DECLARE( main_loop );
 
 // When operating as a server, there may be a need to host multiple games
 // this "stack" holds all valid game states
-struct GSStack_t
+struct sGSStack
 {
-  egoboo_key  ekey;
+  egoboo_key_t  ekey;
   int         count;
-  CGame * data[256];
+  Game_t * data[256];
 };
 
-typedef struct GSStack_t GSStack;
+typedef struct sGSStack GSStack_t;
 
-static GSStack _gs_stack = { bfalse };
+static GSStack_t _gs_stack = { bfalse };
 
-GSStack * GSStack_new(GSStack * stk);
-bool_t GSStack_delete(GSStack * stk);
-bool_t GSStack_push(GSStack * stk, CGame * gs);
-CGame * GSStack_pop(GSStack * stk);
-CGame * GSStack_get(GSStack * stk, int i);
-CGame * GSStack_remove(GSStack * stk, int i);
+GSStack_t * GSStack_new(GSStack_t * stk);
+bool_t GSStack_delete(GSStack_t * stk);
+bool_t GSStack_push(GSStack_t * stk, Game_t * gs);
+Game_t * GSStack_pop(GSStack_t * stk);
+Game_t * GSStack_get(GSStack_t * stk, int i);
+Game_t * GSStack_remove(GSStack_t * stk, int i);
 
-GSStack * Get_GSStack()
+GSStack_t * Get_GSStack()
 {
   // BB > a function to get the global game state stack.
   //      Acts like a singleton, will initialize _gs_stack if not already initialized
@@ -160,15 +162,15 @@ GSStack * Get_GSStack()
 };
 
 //---------------------------------------------------------------------------------------------
-static void update_looped_sounds( CGame * gs );
-static bool_t load_all_music_sounds(ConfigData * cd);
+static void update_looped_sounds( Game_t * gs );
+static bool_t load_all_music_sounds(ConfigData_t * cd);
 
-static void sdlinit( CGraphics * g );
+static void sdlinit( Graphics_t * g );
 
-static void update_game(CGame * gs, float dFrame, Uint32 * rand_idx);
+static void update_game(Game_t * gs, float dFrame, Uint32 * rand_idx);
 static void memory_cleanUp(void);
 
-GSStack * Get_GSStack();
+GSStack_t * Get_GSStack();
 
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
@@ -201,9 +203,9 @@ void memory_cleanUp()
 {
   // ZF> This function releases all loaded things in memory and cleans up everything properly
 
-  CGame * gs;
-  MachineState * mach_state;
-  GSStack * stk = Get_GSStack();
+  Game_t * gs;
+  MachineState_t * mach_state;
+  GSStack_t * stk = Get_GSStack();
 
   log_info("memory_cleanUp() - Attempting to clean up loaded things in memory... ");
 
@@ -214,7 +216,7 @@ void memory_cleanUp()
     if( !EKEY_PVALID(gs) ) continue;
 
     gs->proc.KillMe = btrue;
-    CGame_destroy(&gs);
+    Game_destroy(&gs);
   }
 
   // shut down all game systems
@@ -299,7 +301,7 @@ void make_newloadname( char *modname, char *appendname, char *newloadname )
 //
 //
 //---------------------------------------------------------------------------------------------
-void export_one_character( CGame * gs, CHR_REF ichr, CHR_REF iowner, int number )
+void export_one_character( Game_t * gs, CHR_REF ichr, CHR_REF iowner, int number )
 {
   // ZZ> This function exports a ichr
 
@@ -311,28 +313,28 @@ void export_one_character( CGame * gs, CHR_REF ichr, CHR_REF iowner, int number 
   STRING todirname;
   STRING todirfullname;
 
-  PChr chrlst     = gs->ChrList;
+  PChr_t chrlst     = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  PObj objlst     = gs->ObjList;
+  PObj_t objlst     = gs->ObjList;
   size_t  objlst_size = OBJLST_COUNT;
 
-  //PCap caplst      = gs->CapList;
+  //PCap_t caplst      = gs->CapList;
   //size_t caplst_size = CAPLST_COUNT;
 
-  //PMad madlst      = gs->MadList;
+  //PMad_t madlst      = gs->MadList;
   //size_t madlst_size = MADLST_COUNT;
 
   OBJ_REF iobj;
-  CObj  * pobj;
+  Obj_t  * pobj;
 
   //CAP_REF icap;
-  CCap  * pcap;
+  Cap_t  * pcap;
 
   //MAD_REF imad;
-  CMad  * pmad;
+  Mad_t  * pmad;
 
-  CChr * pchr;
+  Chr_t * pchr;
 
   if( !ACTIVE_CHR(chrlst, ichr) ) return;
   pchr = ChrList_getPChr(gs, ichr);
@@ -411,8 +413,8 @@ void export_one_character( CGame * gs, CHR_REF ichr, CHR_REF iowner, int number 
 
 
     // Copy all of the misc. data files
-    snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "%s", fromdir, CData.message_file );   /*MessageData.TXT*/
-    snprintf( tofile, sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.message_file );   /*MessageData.TXT*/
+    snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "%s", fromdir, CData.message_file );   /*MessageData_t.TXT*/
+    snprintf( tofile, sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.message_file );   /*MessageData_t.TXT*/
     fs_copyFile( fromfile, tofile );
 
     snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "tris.md2", fromdir );    /*TRIS.MD2*/
@@ -478,7 +480,7 @@ void export_one_character( CGame * gs, CHR_REF ichr, CHR_REF iowner, int number 
 }
 
 //---------------------------------------------------------------------------------------------
-void export_all_local_players( CGame * gs )
+void export_all_local_players( Game_t * gs )
 {
   // ZZ> This function saves all the local players in the
   //     PLAYERS directory
@@ -528,7 +530,7 @@ void export_all_local_players( CGame * gs )
 
 
 //--------------------------------------------------------------------------------------------
-void quit_game( CGame * gs )
+void quit_game( Game_t * gs )
 {
   // ZZ> This function exits the game entirely
 
@@ -546,7 +548,7 @@ void quit_game( CGame * gs )
 
 
 //--------------------------------------------------------------------------------------------
-int MessageQueue_get_free(MessageQueue * mq)
+int MessageQueue_get_free(MessageQueue_t * mq)
 {
   // BB > This function finds the first free message
 
@@ -569,7 +571,7 @@ int MessageQueue_get_free(MessageQueue * mq)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t decode_escape_sequence( CGame * gs, char * buffer, size_t buffer_size, const char * message, CHR_REF chr_ref )
+bool_t decode_escape_sequence( Game_t * gs, char * buffer, size_t buffer_size, const char * message, CHR_REF chr_ref )
 {
   // BB> expands escape sequences
 
@@ -579,15 +581,15 @@ bool_t decode_escape_sequence( CGame * gs, char * buffer, size_t buffer_size, co
   CHR_REF target = chr_get_aitarget( gs->ChrList, CHRLST_COUNT, gs->ChrList + chr_ref );
   CHR_REF owner  = chr_get_aiowner( gs->ChrList, CHRLST_COUNT, gs->ChrList + chr_ref );
 
-  CChr * pchr    = ChrList_getPChr(gs, chr_ref);
+  Chr_t * pchr    = ChrList_getPChr(gs, chr_ref);
   AI_STATE * pstate = &(pchr->aistate);
-  CCap * pchr_cap = ChrList_getPCap(gs, chr_ref);
+  Cap_t * pchr_cap = ChrList_getPCap(gs, chr_ref);
 
-  CChr * ptarget  = ChrList_getPChr(gs, target);
-  CCap * ptrg_cap = ChrList_getPCap(gs, target);
+  Chr_t * ptarget  = ChrList_getPChr(gs, target);
+  Cap_t * ptrg_cap = ChrList_getPCap(gs, target);
 
-  CChr * powner   = ChrList_getPChr(gs, owner);
-  CCap * pown_cap = ChrList_getPCap(gs, owner);
+  Chr_t * powner   = ChrList_getPChr(gs, owner);
+  Cap_t * pown_cap = ChrList_getPCap(gs, owner);
 
   char * dst_pos, * src_pos;
   char * dst_end;
@@ -595,14 +597,14 @@ bool_t decode_escape_sequence( CGame * gs, char * buffer, size_t buffer_size, co
   dst_pos = buffer;
   dst_end = buffer + buffer_size - 1;
   src_pos = message;
-  while(dst_pos < dst_end && '\0' != *src_pos)
+  while(dst_pos < dst_end && EOS != *src_pos)
   {
-    while('%' != *src_pos && '\0' != *src_pos && dst_pos < dst_end)
+    while('%' != *src_pos && EOS != *src_pos && dst_pos < dst_end)
     {
       *dst_pos++ = *src_pos++;
     }
 
-    if('%' != *src_pos) { *dst_pos = '\0'; break; }
+    if('%' != *src_pos) { *dst_pos = EOS; break; }
 
     // go to teh escape character
     src_pos++;
@@ -799,15 +801,15 @@ bool_t decode_escape_sequence( CGame * gs, char * buffer, size_t buffer_size, co
 
 
 //--------------------------------------------------------------------------------------------
-bool_t display_message( CGame * gs, int message, CHR_REF chr_ref )
+bool_t display_message( Game_t * gs, int message, CHR_REF chr_ref )
 {
   // ZZ> This function sticks a message in the display queue and sets its timer
 
   int slot;
 
-  MessageData  * msglst = &(gs->MsgList);
-  CGui         * gui    = gui_getState();
-  MessageQueue * mq     = &(gui->msgQueue);
+  MessageData_t  * msglst = &(gs->MsgList);
+  Gui_t         * gui    = gui_getState();
+  MessageQueue_t * mq     = &(gui->msgQueue);
   MESSAGE_ELEMENT * msg;
   char * message_src;
 
@@ -865,7 +867,7 @@ void read_setup( char* filename )
 {
   // ZZ> This function loads the setup file
 
-  ConfigFilePtr lConfigSetup;
+  ConfigFilePtr_t lConfigSetup;
   char lCurSectionName[64];
   bool_t lTempBool;
   Sint32 lTmpInt;
@@ -1322,13 +1324,13 @@ void make_enviro( void )
 }
 
 //--------------------------------------------------------------------------------------------
-void print_status( CGame * gs, Uint16 statindex )
+void print_status( Game_t * gs, Uint16 statindex )
 {
   // ZZ> This function shows the more specific stats for a character
 
   CHR_REF character;
   char gender[8];
-  Status * lst = gs->cl->StatList;
+  Status_t * lst = gs->cl->StatList;
   size_t   lst_size = MAXSTAT;
 
   if ( lst[statindex].delay == 0 )
@@ -1341,7 +1343,7 @@ void print_status( CGame * gs, Uint16 statindex )
       debug_message( 1, "=%s=", gs->ChrList[character].name );
 
       // Level and gender and class
-      gender[0] = '\0';
+      gender[0] = EOS;
       if ( gs->ChrList[character].alive )
       {
         switch ( gs->ChrList[character].gender )
@@ -1368,12 +1370,12 @@ void print_status( CGame * gs, Uint16 statindex )
 
 
 //--------------------------------------------------------------------------------------------
-void draw_chr_info( CGame * gs )
+void draw_chr_info( Game_t * gs )
 {
   // ZZ> This function lets the players check character stats
 
   int cnt;
-  Status * lst      = gs->cl->StatList;
+  Status_t * lst      = gs->cl->StatList;
   size_t   lst_size = gs->cl->StatList_count;
 
   if ( !keyb.mode )
@@ -1473,7 +1475,7 @@ bool_t do_screenshot()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t add_status( CGame * gs, CHR_REF character )
+bool_t add_status( Game_t * gs, CHR_REF character )
 {
   // ZZ> This function adds a status display to the do list
 
@@ -1494,12 +1496,12 @@ bool_t add_status( CGame * gs, CHR_REF character )
 
 
 //--------------------------------------------------------------------------------------------
-bool_t remove_stat( CGame * gs, CChr * pchr )
+bool_t remove_stat( Game_t * gs, Chr_t * pchr )
 {
   int i, icount;
   bool_t bfound;
 
-  Status * statlst      = gs->cl->StatList;
+  Status_t * statlst      = gs->cl->StatList;
   size_t   statlst_size = gs->cl->StatList_count;
 
   if(NULL == pchr) return bfalse;
@@ -1514,7 +1516,7 @@ bool_t remove_stat( CGame * gs, CChr * pchr )
     if(icount > 0)
     {
       // move the data block to fill in the hole
-      memmove(statlst + i, statlst + i + 1, icount*sizeof(Status));
+      memmove(statlst + i, statlst + i + 1, icount*sizeof(Status_t));
     }
 
     // turn off the bad stat at the end of the list
@@ -1535,12 +1537,12 @@ bool_t remove_stat( CGame * gs, CChr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-void sort_statlist( CGame * gs )
+void sort_statlist( Game_t * gs )
 {
   // ZZ> This function puts all of the local players on top of the statlst
 
   PLA_REF pla_cnt;
-  Status * statlst;
+  Status_t * statlst;
   size_t   statlst_size;
 
   if( !EKEY_PVALID(gs) || NULL == gs->cl) return;
@@ -1562,7 +1564,7 @@ void move_water( float dUpdate )
   // ZZ> This function animates the water overlays
 
   int layer;
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   for ( layer = 0; layer < MAXWATERLAYER; layer++ )
   {
@@ -1577,7 +1579,7 @@ void move_water( float dUpdate )
 }
 
 //--------------------------------------------------------------------------------------------
-CHR_REF search_best_leader( CGame * gs, TEAM_REF team, CHR_REF exclude )
+CHR_REF search_best_leader( Game_t * gs, TEAM_REF team, CHR_REF exclude )
 {
   // BB > find the best (most experienced) character other than the sissy to be a team leader
 
@@ -1603,7 +1605,7 @@ CHR_REF search_best_leader( CGame * gs, TEAM_REF team, CHR_REF exclude )
 }
 
 //--------------------------------------------------------------------------------------------
-void call_for_help( CGame * gs, CHR_REF character )
+void call_for_help( Game_t * gs, CHR_REF character )
 {
   // ZZ> This function issues a call for help to all allies
 
@@ -1633,7 +1635,7 @@ void call_for_help( CGame * gs, CHR_REF character )
 }
 
 //--------------------------------------------------------------------------------------------
-void give_experience( CGame * gs, CHR_REF character, int amount, EXPERIENCE xptype )
+void give_experience( Game_t * gs, CHR_REF character, int amount, EXPERIENCE xptype )
 {
   // ZZ> This function gives a character experience, and pawns off level gains to
   //     another function
@@ -1642,9 +1644,9 @@ void give_experience( CGame * gs, CHR_REF character, int amount, EXPERIENCE xpty
   int curlevel, nextexperience;
   int number;
   OBJ_REF iobj;
-  SoundState * snd;
-  CChr * pchr;
-  CCap * pcap;
+  SoundState_t * snd;
+  Chr_t * pchr;
+  Cap_t * pcap;
   Uint32 loc_rand;
 
   loc_rand = gs->randie_index;
@@ -1741,7 +1743,7 @@ void give_experience( CGame * gs, CHR_REF character, int amount, EXPERIENCE xpty
 
 
 //--------------------------------------------------------------------------------------------
-void give_team_experience( CGame * gs, TEAM_REF team, int amount, EXPERIENCE xptype )
+void give_team_experience( Game_t * gs, TEAM_REF team, int amount, EXPERIENCE xptype )
 {
   // ZZ> This function gives a character experience, and pawns off level gains to
   //     another function
@@ -1761,7 +1763,7 @@ void give_team_experience( CGame * gs, TEAM_REF team, int amount, EXPERIENCE xpt
 
 
 //--------------------------------------------------------------------------------------------
-void setup_alliances( CGame * gs, char *modname )
+void setup_alliances( Game_t * gs, char *modname )
 {
   // ZZ> This function reads the alliance file
 
@@ -1788,7 +1790,7 @@ void setup_alliances( CGame * gs, char *modname )
 }
 
 //--------------------------------------------------------------------------------------------
-void check_respawn( CGame * gs )
+void check_respawn( Game_t * gs )
 {
   CHR_REF chr_cnt;
 
@@ -1813,13 +1815,13 @@ void check_respawn( CGame * gs )
 
 
 //--------------------------------------------------------------------------------------------
-void begin_integration( CGame * gs )
+void begin_integration( Game_t * gs )
 {
   CHR_REF chr_cnt;
-  CChr * pchr;
+  Chr_t * pchr;
 
   PRT_REF prt_cnt;
-  CPrt * pprt;
+  Prt_t * pprt;
 
   for( chr_cnt=0; chr_cnt<CHRLST_COUNT; chr_cnt++)
   {
@@ -1842,12 +1844,14 @@ void begin_integration( CGame * gs )
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_collide_mesh(CGame * gs, CHR_REF ichr)
+bool_t chr_collide_mesh(Game_t * gs, CHR_REF ichr)
 {
   float meshlevel;
   vect3 norm;
   bool_t hitmesh = bfalse;
-  CChr * pchr;
+  Chr_t * pchr;
+
+  Mesh_t * pmesh = Game_getMesh(gs);
 
   if( !ACTIVE_CHR( gs->ChrList, ichr ) ) return hitmesh;
 
@@ -1873,7 +1877,7 @@ bool_t chr_collide_mesh(CGame * gs, CHR_REF ichr)
     };
   }
 
-  meshlevel = mesh_get_level( &(gs->Mesh_Mem), pchr->onwhichfan, pchr->ori.pos.x, pchr->ori.pos.y, gs->ChrList[ichr].prop.waterwalk, &(gs->water) );
+  meshlevel = mesh_get_level( &(pmesh->Mem), pchr->onwhichfan, pchr->ori.pos.x, pchr->ori.pos.y, gs->ChrList[ichr].prop.waterwalk, &(gs->water) );
   if( pchr->ori.pos.z < meshlevel )
   {
     hitmesh = btrue;
@@ -1900,7 +1904,7 @@ bool_t chr_collide_mesh(CGame * gs, CHR_REF ichr)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t prt_collide_mesh(CGame * gs, PRT_REF iprt)
+bool_t prt_collide_mesh(Game_t * gs, PRT_REF iprt)
 {
   float meshlevel, dampen;
   CHR_REF attached;
@@ -1908,8 +1912,9 @@ bool_t prt_collide_mesh(CGame * gs, PRT_REF iprt)
   bool_t hitmesh = bfalse;
   PIP_REF pip;
 
-  if( !ACTIVE_PRT( gs->PrtList, iprt) ) return hitmesh;
+  Mesh_t * pmesh = Game_getMesh(gs);
 
+  if( !ACTIVE_PRT( gs->PrtList, iprt) ) return hitmesh;
 
   attached = prt_get_attachedtochr(gs, iprt);
   pip      = gs->PrtList[iprt].pip;
@@ -1983,7 +1988,7 @@ bool_t prt_collide_mesh(CGame * gs, PRT_REF iprt)
     };
   }
 
-  meshlevel = mesh_get_level( &(gs->Mesh_Mem), gs->PrtList[iprt].onwhichfan, gs->PrtList[iprt].ori.pos.x, gs->PrtList[iprt].ori.pos.y, bfalse, &(gs->water) );
+  meshlevel = mesh_get_level( &(pmesh->Mem), gs->PrtList[iprt].onwhichfan, gs->PrtList[iprt].ori.pos.x, gs->PrtList[iprt].ori.pos.y, bfalse, &(gs->water) );
   if( gs->PrtList[iprt].ori.pos.z < meshlevel )
   {
     hitmesh = btrue;
@@ -2017,7 +2022,7 @@ bool_t prt_collide_mesh(CGame * gs, PRT_REF iprt)
 };
 
 //--------------------------------------------------------------------------------------------
-void do_integration(CGame * gs, float dFrame)
+void do_integration(Game_t * gs, float dFrame)
 {
   // BB > Integrate the position of the characters/items and particles.
   //      Handle the interaction with the walls. Make sure that all positions
@@ -2026,13 +2031,13 @@ void do_integration(CGame * gs, float dFrame)
 
   int tnc;
   bool_t collide;
-  COrientation ori_tmp;
+  Orientation_t ori_tmp;
 
   CHR_REF chr_cnt;
-  CChr   *pchr;
+  Chr_t   *pchr;
 
   PRT_REF prt_cnt;
-  CPrt   *pprt;
+  Prt_t   *pprt;
 
   for( chr_cnt=0; chr_cnt<CHRLST_COUNT; chr_cnt++)
   {
@@ -2109,7 +2114,7 @@ void do_integration(CGame * gs, float dFrame)
 };
 
 //--------------------------------------------------------------------------------------------
-void update_timers(CGame * gs)
+void update_timers(Game_t * gs)
 {
   // ZZ> This function updates the game timers
 
@@ -2161,7 +2166,7 @@ void update_timers(CGame * gs)
 
 
 //--------------------------------------------------------------------------------------------
-void reset_teams(CGame * gs)
+void reset_teams(Game_t * gs)
 {
   // ZZ> This function makes everyone hate everyone else
 
@@ -2198,17 +2203,17 @@ void reset_teams(CGame * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-void reset_messages(CGame * gs)
+void reset_messages(Game_t * gs)
 {
   // ZZ> This makes messages safe to use
-  CGui * gui = gui_getState();
+  Gui_t * gui = gui_getState();
 
   clear_messages( &(gs->MsgList) );
   clear_message_queue( &(gui->msgQueue) );
 }
 
 //--------------------------------------------------------------------------------------------
-void reset_timers(CGame * gs)
+void reset_timers(Game_t * gs)
 {
   // ZZ> This function resets the timers...
 
@@ -2233,7 +2238,7 @@ extern int initMenus();
 
 #define DO_CONFIGSTRING_COMPARE(XX) if(0 == strncmp(#XX, szin, strlen(#XX))) { if(NULL !=szout) *szout = szin + strlen(#XX); return cd->XX; }
 //--------------------------------------------------------------------------------------------
-char * get_config_string(ConfigData * cd, char * szin, char ** szout)
+char * get_config_string(ConfigData_t * cd, char * szin, char ** szout)
 {
   // BB > localize a string by converting the name of the string to the string itself
 
@@ -2316,7 +2321,7 @@ char * get_config_string(ConfigData * cd, char * szin, char ** szout)
 
 
 //--------------------------------------------------------------------------------------------
-char * get_config_string_name(ConfigData * cd, STRING * pconfig_string)
+char * get_config_string_name(ConfigData_t * cd, STRING * pconfig_string)
 {
   // BB > localize a string by converting the name of the string to the string itself
 
@@ -2399,7 +2404,7 @@ char * get_config_string_name(ConfigData * cd, STRING * pconfig_string)
 
 
 //--------------------------------------------------------------------------------------------
-void set_default_config_data(ConfigData * pcon)
+void set_default_config_data(ConfigData_t * pcon)
 {
   if(NULL ==pcon) return;
 
@@ -2496,7 +2501,7 @@ void set_default_config_data(ConfigData * pcon)
   pcon->scrz = 16;                  // Screen z-buffer depth ( 8 unsupported )
   pcon->maxmessage = MAXMESSAGE;    //
   pcon->messageon  = btrue;           // Messages?
-  pcon->wraptolerance = 80;     // Status bar
+  pcon->wraptolerance = 80;     // Status_t bar
   pcon->staton = btrue;                 // Draw the status bars?
   pcon->render_overlay = bfalse;
   pcon->render_background = bfalse;
@@ -2539,15 +2544,15 @@ void set_default_config_data(ConfigData * pcon)
 
 //--------------------------------------------------------------------------------------------
 
-int proc_mainLoop( ProcState * ego_proc, int argc, char **argv );
-int proc_gameLoop( ProcState * gproc, CGame * gs);
-int proc_menuLoop( MenuProc  * mproc );
+int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv );
+int proc_gameLoop( ProcState_t * gproc, Game_t * gs);
+int proc_menuLoop( MenuProc_t  * mproc );
 
 //--------------------------------------------------------------------------------------------
 void main_handleKeyboard()
 {
-  CGame * gs   = gfxState.gs;
-  ProcState * gproc = CGame_getProcedure(gs);
+  Game_t * gs   = gfxState.gs;
+  ProcState_t * gproc = Game_getProcedure(gs);
   bool_t control, alt, shift, mod;
 
   control = (SDLKEYDOWN(SDLK_RCTRL) || SDLKEYDOWN(SDLK_LCTRL));
@@ -2614,7 +2619,7 @@ void main_handleKeyboard()
 //--------------------------------------------------------------------------------------------
 retval_t main_doGameGraphics()
 {
-  CGame * gs = gfxState.gs;
+  Game_t * gs = gfxState.gs;
 
   if( !EKEY_PVALID(gs) ) return rv_error;
   if( !gs->proc.Active ) { gs->dFrame = 0; return rv_succeed; };
@@ -2700,8 +2705,8 @@ retval_t main_doGameGraphics()
 
 retval_t main_doGraphics()
 {
-  CGui * gui;
-  MenuProc * mnu_proc;
+  Gui_t * gui;
+  MenuProc_t * mnu_proc;
 
   double frameDuration, frameTicks;
   bool_t do_menu_frame = bfalse;
@@ -2749,9 +2754,9 @@ retval_t main_doGraphics()
     // Do the in-game menu, if it is active
     if ( NULL != gfxState.gs  && gfxState.gs->igm.proc.Active )
     {
-      CGame * gs          = gfxState.gs;
-      MenuProc  * ig_mnu_proc = CGame_getMenuProc(gs);
-      ProcState * game_proc   = CGame_getProcedure(gs);
+      Game_t * gs          = gfxState.gs;
+      MenuProc_t  * ig_mnu_proc = Game_getMenuProc(gs);
+      ProcState_t * game_proc   = Game_getProcedure(gs);
 
       ui_beginFrame();
       {
@@ -2813,13 +2818,13 @@ retval_t main_doGraphics()
 }
 
 //--------------------------------------------------------------------------------------------
-int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
+int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
 {
   // ZZ> This is where the program starts and all the high level stuff happens
   static double frameDuration, frameTicks;
-  CGame    * gs;
-  GSStack      * stk;
-  MachineState * mach_state;
+  Game_t    * gs;
+  GSStack_t      * stk;
+  MachineState_t * mach_state;
   int i;
 
   mach_state = Get_MachineState();
@@ -2843,7 +2848,7 @@ int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
         // when we read the CData values from a file, the CData_default will be used
         // for any non-existant tags
         set_default_config_data(&CData_default);
-        memcpy(&CData, &CData_default, sizeof(ConfigData));
+        memcpy(&CData, &CData_default, sizeof(ConfigData_t));
 
         // start initializing the various subsystems
         log_info( "proc_mainLoop() - Starting Egoboo %s...\n", VERSION );
@@ -2864,7 +2869,7 @@ int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
         snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.actions_file );
         load_action_names( CStringTmp1 );
 
-        // start the CGui
+        // start the Gui_t
         CGui_startUp();
 
         // start the network
@@ -2889,7 +2894,7 @@ int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
         load_all_music_sounds( &CData);
 
         // allocate the maximum amount of mesh memory
-        load_mesh_fans();
+        load_mesh_fans(&gTileDict);
 
         // Make lookup tables
         make_textureoffset();
@@ -2909,10 +2914,10 @@ int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
 
     case PROC_Entering:
       {
-        CGui     * gui;
-        MenuProc     * mnu_proc;
+        Gui_t     * gui;
+        MenuProc_t     * mnu_proc;
 
-        gui        = gui_getState();               // automatically starts the CGui
+        gui        = gui_getState();               // automatically starts the Gui_t
         mnu_proc   = &(gui->mnu_proc);
 
         PROFILE_INIT( resize_characters );
@@ -2950,13 +2955,13 @@ int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
 
     case PROC_Running:
       {
-        CGui * gui;
-        MenuProc * mnu_proc;
+        Gui_t * gui;
+        MenuProc_t * mnu_proc;
         bool_t     no_games_active;
 
         PROFILE_BEGIN( main_loop );
 
-        gui        = gui_getState();               // automatically starts the CGui
+        gui        = gui_getState();               // automatically starts the Gui_t
         mnu_proc   = &(gui->mnu_proc);
 
         game_handleKeyboard();
@@ -2964,10 +2969,10 @@ int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
         no_games_active = btrue;
         for(i=0; i<stk->count; i++)
         {
-          ProcState * proc;
+          ProcState_t * proc;
 
           gs   = GSStack_get(stk, i);
-          proc = CGame_getProcedure(gs);
+          proc = Game_getProcedure(gs);
 
           // a kludge to make sure the the gfxState is connected to something
           if(NULL == gfxState.gs) gfxState.gs = gs;
@@ -3016,18 +3021,18 @@ int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
 
     case PROC_Leaving:
       {
-        CGui     * gui;
-        MenuProc     * mnu_proc;
+        Gui_t     * gui;
+        MenuProc_t     * mnu_proc;
         bool_t all_games_finished;
 
-        gui        = gui_getState();               // automatically starts the CGui
+        gui        = gui_getState();               // automatically starts the Gui_t
         mnu_proc   = &(gui->mnu_proc);
 
         ClockState_frameStep( mach_state->clk );
         frameDuration = ClockState_getFrameDuration( mach_state->clk );
 
         // request that the menu loop to clean itself.
-        // the menu loop is only connected to the CGame that
+        // the menu loop is only connected to the Game_t that
         // the gfxState is connected to
         if ( !mnu_proc->proc.Terminated )
         {
@@ -3045,7 +3050,7 @@ int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
           if ( !gs->proc.Terminated )
           {
             gs->proc.KillMe = btrue;
-            proc_gameLoop( CGame_getProcedure(gs), gs);
+            proc_gameLoop( Game_getProcedure(gs), gs);
             switch ( gs->proc.returnValue )
             {
               case -1: gs->proc.Active = bfalse; gs->proc.Terminated = btrue; break;
@@ -3138,8 +3143,8 @@ int proc_mainLoop( ProcState * ego_proc, int argc, char **argv )
 //--------------------------------------------------------------------------------------------
 void game_handleKeyboard()
 {
-  CGame * gs = gfxState.gs;
-  CGui  * gui = gui_getState();
+  Game_t * gs = gfxState.gs;
+  Gui_t  * gui = gui_getState();
   bool_t control, alt, shift, mod;
 
   if( !EKEY_PVALID(gs) ) return;
@@ -3166,7 +3171,7 @@ void game_handleKeyboard()
 }
 
 //--------------------------------------------------------------------------------------------
-void game_handleIO(CGame * gs)
+void game_handleIO(Game_t * gs)
 {
   set_local_latches( gs );                   // client function
 
@@ -3191,13 +3196,13 @@ void game_handleIO(CGame * gs)
 };
 
 //--------------------------------------------------------------------------------------------
-void cl_update_game(CGame * gs, float dUpdate, Uint32 * rand_idx)
+void cl_update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
 {
   // ZZ> This function does several iterations of character movements and such
   //     to keep the game in sync.
   int cnt;
 
-  CGui * gui = gui_getState();
+  Gui_t * gui = gui_getState();
 
   count_players(gs);
 
@@ -3322,7 +3327,7 @@ void cl_update_game(CGame * gs, float dUpdate, Uint32 * rand_idx)
 }
 
 //--------------------------------------------------------------------------------------------
-void sv_update_game(CGame * gs, float dUpdate, Uint32 * rand_idx)
+void sv_update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
 {
   // ZZ> This function does several iterations of character movements and such
   //     to keep the game in sync.
@@ -3409,15 +3414,15 @@ void sv_update_game(CGame * gs, float dUpdate, Uint32 * rand_idx)
 }
 
 //--------------------------------------------------------------------------------------------
-void update_game(CGame * gs, float dUpdate, Uint32 * rand_idx)
+void update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
 {
   // ZZ> This function does several iterations of character movements and such
   //     to keep the game in sync.
 
   int cnt;
-  CGui    * gui = gui_getState();
-  CClient * cs = gs->cl;
-  CServer * ss = gs->sv;
+  Gui_t    * gui = gui_getState();
+  Client_t * cs = gs->cl;
+  Server_t * ss = gs->sv;
 
   count_players(gs);
 
@@ -3557,7 +3562,7 @@ void update_game(CGame * gs, float dUpdate, Uint32 * rand_idx)
 }
 
 //--------------------------------------------------------------------------------------------
-ProcessStates game_doRun(CGame * gs, ProcessStates procIn)
+ProcessStates game_doRun(Game_t * gs, ProcessStates procIn)
 {
   ProcessStates procOut = procIn;
   static double dTimeUpdate, dTimeFrame;
@@ -3647,11 +3652,11 @@ ProcessStates game_doRun(CGame * gs, ProcessStates procIn)
 
 //--------------------------------------------------------------------------------------------
 // TODO : this should be re-factored so that graphics updates are in a different loop
-int proc_gameLoop( ProcState * gproc, CGame * gs )
+int proc_gameLoop( ProcState_t * gproc, Game_t * gs )
 {
   // if we are being told to exit, jump to PROC_Leaving
   double frameDuration, frameTicks;
-  CGui * gui = gui_getState();
+  Gui_t * gui = gui_getState();
 
   if(NULL == gproc || gproc->Terminated)
   {
@@ -3796,10 +3801,10 @@ int proc_gameLoop( ProcState * gproc, CGame * gs )
 };
 
 //--------------------------------------------------------------------------------------------
-int proc_menuLoop( MenuProc  * mproc )
+int proc_menuLoop( MenuProc_t  * mproc )
 {
-  CGame * gs;
-  ProcState * proc;
+  Game_t * gs;
+  ProcState_t * proc;
 
   if(NULL == mproc || mproc->proc.Terminated) return -1;
 
@@ -3893,12 +3898,12 @@ int proc_menuLoop( MenuProc  * mproc )
 //--------------------------------------------------------------------------------------------
 int SDL_main( int argc, char **argv )
 {
-  ProcState EgoProc = {bfalse };
+  ProcState_t EgoProc = {bfalse };
 
   int program_state = 0, i;
-  MachineState * mach_state;
-  GSStack * stk;
-  CGame * gs;
+  MachineState_t * mach_state;
+  GSStack_t * stk;
+  Game_t * gs;
 
   // Initialize logging first, so that we can use it everywhere.
   log_init();
@@ -3924,7 +3929,7 @@ int SDL_main( int argc, char **argv )
       if(gs->proc.Terminated)
       {
         // only kill one per loop, since the deletion process invalidates the stack
-        CGame_delete(gs);
+        Game_delete(gs);
         break;
       }
     }
@@ -3936,13 +3941,13 @@ int SDL_main( int argc, char **argv )
 }
 
 //--------------------------------------------------------------------------------------------
-int load_all_messages( CGame * gs, const char *szObjectpath, const char *szObjectname )
+int load_all_messages( Game_t * gs, const char *szObjectpath, const char *szObjectname )
 {
   // ZZ> This function loads all of an objects messages
 
   int retval;
   FILE *fileread;
-  MessageData * msglst = &(gs->MsgList);
+  MessageData_t * msglst = &(gs->MsgList);
 
   retval = 0;
   fileread = fs_fileOpen( PRI_NONE, NULL, inherit_fname(szObjectpath, szObjectname, CData.message_file), "r" );
@@ -3959,7 +3964,7 @@ int load_all_messages( CGame * gs, const char *szObjectpath, const char *szObjec
 
 
 //--------------------------------------------------------------------------------------------
-void update_looped_sounds( CGame * gs )
+void update_looped_sounds( Game_t * gs )
 {
   CHR_REF ichr;
 
@@ -3975,7 +3980,7 @@ void update_looped_sounds( CGame * gs )
 
 
 //--------------------------------------------------------------------------------------------
-SearchInfo * SearchInfo_new(SearchInfo * psearch)
+SearchInfo_t * SearchInfo_new(SearchInfo_t * psearch)
 {
   //fprintf( stdout, "SearchInfo_new()\n");
 
@@ -3991,7 +3996,7 @@ SearchInfo * SearchInfo_new(SearchInfo * psearch)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t prt_search_wide( CGame * gs, SearchInfo * psearch, PRT_REF iprt, Uint16 facing,
+bool_t prt_search_wide( Game_t * gs, SearchInfo_t * psearch, PRT_REF iprt, Uint16 facing,
                         Uint16 targetangle, bool_t request_friends, bool_t allow_anyone,
                         TEAM_REF team, CHR_REF donttarget, CHR_REF oldtarget )
 {
@@ -4029,7 +4034,7 @@ bool_t prt_search_wide( CGame * gs, SearchInfo * psearch, PRT_REF iprt, Uint16 f
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_search_block( CGame * gs, SearchInfo * psearch, int block_x, int block_y, CHR_REF character, bool_t ask_items,
+bool_t chr_search_block( Game_t * gs, SearchInfo_t * psearch, int block_x, int block_y, CHR_REF character, bool_t ask_items,
                          bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, bool_t seeinvisible, IDSZ idsz,
                          bool_t invert_idsz )
 {
@@ -4042,8 +4047,10 @@ bool_t chr_search_block( CGame * gs, SearchInfo * psearch, int block_x, int bloc
   vect3 diff;
   float dist;
 
-  MESH_INFO * pmesh  = &(gs->mesh);
-  BUMPLIST  * pbump  = &(pmesh->bumplist);
+  Mesh_t * pmesh   = Game_getMesh(gs);
+  MeshInfo_t * mi  = &(pmesh->Info);
+
+  BUMPLIST  * pbump  = &(mi->bumplist);
 
   bool_t require_friends =  ask_friends && !ask_enemies;
   bool_t require_enemies = !ask_friends &&  ask_enemies;
@@ -4054,7 +4061,7 @@ bool_t chr_search_block( CGame * gs, SearchInfo * psearch, int block_x, int bloc
   if ( !ACTIVE_CHR( gs->ChrList, character ) || !pbump->filled ) return bfalse;
   team     = gs->ChrList[character].team;
 
-  fanblock = mesh_convert_block( &(gs->mesh), block_x, block_y );
+  fanblock = mesh_convert_block( &(pmesh->Info), block_x, block_y );
   for ( cnt = 0, blnode_b = bumplist_get_chr_head( pbump, fanblock );
         cnt < bumplist_get_chr_count(pbump, fanblock) && INVALID_BUMPLIST_NODE != blnode_b;
         cnt++, blnode_b = bumplist_get_next_chr( gs, pbump, blnode_b ) )
@@ -4118,13 +4125,15 @@ bool_t chr_search_block( CGame * gs, SearchInfo * psearch, int block_x, int bloc
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_search_nearby( CGame * gs, SearchInfo * psearch, CHR_REF character, bool_t ask_items,
+bool_t chr_search_nearby( Game_t * gs, SearchInfo_t * psearch, CHR_REF character, bool_t ask_items,
                           bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, IDSZ ask_idsz )
 {
   // ZZ> This function finds a target from the blocks that the character is overlapping. Returns btrue if found.
 
   int ix,ix_min,ix_max, iy,iy_min,iy_max;
   bool_t seeinvisible;
+
+  Mesh_t * pmesh = Game_getMesh(gs);
 
   if ( !ACTIVE_CHR( gs->ChrList, character ) || chr_in_pack( gs->ChrList, CHRLST_COUNT, character ) ) return bfalse;
 
@@ -4135,10 +4144,10 @@ bool_t chr_search_nearby( CGame * gs, SearchInfo * psearch, CHR_REF character, b
   seeinvisible = gs->ChrList[character].prop.canseeinvisible;
 
   // Current fanblock
-  ix_min = MESH_FLOAT_TO_BLOCK( mesh_clip_x( &(gs->mesh), gs->ChrList[character].bmpdata.cv.x_min ) );
-  ix_max = MESH_FLOAT_TO_BLOCK( mesh_clip_x( &(gs->mesh), gs->ChrList[character].bmpdata.cv.x_max ) );
-  iy_min = MESH_FLOAT_TO_BLOCK( mesh_clip_y( &(gs->mesh), gs->ChrList[character].bmpdata.cv.y_min ) );
-  iy_max = MESH_FLOAT_TO_BLOCK( mesh_clip_y( &(gs->mesh), gs->ChrList[character].bmpdata.cv.y_max ) );
+  ix_min = MESH_FLOAT_TO_BLOCK( mesh_clip_x( &(pmesh->Info), gs->ChrList[character].bmpdata.cv.x_min ) );
+  ix_max = MESH_FLOAT_TO_BLOCK( mesh_clip_x( &(pmesh->Info), gs->ChrList[character].bmpdata.cv.x_max ) );
+  iy_min = MESH_FLOAT_TO_BLOCK( mesh_clip_y( &(pmesh->Info), gs->ChrList[character].bmpdata.cv.y_min ) );
+  iy_max = MESH_FLOAT_TO_BLOCK( mesh_clip_y( &(pmesh->Info), gs->ChrList[character].bmpdata.cv.y_max ) );
 
   for( ix = ix_min; ix<=ix_max; ix++ )
   {
@@ -4157,7 +4166,7 @@ bool_t chr_search_nearby( CGame * gs, SearchInfo * psearch, CHR_REF character, b
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_search_distant( CGame * gs, SearchInfo * psearch, CHR_REF character, int maxdist, bool_t ask_enemies, bool_t ask_dead )
+bool_t chr_search_distant( Game_t * gs, SearchInfo_t * psearch, CHR_REF character, int maxdist, bool_t ask_enemies, bool_t ask_dead )
 {
   // ZZ> This function finds a target, or it returns bfalse if it can't find one...
   //     maxdist should be the square of the actual distance you want to use
@@ -4207,7 +4216,7 @@ bool_t chr_search_distant( CGame * gs, SearchInfo * psearch, CHR_REF character, 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_search_block_nearest( CGame * gs, SearchInfo * psearch, int block_x, int block_y, CHR_REF chra_ref, bool_t ask_items,
+bool_t chr_search_block_nearest( Game_t * gs, SearchInfo_t * psearch, int block_x, int block_y, CHR_REF chra_ref, bool_t ask_items,
                                bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, bool_t seeinvisible, IDSZ idsz )
 {
   // ZZ> This is a good little helper
@@ -4218,8 +4227,9 @@ bool_t chr_search_block_nearest( CGame * gs, SearchInfo * psearch, int block_x, 
   CHR_REF chrb_ref;
   Uint32  fanblock, blnode_b;
 
-  MESH_INFO * pmesh  = &(gs->mesh);
-  BUMPLIST  * pbump  = &(pmesh->bumplist);
+  Mesh_t     * pmesh = Game_getMesh(gs);
+  MeshInfo_t * mi    = &(pmesh->Info);
+  BUMPLIST   * pbump = &(mi->bumplist);
 
   bool_t require_friends =  ask_friends && !ask_enemies;
   bool_t require_enemies = !ask_friends &&  ask_enemies;
@@ -4230,7 +4240,7 @@ bool_t chr_search_block_nearest( CGame * gs, SearchInfo * psearch, int block_x, 
   if ( !ACTIVE_CHR( gs->ChrList, chra_ref ) || !pbump->filled ) return bfalse;
 
   // blocks that are off the mesh are not stored
-  fanblock = mesh_convert_block( &(gs->mesh), block_x, block_y );
+  fanblock = mesh_convert_block( &(pmesh->Info), block_x, block_y );
 
   team = gs->ChrList[chra_ref].team;
   for ( cnt = 0, blnode_b = bumplist_get_chr_head(pbump, fanblock);
@@ -4286,7 +4296,7 @@ bool_t chr_search_block_nearest( CGame * gs, SearchInfo * psearch, int block_x, 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_search_wide_nearest( CGame * gs, SearchInfo * psearch, CHR_REF chr_ref, bool_t ask_items,
+bool_t chr_search_wide_nearest( Game_t * gs, SearchInfo_t * psearch, CHR_REF chr_ref, bool_t ask_items,
                                  bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, IDSZ idsz )
 {
   // ZZ> This function finds an target, or it returns CHRLST_COUNT if it can't find one
@@ -4328,7 +4338,7 @@ bool_t chr_search_wide_nearest( CGame * gs, SearchInfo * psearch, CHR_REF chr_re
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_search_wide( CGame * gs, SearchInfo * psearch, CHR_REF chr_ref, bool_t ask_items,
+bool_t chr_search_wide( Game_t * gs, SearchInfo_t * psearch, CHR_REF chr_ref, bool_t ask_items,
                         bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, IDSZ idsz, bool_t excludeid )
 {
   // ZZ> This function finds an object, or it returns bfalse if it can't find one
@@ -4374,7 +4384,7 @@ bool_t chr_search_wide( CGame * gs, SearchInfo * psearch, CHR_REF chr_ref, bool_
 }
 
 //--------------------------------------------------------------------------------------------
-void attach_particle_to_character( CGame * gs, PRT_REF particle, CHR_REF chr_ref, Uint16 vertoffset )
+void attach_particle_to_character( Game_t * gs, PRT_REF particle, CHR_REF chr_ref, Uint16 vertoffset )
 {
   // ZZ> This function sets one particle's position to be attached to a character.
   //     It will kill the particle if the character is no longer around
@@ -4385,14 +4395,14 @@ void attach_particle_to_character( CGame * gs, PRT_REF particle, CHR_REF chr_ref
 
   bool_t prt_valid;
 
-  PChr chrlst      = gs->ChrList;
+  PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  PPrt prtlst      = gs->PrtList;
+  PPrt_t prtlst      = gs->PrtList;
   size_t prtlst_size = PRTLST_COUNT;
 
-  CPrt * pprt;
-  CChr * pchr;
+  Prt_t * pprt;
+  Chr_t * pchr;
 
   prt_valid = btrue;
   if ( !ACTIVE_CHR( chrlst, chr_ref ) )
@@ -4444,11 +4454,11 @@ void attach_particle_to_character( CGame * gs, PRT_REF particle, CHR_REF chr_ref
   {
     // Transform the grip vertex position to world space
 
-    CMad * pmad = ChrList_getPMad(gs, chr_ref);
+    Mad_t * pmad = ChrList_getPMad(gs, chr_ref);
 
     Uint32      ilast, inext;
-    MD2_Model * pmdl;
-    const MD2_Frame * plast, * pnext;
+    MD2_Model_t * pmdl;
+    const MD2_Frame_t * plast, * pnext;
 
     inext = pchr->anim.next;
     ilast = pchr->anim.last;
@@ -4497,14 +4507,14 @@ void attach_particle_to_character( CGame * gs, PRT_REF particle, CHR_REF chr_ref
 
 
 //--------------------------------------------------------------------------------------------
-bool_t load_all_music_sounds(ConfigData * cd)
+bool_t load_all_music_sounds(ConfigData_t * cd)
 {
   //ZF> This function loads all of the music sounds
   STRING songname;
   FILE *playlist;
   Uint8 cnt;
 
-  SoundState * snd = snd_getState(cd);
+  SoundState_t * snd = snd_getState(cd);
 
   if( NULL == snd || NULL == cd ) return bfalse;
 
@@ -4541,11 +4551,11 @@ bool_t load_all_music_sounds(ConfigData * cd)
 }
 
 //--------------------------------------------------------------------------------------------
-void sdlinit( CGraphics * g )
+void sdlinit( Graphics_t * g )
 {
   int cnt;
   SDL_Surface *theSurface;
-  STRING strbuffer = { '\0' };
+  STRING strbuffer = { EOS };
 
   log_info("Initializing main SDL services version %i.%i.%i... ", SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_PATCHLEVEL);
   if ( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK ) < 0 )
@@ -4626,7 +4636,7 @@ void sdlinit( CGraphics * g )
 }
 
 //--------------------------------------------------------------------------------------------
-MachineState * Get_MachineState()
+MachineState_t * Get_MachineState()
 {
   if(!EKEY_VALID(_macState))
   {
@@ -4637,7 +4647,7 @@ MachineState * Get_MachineState()
 }
 
 //--------------------------------------------------------------------------------------------
-MachineState * MachineState_new( MachineState * ms )
+MachineState_t * MachineState_new( MachineState_t * ms )
 {
   //fprintf( stdout, "MachineState_new()\n");
 
@@ -4645,9 +4655,9 @@ MachineState * MachineState_new( MachineState * ms )
 
   MachineState_delete( ms );
 
-  memset(ms, 0, sizeof(MachineState));
+  memset(ms, 0, sizeof(MachineState_t));
 
-  EKEY_PNEW( ms, MachineState );
+  EKEY_PNEW( ms, MachineState_t );
 
   // initialize the system-dependent functions
   sys_initialize();
@@ -4656,13 +4666,13 @@ MachineState * MachineState_new( MachineState * ms )
   fs_init();
 
   // set up the clock
-  ms->clk = ClockState_create("MachineState", -1);
+  ms->clk = ClockState_create("MachineState_t", -1);
 
   return ms;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t MachineState_delete( MachineState * ms )
+bool_t MachineState_delete( MachineState_t * ms )
 {
   if(NULL == ms) return bfalse;
   if(!EKEY_PVALID(ms)) return btrue;
@@ -4677,9 +4687,9 @@ bool_t MachineState_delete( MachineState * ms )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t fget_next_chr_spawn_info(CGame * gs, FILE * pfile, chr_spawn_info * psi)
+bool_t fget_next_chr_spawn_info(Game_t * gs, FILE * pfile, CHR_SPAWN_INFO * psi)
 {
-  STRING myname = { '\0' };
+  STRING myname = { EOS };
   bool_t found;
   int slot;
   vect3 pos;
@@ -4700,7 +4710,7 @@ bool_t fget_next_chr_spawn_info(CGame * gs, FILE * pfile, chr_spawn_info * psi)
   if ( 0 == strcmp( "NONE", myname ) )
   {
     // Random name
-    psi->name[0] = '\0';
+    psi->name[0] = EOS;
   }
   else
   {
@@ -4750,20 +4760,20 @@ bool_t fget_next_chr_spawn_info(CGame * gs, FILE * pfile, chr_spawn_info * psi)
 }
 
 //--------------------------------------------------------------------------------------------
-struct chr_setup_info_t
+struct s_chr_setup_info
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
-  CGame * gs;
+  Game_t * gs;
   CHR_REF last_chr;
   CHR_REF last_item;
   int tnc, localnumber;
 
 };
 
-typedef struct chr_setup_info_t chr_setup_info;
+typedef struct s_chr_setup_info CHR_SETUP_INFO;
 
-bool_t chr_setup_info_delete(chr_setup_info * pi)
+bool_t chr_setup_info_delete(CHR_SETUP_INFO * pi)
 {
   if(NULL == pi) return bfalse;
   if( !EKEY_PVALID(pi) ) return btrue;
@@ -4773,15 +4783,15 @@ bool_t chr_setup_info_delete(chr_setup_info * pi)
   return btrue;
 }
 
-chr_setup_info * chr_setup_info_new(chr_setup_info * pi, CGame * gs)
+CHR_SETUP_INFO * chr_setup_info_new(CHR_SETUP_INFO * pi, Game_t * gs)
 {
   if(NULL == pi) return NULL;
 
   chr_setup_info_delete( pi );
 
-  memset( pi, 0, sizeof(chr_setup_info) );
+  memset( pi, 0, sizeof(CHR_SETUP_INFO) );
 
-  EKEY_PNEW( pi, chr_setup_info );
+  EKEY_PNEW( pi, CHR_SETUP_INFO );
 
   pi->gs = gs;
 
@@ -4796,15 +4806,15 @@ chr_setup_info * chr_setup_info_new(chr_setup_info * pi, CGame * gs)
 
 
 //--------------------------------------------------------------------------------------------
-bool_t do_setup_chracter(chr_setup_info * pinfo, chr_spawn_info * psi)
+bool_t do_setup_chracter(CHR_SETUP_INFO * pinfo, CHR_SPAWN_INFO * psi)
 {
   CHR_REF attach, tmp_item;
   GRIP    grip;
 
-  CGame * gs;
-  PChr chrlst;
-  ModState * pmod;
-  CChr * pitem;
+  Game_t * gs;
+  PChr_t chrlst;
+  ModState_t * pmod;
+  Chr_t * pitem;
 
   if( !EKEY_PVALID(pinfo) || !EKEY_PVALID(psi) ) return bfalse;
 
@@ -4872,7 +4882,7 @@ bool_t do_setup_chracter(chr_setup_info * pinfo, chr_spawn_info * psi)
   // Set the starting level
   if ( psi->level > 0 )
   {
-    CCap * pcap = ChrList_getPCap(gs, pinfo->last_chr);
+    Cap_t * pcap = ChrList_getPCap(gs, pinfo->last_chr);
 
     // make sure that the character/item CAN level
     if( NULL!=pcap && pcap->experiencecoeff > 0)
@@ -4904,13 +4914,13 @@ bool_t do_setup_chracter(chr_setup_info * pinfo, chr_spawn_info * psi)
   return btrue;
 }
 
-void do_setup_inputs(chr_setup_info * pinfo, chr_spawn_info * psi)
+void do_setup_inputs(CHR_SETUP_INFO * pinfo, CHR_SPAWN_INFO * psi)
 {
-  CGui * gui = gui_getState();
-  CGame * gs = pinfo->gs;
-  PChr chrlst = gs->ChrList;
-  CClient * cl = gs->cl;
-  ModState * pmod = &(gs->modstate);
+  Gui_t * gui = gui_getState();
+  Game_t * gs = pinfo->gs;
+  PChr_t chrlst = gs->ChrList;
+  Client_t * cl = gs->cl;
+  ModState_t * pmod = &(gs->modstate);
 
   if(gfxState.gs != gs) return;
 
@@ -4959,17 +4969,17 @@ void do_setup_inputs(chr_setup_info * pinfo, chr_spawn_info * psi)
 }
 
 //--------------------------------------------------------------------------------------------
-void setup_characters( CGame * gs, char *modname )
+void setup_characters( Game_t * gs, char *modname )
 {
   // ZZ> This function sets up character data, loaded from "SPAWN.TXT"
   STRING newloadname;
   FILE * fileread;
-  CGui * gui = NULL;
+  Gui_t * gui = NULL;
 
   bool_t client_running = bfalse, server_running = bfalse;
 
-  chr_spawn_info si;
-  chr_setup_info info;
+  CHR_SPAWN_INFO si;
+  CHR_SETUP_INFO info;
 
   if(gfxState.gs == gs)
   {
@@ -5022,9 +5032,9 @@ void setup_characters( CGame * gs, char *modname )
 
 
 //--------------------------------------------------------------------------------------------
-int cl_proc_setup_character(CGame * gs, chr_setup_info * pinfo, ProcState * proc)
+int cl_proc_setup_character(Game_t * gs, CHR_SETUP_INFO * pinfo, ProcState_t * proc)
 {
-  CClient * cl;
+  Client_t * cl;
   if( !EKEY_PVALID(gs)    ) return -1;
   if( !EKEY_PVALID(pinfo) ) -1;
   if( !EKEY_PVALID(proc)  ) return -1;
@@ -5059,7 +5069,7 @@ int cl_proc_setup_character(CGame * gs, chr_setup_info * pinfo, ProcState * proc
 
     case PROC_Running:
       {
-        chr_spawn_info * psi;
+        CHR_SPAWN_INFO * psi;
 
         // spawn all of the characters that we have received up to this point
         for (;;)
@@ -5096,7 +5106,7 @@ int cl_proc_setup_character(CGame * gs, chr_setup_info * pinfo, ProcState * proc
 }
 
 //--------------------------------------------------------------------------------------------
-void ChrList_resynch(CGame * gs)
+void ChrList_resynch(Game_t * gs)
 {
   // BB > handle all allocation and deallocation requests
 
@@ -5142,7 +5152,7 @@ void ChrList_resynch(CGame * gs)
 
 
 //--------------------------------------------------------------------------------------------
-void PrtList_resynch(CGame * gs)
+void PrtList_resynch(Game_t * gs)
 {
   int tnc;
   Uint16 facing;
@@ -5150,14 +5160,14 @@ void PrtList_resynch(CGame * gs)
   PIP_REF pip;
   CHR_REF prt_target, prt_owner, prt_attachedto;
 
-  PPrt prtlst = gs->PrtList;
-  PPip piplst = gs->PipList;
-  CPrt * pprt;
+  PPrt_t prtlst = gs->PrtList;
+  PPip_t piplst = gs->PipList;
+  Prt_t * pprt;
 
   // actually destroy all particles that requested destruction last time through the loop
   for ( iprt = 0; iprt < PRTLST_COUNT; iprt++ )
   {
-    prt_spawn_info si;
+    PRT_SPAWN_INFO si;
 
     if ( !ACTIVE_PRT( prtlst,  iprt ) ) continue;
     pprt = prtlst + iprt;
@@ -5200,7 +5210,7 @@ void PrtList_resynch(CGame * gs)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t prt_search_block( CGame * gs, SearchInfo * psearch, int block_x, int block_y, PRT_REF prt_ref, Uint16 facing,
+bool_t prt_search_block( Game_t * gs, SearchInfo_t * psearch, int block_x, int block_y, PRT_REF prt_ref, Uint16 facing,
                          bool_t request_friends, bool_t allow_anyone, TEAM_REF team,
                          CHR_REF donttarget_ref, CHR_REF oldtarget_ref )
 {
@@ -5214,13 +5224,14 @@ bool_t prt_search_block( CGame * gs, SearchInfo * psearch, int block_x, int bloc
   Uint32 fanblock, blnode_b;
   int local_distance;
 
-  MESH_INFO * pmesh  = &(gs->mesh);
-  BUMPLIST  * pbump  = &(pmesh->bumplist);
+  Mesh_t     * pmesh = Game_getMesh(gs);
+  MeshInfo_t * mi    = &(pmesh->Info);
+  BUMPLIST   * pbump = &(mi->bumplist);
 
   if( !ACTIVE_PRT( gs->PrtList, prt_ref) ) return bfalse;
 
   // Current fanblock
-  fanblock = mesh_convert_block( &(gs->mesh), block_x, block_y );
+  fanblock = mesh_convert_block( &(pmesh->Info), block_x, block_y );
   if ( INVALID_FAN == fanblock ) return bfalse;
 
   for ( cnt = 0, blnode_b = bumplist_get_chr_head(pbump, fanblock);
@@ -5272,16 +5283,16 @@ bool_t prt_search_block( CGame * gs, SearchInfo * psearch, int block_x, int bloc
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-GSStack * GSStack_new(GSStack * stk)
+GSStack_t * GSStack_new(GSStack_t * stk)
 {
   //fprintf( stdout, "GSStack_new()\n");
 
   if(NULL == stk) return stk;
   GSStack_delete(stk);
 
-  memset(stk, 0, sizeof(stk));
+  memset(stk, 0, sizeof(GSStack_t));
 
-  EKEY_PNEW(stk, GSStack);
+  EKEY_PNEW(stk, GSStack_t);
 
   stk->count = 0;
 
@@ -5289,7 +5300,7 @@ GSStack * GSStack_new(GSStack * stk)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t GSStack_delete(GSStack * stk)
+bool_t GSStack_delete(GSStack_t * stk)
 {
   int i;
 
@@ -5302,7 +5313,7 @@ bool_t GSStack_delete(GSStack * stk)
   {
     if( NULL != stk->data[i] )
     {
-      CGame_delete(stk->data[i]);
+      Game_delete(stk->data[i]);
       FREE(stk->data[i]);
     }
   }
@@ -5312,7 +5323,7 @@ bool_t GSStack_delete(GSStack * stk)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t GSStack_push(GSStack * stk, CGame * gs)
+bool_t GSStack_push(GSStack_t * stk, Game_t * gs)
 {
   if(!EKEY_PVALID(stk) || stk->count + 1 >= 256) return bfalse;
   if(!EKEY_PVALID(gs)) return bfalse;
@@ -5324,7 +5335,7 @@ bool_t GSStack_push(GSStack * stk, CGame * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-CGame * GSStack_pop(GSStack * stk)
+Game_t * GSStack_pop(GSStack_t * stk)
 {
   if(!EKEY_PVALID(stk) || stk->count - 1 < 0) return NULL;
 
@@ -5333,7 +5344,7 @@ CGame * GSStack_pop(GSStack * stk)
 }
 
 //--------------------------------------------------------------------------------------------
-CGame * GSStack_get(GSStack * stk, int i)
+Game_t * GSStack_get(GSStack_t * stk, int i)
 {
   if(!EKEY_PVALID(stk)) return NULL;
   if( i >=  stk->count) return NULL;
@@ -5342,7 +5353,7 @@ CGame * GSStack_get(GSStack * stk, int i)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t GSStack_add(GSStack * stk, CGame * gs)
+bool_t GSStack_add(GSStack_t * stk, Game_t * gs)
 {
   // BB> Adds a new game state into the stack.
   //     Does not add a new wntry if the gamestate is already in the stack.
@@ -5374,7 +5385,7 @@ bool_t GSStack_add(GSStack * stk, CGame * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-CGame * GSStack_remove(GSStack * stk, int i)
+Game_t * GSStack_remove(GSStack_t * stk, int i)
 {
   if(!EKEY_PVALID(stk)) return NULL;
   if( i >= stk->count ) return NULL;
@@ -5382,7 +5393,7 @@ CGame * GSStack_remove(GSStack * stk, int i)
   // float value to remove to the top
   if( stk->count > 1 && i < stk->count -1 )
   {
-    CGame * ptmp;
+    Game_t * ptmp;
     int j = stk->count - 1;
 
     // swap the value with the value at the top of the stack
@@ -5396,17 +5407,17 @@ CGame * GSStack_remove(GSStack * stk, int i)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CGame * CGame_new(CGame * gs, CNet * ns, CClient * cl, CServer * sv)
+Game_t * Game_new(Game_t * gs, Net_t * ns, Client_t * cl, Server_t * sv)
 {
-  fprintf(stdout, "CGame_new()\n");
+  fprintf(stdout, "Game_new()\n");
 
   if( NULL == gs ) return gs;
 
-  CGame_delete( gs );
+  Game_delete( gs );
 
-  memset(gs, 0, sizeof(CGame));
+  memset(gs, 0, sizeof(Game_t));
 
-  EKEY_PNEW(gs, CGame);
+  EKEY_PNEW(gs, Game_t);
 
   // initialize the main loop process
   ProcState_init( &(gs->proc) );
@@ -5420,7 +5431,7 @@ CGame * CGame_new(CGame * gs, CNet * ns, CClient * cl, CServer * sv)
   ModState_new(&(gs->modstate), NULL, (Uint32)-1);
   gs->cd = &CData;
 
-  // if the CNet state doesn't exist, create it
+  // if the Net_t state doesn't exist, create it
   if(NULL == ns) ns = CNet_create( gs );
   ns->parent = gs;
   gs->ns     = ns;
@@ -5437,7 +5448,7 @@ CGame * CGame_new(CGame * gs, CNet * ns, CClient * cl, CServer * sv)
   ModInfo_new( &(gs->mod) );
   ModState_new( &(gs->modstate), NULL, (Uint32)-1 );
   ModSummary_new( &(gs->modtxt) );
-  MeshMem_new( &(gs->Mesh_Mem), 0, 0 );
+  Mesh_new( &(gs->Mesh) );
 
   // profiles
   CapList_new( gs );
@@ -5464,11 +5475,11 @@ CGame * CGame_new(CGame * gs, CNet * ns, CClient * cl, CServer * sv)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CGame_delete(CGame * gs)
+bool_t Game_delete(Game_t * gs)
 {
-  GSStack * stk;
+  GSStack_t * stk;
 
-  fprintf(stdout, "CGame_delete()\n");
+  fprintf(stdout, "Game_delete()\n");
 
   if(NULL == gs) return bfalse;
   if(!EKEY_PVALID(gs))  return btrue;
@@ -5498,7 +5509,7 @@ bool_t CGame_delete(CGame * gs)
   ModState_delete( &(gs->modstate) );
   ModSummary_delete( &(gs->modtxt) );
 
-  MeshMem_delete(&(gs->Mesh_Mem));				  //Free the mesh memory
+  Mesh_delete( &(gs->Mesh) );
 
   // profiles
   CapList_delete( gs );
@@ -5537,21 +5548,21 @@ bool_t CGame_delete(CGame * gs)
   }
 
   // blank out everything (sets all bools to false, all pointers to NULL, ...)
-  memset(gs, 0, sizeof(CGame));
+  memset(gs, 0, sizeof(Game_t));
 
   return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CGame_renew(CGame * gs)
+bool_t Game_renew(Game_t * gs)
 {
-  fprintf(stdout, "CGame_renew()\n");
+  fprintf(stdout, "Game_renew()\n");
 
   if(!EKEY_PVALID(gs)) return bfalse;
 
   // re-initialize the proc state
-  ProcState_renew( CGame_getProcedure(gs) );
-  ProcState_init( CGame_getProcedure(gs) );
+  ProcState_renew( Game_getProcedure(gs) );
+  ProcState_init( Game_getProcedure(gs) );
   gs->proc.Active = bfalse;
 
   CClient_renew(gs->cl);
@@ -5580,18 +5591,18 @@ bool_t CGame_renew(CGame * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-void set_alerts( CGame * gs, CHR_REF ichr, float dUpdate )
+void set_alerts( Game_t * gs, CHR_REF ichr, float dUpdate )
 {
   // ZZ> This function polls some alert conditions
 
-  PCap caplst      = gs->CapList;
+  PCap_t caplst      = gs->CapList;
   size_t caplst_size = CAPLST_COUNT;
 
-  PChr chrlst      = gs->ChrList;
+  PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
   AI_STATE * pstate;
-  CChr      * pchr;
+  Chr_t      * pchr;
 
   if( !ACTIVE_CHR( chrlst, ichr) ) return;
 
@@ -5607,12 +5618,12 @@ void set_alerts( CGame * gs, CHR_REF ichr, float dUpdate )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CGame * CGame_create(CNet * net, CClient * cl, CServer * sv)
+Game_t * Game_create(Net_t * net, Client_t * cl, Server_t * sv)
 {
-  GSStack   * stk;
-  CGame * ret;
+  GSStack_t   * stk;
+  Game_t * ret;
 
-  ret = CGame_new( (CGame*)calloc(1, sizeof(CGame)), net, cl, sv );
+  ret = Game_new( (Game_t*)calloc(1, sizeof(Game_t)), net, cl, sv );
 
   // automatically link it into the game state stack
   stk = Get_GSStack();
@@ -5622,15 +5633,15 @@ CGame * CGame_create(CNet * net, CClient * cl, CServer * sv)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t CGame_destroy(CGame ** gs )
+bool_t Game_destroy(Game_t ** gs )
 {
-  bool_t ret = CGame_delete(*gs);
+  bool_t ret = Game_delete(*gs);
   FREE(*gs);
   return ret;
 };
 
 //--------------------------------------------------------------------------------------------
-retval_t CGame_registerNetwork( CGame * gs, CNet * net, bool_t destroy )
+retval_t Game_registerNetwork( Game_t * gs, Net_t * net, bool_t destroy )
 {
   if( !EKEY_PVALID(gs) ) return rv_fail;
 
@@ -5645,7 +5656,7 @@ retval_t CGame_registerNetwork( CGame * gs, CNet * net, bool_t destroy )
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t CGame_registerClient ( CGame * gs, CClient * cl, bool_t destroy  )
+retval_t Game_registerClient ( Game_t * gs, Client_t * cl, bool_t destroy  )
 {
   if( !EKEY_PVALID(gs) ) return rv_fail;
 
@@ -5660,7 +5671,7 @@ retval_t CGame_registerClient ( CGame * gs, CClient * cl, bool_t destroy  )
 }
 
 //--------------------------------------------------------------------------------------------
-retval_t CGame_registerServer ( CGame * gs, CServer * sv, bool_t destroy )
+retval_t Game_registerServer ( Game_t * gs, Server_t * sv, bool_t destroy )
 {
   if( !EKEY_PVALID(gs) ) return rv_fail;
 
@@ -5678,7 +5689,7 @@ retval_t CGame_registerServer ( CGame * gs, CServer * sv, bool_t destroy )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t ShopList_new( CGame * gs )
+bool_t ShopList_new( Game_t * gs )
 {
   int i;
 
@@ -5695,7 +5706,7 @@ bool_t ShopList_new( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ShopList_delete( CGame * gs )
+bool_t ShopList_delete( Game_t * gs )
 {
   int i;
 
@@ -5712,7 +5723,7 @@ bool_t ShopList_delete( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ShopList_renew( CGame * gs )
+bool_t ShopList_renew( Game_t * gs )
 {
   int i;
 
@@ -5730,7 +5741,7 @@ bool_t ShopList_renew( CGame * gs )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t PassList_new( CGame * gs )
+bool_t PassList_new( Game_t * gs )
 {
   int i;
 
@@ -5747,7 +5758,7 @@ bool_t PassList_new( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t PassList_delete( CGame * gs )
+bool_t PassList_delete( Game_t * gs )
 {
   int i;
 
@@ -5764,7 +5775,7 @@ bool_t PassList_delete( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t PassList_renew( CGame * gs )
+bool_t PassList_renew( Game_t * gs )
 {
   int i;
 
@@ -5782,7 +5793,7 @@ bool_t PassList_renew( CGame * gs )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t CapList_new( CGame * gs )
+bool_t CapList_new( Game_t * gs )
 {
   CAP_REF icap;
 
@@ -5797,7 +5808,7 @@ bool_t CapList_new( CGame * gs )
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t CapList_delete( CGame * gs )
+bool_t CapList_delete( Game_t * gs )
 {
   CAP_REF icap;
 
@@ -5812,7 +5823,7 @@ bool_t CapList_delete( CGame * gs )
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t CapList_renew( CGame * gs )
+bool_t CapList_renew( Game_t * gs )
 {
   CAP_REF icap;
 
@@ -5828,7 +5839,7 @@ bool_t CapList_renew( CGame * gs )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t MadList_new( CGame * gs )
+bool_t MadList_new( Game_t * gs )
 {
   MAD_REF imad;
 
@@ -5841,7 +5852,7 @@ bool_t MadList_new( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t MadList_delete( CGame * gs )
+bool_t MadList_delete( Game_t * gs )
 {
   MAD_REF imad;
 
@@ -5854,7 +5865,7 @@ bool_t MadList_delete( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t MadList_renew( CGame * gs )
+bool_t MadList_renew( Game_t * gs )
 {
   MAD_REF imad;
 
@@ -5872,7 +5883,7 @@ bool_t MadList_renew( CGame * gs )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t EncList_new( CGame * gs )
+bool_t EncList_new( Game_t * gs )
 {
   // ZZ> This functions frees all of the enchantments
 
@@ -5892,7 +5903,7 @@ bool_t EncList_new( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t EncList_delete( CGame * gs )
+bool_t EncList_delete( Game_t * gs )
 {
   // ZZ> This functions frees all of the enchantments
 
@@ -5912,7 +5923,7 @@ bool_t EncList_delete( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t EncList_renew( CGame * gs )
+bool_t EncList_renew( Game_t * gs )
 {
   // ZZ> This functions frees all of the enchantments
 
@@ -5933,7 +5944,7 @@ bool_t EncList_renew( CGame * gs )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t PlaList_new( CGame * gs )
+bool_t PlaList_new( Game_t * gs )
 {
   // ZZ> This functions frees all of the plahantments
 
@@ -5957,7 +5968,7 @@ bool_t PlaList_new( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t PlaList_delete( CGame * gs )
+bool_t PlaList_delete( Game_t * gs )
 {
   // ZZ> This functions frees all of the plahantments
 
@@ -5981,7 +5992,7 @@ bool_t PlaList_delete( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t PlaList_renew( CGame * gs )
+bool_t PlaList_renew( Game_t * gs )
 {
   // ZZ> This functions frees all of the plahantments
 
@@ -6008,7 +6019,7 @@ bool_t PlaList_renew( CGame * gs )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t ChrList_new( CGame * gs )
+bool_t ChrList_new( Game_t * gs )
 {
   CHR_REF chr_cnt;
   if(!EKEY_PVALID(gs)) return bfalse;
@@ -6024,7 +6035,7 @@ bool_t ChrList_new( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ChrList_delete(CGame * gs)
+bool_t ChrList_delete(Game_t * gs)
 {
   CHR_REF chr_cnt;
   if(!EKEY_PVALID(gs)) return bfalse;
@@ -6040,7 +6051,7 @@ bool_t ChrList_delete(CGame * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ChrList_renew( CGame * gs )
+bool_t ChrList_renew( Game_t * gs )
 {
   CHR_REF chr_cnt;
   if(!EKEY_PVALID(gs)) return bfalse;
@@ -6058,7 +6069,7 @@ bool_t ChrList_renew( CGame * gs )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t EveList_new( CGame * gs )
+bool_t EveList_new( Game_t * gs )
 {
   EVE_REF ieve;
 
@@ -6073,7 +6084,7 @@ bool_t EveList_new( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t EveList_delete( CGame * gs )
+bool_t EveList_delete( Game_t * gs )
 {
   EVE_REF ieve;
 
@@ -6088,7 +6099,7 @@ bool_t EveList_delete( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t EveList_renew( CGame * gs )
+bool_t EveList_renew( Game_t * gs )
 {
   EVE_REF ieve;
 
@@ -6104,7 +6115,7 @@ bool_t EveList_renew( CGame * gs )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t PrtList_new( CGame * gs )
+bool_t PrtList_new( Game_t * gs )
 {
   // ZZ> This function resets the particle allocation lists
 
@@ -6125,7 +6136,7 @@ bool_t PrtList_new( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t PrtList_delete( CGame * gs )
+bool_t PrtList_delete( Game_t * gs )
 {
   // ZZ> This function resets the particle allocation lists
 
@@ -6147,7 +6158,7 @@ bool_t PrtList_delete( CGame * gs )
 
 
 //--------------------------------------------------------------------------------------------
-bool_t PrtList_renew( CGame * gs )
+bool_t PrtList_renew( Game_t * gs )
 {
   // ZZ> This function resets the particle allocation lists
 
@@ -6169,7 +6180,7 @@ bool_t PrtList_renew( CGame * gs )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t TeamList_new( CGame * gs )
+bool_t TeamList_new( Game_t * gs )
 {
   TEAM_REF iteam;
 
@@ -6184,7 +6195,7 @@ bool_t TeamList_new( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t TeamList_delete( CGame * gs )
+bool_t TeamList_delete( Game_t * gs )
 {
   TEAM_REF iteam;
 
@@ -6199,7 +6210,7 @@ bool_t TeamList_delete( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t TeamList_renew( CGame * gs )
+bool_t TeamList_renew( Game_t * gs )
 {
   TEAM_REF iteam;
 
@@ -6214,7 +6225,7 @@ bool_t TeamList_renew( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t reset_characters( CGame * gs )
+bool_t reset_characters( Game_t * gs )
 {
   // ZZ> This function resets all the character data
 
@@ -6231,7 +6242,7 @@ bool_t reset_characters( CGame * gs )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t PipList_new( CGame * gs )
+bool_t PipList_new( Game_t * gs )
 {
   PIP_REF ipip;
 
@@ -6247,7 +6258,7 @@ bool_t PipList_new( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t PipList_delete( CGame * gs )
+bool_t PipList_delete( Game_t * gs )
 {
   PIP_REF ipip;
 
@@ -6263,7 +6274,7 @@ bool_t PipList_delete( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t PipList_renew( CGame * gs )
+bool_t PipList_renew( Game_t * gs )
 {
   PIP_REF ipip;
 
@@ -6282,7 +6293,7 @@ bool_t PipList_renew( CGame * gs )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ProcState * ProcState_new(ProcState * ps)
+ProcState_t * ProcState_new(ProcState_t * ps)
 {
   //fprintf( stdout, "ProcState_new()\n");
 
@@ -6290,19 +6301,19 @@ ProcState * ProcState_new(ProcState * ps)
 
   ProcState_delete(ps);
 
-  memset(ps, 0, sizeof(ProcState));
+  memset(ps, 0, sizeof(ProcState_t));
 
-  EKEY_PNEW(ps, ProcState);
+  EKEY_PNEW(ps, ProcState_t);
 
   ps->Active = btrue;
   ps->State  = PROC_Begin;
-  ps->clk    = ClockState_create("ProcState", -1);
+  ps->clk    = ClockState_create("ProcState_t", -1);
 
   return ps;
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t ProcState_delete(ProcState * ps)
+bool_t ProcState_delete(ProcState_t * ps)
 {
   if(NULL == ps) return bfalse;
   if(!EKEY_PVALID(ps)) return btrue;
@@ -6323,14 +6334,14 @@ bool_t ProcState_delete(ProcState * ps)
 }
 
 //--------------------------------------------------------------------------------------------
-ProcState * ProcState_renew(ProcState * ps)
+ProcState_t * ProcState_renew(ProcState_t * ps)
 {
   ProcState_delete(ps);
   return ProcState_new(ps);
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t ProcState_init(ProcState * ps)
+bool_t ProcState_init(ProcState_t * ps)
 {
   if(NULL == ps) return bfalse;
 
@@ -6352,11 +6363,11 @@ bool_t ProcState_init(ProcState * ps)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-static CGui * CGui_new( CGui * g );
-static bool_t     CGui_delete( CGui * g );
+static Gui_t * CGui_new( Gui_t * g );
+static bool_t     CGui_delete( Gui_t * g );
 
 //--------------------------------------------------------------------------------------------
-CGui * gui_getState()
+Gui_t * gui_getState()
 {
   if(!EKEY_VALID(_gui_state))
   {
@@ -6381,7 +6392,7 @@ bool_t CGui_shutDown()
 }
 
 //--------------------------------------------------------------------------------------------
-CGui * CGui_new( CGui * gui )
+Gui_t * CGui_new( Gui_t * gui )
 {
   //fprintf( stdout, "CGui_new()\n");
 
@@ -6389,9 +6400,9 @@ CGui * CGui_new( CGui * gui )
 
   CGui_delete( gui );
 
-  memset(gui, 0, sizeof(CGui));
+  memset(gui, 0, sizeof(Gui_t));
 
-  EKEY_PNEW(gui, CGui);
+  EKEY_PNEW(gui, Gui_t);
 
   MenuProc_init( &(gui->mnu_proc) );
 
@@ -6402,13 +6413,13 @@ CGui * CGui_new( CGui * gui )
   gui->TxBars.textureID = INVALID_TEXTURE;
   gui->TxBlip.textureID = INVALID_TEXTURE;
 
-  gui->clk = ClockState_create("CGui", -1);
+  gui->clk = ClockState_create("Gui_t", -1);
 
   return gui;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CGui_delete( CGui * gui )
+bool_t CGui_delete( Gui_t * gui )
 {
   if(NULL == gui) return bfalse;
   if(!EKEY_PVALID(gui)) return btrue;
@@ -6423,7 +6434,7 @@ bool_t CGui_delete( CGui * gui )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_is_player( CGame * gs, CHR_REF character)
+bool_t chr_is_player( Game_t * gs, CHR_REF character)
 {
   if( !EKEY_PVALID(gs) || !ACTIVE_CHR(gs->ChrList, character)) return bfalse;
 
@@ -6431,15 +6442,15 @@ bool_t chr_is_player( CGame * gs, CHR_REF character)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t count_players(CGame * gs)
+bool_t count_players(Game_t * gs)
 {
   int numdead;
   PLA_REF pla_cnt;
   CHR_REF ichr;
-  PPla plalist;
-  PChr chrlist;
-  CClient * cs;
-  CServer * ss;
+  PPla_t plalist;
+  PChr_t chrlist;
+  Client_t * cs;
+  Server_t * ss;
 
   if( !EKEY_PVALID(gs) ) return bfalse;
 
@@ -6495,7 +6506,7 @@ bool_t count_players(CGame * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-void clear_message_queue(MessageQueue * q)
+void clear_message_queue(MessageQueue_t * q)
 {
   // ZZ> This function empties the message queue
 
@@ -6512,7 +6523,7 @@ void clear_message_queue(MessageQueue * q)
 }
 
 //--------------------------------------------------------------------------------------------
-void clear_messages( MessageData * md)
+void clear_messages( MessageData_t * md)
 {
   int cnt;
 
@@ -6524,11 +6535,11 @@ void clear_messages( MessageData * md)
     md->index[cnt] = 0;
   }
 
-  md->text[0] = '\0';
+  md->text[0] = EOS;
 }
 
 //--------------------------------------------------------------------------------------------
-void load_global_icons(CGame * gs)
+void load_global_icons(Game_t * gs)
 {
   release_all_icons(gs);
 
@@ -6542,7 +6553,7 @@ void load_global_icons(CGame * gs)
 
 //--------------------------------------------------------------------------------------------
 
-void recalc_character_bumpers( CGame * gs )
+void recalc_character_bumpers( Game_t * gs )
 {
   CHR_REF chr_ref;
 
@@ -6556,7 +6567,7 @@ void recalc_character_bumpers( CGame * gs )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t ObjList_new( CGame * gs )
+bool_t ObjList_new( Game_t * gs )
 {
   OBJ_REF iobj;
   if(!EKEY_PVALID(gs)) return bfalse;
@@ -6573,7 +6584,7 @@ bool_t ObjList_new( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ObjList_delete(CGame * gs)
+bool_t ObjList_delete(Game_t * gs)
 {
   OBJ_REF iobj;
   if(!EKEY_PVALID(gs)) return bfalse;
@@ -6590,7 +6601,7 @@ bool_t ObjList_delete(CGame * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ObjList_renew( CGame * gs )
+bool_t ObjList_renew( Game_t * gs )
 {
   OBJ_REF iobj;
   if(!EKEY_PVALID(gs)) return bfalse;
@@ -6607,7 +6618,7 @@ bool_t ObjList_renew( CGame * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-OBJ_REF ObjList_get_free( CGame * gs, OBJ_REF request )
+OBJ_REF ObjList_get_free( Game_t * gs, OBJ_REF request )
 {
   int i;
   OBJ_REF retval = INVALID_OBJ;

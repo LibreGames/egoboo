@@ -490,7 +490,7 @@ void funderf( FILE* filewrite, char* text, char* usename )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t fget_message( FILE* fileread, MessageData * msglst )
+bool_t fget_message( FILE* fileread, MessageData_t * msglst )
 {
   // ZZ> This function loads a string into the message buffer, making sure it
   //     is null terminated.
@@ -534,7 +534,7 @@ bool_t fget_message( FILE* fileread, MessageData * msglst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t fget_next_message( FILE* fileread, MessageData * msglst )
+bool_t fget_next_message( FILE* fileread, MessageData_t * msglst )
 {
   // ZZ> This function loads a string into the message buffer, making sure it
   //     is null terminated.
@@ -595,7 +595,7 @@ char fget_first_letter( FILE* fileread )
 {
   // ZZ> This function returns the next non-whitespace character
 
-  char cTmp = '\0';
+  char cTmp = EOS;
   bool_t bfound = bfalse;
 
   while ( !feof( fileread ) && !bfound )
@@ -806,10 +806,10 @@ ACTION fget_next_action( FILE* fileread )
 };
 
 //--------------------------------------------------------------------------------------------
-PRTTYPE fget_prttype( FILE * fileread )
+PRTALPHA fget_prttype( FILE * fileread )
 {
   char cTmp;
-  PRTTYPE retval = PRTTYPE_SOLID;
+  PRTALPHA retval = PRTTYPE_SOLID;
 
   if ( feof( fileread ) ) return retval;
 
@@ -825,9 +825,9 @@ PRTTYPE fget_prttype( FILE * fileread )
 };
 
 //--------------------------------------------------------------------------------------------
-PRTTYPE fget_next_prttype( FILE * fileread )
+PRTALPHA fget_next_prttype( FILE * fileread )
 {
-  PRTTYPE retval = PRTTYPE_SOLID;
+  PRTALPHA retval = PRTTYPE_SOLID;
 
   if ( fgoto_colon_yesno( fileread ) )
   {
@@ -849,7 +849,7 @@ bool_t fget_string( FILE* fileread, char *szLine, size_t lnLine )
   if ( NULL == szLine || lnLine <= 1 ) return bfalse;
 
   // read past any initial spaces
-  cTmp = '\0';
+  cTmp = EOS;
   while ( !feof( fileread ) )
   {
     cTmp = fgetc( fileread );
@@ -871,7 +871,7 @@ bool_t fget_string( FILE* fileread, char *szLine, size_t lnLine )
     cTmp = fgetc( fileread );
   };
 
-  if ( pout < plast ) *pout = '\0';
+  if ( pout < plast ) *pout = EOS;
 
   return len != 0;
 }
@@ -906,7 +906,7 @@ const char * inherit_fname(const char * szObjPath, const char * szObject, const 
   fs_find_info_new( &fs_finfo );
 
   // blank the static string
-  ret_fname[0] = '\0';
+  ret_fname[0] = EOS;
 
   if(NULL == szObject)
   {
@@ -1052,7 +1052,7 @@ retval_t util_calculateCRC(char * filename, Uint32 seed, Uint32 * pCRC)
     return rv_error;
   }
 
-  if(NULL ==filename || '\0' == filename[0])
+  if( !VALID_CSTR(filename) )
   {
     log_info("util_calculateCRC() - Called null filename.\n");
     return rv_error;

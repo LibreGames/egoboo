@@ -12,9 +12,9 @@ static bool_t       AStar_initialized = bfalse;
 
 static int          AStar_allocated = 0;
 static int          AStar_open_count = 0;
-static AStar_Node * AStar_open_list = NULL;
+static AStar_Node_t * AStar_open_list = NULL;
 static int          AStar_closed_count = 0;
-static AStar_Node * AStar_closed_list = NULL;
+static AStar_Node_t * AStar_closed_list = NULL;
 
 static int AStar_cmp_nodes( const void * pleft, const void * pright );
 
@@ -45,10 +45,10 @@ bool_t AStar_allocate(int requested_size)
     AStar_deallocate();
   }
 
-  AStar_open_list   = calloc(size, sizeof(AStar_Node));
+  AStar_open_list   = calloc(size, sizeof(AStar_Node_t));
   if(NULL == AStar_open_list) return bfalse;
 
-  AStar_closed_list = calloc(size, sizeof(AStar_Node));
+  AStar_closed_list = calloc(size, sizeof(AStar_Node_t));
   if(NULL == AStar_closed_list)
   {
     free(AStar_open_list);
@@ -92,7 +92,7 @@ void AStar_reinit()
 }
 
 //------------------------------------------------------------------------------
-int AStar_closed_find(AStar_Node * pn)
+int AStar_closed_find(AStar_Node_t * pn)
 {
   int i;
 
@@ -108,7 +108,7 @@ int AStar_closed_find(AStar_Node * pn)
 }
 
 //------------------------------------------------------------------------------
-int AStar_open_find(AStar_Node * pn)
+int AStar_open_find(AStar_Node_t * pn)
 {
   int i;
 
@@ -124,7 +124,7 @@ int AStar_open_find(AStar_Node * pn)
 }
 
 //------------------------------------------------------------------------------
-bool_t AStar_open_add(AStar_Node * pn)
+bool_t AStar_open_add(AStar_Node_t * pn)
 {
   bool_t retval = bfalse;
 
@@ -132,14 +132,14 @@ bool_t AStar_open_add(AStar_Node * pn)
 
   if(AStar_open_count >= AStar_allocated-1) return bfalse;
 
-  memcpy(AStar_open_list + AStar_open_count, pn, sizeof(AStar_Node));
+  memcpy(AStar_open_list + AStar_open_count, pn, sizeof(AStar_Node_t));
   AStar_open_count++;
 
   return btrue;
 }
 
 //------------------------------------------------------------------------------
-bool_t AStar_closed_add(AStar_Node * pn)
+bool_t AStar_closed_add(AStar_Node_t * pn)
 {
   bool_t retval = bfalse;
   int i = AStar_closed_find(pn);
@@ -148,12 +148,12 @@ bool_t AStar_closed_add(AStar_Node * pn)
 
   if(i>0 && AStar_closed_list[i].weight < pn->weight)
   {
-    memcpy(AStar_closed_list + i, pn, sizeof(AStar_Node));
+    memcpy(AStar_closed_list + i, pn, sizeof(AStar_Node_t));
     retval = btrue;
   }
   else if(AStar_closed_count < AStar_allocated-1)
   {
-    memcpy(AStar_closed_list + AStar_closed_count, pn, sizeof(AStar_Node));
+    memcpy(AStar_closed_list + AStar_closed_count, pn, sizeof(AStar_Node_t));
     AStar_closed_count++;
     retval = btrue;
   }
@@ -162,17 +162,19 @@ bool_t AStar_closed_add(AStar_Node * pn)
 }
 
 //------------------------------------------------------------------------------
-bool_t AStar_prepare_path(CGame * gs, Uint32 stoppedby, int src_ix, int src_iy, int dst_ix, int dst_iy)
+bool_t AStar_prepare_path(Game_t * gs, Uint32 stoppedby, int src_ix, int src_iy, int dst_ix, int dst_iy)
 {
   int i,j,k;
   bool_t dst_off_mesh;
-  AStar_Node tmp_node;
+  AStar_Node_t tmp_node;
   Uint32     tmp_fan;
-  MESH_FAN  * mf_list = gs->Mesh_Mem.fanlst;
-  MESH_INFO * mi = &(gs->mesh);
   bool_t done, retval = bfalse;
   int deadend_count, open_fraction;
-  AStar_Node * popen;
+  AStar_Node_t * popen;
+
+  Mesh_t     * pmesh   = Game_getMesh(gs);
+  MeshTile_t * mf_list = pmesh->Mem.tilelst;
+  MeshInfo_t * mi      = &(pmesh->Info);
 
   // do not start if the initial point is off the mesh
   if(!mesh_check_fan( mi, src_ix, src_iy )) return bfalse;
@@ -184,7 +186,7 @@ bool_t AStar_prepare_path(CGame * gs, Uint32 stoppedby, int src_ix, int src_iy, 
   done = bfalse;
 
   // initialize the list
-  memset(&tmp_node, 0, sizeof(AStar_Node));
+  memset(&tmp_node, 0, sizeof(AStar_Node_t));
   tmp_node.ix     = src_ix;
   tmp_node.iy     = src_iy;
   tmp_node.weight = sqrt((src_ix-dst_ix)*(src_ix-dst_ix) + (src_iy-dst_iy)*(src_iy-dst_iy));
@@ -288,7 +290,7 @@ bool_t AStar_prepare_path(CGame * gs, Uint32 stoppedby, int src_ix, int src_iy, 
       }
     }
 
-    qsort(AStar_open_list, AStar_open_count, sizeof(AStar_Node), AStar_cmp_nodes);
+    qsort(AStar_open_list, AStar_open_count, sizeof(AStar_Node_t), AStar_cmp_nodes);
 
     // remove the "closeme" nodes from the open list
     open_fraction = AStar_open_count;
@@ -316,15 +318,15 @@ bool_t AStar_prepare_path(CGame * gs, Uint32 stoppedby, int src_ix, int src_iy, 
 }
 
 //------------------------------------------------------------------------------
-int AStar_get_path(int src_ix, int src_iy, AStar_Node buffer[], int buffer_size)
+int AStar_get_path(int src_ix, int src_iy, AStar_Node_t buffer[], int buffer_size)
 {
-  // BB > Fill buffer with the AStar_Node's that connect the source with the destination.
+  // BB > Fill buffer with the AStar_Node_t's that connect the source with the destination.
   //      The best destination tile will be the first in the AStar_open_list.
   //      The node list that is placed in buffer[] is actually reversed.
   //      Returns the number of nodes in buffer[], -1 if the buffer is too small
 
   int i, buffer_count;
-  AStar_Node tmp_node;
+  AStar_Node_t tmp_node;
   bool_t found, found_parent;
 
   if(NULL == buffer || buffer_size < 0) return 0;
@@ -382,8 +384,8 @@ int AStar_get_path(int src_ix, int src_iy, AStar_Node buffer[], int buffer_size)
 //------------------------------------------------------------------------------
 int AStar_cmp_nodes( const void * pleft, const void * pright )
 {
-  AStar_Node * as_lft = (AStar_Node *)pleft;
-  AStar_Node * as_rgt = (AStar_Node *)pright;
+  AStar_Node_t * as_lft = (AStar_Node_t *)pleft;
+  AStar_Node_t * as_rgt = (AStar_Node_t *)pright;
 
   // move all "closeme" nodes to the end of the list
   if(as_lft->closeme && !as_rgt->closeme) return 1;
@@ -400,7 +402,7 @@ int AStar_cmp_nodes( const void * pleft, const void * pright )
 
 
 //------------------------------------------------------------------------------
-int AStar_Node_list_prune(AStar_Node buffer[], int buffer_size)
+int AStar_Node_list_prune(AStar_Node_t buffer[], int buffer_size)
 {
   int i, i1, i2;
   bool_t * eliminate_lst;
@@ -470,7 +472,7 @@ int AStar_Node_list_prune(AStar_Node buffer[], int buffer_size)
       {
         for(i1=i+1; i1<buffer_size; i1++)
         {
-          memcpy( buffer + i1 - 1, buffer + i1, sizeof(AStar_Node) );
+          memcpy( buffer + i1 - 1, buffer + i1, sizeof(AStar_Node_t) );
         }
         buffer_size--;
       }

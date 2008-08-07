@@ -42,11 +42,11 @@
 
 //--------------------------------------------------------------------------------------------
 
-struct ConfigData_t;
-struct CGame_t;
+struct sConfigData;
+struct sGame;
 
 //--------------------------------------------------------------------------------------------
-struct renderlist_t
+struct s_renderlist
 {
   int     num_totl;                            // Number to render, total
   Uint32  totl[MAXMESHRENDER];                 // List of which to render, total
@@ -64,11 +64,11 @@ struct renderlist_t
   Uint32  watr[MAXMESHRENDER];                 // ..., water
   Uint32  watr_mode[MAXMESHRENDER];
 };
-typedef struct renderlist_t RENDERLIST;
+typedef struct s_renderlist RENDERLIST;
 
 //--------------------------------------------------------------------------------------------
 // Global lighting stuff
-struct global_lighting_info_t
+struct s_global_lighting_info
 {
   bool_t on;
   float  spek;
@@ -77,14 +77,14 @@ struct global_lighting_info_t
   float  ambi;
   vect3  ambicol;
 };
-typedef struct global_lighting_info_t GLOBAL_LIGHTING_INFO;
+typedef struct s_global_lighting_info GLOBAL_LIGHTING_INFO;
 
 extern GLOBAL_LIGHTING_INFO GLight;
 
 //--------------------------------------------------------------------------------------------
-struct CGraphics_t
+struct sGraphics
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
   // JF - Added so that the video mode might be determined outside of the graphics code
   SDL_Surface * surface;
@@ -127,49 +127,50 @@ struct CGraphics_t
   float         est_max_fps;
 
   // the game state that we are plugged into
-  struct CGame_t  * gs;
+  struct sGame  * gs;
 
 };
-typedef struct CGraphics_t CGraphics;
+typedef struct sGraphics Graphics_t;
 
-CGraphics * CGraphics_new(CGraphics * g, struct ConfigData_t * cd);
-bool_t      CGraphics_synch(CGraphics * g, struct ConfigData_t * cd);
+Graphics_t * CGraphics_new(Graphics_t * g, struct sConfigData * cd);
+bool_t       CGraphics_synch(Graphics_t * g, struct sConfigData * cd);
 
-extern CGraphics gfxState;
+extern Graphics_t gfxState;
 
 //--------------------------------------------------------------------------------------------
-struct ClockState_t;
+struct sClockState;
 
-typedef struct CGui_t
+struct sGui
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
-  MenuProc mnu_proc;
+  MenuProc_t mnu_proc;
 
   bool_t can_pause;          //Pause button avalible?
 
   GLtexture TxBars;                                         /* status bars */
   GLtexture TxBlip;                                         /* you are here texture */
 
-  struct ClockState_t * clk;
+  struct sClockState * clk;
   float                 dUpdate;
 
-  MessageQueue msgQueue;
-} CGui;
+  MessageQueue_t msgQueue;
+};
+typedef struct sGui Gui_t;
 
-CGui * gui_getState();
+Gui_t * gui_getState();
 bool_t CGui_shutDown();
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct mod_data_t;
-struct CChr_t;
+struct s_mod_info;
+struct sChr;
 
-bool_t glinit(  CGraphics * g, struct ConfigData_t * cd  );
-bool_t gfx_initialize(CGraphics * g, struct ConfigData_t * cd);
+bool_t glinit(  Graphics_t * g, struct sConfigData * cd  );
+bool_t gfx_initialize(Graphics_t * g, struct sConfigData * cd);
 
-int draw_string( BMFont * pfnt, float x, float y, GLfloat tint[], char * szFormat, ... );
-bool_t draw_texture_box( GLtexture * ptx, FRect * tx_rect, FRect * sc_rect );
+int draw_string( BMFont_t * pfnt, float x, float y, GLfloat tint[], char * szFormat, ... );
+bool_t draw_texture_box( GLtexture * ptx, FRect_t * tx_rect, FRect_t * sc_rect );
 
 void BeginText( GLtexture * pfnt );
 void EndText( void );
@@ -179,8 +180,8 @@ void End2DMode( void );
 
 INLINE const bool_t bbox_gl_draw(AA_BBOX * pbbox);
 
-bool_t gfx_set_mode(CGraphics * g);
-bool_t gfx_find_anisotropy( CGraphics * g );
+bool_t gfx_set_mode(Graphics_t * g);
+bool_t gfx_find_anisotropy( Graphics_t * g );
 
 bool_t make_renderlist(RENDERLIST * prlst);
 
@@ -190,7 +191,7 @@ bool_t request_pageflip();
 bool_t do_pageflip();
 bool_t do_clear();
 
-void md2_blend_vertices(struct CChr_t * pchr, Sint32 vrtmin, Sint32 vrtmax);
-void md2_blend_lighting(struct CChr_t * pchr);
+void md2_blend_vertices(struct sChr * pchr, Sint32 vrtmin, Sint32 vrtmax);
+void md2_blend_lighting(struct sChr * pchr);
 
-void prime_icons( struct CGame_t * gs);
+void prime_icons( struct sGame * gs);

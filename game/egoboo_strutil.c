@@ -74,7 +74,7 @@ char * str_convert_underscores( char *strout, size_t insize, char * strin )
 
   if ( NULL == strin || NULL == strout || 0 == insize ) return NULL;
 
-  while ( pout < plast && '\0' != *pin )
+  while ( pout < plast && EOS != *pin )
   {
     *pout = *pin;
     if ( '_' == *pout ) *pout = ' ';
@@ -82,7 +82,7 @@ char * str_convert_underscores( char *strout, size_t insize, char * strin )
     pin++;
   };
 
-  if ( pout < plast ) *pout = '\0';
+  if ( pout < plast ) *pout = EOS;
 
   return strout;
 };
@@ -94,7 +94,7 @@ char * str_convert_spaces( char *strout, size_t insize, char * strin )
 
   if ( NULL == strin || NULL == strout || 0 == insize ) return NULL;
 
-  while ( pout < plast && '\0' != *pin )
+  while ( pout < plast && EOS != *pin )
   {
     if ( !isspace( *pin ) && isprint( *pin ) )
     {
@@ -132,7 +132,7 @@ char * str_convert_spaces( char *strout, size_t insize, char * strin )
     }
   };
 
-  if ( pout < plast ) *pout = '\0';
+  if ( pout < plast ) *pout = EOS;
 
   return strout;
 };
@@ -142,7 +142,7 @@ char * str_convert_net(char * str, size_t size)
 {
   size_t i;
 
-  if(NULL == str || '\0' == str[0]) return str;
+  if( !VALID_CSTR(str) ) return str;
 
 #if !(SLASH_CHAR == NET_SLASH_CHAR)
 
@@ -162,7 +162,7 @@ char * str_convert_sys(char * str, size_t size)
 {
   size_t i;
 
-  if(NULL == str || '\0' == str[0]) return str;
+  if( !VALID_CSTR(str) ) return str;
 
 #if !(SLASH_CHAR == NET_SLASH_CHAR)
   for(i=0; i < size; i++)
@@ -181,7 +181,7 @@ char * str_append_net_slash(char * str, size_t size)
 {
   size_t len;
 
-  if(NULL == str || '\0' == str[0]) return str;
+  if( !VALID_CSTR(str) ) return str;
 
   len = strlen( str );
   if ( str[len-1] != '/' && str[len-1] != '\\' )
@@ -196,7 +196,7 @@ char * str_append_slash(char * str, size_t size)
 {
   size_t len;
 
-  if(NULL == str || '\0' == str[0]) return NULL;
+  if( !VALID_CSTR(str) ) return NULL;
 
   len = strlen( str );
   if ( str[len-1] != '/' && str[len-1] != '\\' )

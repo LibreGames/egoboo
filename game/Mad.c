@@ -32,7 +32,7 @@ ACTION action_number(char * szName)
 
   ACTION cnt;
 
-  if(NULL ==szName || '\0' == szName[0] || '\0' == szName[1]) return ACTION_INVALID;
+  if( !VALID_CSTR(szName)  || EOS == szName[1]) return ACTION_INVALID;
 
   for ( cnt = 0; cnt < MAXACTION; cnt++ )
   {
@@ -66,7 +66,7 @@ bool_t test_frame_name( char * szName, char letter )
   // max md2 frame name is 15 characters
   for(i=4; i<15; i++)
   {
-    if ( '\0'   == szName[i] ) break;
+    if ( EOS   == szName[i] ) break;
     if ( letter == szName[i] ) return btrue;
   }
 
@@ -74,12 +74,12 @@ bool_t test_frame_name( char * szName, char letter )
 }
 
 //--------------------------------------------------------------------------------------------
-void action_copy_correct( CGame * gs, MAD_REF imad, ACTION actiona, ACTION actionb )
+void action_copy_correct( Game_t * gs, MAD_REF imad, ACTION actiona, ACTION actionb )
 {
   // ZZ> This function makes sure both actions are valid if either of them
   //     are valid.  It will copy start and ends to mirror the valid action.
 
-  CMad * pmad;
+  Mad_t * pmad;
 
   if( !LOADED_MAD(gs->MadList, imad) ) return;
   pmad = gs->MadList + imad;
@@ -109,11 +109,11 @@ void action_copy_correct( CGame * gs, MAD_REF imad, ACTION actiona, ACTION actio
 }
 
 //--------------------------------------------------------------------------------------------
-void get_walk_frame( CGame * gs, MAD_REF imad, LIPT lip_trans, ACTION action )
+void get_walk_frame( Game_t * gs, MAD_REF imad, LIPT lip_trans, ACTION action )
 {
   // ZZ> This helps make walking look right
 
-  CMad * pmad;
+  Mad_t * pmad;
   int frame = 0;
   int framesinaction = 0;
 
@@ -143,7 +143,7 @@ Uint16 get_framefx( char * szName )
 
   Uint16 fx = 0;
 
-  if(NULL == szName || '\0' == szName[0] || '\0' == szName[1] ) return 0;
+  if( !VALID_CSTR(szName)  || EOS == szName[1] ) return 0;
 
   if ( test_frame_name( szName, 'I' ) ) fx |= MADFX_INVICTUS;
   if ( test_frame_name( szName, 'S' ) ) fx |= MADFX_STOP;
@@ -172,11 +172,11 @@ Uint16 get_framefx( char * szName )
 }
 
 //--------------------------------------------------------------------------------------------
-void make_framelip( CGame * gs, MAD_REF imad, ACTION action )
+void make_framelip( Game_t * gs, MAD_REF imad, ACTION action )
 {
   // ZZ> This helps make walking look right
 
-  CMad * pmad;
+  Mad_t * pmad;
   int frame, framesinaction;
 
   if( !LOADED_MAD(gs->MadList, imad) ) return;
@@ -196,14 +196,14 @@ void make_framelip( CGame * gs, MAD_REF imad, ACTION action )
 }
 
 //--------------------------------------------------------------------------------------------
-void get_actions( CGame * gs, MAD_REF imad )
+void get_actions( Game_t * gs, MAD_REF imad )
 {
   // ZZ> This function creates the iframe lists for each action based on the
   //     name of each md2 iframe in the model
 
   ACTION      action, lastaction;
-  MD2_Model * pmd2;
-  CMad       * pmad;
+  MD2_Model_t * pmd2;
+  Mad_t       * pmad;
 
   int    iframe, framesinaction;
   int    iFrameCount;
@@ -236,7 +236,7 @@ void get_actions( CGame * gs, MAD_REF imad )
   framesinaction = 0;
   for ( iframe = 0; iframe < iFrameCount; iframe++ )
   {
-    const MD2_Frame * pFrame = md2_get_Frame(pmd2, iframe);
+    const MD2_Frame_t * pFrame = md2_get_Frame(pmd2, iframe);
     szName = pFrame->name;
     action = action_number(szName);
     if ( lastaction == action )
@@ -340,14 +340,14 @@ void get_actions( CGame * gs, MAD_REF imad )
 }
 
 //--------------------------------------------------------------------------------------------
-void make_mad_equally_lit( CGame * gs, MAD_REF imad )
+void make_mad_equally_lit( Game_t * gs, MAD_REF imad )
 {
   // ZZ> This function makes ultra low poly models look better
 
   int frame, vert;
   int iFrames, iVerts;
-  CMad * pmad;
-  MD2_Model * m;
+  Mad_t * pmad;
+  MD2_Model_t * m;
 
   if( !LOADED_MAD(gs->MadList, imad) ) return;
   pmad = gs->MadList + imad;
@@ -360,7 +360,7 @@ void make_mad_equally_lit( CGame * gs, MAD_REF imad )
 
   for ( frame = 0; frame < iFrames; frame++ )
   {
-    const MD2_Frame * f = md2_get_Frame(m, frame);
+    const MD2_Frame_t * f = md2_get_Frame(m, frame);
     for ( vert = 0; vert < iVerts; vert++ )
     {
       f->vertices[vert].normal = EQUALLIGHTINDEX;
@@ -370,7 +370,7 @@ void make_mad_equally_lit( CGame * gs, MAD_REF imad )
 }
 
 //--------------------------------------------------------------------------------------------
-void load_copy_file( CGame * gs, const char * szObjectpath, const char * szObjectname, MAD_REF object )
+void load_copy_file( Game_t * gs, const char * szObjectpath, const char * szObjectname, MAD_REF object )
 {
   // ZZ> This function copies a model's actions
 
@@ -435,7 +435,7 @@ bool_t bbox_list_contract(BBOX_LIST *pnew)
 // the most complete way of doing this would be to find the nodes of an octree
 // at the given level that contain triangles.
 // HOWEVER, the math on that is kicking my @$$, so I will do something simpler
-bool_t mad_generate_bbox_list(BBOX_LIST *plist, MD2_Model * pmd2, int frame, int bbox_divisions)
+bool_t mad_generate_bbox_list(BBOX_LIST *plist, MD2_Model_t * pmd2, int frame, int bbox_divisions)
 {
   int ix, iy, iz;
   int i, j;
@@ -444,7 +444,7 @@ bool_t mad_generate_bbox_list(BBOX_LIST *plist, MD2_Model * pmd2, int frame, int
   AA_BBOX tmp_bb;
 
   int               vrt_count;
-  const MD2_Frame * pframe;
+  const MD2_Frame_t * pframe;
 
   int                  tri_count;
   const md2_triangle * ptri_lst;
@@ -695,7 +695,7 @@ bool_t mad_cull_bbox_list(int max_lod, BBOX_LIST *plst, BBOX_LIST *pcull)
 
 
 //--------------------------------------------------------------------------------------------
-bool_t mad_optimize_bbox_tree(CMad * pmad)
+bool_t mad_optimize_bbox_tree(Mad_t * pmad)
 {
   // BB > optimize the bbox tree by culling inefficient bboxes from the more detailed lists
 
@@ -703,8 +703,8 @@ bool_t mad_optimize_bbox_tree(CMad * pmad)
   BBOX_ARY  * pary;
   BBOX_LIST * pcull, * plst;
   AA_BBOX   * pbbox;
-  MD2_Model * pmd2;
-  const MD2_Frame * pframe;
+  MD2_Model_t * pmd2;
+  const MD2_Frame_t * pframe;
 
   if(NULL == pmad) return bfalse;
 
@@ -912,7 +912,7 @@ static bool_t mad_simplify_bbox_list(int max_divisions, int new_divisions, BBOX_
 
 
 //--------------------------------------------------------------------------------------------
-bool_t mad_delete_bbox_tree(CMad * pmad)
+bool_t mad_delete_bbox_tree(Mad_t * pmad)
 {
   int i;
 
@@ -932,15 +932,15 @@ bool_t mad_delete_bbox_tree(CMad * pmad)
 }
 
 //--------------------------------------------------------------------------------------------
-static bool_t mad_scale_bbox_tree(CMad * pmad)
+static bool_t mad_scale_bbox_tree(Mad_t * pmad)
 {
   // BB > scale bounding boxes to the size of the object
 
   int i, j, k;
   int iframes;
 
-  MD2_Model * pmd2;
-  const MD2_Frame * pframe;
+  MD2_Model_t * pmd2;
+  const MD2_Frame_t * pframe;
 
   BBOX_ARY  * pary;
   BBOX_LIST * plst;
@@ -1002,15 +1002,15 @@ static bool_t mad_scale_bbox_tree(CMad * pmad)
 }
 
 //--------------------------------------------------------------------------------------------
-//bool_t mad_optimize_bbox_tree(int max_level, CMad * pmad)
+//bool_t mad_optimize_bbox_tree(int max_level, Mad_t * pmad)
 //{
 //  // BB > try to collapse some of the bounding boxes on the more detailed levels
 //
 //  int i, j, k;
 //  int iframes;
 //
-//  MD2_Model * pmd2;
-//  const MD2_Frame * pframe;
+//  MD2_Model_t * pmd2;
+//  const MD2_Frame_t * pframe;
 //
 //  BBOX_ARY  * pary;
 //  BBOX_LIST * plst_base, * plst_test;
@@ -1085,7 +1085,7 @@ static bool_t mad_scale_bbox_tree(CMad * pmad)
 //}
 
 //--------------------------------------------------------------------------------------------
-bool_t mad_generate_bbox_tree(int max_level, CMad * pmad)
+bool_t mad_generate_bbox_tree(int max_level, Mad_t * pmad)
 {
   // BB > Make a series of progressively refined BBox lists.
   //      The list will have null nodes for every level of detail where
@@ -1156,21 +1156,21 @@ bool_t mad_generate_bbox_tree(int max_level, CMad * pmad)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CMad * Mad_new(CMad * pmad )
+Mad_t * Mad_new(Mad_t * pmad )
 {
   //fprintf( stdout, "Mad_new()\n");
 
   if(NULL == pmad) return pmad;
 
-  memset(pmad, 0, sizeof(CMad));
+  memset(pmad, 0, sizeof(Mad_t));
 
-  EKEY_PNEW(pmad, CMad);
+  EKEY_PNEW(pmad, Mad_t);
 
   return pmad;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t Mad_delete(CMad * pmad)
+bool_t Mad_delete(Mad_t * pmad)
 {
   if(NULL == pmad) return bfalse;
 
@@ -1195,7 +1195,7 @@ bool_t Mad_delete(CMad * pmad)
 };
 
 //--------------------------------------------------------------------------------------------
-CMad *  Mad_renew(CMad * pmad)
+Mad_t *  Mad_renew(Mad_t * pmad)
 {
   Mad_delete(pmad);
   return Mad_new(pmad);
@@ -1203,15 +1203,15 @@ CMad *  Mad_renew(CMad * pmad)
 
 
 //---------------------------------------------------------------------------------------------
-MAD_REF MadList_load_one( CGame * gs, const char * szObjectpath, const char * szObjectname, MAD_REF imad )
+MAD_REF MadList_load_one( Game_t * gs, const char * szObjectpath, const char * szObjectname, MAD_REF imad )
 {
   // ZZ> This function loads an id md2 file, storing the converted data in the indexed model
   //    int iFileHandleRead;
 
   int iFrames;
-  CMad * pmad;
+  Mad_t * pmad;
 
-  PMad madlst = gs->MadList;
+  PMad_t madlst = gs->MadList;
 
   // make the notation "easier"
   if( !VALID_MAD_RANGE(imad) ) return INVALID_MAD;
@@ -1234,7 +1234,7 @@ MAD_REF MadList_load_one( CGame * gs, const char * szObjectpath, const char * sz
   }
 
 
-  // make sure we have a clean CMad. More complicated because of dynamic allocation...
+  // make sure we have a clean Mad_t. More complicated because of dynamic allocation...
   if(NULL == Mad_renew(pmad)) return INVALID_MAD;
 
   // load the actual md2 data
@@ -1275,7 +1275,7 @@ MAD_REF MadList_load_one( CGame * gs, const char * szObjectpath, const char * sz
 }
 
 //---------------------------------------------------------------------------------------------
-void MadList_free_one( CGame * gs, MAD_REF imad )
+void MadList_free_one( Game_t * gs, MAD_REF imad )
 {
   // ZZ> This function loads an id md2 file, storing the converted data in the indexed model
   //    int iFileHandleRead;
@@ -1317,9 +1317,9 @@ bool_t mad_display_bbox_ary(BBOX_ARY * pary, int level)
   return btrue;
 };
 
-bool_t mad_display_bbox_tree(int level, matrix_4x4 matrix, CMad * pmad, int frame1, int frame2 )
+bool_t mad_display_bbox_tree(int level, matrix_4x4 matrix, Mad_t * pmad, int frame1, int frame2 )
 {
-  MD2_Model * pmd2;
+  MD2_Model_t * pmd2;
   BBOX_ARY  * pary;
 
   if(NULL == pmad) return bfalse;
@@ -1381,11 +1381,11 @@ bool_t mad_display_bbox_tree(int level, matrix_4x4 matrix, CMad * pmad, int fram
 }
 
 //---------------------------------------------------------------------------------------------
-int mad_vertexconnected( MD2_Model * m, int vertex )
+int mad_vertexconnected( MD2_Model_t * m, int vertex )
 {
   // ZZ> This function returns 1 if the model vertex is connected, 0 otherwise
 
-  const MD2_GLCommand * g;
+  const MD2_GLCommand_t * g;
   int commands, entry;
 
   if(NULL == m) return 0;
@@ -1410,7 +1410,7 @@ int mad_vertexconnected( MD2_Model * m, int vertex )
 }
 
 //---------------------------------------------------------------------------------------------
-int mad_calc_transvertices( MD2_Model * m )
+int mad_calc_transvertices( MD2_Model_t * m )
 {
   // ZZ> This function gets the number of vertices to transform for a model...
   //     That means every one except the grip ( unconnected ) vertices
@@ -1430,22 +1430,22 @@ int mad_calc_transvertices( MD2_Model * m )
 
 
 ////--------------------------------------------------------------------------------------------
-//bool_t mad_generate_bbox_level(int bbox_divisions, int frame, CMad * pmad)
+//bool_t mad_generate_bbox_level(int bbox_divisions, int frame, Mad_t * pmad)
 //{
 //  int            i, bbox_count, vrt_count;
 //  int            num_per_axis;
 //  BBOX_LIST      bblist;
 //  AA_BBOX        tmp_bb;
 //
-//  MD2_Model    * pmd2;
+//  MD2_Model_t    * pmd2;
 //
 //  int            vrt_count;
-//  const MD2_Frame    * pframe;
+//  const MD2_Frame_t    * pframe;
 //
 //  int            tri_count;
 //  md2_triangle * ptri_lst;
 //
-//  // check for valid CMad
+//  // check for valid Mad_t
 //  if(NULL == pmad) return bfalse;
 //
 //  // check for valid MD2

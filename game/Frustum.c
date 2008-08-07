@@ -4,7 +4,7 @@
 //
 //  $Author:  DigiBen  digiben@gametutorials.com
 //
-//  $Program:  Frustum Culling
+//  $Program:  Frustum_t Culling
 //
 //  $Description: Demonstrates checking if shapes are in view
 //
@@ -19,7 +19,7 @@
 
 // We create an enum of the sides so we don't have to call each side 0 or 1.
 // This way it makes it more understandable and readable when dealing with frustum sides.
-enum frustum_side_e
+enum e_frustum_side
 {
   RIGHT = 0,  // The RIGHT side of the frustum
   LEFT = 1,  // The LEFT  side of the frustum
@@ -29,11 +29,11 @@ enum frustum_side_e
   FRONT = 5   // The FRONT side of the frustum
 };
 
-typedef enum frustum_side_e FrustumSide;
+typedef enum e_frustum_side FrustumSide;
 
 // Like above, instead of saying a number for the ABC and D of the plane, we
 // want to be more descriptive.
-enum plane_data_t
+enum e_plane_data
 {
   A = 0,    // The X value of the plane's normal
   B = 1,    // The Y value of the plane's normal
@@ -41,9 +41,9 @@ enum plane_data_t
   D = 3    // The distance the plane is from the origin
 };
 
-typedef enum plane_data_t PlaneData;
+typedef enum e_plane_data PlaneData;
 
-Frustum gFrustum;
+Frustum_t gFrustum;
 
 
 ///////////////////////////////// NORMALIZE PLANE \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
@@ -52,7 +52,7 @@ Frustum gFrustum;
 /////
 ///////////////////////////////// NORMALIZE PLANE \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
 
-void NormalizePlane( Frustum *pf, FrustumSide side )
+void NormalizePlane( Frustum_t *pf, FrustumSide side )
 {
   // Here we calculate the magnitude of the normal to the plane (point A B C)
   // Remember that (A, B, C) is that same thing as the normal's (X, Y, Z).
@@ -75,7 +75,7 @@ void NormalizePlane( Frustum *pf, FrustumSide side )
 /////
 ///////////////////////////////// CALCULATE FRUSTUM \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
 
-void Frustum_CalculateFrustum( Frustum *pf, float proj[], float modl[] )
+void Frustum_CalculateFrustum( Frustum_t *pf, float proj[], float modl[] )
 {
   float clip[16];        // This will hold the clipping planes
 
@@ -202,7 +202,7 @@ void Frustum_CalculateFrustum( Frustum *pf, float proj[], float modl[] )
 /////
 ///////////////////////////////// POINT IN FRUSTUM \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
 
-bool_t Frustum_PointInFrustum( Frustum *pf, float pos[] )
+bool_t Frustum_PointInFrustum( Frustum_t *pf, float pos[] )
 {
   // If you remember the plane equation (A*pos[0] + B*pos[1] + C*pos[2] + D = 0), then the rest
   // of this code should be quite obvious and easy to figure out yourself.
@@ -246,7 +246,7 @@ bool_t Frustum_PointInFrustum( Frustum *pf, float pos[] )
 /////
 ///////////////////////////////// SPHERE IN FRUSTUM \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
 
-bool_t Frustum_SphereInFrustum( Frustum *pf, float pos[], float radius )
+bool_t Frustum_SphereInFrustum( Frustum_t *pf, float pos[], float radius )
 {
   // Now this function is almost identical to the PointInFrustum(), except we
   // now have to deal with a radius around the point.  The point is the center of
@@ -284,7 +284,7 @@ bool_t Frustum_SphereInFrustum( Frustum *pf, float pos[], float radius )
 /////
 ///////////////////////////////// CUBE IN FRUSTUM \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
 
-bool_t Frustum_CubeInFrustum( Frustum *pf, float pos[], float size )
+bool_t Frustum_CubeInFrustum( Frustum_t *pf, float pos[], float size )
 {
   // This test is a bit more work, but not too much more complicated.
   // Basically, what is going on is, that we are given the center of the cube,
@@ -327,7 +327,7 @@ bool_t Frustum_CubeInFrustum( Frustum *pf, float pos[], float size )
   return btrue;
 }
 
-bool_t Frustum_BBoxInFrustum( Frustum *pf, float corner1[], float corner2[] )
+bool_t Frustum_BBoxInFrustum( Frustum_t *pf, float corner1[], float corner2[] )
 {
   int i;
 
@@ -365,7 +365,7 @@ bool_t Frustum_BBoxInFrustum( Frustum *pf, float corner1[], float corner2[] )
 // * QUICK NOTES *
 //
 // WOZZERS!  That seemed like an incredible amount to look at, but if you break it
-// down, it's not.  Frustum culling is a VERY useful thing when it comes to 3D.
+// down, it's not.  Frustum_t culling is a VERY useful thing when it comes to 3D.
 // If you want a large world, there is no way you are going to send it down the
 // 3D pipeline every frame and let OpenGL take care of it for you.  That would
 // give you a 0.001 frame rate.  If you hit '+' and bring the sphere count up to

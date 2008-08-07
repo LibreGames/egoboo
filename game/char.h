@@ -77,16 +77,16 @@
 #define SEEINVISIBLE        128                     // Cutoff for invisible characters
 #define INVISIBLE           20                      // The character can't be detected
 
-enum missle_handling_e
+enum e_missle_handling
 {
   MIS_NORMAL  = 0,                  //Treat missiles normally
   MIS_DEFLECT,                      //Deflect incoming missiles
   MIS_REFLECT                       //Reflect them back!
 };
-typedef enum missle_handling_e MISSLE_TYPE;
+typedef enum e_missle_handling MISSLE_TYPE;
 
 
-enum slot_e
+enum e_slot
 {
   SLOT_LEFT,
   SLOT_RIGHT,
@@ -100,11 +100,11 @@ enum slot_e
   SLOT_BEGIN = SLOT_LEFT,
   SLOT_COUNT = SLOT_INVENTORY
 };
-typedef enum slot_e SLOT;
+typedef enum e_slot SLOT;
 
 extern SLOT _slot;
 
-enum grip_e
+enum e_grip
 {
   GRIP_ORIGIN   = 0,                                  // Grip at mount's origin
   GRIP_LAST     = 1,                                  // Grip at mount's last vertex
@@ -118,26 +118,26 @@ enum grip_e
   GRIP_SADDLE    = GRIP_LEFT,    // Grip at mount's "saddle" (== left hand for now)
   GRIP_INVENTORY = GRIP_ORIGIN   // "Grip" in the object's inventory
 };
-typedef enum grip_e GRIP;
+typedef enum e_grip GRIP;
 
 
 //--------------------------------------------------------------------------------------------
 
 struct Cap_t;
-struct CChr_t;
-struct CGame_t;
+struct sChr;
+struct sGame;
 
 //--------------------------------------------------------------------------------------------
-enum gender_e
+enum e_gender
 {
   GEN_FEMALE = 0,
   GEN_MALE,
   GEN_OTHER,
   GEN_RANDOM,
 };
-typedef enum gender_e GENDER;
+typedef enum e_gender GENDER;
 
-enum latch_button_e
+enum e_latch_button
 {
   LATCHBUTTON_NONE      =      0,
   LATCHBUTTON_LEFT      = 1 << 0,                    // Character button presses
@@ -149,9 +149,9 @@ enum latch_button_e
   LATCHBUTTON_PACKRIGHT = 1 << 6,                    //
   LATCHBUTTON_RESPAWN   = 1 << 7                     //
 };
-typedef enum latch_button_e LATCHBUTTON_BITS;
+typedef enum e_latch_button LATCHBUTTON_BITS;
 
-enum alert_bits_e
+enum e_alert_bits
 {
   ALERT_NONE                       =       0,
   ALERT_SPAWNED                    = 1 <<  0,
@@ -187,9 +187,9 @@ enum alert_bits_e
   ALERT_NOTPUTAWAY                 = 1 << 30,
   ALERT_TAKENOUT                   = 1 << 31
 };
-typedef enum alert_bits_e ALERT_BITS;
+typedef enum e_alert_bits ALERT_BITS;
 
-enum turnmode_e
+enum e_turnmode
 {
   TURNMODE_NONE     = 0,
   TURNMODE_VELOCITY,                      // Character gets rotation from velocity
@@ -197,9 +197,9 @@ enum turnmode_e
   TURNMODE_SPIN,                              // For spinning objects
   TURNMODE_WATCHTARGET                        // For combat intensive AI
 };
-typedef enum turnmode_e TURNMODE;
+typedef enum e_turnmode TURNMODE;
 
-enum Experience_e
+enum e_Experience
 {
   XP_FINDSECRET = 0,                           // Finding a secret
   XP_WINQUEST,                                 // Beating a module or a subquest
@@ -212,9 +212,9 @@ enum Experience_e
   XP_COUNT,                                    // Number of ways to get experience
   XP_DIRECT     = 255                          // No modification
 };
-typedef enum Experience_e EXPERIENCE;
+typedef enum e_Experience EXPERIENCE;
 
-enum idsz_index_e
+enum e_idsz_index
 {
   IDSZ_PARENT = 0,                             // Parent index
   IDSZ_TYPE,                                   // Self index
@@ -224,7 +224,7 @@ enum idsz_index_e
   IDSZ_VULNERABILITY,                          // Vulnerability index
   IDSZ_COUNT                                   // ID strings per character
 };
-typedef enum idsz_index_e IDSZ_INDEX;
+typedef enum e_idsz_index IDSZ_INDEX;
 
 #define MAXNUMINPACK        6                       // Max number of items to carry in pack
 #define LOWSTAT             INT_TO_FP8(  1)      // Worst...
@@ -240,7 +240,7 @@ extern Uint16          numdolist;                  // How many in the list
 extern CHR_REF         dolist[CHRLST_COUNT];             // List of which characters to draw
 
 //--------------------------------------------------------------------------------------------
-struct skin_t
+struct s_skin
 {
   Uint8         defense_fp8;                // Defense for each skin
   char          name[MAXCAPNAMESIZE];   // Skin name
@@ -248,11 +248,11 @@ struct skin_t
   Uint8         damagemodifier_fp8[MAXDAMAGETYPE];
   float         maxaccel;                   // Acceleration for each skin
 };
-typedef struct skin_t SKIN;
+typedef struct s_skin SKIN;
 //--------------------------------------------------------------------------------------------
-struct CProperties_t
+struct sProperties
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
   // [BEGIN] Character template parameters that are like Skill Expansions
   bool_t        istoobig;                      // Can't be put in pack
@@ -300,14 +300,15 @@ struct CProperties_t
   // [END] Skill Expansions
 
 };
-typedef struct CProperties_t CProperties;
-CProperties * CProperties_new( CProperties * p);
-bool_t        CProperties_init( CProperties * p );
+typedef struct sProperties Properties_t;
+
+Properties_t * CProperties_new( Properties_t * p);
+bool_t        CProperties_init( Properties_t * p );
 
 
 
 //--------------------------------------------------------------------------------------------
-struct CStatData_t
+struct sStatData
 {
 
   // LIFE
@@ -338,11 +339,11 @@ struct CStatData_t
   PAIR          dexterityperlevel_pair;         //
 
 };
-typedef struct CStatData_t CStatData;
+typedef struct sStatData StatData_t;
 //--------------------------------------------------------------------------------------------
-struct CCap_t
+struct sCap
 {
-  egoboo_key    ekey;
+  egoboo_key_t    ekey;
   bool_t        Loaded;
 
   char          classname[MAXCAPNAMESIZE];     // Class name
@@ -360,7 +361,7 @@ struct CCap_t
   Uint8         ammo;                          //
   GENDER        gender;                        // Gender
 
-  CStatData     statdata;
+  StatData_t     statdata;
 
   Sint16        manacost_fp8;                  // Mana cost to use
   Sint16        money;                         // Money
@@ -423,22 +424,22 @@ struct CCap_t
 
   SKIN          skin[MAXSKIN];
 
-  CProperties   prop;
+  Properties_t   prop;
 
 };
-typedef struct CCap_t CCap;
+typedef struct sCap Cap_t;
 
 #ifdef __cplusplus
-  typedef TList<CCap_t, CAPLST_COUNT> CapList_t;
-  typedef TPList<CCap_t, CAPLST_COUNT> PCap;
+  typedef TList<sCap, CAPLST_COUNT> CapList_t;
+  typedef TPList<sCap, CAPLST_COUNT> PCap_t;
 #else
-  typedef CCap CapList_t[CAPLST_COUNT];
-  typedef CCap * PCap;
+  typedef Cap_t CapList_t[CAPLST_COUNT];
+  typedef Cap_t * PCap_t;
 #endif
 
-CCap *  Cap_new(CCap *pcap);
-bool_t Cap_delete(CCap * pcap);
-CCap *  Cap_renew(CCap *pcap);
+Cap_t *  Cap_new(Cap_t *pcap);
+bool_t Cap_delete(Cap_t * pcap);
+Cap_t *  Cap_renew(Cap_t *pcap);
 
 #define CAP_INHERIT_IDSZ(PGS, MODEL, ID) (PGS->CapList[MODEL].idsz[IDSZ_PARENT] == (IDSZ)(ID) || PGS->CapList[MODEL].idsz[IDSZ_TYPE] == (IDSZ)(ID))
 #define CAP_INHERIT_IDSZ_RANGE(PGS, MODEL,IDMIN,IDMAX) ((PGS->CapList[MODEL].idsz[IDSZ_PARENT] >= (IDSZ)(IDMIN) && PGS->CapList[MODEL].idsz[IDSZ_PARENT] <= (IDSZ)(IDMAX)) || (PGS->CapList[MODEL].idsz[IDSZ_TYPE] >= (IDSZ)(IDMIN) && PGS->CapList[MODEL].idsz[IDSZ_TYPE] <= (IDSZ)(IDMAX)) )
@@ -449,15 +450,16 @@ CCap *  Cap_renew(CCap *pcap);
 #define LOADED_CAP(LST, XX)   ( VALID_CAP(LST, XX) && LST[XX].Loaded )
 
 //--------------------------------------------------------------------------------------------
-struct lighting_data_t
+// generic OpenGL lighting struct
+struct sLData
 {
   vect4 emission, diffuse, specular;
   float shininess[1];
 };
 
-typedef struct lighting_data_t LData;
+typedef struct sLData LData_t;
 //--------------------------------------------------------------------------------------------
-struct action_info_t
+struct s_action_info
 {
   bool_t  keep;      // Keep the action playing?
   bool_t  loop;      // Loop it too?
@@ -465,19 +467,19 @@ struct action_info_t
   ACTION  now;       // Character's current action
   ACTION  next;      // Character's next    action
 };
-typedef struct action_info_t ACTION_INFO;
+typedef struct s_action_info ACTION_INFO;
 
 INLINE ACTION_INFO * action_info_new( ACTION_INFO * a);
 
 //--------------------------------------------------------------------------------------------
-struct animation_info_t
+struct s_animation_info
 {
   Uint16          next;       // Character's frame
   Uint16          last;       // Character's last frame
   float           flip;
   Uint8           ilip;    // Character's low-res frame in betweening
 };
-typedef struct animation_info_t ANIM_INFO;
+typedef struct s_animation_info ANIM_INFO;
 
 INLINE ANIM_INFO * anim_info_new( ANIM_INFO * a );
 
@@ -487,12 +489,12 @@ INLINE ANIM_INFO * anim_info_new( ANIM_INFO * a );
 
 typedef vect2 WAYPOINT;
 
-struct waypoint_list_t
+struct s_waypoint_list
 {
   int      head, tail;
   WAYPOINT pos[MAXWAY];
 };
-typedef struct waypoint_list_t WP_LIST;
+typedef struct s_waypoint_list WP_LIST;
 
 INLINE WP_LIST * wp_list_new(WP_LIST * w, vect3 * pos);
 INLINE bool_t    wp_list_clear(WP_LIST * w);
@@ -506,16 +508,16 @@ INLINE float  wp_list_y( WP_LIST * wl );
 bool_t wp_list_prune(WP_LIST * wl);
 
 //--------------------------------------------------------------------------------------------
-struct ai_state_t
+struct s_ai_state
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
   Uint16          type;          // The AI script to run
 
   // some ai state variables
   int             state;         // Short term memory for AI
   Uint32          alert;         // Alerts for AI script
-  float           time;          // AI Timer
+  float           time;          // AI Timer_t
   bool_t          morphed;       // Some various other stuff
 
   // internal variables - "short term" or temporary variables
@@ -538,7 +540,7 @@ struct ai_state_t
   DAMAGE                 damagetypelast;  // Last damage type
   TURNMODE        turnmode;        // Turning mode
   vect3           trgvel;          // target's velocity
-  CLatch          latch;           // latches
+  Latch_t          latch;           // latches
 
   // "global" variables. Any character to character messages should be sent another way
   // there is no guarantee that scripts will be processed in any specific order!
@@ -553,26 +555,26 @@ struct ai_state_t
   Sint32 tmpdistance;
   Sint32 tmpargument;
 };
-typedef struct ai_state_t AI_STATE;
+typedef struct s_ai_state AI_STATE;
 
 INLINE AI_STATE * ai_state_new(AI_STATE * a);
 INLINE bool_t     ai_state_delete(AI_STATE * a);
-INLINE AI_STATE * ai_state_init(struct CGame_t * gs, AI_STATE * a, CHR_REF ichr);
+INLINE AI_STATE * ai_state_init(struct sGame * gs, AI_STATE * a, CHR_REF ichr);
 INLINE AI_STATE * ai_state_reinit(AI_STATE * a, CHR_REF ichr);
 
 
 //--------------------------------------------------------------------------------------------
-struct chr_terrain_light_t
+struct s_chr_terrain_light
 {
   vect3_ui08      ambi_fp8; // 0-255, terrain light
   vect3_ui08      spek_fp8; // 0-255, terrain light
   vect3_ui16      turn_lr;  // Character's light rotation 0 to 65535
 };
 
-typedef struct chr_terrain_light_t CHR_TLIGHT;
+typedef struct s_chr_terrain_light CHR_TLIGHT;
 
 //--------------------------------------------------------------------------------------------
-struct CStats_t
+struct sStats
 {
   // life
   Sint16  life_fp8;            // Life stuff
@@ -592,14 +594,14 @@ struct CStats_t
   Sint16  intelligence_fp8;    // Intelligence
   Sint16  dexterity_fp8;       // Dexterity
 };
-typedef struct CStats_t CStats;
+typedef struct sStats Stats_t;
 
 //--------------------------------------------------------------------------------------------
-struct chr_spawn_info_t
+struct s_chr_spawn_info
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
 
-  struct CGame_t * gs;       // this is the game state that this character belongs to;
+  struct sGame * gs;       // this is the game state that this character belongs to;
   Uint32 seed;               // the value of gs->randie_seed at the time of character creation
 
   // this is the net ID of the owner of this character (for net play)
@@ -627,47 +629,47 @@ struct chr_spawn_info_t
   bool_t   ghost;
 };
 
-typedef struct chr_spawn_info_t chr_spawn_info;
+typedef struct s_chr_spawn_info CHR_SPAWN_INFO;
 
-chr_spawn_info * chr_spawn_info_new(chr_spawn_info * psi, struct CGame_t * gs );
-bool_t           chr_spawn_info_init( chr_spawn_info * psi, vect3 pos, vect3 vel,
+CHR_SPAWN_INFO * chr_spawn_info_new(CHR_SPAWN_INFO * psi, struct sGame * gs );
+bool_t           chr_spawn_info_init( CHR_SPAWN_INFO * psi, vect3 pos, vect3 vel,
                                       OBJ_REF iobj, TEAM_REF team, Uint8 skin, Uint16 facing,
                                       const char *name, CHR_REF override );
 //--------------------------------------------------------------------------------------------
-struct chr_spawn_queue_t
+struct s_chr_spawn_queue
 {
-  egoboo_key ekey;
+  egoboo_key_t ekey;
   int head, tail;
 
   size_t           data_size;
-  chr_spawn_info * data;
+  CHR_SPAWN_INFO * data;
 };
-typedef struct chr_spawn_queue_t chr_spawn_queue;
+typedef struct s_chr_spawn_queue CHR_SPAWN_QUEUE;
 
-chr_spawn_queue * chr_spawn_queue_new(chr_spawn_queue * q, int size);
-bool_t            chr_spawn_queue_delete(chr_spawn_queue * q);
-chr_spawn_info  * chr_spawn_queue_pop(chr_spawn_queue * q);
-bool_t            chr_spawn_queue_push(chr_spawn_queue * q, chr_spawn_info * psi );
+CHR_SPAWN_QUEUE * chr_spawn_queue_new(CHR_SPAWN_QUEUE * q, int size);
+bool_t            chr_spawn_queue_delete(CHR_SPAWN_QUEUE * q);
+CHR_SPAWN_INFO  * chr_spawn_queue_pop(CHR_SPAWN_QUEUE * q);
+bool_t            chr_spawn_queue_push(CHR_SPAWN_QUEUE * q, CHR_SPAWN_INFO * psi );
 
 //--------------------------------------------------------------------------------------------
-struct CSignal_t
+struct sSignal
 {
   Uint32 type;  // The type of this message
   Uint32 data;  // The message data (i.e. the rank of the character or something)
 };
-typedef struct CSignal_t CSignal;
+typedef struct sSignal Signal_t;
 
 //--------------------------------------------------------------------------------------------
-struct CChr_t
+struct sChr
 {
-  egoboo_key      ekey;
+  egoboo_key_t      ekey;
   bool_t          reserved;        // Is it going to be used?
   bool_t          req_active;      // Are we going to auto-activate ASAP?
   bool_t          active;          // Is it currently on?
   bool_t          gopoof;          // Is poof requested?
   bool_t          freeme;          // Is ChrList_free_one() requested?
 
-  chr_spawn_info  spinfo;
+  CHR_SPAWN_INFO  spinfo;
 
   char            name[MAXCAPNAMESIZE];  // Character name
 
@@ -686,7 +688,7 @@ struct CChr_t
   Uint8           numinpack;       // How many
 
   // stats
-  CStats          stats;
+  Stats_t          stats;
   int             experience;          // Experience
   int             experiencelevel;     // Experience Level
   Sint32          money;               // Money
@@ -701,12 +703,12 @@ struct CChr_t
   bool_t          staton;          // Display stats?
 
   // position info
-  COrientation    ori;
-  COrientation    ori_old;
+  Orientation_t    ori;
+  Orientation_t    ori_old;
 
 
   // physics info
-  CPhysAccum      accum;
+  PhysAccum_t      accum;
   float           flyheight;       // Height to stabilize at
   bool_t          inwater;         //
   float           dampen;          // Bounciness
@@ -741,8 +743,8 @@ struct CChr_t
   // lighting info
   vect3_ui08      vrta_fp8[MAXVERTICES];  // Lighting hack ( Ooze )
   CHR_TLIGHT      tlight;                 // terrain lighting info
-  VData_Blended   vdata;                  // pre-processed per-vertex lighting data
-  LData           ldata;                  // pre-processed matrial parameters
+  VData_Blended_t   vdata;                  // pre-processed per-vertex lighting data
+  LData_t           ldata;                  // pre-processed matrial parameters
   Uint16          alpha_fp8;                 // 255 = Solid, 0 = Invisible
   Uint16          light_fp8;                 // 1 = Light, 0 = Normal
   Uint8           flashand;                  // 1,3,7,15,31 = Flash, 255 = Don't
@@ -759,8 +761,8 @@ struct CChr_t
 
 
   // bumber info
-  BData           bmpdata;           // character bump size data
-  BData           bmpdata_save;
+  BData_t           bmpdata;           // character bump size data
+  BData_t           bmpdata_save;
   float           bumpdampen;      // Character bump mass
 
   Uint8           spd_sneak;        // Sneaking if above this speed
@@ -778,7 +780,7 @@ struct CChr_t
 
   Uint8           passage;         // The passage associated with this character
 
-  CSignal         message;         // The last message given the character
+  Signal_t         message;         // The last message given the character
 
   CHR_REF         onwhichplatform; // What are we standing on?
   Uint16          holdingweight;   // For weighted buttons
@@ -824,32 +826,32 @@ struct CChr_t
   float           loopingvolume;     // Sound volume of the channel
 
 
-  CProperties   prop;                // all character properties
+  Properties_t   prop;                // all character properties
 };
-typedef struct CChr_t CChr;
+typedef struct sChr Chr_t;
 
 #ifdef __cplusplus
-  typedef TList<CChr_t, CHRLST_COUNT> ChrList_t;
-  typedef TPList<CChr_t, CHRLST_COUNT> PChr;
+  typedef TList<sChr, CHRLST_COUNT> ChrList_t;
+  typedef TPList<sChr, CHRLST_COUNT> PChr_t;
 #else
-  typedef CChr ChrList_t[CHRLST_COUNT];
-  typedef CChr * PChr;
+  typedef Chr_t ChrList_t[CHRLST_COUNT];
+  typedef Chr_t * PChr_t;
 #endif
 
-CChr * Chr_new(CChr * pchr);
-bool_t Chr_delete(CChr * pchr);
-CChr * Chr_renew(CChr * pchr);
+Chr_t * Chr_new(Chr_t * pchr);
+bool_t Chr_delete(Chr_t * pchr);
+Chr_t * Chr_renew(Chr_t * pchr);
 
-struct CChr_t * ChrList_getPChr(struct CGame_t * gs, CHR_REF ichr);
-struct CProfile_t * ChrList_getPObj(struct CGame_t * gs, CHR_REF ichr);
-struct CCap_t * ChrList_getPCap(struct CGame_t * gs, CHR_REF ichr);
-CMad * ChrList_getPMad(struct CGame_t * gs, CHR_REF ichr);
-struct CPip_t * ChrList_getPPip(struct CGame_t * gs, CHR_REF ichr, int i);
+struct sChr * ChrList_getPChr(struct sGame * gs, CHR_REF ichr);
+struct sProfile * ChrList_getPObj(struct sGame * gs, CHR_REF ichr);
+struct sCap * ChrList_getPCap(struct sGame * gs, CHR_REF ichr);
+Mad_t * ChrList_getPMad(struct sGame * gs, CHR_REF ichr);
+struct sPip * ChrList_getPPip(struct sGame * gs, CHR_REF ichr, int i);
 
-OBJ_REF ChrList_getRObj(struct CGame_t * gs, CHR_REF ichr);
-CAP_REF ChrList_getRCap(struct CGame_t * gs, CHR_REF ichr);
-MAD_REF ChrList_getRMad(struct CGame_t * gs, CHR_REF ichr);
-PIP_REF ChrList_getRPip(struct CGame_t * gs, CHR_REF ichr, int i);
+OBJ_REF ChrList_getRObj(struct sGame * gs, CHR_REF ichr);
+CAP_REF ChrList_getRCap(struct sGame * gs, CHR_REF ichr);
+MAD_REF ChrList_getRMad(struct sGame * gs, CHR_REF ichr);
+PIP_REF ChrList_getRPip(struct sGame * gs, CHR_REF ichr, int i);
 
 
 
@@ -860,31 +862,31 @@ PIP_REF ChrList_getRPip(struct CGame_t * gs, CHR_REF ichr, int i);
 #define ACTIVE_CHR(LST, XX)   ( VALID_CHR(LST, XX) && LST[XX].active   && !LST[XX].reserved )
 #define PENDING_CHR(LST, XX)  ( VALID_CHR(LST, XX) && (LST[XX].active || LST[XX].req_active) && !LST[XX].reserved )
 
-INLINE bool_t chr_in_pack( PChr lst, size_t lst_size, CHR_REF character );
-INLINE bool_t chr_attached( PChr lst, size_t lst_size, CHR_REF character );
-INLINE bool_t chr_has_inventory( PChr lst, size_t lst_size, CHR_REF character );
-INLINE bool_t chr_is_invisible( PChr lst, size_t lst_size, CHR_REF character );
-INLINE bool_t chr_using_slot( PChr lst, size_t lst_size, CHR_REF character, SLOT slot );
+INLINE bool_t chr_in_pack( PChr_t lst, size_t lst_size, CHR_REF character );
+INLINE bool_t chr_attached( PChr_t lst, size_t lst_size, CHR_REF character );
+INLINE bool_t chr_has_inventory( PChr_t lst, size_t lst_size, CHR_REF character );
+INLINE bool_t chr_is_invisible( PChr_t lst, size_t lst_size, CHR_REF character );
+INLINE bool_t chr_using_slot( PChr_t lst, size_t lst_size, CHR_REF character, SLOT slot );
 
-INLINE CHR_REF chr_get_nextinpack( PChr lst, size_t lst_size, CHR_REF ichr );
-INLINE CHR_REF chr_get_onwhichplatform( PChr lst, size_t lst_size, CHR_REF ichr );
-INLINE CHR_REF chr_get_inwhichpack( PChr lst, size_t lst_size, CHR_REF ichr );
-INLINE CHR_REF chr_get_attachedto( PChr lst, size_t lst_size, CHR_REF ichr );
-INLINE CHR_REF chr_get_holdingwhich( PChr lst, size_t lst_size, CHR_REF ichr, SLOT slot );
+INLINE CHR_REF chr_get_nextinpack( PChr_t lst, size_t lst_size, CHR_REF ichr );
+INLINE CHR_REF chr_get_onwhichplatform( PChr_t lst, size_t lst_size, CHR_REF ichr );
+INLINE CHR_REF chr_get_inwhichpack( PChr_t lst, size_t lst_size, CHR_REF ichr );
+INLINE CHR_REF chr_get_attachedto( PChr_t lst, size_t lst_size, CHR_REF ichr );
+INLINE CHR_REF chr_get_holdingwhich( PChr_t lst, size_t lst_size, CHR_REF ichr, SLOT slot );
 
-INLINE CHR_REF chr_get_aitarget( PChr lst, size_t lst_size, CChr * pchr );
-INLINE CHR_REF chr_get_aiowner( PChr lst, size_t lst_size, CChr * pchr );
-INLINE CHR_REF chr_get_aichild( PChr lst, size_t lst_size, CChr * pchr );
-INLINE CHR_REF chr_get_aiattacklast( PChr lst, size_t lst_size, CChr * pchr );
-INLINE CHR_REF chr_get_aibumplast( PChr lst, size_t lst_size, CChr * pchr );
-INLINE CHR_REF chr_get_aihitlast( PChr lst, size_t lst_size, CChr * pchr );
+INLINE CHR_REF chr_get_aitarget( PChr_t lst, size_t lst_size, Chr_t * pchr );
+INLINE CHR_REF chr_get_aiowner( PChr_t lst, size_t lst_size, Chr_t * pchr );
+INLINE CHR_REF chr_get_aichild( PChr_t lst, size_t lst_size, Chr_t * pchr );
+INLINE CHR_REF chr_get_aiattacklast( PChr_t lst, size_t lst_size, Chr_t * pchr );
+INLINE CHR_REF chr_get_aibumplast( PChr_t lst, size_t lst_size, Chr_t * pchr );
+INLINE CHR_REF chr_get_aihitlast( PChr_t lst, size_t lst_size, Chr_t * pchr );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 INLINE const SLOT   grip_to_slot( GRIP g );
 INLINE const GRIP   slot_to_grip( SLOT s );
-INLINE const Uint16 slot_to_latch( PChr lst, size_t count, Uint16 object, SLOT s );
+INLINE const Uint16 slot_to_latch( PChr_t lst, size_t count, Uint16 object, SLOT s );
 INLINE const Uint16 slot_to_offset( SLOT s );
 
 
@@ -894,82 +896,82 @@ extern Uint16          chrcollisionlevel;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CHR_REF ChrList_reserve( chr_spawn_info * psi );
-CHR_REF ChrList_get_free( struct CGame_t * gs, CHR_REF irequest );
-void ChrList_free_one( struct CGame_t * gs, CHR_REF character );
+CHR_REF ChrList_reserve( CHR_SPAWN_INFO * psi );
+CHR_REF ChrList_get_free( struct sGame * gs, CHR_REF irequest );
+void ChrList_free_one( struct sGame * gs, CHR_REF character );
 
-bool_t make_one_character_matrix( ChrList_t chrlst, size_t chrlst_size, CChr * cnt );
-void chr_free_inventory( PChr lst, size_t lst_size, CHR_REF character );
+bool_t make_one_character_matrix( ChrList_t chrlst, size_t chrlst_size, Chr_t * cnt );
+void chr_free_inventory( PChr_t lst, size_t lst_size, CHR_REF character );
 bool_t make_one_weapon_matrix( ChrList_t chrlst, size_t chrlst_size, Uint16 cnt );
-void make_character_matrices( struct CGame_t * gs );
+void make_character_matrices( struct sGame * gs );
 
-Uint32 chr_hitawall( struct CGame_t * gs, CChr * pchr, vect3 * norm );
-void play_action( struct CGame_t * gs, CHR_REF character, ACTION action, bool_t ready );
-void set_frame( struct CGame_t * gs, CHR_REF character, Uint16 frame, Uint8 lip );
-bool_t detach_character_from_mount( struct CGame_t * gs, CHR_REF character, bool_t ignorekurse, bool_t doshop );
-void drop_money( struct CGame_t * gs, CHR_REF character, Uint16 money );
+Uint32 chr_hitawall( struct sGame * gs, Chr_t * pchr, vect3 * norm );
+void play_action( struct sGame * gs, CHR_REF character, ACTION action, bool_t ready );
+void set_frame( struct sGame * gs, CHR_REF character, Uint16 frame, Uint8 lip );
+bool_t detach_character_from_mount( struct sGame * gs, CHR_REF character, bool_t ignorekurse, bool_t doshop );
+void drop_money( struct sGame * gs, CHR_REF character, Uint16 money );
 
-void damage_character( struct CGame_t * gs, CHR_REF character, Uint16 direction,
+void damage_character( struct sGame * gs, CHR_REF character, Uint16 direction,
                        PAIR * ppair, DAMAGE        damagetype, TEAM_REF team,
                        CHR_REF attacker, Uint16 effects );
-void kill_character( struct CGame_t * gs, CHR_REF character, CHR_REF killer );
-void spawn_poof( struct CGame_t * gs, CHR_REF character, OBJ_REF profile );
+void kill_character( struct sGame * gs, CHR_REF character, CHR_REF killer );
+void spawn_poof( struct sGame * gs, CHR_REF character, OBJ_REF profile );
 
 
-void tilt_character(struct CGame_t * gs, CHR_REF ichr);
-void tilt_characters_to_terrain(struct CGame_t * gs);
+void tilt_character(struct sGame * gs, CHR_REF ichr);
+void tilt_characters_to_terrain(struct sGame * gs);
 
 
 
-void respawn_character( struct CGame_t * gs, CHR_REF character );
-Uint16 change_armor( struct CGame_t * gs, CHR_REF character, Uint16 skin );
-void change_character( struct CGame_t * gs, CHR_REF cnt, OBJ_REF profile, Uint8 skin,
+void respawn_character( struct sGame * gs, CHR_REF character );
+Uint16 change_armor( struct sGame * gs, CHR_REF character, Uint16 skin );
+void change_character( struct sGame * gs, CHR_REF cnt, OBJ_REF profile, Uint8 skin,
                        Uint8 leavewhich );
-bool_t cost_mana( struct CGame_t * gs, CHR_REF character, int amount, CHR_REF killer );
-bool_t attach_character_to_mount( struct CGame_t * gs, CHR_REF character, CHR_REF mount, SLOT slot );
+bool_t cost_mana( struct sGame * gs, CHR_REF character, int amount, CHR_REF killer );
+bool_t attach_character_to_mount( struct sGame * gs, CHR_REF character, CHR_REF mount, SLOT slot );
 
-CHR_REF pack_find_stack( struct CGame_t * gs, CHR_REF item_ref, CHR_REF pack_chr_ref );
-bool_t  pack_add_item( struct CGame_t * gs, CHR_REF item_ref, CHR_REF pack_chr_ref );
-CHR_REF pack_get_item( struct CGame_t * gs,CHR_REF character, SLOT slot, bool_t ignorekurse );
+CHR_REF pack_find_stack( struct sGame * gs, CHR_REF item_ref, CHR_REF pack_chr_ref );
+bool_t  pack_add_item( struct sGame * gs, CHR_REF item_ref, CHR_REF pack_chr_ref );
+CHR_REF pack_get_item( struct sGame * gs,CHR_REF character, SLOT slot, bool_t ignorekurse );
 
-void drop_keys( struct CGame_t * gs,CHR_REF character );
-void drop_all_items( struct CGame_t * gs,CHR_REF character );
-bool_t chr_grab_stuff( struct CGame_t * gs,CHR_REF chara, SLOT slot, bool_t people );
-void chr_swipe( struct CGame_t * gs,Uint16 cnt, SLOT slot );
-void move_characters( struct CGame_t * gs,float dUpdate );
+void drop_keys( struct sGame * gs,CHR_REF character );
+void drop_all_items( struct sGame * gs,CHR_REF character );
+bool_t chr_grab_stuff( struct sGame * gs,CHR_REF chara, SLOT slot, bool_t people );
+void chr_swipe( struct sGame * gs,Uint16 cnt, SLOT slot );
+void move_characters( struct sGame * gs,float dUpdate );
 
-OBJ_REF object_generate_index( struct CGame_t * gs,char *szLoadName );
+OBJ_REF object_generate_index( struct sGame * gs,char *szLoadName );
 
-CAP_REF CapList_load_one( struct CGame_t * gs, const char * szModpath, const char *szObjectname, CAP_REF irequest );
+CAP_REF CapList_load_one( struct sGame * gs, const char * szModpath, const char *szObjectname, CAP_REF irequest );
 
-bool_t chr_bdata_reinit(CChr * pchr, BData * pbd);
+bool_t chr_bdata_reinit(Chr_t * pchr, BData_t * pbd);
 
 int fget_skin( char * szModpath, const char * szObjectname );
 
 
-void calc_cap_experience( struct CGame_t * gs, CHR_REF object );
-int calc_chr_experience( struct CGame_t * gs, CHR_REF object, float level );
-float calc_chr_level( struct CGame_t * gs, CHR_REF object );
+void calc_cap_experience( struct sGame * gs, CHR_REF object );
+int calc_chr_experience( struct sGame * gs, CHR_REF object, float level );
+float calc_chr_level( struct sGame * gs, CHR_REF object );
 
 
-bool_t chr_calculate_bumpers( struct CGame_t * gs, CChr * pchr, int level);
+bool_t chr_calculate_bumpers( struct sGame * gs, Chr_t * pchr, int level);
 
-void flash_character_height( struct CGame_t * gs, CHR_REF character, Uint8 valuelow, Sint16 low,
+void flash_character_height( struct sGame * gs, CHR_REF character, Uint8 valuelow, Sint16 low,
                              Uint8 valuehigh, Sint16 high );
 
-void flash_character( struct CGame_t * gs, CHR_REF character, Uint8 value );
+void flash_character( struct sGame * gs, CHR_REF character, Uint8 value );
 
-void signal_target( struct CGame_t * gs, Uint32 priority, CHR_REF target, Uint16 upper, Uint16 lower );
-void signal_team( struct CGame_t * gs, CHR_REF character, Uint32 order );
-void signal_idsz_index( struct CGame_t * gs, Uint32 priority, Uint32 order, IDSZ idsz, IDSZ_INDEX index );
+void signal_target( struct sGame * gs, Uint32 priority, CHR_REF target, Uint16 upper, Uint16 lower );
+void signal_team( struct sGame * gs, CHR_REF character, Uint32 order );
+void signal_idsz_index( struct sGame * gs, Uint32 priority, Uint32 order, IDSZ idsz, IDSZ_INDEX index );
 
 bool_t ai_state_advance_wp(AI_STATE * a, bool_t do_atlastwaypoint);
 
 #define CHR_MAX_COLLISIONS 512
 extern int chr_collisions;
 
-CHR_REF chr_spawn( struct CGame_t * gs,  vect3 pos, vect3 vel, OBJ_REF iobj, TEAM_REF team,
+CHR_REF chr_spawn( struct sGame * gs,  vect3 pos, vect3 vel, OBJ_REF iobj, TEAM_REF team,
                    Uint8 skin, Uint16 facing, const char *name, CHR_REF override );
 
-CHR_REF force_chr_spawn( chr_spawn_info si );
-bool_t  activate_chr_spawn( struct CGame_t * gs, CHR_REF ichr );
+CHR_REF force_chr_spawn( CHR_SPAWN_INFO si );
+bool_t  activate_chr_spawn( struct sGame * gs, CHR_REF ichr );
