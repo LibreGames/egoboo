@@ -47,6 +47,7 @@
 
 static void   module_load_all_objects( Game_t * gs, char * szModname );
 static bool_t module_load_all_waves( Game_t * gs, char *modname );
+static bool_t module_read_egomap_extra( Game_t * gs, const char * szModPath );
 
 //--------------------------------------------------------------------------------------------
 void release_bumplist(MeshInfo_t * mi)
@@ -293,6 +294,8 @@ bool_t module_load( Game_t * gs, char *smallname )
 
   load_map( gs, szModpath );
   load_blip_bitmap( szModpath );
+
+  module_read_egomap_extra( gs, szModpath );
 
   if ( CData.DevMode )
   {
@@ -748,11 +751,16 @@ bool_t module_read_egomap_extra( Game_t * gs, const char * szModPath )
 {
   FILE * ftmp;
   STRING fname;
+  int file_version;
+  int dynalight_max;
+  int i;
   
   if( !VALID_CSTR(szModPath) ) return bfalse;
 
   // create the filename
   strncpy(fname, szModPath, sizeof(STRING));
+  str_append_slash(fname, sizeof(STRING));
+  strcat(fname, gs->cd->gamedat_dir);
   str_append_slash(fname, sizeof(STRING));
   strcat(fname, "EgoMapExtra.txt");
 
@@ -760,7 +768,35 @@ bool_t module_read_egomap_extra( Game_t * gs, const char * szModPath )
   ftmp = fs_fileOpen( PRI_NONE, NULL, fname, "r" );
   if(NULL == ftmp) return bfalse;
 
+  file_version = fget_next_int(ftmp);
 
+  dynalight_max = fget_next_int(ftmp);
+  for(i=0; i<dynalight_max; i++)
+  {
+    float xpos, ypos, level, radius;
+    DYNALIGHT_INFO di;
 
-  return bfalse;
+    fgoto_colon(ftmp);
+    xpos = fget_float(ftmp);
+    ypos = fget_float(ftmp);
+    level = fget_next_float(ftmp);
+    radius = fget_next_float(ftmp);;
+
+    if(level <=0 || radius <=0) continue;
+
+    di.pos.x = xpos * (1 << 7);
+    di.pos.y = ypos * (1 << 7);
+    di.pos.z = 1.0f * (1 << 7);
+
+    // TODO :: I need to figure out the scaling for this!!!
+    di.falloff = radius;
+    di.level   = level;
+    di.permanent = btrue;
+
+    DLightList_add( gs, &di );
+  };
+
+  fs_fileClose( ftmp );
+
+  return btrue;
 }

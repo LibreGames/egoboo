@@ -30,21 +30,22 @@ enum e_dyna_mode
 };
 typedef enum e_dyna_mode DYNA_MODE;
 
-#define MAXDYNA                         8           // Number of dynamic lights
+#define MAXDYNA                           64        // Number of dynamic lights
 #define MAXDYNADIST                     2700        // Leeway for offscreen lights
 
 
 //Dynamic Lightning effects
 
 #define DYNALIGHT_MEMBERS                \
-  float level;   /* Light level    */ \
-  float falloff; /* Light falloff  */
+  float  level;      /* Light level    */ \
+  float  falloff;    /* Light falloff  */
 
 struct s_dynalight_info
 {
   DYNALIGHT_MEMBERS
+  bool_t permanent;
   vect3  pos;        // Light position
-  int distance;      // The distances
+  int    distance;      // The distances
 };
 typedef struct s_dynalight_info DYNALIGHT_INFO;
 
@@ -55,6 +56,10 @@ typedef struct s_dynalight_info DYNALIGHT_INFO;
   typedef DYNALIGHT_INFO   DLightList_t[MAXDYNA];
   typedef DYNALIGHT_INFO * PDLight;
 #endif
+
+size_t DLightList_clear( struct sGame * gs );
+size_t DLightList_prune( struct sGame * gs );
+size_t DLightList_add( struct sGame * gs, DYNALIGHT_INFO * di );
 
 struct s_dynalight_pip
 {

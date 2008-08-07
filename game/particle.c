@@ -43,81 +43,142 @@
 Uint16 particletexture;                            // All in one bitmap
 
 //--------------------------------------------------------------------------------------------
+size_t DLightList_clear( Game_t * gs )
+{
+  gs->DLightList_count = 0;
+  return gs->DLightList_count;
+}
+
+
+//--------------------------------------------------------------------------------------------
+size_t DLightList_prune( Game_t * gs )
+{
+  // BB > remove all dynalights that are not permanent
+
+  int i,j;
+  PDLight dynalst = gs->DLightList;
+
+  // put all permanent lights at the beginning of the list
+  for(i = 0, j=0; i<gs->DLightList_count; i++)
+  {
+    if( dynalst[i].permanent )
+    {
+      if(i != j)
+      {
+        memcpy(dynalst + j, dynalst + i, sizeof(DYNALIGHT_INFO));
+      };
+      j++;
+    }
+  };
+
+  // set the size of the list
+  gs->DLightList_count = j;
+
+  return gs->DLightList_count;
+};
+
+//--------------------------------------------------------------------------------------------
+size_t DLightList_add( Game_t * gs, DYNALIGHT_INFO * di )
+{
+  int slot, tnc;
+  float disx, disy, disz, absdis, max_dist;
+  PDLight dynalst = gs->DLightList;
+
+  disx = ABS( di->pos.x - GCamera.trackpos.x );
+  disy = ABS( di->pos.y - GCamera.trackpos.y );
+  disz = ABS( di->pos.z - GCamera.trackpos.z );
+  absdis = disx + disy + disz;
+  di->distance = absdis;
+
+  slot = -1;
+  if(gs->DLightList_count < MAXDYNA)
+  {
+    slot = gs->DLightList_count;
+    gs->DLightList_count++;
+
+    if( !di->permanent )
+    {
+      gs->DLightList_distancetobeat = MAX(gs->DLightList_distancetobeat, di->distance);
+    };
+  }
+  else if(absdis < gs->DLightList_distancetobeat || di->permanent)
+  {
+    // Overwrite the worst non-permanent one
+
+    // find the farthest entry
+    slot = 0;
+    max_dist = dynalst[0].distance;
+    for ( tnc = 1; tnc < MAXDYNA; tnc++ )
+    {
+      if ( !dynalst[tnc].permanent && dynalst[tnc].distance > max_dist )
+      {
+        slot = tnc;
+        max_dist = dynalst[tnc].distance;
+      }
+    }
+
+    // Find the new maximum distance
+    max_dist = dynalst[0].distance;
+    for ( tnc = 1; tnc < MAXDYNA; tnc++ )
+    {
+      if(tnc == slot) continue;
+
+      if ( !dynalst[tnc].permanent && dynalst[tnc].distance > max_dist )
+      {
+        slot = tnc;
+        max_dist = dynalst[tnc].distance;
+      }
+    }
+
+  };
+
+  // actually do the insertion
+  if( slot >= 0)
+  {
+    memcpy(dynalst + slot, di, sizeof(DYNALIGHT_INFO));
+  };
+
+  return gs->DLightList_count;
+
+};
+
+//--------------------------------------------------------------------------------------------
 void make_prtlist(Game_t * gs)
 {
   // ZZ> This function figures out which particles are visible, and it sets up dynamic
   //     lighting
 
-  PPrt_t prtlst        = gs->PrtList;
+  PRT_REF        prt_cnt;
+  DYNALIGHT_INFO di;
+
+  PPrt_t prtlst      = gs->PrtList;
   size_t prtlst_size = PRTLST_COUNT;
 
-  PPip_t   piplst        = gs->PipList;
-  size_t piplst_size   = PIPLST_COUNT;
-
-  PDLight dynalist      = gs->DLightList;
-  size_t  dynalist_size = MAXDYNA;
-
   Mesh_t    * pmesh = Game_getMesh(gs);
-  MeshMem_t *  mm   = &(pmesh->Mem);
+  MeshMem_t * mm    = &(pmesh->Mem);
 
-  int tnc, disx, disy, disz, absdis, slot;
-  PRT_REF prt_cnt;
+  // remove all non-permanent lights from the previous iteration
+  DLightList_prune( gs );
 
-  // Don't really make a list, just set to visible or not
-  gs->DLightList_count = 0;
-  gs->DLightList_distancetobeat = MAXDYNADIST;
+  // go through the particle list
   for ( prt_cnt = 0; prt_cnt < prtlst_size; prt_cnt++ )
   {
     prtlst[prt_cnt].inview = bfalse;
     if ( !ACTIVE_PRT( prtlst,  prt_cnt ) ) continue;
 
+    // set to visible or not
     prtlst[prt_cnt].inview = mesh_fan_is_in_renderlist( mm->tilelst, prtlst[prt_cnt].onwhichfan );
 
-    // Set up the lights we need
-    if ( prtlst[prt_cnt].dyna.on )
-    {
-      disx = ABS( prtlst[prt_cnt].ori.pos.x - GCamera.trackpos.x );
-      disy = ABS( prtlst[prt_cnt].ori.pos.y - GCamera.trackpos.y );
-      disz = ABS( prtlst[prt_cnt].ori.pos.z - GCamera.trackpos.z );
-      absdis = disx + disy + disz;
-      if ( absdis < gs->DLightList_distancetobeat )
-      {
-        if ( gs->DLightList_count < MAXDYNA )
-        {
-          // Just add the light
-          slot = gs->DLightList_count;
-          dynalist[slot].distance = absdis;
-          gs->DLightList_count++;
-        }
-        else
-        {
-          // Overwrite the worst one
-          slot = 0;
-          gs->DLightList_distancetobeat = dynalist[0].distance;
-          for ( tnc = 1; tnc < MAXDYNA; tnc++ )
-          {
-            if ( dynalist[tnc].distance > gs->DLightList_distancetobeat )
-            {
-              slot = tnc;
-            }
-          }
-          dynalist[slot].distance = absdis;
+    // Set up the dynamic lights we need
+    di.permanent = bfalse;
+    di.pos       = prtlst[prt_cnt].ori.pos;
+    di.level     = prtlst[prt_cnt].dyna.level;
+    di.falloff   = prtlst[prt_cnt].dyna.falloff;
 
-          // Find the new distance to beat
-          gs->DLightList_distancetobeat = dynalist[0].distance;
-          for ( tnc = 1; tnc < MAXDYNA; tnc++ )
-          {
-            if ( dynalist[tnc].distance > gs->DLightList_distancetobeat )
-            {
-              gs->DLightList_distancetobeat = dynalist[tnc].distance;
-            }
-          }
-        }
-        dynalist[slot].pos     = prtlst[prt_cnt].ori.pos;
-        dynalist[slot].level   = prtlst[prt_cnt].dyna.level;
-        dynalist[slot].falloff = prtlst[prt_cnt].dyna.falloff;
-      }
-    }
+    if(0.0f != di.falloff)
+    {
+      DLightList_add( gs, &di );
+    };
   }
 
 }
