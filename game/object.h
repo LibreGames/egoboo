@@ -77,7 +77,7 @@ typedef struct sProfile Obj_t;
 #endif
 
 Profile_t * CProfile_new(Profile_t *);
-bool_t     CProfile_delete(Profile_t *);
+bool_t      CProfile_delete(Profile_t *);
 Profile_t * CProfile_renew(Profile_t *);
 
 

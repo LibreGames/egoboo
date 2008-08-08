@@ -603,11 +603,20 @@ struct sMachineState
 {
   egoboo_key_t ekey;
 
+  time_t i_actual_time;
+  double f_bishop_time;
+  int    i_bishop_time_y;
+  int    i_bishop_time_m;
+  int    i_bishop_time_d;
+  float  f_bishop_time_h;
+
   struct sClockState * clk;
 };
 typedef struct sMachineState MachineState_t;
 
-MachineState_t * Get_MachineState(void);
+MachineState_t * get_MachineState(void);
+retval_t         MachineState_update(MachineState_t * mac);
+
 
 #include "module.h"
 

@@ -177,7 +177,7 @@ char * naming_generate( Game_t * gs, Obj_t * pobj )
       mychop = pobj->sectionstart[section] + RAND(&loc_rand, 0, pobj->sectionsize[section]);
       read = gs->chop.start[mychop];
       cTmp = gs->chop.text[read];
-      while ( cTmp != 0 && write < MAXCAPNAMESIZE - 1 )
+      while ( cTmp != EOS && write < MAXCAPNAMESIZE - 1 )
       {
         name[write] = cTmp;
         write++;
@@ -188,7 +188,7 @@ char * naming_generate( Game_t * gs, Obj_t * pobj )
     section++;
   }
   if ( write >= MAXCAPNAMESIZE ) write = MAXCAPNAMESIZE - 1;
-  name[write] = 0;
+  name[write] = EOS;
 
   return name;
 }
@@ -222,17 +222,19 @@ void naming_read( Game_t * gs, const char * szModpath, const char * szObjectname
 
       cnt = 0;
       cTmp = mychop[0];
-      while ( cTmp != 0 && cnt < 31 && pchop->write < CHOPDATACHUNK )
+      while ( cTmp != EOS && cnt < 31 && pchop->write < CHOPDATACHUNK )
       {
         if ( cTmp == '_' ) cTmp = ' ';
         pchop->text[pchop->write] = cTmp;
+
         cnt++;
         pchop->write++;
         cTmp = mychop[cnt];
       }
+      pchop->text[pchop->write] = EOS;  
+      pchop->write++;
 
       if ( pchop->write >= CHOPDATACHUNK )  pchop->write = CHOPDATACHUNK - 1;
-      pchop->text[pchop->write] = 0;  pchop->write++;
       chopinsection++;
       pchop->count++;
     }
@@ -253,11 +255,11 @@ void naming_prime( Game_t * gs )
 {
   // ZZ> This function prepares the name chopper for use
 
-  PObj_t objlst     = gs->ObjList;
-  size_t  objlst_size = OBJLST_COUNT;
-
   OBJ_REF obj_cnt;
   int tnc;
+
+  PObj_t objlst      = gs->ObjList;
+  size_t objlst_size = OBJLST_COUNT;
 
   gs->chop.count = 0;
   gs->chop.write = 0;

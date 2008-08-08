@@ -110,7 +110,7 @@ enum e_ekey_list
   ekey_CListOut_Info_t,
   ekey_NetHost_t,
   ekey_PhysicsData_t,
-  ekey_GSStack_t,
+  ekey_GameStack_t,
   ekey_Gui_t,
   ekey_ProcState_t,
   ekey_MachineState_t,

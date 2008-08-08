@@ -47,6 +47,7 @@
 
 #include <assert.h>
 #include <stdarg.h>
+#include <time.h>
 
 #ifdef __unix__
 #include <unistd.h>
@@ -113,6 +114,8 @@ bool_t gfx_initialize(Graphics_t * g, ConfigData_t * cd)
   GLight.spekcol.r = GLight.spekcol.g = GLight.spekcol.b = 1.0f;
   GLight.ambi      = 0.0f;
   GLight.ambicol.r = GLight.ambicol.g = GLight.ambicol.b = 1.0f;
+
+  GLight.spekdir_stt = GLight.spekdir;
 
   return btrue;
 }
@@ -264,7 +267,7 @@ void release_all_textures(Game_t * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 load_one_icon( char * szModname, const char * szObjectname, char * szFilename )
+Uint32 load_one_icon( char * szPathname, const char * szObjectname, char * szFilename )
 {
   // ZZ> This function is used to load an icon.  Most icons are loaded
   //     without this function though...
@@ -272,7 +275,7 @@ Uint32 load_one_icon( char * szModname, const char * szObjectname, char * szFile
   Uint32 retval = MAXICONTX;
   Game_t * gs = gfxState.gs;
 
-  if ( INVALID_TEXTURE != GLTexture_Load( GL_TEXTURE_2D,  gs->TxIcon + gs->TxIcon_count,  inherit_fname(szModname, szObjectname, szFilename), INVALID_KEY ) )
+  if ( INVALID_TEXTURE != GLTexture_Load( GL_TEXTURE_2D,  gs->TxIcon + gs->TxIcon_count,  inherit_fname(szPathname, szObjectname, szFilename), INVALID_KEY ) )
   {
     retval = gs->TxIcon_count;
     gs->TxIcon_count++;
@@ -416,23 +419,24 @@ void reset_end_text( Game_t * gs )
 {
   // ZZ> This function resets the end-module text
 
-  if ( gs->PlaList_count > 1 )
+  // blank the text
+  gs->endtext[0] = EOS;
+
+  if ( gs->PlaList_count == 0 )
+  {
+    // No players???
+    snprintf( gs->endtext, sizeof( gs->endtext ), "The game has ended..." );
+  }
+  else if ( gs->PlaList_count == 1 )
+  {
+    // One player
+    snprintf( gs->endtext, sizeof( gs->endtext ), "Sadly, no trace was ever found..." );
+  }
+  else if ( gs->PlaList_count > 1 )
   {
     snprintf( gs->endtext, sizeof( gs->endtext ), "Sadly, they were never heard from again..." );
   }
-  else
-  {
-    if ( gs->PlaList_count == 0 )
-    {
-      // No players???
-      snprintf( gs->endtext, sizeof( gs->endtext ), "The game has ended..." );
-    }
-    else
-    {
-      // One player
-      snprintf( gs->endtext, sizeof( gs->endtext ), "Sadly, no trace was ever found..." );
-    }
-  }
+
 }
 
 //--------------------------------------------------------------------------------------------
@@ -800,6 +804,7 @@ void read_wawalite( Game_t * gs, char *modname )
       GLight.spekdir.y /= GLight.spek;
       GLight.spekdir.z /= GLight.spek;
 
+      GLight.spekdir_stt = GLight.spekdir;
       GLight.spek *= GLight.ambi;
     }
 
@@ -3062,15 +3067,24 @@ void draw_text( BMFont_t *  pfnt )
       CHR_REF pla_chr = PlaList_getRChr( gs, PLA_REF(0) );
 
       y += draw_string( pfnt, 0, y, NULL, "%2.3f FPS, %2.3f UPS", stabilized_fps, stabilized_ups );
-      y += draw_string( pfnt, 0, y, NULL, "estimated max FPS %2.3f", gfxState.est_max_fps );
-      y += draw_string( pfnt, 0, y, NULL, "character collision frac %1.3f", (float)chr_collisions / (float)CHR_MAX_COLLISIONS );
 
       if( CData.DevMode )
       {
-        y += draw_string( pfnt, 0, y, NULL, "wld_frame %d, gs->wld_clock %d, all_clock %d", gs->wld_frame, gs->wld_clock, gs->all_clock );
-        y += draw_string( pfnt, 0, y, NULL, "<%3.2f,%3.2f,%3.2f>", gs->ChrList[pla_chr].ori.pos.x, gs->ChrList[pla_chr].ori.pos.y, gs->ChrList[pla_chr].ori.pos.z );
-        y += draw_string( pfnt, 0, y, NULL, "<%3.2f,%3.2f,%3.2f>", gs->ChrList[pla_chr].ori.vel.x, gs->ChrList[pla_chr].ori.vel.y, gs->ChrList[pla_chr].ori.vel.z );
+        y += draw_string( pfnt, 0, y, NULL, "estimated max FPS %2.3f", gfxState.est_max_fps );
+        //y += draw_string( pfnt, 0, y, NULL, "wld_frame %d, gs->wld_clock %d, all_clock %d", gs->wld_frame, gs->wld_clock, gs->all_clock );
+        //y += draw_string( pfnt, 0, y, NULL, "<%3.2f,%3.2f,%3.2f>", gs->ChrList[pla_chr].ori.pos.x, gs->ChrList[pla_chr].ori.pos.y, gs->ChrList[pla_chr].ori.pos.z );
+        //y += draw_string( pfnt, 0, y, NULL, "<%3.2f,%3.2f,%3.2f>", gs->ChrList[pla_chr].ori.vel.x, gs->ChrList[pla_chr].ori.vel.y, gs->ChrList[pla_chr].ori.vel.z );
+        y += draw_string( pfnt, 0, y, NULL, "character collision frac %1.3f", (float)chr_collisions / (float)CHR_MAX_COLLISIONS );
       }
+
+      
+      {
+        MachineState_t * mac = get_MachineState();
+        MachineState_update( mac );
+
+        y += draw_string( pfnt, 0, y, NULL, "YLB %d, %d, %d, %2.2f ", mac->i_bishop_time_y, mac->i_bishop_time_m, mac->i_bishop_time_d, mac->f_bishop_time_h );
+      }
+
     }
 
     {

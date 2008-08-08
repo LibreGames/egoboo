@@ -89,7 +89,7 @@ bool_t     ModInfo_delete( MOD_INFO * pmi );
 MOD_INFO * ModInfo_renew( MOD_INFO * pmi );
 
 //--------------------------------------------------------------------------------------------
-struct s_ModSummary
+struct sModSummary
 {
   egoboo_key_t ekey;
 
@@ -97,11 +97,11 @@ struct s_ModSummary
   char   val;
   char   summary[SUMMARYLINES][SUMMARYSIZE];      // Quest description
 };
-typedef struct s_ModSummary ModSummary_t;
+typedef struct sModSummary ModSummary_t;
 
-ModSummary_t * ModSummary_new( ModSummary_t * ms );
-bool_t        ModSummary_delete( ModSummary_t * ms );
-ModSummary_t * ModSummary_renew( ModSummary_t * ms );
+ModSummary_t * ModSummary_new   ( ModSummary_t * ms );
+bool_t         ModSummary_delete( ModSummary_t * ms );
+ModSummary_t * ModSummary_renew ( ModSummary_t * ms );
 
 //--------------------------------------------------------------------------------------------
 struct sModState

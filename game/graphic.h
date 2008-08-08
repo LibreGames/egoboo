@@ -73,6 +73,7 @@ struct s_global_lighting_info
   bool_t on;
   float  spek;
   vect3  spekdir;
+  vect3  spekdir_stt;
   vect3  spekcol;
   float  ambi;
   vect3  ambicol;

@@ -6552,7 +6552,7 @@ void check_player_import(Game_t * gs)
 
       strncpy( ploadplayer->dir, foundfile, sizeof( ploadplayer->dir ) );
 
-      skin = fget_skin( filename, NULL );
+      skin = fget_skin( filepath, NULL );
 
       // Load the AI script for this object
       pobj->ai = load_ai_script( Game_getScriptInfo(gs), filepath, NULL );
@@ -6565,9 +6565,10 @@ void check_player_import(Game_t * gs)
       pobj->mad = MadList_load_one( gs, filepath, NULL, MAD_REF(loadplayer_count) );
 
       snprintf( filename, sizeof( filename ), "icon%d.bmp", skin );
-      load_one_icon( filepath, NULL, filename);
+      load_one_icon( filepath, NULL, filename );
 
-      naming_read( gs, filename, NULL, &otmp);
+      CProfile_new(&otmp);
+      naming_read( gs, filepath, NULL, &otmp);
       strncpy( ploadplayer->name, naming_generate( gs, &otmp ), sizeof( ploadplayer->name ) );
 
       loadplayer_count++;

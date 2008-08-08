@@ -68,7 +68,7 @@ void fget_code( FILE * pfile );
 
 enum e_Action what_action( char cTmp );
 void release_all_textures(struct sGame * gs);
-Uint32 load_one_icon( char * szModname, const char * szObjectname, char * szFilename );
+Uint32 load_one_icon( char * szPathname, const char * szObjectname, char * szFilename );
 void release_all_icons(struct sGame * gs);
 void release_map();
 

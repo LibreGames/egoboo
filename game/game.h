@@ -21,7 +21,7 @@ struct sChr;
 struct SoundState_t;
 struct sGraphics;
 struct script_global_values_t;
-struct sGSStack;
+struct sGameStack;
 
 struct sClient;
 struct sServer;
@@ -367,7 +367,7 @@ void setup_characters( Game_t * gs, char *modname );
 void ChrList_resynch(Game_t * gs);
 
 
-struct sGSStack * Get_GSStack();
+struct sGameStack * Get_GameStack();
 
 void set_alerts( Game_t * gs, CHR_REF character, float dUpdate );
 

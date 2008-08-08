@@ -130,35 +130,35 @@ PROFILE_DECLARE( main_loop );
 
 // When operating as a server, there may be a need to host multiple games
 // this "stack" holds all valid game states
-struct sGSStack
+struct sGameStack
 {
   egoboo_key_t  ekey;
   int         count;
   Game_t * data[256];
 };
 
-typedef struct sGSStack GSStack_t;
+typedef struct sGameStack GameStack_t;
 
-static GSStack_t _gs_stack = { bfalse };
+static GameStack_t _game_stack = { bfalse };
 
-GSStack_t * GSStack_new(GSStack_t * stk);
-bool_t GSStack_delete(GSStack_t * stk);
-bool_t GSStack_push(GSStack_t * stk, Game_t * gs);
-Game_t * GSStack_pop(GSStack_t * stk);
-Game_t * GSStack_get(GSStack_t * stk, int i);
-Game_t * GSStack_remove(GSStack_t * stk, int i);
+GameStack_t * GameStack_new(GameStack_t * stk);
+bool_t        GameStack_delete(GameStack_t * stk);
+bool_t        GameStack_push(GameStack_t * stk, Game_t * gs);
+Game_t *      GameStack_pop(GameStack_t * stk);
+Game_t *      GameStack_get(GameStack_t * stk, int i);
+Game_t *      GameStack_remove(GameStack_t * stk, int i);
 
-GSStack_t * Get_GSStack()
+GameStack_t * Get_GameStack()
 {
   // BB > a function to get the global game state stack.
-  //      Acts like a singleton, will initialize _gs_stack if not already initialized
+  //      Acts like a singleton, will initialize _game_stack if not already initialized
 
-  if(!EKEY_VALID(_gs_stack))
+  if(!EKEY_VALID(_game_stack))
   {
-    GSStack_new(&_gs_stack);
+    GameStack_new(&_game_stack);
   }
 
-  return &_gs_stack;
+  return &_game_stack;
 };
 
 //---------------------------------------------------------------------------------------------
@@ -170,7 +170,7 @@ static void sdlinit( Graphics_t * g );
 static void update_game(Game_t * gs, float dFrame, Uint32 * rand_idx);
 static void memory_cleanUp(void);
 
-GSStack_t * Get_GSStack();
+GameStack_t * Get_GameStack();
 
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
@@ -205,14 +205,14 @@ void memory_cleanUp()
 
   Game_t * gs;
   MachineState_t * mach_state;
-  GSStack_t * stk = Get_GSStack();
+  GameStack_t * stk = Get_GameStack();
 
   log_info("memory_cleanUp() - Attempting to clean up loaded things in memory... ");
 
   // kill all game states
   while(stk->count > 0)
   {
-    gs = GSStack_pop(stk);
+    gs = GameStack_pop(stk);
     if( !EKEY_PVALID(gs) ) continue;
 
     gs->proc.KillMe = btrue;
@@ -223,7 +223,7 @@ void memory_cleanUp()
   snd_quit();
   ui_shutdown();			          //Shutdown various support systems
   CGui_shutDown();
-  mach_state = Get_MachineState();
+  mach_state = get_MachineState();
   MachineState_delete( mach_state );
   sys_shutdown();
 
@@ -2617,73 +2617,98 @@ void main_handleKeyboard()
 };
 
 //--------------------------------------------------------------------------------------------
+void do_sunlight(GLOBAL_LIGHTING_INFO * info)
+{
+  // BB > simulate sunlight
+
+  static bool_t first_time = btrue;
+  static time_t i_time_last;
+  int    dtime;
+
+  MachineState_t * mac = get_MachineState();
+
+  // check to see if we're outdoors
+  bool_t outdoors = info->spek > 0;
+  if(!outdoors) return;
+
+  // update the sun position every 10 seconds
+  MachineState_update(mac);
+  dtime = mac->i_actual_time - i_time_last;
+  if( first_time || dtime > 3 )
+  {
+    float  f_sky_pos;
+    float sval, cval, ftmp;
+
+    first_time  = bfalse;
+    i_time_last = mac->i_actual_time;
+    f_sky_pos = (mac->f_bishop_time_h - 12.0f) / 24.0f;
+
+    sval = sin( f_sky_pos * TWO_PI );
+    cval = cos( f_sky_pos * TWO_PI );
+
+    //info->spekdir.y = info->spekdir_stt.y*cval + info->spekdir_stt.z*sval;
+    //info->spekdir.z =-info->spekdir_stt.y*sval + info->spekdir_stt.z*cval;
+
+    info->spekdir.y = sval;
+    info->spekdir.z = cval;
+
+    if ( info->spekdir.z > 0 )
+    {
+      // do the filtering
+      info->spekcol.r = exp(( 1.0f -  1.0f  / info->spekdir.z ) * 0.1f );
+      info->spekcol.g = exp(( 5.0f -  5.0f  / info->spekdir.z ) * 0.1f );
+      info->spekcol.b = exp(( 16.0f - 16.0f / info->spekdir.z ) * 0.1f );
+
+      info->ambicol.r = ( 1.0f - info->spekcol.r );
+      info->ambicol.g = ( 1.0f - info->spekcol.g );
+      info->ambicol.b = ( 1.0f - info->spekcol.b );
+
+      // do the intensity
+      info->spekcol.r *= ABS( info->spekdir.z ) * info->spek;
+      info->spekcol.g *= ABS( info->spekdir.z ) * info->spek;
+      info->spekcol.b *= ABS( info->spekdir.z ) * info->spek;
+
+      if(info->ambicol.r + info->ambicol.g + info->ambicol.b > 0)
+      {
+        ftmp = ( info->spekcol.r + info->spekcol.g + info->spekcol.b ) / (info->ambicol.r + info->ambicol.g + info->ambicol.b);
+        info->ambicol.r = 0.025f + (1.0f-0.025f) * ftmp * info->ambicol.r + ABS( info->spekdir.z ) * info->ambi;
+        info->ambicol.g = 0.044f + (1.0f-0.044f) * ftmp * info->ambicol.g + ABS( info->spekdir.z ) * info->ambi;
+        info->ambicol.b = 0.100f + (0.9f-0.100f) * ftmp * info->ambicol.b + ABS( info->spekdir.z ) * info->ambi;
+      };
+    }
+    else
+    {
+      info->spekcol.r = 0.0f;
+      info->spekcol.g = 0.0f;
+      info->spekcol.b = 0.0f;
+
+      info->ambicol.r = 0.025; // + info->ambi;
+      info->ambicol.g = 0.044; // + info->ambi;
+      info->ambicol.b = 0.100; // + info->ambi;
+    };
+
+    // update the spektable since the sunlight may have changes
+    make_spektable( GLight.spekdir );
+  }
+
+};
+
+//--------------------------------------------------------------------------------------------
 retval_t main_doGameGraphics()
 {
   Game_t * gs = gfxState.gs;
+
 
   if( !EKEY_PVALID(gs) ) return rv_error;
   if( !gs->proc.Active ) { gs->dFrame = 0; return rv_succeed; };
 
   move_camera( UPDATESCALE );
 
+  // simulate sunlight. runs on its own clock.
+  do_sunlight(&GLight);
+
   if ( gs->dFrame >= 1.0 )
   {
-    bool_t outdoors = bfalse; // GLight.spek > 0;
-
-    // animate the light source
-    if( outdoors )
-    {
-      // BB > simulate sunlight
-
-      float sval, cval, xval, yval, ftmp;
-
-      sval = sin( gs->dFrame/50.0f * TWO_PI / 30.0f);
-      cval = cos( gs->dFrame/50.0f * TWO_PI / 30.0f);
-
-      xval = GLight.spekdir.y;
-      yval = GLight.spekdir.z;
-
-      GLight.spekdir.y = xval*cval + yval*sval;
-      GLight.spekdir.z =-xval*sval + yval*cval;
-
-      if ( GLight.spekdir.z > 0 )
-      {
-        // do the filtering
-        GLight.spekcol.r = exp(( 1.0f -  1.0f  / GLight.spekdir.z ) * 0.1f );
-        GLight.spekcol.g = exp(( 5.0f -  5.0f  / GLight.spekdir.z ) * 0.1f );
-        GLight.spekcol.b = exp(( 16.0f - 16.0f / GLight.spekdir.z ) * 0.1f );
-
-        GLight.ambicol.r = ( 1.0f - GLight.spekcol.r );
-        GLight.ambicol.g = ( 1.0f - GLight.spekcol.g );
-        GLight.ambicol.b = ( 1.0f - GLight.spekcol.b );
-
-        // do the intensity
-        GLight.spekcol.r *= ABS( GLight.spekdir.z ) * GLight.spek;
-        GLight.spekcol.g *= ABS( GLight.spekdir.z ) * GLight.spek;
-        GLight.spekcol.b *= ABS( GLight.spekdir.z ) * GLight.spek;
-
-        if(GLight.ambicol.r + GLight.ambicol.g + GLight.ambicol.b > 0)
-        {
-          ftmp = ( GLight.spekcol.r + GLight.spekcol.g + GLight.spekcol.b ) / (GLight.ambicol.r + GLight.ambicol.g + GLight.ambicol.b);
-          GLight.ambicol.r = 0.025f + (1.0f-0.025f) * ftmp * GLight.ambicol.r + ABS( GLight.spekdir.z ) * GLight.ambi;
-          GLight.ambicol.g = 0.044f + (1.0f-0.044f) * ftmp * GLight.ambicol.g + ABS( GLight.spekdir.z ) * GLight.ambi;
-          GLight.ambicol.b = 0.100f + (0.9f-0.100f) * ftmp * GLight.ambicol.b + ABS( GLight.spekdir.z ) * GLight.ambi;
-        };
-      }
-      else
-      {
-        GLight.spekcol.r = 0.0f;
-        GLight.spekcol.g = 0.0f;
-        GLight.spekcol.b = 0.0f;
-
-        GLight.ambicol.r = 0.025 + GLight.ambi;
-        GLight.ambicol.g = 0.044 + GLight.ambi;
-        GLight.ambicol.b = 0.100 + GLight.ambi;
-      };
-
-      make_spektable( GLight.spekdir );
-    };
-
     // Do the display stuff
     PROFILE_BEGIN( figure_out_what_to_draw );
     figure_out_what_to_draw();
@@ -2823,12 +2848,12 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
   // ZZ> This is where the program starts and all the high level stuff happens
   static double frameDuration, frameTicks;
   Game_t    * gs;
-  GSStack_t      * stk;
+  GameStack_t      * stk;
   MachineState_t * mach_state;
   int i;
 
-  mach_state = Get_MachineState();
-  stk        = Get_GSStack();
+  mach_state = get_MachineState();
+  stk        = Get_GameStack();
 
   if(ego_proc->KillMe && ego_proc->State < PROC_Leaving)
   {
@@ -2971,7 +2996,7 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
         {
           ProcState_t * proc;
 
-          gs   = GSStack_get(stk, i);
+          gs   = GameStack_get(stk, i);
           proc = Game_getProcedure(gs);
 
           // a kludge to make sure the the gfxState is connected to something
@@ -3044,7 +3069,7 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
         all_games_finished = btrue;
         for(i=0; i<stk->count; i++)
         {
-          gs = GSStack_get(stk, i);
+          gs = GameStack_get(stk, i);
 
           // force the main loop to clean itself
           if ( !gs->proc.Terminated )
@@ -3124,7 +3149,7 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
 
         for(i=0; i<stk->count; i++)
         {
-          gs = GSStack_get(stk, i);
+          gs = GameStack_get(stk, i);
           quit_game(gs);
         }
       }
@@ -3902,7 +3927,7 @@ int SDL_main( int argc, char **argv )
 
   int program_state = 0, i;
   MachineState_t * mach_state;
-  GSStack_t * stk;
+  GameStack_t * stk;
   Game_t * gs;
 
   // Initialize logging first, so that we can use it everywhere.
@@ -3910,14 +3935,14 @@ int SDL_main( int argc, char **argv )
   log_setLoggingLevel( 2 );
 
   // force the initialization of the machine state
-  mach_state = Get_MachineState();
+  mach_state = get_MachineState();
 
   // create the main loop "process"
   ProcState_new(&EgoProc);
 
   // For each game state, run the main loop.
   // Delete any game states that have been killed
-  stk = Get_GSStack();
+  stk = Get_GameStack();
   do
   {
     proc_mainLoop( &EgoProc, argc, argv );
@@ -3925,7 +3950,7 @@ int SDL_main( int argc, char **argv )
     // always keep 1 game state on the stack
     for(i=1; i<stk->count; i++)
     {
-      gs = GSStack_get(stk, i);
+      gs = GameStack_get(stk, i);
       if(gs->proc.Terminated)
       {
         // only kill one per loop, since the deletion process invalidates the stack
@@ -4636,7 +4661,36 @@ void sdlinit( Graphics_t * g )
 }
 
 //--------------------------------------------------------------------------------------------
-MachineState_t * Get_MachineState()
+retval_t MachineState_update(MachineState_t * mac)
+{
+  // BB > seconds from Jan 1, 1970 to "birth" of Bishopia
+
+  // seconds from Jan 1, 1970 to "birth" of Bishopia
+  const time_t i_dif  = 10030 * 24 * 60 * 60;
+
+  // 1 game day every 15 minutes
+  const double clock_magnification = 96;
+
+  // seconds in one day
+  const double secs_per_day = 24.0 * 60.0 * 60.0;
+
+  if ( !EKEY_PVALID(mac) ) return rv_error;
+
+  // store the real time
+  mac->i_actual_time = time(NULL);
+
+  // Bishopia has 360 day years, 30 day months, and 24 hour days
+  mac->f_bishop_time   = (double)(mac->i_actual_time - i_dif) * clock_magnification / secs_per_day;
+  mac->i_bishop_time_y = mac->f_bishop_time / 360;
+  mac->i_bishop_time_m = (mac->f_bishop_time - mac->i_bishop_time_y * 360) / 30;
+  mac->i_bishop_time_d = (mac->f_bishop_time - mac->i_bishop_time_y * 360 - mac->i_bishop_time_m * 30);
+  mac->f_bishop_time_h = (mac->f_bishop_time - (int)mac->f_bishop_time) * 24.0;
+
+  return rv_succeed;
+};
+
+//--------------------------------------------------------------------------------------------
+MachineState_t * get_MachineState()
 {
   if(!EKEY_VALID(_macState))
   {
@@ -5283,16 +5337,16 @@ bool_t prt_search_block( Game_t * gs, SearchInfo_t * psearch, int block_x, int b
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-GSStack_t * GSStack_new(GSStack_t * stk)
+GameStack_t * GameStack_new(GameStack_t * stk)
 {
-  //fprintf( stdout, "GSStack_new()\n");
+  //fprintf( stdout, "GameStack_new()\n");
 
   if(NULL == stk) return stk;
-  GSStack_delete(stk);
+  GameStack_delete(stk);
 
-  memset(stk, 0, sizeof(GSStack_t));
+  memset(stk, 0, sizeof(GameStack_t));
 
-  EKEY_PNEW(stk, GSStack_t);
+  EKEY_PNEW(stk, GameStack_t);
 
   stk->count = 0;
 
@@ -5300,7 +5354,7 @@ GSStack_t * GSStack_new(GSStack_t * stk)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t GSStack_delete(GSStack_t * stk)
+bool_t GameStack_delete(GameStack_t * stk)
 {
   int i;
 
@@ -5323,7 +5377,7 @@ bool_t GSStack_delete(GSStack_t * stk)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t GSStack_push(GSStack_t * stk, Game_t * gs)
+bool_t GameStack_push(GameStack_t * stk, Game_t * gs)
 {
   if(!EKEY_PVALID(stk) || stk->count + 1 >= 256) return bfalse;
   if(!EKEY_PVALID(gs)) return bfalse;
@@ -5335,7 +5389,7 @@ bool_t GSStack_push(GSStack_t * stk, Game_t * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-Game_t * GSStack_pop(GSStack_t * stk)
+Game_t * GameStack_pop(GameStack_t * stk)
 {
   if(!EKEY_PVALID(stk) || stk->count - 1 < 0) return NULL;
 
@@ -5344,7 +5398,7 @@ Game_t * GSStack_pop(GSStack_t * stk)
 }
 
 //--------------------------------------------------------------------------------------------
-Game_t * GSStack_get(GSStack_t * stk, int i)
+Game_t * GameStack_get(GameStack_t * stk, int i)
 {
   if(!EKEY_PVALID(stk)) return NULL;
   if( i >=  stk->count) return NULL;
@@ -5353,7 +5407,7 @@ Game_t * GSStack_get(GSStack_t * stk, int i)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t GSStack_add(GSStack_t * stk, Game_t * gs)
+bool_t GameStack_add(GameStack_t * stk, Game_t * gs)
 {
   // BB> Adds a new game state into the stack.
   //     Does not add a new wntry if the gamestate is already in the stack.
@@ -5367,7 +5421,7 @@ bool_t GSStack_add(GSStack_t * stk, Game_t * gs)
   // check to see it it already exists
   for(i=0; i<stk->count; i++)
   {
-    if( gs == GSStack_get(stk, i) )
+    if( gs == GameStack_get(stk, i) )
     {
       bfound = btrue;
       break;
@@ -5377,7 +5431,7 @@ bool_t GSStack_add(GSStack_t * stk, Game_t * gs)
   if(!bfound)
   {
     // not on the stack, so push it
-    retval = GSStack_push(stk, gs);
+    retval = GameStack_push(stk, gs);
   }
 
   return retval;
@@ -5385,7 +5439,7 @@ bool_t GSStack_add(GSStack_t * stk, Game_t * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-Game_t * GSStack_remove(GSStack_t * stk, int i)
+Game_t * GameStack_remove(GameStack_t * stk, int i)
 {
   if(!EKEY_PVALID(stk)) return NULL;
   if( i >= stk->count ) return NULL;
@@ -5402,7 +5456,7 @@ Game_t * GSStack_remove(GSStack_t * stk, int i)
     stk->data[j] = ptmp;
   };
 
-  return GSStack_pop(stk);
+  return GameStack_pop(stk);
 }
 
 //--------------------------------------------------------------------------------------------
@@ -5477,7 +5531,7 @@ Game_t * Game_new(Game_t * gs, Net_t * ns, Client_t * cl, Server_t * sv)
 //--------------------------------------------------------------------------------------------
 bool_t Game_delete(Game_t * gs)
 {
-  GSStack_t * stk;
+  GameStack_t * stk;
 
   fprintf(stdout, "Game_delete()\n");
 
@@ -5532,16 +5586,16 @@ bool_t Game_delete(Game_t * gs)
   }
 
   // unlink this from the game state stack
-  stk = Get_GSStack();
+  stk = Get_GameStack();
   if(NULL != stk)
   {
     int i;
     for(i=0; i<stk->count; i++)
     {
-      if( gs == GSStack_get(stk, i) )
+      if( gs == GameStack_get(stk, i) )
       {
         // found it, so remove and exit
-        GSStack_remove(stk, i);
+        GameStack_remove(stk, i);
         break;
       }
     }
@@ -5620,14 +5674,14 @@ void set_alerts( Game_t * gs, CHR_REF ichr, float dUpdate )
 //--------------------------------------------------------------------------------------------
 Game_t * Game_create(Net_t * net, Client_t * cl, Server_t * sv)
 {
-  GSStack_t   * stk;
+  GameStack_t   * stk;
   Game_t * ret;
 
   ret = Game_new( (Game_t*)calloc(1, sizeof(Game_t)), net, cl, sv );
 
   // automatically link it into the game state stack
-  stk = Get_GSStack();
-  GSStack_add(stk, ret);
+  stk = Get_GameStack();
+  GameStack_add(stk, ret);
 
   return ret;
 };
