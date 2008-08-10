@@ -3378,12 +3378,36 @@ bool_t gfx_set_mode(Graphics_t * g)
 
   if(!gfx_initialized) return bfalse;
 
-
   // ---- reset the SDL video mode ----
   {
     //Enable antialiasing X16
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 16);
+    if(-1 == SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1))
+    {
+      log_warning("SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1) failed - \n\t\"%s\"", SDL_GetError());
+    }
+    else
+    {
+      int ms_size;
+
+      log_info("Multisample buffers activated\n");
+
+      ms_size = 32;
+      do
+      {
+        ms_size >>= 1;
+
+        if(SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, ms_size) < 0)
+        {
+          log_warning("SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, %d) failed - \n\t\"%s\"", ms_size, SDL_GetError());
+        }
+        else
+        {
+          break;
+        }
+      } while (ms_size > 0);
+
+      log_info("Actual multisamples size == %d\n", ms_size);
+    };
 
     //Force OpenGL hardware acceleration (This must be done before video mode)
     if(g->gfxacceleration)
@@ -3392,16 +3416,32 @@ bool_t gfx_set_mode(Graphics_t * g)
     }
 
     /* Set the OpenGL Attributes */
-  #ifndef __unix__
+#ifndef __unix__
     // Under Unix we cannot specify these, we just get whatever format
     // the framebuffer has, specifying depths > the framebuffer one
     // will cause SDL_SetVideoMode to fail with: "Unable to set video mode: Couldn't find matching GLX visual"
-    SDL_GL_SetAttribute( SDL_GL_RED_SIZE,   g->colordepth );
-    SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, g->colordepth );
-    SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE,  g->colordepth );
-    SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, g->scrd );
-  #endif
-    SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
+    if(SDL_GL_SetAttribute( SDL_GL_RED_SIZE,   g->colordepth ) < 0)
+    {
+      log_warning( "SDL_GL_SetAttribute( SDL_GL_RED_SIZE, %d ) failed - \n\t\"%s\"\n", g->colordepth, SDL_GetError());
+    }
+    if(SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, g->colordepth ) < 0)
+    {
+      log_warning( "SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, %d ) failed - \n\t\"%s\"\n", g->colordepth, SDL_GetError());
+    }
+    if(SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE,  g->colordepth ) < 0)
+    {
+      log_warning( "SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, %d ) failed - \n\t\"%s\"\n", g->colordepth, SDL_GetError());
+    }
+    if(SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, g->scrd ) < 0)
+    {
+      log_warning( "SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, %d ) failed - \n\t\"%s\"\n", g->scrd, SDL_GetError());
+    }
+#endif
+
+    if(SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 ) < 0)
+    {
+      log_warning( "SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 ) failed - \n\t\"%s\"\n", SDL_GetError());
+    }
 
     g->surface = SDL_SetVideoMode( g->scrx, g->scry, g->scrd, SDL_DOUBLEBUF | SDL_OPENGL | ( g->fullscreen ? SDL_FULLSCREEN : 0 ) );
     if ( NULL == g->surface )
@@ -3469,7 +3509,10 @@ bool_t gfx_set_mode(Graphics_t * g)
       SDL_putenv("__GL_SYNC_TO_VBLANK=1");
 #else
     /* Turn on vsync, this works on Windows. */
-      SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1);
+      if(SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1) < 0)
+      {
+        log_warning( "SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1) failed - \n\t\"%s\"\n", SDL_GetError());
+      }
 #endif
   }
 
