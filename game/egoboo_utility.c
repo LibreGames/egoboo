@@ -485,7 +485,7 @@ void funderf( FILE* filewrite, char* text, char* usename )
 
   STRING tmpstr;
 
-  str_convert_spaces( tmpstr, sizeof( tmpstr ), usename );
+  str_encode( tmpstr, sizeof( tmpstr ), usename );
   fprintf( filewrite, "%s%s\n", text, tmpstr );
 }
 
@@ -513,7 +513,7 @@ bool_t fget_message( FILE* fileread, MessageData_t * msglst )
   if ( 0 != fscanf( fileread, "%s", szTmp ) )
   {
     msglst->index[msglst->total] = msglst->totalindex;
-    szTmp[255] = 0;
+    szTmp[255] = EOS;
     cTmp = szTmp[0];
     cnt = 1;
     while ( cTmp != 0 && msglst->totalindex < MESSAGEBUFFERSIZE - 1 )
@@ -622,7 +622,7 @@ bool_t fget_name( FILE* fileread, char *szName, size_t lnName )
   // a zero return value from fscanf() means that no fields were filled
   if ( fget_string( fileread, szTmp, sizeof( szTmp ) ) )
   {
-    str_convert_underscores( szName, lnName, szTmp );
+    str_decode( szName, lnName, szTmp );
     retval = btrue;
   };
 
@@ -1048,13 +1048,13 @@ retval_t util_calculateCRC(char * filename, Uint32 seed, Uint32 * pCRC)
 
   if( NULL ==pCRC )
   {
-    log_info("util_calculateCRC() - Called with invalid parameters.\n");
+    log_info("util_calculateCRC() - \n\tCalled with invalid parameters.\n");
     return rv_error;
   }
 
   if( !VALID_CSTR(filename) )
   {
-    log_info("util_calculateCRC() - Called null filename.\n");
+    log_info("util_calculateCRC() - \n\tCalled null filename.\n");
     return rv_error;
   }
 
@@ -1064,7 +1064,7 @@ retval_t util_calculateCRC(char * filename, Uint32 seed, Uint32 * pCRC)
     return rv_fail;
   }
 
-  log_info("NET INFO: util_calculateCRC() - \"%s\" has CRC... ", filename);
+  log_info("NET INFO: util_calculateCRC() - \n\t\"%s\" has CRC... ", filename);
 
   tmpCRC = seed;
   while(!feof(pfile))
@@ -1099,12 +1099,12 @@ Uint32 generate_unsigned( Uint32 * seed, PAIR * ppair )
 
     if ( ppair->irand > 1 )
     {
-      itmp += ego_rand(seed) % ppair->irand;
+      itmp += ego_rand_32(seed) % ppair->irand;
     }
   }
   else
   {
-    itmp = ego_rand(seed);
+    itmp = ego_rand_32(seed);
   }
 
   return itmp;
@@ -1123,13 +1123,13 @@ Sint32 generate_signed( Uint32 * seed, PAIR * ppair )
 
     if ( ppair->irand > 1 )
     {
-      itmp += ego_rand(seed) % ppair->irand;
+      itmp += ego_rand_32(seed) % ppair->irand;
       itmp -= ppair->irand >> 1;
     }
   }
   else
   {
-    itmp = ego_rand(seed);
+    itmp = ego_rand_32(seed);
   }
 
   return itmp;
@@ -1145,7 +1145,7 @@ Sint32 generate_dither( Uint32 * seed, PAIR * ppair, Uint16 strength_fp8 )
 
   if ( NULL != ppair && ppair->irand > 1 )
   {
-    itmp = ego_rand(seed);
+    itmp = ego_rand_32(seed);
     itmp %= ppair->irand;
     itmp -= ppair->irand >> 1;
 

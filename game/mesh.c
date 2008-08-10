@@ -111,7 +111,7 @@ bool_t load_mesh( Game_t * gs, char *modname )
 
   if ( !MeshMem_new(mem, numvert, numfan) )
   {
-    log_error( "load_mesh() - Unable to initialize Mesh Memory. MPD file %s has too many vertices.\n", modname );
+    log_error( "load_mesh() - \n\tUnable to initialize Mesh Memory. MPD file %s has too many vertices.\n", modname );
     return bfalse;
   }
 

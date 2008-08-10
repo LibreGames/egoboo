@@ -80,7 +80,7 @@ void ConvertToKeyCharacters( char *pStr )
     return;
   }
 
-  str_convert_spaces( pStr, ( size_t )( -1 ), pStr );
+  str_encode( pStr, ( size_t )( -1 ), pStr );
 }
 
 

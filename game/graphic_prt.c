@@ -78,7 +78,7 @@ GLint prt_attrib_close;
 
 void get_vectors( PRT_REF prt, vect3 * vert, vect3 * horiz, float * dist )
 {
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   CHR_REF chr;
   PIP_REF pip;
@@ -234,7 +234,7 @@ void get_vectors( PRT_REF prt, vect3 * vert, vect3 * horiz, float * dist )
 //--------------------------------------------------------------------------------------------
 void render_antialias_prt( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  Game_t *gs = gfxState.gs;
+  Game_t *gs = Graphics_requireGame(&gfxState);
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -301,7 +301,7 @@ void render_antialias_prt( Uint32 vrtcount, GLVertex * vrtlist )
 //--------------------------------------------------------------------------------------------
 void render_solid_prt( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  Game_t *gs = gfxState.gs;
+  Game_t *gs = Graphics_requireGame(&gfxState);
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -363,7 +363,7 @@ void render_solid_prt( Uint32 vrtcount, GLVertex * vrtlist )
 //--------------------------------------------------------------------------------------------
 void render_transparent_prt( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  Game_t *gs = gfxState.gs;
+  Game_t *gs = Graphics_requireGame(&gfxState);
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -486,7 +486,7 @@ bool_t calc_billboard(Game_t * gs, GLVertex vrtlst[], GLVertex * vert, float siz
 //--------------------------------------------------------------------------------------------
 void render_light_prt( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  Game_t *gs = gfxState.gs;
+  Game_t *gs = Graphics_requireGame(&gfxState);
   Prt_t   *pprt;
 
   GLVertex vtlist[4];
@@ -592,13 +592,13 @@ void render_particles()
 {
   // ZZ> This function draws the sprites for particle systems
 
-  Game_t *gs = gfxState.gs;
+  Game_t *gs = Graphics_requireGame(&gfxState);
 
   GLVertex v[PRTLST_COUNT];
   Uint16 numparticle;
   PRT_REF prt_cnt;
 
-  if ( INVALID_TEXTURE == GLTexture_GetTextureID( gs->TxTexture + particletexture ) ) return;
+  if ( INVALID_TEXTURE == GLtexture_GetTextureID( gs->TxTexture + particletexture ) ) return;
 
   // Original points
   numparticle = 0;
@@ -632,7 +632,7 @@ void render_particles()
     glDisable( GL_DITHER );
 
     // Choose texture
-    GLTexture_Bind( gs->TxTexture + particletexture, &gfxState );
+    GLtexture_Bind( gs->TxTexture + particletexture, &gfxState );
 
     // DO ANTIALIAS SOLID SPRITES FIRST
     render_antialias_prt( numparticle, v );
@@ -653,7 +653,7 @@ void render_particles()
 //--------------------------------------------------------------------------------------------
 void render_antialias_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  Game_t *gs = gfxState.gs;
+  Game_t *gs = Graphics_requireGame(&gfxState);
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -719,7 +719,7 @@ void render_antialias_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 //--------------------------------------------------------------------------------------------
 void render_solid_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  Game_t *gs = gfxState.gs;
+  Game_t *gs = Graphics_requireGame(&gfxState);
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -782,7 +782,7 @@ void render_solid_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 //--------------------------------------------------------------------------------------------
 void render_transparent_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  Game_t *gs = gfxState.gs;
+  Game_t *gs = Graphics_requireGame(&gfxState);
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -847,7 +847,7 @@ void render_transparent_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 //--------------------------------------------------------------------------------------------
 void render_light_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  Game_t *gs = gfxState.gs;
+  Game_t *gs = Graphics_requireGame(&gfxState);
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -911,7 +911,7 @@ void render_particle_reflections()
 {
   // ZZ> This function draws the sprites for particle systems
 
-  Game_t * gs    = gfxState.gs;
+  Game_t * gs    = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
 
   GLVertex v[PRTLST_COUNT];
@@ -919,7 +919,7 @@ void render_particle_reflections()
   PRT_REF prt_cnt;
   float level;
 
-  if ( INVALID_TEXTURE == GLTexture_GetTextureID( gs->TxTexture + particletexture ) )
+  if ( INVALID_TEXTURE == GLtexture_GetTextureID( gs->TxTexture + particletexture ) )
     return;
 
   // Original points
@@ -955,7 +955,7 @@ void render_particle_reflections()
     glShadeModel( gfxState.shading );
 
     // Choose texture and matrix
-    GLTexture_Bind( gs->TxTexture + particletexture, &gfxState );
+    GLtexture_Bind( gs->TxTexture + particletexture, &gfxState );
 
     glDisable( GL_CULL_FACE );
     glDisable( GL_DITHER );

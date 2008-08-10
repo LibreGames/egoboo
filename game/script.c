@@ -749,7 +749,7 @@ void load_ai_codes( char* loadname )
 
   FILE* fileread;
 
-  log_info( "load_ai_codes() - registering internal script constants\n" );
+  log_info( "load_ai_codes() - \n\tregistering internal script constants\n" );
 
   opcode_lst.count = 0;
 
@@ -1374,7 +1374,7 @@ void load_ai_codes( char* loadname )
   REGISTER_FUNCTION_ALIAS( opcode_lst, AddEndText, "AddEndMessage" );
   REGISTER_FUNCTION_ALIAS( opcode_lst, StopSoundLoop, "StopSound" );
 
-  log_info( "load_ai_codes() - loading external script constants\n" );
+  log_info( "load_ai_codes() - \n\tloading external script constants\n" );
 
   // read all of the remaining opcodes from the file
   fileread = fs_fileOpen( PRI_NONE, NULL, loadname, "rb" );
@@ -1488,7 +1488,6 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
   STRING cTmp;
   SearchInfo_t loc_search;
   Uint32 loc_rand;
-  PRT_SPAWN_INFO prt_si;
   ENC_SPAWN_INFO enc_si;
 
   CHR_REF tmpchr, tmpchr1, tmpchr2, tmpchr3;
@@ -2400,8 +2399,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
         tmpchr = ichr;
         if ( chr_attached( gs->ChrList, CHRLST_COUNT, ichr ) )  tmpchr = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, ichr );
 
-        prt_spawn_info_init( &prt_si, gs, 1.0f, pchr->ori.pos, pchr->ori.turn_lr, pchr->model, PIP_REF(pstate->tmpargument), ichr, (GRIP)pstate->tmpdistance, pchr->team, tmpchr, 0, INVALID_CHR );
-        tmpprt = req_spawn_one_particle( prt_si );
+        tmpprt = prt_spawn( gs, 1.0f, pchr->ori.pos, pchr->ori.vel, pchr->ori.turn_lr, pchr->model, PIP_REF(pstate->tmpargument), ichr, (GRIP)pstate->tmpdistance, pchr->team, tmpchr, 0, INVALID_CHR );
         if ( RESERVED_PRT( gs->PrtList, tmpprt ) )
         {
           // Detach the particle
@@ -3136,8 +3134,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
       {
         tmpchr = ichr;
         if ( chr_attached( gs->ChrList, CHRLST_COUNT, ichr ) )  tmpchr = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, ichr );
-        prt_spawn_info_init( &prt_si, gs, 1.0f, pchr->ori.pos, pchr->ori.turn_lr, pchr->model, PIP_REF(pstate->tmpargument), ichr, (GRIP)pstate->tmpdistance, pchr->team, tmpchr, 0, INVALID_CHR );
-        tmpprt = req_spawn_one_particle( prt_si );
+        tmpprt = prt_spawn( gs, 1.0f, pchr->ori.pos, pchr->ori.vel, pchr->ori.turn_lr, pchr->model, PIP_REF(pstate->tmpargument), ichr, (GRIP)pstate->tmpdistance, pchr->team, tmpchr, 0, INVALID_CHR );
         returncode = RESERVED_PRT( gs->PrtList, tmpprt );
       }
       break;
@@ -3148,11 +3145,12 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
       if ( ACTIVE_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, CHRLST_COUNT, ichr ) )
       {
         vect3 prt_pos = {pstate->tmpx, pstate->tmpy, pstate->tmpdistance};
+        vect3 prt_vel = {0,0,0};
+
         tmpchr = ichr;
         if ( chr_attached( gs->ChrList, CHRLST_COUNT, tmpchr ) )  tmpchr = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, tmpchr );
 
-        prt_spawn_info_init( &prt_si, gs, 1.0f, prt_pos, pchr->ori.turn_lr, pchr->model, PIP_REF(pstate->tmpargument), INVALID_CHR, (GRIP)0, pchr->team, tmpchr, 0, INVALID_CHR );
-        tmpprt = req_spawn_one_particle( prt_si );
+        tmpprt = prt_spawn( gs, 1.0f, prt_pos, prt_vel, pchr->ori.turn_lr, pchr->model, PIP_REF(pstate->tmpargument), INVALID_CHR, (GRIP)0, pchr->team, tmpchr, 0, INVALID_CHR );
         returncode = RESERVED_PRT( gs->PrtList, tmpprt );
       };
       break;
@@ -3365,8 +3363,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
         tmpchr = ichr;
         if ( chr_attached( gs->ChrList, CHRLST_COUNT, ichr ) )  tmpchr = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, ichr );
 
-        prt_spawn_info_init( &prt_si, gs, 1.0f, pchr->ori.pos, pchr->ori.turn_lr, pchr->model, PIP_REF(pstate->tmpargument), ichr, (GRIP)pstate->tmpdistance, pchr->team, tmpchr, 0, INVALID_CHR );
-        tmpprt = req_spawn_one_particle( prt_si );
+        tmpprt = prt_spawn( gs, 1.0f, pchr->ori.pos, pchr->ori.vel, pchr->ori.turn_lr, pchr->model, PIP_REF(pstate->tmpargument), ichr, (GRIP)pstate->tmpdistance, pchr->team, tmpchr, 0, INVALID_CHR );
         if ( RESERVED_PRT( gs->PrtList, tmpprt ) )
         {
           gs->PrtList[tmpprt].size_fp8 = pstate->tmpturn;
@@ -3441,8 +3438,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
         tmpchr = ichr;
         if ( chr_attached( gs->ChrList, CHRLST_COUNT, ichr ) )  tmpchr = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, ichr );
 
-        prt_spawn_info_init( &prt_si, gs, 1.0f, pchr->ori.pos, pstate->tmpturn, pchr->model, PIP_REF(pstate->tmpargument), ichr, (GRIP)pstate->tmpdistance, pchr->team, tmpchr, 0, INVALID_CHR );
-        tmpprt = req_spawn_one_particle( prt_si );
+        tmpprt = prt_spawn( gs, 1.0f, pchr->ori.pos, pchr->ori.vel, pstate->tmpturn, pchr->model, PIP_REF(pstate->tmpargument), ichr, (GRIP)pstate->tmpdistance, pchr->team, tmpchr, 0, INVALID_CHR );
         returncode = RESERVED_PRT( gs->PrtList, tmpprt );
       }
       break;
@@ -3660,8 +3656,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
         tmpchr = ichr;
         if ( chr_attached( gs->ChrList, CHRLST_COUNT, ichr ) )  tmpchr = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, ichr );
 
-        prt_spawn_info_init( &prt_si, gs, 1.0f, pchr->ori.pos, pchr->ori.turn_lr, pchr->model, PIP_REF(pstate->tmpargument), tmpchr, (GRIP)pstate->tmpdistance, pchr->team, tmpchr, 0, INVALID_CHR );
-        tmpprt = req_spawn_one_particle( prt_si );
+        tmpprt = prt_spawn( gs, 1.0f, pchr->ori.pos, pchr->ori.vel, pchr->ori.turn_lr, pchr->model, PIP_REF(pstate->tmpargument), tmpchr, (GRIP)pstate->tmpdistance, pchr->team, tmpchr, 0, INVALID_CHR );
         returncode = RESERVED_PRT( gs->PrtList, tmpprt );
       };
       break;
@@ -3889,11 +3884,12 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
       if ( ACTIVE_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, CHRLST_COUNT, ichr ) )
       {
         vect3 prt_pos = {pstate->tmpx, pstate->tmpy, pstate->tmpdistance};
+        vect3 prt_vel = {0,0,0};
+
         tmpchr = ichr;
         if ( chr_attached( gs->ChrList, CHRLST_COUNT, ichr ) )  tmpchr = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, ichr );
 
-        prt_spawn_info_init( &prt_si, gs, 1.0f, prt_pos, pchr->ori.turn_lr, pchr->model, PIP_REF(pstate->tmpargument), INVALID_CHR, (GRIP)0, pchr->team, tmpchr, 0, INVALID_CHR );
-        tmpprt = req_spawn_one_particle( prt_si );
+        tmpprt = prt_spawn( gs, 1.0f, prt_pos, prt_vel, pchr->ori.turn_lr, pchr->model, PIP_REF(pstate->tmpargument), INVALID_CHR, (GRIP)0, pchr->team, tmpchr, 0, INVALID_CHR );
         if ( RESERVED_PRT( gs->PrtList, tmpprt ) )
         {
           gs->PrtList[tmpprt].target = chr_get_aitarget( gs->ChrList, CHRLST_COUNT, gs->ChrList + ichr );
@@ -4346,14 +4342,14 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
     case F_SpawnExactParticleEndSpawn:
       {
         vect3 prt_pos = {pstate->tmpx, pstate->tmpy, pstate->tmpdistance};
+        vect3 prt_vel = {0,0,0};
 
         // This function spawns a particle that spawns a character...
         returncode = bfalse;
         tmpchr = ichr;
         if ( chr_attached( gs->ChrList, CHRLST_COUNT, ichr ) )  tmpchr = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, ichr );
 
-        prt_spawn_info_init( &prt_si, gs, 1.0f, prt_pos, pchr->ori.turn_lr, pchr->model, PIP_REF(pstate->tmpargument), INVALID_CHR, (GRIP)0, pchr->team, tmpchr, 0, INVALID_CHR );
-        tmpprt = req_spawn_one_particle( prt_si );
+        tmpprt = prt_spawn( gs, 1.0f, prt_pos, prt_vel, pchr->ori.turn_lr, pchr->model, PIP_REF(pstate->tmpargument), INVALID_CHR, (GRIP)0, pchr->team, tmpchr, 0, INVALID_CHR );
         if ( RESERVED_PRT( gs->PrtList, tmpprt ) )
         {
           gs->PrtList[tmpprt].spawncharacterstate = pstate->tmpturn;
@@ -4612,7 +4608,7 @@ retval_t set_operand( AI_STATE * pstate, ScriptInfo_t * slist, Uint8 variable )
       break;
 
     default:
-      log_warning("set_operand() - \"%s\"(0x%x) unknown variable", scriptname, pstate->offset);
+      log_warning("set_operand() - \n\t\"%s\"(0x%x) unknown variable", scriptname, pstate->offset);
       retval = rv_error;
       break;
   }
@@ -5022,7 +5018,7 @@ retval_t run_operand( Game_t * gs, Uint32 value, CHR_REF ichr )
         break;
 
       default:
-        log_warning("run_operand() - \"%s\"(0x%x) unknown variable\n", scriptname, pstate->offset);
+        log_warning("run_operand() - \n\t\"%s\"(0x%x) unknown variable\n", scriptname, pstate->offset);
         return rv_error;
         break;
 
@@ -5060,7 +5056,7 @@ retval_t run_operand( Game_t * gs, Uint32 value, CHR_REF ichr )
     case OP_DIV:
       if ( iTmp == 0 )
       {
-        log_warning("run_operand() - \"%s\"(0x%x) divide by zero", scriptname, pstate->offset);
+        log_warning("run_operand() - \n\t\"%s\"(0x%x) divide by zero", scriptname, pstate->offset);
       }
       else
       {
@@ -5071,7 +5067,7 @@ retval_t run_operand( Game_t * gs, Uint32 value, CHR_REF ichr )
     case OP_MOD:
       if ( iTmp == 0 )
       {
-        log_warning("run_operand() - \"%s\"(0x%x) modulus using zero", scriptname, pstate->offset);
+        log_warning("run_operand() - \n\t\"%s\"(0x%x) modulus using zero", scriptname, pstate->offset);
       }
       else
       {
@@ -5080,7 +5076,7 @@ retval_t run_operand( Game_t * gs, Uint32 value, CHR_REF ichr )
       break;
 
     default:
-      log_warning("run_operand() - \"%s\"(0x%x) unknown operation", scriptname, pstate->offset);
+      log_warning("run_operand() - \n\t\"%s\"(0x%x) unknown operation", scriptname, pstate->offset);
       return rv_error;
       break;
   }

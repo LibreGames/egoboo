@@ -254,7 +254,7 @@ void draw_rect(cart_window_info * w, GLfloat color[], float xl, float yt, float 
 {
   set_window_viewport( w );
 
-  GLTexture_Bind(NULL, &gfxState);
+  GLtexture_Bind(NULL, &gfxState);
 
   if(NULL != color)
   {
@@ -1983,10 +1983,10 @@ void rip_small_tiles(SDL_Surface * bmpload)
       SDL_Rect src = {x, y, TINYX, TINYY};
 
       SDL_BlitSurface(bmpload, &src, bmp_small, &bmp_small->clip_rect);
-      GLTexture_Convert( GL_TEXTURE_2D, cbmp_lst.smalltile + numsmalltile, bmp_small, INVALID_KEY);
+      GLtexture_Convert( GL_TEXTURE_2D, cbmp_lst.smalltile + numsmalltile, bmp_small, INVALID_KEY);
 
       SDL_BlitSurface(bmpload, &src, bmp_tiny, &bmp_tiny->clip_rect);
-      GLTexture_Convert( GL_TEXTURE_2D, cbmp_lst.tinysmalltile + numsmalltile, bmp_tiny, INVALID_KEY);
+      GLtexture_Convert( GL_TEXTURE_2D, cbmp_lst.tinysmalltile + numsmalltile, bmp_tiny, INVALID_KEY);
 
       numsmalltile++;
       x+=32;
@@ -2018,10 +2018,10 @@ void rip_big_tiles(SDL_Surface* bmpload)
       SDL_Rect src = {x, y, x + BIGX, y + BIGY};
 
       SDL_BlitSurface(bmpload, &src, bmp_small, &bmp_small->clip_rect);
-      GLTexture_Convert(GL_TEXTURE_2D, cbmp_lst.bigtile + numbigtile, bmp_small, INVALID_KEY);
+      GLtexture_Convert(GL_TEXTURE_2D, cbmp_lst.bigtile + numbigtile, bmp_small, INVALID_KEY);
 
       SDL_BlitSurface(bmpload, &src, bmp_tiny, &bmp_tiny->clip_rect);
-      GLTexture_Convert(GL_TEXTURE_2D, cbmp_lst.tinybigtile + numbigtile, bmp_tiny, INVALID_KEY);
+      GLtexture_Convert(GL_TEXTURE_2D, cbmp_lst.tinybigtile + numbigtile, bmp_tiny, INVALID_KEY);
 
       numbigtile++;
       x+=32;
@@ -2724,7 +2724,7 @@ void render_window(cart_window_info * w, cart_mesh * cmsh, cart_mouse_info * m)
 void load_window(cart_window_info * w, char *loadname, int x, int y, int bx, int by,
                  int sx, int sy, Uint16 mode)
 {
-  GLTexture_Load(GL_TEXTURE_2D, &(w->tx), loadname, -1);
+  GLtexture_Load(GL_TEXTURE_2D, &(w->tx), loadname, -1);
   w->borderx = bx;
   w->bordery = by;
   w->rect.x = x;
@@ -3590,7 +3590,7 @@ void check_keys(cart_mesh * cmsh, cart_mouse_info * m, char *modname)
 //    y++;
 //  }
 //  cimg_lst.cursor = get_rle_sprite(bmp_temp);
-//  GLTexture_Release(&bmp_temp);
+//  GLtexture_Release(&bmp_temp);
 //
 //
 //  return;
@@ -3610,7 +3610,7 @@ void load_img(void)
     bmp_other = SDL_CreateRGBSurface(SDL_SWSURFACE, (cnt>>1)+4, ((cnt+1)>>1)+4, 32, rmask, gmask, bmask, amask);
     SDL_BlitSurface(bmp_temp, &bmp_temp->clip_rect, bmp_other, &bmp_other->clip_rect);
 
-    GLTexture_Convert( GL_TEXTURE_2D, cimg_lst.point + cnt, bmp_other, INVALID_KEY);
+    GLtexture_Convert( GL_TEXTURE_2D, cimg_lst.point + cnt, bmp_other, INVALID_KEY);
 
     SDL_FreeSurface( bmp_other );
 
@@ -3625,7 +3625,7 @@ void load_img(void)
     bmp_other = SDL_CreateRGBSurface(SDL_SWSURFACE, (cnt>>1)+4, ((cnt+1)>>1)+4, 32, rmask, gmask, bmask, amask);
     SDL_BlitSurface(bmp_temp, &bmp_temp->clip_rect, bmp_other, &bmp_other->clip_rect);
 
-    GLTexture_Convert( GL_TEXTURE_2D, cimg_lst.pointon + cnt , bmp_other, INVALID_KEY);
+    GLtexture_Convert( GL_TEXTURE_2D, cimg_lst.pointon + cnt , bmp_other, INVALID_KEY);
 
     SDL_FreeSurface( bmp_other );
 
@@ -3633,14 +3633,14 @@ void load_img(void)
   }
   SDL_FreeSurface( bmp_temp );
 
-  GLTexture_Load( GL_TEXTURE_2D, &cimg_lst.ref,     "ref.pcx",     INVALID_KEY);
-  GLTexture_Load( GL_TEXTURE_2D, &cimg_lst.drawref, "drawref.pcx", INVALID_KEY);
-  GLTexture_Load( GL_TEXTURE_2D, &cimg_lst.anim,    "anim.pcx",    INVALID_KEY);
-  GLTexture_Load( GL_TEXTURE_2D, &cimg_lst.water,   "water.pcx",   INVALID_KEY);
-  GLTexture_Load( GL_TEXTURE_2D, &cimg_lst.wall,    "slit.pcx",    INVALID_KEY);
-  GLTexture_Load( GL_TEXTURE_2D, &cimg_lst.impass,  "impass.pcx",  INVALID_KEY);
-  GLTexture_Load( GL_TEXTURE_2D, &cimg_lst.damage,  "damage.pcx",  INVALID_KEY);
-  GLTexture_Load( GL_TEXTURE_2D, &cimg_lst.slippy,  "slippy.pcx",  INVALID_KEY);
+  GLtexture_Load( GL_TEXTURE_2D, &cimg_lst.ref,     "ref.pcx",     INVALID_KEY);
+  GLtexture_Load( GL_TEXTURE_2D, &cimg_lst.drawref, "drawref.pcx", INVALID_KEY);
+  GLtexture_Load( GL_TEXTURE_2D, &cimg_lst.anim,    "anim.pcx",    INVALID_KEY);
+  GLtexture_Load( GL_TEXTURE_2D, &cimg_lst.water,   "water.pcx",   INVALID_KEY);
+  GLtexture_Load( GL_TEXTURE_2D, &cimg_lst.wall,    "slit.pcx",    INVALID_KEY);
+  GLtexture_Load( GL_TEXTURE_2D, &cimg_lst.impass,  "impass.pcx",  INVALID_KEY);
+  GLtexture_Load( GL_TEXTURE_2D, &cimg_lst.damage,  "damage.pcx",  INVALID_KEY);
+  GLtexture_Load( GL_TEXTURE_2D, &cimg_lst.slippy,  "slippy.pcx",  INVALID_KEY);
 
   return;
 }
@@ -3654,31 +3654,31 @@ void draw_lotsa_stuff(cart_mouse_info * m, cart_mesh *cmsh)
   // Tell which tile we're in
   x = debugx * 128;
   y = debugy * 128;
-  draw_string( &bmfont,  0, 226, make_color(31, 31, 31), "X = %6.2f (%d)", debugx, x);
-  draw_string( &bmfont,  0, 234, make_color(31, 31, 31), "Y = %6.2f (%d)", debugy, y);
+  draw_string( ui_getBMFont(),  0, 226, make_color(31, 31, 31), "X = %6.2f (%d)", debugx, x);
+  draw_string( ui_getBMFont(),  0, 234, make_color(31, 31, 31), "Y = %6.2f (%d)", debugy, y);
 
 
   // Tell user what keys are important
-  draw_string( &bmfont,  0, OUTY-120, make_color(31, 31, 31), "O = Overlay (Water)");
-  draw_string( &bmfont,  0, OUTY-112, make_color(31, 31, 31), "R = Reflective");
-  draw_string( &bmfont,  0, OUTY-104, make_color(31, 31, 31), "D = Draw Reflection");
-  draw_string( &bmfont,  0, OUTY- 96, make_color(31, 31, 31), "A = Animated");
-  draw_string( &bmfont,  0, OUTY- 88, make_color(31, 31, 31), "B = Barrier (Slit)");
-  draw_string( &bmfont,  0, OUTY- 80, make_color(31, 31, 31), "I = Impassable (Wall)");
-  draw_string( &bmfont,  0, OUTY- 72, make_color(31, 31, 31), "H = Hurt");
-  draw_string( &bmfont,  0, OUTY- 64, make_color(31, 31, 31), "S = Slippy");
+  draw_string( ui_getBMFont(),  0, OUTY-120, make_color(31, 31, 31), "O = Overlay (Water)");
+  draw_string( ui_getBMFont(),  0, OUTY-112, make_color(31, 31, 31), "R = Reflective");
+  draw_string( ui_getBMFont(),  0, OUTY-104, make_color(31, 31, 31), "D = Draw Reflection");
+  draw_string( ui_getBMFont(),  0, OUTY- 96, make_color(31, 31, 31), "A = Animated");
+  draw_string( ui_getBMFont(),  0, OUTY- 88, make_color(31, 31, 31), "B = Barrier (Slit)");
+  draw_string( ui_getBMFont(),  0, OUTY- 80, make_color(31, 31, 31), "I = Impassable (Wall)");
+  draw_string( ui_getBMFont(),  0, OUTY- 72, make_color(31, 31, 31), "H = Hurt");
+  draw_string( ui_getBMFont(),  0, OUTY- 64, make_color(31, 31, 31), "S = Slippy");
 
 
   // Vertices left
-  draw_string( &bmfont,  0, OUTY-56, make_color(31, 31, 31), "Vertices %d", cmsh->xvrt.free_count);
+  draw_string( ui_getBMFont(),  0, OUTY-56, make_color(31, 31, 31), "Vertices %d", cmsh->xvrt.free_count);
 
 
   // Misc data
-  draw_string( &bmfont,  0, OUTY-40, make_color(31, 31, 31), "Ambient   %d", ambi);
-  draw_string( &bmfont,  0, OUTY-32, make_color(31, 31, 31), "Ambicut   %d", ambicut);
-  draw_string( &bmfont,  0, OUTY-24, make_color(31, 31, 31), "Direct    %d", direct);
-  draw_string( &bmfont,  0, OUTY-16, make_color(31, 31, 31), "Brush amount %d", brushamount);
-  draw_string( &bmfont,  0, OUTY-8,  make_color(31, 31, 31), "Brush size   %d", brushsize);
+  draw_string( ui_getBMFont(),  0, OUTY-40, make_color(31, 31, 31), "Ambient   %d", ambi);
+  draw_string( ui_getBMFont(),  0, OUTY-32, make_color(31, 31, 31), "Ambicut   %d", ambicut);
+  draw_string( ui_getBMFont(),  0, OUTY-24, make_color(31, 31, 31), "Direct    %d", direct);
+  draw_string( ui_getBMFont(),  0, OUTY-16, make_color(31, 31, 31), "Brush amount %d", brushamount);
+  draw_string( ui_getBMFont(),  0, OUTY-8,  make_color(31, 31, 31), "Brush size   %d", brushsize);
 
 
   // Cursor
@@ -3732,15 +3732,15 @@ void draw_lotsa_stuff(cart_mouse_info * m, cart_mesh *cmsh)
       tile+=add;
       cnt++;
     }
-    draw_string( &bmfont,  0, 32, make_color(31, 31, 31), "Tile 0x%02x", m->tile);
-    draw_string( &bmfont,  0, 40, make_color(31, 31, 31), "Eats %d verts", pmesh->TileDict[m->type].vrt_count);
+    draw_string( ui_getBMFont(),  0, 32, make_color(31, 31, 31), "Tile 0x%02x", m->tile);
+    draw_string( ui_getBMFont(),  0, 40, make_color(31, 31, 31), "Eats %d verts", pmesh->TileDict[m->type].vrt_count);
     if(m->type>=MAXMESHTYPE/2)
     {
-      draw_string( &bmfont,  0, 56, make_color(31, 16, 16), "63x63 Tile");
+      draw_string( ui_getBMFont(),  0, 56, make_color(31, 16, 16), "63x63 Tile");
     }
     else
     {
-      draw_string( &bmfont,  0, 56, make_color(16, 16, 31), "31x31 Tile");
+      draw_string( ui_getBMFont(),  0, 56, make_color(16, 16, 31), "31x31 Tile");
     }
 
     draw_schematic(cmsh->mm, m, NULL, m->type, 0, 64);
@@ -3774,7 +3774,7 @@ void draw_lotsa_stuff(cart_mouse_info * m, cart_mesh *cmsh)
 
   if(numattempt > 0)
   {
-    draw_string( &bmfont,  0, 0, make_color(31, 31, 31), "numwritten %d/%d", numwritten, numattempt);
+    draw_string( ui_getBMFont(),  0, 0, make_color(31, 31, 31), "numwritten %d/%d", numwritten, numattempt);
   }
 
 

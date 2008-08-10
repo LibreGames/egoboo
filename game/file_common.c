@@ -175,11 +175,11 @@ FILE * fs_fileOpen( PRIORITY priority, const char * src, const char * fname, con
 
   if (  !VALID_CSTR(fname)  )
   {
-    log_warning( "%s - fs_fileOpen() - invalid file name\n", src );
+    log_warning( "%s - fs_fileOpen() - \n\tinvalid file name\n", src );
   }
   else if (  !VALID_CSTR(mode)  )
   {
-    log_warning( "%s - fs_fileOpen() - invalid file mode\n", src );
+    log_warning( "%s - fs_fileOpen() - \n\tinvalid file mode\n", src );
   }
   else
   {
@@ -189,11 +189,11 @@ FILE * fs_fileOpen( PRIORITY priority, const char * src, const char * fname, con
       switch ( priority )
       {
         case PRI_WARN:
-          log_warning( "%s - fs_fileOpen() - could not open file \"%s\" in mode \"%s\"\n", src, fname, mode );
+          log_warning( "%s - fs_fileOpen() - \n\tcould not open file \"%s\" in mode \"%s\"\n", src, fname, mode );
           break;
 
         case PRI_FAIL:
-          log_error( "%s - fs_fileOpen() - could not open file \"%s\" in mode \"%s\"\n", src, fname, mode );
+          log_error( "%s - fs_fileOpen() - \n\tcould not open file \"%s\" in mode \"%s\"\n", src, fname, mode );
           break;
       };
 
@@ -204,7 +204,7 @@ FILE * fs_fileOpen( PRIORITY priority, const char * src, const char * fname, con
       {
         case PRI_WARN:
         case PRI_FAIL:
-          log_info( "%s - fs_fileOpen() - successfully opened file \"%s\" in mode \"%s\"\n", src, fname, mode );
+          log_info( "%s - fs_fileOpen() - \n\tsuccessfully opened file \"%s\" in mode \"%s\"\n", src, fname, mode );
           break;
       };
 
@@ -221,7 +221,7 @@ void fs_fileClose( FILE * pfile )
 
   if ( NULL == pfile )
   {
-    log_warning( "fs_fileClose() - invalid file\n" );
+    log_warning( "fs_fileClose() - \n\tinvalid file\n" );
   }
   else
   {

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Clock.h"
+
 #include "egoboo_config.h"
 #include "egoboo_types.h"
 #include "egoboo_math.inl"
@@ -222,11 +224,37 @@ INLINE bool_t HashList_destroy(HashList_t ** plst)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+
+INLINE Uint32 make_key_32(Uint32 * seed)
+{
+  return ego_rand_32(seed);
+};
+
+INLINE Uint32 make_key_16(Uint16 * seed)
+{
+  Uint16 ret = ego_rand_16(seed);
+  ret        = ego_rand_16(seed) | (ret << 16);
+
+  return ret;
+};
+
+INLINE Uint32 make_key_8(Uint8 * seed)
+{
+  Uint16 ret = ego_rand_8(seed);
+  ret        = ego_rand_8(seed) | (ret << 8);
+  ret        = ego_rand_8(seed) | (ret << 8);
+  ret        = ego_rand_8(seed) | (ret << 8);
+
+  return ret;
+};
+
 INLINE egoboo_key_t * egoboo_key_create(Uint32 itype, void * pdata)
 {
   // BB > dynamically allocate and initialize a new key
 
-  egoboo_key_t * ptmp, * pkey = calloc(1, sizeof(egoboo_key_t));
+  egoboo_key_t * ptmp, * pkey;
+
+  pkey = calloc(1, sizeof(egoboo_key_t));
   if(NULL == pkey) return pkey;
 
   // initialize the key
@@ -281,24 +309,6 @@ INLINE egoboo_key_t * egoboo_key_new(egoboo_key_t * pkey, Uint32 itype, void * p
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t egoboo_key_validate(egoboo_key_t * pkey)
-{
-  // BB > de-initialize the key
-
-  static Uint32 new_id = 0;
-
-  if(NULL == pkey) return bfalse;
-
-  if( egoboo_key_valid(pkey) ) return btrue;
-
-  // make sure that the key is invalid
-  pkey->v1 = ego_rand(&new_id);
-  pkey->v2 = ego_rand(&new_id);
-
-  return btrue;
-}
-
-//--------------------------------------------------------------------------------------------
 INLINE bool_t egoboo_key_invalidate(egoboo_key_t * pkey)
 {
   // BB > de-initialize the key
@@ -307,8 +317,43 @@ INLINE bool_t egoboo_key_invalidate(egoboo_key_t * pkey)
 
   if( !egoboo_key_valid(pkey) ) return bfalse;
 
+  //PROFILE_BEGIN(ekey);
+
   // make sure that the key is invalid
   pkey->v1 = pkey->v2 = 0;
+
+  //PROFILE_END2( ekey );
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE bool_t egoboo_key_validate(egoboo_key_t * pkey)
+{
+  // BB > de-initialize the key
+
+  static Uint32 new_id_32 = -1;
+  static Uint16 new_id_16 = -1;
+  static Uint8  new_id_8  = -1;
+
+  if(NULL == pkey) return bfalse;
+
+  if( egoboo_key_valid(pkey) ) return btrue;
+
+  //PROFILE_BEGIN(ekey);
+
+  // make sure that the key is invalid
+  //pkey->v1 = make_key_32(&new_id_32);
+  //pkey->v2 = make_key_32(&new_id_32);
+
+  //pkey->v1 = make_key_16(&new_id_16);
+  //pkey->v2 = make_key_16(&new_id_16);
+
+  pkey->v1 = make_key_8(&new_id_8);
+  pkey->v2 = make_key_8(&new_id_8);
+
+
+  PROFILE_END2(ekey);
 
   return btrue;
 }
@@ -318,20 +363,26 @@ INLINE bool_t egoboo_key_valid(egoboo_key_t * pkey)
 {
   // BB > verify that a "key" is valid.
 
-  Uint32 seed;
-  bool_t retval;
+  Uint32 seed_32, val_32;
+  Uint16 seed_16;
+  Uint8  seed_8;
 
   if(NULL == pkey) return bfalse;
 
-  seed = pkey->v1;
-  retval = (ego_rand(&seed) == pkey->v2);
+  //PROFILE_BEGIN(ekey);
 
-  if(!retval)
-  {
-    int i=0;
-  }
+  //seed_32 = pkey->v1;
+  //val_32 = ego_rand_32(&seed_32);
 
-  return retval;
+  //seed_16 = pkey->v1 & 0xFFFF;
+  //val_32  = make_key_16( &seed_16 );
+
+  seed_8 = pkey->v1 & 0xFF;
+  val_32  = make_key_8( &seed_8 );
+
+  PROFILE_END2( ekey );
+
+  return (val_32 == pkey->v2);
 }
 
 //--------------------------------------------------------------------------------------------

@@ -28,6 +28,7 @@
 #include "passage.h"
 #include "script.h"
 #include "sound.h"
+#include "Clock.h"
 
 #include "egoboo_utility.h"
 #include "egoboo.h"
@@ -68,7 +69,6 @@ void enc_spawn_particles( Game_t * gs, float dUpdate )
 
   for ( enc_cnt = 0; enc_cnt < enclst_size; enc_cnt++ )
   {
-    PRT_SPAWN_INFO si;
     Enc_t * penc = enclst + enc_cnt;
     if ( !penc->active ) continue;
 
@@ -92,10 +92,8 @@ void enc_spawn_particles( Game_t * gs, float dUpdate )
     facing = chrlst[target_ref].ori.turn_lr;
     for ( tnc = 0; tnc < peve->contspawnamount; tnc++)
     {
-      prt_spawn_info_init( &si, gs, 1.0f, chrlst[target_ref].ori.pos, facing, iobj, peve->contspawnpip,
+      prt_spawn( gs, 1.0f, chrlst[target_ref].ori.pos, chrlst[target_ref].ori.vel, facing, iobj, peve->contspawnpip,
         INVALID_CHR, GRIP_LAST, chrlst[penc->owner].team, penc->owner, tnc, INVALID_CHR );
-
-      req_spawn_one_particle( si );
 
       facing += peve->contspawnfacingadd;
     }
@@ -126,12 +124,12 @@ void spawn_poof( Game_t * gs, CHR_REF character, OBJ_REF profile )
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  PRT_SPAWN_INFO si;
   Uint16 sTmp;
   CHR_REF origin;
   int iTmp;
   Chr_t * pchr;
   Cap_t * pcap = ObjList_getPCap(gs, profile);
+  vect3   prt_vel = {0,0,0};
 
   sTmp = chrlst[character].ori.turn_lr;
   iTmp = 0;
@@ -139,11 +137,9 @@ void spawn_poof( Game_t * gs, CHR_REF character, OBJ_REF profile )
   pchr = ChrList_getPChr(gs, origin);
   while ( iTmp < pcap->gopoofprtamount )
   {
-    prt_spawn_info_init( &si, gs, 1.0f, pchr->ori_old.pos,
+    prt_spawn( gs, 1.0f, pchr->ori_old.pos, prt_vel,
                         sTmp, profile, pcap->gopoofprttype,
                         INVALID_CHR, GRIP_LAST, pchr->team, origin, iTmp, INVALID_CHR );
-
-    req_spawn_one_particle( si );
 
     sTmp += pcap->gopoofprtfacingadd;
     iTmp++;
@@ -203,8 +199,8 @@ void naming_read( Game_t * gs, const char * szModpath, const char * szObjectname
   ChopData_t * pchop;
 
   FILE *fileread;
-  int section, chopinsection, cnt;
-  char mychop[32], cTmp;
+  int section, chopinsection;
+  char mychop[32];
 
   pchop = &(gs->chop);
 
@@ -217,24 +213,19 @@ void naming_read( Game_t * gs, const char * szModpath, const char * szObjectname
   {
     if ( 0 != strcmp( mychop, "STOP" ) )
     {
-      if ( pchop->write >= CHOPDATACHUNK )  pchop->write = CHOPDATACHUNK - 1;
+      size_t len;
+
+      if ( pchop->write >= CHOPBUFFERSIZE )  pchop->write = CHOPBUFFERSIZE - 1;
       pchop->start[pchop->count] = pchop->write;
 
-      cnt = 0;
-      cTmp = mychop[0];
-      while ( cTmp != EOS && cnt < 31 && pchop->write < CHOPDATACHUNK )
-      {
-        if ( cTmp == '_' ) cTmp = ' ';
-        pchop->text[pchop->write] = cTmp;
+      // convert to a real string
+      str_decode( mychop, sizeof( mychop ), mychop );
 
-        cnt++;
-        pchop->write++;
-        cTmp = mychop[cnt];
-      }
-      pchop->text[pchop->write] = EOS;  
-      pchop->write++;
+      // append the string to the buffer
+      len = CLIP(CHOPBUFFERSIZE - pchop->write, 0, MAXCAPNAMESIZE);
+      pchop->write += snprintf( pchop->text + pchop->write, len, "%s", mychop) + 1;
 
-      if ( pchop->write >= CHOPDATACHUNK )  pchop->write = CHOPDATACHUNK - 1;
+      if ( pchop->write >= CHOPBUFFERSIZE )  pchop->write = CHOPBUFFERSIZE - 1;
       chopinsection++;
       pchop->count++;
     }
@@ -651,13 +642,13 @@ bool_t cost_mana( Game_t * gs, CHR_REF chr_ref, int amount, Uint16 killer )
 }
 
 //--------------------------------------------------------------------------------------------
-Enc_t * CEnc_new(Enc_t *penc)
+Enc_t * Enc_new(Enc_t *penc)
 {
-  //fprintf( stdout, "CEnc_new()\n");
+  //fprintf( stdout, "Enc_new()\n");
 
   if(NULL ==penc) return penc;
 
-  CEnc_delete( penc );
+  Enc_delete( penc );
 
   memset(penc, 0, sizeof(Enc_t));
 
@@ -669,7 +660,7 @@ Enc_t * CEnc_new(Enc_t *penc)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t CEnc_delete( Enc_t * penc)
+bool_t Enc_delete( Enc_t * penc)
 {
   if(NULL == penc) return bfalse;
   if(!EKEY_PVALID(penc))  return btrue;
@@ -682,10 +673,10 @@ bool_t CEnc_delete( Enc_t * penc)
 }
 
 //--------------------------------------------------------------------------------------------
-Enc_t * CEnc_renew( Enc_t * penc )
+Enc_t * Enc_renew( Enc_t * penc )
 {
-  CEnc_delete( penc );
-  return CEnc_new( penc );
+  Enc_delete( penc );
+  return Enc_new( penc );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -964,41 +955,31 @@ ENC_REF EncList_get_free( Game_t * gs, ENC_REF irequest )
 {
   // ZZ> This function returns the next free enchantment or ENCLST_COUNT if there are none
 
-  int i;
-  ENC_REF retval = INVALID_ENC;
+  ENC_REF   retval = INVALID_ENC;
+  EncHeap_t * pheap;
 
   if(!EKEY_PVALID(gs)) return INVALID_ENC;
 
-  if(INVALID_ENC == irequest)
-  {
-    // request is not specified. just give them the next one
-    if(gs->EncFreeList_count>0)
-    {
-      gs->EncFreeList_count--;
-      retval = gs->EncFreeList[gs->EncFreeList_count];
-    }
-  }
-  else
-  {
-    // search for the requested reference in the free list
-    for(i=0; i<gs->EncFreeList_count; i++)
-    {
-      if(gs->EncFreeList[i] == irequest)
-      {
-        // found it, so pop it off the list
-        gs->EncFreeList[i] = gs->EncFreeList[gs->EncFreeList_count-1];
-        gs->EncFreeList_count--;
-      }
-    }
+  pheap = &(gs->EncHeap);
 
-    retval = irequest;
+  retval = EncHeap_getFree( pheap, irequest );
+
+  if ( (INVALID_CHR != irequest) && (retval != irequest) )
+  {
+    log_debug( "WARNING: EncList_get_free() - \n\tcannot find irequest index %d\n", irequest );
+    return INVALID_ENC;
   }
 
   // initialize the data
   if(INVALID_ENC != retval)
   {
-    CEnc_new(gs->EncList + retval);
+    Enc_new(gs->EncList + retval);
+    EncHeap_addUsed( pheap, retval );
   }
+  else
+  {
+    log_debug( "WARNING: EncList_get_free() - \n\tcould not get valid enchant\n");
+  };
 
   return retval;
 }
@@ -1465,12 +1446,9 @@ void remove_enchant( Game_t * gs, ENC_REF enchantindex )
     kill_character( gs, overlay, INVALID_CHR );
   }
 
-
-
   // Now get rid of it
   penc->active = bfalse;
-  gs->EncFreeList[gs->EncFreeList_count] = enchantindex;
-  gs->EncFreeList_count++;
+  EncHeap_addFree( &(gs->EncHeap), enchantindex );
 
   // Now fix dem weapons
   for ( _slot = SLOT_LEFT; _slot <= SLOT_RIGHT; _slot = ( SLOT )( _slot + 1 ) )
@@ -2222,7 +2200,172 @@ void EncList_resynch( Game_t * gs )
 
     penc->req_active = bfalse;
     penc->reserved   = bfalse;
-
-    penc->active = btrue;
+    penc->active     = btrue;
   }
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+EncHeap_t * EncHeap_new   ( EncHeap_t * pheap )
+{
+  if( EKEY_PVALID(pheap) )
+  {
+    EncHeap_delete( pheap );
+  }
+
+  memset(pheap, 0, sizeof(EncHeap_t));
+
+  EKEY_PNEW( pheap, EncHeap_t );
+
+  EncHeap_reset( pheap );
+
+  return pheap;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t EncHeap_delete( EncHeap_t * pheap )
+{
+  if( !EKEY_PVALID(pheap) ) return btrue;
+
+  EKEY_PINVALIDATE( pheap );
+
+  pheap->free_count = 0;
+  pheap->used_count = 0;
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+EncHeap_t * EncHeap_renew ( EncHeap_t * pheap )
+{
+  if( !EncHeap_delete( pheap ) ) return pheap;
+
+  return EncHeap_new( pheap );
+};
+
+//--------------------------------------------------------------------------------------------
+bool_t EncHeap_reset ( EncHeap_t * pheap )
+{
+  int i;
+
+  if( !EKEY_PVALID( pheap ) ) return bfalse;
+
+  PROFILE_BEGIN( EncHeap );
+
+  for( i=0; i<ENCLST_COUNT; i++)
+  {
+    pheap->free_list[i] = i;
+    pheap->used_list[i] = INVALID_ENC;
+  };
+  pheap->free_count = ENCLST_COUNT;
+  pheap->used_count = 0;
+
+  PROFILE_END2( EncHeap );
+
+  return btrue;
+};
+
+//--------------------------------------------------------------------------------------------
+ENC_REF EncHeap_getFree( EncHeap_t * pheap, ENC_REF request )
+{
+  int i;
+  ENC_REF ret = INVALID_ENC;
+
+  if( !EKEY_PVALID(pheap)    ) return ret;
+  if( pheap->free_count <= 0 ) return ret;
+
+  PROFILE_BEGIN( EncHeap );
+
+  if(request == INVALID_ENC)
+  {
+
+    pheap->free_count--;
+    ret = pheap->free_list[pheap->free_count];
+    pheap->free_list[pheap->free_count] = INVALID_ENC;
+  }
+  else
+  {
+    for(i = 0; i<pheap->free_count; i++)
+    {
+      if( pheap->free_list[i] == request ) break;
+    };
+
+    if(i != pheap->free_count)
+    {
+      ret = i;
+      pheap->free_count--;
+      pheap->free_list[i] = pheap->free_list[pheap->free_count];
+      pheap->free_list[pheap->free_count] = INVALID_ENC;
+    };
+  };
+
+  PROFILE_END2( EncHeap );
+
+  return ret;
+};
+
+//--------------------------------------------------------------------------------------------
+ENC_REF EncHeap_iterateUsed( EncHeap_t * pheap, int * index )
+{
+  ENC_REF ret = INVALID_ENC;
+
+  if( !EKEY_PVALID(pheap) ) return ret;
+  if( NULL == index || *index >= pheap->used_count ) return ret;
+
+  PROFILE_BEGIN( EncHeap );
+
+  (*index)++;
+  ret = pheap->used_list[*index];
+
+  PROFILE_END2( EncHeap );
+
+  return ret;
+};
+
+//--------------------------------------------------------------------------------------------
+bool_t  EncHeap_addUsed( EncHeap_t * pheap, ENC_REF ref )
+{
+  int i;
+
+  if( !EKEY_PVALID(pheap) ) return bfalse;
+  if( pheap->used_count >= ENCLST_COUNT) return bfalse;
+
+  PROFILE_BEGIN( EncHeap );
+
+  for(i=0; i<pheap->used_count; i++)
+  {
+    if(pheap->used_list[i] == ref) { PROFILE_END2( EncHeap ); return btrue; }
+  };
+
+  pheap->used_list[pheap->used_count] = ref;
+  pheap->used_count++;
+
+  PROFILE_END2( EncHeap );
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t  EncHeap_addFree( EncHeap_t * pheap, ENC_REF ref )
+{
+  int i;
+
+
+
+  if( !EKEY_PVALID(pheap) ) return bfalse;
+  if( pheap->free_count >= ENCLST_COUNT) return bfalse;
+
+  PROFILE_BEGIN( EncHeap );  
+  
+  for(i=0; i<pheap->free_count; i++)
+  {
+    if(pheap->free_list[i] == ref) { PROFILE_END2( EncHeap ); return btrue; }
+  };
+
+  pheap->free_list[pheap->free_count] = ref;
+  pheap->free_count++;
+
+  PROFILE_END2( EncHeap );
+
+  return btrue;
 }

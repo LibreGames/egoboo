@@ -35,6 +35,8 @@
 
 struct sBMFont
 {
+  egoboo_key_t ekey;
+
   GLtexture tex;                    // ogl texture
   int       offset;                 // Line up fonts from top of screen
   SDL_Rect  rect[NUMFONT];          // The font rectangles
@@ -44,7 +46,12 @@ struct sBMFont
 };
 typedef struct sBMFont BMFont_t;
 
-extern BMFont_t bmfont;
+BMFont_t * BMFont_new( BMFont_t * pfnt );
+bool_t     BMFont_delete( BMFont_t * pfnt );
+
+bool_t BMFont_load( BMFont_t * pbmp, int scr_height, char* szBitmap, char* szSpacing );
+void   BMFont_draw_one( BMFont_t * pfnt, int fonttype, float x, float y );
+int    BMFont_word_size( BMFont_t * pfnt, char *szText );
 
 #define FNT_NUM_FONT_CHARACTERS 94
 #define FNT_SMALL_FONT_SIZE 12

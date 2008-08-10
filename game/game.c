@@ -86,18 +86,6 @@ static void     game_handleKeyboard();
 
 //---------------------------------------------------------------------------------------------
 
-#define RELEASE(x) if (x) {x->Release(); x=NULL;}
-
-#define PROFILE_DECLARE(XX) ClockState_t * clkstate_##XX = NULL; double clkcount_##XX = 0.0; double clktime_##XX = 0.0;
-#define PROFILE_INIT(XX)    { clkstate_##XX  = ClockState_create(#XX, -1); }
-#define PROFILE_FREE(XX)    { ClockState_destroy(&(clkstate_##XX)); }
-#define PROFILE_QUERY(XX)   ( (double)clktime_##XX / (double)clkcount_##XX )
-
-#define PROFILE_BEGIN(XX) ClockState_frameStep(clkstate_##XX); {
-#define PROFILE_END(XX)   ClockState_frameStep(clkstate_##XX);  clkcount_##XX = clkcount_##XX*0.9 + 0.1*1.0; clktime_##XX = clktime_##XX*0.9 + 0.1*ClockState_getFrameDuration(clkstate_##XX); }
-
-//---------------------------------------------------------------------------------------------
-
 char cActionName[MAXACTION][2];
 
 KeyboardBuffer_t GNetMsg = {20,0,0,{EOS}};
@@ -127,6 +115,11 @@ PROFILE_DECLARE( draw_main );
 PROFILE_DECLARE( pre_update_game );
 PROFILE_DECLARE( update_game );
 PROFILE_DECLARE( main_loop );
+
+PROFILE_DECLARE( ChrHeap );
+PROFILE_DECLARE( EncHeap );
+PROFILE_DECLARE( PrtHeap );
+PROFILE_DECLARE( ekey );
 
 // When operating as a server, there may be a need to host multiple games
 // this "stack" holds all valid game states
@@ -207,7 +200,7 @@ void memory_cleanUp()
   MachineState_t * mach_state;
   GameStack_t * stk = Get_GameStack();
 
-  log_info("memory_cleanUp() - Attempting to clean up loaded things in memory... ");
+  log_info("memory_cleanUp() - \n\tAttempting to clean up loaded things in memory... ");
 
   // kill all game states
   while(stk->count > 0)
@@ -358,7 +351,7 @@ void export_one_character( Game_t * gs, CHR_REF ichr, CHR_REF iowner, int number
     // TWINK_BO.OBJ
     snprintf( todirname, sizeof( todirname ), "%s" SLASH_STRING, CData.players_dir );
 
-    str_convert_spaces( todirname, sizeof( tmpname ), chrlst[iowner].name );
+    str_encode( todirname, sizeof( tmpname ), chrlst[iowner].name );
     strncat( todirname, ".obj", sizeof( tmpname ) );
 
     // Is it a ichr or an item?
@@ -839,7 +832,7 @@ void load_action_names( char* loadname )
   ACTION cnt;
   char first, second;
 
-  log_info( "load_action_names() - loading all 2 letter action names from %s.\n", loadname );
+  log_info( "load_action_names() - \n\tloading all 2 letter action names from %s.\n", loadname );
 
   fileread = fs_fileOpen( PRI_WARN, NULL, loadname, "r" );
   if ( NULL == fileread )
@@ -1564,7 +1557,7 @@ void move_water( float dUpdate )
   // ZZ> This function animates the water overlays
 
   int layer;
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   for ( layer = 0; layer < MAXWATERLAYER; layer++ )
   {
@@ -2130,7 +2123,7 @@ void update_timers(Game_t * gs)
   }
 
   ups_clock += gs->all_clock - gs->lst_clock;
-  fps_clock += gs->all_clock - gs->lst_clock;
+  gfxState.fps_clock += gs->all_clock - gs->lst_clock;
 
   if ( ups_loops > 0 && ups_clock > 0)
   {
@@ -2138,10 +2131,10 @@ void update_timers(Game_t * gs)
     stabilized_ups_weight = stabilized_ups_weight * 0.99 + 0.01;
   };
 
-  if ( fps_loops > 0 && fps_clock > 0 )
+  if ( gfxState.fps_loops > 0 && gfxState.fps_clock > 0 )
   {
-    stabilized_fps_sum        = stabilized_fps_sum * 0.99 + 0.01 * ( float ) fps_loops / (( float ) fps_clock / TICKS_PER_SEC );
-    stabilized_fps_weight = stabilized_fps_weight * 0.99 + 0.01;
+    gfxState.stabilized_fps_sum    = gfxState.stabilized_fps_sum * 0.99 + 0.01 * ( float ) gfxState.fps_loops / (( float ) gfxState.fps_clock / TICKS_PER_SEC );
+    gfxState.stabilized_fps_weight = gfxState.stabilized_fps_weight * 0.99 + 0.01;
   };
 
   if ( ups_clock >= TICKS_PER_SEC )
@@ -2152,12 +2145,12 @@ void update_timers(Game_t * gs)
     stabilized_ups = stabilized_ups_sum / stabilized_ups_weight;
   }
 
-  if ( fps_clock >= TICKS_PER_SEC )
+  if ( gfxState.fps_clock >= TICKS_PER_SEC )
   {
-    fps_clock = 0;
-    fps_loops = 0;
-    assert(stabilized_ups_weight>0);
-    stabilized_fps = stabilized_fps_sum / stabilized_fps_weight;
+    gfxState.fps_clock = 0;
+    gfxState.fps_loops = 0;
+    assert(gfxState.stabilized_fps_weight>0);
+    gfxState.stabilized_fps = gfxState.stabilized_fps_sum / gfxState.stabilized_fps_weight;
   }
 
 }
@@ -2224,14 +2217,13 @@ void reset_timers(Game_t * gs)
   gs->cl->stat_clock = 0;
   gs->pit_clock  = 0;  gs->pitskill = bfalse;
   gs->wld_frame  = 0;
-  gs->all_frame  = 0;
 
   outofsync = bfalse;
 
   ups_loops = 0;
   ups_clock = 0;
-  fps_loops = 0;
-  fps_clock = 0;
+  gfxState.fps_loops = 0;
+  gfxState.fps_clock = 0;
 }
 
 extern int initMenus();
@@ -2551,8 +2543,6 @@ int proc_menuLoop( MenuProc_t  * mproc );
 //--------------------------------------------------------------------------------------------
 void main_handleKeyboard()
 {
-  Game_t * gs   = gfxState.gs;
-  ProcState_t * gproc = Game_getProcedure(gs);
   bool_t control, alt, shift, mod;
 
   control = (SDLKEYDOWN(SDLK_RCTRL) || SDLKEYDOWN(SDLK_LCTRL));
@@ -2568,50 +2558,6 @@ void main_handleKeyboard()
       debug_message( 1, "Error writing screenshot" );
       log_warning( "Error writing screenshot\n" );    //Log the error in log.txt
     }
-  }
-
-  // do in-game-menu
-  if(SDLKEYDOWN(SDLK_F9) && !mod && CData.DevMode)
-  {
-    gs->igm.proc.Active = btrue;
-    gs->igm.whichMenu   = mnu_Inventory;
-
-    SDL_WM_GrabInput(SDL_GRAB_OFF);
-    SDL_ShowCursor(SDL_DISABLE);
-    mous.on = bfalse;
-  }
-
-  // force the module to be beaten
-  if(SDLKEYDOWN(SDLK_F9) && control && CData.DevMode)
-  {
-    gs->modstate.beat = btrue;
-    gproc->State = PROC_Leaving;
-  }
-
-  // do frame step in single-frame mode
-  if(NULL != gs)
-  {
-    if( gs->Do_frame )
-    {
-      gs->Do_frame = bfalse;
-    }
-    else if( SDLKEYDOWN( SDLK_F10 ) && !mod )
-    {
-      keyb.state[SDLK_F10] = 0;
-      gs->Do_frame = btrue;
-    }
-  }
-
-  //Pressed panic button
-  if ( SDLKEYDOWN( SDLK_q )  && control )
-  {
-    log_info( "User pressed escape button (CTRL+Q)... Quitting game gracefully.\n" );
-    gproc->State = PROC_Leaving;
-
-    // <BB> memory_cleanUp() should be kept in PROC_Finish, so that we can make sure to deallocate
-    //      the memory for any active menus, and/or modules.  Alternately, we could
-    //      register all of the memory deallocation routines with atexit() so they will
-    //      be called automatically on a return from the main function or a call to exit()
   }
 
 };
@@ -2696,7 +2642,7 @@ void do_sunlight(GLOBAL_LIGHTING_INFO * info)
 //--------------------------------------------------------------------------------------------
 retval_t main_doGameGraphics()
 {
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
 
   if( !EKEY_PVALID(gs) ) return rv_error;
@@ -2735,6 +2681,7 @@ retval_t main_doGraphics()
 
   double frameDuration, frameTicks;
   bool_t do_menu_frame = bfalse;
+  bool_t do_game_frame = bfalse;
 
   gui = gui_getState();
   if (NULL == gui) return rv_error;
@@ -2755,11 +2702,15 @@ retval_t main_doGraphics()
   // blank the screen, if required
   do_clear();
 
-  // update the game graphics
-  main_doGameGraphics();
+  do_game_frame = Graphics_hasGame(&gfxState) && Graphics_requireGame(&gfxState)->proc.Active;
+  if(do_game_frame)
+  {
+    // update the game graphics
+    main_doGameGraphics();
+  };
 
   // figure out if we need to process the menus
-  if(NULL != gfxState.gs && gfxState.gs->proc.Active)
+  if(do_menu_frame)
   {
     // the game has written into the frame buffer
     // put the menus on top
@@ -2777,31 +2728,34 @@ retval_t main_doGraphics()
     // OR the game is not active and it is time for an update
 
     // Do the in-game menu, if it is active
-    if ( NULL != gfxState.gs  && gfxState.gs->igm.proc.Active )
+    if ( do_game_frame )
     {
-      Game_t * gs          = gfxState.gs;
+      Game_t * gs               = Graphics_requireGame(&gfxState);
       MenuProc_t  * ig_mnu_proc = Game_getMenuProc(gs);
       ProcState_t * game_proc   = Game_getProcedure(gs);
 
-      ui_beginFrame();
+      if(ig_mnu_proc->proc.Active)
       {
-        mnu_RunIngame( ig_mnu_proc );
-        switch ( ig_mnu_proc->MenuResult  )
+        ui_beginFrame();
         {
-          case 1: /* nothing */
-            break;
+          mnu_RunIngame( ig_mnu_proc );
+          switch ( ig_mnu_proc->MenuResult  )
+          {
+            case 1: /* nothing */
+              break;
 
-          case - 1:
-            // Done with the menu
-            ig_mnu_proc->proc.Active = bfalse;
-            mnu_exitMenuMode();
-            break;
+            case - 1:
+              // Done with the menu
+              ig_mnu_proc->proc.Active = bfalse;
+              mnu_exitMenuMode();
+              break;
+          }
+
         }
+        ui_endFrame();
 
+        request_pageflip();
       }
-      ui_endFrame();
-
-      request_pageflip();
     }
 
     // Do the out-of-game menu, if it is active
@@ -2813,8 +2767,11 @@ retval_t main_doGraphics()
       {
         case  1:
 
-          // start the game state from the beginning
-          ProcState_init( &(gfxState.gs->proc) );
+          // start the game state from the beginning... if it exists
+          if( Graphics_hasGame(&gfxState) )
+          {
+            ProcState_init( &(Graphics_requireGame(&gfxState)->proc) );
+          }
 
           // pause the menu
           mnu_proc->proc.Paused = btrue;
@@ -2876,7 +2833,7 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
         memcpy(&CData, &CData_default, sizeof(ConfigData_t));
 
         // start initializing the various subsystems
-        log_info( "proc_mainLoop() - Starting Egoboo %s...\n", VERSION );
+        log_info( "proc_mainLoop() - \n\tStarting Egoboo %s...\n", VERSION );
 
         // make sure the arrays are initialized to some specific initial value
         memset(BlipList, 0, MAXBLIP * sizeof(BLIP));
@@ -2969,6 +2926,11 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
         PROFILE_INIT( update_game );
         PROFILE_INIT( main_loop );
 
+        PROFILE_INIT( ChrHeap );
+        PROFILE_INIT( EncHeap );
+        PROFILE_INIT( PrtHeap );
+
+
         if( mnu_proc->proc.Active )
         {
           mnu_enterMenuMode();
@@ -2989,7 +2951,7 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
         gui        = gui_getState();               // automatically starts the Gui_t
         mnu_proc   = &(gui->mnu_proc);
 
-        game_handleKeyboard();
+        main_handleKeyboard();
 
         no_games_active = btrue;
         for(i=0; i<stk->count; i++)
@@ -3000,7 +2962,7 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
           proc = Game_getProcedure(gs);
 
           // a kludge to make sure the the gfxState is connected to something
-          if(NULL == gfxState.gs) gfxState.gs = gs;
+          Graphics_ensureGame(&gfxState, gs);
 
           proc_gameLoop( proc, gs ) ;
 
@@ -3168,8 +3130,9 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
 //--------------------------------------------------------------------------------------------
 void game_handleKeyboard()
 {
-  Game_t * gs = gfxState.gs;
-  Gui_t  * gui = gui_getState();
+  Game_t      * gs = Graphics_requireGame(&gfxState);
+  ProcState_t * gproc = Game_getProcedure(gs);
+  Gui_t       * gui = gui_getState();
   bool_t control, alt, shift, mod;
 
   if( !EKEY_PVALID(gs) ) return;
@@ -3192,6 +3155,47 @@ void game_handleKeyboard()
   {
     gs->igm.proc.Active = btrue;
     gs->igm.whichMenu   = mnu_Quit;
+  }
+
+  // do in-game-menu
+  if(SDLKEYDOWN(SDLK_F9) && !mod && CData.DevMode)
+  {
+    gs->igm.proc.Active = btrue;
+    gs->igm.whichMenu   = mnu_Inventory;
+
+    SDL_WM_GrabInput(SDL_GRAB_OFF);
+    SDL_ShowCursor(SDL_DISABLE);
+    mous.on = bfalse;
+  }
+
+  // force the module to be beaten
+  if(SDLKEYDOWN(SDLK_F9) && control && CData.DevMode)
+  {
+    gs->modstate.beat = btrue;
+    gproc->State = PROC_Leaving;
+  }
+
+  // do frame step in single-frame mode
+  if( gs->Do_frame )
+  {
+    gs->Do_frame = bfalse;
+  }
+  else if( SDLKEYDOWN( SDLK_F10 ) && !mod )
+  {
+    keyb.state[SDLK_F10] = 0;
+    gs->Do_frame = btrue;
+  }
+
+  //Pressed panic button
+  if ( SDLKEYDOWN( SDLK_q )  && control )
+  {
+    log_info( "User pressed escape button (CTRL+Q)... Quitting game gracefully.\n" );
+    gproc->State = PROC_Leaving;
+
+    // <BB> memory_cleanUp() should be kept in PROC_Finish, so that we can make sure to deallocate
+    //      the memory for any active menus, and/or modules.  Alternately, we could
+    //      register all of the memory deallocation routines with atexit() so they will
+    //      be called automatically on a return from the main function or a call to exit()
   }
 }
 
@@ -3592,13 +3596,7 @@ ProcessStates game_doRun(Game_t * gs, ProcessStates procIn)
   ProcessStates procOut = procIn;
   static double dTimeUpdate, dTimeFrame;
 
-  bool_t client_running = bfalse, server_running = bfalse, local_running = bfalse;
-
-  if (NULL ==gs)  return procOut;
-
-  client_running = CClient_Running(gs->cl);
-  server_running = sv_Running(gs->sv);
-  local_running  = !client_running && !server_running;
+  if (NULL == gs)  return procOut;
 
   update_timers( gs );
 
@@ -3612,18 +3610,19 @@ ProcessStates game_doRun(Game_t * gs, ProcessStates procIn)
   while ( gs->dUpdate >= 1.0 )
   {
     // Do important things
-    if ( !local_running && !client_running && !server_running )
-    {
-      gs->wld_clock = gs->all_clock;
-    }
-    else if ( gs->Single_frame || (gs->proc.Paused && !server_running && (local_running || client_running)) )
+    //if ( !local_running && !client_running && !server_running )
+    //{
+    //  gs->wld_clock = gs->all_clock;
+    //}
+    //else 
+    if ( gs->Single_frame || (gs->proc.Paused && Game_isLocal(gs)) )
     {
       gs->wld_clock = gs->all_clock;
     }
     else
     {
-      // all of this stupp should only be done for the gfxState.gs game
-      if( gs == gfxState.gs)
+      // all of this stuff should only be done for the Graphics_requireGame(&gfxState) game
+      if( Graphics_matchesGame(&gfxState, gs) )
       {
         PROFILE_BEGIN( pre_update_game );
         {
@@ -3639,24 +3638,24 @@ ProcessStates game_doRun(Game_t * gs, ProcessStates procIn)
       }
 
       PROFILE_BEGIN( update_game );
-      if(local_running)
+      if( Game_isLocal(gs) || Game_isClientServer(gs) )
       {
         // non-networked updates
         update_game(gs, EMULATEUPS / TARGETUPS, &(gs->randie_index) );
       }
-      else if(server_running)
+      else if( Game_isServer(gs) )
       {
         // server-only updated
         sv_update_game(gs, EMULATEUPS / TARGETUPS, &(gs->randie_index));
       }
-      else if(client_running)
+      else if( Game_isClient(gs) )
       {
         // client only updates
         cl_update_game(gs, EMULATEUPS / TARGETUPS, &(gs->randie_index));
       }
       else
       {
-        log_warning("game_doRun() - invalid server/client/local game configuration?");
+        log_warning("game_doRun() - \n\tinvalid server/client/local game configuration?");
       }
       PROFILE_END( update_game );
     }
@@ -3726,9 +3725,9 @@ int proc_gameLoop( ProcState_t * gproc, Game_t * gs )
         // set up the MD2 models
         init_all_models(gs);
 
-        log_info( "proc_gameLoop() - Starting to load module %s.\n", gs->mod.loadname);
+        log_info( "proc_gameLoop() - \n\tStarting to load module %s.\n", gs->mod.loadname);
         mod_return = module_load( gs, gs->mod.loadname ) ? rv_succeed : rv_fail;
-        log_info( "proc_gameLoop() - Loading module %s... ", gs->mod.loadname);
+        log_info( "proc_gameLoop() - \n\tLoading module %s... ", gs->mod.loadname);
         if( mod_return )
         {
           log_message("Succeeded!\n");
@@ -3750,7 +3749,7 @@ int proc_gameLoop( ProcState_t * gproc, Game_t * gs )
         attach_particles( gs );
 
 
-        if ( CClient_Running(gs->cl) || sv_Running(gs->sv) )
+        if ( cl_Running(gs->cl) || sv_Running(gs->sv) )
         {
           log_info( "SDL_main: Loading module %s...\n", gs->mod.loadname );
           keyb.mode = bfalse;
@@ -3786,6 +3785,8 @@ int proc_gameLoop( ProcState_t * gproc, Game_t * gs )
 
       gs->dUpdate += frameTicks / UPDATESKIP;
       if(gs->Single_frame) gs->dUpdate = 1.0f;
+
+      game_handleKeyboard();
 
       if ( !gproc->Active )
       {
@@ -3828,13 +3829,11 @@ int proc_gameLoop( ProcState_t * gproc, Game_t * gs )
 //--------------------------------------------------------------------------------------------
 int proc_menuLoop( MenuProc_t  * mproc )
 {
-  Game_t * gs;
   ProcState_t * proc;
 
   if(NULL == mproc || mproc->proc.Terminated) return -1;
 
   proc = &(mproc->proc);
-  gs   = gfxState.gs;
 
   if(proc->KillMe && proc->State < PROC_Leaving)
   {
@@ -3860,7 +3859,7 @@ int proc_menuLoop( MenuProc_t  * mproc )
         // initialize the bitmap font so we can use the cursor
         snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.font_bitmap );
         snprintf( CStringTmp2, sizeof( CStringTmp2 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.fontdef_file );
-        if ( !load_font( CStringTmp1, CStringTmp2 ) )
+        if ( !ui_load_BMFont( CStringTmp1, CStringTmp2 ) )
         {
           log_warning( "UI unable to use load bitmap font for cursor. Files missing from %s directory\n", CData.basicdat_dir );
         };
@@ -3929,6 +3928,8 @@ int SDL_main( int argc, char **argv )
   MachineState_t * mach_state;
   GameStack_t * stk;
   Game_t * gs;
+
+  PROFILE_INIT( ekey );
 
   // Initialize logging first, so that we can use it everywhere.
   log_init();
@@ -4663,7 +4664,8 @@ void sdlinit( Graphics_t * g )
 //--------------------------------------------------------------------------------------------
 retval_t MachineState_update(MachineState_t * mac)
 {
-  // BB > seconds from Jan 1, 1970 to "birth" of Bishopia
+  // BB > Update items related to this computer.
+  //        - Calclate the Bishopia date
 
   // seconds from Jan 1, 1970 to "birth" of Bishopia
   const time_t i_dif  = 10030 * 24 * 60 * 60;
@@ -4692,6 +4694,8 @@ retval_t MachineState_update(MachineState_t * mac)
 //--------------------------------------------------------------------------------------------
 MachineState_t * get_MachineState()
 {
+  // BB > give access to the machine state singleton
+
   if(!EKEY_VALID(_macState))
   {
     MachineState_new(&_macState);
@@ -4759,7 +4763,7 @@ bool_t fget_next_chr_spawn_info(Game_t * gs, FILE * pfile, CHR_SPAWN_INFO * psi)
   found = fget_next_string( pfile, myname, sizeof( myname ) );
   if( !found ) return bfalse;
 
-  str_convert_underscores( myname, sizeof( myname ), myname );
+  str_decode( myname, sizeof( myname ), myname );
 
   if ( 0 == strcmp( "NONE", myname ) )
   {
@@ -4976,7 +4980,7 @@ void do_setup_inputs(CHR_SETUP_INFO * pinfo, CHR_SPAWN_INFO * psi)
   Client_t * cl = gs->cl;
   ModState_t * pmod = &(gs->modstate);
 
-  if(gfxState.gs != gs) return;
+  if( !Graphics_matchesGame(&gfxState, gs) ) return;
 
   // Turn on player input devices
   if ( psi->stat )
@@ -5030,22 +5034,17 @@ void setup_characters( Game_t * gs, char *modname )
   FILE * fileread;
   Gui_t * gui = NULL;
 
-  bool_t client_running = bfalse, server_running = bfalse;
-
   CHR_SPAWN_INFO si;
   CHR_SETUP_INFO info;
 
-  if(gfxState.gs == gs)
+  if( Graphics_matchesGame(&gfxState, gs) )
   {
     gui = gui_getState();
   }
 
-  client_running = CClient_Running(gs->cl);
-  server_running = sv_Running(gs->sv);
-
-  // if we are in client mode, we have to wait for the server to tell us to spawn
-  if(client_running && !server_running) return;
-
+  // if we are not in control of our own spawning,
+  // we have to wait for the server to tell us to spawn
+  if( !Game_hasServer(gs) ) return;
 
   // Turn some back on
   snprintf( newloadname, sizeof( newloadname ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.spawn_file );
@@ -5169,7 +5168,7 @@ void ChrList_resynch(Game_t * gs)
   // poof all characters that have reserved poof requests
   for ( chr_ref = 0; chr_ref < CHRLST_COUNT; chr_ref++ )
   {
-    if ( !ACTIVE_CHR( gs->ChrList, chr_ref ) || !gs->ChrList[chr_ref].gopoof ) continue;
+    if ( !VALID_CHR( gs->ChrList, chr_ref ) || !gs->ChrList[chr_ref].gopoof ) continue;
 
     // detach from any imount
     detach_character_from_mount( gs, chr_ref, btrue, bfalse );
@@ -5178,7 +5177,9 @@ void ChrList_resynch(Game_t * gs)
     for ( _slot = SLOT_BEGIN; _slot < SLOT_COUNT; _slot = ( SLOT )( _slot + 1 ) )
     {
       if ( chr_using_slot( gs->ChrList, CHRLST_COUNT, chr_ref, _slot ) )
+      {
         detach_character_from_mount( gs, chr_get_holdingwhich( gs->ChrList, CHRLST_COUNT, chr_ref, _slot ), btrue, bfalse );
+      }
     };
 
     chr_free_inventory( gs->ChrList, CHRLST_COUNT, chr_ref );
@@ -5188,7 +5189,7 @@ void ChrList_resynch(Game_t * gs)
   // free all characters that requested destruction last round
   for ( chr_ref = 0; chr_ref < CHRLST_COUNT; chr_ref++ )
   {
-    if ( !ACTIVE_CHR( gs->ChrList, chr_ref ) || !gs->ChrList[chr_ref].freeme ) continue;
+    if ( !VALID_CHR( gs->ChrList, chr_ref ) || !gs->ChrList[chr_ref].freeme ) continue;
     ChrList_free_one( gs, chr_ref );
   }
 
@@ -5221,9 +5222,7 @@ void PrtList_resynch(Game_t * gs)
   // actually destroy all particles that requested destruction last time through the loop
   for ( iprt = 0; iprt < PRTLST_COUNT; iprt++ )
   {
-    PRT_SPAWN_INFO si;
-
-    if ( !ACTIVE_PRT( prtlst,  iprt ) ) continue;
+    if ( !VALID_PRT( prtlst,  iprt ) ) continue;
     pprt = prtlst + iprt;
 
     if( !pprt->gopoof ) continue;
@@ -5237,11 +5236,9 @@ void PrtList_resynch(Game_t * gs)
 
     for ( tnc = 0; tnc < piplst[pip].endspawnamount; tnc++ )
     {
-      prt_spawn_info_init( &si, gs, 1.0f, pprt->ori.pos,
+      prt_spawn( gs, 1.0f, pprt->ori.pos, pprt->ori.vel,
                           facing, pprt->model, piplst[pip].endspawnpip,
                           INVALID_CHR, GRIP_LAST, pprt->team, prt_owner, tnc, prt_target );
-
-      req_spawn_one_particle( si );
 
       facing += piplst[pip].endspawnfacingadd;
     }
@@ -5249,7 +5246,7 @@ void PrtList_resynch(Game_t * gs)
     end_one_particle( gs, iprt );
   }
 
-  // turn on all prthants requested in the last turn
+  // turn on all particles requested in the last turn
   for(iprt = 0; iprt < PRTLST_COUNT; iprt++)
   {
     if( !PENDING_PRT(prtlst, iprt) ) continue;
@@ -5257,8 +5254,14 @@ void PrtList_resynch(Game_t * gs)
 
     pprt->req_active = bfalse;
     pprt->reserved   = bfalse;
+    pprt->active     = btrue;
 
-    pprt->active = btrue;
+    // Do sound effect on activation
+    {
+      Pip_t * ppip = piplst + pprt->spinfo.ipip;
+      snd_play_particle_sound( pprt->spinfo.gs, pprt->spinfo.intensity, pprt->spinfo.iprt, ppip->soundspawn );
+    }
+
   }
 
 };
@@ -5461,6 +5464,38 @@ Game_t * GameStack_remove(GameStack_t * stk, int i)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+static void Game_new_textures( Game_t * gs )
+{
+  int i;
+
+  for(i=0; i<MAXTEXTURE; i++)
+  { 
+    GLtexture_new( gs->TxTexture + i );
+  };
+
+  for(i=0; i<MAXICONTX; i++)
+  { 
+    GLtexture_new( gs->TxIcon + i );
+  };
+  gs->TxIcon_count = 0;
+
+  GLtexture_new( &(gs->TxMap) );
+
+  gs->nullicon = MAXICONTX;
+  gs->keybicon = MAXICONTX;
+  gs->mousicon = MAXICONTX;
+  gs->joyaicon = MAXICONTX;
+  gs->joybicon = MAXICONTX;
+  gs->bookicon = MAXICONTX;                      // The first book icon
+
+  for(i=0; i<MAXTEXTURE; i++)
+  {
+    gs->skintoicon[i] = MAXICONTX;
+  };
+};
+
+
+//--------------------------------------------------------------------------------------------
 Game_t * Game_new(Game_t * gs, Net_t * ns, Client_t * cl, Server_t * sv)
 {
   fprintf(stdout, "Game_new()\n");
@@ -5472,6 +5507,8 @@ Game_t * Game_new(Game_t * gs, Net_t * ns, Client_t * cl, Server_t * sv)
   memset(gs, 0, sizeof(Game_t));
 
   EKEY_PNEW(gs, Game_t);
+
+  gs->net_status = NET_STATUS_LOCAL;
 
   // initialize the main loop process
   ProcState_init( &(gs->proc) );
@@ -5520,13 +5557,49 @@ Game_t * Game_new(Game_t * gs, Net_t * ns, Client_t * cl, Server_t * sv)
   TeamList_new( gs );
   PlaList_new ( gs );
 
+  //textures
+  Game_new_textures( gs );
+
   // the the graphics state is not linked into anyone, link it to us
-  if( NULL == gfxState.gs ) gfxState.gs = gs;
+  Graphics_ensureGame(&gfxState, gs);
 
   prime_icons( gs );
 
+  Game_updateNetStatus( gs );
+
   return gs;
 }
+
+//--------------------------------------------------------------------------------------------
+static void Game_delete_textures( Game_t * gs )
+{
+  int i;
+
+  for(i=0; i<MAXTEXTURE; i++)
+  { 
+    GLtexture_delete( gs->TxTexture + i );
+  };
+
+  for(i=0; i<MAXICONTX; i++)
+  { 
+    GLtexture_delete( gs->TxIcon + i );
+  };
+  gs->TxIcon_count = 0;
+
+  GLtexture_delete( &(gs->TxMap) );
+
+  gs->nullicon = MAXICONTX;
+  gs->keybicon = MAXICONTX;
+  gs->mousicon = MAXICONTX;
+  gs->joyaicon = MAXICONTX;
+  gs->joybicon = MAXICONTX;
+  gs->bookicon = MAXICONTX;                      // The first book icon
+
+  for(i=0; i<MAXTEXTURE; i++)
+  {
+    gs->skintoicon[i] = MAXICONTX;
+  };
+};
 
 //--------------------------------------------------------------------------------------------
 bool_t Game_delete(Game_t * gs)
@@ -5579,11 +5652,11 @@ bool_t Game_delete(Game_t * gs)
   TeamList_delete( gs );
   PlaList_delete( gs );
 
+  // delete/release all textures
+  Game_delete_textures( gs );
+
   // the the graphics state is linked to us, unlink it
-  if(gfxState.gs == gs)
-  {
-    gfxState.gs = NULL;
-  }
+  Graphics_removeGame(&gfxState, gs);
 
   // unlink this from the game state stack
   stk = Get_GameStack();
@@ -5706,6 +5779,8 @@ retval_t Game_registerNetwork( Game_t * gs, Net_t * net, bool_t destroy )
     if(NULL !=gs->ns) gs->ns->parent = gs;
   }
 
+  Game_updateNetStatus( gs );
+
   return rv_succeed;
 }
 
@@ -5720,6 +5795,8 @@ retval_t Game_registerClient ( Game_t * gs, Client_t * cl, bool_t destroy  )
     gs->cl = cl;
     if(NULL !=gs->cl) gs->cl->parent = gs;
   }
+
+  Game_updateNetStatus( gs );
 
   return rv_succeed;
 }
@@ -5736,10 +5813,89 @@ retval_t Game_registerServer ( Game_t * gs, Server_t * sv, bool_t destroy )
     if(NULL !=gs->sv) gs->sv->parent = gs;
   }
 
+  Game_updateNetStatus( gs );
+
   return rv_succeed;
 }
 
+//--------------------------------------------------------------------------------------------
+retval_t Game_updateNetStatus( Game_t * gs )
+{
+  // BB > update the network status variable so that we can know what kind of game we are playing
 
+  if( !EKEY_PVALID(gs) ) return rv_error;
+
+  gs->net_status = NET_STATUS_LOCAL;
+
+  if ( cl_Running(gs->cl) )
+  {
+    gs->net_status |= NET_STATUS_CLIENT;
+  }
+
+  if ( sv_Running(gs->sv) )
+  {
+    gs->net_status |= NET_STATUS_SERVER;
+  }
+
+  return rv_succeed;
+};
+
+
+//--------------------------------------------------------------------------------------------
+bool_t Game_isLocal( Game_t * gs )
+{
+  if( rv_succeed != Game_updateNetStatus(gs) ) return bfalse;
+
+  return (NET_STATUS_LOCAL == gs->net_status);
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t Game_isNetwork( Game_t * gs )
+{
+  if( rv_succeed != Game_updateNetStatus(gs) ) return bfalse;
+
+  return (NET_STATUS_LOCAL != gs->net_status);
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t Game_isClientServer( Game_t * gs )
+{
+  if( rv_succeed != Game_updateNetStatus(gs) ) return bfalse;
+
+  return ((NET_STATUS_CLIENT | NET_STATUS_SERVER) == gs->net_status);
+};
+
+//--------------------------------------------------------------------------------------------
+bool_t Game_isServer ( Game_t * gs )
+{
+  if( rv_succeed != Game_updateNetStatus(gs) ) return bfalse;
+
+  return (NET_STATUS_SERVER == gs->net_status);
+};
+
+//--------------------------------------------------------------------------------------------
+bool_t Game_isClient ( Game_t * gs )
+{
+  if( rv_succeed != Game_updateNetStatus(gs) ) return bfalse;
+
+  return (NET_STATUS_CLIENT == gs->net_status);
+};
+
+//--------------------------------------------------------------------------------------------
+bool_t Game_hasServer ( Game_t * gs )
+{
+  if( rv_succeed != Game_updateNetStatus(gs) ) return bfalse;
+
+  return (NET_STATUS_LOCAL == gs->net_status) || (NET_STATUS_SERVER == gs->net_status);
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t Game_hasClient ( Game_t * gs )
+{
+  if( rv_succeed != Game_updateNetStatus(gs) ) return bfalse;
+
+  return (NET_STATUS_LOCAL == gs->net_status) || (NET_STATUS_CLIENT == gs->net_status);
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -5945,13 +6101,14 @@ bool_t EncList_new( Game_t * gs )
 
   if(!EKEY_PVALID(gs)) return bfalse;
 
-  gs->EncFreeList_count = 0;
+  // initialize the heap
+  EncHeap_new( &(gs->EncHeap) );
+
+  // make sure that all the enchants are deallocated
   for ( enc_cnt = 0; enc_cnt < ENCLST_COUNT; enc_cnt++ )
   {
-    CEnc_new( gs->EncList + enc_cnt );
-    gs->EncFreeList[REF_TO_INT(enc_cnt)] = REF_TO_INT(enc_cnt);
+    Enc_delete( gs->EncList + enc_cnt );
   }
-  gs->EncFreeList_count = ENCLST_COUNT;
 
   return btrue;
 }
@@ -5965,13 +6122,14 @@ bool_t EncList_delete( Game_t * gs )
 
   if(!EKEY_PVALID(gs)) return bfalse;
 
-  gs->EncFreeList_count = 0;
+  // delete the heap
+  EncHeap_delete( &(gs->EncHeap) );
+
+  // make sure that all the enchants are deallocated
   for ( enc_cnt = 0; enc_cnt < ENCLST_COUNT; enc_cnt++ )
   {
-    CEnc_delete( gs->EncList + enc_cnt );
-    gs->EncFreeList[REF_TO_INT(enc_cnt)] = REF_TO_INT(enc_cnt);
+    Enc_delete( gs->EncList + enc_cnt );
   }
-  gs->EncFreeList_count = ENCLST_COUNT;
 
   return btrue;
 }
@@ -5981,17 +6139,15 @@ bool_t EncList_renew( Game_t * gs )
 {
   // ZZ> This functions frees all of the enchantments
 
-  ENC_REF enc_cnt;
+  int i;
 
   if(!EKEY_PVALID(gs)) return bfalse;
 
-  gs->EncFreeList_count = 0;
-  for ( enc_cnt = 0; enc_cnt < ENCLST_COUNT; enc_cnt++ )
+  // don't touch the heap. just renew each used enchant
+  for ( i = 0; i < gs->EncHeap.used_count; i++ )
   {
-    CEnc_renew( gs->EncList + enc_cnt );
-    gs->EncFreeList[REF_TO_INT(enc_cnt)] = REF_TO_INT(enc_cnt);
+    Enc_renew( gs->EncList + gs->EncHeap.used_list[ i ] );
   }
-  gs->EncFreeList_count = ENCLST_COUNT;
 
   return btrue;
 }
@@ -6075,31 +6231,41 @@ bool_t PlaList_renew( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 bool_t ChrList_new( Game_t * gs )
 {
+  // ZZ> This functions frees all of the chrhantments
+
   CHR_REF chr_cnt;
+
   if(!EKEY_PVALID(gs)) return bfalse;
 
-  for(chr_cnt=0; chr_cnt<CHRLST_COUNT; chr_cnt++)
+  // initialize the heap
+  ChrHeap_new( &(gs->ChrHeap) );
+
+  // make sure that all the chrhants are deallocated
+  for ( chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++ )
   {
-    Chr_new( gs->ChrList + chr_cnt );
-    gs->ChrFreeList[REF_TO_INT(chr_cnt)]  = REF_TO_INT(chr_cnt);
+    Chr_delete( gs->ChrList + chr_cnt );
   }
-  gs->ChrFreeList_count = CHRLST_COUNT;
 
   return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ChrList_delete(Game_t * gs)
+bool_t ChrList_delete( Game_t * gs )
 {
+  // ZZ> This functions frees all of the chrhantments
+
   CHR_REF chr_cnt;
+
   if(!EKEY_PVALID(gs)) return bfalse;
 
-  for(chr_cnt=0; chr_cnt<CHRLST_COUNT; chr_cnt++)
+  // delete the heap
+  ChrHeap_delete( &(gs->ChrHeap) );
+
+  // make sure that all the chrhants are deallocated
+  for ( chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++ )
   {
     Chr_delete( gs->ChrList + chr_cnt );
-    gs->ChrFreeList[REF_TO_INT(chr_cnt)]  = REF_TO_INT(chr_cnt);
   }
-  gs->ChrFreeList_count = CHRLST_COUNT;
 
   return btrue;
 }
@@ -6107,16 +6273,17 @@ bool_t ChrList_delete(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 bool_t ChrList_renew( Game_t * gs )
 {
-  CHR_REF chr_cnt;
+  // ZZ> This functions frees all of the chrhantments
+
+  int i;
+
   if(!EKEY_PVALID(gs)) return bfalse;
 
-  for(chr_cnt=0; chr_cnt<CHRLST_COUNT; chr_cnt++)
+  // don't touch the heap. just renew each used chrhant
+  for ( i = 0; i < gs->ChrHeap.used_count; i++ )
   {
-    Chr_renew( gs->ChrList + chr_cnt );
-
-    gs->ChrFreeList[REF_TO_INT(chr_cnt)]  = REF_TO_INT(chr_cnt);
+    Chr_renew( gs->ChrList + gs->ChrHeap.used_list[ i ] );
   }
-  gs->ChrFreeList_count = CHRLST_COUNT;
 
   return btrue;
 }
@@ -6171,20 +6338,20 @@ bool_t EveList_renew( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 bool_t PrtList_new( Game_t * gs )
 {
-  // ZZ> This function resets the particle allocation lists
+  // ZZ> This functions frees all of the particles
 
-  PRT_REF iprt;
+  PRT_REF prt_cnt;
+
   if( !EKEY_PVALID(gs) ) return bfalse;
 
-  log_debug( "INFO: PrtList_new()\n");
+  // initialize the heap
+  PrtHeap_new( &(gs->PrtHeap) );
 
-  for ( iprt = 0; iprt < PRTLST_COUNT; iprt++ )
+  // make sure that all the particles are deallocated
+  for ( prt_cnt = 0; prt_cnt < PRTLST_COUNT; prt_cnt++ )
   {
-    Prt_new(gs->PrtList + iprt);
-
-    gs->PrtFreeList[REF_TO_INT(iprt)] = REF_TO_INT(iprt);
+    Prt_delete( gs->PrtList + prt_cnt );
   }
-  gs->PrtFreeList_count = PRTLST_COUNT;
 
   return btrue;
 }
@@ -6192,42 +6359,38 @@ bool_t PrtList_new( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 bool_t PrtList_delete( Game_t * gs )
 {
-  // ZZ> This function resets the particle allocation lists
+  // ZZ> This functions frees all of the particles
 
-  PRT_REF iprt;
-  if( !EKEY_PVALID(gs) ) return bfalse;
+  PRT_REF prt_cnt;
 
-  log_debug( "INFO: PrtList_delete()\n");
+  if(!EKEY_PVALID(gs)) return bfalse;
 
-  for ( iprt = 0; iprt < PRTLST_COUNT; iprt++ )
+  // delete the heap
+  PrtHeap_delete( &(gs->PrtHeap) );
+
+  // make sure that all the particles are deallocated
+  for ( prt_cnt = 0; prt_cnt < PRTLST_COUNT; prt_cnt++ )
   {
-    Prt_delete(gs->PrtList + iprt);
-
-    gs->PrtFreeList[REF_TO_INT(iprt)] = REF_TO_INT(iprt);
+    Prt_delete( gs->PrtList + prt_cnt );
   }
-  gs->PrtFreeList_count = PRTLST_COUNT;
 
   return btrue;
 }
 
-
 //--------------------------------------------------------------------------------------------
 bool_t PrtList_renew( Game_t * gs )
 {
-  // ZZ> This function resets the particle allocation lists
+  // ZZ> This function renews all the particles
 
-  PRT_REF iprt;
-  if( !EKEY_PVALID(gs) ) return bfalse;
+  int i;
 
-  log_debug( "INFO: PrtList_renew()\n");
+  if(!EKEY_PVALID(gs)) return bfalse;
 
-  for ( iprt = 0; iprt < PRTLST_COUNT; iprt++ )
+  // don't touch the heap. just renew each used prthant
+  for ( i = 0; i < gs->PrtHeap.used_count; i++ )
   {
-    Prt_renew(gs->PrtList + iprt);
-
-    gs->PrtFreeList[REF_TO_INT(iprt)] = REF_TO_INT(iprt);
+    Prt_renew( gs->PrtList + gs->PrtHeap.used_list[ i ] );
   }
-  gs->PrtFreeList_count = PRTLST_COUNT;
 
   return btrue;
 }
@@ -6597,11 +6760,11 @@ void load_global_icons(Game_t * gs)
 {
   release_all_icons(gs);
 
-  gs->nullicon = load_one_icon( CData.basicdat_dir, NULL, CData.nullicon_bitmap );
-  gs->keybicon = load_one_icon( CData.basicdat_dir, NULL, CData.keybicon_bitmap );
-  gs->mousicon = load_one_icon( CData.basicdat_dir, NULL, CData.mousicon_bitmap );
-  gs->joyaicon = load_one_icon( CData.basicdat_dir, NULL, CData.joyaicon_bitmap );
-  gs->joybicon = load_one_icon( CData.basicdat_dir, NULL, CData.joybicon_bitmap );
+  gs->nullicon = load_one_icon( gs, CData.basicdat_dir, NULL, CData.nullicon_bitmap );
+  gs->keybicon = load_one_icon( gs, CData.basicdat_dir, NULL, CData.keybicon_bitmap );
+  gs->mousicon = load_one_icon( gs, CData.basicdat_dir, NULL, CData.mousicon_bitmap );
+  gs->joyaicon = load_one_icon( gs, CData.basicdat_dir, NULL, CData.joyaicon_bitmap );
+  gs->joybicon = load_one_icon( gs, CData.basicdat_dir, NULL, CData.joybicon_bitmap );
 }
 
 

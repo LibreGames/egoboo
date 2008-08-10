@@ -36,6 +36,8 @@
 /**> DATA STRUCTURE: GLtexture <**/
 struct ogl_texture_t
 {
+  egoboo_key_t ekey;
+
   char    name[256];
   GLuint  textureID;    /* The OpenGL texture number */
   GLint   internalFormat;  /* GL_RGB or GL_RGBA */
@@ -47,20 +49,25 @@ struct ogl_texture_t
 typedef struct ogl_texture_t GLtexture;
 
 /**> FUNCTION PROTOTYPES: GLtexture <**/
-Uint32  GLTexture_Convert( GLenum tx_target, GLtexture *texture, SDL_Surface * image, Uint32 key );
-Uint32  GLTexture_Load( GLenum tx_target, GLtexture *texture, const char *filename, Uint32 key );
-GLuint  GLTexture_GetTextureID( GLtexture *texture );
-GLsizei GLTexture_GetImageHeight( GLtexture *texture );
-GLsizei GLTexture_GetImageWidth( GLtexture *texture );
-GLsizei GLTexture_GetTextureWidth( GLtexture *texture );
-GLsizei GLTexture_GetTextureHeight( GLtexture *texture );
-void    GLTexture_SetAlpha( GLtexture *texture, GLfloat alpha );
-GLfloat GLTexture_GetAlpha( GLtexture *texture );
-void    GLTexture_Release( GLtexture *texture );
+GLtexture * GLtexture_new( GLtexture * ptx );
+bool_t      GLtexture_delete( GLtexture * ptx );
+GLtexture * GLtexture_create();
+bool_t      GLtexture_destory( GLtexture ** ptx );
+
+Uint32  GLtexture_Convert( GLenum tx_target, GLtexture *texture, SDL_Surface * image, Uint32 key );
+Uint32  GLtexture_Load( GLenum tx_target, GLtexture *texture, const char *filename, Uint32 key );
+GLuint  GLtexture_GetTextureID( GLtexture *texture );
+GLsizei GLtexture_GetImageHeight( GLtexture *texture );
+GLsizei GLtexture_GetImageWidth( GLtexture *texture );
+GLsizei GLtexture_GetTextureWidth( GLtexture *texture );
+GLsizei GLtexture_GetTextureHeight( GLtexture *texture );
+void    GLtexture_SetAlpha( GLtexture *texture, GLfloat alpha );
+GLfloat GLtexture_GetAlpha( GLtexture *texture );
+void    GLtexture_Release( GLtexture *texture );
 
 struct sGraphics;
 
-void    GLTexture_Bind( GLtexture * texture, struct sGraphics * g );
+void    GLtexture_Bind( GLtexture * texture, struct sGraphics * g );
 
 
 #endif

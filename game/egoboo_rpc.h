@@ -14,7 +14,6 @@ void rec_prt_spawn( PRT_SPAWN_INFO si );
 void snd_chr_spawn( CHR_SPAWN_INFO si );
 void rec_chr_spawn( CHR_SPAWN_INFO si );
 
-
 void snd_enc_spawn( ENC_SPAWN_INFO si );
 void rec_enc_spawn( ENC_SPAWN_INFO si );
 

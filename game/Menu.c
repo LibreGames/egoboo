@@ -504,15 +504,18 @@ int mnu_doMain( MenuProc_t * mproc, float deltaTime )
   {
     case MM_Begin:
       printf("mnu_doMain()\n");
+
+      GLtexture_new( &background );
+
       // set up menu variables
       snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_main_bitmap );
-      GLTexture_Load( GL_TEXTURE_2D, &background, CStringTmp1, INVALID_TEXTURE );
+      GLtexture_Load( GL_TEXTURE_2D, &background, CStringTmp1, INVALID_TEXTURE );
 
       mnu_widgetCount = mnu_initWidgetsList( mnu_widgetList, MAXWIDGET, mnu_mainMenuButtons );
       initSlidyButtons( 1.0f, mnu_widgetList, mnu_widgetCount );
 
-      ui_initWidget( &wBackground, UI_Invalid, ui_getFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
-      ui_initWidget( &wCopyright,  UI_Invalid, ui_getFont(), mnu_copyrightText, NULL, mnu_copyrightLeft, mnu_copyrightTop, 0, 0 );
+      ui_initWidget( &wBackground, UI_Invalid, ui_getTTFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
+      ui_initWidget( &wCopyright,  UI_Invalid, ui_getTTFont(), mnu_copyrightText, NULL, mnu_copyrightLeft, mnu_copyrightTop, 0, 0 );
 
       menuChoice = 0;
       menuState = MM_Entering;
@@ -607,12 +610,13 @@ int mnu_doMain( MenuProc_t * mproc, float deltaTime )
 
     case MM_Finish:
       // Free the background texture; don't need to hold onto it
-      GLTexture_Release( &background );
       menuState = MM_Begin; // Make sure this all resets next time mnu_doMain is called
 
       // Set the next menu to load
       result = menuChoice;
       ui_Reset();
+
+      GLtexture_delete( &background );
       break;
 
   };
@@ -633,15 +637,18 @@ int mnu_doSinglePlayer( MenuProc_t * mproc, float deltaTime )
   {
     case MM_Begin:
       printf("mnu_doSinglePlayer()\n");
+
+      GLtexture_new( &background );
+
       // Load resources for this menu
       snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_advent_bitmap );
-      GLTexture_Load( GL_TEXTURE_2D, &background, CStringTmp1, INVALID_KEY );
+      GLtexture_Load( GL_TEXTURE_2D, &background, CStringTmp1, INVALID_KEY );
 
       mnu_widgetCount = mnu_initWidgetsList( mnu_widgetList, MAXWIDGET, mnu_singlePlayerButtons );
       initSlidyButtons( 1.0f, mnu_widgetList, mnu_widgetCount );
 
-      ui_initWidget( &wBackground, UI_Invalid, ui_getFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
-      ui_initWidget( &wCopyright,  UI_Invalid, ui_getFont(), mnu_copyrightText, NULL, mnu_copyrightLeft, mnu_copyrightTop, 0, 0 );
+      ui_initWidget( &wBackground, UI_Invalid, ui_getTTFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
+      ui_initWidget( &wCopyright,  UI_Invalid, ui_getTTFont(), mnu_copyrightText, NULL, mnu_copyrightLeft, mnu_copyrightTop, 0, 0 );
 
       menuChoice = 0;
       menuState = MM_Entering;
@@ -716,8 +723,6 @@ int mnu_doSinglePlayer( MenuProc_t * mproc, float deltaTime )
       break;
 
     case MM_Finish:
-      // Release the background texture
-      GLTexture_Release( &background );
 
       // Set the next menu to load
       result = menuChoice;
@@ -726,6 +731,10 @@ int mnu_doSinglePlayer( MenuProc_t * mproc, float deltaTime )
       // properly
       menuState = MM_Begin;
       ui_Reset();
+
+      // delete the background texture as we exit
+      GLtexture_delete( &background );
+
       break;
   }
 
@@ -765,15 +774,17 @@ int mnu_doChooseModule( MenuProc_t * mproc, float deltaTime )
     case MM_Begin:
       printf("mnu_doChooseModule()\n");
 
+      GLtexture_new( &background );
+
       // Reload all avalible modules (Hidden ones may pop up after the player has completed one)
       sv->loc_mod_count = mnu_load_mod_data(mproc, sv->loc_mod, MAXMODULE);
 
       // Load font & background
       snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_sleepy_bitmap );
-      GLTexture_Load( GL_TEXTURE_2D, &background, CStringTmp1, INVALID_KEY );
+      GLtexture_Load( GL_TEXTURE_2D, &background, CStringTmp1, INVALID_KEY );
 
-      ui_initWidget( &wBackground, UI_Invalid, ui_getFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
-      ui_initWidget( &wCopyright,  UI_Invalid, ui_getFont(), mnu_copyrightText, NULL, mnu_copyrightLeft, mnu_copyrightTop, 0, 0 );
+      ui_initWidget( &wBackground, UI_Invalid, ui_getTTFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
+      ui_initWidget( &wCopyright,  UI_Invalid, ui_getTTFont(), mnu_copyrightText, NULL, mnu_copyrightLeft, mnu_copyrightTop, 0, 0 );
 
       startIndex = 0;
       mnu_prime_modules(mproc);
@@ -961,8 +972,6 @@ int mnu_doChooseModule( MenuProc_t * mproc, float deltaTime )
       break;
 
     case MM_Finish:
-      GLTexture_Release( &background );
-
       menuState = MM_Begin;
 
       if ( mproc->selectedModule == -1 )
@@ -985,6 +994,10 @@ int mnu_doChooseModule( MenuProc_t * mproc, float deltaTime )
         result = 1;
       }
       ui_Reset();
+
+      // delete the background texture as we exit
+      GLtexture_delete( &background );
+
       break;
 
   }
@@ -1189,7 +1202,7 @@ int mnu_doChoosePlayer( MenuProc_t * mproc, float deltaTime )
   static Uint32 BitsInput[4];
   static bool_t created_game = bfalse;
 
-  Game_t   * gs = gfxState.gs;
+  Game_t   * gs = Graphics_requireGame(&gfxState);
   Client_t * cl = mproc->cl;
   Server_t * sv = mproc->sv;
 
@@ -1197,6 +1210,13 @@ int mnu_doChoosePlayer( MenuProc_t * mproc, float deltaTime )
   {
     case MM_Begin:
       printf("mnu_doChoosePlayer()\n");
+
+      GLtexture_new( &background );;
+
+      for(i=0; i<4; i++)
+      {
+        GLtexture_new(TxInput + i);
+      };
 
       if( !EKEY_PVALID(gs) )
       {
@@ -1209,26 +1229,26 @@ int mnu_doChoosePlayer( MenuProc_t * mproc, float deltaTime )
       mnu_selectedPlayer[0] = 0;
 
       snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_sleepy_bitmap );
-      GLTexture_Load( GL_TEXTURE_2D, &background, CStringTmp1, INVALID_KEY );
+      GLtexture_Load( GL_TEXTURE_2D, &background, CStringTmp1, INVALID_KEY );
 
       snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.keybicon_bitmap );
-      GLTexture_Load( GL_TEXTURE_2D, TxInput + 0, CStringTmp1, INVALID_KEY );
+      GLtexture_Load( GL_TEXTURE_2D, TxInput + 0, CStringTmp1, INVALID_KEY );
       BitsInput[0] = INBITS_KEYB;
 
       snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.mousicon_bitmap );
-      GLTexture_Load( GL_TEXTURE_2D, TxInput + 1, CStringTmp1, INVALID_KEY );
+      GLtexture_Load( GL_TEXTURE_2D, TxInput + 1, CStringTmp1, INVALID_KEY );
       BitsInput[1] = INBITS_MOUS;
 
       snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.joyaicon_bitmap );
-      GLTexture_Load( GL_TEXTURE_2D, TxInput + 2, CStringTmp1, INVALID_KEY );
+      GLtexture_Load( GL_TEXTURE_2D, TxInput + 2, CStringTmp1, INVALID_KEY );
       BitsInput[2] = INBITS_JOYA;
 
       snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.joybicon_bitmap );
-      GLTexture_Load( GL_TEXTURE_2D, TxInput + 3, CStringTmp1, INVALID_KEY );
+      GLtexture_Load( GL_TEXTURE_2D, TxInput + 3, CStringTmp1, INVALID_KEY );
       BitsInput[3] = INBITS_JOYB;
 
-      ui_initWidget( &wBackground, UI_Invalid, ui_getFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
-      ui_initWidget( &wCopyright,  UI_Invalid, ui_getFont(), mnu_copyrightText, NULL, mnu_copyrightLeft, mnu_copyrightTop, 0, 0 );
+      ui_initWidget( &wBackground, UI_Invalid, ui_getTTFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
+      ui_initWidget( &wCopyright,  UI_Invalid, ui_getTTFont(), mnu_copyrightText, NULL, mnu_copyrightLeft, mnu_copyrightTop, 0, 0 );
 
       // load information for all the players that could be imported
       check_player_import( gs );
@@ -1374,7 +1394,6 @@ int mnu_doChoosePlayer( MenuProc_t * mproc, float deltaTime )
       break;
 
     case MM_Finish:
-      GLTexture_Release( &background );
       menuState = MM_Begin;
 
       if ( mnu_selectedPlayerCount > 0 )
@@ -1395,6 +1414,15 @@ int mnu_doChoosePlayer( MenuProc_t * mproc, float deltaTime )
         result = bquit ? -1 : 1;
       }
       ui_Reset();
+
+      // delete the textures as we exit
+      GLtexture_delete( &background );
+
+      for(i=0; i<4; i++)
+      {
+        GLtexture_delete(TxInput + i);
+      };
+
       break;
 
   }
@@ -1419,15 +1447,16 @@ int mnu_doOptions( MenuProc_t * mproc, float deltaTime )
     case MM_Begin:
       printf("mnu_doOptions()\n");
 
-      // set up menu variables
+      GLtexture_new( &background );;
 
+      // set up menu variables
       init_options_data();
 
       snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_gnome_bitmap );
-      GLTexture_Load( GL_TEXTURE_2D, &background, CStringTmp1, INVALID_KEY );
+      GLtexture_Load( GL_TEXTURE_2D, &background, CStringTmp1, INVALID_KEY );
 
-      ui_initWidget( &wBackground, UI_Invalid, ui_getFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
-      ui_initWidget( &wCopyright,  UI_Invalid, ui_getFont(), mnu_optionsText, NULL, mnu_optionsTextLeft, mnu_optionsTextTop, 0, 0 );
+      ui_initWidget( &wBackground, UI_Invalid, ui_getTTFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
+      ui_initWidget( &wCopyright,  UI_Invalid, ui_getTTFont(), mnu_optionsText, NULL, mnu_optionsTextLeft, mnu_optionsTextTop, 0, 0 );
 
       mnu_widgetCount = mnu_initWidgetsList( mnu_widgetList, MAXWIDGET, mnu_optionsButtons );
       initSlidyButtons( 1.0f, mnu_widgetList, mnu_widgetCount );
@@ -1519,8 +1548,6 @@ int mnu_doOptions( MenuProc_t * mproc, float deltaTime )
       break;
 
     case MM_Finish:
-      // Free the background texture; don't need to hold onto it
-      GLTexture_Release( &background );
       menuState = MM_Begin; // Make sure this all resets next time mnu_doMain is called
 
       // Export some of the menu options
@@ -1529,6 +1556,10 @@ int mnu_doOptions( MenuProc_t * mproc, float deltaTime )
       // Set the next menu to load
       result = menuChoice;
       ui_Reset();
+
+      // delete the background texture as we exit
+      GLtexture_delete( &background );
+
       break;
 
   }
@@ -1551,12 +1582,14 @@ int mnu_doAudioOptions( MenuProc_t * mproc, float deltaTime )
     case MM_Begin:
       printf("mnu_doAudioOptions()\n");
 
+      GLtexture_new( &background );;
+
       // set up menu variables
       snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_gnome_bitmap );
-      GLTexture_Load( GL_TEXTURE_2D, &background, CStringTmp1, INVALID_KEY );
+      GLtexture_Load( GL_TEXTURE_2D, &background, CStringTmp1, INVALID_KEY );
 
-      ui_initWidget( &wBackground, UI_Invalid, ui_getFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
-      ui_initWidget( &wCopyright,  UI_Invalid, ui_getFont(), mnu_copyrightText, NULL, mnu_copyrightLeft, mnu_copyrightTop, 0, 0 );
+      ui_initWidget( &wBackground, UI_Invalid, ui_getTTFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
+      ui_initWidget( &wCopyright,  UI_Invalid, ui_getTTFont(), mnu_copyrightText, NULL, mnu_copyrightLeft, mnu_copyrightTop, 0, 0 );
 
       ui_initWidget( mnu_widgetList + 0, 0, mnu_Font, mnu_audioOptionsText[0], NULL, mnu_buttonLeft + 150, gfxState.surface->h - 270, 100, 30 );
       ui_initWidget( mnu_widgetList + 1, 1, mnu_Font, mnu_audioOptionsText[1], NULL, mnu_buttonLeft + 150, gfxState.surface->h - 235, 100, 30 );
@@ -1773,8 +1806,6 @@ int mnu_doAudioOptions( MenuProc_t * mproc, float deltaTime )
       break;
 
     case MM_Finish:
-      // Free the background texture; don't need to hold onto it
-      GLTexture_Release( &background );
       menuState = MM_Begin; // Make sure this all resets next time mnu_doMain is called
 
       // update the audio using the info from this menu
@@ -1785,6 +1816,10 @@ int mnu_doAudioOptions( MenuProc_t * mproc, float deltaTime )
       // Set the next menu to load
       result = 1;
       ui_Reset();
+
+      // delete the background texture as we exit
+      GLtexture_delete( &background );
+
       break;
 
   }
@@ -1811,12 +1846,14 @@ int mnu_doVideoOptions( MenuProc_t * mproc, float deltaTime )
     case MM_Begin:
       printf("mnu_doVideoOptions()\n");
 
+      GLtexture_new( &background );;
+
       // set up menu variables
       snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_gnome_bitmap );
-      GLTexture_Load( GL_TEXTURE_2D, &background, CStringTmp1, INVALID_KEY );
+      GLtexture_Load( GL_TEXTURE_2D, &background, CStringTmp1, INVALID_KEY );
 
-      ui_initWidget( &wBackground, UI_Invalid, ui_getFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
-      ui_initWidget( &wCopyright,  UI_Invalid, ui_getFont(), mnu_copyrightText, NULL, mnu_copyrightLeft, mnu_copyrightTop, 0, 0 );
+      ui_initWidget( &wBackground, UI_Invalid, ui_getTTFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
+      ui_initWidget( &wCopyright,  UI_Invalid, ui_getTTFont(), mnu_copyrightText, NULL, mnu_copyrightLeft, mnu_copyrightTop, 0, 0 );
 
       ui_initWidget( mnu_widgetList + 0,  0, mnu_Font, mnu_text[ 0], NULL, mnu_buttonLeft + 150, gfxState.surface->h - 215, 100, 30 );
       ui_initWidget( mnu_widgetList + 1,  1, mnu_Font, mnu_text[ 1], NULL, mnu_buttonLeft + 150, gfxState.surface->h - 180, 100, 30 );
@@ -2387,8 +2424,6 @@ int mnu_doVideoOptions( MenuProc_t * mproc, float deltaTime )
       break;
 
     case MM_Finish:
-      // Free the background texture; don't need to hold onto it
-      GLTexture_Release( &background );
       menuState = MM_Begin; // Make sure this all resets next time mnu_doMain is called
 
       //Update options data, user may have changed settings last time she accessed the video menu
@@ -2396,7 +2431,7 @@ int mnu_doVideoOptions( MenuProc_t * mproc, float deltaTime )
 
       // Force the program to modify the graphics
       // to get this to work properly, you need to reload all textures!
-      CGraphics_synch(&gfxState, &CData);
+      Graphics_synch(&gfxState, &CData);
       gfx_set_mode(&gfxState);
 
       // reset the auto-formatting for the menus
@@ -2410,6 +2445,10 @@ int mnu_doVideoOptions( MenuProc_t * mproc, float deltaTime )
       // Set the next menu to load
       result = menuChoice;
       ui_Reset();
+
+      // delete the background texture as we exit
+      GLtexture_delete( &background );
+
       break;
   }
   return result;
@@ -2425,16 +2464,16 @@ int mnu_doLaunchGame( MenuProc_t * mproc, float deltaTime )
   static TTFont_t *font;
   int x, y, i, result = 0;
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_getGame(&gfxState);
 
   switch ( menuState )
   {
     case MM_Begin:
       printf("mnu_doLaunchGame()\n");
 
-      font = ui_getFont();
+      font = ui_getTTFont();
 
-      if(NULL == gfxState.gs)
+      if(!Graphics_hasGame(&gfxState))
       {
         mnu_ensure_game(mproc, &gs);
       }
@@ -2457,7 +2496,7 @@ int mnu_doLaunchGame( MenuProc_t * mproc, float deltaTime )
       }
       else
       {
-        log_error("mnu_doLaunchGame() - invalid module configuration");
+        log_error("mnu_doLaunchGame() - \n\tinvalid module configuration");
       }
 
       menuChoice = 0;
@@ -2532,7 +2571,7 @@ int mnu_doNotImplemented( MenuProc_t * mproc, float deltaTime )
     case MM_Begin:
       printf("mnu_doNotImplemented()\n");
 
-      fnt_getTextSize( ui_getFont(), notImplementedMessage, &w, &h );
+      fnt_getTextSize( ui_getTTFont(), notImplementedMessage, &w, &h );
       w += 50; // add some space on the sides
 
       x = ( gfxState.surface->w - w ) / 2;
@@ -2599,7 +2638,7 @@ int mnu_doNetworkOff( MenuProc_t * mproc, float deltaTime )
     case MM_Begin:
       printf("mnu_doNetworkOff()\n");
 
-      fnt_getTextSize( ui_getFont(), networkOffMessage, &w, &h );
+      fnt_getTextSize( ui_getTTFont(), networkOffMessage, &w, &h );
       w += 50; // add some space on the sides
 
       x = ( gfxState.surface->w - w ) / 2;
@@ -2648,7 +2687,7 @@ int mnu_RunIngame( MenuProc_t * mproc )
   double frameDuration, frameTicks;
   float deltaTime;
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   if(NULL == mproc || mproc->proc.Terminated) return -1;
 
@@ -2664,6 +2703,9 @@ int mnu_RunIngame( MenuProc_t * mproc )
     deltaTime = frameDuration;
     mproc->dUpdate += frameTicks / UPDATESKIP;
   }
+
+  // make sure that the mproc has all of the required info
+  MenuProc_resynch( mproc, gs );
 
   switch ( mproc->whichMenu )
   {
@@ -2709,7 +2751,7 @@ int mnu_Run( MenuProc_t * mproc )
 
   if(NULL == mproc || mproc->proc.Terminated) return -1;
 
-  gs   = gfxState.gs;
+  gs   = Graphics_getGame(&gfxState);
   proc = &(mproc->proc);
 
   ClockState_frameStep( proc->clk );
@@ -3300,7 +3342,7 @@ void mnu_saveSettings()
 //  glEnable(GL_TEXTURE_2D);
 //  glEnable(GL_DEPTH_TEST);
 //
-//    GLTexture_Bind( &m_modelTxr, &gfxState );
+//    GLtexture_Bind( &m_modelTxr, &gfxState );
 //  m_model->drawBlendedFrames(m_modelFrame, m_modelNextFrame, m_modelLerp);
 // }
 //};
@@ -3341,10 +3383,12 @@ int mnu_doNetwork(MenuProc_t * mproc, float deltaTime)
   case MM_Begin:
     printf("mnu_doNetwork()\n");
 
+    GLtexture_new( &background );;
+
     // set up menu variables
     snprintf(CStringTmp1, sizeof(CStringTmp1), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_main_bitmap);
-    GLTexture_Load(GL_TEXTURE_2D, &background, CStringTmp1, INVALID_TEXTURE);
-    ui_initWidget( &wBackground, UI_Invalid, ui_getFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
+    GLtexture_Load(GL_TEXTURE_2D, &background, CStringTmp1, INVALID_TEXTURE);
+    ui_initWidget( &wBackground, UI_Invalid, ui_getTTFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
 
     mnu_widgetCount = mnu_initWidgetsList(mnu_widgetList, MAXWIDGET, netMenuButtons );
 
@@ -3358,7 +3402,7 @@ int mnu_doNetwork(MenuProc_t * mproc, float deltaTime)
     // do buttons sliding in animation, and background fading in
     // background
     glColor4f(1, 1, 1, 1 - SlidyButtonState_t.lerp);
-    ui_initWidget( &wBackground, UI_Invalid, ui_getFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
+    ui_initWidget( &wBackground, UI_Invalid, ui_getTTFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
 
     // "Copyright" text
     fnt_drawTextBox(mnu_Font, mnu_copyrightText, mnu_copyrightLeft, mnu_copyrightTop, 0, 0, 20);
@@ -3428,14 +3472,16 @@ int mnu_doNetwork(MenuProc_t * mproc, float deltaTime)
     break;
 
   case MM_Finish:
-    // Free the background texture; don't need to hold onto it
-    GLTexture_Release(&background);
     menuState = MM_Begin; // Make sure this all resets next time doMainMenu is called
 
     // Set the next menu to load
     result = menuChoice;
 
     ui_Reset();
+
+    // delete the background texture as we exit
+    GLtexture_delete( &background );
+
     break;
   };
 
@@ -3472,16 +3518,18 @@ int mnu_doHostGame(MenuProc_t * mproc, float deltaTime)
   case MM_Begin:
     printf("mnu_doHostGame()\n");
 
+    GLtexture_new( &background );;
+
     //Reload all avalible modules (Hidden ones may pop up after the player has completed one)
     mnu_prime_titleimage(mproc);
     sv->loc_mod_count = mnu_load_mod_data(mproc, sv->loc_mod, MAXMODULE);
 
     // Load font & background
     snprintf(CStringTmp1, sizeof(CStringTmp1), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_sleepy_bitmap);
-    GLTexture_Load(GL_TEXTURE_2D, &background, CStringTmp1, INVALID_KEY);
+    GLtexture_Load(GL_TEXTURE_2D, &background, CStringTmp1, INVALID_KEY);
 
-    ui_initWidget( &wBackground, UI_Invalid, ui_getFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
-    ui_initWidget( &wCopyright,  UI_Invalid, ui_getFont(), mnu_copyrightText, NULL, mnu_copyrightLeft, mnu_copyrightTop, 0, 0 );
+    ui_initWidget( &wBackground, UI_Invalid, ui_getTTFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
+    ui_initWidget( &wCopyright,  UI_Invalid, ui_getTTFont(), mnu_copyrightText, NULL, mnu_copyrightLeft, mnu_copyrightTop, 0, 0 );
 
     startIndex = 0;
     mnu_prime_modules(mproc);
@@ -3649,12 +3697,7 @@ int mnu_doHostGame(MenuProc_t * mproc, float deltaTime)
     break;
 
   case MM_Finish:
-    GLTexture_Release(&background);
-
     menuState = MM_Begin;
-
-    // grab the selected module
-
 
     // figure out what to do
     if (-1 == mproc->selectedModule)
@@ -3671,6 +3714,10 @@ int mnu_doHostGame(MenuProc_t * mproc, float deltaTime)
     }
 
     ui_Reset();
+
+    // delete the background texture as we exit
+    GLtexture_delete( &background );
+
     break;
 
   }
@@ -3708,6 +3755,8 @@ int mnu_doUnhostGame(MenuProc_t * mproc, float deltaTime)
   case MM_Begin:
     printf("mnu_doUnhostGame()\n");
 
+    GLtexture_new( &background );;
+
     //Reload all avalible modules (Hidden ones may pop up after the player has completed one)
     mnu_prime_titleimage(mproc);
     sv->loc_mod_count = mnu_load_mod_data(mproc, sv->loc_mod, MAXMODULE);
@@ -3730,8 +3779,8 @@ int mnu_doUnhostGame(MenuProc_t * mproc, float deltaTime)
 
     // Load font & background
     snprintf(CStringTmp1, sizeof(CStringTmp1), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_sleepy_bitmap);
-    GLTexture_Load(GL_TEXTURE_2D, &background, CStringTmp1, INVALID_KEY);
-    ui_initWidget( &wBackground, UI_Invalid, ui_getFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
+    GLtexture_Load(GL_TEXTURE_2D, &background, CStringTmp1, INVALID_KEY);
+    ui_initWidget( &wBackground, UI_Invalid, ui_getTTFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
 
     // Figure out at what offset we want to draw the module menu.
     moduleMenuOffsetX = (gfxState.surface->w - 640) / 2;
@@ -3842,8 +3891,6 @@ int mnu_doUnhostGame(MenuProc_t * mproc, float deltaTime)
     break;
 
   case MM_Finish:
-    GLTexture_Release(&background);
-
     if(mproc->selectedModule == -1)
     {
       result = -1;
@@ -3857,6 +3904,10 @@ int mnu_doUnhostGame(MenuProc_t * mproc, float deltaTime)
     menuState = MM_Begin;
 
     ui_Reset();
+
+    // delete the background texture as we exit
+    GLtexture_delete( &background );
+
     break;
 
   }
@@ -3894,10 +3945,10 @@ int mnu_doJoinGame(MenuProc_t * mproc, float deltaTime)
 
   if( !net_Started() ) return -1;
 
-  gs = gfxState.gs;
+  gs = Graphics_requireGame(&gfxState);
 
   // make sure a Server_t state is defined
-  if( rv_succeed != MenuProc_ensure_client(mproc, gfxState.gs) )
+  if( rv_succeed != MenuProc_ensure_client(mproc, Graphics_requireGame(&gfxState)) )
   {
     return -1;
   }
@@ -3909,6 +3960,8 @@ int mnu_doJoinGame(MenuProc_t * mproc, float deltaTime)
 
     printf("mnu_doJoinGame()\n");
 
+    GLtexture_new( &background );;
+
     // start up the file transfer and client components at this point
 
     // make sure that the NetFile server is running
@@ -3919,10 +3972,10 @@ int mnu_doJoinGame(MenuProc_t * mproc, float deltaTime)
 
     // Load font & background
     snprintf(CStringTmp1, sizeof(CStringTmp1), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_sleepy_bitmap);
-    GLTexture_Load(GL_TEXTURE_2D, &background, CStringTmp1, INVALID_KEY);
+    GLtexture_Load(GL_TEXTURE_2D, &background, CStringTmp1, INVALID_KEY);
 
-    ui_initWidget( &wBackground, UI_Invalid, ui_getFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
-    ui_initWidget( &wCopyright,  UI_Invalid, ui_getFont(), mnu_copyrightText, NULL, mnu_copyrightLeft, mnu_copyrightTop, 0, 0 );
+    ui_initWidget( &wBackground, UI_Invalid, ui_getTTFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
+    ui_initWidget( &wCopyright,  UI_Invalid, ui_getTTFont(), mnu_copyrightText, NULL, mnu_copyrightLeft, mnu_copyrightTop, 0, 0 );
 
     // initialize the module selection data
     startIndex = 0;
@@ -4138,8 +4191,6 @@ int mnu_doJoinGame(MenuProc_t * mproc, float deltaTime)
     break;
 
   case MM_Finish:
-    GLTexture_Release(&background);
-
     // release all of the network connections
     cl_end_request_module(cl);
 
@@ -4179,6 +4230,10 @@ int mnu_doJoinGame(MenuProc_t * mproc, float deltaTime)
     }
 
     ui_Reset();
+
+    // delete the background texture as we exit
+    GLtexture_delete( &background );
+
     break;
 
   }
@@ -4216,7 +4271,7 @@ int mnu_doIngameQuit( MenuProc_t * mproc, float deltaTime )
 
   int result = 0;
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   switch ( menuState )
   {
@@ -4316,8 +4371,9 @@ int mnu_doIngameInventory( MenuProc_t * mproc, float deltaTime )
   int result = 0, offsetX, offsetY;
   static Uint32 starttime;
   int iw, ih;
+  int total_inpack = 0;
 
-  Game_t   * gs = gfxState.gs;
+  Game_t   * gs = Graphics_requireGame(&gfxState);
   Client_t * cl = mproc->cl;
 
   if( !EKEY_PVALID(gs) ) return -1;
@@ -4354,6 +4410,7 @@ int mnu_doIngameInventory( MenuProc_t * mproc, float deltaTime )
           ui_initWidget( mnu_widgetList + k, k, mnu_Font, NULL, gs->TxIcon + itex, offsetX + iw*j, offsetY, iw, ih );
 
           k++;
+          total_inpack++;
         }
         j++;
       }
@@ -4363,7 +4420,15 @@ int mnu_doIngameInventory( MenuProc_t * mproc, float deltaTime )
 
       starttime = SDL_GetTicks();
       menuChoice = 0;
-      menuState = MM_Entering;
+
+      if(0==total_inpack)
+      {
+        menuState = MM_Leaving;
+      }
+      else
+      {
+        menuState = MM_Entering;
+      }
       break;
 
     case MM_Entering:
@@ -4434,6 +4499,8 @@ MenuProc_t * MenuProc_new(MenuProc_t *mproc)
 {
   //fprintf( stdout, "MenuProc_new()\n");
 
+  int i;
+
   if(NULL == mproc) return mproc;
 
   MenuProc_delete( mproc );
@@ -4448,12 +4515,19 @@ MenuProc_t * MenuProc_new(MenuProc_t *mproc)
   mproc->validModules_count = 0;
   memset(mproc->validModules, 0, sizeof(int) * MAXMODULE);
 
+  for(i=0; i<MAXMODULE; i++)
+  {
+    GLtexture_new( mproc->TxTitleImage + i );
+  };
+
+
   return mproc;
 }
 
 //--------------------------------------------------------------------------------------------
 bool_t MenuProc_delete(MenuProc_t * ms)
 {
+  int i;
   bool_t retval = bfalse;
 
   if(NULL == ms) return bfalse;
@@ -4463,7 +4537,10 @@ bool_t MenuProc_delete(MenuProc_t * ms)
 
   retval = ProcState_delete(&(ms->proc));
 
-  mnu_free_all_titleimages(ms);
+  for(i=0; i<MAXMODULE; i++)
+  {
+    GLtexture_delete( ms->TxTitleImage + i );
+  };
 
   return retval;
 }
@@ -4500,7 +4577,7 @@ retval_t MenuProc_ensure_server(MenuProc_t * ms, Game_t * gs)
 
   if( !EKEY_PVALID(ms->sv) )
   {
-    ms->sv = CServer_create(gfxState.gs);
+    ms->sv = CServer_create(gs);
   }
 
   return (NULL != ms->sv) ? rv_succeed : rv_error;
@@ -4586,6 +4663,18 @@ retval_t   MenuProc_start_netfile(MenuProc_t * ms, Game_t * gs)
 };
 
 //--------------------------------------------------------------------------------------------
+bool_t MenuProc_resynch(MenuProc_t * ms, Game_t * gs)
+{
+  if( !EKEY_PVALID(ms) || !EKEY_PVALID(gs) ) return bfalse;
+
+  ms->cl  = gs->cl;
+  ms->sv  = gs->sv;
+  ms->net = gs->ns;
+
+  return btrue;
+};
+
+//--------------------------------------------------------------------------------------------
 bool_t MenuProc_init_ingame(MenuProc_t * ms)
 {
   if(NULL == ms) return bfalse;
@@ -4610,7 +4699,7 @@ Uint32 mnu_load_titleimage(MenuProc_t * mproc, int titleimage, char *szLoadName)
   //     system memory.  Returns btrue if it worked
   Uint32 retval = MAXMODULE;
 
-  if(INVALID_TEXTURE != GLTexture_Load(GL_TEXTURE_2D,  mproc->TxTitleImage + titleimage, szLoadName, INVALID_KEY))
+  if(INVALID_TEXTURE != GLtexture_Load(GL_TEXTURE_2D,  mproc->TxTitleImage + titleimage, szLoadName, INVALID_KEY))
   {
     retval = titleimage;
   }
@@ -4721,7 +4810,7 @@ void mnu_free_all_titleimages(MenuProc_t * mproc)
   int cnt;
   for ( cnt = 0; cnt < MAXMODULE; cnt++ )
   {
-    GLTexture_Release( mproc->TxTitleImage + cnt );
+    GLtexture_Release( mproc->TxTitleImage + cnt );
   }
 }
 
@@ -4752,7 +4841,7 @@ retval_t mnu_ensure_game(MenuProc_t * mproc, Game_t ** optional)
 
   // make sure that we have a Game_t somewhere
   if(NULL != optional) ptmp = *optional;
-  if(NULL == ptmp    ) ptmp = gfxState.gs;
+  if(NULL == ptmp    ) ptmp = Graphics_getGame(&gfxState);
   if(NULL == ptmp    )
   {
     // create a new game
@@ -4775,7 +4864,7 @@ retval_t mnu_ensure_game(MenuProc_t * mproc, Game_t ** optional)
   if( is_valid )
   {
     if(NULL != optional    ) *optional   = ptmp;
-    if(NULL == gfxState.gs ) gfxState.gs = ptmp;
+    Graphics_ensureGame(&gfxState, ptmp);
   }
 
   return is_valid ? rv_succeed : rv_error;

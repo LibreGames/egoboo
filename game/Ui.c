@@ -55,8 +55,12 @@ struct s_ui_Context
   int mousePressed;
   bool_t mouseVisible;
 
+  // truetype font
   TTFont_t *defaultFont;
   TTFont_t *activeFont;
+
+  // bitmapped font
+  BMFont_t bmfont;
 };
 
 static ui_Context_t ui_context;
@@ -76,7 +80,23 @@ static ui_Context_t * UiContext_new(ui_Context_t *pui)
   pui->active = pui->hot = UI_Nothing;
   pui->mouseVisible = btrue;
 
+  BMFont_new( &(pui->bmfont) );
+
   return pui;
+};
+
+//--------------------------------------------------------------------------------------------
+static bool_t UiContext_delete(ui_Context_t *pui)
+{
+  //fprintf( stdout, "UiContext_new()\n");
+
+  if(NULL == pui) return bfalse;
+
+  BMFont_delete( &(pui->bmfont) );
+
+  memset( pui, 0, sizeof( ui_context ) );
+
+  return btrue;
 };
 
 
@@ -100,7 +120,7 @@ int ui_initialize( const char *default_font, int default_font_size )
 //--------------------------------------------------------------------------------------------
 void ui_shutdown()
 {
-  memset( &ui_context, 0, sizeof( ui_context ) );
+  UiContext_delete( &ui_context );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -285,10 +305,29 @@ void ui_sethot( ui_Widget_t * pw )
 }
 
 //--------------------------------------------------------------------------------------------
-TTFont_t* ui_getFont()
+TTFont_t* ui_getTTFont()
 {
   return ( NULL != ui_context.activeFont ) ? ui_context.activeFont : ui_context.defaultFont;
 }
+
+//--------------------------------------------------------------------------------------------
+BMFont_t* ui_getBMFont()
+{
+  BMFont_t * ret = NULL;
+
+  if( INVALID_TEXTURE != ui_context.bmfont.tex.textureID )
+  {
+    ret = &(ui_context.bmfont);
+  }
+
+  return ret;
+};
+
+//--------------------------------------------------------------------------------------------
+bool_t ui_load_BMFont( char* szBitmap, char* szSpacing )
+{
+  return BMFont_load( &(ui_context.bmfont), gfxState.scry, szBitmap, szSpacing );
+};
 
 //--------------------------------------------------------------------------------------------
 bool_t ui_copyWidget( ui_Widget_t * pw2, ui_Widget_t * pw1 )
@@ -478,8 +517,8 @@ void ui_drawImage( ui_Widget_t * pWidget )
 
     if ( pWidget->width == 0 || pWidget->height == 0 )
     {
-      w = GLTexture_GetImageWidth( pWidget->img );
-      h = GLTexture_GetImageHeight( pWidget->img );
+      w = GLtexture_GetImageWidth( pWidget->img );
+      h = GLtexture_GetImageHeight( pWidget->img );
     }
     else
     {
@@ -487,12 +526,12 @@ void ui_drawImage( ui_Widget_t * pWidget )
       h = pWidget->height;
     }
 
-    x1 = ( GLfloat ) GLTexture_GetImageWidth( pWidget->img )  / ( GLfloat ) GLTexture_GetTextureWidth( pWidget->img );
-    y1 = ( GLfloat ) GLTexture_GetImageHeight( pWidget->img ) / ( GLfloat ) GLTexture_GetTextureHeight( pWidget->img );
+    x1 = ( GLfloat ) GLtexture_GetImageWidth( pWidget->img )  / ( GLfloat ) GLtexture_GetTextureWidth( pWidget->img );
+    y1 = ( GLfloat ) GLtexture_GetImageHeight( pWidget->img ) / ( GLfloat ) GLtexture_GetTextureHeight( pWidget->img );
 
     // Draw the image
-    GLTexture_Bind( pWidget->img, &gfxState );
-    glColor4f( 1, 1, 1, GLTexture_GetAlpha( pWidget->img ) );
+    GLtexture_Bind( pWidget->img, &gfxState );
+    glColor4f( 1, 1, 1, GLtexture_GetAlpha( pWidget->img ) );
 
     glBegin( GL_QUADS );
     glTexCoord2f( 0,  0 ); glVertex2i( pWidget->x,     pWidget->y );
@@ -519,7 +558,7 @@ void ui_drawImage( ui_Widget_t * pWidget )
  */
 void ui_drawTextBox( ui_Widget_t * pWidget, int spacing )
 {
-  TTFont_t *font = ui_getFont();
+  TTFont_t *font = ui_getTTFont();
   fnt_drawTextBox( font, pWidget->text, pWidget->x, pWidget->y, pWidget->width, pWidget->height, spacing );
 }
 
@@ -542,7 +581,7 @@ ui_buttonValues ui_doButton( ui_Widget_t * pWidget )
 
   // And then draw the pWidget->text that goes on top of the button
   font = pWidget->pfont;
-  if(NULL == font) { font = ui_getFont(); };
+  if(NULL == font) { font = ui_getTTFont(); };
 
   if ( NULL != font && NULL != pWidget->text )
   {
@@ -610,14 +649,14 @@ ui_buttonValues ui_doImageButtonWithText( ui_Widget_t * pWidget )
 
   // And draw the pWidget->text next to the image
   // And then draw the pWidget->text that goes on top of the button
-  font = ui_getFont();
+  font = ui_getTTFont();
   if ( font )
   {
     // find the pWidget->width & pWidget->height of the pWidget->text to be drawn, so that it can be centered inside
     // the button
     fnt_getTextSize( font, pWidget->text, &text_w, &text_h );
 
-    text_x = GLTexture_GetImageWidth( pWidget->img ) + 5 + pWidget->x;
+    text_x = GLtexture_GetImageWidth( pWidget->img ) + 5 + pWidget->x;
     text_y = ( pWidget->height - text_h ) / 2 + pWidget->y;
 
     glColor3f( 1, 1, 1 );
@@ -640,9 +679,9 @@ void ui_doCursor()
 
   // must use Begin2DMode() and BeginText() to get OpenGL in the right state
   Begin2DMode();
-  BeginText( &(bmfont.tex) );
+  BeginText( &(ui_context.bmfont.tex) );
   {
-    draw_one_font( 95, ui_context.mouseX - 5, ui_context.mouseY - 7 );
+    BMFont_draw_one( &(ui_context.bmfont), 95, ui_context.mouseX - 5, ui_context.mouseY - 7 );
   };
   EndText();
   End2DMode();

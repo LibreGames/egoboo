@@ -1341,7 +1341,7 @@ bool_t mad_display_bbox_tree(int level, matrix_4x4 matrix, Mad_t * pmad, int fra
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
     // choose a "white" texture
-    GLTexture_Bind(NULL, &gfxState);
+    GLtexture_Bind(NULL, &gfxState);
 
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();

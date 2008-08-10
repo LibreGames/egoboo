@@ -82,5 +82,7 @@ void snd_apply_mods( int channel, float intensity, vect3 snd_pos, vect3 ear_pos,
 int snd_play_sound( struct sGame * gs, float intensity, vect3 pos, Mix_Chunk *loadedwave, int loops, OBJ_REF whichobject, int soundnumber);
 void snd_stop_sound( int whichchannel );
 void snd_play_music( int songnumber, int fadetime, int loops );
+int snd_play_global_sound( struct sGame * gs, float intensity, vect3 pos, Sint8 sound );
 int snd_play_particle_sound( struct sGame * gs, float intensity, PRT_REF particle, Sint8 sound );
+
 

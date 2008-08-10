@@ -173,7 +173,7 @@ void make_camera_matrix()
 {
   // ZZ> This function sets GCamera.mView to the camera's location and rotation
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
   vect3 worldup = {0, 0, -gs->phys.gravity};
   float dither_x, dither_y;
 
@@ -199,7 +199,7 @@ void move_camera( float dUpdate )
 {
   // ZZ> This function moves the camera
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   PLA_REF pla_cnt;
   int locoalive;  // Used in rts remove? -> int band,
@@ -444,7 +444,7 @@ void reset_camera()
   int cnt, save;
   float fov2;
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   GCamera.swing = 0;
   GCamera.pos.x = 0;

@@ -121,7 +121,7 @@ bool_t    CClient_destroy(Client_t ** pcs);
 Client_t * CClient_renew(Client_t * cs);
 retval_t  CClient_startUp(Client_t * cs);
 retval_t  CClient_shutDown(Client_t * cs);
-bool_t    CClient_Running(Client_t * cs);
+bool_t    cl_Running(Client_t * cs);
 
 
 

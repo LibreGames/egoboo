@@ -207,7 +207,8 @@ bool_t           prt_spawn_info_delete(PRT_SPAWN_INFO * psi);
 
 struct sPrt
 {
-  egoboo_key_t      ekey;
+  egoboo_key_t    ekey;
+
   bool_t          reserved;         // Is it going to be used?
   bool_t          req_active;      // Are we going to auto-activate ASAP?
   bool_t          active;          // is it currently on?
@@ -220,7 +221,7 @@ struct sPrt
   OBJ_REF         model;                           // Pip_t spawn model
   CHR_REF         attachedtochr;                   // For torch flame
   Uint16          vertoffset;                      // The vertex it's on (counting backward from max vertex)
-  PRTALPHA         type;                            // Transparency mode, 0-2
+  PRTALPHA        type;                            // Transparency mode, 0-2
   Uint16          alpha_fp8;
   Uint16          facing;                          // Direction of the part
   TEAM_REF        team;                            // Team
@@ -271,10 +272,34 @@ typedef struct sPrt Prt_t;
   typedef Prt_t * PPrt_t;
 #endif
 
-
 Prt_t * Prt_new   ( Prt_t * pprt );
 bool_t Prt_delete( Prt_t * pprt );
 Prt_t * Prt_renew ( Prt_t * pprt );
+
+struct sPrtHeap
+{
+  egoboo_key_t ekey;
+
+  int       free_count;
+  PRT_REF   free_list[PRTLST_COUNT];
+
+  int       used_count;
+  PRT_REF   used_list[PRTLST_COUNT];
+};
+
+typedef struct sPrtHeap PrtHeap_t;
+
+PrtHeap_t * PrtHeap_new   ( PrtHeap_t * pheap );
+bool_t      PrtHeap_delete( PrtHeap_t * pheap );
+PrtHeap_t * PrtHeap_renew ( PrtHeap_t * pheap );
+bool_t      PrtHeap_reset ( PrtHeap_t * pheap );
+
+PRT_REF PrtHeap_getFree( PrtHeap_t * pheap, PRT_REF request );
+PRT_REF PrtHeap_iterateUsed( PrtHeap_t * pheap, int * index );
+bool_t  PrtHeap_addUsed( PrtHeap_t * pheap, PRT_REF ref );
+bool_t  PrtHeap_addFree( PrtHeap_t * pheap, PRT_REF ref );
+
+PROFILE_PROTOTYPE( PrtHeap );
 
 INLINE CHR_REF prt_get_owner( struct sGame * gs, PRT_REF iprt );
 INLINE CHR_REF prt_get_target( struct sGame * gs, PRT_REF iprt );
@@ -296,14 +321,13 @@ MAD_REF PrtList_getRMad(struct sGame * gs, PRT_REF iprt);
 
 extern Uint16          particletexture;                            // All in one bitmap
 
-#define VALID_PRT_RANGE(XX)   (((XX)>=0) && ((XX)<PRTLST_COUNT))
-#define VALID_PRT(LST, XX)    ( VALID_PRT_RANGE(XX) && EKEY_VALID(LST[XX]) )
-#define VALIDATE_PRT(LST, XX) ( VALID_PRT(LST, XX) ? (XX) : (INVALID_PRT) )
-#define RESERVED_PRT(LST, XX) ( VALID_PRT(LST, XX) && LST[XX].reserved && !LST[XX].active   )
-#define ACTIVE_PRT(LST, XX)   ( VALID_PRT(LST, XX) && LST[XX].active   && !LST[XX].reserved )
-#define PENDING_PRT(LST, XX)  ( VALID_PRT(LST, XX) && (LST[XX].active || LST[XX].req_active) && !LST[XX].reserved )
-
-
+#define VALID_PRT_RANGE(XX)     (((XX)>=0) && ((XX)<PRTLST_COUNT))
+#define VALID_PRT(LST, XX)      ( VALID_PRT_RANGE(XX) && EKEY_VALID(LST[XX]) )
+#define VALIDATE_PRT(LST, XX)   ( VALID_PRT(LST, XX) ? (XX) : (INVALID_PRT) )
+#define RESERVED_PRT(LST, XX)   ( VALID_PRT(LST, XX) && LST[XX].reserved && !LST[XX].active   )
+#define ACTIVE_PRT(LST, XX)     ( VALID_PRT(LST, XX) && LST[XX].active   && !LST[XX].reserved )
+#define SEMIACTIVE_PRT(LST, XX) ( VALID_PRT(LST, XX) && (LST[XX].active || LST[XX].req_active) && !LST[XX].reserved )
+#define PENDING_PRT(LST, XX)    ( VALID_PRT(LST, XX) && LST[XX].req_active && !LST[XX].reserved )
 
 #define CALCULATE_PRT_U0(CNT)  (((.05f+(CNT&15))/16.0f)*(( float ) gs->TxTexture[particletexture].imgW / ( float ) gs->TxTexture[particletexture].txW))
 #define CALCULATE_PRT_U1(CNT)  (((.95f+(CNT&15))/16.0f)*(( float ) gs->TxTexture[particletexture].imgW / ( float ) gs->TxTexture[particletexture].txW))
@@ -313,10 +337,16 @@ extern Uint16          particletexture;                            // All in one
 void PrtList_resynch( struct sGame * gs );
 void move_particles( struct sGame * gs, float dUpdate );
 void attach_particles( struct sGame * gs );
-PRT_REF prt_spawn_info_init( PRT_SPAWN_INFO * psi, struct sGame * gs, float intensity, vect3 pos,
+PRT_REF prt_spawn_info_init( PRT_SPAWN_INFO * psi, struct sGame * gs, float intensity, vect3 pos, vect3 vel,
                            Uint16 facing, OBJ_REF model, PIP_REF pip,
-                           CHR_REF characterattach, Uint32 offset, TEAM_REF team,
-                           CHR_REF characterorigin, Uint16 multispawn, CHR_REF oldtarget);
+                           CHR_REF chr_attach, Uint32 offset, TEAM_REF team,
+                           CHR_REF chr_origin, Uint16 multispawn, CHR_REF oldtarget);
+
+PRT_REF prt_spawn( struct sGame * gs, float intensity, vect3 pos, vect3 vel,
+                   Uint16 facing, OBJ_REF model, PIP_REF pip,
+                   CHR_REF chr_attach, Uint32 offset, TEAM_REF team,
+                   CHR_REF chr_origin, Uint16 multispawn, CHR_REF oldtarget );
+
 
 PRT_REF req_spawn_one_particle( PRT_SPAWN_INFO si );
 

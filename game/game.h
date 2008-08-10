@@ -37,13 +37,13 @@ enum e_Experience;
 #define CHOPPERMODEL                    32          //
 #define MAXCHOP                         (OBJLST_COUNT*CHOPPERMODEL)
 #define CHOPSIZE                        8
-#define CHOPDATACHUNK                   (MAXCHOP*CHOPSIZE)
+#define CHOPBUFFERSIZE                   (MAXCHOP*CHOPSIZE)
 
 struct sChopData
 {
   Uint16   count;                  // The number of name parts
   Uint32   write;                  // The data pointer
-  char     text[CHOPDATACHUNK];    // The name parts
+  char     text[CHOPBUFFERSIZE];    // The name parts
   Uint16   start[MAXCHOP];         // The first character of each part
 };
 typedef struct sChopData ChopData_t;
@@ -82,6 +82,15 @@ typedef struct sMessageQueue MessageQueue_t;
 //--------------------------------------------------------------------------------------------
 #define MAXENDTEXT 1024
 
+enum e_net_status_bits
+{
+  NET_STATUS_LOCAL   = 0,
+  NET_STATUS_CLIENT  = (1 << 0),
+  NET_STATUS_SERVER  = (1 << 1)
+};
+
+typedef enum e_net_status NET_STATUS_BITS;
+
 struct sGame
 {
   egoboo_key_t ekey;
@@ -94,13 +103,15 @@ struct sGame
   // in-game menu stuff
   MenuProc_t igm;
 
+  Uint32 net_status;
+
   // random stuff
   Uint32 randie_index;       // The current index of the random number table
 
   // module parameters
-  MOD_INFO    mod;
+  MOD_INFO      mod;
   ModState_t    modstate;
-  ModSummary_t modtxt;
+  ModSummary_t  modtxt;
 
   // game-specific module stuff
   Mesh_t        Mesh;
@@ -133,18 +144,15 @@ struct sGame
   PipList_t PipList;
 
   // character data
-  int       ChrFreeList_count;
-  CHR_REF   ChrFreeList[CHRLST_COUNT];
+  ChrHeap_t ChrHeap;
   ChrList_t ChrList;
 
   // enchant data
-  int       EncFreeList_count;
-  ENC_REF   EncFreeList[ENCLST_COUNT];
+  EncHeap_t EncHeap;
   EncList_t EncList;
 
   // particle data
-  int       PrtFreeList_count;
-  PRT_REF   PrtFreeList[PRTLST_COUNT];
+  PrtHeap_t PrtHeap;
   PrtList_t PrtList;
 
   // passage data
@@ -200,7 +208,6 @@ struct sGame
   Uint32 wld_frame;             // The number of frames that should have been drawn
 
   Sint32 all_clock;             // The total number of ticks so far
-  Uint32 all_frame;             // The total number of frames drawn so far
 
   float  pit_clock;             // For pit kills
   bool_t pitskill;              // Do they kill?
@@ -224,6 +231,16 @@ INLINE Mesh_t       * Game_getMesh(Game_t * gs)       { if(NULL ==gs) return NUL
 retval_t Game_registerNetwork( Game_t * gs, struct sNet    * net, bool_t destroy );
 retval_t Game_registerClient ( Game_t * gs, struct sClient * cl,  bool_t destroy  );
 retval_t Game_registerServer ( Game_t * gs, struct sServer * sv,  bool_t destroy  );
+retval_t Game_updateNetStatus( Game_t * gs );
+
+bool_t Game_isLocal  ( Game_t * gs );
+bool_t Game_isNetwork( Game_t * gs );
+bool_t Game_isClientServer( Game_t * gs );
+bool_t Game_isServer ( Game_t * gs );
+bool_t Game_isClient ( Game_t * gs );
+bool_t Game_hasServer ( Game_t * gs );
+bool_t Game_hasClient ( Game_t * gs );
+
 
 
 bool_t CapList_new( Game_t * gs );

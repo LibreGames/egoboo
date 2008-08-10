@@ -78,6 +78,7 @@
 
 #endif
 
+#undef DEBUG_PROFILE
 #undef DEBUG_ATTRIB
 #undef DEBUG_MESH_NORMALS
 #undef DEBUG_CHR_NORMALS

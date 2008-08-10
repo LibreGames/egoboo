@@ -130,11 +130,29 @@ struct sGraphics
   // the game state that we are plugged into
   struct sGame  * gs;
 
+  // pageflip stuff
+  bool_t pageflip_requested;
+  bool_t clear_requested;
+
+  // frame stuff
+  Sint32 fps_clock;               // The number of ticks this second
+  Uint32 fps_loops;               // The number of frames drawn this second
+  float  stabilized_fps;
+  float  stabilized_fps_sum;
+  float  stabilized_fps_weight;
 };
 typedef struct sGraphics Graphics_t;
 
-Graphics_t * CGraphics_new(Graphics_t * g, struct sConfigData * cd);
-bool_t       CGraphics_synch(Graphics_t * g, struct sConfigData * cd);
+Graphics_t * Graphics_new(Graphics_t * g, struct sConfigData * cd);
+bool_t       Graphics_synch(Graphics_t * g, struct sConfigData * cd);
+
+
+struct sGame * Graphics_getGame(Graphics_t * g);
+struct sGame * Graphics_requireGame(Graphics_t * g);
+bool_t         Graphics_hasGame(Graphics_t * g);
+bool_t         Graphics_matchesGame(Graphics_t * g, struct sGame * gs);
+retval_t       Graphics_ensureGame(Graphics_t * g, struct sGame * gs);
+retval_t       Graphics_removeGame(Graphics_t * g, struct sGame * gs);
 
 extern Graphics_t gfxState;
 

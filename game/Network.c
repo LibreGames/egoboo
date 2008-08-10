@@ -1327,7 +1327,7 @@ bool_t net_handlePacket(Net_t * ns, ENetEvent *event)
       net_logf("NET_REQUEST_FILE - \"%s\"\n", temp);
 
       // convert the web compatable directory slashes to local slashes
-      str_convert_sys(local_filename, sizeof(local_filename));
+      str_convert_slash_sys(local_filename, sizeof(local_filename));
 
       // We successfully cracked the filename.  Now send the file if it exists on
       // our machine and if the remote machine's CRC does not match ours
@@ -1618,7 +1618,7 @@ void do_chat_input()
   {
     if(net_Started())
     {
-      net_send_chat( gfxState.gs, kbuffer );
+      net_send_chat( Graphics_requireGame(&gfxState), kbuffer );
     }
 
     debug_message(1, kbuffer->buffer);

@@ -104,7 +104,7 @@ bool_t gfx_initialize(Graphics_t * g, ConfigData_t * cd)
   if(gfx_initialized) return btrue;
 
   // set the graphics state
-  CGraphics_new(g, cd);
+  Graphics_new(g, cd);
   g->rnd_lst = &renderlist;
   gfx_find_anisotropy(g);
   gfx_initialized = btrue;
@@ -226,7 +226,7 @@ void BeginText( GLtexture * pfnt )
   ATTRIB_GUARD_OPEN( text_begin_level );
   ATTRIB_PUSH( "BeginText", GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_TEXTURE_BIT | GL_DEPTH_BUFFER_BIT | GL_POLYGON_BIT | GL_CURRENT_BIT );
 
-  GLTexture_Bind( pfnt, &gfxState );
+  GLtexture_Bind( pfnt, &gfxState );
 
   glEnable( GL_ALPHA_TEST );
   glAlphaFunc( GL_GREATER, 0 );
@@ -262,20 +262,19 @@ void release_all_textures(Game_t * gs)
 
   for ( cnt = 0; cnt < MAXTEXTURE; cnt++ )
   {
-    GLTexture_Release( gs->TxTexture + cnt );
+    GLtexture_Release( gs->TxTexture + cnt );
   }
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 load_one_icon( char * szPathname, const char * szObjectname, char * szFilename )
+Uint32 load_one_icon( Game_t * gs, char * szPathname, const char * szObjectname, char * szFilename )
 {
   // ZZ> This function is used to load an icon.  Most icons are loaded
   //     without this function though...
 
   Uint32 retval = MAXICONTX;
-  Game_t * gs = gfxState.gs;
 
-  if ( INVALID_TEXTURE != GLTexture_Load( GL_TEXTURE_2D,  gs->TxIcon + gs->TxIcon_count,  inherit_fname(szPathname, szObjectname, szFilename), INVALID_KEY ) )
+  if ( INVALID_TEXTURE != GLtexture_Load( GL_TEXTURE_2D,  gs->TxIcon + gs->TxIcon_count,  inherit_fname(szPathname, szObjectname, szFilename), INVALID_KEY ) )
   {
     retval = gs->TxIcon_count;
     gs->TxIcon_count++;
@@ -336,13 +335,14 @@ void release_all_icons(Game_t * gs)
   // ZZ> This function clears out all of the icons
 
   int cnt;
-  gs->TxIcon_count = 0;
+
   for ( cnt = 0; cnt < MAXICONTX; cnt++ )
   {
-    GLTexture_Release( gs->TxIcon + cnt );
+    GLtexture_Release( gs->TxIcon + cnt );
     gs->TxIcon[cnt].textureID = INVALID_TEXTURE;
     gs->skintoicon[cnt]       = MAXICONTX;
   }
+  gs->TxIcon_count = 0;
 }
 
 //---------------------------------------------------------------------------------------------
@@ -369,7 +369,7 @@ void release_map( Game_t * gs )
 {
   // ZZ> This function releases all the map images
 
-  GLTexture_Release( &gs->TxMap );
+  GLtexture_Release( &gs->TxMap );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -500,10 +500,10 @@ void load_basic_textures( Game_t * gs, char *modname )
 
   // Particle sprites
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, "particle.bmp" );
-  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_PARTICLE, CStringTmp1, TRANSCOLOR ) )
+  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_PARTICLE, CStringTmp1, TRANSCOLOR ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.globalparticles_dir, CData.particle_bitmap );
-    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_PARTICLE, CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_PARTICLE, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "!!!!Particle bitmap could not be found!!!! Missing File = \"%s\"\n", CStringTmp1 );
     }
@@ -511,40 +511,40 @@ void load_basic_textures( Game_t * gs, char *modname )
 
   // Module background tiles
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.tile0_bitmap );
-  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_0, CStringTmp1, TRANSCOLOR ) )
+  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_0, CStringTmp1, TRANSCOLOR ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.tile0_bitmap );
-    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_0, CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_0, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Tile 0 could not be found. Missing File = \"%s\"\n", CData.tile0_bitmap );
     }
   };
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.tile1_bitmap );
-  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,   gs->TxTexture + TX_TILE_1, CStringTmp1, TRANSCOLOR ) )
+  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,   gs->TxTexture + TX_TILE_1, CStringTmp1, TRANSCOLOR ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.tile1_bitmap );
-    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_1, CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_1, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Tile 1 could not be found. Missing File = \"%s\"\n", CData.tile1_bitmap );
     }
   };
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.tile2_bitmap );
-  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_2, CStringTmp1, TRANSCOLOR ) )
+  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_2, CStringTmp1, TRANSCOLOR ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.tile2_bitmap );
-    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_2, CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_2, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Tile 2 could not be found. Missing File = \"%s\"\n", CData.tile2_bitmap );
     }
   };
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.tile3_bitmap );
-  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_3, CStringTmp1, TRANSCOLOR ) )
+  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_3, CStringTmp1, TRANSCOLOR ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.tile3_bitmap );
-    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_3, CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_3, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Tile 3 could not be found. Missing File = \"%s\"\n", CData.tile3_bitmap );
     }
@@ -553,10 +553,10 @@ void load_basic_textures( Game_t * gs, char *modname )
 
   // Water textures
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.watertop_bitmap );
-  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_WATER_TOP, CStringTmp1, INVALID_KEY ) )
+  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_WATER_TOP, CStringTmp1, INVALID_KEY ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.watertop_bitmap );
-    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_WATER_TOP, CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_WATER_TOP, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Water Layer 1 could not be found. Missing File = \"%s\"\n", CData.watertop_bitmap );
     }
@@ -564,10 +564,10 @@ void load_basic_textures( Game_t * gs, char *modname )
 
   // This is also used as far background
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.waterlow_bitmap );
-  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_WATER_LOW, CStringTmp1, INVALID_KEY ) )
+  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_WATER_LOW, CStringTmp1, INVALID_KEY ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.waterlow_bitmap );
-    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_WATER_LOW, CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_WATER_LOW, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Water Layer 0 could not be found. Missing File = \"%s\"\n", CData.waterlow_bitmap );
     }
@@ -577,10 +577,10 @@ void load_basic_textures( Game_t * gs, char *modname )
   // BB > this is handled differently now and is not needed
   // Texture 7 is the phong map
   //snprintf(CStringTmp1, sizeof(CStringTmp1), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.phong_bitmap);
-  //if(INVALID_TEXTURE==GLTexture_Load(GL_TEXTURE_2D,  gs->TxTexture + TX_PHONG, CStringTmp1, INVALID_KEY))
+  //if(INVALID_TEXTURE==GLtexture_Load(GL_TEXTURE_2D,  gs->TxTexture + TX_PHONG, CStringTmp1, INVALID_KEY))
   //{
   //  snprintf(CStringTmp1, sizeof(CStringTmp1), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.phong_bitmap);
-  //  GLTexture_Load(GL_TEXTURE_2D,  gs->TxTexture + TX_PHONG, CStringTmp1, TRANSCOLOR );
+  //  GLtexture_Load(GL_TEXTURE_2D,  gs->TxTexture + TX_PHONG, CStringTmp1, TRANSCOLOR );
   //  {
   //    log_warning("Phong Bitmap Layer 1 could not be found. Missing File = \"%s\"", CData.phong_bitmap);
   //  }
@@ -596,7 +596,7 @@ bool_t load_bars( char* szBitmap )
   Gui_t * gui = gui_getState();
   int cnt;
 
-  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D, &gui->TxBars, szBitmap, 0 ) )
+  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D, &gui->TxBars, szBitmap, 0 ) )
   {
     return bfalse;
   }
@@ -630,7 +630,7 @@ void load_map( Game_t * gs, char* szModule )
 
   // Load the images
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModule, CData.gamedat_dir, CData.plan_bitmap );
-  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D, &gs->TxMap, CStringTmp1, INVALID_KEY ) )
+  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D, &gs->TxMap, CStringTmp1, INVALID_KEY ) )
     log_warning( "Cannot load map: %s\n", CStringTmp1 );
 
   // Set up the rectangles
@@ -910,7 +910,7 @@ void render_background( Uint16 texture )
 {
   // ZZ> This function draws the large background
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   GLVertex vtlist[4];
   float size;
@@ -966,7 +966,7 @@ void render_background( Uint16 texture )
 
     glDisable( GL_CULL_FACE );
 
-    GLTexture_Bind( gs->TxTexture + texture, &gfxState );
+    GLtexture_Bind( gs->TxTexture + texture, &gfxState );
 
     glColor4f( 1.0f, 1.0f, 1.0f, 1.0f );
     glBegin( GL_TRIANGLE_FAN );
@@ -986,7 +986,7 @@ void render_background( Uint16 texture )
 //--------------------------------------------------------------------------------------------
 void render_foreground_overlay( Uint16 texture )
 {
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   GLVertex vtlist[4];
   float size;
@@ -1053,7 +1053,7 @@ void render_foreground_overlay( Uint16 texture )
 
     glDisable( GL_CULL_FACE );
 
-    GLTexture_Bind( gs->TxTexture + texture, &gfxState );
+    GLtexture_Bind( gs->TxTexture + texture, &gfxState );
 
     glColor4f( 1.0f, 1.0f, 1.0f, 0.5f );
     glBegin( GL_TRIANGLE_FAN );
@@ -1073,7 +1073,7 @@ void render_shadow( CHR_REF character )
 {
   // ZZ> This function draws a NIFTY shadow
 
-  Game_t * gs    = gfxState.gs;
+  Game_t * gs    = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
 
   GLVertex v[4];
@@ -1173,7 +1173,7 @@ void render_shadow( CHR_REF character )
       glDepthFunc( GL_LESS );
 
       // Choose texture.
-      GLTexture_Bind( gs->TxTexture + particletexture, &gfxState );
+      GLtexture_Bind( gs->TxTexture + particletexture, &gfxState );
 
       glBegin( GL_TRIANGLE_FAN );
       glColor4f( alpha_penumbra, alpha_penumbra, alpha_penumbra, 1.0 );
@@ -1216,7 +1216,7 @@ void render_shadow( CHR_REF character )
       glDepthFunc( GL_LEQUAL );
 
       // Choose texture.
-      GLTexture_Bind( gs->TxTexture + particletexture, &gfxState );
+      GLtexture_Bind( gs->TxTexture + particletexture, &gfxState );
 
       glBegin( GL_TRIANGLE_FAN );
       glColor4f( alpha_penumbra, alpha_penumbra, alpha_penumbra, 1.0 );
@@ -1296,7 +1296,7 @@ void light_characters()
   Uint32 vrtstart;
   Uint32 fan;
 
-  Game_t * gs    = gfxState.gs;
+  Game_t * gs    = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
 
   for ( cnt = 0; cnt < numdolist; cnt++ )
@@ -1389,7 +1389,7 @@ void light_particles()
 {
   // ZZ> This function figures out particle lighting
 
-  Game_t * gs    = gfxState.gs;
+  Game_t * gs    = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
 
   PRT_REF prt_cnt;
@@ -1452,7 +1452,7 @@ void render_water()
   // ZZ> This function draws all of the water fans
 
   int cnt;
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   // Bottom layer first
   if ( !gfxState.render_background && gs->water.layer_count > 1 )
@@ -1482,7 +1482,7 @@ void render_water_lit()
   // BB> This function draws the hilites for water tiles using global lighting
 
   int cnt;
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   // Bottom layer first
   if ( !gfxState.render_background && gs->water.layer_count > 1 )
@@ -1561,7 +1561,7 @@ void render_good_shadows()
   int cnt;
   CHR_REF chr_tnc;
 
-  Game_t * gs    = gfxState.gs;
+  Game_t * gs    = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
 
   // Good shadows for me
@@ -1594,7 +1594,7 @@ void render_character_reflections()
   int cnt;
   CHR_REF chr_tnc;
 
-  Game_t * gs    = gfxState.gs;
+  Game_t * gs    = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
 
   // Render reflections of characters
@@ -1627,7 +1627,7 @@ void render_character_reflections()
 //--------------------------------------------------------------------------------------------
 void render_normal_fans()
 {
-  Game_t * gs    = gfxState.gs;
+  Game_t * gs    = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
 
   int cnt, tnc, fan, texture;
@@ -1656,7 +1656,7 @@ void render_normal_fans()
     {
       texture = cnt + TX_TILE_0;
       pmesh->Info.last_texture = texture;
-      GLTexture_Bind( gs->TxTexture + texture, &gfxState );
+      GLtexture_Bind( gs->TxTexture + texture, &gfxState );
       for ( tnc = 0; tnc < renderlist.num_norm; tnc++ )
       {
         fan = renderlist.norm[tnc];
@@ -1670,7 +1670,7 @@ void render_normal_fans()
 //--------------------------------------------------------------------------------------------
 void render_shiny_fans()
 {
-  Game_t * gs    = gfxState.gs;
+  Game_t * gs    = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
 
   int cnt, tnc, fan, texture;
@@ -1700,7 +1700,7 @@ void render_shiny_fans()
     {
       texture = cnt + TX_TILE_0;
       pmesh->Info.last_texture = texture;
-      GLTexture_Bind( gs->TxTexture + texture, &gfxState );
+      GLtexture_Bind( gs->TxTexture + texture, &gfxState );
       for ( tnc = 0; tnc < renderlist.num_shine; tnc++ )
       {
         fan = renderlist.shine[tnc];
@@ -1714,7 +1714,7 @@ void render_shiny_fans()
 //--------------------------------------------------------------------------------------------
 void render_reflected_fans_ref()
 {
-  Game_t * gs    = gfxState.gs;
+  Game_t * gs    = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
 
   int cnt, tnc, fan, texture;
@@ -1747,7 +1747,7 @@ void render_reflected_fans_ref()
     {
       texture = cnt + TX_TILE_0;
       pmesh->Info.last_texture = texture;
-      GLTexture_Bind( gs->TxTexture + texture, &gfxState );
+      GLtexture_Bind( gs->TxTexture + texture, &gfxState );
       for ( tnc = 0; tnc < renderlist.num_shine; tnc++ )
       {
         fan = renderlist.reflc[tnc];
@@ -1764,7 +1764,7 @@ void render_solid_characters()
   int cnt;
   CHR_REF chr_tnc;
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   // Render the normal characters
   ATTRIB_PUSH( "render_solid_characters", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT );
@@ -1802,7 +1802,7 @@ void render_alpha_characters()
   CHR_REF chr_tnc;
   Uint8 trans;
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   // Now render the transparent characters
   ATTRIB_PUSH( "render_alpha_characters", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT );
@@ -1933,7 +1933,7 @@ void render_character_highlights()
   int cnt;
   CHR_REF chr_tnc;
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   ATTRIB_PUSH( "render_character_highlights", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_LIGHTING_BIT | GL_POLYGON_BIT );
   {
@@ -1988,7 +1988,7 @@ void draw_scene_zreflection()
   // ZZ> This function draws 3D objects
   // do all the rendering of reflections
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   if ( CData.refon )
   {
@@ -2115,10 +2115,7 @@ bool_t draw_texture_box( GLtexture * ptx, FRect_t * tx_rect, FRect_t * sc_rect )
 
   if( NULL == sc_rect ) return bfalse;
 
-  if(NULL != ptx)
-  {
-    GLTexture_Bind( ptx, &gfxState );
-  }
+  GLtexture_Bind( ptx, &gfxState );
 
   if(NULL == tx_rect)
   {
@@ -2169,10 +2166,10 @@ void draw_blip( COLR color, float x, float y)
     // backface culling
     glDisable( GL_CULL_FACE );
 
-    tx_rect.left   = (( float ) BlipList[color].rect.left   ) / ( float ) GLTexture_GetTextureWidth(&gui->TxBlip)  + 0.01;
-    tx_rect.right  = (( float ) BlipList[color].rect.right  ) / ( float ) GLTexture_GetTextureWidth(&gui->TxBlip)  - 0.01;
-    tx_rect.top    = (( float ) BlipList[color].rect.top    ) / ( float ) GLTexture_GetTextureHeight(&gui->TxBlip) + 0.01;
-    tx_rect.bottom = (( float ) BlipList[color].rect.bottom ) / ( float ) GLTexture_GetTextureHeight(&gui->TxBlip) - 0.01;
+    tx_rect.left   = (( float ) BlipList[color].rect.left   ) / ( float ) GLtexture_GetTextureWidth(&gui->TxBlip)  + 0.01;
+    tx_rect.right  = (( float ) BlipList[color].rect.right  ) / ( float ) GLtexture_GetTextureWidth(&gui->TxBlip)  - 0.01;
+    tx_rect.top    = (( float ) BlipList[color].rect.top    ) / ( float ) GLtexture_GetTextureHeight(&gui->TxBlip) + 0.01;
+    tx_rect.bottom = (( float ) BlipList[color].rect.bottom ) / ( float ) GLtexture_GetTextureHeight(&gui->TxBlip) - 0.01;
 
     sc_rect.left   = x - width;
     sc_rect.right  = x + width;
@@ -2191,7 +2188,7 @@ void draw_one_icon( int icontype, int x, int y, Uint8 sparkle )
 {
   // ZZ> This function draws an icon
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   int position, blipx, blipy;
   int width, height;
@@ -2214,10 +2211,10 @@ void draw_one_icon( int icontype, int x, int y, Uint8 sparkle )
     // backface culling
     glDisable( GL_CULL_FACE );
 
-    tx_rect.left   = (( float ) iconrect.left   ) / GLTexture_GetTextureWidth(gs->TxIcon + icontype);
-    tx_rect.right  = (( float ) iconrect.right  ) / GLTexture_GetTextureWidth(gs->TxIcon + icontype);
-    tx_rect.top    = (( float ) iconrect.top    ) / GLTexture_GetTextureHeight(gs->TxIcon + icontype);
-    tx_rect.bottom = (( float ) iconrect.bottom ) / GLTexture_GetTextureHeight(gs->TxIcon + icontype);
+    tx_rect.left   = (( float ) iconrect.left   ) / GLtexture_GetTextureWidth(gs->TxIcon + icontype);
+    tx_rect.right  = (( float ) iconrect.right  ) / GLtexture_GetTextureWidth(gs->TxIcon + icontype);
+    tx_rect.top    = (( float ) iconrect.top    ) / GLtexture_GetTextureHeight(gs->TxIcon + icontype);
+    tx_rect.bottom = (( float ) iconrect.bottom ) / GLtexture_GetTextureHeight(gs->TxIcon + icontype);
 
     width  = iconrect.right  - iconrect.left;
     height = iconrect.bottom - iconrect.top;
@@ -2255,94 +2252,7 @@ void draw_one_icon( int icontype, int x, int y, Uint8 sparkle )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t load_font( char* szBitmap, char* szSpacing )
-{
-  // ZZ> This function loads the font bitmap and sets up the coordinates
-  //     of each font on that bitmap...  Bitmap must have 16x6 fonts
-
-  int cnt, y, xsize, ysize, xdiv, ydiv;
-  int xstt, ystt;
-  int xspacing, yspacing;
-  Uint8 cTmp;
-  FILE *fileread;
-
-
-  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D, &(bmfont.tex), szBitmap, 0 ) ) return bfalse;
-
-
-  // Clear out the conversion table
-  for ( cnt = 0; cnt < 256; cnt++ )
-    bmfont.ascii_table[cnt] = 0;
-
-
-  // Get the size of the bitmap
-  xsize = GLTexture_GetImageWidth( &(bmfont.tex) );
-  ysize = GLTexture_GetImageHeight( &(bmfont.tex) );
-  if ( xsize == 0 || ysize == 0 )
-    log_warning( "Bad font size! (basicdat" SLASH_STRING "%s) - X size: %i , Y size: %i\n", szBitmap, xsize, ysize );
-
-
-  // Figure out the general size of each font
-  ydiv = ysize / NUMFONTY;
-  xdiv = xsize / NUMFONTX;
-
-
-  // Figure out where each font is and its spacing
-  fileread = fs_fileOpen( PRI_NONE, NULL, szSpacing, "r" );
-  if ( NULL == fileread  ) return bfalse;
-
-  globalname = szSpacing;
-
-  // Uniform font height is at the top
-  yspacing = fget_next_int( fileread );
-  bmfont.offset = gfxState.scry - yspacing;
-
-  // Mark all as unused
-  for ( cnt = 0; cnt < 255; cnt++ )
-    bmfont.ascii_table[cnt] = 255;
-
-
-  cnt = 0;
-  y = 0;
-  xstt = 0;
-  ystt = 0;
-  while ( cnt < 255 && fgoto_colon_yesno( fileread ) )
-  {
-    cTmp = fgetc( fileread );
-    xspacing = fget_int( fileread );
-    if ( bmfont.ascii_table[cTmp] == 255 )
-    {
-      bmfont.ascii_table[cTmp] = cnt;
-    }
-
-    if ( xstt + xspacing + 1 >= xsize )
-    {
-      xstt = 0;
-      ystt += yspacing;
-    }
-
-    bmfont.rect[cnt].x = xstt;
-    bmfont.rect[cnt].w = xspacing;
-    bmfont.rect[cnt].y = ystt;
-    bmfont.rect[cnt].h = yspacing - 1;
-    bmfont.spacing_x[cnt] = xspacing;
-
-    xstt += xspacing + 1;
-
-    cnt++;
-  }
-  fs_fileClose( fileread );
-
-
-  // Space between lines
-  bmfont.spacing_y = ( yspacing >> 1 ) + FONTADD;
-
-  return btrue;
-}
-
-
-//--------------------------------------------------------------------------------------------
-void draw_one_font( int fonttype, float x, float y )
+void BMFont_draw_one( BMFont_t * pfnt, int fonttype, float x, float y )
 {
   // ZZ> This function draws a letter or number
   // GAC> Very nasty version for starters.  Lots of room for improvement.
@@ -2354,17 +2264,17 @@ void draw_one_font( int fonttype, float x, float y )
   dy = 1.0f / 256.0f;
   border = 1.0f / 512.0f;
 
-  tx_rect.left   = bmfont.rect[fonttype].x * dx + border;
-  tx_rect.right  = ( bmfont.rect[fonttype].x + bmfont.rect[fonttype].w ) * dx - border;
-  tx_rect.top    = bmfont.rect[fonttype].y * dy + border;
-  tx_rect.bottom = ( bmfont.rect[fonttype].y + bmfont.rect[fonttype].h ) * dy - border;
+  tx_rect.left   = pfnt->rect[fonttype].x * dx + border;
+  tx_rect.right  = ( pfnt->rect[fonttype].x + pfnt->rect[fonttype].w ) * dx - border;
+  tx_rect.top    = pfnt->rect[fonttype].y * dy + border;
+  tx_rect.bottom = ( pfnt->rect[fonttype].y + pfnt->rect[fonttype].h ) * dy - border;
 
   sc_rect.left   = x;
-  sc_rect.right  = x + bmfont.rect[fonttype].w;
+  sc_rect.right  = x + pfnt->rect[fonttype].w;
   sc_rect.top    = gfxState.scry - y;
-  sc_rect.bottom = gfxState.scry - (y + bmfont.rect[fonttype].h);
+  sc_rect.bottom = gfxState.scry - (y + pfnt->rect[fonttype].h);
 
-  draw_texture_box(NULL, &tx_rect, &sc_rect);
+  draw_texture_box(pfnt, &tx_rect, &sc_rect);
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2372,7 +2282,7 @@ void draw_map( float x, float y )
 {
   // ZZ> This function draws the map
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
   FRect_t tx_rect, sc_rect;
 
   ATTRIB_PUSH( "draw_map", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT | GL_TEXTURE_BIT | GL_LIGHTING_BIT );
@@ -2391,9 +2301,9 @@ void draw_map( float x, float y )
     glDisable( GL_CULL_FACE );
 
     tx_rect.left   = 0.0f;
-    tx_rect.right  = (float)GLTexture_GetImageWidth(&gs->TxMap) / (float)GLTexture_GetTextureWidth(&gs->TxMap);
+    tx_rect.right  = (float)GLtexture_GetImageWidth(&gs->TxMap) / (float)GLtexture_GetTextureWidth(&gs->TxMap);
     tx_rect.top    = 0.0f;
-    tx_rect.bottom = (float)GLTexture_GetImageHeight(&gs->TxMap) / (float)GLTexture_GetTextureHeight(&gs->TxMap);
+    tx_rect.bottom = (float)GLtexture_GetImageHeight(&gs->TxMap) / (float)GLtexture_GetTextureHeight(&gs->TxMap);
 
     sc_rect.left   = x + maprect.left;
     sc_rect.right  = x + maprect.right;
@@ -2437,11 +2347,11 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
     if ( maxticks > 0 && ticks >= 0 )
     {
       // Draw the tab
-      GLTexture_Bind( &gui->TxBars, &gfxState );
-      tx_rect.left   = ( float ) tabrect[bartype].left   / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
-      tx_rect.right  = ( float ) tabrect[bartype].right  / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
-      tx_rect.top    = ( float ) tabrect[bartype].top    / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
-      tx_rect.bottom = ( float ) tabrect[bartype].bottom / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
+      GLtexture_Bind( &gui->TxBars, &gfxState );
+      tx_rect.left   = ( float ) tabrect[bartype].left   / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
+      tx_rect.right  = ( float ) tabrect[bartype].right  / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
+      tx_rect.top    = ( float ) tabrect[bartype].top    / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
+      tx_rect.bottom = ( float ) tabrect[bartype].bottom / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
 
       width  = tabrect[bartype].right  - tabrect[bartype].left;
       height = tabrect[bartype].bottom - tabrect[bartype].top;
@@ -2463,10 +2373,10 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
       {
         barrect[bartype].right = BARX;
 
-        tx_rect.left   = ( float ) barrect[bartype].left   / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
-        tx_rect.right  = ( float ) barrect[bartype].right  / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
-        tx_rect.top    = ( float ) barrect[bartype].top    / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
-        tx_rect.bottom = ( float ) barrect[bartype].bottom / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
+        tx_rect.left   = ( float ) barrect[bartype].left   / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
+        tx_rect.right  = ( float ) barrect[bartype].right  / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
+        tx_rect.top    = ( float ) barrect[bartype].top    / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
+        tx_rect.bottom = ( float ) barrect[bartype].bottom / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
 
         width  = barrect[bartype].right  - barrect[bartype].left;
         height = barrect[bartype].bottom - barrect[bartype].top;
@@ -2490,10 +2400,10 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
         // Draw the filled ones
         barrect[bartype].right = ( ticks << 3 ) + TABX;
 
-        tx_rect.left   = ( float ) barrect[bartype].left   / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
-        tx_rect.right  = ( float ) barrect[bartype].right  / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
-        tx_rect.top    = ( float ) barrect[bartype].top    / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
-        tx_rect.bottom = ( float ) barrect[bartype].bottom / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
+        tx_rect.left   = ( float ) barrect[bartype].left   / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
+        tx_rect.right  = ( float ) barrect[bartype].right  / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
+        tx_rect.top    = ( float ) barrect[bartype].top    / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
+        tx_rect.bottom = ( float ) barrect[bartype].bottom / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
 
         width  = barrect[bartype].right  - barrect[bartype].left;
         height = barrect[bartype].bottom - barrect[bartype].top;
@@ -2510,10 +2420,10 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
         if ( noticks > ( NUMTICK - ticks ) ) noticks = ( NUMTICK - ticks );
         barrect[0].right = ( noticks << 3 ) + TABX;
 
-        tx_rect.left   = ( float ) barrect[0].left   / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
-        tx_rect.right  = ( float ) barrect[0].right  / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
-        tx_rect.top    = ( float ) barrect[0].top    / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
-        tx_rect.bottom = ( float ) barrect[0].bottom / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
+        tx_rect.left   = ( float ) barrect[0].left   / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
+        tx_rect.right  = ( float ) barrect[0].right  / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
+        tx_rect.top    = ( float ) barrect[0].top    / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
+        tx_rect.bottom = ( float ) barrect[0].bottom / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
 
         width  = barrect[0].right  - barrect[0].left;
         height = barrect[0].bottom - barrect[0].top;
@@ -2535,10 +2445,10 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
       {
         barrect[0].right = BARX;
 
-        tx_rect.left   = ( float ) barrect[0].left   / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
-        tx_rect.right  = ( float ) barrect[0].right  / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
-        tx_rect.top    = ( float ) barrect[0].top    / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
-        tx_rect.bottom = ( float ) barrect[0].bottom / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
+        tx_rect.left   = ( float ) barrect[0].left   / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
+        tx_rect.right  = ( float ) barrect[0].right  / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
+        tx_rect.top    = ( float ) barrect[0].top    / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
+        tx_rect.bottom = ( float ) barrect[0].bottom / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
 
         width  = barrect[0].right  - barrect[0].left;
         height = barrect[0].bottom - barrect[0].top;
@@ -2560,10 +2470,10 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
       {
         barrect[0].right = ( maxticks << 3 ) + TABX;
 
-        tx_rect.left   = ( float ) barrect[0].left   / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
-        tx_rect.right  = ( float ) barrect[0].right  / ( float ) GLTexture_GetTextureWidth( &gui->TxBars );
-        tx_rect.top    = ( float ) barrect[0].top    / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
-        tx_rect.bottom = ( float ) barrect[0].bottom / ( float ) GLTexture_GetTextureHeight( &gui->TxBars );
+        tx_rect.left   = ( float ) barrect[0].left   / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
+        tx_rect.right  = ( float ) barrect[0].right  / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
+        tx_rect.top    = ( float ) barrect[0].top    / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
+        tx_rect.bottom = ( float ) barrect[0].bottom / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
 
         width  = barrect[0].right  - barrect[0].left;
         height = barrect[0].bottom - barrect[0].top;
@@ -2633,7 +2543,7 @@ int draw_string( BMFont_t * pfnt, float x, float y, GLfloat tint[], char * szFor
       {
         // Normal letter
         cTmp = pfnt->ascii_table[cTmp];
-        draw_one_font( cTmp, x, y );
+        BMFont_draw_one( ui_getBMFont(), cTmp, x, y );
         x += pfnt->spacing_x[cTmp];
       }
       cTmp = szText[cnt];
@@ -2649,7 +2559,7 @@ int draw_string( BMFont_t * pfnt, float x, float y, GLfloat tint[], char * szFor
 }
 
 //--------------------------------------------------------------------------------------------
-int length_of_word( char *szText )
+int BMFont_word_size( BMFont_t * pfnt, char *szText )
 {
   // ZZ> This function returns the number of pixels the
   //     next word will take on screen in the x direction
@@ -2663,7 +2573,7 @@ int length_of_word( char *szText )
   {
     if ( cTmp == ' ' )
     {
-      x += bmfont.spacing_x[bmfont.ascii_table[cTmp]];
+      x += pfnt->spacing_x[pfnt->ascii_table[cTmp]];
     }
     else if ( cTmp == '~' )
     {
@@ -2676,7 +2586,7 @@ int length_of_word( char *szText )
 
   while ( cTmp != ' ' && cTmp != '~' && cTmp != '\n' && cTmp != 0 )
   {
-    x += bmfont.spacing_x[bmfont.ascii_table[cTmp]];
+    x += pfnt->spacing_x[pfnt->ascii_table[cTmp]];
     cnt++;
     cTmp = szText[cnt];
   }
@@ -2719,7 +2629,7 @@ int draw_wrap_string( BMFont_t * pfnt, float x, float y, GLfloat tint[], float m
     xstt = x;
     ystt = y;
     maxx += xstt;
-    newy = y + bmfont.spacing_y;
+    newy = y + pfnt->spacing_y;
 
     cnt = 1;
     cTmp = szText[0];
@@ -2728,15 +2638,15 @@ int draw_wrap_string( BMFont_t * pfnt, float x, float y, GLfloat tint[], float m
       // Check each new word for wrapping
       if ( newword )
       {
-        int endx = x + length_of_word( szText + cnt - 1 );
+        int endx = x + BMFont_word_size( pfnt, szText + cnt - 1 );
 
         newword = bfalse;
         if ( endx > maxx )
         {
           // Wrap the end and cut off spaces and tabs
-          x = xstt + bmfont.spacing_y;
-          y += bmfont.spacing_y;
-          newy += bmfont.spacing_y;
+          x = xstt + pfnt->spacing_y;
+          y += pfnt->spacing_y;
+          newy += pfnt->spacing_y;
           while ( cTmp == ' ' || cTmp == '~' )
           {
             cTmp = szText[cnt];
@@ -2754,15 +2664,15 @@ int draw_wrap_string( BMFont_t * pfnt, float x, float y, GLfloat tint[], float m
         else if ( cTmp == '\n' )
         {
           x = xstt;
-          y += bmfont.spacing_y;
-          newy += bmfont.spacing_y;
+          y += pfnt->spacing_y;
+          newy += pfnt->spacing_y;
         }
         else
         {
           // Normal letter
-          cTmp = bmfont.ascii_table[cTmp];
-          draw_one_font( cTmp, x, y );
-          x += bmfont.spacing_x[cTmp];
+          cTmp = pfnt->ascii_table[cTmp];
+          BMFont_draw_one( ui_getBMFont(), cTmp, x, y );
+          x += pfnt->spacing_x[cTmp];
         }
         cTmp = szText[cnt];
         if ( cTmp == '~' || cTmp == ' ' )
@@ -2809,10 +2719,9 @@ int draw_status( BMFont_t * pfnt, Status_t * pstat )
   Mad_t * pmad;
   Cap_t * pcap;
 
+  gs = Graphics_requireGame(&gfxState);
+  if(NULL == gs) return 0;
 
-
-  if(NULL == gfxState.gs) return 0;
-  gs = gfxState.gs;
   objlst = gs->ObjList;
   chrlst = gs->ChrList;
   //madlst = gs->MadList;
@@ -2943,7 +2852,7 @@ bool_t do_map()
   CHR_REF ichr;
   int cnt;
 
-  Game_t * gs    = gfxState.gs;
+  Game_t * gs    = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
 
   if(!mapon) return bfalse;
@@ -2977,7 +2886,7 @@ int do_messages( BMFont_t * pfnt, int x, int y )
   int cnt, tnc;
   int ystt = y;
 
-  Game_t * gs  = gfxState.gs;
+  Game_t * gs  = Graphics_requireGame(&gfxState);
   Gui_t  * gui = gui_getState();
   MessageQueue_t * mq = &(gui->msgQueue);
   MESSAGE_ELEMENT * msg;
@@ -3039,7 +2948,7 @@ void draw_text( BMFont_t *  pfnt )
   int y, fifties, seconds, minutes;
 
   KeyboardBuffer_t * kbuffer = KeyboardBuffer_getState();
-  Game_t * gs  = gfxState.gs;
+  Game_t * gs  = Graphics_requireGame(&gfxState);
   Gui_t  * gui = gui_getState();
 
   Begin2DMode();
@@ -3066,7 +2975,7 @@ void draw_text( BMFont_t *  pfnt )
     {
       CHR_REF pla_chr = PlaList_getRChr( gs, PLA_REF(0) );
 
-      y += draw_string( pfnt, 0, y, NULL, "%2.3f FPS, %2.3f UPS", stabilized_fps, stabilized_ups );
+      y += draw_string( pfnt, 0, y, NULL, "%2.3f FPS, %2.3f UPS", gfxState.stabilized_fps, stabilized_ups );
 
       if( CData.DevMode )
       {
@@ -3172,39 +3081,48 @@ void draw_text( BMFont_t *  pfnt )
       y += draw_string( pfnt, 0, y, NULL, "~PLA1 %5.1f %5.1f", gs->ChrList[pla_chr].ori.pos.x / 128.0, gs->ChrList[pla_chr].ori.pos.y / 128.0 );
     }
 
+    if(gs->wld_frame > 0)
+    {
+      y += draw_string( pfnt, 0, y, NULL, "ChrHeap - %3.3lf : %3.3lf", 1e6 * clktime_ChrHeap / (double)gs->wld_frame, clkcount_ChrHeap / (double)gs->wld_frame );
+      y += draw_string( pfnt, 0, y, NULL, "EncHeap - %3.3lf : %3.3lf", 1e6 * clktime_EncHeap / (double)gs->wld_frame, clkcount_EncHeap / (double)gs->wld_frame );
+      y += draw_string( pfnt, 0, y, NULL, "PrtHeap - %3.3lf : %3.3lf", 1e6 * clktime_PrtHeap / (double)gs->wld_frame, clkcount_PrtHeap / (double)gs->wld_frame );
+      y += draw_string( pfnt, 0, y, NULL, "ekey    - %3.3lf : %3.3lf", 1e6 * clktime_ekey / (double)gs->wld_frame,    clkcount_ekey / (double)gs->wld_frame );
+    };
 
     // GLOBAL DEBUG MODE
     if ( SDLKEYDOWN( SDLK_F6 ) && CData.DevMode )
     {
       char * net_status;
-      bool_t client_running = bfalse, server_running = bfalse;
-      client_running = CClient_Running(gs->cl);
-      server_running = sv_Running(gs->sv);
 
-      net_status = "local game";
-      if (client_running && server_running)
+      net_status = "? invalid ?";
+      if ( Game_isClientServer(gs) )
       {
         net_status = "client + server";
       }
-      else if (client_running && !server_running)
+      else if ( Game_isClient(gs) )
       {
         net_status = "client";
       }
-      else if (!client_running && server_running)
+      else if ( Game_isServer(gs) )
       {
         net_status = "server";
       }
+      else if( Game_isLocal(gs) )
+      {
+        net_status = "local game";
+      };
 
       // More debug information
       y += draw_string( pfnt, 0, y, NULL, "!!!DEBUG MODE-6!!!" );
-      y += draw_string( pfnt, 0, y, NULL, "~FREEPRT %d", gs->PrtFreeList_count );
-      y += draw_string( pfnt, 0, y, NULL, "~FREECHR %d",  gs->ChrFreeList_count );
-      y += draw_string( pfnt, 0, y, NULL, "~MACHINE %s", net_status );
-      y += draw_string( pfnt, 0, y, NULL, "~EXPORT %d", gs->modstate.exportvalid );
-      y += draw_string( pfnt, 0, y, NULL, "~FOGAFF %d", GFog.affectswater );
-      y += draw_string( pfnt, 0, y, NULL, "~PASS %d" SLASH_STRING "%d", gs->ShopList_count, gs->PassList_count );
-      y += draw_string( pfnt, 0, y, NULL, "~NETPLAYERS %d", gs->sv->num_loaded );
-      y += draw_string( pfnt, 0, y, NULL, "~DAMAGEPART %d", GTile_Dam.parttype );
+      y += draw_string( pfnt, 0, y, NULL, "~GAME TYPE - %s", net_status );
+      y += draw_string( pfnt, 0, y, NULL, "~NETPLAYERS - %d", gs->sv->num_loaded );
+      y += draw_string( pfnt, 0, y, NULL, "~FREEPRT - %d", gs->PrtHeap.free_count );
+      y += draw_string( pfnt, 0, y, NULL, "~FREECHR - %d", gs->ChrHeap.free_count );
+      y += draw_string( pfnt, 0, y, NULL, "~EXPORT - %s", gs->modstate.exportvalid ? "TRUE" : "FALSE" );
+      y += draw_string( pfnt, 0, y, NULL, "~FOG&WATER - %s", GFog.affectswater ? "TRUE" : "FALSE"  );
+      y += draw_string( pfnt, 0, y, NULL, "~SHOP - %d", gs->ShopList_count );
+      y += draw_string( pfnt, 0, y, NULL, "~PASSAGE - %d", gs->PassList_count );
+      y += draw_string( pfnt, 0, y, NULL, "~DAMAGEPART - %d", GTile_Dam.parttype );
     }
 
     // Camera_t DEBUG MODE
@@ -3275,26 +3193,22 @@ void draw_text( BMFont_t *  pfnt )
 }
 
 //--------------------------------------------------------------------------------------------
-static bool_t pageflip_requested = bfalse;
-static bool_t clear_requested    = btrue;
-
-//--------------------------------------------------------------------------------------------
 bool_t query_clear()
 {
-  return clear_requested;
+  return gfxState.clear_requested;
 };
 
 //--------------------------------------------------------------------------------------------
 bool_t query_pageflip()
 {
-  return pageflip_requested;
+  return gfxState.pageflip_requested;
 };
 
 //--------------------------------------------------------------------------------------------
 bool_t request_pageflip()
 {
-  bool_t retval = !pageflip_requested;
-  pageflip_requested = btrue;
+  bool_t retval = !gfxState.pageflip_requested;
+  gfxState.pageflip_requested = btrue;
 
   return retval;
 }
@@ -3302,16 +3216,14 @@ bool_t request_pageflip()
 //--------------------------------------------------------------------------------------------
 bool_t do_pageflip()
 {
-  bool_t retval = pageflip_requested;
-  Game_t * gs = gfxState.gs;
+  bool_t retval = gfxState.pageflip_requested;
 
-  if ( pageflip_requested )
+  if ( gfxState.pageflip_requested )
   {
     SDL_GL_SwapBuffers();
-    gs->all_frame++;
-    fps_loops++;
-    pageflip_requested = bfalse;
-    clear_requested    = btrue;
+    gfxState.fps_loops++;
+    gfxState.pageflip_requested = bfalse;
+    gfxState.clear_requested    = btrue;
   };
 
   return retval;
@@ -3320,12 +3232,12 @@ bool_t do_pageflip()
 //--------------------------------------------------------------------------------------------
 bool_t do_clear()
 {
-  bool_t retval = clear_requested;
+  bool_t retval = gfxState.clear_requested;
 
-  if ( clear_requested )
+  if ( gfxState.clear_requested )
   {
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-    clear_requested = bfalse;
+    gfxState.clear_requested = bfalse;
   };
 
   return retval;
@@ -3365,7 +3277,7 @@ void draw_main( float frameDuration )
 
   draw_scene();
 
-  draw_text( &bmfont );
+  draw_text( ui_getBMFont() );
 
   request_pageflip();
 }
@@ -3378,10 +3290,10 @@ void load_blip_bitmap( char * modname )
   int cnt;
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.blip_bitmap );
-  if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  &gui->TxBlip, CStringTmp1, INVALID_KEY ) )
+  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  &gui->TxBlip, CStringTmp1, INVALID_KEY ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.blip_bitmap );
-    if ( INVALID_TEXTURE == GLTexture_Load( GL_TEXTURE_2D,  &gui->TxBlip, CStringTmp1, INVALID_KEY ) )
+    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  &gui->TxBlip, CStringTmp1, INVALID_KEY ) )
     {
       log_warning( "Blip bitmap not loaded. Missing file = \"%s\"\n", CStringTmp1 );
     }
@@ -3409,7 +3321,7 @@ void load_menu()
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.font_bitmap );
   snprintf( CStringTmp2, sizeof( CStringTmp2 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.fontdef_file );
-  load_font( CStringTmp1, CStringTmp2 );
+  ui_load_BMFont( CStringTmp1, CStringTmp2 );
 }
 
 
@@ -3587,9 +3499,9 @@ bool_t CGraphics_delete(Graphics_t * g)
 }
 
 //--------------------------------------------------------------------------------------------
-Graphics_t * CGraphics_new(Graphics_t * g, ConfigData_t * cd)
+Graphics_t * Graphics_new(Graphics_t * g, ConfigData_t * cd)
 {
-  //fprintf( stdout, "CGraphics_new()\n");
+  //fprintf( stdout, "Graphics_new()\n");
 
   if(NULL == g) return g;
 
@@ -3601,16 +3513,70 @@ Graphics_t * CGraphics_new(Graphics_t * g, ConfigData_t * cd)
 
   EKEY_PNEW( g, Graphics_t );
 
-  CGraphics_synch(g, cd);
+  Graphics_synch(g, cd);
 
   // put a reasonable value in here
-  g->est_max_fps = 30;
+  g->est_max_fps           = 30;
+
+
+  g->stabilized_fps        = TARGETFPS;
+  g->stabilized_fps_sum    = TARGETFPS;
+  g->stabilized_fps_weight = 1;
+  g->pageflip_requested    = bfalse;
+  g->clear_requested       = btrue;
 
   return g;
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t CGraphics_synch(Graphics_t * g, ConfigData_t * cd)
+Game_t * Graphics_getGame(Graphics_t * g)
+{
+  if(NULL == g) return NULL;
+  return g->gs;
+}
+
+//--------------------------------------------------------------------------------------------
+Game_t * Graphics_requireGame(Graphics_t * g)
+{
+  assert(NULL != g && NULL != g->gs);
+  return g->gs;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t Graphics_hasGame(Graphics_t * g)
+{
+  return (NULL != g) && (NULL != g->gs);
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t Graphics_matchesGame(Graphics_t * g, Game_t * gs)
+{
+  if(NULL == g) return bfalse;
+  return g->gs == gs;
+}
+
+//--------------------------------------------------------------------------------------------
+retval_t Graphics_ensureGame(Graphics_t * g, Game_t * gs)
+{
+  if(NULL == g) return rv_error;
+
+  if(NULL == g->gs) g->gs = gs;
+
+  return rv_succeed;
+}
+
+//--------------------------------------------------------------------------------------------
+retval_t Graphics_removeGame(Graphics_t * g, Game_t * gs)
+{
+  if(NULL == g) return rv_error;
+
+  if(gs == g->gs) g->gs = NULL;
+
+  return rv_succeed;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t Graphics_synch(Graphics_t * g, ConfigData_t * cd)
 {
   bool_t changed = bfalse;
 
@@ -3710,24 +3676,24 @@ bool_t CGraphics_synch(Graphics_t * g, ConfigData_t * cd)
 //
 //  GLfloat txWidth, txHeight;
 //
-//  if ( INVALID_TEXTURE != GLTexture_GetTextureID(mproc->TxTitleImage + image) )
+//  if ( INVALID_TEXTURE != GLtexture_GetTextureID(mproc->TxTitleImage + image) )
 //  {
 //    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 //    Begin2DMode();
 //    glNormal3f( 0, 0, 1 ); // glNormal3f( 0, 1, 0 );
 //
 //    /* Calculate the texture width & height */
-//    txWidth = ( GLfloat )( GLTexture_GetImageWidth( mproc->TxTitleImage + image )/GLTexture_GetTextureWidth( mproc->TxTitleImage + image ) );
-//    txHeight = ( GLfloat )( GLTexture_GetImageHeight( mproc->TxTitleImage + image )/GLTexture_GetTextureHeight( mproc->TxTitleImage + image ) );
+//    txWidth = ( GLfloat )( GLtexture_GetImageWidth( mproc->TxTitleImage + image )/GLtexture_GetTextureWidth( mproc->TxTitleImage + image ) );
+//    txHeight = ( GLfloat )( GLtexture_GetImageHeight( mproc->TxTitleImage + image )/GLtexture_GetTextureHeight( mproc->TxTitleImage + image ) );
 //
 //    /* Bind the texture */
-//    GLTexture_Bind( mproc->TxTitleImage + image, &gfxState );
+//    GLtexture_Bind( mproc->TxTitleImage + image, &gfxState );
 //
 //    /* Draw the quad */
 //    glBegin( GL_QUADS );
-//    glTexCoord2f( 0, 1 ); glVertex2f( x, gfxState.scry - y - GLTexture_GetImageHeight( mproc->TxTitleImage + image ) );
-//    glTexCoord2f( txWidth, 1 ); glVertex2f( x + GLTexture_GetImageWidth( mproc->TxTitleImage + image ), gfxState.scry - y - GLTexture_GetImageHeight( mproc->TxTitleImage + image ) );
-//    glTexCoord2f( txWidth, 1-txHeight ); glVertex2f( x + GLTexture_GetImageWidth( mproc->TxTitleImage + image ), gfxState.scry - y );
+//    glTexCoord2f( 0, 1 ); glVertex2f( x, gfxState.scry - y - GLtexture_GetImageHeight( mproc->TxTitleImage + image ) );
+//    glTexCoord2f( txWidth, 1 ); glVertex2f( x + GLtexture_GetImageWidth( mproc->TxTitleImage + image ), gfxState.scry - y - GLtexture_GetImageHeight( mproc->TxTitleImage + image ) );
+//    glTexCoord2f( txWidth, 1-txHeight ); glVertex2f( x + GLtexture_GetImageWidth( mproc->TxTitleImage + image ), gfxState.scry - y );
 //    glTexCoord2f( 0, 1-txHeight ); glVertex2f( x, gfxState.scry - y );
 //    glEnd();
 //
@@ -3742,7 +3708,7 @@ void dolist_add( CHR_REF chr_ref )
   // This function puts a character in the list
   int fan;
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   if ( !ACTIVE_CHR( gs->ChrList,  chr_ref ) || gs->ChrList[chr_ref].indolist ) return;
 
@@ -3756,12 +3722,12 @@ void dolist_add( CHR_REF chr_ref )
 
 
     // Do flashing
-    if (( gs->all_frame & gs->ChrList[chr_ref].flashand ) == 0 && gs->ChrList[chr_ref].flashand != DONTFLASH )
+    if (( gfxState.fps_loops & gs->ChrList[chr_ref].flashand ) == 0 && gs->ChrList[chr_ref].flashand != DONTFLASH )
     {
       flash_character( gs, chr_ref, 255 );
     }
     // Do blacking
-    if (( gs->all_frame&SEEKURSEAND ) == 0 && gs->cl->seekurse && gs->ChrList[chr_ref].prop.iskursed )
+    if (( gfxState.fps_loops&SEEKURSEAND ) == 0 && gs->cl->seekurse && gs->ChrList[chr_ref].prop.iskursed )
     {
       flash_character( gs, chr_ref, 0 );
     }
@@ -3795,7 +3761,7 @@ void dolist_sort( void )
   //     which is needed for reflections to properly clip themselves.
   //     Order from closest to farthest
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   CHR_REF chr_ref, olddolist[CHRLST_COUNT];
   int cnt, tnc, order;
@@ -3844,7 +3810,7 @@ void dolist_make( void )
 {
   // ZZ> This function finds the characters that need to be drawn and puts them in the list
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   int cnt;
   CHR_REF chr_ref, chr_cnt;
@@ -3895,7 +3861,7 @@ bool_t CVolume_draw( CVolume_t * cv, bool_t draw_square, bool_t draw_diamond  )
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
     // choose a "white" texture
-    GLTexture_Bind(NULL, &gfxState);
+    GLtexture_Bind(NULL, &gfxState);
 
     //------------------------------------------------
     // DIAGONAL BBOX
@@ -4028,7 +3994,7 @@ bool_t CVolume_draw( CVolume_t * cv, bool_t draw_square, bool_t draw_diamond  )
 //{
 //  // ZZ> This function draws a sprite shadow
 //
-//  Game_t * gs = gfxState.gs;
+//  Game_t * gs = Graphics_requireGame(&gfxState);
 //
 //  GLVertex v[4];
 //  float size, x, y;
@@ -4101,7 +4067,7 @@ bool_t CVolume_draw( CVolume_t * cv, bool_t draw_square, bool_t draw_diamond  )
 //      glDepthFunc(GL_LEQUAL);
 //
 //      // Choose texture.
-//      GLTexture_Bind( gs->TxTexture + particletexture, &gfxState);
+//      GLtexture_Bind( gs->TxTexture + particletexture, &gfxState);
 //
 //      glColor4f(FP8_TO_FLOAT(ambi), FP8_TO_FLOAT(ambi), FP8_TO_FLOAT(ambi), FP8_TO_FLOAT(trans));
 //      glBegin(GL_TRIANGLE_FAN);
@@ -4123,7 +4089,7 @@ bool_t CVolume_draw( CVolume_t * cv, bool_t draw_square, bool_t draw_diamond  )
 //  int cnt;
 //  CHR_REF chr_tnc;
 //
-//  Game_t * gs = gfxState.gs;
+//  Game_t * gs = Graphics_requireGame(&gfxState);
 //
 //  // Bad shadows
 //  ATTRIB_PUSH("render_bad_shadows", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -4179,7 +4145,7 @@ bool_t CVolume_draw( CVolume_t * cv, bool_t draw_square, bool_t draw_diamond  )
 //    {
 //      texture = cnt + TX_TILE_0;
 //      pmesh->Info.last_texture = texture;
-//      GLTexture_Bind( gs->TxTexture + texture, &gfxState);
+//      GLtexture_Bind( gs->TxTexture + texture, &gfxState);
 //      for (tnc = 0; tnc < renderlist.num_reflc; tnc++)
 //      {
 //        fan = renderlist.reflc[tnc];
@@ -4225,7 +4191,7 @@ bool_t CVolume_draw( CVolume_t * cv, bool_t draw_square, bool_t draw_diamond  )
 //    {
 //      texture = cnt + TX_TILE_0;
 //      pmesh->Info.last_texture = texture;
-//      GLTexture_Bind( gs->TxTexture + texture, &gfxState);
+//      GLtexture_Bind( gs->TxTexture + texture, &gfxState);
 //      for (tnc = 0; tnc < renderlist.num_reflc; tnc++)
 //      {
 //        fan = renderlist.reflc[tnc];

@@ -35,6 +35,7 @@
 #include "Client.h"
 #include "Server.h"
 #include "game.h"
+#include "UI.h"
 
 #include "egoboo_strutil.h"
 #include "egoboo_utility.h"
@@ -60,42 +61,40 @@ void module_release( Game_t * gs )
 {
   // ZZ> This function frees up memory used by the module
 
-  bool_t client_running = bfalse, server_running = bfalse, local_running = bfalse;
-
   Mesh_t     * pmesh = Game_getMesh(gs);
   ModState_t * ms    = &(gs->modstate);
   MeshInfo_t * mi    = &(pmesh->Info);
 
   if(!ms->Active) return;
 
-  client_running = CClient_Running(gs->cl);
-  server_running = sv_Running(gs->sv);
-  local_running  = !client_running && !server_running;
-
-  // if the client has shut down, release all client dependent resources
-  if(local_running || !client_running)
+  // if the game is local or a client,
+  // release all client dependent resources
+  if( Game_hasClient(gs) )
   {
+    // release client resources
     release_all_textures(gs);
     release_all_icons(gs);
   }
 
-  // if the server has shut down, release all server dependent resources
-  if(local_running || !server_running)
+  // if the game is local or a server,
+  // release all server dependent resources
+  if( Game_hasServer(gs) )
   {
+    // release server resources
     release_map(gs);
     release_bumplist( mi );
   }
 
-  if(local_running)
+  if( Game_isLocal(gs) )
   {
     CapList_renew(gs);
-    ChrList_renew(gs);
+    ChrList_new(gs);
 
     PipList_renew(gs);
-    PrtList_renew(gs);
+    PrtList_new(gs);
 
     EveList_renew(gs);
-    EncList_renew(gs);
+    EncList_new(gs);
 
     MadList_renew(gs);
 
@@ -229,8 +228,6 @@ bool_t module_load( Game_t * gs, char *smallname )
   reset_ai_script( gs );
   obj_clear_pips( gs );
 
-  load_one_icon( CData.basicdat_dir, NULL, CData.nullicon_bitmap );
-
   module_load_all_waves( gs, szModpath );
 
   read_wawalite( gs, szModpath );
@@ -272,11 +269,11 @@ bool_t module_load( Game_t * gs, char *smallname )
   // Load fonts and bars after other images, as not to hog videomem
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModpath, CData.gamedat_dir, CData.font_bitmap );
   snprintf( CStringTmp2, sizeof( CStringTmp2 ), "%s%s" SLASH_STRING "%s", szModpath, CData.gamedat_dir, CData.fontdef_file );
-  if ( !load_font( CStringTmp1, CStringTmp2 ) )
+  if ( !ui_load_BMFont( CStringTmp1, CStringTmp2 ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.font_bitmap );
     snprintf( CStringTmp2, sizeof( CStringTmp2 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.fontdef_file );
-    if ( !load_font( CStringTmp1, CStringTmp2 ) )
+    if ( !ui_load_BMFont( CStringTmp1, CStringTmp2 ) )
     {
       log_warning( "Fonts not loaded.  Files missing from %s directory\n", CData.basicdat_dir );
     }
@@ -391,7 +388,7 @@ bool_t module_read_summary( char *szLoadName, ModSummary_t * ms )
     while ( cnt < SUMMARYLINES )
     {
       fget_next_string( fileread, szLine, sizeof( szLine ) );
-      str_convert_underscores( ms->summary[cnt], sizeof( ms->summary[cnt] ), szLine );
+      str_decode( ms->summary[cnt], sizeof( ms->summary[cnt] ), szLine );
       cnt++;
     }
     result = btrue;
@@ -464,7 +461,7 @@ void module_load_all_objects( Game_t * gs, char * szModpath )
     skins_loaded = load_one_object( gs, skin, szObjectpath, tmpstr );
     if(0 == skins_loaded)
     {
-      log_warning("module_load_all_objects() - Could not find object %s" SLASH_STRING "%s", szObjectpath, tmpstr);
+      log_warning("module_load_all_objects() - \n\tCould not find object %s" SLASH_STRING "%s", szObjectpath, tmpstr);
     }
 
     skin += skins_loaded;
@@ -602,16 +599,11 @@ void module_quit( Game_t * gs )
 {
   // ZZ> This function forces a return to the menu
 
-  bool_t client_running = bfalse, server_running = bfalse, local_running = bfalse;
   ModState_t * ms = &(gs->modstate);
 
   if(!ms->Active) return;
 
   reset_end_text(gs);
-
-  client_running = CClient_Running(gs->cl);
-  server_running = sv_Running(gs->sv);
-  local_running  = !client_running && !server_running;
 
   // only export players if it makes sense
   if( (ms->beat && ms->exportvalid) || ms->respawnanytime )
@@ -619,13 +611,13 @@ void module_quit( Game_t * gs )
     export_all_local_players( gs );
   }
 
-  if(local_running)
+  if( Game_isLocal(gs) )
   {
     // reset both the client and server data
     CClient_renew(gs->cl);
     CServer_renew(gs->sv);
   }
-  else if(net_Started() && NULL != gs->cl)
+  else if( Game_hasClient(gs) )
   {
     // reset only the client data. let the server keep running.
     CClient_unjoinGame(gs->cl);

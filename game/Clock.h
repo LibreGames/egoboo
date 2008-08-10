@@ -47,3 +47,30 @@ double ClockState_getTime( ClockState_t * cs );            // Returns the curren
 double ClockState_getFrameDuration( ClockState_t * cs );   // Return the length of the current frame. (Sort of.)
 Uint32 ClockState_getFrameNumber( ClockState_t * cs );     // Return which frame we're on
 float  ClockState_getFrameRate( ClockState_t * cs );       // Return the current instantaneous FPS
+
+//-----------------------------------------------------------------
+// macros to use the high resolution timer for profiling
+
+#ifdef DEBUG_PROFILE
+
+#    define PROFILE_DECLARE(XX) ClockState_t * clkstate_##XX = NULL; double clkcount_##XX = 0.0; double clktime_##XX = 0.0;
+#    define PROFILE_INIT(XX)    { clkstate_##XX  = ClockState_create(#XX, -1); }
+#    define PROFILE_FREE(XX)    { ClockState_destroy(&(clkstate_##XX)); }
+#    define PROFILE_QUERY(XX)   ( (double)clktime_##XX / (double)clkcount_##XX )
+
+#    define PROFILE_BEGIN(XX)  ClockState_frameStep(clkstate_##XX); 
+#    define PROFILE_END(XX)    ClockState_frameStep(clkstate_##XX);   clkcount_##XX = clkcount_##XX*0.9 + 0.1*1.0; clktime_##XX = clktime_##XX*0.9 + 0.1*ClockState_getFrameDuration(clkstate_##XX);
+#    define PROFILE_END2(XX)   ClockState_frameStep(clkstate_##XX);   clkcount_##XX += 1.0;  clktime_##XX += ClockState_getFrameDuration(clkstate_##XX);
+
+#else
+
+#    define PROFILE_DECLARE(XX) ClockState_t * clkstate_##XX = NULL; double clkcount_##XX = 0.0; double clktime_##XX = 0.0;
+#    define PROFILE_INIT(XX)    { clkstate_##XX  = ClockState_create(#XX, -1); }
+#    define PROFILE_FREE(XX)    { ClockState_destroy(&(clkstate_##XX)); }
+#    define PROFILE_QUERY(XX)   1.0
+
+#    define PROFILE_BEGIN(XX)  
+#    define PROFILE_END(XX)    clkcount_##XX  = 1.0;
+#    define PROFILE_END2(XX)   clkcount_##XX += 1.0;
+
+#endif

@@ -842,6 +842,31 @@ Chr_t * Chr_new(Chr_t * pchr);
 bool_t Chr_delete(Chr_t * pchr);
 Chr_t * Chr_renew(Chr_t * pchr);
 
+struct sChrHeap
+{
+  egoboo_key_t ekey;
+
+  int       free_count;
+  CHR_REF   free_list[CHRLST_COUNT];
+
+  int       used_count;
+  CHR_REF   used_list[CHRLST_COUNT];
+};
+
+typedef struct sChrHeap ChrHeap_t;
+
+ChrHeap_t * ChrHeap_new   ( ChrHeap_t * pheap );
+bool_t      ChrHeap_delete( ChrHeap_t * pheap );
+ChrHeap_t * ChrHeap_renew ( ChrHeap_t * pheap );
+bool_t      ChrHeap_reset ( ChrHeap_t * pheap );
+
+CHR_REF ChrHeap_getFree( ChrHeap_t * pheap, CHR_REF request );
+CHR_REF ChrHeap_iterateUsed( ChrHeap_t * pheap, int * index );
+bool_t  ChrHeap_addUsed( ChrHeap_t * pheap, CHR_REF ref );
+bool_t  ChrHeap_addFree( ChrHeap_t * pheap, CHR_REF ref );
+
+PROFILE_PROTOTYPE( ChrHeap );
+
 struct sChr * ChrList_getPChr(struct sGame * gs, CHR_REF ichr);
 struct sProfile * ChrList_getPObj(struct sGame * gs, CHR_REF ichr);
 struct sCap * ChrList_getPCap(struct sGame * gs, CHR_REF ichr);
@@ -860,7 +885,8 @@ PIP_REF ChrList_getRPip(struct sGame * gs, CHR_REF ichr, int i);
 #define VALIDATE_CHR(LST, XX) ( VALID_CHR(LST, XX) ? (XX) : (INVALID_CHR) )
 #define RESERVED_CHR(LST, XX) ( VALID_CHR(LST, XX) && LST[XX].reserved && !LST[XX].active   )
 #define ACTIVE_CHR(LST, XX)   ( VALID_CHR(LST, XX) && LST[XX].active   && !LST[XX].reserved )
-#define PENDING_CHR(LST, XX)  ( VALID_CHR(LST, XX) && (LST[XX].active || LST[XX].req_active) && !LST[XX].reserved )
+#define SEMIACTIVE_CHR(LST, XX)  ( VALID_CHR(LST, XX) && (LST[XX].active || LST[XX].req_active) && !LST[XX].reserved )
+#define PENDING_CHR(LST, XX)  ( VALID_CHR(LST, XX) && LST[XX].req_active && !LST[XX].reserved )
 
 INLINE bool_t chr_in_pack( PChr_t lst, size_t lst_size, CHR_REF character );
 INLINE bool_t chr_attached( PChr_t lst, size_t lst_size, CHR_REF character );

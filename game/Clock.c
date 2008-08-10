@@ -116,7 +116,7 @@ ClockState_t * ClockState_new( ClockState_t * cs, const char * name, int size )
   if(NULL == cs) return cs;
 
   if(size<0) size = 1;
-  log_info("ClockState_new() - \"%s\"\t%d buffer(s)\n", name, size);
+  log_info("ClockState_new() - \n\t\"%s\"\t%d buffer(s)\n", name, size);
 
   memset( cs, 0, sizeof( ClockState_t ) );
 
@@ -182,15 +182,26 @@ void ClockState_setFrameHistoryWindow( ClockState_t * cs, int size )
 
 double ClockState_guessFrameDuration( ClockState_t * cs )
 {
-  int c;
-  double totalTime = 0;
+  double time = 0;
 
-  for ( c = 0; c < cs->frameHistorySize; c++ )
+  if( cs->frameHistorySize == 1 ) 
   {
-    totalTime += cs->frameHistory[c];
+    time = cs->frameHistory[0];
   }
+  else
+  {
+    int c;
+    double totalTime = 0;
 
-  return totalTime / cs->frameHistorySize;
+    for ( c = 0; c < cs->frameHistorySize; c++ )
+    {
+      totalTime += cs->frameHistory[c];
+    }
+
+    time = totalTime / cs->frameHistorySize;
+  };
+
+  return time;
 }
 
 void ClockState_addToFrameHistory( ClockState_t * cs, double frame )

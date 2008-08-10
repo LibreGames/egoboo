@@ -71,7 +71,7 @@ void md2_blend_vertices(Chr_t * pchr, Sint32 vrtmin, Sint32 vrtmax)
 
   Mad_t  * pmad;
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   if( !EKEY_PVALID(pchr) ) return;
 
@@ -214,7 +214,7 @@ void md2_blend_vertices(Chr_t * pchr, Sint32 vrtmin, Sint32 vrtmax)
 //---------------------------------------------------------------------------------------------
 void md2_blend_lighting(Chr_t * pchr)
 {
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   Uint16  sheen_fp8, spekularity_fp8;
   Uint16 lightnew_r, lightnew_g, lightnew_b;
@@ -363,7 +363,7 @@ void draw_textured_md2_opengl(CHR_REF ichr)
   Uint32 cmd_count;
   vect2  off;
 
-  Game_t * gs   = gfxState.gs;
+  Game_t * gs   = Graphics_requireGame(&gfxState);
   Chr_t  * pchr = ChrList_getPChr(gs, ichr);
   Mad_t  * pmad = ChrList_getPMad(gs, ichr);
 
@@ -439,7 +439,7 @@ void draw_enviromapped_md2_opengl(CHR_REF ichr)
   const MD2_GLCommand_t * cmd;
   Uint32 cmd_count;
 
-  Game_t * gs    = gfxState.gs;
+  Game_t * gs    = Graphics_requireGame(&gfxState);
   Chr_t  * pchr = ChrList_getPChr(gs, ichr);
   Mad_t  * pmad = ChrList_getPMad(gs, ichr);
 
@@ -551,7 +551,7 @@ void render_mad_lit( CHR_REF ichr )
   Uint16 texture;
   GLfloat mat_none[4] = {0,0,0,0};
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   if( !ACTIVE_CHR(gs->ChrList, ichr) ) return;
   pchr = gs->ChrList + ichr;
@@ -577,12 +577,12 @@ void render_mad_lit( CHR_REF ichr )
 
     if (SDLKEYDOWN(SDLK_F7))
     {
-      GLTexture_Bind(NULL, &gfxState);
+      GLtexture_Bind(NULL, &gfxState);
     }
     else
     {
       texture = pchr->skin_ref + gs->ObjList[pchr->model].skinstart;
-      GLTexture_Bind( gs->TxTexture + texture, &gfxState );
+      GLtexture_Bind( gs->TxTexture + texture, &gfxState );
     }
 
     draw_textured_md2_opengl(ichr);
@@ -606,7 +606,7 @@ void render_texmad(CHR_REF ichr, Uint8 trans)
 {
   Chr_t * pchr;
   Uint16 texture;
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   if(!ACTIVE_CHR(gs->ChrList, ichr)) return;
   pchr = gs->ChrList + ichr;
@@ -630,11 +630,11 @@ void render_texmad(CHR_REF ichr, Uint8 trans)
     // Choose texture and matrix
     if (SDLKEYDOWN(SDLK_F7))
     {
-      GLTexture_Bind(NULL, &gfxState);
+      GLtexture_Bind(NULL, &gfxState);
     }
     else
     {
-      GLTexture_Bind( gs->TxTexture + texture, &gfxState );
+      GLtexture_Bind( gs->TxTexture + texture, &gfxState );
     }
 
     draw_textured_md2_opengl(ichr);
@@ -657,7 +657,7 @@ void render_texmad(CHR_REF ichr, Uint8 trans)
 void render_enviromad(CHR_REF ichr, Uint8 trans)
 {
   Uint16 texture;
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   if(!ACTIVE_CHR(gs->ChrList, ichr)) return;
 
@@ -677,11 +677,11 @@ void render_enviromad(CHR_REF ichr, Uint8 trans)
     // Choose texture and matrix
     if ( SDLKEYDOWN(SDLK_F7) )
     {
-      GLTexture_Bind(NULL, &gfxState);
+      GLtexture_Bind(NULL, &gfxState);
     }
     else
     {
-      GLTexture_Bind( gs->TxTexture + texture, &gfxState );
+      GLtexture_Bind( gs->TxTexture + texture, &gfxState );
     }
 
     glEnable( GL_TEXTURE_GEN_S );     // Enable Texture Coord Generation For S (NEW)
@@ -704,7 +704,7 @@ void render_mad( CHR_REF ichr, Uint8 trans )
 {
   // ZZ> This function picks the actual function to use
 
-  Game_t * gs   = gfxState.gs;
+  Game_t * gs   = Graphics_requireGame(&gfxState);
   Chr_t  * pchr = ChrList_getPChr(gs, ichr);
   Cap_t  * pcap = ChrList_getPCap(gs, ichr);
   Sint8   hide = pcap->hidestate;
@@ -731,7 +731,7 @@ void render_refmad( CHR_REF ichr, Uint16 trans_fp8 )
 {
   // ZZ> This function draws characters reflected in the floor
 
-  Game_t * gs   = gfxState.gs;
+  Game_t * gs   = Graphics_requireGame(&gfxState);
   Chr_t  * pchr = ChrList_getPChr(gs, ichr);
   Cap_t  * pcap = ChrList_getPCap(gs, ichr);
 
@@ -943,7 +943,7 @@ void make_lighttospek( void )
 //--------------------------------------------------------------------------------------------
 void chr_draw_BBox(CHR_REF ichr)
 {
-  Game_t * gs  = gfxState.gs;
+  Game_t * gs  = Graphics_requireGame(&gfxState);
 
   Chr_t * pchr;
   BData_t * bd;

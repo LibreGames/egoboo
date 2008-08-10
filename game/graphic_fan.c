@@ -41,7 +41,7 @@ void render_fan_ref( Uint32 fan, char tex_loaded, float level )
 {
   // ZZ> This function draws a mesh fan
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
 
   GLVertex v[MAXMESHVERTICES];
@@ -125,7 +125,7 @@ void render_fan_ref( Uint32 fan, char tex_loaded, float level )
   // Change texture if need be
   if ( pmesh->Info.last_texture != texture )
   {
-    GLTexture_Bind( gs->TxTexture + texture, &gfxState );
+    GLtexture_Bind( gs->TxTexture + texture, &gfxState );
     pmesh->Info.last_texture = texture;
   }
 
@@ -182,7 +182,7 @@ void render_fan( Uint32 fan, char tex_loaded )
 {
   // ZZ> This function draws a mesh fan
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
 
   GLVertex v[MAXMESHVERTICES];
@@ -306,7 +306,7 @@ void render_fan( Uint32 fan, char tex_loaded )
   // Change texture if need be
   if ( pmesh->Info.last_texture != texture )
   {
-    GLTexture_Bind( gs->TxTexture + texture, &gfxState );
+    GLtexture_Bind( gs->TxTexture + texture, &gfxState );
     pmesh->Info.last_texture = texture;
   }
 
@@ -437,7 +437,7 @@ void render_water_fan( Uint32 fan, Uint8 layer, Uint8 mode )
 {
   // ZZ> This function draws a water fan
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
 
   GLVertex v[MAXMESHVERTICES];
@@ -501,7 +501,7 @@ void render_water_fan( Uint32 fan, Uint8 layer, Uint8 mode )
 
   ATTRIB_PUSH( "render_water_fan", GL_TEXTURE_BIT | GL_CURRENT_BIT );
   {
-    GLTexture_Bind( gs->TxTexture + texture, &gfxState );
+    GLtexture_Bind( gs->TxTexture + texture, &gfxState );
 
     entry = 0;
     for ( cnt = 0; cnt < commands; cnt++ )
@@ -528,7 +528,7 @@ void render_water_fan_lit( Uint32 fan, Uint8 layer, Uint8 mode )
 {
   // ZZ> This function draws a water fan
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
 
   GLVertex v[MAXMESHVERTICES];
@@ -587,7 +587,7 @@ void render_water_fan_lit( Uint32 fan, Uint8 layer, Uint8 mode )
     // Change texture if need be
     if ( pmesh->Info.last_texture != texture )
     {
-      GLTexture_Bind( gs->TxTexture + texture, &gfxState );
+      GLtexture_Bind( gs->TxTexture + texture, &gfxState );
       pmesh->Info.last_texture = texture;
     }
 
@@ -617,7 +617,7 @@ bool_t make_renderlist(RENDERLIST * prlst)
   bool_t inview;
   static Uint32 next_wldframe = 0;
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   Mesh_t     * pmesh = Game_getMesh(gs);
   MeshInfo_t * mi    = &(pmesh->Info);
@@ -708,7 +708,7 @@ void set_fan_light( int fanx, int fany, PRT_REF particle )
   float light_r, light_g, light_b;
   float light_r0, light_g0, light_b0;
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   Mesh_t     * pmesh = Game_getMesh(gs);
   MeshInfo_t * mi    = &(pmesh->Info);  
@@ -788,7 +788,7 @@ void do_dynalight()
   float dist2;
   vect3 dif, nrm;
 
-  Game_t * gs = gfxState.gs;
+  Game_t * gs = Graphics_requireGame(&gfxState);
 
   Mesh_t * pmesh   = Game_getMesh(gs);
   MeshMem_t *  mm = &(pmesh->Mem);
@@ -803,7 +803,7 @@ void do_dynalight()
   if ( pmesh->Info.exploremode )
   {
     // Set base light level in explore mode...  Don't need to do every frame
-    if (( gs->all_frame & 7 ) == 0 )
+    if (( gfxState.fps_loops & 7 ) == 0 )
     {
       for ( prt_cnt = 0; prt_cnt < PRTLST_COUNT; prt_cnt++ )
       {

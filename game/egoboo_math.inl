@@ -813,11 +813,32 @@ INLINE const BBOX_ARY * bbox_ary_alloc(BBOX_ARY * ary, int count)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE Uint32 ego_rand(Uint32 * seed)
+INLINE Uint32 ego_rand_32(Uint32 * seed)
 {
-  if(NULL == seed) return rand();
+  if(NULL == seed) 
+    return rand();
 
-  *seed = 0x19660D * (*seed) + 0x3C6EF35F;
+  *seed = (Uint32)0x000019660D * (*seed) + (Uint32)0x3C6EF35F;
+
+  return *seed;
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE Uint16 ego_rand_16(Uint16 * seed)
+{
+  if(NULL == seed) return rand() & 0xFFFFL ;
+
+  *seed = (Uint16)0x00FD * (*seed) + (Uint16)0x3F03;
+
+  return *seed;
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE Uint8 ego_rand_8(Uint8 * seed)
+{
+  if(NULL == seed) return rand() & 0xFFL;
+
+  *seed = (Uint8)0x0D * (*seed) + (Uint8)0x33;
 
   return *seed;
 }

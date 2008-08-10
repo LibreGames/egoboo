@@ -330,7 +330,7 @@ void read_controls( char *szFilename )
   INPUT_TYPE   input;
   CONTROL_LIST control;
 
-  log_info( "read_controls() - reading control settings from the %s file.\n", szFilename );
+  log_info( "read_controls() - \n\treading control settings from the %s file.\n", szFilename );
 
   fileread = fs_fileOpen( PRI_WARN, NULL, szFilename, "r" );
   if ( NULL != fileread )

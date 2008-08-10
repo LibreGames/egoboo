@@ -1379,7 +1379,7 @@ int _nfile_receiveCallback(void * data)
         net_logf("NET INFO: _nfile_receiveCallback() - NET_CREATE_DIRECTORY \"%s\"... ", state->destName);
 
         // convert the slashes in the directory name something valid on this system
-        str_convert_sys(state->destName, NET_MAX_FILE_NAME);
+        str_convert_slash_sys(state->destName, NET_MAX_FILE_NAME);
 
         if(fs_fileIsDirectory(state->destName))
         {

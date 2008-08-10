@@ -297,14 +297,11 @@ bool_t make_one_character_matrix( ChrList_t chrlst, size_t chrlst_size, Chr_t * 
   // ZZ> This function sets one character's matrix
 
   Chr_t * povl;
-
   CHR_REF chr_tnc;
-  matrix_4x4 mat_old;
   bool_t recalc_bumper = bfalse;
 
   if ( !EKEY_PVALID(pchr) ) return bfalse;
 
-  mat_old = pchr->matrix;
   pchr->matrix_valid = bfalse;
 
   if ( pchr->overlay )
@@ -314,6 +311,9 @@ bool_t make_one_character_matrix( ChrList_t chrlst, size_t chrlst_size, Chr_t * 
 
     if ( ACTIVE_CHR( chrlst, chr_tnc ) )
     {
+      matrix_4x4 mat_old;
+      mat_old = pchr->matrix;
+
       povl = chrlst + chr_tnc;
 
       pchr->ori.pos.x = povl->matrix.CNV( 3, 0 );
@@ -341,6 +341,9 @@ bool_t make_one_character_matrix( ChrList_t chrlst, size_t chrlst_size, Chr_t * 
   }
   else
   {
+    matrix_4x4 mat_old;
+    mat_old = pchr->matrix;
+
     pchr->matrix = ScaleXYZRotateXYZTranslate( pchr->scale * pchr->pancakepos.x, pchr->scale * pchr->pancakepos.y, pchr->scale * pchr->pancakepos.z,
                      pchr->ori.turn_lr,
                      ( Uint16 )( pchr->ori.mapturn_ud + 32768 ),
@@ -423,8 +426,7 @@ void ChrList_free_one( Game_t * gs, CHR_REF chr_ref )
   }
 
   // add it to the free list
-  gs->ChrFreeList[gs->ChrFreeList_count] = chr_ref;
-  gs->ChrFreeList_count++;
+  ChrHeap_addFree( &(gs->ChrHeap), chr_ref );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -592,47 +594,31 @@ CHR_REF ChrList_get_free( Game_t * gs, CHR_REF irequest )
 {
   // ZZ> This function gets an unused character and returns its index
 
+  ChrHeap_t * pheap;
   CHR_REF retval;
   int tnc;
 
+  if( !EKEY_PVALID(gs) ) return INVALID_CHR;
+  pheap = &(gs->ChrHeap);
+
   // Get the first free index
-  retval = INVALID_CHR;
-  if ( gs->ChrFreeList_count > 0 )
+  retval = ChrHeap_getFree( pheap, irequest );
+
+  if ( (INVALID_CHR != irequest) && (retval != irequest) )
   {
-    // Just grab the next one
-    gs->ChrFreeList_count--;
-    retval = gs->ChrFreeList[gs->ChrFreeList_count];
-  }
-
-  if ( INVALID_CHR != irequest )
-  {
-    if ( retval != irequest )
-    {
-      // Picked the wrong one, so put this one back and find the right one
-      for ( tnc = 0; tnc < gs->ChrFreeList_count; tnc++ )
-      {
-        if ( gs->ChrFreeList[tnc] == irequest )
-        {
-          gs->ChrFreeList[tnc] = retval;
-          break;
-        }
-      }
-      retval = irequest;
-    }
-
-    if ( retval != irequest )
-    {
-      log_debug( "WARNING: req_chr_spawn_one() - failed to spawn : cannot find irequest index %d\n", irequest );
-      return INVALID_CHR;
-    }
-  }
-
-
-  if ( INVALID_CHR == retval )
-  {
-    log_debug( "WARNING: ChrList_get_free() - could not get valid character\n");
+    log_debug( "WARNING: ChrList_get_free() - \n\tfailed to spawn : cannot find irequest index %d\n", irequest );
     return INVALID_CHR;
   }
+
+  if ( INVALID_CHR != retval )
+  {
+    Chr_new( gs->ChrList + retval );
+    ChrHeap_addUsed( pheap, retval );
+  }
+  else
+  {
+    log_debug( "WARNING: ChrList_get_free() - \n\tcould not get valid character\n");
+  };
 
   return retval;
 
@@ -1186,7 +1172,7 @@ bool_t attach_character_to_mount( Game_t * gs, CHR_REF chr_ref, CHR_REF mount_re
   pchr = ChrList_getPChr(gs, chr_ref);
   if(NULL == pchr) return bfalse;
 
-  if( !PENDING_CHR( chrlst, mount_ref ) ) return bfalse;
+  if( !SEMIACTIVE_CHR( chrlst, mount_ref ) ) return bfalse;
   pmount = ChrList_getPChr(gs, mount_ref);
 
 
@@ -2072,10 +2058,8 @@ void chr_swipe( Game_t * gs, CHR_REF ichr, SLOT slot )
     if ( INVALID_PIP != pweapon_cap->attackprttype )
     {
       Prt_t * pprt;
-      PRT_SPAWN_INFO si;
 
-      prt_spawn_info_init( &si, gs, 1.0f, pweapon->ori.pos, pchr->ori.turn_lr, pweapon->model, pweapon_cap->attackprttype, iweapon, spawngrip, pchr->team, ichr, 0, INVALID_CHR );
-      particle = req_spawn_one_particle( si );
+      particle = prt_spawn( gs, 1.0f, pweapon->ori.pos, pweapon->ori.vel, pchr->ori.turn_lr, pweapon->model, pweapon_cap->attackprttype, iweapon, spawngrip, pchr->team, ichr, 0, INVALID_CHR );
       if ( !RESERVED_PRT(gs->PrtList, particle) )
       {
         Pip_t *  ppip = PrtList_getPPip(gs, particle);
@@ -3537,14 +3521,12 @@ void make_onwhichfan( Game_t * gs )
     // splash stuff
     if ( chrlst[chr_ref].inwater != is_inwater && splashstrength > 0.1f )
     {
-      PRT_SPAWN_INFO si;
       vect3 prt_pos = {chrlst[chr_ref].ori.pos.x, chrlst[chr_ref].ori.pos.y, gs->water.surfacelevel + RAISE};
+      vect3 prt_vel = {0,0,0};
       PRT_REF prt_index;
 
       // Splash
-      prt_spawn_info_init( &si, gs, splashstrength, prt_pos, 0, INVALID_OBJ, PIP_REF(PRTPIP_SPLASH), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, 0, INVALID_CHR );
-      prt_index = req_spawn_one_particle( si );
-
+      prt_index = prt_spawn( gs, splashstrength, prt_pos, prt_vel, 0, INVALID_OBJ, PIP_REF(PRTPIP_SPLASH), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, 0, INVALID_CHR );
       if( RESERVED_PRT(gs->PrtList, prt_index) )
       {
         Prt_t * pprt = gs->PrtList + prt_index;
@@ -3575,18 +3557,15 @@ void make_onwhichfan( Game_t * gs )
     else if ( is_inwater && ripplestrength > 0.0f )
     {
       // Ripples
-      PRT_SPAWN_INFO si;
-
       ripand = ((( int ) chrlst[chr_ref].ori.vel.x ) != 0 ) | ((( int ) chrlst[chr_ref].ori.vel.y ) != 0 );
       ripand = RIPPLEAND >> ripand;
       if ( 0 == ( gs->wld_frame&ripand ) )
       {
-        vect3  prt_pos = {chrlst[chr_ref].ori.pos.x, chrlst[chr_ref].ori.pos.y, gs->water.surfacelevel};
+        vect3 prt_pos = {chrlst[chr_ref].ori.pos.x, chrlst[chr_ref].ori.pos.y, gs->water.surfacelevel};
+        vect3 prt_vel = {0,0,0};
         PRT_REF prt_index;
 
-        prt_spawn_info_init( &si, gs, ripplestrength, prt_pos, 0, INVALID_OBJ, PIP_REF(PRTPIP_RIPPLE), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, 0, INVALID_CHR );
-        prt_index = req_spawn_one_particle( si );
-
+        prt_index = prt_spawn( gs, ripplestrength, prt_pos, prt_vel, 0, INVALID_OBJ, PIP_REF(PRTPIP_RIPPLE), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, 0, INVALID_CHR );
         if( RESERVED_PRT(gs->PrtList, prt_index) )
         {
           Prt_t * pprt = gs->PrtList + prt_index;
@@ -3638,8 +3617,6 @@ void make_onwhichfan( Game_t * gs )
       // DAMAGE_SHIFT means they're pretty well immune
       if ( !HAS_ALL_BITS(loc_damagemodifier, DAMAGE_SHIFT ) && !chrlst[chr_ref].prop.invictus )
       {
-        PRT_SPAWN_INFO si;
-
         if ( chrlst[chr_ref].damagetime == 0 )
         {
           PAIR ptemp = {GTile_Dam.amount, 1};
@@ -3649,9 +3626,9 @@ void make_onwhichfan( Game_t * gs )
 
         if ( INVALID_PIP != GTile_Dam.parttype && ( gs->wld_frame&GTile_Dam.partand ) == 0 )
         {
-          prt_spawn_info_init( &si, gs, 1.0f, chrlst[chr_ref].ori.pos,
-                              0, INVALID_OBJ, GTile_Dam.parttype, INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, 0, INVALID_CHR );
-          req_spawn_one_particle( si );
+          vect3 prt_vel = {0,0,0};
+          prt_spawn( gs, 1.0f, chrlst[chr_ref].ori.pos, prt_vel,
+                     0, INVALID_OBJ, GTile_Dam.parttype, INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, 0, INVALID_CHR );
         }
 
       }
@@ -5750,7 +5727,7 @@ void export_one_character_name( Game_t * gs, char *szSaveName, CHR_REF chr_ref )
       return;
   }
 
-  str_convert_spaces( chrlst[chr_ref].name, sizeof( chrlst[chr_ref].name ), chrlst[chr_ref].name );
+  str_encode( chrlst[chr_ref].name, sizeof( chrlst[chr_ref].name ), chrlst[chr_ref].name );
   fprintf( filewrite, ":%s\n", chrlst[chr_ref].name );
   fprintf( filewrite, ":STOP\n\n" );
   fs_fileClose( filewrite );
@@ -6565,7 +6542,7 @@ void check_player_import(Game_t * gs)
       pobj->mad = MadList_load_one( gs, filepath, NULL, MAD_REF(loadplayer_count) );
 
       snprintf( filename, sizeof( filename ), "icon%d.bmp", skin );
-      load_one_icon( filepath, NULL, filename );
+      load_one_icon( gs, filepath, NULL, filename );
 
       CProfile_new(&otmp);
       naming_read( gs, filepath, NULL, &otmp);
@@ -7825,8 +7802,6 @@ void damage_character( Game_t * gs, CHR_REF chr_ref, Uint16 direction,
 
           if ( basedamage > DAMAGE_MIN )
           {
-            PRT_SPAWN_INFO si;
-
             // Call for help if below 1/2 life
             if ( pchr->stats.life_fp8 < ( pchr->stats.lifemax_fp8 >> 1 ) ) //Zefz: Removed, because it caused guards to attack
               call_for_help( gs, chr_ref );                    //when dispelling overlay spells (Faerie Light)
@@ -7834,10 +7809,9 @@ void damage_character( Game_t * gs, CHR_REF chr_ref, Uint16 direction,
             // Spawn blud particles
             if ( pcap->bludlevel > BLUD_NONE && ( damagetype < DAMAGE_HOLY || pcap->bludlevel == BLUD_ULTRA ) )
             {
-              prt_spawn_info_init( &si, gs, 1.0f, pchr->ori.pos,
-                                  pchr->ori.turn_lr + direction, pchr->model, pcap->bludprttype,
-                                  INVALID_CHR, GRIP_LAST, pchr->team, chr_ref, 0, INVALID_CHR );
-              req_spawn_one_particle( si );
+              prt_spawn( gs, 1.0f, pchr->ori.pos, pchr->ori.vel,
+                         pchr->ori.turn_lr + direction, pchr->model, pcap->bludprttype,
+                         INVALID_CHR, GRIP_LAST, pchr->team, chr_ref, 0, INVALID_CHR );
             }
             // Set attack alert if it wasn't an accident
             if ( team == TEAM_DAMAGE )
@@ -7983,10 +7957,7 @@ void damage_character( Game_t * gs, CHR_REF chr_ref, Uint16 direction,
         else
         {
           // Spawn a defend particle
-          PRT_SPAWN_INFO si;
-
-          prt_spawn_info_init( &si, gs, pchr->bumpstrength, pchr->ori.pos, pchr->ori.turn_lr, INVALID_OBJ, PIP_REF(PRTPIP_DEFEND), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, 0, INVALID_CHR );
-          req_spawn_one_particle( si );
+          prt_spawn( gs, pchr->bumpstrength, pchr->ori.pos, pchr->ori.vel, pchr->ori.turn_lr, INVALID_OBJ, PIP_REF(PRTPIP_DEFEND), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, 0, INVALID_CHR );
           pchr->damagetime = DELAY_DEFEND;
           pstate->alert |= ALERT_BLOCKED;
         }
@@ -8189,8 +8160,6 @@ void drop_money( Game_t * gs, CHR_REF ichr, Uint16 money )
 
   if ( money > 0 && chrlst[ichr].ori.pos.z > -2 )
   {
-    PRT_SPAWN_INFO si;
-
     chrlst[ichr].money -= money;
     huns   = money / 100;  money -= huns   * 100;
     tfives = money /  25;  money -= tfives *  25;
@@ -8199,26 +8168,22 @@ void drop_money( Game_t * gs, CHR_REF ichr, Uint16 money )
 
     for ( cnt = 0; cnt < ones; cnt++ )
     {
-      prt_spawn_info_init( &si, gs, 1.0f, chrlst[ichr].ori.pos, 0, INVALID_OBJ, PIP_REF(PRTPIP_COIN_001), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, cnt, INVALID_CHR );
-      req_spawn_one_particle( si );
+      prt_spawn( gs, 1.0f, chrlst[ichr].ori.pos, chrlst[ichr].ori.vel, 0, INVALID_OBJ, PIP_REF(PRTPIP_COIN_001), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, cnt, INVALID_CHR );
     }
 
     for ( cnt = 0; cnt < fives; cnt++ )
     {
-      prt_spawn_info_init( &si, gs, 1.0f, chrlst[ichr].ori.pos, 0, INVALID_OBJ, PIP_REF(PRTPIP_COIN_005), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, cnt, INVALID_CHR );
-      req_spawn_one_particle( si );
+      prt_spawn( gs, 1.0f, chrlst[ichr].ori.pos, chrlst[ichr].ori.vel, 0, INVALID_OBJ, PIP_REF(PRTPIP_COIN_005), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, cnt, INVALID_CHR );
     }
 
     for ( cnt = 0; cnt < tfives; cnt++ )
     {
-      prt_spawn_info_init( &si, gs, 1.0f, chrlst[ichr].ori.pos, 0, INVALID_OBJ, PIP_REF(PRTPIP_COIN_025), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, cnt, INVALID_CHR );
-      req_spawn_one_particle( si );
+      prt_spawn( gs, 1.0f, chrlst[ichr].ori.pos, chrlst[ichr].ori.vel, 0, INVALID_OBJ, PIP_REF(PRTPIP_COIN_025), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, cnt, INVALID_CHR );
     }
 
     for ( cnt = 0; cnt < huns; cnt++ )
     {
-      prt_spawn_info_init( &si, gs, 1.0f, chrlst[ichr].ori.pos, 0, INVALID_OBJ, PIP_REF(PRTPIP_COIN_100), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, cnt, INVALID_CHR );
-      req_spawn_one_particle( si );
+      prt_spawn( gs, 1.0f, chrlst[ichr].ori.pos, chrlst[ichr].ori.vel, 0, INVALID_OBJ, PIP_REF(PRTPIP_COIN_100), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, cnt, INVALID_CHR );
     }
 
     chrlst[ichr].damagetime = DELAY_DAMAGE;  // So it doesn't grab it again
@@ -8231,22 +8196,18 @@ CHR_REF chr_spawn( Game_t * gs,  vect3 pos, vect3 vel, OBJ_REF iobj, TEAM_REF te
 {
   CHR_REF retval;
   CHR_SPAWN_INFO chr_si;
-
-  bool_t client_running = bfalse, server_running = bfalse, local_running = bfalse;
-  bool_t local_control = bfalse;
+  bool_t local_control;
 
   if(!EKEY_PVALID(gs)) return INVALID_CHR;
-
-  client_running = CClient_Running(gs->cl);
-  server_running = sv_Running(gs->sv);
-  local_running  = !client_running && !server_running;
-  local_control = server_running || local_running;
 
   // initialize the spawning data
   if(NULL == chr_spawn_info_new( &chr_si, gs )) return INVALID_CHR;
 
   retval = chr_spawn_info_init( &chr_si, pos, vel, iobj, team, skin, facing, name, override );
   if(INVALID_CHR == retval) return INVALID_CHR;
+
+  // determine if this computer is in control of the spawn
+  local_control = Game_hasServer( gs );
 
   // Initialize the character data.
   // It will automatically activate if this computer is in control of the spawn
@@ -8312,21 +8273,21 @@ CHR_REF ChrList_reserve(CHR_SPAWN_INFO * psi)
   pobj = ObjList_getPObj(gs, psi->iobj);
   if( NULL == pobj )
   {
-    log_debug( "WARNING: chr_spawn_info_init() - invalid request : profile %d doesn't exist\n", REF_TO_INT(psi->iobj) );
+    log_debug( "WARNING: chr_spawn_info_init() - \n\tinvalid request : profile %d doesn't exist\n", REF_TO_INT(psi->iobj) );
     return INVALID_CHR;
   }
 
   pcap = ObjList_getPCap(gs, psi->iobj);
   if( NULL == pcap )
   {
-    log_debug( "WARNING: chr_spawn_info_init() - invalid request : character profile (cap) doesn't exist\n" );
+    log_debug( "WARNING: chr_spawn_info_init() - \n\tinvalid request : character profile (cap) doesn't exist\n" );
     return INVALID_CHR;
   }
 
   pmad = ObjList_getPMad(gs, psi->iobj);
   if( NULL == pmad )
   {
-    log_debug( "WARNING: chr_spawn_info_init() - invalid request : character profile (mad) doesn't exist\n" );
+    log_debug( "WARNING: chr_spawn_info_init() - \n\tinvalid request : character profile (mad) doesn't exist\n" );
     return INVALID_CHR;
   }
 
@@ -8370,21 +8331,16 @@ bool_t chr_create_stats( Uint32 * pseed, Stats_t * pstats, StatData_t * pdata)
 ////--------------------------------------------------------------------------------------------
 //CHR_REF req_chr_spawn_one( CHR_SPAWN_INFO si)
 //{
-//  bool_t client_running = bfalse, server_running = bfalse, local_running = bfalse;
 //  CHR_REF retval;
 //  Game_t * gs = si.gs;
 //
 //  if( !EKEY_PVALID(gs) ) return INVALID_CHR;
 //
-//  client_running = CClient_Running(gs->cl);
-//  server_running = sv_Running(gs->sv);
-//  local_running  = !client_running && !server_running;
-//
-//  if(server_running || local_running)
+//  if( Game_hasServer( gs ) )
 //  {
 //    retval = _chr_spawn( si, btrue );
 //  }
-//  else if ( client_running )
+//  else
 //  {
 //    retval = si.ichr;
 //    snd_chr_spawn( si  );
@@ -8429,25 +8385,25 @@ CHR_REF _chr_spawn( CHR_SPAWN_INFO si, bool_t activate )
   pobj = ObjList_getPObj(si.gs, si.iobj);
   if( NULL == pobj )
   {
-    log_debug( "WARNING: req_chr_spawn_one() - failed to spawn : profile %d doesn't exist\n", REF_TO_INT(si.iobj) );
+    log_debug( "WARNING: req_chr_spawn_one() - \n\tfailed to spawn : profile %d doesn't exist\n", REF_TO_INT(si.iobj) );
     return INVALID_CHR;
   }
 
   pcap = ObjList_getPCap(si.gs, si.iobj);
   if( NULL == pcap )
   {
-    log_debug( "WARNING: req_chr_spawn_one() - failed to spawn : character profile (cap) doesn't exist\n" );
+    log_debug( "WARNING: req_chr_spawn_one() - \n\tfailed to spawn : character profile (cap) doesn't exist\n" );
     return INVALID_CHR;
   }
 
   pmad = ObjList_getPMad(si.gs, si.iobj);
   if( NULL == pmad )
   {
-    log_debug( "WARNING: req_chr_spawn_one() - failed to spawn : character profile (mad) doesn't exist\n" );
+    log_debug( "WARNING: req_chr_spawn_one() - \n\tfailed to spawn : character profile (mad) doesn't exist\n" );
     return INVALID_CHR;
   }
 
-  log_debug( "req_chr_spawn_one() - profile == %d, classname == \"%s\", index == %d\n", si.iobj, pcap->classname, si.ichr );
+  log_debug( "req_chr_spawn_one() - \n\tprofile == %d, classname == \"%s\", index == %d\n", si.iobj, pcap->classname, si.ichr );
 
   // use Chr_new() to do a lot of the raw initialization
   // any values that are bfalse, 0, or NULL can be skipped
@@ -8504,7 +8460,7 @@ CHR_REF _chr_spawn( CHR_SPAWN_INFO si, bool_t activate )
   pchr->team_rank = si.gs->TeamList[si.iteam].morale++;
 
   // Firstborn becomes the leader
-  if ( !PENDING_CHR( chrlst, team_get_leader( si.gs, si.iteam ) ) )
+  if ( !SEMIACTIVE_CHR( chrlst, team_get_leader( si.gs, si.iteam ) ) )
   {
     si.gs->TeamList[si.iteam].leader = si.ichr;
   }
@@ -8618,12 +8574,8 @@ CHR_REF _chr_spawn( CHR_SPAWN_INFO si, bool_t activate )
   // Particle attachments
   for ( tnc = 0; tnc < pcap->attachedprtamount; tnc++ )
   {
-    PRT_SPAWN_INFO tmp_si;
-
-    prt_spawn_info_init( &tmp_si, si.gs, 1.0f, pchr->ori.pos, 0, pchr->model, pcap->attachedprttype,
-                        si.ichr, (GRIP)(GRIP_LAST + tnc), pchr->team, si.ichr, tnc, INVALID_CHR );
-
-    req_spawn_one_particle( tmp_si );
+    prt_spawn( si.gs, 1.0f, pchr->ori.pos, pchr->ori.vel, 0, pchr->model, pcap->attachedprttype,
+               si.ichr, (GRIP)(GRIP_LAST + tnc), pchr->team, si.ichr, tnc, INVALID_CHR );
   }
   pchr->reaffirmdamagetype = pcap->attachedprtreaffirmdamagetype;
 
@@ -8649,6 +8601,10 @@ CHR_REF _chr_spawn( CHR_SPAWN_INFO si, bool_t activate )
 
   // if someone requested us to activate, set the character for automatic activation
   pchr->req_active = activate;
+  if(pchr->req_active)
+  {
+    pchr->reserved = bfalse;
+  }
 
   return si.ichr;
 }
@@ -10023,7 +9979,7 @@ CHR_SPAWN_INFO * chr_spawn_info_new(CHR_SPAWN_INFO * psi, Game_t * gs )
   EKEY_PNEW( psi, CHR_SPAWN_INFO );
 
   // make sure we know which Game_t we're connecting to
-  if( !EKEY_PVALID(gs) ) { gs = gfxState.gs; };
+  if( !EKEY_PVALID(gs) ) { gs = Graphics_requireGame(&gfxState); };
 
   // set default values
   psi->gs   = gs;
@@ -10177,6 +10133,175 @@ bool_t chr_spawn_queue_push(CHR_SPAWN_QUEUE * q, CHR_SPAWN_INFO * psi )
 
   memcpy(q->data + q->head, psi, sizeof(CHR_SPAWN_INFO));
   q->head = tmp_head;
+
+  return btrue;
+}
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+ChrHeap_t * ChrHeap_new   ( ChrHeap_t * pheap )
+{
+  if( EKEY_PVALID(pheap) )
+  {
+    ChrHeap_delete( pheap );
+  }
+
+  memset(pheap, 0, sizeof(ChrHeap_t));
+
+  EKEY_PNEW( pheap, ChrHeap_t );
+
+  ChrHeap_reset( pheap );
+
+  return pheap;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t ChrHeap_delete( ChrHeap_t * pheap )
+{
+  if( !EKEY_PVALID(pheap) ) return btrue;
+
+  EKEY_PINVALIDATE( pheap );
+
+  pheap->free_count = 0;
+  pheap->used_count = 0;
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+ChrHeap_t * ChrHeap_renew ( ChrHeap_t * pheap )
+{
+  ChrHeap_t * ret;
+
+  if( !ChrHeap_delete( pheap ) ) return pheap;
+
+  ret = ChrHeap_new( pheap );
+
+  return ret;
+};
+
+//--------------------------------------------------------------------------------------------
+bool_t ChrHeap_reset ( ChrHeap_t * pheap )
+{
+  int i;
+
+  if( !EKEY_PVALID( pheap ) ) return bfalse;
+
+  PROFILE_BEGIN( ChrHeap );
+
+  for( i=0; i<CHRLST_COUNT; i++)
+  {
+    pheap->free_list[i] = i;
+    pheap->used_list[i] = INVALID_CHR;
+  };
+  pheap->free_count = CHRLST_COUNT;
+  pheap->used_count = 0;
+
+  PROFILE_END2( ChrHeap );
+
+  return btrue;
+};
+
+//--------------------------------------------------------------------------------------------
+CHR_REF ChrHeap_getFree( ChrHeap_t * pheap, CHR_REF request )
+{
+  int i;
+  CHR_REF ret = INVALID_CHR;
+
+  if( !EKEY_PVALID(pheap) ) return ret;
+  if( pheap->free_count <= 0 ) return ret;
+
+  PROFILE_BEGIN( ChrHeap );
+
+  if(request == INVALID_CHR)
+  {
+
+    pheap->free_count--;
+    ret = pheap->free_list[pheap->free_count];
+    pheap->free_list[pheap->free_count] = INVALID_CHR;
+  }
+  else
+  {
+    for(i = 0; i<pheap->free_count; i++)
+    {
+      if( pheap->free_list[i] == request ) break;
+    };
+
+    if(i != pheap->free_count)
+    {
+      ret = i;
+      pheap->free_count--;
+      pheap->free_list[i] = pheap->free_list[pheap->free_count];
+      pheap->free_list[pheap->free_count] = INVALID_CHR;
+    };
+  };
+
+  PROFILE_END2( ChrHeap );
+
+  return ret;
+};
+
+//--------------------------------------------------------------------------------------------
+CHR_REF ChrHeap_iterateUsed( ChrHeap_t * pheap, int * index )
+{
+  CHR_REF ret = INVALID_CHR;
+
+  if( !EKEY_PVALID(pheap) ) return ret;
+  if( NULL == index || *index >= pheap->used_count ) return ret;
+
+  PROFILE_BEGIN( ChrHeap );
+
+  (*index)++;
+  ret = pheap->used_list[*index];
+
+  PROFILE_END2( ChrHeap );
+
+  return ret;
+};
+
+//--------------------------------------------------------------------------------------------
+bool_t  ChrHeap_addUsed( ChrHeap_t * pheap, CHR_REF ref )
+{
+  int i;
+
+  if( !EKEY_PVALID(pheap) ) return bfalse;
+  if( pheap->used_count >= CHRLST_COUNT) return bfalse;
+
+  PROFILE_BEGIN( ChrHeap );
+
+  for(i=0; i<pheap->used_count; i++)
+  {
+    if(pheap->used_list[i] == ref) { PROFILE_END2( ChrHeap ); return btrue; }
+  };
+
+  pheap->used_list[pheap->used_count] = ref;
+  pheap->used_count++;
+
+  PROFILE_END2( ChrHeap );
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t  ChrHeap_addFree( ChrHeap_t * pheap, CHR_REF ref )
+{
+  int i;
+
+  if( !EKEY_PVALID(pheap) ) return bfalse;
+  if( pheap->free_count >= CHRLST_COUNT) return bfalse;
+
+  PROFILE_BEGIN( ChrHeap );
+
+  for(i=0; i<pheap->free_count; i++)
+  {
+    if(pheap->free_list[i] == ref) { PROFILE_END2( ChrHeap ); return btrue; }
+  };
+
+  pheap->free_list[pheap->free_count] = ref;
+  pheap->free_count++;
+
+  PROFILE_END2( ChrHeap );
 
   return btrue;
 }

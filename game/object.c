@@ -145,18 +145,18 @@ int load_one_object( Game_t * gs, int skin_count, const char * szObjectpath, cha
 
     // try various file types
     snprintf( fname, sizeof( newloadname ), "tris%d.png", skin_index );
-    tx_index = GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + skin_count+numskins, inherit_fname(szObjectpath, szObjectname, fname), TRANSCOLOR );
+    tx_index = GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + skin_count+numskins, inherit_fname(szObjectpath, szObjectname, fname), TRANSCOLOR );
 
     if(INVALID_TEXTURE == tx_index)
     {
       snprintf( fname, sizeof( newloadname ), "tris%d.bmp", skin_index );
-      tx_index = GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + skin_count+numskins, inherit_fname(szObjectpath, szObjectname, fname), TRANSCOLOR );
+      tx_index = GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + skin_count+numskins, inherit_fname(szObjectpath, szObjectname, fname), TRANSCOLOR );
     }
 
     if(INVALID_TEXTURE == tx_index)
     {
       snprintf( fname, sizeof( newloadname ), "tris%d.pcx", skin_index );
-      tx_index = GLTexture_Load( GL_TEXTURE_2D,  gs->TxTexture + skin_count + numskins, inherit_fname(szObjectpath, szObjectname, fname), TRANSCOLOR );
+      tx_index = GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + skin_count + numskins, inherit_fname(szObjectpath, szObjectname, fname), TRANSCOLOR );
     }
 
     if ( INVALID_TEXTURE != tx_index )
@@ -164,18 +164,18 @@ int load_one_object( Game_t * gs, int skin_count, const char * szObjectpath, cha
       numskins++;
 
       snprintf( fname, sizeof( newloadname ), "icon%d.png", skin_index );
-      tx_index = GLTexture_Load( GL_TEXTURE_2D,  gs->TxIcon + gs->TxIcon_count, inherit_fname(szObjectpath, szObjectname, fname), INVALID_KEY );
+      tx_index = GLtexture_Load( GL_TEXTURE_2D,  gs->TxIcon + gs->TxIcon_count, inherit_fname(szObjectpath, szObjectname, fname), INVALID_KEY );
 
       if ( INVALID_TEXTURE == tx_index )
       {
         snprintf( fname, sizeof( newloadname ), "icon%d.bmp", skin_index );
-        tx_index = GLTexture_Load( GL_TEXTURE_2D,  gs->TxIcon + gs->TxIcon_count, inherit_fname(szObjectpath, szObjectname, fname), INVALID_KEY );
+        tx_index = GLtexture_Load( GL_TEXTURE_2D,  gs->TxIcon + gs->TxIcon_count, inherit_fname(szObjectpath, szObjectname, fname), INVALID_KEY );
       }
 
       if ( INVALID_TEXTURE == tx_index )
       {
         snprintf( fname, sizeof( newloadname ), "icon%d.pcx", skin_index );
-        tx_index = GLTexture_Load( GL_TEXTURE_2D,  gs->TxIcon + gs->TxIcon_count, inherit_fname(szObjectpath, szObjectname, fname), INVALID_KEY );
+        tx_index = GLtexture_Load( GL_TEXTURE_2D,  gs->TxIcon + gs->TxIcon_count, inherit_fname(szObjectpath, szObjectname, fname), INVALID_KEY );
       }
 
       if( INVALID_TEXTURE != tx_index )

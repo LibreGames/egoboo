@@ -26,6 +26,8 @@
 
 #include "ogl_texture.h"
 #include "Log.h"
+
+#include "egoboo_utility.h"
 #include "egoboo.h"
 
 #include <stdlib.h>
@@ -52,8 +54,6 @@ struct sTTFont
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-
-BMFont_t bmfont;
 
 static bool_t   fnt_initialized = bfalse;
 
@@ -232,7 +232,7 @@ static bool_t fnt_init()
 
   if ( TTF_Init() == -1 )
   {
-    log_warning( "fnt_loadFont() - Could not initialize SDL_TTF!\n" );
+    log_warning( "fnt_loadFont() - \n\tCould not initialize SDL_TTF!\n" );
   }
   else
   {
@@ -479,3 +479,118 @@ void fnt_drawTextFormatted( TTFont_t * fnt, int x, int y, const char *format, ..
 
   fnt_drawText( fnt, x, y, buffer );
 }
+
+
+//--------------------------------------------------------------------------------------------
+BMFont_t * BMFont_new( BMFont_t * pfnt )
+{
+  if( EKEY_PVALID(pfnt) )
+  {
+    BMFont_delete( pfnt );
+  }
+
+  memset(pfnt, 0, sizeof(BMFont_t));
+
+  EKEY_PNEW(pfnt, BMFont_t);
+
+  GLtexture_new( &(pfnt->tex) );
+
+  return pfnt;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t BMFont_delete( BMFont_t * pfnt )
+{
+  if( !EKEY_PVALID(pfnt) ) return btrue;
+
+  GLtexture_delete( &(pfnt->tex) );
+
+  EKEY_PINVALIDATE( pfnt );
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t BMFont_load( BMFont_t * pfnt, int scr_height, char* szBitmap, char* szSpacing )
+{
+  // ZZ> This function loads the font bitmap and sets up the coordinates
+  //     of each font on that bitmap...  Bitmap must have 16x6 fonts
+
+  int cnt, y, xsize, ysize, xdiv, ydiv;
+  int xstt, ystt;
+  int xspacing, yspacing;
+  Uint8 cTmp;
+  FILE *fileread;
+
+  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D, &(pfnt->tex), szBitmap, 0 ) ) return bfalse;
+
+  // Clear out the conversion table
+  for ( cnt = 0; cnt < 256; cnt++ )
+    pfnt->ascii_table[cnt] = 0;
+
+  // Get the size of the bitmap
+  xsize = GLtexture_GetImageWidth( &(pfnt->tex) );
+  ysize = GLtexture_GetImageHeight( &(pfnt->tex) );
+  if ( xsize == 0 || ysize == 0 )
+    log_warning( "Bad font size! (basicdat" SLASH_STRING "%s) - X size: %i , Y size: %i\n", szBitmap, xsize, ysize );
+
+
+  // Figure out the general size of each font
+  ydiv = ysize / NUMFONTY;
+  xdiv = xsize / NUMFONTX;
+
+
+  // Figure out where each font is and its spacing
+  fileread = fs_fileOpen( PRI_NONE, NULL, szSpacing, "r" );
+  if ( NULL == fileread  ) return bfalse;
+
+  globalname = szSpacing;
+
+  // Uniform font height is at the top
+  yspacing = fget_next_int( fileread );
+  pfnt->offset = scr_height - yspacing;
+
+  // Mark all as unused
+  for ( cnt = 0; cnt < 255; cnt++ )
+    pfnt->ascii_table[cnt] = 255;
+
+
+  cnt = 0;
+  y = 0;
+  xstt = 0;
+  ystt = 0;
+  while ( cnt < 255 && fgoto_colon_yesno( fileread ) )
+  {
+    cTmp = fgetc( fileread );
+    xspacing = fget_int( fileread );
+    if ( pfnt->ascii_table[cTmp] == 255 )
+    {
+      pfnt->ascii_table[cTmp] = cnt;
+    }
+
+    if ( xstt + xspacing + 1 >= xsize )
+    {
+      xstt = 0;
+      ystt += yspacing;
+    }
+
+    pfnt->rect[cnt].x = xstt;
+    pfnt->rect[cnt].w = xspacing;
+    pfnt->rect[cnt].y = ystt;
+    pfnt->rect[cnt].h = yspacing - 1;
+    pfnt->spacing_x[cnt] = xspacing;
+
+    xstt += xspacing + 1;
+
+    cnt++;
+  }
+  fs_fileClose( fileread );
+
+
+  // Space between lines
+  pfnt->spacing_y = ( yspacing >> 1 ) + FONTADD;
+
+  return btrue;
+}
+
+

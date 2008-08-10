@@ -68,7 +68,7 @@ void fget_code( FILE * pfile );
 
 enum e_Action what_action( char cTmp );
 void release_all_textures(struct sGame * gs);
-Uint32 load_one_icon( char * szPathname, const char * szObjectname, char * szFilename );
+Uint32 load_one_icon( struct sGame * gs, char * szPathname, const char * szObjectname, char * szFilename );
 void release_all_icons(struct sGame * gs);
 void release_map();
 
@@ -139,7 +139,7 @@ void export_one_character_skin( struct sGame * gs, char *szSaveName, CHR_REF cha
 
 bool_t load_bars( char* szBitmap );
 void load_map( struct sGame * gs, char* szModule );
-bool_t load_font( char* szBitmap, char* szSpacing );
+
 void make_water( struct sGame * gs );
 void read_wawalite( struct sGame * gs, char *modname );
 
@@ -162,10 +162,9 @@ void render_water();
 void draw_scene_zreflection();
 void draw_blip( enum e_color color, float x, float y );
 void draw_one_icon( int icontype, int x, int y, Uint8 sparkle );
-void draw_one_font( int fonttype, float x, float y );
+
 void draw_map( float x, float y );
 int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks );
-int length_of_word( char *szText );
 void draw_scene();
 void draw_main( float );
 
@@ -254,8 +253,8 @@ void make_speklut();
 
 bool_t handle_opengl_error();
 
-char * str_convert_spaces( char *strout, size_t insize, char * strin );
-char * str_convert_underscores( char *strout, size_t insize, char * strin );
+char * str_encode( char *strout, size_t insize, char * strin );
+char * str_decode( char *strout, size_t insize, char * strin );
 
 
 // MD2 Stuff

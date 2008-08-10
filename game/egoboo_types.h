@@ -70,12 +70,12 @@ struct s_egoboo_key
 typedef struct s_egoboo_key egoboo_key_t;
 
 INLINE egoboo_key_t * egoboo_key_create(Uint32 itype, void * pdata);
-INLINE bool_t       egoboo_key_destroy(egoboo_key_t ** pkey);
+INLINE bool_t         egoboo_key_destroy(egoboo_key_t ** pkey);
 INLINE egoboo_key_t * egoboo_key_new(egoboo_key_t * pkey, Uint32 itype, void * pdata);
-INLINE bool_t       egoboo_key_validate(egoboo_key_t * pkey);
-INLINE bool_t       egoboo_key_invalidate(egoboo_key_t * pkey);
-INLINE bool_t       egoboo_key_valid(egoboo_key_t * pkey);
-INLINE void *       egoboo_key_get_data(egoboo_key_t * pkey, Uint32 type);
+INLINE bool_t         egoboo_key_validate(egoboo_key_t * pkey);
+INLINE bool_t         egoboo_key_invalidate(egoboo_key_t * pkey);
+INLINE bool_t         egoboo_key_valid(egoboo_key_t * pkey);
+INLINE void *         egoboo_key_get_data(egoboo_key_t * pkey, Uint32 type);
 
 #define EKEY_NEW(XX,YY) egoboo_key_new( &(XX.ekey), ekey_##YY, &(XX) )
 #define EKEY_PNEW(XX,YY) egoboo_key_new( &(XX->ekey), ekey_##YY, XX )
@@ -141,7 +141,12 @@ enum e_ekey_list
   ekey_BUMPLIST,
   ekey_BSP_node_t,
   ekey_BSP_leaf_t,
-  ekey_BSP_tree_t
+  ekey_BSP_tree_t,
+  ekey_ChrHeap_t,
+  ekey_EncHeap_t,
+  ekey_PrtHeap_t,
+  ekey_GLtexture,
+  ekey_BMFont_t
 };
 
 //--------------------------------------------------------------------------------------------
@@ -535,3 +540,7 @@ INLINE BSP_tree_t * BSP_tree_new( BSP_tree_t * t, Sint32 dim, Sint32 depth);
 INLINE bool_t     BSP_tree_delete( BSP_tree_t * t );
 
 INLINE Sint32 BSP_tree_count_nodes(Sint32 dim, Sint32 depth);
+
+#define PROFILE_PROTOTYPE(XX) struct sClockState; extern struct sClockState * clkstate_##XX; extern double clkcount_##XX; extern double clktime_##XX;
+
+PROFILE_PROTOTYPE(ekey);

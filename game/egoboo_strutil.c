@@ -68,7 +68,7 @@ void str_trim( char *pStr )
   }
 }
 
-char * str_convert_underscores( char *strout, size_t insize, char * strin )
+char * str_decode( char *strout, size_t insize, char * strin )
 {
   char *pin = strin, *pout = strout, *plast = pout + insize;
 
@@ -87,7 +87,7 @@ char * str_convert_underscores( char *strout, size_t insize, char * strin )
   return strout;
 };
 
-char * str_convert_spaces( char *strout, size_t insize, char * strin )
+char * str_encode( char *strout, size_t insize, char * strin )
 {
   char chrlast = 0;
   char *pin = strin, *pout = strout, *plast = pout + insize;
@@ -138,7 +138,7 @@ char * str_convert_spaces( char *strout, size_t insize, char * strin )
 };
 
 
-char * str_convert_net(char * str, size_t size)
+char * str_convert_slash_net(char * str, size_t size)
 {
   size_t i;
 
@@ -158,7 +158,7 @@ char * str_convert_net(char * str, size_t size)
   return str;
 }
 
-char * str_convert_sys(char * str, size_t size)
+char * str_convert_slash_sys(char * str, size_t size)
 {
   size_t i;
 
@@ -177,7 +177,7 @@ char * str_convert_sys(char * str, size_t size)
   return str;
 }
 
-char * str_append_net_slash(char * str, size_t size)
+char * str_append_slash_net(char * str, size_t size)
 {
   size_t len;
 

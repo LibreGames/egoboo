@@ -90,6 +90,7 @@ bool_t       MenuProc_delete(MenuProc_t * ms);
 MenuProc_t * MenuProc_renew(MenuProc_t *ms);
 bool_t       MenuProc_init(MenuProc_t * ms);
 bool_t       MenuProc_init_ingame(MenuProc_t * ms);
+bool_t       MenuProc_resynch(MenuProc_t * ms, struct sGame * gs);
 
 //--------------------------------------------------------------------------------------------
 // All the different menus.  yay!

@@ -175,9 +175,34 @@ typedef struct sEnc Enc_t;
   typedef Enc_t * PEnc;
 #endif
 
-Enc_t *  CEnc_new(Enc_t *penc);
-bool_t  CEnc_delete( Enc_t * penc );
-Enc_t *  CEnc_renew( Enc_t * penc );
+Enc_t *  Enc_new(Enc_t *penc);
+bool_t  Enc_delete( Enc_t * penc );
+Enc_t *  Enc_renew( Enc_t * penc );
+
+struct sEncHeap
+{
+  egoboo_key_t ekey;
+
+  int       free_count;
+  ENC_REF   free_list[ENCLST_COUNT];
+
+  int       used_count;
+  ENC_REF   used_list[ENCLST_COUNT];
+};
+
+typedef struct sEncHeap EncHeap_t;
+
+EncHeap_t * EncHeap_new   ( EncHeap_t * pheap );
+bool_t      EncHeap_delete( EncHeap_t * pheap );
+EncHeap_t * EncHeap_renew ( EncHeap_t * pheap );
+bool_t      EncHeap_reset ( EncHeap_t * pheap );
+
+ENC_REF EncHeap_getFree( EncHeap_t * pheap, ENC_REF request );
+ENC_REF EncHeap_iterateUsed( EncHeap_t * pheap, int * index );
+bool_t  EncHeap_addUsed( EncHeap_t * pheap, ENC_REF ref );
+bool_t  EncHeap_addFree( EncHeap_t * pheap, ENC_REF ref );
+
+PROFILE_PROTOTYPE( EncHeap );
 
 ENC_REF EncList_get_free( struct sGame * gs, ENC_REF irequest);
 
@@ -186,7 +211,8 @@ ENC_REF EncList_get_free( struct sGame * gs, ENC_REF irequest);
 #define VALIDATE_ENC(LST, XX) ( VALID_ENC(LST, XX) ? (XX) : (INVALID_ENC) )
 #define RESERVED_ENC(LST, XX) ( VALID_ENC(LST, XX) && LST[XX].reserved && !LST[XX].active   )
 #define ACTIVE_ENC(LST, XX)   ( VALID_ENC(LST, XX) && LST[XX].active   && !LST[XX].reserved )
-#define PENDING_ENC(LST, XX)  ( VALID_ENC(LST, XX) && (LST[XX].active || LST[XX].req_active) && !LST[XX].reserved )
+#define SEMIACTIVE_ENC(LST, XX)  ( VALID_ENC(LST, XX) && (LST[XX].active || LST[XX].req_active) && !LST[XX].reserved )
+#define PENDING_ENC(LST, XX)  ( VALID_ENC(LST, XX) && LST[XX].req_active && !LST[XX].reserved )
 
 
 void EncList_resynch( struct sGame * gs );

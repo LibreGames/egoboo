@@ -54,7 +54,7 @@ static retval_t  _cl_startUp(void);
 static retval_t  _cl_shutDown(void);
 static int       _cl_HostCallback(void *);
 
-bool_t        CClient_Running(Client_t * cs)  { return cl_Started() && !cs->waiting; }
+bool_t     cl_Running(Client_t * cs)  { return cl_Started() && !cs->waiting; }
 
 static int _cl_HostCallback(void *);
 
@@ -1315,7 +1315,7 @@ void cl_request_module_images(Client_t * cs)
       strcat(fname_temp, CData.title_bitmap);
 
       // convert all system slashes to network slashes
-      str_convert_net(fname_temp, sizeof(STRING));
+      str_convert_slash_net(fname_temp, sizeof(STRING));
     }
 
     sys_packet_addString(&egopkt, fname_temp);
@@ -1595,7 +1595,7 @@ bool_t cl_handle_chr_spawn(Client_t * cs, ENetEvent *event)
   NET_PACKET netpkt;
   Uint16 ui16;
 
-  if(NULL == cs || !CClient_Running(cs)) return bfalse;
+  if(NULL == cs || !cl_Running(cs)) return bfalse;
 
   // send the setup data
   stream_startENet(&stream, event->packet);

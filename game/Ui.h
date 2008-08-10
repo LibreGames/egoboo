@@ -91,7 +91,10 @@ ui_buttonValues  ui_doImageButtonWithText( ui_Widget_t * pWidget );
 // Utility functions
 void    ui_doCursor();
 int     ui_mouseInside( int x, int y, int width, int height );
-TTFont_t* ui_getFont();
+TTFont_t* ui_getTTFont();
+BMFont_t* ui_getBMFont();
+
+bool_t ui_load_BMFont( char* szBitmap, char* szSpacing );
 
 bool_t ui_copyWidget( ui_Widget_t * pw2, ui_Widget_t * pw1 );
 bool_t ui_shrinkWidget( ui_Widget_t * pw2, ui_Widget_t * pw1, int pixels );

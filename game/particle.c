@@ -29,8 +29,10 @@
 #include "sound.h"
 #include "enchant.h"
 #include "game.h"
+#include "Clock.h"
 
 #include "egoboo_utility.h"
+#include "egoboo_rpc.h"
 #include "egoboo.h"
 
 #include <assert.h>
@@ -41,6 +43,8 @@
 #include "egoboo_math.inl"
 
 Uint16 particletexture;                            // All in one bitmap
+
+static PRT_REF _prt_spawn( PRT_SPAWN_INFO si, bool_t activate );
 
 //--------------------------------------------------------------------------------------------
 size_t DLightList_clear( Game_t * gs )
@@ -193,14 +197,13 @@ void PrtList_free_one( Game_t * gs, PRT_REF particle )
   // already deleted
   if(!VALID_PRT(gs->PrtList, particle)) return;
 
-  gs->PrtFreeList[gs->PrtFreeList_count] = particle;
-  gs->PrtFreeList_count++;
+  PrtHeap_addFree( &(gs->PrtHeap),  particle );
 
   pprt = gs->PrtList + particle;
   pprt->active = bfalse;
   Prt_delete(pprt);
 
-  log_debug("INFO: PrtList_free_one() - PrtFreeList_count == %d\n", gs->PrtFreeList_count);
+  //log_debug("PrtList_free_one() - \n\tPrtFreeList_count == %d\n", gs->PrtHeap.free_count);
 }
 
 //--------------------------------------------------------------------------------------------
@@ -240,56 +243,70 @@ void end_one_particle( Game_t * gs, PRT_REF particle )
 //--------------------------------------------------------------------------------------------
 PRT_REF PrtList_get_free( Game_t * gs, bool_t is_critical )
 {
-  // ZZ> This function gets an unused particle.  If all particles are in use
-  //     and is_critical is set, it grabs the first unimportant one.  The particle
+  // ZZ> This function gets an unused iprt.  If all particles are in use
+  //     and is_critical is set, it grabs the first unimportant one.  The iprt
   //     index is the return value
   //
   //     Reserve PRTLST_COUNT / 4 particles for critical particles
 
-  PPrt_t prtlst        = gs->PrtList;
+  PPrt_t prtlst      = gs->PrtList;
   size_t prtlst_size = PRTLST_COUNT;
 
-  PRT_REF particle;
+  PRT_REF iprt;
 
   // Return INALID_PRT if we can't find one
-  particle = INVALID_PRT;
+  iprt = INVALID_PRT;
 
-  if ( gs->PrtFreeList_count > PRTLST_COUNT / 4 )
+  if ( gs->PrtHeap.free_count > PRTLST_COUNT / 4 )
   {
     // Just grab the next one
-    gs->PrtFreeList_count--;
-    particle = gs->PrtFreeList[gs->PrtFreeList_count];
+    iprt = PrtHeap_getFree( &(gs->PrtHeap), INVALID_PRT );
   }
 
-  if(INVALID_PRT == particle && is_critical)
+  if(INVALID_PRT == iprt && is_critical)
   {
-    if ( gs->PrtFreeList_count > 0 )
-    {
-      // Just grab the next one
-      gs->PrtFreeList_count--;
-      particle = gs->PrtFreeList[gs->PrtFreeList_count];
-    }
-    else
+    iprt = PrtHeap_getFree( &(gs->PrtHeap), INVALID_PRT );
+    
+    if( INVALID_PRT == iprt )
     {
       // Gotta find one, so go through the list
-      for( particle = 0; particle < PRTLST_COUNT; particle++ )
+      for( iprt = 0; iprt < PRTLST_COUNT; iprt++ )
       {
-        if ( prtlst[particle].bumpsize == 0 || prtlst[particle].bumpstrength == 0.0f )
+        if ( prtlst[iprt].bumpsize == 0 || prtlst[iprt].bumpstrength == 0.0f )
         {
-          // Found one
+          PrtList_free_one(gs, iprt);
+          iprt = PrtHeap_getFree( &(gs->PrtHeap), INVALID_PRT );
           break;
         }
       }
     }
   }
 
-  //log_debug("INFO: PrtList_get_free() - PrtFreeList_count == %d\n", gs->PrtFreeList_count);
 
-  return particle;
+  //if ( retval != irequest )
+  //{
+  //  log_debug( "WARNING: PrtList_get_free() - \n\tcannot find irequest index %d\n", irequest );
+  //  return INVALID_PRT;
+  //}
+
+  // initialize the particle
+  if(INVALID_PRT != iprt)
+  {
+    Prt_new(prtlst + iprt);
+    PrtHeap_addUsed( &(gs->PrtHeap), iprt );
+  }
+  else
+  {
+    log_debug( "WARNING: PrtList_get_free() - \n\tcould not get valid particle\n");
+  }
+
+  //log_debug("PrtList_get_free() - \n\tPrtFreeList_count == %d\n", gs->PrtFreeList_count);
+
+  return iprt;
 }
 
 //--------------------------------------------------------------------------------------------
-PRT_REF prt_spawn_info_init( PRT_SPAWN_INFO * psi, Game_t * gs, float intensity, vect3 pos,
+PRT_REF prt_spawn_info_init( PRT_SPAWN_INFO * psi, Game_t * gs, float intensity, vect3 pos, vect3 vel,
                            Uint16 facing, OBJ_REF iobj, PIP_REF local_pip,
                            CHR_REF characterattach, Uint32 offset, TEAM_REF team,
                            CHR_REF characterorigin, Uint16 multispawn, CHR_REF oldtarget )
@@ -316,16 +333,31 @@ PRT_REF prt_spawn_info_init( PRT_SPAWN_INFO * psi, Game_t * gs, float intensity,
 
   prt_spawn_info_new(psi, gs);
 
+  // fill in the basic spawn info
+  psi->gs              = gs;
+  psi->seed            = gs->randie_index;
+  psi->iobj            = iobj;
+  psi->intensity       = intensity;
+  psi->pos             = pos;
+  psi->vel             = vel;
+  psi->facing          = facing;
+  psi->characterattach = characterattach;
+  psi->offset          = offset;
+  psi->team            = team;
+  psi->characterorigin = characterorigin;
+  psi->multispawn      = multispawn;
+  psi->oldtarget       = oldtarget;
+
   // assume the worst
   psi->ipip = INVALID_PIP;
 
-  // Convert from local local_pip to global local_pip
-  if ( local_pip < PRTPIP_PEROBJECT_COUNT )
+  // Convert from local pip to global pip
+  if ( INVALID_CHR != iobj && local_pip < PRTPIP_PEROBJECT_COUNT )
   {
     psi->ipip = ObjList_getRPip(gs, iobj, local_pip);
   }
 
-  // assume we were given a global local_pip
+  // assume we were given a global pip
   if ( INVALID_PIP == psi->ipip )
   {
     psi->ipip = local_pip;
@@ -333,21 +365,23 @@ PRT_REF prt_spawn_info_init( PRT_SPAWN_INFO * psi, Game_t * gs, float intensity,
 
   if ( !LOADED_PIP(piplst, psi->ipip) )
   {
-    log_debug( "WARN: prt_spawn_info_init() - failed to spawn : local_pip == %d is an invalid value\n", local_pip );
+    log_debug( "WARN: prt_spawn_info_init() - \n\tfailed to spawn : local_pip == %d is an invalid value\n", local_pip );
     return INVALID_PRT;
   }
   ppip = piplst + psi->ipip;
+
+  psi->iobj = iobj;
 
   psi->iprt = PrtList_get_free( gs, ppip->force );
   if ( INVALID_PRT == psi->iprt )
   {
     if(ppip->force)
     {
-      log_debug( "WARN: prt_spawn_info_init() failed - PrtList_get_free() returned %d, PrtFreeList_count == %d\n", REF_TO_INT(psi->iprt), gs->PrtFreeList_count );
+      log_debug( "WARN: prt_spawn_info_init() failed - PrtList_get_free() returned %d, PrtFreeList_count == %d\n", REF_TO_INT(psi->iprt), gs->PrtHeap.free_count );
     }
     else
     {
-      log_debug( "WARN: prt_spawn_info_init() failed - possible particle overflow. PrtFreeList_count == %d \n", gs->PrtFreeList_count  );
+      log_debug( "WARN: prt_spawn_info_init() failed - possible particle overflow. PrtFreeList_count == %d \n", gs->PrtHeap.free_count  );
     }
 
     return INVALID_PRT;
@@ -359,10 +393,12 @@ PRT_REF prt_spawn_info_init( PRT_SPAWN_INFO * psi, Game_t * gs, float intensity,
 
   return psi->iprt;
 }
+
 //--------------------------------------------------------------------------------------------
-PRT_REF req_spawn_one_particle( PRT_SPAWN_INFO si )
+PRT_REF _prt_spawn( PRT_SPAWN_INFO si, bool_t activate )
 {
-  // ZZ> This function spawns a new particle, and returns the number of that particle
+  // ZZ> This function requests a particle to spawn on the local machine
+  //     it will not actually spawn until a confirmation is received from the server
 
   Uint32 loc_rand;
 
@@ -413,7 +449,7 @@ PRT_REF req_spawn_one_particle( PRT_SPAWN_INFO si )
   // make sure we have a valid iprt
   if ( !RESERVED_PRT(prtlst, si.iprt) )
   {
-    log_debug( "WARN: req_spawn_one_particle() - failed to spawn : particle index == %d is an invalid value\n", REF_TO_INT(si.iprt) );
+    log_debug( "WARN: req_spawn_one_particle() - \n\tfailed to spawn : particle index == %d is an invalid value\n", REF_TO_INT(si.iprt) );
     return INVALID_PRT;
   }
   pprt = prtlst + si.iprt;
@@ -421,22 +457,21 @@ PRT_REF req_spawn_one_particle( PRT_SPAWN_INFO si )
   // make sure we have a valid ipip
   if ( !LOADED_PIP(piplst, si.ipip) )
   {
-    log_debug( "WARN: req_spawn_one_particle() - failed to spawn : local_pip == %d is an invalid value\n", REF_TO_INT(si.ipip) );
+    log_debug( "WARN: req_spawn_one_particle() - \n\tfailed to spawn : local_pip == %d is an invalid value\n", REF_TO_INT(si.ipip) );
     return INVALID_PRT;
   }
   ppip = piplst + si.ipip;
-
 
   weight = 1.0f;
   if ( ACTIVE_CHR( chrlst,  si.characterorigin ) ) weight = MAX( weight, chrlst[si.characterorigin].weight );
   if ( ACTIVE_CHR( chrlst,  si.characterattach ) ) weight = MAX( weight, chrlst[si.characterattach].weight );
   prtlst[si.iprt].weight = weight;
 
-  //log_debug( "req_spawn_one_particle() - local pip == %d, global pip == %d, part == %d\n", local_pip, si.ipip, si.iprt);
-  //log_debug( "req_spawn_one_particle() - part == %d, free ==  %d\n", REF_TO_INT(si.iprt), si.gs->PrtFreeList_count);
+  //log_debug( "req_spawn_one_particle() - \n\tlocal pip == %d, global pip == %d, part == %d\n", local_pip, si.ipip, si.iprt);
+  //log_debug( "req_spawn_one_particle() - \n\tpart == %d, free ==  %d\n", REF_TO_INT(si.iprt), si.gs->PrtFreeList_count);
 
-  // do basic initialization
-  Prt_new(pprt);
+  // !!!! basic initialization should have been done by prt_spawn_info_init() !!!!
+  // Prt_new(pprt);
 
   // copy the spawn info for any respawn command
   pprt->spinfo = si;
@@ -525,7 +560,7 @@ PRT_REF req_spawn_one_particle( PRT_SPAWN_INFO si )
     // Does it go away?
     if ( !ACTIVE_CHR( chrlst,  prt_target ) && ppip->needtarget )
     {
-      log_debug( "WARN: prt_spawn_info_init() - failed to spawn : pip requires target and no target specified\n", si.iprt );
+      log_debug( "WARN: prt_spawn_info_init() - \n\tfailed to spawn : pip requires target and no target specified\n", si.iprt );
       end_one_particle( si.gs, si.iprt );
       return INVALID_PRT;
     }
@@ -594,8 +629,6 @@ PRT_REF req_spawn_one_particle( PRT_SPAWN_INFO si )
       break;
   };
 
-
-
   // Image data
   pprt->rotate = generate_unsigned( &loc_rand, &ppip->rotate );
   pprt->rotateadd = ppip->rotateadd;
@@ -610,15 +643,12 @@ PRT_REF req_spawn_one_particle( PRT_SPAWN_INFO si )
     if ( pprt->imageadd_fp8 != 0 ) pprt->time = 0.0;
   }
 
-
   // Set onwhichfan...
   pprt->onwhichfan = mesh_get_fan( Game_getMesh(si.gs), pprt->ori.pos );
-
 
   // Damage stuff
   pprt->damage.ibase = ppip->damage_fp8.ibase * si.intensity;
   pprt->damage.irand = ppip->damage_fp8.irand * si.intensity;
-
 
   // Spawning data
   pprt->spawntime = ppip->contspawntime;
@@ -633,11 +663,337 @@ PRT_REF req_spawn_one_particle( PRT_SPAWN_INFO si )
     }
   }
 
-  // Sound effect
-  snd_play_particle_sound( si.gs, si.intensity, si.iprt, ppip->soundspawn );
+  // if someone requested us to activate, set the particle for automatic activation
+  pprt->req_active = activate;
+  if(pprt->req_active)
+  {
+    pprt->reserved = bfalse;
+  }
 
   return si.iprt;
 }
+
+
+
+
+
+//--------------------------------------------------------------------------------------------
+PRT_REF prt_spawn( Game_t * gs, float intensity, vect3 pos, vect3 vel,
+                   Uint16 facing, OBJ_REF model, PIP_REF pip,
+                   CHR_REF chr_attach, Uint32 offset, TEAM_REF team,
+                   CHR_REF chr_origin, Uint16 multispawn, CHR_REF oldtarget )
+{
+  PRT_REF retval;
+  PRT_SPAWN_INFO prt_si;
+  bool_t local_control;
+
+  if(!EKEY_PVALID(gs)) return INVALID_PRT;
+
+  // initialize the spawning data
+  if(NULL == prt_spawn_info_new( &prt_si, gs )) return INVALID_PRT;
+
+  retval = prt_spawn_info_init( &prt_si, gs, intensity, pos, vel, facing, model, pip,
+                                 chr_attach, offset, team, chr_origin, multispawn, oldtarget );
+  if(INVALID_PRT == retval) return INVALID_PRT;
+
+  // determine if this computer is in control of the spawn
+  local_control = Game_hasServer( gs );
+
+  // Initialize the particle data.
+  // It will automatically activate if this computer is in control of the spawn
+  retval = _prt_spawn( prt_si, local_control );
+  if(INVALID_PRT == retval) return INVALID_PRT;
+
+  if ( !local_control )
+  {
+    // This computer does not control the spawn.
+    // The character will only activate it the server to OKs this spawn.
+    snd_prt_spawn( prt_si );
+  }
+
+  return retval;
+}
+
+////--------------------------------------------------------------------------------------------
+//PRT_REF req_spawn_one_particle( PRT_SPAWN_INFO si )
+//{
+//  // ZZ> This function requests a particle to spawn on the local machine
+//  //     it will not actually spawn until a confirmation is received from the server
+//
+//  Uint32 loc_rand;
+//
+//  PObj_t objlst;
+//  size_t  objlst_size;
+//
+//  PPrt_t prtlst;
+//  size_t prtlst_size;
+//
+//  PPip_t piplst;
+//  size_t piplst_size;
+//
+//  PChr_t chrlst;
+//  size_t chrlst_size;
+//
+//  PMad_t madlst;
+//  size_t madlst_size;
+//
+//  float velocity;
+//  vect3 pos, vel;
+//  int offsetfacing, newrand;
+//  float weight;
+//  CHR_REF prt_target;
+//  Prt_t * pprt;
+//  Pip_t * ppip;
+//  SearchInfo_t loc_search;
+//  Uint16 facing;
+//
+//  assert( EKEY_PVALID(si.gs) );
+//
+//  loc_rand = si.seed;
+//
+//  objlst      = si.gs->ObjList;
+//  objlst_size = OBJLST_COUNT;
+//
+//  prtlst      = si.gs->PrtList;
+//  prtlst_size = PRTLST_COUNT;
+//
+//  piplst      = si.gs->PipList;
+//  piplst_size = PIPLST_COUNT;
+//
+//  chrlst      = si.gs->ChrList;
+//  chrlst_size = CHRLST_COUNT;
+//
+//  madlst      = si.gs->MadList;
+//  madlst_size = MADLST_COUNT;
+//
+//  // make sure we have a valid iprt
+//  if ( !RESERVED_PRT(prtlst, si.iprt) )
+//  {
+//    log_debug( "WARN: req_spawn_one_particle() - \n\tfailed to spawn : particle index == %d is an invalid value\n", REF_TO_INT(si.iprt) );
+//    return INVALID_PRT;
+//  }
+//  pprt = prtlst + si.iprt;
+//
+//  // make sure we have a valid ipip
+//  if ( !LOADED_PIP(piplst, si.ipip) )
+//  {
+//    log_debug( "WARN: req_spawn_one_particle() - \n\tfailed to spawn : local_pip == %d is an invalid value\n", REF_TO_INT(si.ipip) );
+//    return INVALID_PRT;
+//  }
+//  ppip = piplst + si.ipip;
+//
+//
+//  weight = 1.0f;
+//  if ( ACTIVE_CHR( chrlst,  si.characterorigin ) ) weight = MAX( weight, chrlst[si.characterorigin].weight );
+//  if ( ACTIVE_CHR( chrlst,  si.characterattach ) ) weight = MAX( weight, chrlst[si.characterattach].weight );
+//  prtlst[si.iprt].weight = weight;
+//
+//  //log_debug( "req_spawn_one_particle() - \n\tlocal pip == %d, global pip == %d, part == %d\n", local_pip, si.ipip, si.iprt);
+//  //log_debug( "req_spawn_one_particle() - \n\tpart == %d, free ==  %d\n", REF_TO_INT(si.iprt), si.gs->PrtFreeList_count);
+//
+//  // do basic initialization
+//  Prt_new(pprt);
+//
+//  // copy the spawn info for any respawn command
+//  pprt->spinfo = si;
+//
+//  // Necessary data for any part
+//  pprt->pip = si.ipip;
+//  pprt->model = si.iobj;
+//  pprt->team = si.team;
+//  pprt->owner = si.characterorigin;
+//  pprt->damagetype = ppip->damagetype;
+//
+//  // Lighting and sound
+//  pprt->dyna.on = bfalse;
+//  if ( si.multispawn == 0 )
+//  {
+//    pprt->dyna.on = ( DYNA_OFF != ppip->dyna.mode );
+//    if ( ppip->dyna.mode == DYNA_LOCAL )
+//    {
+//      pprt->dyna.on = bfalse;
+//    }
+//  }
+//  pprt->dyna.level   = ppip->dyna.level * si.intensity;
+//  pprt->dyna.falloff = ppip->dyna.falloff;
+//
+//
+//  // Set character attachments ( INVALID_CHR == si.characterattach means none )
+//  pprt->attachedtochr = si.characterattach;
+//  pprt->vertoffset = si.offset;
+//
+//  // Targeting...
+//  offsetfacing = 0;
+//  vel = si.vel;
+//  pos = si.pos;
+//  facing = si.facing;
+//  pos.z += generate_signed( &loc_rand, &ppip->zspacing );
+//  velocity = generate_unsigned( &loc_rand, &ppip->xyvel );
+//  pprt->target = si.oldtarget;
+//  prt_target = INVALID_CHR;
+//  if ( ppip->newtargetonspawn )
+//  {
+//    if ( ppip->targetcaster )
+//    {
+//      // Set the target to the caster
+//      pprt->target = si.characterorigin;
+//    }
+//    else
+//    {
+//      // Correct facing for dexterity...
+//      if ( chrlst[si.characterorigin].stats.dexterity_fp8 < PERFECTSTAT )
+//      {
+//        // Correct facing for randomness
+//        newrand = FP8_DIV( PERFECTSTAT - chrlst[si.characterorigin].stats.dexterity_fp8,  PERFECTSTAT );
+//        offsetfacing += generate_dither( &loc_rand, &ppip->facing, newrand );
+//      }
+//
+//      // Find a target
+//      if( prt_search_wide( si.gs, SearchInfo_new(&loc_search), si.iprt, facing, ppip->targetangle, ppip->onlydamagefriendly, bfalse, si.team, si.characterorigin, si.oldtarget ) )
+//      {
+//        pprt->target = loc_search.besttarget;
+//      };
+//
+//      prt_target = prt_get_target( si.gs, si.iprt );
+//      if ( ACTIVE_CHR( chrlst,  prt_target ) )
+//      {
+//        offsetfacing -= loc_search.useangle;
+//
+//        if ( ppip->zaimspd != 0 )
+//        {
+//          // These aren't velocities...  This is to do aiming on the Z axis
+//          if ( velocity > 0 )
+//          {
+//            float dx,dy, dt,vz;
+//            dx = chrlst[prt_target].ori.pos.x - pos.x;
+//            dy = chrlst[prt_target].ori.pos.y - pos.y;
+//            dt = sqrt( dx * dx + dy * dy ) / velocity;   // This is the time
+//            if ( dt > 0 )
+//            {
+//              vz = ( chrlst[prt_target].ori.pos.z + ( chrlst[prt_target].bmpdata.calc_size * 0.5f ) - pos.z ) / dt;  // This is the vel.z alteration
+//              vel.z += CLIP(vz, - ( ppip->zaimspd >> 1 ), ( ppip->zaimspd >> 1 ));
+//            }
+//          }
+//        }
+//      }
+//    }
+//
+//    // Does it go away?
+//    if ( !ACTIVE_CHR( chrlst,  prt_target ) && ppip->needtarget )
+//    {
+//      log_debug( "WARN: prt_spawn_info_init() - \n\tfailed to spawn : pip requires target and no target specified\n", si.iprt );
+//      end_one_particle( si.gs, si.iprt );
+//      return INVALID_PRT;
+//    }
+//
+//    // Start on top of target
+//    if ( ACTIVE_CHR( chrlst,  prt_target ) && ppip->startontarget )
+//    {
+//      pos.x = chrlst[prt_target].ori.pos.x;
+//      pos.y = chrlst[prt_target].ori.pos.y;
+//    }
+//  }
+//  else
+//  {
+//    // Correct facing for randomness
+//    offsetfacing += generate_dither( &loc_rand, &ppip->facing, INT_TO_FP8( 1 ) );
+//  }
+//  facing += ppip->facing.ibase + offsetfacing;
+//  pprt->facing = facing;
+//  facing >>= 2;
+//
+//  // Location data from arguments
+//  newrand = generate_unsigned( &loc_rand, &ppip->xyspacing );
+//  pos.x += turntocos[( si.facing+8192 ) & TRIGTABLE_MASK] * newrand;
+//  pos.y += turntosin[( si.facing+8192 ) & TRIGTABLE_MASK] * newrand;
+//
+//  pos.x = mesh_clip_x( &(si.gs->Mesh.Info), si.pos.x );
+//  pos.y = mesh_clip_y( &(si.gs->Mesh.Info), si.pos.y );
+//
+//  pprt->ori.pos = pos;
+//
+//  // Velocity data
+//  vel.x += turntocos[( si.facing+8192 ) & TRIGTABLE_MASK] * velocity;
+//  vel.y += turntosin[( si.facing+8192 ) & TRIGTABLE_MASK] * velocity;
+//  vel.z += generate_signed( &loc_rand, &ppip->zvel );
+//  pprt->ori.vel = vel;
+//
+//  pprt->ori_old.pos.x = pprt->ori.pos.x - pprt->ori.vel.x;
+//  pprt->ori_old.pos.y = pprt->ori.pos.y - pprt->ori.vel.y;
+//  pprt->ori_old.pos.z = pprt->ori.pos.z - pprt->ori.vel.z;
+//
+//  // Template values
+//  pprt->bumpsize     = ppip->bumpsize;
+//  pprt->bumpsizebig  = pprt->bumpsize + ( pprt->bumpsize >> 1 );
+//  pprt->bumpheight   = ppip->bumpheight;
+//  pprt->bumpstrength = ppip->bumpstrength * si.intensity;
+//
+//  // figure out the particle type and transparency
+//  pprt->type = ppip->type;
+//  pprt->alpha_fp8 = 255;
+//  switch ( ppip->type )
+//  {
+//    case PRTTYPE_SOLID:
+//      if ( si.intensity < 1.0f )
+//      {
+//        pprt->type      = PRTTYPE_ALPHA;
+//        pprt->alpha_fp8 = FLOAT_TO_FP8(si.intensity);
+//      }
+//      break;
+//
+//    case PRTTYPE_LIGHT:
+//      pprt->alpha_fp8 = FLOAT_TO_FP8(si.intensity);
+//      break;
+//
+//    case PRTTYPE_ALPHA:
+//      pprt->alpha_fp8 = particletrans_fp8 * si.intensity;
+//      break;
+//  };
+//
+//
+//
+//  // Image data
+//  pprt->rotate = generate_unsigned( &loc_rand, &ppip->rotate );
+//  pprt->rotateadd = ppip->rotateadd;
+//  pprt->size_fp8 = ppip->sizebase_fp8;
+//  pprt->sizeadd_fp8 = ppip->sizeadd;
+//  pprt->imageadd_fp8 = generate_unsigned( &loc_rand, &ppip->imageadd );
+//  pprt->imagestt_fp8 = INT_TO_FP8( ppip->imagebase );
+//  pprt->imagemax_fp8 = INT_TO_FP8( ppip->numframes );
+//  pprt->time = ppip->time;
+//  if ( ppip->endlastframe )
+//  {
+//    if ( pprt->imageadd_fp8 != 0 ) pprt->time = 0.0;
+//  }
+//
+//
+//  // Set onwhichfan...
+//  pprt->onwhichfan = mesh_get_fan( Game_getMesh(si.gs), pprt->ori.pos );
+//
+//
+//  // Damage stuff
+//  pprt->damage.ibase = ppip->damage_fp8.ibase * si.intensity;
+//  pprt->damage.irand = ppip->damage_fp8.irand * si.intensity;
+//
+//
+//  // Spawning data
+//  pprt->spawntime = ppip->contspawntime;
+//  if ( pprt->spawntime != 0 )
+//  {
+//    CHR_REF prt_attachedto = prt_get_attachedtochr( si.gs, si.iprt );
+//
+//    pprt->spawntime = 1;
+//    if ( ACTIVE_CHR( chrlst,  prt_attachedto ) )
+//    {
+//      pprt->spawntime++; // Because attachment takes an update before it happens
+//    }
+//  }
+//
+//  // Sound effect
+//  snd_play_particle_sound( si.gs, si.intensity, si.iprt, ppip->soundspawn );
+//
+//  return si.iprt;
+//}
 
 //--------------------------------------------------------------------------------------------
 Uint32 prt_hitawall( Game_t * gs, PRT_REF particle, vect3 * norm )
@@ -781,10 +1137,7 @@ void reaffirm_attached_particles( Game_t * gs, CHR_REF character )
   numberattached = number_of_attached_particles( gs, character );
   while ( numberattached < ChrList_getPCap(gs, character)->attachedprtamount )
   {
-    PRT_SPAWN_INFO si;
-
-    prt_spawn_info_init( &si, gs, 1.0f, pchr->ori.pos, 0, pchr->model, ChrList_getPCap(gs, character)->attachedprttype, character, (GRIP)(GRIP_LAST + numberattached), pchr->team, character, numberattached, INVALID_CHR );
-    particle = req_spawn_one_particle( si );
+    particle = prt_spawn( gs, 1.0f, pchr->ori.pos, pchr->ori.vel, 0, pchr->model, ChrList_getPCap(gs, character)->attachedprttype, character, (GRIP)(GRIP_LAST + numberattached), pchr->team, character, numberattached, INVALID_CHR );
     if ( RESERVED_PRT(prtlst, particle) )
     {
       attach_particle_to_character( gs, particle, character, prtlst[particle].vertoffset );
@@ -927,19 +1280,15 @@ void move_particles( Game_t * gs, float dUpdate )
       pprt->spawntime -= dUpdate;
       if (pprt->spawntime <= 0.0f )
       {
-        PRT_SPAWN_INFO si;
-
         pprt->spawntime = piplst[pip].contspawntime;
         facing =pprt->facing;
 
         for ( tnc = 0; tnc < piplst[pip].contspawnamount; tnc++ )
         {
-          prt_spawn_info_init( &si, gs, 1.0f, pprt->ori.pos,
+          particle = prt_spawn( gs, 1.0f, pprt->ori.pos, pprt->ori.vel,
             facing, pprt->model, piplst[pip].contspawnpip,
             INVALID_CHR, GRIP_LAST, pprt->team, prt_get_owner( gs, iprt ),
             tnc, prt_target );
-
-          particle = req_spawn_one_particle( si );
 
           if ( RESERVED_PRT(prtlst, particle) && 0 != piplst[prtlst[iprt].pip].facingadd)
           {
@@ -957,12 +1306,11 @@ void move_particles( Game_t * gs, float dUpdate )
     // Check underwater
     if (pprt->ori.pos.z < gs->water.douselevel && mesh_has_some_bits( pmesh->Mem.tilelst,pprt->onwhichfan, MPDFX_WATER ) && piplst[pip].endwater )
     {
-      PRT_SPAWN_INFO si;
       vect3 prt_pos = {prtlst[iprt].ori.pos.x, pprt->ori.pos.y, gs->water.surfacelevel};
+      vect3 prt_vel = {0, 0, 0};
 
       // Splash for particles is just a ripple
-      prt_spawn_info_init( &si, gs, 1.0f, prt_pos, 0, INVALID_OBJ, PIP_REF(PRTPIP_RIPPLE), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, 0, INVALID_CHR );
-      req_spawn_one_particle( si );
+      iprt = prt_spawn( gs, 1.0f, prt_pos, prt_vel, 0, INVALID_OBJ, PIP_REF(PRTPIP_RIPPLE), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, 0, INVALID_CHR );
 
       // Check for disaffirming character
       if ( ACTIVE_CHR( chrlst,  prt_attachedto ) && prt_get_owner( gs, iprt ) == prt_attachedto )
@@ -1034,7 +1382,7 @@ void setup_particles( Game_t * gs )
   particletexture = 0;
 
   // Reset the allocation table
-  PrtList_delete(gs);
+  PrtList_new(gs);
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1181,7 +1529,6 @@ void spawn_bump_particles( Game_t * gs, CHR_REF character, PRT_REF particle )
           // A single particle ( arrow? ) has been stuck in the character...
           // Find best vertex to attach to
 
-          PRT_SPAWN_INFO si;
           Uint32 ilast, inext;
           MD2_Model_t * pmdl;
           const MD2_Frame_t * plast, * pnext;
@@ -1224,20 +1571,17 @@ void spawn_bump_particles( Game_t * gs, CHR_REF character, PRT_REF particle )
 
           }
 
-          prt_spawn_info_init( &si, gs, 1.0f, pchr->ori.pos, 0, pprt->model, ppip->bumpspawnpip,
+          prt_spawn( gs, 1.0f, pchr->ori.pos, pchr->ori.vel, 0, pprt->model, ppip->bumpspawnpip,
                               character, (GRIP)(bestvertex + 1), pprt->team, prt_get_owner( gs, particle ), cnt, character );
-          req_spawn_one_particle( si );
         }
         else
         {
-          PRT_SPAWN_INFO si;
           amount = ( amount * vertices ) >> 5;  // Correct amount for size of character
 
           for ( cnt = 0; cnt < amount; cnt++ )
           {
-            prt_spawn_info_init( &si, gs, 1.0f, pchr->ori.pos, 0, pprt->model, ppip->bumpspawnpip,
+            prt_spawn( gs, 1.0f, pchr->ori.pos, pchr->ori.vel, 0, pprt->model, ppip->bumpspawnpip,
                                 character, (GRIP)RAND(&loc_rand, 0, vertices), pprt->team, prt_get_owner( gs, particle ), cnt, character );
-            req_spawn_one_particle( si );
           }
         }
       }
@@ -1307,9 +1651,7 @@ void do_weather_spawn( Game_t * gs, float dUpdate )
       if ( ACTIVE_CHR( chrlst, chr_cnt ) && !chr_in_pack( chrlst, chrlst_size, chr_cnt ) )
       {
         // Yes, so spawn over that character
-        PRT_SPAWN_INFO si;
-        prt_spawn_info_init( &si, gs, 1.0f, chrlst[chr_cnt].ori.pos, 0, INVALID_OBJ, PIP_REF(PRTPIP_WEATHER_1), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, 0, INVALID_CHR );
-        particle = req_spawn_one_particle( si );
+        particle = prt_spawn( gs, 1.0f, chrlst[chr_cnt].ori.pos, chrlst[chr_cnt].ori.vel, 0, INVALID_OBJ, PIP_REF(PRTPIP_WEATHER_1), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, 0, INVALID_CHR );
         if ( RESERVED_PRT(gs->PrtList, particle) )
         {
           if ( GWeather.overwater && !prt_is_over_water( gs, particle ) )
@@ -1527,7 +1869,7 @@ void PipList_load_global(Game_t * gs)
   // ZF> Load in the standard global particles ( the coins for example )
   //     This should only be needed done once at the start of the game
 
-  log_info("PipList_load_global() - Loading global particles into memory... ");
+  log_info("PipList_load_global() - \n\tLoading global particles into memory... ");
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING, CData.basicdat_dir, CData.globalparticles_dir );
 
   //Defend particle
@@ -1884,6 +2226,165 @@ bool_t prt_spawn_info_delete(PRT_SPAWN_INFO * psi)
   if(!EKEY_PVALID(psi))  return btrue;
 
   EKEY_PINVALIDATE(psi);
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+PrtHeap_t * PrtHeap_new   ( PrtHeap_t * pheap )
+{
+  if( EKEY_PVALID(pheap) )
+  {
+    PrtHeap_delete( pheap );
+  }
+
+  memset(pheap, 0, sizeof(PrtHeap_t));
+
+  EKEY_PNEW( pheap, PrtHeap_t );
+
+  PrtHeap_reset( pheap );
+
+  return pheap;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t PrtHeap_delete( PrtHeap_t * pheap )
+{
+  if( !EKEY_PVALID(pheap) ) return btrue;
+
+  EKEY_PINVALIDATE( pheap );
+
+  pheap->free_count = 0;
+  pheap->used_count = 0;
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+PrtHeap_t * PrtHeap_renew ( PrtHeap_t * pheap )
+{
+  if( !PrtHeap_delete( pheap ) ) return pheap;
+
+  return PrtHeap_new( pheap );
+};
+
+//--------------------------------------------------------------------------------------------
+bool_t PrtHeap_reset ( PrtHeap_t * pheap )
+{
+  int i;
+
+  if( !EKEY_PVALID( pheap ) ) return bfalse;
+
+  PROFILE_BEGIN( PrtHeap );
+
+  for( i=0; i<PRTLST_COUNT; i++)
+  {
+    pheap->free_list[i] = i;
+    pheap->used_list[i] = INVALID_PRT;
+  };
+  pheap->free_count = PRTLST_COUNT;
+  pheap->used_count = 0;
+
+  PROFILE_END2( PrtHeap ); 
+
+  return btrue;
+};
+
+//--------------------------------------------------------------------------------------------
+PRT_REF PrtHeap_getFree( PrtHeap_t * pheap, PRT_REF request )
+{
+  int i;
+  PRT_REF ret = INVALID_PRT;
+
+  if( !EKEY_PVALID(pheap) ) return ret;
+  if( pheap->free_count <= 0 ) return ret;
+
+  PROFILE_BEGIN( PrtHeap );
+
+  if(INVALID_PRT == request)
+  {
+    pheap->free_count--;
+    ret = pheap->free_list[pheap->free_count];
+    pheap->free_list[pheap->free_count] = INVALID_PRT;
+  }
+  else
+  {
+    for(i = 0; i<pheap->free_count; i++)
+    {
+      if( pheap->free_list[i] == request ) break;
+    };
+
+    if(i != pheap->free_count)
+    {
+      ret = i;
+      pheap->free_count--;
+      pheap->free_list[i] = pheap->free_list[pheap->free_count];
+      pheap->free_list[pheap->free_count] = INVALID_PRT;
+    };
+  };
+
+  { PROFILE_END2( PrtHeap ); return ret; }
+};
+
+//--------------------------------------------------------------------------------------------
+PRT_REF PrtHeap_iterateUsed( PrtHeap_t * pheap, int * index )
+{
+  PRT_REF ret = INVALID_PRT;
+
+  if( !EKEY_PVALID(pheap) ) return ret;
+  if( NULL == index || *index >= pheap->used_count ) return ret;
+
+  PROFILE_BEGIN( PrtHeap );
+
+  (*index)++;
+  ret = pheap->used_list[*index];
+
+  PROFILE_END2( PrtHeap ); 
+
+  { PROFILE_END2( PrtHeap ); return ret; }
+};
+
+//--------------------------------------------------------------------------------------------
+bool_t  PrtHeap_addUsed( PrtHeap_t * pheap, PRT_REF ref )
+{
+  int i;
+
+  if( !EKEY_PVALID(pheap) ) return bfalse;
+  if( pheap->used_count >= PRTLST_COUNT) return bfalse;
+
+  PROFILE_BEGIN( PrtHeap );
+
+  for(i=0; i<pheap->used_count; i++)
+  {
+    if(pheap->used_list[i] == ref) { PROFILE_END2( PrtHeap ); return btrue; } 
+  };
+
+  pheap->used_list[pheap->used_count] = ref;
+  pheap->used_count++;
+
+  PROFILE_END2( PrtHeap );
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t  PrtHeap_addFree( PrtHeap_t * pheap, PRT_REF ref )
+{
+  int i;
+
+  if( !EKEY_PVALID(pheap) ) return bfalse;
+  if( pheap->free_count >= PRTLST_COUNT) return bfalse;
+
+  PROFILE_BEGIN( PrtHeap );
+
+  for(i=0; i<pheap->free_count; i++)
+  {
+    if(pheap->free_list[i] == ref) { PROFILE_END2( PrtHeap ); return btrue; } 
+  };
+
+  pheap->free_list[pheap->free_count] = ref;
+  pheap->free_count++;
 
   return btrue;
 }

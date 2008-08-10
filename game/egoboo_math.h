@@ -229,4 +229,6 @@ INLINE const BBOX_ARY * bbox_ary_delete(BBOX_ARY * ary);
 INLINE const BBOX_ARY * bbox_ary_renew(BBOX_ARY * ary);
 INLINE const BBOX_ARY * bbox_ary_alloc(BBOX_ARY * ary, int count);
 
-INLINE Uint32 ego_rand(Uint32 * seed);
+INLINE Uint32 ego_rand_32(Uint32 * seed);
+INLINE Uint16 ego_rand_16(Uint16 * seed);
+INLINE Uint8  ego_rand_8 (Uint8  * seed);

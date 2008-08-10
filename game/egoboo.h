@@ -224,13 +224,6 @@ EXTERN float           stabilized_ups        EQ( TARGETUPS );
 EXTERN float           stabilized_ups_sum    EQ( TARGETUPS );
 EXTERN float           stabilized_ups_weight EQ( 1 );
 
-EXTERN Sint32          fps_clock             EQ( 0 );             // The number of ticks this second
-EXTERN Uint32          fps_loops             EQ( 0 );             // The number of frames drawn this second
-EXTERN float           stabilized_fps        EQ( TARGETFPS );
-EXTERN float           stabilized_fps_sum    EQ( TARGETFPS );
-EXTERN float           stabilized_fps_weight EQ( 1 );
-
-
 EXTERN Uint8           outofsync  EQ( 0 );    //Is this only for RTS? Can it be removed then?
 EXTERN Uint8           parseerror EQ( 0 );    //Do we have an script error?
 
@@ -425,9 +418,9 @@ EXTERN char            cFrameName[16];                                     // MD
 EXTERN Uint16 randie[MAXRAND];
 
 #define RANDIE(IND) randie[IND]; IND++; IND %= MAXRAND;
-#define FRAND(PSEED) ( 2.0f*( float ) ego_rand(PSEED) / ( float ) (1 << 16) / ( float ) (1 << 16) - 1.0f )
-#define RAND(PSEED, MINVAL, MAXVAL) ((((ego_rand(PSEED) >> 16) * (MAXVAL-MINVAL)) >> 16)  + MINVAL)
-#define IRAND(PSEED, BITS) ( ego_rand(PSEED) & ((1<<BITS)-1) )
+#define FRAND(PSEED) ( 2.0f*( float ) ego_rand_32(PSEED) / ( float ) (1 << 16) / ( float ) (1 << 16) - 1.0f )
+#define RAND(PSEED, MINVAL, MAXVAL) ((((ego_rand_32(PSEED) >> 16) * (MAXVAL-MINVAL)) >> 16)  + MINVAL)
+#define IRAND(PSEED, BITS) ( ego_rand_32(PSEED) & ((1<<BITS)-1) )
 
 
 EXTERN Uint32 particletrans_fp8  EQ( 0x80 );

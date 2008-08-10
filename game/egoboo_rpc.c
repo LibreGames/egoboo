@@ -33,6 +33,7 @@ void rec_prt_spawn( PRT_SPAWN_INFO si )
   if( RESERVED_PRT(gs->PrtList, si.iprt) )
   {
     gs->PrtList[ si.iprt ].req_active = btrue;
+    gs->PrtList[ si.iprt ].reserved   = bfalse;
   }
 }
 
@@ -62,6 +63,7 @@ void rec_chr_spawn( CHR_SPAWN_INFO si )
   if( RESERVED_CHR(gs->ChrList, si.ichr) )
   {
     gs->ChrList[ si.ichr ].req_active = btrue;
+    gs->ChrList[ si.ichr ].reserved   = bfalse;
   }
 }
 
@@ -91,5 +93,6 @@ void rec_enc_spawn( ENC_SPAWN_INFO si )
   if( RESERVED_ENC(gs->EncList, si.ienc) )
   {
     gs->EncList[ si.ienc ].req_active = btrue;
+    gs->EncList[ si.ienc ].reserved   = bfalse;
   }
 }
