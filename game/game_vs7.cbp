@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="game" />
+		<Option pch_mode="2" />
+		<Option compiler="msvctk" />
+		<Build>
+			<Target title="Debug Win32">
+				<Option output="Debug\Egoboo2x" prefix_auto="1" extension_auto="1" />
+				<Option object_output="Debug" />
+				<Option type="1" />
+				<Option compiler="msvctk" />
+				<Compiler>
+					<Add option="/DWIN32" />
+					<Add option="/D_DEBUG" />
+					<Add option="/D_WINDOWS" />
+					<Add option="/D_CRT_SECURE_NO_DEPRECATE" />
+					<Add option="/D_CONSOLE" />
+					<Add option="/W4" />
+					<Add option="/Zi" />
+					<Add option="/Od" />
+					<Add option="/Wp64" />
+					<Add option="/MDd" />
+					<Add directory="$(SolutionDir)\enet\include" />
+				</Compiler>
+				<ResourceCompiler>
+					<Add directory="$(SolutionDir)\enet\include" />
+				</ResourceCompiler>
+				<Linker>
+					<Add option="/debug" />
+					<Add option="/pdb:Debug\game.pdb" />
+					<Add library="SDL_image" />
+					<Add library="SDL" />
+					<Add library="SDLmain" />
+					<Add library="SDL_ttf" />
+					<Add library="SDL_mixer" />
+					<Add library="opengl32" />
+					<Add library="glu32" />
+					<Add library="ws2_32" />
+					<Add library="shlwapi" />
+					<Add library="Winmm" />
+				</Linker>
+			</Target>
+			<Target title="Release Win32">
+				<Option output="Release\Egoboo2x" prefix_auto="1" extension_auto="1" />
+				<Option object_output="Release" />
+				<Option type="1" />
+				<Option compiler="msvctk" />
+				<Compiler>
+					<Add option="/DWIN32" />
+					<Add option="/DNDEBUG" />
+					<Add option="/D_WINDOWS" />
+					<Add option="/D_CRT_SECURE_NO_DEPRECATE" />
+					<Add option="/W3" />
+					<Add option="/MD" />
+					<Add directory="$(SolutionDir)\enet\include" />
+				</Compiler>
+				<ResourceCompiler>
+					<Add directory="$(SolutionDir)\enet\include" />
+				</ResourceCompiler>
+				<Linker>
+					<Add option="/debug" />
+					<Add option="/INCREMENTAL:NO" />
+					<Add library="SDL" />
+					<Add library="SDLmain" />
+					<Add library="SDL_ttf" />
+					<Add library="SDL_mixer" />
+					<Add library="SDL_image" />
+					<Add library="opengl32" />
+					<Add library="glu32" />
+					<Add library="ws2_32" />
+					<Add library="Winmm" />
+					<Add library="shlwapi" />
+				</Linker>
+			</Target>
+		</Build>
+		<Unit filename="AStar.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="AStar.h" />
+		<Unit filename="Client.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Client.h" />
+		<Unit filename="Clock.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Clock.h" />
+		<Unit filename="Font.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Font.h" />
+		<Unit filename="Frustum.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Frustum.h" />
+		<Unit filename="Log.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Log.h" />
+		<Unit filename="Mad.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Mad.h" />
+		<Unit filename="Md2.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Md2.h" />
+		<Unit filename="Md2.inl" />
+		<Unit filename="Menu.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Menu.h" />
+		<Unit filename="NetFile.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="NetFile.h" />
+		<Unit filename="Network.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Network.h" />
+		<Unit filename="Network.inl" />
+		<Unit filename="Physics.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Physics.h" />
+		<Unit filename="Physics.inl" />
+		<Unit filename="SDL_GetPixel.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SDL_Pixel.h" />
+		<Unit filename="SDL_PutPixel.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SDL_rotozoom.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SDL_rotozoom.h" />
+		<Unit filename="Server.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Server.h" />
+		<Unit filename="System.h" />
+		<Unit filename="System_lin.c">
+			<Option compilerVar="CC" />
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="System_mac.c">
+			<Option compilerVar="CC" />
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="System_win32.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Task.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Task.h" />
+		<Unit filename="Ticker.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Ticker.h" />
+		<Unit filename="Timer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Timer.h" />
+		<Unit filename="Ui.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Ui.h" />
+		<Unit filename="camera.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="camera.h" />
+		<Unit filename="char.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="char.h" />
+		<Unit filename="char.inl" />
+		<Unit filename="configfile.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="configfile.h" />
+		<Unit filename="egoboo.h" />
+		<Unit filename="egoboo_config.h" />
+		<Unit filename="egoboo_math.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="egoboo_math.h" />
+		<Unit filename="egoboo_math.inl" />
+		<Unit filename="egoboo_rpc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="egoboo_rpc.h" />
+		<Unit filename="egoboo_strutil.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="egoboo_strutil.h" />
+		<Unit filename="egoboo_types.h" />
+		<Unit filename="egoboo_types.inl" />
+		<Unit filename="egoboo_utility.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="egoboo_utility.h" />
+		<Unit filename="enchant.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="enchant.h" />
+		<Unit filename="file_common.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="file_lin.c">
+			<Option compilerVar="CC" />
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="file_win.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="game.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="game.h" />
+		<Unit filename="graphic.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="graphic.h" />
+		<Unit filename="graphic.inl" />
+		<Unit filename="graphic_fan.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="graphic_mad.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="graphic_prt.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="id_md2.h" />
+		<Unit filename="id_normals.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="id_normals.h" />
+		<Unit filename="input.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="input.h" />
+		<Unit filename="input.inl" />
+		<Unit filename="mesh.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="mesh.h" />
+		<Unit filename="mesh.inl" />
+		<Unit filename="module.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="module.h" />
+		<Unit filename="object.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="object.h" />
+		<Unit filename="object.inl" />
+		<Unit filename="ogl_include.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ogl_include.h" />
+		<Unit filename="ogl_texture.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ogl_texture.h" />
+		<Unit filename="particle.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="particle.h" />
+		<Unit filename="particle.inl" />
+		<Unit filename="passage.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="passage.h" />
+		<Unit filename="proto.h" />
+		<Unit filename="script.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="script.h" />
+		<Unit filename="sound.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="sound.h" />
+		<Unit filename="..\res\debug.ico">
+			<Option target="Debug Win32" />
+		</Unit>
+		<Unit filename="..\res\debug.rc">
+			<Option compilerVar="WINDRES" />
+			<Option target="Debug Win32" />
+		</Unit>
+		<Unit filename="..\res\release.ico">
+			<Option target="Release Win32" />
+		</Unit>
+		<Unit filename="..\res\release.rc">
+			<Option compilerVar="WINDRES" />
+			<Option target="Release Win32" />
+		</Unit>
+		<Extensions>
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
