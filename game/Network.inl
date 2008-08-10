@@ -209,7 +209,7 @@ INLINE void sys_packet_addString(SYS_PACKET * egop, const char *string)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE static bool_t stream_reset(STREAM * pwrapper)
+INLINE bool_t stream_reset(STREAM * pwrapper)
 {
   if(NULL ==pwrapper) return bfalse;
 

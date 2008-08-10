@@ -9,6 +9,8 @@
 
 #include "particle.inl"
 #include "char.inl"
+#include "egoboo_math.inl"
+#include "egoboo_types.inl"
 
 //--------------------------------------------------------------------------------------------
 DAMAGE fget_damage( FILE *fileread )

@@ -39,6 +39,8 @@
 #include "egoboo_utility.h"
 #include "egoboo_strutil.h"
 
+#include "egoboo_types.inl"
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <assert.h>

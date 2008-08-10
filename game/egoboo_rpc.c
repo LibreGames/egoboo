@@ -2,6 +2,8 @@
 
 #include "game.h"
 
+#include "egoboo_types.inl"
+
 // this is the implementation for the RPC ("remote procedure call") functions that are necessary for the
 // client/server networking
 

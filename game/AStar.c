@@ -481,4 +481,4 @@ int AStar_Node_list_prune(AStar_Node_t buffer[], int buffer_size)
 
   FREE(eliminate_lst);
   return buffer_size;
-}
+} 

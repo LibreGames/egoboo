@@ -1,6 +1,3 @@
-dnl Process this file with autoconf to produce a configure script.
-dnl Created by Anjuta application wizard.
-
 AC_INIT(egoboo, 2.7.8)
 
 AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
@@ -12,12 +9,15 @@ AC_PROG_CC
 AM_PROG_CC_STDC
 AC_HEADER_STDC
 
+PKG_CHECK_MODULES(Enter new module, sdl)
+AC_SUBST(Enter new module_CFLAGS)
+AC_SUBST(Enter new module_LIBS)
 
-
-
-
-
+PKG_CHECK_MODULES(EGOBOO, sdl)
+AC_SUBST(EGOBOO_CFLAGS)
+AC_SUBST(EGOBOO_LIBS)
 
 AC_OUTPUT([
 Makefile
+game/Makefile
 ])

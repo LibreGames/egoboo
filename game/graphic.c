@@ -40,10 +40,12 @@
 #include "egoboo.h"
 
 #include "input.inl"
+#include "char.inl"
 #include "particle.inl"
 #include "input.inl"
 #include "mesh.inl"
 #include "egoboo_math.inl"
+#include "egoboo_types.inl"
 
 #include <assert.h>
 #include <stdarg.h>
@@ -2274,7 +2276,7 @@ void BMFont_draw_one( BMFont_t * pfnt, int fonttype, float x, float y )
   sc_rect.top    = gfxState.scry - y;
   sc_rect.bottom = gfxState.scry - (y + pfnt->rect[fonttype].h);
 
-  draw_texture_box(pfnt, &tx_rect, &sc_rect);
+  draw_texture_box( &(pfnt->tex), &tx_rect, &sc_rect);
 }
 
 //--------------------------------------------------------------------------------------------

@@ -33,10 +33,11 @@
 #include "NetFile.h"
 #include "game.h"
 
+#include "Network.inl"
+#include "egoboo_types.inl"
+
 #include <enet/enet.h>
 #include <assert.h>
-
-#include "Network.inl"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

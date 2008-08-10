@@ -30,6 +30,8 @@
 #include "egoboo_utility.h"
 #include "egoboo.h"
 
+#include "egoboo_types.inl"
+
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>

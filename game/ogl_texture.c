@@ -26,6 +26,8 @@
 #include "egoboo.h" // GAC - Needed for Win32 stuff
 #include "graphic.h"
 
+#include "egoboo_types.inl"
+
 #include <SDL_image.h>
 
 //--------------------------------------------------------------------------------------------
@@ -281,7 +283,7 @@ Uint32 GLtexture_Load( GLenum tx_target, GLtexture *texture, const char *filenam
 
   if(INVALID_TEXTURE == retval)
   {
-    //printf("****GLtexture_Load() - failed to load texture \"%s\".\n", filename );\
+    //printf("****GLtexture_Load() - failed to load texture \"%s\".\n", filename );
     GLtexture_delete(texture);
   }
   else

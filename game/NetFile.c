@@ -4,6 +4,9 @@
 #include "egoboo_utility.h"
 #include "egoboo_strutil.h"
 
+#include "Network.inl"
+#include "egoboo_types.inl"
+
 #include <assert.h>
 #include <time.h>
 

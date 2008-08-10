@@ -37,6 +37,7 @@
 #include "egoboo.h"
 
 #include "Network.inl"
+#include "egoboo_types.inl"
 
 #include <enet/enet.h>
 #include <assert.h>

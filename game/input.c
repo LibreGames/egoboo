@@ -32,6 +32,8 @@
 #include "egoboo_utility.h"
 #include "egoboo.h"
 
+#include "egoboo_types.inl"
+
 // The SDL virtual key values are the ASCII values of a 102-key qwerty keyboard
 // SDL does not automatically translate the shift key.
 char _shiftvals[SDLK_LAST];

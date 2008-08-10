@@ -36,6 +36,7 @@
 #include "input.inl"
 #include "char.inl"
 #include "egoboo_math.inl"
+#include "egoboo_types.inl"
 
 Camera_t GCamera;
 

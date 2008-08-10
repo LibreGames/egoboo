@@ -40,7 +40,11 @@
 #include "char.inl"
 #include "Md2.inl"
 #include "mesh.inl"
+#include "object.inl"
+#include "input.inl"
 #include "egoboo_math.inl"
+#include "egoboo_types.inl"
+
 
 Uint16 particletexture;                            // All in one bitmap
 

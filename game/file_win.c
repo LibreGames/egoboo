@@ -183,21 +183,29 @@ HANDLE win32_hFind;
 // Read the first directory entry
 const char *fs_findFirstFile( FS_FIND_INFO * i, const char *searchDir, const char *searchBody, const char *searchExtension )
 {
+  int szlen;
   char searchSpec[MAX_PATH];
 
   if( NULL == i || FS_WIN32 != i->type ) return NULL;
 
-  strncpy( searchSpec, searchDir, MAX_PATH );
+  // all this szlen stuff is to MAKE SURE we do not go over the valid path length
+  // we could possibly issue an error if we go over
+
+  szlen = _snprintf( searchSpec, MAX_PATH, "%s", searchDir );
   str_append_slash( searchSpec, MAX_PATH );
 
   if ( NULL != searchBody  )
   {
-    _snprintf( searchSpec, MAX_PATH, "%s%s", searchSpec, searchBody );
+    szlen += _snprintf( searchSpec, MAX(0, MAX_PATH - szlen), "%s%s", searchSpec, searchBody );
   }
 
-  if ( NULL != searchExtension  )
+  if ( NULL == searchExtension  )
   {
-    _snprintf( searchSpec, MAX_PATH, "%s%s", searchSpec, searchExtension );
+    szlen += _snprintf( searchSpec, MAX(0, MAX_PATH - szlen), "%s%s", searchSpec, "*" );
+  }
+  else
+  {
+    szlen += _snprintf( searchSpec, MAX(0, MAX_PATH - szlen), "%s%s", searchSpec, searchExtension );
   }
 
 

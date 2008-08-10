@@ -5,7 +5,7 @@
 #include "game.h"
 
 //--------------------------------------------------------------------------------------------
-CHR_REF prt_get_owner( Game_t * gs, PRT_REF iprt )
+INLINE CHR_REF prt_get_owner( Game_t * gs, PRT_REF iprt )
 {
   if ( !ACTIVE_PRT( gs->PrtList, iprt ) ) return INVALID_CHR;
 
@@ -14,7 +14,7 @@ CHR_REF prt_get_owner( Game_t * gs, PRT_REF iprt )
 };
 
 //--------------------------------------------------------------------------------------------
-CHR_REF prt_get_target( Game_t * gs, PRT_REF iprt )
+INLINE CHR_REF prt_get_target( Game_t * gs, PRT_REF iprt )
 {
   if ( !ACTIVE_PRT( gs->PrtList, iprt ) ) return INVALID_CHR;
 
@@ -23,7 +23,7 @@ CHR_REF prt_get_target( Game_t * gs, PRT_REF iprt )
 };
 
 //--------------------------------------------------------------------------------------------
-CHR_REF prt_get_attachedtochr( Game_t * gs, PRT_REF iprt )
+INLINE CHR_REF prt_get_attachedtochr( Game_t * gs, PRT_REF iprt )
 {
   if ( !ACTIVE_PRT( gs->PrtList, iprt ) ) return INVALID_CHR;
 

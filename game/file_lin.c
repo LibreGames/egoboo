@@ -125,13 +125,30 @@ void empty_import_directory( void )
 // Read the first directory entry
 const char *fs_findFirstFile(FS_FIND_INFO * i, const char *searchDir, const char *searchBody, const char *searchExtension )
 {
+  int szlen = 0;
   char pattern[PATH_MAX];
   char *last_slash;
 
-  if ( searchExtension )
-    snprintf( pattern, PATH_MAX, "%s" SLASH_STRING "*.%s", searchDir, searchExtension );
+  // all this szlen stuff is to MAKE SURE we do not go over the valid path length
+  // we could possibly issue an error if we go over
+
+  szlen = snprintf( searchSpec, PATH_MAX, "%s", searchDir );
+  str_append_slash( searchSpec, PATH_MAX );
+  szlen++;
+
+  if ( NULL != searchBody  )
+  {
+    szlen += snprintf( searchSpec, MAX(0, PATH_MAX - szlen), "%s%s", searchSpec, searchBody );
+  }
+
+  if ( NULL == searchExtension  )
+  {
+    szlen += snprintf( searchSpec, MAX(0, PATH_MAX - szlen), "%s%s", searchSpec, "*" );
+  }
   else
-    snprintf( pattern, PATH_MAX, "%s" SLASH_STRING "*", searchDir );
+  {
+    szlen += snprintf( searchSpec, MAX(0, PATH_MAX - szlen), "%s%s", searchSpec, searchExtension );
+  }
 
   i->L->last_find_glob.gl_offs = 0;
   glob( pattern, GLOB_NOSORT, NULL, &i->L->last_find_glob );

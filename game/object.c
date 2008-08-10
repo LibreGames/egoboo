@@ -26,7 +26,6 @@
 
 #include "graphic.h"
 #include "particle.h"
-#include "char.h"
 #include "Mad.h"
 #include "enchant.h"
 #include "game.h"
@@ -34,6 +33,9 @@
 
 #include "egoboo_utility.h"
 #include "egoboo_strutil.h"
+
+#include "char.inl"
+#include "egoboo_types.inl"
 
 //--------------------------------------------------------------------------------------------
 int load_one_object( Game_t * gs, int skin_count, const char * szObjectpath, char* szObjectname )

@@ -3,30 +3,13 @@
 #include "char.h"
 #include "game.h"
 
+#include "egoboo_types.inl"
+
 #include <assert.h>
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-
-//INLINE bool_t chr_in_pack( CHR_REF character );
-//INLINE bool_t chr_attached( CHR_REF character );
-//INLINE bool_t chr_has_inventory( CHR_REF character );
-//INLINE bool_t chr_is_invisible( CHR_REF character );
-//INLINE bool_t chr_using_slot( CHR_REF character, SLOT slot );
-//
-//INLINE CHR_REF chr_get_nextinpack( CHR_REF ichr );
-//INLINE CHR_REF chr_get_onwhichplatform( CHR_REF ichr );
-//INLINE CHR_REF chr_get_inwhichpack( CHR_REF ichr );
-//INLINE CHR_REF chr_get_attachedto( CHR_REF ichr );
-//INLINE CHR_REF chr_get_holdingwhich( CHR_REF ichr, SLOT slot );
-//
-//INLINE CHR_REF chr_get_aitarget( Chr_t * pchr );
-//INLINE CHR_REF chr_get_aiowner( Chr_t * pchr );
-//INLINE CHR_REF chr_get_aichild( Chr_t * pchr );
-//INLINE CHR_REF chr_get_aiattacklast( Chr_t * pchr );
-//INLINE CHR_REF chr_get_aibumplast( Chr_t * pchr );
-//INLINE CHR_REF chr_get_aihitlast( Chr_t * pchr );
 
 INLINE ACTION_INFO * action_info_new( ACTION_INFO * a);
 

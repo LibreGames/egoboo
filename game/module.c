@@ -26,7 +26,6 @@
 
 #include "Log.h"
 #include "sound.h"
-#include "mesh.h"
 #include "particle.h"
 #include "script.h"
 #include "Menu.h"
@@ -42,6 +41,8 @@
 #include "egoboo.h"
 
 #include "graphic.inl"
+#include "mesh.inl"
+#include "egoboo_types.inl"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

@@ -36,6 +36,8 @@
 #include "Md2.inl"
 #include "input.inl"
 #include "graphic.inl"
+#include "egoboo_math.inl"
+#include "egoboo_types.inl"
 
 float sinlut[MAXLIGHTROTATION];
 float coslut[MAXLIGHTROTATION];

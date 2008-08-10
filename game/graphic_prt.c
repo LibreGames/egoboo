@@ -35,6 +35,8 @@
 #include "particle.inl"
 #include "char.inl"
 #include "egoboo_math.inl"
+#include "egoboo_math.inl"
+#include "egoboo_types.inl"
 
 enum e_prt_ori
 {

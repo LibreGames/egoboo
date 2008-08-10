@@ -39,6 +39,10 @@
 #include "Md2.inl"
 #include "char.inl"
 #include "mesh.inl"
+#include "object.inl"
+#include "egoboo_math.inl"
+#include "egoboo_types.inl"
+
 
 //--------------------------------------------------------------------------------------------
 void enc_spawn_particles( Game_t * gs, float dUpdate )

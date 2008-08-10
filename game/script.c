@@ -45,6 +45,7 @@
 #include "char.inl"
 #include "mesh.inl"
 #include "egoboo_math.inl"
+#include "egoboo_types.inl"
 
 #define FUNCTION_FLAG_BIT 0x80000000
 #define CONSTANT_FLAG_BIT 0x80000000

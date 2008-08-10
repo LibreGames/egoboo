@@ -30,7 +30,6 @@
 
 #include "Ui.h"
 #include "Log.h"
-#include "Network.h"
 #include "Server.h"
 #include "Client.h"
 #include "NetFile.h"
@@ -43,6 +42,9 @@
 
 #include "input.inl"
 #include "graphic.inl"
+#include "Network.inl"
+#include "egoboo_types.inl"
+
 
 int              loadplayer_count = 0;
 LOAD_PLAYER_INFO loadplayer[MAXLOADPLAYER];

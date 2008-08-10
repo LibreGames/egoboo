@@ -33,6 +33,8 @@
 #include "particle.inl"
 #include "mesh.inl"
 #include "graphic.inl"
+#include "egoboo_math.inl"
+#include "egoboo_types.inl"
 
 RENDERLIST renderlist;
 

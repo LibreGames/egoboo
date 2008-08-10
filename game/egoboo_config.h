@@ -40,7 +40,7 @@
 
 #else
 
-#    define INLINE inline
+#    define INLINE static inline
 
 #endif
 
