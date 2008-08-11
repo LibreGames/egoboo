@@ -36,9 +36,9 @@
 #include <stddef.h>
 #include <string.h>
 
-#include <SDL.h>
-#include <SDL_opengl.h>
-#include <SDL_ttf.h>
+#include <SDL/SDL.h>
+#include <SDL/SDL_opengl.h>
+#include <SDL/SDL_ttf.h>
 #include <assert.h>
 
 

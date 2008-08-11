@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_workspace_file>
-	<Workspace title="Egoboo_vs7 workspace">
-		<Project filename="game\game_vs7.cbp" />
-		<Project filename="enet\enet_vs7.cbp" />
+	<Workspace title="Egoboo workspace">
+		<Project filename="game/game.cbp" active="1">
+			<Depends filename="enet/enet.cbp" />
+		</Project>
+		<Project filename="enet/enet.cbp" />
 	</Workspace>
 </CodeBlocks_workspace_file>

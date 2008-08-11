@@ -50,7 +50,7 @@
 #include "egoboo_strutil.h"
 #include "egoboo.h"
 
-#include <SDL_endian.h>
+#include <SDL/SDL_endian.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -3616,7 +3616,7 @@ ProcessStates game_doRun(Game_t * gs, ProcessStates procIn)
     //{
     //  gs->wld_clock = gs->all_clock;
     //}
-    //else 
+    //else
     if ( gs->Single_frame || (gs->proc.Paused && Game_isLocal(gs)) )
     {
       gs->wld_clock = gs->all_clock;
@@ -5515,12 +5515,12 @@ static void Game_new_textures( Game_t * gs )
   int i;
 
   for(i=0; i<MAXTEXTURE; i++)
-  { 
+  {
     GLtexture_new( gs->TxTexture + i );
   };
 
   for(i=0; i<MAXICONTX; i++)
-  { 
+  {
     GLtexture_new( gs->TxIcon + i );
   };
   gs->TxIcon_count = 0;
@@ -5622,12 +5622,12 @@ static void Game_delete_textures( Game_t * gs )
   int i;
 
   for(i=0; i<MAXTEXTURE; i++)
-  { 
+  {
     GLtexture_delete( gs->TxTexture + i );
   };
 
   for(i=0; i<MAXICONTX; i++)
-  { 
+  {
     GLtexture_delete( gs->TxIcon + i );
   };
   gs->TxIcon_count = 0;

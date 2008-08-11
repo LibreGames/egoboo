@@ -26,7 +26,7 @@
 
 #include "ogl_texture.h"
 
-#include <SDL.h>
+#include <SDL/SDL.h>
 
 #define NUMFONTX                        16          // Number of fonts in the bitmap
 #define NUMFONTY                        6           //

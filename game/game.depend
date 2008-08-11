@@ -1,0 +1,805 @@
+# depslib dependency file v1.0
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/AStar.c
+	"AStar.h"
+	"game.h"
+	"mesh.inl"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/AStar.h
+	"egoboo_types.h"
+
+1218412190 /home/benjamin/SVN/sf_egoboo/trunk/game/egoboo_types.h
+	"egoboo_config.h"
+	<SDL/SDL_endian.h>
+	<SDL/SDL_types.h>
+
+1218412165 /home/benjamin/SVN/sf_egoboo/trunk/game/egoboo_config.h
+	<SDL/SDL_endian.h>
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/game.h
+	"input.h"
+	"module.h"
+	"char.h"
+	"particle.h"
+	"enchant.h"
+	"passage.h"
+	"mesh.h"
+	"Menu.h"
+	"script.h"
+
+1218412211 /home/benjamin/SVN/sf_egoboo/trunk/game/input.h
+	"egoboo_types.h"
+	<SDL/SDL.h>
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/module.h
+	"ogl_texture.h"
+	"egoboo_types.h"
+
+1218412226 /home/benjamin/SVN/sf_egoboo/trunk/game/ogl_texture.h
+	"ogl_include.h"
+	<SDL/SDL.h>
+
+1218412375 /home/benjamin/SVN/sf_egoboo/trunk/game/ogl_include.h
+	<SDL/SDL_opengl.h>
+	"egoboo_math.h"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/egoboo_math.h
+	<math.h>
+	"egoboo_types.h"
+	"egoboo_config.h"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/char.h
+	"object.h"
+	"input.h"
+	"Mad.h"
+	"egoboo_utility.h"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/object.h
+	"egoboo_types.h"
+	"egoboo_utility.h"
+	"egoboo_math.h"
+	"Physics.h"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/egoboo_utility.h
+	"egoboo_types.h"
+	"egoboo_config.h"
+	<stdio.h>
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/Physics.h
+	"egoboo_math.h"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/Mad.h
+	"object.h"
+	"egoboo_math.h"
+	"egoboo.h"
+	"Md2.h"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/egoboo.h
+	"proto.h"
+	"Menu.h"
+	"configfile.h"
+	"Md2.h"
+	"ogl_texture.h"
+	"egoboo_config.h"
+	"egoboo_math.h"
+	"egoboo_types.h"
+	<stdlib.h>
+	<stdarg.h>
+	<stdio.h>
+	<string.h>
+	<fcntl.h>
+	<ctype.h>
+	<time.h>
+	<math.h>
+	"module.h"
+
+1218412711 /home/benjamin/SVN/sf_egoboo/trunk/game/proto.h
+	"egoboo_types.h"
+	"egoboo_math.h"
+	<SDL/SDL_mixer.h>
+	<SDL/SDL_opengl.h>
+	<stdio.h>
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/Menu.h
+	"ogl_texture.h"
+	"egoboo_types.h"
+	"module.h"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/configfile.h
+	"egoboo_types.h"
+	<stdio.h>
+	<stdlib.h>
+
+1218412447 /home/benjamin/SVN/sf_egoboo/trunk/game/Md2.h
+	"id_md2.h"
+	<SDL/SDL_opengl.h>
+	<memory.h>
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/id_md2.h
+	"egoboo_types.h"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/particle.h
+	"object.h"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/enchant.h
+	"egoboo_types.h"
+	"object.h"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/passage.h
+	"egoboo_types.h"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/mesh.h
+	"egoboo_types.h"
+	"egoboo_math.h"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/script.h
+	"egoboo_types.h"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/mesh.inl
+	"mesh.h"
+	"char.h"
+	"particle.h"
+	"game.h"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/Client.c
+	"Client.h"
+	"Network.h"
+	"Log.h"
+	"NetFile.h"
+	"game.h"
+	"egoboo_strutil.h"
+	"egoboo.h"
+	"Network.inl"
+	"egoboo_types.inl"
+	<enet/enet.h>
+	<assert.h>
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/Client.h
+	<enet/enet.h>
+	"Network.h"
+	"egoboo_types.h"
+	"egoboo.h"
+
+1218408691 /home/benjamin/SVN/sf_egoboo/trunk/enet/include/enet/enet.h
+	<stdlib.h>
+	"enet/win32.h"
+	"enet/unix.h"
+	"enet/types.h"
+	"enet/protocol.h"
+	"enet/list.h"
+	"enet/callbacks.h"
+
+1218408691 /home/benjamin/SVN/sf_egoboo/trunk/enet/include/enet/win32.h
+	<stdlib.h>
+	<winsock2.h>
+
+1218408691 /home/benjamin/SVN/sf_egoboo/trunk/enet/include/enet/unix.h
+	<stdlib.h>
+	<sys/types.h>
+	<netinet/in.h>
+
+1218408691 /home/benjamin/SVN/sf_egoboo/trunk/enet/include/enet/types.h
+
+1218408691 /home/benjamin/SVN/sf_egoboo/trunk/enet/include/enet/protocol.h
+	"enet/types.h"
+
+1218408691 /home/benjamin/SVN/sf_egoboo/trunk/enet/include/enet/list.h
+	<stdlib.h>
+
+1218408691 /home/benjamin/SVN/sf_egoboo/trunk/enet/include/enet/callbacks.h
+	<stdlib.h>
+
+1218412460 /home/benjamin/SVN/sf_egoboo/trunk/game/Network.h
+	"input.h"
+	"char.h"
+	"egoboo.h"
+	<enet/enet.h>
+	<SDL/SDL_thread.h>
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/Log.h
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/NetFile.h
+	"Network.h"
+	"egoboo_types.h"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/egoboo_strutil.h
+	"egoboo_types.h"
+	"egoboo_config.h"
+	<string.h>
+	<ctype.h>
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/Network.inl
+	"Network.h"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/egoboo_types.inl
+	"Clock.h"
+	"egoboo_config.h"
+	"egoboo_types.h"
+	"egoboo_math.inl"
+
+1218412375 /home/benjamin/SVN/sf_egoboo/trunk/game/Clock.h
+	<SDL/SDL_types.h>
+	"egoboo_types.h"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/egoboo_math.inl
+	"egoboo_math.h"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/Clock.c
+	"Clock.h"
+	"System.h"
+	"Log.h"
+	<stddef.h>
+	<stdlib.h>
+	<memory.h>
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/System.h
+
+1218412736 source:/home/benjamin/SVN/sf_egoboo/trunk/game/Font.c
+	"Font.h"
+	"ogl_texture.h"
+	"Log.h"
+	"egoboo_utility.h"
+	"egoboo.h"
+	"egoboo_types.inl"
+	<stdlib.h>
+	<stddef.h>
+	<string.h>
+	<SDL/SDL.h>
+	<SDL/SDL_opengl.h>
+	<SDL/SDL_ttf.h>
+	<assert.h>
+
+1218412375 /home/benjamin/SVN/sf_egoboo/trunk/game/Font.h
+	"ogl_texture.h"
+	<SDL/SDL.h>
+
+1218412375 source:/home/benjamin/SVN/sf_egoboo/trunk/game/Frustum.c
+	"Frustum.h"
+	<SDL/SDL_opengl.h>
+	<math.h>
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/Frustum.h
+	"egoboo_types.h"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/Log.c
+	"Log.h"
+	"proto.h"
+	"egoboo.h"
+	<stdlib.h>
+	<stdio.h>
+	<stdarg.h>
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/Mad.c
+	"Mad.h"
+	"script.h"
+	"Log.h"
+	"egoboo_utility.h"
+	<assert.h>
+	"Md2.inl"
+	"particle.inl"
+	"graphic.inl"
+	"egoboo_types.inl"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/Md2.inl
+	"Md2.h"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/particle.inl
+	"particle.h"
+	"char.h"
+	"game.h"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/graphic.inl
+	"graphic.h"
+
+1218412550 /home/benjamin/SVN/sf_egoboo/trunk/game/graphic.h
+	"ogl_texture.h"
+	"Font.h"
+	"mesh.h"
+	"Menu.h"
+	"game.h"
+	"egoboo_types.h"
+	<SDL/SDL.h>
+
+1218412375 source:/home/benjamin/SVN/sf_egoboo/trunk/game/Md2.c
+	"Md2.inl"
+	"id_md2.h"
+	<SDL/SDL_endian.h>
+	"egoboo_math.inl"
+	<stdio.h>
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/Menu.c
+	"Menu.h"
+	"Ui.h"
+	"Log.h"
+	"Server.h"
+	"Client.h"
+	"NetFile.h"
+	"Clock.h"
+	"sound.h"
+	"egoboo.h"
+	<assert.h>
+	"input.inl"
+	"graphic.inl"
+	"Network.inl"
+	"egoboo_types.inl"
+
+1218412549 /home/benjamin/SVN/sf_egoboo/trunk/game/Ui.h
+	"Font.h"
+	"ogl_texture.h"
+	"egoboo_types.h"
+	<SDL/SDL.h>
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/Server.h
+	"Network.h"
+	"object.h"
+	"char.h"
+	"input.h"
+	"egoboo_types.h"
+	"egoboo.h"
+	<enet/enet.h>
+
+1218412822 /home/benjamin/SVN/sf_egoboo/trunk/game/sound.h
+	"egoboo_math.h"
+	"egoboo_types.h"
+	<SDL/SDL_mixer.h>
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/input.inl
+	"input.h"
+	"Network.h"
+	"char.h"
+	"graphic.h"
+	"game.h"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/NetFile.c
+	"NetFile.h"
+	"egoboo_utility.h"
+	"egoboo_strutil.h"
+	"Network.inl"
+	"egoboo_types.inl"
+	<assert.h>
+	<time.h>
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/Network.c
+	"Network.inl"
+	"Client.h"
+	"Server.h"
+	"Log.h"
+	"NetFile.h"
+	"game.h"
+	"graphic.h"
+	"input.h"
+	"egoboo_utility.h"
+	"egoboo_strutil.h"
+	"egoboo_types.inl"
+	<stdio.h>
+	<stdarg.h>
+	<assert.h>
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/Physics.c
+	"Physics.inl"
+	"egoboo_math.inl"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/Physics.inl
+	"Physics.h"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/SDL_GetPixel.c
+	"SDL_Pixel.h"
+	<string.h>
+
+1218412549 /home/benjamin/SVN/sf_egoboo/trunk/game/SDL_Pixel.h
+	<SDL/SDL.h>
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/SDL_PutPixel.c
+	"SDL_Pixel.h"
+	<string.h>
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/SDL_rotozoom.c
+	<windows.h>
+	<stdlib.h>
+	<string.h>
+	"SDL_rotozoom.h"
+
+1218412549 /home/benjamin/SVN/sf_egoboo/trunk/game/SDL_rotozoom.h
+	<math.h>
+	<SDL/SDL.h>
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/Server.c
+	"Server.h"
+	"Log.h"
+	"egoboo.h"
+	"NetFile.h"
+	"game.h"
+	"Network.inl"
+	"egoboo_types.inl"
+	<enet/enet.h>
+	<assert.h>
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/Task.c
+	"Task.h"
+	"Clock.h"
+	<stddef.h>
+	<string.h>
+	<stdlib.h>
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/Task.h
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/Ticker.c
+	"Ticker.h"
+	"Clock.h"
+	<assert.h>
+	<stddef.h>
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/Ticker.h
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/Timer.c
+	"Timer.h"
+	"Clock.h"
+	<stddef.h>
+	<stdlib.h>
+	<assert.h>
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/Timer.h
+	"Clock.h"
+
+1218412448 source:/home/benjamin/SVN/sf_egoboo/trunk/game/Ui.c
+	"Ui.h"
+	"Log.h"
+	"egoboo.h"
+	<string.h>
+	<SDL/SDL_opengl.h>
+	<assert.h>
+	"graphic.inl"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/camera.c
+	"camera.h"
+	"Frustum.h"
+	"Log.h"
+	"Client.h"
+	"graphic.h"
+	"egoboo.h"
+	<assert.h>
+	"input.inl"
+	"char.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/camera.h
+	"ogl_include.h"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/char.inl
+	"char.h"
+	"game.h"
+	"egoboo_types.inl"
+	<assert.h>
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/char.c
+	"char.inl"
+	"Network.h"
+	"Client.h"
+	"Server.h"
+	"Log.h"
+	"camera.h"
+	"enchant.h"
+	"passage.h"
+	"Menu.h"
+	"script.h"
+	"mesh.h"
+	"graphic.h"
+	"sound.h"
+	"egoboo_strutil.h"
+	"egoboo_utility.h"
+	"egoboo_rpc.h"
+	"egoboo.h"
+	<assert.h>
+	"object.inl"
+	"Physics.inl"
+	"input.inl"
+	"particle.inl"
+	"Md2.inl"
+	"mesh.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/egoboo_rpc.h
+	"char.h"
+	"enchant.h"
+	"particle.h"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/object.inl
+	"object.h"
+	"char.h"
+	"game.h"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/configfile.c
+	"configfile.h"
+	"proto.h"
+	"egoboo_strutil.h"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/egoboo_math.c
+	"egoboo_math.inl"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/egoboo_rpc.c
+	"egoboo_rpc.h"
+	"game.h"
+	"egoboo_types.inl"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/egoboo_strutil.c
+	"egoboo_strutil.h"
+	"egoboo_config.h"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/egoboo_utility.c
+	"egoboo_utility.h"
+	"Mad.h"
+	"Log.h"
+	"egoboo_strutil.h"
+	<assert.h>
+	"particle.inl"
+	"char.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/enchant.c
+	"enchant.h"
+	"Log.h"
+	"passage.h"
+	"script.h"
+	"sound.h"
+	"Clock.h"
+	"egoboo_utility.h"
+	"egoboo.h"
+	<assert.h>
+	"particle.inl"
+	"Md2.inl"
+	"char.inl"
+	"mesh.inl"
+	"object.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/file_common.c
+	"egoboo.h"
+	"Log.h"
+
+1218413096 source:/home/benjamin/SVN/sf_egoboo/trunk/game/file_lin.c
+	"egoboo.h"
+	<stdio.h>
+	<unistd.h>
+	<glob.h>
+	<sys/types.h>
+	<sys/stat.h>
+	<sys/dir.h>
+
+1218412377 source:/home/benjamin/SVN/sf_egoboo/trunk/game/game.c
+	"game.h"
+	"Ui.h"
+	"Font.h"
+	"Clock.h"
+	"Log.h"
+	"Client.h"
+	"Server.h"
+	"System.h"
+	"id_md2.h"
+	"Menu.h"
+	"script.h"
+	"enchant.h"
+	"camera.h"
+	"sound.h"
+	"object.inl"
+	"Network.inl"
+	"mesh.inl"
+	"egoboo_rpc.h"
+	"egoboo_utility.h"
+	"egoboo_strutil.h"
+	"egoboo.h"
+	<SDL/SDL_endian.h>
+	<assert.h>
+	<stdlib.h>
+	<stdio.h>
+	<time.h>
+	"input.inl"
+	"particle.inl"
+	"Md2.inl"
+	"char.inl"
+	"graphic.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/graphic.c
+	"graphic.inl"
+	"Log.h"
+	"Ui.h"
+	"Menu.h"
+	"camera.h"
+	"script.h"
+	"passage.h"
+	"Network.h"
+	"Client.h"
+	"Server.h"
+	"sound.h"
+	"egoboo_utility.h"
+	"egoboo.h"
+	"input.inl"
+	"char.inl"
+	"particle.inl"
+	"input.inl"
+	"mesh.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+	<assert.h>
+	<stdarg.h>
+	<time.h>
+	<unistd.h>
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/graphic_fan.c
+	"ogl_include.h"
+	"Log.h"
+	"Frustum.h"
+	"egoboo.h"
+	<assert.h>
+	"particle.inl"
+	"mesh.inl"
+	"graphic.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/graphic_mad.c
+	"ogl_include.h"
+	"Mad.h"
+	"id_md2.h"
+	"Log.h"
+	"camera.h"
+	"egoboo.h"
+	<assert.h>
+	"char.inl"
+	"Md2.inl"
+	"input.inl"
+	"graphic.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/graphic_prt.c
+	"ogl_include.h"
+	"Log.h"
+	"mesh.h"
+	"camera.h"
+	"graphic.h"
+	"egoboo.h"
+	<assert.h>
+	"particle.inl"
+	"char.inl"
+	"egoboo_math.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/id_normals.c
+	"id_md2.h"
+	"id_normals.h"
+
+1218408702 /home/benjamin/SVN/sf_egoboo/trunk/game/id_normals.h
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/input.c
+	"input.inl"
+	"Ui.h"
+	"Log.h"
+	"Network.h"
+	"Client.h"
+	"egoboo_utility.h"
+	"egoboo.h"
+	"egoboo_types.inl"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/mesh.c
+	"mesh.inl"
+	"Log.h"
+	"egoboo_utility.h"
+	"egoboo.h"
+	"char.inl"
+	"particle.inl"
+	"egoboo_types.inl"
+
+1218413163 source:/home/benjamin/SVN/sf_egoboo/trunk/game/module.c
+	"module.h"
+	"Log.h"
+	"sound.h"
+	"particle.h"
+	"script.h"
+	"Menu.h"
+	"enchant.h"
+	"object.h"
+	"Client.h"
+	"Server.h"
+	"game.h"
+	"Ui.h"
+	"egoboo_strutil.h"
+	"egoboo_utility.h"
+	"egoboo.h"
+	"graphic.inl"
+	"mesh.inl"
+	"egoboo_types.inl"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/object.c
+	"object.inl"
+	"graphic.h"
+	"particle.h"
+	"Mad.h"
+	"enchant.h"
+	"game.h"
+	"Log.h"
+	"egoboo_utility.h"
+	"egoboo_strutil.h"
+	"char.inl"
+	"egoboo_types.inl"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/ogl_include.c
+	"ogl_include.h"
+	"Log.h"
+	"egoboo_math.inl"
+
+1218412822 source:/home/benjamin/SVN/sf_egoboo/trunk/game/ogl_texture.c
+	"ogl_texture.h"
+	"egoboo.h"
+	"graphic.h"
+	"egoboo_types.inl"
+	<SDL/SDL_image.h>
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/particle.c
+	"particle.inl"
+	"Log.h"
+	"camera.h"
+	"sound.h"
+	"enchant.h"
+	"game.h"
+	"Clock.h"
+	"egoboo_utility.h"
+	"egoboo_rpc.h"
+	"egoboo.h"
+	<assert.h>
+	"char.inl"
+	"Md2.inl"
+	"mesh.inl"
+	"object.inl"
+	"input.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/passage.c
+	"passage.h"
+	"script.h"
+	"egoboo_utility.h"
+	"egoboo.h"
+	"sound.h"
+	"char.inl"
+	"mesh.inl"
+	"egoboo_types.inl"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/script.c
+	<assert.h>
+	"script.h"
+	"Log.h"
+	"Mad.h"
+	"passage.h"
+	"camera.h"
+	"enchant.h"
+	"egoboo.h"
+	"passage.h"
+	"Client.h"
+	"AStar.h"
+	"sound.h"
+	"egoboo_utility.h"
+	"particle.inl"
+	"object.inl"
+	"input.inl"
+	"char.inl"
+	"mesh.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo/trunk/game/sound.c
+	"sound.h"
+	"Log.h"
+	"camera.h"
+	"egoboo_utility.h"
+	"egoboo.h"
+	"particle.inl"
+	"char.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+

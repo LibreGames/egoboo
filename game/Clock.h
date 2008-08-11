@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include <SDL_types.h>
+#include <SDL/SDL_types.h>
 #include "egoboo_types.h"
 
 struct sClockState;
@@ -58,7 +58,7 @@ float  ClockState_getFrameRate( ClockState_t * cs );       // Return the current
 #    define PROFILE_FREE(XX)    { ClockState_destroy(&(clkstate_##XX)); }
 #    define PROFILE_QUERY(XX)   ( (double)clktime_##XX / (double)clkcount_##XX )
 
-#    define PROFILE_BEGIN(XX)  ClockState_frameStep(clkstate_##XX); 
+#    define PROFILE_BEGIN(XX)  ClockState_frameStep(clkstate_##XX);
 #    define PROFILE_END(XX)    ClockState_frameStep(clkstate_##XX);   clkcount_##XX = clkcount_##XX*0.9 + 0.1*1.0; clktime_##XX = clktime_##XX*0.9 + 0.1*ClockState_getFrameDuration(clkstate_##XX);
 #    define PROFILE_END2(XX)   ClockState_frameStep(clkstate_##XX);   clkcount_##XX += 1.0;  clktime_##XX += ClockState_getFrameDuration(clkstate_##XX);
 
@@ -69,7 +69,7 @@ float  ClockState_getFrameRate( ClockState_t * cs );       // Return the current
 #    define PROFILE_FREE(XX)    { ClockState_destroy(&(clkstate_##XX)); }
 #    define PROFILE_QUERY(XX)   1.0
 
-#    define PROFILE_BEGIN(XX)  
+#    define PROFILE_BEGIN(XX)
 #    define PROFILE_END(XX)    clkcount_##XX  = 1.0;
 #    define PROFILE_END2(XX)   clkcount_##XX += 1.0;
 

@@ -132,22 +132,22 @@ const char *fs_findFirstFile(FS_FIND_INFO * i, const char *searchDir, const char
   // all this szlen stuff is to MAKE SURE we do not go over the valid path length
   // we could possibly issue an error if we go over
 
-  szlen = snprintf( searchSpec, PATH_MAX, "%s", searchDir );
-  str_append_slash( searchSpec, PATH_MAX );
+  szlen = snprintf( pattern, PATH_MAX, "%s", searchDir );
+  str_append_slash( pattern, PATH_MAX );
   szlen++;
 
   if ( NULL != searchBody  )
   {
-    szlen += snprintf( searchSpec, MAX(0, PATH_MAX - szlen), "%s%s", searchSpec, searchBody );
+    szlen += snprintf( pattern, MAX(0, PATH_MAX - szlen), "%s%s", pattern, searchBody );
   }
 
   if ( NULL == searchExtension  )
   {
-    szlen += snprintf( searchSpec, MAX(0, PATH_MAX - szlen), "%s%s", searchSpec, "*" );
+    szlen += snprintf( pattern, MAX(0, PATH_MAX - szlen), "%s%s", pattern, "*" );
   }
   else
   {
-    szlen += snprintf( searchSpec, MAX(0, PATH_MAX - szlen), "%s%s", searchSpec, searchExtension );
+    szlen += snprintf( pattern, MAX(0, PATH_MAX - szlen), "%s%s", pattern, searchExtension );
   }
 
   i->L->last_find_glob.gl_offs = 0;

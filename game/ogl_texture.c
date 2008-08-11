@@ -28,7 +28,7 @@
 
 #include "egoboo_types.inl"
 
-#include <SDL_image.h>
+#include <SDL/SDL_image.h>
 
 //--------------------------------------------------------------------------------------------
 // The next two functions are borrowed from the gl_font.c test program from SDL_ttf
@@ -268,7 +268,7 @@ Uint32 GLtexture_Load( GLenum tx_target, GLtexture *texture, const char *filenam
   SDL_Surface * image;
 
   // get rid of any old data
-  GLtexture_delete(texture); 
+  GLtexture_delete(texture);
 
   if ( !VALID_CSTR(filename)  ) return INVALID_TEXTURE;
 

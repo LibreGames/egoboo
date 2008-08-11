@@ -31,7 +31,7 @@
 #pragma once
 
 #include "id_md2.h"
-#include <SDL_opengl.h>
+#include <SDL/SDL_opengl.h>
 #include <memory.h>
 
 #pragma pack(push,1)

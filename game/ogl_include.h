@@ -1,6 +1,6 @@
 #pragma once
 
-#include <SDL_opengl.h>
+#include <SDL/SDL_opengl.h>
 #include "egoboo_math.h"
 
 #ifndef EGOBOO_CONFIG

@@ -34,7 +34,7 @@
 #include "Client.h"
 #include "Server.h"
 #include "game.h"
-#include "UI.h"
+#include "Ui.h"
 
 #include "egoboo_strutil.h"
 #include "egoboo_utility.h"
@@ -747,7 +747,7 @@ bool_t module_read_egomap_extra( Game_t * gs, const char * szModPath )
   int file_version;
   int dynalight_max;
   int i;
-  
+
   if( !VALID_CSTR(szModPath) ) return bfalse;
 
   // create the filename
