@@ -352,7 +352,7 @@ void ObjList_free_one( Game_t * gs, OBJ_REF obj_ref )
   pobj = ObjList_getPObj(gs, obj_ref);
   if(NULL == pobj) return;
 
-  log_debug( "ObjList_free_one() - \n\tprofile == %d, caplst[pobj->cap].classname == \"%s\"", obj_ref, caplst[pobj->cap].classname );
+  log_debug( "ObjList_free_one() - \n\tprofile == %d, caplst[pobj->cap].classname == \"%s\"\n", obj_ref, caplst[pobj->cap].classname );
 
   // deallocate the character
   CProfile_delete(pobj);

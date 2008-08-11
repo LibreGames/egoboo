@@ -4582,7 +4582,7 @@ bool_t load_all_music_sounds(ConfigData_t * cd)
 void sdlinit( Graphics_t * g )
 {
   int cnt;
-  SDL_Surface *theSurface;
+  SDL_Surface * tmp_surface;
   STRING strbuffer = { EOS };
 
   log_info("Initializing main SDL services version %i.%i.%i... ", SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_PATCHLEVEL);
@@ -4602,88 +4602,20 @@ void sdlinit( Graphics_t * g )
   SDL_VideoDriverName( strbuffer, 256 );
   log_info( "Using Video Driver - %s\n", strbuffer );
 
-  g->colordepth = g->scrd / 3;
-
   /* Setup the cute windows manager icon */
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.icon_bitmap );
-  theSurface = SDL_LoadBMP( CStringTmp1 );
-  if ( NULL == theSurface  )
+  tmp_surface = SDL_LoadBMP( CStringTmp1 );
+  if ( NULL == tmp_surface  )
   {
     log_warning( "Unable to load icon (%s)\n", CStringTmp1 );
   }
-  SDL_WM_SetIcon( theSurface, NULL );
+  SDL_WM_SetIcon( tmp_surface, NULL );
 
-  //Enable antialiasing X16
-  if(-1 == SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1))
+  // Get us a video mode
+  if( NULL == sdl_set_mode(NULL, g, bfalse) )
   {
-    log_warning("SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1) failed - \n\t\"%s\"", SDL_GetError());
-  }
-  else
-  {
-    int ms_size;
-
-    log_info("Multisample buffers activated\n");
-
-    ms_size = 32;
-    do
-    {
-      ms_size >>= 1;
-
-      if(SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, ms_size) < 0)
-      {
-        log_warning("SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, %d) failed - \n\t\"%s\"", ms_size, SDL_GetError());
-      }
-      else
-      {
-        break;
-      }
-    } while (ms_size > 0);
-
-    log_info("Actual multisamples size == %d\n", ms_size);
-  };
-
-  //Force OpenGL hardware acceleration (This must be done before video mode)
-  if(g->gfxacceleration)
-  {
-    if(SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1) < 0)
-    {
-      log_warning( "SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1) failed - \n\t\"%s\"\n", SDL_GetError());
-    }
-  }
-
-  /* Set the OpenGL Attributes */
-#ifndef __unix__
-  // Under Unix we cannot specify these, we just get whatever format
-  // the framebuffer has, specifying depths > the framebuffer one
-  // will cause SDL_SetVideoMode to fail with: "Unable to set video mode: Couldn't find matching GLX visual"
-  if(SDL_GL_SetAttribute( SDL_GL_RED_SIZE,   g->colordepth ) < 0)
-  {
-    log_warning( "SDL_GL_SetAttribute( SDL_GL_RED_SIZE, %d ) failed - \n\t\"%s\"\n", g->colordepth, SDL_GetError());
-  }
-  if(SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, g->colordepth ) < 0)
-  {
-    log_warning( "SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, %d ) failed - \n\t\"%s\"\n", g->colordepth, SDL_GetError());
-  }
-  if(SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE,  g->colordepth ) < 0)
-  {
-    log_warning( "SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, %d ) failed - \n\t\"%s\"\n", g->colordepth, SDL_GetError());
-  }
-  if(SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, g->scrd ) < 0)
-  {
-    log_warning( "SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, %d ) failed - \n\t\"%s\"\n", g->scrd, SDL_GetError());
-  }
-#endif
-
-  if(SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 ) < 0)
-  {
-    log_warning( "SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 ) failed - \n\t\"%s\"\n", SDL_GetError());
-  }
-
-  g->surface = SDL_SetVideoMode( g->scrx, g->scry, g->scrd, SDL_DOUBLEBUF | SDL_OPENGL | ( g->fullscreen ? SDL_FULLSCREEN : 0 ) );
-  if ( NULL == g->surface )
-  {
-    log_error( "SDL_SetVideoMode() failed - \n\t \"%s\"\n" , SDL_GetError() );
-    exit( 1 );
+    log_error("I can't get SDL to set any video mode.\n");
+    exit(-1);
   }
 
   // We can now do a valid anisotropy calculation

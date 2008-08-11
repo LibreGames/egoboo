@@ -118,6 +118,8 @@
   typedef union vector3_t { float v[3]; struct { float x, y, z; }; struct { float r, g, b; }; } vect3;
   typedef union vector3_ui08_t { Uint8 v[3]; struct { Uint8 x, y, z; }; struct { Uint8 r, g, b; }; } vect3_ui08;
   typedef union vector3_ui16_t { Uint16 v[3]; struct { Uint16 x, y, z; }; struct { Uint16 r, g, b; }; } vect3_ui16;
+  typedef union vector3_ui32_t { Uint32 v[3]; struct { Uint32 x, y, z; }; struct { Uint32 r, g, b; }; } vect3_ui32;
+  typedef union vector3_si32_t { Sint32 v[3]; struct { Sint32 x, y, z; }; struct { Sint32 r, g, b; }; } vect3_si32;
   typedef union vector4_t { float v[4]; struct { float x, y, z, w; }; struct { float r, g, b, a; }; } vect4;
   typedef vect4 quaternion;
 #pragma pack(pop)

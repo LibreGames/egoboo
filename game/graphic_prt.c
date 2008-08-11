@@ -37,6 +37,7 @@
 #include "egoboo_math.inl"
 #include "egoboo_math.inl"
 #include "egoboo_types.inl"
+#include "mesh.inl"
 
 enum e_prt_ori
 {

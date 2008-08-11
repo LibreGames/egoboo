@@ -2433,8 +2433,27 @@ int mnu_doVideoOptions( MenuProc_t * mproc, float deltaTime )
 
       // Force the program to modify the graphics
       // to get this to work properly, you need to reload all textures!
-      Graphics_synch(&gfxState, &CData);
-      gfx_set_mode(&gfxState);
+      {
+        // buffer graphics update so we can restore the old state if there is an error
+        Graphics_t *pgfx, gfx_new = gfxState;
+        Graphics_synch(&gfx_new, &CData);
+
+        // ??? do we have to free this surface ???
+        gfxState.surface = NULL;
+        pgfx = sdl_set_mode(&gfxState, &gfx_new, btrue);
+
+        if(NULL == pgfx)
+        {
+          log_error("Cannot set the graphics mode - \n\t\"%s\"\n", SDL_GetError());
+          exit(-1);
+        }
+        else if( pgfx != &gfxState)
+        {
+          gfxState = gfx_new;
+        }
+
+        // !!!! reload the textures here !!!!
+      };
 
       // reset the auto-formatting for the menus
       initMenus();

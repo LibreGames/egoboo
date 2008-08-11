@@ -67,10 +67,13 @@ static bool_t        gfx_initialized = bfalse;
 
 //--------------------------------------------------------------------------------------------
 struct sStatus;
+struct s_egoboo_video_parameters;
 
 static int  draw_wrap_string( BMFont_t * pfnt, float x, float y, GLfloat tint[], float maxx, char * szFormat, ... );
 static int  draw_status( BMFont_t *  pfnt , struct sStatus * pstat );
 static void draw_text( BMFont_t *  pfnt  );
+
+static SDL_Surface * RequestVideoMode( struct s_egoboo_video_parameters * v );
 
 void render_particles();
 
@@ -584,7 +587,7 @@ void load_basic_textures( Game_t * gs, char *modname )
   //  snprintf(CStringTmp1, sizeof(CStringTmp1), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.phong_bitmap);
   //  GLtexture_Load(GL_TEXTURE_2D,  gs->TxTexture + TX_PHONG, CStringTmp1, TRANSCOLOR );
   //  {
-  //    log_warning("Phong Bitmap Layer 1 could not be found. Missing File = \"%s\"", CData.phong_bitmap);
+  //    log_warning("Phong Bitmap Layer 1 could not be found. Missing File = \"%s\"\n", CData.phong_bitmap);
   //  }
   //};
 
@@ -3333,7 +3336,7 @@ void Reshape3D( int w, int h )
 {
   glViewport( 0, 0, w, h );
 }
-
+//--------------------------------------------------------------------------------------------
 bool_t glinit( Graphics_t * g, ConfigData_t * cd )
 {
   if(NULL == g || NULL == cd) return bfalse;
@@ -3355,7 +3358,7 @@ bool_t glinit( Graphics_t * g, ConfigData_t * cd )
   glEnable( GL_DEPTH_TEST );
 
   //Load the current graphical settings
-  gfx_set_mode(g);
+  gl_set_mode(g);
 
   //Check which particle image to load
   if      ( cd->particletype == PART_NORMAL ) strncpy( cd->particle_bitmap, "particle_normal.png" , sizeof( STRING ) );
@@ -3371,166 +3374,7 @@ bool_t glinit( Graphics_t * g, ConfigData_t * cd )
   return btrue;
 }
 
-//--------------------------------------------------------------------------------------------
-bool_t gfx_set_mode(Graphics_t * g)
-{
-  //This function loads all the graphics based on the game settings
 
-  if(!gfx_initialized) return bfalse;
-
-  // ---- reset the SDL video mode ----
-  {
-    //Enable antialiasing X16
-    if(-1 == SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1))
-    {
-      log_warning("SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1) failed - \n\t\"%s\"", SDL_GetError());
-    }
-    else
-    {
-      int ms_size;
-
-      log_info("Multisample buffers activated\n");
-
-      ms_size = 32;
-      do
-      {
-        ms_size >>= 1;
-
-        if(SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, ms_size) < 0)
-        {
-          log_warning("SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, %d) failed - \n\t\"%s\"", ms_size, SDL_GetError());
-        }
-        else
-        {
-          break;
-        }
-      } while (ms_size > 0);
-
-      log_info("Actual multisamples size == %d\n", ms_size);
-    };
-
-    //Force OpenGL hardware acceleration (This must be done before video mode)
-    if(g->gfxacceleration)
-    {
-      SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-    }
-
-    /* Set the OpenGL Attributes */
-#ifndef __unix__
-    // Under Unix we cannot specify these, we just get whatever format
-    // the framebuffer has, specifying depths > the framebuffer one
-    // will cause SDL_SetVideoMode to fail with: "Unable to set video mode: Couldn't find matching GLX visual"
-    if(SDL_GL_SetAttribute( SDL_GL_RED_SIZE,   g->colordepth ) < 0)
-    {
-      log_warning( "SDL_GL_SetAttribute( SDL_GL_RED_SIZE, %d ) failed - \n\t\"%s\"\n", g->colordepth, SDL_GetError());
-    }
-    if(SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, g->colordepth ) < 0)
-    {
-      log_warning( "SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, %d ) failed - \n\t\"%s\"\n", g->colordepth, SDL_GetError());
-    }
-    if(SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE,  g->colordepth ) < 0)
-    {
-      log_warning( "SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, %d ) failed - \n\t\"%s\"\n", g->colordepth, SDL_GetError());
-    }
-    if(SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, g->scrd ) < 0)
-    {
-      log_warning( "SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, %d ) failed - \n\t\"%s\"\n", g->scrd, SDL_GetError());
-    }
-#endif
-
-    if(SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 ) < 0)
-    {
-      log_warning( "SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 ) failed - \n\t\"%s\"\n", SDL_GetError());
-    }
-
-    g->surface = SDL_SetVideoMode( g->scrx, g->scry, g->scrd, SDL_DOUBLEBUF | SDL_OPENGL | ( g->fullscreen ? SDL_FULLSCREEN : 0 ) );
-    if ( NULL == g->surface )
-    {
-      log_error( "Unable to set video mode: %s\n", SDL_GetError() );
-      exit( 1 );
-    }
-  }
-
-  glEnable(GL_MULTISAMPLE_ARB);
-  //glEnable(GL_MULTISAMPLE);
-
-  //Check if the computer graphic driver supports anisotropic filtering
-  if ( g->texturefilter >= TX_ANISOTROPIC )
-  {
-    if ( 0 == strstr(( char* ) glGetString( GL_EXTENSIONS ), "GL_EXT_texture_filter_anisotropic" ) )
-    {
-      log_warning( "Your graphics driver does not support anisotropic filtering.\n" );
-      g->texturefilter = TX_TRILINEAR_2; //Set filtering to trillienar instead
-    }
-  }
-
-  //Enable perspective correction?
-  glHint( GL_PERSPECTIVE_CORRECTION_HINT, g->perspective );
-
-  //Enable dithering?
-  if ( g->dither ) glEnable( GL_DITHER );
-  else glDisable( GL_DITHER );
-
-  //Enable gourad g->shading? (Important!)
-  glShadeModel( g->shading );
-
-  //Enable g->antialiasing?
-  if ( g->antialiasing )
-  {
-    glEnable( GL_LINE_SMOOTH );
-    glHint( GL_LINE_SMOOTH_HINT,    GL_NICEST );
-
-    glEnable( GL_POINT_SMOOTH );
-    glHint( GL_POINT_SMOOTH_HINT,   GL_NICEST );
-
-    glDisable( GL_POLYGON_SMOOTH );
-    glHint( GL_POLYGON_SMOOTH_HINT,    GL_FASTEST );
-
-    // PLEASE do not turn this on unless you use
-    //  glEnable (GL_BLEND);
-    //  glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    // before every single draw command
-    //
-    //glEnable(GL_POLYGON_SMOOTH);
-    //glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
-  }
-  else
-  {
-    glDisable( GL_POINT_SMOOTH );
-    glDisable( GL_LINE_SMOOTH );
-    glDisable( GL_POLYGON_SMOOTH );
-  }
-
-  // Wait for vertical synchronization?
-  if( g->vsync )
-  {
-    // Fedora 7 doesn't suuport SDL_GL_SWAP_CONTROL, but we use this  nvidia extension instead.
-#if defined(__unix__)
-      SDL_putenv("__GL_SYNC_TO_VBLANK=1");
-#else
-    /* Turn on vsync, this works on Windows. */
-      if(SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1) < 0)
-      {
-        log_warning( "SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1) failed - \n\t\"%s\"\n", SDL_GetError());
-      }
-#endif
-  }
-
-  //fill mode
-  glPolygonMode( GL_FRONT, GL_FILL );
-  glPolygonMode( GL_BACK,  GL_FILL );
-
-  /* Disable OpenGL lighting */
-  glDisable( GL_LIGHTING );
-
-  /* Backface culling */
-  glEnable( GL_CULL_FACE );  // This seems implied - DDOI
-  glCullFace( GL_BACK );
-
-  glViewport(0, 0, gfxState.surface->w, gfxState.surface->h);
-
-  return btrue;
-}
 
 //--------------------------------------------------------------------------------------------
 bool_t CGraphics_delete(Graphics_t * g)
@@ -3705,7 +3549,7 @@ bool_t Graphics_synch(Graphics_t * g, ConfigData_t * cd)
   if(changed)
   {
     // to get this to work properly, you need to reload all textures!
-    gfx_set_mode(g);
+    gl_set_mode(g);
   }
 
   return btrue;
@@ -4031,6 +3875,423 @@ bool_t CVolume_draw( CVolume_t * cv, bool_t draw_square, bool_t draw_diamond  )
 
   return retval;
 };
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct s_egoboo_video_parameters
+{
+  int    doublebuffer;     // btrue
+  bool_t opengl;           // btrue
+  bool_t fullscreen;       // bfalse
+
+  int multibuffers;      // 1
+  int multisamples;      // 16
+  int glacceleration;    // 1
+
+  vect3_si32 colordepth;  // 8,8,8
+
+  int width;       // 640
+  int height;      // 480
+  int depth;       // 32
+};
+
+typedef struct s_egoboo_video_parameters video_parameters_t;
+
+//--------------------------------------------------------------------------------------------
+bool_t video_parameters_default(video_parameters_t * v)
+{
+  if(NULL == v) return bfalse;
+
+  v->doublebuffer = btrue;
+  v->opengl       = btrue;
+  v->fullscreen   = bfalse;
+
+  v->multibuffers   = 1;
+  v->multisamples   = 16;
+  v->glacceleration = 1;
+
+  v->colordepth.r = 8;
+  v->colordepth.g = 8;
+  v->colordepth.b = 8;
+
+  v->width  = 640;
+  v->height = 480;
+  v->depth  =  32;
+
+  return btrue;
+};
+
+//--------------------------------------------------------------------------------------------
+bool_t video_parameters_download(video_parameters_t * p, Graphics_t * g )
+{
+  if(NULL == g)
+  {
+    return video_parameters_default(p);
+  };
+
+  if(g->scrd > 24)
+  {
+    g->colordepth = g->scrd / 4;
+  }
+  else
+  {
+    g->colordepth = g->scrd / 3;
+  }
+
+  if(NULL == p) return bfalse;
+
+  p->fullscreen     = g->fullscreen;
+  p->glacceleration = g->gfxacceleration;
+
+  if(g->antialiasing)
+  {
+    p->multisamples = 1;
+    p->multibuffers = 16;
+  }
+  else
+  {
+    p->multisamples = 0;
+    p->multibuffers = 0;
+  }
+
+  p->colordepth.r = g->colordepth;
+  p->colordepth.g = g->colordepth;
+  p->colordepth.b = g->colordepth;
+  p->depth        = g->scrd;
+  p->width        = g->scrx;
+  p->height       = g->scry;
+
+  return btrue;
+};
+
+//--------------------------------------------------------------------------------------------
+bool_t video_parameters_upload( video_parameters_t * p, Graphics_t * g )
+{
+  if(NULL == p || NULL == g) return bfalse;
+
+  g->fullscreen     = p->fullscreen;
+  g->gfxacceleration = p->glacceleration;
+
+  g->colordepth = p->colordepth.r;
+  g->scrd       = p->depth;
+  g->scrx       = p->width;
+  g->scry       = p->height;
+
+  return btrue;
+};
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+SDL_Surface * RequestVideoMode( video_parameters_t * v )
+{
+
+  Uint32 flags;
+  SDL_Surface * ret = NULL;
+
+  if(NULL == v) return ret;
+
+  if(v->opengl)
+  {
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, v->multibuffers  );
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, v->multisamples  );
+    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, v->glacceleration);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,       v->doublebuffer  );
+
+#ifndef __unix__
+    // Under Unix we cannot specify these, we just get whatever format
+    // the framebuffer has, specifying depths > the framebuffer one
+    // will cause SDL_SetVideoMode to fail with: "Unable to set video mode: Couldn't find matching GLX visual"
+
+    SDL_GL_SetAttribute( SDL_GL_RED_SIZE,   v->colordepth.r );
+    SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, v->colordepth.g );
+    SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE,  v->colordepth.b );
+    SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, v->depth );
+#else
+      // Try to grab a safe value for the screen depth
+      SDL_GL_GetAttribute( SDL_GL_DEPTH_SIZE, &(v->depth) );
+#endif
+  }
+
+  flags = 0;
+  if(0 != v->doublebuffer) flags |= SDL_DOUBLEBUF;
+  if( v->opengl          ) flags |= SDL_OPENGL;
+  if( v->fullscreen      ) flags |= SDL_FULLSCREEN;
+
+  ret = SDL_SetVideoMode( v->width, v->height, v->depth, flags );
+
+  if(NULL == ret)
+  {
+    log_warning("SDL unable to set video mode with current parameters - \n\t\"%s\"\n", SDL_GetError() );
+
+    if(v->opengl)
+    {
+      log_info( "\tUsing OpenGL\n" );
+      log_info( "\tSDL_GL_MULTISAMPLEBUFFERS == %d\n", v->multibuffers);
+      log_info( "\tSDL_GL_MULTISAMPLESAMPLES == %d\n", v->multisamples);
+      log_info( "\tSDL_GL_ACCELERATED_VISUAL == %d\n", v->glacceleration);
+      log_info( "\tSDL_GL_DOUBLEBUFFER       == %d\n", v->doublebuffer );
+
+#ifndef __unix__
+      // Under Unix we cannot specify these, we just get whatever format
+      // the framebuffer has, specifying depths > the framebuffer one
+      // will cause SDL_SetVideoMode to fail with: "Unable to set video mode: Couldn't find matching GLX visual"
+
+      log_info( "\tSDL_GL_RED_SIZE   == %d\n", v->colordepth.r );
+      log_info( "\tSDL_GL_GREEN_SIZE == %d\n", v->colordepth.g );
+      log_info( "\tSDL_GL_BLUE_SIZE  == %d\n", v->colordepth.b );
+      log_info( "\tSDL_GL_DEPTH_SIZE == %d\n", v->depth );
+#endif
+    }
+
+    log_info( "\t%s\n", ((0 != v->doublebuffer) ? "DOUBLE BUFFER" : "SINGLE BUFFER") );
+    log_info( "\t%s\n", (v->fullscreen   ? "FULLSCREEN"    : "WINDOWED"     ) );
+    log_info( "\twidth == %d, height == %d, depth == %d\n", v->width, v->height, v->depth );
+    
+  }
+  else
+  {
+    // report current graphics values
+
+    log_info("SDL set video mode to the current parameters\n", SDL_GetError() );
+
+    v->opengl = HAS_SOME_BITS(ret->flags, SDL_OPENGL);
+
+    if( v->opengl )
+    {
+      log_info( "\tUsing OpenGL\n" );
+
+      if( 0 == SDL_GL_GetAttribute(SDL_GL_MULTISAMPLEBUFFERS, &(v->multibuffers)) )
+      {
+        log_info("\tGL_MULTISAMPLEBUFFERS == %d\n", v->multibuffers);
+      };
+
+      if( 0 == SDL_GL_GetAttribute(SDL_GL_MULTISAMPLESAMPLES, &(v->multisamples)) )
+      {
+        log_info("\tSDL_GL_MULTISAMPLESAMPLES == %d\n", v->multisamples);
+      };
+
+      if( 0 == SDL_GL_GetAttribute(SDL_GL_ACCELERATED_VISUAL, &(v->glacceleration)) )
+      {
+        log_info("\tSDL_GL_ACCELERATED_VISUAL == %d\n", v->glacceleration);
+      };
+
+      if( 0 == SDL_GL_GetAttribute(SDL_GL_DOUBLEBUFFER, &(v->doublebuffer)) )
+      {
+        log_info("\tSDL_GL_DOUBLEBUFFER == %d\n", v->doublebuffer);
+      };
+
+      SDL_GL_GetAttribute( SDL_GL_RED_SIZE, &(v->colordepth.r) );
+      {
+        log_info("\tSDL_GL_RED_SIZE == %d\n", v->colordepth.r);
+      };
+
+      SDL_GL_GetAttribute( SDL_GL_GREEN_SIZE, &(v->colordepth.g) );
+      {
+        log_info("\tSDL_GL_GREEN_SIZE == %d\n", v->colordepth.g);
+      };
+
+      SDL_GL_GetAttribute( SDL_GL_BLUE_SIZE,  &(v->colordepth.b) );
+      {
+        log_info("\tSDL_GL_BLUE_SIZE == %d\n", v->colordepth.b);
+      };
+
+      SDL_GL_GetAttribute( SDL_GL_DEPTH_SIZE, &(v->depth) );
+      {
+        log_info("\tSDL_GL_DEPTH_SIZE == %d\n", v->depth);
+      };
+
+    }
+
+    log_info( "\t%s\n", (HAS_SOME_BITS(ret->flags, SDL_DOUBLEBUF)  ? "SDL DOUBLE BUFFER" : "SDL SINGLE BUFFER") );
+    log_info( "\t%s\n", (HAS_SOME_BITS(ret->flags, SDL_FULLSCREEN)  ? "FULLSCREEN"    : "WINDOWED"     ) );
+
+    v->width  = ret->w;
+    v->height = ret->h;
+    v->depth  = ret->format->BitsPerPixel;
+    log_info( "\twidth == %d, height == %d, depth == %d\n", v->width, v->height, v->depth );
+  }
+
+  return ret;
+
+};
+
+
+
+//--------------------------------------------------------------------------------------------
+Graphics_t * sdl_set_mode(Graphics_t * g_old, Graphics_t * g_new, bool_t update_ogl)
+{
+  // BB > let SDL try to set a new video mode.
+
+  video_parameters_t param_old, param_new;
+  Graphics_t * retval = NULL;
+  bool_t success = btrue;                      // hope for the best
+
+  if(!gfx_initialized) return g_old;
+
+  // save the old parameters
+  video_parameters_default( &param_old );
+  video_parameters_download( &param_old, g_old );
+
+  // load the param structure function with the video info
+  video_parameters_default( &param_new );
+  video_parameters_download( &param_new, g_new );
+
+  // assume any problem with setting the graphics mode is with the multisampling
+  while( param_new.multisamples > 0 )
+  {
+    g_new->surface = RequestVideoMode(&param_new);
+    if(NULL != g_new->surface) break;
+    param_new.multisamples >>= 1;
+  };
+  
+  if( NULL == g_new->surface )
+  {
+    // we can't have any multi...
+
+    param_new.multibuffers = 0;
+    param_new.multisamples = 0;
+
+    g_new->surface = RequestVideoMode(&param_new);
+  }
+
+  if( NULL != g_new->surface )
+  {
+    // apply the new OpenGL settings?
+
+    video_parameters_upload( &param_new, g_new );
+
+    if(update_ogl)
+    {
+      gl_set_mode( g_new );
+    };
+
+    retval = g_new;
+  }
+  else
+  {
+    log_warning("I can't get SDL to set the new video mode.\n");
+    if( NULL == g_old )
+    {
+      log_warning("Trying to start a default mode.\n");
+    }
+    else
+    {
+      log_warning("Trying to reset the old mode.\n");
+    };
+
+    g_old->surface = RequestVideoMode(&param_old);
+    if(NULL == g_old->surface)
+    {
+      log_error("Could not restore the old video mode. Terminating.\n");
+      exit(-1);
+    }
+
+    retval = g_old;
+
+    video_parameters_upload( &param_old, g_old );
+
+    // need to re-establish all of the old OpenGL settings?
+    if(update_ogl)
+    {
+      gl_set_mode( g_old );
+    }
+  }
+
+  return retval;
+};
+
+
+//--------------------------------------------------------------------------------------------
+bool_t gl_set_mode(Graphics_t * g)
+{
+  // BB > this function applies OpenGL settings. Must have a valid SDL_Surface to do any good.
+
+  if(NULL == g || NULL == g->surface) return bfalse;
+
+  if( g->antialiasing )
+  {
+    glEnable(GL_MULTISAMPLE_ARB);
+    //glEnable(GL_MULTISAMPLE);
+  };
+
+  //Check if the computer graphic driver supports anisotropic filtering
+  if ( g->texturefilter >= TX_ANISOTROPIC )
+  {
+    if ( 0 == strstr(( char* ) glGetString( GL_EXTENSIONS ), "GL_EXT_texture_filter_anisotropic" ) )
+    {
+      log_warning( "Your graphics driver does not support anisotropic filtering.\n" );
+      g->texturefilter = TX_TRILINEAR_2; //Set filtering to trillienar instead
+    }
+  }
+
+  //Enable perspective correction?
+  glHint( GL_PERSPECTIVE_CORRECTION_HINT, g->perspective );
+
+  //Enable dithering?
+  if ( g->dither ) glEnable( GL_DITHER );
+  else glDisable( GL_DITHER );
+
+  //Enable gourad g->shading? (Important!)
+  glShadeModel( g->shading );
+
+  //Enable g->antialiasing?
+  if ( g->antialiasing )
+  {
+    glEnable( GL_LINE_SMOOTH );
+    glHint( GL_LINE_SMOOTH_HINT,    GL_NICEST );
+
+    glEnable( GL_POINT_SMOOTH );
+    glHint( GL_POINT_SMOOTH_HINT,   GL_NICEST );
+
+    glDisable( GL_POLYGON_SMOOTH );
+    glHint( GL_POLYGON_SMOOTH_HINT,    GL_FASTEST );
+
+    // PLEASE do not turn this on unless you use
+    //  glEnable (GL_BLEND);
+    //  glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // before every single draw command
+    //
+    //glEnable(GL_POLYGON_SMOOTH);
+    //glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+  }
+  else
+  {
+    glDisable( GL_POINT_SMOOTH );
+    glDisable( GL_LINE_SMOOTH );
+    glDisable( GL_POLYGON_SMOOTH );
+  }
+
+  // Wait for vertical synchronization?
+  if( g->vsync )
+  {
+    // Fedora 7 doesn't suuport SDL_GL_SWAP_CONTROL, but we use this  nvidia extension instead.
+#if defined(__unix__)
+      SDL_putenv("__GL_SYNC_TO_VBLANK=1");
+#else
+    /* Turn on vsync, this works on Windows. */
+      if(SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1) < 0)
+      {
+        log_warning( "SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1) failed - \n\t\"%s\"\n", SDL_GetError());
+      }
+#endif
+  }
+
+  //fill mode
+  glPolygonMode( GL_FRONT, GL_FILL );
+  glPolygonMode( GL_BACK,  GL_FILL );
+
+  /* Disable OpenGL lighting */
+  glDisable( GL_LIGHTING );
+
+  /* Backface culling */
+  glEnable( GL_CULL_FACE );  // This seems implied - DDOI
+  glCullFace( GL_BACK );
+
+  glViewport(0, 0, g->surface->w, g->surface->h);
+
+  return btrue;
+}
+
 
 
 

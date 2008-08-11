@@ -44,6 +44,8 @@
 
 struct sConfigData;
 struct sGame;
+struct s_mod_info;
+struct sChr;
 
 //--------------------------------------------------------------------------------------------
 struct s_renderlist
@@ -182,8 +184,6 @@ bool_t CGui_shutDown();
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct s_mod_info;
-struct sChr;
 
 bool_t glinit(  Graphics_t * g, struct sConfigData * cd  );
 bool_t gfx_initialize(Graphics_t * g, struct sConfigData * cd);
@@ -199,7 +199,7 @@ void End2DMode( void );
 
 INLINE const bool_t bbox_gl_draw(AA_BBOX * pbbox);
 
-bool_t gfx_set_mode(Graphics_t * g);
+bool_t gl_set_mode(Graphics_t * g);
 bool_t gfx_find_anisotropy( Graphics_t * g );
 
 bool_t make_renderlist(RENDERLIST * prlst);
@@ -214,3 +214,6 @@ void md2_blend_vertices(struct sChr * pchr, Sint32 vrtmin, Sint32 vrtmax);
 void md2_blend_lighting(struct sChr * pchr);
 
 void prime_icons( struct sGame * gs);
+
+Graphics_t * sdl_set_mode(Graphics_t * g_old, Graphics_t * g_new, bool_t update_ogl);
+bool_t       gl_set_mode(Graphics_t * g);
