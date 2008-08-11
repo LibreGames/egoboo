@@ -155,7 +155,7 @@ const char *fs_findFirstFile(FS_FIND_INFO * i, const char *searchDir, const char
     // str_append_slash( pattern, MAX(0, PATH_MAX - szlen) );
     // here if searchBody is defined, but since this case doen't occur 
     // it is hard to tell what is natural...
-    strncat( pattern, MAX(0, searchExtension, PATH_MAX - szlen) );
+    strncat( pattern, searchExtension, MAX(0, PATH_MAX - szlen) );
     szlen = strlen( pattern );
   }
 
