@@ -132,27 +132,30 @@ const char *fs_findFirstFile(FS_FIND_INFO * i, const char *searchDir, const char
   // all this szlen stuff is to MAKE SURE we do not go over the valid path length
   // we could possibly issue an error if we go over
 
-  strncat( pattern, PATH_MAX, searchDir );
+  pattern[0] = EOS;
+  strncat( pattern, searchDir, PATH_MAX );
   szlen = strlen( pattern );
   str_append_slash( pattern, PATH_MAX );
   szlen++;
 
   if ( NULL != searchBody  )
   {
-    strncat( pattern, MAX(0, PATH_MAX - szlen), searchBody );
+    strncat( pattern, searchBody, MAX(0, PATH_MAX - szlen) );
     szlen = strlen( pattern );
   }
 
   if ( NULL == searchExtension  )
   {
-    szlen += _snprintf( pattern, MAX(0, PATH_MAX - szlen), "%s%s", pattern, "*" );
+    strncat( pattern, "*", MAX(0, PATH_MAX - szlen) );
+    szlen = strlen( pattern );
   }
   else
   {
     // possibly we should use 
     // str_append_slash( pattern, MAX(0, PATH_MAX - szlen) );
-    // here, but since this case doen't occur it is hard to tell what is natural...
-    strncat( pattern, MAX(0, PATH_MAX - szlen), searchExtension );
+    // here if searchBody is defined, but since this case doen't occur 
+    // it is hard to tell what is natural...
+    strncat( pattern, MAX(0, searchExtension, PATH_MAX - szlen) );
     szlen = strlen( pattern );
   }
 

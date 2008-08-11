@@ -1204,7 +1204,7 @@ int mnu_doChoosePlayer( MenuProc_t * mproc, float deltaTime )
   static Uint32 BitsInput[4];
   static bool_t created_game = bfalse;
 
-  Game_t   * gs = Graphics_requireGame(&gfxState);
+  Game_t   * gs = Graphics_getGame(&gfxState);
   Client_t * cl = mproc->cl;
   Server_t * sv = mproc->sv;
 
@@ -1213,7 +1213,7 @@ int mnu_doChoosePlayer( MenuProc_t * mproc, float deltaTime )
     case MM_Begin:
       printf("mnu_doChoosePlayer()\n");
 
-      GLtexture_new( &background );;
+      GLtexture_new( &background );
 
       for(i=0; i<4; i++)
       {

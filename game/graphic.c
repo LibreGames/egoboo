@@ -4006,9 +4006,6 @@ SDL_Surface * RequestVideoMode( video_parameters_t * v )
     SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, v->colordepth.g );
     SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE,  v->colordepth.b );
     SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, v->depth );
-#else
-      // Try to grab a safe value for the screen depth
-      SDL_GL_GetAttribute( SDL_GL_DEPTH_SIZE, &(v->depth) );
 #endif
   }
 
