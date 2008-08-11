@@ -22,8 +22,8 @@
 #import <Foundation/NSFileManager.h>
 #import <Foundation/NSBundle.h>
 #include <string.h>
-#include <SDL/SDL.h>
-#include <SDL/SDL_endian.h>
+#include <SDL.h>
+#include <SDL_endian.h>
 
 // Proto.h is not included in this file because Egoboo's BOOL conflicts
 // with Objective-C's built-in BOOL

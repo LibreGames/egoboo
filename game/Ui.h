@@ -29,7 +29,7 @@
 
 #include "egoboo_types.h"
 
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 #define UI_Nothing (ui_id_t)(-1)
 #define UI_Invalid (ui_id_t)(-2)

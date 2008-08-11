@@ -27,8 +27,8 @@
 #include "egoboo_types.h"
 #include "egoboo_math.h"
 
-#include <SDL/SDL_mixer.h> // for Mix_* stuff.
-#include <SDL/SDL_opengl.h>
+#include <SDL_mixer.h> // for Mix_* stuff.
+#include <SDL_opengl.h>
 
 #include <stdio.h>
 

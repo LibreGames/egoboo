@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include <SDL/SDL_types.h>
+#include <SDL_types.h>
 #include "egoboo_types.h"
 
 struct sClockState;

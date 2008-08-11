@@ -9,7 +9,7 @@
 
 #define EGOBOO_CONFIG
 
-#include <SDL/SDL_endian.h>
+#include <SDL_endian.h>
 
 #define FREE(PTR) if(NULL != PTR) { free(PTR); PTR = NULL; }
 

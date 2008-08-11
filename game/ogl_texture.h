@@ -28,7 +28,7 @@
 
 #include "ogl_include.h"
 
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 #define INVALID_TEXTURE (~(GLuint)0)
 #define INVALID_KEY     (~(Uint32)0)

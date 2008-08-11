@@ -6,12 +6,13 @@
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
-			<Target title="Debug Win32">
+			<Target title="Debug Win32 - gcc">
 				<Option platforms="Windows;" />
-				<Option output="Debug/Egoboo2x" prefix_auto="1" extension_auto="1" />
+				<Option output="Debug\Egoboo2x" prefix_auto="1" extension_auto="1" />
 				<Option object_output="Debug" />
-				<Option type="0" />
+				<Option type="1" />
 				<Option compiler="gcc" />
+				<Option use_console_runner="0" />
 				<Compiler>
 					<Add option="-W" />
 					<Add option="-Wall" />
@@ -21,15 +22,15 @@
 					<Add option="-DWIN32" />
 					<Add option="-D_DEBUG" />
 					<Add option="-D_WINDOWS" />
-					<Add option="-D_CRT_SECURE_NO_DEPRECATE" />
 					<Add option="-D_CONSOLE" />
-					<Add directory="$(SolutionDir)/enet/include" />
+					<Add directory="$(SolutionDir)\enet\include" />
 				</Compiler>
 				<ResourceCompiler>
-					<Add directory="$(SolutionDir)/enet/include" />
+					<Add directory="$(SolutionDir)\enet\include" />
 				</ResourceCompiler>
 				<Linker>
 					<Add option="-s" />
+					<Add option="-pg -lgmon" />
 					<Add option="-pg" />
 					<Add library="SDL_image" />
 					<Add library="SDL" />
@@ -43,12 +44,13 @@
 					<Add library="Winmm" />
 				</Linker>
 			</Target>
-			<Target title="Release Win32">
+			<Target title="Release Win32 - gcc">
 				<Option platforms="Windows;" />
-				<Option output="Release/Egoboo2x" prefix_auto="1" extension_auto="1" />
+				<Option output="Release\Egoboo2x" prefix_auto="1" extension_auto="1" />
 				<Option object_output="Release" />
-				<Option type="0" />
+				<Option type="1" />
 				<Option compiler="gcc" />
+				<Option use_console_runner="0" />
 				<Compiler>
 					<Add option="-fexpensive-optimizations" />
 					<Add option="-O3" />
@@ -58,11 +60,11 @@
 					<Add option="-DWIN32" />
 					<Add option="-DNDEBUG" />
 					<Add option="-D_WINDOWS" />
-					<Add option="-D_CRT_SECURE_NO_DEPRECATE" />
-					<Add directory="$(SolutionDir)/enet/include" />
+					<Add option="-D_CONSOLE" />
+					<Add directory="$(SolutionDir)\enet\include" />
 				</Compiler>
 				<ResourceCompiler>
-					<Add directory="$(SolutionDir)/enet/include" />
+					<Add directory="$(SolutionDir)\enet\include" />
 				</ResourceCompiler>
 				<Linker>
 					<Add library="SDL" />
@@ -79,7 +81,7 @@
 			</Target>
 			<Target title="Debug Blah-nix">
 				<Option platforms="Unix;" />
-				<Option output="Debug/Egoboo2x" prefix_auto="1" extension_auto="1" />
+				<Option output="Debug\Egoboo2x" prefix_auto="1" extension_auto="1" />
 				<Option object_output="Debug" />
 				<Option type="0" />
 				<Option compiler="gcc" />
@@ -90,7 +92,7 @@
 					<Add option="-O0" />
 					<Add option="-D_DEBUG" />
 					<Add option="-D_CONSOLE" />
-					<Add directory="$(SolutionDir)/enet/include" />
+					<Add directory="$(SolutionDir)\enet\include" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -98,12 +100,12 @@
 					<Add library="libenet" />
 					<Add library="GL" />
 					<Add library="libsdl" />
-					<Add directory="$(SolutionDir)/enet" />
+					<Add directory="$(SolutionDir)\enet" />
 				</Linker>
 			</Target>
 			<Target title="Release Blah-nix">
 				<Option platforms="Unix;" />
-				<Option output="Release/Egoboo2x" prefix_auto="1" extension_auto="1" />
+				<Option output="Release\Egoboo2x" prefix_auto="1" extension_auto="1" />
 				<Option object_output="Release" />
 				<Option type="0" />
 				<Option compiler="gcc" />
@@ -114,18 +116,18 @@
 					<Add option="-W" />
 					<Add option="-Wall" />
 					<Add option="-DNDEBUG" />
-					<Add directory="$(SolutionDir)/enet/include" />
+					<Add directory="$(SolutionDir)\enet\include" />
 				</Compiler>
 				<Linker>
 					<Add library="libebet" />
 					<Add library="GL" />
 					<Add library="libsdl" />
-					<Add directory="$(SolutionDir)/enet" />
+					<Add directory="$(SolutionDir)\enet" />
 				</Linker>
 			</Target>
 			<Target title="Debug OsX">
 				<Option platforms="Mac;" />
-				<Option output="Debug/Egoboo2x" prefix_auto="1" extension_auto="1" />
+				<Option output="Debug\Egoboo2x" prefix_auto="1" extension_auto="1" />
 				<Option object_output="Debug" />
 				<Option type="0" />
 				<Option compiler="gcc" />
@@ -136,10 +138,10 @@
 					<Add option="-O0" />
 					<Add option="-D_DEBUG" />
 					<Add option="-D_CONSOLE" />
-					<Add directory="$(SolutionDir)/enet/include" />
+					<Add directory="$(SolutionDir)\enet\include" />
 				</Compiler>
 				<ResourceCompiler>
-					<Add directory="$(SolutionDir)/enet/include" />
+					<Add directory="$(SolutionDir)\enet\include" />
 				</ResourceCompiler>
 				<Linker>
 					<Add option="-s" />
@@ -148,7 +150,7 @@
 			</Target>
 			<Target title="Release OsX">
 				<Option platforms="Mac;" />
-				<Option output="Release/Egoboo2x" prefix_auto="1" extension_auto="1" />
+				<Option output="Release\Egoboo2x" prefix_auto="1" extension_auto="1" />
 				<Option object_output="Release" />
 				<Option type="0" />
 				<Option compiler="gcc" />
@@ -159,15 +161,115 @@
 					<Add option="-W" />
 					<Add option="-Wall" />
 					<Add option="-DNDEBUG" />
-					<Add directory="$(SolutionDir)/enet/include" />
+					<Add directory="$(SolutionDir)\enet\include" />
 				</Compiler>
 				<ResourceCompiler>
-					<Add directory="$(SolutionDir)/enet/include" />
+					<Add directory="$(SolutionDir)\enet\include" />
 				</ResourceCompiler>
+			</Target>
+			<Target title="Debug Win32 - msvc">
+				<Option platforms="Windows;" />
+				<Option output="Debug\Egoboo2x" prefix_auto="1" extension_auto="1" />
+				<Option object_output="Debug" />
+				<Option type="1" />
+				<Option compiler="msvctk" />
+				<Option use_console_runner="0" />
+				<Compiler>
+					<Add option="/MDd" />
+					<Add option="/Gd" />
+					<Add option="/Od" />
+					<Add option="/Wp64" />
+					<Add option="/Wall" />
+					<Add option="/Zi /D_DEBUG" />
+					<Add option="/DWIN32" />
+					<Add option="/D_DEBUG" />
+					<Add option="/D_WINDOWS" />
+					<Add option="/D_CRT_SECURE_NO_DEPRECATE" />
+					<Add option="/D_CONSOLE" />
+					<Add directory="$(SolutionDir)\enet\include" />
+					<Add directory="C:\SDKs\SDL-1.2.13" />
+					<Add directory="C:\SDKs\SDL_image-1.2.6" />
+					<Add directory="C:\SDKs\SDL_mixer-1.2.8" />
+					<Add directory="C:\SDKs\SDL_ttf-2.0.9" />
+					<Add directory="$(SolutionDir)\game" />
+				</Compiler>
+				<ResourceCompiler>
+					<Add directory="$(SolutionDir)\res" />
+				</ResourceCompiler>
+				<Linker>
+					<Add option="/DEBUG" />
+					<Add option="-s" />
+					<Add option="-pg" />
+					<Add library="SDL_image" />
+					<Add library="SDL" />
+					<Add library="SDLmain" />
+					<Add library="SDL_ttf" />
+					<Add library="SDL_mixer" />
+					<Add library="opengl32" />
+					<Add library="glu32" />
+					<Add library="ws2_32" />
+					<Add library="shlwapi" />
+					<Add library="Winmm" />
+					<Add directory="..\enet\Debug" />
+					<Add directory="C:\SDKs\SDL-1.2.13\lib" />
+					<Add directory="C:\SDKs\SDL_image-1.2.6\lib" />
+					<Add directory="C:\SDKs\SDL_mixer-1.2.8\lib" />
+					<Add directory="C:\SDKs\SDL_ttf-2.0.9\lib" />
+				</Linker>
+			</Target>
+			<Target title="Release Win32 - msvc">
+				<Option platforms="Windows;" />
+				<Option output="Release\Egoboo2x" prefix_auto="1" extension_auto="1" />
+				<Option object_output="Release" />
+				<Option type="1" />
+				<Option compiler="msvctk" />
+				<Option use_console_runner="0" />
+				<Compiler>
+					<Add option="/MD" />
+					<Add option="/Gd" />
+					<Add option="/GA" />
+					<Add option="/GL" />
+					<Add option="/arch:SSE2" />
+					<Add option="/G7" />
+					<Add option="/O2" />
+					<Add option="/Og" />
+					<Add option="/W1" />
+					<Add option="/DWIN32" />
+					<Add option="/DNDEBUG" />
+					<Add option="/D_WINDOWS" />
+					<Add option="/D_CRT_SECURE_NO_DEPRECATE" />
+					<Add option="/D_CONSOLE" />
+					<Add directory="$(SolutionDir)\enet\include" />
+					<Add directory="C:\SDKs\SDL-1.2.13" />
+					<Add directory="C:\SDKs\SDL_image-1.2.6" />
+					<Add directory="C:\SDKs\SDL_mixer-1.2.8" />
+					<Add directory="C:\SDKs\SDL_ttf-2.0.9" />
+					<Add directory="$(SolutionDir)\game" />
+				</Compiler>
+				<ResourceCompiler>
+					<Add directory="$(SolutionDir)\res" />
+				</ResourceCompiler>
+				<Linker>
+					<Add library="SDL" />
+					<Add library="SDLmain" />
+					<Add library="SDL_ttf" />
+					<Add library="SDL_mixer" />
+					<Add library="SDL_image" />
+					<Add library="opengl32" />
+					<Add library="glu32" />
+					<Add library="ws2_32" />
+					<Add library="Winmm" />
+					<Add library="shlwapi" />
+					<Add directory="..\enet\Release" />
+					<Add directory="C:\SDKs\SDL-1.2.13\lib" />
+					<Add directory="C:\SDKs\SDL_image-1.2.6\lib" />
+					<Add directory="C:\SDKs\SDL_mixer-1.2.8\lib" />
+					<Add directory="C:\SDKs\SDL_ttf-2.0.9\lib" />
+				</Linker>
 			</Target>
 		</Build>
 		<Compiler>
-			<Add directory="../enet/include" />
+			<Add directory="..\enet\include" />
 		</Compiler>
 		<Unit filename="AStar.c">
 			<Option compilerVar="CC" />
@@ -238,8 +340,10 @@
 		<Unit filename="System.h" />
 		<Unit filename="System_lin.c">
 			<Option compilerVar="CC" />
-			<Option target="Debug Win32" />
-			<Option target="Release Win32" />
+			<Option target="Debug Win32 - gcc" />
+			<Option target="Release Win32 - gcc" />
+			<Option target="Debug Win32 - msvc" />
+			<Option target="Release Win32 - msvc" />
 		</Unit>
 		<Unit filename="System_mac.c">
 			<Option compilerVar="CC" />
@@ -248,8 +352,10 @@
 		</Unit>
 		<Unit filename="System_win32.c">
 			<Option compilerVar="CC" />
-			<Option target="Debug Win32" />
-			<Option target="Release Win32" />
+			<Option target="Debug Win32 - gcc" />
+			<Option target="Release Win32 - gcc" />
+			<Option target="Debug Win32 - msvc" />
+			<Option target="Release Win32 - msvc" />
 		</Unit>
 		<Unit filename="Task.c">
 			<Option compilerVar="CC" />
@@ -321,8 +427,10 @@
 		</Unit>
 		<Unit filename="file_win.c">
 			<Option compilerVar="CC" />
-			<Option target="Debug Win32" />
-			<Option target="Release Win32" />
+			<Option target="Debug Win32 - gcc" />
+			<Option target="Release Win32 - gcc" />
+			<Option target="Debug Win32 - msvc" />
+			<Option target="Release Win32 - msvc" />
 		</Unit>
 		<Unit filename="game.c">
 			<Option compilerVar="CC" />
@@ -352,11 +460,11 @@
 		</Unit>
 		<Unit filename="input.h" />
 		<Unit filename="input.inl" />
-		<Unit filename="inspirational/cartman.c">
+		<Unit filename="inspirational\cartman.c">
 			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="inspirational/cartman.h" />
+		<Unit filename="inspirational\cartman.h" />
 		<Unit filename="mesh.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -397,21 +505,27 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="sound.h" />
-		<Unit filename="../res/debug.ico">
-			<Option target="Debug Win32" />
+		<Unit filename="..\res\debug.ico">
+			<Option target="Debug Win32 - gcc" />
 			<Option target="Debug Blah-nix" />
 			<Option target="Debug OsX" />
+			<Option target="Debug Win32 - msvc" />
 		</Unit>
-		<Unit filename="../res/debug.rc">
-			<Option target="Debug Win32" />
+		<Unit filename="..\res\debug.rc">
+			<Option compilerVar="WINDRES" />
+			<Option target="Debug Win32 - gcc" />
+			<Option target="Debug Win32 - msvc" />
 		</Unit>
-		<Unit filename="../res/release.ico">
-			<Option target="Release Win32" />
+		<Unit filename="..\res\release.ico">
+			<Option target="Release Win32 - gcc" />
 			<Option target="Release Blah-nix" />
 			<Option target="Release OsX" />
+			<Option target="Release Win32 - msvc" />
 		</Unit>
-		<Unit filename="../res/release.rc">
-			<Option target="Release Win32" />
+		<Unit filename="..\res\release.rc">
+			<Option compilerVar="WINDRES" />
+			<Option target="Release Win32 - gcc" />
+			<Option target="Release Win32 - msvc" />
 		</Unit>
 		<Extensions>
 			<code_completion />

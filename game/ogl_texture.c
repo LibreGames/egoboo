@@ -28,7 +28,7 @@
 
 #include "egoboo_types.inl"
 
-#include <SDL/SDL_image.h>
+#include <SDL_image.h>
 
 //--------------------------------------------------------------------------------------------
 // The next two functions are borrowed from the gl_font.c test program from SDL_ttf

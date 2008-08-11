@@ -50,7 +50,7 @@
 #include "egoboo_strutil.h"
 #include "egoboo.h"
 
-#include <SDL/SDL_endian.h>
+#include <SDL_endian.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
