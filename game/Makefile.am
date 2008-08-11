@@ -1,3 +1,4 @@
+
 AM_CPPFLAGS = \
    -DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
    -DPACKAGE_SRC_DIR=\""$(srcdir)"\" \
@@ -81,4 +82,4 @@ egoboo_LDADD = $(EGOBOO_LIBS) \
    -lSDL_mixer \
    -lSDL_image \
    -lGL \
-   -lGLU 
+   -lGLU

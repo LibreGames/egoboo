@@ -9,13 +9,13 @@ AC_PROG_CC
 AM_PROG_CC_STDC
 AC_HEADER_STDC
 
-PKG_CHECK_MODULES(Enter new module, sdl)
-AC_SUBST(Enter new module_CFLAGS)
-AC_SUBST(Enter new module_LIBS)
-
 PKG_CHECK_MODULES(EGOBOO, sdl)
 AC_SUBST(EGOBOO_CFLAGS)
 AC_SUBST(EGOBOO_LIBS)
+
+AC_CHECK_LIB(SDL_image, IMG_Load           , ,AC_MSG_ERROR([ *** Unable to find SDL_image library ]))
+AC_CHECK_LIB(SDL_mixer, Mix_Linked_Version , ,AC_MSG_ERROR([ *** Unable to find SDL_mixer library ]))
+AC_CHECK_LIB(SDL_ttf  , TTF_Linked_Version , ,AC_MSG_ERROR([ *** Unable to find SDL_ttf library   ])) 
 
 AC_OUTPUT([
 Makefile
