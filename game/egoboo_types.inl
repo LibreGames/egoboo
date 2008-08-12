@@ -45,7 +45,10 @@ INLINE bool_t HashNode_delete(HashNode_t * n)
 INLINE HashNode_t * HashNode_new(HashNode_t * n, void * data)
 {
   if(NULL == n) return n;
-  if( !EKEY_PVALID( n ) ) HashNode_delete(n);
+  if( EKEY_PVALID( n ) ) 
+  {
+    HashNode_delete(n);
+  }
 
   memset(n, 0, sizeof(HashNode_t));
 
@@ -232,7 +235,7 @@ INLINE Uint32 make_key_32(Uint32 * seed)
 
 INLINE Uint32 make_key_16(Uint16 * seed)
 {
-  Uint16 ret = ego_rand_16(seed);
+  Uint32 ret = ego_rand_16(seed);
   ret        = ego_rand_16(seed) | (ret << 16);
 
   return ret;
@@ -240,7 +243,7 @@ INLINE Uint32 make_key_16(Uint16 * seed)
 
 INLINE Uint32 make_key_8(Uint8 * seed)
 {
-  Uint16 ret = ego_rand_8(seed);
+  Uint32 ret = ego_rand_8(seed);
   ret        = ego_rand_8(seed) | (ret << 8);
   ret        = ego_rand_8(seed) | (ret << 8);
   ret        = ego_rand_8(seed) | (ret << 8);
