@@ -80,6 +80,20 @@ struct sMessageQueue
 typedef struct sMessageQueue MessageQueue_t;
 
 //--------------------------------------------------------------------------------------------
+//Weather and water gfx
+struct s_weather_info
+{
+  bool_t    active;           
+  bool_t    require_water;    // Only spawn over water?
+  int       timereset;        // Rate at which weather particles spawn
+  float     time;
+  PLA_REF   player;
+};
+typedef struct s_weather_info WEATHER_INFO;
+
+bool_t Weather_init(WEATHER_INFO * w);
+
+//--------------------------------------------------------------------------------------------
 #define MAXENDTEXT 1024
 
 enum e_net_status_bits
@@ -154,6 +168,8 @@ struct sGame
   // particle data
   PrtHeap_t PrtHeap;
   PrtList_t PrtList;
+
+  WEATHER_INFO Weather;     // particles for weather spawning
 
   // passage data
   Uint32  PassList_count;
@@ -303,19 +319,6 @@ struct sSearchInfo
 typedef struct sSearchInfo SearchInfo_t;
 
 SearchInfo_t * SearchInfo_new(SearchInfo_t * psearch);
-
-//--------------------------------------------------------------------------------------------
-//Weather and water gfx
-struct s_weather_info
-{
-  bool_t    overwater; // EQ( bfalse );       // Only spawn over water?
-  int       timereset; // EQ( 10 );          // Rate at which weather particles spawn
-  float     time; // EQ( 0 );                // 0 is no weather
-  PLA_REF   player;
-};
-typedef struct s_weather_info WEATHER_INFO;
-
-extern WEATHER_INFO GWeather;
 
 //--------------------------------------------------------------------------------------------
 

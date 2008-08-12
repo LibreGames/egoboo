@@ -116,7 +116,7 @@ ClockState_t * ClockState_new( ClockState_t * cs, const char * name, int size )
   if(NULL == cs) return cs;
 
   if(size<0) size = 1;
-  log_info("ClockState_new() - \n\t\"%s\"\t%d buffer(s)\n", name, size);
+  //log_info("ClockState_new() - \n\t\"%s\"\t%d buffer(s)\n", name, size);
 
   memset( cs, 0, sizeof( ClockState_t ) );
 

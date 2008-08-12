@@ -2176,8 +2176,8 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 
     case F_SetWeatherTime:
       // Set the weather timer
-      GWeather.timereset = pstate->tmpargument;
-      GWeather.time = pstate->tmpargument;
+      gs->Weather.timereset = pstate->tmpargument;
+      gs->Weather.time = pstate->tmpargument;
       break;
 
     case F_GetBumpHeight:

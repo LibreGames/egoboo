@@ -972,7 +972,8 @@ const char * inherit_fname(const char * szObjPath, const char * szObject, const 
   {
     const char * name_ptr = NULL;
 
-    sprintf(ret_fname, "%u*%s", icrc, itype);
+    // the shared resources have the CRC second so that they can be grouped by type
+    sprintf(ret_fname, "*%u%s", icrc, itype);
 
     if( 0 == strcmp(".wav", itype) )
     {
@@ -1016,6 +1017,9 @@ const char * inherit_fname(const char * szObjPath, const char * szObject, const 
     else
     {
       STRING tmpfname;
+
+      // number is first for the non-shared resources
+      sprintf(ret_fname, "%u*%s", icrc, itype);
 
       strcpy(tmpfname, "objects");
       str_append_slash( tmpfname, sizeof(tmpfname) );

@@ -10305,3 +10305,23 @@ bool_t  ChrHeap_addFree( ChrHeap_t * pheap, CHR_REF ref )
 
   return btrue;
 }
+
+//--------------------------------------------------------------------------------------------
+bool_t chr_is_over_water( Game_t * gs, CHR_REF chr_cnt )
+{
+  // This function returns btrue if the particle is over a water tile
+
+  Uint32 fan;
+  Mesh_t * pmesh = Game_getMesh(gs);
+
+  if ( ACTIVE_CHR(gs->ChrList, chr_cnt) )
+  {
+    fan = mesh_get_fan( pmesh, gs->ChrList[chr_cnt].ori.pos );
+    if ( mesh_has_some_bits( pmesh->Mem.tilelst, fan, MPDFX_WATER ) ) 
+    {
+      return ( INVALID_FAN != fan );
+    }
+  }
+
+  return bfalse;
+}

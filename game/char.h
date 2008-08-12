@@ -1001,3 +1001,5 @@ CHR_REF chr_spawn( struct sGame * gs,  vect3 pos, vect3 vel, OBJ_REF iobj, TEAM_
 
 CHR_REF force_chr_spawn( CHR_SPAWN_INFO si );
 bool_t  activate_chr_spawn( struct sGame * gs, CHR_REF ichr );
+
+bool_t chr_is_over_water( struct sGame * gs, CHR_REF cnt );

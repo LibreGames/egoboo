@@ -839,10 +839,16 @@ void read_wawalite( Game_t * gs, char *modname )
     GTile_Dam.type = fget_next_damage( fileread );
 
     // Read weather data fourth
-    GWeather.overwater = fget_next_bool( fileread );
-    GWeather.timereset = fget_next_int( fileread );
-    GWeather.time = GWeather.timereset;
-    GWeather.player = 0;
+    gs->Weather.require_water = fget_next_bool( fileread );
+    gs->Weather.timereset     = fget_next_int( fileread );
+    gs->Weather.time          = gs->Weather.timereset;
+    gs->Weather.player        = 0;
+    gs->Weather.active        = btrue;
+    if(0 == gs->Weather.timereset)
+    {
+      gs->Weather.active = bfalse;
+      gs->Weather.player = INVALID_PLA;
+    }
 
     // Read extra data
     pmesh->Info.exploremode = fget_next_bool( fileread );

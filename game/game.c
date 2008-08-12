@@ -69,8 +69,6 @@
 
 static MachineState_t _macState = { bfalse };
 
-WEATHER_INFO GWeather;
-
 //---------------------------------------------------------------------------------------------
 
 static MachineState_t * MachineState_new( MachineState_t * ms );
@@ -4611,6 +4609,9 @@ void sdlinit( Graphics_t * g )
   }
   SDL_WM_SetIcon( tmp_surface, NULL );
 
+  // Set the window name
+  SDL_WM_SetCaption( "Egoboo", "Egoboo" );
+
   // Get us a video mode
   if( NULL == sdl_set_mode(NULL, g, bfalse) )
   {
@@ -4623,14 +4624,13 @@ void sdlinit( Graphics_t * g )
 
   //Grab all the available video modes
   g->video_mode_list = SDL_ListModes( g->surface->format, SDL_DOUBLEBUF | SDL_HWSURFACE | SDL_FULLSCREEN | SDL_OPENGL | SDL_HWACCEL | SDL_SRCALPHA );
-  log_info( "Detecting avalible video modes...\n" );
+  log_info( "Detecting available full-screen video modes...\n" );
   for ( cnt = 0; NULL != g->video_mode_list[cnt]; ++cnt )
   {
-    log_info( "Video Mode - %d x %d\n", g->video_mode_list[cnt]->w, g->video_mode_list[cnt]->h );
+    log_info( "\tVideo Mode - %d x %d\n", g->video_mode_list[cnt]->w, g->video_mode_list[cnt]->h );
   };
 
-  // Set the window name
-  SDL_WM_SetCaption( "Egoboo", "Egoboo" );
+
 
   // set the mouse cursor
   SDL_WM_GrabInput( g->GrabMouse );
@@ -5534,6 +5534,9 @@ Game_t * Game_new(Game_t * gs, Net_t * ns, Client_t * cl, Server_t * sv)
   ShopList_new( gs );
   TeamList_new( gs );
   PlaList_new ( gs );
+
+  // weather
+  Weather_init( &(gs->Weather) );
 
   //textures
   Game_new_textures( gs );
@@ -6852,3 +6855,19 @@ OBJ_REF ObjList_get_free( Game_t * gs, OBJ_REF request )
   return retval;
 }
 
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+bool_t Weather_init(WEATHER_INFO * w)
+{
+  if(NULL == w) return bfalse;
+
+  w->active        = bfalse;
+  w->require_water = bfalse;
+  w->timereset     = 10; 
+  w->time          = 10;
+  w->player        = INVALID_PLA;
+
+  return btrue;
+};

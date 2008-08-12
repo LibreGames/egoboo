@@ -1618,55 +1618,53 @@ void do_weather_spawn( Game_t * gs, float dUpdate )
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-
   PRT_REF particle;
   PRT_REF cnt;
   bool_t foundone = bfalse;
 
-  if ( GWeather.time > 0 )
+  // Camera swingin' in the wind
+  GCamera.swing = ( GCamera.swing + GCamera.swingrate ) & TRIGTABLE_MASK;
+
+  if( !gs->Weather.active ) return;
+
+  gs->Weather.time -= dUpdate / 10.0f;
+
+  if ( gs->Weather.time <= 0 )
   {
-    GWeather.time -= dUpdate;
-    if ( GWeather.time < 0 ) GWeather.time = 0;
+    gs->Weather.time = gs->Weather.timereset;
 
-    if ( GWeather.time == 0 )
+    // Find a valid player
+    foundone = bfalse;
+
+    for ( cnt = 0; cnt < PLALST_COUNT; cnt++ )
     {
-      GWeather.time = GWeather.timereset;
-
-      // Find a valid player
-      foundone = bfalse;
-
-      for ( cnt = 0; cnt < PLALST_COUNT; cnt++ )
+      gs->Weather.player = PLA_REF( ( REF_TO_INT(gs->Weather.player) + 1 ) % PLALST_COUNT );
+      if ( VALID_PLA( gs->PlaList, gs->Weather.player ) )
       {
-        GWeather.player = PLA_REF( ( GWeather.REF_TO_INT(player) + 1 ) % PLALST_COUNT );
-        if ( VALID_PLA( gs->PlaList, GWeather.player ) )
-        {
-          foundone = btrue;
-          break;
-        }
-      }
-    }
-
-
-    // Did we find one?
-    if ( foundone )
-    {
-      // Yes, but is the character valid?
-      CHR_REF chr_cnt = PlaList_getRChr( gs, GWeather.player );
-      if ( ACTIVE_CHR( chrlst, chr_cnt ) && !chr_in_pack( chrlst, chrlst_size, chr_cnt ) )
-      {
-        // Yes, so spawn over that character
-        particle = prt_spawn( gs, 1.0f, chrlst[chr_cnt].ori.pos, chrlst[chr_cnt].ori.vel, 0, INVALID_OBJ, PIP_REF(PRTPIP_WEATHER_1), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, 0, INVALID_CHR );
-        if ( RESERVED_PRT(gs->PrtList, particle) )
-        {
-          if ( GWeather.overwater && !prt_is_over_water( gs, particle ) )
-          {
-            PrtList_free_one( gs, particle );
-          }
-        }
+        foundone = btrue;
+        break;
       }
     }
   }
-  GCamera.swing = ( GCamera.swing + GCamera.swingrate ) & TRIGTABLE_MASK;
+
+  // Did we find one?
+  if ( foundone )
+  {
+    vect3 prt_vel = {0,0,0};
+
+    // Yes, but is the character valid?
+    CHR_REF chr_cnt = PlaList_getRChr( gs, gs->Weather.player );
+    if ( ACTIVE_CHR( chrlst, chr_cnt ) && !chr_in_pack( chrlst, chrlst_size, chr_cnt ) )
+    {
+      // are the water requirements met?
+      if( !gs->Weather.require_water || chr_is_over_water( gs, chr_cnt ) )
+      {
+        // Yes, so spawn over that character
+        particle = prt_spawn( gs, 1.0f, chrlst[chr_cnt].ori.pos, prt_vel, 0, INVALID_OBJ, PIP_REF(PRTPIP_WEATHER_1), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, 0, INVALID_CHR );
+      }
+    }
+  }
+
 }
 
 
