@@ -125,7 +125,7 @@ void empty_import_directory( void )
 // Read the first directory entry
 const char *fs_findFirstFile(FS_FIND_INFO * i, const char *searchDir, const char *searchBody, const char *searchExtension )
 {
-  int szlen = 0;
+  size_t szlen = 0;
   char pattern[PATH_MAX];
   char *last_slash;
 

@@ -2,6 +2,8 @@
 
 #include "Network.h"
 
+#include "egoboo_types.inl"
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 INLINE void net_packet_startReading(NET_PACKET * p, ENetPacket * enpkt)
@@ -301,7 +303,7 @@ INLINE bool_t stream_done(STREAM * pwrapper)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t stream_readString(STREAM * p, char *buffer, int maxLen)
+INLINE bool_t stream_readString(STREAM * p, char *buffer, size_t maxLen)
 {
   // ZZ> This function reads a NULL terminated string from the packet
   size_t copy_length;
@@ -315,7 +317,7 @@ INLINE bool_t stream_readString(STREAM * p, char *buffer, int maxLen)
   };
 
   copy_length = MIN(maxLen, p->data_size);
-  strncpy(buffer, p->data + p->readLocation, copy_length);
+  strncpy(buffer, (char *)(p->data + p->readLocation), copy_length);
   copy_length = MIN(copy_length, strlen(buffer) + 1);
   p->readLocation += copy_length;
 

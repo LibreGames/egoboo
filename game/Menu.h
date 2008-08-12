@@ -125,7 +125,7 @@ void mnu_exitMenuMode();
 int mnu_Run( MenuProc_t * ms );
 int mnu_RunIngame( MenuProc_t * ms );
 
-Uint32 mnu_load_titleimage( MenuProc_t * mproc, int titleimage, char *szLoadName );
+Uint32 mnu_load_titleimage( MenuProc_t * mproc, Uint32 titleimage, char *szLoadName );
 void   mnu_free_all_titleimages(MenuProc_t * mproc);
 size_t mnu_load_mod_data(MenuProc_t * mproc, MOD_INFO * mi, size_t sz);
 

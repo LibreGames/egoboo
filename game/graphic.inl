@@ -1,6 +1,7 @@
 #pragma once
 
 #include "graphic.h"
+#include "egoboo_types.inl"
 
 //--------------------------------------------------------------------------------------------
 INLINE const bool_t bbox_gl_draw(AA_BBOX * pbbox)

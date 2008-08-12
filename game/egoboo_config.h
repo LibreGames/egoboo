@@ -50,6 +50,7 @@
 
 // end-of-string character. assume standard null terminated string
 #define EOS '\0'
+#define NULL_STRING { EOS }
 
 #define EMPTY_CSTR(PSTR) ((NULL!=PSTR) && (EOS == PSTR[0]))
 #define VALID_CSTR(PSTR) ((NULL!=PSTR) && (EOS != PSTR[0]))
@@ -86,4 +87,4 @@
 
 #undef DEBUG_UPDATE_CLAMP
 #undef DEBUG_MESHFX
-#undef DEBUG_CVOLUME
+#define DEBUG_CVOLUME

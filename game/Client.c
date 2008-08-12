@@ -28,7 +28,6 @@
 
 #include "Client.h"
 
-#include "Network.h"
 #include "Log.h"
 #include "NetFile.h"
 #include "game.h"
@@ -1006,7 +1005,7 @@ int _cl_HostCallback(void * data)
 //{
 //  ENetEvent event;
 //  CListIn_Info_t cin_info, *pcin_info;
-//  char hostName[64] = { EOS };
+//  char hostName[64] = NULL_STRING;
 //  PacketRequest_t * prequest;
 //  size_t copy_size;
 //
@@ -1273,7 +1272,7 @@ void cl_request_module_images(Client_t * cs)
   // request the module info when/if the connection opens
   for (i = 0; i < MAXNETPLAYER; i++)
   {
-    STRING fname_temp = { EOS };
+    STRING fname_temp = NULL_STRING;
 
     if(NULL == cs->rem_req_peer[i]) continue;
     if(ENET_PEER_STATE_CONNECTED != cs->rem_req_peer[i]->state) continue;
@@ -1395,8 +1394,7 @@ void StatList_move_to_top( Status_t lst[], size_t lst_size, CHR_REF character )
 {
   // ZZ> This function puts the character on top of the lst
 
-  int cnt;
-  size_t oldloc;
+  size_t cnt, oldloc;
 
   // Find where it is
   oldloc = lst_size;

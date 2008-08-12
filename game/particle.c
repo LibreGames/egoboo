@@ -469,7 +469,7 @@ PRT_REF _prt_spawn( PRT_SPAWN_INFO si, bool_t activate )
   weight = 1.0f;
   if ( ACTIVE_CHR( chrlst,  si.characterorigin ) ) weight = MAX( weight, chrlst[si.characterorigin].weight );
   if ( ACTIVE_CHR( chrlst,  si.characterattach ) ) weight = MAX( weight, chrlst[si.characterattach].weight );
-  prtlst[si.iprt].weight = weight;
+  pprt->weight = weight;
 
   //log_debug( "req_spawn_one_particle() - \n\tlocal pip == %d, global pip == %d, part == %d\n", local_pip, si.ipip, si.iprt);
   //log_debug( "req_spawn_one_particle() - \n\tpart == %d, free ==  %d\n", REF_TO_INT(si.iprt), si.gs->PrtFreeList_count);

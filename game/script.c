@@ -119,7 +119,7 @@ struct sCompilerState
   size_t          line_size;
   char            line_buffer[MAXLINESIZE];
 
-  int             line_num;
+  size_t          line_num;
   int             index;
   int             temp;
 
@@ -142,11 +142,11 @@ static retval_t run_operand( Game_t * gs, Uint32 value, CHR_REF character );
 static retval_t set_operand( AI_STATE * pstate, ScriptInfo_t * slist, Uint8 variable );
 
 
-static void add_code( ScriptInfo_t * slist, Uint32 highbits );
-static void parse_line_by_line( ScriptInfo_t * slist );
-static Uint32 jump_goto( ScriptInfo_t * slist, int index );
-static void parse_jumps( ScriptInfo_t * slist, int index_stt, int index_end );
-static void log_code( ScriptInfo_t * slist, int ainumber, char* savename );
+static void   add_code( ScriptInfo_t * slist, Uint32 highbits );
+static void   parse_line_by_line( ScriptInfo_t * slist );
+static size_t jump_goto( ScriptInfo_t * slist, size_t index );
+static void   parse_jumps( ScriptInfo_t * slist, size_t index_stt, size_t index_end );
+static void   log_code( ScriptInfo_t * slist, int ainumber, char* savename );
 
 
 //------------------------------------------------------------------------------
@@ -608,7 +608,7 @@ void parse_line_by_line(ScriptInfo_t * slist)
 }
 
 //------------------------------------------------------------------------------
-Uint32 jump_goto( ScriptInfo_t * slist, int index )
+size_t jump_goto( ScriptInfo_t * slist, size_t index )
 {
   // ZZ> This function figures out where to jump to on a fail based on the
   //     starting location and the following code.  The starting location
@@ -648,11 +648,11 @@ Uint32 jump_goto( ScriptInfo_t * slist, int index )
 }
 
 //------------------------------------------------------------------------------
-void parse_jumps( ScriptInfo_t * slist, int index_stt, int index_end )
+void parse_jumps( ScriptInfo_t * slist, size_t index_stt, size_t index_end )
 {
   // ZZ> This function sets up the fail jumps for the down-and-dirty code
 
-  int index;
+  size_t index;
   Uint32 value, iTmp;
 
   index = index_stt;
@@ -708,7 +708,7 @@ void log_code( ScriptInfo_t * slist, int ainumber, char* savename )
 }
 
 //------------------------------------------------------------------------------
-int ai_goto_colon( int read )
+size_t ai_goto_colon( size_t read )
 {
   // ZZ> This function goes to spot after the next colon
 
@@ -1995,7 +1995,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
       // This function proceeds only if the passage specified by tmpargument
       // is both valid and open
       returncode = bfalse;
-      if ( pstate->tmpargument < gs->PassList_count && pstate->tmpargument >= 0 )
+      if ( pstate->tmpargument >= 0 && pstate->tmpargument < (Sint32)gs->PassList_count  )
       {
         returncode = gs->PassList[pstate->tmpargument].open;
       }

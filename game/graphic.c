@@ -31,7 +31,6 @@
 #include "camera.h"
 #include "script.h"
 #include "passage.h"
-#include "Network.h"
 #include "Client.h"
 #include "Server.h"
 #include "sound.h"
@@ -39,11 +38,13 @@
 #include "egoboo_utility.h"
 #include "egoboo.h"
 
+#include "Network.inl"
 #include "input.inl"
 #include "char.inl"
 #include "particle.inl"
 #include "input.inl"
 #include "mesh.inl"
+#include "Physics.inl"
 #include "egoboo_math.inl"
 #include "egoboo_types.inl"
 

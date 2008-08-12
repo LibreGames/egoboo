@@ -51,10 +51,10 @@ FS_FIND_INFO * fs_find_info_new(FS_FIND_INFO * i)
 };
 
 // Paths that the game will deal with
-char win32_tempPath[MAX_PATH] = { EOS };
-char win32_importPath[MAX_PATH] = { EOS };
-char win32_savePath[MAX_PATH] = { EOS };
-char win32_gamePath[MAX_PATH] = { EOS };
+char win32_tempPath[MAX_PATH] = NULL_STRING;
+char win32_importPath[MAX_PATH] = NULL_STRING;
+char win32_savePath[MAX_PATH] = NULL_STRING;
+char win32_gamePath[MAX_PATH] = NULL_STRING;
 
 //---------------------------------------------------------------------------------------------
 //File Routines-------------------------------------------------------------------------------
@@ -183,7 +183,7 @@ HANDLE win32_hFind;
 // Read the first directory entry
 const char *fs_findFirstFile( FS_FIND_INFO * i, const char *searchDir, const char *searchBody, const char *searchExtension )
 {
-  int szlen;
+  size_t szlen;
   char searchSpec[MAX_PATH];
 
   if( NULL == i || FS_WIN32 != i->type ) return NULL;

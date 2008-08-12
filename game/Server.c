@@ -937,7 +937,7 @@ int _sv_HostCallback(void * data)
 //{
 //  ENetEvent event;
 //  CListIn_Info_t cin_info, *pcin_info;
-//  char hostName[64] = { EOS };
+//  char hostName[64] = NULL_STRING;
 //  PacketRequest_t * prequest;
 //  size_t copy_size;
 //  NetHost_t * sv_host;

@@ -39,7 +39,7 @@ TileDictionary_t gTileDict;
 //--------------------------------------------------------------------------------------------
 bool_t reset_bumplist(MeshInfo_t * mi)
 {
-  int i;
+  size_t i;
 
   BUMPLIST  * pbump  = &(mi->bumplist);
 

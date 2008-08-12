@@ -639,14 +639,14 @@ bool_t           chr_spawn_info_init( CHR_SPAWN_INFO * psi, vect3 pos, vect3 vel
 struct s_chr_spawn_queue
 {
   egoboo_key_t ekey;
-  int head, tail;
 
+  size_t           head, tail;
   size_t           data_size;
   CHR_SPAWN_INFO * data;
 };
 typedef struct s_chr_spawn_queue CHR_SPAWN_QUEUE;
 
-CHR_SPAWN_QUEUE * chr_spawn_queue_new(CHR_SPAWN_QUEUE * q, int size);
+CHR_SPAWN_QUEUE * chr_spawn_queue_new(CHR_SPAWN_QUEUE * q, size_t size);
 bool_t            chr_spawn_queue_delete(CHR_SPAWN_QUEUE * q);
 CHR_SPAWN_INFO  * chr_spawn_queue_pop(CHR_SPAWN_QUEUE * q);
 bool_t            chr_spawn_queue_push(CHR_SPAWN_QUEUE * q, CHR_SPAWN_INFO * psi );

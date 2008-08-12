@@ -485,7 +485,7 @@ INLINE bool_t stream_startENet(STREAM * pwrapper, ENetPacket * packet);
 INLINE bool_t stream_startRemote(STREAM * pwrapper, NET_PACKET * pnetpkt);
 INLINE bool_t stream_done(STREAM * pwrapper);
 
-INLINE bool_t stream_readString(STREAM * p, char *buffer, int maxLen);
+INLINE bool_t stream_readString(STREAM * p, char *buffer, size_t maxLen);
 INLINE Uint8  stream_readUint8(STREAM * p);
 INLINE Sint8  stream_readSint8(STREAM * p);
 INLINE Uint16 stream_readUint16(STREAM * p);

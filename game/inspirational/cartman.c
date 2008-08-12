@@ -2,7 +2,7 @@
 
 #include "../Ui.h"
 #include "../Log.h"
-#include "../mesh.h"
+#include "../mesh.inl"
 
 #include "../egoboo.h"
 

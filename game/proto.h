@@ -63,7 +63,7 @@ int get_indentation();
 void fix_operators();
 int starts_with_capital_letter();
 
-int ai_goto_colon( int read );
+size_t ai_goto_colon( size_t read );
 void fget_code( FILE * pfile );
 
 enum e_Action what_action( char cTmp );

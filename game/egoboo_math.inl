@@ -25,6 +25,7 @@
 #pragma once
 
 #include "egoboo_math.h"
+#include "egoboo_types.inl"
 
 //---------------------------------------------------------------------------------------------
 INLINE void turn_to_vec( Uint16 turn, float * dx, float * dy )

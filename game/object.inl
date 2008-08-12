@@ -1,8 +1,11 @@
 #pragma once
 
+
 #include "object.h"
-#include "char.h"
 #include "game.h"
+
+#include "char.inl"
+#include "egoboo_types.inl"
 
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF team_get_sissy( Game_t * gs, TEAM_REF iteam )

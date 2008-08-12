@@ -134,8 +134,8 @@ void camera_calc_turn_lr()
 void screen_dump_matrix( Game_t * gs, matrix_4x4 a )
 {
   int i, j;
-  STRING buffer1 = { EOS };
-  STRING buffer2 = { EOS };
+  STRING buffer1 = NULL_STRING;
+  STRING buffer2 = NULL_STRING;
 
   reset_messages( gs );
   for ( j = 0; j < 4; j++ )

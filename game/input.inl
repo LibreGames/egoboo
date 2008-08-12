@@ -6,6 +6,8 @@
 #include "graphic.h"
 #include "game.h"
 
+#include "egoboo_types.inl"
+
 extern KeyboardBuffer_t _keybuff;
 
 //--------------------------------------------------------------------------------------------

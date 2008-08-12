@@ -1,8 +1,10 @@
 #pragma once
 
 #include "particle.h"
-#include "char.h"
 #include "game.h"
+
+#include "char.inl"
+#include "egoboo_types.inl"
 
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF prt_get_owner( Game_t * gs, PRT_REF iprt )

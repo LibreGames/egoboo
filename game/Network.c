@@ -234,7 +234,7 @@ retval_t NetHost_dispatch( NetHost_t * nh )
   ENetEvent event;
   STREAM    tmpstream;
   CListIn_Info_t cin_info, *pcin_info;
-  char hostName[64] = { EOS };
+  char hostName[64] = NULL_STRING;
   size_t copy_size;
 
   if( !EKEY_PVALID(nh) ) return rv_fail;
@@ -1317,7 +1317,7 @@ bool_t net_handlePacket(Net_t * ns, ENetEvent *event)
     {
       // crack the incoming packet so we can localize the location of the file to this machine
 
-      STRING remote_filename = { EOS }, local_filename = { EOS }, temp = { EOS };
+      STRING remote_filename = NULL_STRING, local_filename = NULL_STRING, temp = NULL_STRING;
 
       // read the remote filename
       packet_readString(&netpkt, temp, sizeof(temp));
@@ -1341,7 +1341,7 @@ bool_t net_handlePacket(Net_t * ns, ENetEvent *event)
     {
       // The other computer is requesting all the files for the module
 
-      STRING remote_filename = { EOS }, module_filename = { EOS }, module_path = { EOS }, temp = { EOS };
+      STRING remote_filename = NULL_STRING, module_filename = NULL_STRING, module_path = NULL_STRING, temp = NULL_STRING;
 
       net_logf("TO_HOST_REQUEST_MODULE\n");
 
@@ -1665,7 +1665,7 @@ PacketRequest_t * NetRequest_new(PacketRequest_t * pr)
 //--------------------------------------------------------------------------------------------
 int NetRequest_getFreeIndex(NetAsynchData_t * asynch_list, size_t asynch_count)
 {
-  int index;
+  size_t index;
   if(NULL ==asynch_list || 0 == asynch_count) return -1;
 
   for(index=0; index<asynch_count; index++)
@@ -1682,7 +1682,7 @@ int NetRequest_getFreeIndex(NetAsynchData_t * asynch_list, size_t asynch_count)
 //--------------------------------------------------------------------------------------------
 PacketRequest_t * NetRequest_getFree(NetAsynchData_t * asynch_list, size_t asynch_count)
 {
-  int index;
+  size_t index;
   if(NULL ==asynch_list || 0 == asynch_count) return NULL;
 
   for(index=0; index<asynch_count; index++)
@@ -1722,7 +1722,7 @@ bool_t NetRequest_release(PacketRequest_t * prequest)
 //--------------------------------------------------------------------------------------------
 PacketRequest_t * NetRequest_check(NetAsynchData_t * asynch_list, size_t asynch_count, ENetEvent * pevent)
 {
-  int index;
+  size_t index;
   PacketRequest_t * retval = NULL;
   NET_PACKET       npkt;
   if(NULL ==asynch_list || 0 == asynch_count || NULL ==pevent) return NULL;

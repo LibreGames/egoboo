@@ -250,7 +250,7 @@ void snd_apply_mods( int channel, float intensity, vect3 snd_pos, vect3 ear_pos,
   float dist_xyz2, dist_xy2, volume;
   float vl, vr, dx, dy;
   int vol_left, vol_right;
-  const float reverbdistance = 128 * 2.5;
+  const float reverbdistance = 128 * 2.5;  // there will effectively be "no change"  in the sound volume for distances less than 2.5 tiles away
 
   if ( !_sndState.soundActive || INVALID_CHANNEL == channel ) return;
 
@@ -304,6 +304,10 @@ int snd_play_sound( Game_t * gs, float intensity, vect3 pos, Mix_Chunk *loadedwa
   Cap_t * pcap;
 
   if( !_sndState.soundActive ) return INVALID_CHANNEL;
+
+  // the sound is too quiet hear
+  if( 255.0f * intensity * ( CData.soundvolume / 100.0f ) < 1.0f ) 
+    return INVALID_CHANNEL;
 
   pcap = ObjList_getPCap(gs, whichobject);
 
@@ -403,10 +407,6 @@ int snd_play_particle_sound( Game_t * gs, float intensity, PRT_REF particle, Sin
   else if ( VALID_OBJ(gs->ObjList, iobj) && sound < MAXWAVE)
   {
     channel = snd_play_sound( gs, intensity, gs->PrtList[particle].ori.pos, gs->ObjList[iobj].wavelist[sound], 0, iobj, sound );
-  }
-  else
-  {
-    int i=0;
   }
 
   return channel;

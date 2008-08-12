@@ -88,7 +88,7 @@ static void     game_handleKeyboard();
 
 char cActionName[MAXACTION][2];
 
-KeyboardBuffer_t GNetMsg = {20,0,0,{EOS}};
+KeyboardBuffer_t GNetMsg = {20,0,0,NULL_STRING};
 Gui_t   _gui_state = { bfalse };
 
 PROFILE_DECLARE( resize_characters );
@@ -1491,7 +1491,8 @@ bool_t add_status( Game_t * gs, CHR_REF character )
 //--------------------------------------------------------------------------------------------
 bool_t remove_stat( Game_t * gs, Chr_t * pchr )
 {
-  int i, icount;
+  int i;
+  size_t icount;
   bool_t bfound;
 
   Status_t * statlst      = gs->cl->StatList;
@@ -4581,7 +4582,7 @@ void sdlinit( Graphics_t * g )
 {
   int cnt;
   SDL_Surface * tmp_surface;
-  STRING strbuffer = { EOS };
+  STRING strbuffer = NULL_STRING;
 
   log_info("Initializing main SDL services version %i.%i.%i... ", SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_PATCHLEVEL);
   if ( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK ) < 0 )
@@ -4725,7 +4726,7 @@ bool_t MachineState_delete( MachineState_t * ms )
 //--------------------------------------------------------------------------------------------
 bool_t fget_next_chr_spawn_info(Game_t * gs, FILE * pfile, CHR_SPAWN_INFO * psi)
 {
-  STRING myname = { EOS };
+  STRING myname = NULL_STRING;
   bool_t found;
   int slot;
   vect3 pos;
@@ -5235,8 +5236,10 @@ void PrtList_resynch(Game_t * gs)
     pprt->active     = btrue;
 
     // Do sound effect on activation
+    if( VALID_PIP(piplst, pprt->spinfo.ipip) )
     {
       Pip_t * ppip = piplst + pprt->spinfo.ipip;
+
       snd_play_particle_sound( pprt->spinfo.gs, pprt->spinfo.intensity, pprt->spinfo.iprt, ppip->soundspawn );
     }
 

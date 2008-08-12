@@ -335,9 +335,9 @@ INLINE bool_t egoboo_key_validate(egoboo_key_t * pkey)
 {
   // BB > de-initialize the key
 
-  static Uint32 new_id_32 = -1;
-  static Uint16 new_id_16 = -1;
-  static Uint8  new_id_8  = -1;
+  static Uint32 new_id_32 = (Uint32)(~0);
+  static Uint16 new_id_16 = (Uint16)(~0);
+  static Uint8  new_id_8  = (Uint8 )(~0);
 
   if(NULL == pkey) return bfalse;
 
@@ -366,8 +366,9 @@ INLINE bool_t egoboo_key_valid(egoboo_key_t * pkey)
 {
   // BB > verify that a "key" is valid.
 
-  Uint32 seed_32, val_32;
-  Uint16 seed_16;
+  Uint32 val_32;
+  //Uint32 seed_32;
+  //Uint16 seed_16;
   Uint8  seed_8;
 
   if(NULL == pkey) return bfalse;
@@ -446,7 +447,7 @@ INLINE bool_t BSP_node_delete( BSP_node_t * n )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE BSP_leaf_t * BSP_leaf_new( BSP_leaf_t * L, int count )
+INLINE BSP_leaf_t * BSP_leaf_new( BSP_leaf_t * L, size_t count )
 {
   if(NULL == L) return L;
 
@@ -496,7 +497,7 @@ INLINE bool_t BSP_leaf_insert( BSP_leaf_t * L, BSP_node_t * n )
 //--------------------------------------------------------------------------------------------
 INLINE bool_t BSP_tree_allocate( BSP_tree_t * t, size_t count, size_t children )
 {
-  int i;
+  size_t i;
 
   if(NULL == t) return bfalse;
   if(NULL != t->leaf_list || t->leaf_count > 0) return bfalse;
@@ -518,7 +519,7 @@ INLINE bool_t BSP_tree_allocate( BSP_tree_t * t, size_t count, size_t children )
 //--------------------------------------------------------------------------------------------
 INLINE bool_t BSP_tree_deallocate( BSP_tree_t * t )
 {
-  int i;
+  size_t i;
 
   if( NULL == t ) return bfalse;
   if( !EKEY_PVALID(t) ) return btrue;
@@ -632,7 +633,7 @@ INLINE Sint32 BSP_tree_count_nodes(Sint32 dim, Sint32 depth)
 INLINE bool_t BSP_tree_insert( BSP_tree_t * t, BSP_leaf_t * L, BSP_node_t * n, int index )
 {
   if( !EKEY_PVALID(t) || !EKEY_PVALID(L) || !EKEY_PVALID(n) ) return bfalse;
-  if(index > 0 || index > L->child_count) return bfalse;
+  if( index > L->child_count ) return bfalse;
 
   if( index >= 0 && NULL != L->children[index])
   {

@@ -25,7 +25,6 @@
 #include "object.inl"
 
 #include "graphic.h"
-#include "particle.h"
 #include "Mad.h"
 #include "enchant.h"
 #include "game.h"
@@ -34,6 +33,7 @@
 #include "egoboo_utility.h"
 #include "egoboo_strutil.h"
 
+#include "particle.inl"
 #include "char.inl"
 #include "egoboo_types.inl"
 

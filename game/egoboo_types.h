@@ -517,7 +517,7 @@ struct sBSP_leaf
 };
 typedef struct sBSP_leaf BSP_leaf_t;
 
-INLINE BSP_leaf_t * BSP_leaf_new( BSP_leaf_t * L, int size );
+INLINE BSP_leaf_t * BSP_leaf_new( BSP_leaf_t * L, size_t size );
 INLINE bool_t       BSP_leaf_delete( BSP_leaf_t * L );
 INLINE bool_t       BSP_leaf_insert( BSP_leaf_t * L, BSP_node_t * n );
 
@@ -529,7 +529,7 @@ struct sBSP_tree
   int dimensions;
   int depth;
 
-  int        leaf_count;
+  size_t       leaf_count;
   BSP_leaf_t * leaf_list;
 
   BSP_leaf_t * root;

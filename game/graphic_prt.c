@@ -24,7 +24,6 @@
 
 #include "ogl_include.h"
 #include "Log.h"
-#include "mesh.h"
 #include "camera.h"
 #include "graphic.h"
 

@@ -26,12 +26,12 @@
 
 #include "Ui.h"
 #include "Log.h"
-#include "Network.h"
 #include "Client.h"
 
 #include "egoboo_utility.h"
 #include "egoboo.h"
 
+#include "Network.inl"
 #include "egoboo_types.inl"
 
 // The SDL virtual key values are the ASCII values of a 102-key qwerty keyboard

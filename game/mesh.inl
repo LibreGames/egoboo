@@ -5,6 +5,8 @@
 #include "particle.h"
 #include "game.h"
 
+#include "egoboo_types.inl"
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 INLINE const BUMPLIST_NODE * bumplist_node_new(BUMPLIST_NODE * n)

@@ -26,11 +26,9 @@
 
 #include "Log.h"
 #include "sound.h"
-#include "particle.h"
 #include "script.h"
 #include "Menu.h"
 #include "enchant.h"
-#include "object.h"
 #include "Client.h"
 #include "Server.h"
 #include "game.h"
@@ -40,6 +38,8 @@
 #include "egoboo_utility.h"
 #include "egoboo.h"
 
+#include "particle.inl"
+#include "object.inl"
 #include "graphic.inl"
 #include "mesh.inl"
 #include "egoboo_types.inl"
@@ -190,19 +190,19 @@ int module_find( char *smallname, MOD_INFO * mi_ary, size_t mi_size )
   // ZZ> This function returns -1 if the module does not exist locally, the module
   //     index otherwise
 
-  int cnt, index;
-  cnt = 0;
-  index = -1;
-  while ( cnt < mi_size )
+  size_t cnt, index;
+
+  index = mi_size;
+  for ( cnt=0; cnt < mi_size; cnt++ )
   {
     if ( strcmp( smallname, mi_ary[cnt].loadname ) == 0 )
     {
       index = cnt;
-      cnt = mi_size;
+      break;
     }
-    cnt++;
   }
-  return index;
+
+  return (index==mi_size) ? -1 : index;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -727,7 +727,7 @@ MOD_INFO * ModInfo_renew( MOD_INFO * pmi )
 //---------------------------------------------------------------------------------------------
 void ModInfo_clear_all_titleimages( MOD_INFO * mi_ary, size_t mi_count )
 {
-  int cnt;
+  size_t cnt;
 
   if(NULL == mi_ary || 0 == mi_count) return;
 

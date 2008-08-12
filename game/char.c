@@ -24,7 +24,6 @@
 
 #include "char.inl"
 
-#include "Network.h"
 #include "Client.h"
 #include "Server.h"
 #include "Log.h"
@@ -33,10 +32,10 @@
 #include "passage.h"
 #include "Menu.h"
 #include "script.h"
-#include "mesh.h"
 #include "graphic.h"
 #include "sound.h"
 
+#include "Network.inl"
 #include "egoboo_strutil.h"
 #include "egoboo_utility.h"
 #include "egoboo_rpc.h"
@@ -113,13 +112,7 @@ Uint16  chrcollisionlevel = 2;
 
 TILE_DAMAGE GTile_Dam;
 
-//--------------------------------------------------------------------------------------------
-Uint32  cv_list_count = 0;
-CVolume_t cv_list[1000];
 
-INLINE void cv_list_add( CVolume_t * cv);
-INLINE void cv_list_clear();
-INLINE void cv_list_draw();
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -8044,33 +8037,6 @@ bool_t import_info_add(IMPORT_INFO * ii, OBJ_REF obj)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE void cv_list_add( CVolume_t * cv)
-{
-  if(NULL == cv || cv_list_count > 1000) return;
-
-  cv_list[cv_list_count++] = *cv;
-};
-
-//--------------------------------------------------------------------------------------------
-INLINE void cv_list_clear()
-{
-  cv_list_count = 0;
-};
-
-//--------------------------------------------------------------------------------------------
-INLINE void cv_list_draw()
-{
-  Uint32 cnt;
-
-  for(cnt=0; cnt<cv_list_count; cnt++)
-  {
-    CVolume_draw( &(cv_list[cnt]), btrue, bfalse );
-  };
-}
-
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
 void play_action( Game_t * gs, CHR_REF ichr, ACTION action, bool_t ready )
 {
   // ZZ> This function starts a generic action for a ichr
@@ -10070,9 +10036,9 @@ CHR_REF force_chr_spawn( CHR_SPAWN_INFO si )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CHR_SPAWN_QUEUE * chr_spawn_queue_new(CHR_SPAWN_QUEUE * q, int size)
+CHR_SPAWN_QUEUE * chr_spawn_queue_new(CHR_SPAWN_QUEUE * q, size_t size)
 {
-  if(NULL == q || size < 0) return q;
+  if(NULL == q) return q;
 
   chr_spawn_queue_delete( q );
 
@@ -10123,7 +10089,7 @@ CHR_SPAWN_INFO * chr_spawn_queue_pop(CHR_SPAWN_QUEUE * q)
 //--------------------------------------------------------------------------------------------
 bool_t chr_spawn_queue_push(CHR_SPAWN_QUEUE * q, CHR_SPAWN_INFO * psi )
 {
-  int tmp_head;
+  size_t tmp_head;
 
   if(NULL == q || q->data_size == 0 ) return bfalse;
 

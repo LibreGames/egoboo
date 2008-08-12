@@ -2,6 +2,7 @@
 
 #include "Md2.h"
 
+
 INLINE const int md2_get_numVertices(MD2_Model_t * m)  { return m->m_numVertices; }
 INLINE const int md2_get_numTexCoords(MD2_Model_t * m) { return m->m_numTexCoords; }
 INLINE const int md2_get_numTriangles(MD2_Model_t * m) { return m->m_numTriangles; }

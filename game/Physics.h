@@ -68,10 +68,14 @@ CVolume_t CVolume_merge(CVolume_t * pv1, CVolume_t * pv2);
 CVolume_t CVolume_intersect(CVolume_t * pv1, CVolume_t * pv2);
 bool_t    CVolume_draw( CVolume_t * cv, bool_t draw_square, bool_t draw_diamond );
 
-
 //--------------------------------------------------------------------------------------------
 struct sCVolume_Tree { CVolume_t leaf[8]; };
 typedef struct sCVolume_Tree CVolume_Tree_t;
+
+//--------------------------------------------------------------------------------------------
+INLINE void cv_list_add( CVolume_t * cv);
+INLINE void cv_list_clear();
+INLINE void cv_list_draw();
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

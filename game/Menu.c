@@ -161,8 +161,8 @@ OPTIONS_DATA OData;
 // TEMPORARY!
 #define NET_DONE_SENDING_FILES 10009
 #define NET_NUM_FILES_TO_SEND  10010
-static STRING mnu_filternamebuffer    = { EOS };
-static STRING mnu_display_mode_buffer = { EOS };
+static STRING mnu_filternamebuffer    = NULL_STRING;
+static STRING mnu_display_mode_buffer = NULL_STRING;
 static int    mnu_display_mode_index = 0;
 
 #define MAXWIDGET 100
@@ -759,7 +759,8 @@ int mnu_doChooseModule( MenuProc_t * mproc, float deltaTime )
   static int moduleMenuOffsetY;
 
   int result = 0;
-  int i, j, x, y;
+  size_t i;
+  int    j, x, y;
   char txtBuffer[128];
 
   Server_t * sv;
@@ -4714,7 +4715,7 @@ bool_t MenuProc_init_ingame(MenuProc_t * ms)
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 mnu_load_titleimage(MenuProc_t * mproc, int titleimage, char *szLoadName)
+Uint32 mnu_load_titleimage(MenuProc_t * mproc, Uint32 titleimage, char *szLoadName)
 {
   // ZZ> This function loads a title in the specified image slot, forcing it into
   //     system memory.  Returns btrue if it worked
