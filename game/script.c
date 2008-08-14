@@ -2176,8 +2176,9 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 
     case F_SetWeatherTime:
       // Set the weather timer
-      gs->Weather.timereset = pstate->tmpargument;
-      gs->Weather.time = pstate->tmpargument;
+      gs->Weather.timereset =
+      gs->Weather.time      = pstate->tmpargument;
+      gs->Weather.active    = (0 != gs->Weather.time);  // time == 0 means weather is off
       break;
 
     case F_GetBumpHeight:
@@ -2617,11 +2618,11 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 
     case F_SetWaterLevel:
       // This function raises and lowers the module's water
-      fTmp = ( pstate->tmpargument / 10.0 ) - gs->water.douselevel;
-      gs->water.surfacelevel += fTmp;
-      gs->water.douselevel += fTmp;
+      fTmp = ( pstate->tmpargument / 10.0 ) - gs->Water.douselevel;
+      gs->Water.surfacelevel += fTmp;
+      gs->Water.douselevel += fTmp;
       for ( iTmp = 0; iTmp < MAXWATERLAYER; iTmp++ )
-        gs->water.layer[iTmp].z += fTmp;
+        gs->Water.layer[iTmp].z += fTmp;
       break;
 
     case F_EnchantTarget:
@@ -2834,7 +2835,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 
     case F_GetWaterLevel:
       // This function gets the douse level for the water, returning it in tmpargument
-      pstate->tmpargument = gs->water.douselevel * 10;
+      pstate->tmpargument = gs->Water.douselevel * 10;
       break;
 
     case F_CostTargetMana:
@@ -3078,7 +3079,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 
     case F_IfOverWater:
       // This function passes if the character is on a water tile
-      returncode = mesh_has_some_bits( pmesh->Mem.tilelst, pchr->onwhichfan, MPDFX_WATER ) && gs->water.iswater;
+      returncode = mesh_has_some_bits( pmesh->Mem.tilelst, pchr->onwhichfan, MPDFX_WATER ) && gs->Water.iswater;
       break;
 
     case F_IfThrown:
@@ -4318,7 +4319,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 
     case F_PitsKill:
       // This function activates pit deaths...
-      gs->pitskill = btrue;
+      gs->pits_kill = btrue;
       break;
 
     case F_SetTargetToPassageID:

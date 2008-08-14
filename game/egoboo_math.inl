@@ -816,7 +816,7 @@ INLINE const BBOX_ARY * bbox_ary_alloc(BBOX_ARY * ary, int count)
 //--------------------------------------------------------------------------------------------
 INLINE Uint32 ego_rand_32(Uint32 * seed)
 {
-  if(NULL == seed) 
+  if(NULL == seed)
     return rand();
 
   *seed = (Uint32)0x000019660D * (*seed) + (Uint32)0x3C6EF35F;

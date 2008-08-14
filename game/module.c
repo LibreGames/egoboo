@@ -202,7 +202,7 @@ int module_find( char *smallname, MOD_INFO * mi_ary, size_t mi_size )
     }
   }
 
-  return (index==mi_size) ? -1 : index;
+  return (index==mi_size) ? -1 : (int)index;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -246,13 +246,13 @@ bool_t module_load( Game_t * gs, char *smallname )
 
   release_all_models( gs );
 
-  EncList_delete( gs );
+  EncList_new( gs );
 
   module_load_all_objects( gs, szModpath );
 
   if ( !load_mesh( gs, szModpath ) )
   {
-    log_error( "Load problems with the pmesh->Info.\n" );
+    log_error( "Load problems with the mesh.\n" );
   }
 
   setup_particles( gs );
@@ -348,7 +348,7 @@ bool_t module_read_data( MOD_INFO * pmod, char *szLoadName )
     pmod->respawnmode  = fget_next_respawn( fileread );
     pmod->rts_control  = fget_next_bool( fileread ) ;
     fget_next_string( fileread, pmod->rank, sizeof( pmod->rank ) );
-    pmod->rank[RANKSIZE] = EOS;
+    pmod->rank[RANKSIZE-1] = EOS;
 
     // Read the expansions
     return btrue;
@@ -414,12 +414,12 @@ void module_load_all_objects( Game_t * gs, char * szModpath )
 
   fs_find_info_new( &fs_finfo );
 
-  // Clear the import slots...
-  import_info_clear( &(gs->modstate.import) );
+  //// Clear the import slots...
+  //import_info_clear( &(gs->modstate.import) );
 
   // Load the import directory
   skin = TX_LAST;  // Character skins start just after the last special texture
-  if ( gs->modstate.import.valid )
+  if ( gs->modstate.import_valid )
   {
     for ( cnt = 0; cnt < MAXIMPORT; cnt++ )
     {
@@ -431,26 +431,24 @@ void module_load_all_objects( Game_t * gs, char * szModpath )
       snprintf( szTempdir, sizeof( szTempdir ), "%s" SLASH_STRING "%s", CData.import_dir, objectname );
       if ( !fs_fileIsDirectory(szTempdir) ) continue;
 
-      // Load it...
-      gs->modstate.import.player = cnt / 9;
+      //// Load it...
+      //gs->modstate.import.player = cnt / MAXIMPORTPERCHAR;
 
-      import_info_add( &(gs->modstate.import), OBJ_REF(cnt) );
+      //import_info_add( &(gs->modstate.import), OBJ_REF(cnt) );
 
-      skin += load_one_object( gs, skin, CData.import_dir, objectname );
+      skin += load_one_object( gs, skin, CData.import_dir, objectname, cnt );
     }
   }
-
-  empty_import_directory();  // Free up that disk space...
 
   // If in Developer mode, create a new debug.txt file for debug info logging
   log_debug( "DEBUG INFORMATION FOR MODULE: \"%s\"\n", szModpath );
   log_debug( "This document logs extra debugging information for the last module loaded.\n");
-  log_debug( "\nSpawning log after module has started...\n");
+  log_debug( "Spawning log after module has started...\n");
   log_debug( "-----------------------------------------------\n" );
 
 
   // Search for .obj directories and load them
-  gs->modstate.import.object = INVALID_OBJ;
+  //gs->modstate.import.object = INVALID_OBJ;
   snprintf( szObjectpath, sizeof( szObjectpath ), "%s%s" SLASH_STRING, szModpath, CData.objects_dir );
 
   filehandle = fs_findFirstFile( &fs_finfo, szObjectpath, NULL, "*.obj" );
@@ -459,10 +457,10 @@ void module_load_all_objects( Game_t * gs, char * szModpath )
     int skins_loaded;
     strcpy(tmpstr, filehandle);
 
-    skins_loaded = load_one_object( gs, skin, szObjectpath, tmpstr );
+    skins_loaded = load_one_object( gs, skin, szObjectpath, tmpstr, INVALID_OBJ );
     if(0 == skins_loaded)
     {
-      log_warning("module_load_all_objects() - \n\tCould not find object %s" SLASH_STRING "%s", szObjectpath, tmpstr);
+      log_warning("module_load_all_objects() - \n\tCould not load object %s" SLASH_STRING "%s", szObjectpath, tmpstr);
     }
 
     skin += skins_loaded;
@@ -491,10 +489,10 @@ ModState_t * ModState_new(ModState_t * ms, MOD_INFO * mi, Uint32 seed)
 
   if(NULL != mi)
   {
-    ms->import.amount  = mi->importamount;
-    ms->import.min_pla = mi->maxplayers;
-    ms->import.max_pla = mi->maxplayers;
-    ms->import.valid   = (mi->importamount > 0) || (mi->maxplayers > 0);
+    ms->import_amount  = mi->importamount;
+    ms->import_min_pla = mi->maxplayers;
+    ms->import_max_pla = mi->maxplayers;
+    ms->import_valid   = (mi->importamount > 0) || (mi->maxplayers > 1);
 
     ms->exportvalid    = mi->allowexport;
     ms->rts_control    = mi->rts_control;

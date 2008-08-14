@@ -45,7 +45,8 @@ KeyboardBuffer_t _keybuff;
 
 MOUSE mous =
 {
-  btrue,            // on
+  btrue,            // connected to the ui
+  bfalse,           // not connected to the game
   2.0f,             // sense
   0.9f,             // sustain
   0.1f,             // cover
@@ -148,7 +149,7 @@ bool_t input_read_mouse(MOUSE * pm)
 
   if(NULL == pm) return bfalse;
 
-  if ( pm->on )
+  if ( pm->ui || pm->game )
   {
     b = SDL_GetRelativeMouseState( &x, &y );
 

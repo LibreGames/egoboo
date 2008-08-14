@@ -569,6 +569,7 @@ bool_t decode_escape_sequence( Game_t * gs, char * buffer, size_t buffer_size, c
   // BB> expands escape sequences
 
   STRING szTmp;
+  char esc_code;
   char lTmp;
 
   CHR_REF target = chr_get_aitarget( gs->ChrList, CHRLST_COUNT, gs->ChrList + chr_ref );
@@ -592,6 +593,8 @@ bool_t decode_escape_sequence( Game_t * gs, char * buffer, size_t buffer_size, c
   src_pos = message;
   while(dst_pos < dst_end && EOS != *src_pos)
   {
+    bool_t handled;
+
     while('%' != *src_pos && EOS != *src_pos && dst_pos < dst_end)
     {
       *dst_pos++ = *src_pos++;
@@ -599,16 +602,22 @@ bool_t decode_escape_sequence( Game_t * gs, char * buffer, size_t buffer_size, c
 
     if('%' != *src_pos) { *dst_pos = EOS; break; }
 
-    // go to teh escape character
+    // go to the esc_code character
+    src_pos++;
+    esc_code = *src_pos;
     src_pos++;
 
-    if ( *src_pos >= '0' && *src_pos <= '0' + ( MAXSKIN - 1 ) )  // Target's skin name
+    handled = bfalse;
+    if ( esc_code >= '0' && esc_code <= '0' + ( MAXSKIN - 1 ) )  // Target's skin name
     {
-      strncpy( szTmp, ptrg_cap->skin[*src_pos-'0'].name, sizeof( STRING ) );
+      strncpy( szTmp, ptrg_cap->skin[esc_code-'0'].name, sizeof( STRING ) );
+      handled = btrue;
     }
     else
     {
-      switch(*src_pos)
+      handled = btrue;
+
+      switch(esc_code)
       {
       case 'n': // Name
         {
@@ -654,7 +663,7 @@ bool_t decode_escape_sequence( Game_t * gs, char * buffer, size_t buffer_size, c
             strncpy( szTmp, powner->name, sizeof( STRING ) );
           else
           {
-            lTmp = pown_cap->classname[0];
+            lTmp = toupper(pown_cap->classname[0]);
             if ( lTmp == 'A' || lTmp == 'E' || lTmp == 'I' || lTmp == 'O' || lTmp == 'U' )
               snprintf( szTmp, sizeof( szTmp ), "an %s", pown_cap->classname );
             else
@@ -730,16 +739,13 @@ bool_t decode_escape_sequence( Game_t * gs, char * buffer, size_t buffer_size, c
           {
             snprintf( szTmp, sizeof( szTmp ), "her" );
           }
+          else if ( pchr->gender == GEN_MALE )
+          {
+            snprintf( szTmp, sizeof( szTmp ), "his" );
+          }
           else
           {
-            if ( pchr->gender == GEN_MALE )
-            {
-              snprintf( szTmp, sizeof( szTmp ), "his" );
-            }
-            else
-            {
-              snprintf( szTmp, sizeof( szTmp ), "its" );
-            }
+            snprintf( szTmp, sizeof( szTmp ), "its" );
           }
         }
         break;
@@ -750,16 +756,13 @@ bool_t decode_escape_sequence( Game_t * gs, char * buffer, size_t buffer_size, c
           {
             snprintf( szTmp, sizeof( szTmp ), "female " );
           }
+          else if ( pchr->gender == GEN_MALE )
+          {
+            snprintf( szTmp, sizeof( szTmp ), "male " );
+          }
           else
           {
-            if ( pchr->gender == GEN_MALE )
-            {
-              snprintf( szTmp, sizeof( szTmp ), "male " );
-            }
-            else
-            {
-              snprintf( szTmp, sizeof( szTmp ), " " );
-            }
+            snprintf( szTmp, sizeof( szTmp ), " " );
           }
         }
         break;
@@ -770,20 +773,28 @@ bool_t decode_escape_sequence( Game_t * gs, char * buffer, size_t buffer_size, c
           {
             snprintf( szTmp, sizeof( szTmp ), "her" );
           }
+          else if ( ptarget->gender == GEN_MALE )
+          {
+            snprintf( szTmp, sizeof( szTmp ), "his" );
+          }
           else
           {
-            if ( ptarget->gender == GEN_MALE )
-            {
-              snprintf( szTmp, sizeof( szTmp ), "his" );
-            }
-            else
-            {
-              snprintf( szTmp, sizeof( szTmp ), "its" );
-            }
+            snprintf( szTmp, sizeof( szTmp ), "its" );
           }
+
         }
 
+        break;
+
+      default:
+        handled = bfalse;
+        break;
       }
+    }
+
+    if(!handled)
+    {
+      strcpy( szTmp, "####" );
     }
 
     dst_pos += snprintf(dst_pos, (size_t)(dst_end-dst_pos), szTmp);
@@ -1367,7 +1378,7 @@ void draw_chr_info( Game_t * gs )
 {
   // ZZ> This function lets the players check character stats
 
-  int cnt;
+  size_t cnt;
   Status_t * lst      = gs->cl->StatList;
   size_t   lst_size = gs->cl->StatList_count;
 
@@ -1491,8 +1502,7 @@ bool_t add_status( Game_t * gs, CHR_REF character )
 //--------------------------------------------------------------------------------------------
 bool_t remove_stat( Game_t * gs, Chr_t * pchr )
 {
-  int i;
-  size_t icount;
+  size_t i, icount;
   bool_t bfound;
 
   Status_t * statlst      = gs->cl->StatList;
@@ -1562,13 +1572,13 @@ void move_water( float dUpdate )
 
   for ( layer = 0; layer < MAXWATERLAYER; layer++ )
   {
-    gs->water.layer[layer].u += gs->water.layer[layer].uadd * dUpdate;
-    gs->water.layer[layer].v += gs->water.layer[layer].vadd * dUpdate;
-    if ( gs->water.layer[layer].u > 1.0 )  gs->water.layer[layer].u -= 1.0;
-    if ( gs->water.layer[layer].v > 1.0 )  gs->water.layer[layer].v -= 1.0;
-    if ( gs->water.layer[layer].u < -1.0 )  gs->water.layer[layer].u += 1.0;
-    if ( gs->water.layer[layer].v < -1.0 )  gs->water.layer[layer].v += 1.0;
-    gs->water.layer[layer].frame = (( int )( gs->water.layer[layer].frame + gs->water.layer[layer].frameadd * dUpdate ) ) & WATERFRAMEAND;
+    gs->Water.layer[layer].u += gs->Water.layer[layer].uadd * dUpdate;
+    gs->Water.layer[layer].v += gs->Water.layer[layer].vadd * dUpdate;
+    if ( gs->Water.layer[layer].u > 1.0 )  gs->Water.layer[layer].u -= 1.0;
+    if ( gs->Water.layer[layer].v > 1.0 )  gs->Water.layer[layer].v -= 1.0;
+    if ( gs->Water.layer[layer].u < -1.0 )  gs->Water.layer[layer].u += 1.0;
+    if ( gs->Water.layer[layer].v < -1.0 )  gs->Water.layer[layer].v += 1.0;
+    gs->Water.layer[layer].frame = (( int )( gs->Water.layer[layer].frame + gs->Water.layer[layer].frameadd * dUpdate ) ) & WATERFRAMEAND;
   }
 }
 
@@ -1871,7 +1881,7 @@ bool_t chr_collide_mesh(Game_t * gs, CHR_REF ichr)
     };
   }
 
-  meshlevel = mesh_get_level( &(pmesh->Mem), pchr->onwhichfan, pchr->ori.pos.x, pchr->ori.pos.y, gs->ChrList[ichr].prop.waterwalk, &(gs->water) );
+  meshlevel = mesh_get_level( &(pmesh->Mem), pchr->onwhichfan, pchr->ori.pos.x, pchr->ori.pos.y, gs->ChrList[ichr].prop.waterwalk, &(gs->Water) );
   if( pchr->ori.pos.z < meshlevel )
   {
     hitmesh = btrue;
@@ -1982,7 +1992,7 @@ bool_t prt_collide_mesh(Game_t * gs, PRT_REF iprt)
     };
   }
 
-  meshlevel = mesh_get_level( &(pmesh->Mem), gs->PrtList[iprt].onwhichfan, gs->PrtList[iprt].ori.pos.x, gs->PrtList[iprt].ori.pos.y, bfalse, &(gs->water) );
+  meshlevel = mesh_get_level( &(pmesh->Mem), gs->PrtList[iprt].onwhichfan, gs->PrtList[iprt].ori.pos.x, gs->PrtList[iprt].ori.pos.y, bfalse, &(gs->Water) );
   if( gs->PrtList[iprt].ori.pos.z < meshlevel )
   {
     hitmesh = btrue;
@@ -2216,7 +2226,7 @@ void reset_timers(Game_t * gs)
   gs->lst_clock  = 0;
   gs->wld_clock  = 0;
   gs->cl->stat_clock = 0;
-  gs->pit_clock  = 0;  gs->pitskill = bfalse;
+  gs->pits_clock  = 0;  gs->pits_kill = bfalse;
   gs->wld_frame  = 0;
 
   outofsync = bfalse;
@@ -2411,11 +2421,11 @@ void set_default_config_data(ConfigData_t * pcon)
   strncpy( pcon->import_dir, "import" , sizeof( STRING ) );
   strncpy( pcon->players_dir, "players", sizeof( STRING ) );
 
-  strncpy( pcon->nullicon_bitmap, "nullicon.bmp" , sizeof( STRING ) );
-  strncpy( pcon->keybicon_bitmap, "keybicon.bmp" , sizeof( STRING ) );
-  strncpy( pcon->mousicon_bitmap, "mousicon.bmp" , sizeof( STRING ) );
-  strncpy( pcon->joyaicon_bitmap, "joyaicon.bmp" , sizeof( STRING ) );
-  strncpy( pcon->joybicon_bitmap, "joybicon.bmp" , sizeof( STRING ) );
+  strncpy( pcon->nullicon_bitmap, "ico_lst[ICO_NULL].bmp" , sizeof( STRING ) );
+  strncpy( pcon->keybicon_bitmap, "ico_lst[ICO_KEYB].bmp" , sizeof( STRING ) );
+  strncpy( pcon->mousicon_bitmap, "ico_lst[ICO_MOUS].bmp" , sizeof( STRING ) );
+  strncpy( pcon->joyaicon_bitmap, "ico_lst[ICO_JOYA].bmp" , sizeof( STRING ) );
+  strncpy( pcon->joybicon_bitmap, "ico_lst[ICO_JOYB].bmp" , sizeof( STRING ) );
 
   strncpy( pcon->tile0_bitmap, "tile0.bmp" , sizeof( STRING ) );
   strncpy( pcon->tile1_bitmap, "tile1.bmp" , sizeof( STRING ) );
@@ -2476,8 +2486,8 @@ void set_default_config_data(ConfigData_t * pcon)
   strncpy( pcon->quest_file, "quest.txt", sizeof( STRING ) );
 
 
-  pcon->uifont_points  = 20;
-  pcon->uifont_points2 = 18;
+  pcon->uifont_points_large = 22;
+  pcon->uifont_points_small = 17;
   strncpy( pcon->uifont_ttf, "Negatori.ttf" , sizeof( STRING ) );
 
   strncpy( pcon->coinget_sound, "coinget.wav" , sizeof( STRING ) );
@@ -2748,7 +2758,7 @@ retval_t main_doGraphics()
             case - 1:
               // Done with the menu
               ig_mnu_proc->proc.Active = bfalse;
-              mnu_exitMenuMode();
+              mous.game = btrue;
               break;
           }
 
@@ -2870,7 +2880,7 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
 
         // initialize the user interface
         snprintf(CStringTmp1, sizeof(CStringTmp1), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.uifont_ttf);
-        ui_initialize(CStringTmp1, CData.uifont_points);
+        ui_initialize(CStringTmp1, CData.uifont_points_large);
 
         // initialize the sound system
         snd_initialize(&CData);
@@ -3054,6 +3064,8 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
 
     case PROC_Finish:
       {
+
+#if defined(DEBUG_PROFILE)
         log_info( "============ PROFILE =================\n" );
         log_info( "times in microseconds\n" );
         log_info( "======================================\n" );
@@ -3085,6 +3097,7 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
         log_info( "\tanimate_tiles - %lf\n", 1e6*PROFILE_QUERY( animate_tiles ) );
         log_info( "\tmove_water - %lf\n", 1e6*PROFILE_QUERY( move_water ) );
         log_info( "======================================\n\n" );
+#endif
 
         PROFILE_FREE( resize_characters );
         PROFILE_FREE( keep_weapons_with_holders );
@@ -3163,10 +3176,6 @@ void game_handleKeyboard()
   {
     gs->igm.proc.Active = btrue;
     gs->igm.whichMenu   = mnu_Inventory;
-
-    SDL_WM_GrabInput(SDL_GRAB_OFF);
-    SDL_ShowCursor(SDL_DISABLE);
-    mous.on = bfalse;
   }
 
   // force the module to be beaten
@@ -3321,11 +3330,6 @@ void cl_update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
     move_water( dUpdate );                            // client function
     PROFILE_END( move_water );
 
-
-    // Timers
-    gs->wld_clock += FRAMESKIP;
-    gs->wld_frame++;
-
     gui->msgQueue.timechange += dUpdate;
 
     for(cnt=0; cnt<MAXSTAT; cnt++)
@@ -3436,9 +3440,6 @@ void sv_update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
       gs->sv->rand_idx += *((Uint32*) & kMd2Normals[gs->sv->rand_idx&127][1]);
     }
 
-    // Timers
-    gs->wld_clock += FRAMESKIP;
-    gs->wld_frame++;
   }
 
 }
@@ -3464,7 +3465,7 @@ void update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
   // Important stuff to keep in sync
 
   // gs->wld_clock<gs->all_clock  will this work with multiple game states?
-  while ( (gs->wld_clock<gs->all_clock) &&  ( cs->tlb.numtimes > 0 ) )
+  //while ( (gs->wld_clock<gs->all_clock) &&  ( cs->tlb.numtimes > 0 ) )
   {
     srand(ss->rand_idx);                          // client/server function
 
@@ -3557,10 +3558,6 @@ void update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
     move_water( dUpdate );                          // client function
     PROFILE_END( move_water );
 
-    // Timers
-    gs->wld_clock += FRAMESKIP;
-    gs->wld_frame++;
-
     gui->msgQueue.timechange += dUpdate;
 
     for(cnt=0; cnt<MAXSTAT; cnt++)
@@ -3599,8 +3596,6 @@ ProcessStates game_doRun(Game_t * gs, ProcessStates procIn)
 
   if (NULL == gs)  return procOut;
 
-  update_timers( gs );
-
 #if DEBUG_UPDATE_CLAMP && defined(_DEBUG)
   if(CData.DevMode)
   {
@@ -3610,6 +3605,8 @@ ProcessStates game_doRun(Game_t * gs, ProcessStates procIn)
 
   while ( gs->dUpdate >= 1.0 )
   {
+    update_timers( gs );
+
     // Do important things
     //if ( !local_running && !client_running && !server_running )
     //{
@@ -3622,13 +3619,11 @@ ProcessStates game_doRun(Game_t * gs, ProcessStates procIn)
     }
     else
     {
-      // all of this stuff should only be done for the Graphics_requireGame(&gfxState) game
+      // all of this stuff should only be done for the game we are watching game
       if( Graphics_matchesGame(&gfxState, gs) )
       {
         PROFILE_BEGIN( pre_update_game );
         {
-          update_timers( gs );
-
           check_passage_music( gs );
           update_looped_sounds( gs );
 
@@ -3668,8 +3663,12 @@ ProcessStates game_doRun(Game_t * gs, ProcessStates procIn)
     }
 #endif
 
-    gs->dUpdate -= 1.0f;
+    // Timers
+    gs->wld_clock += FRAMESKIP;
+    gs->wld_frame++;
     ups_loops++;
+
+    gs->dUpdate -= 1.0f;
   };
 
   return procOut;
@@ -3816,8 +3815,11 @@ int proc_gameLoop( ProcState_t * gproc, Game_t * gs )
         gproc->Terminated = btrue;
 
         // Let the normal OS mouse cursor work
-        SDL_WM_GrabInput( CData.GrabMouse );
+        //SDL_WM_GrabInput( CData.GrabMouse );
         //SDL_ShowCursor(SDL_ENABLE);
+
+        // this game is done. stop looking at it.
+        Graphics_removeGame( &gfxState, gs );
       }
       gproc->returnValue = -1;
       gproc->State = PROC_Begin;
@@ -3851,7 +3853,7 @@ int proc_menuLoop( MenuProc_t  * mproc )
     case PROC_Begin:
       {
         snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.uifont_ttf );
-        ui_initialize( CStringTmp1, CData.uifont_points );
+        ui_initialize( CStringTmp1, CData.uifont_points_large );
 
         //Load stuff into memory
         mnu_free_all_titleimages(mproc);
@@ -3871,7 +3873,7 @@ int proc_menuLoop( MenuProc_t  * mproc )
         // Let the normal OS mouse cursor work
         SDL_WM_GrabInput( SDL_GRAB_OFF );
         SDL_ShowCursor( SDL_DISABLE );
-        mous.on = bfalse;
+        mous.game = bfalse;
       }
       proc->State = PROC_Entering;
       break;
@@ -4454,7 +4456,12 @@ void attach_particle_to_character( Game_t * gs, PRT_REF particle, CHR_REF chr_re
 
 
   // Check validity of attachment
-  if ( !prt_valid || chr_in_pack( chrlst, CHRLST_COUNT, chr_ref ) )
+  if ( !prt_valid )
+  {
+    return;
+  }
+
+  if( chr_in_pack( chrlst, CHRLST_COUNT, chr_ref ) )
   {
     pprt->gopoof = btrue;
     return;
@@ -4469,7 +4476,7 @@ void attach_particle_to_character( Game_t * gs, PRT_REF particle, CHR_REF chr_re
     pprt->ori.pos.y = pchr->ori.pos.y;
     pprt->ori.pos.z = pchr->ori.pos.z;
   }
-  else   if ( vertoffset == GRIP_ORIGIN )
+  else if ( vertoffset == GRIP_ORIGIN )
   {
     // Transform the origin to world space
 
@@ -4874,13 +4881,13 @@ bool_t do_setup_chracter(CHR_SETUP_INFO * pinfo, CHR_SPAWN_INFO * psi)
   pinfo->last_item = tmp_item;
 
   // handle attachments
-  if ( !VALID_CHR( chrlst, attach ) )
+  if ( SLOT_NONE == psi->slot ) //  !VALID_CHR( chrlst, attach ) )
   {
     // The item is actually a character
     pinfo->last_chr  = pinfo->last_item;
     pinfo->last_item = INVALID_CHR;
   }
-  else if ( psi->slot == SLOT_INVENTORY )
+  else if ( SLOT_INVENTORY == psi->slot )
   {
     // Place pinfo->last_item into the inventory of pinfo->last_chr.
     // Pretend that the item was grabbed by the left hand first and run the
@@ -4964,7 +4971,7 @@ void do_setup_inputs(CHR_SETUP_INFO * pinfo, CHR_SPAWN_INFO * psi)
   // Turn on player input devices
   if ( psi->stat )
   {
-    if ( pmod->import.amount == 0 )
+    if ( pmod->import_amount == 0 )
     {
       if ( cl->StatList_count == 0 )
       {
@@ -4972,14 +4979,14 @@ void do_setup_inputs(CHR_SETUP_INFO * pinfo, CHR_SPAWN_INFO * psi)
         add_player( pinfo->gs, pinfo->last_chr, INBITS_MOUS | INBITS_KEYB | INBITS_JOYA | INBITS_JOYB );
       };
     }
-    else if ( cl->StatList_count < pmod->import.amount )
+    else if ( cl->StatList_count < pmod->import_amount )
     {
       // Multiplayer module
-      int tnc, localnumber;
+      int tnc, localnumber=0;
       bool_t itislocal = bfalse;
       for ( tnc = 0; tnc < localplayer_count; tnc++ )
       {
-        if ( pmod->import.slot_lst[REF_TO_INT(chrlst[pinfo->last_item].model)] == localplayer_slot[tnc] )
+        if ( REF_TO_INT(chrlst[pinfo->last_item].model) == localplayer_slot[tnc] )
         {
           itislocal = btrue;
           localnumber = tnc;
@@ -5462,12 +5469,12 @@ static void Game_new_textures( Game_t * gs )
 
   GLtexture_new( &(gs->TxMap) );
 
-  gs->nullicon = MAXICONTX;
-  gs->keybicon = MAXICONTX;
-  gs->mousicon = MAXICONTX;
-  gs->joyaicon = MAXICONTX;
-  gs->joybicon = MAXICONTX;
-  gs->bookicon = MAXICONTX;                      // The first book icon
+  gs->ico_lst[ICO_NULL] = MAXICONTX;
+  gs->ico_lst[ICO_KEYB] = MAXICONTX;
+  gs->ico_lst[ICO_MOUS] = MAXICONTX;
+  gs->ico_lst[ICO_JOYA] = MAXICONTX;
+  gs->ico_lst[ICO_JOYB] = MAXICONTX;
+  gs->ico_lst[ICO_BOOK_0] = MAXICONTX;                      // The first book icon
 
   for(i=0; i<MAXTEXTURE; i++)
   {
@@ -5572,12 +5579,12 @@ static void Game_delete_textures( Game_t * gs )
 
   GLtexture_delete( &(gs->TxMap) );
 
-  gs->nullicon = MAXICONTX;
-  gs->keybicon = MAXICONTX;
-  gs->mousicon = MAXICONTX;
-  gs->joyaicon = MAXICONTX;
-  gs->joybicon = MAXICONTX;
-  gs->bookicon = MAXICONTX;                      // The first book icon
+  gs->ico_lst[ICO_NULL] = MAXICONTX;
+  gs->ico_lst[ICO_KEYB] = MAXICONTX;
+  gs->ico_lst[ICO_MOUS] = MAXICONTX;
+  gs->ico_lst[ICO_JOYA] = MAXICONTX;
+  gs->ico_lst[ICO_JOYB] = MAXICONTX;
+  gs->ico_lst[ICO_BOOK_0] = MAXICONTX;                      // The first book icon
 
   for(i=0; i<MAXTEXTURE; i++)
   {
@@ -6083,7 +6090,7 @@ bool_t EncList_new( Game_t * gs )
 
   ENC_REF enc_cnt;
 
-  if(!EKEY_PVALID(gs)) return bfalse;
+  if( !EKEY_PVALID(gs) ) return bfalse;
 
   // initialize the heap
   EncHeap_new( &(gs->EncHeap) );
@@ -6744,11 +6751,11 @@ void load_global_icons(Game_t * gs)
 {
   release_all_icons(gs);
 
-  gs->nullicon = load_one_icon( gs, CData.basicdat_dir, NULL, CData.nullicon_bitmap );
-  gs->keybicon = load_one_icon( gs, CData.basicdat_dir, NULL, CData.keybicon_bitmap );
-  gs->mousicon = load_one_icon( gs, CData.basicdat_dir, NULL, CData.mousicon_bitmap );
-  gs->joyaicon = load_one_icon( gs, CData.basicdat_dir, NULL, CData.joyaicon_bitmap );
-  gs->joybicon = load_one_icon( gs, CData.basicdat_dir, NULL, CData.joybicon_bitmap );
+  gs->ico_lst[ICO_NULL] = load_one_icon( gs, CData.basicdat_dir, NULL, CData.nullicon_bitmap );
+  gs->ico_lst[ICO_KEYB] = load_one_icon( gs, CData.basicdat_dir, NULL, CData.keybicon_bitmap );
+  gs->ico_lst[ICO_MOUS] = load_one_icon( gs, CData.basicdat_dir, NULL, CData.mousicon_bitmap );
+  gs->ico_lst[ICO_JOYA] = load_one_icon( gs, CData.basicdat_dir, NULL, CData.joyaicon_bitmap );
+  gs->ico_lst[ICO_JOYB] = load_one_icon( gs, CData.basicdat_dir, NULL, CData.joybicon_bitmap );
 }
 
 
@@ -6868,7 +6875,7 @@ bool_t Weather_init(WEATHER_INFO * w)
 
   w->active        = bfalse;
   w->require_water = bfalse;
-  w->timereset     = 10; 
+  w->timereset     = 10;
   w->time          = 10;
   w->player        = INVALID_PLA;
 

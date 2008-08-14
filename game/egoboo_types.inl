@@ -45,7 +45,7 @@ INLINE bool_t HashNode_delete(HashNode_t * n)
 INLINE HashNode_t * HashNode_new(HashNode_t * n, void * data)
 {
   if(NULL == n) return n;
-  if( EKEY_PVALID( n ) ) 
+  if( EKEY_PVALID( n ) )
   {
     HashNode_delete(n);
   }
@@ -192,7 +192,7 @@ INLINE HashList_t * HashList_new(HashList_t * lst, int size)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t     HashList_delete(HashList_t * lst)
+INLINE bool_t HashList_delete(HashList_t * lst)
 {
   if(NULL == lst) return bfalse;
 
@@ -633,7 +633,7 @@ INLINE Sint32 BSP_tree_count_nodes(Sint32 dim, Sint32 depth)
 INLINE bool_t BSP_tree_insert( BSP_tree_t * t, BSP_leaf_t * L, BSP_node_t * n, int index )
 {
   if( !EKEY_PVALID(t) || !EKEY_PVALID(L) || !EKEY_PVALID(n) ) return bfalse;
-  if( index > L->child_count ) return bfalse;
+  if( index > (int)L->child_count ) return bfalse;
 
   if( index >= 0 && NULL != L->children[index])
   {

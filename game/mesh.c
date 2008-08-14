@@ -104,7 +104,7 @@ bool_t load_mesh( Game_t * gs, char *modname )
   if ( NULL == fileread ) return bfalse;
 
   fread( &itmp, 4, 1, fileread );  if (SDL_SwapLE32( itmp ) != MAPID ) return bfalse;
-  fread( &itmp, 4, 1, fileread );  numvert     = SDL_SwapLE32( itmp );
+  fread( &itmp, 4, 1, fileread );  numvert    = SDL_SwapLE32( itmp );
   fread( &itmp, 4, 1, fileread );  mi->size_x = SDL_SwapLE32( itmp );
   fread( &itmp, 4, 1, fileread );  mi->size_y = SDL_SwapLE32( itmp );
   numfan = mi->size_x * mi->size_y;
@@ -632,7 +632,7 @@ float mesh_get_level( MeshMem_t * mm, Uint32 fan, float x, float y, bool_t water
 {
   // ZZ> This function returns the height of a point within a mesh fan, precise
   //     If waterwalk is nonzero and the fan is wi->y, then the level returned is the
-  //     level of the water.
+  //     level of the Water.
 
   float z0, z1, z2, z3;         // Height of each fan corner
   float zleft, zright, zdone;   // Weighted height of each side

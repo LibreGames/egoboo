@@ -172,20 +172,20 @@ struct cart_mouse_info_t
 };
 typedef struct cart_mouse_info_t cart_mouse_info;
 
-cart_mouse_info cmouse_info = 
+cart_mouse_info cmouse_info =
 {
-  -1,             // data        
-  -1,             // x       
-  -1,             // y       
-  0,              // mode    
-  0,              // onfan   
-  0,              // tile    
-  0,              // presser 
-  0,              // type    
-  0,              // rect    
-  0,              // rectx   
-  0,              // recty   
-  MPDFX_NOREFLECT // fx      
+  -1,             // data
+  -1,             // x
+  -1,             // y
+  0,              // mode
+  0,              // onfan
+  0,              // tile
+  0,              // presser
+  0,              // type
+  0,              // rect
+  0,              // rectx
+  0,              // recty
+  MPDFX_NOREFLECT // fx
 };
 
 int    colordepth = 8;    // 256 colors
@@ -2615,7 +2615,7 @@ void render_vertex_window(cart_window_info * w, cart_mouse_info * m, cart_mesh *
 
   if(m->rect && m->mode==WINVERTEX)
   {
-    draw_rect(w, make_color(16 /* + (gs->wld_frame&15) */, 16 /* + (gs->wld_frame&15) */, 0),
+    draw_rect(w, make_color(16 + (ups_loops&15), 16 + (ups_loops&15), 0),
       (m->rectx/FOURNUM)+x, (m->recty/FOURNUM)+y,
       (m->x/FOURNUM)+x, (m->y/FOURNUM)+y );
   }
@@ -2674,7 +2674,7 @@ void render_side_window(cart_window_info * w, cart_mouse_info * m, cart_mesh * c
 
   if(m->rect && m->mode==WINSIDE)
   {
-    draw_rect(w, make_color(16 /* + (gs->wld_frame&15) */, 16 /* + (gs->wld_frame&15) */, 0),
+    draw_rect(w, make_color(16 + (ups_loops&15), 16 + (ups_loops&15), 0),
       (m->rectx/FOURNUM)+x, (m->y/FOURNUM), (m->x/FOURNUM)+x, (m->recty/FOURNUM) );
   }
 
@@ -3636,7 +3636,7 @@ void load_img(void)
   GLtexture_Load( GL_TEXTURE_2D, &cimg_lst.ref,     "ref.pcx",     INVALID_KEY);
   GLtexture_Load( GL_TEXTURE_2D, &cimg_lst.drawref, "drawref.pcx", INVALID_KEY);
   GLtexture_Load( GL_TEXTURE_2D, &cimg_lst.anim,    "anim.pcx",    INVALID_KEY);
-  GLtexture_Load( GL_TEXTURE_2D, &cimg_lst.water,   "water.pcx",   INVALID_KEY);
+  GLtexture_Load( GL_TEXTURE_2D, &cimg_lst.water,   "Water.pcx",   INVALID_KEY);
   GLtexture_Load( GL_TEXTURE_2D, &cimg_lst.wall,    "slit.pcx",    INVALID_KEY);
   GLtexture_Load( GL_TEXTURE_2D, &cimg_lst.impass,  "impass.pcx",  INVALID_KEY);
   GLtexture_Load( GL_TEXTURE_2D, &cimg_lst.damage,  "damage.pcx",  INVALID_KEY);

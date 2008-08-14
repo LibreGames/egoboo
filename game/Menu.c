@@ -455,7 +455,7 @@ int initMenus()
   int i;
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.uifont_ttf );
-  mnu_Font = fnt_loadFont( CStringTmp1, CData.uifont_points2 );
+  mnu_Font = fnt_loadFont( CStringTmp1, CData.uifont_points_small );
   if ( NULL == mnu_Font )
   {
     log_error( "Could not load the menu font!\n" );
@@ -754,11 +754,15 @@ int mnu_doChooseModule( MenuProc_t * mproc, float deltaTime )
   static int startIndex;
   static GLtexture background;
   static ui_Widget_t wBackground, wCopyright, wtmp;
+  static char description[1024];
+  static int local_selectedModule = -1;
 
   static int moduleMenuOffsetX;
   static int moduleMenuOffsetY;
 
   int result = 0;
+
+  char * pchar, * pchar_end;
   size_t i;
   int    j, x, y;
   char txtBuffer[128];
@@ -792,6 +796,8 @@ int mnu_doChooseModule( MenuProc_t * mproc, float deltaTime )
       startIndex = 0;
       mnu_prime_modules(mproc);
       sv->loc_modtxt.val = -2;
+
+      description[0] = EOS;
 
       // Find the modules that we want to allow loading for.  If mnu_startNewPlayer
       // is true, we want ones that don't allow imports (e.g. starter modules).
@@ -836,7 +842,7 @@ int mnu_doChooseModule( MenuProc_t * mproc, float deltaTime )
       ui_initWidget( mnu_widgetList + 6, 6, mnu_Font, NULL, NULL, moduleMenuOffsetX, moduleMenuOffsetY, 138, 138 );
 
       // Module description
-      ui_initWidget( mnu_widgetList + 7, UI_Invalid, mnu_Font, NULL, NULL, moduleMenuOffsetX + 21, moduleMenuOffsetY + 173, 291, 230 );
+      ui_initWidget( mnu_widgetList + 7, UI_Invalid, mnu_Font, &description, NULL, moduleMenuOffsetX + 21, moduleMenuOffsetY + 173, 291, 230 );
 
       x = ( gfxState.surface->w / 2 ) - ( background.imgW / 2 );
       y = gfxState.surface->h - background.imgH;
@@ -896,8 +902,9 @@ int mnu_doChooseModule( MenuProc_t * mproc, float deltaTime )
         x += 138 + 20; // Width of the button, and the spacing between buttons
       }
 
-      // Draw an unused button as the backdrop for the text for now
-      ui_drawButton( mnu_widgetList + 7 );
+      // Draw the module description as a button and a text box
+      ui_drawButton( mnu_widgetList + 7);
+      ui_drawTextBox( mnu_widgetList + 7, 20 );
 
       // And draw the next & back buttons
       if ( BUTTON_UP == ui_doButton( mnu_widgetList + 2 ) )
@@ -914,58 +921,71 @@ int mnu_doChooseModule( MenuProc_t * mproc, float deltaTime )
       }
 
       // Draw the text description of the selected module
-      if ( mproc->selectedModule > -1 )
+      if ( mproc->selectedModule != local_selectedModule )
       {
-        MOD_INFO * mi = sv->loc_mod + mproc->validModules[mproc->selectedModule];
+        MOD_INFO * mi;
+
+        local_selectedModule = mproc->selectedModule;
+        mi = sv->loc_mod + mproc->validModules[local_selectedModule];
+
+        // initialize the pointers to the description
+        pchar = description;
+        pchar_end = pchar + sizeof(description) - 1;
 
         y = 173 + 5;
         x = 21 + 5;
-        glColor4f( 1, 1, 1, 1 );
-        fnt_drawText( mnu_Font, moduleMenuOffsetX + x, moduleMenuOffsetY + y,
-                      mi->longname );
-        y += 20;
 
-        snprintf( txtBuffer, sizeof( txtBuffer ), "Difficulty: %s", mi->rank );
-        fnt_drawText( mnu_Font, moduleMenuOffsetX + x, moduleMenuOffsetY + y, txtBuffer );
-        y += 20;
+        // module name
+        pchar += snprintf(pchar, pchar_end - pchar, "%s\n", mi->longname);
 
+        // module rank
+        pchar += snprintf( pchar, pchar_end - pchar, "Difficulty: %s\n", mi->rank );
+
+        // number of players
         if ( mi->maxplayers > 1 )
         {
           if ( mi->minplayers == mi->maxplayers )
           {
-            snprintf( txtBuffer, sizeof( txtBuffer ), "%d Players", mi->minplayers );
+            pchar += snprintf( pchar, pchar_end - pchar, "%d Players\n", mi->minplayers );
           }
           else
           {
-            snprintf( txtBuffer, sizeof( txtBuffer ), "%d - %d Players", mi->minplayers, mi->maxplayers );
+            pchar += snprintf( pchar, pchar_end - pchar, "%d - %d Players\n", mi->minplayers, mi->maxplayers );
           }
         }
         else
         {
           if ( mi->importamount == 0 )
           {
-            snprintf( txtBuffer, sizeof( txtBuffer ), "Starter Module" );
+            pchar += snprintf( pchar, pchar_end - pchar, "Starter Module\n" );
           }
           else
           {
-            snprintf( txtBuffer, sizeof( txtBuffer ), "Special Module" );
+            pchar += snprintf( pchar, pchar_end - pchar, "Special Module\n" );
           }
         }
-        fnt_drawText( mnu_Font, moduleMenuOffsetX + x, moduleMenuOffsetY + y, txtBuffer );
-        y += 20;
 
         // And finally, the summary
         snprintf( txtBuffer, sizeof( txtBuffer ), "%s" SLASH_STRING "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.modules_dir, mi->loadname, CData.gamedat_dir, CData.mnu_file );
-        if ( mproc->validModules[mproc->selectedModule] != sv->loc_modtxt.val )
+        if ( mproc->validModules[local_selectedModule] != sv->loc_modtxt.val )
         {
-          if ( module_read_summary( txtBuffer, &(sv->loc_modtxt) ) ) sv->loc_modtxt.val = mproc->validModules[mproc->selectedModule];
+          if ( module_read_summary( txtBuffer, &(sv->loc_modtxt) ) ) 
+          {
+            sv->loc_modtxt.val = mproc->validModules[local_selectedModule];
+          };
         };
 
-        for ( i = 0;i < SUMMARYLINES;i++ )
+        for ( i = 0; i < SUMMARYLINES; i++ )
         {
-          fnt_drawText( mnu_Font, moduleMenuOffsetX + x, moduleMenuOffsetY + y, sv->loc_modtxt.summary[i] );
-          y += 20;
+          if(EOS != sv->loc_modtxt.summary[i][0])
+          {
+            pchar += snprintf( pchar, pchar_end - pchar, "%s\n", sv->loc_modtxt.summary[i] );
+          };
         }
+
+        *pchar = EOS;
+
+        str_decode( description, sizeof(description), description );
       }
 
       break;
@@ -1170,7 +1190,7 @@ void import_selected_players()
   {
     iplayer = mnu_selectedPlayer[localplayer_count];
     localplayer_control[localplayer_count] = mnu_selectedInput[localplayer_count];
-    localplayer_slot[localplayer_count]    = 9 * localplayer_count;
+    localplayer_slot[localplayer_count]    = MAXIMPORTPERCHAR * localplayer_count;
 
     // Copy the character to the import directory
     snprintf( srcDir,  sizeof( srcDir ),  "%s" SLASH_STRING "%s", CData.players_dir, loadplayer[REF_TO_INT(iplayer)].dir );
@@ -2543,7 +2563,7 @@ int mnu_doLaunchGame( MenuProc_t * mproc, float deltaTime )
       fnt_drawTextFormatted( font, x, y, "Module selected: %s", gs->mod.longname );
       y += 35;
 
-      if ( gs->modstate.import.valid )
+      if ( gs->modstate.import_valid )
       {
         for ( i = 0; i < mnu_selectedPlayerCount; i++ )
         {
@@ -3376,7 +3396,7 @@ void mnu_enterMenuMode()
 
   SDL_WM_GrabInput( SDL_GRAB_OFF );
   SDL_ShowCursor( SDL_DISABLE );
-  mous.on = bfalse;
+  mous.game = bfalse;
 };
 
 void mnu_exitMenuMode()
@@ -3385,7 +3405,7 @@ void mnu_exitMenuMode()
 
   SDL_WM_GrabInput( CData.GrabMouse );
   SDL_ShowCursor( CData.HideMouse ? SDL_DISABLE : SDL_ENABLE );
-  mous.on = btrue;
+  mous.game = btrue;
 };
 
 //--------------------------------------------------------------------------------------------
@@ -4304,6 +4324,8 @@ int mnu_doIngameQuit( MenuProc_t * mproc, float deltaTime )
       mnu_widgetCount = mnu_initWidgetsList( mnu_widgetList, MAXWIDGET, buttons );
       initSlidyButtons( 1.0f, mnu_widgetList, mnu_widgetCount );
 
+      mous.game = bfalse;
+
       menuChoice = 0;
       menuState = MM_Entering;
       break;
@@ -4371,6 +4393,8 @@ int mnu_doIngameQuit( MenuProc_t * mproc, float deltaTime )
         gs->proc.KillMe = btrue;
       }
 
+      mous.game = btrue;
+
       ui_Reset();
       break;
 
@@ -4409,6 +4433,8 @@ int mnu_doIngameInventory( MenuProc_t * mproc, float deltaTime )
     case MM_Begin:
 
       printf("mnu_doIngameInventory()\n");
+
+      mous.game = bfalse;
 
       // set up menu variables
       for(i=0, k=0; i<MAXSTAT; i++)
@@ -4505,6 +4531,10 @@ int mnu_doIngameInventory( MenuProc_t * mproc, float deltaTime )
 
       // Set the next menu to load
       result = -1;
+
+
+      mous.game = btrue;
+
       ui_Reset();
       break;
 

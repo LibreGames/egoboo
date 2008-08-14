@@ -77,8 +77,6 @@ typedef enum e_color COLR;
 #define DELAY_RESIZE            50                      // Time it takes to resize a character
 
 
-
-#define MAXIMPORT           (32*9)                  // Number of subdirs in IMPORT directory
 #define EXPKEEP 0.85                                // Experience to keep when respawning
 #define NOHIDE              127                     // Don't hide
 
@@ -261,13 +259,12 @@ typedef struct s_water_layer WATER_LAYER;
 
 struct s_water_info
 {
-  Uint8     shift ; // EQ( 3 );
-  float     surfacelevel; // EQ( 0 );          // Surface level for water striders
-  float     douselevel; // EQ( 0 );            // Surface level for torches
-  bool_t    light; // EQ( 0 );                 // Is it light ( default is alpha )
-  Uint8     spekstart; // EQ( 128 );           // Specular begins at which light value
-  Uint8     speklevel_fp8; // EQ( 128 );           // General specular amount (0-255)
-  bool_t    iswater ; // EQ( btrue );          // Is it water?  ( Or lava... )
+  float     surfacelevel;         // Surface level for water striders
+  float     douselevel;           // Surface level for torches
+  bool_t    light;                // Is it light ( default is alpha )
+  Uint8     spekstart;            // Specular begins at which light value
+  Uint8     speklevel_fp8;        // General specular amount (0-255)
+  bool_t    iswater;              // Is it water?  ( Or lava... )
 
   int         layer_count; // EQ( 0 );              // Number of layers
   WATER_LAYER layer[MAXWATERLAYER];
@@ -295,7 +292,7 @@ typedef struct s_fog_info FOG_INFO;
 
 EXTERN FOG_INFO GFog;
 
-/*OpenGL Textures*/
+/*Special Textures*/
 typedef enum e_tx_type
 {
   TX_PARTICLE = 0,
@@ -308,6 +305,18 @@ typedef enum e_tx_type
   TX_PHONG,
   TX_LAST
 } TX_TYPE;
+
+/*Special Textures*/
+typedef enum e_ico_type
+{
+  ICO_NULL,
+  ICO_KEYB,
+  ICO_MOUS,
+  ICO_JOYA,
+  ICO_JOYB,
+  ICO_BOOK_0,   // The first book icon
+  ICO_COUNT
+} ICO_TYPE;
 
 
 //Texture filtering
@@ -505,8 +514,8 @@ struct sConfigData
   STRING credits_file;
   STRING quest_file;
 
-  int    uifont_points;
-  int    uifont_points2;
+  int    uifont_points_large;
+  int    uifont_points_small;
   STRING uifont_ttf;
 
   //Global Sounds

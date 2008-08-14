@@ -52,6 +52,7 @@ struct sPlayer;
 struct s_mod_info;
 struct sGame;
 struct sKeyboardBuffer;
+struct sConfigData;
 
 void insert_space( size_t position );
 void copy_one_line( size_t write );
@@ -126,9 +127,6 @@ void pit_kill( struct sGame * gs, float dUpdate );
 void reset_players( struct sGame * gs );
 
 void resize_characters( struct sGame * gs, float dUpdate );
-void load_basic_textures( struct sGame * gs, char *modname );
-
-
 
 
 

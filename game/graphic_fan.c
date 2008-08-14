@@ -456,9 +456,9 @@ void render_water_fan( Uint32 fan, Uint8 layer, Uint8 mode )
 
   // To make life easier
   type   = 0;                              // Command type ( index to points in fan )
-  off.u  = gs->water.layer[layer].u;         // Texture offsets
-  off.v  = gs->water.layer[layer].v;         //
-  frame  = gs->water.layer[layer].frame;     // Frame
+  off.u  = gs->Water.layer[layer].u;         // Texture offsets
+  off.v  = gs->Water.layer[layer].v;         //
+  frame  = gs->Water.layer[layer].frame;     // Frame
 
   texture = layer + TX_WATER_TOP;        // Water starts at texture 5
   vertices = pmesh->TileDict[type].vrt_count;   // Number of vertices
@@ -471,20 +471,20 @@ void render_water_fan( Uint32 fan, Uint8 layer, Uint8 mode )
   {
     v[cnt].pos.x = pmesh->Mem.vrt_x[badvertex];
     v[cnt].pos.y = pmesh->Mem.vrt_y[badvertex];
-    v[cnt].pos.z = gs->water.layer[layer].zadd[frame][mode][cnt] + gs->water.layer[layer].z;
+    v[cnt].pos.z = gs->Water.layer[layer].zadd[frame][mode][cnt] + gs->Water.layer[layer].z;
 
-    if ( !gs->water.light )
+    if ( !gs->Water.light )
     {
       v[cnt].col.r = FP8_TO_FLOAT( pmesh->Mem.vrt_lr_fp8[badvertex] );
       v[cnt].col.g = FP8_TO_FLOAT( pmesh->Mem.vrt_lg_fp8[badvertex] );
       v[cnt].col.b = FP8_TO_FLOAT( pmesh->Mem.vrt_lb_fp8[badvertex] );
-      v[cnt].col.a = FP8_TO_FLOAT( gs->water.layer[layer].alpha_fp8 );
+      v[cnt].col.a = FP8_TO_FLOAT( gs->Water.layer[layer].alpha_fp8 );
     }
     else
     {
-      v[cnt].col.r = FP8_TO_FLOAT( FP8_MUL( pmesh->Mem.vrt_lr_fp8[badvertex], gs->water.layer[layer].alpha_fp8 ) );
-      v[cnt].col.g = FP8_TO_FLOAT( FP8_MUL( pmesh->Mem.vrt_lg_fp8[badvertex], gs->water.layer[layer].alpha_fp8 ) );
-      v[cnt].col.b = FP8_TO_FLOAT( FP8_MUL( pmesh->Mem.vrt_lb_fp8[badvertex], gs->water.layer[layer].alpha_fp8 ) );
+      v[cnt].col.r = FP8_TO_FLOAT( FP8_MUL( pmesh->Mem.vrt_lr_fp8[badvertex], gs->Water.layer[layer].alpha_fp8 ) );
+      v[cnt].col.g = FP8_TO_FLOAT( FP8_MUL( pmesh->Mem.vrt_lg_fp8[badvertex], gs->Water.layer[layer].alpha_fp8 ) );
+      v[cnt].col.b = FP8_TO_FLOAT( FP8_MUL( pmesh->Mem.vrt_lb_fp8[badvertex], gs->Water.layer[layer].alpha_fp8 ) );
       v[cnt].col.a = 1.0f;
     }
 
@@ -552,9 +552,9 @@ void render_water_fan_lit( Uint32 fan, Uint8 layer, Uint8 mode )
 
   // To make life easier
   type  = 0;                             // Command type ( index to points in fan )
-  off.u  = gs->water.layer[layer].u;         // Texture offsets
-  off.v  = gs->water.layer[layer].v;         //
-  frame = gs->water.layer[layer].frame;     // Frame
+  off.u  = gs->Water.layer[layer].u;         // Texture offsets
+  off.v  = gs->Water.layer[layer].v;         //
+  frame = gs->Water.layer[layer].frame;     // Frame
 
   texture  = layer + TX_WATER_TOP;       // Water starts at texture 5
   vertices = pmesh->TileDict[type].vrt_count;   // Number of vertices
@@ -566,10 +566,10 @@ void render_water_fan_lit( Uint32 fan, Uint8 layer, Uint8 mode )
   {
     v[cnt].pos.x = pmesh->Mem.vrt_x[badvertex];
     v[cnt].pos.y = pmesh->Mem.vrt_y[badvertex];
-    v[cnt].pos.z = gs->water.layer[layer].zadd[frame][mode][cnt] + gs->water.layer[layer].z;
+    v[cnt].pos.z = gs->Water.layer[layer].zadd[frame][mode][cnt] + gs->Water.layer[layer].z;
 
     v[cnt].col.r = v[cnt].col.g = v[cnt].col.b = 1.0f;
-    v[cnt].col.a = FP8_TO_FLOAT( gs->water.layer[layer].alpha_fp8 );
+    v[cnt].col.a = FP8_TO_FLOAT( gs->Water.layer[layer].alpha_fp8 );
 
     badvertex++;
   };
@@ -713,8 +713,8 @@ void set_fan_light( int fanx, int fany, PRT_REF particle )
   Game_t * gs = Graphics_requireGame(&gfxState);
 
   Mesh_t     * pmesh = Game_getMesh(gs);
-  MeshInfo_t * mi    = &(pmesh->Info);  
-  MeshMem_t  * mm    = &(pmesh->Mem);  
+  MeshInfo_t * mi    = &(pmesh->Info);
+  MeshMem_t  * mm    = &(pmesh->Mem);
 
   if ( fanx >= 0 && fanx < mi->size_x && fany >= 0 && fany < mi->size_y )
   {

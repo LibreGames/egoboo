@@ -134,20 +134,29 @@ bool_t ui_handleSDLEvent( SDL_Event *evt )
   switch ( evt->type )
   {
     case SDL_MOUSEBUTTONDOWN:
-      ui_context.mouseReleased = 0;
-      ui_context.mousePressed++;
+      if(mous.ui)
+      {
+        ui_context.mouseReleased = 0;
+        ui_context.mousePressed++;
+      }
       handled = btrue;
       break;
 
     case SDL_MOUSEBUTTONUP:
-      ui_context.mousePressed = 0;
-      ui_context.mouseReleased++;
+      if(mous.ui)
+      {
+        ui_context.mousePressed = 0;
+        ui_context.mouseReleased++;
+      }
       handled = btrue;
       break;
 
     case SDL_MOUSEMOTION:
-      ui_context.mouseX = evt->motion.x;
-      ui_context.mouseY = evt->motion.y;
+      if(mous.ui)
+      {
+        ui_context.mouseX = evt->motion.x;
+        ui_context.mouseY = evt->motion.y;
+      }
       handled = btrue;
       break;
 
@@ -558,7 +567,9 @@ void ui_drawImage( ui_Widget_t * pWidget )
  */
 void ui_drawTextBox( ui_Widget_t * pWidget, int spacing )
 {
-  TTFont_t *font = ui_getTTFont();
+  TTFont_t *font = pWidget->pfont;
+  if(NULL == font) font = ui_getTTFont();
+
   fnt_drawTextBox( font, pWidget->text, pWidget->x, pWidget->y, pWidget->width, pWidget->height, spacing );
 }
 
@@ -633,6 +644,7 @@ ui_buttonValues ui_doImageButtonWithText( ui_Widget_t * pWidget )
   TTFont_t *font;
   int text_x, text_y;
   int text_w, text_h;
+  int img_w;
   ui_Widget_t wtmp;
 
   // Do all the logic type work for the button
@@ -647,6 +659,8 @@ ui_buttonValues ui_doImageButtonWithText( ui_Widget_t * pWidget )
   wtmp.width = wtmp.height;
   ui_drawImage( &wtmp );
 
+  img_w = GLtexture_GetImageWidth( pWidget->img ) + 5;
+
   // And draw the pWidget->text next to the image
   // And then draw the pWidget->text that goes on top of the button
   font = ui_getTTFont();
@@ -656,7 +670,13 @@ ui_buttonValues ui_doImageButtonWithText( ui_Widget_t * pWidget )
     // the button
     fnt_getTextSize( font, pWidget->text, &text_w, &text_h );
 
-    text_x = GLtexture_GetImageWidth( pWidget->img ) + 5 + pWidget->x;
+    text_w = MIN(text_w, pWidget->width );
+    text_h = MIN(text_h, pWidget->height);
+
+    text_x = ( pWidget->width  - text_w ) / 2 + pWidget->x;
+    text_y = ( pWidget->height - text_h ) / 2 + pWidget->y;
+
+    text_x = img_w + ( pWidget->width - img_w - text_w ) / 2 + pWidget->x;
     text_y = ( pWidget->height - text_h ) / 2 + pWidget->y;
 
     glColor3f( 1, 1, 1 );

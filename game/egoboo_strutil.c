@@ -77,7 +77,8 @@ char * str_decode( char *strout, size_t insize, char * strin )
   while ( pout < plast && EOS != *pin )
   {
     *pout = *pin;
-    if ( '_' == *pout ) *pout = ' ';
+    if      ( '_' == *pout ) *pout = ' ';
+    else if ( '~' == *pout ) *pout = '\t';
     pout++;
     pin++;
   };

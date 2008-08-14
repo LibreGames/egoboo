@@ -38,7 +38,7 @@
 #include "egoboo_types.inl"
 
 //--------------------------------------------------------------------------------------------
-int load_one_object( Game_t * gs, int skin_count, const char * szObjectpath, char* szObjectname )
+int load_one_object( Game_t * gs, int skin_count, const char * szObjectpath, char* szObjectname, OBJ_REF slot_override )
 {
   // ZZ> This function loads one object and returns the number of skins
 
@@ -62,29 +62,32 @@ int load_one_object( Game_t * gs, int skin_count, const char * szObjectpath, cha
   strcat(newloadname, CData.data_file);
 
   // grab the requested object
+  if( INVALID_OBJ != slot_override )
   {
+    // we have already been given the slot to use
+    iobj = slot_override;
+  }
+  else
+  {
+    // grab the slot from the data.txt file
     iobj = object_generate_index(gs, newloadname);
-    if(INVALID_OBJ == iobj)
-    {
-      // could not find the object
-      return 0;
-    }
+  }
 
-    iobj = ObjList_get_free(gs, iobj);
-    if(INVALID_OBJ == iobj)
-    {
-      // could not find the object
-      return 0;
-    }
+  // check see if the object is available
+  iobj = ObjList_get_free(gs, iobj);
+  if(INVALID_OBJ == iobj)
+  {
+    // could not obtain a valid object
+    return 0;
+  }
 
-    pobj = gs->ObjList +  iobj;
+  pobj = gs->ObjList +  iobj;
 
-    // Make up a name for the model...  IMPORT\TEMP0000.OBJ
-    strncpy( pobj->name, szObjectpath, sizeof( pobj->name ) );
-    if(NULL != szObjectname)
-    {
-      strncat( pobj->name, szObjectname, sizeof( pobj->name ) );
-    }
+  // Make up a name for the model...  IMPORT\TEMP0000.OBJ
+  strncpy( pobj->name, szObjectpath, sizeof( pobj->name ) );
+  if(NULL != szObjectname)
+  {
+    strncat( pobj->name, szObjectname, sizeof( pobj->name ) );
   }
 
   // Append a slash to the szObjectname
@@ -182,9 +185,9 @@ int load_one_object( Game_t * gs, int skin_count, const char * szObjectpath, cha
 
       if( INVALID_TEXTURE != tx_index )
       {
-        if ( iobj == SPELLBOOK && gs->bookicon == 0 )
+        if ( iobj == SPELLBOOK && MAXICONTX == gs->ico_lst[ICO_BOOK_0] )
         {
-          gs->bookicon = gs->TxIcon_count;
+          gs->ico_lst[ICO_BOOK_0] = gs->TxIcon_count;
         }
 
         while ( TxIcon_count < numskins )

@@ -308,7 +308,7 @@ void move_camera( float dUpdate )
   // Camera controls
   if ( CData.autoturncamera == 255 && gs->cl->loc_pla_count >= 1 )
   {
-    if ( mous.on && !control_mouse_is_pressed( CONTROL_CAMERA ) )
+    if ( mous.game && !control_mouse_is_pressed( CONTROL_CAMERA ) )
       GCamera.turnadd -= ( mous.dlatch.x * .5 ) * dUpdate / gs->cl->loc_pla_count;
 
     if ( keyb.on )
@@ -330,7 +330,7 @@ void move_camera( float dUpdate )
 
   if ( gs->cl->loc_pla_count >= 1 )
   {
-    if ( mous.on )
+    if ( mous.game )
     {
       if ( control_mouse_is_pressed( CONTROL_CAMERA ) )
       {
@@ -402,15 +402,15 @@ void move_camera( float dUpdate )
   if ( CData.render_overlay )
   {
     // Do fg distance effect
-    gs->water.layer[0].u += vel.x * gs->water.layer[0].distx * dUpdate;
-    gs->water.layer[0].v += vel.y * gs->water.layer[0].disty * dUpdate;
+    gs->Water.layer[0].u += vel.x * gs->Water.layer[0].distx * dUpdate;
+    gs->Water.layer[0].v += vel.y * gs->Water.layer[0].disty * dUpdate;
   }
 
   if ( CData.render_background )
   {
     // Do bg distance effect
-    gs->water.layer[1].u += vel.x * gs->water.layer[1].distx * dUpdate;
-    gs->water.layer[1].v += vel.y * gs->water.layer[1].disty * dUpdate;
+    gs->Water.layer[1].u += vel.x * gs->Water.layer[1].distx * dUpdate;
+    gs->Water.layer[1].v += vel.y * gs->Water.layer[1].disty * dUpdate;
   }
 
   // Get ready to scroll...

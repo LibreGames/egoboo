@@ -83,7 +83,7 @@ INLINE const bool_t bumplist_clear(BUMPLIST * b)
 {
   Uint32 i;
 
-  if( !EKEY_PVALID(b) || !b->allocated) return bfalse;
+  if( !EKEY_PVALID(b) || !b->allocated ) return bfalse;
 
   // initialize the data
   for(i=0; i < b->num_blocks; i++)
@@ -103,14 +103,20 @@ INLINE const bool_t bumplist_clear(BUMPLIST * b)
 //--------------------------------------------------------------------------------------------
 INLINE const bool_t bumplist_allocate(BUMPLIST * b, int size)
 {
-  if(NULL == b) return bfalse;
+  if( !EKEY_PVALID(b) ) return bfalse;
 
-  if(size <= 0)
+  // deallocate the list if necessary
+  if(size < 0)
   {
     bumplist_renew(b);
+    return btrue;
   }
-  else
+
+  // re-allocate blocks if necessary
+  if (size > (int)b->num_blocks)
   {
+    bumplist_renew(b);
+
     b->num_chr = (Uint16       *)calloc(size, sizeof(Uint16));
     b->chr_ref = (BUMPLIST_NODE*)calloc(size, sizeof(BUMPLIST_NODE));
 
@@ -121,9 +127,11 @@ INLINE const bool_t bumplist_allocate(BUMPLIST * b, int size)
     {
       b->num_blocks = size;
       b->allocated  = btrue;
-      bumplist_clear(b);
     }
   }
+
+  // clear the bumplist
+  bumplist_clear(b);
 
   return btrue;
 };
@@ -662,17 +670,17 @@ INLINE const Uint8 mesh_get_twist( MeshTile_t * mf_list, int fan )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE Mesh_t * Mesh_new( Mesh_t * pmesh ) 
-{ 
+INLINE Mesh_t * Mesh_new( Mesh_t * pmesh )
+{
   memset( pmesh, 0, sizeof(Mesh_t) );
 
-  MeshMem_new(&(pmesh->Mem), 0, 0 ); 
-  memcpy( pmesh->TileDict, gTileDict, sizeof(TileDictionary_t)); 
+  MeshMem_new(&(pmesh->Mem), 0, 0 );
+  memcpy( pmesh->TileDict, gTileDict, sizeof(TileDictionary_t));
 
   return pmesh;
 };
 
-INLINE bool_t Mesh_delete( Mesh_t * pmesh ) 
+INLINE bool_t Mesh_delete( Mesh_t * pmesh )
 {
   if(NULL == pmesh) return bfalse;
 

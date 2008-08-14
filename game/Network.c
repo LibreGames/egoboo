@@ -1591,9 +1591,6 @@ void do_chat_input()
   // ZZ> This function lets players communicate over network by hitting return, then
   //     typing text, then return again
 
-  int cnt;
-  char cTmp;
-
   KeyboardBuffer_t * kbuffer = KeyboardBuffer_getState();
 
   if(keyb.mode)
@@ -1613,8 +1610,6 @@ void do_chat_input()
       }
     }
   }
-
-
 
   if(kbuffer->done)
   {

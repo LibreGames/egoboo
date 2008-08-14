@@ -217,3 +217,6 @@ void prime_icons( struct sGame * gs);
 
 Graphics_t * sdl_set_mode(Graphics_t * g_old, Graphics_t * g_new, bool_t update_ogl);
 bool_t       gl_set_mode(Graphics_t * g);
+
+bool_t load_basic_textures( struct sGame * gs, const char *szModPath );
+bool_t load_particle_texture( struct sGame * gs, const char *szModPath );

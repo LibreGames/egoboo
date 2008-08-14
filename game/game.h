@@ -83,7 +83,7 @@ typedef struct sMessageQueue MessageQueue_t;
 //Weather and water gfx
 struct s_weather_info
 {
-  bool_t    active;           
+  bool_t    active;
   bool_t    require_water;    // Only spawn over water?
   int       timereset;        // Rate at which weather particles spawn
   float     time;
@@ -131,7 +131,7 @@ struct sGame
   Mesh_t        Mesh;
 
   // water and lighting info
-  WATER_INFO    water;
+  WATER_INFO    Water;
 
   // physics info
   PhysicsData_t phys;
@@ -201,32 +201,31 @@ struct sGame
   // local texture info
   GLtexture TxTexture[MAXTEXTURE];      // All normal textures
 
+  // all icons
   int       TxIcon_count;               // Number of icons
   GLtexture TxIcon[MAXICONTX];       // All icon textures
 
+  // list of special icons
+  int ico_lst[ICO_COUNT];
+
+  // map of object skins to object icons
+  Uint16    skintoicon[MAXTEXTURE];
+
+  // the map texture
   GLtexture TxMap;
 
-  int       nullicon;
-  int       keybicon;
-  int       mousicon;
-  int       joyaicon;
-  int       joybicon;
-  int       bookicon;                      // The first book icon
+  bool_t somepladead;           // someone is dead
+  bool_t allpladead;            // everyone is dead?
 
-  Uint16    skintoicon[MAXTEXTURE];        // Skin to icon
-
-  bool_t somepladead;           // Someone has died.
-  bool_t allpladead;            // Has everyone died?
-
-  Sint32 stt_clock;             // GetTickCount at start
+  Sint32 stt_clock;             // SDL_GetTickCount() at start
   Sint32 lst_clock;             // The last total of ticks so far
+  Sint32 all_clock;             // The total number of ticks so far
+
   Sint32 wld_clock;             // The sync clock
   Uint32 wld_frame;             // The number of frames that should have been drawn
 
-  Sint32 all_clock;             // The total number of ticks so far
-
-  float  pit_clock;             // For pit kills
-  bool_t pitskill;              // Do they kill?
+  float  pits_clock;             // For pit kills
+  bool_t pits_kill;              // Do they kill?
 
   char endtext[MAXENDTEXT];     // The end-module text
 

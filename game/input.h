@@ -164,13 +164,14 @@ INLINE CHR_REF PlaList_getRChr( struct sGame * gs, PLA_REF iplayer );
 
 struct s_mouse
 {
-  bool_t   on;                   // Is the mouse live?
+  bool_t   ui;                   // Is the mouse connected to the ui?
+  bool_t   game;                 // Is the mouse connected to the game?
   float    sense;                // Sensitivity threshold
   float    sustain;              // Falloff rate for old movement
   float    cover;                // For falloff
-  Latch_t    latch;
-  Latch_t    latch_old;            // For sustain
-  Latch_t    dlatch;
+  Latch_t  latch;
+  Latch_t  latch_old;            // For sustain
+  Latch_t  dlatch;
   Sint32   z;                    // Mouse wheel movement counter
   Uint8    button[MOUSEBUTTON];  // Mouse button states
 };

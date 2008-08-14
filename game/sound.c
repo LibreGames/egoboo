@@ -150,7 +150,7 @@ void EgobooChannelFinishedCallback(int channel)
   }
   else
   {
-    printf("snd_play_sound() - playing sound on channel %d\n", channel );
+    //log_debug("snd_play_sound() - \n\tplaying delayed sound on channel %d\n", channel );
     snd_apply_mods( channel, si->intensity, si->pos, GCamera.trackpos, GCamera.turn_lr);
   };
 
@@ -306,7 +306,7 @@ int snd_play_sound( Game_t * gs, float intensity, vect3 pos, Mix_Chunk *loadedwa
   if( !_sndState.soundActive ) return INVALID_CHANNEL;
 
   // the sound is too quiet hear
-  if( 255.0f * intensity * ( CData.soundvolume / 100.0f ) < 1.0f ) 
+  if( 255.0f * intensity * ( CData.soundvolume / 100.0f ) < 1.0f )
     return INVALID_CHANNEL;
 
   pcap = ObjList_getPCap(gs, whichobject);
@@ -350,15 +350,15 @@ int snd_play_sound( Game_t * gs, float intensity, vect3 pos, Mix_Chunk *loadedwa
 
     if( stored )
     {
-      log_warning( "All sound channels are currently in use. Sound being stored to play later\n" );
+      // log_warning( "All sound channels are currently in use. Sound being stored to play later\n" );
     }
     else if( NULL == pcap )
     {
-      log_warning( "All sound channels are currently in use. Global sound %d NOT playing\n", REF_TO_INT(whichobject) );
+      log_warning( "All sound channels are currently in use. No buffers available. Global sound %d NOT playing\n", REF_TO_INT(whichobject) );
     }
     else
     {
-      log_warning( "All sound channels are currently in use. Sound is NOT playing - Object \"%s\" is trying to play sound%i.wav\n", pcap->classname, soundnumber );
+      log_warning( "All sound channels are currently in use. No buffers available. Sound is NOT playing - Object \"%s\" is trying to play sound%i.wav\n", pcap->classname, soundnumber );
     };
   }
   else

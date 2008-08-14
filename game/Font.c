@@ -26,6 +26,7 @@
 
 #include "ogl_texture.h"
 #include "Log.h"
+#include "graphic.h"
 
 #include "egoboo_utility.h"
 #include "egoboo.h"
@@ -281,7 +282,7 @@ static void fnt_quit(void)
 //--------------------------------------------------------------------------------------------
 TTFont_t* fnt_loadFont( const char *fileName, int pointSize )
 {
-  TTFont_t   *newFont;
+  TTFont_t *newFont;
   TTF_Font *ttfFont;
 
   // Make sure the TTF library was initialized
@@ -391,54 +392,52 @@ void fnt_getTextSize( TTFont_t *font, const char *text, int *pwidth, int *pheigh
 
 void fnt_drawTextBox( TTFont_t *font, const char *text, int x, int y,  int width, int height, int spacing )
 {
-  GLint matrix_mode;
-  GLint viewport_save[4];
+  //GLint matrix_mode;
+  //GLint viewport_save[4];
   size_t len;
-  char *buffer, *line;
+  char *buffer, *line, *line_next;
 
   if ( NULL == font ) return;
 
   // If text is empty, there's nothing to draw
   if (  !VALID_CSTR(text)  ) return;
 
-  //if(0 != width && 0 != height)
-  //{
-  //  //grab the old viewoprt info
-  //  glGetIntegerv (GL_VIEWPORT, viewport_save);
-  //  glGetIntegerv(GL_MATRIX_MODE, &matrix_mode);
-
-  //  // forcefully clip the active region to the given box
-
-  //  glMatrixMode( GL_PROJECTION );                            /* GL_TRANSFORM_BIT */
-  //  glPushMatrix();
-  //  glLoadIdentity();
-  //  glOrtho( x, x + width, y + height, y, -1, 1 );
-
-  //  glViewport(x,gfxState.scry-y-height,width,height);
-  //}
+  if(0 != width && 0 != height)
+  {
+    glEnable(GL_SCISSOR_TEST);
+    glScissor(x, (gfxState.scry - y)-height, width, height);
+  }
 
   // Split the passed in text into separate lines
   len = strlen( text );
   buffer = (char*)calloc( len + 1, sizeof(char) );
   strncpy( buffer, text, len );
 
-  line = strtok( buffer, "\n" );
-  while ( NULL != line  )
+  // parse the text by lines
+  line      = NULL;
+  line_next = buffer;
+  do
   {
+    line      = line_next;
+    line_next = strpbrk(line, "\n");
+    if(NULL != line_next)
+    {
+      *line_next = EOS;
+      line_next++;
+    };
+
     fnt_drawText( font, x, y, line );
     y += spacing;
-    line = strtok( NULL, "\n" );
-  }
+
+  } while ( VALID_CSTR(line_next) );
+
   FREE( buffer );
 
-  //if(0 != width && 0 != height)
-  //{
-  //  glMatrixMode( matrix_mode );                            /* GL_TRANSFORM_BIT */
-  //  glPopMatrix();
+  if(0 != width && 0 != height)
+  {
+    glDisable(GL_SCISSOR_TEST);
+  }
 
-  //  // restore the old viewport
-  //  glViewport(viewport_save[0],viewport_save[1],viewport_save[2],viewport_save[3]);
-  //}
 }
 
 //--------------------------------------------------------------------------------------------

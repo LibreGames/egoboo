@@ -968,7 +968,7 @@ ENC_REF EncList_get_free( Game_t * gs, ENC_REF irequest )
 
   retval = EncHeap_getFree( pheap, irequest );
 
-  if ( (INVALID_CHR != irequest) && (retval != irequest) )
+  if ( (INVALID_ENC != irequest) && (retval != irequest) )
   {
     log_debug( "WARNING: EncList_get_free() - \n\tcannot find irequest index %d\n", irequest );
     return INVALID_ENC;
@@ -2359,8 +2359,8 @@ bool_t  EncHeap_addFree( EncHeap_t * pheap, ENC_REF ref )
   if( !EKEY_PVALID(pheap) ) return bfalse;
   if( pheap->free_count >= ENCLST_COUNT) return bfalse;
 
-  PROFILE_BEGIN( EncHeap );  
-  
+  PROFILE_BEGIN( EncHeap );
+
   for(i=0; i<pheap->free_count; i++)
   {
     if(pheap->free_list[i] == ref) { PROFILE_END2( EncHeap ); return btrue; }

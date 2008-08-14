@@ -600,7 +600,7 @@ void render_particles()
   Uint16 numparticle;
   PRT_REF prt_cnt;
 
-  if ( INVALID_TEXTURE == GLtexture_GetTextureID( gs->TxTexture + particletexture ) ) return;
+  if ( MAXTEXTURE == particletexture || INVALID_TEXTURE == GLtexture_GetTextureID( gs->TxTexture + particletexture ) ) return;
 
   // Original points
   numparticle = 0;

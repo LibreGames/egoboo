@@ -250,7 +250,7 @@ void switch_team( struct sGame * gs, CHR_REF character, TEAM_REF team );
 int  restock_ammo( struct sGame * gs, CHR_REF character, IDSZ idsz );
 void issue_clean( struct sGame * gs, CHR_REF character );
 
-int load_one_object( struct sGame * gs, int skin_count, const char * szObjectpath, char* szObjectname );
+int load_one_object( struct sGame * gs, int skin_count, const char * szObjectpath, char* szObjectname, OBJ_REF slot_override );
 
 
 void obj_clear_pips( struct sGame * gs );

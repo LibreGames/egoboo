@@ -327,12 +327,12 @@ void prime_icons(Game_t * gs)
   iconrect.top = 0;
   iconrect.bottom = 32;
 
-  gs->nullicon = MAXICONTX;
-  gs->keybicon = MAXICONTX;
-  gs->mousicon = MAXICONTX;
-  gs->joyaicon = MAXICONTX;
-  gs->joybicon = MAXICONTX;
-  gs->bookicon = MAXICONTX;
+  gs->ico_lst[ICO_NULL] = MAXICONTX;
+  gs->ico_lst[ICO_KEYB] = MAXICONTX;
+  gs->ico_lst[ICO_MOUS] = MAXICONTX;
+  gs->ico_lst[ICO_JOYA] = MAXICONTX;
+  gs->ico_lst[ICO_JOYB] = MAXICONTX;
+  gs->ico_lst[ICO_BOOK_0] = MAXICONTX;
 }
 
 //---------------------------------------------------------------------------------------------
@@ -499,96 +499,165 @@ void animate_tiles( float dUpdate )
 }
 
 //--------------------------------------------------------------------------------------------
-void load_basic_textures( Game_t * gs, char *modname )
+bool_t load_particle_texture( Game_t * gs, const char *szModPath  )
+{
+  // BB> Load the particle bitmap. Check the gamedat dir first for a module override
+
+  STRING szTemp;
+  ConfigData_t * cd;
+
+  if( !EKEY_PVALID(gs) ) return bfalse;
+
+  cd = gs->cd;
+  if(NULL == cd) cd = &CData;
+
+  // release any old texture
+  if(MAXTEXTURE != particletexture)
+  {
+    GLtexture_delete( gs->TxTexture + particletexture );
+    particletexture = MAXTEXTURE;
+  }
+
+  if( VALID_CSTR(szModPath) )
+  {
+    // try to load it from the module's gamedat dir
+    if( MAXTEXTURE == particletexture )
+    {
+      snprintf( szTemp, sizeof( szTemp ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, "particle.bmp" );
+      if ( INVALID_TEXTURE != GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_PARTICLE, szTemp, TRANSCOLOR ) )
+      {
+        particletexture = TX_PARTICLE;
+      }
+    }
+
+    if( MAXTEXTURE == particletexture )
+    {
+      snprintf( szTemp, sizeof( szTemp ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, "particle.png" );
+      if ( INVALID_TEXTURE != GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_PARTICLE, szTemp, TRANSCOLOR ) )
+      {
+        particletexture = TX_PARTICLE;
+      }
+    }
+
+    if( MAXTEXTURE == particletexture )
+    {
+      snprintf( szTemp, sizeof( szTemp ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->particle_bitmap );
+      if ( INVALID_TEXTURE != GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_PARTICLE, szTemp, TRANSCOLOR ) )
+      {
+        particletexture = TX_PARTICLE;
+      }
+    }
+  }
+
+  // load the default
+  if( MAXTEXTURE == particletexture )
+  {
+    snprintf( szTemp, sizeof( szTemp ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->globalparticles_dir, cd->particle_bitmap );
+    if ( INVALID_TEXTURE != GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_PARTICLE, szTemp, TRANSCOLOR ) )
+    {
+      particletexture = TX_PARTICLE;
+    }
+  }
+
+
+  if( MAXTEXTURE == particletexture )
+  {
+    log_warning( "!!!!Particle bitmap could not be found!!!! Missing File = \"%s\"\n", szTemp );
+  };
+
+  return (MAXTEXTURE != particletexture);
+}
+
+
+//--------------------------------------------------------------------------------------------
+bool_t load_basic_textures( Game_t * gs, const char *szModPath )
 {
   // ZZ> This function loads the standard textures for a module
   // BB> In each case, try to load one stored with the module first.
 
-  // Particle sprites
-  snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, "particle.bmp" );
-  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_PARTICLE, CStringTmp1, TRANSCOLOR ) )
-  {
-    snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.globalparticles_dir, CData.particle_bitmap );
-    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_PARTICLE, CStringTmp1, TRANSCOLOR ) )
-    {
-      log_warning( "!!!!Particle bitmap could not be found!!!! Missing File = \"%s\"\n", CStringTmp1 );
-    }
-  };
+  ConfigData_t * cd;
+
+  if( !EKEY_PVALID(gs) ) return bfalse;
+
+  cd = gs->cd;
+  if(NULL == cd) cd = cd;
+
+  load_particle_texture( gs, szModPath );
 
   // Module background tiles
-  snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.tile0_bitmap );
+  snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->tile0_bitmap );
   if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_0, CStringTmp1, TRANSCOLOR ) )
   {
-    snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.tile0_bitmap );
+    snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->tile0_bitmap );
     if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_0, CStringTmp1, TRANSCOLOR ) )
     {
-      log_warning( "Tile 0 could not be found. Missing File = \"%s\"\n", CData.tile0_bitmap );
+      log_warning( "Tile 0 could not be found. Missing File = \"%s\"\n", cd->tile0_bitmap );
     }
   };
 
-  snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.tile1_bitmap );
+  snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->tile1_bitmap );
   if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,   gs->TxTexture + TX_TILE_1, CStringTmp1, TRANSCOLOR ) )
   {
-    snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.tile1_bitmap );
+    snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->tile1_bitmap );
     if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_1, CStringTmp1, TRANSCOLOR ) )
     {
-      log_warning( "Tile 1 could not be found. Missing File = \"%s\"\n", CData.tile1_bitmap );
+      log_warning( "Tile 1 could not be found. Missing File = \"%s\"\n", cd->tile1_bitmap );
     }
   };
 
-  snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.tile2_bitmap );
+  snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->tile2_bitmap );
   if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_2, CStringTmp1, TRANSCOLOR ) )
   {
-    snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.tile2_bitmap );
+    snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->tile2_bitmap );
     if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_2, CStringTmp1, TRANSCOLOR ) )
     {
-      log_warning( "Tile 2 could not be found. Missing File = \"%s\"\n", CData.tile2_bitmap );
+      log_warning( "Tile 2 could not be found. Missing File = \"%s\"\n", cd->tile2_bitmap );
     }
   };
 
-  snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.tile3_bitmap );
+  snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->tile3_bitmap );
   if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_3, CStringTmp1, TRANSCOLOR ) )
   {
-    snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.tile3_bitmap );
+    snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->tile3_bitmap );
     if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_3, CStringTmp1, TRANSCOLOR ) )
     {
-      log_warning( "Tile 3 could not be found. Missing File = \"%s\"\n", CData.tile3_bitmap );
+      log_warning( "Tile 3 could not be found. Missing File = \"%s\"\n", cd->tile3_bitmap );
     }
   };
 
 
   // Water textures
-  snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.watertop_bitmap );
+  snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->watertop_bitmap );
   if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_WATER_TOP, CStringTmp1, INVALID_KEY ) )
   {
-    snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.watertop_bitmap );
+    snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->watertop_bitmap );
     if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_WATER_TOP, CStringTmp1, TRANSCOLOR ) )
     {
-      log_warning( "Water Layer 1 could not be found. Missing File = \"%s\"\n", CData.watertop_bitmap );
+      log_warning( "Water Layer 1 could not be found. Missing File = \"%s\"\n", cd->watertop_bitmap );
     }
   };
 
   // This is also used as far background
-  snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.waterlow_bitmap );
+  snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->waterlow_bitmap );
   if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_WATER_LOW, CStringTmp1, INVALID_KEY ) )
   {
-    snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.waterlow_bitmap );
+    snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->waterlow_bitmap );
     if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_WATER_LOW, CStringTmp1, TRANSCOLOR ) )
     {
-      log_warning( "Water Layer 0 could not be found. Missing File = \"%s\"\n", CData.waterlow_bitmap );
+      log_warning( "Water Layer 0 could not be found. Missing File = \"%s\"\n", cd->waterlow_bitmap );
     }
   };
 
 
   // BB > this is handled differently now and is not needed
   // Texture 7 is the phong map
-  //snprintf(CStringTmp1, sizeof(CStringTmp1), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.phong_bitmap);
+  //snprintf(CStringTmp1, sizeof(CStringTmp1), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->phong_bitmap);
   //if(INVALID_TEXTURE==GLtexture_Load(GL_TEXTURE_2D,  gs->TxTexture + TX_PHONG, CStringTmp1, INVALID_KEY))
   //{
-  //  snprintf(CStringTmp1, sizeof(CStringTmp1), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.phong_bitmap);
+  //  snprintf(CStringTmp1, sizeof(CStringTmp1), "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->phong_bitmap);
   //  GLtexture_Load(GL_TEXTURE_2D,  gs->TxTexture + TX_PHONG, CStringTmp1, TRANSCOLOR );
   //  {
-  //    log_warning("Phong Bitmap Layer 1 could not be found. Missing File = \"%s\"\n", CData.phong_bitmap);
+  //    log_warning("Phong Bitmap Layer 1 could not be found. Missing File = \"%s\"\n", cd->phong_bitmap);
   //  }
   //};
 
@@ -658,10 +727,10 @@ void make_water(Game_t * gs)
   Uint8 spek;
 
   layer = 0;
-  while ( layer < gs->water.layer_count )
+  while ( layer < gs->Water.layer_count )
   {
-    gs->water.layer[layer].u = 0;
-    gs->water.layer[layer].v = 0;
+    gs->Water.layer[layer].u = 0;
+    gs->Water.layer[layer].v = 0;
     frame = 0;
     while ( frame < MAXWATERFRAME )
     {
@@ -671,39 +740,39 @@ void make_water(Game_t * gs)
       {
         tmp_sin = sin(( frame * TWO_PI / MAXWATERFRAME ) + ( PI * point / WATERPOINTS ) + ( PI_OVER_TWO * layer / MAXWATERLAYER ) );
         tmp_cos = cos(( frame * TWO_PI / MAXWATERFRAME ) + ( PI * point / WATERPOINTS ) + ( PI_OVER_TWO * layer / MAXWATERLAYER ) );
-        gs->water.layer[layer].zadd[frame][mode][point]  = tmp_sin * gs->water.layer[layer].amp;
+        gs->Water.layer[layer].zadd[frame][mode][point]  = tmp_sin * gs->Water.layer[layer].amp;
       }
 
       // Now mirror and copy data to other three modes
       mode++;
-      gs->water.layer[layer].zadd[frame][mode][0] = gs->water.layer[layer].zadd[frame][0][1];
-      //gs->water.layer[layer].color[frame][mode][0] = gs->water.layer[layer].color[frame][0][1];
-      gs->water.layer[layer].zadd[frame][mode][1] = gs->water.layer[layer].zadd[frame][0][0];
-      //gs->water.layer[layer].color[frame][mode][1] = gs->water.layer[layer].color[frame][0][0];
-      gs->water.layer[layer].zadd[frame][mode][2] = gs->water.layer[layer].zadd[frame][0][3];
-      //gs->water.layer[layer].color[frame][mode][2] = gs->water.layer[layer].color[frame][0][3];
-      gs->water.layer[layer].zadd[frame][mode][3] = gs->water.layer[layer].zadd[frame][0][2];
-      //gs->water.layer[layer].color[frame][mode][3] = gs->water.layer[layer].color[frame][0][2];
+      gs->Water.layer[layer].zadd[frame][mode][0] = gs->Water.layer[layer].zadd[frame][0][1];
+      //gs->Water.layer[layer].color[frame][mode][0] = gs->Water.layer[layer].color[frame][0][1];
+      gs->Water.layer[layer].zadd[frame][mode][1] = gs->Water.layer[layer].zadd[frame][0][0];
+      //gs->Water.layer[layer].color[frame][mode][1] = gs->Water.layer[layer].color[frame][0][0];
+      gs->Water.layer[layer].zadd[frame][mode][2] = gs->Water.layer[layer].zadd[frame][0][3];
+      //gs->Water.layer[layer].color[frame][mode][2] = gs->Water.layer[layer].color[frame][0][3];
+      gs->Water.layer[layer].zadd[frame][mode][3] = gs->Water.layer[layer].zadd[frame][0][2];
+      //gs->Water.layer[layer].color[frame][mode][3] = gs->Water.layer[layer].color[frame][0][2];
       mode++;
 
-      gs->water.layer[layer].zadd[frame][mode][0] = gs->water.layer[layer].zadd[frame][0][3];
-      //gs->water.layer[layer].color[frame][mode][0] = gs->water.layer[layer].color[frame][0][3];
-      gs->water.layer[layer].zadd[frame][mode][1] = gs->water.layer[layer].zadd[frame][0][2];
-      //gs->water.layer[layer].color[frame][mode][1] = gs->water.layer[layer].color[frame][0][2];
-      gs->water.layer[layer].zadd[frame][mode][2] = gs->water.layer[layer].zadd[frame][0][1];
-      //gs->water.layer[layer].color[frame][mode][2] = gs->water.layer[layer].color[frame][0][1];
-      gs->water.layer[layer].zadd[frame][mode][3] = gs->water.layer[layer].zadd[frame][0][0];
-      //gs->water.layer[layer].color[frame][mode][3] = gs->water.layer[layer].color[frame][0][0];
+      gs->Water.layer[layer].zadd[frame][mode][0] = gs->Water.layer[layer].zadd[frame][0][3];
+      //gs->Water.layer[layer].color[frame][mode][0] = gs->Water.layer[layer].color[frame][0][3];
+      gs->Water.layer[layer].zadd[frame][mode][1] = gs->Water.layer[layer].zadd[frame][0][2];
+      //gs->Water.layer[layer].color[frame][mode][1] = gs->Water.layer[layer].color[frame][0][2];
+      gs->Water.layer[layer].zadd[frame][mode][2] = gs->Water.layer[layer].zadd[frame][0][1];
+      //gs->Water.layer[layer].color[frame][mode][2] = gs->Water.layer[layer].color[frame][0][1];
+      gs->Water.layer[layer].zadd[frame][mode][3] = gs->Water.layer[layer].zadd[frame][0][0];
+      //gs->Water.layer[layer].color[frame][mode][3] = gs->Water.layer[layer].color[frame][0][0];
       mode++;
 
-      gs->water.layer[layer].zadd[frame][mode][0] = gs->water.layer[layer].zadd[frame][0][2];
-      //gs->water.layer[layer].color[frame][mode][0] = gs->water.layer[layer].color[frame][0][2];
-      gs->water.layer[layer].zadd[frame][mode][1] = gs->water.layer[layer].zadd[frame][0][3];
-      //gs->water.layer[layer].color[frame][mode][1] = gs->water.layer[layer].color[frame][0][3];
-      gs->water.layer[layer].zadd[frame][mode][2] = gs->water.layer[layer].zadd[frame][0][0];
-      //gs->water.layer[layer].color[frame][mode][2] = gs->water.layer[layer].color[frame][0][0];
-      gs->water.layer[layer].zadd[frame][mode][3] = gs->water.layer[layer].zadd[frame][0][1];
-      //gs->water.layer[layer].color[frame][mode][3] = gs->water.layer[layer].color[frame][0][1];
+      gs->Water.layer[layer].zadd[frame][mode][0] = gs->Water.layer[layer].zadd[frame][0][2];
+      //gs->Water.layer[layer].color[frame][mode][0] = gs->Water.layer[layer].color[frame][0][2];
+      gs->Water.layer[layer].zadd[frame][mode][1] = gs->Water.layer[layer].zadd[frame][0][3];
+      //gs->Water.layer[layer].color[frame][mode][1] = gs->Water.layer[layer].color[frame][0][3];
+      gs->Water.layer[layer].zadd[frame][mode][2] = gs->Water.layer[layer].zadd[frame][0][0];
+      //gs->Water.layer[layer].color[frame][mode][2] = gs->Water.layer[layer].color[frame][0][0];
+      gs->Water.layer[layer].zadd[frame][mode][3] = gs->Water.layer[layer].zadd[frame][0][1];
+      //gs->Water.layer[layer].color[frame][mode][3] = gs->Water.layer[layer].color[frame][0][1];
       frame++;
     }
     layer++;
@@ -717,7 +786,7 @@ void make_water(Game_t * gs)
     tmp = FP8_TO_FLOAT( cnt );
     spek = 255 * tmp * tmp;
 
-    gs->water.spek[cnt] = spek;
+    gs->Water.spek[cnt] = spek;
 
     // [claforte] Probably need to replace this with a
     //            glColor4f( FP8_TO_FLOAT(spek), FP8_TO_FLOAT(spek), FP8_TO_FLOAT(spek), 1.0f) call:
@@ -753,47 +822,47 @@ void read_wawalite( Game_t * gs, char *modname )
 
 
     // Read water data first
-    gs->water.layer_count = fget_next_int( fileread );
-    gs->water.spekstart = fget_next_int( fileread );
-    gs->water.speklevel_fp8 = fget_next_int( fileread );
-    gs->water.douselevel = fget_next_int( fileread );
-    gs->water.surfacelevel = fget_next_int( fileread );
-    gs->water.light = fget_next_bool( fileread );
-    gs->water.iswater = fget_next_bool( fileread );
+    gs->Water.layer_count = fget_next_int( fileread );
+    gs->Water.spekstart = fget_next_int( fileread );
+    gs->Water.speklevel_fp8 = fget_next_int( fileread );
+    gs->Water.douselevel = fget_next_int( fileread );
+    gs->Water.surfacelevel = fget_next_int( fileread );
+    gs->Water.light = fget_next_bool( fileread );
+    gs->Water.iswater = fget_next_bool( fileread );
     gfxState.render_overlay    = fget_next_bool( fileread ) && CData.overlayvalid;
     gfxState.render_background = fget_next_bool( fileread ) && CData.backgroundvalid;
-    gs->water.layer[0].distx = fget_next_float( fileread );
-    gs->water.layer[0].disty = fget_next_float( fileread );
-    gs->water.layer[1].distx = fget_next_float( fileread );
-    gs->water.layer[1].disty = fget_next_float( fileread );
+    gs->Water.layer[0].distx = fget_next_float( fileread );
+    gs->Water.layer[0].disty = fget_next_float( fileread );
+    gs->Water.layer[1].distx = fget_next_float( fileread );
+    gs->Water.layer[1].disty = fget_next_float( fileread );
     foregroundrepeat = fget_next_int( fileread );
     backgroundrepeat = fget_next_int( fileread );
 
 
-    gs->water.layer[0].z = fget_next_int( fileread );
-    gs->water.layer[0].alpha_fp8 = fget_next_int( fileread );
-    gs->water.layer[0].frameadd = fget_next_int( fileread );
-    gs->water.layer[0].lightlevel_fp8 = fget_next_int( fileread );
-    gs->water.layer[0].lightadd_fp8 = fget_next_int( fileread );
-    gs->water.layer[0].amp = fget_next_float( fileread );
-    gs->water.layer[0].uadd = fget_next_float( fileread );
-    gs->water.layer[0].vadd = fget_next_float( fileread );
+    gs->Water.layer[0].z = fget_next_int( fileread );
+    gs->Water.layer[0].alpha_fp8 = fget_next_int( fileread );
+    gs->Water.layer[0].frameadd = fget_next_int( fileread );
+    gs->Water.layer[0].lightlevel_fp8 = fget_next_int( fileread );
+    gs->Water.layer[0].lightadd_fp8 = fget_next_int( fileread );
+    gs->Water.layer[0].amp = fget_next_float( fileread );
+    gs->Water.layer[0].uadd = fget_next_float( fileread );
+    gs->Water.layer[0].vadd = fget_next_float( fileread );
 
-    gs->water.layer[1].z = fget_next_int( fileread );
-    gs->water.layer[1].alpha_fp8 = fget_next_int( fileread );
-    gs->water.layer[1].frameadd = fget_next_int( fileread );
-    gs->water.layer[1].lightlevel_fp8 = fget_next_int( fileread );
-    gs->water.layer[1].lightadd_fp8 = fget_next_int( fileread );
-    gs->water.layer[1].amp = fget_next_float( fileread );
-    gs->water.layer[1].uadd = fget_next_float( fileread );
-    gs->water.layer[1].vadd = fget_next_float( fileread );
+    gs->Water.layer[1].z = fget_next_int( fileread );
+    gs->Water.layer[1].alpha_fp8 = fget_next_int( fileread );
+    gs->Water.layer[1].frameadd = fget_next_int( fileread );
+    gs->Water.layer[1].lightlevel_fp8 = fget_next_int( fileread );
+    gs->Water.layer[1].lightadd_fp8 = fget_next_int( fileread );
+    gs->Water.layer[1].amp = fget_next_float( fileread );
+    gs->Water.layer[1].uadd = fget_next_float( fileread );
+    gs->Water.layer[1].vadd = fget_next_float( fileread );
 
-    gs->water.layer[0].u = 0;
-    gs->water.layer[0].v = 0;
-    gs->water.layer[1].u = 0;
-    gs->water.layer[1].v = 0;
-    gs->water.layer[0].frame = RAND( &loc_rand, 0, WATERFRAMEAND );
-    gs->water.layer[1].frame = RAND( &loc_rand, 0, WATERFRAMEAND );
+    gs->Water.layer[0].u = 0;
+    gs->Water.layer[0].v = 0;
+    gs->Water.layer[1].u = 0;
+    gs->Water.layer[1].v = 0;
+    gs->Water.layer[0].frame = RAND( &loc_rand, 0, WATERFRAMEAND );
+    gs->Water.layer[1].frame = RAND( &loc_rand, 0, WATERFRAMEAND );
 
     // Read light data second
     GLight.on        = btrue;
@@ -895,14 +964,14 @@ void read_wawalite( Game_t * gs, char *modname )
     }
 
     // Allow slow machines to ignore the fancy stuff
-    if ( !CData.twolayerwateron && gs->water.layer_count > 1 )
+    if ( !CData.twolayerwateron && gs->Water.layer_count > 1 )
     {
       int iTmp;
-      gs->water.layer_count = 1;
-      iTmp = gs->water.layer[0].alpha_fp8;
-      iTmp = FP8_MUL( gs->water.layer[1].alpha_fp8, iTmp ) + iTmp;
+      gs->Water.layer_count = 1;
+      iTmp = gs->Water.layer[0].alpha_fp8;
+      iTmp = FP8_MUL( gs->Water.layer[1].alpha_fp8, iTmp ) + iTmp;
       if ( iTmp > 255 ) iTmp = 255;
-      gs->water.layer[0].alpha_fp8 = iTmp;
+      gs->Water.layer[0].alpha_fp8 = iTmp;
     }
 
 
@@ -937,8 +1006,8 @@ void render_background( Uint16 texture )
   x = gfxState.scrx << 6;
   y = gfxState.scry << 6;
   z = -100;
-  u = gs->water.layer[1].u;
-  v = gs->water.layer[1].v;
+  u = gs->Water.layer[1].u;
+  v = gs->Water.layer[1].v;
   size = x + y + 1;
   sinsize = turntosin[( 3*2047 ) & TRIGTABLE_MASK] * size;   // why 3/8 of a turn???
   cossize = turntocos[( 3*2047 ) & TRIGTABLE_MASK] * size;   // why 3/8 of a turn???
@@ -1012,8 +1081,8 @@ void render_foreground_overlay( Uint16 texture )
   x = gfxState.scrx << 6;
   y = gfxState.scry << 6;
   z = 0;
-  u = gs->water.layer[1].u;
-  v = gs->water.layer[1].v;
+  u = gs->Water.layer[1].u;
+  v = gs->Water.layer[1].v;
   size = x + y + 1;
   rotate = 16384 + 8192;
   rotate >>= 2;
@@ -1185,7 +1254,14 @@ void render_shadow( CHR_REF character )
       glDepthFunc( GL_LESS );
 
       // Choose texture.
-      GLtexture_Bind( gs->TxTexture + particletexture, &gfxState );
+      if( MAXTEXTURE == particletexture)
+      {
+        GLtexture_Bind( NULL, &gfxState );
+      }
+      else
+      {
+        GLtexture_Bind( gs->TxTexture + particletexture, &gfxState );
+      };
 
       glBegin( GL_TRIANGLE_FAN );
       glColor4f( alpha_penumbra, alpha_penumbra, alpha_penumbra, 1.0 );
@@ -1228,7 +1304,14 @@ void render_shadow( CHR_REF character )
       glDepthFunc( GL_LEQUAL );
 
       // Choose texture.
-      GLtexture_Bind( gs->TxTexture + particletexture, &gfxState );
+      if( MAXTEXTURE == particletexture)
+      {
+        GLtexture_Bind( NULL, &gfxState );
+      }
+      else
+      {
+        GLtexture_Bind( gs->TxTexture + particletexture, &gfxState );
+      };
 
       glBegin( GL_TRIANGLE_FAN );
       glColor4f( alpha_penumbra, alpha_penumbra, alpha_penumbra, 1.0 );
@@ -1467,7 +1550,7 @@ void render_water()
   Game_t * gs = Graphics_requireGame(&gfxState);
 
   // Bottom layer first
-  if ( !gfxState.render_background && gs->water.layer_count > 1 )
+  if ( !gfxState.render_background && gs->Water.layer_count > 1 )
   {
     cnt = 0;
     while ( cnt < renderlist.num_watr )
@@ -1478,7 +1561,7 @@ void render_water()
   }
 
   // Top layer second
-  if ( !gfxState.render_overlay && gs->water.layer_count > 0 )
+  if ( !gfxState.render_overlay && gs->Water.layer_count > 0 )
   {
     cnt = 0;
     while ( cnt < renderlist.num_watr )
@@ -1497,17 +1580,17 @@ void render_water_lit()
   Game_t * gs = Graphics_requireGame(&gfxState);
 
   // Bottom layer first
-  if ( !gfxState.render_background && gs->water.layer_count > 1 )
+  if ( !gfxState.render_background && gs->Water.layer_count > 1 )
   {
-    float ambi_level = FP8_TO_FLOAT( gs->water.layer[1].lightadd_fp8 + gs->water.layer[1].lightlevel_fp8 );
-    float spek_level =  FP8_TO_FLOAT( gs->water.speklevel_fp8 );
+    float ambi_level = FP8_TO_FLOAT( gs->Water.layer[1].lightadd_fp8 + gs->Water.layer[1].lightlevel_fp8 );
+    float spek_level =  FP8_TO_FLOAT( gs->Water.speklevel_fp8 );
     float spekularity = MIN( 40, spek_level / ambi_level ) + 2;
     GLfloat mat_none[]      = {0, 0, 0, 0};
     GLfloat mat_ambient[]   = { ambi_level, ambi_level, ambi_level, 1.0 };
     GLfloat mat_diffuse[]   = { spek_level, spek_level, spek_level, 1.0 };
     GLfloat mat_shininess[] = {spekularity};
 
-    if ( gs->water.light )
+    if ( gs->Water.light )
     {
       // self-lit water provides its own light
       glMaterialfv( GL_FRONT_AND_BACK, GL_EMISSION, mat_ambient );
@@ -1531,10 +1614,10 @@ void render_water_lit()
   }
 
   // Top layer second
-  if ( !gfxState.render_overlay && gs->water.layer_count > 0 )
+  if ( !gfxState.render_overlay && gs->Water.layer_count > 0 )
   {
-    float ambi_level = ( gs->water.layer[1].lightadd_fp8 + gs->water.layer[1].lightlevel_fp8 ) / 255.0;
-    float spek_level =  FP8_TO_FLOAT( gs->water.speklevel_fp8 );
+    float ambi_level = ( gs->Water.layer[1].lightadd_fp8 + gs->Water.layer[1].lightlevel_fp8 ) / 255.0;
+    float spek_level =  FP8_TO_FLOAT( gs->Water.speklevel_fp8 );
     float spekularity = MIN( 40, spek_level / ambi_level ) + 2;
 
     GLfloat mat_none[]      = {0, 0, 0, 0};
@@ -1542,7 +1625,7 @@ void render_water_lit()
     GLfloat mat_diffuse[]   = { spek_level, spek_level, spek_level, 1.0 };
     GLfloat mat_shininess[] = {spekularity};
 
-    if ( gs->water.light )
+    if ( gs->Water.light )
     {
       // self-lit water provides its own light
       glMaterialfv( GL_FRONT_AND_BACK, GL_EMISSION, mat_ambient );
@@ -2062,7 +2145,7 @@ void draw_scene_zreflection()
     render_alpha_characters();
 
     // And alpha water
-    if ( !gs->water.light )
+    if ( !gs->Water.light )
     {
       ATTRIB_GUARD_OPEN( inp_attrib_stack );
       render_alpha_water();
@@ -2070,7 +2153,7 @@ void draw_scene_zreflection()
     };
 
     // Do self-lit water
-    if ( gs->water.light )
+    if ( gs->Water.light )
     {
       ATTRIB_GUARD_OPEN( inp_attrib_stack );
       render_light_water();
@@ -2809,10 +2892,10 @@ int draw_status( BMFont_t * pfnt, Status_t * pstat )
       }
     }
     else
-      draw_one_icon( gs->bookicon + ( tmppchr->money % MAXSKIN ), ix + 8, iy, tmppchr->sparkle );
+      draw_one_icon( gs->ico_lst[ICO_BOOK_0] + ( tmppchr->money % MAXSKIN ), ix + 8, iy, tmppchr->sparkle );
   }
   else
-    draw_one_icon( gs->nullicon, ix + 8, iy, NOSPARKLE );
+    draw_one_icon( gs->ico_lst[ICO_NULL], ix + 8, iy, NOSPARKLE );
 
   item = chr_get_holdingwhich( chrlst, CHRLST_COUNT, ichr, SLOT_RIGHT );
   if ( ACTIVE_CHR( chrlst,  item ) && VALID_OBJ( objlst, chrlst[item].model) )
@@ -2823,7 +2906,7 @@ int draw_status( BMFont_t * pfnt, Status_t * pstat )
 
     if ( tmppchr->prop.icon )
     {
-      draw_one_icon( gs->skintoicon[tmppchr->skin_ref + tmppobj->skinstart], ix + 8, iy, tmppchr->sparkle );
+      draw_one_icon( gs->skintoicon[tmppchr->skin_ref + tmppobj->skinstart], ix + 72, iy, tmppchr->sparkle );
       if ( tmppchr->ammomax != 0 && tmppchr->ammoknown )
       {
         if ( !tmppcap->prop.isstackable || tmppchr->ammo > 1 )
@@ -2834,10 +2917,10 @@ int draw_status( BMFont_t * pfnt, Status_t * pstat )
       }
     }
     else
-      draw_one_icon( gs->bookicon + ( chrlst[item].money % MAXSKIN ), ix + 72, iy, chrlst[item].sparkle );
+      draw_one_icon( gs->ico_lst[ICO_BOOK_0] + ( chrlst[item].money % MAXSKIN ), ix + 72, iy, chrlst[item].sparkle );
   }
   else
-    draw_one_icon( gs->nullicon, ix + 72, iy, NOSPARKLE );
+    draw_one_icon( gs->ico_lst[ICO_NULL], ix + 72, iy, NOSPARKLE );
 
   iy += 32;
 
@@ -2876,7 +2959,7 @@ bool_t do_map()
     draw_blip( BlipList[cnt].c, maprect.left + BlipList[cnt].x, maprect.top + BlipList[cnt].y );
   };
 
-  if ( youarehereon && ( gs->wld_frame&8 ) )
+  if ( youarehereon && 0 == ( ( gfxState.fps_clock >> 3) & 1 ) )
   {
     for ( ipla = 0; ipla < PLALST_COUNT; ipla++ )
     {
@@ -2998,7 +3081,7 @@ void draw_text( BMFont_t *  pfnt )
         y += draw_string( pfnt, 0, y, NULL, "character collision frac %1.3f", (float)chr_collisions / (float)CHR_MAX_COLLISIONS );
       }
 
-      
+
       {
         MachineState_t * mac = get_MachineState();
         MachineState_update( mac );
@@ -3093,12 +3176,12 @@ void draw_text( BMFont_t *  pfnt )
       y += draw_string( pfnt, 0, y, NULL, "~PLA1 %5.1f %5.1f", gs->ChrList[pla_chr].ori.pos.x / 128.0, gs->ChrList[pla_chr].ori.pos.y / 128.0 );
     }
 
-    if(gs->wld_frame > 0)
+    if(ups_loops > 0)
     {
-      y += draw_string( pfnt, 0, y, NULL, "ChrHeap - %3.3lf : %3.3lf", 1e6 * clktime_ChrHeap / (double)gs->wld_frame, clkcount_ChrHeap / (double)gs->wld_frame );
-      y += draw_string( pfnt, 0, y, NULL, "EncHeap - %3.3lf : %3.3lf", 1e6 * clktime_EncHeap / (double)gs->wld_frame, clkcount_EncHeap / (double)gs->wld_frame );
-      y += draw_string( pfnt, 0, y, NULL, "PrtHeap - %3.3lf : %3.3lf", 1e6 * clktime_PrtHeap / (double)gs->wld_frame, clkcount_PrtHeap / (double)gs->wld_frame );
-      y += draw_string( pfnt, 0, y, NULL, "ekey    - %3.3lf : %3.3lf", 1e6 * clktime_ekey / (double)gs->wld_frame,    clkcount_ekey / (double)gs->wld_frame );
+      y += draw_string( pfnt, 0, y, NULL, "ChrHeap - %3.3lf : %3.3lf", 1e6 * clktime_ChrHeap / (double)ups_loops, clkcount_ChrHeap / (double)ups_loops );
+      y += draw_string( pfnt, 0, y, NULL, "EncHeap - %3.3lf : %3.3lf", 1e6 * clktime_EncHeap / (double)ups_loops, clkcount_EncHeap / (double)ups_loops );
+      y += draw_string( pfnt, 0, y, NULL, "PrtHeap - %3.3lf : %3.3lf", 1e6 * clktime_PrtHeap / (double)ups_loops, clkcount_PrtHeap / (double)ups_loops );
+      y += draw_string( pfnt, 0, y, NULL, "ekey    - %3.3lf : %3.3lf", 1e6 * clktime_ekey / (double)ups_loops,    clkcount_ekey / (double)ups_loops );
     };
 
     // GLOBAL DEBUG MODE
@@ -4050,7 +4133,7 @@ SDL_Surface * RequestVideoMode( video_parameters_t * v )
     log_info( "\t%s\n", ((0 != v->doublebuffer) ? "DOUBLE BUFFER" : "SINGLE BUFFER") );
     log_info( "\t%s\n", (v->fullscreen   ? "FULLSCREEN"    : "WINDOWED"     ) );
     log_info( "\twidth == %d, height == %d, depth == %d\n", v->width, v->height, v->depth );
-    
+
   }
   else
   {
@@ -4147,7 +4230,7 @@ Graphics_t * sdl_set_mode(Graphics_t * g_old, Graphics_t * g_new, bool_t update_
     if(NULL != g_new->surface) break;
     param_new.multisamples >>= 1;
   };
-  
+
   if( NULL == g_new->surface )
   {
     // we can't have any multi...
@@ -4377,7 +4460,14 @@ bool_t gl_set_mode(Graphics_t * g)
 //      glDepthFunc(GL_LEQUAL);
 //
 //      // Choose texture.
-//      GLtexture_Bind( gs->TxTexture + particletexture, &gfxState);
+//      if( MAXTEXTURE == particletexture)
+//      {
+//        GLtexture_Bind( NULL, &gfxState );
+//      }
+//      else
+//      {
+//        GLtexture_Bind( gs->TxTexture + particletexture, &gfxState );
+//      };
 //
 //      glColor4f(FP8_TO_FLOAT(ambi), FP8_TO_FLOAT(ambi), FP8_TO_FLOAT(ambi), FP8_TO_FLOAT(trans));
 //      glBegin(GL_TRIANGLE_FAN);

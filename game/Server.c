@@ -279,10 +279,9 @@ void CServer_bufferLatches(Server_t * ss)
 
   if (gs->wld_frame > STARTTALK)
   {
-    uiTime = gs->wld_frame + CData.lag;
+    uiTime = (ups_loops + CData.lag) & LAGAND;
 
     // Now pretend the host got the packet...
-    uiTime = uiTime & LAGAND;
     for (ichr = 0; ichr < CHRLST_COUNT; ichr++)
     {
       ss->tlb.buffer[ichr][uiTime].latch.b = ss->latch[ichr].b;
@@ -312,7 +311,7 @@ void sv_talkToRemotes(Server_t * ss)
     // check all possible lags
     for(i=0; i<MAXLAG; i++)
     {
-      stamp  = gs->wld_frame - i;
+      stamp  = ups_loops - i;
       if(stamp<0) continue;
 
       uiTime = stamp & LAGAND;
@@ -677,7 +676,7 @@ bool_t sv_handlePacket(Server_t * ss, ENetEvent *event)
     cnt++;
     }
     what = net_packet_readUint32();
-    when = gs->wld_frame + CData.GOrder.lag;
+    when = ups_loops + CData.GOrder.lag;
     GOrder.what[whichorder] = what;
     GOrder.when[whichorder] = when;
 
@@ -795,7 +794,7 @@ void CServer_unbufferLatches(Server_t * ss)
   if(!sv_Started()) return;
 
   // Copy the latches
-  uiTime = gs->wld_frame & LAGAND;
+  uiTime = ups_loops & LAGAND;
   for (chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++)
   {
     if( !ACTIVE_CHR(gs->ChrList, chr_cnt) ) continue;

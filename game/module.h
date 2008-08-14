@@ -49,7 +49,7 @@ struct s_import_info
   OBJ_REF object;
   int     player;
 
-  int     amount;
+  size_t  amount;
   int     min_pla;
   int     max_pla;
 
@@ -119,8 +119,10 @@ struct sModState
   bool_t       rts_control;                // Play as a real-time stragedy? BAD REMOVE
   bool_t       beat;                       // Show Module Ended text?
 
-  IMPORT_INFO import;
-
+  int    import_amount;
+  int    import_min_pla;
+  int    import_max_pla;
+  bool_t import_valid;
 };
 typedef struct sModState ModState_t;
 

@@ -46,7 +46,7 @@
 #include "egoboo_types.inl"
 
 
-Uint16 particletexture;                            // All in one bitmap
+Uint16 particletexture = MAXTEXTURE;     // All in one bitmap
 
 static PRT_REF _prt_spawn( PRT_SPAWN_INFO si, bool_t activate );
 
@@ -270,7 +270,7 @@ PRT_REF PrtList_get_free( Game_t * gs, bool_t is_critical )
   if(INVALID_PRT == iprt && is_critical)
   {
     iprt = PrtHeap_getFree( &(gs->PrtHeap), INVALID_PRT );
-    
+
     if( INVALID_PRT == iprt )
     {
       // Gotta find one, so go through the list
@@ -1198,7 +1198,7 @@ void move_particles( Game_t * gs, float dUpdate )
    pprt->level = 0;
    fan = mesh_get_fan( pmesh, pprt->ori.pos );
    pprt->onwhichfan = fan;
-   pprt->level = ( INVALID_FAN == fan ) ? 0 : mesh_get_level( &(pmesh->Mem), fan,pprt->ori.pos.x,pprt->ori.pos.y, bfalse, &(gs->water) );
+   pprt->level = ( INVALID_FAN == fan ) ? 0 : mesh_get_level( &(pmesh->Mem), fan,pprt->ori.pos.x,pprt->ori.pos.y, bfalse, &(gs->Water) );
 
     // To make it easier
     pip =pprt->pip;
@@ -1308,9 +1308,9 @@ void move_particles( Game_t * gs, float dUpdate )
 
 
     // Check underwater
-    if (pprt->ori.pos.z < gs->water.douselevel && mesh_has_some_bits( pmesh->Mem.tilelst,pprt->onwhichfan, MPDFX_WATER ) && piplst[pip].endwater )
+    if (pprt->ori.pos.z < gs->Water.douselevel && mesh_has_some_bits( pmesh->Mem.tilelst,pprt->onwhichfan, MPDFX_WATER ) && piplst[pip].endwater )
     {
-      vect3 prt_pos = {prtlst[iprt].ori.pos.x, pprt->ori.pos.y, gs->water.surfacelevel};
+      vect3 prt_pos = {prtlst[iprt].ori.pos.x, pprt->ori.pos.y, gs->Water.surfacelevel};
       vect3 prt_vel = {0, 0, 0};
 
       // Splash for particles is just a ripple
@@ -1383,7 +1383,8 @@ void setup_particles( Game_t * gs )
 {
   // ZZ> This function sets up particle data
 
-  particletexture = 0;
+  // re-load the particle texture from ./basicdat
+  load_particle_texture( gs, NULL );
 
   // Reset the allocation table
   PrtList_new(gs);
@@ -2288,7 +2289,7 @@ bool_t PrtHeap_reset ( PrtHeap_t * pheap )
   pheap->free_count = PRTLST_COUNT;
   pheap->used_count = 0;
 
-  PROFILE_END2( PrtHeap ); 
+  PROFILE_END2( PrtHeap );
 
   return btrue;
 };
@@ -2342,7 +2343,7 @@ PRT_REF PrtHeap_iterateUsed( PrtHeap_t * pheap, int * index )
   (*index)++;
   ret = pheap->used_list[*index];
 
-  PROFILE_END2( PrtHeap ); 
+  PROFILE_END2( PrtHeap );
 
   { PROFILE_END2( PrtHeap ); return ret; }
 };
@@ -2359,7 +2360,7 @@ bool_t  PrtHeap_addUsed( PrtHeap_t * pheap, PRT_REF ref )
 
   for(i=0; i<pheap->used_count; i++)
   {
-    if(pheap->used_list[i] == ref) { PROFILE_END2( PrtHeap ); return btrue; } 
+    if(pheap->used_list[i] == ref) { PROFILE_END2( PrtHeap ); return btrue; }
   };
 
   pheap->used_list[pheap->used_count] = ref;
@@ -2382,7 +2383,7 @@ bool_t  PrtHeap_addFree( PrtHeap_t * pheap, PRT_REF ref )
 
   for(i=0; i<pheap->free_count; i++)
   {
-    if(pheap->free_list[i] == ref) { PROFILE_END2( PrtHeap ); return btrue; } 
+    if(pheap->free_list[i] == ref) { PROFILE_END2( PrtHeap ); return btrue; }
   };
 
   pheap->free_list[pheap->free_count] = ref;

@@ -1152,10 +1152,10 @@ bool_t attach_character_to_mount( Game_t * gs, CHR_REF chr_ref, CHR_REF mount_re
   size_t chrlst_size = CHRLST_COUNT;
 
   PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //size_t caplst_size = CAPLST_COUNT;
 
   PMad_t madlst      = gs->MadList;
-  size_t madlst_size = MADLST_COUNT;
+  //size_t madlst_size = MADLST_COUNT;
 
   int tnc;
 
@@ -1276,7 +1276,7 @@ CHR_REF pack_find_stack( Game_t * gs, CHR_REF item_ref, CHR_REF pack_chr_ref )
   size_t chrlst_size = CHRLST_COUNT;
 
   PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //size_t caplst_size = CAPLST_COUNT;
 
   CHR_REF inpack_ref;
   Uint16 id;
@@ -1422,7 +1422,7 @@ bool_t pack_add_item( Game_t * gs, CHR_REF item_ref, CHR_REF pack_chr_ref )
   size_t chrlst_size = CHRLST_COUNT;
 
   PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //size_t caplst_size = CAPLST_COUNT;
 
   Uint16 newammo;
   CHR_REF istack;
@@ -1674,9 +1674,9 @@ bool_t chr_grab_stuff( Game_t * gs, CHR_REF chr_ref, SLOT slot, bool_t people )
   size_t chrlst_size = CHRLST_COUNT;
 
   PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //size_t caplst_size = CAPLST_COUNT;
 
-  Mesh_t * pmesh     = Game_getMesh(gs); 
+  Mesh_t * pmesh     = Game_getMesh(gs);
 
   vect4 posa, point;
   vect3 posb, posc;
@@ -1960,13 +1960,13 @@ void chr_swipe( Game_t * gs, CHR_REF ichr, SLOT slot )
   size_t chrlst_size = CHRLST_COUNT;
 
   PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //size_t caplst_size = CAPLST_COUNT;
 
   PPrt_t prtlst      = gs->PrtList;
-  size_t prtlst_size = PRTLST_COUNT;
+  //size_t prtlst_size = PRTLST_COUNT;
 
   PPip_t piplst      = gs->PipList;
-  size_t piplst_size = PIPLST_COUNT;
+  //size_t piplst_size = PIPLST_COUNT;
 
   CHR_REF iweapon, ithrown;
   Chr_t * pchr, * pweapon, *pthrown;
@@ -2330,15 +2330,15 @@ bool_t chr_do_animation( Game_t * gs, float dUpdate, CHR_REF chr_ref, ChrEnviro_
 bool_t chr_do_environment(Game_t * gs, Chr_t * pchr, ChrEnviro_t * enviro)
 {
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //size_t caplst_size = CAPLST_COUNT;
 
   PMad_t madlst      = gs->MadList;
-  size_t madlst_size = MADLST_COUNT;
+  //size_t madlst_size = MADLST_COUNT;
 
-  Mesh_t * pmesh     = Game_getMesh(gs); 
+  Mesh_t * pmesh     = Game_getMesh(gs);
 
   float wt;
 
@@ -2387,7 +2387,7 @@ bool_t chr_do_environment(Game_t * gs, Chr_t * pchr, ChrEnviro_t * enviro)
       if ( enviro->buoyancy > 1.0f ) enviro->buoyancy = 1.0f;
     };
 
-    lerp = ( float )( gs->water.surfacelevel - pchr->ori.pos.z ) / ( float ) ( pchr->bmpdata.cv.z_max - pchr->bmpdata.cv.z_min );
+    lerp = ( float )( gs->Water.surfacelevel - pchr->ori.pos.z ) / ( float ) ( pchr->bmpdata.cv.z_max - pchr->bmpdata.cv.z_min );
     if ( lerp > 1.0f ) lerp = 1.0f;
     if ( lerp < 0.0f ) lerp = 0.0f;
 
@@ -2499,13 +2499,13 @@ bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dU
   size_t chrlst_size = CHRLST_COUNT;
 
   PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //size_t caplst_size = CAPLST_COUNT;
 
   PMad_t madlst      = gs->MadList;
-  size_t madlst_size = MADLST_COUNT;
+  //size_t madlst_size = MADLST_COUNT;
 
   PObj_t   objlst = gs->ObjList;
-  size_t objlst_size = OBJLST_COUNT;
+  //size_t objlst_size = OBJLST_COUNT;
 
   Chr_t        * pchr;
   PhysAccum_t  * paccum;
@@ -2976,7 +2976,7 @@ bool_t chr_do_physics( Game_t * gs, Chr_t * pchr, ChrEnviro_t * enviro, float dU
 {
   PhysAccum_t * paccum = &(pchr->accum);
 
-  Mesh_t * pmesh     = Game_getMesh(gs); 
+  Mesh_t * pmesh     = Game_getMesh(gs);
 
   if(!EKEY_PVALID(gs) || !EKEY_PVALID(pchr)  || !EKEY_PVALID(enviro)) return bfalse;
 
@@ -3005,7 +3005,7 @@ bool_t chr_do_physics( Game_t * gs, Chr_t * pchr, ChrEnviro_t * enviro, float dU
     if ( lerp_normal < 0.2f ) lerp_normal = 0.2f;
 
     // slippy hills make characters slide
-    if ( pchr->weight > 0 && gs->water.iswater && !enviro->inwater && INVALID_FAN != pchr->onwhichfan && mesh_has_some_bits( pmesh->Mem.tilelst, pchr->onwhichfan, MPDFX_SLIPPY ) )
+    if ( pchr->weight > 0 && gs->Water.iswater && !enviro->inwater && INVALID_FAN != pchr->onwhichfan && mesh_has_some_bits( pmesh->Mem.tilelst, pchr->onwhichfan, MPDFX_SLIPPY ) )
     {
       paccum->acc.x -= enviro->nrm.x * gs->phys.gravity * lerp_tang * gs->phys.hillslide;
       paccum->acc.y -= enviro->nrm.y * gs->phys.gravity * lerp_tang * gs->phys.hillslide;
@@ -3037,10 +3037,10 @@ void move_characters( Game_t * gs, float dUpdate )
   size_t chrlst_size = CHRLST_COUNT;
 
   PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //size_t caplst_size = CAPLST_COUNT;
 
   PMad_t madlst      = gs->MadList;
-  size_t madlst_size = MADLST_COUNT;
+  //size_t madlst_size = MADLST_COUNT;
 
   CHR_REF chr_ref;
 
@@ -3102,7 +3102,7 @@ bool_t PlaList_set_latch( Game_t * gs, Player_t * ppla )
   //     move around
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   float newx, newy;
   Uint16 turnsin;
@@ -3132,7 +3132,7 @@ bool_t PlaList_set_latch( Game_t * gs, Player_t * ppla )
   ppla->latch.y *= mous.sustain;
 
   // Mouse routines
-  if ( HAS_SOME_BITS( device, INBITS_MOUS ) && mous.on )
+  if ( HAS_SOME_BITS( device, INBITS_MOUS ) && mous.game )
   {
     // Movement
     newx = 0;
@@ -3401,7 +3401,7 @@ float get_one_level( Game_t * gs, CHR_REF chr_ref )
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  Mesh_t * pmesh     = Game_getMesh(gs); 
+  Mesh_t * pmesh     = Game_getMesh(gs);
 
   float level;
   CHR_REF platform;
@@ -3414,7 +3414,7 @@ float get_one_level( Game_t * gs, CHR_REF chr_ref )
 
   //get the base level
   chrlst[chr_ref].onwhichfan = mesh_get_fan( pmesh, chrlst[chr_ref].ori.pos );
-  level = mesh_get_level( &(pmesh->Mem), chrlst[chr_ref].onwhichfan, chrlst[chr_ref].ori.pos.x, chrlst[chr_ref].ori.pos.y, chrlst[chr_ref].prop.waterwalk, &(gs->water) );
+  level = mesh_get_level( &(pmesh->Mem), chrlst[chr_ref].onwhichfan, chrlst[chr_ref].ori.pos.x, chrlst[chr_ref].ori.pos.y, chrlst[chr_ref].prop.waterwalk, &(gs->Water) );
 
   // if there is a platform, choose whichever is higher
   platform = chr_get_onwhichplatform( chrlst, chrlst_size, chr_ref );
@@ -3465,9 +3465,9 @@ void make_onwhichfan( Game_t * gs )
   size_t chrlst_size = CHRLST_COUNT;
 
   PPrt_t prtlst      = gs->PrtList;
-  size_t prtlst_size = PRTLST_COUNT;
+  //size_t prtlst_size = PRTLST_COUNT;
 
-  Mesh_t * pmesh     = Game_getMesh(gs); 
+  Mesh_t * pmesh     = Game_getMesh(gs);
 
   CHR_REF chr_ref;
   int ripand;
@@ -3493,19 +3493,19 @@ void make_onwhichfan( Game_t * gs )
       if ( chrlst[chr_ref].ori.vel.z > 0.0f ) splashstrength *= 0.5;
       splashstrength *= ABS( chrlst[chr_ref].ori.vel.z ) / 10.0f;
       splashstrength *= chrlst[chr_ref].bumpstrength;
-      if ( chrlst[chr_ref].ori.pos.z < gs->water.surfacelevel )
+      if ( chrlst[chr_ref].ori.pos.z < gs->Water.surfacelevel )
       {
         is_inwater = btrue;
       }
 
       ripplesize = ( chrlst[chr_ref].bmpdata.calc_size + chrlst[chr_ref].bmpdata.calc_size_big ) * 0.5f;
-      if ( chrlst[chr_ref].bmpdata.cv.z_max < gs->water.surfacelevel )
+      if ( chrlst[chr_ref].bmpdata.cv.z_max < gs->Water.surfacelevel )
       {
         is_underwater = btrue;
       }
 
       // scale the ripple strength
-      ripplestrength = - ( chrlst[chr_ref].bmpdata.cv.z_min - gs->water.surfacelevel ) * ( chrlst[chr_ref].bmpdata.cv.z_max - gs->water.surfacelevel );
+      ripplestrength = - ( chrlst[chr_ref].bmpdata.cv.z_min - gs->Water.surfacelevel ) * ( chrlst[chr_ref].bmpdata.cv.z_max - gs->Water.surfacelevel );
       ripplestrength /= 0.75f * chrlst[chr_ref].bmpdata.calc_height * chrlst[chr_ref].bmpdata.calc_height;
       ripplestrength *= ripplesize / 37.5f * chrlst[chr_ref].bumpstrength;
       ripplestrength = MAX( 0.0f, ripplestrength );
@@ -3514,7 +3514,7 @@ void make_onwhichfan( Game_t * gs )
     // splash stuff
     if ( chrlst[chr_ref].inwater != is_inwater && splashstrength > 0.1f )
     {
-      vect3 prt_pos = {chrlst[chr_ref].ori.pos.x, chrlst[chr_ref].ori.pos.y, gs->water.surfacelevel + RAISE};
+      vect3 prt_pos = {chrlst[chr_ref].ori.pos.x, chrlst[chr_ref].ori.pos.y, gs->Water.surfacelevel + RAISE};
       vect3 prt_vel = {0,0,0};
       PRT_REF prt_index;
 
@@ -3541,7 +3541,7 @@ void make_onwhichfan( Game_t * gs )
         }
 
         chrlst[chr_ref].inwater = is_inwater;
-        if ( gs->water.iswater && is_inwater )
+        if ( gs->Water.iswater && is_inwater )
         {
           chrlst[chr_ref].aistate.alert |= ALERT_INWATER;
         }
@@ -3552,9 +3552,9 @@ void make_onwhichfan( Game_t * gs )
       // Ripples
       ripand = ((( int ) chrlst[chr_ref].ori.vel.x ) != 0 ) | ((( int ) chrlst[chr_ref].ori.vel.y ) != 0 );
       ripand = RIPPLEAND >> ripand;
-      if ( 0 == ( gs->wld_frame&ripand ) )
+      if ( 0 == (ups_loops & ripand) )
       {
-        vect3 prt_pos = {chrlst[chr_ref].ori.pos.x, chrlst[chr_ref].ori.pos.y, gs->water.surfacelevel};
+        vect3 prt_pos = {chrlst[chr_ref].ori.pos.x, chrlst[chr_ref].ori.pos.y, gs->Water.surfacelevel};
         vect3 prt_vel = {0,0,0};
         PRT_REF prt_index;
 
@@ -3583,7 +3583,7 @@ void make_onwhichfan( Game_t * gs )
     }
 
     // damage tile stuff
-    if ( mesh_has_some_bits( pmesh->Mem.tilelst, chrlst[chr_ref].onwhichfan, MPDFX_DAMAGE ) && chrlst[chr_ref].ori.pos.z <= gs->water.surfacelevel + DAMAGERAISE )
+    if ( mesh_has_some_bits( pmesh->Mem.tilelst, chrlst[chr_ref].onwhichfan, MPDFX_DAMAGE ) && chrlst[chr_ref].ori.pos.z <= gs->Water.surfacelevel + DAMAGERAISE )
     {
       Uint8 loc_damagemodifier;
       CHR_REF imount;
@@ -3617,7 +3617,7 @@ void make_onwhichfan( Game_t * gs )
           chrlst[chr_ref].damagetime = DELAY_DAMAGETILE;
         }
 
-        if ( INVALID_PIP != GTile_Dam.parttype && ( gs->wld_frame&GTile_Dam.partand ) == 0 )
+        if ( INVALID_PIP != GTile_Dam.parttype && 0 == ( ups_loops & GTile_Dam.partand ) )
         {
           vect3 prt_vel = {0,0,0};
           prt_spawn( gs, 1.0f, chrlst[chr_ref].ori.pos, prt_vel,
@@ -3628,8 +3628,10 @@ void make_onwhichfan( Game_t * gs )
 
       if ( chrlst[chr_ref].reaffirmdamagetype == GTile_Dam.type )
       {
-        if (( gs->wld_frame&TILEREAFFIRMAND ) == 0 )
+        if (0 == ( ups_loops & TILEREAFFIRMAND ))
+        {
           reaffirm_attached_particles( gs, chr_ref );
+        }
       }
     }
 
@@ -3644,7 +3646,7 @@ bool_t remove_from_platform( Game_t * gs, CHR_REF object_ref )
   size_t chrlst_size = CHRLST_COUNT;
 
   PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //size_t caplst_size = CAPLST_COUNT;
 
   CHR_REF platform;
   if ( !ACTIVE_CHR( chrlst, object_ref ) ) return bfalse;
@@ -3670,10 +3672,10 @@ bool_t remove_from_platform( Game_t * gs, CHR_REF object_ref )
 bool_t attach_to_platform( Game_t * gs, CHR_REF object_ref, CHR_REF platform )
 {
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //size_t caplst_size = CAPLST_COUNT;
 
   remove_from_platform( gs, object_ref );
 
@@ -3713,7 +3715,7 @@ void fill_bumplists(Game_t * gs)
   size_t chrlst_size = CHRLST_COUNT;
 
   PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //size_t caplst_size = CAPLST_COUNT;
 
   PPrt_t prtlst      = gs->PrtList;
   size_t prtlst_size = PRTLST_COUNT;
@@ -3778,11 +3780,12 @@ void fill_bumplists(Game_t * gs)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t find_collision_volume( vect3 * ppa, CVolume_t * pva, vect3 * ppb, CVolume_t * pvb, bool_t exclude_vert, CVolume_t * pcv)
+bool_t find_collision_volume_0( vect3 * ppa, CVolume_t * pva, vect3 * ppb, CVolume_t * pvb, bool_t exclude_vert, CVolume_t * pcv)
 {
-  bool_t retval = bfalse, bfound;
-  CVolume_t cv, tmp_cv;
-  float ftmp;
+  // BB > Find the simplest possible non-empty collision volume
+
+  bool_t retval = bfalse;
+  CVolume_t cv;
 
   if( NULL == ppa || NULL == pva || NULL == ppb || NULL == pvb ) return bfalse;
 
@@ -3810,6 +3813,30 @@ bool_t find_collision_volume( vect3 * ppa, CVolume_t * pva, vect3 * ppb, CVolume
   cv.z_min = MAX(pva->z_min + ppa->z, pvb->z_min + ppb->z);
   cv.z_max = MIN(pva->z_max + ppa->z, pvb->z_max + ppb->z);
   if(!exclude_vert && cv.z_min >= cv.z_max) return bfalse;
+
+  if(NULL != pcv)
+  {
+    *pcv = cv;
+  }
+
+  return btrue;
+}
+
+
+//--------------------------------------------------------------------------------------------
+bool_t find_collision_volume( vect3 * ppa, CVolume_t * pva, vect3 * ppb, CVolume_t * pvb, bool_t exclude_vert, CVolume_t * pcv)
+{
+  bool_t retval = bfalse, bfound;
+  CVolume_t cv, tmp_cv;
+  float ftmp;
+
+
+  //---- do the preliminary collision test ----
+
+  if( !find_collision_volume_0(ppa, pva, ppb, pvb, exclude_vert, &cv) )
+  {
+    return bfalse;
+  };
 
   //---- limit the collision volume ----
 
@@ -4046,7 +4073,7 @@ bool_t chr_is_inside( Game_t * gs, CHR_REF chra_ref, float lerp, CHR_REF chrb_re
   //      Abstraction of the old algorithm to see whether a character cpold be "above" another
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   float ftmp;
   BData_t * ba, * bb;
@@ -4089,7 +4116,7 @@ bool_t chr_detect_collision( Game_t * gs, CHR_REF chra_ref, CHR_REF chrb_ref, bo
   // BB > use the bounding boxes to estimate whether a collision has occurred.
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   bool_t retval = bfalse;
 
@@ -4106,7 +4133,7 @@ bool_t chr_detect_collision( Game_t * gs, CHR_REF chra_ref, CHR_REF chrb_ref, bo
   }
 
   // find the simplest collision volume
-  return find_collision_volume( &(chrlst[chra_ref].ori.pos), &(chrlst[chra_ref].bmpdata.cv), &(chrlst[chrb_ref].ori.pos), &(chrlst[chrb_ref].bmpdata.cv), exclude_height, cv);
+  return find_collision_volume_0( &(chrlst[chra_ref].ori.pos), &(chrlst[chra_ref].bmpdata.cv), &(chrlst[chrb_ref].ori.pos), &(chrlst[chrb_ref].bmpdata.cv), exclude_height, cv);
 }
 
 
@@ -4122,7 +4149,7 @@ bool_t chr_do_collision( Game_t * gs, CHR_REF chra_ref, CHR_REF chrb_ref, bool_t
   //  the level is chosen by the global variable chrcollisionlevel
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   Chr_t * pchra, * pchrb;
 
@@ -4247,19 +4274,17 @@ bool_t chr_do_collision( Game_t * gs, CHR_REF chra_ref, CHR_REF chrb_ref, bool_t
 //--------------------------------------------------------------------------------------------
 bool_t prt_detect_collision( Game_t * gs, CHR_REF chra_ref, PRT_REF prtb, bool_t exclude_height )
 {
-  PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
-
+  PChr_t chrlst = gs->ChrList;
   PPrt_t prtlst = gs->PrtList;
 
-  return find_collision_volume( &(chrlst[chra_ref].ori.pos), &(chrlst[chra_ref].bmpdata.cv), &(prtlst[prtb].ori.pos), &(prtlst[prtb].bmpdata.cv), bfalse, NULL );
+  return find_collision_volume_0( &(chrlst[chra_ref].ori.pos), &(chrlst[chra_ref].bmpdata.cv), &(prtlst[prtb].ori.pos), &(prtlst[prtb].bmpdata.cv), bfalse, NULL );
 }
 
 //--------------------------------------------------------------------------------------------
 bool_t prt_do_collision( Game_t * gs, CHR_REF chra_ref, PRT_REF prtb_ref, bool_t exclude_height )
 {
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   PPrt_t prtlst = gs->PrtList;
 
@@ -4297,6 +4322,7 @@ bool_t prt_do_collision( Game_t * gs, CHR_REF chra_ref, PRT_REF prtb_ref, bool_t
 }
 
 //--------------------------------------------------------------------------------------------
+#define COLLISION_HASH_NODES (CHR_MAX_COLLISIONS*2)
 void do_bumping( Game_t * gs, float dUpdate )
 {
   // ZZ> This function sets handles characters hitting other characters or particles
@@ -4307,12 +4333,12 @@ void do_bumping( Game_t * gs, float dUpdate )
   CoData_t   * d;
 
   // collision data
-  int    cdata_count = 0;
+  int      cdata_count = 0;
   CoData_t cdata[CHR_MAX_COLLISIONS];
 
   // collision data hash nodes
   int    hn_count = 0;
-  HashNode_t hnlst[CHR_MAX_COLLISIONS];
+  HashNode_t hnlst[COLLISION_HASH_NODES];
 
   Uint32  blnode_a, blnode_b;
   CHR_REF ichra, ichrb;
@@ -4322,22 +4348,22 @@ void do_bumping( Game_t * gs, float dUpdate )
 
   float loc_platkeep, loc_platascend, loc_platstick;
 
-  Mesh_t * pmesh     = Game_getMesh(gs); 
+  Mesh_t * pmesh     = Game_getMesh(gs);
 
   MeshInfo_t * mi     = &(pmesh->Info);
   BUMPLIST   * pbump  = &(mi->bumplist);
 
-  PChr_t chrlst        = gs->ChrList;
+  PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
   PPrt_t prtlst        = gs->PrtList;
-  size_t prtlst_size = PRTLST_COUNT;
+  //size_t prtlst_size = PRTLST_COUNT;
 
   PPip_t piplst      = gs->PipList;
-  size_t piplst_size = PIPLST_COUNT;
+  //size_t piplst_size = PIPLST_COUNT;
 
   PEnc enclst        = gs->EncList;
-  size_t enclst_size = ENCLST_COUNT;
+  //size_t enclst_size = ENCLST_COUNT;
 
 
   loc_platascend = pow( PLATASCEND, 1.0 / dUpdate );
@@ -4458,6 +4484,7 @@ void do_bumping( Game_t * gs, float dUpdate )
           if(!found)
           {
             // pick a free collision data
+            assert(cdata_count < CHR_MAX_COLLISIONS);
             d = cdata + cdata_count;
             cdata_count++;
 
@@ -4467,6 +4494,7 @@ void do_bumping( Game_t * gs, float dUpdate )
             d->prtb = INVALID_PRT;
 
             // generate a new hash node
+            assert(hn_count < COLLISION_HASH_NODES);
             n = hnlst + hn_count;
             hn_count++;
             HashNode_new(n, (void*)d);
@@ -4549,6 +4577,7 @@ void do_bumping( Game_t * gs, float dUpdate )
           if(!found)
           {
             // pick a free collision data
+            assert(cdata_count < CHR_MAX_COLLISIONS);
             d = cdata + cdata_count;
             cdata_count++;
 
@@ -4558,6 +4587,7 @@ void do_bumping( Game_t * gs, float dUpdate )
             d->prtb = iprtb;
 
             // generate a new hash node
+            assert(hn_count < COLLISION_HASH_NODES);
             n = hnlst + hn_count;
             hn_count++;
             HashNode_new(n, (void*)d);
@@ -5250,7 +5280,7 @@ void do_bumping( Game_t * gs, float dUpdate )
                     }
                   }
 
-                  if (( gs->wld_frame&31 ) == 0 && prt_attached == ichra )
+                  if ( 0 == ( ups_loops & 31 ) && prt_attached == ichra )
                   {
                     // Attached iprtb damage ( Burning )
                     if ( piplst[pip].xyvel.ibase == 0 )
@@ -5380,7 +5410,7 @@ void stat_return( Game_t * gs, float dUpdate )
   size_t chrlst_size = CHRLST_COUNT;
 
   PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //size_t caplst_size = CAPLST_COUNT;
 
   PEnc enclst      = gs->EncList;
   size_t enclst_size = ENCLST_COUNT;
@@ -5534,19 +5564,19 @@ void pit_kill( Game_t * gs, float dUpdate )
   size_t prtlst_size = PRTLST_COUNT;
 
   PPip_t piplst      = gs->PipList;
-  size_t piplst_size = PIPLST_COUNT;
+  //size_t piplst_size = PIPLST_COUNT;
 
 
   PRT_REF prt_cnt;
   CHR_REF chr_cnt;
 
-  if ( gs->pitskill )
+  if ( gs->pits_kill )
   {
-    if ( gs->pit_clock > 19 )
+    if ( gs->pits_clock > 19 )
     {
-      gs->pit_clock = 0;
+      gs->pits_clock = 0;
 
-      // Kill any particles that fell in a pit, if they die in water...
+      // Kill any particles that fell in a pit, if they die in Water...
 
       for ( prt_cnt = 0; prt_cnt < prtlst_size; prt_cnt++ )
       {
@@ -5578,7 +5608,7 @@ void pit_kill( Game_t * gs, float dUpdate )
     }
     else
     {
-      gs->pit_clock += dUpdate;
+      gs->pits_clock += dUpdate;
     }
   }
 }
@@ -5589,7 +5619,7 @@ void reset_players( Game_t * gs )
   // ZZ> This function clears the player list data
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
 
   // Reset the local data stuff
@@ -5618,7 +5648,7 @@ void resize_characters( Game_t * gs, float dUpdate )
   size_t chrlst_size = CHRLST_COUNT;
 
   PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //size_t caplst_size = CAPLST_COUNT;
 
   CHR_REF chr_ref;
 
@@ -5706,7 +5736,7 @@ void export_one_character_name( Game_t * gs, char *szSaveName, CHR_REF chr_ref )
   // ZZ> This function makes the "NAMING.TXT" file for the character
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   FILE* filewrite;
   OBJ_REF profile;
@@ -5733,13 +5763,13 @@ void export_one_character_profile( Game_t * gs, char *szSaveName, CHR_REF ichr )
   //     it is assumed that all enchantments have been done away with
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //size_t caplst_size = CAPLST_COUNT;
 
   PObj_t   objlst = gs->ObjList;
-  size_t objlst_size = OBJLST_COUNT;
+  //size_t objlst_size = OBJLST_COUNT;
 
   FILE* filewrite;
   int damagetype, iskin;
@@ -6023,7 +6053,7 @@ void export_one_character_skin( Game_t * gs, char *szSaveName, CHR_REF ichr )
   // ZZ> This function creates a "SKIN.TXT" file for the given character.
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   FILE* filewrite;
   OBJ_REF profile;
@@ -6045,7 +6075,7 @@ void export_one_character_skin( Game_t * gs, char *szSaveName, CHR_REF ichr )
 void calc_cap_experience( Game_t * gs, CAP_REF icap )
 {
   PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //size_t caplst_size = CAPLST_COUNT;
 
   float statdebt, statperlevel;
 
@@ -6122,11 +6152,9 @@ OBJ_REF object_generate_index( Game_t * gs, char *szLoadName )
   iobj = fget_next_int( fileread );
   if ( iobj < 0 )
   {
-    retval = gs->modstate.import.object;
-    if ( INVALID_OBJ == retval )
-    {
-      log_error( "Object slot number %i is invalid. (%s) \n", iobj, szLoadName );
-    }
+    // This should not happen.
+    log_warning( "object_generate_index() called on %s (\"%s\")with negative index %i\n", CData.data_file, szLoadName, iobj );
+    iobj = INVALID_OBJ;
   }
   else
   {
@@ -6144,7 +6172,7 @@ CAP_REF CapList_load_one( Game_t * gs, const char * szObjectpath, const char *sz
   // ZZ> This function fills a character profile with data from "DATA.TXT"
 
   PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //size_t caplst_size = CAPLST_COUNT;
 
   FILE* fileread;
   int iskin, cnt;
@@ -6159,10 +6187,20 @@ CAP_REF CapList_load_one( Game_t * gs, const char * szObjectpath, const char *sz
 
   // Open the file
   fileread = fs_fileOpen( PRI_NONE, "CapList_load_one()", inherit_fname(szObjectpath, szObjectname, CData.data_file), "r");
-  if ( NULL == fileread  )
+  if ( NULL == fileread )
   {
-    // The data file wasn't found
-    log_error( "Data.txt could not be correctly read! (%s) \n", szLoadname );
+    if( irequest < MAXIMPORT )
+    {
+      // an import directory wasn't found. no big deal
+      //log_warning( "CapList_load_one() - \n\t%s could not be correctly read for import. (%s) \n", szLoadname );
+    }
+    else
+    {
+      // A data file for an object specified in spawn.txt was not found.
+      // This used to make the game halt. That is a bit extreme... I'll just have it warn you! :)
+      log_warning( "CapList_load_one() - \n\t%s could not be correctly read. (\"%s\":%i) \n", CData.data_file, szLoadname, irequest );
+    }
+
     return INVALID_CAP;
   }
 
@@ -6557,10 +6595,10 @@ bool_t check_skills( Game_t * gs, CHR_REF who, Uint32 whichskill )
   // and bfalse if not. Also checks Skill expansions.
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //size_t caplst_size = CAPLST_COUNT;
 
   bool_t result = bfalse;
 
@@ -7056,7 +7094,7 @@ bool_t chr_calculate_bumpers_1( Game_t * gs, Chr_t * pchr )
   CVolume_t cv;
 
   PObj_t objlst     = gs->ObjList;
-  size_t  objlst_size = OBJLST_COUNT;
+  //size_t  objlst_size = OBJLST_COUNT;
 
   OBJ_REF iobj;
   Obj_t  * pobj;
@@ -7272,7 +7310,7 @@ bool_t chr_calculate_bumpers_2( Game_t * gs, Chr_t * pchr, vect3 * vrt_ary)
   CVolume_t cv;
 
   PObj_t objlst     = gs->ObjList;
-  size_t  objlst_size = OBJLST_COUNT;
+  //size_t  objlst_size = OBJLST_COUNT;
 
   OBJ_REF iobj;
   Obj_t  * pobj;
@@ -7418,7 +7456,7 @@ bool_t chr_calculate_bumpers_3( Game_t * gs, Chr_t * pchr, CVolume_Tree_t * cv_t
   CVolume_t *pcv, cv_node[8];
 
   PObj_t objlst     = gs->ObjList;
-  size_t  objlst_size = OBJLST_COUNT;
+  //size_t  objlst_size = OBJLST_COUNT;
 
   OBJ_REF iobj;
   Obj_t  * pobj;
@@ -7658,10 +7696,10 @@ void damage_character( Game_t * gs, CHR_REF chr_ref, Uint16 direction,
   size_t chrlst_size = CHRLST_COUNT;
 
   PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //size_t caplst_size = CAPLST_COUNT;
 
   PMad_t madlst      = gs->MadList;
-  size_t madlst_size = MADLST_COUNT;
+  //size_t madlst_size = MADLST_COUNT;
 
   CHR_REF chr_tnc;
   Uint16 tnc;
@@ -8118,7 +8156,7 @@ void drop_money( Game_t * gs, CHR_REF ichr, Uint16 money )
   // ZZ> This function drops some of a ichr's money
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   Uint16 huns, tfives, fives, ones, cnt;
 
@@ -8246,14 +8284,14 @@ CHR_REF ChrList_reserve(CHR_SPAWN_INFO * psi)
   pcap = ObjList_getPCap(gs, psi->iobj);
   if( NULL == pcap )
   {
-    log_debug( "WARNING: chr_spawn_info_init() - \n\tinvalid request : character profile (cap) doesn't exist\n" );
+    log_debug( "WARNING: chr_spawn_info_init() - \n\tinvalid request : character profile (cap) == %d doesn't exist\n", psi->iobj );
     return INVALID_CHR;
   }
 
   pmad = ObjList_getPMad(gs, psi->iobj);
   if( NULL == pmad )
   {
-    log_debug( "WARNING: chr_spawn_info_init() - \n\tinvalid request : character profile (mad) doesn't exist\n" );
+    log_debug( "WARNING: chr_spawn_info_init() - \n\tinvalid request : character profile (mad) == %d  doesn't exist\n", psi->iobj  );
     return INVALID_CHR;
   }
 
@@ -8325,13 +8363,13 @@ CHR_REF _chr_spawn( CHR_SPAWN_INFO si, bool_t activate )
   size_t chrlst_size = CHRLST_COUNT;
 
   PObj_t objlst     = si.gs->ObjList;
-  size_t  objlst_size = OBJLST_COUNT;
+  //size_t  objlst_size = OBJLST_COUNT;
 
   PCap_t caplst      = si.gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //size_t caplst_size = CAPLST_COUNT;
 
   PMad_t madlst      = si.gs->MadList;
-  size_t madlst_size = MADLST_COUNT;
+  //size_t madlst_size = MADLST_COUNT;
 
   Mesh_t     * pmesh = Game_getMesh(si.gs);
 
@@ -8509,7 +8547,7 @@ CHR_REF _chr_spawn( CHR_SPAWN_INFO si, bool_t activate )
   pchr->ori.pos.y   = si.pos.y;
   pchr->ori.turn_lr = si.facing;
   pchr->onwhichfan = mesh_get_fan( pmesh, pchr->ori.pos );
-  pchr->level = mesh_get_level( &(pmesh->Mem), pchr->onwhichfan, pchr->ori.pos.x, pchr->ori.pos.y, pchr->prop.waterwalk, &(si.gs->water) ) + RAISE;
+  pchr->level = mesh_get_level( &(pmesh->Mem), pchr->onwhichfan, pchr->ori.pos.x, pchr->ori.pos.y, pchr->prop.waterwalk, &(si.gs->Water) ) + RAISE;
   if ( si.pos.z < pchr->level ) si.pos.z = pchr->level;
   pchr->ori.pos.z = si.pos.z;
 
@@ -8584,7 +8622,7 @@ void respawn_character( Game_t * gs, CHR_REF ichr )
   size_t chrlst_size = CHRLST_COUNT;
 
   PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //size_t caplst_size = CAPLST_COUNT;
 
   CHR_REF item;
   OBJ_REF profile;
@@ -8719,10 +8757,10 @@ void signal_idsz_index( Game_t * gs, Uint32 priority, Uint32 data, IDSZ idsz, ID
   // ZZ> This function issues an data to all characters with the a matching special IDSZ
 
   PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //size_t caplst_size = CAPLST_COUNT;
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   Uint8 counter;
   CHR_REF chr_cnt;
@@ -10283,7 +10321,7 @@ bool_t chr_is_over_water( Game_t * gs, CHR_REF chr_cnt )
   if ( ACTIVE_CHR(gs->ChrList, chr_cnt) )
   {
     fan = mesh_get_fan( pmesh, gs->ChrList[chr_cnt].ori.pos );
-    if ( mesh_has_some_bits( pmesh->Mem.tilelst, fan, MPDFX_WATER ) ) 
+    if ( mesh_has_some_bits( pmesh->Mem.tilelst, fan, MPDFX_WATER ) )
     {
       return ( INVALID_FAN != fan );
     }

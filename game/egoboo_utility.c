@@ -920,9 +920,9 @@ const char * inherit_fname(const char * szObjPath, const char * szObject, const 
   }
 
   strcpy(loc_fname, szObjPath);
-  str_append_slash(ret_fname, sizeof(ret_fname));
+  str_append_slash(loc_fname, sizeof(loc_fname));
   strcat(loc_fname, szObject);
-  str_append_slash( loc_fname, sizeof( loc_fname ) );
+  str_append_slash( loc_fname, sizeof(loc_fname) );
   strcat(loc_fname, "inherit.txt");
   loc_pfile = fs_fileOpen(PRI_NONE, "loc_fname()", loc_fname, "r");
   if(NULL == loc_pfile)
@@ -972,6 +972,8 @@ const char * inherit_fname(const char * szObjPath, const char * szObject, const 
   {
     const char * name_ptr = NULL;
 
+    found = bfalse;
+
     // the shared resources have the CRC second so that they can be grouped by type
     sprintf(ret_fname, "*%u%s", icrc, itype);
 
@@ -984,6 +986,7 @@ const char * inherit_fname(const char * szObjPath, const char * szObject, const 
       if(NULL != name_ptr)
       {
         sprintf(ret_fname, "objects" SLASH_STRING "_sounds" SLASH_STRING "%s", name_ptr);
+        found = btrue;
       }
 
       fs_findClose(&fs_finfo);
@@ -997,6 +1000,7 @@ const char * inherit_fname(const char * szObjPath, const char * szObject, const 
       if(NULL != name_ptr)
       {
         sprintf(ret_fname, "objects" SLASH_STRING "_icons" SLASH_STRING "%s", name_ptr);
+        found = btrue;
       }
 
       fs_findClose(&fs_finfo);
@@ -1010,6 +1014,7 @@ const char * inherit_fname(const char * szObjPath, const char * szObject, const 
       if(NULL != name_ptr)
       {
         sprintf(ret_fname, "objects" SLASH_STRING "_particles" SLASH_STRING "%s", name_ptr);
+        found = btrue;
       }
 
       fs_findClose(&fs_finfo);
@@ -1031,13 +1036,18 @@ const char * inherit_fname(const char * szObjPath, const char * szObject, const 
       if(NULL != name_ptr)
       {
         sprintf(ret_fname, "%s%s", tmpfname, name_ptr);
+        found = btrue;
       }
 
       fs_findClose(&fs_finfo);
     }
+
+    if(!found)
+    {
+      log_warning("Could not find file <\"%s\", \"%s\", \"%s\"> with CRC %s\n", szObjPath, szObject, szFname, ret_fname );
+    }
+
   };
-
-
 
 
   fs_fileClose(loc_pfile);

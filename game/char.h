@@ -226,7 +226,14 @@ enum e_idsz_index
 };
 typedef enum e_idsz_index IDSZ_INDEX;
 
+// import information
 #define MAXNUMINPACK        6                       // Max number of items to carry in pack
+#define MAXHELDITEMS        2
+
+#define MAXIMPORTPERCHAR    (1 + MAXNUMINPACK + MAXHELDITEMS)  // Max number of items to be imported per character
+#define MAXIMPORTCHAR        4
+#define MAXIMPORT           (MAXIMPORTCHAR*MAXIMPORTPERCHAR) // Number of subdirs in IMPORT directory
+
 #define LOWSTAT             INT_TO_FP8(  1)      // Worst...
 #define PERFECTSTAT         INT_TO_FP8( 75)      // Perfect...
 #define HIGHSTAT            INT_TO_FP8( 99)      // Absolute MAX strength...
@@ -993,7 +1000,7 @@ void signal_idsz_index( struct sGame * gs, Uint32 priority, Uint32 order, IDSZ i
 
 bool_t ai_state_advance_wp(AI_STATE * a, bool_t do_atlastwaypoint);
 
-#define CHR_MAX_COLLISIONS 512
+#define CHR_MAX_COLLISIONS 512*16
 extern int chr_collisions;
 
 CHR_REF chr_spawn( struct sGame * gs,  vect3 pos, vect3 vel, OBJ_REF iobj, TEAM_REF team,

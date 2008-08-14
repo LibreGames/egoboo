@@ -184,7 +184,7 @@ double ClockState_guessFrameDuration( ClockState_t * cs )
 {
   double time = 0;
 
-  if( cs->frameHistorySize == 1 ) 
+  if( cs->frameHistorySize == 1 )
   {
     time = cs->frameHistory[0];
   }

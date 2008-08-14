@@ -210,9 +210,9 @@ const char *fs_findFirstFile( FS_FIND_INFO * i, const char *searchDir, const cha
   }
   else
   {
-    // possibly we should use 
+    // possibly we should use
     // str_append_slash( searchSpec, MAX(0, MAX_PATH - szlen) );
-    // here if searchBody is defined, but since this case doen't occur 
+    // here if searchBody is defined, but since this case doen't occur
     // it is hard to tell what is natural...
     strncat( searchSpec, searchExtension, MAX(0, MAX_PATH - szlen) );
     szlen = strlen( searchSpec );

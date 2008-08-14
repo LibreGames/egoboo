@@ -541,7 +541,7 @@ void CClient_talkToHost(Client_t * cs)
   if (gs->wld_frame > STARTTALK && cs->loc_pla_count>0)
   {
     CHR_REF ichr;
-    Uint32 stamp = gs->wld_frame;
+    Uint32 stamp = ups_loops;
     Uint32 time = (stamp + 1) & LAGAND;
 
     net_startNewSysPacket(&egopkt);
@@ -578,8 +578,8 @@ void CClient_unbufferLatches(Client_t * cs)
   Game_t * gs = cs->parent;
 
   // Copy the latches
-  stamp = gs->wld_frame;
-  uiTime  = stamp & LAGAND;
+  stamp  = ups_loops;
+  uiTime = stamp & LAGAND;
   for (chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++)
   {
     if( !ACTIVE_CHR(gs->ChrList, chr_cnt) ) continue;
@@ -835,7 +835,7 @@ bool_t cl_handlePacket(Client_t * cs, ENetEvent *event)
       net_logf("NET WARNING: net_handlePacket: OUT OF ORDER SYS_PACKET\n");
       outofsync = btrue;
     }
-    if (stamp <= gs->wld_frame)
+    if (stamp <= ups_loops)
     {
       net_logf("NET WARNING: net_handlePacket: LATE SYS_PACKET\n");
       outofsync = btrue;
@@ -940,7 +940,7 @@ void CClient_bufferLatches(Client_t * cs)
   PChr_t chrlst = gs->ChrList;
   PPla_t plalst = gs->PlaList;
 
-  stamp = gs->wld_frame + 1;
+  stamp = ups_loops + 1;
   uiTime = stamp & LAGAND;
   for (player = 0; player < PLALST_COUNT; player++)
   {
