@@ -1401,7 +1401,7 @@ Uint32 load_ai_script( ScriptInfo_t * slist, const char * szObjectpath, const ch
   //     returns bfalse if it fails to do so
 
   FILE * fileread;
-  char * loc_fname;
+  const char * loc_fname;
   Uint32 script_idx = AILST_COUNT;
 
   if(NULL == slist || slist->offset_count >= AILST_COUNT) return AILST_COUNT;
@@ -4928,7 +4928,7 @@ retval_t run_operand( Game_t * gs, Uint32 value, CHR_REF ichr )
         break;
 
       case VAR_XYDISTANCE:
-        iTmp = sqrt( pstate->tmpx * pstate->tmpx + pstate->tmpy * pstate->tmpy );
+        iTmp = sqrt( (float)(pstate->tmpx * pstate->tmpx + pstate->tmpy * pstate->tmpy) );
         break;
 
       case VAR_SELF_Z:

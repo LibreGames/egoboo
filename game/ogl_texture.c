@@ -78,7 +78,7 @@ bool_t GLtexture_delete( GLtexture * ptx )
 //--------------------------------------------------------------------------------------------
 GLtexture * GLtexture_create()
 {
-  GLtexture * ptx = malloc( sizeof(GLtexture) );
+  GLtexture * ptx = EGOBOO_NEW( GLtexture );
   ptx = GLtexture_new( ptx );
 
   if(NULL != ptx)

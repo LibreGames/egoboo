@@ -269,7 +269,7 @@ static void fnt_quit(void)
       TTF_CloseFont(pfnt->ttfFont);
     }
 
-    FREE(pfnt);
+    EGOBOO_DELETE(pfnt);
   }
 
   if(TTF_WasInit())
@@ -297,7 +297,7 @@ TTFont_t* fnt_loadFont( const char *fileName, int pointSize )
   }
 
   // Everything looks good
-  newFont = ( TTFont_t* ) calloc( 1, sizeof( TTFont_t ) );
+  newFont = EGOBOO_NEW( TTFont_t );
   newFont->ttfFont = ttfFont;
   newFont->texture = 0;
 
@@ -323,7 +323,7 @@ bool_t fnt_freeFont( TTFont_t *font )
   {
     if(NULL != pfnt->ttfFont) { TTF_CloseFont( pfnt->ttfFont); }
     glDeleteTextures( 1, &pfnt->texture );
-    FREE( font );
+    EGOBOO_DELETE( font );
   }
 
 
@@ -410,7 +410,7 @@ void fnt_drawTextBox( TTFont_t *font, const char *text, int x, int y,  int width
 
   // Split the passed in text into separate lines
   len = strlen( text );
-  buffer = (char*)calloc( len + 1, sizeof(char) );
+  buffer = EGOBOO_NEW_ARY( char, len + 1 );
   strncpy( buffer, text, len );
 
   // parse the text by lines
@@ -431,7 +431,7 @@ void fnt_drawTextBox( TTFont_t *font, const char *text, int x, int y,  int width
 
   } while ( VALID_CSTR(line_next) );
 
-  FREE( buffer );
+  EGOBOO_DELETE( buffer );
 
   if(0 != width && 0 != height)
   {
@@ -452,7 +452,7 @@ void fnt_getTextBoxSize( TTFont_t *font, const char *text, int spacing, int *wid
 
   // Split the passed in text into separate lines
   len = strlen( text );
-  buffer = (char*)calloc( len + 1, sizeof(char) );
+  buffer = EGOBOO_NEW_ARY( char, len + 1 );
   strncpy( buffer, text, len );
 
   line = strtok( buffer, "\n" );
@@ -465,7 +465,7 @@ void fnt_getTextBoxSize( TTFont_t *font, const char *text, int spacing, int *wid
 
     line = strtok( NULL, "\n" );
   }
-  FREE( buffer );
+  EGOBOO_DELETE( buffer );
 }
 
 //--------------------------------------------------------------------------------------------

@@ -780,7 +780,7 @@ void set_fan_light( int fanx, int fany, PRT_REF particle )
 
 
 //--------------------------------------------------------------------------------------------
-void do_dynalight()
+void do_dynalight(Game_t * gs)
 {
   // ZZ> This function does dynamic lighting of visible fans
 
@@ -790,16 +790,21 @@ void do_dynalight()
   float dist2;
   vect3 dif, nrm;
 
-  Game_t * gs = Graphics_requireGame(&gfxState);
+  Mesh_t * pmesh   = NULL;
+  MeshMem_t *  mm  = NULL;
 
-  Mesh_t * pmesh   = Game_getMesh(gs);
-  MeshMem_t *  mm = &(pmesh->Mem);
+  PPrt_t prtlst        = NULL;
+  size_t prtlst_size   = PRTLST_COUNT;
 
-  PPrt_t prtlst        = gs->PrtList;
-  size_t prtlst_size = PRTLST_COUNT;
-
-  PDLight dynalst      = gs->DLightList;
+  PDLight dynalst      = NULL;
   size_t  dynalst_size = MAXDYNA;
+
+  if(NULL == gs) gs = Graphics_requireGame( &gfxState );
+
+  pmesh   = Game_getMesh(gs);
+  mm      = &(pmesh->Mem);
+  prtlst  = gs->PrtList;
+  dynalst = gs->DLightList;
 
   // Don't need to do every frame
   if ( 0 != ( gfxState.fps_loops & 7 ) ) return;

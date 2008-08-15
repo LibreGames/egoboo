@@ -193,7 +193,7 @@ retval_t CClient_shutDown(Client_t * cs)
 //--------------------------------------------------------------------------------------------
 Client_t * CClient_create(Game_t * gs)
 {
-  Client_t * cs = (Client_t *)calloc(1, sizeof(Client_t));
+  Client_t * cs = EGOBOO_NEW(Client_t);
   return CClient_new(cs, gs);
 }
 
@@ -206,7 +206,7 @@ bool_t CClient_destroy(Client_t ** pcs)
   if( !EKEY_PVALID( (*pcs) ) ) return btrue;
 
   retval = CClient_delete(*pcs);
-  FREE( *pcs );
+  EGOBOO_DELETE( *pcs );
 
   return retval;
 }
@@ -900,7 +900,7 @@ void CClient_reset_latches(Client_t * cs)
 
   for(chr_cnt = 0; chr_cnt<CHRLST_COUNT; chr_cnt++)
   {
-    CClient_resetTimeLatches(cs, chr_cnt);
+    Client_resetTimeLatches(cs, chr_cnt);
   };
 
   cs->tlb.nextstamp = INVALID_TIMESTAMP;
@@ -909,7 +909,7 @@ void CClient_reset_latches(Client_t * cs)
 
 
 //--------------------------------------------------------------------------------------------
-void CClient_resetTimeLatches(Client_t * cs, CHR_REF ichr)
+void Client_resetTimeLatches(Client_t * cs, CHR_REF ichr)
 {
   int cnt;
   CHR_TIME_LATCH *ptl;
@@ -923,7 +923,7 @@ void CClient_resetTimeLatches(Client_t * cs, CHR_REF ichr)
     (*ptl)[cnt].valid   = bfalse;
     (*ptl)[cnt].stamp   = INVALID_TIMESTAMP;
 
-    CLatch_clear( &((*ptl)[cnt].latch) );
+    Latch_clear( &((*ptl)[cnt].latch) );
   }
 };
 

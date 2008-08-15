@@ -791,3 +791,12 @@ bool_t module_read_egomap_extra( Game_t * gs, const char * szModPath )
 
   return btrue;
 }
+
+//--------------------------------------------------------------------------------------------
+void release_map( Game_t * gs )
+{
+  // ZZ> This function releases all the map images
+
+  GLtexture_Release( &gs->TxMap );
+}
+

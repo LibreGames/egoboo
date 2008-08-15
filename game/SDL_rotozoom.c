@@ -15,6 +15,8 @@ LGPL (c) A. Schiffler
 
 #include "SDL_rotozoom.h"
 
+#include "egoboo_types.h"
+
 #define MAX(a,b)    (((a) > (b)) ? (a) : (b))
 #define MIN(a,b)    (((a) < (b)) ? (a) : (b))
 
@@ -55,10 +57,10 @@ int zoomSurfaceRGBA(SDL_Surface * src, SDL_Surface * dst, int smooth)
   /*
   * Allocate memory for row increments
   */
-  if ((sax = (Uint32 *) calloc((dst->w + 1), sizeof(Uint32))) == NULL) {
+  if ((sax = EGOBOO_NEW_ARY( Uint32, (dst->w + 1) )) == NULL) {
     return (-1);
   }
-  if ((say = (Uint32 *) calloc((dst->h + 1), sizeof(Uint32))) == NULL) {
+  if ((say = EGOBOO_NEW_ARY( Uint32, (dst->h + 1) )) == NULL) {
     free(sax);
     return (-1);
   }
@@ -231,10 +233,10 @@ int zoomSurfaceY(SDL_Surface * src, SDL_Surface * dst)
   /*
   * Allocate memory for row increments
   */
-  if ((sax = (Uint32 *) calloc(dst->w, sizeof(Uint32))) == NULL) {
+  if ((sax = EGOBOO_NEW_ARY( Uint32, dst->w )) == NULL) {
     return (-1);
   }
-  if ((say = (Uint32 *) calloc(dst->h, sizeof(Uint32))) == NULL) {
+  if ((say = EGOBOO_NEW_ARY( Uint32, dst->h )) == NULL) {
     if (sax != NULL) {
       free(sax);
     }

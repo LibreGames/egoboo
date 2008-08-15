@@ -80,14 +80,14 @@ MD2_Model_t* md2_load(const char * szFilename, MD2_Model_t* mdl)
   model->m_numSkins     = header.numSkins;
   model->m_numFrames    = header.numFrames;
 
-  model->m_texCoords = (MD2_TexCoord_t*)calloc( header.numTexCoords, sizeof(MD2_TexCoord_t) );
-  model->m_triangles = (MD2_Triangle_t*)calloc( header.numTriangles, sizeof(MD2_Triangle_t) );
-  model->m_skins     = (MD2_SkinName_t*)calloc( header.numSkins,     sizeof(MD2_SkinName_t) );
-  model->m_frames    = (MD2_Frame_t   *)calloc( header.numFrames ,   sizeof(MD2_Frame_t)    );
+  model->m_texCoords = EGOBOO_NEW_ARY( MD2_TexCoord_t, header.numTexCoords );
+  model->m_triangles = EGOBOO_NEW_ARY( MD2_Triangle_t, header.numTriangles );
+  model->m_skins     = EGOBOO_NEW_ARY( MD2_SkinName_t, header.numSkins );
+  model->m_frames    = EGOBOO_NEW_ARY( MD2_Frame_t, header.numFrames  );
 
   for (i = 0;i < header.numFrames; i++)
   {
-    model->m_frames[i].vertices = (MD2_Vertex_t*)calloc( header.numVertices, sizeof(MD2_Vertex_t) );
+    model->m_frames[i].vertices = EGOBOO_NEW_ARY( MD2_Vertex_t, header.numVertices );
   }
 
   // Load the texture coordinates from the file, normalizing them as we go
@@ -219,7 +219,7 @@ MD2_Model_t* md2_load(const char * szFilename, MD2_Model_t* mdl)
       }
 
       //allocate the data
-      cmd->data = (md2_gldata*)calloc( cmd->command_count, sizeof(md2_gldata) );
+      cmd->data = EGOBOO_NEW_ARY( md2_gldata, cmd->command_count );
 
       //read in the data
       fread(cmd->data, sizeof(md2_gldata), cmd->command_count, f);
@@ -294,7 +294,7 @@ void MD2_GLCommand_destruct(MD2_GLCommand_t * m)
     m->next = NULL;
   };
 
-  FREE(m->data);
+  EGOBOO_DELETE(m->data);
 };
 
 MD2_GLCommand_t * MD2_GLCommand_new()
@@ -302,7 +302,7 @@ MD2_GLCommand_t * MD2_GLCommand_new()
   MD2_GLCommand_t * m;
   //fprintf( stdout, "MD2_GLCommand_new()\n");
 
-  m = (MD2_GLCommand_t*)calloc(1, sizeof(MD2_GLCommand_t));
+  m = EGOBOO_NEW( MD2_GLCommand_t );
   MD2_GLCommand_construct(m);
   return m;
 };
@@ -310,7 +310,7 @@ MD2_GLCommand_t * MD2_GLCommand_new()
 MD2_GLCommand_t * MD2_GLCommand_new_vector(int n)
 {
   int i;
-  MD2_GLCommand_t * v = (MD2_GLCommand_t*)calloc( n, sizeof(MD2_GLCommand_t) );
+  MD2_GLCommand_t * v = EGOBOO_NEW_ARY( MD2_GLCommand_t, n );
   for(i=0; i<n; i++) MD2_GLCommand_construct(v + i);
   return v;
 }
@@ -319,7 +319,7 @@ void MD2_GLCommand_delete(MD2_GLCommand_t * m)
 {
   if(NULL ==m) return;
   MD2_GLCommand_destruct(m);
-  FREE(m);
+  EGOBOO_DELETE(m);
 };
 
 void MD2_GLCommand_delete_vector(MD2_GLCommand_t * v, int n)
@@ -327,7 +327,7 @@ void MD2_GLCommand_delete_vector(MD2_GLCommand_t * v, int n)
   int i;
   if(NULL ==v || 0 == n) return;
   for(i=0; i<n; i++) MD2_GLCommand_destruct(v + i);
-  FREE(v);
+  EGOBOO_DELETE(v);
 };
 
 
@@ -348,13 +348,13 @@ void md2_construct(MD2_Model_t * m)
 
 void md2_deallocate(MD2_Model_t * m)
 {
-  FREE( m->m_skins );
+  EGOBOO_DELETE( m->m_skins );
   m->m_numSkins = 0;
 
-  FREE(m->m_texCoords);
+  EGOBOO_DELETE(m->m_texCoords);
   m->m_numTexCoords = 0;
 
-  FREE(m->m_triangles);
+  EGOBOO_DELETE(m->m_triangles);
   m->m_numTriangles = 0;
 
   if( NULL != m->m_frames )
@@ -362,13 +362,13 @@ void md2_deallocate(MD2_Model_t * m)
     int i;
     for(i = 0;i < m->m_numFrames; i++)
     {
-      FREE(m->m_frames[i].vertices)
+      EGOBOO_DELETE(m->m_frames[i].vertices)
     }
-    FREE( m->m_frames );
+    EGOBOO_DELETE( m->m_frames );
     m->m_numFrames = 0;
   }
 
-  FREE(m->m_commands);
+  EGOBOO_DELETE(m->m_commands);
   m->m_numCommands = 0;
 
 };
@@ -384,7 +384,7 @@ MD2_Model_t * md2_new()
   MD2_Model_t * m;
 
   //fprintf( stdout, "MD2_GLCommand_new()\n");
-  m = (MD2_Model_t*)calloc( 1, sizeof(MD2_Model_t) );
+  m = EGOBOO_NEW( MD2_Model_t );
   md2_construct(m);
 
   return m;
@@ -393,7 +393,7 @@ MD2_Model_t * md2_new()
 MD2_Model_t * md2_new_vector(int n)
 {
   int i;
-  MD2_Model_t * v = (MD2_Model_t*)calloc( n, sizeof(MD2_Model_t) );
+  MD2_Model_t * v = EGOBOO_NEW_ARY( MD2_Model_t, n );
   for(i=0; i<n; i++) md2_construct(v + i);
   return v;
 }
@@ -402,7 +402,7 @@ void md2_delete(MD2_Model_t * m)
 {
   if(NULL ==m) return;
   md2_destruct(m);
-  FREE(m);
+  EGOBOO_DELETE(m);
 };
 
 void md2_delete_vector(MD2_Model_t * v, int n)
@@ -410,7 +410,7 @@ void md2_delete_vector(MD2_Model_t * v, int n)
   int i;
   if(NULL ==v || 0 == n) return;
   for(i=0; i<n; i++) md2_destruct(v + i);
-  FREE(v);
+  EGOBOO_DELETE(v);
 };
 
 

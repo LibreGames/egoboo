@@ -145,3 +145,4 @@ bool_t module_read_summary( char *szLoadName, ModSummary_t * ms );
 
 void ModInfo_clear_all_titleimages( MOD_INFO * mi_ary, size_t mi_count );
 
+void release_map(struct sGame * gs);

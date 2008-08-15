@@ -62,7 +62,7 @@ INLINE HashNode_t * HashNode_new(HashNode_t * n, void * data)
 //--------------------------------------------------------------------------------------------
 INLINE HashNode_t * HashNode_create(void * data)
 {
-  HashNode_t * n = calloc(1, sizeof(HashNode_t));
+  HashNode_t * n = EGOBOO_NEW( HashNode_t );
   if(NULL == n) return n;
 
   return HashNode_new(n, data);
@@ -77,7 +77,7 @@ INLINE bool_t HashNode_destroy(HashNode_t ** pn)
 
   retval = HashNode_delete(*pn);
 
-  FREE(*pn);
+  EGOBOO_DELETE(*pn);
 
   return retval;
 }
@@ -148,8 +148,8 @@ INLINE bool_t HashList_deallocate(HashList_t * lst)
   if(NULL == lst) return bfalse;
   if(0 == lst->allocated) return btrue;
 
-  FREE(lst->subcount);
-  FREE(lst->sublist);
+  EGOBOO_DELETE(lst->subcount);
+  EGOBOO_DELETE(lst->sublist);
   lst->allocated = 0;
 
   return btrue;
@@ -162,16 +162,16 @@ INLINE bool_t HashList_allocate(HashList_t * lst, int size)
 
   HashList_deallocate(lst);
 
-  lst->subcount = calloc(size, sizeof(int));
+  lst->subcount = EGOBOO_NEW_ARY(int, size);
   if(NULL == lst->subcount)
   {
     return bfalse;
   }
 
-  lst->sublist = calloc(size, sizeof(HashNode_t *));
+  lst->sublist = EGOBOO_NEW_ARY( HashNode_t *, size );
   if(NULL == lst->sublist)
   {
-    FREE(lst->subcount);
+    EGOBOO_DELETE(lst->subcount);
     return bfalse;
   }
 
@@ -203,10 +203,7 @@ INLINE bool_t HashList_delete(HashList_t * lst)
 //--------------------------------------------------------------------------------------------
 INLINE HashList_t * HashList_create(int size)
 {
-  HashList_t * lst = calloc(1, sizeof(HashList_t));
-  if(NULL == lst) return lst;
-
-  return HashList_new(lst, size);
+  return HashList_new( EGOBOO_NEW( HashList_t ), size);
 }
 
 //--------------------------------------------------------------------------------------------
@@ -218,7 +215,7 @@ INLINE bool_t HashList_destroy(HashList_t ** plst)
 
   retval = HashList_delete(*plst);
 
-  FREE(*plst);
+  EGOBOO_DELETE(*plst);
 
   return retval;
 }
@@ -257,14 +254,14 @@ INLINE egoboo_key_t * egoboo_key_create(Uint32 itype, void * pdata)
 
   egoboo_key_t * ptmp, * pkey;
 
-  pkey = calloc(1, sizeof(egoboo_key_t));
+  pkey = EGOBOO_NEW( egoboo_key_t );
   if(NULL == pkey) return pkey;
 
   // initialize the key
   ptmp = egoboo_key_new(pkey, itype, pdata);
   if(NULL == ptmp)
   {
-    FREE(pkey);
+    EGOBOO_DELETE(pkey);
   }
 
   // let everyone know that this data is on the heap, not the stack
@@ -285,7 +282,7 @@ INLINE bool_t egoboo_key_destroy(egoboo_key_t ** ppkey)
   // do the actual freeing. make sure never to free memory that is on the stack.
   if((*ppkey)->dynamic)
   {
-    FREE(*ppkey);
+    EGOBOO_DELETE(*ppkey);
   }
 
   return btrue;
@@ -455,7 +452,7 @@ INLINE BSP_leaf_t * BSP_leaf_new( BSP_leaf_t * L, size_t count )
 
   memset(L, 0, sizeof(BSP_leaf_t));
 
-  L->children = calloc(count, sizeof(BSP_leaf_t*));
+  L->children = EGOBOO_NEW_ARY(BSP_leaf_t*, count);
   if(NULL != L->children)
   {
     L->child_count = count;
@@ -474,7 +471,7 @@ INLINE bool_t BSP_leaf_delete( BSP_leaf_t * L )
   if( NULL == L ) return bfalse;
   if( !EKEY_PVALID(L) ) return btrue;
 
-  FREE(L->children);
+  EGOBOO_DELETE(L->children);
   L->child_count = 0;
 
   EKEY_PINVALIDATE( L );
@@ -503,7 +500,7 @@ INLINE bool_t BSP_tree_allocate( BSP_tree_t * t, size_t count, size_t children )
   if(NULL != t->leaf_list || t->leaf_count > 0) return bfalse;
 
   // allocate the nodes
-  t->leaf_list = calloc(count, sizeof(BSP_leaf_t));
+  t->leaf_list = EGOBOO_NEW_ARY( BSP_leaf_t, count );
   if(NULL == t->leaf_list) return bfalse;
 
   // initialize the nodes
@@ -531,7 +528,7 @@ INLINE bool_t BSP_tree_deallocate( BSP_tree_t * t )
     BSP_leaf_delete(t->leaf_list + i);
   }
 
-  FREE(t->leaf_list);
+  EGOBOO_DELETE(t->leaf_list);
   t->leaf_count = 0;
 
   return btrue;
@@ -699,7 +696,7 @@ INLINE bool_t BSP_tree_insert( BSP_tree_t * t, BSP_leaf_t * L, BSP_node_t * n, i
 //
 //  if(lst->count>0 && lst->size>0 && NULL != lst->data)
 //  {
-//    FREE(lst->data);
+//    EGOBOO_DELETE(lst->data);
 //    lst->count = 0;
 //    lst->size = 0;
 //  }

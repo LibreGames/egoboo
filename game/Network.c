@@ -702,7 +702,7 @@ retval_t net_shutDown()
 //--------------------------------------------------------------------------------------------
 Net_t * CNet_create(Game_t * gs)
 {
-  Net_t * ns = (Net_t *)calloc(1, sizeof(Net_t));
+  Net_t * ns = EGOBOO_NEW( Net_t );
   return CNet_new(ns, gs);
 }
 
@@ -715,7 +715,7 @@ bool_t CNet_destroy(Net_t ** pns)
   if( !EKEY_PVALID( (*pns) ) ) return btrue;
 
   retval = CNet_delete(*pns);
-  FREE( *pns );
+  EGOBOO_DELETE( *pns );
 
   return retval;
 }
@@ -1509,10 +1509,10 @@ PLA_REF add_player(Game_t * gs, CHR_REF chr_ref, Uint8 device)
   pla->chr_ref = chr_ref;
   pla->Active = btrue;
   pla->device = device;
-  CLatch_clear( &(pla->latch) );
+  Latch_clear( &(pla->latch) );
 
-  CClient_resetTimeLatches(gs->cl, chr_ref);
-  CServer_resetTimeLatches(gs->sv, chr_ref);
+  Client_resetTimeLatches(gs->cl, chr_ref);
+  Server_resetTimeLatches(gs->sv, chr_ref);
 
   gs->allpladead = bfalse;
   if (device != INBITS_NONE)
@@ -2634,7 +2634,7 @@ NetHost_t * NetHost_create(SDL_Callback_Ptr pcall)
 
   if(!CData.request_network) return NULL;
 
-  nh = (NetHost_t *)calloc(1, sizeof(NetHost_t));
+  nh = EGOBOO_NEW( NetHost_t );
   return NetHost_new(nh, pcall);
 }
 
@@ -2646,7 +2646,7 @@ bool_t NetHost_destroy(NetHost_t ** pnh)
   if(NULL == pnh || NULL == *pnh || !EKEY_PVALID( (*pnh) ) ) return bfalse;
 
   retval = NetHost_delete(*pnh);
-  FREE(*pnh);
+  EGOBOO_DELETE(*pnh);
 
   return retval;
 }
@@ -2774,7 +2774,7 @@ retval_t NetHost_shutDown( NetHost_t * nh )
 //--------------------------------------------------------------------------------------------
 NetThread_t * NetThread_create(SDL_Callback_Ptr pcall)
 {
-  NetThread_t * nt = (NetThread_t *)calloc(1, sizeof(NetThread_t));
+  NetThread_t * nt = EGOBOO_NEW( NetThread_t );
   return NetThread_new(nt,pcall);
 }
 
@@ -2787,7 +2787,7 @@ bool_t NetThread_destroy(NetThread_t ** pnt)
   if( !EKEY_PVALID( (*pnt) ) ) return btrue;
 
   retval = NetThread_delete(*pnt);
-  FREE( *pnt );
+  EGOBOO_DELETE( *pnt );
 
   return retval;
 }

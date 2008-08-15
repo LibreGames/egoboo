@@ -925,7 +925,7 @@ bool_t mad_delete_bbox_tree(Mad_t * pmad)
     bbox_ary_delete(pmad->bbox_arrays + i);
   }
 
-  FREE(pmad->bbox_arrays);
+  EGOBOO_DELETE(pmad->bbox_arrays);
   pmad->bbox_frames = 0;
 
   return btrue;
@@ -1105,7 +1105,7 @@ bool_t mad_generate_bbox_tree(int max_level, Mad_t * pmad)
 
   // read the frame count and allocate one BBOX_ARY per frame
   pmad->bbox_frames = pmad->md2_ptr->m_numFrames;
-  pmad->bbox_arrays = (BBOX_ARY*)calloc(pmad->bbox_frames, sizeof(BBOX_ARY));
+  pmad->bbox_arrays = EGOBOO_NEW_ARY( BBOX_ARY, pmad->bbox_frames );
 
   // go through every frame
   for(i=0; i<pmad->bbox_frames; i++)
@@ -1184,8 +1184,8 @@ bool_t Mad_delete(Mad_t * pmad)
     pmad->md2_ptr = NULL;
   }
 
-  FREE(pmad->framelip);
-  FREE(pmad->framefx);
+  EGOBOO_DELETE(pmad->framelip);
+  EGOBOO_DELETE(pmad->framefx);
 
   mad_delete_bbox_tree(pmad);
 
@@ -1259,8 +1259,8 @@ MAD_REF MadList_load_one( Game_t * gs, const char * szObjectpath, const char * s
 
   // allocate the extra animation data
   iFrames = md2_get_numFrames(pmad->md2_ptr);
-  pmad->framelip = (Uint8 *)calloc(iFrames, sizeof(Uint8 ));
-  pmad->framefx  = (Uint16*)calloc(iFrames, sizeof(Uint16));
+  pmad->framelip = EGOBOO_NEW_ARY( Uint8 , iFrames );
+  pmad->framefx  = EGOBOO_NEW_ARY( Uint16, iFrames );
 
   // tell everyone that we loaded correctly
   pmad->Loaded = btrue;

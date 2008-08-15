@@ -19,9 +19,9 @@ struct sNet;
 struct sConfigData;
 struct sStatus;
 struct sChr;
-struct SoundState_t;
+struct sSoundState;
 struct sGraphics;
-struct script_global_values_t;
+struct s_script_global_values;
 struct sGameStack;
 
 struct sClient;

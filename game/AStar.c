@@ -24,8 +24,8 @@ bool_t AStar_deallocate()
   {
   if ( AStar_allocated == 0 ) return btrue;
 
-  FREE( AStar_open_list );
-  FREE( AStar_closed_list );
+  EGOBOO_DELETE( AStar_open_list );
+  EGOBOO_DELETE( AStar_closed_list );
 
   AStar_allocated = 0;
 
@@ -45,10 +45,10 @@ bool_t AStar_allocate( int requested_size )
     AStar_deallocate();
     }
 
-  AStar_open_list   = calloc( size, sizeof( AStar_Node_t ) );
+  AStar_open_list   = EGOBOO_NEW_ARY( AStar_Node_t, size );
   if ( NULL == AStar_open_list ) return bfalse;
 
-  AStar_closed_list = calloc( size, sizeof( AStar_Node_t ) );
+  AStar_closed_list = EGOBOO_NEW_ARY( AStar_Node_t, size );
   if ( NULL == AStar_closed_list )
     {
     free( AStar_open_list );
@@ -412,7 +412,7 @@ int AStar_Node_list_prune( AStar_Node_t buffer[], int buffer_size )
   if ( NULL == buffer || buffer_size < 2 ) return buffer_size;
 
   // allocate a list to track the elimination of nodes
-  eliminate_lst = calloc( buffer_size, sizeof( bool_t ) );
+  eliminate_lst = EGOBOO_NEW_ARY( bool_t, buffer_size );
   if ( NULL == eliminate_lst ) return buffer_size;
 
   done = bfalse;
@@ -479,6 +479,6 @@ int AStar_Node_list_prune( AStar_Node_t buffer[], int buffer_size )
       };
     }
 
-  FREE( eliminate_lst );
+  EGOBOO_DELETE( eliminate_lst );
   return buffer_size;
   }

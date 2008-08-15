@@ -38,21 +38,21 @@ bool_t fs_find_info_delete(FS_FIND_INFO * i)
   if(NULL == i) return bfalse;
   if(FS_UNKNOWN == i->type) return bfalse;
 
-  // this is not strictly necessary, since FREE() or free() doesn't care about the type of its argument
+  // this is not strictly necessary, since EGOBOO_DELETE() or free() doesn't care about the type of its argument
   switch(i->type)
   {
     case FS_WIN32:
-      FREE(i->W);
+      EGOBOO_DELETE(i->W);
       retval = btrue;
       break;
 
     case FS_LIN:
-      FREE(i->L);
+      EGOBOO_DELETE(i->L);
       retval = btrue;
       break;
 
     case FS_MAC:
-      FREE(i->M);
+      EGOBOO_DELETE(i->M);
       retval = btrue;
       break;
 

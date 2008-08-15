@@ -46,7 +46,7 @@ FS_FIND_INFO * fs_find_info_new(FS_FIND_INFO * i)
   if(NULL ==i) return i;
 
   i->type = FS_WIN32;
-  i->L    = (FS_FIND_INFO_LIN*)calloc(1, sizeof(FS_FIND_INFO_LIN));
+  i->L    = EGOBOO_NEW( FS_FIND_INFO_LIN );
 
   return i;
 };

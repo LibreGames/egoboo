@@ -92,7 +92,7 @@ ClockState_t * ClockState_create(const char * name, int size)
 {
   ClockState_t * cs;
 
-  cs = ( ClockState_t * ) calloc( 1, sizeof( ClockState_t ) );
+  cs = EGOBOO_NEW( ClockState_t );
 
   return ClockState_new( cs, name, size );
 };
@@ -104,7 +104,7 @@ bool_t ClockState_destroy( ClockState_t ** pcs )
   if(NULL == pcs || NULL == *pcs) return bfalse;
 
   retval = ClockState_delete( *pcs );
-  FREE( *pcs );
+  EGOBOO_DELETE( *pcs );
 
   return retval;
 };
@@ -135,7 +135,7 @@ bool_t ClockState_delete( ClockState_t * cs )
 {
   if(NULL == cs) return bfalse;
 
-  FREE ( cs->frameHistory );
+  EGOBOO_DELETE ( cs->frameHistory );
 
   return btrue;
 };
@@ -160,7 +160,7 @@ void ClockState_setFrameHistoryWindow( ClockState_t * cs, int size )
 
   // The frame history has to be at least 1
   cs->frameHistoryWindow = ( size > 1 ) ? size : 1;
-  history = (double *)calloc( cs->frameHistoryWindow, sizeof( double ) );
+  history = EGOBOO_NEW_ARY( double, cs->frameHistoryWindow );
 
   if (NULL == cs->frameHistory)
   {
@@ -173,7 +173,7 @@ void ClockState_setFrameHistoryWindow( ClockState_t * cs, int size )
     less = ( cs->frameHistoryWindow < oldSize ) ? cs->frameHistoryWindow : oldSize;
     memcpy( history, cs->frameHistory, less );
 
-    FREE( cs->frameHistory );
+    EGOBOO_DELETE( cs->frameHistory );
   }
 
   cs->frameHistoryHead = 0;

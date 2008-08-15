@@ -108,7 +108,7 @@ void timer_addTimer( Timer_t *t )
 
   if ( NULL == t ) return;
 
-  node = (TimerNode_t *)calloc( 1, sizeof( TimerNode_t ) );
+  node = EGOBOO_NEW( TimerNode_t );
   node->timer = t;
 
   if ( timerList )

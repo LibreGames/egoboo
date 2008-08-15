@@ -58,6 +58,24 @@ typedef enum e_retval retval_t;
 
 typedef char STRING[256];
 
+#if defined(__cplusplus)
+#    define EGOBOO_NEW( TYPE ) new TYPE
+#    define EGOBOO_NEW_ARY( TYPE, COUNT ) new TYPE [ COUNT ]
+#    define EGOBOO_DELETE(PTR) if(NULL != PTR) { delete PTR; PTR = NULL; }
+#    define EGOBOO_DELETE_ARY(PTR) if(NULL != PTR) { delete [] PTR; PTR = NULL; }
+#else
+//#    if defined(_DEBUG)
+#        define EGOBOO_NEW( TYPE ) (TYPE *)calloc(1, sizeof(TYPE))
+#        define EGOBOO_NEW_ARY( TYPE, COUNT ) (TYPE *)calloc(COUNT, sizeof(TYPE))
+#        define EGOBOO_DELETE(PTR) if(NULL != PTR) { free(PTR); PTR = NULL; }
+#        define EGOBOO_DELETE_ARY(PTR) if(NULL != PTR) { free(PTR); PTR = NULL; }
+//#    else
+//#        define EGOBOO_NEW( TYPE ) (TYPE *)malloc( sizeof(TYPE) )
+//#        define EGOBOO_NEW_ARY( TYPE, COUNT ) (TYPE *)malloc(COUNT * sizeof(TYPE))
+//#    endif
+#endif
+
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 struct s_egoboo_key
@@ -257,7 +275,7 @@ struct TList
   size_t sz;
   _ty  * data;
 
-  TList() { sz = _sz; data = calloc(sz, sizeof(_ty)); }
+  TList() { sz = _sz; data = EGOBOO_NEW_ARY(_ty, sz); }
   ~TList() { free(data); }
 
   _ty & operator [] (Handle i) { return data[i.val]; }

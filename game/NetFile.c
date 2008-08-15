@@ -234,7 +234,7 @@ static retval_t             nfile_ReceiveState_stopThread(nfile_ReceiveState_t *
 //--------------------------------------------------------------------------------------------
 NFileState_t * NFileState_create(Net_t * ns)
 {
-  NFileState_t * nfs = (NFileState_t *)calloc(1, sizeof(NFileState_t));
+  NFileState_t * nfs = EGOBOO_NEW( NFileState_t );
   return NFileState_new(nfs, ns);
 }
 
@@ -247,7 +247,7 @@ bool_t NFileState_destroy(NFileState_t ** pnfs)
   if( !EKEY_PVALID((*pnfs)) ) return btrue;
 
   retval = NFileState_delete(*pnfs);
-  FREE( *pnfs );
+  EGOBOO_DELETE( *pnfs );
 
   return retval;
 }
@@ -373,7 +373,7 @@ retval_t NFileState_shutDown(NFileState_t * nfs)
 //--------------------------------------------------------------------------------------------
 nfile_SendState_t * nfile_SendState_create()
 {
-  nfile_SendState_t * snd = (nfile_SendState_t *)calloc(1, sizeof(nfile_SendState_t));
+  nfile_SendState_t * snd = EGOBOO_NEW( nfile_SendState_t );
   return nfile_SendState_new( snd );
 }
 
@@ -387,7 +387,7 @@ bool_t nfile_SendState_destroy(nfile_SendState_t ** snd)
 
   retval = nfile_SendState_delete(*snd);
 
-  FREE( *snd );
+  EGOBOO_DELETE( *snd );
 
   return retval;
 }
@@ -499,7 +499,7 @@ retval_t nfile_SendState_shutDown(nfile_SendState_t * snd)
 //--------------------------------------------------------------------------------------------
 nfile_ReceiveState_t * nfile_ReceiveState_create()
 {
-  nfile_ReceiveState_t * rec = (nfile_ReceiveState_t *)calloc(1, sizeof(nfile_ReceiveState_t));
+  nfile_ReceiveState_t * rec = EGOBOO_NEW( nfile_ReceiveState_t );
   return nfile_ReceiveState_new( rec);
 }
 
@@ -513,7 +513,7 @@ bool_t nfile_ReceiveState_destroy(nfile_ReceiveState_t ** rec)
 
   retval = nfile_ReceiveState_delete(*rec);
 
-  FREE( *rec );
+  EGOBOO_DELETE( *rec );
 
   EKEY_PINVALIDATE( (*rec) );
 
@@ -631,7 +631,7 @@ bool_t nfile_ReceiveInfo_alloc( nfile_ReceiveInfo_t * nri, size_t size)
   }
   else
   {
-    nri->buffer = (Uint8*)calloc(size, sizeof(Uint8));
+    nri->buffer = EGOBOO_NEW_ARY( Uint8, size );
     retval = btrue;
   }
 
@@ -650,7 +650,7 @@ bool_t nfile_ReceiveInfo_dealloc( nfile_ReceiveInfo_t * nri)
   if(NULL == nri) return bfalse;
   if(!nri->allocated) return btrue;
 
-  FREE(nri->buffer);
+  EGOBOO_DELETE(nri->buffer);
   nri->buffer_size = 0;
   nri->allocated   = bfalse;
 
@@ -857,7 +857,7 @@ static retval_t net_doFileTransfer(nfile_SendInfo_t *state)
     buffer_size += 6; // Uint32 size, and Uint16 message type
     buffer_size += fileSize;
 
-    buffer = (Uint8*)calloc(buffer_size, sizeof(Uint8));
+    buffer = EGOBOO_NEW_ARY( Uint8, buffer_size );
     *(Uint16*)buffer = ENET_HOST_TO_NET_16(NET_TRANSFER_FILE);
 
     // Add the string and file length to the buffer
@@ -894,7 +894,7 @@ static retval_t net_doFileTransfer(nfile_SendInfo_t *state)
       net_logf("NET ERROR: net_doFileTransfer() - Unable to generate packet.\n");
     }
 
-    FREE(buffer);
+    EGOBOO_DELETE(buffer);
     buffer_size = 0;
 
     retval = rv_succeed;

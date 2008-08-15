@@ -71,7 +71,7 @@ enum e_Action what_action( char cTmp );
 void release_all_textures(struct sGame * gs);
 Uint32 load_one_icon( struct sGame * gs, char * szPathname, const char * szObjectname, char * szFilename );
 void release_all_icons(struct sGame * gs);
-void release_map();
+
 
 
 void close_session();
@@ -96,7 +96,7 @@ void dolist_make( void );
 
 
 void   keep_weapons_with_holders( struct sGame * gs );
-void   make_prtlist();
+void   make_prtlist( struct sGame * gs );
 bool_t debug_message( int time, const char *format, ... );
 void   reset_end_text( struct sGame * gs );
 
@@ -148,19 +148,18 @@ void render_enviromad( CHR_REF character, Uint8 trans );
 void render_texmad( CHR_REF character, Uint8 trans );
 void render_mad( CHR_REF character, Uint8 trans );
 void render_refmad( CHR_REF tnc, Uint16 trans );
-void light_characters();
-void light_particles();
+void light_characters(struct sGame * gs);
+void light_particles(struct sGame * gs);
 void set_fan_light( int fanx, int fany, PRT_REF particle );
-void do_dynalight();
 void render_water();
 void draw_scene_zreflection();
 void draw_blip( enum e_color color, float x, float y );
 void draw_one_icon( int icontype, int x, int y, Uint8 sparkle );
 
-void draw_map( float x, float y );
-int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks );
-void draw_scene();
-void draw_main( float );
+void   draw_map( float x, float y );
+int    draw_one_bar( int bartype, int x, int y, int ticks, int maxticks );
+bool_t draw_scene( struct sGame * gs );
+void   draw_main( float );
 
 
 void load_blip_bitmap( char * modname );

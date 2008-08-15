@@ -147,7 +147,7 @@ INLINE bool_t BData_delete(BData_t * b)
 {
   if(NULL == b || !b->valid) return bfalse;
 
-  FREE(b->cv_tree);
+  EGOBOO_DELETE(b->cv_tree);
   b->valid = bfalse;
 
   return btrue;

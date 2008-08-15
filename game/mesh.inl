@@ -57,14 +57,14 @@ INLINE const bool_t bumplist_delete(BUMPLIST * b)
   b->num_blocks = 0;
 
   b->free_count = 0;
-  FREE(b->free_lst);
-  FREE(b->node_lst);
+  EGOBOO_DELETE(b->free_lst);
+  EGOBOO_DELETE(b->node_lst);
 
-  FREE(b->num_chr);
-  FREE(b->chr_ref);
+  EGOBOO_DELETE(b->num_chr);
+  EGOBOO_DELETE(b->chr_ref);
 
-  FREE(b->num_prt);
-  FREE(b->prt_ref);
+  EGOBOO_DELETE(b->num_prt);
+  EGOBOO_DELETE(b->prt_ref);
 
   return btrue;
 }
@@ -117,11 +117,11 @@ INLINE const bool_t bumplist_allocate(BUMPLIST * b, int size)
   {
     bumplist_renew(b);
 
-    b->num_chr = (Uint16       *)calloc(size, sizeof(Uint16));
-    b->chr_ref = (BUMPLIST_NODE*)calloc(size, sizeof(BUMPLIST_NODE));
+    b->num_chr = EGOBOO_NEW_ARY( Uint16, size );
+    b->chr_ref = EGOBOO_NEW_ARY( BUMPLIST_NODE, size );
 
-    b->num_prt = (Uint16       *)calloc(size, sizeof(Uint16));
-    b->prt_ref = (BUMPLIST_NODE*)calloc(size, sizeof(BUMPLIST_NODE));
+    b->num_prt = EGOBOO_NEW_ARY( Uint16, size );
+    b->prt_ref = EGOBOO_NEW_ARY( BUMPLIST_NODE, size );
 
     if(NULL != b->num_chr && NULL != b->chr_ref && NULL != b->num_prt && NULL != b->prt_ref)
     {

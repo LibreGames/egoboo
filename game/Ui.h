@@ -58,12 +58,12 @@ struct s_ui_Widget
 {
   ui_id_t      id;
   TTFont_t    *pfont;
-  char      *text;
-  GLtexture *img;
-  int        x;
-  int        y;
-  int        width;
-  int        height;
+  const char  *text;
+  GLtexture   *img;
+  int          x;
+  int          y;
+  int          width;
+  int          height;
   Uint32 mask, state, timeout;
 };
 typedef struct s_ui_Widget ui_Widget_t;

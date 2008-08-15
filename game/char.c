@@ -7367,7 +7367,7 @@ bool_t chr_calculate_bumpers_2( Game_t * gs, Chr_t * pchr, vect3 * vrt_ary)
   vrt_count = md2_get_numVertices(pmdl);
   if(NULL == vrt_ary)
   {
-    vrt_ary = (vect3*)calloc(vrt_count, sizeof(vect3));
+    vrt_ary = EGOBOO_NEW_ARY(vect3, vrt_count);
     if(NULL ==vrt_ary)
     {
       return chr_calculate_bumpers_1( gs, pchr );
@@ -7436,7 +7436,7 @@ bool_t chr_calculate_bumpers_2( Game_t * gs, Chr_t * pchr, vect3 * vrt_ary)
 
   if(free_array)
   {
-    FREE( vrt_ary );
+    EGOBOO_DELETE( vrt_ary );
   }
 
   return btrue;
@@ -7489,7 +7489,7 @@ bool_t chr_calculate_bumpers_3( Game_t * gs, Chr_t * pchr, CVolume_Tree_t * cv_t
 
   // allocate the array
   vrt_count = md2_get_numVertices(pmdl);
-  vrt_ary   = (vect3*)calloc(vrt_count, sizeof(vect3));
+  vrt_ary   = EGOBOO_NEW_ARY(vect3, vrt_count);
   if(NULL ==vrt_ary) return chr_calculate_bumpers_1(  gs, pchr );
 
   // make sure that we have the correct bounds
@@ -7628,7 +7628,7 @@ bool_t chr_calculate_bumpers_3( Game_t * gs, Chr_t * pchr, CVolume_Tree_t * cv_t
 
   bd->cv.lod = 3;
 
-  FREE( vrt_ary );
+  EGOBOO_DELETE( vrt_ary );
 
   return btrue;
 };
@@ -7652,7 +7652,7 @@ bool_t chr_calculate_bumpers( Game_t * gs, Chr_t * pchr, int level)
         // calculate the octree collision volume
         if(NULL == pchr->bmpdata.cv_tree)
         {
-          pchr->bmpdata.cv_tree = (CVolume_Tree_t*)calloc(1, sizeof(CVolume_Tree_t));
+          pchr->bmpdata.cv_tree = EGOBOO_NEW(CVolume_Tree_t);
         };
         retval = chr_calculate_bumpers_3( gs, pchr, pchr->bmpdata.cv_tree);
       };
@@ -10080,12 +10080,12 @@ CHR_SPAWN_QUEUE * chr_spawn_queue_new(CHR_SPAWN_QUEUE * q, size_t size)
   EKEY_PNEW( q, CHR_SPAWN_QUEUE );
 
   // deallocate any previous data
-  if(q->data_size>0) { FREE(q->data); q->data_size = 0; }
+  if(q->data_size>0) { EGOBOO_DELETE(q->data); q->data_size = 0; }
 
   // initialize the data
   memset(q, 0, sizeof(CHR_SPAWN_QUEUE));
 
-  q->data = calloc(size, sizeof(CHR_SPAWN_INFO));
+  q->data = EGOBOO_NEW_ARY(CHR_SPAWN_INFO, size);
   if(NULL != q->data) q->data_size = size;
 
   return q;
@@ -10101,7 +10101,7 @@ bool_t chr_spawn_queue_delete(CHR_SPAWN_QUEUE * q)
   EKEY_PINVALIDATE( q );
 
   // deallocate any previous data
-  if(q->data_size>0) { FREE(q->data); q->data_size = 0; }
+  if(q->data_size>0) { EGOBOO_DELETE(q->data); q->data_size = 0; }
 
   return btrue;
 }

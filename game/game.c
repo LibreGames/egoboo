@@ -1439,7 +1439,7 @@ bool_t do_screenshot()
   if ( NULL == temp  )
     return bfalse;
 
-  pixels = (Uint8*)calloc( 3 * screen->w * screen->h, sizeof(Uint8) );
+  pixels = EGOBOO_NEW_ARY( Uint8, 3 * screen->w * screen->h );
   if ( NULL == pixels  )
   {
     SDL_FreeSurface( temp );
@@ -1452,7 +1452,7 @@ bool_t do_screenshot()
   {
     memcpy((( char * ) temp->pixels ) + temp->pitch * i, pixels + 3 * screen->w * ( screen->h - i - 1 ), screen->w * 3 );
   }
-  FREE( pixels );
+  EGOBOO_DELETE( pixels );
 
   // find the next EGO??.BMP file for writing
   i = 0;
@@ -5375,7 +5375,7 @@ bool_t GameStack_delete(GameStack_t * stk)
     if( NULL != stk->data[i] )
     {
       Game_delete(stk->data[i]);
-      FREE(stk->data[i]);
+      EGOBOO_DELETE(stk->data[i]);
     }
   }
   stk->count = 0;
@@ -5765,7 +5765,7 @@ Game_t * Game_create(Net_t * net, Client_t * cl, Server_t * sv)
   GameStack_t   * stk;
   Game_t * ret;
 
-  ret = Game_new( (Game_t*)calloc(1, sizeof(Game_t)), net, cl, sv );
+  ret = Game_new( EGOBOO_NEW( Game_t ), net, cl, sv );
 
   // automatically link it into the game state stack
   stk = Get_GameStack();
@@ -5778,7 +5778,7 @@ Game_t * Game_create(Net_t * net, Client_t * cl, Server_t * sv)
 bool_t Game_destroy(Game_t ** gs )
 {
   bool_t ret = Game_delete(*gs);
-  FREE(*gs);
+  EGOBOO_DELETE(*gs);
   return ret;
 };
 

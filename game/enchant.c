@@ -479,7 +479,7 @@ void change_character( Game_t * gs, CHR_REF ichr, OBJ_REF new_profile, Uint8 new
   pchr->aistate.type = pobj->ai;
   pchr->aistate.state = 0;
   pchr->aistate.time = 0;
-  CLatch_clear( &(pchr->aistate.latch) );
+  Latch_clear( &(pchr->aistate.latch) );
   pchr->aistate.turnmode = TURNMODE_VELOCITY;
 
   // Flags

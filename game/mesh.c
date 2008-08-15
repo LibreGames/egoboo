@@ -72,8 +72,8 @@ bool_t allocate_bumplist(MeshInfo_t * mi, int blocks)
     // set up nodes and the list of free nodes
     pbump->free_max   =
     pbump->free_count = 8*(CHRLST_COUNT + PRTLST_COUNT);
-    pbump->free_lst = (Uint32       *)calloc( pbump->free_count, sizeof(Uint32));
-    pbump->node_lst = (BUMPLIST_NODE*)calloc( pbump->free_count, sizeof(BUMPLIST_NODE));
+    pbump->free_lst = EGOBOO_NEW_ARY( Uint32, pbump->free_count );
+    pbump->node_lst = EGOBOO_NEW_ARY( BUMPLIST_NODE, pbump->free_count );
 
     reset_bumplist(mi);
   }
@@ -672,7 +672,7 @@ static bool_t MeshMem_dealloc_verts(MeshMem_t * mem)
 {
   if(NULL ==mem) return bfalse;
 
-  FREE ( mem->base );
+  EGOBOO_DELETE ( mem->base );
 
   mem->vrt_count  = 0;
 
@@ -727,7 +727,7 @@ static bool_t MeshMem_dealloc_fans(MeshMem_t * mem)
 {
   if(NULL ==mem) return bfalse;
 
-  FREE ( mem->tilelst );
+  EGOBOO_DELETE ( mem->tilelst );
 
   mem->tile_count  = 0;
 
@@ -745,7 +745,7 @@ static bool_t MeshMem_alloc_fans(MeshMem_t * mem, int fancount)
   MeshMem_dealloc_fans(mem);
 
   mem->tile_count = 0;
-  mem->tilelst = (MeshTile_t*)calloc( fancount, sizeof(MeshTile_t) );
+  mem->tilelst = EGOBOO_NEW_ARY( MeshTile_t, fancount );
   if ( NULL == mem->tilelst ) return bfalse;
 
   mem->tile_count  = fancount;

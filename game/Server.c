@@ -177,7 +177,7 @@ retval_t CServer_shutDown(Server_t * ss)
 //--------------------------------------------------------------------------------------------
 Server_t * CServer_create(Game_t * gs)
 {
-  Server_t * ss = (Server_t *)calloc(1, sizeof(Server_t));
+  Server_t * ss = EGOBOO_NEW( Server_t );
   return CServer_new(ss, gs);
 }
 
@@ -190,7 +190,7 @@ bool_t CServer_destroy(Server_t ** pss)
   if( !EKEY_PVALID((*pss)) ) return btrue;
 
   retval = CServer_delete(*pss);
-  FREE( *pss );
+  EGOBOO_DELETE( *pss );
 
   return retval;
 }
@@ -1177,7 +1177,7 @@ bool_t sv_send_chr_setup( Server_t * ss, CHR_SPAWN_INFO * psi )
   sys_packet_addUint16(&egopkt, TO_REMOTE_CHR_SPAWN);
   sys_packet_addUint32(&egopkt, psi->seed);
   sys_packet_addUint32(&egopkt, psi->net_id);
-  sys_packet_addUint32(&egopkt, psi->ichr);
+  sys_packet_addUint32(&egopkt, REF_TO_INT(psi->ichr) );
 
   // convert pos to 16.16 fixed point
   sys_packet_addSint32(&egopkt, psi->pos.x * (1<<16) );
@@ -1189,13 +1189,13 @@ bool_t sv_send_chr_setup( Server_t * ss, CHR_SPAWN_INFO * psi )
   sys_packet_addSint32(&egopkt, psi->vel.y * (1<<16) );
   sys_packet_addSint32(&egopkt, psi->vel.z * (1<<16) );
 
-  sys_packet_addUint32(&egopkt, psi->iobj   );
-  sys_packet_addUint32(&egopkt, psi->iteam  );
+  sys_packet_addUint32(&egopkt, REF_TO_INT(psi->iobj) );
+  sys_packet_addUint32(&egopkt, REF_TO_INT(psi->iteam)  );
   sys_packet_addUint8 (&egopkt, psi->iskin  );
   sys_packet_addUint16(&egopkt, psi->facing );
   sys_packet_addUint8 (&egopkt, psi->slot   );
   sys_packet_addString(&egopkt, psi->name   );
-  sys_packet_addUint32(&egopkt, psi->ioverride   );
+  sys_packet_addUint32(&egopkt, REF_TO_INT(psi->ioverride) );
 
   sys_packet_addSint32(&egopkt, psi->money   );
   sys_packet_addSint32(&egopkt, psi->content );

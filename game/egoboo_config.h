@@ -11,7 +11,8 @@
 
 #include <SDL_endian.h>
 
-#define FREE(PTR) if(NULL != PTR) { free(PTR); PTR = NULL; }
+
+
 
 // localize the inline keyword to the compiler
 #if defined(_MSC_VER)

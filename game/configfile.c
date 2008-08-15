@@ -217,7 +217,7 @@ Sint32 ReadConfigValue( ConfigFilePtr_t pConfigFile, ConfigFileValuePtr_t pValue
           ungetc( lc, pConfigFile->f );
           // succesfull scan
           // allocate memory for value
-          pValue->Value = (char *) calloc( lLenghtName + 1, sizeof(char) );
+          pValue->Value = EGOBOO_NEW_ARY( char, lLenghtName + 1 );
           // copy string
           strcpy( pValue->Value, lTempStr );
           // exit scan
@@ -285,7 +285,7 @@ Sint32 ReadConfigCommentary( ConfigFilePtr_t pConfigFile, ConfigFileValuePtr_t p
         if ( lc == 13 || lc == 10 || feof( pConfigFile->f ) )
         {
           // allocate memory for commentary
-          pValue->Commentary = (char *)calloc( lLenghtName + 1, sizeof(char) );
+          pValue->Commentary = EGOBOO_NEW_ARY( char, lLenghtName + 1 );
           // copy string
           strcpy( pValue->Commentary, lTempStr );
           // exit scan
@@ -330,7 +330,7 @@ ConfigFilePtr_t OpenConfigFile( const char *pPath )
   lTempFile = fs_fileOpen( PRI_NONE, NULL, pPath, "rt+" );
   if ( NULL != lTempFile  )
   {
-    lTempConfig = ( ConfigFilePtr_t ) calloc( 1, sizeof( ConfigFile_t ) );
+    lTempConfig = EGOBOO_NEW( ConfigFile_t );
     lTempConfig->f = lTempFile;
     lTempConfig->ConfigSectionList = NULL;
     lTempConfig->CurrentSection = NULL;
@@ -347,8 +347,7 @@ ConfigFilePtr_t OpenConfigFile( const char *pPath )
           if ( lc == '{' )
           {
             // create first section and load name
-            lTempConfig->ConfigSectionList = ( ConfigFileSectionPtr_t ) calloc( 1, sizeof( ConfigFileSection_t ) );
-            memset( lTempConfig->ConfigSectionList, 0, sizeof( ConfigFileSection_t ) );
+            lTempConfig->ConfigSectionList = EGOBOO_NEW( ConfigFileSection_t );
             lCurSection = lTempConfig->ConfigSectionList;
             ReadConfigSectionName( lTempConfig, lTempConfig->ConfigSectionList );
             lCurValue = NULL; // just to be safe
@@ -367,7 +366,7 @@ ConfigFilePtr_t OpenConfigFile( const char *pPath )
           if ( lc == '{' )
           {
             // create new section and load name
-            lCurSection->NextSection = ( ConfigFileSectionPtr_t ) calloc( 1, sizeof( ConfigFileSection_t ) );
+            lCurSection->NextSection = EGOBOO_NEW( ConfigFileSection_t );
             lCurSection = lCurSection->NextSection;
             memset( lCurSection, 0, sizeof( ConfigFileSection_t ) );
             ReadConfigSectionName( lTempConfig, lCurSection );
@@ -379,13 +378,13 @@ ConfigFilePtr_t OpenConfigFile( const char *pPath )
             if ( NULL == lCurValue  )
             {
               // first value in section
-              lCurSection->FirstValue = ( ConfigFileValuePtr_t ) calloc( 1, sizeof( ConfigFileValue_t ) );
+              lCurSection->FirstValue = EGOBOO_NEW( ConfigFileValue_t );
               lCurValue = lCurSection->FirstValue;
             }
             else
             {
               // link to new value
-              lCurValue->NextValue = ( ConfigFileValuePtr_t ) calloc( 1, sizeof( ConfigFileValue_t ) );
+              lCurValue->NextValue = EGOBOO_NEW( ConfigFileValue_t );
               lCurValue = lCurValue->NextValue;
             }
             memset( lCurValue, 0, sizeof( ConfigFileValue_t ) );
@@ -642,15 +641,13 @@ Sint32 SetConfigValue( ConfigFilePtr_t pConfigFile, const char *pSection, const 
   if (( lOK = SetConfigCurrentSection( pConfigFile, lNewSectionName ) )  == 0 )
   {
     // section doesn't exist so create it and create value
-    lTempSection = ( ConfigFileSectionPtr_t ) calloc( 1, sizeof( ConfigFileValue_t ) );
-    memset( lTempSection, 0, sizeof( ConfigFileValue_t ) );
+    lTempSection = EGOBOO_NEW( ConfigFileSection_t );
     lTempSection->NextSection = pConfigFile->ConfigSectionList;
     pConfigFile->ConfigSectionList = lTempSection;
     strcpy( lTempSection->SectionName, lNewSectionName );
 
     // create the new value
-    lTempValue = ( ConfigFileValuePtr_t ) calloc( 1, sizeof( ConfigFileValue_t ) );
-    memset( lTempValue, 0, sizeof( ConfigFileValue_t ) );
+    lTempValue = EGOBOO_NEW( ConfigFileValue_t );
     lTempSection->FirstValue = lTempValue;
     strcpy( lTempValue->KeyName, lNewKeyName );
 
@@ -666,8 +663,7 @@ Sint32 SetConfigValue( ConfigFilePtr_t pConfigFile, const char *pSection, const 
     if ( 0 == SetConfigCurrentValueFromCurrentSection( pConfigFile, lNewKeyName ) )
     {
       // create new value in current section
-      lTempValue = ( ConfigFileValuePtr_t ) calloc( 1, sizeof( ConfigFileValue_t ) );
-      memset( lTempValue, 0, sizeof( ConfigFileValue_t ) );
+      lTempValue = EGOBOO_NEW( ConfigFileValue_t );
       lTempValue->NextValue = pConfigFile->CurrentSection->FirstValue;
       pConfigFile->CurrentSection->FirstValue = lTempValue;
       strcpy( lTempValue->KeyName, lNewKeyName );
@@ -681,7 +677,7 @@ Sint32 SetConfigValue( ConfigFilePtr_t pConfigFile, const char *pSection, const 
   if ( NULL == pConfigFile->CurrentValue->Value )
   {
     // if the stirng value doesn't exist than allocate memory for it
-    pConfigFile->CurrentValue->Value = ( char * ) calloc( lLentghtNewValue  + 1, sizeof(char) );
+    pConfigFile->CurrentValue->Value = EGOBOO_NEW_ARY( char, lLentghtNewValue  + 1 );
     memset( pConfigFile->CurrentValue->Value, 0, lLentghtNewValue + 1 );
   }
   else
@@ -695,8 +691,8 @@ Sint32 SetConfigValue( ConfigFilePtr_t pConfigFile, const char *pSection, const 
     }
     if ( lLentghtNewValue >= lLengthValue )
     {
-      FREE( pConfigFile->CurrentValue->Value );
-      pConfigFile->CurrentValue->Value = ( char * ) calloc( lLentghtNewValue  + 1, sizeof(char) );
+      EGOBOO_DELETE( pConfigFile->CurrentValue->Value );
+      pConfigFile->CurrentValue->Value = EGOBOO_NEW_ARY( char, lLentghtNewValue  + 1 );
       memset( pConfigFile->CurrentValue->Value, 0, lLentghtNewValue + 1 );
     }
     else
@@ -763,17 +759,17 @@ void CloseConfigFile( ConfigFilePtr_t pConfigFile )
     lTempValue = lTempSection->FirstValue;
     while ( NULL != lTempValue  )
     {
-      FREE ( lTempValue->Value );
-      FREE ( lTempValue->Commentary );
+      EGOBOO_DELETE ( lTempValue->Value );
+      EGOBOO_DELETE ( lTempValue->Commentary );
       lDoomedValue = lTempValue;
       lTempValue = lTempValue->NextValue;
-      FREE( lDoomedValue );
+      EGOBOO_DELETE( lDoomedValue );
     }
     lDoomedSection = lTempSection;
     lTempSection = lTempSection->NextSection;
-    FREE( lDoomedSection );
+    EGOBOO_DELETE( lDoomedSection );
   }
-  FREE( pConfigFile );
+  EGOBOO_DELETE( pConfigFile );
 }
 
 // SaveConfigValue saves the value from pValue at the current position

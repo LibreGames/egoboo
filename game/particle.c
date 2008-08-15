@@ -157,13 +157,17 @@ void make_prtlist(Game_t * gs)
   //     lighting
 
   PRT_REF        prt_cnt;
-  DYNALIGHT_INFO di;
 
-  PPrt_t prtlst      = gs->PrtList;
+  PPrt_t prtlst      = NULL;
   size_t prtlst_size = PRTLST_COUNT;
 
-  Mesh_t    * pmesh = Game_getMesh(gs);
-  MeshMem_t * mm    = &(pmesh->Mem);
+  Mesh_t    * pmesh = NULL;
+  MeshMem_t * mm    = NULL;
+
+  if(NULL == gs) gs = Graphics_requireGame( &gfxState );
+  prtlst = gs->PrtList;
+  pmesh  = Game_getMesh(gs);
+  mm     = &(pmesh->Mem);
 
   // remove all non-permanent lights from the previous iteration
   DLightList_prune( gs );
@@ -178,13 +182,15 @@ void make_prtlist(Game_t * gs)
     prtlst[prt_cnt].inview = mesh_fan_is_in_renderlist( mm->tilelst, prtlst[prt_cnt].onwhichfan );
 
     // Set up the dynamic lights we need
-    di.permanent = bfalse;
-    di.pos       = prtlst[prt_cnt].ori.pos;
-    di.level     = prtlst[prt_cnt].dyna.level;
-    di.falloff   = prtlst[prt_cnt].dyna.falloff;
-
-    if(0.0f != di.falloff)
+    if(prtlst[prt_cnt].dyna.falloff > 0 && prtlst[prt_cnt].dyna.level > 0 )
     {
+      DYNALIGHT_INFO di;
+      
+      di.permanent = bfalse;
+      di.pos       = prtlst[prt_cnt].ori.pos;
+      di.level     = prtlst[prt_cnt].dyna.level;
+      di.falloff   = prtlst[prt_cnt].dyna.falloff;
+
       DLightList_add( gs, &di );
     };
   }
@@ -358,7 +364,7 @@ PRT_REF prt_spawn_info_init( PRT_SPAWN_INFO * psi, Game_t * gs, float intensity,
   // Convert from local pip to global pip
   if ( INVALID_CHR != iobj && local_pip < PRTPIP_PEROBJECT_COUNT )
   {
-    psi->ipip = ObjList_getRPip(gs, iobj, local_pip);
+    psi->ipip = ObjList_getRPip(gs, iobj, REF_TO_INT(local_pip));
   }
 
   // assume we were given a global pip

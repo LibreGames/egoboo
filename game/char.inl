@@ -499,17 +499,17 @@ INLINE void VData_Blended_Deallocate(VData_Blended_t * v)
 {
   if(NULL == v) return;
 
-  FREE( v->Vertices );
-  FREE( v->Normals );
-  FREE( v->Colors );
-  FREE( v->Texture );
-  FREE( v->Ambient );
+  EGOBOO_DELETE( v->Vertices );
+  EGOBOO_DELETE( v->Normals );
+  EGOBOO_DELETE( v->Colors );
+  EGOBOO_DELETE( v->Texture );
+  EGOBOO_DELETE( v->Ambient );
 }
 
 //--------------------------------------------------------------------------------------------
 INLINE VData_Blended_t * VData_Blended_new()
 {
-  VData_Blended_t * retval = (VData_Blended_t*)calloc(1, sizeof(VData_Blended_t));
+  VData_Blended_t * retval = EGOBOO_NEW( VData_Blended_t );
   if(NULL != retval)
   {
     VData_Blended_construct(retval);
@@ -523,7 +523,7 @@ INLINE void VData_Blended_delete(VData_Blended_t * v)
   if(NULL != v) return;
 
   VData_Blended_destruct(v);
-  FREE(v);
+  EGOBOO_DELETE(v);
 };
 
 //--------------------------------------------------------------------------------------------
@@ -533,9 +533,9 @@ INLINE void VData_Blended_Allocate(VData_Blended_t * v, size_t verts)
 
   VData_Blended_destruct(v);
 
-  v->Vertices = (vect3*)calloc( verts, sizeof(vect3));
-  v->Normals  = (vect3*)calloc( verts, sizeof(vect3));
-  v->Colors   = (vect4*)calloc( verts, sizeof(vect4));
-  v->Texture  = (vect2*)calloc( verts, sizeof(vect2));
-  v->Ambient  = (float*)calloc( verts, sizeof(float));
+  v->Vertices = EGOBOO_NEW_ARY( vect3, verts );
+  v->Normals  = EGOBOO_NEW_ARY( vect3, verts );
+  v->Colors   = EGOBOO_NEW_ARY( vect4, verts );
+  v->Texture  = EGOBOO_NEW_ARY( vect2, verts );
+  v->Ambient  = EGOBOO_NEW_ARY( float, verts );
 }

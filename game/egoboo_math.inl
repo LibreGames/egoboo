@@ -687,7 +687,7 @@ INLINE const BBOX_LIST * bbox_list_delete(BBOX_LIST * lst)
 
   if( lst->count > 0 )
   {
-    FREE(lst->list);
+    EGOBOO_DELETE(lst->list);
   }
 
   lst->count = 0;
@@ -714,7 +714,7 @@ INLINE const BBOX_LIST * bbox_list_alloc(BBOX_LIST * lst, int count)
 
   if(count>0)
   {
-    lst->list = (AA_BBOX*)calloc(count, sizeof(AA_BBOX));
+    lst->list = EGOBOO_NEW_ARY( AA_BBOX, count );
     if(NULL != lst->list)
     {
       lst->count = count;
@@ -777,7 +777,7 @@ INLINE const BBOX_ARY * bbox_ary_delete(BBOX_ARY * ary)
       bbox_list_delete(ary->list + i);
     }
 
-    FREE(ary->list);
+    EGOBOO_DELETE(ary->list);
   }
 
   ary->count = 0;
@@ -803,7 +803,7 @@ INLINE const BBOX_ARY * bbox_ary_alloc(BBOX_ARY * ary, int count)
 
   if(count>0)
   {
-    ary->list = (BBOX_LIST*)calloc(count, sizeof(BBOX_LIST));
+    ary->list = EGOBOO_NEW_ARY( BBOX_LIST, count );
     if(NULL != ary->list)
     {
       ary->count = count;

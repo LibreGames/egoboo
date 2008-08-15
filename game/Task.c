@@ -68,9 +68,9 @@ void task_register( const char *taskName, float timeInterval, TaskCallback f )
   if ( timeInterval < 0 ) timeInterval = 0;
 
   len = strlen( taskName ) + 1;
-  aTask = (Task_t*)calloc( 1, sizeof( Task_t ) );
+  aTask = EGOBOO_NEW( Task_t );
 
-  aTask->name = (char*)calloc( len, sizeof(char) );
+  aTask->name = EGOBOO_NEW_ARY( char, len );
   strncpy( aTask->name, taskName, len );
   aTask->func = f;
 

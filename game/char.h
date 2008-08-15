@@ -123,7 +123,7 @@ typedef enum e_grip GRIP;
 
 //--------------------------------------------------------------------------------------------
 
-struct Cap_t;
+struct sCap;
 struct sChr;
 struct sGame;
 

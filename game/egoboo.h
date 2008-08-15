@@ -579,8 +579,8 @@ retval_t         MachineState_update(MachineState_t * mac);
 
 #include "module.h"
 
-EXTERN char *globalname  EQ( NULL );   // For debuggin' fgoto_colon
-EXTERN char *globalparsename  EQ( NULL );  // The SCRIPT.TXT filename
+EXTERN const char *globalname  EQ( NULL );   // For debuggin' fgoto_colon
+EXTERN const char *globalparsename  EQ( NULL );  // The SCRIPT.TXT filename
 
 
 bool_t add_quest_idsz( char *whichplayer, IDSZ idsz );

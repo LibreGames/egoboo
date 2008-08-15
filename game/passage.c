@@ -25,10 +25,10 @@
 #include "passage.h"
 
 #include "script.h"
+#include "sound.h"
 
 #include "egoboo_utility.h"
 #include "egoboo.h"
-#include "sound.h"
 
 #include "char.inl"
 #include "mesh.inl"

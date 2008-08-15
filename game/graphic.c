@@ -362,14 +362,6 @@ void release_all_models(Game_t * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-void release_map( Game_t * gs )
-{
-  // ZZ> This function releases all the map images
-
-  GLtexture_Release( &gs->TxMap );
-}
-
-//--------------------------------------------------------------------------------------------
 static bool_t write_debug_message( int time, const char *format, va_list args )
 {
   // ZZ> This function sticks a message in the display queue and sets its timer
@@ -1391,7 +1383,7 @@ void calc_chr_lighting( int x, int y, Uint16 tl, Uint16 tr, Uint16 bl, Uint16 br
 };
 
 //--------------------------------------------------------------------------------------------
-void light_characters()
+void light_characters(Game_t * gs)
 {
   // ZZ> This function figures out character lighting
 
@@ -1402,8 +1394,10 @@ void light_characters()
   Uint32 vrtstart;
   Uint32 fan;
 
-  Game_t * gs    = Graphics_requireGame(&gfxState);
-  Mesh_t * pmesh = Game_getMesh(gs);
+  Mesh_t * pmesh;
+  
+  if(NULL == gs) gs = Graphics_requireGame( &gfxState );
+  pmesh = Game_getMesh(gs);
 
   for ( cnt = 0; cnt < numdolist; cnt++ )
   {
@@ -1491,15 +1485,17 @@ void light_characters()
 }
 
 //--------------------------------------------------------------------------------------------
-void light_particles()
+void light_particles(Game_t * gs)
 {
   // ZZ> This function figures out particle lighting
 
-  Game_t * gs    = Graphics_requireGame(&gfxState);
-  Mesh_t * pmesh = Game_getMesh(gs);
+  Mesh_t * pmesh = NULL;
 
   PRT_REF prt_cnt;
   CHR_REF character;
+
+  if(NULL == gs) gs = Graphics_requireGame( &gfxState );
+  pmesh = Game_getMesh(gs);
 
   for ( prt_cnt = 0; prt_cnt < PRTLST_COUNT; prt_cnt++ )
   {
@@ -3347,14 +3343,17 @@ bool_t do_clear()
 };
 
 //--------------------------------------------------------------------------------------------
-void draw_scene()
+bool_t draw_scene(Game_t * gs)
 {
+  if(NULL == gs) gs = Graphics_getGame(&gfxState);
+  if(NULL == gs) return bfalse;
+
   Begin3DMode();
 
-  make_prtlist();
-  do_dynalight();
-  light_characters();
-  light_particles();
+  make_prtlist(gs);
+  do_dynalight(gs);
+  light_characters(gs);
+  light_particles(gs);
 
   // Render the background
   if ( gfxState.render_background )
@@ -3371,6 +3370,8 @@ void draw_scene()
   }
 
   End3DMode();
+
+  return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -3378,7 +3379,7 @@ void draw_main( float frameDuration )
 {
   // ZZ> This function does all the drawing stuff
 
-  draw_scene();
+  draw_scene( NULL );
 
   draw_text( ui_getBMFont() );
 
