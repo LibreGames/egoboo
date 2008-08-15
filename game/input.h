@@ -123,7 +123,7 @@ struct sLatch
 };
 typedef struct sLatch Latch_t;
 
-INLINE bool_t CLatch_clear(Latch_t * pl) { if(NULL == pl) return bfalse; memset(pl, 0, sizeof(Latch_t)); return btrue; }
+INLINE bool_t Latch_clear(Latch_t * pl) { if(NULL == pl) return bfalse; memset(pl, 0, sizeof(Latch_t)); return btrue; }
 
 
 

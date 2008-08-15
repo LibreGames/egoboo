@@ -75,10 +75,10 @@ int cart_pos_x = 0;
 int cart_pos_y = 0;
 
 char    loadname[80];    // Text
-int    SCRX = 640;    // Screen size
-int    SCRY = 480;    //
-int    OUTX = 640;    // Output size <= Screen size
-int    OUTY = 480;    //
+int    SCRX = DEFAULT_SCREEN_W;    // Screen size
+int    SCRY = DEFAULT_SCREEN_H;    //
+int    OUTX = DEFAULT_SCREEN_W;    // Output size <= Screen size
+int    OUTY = DEFAULT_SCREEN_H;    //
 
 
 int    brushsize = 3;    // Size of raise/lower terrain brush
@@ -692,16 +692,16 @@ GLtexture * tiny_tile_at(cart_mesh * cmsh, int x, int y)
     if ( type >= ( MAXMESHTYPE >> 1 ) )
     {
       // Big tiles
-      basetile = tile & GTile_Anim.bigbaseand;// Animation set
-      tile += GTile_Anim.frameadd << 1;         // Animated tile
-      tile = ( tile & GTile_Anim.bigframeand ) + basetile;
+      basetile = tile & gs->Tile_Anim.bigbaseand;// Animation set
+      tile += gs->Tile_Anim.frameadd << 1;         // Animated tile
+      tile = ( tile & gs->Tile_Anim.bigframeand ) + basetile;
     }
     else
     {
       // Small tiles
-      basetile = tile & GTile_Anim.baseand;// Animation set
-      tile += GTile_Anim.frameadd;         // Animated tile
-      tile = ( tile & GTile_Anim.frameand ) + basetile;
+      basetile = tile & gs->Tile_Anim.baseand;// Animation set
+      tile += gs->Tile_Anim.frameadd;         // Animated tile
+      tile = ( tile & gs->Tile_Anim.frameand ) + basetile;
     }
   }
 
@@ -1435,16 +1435,16 @@ GLtexture * tile_at(cart_mesh * cmsh, int x, int y)
     if ( type >= ( MAXMESHTYPE >> 1 ) )
     {
       // Big tiles
-      basetile = tile & GTile_Anim.bigbaseand;// Animation set
-      tile += GTile_Anim.frameadd << 1;         // Animated tile
-      tile = ( tile & GTile_Anim.bigframeand ) + basetile;
+      basetile = tile & gs->Tile_Anim.bigbaseand;// Animation set
+      tile += gs->Tile_Anim.frameadd << 1;         // Animated tile
+      tile = ( tile & gs->Tile_Anim.bigframeand ) + basetile;
     }
     else
     {
       // Small tiles
-      basetile = tile & GTile_Anim.baseand;// Animation set
-      tile += GTile_Anim.frameadd;         // Animated tile
-      tile = ( tile & GTile_Anim.frameand ) + basetile;
+      basetile = tile & gs->Tile_Anim.baseand;// Animation set
+      tile += gs->Tile_Anim.frameadd;         // Animated tile
+      tile = ( tile & gs->Tile_Anim.frameand ) + basetile;
     }
   }
 

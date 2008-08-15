@@ -10,6 +10,7 @@
 #include "mesh.h"
 #include "Menu.h"
 #include "script.h"
+#include "graphic.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -47,37 +48,6 @@ struct sChopData
   Uint16   start[MAXCHOP];         // The first character of each part
 };
 typedef struct sChopData ChopData_t;
-
-//--------------------------------------------------------------------------------------------
-// Display messages
-struct s_message_element
-{
-  Sint16    time;                                //
-  char      textdisplay[MESSAGESIZE];            // The displayed text
-
-};
-typedef struct s_message_element MESSAGE_ELEMENT;
-
-struct sMessageData
-{
-  // Message files
-  Uint16  total;                                         // The number of messages
-  Uint32  totalindex;                                    // Where to put letter
-
-  Uint32  index[MAXTOTALMESSAGE];                        // Where it is
-  char    text[MESSAGEBUFFERSIZE];                       // The text buffer
-};
-typedef struct sMessageData MessageData_t;
-
-struct sMessageQueue
-{
-  int             count;
-
-  Uint16          start;
-  MESSAGE_ELEMENT list[MAXMESSAGE];
-  float           timechange;
-};
-typedef struct sMessageQueue MessageQueue_t;
 
 //--------------------------------------------------------------------------------------------
 //Weather and water gfx
@@ -129,12 +99,8 @@ struct sGame
 
   // game-specific module stuff
   Mesh_t        Mesh;
-
-  // water and lighting info
-  WATER_INFO    Water;
-
-  // physics info
-  PhysicsData_t phys;
+  TILE_ANIMATED Tile_Anim;
+  TILE_DAMAGE   Tile_Dam;
 
   // game loop variables
   double dFrame, dUpdate;
@@ -169,8 +135,6 @@ struct sGame
   PrtHeap_t PrtHeap;
   PrtList_t PrtList;
 
-  WEATHER_INFO Weather;     // particles for weather spawning
-
   // passage data
   Uint32  PassList_count;
   Passage_t PassList[PASSLST_COUNT];
@@ -193,11 +157,6 @@ struct sGame
   // script values
   ScriptInfo_t ScriptList;
 
-  // dynamic lighting info
-  int          DLightList_distancetobeat;      // The number to beat
-  int          DLightList_count;               // Number of dynamic lights
-  DLightList_t DLightList;
-
   // local texture info
   GLtexture TxTexture[MAXTEXTURE];      // All normal textures
 
@@ -213,6 +172,18 @@ struct sGame
 
   // the map texture
   GLtexture TxMap;
+
+  // water and lighting info
+  WATER_INFO    Water;
+  LIGHTING_INFO Light;
+  WEATHER_INFO  Weather;    // particles for weather spawning
+  PhysicsData_t phys;       // gravity, friction, etc.
+  FOG_INFO      Fog;
+
+  // dynamic lighting info
+  int          DLightList_distancetobeat;      // The number to beat
+  int          DLightList_count;               // Number of dynamic lights
+  DLightList_t DLightList;
 
   bool_t somepladead;           // someone is dead
   bool_t allpladead;            // everyone is dead?
@@ -414,3 +385,4 @@ void naming_read( struct sGame * gs, const char * szModpath, const char * szObje
 void naming_prime( struct sGame * gs );
 
 bool_t decode_escape_sequence( Game_t * gs, char * buffer, size_t buffer_size, const char * message, CHR_REF chr_ref );
+void   animate_tiles( TILE_ANIMATED * t, float dUpdate );

@@ -110,9 +110,6 @@ CHR_REF  dolist[CHRLST_COUNT];
 
 Uint16  chrcollisionlevel = 2;
 
-TILE_DAMAGE GTile_Dam;
-
-
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -3589,14 +3586,14 @@ void make_onwhichfan( Game_t * gs )
       CHR_REF imount;
 
       // augment the rider's damage immunity with the mount's
-      loc_damagemodifier = chrlst[chr_ref].skin.damagemodifier_fp8[GTile_Dam.type];
+      loc_damagemodifier = chrlst[chr_ref].skin.damagemodifier_fp8[gs->Tile_Dam.type];
       imount = chr_get_attachedto(chrlst, chrlst_size, chr_ref);
       if ( ACTIVE_CHR(chrlst, imount) )
       {
         Uint8 modbits1, modbits2, modshift1, modshift2;
         Uint8 tmp_damagemodifier;
 
-        tmp_damagemodifier = chrlst[imount].skin.damagemodifier_fp8[GTile_Dam.type];
+        tmp_damagemodifier = chrlst[imount].skin.damagemodifier_fp8[gs->Tile_Dam.type];
 
         modbits1  = loc_damagemodifier & (~DAMAGE_SHIFT);
         modshift1 = loc_damagemodifier & DAMAGE_SHIFT;
@@ -3612,21 +3609,21 @@ void make_onwhichfan( Game_t * gs )
       {
         if ( chrlst[chr_ref].damagetime == 0 )
         {
-          PAIR ptemp = {GTile_Dam.amount, 1};
-          damage_character( gs, chr_ref, 32768, &ptemp, GTile_Dam.type, TEAM_REF(TEAM_DAMAGE), chr_get_aibumplast( chrlst, chrlst_size, chrlst + chr_ref ), DAMFX_BLOC | DAMFX_ARMO );
+          PAIR ptemp = {gs->Tile_Dam.amount, 1};
+          damage_character( gs, chr_ref, 32768, &ptemp, gs->Tile_Dam.type, TEAM_REF(TEAM_DAMAGE), chr_get_aibumplast( chrlst, chrlst_size, chrlst + chr_ref ), DAMFX_BLOC | DAMFX_ARMO );
           chrlst[chr_ref].damagetime = DELAY_DAMAGETILE;
         }
 
-        if ( INVALID_PIP != GTile_Dam.parttype && 0 == ( ups_loops & GTile_Dam.partand ) )
+        if ( INVALID_PIP != gs->Tile_Dam.parttype && 0 == ( ups_loops & gs->Tile_Dam.partand ) )
         {
           vect3 prt_vel = {0,0,0};
           prt_spawn( gs, 1.0f, chrlst[chr_ref].ori.pos, prt_vel,
-                     0, INVALID_OBJ, GTile_Dam.parttype, INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, 0, INVALID_CHR );
+                     0, INVALID_OBJ, gs->Tile_Dam.parttype, INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, 0, INVALID_CHR );
         }
 
       }
 
-      if ( chrlst[chr_ref].reaffirmdamagetype == GTile_Dam.type )
+      if ( chrlst[chr_ref].reaffirmdamagetype == gs->Tile_Dam.type )
       {
         if (0 == ( ups_loops & TILEREAFFIRMAND ))
         {

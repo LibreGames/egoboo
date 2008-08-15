@@ -3670,37 +3670,37 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 
     case F_SetFogLevel:
       // This function raises and lowers the module's fog
-      fTmp = ( pstate->tmpargument / 10.0 ) - GFog.top;
-      GFog.top += fTmp;
-      GFog.distance += fTmp;
-      GFog.on = CData.fogallowed;
-      if ( GFog.distance < 1.0 )  GFog.on = bfalse;
+      fTmp = ( pstate->tmpargument / 10.0 ) - gs->Fog.top;
+      gs->Fog.top += fTmp;
+      gs->Fog.distance += fTmp;
+      gs->Fog.on = CData.fogallowed;
+      if ( gs->Fog.distance < 1.0 )  gs->Fog.on = bfalse;
       break;
 
     case F_GetFogLevel:
       // This function gets the fog level
-      pstate->tmpargument = GFog.top * 10;
+      pstate->tmpargument = gs->Fog.top * 10;
       break;
 
     case F_SetFogTAD:
       // This function changes the fog color
-      GFog.red = pstate->tmpturn;
-      GFog.grn = pstate->tmpargument;
-      GFog.blu = pstate->tmpdistance;
+      gs->Fog.red = pstate->tmpturn;
+      gs->Fog.grn = pstate->tmpargument;
+      gs->Fog.blu = pstate->tmpdistance;
       break;
 
     case F_SetFogBottomLevel:
       // This function sets the module's bottom fog level...
-      fTmp = ( pstate->tmpargument / 10.0 ) - GFog.bottom;
-      GFog.bottom += fTmp;
-      GFog.distance -= fTmp;
-      GFog.on = CData.fogallowed;
-      if ( GFog.distance < 1.0 )  GFog.on = bfalse;
+      fTmp = ( pstate->tmpargument / 10.0 ) - gs->Fog.bottom;
+      gs->Fog.bottom += fTmp;
+      gs->Fog.distance -= fTmp;
+      gs->Fog.on = CData.fogallowed;
+      if ( gs->Fog.distance < 1.0 )  gs->Fog.on = bfalse;
       break;
 
     case F_GetFogBottomLevel:
       // This function gets the fog level
-      pstate->tmpargument = GFog.bottom * 10;
+      pstate->tmpargument = gs->Fog.bottom * 10;
       break;
 
     case F_CorrectActionForHand:

@@ -61,10 +61,9 @@
 
 struct sGame;
 
-RENDERLIST           renderlist;
+RENDERLIST         renderlist;
 Graphics_t         gfxState;
-GLOBAL_LIGHTING_INFO GLight = {bfalse};
-static bool_t        gfx_initialized = bfalse;
+static bool_t      gfx_initialized = bfalse;
 
 //--------------------------------------------------------------------------------------------
 struct sStatus;
@@ -114,14 +113,6 @@ bool_t gfx_initialize(Graphics_t * g, ConfigData_t * cd)
   g->rnd_lst = &renderlist;
   gfx_find_anisotropy(g);
   gfx_initialized = btrue;
-
-  GLight.spek      = 0.0f;
-  GLight.spekdir.x = GLight.spekdir.y = GLight.spekdir.z = 0.0f;
-  GLight.spekcol.r = GLight.spekcol.g = GLight.spekcol.b = 1.0f;
-  GLight.ambi      = 0.0f;
-  GLight.ambicol.r = GLight.ambicol.g = GLight.ambicol.b = 1.0f;
-
-  GLight.spekdir_stt = GLight.spekdir;
 
   return btrue;
 }
@@ -486,15 +477,15 @@ void figure_out_what_to_draw()
 }
 
 //--------------------------------------------------------------------------------------------
-void animate_tiles( float dUpdate )
+void animate_tiles( TILE_ANIMATED * t, float dUpdate )
 {
   // This function changes the animated tile frame
 
-  GTile_Anim.framefloat += dUpdate / ( float ) GTile_Anim.updateand;
-  while ( GTile_Anim.framefloat >= 1.0f )
+  t->framefloat += dUpdate / ( float ) t->updateand;
+  while ( t->framefloat >= 1.0f )
   {
-    GTile_Anim.framefloat -= 1.0f;
-    GTile_Anim.frameadd = ( GTile_Anim.frameadd + 1 ) & GTile_Anim.frameand;
+    t->framefloat -= 1.0f;
+    t->frameadd = ( t->frameadd + 1 ) & t->frameand;
   };
 }
 
@@ -661,6 +652,7 @@ bool_t load_basic_textures( Game_t * gs, const char *szModPath )
   //  }
   //};
 
+  return btrue;
 
 }
 
@@ -709,7 +701,7 @@ void load_map( Game_t * gs, char* szModule )
     log_warning( "Cannot load map: %s\n", CStringTmp1 );
 
   // Set up the rectangles
-  mapscale = MIN(( float ) gfxState.scrx / 640.0f, ( float ) gfxState.scry / 480.0f );
+  mapscale = MIN(( float ) gfxState.scrx / (float)DEFAULT_SCREEN_W, ( float ) gfxState.scry / (float)DEFAULT_SCREEN_H );
   maprect.left   = 0;
   maprect.right  = MAPSIZE * mapscale;
   maprect.top    = gfxState.scry - MAPSIZE * mapscale;
@@ -718,7 +710,7 @@ void load_map( Game_t * gs, char* szModule )
 }
 
 //--------------------------------------------------------------------------------------------
-void make_water(Game_t * gs)
+bool_t make_water(WATER_INFO * wi)
 {
   // ZZ> This function sets up water movements
 
@@ -727,10 +719,10 @@ void make_water(Game_t * gs)
   Uint8 spek;
 
   layer = 0;
-  while ( layer < gs->Water.layer_count )
+  while ( layer < wi->layer_count )
   {
-    gs->Water.layer[layer].u = 0;
-    gs->Water.layer[layer].v = 0;
+    wi->layer[layer].u = 0;
+    wi->layer[layer].v = 0;
     frame = 0;
     while ( frame < MAXWATERFRAME )
     {
@@ -740,39 +732,27 @@ void make_water(Game_t * gs)
       {
         tmp_sin = sin(( frame * TWO_PI / MAXWATERFRAME ) + ( PI * point / WATERPOINTS ) + ( PI_OVER_TWO * layer / MAXWATERLAYER ) );
         tmp_cos = cos(( frame * TWO_PI / MAXWATERFRAME ) + ( PI * point / WATERPOINTS ) + ( PI_OVER_TWO * layer / MAXWATERLAYER ) );
-        gs->Water.layer[layer].zadd[frame][mode][point]  = tmp_sin * gs->Water.layer[layer].amp;
+        wi->layer[layer].zadd[frame][mode][point]  = tmp_sin * wi->layer[layer].amp;
       }
 
       // Now mirror and copy data to other three modes
       mode++;
-      gs->Water.layer[layer].zadd[frame][mode][0] = gs->Water.layer[layer].zadd[frame][0][1];
-      //gs->Water.layer[layer].color[frame][mode][0] = gs->Water.layer[layer].color[frame][0][1];
-      gs->Water.layer[layer].zadd[frame][mode][1] = gs->Water.layer[layer].zadd[frame][0][0];
-      //gs->Water.layer[layer].color[frame][mode][1] = gs->Water.layer[layer].color[frame][0][0];
-      gs->Water.layer[layer].zadd[frame][mode][2] = gs->Water.layer[layer].zadd[frame][0][3];
-      //gs->Water.layer[layer].color[frame][mode][2] = gs->Water.layer[layer].color[frame][0][3];
-      gs->Water.layer[layer].zadd[frame][mode][3] = gs->Water.layer[layer].zadd[frame][0][2];
-      //gs->Water.layer[layer].color[frame][mode][3] = gs->Water.layer[layer].color[frame][0][2];
+      wi->layer[layer].zadd[frame][mode][0] = wi->layer[layer].zadd[frame][0][1];
+      wi->layer[layer].zadd[frame][mode][1] = wi->layer[layer].zadd[frame][0][0];
+      wi->layer[layer].zadd[frame][mode][2] = wi->layer[layer].zadd[frame][0][3];
+      wi->layer[layer].zadd[frame][mode][3] = wi->layer[layer].zadd[frame][0][2];
       mode++;
 
-      gs->Water.layer[layer].zadd[frame][mode][0] = gs->Water.layer[layer].zadd[frame][0][3];
-      //gs->Water.layer[layer].color[frame][mode][0] = gs->Water.layer[layer].color[frame][0][3];
-      gs->Water.layer[layer].zadd[frame][mode][1] = gs->Water.layer[layer].zadd[frame][0][2];
-      //gs->Water.layer[layer].color[frame][mode][1] = gs->Water.layer[layer].color[frame][0][2];
-      gs->Water.layer[layer].zadd[frame][mode][2] = gs->Water.layer[layer].zadd[frame][0][1];
-      //gs->Water.layer[layer].color[frame][mode][2] = gs->Water.layer[layer].color[frame][0][1];
-      gs->Water.layer[layer].zadd[frame][mode][3] = gs->Water.layer[layer].zadd[frame][0][0];
-      //gs->Water.layer[layer].color[frame][mode][3] = gs->Water.layer[layer].color[frame][0][0];
+      wi->layer[layer].zadd[frame][mode][0] = wi->layer[layer].zadd[frame][0][3];
+      wi->layer[layer].zadd[frame][mode][1] = wi->layer[layer].zadd[frame][0][2];
+      wi->layer[layer].zadd[frame][mode][2] = wi->layer[layer].zadd[frame][0][1];
+      wi->layer[layer].zadd[frame][mode][3] = wi->layer[layer].zadd[frame][0][0];
       mode++;
 
-      gs->Water.layer[layer].zadd[frame][mode][0] = gs->Water.layer[layer].zadd[frame][0][2];
-      //gs->Water.layer[layer].color[frame][mode][0] = gs->Water.layer[layer].color[frame][0][2];
-      gs->Water.layer[layer].zadd[frame][mode][1] = gs->Water.layer[layer].zadd[frame][0][3];
-      //gs->Water.layer[layer].color[frame][mode][1] = gs->Water.layer[layer].color[frame][0][3];
-      gs->Water.layer[layer].zadd[frame][mode][2] = gs->Water.layer[layer].zadd[frame][0][0];
-      //gs->Water.layer[layer].color[frame][mode][2] = gs->Water.layer[layer].color[frame][0][0];
-      gs->Water.layer[layer].zadd[frame][mode][3] = gs->Water.layer[layer].zadd[frame][0][1];
-      //gs->Water.layer[layer].color[frame][mode][3] = gs->Water.layer[layer].color[frame][0][1];
+      wi->layer[layer].zadd[frame][mode][0] = wi->layer[layer].zadd[frame][0][2];
+      wi->layer[layer].zadd[frame][mode][1] = wi->layer[layer].zadd[frame][0][3];
+      wi->layer[layer].zadd[frame][mode][2] = wi->layer[layer].zadd[frame][0][0];
+      wi->layer[layer].zadd[frame][mode][3] = wi->layer[layer].zadd[frame][0][1];
       frame++;
     }
     layer++;
@@ -786,204 +766,235 @@ void make_water(Game_t * gs)
     tmp = FP8_TO_FLOAT( cnt );
     spek = 255 * tmp * tmp;
 
-    gs->Water.spek[cnt] = spek;
+    wi->spek[cnt] = spek;
 
     // [claforte] Probably need to replace this with a
     //            glColor4f( FP8_TO_FLOAT(spek), FP8_TO_FLOAT(spek), FP8_TO_FLOAT(spek), 1.0f) call:
   }
+
+  return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-void read_wawalite( Game_t * gs, char *modname )
+bool_t setup_lighting( LIGHTING_INFO * li )
+{
+  if(NULL ==li) return bfalse;
+
+  // process the lighting info
+  if( li->on )
+  {
+    li->spek = DotProduct( li->spekdir, li->spekdir );
+  }
+  else
+  {
+    li->spek = 0;
+    li->ambi = 0;
+  }
+
+  if ( 0 != li->spek )
+  {
+    li->spek = sqrt( li->spek );
+    li->spekdir.x /= li->spek;
+    li->spekdir.y /= li->spek;
+    li->spekdir.z /= li->spek;
+
+    li->spekdir_stt = li->spekdir;
+    li->spek *= li->ambi;
+  }
+
+  li->spekcol.r =
+  li->spekcol.g =
+  li->spekcol.b = li->spek;
+
+  li->ambicol.r =
+  li->ambicol.g =
+  li->ambicol.b = li->ambi;
+
+  make_speklut();
+  make_lighttospek();
+  make_spektable( li->spekdir );
+
+  return btrue;
+};
+
+//--------------------------------------------------------------------------------------------
+bool_t read_wawalite( Game_t * gs, char *modname )
 {
   // ZZ> This function sets up water and lighting for the module
 
+  Mesh_t * pmesh;
   FILE* fileread;
   Uint32 loc_rand;
 
-  Mesh_t * pmesh = Game_getMesh(gs);
+  if( !EKEY_PVALID(gs) ) return bfalse;
+
+  pmesh = Game_getMesh(gs);
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.wawalite_file );
   fileread = fs_fileOpen( PRI_NONE, NULL, CStringTmp1, "r" );
-  if ( NULL != fileread )
+  if ( NULL == fileread ) return bfalse;
+
+
+  loc_rand = gs->randie_index;
+
+  fgoto_colon( fileread );
+  //  !!!BAD!!!
+  //  Random map...
+  //  If someone else wants to handle this, here are some thoughts for approaching
+  //  it.  The .MPD file for the level should give the basic size of the map.  Use
+  //  a standard tile set like the Palace modules.  Only use objects that are in
+  //  the module's object directory, and only use some of them.  Imagine several Rock
+  //  Moles eating through a stone filled level to make a path from the entrance to
+  //  the exit.  Door placement will be difficult.
+  //  !!!BAD!!!
+
+
+  // Read water data first
+  gs->Water.layer_count = fget_next_int( fileread );
+  gs->Water.spekstart = fget_next_int( fileread );
+  gs->Water.speklevel_fp8 = fget_next_int( fileread );
+  gs->Water.douselevel = fget_next_int( fileread );
+  gs->Water.surfacelevel = fget_next_int( fileread );
+  gs->Water.light = fget_next_bool( fileread );
+  gs->Water.iswater = fget_next_bool( fileread );
+  gfxState.render_overlay    = fget_next_bool( fileread ) && CData.overlayvalid;
+  gfxState.render_background = fget_next_bool( fileread ) && CData.backgroundvalid;
+  gs->Water.layer[0].distx = fget_next_float( fileread );
+  gs->Water.layer[0].disty = fget_next_float( fileread );
+  gs->Water.layer[1].distx = fget_next_float( fileread );
+  gs->Water.layer[1].disty = fget_next_float( fileread );
+  foregroundrepeat = fget_next_int( fileread );
+  backgroundrepeat = fget_next_int( fileread );
+
+
+  gs->Water.layer[0].z = fget_next_int( fileread );
+  gs->Water.layer[0].alpha_fp8 = fget_next_int( fileread );
+  gs->Water.layer[0].frameadd = fget_next_int( fileread );
+  gs->Water.layer[0].lightlevel_fp8 = fget_next_int( fileread );
+  gs->Water.layer[0].lightadd_fp8 = fget_next_int( fileread );
+  gs->Water.layer[0].amp = fget_next_float( fileread );
+  gs->Water.layer[0].uadd = fget_next_float( fileread );
+  gs->Water.layer[0].vadd = fget_next_float( fileread );
+
+  gs->Water.layer[1].z = fget_next_int( fileread );
+  gs->Water.layer[1].alpha_fp8 = fget_next_int( fileread );
+  gs->Water.layer[1].frameadd = fget_next_int( fileread );
+  gs->Water.layer[1].lightlevel_fp8 = fget_next_int( fileread );
+  gs->Water.layer[1].lightadd_fp8 = fget_next_int( fileread );
+  gs->Water.layer[1].amp = fget_next_float( fileread );
+  gs->Water.layer[1].uadd = fget_next_float( fileread );
+  gs->Water.layer[1].vadd = fget_next_float( fileread );
+
+  gs->Water.layer[0].u = 0;
+  gs->Water.layer[0].v = 0;
+  gs->Water.layer[1].u = 0;
+  gs->Water.layer[1].v = 0;
+  gs->Water.layer[0].frame = RAND( &loc_rand, 0, WATERFRAMEAND );
+  gs->Water.layer[1].frame = RAND( &loc_rand, 0, WATERFRAMEAND );
+
+  // Read light data second
+  gs->Light.on        = btrue;
+  gs->Light.spekdir.x = fget_next_float( fileread );
+  gs->Light.spekdir.y = fget_next_float( fileread );
+  gs->Light.spekdir.z = fget_next_float( fileread );
+  gs->Light.ambi      = fget_next_float( fileread );
+  gs->Light.spek      = 0;
+
+  // Read tile data third
+  gs->phys.hillslide = fget_next_float( fileread );
+  gs->phys.slippyfriction = fget_next_float( fileread );
+  gs->phys.airfriction = fget_next_float( fileread );
+  gs->phys.waterfriction = fget_next_float( fileread );
+  gs->phys.noslipfriction = fget_next_float( fileread );
+  gs->phys.gravity = fget_next_float( fileread );
+  gs->phys.slippyfriction = MAX( gs->phys.slippyfriction, sqrt( gs->phys.noslipfriction ) );
+  gs->phys.airfriction    = MAX( gs->phys.airfriction,    sqrt( gs->phys.slippyfriction ) );
+  gs->phys.waterfriction  = MIN( gs->phys.waterfriction,  pow( gs->phys.airfriction, 4.0f ) );
+
+  gs->Tile_Anim.updateand = fget_next_int( fileread );
+  gs->Tile_Anim.frameand = fget_next_int( fileread );
+  gs->Tile_Anim.bigframeand = ( gs->Tile_Anim.frameand << 1 ) + 1;
+  gs->Tile_Dam.amount = fget_next_int( fileread );
+  gs->Tile_Dam.type = fget_next_damage( fileread );
+
+  // Read weather data fourth
+  gs->Weather.require_water = fget_next_bool( fileread );
+  gs->Weather.timereset     = fget_next_int( fileread );
+  gs->Weather.time          = gs->Weather.timereset;
+  gs->Weather.player        = 0;
+  gs->Weather.active        = btrue;
+  if(0 == gs->Weather.timereset)
   {
-    loc_rand = gs->randie_index;
-
-    fgoto_colon( fileread );
-    //  !!!BAD!!!
-    //  Random map...
-    //  If someone else wants to handle this, here are some thoughts for approaching
-    //  it.  The .MPD file for the level should give the basic size of the map.  Use
-    //  a standard tile set like the Palace modules.  Only use objects that are in
-    //  the module's object directory, and only use some of them.  Imagine several Rock
-    //  Moles eating through a stone filled level to make a path from the entrance to
-    //  the exit.  Door placement will be difficult.
-    //  !!!BAD!!!
-
-
-    // Read water data first
-    gs->Water.layer_count = fget_next_int( fileread );
-    gs->Water.spekstart = fget_next_int( fileread );
-    gs->Water.speklevel_fp8 = fget_next_int( fileread );
-    gs->Water.douselevel = fget_next_int( fileread );
-    gs->Water.surfacelevel = fget_next_int( fileread );
-    gs->Water.light = fget_next_bool( fileread );
-    gs->Water.iswater = fget_next_bool( fileread );
-    gfxState.render_overlay    = fget_next_bool( fileread ) && CData.overlayvalid;
-    gfxState.render_background = fget_next_bool( fileread ) && CData.backgroundvalid;
-    gs->Water.layer[0].distx = fget_next_float( fileread );
-    gs->Water.layer[0].disty = fget_next_float( fileread );
-    gs->Water.layer[1].distx = fget_next_float( fileread );
-    gs->Water.layer[1].disty = fget_next_float( fileread );
-    foregroundrepeat = fget_next_int( fileread );
-    backgroundrepeat = fget_next_int( fileread );
-
-
-    gs->Water.layer[0].z = fget_next_int( fileread );
-    gs->Water.layer[0].alpha_fp8 = fget_next_int( fileread );
-    gs->Water.layer[0].frameadd = fget_next_int( fileread );
-    gs->Water.layer[0].lightlevel_fp8 = fget_next_int( fileread );
-    gs->Water.layer[0].lightadd_fp8 = fget_next_int( fileread );
-    gs->Water.layer[0].amp = fget_next_float( fileread );
-    gs->Water.layer[0].uadd = fget_next_float( fileread );
-    gs->Water.layer[0].vadd = fget_next_float( fileread );
-
-    gs->Water.layer[1].z = fget_next_int( fileread );
-    gs->Water.layer[1].alpha_fp8 = fget_next_int( fileread );
-    gs->Water.layer[1].frameadd = fget_next_int( fileread );
-    gs->Water.layer[1].lightlevel_fp8 = fget_next_int( fileread );
-    gs->Water.layer[1].lightadd_fp8 = fget_next_int( fileread );
-    gs->Water.layer[1].amp = fget_next_float( fileread );
-    gs->Water.layer[1].uadd = fget_next_float( fileread );
-    gs->Water.layer[1].vadd = fget_next_float( fileread );
-
-    gs->Water.layer[0].u = 0;
-    gs->Water.layer[0].v = 0;
-    gs->Water.layer[1].u = 0;
-    gs->Water.layer[1].v = 0;
-    gs->Water.layer[0].frame = RAND( &loc_rand, 0, WATERFRAMEAND );
-    gs->Water.layer[1].frame = RAND( &loc_rand, 0, WATERFRAMEAND );
-
-    // Read light data second
-    GLight.on        = btrue;
-    GLight.spekdir.x = fget_next_float( fileread );
-    GLight.spekdir.y = fget_next_float( fileread );
-    GLight.spekdir.z = fget_next_float( fileread );
-    GLight.ambi      = fget_next_float( fileread );
-
-    GLight.spek = DotProduct( GLight.spekdir, GLight.spekdir );
-    if ( 0 != GLight.spek )
-    {
-      GLight.spek = sqrt( GLight.spek );
-      GLight.spekdir.x /= GLight.spek;
-      GLight.spekdir.y /= GLight.spek;
-      GLight.spekdir.z /= GLight.spek;
-
-      GLight.spekdir_stt = GLight.spekdir;
-      GLight.spek *= GLight.ambi;
-    }
-
-    GLight.spekcol.r =
-    GLight.spekcol.g =
-    GLight.spekcol.b = GLight.spek;
-
-    GLight.ambicol.r =
-    GLight.ambicol.g =
-    GLight.ambicol.b = GLight.ambi;
-
-    // Read tile data third
-    gs->phys.hillslide = fget_next_float( fileread );
-    gs->phys.slippyfriction = fget_next_float( fileread );
-    gs->phys.airfriction = fget_next_float( fileread );
-    gs->phys.waterfriction = fget_next_float( fileread );
-    gs->phys.noslipfriction = fget_next_float( fileread );
-    gs->phys.gravity = fget_next_float( fileread );
-    gs->phys.slippyfriction = MAX( gs->phys.slippyfriction, sqrt( gs->phys.noslipfriction ) );
-    gs->phys.airfriction    = MAX( gs->phys.airfriction,    sqrt( gs->phys.slippyfriction ) );
-    gs->phys.waterfriction  = MIN( gs->phys.waterfriction,  pow( gs->phys.airfriction, 4.0f ) );
-
-    GTile_Anim.updateand = fget_next_int( fileread );
-    GTile_Anim.frameand = fget_next_int( fileread );
-    GTile_Anim.bigframeand = ( GTile_Anim.frameand << 1 ) + 1;
-    GTile_Dam.amount = fget_next_int( fileread );
-    GTile_Dam.type = fget_next_damage( fileread );
-
-    // Read weather data fourth
-    gs->Weather.require_water = fget_next_bool( fileread );
-    gs->Weather.timereset     = fget_next_int( fileread );
-    gs->Weather.time          = gs->Weather.timereset;
-    gs->Weather.player        = 0;
-    gs->Weather.active        = btrue;
-    if(0 == gs->Weather.timereset)
-    {
-      gs->Weather.active = bfalse;
-      gs->Weather.player = INVALID_PLA;
-    }
-
-    // Read extra data
-    pmesh->Info.exploremode = fget_next_bool( fileread );
-    usefaredge = fget_next_bool( fileread );
-    GCamera.swing = 0;
-    GCamera.swingrate = fget_next_float( fileread );
-    GCamera.swingamp = fget_next_float( fileread );
-
-
-    // Read unnecessary data...  Only read if it exists...
-    GFog.on = bfalse;
-    GFog.affectswater = btrue;
-    GFog.top = 100;
-    GFog.bottom = 0;
-    GFog.distance = 100;
-    GFog.red = 255;
-    GFog.grn = 255;
-    GFog.blu = 255;
-    GTile_Dam.parttype = INVALID_PIP;
-    GTile_Dam.partand = 255;
-    GTile_Dam.sound = INVALID_SOUND;
-
-    if ( fgoto_colon_yesno( fileread ) )
-    {
-      GFog.on           = CData.fogallowed;
-      GFog.top          = fget_next_float( fileread );
-      GFog.bottom       = fget_next_float( fileread );
-      GFog.red          = fget_next_fixed( fileread );
-      GFog.grn          = fget_next_fixed( fileread );
-      GFog.blu          = fget_next_fixed( fileread );
-      GFog.affectswater = fget_next_bool( fileread );
-
-      GFog.distance = ( GFog.top - GFog.bottom );
-      if ( GFog.distance < 1.0 )  GFog.on = bfalse;
-
-      // Read extra stuff for damage tile particles...
-      if ( fgoto_colon_yesno( fileread ) )
-      {
-        GTile_Dam.parttype = fget_int( fileread );
-        GTile_Dam.partand  = fget_next_int( fileread );
-        GTile_Dam.sound    = fget_next_int( fileread );
-      }
-    }
-
-    // Allow slow machines to ignore the fancy stuff
-    if ( !CData.twolayerwateron && gs->Water.layer_count > 1 )
-    {
-      int iTmp;
-      gs->Water.layer_count = 1;
-      iTmp = gs->Water.layer[0].alpha_fp8;
-      iTmp = FP8_MUL( gs->Water.layer[1].alpha_fp8, iTmp ) + iTmp;
-      if ( iTmp > 255 ) iTmp = 255;
-      gs->Water.layer[0].alpha_fp8 = iTmp;
-    }
-
-
-    fs_fileClose( fileread );
-
-    // Do it
-    make_speklut();
-    make_lighttospek();
-    make_spektable( GLight.spekdir );
-    make_water( gs );
+    gs->Weather.active = bfalse;
+    gs->Weather.player = INVALID_PLA;
   }
 
+  // Read extra data
+  pmesh->Info.exploremode = fget_next_bool( fileread );
+  usefaredge = fget_next_bool( fileread );
+  GCamera.swing = 0;
+  GCamera.swingrate = fget_next_float( fileread );
+  GCamera.swingamp = fget_next_float( fileread );
+
+
+  // Read unnecessary data...  Only read if it exists...
+  fog_info_reset( &(gs->Fog) );
+  tile_damage_reset( &(gs->Tile_Dam) );
+  if ( fgoto_colon_yesno( fileread ) )
+  {
+    gs->Fog.on           = CData.fogallowed;
+    gs->Fog.top          = fget_next_float( fileread );
+    gs->Fog.bottom       = fget_next_float( fileread );
+    gs->Fog.red          = fget_next_fixed( fileread );
+    gs->Fog.grn          = fget_next_fixed( fileread );
+    gs->Fog.blu          = fget_next_fixed( fileread );
+    gs->Fog.affectswater = fget_next_bool( fileread );
+
+    gs->Fog.distance = ( gs->Fog.top - gs->Fog.bottom );
+    if ( gs->Fog.distance < 1.0 )  gs->Fog.on = bfalse;
+
+    // Read extra stuff for damage tile particles...
+    if ( fgoto_colon_yesno( fileread ) )
+    {
+      gs->Tile_Dam.parttype = fget_int( fileread );
+      gs->Tile_Dam.partand  = fget_next_int( fileread );
+      gs->Tile_Dam.sound    = fget_next_int( fileread );
+    }
+  }
+
+  // Allow slow machines to ignore the fancy stuff
+  if ( !CData.twolayerwateron && gs->Water.layer_count > 1 )
+  {
+    int iTmp;
+    gs->Water.layer_count = 1;
+    iTmp = gs->Water.layer[0].alpha_fp8;
+    iTmp = FP8_MUL( gs->Water.layer[1].alpha_fp8, iTmp ) + iTmp;
+    if ( iTmp > 255 ) iTmp = 255;
+    gs->Water.layer[0].alpha_fp8 = iTmp;
+  }
+
+  // Read expansions
+  while ( fgoto_colon_yesno( fileread ) )
+  {
+    IDSZ idsz;
+    int iTmp;
+
+    idsz = fget_idsz( fileread );
+    iTmp = fget_int( fileread );
+
+    // "MOON" == you can see the moon, so lycanthropy... mwa ha ha ha ha!
+    // Also, it just means that it is outdoors
+    if ( MAKE_IDSZ( "MOON" ) == idsz ) gs->Light.on = INT_TO_BOOL( iTmp );
+  };
+
+
+  fs_fileClose( fileread );
+
+  // Do it
+  setup_lighting( &(gs->Light) );
+  make_water( &(gs->Water) );
+
+  return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1170,8 +1181,8 @@ void render_shadow( CHR_REF character )
 
   Uint16 chrlightambi  = gs->ChrList[character].tlight.ambi_fp8.r + gs->ChrList[character].tlight.ambi_fp8.g + gs->ChrList[character].tlight.ambi_fp8.b;
   Uint16 chrlightspek  = gs->ChrList[character].tlight.spek_fp8.r + gs->ChrList[character].tlight.spek_fp8.g + gs->ChrList[character].tlight.spek_fp8.b;
-  float  globlightambi = GLight.ambicol.r + GLight.ambicol.g + GLight.ambicol.b;
-  float  globlightspek = GLight.spekcol.r + GLight.spekcol.g + GLight.spekcol.b;
+  float  globlightambi = gs->Light.ambicol.r + gs->Light.ambicol.g + gs->Light.ambicol.b;
+  float  globlightspek = gs->Light.spekcol.r + gs->Light.spekcol.g + gs->Light.spekcol.b;
 
   hide = ChrList_getPCap(gs, character)->hidestate;
   if ( hide != NOHIDE && hide == gs->ChrList[character].aistate.state ) return;
@@ -1940,11 +1951,13 @@ void render_alpha_characters()
 // render the water hilights, etc. using global lighting
 void render_water_highlights()
 {
+  Game_t * gs = Graphics_requireGame(&gfxState);
+
   ATTRIB_PUSH( "render_water_highlights", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_LIGHTING_BIT );
   {
-    GLfloat light_position[] = { 10000*GLight.spekdir.x, 10000*GLight.spekdir.y, 10000*GLight.spekdir.z, 1.0 };
-    GLfloat lmodel_ambient[] = { GLight.ambicol.r, GLight.ambicol.g, GLight.ambicol.b, 1.0 };
-    GLfloat light_diffuse[]  = { GLight.spekcol.r, GLight.spekcol.g, GLight.spekcol.b, 1.0 };
+    GLfloat light_position[] = { 10000*gs->Light.spekdir.x, 10000*gs->Light.spekdir.y, 10000*gs->Light.spekdir.z, 1.0 };
+    GLfloat lmodel_ambient[] = { gs->Light.ambicol.r, gs->Light.ambicol.g, gs->Light.ambicol.b, 1.0 };
+    GLfloat light_diffuse[]  = { gs->Light.spekcol.r, gs->Light.spekcol.g, gs->Light.spekcol.b, 1.0 };
 
     glDepthMask( GL_FALSE );
     glEnable( GL_DEPTH_TEST );
@@ -2033,9 +2046,9 @@ void render_character_highlights()
   ATTRIB_PUSH( "render_character_highlights", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_LIGHTING_BIT | GL_POLYGON_BIT );
   {
     GLfloat light_none[]     = {0, 0, 0, 0};
-    GLfloat light_position[] = { 10000*GLight.spekdir.x, 10000*GLight.spekdir.y, 10000*GLight.spekdir.z, 1.0 };
-    GLfloat lmodel_ambient[] = { GLight.ambicol.r, GLight.ambicol.g, GLight.ambicol.b, 1.0 };
-    GLfloat light_specular[] = { GLight.spekcol.r, GLight.spekcol.g, GLight.spekcol.b, 1.0 };
+    GLfloat light_position[] = { 10000*gs->Light.spekdir.x, 10000*gs->Light.spekdir.y, 10000*gs->Light.spekdir.z, 1.0 };
+    GLfloat lmodel_ambient[] = { gs->Light.ambicol.r, gs->Light.ambicol.g, gs->Light.ambicol.b, 1.0 };
+    GLfloat light_specular[] = { gs->Light.spekcol.r, gs->Light.spekcol.g, gs->Light.spekcol.b, 1.0 };
 
     glDisable( GL_CULL_FACE );
 
@@ -3214,10 +3227,10 @@ void draw_text( BMFont_t *  pfnt )
       y += draw_string( pfnt, 0, y, NULL, "~FREEPRT - %d", gs->PrtHeap.free_count );
       y += draw_string( pfnt, 0, y, NULL, "~FREECHR - %d", gs->ChrHeap.free_count );
       y += draw_string( pfnt, 0, y, NULL, "~EXPORT - %s", gs->modstate.exportvalid ? "TRUE" : "FALSE" );
-      y += draw_string( pfnt, 0, y, NULL, "~FOG&WATER - %s", GFog.affectswater ? "TRUE" : "FALSE"  );
+      y += draw_string( pfnt, 0, y, NULL, "~FOG&WATER - %s", gs->Fog.affectswater ? "TRUE" : "FALSE"  );
       y += draw_string( pfnt, 0, y, NULL, "~SHOP - %d", gs->ShopList_count );
       y += draw_string( pfnt, 0, y, NULL, "~PASSAGE - %d", gs->PassList_count );
-      y += draw_string( pfnt, 0, y, NULL, "~DAMAGEPART - %d", GTile_Dam.parttype );
+      y += draw_string( pfnt, 0, y, NULL, "~DAMAGEPART - %d", gs->Tile_Dam.parttype );
     }
 
     // Camera_t DEBUG MODE
@@ -3233,8 +3246,6 @@ void draw_text( BMFont_t *  pfnt )
       y += draw_string( pfnt, 0, y, NULL, "~y %f %f", GCamera.centerpos.y, GCamera.trackpos.y );
       y += draw_string( pfnt, 0, y, NULL, "~turn %d %d", CData.autoturncamera, doturntime );
     }
-
-
 
     //Draw paused text
     if ( gs->proc.Paused && !SDLKEYDOWN( SDLK_F11 ) )
@@ -3272,14 +3283,11 @@ void draw_text( BMFont_t *  pfnt )
       y += draw_string( pfnt, 0, y, NULL, "JUMP TO RESPAWN" );
     }
 
-
-
     // Network message input
     if ( keyb.mode )
     {
       y += draw_wrap_string( pfnt, 0, y, NULL, gfxState.scrx - CData.wraptolerance, kbuffer->buffer );
     }
-
 
     // Messages
     y += do_messages( pfnt, 0, y );
@@ -3980,8 +3988,8 @@ struct s_egoboo_video_parameters
 
   vect3_si32 colordepth;  // 8,8,8
 
-  int width;       // 640
-  int height;      // 480
+  int width;       // DEFAULT_SCREEN_W == 640
+  int height;      // DEFAULT_SCREEN_H == 480
   int depth;       // 32
 };
 
@@ -4004,8 +4012,8 @@ bool_t video_parameters_default(video_parameters_t * v)
   v->colordepth.g = 8;
   v->colordepth.b = 8;
 
-  v->width  = 640;
-  v->height = 480;
+  v->width  = DEFAULT_SCREEN_W;
+  v->height = DEFAULT_SCREEN_H;
   v->depth  =  32;
 
   return btrue;
@@ -4379,6 +4387,20 @@ bool_t gl_set_mode(Graphics_t * g)
   return btrue;
 }
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t lighting_info_reset(LIGHTING_INFO * li)
+{
+  li->spek      = 0.0f;
+  li->spekdir.x = li->spekdir.y = li->spekdir.z = 0.0f;
+  li->spekcol.r = li->spekcol.g = li->spekcol.b = 1.0f;
+  li->ambi      = 0.0f;
+  li->ambicol.r = li->ambicol.g = li->ambicol.b = 1.0f;
+
+  li->spekdir_stt = li->spekdir;
+
+  return btrue;
+};
 
 
 
@@ -4603,4 +4625,5 @@ bool_t gl_set_mode(Graphics_t * g)
 //  ATTRIB_POP("render_sha_fans_ref");
 //};
 //
+
 

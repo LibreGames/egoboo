@@ -61,6 +61,10 @@ struct sGame;
 
 EXTERN const char VERSION[] EQ( "2.7.x" );   // Version of the game
 
+
+#define DEFAULT_SCREEN_W 640
+#define DEFAULT_SCREEN_H 480
+
 enum e_color
 {
   COLR_WHITE = 0,
@@ -108,11 +112,6 @@ typedef enum e_part_type PART_TYPE;
 
 #define MAXSTAT             16                      // Maximum status displays
 
-#define MAXMESSAGE          6                       // Number of messages
-#define MAXTOTALMESSAGE     1024                    //
-#define MESSAGESIZE         80                      //
-#define MESSAGEBUFFERSIZE   (MAXTOTALMESSAGE*40)
-#define DELAY_MESSAGE         200                     // Time to keep the message alive
 
 
 #define DELAY_DAMAGETILE      32                      // Invincibility time
@@ -131,11 +130,6 @@ typedef enum e_part_type PART_TYPE;
 #define SHADOWRAISE 5                               //
 #define DAMAGERAISE 25                              //
 
-#define MAXWATERLAYER 2                             // Maximum water layers
-#define MAXWATERFRAME 512                           // Maximum number of wave frames
-#define WATERFRAMEAND (MAXWATERFRAME-1)             //
-#define WATERPOINTS 4                               // Points in a water fan
-#define WATERMODE 4                                 // Ummm...  For making it work, yeah...
 
 
 
@@ -170,17 +164,17 @@ typedef enum e_part_type PART_TYPE;
 
 struct s_tile_animated
 {
-  int    updateand; //  EQ( 7 );                        // New tile every 7 frames
-  Uint16 frameand; //  EQ( 3 );              // Only 4 frames
-  Uint16 baseand; //  EQ( 0xfffc );          //
-  Uint16 bigframeand; //  EQ( 7 );           // For big tiles
-  Uint16 bigbaseand; //  EQ( 0xfff8 );       //
-  float  framefloat; //  EQ( 0 );              // Current frame
-  Uint16 frameadd; //  EQ( 0 );              // Current frame
+  int    updateand;         // New tile every 7 frames
+  Uint16 frameand;          // Only 4 frames
+  Uint16 baseand;           //
+  Uint16 bigframeand;       // For big tiles
+  Uint16 bigbaseand;        //
+  float  framefloat;        // Current frame
+  Uint16 frameadd;          // Current frame
 };
 typedef struct s_tile_animated TILE_ANIMATED;
 
-EXTERN TILE_ANIMATED GTile_Anim;
+bool_t tile_animated_reset(TILE_ANIMATED * t);
 
 #define NORTH 16384                                 // Character facings
 #define SOUTH 49152                                 //
@@ -234,44 +228,6 @@ EXTERN OBJ_REF                 localplayer_slot[16];              // For local i
 
 // EWWWW. GLOBALS ARE EVIL.
 
-struct s_water_layer
-{
-  Uint16    lightlevel_fp8; // General light amount (0-63)
-  Uint16    lightadd_fp8;   // Ambient light amount (0-63)
-  Uint16    alpha_fp8;      // Transparency
-
-  float     u;              // Coordinates of texture
-  float     v;              //
-  float     uadd;           // Texture movement
-  float     vadd;           //
-
-  float     amp;            // Amplitude of waves
-  float     z;              // Base height of water
-  float     zadd[MAXWATERFRAME][WATERMODE][WATERPOINTS];
-  Uint8     color[MAXWATERFRAME][WATERMODE][WATERPOINTS];
-  Uint16    frame;          // Frame
-  Uint16    frameadd;       // Speed
-
-  float     distx;          // For distant backgrounds
-  float     disty;          //
-};
-typedef struct s_water_layer WATER_LAYER;
-
-struct s_water_info
-{
-  float     surfacelevel;         // Surface level for water striders
-  float     douselevel;           // Surface level for torches
-  bool_t    light;                // Is it light ( default is alpha )
-  Uint8     spekstart;            // Specular begins at which light value
-  Uint8     speklevel_fp8;        // General specular amount (0-255)
-  bool_t    iswater;              // Is it water?  ( Or lava... )
-
-  int         layer_count; // EQ( 0 );              // Number of layers
-  WATER_LAYER layer[MAXWATERLAYER];
-
-  Uint32    spek[256];             // Specular highlights
-};
-typedef struct s_water_info WATER_INFO;
 
 EXTERN float     foregroundrepeat  EQ( 1 );     //
 EXTERN float     backgroundrepeat  EQ( 1 );     //
@@ -290,7 +246,8 @@ struct s_fog_info
 };
 typedef struct s_fog_info FOG_INFO;
 
-EXTERN FOG_INFO GFog;
+bool_t fog_info_reset(FOG_INFO * f);
+
 
 /*Special Textures*/
 typedef enum e_tx_type

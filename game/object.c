@@ -29,6 +29,7 @@
 #include "enchant.h"
 #include "game.h"
 #include "Log.h"
+#include "sound.h"
 
 #include "egoboo_utility.h"
 #include "egoboo_strutil.h"
@@ -571,3 +572,18 @@ void ObjList_log_used( Game_t * gs, char *savename )
     fs_fileClose( hFileWrite );
   }
 }
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t tile_damage_reset(TILE_DAMAGE * t)
+{
+  if(NULL == t) return bfalse;
+
+  t->parttype = INVALID_PIP;
+  t->partand  = 0xFF;
+  t->sound    = INVALID_SOUND;
+  t->amount   = INT_TO_FP8(1);                    // Amount of damage
+  t->type     = DAMAGE_FIRE;                      // Type of damage
+
+  return btrue;
+};

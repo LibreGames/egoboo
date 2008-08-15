@@ -96,7 +96,7 @@ void CServer_reset_latches(Server_t * ss);
 void sv_talkToRemotes(Server_t * ss);
 void CServer_bufferLatches(Server_t * ss);
 void CServer_unbufferLatches(Server_t * ss);
-void CServer_resetTimeLatches(Server_t * ss, CHR_REF ichr);
+void Server_resetTimeLatches(Server_t * ss, CHR_REF ichr);
 
 bool_t sv_sendPacketToAllClients(Server_t * ss, SYS_PACKET * egop);
 bool_t sv_sendPacketToAllClientsGuaranteed(Server_t * ss, SYS_PACKET * egop);

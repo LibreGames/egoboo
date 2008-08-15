@@ -26,6 +26,7 @@
 #include "Ui.h"
 
 #include "Log.h"
+#include "input.h"
 
 #include "egoboo.h"
 

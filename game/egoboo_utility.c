@@ -960,7 +960,7 @@ const char * inherit_fname(const char * szObjPath, const char * szObject, const 
     }
   }
 
-  if(!found)
+  if(!found || 0 == strncmp( ifile, "data" , 4 ) )
   {
     strcpy(ret_fname, szObjPath);
     str_append_slash(ret_fname, sizeof(ret_fname));

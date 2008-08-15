@@ -297,21 +297,21 @@ void md2_blend_lighting(Chr_t * pchr)
       lightnew_g = 0;
       lightnew_b = 0;
 
-      ftmp = DotProduct( vd->Normals[i], GLight.spekdir );
+      ftmp = DotProduct( vd->Normals[i], gs->Light.spekdir );
       if ( ftmp > 0.0f )
       {
-        lightnew_r += ftmp * ftmp * spekularity_fp8 * GLight.spekcol.r;
-        lightnew_g += ftmp * ftmp * spekularity_fp8 * GLight.spekcol.g;
-        lightnew_b += ftmp * ftmp * spekularity_fp8 * GLight.spekcol.b;
+        lightnew_r += ftmp * ftmp * spekularity_fp8 * gs->Light.spekcol.r;
+        lightnew_g += ftmp * ftmp * spekularity_fp8 * gs->Light.spekcol.g;
+        lightnew_b += ftmp * ftmp * spekularity_fp8 * gs->Light.spekcol.b;
       }
 
       lightnew_r += speklevelr_fp8 * spek_calc_local_lighting(lightrotationr, vd->Normals[i]);
       lightnew_g += speklevelg_fp8 * spek_calc_local_lighting(lightrotationg, vd->Normals[i]);
       lightnew_b += speklevelb_fp8 * spek_calc_local_lighting(lightrotationb, vd->Normals[i]);
 
-      lightnew_r = lighttospek[sheen_fp8][lightnew_r] + ambilevelr_fp8 + GLight.ambicol.r * 255;
-      lightnew_g = lighttospek[sheen_fp8][lightnew_g] + ambilevelg_fp8 + GLight.ambicol.g * 255;
-      lightnew_b = lighttospek[sheen_fp8][lightnew_b] + ambilevelb_fp8 + GLight.ambicol.b * 255;
+      lightnew_r = lighttospek[sheen_fp8][lightnew_r] + ambilevelr_fp8 + gs->Light.ambicol.r * 255;
+      lightnew_g = lighttospek[sheen_fp8][lightnew_g] + ambilevelg_fp8 + gs->Light.ambicol.g * 255;
+      lightnew_b = lighttospek[sheen_fp8][lightnew_b] + ambilevelb_fp8 + gs->Light.ambicol.b * 255;
 
       lightold_r = vd->Colors[i].r;
       lightold_g = vd->Colors[i].g;
@@ -760,12 +760,12 @@ void render_refmad( CHR_REF ichr, Uint16 trans_fp8 )
   ( pchr->matrix ).CNV( 1, 2 ) = - ( pchr->matrix ).CNV( 1, 2 );
   ( pchr->matrix ).CNV( 2, 2 ) = - ( pchr->matrix ).CNV( 2, 2 );
   ( pchr->matrix ).CNV( 3, 2 ) = - ( pchr->matrix ).CNV( 3, 2 ) + level + level;
-  fog_save = GFog.on;
-  GFog.on  = bfalse;
+  fog_save = gs->Fog.on;
+  gs->Fog.on  = bfalse;
 
   render_mad( ichr, alphatmp_fp8 );
 
-  GFog.on = fog_save;
+  gs->Fog.on = fog_save;
   ( pchr->matrix ).CNV( 0, 2 ) = - ( pchr->matrix ).CNV( 0, 2 );
   ( pchr->matrix ).CNV( 1, 2 ) = - ( pchr->matrix ).CNV( 1, 2 );
   ( pchr->matrix ).CNV( 2, 2 ) = - ( pchr->matrix ).CNV( 2, 2 );

@@ -804,7 +804,7 @@ int mnu_doChooseModule( MenuProc_t * mproc, float deltaTime )
       // Otherwise, we want modules that allow imports
       if ( mnu_selectedPlayerCount > 0 )
       {
-        for ( i = 0;i < sv->loc_mod_count; i++ )
+        for ( i = 0; i < sv->loc_mod_count; i++ )
         {
           if ( sv->loc_mod[i].importamount >= mnu_selectedPlayerCount )
           {
@@ -816,7 +816,7 @@ int mnu_doChooseModule( MenuProc_t * mproc, float deltaTime )
       else
       {
         // Starter modules
-        for ( i = 0;i < sv->loc_mod_count; i++ )
+        for ( i = 0; i < sv->loc_mod_count; i++ )
         {
           if ( sv->loc_mod[i].importamount == 0 && sv->loc_mod[i].maxplayers == 1 )
           {
@@ -827,8 +827,8 @@ int mnu_doChooseModule( MenuProc_t * mproc, float deltaTime )
       };
 
       // Figure out at what offset we want to draw the module menu.
-      moduleMenuOffsetX = ( gfxState.surface->w - 640 ) / 2;
-      moduleMenuOffsetY = ( gfxState.surface->h - 480 ) / 2;
+      moduleMenuOffsetX = ( gfxState.surface->w - DEFAULT_SCREEN_W ) / 2;
+      moduleMenuOffsetY = ( gfxState.surface->h - DEFAULT_SCREEN_H ) / 2;
 
       // navigation buttons
       ui_initWidget( mnu_widgetList + 0, 0, mnu_Font, "<-", NULL, moduleMenuOffsetX + 20, moduleMenuOffsetY + 74, 30, 30 );
@@ -842,7 +842,7 @@ int mnu_doChooseModule( MenuProc_t * mproc, float deltaTime )
       ui_initWidget( mnu_widgetList + 6, 6, mnu_Font, NULL, NULL, moduleMenuOffsetX, moduleMenuOffsetY, 138, 138 );
 
       // Module description
-      ui_initWidget( mnu_widgetList + 7, UI_Invalid, mnu_Font, &description, NULL, moduleMenuOffsetX + 21, moduleMenuOffsetY + 173, 291, 230 );
+      ui_initWidget( mnu_widgetList + 7, UI_Invalid, mnu_Font, description, NULL, moduleMenuOffsetX + 21, moduleMenuOffsetY + 173, 291, 230 );
 
       x = ( gfxState.surface->w / 2 ) - ( background.imgW / 2 );
       y = gfxState.surface->h - background.imgH;
@@ -3588,8 +3588,8 @@ int mnu_doHostGame(MenuProc_t * mproc, float deltaTime)
     }
 
     // Figure out at what offset we want to draw the module menu.
-    moduleMenuOffsetX = (gfxState.surface->w - 640) / 2;
-    moduleMenuOffsetY = (gfxState.surface->h - 480) / 2;
+    moduleMenuOffsetX = (gfxState.surface->w - DEFAULT_SCREEN_W) / 2;
+    moduleMenuOffsetY = (gfxState.surface->h - DEFAULT_SCREEN_H) / 2;
 
     // navigation buttons
     ui_initWidget( mnu_widgetList + 0, 0, mnu_Font, "<-",          NULL, moduleMenuOffsetX +  20, moduleMenuOffsetY +  74, 30, 30 );
@@ -3825,8 +3825,8 @@ int mnu_doUnhostGame(MenuProc_t * mproc, float deltaTime)
     ui_initWidget( &wBackground, UI_Invalid, ui_getTTFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
 
     // Figure out at what offset we want to draw the module menu.
-    moduleMenuOffsetX = (gfxState.surface->w - 640) / 2;
-    moduleMenuOffsetY = (gfxState.surface->h - 480) / 2;
+    moduleMenuOffsetX = (gfxState.surface->w - DEFAULT_SCREEN_W) / 2;
+    moduleMenuOffsetY = (gfxState.surface->h - DEFAULT_SCREEN_H) / 2;
 
     // navigation buttons
     ui_initWidget( mnu_widgetList + 2, 2, mnu_Font, "Unhost Module", NULL, moduleMenuOffsetX + 327, moduleMenuOffsetY + 173, 200, 30 );
@@ -4030,8 +4030,8 @@ int mnu_doJoinGame(MenuProc_t * mproc, float deltaTime)
     cl_request_module_info(cl);
 
     // Figure out at what offset we want to draw the module menu.
-    moduleMenuOffsetX = (gfxState.surface->w - 640) / 2;
-    moduleMenuOffsetY = (gfxState.surface->h - 480) / 2;
+    moduleMenuOffsetX = (gfxState.surface->w - DEFAULT_SCREEN_W) / 2;
+    moduleMenuOffsetY = (gfxState.surface->h - DEFAULT_SCREEN_H) / 2;
 
     // navigation buttons
     ui_initWidget( mnu_widgetList + 0, 0, mnu_Font, "<-", NULL, moduleMenuOffsetX + 20, moduleMenuOffsetY + 74, 30, 30 );

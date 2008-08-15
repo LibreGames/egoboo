@@ -228,7 +228,7 @@ struct s_tile_damage
 };
 typedef struct s_tile_damage TILE_DAMAGE;
 
-extern TILE_DAMAGE GTile_Dam;
+bool_t tile_damage_reset(TILE_DAMAGE * t);
 
 #define DELAY_TILESOUND 16
 #define TILEREAFFIRMAND  3

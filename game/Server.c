@@ -832,7 +832,7 @@ void CServer_reset_latches(Server_t * ss)
 
   for(chr_cnt = 0; chr_cnt<CHRLST_COUNT; chr_cnt++)
   {
-    CServer_resetTimeLatches(ss,chr_cnt);
+    Server_resetTimeLatches(ss,chr_cnt);
   };
 
   ss->tlb.nextstamp = INVALID_TIMESTAMP;
@@ -840,7 +840,7 @@ void CServer_reset_latches(Server_t * ss)
 };
 
 //--------------------------------------------------------------------------------------------
-void CServer_resetTimeLatches(Server_t * ss, CHR_REF ichr)
+void Server_resetTimeLatches(Server_t * ss, CHR_REF ichr)
 {
   int cnt, chr_val;
 
@@ -848,14 +848,14 @@ void CServer_resetTimeLatches(Server_t * ss, CHR_REF ichr)
 
   chr_val = REF_TO_INT(ichr);
 
-  CLatch_clear( ss->latch + chr_val );
+  Latch_clear( ss->latch + chr_val );
 
   for(cnt=0; cnt < MAXLAG; cnt++)
   {
     ss->tlb.buffer[chr_val][cnt].valid   = bfalse;
     ss->tlb.buffer[chr_val][cnt].stamp   = INVALID_TIMESTAMP;
 
-    CLatch_clear( &(ss->tlb.buffer[chr_val][cnt].latch) );
+    Latch_clear( &(ss->tlb.buffer[chr_val][cnt].latch) );
   }
 };
 

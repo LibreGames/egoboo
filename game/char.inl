@@ -358,7 +358,7 @@ INLINE AI_STATE * ai_state_new(AI_STATE * a)
   // other random stuff
   a->turnmode       = TURNMODE_VELOCITY;        // Turning mode
 
-  CLatch_clear( &(a->latch) );
+  Latch_clear( &(a->latch) );
 
   return a;
 };
@@ -409,7 +409,7 @@ INLINE AI_STATE * ai_state_init(Game_t * gs, AI_STATE * a, CHR_REF ichr)
 
   a->morphed = bfalse;
 
-  CLatch_clear( &(a->latch) );
+  Latch_clear( &(a->latch) );
   a->turnmode = TURNMODE_VELOCITY;
 
   a->bumplast   = ichr;

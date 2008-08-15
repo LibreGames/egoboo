@@ -72,16 +72,16 @@ void render_fan_ref( Uint32 fan, char tex_loaded, float level )
     if ( type >= ( MAXMESHTYPE >> 1 ) )
     {
       // Big tiles
-      basetile = tile & GTile_Anim.bigbaseand;// Animation set
-      tile += GTile_Anim.frameadd << 1;         // Animated tile
-      tile = ( tile & GTile_Anim.bigframeand ) + basetile;
+      basetile = tile & gs->Tile_Anim.bigbaseand;// Animation set
+      tile += gs->Tile_Anim.frameadd << 1;         // Animated tile
+      tile = ( tile & gs->Tile_Anim.bigframeand ) + basetile;
     }
     else
     {
       // Small tiles
-      basetile = tile & GTile_Anim.baseand;// Animation set
-      tile += GTile_Anim.frameadd;         // Animated tile
-      tile = ( tile & GTile_Anim.frameand ) + basetile;
+      basetile = tile & gs->Tile_Anim.baseand;// Animation set
+      tile += gs->Tile_Anim.frameadd;         // Animated tile
+      tile = ( tile & gs->Tile_Anim.frameand ) + basetile;
     }
   }
 
@@ -216,16 +216,16 @@ void render_fan( Uint32 fan, char tex_loaded )
     if ( type >= ( MAXMESHTYPE >> 1 ) )
     {
       // Big tiles
-      basetile = tile & GTile_Anim.bigbaseand;// Animation set
-      tile += GTile_Anim.frameadd << 1;         // Animated tile
-      tile = ( tile & GTile_Anim.bigframeand ) + basetile;
+      basetile = tile & gs->Tile_Anim.bigbaseand;// Animation set
+      tile += gs->Tile_Anim.frameadd << 1;         // Animated tile
+      tile = ( tile & gs->Tile_Anim.bigframeand ) + basetile;
     }
     else
     {
       // Small tiles
-      basetile = tile & GTile_Anim.baseand;// Animation set
-      tile += GTile_Anim.frameadd;         // Animated tile
-      tile = ( tile & GTile_Anim.frameand ) + basetile;
+      basetile = tile & gs->Tile_Anim.baseand;// Animation set
+      tile += gs->Tile_Anim.frameadd;         // Animated tile
+      tile = ( tile & gs->Tile_Anim.frameand ) + basetile;
     }
   }
 
@@ -390,10 +390,10 @@ void render_fan( Uint32 fan, char tex_loaded )
 // float z;
 // Uint8 red, grn, blu;
 //TODO: Implement OpenGL fog effects
-/*  if(GFog.on)
+/*  if(gs->Fog.on)
 {
 // The full fog value
-GFog.spec = 0xff000000 | (GFog.red<<16) | (GFog.grn<<8) | (GFog.blu);
+gs->Fog.spec = 0xff000000 | (gs->Fog.red<<16) | (gs->Fog.grn<<8) | (gs->Fog.blu);
 for (cnt = 0; cnt < vertices; cnt++)
 {
 v[cnt].pos.x = (float) pmesh->Mem.vrt_x[badvertex];
@@ -403,18 +403,18 @@ z = v[cnt].pos.z;
 
 
 // Figure out the fog coloring
-if(z < GFog.top)
+if(z < gs->Fog.top)
 {
-if(z < GFog.bottom)
+if(z < gs->Fog.bottom)
 {
-v[cnt].dcSpecular = GFog.spec;  // Full fog
+v[cnt].dcSpecular = gs->Fog.spec;  // Full fog
 }
 else
 {
-z = 1.0 - ((z - GFog.bottom)/GFog.distance);  // 0.0 to 1.0... Amount of fog to keep
-red = (GFog.red * z);
-grn = (GFog.grn * z);
-blu = (GFog.blu * z);
+z = 1.0 - ((z - gs->Fog.bottom)/gs->Fog.distance);  // 0.0 to 1.0... Amount of fog to keep
+red = (gs->Fog.red * z);
+grn = (gs->Fog.grn * z);
+blu = (gs->Fog.blu * z);
 ambi = 0xff000000 | (red<<16) | (grn<<8) | (blu);
 v[cnt].dcSpecular = ambi;
 }
@@ -545,7 +545,7 @@ void render_water_fan_lit( Uint32 fan, Uint8 layer, Uint8 mode )
   // Uint8 red, grn, blu;
   // float z;
   //Uint32 ambi, spek;
-  // DWORD GFog.spec;
+  // DWORD gs->Fog.spec;
 
   // vertex is a value from 0-15, for the meshcommandref/u/v variables
   // badvertex is a value that references the actual vertex number
@@ -801,25 +801,26 @@ void do_dynalight()
   PDLight dynalst      = gs->DLightList;
   size_t  dynalst_size = MAXDYNA;
 
+  // Don't need to do every frame
+  if ( 0 != ( gfxState.fps_loops & 7 ) ) return;
+
   // Do each floor tile
   if ( pmesh->Info.exploremode )
   {
-    // Set base light level in explore mode...  Don't need to do every frame
-    if (( gfxState.fps_loops & 7 ) == 0 )
+    // Set base light level in explore mode...  
+
+    for ( prt_cnt = 0; prt_cnt < PRTLST_COUNT; prt_cnt++ )
     {
-      for ( prt_cnt = 0; prt_cnt < PRTLST_COUNT; prt_cnt++ )
+      if ( !ACTIVE_PRT( prtlst, prt_cnt ) || !prtlst[prt_cnt].dyna.on ) continue;
+
+      fanx = MESH_FLOAT_TO_FAN( prtlst[prt_cnt].ori.pos.x );
+      fany = MESH_FLOAT_TO_FAN( prtlst[prt_cnt].ori.pos.y );
+
+      for ( addy = -DYNAFANS; addy <= DYNAFANS; addy++ )
       {
-        if ( !ACTIVE_PRT( prtlst, prt_cnt ) || !prtlst[prt_cnt].dyna.on ) continue;
-
-        fanx = MESH_FLOAT_TO_FAN( prtlst[prt_cnt].ori.pos.x );
-        fany = MESH_FLOAT_TO_FAN( prtlst[prt_cnt].ori.pos.y );
-
-        for ( addy = -DYNAFANS; addy <= DYNAFANS; addy++ )
+        for ( addx = -DYNAFANS; addx <= DYNAFANS; addx++ )
         {
-          for ( addx = -DYNAFANS; addx <= DYNAFANS; addx++ )
-          {
-            set_fan_light( fanx + addx, fany + addy, prt_cnt );
-          }
+          set_fan_light( fanx + addx, fany + addy, prt_cnt );
         }
       }
     }
@@ -846,21 +847,20 @@ void do_dynalight()
           light_b = mm->vrt_ab_fp8[vertex];
 
           mesh_calc_normal( pmesh, &(gs->phys), pos, &nrm );
-          light_r += GLight.ambicol.r * 255;
-          light_g += GLight.ambicol.g * 255;
-          light_b += GLight.ambicol.b * 255;
+          light_r += gs->Light.ambicol.r * 255;
+          light_g += gs->Light.ambicol.g * 255;
+          light_b += gs->Light.ambicol.b * 255;
 
-
-          ftmp = DotProduct( nrm, GLight.spekdir );
+          ftmp = DotProduct( nrm, gs->Light.spekdir );
           if ( ftmp > 0 )
           {
-            light_r += GLight.spekcol.r * 255 * ftmp * ftmp;
-            light_g += GLight.spekcol.g * 255 * ftmp * ftmp;
-            light_b += GLight.spekcol.b * 255 * ftmp * ftmp;
+            light_r += gs->Light.spekcol.r * 255 * ftmp * ftmp;
+            light_g += gs->Light.spekcol.g * 255 * ftmp * ftmp;
+            light_b += gs->Light.spekcol.b * 255 * ftmp * ftmp;
           };
 
-          cnt = 0;
-          while ( cnt < gs->DLightList_count )
+          
+          for ( cnt = 0; cnt < gs->DLightList_count; cnt++ )
           {
             float flight;
 
@@ -895,8 +895,6 @@ void do_dynalight()
               light_g += 255 * flight;
               light_b += 255 * flight;
             }
-
-            cnt++;
           }
 
           if ( light_r > 255 ) light_r = 255;

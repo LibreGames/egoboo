@@ -206,7 +206,7 @@ bool_t input_read_joystick(JOYSTICK * pj)
 
   if (!pj->on || NULL == pj->sdl_device )
   {
-    CLatch_clear( &(pj->latch) );
+    Latch_clear( &(pj->latch) );
 
     return (NULL != pj->sdl_device);
   };

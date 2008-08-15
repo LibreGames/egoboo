@@ -126,7 +126,7 @@ bool_t    cl_Running(Client_t * cs);
 
 
 void CClient_reset_latches(Client_t * cs);
-void CClient_resetTimeLatches(Client_t * cs, CHR_REF ichr);
+void Client_resetTimeLatches(Client_t * cs, CHR_REF ichr);
 void CClient_bufferLatches(Client_t * cs);
 
 

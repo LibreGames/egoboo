@@ -121,7 +121,6 @@ void make_onwhichfan( struct sGame * gs );
 void do_bumping( struct sGame * gs, float dUpdate );
 
 void do_weather_spawn( struct sGame * gs, float dUpdate );
-void animate_tiles( float dUpdate );
 void stat_return( struct sGame * gs, float dUpdate );
 void pit_kill( struct sGame * gs, float dUpdate );
 void reset_players( struct sGame * gs );
@@ -137,9 +136,6 @@ void export_one_character_skin( struct sGame * gs, char *szSaveName, CHR_REF cha
 
 bool_t load_bars( char* szBitmap );
 void load_map( struct sGame * gs, char* szModule );
-
-void make_water( struct sGame * gs );
-void read_wawalite( struct sGame * gs, char *modname );
 
 void render_prt();
 void render_shadow( CHR_REF character );

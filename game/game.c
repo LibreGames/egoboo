@@ -2421,11 +2421,11 @@ void set_default_config_data(ConfigData_t * pcon)
   strncpy( pcon->import_dir, "import" , sizeof( STRING ) );
   strncpy( pcon->players_dir, "players", sizeof( STRING ) );
 
-  strncpy( pcon->nullicon_bitmap, "ico_lst[ICO_NULL].bmp" , sizeof( STRING ) );
-  strncpy( pcon->keybicon_bitmap, "ico_lst[ICO_KEYB].bmp" , sizeof( STRING ) );
-  strncpy( pcon->mousicon_bitmap, "ico_lst[ICO_MOUS].bmp" , sizeof( STRING ) );
-  strncpy( pcon->joyaicon_bitmap, "ico_lst[ICO_JOYA].bmp" , sizeof( STRING ) );
-  strncpy( pcon->joybicon_bitmap, "ico_lst[ICO_JOYB].bmp" , sizeof( STRING ) );
+  strncpy( pcon->nullicon_bitmap, "nullicon.bmp" , sizeof( STRING ) );
+  strncpy( pcon->keybicon_bitmap, "keybicon.bmp" , sizeof( STRING ) );
+  strncpy( pcon->mousicon_bitmap, "mousicon.bmp" , sizeof( STRING ) );
+  strncpy( pcon->joyaicon_bitmap, "joyaicon.bmp" , sizeof( STRING ) );
+  strncpy( pcon->joybicon_bitmap, "joybicon.bmp" , sizeof( STRING ) );
 
   strncpy( pcon->tile0_bitmap, "tile0.bmp" , sizeof( STRING ) );
   strncpy( pcon->tile1_bitmap, "tile1.bmp" , sizeof( STRING ) );
@@ -2574,7 +2574,7 @@ void main_handleKeyboard()
 };
 
 //--------------------------------------------------------------------------------------------
-void do_sunlight(GLOBAL_LIGHTING_INFO * info)
+void do_sunlight(LIGHTING_INFO * info)
 {
   // BB > simulate sunlight
 
@@ -2645,7 +2645,7 @@ void do_sunlight(GLOBAL_LIGHTING_INFO * info)
     };
 
     // update the spektable since the sunlight may have changes
-    make_spektable( GLight.spekdir );
+    make_spektable( info->spekdir );
   }
 
 };
@@ -2662,7 +2662,7 @@ retval_t main_doGameGraphics()
   move_camera( UPDATESCALE );
 
   // simulate sunlight. runs on its own clock.
-  do_sunlight(&GLight);
+  do_sunlight(&gs->Light);
 
   if ( gs->dFrame >= 1.0 )
   {
@@ -3323,7 +3323,7 @@ void cl_update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
     //flash_select();                                    // client function
 
     PROFILE_BEGIN( animate_tiles );
-    animate_tiles( dUpdate );                          // client function
+    animate_tiles( &(gs->Tile_Anim), dUpdate );                          // client function
     PROFILE_END( animate_tiles );
 
     PROFILE_BEGIN( move_water );
@@ -3551,7 +3551,7 @@ void update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
     //flash_select();                          // client function
 
     PROFILE_BEGIN( animate_tiles );
-    animate_tiles( dUpdate );                          // client function
+    animate_tiles( &(gs->Tile_Anim), dUpdate );                          // client function
     PROFILE_END( animate_tiles );
 
     PROFILE_BEGIN( move_water );
@@ -4763,7 +4763,7 @@ bool_t fget_next_chr_spawn_info(Game_t * gs, FILE * pfile, CHR_SPAWN_INFO * psi)
 
   // the slot number
   fscanf( pfile, "%d", &slot );
-  psi->iobj = OBJ_REF(slot);
+  psi->iobj = (slot < 0) ? INVALID_OBJ : OBJ_REF(slot);
 
   // the position info
   pos.x = fget_float( pfile );
@@ -4809,8 +4809,9 @@ struct s_chr_setup_info
   egoboo_key_t ekey;
 
   Game_t * gs;
-  CHR_REF last_chr;
-  CHR_REF last_item;
+  CHR_REF  last_chr;
+  vect3    last_chr_pos;
+  CHR_REF  last_item;
   int tnc, localnumber;
 
 };
@@ -4881,11 +4882,20 @@ bool_t do_setup_chracter(CHR_SETUP_INFO * pinfo, CHR_SPAWN_INFO * psi)
   pinfo->last_item = tmp_item;
 
   // handle attachments
-  if ( SLOT_NONE == psi->slot ) //  !VALID_CHR( chrlst, attach ) )
+  if ( SLOT_NONE == psi->slot )
   {
     // The item is actually a character
-    pinfo->last_chr  = pinfo->last_item;
-    pinfo->last_item = INVALID_CHR;
+    pinfo->last_chr     = pinfo->last_item;
+    pinfo->last_item    = INVALID_CHR;
+
+    if( VALID_CHR(chrlst, pinfo->last_chr) )
+    {
+      pinfo->last_chr_pos = chrlst[pinfo->last_chr].ori.pos;
+    }
+    else
+    {
+      VectorClear( pinfo->last_chr_pos.v );
+    }
   }
   else if ( SLOT_INVENTORY == psi->slot )
   {
@@ -4913,6 +4923,9 @@ bool_t do_setup_chracter(CHR_SETUP_INFO * pinfo, CHR_SPAWN_INFO * psi)
 
     // actually insert intot the inventory
     pack_add_item( pinfo->gs, pinfo->last_item, pinfo->last_chr );
+
+    // set the item position to the holder's position
+    pitem->ori.pos = pinfo->last_chr_pos;
   }
   else
   {
@@ -4921,6 +4934,9 @@ bool_t do_setup_chracter(CHR_SETUP_INFO * pinfo, CHR_SPAWN_INFO * psi)
     {
       run_script( pinfo->gs, pinfo->last_item, 1.0f );   // Empty the grabbed messages
     };
+
+    // set the item position to the holder's position
+    pitem->ori.pos = pinfo->last_chr_pos;
   }
 
   // Set the starting level
@@ -4986,7 +5002,7 @@ void do_setup_inputs(CHR_SETUP_INFO * pinfo, CHR_SPAWN_INFO * psi)
       bool_t itislocal = bfalse;
       for ( tnc = 0; tnc < localplayer_count; tnc++ )
       {
-        if ( REF_TO_INT(chrlst[pinfo->last_item].model) == localplayer_slot[tnc] )
+        if ( REF_TO_INT(chrlst[pinfo->last_chr].model) == localplayer_slot[tnc] )
         {
           itislocal = btrue;
           localnumber = tnc;
@@ -5528,6 +5544,8 @@ Game_t * Game_new(Game_t * gs, Net_t * ns, Client_t * cl, Server_t * sv)
   ModState_new( &(gs->modstate), NULL, (Uint32)-1 );
   ModSummary_new( &(gs->modtxt) );
   Mesh_new( &(gs->Mesh) );
+  tile_animated_reset( &(gs->Tile_Anim) );
+  tile_damage_reset( &(gs->Tile_Dam) );
 
   // profiles
   CapList_new( gs );
@@ -5547,6 +5565,12 @@ Game_t * Game_new(Game_t * gs, Net_t * ns, Client_t * cl, Server_t * sv)
 
   // weather
   Weather_init( &(gs->Weather) );
+
+  // lighting
+  lighting_info_reset( &(gs->Light) );
+
+  // fog
+  fog_info_reset( &(gs->Fog) );
 
   //textures
   Game_new_textures( gs );
@@ -6878,6 +6902,44 @@ bool_t Weather_init(WEATHER_INFO * w)
   w->timereset     = 10;
   w->time          = 10;
   w->player        = INVALID_PLA;
+
+  return btrue;
+};
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t tile_animated_reset(TILE_ANIMATED * t)
+{
+  if(NULL == t) return bfalse;
+
+  t->updateand   =  7;                  // New tile every 7 frames
+
+  t->frameand    =  3;                  // Only 4 frames
+  t->baseand     =  ~(t->frameand);     //
+
+  t->bigframeand =  7;                  // For big tiles
+  t->bigbaseand  =  ~(t->bigframeand);  //
+
+  t->framefloat  =  0;                  // Current frame
+  t->frameadd    =  0;                  // Current frame rate
+
+  return btrue;
+};
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t fog_info_reset(FOG_INFO * f)
+{
+  if(NULL == f) return bfalse;
+
+  f->on           = bfalse;          // Do ground fog?
+  f->bottom       = 0.0;             //
+  f->top          = 100;             //
+  f->distance     = 100;             //
+  f->red          = 255;             //  Fog color
+  f->grn          = 255;             //
+  f->blu          = 255;             //
+  f->affectswater = bfalse;
 
   return btrue;
 };

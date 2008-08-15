@@ -28,7 +28,6 @@
 #include "Font.h"
 #include "mesh.h"
 #include "Menu.h"
-#include "game.h"
 
 #include "egoboo_types.h"
 
@@ -70,7 +69,7 @@ typedef struct s_renderlist RENDERLIST;
 
 //--------------------------------------------------------------------------------------------
 // Global lighting stuff
-struct s_global_lighting_info
+struct s_lighting_info
 {
   bool_t on;
   float  spek;
@@ -80,9 +79,10 @@ struct s_global_lighting_info
   float  ambi;
   vect3  ambicol;
 };
-typedef struct s_global_lighting_info GLOBAL_LIGHTING_INFO;
+typedef struct s_lighting_info LIGHTING_INFO;
 
-extern GLOBAL_LIGHTING_INFO GLight;
+bool_t lighting_info_reset(LIGHTING_INFO * li);
+bool_t setup_lighting( LIGHTING_INFO * li);
 
 //--------------------------------------------------------------------------------------------
 struct sGraphics
@@ -159,6 +159,44 @@ retval_t       Graphics_removeGame(Graphics_t * g, struct sGame * gs);
 extern Graphics_t gfxState;
 
 //--------------------------------------------------------------------------------------------
+// Display messages
+
+#define MAXMESSAGE          6                       // Number of messages
+#define MAXTOTALMESSAGE     1024                    //
+#define MESSAGESIZE         80                      //
+#define MESSAGEBUFFERSIZE   (MAXTOTALMESSAGE*40)
+#define DELAY_MESSAGE         200                     // Time to keep the message alive
+
+struct s_message_element
+{
+  Sint16    time;                                //
+  char      textdisplay[MESSAGESIZE];            // The displayed text
+
+};
+typedef struct s_message_element MESSAGE_ELEMENT;
+
+struct sMessageData
+{
+  // Message files
+  Uint16  total;                                         // The number of messages
+  Uint32  totalindex;                                    // Where to put letter
+
+  Uint32  index[MAXTOTALMESSAGE];                        // Where it is
+  char    text[MESSAGEBUFFERSIZE];                       // The text buffer
+};
+typedef struct sMessageData MessageData_t;
+
+struct sMessageQueue
+{
+  int             count;
+
+  Uint16          start;
+  MESSAGE_ELEMENT list[MAXMESSAGE];
+  float           timechange;
+};
+typedef struct sMessageQueue MessageQueue_t;
+
+//--------------------------------------------------------------------------------------------
 struct sClockState;
 
 struct sGui
@@ -181,6 +219,56 @@ typedef struct sGui Gui_t;
 
 Gui_t * gui_getState();
 bool_t CGui_shutDown();
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#define MAXWATERLAYER 2                             // Maximum water layers
+#define MAXWATERFRAME 512                           // Maximum number of wave frames
+#define WATERFRAMEAND (MAXWATERFRAME-1)             //
+#define WATERPOINTS 4                               // Points in a water fan
+#define WATERMODE 4                                 // Ummm...  For making it work, yeah...
+
+struct s_water_layer
+{
+  Uint16    lightlevel_fp8; // General light amount (0-63)
+  Uint16    lightadd_fp8;   // Ambient light amount (0-63)
+  Uint16    alpha_fp8;      // Transparency
+
+  float     u;              // Coordinates of texture
+  float     v;              //
+  float     uadd;           // Texture movement
+  float     vadd;           //
+
+  float     amp;            // Amplitude of waves
+  float     z;              // Base height of water
+  float     zadd[MAXWATERFRAME][WATERMODE][WATERPOINTS];
+  Uint8     color[MAXWATERFRAME][WATERMODE][WATERPOINTS];
+  Uint16    frame;          // Frame
+  Uint16    frameadd;       // Speed
+
+  float     distx;          // For distant backgrounds
+  float     disty;          //
+};
+typedef struct s_water_layer WATER_LAYER;
+
+struct s_water_info
+{
+  float     surfacelevel;         // Surface level for water striders
+  float     douselevel;           // Surface level for torches
+  bool_t    light;                // Is it light ( default is alpha )
+  Uint8     spekstart;            // Specular begins at which light value
+  Uint8     speklevel_fp8;        // General specular amount (0-255)
+  bool_t    iswater;              // Is it water?  ( Or lava... )
+
+  int         layer_count; // EQ( 0 );              // Number of layers
+  WATER_LAYER layer[MAXWATERLAYER];
+
+  Uint32    spek[256];             // Specular highlights
+};
+typedef struct s_water_info WATER_INFO;
+
+bool_t make_water(WATER_INFO * wi);
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -220,3 +308,5 @@ bool_t       gl_set_mode(Graphics_t * g);
 
 bool_t load_basic_textures( struct sGame * gs, const char *szModPath );
 bool_t load_particle_texture( struct sGame * gs, const char *szModPath );
+
+bool_t read_wawalite( struct sGame * gs, char *modname );
