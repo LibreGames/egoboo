@@ -5631,7 +5631,7 @@ void reset_players( Game_t * gs )
   // Reset the initial player data and latches
   PlaList_renew( gs );
 
-  CClient_reset_latches( gs->cl );
+  Client_reset_latches( gs->cl );
   CServer_reset_latches( gs->sv );
 }
 

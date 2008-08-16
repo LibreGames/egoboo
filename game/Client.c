@@ -116,7 +116,7 @@ static bool_t    CClient_delete(Client_t * cs);
 //
 //--------------------------------------------------------------------------------------------
 
-retval_t CClient_startUp(Client_t * cs)
+retval_t Client_startUp(Client_t * cs)
 {
   NetHost_t * cl_host;
 
@@ -133,7 +133,7 @@ retval_t CClient_startUp(Client_t * cs)
   }
   else
   {
-    CClient_shutDown(cs);
+    Client_shutDown(cs);
     return rv_error;
   }
 
@@ -145,14 +145,14 @@ retval_t CClient_startUp(Client_t * cs)
   {
     // Try to create a new session
     net_logf("---------------------------------------------\n");
-    net_logf("NET INFO: CClient_startUp() - Starting game client\n");
+    net_logf("NET INFO: Client_startUp() - Starting game client\n");
 
     _cl_startUp();
   }
   else
   {
     net_logf("---------------------------------------------\n");
-    net_logf("NET INFO: CClient_startUp() - Restarting game server\n");
+    net_logf("NET INFO: Client_startUp() - Restarting game server\n");
   }
 
   // To function, the client requires the file transfer component
@@ -162,13 +162,13 @@ retval_t CClient_startUp(Client_t * cs)
 };
 
 //--------------------------------------------------------------------------------------------
-retval_t CClient_shutDown(Client_t * cs)
+retval_t Client_shutDown(Client_t * cs)
 {
   if(NULL == cs) return rv_error;
 
   if(!cl_Started()) return rv_succeed;
 
-  net_logf("NET INFO: CClient_shutDown() - Shutting down a game client... ");
+  net_logf("NET INFO: Client_shutDown() - Shutting down a game client... ");
 
   // shut down the connection to the game host
   net_stopPeer( cs->gamePeer );
@@ -191,14 +191,14 @@ retval_t CClient_shutDown(Client_t * cs)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-Client_t * CClient_create(Game_t * gs)
+Client_t * Client_create(Game_t * gs)
 {
   Client_t * cs = EGOBOO_NEW(Client_t);
   return CClient_new(cs, gs);
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CClient_destroy(Client_t ** pcs)
+bool_t Client_destroy(Client_t ** pcs)
 {
   bool_t retval;
 
@@ -237,7 +237,7 @@ Client_t * CClient_new(Client_t * cs, Game_t * gs)
     ModInfo_new(cs->rem_mod + cnt);
   };
 
-  CClient_reset_latches(cs);
+  Client_reset_latches(cs);
 
   chr_spawn_queue_new(&(cs->chr_queue), 256);
 
@@ -262,7 +262,7 @@ bool_t CClient_delete(Client_t * cs)
 }
 
 //--------------------------------------------------------------------------------------------
-Client_t * CClient_renew(Client_t * cs)
+Client_t * Client_renew(Client_t * cs)
 {
   Game_t * gs;
 
@@ -452,7 +452,7 @@ bool_t CClient_connect(Client_t * cs, const char* hostname)
 
 
 //--------------------------------------------------------------------------------------------
-retval_t CClient_joinGame(Client_t * cs, const char * hostname)
+retval_t Client_joinGame(Client_t * cs, const char * hostname)
 {
   // ZZ> This function tries to join one of the sessions we found
 
@@ -465,14 +465,14 @@ retval_t CClient_joinGame(Client_t * cs, const char * hostname)
   if(NULL == cs ||  !VALID_CSTR(hostname) ) return rv_fail;
 
   if ( !net_Started()  ) return rv_error;
-  if ( !CClient_startUp(cs) ) return rv_fail;
+  if ( !Client_startUp(cs) ) return rv_fail;
 
   if(!CClient_connect(cs, hostname)) return rv_error;
 
   net_startNewSysPacket(&egopkt);
   sys_packet_addUint16(&egopkt, TO_HOST_LOGON);           // try to logon
   sys_packet_addString(&egopkt, CData.net_messagename);             // logon name
-  CClient_sendPacketToHost(cs, &egopkt);
+  Client_sendPacketToHost(cs, &egopkt);
 
   // wait up to 5 seconds for the client to respond to the request
   wait_return = net_waitForPacket(cs->host->asynch, cs->gamePeer, 5000, TO_REMOTE_LOGON, NULL);
@@ -497,7 +497,7 @@ retval_t CClient_joinGame(Client_t * cs, const char * hostname)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t CClient_unjoinGame(Client_t * cs)
+bool_t Client_unjoinGame(Client_t * cs)
 {
   NetHost_t * cl_host;
   SYS_PACKET egopkt;
@@ -509,24 +509,24 @@ bool_t CClient_unjoinGame(Client_t * cs)
   if( cs->logged_on )
   {
     // send logoff messages to all the clients
-    net_logf("NET INFO: CClient_unjoinGame() - Telling the server we are logging off.\n");
+    net_logf("NET INFO: Client_unjoinGame() - Telling the server we are logging off.\n");
     net_startNewSysPacket(&egopkt);
     sys_packet_addUint16(&egopkt, TO_HOST_LOGOFF);
-    CClient_sendPacketToHostGuaranteed(cs, &egopkt);
+    Client_sendPacketToHostGuaranteed(cs, &egopkt);
 
     cs->logged_on = bfalse;
   }
 
   // close all outgoing connections
-  net_logf("NET INFO: CClient_unjoinGame() - Disconnecting from the client host.\n");
-  CClient_shutDown( cs );
+  net_logf("NET INFO: Client_unjoinGame() - Disconnecting from the client host.\n");
+  Client_shutDown( cs );
 
 
   return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-void CClient_talkToHost(Client_t * cs)
+void Client_talkToHost(Client_t * cs)
 {
   // ZZ> This function sends the latch packets to the host machine
   PLA_REF player;
@@ -561,12 +561,12 @@ void CClient_talkToHost(Client_t * cs)
     }
 
     // Send it to the host
-    CClient_sendPacketToHost(cs, &egopkt);
+    Client_sendPacketToHost(cs, &egopkt);
   }
 }
 
 //--------------------------------------------------------------------------------------------
-void CClient_unbufferLatches(Client_t * cs)
+void Client_unbufferLatches(Client_t * cs)
 {
   // ZZ> This function sets character latches based on player input to the host
   CHR_REF chr_cnt;
@@ -694,7 +694,7 @@ bool_t cl_handlePacket(Client_t * cs, ENetEvent *event)
       {
         net_startNewSysPacket(&egopkt);
         sys_packet_addUint16(&egopkt, TO_HOST_MODULEBAD);
-        CClient_sendPacketToHostGuaranteed(cs, &egopkt);
+        Client_sendPacketToHostGuaranteed(cs, &egopkt);
       }
       else
       {
@@ -704,7 +704,7 @@ bool_t cl_handlePacket(Client_t * cs, ENetEvent *event)
         // Tell the host we're ready
         net_startNewSysPacket(&egopkt);
         sys_packet_addUint16(&egopkt, TO_HOST_MODULEOK);
-        CClient_sendPacketToHostGuaranteed(cs, &egopkt);
+        Client_sendPacketToHostGuaranteed(cs, &egopkt);
       }
     }
 
@@ -893,7 +893,7 @@ bool_t cl_handlePacket(Client_t * cs, ENetEvent *event)
 }
 
 //--------------------------------------------------------------------------------------------
-void CClient_reset_latches(Client_t * cs)
+void Client_reset_latches(Client_t * cs)
 {
   CHR_REF chr_cnt;
   if(NULL ==cs) return;
@@ -928,7 +928,7 @@ void Client_resetTimeLatches(Client_t * cs, CHR_REF ichr)
 };
 
 //--------------------------------------------------------------------------------------------
-void CClient_bufferLatches(Client_t * cs)
+void Client_bufferLatches(Client_t * cs)
 {
   // ZZ> This function buffers the player data
   Uint32 stamp, uiTime;
@@ -1332,21 +1332,21 @@ void cl_request_module_images(Client_t * cs)
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t CClient_sendPacketToHost(Client_t * cs, SYS_PACKET * egop)
+bool_t Client_sendPacketToHost(Client_t * cs, SYS_PACKET * egop)
 {
   // ZZ> This function sends a packet to the host
 
-  net_logf("NET INFO: CClient_sendPacketToHost()\n");
+  net_logf("NET INFO: Client_sendPacketToHost()\n");
 
   if(NULL == cs || NULL == egop)
   {
-    net_logf("NET ERROR: CClient_sendPacketToHost() - Called with invalid parameters.\n");
+    net_logf("NET ERROR: Client_sendPacketToHost() - Called with invalid parameters.\n");
     return bfalse;
   }
 
   if(!cl_Started())
   {
-    net_logf("NET WARN: CClient_sendPacketToHost() - Client is not active.\n");
+    net_logf("NET WARN: Client_sendPacketToHost() - Client is not active.\n");
     return bfalse;
   }
 
@@ -1354,21 +1354,21 @@ bool_t CClient_sendPacketToHost(Client_t * cs, SYS_PACKET * egop)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CClient_sendPacketToHostGuaranteed(Client_t * cs, SYS_PACKET * egop)
+bool_t Client_sendPacketToHostGuaranteed(Client_t * cs, SYS_PACKET * egop)
 {
   // ZZ> This function sends a packet to the host
 
-  net_logf("NET INFO: CClient_sendPacketToHostGuaranteed()\n");
+  net_logf("NET INFO: Client_sendPacketToHostGuaranteed()\n");
 
   if(NULL == cs || NULL == egop)
   {
-    net_logf("NET ERROR: CClient_sendPacketToHostGuaranteed() - Called with invalid parameters.\n");
+    net_logf("NET ERROR: Client_sendPacketToHostGuaranteed() - Called with invalid parameters.\n");
     return bfalse;
   }
 
   if(!cl_Started())
   {
-    net_logf("NET WARN: CClient_sendPacketToHostGuaranteed() - Client is not active.\n");
+    net_logf("NET WARN: Client_sendPacketToHostGuaranteed() - Client is not active.\n");
     return bfalse;
   }
 

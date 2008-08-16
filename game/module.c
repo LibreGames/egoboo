@@ -613,14 +613,14 @@ void module_quit( Game_t * gs )
   if( Game_isLocal(gs) )
   {
     // reset both the client and server data
-    CClient_renew(gs->cl);
+    Client_renew(gs->cl);
     CServer_renew(gs->sv);
   }
   else if( Game_hasClient(gs) )
   {
     // reset only the client data. let the server keep running.
-    CClient_unjoinGame(gs->cl);
-    CClient_shutDown(gs->cl);
+    Client_unjoinGame(gs->cl);
+    Client_shutDown(gs->cl);
   }
 
   // deallocate any memory

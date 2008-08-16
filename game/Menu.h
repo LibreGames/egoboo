@@ -50,7 +50,8 @@ enum e_mnu
   mnu_LoadPlayer,
   mnu_NetworkOff,
   mnu_Inventory,
-  mnu_Quit
+  mnu_Quit,
+  mnu_EndGame
 };
 
 //--------------------------------------------------------------------------------------------

@@ -116,18 +116,18 @@ struct sClient
 };
 typedef struct sClient Client_t;
 
-Client_t * CClient_create(struct sGame * gs);
-bool_t    CClient_destroy(Client_t ** pcs);
-Client_t * CClient_renew(Client_t * cs);
-retval_t  CClient_startUp(Client_t * cs);
-retval_t  CClient_shutDown(Client_t * cs);
-bool_t    cl_Running(Client_t * cs);
+Client_t * Client_create(struct sGame * gs);
+bool_t     Client_destroy(Client_t ** pcs);
+Client_t * Client_renew(Client_t * cs);
+retval_t   Client_startUp(Client_t * cs);
+retval_t   Client_shutDown(Client_t * cs);
+bool_t     cl_Running(Client_t * cs);
 
 
 
-void CClient_reset_latches(Client_t * cs);
+void Client_reset_latches(Client_t * cs);
 void Client_resetTimeLatches(Client_t * cs, CHR_REF ichr);
-void CClient_bufferLatches(Client_t * cs);
+void Client_bufferLatches(Client_t * cs);
 
 
 
@@ -136,15 +136,15 @@ bool_t CClient_disconnect(Client_t * cs);
 
 ENetPeer * cl_startPeer( const char* hostname );
 
-void     CClient_talkToHost(Client_t * cs);
-retval_t CClient_joinGame(Client_t * cs, const char *hostname);
-bool_t   CClient_unjoinGame(Client_t * cs);
+void     Client_talkToHost(Client_t * cs);
+retval_t Client_joinGame(Client_t * cs, const char *hostname);
+bool_t   Client_unjoinGame(Client_t * cs);
 
-bool_t CClient_sendPacketToHost(Client_t * cs, SYS_PACKET * egop);
-bool_t CClient_sendPacketToHostGuaranteed(Client_t * cs, SYS_PACKET * egop);
+bool_t Client_sendPacketToHost(Client_t * cs, SYS_PACKET * egop);
+bool_t Client_sendPacketToHostGuaranteed(Client_t * cs, SYS_PACKET * egop);
 
 
-void   CClient_unbufferLatches(Client_t * cs);
+void   Client_unbufferLatches(Client_t * cs);
 
 bool_t cl_begin_request_module(Client_t * cs);
 bool_t cl_end_request_module(Client_t * cs);

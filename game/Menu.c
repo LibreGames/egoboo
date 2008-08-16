@@ -75,7 +75,7 @@ static int mnu_doJoinGame(MenuProc_t * mproc, float deltaTime);
 
 static int mnu_doIngameQuit( MenuProc_t * mproc, float deltaTime );
 static int mnu_doIngameInventory( MenuProc_t * mproc, float deltaTime );
-
+static int mnu_doIngameEndGame( MenuProc_t * mproc, float deltaTime );
 
 static int mnu_handleKeyboard(  MenuProc_t * mproc  );
 
@@ -2505,8 +2505,8 @@ int mnu_doLaunchGame( MenuProc_t * mproc, float deltaTime )
 
   static TTFont_t *font;
   int x, y, i, result = 0;
-
-  Game_t * gs = Graphics_getGame(&gfxState);
+  static Game_t * gs = NULL;
+  
 
   switch ( menuState )
   {
@@ -2523,6 +2523,7 @@ int mnu_doLaunchGame( MenuProc_t * mproc, float deltaTime )
       {
         // make sure the game has the correct information
         // destroy any extra info
+        gs = Graphics_getGame(&gfxState);
         assert( rv_succeed == mnu_upload_game_info(gs, mproc) );
       }
 
@@ -2549,6 +2550,8 @@ int mnu_doLaunchGame( MenuProc_t * mproc, float deltaTime )
       menuState = MM_Running;
 
       ui_initWidget( mnu_widgetList + 0, UI_Invalid, mnu_Font, NULL, NULL, 30, 30, gfxState.scrx - 60, gfxState.scry - 60 );
+
+      menuState = MM_Running;
       break;
 
 
@@ -2576,17 +2579,20 @@ int mnu_doLaunchGame( MenuProc_t * mproc, float deltaTime )
         fnt_drawText( font, x, y, "Starting a new player." );
       }
 
+      // tell the game not to do any more pageflips so that this menu will persist
+      request_pageflip_pause();
       menuState = MM_Leaving;
       break;
 
-
     case MM_Leaving:
+      // Launch the game here.
+      // Do not quit this loop until the game is fully loaded
+      ProcState_init( &(gs->proc) );
+
       menuState = MM_Finish;
       break;
 
-
     case MM_Finish:
-      gs->proc.Active = btrue;
       result = 1;
       menuState = MM_Begin;
       ui_Reset();
@@ -2761,6 +2767,18 @@ int mnu_RunIngame( MenuProc_t * mproc )
 
     case mnu_Quit:
       mproc->MenuResult = mnu_doIngameQuit( mproc, deltaTime );
+      if ( mproc->MenuResult != 0 )
+      {
+        if ( mproc->MenuResult == -1 )
+        {
+          // menu finished
+          mproc->whichMenu = mnu_EndGame;
+        }
+      }
+      break;
+
+    case mnu_EndGame:
+      mproc->MenuResult = mnu_doIngameEndGame( mproc, deltaTime );
       if ( mproc->MenuResult != 0 )
       {
         if ( mproc->MenuResult == -1 )
@@ -2976,7 +2994,7 @@ int mnu_Run( MenuProc_t * mproc )
           mproc->lastMenu = mnu_Network;
           if(!mproc->cl->logged_on)
           {
-            CClient_shutDown(mproc->cl);
+            Client_shutDown(mproc->cl);
           }
           mproc->whichMenu = mproc->lastMenu;
         }
@@ -3012,7 +3030,7 @@ int mnu_Run( MenuProc_t * mproc )
 
           gs->allpladead      = bfalse;
 
-          CClient_joinGame(mproc->cl, mproc->cl->req_host);
+          Client_joinGame(mproc->cl, mproc->cl->req_host);
 
           mproc->whichMenu = mnu_ChoosePlayer;
         }
@@ -4254,7 +4272,7 @@ int mnu_doJoinGame(MenuProc_t * mproc, float deltaTime)
         net_startNewSysPacket(&egopkt);
         sys_packet_addUint16(&egopkt, TO_HOST_REQUEST_MODULE);
         sys_packet_addString(&egopkt, cl->req_mod.loadname);
-        CClient_sendPacketToHost(cl, &egopkt);
+        Client_sendPacketToHost(cl, &egopkt);
 
         // wait for up to 2 minutes to transfer needed files
         // this probably needs to be longer
@@ -4387,13 +4405,9 @@ int mnu_doIngameQuit( MenuProc_t * mproc, float deltaTime )
       menuState = MM_Begin; // Make sure this all resets next time mnu_doMain is called
 
       // Set the next menu to load
-      result = menuChoice;
-      if(NULL != gs && -1 == result)
-      {
-        gs->proc.KillMe = btrue;
-      }
-
-      mous.game = btrue;
+      //result = menuChoice;
+      result = 1;
+      mproc->whichMenu = mnu_EndGame;
 
       ui_Reset();
       break;
@@ -4543,6 +4557,76 @@ int mnu_doIngameInventory( MenuProc_t * mproc, float deltaTime )
   return result;
 }
 
+//--------------------------------------------------------------------------------------------
+int mnu_doIngameEndGame( MenuProc_t * mproc, float deltaTime )
+{
+  static MenuProcs menuState = MM_Begin;
+  static int menuChoice = 0;
+
+  static char notImplementedMessage[] = "Not implemented yet!  Check back soon!";
+  int result = 0;
+
+  Game_t * gs = Graphics_requireGame(&gfxState);
+
+  int x, y;
+  int w, h;
+
+  switch ( menuState )
+  {
+    case MM_Begin:
+      printf("mnu_doIngameEndGame()\n");
+
+      fnt_getTextSize( ui_getTTFont(), gs->endtext , &w, &h );
+      w += 50; // add some space on the sides
+
+      x = ( gfxState.surface->w - w ) / 2;
+      y = ( gfxState.surface->h - 34 ) / 2;
+
+      ui_initWidget( mnu_widgetList + 0, UI_Invalid, mnu_Font, gs->endtext, NULL, x, y, w, 30 );
+
+      menuChoice = 0;
+      menuState = MM_Entering;
+      break;
+
+    case MM_Entering:
+
+      menuState = MM_Running;
+      break;
+
+
+    case MM_Running:
+
+      if ( BUTTON_UP == ui_doButton( mnu_widgetList + 0 ) )
+      {
+        menuState = MM_Leaving;
+      }
+
+      break;
+
+
+    case MM_Leaving:
+      menuState = MM_Finish;
+      break;
+
+
+    case MM_Finish:
+
+      menuState = MM_Begin;
+
+      result = mproc->MenuResult = -1;
+      if(NULL != gs && -1 == result)
+      {
+        gs->proc.KillMe = btrue;
+      }
+
+      mous.game = btrue;
+
+      ui_Reset();
+      break;
+  }
+
+  return result;
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -4642,7 +4726,7 @@ retval_t   MenuProc_ensure_client(MenuProc_t * ms, Game_t * gs)
 
   if( !EKEY_PVALID(ms->cl) )
   {
-    ms->cl = CClient_create(gs);
+    ms->cl = Client_create(gs);
   }
 
   return  (NULL != ms->cl) ? rv_succeed : rv_error;
@@ -4687,7 +4771,7 @@ retval_t   MenuProc_start_client(MenuProc_t * ms, Game_t * gs)
   if(rv_succeed != ret) return ret;
 
   // start up the server
-  ret = CClient_startUp(ms->cl);
+  ret = Client_startUp(ms->cl);
 
   return ret;
 }

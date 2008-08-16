@@ -134,6 +134,11 @@ struct sGraphics
 
   // pageflip stuff
   bool_t pageflip_requested;
+
+  bool_t pageflip_pause_requested;
+  bool_t pageflip_unpause_requested;
+  bool_t pageflip_paused;
+
   bool_t clear_requested;
 
   // frame stuff
@@ -295,6 +300,8 @@ bool_t make_renderlist(RENDERLIST * prlst);
 bool_t query_clear();
 bool_t query_pageflip();
 bool_t request_pageflip();
+bool_t request_pageflip_pause();
+bool_t request_pageflip_unpause();
 bool_t do_pageflip();
 bool_t do_clear();
 

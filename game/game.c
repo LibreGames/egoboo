@@ -96,7 +96,7 @@ PROFILE_DECLARE( keep_weapons_with_holders );
 PROFILE_DECLARE( run_all_scripts );
 PROFILE_DECLARE( do_weather_spawn );
 PROFILE_DECLARE( enc_spawn_particles );
-PROFILE_DECLARE( CClient_unbufferLatches );
+PROFILE_DECLARE( Client_unbufferLatches );
 PROFILE_DECLARE( CServer_unbufferLatches );
 PROFILE_DECLARE( check_respawn );
 PROFILE_DECLARE( move_characters );
@@ -2594,15 +2594,15 @@ void do_sunlight(LIGHTING_INFO * info)
     return;
   };
 
-  // some useful constants
+  // the color of the night sky
   night_ambi.r = 0.025;
   night_ambi.g = 0.044;
   night_ambi.b = 0.100;
 
+  // the transmission of sunlight through the atmosphere at mid-day
   day_spek.r = 0.666f;
   day_spek.g = 0.628f;
   day_spek.b = 0.345f;
-
 
   // update the sun position every 10 seconds
   MachineState_update(mac);
@@ -2619,29 +2619,17 @@ void do_sunlight(LIGHTING_INFO * info)
     sval = sin( f_sky_pos * TWO_PI );
     cval = cos( f_sky_pos * TWO_PI );
 
-    //info->spekdir.y = info->spekdir_stt.y*cval + info->spekdir_stt.z*sval;
-    //info->spekdir.z =-info->spekdir_stt.y*sval + info->spekdir_stt.z*cval;
-
-    info->spekdir.y = sval;
-    info->spekdir.z = cval;
+    //info->spekdir.y = sval;
+    //info->spekdir.z = cval;
+    info->spekdir.z = 0.1;
+    info->spekdir.y = sqrt( 1.0f - pow(info->spekdir.z,2));
 
     if ( info->spekdir.z > 0 )
     {
       // do the filtering
 
-      //// do the "sunset effect"
-      //info->spekcol.r = day_spek.r * exp(( 1.0f - 1.0f / info->spekdir.z ) * 0.381f );
-      //info->spekcol.g = day_spek.g * exp(( 1.0f - 1.0f / info->spekdir.z ) * 0.437f );
-      //info->spekcol.b = day_spek.b * exp(( 1.0f - 1.0f / info->spekdir.z ) * 1.000f );
-
-      //// do the "blue sky" effect
-      //// everything that doesn't come from the sun comes from the blue sky
-      //info->ambicol.r = ( 1.0f - day_spek.r ) * exp(( 1.0f - 1.0f / info->spekdir.z ) * 0.437f );
-      //info->ambicol.g = ( 1.0f - day_spek.g ) * exp(( 1.0f - 1.0f / info->spekdir.z ) * 0.437f );
-      //info->ambicol.b = ( 1.0f - day_spek.b ) * exp(( 1.0f - 1.0f / info->spekdir.z ) * 0.437f );
-
       // do the "sunset effect"
-      ftmp = (1 - info->spekdir.z) * 4.0;
+      ftmp = (1 - info->spekdir.z) * 2.0;
       transmit.r = exp(-ftmp * 0.381f );
       transmit.g = exp(-ftmp * 0.437f );
       transmit.b = exp(-ftmp * 1.000f );
@@ -2661,20 +2649,6 @@ void do_sunlight(LIGHTING_INFO * info)
       info->ambicol.r += night_ambi.r;
       info->ambicol.g += night_ambi.g;
       info->ambicol.b += night_ambi.b;
-
-
-      //info->spekcol.r *= ftmp * info->spek;
-      //info->spekcol.g *= ftmp * info->spek;
-      //info->spekcol.b *= ftmp * info->spek;
-
-      //info->ambicol.r *= ftmp * info->spek;
-      //info->ambicol.g *= ftmp * info->spek;
-      //info->ambicol.b *= ftmp * info->spek;
-
-      //// smoothly interpolate down to the "night" setting
-      //info->ambicol.r = night_ambi.r * (1.0-ftmp) + info->ambicol.r * ftmp;
-      //info->ambicol.g = night_ambi.g * (1.0-ftmp) + info->ambicol.r * ftmp;
-      //info->ambicol.b = night_ambi.b * (1.0-ftmp) + info->ambicol.r * ftmp;
     }
     else
     {
@@ -2682,9 +2656,9 @@ void do_sunlight(LIGHTING_INFO * info)
       info->spekcol.g = 0.0f;
       info->spekcol.b = 0.0f;
 
-      info->ambicol.r = night_ambi.r; // + info->ambi;
-      info->ambicol.g = night_ambi.g; // + info->ambi;
-      info->ambicol.b = night_ambi.b; // + info->ambi;
+      info->ambicol.r = night_ambi.r;
+      info->ambicol.g = night_ambi.g;
+      info->ambicol.b = night_ambi.b;
     };
 
     glClearColor( info->ambicol.r, info->ambicol.g, info->ambicol.b, 1 );
@@ -2823,12 +2797,6 @@ retval_t main_doGraphics()
       {
         case  1:
 
-          // start the game state from the beginning... if it exists
-          if( Graphics_hasGame(&gfxState) )
-          {
-            ProcState_init( &(Graphics_requireGame(&gfxState)->proc) );
-          }
-
           // pause the menu
           mnu_proc->proc.Paused = btrue;
 
@@ -2963,7 +2931,7 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
         PROFILE_INIT( run_all_scripts );
         PROFILE_INIT( do_weather_spawn );
         PROFILE_INIT( enc_spawn_particles );
-        PROFILE_INIT( CClient_unbufferLatches );
+        PROFILE_INIT( Client_unbufferLatches );
         PROFILE_INIT( CServer_unbufferLatches );
         PROFILE_INIT( check_respawn );
         PROFILE_INIT( move_characters );
@@ -3128,7 +3096,7 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
         log_info( "\trun_all_scripts - %lf\n", 1e6*PROFILE_QUERY( run_all_scripts ) );
         log_info( "\tdo_weather_spawn - %lf\n", 1e6*PROFILE_QUERY( do_weather_spawn ) );
         log_info( "\tdo_enchant_spawn - %lf\n", 1e6*PROFILE_QUERY( enc_spawn_particles ) );
-        log_info( "\tCClient_unbufferLatches - %lf\n", 1e6*PROFILE_QUERY( CClient_unbufferLatches ) );
+        log_info( "\tCClient_unbufferLatches - %lf\n", 1e6*PROFILE_QUERY( Client_unbufferLatches ) );
         log_info( "\tCServer_unbufferLatches - %lf\n", 1e6*PROFILE_QUERY( CServer_unbufferLatches ) );
         log_info( "\tcheck_respawn - %lf\n", 1e6*PROFILE_QUERY( check_respawn ) );
         log_info( "\tmove_characters - %lf\n", 1e6*PROFILE_QUERY( move_characters ) );
@@ -3149,7 +3117,7 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
         PROFILE_FREE( run_all_scripts );
         PROFILE_FREE( do_weather_spawn );
         PROFILE_FREE( enc_spawn_particles );
-        PROFILE_FREE( CClient_unbufferLatches );
+        PROFILE_FREE( Client_unbufferLatches );
         PROFILE_FREE( CServer_unbufferLatches );
         PROFILE_FREE( check_respawn );
         PROFILE_FREE( move_characters );
@@ -3267,14 +3235,14 @@ void game_handleIO(Game_t * gs)
   }
 
   // this needs to be done even if the network is not on
-  CClient_bufferLatches(gs->cl);     // client function
+  Client_bufferLatches(gs->cl);     // client function
 
   if(net_Started())
   {
     CServer_bufferLatches(gs->sv);     // server function
 
     // upload the information
-    CClient_talkToHost(gs->cl);        // client function
+    Client_talkToHost(gs->cl);        // client function
     sv_talkToRemotes(gs->sv);     // server function
   }
 };
@@ -3309,9 +3277,9 @@ void cl_update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
     PROFILE_END( keep_weapons_with_holders );
 
     // unbuffer the updated latches after run_all_scripts() and before move_characters()
-    PROFILE_BEGIN( CClient_unbufferLatches );
-    CClient_unbufferLatches( gs->cl );              // client function
-    PROFILE_END( CClient_unbufferLatches );
+    PROFILE_BEGIN( Client_unbufferLatches );
+    Client_unbufferLatches( gs->cl );              // client function
+    PROFILE_END( Client_unbufferLatches );
 
     PROFILE_BEGIN( check_respawn );
     check_respawn( gs );                         // client function
@@ -3535,9 +3503,9 @@ void update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
     PROFILE_END( enc_spawn_particles );
 
     // unbuffer the updated latches after run_all_scripts() and before move_characters()
-    PROFILE_BEGIN( CClient_unbufferLatches );
-    CClient_unbufferLatches( cs );              // client function
-    PROFILE_END( CClient_unbufferLatches );
+    PROFILE_BEGIN( Client_unbufferLatches );
+    Client_unbufferLatches( cs );              // client function
+    PROFILE_END( Client_unbufferLatches );
 
     PROFILE_BEGIN( CServer_unbufferLatches );
     CServer_unbufferLatches( ss );              // server function
@@ -3720,11 +3688,17 @@ ProcessStates game_doRun(Game_t * gs, ProcessStates procIn)
 }
 
 //--------------------------------------------------------------------------------------------
+
+
+//--------------------------------------------------------------------------------------------
 // TODO : this should be re-factored so that graphics updates are in a different loop
 int proc_gameLoop( ProcState_t * gproc, Game_t * gs )
 {
   // if we are being told to exit, jump to PROC_Leaving
   double frameDuration, frameTicks;
+  static SDL_Thread       * pThread = NULL;
+  static SDL_Callback_Ptr   pCallback = NULL;
+
   Gui_t * gui = gui_getState();
 
   if(NULL == gproc || gproc->Terminated)
@@ -3817,6 +3791,9 @@ int proc_gameLoop( ProcState_t * gproc, Game_t * gs )
 
         // reset the timers
         gs->dFrame = gs->dUpdate = 0.0f;
+
+        // force the game to start flipping pages again
+        request_pageflip_unpause();
       }
       gproc->State = PROC_Running;
       break;
@@ -5688,7 +5665,7 @@ bool_t Game_delete(Game_t * gs)
   // initialize the sub-game-state values and link them
   ModState_delete( &(gs->modstate) );
   CNet_destroy( &(gs->ns) );
-  CClient_destroy(  &(gs->cl) );
+  Client_destroy(  &(gs->cl) );
   CServer_destroy(  &(gs->sv) );
 
   // module parameters
@@ -5752,7 +5729,7 @@ bool_t Game_renew(Game_t * gs)
   ProcState_init( Game_getProcedure(gs) );
   gs->proc.Active = bfalse;
 
-  CClient_renew(gs->cl);
+  Client_renew(gs->cl);
   CServer_renew(gs->sv);
 
   // module parameters
@@ -5851,7 +5828,7 @@ retval_t Game_registerClient ( Game_t * gs, Client_t * cl, bool_t destroy  )
 
   if(gs->cl != cl )
   {
-    if(destroy) CClient_destroy( &(gs->cl) );
+    if(destroy) Client_destroy( &(gs->cl) );
     gs->cl = cl;
     if(NULL !=gs->cl) gs->cl->parent = gs;
   }

@@ -3309,17 +3309,65 @@ bool_t request_pageflip()
 }
 
 //--------------------------------------------------------------------------------------------
+bool_t request_pageflip_pause()
+{
+  bool_t retval = !gfxState.pageflip_paused;
+  gfxState.pageflip_pause_requested = btrue;
+
+  return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t request_pageflip_unpause()
+{
+  bool_t retval = gfxState.pageflip_paused;
+  gfxState.pageflip_unpause_requested = btrue;
+
+  return retval;
+}
+
+//--------------------------------------------------------------------------------------------
 bool_t do_pageflip()
 {
+  // BB > actualy attempt a pageflip. It is possible to freeze the whole pageflipping
+  //      process by calling request_pageflip_pause(). It will freeze the screen after the next
+  //      actual pageflip. This can be overriden by calling request_pageflip_unpause() at any time.
+
   bool_t retval = gfxState.pageflip_requested;
 
-  if ( gfxState.pageflip_requested )
+  if ( gfxState.pageflip_requested && !gfxState.pageflip_paused )
   {
     SDL_GL_SwapBuffers();
+
+    // only pause on a pageflip
+    if(gfxState.pageflip_pause_requested && !gfxState.pageflip_unpause_requested)
+    {
+      gfxState.pageflip_paused = btrue;
+      gfxState.pageflip_pause_requested = bfalse;
+    }
+
+    // only clear if the pageflip is not paused
+    // otherwise, what's the point?
+    if(!gfxState.pageflip_paused)
+    {
+      gfxState.clear_requested = btrue;
+    };
+  }
+
+  // update the fps_loops and pageflip_requested variables 
+  // just AS IF the page was flipping
+  if( gfxState.pageflip_requested )
+  {
     gfxState.fps_loops++;
     gfxState.pageflip_requested = bfalse;
-    gfxState.clear_requested    = btrue;
-  };
+  }
+
+  // unpause at any time
+  if(gfxState.pageflip_unpause_requested)
+  {
+    gfxState.pageflip_paused = bfalse;
+    gfxState.pageflip_unpause_requested = bfalse;
+  }
 
   return retval;
 }

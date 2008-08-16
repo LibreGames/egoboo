@@ -801,7 +801,7 @@ bool_t CNet_delete(Net_t * ns)
 //  if(NULL == ns ) return bfalse;
 //  if(!EKEY_PVALID( ns )) return btrue;
 //
-//  //CClient_shutDown(ns->parent->cl);
+//  //Client_shutDown(ns->parent->cl);
 //  //CServer_shutDown(ns->parent->sv);
 //  NFileState_shutDown(ns->nfs);
 //
@@ -1200,7 +1200,7 @@ void net_sayHello(Game_t * gs)
       net_logf("NET INFO: net_sayHello: Client saying hello.\n");
       net_startNewSysPacket(&egopkt);
       sys_packet_addUint16(&egopkt, TO_HOST_IM_LOADED);
-      CClient_sendPacketToHostGuaranteed(cl, &egopkt);
+      Client_sendPacketToHostGuaranteed(cl, &egopkt);
       cl->waiting = btrue;
     }
   }
@@ -1445,10 +1445,10 @@ void close_session(Net_t * ns)
   if ( !_enet_initialized ) return;
 
   sv_unhostGame(sv);
-  CClient_unjoinGame(cl);
+  Client_unjoinGame(cl);
 
   // pause the network threads
-  CClient_shutDown(cl);
+  Client_shutDown(cl);
   CServer_shutDown(sv);
   NFileState_shutDown(ns->nfs);
 }
@@ -1473,7 +1473,7 @@ bool_t net_beginGame(struct sGame * gs)
   cl_host = cl_getHost();
   if(retval && cl_host->nthread.Active)
   {
-    bool_t bool_tmp = (rv_succeed == CClient_joinGame(gs->cl, gs->cd->net_hosts[0]));
+    bool_t bool_tmp = (rv_succeed == Client_joinGame(gs->cl, gs->cd->net_hosts[0]));
     retval = retval && bool_tmp;
   };
 
@@ -1580,7 +1580,7 @@ void net_send_chat(Game_t *gs, KeyboardBuffer_t * kbuffer)
     }
     else
     {
-      CClient_sendPacketToHost(cl, &egopkt);
+      Client_sendPacketToHost(cl, &egopkt);
     };
   }
 }
@@ -2158,7 +2158,7 @@ bool_t net_sendSysPacketToAllPeersGuaranteed(ENetHost * host, SYS_PACKET * egop)
 //      sys_packet_addUint16(&egopkt, TO_HOST_DIR);
 //      sys_packet_addString(&egopkt, dest);
 ////   sv_sendPacketToAllClientsGuaranteed(ns->parent->sv, &egopkt);
-//      CClient_sendPacketToHost(ns->parent->cl, &egopkt);
+//      Client_sendPacketToHost(ns->parent->cl, &egopkt);
 //    }
 //    else
 //    {
@@ -2188,7 +2188,7 @@ bool_t net_sendSysPacketToAllPeersGuaranteed(ENetHost * host, SYS_PACKET * egop)
 //            if (packetend >= COPYSIZE)
 //            {
 //              // Send off the packet
-//              CClient_sendPacketToHostGuaranteed(ns->parent->cl, &egopkt);
+//              Client_sendPacketToHostGuaranteed(ns->parent->cl, &egopkt);
 //              enet_host_flush(cl_host->Host);
 //
 //              // Start on the next 4K
@@ -2201,7 +2201,7 @@ bool_t net_sendSysPacketToAllPeersGuaranteed(ENetHost * host, SYS_PACKET * egop)
 //            }
 //          }
 //          // Send off the packet
-//          CClient_sendPacketToHostGuaranteed(ns->parent->cl, &egopkt);
+//          Client_sendPacketToHostGuaranteed(ns->parent->cl, &egopkt);
 //        }
 //        fclose(fileread);
 //      }
