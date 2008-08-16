@@ -150,7 +150,7 @@ void render_mad( CHR_REF character, Uint8 trans );
 void render_refmad( CHR_REF tnc, Uint16 trans );
 void light_characters(struct sGame * gs);
 void light_particles(struct sGame * gs);
-void set_fan_light( int fanx, int fany, PRT_REF particle );
+void set_fan_dyna_light( int fanx, int fany, PRT_REF particle );
 void render_water();
 void draw_scene_zreflection();
 void draw_blip( enum e_color color, float x, float y );

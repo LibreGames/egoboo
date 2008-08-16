@@ -310,4 +310,4 @@ bool_t load_basic_textures( struct sGame * gs, const char *szModPath );
 bool_t load_particle_texture( struct sGame * gs, const char *szModPath );
 
 bool_t read_wawalite( struct sGame * gs, char *modname );
-void do_dynalight(struct sGame * gs);
+void do_dyna_light(struct sGame * gs);

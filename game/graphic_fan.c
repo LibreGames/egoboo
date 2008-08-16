@@ -482,9 +482,9 @@ void render_water_fan( Uint32 fan, Uint8 layer, Uint8 mode )
     }
     else
     {
-      v[cnt].col.r = FP8_TO_FLOAT( FP8_MUL( pmesh->Mem.vrt_lr_fp8[badvertex], gs->Water.layer[layer].alpha_fp8 ) );
-      v[cnt].col.g = FP8_TO_FLOAT( FP8_MUL( pmesh->Mem.vrt_lg_fp8[badvertex], gs->Water.layer[layer].alpha_fp8 ) );
-      v[cnt].col.b = FP8_TO_FLOAT( FP8_MUL( pmesh->Mem.vrt_lb_fp8[badvertex], gs->Water.layer[layer].alpha_fp8 ) );
+      v[cnt].col.r = pmesh->Mem.vrt_lr_fp8[badvertex] * FP8_TO_FLOAT(gs->Water.layer[layer].alpha_fp8);//FP8_TO_FLOAT( FP8_MUL( pmesh->Mem.vrt_lr_fp8[badvertex], gs->Water.layer[layer].alpha_fp8 ) );
+      v[cnt].col.g = pmesh->Mem.vrt_lg_fp8[badvertex] * FP8_TO_FLOAT(gs->Water.layer[layer].alpha_fp8);//FP8_TO_FLOAT( FP8_MUL( pmesh->Mem.vrt_lg_fp8[badvertex], gs->Water.layer[layer].alpha_fp8 ) );
+      v[cnt].col.b = pmesh->Mem.vrt_lb_fp8[badvertex] * FP8_TO_FLOAT(gs->Water.layer[layer].alpha_fp8);//FP8_TO_FLOAT( FP8_MUL( pmesh->Mem.vrt_lb_fp8[badvertex], gs->Water.layer[layer].alpha_fp8 ) );
       v[cnt].col.a = 1.0f;
     }
 
@@ -699,7 +699,7 @@ bool_t make_renderlist(RENDERLIST * prlst)
 }
 
 //--------------------------------------------------------------------------------------------
-void set_fan_light( int fanx, int fany, PRT_REF particle )
+void set_fan_dyna_light( int fanx, int fany, PRT_REF particle )
 {
   // ZZ> This function is a little helper, lighting the selected fan
   //     with the chosen particle
@@ -723,9 +723,9 @@ void set_fan_light( int fanx, int fany, PRT_REF particle )
     lastvertex = vertex + pmesh->TileDict[mm->tilelst[fan].type].vrt_count;
     while ( vertex < lastvertex )
     {
-      light_r0 = light_r = mm->vrt_ar_fp8[vertex];
-      light_g0 = light_g = mm->vrt_ag_fp8[vertex];
-      light_b0 = light_b = mm->vrt_ab_fp8[vertex];
+      light_r0 = light_r = mm->vrt_lr_fp8[vertex];
+      light_g0 = light_g = mm->vrt_lg_fp8[vertex];
+      light_b0 = light_b = mm->vrt_lb_fp8[vertex];
 
       dif.x = gs->PrtList[particle].ori.pos.x - mm->vrt_x[vertex];
       dif.y = gs->PrtList[particle].ori.pos.y - mm->vrt_y[vertex];
@@ -762,25 +762,24 @@ void set_fan_light( int fanx, int fany, PRT_REF particle )
         light_b += 255 * flight;
       }
 
-      mm->vrt_lr_fp8[vertex] = 0.9 * light_r0 + 0.1 * light_r;
-      mm->vrt_lg_fp8[vertex] = 0.9 * light_g0 + 0.1 * light_g;
+      mm->vrt_lr_fp8[vertex] = 0.9 * light_r0; // + 0.1 * light_r;
+      mm->vrt_lg_fp8[vertex] = 0.9 * light_g0; //  + 0.1 * light_g;
       mm->vrt_lb_fp8[vertex] = 0.9 * light_b0 + 0.1 * light_b;
 
-      if ( mi->exploremode )
-      {
-        if ( mm->vrt_lr_fp8[vertex] > light_r0 ) mm->vrt_ar_fp8[vertex] = 0.9 * mm->vrt_ar_fp8[vertex] + 0.1 * mm->vrt_lr_fp8[vertex];
-        if ( mm->vrt_lg_fp8[vertex] > light_g0 ) mm->vrt_ag_fp8[vertex] = 0.9 * mm->vrt_ag_fp8[vertex] + 0.1 * mm->vrt_lg_fp8[vertex];
-        if ( mm->vrt_lb_fp8[vertex] > light_b0 ) mm->vrt_ab_fp8[vertex] = 0.9 * mm->vrt_ab_fp8[vertex] + 0.1 * mm->vrt_lb_fp8[vertex];
-      };
+      //if ( mi->exploremode )
+      //{
+      //  if ( mm->vrt_lr_fp8[vertex] > light_r0 ) mm->vrt_ar_fp8[vertex] = 0.9 * mm->vrt_ar_fp8[vertex] + 0.1 * mm->vrt_lr_fp8[vertex];
+      //  if ( mm->vrt_lg_fp8[vertex] > light_g0 ) mm->vrt_ag_fp8[vertex] = 0.9 * mm->vrt_ag_fp8[vertex] + 0.1 * mm->vrt_lg_fp8[vertex];
+      //  if ( mm->vrt_lb_fp8[vertex] > light_b0 ) mm->vrt_ab_fp8[vertex] = 0.9 * mm->vrt_ab_fp8[vertex] + 0.1 * mm->vrt_lb_fp8[vertex];
+      //};
 
       vertex++;
     }
   }
 }
 
-
 //--------------------------------------------------------------------------------------------
-void do_dynalight(Game_t * gs)
+void do_dyna_light(Game_t * gs)
 {
   // ZZ> This function does dynamic lighting of visible fans
 
@@ -799,6 +798,8 @@ void do_dynalight(Game_t * gs)
   PDLight dynalst      = NULL;
   size_t  dynalst_size = MAXDYNA;
 
+  float dist_factor;
+
   if(NULL == gs) gs = Graphics_requireGame( &gfxState );
 
   pmesh   = Game_getMesh(gs);
@@ -808,6 +809,10 @@ void do_dynalight(Game_t * gs)
 
   // Don't need to do every frame
   if ( 0 != ( gfxState.fps_loops & 7 ) ) return;
+
+  // factor to make sure that the light falls to 1/8 when the distance
+  // from the dynalight == falloff_distance
+  dist_factor = 1.0f  / sqrt( (float)8 - 1 );
 
   // Do each floor tile
   if ( pmesh->Info.exploremode )
@@ -825,7 +830,7 @@ void do_dynalight(Game_t * gs)
       {
         for ( addx = -DYNAFANS; addx <= DYNAFANS; addx++ )
         {
-          set_fan_light( fanx + addx, fany + addy, prt_cnt );
+          set_fan_dyna_light( fanx + addx, fany + addy, prt_cnt );
         }
       }
     }
@@ -840,6 +845,7 @@ void do_dynalight(Game_t * gs)
       while ( entry < renderlist.num_totl )
       {
         fan = renderlist.totl[entry];
+
         vertex = mm->tilelst[fan].vrt_start;
         lastvertex = vertex + pmesh->TileDict[mm->tilelst[fan].type].vrt_count;
         while ( vertex < lastvertex )
@@ -852,17 +858,17 @@ void do_dynalight(Game_t * gs)
           light_b = mm->vrt_ab_fp8[vertex];
 
           mesh_calc_normal( pmesh, &(gs->phys), pos, &nrm );
-          light_r += gs->Light.ambicol.r * 255;
-          light_g += gs->Light.ambicol.g * 255;
-          light_b += gs->Light.ambicol.b * 255;
+          //light_r += gs->Light.ambicol.r * 255;
+          //light_g += gs->Light.ambicol.g * 255;
+          //light_b += gs->Light.ambicol.b * 255;
 
-          ftmp = DotProduct( nrm, gs->Light.spekdir );
-          if ( ftmp > 0 )
-          {
-            light_r += gs->Light.spekcol.r * 255 * ftmp * ftmp;
-            light_g += gs->Light.spekcol.g * 255 * ftmp * ftmp;
-            light_b += gs->Light.spekcol.b * 255 * ftmp * ftmp;
-          };
+          //ftmp = DotProduct( nrm, gs->Light.spekdir );
+          //if ( ftmp > 0 )
+          //{
+          //  light_r += gs->Light.spekcol.r * 255 * ftmp * ftmp;
+          //  light_g += gs->Light.spekcol.g * 255 * ftmp * ftmp;
+          //  light_b += gs->Light.spekcol.b * 255 * ftmp * ftmp;
+          //};
 
           
           for ( cnt = 0; cnt < gs->DLightList_count; cnt++ )
@@ -873,32 +879,42 @@ void do_dynalight(Game_t * gs)
             dif.y = dynalst[cnt].pos.y - mm->vrt_y[vertex];
             dif.z = dynalst[cnt].pos.z - mm->vrt_z[vertex];
 
-            dist2 = DotProduct( dif, dif );
-
-            flight = dynalst[cnt].level;
-            flight *= 127 * dynalst[cnt].falloff / ( 127 * dynalst[cnt].falloff + dist2 );
-
-            if ( dist2 > 0.0f )
+            ftmp = DotProduct( dif, nrm );
+            if ( ftmp > 0 )
             {
-              float dist = sqrt( dist2 );
+              float dist_temp = dist_factor * dynalst[cnt].falloff;
 
-              dif.x /= dist;
-              dif.y /= dist;
-              dif.z /= dist;
+              dist2 = DotProduct( dif, dif );
 
-              ftmp = DotProduct( dif, nrm );
-              if ( ftmp > 0 )
+              flight = dynalst[cnt].level;
+              flight *= dist_temp*dist_temp / ( dist_temp*dist_temp + dist2 );
+
+              if(flight * 255 * gs->DLightList_count > 1)
               {
-                light_r += 255 * flight * ftmp * ftmp;
-                light_g += 255 * flight * ftmp * ftmp;
-                light_b += 255 * flight * ftmp * ftmp;
-              };
-            }
-            else
-            {
-              light_r += 255 * flight;
-              light_g += 255 * flight;
-              light_b += 255 * flight;
+                if ( dist2 > 0.0f )
+                {
+                  // little kludge to soften the normal-dependent lighting
+                  // the dot ptoduct factor will vary between 1 for fill lighting
+                  // down to m*m for "shadowed" lighting
+                  float m, k1, k2;
+                  m = 0.5f;
+                  k1 = 1.0f - m;
+                  k2 = m/(1- m);
+
+                  ftmp /= sqrt( dist2 );
+                  ftmp = k1 * (ftmp + k2);
+
+                  light_r += 255 * flight * ftmp * ftmp;
+                  light_g += 255 * flight * ftmp * ftmp;
+                  light_b += 255 * flight * ftmp * ftmp;
+                }
+                else
+                {
+                  light_r += 255 * flight;
+                  light_g += 255 * flight;
+                  light_b += 255 * flight;
+                }
+              }
             }
           }
 
@@ -908,18 +924,18 @@ void do_dynalight(Game_t * gs)
 
           if ( light_g > 255 ) light_g = 255;
           if ( light_g <   0 ) light_g = 0;
-          mm->vrt_lg_fp8[vertex] = 0.9 * mm->vrt_lg_fp8[vertex] + 0.1 * light_g;
+          mm->vrt_lg_fp8[vertex] = 0.9 * mm->vrt_lg_fp8[vertex]  + 0.1 * light_g;
 
           if ( light_b > 255 ) light_b = 255;
           if ( light_b <   0 ) light_b = 0;
-          mm->vrt_lb_fp8[vertex] = 0.9 * mm->vrt_lb_fp8[vertex] + 0.1 * light_b;
+          mm->vrt_lb_fp8[vertex] = 0.9 * mm->vrt_lb_fp8[vertex]  + 0.1 * light_b;
 
-          if ( pmesh->Info.exploremode )
-          {
-            if ( light_r > mm->vrt_ar_fp8[vertex] ) mm->vrt_ar_fp8[vertex] = 0.9 * mm->vrt_ar_fp8[vertex] + 0.1 * light_r;
-            if ( light_g > mm->vrt_ag_fp8[vertex] ) mm->vrt_ag_fp8[vertex] = 0.9 * mm->vrt_ag_fp8[vertex] + 0.1 * light_g;
-            if ( light_b > mm->vrt_ab_fp8[vertex] ) mm->vrt_ab_fp8[vertex] = 0.9 * mm->vrt_ab_fp8[vertex] + 0.1 * light_b;
-          }
+          //if ( pmesh->Info.exploremode )
+          //{
+          //  if ( light_r > mm->vrt_ar_fp8[vertex] ) mm->vrt_ar_fp8[vertex] = 0.9 * mm->vrt_ar_fp8[vertex] + 0.1 * light_r;
+          //  if ( light_g > mm->vrt_ag_fp8[vertex] ) mm->vrt_ag_fp8[vertex] = 0.9 * mm->vrt_ag_fp8[vertex] + 0.1 * light_g;
+          //  if ( light_b > mm->vrt_ab_fp8[vertex] ) mm->vrt_ab_fp8[vertex] = 0.9 * mm->vrt_ab_fp8[vertex] + 0.1 * light_b;
+          //}
 
           vertex++;
         }

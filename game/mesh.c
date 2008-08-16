@@ -715,7 +715,7 @@ static bool_t MeshMem_alloc_verts(MeshMem_t * mem, int vertcount)
   mem->vrt_ag_fp8 = mem->vrt_ar_fp8 + vertcount;
   mem->vrt_ab_fp8 = mem->vrt_ag_fp8 + vertcount;
 
-  mem->vrt_lr_fp8 = mem->vrt_ab_fp8 + vertcount;
+  mem->vrt_lr_fp8 = (float *)(mem->vrt_ab_fp8 + vertcount);
   mem->vrt_lg_fp8 = mem->vrt_lr_fp8 + vertcount;
   mem->vrt_lb_fp8 = mem->vrt_lg_fp8 + vertcount;
 

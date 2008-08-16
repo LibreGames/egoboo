@@ -885,7 +885,7 @@ bool_t read_wawalite( Game_t * gs, char *modname )
   gs->Water.layer[1].frame = RAND( &loc_rand, 0, WATERFRAMEAND );
 
   // Read light data second
-  gs->Light.on        = btrue;
+  gs->Light.on        = bfalse;
   gs->Light.spekdir.x = fget_next_float( fileread );
   gs->Light.spekdir.y = fget_next_float( fileread );
   gs->Light.spekdir.z = fget_next_float( fileread );
@@ -1330,71 +1330,57 @@ void render_shadow( CHR_REF character )
 };
 
 //--------------------------------------------------------------------------------------------
-void calc_chr_lighting( int x, int y, Uint16 tl, Uint16 tr, Uint16 bl, Uint16 br, Uint16 * spek, Uint16 * ambi )
+void calc_chr_lighting( vect3 pos, Uint16 tl, Uint16 tr, Uint16 bl, Uint16 br, Uint16 * spek, Uint16 * minv, Uint16 * maxv )
 {
-  ( *spek ) = 0;
-  ( *ambi ) = MIN( MIN( tl, tr ), MIN( bl, br ) );
+  float dx,dy;
+  Uint16 minval, maxval;
+  float top, bot;
+
+  dx = MESH_FLOAT_TO_FAN(pos.x); dx -= (int)dx;
+  dy = MESH_FLOAT_TO_FAN(pos.y); dy -= (int)dy;
+
+  minval = MIN( MIN( tl, tr ), MIN( bl, br ) );
+  if(NULL != minv)
+  {
+    (*minv) = minval;
+  }
+
+  maxval = MAX( MAX( tl, tr ), MAX( bl, br ) );
+  if(NULL != maxv)
+  {
+    (*maxv) = maxval;
+  }
 
   // Interpolate lighting level using tile corners
-  switch ( x )
+  if(maxval <= minval)
   {
-    case 0:
-      ( *spek ) += ( tl - ( *ambi ) ) << 1;
-      ( *spek ) += ( bl - ( *ambi ) ) << 1;
-      break;
-
-    case 1:
-    case 2:
-      ( *spek ) += ( tl - ( *ambi ) );
-      ( *spek ) += ( tr - ( *ambi ) );
-      ( *spek ) += ( bl - ( *ambi ) );
-      ( *spek ) += ( br - ( *ambi ) );
-      break;
-
-    case 3:
-      ( *spek ) += ( tr - ( *ambi ) ) << 1;
-      ( *spek ) += ( br - ( *ambi ) ) << 1;
-      break;
+    (*spek) = 0;
   }
-
-
-  switch ( y )
+  else
   {
-    case 0:
-      ( *spek ) += ( tl - ( *ambi ) ) << 1;
-      ( *spek ) += ( tr - ( *ambi ) ) << 1;
-      break;
-
-    case 1:
-    case 2:
-      ( *spek ) += ( tl - ( *ambi ) );
-      ( *spek ) += ( tr - ( *ambi ) );
-      ( *spek ) += ( bl - ( *ambi ) );
-      ( *spek ) += ( br - ( *ambi ) );
-      break;
-
-    case 3:
-      ( *spek ) += ( bl - ( *ambi ) ) << 1;
-      ( *spek ) += ( br - ( *ambi ) ) << 1;
-      break;
+    top = dx*tr + (1-dx)*tl;
+    bot = dx*br + (1-dx)*bl;
+    if(NULL != spek)
+    {
+      (*spek) = (dy*bot + (1.0f-dy)*top) - minval;
+    };
   }
-
-  ( *spek ) >>= 3;
 };
 
 //--------------------------------------------------------------------------------------------
 void light_characters(Game_t * gs)
 {
-  // ZZ> This function figures out character lighting
+  // ZZ> This function figures out character dynamic lighting from the mesh
 
-  int cnt, x, y;
+  int cnt;
   CHR_REF chr_tnc;
   Uint16 i0, i1, i2, i3;
-  Uint16 spek, ambi;
+  Uint16 spek, minval, maxval;
   Uint32 vrtstart;
   Uint32 fan;
 
   Mesh_t * pmesh;
+  CHR_TLIGHT * tlight;
   
   if(NULL == gs) gs = Graphics_requireGame( &gfxState );
   pmesh = Game_getMesh(gs);
@@ -1402,85 +1388,89 @@ void light_characters(Game_t * gs)
   for ( cnt = 0; cnt < numdolist; cnt++ )
   {
     chr_tnc = dolist[cnt];
+    tlight = &(gs->ChrList[chr_tnc].tlight);
     fan = gs->ChrList[chr_tnc].onwhichfan;
 
     if(INVALID_FAN == fan) continue;
 
     vrtstart = pmesh->Mem.tilelst[gs->ChrList[chr_tnc].onwhichfan].vrt_start;
 
-    x = gs->ChrList[chr_tnc].ori.pos.x;
-    y = gs->ChrList[chr_tnc].ori.pos.y;
-    x = ( x & 127 ) >> 5;  // From 0 to 3
-    y = ( y & 127 ) >> 5;  // From 0 to 3
-
     i0 = pmesh->Mem.vrt_lr_fp8[vrtstart + 0];
     i1 = pmesh->Mem.vrt_lr_fp8[vrtstart + 1];
     i2 = pmesh->Mem.vrt_lr_fp8[vrtstart + 2];
     i3 = pmesh->Mem.vrt_lr_fp8[vrtstart + 3];
-    calc_chr_lighting( x, y, i0, i1, i2, i3, &spek, &ambi );
-    gs->ChrList[chr_tnc].tlight.ambi_fp8.r = ambi;
-    gs->ChrList[chr_tnc].tlight.spek_fp8.r = spek;
+    calc_chr_lighting( gs->ChrList[chr_tnc].ori.pos, i0, i1, i2, i3, &spek, &minval, &maxval );
+    tlight->ambi_fp8.r = minval;
+    tlight->spek_fp8.r = spek;
 
-    if ( !pmesh->Info.exploremode )
+    if ( spek == 0 || pmesh->Info.exploremode )
     {
-      // Look up spek direction using corners again
-      i0 = (( i0 & 0xf0 ) << 8 ) & 0xf000;
-      i1 = (( i1 & 0xf0 ) << 4 ) & 0x0f00;
-      i3 = (( i3 & 0xf0 ) << 0 ) & 0x00f0;
-      i2 = (( i2 & 0xf0 ) >> 4 ) & 0x000f;
-      i0 = i0 | i1 | i3 | i2;
-      gs->ChrList[chr_tnc].tlight.turn_lr.r = ( lightdirectionlookup[i0] << 8 );
+      tlight->turn_lr.r = 0;
     }
     else
     {
-      gs->ChrList[chr_tnc].tlight.turn_lr.r = 0;
+      float scale = 255.0f / maxval;
+
+      // Look up spek direction using corners again
+      i0 = (( ((int)(scale*i0)) & 0xf0 ) << 8 ) & 0xf000;
+      i1 = (( ((int)(scale*i1)) & 0xf0 ) << 4 ) & 0x0f00;
+      i3 = (( ((int)(scale*i3)) & 0xf0 ) << 0 ) & 0x00f0;
+      i2 = (( ((int)(scale*i2)) & 0xf0 ) >> 4 ) & 0x000f;
+      i0 = i0 | i1 | i3 | i2;
+      tlight->turn_lr.r = ( lightdirectionlookup[i0] << 8 );
     }
+
 
     i0 = pmesh->Mem.vrt_lg_fp8[vrtstart + 0];
     i1 = pmesh->Mem.vrt_lg_fp8[vrtstart + 1];
     i3 = pmesh->Mem.vrt_lg_fp8[vrtstart + 2];
     i2 = pmesh->Mem.vrt_lg_fp8[vrtstart + 3];
-    calc_chr_lighting( x, y, i0, i1, i2, i3, &spek, &ambi );
-    gs->ChrList[chr_tnc].tlight.ambi_fp8.g = ambi;
-    gs->ChrList[chr_tnc].tlight.spek_fp8.g = spek;
+    calc_chr_lighting( gs->ChrList[chr_tnc].ori.pos, i0, i1, i2, i3, &spek, &minval, &maxval );
+    tlight->ambi_fp8.g = minval;
+    tlight->spek_fp8.g = spek;
 
-    if ( !pmesh->Info.exploremode )
+    if ( spek == 0 || pmesh->Info.exploremode )
     {
-      // Look up spek direction using corners again
-      i0 = (( i0 & 0xf0 ) << 8 ) & 0xf000;
-      i1 = (( i1 & 0xf0 ) << 4 ) & 0x0f00;
-      i3 = (( i3 & 0xf0 ) << 0 ) & 0x00f0;
-      i2 = (( i2 & 0xf0 ) >> 4 ) & 0x000f;
-      i0 = i0 | i1 | i3 | i2;
-      gs->ChrList[chr_tnc].tlight.turn_lr.g = ( lightdirectionlookup[i0] << 8 );
+      tlight->turn_lr.g = 0;
     }
     else
     {
-      gs->ChrList[chr_tnc].tlight.turn_lr.g = 0;
+      float scale = 255.0f / maxval;
+
+      // Look up spek direction using corners again
+      i0 = (( ((int)(scale*i0)) & 0xf0 ) << 8 ) & 0xf000;
+      i1 = (( ((int)(scale*i1)) & 0xf0 ) << 4 ) & 0x0f00;
+      i3 = (( ((int)(scale*i3)) & 0xf0 ) << 0 ) & 0x00f0;
+      i2 = (( ((int)(scale*i2)) & 0xf0 ) >> 4 ) & 0x000f;
+      i0 = i0 | i1 | i3 | i2;
+      tlight->turn_lr.g = ( lightdirectionlookup[i0] << 8 );
     }
 
     i0 = pmesh->Mem.vrt_lb_fp8[vrtstart + 0];
     i1 = pmesh->Mem.vrt_lb_fp8[vrtstart + 1];
     i3 = pmesh->Mem.vrt_lb_fp8[vrtstart + 2];
     i2 = pmesh->Mem.vrt_lb_fp8[vrtstart + 3];
-    calc_chr_lighting( x, y, i0, i1, i2, i3, &spek, &ambi );
-    gs->ChrList[chr_tnc].tlight.ambi_fp8.b = ambi;
-    gs->ChrList[chr_tnc].tlight.spek_fp8.b = spek;
+    calc_chr_lighting( gs->ChrList[chr_tnc].ori.pos, i0, i1, i2, i3, &spek, &minval, &maxval );
+    tlight->ambi_fp8.b = minval;
+    tlight->spek_fp8.b = spek;
 
-    if ( !pmesh->Info.exploremode )
+    if ( spek == 0 || pmesh->Info.exploremode )
     {
-      // Look up spek direction using corners again
-      i0 = (( i0 & 0xf0 ) << 8 ) & 0xf000;
-      i1 = (( i1 & 0xf0 ) << 4 ) & 0x0f00;
-      i3 = (( i3 & 0xf0 ) << 0 ) & 0x00f0;
-      i2 = (( i2 & 0xf0 ) >> 4 ) & 0x000f;
-      i0 = i0 | i1 | i3 | i2;
-      gs->ChrList[chr_tnc].tlight.turn_lr.b = ( lightdirectionlookup[i0] << 8 );
+      tlight->turn_lr.b = 0;
     }
     else
     {
-      gs->ChrList[chr_tnc].tlight.turn_lr.b = 0;
+      float scale = 255.0f / maxval;
+
+      // Look up spek direction using corners again
+      i0 = (( ((int)(scale*i0)) & 0xf0 ) << 8 ) & 0xf000;
+      i1 = (( ((int)(scale*i1)) & 0xf0 ) << 4 ) & 0x0f00;
+      i3 = (( ((int)(scale*i3)) & 0xf0 ) << 0 ) & 0x00f0;
+      i2 = (( ((int)(scale*i2)) & 0xf0 ) >> 4 ) & 0x000f;
+      i0 = i0 | i1 | i3 | i2;
+      tlight->turn_lr.b = ( lightdirectionlookup[i0] << 8 );
     }
+
   }
 }
 
@@ -3026,11 +3016,10 @@ int do_messages( BMFont_t * pfnt, int x, int y )
 //--------------------------------------------------------------------------------------------
 int do_status( Client_t * cs, BMFont_t * pfnt, int x, int y)
 {
-  int cnt;
+  Uint32 cnt;
   int ystt = y;
 
   if ( !CData.staton ) return 0;
-
 
   for ( cnt = 0; cnt < cs->StatList_count && y < gfxState.scry; cnt++ )
   {
@@ -3351,7 +3340,7 @@ bool_t draw_scene(Game_t * gs)
   Begin3DMode();
 
   make_prtlist(gs);
-  do_dynalight(gs);
+  do_dyna_light(gs);
   light_characters(gs);
   light_particles(gs);
 
@@ -4392,9 +4381,12 @@ bool_t gl_set_mode(Graphics_t * g)
 //--------------------------------------------------------------------------------------------
 bool_t lighting_info_reset(LIGHTING_INFO * li)
 {
+  li->on        = bfalse;
+
   li->spek      = 0.0f;
   li->spekdir.x = li->spekdir.y = li->spekdir.z = 0.0f;
   li->spekcol.r = li->spekcol.g = li->spekcol.b = 1.0f;
+
   li->ambi      = 0.0f;
   li->ambicol.r = li->ambicol.g = li->ambicol.b = 1.0f;
 

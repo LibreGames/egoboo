@@ -62,7 +62,7 @@ INLINE const Uint32     bumplist_get_next_chr(struct sGame * gs, BUMPLIST * b, U
 
 #define MAXMESHFAN                      (512*512)      // Terrain mesh size
 #define MAXMESHSIZEY                    1024           // Max fans in y direction
-#define BYTESFOREACHVERTEX              (3*sizeof(float) + 6*sizeof(Uint8))
+#define BYTESFOREACHVERTEX              (3*sizeof(float) + 3*sizeof(Uint8) + 3*sizeof(float))
 #define MAXMESHVERTICES                 16             // Fansquare vertices
 #define MAXMESHTYPE                     64             // Number of fansquare command types
 #define MAXMESHCOMMAND                  4              // Draw up to 4 fans
@@ -74,6 +74,7 @@ INLINE const Uint32     bumplist_get_next_chr(struct sGame * gs, BUMPLIST * b, U
 #define INVALID_FAN                     ((Uint32)(~(Uint32)0))   // Character not on a fan ( maybe )
 
 #define FAN_BITS 7
+#define FAN_MASK (1-(1<<FAN_BITS))
 #define MESH_FAN_TO_INT(XX)    ( (XX) << FAN_BITS )
 #define MESH_INT_TO_FAN(XX)    ( (XX) >> FAN_BITS )
 #define MESH_FAN_TO_FLOAT(XX)  ( (float)(XX) * (float)(1<<FAN_BITS) )
@@ -177,9 +178,9 @@ struct sMeshMem
   Uint8*  vrt_ag_fp8;                                           // Vertex base light
   Uint8*  vrt_ab_fp8;                                           // Vertex base light
 
-  Uint8*  vrt_lr_fp8;                                           // Vertex light
-  Uint8*  vrt_lg_fp8;                                           // Vertex light
-  Uint8*  vrt_lb_fp8;                                           // Vertex light
+  float*  vrt_lr_fp8;                                           // Vertex light
+  float*  vrt_lg_fp8;                                           // Vertex light
+  float*  vrt_lb_fp8;                                           // Vertex light
 
   int         tile_count;
   MeshTile_t  * tilelst;

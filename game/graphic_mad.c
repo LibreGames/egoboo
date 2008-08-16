@@ -218,15 +218,22 @@ void md2_blend_lighting(Chr_t * pchr)
 {
   Game_t * gs = Graphics_requireGame(&gfxState);
 
-  Uint16  sheen_fp8, spekularity_fp8;
-  Uint16 lightnew_r, lightnew_g, lightnew_b;
-  Uint16 lightold_r, lightold_g, lightold_b;
-  Uint16 lightrotationr, lightrotationg, lightrotationb;
-  Uint16 ambilevelr_fp8, ambilevelg_fp8, ambilevelb_fp8;
-  Uint16  speklevelr_fp8, speklevelg_fp8, speklevelb_fp8;
+  Uint16 sheen_fp8, spekularity_fp8;
   Uint8  r_sft, g_sft, b_sft;
   Uint16 trans;
   vect2  offset;
+
+  Uint16 light_ambi_r, light_ambi_g, light_ambi_b;
+  Uint16 light_spek_r, light_spek_g, light_spek_b;
+  Uint16 lightnew_r, lightnew_g, lightnew_b;
+  Uint16 lightold_r, lightold_g, lightold_b;
+  Uint16 lightrotationr, lightrotationg, lightrotationb;
+
+  Uint16 ambilevelr_fp8, ambilevelg_fp8, ambilevelb_fp8;
+  bool_t has_ambi;
+
+  Uint16  speklevelr_fp8, speklevelg_fp8, speklevelb_fp8;
+  bool_t has_spek;
 
   Uint32 i, numVertices;
   VData_Blended_t * vd;
@@ -270,10 +277,12 @@ void md2_blend_lighting(Chr_t * pchr)
   ambilevelr_fp8 = pchr->tlight.ambi_fp8.r;
   ambilevelg_fp8 = pchr->tlight.ambi_fp8.g;
   ambilevelb_fp8 = pchr->tlight.ambi_fp8.b;
+  has_ambi = (ambilevelr_fp8 + ambilevelg_fp8 + ambilevelb_fp8 > 0);
 
   speklevelr_fp8 = pchr->tlight.spek_fp8.r;
   speklevelg_fp8 = pchr->tlight.spek_fp8.g;
   speklevelb_fp8 = pchr->tlight.spek_fp8.b;
+  has_spek = (speklevelr_fp8 + speklevelg_fp8 + speklevelb_fp8 > 0);
 
   offset.u = textureoffset[ FP8_TO_INT( pchr->uoffset_fp8 )];
   offset.v = textureoffset[ FP8_TO_INT( pchr->voffset_fp8 )];
@@ -293,25 +302,48 @@ void md2_blend_lighting(Chr_t * pchr)
     {
       float ftmp;
 
-      lightnew_r = 0;
-      lightnew_g = 0;
-      lightnew_b = 0;
+      light_spek_r = 0;
+      light_spek_g = 0;
+      light_spek_b = 0;
 
-      ftmp = DotProduct( vd->Normals[i], gs->Light.spekdir );
-      if ( ftmp > 0.0f )
+      light_ambi_r = 0;
+      light_ambi_g = 0;
+      light_ambi_b = 0;
+
+      if( gs->Light.on )
       {
-        lightnew_r += ftmp * ftmp * spekularity_fp8 * gs->Light.spekcol.r;
-        lightnew_g += ftmp * ftmp * spekularity_fp8 * gs->Light.spekcol.g;
-        lightnew_b += ftmp * ftmp * spekularity_fp8 * gs->Light.spekcol.b;
+        // global lighting specular component
+        ftmp = DotProduct( vd->Normals[i], gs->Light.spekdir );
+        if ( ftmp > 0.0f )
+        {
+          light_spek_r += ftmp * ftmp * spekularity_fp8 * gs->Light.spekcol.r;
+          light_spek_g += ftmp * ftmp * spekularity_fp8 * gs->Light.spekcol.g;
+          light_spek_b += ftmp * ftmp * spekularity_fp8 * gs->Light.spekcol.b;
+        }
+
+        // global lighting ambient component
+        light_ambi_r += gs->Light.ambicol.r * 255;
+        light_ambi_g += gs->Light.ambicol.g * 255;
+        light_ambi_b += gs->Light.ambicol.b * 255;
       }
 
-      lightnew_r += speklevelr_fp8 * spek_calc_local_lighting(lightrotationr, vd->Normals[i]);
-      lightnew_g += speklevelg_fp8 * spek_calc_local_lighting(lightrotationg, vd->Normals[i]);
-      lightnew_b += speklevelb_fp8 * spek_calc_local_lighting(lightrotationb, vd->Normals[i]);
+      if( has_spek )
+      {
+        light_spek_r += speklevelr_fp8 * spek_calc_local_lighting(lightrotationr, vd->Normals[i]);
+        light_spek_g += speklevelg_fp8 * spek_calc_local_lighting(lightrotationg, vd->Normals[i]);
+        light_spek_b += speklevelb_fp8 * spek_calc_local_lighting(lightrotationb, vd->Normals[i]);
+      }
 
-      lightnew_r = lighttospek[sheen_fp8][lightnew_r] + ambilevelr_fp8 + gs->Light.ambicol.r * 255;
-      lightnew_g = lighttospek[sheen_fp8][lightnew_g] + ambilevelg_fp8 + gs->Light.ambicol.g * 255;
-      lightnew_b = lighttospek[sheen_fp8][lightnew_b] + ambilevelb_fp8 + gs->Light.ambicol.b * 255;
+      if( has_ambi )
+      {
+        light_ambi_r += ambilevelr_fp8;
+        light_ambi_g += ambilevelg_fp8;
+        light_ambi_b += ambilevelb_fp8;
+      }
+
+      lightnew_r = lighttospek[sheen_fp8][light_spek_r] + light_ambi_r;
+      lightnew_g = lighttospek[sheen_fp8][light_spek_g] + light_ambi_g;
+      lightnew_b = lighttospek[sheen_fp8][light_spek_b] + light_ambi_b;
 
       lightold_r = vd->Colors[i].r;
       lightold_g = vd->Colors[i].g;

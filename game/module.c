@@ -293,7 +293,7 @@ bool_t module_load( Game_t * gs, char *smallname )
   load_map( gs, szModpath );
   load_blip_bitmap( szModpath );
 
-  module_read_egomap_extra( gs, szModpath );
+  //module_read_egomap_extra( gs, szModpath );
 
   if ( CData.DevMode )
   {
