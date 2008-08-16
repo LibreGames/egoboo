@@ -103,18 +103,18 @@ void render_fan_ref( Uint32 fan, char tex_loaded, float level )
   for ( cnt = 0; cnt < vertices; cnt++ )
   {
     float ftmp;
-    light_flat_r += pmesh->Mem.vrt_lr_fp8[badvertex] * 0.5f;
-    light_flat_g += pmesh->Mem.vrt_lg_fp8[badvertex] * 0.5f;
-    light_flat_b += pmesh->Mem.vrt_lb_fp8[badvertex] * 0.5f;
+    light_flat_r += pmesh->Mem.vrt_lr_fp8[badvertex] + pmesh->Mem.vrt_ar_fp8[badvertex];
+    light_flat_g += pmesh->Mem.vrt_lg_fp8[badvertex] + pmesh->Mem.vrt_ag_fp8[badvertex];
+    light_flat_b += pmesh->Mem.vrt_lb_fp8[badvertex] + pmesh->Mem.vrt_ab_fp8[badvertex];
 
     ftmp = pmesh->Mem.vrt_z[badvertex] - level;
     v[cnt].pos.x = pmesh->Mem.vrt_x[badvertex];
     v[cnt].pos.y = pmesh->Mem.vrt_y[badvertex];
     v[cnt].pos.z = level - ftmp;
 
-    v[cnt].col.r = FP8_TO_FLOAT( pmesh->Mem.vrt_lr_fp8[badvertex] );
-    v[cnt].col.g = FP8_TO_FLOAT( pmesh->Mem.vrt_lg_fp8[badvertex] );
-    v[cnt].col.b = FP8_TO_FLOAT( pmesh->Mem.vrt_lb_fp8[badvertex] );
+    v[cnt].col.r = FP8_TO_FLOAT( pmesh->Mem.vrt_lr_fp8[badvertex] + pmesh->Mem.vrt_ar_fp8[badvertex] );
+    v[cnt].col.g = FP8_TO_FLOAT( pmesh->Mem.vrt_lg_fp8[badvertex] + pmesh->Mem.vrt_ag_fp8[badvertex] );
+    v[cnt].col.b = FP8_TO_FLOAT( pmesh->Mem.vrt_lb_fp8[badvertex] + pmesh->Mem.vrt_ab_fp8[badvertex] );
 
     badvertex++;
   }
@@ -251,9 +251,9 @@ void render_fan( Uint32 fan, char tex_loaded )
     v[cnt].pos.y = pmesh->Mem.vrt_y[badvertex];
     v[cnt].pos.z = pmesh->Mem.vrt_z[badvertex];
 
-    v[cnt].col.r = FP8_TO_FLOAT( pmesh->Mem.vrt_lr_fp8[badvertex] );
-    v[cnt].col.g = FP8_TO_FLOAT( pmesh->Mem.vrt_lg_fp8[badvertex] );
-    v[cnt].col.b = FP8_TO_FLOAT( pmesh->Mem.vrt_lb_fp8[badvertex] );
+    v[cnt].col.r = FP8_TO_FLOAT( pmesh->Mem.vrt_lr_fp8[badvertex] + pmesh->Mem.vrt_ar_fp8[badvertex] );
+    v[cnt].col.g = FP8_TO_FLOAT( pmesh->Mem.vrt_lg_fp8[badvertex] + pmesh->Mem.vrt_ag_fp8[badvertex] );
+    v[cnt].col.b = FP8_TO_FLOAT( pmesh->Mem.vrt_lb_fp8[badvertex] + pmesh->Mem.vrt_ab_fp8[badvertex] );
     v[cnt].col.a = 1.0f;
 
 #if defined(DEBUG_MESHFX) && defined(_DEBUG)
@@ -852,25 +852,47 @@ void do_dyna_light(Game_t * gs)
         {
           vect3 pos = {mm->vrt_x[vertex], mm->vrt_y[vertex], mm->vrt_z[vertex]};
 
-          // Do light particles
-          light_r = mm->vrt_ar_fp8[vertex];
-          light_g = mm->vrt_ag_fp8[vertex];
-          light_b = mm->vrt_ab_fp8[vertex];
-
           mesh_calc_normal( pmesh, &(gs->phys), pos, &nrm );
-          //light_r += gs->Light.ambicol.r * 255;
-          //light_g += gs->Light.ambicol.g * 255;
-          //light_b += gs->Light.ambicol.b * 255;
 
-          //ftmp = DotProduct( nrm, gs->Light.spekdir );
-          //if ( ftmp > 0 )
-          //{
-          //  light_r += gs->Light.spekcol.r * 255 * ftmp * ftmp;
-          //  light_g += gs->Light.spekcol.g * 255 * ftmp * ftmp;
-          //  light_b += gs->Light.spekcol.b * 255 * ftmp * ftmp;
-          //};
+          // do global lighting
+          if(gs->Light.on)
+          {
+            light_r = gs->Light.ambicol.r * 255;
+            light_g = gs->Light.ambicol.g * 255;
+            light_b = gs->Light.ambicol.b * 255;
 
-          
+            ftmp = DotProduct( nrm, gs->Light.spekdir );
+            if ( ftmp > 0 )
+            {
+              float m, k1, k2;
+              m = 0.5f;
+              k1 = 1.0f - m;
+              k2 = m/(1- m);
+              ftmp = k1 * (ftmp + k2);
+
+              light_r += gs->Light.spekcol.r * 255 * ftmp * ftmp;
+              light_g += gs->Light.spekcol.g * 255 * ftmp * ftmp;
+              light_b += gs->Light.spekcol.b * 255 * ftmp * ftmp;
+            };
+
+            if ( light_r > 255 ) light_r = 255;
+            if ( light_r <   0 ) light_r = 0;
+            mm->vrt_ar_fp8[vertex] = 0.9 * mm->vrt_ar_fp8[vertex] + 0.1 * light_r;
+
+            if ( light_g > 255 ) light_g = 255;
+            if ( light_g <   0 ) light_g = 0;
+            mm->vrt_ag_fp8[vertex] = 0.9 * mm->vrt_ag_fp8[vertex]  + 0.1 * light_g;
+
+            if ( light_b > 255 ) light_b = 255;
+            if ( light_b <   0 ) light_b = 0;
+            mm->vrt_ab_fp8[vertex] = 0.9 * mm->vrt_ab_fp8[vertex]  + 0.1 * light_b;
+          }
+
+          // Do light particles
+          light_r = mm->vrt_lr_fp8[vertex];
+          light_g = mm->vrt_lg_fp8[vertex];
+          light_b = mm->vrt_lb_fp8[vertex];
+
           for ( cnt = 0; cnt < gs->DLightList_count; cnt++ )
           {
             float flight;

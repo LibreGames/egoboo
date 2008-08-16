@@ -773,16 +773,8 @@ bool_t setup_lighting( LIGHTING_INFO * li )
   if(NULL ==li) return bfalse;
 
   // process the lighting info
-  if( li->on )
-  {
-    li->spek = DotProduct( li->spekdir, li->spekdir );
-  }
-  else
-  {
-    li->spek = 0;
-    li->ambi = 0;
-  }
 
+  li->spek = DotProduct( li->spekdir, li->spekdir );
   if ( 0 != li->spek )
   {
     li->spek = sqrt( li->spek );
@@ -817,6 +809,7 @@ bool_t read_wawalite( Game_t * gs, char *modname )
   Mesh_t * pmesh;
   FILE* fileread;
   Uint32 loc_rand;
+  bool_t found_expansion, found_idsz;
 
   if( !EKEY_PVALID(gs) ) return bfalse;
 
@@ -928,29 +921,61 @@ bool_t read_wawalite( Game_t * gs, char *modname )
   GCamera.swingrate = fget_next_float( fileread );
   GCamera.swingamp = fget_next_float( fileread );
 
-
-  // Read unnecessary data...  Only read if it exists...
+  // test for expansions (a bit tricky because of the fog stuff)
   fog_info_reset( &(gs->Fog) );
   tile_damage_reset( &(gs->Tile_Dam) );
-  if ( fgoto_colon_yesno( fileread ) )
+
+  found_expansion = fgoto_colon_yesno( fileread );
+  if( found_expansion )
   {
-    gs->Fog.on           = CData.fogallowed;
-    gs->Fog.top          = fget_next_float( fileread );
-    gs->Fog.bottom       = fget_next_float( fileread );
-    gs->Fog.red          = fget_next_fixed( fileread );
-    gs->Fog.grn          = fget_next_fixed( fileread );
-    gs->Fog.blu          = fget_next_fixed( fileread );
-    gs->Fog.affectswater = fget_next_bool( fileread );
+    found_idsz = ftest_idsz( fileread );
 
-    gs->Fog.distance = ( gs->Fog.top - gs->Fog.bottom );
-    if ( gs->Fog.distance < 1.0 )  gs->Fog.on = bfalse;
-
-    // Read extra stuff for damage tile particles...
-    if ( fgoto_colon_yesno( fileread ) )
+    if( !found_idsz )
     {
-      gs->Tile_Dam.parttype = fget_int( fileread );
-      gs->Tile_Dam.partand  = fget_next_int( fileread );
-      gs->Tile_Dam.sound    = fget_next_int( fileread );
+      // Read unnecessary data...  Only read if it exists...
+      found_expansion = bfalse;
+      gs->Fog.on           = CData.fogallowed;
+      gs->Fog.top          = fget_float( fileread );
+      gs->Fog.bottom       = fget_next_float( fileread );
+      gs->Fog.red          = fget_next_fixed( fileread );
+      gs->Fog.grn          = fget_next_fixed( fileread );
+      gs->Fog.blu          = fget_next_fixed( fileread );
+      gs->Fog.affectswater = fget_next_bool( fileread );
+
+      gs->Fog.distance = ( gs->Fog.top - gs->Fog.bottom );
+
+      // Read extra stuff for damage tile particles...
+      found_expansion = fgoto_colon_yesno( fileread );
+      if ( found_expansion )
+      {
+        found_idsz = ftest_idsz( fileread );
+        if(!found_idsz)
+        {
+          found_expansion = bfalse;
+          gs->Tile_Dam.parttype = fget_int( fileread );
+          gs->Tile_Dam.partand  = fget_next_int( fileread );
+          gs->Tile_Dam.sound    = fget_next_int( fileread );
+        }
+      }
+    };
+
+    if( !found_expansion ) { found_expansion = fgoto_colon_yesno( fileread ); if(found_expansion) { found_idsz = ftest_idsz( fileread ); } }
+    if( found_expansion && found_idsz )
+    {
+      // we must have already found_expansion a ':' use the post-test do...while loop
+      do 
+      {
+        IDSZ idsz;
+        int iTmp;
+
+        idsz = fget_idsz( fileread );
+        iTmp = fget_int( fileread );
+
+        // "MOON" == you can see the moon, so lycanthropy... mwa ha ha ha ha!
+        // Also, it just means that it is outdoors
+        if ( MAKE_IDSZ( "MOON" ) == idsz ) gs->Light.on = INT_TO_BOOL( iTmp );
+
+      } while( fgoto_colon_yesno( fileread ) );
     }
   }
 
@@ -965,20 +990,6 @@ bool_t read_wawalite( Game_t * gs, char *modname )
     gs->Water.layer[0].alpha_fp8 = iTmp;
   }
 
-  // Read expansions
-  while ( fgoto_colon_yesno( fileread ) )
-  {
-    IDSZ idsz;
-    int iTmp;
-
-    idsz = fget_idsz( fileread );
-    iTmp = fget_int( fileread );
-
-    // "MOON" == you can see the moon, so lycanthropy... mwa ha ha ha ha!
-    // Also, it just means that it is outdoors
-    if ( MAKE_IDSZ( "MOON" ) == idsz ) gs->Light.on = INT_TO_BOOL( iTmp );
-  };
-
 
   fs_fileClose( fileread );
 
@@ -987,7 +998,7 @@ bool_t read_wawalite( Game_t * gs, char *modname )
   make_water( &(gs->Water) );
 
   return btrue;
-}
+};
 
 //--------------------------------------------------------------------------------------------
 void render_background( Uint16 texture )
@@ -1368,7 +1379,7 @@ void calc_chr_lighting( vect3 pos, Uint16 tl, Uint16 tr, Uint16 bl, Uint16 br, U
 };
 
 //--------------------------------------------------------------------------------------------
-void light_characters(Game_t * gs)
+void do_chr_dynalight(Game_t * gs)
 {
   // ZZ> This function figures out character dynamic lighting from the mesh
 
@@ -1395,6 +1406,8 @@ void light_characters(Game_t * gs)
 
     vrtstart = pmesh->Mem.tilelst[gs->ChrList[chr_tnc].onwhichfan].vrt_start;
 
+    //----------------------------------------
+    // Red lighting
     i0 = pmesh->Mem.vrt_lr_fp8[vrtstart + 0];
     i1 = pmesh->Mem.vrt_lr_fp8[vrtstart + 1];
     i2 = pmesh->Mem.vrt_lr_fp8[vrtstart + 2];
@@ -1403,11 +1416,8 @@ void light_characters(Game_t * gs)
     tlight->ambi_fp8.r = minval;
     tlight->spek_fp8.r = spek;
 
-    if ( spek == 0 || pmesh->Info.exploremode )
-    {
-      tlight->turn_lr.r = 0;
-    }
-    else
+    tlight->turn_lr.r = 0;
+    if ( spek > 0 || !pmesh->Info.exploremode )
     {
       float scale = 255.0f / maxval;
 
@@ -1420,7 +1430,8 @@ void light_characters(Game_t * gs)
       tlight->turn_lr.r = ( lightdirectionlookup[i0] << 8 );
     }
 
-
+    //----------------------------------------
+    // Green lighting
     i0 = pmesh->Mem.vrt_lg_fp8[vrtstart + 0];
     i1 = pmesh->Mem.vrt_lg_fp8[vrtstart + 1];
     i3 = pmesh->Mem.vrt_lg_fp8[vrtstart + 2];
@@ -1429,11 +1440,8 @@ void light_characters(Game_t * gs)
     tlight->ambi_fp8.g = minval;
     tlight->spek_fp8.g = spek;
 
-    if ( spek == 0 || pmesh->Info.exploremode )
-    {
-      tlight->turn_lr.g = 0;
-    }
-    else
+    tlight->turn_lr.g = 0;
+    if ( spek > 0 && !pmesh->Info.exploremode )
     {
       float scale = 255.0f / maxval;
 
@@ -1446,6 +1454,8 @@ void light_characters(Game_t * gs)
       tlight->turn_lr.g = ( lightdirectionlookup[i0] << 8 );
     }
 
+    //----------------------------------------
+    // Blue lighting
     i0 = pmesh->Mem.vrt_lb_fp8[vrtstart + 0];
     i1 = pmesh->Mem.vrt_lb_fp8[vrtstart + 1];
     i3 = pmesh->Mem.vrt_lb_fp8[vrtstart + 2];
@@ -1454,11 +1464,8 @@ void light_characters(Game_t * gs)
     tlight->ambi_fp8.b = minval;
     tlight->spek_fp8.b = spek;
 
-    if ( spek == 0 || pmesh->Info.exploremode )
-    {
-      tlight->turn_lr.b = 0;
-    }
-    else
+    tlight->turn_lr.b = 0;
+    if ( spek > 0 || !pmesh->Info.exploremode )
     {
       float scale = 255.0f / maxval;
 
@@ -1475,7 +1482,7 @@ void light_characters(Game_t * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-void light_particles(Game_t * gs)
+void do_prt_dynalight(Game_t * gs)
 {
   // ZZ> This function figures out particle lighting
 
@@ -1523,16 +1530,16 @@ void light_particles(Game_t * gs)
           else
           {
             gs->PrtList[prt_cnt].lightr_fp8 =
-              gs->PrtList[prt_cnt].lightg_fp8 =
-                gs->PrtList[prt_cnt].lightb_fp8 = 0;
+            gs->PrtList[prt_cnt].lightg_fp8 =
+            gs->PrtList[prt_cnt].lightb_fp8 = 0;
           }
         }
         break;
 
       default:
         gs->PrtList[prt_cnt].lightr_fp8 =
-          gs->PrtList[prt_cnt].lightg_fp8 =
-            gs->PrtList[prt_cnt].lightb_fp8 = 0;
+        gs->PrtList[prt_cnt].lightg_fp8 =
+        gs->PrtList[prt_cnt].lightb_fp8 = 0;
     };
   }
 
@@ -3341,8 +3348,8 @@ bool_t draw_scene(Game_t * gs)
 
   make_prtlist(gs);
   do_dyna_light(gs);
-  light_characters(gs);
-  light_particles(gs);
+  do_chr_dynalight(gs);
+  do_prt_dynalight(gs);
 
   // Render the background
   if ( gfxState.render_background )

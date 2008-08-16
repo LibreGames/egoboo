@@ -167,6 +167,28 @@ char * undo_idsz( IDSZ idsz )
 }
 
 //--------------------------------------------------------------------------------------------
+bool_t ftest_idsz( FILE* fileread )
+{
+  char cTmp;
+  long pos;
+  bool_t retval;
+  
+  pos = ftell(fileread);
+
+  cTmp = fget_first_letter( fileread );
+  retval = ( '[' == cTmp);
+
+  fseek( fileread, 4, SEEK_CUR);
+  cTmp = fget_first_letter( fileread );
+  retval = retval && ( ']' == cTmp);
+
+  // go back to the original position
+  fseek( fileread, pos, SEEK_SET );
+  
+  return retval;
+};
+
+//--------------------------------------------------------------------------------------------
 IDSZ fget_idsz( FILE* fileread )
 {
   // ZZ> This function reads and returns an IDSZ tag, or IDSZ_NONE if there wasn't one

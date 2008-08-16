@@ -314,11 +314,20 @@ void md2_blend_lighting(Chr_t * pchr)
       {
         // global lighting specular component
         ftmp = DotProduct( vd->Normals[i], gs->Light.spekdir );
-        if ( ftmp > 0.0f )
+        if ( ftmp > 0.0f && gs->Light.spekdir.z > 0 )
         {
-          light_spek_r += ftmp * ftmp * spekularity_fp8 * gs->Light.spekcol.r;
-          light_spek_g += ftmp * ftmp * spekularity_fp8 * gs->Light.spekcol.g;
-          light_spek_b += ftmp * ftmp * spekularity_fp8 * gs->Light.spekcol.b;
+          // little kludge to soften the normal-dependent lighting
+          // the dot ptoduct factor will vary between 1 for fill lighting
+          // down to m*m for "shadowed" lighting
+          float m, k1, k2;
+          m = 0.5f;
+          k1 = 1.0f - m;
+          k2 = m/(1- m);
+          ftmp = k1 * (ftmp + k2);
+
+          light_spek_r += ftmp * ftmp * gs->Light.spekcol.r * 255;
+          light_spek_g += ftmp * ftmp * gs->Light.spekcol.g * 255;
+          light_spek_b += ftmp * ftmp * gs->Light.spekcol.b * 255;
         }
 
         // global lighting ambient component
@@ -345,13 +354,13 @@ void md2_blend_lighting(Chr_t * pchr)
       lightnew_g = lighttospek[sheen_fp8][light_spek_g] + light_ambi_g;
       lightnew_b = lighttospek[sheen_fp8][light_spek_b] + light_ambi_b;
 
-      lightold_r = vd->Colors[i].r;
-      lightold_g = vd->Colors[i].g;
-      lightold_b = vd->Colors[i].b;
+      lightold_r = FLOAT_TO_FP8(vd->Colors[i].r);
+      lightold_g = FLOAT_TO_FP8(vd->Colors[i].g);
+      lightold_b = FLOAT_TO_FP8(vd->Colors[i].b);
 
-      vd->Colors[i].r = MIN( 255, 0.9 * lightold_r + 0.1 * lightnew_r );
-      vd->Colors[i].g = MIN( 255, 0.9 * lightold_g + 0.1 * lightnew_g );
-      vd->Colors[i].b = MIN( 255, 0.9 * lightold_b + 0.1 * lightnew_b );
+      vd->Colors[i].r = FP8_TO_FLOAT( MIN( 255, 0.9 * lightold_r + 0.1 * lightnew_r ) );
+      vd->Colors[i].g = FP8_TO_FLOAT( MIN( 255, 0.9 * lightold_g + 0.1 * lightnew_g ) );
+      vd->Colors[i].b = FP8_TO_FLOAT( MIN( 255, 0.9 * lightold_b + 0.1 * lightnew_b ) );
       vd->Colors[i].a = 1.0f;
 
       vd->Colors[i].r /= (float)(1 << r_sft) * FP8_TO_FLOAT(trans);
@@ -967,7 +976,7 @@ void make_lighttospek( void )
   {
     for ( tnc = 0; tnc < 256; tnc++ )
     {
-      lighttospek[cnt][tnc] = FLOAT_TO_FP8( pow( FP8_TO_FLOAT( tnc ), 1.0 + cnt / 2.0f ) );
+      lighttospek[cnt][tnc] = FLOAT_TO_FP8( pow( FP8_TO_FLOAT( tnc ) * 256.0f/255.0f, 1.0 + cnt / 2.0f ) );
       lighttospek[cnt][tnc] = MIN( 255, lighttospek[cnt][tnc] );
     }
   }

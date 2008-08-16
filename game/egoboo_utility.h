@@ -38,8 +38,9 @@ bool_t fget_pair( FILE* fileread, PAIR * ppair );
 bool_t fget_next_pair( FILE* fileread, PAIR * ppair );
 
 char * undo_idsz( IDSZ idsz );
-IDSZ fget_idsz( FILE* fileread );
-IDSZ fget_next_idsz( FILE* fileread );
+bool_t ftest_idsz( FILE* fileread );
+IDSZ   fget_idsz( FILE* fileread );
+IDSZ   fget_next_idsz( FILE* fileread );
 
 int   fget_int( FILE* fileread );
 int   fget_next_int( FILE* fileread );

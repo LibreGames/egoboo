@@ -2581,12 +2581,28 @@ void do_sunlight(LIGHTING_INFO * info)
   static bool_t first_time = btrue;
   static time_t i_time_last;
   int    dtime;
+  vect3 transmit;
+  vect3 night_ambi;
+  vect3 day_spek;
 
   MachineState_t * mac = get_MachineState();
 
   // check to see if we're outdoors
-  bool_t outdoors = info->spek > 0;
-  if(!outdoors) return;
+  if(!info->on)
+  {
+    glClearColor( 0,0,0,1 );
+    return;
+  };
+
+  // some useful constants
+  night_ambi.r = 0.025;
+  night_ambi.g = 0.044;
+  night_ambi.b = 0.100;
+
+  day_spek.r = 0.666f;
+  day_spek.g = 0.628f;
+  day_spek.b = 0.345f;
+
 
   // update the sun position every 10 seconds
   MachineState_update(mac);
@@ -2612,26 +2628,53 @@ void do_sunlight(LIGHTING_INFO * info)
     if ( info->spekdir.z > 0 )
     {
       // do the filtering
-      info->spekcol.r = exp(( 1.0f -  1.0f  / info->spekdir.z ) * 0.1f );
-      info->spekcol.g = exp(( 5.0f -  5.0f  / info->spekdir.z ) * 0.1f );
-      info->spekcol.b = exp(( 16.0f - 16.0f / info->spekdir.z ) * 0.1f );
 
-      info->ambicol.r = ( 1.0f - info->spekcol.r );
-      info->ambicol.g = ( 1.0f - info->spekcol.g );
-      info->ambicol.b = ( 1.0f - info->spekcol.b );
+      //// do the "sunset effect"
+      //info->spekcol.r = day_spek.r * exp(( 1.0f - 1.0f / info->spekdir.z ) * 0.381f );
+      //info->spekcol.g = day_spek.g * exp(( 1.0f - 1.0f / info->spekdir.z ) * 0.437f );
+      //info->spekcol.b = day_spek.b * exp(( 1.0f - 1.0f / info->spekdir.z ) * 1.000f );
 
-      // do the intensity
-      info->spekcol.r *= ABS( info->spekdir.z ) * info->spek;
-      info->spekcol.g *= ABS( info->spekdir.z ) * info->spek;
-      info->spekcol.b *= ABS( info->spekdir.z ) * info->spek;
+      //// do the "blue sky" effect
+      //// everything that doesn't come from the sun comes from the blue sky
+      //info->ambicol.r = ( 1.0f - day_spek.r ) * exp(( 1.0f - 1.0f / info->spekdir.z ) * 0.437f );
+      //info->ambicol.g = ( 1.0f - day_spek.g ) * exp(( 1.0f - 1.0f / info->spekdir.z ) * 0.437f );
+      //info->ambicol.b = ( 1.0f - day_spek.b ) * exp(( 1.0f - 1.0f / info->spekdir.z ) * 0.437f );
 
-      if(info->ambicol.r + info->ambicol.g + info->ambicol.b > 0)
-      {
-        ftmp = ( info->spekcol.r + info->spekcol.g + info->spekcol.b ) / (info->ambicol.r + info->ambicol.g + info->ambicol.b);
-        info->ambicol.r = 0.025f + (1.0f-0.025f) * ftmp * info->ambicol.r + ABS( info->spekdir.z ) * info->ambi;
-        info->ambicol.g = 0.044f + (1.0f-0.044f) * ftmp * info->ambicol.g + ABS( info->spekdir.z ) * info->ambi;
-        info->ambicol.b = 0.100f + (0.9f-0.100f) * ftmp * info->ambicol.b + ABS( info->spekdir.z ) * info->ambi;
-      };
+      // do the "sunset effect"
+      ftmp = (1 - info->spekdir.z) * 4.0;
+      transmit.r = exp(-ftmp * 0.381f );
+      transmit.g = exp(-ftmp * 0.437f );
+      transmit.b = exp(-ftmp * 1.000f );
+
+      // do the "blue sky" effect
+      // everything that doesn't come from the sun comes from the blue sky
+      info->spekcol.r = day_spek.r * transmit.r;
+      info->spekcol.g = day_spek.g * transmit.g;
+      info->spekcol.b = day_spek.b * transmit.b;
+
+      info->ambicol.r = ( 1.0f - day_spek.r ) * transmit.r;
+      info->ambicol.g = ( 1.0f - day_spek.g ) * transmit.r;
+      info->ambicol.b = ( 1.0f - day_spek.b ) * transmit.r;
+
+      // add in the "night sky" effect
+      // smoothly interpolate down to the "night" setting
+      info->ambicol.r += night_ambi.r;
+      info->ambicol.g += night_ambi.g;
+      info->ambicol.b += night_ambi.b;
+
+
+      //info->spekcol.r *= ftmp * info->spek;
+      //info->spekcol.g *= ftmp * info->spek;
+      //info->spekcol.b *= ftmp * info->spek;
+
+      //info->ambicol.r *= ftmp * info->spek;
+      //info->ambicol.g *= ftmp * info->spek;
+      //info->ambicol.b *= ftmp * info->spek;
+
+      //// smoothly interpolate down to the "night" setting
+      //info->ambicol.r = night_ambi.r * (1.0-ftmp) + info->ambicol.r * ftmp;
+      //info->ambicol.g = night_ambi.g * (1.0-ftmp) + info->ambicol.r * ftmp;
+      //info->ambicol.b = night_ambi.b * (1.0-ftmp) + info->ambicol.r * ftmp;
     }
     else
     {
@@ -2639,10 +2682,12 @@ void do_sunlight(LIGHTING_INFO * info)
       info->spekcol.g = 0.0f;
       info->spekcol.b = 0.0f;
 
-      info->ambicol.r = 0.025; // + info->ambi;
-      info->ambicol.g = 0.044; // + info->ambi;
-      info->ambicol.b = 0.100; // + info->ambi;
+      info->ambicol.r = night_ambi.r; // + info->ambi;
+      info->ambicol.g = night_ambi.g; // + info->ambi;
+      info->ambicol.b = night_ambi.b; // + info->ambi;
     };
+
+    glClearColor( info->ambicol.r, info->ambicol.g, info->ambicol.b, 1 );
 
     // update the spektable since the sunlight may have changes
     make_spektable( info->spekdir );
