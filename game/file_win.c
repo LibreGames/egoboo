@@ -22,10 +22,12 @@
 //*
 //********************************************************************************************
 
-#include "egoboo_strutil.h"
-#include "egoboo.h"
-
+#include "file_common.h"
 #include "Log.h"
+#include "game.h"
+
+#include "egoboo_strutil.h"
+
 #include <windows.h>
 #include <shlobj.h>
 #include <shlwapi.h>

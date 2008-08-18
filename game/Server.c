@@ -32,6 +32,7 @@
 #include "egoboo.h"
 #include "NetFile.h"
 #include "game.h"
+#include "file_common.h"
 
 #include "Network.inl"
 #include "egoboo_types.inl"

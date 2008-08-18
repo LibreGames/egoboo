@@ -23,8 +23,8 @@
 //********************************************************************************************
 #include "ogl_texture.h"
 
-#include "egoboo.h" // GAC - Needed for Win32 stuff
 #include "graphic.h"
+#include "game.h"
 
 #include "egoboo_types.inl"
 

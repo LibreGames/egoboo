@@ -4,6 +4,7 @@
 	Version="7.10"
 	Name="game"
 	ProjectGUID="{E9988340-E474-4C0A-8496-EFF3296DE056}"
+	RootNamespace="game"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -45,11 +46,14 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="SDL_image.lib SDL.lib SDLmain.lib SDL_ttf.lib SDL_mixer.lib opengl32.lib glu32.lib ws2_32.lib shlwapi.lib Winmm.lib"
 				OutputFile="$(OutDir)/Egoboo2x.exe"
-				LinkIncremental="2"
+				LinkIncremental="1"
 				AdditionalLibraryDirectories=""
 				IgnoreAllDefaultLibraries="FALSE"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/game.pdb"
+				GenerateMapFile="FALSE"
+				MapExports="FALSE"
+				MapLines="FALSE"
 				SubSystem="1"
 				TargetMachine="1"/>
 			<Tool
@@ -387,6 +391,9 @@
 			</File>
 			<File
 				RelativePath=".\enchant.h">
+			</File>
+			<File
+				RelativePath=".\file_common.h">
 			</File>
 			<File
 				RelativePath=".\Font.h">

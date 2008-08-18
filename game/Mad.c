@@ -2,6 +2,7 @@
 
 #include "script.h"
 #include "Log.h"
+#include "file_common.h"
 
 #include "egoboo_utility.h"
 

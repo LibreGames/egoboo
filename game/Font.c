@@ -27,6 +27,7 @@
 #include "ogl_texture.h"
 #include "Log.h"
 #include "graphic.h"
+#include "file_common.h"
 
 #include "egoboo_utility.h"
 #include "egoboo.h"

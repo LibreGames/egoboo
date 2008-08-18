@@ -40,6 +40,7 @@
 #include "enchant.h"
 #include "camera.h"
 #include "sound.h"
+#include "file_common.h"
 
 #include "object.inl"
 #include "Network.inl"
@@ -67,18 +68,14 @@
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
 
-static MachineState_t _macState = { bfalse };
-
-//---------------------------------------------------------------------------------------------
-
 static MachineState_t * MachineState_new( MachineState_t * ms );
 static bool_t         MachineState_delete( MachineState_t * ms );
 
 
 static Game_t * Game_new(Game_t * gs, Net_t * net, Client_t * cl, Server_t * sv);
-static bool_t  Game_delete(Game_t * gs);
+static bool_t   Game_delete(Game_t * gs);
 
-static bool_t  CGui_startUp();
+static bool_t   Gui_startUp();
 
 static retval_t main_doGameGraphics();
 static void     game_handleKeyboard();
@@ -86,10 +83,14 @@ static void     game_handleKeyboard();
 
 //---------------------------------------------------------------------------------------------
 
+static MachineState_t _macState = { bfalse };
+static ConfigData_t   CData_default;
+ConfigData_t CData;
+
 char cActionName[MAXACTION][2];
 
 KeyboardBuffer_t GNetMsg = {20,0,0,NULL_STRING};
-Gui_t   _gui_state = { bfalse };
+Gui_t            _gui_state = { bfalse };
 
 PROFILE_DECLARE( resize_characters );
 PROFILE_DECLARE( keep_weapons_with_holders );
@@ -291,14 +292,75 @@ void make_newloadname( char *modname, char *appendname, char *newloadname )
 //  Particle Effect: REDBLOOD, SMOKE, HEALCLOUD
 //  */
 //}
-//
-//
+
 //---------------------------------------------------------------------------------------------
-void export_one_character( Game_t * gs, CHR_REF ichr, CHR_REF iowner, int number )
+bool_t export_all_enchants( Game_t * gs, CHR_REF ichr, const char * todirname )
 {
-  // ZZ> This function exports a ichr
+  // BB> Export all of the enchant info associated with an enchant to a file called rechantXXXX.txt
+  //     Note that this does not save the sounds, particles, or any other asset associated with the enchant
+
+  int cnt;
+  ENC_REF ienc;
+  STRING  exportname, fname, rechant_name;
+  FILE *  rechant_file;
+
+  PChr_t chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
+
+  strncpy( exportname, todirname, sizeof(exportname));
+  str_append_slash(exportname, sizeof(exportname));
+  
+  snprintf( rechant_name, sizeof(rechant_name), "%srechant.txt", exportname );
+
+  rechant_file = fs_fileOpen( PRI_WARN, "export_all_enchants()", fname, "w" );
+  if(NULL == rechant_file) return bfalse;
+
+  fprintf( rechant_file, "// Stores the data for enchants that are to be re-applied to the character\n" );
+  fprintf( rechant_file, "// Enchant number - remaining time\n" );
+
+  cnt = 0;
+  ienc = chrlst[ichr].firstenchant;
+  while ( INVALID_ENC != ienc )
+  {
+    EVE_REF ieve;
+
+    ienc = chrlst[ichr].firstenchant;
+    ieve = gs->EncList[ienc].eve;
+
+    if( !gs->EveList[ieve].endifcantpay ||  gs->EveList[ieve].stayifnoowner )
+    {
+      // store the info in the rechant.txt file
+      fprintf( rechant_file, ":%d %d %d\n", cnt,  gs->EncList[ienc].time, gs->EncList[ienc].spawntime );
+
+      // create the new filename
+      snprintf( fname, sizeof(fname), "%senchant%03d.txt", exportname, cnt );
+      cnt++;
+
+      // copy the file
+      fs_copyFile(gs->EveList[ieve].loadname, fname);
+    };
+
+    ienc = gs->EncList[ienc].nextenchant;
+  }
+
+  fs_fileClose(rechant_file);
+
+  return btrue;
+}
+
+
+//---------------------------------------------------------------------------------------------
+bool_t export_one_character( Game_t * gs, CHR_REF ichr, CHR_REF iowner, int number, bool_t export_profile )
+{
+  // ZZ> This function exports a character
+
+  // BB> If export_profile is true, we have just exited a starter module. We should just export the base values
+  //     directly from the profile. Otherwise, we have just beaten some module or exited a town, and we SHOULD
+  //     carry all enchants, etc. with us. I'm not sure how to do this other than exporting all enchants to the
+  //     *.obj directory?
 
   int tnc;
+  STRING tmpname;
   STRING fromdir;
   STRING todir;
   STRING fromfile;
@@ -329,151 +391,153 @@ void export_one_character( Game_t * gs, CHR_REF ichr, CHR_REF iowner, int number
 
   Chr_t * pchr;
 
-  if( !ACTIVE_CHR(chrlst, ichr) ) return;
+  if( !ACTIVE_CHR(chrlst, ichr) ) return bfalse;
   pchr = ChrList_getPChr(gs, ichr);
 
   iobj = ChrList_getRObj(gs, ichr);
-  if( INVALID_OBJ == iobj ) return;
+  if( INVALID_OBJ == iobj ) return bfalse;
   pobj = gs->ObjList + iobj;
 
   pcap = ChrList_getPCap(gs, ichr);
-  if(NULL == pcap) return;
+  if(NULL == pcap) return bfalse;
 
   pmad = ChrList_getPMad(gs, ichr);
-  if(NULL == pmad) return;
+  if(NULL == pmad) return bfalse;
 
+  if( !gs->modstate.exportvalid ) return bfalse;
+  if( !pcap->cancarrytonextmodule && pcap->prop.isitem ) return bfalse;
+
+  // TWINK_BO.OBJ
+  snprintf( todirname, sizeof( todirname ), "%s" SLASH_STRING, CData.players_dir );
+  str_encode( todirname, sizeof( tmpname ), chrlst[iowner].name );
+  strncat( todirname, ".obj", sizeof( tmpname ) );
+
+  if( !export_profile )
+  {
+    // make the enchants stick to the character after this module
+    export_all_enchants(gs, ichr, todirname);
+  }
+ 
   // Don't export enchants
   disenchant_character( gs, ichr );
 
-  if (( pcap->cancarrytonextmodule || !pcap->prop.isitem ) && gs->modstate.exportvalid )
+  // Is it a character or an item?
+  if ( iowner != ichr )
   {
-    STRING tmpname;
-    // TWINK_BO.OBJ
-    snprintf( todirname, sizeof( todirname ), "%s" SLASH_STRING, CData.players_dir );
+    // Item - make a subdirectory of the owner directory...
+    snprintf( todirfullname, sizeof( todirfullname ), "%s" SLASH_STRING "%d.obj", todirname, number );
+  }
+  else
+  {
+    // Character - make directory
+    strncpy( todirfullname, todirname, sizeof( todirfullname ) );
+  }
 
-    str_encode( todirname, sizeof( tmpname ), chrlst[iowner].name );
-    strncat( todirname, ".obj", sizeof( tmpname ) );
+  // players/twink.obj or players/twink.obj/sword.obj
+  snprintf( todir, sizeof( todir ), "%s" SLASH_STRING "%s", CData.players_dir, todirfullname );
 
-    // Is it a ichr or an item?
-    if ( iowner != ichr )
-    {
-      // Item is a subdirectory of the iowner directory...
-      snprintf( todirfullname, sizeof( todirfullname ), "%s" SLASH_STRING "%d.obj", todirname, number );
-    }
-    else
-    {
-      // Character directory
-      strncpy( todirfullname, todirname, sizeof( todirfullname ) );
-    }
+  // modules/advent.mod/objects/advent.obj
+  strncpy( fromdir, pobj->name, sizeof( fromdir ) );
 
-
-    // players/twink.obj or players/twink.obj/sword.obj
-    snprintf( todir, sizeof( todir ), "%s" SLASH_STRING "%s", CData.players_dir, todirfullname );
-
-    // modules/advent.mod/objects/advent.obj
-    strncpy( fromdir, pobj->name, sizeof( fromdir ) );
-
-    // Delete all the old items
-    if ( iowner == ichr )
-    {
-      tnc = 0;
-      while ( tnc < 8 )
-      {
-        snprintf( tofile, sizeof( tofile ), "%s" SLASH_STRING "%d.obj", todir, tnc );   /*.OBJ*/
-        fs_removeDirectoryAndContents( tofile );
-        tnc++;
-      }
-    }
-
-
-    // Make the directory
-    fs_createDirectory( todir );
-
-
-    // Build the DATA.TXT file
-    snprintf( tofile, sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.data_file );    /*DATA.TXT*/
-    export_one_character_profile( gs, tofile, ichr );
-
-
-    // Build the SKIN.TXT file
-    snprintf( tofile, sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.skin_file );    /*SKIN.TXT*/
-    export_one_character_skin( gs, tofile, ichr );
-
-
-    // Build the NAMING.TXT file
-    snprintf( tofile, sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.naming_file );    /*NAMING.TXT*/
-    export_one_character_name( gs, tofile, ichr );
-
-
-    // Copy all of the misc. data files
-    snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "%s", fromdir, CData.message_file );   /*MessageData_t.TXT*/
-    snprintf( tofile, sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.message_file );   /*MessageData_t.TXT*/
-    fs_copyFile( fromfile, tofile );
-
-    snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "tris.md2", fromdir );    /*TRIS.MD2*/
-    snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "tris.md2", todir );    /*TRIS.MD2*/
-    fs_copyFile( fromfile, tofile );
-
-    snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "%s", fromdir, CData.copy_file );    /*COPY.TXT*/
-    snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.copy_file );    /*COPY.TXT*/
-    fs_copyFile( fromfile, tofile );
-
-    snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "%s", fromdir, CData.script_file );
-    snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.script_file );
-    fs_copyFile( fromfile, tofile );
-
-    snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "%s", fromdir, CData.enchant_file );
-    snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.enchant_file );
-    fs_copyFile( fromfile, tofile );
-
-    snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "%s", fromdir, CData.credits_file );
-    snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.credits_file );
-    fs_copyFile( fromfile, tofile );
-
-
-    snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "%s", fromdir, CData.quest_file );
-    snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.quest_file );
-    fs_copyFile( fromfile, tofile );
-
-    // Copy all of the particle files
+  // Delete all the old items
+  if ( iowner == ichr )
+  {
     tnc = 0;
-    while ( tnc < PRTPIP_PEROBJECT_COUNT )
+    while ( tnc < 8 )
     {
-      snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "part%d.txt", fromdir, tnc );
-      snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "part%d.txt", todir,   tnc );
-      fs_copyFile( fromfile, tofile );
-      tnc++;
-    }
-
-
-    // Copy all of the sound files
-
-    for ( tnc = 0; tnc < MAXWAVE; tnc++ )
-    {
-      snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "sound%d.wav", fromdir, tnc );
-      snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "sound%d.wav", todir,   tnc );
-      fs_copyFile( fromfile, tofile );
-    }
-
-
-    // Copy all of the image files
-    tnc = 0;
-    while ( tnc < 4 )
-    {
-      snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "tris%d.bmp", fromdir, tnc );
-      snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "tris%d.bmp", todir,   tnc );
-      fs_copyFile( fromfile, tofile );
-
-      snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "icon%d.bmp", fromdir, tnc );
-      snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "icon%d.bmp", todir,   tnc );
-      fs_copyFile( fromfile, tofile );
+      snprintf( tofile, sizeof( tofile ), "%s" SLASH_STRING "%d.obj", todir, tnc );   /*.OBJ*/
+      fs_removeDirectoryAndContents( tofile );
       tnc++;
     }
   }
+
+  // Make the directory
+  fs_createDirectory( todir );
+
+  // Build the DATA.TXT file
+  snprintf( tofile, sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.data_file );    /*DATA.TXT*/
+  CapList_save_one( gs, tofile, ichr );
+
+  // Build the SKIN.TXT file
+  snprintf( tofile, sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.skin_file );    /*SKIN.TXT*/
+  export_one_character_skin( gs, tofile, ichr );
+
+  // Build the NAMING.TXT file
+  snprintf( tofile, sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.naming_file );    /*NAMING.TXT*/
+  export_one_character_name( gs, tofile, ichr );
+
+  // Copy all the messages
+  snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "%s", fromdir, CData.message_file );   /*MessageData_t.TXT*/
+  snprintf( tofile, sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.message_file );   /*MessageData_t.TXT*/
+  fs_copyFile( fromfile, tofile );
+
+  // Copy all the model
+  snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "tris.md2", fromdir );    /*TRIS.MD2*/
+  snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "tris.md2", todir );    /*TRIS.MD2*/
+  fs_copyFile( fromfile, tofile );
+
+  // Copy "copy.txt"
+  snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "%s", fromdir, CData.copy_file );    /*COPY.TXT*/
+  snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.copy_file );    /*COPY.TXT*/
+  fs_copyFile( fromfile, tofile );
+
+  // Copy all the script
+  snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "%s", fromdir, CData.script_file );
+  snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.script_file );
+  fs_copyFile( fromfile, tofile );
+
+  // Copy the enchant file
+  snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "%s", fromdir, CData.enchant_file );
+  snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.enchant_file );
+  fs_copyFile( fromfile, tofile );
+
+  // Copy any credits
+  snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "%s", fromdir, CData.credits_file );
+  snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.credits_file );
+  fs_copyFile( fromfile, tofile );
+
+  // Copy the quest info file
+  snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "%s", fromdir, CData.quest_file );
+  snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "%s", todir, CData.quest_file );
+  fs_copyFile( fromfile, tofile );
+
+  // Copy all of the particle files
+  tnc = 0;
+  while ( tnc < PRTPIP_PEROBJECT_COUNT )
+  {
+    snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "part%d.txt", fromdir, tnc );
+    snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "part%d.txt", todir,   tnc );
+    fs_copyFile( fromfile, tofile );
+    tnc++;
+  }
+
+  // Copy all of the sound files
+  for ( tnc = 0; tnc < MAXWAVE; tnc++ )
+  {
+    snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "sound%d.wav", fromdir, tnc );
+    snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "sound%d.wav", todir,   tnc );
+    fs_copyFile( fromfile, tofile );
+  }
+
+  // Copy all of the image files
+  tnc = 0;
+  while ( tnc < 4 )
+  {
+    snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "tris%d.bmp", fromdir, tnc );
+    snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "tris%d.bmp", todir,   tnc );
+    fs_copyFile( fromfile, tofile );
+
+    snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "icon%d.bmp", fromdir, tnc );
+    snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "icon%d.bmp", todir,   tnc );
+    fs_copyFile( fromfile, tofile );
+    tnc++;
+  }
+
+  return btrue;
 }
 
 //---------------------------------------------------------------------------------------------
-void export_all_local_players( Game_t * gs )
+void export_all_local_players( Game_t * gs, bool_t export_profile )
 {
   // ZZ> This function saves all the local players in the
   //     PLAYERS directory
@@ -494,7 +558,7 @@ void export_all_local_players( Game_t * gs )
     if ( !ACTIVE_CHR( gs->ChrList, character ) || !gs->ChrList[character].alive ) continue;
 
     // Export the character
-    export_one_character( gs, character, character, 0 );
+    export_one_character( gs, character, character, 0, export_profile  );
 
     // Export all held items
     for ( _slot = SLOT_BEGIN; _slot < SLOT_COUNT; _slot = ( SLOT )( _slot + 1 ) )
@@ -503,7 +567,7 @@ void export_all_local_players( Game_t * gs )
       if ( ACTIVE_CHR( gs->ChrList, item ) && gs->ChrList[item].prop.isitem )
       {
         SLOT loc_slot = (_slot == SLOT_SADDLE ? _slot : SLOT_LEFT);
-        export_one_character( gs, item, character, loc_slot );
+        export_one_character( gs, item, character, loc_slot, export_profile  );
       };
     }
 
@@ -512,7 +576,7 @@ void export_all_local_players( Game_t * gs )
     item  = chr_get_nextinpack( gs->ChrList, CHRLST_COUNT, character );
     while ( ACTIVE_CHR( gs->ChrList, item ) )
     {
-      if ( gs->ChrList[item].prop.isitem ) export_one_character( gs, item, character, number );
+      if ( gs->ChrList[item].prop.isitem ) export_one_character( gs, item, character, number, export_profile  );
       item  = chr_get_nextinpack( gs->ChrList, CHRLST_COUNT, item );
       number++;
     }
@@ -2296,6 +2360,7 @@ char * get_config_string(ConfigData_t * cd, char * szin, char ** szout)
   else DO_CONFIGSTRING_COMPARE(scancode_file)
   else DO_CONFIGSTRING_COMPARE(playlist_file)
   else DO_CONFIGSTRING_COMPARE(spawn_file)
+  else DO_CONFIGSTRING_COMPARE(spawn2_file)
   else DO_CONFIGSTRING_COMPARE(wawalite_file)
   else DO_CONFIGSTRING_COMPARE(defend_file)
   else DO_CONFIGSTRING_COMPARE(splash_file)
@@ -2379,6 +2444,7 @@ char * get_config_string_name(ConfigData_t * cd, STRING * pconfig_string)
   else if(pconfig_string == &(cd->scancode_file)) return "scancode_file";
   else if(pconfig_string == &(cd->playlist_file)) return "playlist_file";
   else if(pconfig_string == &(cd->spawn_file)) return "spawn_file";
+  else if(pconfig_string == &(cd->spawn2_file)) return "spawn2_file";
   else if(pconfig_string == &(cd->wawalite_file)) return "wawalite_file";
   else if(pconfig_string == &(cd->defend_file)) return "defend_file";
   else if(pconfig_string == &(cd->splash_file)) return "splash_file";
@@ -2467,6 +2533,7 @@ void set_default_config_data(ConfigData_t * pcon)
   strncpy( pcon->scancode_file, "scancode.txt" , sizeof( STRING ) );
   strncpy( pcon->playlist_file, "playlist.txt" , sizeof( STRING ) );
   strncpy( pcon->spawn_file, "spawn.txt" , sizeof( STRING ) );
+  strncpy( pcon->spawn2_file, "spawn2.txt" , sizeof( STRING ) );
   strncpy( pcon->wawalite_file, "wawalite.txt" , sizeof( STRING ) );
   strncpy( pcon->defend_file, "defend.txt" , sizeof( STRING ) );
   strncpy( pcon->splash_file, "splash.txt" , sizeof( STRING ) );
@@ -2876,7 +2943,7 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
         load_action_names( CStringTmp1 );
 
         // start the Gui_t
-        CGui_startUp();
+        Gui_startUp();
 
         // start the network
         net_startUp(&CData);
@@ -2900,7 +2967,7 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
         load_all_music_sounds( &CData);
 
         // allocate the maximum amount of mesh memory
-        load_mesh_fans(&gTileDict);
+        TileDictionary_load(&gTileDict);
 
         // Make lookup tables
         make_textureoffset();
@@ -3194,8 +3261,12 @@ void game_handleKeyboard()
   // force the module to be beaten
   if(SDLKEYDOWN(SDLK_F9) && control && CData.DevMode)
   {
-    gs->modstate.beat = btrue;
-    gproc->State = PROC_Leaving;
+    // make it so that we truely beat the module
+    gs->modstate.beat        = btrue;
+    gs->modstate.exportvalid = gs->modstate.exportvalid || (1 == gs->modstate.import_max_pla);
+
+    gs->igm.proc.Active = btrue;
+    gs->igm.whichMenu   = mnu_EndGame;
   }
 
   // do frame step in single-frame mode
@@ -3637,7 +3708,7 @@ ProcessStates game_doRun(Game_t * gs, ProcessStates procIn)
       {
         PROFILE_BEGIN( pre_update_game );
         {
-          check_passage_music( gs );
+          passage_check_music( gs );
           update_looped_sounds( gs );
 
           // handle the game and network IO
@@ -4113,6 +4184,8 @@ bool_t chr_search_block( Game_t * gs, SearchInfo_t * psearch, int block_x, int b
   team     = gs->ChrList[character].team;
 
   fanblock = mesh_convert_block( &(pmesh->Info), block_x, block_y );
+  if(INVALID_FAN == fanblock) return bfalse;
+
   for ( cnt = 0, blnode_b = bumplist_get_chr_head( pbump, fanblock );
         cnt < bumplist_get_chr_count(pbump, fanblock) && INVALID_BUMPLIST_NODE != blnode_b;
         cnt++, blnode_b = bumplist_get_next_chr( gs, pbump, blnode_b ) )
@@ -4292,6 +4365,7 @@ bool_t chr_search_block_nearest( Game_t * gs, SearchInfo_t * psearch, int block_
 
   // blocks that are off the mesh are not stored
   fanblock = mesh_convert_block( &(pmesh->Info), block_x, block_y );
+  if(INVALID_FAN == fanblock) return bfalse;
 
   team = gs->ChrList[chra_ref].team;
   for ( cnt = 0, blnode_b = bumplist_get_chr_head(pbump, fanblock);
@@ -4403,7 +4477,7 @@ bool_t chr_search_wide( Game_t * gs, SearchInfo_t * psearch, CHR_REF chr_ref, bo
   // make sure the search context is clear
   SearchInfo_new(psearch);
 
-  // get seeinvisible from the chr_ref
+  // get seeinvisible from the character
   seeinvisible = gs->ChrList[chr_ref].prop.canseeinvisible;
 
   // Current fanblock
@@ -6632,7 +6706,7 @@ Gui_t * gui_getState()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CGui_startUp()
+bool_t Gui_startUp()
 {
   gui_getState();
 

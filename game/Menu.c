@@ -35,6 +35,7 @@
 #include "NetFile.h"
 #include "Clock.h"
 #include "sound.h"
+#include "file_common.h"
 
 #include "egoboo.h"
 
@@ -2570,7 +2571,7 @@ int mnu_doLaunchGame( MenuProc_t * mproc, float deltaTime )
       {
         for ( i = 0; i < mnu_selectedPlayerCount; i++ )
         {
-          fnt_drawTextFormatted( font, x, y, "Player_t selected: %s", loadplayer[REF_TO_INT(mnu_selectedPlayer[i])].name );
+          fnt_drawTextFormatted( font, x, y, "Player selected: %s", loadplayer[REF_TO_INT(mnu_selectedPlayer[i])].name );
           y += 35;
         };
       }

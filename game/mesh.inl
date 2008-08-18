@@ -7,6 +7,8 @@
 
 #include "egoboo_types.inl"
 
+#include <assert.h>
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 INLINE const BUMPLIST_NODE * bumplist_node_new(BUMPLIST_NODE * n)
@@ -57,14 +59,14 @@ INLINE const bool_t bumplist_delete(BUMPLIST * b)
   b->num_blocks = 0;
 
   b->free_count = 0;
-  EGOBOO_DELETE(b->free_lst);
-  EGOBOO_DELETE(b->node_lst);
+  EGOBOO_DELETE_ARY(b->free_lst);
+  EGOBOO_DELETE_ARY(b->node_lst);
 
-  EGOBOO_DELETE(b->num_chr);
-  EGOBOO_DELETE(b->chr_ref);
+  EGOBOO_DELETE_ARY(b->num_chr);
+  EGOBOO_DELETE_ARY(b->chr_ref);
 
-  EGOBOO_DELETE(b->num_prt);
-  EGOBOO_DELETE(b->prt_ref);
+  EGOBOO_DELETE_ARY(b->num_prt);
+  EGOBOO_DELETE_ARY(b->prt_ref);
 
   return btrue;
 }
@@ -168,6 +170,8 @@ INLINE const bool_t bumplist_insert_chr(BUMPLIST * b, Uint32 block, CHR_REF chr_
   ref = bumplist_get_free(b);
   if( INVALID_BUMPLIST_NODE == ref ) return bfalse;
 
+  assert( block < b->num_blocks );
+
   // place this as the first node in the list
   b->node_lst[ref].ref  = REF_TO_INT(chr_ref);
   b->node_lst[ref].next = b->chr_ref[block].next;
@@ -190,6 +194,8 @@ INLINE const bool_t bumplist_insert_prt(BUMPLIST * b, Uint32 block, PRT_REF prt_
   Uint32 ref;
 
   if(!EKEY_PVALID(b)) return bfalse;
+
+  assert( block < b->num_blocks );
 
   ref = bumplist_get_free(b);
   if( INVALID_BUMPLIST_NODE == ref ) return bfalse;
@@ -346,7 +352,7 @@ INLINE const float mesh_clip_y( MeshInfo_t * mi, float y )
 INLINE const int mesh_clip_fan_x( MeshInfo_t * mi, int ix )
 {
   if ( ix < 0 )  ix = 0;
-  if ( ix > mi->size_x - 1 )  ix = mi->size_x - 1;
+  if ( ix > mi->tiles_x - 1 )  ix = mi->tiles_x - 1;
 
   return ix;
 };
@@ -355,7 +361,7 @@ INLINE const int mesh_clip_fan_x( MeshInfo_t * mi, int ix )
 INLINE const int mesh_clip_fan_y( MeshInfo_t * mi, int iy )
 {
   if ( iy < 0 )  iy = 0;
-  if ( iy > mi->size_y - 1 )  iy = mi->size_y - 1;
+  if ( iy > mi->tiles_y - 1 )  iy = mi->tiles_y - 1;
 
   return iy;
 };
@@ -364,7 +370,7 @@ INLINE const int mesh_clip_fan_y( MeshInfo_t * mi, int iy )
 INLINE const int mesh_clip_block_x( MeshInfo_t * mi, int ix )
 {
   if ( ix < 0 )  ix = 0;
-  if ( ix > ( mi->size_x >> 2 ) - 1 )  ix = ( mi->size_x >> 2 ) - 1;
+  if ( ix > ( mi->tiles_x >> 2 ) - 1 )  ix = ( mi->tiles_x >> 2 ) - 1;
 
   return ix;
 };
@@ -373,7 +379,7 @@ INLINE const int mesh_clip_block_x( MeshInfo_t * mi, int ix )
 INLINE const int mesh_clip_block_y( MeshInfo_t * mi, int iy )
 {
   if ( iy < 0 )  iy = 0;
-  if ( iy > ( mi->size_y >> 2 ) - 1 )  iy = ( mi->size_y >> 2 ) - 1;
+  if ( iy > ( mi->tiles_y >> 2 ) - 1 )  iy = ( mi->tiles_y >> 2 ) - 1;
 
   return iy;
 };
@@ -390,8 +396,8 @@ INLINE const bool_t mesh_check( MeshInfo_t * mi, float x, float y )
 //--------------------------------------------------------------------------------------------
 INLINE const bool_t mesh_check_fan( MeshInfo_t * mi, int fan_x, int fan_y )
 {
-  if ( fan_x < 0 || fan_x >= mi->size_x ) return bfalse;
-  if ( fan_y < 0 || fan_y >= mi->size_y ) return bfalse;
+  if ( fan_x < 0 || fan_x >= mi->tiles_x ) return bfalse;
+  if ( fan_y < 0 || fan_y >= mi->tiles_y ) return bfalse;
 
   return btrue;
 }
@@ -593,18 +599,19 @@ INLINE const Uint32 mesh_convert_fan( MeshInfo_t * mi, int fan_x, int fan_y )
 {
   // BB > convert <fan_x,fan_y> to a fanblock
 
-  if ( fan_x < 0 || fan_x >= mi->size_x || fan_y < 0 || fan_y >= mi->size_y ) return INVALID_FAN;
+  if ( fan_x < 0 || fan_x >= mi->tiles_x || fan_y < 0 || fan_y >= mi->tiles_y ) return INVALID_FAN;
 
-  return fan_x + mi->Fan_X[fan_y];
+  return fan_x + mi->Tile_X[fan_y];
 };
 
 //--------------------------------------------------------------------------------------------
 INLINE const Uint32 mesh_convert_block( MeshInfo_t * mi, int block_x, int block_y )
 {
   // BB > convert <block_x,block_y> to a fanblock
+  //      be careful, since there is no guarantee that block_x or block_y are multiples of 4
 
-  if ( block_x < 0 || block_x > ( mi->size_x >> 2 ) || block_y < 0 || block_y > ( mi->size_y >> 2 ) ) return INVALID_FAN;
-
+  if ( block_x < 0 || block_x > ( mi->tiles_x >> 2 ) || block_y < 0 || block_y > ( mi->tiles_y >> 2 ) ) return INVALID_FAN;
+  assert( block_y < ((MAXMESHSIZEY >> 2) +1) );
   return block_x + mi->Block_X[block_y];
 };
 

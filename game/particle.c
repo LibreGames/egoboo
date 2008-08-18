@@ -30,6 +30,7 @@
 #include "enchant.h"
 #include "game.h"
 #include "Clock.h"
+#include "file_common.h"
 
 #include "egoboo_utility.h"
 #include "egoboo_rpc.h"
@@ -253,8 +254,8 @@ void end_one_particle( Game_t * gs, PRT_REF particle )
 //--------------------------------------------------------------------------------------------
 PRT_REF PrtList_get_free( Game_t * gs, bool_t is_critical )
 {
-  // ZZ> This function gets an unused iprt.  If all particles are in use
-  //     and is_critical is set, it grabs the first unimportant one.  The iprt
+  // ZZ> This function gets an unused particle.  If all particles are in use
+  //     and is_critical is set, it grabs the first unimportant one.  The particle
   //     index is the return value
   //
   //     Reserve PRTLST_COUNT / 4 particles for critical particles
@@ -456,7 +457,7 @@ PRT_REF _prt_spawn( PRT_SPAWN_INFO si, bool_t activate )
   madlst      = si.gs->MadList;
   madlst_size = MADLST_COUNT;
 
-  // make sure we have a valid iprt
+  // make sure we have a valid particle
   if ( !RESERVED_PRT(prtlst, si.iprt) )
   {
     log_debug( "WARN: req_spawn_one_particle() - \n\tfailed to spawn : particle index == %d is an invalid value\n", REF_TO_INT(si.iprt) );
@@ -776,7 +777,7 @@ PRT_REF prt_spawn( Game_t * gs, float intensity, vect3 pos, vect3 vel,
 //  madlst      = si.gs->MadList;
 //  madlst_size = MADLST_COUNT;
 //
-//  // make sure we have a valid iprt
+//  // make sure we have a valid particle
 //  if ( !RESERVED_PRT(prtlst, si.iprt) )
 //  {
 //    log_debug( "WARN: req_spawn_one_particle() - \n\tfailed to spawn : particle index == %d is an invalid value\n", REF_TO_INT(si.iprt) );
@@ -2148,7 +2149,7 @@ MAD_REF PrtList_getRMad(Game_t * gs, PRT_REF iprt)
 //--------------------------------------------------------------------------------------------
 Prt_t * PrtList_getPPrt(Game_t * gs, PRT_REF iprt)
 {
-  if(!ACTIVE_PRT(gs->PrtList, iprt)) return NULL;
+  if(!VALID_PRT(gs->PrtList, iprt)) return NULL;
 
   return gs->PrtList + iprt;
 }

@@ -33,6 +33,7 @@
 #include "Server.h"
 #include "game.h"
 #include "Ui.h"
+#include "file_common.h"
 
 #include "egoboo_strutil.h"
 #include "egoboo_utility.h"
@@ -233,7 +234,7 @@ bool_t module_load( Game_t * gs, char *smallname )
 
   read_wawalite( gs, szModpath );
 
-  make_twist();
+  mesh_make_twist();
 
   load_basic_textures( gs, szModpath );
 
@@ -250,7 +251,7 @@ bool_t module_load( Game_t * gs, char *smallname )
 
   module_load_all_objects( gs, szModpath );
 
-  if ( !load_mesh( gs, szModpath ) )
+  if ( !mesh_load( Game_getMesh(gs), szModpath ) )
   {
     log_error( "Load problems with the mesh.\n" );
   }
@@ -607,7 +608,7 @@ void module_quit( Game_t * gs )
   // only export players if it makes sense
   if( (ms->beat && ms->exportvalid) || ms->respawnanytime )
   {
-    export_all_local_players( gs );
+    export_all_local_players( gs, ms->beat );
   }
 
   if( Game_isLocal(gs) )

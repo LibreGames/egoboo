@@ -4,7 +4,7 @@
 //
 //  $Author:  DigiBen  digiben@gametutorials.com
 //
-//  $Program:  Frustum_t Culling
+//  $Program:  Frustum Culling
 //
 //  $Description: Demonstrates checking if shapes are in view
 //
@@ -365,7 +365,7 @@ bool_t Frustum_BBoxInFrustum( Frustum_t *pf, float corner1[], float corner2[] )
 // * QUICK NOTES *
 //
 // WOZZERS!  That seemed like an incredible amount to look at, but if you break it
-// down, it's not.  Frustum_t culling is a VERY useful thing when it comes to 3D.
+// down, it's not.  Frustum culling is a VERY useful thing when it comes to 3D.
 // If you want a large world, there is no way you are going to send it down the
 // 3D pipeline every frame and let OpenGL take care of it for you.  That would
 // give you a 0.001 frame rate.  If you hit '+' and bring the sphere count up to

@@ -34,6 +34,7 @@
 #include "Client.h"
 #include "Server.h"
 #include "sound.h"
+#include "file_common.h"
 
 #include "egoboo_utility.h"
 #include "egoboo.h"
@@ -1181,11 +1182,23 @@ void render_shadow( CHR_REF character )
   Sint8 hide;
   int i;
 
+  Uint16 chrlightambi, chrlightspek;
+  float  globlightambi = 0, globlightspek = 0;
+  float  lightambi, lightspek;
 
-  Uint16 chrlightambi  = gs->ChrList[character].tlight.ambi_fp8.r + gs->ChrList[character].tlight.ambi_fp8.g + gs->ChrList[character].tlight.ambi_fp8.b;
-  Uint16 chrlightspek  = gs->ChrList[character].tlight.spek_fp8.r + gs->ChrList[character].tlight.spek_fp8.g + gs->ChrList[character].tlight.spek_fp8.b;
-  float  globlightambi = gs->Light.ambicol.r + gs->Light.ambicol.g + gs->Light.ambicol.b;
-  float  globlightspek = gs->Light.spekcol.r + gs->Light.spekcol.g + gs->Light.spekcol.b;
+  chrlightambi  = gs->ChrList[character].tlight.ambi_fp8.r + gs->ChrList[character].tlight.ambi_fp8.g + gs->ChrList[character].tlight.ambi_fp8.b;
+  chrlightspek  = gs->ChrList[character].tlight.spek_fp8.r + gs->ChrList[character].tlight.spek_fp8.g + gs->ChrList[character].tlight.spek_fp8.b;
+
+  if( gs->Light.on )
+  {
+    globlightambi = gs->Light.ambicol.r + gs->Light.ambicol.g + gs->Light.ambicol.b;
+    globlightspek = gs->Light.spekcol.r + gs->Light.spekcol.g + gs->Light.spekcol.b;
+  };
+
+  lightambi = chrlightambi + 255 * globlightambi;
+  lightspek = chrlightspek + 255 * globlightspek;
+
+  if( lightambi + lightspek < 1.0 ) return;
 
   hide = ChrList_getPCap(gs, character)->hidestate;
   if ( hide != NOHIDE && hide == gs->ChrList[character].aistate.state ) return;
@@ -1199,8 +1212,7 @@ void render_shadow( CHR_REF character )
   tile_factor = mesh_has_some_bits( pmesh->Mem.tilelst, gs->ChrList[character].onwhichfan, MPDFX_WATER ) ? 0.5 : 1.0;
 
   height_factor   = MAX( MIN(( 5 * gs->ChrList[character].bmpdata.calc_size / height ), 1 ), 0 );
-  ambient_factor  = ( float )( chrlightspek ) / ( float )( chrlightambi + chrlightspek );
-  ambient_factor  = 0.5f * ( ambient_factor + globlightspek / ( globlightambi + globlightspek ) );
+  ambient_factor  = ( lightambi ) / ( lightambi + lightspek );
   alpha_character = FP8_TO_FLOAT( gs->ChrList[character].alpha_fp8 );
   if ( gs->ChrList[character].light_fp8 == 255 )
   {
@@ -2795,7 +2807,7 @@ int draw_wrap_string( BMFont_t * pfnt, float x, float y, GLfloat tint[], float m
 //--------------------------------------------------------------------------------------------
 int draw_status( BMFont_t * pfnt, Status_t * pstat )
 {
-  // ZZ> This function shows a ichr's icon, status and inventory
+  // ZZ> This function shows a character's icon, status and inventory
   //     The x,y coordinates are the top left point of the image to draw
 
   STRING szTmp;
@@ -2852,7 +2864,7 @@ int draw_status( BMFont_t * pfnt, Status_t * pstat )
   mana    = FP8_TO_FLOAT( pchr->stats.mana_fp8 );
   manamax = FP8_TO_FLOAT( pchr->stats.manamax_fp8 );
 
-  // Write the ichr's first name
+  // Write the character's first name
   if ( pchr->prop.nameknown )
     readtext = pchr->name;
   else
@@ -3806,7 +3818,7 @@ void dolist_sort( void )
     chr_ref = dolist[cnt];  olddolist[cnt] = chr_ref;
     if ( gs->ChrList[chr_ref].light_fp8 != 255 || gs->ChrList[chr_ref].alpha_fp8 != 255 )
     {
-      // This makes stuff inside an invisible chr_ref visible...
+      // This makes stuff inside an invisible character visible...
       // A key inside a Jellcube, for example
       dist[cnt] = 0x7fffffff;
     }

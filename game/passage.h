@@ -21,8 +21,11 @@ struct sPassage
 typedef struct sPassage Passage_t;
 
 Passage_t * Passage_new(Passage_t *ppass);
-bool_t    Passage_delete(Passage_t *ppass);
+bool_t      Passage_delete(Passage_t *ppass);
 Passage_t * Passage_renew(Passage_t *ppass);
+
+Uint32 PassList_add( struct sGame * gs,  int tlx, int tly, int brx, int bry, bool_t open, Uint32 mask );
+void   PassList_load( struct sGame * gs, char *modname );
 
 struct sShop
 {
@@ -33,27 +36,25 @@ struct sShop
 typedef struct sShop Shop_t;
 
 Shop_t * Shop_new(Shop_t *pshop);
-bool_t Shop_delete(Shop_t *pshop);
+bool_t   Shop_delete(Shop_t *pshop);
 Shop_t * Shop_renew(Shop_t *pshop);
 
-// Passage_t control functions
-bool_t open_passage( struct sGame * gs,  PASS_REF passage );
-void check_passage_music(struct sGame * gs );
-void flash_passage( struct sGame * gs,  PASS_REF passage, Uint8 color );
-CHR_REF who_is_blocking_passage( struct sGame * gs,  PASS_REF passage );
-CHR_REF who_is_blocking_passage_ID( struct sGame * gs,  PASS_REF passage, IDSZ idsz );
-bool_t close_passage( struct sGame * gs,  Uint32 passage );
-void clear_passages(struct sGame * gs );
 Uint32 ShopList_add( struct sGame * gs,  CHR_REF owner, PASS_REF passage );
-Uint32 PassList_add( struct sGame * gs,  int tlx, int tly, int brx, int bry, bool_t open, Uint32 mask );
 
-bool_t break_passage( struct sGame * gs, PASS_REF passage, Uint16 starttile, Uint16 frames, Uint16 become, Uint32 meshfxor, Sint32 *pix, Sint32 *piy );
+// Passage control functions
+bool_t  passage_open( struct sGame * gs,  PASS_REF passage );
+bool_t  passage_close( struct sGame * gs,  Uint32 passage );
 
-bool_t search_tile_in_passage( struct sGame * gs, PASS_REF passage, Uint32 tiletype, Sint32 tmpx, Sint32 tmpy, Sint32 * pix, Sint32 * piy );
-void PassList_load( struct sGame * gs, char *modname );
+void    passage_check_music(struct sGame * gs );
+void    passage_flash( struct sGame * gs,  PASS_REF passage, Uint8 color );
 
+CHR_REF passage_search_blocking( struct sGame * gs,  PASS_REF passage );
+CHR_REF passage_search_blocking_ID( struct sGame * gs,  PASS_REF passage, IDSZ idsz );
+bool_t  passage_search_tile( struct sGame * gs, PASS_REF passage, Uint32 tiletype, Sint32 tmpx, Sint32 tmpy, Sint32 * pix, Sint32 * piy );
+bool_t  passage_break_tiles( struct sGame * gs, PASS_REF passage, Uint16 starttile, Uint16 frames, Uint16 become, Uint32 meshfxor, Sint32 *pix, Sint32 *piy );
 
-bool_t passage_check_any( struct sGame * gs, CHR_REF ichr, PASS_REF pass, Uint16 * powner );
-bool_t passage_check_all( struct sGame * gs, CHR_REF ichr, PASS_REF pass, Uint16 * powner );
-bool_t passage_check( struct sGame * gs, CHR_REF ichr, PASS_REF pass, Uint16 * powner );
+bool_t  passage_check    ( struct sGame * gs, CHR_REF ichr, PASS_REF pass, Uint16 * powner );
+bool_t  passage_check_any( struct sGame * gs, CHR_REF ichr, PASS_REF pass, Uint16 * powner );
+bool_t  passage_check_all( struct sGame * gs, CHR_REF ichr, PASS_REF pass, Uint16 * powner );
+
 

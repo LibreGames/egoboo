@@ -26,6 +26,7 @@
 
 #include "script.h"
 #include "sound.h"
+#include "file_common.h"
 
 #include "egoboo_utility.h"
 #include "egoboo.h"
@@ -37,7 +38,7 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t open_passage( Game_t * gs, PASS_REF passage )
+bool_t passage_open( Game_t * gs, PASS_REF passage )
 {
   // ZZ> This function makes a passage passable
 
@@ -64,7 +65,7 @@ bool_t open_passage( Game_t * gs, PASS_REF passage )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t break_passage( Game_t * gs, PASS_REF passage, Uint16 starttile, Uint16 frames, Uint16 become, Uint32 meshfxor, Sint32 *pix, Sint32 *piy )
+bool_t passage_break_tiles( Game_t * gs, PASS_REF passage, Uint16 starttile, Uint16 frames, Uint16 become, Uint32 meshfxor, Sint32 *pix, Sint32 *piy )
 {
   // ZZ> This function breaks the tiles of a passage if there is a character standing
   //     on 'em...  Turns the tiles into damage terrain if it reaches last frame.
@@ -118,7 +119,7 @@ bool_t break_passage( Game_t * gs, PASS_REF passage, Uint16 starttile, Uint16 fr
 }
 
 //--------------------------------------------------------------------------------------------
-void flash_passage( Game_t * gs, PASS_REF passage, Uint8 color )
+void passage_flash( Game_t * gs, PASS_REF passage, Uint8 color )
 {
   // ZZ> This function makes a passage flash white
 
@@ -139,7 +140,7 @@ void flash_passage( Game_t * gs, PASS_REF passage, Uint8 color )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t search_tile_in_passage( Game_t * gs, PASS_REF passage, Uint32 tiletype, Sint32 tmpx, Sint32 tmpy, Sint32 * pix, Sint32 * piy )
+bool_t passage_search_tile( Game_t * gs, PASS_REF passage, Uint32 tiletype, Sint32 tmpx, Sint32 tmpy, Sint32 * pix, Sint32 * piy )
 {
   // ZZ> This function finds the next tile in the passage, slist->tmpx and slist->tmpy
   //     must be set first, and are set on a find...  Returns btrue or bfalse
@@ -176,7 +177,7 @@ bool_t search_tile_in_passage( Game_t * gs, PASS_REF passage, Uint32 tiletype, S
 }
 
 //--------------------------------------------------------------------------------------------
-CHR_REF who_is_blocking_passage( Game_t * gs, PASS_REF passage )
+CHR_REF passage_search_blocking( Game_t * gs, PASS_REF passage )
 {
   // ZZ> This function returns CHRLST_COUNT if there is no character in the passage,
   //     otherwise the index of the first character found is returned...
@@ -212,7 +213,7 @@ CHR_REF who_is_blocking_passage( Game_t * gs, PASS_REF passage )
 }
 
 //--------------------------------------------------------------------------------------------
-void check_passage_music(Game_t * gs)
+void passage_check_music(Game_t * gs)
 {
   //This function checks all passages if there is a player in it, if it is, it plays a specified
   //song set in by the AI script functions
@@ -240,7 +241,7 @@ void check_passage_music(Game_t * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-CHR_REF who_is_blocking_passage_ID( Game_t * gs, PASS_REF passage, IDSZ idsz )
+CHR_REF passage_search_blocking_ID( Game_t * gs, PASS_REF passage, IDSZ idsz )
 {
   // ZZ> This function returns CHRLST_COUNT if there is no character in the passage who
   //     have an item with the given ID.  Otherwise, the index of the first character
@@ -290,7 +291,7 @@ CHR_REF who_is_blocking_passage_ID( Game_t * gs, PASS_REF passage, IDSZ idsz )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t close_passage( Game_t * gs, Uint32 passage )
+bool_t passage_close( Game_t * gs, Uint32 passage )
 {
   // ZZ> This function makes a passage impassable, and returns btrue if it isn't blocked
 
@@ -362,7 +363,7 @@ bool_t close_passage( Game_t * gs, Uint32 passage )
 }
 
 //--------------------------------------------------------------------------------------------
-void clear_passages(Game_t * gs)
+void clear_all_passages(Game_t * gs)
 {
   // ZZ> This function clears the passage list ( for doors )
 
@@ -378,25 +379,57 @@ bool_t passage_check_all( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * pown
   float x_min, x_max;
   float y_min, y_max;
   bool_t retval = bfalse;
-
+  CHR_REF     iowner;
+  Chr_t     * pchr;
+  CVolume_t * pcv;
+  IRect_t   * parea;
+  
   if ( !ACTIVE_CHR( gs->ChrList,  ichr ) || pass >= gs->PassList_count ) return retval;
 
-  x_min = gs->ChrList[ichr].bmpdata.cv.x_min;
-  x_max = gs->ChrList[ichr].bmpdata.cv.x_max;
+  iowner = gs->PassList[pass].owner;
+  if ( INVALID_CHR == iowner )
+  {
+    if ( NULL != powner )
+    {
+      *powner = INVALID_CHR;
+    }
+    return bfalse;
+  };
 
-  y_min = gs->ChrList[ichr].bmpdata.cv.x_min;
-  y_max = gs->ChrList[ichr].bmpdata.cv.x_max;
+  pchr = gs->ChrList + ichr;
+  pcv  = &(pchr->bmpdata.cv);
+  parea = &(gs->PassList[pass].area);
 
-  retval = ( x_min > MESH_FAN_TO_INT( gs->PassList[pass].area.left ) && x_max < MESH_FAN_TO_INT( gs->PassList[pass].area.right + 1 ) ) &&
-           ( y_min > MESH_FAN_TO_INT( gs->PassList[pass].area.top ) && y_max < MESH_FAN_TO_INT( gs->PassList[pass].area.bottom + 1 ) );
+  // check whether the character is in the passage now
+  x_min = pcv->x_min;
+  x_max = pcv->x_max;
+
+  y_min = pcv->y_min;
+  y_max = pcv->y_max;
+
+  retval = ( x_min > MESH_FAN_TO_INT( parea->left ) && x_max < MESH_FAN_TO_INT( parea->right + 1 ) ) &&
+           ( y_min > MESH_FAN_TO_INT( parea->top )  && y_max < MESH_FAN_TO_INT( parea->bottom + 1 ) );
 
   if ( retval )
   {
-    signal_target( gs, 0, gs->PassList[pass].owner, SIGNAL_ENTERPASSAGE, REF_TO_INT(ichr) );
+    // check whether it was in the passage before
+    x_min = pcv->x_min + (pchr->ori_old.pos.x - pchr->ori.pos.x) ;
+    x_max = pcv->x_max + (pchr->ori_old.pos.x - pchr->ori.pos.x) ;
 
-    if ( NULL != powner )
+    y_min = pcv->y_min + (pchr->ori_old.pos.y - pchr->ori.pos.y);
+    y_max = pcv->y_max + (pchr->ori_old.pos.y - pchr->ori.pos.y);
+
+    retval = ( x_min > MESH_FAN_TO_INT( parea->left ) && x_max < MESH_FAN_TO_INT( parea->right + 1 ) ) &&
+             ( y_min > MESH_FAN_TO_INT( parea->top )  && y_max < MESH_FAN_TO_INT( parea->bottom + 1 ) );
+
+    if( retval )
     {
-      *powner = gs->PassList[pass].owner;
+      signal_target( gs, 0, iowner, SIGNAL_ENTERPASSAGE, REF_TO_INT(ichr) );
+
+      if ( NULL != powner )
+      {
+        *powner = iowner;
+      }
     }
   };
 
@@ -410,23 +443,52 @@ bool_t passage_check_any( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * pown
 
   float x_min, x_max;
   float y_min, y_max;
+  CHR_REF     iowner;
+  Chr_t     * pchr;
+  CVolume_t * pcv;
+  IRect_t   * parea;
 
   if ( !ACTIVE_CHR( gs->ChrList,  ichr ) || pass >= gs->PassList_count ) return bfalse;
 
-  x_min = gs->ChrList[ichr].bmpdata.cv.x_min;
-  x_max = gs->ChrList[ichr].bmpdata.cv.x_max;
+  iowner = gs->PassList[pass].owner;
+  if ( INVALID_CHR == iowner )
+  {
+    if ( NULL != powner )
+    {
+      *powner = INVALID_CHR;
+    }
+    return bfalse;
+  };
 
-  y_min = gs->ChrList[ichr].bmpdata.cv.y_min;
-  y_max = gs->ChrList[ichr].bmpdata.cv.y_max;
+  pchr = gs->ChrList + ichr;
+  pcv  = &(pchr->bmpdata.cv);
+  parea = &(gs->PassList[pass].area);
 
-  if ( x_max < MESH_FAN_TO_INT( gs->PassList[pass].area.left ) || x_min > MESH_FAN_TO_INT( gs->PassList[pass].area.right + 1 ) ) return bfalse;
-  if ( y_max < MESH_FAN_TO_INT( gs->PassList[pass].area.top ) || y_min > MESH_FAN_TO_INT( gs->PassList[pass].area.bottom + 1 ) ) return bfalse;
+  // check whether it is intersecting the passage now
+  x_min = pcv->x_min;
+  x_max = pcv->x_max;
 
-  signal_target( gs, 0, gs->PassList[pass].owner, SIGNAL_ENTERPASSAGE, REF_TO_INT(ichr) );
+  y_min = pcv->y_min;
+  y_max = pcv->y_max;
+
+  if ( x_max < MESH_FAN_TO_INT( parea->left ) || x_min > MESH_FAN_TO_INT( parea->right + 1 ) ) return bfalse;
+  if ( y_max < MESH_FAN_TO_INT( parea->top )  || y_min > MESH_FAN_TO_INT( parea->bottom + 1 ) ) return bfalse;
+
+  // check whether it was intersecting the passage before
+  x_min = pcv->x_min + (pchr->ori_old.pos.x - pchr->ori.pos.x) ;
+  x_max = pcv->x_max + (pchr->ori_old.pos.x - pchr->ori.pos.x) ;
+
+  y_min = pcv->y_min + (pchr->ori_old.pos.y - pchr->ori.pos.y);
+  y_max = pcv->y_max + (pchr->ori_old.pos.y - pchr->ori.pos.y);
+
+  if ( x_max < MESH_FAN_TO_INT( parea->left ) || x_min > MESH_FAN_TO_INT( parea->right + 1 ) ) return bfalse;
+  if ( y_max < MESH_FAN_TO_INT( parea->top )  || y_min > MESH_FAN_TO_INT( parea->bottom + 1 ) ) return bfalse;
+
+  signal_target( gs, 0, iowner, SIGNAL_ENTERPASSAGE, REF_TO_INT(ichr) );
 
   if ( NULL != powner )
   {
-    *powner = gs->PassList[pass].owner;
+    *powner = iowner;
   }
 
   return btrue;
@@ -438,19 +500,46 @@ bool_t passage_check( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powner )
   // BB > character ichr's center is inside passage pass
 
   bool_t retval = bfalse;
+  Orientation_t * pori;
+  IRect_t * parea;
+  CHR_REF   iowner;
+  Chr_t   * pchr;
 
-  if ( !ACTIVE_CHR( gs->ChrList,  ichr ) || pass >= gs->PassList_count ) return retval;
+  if ( !ACTIVE_CHR( gs->ChrList,  ichr ) || pass >= gs->PassList_count ) return bfalse;
 
-  retval = ( gs->ChrList[ichr].ori.pos.x > MESH_FAN_TO_INT( gs->PassList[pass].area.left ) && gs->ChrList[ichr].ori.pos.x < MESH_FAN_TO_INT( gs->PassList[pass].area.right + 1 ) ) &&
-           ( gs->ChrList[ichr].ori.pos.y > MESH_FAN_TO_INT( gs->PassList[pass].area.top ) && gs->ChrList[ichr].ori.pos.y < MESH_FAN_TO_INT( gs->PassList[pass].area.bottom + 1 ) );
+  iowner = gs->PassList[pass].owner;
+  if ( INVALID_CHR == iowner )
+  {
+    if ( NULL != powner )
+    {
+      *powner = INVALID_CHR;
+    }
+    return bfalse;
+  };
+
+  pchr = gs->ChrList + ichr;
+
+  pori = &(pchr->ori);
+  parea = &(gs->PassList[pass].area);
+
+  retval = ( pori->pos.x > MESH_FAN_TO_INT( parea->left ) && pori->pos.x < MESH_FAN_TO_INT( parea->right + 1 ) ) &&
+           ( pori->pos.y > MESH_FAN_TO_INT( parea->top ) && pori->pos.y < MESH_FAN_TO_INT( parea->bottom + 1 ) );
 
   if ( retval )
   {
-    signal_target( gs, 0, gs->PassList[pass].owner, SIGNAL_ENTERPASSAGE, REF_TO_INT(ichr) );
+    pori = &(pchr->ori_old);
 
-    if ( NULL != powner )
+    retval = ( pori->pos.x > MESH_FAN_TO_INT( parea->left ) && pori->pos.x < MESH_FAN_TO_INT( parea->right + 1 ) ) &&
+            ( pori->pos.y > MESH_FAN_TO_INT( parea->top ) && pori->pos.y < MESH_FAN_TO_INT( parea->bottom + 1 ) );
+
+    if ( retval )
     {
-      *powner = gs->PassList[pass].owner;
+      signal_target( gs, 0, iowner, SIGNAL_ENTERPASSAGE, REF_TO_INT(ichr) );
+
+      if ( NULL != powner )
+      {
+        *powner = iowner;
+      }
     }
   };
 
@@ -466,12 +555,12 @@ Uint32 ShopList_add( Game_t * gs, CHR_REF owner, PASS_REF passage )
   if ( passage < gs->PassList_count && gs->ShopList_count < PASSLST_COUNT )
   {
     shop_passage = gs->ShopList_count;
+    gs->ShopList_count++;
 
     // The passage exists...
-    gs->ShopList[shop_passage].passage = passage;
     gs->PassList[passage].owner        = owner;
+    gs->ShopList[shop_passage].passage = passage;
     gs->ShopList[shop_passage].owner   = owner;  // Assume the owner is alive
-    gs->ShopList_count++;
   }
 
   return shop_passage;
@@ -529,7 +618,7 @@ void PassList_load( Game_t * gs, char *modname )
   FILE *fileread;
 
   // Reset all of the old passages
-  clear_passages( gs );
+  clear_all_passages( gs );
 
   // Load the file
   snprintf( newloadname, sizeof( newloadname ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.passage_file );

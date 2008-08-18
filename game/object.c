@@ -30,6 +30,7 @@
 #include "game.h"
 #include "Log.h"
 #include "sound.h"
+#include "file_common.h"
 
 #include "egoboo_utility.h"
 #include "egoboo_strutil.h"
@@ -218,7 +219,7 @@ int load_one_object( Game_t * gs, int skin_count, const char * szObjectpath, cha
 //--------------------------------------------------------------------------------------------
 void switch_team( Game_t * gs, CHR_REF chr_ref, TEAM_REF team )
 {
-  // ZZ> This function makes a chr_ref join another team...
+  // ZZ> This function makes a character join another team...
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;

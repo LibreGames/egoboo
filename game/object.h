@@ -213,9 +213,9 @@ enum e_damage
 typedef enum e_damage DAMAGE;
 
 #define DAMAGE_SHIFT         3                       // 000000xx Resistance ( 1 is common )
-#define DAMAGE_INVERT        4                       // 00000x00 Makes damage heal
-#define DAMAGE_CHARGE        8                       // 0000x000 Converts damage to mana
-#define DAMAGE_MANA         16                       // 000x0000 Makes damage deal to mana
+#define DAMAGE_INVERT       (1 << 2)                 // 00000x00 Makes damage heal
+#define DAMAGE_CHARGE       (1 << 3)                 // 0000x000 Converts damage to mana
+#define DAMAGE_MANA         (1 << 4)                 // 000x0000 Makes damage deal to mana
 
 //--------------------------------------------------------------------------------------------
 struct s_tile_damage

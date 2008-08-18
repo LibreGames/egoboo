@@ -243,7 +243,7 @@ void move_camera( float dUpdate )
 
       if ( VALID_CHR(gs->ChrList,  attachedto_ref ) )
       {
-        // The chr_ref is mounted
+        // The character is mounted
         pos.x += gs->ChrList[attachedto_ref].ori.pos.x;
         pos.y += gs->ChrList[attachedto_ref].ori.pos.y;
         pos.z += gs->ChrList[attachedto_ref].ori.pos.z + 0.9 * gs->ChrList[chr_ref].bmpdata.calc_height;
@@ -256,7 +256,7 @@ void move_camera( float dUpdate )
       }
       else if ( !VALID_CHR(gs->ChrList, inwhichpack_ref ) )
       {
-        // The chr_ref is on foot
+        // The character is on foot
         pos.x += gs->ChrList[chr_ref].ori.pos.x;
         pos.y += gs->ChrList[chr_ref].ori.pos.y;
         pos.z += gs->ChrList[chr_ref].ori.pos.z + 0.9 * gs->ChrList[chr_ref].bmpdata.calc_height;

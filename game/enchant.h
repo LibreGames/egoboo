@@ -65,7 +65,8 @@ typedef enum e_eve_add EVE_ADD;
 
 struct sEve
 {
-  egoboo_key_t      ekey;
+  egoboo_key_t    ekey;
+  STRING          loadname;
   bool_t          Loaded;                      // Enchant.txt loaded?
 
   bool_t          override;                    // Override other enchants?
@@ -232,6 +233,7 @@ void reset_character_alpha( struct sGame * gs, CHR_REF character );
 void chr_reset_accel( struct sGame * gs, CHR_REF character );
 
 EVE_REF EveList_load_one( struct sGame * gs, const char * szObjectpath, const char * szObjectname, EVE_REF irequest );
+bool_t  EveList_save_one( struct sGame * gs, const char * szFilename, EVE_REF ieve );
 void    unset_enchant_value( struct sGame * gs, ENC_REF enchantindex, Uint8 valueindex );
 void    remove_enchant_value( struct sGame * gs, ENC_REF enchantindex, Uint8 valueindex );
 

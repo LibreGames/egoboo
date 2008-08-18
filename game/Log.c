@@ -23,9 +23,8 @@
 //********************************************************************************************
 
 #include "Log.h"
+#include "game.h"
 
-#include "proto.h"
-#include "egoboo.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>

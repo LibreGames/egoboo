@@ -637,7 +637,7 @@ bool_t make_renderlist(RENDERLIST * prlst)
   prlst->num_norm = 0;
   prlst->num_watr = 0;
 
-  tile_count = mi->size_x * mi->size_y;
+  tile_count = mi->tiles_x * mi->tiles_y;
   for ( fan = 0; fan < tile_count; fan++ )
   {
     inview = Frustum_BBoxInFrustum( &gFrustum, mm->tilelst[fan].bbox.mins.v, mm->tilelst[fan].bbox.maxs.v );
@@ -684,8 +684,8 @@ bool_t make_renderlist(RENDERLIST * prlst)
         // precalculate the "mode" variable so that we don't waste time rendering the waves
         int tx, ty;
 
-        ty = fan / mi->size_x;
-        tx = fan % mi->size_x;
+        ty = fan / mi->tiles_x;
+        tx = fan % mi->tiles_x;
 
         prlst->watr_mode[prlst->num_watr] = ((ty & 1) << 1) + (tx & 1);
         prlst->watr[prlst->num_watr]      = fan;
@@ -716,7 +716,7 @@ void set_fan_dyna_light( int fanx, int fany, PRT_REF particle )
   MeshInfo_t * mi    = &(pmesh->Info);
   MeshMem_t  * mm    = &(pmesh->Mem);
 
-  if ( fanx >= 0 && fanx < mi->size_x && fany >= 0 && fany < mi->size_y )
+  if ( fanx >= 0 && fanx < mi->tiles_x && fany >= 0 && fany < mi->tiles_y )
   {
     fan = mesh_convert_fan( mi, fanx, fany );
     vertex = mm->tilelst[fan].vrt_start;
@@ -1080,11 +1080,11 @@ void do_dyna_light(Game_t * gs)
 //    run = MESH_INT_TO_FAN(ylist[to]);
 //    while (fany < run)
 //    {
-//      if (fany >= 0 && fany < pmesh->Info.size_y)
+//      if (fany >= 0 && fany < pmesh->Info.tiles_y)
 //      {
 //        fanx = MESH_INT_TO_FAN(x);
 //        if (fanx < 0)  fanx = 0;
-//        if (fanx >= pmesh->Info.size_x)  fanx = pmesh->Info.size_x - 1;
+//        if (fanx >= pmesh->Info.tiles_x)  fanx = pmesh->Info.tiles_x - 1;
 //        fanrowstart[row] = fanx;
 //        row++;
 //      }
@@ -1115,11 +1115,11 @@ void do_dyna_light(Game_t * gs)
 //    run = MESH_INT_TO_FAN(ylist[to]);
 //    while (fany < run)
 //    {
-//      if (fany >= 0 && fany < pmesh->Info.size_y)
+//      if (fany >= 0 && fany < pmesh->Info.tiles_y)
 //      {
 //        fanx = MESH_INT_TO_FAN(x);
 //        if (fanx < 0)  fanx = 0;
-//        if (fanx >= pmesh->Info.size_x - 1)  fanx = pmesh->Info.size_x - 1;//-2
+//        if (fanx >= pmesh->Info.tiles_x - 1)  fanx = pmesh->Info.tiles_x - 1;//-2
 //        fanrowrun[row] = ABS(fanx - fanrowstart[row]) + 1;
 //        row++;
 //      }
@@ -1137,7 +1137,7 @@ void do_dyna_light(Game_t * gs)
 //  // Fill 'em up again
 //  fany = MESH_INT_TO_FAN(ylist[0]);
 //  if (fany < 0) fany = 0;
-//  if (fany >= pmesh->Info.size_y) fany = pmesh->Info.size_y - 1;
+//  if (fany >= pmesh->Info.tiles_y) fany = pmesh->Info.tiles_y - 1;
 //  row = 0;
 //  while (row < numrow)
 //  {

@@ -27,6 +27,7 @@
 #include "Ui.h"
 #include "Log.h"
 #include "Client.h"
+#include "file_common.h"
 
 #include "egoboo_utility.h"
 #include "egoboo.h"

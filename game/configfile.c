@@ -66,8 +66,8 @@
 //---------------------------------------------------------------------
 
 #include "configfile.h"
+#include "file_common.h"
 
-#include "proto.h"
 #include "egoboo_strutil.h"
 
 // Change any non alphanumeric character or space or underscore to an underscore

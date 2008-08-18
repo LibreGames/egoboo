@@ -887,13 +887,15 @@ PIP_REF ChrList_getRPip(struct sGame * gs, CHR_REF ichr, int i);
 
 
 
-#define VALID_CHR_RANGE(XX)   (((XX)>=0) && ((XX)<CHRLST_COUNT))
-#define VALID_CHR(LST, XX)    ( VALID_CHR_RANGE(XX) && EKEY_VALID(LST[XX]) )
-#define VALIDATE_CHR(LST, XX) ( VALID_CHR(LST, XX) ? (XX) : (INVALID_CHR) )
-#define RESERVED_CHR(LST, XX) ( VALID_CHR(LST, XX) && LST[XX].reserved && !LST[XX].active   )
-#define ACTIVE_CHR(LST, XX)   ( VALID_CHR(LST, XX) && LST[XX].active   && !LST[XX].reserved )
-#define SEMIACTIVE_CHR(LST, XX)  ( VALID_CHR(LST, XX) && (LST[XX].active || LST[XX].req_active) && !LST[XX].reserved )
-#define PENDING_CHR(LST, XX)  ( VALID_CHR(LST, XX) && LST[XX].req_active && !LST[XX].reserved )
+#define VALID_CHR_RANGE(XX)     (((XX)>=0) && ((XX)<CHRLST_COUNT))
+#define VALID_CHR(LST, XX)      ( VALID_CHR_RANGE(XX) && EKEY_VALID(LST[XX]) )
+#define VALIDATE_CHR(LST, XX)   ( VALID_CHR(LST, XX) ? (XX) : (INVALID_CHR) )
+#define RESERVED_CHR(LST, XX)   ( VALID_CHR(LST, XX) && LST[XX].reserved && !LST[XX].active   )
+#define ACTIVE_CHR(LST, XX)     ( VALID_CHR(LST, XX) && LST[XX].active   && !LST[XX].reserved )
+#define PENDING_CHR(LST, XX)    ( VALID_CHR(LST, XX) && LST[XX].req_active && !LST[XX].reserved )
+#define SEMIACTIVE_CHR(LST, XX) ( VALID_CHR(LST, XX) && (LST[XX].active || LST[XX].req_active) && !LST[XX].reserved )
+#define READVALID_CHR(LST, XX)   VALID_CHR(LST, XX)
+#define WRITEVALID_CHR(LST, XX)  SEMIACTIVE_CHR(LST, XX)
 
 INLINE bool_t chr_in_pack( PChr_t lst, size_t lst_size, CHR_REF character );
 INLINE bool_t chr_attached( PChr_t lst, size_t lst_size, CHR_REF character );

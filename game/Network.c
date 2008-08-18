@@ -35,6 +35,7 @@
 #include "game.h"
 #include "graphic.h"
 #include "input.h"
+#include "file_common.h"
 
 #include "egoboo_utility.h"
 #include "egoboo_strutil.h"

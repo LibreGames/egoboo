@@ -25,6 +25,7 @@
 #include "mesh.inl"
 
 #include "Log.h"
+#include "file_common.h"
 
 #include "egoboo_utility.h"
 #include "egoboo.h"
@@ -36,8 +37,10 @@
 TILE_TXBOX       gTileTxBox[MAXTILETYPE];
 TileDictionary_t gTileDict;
 
+#define TX_FUDGE 0.5f
+
 //--------------------------------------------------------------------------------------------
-bool_t reset_bumplist(MeshInfo_t * mi)
+bool_t mesh_reset_bumplist(MeshInfo_t * mi)
 {
   size_t i;
 
@@ -61,7 +64,7 @@ bool_t reset_bumplist(MeshInfo_t * mi)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t allocate_bumplist(MeshInfo_t * mi, int blocks)
+bool_t mesh_allocate_bumplist(MeshInfo_t * mi, int blocks)
 {
   BUMPLIST * pbump  = &(mi->bumplist);
 
@@ -75,14 +78,14 @@ bool_t allocate_bumplist(MeshInfo_t * mi, int blocks)
     pbump->free_lst = EGOBOO_NEW_ARY( Uint32, pbump->free_count );
     pbump->node_lst = EGOBOO_NEW_ARY( BUMPLIST_NODE, pbump->free_count );
 
-    reset_bumplist(mi);
+    mesh_reset_bumplist(mi);
   }
 
   return btrue;
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t load_mesh( Game_t * gs, char *modname )
+bool_t mesh_load( Mesh_t * pmesh, char *modname )
 {
   // ZZ> This function loads the "LEVEL.MPD" file
 
@@ -91,10 +94,8 @@ bool_t load_mesh( Game_t * gs, char *modname )
   int itmp, cnt;
   float ftmp;
   int fan;
-  int numvert, numfan;
   int vert, vrt;
 
-  Mesh_t      * pmesh   = Game_getMesh(gs);
   MeshMem_t   * mem     = &(pmesh->Mem);
   MeshInfo_t  * mi      = &(pmesh->Info);
   MeshTile_t  * mf_list;
@@ -104,28 +105,34 @@ bool_t load_mesh( Game_t * gs, char *modname )
   if ( NULL == fileread ) return bfalse;
 
   fread( &itmp, 4, 1, fileread );  if (SDL_SwapLE32( itmp ) != MAPID ) return bfalse;
-  fread( &itmp, 4, 1, fileread );  numvert    = SDL_SwapLE32( itmp );
-  fread( &itmp, 4, 1, fileread );  mi->size_x = SDL_SwapLE32( itmp );
-  fread( &itmp, 4, 1, fileread );  mi->size_y = SDL_SwapLE32( itmp );
-  numfan = mi->size_x * mi->size_y;
+  fread( &itmp, 4, 1, fileread );  mi->vert_count = SDL_SwapLE32( itmp );
+  fread( &itmp, 4, 1, fileread );  mi->tiles_x    = SDL_SwapLE32( itmp );
+  fread( &itmp, 4, 1, fileread );  mi->tiles_y    = SDL_SwapLE32( itmp );
+  mi->tile_count = mi->tiles_x * mi->tiles_y;
 
-  if ( !MeshMem_new(mem, numvert, numfan) )
+  mi->blocks_x = mi->tiles_x >> 2;
+  mi->blocks_y = mi->tiles_y >> 2;
+  if( 0 != (mi->tiles_x & 0x03) ) mi->blocks_x++;   // check for multiples of 4
+  if( 0 != (mi->tiles_y & 0x03) ) mi->blocks_y++;
+  mi->block_count = mi->blocks_x * mi->blocks_y;
+
+  if ( !MeshMem_new(mem, mi->vert_count, mi->tile_count) )
   {
-    log_error( "load_mesh() - \n\tUnable to initialize Mesh Memory. MPD file %s has too many vertices.\n", modname );
+    log_error( "mesh_load() - \n\tUnable to initialize Mesh Memory. MPD file %s has too many vertices.\n", modname );
     return bfalse;
   }
 
   // wait until fanlist is allocated!
   mf_list = mem->tilelst;
 
-  mi->edge_x = mi->size_x * 128;
-  mi->edge_y = mi->size_y * 128;
+  mi->edge_x = mi->tiles_x * 128;
+  mi->edge_y = mi->tiles_y * 128;
 
   // allocate the bumplist
-  allocate_bumplist( mi, ( mi->size_x >> 2 ) * ( mi->size_y >> 2 ) );
+  mesh_allocate_bumplist( mi, mi->block_count );
 
   // Load fan data
-  for ( fan = 0; fan < numfan;  fan++)
+  for ( fan = 0; fan < mi->tile_count;  fan++)
   {
     fread( &itmp, 4, 1, fileread );
     itmp = SDL_SwapLE32( itmp );
@@ -136,21 +143,21 @@ bool_t load_mesh( Game_t * gs, char *modname )
   }
 
   // Load fan data
-  for ( fan = 0; fan < numfan; fan++ )
+  for ( fan = 0; fan < mi->tile_count; fan++ )
   {
     fread( &itmp, 1, 1, fileread );
     mf_list[fan].twist = itmp;
   }
 
   // Load vertex fan_x data
-  for( cnt = 0;  cnt < numvert; cnt++ )
+  for( cnt = 0;  cnt < mi->vert_count; cnt++ )
   {
     fread( &ftmp, 4, 1, fileread );
     mem->vrt_x[cnt] = SwapLE_float( ftmp );
   }
 
   // Load vertex fan_y data
-  for( cnt = 0; cnt < numvert; cnt++ )
+  for( cnt = 0; cnt < mi->vert_count; cnt++ )
   {
     fread( &ftmp, 4, 1, fileread );
     mem->vrt_y[cnt] = SwapLE_float( ftmp );
@@ -158,7 +165,7 @@ bool_t load_mesh( Game_t * gs, char *modname )
 
   // Load vertex z data
   cnt = 0;
-  for( cnt = 0; cnt < numvert; cnt++ )
+  for( cnt = 0; cnt < mi->vert_count; cnt++ )
   {
     fread( &ftmp, 4, 1, fileread );
     mem->vrt_z[cnt] = SwapLE_float( ftmp )  / 16.0;  // Cartman uses 4 bit fixed point for Z
@@ -166,7 +173,7 @@ bool_t load_mesh( Game_t * gs, char *modname )
 
   // Load vertex lighting data
 
-  for ( cnt = 0; cnt < numvert; cnt++ )
+  for ( cnt = 0; cnt < mi->vert_count; cnt++ )
   {
     fread( &itmp, 1, 1, fileread );
 
@@ -181,7 +188,7 @@ bool_t load_mesh( Game_t * gs, char *modname )
 
   fs_fileClose( fileread );
 
-  make_fanstart( mi );
+  mesh_make_fanstart( mi );
 
   vert = 0;
   for ( fan = 0; fan < mem->tile_count; fan++ )
@@ -213,9 +220,7 @@ bool_t load_mesh( Game_t * gs, char *modname )
 }
 
 //--------------------------------------------------------------------------------------------
-#define TX_FUDGE 0.5f
-
-bool_t load_mesh_fans(TileDictionary_t * pdict)
+bool_t TileDictionary_load(TileDictionary_t * pdict)
 {
   // ZZ> This function loads fan types for the terrain
 
@@ -336,26 +341,26 @@ bool_t load_mesh_fans(TileDictionary_t * pdict)
 }
 
 //--------------------------------------------------------------------------------------------
-void make_fanstart(MeshInfo_t * mi)
+void mesh_make_fanstart(MeshInfo_t * mi)
 {
   // ZZ> This function builds a look up table to ease calculating the
   //     fan number given an x,y pair
 
   int cnt;
 
-  for ( cnt = 0; cnt < mi->size_y; cnt++ )
+  for ( cnt = 0; cnt < mi->tiles_y; cnt++ )
   {
-    mi->Fan_X[cnt] = mi->size_x * cnt;
+    mi->Tile_X[cnt] = mi->tiles_x * cnt;
   }
 
-  for ( cnt = 0; cnt < ( mi->size_y >> 2 ); cnt++ )
+  for ( cnt = 0; cnt < mi->blocks_y; cnt++ )
   {
-    mi->Block_X[cnt] = ( mi->size_x >> 2 ) * cnt;
+    mi->Block_X[cnt] = mi->blocks_x * cnt;
   }
 }
 
 //--------------------------------------------------------------------------------------------
-void make_twist()
+void mesh_make_twist()
 {
   // ZZ> This function precomputes surface normals and steep hill acceleration for
   //     the mesh
@@ -817,7 +822,7 @@ void set_fan_colorl( Game_t * gs, int fan_x, int fan_y, int color )
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 mesh_hitawall( Mesh_t * pmesh, vect3 pos, float size_x, float size_y, Uint32 collision_bits, vect3 * nrm )
+Uint32 mesh_hitawall( Mesh_t * pmesh, vect3 pos, float tiles_x, float tiles_y, Uint32 collision_bits, vect3 * nrm )
 {
   // ZZ> This function returns nonzero if <pos.x, pos.y> is in an invalid tile
 
@@ -830,11 +835,11 @@ Uint32 mesh_hitawall( Mesh_t * pmesh, vect3 pos, float size_x, float size_y, Uin
     VectorClear(nrm->v);
   }
 
-  fan_x_min = ( pos.x - size_x < 0 ) ? 0 : MESH_FLOAT_TO_FAN( pos.x - size_x );
-  fan_x_max = ( pos.x + size_x < 0 ) ? 0 : MESH_FLOAT_TO_FAN( pos.x + size_x );
+  fan_x_min = ( pos.x - tiles_x < 0 ) ? 0 : MESH_FLOAT_TO_FAN( pos.x - tiles_x );
+  fan_x_max = ( pos.x + tiles_x < 0 ) ? 0 : MESH_FLOAT_TO_FAN( pos.x + tiles_x );
 
-  fan_y_min = ( pos.y - size_y < 0 ) ? 0 : MESH_FLOAT_TO_FAN( pos.y - size_y );
-  fan_y_max = ( pos.y + size_y < 0 ) ? 0 : MESH_FLOAT_TO_FAN( pos.y + size_y );
+  fan_y_min = ( pos.y - tiles_y < 0 ) ? 0 : MESH_FLOAT_TO_FAN( pos.y - tiles_y );
+  fan_y_max = ( pos.y + tiles_y < 0 ) ? 0 : MESH_FLOAT_TO_FAN( pos.y + tiles_y );
 
   for ( fan_x = fan_x_min; fan_x <= fan_x_max; fan_x++ )
   {

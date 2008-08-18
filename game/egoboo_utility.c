@@ -2,6 +2,7 @@
 
 #include "Mad.h"
 #include "Log.h"
+#include "file_common.h"
 
 #include "egoboo_strutil.h"
 
@@ -576,30 +577,45 @@ bool_t fget_next_message( FILE* fileread, MessageData_t * msglst )
 //--------------------------------------------------------------------------------------------
 void fgoto_colon( FILE* fileread )
 {
-  // ZZ> This function moves a file read pointer to the next colon
+  // BB > this calls fgoto_colon_buffer() with no buffer
 
-  Uint32 ch = fgetc( fileread );
-
-  while ( ch != ':' )
-  {
-    if ( ch == EOF )
-    {
-      // not enough colons in file!
-      log_error( "There are not enough colons in file! (%s)\n", globalname );
-    }
-
-    ch = fgetc( fileread );
-  }
+  fgoto_colon_buffer( fileread, NULL, 0 );
 }
 
 //--------------------------------------------------------------------------------------------
 bool_t fgoto_colon_yesno( FILE* fileread )
 {
-  // ZZ> This function moves a file read pointer to the next colon, or it returns
-  //     bfalse if there are no more
+  // BB > this calls fgoto_colon_yesno_buffer() with no buffer
 
-  char cTmp;
+  return fgoto_colon_yesno_buffer( fileread, NULL, 0 );
+}
+
+//--------------------------------------------------------------------------------------------
+void fgoto_colon_buffer( FILE* fileread, char * buffer, size_t buffer_len )
+{
+  // BB> This function scans the file for the next colon. If there is no colon,
+  //     it forces the program to quit. It also stores any text
+  //     before the colon in the optional array "buffer"
+
+  if( !fgoto_colon_yesno_buffer( fileread, buffer, buffer_len ) )
+  {
+    // not enough colons in file!
+    log_error( "There are not enough colons in file! (%s)\n", globalname );
+  };
+
+};
+
+//--------------------------------------------------------------------------------------------
+bool_t fgoto_colon_yesno_buffer( FILE* fileread, char * buffer, size_t buffer_len  )
+{
+  // BB> This function scans the file for the next colon. If there is no colon,
+  //     it returns bfalse. It also stores any text before the colon in the optional array "buffer"
+
+  char cTmp, * pchar, * pchar_end;
   bool_t bfound = bfalse;
+
+  pchar = pchar_end = buffer;
+  if(pchar != NULL) pchar_end += buffer_len;
 
   while ( !feof( fileread ) )
   {
@@ -608,7 +624,27 @@ bool_t fgoto_colon_yesno( FILE* fileread )
     {
       bfound = btrue;
       break;
-    };
+    }
+    else if ( EOF == cTmp )
+    {
+      // not enough colons in file!
+      break;
+    }
+    else if ( '\n' ==  cTmp)
+    {
+      pchar = buffer;
+      if(pchar < pchar_end)
+      {
+        *pchar = EOS;
+      }
+    }
+    else
+    {
+      if(pchar < pchar_end)
+      {
+        *pchar++ = cTmp;
+      }
+    }
   }
 
   return bfound;
@@ -1235,5 +1271,531 @@ void make_randie()
 }
 
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t fput_next( FILE* filewrite, const char * comment )
+{
+  int written;
+  if( NULL == filewrite) return bfalse;
+  if( !VALID_CSTR(comment) ) comment = "";
+
+  written = fprintf( filewrite, "\n%s: ", comment );
+
+  return written > 0;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t fput_idsz( FILE* filewrite, IDSZ data )
+{
+  int written;
+
+  if(NULL == filewrite) return bfalse;
+
+  written = fprintf( filewrite, "[%s] ", undo_idsz(data) );
+
+  return written > 0;
+}
 
 
+
+//--------------------------------------------------------------------------------------------
+bool_t fput_next_idsz( FILE* filewrite, const char * comment, IDSZ data )
+{
+  if( !fput_next(filewrite, comment) ) return bfalse;
+  fput_idsz(filewrite, data);
+
+  return btrue;
+}
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t fput_int( FILE* filewrite, int data )
+{
+  int written;
+  if(NULL == filewrite) return bfalse;
+
+  written = fprintf( filewrite, "%d ", data );
+
+  return written > 0;
+}
+
+
+//--------------------------------------------------------------------------------------------
+bool_t fput_next_int( FILE* filewrite, const char * comment, int data )
+{
+  if( !fput_next(filewrite, comment) ) return bfalse;
+  fput_int(filewrite, data);
+
+  return btrue;
+}
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t fput_float( FILE* filewrite, float data )
+{
+  int written;
+  if(NULL == filewrite) return bfalse;
+
+  written = fprintf( filewrite, "%f ", data );
+
+  return written > 0;
+}
+
+
+
+//--------------------------------------------------------------------------------------------
+bool_t fput_next_float( FILE* filewrite, const char * comment, float data )
+{
+  if( !fput_next(filewrite, comment) ) return bfalse;
+  fput_float(filewrite, data);
+
+  return btrue;
+}
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t fput_fixed( FILE* filewrite, Uint16 data )
+{
+  int written;
+  if(NULL == filewrite) return bfalse;
+
+  written = fprintf( filewrite, "%d ", FP8_TO_INT(data) );
+
+  return written > 0;
+}
+
+
+
+//--------------------------------------------------------------------------------------------
+bool_t fput_next_fixed( FILE* filewrite, const char * comment, Uint16 data )
+{
+  if( !fput_next(filewrite, comment) ) return bfalse;
+  fput_fixed(filewrite, data);
+
+  return btrue;
+}
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t fput_bool( FILE* filewrite, bool_t data )
+{
+  int written;
+  if(NULL == filewrite) return bfalse;
+
+  written = fprintf( filewrite, "%s ", data ? "TRUE" : "FALSE" );
+
+  return written > 0;
+}
+
+
+
+//--------------------------------------------------------------------------------------------
+bool_t fput_next_bool( FILE* filewrite, const char * comment, bool_t data )
+{
+  if( !fput_next(filewrite, comment) ) return bfalse;
+  fput_bool(filewrite, data);
+
+  return btrue;
+}
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t fput_gender( FILE* filewrite, enum e_gender data )
+{
+  int written;
+  char * pchar;
+
+  if(NULL == filewrite) return bfalse;
+
+  pchar = "RANDOM";
+  switch ( data )
+  {
+    case GEN_MALE:   pchar = "MALE";   break;
+    case GEN_FEMALE: pchar = "FEMALE"; break;
+    case GEN_OTHER:  pchar = "OTHER";  break;
+    case GEN_RANDOM: pchar = "RANDOM"; break;
+  };
+
+  written = fprintf( filewrite, "%s ", pchar );
+
+  return written > 0;
+}
+
+
+
+//--------------------------------------------------------------------------------------------
+bool_t fput_next_gender( FILE* filewrite, const char * comment, enum e_gender data )
+{
+  if( !fput_next(filewrite, comment) ) return bfalse;
+  fput_gender(filewrite, data);
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t fput_damage_char( FILE* filewrite, enum e_damage data )
+{
+  int written;
+  char cTmp;
+
+  if(NULL == filewrite) return bfalse;
+
+  cTmp = 'N';
+  switch ( data )
+  {
+    case DAMAGE_SLASH: cTmp = 'S'; break;
+    case DAMAGE_CRUSH: cTmp = 'C'; break;
+    case DAMAGE_POKE:  cTmp = 'P';  break;
+    case DAMAGE_HOLY:  cTmp = 'H';  break;
+    case DAMAGE_EVIL:  cTmp = 'E';  break;
+    case DAMAGE_FIRE:  cTmp = 'F';  break;
+    case DAMAGE_ICE:   cTmp = 'I';   break;
+    case DAMAGE_ZAP:   cTmp = 'Z';   break;
+    default:           cTmp = 'N';  break;
+  };
+
+  written = fprintf( filewrite, "%c ", cTmp );
+
+  return written > 0;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t fput_damage( FILE* filewrite, enum e_damage data )
+{
+  int written;
+  char * pchar;
+
+  if(NULL == filewrite) return bfalse;
+
+  pchar = "NONE";
+  switch ( data )
+  {
+    case DAMAGE_SLASH: pchar = "SLASH"; break;
+    case DAMAGE_CRUSH: pchar = "CRUSH"; break;
+    case DAMAGE_POKE:  pchar = "POKE";  break;
+    case DAMAGE_HOLY:  pchar = "HOLY";  break;
+    case DAMAGE_EVIL:  pchar = "EVIL";  break;
+    case DAMAGE_FIRE:  pchar = "FIRE";  break;
+    case DAMAGE_ICE:   pchar = "ICE";   break;
+    case DAMAGE_ZAP:   pchar = "ZAP";   break;
+    default:           pchar = "NONE";  break;
+  };
+
+  written = fprintf( filewrite, "%s ", pchar );
+
+  return written > 0;
+}
+
+
+
+//--------------------------------------------------------------------------------------------
+bool_t fput_next_damage( FILE* filewrite, const char * comment, enum e_damage data )
+{
+  if( !fput_next(filewrite, comment) ) return bfalse;
+  fput_damage(filewrite, data);
+
+  return btrue;
+}
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t fput_blud( FILE* filewrite, enum e_blud_level data )
+{
+  int written;
+  char * pchar;
+
+  if(NULL == filewrite) return bfalse;
+
+  pchar = "FALSE";
+  switch ( data )
+  {
+    case BLUD_NORMAL: pchar = "TRUE"; break;
+    case BLUD_NONE:   pchar = "FALSE"; break;
+    case BLUD_ULTRA:  pchar = "ULTRABLUDY"; break;
+  };
+
+  written = fprintf( filewrite, "%s ", pchar );
+
+  return written > 0;
+}
+
+
+
+//--------------------------------------------------------------------------------------------
+bool_t fput_next_blud( FILE* filewrite, const char * comment, enum e_blud_level data )
+{
+  if( !fput_next(filewrite, comment) ) return bfalse;
+  fput_blud(filewrite, data);
+
+  return btrue;
+}
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t fput_dynamode( FILE* filewrite, enum e_dyna_mode data )
+{
+  int written;
+  char * pchar;
+
+  if(NULL == filewrite) return bfalse;
+
+  pchar = "FALSE";
+  switch ( data )
+  {
+    case DYNA_ON:    pchar = "TRUE";  break;
+    case DYNA_OFF:   pchar = "FALSE"; break;
+    case DYNA_LOCAL: pchar = "LOCAL"; break;
+  };
+
+  written = fprintf( filewrite, "%s ", data );
+
+  return written > 0;
+}
+
+
+
+//--------------------------------------------------------------------------------------------
+bool_t fput_next_dynamode( FILE* filewrite, const char * comment, enum e_dyna_mode data )
+{
+  if( !fput_next(filewrite, comment) ) return bfalse;
+  fput_dynamode(filewrite, data);
+
+  return btrue;
+}
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t fput_name( FILE* filewrite, char * data )
+{
+  int written;
+  STRING szName;
+
+  if(NULL == filewrite) return bfalse;
+
+  str_encode( szName, sizeof(szName), data );
+
+  written = fprintf( filewrite, "%s ", szName );
+
+  return written > 0;
+}
+
+
+
+//--------------------------------------------------------------------------------------------
+bool_t fput_next_name( FILE* filewrite, const char * comment, char * data )
+{
+  if( !fput_next(filewrite, comment) ) return bfalse;
+
+  fput_name(filewrite, data);
+
+  return btrue;
+}
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t fput_string( FILE* filewrite, char * data )
+{
+  int written;
+
+  if(NULL == filewrite) return bfalse;
+
+  written = fprintf( filewrite, "%s ", data );
+
+  return written > 0;
+}
+
+
+
+//--------------------------------------------------------------------------------------------
+bool_t fput_next_string( FILE* filewrite, const char * comment, char * data )
+{
+  if( !fput_next(filewrite, comment) ) return bfalse;
+  fput_string(filewrite, data);
+
+  return btrue;
+}
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t fput_alpha_type( FILE* filewrite, enum e_particle_alpha_type data )
+{
+  int written;
+  char * pchar;
+
+  if(NULL == filewrite) return bfalse;
+
+  pchar = "SOLID";
+  switch( data )
+  {
+    case PRTTYPE_LIGHT: pchar = "LIGHT"; break;
+    case PRTTYPE_SOLID: pchar = "SOLID"; break;
+    case PRTTYPE_ALPHA: pchar = "ALPHA"; break;
+  }
+
+  written = fprintf( filewrite, "%s ", pchar );
+
+  return written > 0;
+}
+
+
+
+//--------------------------------------------------------------------------------------------
+bool_t fput_next_alpha_type( FILE* filewrite, const char * comment, enum e_particle_alpha_type data )
+{
+  if( !fput_next(filewrite, comment) ) return bfalse;
+  fput_alpha_type(filewrite, data);
+
+  return btrue;
+}
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t fput_action( FILE* filewrite, enum e_Action data )
+{
+  int written;
+  char * pchar;
+
+  if(NULL == filewrite) return bfalse;
+
+ pchar = "DANCE";
+ if ( data >= ACTION_DA && data <= ACTION_DD )
+    pchar = "WALK";
+  else if ( data >= ACTION_UA && data <= ACTION_UD )
+    pchar = "UNARMED";
+  else if ( data >= ACTION_TA && data <= ACTION_TD )
+    pchar = "THRUST";
+  else if ( data >= ACTION_SA && data <= ACTION_SD )
+    pchar = "SLASH";
+  else if ( data >= ACTION_CA && data <= ACTION_CD )
+    pchar = "CHOP";
+  else if ( data >= ACTION_BA && data <= ACTION_BD )
+    pchar = "BASH";
+  else if ( data >= ACTION_LA && data <= ACTION_LD )
+    pchar = "LONGBOW";
+  else if ( data >= ACTION_XA && data <= ACTION_XD )
+    pchar = "XBOW";
+  else if ( data >= ACTION_FA && data <= ACTION_FD )
+    pchar = "FLING";
+  else if ( data >= ACTION_PA && data <= ACTION_PD )
+    pchar = "PARRY";
+  else if ( data >= ACTION_ZA && data <= ACTION_ZD )
+    pchar = "ZAP";
+
+  written = fprintf( filewrite, "%s ", pchar );
+
+  return written > 0;
+}
+
+
+
+//--------------------------------------------------------------------------------------------
+bool_t fput_next_action( FILE* filewrite, const char * comment, enum e_Action data )
+{
+  if( !fput_next(filewrite, comment) ) return bfalse;
+  fput_action(filewrite, data);
+
+  return btrue;
+}
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t fput_message( FILE* filewrite, MessageData_t * data, int num )
+{
+  int written, index;
+  char * pchar;
+  STRING szMessage;
+
+  if(NULL == filewrite) return bfalse;
+
+  index = data->index[num];
+
+  pchar = "_";
+  if(MAXTOTALMESSAGE != index)
+  {
+    pchar = data->text + index;
+  }
+
+  str_encode( szMessage, sizeof(szMessage), pchar );
+
+  written = fprintf( filewrite, "%s", szMessage );
+
+  return written > 0;
+}
+
+
+
+//--------------------------------------------------------------------------------------------
+bool_t fput_next_message( FILE* filewrite, const char * comment, MessageData_t * data, int num )
+{
+  if( !fput_next(filewrite, comment) ) return bfalse;
+
+  fput_message(filewrite, data, num);
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t fput_expansion( FILE* filewrite, char * idsz_string, int value )
+{
+  if(NULL == filewrite) return bfalse;
+
+  fprintf( filewrite, "[%4c] ", idsz_string );
+  fput_int ( filewrite, value );
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t fput_next_expansion( FILE* filewrite, const char * comment, char * idsz_string, int value )
+{
+  if( !fput_next(filewrite, comment) ) return bfalse;
+
+  fput_expansion(filewrite, idsz_string, value);
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t fput_pair( FILE* filewrite, PAIR * data )
+{
+  RANGE rng;
+
+  if(NULL == filewrite) return bfalse;
+
+  if ( undo_pair_fp8( data, &rng ) )
+  {
+    fprintf( filewrite, "%4.2f-%4.2f ", rng.ffrom, rng.fto );
+  }
+  else
+  {
+    fprintf( filewrite, "0 " );
+  }
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t fput_next_pair( FILE* filewrite, const char * comment, PAIR * data )
+{
+  if( !fput_next(filewrite, comment) ) return bfalse;
+
+  fput_pair(filewrite, data);
+
+  return btrue;
+}

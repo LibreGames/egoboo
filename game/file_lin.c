@@ -22,7 +22,8 @@
 //*
 //********************************************************************************************
 
-#include "egoboo.h"
+#include "file_common.h"
+
 #include <stdio.h>
 #include <unistd.h>
 #include <glob.h>

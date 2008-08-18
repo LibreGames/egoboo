@@ -29,8 +29,10 @@
 #include "script.h"
 #include "sound.h"
 #include "Clock.h"
+#include "file_common.h"
 
 #include "egoboo_utility.h"
+#include "egoboo_strutil.h"
 #include "egoboo.h"
 
 #include <assert.h>
@@ -704,7 +706,293 @@ Uint32 fget_damage_modifier( FILE * fileread )
 };
 
 //--------------------------------------------------------------------------------------------
-EVE_REF EveList_load_one( Game_t * gs, const char * szObjectpath, const char * szObjectname, EVE_REF irequest )
+bool_t fput_damage_modifier_char( FILE * filewrite, Uint32 mod )
+{
+  int written;
+  char cTmp;
+  Uint32 iMod;
+
+  if(NULL == filewrite) return bfalse;
+
+  iMod = mod & (~DAMAGE_SHIFT);
+
+  cTmp = 'F';
+  if( HAS_SOME_BITS(iMod, DAMAGE_INVERT ) )
+  {
+    cTmp = 'I';
+  }
+  else if( HAS_SOME_BITS(iMod, DAMAGE_CHARGE ) )
+  {
+    cTmp = 'C';
+  }
+  else if( HAS_SOME_BITS(iMod, DAMAGE_MANA ) )
+  {
+    cTmp = 'M';
+  }
+
+  written = fprintf( filewrite, "%c ", cTmp );
+
+  return written > 0;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t fput_damage_modifier_shift( FILE * filewrite, Uint32 mod )
+{
+  int written;
+
+  if(NULL == filewrite) return bfalse;
+
+  written = fprintf( filewrite, "%d ", mod & DAMAGE_SHIFT );
+
+  return written > 0;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t fput_damage_modifier( FILE * filewrite, Uint32 mod )
+{
+  if(NULL == filewrite) return bfalse;
+
+  fput_damage_modifier_char( filewrite, mod );
+  fput_damage_modifier_shift( filewrite, mod );
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t EveList_save_one( Game_t * gs, const char * szFilename, EVE_REF ieve )
+{
+  // BB> This exports a given enchantment
+
+  FILE* filewrite;
+
+  char cTmp;
+  int num;
+
+  PObj_t objlst     = gs->ObjList;
+  size_t  objlst_size = OBJLST_COUNT;
+
+  PEve_t evelst      = gs->EveList;
+  size_t evelst_size = EVELST_COUNT;
+
+  Eve_t   * peve;
+
+  if( !VALID_EVE(evelst, ieve) || !LOADED_EVE(evelst, ieve) ) return bfalse;
+
+  peve = evelst + ieve;
+
+  filewrite = fs_fileOpen( PRI_NONE, "EveList_save_one()", szFilename, "w" );
+  if ( NULL == filewrite ) return bfalse;
+
+  // btrue/bfalse values
+  fprintf( filewrite, "// Basic enchantment stuff\n" );
+  fput_next_bool( filewrite, "Retarget as target's weapon ( TRUE or FALSE ) ", peve->retarget );
+  fput_next_bool( filewrite, "Override set values ( TRUE or FALSE )         ", peve->override );
+  fput_next_bool( filewrite, "Remove overridden enchants ( TRUE or FALSE )  ", peve->removeoverridden );
+  fput_next_bool( filewrite, "Kill character on end ( TRUE or FALSE )       ", peve->killonend );
+  fput_next_bool( filewrite, "Spawn poof on end ( TRUE or FALSE )           ", peve->poofonend );
+
+  // More stuff
+  fput_next_int( filewrite, "Seconds before end ( -1 for infinite )        ", peve->time );
+  // make -1 the "never-ending enchant" marker
+  if ( peve->time == -1 ) peve->time = 0;
+  fput_next_int( filewrite, "End message ( -1 for none )                   ", peve->endmessage );
+
+  // Drain stuff
+  fprintf( filewrite, "\n\n// Enchantment draining/sustaining\n" );
+  fput_next_fixed( filewrite, "Owner's mana boost each second ( -1.0 to 1.0 )  ", peve->ownermana_fp8 );
+  fput_next_fixed( filewrite, "Target's mana boost each second ( -1.0 to 1.0 ) ", peve->targetmana_fp8 );
+  fput_next_bool( filewrite, "End if mana can't be payed ( TRUE or FALSE )    ", peve->endifcantpay );
+  fput_next_fixed( filewrite, "Owner's life boost each second ( -1.0 to 1.0 )  ", peve->ownerlife_fp8 );
+  fput_next_fixed( filewrite, "Target's life boost each second ( -1.0 to 1.0 ) ", peve->targetlife_fp8 );
+
+
+  // Specifics
+  fprintf( filewrite, "\n\n// Stuff to make the enchantment more specific\n" );
+  fput_next_damage( filewrite, "Don't work if target resists ... ( ex. CRUSH )  ", peve->dontdamagetype );
+  fput_next_damage( filewrite, "Only work if target causes ... ( ex. SLASH )    ", peve->onlydamagetype );
+  fput_next_idsz( filewrite, "Removed by ... ( [NONE] or an IDSZ )            ", peve->removedbyidsz );
+
+
+  // Now the set values
+  fprintf( filewrite, "\n\n// Set target's attributes...  The numbers are explicit, and\n" );
+  fprintf( filewrite, "// are reset when removed.  Multiple sets are not cumulative\n" );
+  fprintf( filewrite, "// because that would be bad.  Preceed each value with a T\n" );
+  fprintf( filewrite, "// if the value is to be set, F otherwise\n" );
+  num = 0;
+  fput_next_bool( filewrite, "Damage type ( CRUSH, POKE, SLASH, etc. )        ", peve->setyesno[num] );
+  fput_damage( filewrite, peve->setvalue[num] );
+  num++;
+
+  fput_next_bool( filewrite, "Number of jumps ( 0 to 2 )                      ", peve->setyesno[num] );
+  fput_int( filewrite, peve->setvalue[num] );
+  num++;
+
+  fput_next_bool( filewrite, "Life bar color ( 0 to 5, 1 is red )             ", peve->setyesno[num] );
+  fput_int( filewrite, peve->setvalue[num] );
+  num++;
+
+  fput_next_bool( filewrite, "Mana bar color ( 0 to 5, 5 is purple )          ", peve->setyesno[num] );
+  fput_int( filewrite, peve->setvalue[num] );
+  num++;
+
+  fput_next_bool( filewrite, "SLASH damage modifier ( InversionTFC, Shift )   ", peve->setyesno[num] );
+  fput_damage_modifier( filewrite, peve->setvalue[num] );
+  num++;
+
+  fput_next_bool( filewrite, "CRUSH damage modifier ( InversionTFC, Shift )   ", peve->setyesno[num] );
+  fput_damage_modifier( filewrite, peve->setvalue[num] );
+  num++;
+
+  fput_next_bool( filewrite, "POKE  damage modifier ( InversionTFC, Shift )   ", peve->setyesno[num] );
+  fput_damage_modifier( filewrite, peve->setvalue[num] );
+  num++;
+
+  fput_next_bool( filewrite, "HOLY  damage modifier ( InversionTFC, Shift )   ", peve->setyesno[num] );
+  fput_damage_modifier( filewrite, peve->setvalue[num] );
+  num++;
+
+  fput_next_bool( filewrite, "EVIL  damage modifier ( InversionTFC, Shift )   ", peve->setyesno[num] );
+  fput_damage_modifier( filewrite, peve->setvalue[num] );
+  num++;
+
+  fput_next_bool( filewrite, "FIRE  damage modifier ( InversionTFC, Shift )   ", peve->setyesno[num] );
+  fput_damage_modifier( filewrite, peve->setvalue[num] );
+  num++;
+
+  fput_next_bool( filewrite, "ICE   damage modifier ( InversionTFC, Shift )   ", peve->setyesno[num] );
+  fput_damage_modifier( filewrite, peve->setvalue[num] );
+  num++;
+
+  fput_next_bool( filewrite, "ZAP   damage modifier ( InversionTFC, Shift )   ", peve->setyesno[num] );
+  fput_damage_modifier( filewrite, peve->setvalue[num] );
+  num++;
+
+  fput_next_bool( filewrite, "Flashing AND ( 1, 3, 7, 15...  255 is don't )   ", peve->setyesno[num] );
+  fput_int( filewrite, peve->setvalue[num] );
+  num++;
+
+  fput_next_bool( filewrite, "Light blending ( 255 is normal )                ", peve->setyesno[num] );
+  fput_int( filewrite, peve->setvalue[num] );
+  num++;
+
+  fput_next_bool( filewrite, "Alpha blending ( 255 is normal )                ", peve->setyesno[num] );
+  fput_int( filewrite, peve->setvalue[num] );
+  num++;
+
+  fput_next_bool( filewrite, "Sheen ( 0 - 15, 0 is dull, 15 is shiny )        ", peve->setyesno[num] );
+  fput_int( filewrite, peve->setvalue[num] );
+  num++;
+
+  fput_next_bool( filewrite, "Fly to height ( 0 to 255, Won't affect innate ) ", peve->setyesno[num] );
+  fput_int( filewrite, peve->setvalue[num] );
+  num++;
+
+  fput_next_bool( filewrite, "Walk on water ( TRUE or FALSE, Not on innate )  ", peve->setyesno[num] );
+  fput_bool( filewrite, peve->setvalue[num] );
+  num++;
+
+  fput_next_bool( filewrite, "Can see invisible ( TRUE or FALSE )             ", peve->setyesno[num] );
+  fput_bool( filewrite, peve->setvalue[num] );
+  num++;
+
+  fput_next_bool( filewrite, "Missile treatment ( NORMAL, DEFLECT, REFLECT )  ", peve->setyesno[num] );
+  cTmp = fget_first_letter( filewrite );
+  peve->setvalue[num] = MIS_NORMAL;
+  switch ( peve->setvalue[num] )
+  {
+    case MIS_REFLECT: fprintf( filewrite, " R\n" ); break;
+    case MIS_DEFLECT: fprintf( filewrite, " D\n" ); break;
+    default:          fprintf( filewrite, " N\n" ); break;   // MIS_NORMAL
+  };
+  num++;
+
+  fput_next_bool( filewrite, "Cost for each missile treated ( 0.0 to 1.0 )    ", peve->setyesno[num] );
+  fput_float( filewrite, peve->setvalue[num] / 16.0f ) ;
+  num++;
+
+  fput_next_bool( filewrite, "Morph target ( TRUE )                           ", peve->setyesno[num] );
+  fput_bool( filewrite, peve->setvalue[num] );
+  num++;
+
+  fput_next_bool( filewrite, "Target may now channel life ( TRUE )            ", peve->setyesno[num] );
+  fput_bool( filewrite, peve->setvalue[num] );
+  num++;
+
+
+  // Now read in the add values
+  fprintf( filewrite, "\n\n// Modify target's attributes...  These are cumulative, and\n" );
+  fprintf( filewrite, "// are simply undone when removed.\n" );
+
+  num = 0;
+  fput_next_float( filewrite, "Jump power increase ( -5.0 to 5.0 )    ", peve->addvalue[num] / 16.0f );
+  num++;
+
+  fput_next_float( filewrite, "Bump dampen change ( -1.0 to 1.0 )     ", peve->addvalue[num] / 127.0f ) ;
+  num++;
+
+  fput_next_float( filewrite, "Bounciness change ( -.95 to .95 )      ", peve->addvalue[num] / 127.0f );
+  num++;
+
+  fput_next_float( filewrite, "Damage bonus ( -4.0 to 4.0 )           ", peve->addvalue[num] / 4.0f );
+  num++;
+
+  fput_next_float( filewrite, "Size increase ( -.5 to .5 )            ", peve->addvalue[num] / 127.0f );
+  num++;
+
+  fput_next_int( filewrite, "Acceleration booost ( -40 to 40 )      ", peve->addvalue[num] );
+  num++;
+
+  fput_next_int( filewrite, "Darkening red shift change ( -3 to 3 ) ", peve->addvalue[num] );
+  num++;
+
+  fput_next_int( filewrite, "Darkening green shift ( -3 to 3 )      ", peve->addvalue[num] );
+  num++;
+
+  fput_next_int( filewrite, "Darkening blue shift ( -3 to 3 )       ", peve->addvalue[num] );
+  num++;
+
+  fput_next_int( filewrite, "Base defense increase ( -50 to 50 )    ", peve->addvalue[num] );
+  num++;
+
+  fput_next_float( filewrite, "Maximum mana increase ( -3.0 to 3.0 )  ", peve->addvalue[num] * 4.0f );
+  num++;
+
+  fput_next_float( filewrite, "Maximum life increase ( -3.0 to 3.0 )  ", peve->addvalue[num] * 4.0f );
+  num++;
+
+  fput_next_float( filewrite, "Strength boost ( -3.0 to 3.0 )         ", peve->addvalue[num] * 4.0f );
+  num++;
+
+  fput_next_float( filewrite, "Wisdom boost ( -3.0 to 3.0 )           ", peve->addvalue[num] * 4.0f );
+  num++;
+
+  fput_next_float( filewrite, "Intelligence boost ( -3.0 to 3.0 )     ", peve->addvalue[num] * 4.0f );
+  num++;
+
+  fput_next_float( filewrite, "Dexterity boost ( -3.0 to 3.0 )        ", peve->addvalue[num] * 4.0f );
+  num++;
+
+  fprintf( filewrite, "\n\n" );
+  // Write expansions
+  if ( peve->contspawnamount > 0         ) fput_next_expansion( filewrite, NULL, "AMOU", peve->contspawnamount);
+  if ( INVALID_PIP != peve->contspawnpip ) fput_next_expansion( filewrite, NULL, "TYPE", peve->contspawnpip);
+  if ( peve->contspawntime > 0           ) fput_next_expansion( filewrite, NULL, "TIME", peve->contspawntime);
+  if ( peve->contspawnfacingadd > 0      ) fput_next_expansion( filewrite, NULL, "FACE", peve->contspawnfacingadd);
+  if ( INVALID_SOUND != peve->endsound   ) fput_next_expansion( filewrite, NULL, "SEND", peve->endsound);
+  if ( peve->stayifnoowner               ) fput_next_expansion( filewrite, NULL, "STAY", peve->stayifnoowner);
+  if ( INVALID_CHR != peve->overlay      ) fput_next_expansion( filewrite, NULL, "OVER", peve->overlay);
+  if ( peve->canseekurse                 ) fput_next_expansion( filewrite, NULL, "CKUR", peve->canseekurse);
+
+  // All done ( finally )
+  fs_fileClose( filewrite );
+
+  return btrue;
+}
+
+
+
+//--------------------------------------------------------------------------------------------
+ENC_REF EveList_load_one( Game_t * gs, const char * szObjectpath, const char * szObjectname, EVE_REF irequest )
 {
   // ZZ> This function loads the enchantment associated with an object
 
@@ -713,6 +1001,7 @@ EVE_REF EveList_load_one( Game_t * gs, const char * szObjectpath, const char * s
   int iTmp;
   int num;
   IDSZ idsz;
+  STRING fname;
 
   PObj_t objlst     = gs->ObjList;
   size_t  objlst_size = OBJLST_COUNT;
@@ -738,7 +1027,8 @@ EVE_REF EveList_load_one( Game_t * gs, const char * szObjectpath, const char * s
   Eve_new(peve);
 
   globalname = szObjectname;
-  fileread = fs_fileOpen( PRI_NONE, NULL, inherit_fname(szObjectpath, szObjectname, CData.enchant_file), "r" );
+  strncpy( fname, inherit_fname(szObjectpath, szObjectname, CData.enchant_file), sizeof(fname) );
+  fileread = fs_fileOpen( PRI_NONE, NULL, fname, "r" );
   if ( NULL == fileread ) return INVALID_EVE;
 
   // btrue/bfalse values
@@ -949,6 +1239,7 @@ EVE_REF EveList_load_one( Game_t * gs, const char * szObjectpath, const char * s
   // All done ( finally )
   fs_fileClose( fileread );
 
+  strncpy( peve->loadname, fname, sizeof(peve->loadname) );
   peve->Loaded = btrue;
 
   return ieve;
@@ -1249,7 +1540,8 @@ bool_t Eve_delete( Eve_t * peve )
 
   EKEY_PINVALIDATE( peve );
 
-  peve->Loaded = bfalse;
+  peve->loadname[0] = EOS;
+  peve->Loaded      = bfalse;
 
   return btrue;
 }
@@ -1514,7 +1806,7 @@ ENC_REF enchant_value_filled( Game_t * gs, ENC_REF enchantindex, Uint8 valueinde
 void set_enchant_value( Game_t * gs, ENC_REF enchantindex, Uint8 valueindex,
                         EVE_REF enchanttype )
 {
-  // ZZ> This function sets and saves one of the ichr's stats
+  // ZZ> This function sets and saves one of the character's stats
 
   PEve_t evelst      = gs->EveList;
   size_t evelst_size = EVELST_COUNT;
@@ -1558,7 +1850,7 @@ void set_enchant_value( Game_t * gs, ENC_REF enchantindex, Uint8 valueindex,
           unset_enchant_value( gs, conflict, valueindex );
         }
       }
-      // Set the value, and save the ichr's real stat
+      // Set the value, and save the character's real stat
       ichr = penc->target;
       pchr = ChrList_getPChr(gs, ichr);
       pcap = ChrList_getPCap(gs, ichr);

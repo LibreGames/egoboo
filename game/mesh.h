@@ -137,15 +137,25 @@ typedef enum e_fan_type FAN_TYPE;
 
 struct sMeshInfo
 {
-  bool_t  exploremode;                            // Explore mode?
-  int     size_x;                                          // Size in fansquares
-  int     size_y;                                          //
-  float   edge_x;                                          // Limits !!!BAD!!!
+  bool_t  exploremode;                      // Explore mode?
+
+  int     vert_count;                       // Total mesh vertices
+
+  int     tiles_x;                          // Mesh size in tiles
+  int     tiles_y;
+  int     tile_count;
+
+  int     blocks_x;
+  int     blocks_y;
+  int     block_count;
+
+  float   edge_x;                                          // floating point size of mesh
   float   edge_y;                                          //
+
   Uint16  last_texture;                                    // Last texture used
 
-  Uint32  Block_X[( MAXMESHSIZEY/4 ) +1];
-  Uint32  Fan_X[MAXMESHSIZEY];                         // Which fan to start a row with
+  Uint32  Block_X[(MAXMESHSIZEY >> 2) +1];
+  Uint32  Tile_X[MAXMESHSIZEY];                         // Which fan to start a row with
 
   BUMPLIST bumplist;
 };
@@ -226,10 +236,10 @@ typedef struct s_mesh_tile_txbox TILE_TXBOX;
 
 extern TILE_TXBOX gTileTxBox[MAXTILETYPE];
 
-bool_t load_mesh_fans(TileDictionary_t * pdict);
-void make_fanstart(MeshInfo_t * mi);
-void make_twist();
-bool_t load_mesh( struct sGame * gs, char *modname );
+bool_t TileDictionary_load(TileDictionary_t * pdict);
+void mesh_make_fanstart(MeshInfo_t * mi);
+void mesh_make_twist();
+bool_t mesh_load( Mesh_t * pmesh, char *modname );
 
 
 bool_t mesh_calc_normal_fan( Mesh_t * pmesh, struct sPhysicsData * phys, int fan, vect3 * pnrm, vect3 * ppos );
@@ -239,7 +249,7 @@ bool_t mesh_calc_normal( Mesh_t * pmesh, struct sPhysicsData * phys, vect3 pos, 
 float mesh_get_level( MeshMem_t * mm, Uint32 fan, float x, float y, bool_t waterwalk, struct s_water_info * wi );
 
 
-Uint32 mesh_hitawall( Mesh_t * pmesh, vect3 pos, float size_x, float size_y, Uint32 collision_bits, vect3 * nrm );
+Uint32 mesh_hitawall( Mesh_t * pmesh, vect3 pos, float tiles_x, float tiles_y, Uint32 collision_bits, vect3 * nrm );
 
 INLINE const Uint32 mesh_get_fan( Mesh_t * pmesh, vect3 pos );
 INLINE const Uint32 mesh_get_block( MeshInfo_t * mi, vect3 pos );
@@ -281,4 +291,4 @@ INLINE const bool_t mesh_has_all_bits( MeshTile_t * mf_list, int fan, Uint32 bit
 
 INLINE const Uint8 mesh_get_twist( MeshTile_t * mf_list, int fan );
 
-bool_t reset_bumplist(MeshInfo_t * mi);
+bool_t mesh_reset_bumplist(MeshInfo_t * mi);

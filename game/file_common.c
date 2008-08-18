@@ -23,7 +23,7 @@
 //*
 //********************************************************************************************
 
-#include "egoboo.h"
+#include "file_common.h"
 #include "Log.h"
 
 #ifndef MAX_PATH

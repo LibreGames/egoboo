@@ -34,6 +34,7 @@
 #include "script.h"
 #include "graphic.h"
 #include "sound.h"
+#include "file_common.h"
 
 #include "Network.inl"
 #include "egoboo_strutil.h"
@@ -117,7 +118,7 @@ Uint16  chrcollisionlevel = 2;
 void flash_character_height( Game_t * gs, CHR_REF chr_ref, Uint8 valuelow, Sint16 low,
                              Uint8 valuehigh, Sint16 high )
 {
-  // ZZ> This function sets a chr_ref's lighting depending on vertex height...
+  // ZZ> This function sets a character's lighting depending on vertex height...
   //     Can make feet dark and head light...
 
   int cnt;
@@ -177,7 +178,7 @@ void flash_character_height( Game_t * gs, CHR_REF chr_ref, Uint8 valuelow, Sint1
 //--------------------------------------------------------------------------------------------
 void flash_character( Game_t * gs, CHR_REF chr_ref, Uint8 value )
 {
-  // ZZ> This function sets a chr_ref's lighting
+  // ZZ> This function sets a character's lighting
 
   PChr_t chrlst      = gs->ChrList;
   PMad_t madlst      = gs->MadList;
@@ -794,7 +795,7 @@ Chr_t * Chr_renew(Chr_t * pchr)
 Uint32 chr_hitawall( Game_t * gs, Chr_t * pchr, vect3 * norm )
 {
   // ZZ> This function returns nonzero if the character hit a wall that the
-  //     chr_ref is not allowed to cross
+  //     character is not allowed to cross
 
   Uint32 retval;
   vect3  pos, size, test_norm, tmp_norm;
@@ -968,14 +969,14 @@ bool_t detach_character_from_mount( Game_t * gs, CHR_REF chr_ref, bool_t ignorek
   Chr_t * pchr, * pmount;
   Cap_t * pcap;
 
-  // Make sure the chr_ref is valid
+  // Make sure the character is valid
   pchr = ChrList_getPChr(gs, chr_ref);
   if(NULL == pchr) return bfalse;
 
   pcap = ChrList_getPCap(gs, chr_ref);
   if(NULL == pcap) return bfalse;
 
-  // Make sure the chr_ref is mounted
+  // Make sure the character is mounted
   imount = chr_get_attachedto( chrlst, chrlst_size, chr_ref );
   if ( !ACTIVE_CHR( chrlst, imount ) ) return bfalse;
   pmount = ChrList_getPChr(gs, imount);
@@ -1413,7 +1414,7 @@ static CHR_REF pack_pop_back( ChrList_t chrlst, size_t chrlst_size, CHR_REF pack
 //--------------------------------------------------------------------------------------------
 bool_t pack_add_item( Game_t * gs, CHR_REF item_ref, CHR_REF pack_chr_ref )
 {
-  // ZZ> This function puts one pack_chr_ref inside the other's pack
+  // ZZ> This function puts one character inside the other's pack
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -1509,7 +1510,7 @@ CHR_REF pack_get_item( Game_t * gs, CHR_REF pack_chr_ref, SLOT slot, bool_t igno
 
   CHR_REF item;
 
-  // dose the pack_chr_ref exist?
+  // dose the pack character exist?
   if ( !ACTIVE_CHR( chrlst, pack_chr_ref ) )
     return INVALID_CHR;
 
@@ -1533,7 +1534,7 @@ CHR_REF pack_get_item( Game_t * gs, CHR_REF pack_chr_ref, SLOT slot, bool_t igno
   }
   else
   {
-    // Attach the item to the pack_chr_ref's hand
+    // Attach the item to the pack character's hand
     attach_character_to_mount( gs, item, pack_chr_ref, slot );
 
     // fix some item values
@@ -1548,7 +1549,7 @@ CHR_REF pack_get_item( Game_t * gs, CHR_REF pack_chr_ref, SLOT slot, bool_t igno
 //--------------------------------------------------------------------------------------------
 void drop_keys( Game_t * gs, CHR_REF chr_ref )
 {
-  // ZZ> This function drops all keys ( [KEYA] to [KEYZ] ) that are in a chr_ref's
+  // ZZ> This function drops all keys ( [KEYA] to [KEYZ] ) that are in a character's
   //     inventory ( Not hands ).
 
   PChr_t chrlst      = gs->ChrList;
@@ -3026,6 +3027,34 @@ bool_t chr_do_physics( Game_t * gs, Chr_t * pchr, ChrEnviro_t * enviro, float dU
 }
 
 //--------------------------------------------------------------------------------------------
+bool_t chr_check_passages(Game_t * gs, CHR_REF ichr)
+{
+  // BB> automatically signal passages when someone enters or leaves
+
+  int cnt;
+  PASS_REF ipass;
+
+  // don't check stationary objects
+  if( (gs->ChrList[ichr].ori.pos.x == gs->ChrList[ichr].ori_old.pos.x ) && 
+      (gs->ChrList[ichr].ori.pos.y == gs->ChrList[ichr].ori_old.pos.y ) )
+      return bfalse;
+
+  
+  if( INVALID_CHR == gs->ChrList[ichr].passage ) return bfalse;
+
+  ipass = gs->ChrList[ichr].passage;
+  for ( cnt = 0; cnt < gs->PassList_count; cnt++ )
+  {
+    // don't check for your own passage
+    if(cnt == ipass) continue;
+
+    passage_check( gs, ichr, cnt, NULL );
+  };
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
 void move_characters( Game_t * gs, float dUpdate )
 {
   // ZZ> This function handles character physics
@@ -3076,6 +3105,7 @@ void move_characters( Game_t * gs, float dUpdate )
 
     chr_do_animation(gs, dUpdate, chr_ref, &enviro, &loc_rand);
 
+    chr_check_passages( gs, chr_ref );
 
     // Down the jump timer if we are on a valid surface
     pchr->jumptime  -= dUpdate;
@@ -3723,7 +3753,7 @@ void fill_bumplists(Game_t * gs)
   Uint8   hidestate;
 
   // Clear the lists
-  reset_bumplist(mi);
+  mesh_reset_bumplist(mi);
 
   // Fill 'em back up
   for ( chr_ref = 0; chr_ref < chrlst_size; chr_ref++ )
@@ -5144,7 +5174,7 @@ void do_bumping( Game_t * gs, float dUpdate )
                   if ( pchra->damagetime == 0 && prt_attached != ichra && HAS_NO_BITS( piplst[pip].damfx, DAMFX_ARRO ) )
                   {
 
-                    // Normal iprtb damage
+                    // Normal particle damage
                     if ( piplst[pip].allowpush )
                     {
                       float ftmp = 0.2;
@@ -5279,7 +5309,7 @@ void do_bumping( Game_t * gs, float dUpdate )
 
                   if ( 0 == ( ups_loops & 31 ) && prt_attached == ichra )
                   {
-                    // Attached iprtb damage ( Burning )
+                    // Attached particle damage ( Burning )
                     if ( piplst[pip].xyvel.ibase == 0 )
                     {
                       // Make character limp
@@ -5754,7 +5784,7 @@ void export_one_character_name( Game_t * gs, char *szSaveName, CHR_REF chr_ref )
 }
 
 //--------------------------------------------------------------------------------------------
-void export_one_character_profile( Game_t * gs, char *szSaveName, CHR_REF ichr )
+void CapList_save_one( Game_t * gs, char *szSaveName, CHR_REF ichr )
 {
   // ZZ> This function creates a "DATA.TXT" file for the given character.
   //     it is assumed that all enchantments have been done away with
@@ -5798,77 +5828,80 @@ void export_one_character_profile( Game_t * gs, char *szSaveName, CHR_REF ichr )
   if ( NULL == filewrite ) return;
 
   // Real general data
-  fprintf( filewrite, "Slot number    : -1\n" );   // -1 signals a flexible load thing
-  funderf( filewrite, "Class name     : ", pcap->classname );
-  ftruthf( filewrite, "Uniform light  : ", pcap->uniformlit );
-  fprintf( filewrite, "Maximum ammo   : %d\n", pcap->ammomax );
-  fprintf( filewrite, "Current ammo   : %d\n", pcap->ammo );
-  fgendef( filewrite, "Gender         : ", pcap->gender );
+  fput_next_int   ( filewrite, "Slot number    ", -1 );   // -1 signals a flexible load thing
+  fput_next_name  ( filewrite, "Class name     ", pcap->classname );
+  fput_next_bool  ( filewrite, "Uniform light  ", pcap->uniformlit );
+  fput_next_int   ( filewrite, "Maximum ammo   ", pcap->ammomax );
+  fput_next_int   ( filewrite, "Current ammo   ", pcap->ammo );
+  fput_next_gender( filewrite, "Gender         ", pcap->gender );
   fprintf( filewrite, "\n" );
 
   // Object stats
-  fprintf( filewrite, "Life color     : %d\n", pcap->lifecolor );
-  fprintf( filewrite, "Mana color     : %d\n", pcap->manacolor );
-  fprintf( filewrite, "Life           : %4.2f\n", FP8_TO_FLOAT( pchr->stats.lifemax_fp8 ) );
-  fpairof( filewrite, "Life up        : ", &pcap->statdata.lifeperlevel_pair );
-  fprintf( filewrite, "Mana           : %4.2f\n", FP8_TO_FLOAT( pchr->stats.manamax_fp8 ) );
-  fpairof( filewrite, "Mana up        : ", &pcap->statdata.manaperlevel_pair );
-  fprintf( filewrite, "Mana return    : %4.2f\n", FP8_TO_FLOAT( pchr->stats.manareturn_fp8 ) );
-  fpairof( filewrite, "Mana return up : ", &pcap->statdata.manareturnperlevel_pair );
-  fprintf( filewrite, "Mana flow      : %4.2f\n", FP8_TO_FLOAT( pchr->stats.manaflow_fp8 ) );
-  fpairof( filewrite, "Mana flow up   : ", &pcap->statdata.manaflowperlevel_pair );
-  fprintf( filewrite, "STR            : %4.2f\n", FP8_TO_FLOAT( pchr->stats.strength_fp8 ) );
-  fpairof( filewrite, "STR up         : ", &pcap->statdata.strengthperlevel_pair );
-  fprintf( filewrite, "WIS            : %4.2f\n", FP8_TO_FLOAT( pchr->stats.wisdom_fp8 ) );
-  fpairof( filewrite, "WIS up         : ", &pcap->statdata.wisdomperlevel_pair );
-  fprintf( filewrite, "INT            : %4.2f\n", FP8_TO_FLOAT( pchr->stats.intelligence_fp8 ) );
-  fpairof( filewrite, "INT up         : ", &pcap->statdata.intelligenceperlevel_pair );
-  fprintf( filewrite, "DEX            : %4.2f\n", FP8_TO_FLOAT( pchr->stats.dexterity_fp8 ) );
-  fpairof( filewrite, "DEX up         : ", &pcap->statdata.dexterityperlevel_pair );
+  fput_next_int  ( filewrite, "Life color     ", pcap->lifecolor );
+  fput_next_int  ( filewrite, "Mana color     ", pcap->manacolor );
+  fput_next_float( filewrite, "Life           ", FP8_TO_FLOAT( pchr->stats.lifemax_fp8 ) );
+  fput_next_pair ( filewrite, "Life up        ", &pcap->statdata.lifeperlevel_pair );
+  fput_next_float( filewrite, "Mana           ", FP8_TO_FLOAT( pchr->stats.manamax_fp8 ) );
+  fput_next_pair ( filewrite, "Mana up        ", &pcap->statdata.manaperlevel_pair );
+  fput_next_float( filewrite, "Mana return    ", FP8_TO_FLOAT( pchr->stats.manareturn_fp8 ) );
+  fput_next_pair ( filewrite, "Mana return up ", &pcap->statdata.manareturnperlevel_pair );
+  fput_next_float( filewrite, "Mana flow      ", FP8_TO_FLOAT( pchr->stats.manaflow_fp8 ) );
+  fput_next_pair ( filewrite, "Mana flow up   ", &pcap->statdata.manaflowperlevel_pair );
+  fput_next_float( filewrite, "STR            ", FP8_TO_FLOAT( pchr->stats.strength_fp8 ) );
+  fput_next_pair ( filewrite, "STR up         ", &pcap->statdata.strengthperlevel_pair );
+  fput_next_float( filewrite, "WIS            ", FP8_TO_FLOAT( pchr->stats.wisdom_fp8 ) );
+  fput_next_pair ( filewrite, "WIS up         ", &pcap->statdata.wisdomperlevel_pair );
+  fput_next_float( filewrite, "INT            ", FP8_TO_FLOAT( pchr->stats.intelligence_fp8 ) );
+  fput_next_pair ( filewrite, "INT up         ", &pcap->statdata.intelligenceperlevel_pair );
+  fput_next_float( filewrite, "DEX            ", FP8_TO_FLOAT( pchr->stats.dexterity_fp8 ) );
+  fput_next_pair ( filewrite, "DEX up         ", &pcap->statdata.dexterityperlevel_pair );
   fprintf( filewrite, "\n" );
 
   // More physical attributes
-  fprintf( filewrite, "Size           : %4.2f\n", pchr->sizegoto );
-  fprintf( filewrite, "Size up        : %4.2f\n", pcap->sizeperlevel );
-  fprintf( filewrite, "Shadow size    : %d\n", pcap->shadowsize );
-  fprintf( filewrite, "Bump size      : %d\n", pcap->bumpsize );
-  fprintf( filewrite, "Bump height    : %d\n", pcap->bumpheight );
-  fprintf( filewrite, "Bump dampen    : %4.2f\n", pcap->bumpdampen );
-  fprintf( filewrite, "Weight         : %d\n", pcap->weight < 0.0f ? 0xFF : ( Uint8 ) pcap->weight );
-  fprintf( filewrite, "Jump power     : %4.2f\n", pcap->jump );
-  fprintf( filewrite, "Jump number    : %d\n", pcap->jumpnumber );
-  fprintf( filewrite, "Sneak speed    : %d\n", pcap->spd_sneak );
-  fprintf( filewrite, "Walk speed     : %d\n", pcap->spd_walk );
-  fprintf( filewrite, "Run speed      : %d\n", pcap->spd_run );
-  fprintf( filewrite, "Fly to height  : %d\n", pcap->flyheight );
-  fprintf( filewrite, "Flashing AND   : %d\n", pcap->flashand );
-  fprintf( filewrite, "Alpha blending : %d\n", pcap->alpha_fp8 );
-  fprintf( filewrite, "Light blending : %d\n", pcap->light_fp8 );
-  ftruthf( filewrite, "Transfer blend : ", pcap->transferblend );
-  fprintf( filewrite, "Sheen          : %d\n", pcap->sheen_fp8 );
-  ftruthf( filewrite, "Phong mapping  : ", pcap->enviro );
-  fprintf( filewrite, "Texture X add  : %4.2f\n", pcap->uoffvel / (float)UINT16_SIZE );
-  fprintf( filewrite, "Texture Y add  : %4.2f\n", pcap->voffvel / (float)UINT16_SIZE );
-  ftruthf( filewrite, "Sticky butt    : ", pcap->prop.stickybutt );
+  fput_next_float( filewrite, "Size           ", pchr->sizegoto );
+  fput_next_float( filewrite, "Size up        ", pcap->sizeperlevel );
+  fput_next_int  ( filewrite, "Shadow size    ", pcap->shadowsize );
+  fput_next_int  ( filewrite, "Bump size      ", pcap->bumpsize );
+  fput_next_int  ( filewrite, "Bump height    ", pcap->bumpheight );
+  fput_next_float( filewrite, "Bump dampen    ", pcap->bumpdampen );
+  fput_next_int  ( filewrite, "Weight         ", pcap->weight < 0.0f ? 0xFF : ( Uint8 ) pcap->weight );
+  fput_next_float( filewrite, "Jump power     ", pcap->jump );
+  fput_next_int  ( filewrite, "Jump number    ", pcap->jumpnumber );
+  fput_next_int  ( filewrite, "Sneak speed    ", pcap->spd_sneak );
+  fput_next_int  ( filewrite, "Walk speed     ", pcap->spd_walk );
+  fput_next_int  ( filewrite, "Run speed      ", pcap->spd_run );
+  fput_next_int  ( filewrite, "Fly to height  ", pcap->flyheight );
+  fput_next_int  ( filewrite, "Flashing AND   ", pcap->flashand );
+  fput_next_int  ( filewrite, "Alpha blending ", pcap->alpha_fp8 );
+  fput_next_int  ( filewrite, "Light blending ", pcap->light_fp8 );
+  fput_next_bool ( filewrite, "Transfer blend ", pcap->transferblend );
+  fput_next_int  ( filewrite, "Sheen          ", pcap->sheen_fp8 );
+  fput_next_bool ( filewrite, "Phong mapping  ", pcap->enviro );
+  fput_next_float( filewrite, "Texture X add  ", pcap->uoffvel / (float)UINT16_SIZE );
+  fput_next_float( filewrite, "Texture Y add  ", pcap->voffvel / (float)UINT16_SIZE );
+  fput_next_bool ( filewrite, "Sticky butt    ", pcap->prop.stickybutt );
   fprintf( filewrite, "\n" );
 
   // Invulnerability data
-  ftruthf( filewrite, "Invictus       : ", pcap->prop.invictus );
-  fprintf( filewrite, "NonI facing    : %d\n", pcap->nframefacing );
-  fprintf( filewrite, "NonI angle     : %d\n", pcap->nframeangle );
-  fprintf( filewrite, "I facing       : %d\n", pcap->iframefacing );
-  fprintf( filewrite, "I angle        : %d\n", pcap->iframeangle );
+  fput_next_bool( filewrite, "Invictus       ", pcap->prop.invictus );
+  fput_next_int ( filewrite, "NonI facing    ", pcap->nframefacing );
+  fput_next_int ( filewrite, "NonI angle     ", pcap->nframeangle );
+  fput_next_int ( filewrite, "I facing       ", pcap->iframefacing );
+  fput_next_int ( filewrite, "I angle        ", pcap->iframeangle );
   fprintf( filewrite, "\n" );
 
   // Skin defenses
-  fprintf( filewrite, "Base defense   : " );
+  fput_next( filewrite, "Base defense   " );
   for ( iskin = 0; iskin < MAXSKIN; iskin++ ) { fprintf( filewrite, "%3d ", 255 - pcap->skin[iskin].defense_fp8 ); }
   fprintf( filewrite, "\n" );
 
   for ( damagetype = 0; damagetype < MAXDAMAGETYPE; damagetype++ )
   {
     fprintf( filewrite, "%c damage shift :", types[damagetype] );
-    for ( iskin = 0; iskin < MAXSKIN; iskin++ ) { fprintf( filewrite, "%3d ", pcap->skin[iskin].damagemodifier_fp8[damagetype]&DAMAGE_SHIFT ); };
+    for ( iskin = 0; iskin < MAXSKIN; iskin++ ) 
+    { 
+      fput_damage_modifier_shift( filewrite, pcap->skin[iskin].damagemodifier_fp8[damagetype] ); 
+    };
     fprintf( filewrite, "\n" );
   }
 
@@ -5877,169 +5910,167 @@ void export_one_character_profile( Game_t * gs, char *szSaveName, CHR_REF ichr )
     fprintf( filewrite, "%c damage code  : ", types[damagetype] );
     for ( iskin = 0; iskin < MAXSKIN; iskin++ )
     {
-      codes[iskin] = 'F';
-      if ( pcap->skin[iskin].damagemodifier_fp8[damagetype] & DAMAGE_CHARGE ) codes[iskin] = 'C';
-      if ( pcap->skin[iskin].damagemodifier_fp8[damagetype] & DAMAGE_INVERT ) codes[iskin] = 'T';
-      if ( pcap->skin[iskin].damagemodifier_fp8[damagetype] & DAMAGE_MANA   ) codes[iskin] = 'M';
-      fprintf( filewrite, "%3c ", codes[iskin] );
+      fput_damage_modifier_char(filewrite, pcap->skin[iskin].damagemodifier_fp8[damagetype]);
     }
     fprintf( filewrite, "\n" );
   }
 
-  fprintf( filewrite, "Acceleration   : " );
+  fput_next( filewrite, "Acceleration   " );
   for ( iskin = 0; iskin < MAXSKIN; iskin++ )
   {
-    fprintf( filewrite, "%3.0f ", pcap->skin[iskin].maxaccel*80 );
+    fput_float( filewrite, pcap->skin[iskin].maxaccel*80 );
   }
   fprintf( filewrite, "\n" );
 
   // Experience and level data
-  fprintf( filewrite, "EXP for 2nd    : %d\n", pcap->experienceforlevel[1] );
-  fprintf( filewrite, "EXP for 3rd    : %d\n", pcap->experienceforlevel[2] );
-  fprintf( filewrite, "EXP for 4th    : %d\n", pcap->experienceforlevel[3] );
-  fprintf( filewrite, "EXP for 5th    : %d\n", pcap->experienceforlevel[4] );
-  fprintf( filewrite, "EXP for 6th    : %d\n", pcap->experienceforlevel[5] );
-  fprintf( filewrite, "Starting EXP   : %d\n", pcap->experience );
-  fprintf( filewrite, "EXP worth      : %d\n", pcap->experienceworth );
-  fprintf( filewrite, "EXP exchange   : %5.3f\n", pcap->experienceexchange );
-  fprintf( filewrite, "EXPSECRET      : %4.2f\n", pcap->experiencerate[0] );
-  fprintf( filewrite, "EXPQUEST       : %4.2f\n", pcap->experiencerate[1] );
-  fprintf( filewrite, "EXPDARE        : %4.2f\n", pcap->experiencerate[2] );
-  fprintf( filewrite, "EXPKILL        : %4.2f\n", pcap->experiencerate[3] );
-  fprintf( filewrite, "EXPMURDER      : %4.2f\n", pcap->experiencerate[4] );
-  fprintf( filewrite, "EXPREVENGE     : %4.2f\n", pcap->experiencerate[5] );
-  fprintf( filewrite, "EXPTEAMWORK    : %4.2f\n", pcap->experiencerate[6] );
-  fprintf( filewrite, "EXPROLEPLAY    : %4.2f\n", pcap->experiencerate[7] );
+  fput_next_int  ( filewrite, "EXP for 2nd    ", pcap->experienceforlevel[1] );
+  fput_next_int  ( filewrite, "EXP for 3rd    ", pcap->experienceforlevel[2] );
+  fput_next_int  ( filewrite, "EXP for 4th    ", pcap->experienceforlevel[3] );
+  fput_next_int  ( filewrite, "EXP for 5th    ", pcap->experienceforlevel[4] );
+  fput_next_int  ( filewrite, "EXP for 6th    ", pcap->experienceforlevel[5] );
+  fput_next_pair ( filewrite, "Starting EXP   ", &pcap->experience );
+  fput_next_int  ( filewrite, "EXP worth      ", pcap->experienceworth );
+  fput_next_float( filewrite, "EXP exchange   ", pcap->experienceexchange );
+  fput_next_float( filewrite, "EXPSECRET      ", pcap->experiencerate[0] );
+  fput_next_float( filewrite, "EXPQUEST       ", pcap->experiencerate[1] );
+  fput_next_float( filewrite, "EXPDARE        ", pcap->experiencerate[2] );
+  fput_next_float( filewrite, "EXPKILL        ", pcap->experiencerate[3] );
+  fput_next_float( filewrite, "EXPMURDER      ", pcap->experiencerate[4] );
+  fput_next_float( filewrite, "EXPREVENGE     ", pcap->experiencerate[5] );
+  fput_next_float( filewrite, "EXPTEAMWORK    ", pcap->experiencerate[6] );
+  fput_next_float( filewrite, "EXPROLEPLAY    ", pcap->experiencerate[7] );
   fprintf( filewrite, "\n" );
 
   // IDSZ identification tags
-  fprintf( filewrite, "IDSZ Parent    : [%s]\n", undo_idsz( pcap->idsz[0] ) );
-  fprintf( filewrite, "IDSZ Type      : [%s]\n", undo_idsz( pcap->idsz[1] ) );
-  fprintf( filewrite, "IDSZ Skill     : [%s]\n", undo_idsz( pcap->idsz[2] ) );
-  fprintf( filewrite, "IDSZ Special   : [%s]\n", undo_idsz( pcap->idsz[3] ) );
-  fprintf( filewrite, "IDSZ Hate      : [%s]\n", undo_idsz( pcap->idsz[4] ) );
-  fprintf( filewrite, "IDSZ Vulnie    : [%s]\n", undo_idsz( pcap->idsz[5] ) );
+  fput_next_idsz( filewrite, "IDSZ Parent    ", pcap->idsz[0]);
+  fput_next_idsz( filewrite, "IDSZ Type      ", pcap->idsz[1]);
+  fput_next_idsz( filewrite, "IDSZ Skill     ", pcap->idsz[2]);
+  fput_next_idsz( filewrite, "IDSZ Special   ", pcap->idsz[3]);
+  fput_next_idsz( filewrite, "IDSZ Hate      ", pcap->idsz[4]);
+  fput_next_idsz( filewrite, "IDSZ Vulnie    ", pcap->idsz[5]);
   fprintf( filewrite, "\n" );
 
   // Item and damage flags
-  ftruthf( filewrite, "Is an item     : ", pcap->prop.isitem );
-  ftruthf( filewrite, "Is a mount     : ", pcap->prop.ismount );
-  ftruthf( filewrite, "Is stackable   : ", pcap->prop.isstackable );
-  ftruthf( filewrite, "Name known     : ", pcap->prop.nameknown );
-  ftruthf( filewrite, "Usage known    : ", pcap->prop.usageknown );
-  ftruthf( filewrite, "Is exportable  : ", pcap->cancarrytonextmodule );
-  ftruthf( filewrite, "Requires skill : ", pcap->needskillidtouse );
-  ftruthf( filewrite, "Is platform    : ", pcap->prop.isplatform );
-  ftruthf( filewrite, "Collects money : ", pcap->prop.cangrabmoney );
-  ftruthf( filewrite, "Can open stuff : ", pcap->prop.canopenstuff );
+  fput_next_bool( filewrite, "Is an item     ", pcap->prop.isitem );
+  fput_next_bool( filewrite, "Is a mount     ", pcap->prop.ismount );
+  fput_next_bool( filewrite, "Is stackable   ", pcap->prop.isstackable );
+  fput_next_bool( filewrite, "Name known     ", pcap->prop.nameknown );
+  fput_next_bool( filewrite, "Usage known    ", pcap->prop.usageknown );
+  fput_next_bool( filewrite, "Is exportable  ", pcap->cancarrytonextmodule );
+  fput_next_bool( filewrite, "Requires skill ", pcap->needskillidtouse );
+  fput_next_bool( filewrite, "Is platform    ", pcap->prop.isplatform );
+  fput_next_bool( filewrite, "Collects money ", pcap->prop.cangrabmoney );
+  fput_next_bool( filewrite, "Can open stuff ", pcap->prop.canopenstuff );
   fprintf( filewrite, "\n" );
 
   // Other item and damage stuff
-  fdamagf( filewrite, "Damage type    : ", pcap->damagetargettype );
-  factiof( filewrite, "Attack type    : ", pcap->weaponaction );
+  fput_next_damage( filewrite, "Damage type    ", pcap->damagetargettype );
+  fput_next_action( filewrite, "Attack type    ", pcap->weaponaction );
   fprintf( filewrite, "\n" );
 
   // Particle attachments
-  fprintf( filewrite, "Attached parts : %d\n", pcap->attachedprtamount );
-  fdamagf( filewrite, "Reaffirm type  : ", pcap->attachedprtreaffirmdamagetype );
-  fprintf( filewrite, "Particle type  : %d\n", pcap->attachedprttype );
-  fprintf( filewrite, "\n" );
+  fput_next_int   ( filewrite, "Attached parts ", pcap->attachedprtamount );
+  fput_next_damage( filewrite, "Reaffirm type  ", pcap->attachedprtreaffirmdamagetype );
+  fput_next_int   ( filewrite, "Particle type  ", pcap->attachedprttype );
+  fprintf ( filewrite, "\n" );
 
   // Character hands
-  ftruthf( filewrite, "Left valid     : ", pcap->slotvalid[SLOT_LEFT] );
-  ftruthf( filewrite, "Right valid    : ", pcap->slotvalid[SLOT_RIGHT] );
+  fput_next_bool( filewrite, "Left valid     ", pcap->slotvalid[SLOT_LEFT] );
+  fput_next_bool( filewrite, "Right valid    ", pcap->slotvalid[SLOT_RIGHT] );
   fprintf( filewrite, "\n" );
 
   // Particle spawning on attack
-  ftruthf( filewrite, "Part on weapon : ", pcap->attackattached );
-  fprintf( filewrite, "Part type      : %d\n", pcap->attackprttype );
+  fput_next_bool( filewrite, "Part on weapon ", pcap->attackattached );
+  fput_next_int ( filewrite, "Part type      ", pcap->attackprttype );
   fprintf( filewrite, "\n" );
 
   // Particle spawning for GoPoof
-  fprintf( filewrite, "Poof amount    : %d\n", pcap->gopoofprtamount );
-  fprintf( filewrite, "Facing add     : %d\n", pcap->gopoofprtfacingadd );
-  fprintf( filewrite, "Part type      : %d\n", pcap->gopoofprttype );
+  fput_next_int( filewrite, "Poof amount    ", pcap->gopoofprtamount );
+  fput_next_int( filewrite, "Facing add     ", pcap->gopoofprtfacingadd );
+  fput_next_int( filewrite, "Part type      ", pcap->gopoofprttype );
   fprintf( filewrite, "\n" );
 
   // Particle spawning for blud
-  ftruthf( filewrite, "Blud valid    : ", BLUD_NONE != pcap->bludlevel );
-  fprintf( filewrite, "Part type      : %d\n", pcap->bludprttype );
+  fput_next_blud( filewrite, "Blud valid    ", pcap->bludlevel );
+  fput_next_int ( filewrite, "Part type     ", pcap->bludprttype );
   fprintf( filewrite, "\n" );
 
   // Extra stuff
-  ftruthf( filewrite, "Waterwalking   : ", pcap->prop.waterwalk );
-  fprintf( filewrite, "Bounce dampen  : %5.3f\n", pcap->dampen );
+  fput_next_bool ( filewrite, "Waterwalking   ", pcap->prop.waterwalk );
+  fput_next_float( filewrite, "Bounce dampen  ", pcap->dampen );
   fprintf( filewrite, "\n" );
 
   // More stuff
-  fprintf( filewrite, "Life healing   : %5.3f\n", FP8_TO_FLOAT( pcap->statdata.lifeheal_fp8 ) );
-  fprintf( filewrite, "Mana cost      : %5.3f\n", FP8_TO_FLOAT( pcap->manacost_fp8 ) );
-  fprintf( filewrite, "Life return    : %d\n", pcap->statdata.lifereturn_fp8 );
-  fprintf( filewrite, "Stopped by     : %d\n", pcap->stoppedby );
+  fput_next_float( filewrite, "Life healing   ", FP8_TO_FLOAT( pcap->statdata.lifeheal_fp8 ) );
+  fput_next_float( filewrite, "Mana cost      ", FP8_TO_FLOAT( pcap->manacost_fp8 ) );
+  fput_next_int  ( filewrite, "Life return    ", pcap->statdata.lifereturn_fp8 );
+  fput_next_int  ( filewrite, "Stopped by     ", pcap->stoppedby );
 
   for ( iskin = 0; iskin < MAXSKIN; iskin++ )
   {
     STRING stmp;
-    snprintf( stmp, sizeof( stmp ), "Skin %d name    : ", iskin );
-    funderf( filewrite, stmp, pcap->skin[iskin].name );
+    snprintf( stmp, sizeof( stmp ), "Skin %d name    ", iskin );
+    fput_next_name( filewrite, stmp, pcap->skin[iskin].name );
   };
 
   for ( iskin = 0; iskin < MAXSKIN; iskin++ )
   {
-    fprintf( filewrite, "Skin %d cost    : %d\n", iskin, pcap->skin[iskin].cost );
+    STRING stmp;
+    snprintf( stmp, sizeof( stmp ), "Skin %d cost    ", iskin );
+    fput_next_int( filewrite, stmp, pcap->skin[iskin].cost );
   };
 
-  fprintf( filewrite, "STR dampen     : %5.3f\n", pcap->strengthdampen );
+  fput_next_float( filewrite, "STR dampen     ", pcap->strengthdampen );
   fprintf( filewrite, "\n" );
 
   // Another memory lapse
-  ftruthf( filewrite, "No rider attak : ", !pcap->prop.ridercanattack );
-  ftruthf( filewrite, "Can be dazed   : ", pcap->prop.canbedazed );
-  ftruthf( filewrite, "Can be grogged : ", pcap->prop.canbegrogged );
-  fprintf( filewrite, "NOT USED       : 0\n" );
-  fprintf( filewrite, "NOT USED       : 0\n" );
-  ftruthf( filewrite, "Can see invisi : ", pcap->prop.canseeinvisible );
-  fprintf( filewrite, "Kursed chance  : %d\n", pchr->prop.iskursed*100 );
-  fprintf( filewrite, "Footfall sound : %d\n", pcap->footfallsound );
-  fprintf( filewrite, "Jump sound     : %d\n", pcap->jumpsound );
+  fput_next_bool( filewrite, "No rider attak ", !pcap->prop.ridercanattack );
+  fput_next_bool( filewrite, "Can be dazed   ", pcap->prop.canbedazed );
+  fput_next_bool( filewrite, "Can be grogged ", pcap->prop.canbegrogged );
+  fput_next_int ( filewrite, "NOT USED       ", 0 );
+  fput_next_int ( filewrite, "NOT USED       ", 0 );
+  fput_next_bool( filewrite, "Can see invisi ", pcap->prop.canseeinvisible );
+  fput_next_int ( filewrite, "Kursed chance  ", pchr->prop.iskursed*100 );
+  fput_next_int ( filewrite, "Footfall sound ", pcap->footfallsound );
+  fput_next_int ( filewrite, "Jump sound     ", pcap->jumpsound );
   fprintf( filewrite, "\n" );
 
   // Expansions
-  fprintf( filewrite, ":[GOLD] %d\n", pcap->money );
+  fput_next_expansion( filewrite, NULL, "GOLD", pcap->money );
 
-  if ( pcap->skindressy&1 ) fprintf( filewrite, ":[DRES] 0\n" );
-  if ( pcap->skindressy&2 ) fprintf( filewrite, ":[DRES] 1\n" );
-  if ( pcap->skindressy&4 ) fprintf( filewrite, ":[DRES] 2\n" );
-  if ( pcap->skindressy&8 ) fprintf( filewrite, ":[DRES] 3\n" );
-  if ( pcap->prop.resistbumpspawn ) fprintf( filewrite, ":[STUK] 0\n" );
-  if ( pcap->prop.istoobig ) fprintf( filewrite, ":[PACK] 0\n" );
-  if ( !pcap->prop.reflect ) fprintf( filewrite, ":[VAMP] 1\n" );
-  if ( pcap->prop.alwaysdraw ) fprintf( filewrite, ":[DRAW] 1\n" );
-  if ( pcap->prop.isranged ) fprintf( filewrite, ":[RANG] 1\n" );
-  if ( pcap->hidestate != NOHIDE ) fprintf( filewrite, ":[HIDE] %d\n", pcap->hidestate );
-  if ( pcap->prop.isequipment ) fprintf( filewrite, ":[EQUI] 1\n" );
-  if ( pcap->bumpsizebig >= pcap->bumpsize ) fprintf( filewrite, ":[SQUA] 1\n" );
-  if ( pcap->prop.icon != pcap->prop.usageknown ) fprintf( filewrite, ":[ICON] %d\n", pcap->prop.icon );
-  if ( pcap->prop.forceshadow ) fprintf( filewrite, ":[SHAD] 1\n" );
+  if ( pcap->skindressy&1                       ) fput_next_expansion( filewrite, "Skin is dressy   ", "DRES", 0 );
+  if ( pcap->skindressy&2                       ) fput_next_expansion( filewrite, "Skin is dressy   ", "DRES", 1 );
+  if ( pcap->skindressy&4                       ) fput_next_expansion( filewrite, "Skin is dressy   ", "DRES", 2 );
+  if ( pcap->skindressy&8                       ) fput_next_expansion( filewrite, "Skin is dressy   ", "DRES", 3 );
+  if ( pcap->prop.resistbumpspawn               ) fput_next_expansion( filewrite, "Don't burn       ", "STUK", 0 );
+  if ( pcap->prop.istoobig                      ) fput_next_expansion( filewrite, "Too big fo a pack", "PACK", 0 );
+  if ( !pcap->prop.reflect                      ) fput_next_expansion( filewrite, "Draw reflection  ", "VAMP", 1 );
+  if ( pcap->prop.alwaysdraw                    ) fput_next_expansion( filewrite, "Always draw      ", "DRAW", 1 );
+  if ( pcap->prop.isranged                      ) fput_next_expansion( filewrite, "Is Ranged weapon ", "RANG", 1 );
+  if ( pcap->hidestate != NOHIDE                ) fput_next_expansion( filewrite, "Hide if          ", "HIDE", pcap->hidestate );
+  if ( pcap->prop.isequipment                   ) fput_next_expansion( filewrite, "Is equipment     ", "EQUI", 1 );
+  if ( pcap->bumpsizebig >= pcap->bumpsize      ) fput_next_expansion( filewrite, "Is square        ", "SQUA", 1 );
+  if ( pcap->prop.icon != pcap->prop.usageknown ) fput_next_expansion( filewrite, "Show icon        ", "ICON", pcap->prop.icon );
+  if ( pcap->prop.forceshadow                   ) fput_next_expansion( filewrite, "Require shadow   ", "SHAD", 1 );
 
   //Skill expansions
-  if ( pcap->prop.canseekurse )  fprintf( filewrite, ":[CKUR] 1\n" );
-  if ( pcap->prop.canusearcane ) fprintf( filewrite, ":[WMAG] 1\n" );
-  if ( pcap->prop.canjoust )     fprintf( filewrite, ":[JOUS] 1\n" );
-  if ( pcap->prop.canusedivine ) fprintf( filewrite, ":[HMAG] 1\n" );
-  if ( pcap->prop.candisarm )    fprintf( filewrite, ":[DISA] 1\n" );
-  if ( pcap->prop.canusetech )   fprintf( filewrite, ":[TECH] 1\n" );
-  if ( pcap->prop.canbackstab )  fprintf( filewrite, ":[STAB] 1\n" );
-  if ( pcap->prop.canuseadvancedweapons ) fprintf( filewrite, ":[AWEP] 1\n" );
-  if ( pcap->prop.canusepoison ) fprintf( filewrite, ":[POIS] 1\n" );
-  if ( pcap->prop.canread )  fprintf( filewrite, ":[READ] 1\n" );
+  if ( pcap->prop.canseekurse           ) fput_next_expansion( filewrite, "Can see kurse           ", "CKUR", 1 );
+  if ( pcap->prop.canusearcane          ) fput_next_expansion( filewrite, "Can use arcane          ", "WMAG", 1 );
+  if ( pcap->prop.canjoust              ) fput_next_expansion( filewrite, "Can joust               ", "JOUS", 1 );
+  if ( pcap->prop.canusedivine          ) fput_next_expansion( filewrite, "Can use divine          ", "HMAG", 1 );
+  if ( pcap->prop.candisarm             ) fput_next_expansion( filewrite, "Can disarm              ", "DISA", 1 );
+  if ( pcap->prop.canusetech            ) fput_next_expansion( filewrite, "Can use technology      ", "TECH", 1 );
+  if ( pcap->prop.canbackstab           ) fput_next_expansion( filewrite, "Can backstab            ", "STAB", 1 );
+  if ( pcap->prop.canuseadvancedweapons ) fput_next_expansion( filewrite, "Can use advanced weapons", "AWEP", 1 );
+  if ( pcap->prop.canusepoison          ) fput_next_expansion( filewrite, "Can use poison          ", "POIS", 1 );
+  if ( pcap->prop.canread               ) fput_next_expansion( filewrite, "Can read                ", "READ", 1 );
 
-  //General exported ichr information
-  fprintf( filewrite, ":[PLAT] %d\n", pcap->prop.canuseplatforms );
-  fprintf( filewrite, ":[SKIN] %d\n", pchr->skin_ref % MAXSKIN );
-  fprintf( filewrite, ":[CONT] %d\n", pchr->aistate.content );
-  fprintf( filewrite, ":[STAT] %d\n", pchr->aistate.state );
-  fprintf( filewrite, ":[LEVL] %d\n", pchr->experiencelevel );
+  //General exported character information
+  fput_next_expansion( filewrite, "Can use platforms", "PLAT",  pcap->prop.canuseplatforms );
+  fput_next_expansion( filewrite, "Which skin       ", "SKIN",  pchr->skin_ref % MAXSKIN );
+  fput_next_expansion( filewrite, "AI content       ", "CONT",  pchr->aistate.content );
+  fput_next_expansion( filewrite, "AI state         ", "STAT",  pchr->aistate.state );
+  fput_next_expansion( filewrite, "Experience level ", "LEVL",  pchr->experiencelevel );
   fs_fileClose( filewrite );
 
 }
@@ -7848,10 +7879,10 @@ void damage_character( Game_t * gs, CHR_REF chr_ref, Uint16 direction,
             }
             else
             {
-              // Don't alert the chr_ref too much if under constant fire
+              // Don't alert the character too much if under constant fire
               if ( pchr->carefultime == 0 )
               {
-                // Don't let ichrs chase themselves...  That would be silly
+                // Don't let character chase themselves...  That would be silly
                 if ( attacker != chr_ref )
                 {
                   pstate->alert |= ALERT_ATTACKED;
@@ -7976,7 +8007,7 @@ void damage_character( Game_t * gs, CHR_REF chr_ref, Uint16 direction,
               action = (ACTION)(action + IRAND(&loc_rand, 2));
               play_action( gs,  chr_ref, action, bfalse );
 
-              // Make the chr_ref invincible for a limited time only
+              // Make the character invincible for a limited time only
               if ( HAS_NO_BITS( effects, DAMFX_TIME ) )
                 pchr->damagetime = DELAY_DAMAGE;
             }
@@ -8074,7 +8105,7 @@ bool_t import_info_add(IMPORT_INFO * ii, OBJ_REF obj)
 //--------------------------------------------------------------------------------------------
 void play_action( Game_t * gs, CHR_REF ichr, ACTION action, bool_t ready )
 {
-  // ZZ> This function starts a generic action for a ichr
+  // ZZ> This function starts a generic action for a character
 
   Chr_t * pchr;
   Mad_t * pmad;
@@ -8102,7 +8133,7 @@ void play_action( Game_t * gs, CHR_REF ichr, ACTION action, bool_t ready )
 //--------------------------------------------------------------------------------------------
 void set_frame( Game_t * gs, CHR_REF ichr, Uint16 frame, Uint8 lip )
 {
-  // ZZ> This function sets the frame for a ichr explicitly...  This is used to
+  // ZZ> This function sets the frame for a character explicitly...  This is used to
   //     rotate Tank turrets
 
   Uint16 start, end;
@@ -8150,7 +8181,7 @@ void set_frame( Game_t * gs, CHR_REF ichr, Uint16 frame, Uint8 lip )
 //--------------------------------------------------------------------------------------------
 void drop_money( Game_t * gs, CHR_REF ichr, Uint16 money )
 {
-  // ZZ> This function drops some of a ichr's money
+  // ZZ> This function drops some of a character's money
 
   PChr_t chrlst      = gs->ChrList;
   //size_t chrlst_size = CHRLST_COUNT;
@@ -8434,13 +8465,16 @@ CHR_REF _chr_spawn( CHR_SPAWN_INFO si, bool_t activate )
   // copy over all of the properties (flags, abilities, etc.)
   pchr->prop = pcap->prop;
 
-  pchr->stoppedby = pcap->stoppedby;
   pchr->manacost_fp8 = pcap->manacost_fp8;
-  pchr->ammoknown = pchr->prop.nameknown;
-  pchr->hitready = btrue;
+  pchr->ammoknown    = pchr->prop.nameknown;
+  pchr->hitready     = btrue;
 
   // generate the character's stats
   chr_create_stats( &loc_rand, &(pchr->stats), &(pcap->statdata) );
+
+  // Passage stuff
+  pchr->passage      = si.passage;
+  pchr->stoppedby    = pcap->stoppedby;
 
   // Kurse state
   pchr->prop.iskursed = ( RAND(&loc_rand, 0, 100) <= pcap->kursechance );

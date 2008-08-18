@@ -36,6 +36,7 @@
 #include "Client.h"
 #include "AStar.h"
 #include "sound.h"
+#include "file_common.h"
 
 #include "egoboo_utility.h"
 
@@ -1982,13 +1983,13 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
     case F_OpenPassage:
       // This function opens the passage specified by tmpargument, failing if the
       // passage was already open
-      returncode = open_passage( gs, pstate->tmpargument );
+      returncode = passage_open( gs, pstate->tmpargument );
       break;
 
     case F_ClosePassage:
       // This function closes the passage specified by tmpargument, and proceeds
       // only if the passage is clear of obstructions
-      returncode = close_passage( gs, pstate->tmpargument );
+      returncode = passage_close( gs, pstate->tmpargument );
       break;
 
     case F_IfPassageOpen:
@@ -2290,7 +2291,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
         chr_vel.x = turntocos[( tTmp+8192 ) & TRIGTABLE_MASK] * pstate->tmpdistance;
         chr_vel.y = turntosin[( tTmp+8192 ) & TRIGTABLE_MASK] * pstate->tmpdistance;
 
-        // This function spawns a ichr, failing if x,y is invalid
+        // This function spawns a character, failing if x,y is invalid
         returncode = bfalse;
         tmpchr = chr_spawn( gs, chr_pos, chr_vel, pchr->model, pchr->team, 0, pstate->tmpturn, NULL, INVALID_CHR );
         if ( VALID_CHR( gs->ChrList, tmpchr ) )
@@ -2339,7 +2340,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
       break;
 
     case F_DetachFromHolder:
-      // This function drops the ichr, failing only if it was not held
+      // This function drops the character, failing only if it was not held
       returncode = detach_character_from_mount( gs, ichr, btrue, btrue );
       break;
 
@@ -3230,7 +3231,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
       break;
 
     case F_HealSelf:
-      // This function heals the ichr, without setting the alert or modifying
+      // This function heals the character, without setting the alert or modifying
       // the amount
       if ( pchr->alive )
       {
@@ -3450,7 +3451,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
       break;
 
     case F_SetTargetToDistantEnemy:
-      // This function finds an enemy, within a certain distance to the ichr, and
+      // This function finds an enemy, within a certain distance to the character, and
       // proceeds only if there is one
 
       returncode = chr_search_distant( gs, SearchInfo_new(&loc_search), ichr, pstate->tmpdistance, btrue, bfalse );
@@ -3773,7 +3774,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
     case F_SetTargetToWhoeverIsInPassage:
       // This function lets passage rectangles be used as event triggers
       {
-        tmpchr = who_is_blocking_passage( gs, pstate->tmpargument );
+        tmpchr = passage_search_blocking( gs, pstate->tmpargument );
         returncode = bfalse;
         if ( ACTIVE_CHR( gs->ChrList, tmpchr ) )
         {
@@ -3809,7 +3810,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
         vect3 chr_pos = {pstate->tmpx, pstate->tmpy, pstate->tmpdistance};
         vect3 chr_vel = {0,0,0};
 
-        // This function spawns a ichr, failing if x,y,z is invalid
+        // This function spawns a character, failing if x,y,z is invalid
         returncode = bfalse;
         tmpchr = chr_spawn( gs, chr_pos, chr_vel, pchr->model, pchr->team, 0, pstate->tmpturn, NULL, INVALID_CHR );
         if ( VALID_CHR( gs->ChrList, tmpchr ) )
@@ -4035,7 +4036,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 
     case F_FlashPassage:
       // This function makes the passage light or dark...  For debug...
-      flash_passage( gs, pstate->tmpargument, pstate->tmpdistance );
+      passage_flash( gs, pstate->tmpargument, pstate->tmpdistance );
       break;
 
     case F_FindTileInPassage:
@@ -4326,7 +4327,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
       // This function finds a character who is both in the passage and who has
       // an item with the given IDSZ
       {
-        tmpchr = who_is_blocking_passage_ID( gs, pstate->tmpargument, pstate->tmpdistance );
+        tmpchr = passage_search_blocking_ID( gs, pstate->tmpargument, pstate->tmpdistance );
         returncode = bfalse;
         if ( ACTIVE_CHR( gs->ChrList, tmpchr ) )
         {
@@ -5089,7 +5090,7 @@ retval_t run_operand( Game_t * gs, Uint32 value, CHR_REF ichr )
 //--------------------------------------------------------------------------------------------
 retval_t run_script( Game_t * gs, CHR_REF ichr, float dUpdate )
 {
-  // ZZ> This function lets one ichr do AI stuff
+  // ZZ> This function lets one character do AI stuff
 
   Uint16   type_stt;
   Uint32   offset_end, offset_last;
@@ -5349,12 +5350,12 @@ void run_all_scripts( Game_t * gs, float dUpdate )
 
 bool_t scr_break_passage( Game_t * gs, AI_STATE * pstate )
 {
-  return break_passage(gs, pstate->tmpargument, pstate->tmpturn, pstate->tmpdistance, pstate->tmpx, pstate->tmpy, &(pstate->tmpx), &(pstate->tmpy) );
+  return passage_break_tiles(gs, pstate->tmpargument, pstate->tmpturn, pstate->tmpdistance, pstate->tmpx, pstate->tmpy, &(pstate->tmpx), &(pstate->tmpy) );
 }
 
 bool_t scr_search_tile_in_passage( Game_t * gs, AI_STATE * pstate )
 {
-  return search_tile_in_passage( gs, pstate->tmpargument, pstate->tmpdistance, pstate->tmpx, pstate->tmpy, &(pstate->tmpx), &(pstate->tmpy) );
+  return passage_search_tile( gs, pstate->tmpargument, pstate->tmpdistance, pstate->tmpx, pstate->tmpy, &(pstate->tmpx), &(pstate->tmpy) );
 }
 
 
