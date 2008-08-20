@@ -242,7 +242,7 @@ INLINE bool_t stream_startFile(STREAM * pwrapper, FILE * pfile)
   fseek(pfile, pos, SEEK_SET);
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE bool_t stream_startRaw(STREAM * pwrapper, Uint8 * buffer, size_t buffer_size)
@@ -255,7 +255,7 @@ INLINE bool_t stream_startRaw(STREAM * pwrapper, Uint8 * buffer, size_t buffer_s
   pwrapper->readLocation = 0;
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE bool_t stream_startLocal(STREAM * pwrapper, SYS_PACKET * pegopkt)
@@ -268,7 +268,7 @@ INLINE bool_t stream_startLocal(STREAM * pwrapper, SYS_PACKET * pegopkt)
   pwrapper->readLocation = 0;
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE bool_t stream_startENet(STREAM * pwrapper, ENetPacket * packet)
@@ -281,7 +281,7 @@ INLINE bool_t stream_startENet(STREAM * pwrapper, ENetPacket * packet)
   pwrapper->readLocation = 0;
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE bool_t stream_startRemote(STREAM * pwrapper, NET_PACKET * pnetpkt)
@@ -294,7 +294,7 @@ INLINE bool_t stream_startRemote(STREAM * pwrapper, NET_PACKET * pnetpkt)
   pwrapper->readLocation = 0;
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE bool_t stream_done(STREAM * pwrapper)

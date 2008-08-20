@@ -619,7 +619,8 @@ void render_water_fan_lit( Uint32 fan, Uint8 layer, Uint8 mode )
 //--------------------------------------------------------------------------------------------
 bool_t make_renderlist(RENDERLIST * prlst)
 {
-  int fan, tile_count;
+  Uint32 fan;
+  int    tile_count;
   bool_t inview;
   static Uint32 next_wldframe = 0;
 
@@ -709,7 +710,8 @@ void set_fan_dyna_light( int fanx, int fany, PRT_REF particle )
   //     with the chosen particle
 
   vect3 dif, nrm;
-  int fan, vertex, lastvertex;
+  Uint32 fan;
+  int   vertex, lastvertex;
   float flight, dist2;
   float light_r, light_g, light_b;
   float light_r0, light_g0, light_b0;
@@ -743,7 +745,7 @@ void set_fan_dyna_light( int fanx, int fany, PRT_REF particle )
       if ( dist2 > 0.0f )
       {
         float ftmp, dist = sqrt( dist2 );
-        vect3 pos = {mm->vrt_x[vertex], mm->vrt_y[vertex], mm->vrt_z[vertex]};
+        vect3 pos = VECT3(mm->vrt_x[vertex], mm->vrt_y[vertex], mm->vrt_z[vertex]);
 
         dif.x /= dist;
         dif.y /= dist;
@@ -856,7 +858,7 @@ void do_dyna_light(Game_t * gs)
         lastvertex = vertex + pmesh->TileDict[mm->tilelst[fan].type].vrt_count;
         while ( vertex < lastvertex )
         {
-          vect3 pos = {mm->vrt_x[vertex], mm->vrt_y[vertex], mm->vrt_z[vertex]};
+          vect3 pos = VECT3(mm->vrt_x[vertex], mm->vrt_y[vertex], mm->vrt_z[vertex]);
 
           mesh_calc_normal( pmesh, &(gs->phys), pos, &nrm );
 

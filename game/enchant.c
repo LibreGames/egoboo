@@ -135,7 +135,7 @@ void spawn_poof( Game_t * gs, CHR_REF character, OBJ_REF profile )
   int iTmp;
   Chr_t * pchr;
   Cap_t * pcap = ObjList_getPCap(gs, profile);
-  vect3   prt_vel = {0,0,0};
+  vect3   prt_vel = ZERO_VECT3;
 
   sTmp = chrlst[character].ori.turn_lr;
   iTmp = 0;

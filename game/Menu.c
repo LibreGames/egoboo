@@ -176,8 +176,8 @@ static int mnu_selectedInput[PLALST_COUNT] = {0};
 static PLA_REF mnu_selectedPlayer[PLALST_COUNT];
 
 /* Variables for the model viewer in mnu_doChoosePlayer */
-static float  mnu_modelAngle = 0;
-static Uint32 mnu_modelIndex = 0;
+//static float  mnu_modelAngle = 0;
+//static Uint32 mnu_modelIndex = 0;
 
 /* Copyright text variables.  Change these to change how the copyright text appears */
 const char mnu_copyrightText[] = "Welcome to Egoboo!\nhttp://egoboo.sourceforge.net\nVersion 2.7.x";
@@ -216,12 +216,12 @@ const char *netMenuButtons[] =
   ""
 };
 
-static const char *mnu_multiPlayerButtons[] =
-{
-  "Start Game",
-  "Back",
-  ""
-};
+//static const char *mnu_multiPlayerButtons[] =
+//{
+//  "Start Game",
+//  "Back",
+//  ""
+//};
 
 static const char *mnu_optionsButtons[] =
 {
@@ -499,7 +499,7 @@ int mnu_doMain( MenuProc_t * mproc, float deltaTime )
   static MenuProcs menuState = MM_Begin;
   static GLtexture background;
   static ui_Widget_t wBackground, wCopyright;
-  static float lerp;
+  //static float lerp;
   static int menuChoice = 0;
 
   int result = 0;
@@ -971,7 +971,7 @@ int mnu_doChooseModule( MenuProc_t * mproc, float deltaTime )
         snprintf( txtBuffer, sizeof( txtBuffer ), "%s" SLASH_STRING "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.modules_dir, mi->loadname, CData.gamedat_dir, CData.mnu_file );
         if ( mproc->validModules[local_selectedModule] != sv->loc_modtxt.val )
         {
-          if ( module_read_summary( txtBuffer, &(sv->loc_modtxt) ) ) 
+          if ( module_read_summary( txtBuffer, &(sv->loc_modtxt) ) )
           {
             sv->loc_modtxt.val = mproc->validModules[local_selectedModule];
           };
@@ -1034,7 +1034,7 @@ int mnu_doChooseModule( MenuProc_t * mproc, float deltaTime )
 static bool_t mnu_checkSelectedPlayer( PLA_REF player )
 {
   int i;
-  if ( player < 0 || player > loadplayer_count ) return bfalse;
+  if ( /* player < 0 || */ player > loadplayer_count ) return bfalse;
 
   for ( i = 0; i < PLALST_COUNT && i < mnu_selectedPlayerCount; i++ )
   {
@@ -1048,7 +1048,7 @@ static bool_t mnu_checkSelectedPlayer( PLA_REF player )
 static PLA_REF mnu_getSelectedPlayer( PLA_REF player )
 {
   PLA_REF ipla;
-  if ( player < 0 || player > loadplayer_count ) return INVALID_PLA;
+  if ( /* player < 0 || */ player > loadplayer_count ) return INVALID_PLA;
 
   for ( ipla = 0; ipla < PLALST_COUNT && ipla < mnu_selectedPlayerCount; ipla++ )
   {
@@ -1061,7 +1061,7 @@ static PLA_REF mnu_getSelectedPlayer( PLA_REF player )
 //--------------------------------------------------------------------------------------------
 static bool_t mnu_addSelectedPlayer( PLA_REF player )
 {
-  if ( player < 0 || player > loadplayer_count || mnu_selectedPlayerCount >= PLALST_COUNT ) return bfalse;
+  if ( /* player < 0 || */ player > loadplayer_count || mnu_selectedPlayerCount >= PLALST_COUNT ) return bfalse;
   if ( mnu_checkSelectedPlayer( player ) ) return bfalse;
 
   mnu_selectedPlayer[mnu_selectedPlayerCount] = REF_TO_INT(player);
@@ -1077,7 +1077,7 @@ static bool_t mnu_removeSelectedPlayer( PLA_REF player )
   int i;
   bool_t found = bfalse;
 
-  if ( player < 0 || player > loadplayer_count || mnu_selectedPlayerCount <= 0 ) return bfalse;
+  if ( /* player < 0 || */ player > loadplayer_count || mnu_selectedPlayerCount <= 0 ) return bfalse;
 
   if ( mnu_selectedPlayerCount == 1 )
   {
@@ -1229,7 +1229,7 @@ int mnu_doChoosePlayer( MenuProc_t * mproc, float deltaTime )
 
   Game_t   * gs = Graphics_getGame(&gfxState);
   Graphics_Data_t * gfx = Game_getGfx(gs);
-  Client_t * cl = mproc->cl;
+  //Client_t * cl = mproc->cl;
   Server_t * sv = mproc->sv;
 
   switch ( menuState )
@@ -1463,7 +1463,7 @@ int mnu_doOptions( MenuProc_t * mproc, float deltaTime )
   static MenuProcs menuState = MM_Begin;
   static GLtexture background;
   static ui_Widget_t wBackground, wCopyright;
-  static float lerp;
+  //static float lerp;
   static int menuChoice = 0;
 
   int result = 0;
@@ -1598,7 +1598,7 @@ int mnu_doAudioOptions( MenuProc_t * mproc, float deltaTime )
   static MenuProcs menuState = MM_Begin;
   static GLtexture background;
   static ui_Widget_t wBackground, wCopyright;
-  static float lerp;
+  //static float lerp;
   static int menuChoice = 0;
 
   int result = 0;
@@ -1858,9 +1858,9 @@ int mnu_doVideoOptions( MenuProc_t * mproc, float deltaTime )
   static MenuProcs menuState = MM_Begin;
   static GLtexture background;
   static ui_Widget_t wBackground, wCopyright;
-  static float lerp;
+  //static float lerp;
   static int menuChoice = 0;
-  static STRING button_txt;
+  //static STRING button_txt;
   int result = 0;
 
   static STRING mnu_text[13];
@@ -2509,7 +2509,7 @@ int mnu_doLaunchGame( MenuProc_t * mproc, float deltaTime )
   static TTFont_t *font;
   int x, y, i, result = 0;
   static Game_t * gs = NULL;
-  
+
 
   switch ( menuState )
   {
@@ -3435,7 +3435,7 @@ int mnu_doNetwork(MenuProc_t * mproc, float deltaTime)
   static int menuState = MM_Begin;
   static GLtexture background;
   static ui_Widget_t wBackground, wCopyright;
-  static float lerp;
+  //static float lerp;
   static int menuChoice = 0;
   int result = 0;
 
@@ -3991,9 +3991,9 @@ int mnu_doJoinGame(MenuProc_t * mproc, float deltaTime)
   static int moduleMenuOffsetX;
   static int moduleMenuOffsetY;
 
-  static bool_t all_module_images_loaded = bfalse;
+  //static bool_t all_module_images_loaded = bfalse;
 
-  static bool_t all_module_info_loaded = bfalse;
+  //static bool_t all_module_info_loaded = bfalse;
 
   retval_t wait_return;
 
@@ -4328,7 +4328,7 @@ int mnu_handleKeyboard( MenuProc_t * mproc )
 int mnu_doIngameQuit( MenuProc_t * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
-  static float lerp;
+  //static float lerp;
   static int menuChoice = 0;
   static char * buttons[] = { "Quit", "Continue", "" };
 
@@ -4425,7 +4425,7 @@ int mnu_doIngameQuit( MenuProc_t * mproc, float deltaTime )
 int mnu_doIngameInventory( MenuProc_t * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
-  static float lerp;
+  //static float lerp;
   static int menuChoice = 0;
   int i,j,k;
   Uint16 itex;
@@ -4567,7 +4567,7 @@ int mnu_doIngameEndGame( MenuProc_t * mproc, float deltaTime )
   static MenuProcs menuState = MM_Begin;
   static int menuChoice = 0;
 
-  static char notImplementedMessage[] = "Not implemented yet!  Check back soon!";
+  //static char notImplementedMessage[] = "Not implemented yet!  Check back soon!";
   int result = 0;
 
   Game_t * gs = Graphics_requireGame(&gfxState);

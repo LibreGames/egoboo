@@ -164,14 +164,14 @@ void stdout_dump_matrix( matrix_4x4 a )
 
   for ( j = 0; j < 4; j++ )
   {
-    //fprintf( stdout, "  " );
+    fprintf( stdout, "  " );
     for ( i = 0; i < 4; i++ )
     {
-      //fprintf( stdout, "%2.4f ", a.CNV( i, j ) );
+      fprintf( stdout, "%2.4f ", a.CNV( i, j ) );
     };
-    //fprintf( stdout, "\n" );
+    fprintf( stdout, "\n" );
   }
-  //fprintf( stdout, "\n" );
+  fprintf( stdout, "\n" );
 }
 
 
@@ -181,7 +181,7 @@ void make_camera_matrix()
   // ZZ> This function sets GCamera.mView to the camera's location and rotation
 
   Game_t * gs = Graphics_requireGame(&gfxState);
-  vect3 worldup = {0, 0, -gs->phys.gravity};
+  vect3 worldup = VECT3(0, 0, -gs->phys.gravity);
   float dither_x, dither_y;
 
   if ( GCamera.swingamp > 0 )

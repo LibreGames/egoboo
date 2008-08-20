@@ -1322,8 +1322,8 @@ void move_particles( Game_t * gs, float dUpdate )
     // Check underwater
     if (pprt->ori.pos.z < gfx->Water.douselevel && mesh_has_some_bits( pmesh->Mem.tilelst,pprt->onwhichfan, MPDFX_WATER ) && piplst[pip].endwater )
     {
-      vect3 prt_pos = {prtlst[iprt].ori.pos.x, pprt->ori.pos.y, gfx->Water.surfacelevel};
-      vect3 prt_vel = {0, 0, 0};
+      vect3 prt_pos = VECT3(prtlst[iprt].ori.pos.x, pprt->ori.pos.y, gfx->Water.surfacelevel);
+      vect3 prt_vel = ZERO_VECT3;
 
       // Splash for particles is just a ripple
       iprt = prt_spawn( gs, 1.0f, prt_pos, prt_vel, 0, INVALID_OBJ, PIP_REF(PRTPIP_RIPPLE), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, 0, INVALID_CHR );
@@ -1632,7 +1632,7 @@ void do_weather_spawn( Game_t * gs, float dUpdate )
   // Did we find one?
   if ( foundone )
   {
-    vect3 prt_vel = {0,0,0};
+    vect3 prt_vel = ZERO_VECT3;
 
     // Yes, but is the character valid?
     CHR_REF chr_cnt = PlaList_getRChr( gs, gs->Weather.player );

@@ -124,6 +124,14 @@
   typedef vect4 quaternion;
 #pragma pack(pop)
 
+#define ZERO_VECT2 { {0,0} }
+#define ZERO_VECT3 { {0,0,0} }
+#define ZERO_VECT4 { {0,0,0,0} }
+
+#define VECT2(XX,YY) { {XX,YY} }
+#define VECT3(XX,YY,ZZ) { {XX,YY,ZZ} }
+#define VECT4(XX,YY,ZZ,WW) { {XX,YY,ZZ,WW} }
+
 /**> GLOBAL VARIABLES <**/
 #define TRIGTABLE_SIZE (1<<14)
 #define TRIGTABLE_MASK (TRIGTABLE_SIZE-1)

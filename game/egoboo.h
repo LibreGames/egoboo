@@ -411,7 +411,7 @@ struct sGraphics_Data
 {
   egoboo_key_t ekey;
 
-  bool_t render_overlay;   
+  bool_t render_overlay;
   bool_t render_background;
   bool_t render_fog;
   bool_t usefaredge;                 // Far edge maps? (Outdoor)

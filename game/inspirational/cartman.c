@@ -427,7 +427,7 @@ int dist_from_edge(cart_mesh * cmsh, int x, int y)
 bool_t fan_is_floor(cart_mesh * cmsh, float x, float y)
 {
   Uint32 fan;
-  vect3 pos = {x,y,0};
+  vect3 pos = VECT3(x,y,0);
 
   fan = mesh_get_fan( cmsh->mi, cmsh->mm, pos );
   if( INVALID_FAN != fan )
@@ -444,7 +444,7 @@ void set_barrier_height(cart_mesh * cmsh, cart_mouse_info * m, int x, int y)
   Uint32 type, fan, vert;
   int cnt, noedges;
   float bestprox, prox, tprox, scale;
-  vect3 pos = {x,y,0};
+  vect3 pos = VECT3(x,y,0);
 
   fan = mesh_get_fan( cmsh->mi, cmsh->mm, pos );
   if(fan != -1)
@@ -642,7 +642,7 @@ void make_hitemap(cart_mesh * cmsh)
     pixx = 0;
     while(pixx < (cmsh->mi->tiles_x<<2))
     {
-      vect3 pos = {x,y,0};
+      vect3 pos = VECT3(x,y,0);
 
       level=(mesh_get_level(cmsh->mm, mesh_get_fan(cmsh->mi, cmsh->mm, pos), x, y, bfalse, NULL)*255/cmsh->edgez);  // level is 0 to 255
       if(level > 252) level = 252;
@@ -1052,7 +1052,7 @@ void make_onscreen( cart_mesh * cmsh )
 }
 
 //------------------------------------------------------------------------------
-void draw_top_fan(cart_mesh * cmsh, cart_window_info * w, int fan, int x, int y)
+void draw_top_fan(cart_mesh * cmsh, cart_window_info * w, Uint32 fan, int x, int y)
 {
   // ZZ> This function draws the line drawing preview of the tile type...
   //     A wireframe tile from a vertex connection window
@@ -1127,7 +1127,7 @@ void draw_top_fan(cart_mesh * cmsh, cart_window_info * w, int fan, int x, int y)
 }
 
 //------------------------------------------------------------------------------
-void draw_side_fan(cart_mesh * cmsh, cart_window_info * w, int fan, int x, int y)
+void draw_side_fan(cart_mesh * cmsh, cart_window_info * w, Uint32 fan, int x, int y)
 {
   // ZZ> This function draws the line drawing preview of the tile type...
   //     A wireframe tile from a vertex connection window ( Side view )
@@ -1310,7 +1310,7 @@ int get_free_vertex(cart_mesh * cmsh)
 }
 
 //------------------------------------------------------------------------------
-void remove_fan(cart_mesh * cmsh, int fan)
+void remove_fan(cart_mesh * cmsh, Uint32 fan)
 {
   // ZZ> This function removes a fan's vertices from usage and sets the fan
   //     to not be drawn
@@ -1334,7 +1334,7 @@ void remove_fan(cart_mesh * cmsh, int fan)
 }
 
 //------------------------------------------------------------------------------
-int add_fan(cart_mesh *cmsh, int fan, int x, int y)
+int add_fan(cart_mesh *cmsh, Uint32 fan, int x, int y)
 {
   // ZZ> This function allocates the vertices needed for a fan
 
@@ -1463,7 +1463,7 @@ GLtexture * tile_at(cart_mesh * cmsh, int x, int y)
 //------------------------------------------------------------------------------
 int fan_at(cart_mesh * cmsh, int x, int y)
 {
-  int fan;
+  Uint32 fan;
 
   if(x < 0 || x >= cmsh->mi->tiles_x || y < 0 || y >= cmsh->mi->tiles_y)
   {
@@ -2081,8 +2081,8 @@ void cart_load_basic_textures(char *modname)
 //------------------------------------------------------------------------------
 int count_vertices(cart_mesh * cmsh)
 {
-  int fan, x, y, cnt, num, totalvert;
-  Uint32 vert;
+  int x, y, cnt, num, totalvert;
+  Uint32 fan, vert;
 
   totalvert = 0;
   y = 0;
@@ -2117,7 +2117,8 @@ void save_mesh(cart_mesh * cmsh, char *modname)
   char newloadname[256];
   int itmp;
   float ftmp;
-  int fan, x, y, cnt, num;
+  Uint32 fan;
+  int x, y, cnt, num;
   Uint32 vert;
   Uint8 ctmp;
 

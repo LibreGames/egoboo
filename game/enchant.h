@@ -222,7 +222,7 @@ enum e_disenchant_mode
 {
   LEAVE_ALL   = 0,
   LEAVE_FIRST,
-  LEAVE_NONE,
+  LEAVE_NONE
 };
 typedef enum e_disenchant_mode DISENCHANT_MODE;
 

@@ -260,8 +260,8 @@ void mesh_make_twist();
 bool_t mesh_load( Mesh_t * pmesh, char *modname );
 
 
-bool_t mesh_calc_normal_fan( Mesh_t * pmesh, struct sPhysicsData * phys, int fan, vect3 * pnrm, vect3 * ppos );
-bool_t mesh_calc_normal_pos( Mesh_t * pmesh, struct sPhysicsData * phys, int fan, vect3 pos, vect3 * pnrm );
+bool_t mesh_calc_normal_fan( Mesh_t * pmesh, struct sPhysicsData * phys, Uint32 fan, vect3 * pnrm, vect3 * ppos );
+bool_t mesh_calc_normal_pos( Mesh_t * pmesh, struct sPhysicsData * phys, Uint32 fan, vect3 pos, vect3 * pnrm );
 bool_t mesh_calc_normal( Mesh_t * pmesh, struct sPhysicsData * phys, vect3 pos, vect3 * pnrm );
 
 float mesh_get_level( MeshMem_t * mm, Uint32 fan, float x, float y, bool_t waterwalk, struct s_water_info * wi );
@@ -288,9 +288,9 @@ INLINE const Uint32 mesh_convert_block( MeshInfo_t * mi, int block_x, int block_
 INLINE const float mesh_fraction_x( MeshInfo_t * mi, float x );
 INLINE const float mesh_fraction_y( MeshInfo_t * mi, float y );
 
-INLINE const bool_t mesh_fan_is_in_renderlist(  MeshTile_t * mf_list, int fan );
-INLINE       void   mesh_fan_remove_renderlist( MeshTile_t * mf_list, int fan );
-INLINE       void   mesh_fan_add_renderlist( MeshTile_t * mf_list, int fan );
+INLINE const bool_t mesh_fan_is_in_renderlist(  MeshTile_t * mf_list, Uint32 fan );
+INLINE       void   mesh_fan_remove_renderlist( MeshTile_t * mf_list, Uint32 fan );
+INLINE       void   mesh_fan_add_renderlist( MeshTile_t * mf_list, Uint32 fan );
 
 INLINE const float mesh_clip_x( MeshInfo_t * mi, float x );
 INLINE const float mesh_clip_y( MeshInfo_t * mi, float y );
@@ -302,11 +302,11 @@ INLINE const int mesh_clip_block_y( MeshInfo_t * mi, int block_y );
 INLINE const bool_t mesh_check( MeshInfo_t * mi, float x, float y );
 INLINE const bool_t mesh_check_fan( MeshInfo_t * mi, int fan_x, int fan_y );
 
-INLINE const Uint32 mesh_test_bits( MeshTile_t * mf_list, int fan, Uint32 bits );
-INLINE const bool_t mesh_has_some_bits( MeshTile_t * mf_list, int fan, Uint32 bits );
-INLINE const bool_t mesh_has_no_bits( MeshTile_t * mf_list, int fan, Uint32 bits );
-INLINE const bool_t mesh_has_all_bits( MeshTile_t * mf_list, int fan, Uint32 bits );
+INLINE const Uint32 mesh_test_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits );
+INLINE const bool_t mesh_has_some_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits );
+INLINE const bool_t mesh_has_no_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits );
+INLINE const bool_t mesh_has_all_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits );
 
-INLINE const Uint8 mesh_get_twist( MeshTile_t * mf_list, int fan );
+INLINE const Uint8 mesh_get_twist( MeshTile_t * mf_list, Uint32 fan );
 
 bool_t mesh_reset_bumplist(MeshInfo_t * mi);

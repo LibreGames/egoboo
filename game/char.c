@@ -1419,7 +1419,7 @@ bool_t pack_add_item( Game_t * gs, CHR_REF item_ref, CHR_REF pack_chr_ref )
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
+  //PCap_t caplst      = gs->CapList;
   //size_t caplst_size = CAPLST_COUNT;
 
   Uint16 newammo;
@@ -3040,7 +3040,7 @@ bool_t chr_check_passages(Game_t * gs, CHR_REF ichr)
       return bfalse;
 
 
-  if( INVALID_CHR == gs->ChrList[ichr].passage ) return bfalse;
+  if( INVALID_PASS == gs->ChrList[ichr].passage ) return bfalse;
 
   ipass = gs->ChrList[ichr].passage;
   for ( cnt = 0; cnt < gs->PassList_count; cnt++ )
@@ -3541,8 +3541,8 @@ void make_onwhichfan( Game_t * gs )
     // splash stuff
     if ( chrlst[chr_ref].inwater != is_inwater && splashstrength > 0.1f )
     {
-      vect3 prt_pos = {chrlst[chr_ref].ori.pos.x, chrlst[chr_ref].ori.pos.y, gs->GfxData.Water.surfacelevel + RAISE};
-      vect3 prt_vel = {0,0,0};
+      vect3 prt_pos = VECT3(chrlst[chr_ref].ori.pos.x, chrlst[chr_ref].ori.pos.y, gs->GfxData.Water.surfacelevel + RAISE);
+      vect3 prt_vel = ZERO_VECT3;
       PRT_REF prt_index;
 
       // Splash
@@ -3581,8 +3581,8 @@ void make_onwhichfan( Game_t * gs )
       ripand = RIPPLEAND >> ripand;
       if ( 0 == (ups_loops & ripand) )
       {
-        vect3 prt_pos = {chrlst[chr_ref].ori.pos.x, chrlst[chr_ref].ori.pos.y, gs->GfxData.Water.surfacelevel};
-        vect3 prt_vel = {0,0,0};
+        vect3 prt_pos = VECT3(chrlst[chr_ref].ori.pos.x, chrlst[chr_ref].ori.pos.y, gs->GfxData.Water.surfacelevel);
+        vect3 prt_vel = ZERO_VECT3;
         PRT_REF prt_index;
 
         prt_index = prt_spawn( gs, ripplestrength, prt_pos, prt_vel, 0, INVALID_OBJ, PIP_REF(PRTPIP_RIPPLE), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, 0, INVALID_CHR );
@@ -3646,7 +3646,7 @@ void make_onwhichfan( Game_t * gs )
 
         if ( INVALID_PIP != gs->Tile_Dam.parttype && 0 == ( ups_loops & gs->Tile_Dam.partand ) )
         {
-          vect3 prt_vel = {0,0,0};
+          vect3 prt_vel = ZERO_VECT3;
           prt_spawn( gs, 1.0f, chrlst[chr_ref].ori.pos, prt_vel,
                      0, INVALID_OBJ, gs->Tile_Dam.parttype, INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, 0, INVALID_CHR );
         }
@@ -6136,7 +6136,7 @@ float calc_chr_level( Game_t * gs, CHR_REF ichr )
 };
 
 //--------------------------------------------------------------------------------------------
-OBJ_REF object_generate_index( Game_t * gs, char *szLoadName )
+OBJ_REF object_generate_index( char *szLoadName )
 {
   // ZZ > This reads the object slot in "DATA.TXT" that the profile
   //      is assigned to.  Errors in this number may cause the program to abort
@@ -9914,7 +9914,7 @@ CHR_SPAWN_INFO * chr_spawn_info_new(CHR_SPAWN_INFO * psi, Game_t * gs )
 
   // set default values
   psi->gs   = gs;
-  psi->seed = !EKEY_PVALID(gs) ? -time(NULL) : gs->randie_index;
+  psi->seed = !EKEY_PVALID(gs) ? ~time(NULL) : gs->randie_index;
   psi->ichr = INVALID_CHR;
 
   psi->iobj      = INVALID_OBJ;

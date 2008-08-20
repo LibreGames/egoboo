@@ -3561,7 +3561,7 @@ bool_t Graphics_synch(Graphics_t * g, ConfigData_t * cd)
 void dolist_add( CHR_REF chr_ref )
 {
   // This function puts a character in the list
-  int fan;
+  Uint32 fan;
 
   Game_t * gs = Graphics_requireGame(&gfxState);
 

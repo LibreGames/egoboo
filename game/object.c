@@ -74,7 +74,7 @@ int load_one_object( Game_t * gs, int skin_count, const char * szObjectpath, cha
   else
   {
     // grab the slot from the data.txt file
-    iobj = object_generate_index(gs, newloadname);
+    iobj = object_generate_index(newloadname);
   }
 
   // check see if the object is available

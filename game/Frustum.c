@@ -67,7 +67,7 @@ void NormalizePlane( Frustum_t *pf, FrustumSide side )
   pf->planes[side][B] /= magnitude;
   pf->planes[side][C] /= magnitude;
   pf->planes[side][D] /= magnitude;
-};
+}
 
 ///////////////////////////////// CALCULATE FRUSTUM \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
 /////
@@ -357,7 +357,7 @@ bool_t Frustum_BBoxInFrustum( Frustum_t *pf, float corner1[], float corner2[] )
   }
 
   return btrue;
-};
+}
 
 
 /////////////////////////////////////////////////////////////////////////////////

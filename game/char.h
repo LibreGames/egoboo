@@ -872,7 +872,7 @@ CHR_REF ChrHeap_iterateUsed( ChrHeap_t * pheap, int * index );
 bool_t  ChrHeap_addUsed( ChrHeap_t * pheap, CHR_REF ref );
 bool_t  ChrHeap_addFree( ChrHeap_t * pheap, CHR_REF ref );
 
-PROFILE_PROTOTYPE( ChrHeap );
+PROFILE_PROTOTYPE( ChrHeap )
 
 struct sChr * ChrList_getPChr(struct sGame * gs, CHR_REF ichr);
 struct sProfile * ChrList_getPObj(struct sGame * gs, CHR_REF ichr);
@@ -975,7 +975,7 @@ bool_t chr_grab_stuff( struct sGame * gs,CHR_REF chara, SLOT slot, bool_t people
 void chr_swipe( struct sGame * gs,Uint16 cnt, SLOT slot );
 void move_characters( struct sGame * gs,float dUpdate );
 
-OBJ_REF object_generate_index( struct sGame * gs,char *szLoadName );
+OBJ_REF object_generate_index( char *szLoadName );
 
 CAP_REF CapList_load_one( struct sGame * gs, const char * szModpath, const char *szObjectname, CAP_REF irequest );
 

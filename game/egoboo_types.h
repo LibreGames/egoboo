@@ -450,7 +450,7 @@ enum e_ProcessStates
   PROC_Entering,
   PROC_Running,
   PROC_Leaving,
-  PROC_Finish,
+  PROC_Finish
 };
 
 typedef enum e_ProcessStates ProcessStates;

@@ -1426,7 +1426,7 @@ void draw_chr_info( Game_t * gs )
   Status_t * lst      = gs->cl->StatList;
   size_t   lst_size = gs->cl->StatList_count;
   Graphics_Data_t * gfx = Game_getGfx(gs);
-  
+
   if ( !keyb.mode )
   {
     for(cnt=0; cnt<8; cnt++)
@@ -7064,7 +7064,7 @@ bool_t read_wawalite( Game_t * gs, char *modname )
   FOG_INFO        * fog_info;
   WEATHER_INFO    * weather_info;
   LIGHTING_INFO   * light_info;
- 
+
   if( !EKEY_PVALID(gs) ) return bfalse;
 
   gfx_info     = &(gs->GfxData);
@@ -7318,7 +7318,7 @@ Graphics_Data_t * Graphics_Data_new( Graphics_Data_t * gfx )
   Graphics_Data_new_textures( gfx );
 
   // foreground/background
-  gfx->render_overlay    = bfalse;   
+  gfx->render_overlay    = bfalse;
   gfx->render_background = bfalse;
   gfx->render_fog        = bfalse;
   gfx->usefaredge        = bfalse;
@@ -7392,4 +7392,4 @@ bool_t Graphics_Data_delete( Graphics_Data_t * gd )
   EKEY_PINVALIDATE(gd);
 
   return btrue;
-};
+}

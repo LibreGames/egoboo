@@ -75,20 +75,21 @@ INLINE bool_t chr_using_slot( PChr_t lst, size_t lst_size, CHR_REF chr_ref, SLOT
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF chr_get_nextinpack( PChr_t lst, size_t lst_size, CHR_REF chr_ref )
 {
-  CHR_REF nextinpack = INVALID_CHR;
-
   if ( !ACTIVE_CHR(lst, chr_ref ) ) return INVALID_CHR;
 
 #if defined(_DEBUG) || !defined(NDEBUG)
-  nextinpack = lst[chr_ref].nextinpack;
-  if ( INVALID_CHR != nextinpack && !ACTIVE_CHR(lst, chr_ref) )
   {
-    // this is an invalid configuration that may indicate a corrupted list
-    nextinpack = lst[nextinpack].nextinpack;
-    if ( ACTIVE_CHR(lst, nextinpack ) )
+    CHR_REF nextinpack = INVALID_CHR;
+    nextinpack = lst[chr_ref].nextinpack;
+    if ( INVALID_CHR != nextinpack && !ACTIVE_CHR(lst, chr_ref) )
     {
-      // the list is definitely corrupted
-      assert( bfalse );
+      // this is an invalid configuration that may indicate a corrupted list
+      nextinpack = lst[nextinpack].nextinpack;
+      if ( ACTIVE_CHR(lst, nextinpack ) )
+      {
+        // the list is definitely corrupted
+        assert( bfalse );
+      }
     }
   }
 #endif

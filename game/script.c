@@ -2302,8 +2302,8 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 
     case F_SpawnCharacter:
       {
-        vect3 chr_pos = {pstate->tmpx, pstate->tmpy, 0};
-        vect3 chr_vel = {0,0,0};
+        vect3 chr_pos = VECT3(pstate->tmpx, pstate->tmpy, 0);
+        vect3 chr_vel = ZERO_VECT3;
 
         tTmp = pchr->ori.turn_lr >> 2;
         chr_vel.x = turntocos[( tTmp+8192 ) & TRIGTABLE_MASK] * pstate->tmpdistance;
@@ -3165,8 +3165,8 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
       returncode = bfalse;
       if ( ACTIVE_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, CHRLST_COUNT, ichr ) )
       {
-        vect3 prt_pos = {pstate->tmpx, pstate->tmpy, pstate->tmpdistance};
-        vect3 prt_vel = {0,0,0};
+        vect3 prt_pos = VECT3(pstate->tmpx, pstate->tmpy, pstate->tmpdistance);
+        vect3 prt_vel = ZERO_VECT3;
 
         tmpchr = ichr;
         if ( chr_attached( gs->ChrList, CHRLST_COUNT, tmpchr ) )  tmpchr = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, tmpchr );
@@ -3825,8 +3825,8 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 
     case F_SpawnCharacterXYZ:
       {
-        vect3 chr_pos = {pstate->tmpx, pstate->tmpy, pstate->tmpdistance};
-        vect3 chr_vel = {0,0,0};
+        vect3 chr_pos = VECT3(pstate->tmpx, pstate->tmpy, pstate->tmpdistance);
+        vect3 chr_vel = ZERO_VECT3;
 
         // This function spawns a character, failing if x,y,z is invalid
         returncode = bfalse;
@@ -3855,8 +3855,8 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
       // This function spawns a character ( specific model slot ),
       // failing if x,y,z is invalid
       {
-        vect3 chr_pos = {pstate->tmpx, pstate->tmpy, pstate->tmpdistance};
-        vect3 chr_vel = {0,0,0};
+        vect3 chr_pos = VECT3(pstate->tmpx, pstate->tmpy, pstate->tmpdistance);
+        vect3 chr_vel = ZERO_VECT3;
 
         returncode = bfalse;
         tmpchr = chr_spawn( gs, chr_pos, chr_vel, OBJ_REF(pstate->tmpargument), pchr->team, 0, pstate->tmpturn, NULL, INVALID_CHR );
@@ -3904,8 +3904,8 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
       returncode = bfalse;
       if ( ACTIVE_CHR( gs->ChrList, ichr ) && !chr_in_pack( gs->ChrList, CHRLST_COUNT, ichr ) )
       {
-        vect3 prt_pos = {pstate->tmpx, pstate->tmpy, pstate->tmpdistance};
-        vect3 prt_vel = {0,0,0};
+        vect3 prt_pos = VECT3(pstate->tmpx, pstate->tmpy, pstate->tmpdistance);
+        vect3 prt_vel = ZERO_VECT3;
 
         tmpchr = ichr;
         if ( chr_attached( gs->ChrList, CHRLST_COUNT, ichr ) )  tmpchr = chr_get_attachedto( gs->ChrList, CHRLST_COUNT, ichr );
@@ -4362,8 +4362,8 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 
     case F_SpawnExactParticleEndSpawn:
       {
-        vect3 prt_pos = {pstate->tmpx, pstate->tmpy, pstate->tmpdistance};
-        vect3 prt_vel = {0,0,0};
+        vect3 prt_pos = VECT3(pstate->tmpx, pstate->tmpy, pstate->tmpdistance);
+        vect3 prt_vel = ZERO_VECT3;
 
         // This function spawns a particle that spawns a character...
         returncode = bfalse;

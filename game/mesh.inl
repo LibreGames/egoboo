@@ -309,7 +309,7 @@ INLINE const Uint32 bumplist_get_ref(BUMPLIST * b, Uint32 node)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_fan_is_in_renderlist( MeshTile_t * mf_list, int fan )
+INLINE const bool_t mesh_fan_is_in_renderlist( MeshTile_t * mf_list, Uint32 fan )
 {
   if ( INVALID_FAN == fan ) return bfalse;
 
@@ -317,13 +317,13 @@ INLINE const bool_t mesh_fan_is_in_renderlist( MeshTile_t * mf_list, int fan )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE void mesh_fan_remove_renderlist( MeshTile_t * mf_list, int fan )
+INLINE void mesh_fan_remove_renderlist( MeshTile_t * mf_list, Uint32 fan )
 {
   mf_list[fan].inrenderlist = bfalse;
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE void mesh_fan_add_renderlist( MeshTile_t * mf_list, int fan )
+INLINE void mesh_fan_add_renderlist( MeshTile_t * mf_list, Uint32 fan )
 {
   mf_list[fan].inrenderlist = btrue;
 }
@@ -618,7 +618,7 @@ INLINE const Uint32 mesh_convert_block( MeshInfo_t * mi, int block_x, int block_
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 mesh_get_bits( MeshTile_t * mf_list, int fan, Uint32 bits )
+INLINE const Uint32 mesh_get_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits )
 {
   if ( INVALID_FAN == fan ) return 0;
 
@@ -626,15 +626,15 @@ INLINE const Uint32 mesh_get_bits( MeshTile_t * mf_list, int fan, Uint32 bits )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_has_some_bits( MeshTile_t * mf_list, int fan, Uint32 bits )
+INLINE const bool_t mesh_has_some_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits )
 {
   if ( INVALID_FAN == fan ) return 0;
 
   return HAS_SOME_BITS( mf_list[fan].fx, bits );
-};
+}
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_has_no_bits( MeshTile_t * mf_list, int fan, Uint32 bits )
+INLINE const bool_t mesh_has_no_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits )
 {
   if ( INVALID_FAN == fan ) return 0;
 
@@ -642,7 +642,7 @@ INLINE const bool_t mesh_has_no_bits( MeshTile_t * mf_list, int fan, Uint32 bits
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_has_all_bits( MeshTile_t * mf_list, int fan, Uint32 bits )
+INLINE const bool_t mesh_has_all_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits )
 {
   if ( INVALID_FAN == fan ) return 0;
 
@@ -663,7 +663,7 @@ INLINE const float mesh_fraction_y( MeshInfo_t * mi, float y )
 
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint8 mesh_get_twist( MeshTile_t * mf_list, int fan )
+INLINE const Uint8 mesh_get_twist( MeshTile_t * mf_list, Uint32 fan )
 {
   Uint8 retval = 0x77;
 

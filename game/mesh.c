@@ -94,7 +94,7 @@ bool_t mesh_load( Mesh_t * pmesh, char *modname )
   STRING newloadname;
   int itmp, cnt;
   float ftmp;
-  int fan;
+  Uint32 fan;
   int vert, vrt;
 
   MeshMem_t   * mem     = &(pmesh->Mem);
@@ -410,7 +410,7 @@ void mesh_make_twist()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mesh_calc_normal_fan( Mesh_t * pmesh, PhysicsData_t * phys, int fan, vect3 * pnrm, vect3 * ppos )
+bool_t mesh_calc_normal_fan( Mesh_t * pmesh, PhysicsData_t * phys, Uint32 fan, vect3 * pnrm, vect3 * ppos )
 {
   bool_t retval = bfalse;
   Uint32 cnt;
@@ -491,7 +491,7 @@ bool_t mesh_calc_normal_fan( Mesh_t * pmesh, PhysicsData_t * phys, int fan, vect
 
 
 //--------------------------------------------------------------------------------------------
-bool_t mesh_calc_normal_pos( Mesh_t * pmesh, PhysicsData_t * phys, int fan, vect3 pos, vect3 * pnrm )
+bool_t mesh_calc_normal_pos( Mesh_t * pmesh, PhysicsData_t * phys, Uint32 fan, vect3 pos, vect3 * pnrm )
 {
   bool_t retval = bfalse;
   vect3 normal;

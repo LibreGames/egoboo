@@ -79,7 +79,7 @@ INLINE bool_t fnt_reg_init(FNT_REGISTRY * r)
   memset(r->list, 0, sizeof(FNT_REGISTRY));
 
   return btrue;
-};
+}
 
 INLINE bool_t fnt_reg_add(FNT_REGISTRY * r, TTFont_t * f)
 {
@@ -248,7 +248,7 @@ static bool_t fnt_init()
 
 
   return fnt_initialized;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 static void fnt_quit(void)

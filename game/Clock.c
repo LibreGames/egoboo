@@ -42,7 +42,7 @@ static clock_source_ptr_t clock_getTimeSource()
   }
 
   return _clock_timeSource;
-};
+}
 
 void clock_init()
 {
@@ -95,7 +95,7 @@ ClockState_t * Clock_create(const char * name, int size)
   cs = EGOBOO_NEW( ClockState_t );
 
   return Clock_new( cs, name, size );
-};
+}
 
 bool_t Clock_destroy( ClockState_t ** pcs )
 {
@@ -107,7 +107,7 @@ bool_t Clock_destroy( ClockState_t ** pcs )
   EGOBOO_DELETE( *pcs );
 
   return retval;
-};
+}
 
 
 ClockState_t * Clock_new( ClockState_t * cs, const char * name, int size )
@@ -129,7 +129,7 @@ ClockState_t * Clock_new( ClockState_t * cs, const char * name, int size )
   cs->sourceLastTime  = cs->sourceStartTime;
 
   return cs;
-};
+}
 
 bool_t Clock_delete( ClockState_t * cs )
 {
@@ -138,7 +138,7 @@ bool_t Clock_delete( ClockState_t * cs )
   EGOBOO_DELETE ( cs->frameHistory );
 
   return btrue;
-};
+}
 
 ClockState_t * Clock_renew( ClockState_t * cs )
 {
@@ -150,7 +150,7 @@ ClockState_t * Clock_renew( ClockState_t * cs )
 
   Clock_delete(cs);
   return Clock_new(cs, name, size);
-};
+}
 
 void Clock_setFrameHistoryWindow( ClockState_t * cs, int size )
 {
