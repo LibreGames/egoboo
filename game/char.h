@@ -451,7 +451,7 @@ Cap_t *  Cap_renew(Cap_t *pcap);
 #define CAP_INHERIT_IDSZ(PGS, MODEL, ID) (PGS->CapList[MODEL].idsz[IDSZ_PARENT] == (IDSZ)(ID) || PGS->CapList[MODEL].idsz[IDSZ_TYPE] == (IDSZ)(ID))
 #define CAP_INHERIT_IDSZ_RANGE(PGS, MODEL,IDMIN,IDMAX) ((PGS->CapList[MODEL].idsz[IDSZ_PARENT] >= (IDSZ)(IDMIN) && PGS->CapList[MODEL].idsz[IDSZ_PARENT] <= (IDSZ)(IDMAX)) || (PGS->CapList[MODEL].idsz[IDSZ_TYPE] >= (IDSZ)(IDMIN) && PGS->CapList[MODEL].idsz[IDSZ_TYPE] <= (IDSZ)(IDMAX)) )
 
-#define VALID_CAP_RANGE(XX)   (((XX)>=0) && ((XX)<CAPLST_COUNT))
+#define VALID_CAP_RANGE(XX)   ( /*(((XX)>=0) && */ ((XX)<CAPLST_COUNT) )
 #define VALID_CAP(LST, XX)    ( VALID_CAP_RANGE(XX) && EKEY_VALID(LST[XX]) )
 #define VALIDATE_CAP(LST, XX) ( VALID_CAP(LST, XX) ? (XX) : (INVALID_CAP) )
 #define LOADED_CAP(LST, XX)   ( VALID_CAP(LST, XX) && LST[XX].Loaded )
@@ -887,7 +887,7 @@ PIP_REF ChrList_getRPip(struct sGame * gs, CHR_REF ichr, int i);
 
 
 
-#define VALID_CHR_RANGE(XX)     (((XX)>=0) && ((XX)<CHRLST_COUNT))
+#define VALID_CHR_RANGE(XX)     ( /*(((XX)>=0) && */ ((XX)<CHRLST_COUNT) )
 #define VALID_CHR(LST, XX)      ( VALID_CHR_RANGE(XX) && EKEY_VALID(LST[XX]) )
 #define VALIDATE_CHR(LST, XX)   ( VALID_CHR(LST, XX) ? (XX) : (INVALID_CHR) )
 #define RESERVED_CHR(LST, XX)   ( VALID_CHR(LST, XX) && LST[XX].reserved && !LST[XX].active   )

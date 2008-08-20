@@ -23,9 +23,9 @@
 //********************************************************************************************
 #include "ogl_texture.h"
 
-#include "graphic.h"
 #include "game.h"
 
+#include "graphic.inl"
 #include "egoboo_types.inl"
 
 #include <SDL_image.h>

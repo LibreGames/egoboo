@@ -186,7 +186,7 @@ void make_prtlist(Game_t * gs)
     if(prtlst[prt_cnt].dyna.falloff > 0 && prtlst[prt_cnt].dyna.level > 0 )
     {
       DYNALIGHT_INFO di;
-      
+
       di.permanent = bfalse;
       di.pos       = prtlst[prt_cnt].ori.pos;
       di.level     = prtlst[prt_cnt].dyna.level;
@@ -224,13 +224,13 @@ void end_one_particle( Game_t * gs, PRT_REF particle )
   //     plays the sound associated with the particle
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
-  PPrt_t prtlst      = gs->PrtList;
-  size_t prtlst_size = PRTLST_COUNT;
+  //PPrt_t prtlst      = gs->PrtList;
+  //size_t prtlst_size = PRTLST_COUNT;
 
   PPip_t piplst      = gs->PipList;
-  size_t piplst_size = PIPLST_COUNT;
+  //size_t piplst_size = PIPLST_COUNT;
 
   CHR_REF child;
 
@@ -261,7 +261,7 @@ PRT_REF PrtList_get_free( Game_t * gs, bool_t is_critical )
   //     Reserve PRTLST_COUNT / 4 particles for critical particles
 
   PPrt_t prtlst      = gs->PrtList;
-  size_t prtlst_size = PRTLST_COUNT;
+  //size_t prtlst_size = PRTLST_COUNT;
 
   PRT_REF iprt;
 
@@ -324,20 +324,20 @@ PRT_REF prt_spawn_info_init( PRT_SPAWN_INFO * psi, Game_t * gs, float intensity,
 {
   // ZZ> This function spawns a new particle, and returns the number of that particle
 
-  PObj_t objlst     = gs->ObjList;
-  size_t  objlst_size = OBJLST_COUNT;
+  //PObj_t objlst     = gs->ObjList;
+  //size_t  objlst_size = OBJLST_COUNT;
 
   PPrt_t prtlst      = gs->PrtList;
-  size_t prtlst_size = PRTLST_COUNT;
+  //size_t prtlst_size = PRTLST_COUNT;
 
   PPip_t piplst      = gs->PipList;
-  size_t piplst_size = PIPLST_COUNT;
+  //size_t piplst_size = PIPLST_COUNT;
 
-  PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //PChr_t chrlst      = gs->ChrList;
+  //size_t chrlst_size = CHRLST_COUNT;
 
-  PMad_t madlst      = gs->MadList;
-  size_t madlst_size = MADLST_COUNT;
+  //PMad_t madlst      = gs->MadList;
+  //size_t madlst_size = MADLST_COUNT;
 
   Prt_t * pprt;
   Pip_t * ppip;
@@ -1012,10 +1012,10 @@ Uint32 prt_hitawall( Game_t * gs, PRT_REF particle, vect3 * norm )
   // ZZ> This function returns nonzero if the particle hit a wall
 
   PPrt_t prtlst      = gs->PrtList;
-  size_t prtlst_size = PRTLST_COUNT;
+  //size_t prtlst_size = PRTLST_COUNT;
 
   PPip_t piplst      = gs->PipList;
-  size_t piplst_size = PIPLST_COUNT;
+  //size_t piplst_size = PIPLST_COUNT;
 
   Mesh_t * pmesh = Game_getMesh(gs);
 
@@ -1080,7 +1080,7 @@ void disaffirm_attached_particles( Game_t * gs, CHR_REF character )
   size_t prtlst_size = PRTLST_COUNT;
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   PRT_REF particle;
   bool_t useful = bfalse;
@@ -1135,12 +1135,12 @@ void reaffirm_attached_particles( Game_t * gs, CHR_REF character )
   // ZZ> This function makes sure a character has all of it's particles
 
   PPrt_t prtlst      = gs->PrtList;
-  size_t prtlst_size = PRTLST_COUNT;
+  //size_t prtlst_size = PRTLST_COUNT;
 
   Chr_t  * pchr        = gs->ChrList + character;
 
-  PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //PCap_t caplst      = gs->CapList;
+  //size_t caplst_size = CAPLST_COUNT;
 
   Uint16 numberattached;
   PRT_REF particle;
@@ -1169,10 +1169,10 @@ void move_particles( Game_t * gs, float dUpdate )
   size_t prtlst_size = PRTLST_COUNT;
 
   PPip_t piplst      = gs->PipList;
-  size_t piplst_size = PIPLST_COUNT;
+  //size_t piplst_size = PIPLST_COUNT;
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   Mesh_t    * pmesh = Game_getMesh(gs);
 
@@ -1359,10 +1359,10 @@ void attach_particles(Game_t * gs)
   size_t prtlst_size = PRTLST_COUNT;
 
   PPip_t piplst      = gs->PipList;
-  size_t piplst_size = PIPLST_COUNT;
+  //size_t piplst_size = PIPLST_COUNT;
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   for ( prt_cnt = 0; prt_cnt < prtlst_size; prt_cnt++ )
   {
@@ -1444,22 +1444,22 @@ void spawn_bump_particles( Game_t * gs, CHR_REF character, PRT_REF particle )
   Uint32 loc_rand;
 
   PObj_t objlst     = gs->ObjList;
-  size_t  objlst_size = OBJLST_COUNT;
+  //size_t  objlst_size = OBJLST_COUNT;
 
   PPrt_t prtlst      = gs->PrtList;
-  size_t prtlst_size = PRTLST_COUNT;
+  //size_t prtlst_size = PRTLST_COUNT;
 
-  PPip_t piplst      = gs->PipList;
-  size_t piplst_size = PIPLST_COUNT;
+  //PPip_t piplst      = gs->PipList;
+  //size_t piplst_size = PIPLST_COUNT;
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
-  PMad_t madlst      = gs->MadList;
-  size_t madlst_size = MADLST_COUNT;
+  //PMad_t madlst      = gs->MadList;
+  //size_t madlst_size = MADLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //caplst      = gs->CapList;
+  //size_t caplst_size = CAPLST_COUNT;
 
   Chr_t * pchr;
   Prt_t  * pprt;
@@ -1960,7 +1960,7 @@ void reset_particles( Game_t * gs, char* modname )
 bool_t prt_calculate_bumpers(Game_t * gs, PRT_REF iprt)
 {
   PPrt_t prtlst      = gs->PrtList;
-  size_t prtlst_size = PRTLST_COUNT;
+  //size_t prtlst_size = PRTLST_COUNT;
 
   float ftmp;
 

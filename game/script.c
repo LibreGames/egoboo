@@ -1495,7 +1495,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
   CHR_REF tmpchr, tmpchr1, tmpchr2, tmpchr3;
   PRT_REF tmpprt;
 
-  ScriptInfo_t * slist = Game_getScriptInfo(gs);
+  //ScriptInfo_t * slist = Game_getScriptInfo(gs);
 
   Chr_t     * pchr = gs->ChrList + ichr;
   AI_STATE * pstate = &(pchr->aistate);
@@ -2711,7 +2711,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 
       iTmp = 0;  // Amount of ammo given
       {
-        tmpchr;
+        CHR_REF tmpchr;
 
         for ( _slot = SLOT_LEFT; _slot <= SLOT_RIGHT; _slot = ( SLOT )( _slot + 1 ) )
         {
@@ -3630,7 +3630,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
     case F_MakeSimilarNamesKnown:
       // Make names of matching objects known
       {
-        tmpchr;
+        CHR_REF tmpchr;
         for ( tmpchr = 0; tmpchr < CHRLST_COUNT; tmpchr++ )
         {
           sTmp = btrue;
@@ -3919,7 +3919,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
     case F_UnkurseTargetInventory:
       // This function unkurses every item a character is holding
       {
-        tmpchr;
+        CHR_REF tmpchr;
 
         for ( _slot = SLOT_LEFT; _slot <= SLOT_RIGHT; _slot = ( SLOT )( _slot + 1 ) )
         {
@@ -4251,7 +4251,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
         if(snd->soundActive)
         {
           //Go through all teammates
-          tmpchr;
+          CHR_REF tmpchr;
           for(tmpchr = 0; tmpchr < CHRLST_COUNT; tmpchr++)
           {
             if(!ACTIVE_CHR(gs->ChrList, tmpchr) ) continue;
@@ -4496,7 +4496,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 
     case F_SetQuestLevel:
       //This function modifies the quest level for a specific quest IDSZ
-      //tmpargument specifies quest idsz and tmpdistance the adjustment (which may be negative)	
+      //tmpargument specifies quest idsz and tmpdistance the adjustment (which may be negative)
       returncode = bfalse;
       if ( chr_is_player(gs, pstate->target) && pstate->tmpdistance != 0 )
       {
@@ -4648,7 +4648,7 @@ retval_t run_operand( Game_t * gs, Uint32 value, CHR_REF ichr )
 
   // for debugging
   char    * scriptname = slist->fname[pchr->aistate.type];
-  Uint32    offset     = pstate->offset;
+  //Uint32    offset     = pstate->offset;
 
 
   loc_aitarget = chr_get_aitarget( gs->ChrList, CHRLST_COUNT, gs->ChrList + ichr );

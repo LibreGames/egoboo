@@ -98,7 +98,7 @@ MAD_REF ObjList_getRMad(struct sGame * gs, OBJ_REF obj);
 MAD_REF ObjList_getRAi (struct sGame * gs, OBJ_REF obj);
 PIP_REF ObjList_getRPip(struct sGame * gs, OBJ_REF iobj, int i);
 
-#define VALID_OBJ_RANGE(XX) (((XX)>=0) && ((XX)<OBJLST_COUNT))
+#define VALID_OBJ_RANGE(XX)   ( /*(((XX)>=0) && */ ((XX)<OBJLST_COUNT) )
 #define VALID_OBJ(LST, XX)    ( VALID_OBJ_RANGE(XX) && EKEY_VALID(LST[XX]) )
 #define VALIDATE_OBJ(LST, XX) ( VALID_OBJ(LST, XX) ? (XX) : (INVALID_OBJ) )
 
@@ -163,7 +163,7 @@ Team_t * CTeam_new(Team_t *pteam);
 bool_t  CTeam_delete(Team_t *pteam);
 Team_t * CTeam_renew(Team_t *pteam);
 
-#define VALID_TEAM_RANGE(XX) ( ((XX)>=0) && ((XX)<TEAM_COUNT) )
+#define VALID_TEAM_RANGE(XX) ( /*(((XX)>=0) && */ ((XX)<TEAM_COUNT) )
 
 INLINE CHR_REF team_get_sissy( struct sGame * gs, TEAM_REF iteam );
 INLINE CHR_REF team_get_leader( struct sGame * gs, TEAM_REF iteam );
@@ -207,8 +207,8 @@ enum e_damage
   DAMAGE_FIRE,                                 //
   DAMAGE_ICE,                                  //
   DAMAGE_ZAP,                                  //
-  MAXDAMAGETYPE,                              // Damage types
-  DAMAGE_NULL     = 255,                       //
+  MAXDAMAGETYPE,                               // Damage types
+  DAMAGE_NULL     = 255                        //
 };
 typedef enum e_damage DAMAGE;
 

@@ -76,7 +76,7 @@ bool_t passage_break_tiles( Game_t * gs, PASS_REF passage, Uint16 starttile, Uin
   CHR_REF character;
   Chr_t * pchr;
 
-  ScriptInfo_t * slist = Game_getScriptInfo(gs);
+  //ScriptInfo_t * slist = Game_getScriptInfo(gs);
   Mesh_t       * pmesh = Game_getMesh(gs);
 
   if ( passage >= gs->PassList_count ) return useful;
@@ -148,7 +148,7 @@ bool_t passage_search_tile( Game_t * gs, PASS_REF passage, Uint32 tiletype, Sint
 
   int fan_x, fan_y;
 
-  ScriptInfo_t * slist = Game_getScriptInfo(gs);
+  //ScriptInfo_t * slist = Game_getScriptInfo(gs);
   Mesh_t       * pmesh = Game_getMesh(gs);
 
   if ( passage >= gs->PassList_count ) return bfalse;
@@ -383,7 +383,7 @@ bool_t passage_check_all( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * pown
   Chr_t     * pchr;
   CVolume_t * pcv;
   IRect_t   * parea;
-  
+
   if ( !ACTIVE_CHR( gs->ChrList,  ichr ) || pass >= gs->PassList_count ) return retval;
 
   iowner = gs->PassList[pass].owner;

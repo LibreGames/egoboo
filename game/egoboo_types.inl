@@ -228,7 +228,7 @@ INLINE bool_t HashList_destroy(HashList_t ** plst)
 INLINE Uint32 make_key_32(Uint32 * seed)
 {
   return ego_rand_32(seed);
-};
+}
 
 INLINE Uint32 make_key_16(Uint16 * seed)
 {
@@ -236,7 +236,7 @@ INLINE Uint32 make_key_16(Uint16 * seed)
   ret        = ego_rand_16(seed) | (ret << 16);
 
   return ret;
-};
+}
 
 INLINE Uint32 make_key_8(Uint8 * seed)
 {
@@ -246,7 +246,7 @@ INLINE Uint32 make_key_8(Uint8 * seed)
   ret        = ego_rand_8(seed) | (ret << 8);
 
   return ret;
-};
+}
 
 INLINE egoboo_key_t * egoboo_key_create(Uint32 itype, void * pdata)
 {
@@ -332,8 +332,8 @@ INLINE bool_t egoboo_key_validate(egoboo_key_t * pkey)
 {
   // BB > de-initialize the key
 
-  static Uint32 new_id_32 = (Uint32)(~0);
-  static Uint16 new_id_16 = (Uint16)(~0);
+  //static Uint32 new_id_32 = (Uint32)(~0);
+  //static Uint16 new_id_16 = (Uint16)(~0);
   static Uint8  new_id_8  = (Uint8 )(~0);
 
   if(NULL == pkey) return bfalse;

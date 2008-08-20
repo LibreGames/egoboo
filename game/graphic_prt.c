@@ -25,12 +25,12 @@
 #include "ogl_include.h"
 #include "Log.h"
 #include "camera.h"
-#include "graphic.h"
 
 #include "egoboo.h"
 
 #include <assert.h>
 
+#include "graphic.inl"
 #include "particle.inl"
 #include "char.inl"
 #include "egoboo_math.inl"
@@ -94,7 +94,7 @@ void get_vectors( PRT_REF prt, vect3 * vert, vect3 * horiz, float * dist )
   Uint32  image;
 
   Prt_t * pprt = PrtList_getPPrt(gs, prt);
-  Pip_t * ppip = PrtList_getPPip(gs, prt);
+  //Pip_t * ppip = PrtList_getPPip(gs, prt);
 
   if ( NULL == pprt ) return;
 

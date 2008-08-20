@@ -26,7 +26,6 @@
 #include "Ui.h"
 
 #include "Log.h"
-#include "input.h"
 
 #include "egoboo.h"
 
@@ -34,6 +33,7 @@
 #include <SDL_opengl.h>
 #include <assert.h>
 
+#include "input.inl"
 #include "graphic.inl"
 
 GLfloat ui_active_color[]  = {0.00f, 0.00f, 0.90f, 0.60f};

@@ -2,10 +2,10 @@
 
 #include "input.h"
 #include "Network.h"
-#include "char.h"
-#include "graphic.h"
 #include "game.h"
 
+#include "graphic.inl"
+#include "char.inl"
 #include "egoboo_types.inl"
 
 extern KeyboardBuffer_t _keybuff;

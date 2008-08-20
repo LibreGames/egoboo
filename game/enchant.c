@@ -57,16 +57,16 @@ void enc_spawn_particles( Game_t * gs, float dUpdate )
   CHR_REF target_ref;
 
   PObj_t objlst     = gs->ObjList;
-  size_t  objlst_size = OBJLST_COUNT;
+  //size_t  objlst_size = OBJLST_COUNT;
 
-  PEve_t evelst      = gs->EveList;
-  size_t evelst_size = EVELST_COUNT;
+  //PEve_t evelst      = gs->EveList;
+  //size_t evelst_size = EVELST_COUNT;
 
-  PEnc enclst      = gs->EncList;
+  PEnc_t enclst      = gs->EncList;
   size_t enclst_size = ENCLST_COUNT;
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   OBJ_REF iobj;
   Obj_t  * pobj;
@@ -114,7 +114,7 @@ void disenchant_character( Game_t * gs, CHR_REF cnt )
   // ZZ> This function removes all enchantments from a character
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   while ( INVALID_ENC != chrlst[cnt].firstenchant )
   {
@@ -128,7 +128,7 @@ void spawn_poof( Game_t * gs, CHR_REF character, OBJ_REF profile )
   // ZZ> This function spawns a character poof
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   Uint16 sTmp;
   CHR_REF origin;
@@ -160,7 +160,7 @@ char * naming_generate( Game_t * gs, Obj_t * pobj )
   static STRING name; // The name returned by the function
   Uint32 loc_rand;
 
-  size_t  objlst_size = OBJLST_COUNT;
+  //size_t  objlst_size = OBJLST_COUNT;
 
   int read, write, section, mychop;
   char cTmp;
@@ -200,8 +200,8 @@ void naming_read( Game_t * gs, const char * szModpath, const char * szObjectname
 {
   // ZZ> This function reads a naming file
 
-  PObj_t objlst     = gs->ObjList;
-  size_t  objlst_size = OBJLST_COUNT;
+  //PObj_t objlst     = gs->ObjList;
+  //size_t  objlst_size = OBJLST_COUNT;
   ChopData_t * pchop;
 
   FILE *fileread;
@@ -256,7 +256,7 @@ void naming_prime( Game_t * gs )
   int tnc;
 
   PObj_t objlst      = gs->ObjList;
-  size_t objlst_size = OBJLST_COUNT;
+  //size_t objlst_size = OBJLST_COUNT;
 
   gs->chop.count = 0;
   gs->chop.write = 0;
@@ -294,7 +294,7 @@ void tilt_characters_to_terrain(Game_t * gs)
   CHR_REF chr_cnt;
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
 
   for ( chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++ )
@@ -311,14 +311,14 @@ Uint16 change_armor( Game_t * gs, CHR_REF character, Uint16 iskin )
 {
   // ZZ> This function changes the armor of the character
 
-  PEnc enclst      = gs->EncList;
-  size_t enclst_size = ENCLST_COUNT;
+  PEnc_t enclst      = gs->EncList;
+  //size_t enclst_size = ENCLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //PCap_t caplst      = gs->CapList;
+  //size_t caplst_size = CAPLST_COUNT;
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   ENC_REF enchant;
   OBJ_REF sTmp;
@@ -380,19 +380,19 @@ void change_character( Game_t * gs, CHR_REF ichr, OBJ_REF new_profile, Uint8 new
   // ZZ> This function polymorphs a character, changing stats, dropping weapons
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
-  PObj_t objlst     = gs->ObjList;
-  size_t  objlst_size = OBJLST_COUNT;
+  //PObj_t objlst     = gs->ObjList;
+  //size_t  objlst_size = OBJLST_COUNT;
 
-  PEnc enclst      = gs->EncList;
-  size_t enclst_size = ENCLST_COUNT;
+  PEnc_t enclst      = gs->EncList;
+  //size_t enclst_size = ENCLST_COUNT;
 
-  PMad_t madlst      = gs->MadList;
-  size_t madlst_size = MADLST_COUNT;
+  //PMad_t madlst      = gs->MadList;
+  //size_t madlst_size = MADLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //PCap_t caplst      = gs->CapList;
+  //size_t caplst_size = CAPLST_COUNT;
 
   int tnc;
   ENC_REF enchant;
@@ -617,7 +617,7 @@ bool_t cost_mana( Game_t * gs, CHR_REF chr_ref, int amount, Uint16 killer )
   //     otherwise
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   int iTmp;
 
@@ -768,11 +768,11 @@ bool_t EveList_save_one( Game_t * gs, const char * szFilename, EVE_REF ieve )
   char cTmp;
   int num;
 
-  PObj_t objlst     = gs->ObjList;
-  size_t  objlst_size = OBJLST_COUNT;
+  //PObj_t objlst     = gs->ObjList;
+  //size_t  objlst_size = OBJLST_COUNT;
 
   PEve_t evelst      = gs->EveList;
-  size_t evelst_size = EVELST_COUNT;
+  //size_t evelst_size = EVELST_COUNT;
 
   Eve_t   * peve;
 
@@ -1003,11 +1003,11 @@ ENC_REF EveList_load_one( Game_t * gs, const char * szObjectpath, const char * s
   IDSZ idsz;
   STRING fname;
 
-  PObj_t objlst     = gs->ObjList;
-  size_t  objlst_size = OBJLST_COUNT;
+  //PObj_t objlst     = gs->ObjList;
+  //size_t  objlst_size = OBJLST_COUNT;
 
   PEve_t evelst      = gs->EveList;
-  size_t evelst_size = EVELST_COUNT;
+  //size_t evelst_size = EVELST_COUNT;
 
   EVE_REF  ieve;
   Eve_t   * peve;
@@ -1284,14 +1284,14 @@ void unset_enchant_value( Game_t * gs, ENC_REF enchantindex, Uint8 valueindex )
 {
   // ZZ> This function unsets a set value
 
-  PEve_t evelst      = gs->EveList;
-  size_t evelst_size = EVELST_COUNT;
+  //PEve_t evelst      = gs->EveList;
+  //size_t evelst_size = EVELST_COUNT;
 
-  PEnc enclst      = gs->EncList;
-  size_t enclst_size = ENCLST_COUNT;
+  PEnc_t enclst      = gs->EncList;
+  //size_t enclst_size = ENCLST_COUNT;
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   CHR_REF character;
 
@@ -1405,14 +1405,14 @@ void remove_enchant_value( Game_t * gs, ENC_REF enchantindex, Uint8 valueindex )
 {
   // ZZ> This function undoes cumulative modification to character stats
 
-  PEve_t evelst      = gs->EveList;
-  size_t evelst_size = EVELST_COUNT;
+  //PEve_t evelst      = gs->EveList;
+  //size_t evelst_size = EVELST_COUNT;
 
-  PEnc enclst      = gs->EncList;
-  size_t enclst_size = ENCLST_COUNT;
+  PEnc_t enclst      = gs->EncList;
+  //size_t enclst_size = ENCLST_COUNT;
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   float fvaluetoadd;
   int valuetoadd;
@@ -1558,17 +1558,17 @@ void reset_character_alpha( Game_t * gs, CHR_REF character )
 {
   // ZZ> This function fixes an item's transparency
 
-  PEve_t evelst      = gs->EveList;
-  size_t evelst_size = EVELST_COUNT;
+  //PEve_t evelst      = gs->EveList;
+  //size_t evelst_size = EVELST_COUNT;
 
-  PEnc enclst      = gs->EncList;
-  size_t enclst_size = ENCLST_COUNT;
+  PEnc_t enclst      = gs->EncList;
+  //size_t enclst_size = ENCLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //PCap_t caplst      = gs->CapList;
+  //size_t caplst_size = CAPLST_COUNT;
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   ENC_REF enchant;
   CHR_REF mount;
@@ -1613,19 +1613,19 @@ void remove_enchant( Game_t * gs, ENC_REF enchantindex )
   int add, cnt;
 
   PObj_t objlst     = gs->ObjList;
-  size_t  objlst_size = OBJLST_COUNT;
+  //size_t  objlst_size = OBJLST_COUNT;
 
-  PEve_t evelst      = gs->EveList;
-  size_t evelst_size = EVELST_COUNT;
+  //PEve_t evelst      = gs->EveList;
+  //size_t evelst_size = EVELST_COUNT;
 
-  PEnc enclst      = gs->EncList;
-  size_t enclst_size = ENCLST_COUNT;
+  PEnc_t enclst      = gs->EncList;
+  //size_t enclst_size = ENCLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //PCap_t caplst      = gs->CapList;
+  //size_t caplst_size = CAPLST_COUNT;
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   CHR_REF character, overlay;
   ENC_REF lastenchant, currentenchant;
@@ -1769,14 +1769,14 @@ ENC_REF enchant_value_filled( Game_t * gs, ENC_REF enchantindex, Uint8 valueinde
   //     set values in its other enchantments.  Otherwise it returns the enchantindex
   //     of the conflicting enchantment
 
-  PEve_t evelst      = gs->EveList;
-  size_t evelst_size = EVELST_COUNT;
+  //PEve_t evelst      = gs->EveList;
+  //size_t evelst_size = EVELST_COUNT;
 
-  PEnc enclst      = gs->EncList;
-  size_t enclst_size = ENCLST_COUNT;
+  PEnc_t enclst      = gs->EncList;
+  //size_t enclst_size = ENCLST_COUNT;
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   CHR_REF character;
   ENC_REF currenchant;
@@ -1809,16 +1809,16 @@ void set_enchant_value( Game_t * gs, ENC_REF enchantindex, Uint8 valueindex,
   // ZZ> This function sets and saves one of the character's stats
 
   PEve_t evelst      = gs->EveList;
-  size_t evelst_size = EVELST_COUNT;
+  //size_t evelst_size = EVELST_COUNT;
 
-  PEnc enclst      = gs->EncList;
-  size_t enclst_size = ENCLST_COUNT;
+  PEnc_t enclst      = gs->EncList;
+  //size_t enclst_size = ENCLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //PCap_t caplst      = gs->CapList;
+  //size_t caplst_size = CAPLST_COUNT;
 
-  PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //PChr_t chrlst      = gs->ChrList;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   ENC_REF conflict;
   CHR_REF ichr;
@@ -2047,13 +2047,13 @@ void add_enchant_value( Game_t * gs, ENC_REF enchantindex, Uint8 valueindex,
   // ZZ> This function does cumulative modification to character stats
 
   PEve_t evelst      = gs->EveList;
-  size_t evelst_size = EVELST_COUNT;
+  //size_t evelst_size = EVELST_COUNT;
 
-  PEnc enclst      = gs->EncList;
-  size_t enclst_size = ENCLST_COUNT;
+  PEnc_t enclst      = gs->EncList;
+  //size_t enclst_size = ENCLST_COUNT;
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   int valuetoadd, newvalue;
   float fvaluetoadd, fnewvalue;
@@ -2234,13 +2234,13 @@ ENC_REF enc_spawn_info_init( ENC_SPAWN_INFO * psi, Game_t * gs, CHR_REF owner, C
   //     if failed
 
   PEve_t evelst      = gs->EveList;
-  size_t evelst_size = EVELST_COUNT;
+  //size_t evelst_size = EVELST_COUNT;
 
-  PEnc enclst      = gs->EncList;
-  size_t enclst_size = ENCLST_COUNT;
+  //PEnc_t enclst      = gs->EncList;
+  //size_t enclst_size = ENCLST_COUNT;
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   Eve_t * peve;
 
@@ -2343,8 +2343,8 @@ ENC_REF req_spawn_one_enchant( ENC_SPAWN_INFO si )
   // ZZ> This function enchants a si.target, returning the enchantment index or INVALID_ENC
   //     if failed
 
-  PEve_t evelst = si.gs->EveList;
-  PEnc enclst = si.gs->EncList;
+  //PEve_t evelst = si.gs->EveList;
+  PEnc_t enclst = si.gs->EncList;
   PChr_t chrlst = si.gs->ChrList;
   PObj_t objlst = si.gs->ObjList;
 
@@ -2415,7 +2415,7 @@ ENC_REF req_spawn_one_enchant( ENC_SPAWN_INFO si )
 bool_t activate_enchant(Enc_t * penc)
 {
   PEve_t evelst;
-  PEnc enclst;
+  PEnc_t enclst;
   PChr_t chrlst;
 
   Game_t * gs;
@@ -2485,7 +2485,7 @@ void EncList_resynch( Game_t * gs )
 {
   ENC_REF ienc;
   Enc_t  * penc;
-  PEnc enclst = gs->EncList;
+  PEnc_t enclst = gs->EncList;
   size_t enclst_size = ENCLST_COUNT;
 
   // turn on all enchants requested in the last turn

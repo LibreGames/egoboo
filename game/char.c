@@ -32,10 +32,10 @@
 #include "passage.h"
 #include "Menu.h"
 #include "script.h"
-#include "graphic.h"
 #include "sound.h"
 #include "file_common.h"
 
+#include "graphic.inl"
 #include "Network.inl"
 #include "egoboo_strutil.h"
 #include "egoboo_utility.h"
@@ -180,8 +180,8 @@ void flash_character( Game_t * gs, CHR_REF chr_ref, Uint8 value )
 {
   // ZZ> This function sets a character's lighting
 
-  PChr_t chrlst      = gs->ChrList;
-  PMad_t madlst      = gs->MadList;
+  //PChr_t chrlst      = gs->ChrList;
+  //PMad_t madlst      = gs->MadList;
 
   Obj_t * pobj;
   Mad_t  * pmad;
@@ -214,7 +214,7 @@ void keep_weapons_with_holders(Game_t * gs)
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
+  //PCap_t caplst      = gs->CapList;
 
   CHR_REF chr_cnt;
   CHR_REF holder_ref;
@@ -361,10 +361,10 @@ void ChrList_free_one( Game_t * gs, CHR_REF chr_ref )
 {
   // ZZ> This function sticks a character back on the free character stack
 
-  PChr_t chrlst      = gs->ChrList;
+  //PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
+  //PCap_t caplst      = gs->CapList;
 
   CHR_REF chr_cnt;
 
@@ -587,7 +587,7 @@ CHR_REF ChrList_get_free( Game_t * gs, CHR_REF irequest )
 
   ChrHeap_t * pheap;
   CHR_REF retval;
-  int tnc;
+  //int tnc;
 
   if( !EKEY_PVALID(gs) ) return INVALID_CHR;
   pheap = &(gs->ChrHeap);
@@ -914,9 +914,9 @@ void chr_reset_accel( Game_t * gs, CHR_REF chr_ref )
   // ZZ> This function fixes a character's MAX acceleration
 
   PChr_t chrlst      = gs->ChrList;
-  PCap_t caplst      = gs->CapList;
+  //PCap_t caplst      = gs->CapList;
 
-  PEnc enclst      = gs->EncList;
+  PEnc_t enclst      = gs->EncList;
   size_t enclst_size = ENCLST_COUNT;
 
   ENC_REF enchant;
@@ -954,10 +954,10 @@ bool_t detach_character_from_mount( Game_t * gs, CHR_REF chr_ref, bool_t ignorek
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
+  //PCap_t caplst      = gs->CapList;
   //size_t caplst_size = CAPLST_COUNT;
 
-  PEnc enclst      = gs->EncList;
+  PEnc_t enclst      = gs->EncList;
   size_t enclst_size = ENCLST_COUNT;
 
   CHR_REF imount, iowner = INVALID_CHR;
@@ -1048,7 +1048,7 @@ bool_t detach_character_from_mount( Game_t * gs, CHR_REF chr_ref, bool_t ignorek
 
     if ( doshop && inshop )
     {
-      OBJ_REF model = pchr->model;
+      //OBJ_REF model = pchr->model;
 
       assert( NULL != ChrList_getPMad(gs, chr_ref) );
 
@@ -1101,7 +1101,7 @@ bool_t detach_character_from_mount( Game_t * gs, CHR_REF chr_ref, bool_t ignorek
   // Reset transparency
   if ( pchr->prop.isitem && pmount->transferblend )
   {
-    OBJ_REF model = pchr->model;
+    //OBJ_REF model = pchr->model;
 
     assert( NULL != ChrList_getPMad(gs, chr_ref) );
 
@@ -1149,7 +1149,7 @@ bool_t attach_character_to_mount( Game_t * gs, CHR_REF chr_ref, CHR_REF mount_re
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
+  //PCap_t caplst      = gs->CapList;
   //size_t caplst_size = CAPLST_COUNT;
 
   PMad_t madlst      = gs->MadList;
@@ -1191,7 +1191,7 @@ bool_t attach_character_to_mount( Game_t * gs, CHR_REF chr_ref, CHR_REF mount_re
 
   // handle the vertices
   {
-    OBJ_REF iobj = ChrList_getRObj(gs, mount_ref);
+    //OBJ_REF iobj = ChrList_getRObj(gs, mount_ref);
     MAD_REF imad = ChrList_getRMad(gs, mount_ref);
     Uint16 vrtoffset = slot_to_offset( slot );
 
@@ -1671,7 +1671,7 @@ bool_t chr_grab_stuff( Game_t * gs, CHR_REF chr_ref, SLOT slot, bool_t people )
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
+  //PCap_t caplst      = gs->CapList;
   //size_t caplst_size = CAPLST_COUNT;
 
   Mesh_t * pmesh     = Game_getMesh(gs);
@@ -1957,13 +1957,13 @@ void chr_swipe( Game_t * gs, CHR_REF ichr, SLOT slot )
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
+  //PCap_t caplst      = gs->CapList;
   //size_t caplst_size = CAPLST_COUNT;
 
-  PPrt_t prtlst      = gs->PrtList;
+  //PPrt_t prtlst      = gs->PrtList;
   //size_t prtlst_size = PRTLST_COUNT;
 
-  PPip_t piplst      = gs->PipList;
+  //PPip_t piplst      = gs->PipList;
   //size_t piplst_size = PIPLST_COUNT;
 
   CHR_REF iweapon, ithrown;
@@ -2060,7 +2060,7 @@ void chr_swipe( Game_t * gs, CHR_REF ichr, SLOT slot )
         if ( !pweapon_cap->attackattached )
         {
           // Detach the particle
-          if ( NULL!=ppip && !ppip->startontarget || !ACTIVE_CHR( chrlst, prt_target ) )
+          if ( (NULL!=ppip && !ppip->startontarget) || !ACTIVE_CHR( chrlst, prt_target ) )
           {
             attach_particle_to_character( gs, particle, iweapon, spawngrip );
 
@@ -2330,10 +2330,10 @@ bool_t chr_do_environment(Game_t * gs, Chr_t * pchr, ChrEnviro_t * enviro)
   PChr_t chrlst      = gs->ChrList;
   //size_t chrlst_size = CHRLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
+  //PCap_t caplst      = gs->CapList;
   //size_t caplst_size = CAPLST_COUNT;
 
-  PMad_t madlst      = gs->MadList;
+  //PMad_t madlst      = gs->MadList;
   //size_t madlst_size = MADLST_COUNT;
 
   Mesh_t * pmesh     = Game_getMesh(gs);
@@ -2496,13 +2496,13 @@ bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dU
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
+  //PCap_t caplst      = gs->CapList;
   //size_t caplst_size = CAPLST_COUNT;
 
-  PMad_t madlst      = gs->MadList;
+  //PMad_t madlst      = gs->MadList;
   //size_t madlst_size = MADLST_COUNT;
 
-  PObj_t   objlst = gs->ObjList;
+  //PObj_t   objlst = gs->ObjList;
   //size_t objlst_size = OBJLST_COUNT;
 
   Chr_t        * pchr;
@@ -3035,11 +3035,11 @@ bool_t chr_check_passages(Game_t * gs, CHR_REF ichr)
   PASS_REF ipass;
 
   // don't check stationary objects
-  if( (gs->ChrList[ichr].ori.pos.x == gs->ChrList[ichr].ori_old.pos.x ) && 
+  if( (gs->ChrList[ichr].ori.pos.x == gs->ChrList[ichr].ori_old.pos.x ) &&
       (gs->ChrList[ichr].ori.pos.y == gs->ChrList[ichr].ori_old.pos.y ) )
       return bfalse;
 
-  
+
   if( INVALID_CHR == gs->ChrList[ichr].passage ) return bfalse;
 
   ipass = gs->ChrList[ichr].passage;
@@ -3062,10 +3062,10 @@ void move_characters( Game_t * gs, float dUpdate )
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
+  //PCap_t caplst      = gs->CapList;
   //size_t caplst_size = CAPLST_COUNT;
 
-  PMad_t madlst      = gs->MadList;
+  //PMad_t madlst      = gs->MadList;
   //size_t madlst_size = MADLST_COUNT;
 
   CHR_REF chr_ref;
@@ -3491,7 +3491,7 @@ void make_onwhichfan( Game_t * gs )
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  PPrt_t prtlst      = gs->PrtList;
+  //PPrt_t prtlst      = gs->PrtList;
   //size_t prtlst_size = PRTLST_COUNT;
 
   Mesh_t * pmesh     = Game_getMesh(gs);
@@ -3672,7 +3672,7 @@ bool_t remove_from_platform( Game_t * gs, CHR_REF object_ref )
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
+  //PCap_t caplst      = gs->CapList;
   //size_t caplst_size = CAPLST_COUNT;
 
   CHR_REF platform;
@@ -3701,7 +3701,7 @@ bool_t attach_to_platform( Game_t * gs, CHR_REF object_ref, CHR_REF platform )
   PChr_t chrlst      = gs->ChrList;
   //size_t chrlst_size = CHRLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
+  //PCap_t caplst      = gs->CapList;
   //size_t caplst_size = CAPLST_COUNT;
 
   remove_from_platform( gs, object_ref );
@@ -3741,7 +3741,7 @@ void fill_bumplists(Game_t * gs)
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
+  //PCap_t caplst      = gs->CapList;
   //size_t caplst_size = CAPLST_COUNT;
 
   PPrt_t prtlst      = gs->PrtList;
@@ -3811,7 +3811,6 @@ bool_t find_collision_volume_0( vect3 * ppa, CVolume_t * pva, vect3 * ppb, CVolu
 {
   // BB > Find the simplest possible non-empty collision volume
 
-  bool_t retval = bfalse;
   CVolume_t cv;
 
   if( NULL == ppa || NULL == pva || NULL == ppb || NULL == pvb ) return bfalse;
@@ -3853,7 +3852,7 @@ bool_t find_collision_volume_0( vect3 * ppa, CVolume_t * pva, vect3 * ppb, CVolu
 //--------------------------------------------------------------------------------------------
 bool_t find_collision_volume( vect3 * ppa, CVolume_t * pva, vect3 * ppb, CVolume_t * pvb, bool_t exclude_vert, CVolume_t * pcv)
 {
-  bool_t retval = bfalse, bfound;
+  bool_t bfound;
   CVolume_t cv, tmp_cv;
   float ftmp;
 
@@ -4145,8 +4144,6 @@ bool_t chr_detect_collision( Game_t * gs, CHR_REF chra_ref, CHR_REF chrb_ref, bo
   PChr_t chrlst      = gs->ChrList;
   //size_t chrlst_size = CHRLST_COUNT;
 
-  bool_t retval = bfalse;
-
   // set the minimum bumper level for object a
   if(chrlst[chra_ref].bmpdata.cv.lod < 0)
   {
@@ -4313,7 +4310,7 @@ bool_t prt_do_collision( Game_t * gs, CHR_REF chra_ref, PRT_REF prtb_ref, bool_t
   PChr_t chrlst      = gs->ChrList;
   //size_t chrlst_size = CHRLST_COUNT;
 
-  PPrt_t prtlst = gs->PrtList;
+  //PPrt_t prtlst = gs->PrtList;
 
   bool_t retval = bfalse;
 
@@ -4389,7 +4386,7 @@ void do_bumping( Game_t * gs, float dUpdate )
   PPip_t piplst      = gs->PipList;
   //size_t piplst_size = PIPLST_COUNT;
 
-  PEnc enclst        = gs->EncList;
+  PEnc_t enclst        = gs->EncList;
   //size_t enclst_size = ENCLST_COUNT;
 
 
@@ -5405,6 +5402,10 @@ void do_bumping( Game_t * gs, float dUpdate )
                   pprtb->accum.vel.y += -2.0f * pprtb->ori.vel.y;
                 };
                 break;
+
+                case MIS_NORMAL:
+                  // do nothing
+                  break;
               };
 
               // Change the owner of the missile
@@ -5436,10 +5437,10 @@ void stat_return( Game_t * gs, float dUpdate )
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
+  //PCap_t caplst      = gs->CapList;
   //size_t caplst_size = CAPLST_COUNT;
 
-  PEnc enclst      = gs->EncList;
+  PEnc_t enclst      = gs->EncList;
   size_t enclst_size = ENCLST_COUNT;
 
   CHR_REF chr_cnt, owner, target;
@@ -5590,7 +5591,7 @@ void pit_kill( Game_t * gs, float dUpdate )
   PPrt_t prtlst      = gs->PrtList;
   size_t prtlst_size = PRTLST_COUNT;
 
-  PPip_t piplst      = gs->PipList;
+  //PPip_t piplst      = gs->PipList;
   //size_t piplst_size = PIPLST_COUNT;
 
 
@@ -5645,7 +5646,7 @@ void reset_players( Game_t * gs )
 {
   // ZZ> This function clears the player list data
 
-  PChr_t chrlst      = gs->ChrList;
+  //PChr_t chrlst      = gs->ChrList;
   //size_t chrlst_size = CHRLST_COUNT;
 
 
@@ -5674,7 +5675,7 @@ void resize_characters( Game_t * gs, float dUpdate )
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
+  //PCap_t caplst      = gs->CapList;
   //size_t caplst_size = CAPLST_COUNT;
 
   CHR_REF chr_ref;
@@ -5789,19 +5790,19 @@ void CapList_save_one( Game_t * gs, char *szSaveName, CHR_REF ichr )
   // ZZ> This function creates a "DATA.TXT" file for the given character.
   //     it is assumed that all enchantments have been done away with
 
-  PChr_t chrlst      = gs->ChrList;
+  //PChr_t chrlst      = gs->ChrList;
   //size_t chrlst_size = CHRLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
+  //PCap_t caplst      = gs->CapList;
   //size_t caplst_size = CAPLST_COUNT;
 
-  PObj_t   objlst = gs->ObjList;
+  //PObj_t   objlst = gs->ObjList;
   //size_t objlst_size = OBJLST_COUNT;
 
   FILE* filewrite;
   int damagetype, iskin;
   char types[10] = "SCPHEFIZ";
-  char codes[4];
+  //char codes[4];
 
   Chr_t  * pchr;
 
@@ -5898,9 +5899,9 @@ void CapList_save_one( Game_t * gs, char *szSaveName, CHR_REF ichr )
   for ( damagetype = 0; damagetype < MAXDAMAGETYPE; damagetype++ )
   {
     fprintf( filewrite, "%c damage shift :", types[damagetype] );
-    for ( iskin = 0; iskin < MAXSKIN; iskin++ ) 
-    { 
-      fput_damage_modifier_shift( filewrite, pcap->skin[iskin].damagemodifier_fp8[damagetype] ); 
+    for ( iskin = 0; iskin < MAXSKIN; iskin++ )
+    {
+      fput_damage_modifier_shift( filewrite, pcap->skin[iskin].damagemodifier_fp8[damagetype] );
     };
     fprintf( filewrite, "\n" );
   }
@@ -6199,7 +6200,7 @@ CAP_REF CapList_load_one( Game_t * gs, const char * szObjectpath, const char *sz
 {
   // ZZ> This function fills a character profile with data from "DATA.TXT"
 
-  PCap_t caplst      = gs->CapList;
+  //PCap_t caplst      = gs->CapList;
   //size_t caplst_size = CAPLST_COUNT;
 
   FILE* fileread;
@@ -6549,7 +6550,7 @@ void check_player_import(Game_t * gs)
 
   OBJ_REF iobj;
   Obj_t  * pobj;
-  PObj_t objlst = gs->ObjList;
+  //PObj_t objlst = gs->ObjList;
 
   LOAD_PLAYER_INFO * ploadplayer;
 
@@ -6625,7 +6626,7 @@ bool_t check_skills( Game_t * gs, CHR_REF who, Uint32 whichskill )
   PChr_t chrlst      = gs->ChrList;
   //size_t chrlst_size = CHRLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
+  //PCap_t caplst      = gs->CapList;
   //size_t caplst_size = CAPLST_COUNT;
 
   bool_t result = bfalse;
@@ -7718,15 +7719,15 @@ void damage_character( Game_t * gs, CHR_REF chr_ref, Uint16 direction,
 
   Uint32 loc_rand;
 
-  PObj_t objlst      = gs->ObjList;
+  //PObj_t objlst      = gs->ObjList;
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
+  //PCap_t caplst      = gs->CapList;
   //size_t caplst_size = CAPLST_COUNT;
 
-  PMad_t madlst      = gs->MadList;
+  //PMad_t madlst      = gs->MadList;
   //size_t madlst_size = MADLST_COUNT;
 
   CHR_REF chr_tnc;
@@ -8390,13 +8391,13 @@ CHR_REF _chr_spawn( CHR_SPAWN_INFO si, bool_t activate )
   PChr_t chrlst      = si.gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  PObj_t objlst     = si.gs->ObjList;
+  //PObj_t objlst     = si.gs->ObjList;
   //size_t  objlst_size = OBJLST_COUNT;
 
-  PCap_t caplst      = si.gs->CapList;
+  //PCap_t caplst      = si.gs->CapList;
   //size_t caplst_size = CAPLST_COUNT;
 
-  PMad_t madlst      = si.gs->MadList;
+  //PMad_t madlst      = si.gs->MadList;
   //size_t madlst_size = MADLST_COUNT;
 
   Mesh_t     * pmesh = Game_getMesh(si.gs);
@@ -8652,7 +8653,7 @@ void respawn_character( Game_t * gs, CHR_REF ichr )
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
-  PCap_t caplst      = gs->CapList;
+  //PCap_t caplst      = gs->CapList;
   //size_t caplst_size = CAPLST_COUNT;
 
   CHR_REF item;
@@ -8787,7 +8788,7 @@ void signal_idsz_index( Game_t * gs, Uint32 priority, Uint32 data, IDSZ idsz, ID
 {
   // ZZ> This function issues an data to all characters with the a matching special IDSZ
 
-  PCap_t caplst      = gs->CapList;
+  //PCap_t caplst      = gs->CapList;
   //size_t caplst_size = CAPLST_COUNT;
 
   PChr_t chrlst      = gs->ChrList;

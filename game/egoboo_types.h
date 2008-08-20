@@ -561,4 +561,4 @@ INLINE Sint32 BSP_tree_count_nodes(Sint32 dim, Sint32 depth);
 
 #define PROFILE_PROTOTYPE(XX) struct sClockState; extern struct sClockState * clkstate_##XX; extern double clkcount_##XX; extern double clktime_##XX;
 
-PROFILE_PROTOTYPE(ekey);
+PROFILE_PROTOTYPE(ekey)

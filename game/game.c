@@ -309,7 +309,7 @@ bool_t export_all_enchants( Game_t * gs, CHR_REF ichr, const char * todirname )
 
   strncpy( exportname, todirname, sizeof(exportname));
   str_append_slash(exportname, sizeof(exportname));
-  
+
   snprintf( rechant_name, sizeof(rechant_name), "%srechant.txt", exportname );
 
   rechant_file = fs_fileOpen( PRI_WARN, "export_all_enchants()", fname, "w" );
@@ -330,7 +330,7 @@ bool_t export_all_enchants( Game_t * gs, CHR_REF ichr, const char * todirname )
     if( !gs->EveList[ieve].endifcantpay ||  gs->EveList[ieve].stayifnoowner )
     {
       // store the info in the rechant.txt file
-      fprintf( rechant_file, ":%d %d %d\n", cnt,  gs->EncList[ienc].time, gs->EncList[ienc].spawntime );
+      fprintf( rechant_file, ":%d %d %d\n", cnt,  (int)gs->EncList[ienc].time, (int)gs->EncList[ienc].spawntime );
 
       // create the new filename
       snprintf( fname, sizeof(fname), "%senchant%03d.txt", exportname, cnt );
@@ -369,10 +369,10 @@ bool_t export_one_character( Game_t * gs, CHR_REF ichr, CHR_REF iowner, int numb
   STRING todirfullname;
 
   PChr_t chrlst     = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
-  PObj_t objlst     = gs->ObjList;
-  size_t  objlst_size = OBJLST_COUNT;
+  //PObj_t objlst     = gs->ObjList;
+  //size_t  objlst_size = OBJLST_COUNT;
 
   //PCap_t caplst      = gs->CapList;
   //size_t caplst_size = CAPLST_COUNT;
@@ -417,7 +417,7 @@ bool_t export_one_character( Game_t * gs, CHR_REF ichr, CHR_REF iowner, int numb
     // make the enchants stick to the character after this module
     export_all_enchants(gs, ichr, todirname);
   }
- 
+
   // Don't export enchants
   disenchant_character( gs, ichr );
 
@@ -1418,6 +1418,7 @@ void print_status( Game_t * gs, Uint16 statindex )
         {
           case GEN_MALE: snprintf( gender, sizeof( gender ), "Male" ); break;
           case GEN_FEMALE: snprintf( gender, sizeof( gender ), "Female" ); break;
+          default: snprintf( gender, sizeof( gender ), "Some kind of" ); break;
         };
 
         debug_message( 1, " %s %s", gender, ChrList_getPCap(gs, character)->classname );
@@ -2829,7 +2830,7 @@ retval_t main_doGraphics()
     {
       Game_t * gs               = Graphics_requireGame(&gfxState);
       MenuProc_t  * ig_mnu_proc = Game_getMenuProc(gs);
-      ProcState_t * game_proc   = Game_getProcedure(gs);
+      //ProcState_t * game_proc   = Game_getProcedure(gs);
 
       if(ig_mnu_proc->proc.Active)
       {
@@ -2894,7 +2895,7 @@ retval_t main_doGraphics()
 int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
 {
   // ZZ> This is where the program starts and all the high level stuff happens
-  static double frameDuration, frameTicks;
+  static double frameDuration /*, frameTicks */;
   Game_t    * gs;
   GameStack_t      * stk;
   MachineState_t * mach_state;
@@ -3676,7 +3677,7 @@ void update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
 ProcessStates game_doRun(Game_t * gs, ProcessStates procIn)
 {
   ProcessStates procOut = procIn;
-  static double dTimeUpdate, dTimeFrame;
+  //static double dTimeUpdate, dTimeFrame;
 
   if (NULL == gs)  return procOut;
 
@@ -3767,10 +3768,10 @@ int proc_gameLoop( ProcState_t * gproc, Game_t * gs )
 {
   // if we are being told to exit, jump to PROC_Leaving
   double frameDuration, frameTicks;
-  static SDL_Thread       * pThread = NULL;
-  static SDL_Callback_Ptr   pCallback = NULL;
+  //static SDL_Thread       * pThread = NULL;
+  //static SDL_Callback_Ptr   pCallback = NULL;
 
-  Gui_t * gui = gui_getState();
+  //Gui_t * gui = gui_getState();
 
   if(NULL == gproc || gproc->Terminated)
   {
@@ -4020,7 +4021,7 @@ int SDL_main( int argc, char **argv )
 {
   ProcState_t EgoProc = {bfalse };
 
-  int program_state = 0, i;
+  int /* program_state = 0, */ i;
   MachineState_t * mach_state;
   GameStack_t * stk;
   Game_t * gs;
@@ -4373,7 +4374,7 @@ bool_t chr_search_block_nearest( Game_t * gs, SearchInfo_t * psearch, int block_
         cnt++, blnode_b = bumplist_get_next_chr(gs, pbump, blnode_b) )
   {
     chrb_ref = bumplist_get_ref(pbump, blnode_b);
-    ACTIVE_CHR( gs->ChrList, chrb_ref );
+    assert( ACTIVE_CHR( gs->ChrList, chrb_ref ) );
 
     // don't find stupid stuff
     if ( !ACTIVE_CHR( gs->ChrList, chrb_ref ) || 0.0f == gs->ChrList[chrb_ref].bumpstrength ) continue;
@@ -5072,7 +5073,7 @@ bool_t do_setup_chracter(CHR_SETUP_INFO * pinfo, CHR_SPAWN_INFO * psi)
 
 void do_setup_inputs(CHR_SETUP_INFO * pinfo, CHR_SPAWN_INFO * psi)
 {
-  Gui_t * gui = gui_getState();
+  //Gui_t * gui = gui_getState();
   Game_t * gs = pinfo->gs;
   PChr_t chrlst = gs->ChrList;
   Client_t * cl = gs->cl;
@@ -5187,7 +5188,7 @@ int cl_proc_setup_character(Game_t * gs, CHR_SETUP_INFO * pinfo, ProcState_t * p
 {
   Client_t * cl;
   if( !EKEY_PVALID(gs)    ) return -1;
-  if( !EKEY_PVALID(pinfo) ) -1;
+  if( !EKEY_PVALID(pinfo) ) return -1;
   if( !EKEY_PVALID(proc)  ) return -1;
 
   cl = gs->cl;
@@ -5833,11 +5834,11 @@ void set_alerts( Game_t * gs, CHR_REF ichr, float dUpdate )
 {
   // ZZ> This function polls some alert conditions
 
-  PCap_t caplst      = gs->CapList;
-  size_t caplst_size = CAPLST_COUNT;
+  //PCap_t caplst      = gs->CapList;
+  //size_t caplst_size = CAPLST_COUNT;
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   AI_STATE * pstate;
   Chr_t      * pchr;

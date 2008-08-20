@@ -554,8 +554,8 @@ void calc_lighting_data( Game_t * gs, Chr_t * pchr )
   LData_t * pldata = &(pchr->ldata);
 
   Uint16 sheen_fp8       = pchr->sheen_fp8;
-  Uint16 spekularity_fp8 = FLOAT_TO_FP8(( float ) sheen_fp8 / ( float ) MAXSPEKLEVEL );
-  Uint16 texture         = pchr->skin_ref + gs->ObjList[pchr->model].skinstart;
+  //Uint16 spekularity_fp8 = FLOAT_TO_FP8(( float ) sheen_fp8 / ( float ) MAXSPEKLEVEL );
+  //Uint16 texture         = pchr->skin_ref + gs->ObjList[pchr->model].skinstart;
 
   Uint8 r_sft = pchr->redshift;
   Uint8 g_sft = pchr->grnshift;
@@ -782,7 +782,7 @@ void render_refmad( CHR_REF ichr, Uint16 trans_fp8 )
   float level = pchr->level;
   float zpos = ( pchr->matrix ).CNV( 3, 2 ) - level;
 
-  Uint16 lastframe = pchr->anim.last;
+  //Uint16 lastframe = pchr->anim.last;
   Uint8 sheensave;
   bool_t fog_save;
 

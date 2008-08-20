@@ -803,3 +803,1543 @@
 	"egoboo_math.inl"
 	"egoboo_types.inl"
 
+1219115592 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/AStar.c
+	"AStar.h"
+	"game.h"
+	"mesh.inl"
+
+1219102185 /home/benjamin/SVN/sf_egoboo_2/trunk/game/AStar.h
+	"egoboo_types.h"
+
+1219115592 /home/benjamin/SVN/sf_egoboo_2/trunk/game/egoboo_types.h
+	"egoboo_config.h"
+	<SDL_endian.h>
+	<SDL_types.h>
+
+1219100294 /home/benjamin/SVN/sf_egoboo_2/trunk/game/egoboo_config.h
+	<SDL_endian.h>
+
+1199508731 /usr/include/SDL/SDL_endian.h
+	"SDL_stdinc.h"
+	"begin_code.h"
+	"close_code.h"
+
+1199508731 /usr/include/SDL/SDL_stdinc.h
+	"SDL_config.h"
+	<sys/types.h>
+	<stdio.h>
+	<stdlib.h>
+	<stddef.h>
+	<stdarg.h>
+	<stdlib.h>
+	<malloc.h>
+	<stddef.h>
+	<stdarg.h>
+	<memory.h>
+	<string.h>
+	<strings.h>
+	<inttypes.h>
+	<stdint.h>
+	<ctype.h>
+	<iconv.h>
+	"begin_code.h"
+	<alloca.h>
+	<malloc.h>
+	<malloc.h>
+	<stdlib.h>
+	"close_code.h"
+
+1199508731 /usr/include/SDL/SDL_config.h
+	"SDL_platform.h"
+	<stdarg.h>
+
+1199508731 /usr/include/SDL/SDL_platform.h
+
+1207352247 /usr/include/sys/types.h
+	<features.h>
+	<bits/types.h>
+	<time.h>
+	<stddef.h>
+	<endian.h>
+	<sys/select.h>
+	<sys/sysmacros.h>
+	<bits/pthreadtypes.h>
+
+1207352211 /usr/include/features.h
+	<sys/cdefs.h>
+	<gnu/stubs.h>
+
+1207352250 /usr/include/sys/cdefs.h
+	<features.h>
+	<bits/wordsize.h>
+
+1207352237 /usr/include/bits/wordsize.h
+
+1207352211 /usr/include/gnu/stubs.h
+	<bits/wordsize.h>
+	<gnu/stubs-32.h>
+	<gnu/stubs-64.h>
+
+1207351701 /usr/include/gnu/stubs-32.h
+
+1207352247 /usr/include/bits/types.h
+	<features.h>
+	<bits/wordsize.h>
+	<bits/typesizes.h>
+
+1207352247 /usr/include/bits/typesizes.h
+
+1207352244 /usr/include/time.h
+	<features.h>
+	<stddef.h>
+	<bits/time.h>
+	<bits/types.h>
+	<bits/types.h>
+	<bits/types.h>
+	<bits/types.h>
+	<bits/types.h>
+	<xlocale.h>
+
+1207352244 /usr/include/bits/time.h
+	<bits/types.h>
+	<bits/types.h>
+
+1207352217 /usr/include/xlocale.h
+
+1207352242 /usr/include/endian.h
+	<features.h>
+	<bits/endian.h>
+
+1207352242 /usr/include/bits/endian.h
+
+1207352250 /usr/include/sys/select.h
+	<features.h>
+	<bits/types.h>
+	<bits/select.h>
+	<bits/sigset.h>
+	<time.h>
+	<bits/time.h>
+
+1207352250 /usr/include/bits/select.h
+
+1207352236 /usr/include/bits/sigset.h
+
+1207352247 /usr/include/sys/sysmacros.h
+	<features.h>
+
+1207352247 /usr/include/bits/pthreadtypes.h
+	<bits/wordsize.h>
+
+1207352239 /usr/include/stdio.h
+	<features.h>
+	<stddef.h>
+	<bits/types.h>
+	<libio.h>
+	<stdarg.h>
+	<bits/stdio_lim.h>
+	<bits/sys_errlist.h>
+	<getopt.h>
+	<bits/stdio.h>
+	<bits/stdio2.h>
+	<bits/stdio-ldbl.h>
+
+1207352239 /usr/include/libio.h
+	<_G_config.h>
+	<stdarg.h>
+	<sys/cdefs.h>
+	<bits/stdio-lock.h>
+	<shlib-compat.h>
+	<bits/libio-ldbl.h>
+
+1207352239 /usr/include/_G_config.h
+	<bits/types.h>
+	<stddef.h>
+	<wchar.h>
+	<gconv.h>
+
+1207352243 /usr/include/wchar.h
+	<features.h>
+	<stdio.h>
+	<stdarg.h>
+	<bits/wchar.h>
+	<stddef.h>
+	<wctype.h>
+	<xlocale.h>
+	<xlocale.h>
+	<xlocale.h>
+	<wctype.h>
+	<bits/wchar2.h>
+	<bits/wchar-ldbl.h>
+
+1207352243 /usr/include/bits/wchar.h
+
+1207352253 /usr/include/wctype.h
+	<features.h>
+	<bits/types.h>
+	<wchar.h>
+	<endian.h>
+	<xlocale.h>
+
+1207352243 /usr/include/bits/wchar2.h
+
+1207352243 /usr/include/bits/wchar-ldbl.h
+
+1207352212 /usr/include/gconv.h
+	<features.h>
+	<wchar.h>
+	<stddef.h>
+
+1207352239 /usr/include/bits/stdio-lock.h
+	<bits/libc-lock.h>
+	<lowlevellock.h>
+
+1207352211 /usr/include/bits/libc-lock.h
+	<pthread.h>
+	<stddef.h>
+	<lowlevellock.h>
+	<tls.h>
+	<pthread-functions.h>
+	<bp-sym.h>
+
+1207352258 /usr/include/pthread.h
+	<features.h>
+	<endian.h>
+	<sched.h>
+	<time.h>
+	<signal.h>
+	<bits/pthreadtypes.h>
+	<bits/setjmp.h>
+	<bits/wordsize.h>
+
+1207352247 /usr/include/sched.h
+	<features.h>
+	<bits/types.h>
+	<stddef.h>
+	<time.h>
+	<bits/sched.h>
+
+1207352247 /usr/include/bits/sched.h
+
+1207352236 /usr/include/signal.h
+	<features.h>
+	<bits/sigset.h>
+	<bits/types.h>
+	<bits/signum.h>
+	<time.h>
+	<bits/siginfo.h>
+	<bits/sigaction.h>
+	<bits/sigcontext.h>
+	<stddef.h>
+	<bits/sigstack.h>
+	<sys/ucontext.h>
+	<bits/pthreadtypes.h>
+	<bits/sigthread.h>
+
+1207352236 /usr/include/bits/signum.h
+
+1207352236 /usr/include/bits/siginfo.h
+	<bits/wordsize.h>
+
+1207352236 /usr/include/bits/sigaction.h
+
+1207352236 /usr/include/bits/sigcontext.h
+	<bits/wordsize.h>
+
+1207352236 /usr/include/bits/sigstack.h
+
+1207352237 /usr/include/sys/ucontext.h
+	<features.h>
+	<signal.h>
+	<bits/wordsize.h>
+	<bits/sigcontext.h>
+
+1207352236 /usr/include/bits/sigthread.h
+
+1207352235 /usr/include/bits/setjmp.h
+	<bits/wordsize.h>
+
+1207352239 /usr/include/bits/libio-ldbl.h
+
+1207352238 /usr/include/bits/stdio_lim.h
+
+1207352239 /usr/include/bits/sys_errlist.h
+
+1207352247 /usr/include/getopt.h
+	<ctype.h>
+
+1207352230 /usr/include/ctype.h
+	<features.h>
+	<bits/types.h>
+	<endian.h>
+	<xlocale.h>
+
+1207352239 /usr/include/bits/stdio.h
+
+1207352239 /usr/include/bits/stdio2.h
+
+1207352239 /usr/include/bits/stdio-ldbl.h
+
+1207352237 /usr/include/stdlib.h
+	<features.h>
+	<stddef.h>
+	<bits/waitflags.h>
+	<bits/waitstatus.h>
+	<xlocale.h>
+	<sys/types.h>
+	<alloca.h>
+	<bits/stdlib.h>
+	<bits/stdlib-ldbl.h>
+
+1207352247 /usr/include/bits/waitflags.h
+
+1207352247 /usr/include/bits/waitstatus.h
+	<endian.h>
+
+1207352237 /usr/include/alloca.h
+	<features.h>
+	<stddef.h>
+
+1207352237 /usr/include/bits/stdlib.h
+
+1207352237 /usr/include/bits/stdlib-ldbl.h
+
+1207352241 /usr/include/malloc.h
+	<features.h>
+	<stddef.h>
+
+1207352242 /usr/include/memory.h
+	<features.h>
+	<string.h>
+
+1207352242 /usr/include/string.h
+	<features.h>
+	<stddef.h>
+	<xlocale.h>
+	<bits/string.h>
+	<bits/string2.h>
+	<bits/string3.h>
+
+1207352242 /usr/include/bits/string.h
+
+1207352242 /usr/include/bits/string2.h
+	<endian.h>
+	<bits/types.h>
+	<stdlib.h>
+
+1207352242 /usr/include/bits/string3.h
+
+1207352242 /usr/include/strings.h
+	<features.h>
+	<stddef.h>
+
+1207352237 /usr/include/inttypes.h
+	<features.h>
+	<stdint.h>
+	<stddef.h>
+
+1207352237 /usr/include/stdint.h
+	<features.h>
+	<bits/wchar.h>
+	<bits/wordsize.h>
+
+1207352212 /usr/include/iconv.h
+	<features.h>
+	<stddef.h>
+
+1199508731 /usr/include/SDL/begin_code.h
+
+1199508731 /usr/include/SDL/close_code.h
+
+1199508731 /usr/include/SDL/SDL_types.h
+	"SDL_stdinc.h"
+
+1219102186 /home/benjamin/SVN/sf_egoboo_2/trunk/game/game.h
+	"input.h"
+	"module.h"
+	"char.h"
+	"particle.h"
+	"enchant.h"
+	"passage.h"
+	"mesh.h"
+	"Menu.h"
+	"script.h"
+	"graphic.h"
+
+1219118774 /home/benjamin/SVN/sf_egoboo_2/trunk/game/input.h
+	"egoboo_types.h"
+	<SDL.h>
+
+1199508731 /usr/include/SDL/SDL.h
+	"SDL_main.h"
+	"SDL_stdinc.h"
+	"SDL_audio.h"
+	"SDL_cdrom.h"
+	"SDL_cpuinfo.h"
+	"SDL_endian.h"
+	"SDL_error.h"
+	"SDL_events.h"
+	"SDL_loadso.h"
+	"SDL_mutex.h"
+	"SDL_rwops.h"
+	"SDL_thread.h"
+	"SDL_timer.h"
+	"SDL_video.h"
+	"SDL_version.h"
+	"begin_code.h"
+	"close_code.h"
+
+1199508731 /usr/include/SDL/SDL_main.h
+	"SDL_stdinc.h"
+	"begin_code.h"
+	"close_code.h"
+	"begin_code.h"
+	"close_code.h"
+
+1199508731 /usr/include/SDL/SDL_audio.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"SDL_endian.h"
+	"SDL_mutex.h"
+	"SDL_thread.h"
+	"SDL_rwops.h"
+	"begin_code.h"
+	"close_code.h"
+
+1199508731 /usr/include/SDL/SDL_error.h
+	"SDL_stdinc.h"
+	"begin_code.h"
+	"close_code.h"
+
+1199508731 /usr/include/SDL/SDL_mutex.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"begin_code.h"
+	"close_code.h"
+
+1199508731 /usr/include/SDL/SDL_thread.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"SDL_mutex.h"
+	"begin_code.h"
+	<process.h>
+	"close_code.h"
+
+1199508731 /usr/include/SDL/SDL_rwops.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"begin_code.h"
+	"close_code.h"
+
+1199508731 /usr/include/SDL/SDL_cdrom.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"begin_code.h"
+	"close_code.h"
+
+1199508731 /usr/include/SDL/SDL_cpuinfo.h
+	"SDL_stdinc.h"
+	"begin_code.h"
+	"close_code.h"
+
+1199508731 /usr/include/SDL/SDL_events.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"SDL_active.h"
+	"SDL_keyboard.h"
+	"SDL_mouse.h"
+	"SDL_joystick.h"
+	"SDL_quit.h"
+	"begin_code.h"
+	"close_code.h"
+
+1199508731 /usr/include/SDL/SDL_active.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"begin_code.h"
+	"close_code.h"
+
+1199508731 /usr/include/SDL/SDL_keyboard.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"SDL_keysym.h"
+	"begin_code.h"
+	"close_code.h"
+
+1199508731 /usr/include/SDL/SDL_keysym.h
+
+1199508731 /usr/include/SDL/SDL_mouse.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"SDL_video.h"
+	"begin_code.h"
+	"close_code.h"
+
+1199508731 /usr/include/SDL/SDL_video.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"SDL_rwops.h"
+	"begin_code.h"
+	"close_code.h"
+
+1199508731 /usr/include/SDL/SDL_joystick.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"begin_code.h"
+	"close_code.h"
+
+1199508731 /usr/include/SDL/SDL_quit.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+
+1199508731 /usr/include/SDL/SDL_loadso.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"begin_code.h"
+	"close_code.h"
+
+1199508731 /usr/include/SDL/SDL_timer.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"begin_code.h"
+	"close_code.h"
+
+1199508731 /usr/include/SDL/SDL_version.h
+	"SDL_stdinc.h"
+	"begin_code.h"
+	"close_code.h"
+
+1219102185 /home/benjamin/SVN/sf_egoboo_2/trunk/game/module.h
+	"ogl_texture.h"
+	"egoboo_types.h"
+
+1219100294 /home/benjamin/SVN/sf_egoboo_2/trunk/game/ogl_texture.h
+	"ogl_include.h"
+	<SDL.h>
+
+1219108457 /home/benjamin/SVN/sf_egoboo_2/trunk/game/ogl_include.h
+	<SDL_opengl.h>
+	"egoboo_math.h"
+
+1199508731 /usr/include/SDL/SDL_opengl.h
+	"SDL_config.h"
+	<windows.h>
+	<OpenGL/gl.h>
+	<OpenGL/glu.h>
+	<gl.h>
+	<glu.h>
+	<GL/gl.h>
+	<GL/glu.h>
+	<windows.h>
+	<stddef.h>
+
+1207432987 /usr/include/GL/gl.h
+	"gl_mangle.h"
+	<stdlib.h>
+	<windows.h>
+	<GL/mesa_wgl.h>
+	<GL/glext.h>
+
+1207432987 /usr/include/GL/gl_mangle.h
+
+1207432987 /usr/include/GL/glext.h
+	<windows.h>
+	<stddef.h>
+	<inttypes.h>
+	<inttypes.h>
+	<inttypes.h>
+	<stdint.h>
+	<stdint.h>
+	<inttypes.h>
+
+1207432987 /usr/include/GL/glu.h
+	"glu_mangle.h"
+	<GL/gl.h>
+
+1207432987 /usr/include/GL/glu_mangle.h
+
+1219100294 /home/benjamin/SVN/sf_egoboo_2/trunk/game/egoboo_math.h
+	<math.h>
+	"egoboo_types.h"
+	"egoboo_config.h"
+
+1207352233 /usr/include/math.h
+	<features.h>
+	<bits/huge_val.h>
+	<bits/huge_valf.h>
+	<bits/huge_vall.h>
+	<bits/inf.h>
+	<bits/nan.h>
+	<bits/mathdef.h>
+	<bits/mathcalls.h>
+	<bits/mathcalls.h>
+	<bits/mathcalls.h>
+	<bits/mathinline.h>
+
+1207352233 /usr/include/bits/huge_val.h
+	<endian.h>
+
+1207352233 /usr/include/bits/huge_valf.h
+
+1207352233 /usr/include/bits/huge_vall.h
+
+1207352233 /usr/include/bits/inf.h
+
+1207352233 /usr/include/bits/nan.h
+	<endian.h>
+
+1207352233 /usr/include/bits/mathdef.h
+	<bits/wordsize.h>
+
+1207352233 /usr/include/bits/mathcalls.h
+
+1207352233 /usr/include/bits/mathinline.h
+
+1219118773 /home/benjamin/SVN/sf_egoboo_2/trunk/game/char.h
+	"object.h"
+	"input.h"
+	"Mad.h"
+	"egoboo_utility.h"
+
+1219118774 /home/benjamin/SVN/sf_egoboo_2/trunk/game/object.h
+	"egoboo_types.h"
+	"egoboo_utility.h"
+	"egoboo_math.h"
+	"Physics.h"
+
+1219117249 /home/benjamin/SVN/sf_egoboo_2/trunk/game/egoboo_utility.h
+	"egoboo_types.h"
+	"egoboo_config.h"
+	<stdio.h>
+
+1219100294 /home/benjamin/SVN/sf_egoboo_2/trunk/game/Physics.h
+	"egoboo_math.h"
+
+1219118773 /home/benjamin/SVN/sf_egoboo_2/trunk/game/Mad.h
+	"object.h"
+	"egoboo_math.h"
+	"egoboo.h"
+	"Md2.h"
+
+1219115592 /home/benjamin/SVN/sf_egoboo_2/trunk/game/egoboo.h
+	"proto.h"
+	"Menu.h"
+	"configfile.h"
+	"Md2.h"
+	"ogl_texture.h"
+	"egoboo_config.h"
+	"egoboo_math.h"
+	"egoboo_types.h"
+	<stdlib.h>
+	<stdarg.h>
+	<stdio.h>
+	<string.h>
+	<fcntl.h>
+	<ctype.h>
+	<time.h>
+	<math.h>
+	"module.h"
+
+1219100294 /home/benjamin/SVN/sf_egoboo_2/trunk/game/proto.h
+	"egoboo_types.h"
+	"egoboo_math.h"
+	<SDL_mixer.h>
+	<SDL_opengl.h>
+	<stdio.h>
+
+1212158050 /usr/include/SDL/SDL_mixer.h
+	"SDL_types.h"
+	"SDL_rwops.h"
+	"SDL_audio.h"
+	"SDL_endian.h"
+	"SDL_version.h"
+	"begin_code.h"
+	"close_code.h"
+
+1219100294 /home/benjamin/SVN/sf_egoboo_2/trunk/game/Menu.h
+	"ogl_texture.h"
+	"egoboo_types.h"
+	"module.h"
+
+1218408702 /home/benjamin/SVN/sf_egoboo_2/trunk/game/configfile.h
+	"egoboo_types.h"
+	<stdio.h>
+	<stdlib.h>
+
+1219100294 /home/benjamin/SVN/sf_egoboo_2/trunk/game/Md2.h
+	"id_md2.h"
+	<SDL_opengl.h>
+	<memory.h>
+
+1218408702 /home/benjamin/SVN/sf_egoboo_2/trunk/game/id_md2.h
+	"egoboo_types.h"
+
+1207352248 /usr/include/fcntl.h
+	<features.h>
+	<bits/fcntl.h>
+	<sys/stat.h>
+	<bits/fcntl2.h>
+
+1207352248 /usr/include/bits/fcntl.h
+	<sys/types.h>
+	<bits/wordsize.h>
+	<bits/uio.h>
+
+1207352250 /usr/include/bits/uio.h
+	<sys/types.h>
+
+1207352248 /usr/include/sys/stat.h
+	<features.h>
+	<bits/types.h>
+	<time.h>
+	<bits/stat.h>
+
+1207352248 /usr/include/bits/stat.h
+
+1207352248 /usr/include/bits/fcntl2.h
+
+1219118774 /home/benjamin/SVN/sf_egoboo_2/trunk/game/particle.h
+	"object.h"
+
+1219118774 /home/benjamin/SVN/sf_egoboo_2/trunk/game/enchant.h
+	"egoboo_types.h"
+	"object.h"
+
+1219100294 /home/benjamin/SVN/sf_egoboo_2/trunk/game/passage.h
+	"egoboo_types.h"
+
+1219102186 /home/benjamin/SVN/sf_egoboo_2/trunk/game/mesh.h
+	"egoboo_types.h"
+	"egoboo_math.h"
+
+1219100294 /home/benjamin/SVN/sf_egoboo_2/trunk/game/script.h
+	"egoboo_types.h"
+
+1219102186 /home/benjamin/SVN/sf_egoboo_2/trunk/game/graphic.h
+	"ogl_texture.h"
+	"Font.h"
+	"mesh.h"
+	"Menu.h"
+	"egoboo_types.h"
+	<SDL.h>
+
+1219100294 /home/benjamin/SVN/sf_egoboo_2/trunk/game/Font.h
+	"ogl_texture.h"
+	<SDL.h>
+
+1219115593 /home/benjamin/SVN/sf_egoboo_2/trunk/game/mesh.inl
+	"mesh.h"
+	"game.h"
+	"particle.inl"
+	"char.inl"
+	"egoboo_types.inl"
+	<assert.h>
+
+1219115593 /home/benjamin/SVN/sf_egoboo_2/trunk/game/particle.inl
+	"particle.h"
+	"game.h"
+	"char.inl"
+	"egoboo_types.inl"
+
+1219115592 /home/benjamin/SVN/sf_egoboo_2/trunk/game/char.inl
+	"char.h"
+	"game.h"
+	"egoboo_types.inl"
+	<assert.h>
+
+1219116634 /home/benjamin/SVN/sf_egoboo_2/trunk/game/egoboo_types.inl
+	"Clock.h"
+	"egoboo_config.h"
+	"egoboo_types.h"
+	"egoboo_math.inl"
+
+1219100294 /home/benjamin/SVN/sf_egoboo_2/trunk/game/Clock.h
+	<SDL_types.h>
+	"egoboo_types.h"
+
+1219116565 /home/benjamin/SVN/sf_egoboo_2/trunk/game/egoboo_math.inl
+	"egoboo_math.h"
+	"egoboo_types.inl"
+
+1207352230 /usr/include/assert.h
+	<features.h>
+
+1219100294 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/Client.c
+	"Client.h"
+	"Log.h"
+	"NetFile.h"
+	"game.h"
+	"egoboo_strutil.h"
+	"egoboo.h"
+	"Network.inl"
+	"egoboo_types.inl"
+	<enet/enet.h>
+	<assert.h>
+
+1219100294 /home/benjamin/SVN/sf_egoboo_2/trunk/game/Client.h
+	<enet/enet.h>
+	"Network.h"
+	"egoboo_types.h"
+	"egoboo.h"
+
+1218426037 /home/benjamin/SVN/sf_egoboo_2/trunk/enet/include/enet/enet.h
+	<stdlib.h>
+	"enet/win32.h"
+	"enet/unix.h"
+	"enet/types.h"
+	"enet/protocol.h"
+	"enet/list.h"
+	"enet/callbacks.h"
+
+1218426037 /home/benjamin/SVN/sf_egoboo_2/trunk/enet/include/enet/win32.h
+	<stdlib.h>
+	<winsock2.h>
+
+1218426037 /home/benjamin/SVN/sf_egoboo_2/trunk/enet/include/enet/unix.h
+	<stdlib.h>
+	<sys/types.h>
+	<netinet/in.h>
+
+1207352266 /usr/include/netinet/in.h
+	<features.h>
+	<stdint.h>
+	<sys/socket.h>
+	<bits/types.h>
+	<bits/in.h>
+	<endian.h>
+	<bits/byteswap.h>
+
+1207352251 /usr/include/sys/socket.h
+	<features.h>
+	<sys/uio.h>
+	<stddef.h>
+	<bits/socket.h>
+	<bits/socket2.h>
+
+1207352250 /usr/include/sys/uio.h
+	<features.h>
+	<sys/types.h>
+	<bits/uio.h>
+
+1207352251 /usr/include/bits/socket.h
+	<stddef.h>
+	<limits.h>
+	<sys/types.h>
+	<bits/sockaddr.h>
+	<asm/socket.h>
+
+1207352211 /usr/include/limits.h
+	<features.h>
+	<bits/wordsize.h>
+	<bits/posix1_lim.h>
+	<bits/posix2_lim.h>
+	<bits/xopen_lim.h>
+
+1207352247 /usr/include/bits/posix1_lim.h
+	<bits/local_lim.h>
+
+1207352247 /usr/include/bits/local_lim.h
+	<linux/limits.h>
+
+1215841469 /usr/include/linux/limits.h
+
+1207352247 /usr/include/bits/posix2_lim.h
+
+1207352211 /usr/include/bits/xopen_lim.h
+	<bits/stdio_lim.h>
+	<bits/wordsize.h>
+
+1207352251 /usr/include/bits/sockaddr.h
+
+1215841467 /usr/include/asm/socket.h
+	<asm/sockios.h>
+
+1215841467 /usr/include/asm/sockios.h
+
+1207352251 /usr/include/bits/socket2.h
+
+1207352266 /usr/include/bits/in.h
+
+1207352242 /usr/include/bits/byteswap.h
+	<bits/wordsize.h>
+
+1218426037 /home/benjamin/SVN/sf_egoboo_2/trunk/enet/include/enet/types.h
+
+1218426037 /home/benjamin/SVN/sf_egoboo_2/trunk/enet/include/enet/protocol.h
+	"enet/types.h"
+
+1218426037 /home/benjamin/SVN/sf_egoboo_2/trunk/enet/include/enet/list.h
+	<stdlib.h>
+
+1218426037 /home/benjamin/SVN/sf_egoboo_2/trunk/enet/include/enet/callbacks.h
+	<stdlib.h>
+
+1219100294 /home/benjamin/SVN/sf_egoboo_2/trunk/game/Network.h
+	"input.h"
+	"char.h"
+	"egoboo.h"
+	<enet/enet.h>
+	<SDL_thread.h>
+
+1218408702 /home/benjamin/SVN/sf_egoboo_2/trunk/game/Log.h
+
+1218408702 /home/benjamin/SVN/sf_egoboo_2/trunk/game/NetFile.h
+	"Network.h"
+	"egoboo_types.h"
+
+1218408702 /home/benjamin/SVN/sf_egoboo_2/trunk/game/egoboo_strutil.h
+	"egoboo_types.h"
+	"egoboo_config.h"
+	<string.h>
+	<ctype.h>
+
+1219116354 /home/benjamin/SVN/sf_egoboo_2/trunk/game/Network.inl
+	"Network.h"
+	"egoboo_types.inl"
+
+1219116414 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/Clock.c
+	"Clock.h"
+	"System.h"
+	"Log.h"
+	<stddef.h>
+	<stdlib.h>
+	<memory.h>
+
+1218408702 /home/benjamin/SVN/sf_egoboo_2/trunk/game/System.h
+
+1219102805 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/Font.c
+	"Font.h"
+	"ogl_texture.h"
+	"Log.h"
+	"file_common.h"
+	"egoboo_utility.h"
+	"egoboo.h"
+	"graphic.inl"
+	"egoboo_types.inl"
+	<stdlib.h>
+	<stddef.h>
+	<string.h>
+	<SDL.h>
+	<SDL_opengl.h>
+	<SDL_ttf.h>
+	<assert.h>
+
+1219104153 /home/benjamin/SVN/sf_egoboo_2/trunk/game/file_common.h
+	"egoboo_types.h"
+	<stdio.h>
+
+1219104154 /home/benjamin/SVN/sf_egoboo_2/trunk/game/graphic.inl
+	"graphic.h"
+	"egoboo_types.inl"
+
+1186441190 /usr/include/SDL/SDL_ttf.h
+	"SDL.h"
+	"begin_code.h"
+	"close_code.h"
+
+1219100294 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/Frustum.c
+	"Frustum.h"
+	<SDL_opengl.h>
+	<math.h>
+
+1218408702 /home/benjamin/SVN/sf_egoboo_2/trunk/game/Frustum.h
+	"egoboo_types.h"
+
+1219104153 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/Log.c
+	"Log.h"
+	"game.h"
+	<stdlib.h>
+	<stdio.h>
+	<stdarg.h>
+
+1219116565 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/Mad.c
+	"Mad.h"
+	"script.h"
+	"Log.h"
+	"file_common.h"
+	"egoboo_utility.h"
+	<assert.h>
+	"Md2.inl"
+	"particle.inl"
+	"graphic.inl"
+	"egoboo_types.inl"
+
+1219104153 /home/benjamin/SVN/sf_egoboo_2/trunk/game/Md2.inl
+	"Md2.h"
+
+1219100294 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/Md2.c
+	"Md2.inl"
+	"id_md2.h"
+	<SDL_endian.h>
+	"egoboo_math.inl"
+	<stdio.h>
+
+1219100294 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/Menu.c
+	"Menu.h"
+	"Ui.h"
+	"Log.h"
+	"Server.h"
+	"Client.h"
+	"NetFile.h"
+	"Clock.h"
+	"sound.h"
+	"file_common.h"
+	"egoboo.h"
+	<assert.h>
+	"input.inl"
+	"graphic.inl"
+	"Network.inl"
+	"egoboo_types.inl"
+
+1219100294 /home/benjamin/SVN/sf_egoboo_2/trunk/game/Ui.h
+	"Font.h"
+	"ogl_texture.h"
+	"egoboo_types.h"
+	<SDL.h>
+
+1219100294 /home/benjamin/SVN/sf_egoboo_2/trunk/game/Server.h
+	"Network.h"
+	"object.h"
+	"char.h"
+	"input.h"
+	"egoboo_types.h"
+	"egoboo.h"
+	<enet/enet.h>
+
+1219100294 /home/benjamin/SVN/sf_egoboo_2/trunk/game/sound.h
+	"egoboo_math.h"
+	"egoboo_types.h"
+	<SDL_mixer.h>
+
+1219102869 /home/benjamin/SVN/sf_egoboo_2/trunk/game/input.inl
+	"input.h"
+	"Network.h"
+	"game.h"
+	"graphic.inl"
+	"char.inl"
+	"egoboo_types.inl"
+
+1219116674 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/NetFile.c
+	"NetFile.h"
+	"file_common.h"
+	"egoboo_utility.h"
+	"egoboo_strutil.h"
+	"Network.inl"
+	"egoboo_types.inl"
+	<assert.h>
+	<time.h>
+
+1219116722 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/Network.c
+	"Network.inl"
+	"Client.h"
+	"Server.h"
+	"Log.h"
+	"NetFile.h"
+	"game.h"
+	"graphic.h"
+	"file_common.h"
+	"egoboo_utility.h"
+	"egoboo_strutil.h"
+	<stdio.h>
+	<stdarg.h>
+	<assert.h>
+	"input.inl"
+	"egoboo_types.inl"
+
+1219116747 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/Physics.c
+	"Physics.inl"
+	"egoboo_math.inl"
+
+1219116747 /home/benjamin/SVN/sf_egoboo_2/trunk/game/Physics.inl
+	"Physics.h"
+	"egoboo_types.inl"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/SDL_GetPixel.c
+	"SDL_Pixel.h"
+	<string.h>
+
+1219100294 /home/benjamin/SVN/sf_egoboo_2/trunk/game/SDL_Pixel.h
+	<SDL.h>
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/SDL_PutPixel.c
+	"SDL_Pixel.h"
+	<string.h>
+
+1219116813 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/SDL_rotozoom.c
+	<windows.h>
+	<stdlib.h>
+	<string.h>
+	"SDL_rotozoom.h"
+	"egoboo_types.inl"
+
+1219100294 /home/benjamin/SVN/sf_egoboo_2/trunk/game/SDL_rotozoom.h
+	<math.h>
+	<SDL.h>
+
+1219116843 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/Server.c
+	"Server.h"
+	"Log.h"
+	"egoboo.h"
+	"NetFile.h"
+	"game.h"
+	"file_common.h"
+	"Network.inl"
+	"egoboo_types.inl"
+	<enet/enet.h>
+	<assert.h>
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/System_lin.c
+	<stdio.h>
+	<sys/time.h>
+
+1207352244 /usr/include/sys/time.h
+	<features.h>
+	<bits/types.h>
+	<time.h>
+	<bits/time.h>
+	<sys/select.h>
+
+1219100294 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/Task.c
+	"Task.h"
+	"Clock.h"
+	<stddef.h>
+	<string.h>
+	<stdlib.h>
+
+1218408702 /home/benjamin/SVN/sf_egoboo_2/trunk/game/Task.h
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/Ticker.c
+	"Ticker.h"
+	"Clock.h"
+	<assert.h>
+	<stddef.h>
+
+1218408702 /home/benjamin/SVN/sf_egoboo_2/trunk/game/Ticker.h
+
+1219100294 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/Timer.c
+	"Timer.h"
+	"Clock.h"
+	<stddef.h>
+	<stdlib.h>
+	<assert.h>
+
+1218408702 /home/benjamin/SVN/sf_egoboo_2/trunk/game/Timer.h
+	"Clock.h"
+
+1219102804 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/Ui.c
+	"Ui.h"
+	"Log.h"
+	"egoboo.h"
+	<string.h>
+	<SDL_opengl.h>
+	<assert.h>
+	"input.inl"
+	"graphic.inl"
+
+1219116923 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/camera.c
+	"camera.h"
+	"Frustum.h"
+	"Log.h"
+	"Client.h"
+	"egoboo.h"
+	<assert.h>
+	"graphic.inl"
+	"input.inl"
+	"char.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+
+1218408702 /home/benjamin/SVN/sf_egoboo_2/trunk/game/camera.h
+	"ogl_include.h"
+
+1219118859 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/char.c
+	"char.inl"
+	"Client.h"
+	"Server.h"
+	"Log.h"
+	"camera.h"
+	"enchant.h"
+	"passage.h"
+	"Menu.h"
+	"script.h"
+	"sound.h"
+	"file_common.h"
+	"graphic.inl"
+	"Network.inl"
+	"egoboo_strutil.h"
+	"egoboo_utility.h"
+	"egoboo_rpc.h"
+	"egoboo.h"
+	<assert.h>
+	"object.inl"
+	"Physics.inl"
+	"input.inl"
+	"particle.inl"
+	"Md2.inl"
+	"mesh.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+
+1219104196 /home/benjamin/SVN/sf_egoboo_2/trunk/game/egoboo_rpc.h
+	"char.h"
+	"enchant.h"
+	"particle.h"
+
+1219118126 /home/benjamin/SVN/sf_egoboo_2/trunk/game/object.inl
+	"object.h"
+	"game.h"
+	"char.inl"
+	"egoboo_types.inl"
+
+1219100294 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/configfile.c
+	"configfile.h"
+	"file_common.h"
+	"egoboo_strutil.h"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/egoboo_math.c
+	"egoboo_math.inl"
+
+1219117302 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/egoboo_rpc.c
+	"egoboo_rpc.h"
+	"game.h"
+	"egoboo_types.inl"
+
+1219117327 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/egoboo_strutil.c
+	"egoboo_strutil.h"
+	"egoboo_config.h"
+
+1219104839 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/egoboo_utility.c
+	"egoboo_utility.h"
+	"Mad.h"
+	"Log.h"
+	"file_common.h"
+	"egoboo_strutil.h"
+	<assert.h>
+	"particle.inl"
+	"char.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+
+1219106937 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/enchant.c
+	"enchant.h"
+	"Log.h"
+	"passage.h"
+	"script.h"
+	"sound.h"
+	"Clock.h"
+	"file_common.h"
+	"egoboo_utility.h"
+	"egoboo_strutil.h"
+	"egoboo.h"
+	<assert.h>
+	"particle.inl"
+	"Md2.inl"
+	"char.inl"
+	"mesh.inl"
+	"object.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+
+1219117491 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/file_common.c
+	"file_common.h"
+	"Log.h"
+
+1219117527 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/file_lin.c
+	"file_common.h"
+	"egoboo_strutil.h"
+	<stdio.h>
+	<unistd.h>
+	<glob.h>
+	<sys/types.h>
+	<sys/stat.h>
+	<sys/dir.h>
+	"egoboo_math.inl"
+
+1207352247 /usr/include/unistd.h
+	<features.h>
+	<bits/posix_opt.h>
+	<bits/environments.h>
+	<bits/types.h>
+	<stddef.h>
+	<bits/confname.h>
+	<getopt.h>
+	<bits/unistd.h>
+
+1207352247 /usr/include/bits/posix_opt.h
+
+1207352247 /usr/include/bits/environments.h
+	<bits/wordsize.h>
+
+1207352247 /usr/include/bits/confname.h
+
+1207352247 /usr/include/bits/unistd.h
+
+1207352247 /usr/include/glob.h
+	<sys/cdefs.h>
+	<stddef.h>
+
+1207352250 /usr/include/sys/dir.h
+	<features.h>
+	<dirent.h>
+
+1207352245 /usr/include/dirent.h
+	<features.h>
+	<bits/types.h>
+	<bits/dirent.h>
+	<bits/types.h>
+	<bits/posix1_lim.h>
+	<stddef.h>
+
+1207352245 /usr/include/bits/dirent.h
+
+1219117790 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/game.c
+	"game.h"
+	"Ui.h"
+	"Font.h"
+	"Clock.h"
+	"Log.h"
+	"Client.h"
+	"Server.h"
+	"System.h"
+	"id_md2.h"
+	"Menu.h"
+	"script.h"
+	"enchant.h"
+	"camera.h"
+	"sound.h"
+	"file_common.h"
+	"object.inl"
+	"Network.inl"
+	"mesh.inl"
+	"egoboo_rpc.h"
+	"egoboo_utility.h"
+	"egoboo_strutil.h"
+	"egoboo.h"
+	<SDL_endian.h>
+	<assert.h>
+	<stdlib.h>
+	<stdio.h>
+	<time.h>
+	"input.inl"
+	"particle.inl"
+	"Md2.inl"
+	"char.inl"
+	"graphic.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+
+1219117861 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/graphic.c
+	"graphic.inl"
+	"Log.h"
+	"Ui.h"
+	"Menu.h"
+	"camera.h"
+	"script.h"
+	"passage.h"
+	"Client.h"
+	"Server.h"
+	"sound.h"
+	"file_common.h"
+	"egoboo_utility.h"
+	"egoboo.h"
+	"Network.inl"
+	"input.inl"
+	"char.inl"
+	"particle.inl"
+	"input.inl"
+	"mesh.inl"
+	"Physics.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+	<assert.h>
+	<stdarg.h>
+	<time.h>
+	<unistd.h>
+
+1219106940 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/graphic_fan.c
+	"ogl_include.h"
+	"Log.h"
+	"Frustum.h"
+	"egoboo.h"
+	<assert.h>
+	"particle.inl"
+	"mesh.inl"
+	"graphic.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+
+1219106940 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/graphic_mad.c
+	"ogl_include.h"
+	"Mad.h"
+	"id_md2.h"
+	"Log.h"
+	"camera.h"
+	"egoboo.h"
+	<assert.h>
+	"char.inl"
+	"Md2.inl"
+	"input.inl"
+	"graphic.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+
+1219117949 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/graphic_prt.c
+	"ogl_include.h"
+	"Log.h"
+	"camera.h"
+	"egoboo.h"
+	<assert.h>
+	"graphic.inl"
+	"particle.inl"
+	"char.inl"
+	"egoboo_math.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+	"mesh.inl"
+
+1218408702 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/id_normals.c
+	"id_md2.h"
+	"id_normals.h"
+
+1219117975 /home/benjamin/SVN/sf_egoboo_2/trunk/game/id_normals.h
+
+1219118013 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/input.c
+	"input.inl"
+	"Ui.h"
+	"Log.h"
+	"Client.h"
+	"file_common.h"
+	"egoboo_utility.h"
+	"egoboo.h"
+	"Network.inl"
+	"egoboo_types.inl"
+
+1219100294 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/mesh.c
+	"mesh.inl"
+	"Log.h"
+	"file_common.h"
+	"egoboo_utility.h"
+	"egoboo.h"
+	"char.inl"
+	"particle.inl"
+	"egoboo_types.inl"
+
+1219106940 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/module.c
+	"module.h"
+	"Log.h"
+	"sound.h"
+	"script.h"
+	"Menu.h"
+	"enchant.h"
+	"Client.h"
+	"Server.h"
+	"game.h"
+	"Ui.h"
+	"file_common.h"
+	"egoboo_strutil.h"
+	"egoboo_utility.h"
+	"egoboo.h"
+	"particle.inl"
+	"object.inl"
+	"graphic.inl"
+	"mesh.inl"
+	"egoboo_types.inl"
+
+1219118190 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/object.c
+	"object.inl"
+	"Mad.h"
+	"enchant.h"
+	"game.h"
+	"Log.h"
+	"sound.h"
+	"file_common.h"
+	"egoboo_utility.h"
+	"egoboo_strutil.h"
+	"graphic.inl"
+	"particle.inl"
+	"char.inl"
+	"egoboo_types.inl"
+
+1219118202 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/ogl_include.c
+	"ogl_include.h"
+	"Log.h"
+	"egoboo_math.inl"
+
+1219102869 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/ogl_texture.c
+	"ogl_texture.h"
+	"game.h"
+	"graphic.inl"
+	"egoboo_types.inl"
+	<SDL_image.h>
+
+1202785916 /usr/include/SDL/SDL_image.h
+	"SDL.h"
+	"SDL_version.h"
+	"begin_code.h"
+	"close_code.h"
+
+1219106941 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/particle.c
+	"particle.inl"
+	"Log.h"
+	"camera.h"
+	"sound.h"
+	"enchant.h"
+	"game.h"
+	"Clock.h"
+	"file_common.h"
+	"egoboo_utility.h"
+	"egoboo_rpc.h"
+	"egoboo.h"
+	<assert.h>
+	"char.inl"
+	"Md2.inl"
+	"mesh.inl"
+	"object.inl"
+	"input.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+
+1219118347 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/passage.c
+	"passage.h"
+	"script.h"
+	"sound.h"
+	"file_common.h"
+	"egoboo_utility.h"
+	"egoboo.h"
+	"char.inl"
+	"mesh.inl"
+	"egoboo_types.inl"
+
+1219106942 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/script.c
+	<assert.h>
+	"script.h"
+	"Log.h"
+	"Mad.h"
+	"passage.h"
+	"camera.h"
+	"enchant.h"
+	"egoboo.h"
+	"passage.h"
+	"Client.h"
+	"AStar.h"
+	"sound.h"
+	"file_common.h"
+	"egoboo_utility.h"
+	"particle.inl"
+	"object.inl"
+	"input.inl"
+	"char.inl"
+	"mesh.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+
+1219100294 source:/home/benjamin/SVN/sf_egoboo_2/trunk/game/sound.c
+	"sound.h"
+	"Log.h"
+	"camera.h"
+	"egoboo_utility.h"
+	"egoboo.h"
+	"particle.inl"
+	"char.inl"
+	"egoboo_math.inl"
+	"egoboo_types.inl"
+

@@ -24,7 +24,6 @@
 
 #include "object.inl"
 
-#include "graphic.h"
 #include "Mad.h"
 #include "enchant.h"
 #include "game.h"
@@ -35,6 +34,7 @@
 #include "egoboo_utility.h"
 #include "egoboo_strutil.h"
 
+#include "graphic.inl"
 #include "particle.inl"
 #include "char.inl"
 #include "egoboo_types.inl"
@@ -48,7 +48,7 @@ int load_one_object( Game_t * gs, int skin_count, const char * szObjectpath, cha
   STRING newloadname, loc_loadpath, wavename;
   int cnt;
 
-  PObj_t objlst = gs->ObjList;
+  //PObj_t objlst = gs->ObjList;
 
   OBJ_REF iobj;
   Obj_t  * pobj;
@@ -222,7 +222,7 @@ void switch_team( Game_t * gs, CHR_REF chr_ref, TEAM_REF team )
   // ZZ> This function makes a character join another team...
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   if ( team < TEAM_COUNT )
   {
@@ -253,7 +253,8 @@ int restock_ammo( Game_t * gs, CHR_REF chr_ref, IDSZ idsz )
   //     function returns the amount of ammo given.
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
+
   int amount;
   OBJ_REF model;
   CAP_REF icap;
@@ -285,7 +286,7 @@ void issue_clean( Game_t * gs, CHR_REF chr_ref )
   CHR_REF chr_cnt;
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   team = chrlst[chr_ref].team;
 
@@ -346,11 +347,11 @@ void ObjList_free_one( Game_t * gs, OBJ_REF obj_ref )
 {
   // BB> This function sticks a profile back on the free profile stack
 
-  PObj_t   objlst      = gs->ObjList;
-  size_t objlst_size = OBJLST_COUNT;
+  //PObj_t   objlst      = gs->ObjList;
+  //size_t objlst_size = OBJLST_COUNT;
 
   PCap_t    caplst      = gs->CapList;
-  size_t  caplst_size = CAPLST_COUNT;
+  //size_t  caplst_size = CAPLST_COUNT;
 
   Obj_t * pobj;
 

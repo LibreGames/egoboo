@@ -173,7 +173,7 @@ bool_t ftest_idsz( FILE* fileread )
   char cTmp;
   long pos;
   bool_t retval;
-  
+
   pos = ftell(fileread);
 
   cTmp = fget_first_letter( fileread );
@@ -185,7 +185,7 @@ bool_t ftest_idsz( FILE* fileread )
 
   // go back to the original position
   fseek( fileread, pos, SEEK_SET );
-  
+
   return retval;
 };
 
@@ -1556,7 +1556,7 @@ bool_t fput_dynamode( FILE* filewrite, enum e_dyna_mode data )
     case DYNA_LOCAL: pchar = "LOCAL"; break;
   };
 
-  written = fprintf( filewrite, "%s ", data );
+  written = fprintf( filewrite, "%s ", pchar );
 
   return written > 0;
 }
@@ -1754,7 +1754,7 @@ bool_t fput_expansion( FILE* filewrite, char * idsz_string, int value )
 {
   if(NULL == filewrite) return bfalse;
 
-  fprintf( filewrite, "[%4c] ", idsz_string );
+  fprintf( filewrite, "[%4s] ", idsz_string );
   fput_int ( filewrite, value );
 
   return btrue;

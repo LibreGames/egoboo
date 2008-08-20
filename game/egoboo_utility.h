@@ -37,6 +37,8 @@ bool_t undo_pair( PAIR * ppair, RANGE * prange );
 bool_t fget_pair( FILE* fileread, PAIR * ppair );
 bool_t fget_next_pair( FILE* fileread, PAIR * ppair );
 
+bool_t fput_next( FILE* filewrite, const char * comment );
+
 char * undo_idsz( IDSZ idsz );
 bool_t ftest_idsz( FILE* fileread );
 

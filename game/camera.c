@@ -27,12 +27,12 @@
 #include "Frustum.h"
 #include "Log.h"
 #include "Client.h"
-#include "graphic.h"
 
 #include "egoboo.h"
 
 #include <assert.h>
 
+#include "graphic.inl"
 #include "input.inl"
 #include "char.inl"
 #include "egoboo_math.inl"
@@ -445,7 +445,7 @@ void reset_camera()
   int cnt, save;
   float fov2;
 
-  Game_t * gs = Graphics_requireGame(&gfxState);
+  //Game_t * gs = Graphics_requireGame(&gfxState);
 
   GCamera.swing = 0;
   GCamera.pos.x = 0;

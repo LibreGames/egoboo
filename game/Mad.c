@@ -1212,7 +1212,7 @@ MAD_REF MadList_load_one( Game_t * gs, const char * szObjectpath, const char * s
   int iFrames;
   Mad_t * pmad;
 
-  PMad_t madlst = gs->MadList;
+  //PMad_t madlst = gs->MadList;
 
   // make the notation "easier"
   if( !VALID_MAD_RANGE(imad) ) return INVALID_MAD;

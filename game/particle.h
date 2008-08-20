@@ -18,7 +18,7 @@ enum e_particle_alpha_type
 {
   PRTTYPE_LIGHT = 0,                         // Magic effect particle
   PRTTYPE_SOLID,                             // Sprite particle
-  PRTTYPE_ALPHA,                             // Smoke particle
+  PRTTYPE_ALPHA                              // Smoke particle
 };
 typedef enum e_particle_alpha_type PRTALPHA;
 
@@ -26,7 +26,7 @@ enum e_dyna_mode
 {
   DYNA_OFF = 0,
   DYNA_ON,
-  DYNA_LOCAL,
+  DYNA_LOCAL
 };
 typedef enum e_dyna_mode DYNA_MODE;
 
@@ -164,7 +164,7 @@ Pip_t * Pip_new(Pip_t * ppip);
 bool_t Pip_delete(Pip_t * ppip);
 Pip_t * Pip_renew(Pip_t * ppip);
 
-#define VALID_PIP_RANGE(XX) (((XX)>=0) && ((XX)<PIPLST_COUNT))
+#define VALID_PIP_RANGE(XX)   ( /*(((XX)>=0) && */ ((XX)<PIPLST_COUNT) )
 #define VALID_PIP(LST, XX)    ( VALID_PIP_RANGE(XX) && EKEY_VALID(LST[XX]) )
 #define VALIDATE_PIP(LST, XX) ( VALID_PIP(LST, XX) ? (XX) : (INVALID_PIP) )
 #define LOADED_PIP(LST, XX)   ( VALID_PIP(LST, XX) && LST[XX].Loaded )
@@ -299,7 +299,7 @@ PRT_REF PrtHeap_iterateUsed( PrtHeap_t * pheap, int * index );
 bool_t  PrtHeap_addUsed( PrtHeap_t * pheap, PRT_REF ref );
 bool_t  PrtHeap_addFree( PrtHeap_t * pheap, PRT_REF ref );
 
-PROFILE_PROTOTYPE( PrtHeap );
+PROFILE_PROTOTYPE( PrtHeap )
 
 INLINE CHR_REF prt_get_owner( struct sGame * gs, PRT_REF iprt );
 INLINE CHR_REF prt_get_target( struct sGame * gs, PRT_REF iprt );
@@ -321,7 +321,7 @@ MAD_REF PrtList_getRMad(struct sGame * gs, PRT_REF iprt);
 
 extern Uint16          particletexture;                            // All in one bitmap
 
-#define VALID_PRT_RANGE(XX)     (((XX)>=0) && ((XX)<PRTLST_COUNT))
+#define VALID_PRT_RANGE(XX)     ( /*(((XX)>=0) && */ ((XX)<PRTLST_COUNT) )
 #define VALID_PRT(LST, XX)      ( VALID_PRT_RANGE(XX) && EKEY_VALID(LST[XX]) )
 #define VALIDATE_PRT(LST, XX)   ( VALID_PRT(LST, XX) ? (XX) : (INVALID_PRT) )
 #define RESERVED_PRT(LST, XX)   ( VALID_PRT(LST, XX) && LST[XX].reserved && !LST[XX].active   )

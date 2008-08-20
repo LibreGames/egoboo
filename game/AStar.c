@@ -125,9 +125,7 @@ int AStar_open_find( AStar_Node_t * pn )
 
 //------------------------------------------------------------------------------
 bool_t AStar_open_add( AStar_Node_t * pn )
-  {
-  bool_t retval = bfalse;
-
+{
   if ( NULL == pn || pn->closeme ) return bfalse;
 
   if ( AStar_open_count >= AStar_allocated-1 ) return bfalse;

@@ -60,7 +60,7 @@ void clock_shutdown()
 struct sClockState
 {
   // Clock data
-  char * name;
+  const char * name;
 
   double sourceStartTime;  // The first value the clock receives from above function
   double sourceLastTime;  // The last value the clock received from above function

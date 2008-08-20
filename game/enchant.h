@@ -111,10 +111,10 @@ Eve_t *  Eve_new(Eve_t *peve);
 bool_t Eve_delete( Eve_t * peve );
 Eve_t *  Eve_renew( Eve_t * peve );
 
-#define VALID_EVE_RANGE(XX) (((XX)>=0) && ((XX)<EVELST_COUNT))
+#define VALID_EVE_RANGE(XX)   ( /*(((XX)>=0) && */ ((XX)<EVELST_COUNT) )
 #define VALID_EVE(LST, XX)    ( VALID_EVE_RANGE(XX) && EKEY_VALID(LST[XX]) )
 #define VALIDATE_EVE(LST, XX) ( VALID_EVE(LST, XX) ? (XX) : (INVALID_EVE) )
-#define LOADED_EVE(LST, XX)  ( VALID_EVE(LST, XX) && LST[XX].Loaded )
+#define LOADED_EVE(LST, XX)   ( VALID_EVE(LST, XX) && LST[XX].Loaded )
 
 struct s_enc_spawn_info
 {
@@ -170,10 +170,10 @@ typedef struct sEnc Enc_t;
 
 #ifdef __cplusplus
   typedef TList<sEnc, ENCLST_COUNT> EncList_t;
-  typedef TPList<sEnc, ENCLST_COUNT> PEnc;
+  typedef TPList<sEnc, ENCLST_COUNT> PEnc_t;
 #else
   typedef Enc_t EncList_t[ENCLST_COUNT];
-  typedef Enc_t * PEnc;
+  typedef Enc_t * PEnc_t;
 #endif
 
 Enc_t *  Enc_new(Enc_t *penc);
@@ -203,11 +203,11 @@ ENC_REF EncHeap_iterateUsed( EncHeap_t * pheap, int * index );
 bool_t  EncHeap_addUsed( EncHeap_t * pheap, ENC_REF ref );
 bool_t  EncHeap_addFree( EncHeap_t * pheap, ENC_REF ref );
 
-PROFILE_PROTOTYPE( EncHeap );
+PROFILE_PROTOTYPE( EncHeap )
 
 ENC_REF EncList_get_free( struct sGame * gs, ENC_REF irequest);
 
-#define VALID_ENC_RANGE(XX)   (((XX)>=0) && ((XX)<ENCLST_COUNT))
+#define VALID_ENC_RANGE(XX)   ( /*(((XX)>=0) && */ ((XX)<ENCLST_COUNT) )
 #define VALID_ENC(LST, XX)    ( VALID_ENC_RANGE(XX) && EKEY_VALID(LST[XX]) )
 #define VALIDATE_ENC(LST, XX) ( VALID_ENC(LST, XX) ? (XX) : (INVALID_ENC) )
 #define RESERVED_ENC(LST, XX) ( VALID_ENC(LST, XX) && LST[XX].reserved && !LST[XX].active   )

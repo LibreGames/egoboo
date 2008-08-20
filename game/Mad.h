@@ -183,7 +183,7 @@ Mad_t *  Mad_renew(Mad_t * pmad);
 
 void   MadList_free_one( struct sGame * gs, Uint16 imdl );
 
-#define VALID_MAD_RANGE(XX) ( ((XX)>=0) && ((XX)<MADLST_COUNT) )
+#define VALID_MAD_RANGE(XX) ( /*(((XX)>=0) && */ ((XX)<MADLST_COUNT) )
 #define VALID_MAD(LST, XX)   ( VALID_MAD_RANGE(XX) && EKEY_VALID(LST[XX]) )
 #define VALIDATE_MAD(LST,XX) ( VALID_MAD(LST, XX) ? (XX) : (INVALID_MAD) )
 #define LOADED_MAD(LST, XX)  ( VALID_MAD(LST, XX) && LST[XX].Loaded )

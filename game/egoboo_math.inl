@@ -32,13 +32,13 @@ INLINE void turn_to_vec( Uint16 turn, float * dx, float * dy )
 {
   *dx = -turntocos[turn>>2];
   *dy = -turntosin[turn>>2];
-};
+}
 
 //---------------------------------------------------------------------------------------------
 INLINE Uint16 vec_to_turn( float dx, float dy )
 {
   return RAD_TO_TURN( atan2( dy, dx ) );
-};
+}
 
 //---------------------------------------------------------------------------------------------
 INLINE vect3 VSub( vect3 A, vect3 B )
@@ -205,7 +205,7 @@ INLINE quaternion QuatTransform(quaternion q1, quaternion q2, quaternion q3)
 //---------------------------------------------------------------------------------------------
 INLINE quaternion QuatConvert(matrix_4x4 m)
 {
-  quaternion quat = {0,0,0,1};
+  quaternion quat = {{0,0,0,1}};  // the funky {{,,,}} thing is because the vectors are declared as structs of unions (nested typed == nested {}'s)
   float  tr, s, s2;
   int    i, j, k;
   int nxt[3] = {1, 2, 0};
@@ -223,7 +223,7 @@ INLINE quaternion QuatConvert(matrix_4x4 m)
     quat.z = (m.CNV(1, 0) - m.CNV(0, 1)) * s;
   }
   else
-  {		
+  {
     // diagonal is negative
     i = 0;
     if (m.CNV(1, 1) > m.CNV(0, 0)) i = 1;
@@ -643,14 +643,14 @@ INLINE void Translate3( matrix_4x4 *pMatrix, vect3 pSourceV[], vect3 pDestV[], U
 INLINE void VectorClear( float v[] )
 {
   v[0] = v[1] = v[2] = 0.0f;
-};
+}
 
 //----------------------------------------------------
 INLINE void VectorClear4( float v[] )
 {
   v[0] = v[1] = v[2] = 0.0f;
   v[3] = 1.0f;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE bool_t matrix_compare_3x3(matrix_4x4 * pm1, matrix_4x4 * pm2)
@@ -663,7 +663,7 @@ INLINE bool_t matrix_compare_3x3(matrix_4x4 * pm1, matrix_4x4 * pm2)
   {
     for(j=0;j<3;j++)
     {
-      if( (*pm1).CNV(i,j) != (*pm2).CNV(i,j) ) bfalse;
+      if( (*pm1).CNV(i,j) != (*pm2).CNV(i,j) ) return bfalse;
     };
   };
 

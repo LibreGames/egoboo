@@ -123,6 +123,7 @@ INLINE const Uint16 slot_to_latch( PChr_t lst, size_t count, CHR_REF object, SLO
   {
     case SLOT_LEFT:  latch = in_hand ? LATCHBUTTON_LEFT  : LATCHBUTTON_ALTLEFT;  break;
     case SLOT_RIGHT: latch = in_hand ? LATCHBUTTON_RIGHT : LATCHBUTTON_ALTRIGHT; break;
+    default: /* do nothing */ break;
   };
 
   return latch;

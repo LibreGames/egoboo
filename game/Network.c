@@ -34,17 +34,17 @@
 #include "NetFile.h"
 #include "game.h"
 #include "graphic.h"
-#include "input.h"
 #include "file_common.h"
 
 #include "egoboo_utility.h"
 #include "egoboo_strutil.h"
 
-#include "egoboo_types.inl"
-
 #include <stdio.h>
 #include <stdarg.h>
 #include <assert.h>
+
+#include "input.inl"
+#include "egoboo_types.inl"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -1342,7 +1342,7 @@ bool_t net_handlePacket(Net_t * ns, ENetEvent *event)
     {
       // The other computer is requesting all the files for the module
 
-      STRING remote_filename = NULL_STRING, module_filename = NULL_STRING, module_path = NULL_STRING, temp = NULL_STRING;
+      STRING remote_filename = NULL_STRING, module_filename = NULL_STRING, /* module_path = NULL_STRING, */ temp = NULL_STRING;
 
       net_logf("TO_HOST_REQUEST_MODULE\n");
 

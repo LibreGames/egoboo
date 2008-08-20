@@ -241,7 +241,7 @@ bool_t module_load( Game_t * gs, char *smallname )
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s", szModpath, CData.gamedat_dir );
   if ( AILST_COUNT == load_ai_script( Game_getScriptInfo(gs), CStringTmp1, NULL ) )
   {
-    snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s", CData.basicdat_dir, CData.script_file );
+    snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s", CData.basicdat_dir, CData.script_file );
     load_ai_script( Game_getScriptInfo(gs), CStringTmp1, NULL );
   };
 

@@ -61,7 +61,7 @@ INLINE bool_t chr_is_invisible( PChr_t lst, size_t lst_size, CHR_REF chr_ref )
   if ( !ACTIVE_CHR(lst, chr_ref ) ) return btrue;
 
   return FP8_MUL( lst[chr_ref].alpha_fp8, lst[chr_ref].light_fp8 ) <= INVISIBLE;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE bool_t chr_using_slot( PChr_t lst, size_t lst_size, CHR_REF chr_ref, SLOT slot )
@@ -69,7 +69,7 @@ INLINE bool_t chr_using_slot( PChr_t lst, size_t lst_size, CHR_REF chr_ref, SLOT
   CHR_REF inslot = chr_get_holdingwhich( lst, lst_size, chr_ref, slot );
 
   return ACTIVE_CHR(lst, inslot );
-};
+}
 
 
 //--------------------------------------------------------------------------------------------
@@ -95,7 +95,7 @@ INLINE CHR_REF chr_get_nextinpack( PChr_t lst, size_t lst_size, CHR_REF chr_ref 
 
   lst[chr_ref].nextinpack = VALIDATE_CHR(lst, lst[chr_ref].nextinpack );
   return lst[chr_ref].nextinpack;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF chr_get_onwhichplatform( PChr_t lst, size_t lst_size, CHR_REF chr_ref )
@@ -104,7 +104,7 @@ INLINE CHR_REF chr_get_onwhichplatform( PChr_t lst, size_t lst_size, CHR_REF chr
 
   lst[chr_ref].onwhichplatform = VALIDATE_CHR(lst, lst[chr_ref].onwhichplatform );
   return lst[chr_ref].onwhichplatform;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF chr_get_holdingwhich( PChr_t lst, size_t lst_size, CHR_REF chr_ref, SLOT slot )
@@ -132,7 +132,7 @@ INLINE CHR_REF chr_get_holdingwhich( PChr_t lst, size_t lst_size, CHR_REF chr_re
 
   lst[chr_ref].holdingwhich[slot] = VALIDATE_CHR(lst, lst[chr_ref].holdingwhich[slot] );
   return lst[chr_ref].holdingwhich[slot];
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF chr_get_inwhichpack( PChr_t lst, size_t lst_size, CHR_REF chr_ref )
@@ -141,7 +141,7 @@ INLINE CHR_REF chr_get_inwhichpack( PChr_t lst, size_t lst_size, CHR_REF chr_ref
 
   lst[chr_ref].inwhichpack = VALIDATE_CHR(lst, lst[chr_ref].inwhichpack );
   return lst[chr_ref].inwhichpack;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF chr_get_attachedto( PChr_t lst, size_t lst_size, CHR_REF chr_ref )
@@ -173,7 +173,7 @@ INLINE CHR_REF chr_get_attachedto( PChr_t lst, size_t lst_size, CHR_REF chr_ref 
   lst[chr_ref].attachedto = VALIDATE_CHR(lst, lst[chr_ref].attachedto );
   if( !ACTIVE_CHR(lst, lst[chr_ref].attachedto ) ) lst[chr_ref].inwhichslot = SLOT_NONE;
   return lst[chr_ref].attachedto;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF chr_get_aitarget( PChr_t lst, size_t lst_size, Chr_t * pchr )
@@ -182,7 +182,7 @@ INLINE CHR_REF chr_get_aitarget( PChr_t lst, size_t lst_size, Chr_t * pchr )
 
   pchr->aistate.target = VALIDATE_CHR( lst, pchr->aistate.target );
   return pchr->aistate.target;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF chr_get_aiowner( PChr_t lst, size_t lst_size, Chr_t * pchr )
@@ -191,7 +191,7 @@ INLINE CHR_REF chr_get_aiowner( PChr_t lst, size_t lst_size, Chr_t * pchr )
 
   pchr->aistate.owner = VALIDATE_CHR(lst, pchr->aistate.owner );
   return pchr->aistate.owner;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF chr_get_aichild( PChr_t lst, size_t lst_size, Chr_t * pchr )
@@ -200,7 +200,7 @@ INLINE CHR_REF chr_get_aichild( PChr_t lst, size_t lst_size, Chr_t * pchr )
 
   pchr->aistate.child = VALIDATE_CHR(lst, pchr->aistate.child );
   return pchr->aistate.child;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF chr_get_aiattacklast( PChr_t lst, size_t lst_size, Chr_t * pchr )
@@ -209,7 +209,7 @@ INLINE CHR_REF chr_get_aiattacklast( PChr_t lst, size_t lst_size, Chr_t * pchr )
 
   pchr->aistate.attacklast = VALIDATE_CHR(lst, pchr->aistate.attacklast );
   return pchr->aistate.attacklast;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF chr_get_aibumplast( PChr_t lst, size_t lst_size, Chr_t * pchr )
@@ -218,7 +218,7 @@ INLINE CHR_REF chr_get_aibumplast( PChr_t lst, size_t lst_size, Chr_t * pchr )
 
   pchr->aistate.bumplast = VALIDATE_CHR(lst, pchr->aistate.bumplast );
   return pchr->aistate.bumplast;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF chr_get_aihitlast( PChr_t lst, size_t lst_size, Chr_t * pchr )
@@ -227,7 +227,7 @@ INLINE CHR_REF chr_get_aihitlast( PChr_t lst, size_t lst_size, Chr_t * pchr )
 
   pchr->aistate.hitlast = VALIDATE_CHR(lst, pchr->aistate.hitlast );
   return pchr->aistate.hitlast;
-};
+}
 
 
 //--------------------------------------------------------------------------------------------
@@ -295,7 +295,7 @@ INLINE bool_t wp_list_add(WP_LIST * wl, float x, float y)
   wl->head = test;
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE bool_t wp_list_empty( WP_LIST * wl )
@@ -311,7 +311,7 @@ INLINE float wp_list_x( WP_LIST * wl )
   if(NULL == wl) return 0.0f;
 
   return wl->pos[wl->tail].x;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE float wp_list_y( WP_LIST * wl )
@@ -319,7 +319,7 @@ INLINE float wp_list_y( WP_LIST * wl )
   if(NULL == wl) return 0.0f;
 
   return wl->pos[wl->tail].y;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -361,7 +361,7 @@ INLINE AI_STATE * ai_state_new(AI_STATE * a)
   Latch_clear( &(a->latch) );
 
   return a;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE AI_STATE * ai_state_init(Game_t * gs, AI_STATE * a, CHR_REF ichr)
@@ -421,7 +421,7 @@ INLINE AI_STATE * ai_state_init(Game_t * gs, AI_STATE * a, CHR_REF ichr)
   a->trgvel.z = 0;
 
   return a;
-};
+}
 
 
 //--------------------------------------------------------------------------------------------
@@ -437,7 +437,7 @@ INLINE AI_STATE * ai_state_reinit(AI_STATE * a, CHR_REF ichr)
   a->trgvel.z = 0;
 
   return a;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -465,7 +465,7 @@ INLINE ANIM_INFO * anim_info_new( ANIM_INFO * a )
   a->next    = a->last = 0;
 
   return a;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -491,7 +491,7 @@ INLINE void VData_Blended_construct(VData_Blended_t * v)
 INLINE void VData_Blended_destruct(VData_Blended_t * v)
 {
   VData_Blended_Deallocate(v);
-};
+}
 
 
 //--------------------------------------------------------------------------------------------
@@ -515,7 +515,7 @@ INLINE VData_Blended_t * VData_Blended_new()
     VData_Blended_construct(retval);
   };
   return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE void VData_Blended_delete(VData_Blended_t * v)
@@ -524,7 +524,7 @@ INLINE void VData_Blended_delete(VData_Blended_t * v)
 
   VData_Blended_destruct(v);
   EGOBOO_DELETE(v);
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE void VData_Blended_Allocate(VData_Blended_t * v, size_t verts)

@@ -793,10 +793,10 @@ void do_dyna_light(Game_t * gs)
   MeshMem_t *  mm  = NULL;
 
   PPrt_t prtlst        = NULL;
-  size_t prtlst_size   = PRTLST_COUNT;
+  //size_t prtlst_size   = PRTLST_COUNT;
 
   PDLight dynalst      = NULL;
-  size_t  dynalst_size = MAXDYNA;
+  //size_t  dynalst_size = MAXDYNA;
 
   float dist_factor;
 
@@ -817,7 +817,7 @@ void do_dyna_light(Game_t * gs)
   // Do each floor tile
   if ( pmesh->Info.exploremode )
   {
-    // Set base light level in explore mode...  
+    // Set base light level in explore mode...
 
     for ( prt_cnt = 0; prt_cnt < PRTLST_COUNT; prt_cnt++ )
     {

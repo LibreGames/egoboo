@@ -22,7 +22,7 @@ INLINE CHR_REF prt_get_target( Game_t * gs, PRT_REF iprt )
 
   gs->PrtList[iprt].target = VALIDATE_CHR( gs->ChrList, gs->PrtList[iprt].target );
   return gs->PrtList[iprt].target;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF prt_get_attachedtochr( Game_t * gs, PRT_REF iprt )
@@ -31,4 +31,4 @@ INLINE CHR_REF prt_get_attachedtochr( Game_t * gs, PRT_REF iprt )
 
   gs->PrtList[iprt].attachedtochr = VALIDATE_CHR( gs->ChrList, gs->PrtList[iprt].attachedtochr );
   return gs->PrtList[iprt].attachedtochr;
-};
+}

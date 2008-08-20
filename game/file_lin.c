@@ -23,6 +23,7 @@
 //********************************************************************************************
 
 #include "file_common.h"
+#include "egoboo_strutil.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -30,6 +31,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/dir.h>
+
+#include "egoboo_math.inl"
+
 
 struct s_fs_find_info_lin
 {

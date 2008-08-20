@@ -964,7 +964,7 @@ bool_t read_wawalite( Game_t * gs, char *modname )
     if( found_expansion && found_idsz )
     {
       // we must have already found_expansion a ':' use the post-test do...while loop
-      do 
+      do
       {
         IDSZ idsz;
         int iTmp;
@@ -1404,7 +1404,7 @@ void do_chr_dynalight(Game_t * gs)
 
   Mesh_t * pmesh;
   CHR_TLIGHT * tlight;
-  
+
   if(NULL == gs) gs = Graphics_requireGame( &gfxState );
   pmesh = Game_getMesh(gs);
 
@@ -1692,7 +1692,7 @@ void render_good_shadows()
     for ( cnt = 0; cnt < numdolist; cnt++ )
     {
       chr_tnc = dolist[cnt];
-      if ( gs->ChrList[chr_tnc].bmpdata.shadow != 0 || gs->ChrList[chr_tnc].prop.forceshadow && mesh_has_no_bits( pmesh->Mem.tilelst, gs->ChrList[chr_tnc].onwhichfan, MPDFX_SHINY ) )
+      if ( 0 != gs->ChrList[chr_tnc].bmpdata.shadow || (gs->ChrList[chr_tnc].prop.forceshadow && mesh_has_no_bits( pmesh->Mem.tilelst, gs->ChrList[chr_tnc].onwhichfan, MPDFX_SHINY )) )
         render_shadow( chr_tnc );
     }
   }
@@ -2052,7 +2052,7 @@ void render_character_highlights()
   {
     GLfloat light_none[]     = {0, 0, 0, 0};
     GLfloat light_position[] = { 10000*gs->Light.spekdir.x, 10000*gs->Light.spekdir.y, 10000*gs->Light.spekdir.z, 1.0 };
-    GLfloat lmodel_ambient[] = { gs->Light.ambicol.r, gs->Light.ambicol.g, gs->Light.ambicol.b, 1.0 };
+    //GLfloat lmodel_ambient[] = { gs->Light.ambicol.r, gs->Light.ambicol.g, gs->Light.ambicol.b, 1.0 };
     GLfloat light_specular[] = { gs->Light.spekcol.r, gs->Light.spekcol.g, gs->Light.spekcol.b, 1.0 };
 
     glDisable( GL_CULL_FACE );
@@ -2999,7 +2999,7 @@ int do_messages( BMFont_t * pfnt, int x, int y )
   int cnt, tnc;
   int ystt = y;
 
-  Game_t * gs  = Graphics_requireGame(&gfxState);
+  //Game_t * gs  = Graphics_requireGame(&gfxState);
   Gui_t  * gui = gui_getState();
   MessageQueue_t * mq = &(gui->msgQueue);
   MESSAGE_ELEMENT * msg;
@@ -3061,7 +3061,7 @@ void draw_text( BMFont_t *  pfnt )
 
   KeyboardBuffer_t * kbuffer = KeyboardBuffer_getState();
   Game_t * gs  = Graphics_requireGame(&gfxState);
-  Gui_t  * gui = gui_getState();
+  //Gui_t  * gui = gui_getState();
 
   Begin2DMode();
   {
@@ -3085,7 +3085,7 @@ void draw_text( BMFont_t *  pfnt )
 
     if ( CData.fpson )
     {
-      CHR_REF pla_chr = PlaList_getRChr( gs, PLA_REF(0) );
+      //CHR_REF pla_chr = PlaList_getRChr( gs, PLA_REF(0) );
 
       y += draw_string( pfnt, 0, y, NULL, "%2.3f FPS, %2.3f UPS", gfxState.stabilized_fps, stabilized_ups );
 
@@ -3366,7 +3366,7 @@ bool_t do_pageflip()
     };
   }
 
-  // update the fps_loops and pageflip_requested variables 
+  // update the fps_loops and pageflip_requested variables
   // just AS IF the page was flipping
   if( gfxState.pageflip_requested )
   {

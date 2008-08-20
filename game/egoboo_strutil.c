@@ -141,7 +141,7 @@ char * str_encode( char *strout, size_t insize, char * strin )
 
 char * str_convert_slash_net(char * str, size_t size)
 {
-  size_t i;
+  //size_t i;
 
   if( !VALID_CSTR(str) ) return str;
 
@@ -161,7 +161,7 @@ char * str_convert_slash_net(char * str, size_t size)
 
 char * str_convert_slash_sys(char * str, size_t size)
 {
-  size_t i;
+  //size_t i;
 
   if( !VALID_CSTR(str) ) return str;
 

@@ -157,7 +157,8 @@ Player_t * Player_renew(Player_t *ppla);
 
 INLINE CHR_REF PlaList_getRChr( struct sGame * gs, PLA_REF iplayer );
 
-#define VALID_PLA(LST, XX) ( ((XX)>=0) && ((XX)<PLALST_COUNT) && LST[XX].Active )
+#define VALID_PLA_RANGE(XX) ( /* ((XX)>=0) && */ ((XX)<PLALST_COUNT) )
+#define VALID_PLA(LST, XX)  ( VALID_PLA_RANGE(XX) && LST[XX].Active )
 
 //--------------------------------------------------------------------------------------------
 #define MOUSEBUTTON         4

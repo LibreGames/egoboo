@@ -188,10 +188,15 @@ FILE * fs_fileOpen( PRIORITY priority, const char * src, const char * fname, con
     {
       switch ( priority )
       {
+        case PRI_NONE:
+        // do nothing
+          break;
+
         case PRI_WARN:
           log_warning( "%s - fs_fileOpen() - \n\tcould not open file \"%s\" in mode \"%s\"\n", src, fname, mode );
           break;
 
+        default:
         case PRI_FAIL:
           log_error( "%s - fs_fileOpen() - \n\tcould not open file \"%s\" in mode \"%s\"\n", src, fname, mode );
           break;
