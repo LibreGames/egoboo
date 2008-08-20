@@ -157,6 +157,8 @@ typedef enum e_fan_type FAN_TYPE;
 
 struct sMeshInfo
 {
+  egoboo_key_t ekey;
+
   int     vert_count;                       // Total mesh vertices
 
   int     tiles_x;                          // Mesh size in tiles
@@ -178,6 +180,9 @@ struct sMeshInfo
   BUMPLIST bumplist;
 };
 typedef struct sMeshInfo MeshInfo_t;
+
+MeshInfo_t * MeshInfo_new(MeshInfo_t *);
+bool_t       MeshInfo_delete(MeshInfo_t *);
 
 struct sMeshTile
 {

@@ -55,6 +55,10 @@
 #define UINT32_MAX          ((1<<32)-1)
 #endif
 
+#ifndef SINT32_MAX
+#define SINT32_MAX          ((UINT32_SIZE>>1)-1)
+#endif
+
 #ifndef UINT16_SIZE
 #define UINT16_SIZE         (1<<16)
 #endif
@@ -63,12 +67,20 @@
 #define UINT16_MAX          ((1<<16)-1)
 #endif
 
+#ifndef SINT16_MAX
+#define SINT16_MAX          ((UINT16_SIZE>>1)-1)
+#endif
+
 #ifndef UINT8_SIZE
 #define UINT8_SIZE          (1<< 8)
 #endif
 
 #ifndef UINT8_MAX
 #define UINT8_MAX           ((1<< 8)-1)
+#endif
+
+#ifndef SINT8_MAX
+#define SINT8_MAX          ((UINT8_SIZE>>1)-1)
 #endif
 
 #define RAD_TO_TURN(XX)     ((Uint16)(((XX) + PI) * RAD_TO_SHORT))

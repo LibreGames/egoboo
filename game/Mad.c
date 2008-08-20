@@ -1228,14 +1228,6 @@ MAD_REF MadList_load_one( Game_t * gs, const char * szObjectpath, const char * s
   // initialize the model template
   Mad_new(pmad);
 
-  // Make up a name for the mad...  IMPORT\TEMP0000.OBJ
-  strncpy( pmad->name, szObjectpath, sizeof( pmad->name ) );
-  if(NULL != szObjectname)
-  {
-    strncat( pmad->name, szObjectname, sizeof( pmad->name ) );
-  }
-
-
   // make sure we have a clean Mad_t. More complicated because of dynamic allocation...
   if(NULL == Mad_renew(pmad)) return INVALID_MAD;
 
@@ -1264,14 +1256,21 @@ MAD_REF MadList_load_one( Game_t * gs, const char * szObjectpath, const char * s
   pmad->framelip = EGOBOO_NEW_ARY( Uint8 , iFrames );
   pmad->framefx  = EGOBOO_NEW_ARY( Uint16, iFrames );
 
-  // tell everyone that we loaded correctly
-  pmad->Loaded = btrue;
-
   // Create the actions table for this object
   get_actions( gs, imad );
 
   // Copy entire actions to save frame space "COPY.TXT"
   load_copy_file( gs, szObjectpath, szObjectname, imad );
+
+  // Make up a name for the mad...  IMPORT\TEMP0000.OBJ
+  strncpy( pmad->name, szObjectpath, sizeof( pmad->name ) );
+  if(NULL != szObjectname)
+  {
+    strncat( pmad->name, szObjectname, sizeof( pmad->name ) );
+  }
+
+  // tell everyone that we loaded correctly
+  pmad->Loaded = btrue;
 
   return imad;
 }

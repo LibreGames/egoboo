@@ -218,7 +218,7 @@ void memory_cleanUp()
   // shut down all game systems
   snd_quit();
   ui_shutdown();			          //Shutdown various support systems
-  CGui_shutDown();
+  gui_shutDown();
   mach_state = get_MachineState();
   MachineState_delete( mach_state );
   sys_shutdown();
@@ -5612,6 +5612,12 @@ Game_t * Game_new(Game_t * gs, Net_t * ns, Client_t * cl, Server_t * sv)
   // weather
   Weather_init( &(gs->Weather) );
 
+  // mesh and tile stuff
+  MeshInfo_new( &(gs->Mesh) );
+  tile_animated_reset( &(gs->Tile_Anim) );
+  tile_damage_reset( &(gs->Tile_Dam) );
+
+  // shared graphics data
   Graphics_Data_new( &(gs->GfxData) );
 
   // timer initialization
@@ -6198,7 +6204,7 @@ bool_t PlaList_new( Game_t * gs )
     gs->cl->StatList_count = 0;
   };
 
-  for ( pla_cnt = 0; pla_cnt < ENCLST_COUNT; pla_cnt++ )
+  for ( pla_cnt = 0; pla_cnt < PLALST_COUNT; pla_cnt++ )
   {
     Player_new( gs->PlaList + pla_cnt );
   }
@@ -6222,7 +6228,7 @@ bool_t PlaList_delete( Game_t * gs )
     gs->cl->StatList_count = 0;
   };
 
-  for ( pla_cnt = 0; pla_cnt < ENCLST_COUNT; pla_cnt++ )
+  for ( pla_cnt = 0; pla_cnt < PLALST_COUNT; pla_cnt++ )
   {
     Player_delete( gs->PlaList + pla_cnt );
   }
@@ -6632,7 +6638,7 @@ bool_t Gui_startUp()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CGui_shutDown()
+bool_t gui_shutDown()
 {
   return CGui_delete( &_gui_state );
 }

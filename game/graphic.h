@@ -72,7 +72,67 @@ struct s_renderlist
 };
 typedef struct s_renderlist RENDERLIST;
 
+//--------------------------------------------------------------------------------------------
+// Display messages
 
+#define MAXMESSAGE          6                       // Number of messages
+#define MAXTOTALMESSAGE     1024                    //
+#define MESSAGESIZE         80                      //
+#define MESSAGEBUFFERSIZE   (MAXTOTALMESSAGE*40)
+#define DELAY_MESSAGE         200                     // Time to keep the message alive
+
+struct s_message_element
+{
+  Sint16    time;                                //
+  char      textdisplay[MESSAGESIZE];            // The displayed text
+
+};
+typedef struct s_message_element MESSAGE_ELEMENT;
+
+struct sMessageData
+{
+  // Message files
+  Uint16  total;                                         // The number of messages
+  Uint32  totalindex;                                    // Where to put letter
+
+  Uint32  index[MAXTOTALMESSAGE];                        // Where it is
+  char    text[MESSAGEBUFFERSIZE];                       // The text buffer
+};
+typedef struct sMessageData MessageData_t;
+
+struct sMessageQueue
+{
+  int             count;
+
+  Uint16          start;
+  MESSAGE_ELEMENT list[MAXMESSAGE];
+  float           timechange;
+};
+typedef struct sMessageQueue MessageQueue_t;
+
+//--------------------------------------------------------------------------------------------
+struct sClockState;
+
+struct sGui
+{
+  egoboo_key_t ekey;
+
+  MenuProc_t mnu_proc;
+
+  bool_t can_pause;          //Pause button avalible?
+
+  struct sClockState * clk;
+  float                dUpdate;
+
+  SDL_GrabMode  GrabMouse;
+  bool_t        HideMouse;
+
+  MessageQueue_t msgQueue;
+};
+typedef struct sGui Gui_t;
+
+Gui_t * gui_getState();
+bool_t  gui_shutDown();
 
 //--------------------------------------------------------------------------------------------
 struct sGraphics
@@ -152,70 +212,6 @@ retval_t       Graphics_ensureGame(Graphics_t * g, struct sGame * gs);
 retval_t       Graphics_removeGame(Graphics_t * g, struct sGame * gs);
 
 extern Graphics_t gfxState;
-
-//--------------------------------------------------------------------------------------------
-// Display messages
-
-#define MAXMESSAGE          6                       // Number of messages
-#define MAXTOTALMESSAGE     1024                    //
-#define MESSAGESIZE         80                      //
-#define MESSAGEBUFFERSIZE   (MAXTOTALMESSAGE*40)
-#define DELAY_MESSAGE         200                     // Time to keep the message alive
-
-struct s_message_element
-{
-  Sint16    time;                                //
-  char      textdisplay[MESSAGESIZE];            // The displayed text
-
-};
-typedef struct s_message_element MESSAGE_ELEMENT;
-
-struct sMessageData
-{
-  // Message files
-  Uint16  total;                                         // The number of messages
-  Uint32  totalindex;                                    // Where to put letter
-
-  Uint32  index[MAXTOTALMESSAGE];                        // Where it is
-  char    text[MESSAGEBUFFERSIZE];                       // The text buffer
-};
-typedef struct sMessageData MessageData_t;
-
-struct sMessageQueue
-{
-  int             count;
-
-  Uint16          start;
-  MESSAGE_ELEMENT list[MAXMESSAGE];
-  float           timechange;
-};
-typedef struct sMessageQueue MessageQueue_t;
-
-//--------------------------------------------------------------------------------------------
-struct sClockState;
-
-struct sGui
-{
-  egoboo_key_t ekey;
-
-  MenuProc_t mnu_proc;
-
-  bool_t can_pause;          //Pause button avalible?
-
-  struct sClockState * clk;
-  float                dUpdate;
-
-  SDL_GrabMode  GrabMouse;
-  bool_t        HideMouse;
-
-  MessageQueue_t msgQueue;
-};
-typedef struct sGui Gui_t;
-
-Gui_t * gui_getState();
-bool_t CGui_shutDown();
-
-
 
 
 

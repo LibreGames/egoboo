@@ -7883,7 +7883,7 @@ void damage_character( Game_t * gs, CHR_REF chr_ref, Uint16 direction,
             // Turn off all sounds if it's a player
             for ( tnc = 0; tnc < MAXWAVE; tnc++ )
             {
-              //TODO Zefz: Do we need this? This makes all sounds a chr_ref makes stop when it dies...
+              //TODO Zefz: Do we need this? This makes all sounds a character makes stop when it dies...
               //           This may stop death sounds
               //snd_stop_sound(pchr->model);
             }

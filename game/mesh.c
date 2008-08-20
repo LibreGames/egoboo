@@ -73,11 +73,13 @@ bool_t mesh_allocate_bumplist(MeshInfo_t * mi, int blocks)
 
   if( bumplist_allocate(pbump, blocks) )
   {
-    // set up nodes and the list of free nodes
-    pbump->free_max   =
-    pbump->free_count = 8*(CHRLST_COUNT + PRTLST_COUNT);
-    pbump->free_lst = EGOBOO_NEW_ARY( Uint32, pbump->free_count );
-    pbump->node_lst = EGOBOO_NEW_ARY( BUMPLIST_NODE, pbump->free_count );
+    // set up nodes and the list of free nodes    
+    pbump->free_max = 8*(CHRLST_COUNT + PRTLST_COUNT);
+    pbump->free_lst = EGOBOO_NEW_ARY( Uint32, pbump->free_max );
+    pbump->node_lst = EGOBOO_NEW_ARY( BUMPLIST_NODE, pbump->free_max );
+
+    // set this to 0 until the list has been set up
+    pbump->free_count = 0;
 
     mesh_reset_bumplist(mi);
   }
@@ -886,3 +888,34 @@ Uint32 mesh_hitawall( Mesh_t * pmesh, vect3 pos, float tiles_x, float tiles_y, U
   return HAS_SOME_BITS(pass, collision_bits);
 }
 
+//--------------------------------------------------------------------------------------------
+MeshInfo_t * MeshInfo_new(MeshInfo_t * mi)
+{
+  if(NULL == mi) return mi;
+
+  MeshInfo_delete( mi );
+
+  memset( mi, 0, sizeof(MeshInfo_t) );
+
+  EKEY_PNEW( mi, MeshInfo_t );
+
+  bumplist_new( &(mi->bumplist) );
+
+  return mi;
+};
+
+//--------------------------------------------------------------------------------------------
+bool_t MeshInfo_delete(MeshInfo_t * mi)
+{
+  if(NULL == mi) return bfalse;
+
+  if( !EKEY_PVALID(mi) ) return btrue;
+
+  bumplist_delete( &(mi->bumplist) );
+
+  EKEY_PINVALIDATE( mi );
+
+  memset(mi, 0, sizeof(MeshInfo_t));
+
+  return btrue;
+}

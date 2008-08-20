@@ -717,6 +717,7 @@ void set_fan_dyna_light( int fanx, int fany, PRT_REF particle )
   float light_r0, light_g0, light_b0;
 
   Game_t * gs = Graphics_requireGame(&gfxState);
+  PPrt_t   prtlst = gs->PrtList;
 
   Mesh_t     * pmesh = Game_getMesh(gs);
   MeshInfo_t * mi    = &(pmesh->Info);
@@ -733,14 +734,14 @@ void set_fan_dyna_light( int fanx, int fany, PRT_REF particle )
       light_g0 = light_g = mm->vrt_lg_fp8[vertex];
       light_b0 = light_b = mm->vrt_lb_fp8[vertex];
 
-      dif.x = gs->PrtList[particle].ori.pos.x - mm->vrt_x[vertex];
-      dif.y = gs->PrtList[particle].ori.pos.y - mm->vrt_y[vertex];
-      dif.z = gs->PrtList[particle].ori.pos.z - mm->vrt_z[vertex];
+      dif.x = prtlst[particle].ori.pos.x - mm->vrt_x[vertex];
+      dif.y = prtlst[particle].ori.pos.y - mm->vrt_y[vertex];
+      dif.z = prtlst[particle].ori.pos.z - mm->vrt_z[vertex];
 
       dist2 = DotProduct( dif, dif );
 
-      flight = gs->PrtList[particle].dyna.level;
-      flight *= 127 * gs->PrtList[particle].dyna.falloff / ( 127 * gs->PrtList[particle].dyna.falloff + dist2 );
+      flight = prtlst[particle].dyna.level;
+      flight *= 127 * prtlst[particle].dyna.falloff / ( 127 * gs->PrtList[particle].dyna.falloff + dist2 );
 
       if ( dist2 > 0.0f )
       {
@@ -768,8 +769,8 @@ void set_fan_dyna_light( int fanx, int fany, PRT_REF particle )
         light_b += 255 * flight;
       }
 
-      mm->vrt_lr_fp8[vertex] = 0.9 * light_r0; // + 0.1 * light_r;
-      mm->vrt_lg_fp8[vertex] = 0.9 * light_g0; //  + 0.1 * light_g;
+      mm->vrt_lr_fp8[vertex] = 0.9 * light_r0 + 0.1 * light_r;
+      mm->vrt_lg_fp8[vertex] = 0.9 * light_g0 + 0.1 * light_g;
       mm->vrt_lb_fp8[vertex] = 0.9 * light_b0 + 0.1 * light_b;
 
       //if ( mi->exploremode )
@@ -897,10 +898,13 @@ void do_dyna_light(Game_t * gs)
           }
 
           // Do light particles
-          light_r = mm->vrt_lr_fp8[vertex];
-          light_g = mm->vrt_lg_fp8[vertex];
-          light_b = mm->vrt_lb_fp8[vertex];
+          //light_r = mm->vrt_lr_fp8[vertex];
+          //light_g = mm->vrt_lg_fp8[vertex];
+          //light_b = mm->vrt_lb_fp8[vertex];
 
+          light_r = 0;
+          light_g = 0;
+          light_b = 0;
           for ( cnt = 0; cnt < gfx->DLightList_count; cnt++ )
           {
             float flight;

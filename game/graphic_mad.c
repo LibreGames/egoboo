@@ -71,12 +71,13 @@ void md2_blend_vertices(Chr_t * pchr, Sint32 vrtmin, Sint32 vrtmax)
   Mad_t  * pmad;
 
   Game_t * gs = Graphics_requireGame(&gfxState);
+  PObj_t   objlst = gs->ObjList;
 
   if( !EKEY_PVALID(pchr) ) return;
 
-  iobj = pchr->model = VALIDATE_OBJ(gs->ObjList, pchr->model);
+  iobj = pchr->model = VALIDATE_OBJ(objlst, pchr->model);
   if( INVALID_OBJ == iobj) return;
-  pobj = gs->ObjList + iobj;
+  pobj = objlst + iobj;
 
   pmad = ObjList_getPMad(gs, iobj);
   if(NULL == pmad) return;
@@ -214,6 +215,7 @@ void md2_blend_vertices(Chr_t * pchr, Sint32 vrtmin, Sint32 vrtmax)
 void md2_blend_lighting(Chr_t * pchr)
 {
   Game_t * gs = Graphics_requireGame(&gfxState);
+  PObj_t   objlst = gs->ObjList;
   Graphics_Data_t * gfx = gfxState.pGfx;
 
   Uint16 sheen_fp8, spekularity_fp8;
@@ -252,9 +254,9 @@ void md2_blend_lighting(Chr_t * pchr)
   //       vertex blending.  it needs to be sensitive to global lighting changes, too.
   if(!vd->needs_lighting) return;
 
-  iobj = pchr->model = VALIDATE_OBJ(gs->ObjList, pchr->model);
+  iobj = pchr->model = VALIDATE_OBJ(objlst, pchr->model);
   if( INVALID_OBJ == iobj) return;
-  pobj = gs->ObjList + iobj;
+  pobj = objlst + iobj;
 
   pmad = ObjList_getPMad(gs, iobj);
   if(NULL == pmad) return;
@@ -553,7 +555,7 @@ void calc_lighting_data( Game_t * gs, Chr_t * pchr )
 
   Uint16 sheen_fp8       = pchr->sheen_fp8;
   //Uint16 spekularity_fp8 = FLOAT_TO_FP8(( float ) sheen_fp8 / ( float ) MAXSPEKLEVEL );
-  //Uint16 texture         = pchr->skin_ref + gs->ObjList[pchr->model].skinstart;
+  //Uint16 texture         = pchr->skin_ref + objlst[pchr->model].skinstart;
 
   Uint8 r_sft = pchr->redshift;
   Uint8 g_sft = pchr->grnshift;
@@ -593,6 +595,7 @@ void render_mad_lit( CHR_REF ichr )
   GLfloat mat_none[4] = {0,0,0,0};
 
   Game_t * gs = Graphics_requireGame(&gfxState);
+  PObj_t   objlst = gs->ObjList;
   Graphics_Data_t * gfx = gfxState.pGfx;
 
   if( !ACTIVE_CHR(gs->ChrList, ichr) ) return;
@@ -623,7 +626,7 @@ void render_mad_lit( CHR_REF ichr )
     }
     else
     {
-      texture = pchr->skin_ref + gs->ObjList[pchr->model].skinstart;
+      texture = pchr->skin_ref + objlst[pchr->model].skinstart;
       GLtexture_Bind( gfx->TxTexture + texture, &gfxState );
     }
 
@@ -649,12 +652,13 @@ void render_texmad(CHR_REF ichr, Uint8 trans)
   Chr_t * pchr;
   Uint16 texture;
   Game_t * gs = Graphics_requireGame(&gfxState);
+  PObj_t   objlst = gs->ObjList;
   Graphics_Data_t * gfx = gfxState.pGfx;
 
   if(!ACTIVE_CHR(gs->ChrList, ichr)) return;
   pchr = gs->ChrList + ichr;
 
-  texture = pchr->skin_ref + gs->ObjList[pchr->model].skinstart;
+  texture = pchr->skin_ref + objlst[pchr->model].skinstart;
 
   md2_blend_vertices(pchr, -1, -1);
   md2_blend_lighting(pchr);
@@ -701,11 +705,12 @@ void render_enviromad(CHR_REF ichr, Uint8 trans)
 {
   Uint16 texture;
   Game_t * gs = Graphics_requireGame(&gfxState);
+  PObj_t   objlst = gs->ObjList;
   Graphics_Data_t * gfx = gfxState.pGfx;
 
   if(!ACTIVE_CHR(gs->ChrList, ichr)) return;
 
-  texture = gs->ChrList[ichr].skin_ref + gs->ObjList[gs->ChrList[ichr].model].skinstart;
+  texture = gs->ChrList[ichr].skin_ref + objlst[gs->ChrList[ichr].model].skinstart;
 
   ATTRIB_PUSH( "render_enviromad", GL_TRANSFORM_BIT | GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_CURRENT_BIT | GL_TEXTURE_BIT );
   {

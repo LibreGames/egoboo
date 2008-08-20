@@ -189,7 +189,7 @@ MD2_Model_t* md2_load(const char * szFilename, MD2_Model_t* mdl)
   //Load up the pre-computed OpenGL optimizations
   if(header.numGlCommands > 0)
   {
-    Uint32          cmd_cnt = 0;
+    Uint32            cmd_cnt = 0;
     MD2_GLCommand_t * cmd     = NULL;
     fseek(f, header.offsetGlCommands, SEEK_SET);
 
@@ -241,6 +241,8 @@ MD2_Model_t* md2_load(const char * szFilename, MD2_Model_t* mdl)
 
       cmd_cnt += cmd->command_count;
     };
+
+    model->m_numCommands = cmd_cnt;
   }
 
 

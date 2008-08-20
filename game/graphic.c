@@ -963,6 +963,7 @@ void render_shadow( CHR_REF character )
   // ZZ> This function draws a NIFTY shadow
 
   Game_t * gs    = Graphics_requireGame(&gfxState);
+  PChr_t chrlst  = gs->ChrList;
   Mesh_t * pmesh = Game_getMesh(gs);
   Graphics_Data_t * gfx = gfxState.pGfx;
 
@@ -980,8 +981,8 @@ void render_shadow( CHR_REF character )
   float  globlightambi = 0, globlightspek = 0;
   float  lightambi, lightspek;
 
-  chrlightambi  = gs->ChrList[character].tlight.ambi_fp8.r + gs->ChrList[character].tlight.ambi_fp8.g + gs->ChrList[character].tlight.ambi_fp8.b;
-  chrlightspek  = gs->ChrList[character].tlight.spek_fp8.r + gs->ChrList[character].tlight.spek_fp8.g + gs->ChrList[character].tlight.spek_fp8.b;
+  chrlightambi  = chrlst[character].tlight.ambi_fp8.r + chrlst[character].tlight.ambi_fp8.g + chrlst[character].tlight.ambi_fp8.b;
+  chrlightspek  = chrlst[character].tlight.spek_fp8.r + chrlst[character].tlight.spek_fp8.g + chrlst[character].tlight.spek_fp8.b;
 
   if( gfx->Light.on )
   {
@@ -995,42 +996,42 @@ void render_shadow( CHR_REF character )
   if( lightambi + lightspek < 1.0 ) return;
 
   hide = ChrList_getPCap(gs, character)->hidestate;
-  if ( hide != NOHIDE && hide == gs->ChrList[character].aistate.state ) return;
+  if ( hide != NOHIDE && hide == chrlst[character].aistate.state ) return;
 
   // Original points
-  level = gs->ChrList[character].level;
+  level = chrlst[character].level;
   level += SHADOWRAISE;
-  height = gs->ChrList[character].matrix.CNV( 3, 2 ) - level;
+  height = chrlst[character].matrix.CNV( 3, 2 ) - level;
   if ( height < 0 ) height = 0;
 
-  tile_factor = mesh_has_some_bits( pmesh->Mem.tilelst, gs->ChrList[character].onwhichfan, MPDFX_WATER ) ? 0.5 : 1.0;
+  tile_factor = mesh_has_some_bits( pmesh->Mem.tilelst, chrlst[character].onwhichfan, MPDFX_WATER ) ? 0.5 : 1.0;
 
-  height_factor   = MAX( MIN(( 5 * gs->ChrList[character].bmpdata.calc_size / height ), 1 ), 0 );
+  height_factor   = MAX( MIN(( 5 * chrlst[character].bmpdata.calc_size / height ), 1 ), 0 );
   ambient_factor  = ( lightambi ) / ( lightambi + lightspek );
-  alpha_character = FP8_TO_FLOAT( gs->ChrList[character].alpha_fp8 );
-  if ( gs->ChrList[character].light_fp8 == 255 )
+  alpha_character = FP8_TO_FLOAT( chrlst[character].alpha_fp8 );
+  if ( chrlst[character].light_fp8 == 255 )
   {
     light_character = 1.0f;
   }
   else
   {
-    light_character = ( float ) chrlightspek / 3.0f / ( float ) gs->ChrList[character].light_fp8;
+    light_character = ( float ) chrlightspek / 3.0f / ( float ) chrlst[character].light_fp8;
     light_character =  MIN( 1, MAX( 0, light_character ) );
   };
 
 
-  size_umbra_x    = ( gs->ChrList[character].bmpdata.cv.x_max - gs->ChrList[character].bmpdata.cv.x_min - height / 30.0 );
-  size_umbra_y    = ( gs->ChrList[character].bmpdata.cv.y_max - gs->ChrList[character].bmpdata.cv.y_min - height / 30.0 );
-  size_penumbra_x = ( gs->ChrList[character].bmpdata.cv.x_max - gs->ChrList[character].bmpdata.cv.x_min + height / 30.0 );
-  size_penumbra_y = ( gs->ChrList[character].bmpdata.cv.y_max - gs->ChrList[character].bmpdata.cv.y_min + height / 30.0 );
+  size_umbra_x    = ( chrlst[character].bmpdata.cv.x_max - chrlst[character].bmpdata.cv.x_min - height / 30.0 );
+  size_umbra_y    = ( chrlst[character].bmpdata.cv.y_max - chrlst[character].bmpdata.cv.y_min - height / 30.0 );
+  size_penumbra_x = ( chrlst[character].bmpdata.cv.x_max - chrlst[character].bmpdata.cv.x_min + height / 30.0 );
+  size_penumbra_y = ( chrlst[character].bmpdata.cv.y_max - chrlst[character].bmpdata.cv.y_min + height / 30.0 );
 
   alpha_umbra    = alpha_character * height_factor * ambient_factor * light_character * tile_factor;
   alpha_penumbra = alpha_character * height_factor * ambient_factor * light_character * tile_factor;
 
   if ( FLOAT_TO_FP8( alpha_umbra ) == 0 && FLOAT_TO_FP8( alpha_penumbra ) == 0 ) return;
 
-  x = gs->ChrList[character].matrix.CNV( 3, 0 );
-  y = gs->ChrList[character].matrix.CNV( 3, 1 );
+  x = chrlst[character].matrix.CNV( 3, 0 );
+  y = chrlst[character].matrix.CNV( 3, 1 );
 
   //GOOD SHADOW
   v[0].tx.s = CALCULATE_PRT_U0( 238 );
@@ -1199,19 +1200,21 @@ void do_chr_dynalight(Game_t * gs)
   Mesh_t * pmesh;
   CHR_TLIGHT * tlight;
   Graphics_Data_t * gfx = gfxState.pGfx;
+  PChr_t chrlst  = NULL;
 
   if(NULL == gs) gs = Graphics_requireGame( &gfxState );
-  pmesh = Game_getMesh(gs);
+  chrlst = gs->ChrList;
+  pmesh  = Game_getMesh(gs);
 
   for ( cnt = 0; cnt < numdolist; cnt++ )
   {
     chr_tnc = dolist[cnt];
-    tlight = &(gs->ChrList[chr_tnc].tlight);
-    fan = gs->ChrList[chr_tnc].onwhichfan;
+    tlight = &(chrlst[chr_tnc].tlight);
+    fan = chrlst[chr_tnc].onwhichfan;
 
     if(INVALID_FAN == fan) continue;
 
-    vrtstart = pmesh->Mem.tilelst[gs->ChrList[chr_tnc].onwhichfan].vrt_start;
+    vrtstart = pmesh->Mem.tilelst[chrlst[chr_tnc].onwhichfan].vrt_start;
 
     //----------------------------------------
     // Red lighting
@@ -1219,7 +1222,7 @@ void do_chr_dynalight(Game_t * gs)
     i1 = pmesh->Mem.vrt_lr_fp8[vrtstart + 1];
     i2 = pmesh->Mem.vrt_lr_fp8[vrtstart + 2];
     i3 = pmesh->Mem.vrt_lr_fp8[vrtstart + 3];
-    calc_chr_lighting( gs->ChrList[chr_tnc].ori.pos, i0, i1, i2, i3, &spek, &minval, &maxval );
+    calc_chr_lighting( chrlst[chr_tnc].ori.pos, i0, i1, i2, i3, &spek, &minval, &maxval );
     tlight->ambi_fp8.r = minval;
     tlight->spek_fp8.r = spek;
 
@@ -1243,7 +1246,7 @@ void do_chr_dynalight(Game_t * gs)
     i1 = pmesh->Mem.vrt_lg_fp8[vrtstart + 1];
     i3 = pmesh->Mem.vrt_lg_fp8[vrtstart + 2];
     i2 = pmesh->Mem.vrt_lg_fp8[vrtstart + 3];
-    calc_chr_lighting( gs->ChrList[chr_tnc].ori.pos, i0, i1, i2, i3, &spek, &minval, &maxval );
+    calc_chr_lighting( chrlst[chr_tnc].ori.pos, i0, i1, i2, i3, &spek, &minval, &maxval );
     tlight->ambi_fp8.g = minval;
     tlight->spek_fp8.g = spek;
 
@@ -1267,7 +1270,7 @@ void do_chr_dynalight(Game_t * gs)
     i1 = pmesh->Mem.vrt_lb_fp8[vrtstart + 1];
     i3 = pmesh->Mem.vrt_lb_fp8[vrtstart + 2];
     i2 = pmesh->Mem.vrt_lb_fp8[vrtstart + 3];
-    calc_chr_lighting( gs->ChrList[chr_tnc].ori.pos, i0, i1, i2, i3, &spek, &minval, &maxval );
+    calc_chr_lighting( chrlst[chr_tnc].ori.pos, i0, i1, i2, i3, &spek, &minval, &maxval );
     tlight->ambi_fp8.b = minval;
     tlight->spek_fp8.b = spek;
 
@@ -1294,27 +1297,31 @@ void do_prt_dynalight(Game_t * gs)
   // ZZ> This function figures out particle lighting
 
   Mesh_t * pmesh = NULL;
+  PChr_t   chrlst  = NULL;
+  PPrt_t   prtlst  = NULL;
 
   PRT_REF prt_cnt;
   CHR_REF character;
 
   if(NULL == gs) gs = Graphics_requireGame( &gfxState );
-  pmesh = Game_getMesh(gs);
+  chrlst = gs->ChrList;
+  prtlst = gs->PrtList;
+  pmesh  = Game_getMesh(gs);
 
   for ( prt_cnt = 0; prt_cnt < PRTLST_COUNT; prt_cnt++ )
   {
-    if ( !ACTIVE_PRT(gs->PrtList,  prt_cnt ) ) continue;
+    if ( !ACTIVE_PRT(prtlst,  prt_cnt ) ) continue;
 
-    switch ( gs->PrtList[prt_cnt].type )
+    switch ( prtlst[prt_cnt].type )
     {
       case PRTTYPE_LIGHT:
         {
-          float ftmp = gs->PrtList[prt_cnt].dyna.level * ( 127 * gs->PrtList[prt_cnt].dyna.falloff ) / FP8_TO_FLOAT( FP8_MUL( gs->PrtList[prt_cnt].size_fp8, gs->PrtList[prt_cnt].size_fp8 ) );
+          float ftmp = prtlst[prt_cnt].dyna.level * ( 127 * prtlst[prt_cnt].dyna.falloff ) / FP8_TO_FLOAT( FP8_MUL( prtlst[prt_cnt].size_fp8, prtlst[prt_cnt].size_fp8 ) );
           if ( ftmp > 255 ) ftmp = 255;
 
-          gs->PrtList[prt_cnt].lightr_fp8 =
-          gs->PrtList[prt_cnt].lightg_fp8 =
-          gs->PrtList[prt_cnt].lightb_fp8 = ftmp;
+          prtlst[prt_cnt].lightr_fp8 =
+          prtlst[prt_cnt].lightg_fp8 =
+          prtlst[prt_cnt].lightb_fp8 = ftmp;
         }
         break;
 
@@ -1322,31 +1329,31 @@ void do_prt_dynalight(Game_t * gs)
       case PRTTYPE_SOLID:
         {
           character = prt_get_attachedtochr( gs, prt_cnt );
-          if ( ACTIVE_CHR( gs->ChrList,  character ) )
+          if ( ACTIVE_CHR( chrlst,  character ) )
           {
-            gs->PrtList[prt_cnt].lightr_fp8 = gs->ChrList[character].tlight.spek_fp8.r + gs->ChrList[character].tlight.ambi_fp8.r;
-            gs->PrtList[prt_cnt].lightg_fp8 = gs->ChrList[character].tlight.spek_fp8.g + gs->ChrList[character].tlight.ambi_fp8.g;
-            gs->PrtList[prt_cnt].lightb_fp8 = gs->ChrList[character].tlight.spek_fp8.b + gs->ChrList[character].tlight.ambi_fp8.b;
+            prtlst[prt_cnt].lightr_fp8 = chrlst[character].tlight.spek_fp8.r + chrlst[character].tlight.ambi_fp8.r;
+            prtlst[prt_cnt].lightg_fp8 = chrlst[character].tlight.spek_fp8.g + chrlst[character].tlight.ambi_fp8.g;
+            prtlst[prt_cnt].lightb_fp8 = chrlst[character].tlight.spek_fp8.b + chrlst[character].tlight.ambi_fp8.b;
           }
-          else if ( INVALID_FAN != gs->PrtList[prt_cnt].onwhichfan )
+          else if ( INVALID_FAN != prtlst[prt_cnt].onwhichfan )
           {
-            gs->PrtList[prt_cnt].lightr_fp8 = pmesh->Mem.vrt_lr_fp8[pmesh->Mem.tilelst[gs->PrtList[prt_cnt].onwhichfan].vrt_start];
-            gs->PrtList[prt_cnt].lightg_fp8 = pmesh->Mem.vrt_lg_fp8[pmesh->Mem.tilelst[gs->PrtList[prt_cnt].onwhichfan].vrt_start];
-            gs->PrtList[prt_cnt].lightb_fp8 = pmesh->Mem.vrt_lb_fp8[pmesh->Mem.tilelst[gs->PrtList[prt_cnt].onwhichfan].vrt_start];
+            prtlst[prt_cnt].lightr_fp8 = pmesh->Mem.vrt_lr_fp8[pmesh->Mem.tilelst[prtlst[prt_cnt].onwhichfan].vrt_start];
+            prtlst[prt_cnt].lightg_fp8 = pmesh->Mem.vrt_lg_fp8[pmesh->Mem.tilelst[prtlst[prt_cnt].onwhichfan].vrt_start];
+            prtlst[prt_cnt].lightb_fp8 = pmesh->Mem.vrt_lb_fp8[pmesh->Mem.tilelst[prtlst[prt_cnt].onwhichfan].vrt_start];
           }
           else
           {
-            gs->PrtList[prt_cnt].lightr_fp8 =
-            gs->PrtList[prt_cnt].lightg_fp8 =
-            gs->PrtList[prt_cnt].lightb_fp8 = 0;
+            prtlst[prt_cnt].lightr_fp8 =
+            prtlst[prt_cnt].lightg_fp8 =
+            prtlst[prt_cnt].lightb_fp8 = 0;
           }
         }
         break;
 
       default:
-        gs->PrtList[prt_cnt].lightr_fp8 =
-        gs->PrtList[prt_cnt].lightg_fp8 =
-        gs->PrtList[prt_cnt].lightb_fp8 = 0;
+        prtlst[prt_cnt].lightr_fp8 =
+        prtlst[prt_cnt].lightg_fp8 =
+        prtlst[prt_cnt].lightb_fp8 = 0;
     };
   }
 
@@ -1469,8 +1476,9 @@ void render_good_shadows()
   int cnt;
   CHR_REF chr_tnc;
 
-  Game_t * gs    = Graphics_requireGame(&gfxState);
-  Mesh_t * pmesh = Game_getMesh(gs);
+  Game_t * gs     = Graphics_requireGame(&gfxState);
+  PChr_t   chrlst = gs->ChrList;
+  Mesh_t * pmesh  = Game_getMesh(gs);
 
   // Good shadows for me
   ATTRIB_PUSH( "render_good_shadows", GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_POLYGON_BIT );
@@ -1489,7 +1497,7 @@ void render_good_shadows()
     for ( cnt = 0; cnt < numdolist; cnt++ )
     {
       chr_tnc = dolist[cnt];
-      if ( 0 != gs->ChrList[chr_tnc].bmpdata.shadow || (gs->ChrList[chr_tnc].prop.forceshadow && mesh_has_no_bits( pmesh->Mem.tilelst, gs->ChrList[chr_tnc].onwhichfan, MPDFX_SHINY )) )
+      if ( 0 != chrlst[chr_tnc].bmpdata.shadow || (chrlst[chr_tnc].prop.forceshadow && mesh_has_no_bits( pmesh->Mem.tilelst, chrlst[chr_tnc].onwhichfan, MPDFX_SHINY )) )
         render_shadow( chr_tnc );
     }
   }
@@ -1502,8 +1510,9 @@ void render_character_reflections()
   int cnt;
   CHR_REF chr_tnc;
 
-  Game_t * gs    = Graphics_requireGame(&gfxState);
-  Mesh_t * pmesh = Game_getMesh(gs);
+  Game_t * gs     = Graphics_requireGame(&gfxState);
+  PChr_t   chrlst = gs->ChrList;
+  Mesh_t * pmesh  = Game_getMesh(gs);
 
   // Render reflections of characters
   ATTRIB_PUSH( "render_character_reflections", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT );
@@ -1524,8 +1533,8 @@ void render_character_reflections()
     for ( cnt = 0; cnt < numdolist; cnt++ )
     {
       chr_tnc = dolist[cnt];
-      if ( mesh_has_some_bits( pmesh->Mem.tilelst, gs->ChrList[chr_tnc].onwhichfan, MPDFX_SHINY ) )
-        render_refmad( chr_tnc, gs->ChrList[chr_tnc].alpha_fp8 / 2 );
+      if ( mesh_has_some_bits( pmesh->Mem.tilelst, chrlst[chr_tnc].onwhichfan, MPDFX_SHINY ) )
+        render_refmad( chr_tnc, chrlst[chr_tnc].alpha_fp8 / 2 );
     }
   }
   ATTRIB_POP( "render_character_reflections" );
@@ -1676,6 +1685,7 @@ void render_solid_characters()
   CHR_REF chr_tnc;
 
   Game_t * gs = Graphics_requireGame(&gfxState);
+  PChr_t chrlst  = gs->ChrList;
 
   // Render the normal characters
   ATTRIB_PUSH( "render_solid_characters", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT );
@@ -1698,7 +1708,7 @@ void render_solid_characters()
     for ( cnt = 0; cnt < numdolist; cnt++ )
     {
       chr_tnc = dolist[cnt];
-      if ( gs->ChrList[chr_tnc].alpha_fp8 == 255 && gs->ChrList[chr_tnc].light_fp8 == 255 )
+      if ( chrlst[chr_tnc].alpha_fp8 == 255 && chrlst[chr_tnc].light_fp8 == 255 )
         render_mad( chr_tnc, 255 );
     }
   }
@@ -1714,6 +1724,7 @@ void render_alpha_characters()
   Uint8 trans;
 
   Game_t * gs = Graphics_requireGame(&gfxState);
+  PChr_t chrlst  = gs->ChrList;
 
   // Now render the transparent characters
   ATTRIB_PUSH( "render_alpha_characters", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT );
@@ -1736,12 +1747,12 @@ void render_alpha_characters()
     for ( cnt = 0; cnt < numdolist; cnt++ )
     {
       chr_tnc = dolist[cnt];
-      if ( gs->ChrList[chr_tnc].alpha_fp8 != 255 )
+      if ( chrlst[chr_tnc].alpha_fp8 != 255 )
       {
-        trans = gs->ChrList[chr_tnc].alpha_fp8;
+        trans = chrlst[chr_tnc].alpha_fp8;
 
-        if (( gs->ChrList[chr_tnc].alpha_fp8 + gs->ChrList[chr_tnc].light_fp8 ) < SEEINVISIBLE &&  gs->cl->seeinvisible && chr_is_player(gs, chr_tnc) && gs->PlaList[gs->ChrList[chr_tnc].whichplayer].is_local )
-          trans = SEEINVISIBLE - gs->ChrList[chr_tnc].light_fp8;
+        if (( chrlst[chr_tnc].alpha_fp8 + chrlst[chr_tnc].light_fp8 ) < SEEINVISIBLE &&  gs->cl->seeinvisible && chr_is_player(gs, chr_tnc) && gs->PlaList[chrlst[chr_tnc].whichplayer].is_local )
+          trans = SEEINVISIBLE - chrlst[chr_tnc].light_fp8;
 
         render_mad( chr_tnc, trans );
       }
@@ -1848,6 +1859,7 @@ void render_character_highlights()
   CHR_REF chr_tnc;
 
   Game_t * gs = Graphics_requireGame(&gfxState);
+  PChr_t chrlst  = gs->ChrList;
   Graphics_Data_t * gfx = gfxState.pGfx;
 
   ATTRIB_PUSH( "render_character_highlights", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_LIGHTING_BIT | GL_POLYGON_BIT );
@@ -1886,7 +1898,7 @@ void render_character_highlights()
     {
       chr_tnc = dolist[cnt];
 
-      if ( gs->ChrList[chr_tnc].sheen_fp8 == 0 && gs->ChrList[chr_tnc].light_fp8 == 255 && gs->ChrList[chr_tnc].alpha_fp8 == 255 ) continue;
+      if ( chrlst[chr_tnc].sheen_fp8 == 0 && chrlst[chr_tnc].light_fp8 == 255 && chrlst[chr_tnc].alpha_fp8 == 255 ) continue;
 
       render_mad_lit( chr_tnc );
     }
@@ -2015,9 +2027,9 @@ void draw_scene_zreflection()
 //
 //    for(i=0; i<CHRLST_COUNT; i++)
 //    {
-//      if( !ACTIVE_CHR(gs->ChrList, i) ) continue;
+//      if( !ACTIVE_CHR(chrlst, i) ) continue;
 //
-//      mad_display_bbox_tree(2, gs->ChrList[i].matrix, gs->MadList + gs->ChrList[i].model, gs->ChrList[i].anim.last, gs->ChrList[i].anim.next );
+//      mad_display_bbox_tree(2, chrlst[i].matrix, gs->MadList + chrlst[i].model, chrlst[i].anim.last, chrlst[i].anim.next );
 //    }
 //  };
 //#endif
@@ -2660,7 +2672,7 @@ int draw_status( BMFont_t * pfnt, Status_t * pstat )
 
   iobj = ChrList_getRObj(gs, ichr);
   if( INVALID_OBJ == iobj ) return 0;
-  pobj = gs->ObjList + iobj;
+  pobj = objlst + iobj;
 
   pmad = ChrList_getPMad(gs, ichr);
   if(NULL == pmad) return 0;
@@ -2776,7 +2788,8 @@ bool_t do_map()
 
   Game_t * gs    = Graphics_requireGame(&gfxState);
   Graphics_Data_t * gfx = gfxState.pGfx;
-  Mesh_t * pmesh = Game_getMesh(gs);
+  PChr_t   chrlst = gs->ChrList;
+  Mesh_t * pmesh  = Game_getMesh(gs);
 
   if(!gfx->Map_on) return bfalse;
 
@@ -2794,9 +2807,9 @@ bool_t do_map()
       if ( !VALID_PLA( gs->PlaList, ipla ) || INBITS_NONE == gs->PlaList[ipla].device ) continue;
 
       ichr = PlaList_getRChr( gs, ipla );
-      if ( !ACTIVE_CHR( gs->ChrList,  ichr ) || !gs->ChrList[ichr].alive ) continue;
+      if ( !ACTIVE_CHR( chrlst,  ichr ) || !chrlst[ichr].alive ) continue;
 
-      draw_blip( (COLR)0, gfx->Map_rect.left + MAPSIZE * mesh_fraction_x( &(pmesh->Info), gs->ChrList[ichr].ori.pos.x ) * gfx->Map_scale, gfx->Map_rect.top + MAPSIZE * mesh_fraction_y( &(pmesh->Info), gs->ChrList[ichr].ori.pos.y ) * gfx->Map_scale );
+      draw_blip( (COLR)0, gfx->Map_rect.left + MAPSIZE * mesh_fraction_x( &(pmesh->Info), chrlst[ichr].ori.pos.x ) * gfx->Map_scale, gfx->Map_rect.top + MAPSIZE * mesh_fraction_y( &(pmesh->Info), chrlst[ichr].ori.pos.y ) * gfx->Map_scale );
     }
   }
 
@@ -2872,6 +2885,7 @@ void draw_text( BMFont_t *  pfnt )
   KeyboardBuffer_t * kbuffer = KeyboardBuffer_getState();
   Game_t * gs  = Graphics_requireGame(&gfxState);
   Graphics_Data_t * gfx = gfxState.pGfx;
+  PChr_t chrlst  = gs->ChrList;
   //Gui_t  * gui = gui_getState();
 
   Begin2DMode();
@@ -2904,8 +2918,8 @@ void draw_text( BMFont_t *  pfnt )
       {
         y += draw_string( pfnt, 0, y, NULL, "estimated max FPS %2.3f", gfxState.est_max_fps );
         //y += draw_string( pfnt, 0, y, NULL, "wld_frame %d, gs->wld_clock %d, all_clock %d", gs->wld_frame, gs->wld_clock, gs->all_clock );
-        //y += draw_string( pfnt, 0, y, NULL, "<%3.2f,%3.2f,%3.2f>", gs->ChrList[pla_chr].ori.pos.x, gs->ChrList[pla_chr].ori.pos.y, gs->ChrList[pla_chr].ori.pos.z );
-        //y += draw_string( pfnt, 0, y, NULL, "<%3.2f,%3.2f,%3.2f>", gs->ChrList[pla_chr].ori.vel.x, gs->ChrList[pla_chr].ori.vel.y, gs->ChrList[pla_chr].ori.vel.z );
+        //y += draw_string( pfnt, 0, y, NULL, "<%3.2f,%3.2f,%3.2f>", chrlst[pla_chr].ori.pos.x, chrlst[pla_chr].ori.pos.y, chrlst[pla_chr].ori.pos.z );
+        //y += draw_string( pfnt, 0, y, NULL, "<%3.2f,%3.2f,%3.2f>", chrlst[pla_chr].ori.vel.x, chrlst[pla_chr].ori.vel.y, chrlst[pla_chr].ori.vel.z );
         y += draw_string( pfnt, 0, y, NULL, "character collision frac %1.3f", (float)chr_collisions / (float)CHR_MAX_COLLISIONS );
       }
 
@@ -2924,24 +2938,24 @@ void draw_text( BMFont_t *  pfnt )
       GLvector tint = {0.5, 1.0, 1.0, 1.0};
 
       ichr = PlaList_getRChr( gs, PLA_REF(0) );
-      if( ACTIVE_CHR( gs->ChrList,  ichr) )
+      if( ACTIVE_CHR( chrlst,  ichr) )
       {
-        iref = chr_get_attachedto( gs->ChrList, CHRLST_COUNT,ichr);
-        if( ACTIVE_CHR( gs->ChrList, iref) )
+        iref = chr_get_attachedto( chrlst, CHRLST_COUNT,ichr);
+        if( ACTIVE_CHR( chrlst, iref) )
         {
-          y += draw_string( pfnt, 0, y, tint.v, "PLA0 holder == %s(%s)", gs->ChrList[iref].name, ChrList_getPCap(gs, iref)->classname );
+          y += draw_string( pfnt, 0, y, tint.v, "PLA0 holder == %s(%s)", chrlst[iref].name, ChrList_getPCap(gs, iref)->classname );
         };
 
-        iref = chr_get_inwhichpack( gs->ChrList, CHRLST_COUNT,ichr);
-        if( ACTIVE_CHR( gs->ChrList, iref) )
+        iref = chr_get_inwhichpack( chrlst, CHRLST_COUNT,ichr);
+        if( ACTIVE_CHR( chrlst, iref) )
         {
-          y += draw_string( pfnt, 0, y, tint.v, "PLA0 packer == %s(%s)", gs->ChrList[iref].name, ChrList_getPCap(gs, iref)->classname );
+          y += draw_string( pfnt, 0, y, tint.v, "PLA0 packer == %s(%s)", chrlst[iref].name, ChrList_getPCap(gs, iref)->classname );
         };
 
-        iref = chr_get_onwhichplatform( gs->ChrList, CHRLST_COUNT,ichr);
-        if( ACTIVE_CHR( gs->ChrList, iref) )
+        iref = chr_get_onwhichplatform( chrlst, CHRLST_COUNT,ichr);
+        if( ACTIVE_CHR( chrlst, iref) )
         {
-          y += draw_string( pfnt, 0, y, tint.v, "PLA0 platform == %s(%s)", gs->ChrList[iref].name, ChrList_getPCap(gs, iref)->classname );
+          y += draw_string( pfnt, 0, y, tint.v, "PLA0 platform == %s(%s)", chrlst[iref].name, ChrList_getPCap(gs, iref)->classname );
         };
 
       };
@@ -2989,19 +3003,19 @@ void draw_text( BMFont_t *  pfnt )
       y += draw_string( pfnt, 0, y, NULL, "~CAM %f %f", GCamera.pos.x, GCamera.pos.y );
 
       y += draw_string( pfnt, 0, y, NULL, "  PLA0DEF %d %d %d %d %d %d %d %d",
-                gs->ChrList[pla_chr].skin.damagemodifier_fp8[0]&DAMAGE_SHIFT,
-                gs->ChrList[pla_chr].skin.damagemodifier_fp8[1]&DAMAGE_SHIFT,
-                gs->ChrList[pla_chr].skin.damagemodifier_fp8[2]&DAMAGE_SHIFT,
-                gs->ChrList[pla_chr].skin.damagemodifier_fp8[3]&DAMAGE_SHIFT,
-                gs->ChrList[pla_chr].skin.damagemodifier_fp8[4]&DAMAGE_SHIFT,
-                gs->ChrList[pla_chr].skin.damagemodifier_fp8[5]&DAMAGE_SHIFT,
-                gs->ChrList[pla_chr].skin.damagemodifier_fp8[6]&DAMAGE_SHIFT,
-                gs->ChrList[pla_chr].skin.damagemodifier_fp8[7]&DAMAGE_SHIFT );
+                chrlst[pla_chr].skin.damagemodifier_fp8[0]&DAMAGE_SHIFT,
+                chrlst[pla_chr].skin.damagemodifier_fp8[1]&DAMAGE_SHIFT,
+                chrlst[pla_chr].skin.damagemodifier_fp8[2]&DAMAGE_SHIFT,
+                chrlst[pla_chr].skin.damagemodifier_fp8[3]&DAMAGE_SHIFT,
+                chrlst[pla_chr].skin.damagemodifier_fp8[4]&DAMAGE_SHIFT,
+                chrlst[pla_chr].skin.damagemodifier_fp8[5]&DAMAGE_SHIFT,
+                chrlst[pla_chr].skin.damagemodifier_fp8[6]&DAMAGE_SHIFT,
+                chrlst[pla_chr].skin.damagemodifier_fp8[7]&DAMAGE_SHIFT );
 
-      y += draw_string( pfnt, 0, y, NULL, "~PLA0 %5.1f %5.1f", gs->ChrList[pla_chr].ori.pos.x / 128.0, gs->ChrList[pla_chr].ori.pos.y / 128.0  );
+      y += draw_string( pfnt, 0, y, NULL, "~PLA0 %5.1f %5.1f", chrlst[pla_chr].ori.pos.x / 128.0, chrlst[pla_chr].ori.pos.y / 128.0  );
 
       pla_chr = PlaList_getRChr( gs, PLA_REF(1) );
-      y += draw_string( pfnt, 0, y, NULL, "~PLA1 %5.1f %5.1f", gs->ChrList[pla_chr].ori.pos.x / 128.0, gs->ChrList[pla_chr].ori.pos.y / 128.0 );
+      y += draw_string( pfnt, 0, y, NULL, "~PLA1 %5.1f %5.1f", chrlst[pla_chr].ori.pos.x / 128.0, chrlst[pla_chr].ori.pos.y / 128.0 );
     }
 
     if(ups_loops > 0)
@@ -3368,11 +3382,12 @@ Graphics_t * Graphics_new(Graphics_t * g, ConfigData_t * cd)
 
   EKEY_PNEW( g, Graphics_t );
 
+  g->gui = gui_getState();
+
   Graphics_synch(g, cd);
 
   // put a reasonable value in here
   g->est_max_fps           = 30;
-
 
   g->stabilized_fps        = TARGETFPS;
   g->stabilized_fps_sum    = TARGETFPS;
@@ -3415,7 +3430,11 @@ retval_t Graphics_ensureGame(Graphics_t * g, Game_t * gs)
 {
   if(NULL == g) return rv_error;
 
-  if(NULL == g->gs) g->gs = gs;
+  if(NULL == g->gs)
+  {
+    g->gs   = gs;
+    g->pGfx = Game_getGfx(gs);
+  };
 
   return rv_succeed;
 }
@@ -3437,12 +3456,19 @@ bool_t Graphics_synch(Graphics_t * g, ConfigData_t * cd)
 
   if(NULL == g || NULL == cd) return bfalse;
 
-  g->gui->GrabMouse = cd->GrabMouse;
-  g->gui->HideMouse = cd->HideMouse;
+  if(NULL != g->gui)
+  {
+    g->gui->GrabMouse = cd->GrabMouse;
+    g->gui->HideMouse = cd->HideMouse;
+  }
+
+  if(NULL != g->pGfx)
+  {
+    g->pGfx->render_overlay     = cd->render_overlay;
+    g->pGfx->render_background  = cd->render_background;
+  };
 
   g->shading                  = cd->shading;
-  g->pGfx->render_overlay     = cd->render_overlay;
-  g->pGfx->render_background  = cd->render_background;
   g->phongon                  = cd->phongon;
 
   if(g->perspective != cd->perspective)
@@ -3456,7 +3482,6 @@ bool_t Graphics_synch(Graphics_t * g, ConfigData_t * cd)
     g->antialiasing = cd->antialiasing;
     changed = btrue;
   }
-
 
   if(g->dither != cd->dither)
   {
@@ -3564,39 +3589,40 @@ void dolist_add( CHR_REF chr_ref )
   Uint32 fan;
 
   Game_t * gs = Graphics_requireGame(&gfxState);
+  PChr_t chrlst = gs->ChrList;
 
-  if ( !ACTIVE_CHR( gs->ChrList,  chr_ref ) || gs->ChrList[chr_ref].indolist ) return;
+  if ( !ACTIVE_CHR( chrlst,  chr_ref ) || chrlst[chr_ref].indolist ) return;
 
-  fan = gs->ChrList[chr_ref].onwhichfan;
+  fan = chrlst[chr_ref].onwhichfan;
   //if ( mesh_fan_remove_renderlist( fan ) )
   {
-    //gs->ChrList[chr_ref].lightspek_fp8 = Mesh[meshvrtstart[fan]].vrtl_fp8;
+    //chrlst[chr_ref].lightspek_fp8 = Mesh[meshvrtstart[fan]].vrtl_fp8;
     dolist[numdolist] = chr_ref;
-    gs->ChrList[chr_ref].indolist = btrue;
+    chrlst[chr_ref].indolist = btrue;
     numdolist++;
 
 
     // Do flashing
-    if (( gfxState.fps_loops & gs->ChrList[chr_ref].flashand ) == 0 && gs->ChrList[chr_ref].flashand != DONTFLASH )
+    if (( gfxState.fps_loops & chrlst[chr_ref].flashand ) == 0 && chrlst[chr_ref].flashand != DONTFLASH )
     {
       flash_character( gs, chr_ref, 255 );
     }
     // Do blacking
-    if (( gfxState.fps_loops&SEEKURSEAND ) == 0 && gs->cl->seekurse && gs->ChrList[chr_ref].prop.iskursed )
+    if (( gfxState.fps_loops&SEEKURSEAND ) == 0 && gs->cl->seekurse && chrlst[chr_ref].prop.iskursed )
     {
       flash_character( gs, chr_ref, 0 );
     }
   }
   //else
   //{
-  //  OBJ_REF model = gs->ChrList[chr_ref].model;
+  //  OBJ_REF model = chrlst[chr_ref].model;
   //  assert( MADLST_COUNT != VALIDATE_MDL( model ) );
 
   //  // Double check for large/special objects
   //  if ( gs->CapList[model].prop.alwaysdraw )
   //  {
   //    dolist[numdolist] = chr_ref;
-  //    gs->ChrList[chr_ref].indolist = btrue;
+  //    chrlst[chr_ref].indolist = btrue;
   //    numdolist++;
   //  }
   //}
@@ -3604,7 +3630,7 @@ void dolist_add( CHR_REF chr_ref )
   // Add its weapons too
   for ( _slot = SLOT_BEGIN; _slot < SLOT_COUNT; _slot = ( SLOT )( _slot + 1 ) )
   {
-    dolist_add( chr_get_holdingwhich(  gs->ChrList, CHRLST_COUNT, chr_ref, _slot ) );
+    dolist_add( chr_get_holdingwhich(  chrlst, CHRLST_COUNT, chr_ref, _slot ) );
   };
 
 }
@@ -3617,6 +3643,7 @@ void dolist_sort( void )
   //     Order from closest to farthest
 
   Game_t * gs = Graphics_requireGame(&gfxState);
+  PChr_t   chrlst = gs->ChrList;
 
   CHR_REF chr_ref, olddolist[CHRLST_COUNT];
   int cnt, tnc, order;
@@ -3627,15 +3654,15 @@ void dolist_sort( void )
   while ( cnt < numdolist )
   {
     chr_ref = dolist[cnt];  olddolist[cnt] = chr_ref;
-    if ( gs->ChrList[chr_ref].light_fp8 != 255 || gs->ChrList[chr_ref].alpha_fp8 != 255 )
+    if ( chrlst[chr_ref].light_fp8 != 255 || chrlst[chr_ref].alpha_fp8 != 255 )
     {
       // This makes stuff inside an invisible character visible...
       // A key inside a Jellcube, for example
-      dist[cnt] = 0x7fffffff;
+      dist[cnt] = SINT32_MAX;
     }
     else
     {
-      dist[cnt] = ABS( gs->ChrList[chr_ref].ori.pos.x - GCamera.pos.x ) + ABS( gs->ChrList[chr_ref].ori.pos.y - GCamera.pos.y );
+      dist[cnt] = ABS( chrlst[chr_ref].ori.pos.x - GCamera.pos.x ) + ABS( chrlst[chr_ref].ori.pos.y - GCamera.pos.y );
     }
     cnt++;
   }
@@ -3646,7 +3673,7 @@ void dolist_sort( void )
   while ( cnt < numdolist )
   {
     chr_ref = olddolist[cnt];
-    order = 0;  // Assume this chr_ref is closest
+    order = 0;  // Assume this character is closest
     tnc = 0;
     while ( tnc < numdolist )
     {
@@ -3666,6 +3693,7 @@ void dolist_make( void )
   // ZZ> This function finds the characters that need to be drawn and puts them in the list
 
   Game_t * gs = Graphics_requireGame(&gfxState);
+  PChr_t   chrlst = gs->ChrList;
 
   int cnt;
   CHR_REF chr_ref, chr_cnt;
@@ -3676,7 +3704,7 @@ void dolist_make( void )
   while ( cnt < numdolist )
   {
     chr_ref = dolist[cnt];
-    gs->ChrList[chr_ref].indolist = bfalse;
+    chrlst[chr_ref].indolist = bfalse;
     cnt++;
   }
   numdolist = 0;
@@ -3685,9 +3713,9 @@ void dolist_make( void )
   // Now fill it up again
   for ( chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++)
   {
-    if( !ACTIVE_CHR(gs->ChrList, chr_cnt) ) continue;
+    if( !ACTIVE_CHR(chrlst, chr_cnt) ) continue;
 
-    if ( !chr_in_pack( gs->ChrList, CHRLST_COUNT, chr_cnt ) )
+    if ( !chr_in_pack( chrlst, CHRLST_COUNT, chr_cnt ) )
     {
       dolist_add( chr_cnt );
     }
@@ -4317,21 +4345,21 @@ void make_lightdirectionlookup()
 //
 //
 //  hide = ChrList_getPCap(gs, character)->hidestate;
-//  if (hide == NOHIDE || hide != gs->ChrList[character].aistate.state)
+//  if (hide == NOHIDE || hide != chrlst[character].aistate.state)
 //  {
 //    // Original points
-//    level = gs->ChrList[character].level;
+//    level = chrlst[character].level;
 //    level += SHADOWRAISE;
-//    height = gs->ChrList[character].matrix.CNV(3, 2) - level;
+//    height = chrlst[character].matrix.CNV(3, 2) - level;
 //    if (height > 255)  return;
 //    if (height < 0) height = 0;
-//    size = gs->ChrList[character].bmpdata.calc_shadowsize - FP8_MUL(height, gs->ChrList[character].bmpdata.calc_shadowsize);
+//    size = chrlst[character].bmpdata.calc_shadowsize - FP8_MUL(height, chrlst[character].bmpdata.calc_shadowsize);
 //    if (size < 1) return;
-//    ambi = gs->ChrList[character].lightspek_fp8 >> 4;  // LUL >>3;
+//    ambi = chrlst[character].lightspek_fp8 >> 4;  // LUL >>3;
 //    trans = ((255 - height) >> 1) + 64;
 //
-//    x = gs->ChrList[character].matrix.CNV(3, 0);
-//    y = gs->ChrList[character].matrix.CNV(3, 1);
+//    x = chrlst[character].matrix.CNV(3, 0);
+//    y = chrlst[character].matrix.CNV(3, 1);
 //    v[0].pos.x = (float) x + size;
 //    v[0].pos.y = (float) y - size;
 //    v[0].pos.z = (float) level;
@@ -4421,9 +4449,9 @@ void make_lightdirectionlookup()
 //    for (cnt = 0; cnt < numdolist; cnt++)
 //    {
 //      chr_tnc = dolist[cnt];
-//      //if(INVALID_CHR == gs->ChrList[chr_tnc].attachedto )
+//      //if(INVALID_CHR == chrlst[chr_tnc].attachedto )
 //      //{
-//      if (gs->ChrList[chr_tnc].bmpdata.calc_shadowsize != 0 || chrlst[chr_tnc].prop.forceshadow && HAS_NO_BITS(Mesh[gs->ChrList[chr_tnc].onwhichfan].fx, MPDFX_SHINY))
+//      if (chrlst[chr_tnc].bmpdata.calc_shadowsize != 0 || chrlst[chr_tnc].prop.forceshadow && HAS_NO_BITS(Mesh[chrlst[chr_tnc].onwhichfan].fx, MPDFX_SHINY))
 //        render_bad_shadow(chr_tnc);
 //      //}
 //    }

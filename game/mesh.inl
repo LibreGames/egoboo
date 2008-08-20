@@ -682,6 +682,7 @@ INLINE Mesh_t * Mesh_new( Mesh_t * pmesh )
   memset( pmesh, 0, sizeof(Mesh_t) );
 
   MeshMem_new(&(pmesh->Mem), 0, 0 );
+  MeshInfo_new(&(pmesh->Info));
   memcpy( pmesh->TileDict, gTileDict, sizeof(TileDictionary_t));
 
   return pmesh;

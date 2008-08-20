@@ -80,8 +80,6 @@ GLint prt_attrib_close;
 
 void get_vectors( PRT_REF prt, vect3 * vert, vect3 * horiz, float * dist )
 {
-  Game_t * gs = Graphics_requireGame(&gfxState);
-
   CHR_REF chr;
   PIP_REF pip;
   float cossize, sinsize;
@@ -92,6 +90,10 @@ void get_vectors( PRT_REF prt, vect3 * vert, vect3 * horiz, float * dist )
 
   PRT_ORI ori;
   Uint32  image;
+
+  Game_t * gs = Graphics_requireGame(&gfxState);
+
+  PChr_t  chrlst = gs->ChrList;
 
   Prt_t * pprt = PrtList_getPPrt(gs, prt);
   //Pip_t * ppip = PrtList_getPPip(gs, prt);
@@ -165,11 +167,11 @@ void get_vectors( PRT_REF prt, vect3 * vert, vect3 * horiz, float * dist )
           vec_vel.y = pprt->ori.vel.y;
           vec_vel.z = pprt->ori.vel.z;
         }
-        else if ( ACTIVE_CHR( gs->ChrList,  prt_target ) && ACTIVE_CHR( gs->ChrList,  prt_target ) )
+        else if ( ACTIVE_CHR( chrlst,  prt_target ) && ACTIVE_CHR( chrlst,  prt_target ) )
         {
-          vec_vel.x = gs->ChrList[prt_target].ori.pos.x - pprt->ori.pos.x;
-          vec_vel.y = gs->ChrList[prt_target].ori.pos.y - pprt->ori.pos.y;
-          vec_vel.z = gs->ChrList[prt_target].ori.pos.z - pprt->ori.pos.z;
+          vec_vel.x = chrlst[prt_target].ori.pos.x - pprt->ori.pos.x;
+          vec_vel.y = chrlst[prt_target].ori.pos.y - pprt->ori.pos.y;
+          vec_vel.z = chrlst[prt_target].ori.pos.z - pprt->ori.pos.z;
         }
         else
         {
@@ -214,9 +216,9 @@ void get_vectors( PRT_REF prt, vect3 * vert, vect3 * horiz, float * dist )
       break;
   };
 
-  if ( ACTIVE_CHR( gs->ChrList,  chr ) && gs->PipList[pip].rotatewithattached )
+  if ( ACTIVE_CHR( chrlst,  chr ) && gs->PipList[pip].rotatewithattached )
   {
-    rotate += gs->ChrList[chr].ori.turn_lr;
+    rotate += chrlst[chr].ori.turn_lr;
   }
 
   rotate >>= 2;
@@ -236,7 +238,8 @@ void get_vectors( PRT_REF prt, vect3 * vert, vect3 * horiz, float * dist )
 //--------------------------------------------------------------------------------------------
 void render_antialias_prt( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  Game_t *gs = Graphics_requireGame(&gfxState);
+  Game_t * gs = Graphics_requireGame(&gfxState);
+  PPrt_t   prtlst = gs->PrtList;
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -267,19 +270,19 @@ void render_antialias_prt( Uint32 vrtcount, GLVertex * vrtlist )
       // Get the index from the color slot
       prt = ( Uint16 ) vrtlist[cnt].color;
       chr = prt_get_attachedtochr( gs, prt );
-      pip = gs->PrtList[prt].pip;
+      pip = prtlst[prt].pip;
 
       // Render solid ones twice...  For Antialias
-      if ( gs->PrtList[prt].type != PRTTYPE_SOLID ) continue;
+      if ( prtlst[prt].type != PRTTYPE_SOLID ) continue;
 
       {
-        GLvector color_component = {FP8_TO_FLOAT( gs->PrtList[prt].lightr_fp8 ), FP8_TO_FLOAT( gs->PrtList[prt].lightg_fp8 ), FP8_TO_FLOAT( gs->PrtList[prt].lightb_fp8 ), FP8_TO_FLOAT( antialiastrans_fp8 ) };
+        GLvector color_component = {FP8_TO_FLOAT( prtlst[prt].lightr_fp8 ), FP8_TO_FLOAT( prtlst[prt].lightg_fp8 ), FP8_TO_FLOAT( prtlst[prt].lightb_fp8 ), FP8_TO_FLOAT( antialiastrans_fp8 ) };
 
         // Figure out the sprite's size based on distance
-        size = FP8_TO_FLOAT( gs->PrtList[prt].size_fp8 ) * 0.25f * 1.1f;  // [claforte] Fudge the value.
+        size = FP8_TO_FLOAT( prtlst[prt].size_fp8 ) * 0.25f * 1.1f;  // [claforte] Fudge the value.
 
         // Fill in the rest of the data
-        image = FP8_TO_FLOAT( gs->PrtList[prt].image_fp8 + gs->PrtList[prt].imagestt_fp8 );
+        image = FP8_TO_FLOAT( prtlst[prt].image_fp8 + prtlst[prt].imagestt_fp8 );
 
         // Create the billboard vertices for this particle.
         calc_billboard(gs, vtlist, vrtlist + cnt, size, image);
@@ -303,7 +306,8 @@ void render_antialias_prt( Uint32 vrtcount, GLVertex * vrtlist )
 //--------------------------------------------------------------------------------------------
 void render_solid_prt( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  Game_t *gs = Graphics_requireGame(&gfxState);
+  Game_t * gs = Graphics_requireGame(&gfxState);
+  PPrt_t   prtlst = gs->PrtList;
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -332,19 +336,19 @@ void render_solid_prt( Uint32 vrtcount, GLVertex * vrtlist )
       // Get the index from the color slot
       prt = ( Uint16 ) vrtlist[cnt].color;
       chr = prt_get_attachedtochr( gs, prt );
-      pip = gs->PrtList[prt].pip;
+      pip = prtlst[prt].pip;
 
       // Draw sprites this round
-      if ( gs->PrtList[prt].type != PRTTYPE_SOLID ) continue;
+      if ( prtlst[prt].type != PRTTYPE_SOLID ) continue;
 
       {
-        GLvector color_component = { FP8_TO_FLOAT( gs->PrtList[prt].lightr_fp8 ), FP8_TO_FLOAT( gs->PrtList[prt].lightg_fp8 ), FP8_TO_FLOAT( gs->PrtList[prt].lightb_fp8 ), 1};
+        GLvector color_component = { FP8_TO_FLOAT( prtlst[prt].lightr_fp8 ), FP8_TO_FLOAT( prtlst[prt].lightg_fp8 ), FP8_TO_FLOAT( prtlst[prt].lightb_fp8 ), 1};
 
         // [claforte] Fudge the value.
-        size = FP8_TO_FLOAT( gs->PrtList[prt].size_fp8 ) * 0.25f;
+        size = FP8_TO_FLOAT( prtlst[prt].size_fp8 ) * 0.25f;
 
         // Fill in the rest of the data
-        image = FP8_TO_FLOAT( gs->PrtList[prt].image_fp8 + gs->PrtList[prt].imagestt_fp8 );
+        image = FP8_TO_FLOAT( prtlst[prt].image_fp8 + prtlst[prt].imagestt_fp8 );
 
         // Create the billboard vertices for this particle.
         calc_billboard(gs, vtlist, vrtlist + cnt, size, image);
@@ -365,7 +369,8 @@ void render_solid_prt( Uint32 vrtcount, GLVertex * vrtlist )
 //--------------------------------------------------------------------------------------------
 void render_transparent_prt( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  Game_t *gs = Graphics_requireGame(&gfxState);
+  Game_t * gs = Graphics_requireGame(&gfxState);
+  PPrt_t   prtlst = gs->PrtList;
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -395,19 +400,19 @@ void render_transparent_prt( Uint32 vrtcount, GLVertex * vrtlist )
       // Get the index from the color slot
       prt = ( Uint16 ) vrtlist[cnt].color;
       chr = prt_get_attachedtochr( gs, prt );
-      pip = gs->PrtList[prt].pip;
+      pip = prtlst[prt].pip;
 
       // Draw transparent sprites this round
-      if ( gs->PrtList[prt].type != PRTTYPE_ALPHA ) continue;
+      if ( prtlst[prt].type != PRTTYPE_ALPHA ) continue;
 
       {
-        GLvector color_component = {FP8_TO_FLOAT( gs->PrtList[prt].lightr_fp8 ), FP8_TO_FLOAT( gs->PrtList[prt].lightg_fp8 ), FP8_TO_FLOAT( gs->PrtList[prt].lightb_fp8 ), FP8_TO_FLOAT( gs->PrtList[prt].alpha_fp8 ) };
+        GLvector color_component = {FP8_TO_FLOAT( prtlst[prt].lightr_fp8 ), FP8_TO_FLOAT( prtlst[prt].lightg_fp8 ), FP8_TO_FLOAT( prtlst[prt].lightb_fp8 ), FP8_TO_FLOAT( prtlst[prt].alpha_fp8 ) };
 
         // Figure out the sprite's size based on distance
-        size = FP8_TO_FLOAT( gs->PrtList[prt].size_fp8 ) * 0.5f;  // [claforte] Fudge the value.
+        size = FP8_TO_FLOAT( prtlst[prt].size_fp8 ) * 0.5f;  // [claforte] Fudge the value.
 
         // Fill in the rest of the data
-        image = FP8_TO_FLOAT( gs->PrtList[prt].image_fp8 + gs->PrtList[prt].imagestt_fp8 );
+        image = FP8_TO_FLOAT( prtlst[prt].image_fp8 + prtlst[prt].imagestt_fp8 );
 
         // Create the billboard vertices for this particle.
         calc_billboard(gs, vtlist, vrtlist + cnt, size, image);
@@ -490,8 +495,9 @@ bool_t calc_billboard(Game_t * gs, GLVertex vrtlst[], GLVertex * vert, float siz
 //--------------------------------------------------------------------------------------------
 void render_light_prt( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  Game_t *gs = Graphics_requireGame(&gfxState);
-  Prt_t   *pprt;
+  Game_t * gs = Graphics_requireGame(&gfxState);
+  PPrt_t   prtlst = gs->PrtList;
+  Prt_t  * pprt;
 
   GLVertex vtlist[4];
   GLvector color_component;
@@ -518,8 +524,8 @@ void render_light_prt( Uint32 vrtcount, GLVertex * vrtlist )
     {
       // Get the index from the color slot
       prt = ( Uint16 ) vrtlist[cnt].color;
-      if( !ACTIVE_PRT(gs->PrtList, prt) ) continue;
-      pprt = gs->PrtList + prt;
+      if( !ACTIVE_PRT(prtlst, prt) ) continue;
+      pprt = prtlst + prt;
 
       chr = prt_get_attachedtochr( gs, prt );
       pip = pprt->pip;
@@ -533,7 +539,7 @@ void render_light_prt( Uint32 vrtcount, GLVertex * vrtlist )
       color_component.a = 1.0f;
 
       // [claforte] Fudge the value.
-      size = FP8_TO_FLOAT( gs->PrtList[prt].size_fp8 ) * 0.5f;
+      size = FP8_TO_FLOAT( prtlst[prt].size_fp8 ) * 0.5f;
 
       // Fill in the rest of the data
       image = FP8_TO_FLOAT( pprt->image_fp8 + pprt->imagestt_fp8 );
@@ -598,6 +604,7 @@ void render_particles()
 
   Game_t *gs = Graphics_requireGame(&gfxState);
   Graphics_Data_t * gfx = gfxState.pGfx;
+  PPrt_t   prtlst = gs->PrtList;
 
   GLVertex v[PRTLST_COUNT];
   Uint16 numparticle;
@@ -609,11 +616,11 @@ void render_particles()
   numparticle = 0;
   for ( prt_cnt = 0; prt_cnt < PRTLST_COUNT; prt_cnt++ )
   {
-    if ( !ACTIVE_PRT( gs->PrtList, prt_cnt ) || /* !gs->PrtList[prt_cnt].inview  || */ gs->PrtList[prt_cnt].gopoof || gs->PrtList[prt_cnt].size_fp8 == 0 ) continue;
+    if ( !ACTIVE_PRT( prtlst, prt_cnt ) || /* !prtlst[prt_cnt].inview  || */ prtlst[prt_cnt].gopoof || prtlst[prt_cnt].size_fp8 == 0 ) continue;
 
-    v[numparticle].pos.x = ( float ) gs->PrtList[prt_cnt].ori.pos.x;
-    v[numparticle].pos.y = ( float ) gs->PrtList[prt_cnt].ori.pos.y;
-    v[numparticle].pos.z = ( float ) gs->PrtList[prt_cnt].ori.pos.z;
+    v[numparticle].pos.x = ( float ) prtlst[prt_cnt].ori.pos.x;
+    v[numparticle].pos.y = ( float ) prtlst[prt_cnt].ori.pos.y;
+    v[numparticle].pos.z = ( float ) prtlst[prt_cnt].ori.pos.z;
 
     // !!!!!PRE CALCULATE the billboard vectors so you only have to do it ONCE!!!!!!!
     get_vectors( prt_cnt, &v[numparticle].up, &v[numparticle].rt, &v[numparticle].col.r );
@@ -659,6 +666,7 @@ void render_particles()
 void render_antialias_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 {
   Game_t *gs = Graphics_requireGame(&gfxState);
+  PPrt_t  prtlst = gs->PrtList;
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -688,19 +696,19 @@ void render_antialias_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
       // Get the index from the color slot
       prt = ( Uint16 ) vrtlist[cnt].color;
       chr = prt_get_attachedtochr( gs, prt );
-      pip = gs->PrtList[prt].pip;
+      pip = prtlst[prt].pip;
 
       // Render solid ones twice...  For Antialias
-      if ( gs->PrtList[prt].type != PRTTYPE_SOLID ) continue;
+      if ( prtlst[prt].type != PRTTYPE_SOLID ) continue;
 
       {
-        GLvector color_component = {FP8_TO_FLOAT( gs->PrtList[prt].lightr_fp8 ), FP8_TO_FLOAT( gs->PrtList[prt].lightg_fp8 ), FP8_TO_FLOAT( gs->PrtList[prt].lightb_fp8 ), FP8_TO_FLOAT( antialiastrans_fp8 ) };
+        GLvector color_component = {FP8_TO_FLOAT( prtlst[prt].lightr_fp8 ), FP8_TO_FLOAT( prtlst[prt].lightg_fp8 ), FP8_TO_FLOAT( prtlst[prt].lightb_fp8 ), FP8_TO_FLOAT( antialiastrans_fp8 ) };
 
         // Figure out the sprite's size based on distance
-        size = FP8_TO_FLOAT( gs->PrtList[prt].size_fp8 ) * 0.25f * 1.1f;  // [claforte] Fudge the value.
+        size = FP8_TO_FLOAT( prtlst[prt].size_fp8 ) * 0.25f * 1.1f;  // [claforte] Fudge the value.
 
         // Fill in the rest of the data
-        image = FP8_TO_FLOAT( gs->PrtList[prt].image_fp8 + gs->PrtList[prt].imagestt_fp8 );
+        image = FP8_TO_FLOAT( prtlst[prt].image_fp8 + prtlst[prt].imagestt_fp8 );
 
         // Create the billboard vertices for this particle.
         calc_billboard(gs, vtlist, vrtlist + cnt, size, image);
@@ -724,7 +732,8 @@ void render_antialias_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 //--------------------------------------------------------------------------------------------
 void render_solid_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  Game_t *gs = Graphics_requireGame(&gfxState);
+  Game_t * gs = Graphics_requireGame(&gfxState);
+  PPrt_t   prtlst = gs->PrtList;
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -753,19 +762,19 @@ void render_solid_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
       // Get the index from the color slot
       prt = ( Uint16 ) vrtlist[cnt].color;
       chr = prt_get_attachedtochr( gs, prt );
-      pip = gs->PrtList[prt].pip;
+      pip = prtlst[prt].pip;
 
       // Draw sprites this round
-      if ( gs->PrtList[prt].type != PRTTYPE_SOLID ) continue;
+      if ( prtlst[prt].type != PRTTYPE_SOLID ) continue;
 
       {
-        GLvector color_component = {FP8_TO_FLOAT( gs->PrtList[prt].lightr_fp8 ), FP8_TO_FLOAT( gs->PrtList[prt].lightg_fp8 ), FP8_TO_FLOAT( gs->PrtList[prt].lightb_fp8 ), 1};
+        GLvector color_component = {FP8_TO_FLOAT( prtlst[prt].lightr_fp8 ), FP8_TO_FLOAT( prtlst[prt].lightg_fp8 ), FP8_TO_FLOAT( prtlst[prt].lightb_fp8 ), 1};
 
         // [claforte] Fudge the value.
-        size = FP8_TO_FLOAT( gs->PrtList[prt].size_fp8 ) * 0.25f;
+        size = FP8_TO_FLOAT( prtlst[prt].size_fp8 ) * 0.25f;
 
         // Fill in the rest of the data
-        image = FP8_TO_FLOAT( gs->PrtList[prt].image_fp8 + gs->PrtList[prt].imagestt_fp8 );
+        image = FP8_TO_FLOAT( prtlst[prt].image_fp8 + prtlst[prt].imagestt_fp8 );
 
         // Create the billboard vertices for this particle.
         calc_billboard(gs, vtlist, vrtlist + cnt, size, image);
@@ -787,7 +796,8 @@ void render_solid_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 //--------------------------------------------------------------------------------------------
 void render_transparent_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  Game_t *gs = Graphics_requireGame(&gfxState);
+  Game_t * gs = Graphics_requireGame(&gfxState);
+  PPrt_t   prtlst = gs->PrtList;
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -816,19 +826,19 @@ void render_transparent_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
       // Get the index from the color slot
       prt = ( Uint16 ) vrtlist[cnt].color;
       chr = prt_get_attachedtochr( gs, prt );
-      pip = gs->PrtList[prt].pip;
+      pip = prtlst[prt].pip;
 
       // Draw transparent sprites this round
-      if ( gs->PrtList[prt].type != PRTTYPE_ALPHA ) continue;
+      if ( prtlst[prt].type != PRTTYPE_ALPHA ) continue;
 
       {
-        GLvector color_component = { FP8_TO_FLOAT( gs->PrtList[prt].lightr_fp8 ), FP8_TO_FLOAT( gs->PrtList[prt].lightg_fp8 ), FP8_TO_FLOAT( gs->PrtList[prt].lightb_fp8 ), FP8_TO_FLOAT( gs->PrtList[prt].alpha_fp8 ) };
+        GLvector color_component = { FP8_TO_FLOAT( prtlst[prt].lightr_fp8 ), FP8_TO_FLOAT( prtlst[prt].lightg_fp8 ), FP8_TO_FLOAT( prtlst[prt].lightb_fp8 ), FP8_TO_FLOAT( prtlst[prt].alpha_fp8 ) };
 
         // Figure out the sprite's size based on distance
-        size = FP8_TO_FLOAT( gs->PrtList[prt].size_fp8 ) * 0.25f;  // [claforte] Fudge the value.
+        size = FP8_TO_FLOAT( prtlst[prt].size_fp8 ) * 0.25f;  // [claforte] Fudge the value.
 
         // Fill in the rest of the data
-        image = FP8_TO_FLOAT( gs->PrtList[prt].image_fp8 + gs->PrtList[prt].imagestt_fp8 );
+        image = FP8_TO_FLOAT( prtlst[prt].image_fp8 + prtlst[prt].imagestt_fp8 );
 
         // Create the billboard vertices for this particle.
         calc_billboard(gs, vtlist, vrtlist + cnt, size, image);
@@ -852,7 +862,8 @@ void render_transparent_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 //--------------------------------------------------------------------------------------------
 void render_light_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 {
-  Game_t *gs = Graphics_requireGame(&gfxState);
+  Game_t * gs = Graphics_requireGame(&gfxState);
+  PPrt_t   prtlst = gs->PrtList;
 
   GLVertex vtlist[4];
   Uint16 cnt;
@@ -879,19 +890,19 @@ void render_light_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
       GLvector color_component;
       // Get the index from the color slot
       prt = ( Uint16 ) vrtlist[cnt].color;
-      color_component.r = color_component.g = color_component.b = FP8_TO_FLOAT( gs->PrtList[prt].alpha_fp8 );
+      color_component.r = color_component.g = color_component.b = FP8_TO_FLOAT( prtlst[prt].alpha_fp8 );
       color_component.a = 1.0f;
       chr = prt_get_attachedtochr( gs, prt );
-      pip = gs->PrtList[prt].pip;
+      pip = prtlst[prt].pip;
 
       // Draw lights this round
-      if ( gs->PrtList[prt].type != PRTTYPE_LIGHT ) continue;
+      if ( prtlst[prt].type != PRTTYPE_LIGHT ) continue;
 
       // [claforte] Fudge the value.
-      size = FP8_TO_FLOAT( gs->PrtList[prt].size_fp8 ) * 0.5f;
+      size = FP8_TO_FLOAT( prtlst[prt].size_fp8 ) * 0.5f;
 
       // Fill in the rest of the data
-      image = FP8_TO_FLOAT( gs->PrtList[prt].image_fp8 + gs->PrtList[prt].imagestt_fp8 );
+      image = FP8_TO_FLOAT( prtlst[prt].image_fp8 + prtlst[prt].imagestt_fp8 );
 
       // Create the billboard vertices for this particle.
       calc_billboard(gs, vtlist, vrtlist + cnt, size, image);
@@ -917,8 +928,10 @@ void render_particle_reflections()
   // ZZ> This function draws the sprites for particle systems
 
   Game_t * gs    = Graphics_requireGame(&gfxState);
-  Mesh_t * pmesh = Game_getMesh(gs);
   Graphics_Data_t * gfx = gfxState.pGfx;
+
+  PPrt_t   prtlst = gs->PrtList;
+  Mesh_t * pmesh = Game_getMesh(gs);
 
   GLVertex v[PRTLST_COUNT];
   Uint16 numparticle;
@@ -932,14 +945,14 @@ void render_particle_reflections()
   numparticle = 0;
   for ( prt_cnt = 0; prt_cnt < PRTLST_COUNT; prt_cnt++ )
   {
-    if ( !ACTIVE_PRT( gs->PrtList, prt_cnt ) || !gs->PrtList[prt_cnt].inview || gs->PrtList[prt_cnt].size_fp8 == 0 ) continue;
+    if ( !ACTIVE_PRT( prtlst, prt_cnt ) || !prtlst[prt_cnt].inview || prtlst[prt_cnt].size_fp8 == 0 ) continue;
 
-    if ( mesh_has_some_bits( pmesh->Mem.tilelst, gs->PrtList[prt_cnt].onwhichfan, MPDFX_SHINY ) )
+    if ( mesh_has_some_bits( pmesh->Mem.tilelst, prtlst[prt_cnt].onwhichfan, MPDFX_SHINY ) )
     {
-      level = gs->PrtList[prt_cnt].level;
-      v[numparticle].pos.x = gs->PrtList[prt_cnt].ori.pos.x;
-      v[numparticle].pos.y = gs->PrtList[prt_cnt].ori.pos.y;
-      v[numparticle].pos.z = level + level - gs->PrtList[prt_cnt].ori.pos.z;
+      level = prtlst[prt_cnt].level;
+      v[numparticle].pos.x = prtlst[prt_cnt].ori.pos.x;
+      v[numparticle].pos.y = prtlst[prt_cnt].ori.pos.y;
+      v[numparticle].pos.z = level + level - prtlst[prt_cnt].ori.pos.z;
 
       // !!!!!PRE CALCULATE the billboard vectors so you only have to do it ONCE!!!!!!!
       get_vectors( prt_cnt, &v[numparticle].up, &v[numparticle].rt, &v[numparticle].col.r );

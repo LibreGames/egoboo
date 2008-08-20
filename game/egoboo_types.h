@@ -176,7 +176,8 @@ enum e_ekey_list
   ekey_PrtHeap_t,
   ekey_GLtexture,
   ekey_BMFont_t,
-  ekey_Graphics_Data_t
+  ekey_Graphics_Data_t,
+  ekey_MeshInfo_t
 };
 
 //--------------------------------------------------------------------------------------------
