@@ -54,6 +54,11 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
+static void close_session(struct sNet * ns);
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
 // network status
 static bool_t       _enet_initialized       = bfalse;
 static bool_t       _net_registered_atexit = bfalse;
@@ -780,7 +785,7 @@ bool_t CNet_delete(Net_t * ns)
 //  {
 //    ns->parent->sv = sv_getState();
 //  }
-//  ns->parent->sv = CServer_new(ns->parent->sv, ns);
+//  ns->parent->sv = Server_new(ns->parent->sv, ns);
 //
 //  // Link us with the file transfer state
 //  ns->nfs = nfs;
@@ -803,7 +808,7 @@ bool_t CNet_delete(Net_t * ns)
 //  if(!EKEY_PVALID( ns )) return btrue;
 //
 //  //Client_shutDown(ns->parent->cl);
-//  //CServer_shutDown(ns->parent->sv);
+//  //Server_shutDown(ns->parent->sv);
 //  NFileState_shutDown(ns->nfs);
 //
 //  return btrue;
@@ -1450,7 +1455,7 @@ void close_session(Net_t * ns)
 
   // pause the network threads
   Client_shutDown(cl);
-  CServer_shutDown(sv);
+  Server_shutDown(sv);
   NFileState_shutDown(ns->nfs);
 }
 
@@ -1466,7 +1471,7 @@ bool_t net_beginGame(struct sGame * gs)
   sv_host = sv_getHost();
   if(retval && sv_host->nthread.Active)
   {
-    bool_t bool_tmp = (rv_succeed == CServer_startUp(gs->sv));
+    bool_t bool_tmp = (rv_succeed == Server_startUp(gs->sv));
     retval = retval && bool_tmp;
   };
 
@@ -1528,32 +1533,6 @@ PLA_REF add_player(Game_t * gs, CHR_REF chr_ref, Uint8 device)
   }
 
   return pla_ref;
-}
-
-//--------------------------------------------------------------------------------------------
-void check_add(Uint8 key, char bigletter, char littleletter)
-{
-  // ZZ> This function adds letters to the net message
-  KeyboardBuffer_t * kbuffer = KeyboardBuffer_getState();
-
-  if(SDLKEYDOWN(key))
-  {
-    if(kbuffer->write < MESSAGESIZE-2)
-    {
-      if(SDLKEYDOWN(SDLK_LSHIFT) || SDLKEYDOWN(SDLK_RSHIFT))
-      {
-        kbuffer->buffer[kbuffer->write] = bigletter;
-      }
-      else
-      {
-        kbuffer->buffer[kbuffer->write] = littleletter;
-      }
-      kbuffer->write++;
-      kbuffer->buffer[kbuffer->write]   = '?'; // The flashing input cursor
-      kbuffer->buffer[kbuffer->write+1] = EOS;
-    }
-  }
-
 }
 
 //--------------------------------------------------------------------------------------------

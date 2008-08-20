@@ -94,7 +94,7 @@ void timer_update()
     assert( NULL != node->timer );
     if ( !node->timer->isPaused )
     {
-      node->timer->frameTime = ClockState_getFrameDuration( timerClock ) * node->timer->timeScale;
+      node->timer->frameTime = Clock_getFrameDuration( timerClock ) * node->timer->timeScale;
       node->timer->currentTime += node->timer->frameTime;
     }
 

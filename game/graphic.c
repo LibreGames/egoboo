@@ -64,7 +64,15 @@ struct sGame;
 
 RENDERLIST         renderlist;
 Graphics_t         gfxState;
-static bool_t      gfx_initialized = bfalse;
+static bool_t      _gfx_initialized = bfalse;
+
+static Uint8       lightdirectionlookup[UINT16_SIZE];  // For lighting characters
+
+static IRect_t     tabrect[BAR_COUNT];            // The tab rectangles
+
+static Uint16      blipwidth;
+static Uint16      blipheight;
+
 
 //--------------------------------------------------------------------------------------------
 struct sStatus;
@@ -76,7 +84,9 @@ static void draw_text( BMFont_t *  pfnt  );
 
 static SDL_Surface * RequestVideoMode( struct s_egoboo_video_parameters * v );
 
-void render_particles();
+static void dolist_add( Uint16 cnt );
+static void dolist_sort( void );
+static void dolist_make( void );
 
 //--------------------------------------------------------------------------------------------
 bool_t gfx_find_anisotropy( Graphics_t * g )
@@ -107,13 +117,13 @@ bool_t gfx_initialize(Graphics_t * g, ConfigData_t * cd)
 {
   if(NULL == g || NULL == cd) return bfalse;
 
-  if(gfx_initialized) return btrue;
+  if(_gfx_initialized) return btrue;
 
   // set the graphics state
   Graphics_new(g, cd);
   g->rnd_lst = &renderlist;
   gfx_find_anisotropy(g);
-  gfx_initialized = btrue;
+  _gfx_initialized = btrue;
 
   return btrue;
 }
@@ -252,7 +262,7 @@ void EndText()
 
 
 //---------------------------------------------------------------------------------------------
-void release_all_textures(Game_t * gs)
+void release_all_textures( Graphics_Data_t * gfx )
 {
   // ZZ> This function clears out all of the textures
 
@@ -260,22 +270,22 @@ void release_all_textures(Game_t * gs)
 
   for ( cnt = 0; cnt < MAXTEXTURE; cnt++ )
   {
-    GLtexture_Release( gs->TxTexture + cnt );
+    GLtexture_Release( gfx->TxTexture + cnt );
   }
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 load_one_icon( Game_t * gs, char * szPathname, const char * szObjectname, char * szFilename )
+Uint32 load_one_icon( Graphics_Data_t * gfx, char * szPathname, const char * szObjectname, char * szFilename )
 {
   // ZZ> This function is used to load an icon.  Most icons are loaded
   //     without this function though...
 
   Uint32 retval = MAXICONTX;
 
-  if ( INVALID_TEXTURE != GLtexture_Load( GL_TEXTURE_2D,  gs->TxIcon + gs->TxIcon_count,  inherit_fname(szPathname, szObjectname, szFilename), INVALID_KEY ) )
+  if ( INVALID_TEXTURE != GLtexture_Load( GL_TEXTURE_2D,  gfx->TxIcon + gfx->TxIcon_count,  inherit_fname(szPathname, szObjectname, szFilename), INVALID_KEY ) )
   {
-    retval = gs->TxIcon_count;
-    gs->TxIcon_count++;
+    retval = gfx->TxIcon_count;
+    gfx->TxIcon_count++;
   }
 
   return retval;
@@ -307,28 +317,30 @@ void prime_icons(Game_t * gs)
 
   int cnt;
 
-  gs->TxIcon_count = 0;
+  Graphics_Data_t * gfx = Game_getGfx(gs);
+
+  gfx->TxIcon_count = 0;
   for ( cnt = 0; cnt < MAXICONTX; cnt++ )
   {
-    gs->TxIcon[cnt].textureID = INVALID_TEXTURE;
+    gfx->TxIcon[cnt].textureID = INVALID_TEXTURE;
     gs->skintoicon[cnt] = MAXICONTX;
   }
 
-  iconrect.left = 0;
-  iconrect.right = 32;
-  iconrect.top = 0;
-  iconrect.bottom = 32;
+  gfx->TxIcon_rect.left = 0;
+  gfx->TxIcon_rect.right = 32;
+  gfx->TxIcon_rect.top = 0;
+  gfx->TxIcon_rect.bottom = 32;
 
-  gs->ico_lst[ICO_NULL] = MAXICONTX;
-  gs->ico_lst[ICO_KEYB] = MAXICONTX;
-  gs->ico_lst[ICO_MOUS] = MAXICONTX;
-  gs->ico_lst[ICO_JOYA] = MAXICONTX;
-  gs->ico_lst[ICO_JOYB] = MAXICONTX;
-  gs->ico_lst[ICO_BOOK_0] = MAXICONTX;
+  gfx->ico_lst[ICO_NULL]   = MAXICONTX;
+  gfx->ico_lst[ICO_KEYB]   = MAXICONTX;
+  gfx->ico_lst[ICO_MOUS]   = MAXICONTX;
+  gfx->ico_lst[ICO_JOYA]   = MAXICONTX;
+  gfx->ico_lst[ICO_JOYB]   = MAXICONTX;
+  gfx->ico_lst[ICO_BOOK_0] = MAXICONTX;
 }
 
 //---------------------------------------------------------------------------------------------
-void release_all_icons(Game_t * gs)
+void release_all_icons( Graphics_Data_t * gfx )
 {
   // ZZ> This function clears out all of the icons
 
@@ -336,11 +348,10 @@ void release_all_icons(Game_t * gs)
 
   for ( cnt = 0; cnt < MAXICONTX; cnt++ )
   {
-    GLtexture_Release( gs->TxIcon + cnt );
-    gs->TxIcon[cnt].textureID = INVALID_TEXTURE;
-    gs->skintoicon[cnt]       = MAXICONTX;
+    GLtexture_Release( gfx->TxIcon + cnt );
+    gfx->TxIcon[cnt].textureID = INVALID_TEXTURE;
   }
-  gs->TxIcon_count = 0;
+  gfx->TxIcon_count = 0;
 }
 
 //---------------------------------------------------------------------------------------------
@@ -489,6 +500,7 @@ bool_t load_particle_texture( Game_t * gs, const char *szModPath  )
 
   STRING szTemp;
   ConfigData_t * cd;
+  Graphics_Data_t * gfx = Game_getGfx(gs);
 
   if( !EKEY_PVALID(gs) ) return bfalse;
 
@@ -498,7 +510,7 @@ bool_t load_particle_texture( Game_t * gs, const char *szModPath  )
   // release any old texture
   if(MAXTEXTURE != particletexture)
   {
-    GLtexture_delete( gs->TxTexture + particletexture );
+    GLtexture_delete( gfx->TxTexture + particletexture );
     particletexture = MAXTEXTURE;
   }
 
@@ -508,7 +520,7 @@ bool_t load_particle_texture( Game_t * gs, const char *szModPath  )
     if( MAXTEXTURE == particletexture )
     {
       snprintf( szTemp, sizeof( szTemp ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, "particle.bmp" );
-      if ( INVALID_TEXTURE != GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_PARTICLE, szTemp, TRANSCOLOR ) )
+      if ( INVALID_TEXTURE != GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_PARTICLE, szTemp, TRANSCOLOR ) )
       {
         particletexture = TX_PARTICLE;
       }
@@ -517,7 +529,7 @@ bool_t load_particle_texture( Game_t * gs, const char *szModPath  )
     if( MAXTEXTURE == particletexture )
     {
       snprintf( szTemp, sizeof( szTemp ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, "particle.png" );
-      if ( INVALID_TEXTURE != GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_PARTICLE, szTemp, TRANSCOLOR ) )
+      if ( INVALID_TEXTURE != GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_PARTICLE, szTemp, TRANSCOLOR ) )
       {
         particletexture = TX_PARTICLE;
       }
@@ -526,7 +538,7 @@ bool_t load_particle_texture( Game_t * gs, const char *szModPath  )
     if( MAXTEXTURE == particletexture )
     {
       snprintf( szTemp, sizeof( szTemp ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->particle_bitmap );
-      if ( INVALID_TEXTURE != GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_PARTICLE, szTemp, TRANSCOLOR ) )
+      if ( INVALID_TEXTURE != GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_PARTICLE, szTemp, TRANSCOLOR ) )
       {
         particletexture = TX_PARTICLE;
       }
@@ -537,7 +549,7 @@ bool_t load_particle_texture( Game_t * gs, const char *szModPath  )
   if( MAXTEXTURE == particletexture )
   {
     snprintf( szTemp, sizeof( szTemp ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->globalparticles_dir, cd->particle_bitmap );
-    if ( INVALID_TEXTURE != GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_PARTICLE, szTemp, TRANSCOLOR ) )
+    if ( INVALID_TEXTURE != GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_PARTICLE, szTemp, TRANSCOLOR ) )
     {
       particletexture = TX_PARTICLE;
     }
@@ -560,6 +572,7 @@ bool_t load_basic_textures( Game_t * gs, const char *szModPath )
   // BB> In each case, try to load one stored with the module first.
 
   ConfigData_t * cd;
+  Graphics_Data_t * gfx = Game_getGfx(gs);
 
   if( !EKEY_PVALID(gs) ) return bfalse;
 
@@ -570,40 +583,40 @@ bool_t load_basic_textures( Game_t * gs, const char *szModPath )
 
   // Module background tiles
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->tile0_bitmap );
-  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_0, CStringTmp1, TRANSCOLOR ) )
+  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_TILE_0, CStringTmp1, TRANSCOLOR ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->tile0_bitmap );
-    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_0, CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_TILE_0, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Tile 0 could not be found. Missing File = \"%s\"\n", cd->tile0_bitmap );
     }
   };
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->tile1_bitmap );
-  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,   gs->TxTexture + TX_TILE_1, CStringTmp1, TRANSCOLOR ) )
+  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,   gfx->TxTexture + TX_TILE_1, CStringTmp1, TRANSCOLOR ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->tile1_bitmap );
-    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_1, CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_TILE_1, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Tile 1 could not be found. Missing File = \"%s\"\n", cd->tile1_bitmap );
     }
   };
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->tile2_bitmap );
-  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_2, CStringTmp1, TRANSCOLOR ) )
+  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_TILE_2, CStringTmp1, TRANSCOLOR ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->tile2_bitmap );
-    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_2, CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_TILE_2, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Tile 2 could not be found. Missing File = \"%s\"\n", cd->tile2_bitmap );
     }
   };
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->tile3_bitmap );
-  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_3, CStringTmp1, TRANSCOLOR ) )
+  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_TILE_3, CStringTmp1, TRANSCOLOR ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->tile3_bitmap );
-    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_TILE_3, CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_TILE_3, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Tile 3 could not be found. Missing File = \"%s\"\n", cd->tile3_bitmap );
     }
@@ -612,10 +625,10 @@ bool_t load_basic_textures( Game_t * gs, const char *szModPath )
 
   // Water textures
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->watertop_bitmap );
-  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_WATER_TOP, CStringTmp1, INVALID_KEY ) )
+  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_WATER_TOP, CStringTmp1, INVALID_KEY ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->watertop_bitmap );
-    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_WATER_TOP, CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_WATER_TOP, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Water Layer 1 could not be found. Missing File = \"%s\"\n", cd->watertop_bitmap );
     }
@@ -623,10 +636,10 @@ bool_t load_basic_textures( Game_t * gs, const char *szModPath )
 
   // This is also used as far background
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->waterlow_bitmap );
-  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_WATER_LOW, CStringTmp1, INVALID_KEY ) )
+  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_WATER_LOW, CStringTmp1, INVALID_KEY ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->waterlow_bitmap );
-    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gs->TxTexture + TX_WATER_LOW, CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_WATER_LOW, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Water Layer 0 could not be found. Missing File = \"%s\"\n", cd->waterlow_bitmap );
     }
@@ -636,10 +649,10 @@ bool_t load_basic_textures( Game_t * gs, const char *szModPath )
   // BB > this is handled differently now and is not needed
   // Texture 7 is the phong map
   //snprintf(CStringTmp1, sizeof(CStringTmp1), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->phong_bitmap);
-  //if(INVALID_TEXTURE==GLtexture_Load(GL_TEXTURE_2D,  gs->TxTexture + TX_PHONG, CStringTmp1, INVALID_KEY))
+  //if(INVALID_TEXTURE==GLtexture_Load(GL_TEXTURE_2D,  gfx->TxTexture + TX_PHONG, CStringTmp1, INVALID_KEY))
   //{
   //  snprintf(CStringTmp1, sizeof(CStringTmp1), "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->phong_bitmap);
-  //  GLtexture_Load(GL_TEXTURE_2D,  gs->TxTexture + TX_PHONG, CStringTmp1, TRANSCOLOR );
+  //  GLtexture_Load(GL_TEXTURE_2D,  gfx->TxTexture + TX_PHONG, CStringTmp1, TRANSCOLOR );
   //  {
   //    log_warning("Phong Bitmap Layer 1 could not be found. Missing File = \"%s\"\n", cd->phong_bitmap);
   //  }
@@ -656,50 +669,27 @@ bool_t load_bars( char* szBitmap )
   Gui_t * gui = gui_getState();
   int cnt;
 
-  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D, &gui->TxBars, szBitmap, 0 ) )
+  Graphics_Data_t * gfx = gfxState.pGfx;
+
+  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D, &gfx->TxBars, szBitmap, 0 ) )
   {
     return bfalse;
   }
 
-
   // Make the blit rectangles
-  for ( cnt = 0; cnt < NUMBAR; cnt++ )
+  for ( cnt = 0; cnt < BAR_COUNT; cnt++ )
   {
     tabrect[cnt].left = 0;
     tabrect[cnt].right = TABX;
     tabrect[cnt].top = cnt * BARY;
     tabrect[cnt].bottom = ( cnt + 1 ) * BARY;
-    barrect[cnt].left = TABX;
-    barrect[cnt].right = BARX;  // This is reset whenever a bar is drawn
-    barrect[cnt].top = tabrect[cnt].top;
-    barrect[cnt].bottom = tabrect[cnt].bottom;
+    gfx->TxBars_rect[cnt].left = TABX;
+    gfx->TxBars_rect[cnt].right = BARX;  // This is reset whenever a bar is drawn
+    gfx->TxBars_rect[cnt].top = tabrect[cnt].top;
+    gfx->TxBars_rect[cnt].bottom = tabrect[cnt].bottom;
   }
 
   return btrue;
-}
-
-//--------------------------------------------------------------------------------------------
-void load_map( Game_t * gs, char* szModule )
-{
-  // ZZ> This function loads the map bitmap and the blip bitmap
-
-  // Turn it all off
-  mapon = bfalse;
-  youarehereon = bfalse;
-  numblip = 0;
-
-  // Load the images
-  snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModule, CData.gamedat_dir, CData.plan_bitmap );
-  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D, &gs->TxMap, CStringTmp1, INVALID_KEY ) )
-    log_warning( "Cannot load map: %s\n", CStringTmp1 );
-
-  // Set up the rectangles
-  mapscale = MIN(( float ) gfxState.scrx / (float)DEFAULT_SCREEN_W, ( float ) gfxState.scry / (float)DEFAULT_SCREEN_H );
-  maprect.left   = 0;
-  maprect.right  = MAPSIZE * mapscale;
-  maprect.top    = gfxState.scry - MAPSIZE * mapscale;
-  maprect.bottom = gfxState.scry;
-
 }
 
 //--------------------------------------------------------------------------------------------
@@ -803,210 +793,12 @@ bool_t setup_lighting( LIGHTING_INFO * li )
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t read_wawalite( Game_t * gs, char *modname )
-{
-  // ZZ> This function sets up water and lighting for the module
-
-  Mesh_t * pmesh;
-  FILE* fileread;
-  Uint32 loc_rand;
-  bool_t found_expansion, found_idsz;
-
-  if( !EKEY_PVALID(gs) ) return bfalse;
-
-  pmesh = Game_getMesh(gs);
-
-  snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.wawalite_file );
-  fileread = fs_fileOpen( PRI_NONE, NULL, CStringTmp1, "r" );
-  if ( NULL == fileread ) return bfalse;
-
-
-  loc_rand = gs->randie_index;
-
-  fgoto_colon( fileread );
-  //  !!!BAD!!!
-  //  Random map...
-  //  If someone else wants to handle this, here are some thoughts for approaching
-  //  it.  The .MPD file for the level should give the basic size of the map.  Use
-  //  a standard tile set like the Palace modules.  Only use objects that are in
-  //  the module's object directory, and only use some of them.  Imagine several Rock
-  //  Moles eating through a stone filled level to make a path from the entrance to
-  //  the exit.  Door placement will be difficult.
-  //  !!!BAD!!!
-
-
-  // Read water data first
-  gs->Water.layer_count = fget_next_int( fileread );
-  gs->Water.spekstart = fget_next_int( fileread );
-  gs->Water.speklevel_fp8 = fget_next_int( fileread );
-  gs->Water.douselevel = fget_next_int( fileread );
-  gs->Water.surfacelevel = fget_next_int( fileread );
-  gs->Water.light = fget_next_bool( fileread );
-  gs->Water.iswater = fget_next_bool( fileread );
-  gfxState.render_overlay    = fget_next_bool( fileread ) && CData.overlayvalid;
-  gfxState.render_background = fget_next_bool( fileread ) && CData.backgroundvalid;
-  gs->Water.layer[0].distx = fget_next_float( fileread );
-  gs->Water.layer[0].disty = fget_next_float( fileread );
-  gs->Water.layer[1].distx = fget_next_float( fileread );
-  gs->Water.layer[1].disty = fget_next_float( fileread );
-  foregroundrepeat = fget_next_int( fileread );
-  backgroundrepeat = fget_next_int( fileread );
-
-
-  gs->Water.layer[0].z = fget_next_int( fileread );
-  gs->Water.layer[0].alpha_fp8 = fget_next_int( fileread );
-  gs->Water.layer[0].frameadd = fget_next_int( fileread );
-  gs->Water.layer[0].lightlevel_fp8 = fget_next_int( fileread );
-  gs->Water.layer[0].lightadd_fp8 = fget_next_int( fileread );
-  gs->Water.layer[0].amp = fget_next_float( fileread );
-  gs->Water.layer[0].uadd = fget_next_float( fileread );
-  gs->Water.layer[0].vadd = fget_next_float( fileread );
-
-  gs->Water.layer[1].z = fget_next_int( fileread );
-  gs->Water.layer[1].alpha_fp8 = fget_next_int( fileread );
-  gs->Water.layer[1].frameadd = fget_next_int( fileread );
-  gs->Water.layer[1].lightlevel_fp8 = fget_next_int( fileread );
-  gs->Water.layer[1].lightadd_fp8 = fget_next_int( fileread );
-  gs->Water.layer[1].amp = fget_next_float( fileread );
-  gs->Water.layer[1].uadd = fget_next_float( fileread );
-  gs->Water.layer[1].vadd = fget_next_float( fileread );
-
-  gs->Water.layer[0].u = 0;
-  gs->Water.layer[0].v = 0;
-  gs->Water.layer[1].u = 0;
-  gs->Water.layer[1].v = 0;
-  gs->Water.layer[0].frame = RAND( &loc_rand, 0, WATERFRAMEAND );
-  gs->Water.layer[1].frame = RAND( &loc_rand, 0, WATERFRAMEAND );
-
-  // Read light data second
-  gs->Light.on        = bfalse;
-  gs->Light.spekdir.x = fget_next_float( fileread );
-  gs->Light.spekdir.y = fget_next_float( fileread );
-  gs->Light.spekdir.z = fget_next_float( fileread );
-  gs->Light.ambi      = fget_next_float( fileread );
-  gs->Light.spek      = 0;
-
-  // Read tile data third
-  gs->phys.hillslide = fget_next_float( fileread );
-  gs->phys.slippyfriction = fget_next_float( fileread );
-  gs->phys.airfriction = fget_next_float( fileread );
-  gs->phys.waterfriction = fget_next_float( fileread );
-  gs->phys.noslipfriction = fget_next_float( fileread );
-  gs->phys.gravity = fget_next_float( fileread );
-  gs->phys.slippyfriction = MAX( gs->phys.slippyfriction, sqrt( gs->phys.noslipfriction ) );
-  gs->phys.airfriction    = MAX( gs->phys.airfriction,    sqrt( gs->phys.slippyfriction ) );
-  gs->phys.waterfriction  = MIN( gs->phys.waterfriction,  pow( gs->phys.airfriction, 4.0f ) );
-
-  gs->Tile_Anim.updateand = fget_next_int( fileread );
-  gs->Tile_Anim.frameand = fget_next_int( fileread );
-  gs->Tile_Anim.bigframeand = ( gs->Tile_Anim.frameand << 1 ) + 1;
-  gs->Tile_Dam.amount = fget_next_int( fileread );
-  gs->Tile_Dam.type = fget_next_damage( fileread );
-
-  // Read weather data fourth
-  gs->Weather.require_water = fget_next_bool( fileread );
-  gs->Weather.timereset     = fget_next_int( fileread );
-  gs->Weather.time          = gs->Weather.timereset;
-  gs->Weather.player        = 0;
-  gs->Weather.active        = btrue;
-  if(0 == gs->Weather.timereset)
-  {
-    gs->Weather.active = bfalse;
-    gs->Weather.player = INVALID_PLA;
-  }
-
-  // Read extra data
-  pmesh->Info.exploremode = fget_next_bool( fileread );
-  usefaredge = fget_next_bool( fileread );
-  GCamera.swing = 0;
-  GCamera.swingrate = fget_next_float( fileread );
-  GCamera.swingamp = fget_next_float( fileread );
-
-  // test for expansions (a bit tricky because of the fog stuff)
-  fog_info_reset( &(gs->Fog) );
-  tile_damage_reset( &(gs->Tile_Dam) );
-
-  found_expansion = fgoto_colon_yesno( fileread );
-  if( found_expansion )
-  {
-    found_idsz = ftest_idsz( fileread );
-
-    if( !found_idsz )
-    {
-      // Read unnecessary data...  Only read if it exists...
-      found_expansion = bfalse;
-      gs->Fog.on           = CData.fogallowed;
-      gs->Fog.top          = fget_float( fileread );
-      gs->Fog.bottom       = fget_next_float( fileread );
-      gs->Fog.red          = fget_next_fixed( fileread );
-      gs->Fog.grn          = fget_next_fixed( fileread );
-      gs->Fog.blu          = fget_next_fixed( fileread );
-      gs->Fog.affectswater = fget_next_bool( fileread );
-
-      gs->Fog.distance = ( gs->Fog.top - gs->Fog.bottom );
-
-      // Read extra stuff for damage tile particles...
-      found_expansion = fgoto_colon_yesno( fileread );
-      if ( found_expansion )
-      {
-        found_idsz = ftest_idsz( fileread );
-        if(!found_idsz)
-        {
-          found_expansion = bfalse;
-          gs->Tile_Dam.parttype = fget_int( fileread );
-          gs->Tile_Dam.partand  = fget_next_int( fileread );
-          gs->Tile_Dam.sound    = fget_next_int( fileread );
-        }
-      }
-    };
-
-    if( !found_expansion ) { found_expansion = fgoto_colon_yesno( fileread ); if(found_expansion) { found_idsz = ftest_idsz( fileread ); } }
-    if( found_expansion && found_idsz )
-    {
-      // we must have already found_expansion a ':' use the post-test do...while loop
-      do
-      {
-        IDSZ idsz;
-        int iTmp;
-
-        idsz = fget_idsz( fileread );
-        iTmp = fget_int( fileread );
-
-        // "MOON" == you can see the moon, so lycanthropy... mwa ha ha ha ha!
-        // Also, it just means that it is outdoors
-        if ( MAKE_IDSZ( "MOON" ) == idsz ) gs->Light.on = INT_TO_BOOL( iTmp );
-
-      } while( fgoto_colon_yesno( fileread ) );
-    }
-  }
-
-  // Allow slow machines to ignore the fancy stuff
-  if ( !CData.twolayerwateron && gs->Water.layer_count > 1 )
-  {
-    int iTmp;
-    gs->Water.layer_count = 1;
-    iTmp = gs->Water.layer[0].alpha_fp8;
-    iTmp = FP8_MUL( gs->Water.layer[1].alpha_fp8, iTmp ) + iTmp;
-    if ( iTmp > 255 ) iTmp = 255;
-    gs->Water.layer[0].alpha_fp8 = iTmp;
-  }
-
-
-  fs_fileClose( fileread );
-
-  // Do it
-  setup_lighting( &(gs->Light) );
-  make_water( &(gs->Water) );
-
-  return btrue;
-};
-
-//--------------------------------------------------------------------------------------------
 void render_background( Uint16 texture )
 {
   // ZZ> This function draws the large background
 
   Game_t * gs = Graphics_requireGame(&gfxState);
+  Graphics_Data_t * gfx = gfxState.pGfx;
 
   GLVertex vtlist[4];
   float size;
@@ -1021,12 +813,12 @@ void render_background( Uint16 texture )
   x = gfxState.scrx << 6;
   y = gfxState.scry << 6;
   z = -100;
-  u = gs->Water.layer[1].u;
-  v = gs->Water.layer[1].v;
+  u = gfx->Water.layer[1].u;
+  v = gfx->Water.layer[1].v;
   size = x + y + 1;
   sinsize = turntosin[( 3*2047 ) & TRIGTABLE_MASK] * size;   // why 3/8 of a turn???
   cossize = turntocos[( 3*2047 ) & TRIGTABLE_MASK] * size;   // why 3/8 of a turn???
-  loc_backgroundrepeat = backgroundrepeat * MIN( x / gfxState.scrx, y / gfxState.scrx );
+  loc_backgroundrepeat = gfx->backgroundrepeat * MIN( x / gfxState.scrx, y / gfxState.scrx );
 
 
   vtlist[0].pos.x = x + cossize;
@@ -1062,7 +854,7 @@ void render_background( Uint16 texture )
 
     glDisable( GL_CULL_FACE );
 
-    GLtexture_Bind( gs->TxTexture + texture, &gfxState );
+    GLtexture_Bind( gfx->TxTexture + texture, &gfxState );
 
     glColor4f( 1.0f, 1.0f, 1.0f, 1.0f );
     glBegin( GL_TRIANGLE_FAN );
@@ -1083,6 +875,7 @@ void render_background( Uint16 texture )
 void render_foreground_overlay( Uint16 texture )
 {
   Game_t * gs = Graphics_requireGame(&gfxState);
+  Graphics_Data_t * gfx = gfxState.pGfx;
 
   GLVertex vtlist[4];
   float size;
@@ -1096,15 +889,15 @@ void render_foreground_overlay( Uint16 texture )
   x = gfxState.scrx << 6;
   y = gfxState.scry << 6;
   z = 0;
-  u = gs->Water.layer[1].u;
-  v = gs->Water.layer[1].v;
+  u = gfx->Water.layer[1].u;
+  v = gfx->Water.layer[1].v;
   size = x + y + 1;
   rotate = 16384 + 8192;
   rotate >>= 2;
   sinsize = turntosin[rotate & TRIGTABLE_MASK] * size;
   cossize = turntocos[rotate & TRIGTABLE_MASK] * size;
 
-  loc_foregroundrepeat = foregroundrepeat * MIN( x / gfxState.scrx, y / gfxState.scrx ) / 4.0;
+  loc_foregroundrepeat = gfx->foregroundrepeat * MIN( x / gfxState.scrx, y / gfxState.scrx ) / 4.0;
 
 
   vtlist[0].pos.x = x + cossize;
@@ -1149,7 +942,7 @@ void render_foreground_overlay( Uint16 texture )
 
     glDisable( GL_CULL_FACE );
 
-    GLtexture_Bind( gs->TxTexture + texture, &gfxState );
+    GLtexture_Bind( gfx->TxTexture + texture, &gfxState );
 
     glColor4f( 1.0f, 1.0f, 1.0f, 0.5f );
     glBegin( GL_TRIANGLE_FAN );
@@ -1171,6 +964,7 @@ void render_shadow( CHR_REF character )
 
   Game_t * gs    = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
+  Graphics_Data_t * gfx = gfxState.pGfx;
 
   GLVertex v[4];
 
@@ -1189,10 +983,10 @@ void render_shadow( CHR_REF character )
   chrlightambi  = gs->ChrList[character].tlight.ambi_fp8.r + gs->ChrList[character].tlight.ambi_fp8.g + gs->ChrList[character].tlight.ambi_fp8.b;
   chrlightspek  = gs->ChrList[character].tlight.spek_fp8.r + gs->ChrList[character].tlight.spek_fp8.g + gs->ChrList[character].tlight.spek_fp8.b;
 
-  if( gs->Light.on )
+  if( gfx->Light.on )
   {
-    globlightambi = gs->Light.ambicol.r + gs->Light.ambicol.g + gs->Light.ambicol.b;
-    globlightspek = gs->Light.spekcol.r + gs->Light.spekcol.g + gs->Light.spekcol.b;
+    globlightambi = gfx->Light.ambicol.r + gfx->Light.ambicol.g + gfx->Light.ambicol.b;
+    globlightspek = gfx->Light.spekcol.r + gfx->Light.spekcol.g + gfx->Light.spekcol.b;
   };
 
   lightambi = chrlightambi + 255 * globlightambi;
@@ -1286,7 +1080,7 @@ void render_shadow( CHR_REF character )
       }
       else
       {
-        GLtexture_Bind( gs->TxTexture + particletexture, &gfxState );
+        GLtexture_Bind( gfx->TxTexture + particletexture, &gfxState );
       };
 
       glBegin( GL_TRIANGLE_FAN );
@@ -1336,7 +1130,7 @@ void render_shadow( CHR_REF character )
       }
       else
       {
-        GLtexture_Bind( gs->TxTexture + particletexture, &gfxState );
+        GLtexture_Bind( gfx->TxTexture + particletexture, &gfxState );
       };
 
       glBegin( GL_TRIANGLE_FAN );
@@ -1404,6 +1198,7 @@ void do_chr_dynalight(Game_t * gs)
 
   Mesh_t * pmesh;
   CHR_TLIGHT * tlight;
+  Graphics_Data_t * gfx = gfxState.pGfx;
 
   if(NULL == gs) gs = Graphics_requireGame( &gfxState );
   pmesh = Game_getMesh(gs);
@@ -1429,7 +1224,7 @@ void do_chr_dynalight(Game_t * gs)
     tlight->spek_fp8.r = spek;
 
     tlight->turn_lr.r = 0;
-    if ( spek > 0 || !pmesh->Info.exploremode )
+    if ( spek > 0 || !gfx->exploremode )
     {
       float scale = 255.0f / maxval;
 
@@ -1453,7 +1248,7 @@ void do_chr_dynalight(Game_t * gs)
     tlight->spek_fp8.g = spek;
 
     tlight->turn_lr.g = 0;
-    if ( spek > 0 && !pmesh->Info.exploremode )
+    if ( spek > 0 && !gfx->exploremode )
     {
       float scale = 255.0f / maxval;
 
@@ -1477,7 +1272,7 @@ void do_chr_dynalight(Game_t * gs)
     tlight->spek_fp8.b = spek;
 
     tlight->turn_lr.b = 0;
-    if ( spek > 0 || !pmesh->Info.exploremode )
+    if ( spek > 0 || !gfx->exploremode )
     {
       float scale = 255.0f / maxval;
 
@@ -1564,9 +1359,10 @@ void render_water()
 
   int cnt;
   Game_t * gs = Graphics_requireGame(&gfxState);
+  Graphics_Data_t * gfx = gfxState.pGfx;
 
   // Bottom layer first
-  if ( !gfxState.render_background && gs->Water.layer_count > 1 )
+  if ( !gfx->render_background && gfx->Water.layer_count > 1 )
   {
     cnt = 0;
     while ( cnt < renderlist.num_watr )
@@ -1577,7 +1373,7 @@ void render_water()
   }
 
   // Top layer second
-  if ( !gfxState.render_overlay && gs->Water.layer_count > 0 )
+  if ( !gfx->render_overlay && gfx->Water.layer_count > 0 )
   {
     cnt = 0;
     while ( cnt < renderlist.num_watr )
@@ -1594,19 +1390,20 @@ void render_water_lit()
 
   int cnt;
   Game_t * gs = Graphics_requireGame(&gfxState);
+  Graphics_Data_t * gfx = gfxState.pGfx;
 
   // Bottom layer first
-  if ( !gfxState.render_background && gs->Water.layer_count > 1 )
+  if ( !gfx->render_background && gfx->Water.layer_count > 1 )
   {
-    float ambi_level = FP8_TO_FLOAT( gs->Water.layer[1].lightadd_fp8 + gs->Water.layer[1].lightlevel_fp8 );
-    float spek_level =  FP8_TO_FLOAT( gs->Water.speklevel_fp8 );
+    float ambi_level = FP8_TO_FLOAT( gfx->Water.layer[1].lightadd_fp8 + gfx->Water.layer[1].lightlevel_fp8 );
+    float spek_level =  FP8_TO_FLOAT( gfx->Water.speklevel_fp8 );
     float spekularity = MIN( 40, spek_level / ambi_level ) + 2;
     GLfloat mat_none[]      = {0, 0, 0, 0};
     GLfloat mat_ambient[]   = { ambi_level, ambi_level, ambi_level, 1.0 };
     GLfloat mat_diffuse[]   = { spek_level, spek_level, spek_level, 1.0 };
     GLfloat mat_shininess[] = {spekularity};
 
-    if ( gs->Water.light )
+    if ( gfx->Water.light )
     {
       // self-lit water provides its own light
       glMaterialfv( GL_FRONT_AND_BACK, GL_EMISSION, mat_ambient );
@@ -1630,10 +1427,10 @@ void render_water_lit()
   }
 
   // Top layer second
-  if ( !gfxState.render_overlay && gs->Water.layer_count > 0 )
+  if ( !gfx->render_overlay && gfx->Water.layer_count > 0 )
   {
-    float ambi_level = ( gs->Water.layer[1].lightadd_fp8 + gs->Water.layer[1].lightlevel_fp8 ) / 255.0;
-    float spek_level =  FP8_TO_FLOAT( gs->Water.speklevel_fp8 );
+    float ambi_level = ( gfx->Water.layer[1].lightadd_fp8 + gfx->Water.layer[1].lightlevel_fp8 ) / 255.0;
+    float spek_level =  FP8_TO_FLOAT( gfx->Water.speklevel_fp8 );
     float spekularity = MIN( 40, spek_level / ambi_level ) + 2;
 
     GLfloat mat_none[]      = {0, 0, 0, 0};
@@ -1641,7 +1438,7 @@ void render_water_lit()
     GLfloat mat_diffuse[]   = { spek_level, spek_level, spek_level, 1.0 };
     GLfloat mat_shininess[] = {spekularity};
 
-    if ( gs->Water.light )
+    if ( gfx->Water.light )
     {
       // self-lit water provides its own light
       glMaterialfv( GL_FRONT_AND_BACK, GL_EMISSION, mat_ambient );
@@ -1740,6 +1537,7 @@ void render_normal_fans()
 {
   Game_t * gs    = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
+  Graphics_Data_t * gfx = gfxState.pGfx;
 
   int cnt, tnc, fan, texture;
 
@@ -1767,7 +1565,7 @@ void render_normal_fans()
     {
       texture = cnt + TX_TILE_0;
       pmesh->Info.last_texture = texture;
-      GLtexture_Bind( gs->TxTexture + texture, &gfxState );
+      GLtexture_Bind( gfx->TxTexture + texture, &gfxState );
       for ( tnc = 0; tnc < renderlist.num_norm; tnc++ )
       {
         fan = renderlist.norm[tnc];
@@ -1783,6 +1581,7 @@ void render_shiny_fans()
 {
   Game_t * gs    = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
+  Graphics_Data_t * gfx = gfxState.pGfx;
 
   int cnt, tnc, fan, texture;
 
@@ -1811,7 +1610,7 @@ void render_shiny_fans()
     {
       texture = cnt + TX_TILE_0;
       pmesh->Info.last_texture = texture;
-      GLtexture_Bind( gs->TxTexture + texture, &gfxState );
+      GLtexture_Bind( gfx->TxTexture + texture, &gfxState );
       for ( tnc = 0; tnc < renderlist.num_shine; tnc++ )
       {
         fan = renderlist.shine[tnc];
@@ -1827,6 +1626,7 @@ void render_reflected_fans_ref()
 {
   Game_t * gs    = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
+  Graphics_Data_t * gfx = gfxState.pGfx;
 
   int cnt, tnc, fan, texture;
 
@@ -1858,7 +1658,7 @@ void render_reflected_fans_ref()
     {
       texture = cnt + TX_TILE_0;
       pmesh->Info.last_texture = texture;
-      GLtexture_Bind( gs->TxTexture + texture, &gfxState );
+      GLtexture_Bind( gfx->TxTexture + texture, &gfxState );
       for ( tnc = 0; tnc < renderlist.num_shine; tnc++ )
       {
         fan = renderlist.reflc[tnc];
@@ -1957,12 +1757,13 @@ void render_alpha_characters()
 void render_water_highlights()
 {
   Game_t * gs = Graphics_requireGame(&gfxState);
+  Graphics_Data_t * gfx = gfxState.pGfx;
 
   ATTRIB_PUSH( "render_water_highlights", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_LIGHTING_BIT );
   {
-    GLfloat light_position[] = { 10000*gs->Light.spekdir.x, 10000*gs->Light.spekdir.y, 10000*gs->Light.spekdir.z, 1.0 };
-    GLfloat lmodel_ambient[] = { gs->Light.ambicol.r, gs->Light.ambicol.g, gs->Light.ambicol.b, 1.0 };
-    GLfloat light_diffuse[]  = { gs->Light.spekcol.r, gs->Light.spekcol.g, gs->Light.spekcol.b, 1.0 };
+    GLfloat light_position[] = { 10000*gfx->Light.spekdir.x, 10000*gfx->Light.spekdir.y, 10000*gfx->Light.spekdir.z, 1.0 };
+    GLfloat lmodel_ambient[] = { gfx->Light.ambicol.r, gfx->Light.ambicol.g, gfx->Light.ambicol.b, 1.0 };
+    GLfloat light_diffuse[]  = { gfx->Light.spekcol.r, gfx->Light.spekcol.g, gfx->Light.spekcol.b, 1.0 };
 
     glDepthMask( GL_FALSE );
     glEnable( GL_DEPTH_TEST );
@@ -2047,13 +1848,14 @@ void render_character_highlights()
   CHR_REF chr_tnc;
 
   Game_t * gs = Graphics_requireGame(&gfxState);
+  Graphics_Data_t * gfx = gfxState.pGfx;
 
   ATTRIB_PUSH( "render_character_highlights", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_LIGHTING_BIT | GL_POLYGON_BIT );
   {
     GLfloat light_none[]     = {0, 0, 0, 0};
-    GLfloat light_position[] = { 10000*gs->Light.spekdir.x, 10000*gs->Light.spekdir.y, 10000*gs->Light.spekdir.z, 1.0 };
-    //GLfloat lmodel_ambient[] = { gs->Light.ambicol.r, gs->Light.ambicol.g, gs->Light.ambicol.b, 1.0 };
-    GLfloat light_specular[] = { gs->Light.spekcol.r, gs->Light.spekcol.g, gs->Light.spekcol.b, 1.0 };
+    GLfloat light_position[] = { 10000*gfx->Light.spekdir.x, 10000*gfx->Light.spekdir.y, 10000*gfx->Light.spekdir.z, 1.0 };
+    //GLfloat lmodel_ambient[] = { gfx->Light.ambicol.r, gfx->Light.ambicol.g, gfx->Light.ambicol.b, 1.0 };
+    GLfloat light_specular[] = { gfx->Light.spekcol.r, gfx->Light.spekcol.g, gfx->Light.spekcol.b, 1.0 };
 
     glDisable( GL_CULL_FACE );
 
@@ -2102,6 +1904,7 @@ void draw_scene_zreflection()
   // do all the rendering of reflections
 
   Game_t * gs = Graphics_requireGame(&gfxState);
+  Graphics_Data_t * gfx = gfxState.pGfx;
 
   if ( CData.refon )
   {
@@ -2163,7 +1966,7 @@ void draw_scene_zreflection()
     render_alpha_characters();
 
     // And alpha water
-    if ( !gs->Water.light )
+    if ( !gfx->Water.light )
     {
       ATTRIB_GUARD_OPEN( inp_attrib_stack );
       render_alpha_water();
@@ -2171,7 +1974,7 @@ void draw_scene_zreflection()
     };
 
     // Do self-lit water
-    if ( gs->Water.light )
+    if ( gfx->Water.light )
     {
       ATTRIB_GUARD_OPEN( inp_attrib_stack );
       render_light_water();
@@ -2253,12 +2056,13 @@ void draw_blip( COLR color, float x, float y)
   // ZZ> This function draws a blip
 
   Gui_t * gui = gui_getState();
+  Graphics_Data_t * gfx = gfxState.pGfx;
 
   FRect_t tx_rect, sc_rect;
   float width, height;
 
-  width  = 3.0*mapscale*0.5f;
-  height = 3.0*mapscale*0.5f;
+  width  = 3.0*gfx->Map_scale*0.5f;
+  height = 3.0*gfx->Map_scale*0.5f;
 
   if ( x < -width || x > gfxState.scrx + width || y < -height || y > gfxState.scry + height ) return;
 
@@ -2279,10 +2083,10 @@ void draw_blip( COLR color, float x, float y)
     // backface culling
     glDisable( GL_CULL_FACE );
 
-    tx_rect.left   = (( float ) BlipList[color].rect.left   ) / ( float ) GLtexture_GetTextureWidth(&gui->TxBlip)  + 0.01;
-    tx_rect.right  = (( float ) BlipList[color].rect.right  ) / ( float ) GLtexture_GetTextureWidth(&gui->TxBlip)  - 0.01;
-    tx_rect.top    = (( float ) BlipList[color].rect.top    ) / ( float ) GLtexture_GetTextureHeight(&gui->TxBlip) + 0.01;
-    tx_rect.bottom = (( float ) BlipList[color].rect.bottom ) / ( float ) GLtexture_GetTextureHeight(&gui->TxBlip) - 0.01;
+    tx_rect.left   = (( float ) gfx->BlipList[color].rect.left   ) / ( float ) GLtexture_GetTextureWidth(&gfx->BlipList_tex)  + 0.01;
+    tx_rect.right  = (( float ) gfx->BlipList[color].rect.right  ) / ( float ) GLtexture_GetTextureWidth(&gfx->BlipList_tex)  - 0.01;
+    tx_rect.top    = (( float ) gfx->BlipList[color].rect.top    ) / ( float ) GLtexture_GetTextureHeight(&gfx->BlipList_tex) + 0.01;
+    tx_rect.bottom = (( float ) gfx->BlipList[color].rect.bottom ) / ( float ) GLtexture_GetTextureHeight(&gfx->BlipList_tex) - 0.01;
 
     sc_rect.left   = x - width;
     sc_rect.right  = x + width;
@@ -2291,7 +2095,7 @@ void draw_blip( COLR color, float x, float y)
 
     glColor4f( 1.0f, 1.0f, 1.0f, 1.0f );
 
-    draw_texture_box(&gui->TxBlip, &tx_rect, &sc_rect);
+    draw_texture_box(&gfx->BlipList_tex, &tx_rect, &sc_rect);
   }
   ATTRIB_POP( "draw_blip" );
 }
@@ -2302,12 +2106,13 @@ void draw_one_icon( int icontype, int x, int y, Uint8 sparkle )
   // ZZ> This function draws an icon
 
   Game_t * gs = Graphics_requireGame(&gfxState);
+  Graphics_Data_t * gfx = gfxState.pGfx;
 
   int position, blipx, blipy;
   int width, height;
   FRect_t tx_rect, sc_rect;
 
-  if (MAXICONTX== icontype || INVALID_TEXTURE == gs->TxIcon[icontype].textureID ) return;
+  if (MAXICONTX== icontype || INVALID_TEXTURE == gfx->TxIcon[icontype].textureID ) return;
 
   ATTRIB_PUSH( "draw_one_icon", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT | GL_TEXTURE_BIT | GL_LIGHTING_BIT | GL_CURRENT_BIT );
   {
@@ -2324,20 +2129,20 @@ void draw_one_icon( int icontype, int x, int y, Uint8 sparkle )
     // backface culling
     glDisable( GL_CULL_FACE );
 
-    tx_rect.left   = (( float ) iconrect.left   ) / GLtexture_GetTextureWidth(gs->TxIcon + icontype);
-    tx_rect.right  = (( float ) iconrect.right  ) / GLtexture_GetTextureWidth(gs->TxIcon + icontype);
-    tx_rect.top    = (( float ) iconrect.top    ) / GLtexture_GetTextureHeight(gs->TxIcon + icontype);
-    tx_rect.bottom = (( float ) iconrect.bottom ) / GLtexture_GetTextureHeight(gs->TxIcon + icontype);
+    tx_rect.left   = (( float ) gfx->TxIcon_rect.left   ) / GLtexture_GetTextureWidth(gfx->TxIcon + icontype);
+    tx_rect.right  = (( float ) gfx->TxIcon_rect.right  ) / GLtexture_GetTextureWidth(gfx->TxIcon + icontype);
+    tx_rect.top    = (( float ) gfx->TxIcon_rect.top    ) / GLtexture_GetTextureHeight(gfx->TxIcon + icontype);
+    tx_rect.bottom = (( float ) gfx->TxIcon_rect.bottom ) / GLtexture_GetTextureHeight(gfx->TxIcon + icontype);
 
-    width  = iconrect.right  - iconrect.left;
-    height = iconrect.bottom - iconrect.top;
+    width  = gfx->TxIcon_rect.right  - gfx->TxIcon_rect.left;
+    height = gfx->TxIcon_rect.bottom - gfx->TxIcon_rect.top;
 
     sc_rect.left   = x;
     sc_rect.right  = x + width;
     sc_rect.top    = gfxState.scry - y;
     sc_rect.bottom = gfxState.scry - (y + height);
 
-    draw_texture_box( gs->TxIcon + icontype, &tx_rect, &sc_rect);
+    draw_texture_box( gfx->TxIcon + icontype, &tx_rect, &sc_rect);
   }
   ATTRIB_POP( "draw_one_icon" );
 
@@ -2395,8 +2200,9 @@ void draw_map( float x, float y )
 {
   // ZZ> This function draws the map
 
-  Game_t * gs = Graphics_requireGame(&gfxState);
   FRect_t tx_rect, sc_rect;
+  Game_t * gs = Graphics_requireGame(&gfxState);
+  Graphics_Data_t * gfx = gfxState.pGfx;
 
   ATTRIB_PUSH( "draw_map", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT | GL_TEXTURE_BIT | GL_LIGHTING_BIT );
   {
@@ -2414,16 +2220,16 @@ void draw_map( float x, float y )
     glDisable( GL_CULL_FACE );
 
     tx_rect.left   = 0.0f;
-    tx_rect.right  = (float)GLtexture_GetImageWidth(&gs->TxMap) / (float)GLtexture_GetTextureWidth(&gs->TxMap);
+    tx_rect.right  = (float)GLtexture_GetImageWidth(&gfx->Map_tex) / (float)GLtexture_GetTextureWidth(&gfx->Map_tex);
     tx_rect.top    = 0.0f;
-    tx_rect.bottom = (float)GLtexture_GetImageHeight(&gs->TxMap) / (float)GLtexture_GetTextureHeight(&gs->TxMap);
+    tx_rect.bottom = (float)GLtexture_GetImageHeight(&gfx->Map_tex) / (float)GLtexture_GetTextureHeight(&gfx->Map_tex);
 
-    sc_rect.left   = x + maprect.left;
-    sc_rect.right  = x + maprect.right;
-    sc_rect.top    = maprect.bottom - y;
-    sc_rect.bottom = maprect.top    - y;
+    sc_rect.left   = x + gfx->Map_rect.left;
+    sc_rect.right  = x + gfx->Map_rect.right;
+    sc_rect.top    = gfx->Map_rect.bottom - y;
+    sc_rect.bottom = gfx->Map_rect.top    - y;
 
-    draw_texture_box( &gs->TxMap, &tx_rect, &sc_rect );
+    draw_texture_box( &gfx->Map_tex, &tx_rect, &sc_rect );
   }
   ATTRIB_POP( "draw_map" );
 }
@@ -2434,6 +2240,7 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
   // ZZ> This function draws a bar and returns the y position for the next one
 
   Gui_t * gui = gui_getState();
+  Graphics_Data_t * gfx = gfxState.pGfx;
 
   int noticks;
   FRect_t tx_rect, sc_rect;
@@ -2460,11 +2267,11 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
     if ( maxticks > 0 && ticks >= 0 )
     {
       // Draw the tab
-      GLtexture_Bind( &gui->TxBars, &gfxState );
-      tx_rect.left   = ( float ) tabrect[bartype].left   / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
-      tx_rect.right  = ( float ) tabrect[bartype].right  / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
-      tx_rect.top    = ( float ) tabrect[bartype].top    / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
-      tx_rect.bottom = ( float ) tabrect[bartype].bottom / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
+      GLtexture_Bind( &gfx->TxBars, &gfxState );
+      tx_rect.left   = ( float ) tabrect[bartype].left   / ( float ) GLtexture_GetTextureWidth( &gfx->TxBars );
+      tx_rect.right  = ( float ) tabrect[bartype].right  / ( float ) GLtexture_GetTextureWidth( &gfx->TxBars );
+      tx_rect.top    = ( float ) tabrect[bartype].top    / ( float ) GLtexture_GetTextureHeight( &gfx->TxBars );
+      tx_rect.bottom = ( float ) tabrect[bartype].bottom / ( float ) GLtexture_GetTextureHeight( &gfx->TxBars );
 
       width  = tabrect[bartype].right  - tabrect[bartype].left;
       height = tabrect[bartype].bottom - tabrect[bartype].top;
@@ -2474,7 +2281,7 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
       sc_rect.top    = gfxState.scry - y;
       sc_rect.bottom = gfxState.scry - (y + height);
 
-      draw_texture_box(&gui->TxBars, &tx_rect, &sc_rect);
+      draw_texture_box(&gfx->TxBars, &tx_rect, &sc_rect);
 
       // Error check
       if ( maxticks > MAXTICK ) maxticks = MAXTICK;
@@ -2484,22 +2291,22 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
       x += TABX;
       while ( ticks >= NUMTICK )
       {
-        barrect[bartype].right = BARX;
+        gfx->TxBars_rect[bartype].right = BARX;
 
-        tx_rect.left   = ( float ) barrect[bartype].left   / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
-        tx_rect.right  = ( float ) barrect[bartype].right  / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
-        tx_rect.top    = ( float ) barrect[bartype].top    / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
-        tx_rect.bottom = ( float ) barrect[bartype].bottom / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
+        tx_rect.left   = ( float ) gfx->TxBars_rect[bartype].left   / ( float ) GLtexture_GetTextureWidth( &gfx->TxBars );
+        tx_rect.right  = ( float ) gfx->TxBars_rect[bartype].right  / ( float ) GLtexture_GetTextureWidth( &gfx->TxBars );
+        tx_rect.top    = ( float ) gfx->TxBars_rect[bartype].top    / ( float ) GLtexture_GetTextureHeight( &gfx->TxBars );
+        tx_rect.bottom = ( float ) gfx->TxBars_rect[bartype].bottom / ( float ) GLtexture_GetTextureHeight( &gfx->TxBars );
 
-        width  = barrect[bartype].right  - barrect[bartype].left;
-        height = barrect[bartype].bottom - barrect[bartype].top;
+        width  = gfx->TxBars_rect[bartype].right  - gfx->TxBars_rect[bartype].left;
+        height = gfx->TxBars_rect[bartype].bottom - gfx->TxBars_rect[bartype].top;
 
         sc_rect.left   = x;
         sc_rect.right  = x + width;
         sc_rect.top    = gfxState.scry - y;
         sc_rect.bottom = gfxState.scry - (y + height);
 
-        draw_texture_box(&gui->TxBars, &tx_rect, &sc_rect);
+        draw_texture_box(&gfx->TxBars, &tx_rect, &sc_rect);
 
         y += BARY;
         ticks -= NUMTICK;
@@ -2511,42 +2318,42 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
       if ( maxticks > 0 )
       {
         // Draw the filled ones
-        barrect[bartype].right = ( ticks << 3 ) + TABX;
+        gfx->TxBars_rect[bartype].right = ( ticks << 3 ) + TABX;
 
-        tx_rect.left   = ( float ) barrect[bartype].left   / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
-        tx_rect.right  = ( float ) barrect[bartype].right  / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
-        tx_rect.top    = ( float ) barrect[bartype].top    / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
-        tx_rect.bottom = ( float ) barrect[bartype].bottom / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
+        tx_rect.left   = ( float ) gfx->TxBars_rect[bartype].left   / ( float ) GLtexture_GetTextureWidth( &gfx->TxBars );
+        tx_rect.right  = ( float ) gfx->TxBars_rect[bartype].right  / ( float ) GLtexture_GetTextureWidth( &gfx->TxBars );
+        tx_rect.top    = ( float ) gfx->TxBars_rect[bartype].top    / ( float ) GLtexture_GetTextureHeight( &gfx->TxBars );
+        tx_rect.bottom = ( float ) gfx->TxBars_rect[bartype].bottom / ( float ) GLtexture_GetTextureHeight( &gfx->TxBars );
 
-        width  = barrect[bartype].right  - barrect[bartype].left;
-        height = barrect[bartype].bottom - barrect[bartype].top;
+        width  = gfx->TxBars_rect[bartype].right  - gfx->TxBars_rect[bartype].left;
+        height = gfx->TxBars_rect[bartype].bottom - gfx->TxBars_rect[bartype].top;
 
         sc_rect.left   = x;
         sc_rect.right  = x + width;
         sc_rect.top    = gfxState.scry - y;
         sc_rect.bottom = gfxState.scry - (y + height);
 
-        draw_texture_box(&gui->TxBars, &tx_rect, &sc_rect);
+        draw_texture_box(&gfx->TxBars, &tx_rect, &sc_rect);
 
         // Draw the empty ones
         noticks = maxticks - ticks;
         if ( noticks > ( NUMTICK - ticks ) ) noticks = ( NUMTICK - ticks );
-        barrect[0].right = ( noticks << 3 ) + TABX;
+        gfx->TxBars_rect[0].right = ( noticks << 3 ) + TABX;
 
-        tx_rect.left   = ( float ) barrect[0].left   / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
-        tx_rect.right  = ( float ) barrect[0].right  / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
-        tx_rect.top    = ( float ) barrect[0].top    / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
-        tx_rect.bottom = ( float ) barrect[0].bottom / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
+        tx_rect.left   = ( float ) gfx->TxBars_rect[0].left   / ( float ) GLtexture_GetTextureWidth( &gfx->TxBars );
+        tx_rect.right  = ( float ) gfx->TxBars_rect[0].right  / ( float ) GLtexture_GetTextureWidth( &gfx->TxBars );
+        tx_rect.top    = ( float ) gfx->TxBars_rect[0].top    / ( float ) GLtexture_GetTextureHeight( &gfx->TxBars );
+        tx_rect.bottom = ( float ) gfx->TxBars_rect[0].bottom / ( float ) GLtexture_GetTextureHeight( &gfx->TxBars );
 
-        width  = barrect[0].right  - barrect[0].left;
-        height = barrect[0].bottom - barrect[0].top;
+        width  = gfx->TxBars_rect[0].right  - gfx->TxBars_rect[0].left;
+        height = gfx->TxBars_rect[0].bottom - gfx->TxBars_rect[0].top;
 
         sc_rect.left   = x;
         sc_rect.right  = x + width;
         sc_rect.top    = gfxState.scry - y;
         sc_rect.bottom = gfxState.scry - (y + height);
 
-        draw_texture_box(&gui->TxBars, &tx_rect, &sc_rect);
+        draw_texture_box(&gfx->TxBars, &tx_rect, &sc_rect);
 
         maxticks -= NUMTICK;
         y += BARY;
@@ -2556,22 +2363,22 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
       // Draw full rows of empty ticks
       while ( maxticks >= NUMTICK )
       {
-        barrect[0].right = BARX;
+        gfx->TxBars_rect[0].right = BARX;
 
-        tx_rect.left   = ( float ) barrect[0].left   / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
-        tx_rect.right  = ( float ) barrect[0].right  / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
-        tx_rect.top    = ( float ) barrect[0].top    / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
-        tx_rect.bottom = ( float ) barrect[0].bottom / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
+        tx_rect.left   = ( float ) gfx->TxBars_rect[0].left   / ( float ) GLtexture_GetTextureWidth( &gfx->TxBars );
+        tx_rect.right  = ( float ) gfx->TxBars_rect[0].right  / ( float ) GLtexture_GetTextureWidth( &gfx->TxBars );
+        tx_rect.top    = ( float ) gfx->TxBars_rect[0].top    / ( float ) GLtexture_GetTextureHeight( &gfx->TxBars );
+        tx_rect.bottom = ( float ) gfx->TxBars_rect[0].bottom / ( float ) GLtexture_GetTextureHeight( &gfx->TxBars );
 
-        width  = barrect[0].right  - barrect[0].left;
-        height = barrect[0].bottom - barrect[0].top;
+        width  = gfx->TxBars_rect[0].right  - gfx->TxBars_rect[0].left;
+        height = gfx->TxBars_rect[0].bottom - gfx->TxBars_rect[0].top;
 
         sc_rect.left   = x;
         sc_rect.right  = x + width;
         sc_rect.top    = gfxState.scry - y;
         sc_rect.bottom = gfxState.scry - (y + height);
 
-        draw_texture_box(&gui->TxBars, &tx_rect, &sc_rect);
+        draw_texture_box(&gfx->TxBars, &tx_rect, &sc_rect);
 
         y += BARY;
         maxticks -= NUMTICK;
@@ -2581,22 +2388,22 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
       // Draw the last of the empty ones
       if ( maxticks > 0 )
       {
-        barrect[0].right = ( maxticks << 3 ) + TABX;
+        gfx->TxBars_rect[0].right = ( maxticks << 3 ) + TABX;
 
-        tx_rect.left   = ( float ) barrect[0].left   / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
-        tx_rect.right  = ( float ) barrect[0].right  / ( float ) GLtexture_GetTextureWidth( &gui->TxBars );
-        tx_rect.top    = ( float ) barrect[0].top    / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
-        tx_rect.bottom = ( float ) barrect[0].bottom / ( float ) GLtexture_GetTextureHeight( &gui->TxBars );
+        tx_rect.left   = ( float ) gfx->TxBars_rect[0].left   / ( float ) GLtexture_GetTextureWidth( &gfx->TxBars );
+        tx_rect.right  = ( float ) gfx->TxBars_rect[0].right  / ( float ) GLtexture_GetTextureWidth( &gfx->TxBars );
+        tx_rect.top    = ( float ) gfx->TxBars_rect[0].top    / ( float ) GLtexture_GetTextureHeight( &gfx->TxBars );
+        tx_rect.bottom = ( float ) gfx->TxBars_rect[0].bottom / ( float ) GLtexture_GetTextureHeight( &gfx->TxBars );
 
-        width  = barrect[0].right  - barrect[0].left;
-        height = barrect[0].bottom - barrect[0].top;
+        width  = gfx->TxBars_rect[0].right  - gfx->TxBars_rect[0].left;
+        height = gfx->TxBars_rect[0].bottom - gfx->TxBars_rect[0].top;
 
         sc_rect.left   = x;
         sc_rect.right  = x + width;
         sc_rect.top    = gfxState.scry - y;
         sc_rect.bottom = gfxState.scry - (y + height);
 
-        draw_texture_box(&gui->TxBars, &tx_rect, &sc_rect);
+        draw_texture_box(&gfx->TxBars, &tx_rect, &sc_rect);
 
         y += BARY;
       }
@@ -2832,6 +2639,8 @@ int draw_status( BMFont_t * pfnt, Status_t * pstat )
   Mad_t * pmad;
   Cap_t * pcap;
 
+  Graphics_Data_t * gfx = gfxState.pGfx;
+
   gs = Graphics_requireGame(&gfxState);
   if(NULL == gs) return 0;
 
@@ -2910,10 +2719,10 @@ int draw_status( BMFont_t * pfnt, Status_t * pstat )
       }
     }
     else
-      draw_one_icon( gs->ico_lst[ICO_BOOK_0] + ( tmppchr->money % MAXSKIN ), ix + 8, iy, tmppchr->sparkle );
+      draw_one_icon( gfx->ico_lst[ICO_BOOK_0] + ( tmppchr->money % MAXSKIN ), ix + 8, iy, tmppchr->sparkle );
   }
   else
-    draw_one_icon( gs->ico_lst[ICO_NULL], ix + 8, iy, NOSPARKLE );
+    draw_one_icon( gfx->ico_lst[ICO_NULL], ix + 8, iy, NOSPARKLE );
 
   item = chr_get_holdingwhich( chrlst, CHRLST_COUNT, ichr, SLOT_RIGHT );
   if ( ACTIVE_CHR( chrlst,  item ) && VALID_OBJ( objlst, chrlst[item].model) )
@@ -2935,10 +2744,10 @@ int draw_status( BMFont_t * pfnt, Status_t * pstat )
       }
     }
     else
-      draw_one_icon( gs->ico_lst[ICO_BOOK_0] + ( chrlst[item].money % MAXSKIN ), ix + 72, iy, chrlst[item].sparkle );
+      draw_one_icon( gfx->ico_lst[ICO_BOOK_0] + ( chrlst[item].money % MAXSKIN ), ix + 72, iy, chrlst[item].sparkle );
   }
   else
-    draw_one_icon( gs->ico_lst[ICO_NULL], ix + 72, iy, NOSPARKLE );
+    draw_one_icon( gfx->ico_lst[ICO_NULL], ix + 72, iy, NOSPARKLE );
 
   iy += 32;
 
@@ -2966,18 +2775,19 @@ bool_t do_map()
   int cnt;
 
   Game_t * gs    = Graphics_requireGame(&gfxState);
+  Graphics_Data_t * gfx = gfxState.pGfx;
   Mesh_t * pmesh = Game_getMesh(gs);
 
-  if(!mapon) return bfalse;
+  if(!gfx->Map_on) return bfalse;
 
-  draw_map( maprect.left, maprect.top );
+  draw_map( gfx->Map_rect.left, gfx->Map_rect.top );
 
-  for ( cnt = 0; cnt < numblip; cnt++ )
+  for ( cnt = 0; cnt < gfx->BlipList_count; cnt++ )
   {
-    draw_blip( BlipList[cnt].c, maprect.left + BlipList[cnt].x, maprect.top + BlipList[cnt].y );
+    draw_blip( gfx->BlipList[cnt].c, gfx->Map_rect.left + gfx->BlipList[cnt].x, gfx->Map_rect.top + gfx->BlipList[cnt].y );
   };
 
-  if ( youarehereon && 0 == ( ( gfxState.fps_clock >> 3) & 1 ) )
+  if ( gfx->Map_youarehereon && 0 == ( ( gfxState.fps_clock >> 3) & 1 ) )
   {
     for ( ipla = 0; ipla < PLALST_COUNT; ipla++ )
     {
@@ -2986,7 +2796,7 @@ bool_t do_map()
       ichr = PlaList_getRChr( gs, ipla );
       if ( !ACTIVE_CHR( gs->ChrList,  ichr ) || !gs->ChrList[ichr].alive ) continue;
 
-      draw_blip( (COLR)0, maprect.left + MAPSIZE * mesh_fraction_x( &(pmesh->Info), gs->ChrList[ichr].ori.pos.x ) * mapscale, maprect.top + MAPSIZE * mesh_fraction_y( &(pmesh->Info), gs->ChrList[ichr].ori.pos.y ) * mapscale );
+      draw_blip( (COLR)0, gfx->Map_rect.left + MAPSIZE * mesh_fraction_x( &(pmesh->Info), gs->ChrList[ichr].ori.pos.x ) * gfx->Map_scale, gfx->Map_rect.top + MAPSIZE * mesh_fraction_y( &(pmesh->Info), gs->ChrList[ichr].ori.pos.y ) * gfx->Map_scale );
     }
   }
 
@@ -3061,6 +2871,7 @@ void draw_text( BMFont_t *  pfnt )
 
   KeyboardBuffer_t * kbuffer = KeyboardBuffer_getState();
   Game_t * gs  = Graphics_requireGame(&gfxState);
+  Graphics_Data_t * gfx = gfxState.pGfx;
   //Gui_t  * gui = gui_getState();
 
   Begin2DMode();
@@ -3073,7 +2884,7 @@ void draw_text( BMFont_t *  pfnt )
     do_map();
 
     y = 0;
-    if ( outofsync )
+    if ( gs->cl->outofsync )
     {
       y += draw_string( pfnt, 0, y, NULL, "OUT OF SYNC!" );
     }
@@ -3231,7 +3042,7 @@ void draw_text( BMFont_t *  pfnt )
       y += draw_string( pfnt, 0, y, NULL, "~FREEPRT - %d", gs->PrtHeap.free_count );
       y += draw_string( pfnt, 0, y, NULL, "~FREECHR - %d", gs->ChrHeap.free_count );
       y += draw_string( pfnt, 0, y, NULL, "~EXPORT - %s", gs->modstate.exportvalid ? "TRUE" : "FALSE" );
-      y += draw_string( pfnt, 0, y, NULL, "~FOG&WATER - %s", gs->Fog.affectswater ? "TRUE" : "FALSE"  );
+      y += draw_string( pfnt, 0, y, NULL, "~FOG&WATER - %s", gfx->Fog.affectswater ? "TRUE" : "FALSE"  );
       y += draw_string( pfnt, 0, y, NULL, "~SHOP - %d", gs->ShopList_count );
       y += draw_string( pfnt, 0, y, NULL, "~PASSAGE - %d", gs->PassList_count );
       y += draw_string( pfnt, 0, y, NULL, "~DAMAGEPART - %d", gs->Tile_Dam.parttype );
@@ -3259,11 +3070,11 @@ void draw_text( BMFont_t *  pfnt )
     }
 
     // TIMER
-    if ( timeron )
+    if ( gs->timeron )
     {
-      fifties = ( timervalue % 50 ) << 1;
-      seconds = (( timervalue / 50 ) % 60 );
-      minutes = ( timervalue / 3000 );
+      fifties = ( gs->timervalue % 50 ) << 1;
+      seconds = (( gs->timervalue / 50 ) % 60 );
+      minutes = ( gs->timervalue / 3000 );
       y += draw_string( pfnt, 0, y, NULL, "=%d:%02d:%02d=", minutes, seconds, fifties );
     }
 
@@ -3401,6 +3212,8 @@ bool_t do_clear()
 //--------------------------------------------------------------------------------------------
 bool_t draw_scene(Game_t * gs)
 {
+  Graphics_Data_t * gfx = gfxState.pGfx;
+
   if(NULL == gs) gs = Graphics_getGame(&gfxState);
   if(NULL == gs) return bfalse;
 
@@ -3412,7 +3225,7 @@ bool_t draw_scene(Game_t * gs)
   do_prt_dynalight(gs);
 
   // Render the background
-  if ( gfxState.render_background )
+  if ( gfx->render_background )
   {
     render_background( TX_WATER_LOW );   // TX_WATER_LOW == 6 is the texture for waterlow.bmp
   }
@@ -3420,7 +3233,7 @@ bool_t draw_scene(Game_t * gs)
   draw_scene_zreflection();
 
   //Foreground overlay
-  if ( gfxState.render_overlay )
+  if ( gfx->render_overlay )
   {
     render_foreground_overlay( TX_WATER_TOP );   // TX_WATER_TOP ==  5 is watertop.bmp
   }
@@ -3443,33 +3256,31 @@ void draw_main( float frameDuration )
 }
 
 //--------------------------------------------------------------------------------------------
-void load_blip_bitmap( char * modname )
+void load_blip_bitmap( struct sGraphics_Data * gfx, char * modname )
 {
   //This function loads the blip bitmaps
   Gui_t * gui = gui_getState();
   int cnt;
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.blip_bitmap );
-  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  &gui->TxBlip, CStringTmp1, INVALID_KEY ) )
+  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  &gfx->BlipList_tex, CStringTmp1, INVALID_KEY ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.blip_bitmap );
-    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  &gui->TxBlip, CStringTmp1, INVALID_KEY ) )
+    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  &gfx->BlipList_tex, CStringTmp1, INVALID_KEY ) )
     {
       log_warning( "Blip bitmap not loaded. Missing file = \"%s\"\n", CStringTmp1 );
     }
   };
 
-
-
   // Set up the rectangles
-  blipwidth  = gui->TxBlip.imgW / NUMBAR;
-  blipheight = gui->TxBlip.imgH;
-  for ( cnt = 0; cnt < NUMBAR; cnt++ )
+  blipwidth  = gfx->BlipList_tex.imgW / BAR_COUNT;
+  blipheight = gfx->BlipList_tex.imgH;
+  for ( cnt = 0; cnt < BAR_COUNT; cnt++ )
   {
-    BlipList[cnt].rect.left   = ( cnt + 0 ) * blipwidth;
-    BlipList[cnt].rect.right  = ( cnt + 1 ) * blipwidth;
-    BlipList[cnt].rect.top    = 0;
-    BlipList[cnt].rect.bottom = blipheight;
+    gfx->BlipList[cnt].rect.left   = ( cnt + 0 ) * blipwidth;
+    gfx->BlipList[cnt].rect.right  = ( cnt + 1 ) * blipwidth;
+    gfx->BlipList[cnt].rect.top    = 0;
+    gfx->BlipList[cnt].rect.bottom = blipheight;
   }
 }
 
@@ -3626,13 +3437,13 @@ bool_t Graphics_synch(Graphics_t * g, ConfigData_t * cd)
 
   if(NULL == g || NULL == cd) return bfalse;
 
-  g->GrabMouse = cd->GrabMouse;
-  g->HideMouse = cd->HideMouse;
+  g->gui->GrabMouse = cd->GrabMouse;
+  g->gui->HideMouse = cd->HideMouse;
 
-  g->shading            = cd->shading;
-  g->render_overlay     = cd->render_overlay;
-  g->render_background  = cd->render_background;
-  g->phongon            = cd->phongon;
+  g->shading                  = cd->shading;
+  g->pGfx->render_overlay     = cd->render_overlay;
+  g->pGfx->render_background  = cd->render_background;
+  g->phongon                  = cd->phongon;
 
   if(g->perspective != cd->perspective)
   {
@@ -4278,7 +4089,7 @@ Graphics_t * sdl_set_mode(Graphics_t * g_old, Graphics_t * g_new, bool_t update_
   Graphics_t * retval = NULL;
   bool_t success = btrue;                      // hope for the best
 
-  if(!gfx_initialized) return g_old;
+  if(!_gfx_initialized) return g_old;
 
   // save the old parameters
   video_parameters_default( &param_old );
@@ -4462,6 +4273,29 @@ bool_t lighting_info_reset(LIGHTING_INFO * li)
   return btrue;
 };
 
+//---------------------------------------------------------------------------------------------
+void make_lightdirectionlookup()
+{
+  // ZZ> This function builds the lighting direction table
+  //     The table is used to find which direction the light is coming
+  //     from, based on the four corner vertices of a mesh tile.
+
+  Uint32 cnt;
+  Uint16 tl, tr, br, bl;
+  int x, y;
+
+  for ( cnt = 0; cnt < UINT16_SIZE; cnt++ )
+  {
+    tl = ( cnt & 0xf000 ) >> 12;
+    tr = ( cnt & 0x0f00 ) >> 8;
+    br = ( cnt & 0x00f0 ) >> 4;
+    bl = ( cnt & 0x000f );
+    x = br + tr - bl - tl;
+    y = br + bl - tl - tr;
+    lightdirectionlookup[cnt] = ( atan2( -y, x ) + PI ) * RAD_TO_BYTE;
+  }
+}
+
 
 
 //--------------------------------------------------------------------------------------------
@@ -4548,7 +4382,7 @@ bool_t lighting_info_reset(LIGHTING_INFO * li)
 //      }
 //      else
 //      {
-//        GLtexture_Bind( gs->TxTexture + particletexture, &gfxState );
+//        GLtexture_Bind( gfx->TxTexture + particletexture, &gfxState );
 //      };
 //
 //      glColor4f(FP8_TO_FLOAT(ambi), FP8_TO_FLOAT(ambi), FP8_TO_FLOAT(ambi), FP8_TO_FLOAT(trans));
@@ -4627,7 +4461,7 @@ bool_t lighting_info_reset(LIGHTING_INFO * li)
 //    {
 //      texture = cnt + TX_TILE_0;
 //      pmesh->Info.last_texture = texture;
-//      GLtexture_Bind( gs->TxTexture + texture, &gfxState);
+//      GLtexture_Bind( gfx->TxTexture + texture, &gfxState);
 //      for (tnc = 0; tnc < renderlist.num_reflc; tnc++)
 //      {
 //        fan = renderlist.reflc[tnc];
@@ -4673,7 +4507,7 @@ bool_t lighting_info_reset(LIGHTING_INFO * li)
 //    {
 //      texture = cnt + TX_TILE_0;
 //      pmesh->Info.last_texture = texture;
-//      GLtexture_Bind( gs->TxTexture + texture, &gfxState);
+//      GLtexture_Bind( gfx->TxTexture + texture, &gfxState);
 //      for (tnc = 0; tnc < renderlist.num_reflc; tnc++)
 //      {
 //        fan = renderlist.reflc[tnc];

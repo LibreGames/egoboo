@@ -29,8 +29,8 @@
 
 #define MAXVERTICES                    1024         // Max number of points in a model
 
-#define MAXSTOR             (1<<4)                  // Storage data
-#define STOR_AND             (MAXSTOR-1)             //
+#define STOR_COUNT          (1<<4)                  // Storage data
+#define STOR_AND            (STOR_COUNT-1)             //
 
 
 #define DELAY_BORE(PRAND)               (IRAND(PRAND, 8) + 120)
@@ -530,8 +530,8 @@ struct s_ai_state
   // internal variables - "short term" or temporary variables
   int             content;       // A variable set by "setup.txt"
   WP_LIST         wp;
-  int             x[MAXSTOR];    // Temporary values...  SetXY
-  int             y[MAXSTOR];    //
+  int             x[STOR_COUNT];    // Temporary values...  SetXY
+  int             y[STOR_COUNT];    //
 
   // "pointers" to various external data
   CHR_REF         target;          // Who the AI is after
@@ -669,7 +669,7 @@ typedef struct sSignal Signal_t;
 //--------------------------------------------------------------------------------------------
 struct sChr
 {
-  egoboo_key_t      ekey;
+  egoboo_key_t    ekey;
   bool_t          reserved;        // Is it going to be used?
   bool_t          req_active;      // Are we going to auto-activate ASAP?
   bool_t          active;          // Is it currently on?
@@ -695,7 +695,7 @@ struct sChr
   Uint8           numinpack;       // How many
 
   // stats
-  Stats_t          stats;
+  Stats_t         stats;
   int             experience;          // Experience
   int             experiencelevel;     // Experience Level
   Sint32          money;               // Money
@@ -715,7 +715,7 @@ struct sChr
 
 
   // physics info
-  PhysAccum_t      accum;
+  PhysAccum_t     accum;
   float           flyheight;       // Height to stabilize at
   bool_t          inwater;         //
   float           dampen;          // Bounciness
@@ -1012,3 +1012,17 @@ CHR_REF force_chr_spawn( CHR_SPAWN_INFO si );
 bool_t  activate_chr_spawn( struct sGame * gs, CHR_REF ichr );
 
 bool_t chr_is_over_water( struct sGame * gs, CHR_REF cnt );
+
+void   keep_weapons_with_holders( struct sGame * gs );
+
+void export_one_character_name( struct sGame * gs, char *szSaveName, CHR_REF character );
+void CapList_save_one( struct sGame * gs, char *szSaveName, CHR_REF character );
+void export_one_character_skin( struct sGame * gs, char *szSaveName, CHR_REF character );
+
+
+bool_t check_skills( struct sGame * gs, CHR_REF who, Uint32 whichskill );
+
+bool_t add_quest_idsz( char *whichplayer, IDSZ idsz );
+int    modify_quest_idsz( char *whichplayer, IDSZ idsz, int adjustment );
+int    check_player_quest( char *whichplayer, IDSZ idsz );
+

@@ -242,3 +242,5 @@ bool_t input_read_key(KEYBOARD * pk);
 bool_t input_read_joystick(JOYSTICK * pj);
 
 KeyboardBuffer_t * KeyboardBuffer_getState();
+
+void check_add( Uint8 key, char bigletter, char littleletter );

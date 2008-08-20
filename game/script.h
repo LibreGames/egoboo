@@ -15,6 +15,10 @@ extern int                     iNumAis;
 #define MAXCODENAMESIZE     64                      //
 #define AISMAXCOMPILESIZE   (AILST_COUNT*MAXCODE)         // For parsing AI scripts
 
+extern bool_t parseerror;    //Do we have an script error?
+
+
+
 enum e_script_opcode
 {
   F_IfSpawned = 0,                      // Scripted AI functions (v0.10)
@@ -477,6 +481,7 @@ struct sScriptInfo
   int    offset_end[AILST_COUNT];
 };
 typedef struct sScriptInfo ScriptInfo_t;
+
 
 retval_t run_script( struct sGame * gs, CHR_REF character, float dUpdate );
 void run_all_scripts( struct sGame * gs, float dUpdate );

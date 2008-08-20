@@ -87,8 +87,6 @@ struct sGame
   // in-game menu stuff
   MenuProc_t igm;
 
-  Uint32 net_status;
-
   // random stuff
   Uint32 randie_index;       // The current index of the random number table
 
@@ -97,23 +95,22 @@ struct sGame
   ModState_t    modstate;
   ModSummary_t  modtxt;
 
-  // game-specific module stuff
-  Mesh_t        Mesh;
-  TILE_ANIMATED Tile_Anim;
-  TILE_DAMAGE   Tile_Dam;
-
   // game loop variables
   double dFrame, dUpdate;
 
   // links to important data
-  struct sNet    * ns;
+  Uint32                net_status;
+  struct sNet         * ns;
   struct sConfigData  * cd;
-  struct sClient     * cl;
-  struct sServer     * sv;
+  struct sClient      * cl;
+  struct sServer      * sv;
 
-  int      ObjFreeList_count;
-  OBJ_REF  ObjFreeList[CHRLST_COUNT];
-  ObjList_t ObjList;
+  // Object/profile stuff
+  int        ObjFreeList_count;
+  OBJ_REF    ObjFreeList[CHRLST_COUNT];
+  ObjList_t  ObjList;
+  Uint16     skintoicon[MAXTEXTURE];       // convert object skins to texture references
+  ChopData_t chop;                         // per-object random naming data
 
   // profiles
   CapList_t CapList;
@@ -136,20 +133,29 @@ struct sGame
   PrtList_t PrtList;
 
   // passage data
-  Uint32  PassList_count;
+  Uint32    PassList_count;
   Passage_t PassList[PASSLST_COUNT];
 
   // shop data
   Uint16 ShopList_count;
-  Shop_t   ShopList[PASSLST_COUNT];
+  Shop_t ShopList[PASSLST_COUNT];
 
   // team data
   TeamList_t TeamList;
 
   // local variables
-  float  PlaList_level;
-  int    PlaList_count;                                 // Number of players
+  float     PlaList_level;
+  int       PlaList_count;                                 // Number of players
   PlaList_t PlaList;
+
+  // environmant info
+  WEATHER_INFO  Weather;    // particles for weather spawning
+  PhysicsData_t phys;       // gravity, friction, etc.
+
+  // Mesh and Tile stuff
+  Mesh_t        Mesh;
+  TILE_ANIMATED Tile_Anim;
+  TILE_DAMAGE   Tile_Dam;
 
   // messages
   MessageData_t MsgList;
@@ -157,37 +163,10 @@ struct sGame
   // script values
   ScriptInfo_t ScriptList;
 
-  // local texture info
-  GLtexture TxTexture[MAXTEXTURE];      // All normal textures
+  // per-module graphics info
+  Graphics_Data_t GfxData;
 
-  // all icons
-  int       TxIcon_count;               // Number of icons
-  GLtexture TxIcon[MAXICONTX];       // All icon textures
-
-  // list of special icons
-  int ico_lst[ICO_COUNT];
-
-  // map of object skins to object icons
-  Uint16    skintoicon[MAXTEXTURE];
-
-  // the map texture
-  GLtexture TxMap;
-
-  // water and lighting info
-  WATER_INFO    Water;
-  LIGHTING_INFO Light;
-  WEATHER_INFO  Weather;    // particles for weather spawning
-  PhysicsData_t phys;       // gravity, friction, etc.
-  FOG_INFO      Fog;
-
-  // dynamic lighting info
-  int          DLightList_distancetobeat;      // The number to beat
-  int          DLightList_count;               // Number of dynamic lights
-  DLightList_t DLightList;
-
-  bool_t somepladead;           // someone is dead
-  bool_t allpladead;            // everyone is dead?
-
+  // Game clocks 
   Sint32 stt_clock;             // SDL_GetTickCount() at start
   Sint32 lst_clock;             // The last total of ticks so far
   Sint32 all_clock;             // The total number of ticks so far
@@ -195,12 +174,17 @@ struct sGame
   Sint32 wld_clock;             // The sync clock
   Uint32 wld_frame;             // The number of frames that should have been drawn
 
+  Uint8  timeron;               // Game timer displayed?
+  Uint32 timervalue;            // Timer_t time ( 50ths of a second )
+
+  // Misc stuff
   float  pits_clock;             // For pit kills
   bool_t pits_kill;              // Do they kill?
 
-  char endtext[MAXENDTEXT];     // The end-module text
+  bool_t somepladead;           // someone is dead
+  bool_t allpladead;            // everyone is dead?
 
-  ChopData_t chop;
+  char endtext[MAXENDTEXT];     // The end-module text
 
 };
 typedef struct sGame Game_t;
@@ -209,10 +193,11 @@ Game_t * Game_create(struct sNet * net,  struct sClient * cl, struct sServer * s
 bool_t   Game_destroy(Game_t ** gs );
 bool_t   Game_renew(Game_t * gs);
 
-INLINE ScriptInfo_t * Game_getScriptInfo(Game_t * gs) { if(NULL ==gs) return NULL; return &(gs->ScriptList); }
-INLINE ProcState_t  * Game_getProcedure(Game_t * gs)  { if(NULL ==gs) return NULL; return &(gs->proc); }
-INLINE MenuProc_t   * Game_getMenuProc(Game_t * gs)   { if(NULL ==gs) return NULL; return &(gs->igm); }
-INLINE Mesh_t       * Game_getMesh(Game_t * gs)       { if(NULL ==gs) return NULL; return &(gs->Mesh); }
+INLINE ScriptInfo_t    * Game_getScriptInfo(Game_t * gs) { if(NULL ==gs) return NULL; return &(gs->ScriptList); }
+INLINE ProcState_t     * Game_getProcedure(Game_t * gs)  { if(NULL ==gs) return NULL; return &(gs->proc); }
+INLINE MenuProc_t      * Game_getMenuProc(Game_t * gs)   { if(NULL ==gs) return NULL; return &(gs->igm); }
+INLINE Mesh_t          * Game_getMesh(Game_t * gs)       { if(NULL ==gs) return NULL; return &(gs->Mesh); }
+INLINE Graphics_Data_t * Game_getGfx(Game_t * gs)     { if(NULL ==gs) return NULL; return &(gs->GfxData); }
 
 retval_t Game_registerNetwork( Game_t * gs, struct sNet    * net, bool_t destroy );
 retval_t Game_registerClient ( Game_t * gs, struct sClient * cl,  bool_t destroy  );
@@ -452,7 +437,7 @@ void make_lightdirectionlookup();
 void make_enviro( void );
 void draw_chr_info();
 bool_t do_screenshot();
-void move_water( float dUpdate );
+void move_water( WATER_LAYER wlayer[], size_t layer_count, float dUpdate );
 
 CHR_REF search_best_leader( Game_t * gs, TEAM_REF team, CHR_REF exclude );
 void call_for_help( Game_t * gs, CHR_REF character );
@@ -523,7 +508,7 @@ bool_t count_players(Game_t * gs);
 void clear_message_queue(MessageQueue_t * q);
 void clear_messages( MessageData_t * md);
 
-void load_global_icons(Game_t * gs);
+void load_global_icons( struct sGraphics_Data * gfx );
 
 void recalc_character_bumpers( Game_t * gs );
 
@@ -535,3 +520,19 @@ bool_t decode_escape_sequence( Game_t * gs, char * buffer, size_t buffer_size, c
 void   animate_tiles( TILE_ANIMATED * t, float dUpdate );
 
 void    clear_all_passages(struct sGame * gs );
+
+void   make_prtlist( struct sGame * gs );
+bool_t PlaList_set_latch( struct sGame * gs, struct sPlayer * player );
+void   set_local_latches( struct sGame * gs );
+void make_onwhichfan( struct sGame * gs );
+void do_bumping( struct sGame * gs, float dUpdate );
+
+void do_weather_spawn( struct sGame * gs, float dUpdate );
+void stat_return( struct sGame * gs, float dUpdate );
+void pit_kill( struct sGame * gs, float dUpdate );
+
+void reset_players( struct sGame * gs );
+void resize_characters( struct sGame * gs, float dUpdate );
+
+Uint16 terp_dir( Uint16 majordir, float dx, float dy, float dUpdate );
+Uint16 terp_dir_fast( Uint16 majordir, float dx, float dy, float dUpdate );

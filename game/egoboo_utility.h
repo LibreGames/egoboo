@@ -25,9 +25,22 @@ enum e_dyna_mode;
 enum e_particle_alpha_type;
 enum e_respawn_mode;
 enum e_idsz_index;
-enum e_color;
 
 struct sMessageData;
+
+// My lil' random number table
+#define RANDIE_BITS  12
+#define RANDIE_COUNT (1 << RANDIE_BITS)
+#define RANDIE_MASK  (RANDIE_COUNT - 1)
+#define RANDIE(IND) randie[IND]; IND++; IND &= RANDIE_MASK;
+extern  Uint16 randie[RANDIE_COUNT];
+
+
+#define FRAND(PSEED) ( 2.0f*( float ) ego_rand_32(PSEED) / ( float ) (1 << 16) / ( float ) (1 << 16) - 1.0f )
+#define RAND(PSEED, MINVAL, MAXVAL) ((((ego_rand_32(PSEED) >> 16) * (MAXVAL-MINVAL)) >> 16)  + MINVAL)
+#define IRAND(PSEED, BITS) ( ego_rand_32(PSEED) & ((1<<BITS)-1) )
+
+extern const char *globalname;   // For debuggin' fgoto_colon
 
 bool_t undo_pair_fp8( PAIR * ppair, RANGE * prange );
 bool_t fget_pair_fp8( FILE* fileread, PAIR * ppair );

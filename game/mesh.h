@@ -3,10 +3,28 @@
 #include "egoboo_types.h"
 #include "egoboo_math.h"
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
 struct sGame;
 struct s_water_info;
 struct sPhysicsData;
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct s_twist_entry
+{
+  Uint32       lr;           // For surface normal of mesh
+  Uint32       ud;           //
+  vect3        nrm;          // For sliding down steep hills
+  bool_t       flat;         //
+};
+typedef struct s_twist_entry TWIST_ENTRY;
+
+extern TWIST_ENTRY twist_table[256];
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 #define INVALID_BUMPLIST_NODE (~(Uint32)0)
 
 struct s_bumplist_node
@@ -58,6 +76,8 @@ INLINE const Uint32     bumplist_get_ref(BUMPLIST * b, Uint32 node );
 INLINE const Uint32     bumplist_get_next_prt(struct sGame * gs, BUMPLIST * b, Uint32 node );
 INLINE const Uint32     bumplist_get_next_chr(struct sGame * gs, BUMPLIST * b, Uint32 node );
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 #define MAPID                           0x4470614d     // The string 'MapD'
 
 #define MAXMESHFAN                      (512*512)      // Terrain mesh size
@@ -137,8 +157,6 @@ typedef enum e_fan_type FAN_TYPE;
 
 struct sMeshInfo
 {
-  bool_t  exploremode;                      // Explore mode?
-
   int     vert_count;                       // Total mesh vertices
 
   int     tiles_x;                          // Mesh size in tiles

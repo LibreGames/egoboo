@@ -431,6 +431,8 @@ void render_transparent_prt( Uint32 vrtcount, GLVertex * vrtlist )
 //--------------------------------------------------------------------------------------------
 bool_t calc_billboard(Game_t * gs, GLVertex vrtlst[], GLVertex * vert, float size, Uint16 image)
 {
+  Graphics_Data_t * gfx = gfxState.pGfx;
+
   if(NULL == vrtlst || NULL == vert) return bfalse;
 
   if(0==size)
@@ -595,12 +597,13 @@ void render_particles()
   // ZZ> This function draws the sprites for particle systems
 
   Game_t *gs = Graphics_requireGame(&gfxState);
+  Graphics_Data_t * gfx = gfxState.pGfx;
 
   GLVertex v[PRTLST_COUNT];
   Uint16 numparticle;
   PRT_REF prt_cnt;
 
-  if ( MAXTEXTURE == particletexture || INVALID_TEXTURE == GLtexture_GetTextureID( gs->TxTexture + particletexture ) ) return;
+  if ( MAXTEXTURE == particletexture || INVALID_TEXTURE == GLtexture_GetTextureID( gfx->TxTexture + particletexture ) ) return;
 
   // Original points
   numparticle = 0;
@@ -634,7 +637,7 @@ void render_particles()
     glDisable( GL_DITHER );
 
     // Choose texture
-    GLtexture_Bind( gs->TxTexture + particletexture, &gfxState );
+    GLtexture_Bind( gfx->TxTexture + particletexture, &gfxState );
 
     // DO ANTIALIAS SOLID SPRITES FIRST
     render_antialias_prt( numparticle, v );
@@ -915,13 +918,14 @@ void render_particle_reflections()
 
   Game_t * gs    = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
+  Graphics_Data_t * gfx = gfxState.pGfx;
 
   GLVertex v[PRTLST_COUNT];
   Uint16 numparticle;
   PRT_REF prt_cnt;
   float level;
 
-  if ( INVALID_TEXTURE == GLtexture_GetTextureID( gs->TxTexture + particletexture ) )
+  if ( INVALID_TEXTURE == GLtexture_GetTextureID( gfx->TxTexture + particletexture ) )
     return;
 
   // Original points
@@ -957,7 +961,7 @@ void render_particle_reflections()
     glShadeModel( gfxState.shading );
 
     // Choose texture and matrix
-    GLtexture_Bind( gs->TxTexture + particletexture, &gfxState );
+    GLtexture_Bind( gfx->TxTexture + particletexture, &gfxState );
 
     glDisable( GL_CULL_FACE );
     glDisable( GL_DITHER );

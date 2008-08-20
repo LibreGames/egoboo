@@ -39,17 +39,14 @@
 #include "egoboo_math.inl"
 #include "egoboo_types.inl"
 
-float sinlut[MAXLIGHTROTATION];
-float coslut[MAXLIGHTROTATION];
+static float sinlut[MAXLIGHTROTATION];
+static float coslut[MAXLIGHTROTATION];
 
-float spek_global_lighting( int rotation, int normal, vect3 lite );
-float spek_local_lighting( int rotation, int normal );
-float spek_calc_local_lighting( Uint16 turn, vect3 nrm );
-void make_speklut();
-void make_spektable( vect3 lite );
-void make_lighttospek( void );
+static float spek_global_lighting( int rotation, int normal, vect3 lite );
+static float spek_local_lighting( int rotation, int normal );
+static float spek_calc_local_lighting( Uint16 turn, vect3 nrm );
 
-void   chr_draw_BBox(CHR_REF ichr);
+static void   chr_draw_BBox(CHR_REF ichr);
 
 //---------------------------------------------------------------------------------------------
 // md2_blend_vertices
@@ -217,6 +214,7 @@ void md2_blend_vertices(Chr_t * pchr, Sint32 vrtmin, Sint32 vrtmax)
 void md2_blend_lighting(Chr_t * pchr)
 {
   Game_t * gs = Graphics_requireGame(&gfxState);
+  Graphics_Data_t * gfx = gfxState.pGfx;
 
   Uint16 sheen_fp8, spekularity_fp8;
   Uint8  r_sft, g_sft, b_sft;
@@ -310,11 +308,11 @@ void md2_blend_lighting(Chr_t * pchr)
       light_ambi_g = 0;
       light_ambi_b = 0;
 
-      if( gs->Light.on )
+      if( gfx->Light.on )
       {
         // global lighting specular component
-        ftmp = DotProduct( vd->Normals[i], gs->Light.spekdir );
-        if ( ftmp > 0.0f && gs->Light.spekdir.z > 0 )
+        ftmp = DotProduct( vd->Normals[i], gfx->Light.spekdir );
+        if ( ftmp > 0.0f && gfx->Light.spekdir.z > 0 )
         {
           // little kludge to soften the normal-dependent lighting
           // the dot ptoduct factor will vary between 1 for fill lighting
@@ -325,15 +323,15 @@ void md2_blend_lighting(Chr_t * pchr)
           k2 = m/(1- m);
           ftmp = k1 * (ftmp + k2);
 
-          light_spek_r += ftmp * ftmp * gs->Light.spekcol.r * 255;
-          light_spek_g += ftmp * ftmp * gs->Light.spekcol.g * 255;
-          light_spek_b += ftmp * ftmp * gs->Light.spekcol.b * 255;
+          light_spek_r += ftmp * ftmp * gfx->Light.spekcol.r * 255;
+          light_spek_g += ftmp * ftmp * gfx->Light.spekcol.g * 255;
+          light_spek_b += ftmp * ftmp * gfx->Light.spekcol.b * 255;
         }
 
         // global lighting ambient component
-        light_ambi_r += gs->Light.ambicol.r * 255;
-        light_ambi_g += gs->Light.ambicol.g * 255;
-        light_ambi_b += gs->Light.ambicol.b * 255;
+        light_ambi_r += gfx->Light.ambicol.r * 255;
+        light_ambi_g += gfx->Light.ambicol.g * 255;
+        light_ambi_b += gfx->Light.ambicol.b * 255;
       }
 
       if( has_spek )
@@ -595,6 +593,7 @@ void render_mad_lit( CHR_REF ichr )
   GLfloat mat_none[4] = {0,0,0,0};
 
   Game_t * gs = Graphics_requireGame(&gfxState);
+  Graphics_Data_t * gfx = gfxState.pGfx;
 
   if( !ACTIVE_CHR(gs->ChrList, ichr) ) return;
   pchr = gs->ChrList + ichr;
@@ -625,7 +624,7 @@ void render_mad_lit( CHR_REF ichr )
     else
     {
       texture = pchr->skin_ref + gs->ObjList[pchr->model].skinstart;
-      GLtexture_Bind( gs->TxTexture + texture, &gfxState );
+      GLtexture_Bind( gfx->TxTexture + texture, &gfxState );
     }
 
     draw_textured_md2_opengl(ichr);
@@ -650,6 +649,7 @@ void render_texmad(CHR_REF ichr, Uint8 trans)
   Chr_t * pchr;
   Uint16 texture;
   Game_t * gs = Graphics_requireGame(&gfxState);
+  Graphics_Data_t * gfx = gfxState.pGfx;
 
   if(!ACTIVE_CHR(gs->ChrList, ichr)) return;
   pchr = gs->ChrList + ichr;
@@ -677,7 +677,7 @@ void render_texmad(CHR_REF ichr, Uint8 trans)
     }
     else
     {
-      GLtexture_Bind( gs->TxTexture + texture, &gfxState );
+      GLtexture_Bind( gfx->TxTexture + texture, &gfxState );
     }
 
     draw_textured_md2_opengl(ichr);
@@ -701,6 +701,7 @@ void render_enviromad(CHR_REF ichr, Uint8 trans)
 {
   Uint16 texture;
   Game_t * gs = Graphics_requireGame(&gfxState);
+  Graphics_Data_t * gfx = gfxState.pGfx;
 
   if(!ACTIVE_CHR(gs->ChrList, ichr)) return;
 
@@ -724,7 +725,7 @@ void render_enviromad(CHR_REF ichr, Uint8 trans)
     }
     else
     {
-      GLtexture_Bind( gs->TxTexture + texture, &gfxState );
+      GLtexture_Bind( gfx->TxTexture + texture, &gfxState );
     }
 
     glEnable( GL_TEXTURE_GEN_S );     // Enable Texture Coord Generation For S (NEW)
@@ -777,6 +778,7 @@ void render_refmad( CHR_REF ichr, Uint16 trans_fp8 )
   Game_t * gs   = Graphics_requireGame(&gfxState);
   Chr_t  * pchr = ChrList_getPChr(gs, ichr);
   Cap_t  * pcap = ChrList_getPCap(gs, ichr);
+  Graphics_Data_t * gfx = gfxState.pGfx;
 
   int alphatmp_fp8;
   float level = pchr->level;
@@ -801,12 +803,12 @@ void render_refmad( CHR_REF ichr, Uint16 trans_fp8 )
   ( pchr->matrix ).CNV( 1, 2 ) = - ( pchr->matrix ).CNV( 1, 2 );
   ( pchr->matrix ).CNV( 2, 2 ) = - ( pchr->matrix ).CNV( 2, 2 );
   ( pchr->matrix ).CNV( 3, 2 ) = - ( pchr->matrix ).CNV( 3, 2 ) + level + level;
-  fog_save = gs->Fog.on;
-  gs->Fog.on  = bfalse;
+  fog_save = gfx->Fog.on;
+  gfx->Fog.on  = bfalse;
 
   render_mad( ichr, alphatmp_fp8 );
 
-  gs->Fog.on = fog_save;
+  gfx->Fog.on = fog_save;
   ( pchr->matrix ).CNV( 0, 2 ) = - ( pchr->matrix ).CNV( 0, 2 );
   ( pchr->matrix ).CNV( 1, 2 ) = - ( pchr->matrix ).CNV( 1, 2 );
   ( pchr->matrix ).CNV( 2, 2 ) = - ( pchr->matrix ).CNV( 2, 2 );

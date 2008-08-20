@@ -38,7 +38,13 @@
 #include "egoboo_math.inl"
 #include "egoboo_types.inl"
 
+//--------------------------------------------------------------------------------------------
+
 Camera_t GCamera;
+
+static void make_camera_matrix();
+static void camera_calc_turn_lr();
+//static void adjust_camera_angle( int height );
 
 //--------------------------------------------------------------------------------------------
 void ortho_jitter( GLfloat xoff, GLfloat yoff )
@@ -196,7 +202,7 @@ void make_camera_matrix()
 }
 
 //--------------------------------------------------------------------------------------------
-void move_camera( float dUpdate )
+void camera_move( float dUpdate )
 {
   // ZZ> This function moves the camera
 
@@ -402,15 +408,15 @@ void move_camera( float dUpdate )
   if ( CData.render_overlay )
   {
     // Do fg distance effect
-    gs->Water.layer[0].u += vel.x * gs->Water.layer[0].distx * dUpdate;
-    gs->Water.layer[0].v += vel.y * gs->Water.layer[0].disty * dUpdate;
+    gfxState.pGfx->Water.layer[0].u += vel.x * gfxState.pGfx->Water.layer[0].distx * dUpdate;
+    gfxState.pGfx->Water.layer[0].v += vel.y * gfxState.pGfx->Water.layer[0].disty * dUpdate;
   }
 
   if ( CData.render_background )
   {
     // Do bg distance effect
-    gs->Water.layer[1].u += vel.x * gs->Water.layer[1].distx * dUpdate;
-    gs->Water.layer[1].v += vel.y * gs->Water.layer[1].disty * dUpdate;
+    gfxState.pGfx->Water.layer[1].u += vel.x * gfxState.pGfx->Water.layer[1].distx * dUpdate;
+    gfxState.pGfx->Water.layer[1].v += vel.y * gfxState.pGfx->Water.layer[1].disty * dUpdate;
   }
 
   // Get ready to scroll...
@@ -438,7 +444,7 @@ void move_camera( float dUpdate )
 }
 
 //--------------------------------------------------------------------------------------------
-void reset_camera()
+void camera_reset()
 {
   // ZZ> This function makes sure the camera starts in a suitable position
 
@@ -480,7 +486,7 @@ void reset_camera()
 
   for ( cnt = 0; cnt < 32; cnt++ )
   {
-    move_camera( 1.0 );
+    camera_move( 1.0 );
     GCamera.centerpos.x = GCamera.trackpos.x;
     GCamera.centerpos.y = GCamera.trackpos.y;
   }

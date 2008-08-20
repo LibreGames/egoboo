@@ -33,6 +33,7 @@
 
 #include <stdio.h>
 
+
 MD2_Model_t* md2_load(const char * szFilename, MD2_Model_t* mdl)
 {
   FILE * f;

@@ -74,6 +74,7 @@ struct sClient
   // game info
   ENetPeer   * gamePeer;
   Uint32       gameID;
+  bool_t       outofsync;   // is the client too far out of synch with the server?
 
   // connection to the host handling TO_REMOTE_* type transfers
   NetHost_t  * host;

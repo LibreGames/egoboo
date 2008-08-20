@@ -502,8 +502,6 @@ void    do_chat_input();
 void    net_sayHello(struct sGame * gs);
 bool_t  net_beginGame(struct sGame * gs);
 
-void close_session(struct sNet * ns);
-
 PLA_REF add_player(struct sGame * gs,  CHR_REF character, Uint8 device );
 char *  convert_host(Uint32 host);
 

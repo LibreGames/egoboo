@@ -26,11 +26,11 @@
 
 typedef void ( *TaskCallback )( float timeElapsed );
 
-void task_register( const char *taskName, float timeInterval, TaskCallback f );
-void task_remove( const char *taskName );
-void task_pause( const char *taskName );
-void task_play( const char *taskName );
+void Task_register( const char *taskName, float timeInterval, TaskCallback f );
+void Task_remove( const char *taskName );
+void Task_pause( const char *taskName );
+void Task_play( const char *taskName );
 
-void task_updateAllTasks();
+void Task_updateAllTasks();
 
 #endif // include guard

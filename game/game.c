@@ -68,6 +68,8 @@
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
 
+#define TURNSPD                         .01         // Cutoff for turning or same direction
+
 static MachineState_t * MachineState_new( MachineState_t * ms );
 static bool_t         MachineState_delete( MachineState_t * ms );
 
@@ -1338,29 +1340,6 @@ void read_setup( char* filename )
 }
 
 
-//---------------------------------------------------------------------------------------------
-void make_lightdirectionlookup()
-{
-  // ZZ> This function builds the lighting direction table
-  //     The table is used to find which direction the light is coming
-  //     from, based on the four corner vertices of a mesh tile.
-
-  Uint32 cnt;
-  Uint16 tl, tr, br, bl;
-  int x, y;
-
-  for ( cnt = 0; cnt < UINT16_SIZE; cnt++ )
-  {
-    tl = ( cnt & 0xf000 ) >> 12;
-    tr = ( cnt & 0x0f00 ) >> 8;
-    br = ( cnt & 0x00f0 ) >> 4;
-    bl = ( cnt & 0x000f );
-    x = br + tr - bl - tl;
-    y = br + bl - tl - tr;
-    lightdirectionlookup[cnt] = ( atan2( -y, x ) + PI ) * RAD_TO_BYTE;
-  }
-}
-
 //--------------------------------------------------------------------------------------------
 void make_enviro( void )
 {
@@ -1446,7 +1425,8 @@ void draw_chr_info( Game_t * gs )
   size_t cnt;
   Status_t * lst      = gs->cl->StatList;
   size_t   lst_size = gs->cl->StatList_count;
-
+  Graphics_Data_t * gfx = Game_getGfx(gs);
+  
   if ( !keyb.mode )
   {
     for(cnt=0; cnt<8; cnt++)
@@ -1471,8 +1451,8 @@ void draw_chr_info( Game_t * gs )
     //CTRL+M - show or hide map
     if ( CData.DevMode && SDLKEYDOWN( SDLK_m ) && SDLKEYDOWN (SDLK_LCTRL ) )
     {
-      mapon        = !mapon;
-      youarehereon = mapon;
+      gfx->Map_on           = !gfx->Map_on;
+      gfx->Map_youarehereon = gfx->Map_on;
     }
   }
 }
@@ -1628,22 +1608,23 @@ void sort_statlist( Game_t * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-void move_water( float dUpdate )
+void move_water( WATER_LAYER wlayer[], size_t layer_count, float dUpdate )
 {
   // ZZ> This function animates the water overlays
 
   int layer;
-  Game_t * gs = Graphics_requireGame(&gfxState);
 
-  for ( layer = 0; layer < MAXWATERLAYER; layer++ )
+  if( NULL == wlayer ) return;
+
+  for ( layer = 0; layer < layer_count; layer++ )
   {
-    gs->Water.layer[layer].u += gs->Water.layer[layer].uadd * dUpdate;
-    gs->Water.layer[layer].v += gs->Water.layer[layer].vadd * dUpdate;
-    if ( gs->Water.layer[layer].u > 1.0 )  gs->Water.layer[layer].u -= 1.0;
-    if ( gs->Water.layer[layer].v > 1.0 )  gs->Water.layer[layer].v -= 1.0;
-    if ( gs->Water.layer[layer].u < -1.0 )  gs->Water.layer[layer].u += 1.0;
-    if ( gs->Water.layer[layer].v < -1.0 )  gs->Water.layer[layer].v += 1.0;
-    gs->Water.layer[layer].frame = (( int )( gs->Water.layer[layer].frame + gs->Water.layer[layer].frameadd * dUpdate ) ) & WATERFRAMEAND;
+    wlayer[layer].u += wlayer[layer].uadd * dUpdate;
+    wlayer[layer].v += wlayer[layer].vadd * dUpdate;
+    if ( wlayer[layer].u > 1.0 )  wlayer[layer].u -= 1.0;
+    if ( wlayer[layer].v > 1.0 )  wlayer[layer].v -= 1.0;
+    if ( wlayer[layer].u < -1.0 )  wlayer[layer].u += 1.0;
+    if ( wlayer[layer].v < -1.0 )  wlayer[layer].v += 1.0;
+    wlayer[layer].frame = (( int )( wlayer[layer].frame + wlayer[layer].frameadd * dUpdate ) ) & WATERFRAMEAND;
   }
 }
 
@@ -1920,7 +1901,8 @@ bool_t chr_collide_mesh(Game_t * gs, CHR_REF ichr)
   bool_t hitmesh = bfalse;
   Chr_t * pchr;
 
-  Mesh_t * pmesh = Game_getMesh(gs);
+  Mesh_t          * pmesh = Game_getMesh(gs);
+  Graphics_Data_t * gfx   = Game_getGfx(gs);
 
   if( !ACTIVE_CHR( gs->ChrList, ichr ) ) return hitmesh;
 
@@ -1946,7 +1928,7 @@ bool_t chr_collide_mesh(Game_t * gs, CHR_REF ichr)
     };
   }
 
-  meshlevel = mesh_get_level( &(pmesh->Mem), pchr->onwhichfan, pchr->ori.pos.x, pchr->ori.pos.y, gs->ChrList[ichr].prop.waterwalk, &(gs->Water) );
+  meshlevel = mesh_get_level( &(pmesh->Mem), pchr->onwhichfan, pchr->ori.pos.x, pchr->ori.pos.y, gs->ChrList[ichr].prop.waterwalk, &(gfx->Water) );
   if( pchr->ori.pos.z < meshlevel )
   {
     hitmesh = btrue;
@@ -1982,6 +1964,7 @@ bool_t prt_collide_mesh(Game_t * gs, PRT_REF iprt)
   PIP_REF pip;
 
   Mesh_t * pmesh = Game_getMesh(gs);
+  Graphics_Data_t * gfx = Game_getGfx(gs);
 
   if( !ACTIVE_PRT( gs->PrtList, iprt) ) return hitmesh;
 
@@ -2057,7 +2040,7 @@ bool_t prt_collide_mesh(Game_t * gs, PRT_REF iprt)
     };
   }
 
-  meshlevel = mesh_get_level( &(pmesh->Mem), gs->PrtList[iprt].onwhichfan, gs->PrtList[iprt].ori.pos.x, gs->PrtList[iprt].ori.pos.y, bfalse, &(gs->Water) );
+  meshlevel = mesh_get_level( &(pmesh->Mem), gs->PrtList[iprt].onwhichfan, gs->PrtList[iprt].ori.pos.x, gs->PrtList[iprt].ori.pos.y, bfalse, &(gfx->Water) );
   if( gs->PrtList[iprt].ori.pos.z < meshlevel )
   {
     hitmesh = btrue;
@@ -2294,7 +2277,10 @@ void reset_timers(Game_t * gs)
   gs->pits_clock  = 0;  gs->pits_kill = bfalse;
   gs->wld_frame  = 0;
 
-  outofsync = bfalse;
+  if(NULL != gs->cl)
+  {
+    gs->cl->outofsync = bfalse;
+  }
 
   ups_loops = 0;
   ups_clock = 0;
@@ -2740,16 +2726,16 @@ void do_sunlight(LIGHTING_INFO * info)
 //--------------------------------------------------------------------------------------------
 retval_t main_doGameGraphics()
 {
-  Game_t * gs = Graphics_requireGame(&gfxState);
-
+  Game_t * gs           = Graphics_requireGame(&gfxState);
+  Graphics_Data_t * gfx = Game_getGfx(gs);
 
   if( !EKEY_PVALID(gs) ) return rv_error;
   if( !gs->proc.Active ) { gs->dFrame = 0; return rv_succeed; };
 
-  move_camera( UPDATESCALE );
+  camera_move( UPDATESCALE );
 
   // simulate sunlight. runs on its own clock.
-  do_sunlight(&gs->Light);
+  do_sunlight(&gfx->Light);
 
   if ( gs->dFrame >= 1.0 )
   {
@@ -2786,8 +2772,8 @@ retval_t main_doGraphics()
   mnu_proc = &(gui->mnu_proc);
 
   // Clock updates each frame
-  ClockState_frameStep( gui->clk );
-  frameDuration = ClockState_getFrameDuration( gui->clk );
+  Clock_frameStep( gui->clk );
+  frameDuration = Clock_getFrameDuration( gui->clk );
   frameTicks    = frameDuration * TICKS_PER_SEC;
   gui->dUpdate  += frameTicks / UPDATESKIP;
 
@@ -2926,9 +2912,6 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
 
         // start initializing the various subsystems
         log_info( "proc_mainLoop() - \n\tStarting Egoboo %s...\n", VERSION );
-
-        // make sure the arrays are initialized to some specific initial value
-        memset(BlipList, 0, MAXBLIP * sizeof(BLIP));
 
         read_setup( CData.setup_file );
 
@@ -3107,8 +3090,8 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
         gui        = gui_getState();               // automatically starts the Gui_t
         mnu_proc   = &(gui->mnu_proc);
 
-        ClockState_frameStep( mach_state->clk );
-        frameDuration = ClockState_getFrameDuration( mach_state->clk );
+        Clock_frameStep( mach_state->clk );
+        frameDuration = Clock_getFrameDuration( mach_state->clk );
 
         // request that the menu loop to clean itself.
         // the menu loop is only connected to the Game_t that
@@ -3311,7 +3294,7 @@ void game_handleIO(Game_t * gs)
 
   if(net_Started())
   {
-    CServer_bufferLatches(gs->sv);     // server function
+    Server_bufferLatches(gs->sv);     // server function
 
     // upload the information
     Client_talkToHost(gs->cl);        // client function
@@ -3412,7 +3395,7 @@ void cl_update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
     PROFILE_END( animate_tiles );
 
     PROFILE_BEGIN( move_water );
-    move_water( dUpdate );                            // client function
+    move_water( gs->GfxData.Water.layer, gs->GfxData.Water.layer_count, dUpdate );                            // client function
     PROFILE_END( move_water );
 
     gui->msgQueue.timechange += dUpdate;
@@ -3481,7 +3464,7 @@ void sv_update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
 
     // unbuffer the updated latches after run_all_scripts() and before move_characters()
     PROFILE_BEGIN( CServer_unbufferLatches );
-    CServer_unbufferLatches( gs->sv );              // server function
+    Server_unbufferLatches( gs->sv );              // server function
     PROFILE_END( CServer_unbufferLatches );
 
     PROFILE_BEGIN( make_onwhichfan );
@@ -3580,7 +3563,7 @@ void update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
     PROFILE_END( Client_unbufferLatches );
 
     PROFILE_BEGIN( CServer_unbufferLatches );
-    CServer_unbufferLatches( ss );              // server function
+    Server_unbufferLatches( ss );              // server function
     PROFILE_END( CServer_unbufferLatches );
 
     PROFILE_BEGIN( check_respawn );
@@ -3640,7 +3623,7 @@ void update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
     PROFILE_END( animate_tiles );
 
     PROFILE_BEGIN( move_water );
-    move_water( dUpdate );                          // client function
+    move_water( gs->GfxData.Water.layer, gs->GfxData.Water.layer_count, dUpdate );                          // client function
     PROFILE_END( move_water );
 
     gui->msgQueue.timechange += dUpdate;
@@ -3793,8 +3776,8 @@ int proc_gameLoop( ProcState_t * gproc, Game_t * gs )
   }
 
   // update this game state's clock clock
-  ClockState_frameStep( gproc->clk );
-  frameDuration = ClockState_getFrameDuration( gproc->clk );
+  Clock_frameStep( gproc->clk );
+  frameDuration = Clock_getFrameDuration( gproc->clk );
   frameTicks    = frameDuration * TICKS_PER_SEC;
 
   // frameDuration is given in seconds, convert to ticks (ticks == milliseconds on win32)
@@ -3811,7 +3794,7 @@ int proc_gameLoop( ProcState_t * gproc, Game_t * gs )
         srand( time(NULL) );
 
         // clear out any old icons and load the global icons
-        load_global_icons( gs );
+        load_global_icons( Game_getGfx(gs) );
 
         // set up the MD2 models
         init_all_models(gs);
@@ -3832,7 +3815,7 @@ int proc_gameLoop( ProcState_t * gproc, Game_t * gs )
         }
 
         make_onwhichfan( gs );
-        reset_camera();
+        camera_reset();
         reset_timers( gs );
         figure_out_what_to_draw();
         make_character_matrices( gs );
@@ -4735,10 +4718,8 @@ void sdlinit( Graphics_t * g )
     log_info( "\tVideo Mode - %d x %d\n", g->video_mode_list[cnt]->w, g->video_mode_list[cnt]->h );
   };
 
-
-
   // set the mouse cursor
-  SDL_WM_GrabInput( g->GrabMouse );
+  SDL_WM_GrabInput( g->gui->GrabMouse );
   //if (g->HideMouse) SDL_ShowCursor(SDL_DISABLE);
 
   input_setup();
@@ -4807,7 +4788,7 @@ MachineState_t * MachineState_new( MachineState_t * ms )
   fs_init();
 
   // set up the clock
-  ms->clk = ClockState_create("MachineState_t", -1);
+  ms->clk = Clock_create("MachineState_t", -1);
 
   return ms;
 }
@@ -4820,7 +4801,7 @@ bool_t MachineState_delete( MachineState_t * ms )
 
   EKEY_PINVALIDATE(ms);
 
-  ClockState_destroy( &(ms->clk) );
+  Clock_destroy( &(ms->clk) );
 
   sys_shutdown();
 
@@ -5565,38 +5546,6 @@ Game_t * GameStack_remove(GameStack_t * stk, int i)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-static void Game_new_textures( Game_t * gs )
-{
-  int i;
-
-  for(i=0; i<MAXTEXTURE; i++)
-  {
-    GLtexture_new( gs->TxTexture + i );
-  };
-
-  for(i=0; i<MAXICONTX; i++)
-  {
-    GLtexture_new( gs->TxIcon + i );
-  };
-  gs->TxIcon_count = 0;
-
-  GLtexture_new( &(gs->TxMap) );
-
-  gs->ico_lst[ICO_NULL] = MAXICONTX;
-  gs->ico_lst[ICO_KEYB] = MAXICONTX;
-  gs->ico_lst[ICO_MOUS] = MAXICONTX;
-  gs->ico_lst[ICO_JOYA] = MAXICONTX;
-  gs->ico_lst[ICO_JOYB] = MAXICONTX;
-  gs->ico_lst[ICO_BOOK_0] = MAXICONTX;                      // The first book icon
-
-  for(i=0; i<MAXTEXTURE; i++)
-  {
-    gs->skintoicon[i] = MAXICONTX;
-  };
-};
-
-
-//--------------------------------------------------------------------------------------------
 Game_t * Game_new(Game_t * gs, Net_t * ns, Client_t * cl, Server_t * sv)
 {
   fprintf(stdout, "Game_new()\n");
@@ -5663,14 +5612,11 @@ Game_t * Game_new(Game_t * gs, Net_t * ns, Client_t * cl, Server_t * sv)
   // weather
   Weather_init( &(gs->Weather) );
 
-  // lighting
-  lighting_info_reset( &(gs->Light) );
+  Graphics_Data_new( &(gs->GfxData) );
 
-  // fog
-  fog_info_reset( &(gs->Fog) );
-
-  //textures
-  Game_new_textures( gs );
+  // timer initialization
+  gs->timeron     = bfalse;
+  gs->timervalue  = 0;
 
   // the the graphics state is not linked into anyone, link it to us
   Graphics_ensureGame(&gfxState, gs);
@@ -5679,39 +5625,10 @@ Game_t * Game_new(Game_t * gs, Net_t * ns, Client_t * cl, Server_t * sv)
 
   Game_updateNetStatus( gs );
 
+
+
   return gs;
 }
-
-//--------------------------------------------------------------------------------------------
-static void Game_delete_textures( Game_t * gs )
-{
-  int i;
-
-  for(i=0; i<MAXTEXTURE; i++)
-  {
-    GLtexture_delete( gs->TxTexture + i );
-  };
-
-  for(i=0; i<MAXICONTX; i++)
-  {
-    GLtexture_delete( gs->TxIcon + i );
-  };
-  gs->TxIcon_count = 0;
-
-  GLtexture_delete( &(gs->TxMap) );
-
-  gs->ico_lst[ICO_NULL] = MAXICONTX;
-  gs->ico_lst[ICO_KEYB] = MAXICONTX;
-  gs->ico_lst[ICO_MOUS] = MAXICONTX;
-  gs->ico_lst[ICO_JOYA] = MAXICONTX;
-  gs->ico_lst[ICO_JOYB] = MAXICONTX;
-  gs->ico_lst[ICO_BOOK_0] = MAXICONTX;                      // The first book icon
-
-  for(i=0; i<MAXTEXTURE; i++)
-  {
-    gs->skintoicon[i] = MAXICONTX;
-  };
-};
 
 //--------------------------------------------------------------------------------------------
 bool_t Game_delete(Game_t * gs)
@@ -5741,7 +5658,7 @@ bool_t Game_delete(Game_t * gs)
   ModState_delete( &(gs->modstate) );
   CNet_destroy( &(gs->ns) );
   Client_destroy(  &(gs->cl) );
-  CServer_destroy(  &(gs->sv) );
+  Server_destroy(  &(gs->sv) );
 
   // module parameters
   ModInfo_delete( &(gs->mod) );
@@ -5765,7 +5682,7 @@ bool_t Game_delete(Game_t * gs)
   PlaList_delete( gs );
 
   // delete/release all textures
-  Game_delete_textures( gs );
+  Graphics_Data_delete( &(gs->GfxData) );
 
   // the the graphics state is linked to us, unlink it
   Graphics_removeGame(&gfxState, gs);
@@ -5805,7 +5722,7 @@ bool_t Game_renew(Game_t * gs)
   gs->proc.Active = bfalse;
 
   Client_renew(gs->cl);
-  CServer_renew(gs->sv);
+  Server_renew(gs->sv);
 
   // module parameters
   ModInfo_renew( &(gs->mod) );
@@ -5920,7 +5837,7 @@ retval_t Game_registerServer ( Game_t * gs, Server_t * sv, bool_t destroy )
 
   if(gs->sv != sv )
   {
-    if(destroy) CServer_destroy( &(gs->sv) );
+    if(destroy) Server_destroy( &(gs->sv) );
     gs->sv = sv;
     if(NULL !=gs->sv) gs->sv->parent = gs;
   }
@@ -6636,7 +6553,7 @@ ProcState_t * ProcState_new(ProcState_t * ps)
 
   ps->Active = btrue;
   ps->State  = PROC_Begin;
-  ps->clk    = ClockState_create("ProcState_t", -1);
+  ps->clk    = Clock_create("ProcState_t", -1);
 
   return ps;
 };
@@ -6657,7 +6574,7 @@ bool_t ProcState_delete(ProcState_t * ps)
   EKEY_PINVALIDATE(ps);
 
   ps->Active      = bfalse;
-  ClockState_destroy( &(ps->clk) );
+  Clock_destroy( &(ps->clk) );
 
   return btrue;
 }
@@ -6738,11 +6655,7 @@ Gui_t * CGui_new( Gui_t * gui )
   //Pause button avalible?
   gui->can_pause = btrue;
 
-  // initialize the textures
-  gui->TxBars.textureID = INVALID_TEXTURE;
-  gui->TxBlip.textureID = INVALID_TEXTURE;
-
-  gui->clk = ClockState_create("Gui_t", -1);
+  gui->clk = Clock_create("Gui_t", -1);
 
   return gui;
 }
@@ -6757,7 +6670,7 @@ bool_t CGui_delete( Gui_t * gui )
 
   MenuProc_delete( &(gui->mnu_proc) );
 
-  ClockState_destroy( &(gui->clk) );
+  Clock_destroy( &(gui->clk) );
 
   return btrue;
 }
@@ -6868,15 +6781,15 @@ void clear_messages( MessageData_t * md)
 }
 
 //--------------------------------------------------------------------------------------------
-void load_global_icons(Game_t * gs)
+void load_global_icons(Graphics_Data_t * gfx)
 {
-  release_all_icons(gs);
+  release_all_icons(gfx);
 
-  gs->ico_lst[ICO_NULL] = load_one_icon( gs, CData.basicdat_dir, NULL, CData.nullicon_bitmap );
-  gs->ico_lst[ICO_KEYB] = load_one_icon( gs, CData.basicdat_dir, NULL, CData.keybicon_bitmap );
-  gs->ico_lst[ICO_MOUS] = load_one_icon( gs, CData.basicdat_dir, NULL, CData.mousicon_bitmap );
-  gs->ico_lst[ICO_JOYA] = load_one_icon( gs, CData.basicdat_dir, NULL, CData.joyaicon_bitmap );
-  gs->ico_lst[ICO_JOYB] = load_one_icon( gs, CData.basicdat_dir, NULL, CData.joybicon_bitmap );
+  gfx->ico_lst[ICO_NULL] = load_one_icon( gfx, CData.basicdat_dir, NULL, CData.nullicon_bitmap );
+  gfx->ico_lst[ICO_KEYB] = load_one_icon( gfx, CData.basicdat_dir, NULL, CData.keybicon_bitmap );
+  gfx->ico_lst[ICO_MOUS] = load_one_icon( gfx, CData.basicdat_dir, NULL, CData.mousicon_bitmap );
+  gfx->ico_lst[ICO_JOYA] = load_one_icon( gfx, CData.basicdat_dir, NULL, CData.joyaicon_bitmap );
+  gfx->ico_lst[ICO_JOYB] = load_one_icon( gfx, CData.basicdat_dir, NULL, CData.joybicon_bitmap );
 }
 
 
@@ -6898,6 +6811,7 @@ void recalc_character_bumpers( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 bool_t ObjList_new( Game_t * gs )
 {
+  int i;
   OBJ_REF iobj;
   if(!EKEY_PVALID(gs)) return bfalse;
 
@@ -6908,6 +6822,15 @@ bool_t ObjList_new( Game_t * gs )
     gs->ObjFreeList[REF_TO_INT(iobj)]  = REF_TO_INT(iobj);
   }
   gs->ObjFreeList_count = OBJLST_COUNT;
+
+  // get rid of the object-to-icon map
+  for(i=0; i<MAXTEXTURE; i++)
+  {
+    gs->skintoicon[i] = MAXICONTX;
+  };
+
+  // get rid of the per-object naming (chop) info
+  naming_prime( gs );
 
   return btrue;
 }
@@ -7037,6 +6960,436 @@ bool_t fog_info_reset(FOG_INFO * f)
   f->grn          = 255;             //
   f->blu          = 255;             //
   f->affectswater = bfalse;
+
+  return btrue;
+};
+
+
+//--------------------------------------------------------------------------------------------
+void reset_players( Game_t * gs )
+{
+  // ZZ> This function clears the player list data
+
+  //PChr_t chrlst      = gs->ChrList;
+  //size_t chrlst_size = CHRLST_COUNT;
+
+
+  // Reset the local data stuff
+  if(NULL != gs->cl)
+  {
+    gs->cl->seekurse    = bfalse;
+    gs->cl->seeinvisible = bfalse;
+  }
+  gs->somepladead  = bfalse;
+  gs->allpladead   = bfalse;
+
+  // Reset the initial player data and latches
+  PlaList_renew( gs );
+
+  Client_reset_latches( gs->cl );
+  Server_reset_latches( gs->sv );
+}
+
+//--------------------------------------------------------------------------------------------
+Uint16 terp_dir( Uint16 majordir, float dx, float dy, float dUpdate )
+{
+  // ZZ> This function returns a direction between the major and minor ones, closer
+  //     to the major.
+
+  Uint16 rotate_sin, minordir;
+  Sint16 diff_dir;
+  const float turnspeed = 2000.0f;
+
+  if ( ABS( dx ) + ABS( dy ) > TURNSPD )
+  {
+    minordir = vec_to_turn( dx, dy );
+
+    diff_dir = (( Sint16 ) minordir ) - (( Sint16 ) majordir );
+
+    if (( diff_dir > -turnspeed * dUpdate ) && ( diff_dir < turnspeed * dUpdate ) )
+    {
+      rotate_sin = ( Uint16 ) diff_dir;
+    }
+    else
+    {
+      rotate_sin = ( Uint16 )( turnspeed * dUpdate * SGN( diff_dir ) );
+    };
+
+    return majordir + rotate_sin;
+  }
+  else
+    return majordir;
+}
+
+//--------------------------------------------------------------------------------------------
+void load_map( Graphics_Data_t * gfx, char* szModule )
+{
+  // ZZ> This function loads the map bitmap and the blip bitmap
+
+  // Turn it all off
+  gfx->Map_on = bfalse;
+  gfx->Map_youarehereon = bfalse;
+  gfx->BlipList_count = 0;
+
+  // Load the images
+  snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModule, CData.gamedat_dir, CData.plan_bitmap );
+  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D, &gfx->Map_tex, CStringTmp1, INVALID_KEY ) )
+  {
+    log_warning( "Cannot load map: %s\n", CStringTmp1 );
+  }
+
+  // Set up the rectangles
+  gfx->Map_scale = MIN(( float ) gfxState.scrx / (float)DEFAULT_SCREEN_W, ( float ) gfxState.scry / (float)DEFAULT_SCREEN_H );
+  gfx->Map_rect.left   = 0;
+  gfx->Map_rect.right  = MAPSIZE * gfx->Map_scale;
+  gfx->Map_rect.top    = gfxState.scry - MAPSIZE * gfx->Map_scale;
+  gfx->Map_rect.bottom = gfxState.scry;
+
+}
+
+
+//--------------------------------------------------------------------------------------------
+bool_t read_wawalite( Game_t * gs, char *modname )
+{
+  // ZZ> This function sets up water and lighting for the module
+
+  Mesh_t * pmesh;
+  FILE* fileread;
+  Uint32 loc_rand;
+  bool_t found_expansion, found_idsz;
+
+  Graphics_Data_t * gfx_info;
+  WATER_INFO      * water_info;
+  PhysicsData_t   * phys_info;
+  FOG_INFO        * fog_info;
+  WEATHER_INFO    * weather_info;
+  LIGHTING_INFO   * light_info;
+ 
+  if( !EKEY_PVALID(gs) ) return bfalse;
+
+  gfx_info     = &(gs->GfxData);
+  phys_info    = &(gs->phys);
+  weather_info = &(gs->Weather);
+
+  water_info   = &(gfx_info->Water);
+  fog_info     = &(gfx_info->Fog);
+  light_info   = &(gfx_info->Light);
+
+  pmesh = Game_getMesh(gs);
+
+  snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.wawalite_file );
+  fileread = fs_fileOpen( PRI_NONE, NULL, CStringTmp1, "r" );
+  if ( NULL == fileread ) return bfalse;
+
+  loc_rand = gs->randie_index;
+
+  fgoto_colon( fileread );
+  //  !!!BAD!!!
+  //  Random map...
+  //  If someone else wants to handle this, here are some thoughts for approaching
+  //  it.  The .MPD file for the level should give the basic size of the map.  Use
+  //  a standard tile set like the Palace modules.  Only use objects that are in
+  //  the module's object directory, and only use some of them.  Imagine several Rock
+  //  Moles eating through a stone filled level to make a path from the entrance to
+  //  the exit.  Door placement will be difficult.
+  //  !!!BAD!!!
+
+
+  // Read water data first
+  water_info->layer_count = fget_next_int( fileread );
+  water_info->spekstart = fget_next_int( fileread );
+  water_info->speklevel_fp8 = fget_next_int( fileread );
+  water_info->douselevel = fget_next_int( fileread );
+  water_info->surfacelevel = fget_next_int( fileread );
+  water_info->light = fget_next_bool( fileread );
+  water_info->iswater = fget_next_bool( fileread );
+  gfx_info->render_overlay    = fget_next_bool( fileread ) && CData.overlayvalid;
+  gfx_info->render_background = fget_next_bool( fileread ) && CData.backgroundvalid;
+  water_info->layer[0].distx = fget_next_float( fileread );
+  water_info->layer[0].disty = fget_next_float( fileread );
+  water_info->layer[1].distx = fget_next_float( fileread );
+  water_info->layer[1].disty = fget_next_float( fileread );
+  gfx_info->foregroundrepeat = fget_next_int( fileread );
+  gfx_info->backgroundrepeat = fget_next_int( fileread );
+
+
+  water_info->layer[0].z = fget_next_int( fileread );
+  water_info->layer[0].alpha_fp8 = fget_next_int( fileread );
+  water_info->layer[0].frameadd = fget_next_int( fileread );
+  water_info->layer[0].lightlevel_fp8 = fget_next_int( fileread );
+  water_info->layer[0].lightadd_fp8 = fget_next_int( fileread );
+  water_info->layer[0].amp = fget_next_float( fileread );
+  water_info->layer[0].uadd = fget_next_float( fileread );
+  water_info->layer[0].vadd = fget_next_float( fileread );
+
+  water_info->layer[1].z = fget_next_int( fileread );
+  water_info->layer[1].alpha_fp8 = fget_next_int( fileread );
+  water_info->layer[1].frameadd = fget_next_int( fileread );
+  water_info->layer[1].lightlevel_fp8 = fget_next_int( fileread );
+  water_info->layer[1].lightadd_fp8 = fget_next_int( fileread );
+  water_info->layer[1].amp = fget_next_float( fileread );
+  water_info->layer[1].uadd = fget_next_float( fileread );
+  water_info->layer[1].vadd = fget_next_float( fileread );
+
+  water_info->layer[0].u = 0;
+  water_info->layer[0].v = 0;
+  water_info->layer[1].u = 0;
+  water_info->layer[1].v = 0;
+  water_info->layer[0].frame = RAND( &loc_rand, 0, WATERFRAMEAND );
+  water_info->layer[1].frame = RAND( &loc_rand, 0, WATERFRAMEAND );
+
+  // Read light data second
+  light_info->on        = bfalse;
+  light_info->spekdir.x = fget_next_float( fileread );
+  light_info->spekdir.y = fget_next_float( fileread );
+  light_info->spekdir.z = fget_next_float( fileread );
+  light_info->ambi      = fget_next_float( fileread );
+  light_info->spek      = 0;
+
+  // Read tile data third
+  phys_info->hillslide = fget_next_float( fileread );
+  phys_info->slippyfriction = fget_next_float( fileread );
+  phys_info->airfriction = fget_next_float( fileread );
+  phys_info->waterfriction = fget_next_float( fileread );
+  phys_info->noslipfriction = fget_next_float( fileread );
+  phys_info->gravity = fget_next_float( fileread );
+  phys_info->slippyfriction = MAX( phys_info->slippyfriction, sqrt( phys_info->noslipfriction ) );
+  phys_info->airfriction    = MAX( phys_info->airfriction,    sqrt( phys_info->slippyfriction ) );
+  phys_info->waterfriction  = MIN( phys_info->waterfriction,  pow( phys_info->airfriction, 4.0f ) );
+
+  gs->Tile_Anim.updateand = fget_next_int( fileread );
+  gs->Tile_Anim.frameand = fget_next_int( fileread );
+  gs->Tile_Anim.bigframeand = ( gs->Tile_Anim.frameand << 1 ) + 1;
+  gs->Tile_Dam.amount = fget_next_int( fileread );
+  gs->Tile_Dam.type = fget_next_damage( fileread );
+
+  // Read weather data fourth
+  weather_info->require_water = fget_next_bool( fileread );
+  weather_info->timereset     = fget_next_int( fileread );
+  weather_info->time          = weather_info->timereset;
+  weather_info->player        = 0;
+  weather_info->active        = btrue;
+  if(0 == weather_info->timereset)
+  {
+    weather_info->active = bfalse;
+    weather_info->player = INVALID_PLA;
+  }
+
+  // Read extra data
+  gfx_info->exploremode = fget_next_bool( fileread );
+  gfx_info->usefaredge  = fget_next_bool( fileread );
+  GCamera.swing = 0;
+  GCamera.swingrate = fget_next_float( fileread );
+  GCamera.swingamp = fget_next_float( fileread );
+
+  // test for expansions (a bit tricky because of the fog stuff)
+  fog_info_reset( fog_info );
+  tile_damage_reset( &(gs->Tile_Dam) );
+
+  found_expansion = fgoto_colon_yesno( fileread );
+  if( found_expansion )
+  {
+    found_idsz = ftest_idsz( fileread );
+
+    if( !found_idsz )
+    {
+      // Read unnecessary data...  Only read if it exists...
+      found_expansion = bfalse;
+      fog_info->on           = CData.fogallowed;
+      fog_info->top          = fget_float( fileread );
+      fog_info->bottom       = fget_next_float( fileread );
+      fog_info->red          = fget_next_fixed( fileread );
+      fog_info->grn          = fget_next_fixed( fileread );
+      fog_info->blu          = fget_next_fixed( fileread );
+      fog_info->affectswater = fget_next_bool( fileread );
+
+      fog_info->distance = ( fog_info->top - fog_info->bottom );
+
+      // Read extra stuff for damage tile particles...
+      found_expansion = fgoto_colon_yesno( fileread );
+      if ( found_expansion )
+      {
+        found_idsz = ftest_idsz( fileread );
+        if(!found_idsz)
+        {
+          found_expansion = bfalse;
+          gs->Tile_Dam.parttype = fget_int( fileread );
+          gs->Tile_Dam.partand  = fget_next_int( fileread );
+          gs->Tile_Dam.sound    = fget_next_int( fileread );
+        }
+      }
+    };
+
+    if( !found_expansion ) { found_expansion = fgoto_colon_yesno( fileread ); if(found_expansion) { found_idsz = ftest_idsz( fileread ); } }
+    if( found_expansion && found_idsz )
+    {
+      // we must have already found_expansion a ':' use the post-test do...while loop
+      do
+      {
+        IDSZ idsz;
+        int iTmp;
+
+        idsz = fget_idsz( fileread );
+        iTmp = fget_int( fileread );
+
+        // "MOON" == you can see the moon, so lycanthropy... mwa ha ha ha ha!
+        // Also, it just means that it is outdoors
+        if ( MAKE_IDSZ( "MOON" ) == idsz ) light_info->on = INT_TO_BOOL( iTmp );
+
+      } while( fgoto_colon_yesno( fileread ) );
+    }
+  }
+
+  // Allow slow machines to ignore the fancy stuff
+  if ( !CData.twolayerwateron && water_info->layer_count > 1 )
+  {
+    int iTmp;
+    water_info->layer_count = 1;
+    iTmp = water_info->layer[0].alpha_fp8;
+    iTmp = FP8_MUL( water_info->layer[1].alpha_fp8, iTmp ) + iTmp;
+    if ( iTmp > 255 ) iTmp = 255;
+    water_info->layer[0].alpha_fp8 = iTmp;
+  }
+
+
+  fs_fileClose( fileread );
+
+  // Do it
+  setup_lighting( light_info );
+  make_water( water_info );
+
+  return btrue;
+};
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+static void Graphics_Data_new_textures( Graphics_Data_t * gd )
+{
+  int i;
+
+  // invalidate any icon textures
+  for(i=0; i<MAXICONTX; i++)
+  {
+    GLtexture_new( gd->TxIcon + i );
+  };
+  gd->TxIcon_count = 0;
+
+  // invalidate the generic textures
+  for(i=0; i<MAXTEXTURE; i++)
+  {
+    GLtexture_new( gd->TxTexture + i );
+  };
+
+  // clear out the icon references
+  for(i = 0; i<ICO_COUNT; i++)
+  {
+    gd->ico_lst[i] = MAXICONTX;
+  }
+
+  // invalidate the map texture
+  GLtexture_new( &(gd->Map_tex) );
+
+  // invalidate the "you are here" blips
+  GLtexture_new( &(gd->BlipList_tex) );
+  gd->BlipList_count = 0;
+
+  // invalidate the bars
+  GLtexture_new( &(gd->TxBars) );                        // "you are here" texture
+
+};
+
+
+//--------------------------------------------------------------------------------------------
+Graphics_Data_t * Graphics_Data_new( Graphics_Data_t * gfx )
+{
+  if(NULL == gfx) return NULL;
+
+  if( !EKEY_PVALID(gfx) )
+  {
+    Graphics_Data_delete( gfx );
+  }
+
+  memset(gfx, 0, sizeof(Graphics_Data_t));
+
+  EKEY_PNEW( gfx, Graphics_Data_t );
+
+  // clear the textures
+  Graphics_Data_new_textures( gfx );
+
+  // foreground/background
+  gfx->render_overlay    = bfalse;   
+  gfx->render_background = bfalse;
+  gfx->render_fog        = bfalse;
+  gfx->usefaredge        = bfalse;
+
+  gfx->foregroundrepeat = 1;
+  gfx->backgroundrepeat = 1;
+
+  // lighting
+  lighting_info_reset( &(gfx->Light) );
+  DLightList_clear( gfx );
+
+  // fog
+  fog_info_reset( &(gfx->Fog) );
+
+  // Map stuff
+  gfx->Map_on = bfalse;
+  gfx->Map_youarehereon = bfalse;
+  gfx->Map_scale = 1.0f;
+
+  // blip info
+  gfx->BlipList_count   = 0;
+  memset(gfx->BlipList, 0, MAXBLIP * sizeof(BLIP));
+
+  return gfx;
+}
+
+//--------------------------------------------------------------------------------------------
+static void Graphics_Data_delete_textures( Graphics_Data_t * gd )
+{
+  int i;
+
+  // invalidate any icon textures
+  for(i=0; i<MAXICONTX; i++)
+  {
+    GLtexture_delete( gd->TxIcon + i );
+  };
+  gd->TxIcon_count = 0;
+
+  // invalidate the generic textures
+  for(i=0; i<MAXTEXTURE; i++)
+  {
+    GLtexture_delete( gd->TxTexture + i );
+  };
+
+  // clear out the icon references
+  for(i = 0; i<ICO_COUNT; i++)
+  {
+    gd->ico_lst[i] = MAXICONTX;
+  }
+
+  // invalidate the map texture
+  GLtexture_delete( &(gd->Map_tex) );
+
+  // invalidate the "you are here" blips
+  GLtexture_delete( &(gd->BlipList_tex) );
+  gd->BlipList_count = 0;
+
+  // invalidate the bars
+  GLtexture_delete( &(gd->TxBars) );                        // "you are here" texture
+
+};
+
+//--------------------------------------------------------------------------------------------
+bool_t Graphics_Data_delete( Graphics_Data_t * gd )
+{
+  if( NULL == gd ) return bfalse;
+  if( !EKEY_PVALID(gd) ) return btrue;
+
+  Graphics_Data_delete_textures( gd );
+
+  EKEY_PINVALIDATE(gd);
 
   return btrue;
 };

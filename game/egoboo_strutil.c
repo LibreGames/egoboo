@@ -26,10 +26,11 @@
 
 #include "egoboo_config.h"
 
-// str_trim remove all space and tabs in the beginning and at the end of the string
 void str_trim( char *pStr )
 {
-  Sint32 DebPos, EndPos, CurPos;
+  // ZZ> str_trim remove all space and tabs in the beginning and at the end of the string
+
+  Sint32 DebPos = 0, EndPos = 0, CurPos = 0;
 
   if ( NULL == pStr  )
   {
@@ -70,6 +71,8 @@ void str_trim( char *pStr )
 
 char * str_decode( char *strout, size_t insize, char * strin )
 {
+  // BB> str_decode converts a string from "storage mode" to an actual string
+
   char *pin = strin, *pout = strout, *plast = pout + insize;
 
   if ( NULL == strin || NULL == strout || 0 == insize ) return NULL;
@@ -90,6 +93,8 @@ char * str_decode( char *strout, size_t insize, char * strin )
 
 char * str_encode( char *strout, size_t insize, char * strin )
 {
+  // BB> str_encode converts an actual string to "storage mode"
+
   char chrlast = 0;
   char *pin = strin, *pout = strout, *plast = pout + insize;
 
@@ -141,17 +146,19 @@ char * str_encode( char *strout, size_t insize, char * strin )
 
 char * str_convert_slash_net(char * str, size_t size)
 {
-  //size_t i;
+  // BB> converts the slashes in a string to those appropriate for the Net
 
   if( !VALID_CSTR(str) ) return str;
 
 #if !(SLASH_CHAR == NET_SLASH_CHAR)
-
-  for(i=0; i < size; i++)
   {
-    if(SLASH_CHAR == str[i])
+    size_t i;
+    for(i=0; i < size; i++)
     {
-      str[i] = NET_SLASH_CHAR;
+      if(SLASH_CHAR == str[i])
+      {
+        str[i] = NET_SLASH_CHAR;
+      }
     }
   }
 #endif
@@ -161,16 +168,19 @@ char * str_convert_slash_net(char * str, size_t size)
 
 char * str_convert_slash_sys(char * str, size_t size)
 {
-  //size_t i;
+  // BB> converts the slashes in a string to those appropriate this system
 
   if( !VALID_CSTR(str) ) return str;
 
 #if !(SLASH_CHAR == NET_SLASH_CHAR)
-  for(i=0; i < size; i++)
   {
-    if(NET_SLASH_CHAR == str[i])
+    size_t i;
+    for(i=0; i < size; i++)
     {
-      str[i] = SLASH_CHAR;
+      if(NET_SLASH_CHAR == str[i])
+      {
+        str[i] = SLASH_CHAR;
+      }
     }
   }
 #endif
@@ -180,6 +190,8 @@ char * str_convert_slash_sys(char * str, size_t size)
 
 char * str_append_slash_net(char * str, size_t size)
 {
+  // BB> appends a network-type slash to a string, if it does not already have one
+
   size_t len;
 
   if( !VALID_CSTR(str) ) return str;
@@ -195,6 +207,8 @@ char * str_append_slash_net(char * str, size_t size)
 
 char * str_append_slash(char * str, size_t size)
 {
+  // BB> appends this system's slash to a string, if it does not already have one
+
   size_t len;
 
   if( !VALID_CSTR(str) ) return NULL;

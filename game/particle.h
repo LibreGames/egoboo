@@ -1,10 +1,9 @@
 #pragma once
 
+#include "egoboo.h"
 #include "object.h"
 
 struct sGame;
-
-#define TURNSPD                         .01         // Cutoff for turning or same direction
 
 #define SPAWN_NOCHARACTER        255                 // For particles that spawn characters...
 
@@ -30,36 +29,10 @@ enum e_dyna_mode
 };
 typedef enum e_dyna_mode DYNA_MODE;
 
-#define MAXDYNA                           64        // Number of dynamic lights
-#define MAXDYNADIST                     2700        // Leeway for offscreen lights
+
 
 
 //Dynamic Lightning effects
-
-#define DYNALIGHT_MEMBERS                \
-  float  level;      /* Light level    */ \
-  float  falloff;    /* Light falloff  */
-
-struct s_dynalight_info
-{
-  DYNALIGHT_MEMBERS
-  bool_t permanent;
-  vect3  pos;        // Light position
-  int    distance;      // The distances
-};
-typedef struct s_dynalight_info DYNALIGHT_INFO;
-
-#ifdef __cplusplus
-  typedef TList<DYNALIGHT_INFO, MAXDYNA> DLightList_t;
-  typedef TPList<DYNALIGHT_INFO, MAXDYNA> PDLight;
-#else
-  typedef DYNALIGHT_INFO   DLightList_t[MAXDYNA];
-  typedef DYNALIGHT_INFO * PDLight;
-#endif
-
-size_t DLightList_clear( struct sGame * gs );
-size_t DLightList_prune( struct sGame * gs );
-size_t DLightList_add( struct sGame * gs, DYNALIGHT_INFO * di );
 
 struct s_dynalight_pip
 {
@@ -329,10 +302,10 @@ extern Uint16          particletexture;                            // All in one
 #define SEMIACTIVE_PRT(LST, XX) ( VALID_PRT(LST, XX) && (LST[XX].active || LST[XX].req_active) && !LST[XX].reserved )
 #define PENDING_PRT(LST, XX)    ( VALID_PRT(LST, XX) && LST[XX].req_active && !LST[XX].reserved )
 
-#define CALCULATE_PRT_U0(CNT)  (((.05f+(CNT&15))/16.0f)*(( float ) gs->TxTexture[particletexture].imgW / ( float ) gs->TxTexture[particletexture].txW))
-#define CALCULATE_PRT_U1(CNT)  (((.95f+(CNT&15))/16.0f)*(( float ) gs->TxTexture[particletexture].imgW / ( float ) gs->TxTexture[particletexture].txW))
-#define CALCULATE_PRT_V0(CNT)  (((.05f+(CNT/16))/16.0f) * ((float)gs->TxTexture[particletexture].imgW/(float)gs->TxTexture[particletexture].imgH)*(( float ) gs->TxTexture[particletexture].imgH / ( float ) gs->TxTexture[particletexture].txH))
-#define CALCULATE_PRT_V1(CNT)  (((.95f+(CNT/16))/16.0f) * ((float)gs->TxTexture[particletexture].imgW/(float)gs->TxTexture[particletexture].imgH)*(( float ) gs->TxTexture[particletexture].imgH / ( float ) gs->TxTexture[particletexture].txH))
+#define CALCULATE_PRT_U0(CNT)  (((.05f+(CNT&15))/16.0f)*(( float ) gfx->TxTexture[particletexture].imgW / ( float ) gfx->TxTexture[particletexture].txW))
+#define CALCULATE_PRT_U1(CNT)  (((.95f+(CNT&15))/16.0f)*(( float ) gfx->TxTexture[particletexture].imgW / ( float ) gfx->TxTexture[particletexture].txW))
+#define CALCULATE_PRT_V0(CNT)  (((.05f+(CNT/16))/16.0f) * ((float)gfx->TxTexture[particletexture].imgW/(float)gfx->TxTexture[particletexture].imgH)*(( float ) gfx->TxTexture[particletexture].imgH / ( float ) gfx->TxTexture[particletexture].txH))
+#define CALCULATE_PRT_V1(CNT)  (((.95f+(CNT/16))/16.0f) * ((float)gfx->TxTexture[particletexture].imgW/(float)gfx->TxTexture[particletexture].imgH)*(( float ) gfx->TxTexture[particletexture].imgH / ( float ) gfx->TxTexture[particletexture].txH))
 
 void PrtList_resynch( struct sGame * gs );
 void move_particles( struct sGame * gs, float dUpdate );

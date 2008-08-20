@@ -52,23 +52,23 @@ Uint16 particletexture = MAXTEXTURE;     // All in one bitmap
 static PRT_REF _prt_spawn( PRT_SPAWN_INFO si, bool_t activate );
 
 //--------------------------------------------------------------------------------------------
-size_t DLightList_clear( Game_t * gs )
+size_t DLightList_clear( Graphics_Data_t * gfx )
 {
-  gs->DLightList_count = 0;
-  return gs->DLightList_count;
+  gfx->DLightList_count = 0;
+  return gfx->DLightList_count;
 }
 
 
 //--------------------------------------------------------------------------------------------
-size_t DLightList_prune( Game_t * gs )
+size_t DLightList_prune( Graphics_Data_t * gfx )
 {
   // BB > remove all dynalights that are not permanent
 
   int i,j;
-  PDLight dynalst = gs->DLightList;
+  PDLight dynalst = gfx->DLightList;
 
   // put all permanent lights at the beginning of the list
-  for(i = 0, j=0; i<gs->DLightList_count; i++)
+  for(i = 0, j=0; i<gfx->DLightList_count; i++)
   {
     if( dynalst[i].permanent )
     {
@@ -81,17 +81,17 @@ size_t DLightList_prune( Game_t * gs )
   };
 
   // set the size of the list
-  gs->DLightList_count = j;
+  gfx->DLightList_count = j;
 
-  return gs->DLightList_count;
+  return gfx->DLightList_count;
 };
 
 //--------------------------------------------------------------------------------------------
-size_t DLightList_add( Game_t * gs, DYNALIGHT_INFO * di )
+size_t DLightList_add( Graphics_Data_t * gfx, DYNALIGHT_INFO * di )
 {
   int slot, tnc;
   float disx, disy, disz, absdis, max_dist;
-  PDLight dynalst = gs->DLightList;
+  PDLight dynalst = gfx->DLightList;
 
   disx = ABS( di->pos.x - GCamera.trackpos.x );
   disy = ABS( di->pos.y - GCamera.trackpos.y );
@@ -100,17 +100,17 @@ size_t DLightList_add( Game_t * gs, DYNALIGHT_INFO * di )
   di->distance = absdis;
 
   slot = -1;
-  if(gs->DLightList_count < MAXDYNA)
+  if(gfx->DLightList_count < MAXDYNA)
   {
-    slot = gs->DLightList_count;
-    gs->DLightList_count++;
+    slot = gfx->DLightList_count;
+    gfx->DLightList_count++;
 
     if( !di->permanent )
     {
-      gs->DLightList_distancetobeat = MAX(gs->DLightList_distancetobeat, di->distance);
+      gfx->DLightList_distancetobeat = MAX(gfx->DLightList_distancetobeat, di->distance);
     };
   }
-  else if(absdis < gs->DLightList_distancetobeat || di->permanent)
+  else if(absdis < gfx->DLightList_distancetobeat || di->permanent)
   {
     // Overwrite the worst non-permanent one
 
@@ -147,7 +147,7 @@ size_t DLightList_add( Game_t * gs, DYNALIGHT_INFO * di )
     memcpy(dynalst + slot, di, sizeof(DYNALIGHT_INFO));
   };
 
-  return gs->DLightList_count;
+  return gfx->DLightList_count;
 
 };
 
@@ -164,14 +164,17 @@ void make_prtlist(Game_t * gs)
 
   Mesh_t    * pmesh = NULL;
   MeshMem_t * mm    = NULL;
+  Graphics_Data_t * gfx = NULL;
 
   if(NULL == gs) gs = Graphics_requireGame( &gfxState );
+
+  gfx = Game_getGfx( gs );
   prtlst = gs->PrtList;
   pmesh  = Game_getMesh(gs);
   mm     = &(pmesh->Mem);
 
   // remove all non-permanent lights from the previous iteration
-  DLightList_prune( gs );
+  DLightList_prune( gfx );
 
   // go through the particle list
   for ( prt_cnt = 0; prt_cnt < prtlst_size; prt_cnt++ )
@@ -192,7 +195,7 @@ void make_prtlist(Game_t * gs)
       di.level     = prtlst[prt_cnt].dyna.level;
       di.falloff   = prtlst[prt_cnt].dyna.falloff;
 
-      DLightList_add( gs, &di );
+      DLightList_add( gfx, &di );
     };
   }
 
@@ -1165,6 +1168,8 @@ void move_particles( Game_t * gs, float dUpdate )
 {
   // ZZ> This is the particle physics function
 
+  Graphics_Data_t * gfx = Game_getGfx( gs );
+
   PPrt_t prtlst      = gs->PrtList;
   size_t prtlst_size = PRTLST_COUNT;
 
@@ -1205,7 +1210,7 @@ void move_particles( Game_t * gs, float dUpdate )
    pprt->level = 0;
    fan = mesh_get_fan( pmesh, pprt->ori.pos );
    pprt->onwhichfan = fan;
-   pprt->level = ( INVALID_FAN == fan ) ? 0 : mesh_get_level( &(pmesh->Mem), fan,pprt->ori.pos.x,pprt->ori.pos.y, bfalse, &(gs->Water) );
+   pprt->level = ( INVALID_FAN == fan ) ? 0 : mesh_get_level( &(pmesh->Mem), fan,pprt->ori.pos.x,pprt->ori.pos.y, bfalse, &(gfx->Water) );
 
     // To make it easier
     pip =pprt->pip;
@@ -1315,9 +1320,9 @@ void move_particles( Game_t * gs, float dUpdate )
 
 
     // Check underwater
-    if (pprt->ori.pos.z < gs->Water.douselevel && mesh_has_some_bits( pmesh->Mem.tilelst,pprt->onwhichfan, MPDFX_WATER ) && piplst[pip].endwater )
+    if (pprt->ori.pos.z < gfx->Water.douselevel && mesh_has_some_bits( pmesh->Mem.tilelst,pprt->onwhichfan, MPDFX_WATER ) && piplst[pip].endwater )
     {
-      vect3 prt_pos = {prtlst[iprt].ori.pos.x, pprt->ori.pos.y, gs->Water.surfacelevel};
+      vect3 prt_pos = {prtlst[iprt].ori.pos.x, pprt->ori.pos.y, gfx->Water.surfacelevel};
       vect3 prt_vel = {0, 0, 0};
 
       // Splash for particles is just a ripple
@@ -1395,37 +1400,6 @@ void setup_particles( Game_t * gs )
 
   // Reset the allocation table
   PrtList_new(gs);
-}
-
-//--------------------------------------------------------------------------------------------
-Uint16 terp_dir( Uint16 majordir, float dx, float dy, float dUpdate )
-{
-  // ZZ> This function returns a direction between the major and minor ones, closer
-  //     to the major.
-
-  Uint16 rotate_sin, minordir;
-  Sint16 diff_dir;
-  const float turnspeed = 2000.0f;
-
-  if ( ABS( dx ) + ABS( dy ) > TURNSPD )
-  {
-    minordir = vec_to_turn( dx, dy );
-
-    diff_dir = (( Sint16 ) minordir ) - (( Sint16 ) majordir );
-
-    if (( diff_dir > -turnspeed * dUpdate ) && ( diff_dir < turnspeed * dUpdate ) )
-    {
-      rotate_sin = ( Uint16 ) diff_dir;
-    }
-    else
-    {
-      rotate_sin = ( Uint16 )( turnspeed * dUpdate * SGN( diff_dir ) );
-    };
-
-    return majordir + rotate_sin;
-  }
-  else
-    return majordir;
 }
 
 //--------------------------------------------------------------------------------------------

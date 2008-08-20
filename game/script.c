@@ -94,6 +94,7 @@
 
 #define IS_END(XX) ( GET_FUNCTION_BITS( XX ) == END_FUNCTION )
 
+static const char *scr_parsename = NULL;  // The SCRIPT.TXT filename
 
 struct s_opcode_element
 {
@@ -130,6 +131,20 @@ typedef struct sCompilerState CompilerState_t;
 
 static CompilerState_t _cstate;
 
+bool_t parseerror = bfalse; //Do we have an script error?
+
+static void insert_space( size_t position );
+static void copy_one_line( size_t write );
+static size_t load_one_line( size_t read );
+static size_t load_parsed_line( size_t read );
+static void surround_space( size_t position );
+static int  get_indentation();
+static void fix_operators();
+static int  starts_with_capital_letter();
+
+static size_t ai_goto_colon( size_t read );
+static void   fget_code( FILE * pfile );
+
 
 static bool_t run_function( Game_t * gs, Uint32 value, CHR_REF character );
 
@@ -145,6 +160,7 @@ static retval_t set_operand( AI_STATE * pstate, ScriptInfo_t * slist, Uint8 vari
 
 static void   add_code( ScriptInfo_t * slist, Uint32 highbits );
 static void   parse_line_by_line( ScriptInfo_t * slist );
+static void   parse_null_terminate_comments();
 static size_t jump_goto( ScriptInfo_t * slist, size_t index );
 static void   parse_jumps( ScriptInfo_t * slist, size_t index_stt, size_t index_end );
 static void   log_code( ScriptInfo_t * slist, int ainumber, char* savename );
@@ -346,13 +362,13 @@ int get_indentation()
 
   if( iscntrl(cTmp) )
   {
-    log_message( "SCRIPT ERROR FOUND: %s (%d) - %d illegal control code\n", globalparsename, _cstate.line_num, cnt );
+    log_message( "SCRIPT ERROR FOUND: %s (%d) - %d illegal control code\n", scr_parsename, _cstate.line_num, cnt );
     parseerror = btrue;
   }
 
   if( HAS_SOME_BITS(cnt, 0x01) )
   {
-    log_message( "SCRIPT ERROR FOUND: %s (%d) - %d odd number of spaces\n", globalparsename, _cstate.line_num, cnt );
+    log_message( "SCRIPT ERROR FOUND: %s (%d) - %d odd number of spaces\n", scr_parsename, _cstate.line_num, cnt );
     parseerror = btrue;
   };
 
@@ -360,7 +376,7 @@ int get_indentation()
 
   if ( cnt > 15 )
   {
-    log_warning( "SCRIPT ERROR FOUND: %s (%d) - %d levels of indentation\n", globalparsename, _cstate.line_num, cnt );
+    log_warning( "SCRIPT ERROR FOUND: %s (%d) - %d levels of indentation\n", scr_parsename, _cstate.line_num, cnt );
     parseerror = btrue;
     cnt = 15;
   };
@@ -533,7 +549,7 @@ size_t tell_code( size_t read )
     // Throw out an error code if we're loggin' 'em
     if ( '=' != cWordBuffer[0] || EOS != cWordBuffer[1])
     {
-      log_message( "SCRIPT ERROR FOUND: %s (%d) - %s undefined\n", globalparsename, _cstate.line_num, cWordBuffer );
+      log_message( "SCRIPT ERROR FOUND: %s (%d) - %s undefined\n", scr_parsename, _cstate.line_num, cWordBuffer );
       parseerror = btrue;
     }
   }
@@ -1408,7 +1424,7 @@ Uint32 load_ai_script( ScriptInfo_t * slist, const char * szObjectpath, const ch
   if(NULL == slist || slist->offset_count >= AILST_COUNT) return AILST_COUNT;
 
   loc_fname = inherit_fname(szObjectpath, szObjectname, CData.script_file);
-  globalparsename = loc_fname;
+  scr_parsename = loc_fname;
   fileread = fs_fileOpen(PRI_NONE, "load_ai_script()", loc_fname, "r");
   if ( NULL == fileread ) return script_idx;
 
@@ -1494,6 +1510,8 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 
   CHR_REF tmpchr, tmpchr1, tmpchr2, tmpchr3;
   PRT_REF tmpprt;
+
+  Graphics_Data_t * gfx = Game_getGfx( gs );
 
   //ScriptInfo_t * slist = Game_getScriptInfo(gs);
 
@@ -2619,11 +2637,11 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 
     case F_SetWaterLevel:
       // This function raises and lowers the module's water
-      fTmp = ( pstate->tmpargument / 10.0 ) - gs->Water.douselevel;
-      gs->Water.surfacelevel += fTmp;
-      gs->Water.douselevel += fTmp;
+      fTmp = ( pstate->tmpargument / 10.0 ) - gfx->Water.douselevel;
+      gfx->Water.surfacelevel += fTmp;
+      gfx->Water.douselevel += fTmp;
       for ( iTmp = 0; iTmp < MAXWATERLAYER; iTmp++ )
-        gs->Water.layer[iTmp].z += fTmp;
+        gfx->Water.layer[iTmp].z += fTmp;
       break;
 
     case F_EnchantTarget:
@@ -2836,7 +2854,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 
     case F_GetWaterLevel:
       // This function gets the douse level for the water, returning it in tmpargument
-      pstate->tmpargument = gs->Water.douselevel * 10;
+      pstate->tmpargument = gfx->Water.douselevel * 10;
       break;
 
     case F_CostTargetMana:
@@ -3080,7 +3098,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 
     case F_IfOverWater:
       // This function passes if the character is on a water tile
-      returncode = mesh_has_some_bits( pmesh->Mem.tilelst, pchr->onwhichfan, MPDFX_WATER ) && gs->Water.iswater;
+      returncode = mesh_has_some_bits( pmesh->Mem.tilelst, pchr->onwhichfan, MPDFX_WATER ) && gfx->Water.iswater;
       break;
 
     case F_IfThrown:
@@ -3109,20 +3127,20 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 
     case F_SetXY:
       // This function stores tmpx and tmpy in the storage array
-      pstate->x[pstate->tmpargument&STOR_AND] = pstate->tmpx;
-      pstate->y[pstate->tmpargument&STOR_AND] = pstate->tmpy;
+      pstate->x[pstate->tmpargument & STOR_AND] = pstate->tmpx;
+      pstate->y[pstate->tmpargument & STOR_AND] = pstate->tmpy;
       break;
 
     case F_GetXY:
       // This function gets previously stored data, setting tmpx and tmpy
-      pstate->tmpx = pstate->x[pstate->tmpargument&STOR_AND];
-      pstate->tmpy = pstate->y[pstate->tmpargument&STOR_AND];
+      pstate->tmpx = pstate->x[pstate->tmpargument & STOR_AND];
+      pstate->tmpy = pstate->y[pstate->tmpargument & STOR_AND];
       break;
 
     case F_AddXY:
       // This function adds tmpx and tmpy to the storage array
-      pstate->x[pstate->tmpargument&STOR_AND] += pstate->tmpx;
-      pstate->y[pstate->tmpargument&STOR_AND] += pstate->tmpy;
+      pstate->x[pstate->tmpargument & STOR_AND] += pstate->tmpx;
+      pstate->y[pstate->tmpargument & STOR_AND] += pstate->tmpy;
       break;
 
     case F_MakeAmmoKnown:
@@ -3386,8 +3404,8 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 
     case F_ShowTimer:
       // This function turns the timer on, using the value for tmpargument
-      timeron = btrue;
-      timervalue = pstate->tmpargument;
+      gs->timeron = btrue;
+      gs->timervalue = pstate->tmpargument;
       break;
 
     case F_IfFacingTarget:
@@ -3560,27 +3578,27 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 
     case F_ShowMap:
       // Show the map...  Fails if map already visible
-      if ( mapon )  returncode = bfalse;
-      mapon = btrue;
+      if ( gfx->Map_on )  returncode = bfalse;
+      gfx->Map_on = btrue;
       break;
 
     case F_ShowYouAreHere:
       // Show the camera target location
-      youarehereon = btrue;
+      gfx->Map_youarehereon = btrue;
       break;
 
     case F_ShowBlipXY:
       // Add a blip
-      if ( numblip < MAXBLIP )
+      if ( gfx->BlipList_count < MAXBLIP )
       {
         if ( mesh_check( &(pmesh->Info), pstate->tmpx, pstate->tmpy ) )
         {
-          if ( pstate->tmpargument < NUMBAR && pstate->tmpargument >= 0 )
+          if ( pstate->tmpargument < BAR_COUNT && pstate->tmpargument >= 0 )
           {
-            BlipList[numblip].x = mesh_fraction_x( &(pmesh->Info), pstate->tmpx ) * MAPSIZE * mapscale;
-            BlipList[numblip].y = mesh_fraction_y( &(pmesh->Info), pstate->tmpy ) * MAPSIZE * mapscale ;
-            BlipList[numblip].c = (COLR)pstate->tmpargument;
-            numblip++;
+            gfx->BlipList[gfx->BlipList_count].x = mesh_fraction_x( &(pmesh->Info), pstate->tmpx ) * MAPSIZE * gfx->Map_scale;
+            gfx->BlipList[gfx->BlipList_count].y = mesh_fraction_y( &(pmesh->Info), pstate->tmpy ) * MAPSIZE * gfx->Map_scale ;
+            gfx->BlipList[gfx->BlipList_count].c = (COLR)pstate->tmpargument;
+            gfx->BlipList_count++;
           }
         }
       }
@@ -3671,37 +3689,37 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 
     case F_SetFogLevel:
       // This function raises and lowers the module's fog
-      fTmp = ( pstate->tmpargument / 10.0 ) - gs->Fog.top;
-      gs->Fog.top += fTmp;
-      gs->Fog.distance += fTmp;
-      gs->Fog.on = CData.fogallowed;
-      if ( gs->Fog.distance < 1.0 )  gs->Fog.on = bfalse;
+      fTmp = ( pstate->tmpargument / 10.0 ) - gfx->Fog.top;
+      gfx->Fog.top += fTmp;
+      gfx->Fog.distance += fTmp;
+      gfx->Fog.on = CData.fogallowed;
+      if ( gfx->Fog.distance < 1.0 )  gfx->Fog.on = bfalse;
       break;
 
     case F_GetFogLevel:
       // This function gets the fog level
-      pstate->tmpargument = gs->Fog.top * 10;
+      pstate->tmpargument = gfx->Fog.top * 10;
       break;
 
     case F_SetFogTAD:
       // This function changes the fog color
-      gs->Fog.red = pstate->tmpturn;
-      gs->Fog.grn = pstate->tmpargument;
-      gs->Fog.blu = pstate->tmpdistance;
+      gfx->Fog.red = pstate->tmpturn;
+      gfx->Fog.grn = pstate->tmpargument;
+      gfx->Fog.blu = pstate->tmpdistance;
       break;
 
     case F_SetFogBottomLevel:
       // This function sets the module's bottom fog level...
-      fTmp = ( pstate->tmpargument / 10.0 ) - gs->Fog.bottom;
-      gs->Fog.bottom += fTmp;
-      gs->Fog.distance -= fTmp;
-      gs->Fog.on = CData.fogallowed;
-      if ( gs->Fog.distance < 1.0 )  gs->Fog.on = bfalse;
+      fTmp = ( pstate->tmpargument / 10.0 ) - gfx->Fog.bottom;
+      gfx->Fog.bottom += fTmp;
+      gfx->Fog.distance -= fTmp;
+      gfx->Fog.on = CData.fogallowed;
+      if ( gfx->Fog.distance < 1.0 )  gfx->Fog.on = bfalse;
       break;
 
     case F_GetFogBottomLevel:
       // This function gets the fog level
-      pstate->tmpargument = gs->Fog.bottom * 10;
+      pstate->tmpargument = gfx->Fog.bottom * 10;
       break;
 
     case F_CorrectActionForHand:
@@ -3736,7 +3754,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 
     case F_SparkleIcon:
       // This function makes a blippie thing go around the icon
-      if ( pstate->tmpargument < NUMBAR && pstate->tmpargument > -1 )
+      if ( pstate->tmpargument < BAR_COUNT && pstate->tmpargument > -1 )
       {
         pchr->sparkle = pstate->tmpargument;
       }
@@ -5278,8 +5296,9 @@ void run_all_scripts( Game_t * gs, float dUpdate )
   CHR_REF character;
   bool_t allow_thinking;
   PChr_t chrlst = gs->ChrList;
+  Graphics_Data_t * gfx = Game_getGfx( gs );
 
-  numblip = 0;
+  gfx->BlipList_count = 0;
   for ( character = 0; character < CHRLST_COUNT; character++ )
   {
     if ( !ACTIVE_CHR( chrlst, character ) ) continue;

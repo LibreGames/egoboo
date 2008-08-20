@@ -19,6 +19,7 @@ float  indextoenvirox[MD2LIGHTINDICES];                    // Environment map
 float  lighttoenviroy[256];                                // Environment map
 Uint32 lighttospek[MAXSPEKLEVEL][256];                     //
 
+static char cFrameName[16]; // MD2 Frame Name
 
 
 //--------------------------------------------------------------------------------------------

@@ -2385,7 +2385,7 @@ bool_t chr_do_environment(Game_t * gs, Chr_t * pchr, ChrEnviro_t * enviro)
       if ( enviro->buoyancy > 1.0f ) enviro->buoyancy = 1.0f;
     };
 
-    lerp = ( float )( gs->Water.surfacelevel - pchr->ori.pos.z ) / ( float ) ( pchr->bmpdata.cv.z_max - pchr->bmpdata.cv.z_min );
+    lerp = ( float )( gs->GfxData.Water.surfacelevel - pchr->ori.pos.z ) / ( float ) ( pchr->bmpdata.cv.z_max - pchr->bmpdata.cv.z_min );
     if ( lerp > 1.0f ) lerp = 1.0f;
     if ( lerp < 0.0f ) lerp = 0.0f;
 
@@ -3003,7 +3003,7 @@ bool_t chr_do_physics( Game_t * gs, Chr_t * pchr, ChrEnviro_t * enviro, float dU
     if ( lerp_normal < 0.2f ) lerp_normal = 0.2f;
 
     // slippy hills make characters slide
-    if ( pchr->weight > 0 && gs->Water.iswater && !enviro->inwater && INVALID_FAN != pchr->onwhichfan && mesh_has_some_bits( pmesh->Mem.tilelst, pchr->onwhichfan, MPDFX_SLIPPY ) )
+    if ( pchr->weight > 0 && gs->GfxData.Water.iswater && !enviro->inwater && INVALID_FAN != pchr->onwhichfan && mesh_has_some_bits( pmesh->Mem.tilelst, pchr->onwhichfan, MPDFX_SLIPPY ) )
     {
       paccum->acc.x -= enviro->nrm.x * gs->phys.gravity * lerp_tang * gs->phys.hillslide;
       paccum->acc.y -= enviro->nrm.y * gs->phys.gravity * lerp_tang * gs->phys.hillslide;
@@ -3441,7 +3441,7 @@ float get_one_level( Game_t * gs, CHR_REF chr_ref )
 
   //get the base level
   chrlst[chr_ref].onwhichfan = mesh_get_fan( pmesh, chrlst[chr_ref].ori.pos );
-  level = mesh_get_level( &(pmesh->Mem), chrlst[chr_ref].onwhichfan, chrlst[chr_ref].ori.pos.x, chrlst[chr_ref].ori.pos.y, chrlst[chr_ref].prop.waterwalk, &(gs->Water) );
+  level = mesh_get_level( &(pmesh->Mem), chrlst[chr_ref].onwhichfan, chrlst[chr_ref].ori.pos.x, chrlst[chr_ref].ori.pos.y, chrlst[chr_ref].prop.waterwalk, &(gs->GfxData.Water) );
 
   // if there is a platform, choose whichever is higher
   platform = chr_get_onwhichplatform( chrlst, chrlst_size, chr_ref );
@@ -3520,19 +3520,19 @@ void make_onwhichfan( Game_t * gs )
       if ( chrlst[chr_ref].ori.vel.z > 0.0f ) splashstrength *= 0.5;
       splashstrength *= ABS( chrlst[chr_ref].ori.vel.z ) / 10.0f;
       splashstrength *= chrlst[chr_ref].bumpstrength;
-      if ( chrlst[chr_ref].ori.pos.z < gs->Water.surfacelevel )
+      if ( chrlst[chr_ref].ori.pos.z < gs->GfxData.Water.surfacelevel )
       {
         is_inwater = btrue;
       }
 
       ripplesize = ( chrlst[chr_ref].bmpdata.calc_size + chrlst[chr_ref].bmpdata.calc_size_big ) * 0.5f;
-      if ( chrlst[chr_ref].bmpdata.cv.z_max < gs->Water.surfacelevel )
+      if ( chrlst[chr_ref].bmpdata.cv.z_max < gs->GfxData.Water.surfacelevel )
       {
         is_underwater = btrue;
       }
 
       // scale the ripple strength
-      ripplestrength = - ( chrlst[chr_ref].bmpdata.cv.z_min - gs->Water.surfacelevel ) * ( chrlst[chr_ref].bmpdata.cv.z_max - gs->Water.surfacelevel );
+      ripplestrength = - ( chrlst[chr_ref].bmpdata.cv.z_min - gs->GfxData.Water.surfacelevel ) * ( chrlst[chr_ref].bmpdata.cv.z_max - gs->GfxData.Water.surfacelevel );
       ripplestrength /= 0.75f * chrlst[chr_ref].bmpdata.calc_height * chrlst[chr_ref].bmpdata.calc_height;
       ripplestrength *= ripplesize / 37.5f * chrlst[chr_ref].bumpstrength;
       ripplestrength = MAX( 0.0f, ripplestrength );
@@ -3541,7 +3541,7 @@ void make_onwhichfan( Game_t * gs )
     // splash stuff
     if ( chrlst[chr_ref].inwater != is_inwater && splashstrength > 0.1f )
     {
-      vect3 prt_pos = {chrlst[chr_ref].ori.pos.x, chrlst[chr_ref].ori.pos.y, gs->Water.surfacelevel + RAISE};
+      vect3 prt_pos = {chrlst[chr_ref].ori.pos.x, chrlst[chr_ref].ori.pos.y, gs->GfxData.Water.surfacelevel + RAISE};
       vect3 prt_vel = {0,0,0};
       PRT_REF prt_index;
 
@@ -3568,7 +3568,7 @@ void make_onwhichfan( Game_t * gs )
         }
 
         chrlst[chr_ref].inwater = is_inwater;
-        if ( gs->Water.iswater && is_inwater )
+        if ( gs->GfxData.Water.iswater && is_inwater )
         {
           chrlst[chr_ref].aistate.alert |= ALERT_INWATER;
         }
@@ -3581,7 +3581,7 @@ void make_onwhichfan( Game_t * gs )
       ripand = RIPPLEAND >> ripand;
       if ( 0 == (ups_loops & ripand) )
       {
-        vect3 prt_pos = {chrlst[chr_ref].ori.pos.x, chrlst[chr_ref].ori.pos.y, gs->Water.surfacelevel};
+        vect3 prt_pos = {chrlst[chr_ref].ori.pos.x, chrlst[chr_ref].ori.pos.y, gs->GfxData.Water.surfacelevel};
         vect3 prt_vel = {0,0,0};
         PRT_REF prt_index;
 
@@ -3610,7 +3610,7 @@ void make_onwhichfan( Game_t * gs )
     }
 
     // damage tile stuff
-    if ( mesh_has_some_bits( pmesh->Mem.tilelst, chrlst[chr_ref].onwhichfan, MPDFX_DAMAGE ) && chrlst[chr_ref].ori.pos.z <= gs->Water.surfacelevel + DAMAGERAISE )
+    if ( mesh_has_some_bits( pmesh->Mem.tilelst, chrlst[chr_ref].onwhichfan, MPDFX_DAMAGE ) && chrlst[chr_ref].ori.pos.z <= gs->GfxData.Water.surfacelevel + DAMAGERAISE )
     {
       Uint8 loc_damagemodifier;
       CHR_REF imount;
@@ -5641,30 +5641,7 @@ void pit_kill( Game_t * gs, float dUpdate )
   }
 }
 
-//--------------------------------------------------------------------------------------------
-void reset_players( Game_t * gs )
-{
-  // ZZ> This function clears the player list data
 
-  //PChr_t chrlst      = gs->ChrList;
-  //size_t chrlst_size = CHRLST_COUNT;
-
-
-  // Reset the local data stuff
-  if(NULL != gs->cl)
-  {
-    gs->cl->seekurse    = bfalse;
-    gs->cl->seeinvisible = bfalse;
-  }
-  gs->somepladead  = bfalse;
-  gs->allpladead   = bfalse;
-
-  // Reset the initial player data and latches
-  PlaList_renew( gs );
-
-  Client_reset_latches( gs->cl );
-  CServer_reset_latches( gs->sv );
-}
 
 //--------------------------------------------------------------------------------------------
 void resize_characters( Game_t * gs, float dUpdate )
@@ -6534,88 +6511,6 @@ int fget_skin( char * szObjectpath, const char * szObjectname )
   return skin;
 }
 
-//--------------------------------------------------------------------------------------------
-void check_player_import(Game_t * gs)
-{
-  // ZZ> This function figures out which players may be imported, and loads basic
-  //     data for each
-
-  STRING searchname, filename, filepath;
-  int skin;
-  bool_t keeplooking;
-  const char *foundfile;
-  FS_FIND_INFO fs_finfo;
-
-  Obj_t otmp;
-
-  OBJ_REF iobj;
-  Obj_t  * pobj;
-  //PObj_t objlst = gs->ObjList;
-
-  LOAD_PLAYER_INFO * ploadplayer;
-
-  // Set up...
-  loadplayer_count = 0;
-
-  // Search for all objects
-  fs_find_info_new( &fs_finfo );
-  snprintf( searchname, sizeof( searchname ), "%s" SLASH_STRING "*.obj", CData.players_dir );
-  foundfile = fs_findFirstFile( &fs_finfo, CData.players_dir, NULL, "*.obj" );
-  keeplooking = 1;
-  if ( NULL != foundfile  )
-  {
-    snprintf( filepath, sizeof( filename ), "%s" SLASH_STRING "%s" SLASH_STRING, CData.players_dir, foundfile );
-
-    while (loadplayer_count < MAXLOADPLAYER )
-    {
-      // grab the requested profile
-      {
-        iobj = ObjList_get_free(gs, OBJ_REF(loadplayer_count));
-        pobj = ObjList_getPObj(gs, iobj);
-
-        // Make up a name for the profile...  IMPORT\TEMP0000.OBJ
-        strncpy( pobj->name, filepath, sizeof( pobj->name ) );
-      }
-      if(NULL == pobj)
-      {
-        assert(bfalse);
-        break;
-      }
-
-      // get the loadplayer data
-      ploadplayer = loadplayer + loadplayer_count;
-
-      naming_prime( gs );
-
-      strncpy( ploadplayer->dir, foundfile, sizeof( ploadplayer->dir ) );
-
-      skin = fget_skin( filepath, NULL );
-
-      // Load the AI script for this object
-      pobj->ai = load_ai_script( Game_getScriptInfo(gs), filepath, NULL );
-      if ( AILST_COUNT == pobj->ai )
-      {
-        // use the default script
-        pobj->ai = 0;
-      }
-
-      pobj->mad = MadList_load_one( gs, filepath, NULL, MAD_REF(loadplayer_count) );
-
-      snprintf( filename, sizeof( filename ), "icon%d.bmp", skin );
-      load_one_icon( gs, filepath, NULL, filename );
-
-      CProfile_new(&otmp);
-      naming_read( gs, filepath, NULL, &otmp);
-      strncpy( ploadplayer->name, naming_generate( gs, &otmp ), sizeof( ploadplayer->name ) );
-
-      loadplayer_count++;
-
-      foundfile = fs_findNextFile(&fs_finfo);
-      if (NULL == foundfile) break;
-    }
-  }
-  fs_findClose(&fs_finfo);
-}
 
 //--------------------------------------------------------------------------------------------
 bool_t check_skills( Game_t * gs, CHR_REF who, Uint32 whichskill )
@@ -8579,7 +8474,7 @@ CHR_REF _chr_spawn( CHR_SPAWN_INFO si, bool_t activate )
   pchr->ori.pos.y   = si.pos.y;
   pchr->ori.turn_lr = si.facing;
   pchr->onwhichfan = mesh_get_fan( pmesh, pchr->ori.pos );
-  pchr->level = mesh_get_level( &(pmesh->Mem), pchr->onwhichfan, pchr->ori.pos.x, pchr->ori.pos.y, pchr->prop.waterwalk, &(si.gs->Water) ) + RAISE;
+  pchr->level = mesh_get_level( &(pmesh->Mem), pchr->onwhichfan, pchr->ori.pos.x, pchr->ori.pos.y, pchr->prop.waterwalk, &(si.gs->GfxData.Water) ) + RAISE;
   if ( si.pos.z < pchr->level ) si.pos.z = pchr->level;
   pchr->ori.pos.z = si.pos.z;
 

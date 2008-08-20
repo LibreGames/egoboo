@@ -37,9 +37,9 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-bool_t    sv_Started();
+bool_t      sv_Started();
 NetHost_t * sv_getHost();
-void      sv_quitHost();
+void        sv_quitHost();
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -81,22 +81,23 @@ struct sServer
 };
 typedef struct sServer Server_t;
 
-Server_t * CServer_create(struct sGame * gs);
-bool_t    CServer_destroy(Server_t ** pss);
-Server_t * CServer_renew(Server_t * ss);
-retval_t  CServer_startUp(Server_t * ss);
-retval_t  CServer_shutDown(Server_t * ss);
+Server_t * Server_create(struct sGame * gs);
+bool_t     Server_destroy(Server_t ** pss);
+Server_t * Server_renew(Server_t * ss);
+retval_t   Server_startUp(Server_t * ss);
+retval_t   Server_shutDown(Server_t * ss);
 
-retval_t      sv_shutDown(Server_t * ss);
-bool_t        sv_Running(Server_t * ss);
+void Server_reset_latches(Server_t * ss);
+
+void Server_bufferLatches(Server_t * ss);
+void Server_unbufferLatches(Server_t * ss);
+void Server_resetTimeLatches(Server_t * ss, CHR_REF ichr);
+
+retval_t sv_shutDown(Server_t * ss);
+bool_t   sv_Running(Server_t * ss);
 
 void     sv_frameStep(Server_t * ss);
-
-void CServer_reset_latches(Server_t * ss);
-void sv_talkToRemotes(Server_t * ss);
-void CServer_bufferLatches(Server_t * ss);
-void CServer_unbufferLatches(Server_t * ss);
-void Server_resetTimeLatches(Server_t * ss, CHR_REF ichr);
+void     sv_talkToRemotes(Server_t * ss);
 
 bool_t sv_sendPacketToAllClients(Server_t * ss, SYS_PACKET * egop);
 bool_t sv_sendPacketToAllClientsGuaranteed(Server_t * ss, SYS_PACKET * egop);
@@ -106,11 +107,9 @@ void   sv_letPlayersJoin(Server_t * ss);
 
 bool_t sv_dispatchPackets(Server_t * ss);
 bool_t sv_handlePacket(Server_t * ss, ENetEvent *event);
+bool_t sv_send_chr_setup( Server_t * ss, CHR_SPAWN_INFO * si );
 
 // More to come...
 // int  sv_beginSinglePlayer(...)
 // int  sv_beginMultiPlayer(...)
 // int  sv_loadModule(...)
-
-
-bool_t sv_send_chr_setup( Server_t * ss, CHR_SPAWN_INFO * si );

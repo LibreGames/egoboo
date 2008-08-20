@@ -574,3 +574,29 @@ void input_init_keybuffer()
   _shiftvals[SDLK_BACKSLASH]    = '|';
   _shiftvals[SDLK_SLASH]        = '?';
 }
+
+//--------------------------------------------------------------------------------------------
+void check_add(Uint8 key, char bigletter, char littleletter)
+{
+  // ZZ> This function adds letters to the net message
+  KeyboardBuffer_t * kbuffer = KeyboardBuffer_getState();
+
+  if(SDLKEYDOWN(key))
+  {
+    if(kbuffer->write < MESSAGESIZE-2)
+    {
+      if(SDLKEYDOWN(SDLK_LSHIFT) || SDLKEYDOWN(SDLK_RSHIFT))
+      {
+        kbuffer->buffer[kbuffer->write] = bigletter;
+      }
+      else
+      {
+        kbuffer->buffer[kbuffer->write] = littleletter;
+      }
+      kbuffer->write++;
+      kbuffer->buffer[kbuffer->write]   = '?'; // The flashing input cursor
+      kbuffer->buffer[kbuffer->write+1] = EOS;
+    }
+  }
+
+}

@@ -89,8 +89,8 @@ ui_buttonValues  ui_doImageButtonWithText( ui_Widget_t * pWidget );
 //int  ui_doTextBox(ui_Widget_t * pWidget);
 
 // Utility functions
-void    ui_doCursor();
-int     ui_mouseInside( int x, int y, int width, int height );
+void      ui_doCursor();
+int       ui_mouseInside( int x, int y, int width, int height );
 TTFont_t* ui_getTTFont();
 BMFont_t* ui_getBMFont();
 

@@ -35,9 +35,13 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-#define TABAND              31                      // Tab size
+#define TABAND              31          // Tab size
 
-#define TRANSCOLOR                      0           // Transparent color
+#define TRANSCOLOR          0           // Transparent color
+
+#define SPARKLESIZE 28
+#define SPARKLEADD 2
+#define MAPSIZE 96
 
 //--------------------------------------------------------------------------------------------
 
@@ -45,6 +49,7 @@ struct sConfigData;
 struct sGame;
 struct s_mod_info;
 struct sChr;
+struct sGraphics_Data;
 
 //--------------------------------------------------------------------------------------------
 struct s_renderlist
@@ -67,36 +72,27 @@ struct s_renderlist
 };
 typedef struct s_renderlist RENDERLIST;
 
-//--------------------------------------------------------------------------------------------
-// Global lighting stuff
-struct s_lighting_info
-{
-  bool_t on;
-  float  spek;
-  vect3  spekdir;
-  vect3  spekdir_stt;
-  vect3  spekcol;
-  float  ambi;
-  vect3  ambicol;
-};
-typedef struct s_lighting_info LIGHTING_INFO;
 
-bool_t lighting_info_reset(LIGHTING_INFO * li);
-bool_t setup_lighting( LIGHTING_INFO * li);
 
 //--------------------------------------------------------------------------------------------
 struct sGraphics
 {
   egoboo_key_t ekey;
 
+  // the game state that we are plugged into
+
+  struct sGame          * gs;
+  struct sGraphics_Data * pGfx;
+  struct sGui           * gui;
+
+  // graphics configuration info
+
   // JF - Added so that the video mode might be determined outside of the graphics code
   SDL_Surface * surface;
 
-  bool_t        texture_on;
-  SDL_GrabMode  GrabMouse;
-  bool_t        HideMouse;
-
   STRING        szDriver;                   // graphics driver name;
+
+  bool_t        texture_on;
 
   bool_t        fullscreen;                 // current value of the fullscreen
   bool_t        gfxacceleration;            // current value of the gfx acceleration
@@ -115,22 +111,14 @@ struct sGraphics
   bool_t        vsync;                      // current vsync flag
   bool_t        phongon;                    // current phongon flag
 
-  bool_t        render_overlay;              // current overlayvalid flag
-  bool_t        render_background;           // current overlayvalid flag
-  bool_t        render_fog;                  // current fogallowed flag
-
   float         maxAnisotropy;                     // Max anisotropic filterings (Between 1.00 and 16.00)
   int           userAnisotropy;                    // Requested anisotropic level
   int           log2Anisotropy;                    // Max levels of anisotropy
 
   SDL_Rect **   video_mode_list;
 
+  // graphics optimization info
   RENDERLIST *  rnd_lst;
-
-  float         est_max_fps;
-
-  // the game state that we are plugged into
-  struct sGame  * gs;
 
   // pageflip stuff
   bool_t pageflip_requested;
@@ -141,13 +129,15 @@ struct sGraphics
 
   bool_t clear_requested;
 
-  // frame stuff
+  // fps stuff
+  float  est_max_fps;
   Sint32 fps_clock;               // The number of ticks this second
   Uint32 fps_loops;               // The number of frames drawn this second
   float  stabilized_fps;
   float  stabilized_fps_sum;
   float  stabilized_fps_weight;
 };
+
 typedef struct sGraphics Graphics_t;
 
 Graphics_t * Graphics_new(Graphics_t * g, struct sConfigData * cd);
@@ -212,11 +202,11 @@ struct sGui
 
   bool_t can_pause;          //Pause button avalible?
 
-  GLtexture TxBars;                                         /* status bars */
-  GLtexture TxBlip;                                         /* you are here texture */
-
   struct sClockState * clk;
-  float                 dUpdate;
+  float                dUpdate;
+
+  SDL_GrabMode  GrabMouse;
+  bool_t        HideMouse;
 
   MessageQueue_t msgQueue;
 };
@@ -225,55 +215,9 @@ typedef struct sGui Gui_t;
 Gui_t * gui_getState();
 bool_t CGui_shutDown();
 
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
 
-#define MAXWATERLAYER 2                             // Maximum water layers
-#define MAXWATERFRAME 512                           // Maximum number of wave frames
-#define WATERFRAMEAND (MAXWATERFRAME-1)             //
-#define WATERPOINTS 4                               // Points in a water fan
-#define WATERMODE 4                                 // Ummm...  For making it work, yeah...
 
-struct s_water_layer
-{
-  Uint16    lightlevel_fp8; // General light amount (0-63)
-  Uint16    lightadd_fp8;   // Ambient light amount (0-63)
-  Uint16    alpha_fp8;      // Transparency
 
-  float     u;              // Coordinates of texture
-  float     v;              //
-  float     uadd;           // Texture movement
-  float     vadd;           //
-
-  float     amp;            // Amplitude of waves
-  float     z;              // Base height of water
-  float     zadd[MAXWATERFRAME][WATERMODE][WATERPOINTS];
-  Uint8     color[MAXWATERFRAME][WATERMODE][WATERPOINTS];
-  Uint16    frame;          // Frame
-  Uint16    frameadd;       // Speed
-
-  float     distx;          // For distant backgrounds
-  float     disty;          //
-};
-typedef struct s_water_layer WATER_LAYER;
-
-struct s_water_info
-{
-  float     surfacelevel;         // Surface level for water striders
-  float     douselevel;           // Surface level for torches
-  bool_t    light;                // Is it light ( default is alpha )
-  Uint8     spekstart;            // Specular begins at which light value
-  Uint8     speklevel_fp8;        // General specular amount (0-255)
-  bool_t    iswater;              // Is it water?  ( Or lava... )
-
-  int         layer_count; // EQ( 0 );              // Number of layers
-  WATER_LAYER layer[MAXWATERLAYER];
-
-  Uint32    spek[256];             // Specular highlights
-};
-typedef struct s_water_info WATER_INFO;
-
-bool_t make_water(WATER_INFO * wi);
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -318,3 +262,63 @@ bool_t load_particle_texture( struct sGame * gs, const char *szModPath );
 
 bool_t read_wawalite( struct sGame * gs, char *modname );
 void do_dyna_light(struct sGame * gs);
+
+void  make_spektable( vect3 lite );
+void  make_lighttospek( void );
+
+void render_particles();
+void render_particle_reflections();
+void render_mad_lit( CHR_REF character );
+void render_water_fan_lit( Uint32 fan, Uint8 layer, Uint8 mode );
+
+void   reset_end_text( struct sGame * gs );
+void make_textureoffset( void );
+void figure_out_what_to_draw();
+
+bool_t load_bars( char* szBitmap );
+void load_map( struct sGraphics_Data * gfx, char* szModule );
+
+void render_prt();
+void render_shadow( CHR_REF character );
+//void render_bad_shadow( CHR_REF character );
+void render_refprt();
+void render_fan( Uint32 fan, char tex_loaded );
+void render_fan_ref( Uint32 fan, char tex_loaded, float level );
+void render_water_fan( Uint32 fan, Uint8 layer, Uint8 mode );
+void render_enviromad( CHR_REF character, Uint8 trans );
+void render_texmad( CHR_REF character, Uint8 trans );
+void render_mad( CHR_REF character, Uint8 trans );
+void render_refmad( CHR_REF tnc, Uint16 trans );
+
+void do_chr_dynalight(struct sGame * gs);
+void do_prt_dynalight(struct sGame * gs);
+void set_fan_dyna_light( int fanx, int fany, PRT_REF particle );
+void render_water();
+void draw_scene_zreflection();
+void draw_blip( enum e_color color, float x, float y );
+void draw_one_icon( int icontype, int x, int y, Uint8 sparkle );
+
+void   draw_map( float x, float y );
+int    draw_one_bar( int bartype, int x, int y, int ticks, int maxticks );
+bool_t draw_scene( struct sGame * gs );
+void   draw_main( float );
+
+
+void load_blip_bitmap( struct sGraphics_Data * gfx,  char * modname );
+
+void render_mad_lit( CHR_REF character );
+void render_particle_reflections();
+void render_water_fan_lit( Uint32 fan, Uint8 layer, Uint8 mode );
+
+void make_speklut();
+
+void   release_all_textures( struct sGraphics_Data * gfx );
+Uint32 load_one_icon( struct sGraphics_Data * gfx, char * szPathname, const char * szObjectname, char * szFilename );
+void   release_all_icons( struct sGraphics_Data * gfx );
+
+bool_t debug_message( int time, const char *format, ... );
+void make_spektable( vect3 lite );
+void make_lighttospek( void );
+
+
+bool_t gfx_download( struct sGame * gs );

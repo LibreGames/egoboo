@@ -38,7 +38,8 @@ bool_t fs_find_info_delete(FS_FIND_INFO * i)
   if(NULL == i) return bfalse;
   if(FS_UNKNOWN == i->type) return bfalse;
 
-  // this is not strictly necessary, since EGOBOO_DELETE() or free() doesn't care about the type of its argument
+  // this is not strictly necessary in C, since EGOBOO_DELETE() or free() 
+  // doesn't care about the type of its argument
   switch(i->type)
   {
     case FS_WIN32:
@@ -91,6 +92,7 @@ void fs_removeDirectoryAndContents( const char *dirname )
       snprintf( filePath, MAX_PATH, "%s" SLASH_STRING "%s", dirname, fileName );
       if ( fs_fileIsDirectory( filePath ) )
       {
+        // this is recursive delete
         //fs_removeDirectoryAndContents(filePath);
       }
       else

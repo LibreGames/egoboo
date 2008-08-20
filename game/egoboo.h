@@ -47,7 +47,7 @@
 #include <math.h>
 
 struct sGame;
-
+struct sGraphics_Data;
 
 
 // The following magic allows this include to work in multiple files
@@ -59,22 +59,13 @@ struct sGame;
 #    define EQ(x)
 #endif
 
-EXTERN const char VERSION[] EQ( "2.7.x" );   // Version of the game
+#define MEG              0x00100000
+#define BUFFER_SIZE     (4 * MEG)
 
+EXTERN const char VERSION[] EQ( "2.8.x" );   // Version of the game
 
 #define DEFAULT_SCREEN_W 640
 #define DEFAULT_SCREEN_H 480
-
-enum e_color
-{
-  COLR_WHITE = 0,
-  COLR_RED,
-  COLR_YELLOW,
-  COLR_GREEN,
-  COLR_BLUE,
-  COLR_PURPLE
-};
-typedef enum e_color COLR;
 
 #define NOSPARKLE           255
 
@@ -103,7 +94,43 @@ enum e_part_type
 };
 typedef enum e_part_type PART_TYPE;
 
+typedef enum e_ORDER
+{
+  MESSAGE_SIGNAL = 0,
+  MESSAGE_MOVE = 1,
+  MESSAGE_ATTACK,
+  MESSAGE_ASSIST,
+  MESSAGE_STAND,
+  MESSAGE_TERRAIN
+} ORDER;
 
+typedef enum e_SIGNAL
+{
+  SIGNAL_BUY     = 0,
+  SIGNAL_SELL,
+  SIGNAL_REJECT,
+  SIGNAL_ENTERPASSAGE
+} SIGNAL;
+
+
+typedef enum e_move
+{
+  MOVE_MELEE = 300,
+  MOVE_RANGED = -600,
+  MOVE_DISTANCE = -175,
+  MOVE_RETREAT = 900,
+  MOVE_CHARGE = 1500,
+  MOVE_FOLLOW = 0
+} MOVE;
+
+typedef enum e_search_bits
+{
+  SEARCH_DEAD      = 1 << 0,
+  SEARCH_ENEMIES   = 1 << 1,
+  SEARCH_FRIENDS   = 1 << 2,
+  SEARCH_ITEMS     = 1 << 3,
+  SEARCH_INVERT    = 1 << 4
+} SEARCH_BITS;
 
 #define SPELLBOOK           127                     // The spellbook model TODO: change this badly thing
 
@@ -133,7 +160,7 @@ typedef enum e_part_type PART_TYPE;
 
 
 
-#define NUMBAR                          6           // Number of status bars
+#define BAR_COUNT                          6           // Number of status bars
 #define TABX                            32          // Size of little name tag on the bar
 #define BARX                            112         // Size of bar
 #define BARY                            16          //
@@ -189,25 +216,15 @@ bool_t tile_animated_reset(TILE_ANIMATED * t);
 
 //Minimap stuff
 #define MAXBLIP     32     //Max number of blips displayed on the map
-EXTERN Uint16          numblip  EQ( 0 );
 typedef struct s_blip
 {
-  Uint16          x;
-  Uint16          y;
+  Uint16  x;
+  Uint16  y;
   COLR    c;
 
   // !!! wrong, but it will work !!!
   IRect_t           rect;           // The blip rectangles
 } BLIP;
-
-EXTERN BLIP BlipList[MAXBLIP];
-
-EXTERN Uint8           mapon  EQ( bfalse );
-EXTERN Uint8           youarehereon  EQ( bfalse );
-
-
-EXTERN Uint8           timeron     EQ( bfalse );      // Game timer displayed?
-EXTERN Uint32          timervalue  EQ( 0 );           // Timer_t time ( 50ths of a second )
 
 
 EXTERN Sint32          ups_clock             EQ( 0 );             // The number of ticks this second
@@ -215,9 +232,6 @@ EXTERN Uint32          ups_loops             EQ( 0 );             // The number 
 EXTERN float           stabilized_ups        EQ( TARGETUPS );
 EXTERN float           stabilized_ups_sum    EQ( TARGETUPS );
 EXTERN float           stabilized_ups_weight EQ( 1 );
-
-EXTERN Uint8           outofsync  EQ( 0 );    //Is this only for RTS? Can it be removed then?
-EXTERN Uint8           parseerror EQ( 0 );    //Do we have an script error?
 
 #define DELAY_TURN 16
 
@@ -227,26 +241,6 @@ EXTERN Uint8                   localplayer_control[16];           // For local i
 EXTERN OBJ_REF                 localplayer_slot[16];              // For local imports
 
 // EWWWW. GLOBALS ARE EVIL.
-
-
-EXTERN float     foregroundrepeat  EQ( 1 );     //
-EXTERN float     backgroundrepeat  EQ( 1 );     //
-
-//Fog stuff
-struct s_fog_info
-{
-  bool_t          on; // EQ( bfalse );            // Do ground fog?
-  float           bottom; // EQ( 0.0 );          //
-  float           top; // EQ( 100 );             //
-  float           distance; // EQ( 100 );        //
-  Uint8           red; // EQ( 255 );             //  Fog collour
-  Uint8           grn; // EQ( 255 );             //
-  Uint8           blu; // EQ( 255 );             //
-  bool_t          affectswater;
-};
-typedef struct s_fog_info FOG_INFO;
-
-bool_t fog_info_reset(FOG_INFO * f);
 
 
 /*Special Textures*/
@@ -292,79 +286,186 @@ typedef enum e_tx_filters
 #define GL_TEXTURE_MAX_ANISOTROPY_EXT 0x84FE
 #define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 
-//Interface stuff
-EXTERN IRect_t                    iconrect;                   // The 32x32 icon rectangle
-EXTERN IRect_t                    trimrect;                   // The menu trim rectangle
+#define MAXWATERLAYER 2                             // Maximum water layers
+#define MAXWATERFRAME 512                           // Maximum number of wave frames
+#define WATERFRAMEAND (MAXWATERFRAME-1)             //
+#define WATERPOINTS 4                               // Points in a water fan
+#define WATERMODE 4                                 // Ummm...  For making it work, yeah...
 
-
-EXTERN IRect_t                    tabrect[NUMBAR];            // The tab rectangles
-EXTERN IRect_t                    barrect[NUMBAR];            // The bar rectangles
-
-EXTERN Uint16                   blipwidth;
-EXTERN Uint16                   blipheight;
-
-EXTERN float                    mapscale EQ( 1.0 );
-EXTERN IRect_t                    maprect;                    // The map rectangle
-
-#define SPARKLESIZE 28
-#define SPARKLEADD 2
-#define MAPSIZE 96
-
-EXTERN Uint8                   lightdirectionlookup[UINT16_SIZE];// For lighting characters
-
-#define MEG              0x00100000
-#define BUFFER_SIZE     (4 * MEG)
-
-
-struct s_twist_entry
+struct s_water_layer
 {
-  Uint32       lr;           // For surface normal of mesh
-  Uint32       ud;           //
-  vect3        nrm;          // For sliding down steep hills
-  bool_t       flat;         //
+  Uint16    lightlevel_fp8; // General light amount (0-63)
+  Uint16    lightadd_fp8;   // Ambient light amount (0-63)
+  Uint16    alpha_fp8;      // Transparency
+
+  float     u;              // Coordinates of texture
+  float     v;              //
+  float     uadd;           // Texture movement
+  float     vadd;           //
+
+  float     amp;            // Amplitude of waves
+  float     z;              // Base height of water
+  float     zadd[MAXWATERFRAME][WATERMODE][WATERPOINTS];
+  Uint8     color[MAXWATERFRAME][WATERMODE][WATERPOINTS];
+  Uint16    frame;          // Frame
+  Uint16    frameadd;       // Speed
+
+  float     distx;          // For distant backgrounds
+  float     disty;          //
 };
-typedef struct s_twist_entry TWIST_ENTRY;
+typedef struct s_water_layer WATER_LAYER;
 
-EXTERN TWIST_ENTRY twist_table[256];
-
-typedef enum e_ORDER
+struct s_water_info
 {
-  MESSAGE_SIGNAL = 0,
-  MESSAGE_MOVE = 1,
-  MESSAGE_ATTACK,
-  MESSAGE_ASSIST,
-  MESSAGE_STAND,
-  MESSAGE_TERRAIN
-} ORDER;
+  float     surfacelevel;         // Surface level for water striders
+  float     douselevel;           // Surface level for torches
+  bool_t    light;                // Is it light ( default is alpha )
+  Uint8     spekstart;            // Specular begins at which light value
+  Uint8     speklevel_fp8;        // General specular amount (0-255)
+  bool_t    iswater;              // Is it water?  ( Or lava... )
 
-typedef enum e_SIGNAL
+  int         layer_count; // EQ( 0 );              // Number of layers
+  WATER_LAYER layer[MAXWATERLAYER];
+
+  Uint32    spek[256];             // Specular highlights
+};
+typedef struct s_water_info WATER_INFO;
+
+bool_t make_water(WATER_INFO * wi);
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+// Global lighting stuff
+struct s_lighting_info
 {
-  SIGNAL_BUY     = 0,
-  SIGNAL_SELL,
-  SIGNAL_REJECT,
-  SIGNAL_ENTERPASSAGE
-} SIGNAL;
+  bool_t on;
+  float  spek;
+  vect3  spekdir;
+  vect3  spekdir_stt;
+  vect3  spekcol;
+  float  ambi;
+  vect3  ambicol;
+};
+typedef struct s_lighting_info LIGHTING_INFO;
 
+bool_t lighting_info_reset(LIGHTING_INFO * li);
+bool_t setup_lighting( LIGHTING_INFO * li);
 
-typedef enum e_move
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+//Fog stuff
+struct s_fog_info
 {
-  MOVE_MELEE = 300,
-  MOVE_RANGED = -600,
-  MOVE_DISTANCE = -175,
-  MOVE_RETREAT = 900,
-  MOVE_CHARGE = 1500,
-  MOVE_FOLLOW = 0
-} MOVE;
+  bool_t          on; // EQ( bfalse );            // Do ground fog?
+  float           bottom; // EQ( 0.0 );          //
+  float           top; // EQ( 100 );             //
+  float           distance; // EQ( 100 );        //
+  Uint8           red; // EQ( 255 );             //  Fog collour
+  Uint8           grn; // EQ( 255 );             //
+  Uint8           blu; // EQ( 255 );             //
+  bool_t          affectswater;
+};
+typedef struct s_fog_info FOG_INFO;
 
-typedef enum e_search_bits
+bool_t fog_info_reset(FOG_INFO * f);
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+//Dynamic Lightning effects
+
+#define MAXDYNA                           64        // Number of dynamic lights
+#define MAXDYNADIST                     2700        // Leeway for offscreen lights
+
+#define DYNALIGHT_MEMBERS                \
+  float  level;      /* Light level    */ \
+  float  falloff;    /* Light falloff  */
+
+struct s_dynalight_info
 {
-  SEARCH_DEAD      = 1 << 0,
-  SEARCH_ENEMIES   = 1 << 1,
-  SEARCH_FRIENDS   = 1 << 2,
-  SEARCH_ITEMS     = 1 << 3,
-  SEARCH_INVERT    = 1 << 4
-} SEARCH_BITS;
+  DYNALIGHT_MEMBERS
+  bool_t permanent;
+  vect3  pos;        // Light position
+  int    distance;      // The distances
+};
+typedef struct s_dynalight_info DYNALIGHT_INFO;
+
+#ifdef __cplusplus
+  typedef TList<DYNALIGHT_INFO, MAXDYNA> DLightList_t;
+  typedef TPList<DYNALIGHT_INFO, MAXDYNA> PDLight;
+#else
+  typedef DYNALIGHT_INFO   DLightList_t[MAXDYNA];
+  typedef DYNALIGHT_INFO * PDLight;
+#endif
+
+size_t DLightList_clear( struct sGraphics_Data * gfx );
+size_t DLightList_prune( struct sGraphics_Data * gfx );
+size_t DLightList_add( struct sGraphics_Data * gfx, DYNALIGHT_INFO * di );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+// per-module graphics data that is shared between Game_t and the graphics module
+struct sGraphics_Data
+{
+  egoboo_key_t ekey;
+
+  bool_t render_overlay;   
+  bool_t render_background;
+  bool_t render_fog;
+  bool_t usefaredge;                 // Far edge maps? (Outdoor)
+  bool_t exploremode;                // Explore mode? (fog of war)
+
+  float  foregroundrepeat;
+  float  backgroundrepeat;
+
+  // trim stuff (obsolete)
+  //extern IRect_t           trimrect;                   // The menu trim rectangle
+
+  // Map stuff
+  GLtexture  Map_tex;
+  IRect_t    Map_rect;
+  float      Map_scale;
+  bool_t     Map_on;
+  bool_t     Map_youarehereon;
+
+
+  // Bars
+  GLtexture  TxBars;                              // status bar bitmap
+  IRect_t    TxBars_rect[BAR_COUNT];              // The bar rectangles
+
+  // Blips
+  GLtexture  BlipList_tex;                        // "you are here" texture
+  Uint16     BlipList_count;
+  BLIP       BlipList[MAXBLIP];
+
+  // water and lighting info
+  WATER_INFO    Water;
+  LIGHTING_INFO Light;
+  FOG_INFO      Fog;
+
+  // dynamic lighting info
+  int          DLightList_distancetobeat;      // The number to beat
+  int          DLightList_count;               // Number of dynamic lights
+  DLightList_t DLightList;
+
+  // Texture info
+  GLtexture TxTexture[MAXTEXTURE];   // All normal textures
+  int       ico_lst[ICO_COUNT];      // A lookup table for special icons
+
+  // Icon stuff
+  IRect_t   TxIcon_rect;             // The 32x32 icon rectangle
+  int       TxIcon_count;            // Number of icons
+  GLtexture TxIcon[MAXICONTX];       // All icon textures
+};
+typedef struct sGraphics_Data Graphics_Data_t;
+
+Graphics_Data_t * Graphics_Data_new(Graphics_Data_t * gd);
+bool_t            Graphics_Data_delete(Graphics_Data_t * gd);
+
+
+
 
 
 
@@ -377,27 +478,14 @@ typedef enum e_search_bits
 EXTERN float           textureoffset[256];         // For moving textures
 
 
-EXTERN char            cFrameName[16];                                     // MD2 Frame Name
-
-// My lil' random number table
-#define MAXRAND 4096
-EXTERN Uint16 randie[MAXRAND];
-
-#define RANDIE(IND) randie[IND]; IND++; IND %= MAXRAND;
-#define FRAND(PSEED) ( 2.0f*( float ) ego_rand_32(PSEED) / ( float ) (1 << 16) / ( float ) (1 << 16) - 1.0f )
-#define RAND(PSEED, MINVAL, MAXVAL) ((((ego_rand_32(PSEED) >> 16) * (MAXVAL-MINVAL)) >> 16)  + MINVAL)
-#define IRAND(PSEED, BITS) ( ego_rand_32(PSEED) & ((1<<BITS)-1) )
-
-
-EXTERN Uint32 particletrans_fp8  EQ( 0x80 );
-EXTERN Uint32 antialiastrans_fp8  EQ( 0xC0 );
+EXTERN const Uint32 particletrans_fp8  EQ( 0x80 );
+EXTERN const Uint32 antialiastrans_fp8  EQ( 0xC0 );
 
 
 //Network Stuff
 //#define CHARVEL 5.0
 
 
-EXTERN bool_t          usefaredge;                     // Far edge maps? (Outdoor)
 EXTERN float       doturntime;                     // Time for smooth turn
 
 EXTERN STRING      CStringTmp1, CStringTmp2;
@@ -428,14 +516,3 @@ typedef struct sMachineState MachineState_t;
 
 MachineState_t * get_MachineState(void);
 retval_t         MachineState_update(MachineState_t * mac);
-
-
-#include "module.h"
-
-EXTERN const char *globalname  EQ( NULL );   // For debuggin' fgoto_colon
-EXTERN const char *globalparsename  EQ( NULL );  // The SCRIPT.TXT filename
-
-
-bool_t add_quest_idsz( char *whichplayer, IDSZ idsz );
-int    modify_quest_idsz( char *whichplayer, IDSZ idsz, int adjustment );
-int    check_player_quest( char *whichplayer, IDSZ idsz );

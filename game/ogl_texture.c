@@ -442,23 +442,3 @@ void GLtexture_Bind( GLtexture *texture, Graphics_t * g )
 };
 
 
-//--------------------------------------------------------------------------------------------
-bool_t handle_opengl_error()
-{
-  bool_t berror = btrue;
-
-  switch ( glGetError() )
-  {
-    case GL_INVALID_ENUM:      //fprintf( stderr, "GLenum argument out of range" ); break;
-    case GL_INVALID_VALUE:     //fprintf( stderr, "Numeric argument out of range" ); break;
-    case GL_INVALID_OPERATION: //fprintf( stderr, "Operation illegal in current state" ); break;
-    case GL_STACK_OVERFLOW:    //fprintf( stderr, "Command would cause a stack overflow" ); break;
-    case GL_STACK_UNDERFLOW:   //fprintf( stderr, "Command would cause a stack underflow" ); break;
-    case GL_OUT_OF_MEMORY:     //fprintf( stderr, "Not enough memory left to execute command" ); break;
-    default: berror = bfalse; break;
-  };
-
-  if ( berror ) fflush( stderr );
-
-  return berror;
-};

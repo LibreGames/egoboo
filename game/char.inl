@@ -398,7 +398,7 @@ INLINE AI_STATE * ai_state_init(Game_t * gs, AI_STATE * a, CHR_REF ichr)
   a->time    = 0;
 
   tnc = 0;
-  while ( tnc < MAXSTOR )
+  while ( tnc < STOR_COUNT )
   {
     a->x[tnc] = 0;
     a->y[tnc] = 0;

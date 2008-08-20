@@ -39,3 +39,6 @@ struct ogl_vertex_t
   vect3 rt;
 };
 typedef struct ogl_vertex_t GLVertex;
+
+
+bool_t handle_opengl_error();

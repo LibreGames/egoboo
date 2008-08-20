@@ -134,3 +134,5 @@ bool_t mnu_load_cl_images(MenuProc_t * mproc);
 void   mnu_free_all_titleimages(MenuProc_t * mproc);
 void   mnu_prime_titleimage(MenuProc_t * mproc);
 void   mnu_prime_modules(MenuProc_t * mproc);
+
+void   check_player_import(struct sGame * gs);

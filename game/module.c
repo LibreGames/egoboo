@@ -66,6 +66,7 @@ void module_release( Game_t * gs )
   Mesh_t     * pmesh = Game_getMesh(gs);
   ModState_t * ms    = &(gs->modstate);
   MeshInfo_t * mi    = &(pmesh->Info);
+  Graphics_Data_t * gfx = Game_getGfx( gs );
 
   if(!ms->Active) return;
 
@@ -74,8 +75,8 @@ void module_release( Game_t * gs )
   if( Game_hasClient(gs) )
   {
     // release client resources
-    release_all_textures(gs);
-    release_all_icons(gs);
+    release_all_textures( gfx );
+    release_all_icons( gfx  );
   }
 
   // if the game is local or a server,
@@ -83,7 +84,7 @@ void module_release( Game_t * gs )
   if( Game_hasServer(gs) )
   {
     // release server resources
-    release_map(gs);
+    release_map( gfx );
     release_bumplist( mi );
   }
 
@@ -212,11 +213,12 @@ bool_t module_load( Game_t * gs, char *smallname )
   // ZZ> This function loads a module
 
   STRING szModpath;
+  Graphics_Data_t * gfx = Game_getGfx( gs );
 
   if(!EKEY_PVALID(gs) ||  !VALID_CSTR(smallname) ) return bfalse;
 
   gs->modstate.beat = bfalse;
-  timeron = bfalse;
+  gs->timeron = bfalse;
   snprintf( szModpath, sizeof( szModpath ), "%s" SLASH_STRING "%s" SLASH_STRING, CData.modules_dir, smallname );
 
   make_randie();
@@ -291,8 +293,8 @@ bool_t module_load( Game_t * gs, char *smallname )
     }
   };
 
-  load_map( gs, szModpath );
-  load_blip_bitmap( szModpath );
+  load_map( gfx, szModpath );
+  load_blip_bitmap( gfx, szModpath );
 
   //module_read_egomap_extra( gs, szModpath );
 
@@ -615,7 +617,7 @@ void module_quit( Game_t * gs )
   {
     // reset both the client and server data
     Client_renew(gs->cl);
-    CServer_renew(gs->sv);
+    Server_renew(gs->sv);
   }
   else if( Game_hasClient(gs) )
   {
@@ -785,7 +787,7 @@ bool_t module_read_egomap_extra( Game_t * gs, const char * szModPath )
     di.level   = level;
     di.permanent = btrue;
 
-    DLightList_add( gs, &di );
+    DLightList_add( Game_getGfx(gs), &di );
   };
 
   fs_fileClose( ftmp );
@@ -794,10 +796,10 @@ bool_t module_read_egomap_extra( Game_t * gs, const char * szModPath )
 }
 
 //--------------------------------------------------------------------------------------------
-void release_map( Game_t * gs )
+void release_map( Graphics_Data_t * gfx )
 {
   // ZZ> This function releases all the map images
 
-  GLtexture_Release( &gs->TxMap );
+  GLtexture_Release( &gfx->Map_tex );
 }
 

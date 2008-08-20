@@ -49,7 +49,7 @@ typedef struct sTask Task_t;
 Task_t *task_list = NULL;
 ClockState_t * taskClock = NULL;
 
-void task_register( const char *taskName, float timeInterval, TaskCallback f )
+void Task_register( const char *taskName, float timeInterval, TaskCallback f )
 {
   Task_t *aTask;
   size_t len;
@@ -61,7 +61,7 @@ void task_register( const char *taskName, float timeInterval, TaskCallback f )
 
   if ( NULL == taskClock )
   {
-    taskClock = ClockState_create("task", -1);
+    taskClock = Clock_create("task", -1);
   };
 
   // If the time interval is negative, treat it as 0
@@ -75,7 +75,7 @@ void task_register( const char *taskName, float timeInterval, TaskCallback f )
   aTask->func = f;
 
   aTask->interval = timeInterval;
-  aTask->timeLastCalled = ( float ) ClockState_getTime( taskClock );
+  aTask->timeLastCalled = ( float ) Clock_getTime( taskClock );
 
   if ( NULL == task_list  )
   {
@@ -91,7 +91,7 @@ void task_register( const char *taskName, float timeInterval, TaskCallback f )
   }
 }
 
-void task_remove( const char *taskName )
+void Task_remove( const char *taskName )
 {
   Task_t *aTask;
 
@@ -114,11 +114,11 @@ void task_remove( const char *taskName )
 
   if ( NULL == task_list )
   {
-    ClockState_destroy( &taskClock );
+    Clock_destroy( &taskClock );
   }
 }
 
-void task_pause( const char *taskName )
+void Task_pause( const char *taskName )
 {
   Task_t *aTask;
 
@@ -134,7 +134,7 @@ void task_pause( const char *taskName )
   }
 }
 
-void task_play( const char *taskName )
+void Task_play( const char *taskName )
 {
   Task_t *aTask;
 
@@ -150,12 +150,12 @@ void task_play( const char *taskName )
   }
 }
 
-void task_updateAllTasks()
+void Task_updateAllTasks()
 {
   double currentTime, deltaTime;
   Task_t *aTask;
 
-  currentTime = ClockState_getTime( taskClock );
+  currentTime = Clock_getTime( taskClock );
 
   aTask = task_list;
   while ( NULL != aTask  )

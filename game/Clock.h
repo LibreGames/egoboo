@@ -37,16 +37,16 @@ void clock_init();      // Init the clock module
 void clock_shutdown();  // Shut down the clock module
 void clock_setTimeSource( clock_source_ptr_t tsrc );     // Specify where the clock gets its time values from
 
-ClockState_t * ClockState_create( const char * name, int size );
-bool_t       ClockState_destroy( ClockState_t ** cs );
-ClockState_t * ClockState_renew( ClockState_t * cs );
+ClockState_t * Clock_create( const char * name, int size );
+bool_t       Clock_destroy( ClockState_t ** cs );
+ClockState_t * Clock_renew( ClockState_t * cs );
 
-void   ClockState_frameStep( ClockState_t * cs );          // Update the clock.
-double ClockState_getTime( ClockState_t * cs );            // Returns the current time.  The clock's time only
-                                                         // updates when ClockState_frameStep() is called
-double ClockState_getFrameDuration( ClockState_t * cs );   // Return the length of the current frame. (Sort of.)
-Uint32 ClockState_getFrameNumber( ClockState_t * cs );     // Return which frame we're on
-float  ClockState_getFrameRate( ClockState_t * cs );       // Return the current instantaneous FPS
+void   Clock_frameStep( ClockState_t * cs );          // Update the clock.
+double Clock_getTime( ClockState_t * cs );            // Returns the current time.  The clock's time only
+                                                         // updates when Clock_frameStep() is called
+double Clock_getFrameDuration( ClockState_t * cs );   // Return the length of the current frame. (Sort of.)
+Uint32 Clock_getFrameNumber( ClockState_t * cs );     // Return which frame we're on
+float  Clock_getFrameRate( ClockState_t * cs );       // Return the current instantaneous FPS
 
 //-----------------------------------------------------------------
 // macros to use the high resolution timer for profiling
@@ -54,19 +54,19 @@ float  ClockState_getFrameRate( ClockState_t * cs );       // Return the current
 #ifdef DEBUG_PROFILE
 
 #    define PROFILE_DECLARE(XX) ClockState_t * clkstate_##XX = NULL; double clkcount_##XX = 0.0; double clktime_##XX = 0.0;
-#    define PROFILE_INIT(XX)    { clkstate_##XX  = ClockState_create(#XX, -1); }
-#    define PROFILE_FREE(XX)    { ClockState_destroy(&(clkstate_##XX)); }
+#    define PROFILE_INIT(XX)    { clkstate_##XX  = Clock_create(#XX, -1); }
+#    define PROFILE_FREE(XX)    { Clock_destroy(&(clkstate_##XX)); }
 #    define PROFILE_QUERY(XX)   ( (double)clktime_##XX / (double)clkcount_##XX )
 
-#    define PROFILE_BEGIN(XX)  ClockState_frameStep(clkstate_##XX);
-#    define PROFILE_END(XX)    ClockState_frameStep(clkstate_##XX);   clkcount_##XX = clkcount_##XX*0.9 + 0.1*1.0; clktime_##XX = clktime_##XX*0.9 + 0.1*ClockState_getFrameDuration(clkstate_##XX);
-#    define PROFILE_END2(XX)   ClockState_frameStep(clkstate_##XX);   clkcount_##XX += 1.0;  clktime_##XX += ClockState_getFrameDuration(clkstate_##XX);
+#    define PROFILE_BEGIN(XX)  Clock_frameStep(clkstate_##XX);
+#    define PROFILE_END(XX)    Clock_frameStep(clkstate_##XX);   clkcount_##XX = clkcount_##XX*0.9 + 0.1*1.0; clktime_##XX = clktime_##XX*0.9 + 0.1*Clock_getFrameDuration(clkstate_##XX);
+#    define PROFILE_END2(XX)   Clock_frameStep(clkstate_##XX);   clkcount_##XX += 1.0;  clktime_##XX += Clock_getFrameDuration(clkstate_##XX);
 
 #else
 
 #    define PROFILE_DECLARE(XX) ClockState_t * clkstate_##XX = NULL; double clkcount_##XX = 0.0; double clktime_##XX = 0.0;
-#    define PROFILE_INIT(XX)    { clkstate_##XX  = ClockState_create(#XX, -1); }
-#    define PROFILE_FREE(XX)    { ClockState_destroy(&(clkstate_##XX)); }
+#    define PROFILE_INIT(XX)    { clkstate_##XX  = Clock_create(#XX, -1); }
+#    define PROFILE_FREE(XX)    { Clock_destroy(&(clkstate_##XX)); }
 #    define PROFILE_QUERY(XX)   1.0
 
 #    define PROFILE_BEGIN(XX)

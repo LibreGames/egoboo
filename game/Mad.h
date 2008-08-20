@@ -206,3 +206,7 @@ bool_t mad_display_bbox_tree(int level, matrix_4x4 matrix, Mad_t * pmad, int fra
 void load_copy_file( struct sGame * gs, const char * szModpath, const char * szObjectname, MAD_REF object );
 
 void ObjList_log_used( struct sGame * gs, char *savename );
+
+int mad_vertexconnected( struct s_ego_md2_model * m, int vertex );
+int mad_calc_transvertices( struct s_ego_md2_model * m );
+enum e_Action what_action( char cTmp );

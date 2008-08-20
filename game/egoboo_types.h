@@ -75,6 +75,17 @@ typedef char STRING[256];
 //#    endif
 #endif
 
+enum e_color
+{
+  COLR_WHITE = 0,
+  COLR_RED,
+  COLR_YELLOW,
+  COLR_GREEN,
+  COLR_BLUE,
+  COLR_PURPLE
+};
+typedef enum e_color COLR;
+
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -164,7 +175,8 @@ enum e_ekey_list
   ekey_EncHeap_t,
   ekey_PrtHeap_t,
   ekey_GLtexture,
-  ekey_BMFont_t
+  ekey_BMFont_t,
+  ekey_Graphics_Data_t
 };
 
 //--------------------------------------------------------------------------------------------

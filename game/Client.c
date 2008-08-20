@@ -833,18 +833,18 @@ bool_t cl_handlePacket(Client_t * cs, ENetEvent *event)
     if (stamp < cs->tlb.nextstamp)
     {
       net_logf("NET WARNING: net_handlePacket: OUT OF ORDER SYS_PACKET\n");
-      outofsync = btrue;
+      cs->outofsync = btrue;
     }
     if (stamp <= ups_loops)
     {
       net_logf("NET WARNING: net_handlePacket: LATE SYS_PACKET\n");
-      outofsync = btrue;
+      cs->outofsync = btrue;
     }
     if (stamp > cs->tlb.nextstamp)
     {
       net_logf("NET WARNING: net_handlePacket: MISSED SYS_PACKET\n");
       cs->tlb.nextstamp = stamp;  // Still use it
-      outofsync = btrue;
+      cs->outofsync = btrue;
     }
     if (stamp == cs->tlb.nextstamp)
     {

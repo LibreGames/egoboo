@@ -1,5 +1,5 @@
 //********************************************************************************************
-//* Egoboo - sys_win32.c
+//* Egoboo - System_win32.c
 //*
 //* Microsoft Win32-specific code
 //*
@@ -21,10 +21,13 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
 #include "System.h"
 
 #include "proto.h"
 #include "Log.h"
+
+#include "egoboo_types.inl"
 
 #include <windows.h>
 

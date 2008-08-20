@@ -58,8 +58,8 @@ bool_t sv_Running(Server_t * ss)  { return sv_Started() &&  ss->ready; }
 
 //--------------------------------------------------------------------------------------------
 // Server state private initialization
-static Server_t * CServer_new(Server_t * ss, Game_t * gs);
-static bool_t    CServer_delete(Server_t * ss);
+static Server_t * Server_new(Server_t * ss, Game_t * gs);
+static bool_t    Server_delete(Server_t * ss);
 
 
 //--------------------------------------------------------------------------------------------
@@ -104,7 +104,7 @@ static bool_t    CServer_delete(Server_t * ss);
 //    ss = &ACServer;
 //  }
 //
-//  delete_return = CServer_delete(ss) ? rv_succeed : rv_fail;
+//  delete_return = Server_delete(ss) ? rv_succeed : rv_fail;
 //
 //  sv_initialized = bfalse;
 //
@@ -112,7 +112,7 @@ static bool_t    CServer_delete(Server_t * ss);
 //}
 
 //--------------------------------------------------------------------------------------------
-retval_t CServer_startUp(Server_t * ss)
+retval_t Server_startUp(Server_t * ss)
 {
   // ZZ> This function tries to host a new session
 
@@ -123,7 +123,7 @@ retval_t CServer_startUp(Server_t * ss)
 
   if (!net_Started())
   {
-    CServer_shutDown(ss);
+    Server_shutDown(ss);
     return rv_error;
   }
 
@@ -135,14 +135,14 @@ retval_t CServer_startUp(Server_t * ss)
   if(!sv_Started())
   {
     net_logf("---------------------------------------------\n");
-    net_logf("NET INFO: CServer_startUp() - Starting game server\n");
+    net_logf("NET INFO: Server_startUp() - Starting game server\n");
 
     _sv_startUp();
   }
   else
   {
     net_logf("---------------------------------------------\n");
-    net_logf("NET INFO: CServer_startUp() - Restarting game server\n");
+    net_logf("NET INFO: Server_startUp() - Restarting game server\n");
   }
 
   // To function, the client requires the file transfer component
@@ -152,13 +152,13 @@ retval_t CServer_startUp(Server_t * ss)
 }
 
 ////--------------------------------------------------------------------------------------------
-retval_t CServer_shutDown(Server_t * ss)
+retval_t Server_shutDown(Server_t * ss)
 {
   if(NULL == ss) return rv_error;
 
   if(!sv_Started()) return rv_succeed;
 
-  net_logf("NET INFO: CServer_shutDown() - Shutting down the game server... ");
+  net_logf("NET INFO: Server_shutDown() - Shutting down the game server... ");
 
   // close all open connections to this state
   NetHost_close( sv_getHost(), ss );
@@ -171,40 +171,40 @@ retval_t CServer_shutDown(Server_t * ss)
 //--------------------------------------------------------------------------------------------
 //void sv_Quit(void)
 //{
-//  CServer_delete(&ACServer);
+//  Server_delete(&ACServer);
 //}
 //
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-Server_t * CServer_create(Game_t * gs)
+Server_t * Server_create(Game_t * gs)
 {
   Server_t * ss = EGOBOO_NEW( Server_t );
-  return CServer_new(ss, gs);
+  return Server_new(ss, gs);
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CServer_destroy(Server_t ** pss)
+bool_t Server_destroy(Server_t ** pss)
 {
   bool_t retval;
 
   if(NULL == pss || NULL == *pss) return bfalse;
   if( !EKEY_PVALID((*pss)) ) return btrue;
 
-  retval = CServer_delete(*pss);
+  retval = Server_delete(*pss);
   EGOBOO_DELETE( *pss );
 
   return retval;
 }
 
 //--------------------------------------------------------------------------------------------
-Server_t * CServer_new(Server_t * ss, Game_t * gs)
+Server_t * Server_new(Server_t * ss, Game_t * gs)
 {
   int cnt;
 
-  //fprintf( stdout, "CServer_new()\n");
+  //fprintf( stdout, "Server_new()\n");
 
   if(NULL == ss) return ss;
-  CServer_delete(ss);
+  Server_delete(ss);
 
   memset( ss, 0, sizeof(Server_t) );
 
@@ -228,13 +228,13 @@ Server_t * CServer_new(Server_t * ss, Game_t * gs)
     ModInfo_new(ss->loc_mod + cnt);
   }
 
-  CServer_reset_latches(ss);
+  Server_reset_latches(ss);
 
   return ss;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CServer_delete(Server_t * ss)
+bool_t Server_delete(Server_t * ss)
 {
   if(NULL == ss) return bfalse;
   if(!EKEY_PVALID(ss)) return btrue;
@@ -248,7 +248,7 @@ bool_t CServer_delete(Server_t * ss)
 }
 
 //--------------------------------------------------------------------------------------------
-Server_t * CServer_renew(Server_t * ss)
+Server_t * Server_renew(Server_t * ss)
 {
   Game_t * gs;
 
@@ -256,8 +256,8 @@ Server_t * CServer_renew(Server_t * ss)
 
   gs = ss->parent;
 
-  CServer_delete(ss);
-  return CServer_new(ss, gs);
+  Server_delete(ss);
+  return Server_new(ss, gs);
 }
 
 //--------------------------------------------------------------------------------------------
@@ -268,7 +268,7 @@ void sv_frameStep(Server_t * ss)
 }
 
 //--------------------------------------------------------------------------------------------
-void CServer_bufferLatches(Server_t * ss)
+void Server_bufferLatches(Server_t * ss)
 {
   // ZZ> This function buffers the character latches
   Game_t * gs;
@@ -785,7 +785,7 @@ bool_t sv_handlePacket(Server_t * ss, ENetEvent *event)
 };
 
 //--------------------------------------------------------------------------------------------
-void CServer_unbufferLatches(Server_t * ss)
+void Server_unbufferLatches(Server_t * ss)
 {
   // ZZ> This function sets character latches based on player input to the host
   CHR_REF chr_cnt;
@@ -826,7 +826,7 @@ void CServer_unbufferLatches(Server_t * ss)
 }
 
 //--------------------------------------------------------------------------------------------
-void CServer_reset_latches(Server_t * ss)
+void Server_reset_latches(Server_t * ss)
 {
   CHR_REF chr_cnt;
   if(NULL ==ss) return;

@@ -32,34 +32,34 @@
 
 static ClockState_t * tickerClock = NULL;
 
-void ticker_initWithInterval( Ticker_t *ticker, double interval )
+void Ticker_initWithInterval( Ticker_t *ticker, double interval )
 {
   assert( NULL != ticker  && "ticker_initWithInterval: NULL ticker passed!" );
   if ( NULL == ticker  || interval <= 0 ) return;
 
   if ( NULL == tickerClock )
   {
-    tickerClock = ClockState_create("ticker", -1);
+    tickerClock = Clock_create("ticker", -1);
   }
 
-  ticker->lastTime = ClockState_getTime( tickerClock );
+  ticker->lastTime = Clock_getTime( tickerClock );
   ticker->numTicks = 0;
   ticker->tickInterval = interval;
 }
 
-void ticker_initWithFrequency( Ticker_t *ticker, int freq )
+void Ticker_initWithFrequency( Ticker_t *ticker, int freq )
 {
   double interval = 1.0 / freq;
-  ticker_initWithInterval( ticker, interval );
+  Ticker_initWithInterval( ticker, interval );
 }
 
-void ticker_update( Ticker_t *ticker )
+void Ticker_update( Ticker_t *ticker )
 {
   double deltaTime, currentTime;
   assert( NULL != ticker  && "ticker_update: NULL ticker passed!" );
   if ( NULL == ticker  ) return;
 
-  currentTime = ClockState_getTime( tickerClock );
+  currentTime = Clock_getTime( tickerClock );
   deltaTime = currentTime - ticker->lastTime;
 
   while ( deltaTime > ticker->tickInterval )
@@ -71,7 +71,7 @@ void ticker_update( Ticker_t *ticker )
   }
 }
 
-int ticker_tick( Ticker_t *ticker )
+int Ticker_tick( Ticker_t *ticker )
 {
   int numTicks;
 

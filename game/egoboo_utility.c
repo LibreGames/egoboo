@@ -14,6 +14,13 @@
 #include "egoboo_types.inl"
 
 //--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+const char * globalname = NULL;   // For debuggin' fgoto_colon
+Uint16 randie[RANDIE_COUNT];
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 DAMAGE fget_damage( FILE *fileread )
 {
   char cTmp;
@@ -1249,7 +1256,7 @@ void make_randie()
 
   // Fill in the basic values
   cnt = 0;
-  while ( cnt < MAXRAND )
+  while ( cnt < RANDIE_COUNT )
   {
     randie[cnt] = rand() << 1;
     cnt++;
@@ -1261,7 +1268,7 @@ void make_randie()
   while ( tnc < 20 )
   {
     cnt = 0;
-    while ( cnt < MAXRAND )
+    while ( cnt < RANDIE_COUNT )
     {
       randie[cnt] += ( Uint16 ) rand();
       cnt++;

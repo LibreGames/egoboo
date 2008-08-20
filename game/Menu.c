@@ -37,6 +37,7 @@
 #include "sound.h"
 #include "file_common.h"
 
+#include "egoboo_strutil.h"
 #include "egoboo.h"
 
 #include <assert.h>
@@ -1227,6 +1228,7 @@ int mnu_doChoosePlayer( MenuProc_t * mproc, float deltaTime )
   static bool_t created_game = bfalse;
 
   Game_t   * gs = Graphics_getGame(&gfxState);
+  Graphics_Data_t * gfx = Game_getGfx(gs);
   Client_t * cl = mproc->cl;
   Server_t * sv = mproc->sv;
 
@@ -1337,7 +1339,7 @@ int mnu_doChoosePlayer( MenuProc_t * mproc, float deltaTime )
         {
           PLA_REF splayer;
 
-          mnu_widgetList[m].img  = gs->TxIcon + REF_TO_INT(player);
+          mnu_widgetList[m].img  = gfx->TxIcon + REF_TO_INT(player);
           mnu_widgetList[m].text = loadplayer[REF_TO_INT(player)].name;
 
           splayer = mnu_getSelectedPlayer( player );
@@ -2742,8 +2744,8 @@ int mnu_RunIngame( MenuProc_t * mproc )
 
   proc = &(mproc->proc);
 
-  ClockState_frameStep( proc->clk );
-  frameDuration = ClockState_getFrameDuration( proc->clk );
+  Clock_frameStep( proc->clk );
+  frameDuration = Clock_getFrameDuration( proc->clk );
   frameTicks    = frameDuration * TICKS_PER_SEC;
 
   deltaTime = 0;
@@ -2815,8 +2817,8 @@ int mnu_Run( MenuProc_t * mproc )
   gs   = Graphics_getGame(&gfxState);
   proc = &(mproc->proc);
 
-  ClockState_frameStep( proc->clk );
-  frameDuration = ClockState_getFrameDuration( proc->clk );
+  Clock_frameStep( proc->clk );
+  frameDuration = Clock_getFrameDuration( proc->clk );
   frameTicks    = frameDuration * TICKS_PER_SEC;
 
   if(!proc->Paused)
@@ -2977,7 +2979,7 @@ int mnu_Run( MenuProc_t * mproc )
 
             sv_unhostGame(mproc->sv);
 
-            CServer_shutDown(mproc->sv);
+            Server_shutDown(mproc->sv);
           }
         };
       };
@@ -4435,12 +4437,13 @@ int mnu_doIngameInventory( MenuProc_t * mproc, float deltaTime )
   int total_inpack = 0;
 
   Game_t   * gs = Graphics_requireGame(&gfxState);
+  Graphics_Data_t * gfx = Game_getGfx(gs);
   Client_t * cl = mproc->cl;
 
   if( !EKEY_PVALID(gs) ) return -1;
 
-  iw = iconrect.right  - iconrect.left;
-  ih = iconrect.bottom - iconrect.top;
+  iw = gfx->TxIcon_rect.right  - gfx->TxIcon_rect.left;
+  ih = gfx->TxIcon_rect.bottom - gfx->TxIcon_rect.top;
 
   switch ( menuState )
   {
@@ -4470,7 +4473,7 @@ int mnu_doIngameInventory( MenuProc_t * mproc, float deltaTime )
           if(!VALID_OBJ(gs->ObjList, iobj)) break;
 
           itex = gs->skintoicon[gs->ChrList[iitem].skin_ref + gs->ObjList[iobj].skinstart];
-          ui_initWidget( mnu_widgetList + k, k, mnu_Font, NULL, gs->TxIcon + itex, offsetX + iw*j, offsetY, iw, ih );
+          ui_initWidget( mnu_widgetList + k, k, mnu_Font, NULL, gfx->TxIcon + itex, offsetX + iw*j, offsetY, iw, ih );
 
           k++;
           total_inpack++;
@@ -4714,7 +4717,7 @@ retval_t MenuProc_ensure_server(MenuProc_t * ms, Game_t * gs)
 
   if( !EKEY_PVALID(ms->sv) )
   {
-    ms->sv = CServer_create(gs);
+    ms->sv = Server_create(gs);
   }
 
   return (NULL != ms->sv) ? rv_succeed : rv_error;
@@ -4757,7 +4760,7 @@ retval_t   MenuProc_start_server(MenuProc_t * ms, Game_t * gs)
   if(rv_succeed != ret) return ret;
 
   // start up the server
-  ret = CServer_startUp(ms->sv);
+  ret = Server_startUp(ms->sv);
 
   return ret;
 }
@@ -5020,3 +5023,86 @@ retval_t mnu_upload_game_info(Game_t * gs, MenuProc_t * ms)
 
   return rv_succeed;
 };
+
+//--------------------------------------------------------------------------------------------
+void check_player_import(Game_t * gs)
+{
+  // ZZ> This function figures out which players may be imported, and loads basic
+  //     data for each
+
+  STRING searchname, filename, filepath;
+  int skin;
+  bool_t keeplooking;
+  const char *foundfile;
+  FS_FIND_INFO fs_finfo;
+
+  Obj_t otmp;
+
+  OBJ_REF iobj;
+  Obj_t  * pobj;
+  //PObj_t objlst = gs->ObjList;
+
+  LOAD_PLAYER_INFO * ploadplayer;
+
+  // Set up...
+  loadplayer_count = 0;
+
+  // Search for all objects
+  fs_find_info_new( &fs_finfo );
+  snprintf( searchname, sizeof( searchname ), "%s" SLASH_STRING "*.obj", CData.players_dir );
+  foundfile = fs_findFirstFile( &fs_finfo, CData.players_dir, NULL, "*.obj" );
+  keeplooking = 1;
+  if ( NULL != foundfile  )
+  {
+    snprintf( filepath, sizeof( filename ), "%s" SLASH_STRING "%s" SLASH_STRING, CData.players_dir, foundfile );
+
+    while (loadplayer_count < MAXLOADPLAYER )
+    {
+      // grab the requested profile
+      {
+        iobj = ObjList_get_free(gs, OBJ_REF(loadplayer_count));
+        pobj = ObjList_getPObj(gs, iobj);
+
+        // Make up a name for the profile...  IMPORT\TEMP0000.OBJ
+        strncpy( pobj->name, filepath, sizeof( pobj->name ) );
+      }
+      if(NULL == pobj)
+      {
+        assert(bfalse);
+        break;
+      }
+
+      // get the loadplayer data
+      ploadplayer = loadplayer + loadplayer_count;
+
+      naming_prime( gs );
+
+      strncpy( ploadplayer->dir, foundfile, sizeof( ploadplayer->dir ) );
+
+      skin = fget_skin( filepath, NULL );
+
+      // Load the AI script for this object
+      pobj->ai = load_ai_script( Game_getScriptInfo(gs), filepath, NULL );
+      if ( AILST_COUNT == pobj->ai )
+      {
+        // use the default script
+        pobj->ai = 0;
+      }
+
+      pobj->mad = MadList_load_one( gs, filepath, NULL, MAD_REF(loadplayer_count) );
+
+      snprintf( filename, sizeof( filename ), "icon%d.bmp", skin );
+      load_one_icon( Game_getGfx(gs), filepath, NULL, filename );
+
+      CProfile_new(&otmp);
+      naming_read( gs, filepath, NULL, &otmp);
+      strncpy( ploadplayer->name, naming_generate( gs, &otmp ), sizeof( ploadplayer->name ) );
+
+      loadplayer_count++;
+
+      foundfile = fs_findNextFile(&fs_finfo);
+      if (NULL == foundfile) break;
+    }
+  }
+  fs_findClose(&fs_finfo);
+}

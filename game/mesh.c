@@ -36,6 +36,7 @@
 
 TILE_TXBOX       gTileTxBox[MAXTILETYPE];
 TileDictionary_t gTileDict;
+TWIST_ENTRY      twist_table[256];
 
 #define TX_FUDGE 0.5f
 

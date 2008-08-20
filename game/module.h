@@ -31,6 +31,12 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
+struct sGame;
+struct sGraphics_Data;
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
 #define RANKSIZE 8
 #define SUMMARYLINES 8
 #define SUMMARYSIZE  80
@@ -38,9 +44,6 @@
 #define MAXMODULE           100                     // Number of modules
 
 //--------------------------------------------------------------------------------------------
-
-struct sGame;
-
 //--------------------------------------------------------------------------------------------
 struct s_import_info
 {
@@ -111,13 +114,13 @@ struct sModState
   bool_t Active;                     // Is the control loop still going?
   bool_t Paused;                     // Is the control loop paused?
 
-  bool_t       loaded;
-  Uint32       seed;                       // the seed for the module
-  bool_t       respawnvalid;               // Can players respawn with Spacebar?
-  bool_t       respawnanytime;             // True if it's a small level...
-  bool_t       exportvalid;                // Can it export?
-  bool_t       rts_control;                // Play as a real-time stragedy? BAD REMOVE
-  bool_t       beat;                       // Show Module Ended text?
+  bool_t loaded;
+  Uint32 seed;                       // the seed for the module
+  bool_t respawnvalid;               // Can players respawn with Spacebar?
+  bool_t respawnanytime;             // True if it's a small level...
+  bool_t exportvalid;                // Can it export?
+  bool_t rts_control;                // Play as a real-time stragedy? BAD REMOVE
+  bool_t beat;                       // Show Module Ended text?
 
   int    import_amount;
   int    import_min_pla;
@@ -145,4 +148,4 @@ bool_t module_read_summary( char *szLoadName, ModSummary_t * ms );
 
 void ModInfo_clear_all_titleimages( MOD_INFO * mi_ary, size_t mi_count );
 
-void release_map(struct sGame * gs);
+void release_map(struct sGraphics_Data * gfx);

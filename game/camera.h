@@ -51,11 +51,13 @@ typedef struct sCamera Camera_t;
 
 extern Camera_t GCamera;
 
-extern float                   cornerx[4];                 // Render area corners
-extern float                   cornery[4];                 //
-extern int                     cornerlistlowtohighy[4];    // Ordered list
-extern int                     cornerlowx;                 // Render area extremes
-extern int                     cornerhighx;                //
-extern int                     cornerlowy;                 //
-extern int                     cornerhighy;                //
+//extern float                   cornerx[4];                 // Render area corners
+//extern float                   cornery[4];                 //
+//extern int                     cornerlistlowtohighy[4];    // Ordered list
+//extern int                     cornerlowx;                 // Render area extremes
+//extern int                     cornerhighx;                //
+//extern int                     cornerlowy;                 //
+//extern int                     cornerhighy;                //
 
+void camera_move( float dUpdate );
+void camera_reset();

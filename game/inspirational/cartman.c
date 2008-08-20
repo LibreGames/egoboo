@@ -4044,7 +4044,7 @@ int cartman(char * modulename)
 //  return bfalse;
 //}
 
-//void move_camera(cart_mouse_info * m)
+//void camera_move(cart_mouse_info * m)
 //{
 //  if(((mous.latch.b&4) || SDLKEYDOWN(SDLK_m)) && m->data!=-1)
 //  {
@@ -4381,7 +4381,7 @@ int cartman(char * modulename)
 //  debugy = -1;
 //
 //  unbound_mouse();
-//  move_camera(m);
+//  camera_move(m);
 //  m->data = -1;
 //  m->x = -1;
 //  m->y = -1;

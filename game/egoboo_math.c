@@ -41,3 +41,4 @@ void make_turntosin( void )
     turntocos[cnt] = cos(( TWO_PI * cnt ) / ( float ) TRIGTABLE_SIZE );
   }
 }
+
