@@ -48,39 +48,39 @@
 #define RAD_TO_DEG          57.295779513082320876798154814105
 
 #ifndef UINT32_SIZE
-#define UINT32_SIZE         (1<<32)
+#define UINT32_SIZE         0x100000000
 #endif
 
 #ifndef UINT32_MAX
-#define UINT32_MAX          ((1<<32)-1)
+#define UINT32_MAX          0xFFFFFFFF
 #endif
 
 #ifndef SINT32_MAX
-#define SINT32_MAX          ((UINT32_SIZE>>1)-1)
+#define SINT32_MAX          0x7FFFFFFF
 #endif
 
 #ifndef UINT16_SIZE
-#define UINT16_SIZE         (1<<16)
+#define UINT16_SIZE         0x10000
 #endif
 
 #ifndef UINT16_MAX
-#define UINT16_MAX          ((1<<16)-1)
+#define UINT16_MAX          0xFFFF
 #endif
 
 #ifndef SINT16_MAX
-#define SINT16_MAX          ((UINT16_SIZE>>1)-1)
+#define SINT16_MAX          0x7FFF
 #endif
 
 #ifndef UINT8_SIZE
-#define UINT8_SIZE          (1<< 8)
+#define UINT8_SIZE          0x100
 #endif
 
 #ifndef UINT8_MAX
-#define UINT8_MAX           ((1<< 8)-1)
+#define UINT8_MAX           0xFF
 #endif
 
 #ifndef SINT8_MAX
-#define SINT8_MAX          ((UINT8_SIZE>>1)-1)
+#define SINT8_MAX           0x7F
 #endif
 
 #define RAD_TO_TURN(XX)     ((Uint16)(((XX) + PI) * RAD_TO_SHORT))
@@ -154,8 +154,8 @@ extern float turntocos[TRIGTABLE_SIZE];           // Convert chrturn>>2...  to c
 
 /**> FUNCTION PROTOTYPES <**/
 void make_turntosin( void );
-matrix_4x4 ViewMatrix( const vect3 from, const vect3 at, const vect3 world_up, const float roll );
-matrix_4x4 ProjectionMatrix( const float near_plane, const float far_plane, const float fov );
+matrix_4x4 ViewMatrix( EGO_CONST vect3 from, EGO_CONST vect3 at, EGO_CONST vect3 world_up, EGO_CONST float roll );
+matrix_4x4 ProjectionMatrix( EGO_CONST float near_plane, EGO_CONST float far_plane, EGO_CONST float fov );
 
 /**> 3 component vector <**/
 INLINE vect3 VSub        ( vect3 A, vect3 B );
@@ -180,14 +180,14 @@ INLINE quaternion QuatConvert(matrix_4x4 m);
 /**> 4x4 matrix <**/
 INLINE matrix_4x4 IdentityMatrix( void );
 INLINE matrix_4x4 ZeroMatrix( void );
-INLINE matrix_4x4 MatrixTranspose( const matrix_4x4 a );
-INLINE matrix_4x4 MatrixMult( const matrix_4x4 a, const matrix_4x4 b );
-INLINE matrix_4x4 Translate( const float dx, const float dy, const float dz );
-INLINE matrix_4x4 RotateX( const float rads );
-INLINE matrix_4x4 RotateY( const float rads );
-INLINE matrix_4x4 RotateZ( const float rads );
-INLINE matrix_4x4 ScaleXYZ( const float sizex, const float sizey, const float sizez );
-INLINE matrix_4x4 ScaleXYZRotateXYZTranslate( const float sizex, const float sizey, const float sizez, Uint16 turnz, Uint16 turnx, Uint16 turny, float tx, float ty, float tz );
+INLINE matrix_4x4 MatrixTranspose( EGO_CONST matrix_4x4 a );
+INLINE matrix_4x4 MatrixMult( EGO_CONST matrix_4x4 a, EGO_CONST matrix_4x4 b );
+INLINE matrix_4x4 Translate( EGO_CONST float dx, EGO_CONST float dy, EGO_CONST float dz );
+INLINE matrix_4x4 RotateX( EGO_CONST float rads );
+INLINE matrix_4x4 RotateY( EGO_CONST float rads );
+INLINE matrix_4x4 RotateZ( EGO_CONST float rads );
+INLINE matrix_4x4 ScaleXYZ( EGO_CONST float sizex, EGO_CONST float sizey, EGO_CONST float sizez );
+INLINE matrix_4x4 ScaleXYZRotateXYZTranslate( EGO_CONST float sizex, EGO_CONST float sizey, EGO_CONST float sizez, Uint16 turnz, Uint16 turnx, Uint16 turny, float tx, float ty, float tz );
 INLINE matrix_4x4 FourPoints( vect4 ori, vect4 wid, vect4 forw, vect4 up, float scale );
 INLINE matrix_4x4 MatrixConvert(quaternion q1);
 
@@ -232,11 +232,11 @@ struct s_bbox_list
 };
 typedef struct s_bbox_list BBOX_LIST;
 
-INLINE const BBOX_LIST * bbox_list_new(BBOX_LIST * lst);
-INLINE const BBOX_LIST * bbox_list_delete(BBOX_LIST * lst);
-INLINE const BBOX_LIST * bbox_list_renew(BBOX_LIST * lst);
-INLINE const BBOX_LIST * bbox_list_alloc(BBOX_LIST * lst, int count);
-INLINE const BBOX_LIST * bbox_list_realloc(BBOX_LIST * lst, int count);
+INLINE EGO_CONST BBOX_LIST * bbox_list_new(BBOX_LIST * lst);
+INLINE EGO_CONST BBOX_LIST * bbox_list_delete(BBOX_LIST * lst);
+INLINE EGO_CONST BBOX_LIST * bbox_list_renew(BBOX_LIST * lst);
+INLINE EGO_CONST BBOX_LIST * bbox_list_alloc(BBOX_LIST * lst, int count);
+INLINE EGO_CONST BBOX_LIST * bbox_list_realloc(BBOX_LIST * lst, int count);
 
 //--------------------------------------------------------------------------------------------
 struct s_bbox_array
@@ -246,10 +246,10 @@ struct s_bbox_array
 };
 typedef struct s_bbox_array BBOX_ARY;
 
-INLINE const BBOX_ARY * bbox_ary_new(BBOX_ARY * ary);
-INLINE const BBOX_ARY * bbox_ary_delete(BBOX_ARY * ary);
-INLINE const BBOX_ARY * bbox_ary_renew(BBOX_ARY * ary);
-INLINE const BBOX_ARY * bbox_ary_alloc(BBOX_ARY * ary, int count);
+INLINE EGO_CONST BBOX_ARY * bbox_ary_new(BBOX_ARY * ary);
+INLINE EGO_CONST BBOX_ARY * bbox_ary_delete(BBOX_ARY * ary);
+INLINE EGO_CONST BBOX_ARY * bbox_ary_renew(BBOX_ARY * ary);
+INLINE EGO_CONST BBOX_ARY * bbox_ary_alloc(BBOX_ARY * ary, int count);
 
 INLINE Uint32 ego_rand_32(Uint32 * seed);
 INLINE Uint16 ego_rand_16(Uint16 * seed);

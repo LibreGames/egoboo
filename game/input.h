@@ -51,7 +51,7 @@ enum e_control_list
   JOB_RIGHT_GET,
   JOB_RIGHT_PACK,
   JOB_CAMERA,
-  CONTROL_LIST_COUNT,
+  CONTROL_LST_COUNT,
 
   // !!!! OMG !!!! - these aliases have to be last or they mess up the automatic ordering
   KEY_FIRST = KEY_JUMP,
@@ -62,7 +62,7 @@ enum e_control_list
   KEY_LAST = MOS_FIRST,
   MOS_LAST = JOA_FIRST,
   JOA_LAST = JOB_FIRST,
-  JOB_LAST = CONTROL_LIST_COUNT
+  JOB_LAST = CONTROL_LST_COUNT
 
 };
 typedef enum e_control_list CONTROL_LIST;

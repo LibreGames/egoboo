@@ -97,6 +97,6 @@ enum e_id_md2_constant
   MD2_VERSION   = 8
 };
 
-extern const float kMd2Normals[][3];
+extern EGO_CONST float kMd2Normals[][3];
 
 #endif

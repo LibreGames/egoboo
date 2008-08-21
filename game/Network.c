@@ -1049,7 +1049,7 @@ retval_t net_copyDirectoryToHost(Net_t * ns, char *dirname, char *todirname)
 {
   // ZZ> This function copies all files in a directory
   STRING searchname, fromname, toname;
-  const char *searchResult;
+  EGO_CONST char *searchResult;
   FS_FIND_INFO fnd_info;
 
   net_logf("NET INFO: net_copyDirectoryToHost: %s, %s\n", dirname, todirname);
@@ -1094,7 +1094,7 @@ retval_t net_copyDirectoryToAllPeers(Net_t * ns, char *dirname, char *todirname)
 {
   // ZZ> This function copies all files in a directory
   STRING searchname, fromname, toname;
-  const char *searchResult;
+  EGO_CONST char *searchResult;
   FS_FIND_INFO fnd_info;
 
   net_logf("NET INFO: net_copyDirectoryToAllPeers: %s, %s\n", dirname, todirname);
@@ -1135,7 +1135,7 @@ retval_t net_copyDirectoryToPeer(Net_t * ns, ENetPeer * peer, char *dirname, cha
 {
   // ZZ> This function copies all files in a directory
   STRING searchname, fromname, toname;
-  const char *searchResult;
+  EGO_CONST char *searchResult;
   retval_t retval;
   FS_FIND_INFO fnd_info;
 
@@ -1811,7 +1811,7 @@ retval_t net_waitForPacket(NetAsynchData_t * asynch_list, ENetPeer * peer, Uint3
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-static void net_writeLogMessage(FILE * logFile, const char *format, va_list args)
+static void net_writeLogMessage(FILE * logFile, EGO_CONST char *format, va_list args)
 {
   static char logBuffer[MAX_NET_LOG_MESSAGE];
 
@@ -1827,7 +1827,7 @@ static void net_writeLogMessage(FILE * logFile, const char *format, va_list args
 }
 
 //--------------------------------------------------------------------------------------------
-void net_logf(const char *format, ...)
+void net_logf(EGO_CONST char *format, ...)
 {
   va_list args;
 
@@ -1947,7 +1947,7 @@ ENetPeer * net_startPeer(ENetHost * host, ENetAddress * address )
 };
 
 //--------------------------------------------------------------------------------------------
-ENetPeer * net_startPeerByName(ENetHost * host, const char* connect_name, const int connect_port )
+ENetPeer * net_startPeerByName(ENetHost * host, EGO_CONST char* connect_name, EGO_CONST int connect_port )
 {
   // BB > start the peer connection process, do not wait for confirmation
 

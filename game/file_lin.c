@@ -60,7 +60,7 @@ void fs_init()
 {
 }
 
-int fs_fileIsDirectory( const char *filename )
+int fs_fileIsDirectory( EGO_CONST char *filename )
 {
   struct stat stats;
 
@@ -70,28 +70,28 @@ int fs_fileIsDirectory( const char *filename )
   return 0;
 }
 
-int fs_createDirectory( const char *dirname )
+int fs_createDirectory( EGO_CONST char *dirname )
 {
   // ZZ> This function makes a new directory
 
   return mkdir( dirname, 0755 );
 }
 
-int fs_removeDirectory( const char *dirname )
+int fs_removeDirectory( EGO_CONST char *dirname )
 {
   // ZZ> This function removes a directory
 
   return rmdir( dirname );
 }
 
-void fs_deleteFile( const char *filename )
+void fs_deleteFile( EGO_CONST char *filename )
 {
   // ZZ> This function deletes a file
 
   unlink( filename );
 }
 
-void fs_copyFile( const char *source, const char *dest )
+void fs_copyFile( EGO_CONST char *source, EGO_CONST char *dest )
 {
   // ZZ> This function copies a file on the local machine
 
@@ -128,7 +128,7 @@ void empty_import_directory( void )
 
 
 // Read the first directory entry
-const char *fs_findFirstFile(FS_FIND_INFO * i, const char *searchDir, const char *searchBody, const char *searchExtension )
+EGO_CONST char *fs_findFirstFile(FS_FIND_INFO * i, EGO_CONST char *searchDir, EGO_CONST char *searchBody, EGO_CONST char *searchExtension )
 {
   size_t szlen = 0;
   char pattern[PATH_MAX];
@@ -180,7 +180,7 @@ const char *fs_findFirstFile(FS_FIND_INFO * i, const char *searchDir, const char
 }
 
 // Read the next directory entry (NULL if done)
-const char *fs_findNextFile( FS_FIND_INFO * i )
+EGO_CONST char *fs_findNextFile( FS_FIND_INFO * i )
 {
   char *last_slash;
 

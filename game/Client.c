@@ -302,7 +302,7 @@ void cl_frameStep()
 //};
 
 //--------------------------------------------------------------------------------------------
-ENetPeer * cl_startPeer(const char* hostname)
+ENetPeer * cl_startPeer(EGO_CONST char* hostname)
 {
   // BB > start the peer connection process, do not wait for confirmation
 
@@ -329,7 +329,7 @@ ENetPeer * cl_startPeer(const char* hostname)
 
 
 //--------------------------------------------------------------------------------------------
-//bool_t cl_connectRemote(Client_t * cs, const char* hostname, int slot)
+//bool_t cl_connectRemote(Client_t * cs, EGO_CONST char* hostname, int slot)
 //{
 //  // ZZ> This function tries to connect onto a server
 //
@@ -386,7 +386,7 @@ bool_t CClient_disconnect(Client_t * cs)
 
 
 //--------------------------------------------------------------------------------------------
-bool_t CClient_connect(Client_t * cs, const char* hostname)
+bool_t CClient_connect(Client_t * cs, EGO_CONST char* hostname)
 {
   // ZZ> This function tries to connect onto a server
 
@@ -452,7 +452,7 @@ bool_t CClient_connect(Client_t * cs, const char* hostname)
 
 
 //--------------------------------------------------------------------------------------------
-retval_t Client_joinGame(Client_t * cs, const char * hostname)
+retval_t Client_joinGame(Client_t * cs, EGO_CONST char * hostname)
 {
   // ZZ> This function tries to join one of the sessions we found
 
@@ -555,9 +555,9 @@ void Client_talkToHost(Client_t * cs)
 
       ichr = gs->PlaList[player].chr_ref;
       sys_packet_addUint16(&egopkt, REF_TO_INT(ichr));                                   // The character index
-      sys_packet_addUint8(&egopkt, cs->tlb.buffer[REF_TO_INT(ichr)][time].latch.b);         // Player_t button states
-      sys_packet_addSint16 (&egopkt, cs->tlb.buffer[REF_TO_INT(ichr)][time].latch.x*SHORTLATCH);    // Player_t motion
-      sys_packet_addSint16 (&egopkt, cs->tlb.buffer[REF_TO_INT(ichr)][time].latch.y*SHORTLATCH);    // Player_t motion
+      sys_packet_addUint8 (&egopkt, cs->tlb.buffer[REF_TO_INT(ichr)][time].latch.b);         // Player_t button states
+      sys_packet_addSint16(&egopkt, cs->tlb.buffer[REF_TO_INT(ichr)][time].latch.x*SHORTLATCH);    // Player_t motion
+      sys_packet_addSint16(&egopkt, cs->tlb.buffer[REF_TO_INT(ichr)][time].latch.y*SHORTLATCH);    // Player_t motion
     }
 
     // Send it to the host
@@ -585,7 +585,7 @@ void Client_unbufferLatches(Client_t * cs)
     if( !ACTIVE_CHR(gs->ChrList, chr_cnt) ) continue;
 
     pchr = gs->ChrList + chr_cnt;
-    ptl = cs->tlb.buffer + REF_TO_INT(chr_cnt);
+    ptl  = cs->tlb.buffer + REF_TO_INT(chr_cnt);
 
     if(!(*ptl)[uiTime].valid) continue;
     if(INVALID_TIMESTAMP == (*ptl)[uiTime].stamp) continue;
@@ -936,7 +936,7 @@ void Client_bufferLatches(Client_t * cs)
   CHR_REF ichr;
   CHR_TIME_LATCH *ptl;
 
-  Game_t * gs     = cs->parent;
+  Game_t * gs   = cs->parent;
   PChr_t chrlst = gs->ChrList;
   PPla_t plalst = gs->PlaList;
 

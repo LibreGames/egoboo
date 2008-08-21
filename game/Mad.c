@@ -238,7 +238,7 @@ void get_actions( Game_t * gs, MAD_REF imad )
   framesinaction = 0;
   for ( iframe = 0; iframe < iFrameCount; iframe++ )
   {
-    const MD2_Frame_t * pFrame = md2_get_Frame(pmd2, iframe);
+    EGO_CONST MD2_Frame_t * pFrame = md2_get_Frame(pmd2, iframe);
     szName = pFrame->name;
     action = action_number(szName);
     if ( lastaction == action )
@@ -362,7 +362,7 @@ void make_mad_equally_lit( Game_t * gs, MAD_REF imad )
 
   for ( frame = 0; frame < iFrames; frame++ )
   {
-    const MD2_Frame_t * f = md2_get_Frame(m, frame);
+    EGO_CONST MD2_Frame_t * f = md2_get_Frame(m, frame);
     for ( vert = 0; vert < iVerts; vert++ )
     {
       f->vertices[vert].normal = EQUALLIGHTINDEX;
@@ -372,7 +372,7 @@ void make_mad_equally_lit( Game_t * gs, MAD_REF imad )
 }
 
 //--------------------------------------------------------------------------------------------
-void load_copy_file( Game_t * gs, const char * szObjectpath, const char * szObjectname, MAD_REF object )
+void load_copy_file( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST char * szObjectname, MAD_REF object )
 {
   // ZZ> This function copies a model's actions
 
@@ -446,10 +446,10 @@ bool_t mad_generate_bbox_list(BBOX_LIST *plist, MD2_Model_t * pmd2, int frame, i
   AA_BBOX tmp_bb;
 
   int               vrt_count;
-  const MD2_Frame_t * pframe;
+  EGO_CONST MD2_Frame_t * pframe;
 
   int                  tri_count;
-  const md2_triangle * ptri_lst;
+  EGO_CONST md2_triangle * ptri_lst;
 
   vect3 diff, origin;
 
@@ -706,7 +706,7 @@ bool_t mad_optimize_bbox_tree(Mad_t * pmad)
   BBOX_LIST * pcull, * plst;
   AA_BBOX   * pbbox;
   MD2_Model_t * pmd2;
-  const MD2_Frame_t * pframe;
+  EGO_CONST MD2_Frame_t * pframe;
 
   if(NULL == pmad) return bfalse;
 
@@ -942,7 +942,7 @@ static bool_t mad_scale_bbox_tree(Mad_t * pmad)
   int iframes;
 
   MD2_Model_t * pmd2;
-  const MD2_Frame_t * pframe;
+  EGO_CONST MD2_Frame_t * pframe;
 
   BBOX_ARY  * pary;
   BBOX_LIST * plst;
@@ -1012,7 +1012,7 @@ static bool_t mad_scale_bbox_tree(Mad_t * pmad)
 //  int iframes;
 //
 //  MD2_Model_t * pmd2;
-//  const MD2_Frame_t * pframe;
+//  EGO_CONST MD2_Frame_t * pframe;
 //
 //  BBOX_ARY  * pary;
 //  BBOX_LIST * plst_base, * plst_test;
@@ -1205,7 +1205,7 @@ Mad_t *  Mad_renew(Mad_t * pmad)
 
 
 //---------------------------------------------------------------------------------------------
-MAD_REF MadList_load_one( Game_t * gs, const char * szObjectpath, const char * szObjectname, MAD_REF imad )
+MAD_REF MadList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST char * szObjectname, MAD_REF imad )
 {
   // ZZ> This function loads an id md2 file, storing the converted data in the indexed model
   //    int iFileHandleRead;
@@ -1386,7 +1386,7 @@ int mad_vertexconnected( MD2_Model_t * m, int vertex )
 {
   // ZZ> This function returns 1 if the model vertex is connected, 0 otherwise
 
-  const MD2_GLCommand_t * g;
+  EGO_CONST MD2_GLCommand_t * g;
   int commands, entry;
 
   if(NULL == m) return 0;
@@ -1441,7 +1441,7 @@ int mad_calc_transvertices( MD2_Model_t * m )
 //  MD2_Model_t    * pmd2;
 //
 //  int            vrt_count;
-//  const MD2_Frame_t    * pframe;
+//  EGO_CONST MD2_Frame_t    * pframe;
 //
 //  int            tri_count;
 //  md2_triangle * ptri_lst;

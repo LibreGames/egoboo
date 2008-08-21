@@ -174,7 +174,7 @@ INLINE void sys_packet_addSint32(SYS_PACKET * egop, Sint32 si)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE void sys_packet_addFString(SYS_PACKET * egop, const char *format, ...)
+INLINE void sys_packet_addFString(SYS_PACKET * egop, EGO_CONST char *format, ...)
 {
   char stringbuffer[COPYSIZE];
   va_list args;
@@ -187,7 +187,7 @@ INLINE void sys_packet_addFString(SYS_PACKET * egop, const char *format, ...)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE void sys_packet_addString(SYS_PACKET * egop, const char *string)
+INLINE void sys_packet_addString(SYS_PACKET * egop, EGO_CONST char *string)
 {
   // ZZ> This function appends a null terminated string to the packet
   char* cp;

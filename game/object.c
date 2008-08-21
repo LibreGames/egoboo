@@ -40,7 +40,7 @@
 #include "egoboo_types.inl"
 
 //--------------------------------------------------------------------------------------------
-int load_one_object( Game_t * gs, int skin_count, const char * szObjectpath, char* szObjectname, OBJ_REF slot_override )
+int load_one_object( Game_t * gs, int skin_count, EGO_CONST char * szObjectpath, char* szObjectname, OBJ_REF slot_override )
 {
   // ZZ> This function loads one object and returns the number of skins
 
@@ -49,8 +49,6 @@ int load_one_object( Game_t * gs, int skin_count, const char * szObjectpath, cha
   int cnt;
 
   Graphics_Data_t * gfx = Game_getGfx( gs );
-
-  //PObj_t objlst = gs->ObjList;
 
   OBJ_REF iobj;
   Obj_t  * pobj;
@@ -224,7 +222,6 @@ void switch_team( Game_t * gs, CHR_REF chr_ref, TEAM_REF team )
   // ZZ> This function makes a character join another team...
 
   PChr_t chrlst      = gs->ChrList;
-  //size_t chrlst_size = CHRLST_COUNT;
 
   if ( team < TEAM_COUNT )
   {
@@ -255,7 +252,6 @@ int restock_ammo( Game_t * gs, CHR_REF chr_ref, IDSZ idsz )
   //     function returns the amount of ammo given.
 
   PChr_t chrlst      = gs->ChrList;
-  //size_t chrlst_size = CHRLST_COUNT;
 
   int amount;
   OBJ_REF model;
@@ -288,11 +284,11 @@ void issue_clean( Game_t * gs, CHR_REF chr_ref )
   CHR_REF chr_cnt;
 
   PChr_t chrlst      = gs->ChrList;
-  //size_t chrlst_size = CHRLST_COUNT;
+  size_t chrlst_size = CHRLST_COUNT;
 
   team = chrlst[chr_ref].team;
 
-  for ( chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++ )
+  for ( chr_cnt = 0; chr_cnt < chrlst_size; chr_cnt++ )
   {
     if ( chrlst[chr_cnt].team == team && !chrlst[chr_cnt].alive )
     {
@@ -349,11 +345,7 @@ void ObjList_free_one( Game_t * gs, OBJ_REF obj_ref )
 {
   // BB> This function sticks a profile back on the free profile stack
 
-  //PObj_t   objlst      = gs->ObjList;
-  //size_t objlst_size = OBJLST_COUNT;
-
   PCap_t    caplst      = gs->CapList;
-  //size_t  caplst_size = CAPLST_COUNT;
 
   Obj_t * pobj;
 

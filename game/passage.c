@@ -76,7 +76,6 @@ bool_t passage_break_tiles( Game_t * gs, PASS_REF passage, Uint16 starttile, Uin
   CHR_REF character;
   Chr_t * pchr;
 
-  //ScriptInfo_t * slist = Game_getScriptInfo(gs);
   Mesh_t       * pmesh = Game_getMesh(gs);
 
   if ( passage >= gs->PassList_count ) return useful;
@@ -148,7 +147,6 @@ bool_t passage_search_tile( Game_t * gs, PASS_REF passage, Uint32 tiletype, Sint
 
   int fan_x, fan_y;
 
-  //ScriptInfo_t * slist = Game_getScriptInfo(gs);
   Mesh_t       * pmesh = Game_getMesh(gs);
 
   if ( passage >= gs->PassList_count ) return bfalse;
@@ -185,17 +183,20 @@ CHR_REF passage_search_blocking( Game_t * gs, PASS_REF passage )
 
   CHR_REF character, foundother;
 
+  PChr_t chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
+
   if ( passage >= gs->PassList_count ) return INVALID_CHR;
 
   // Look at each character
   foundother = INVALID_CHR;
-  for ( character = 0; character < CHRLST_COUNT; character++ )
+  for ( character = 0; character < chrlst_size; character++ )
   {
-    if ( !ACTIVE_CHR( gs->ChrList,  character ) || chr_in_pack( gs->ChrList, CHRLST_COUNT, character ) ) continue;
+    if ( !ACTIVE_CHR( chrlst,  character ) || chr_in_pack( chrlst, chrlst_size, character ) ) continue;
 
     if ( passage_check_any( gs, character, passage, NULL ) )
     {
-      if ( gs->ChrList[character].alive && !gs->ChrList[character].prop.isitem )
+      if ( chrlst[character].alive && !chrlst[character].prop.isitem )
       {
         // Found a live one
         return character;
@@ -250,33 +251,36 @@ CHR_REF passage_search_blocking_ID( Game_t * gs, PASS_REF passage, IDSZ idsz )
   CHR_REF character;
   CHR_REF  sTmp;
 
-  // Look at each character
-  for ( character = 0; character < CHRLST_COUNT; character++ )
-  {
-    if ( !ACTIVE_CHR( gs->ChrList, character ) || chr_in_pack( gs->ChrList, CHRLST_COUNT, character ) ) continue;
+  PChr_t chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
 
-    if ( !gs->ChrList[character].prop.isitem && gs->ChrList[character].alive )
+  // Look at each character
+  for ( character = 0; character < chrlst_size; character++ )
+  {
+    if ( !ACTIVE_CHR( chrlst, character ) || chr_in_pack( chrlst, chrlst_size, character ) ) continue;
+
+    if ( !chrlst[character].prop.isitem && chrlst[character].alive )
     {
       if ( passage_check_any( gs, character, passage, NULL ) )
       {
         // Found a live one...  Does it have a matching item?
 
         // Check the pack
-        sTmp  = chr_get_nextinpack( gs->ChrList, CHRLST_COUNT, character );
-        while ( ACTIVE_CHR( gs->ChrList,  sTmp ) )
+        sTmp  = chr_get_nextinpack( chrlst, chrlst_size, character );
+        while ( ACTIVE_CHR( chrlst,  sTmp ) )
         {
           if ( CAP_INHERIT_IDSZ( gs, ChrList_getRCap(gs, sTmp), idsz ) )
           {
             // It has the item...
             return character;
           }
-          sTmp  = chr_get_nextinpack( gs->ChrList, CHRLST_COUNT, sTmp );
+          sTmp  = chr_get_nextinpack( chrlst, chrlst_size, sTmp );
         }
 
         for ( _slot = SLOT_BEGIN; _slot < SLOT_COUNT; _slot = ( SLOT )( _slot + 1 ) )
         {
-          sTmp = chr_get_holdingwhich( gs->ChrList, CHRLST_COUNT, character, _slot );
-          if ( ACTIVE_CHR( gs->ChrList,  sTmp ) && CAP_INHERIT_IDSZ( gs,  ChrList_getRCap(gs, sTmp), idsz ) )
+          sTmp = chr_get_holdingwhich( chrlst, chrlst_size, character, _slot );
+          if ( ACTIVE_CHR( chrlst,  sTmp ) && CAP_INHERIT_IDSZ( gs,  ChrList_getRCap(gs, sTmp), idsz ) )
           {
             // It has the item...
             return character;
@@ -378,13 +382,13 @@ bool_t passage_check_all( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * pown
 
   float x_min, x_max;
   float y_min, y_max;
-  bool_t retval = bfalse;
+  bool_t      is_inside = bfalse, was_inside = bfalse;
   CHR_REF     iowner;
   Chr_t     * pchr;
   CVolume_t * pcv;
   IRect_t   * parea;
 
-  if ( !ACTIVE_CHR( gs->ChrList,  ichr ) || pass >= gs->PassList_count ) return retval;
+  if ( !ACTIVE_CHR( gs->ChrList,  ichr ) || pass >= gs->PassList_count ) return is_inside;
 
   iowner = gs->PassList[pass].owner;
   if ( INVALID_CHR == iowner )
@@ -407,33 +411,35 @@ bool_t passage_check_all( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * pown
   y_min = pcv->y_min;
   y_max = pcv->y_max;
 
-  retval = ( x_min > MESH_FAN_TO_INT( parea->left ) && x_max < MESH_FAN_TO_INT( parea->right + 1 ) ) &&
-           ( y_min > MESH_FAN_TO_INT( parea->top )  && y_max < MESH_FAN_TO_INT( parea->bottom + 1 ) );
+  is_inside = ( x_min > MESH_FAN_TO_INT( parea->left ) && x_max < MESH_FAN_TO_INT( parea->right + 1 ) ) &&
+              ( y_min > MESH_FAN_TO_INT( parea->top )  && y_max < MESH_FAN_TO_INT( parea->bottom + 1 ) );
 
-  if ( retval )
+
+  // check whether it was in the passage before
+  x_min = pcv->x_min + (pchr->ori_old.pos.x - pchr->ori.pos.x) ;
+  x_max = pcv->x_max + (pchr->ori_old.pos.x - pchr->ori.pos.x) ;
+
+  y_min = pcv->y_min + (pchr->ori_old.pos.y - pchr->ori.pos.y);
+  y_max = pcv->y_max + (pchr->ori_old.pos.y - pchr->ori.pos.y);
+
+  was_inside = ( x_min > MESH_FAN_TO_INT( parea->left ) && x_max < MESH_FAN_TO_INT( parea->right + 1 ) ) &&
+               ( y_min > MESH_FAN_TO_INT( parea->top )  && y_max < MESH_FAN_TO_INT( parea->bottom + 1 ) );
+
+  if( is_inside && !was_inside)
   {
-    // check whether it was in the passage before
-    x_min = pcv->x_min + (pchr->ori_old.pos.x - pchr->ori.pos.x) ;
-    x_max = pcv->x_max + (pchr->ori_old.pos.x - pchr->ori.pos.x) ;
+    signal_target( gs, 0, iowner, SIGNAL_ENTERPASSAGE, REF_TO_INT(ichr) );
+  }
+  else if ( !is_inside && was_inside)
+  {
+    signal_target( gs, 0, iowner, SIGNAL_EXITPASSAGE, REF_TO_INT(ichr) );
+  }
 
-    y_min = pcv->y_min + (pchr->ori_old.pos.y - pchr->ori.pos.y);
-    y_max = pcv->y_max + (pchr->ori_old.pos.y - pchr->ori.pos.y);
+  if ( is_inside && NULL != powner )
+  {
+    *powner = iowner;
+  }
 
-    retval = ( x_min > MESH_FAN_TO_INT( parea->left ) && x_max < MESH_FAN_TO_INT( parea->right + 1 ) ) &&
-             ( y_min > MESH_FAN_TO_INT( parea->top )  && y_max < MESH_FAN_TO_INT( parea->bottom + 1 ) );
-
-    if( retval )
-    {
-      signal_target( gs, 0, iowner, SIGNAL_ENTERPASSAGE, REF_TO_INT(ichr) );
-
-      if ( NULL != powner )
-      {
-        *powner = iowner;
-      }
-    }
-  };
-
-  return retval;
+  return is_inside;
 };
 
 //--------------------------------------------------------------------------------------------
@@ -441,14 +447,17 @@ bool_t passage_check_any( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * pown
 {
   // BB > character ichr is partially inside passage pass
 
+  // BB > character ichr is completely inside passage pass
+
   float x_min, x_max;
   float y_min, y_max;
+  bool_t      is_inside = bfalse, was_inside = bfalse;
   CHR_REF     iowner;
   Chr_t     * pchr;
   CVolume_t * pcv;
   IRect_t   * parea;
 
-  if ( !ACTIVE_CHR( gs->ChrList,  ichr ) || pass >= gs->PassList_count ) return bfalse;
+  if ( !ACTIVE_CHR( gs->ChrList,  ichr ) || pass >= gs->PassList_count ) return is_inside;
 
   iowner = gs->PassList[pass].owner;
   if ( INVALID_CHR == iowner )
@@ -464,34 +473,41 @@ bool_t passage_check_any( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * pown
   pcv  = &(pchr->bmpdata.cv);
   parea = &(gs->PassList[pass].area);
 
-  // check whether it is intersecting the passage now
+  // check whether the character is in the passage now
   x_min = pcv->x_min;
   x_max = pcv->x_max;
 
   y_min = pcv->y_min;
   y_max = pcv->y_max;
 
-  if ( x_max < MESH_FAN_TO_INT( parea->left ) || x_min > MESH_FAN_TO_INT( parea->right + 1 ) ) return bfalse;
-  if ( y_max < MESH_FAN_TO_INT( parea->top )  || y_min > MESH_FAN_TO_INT( parea->bottom + 1 ) ) return bfalse;
+  is_inside = ( x_max >= MESH_FAN_TO_INT( parea->left ) && x_min <= MESH_FAN_TO_INT( parea->right + 1 ) ) &&
+              ( y_max >= MESH_FAN_TO_INT( parea->top )  && y_min <= MESH_FAN_TO_INT( parea->bottom + 1 ) );
 
-  // check whether it was intersecting the passage before
+  // check whether it was in the passage before
   x_min = pcv->x_min + (pchr->ori_old.pos.x - pchr->ori.pos.x) ;
   x_max = pcv->x_max + (pchr->ori_old.pos.x - pchr->ori.pos.x) ;
 
   y_min = pcv->y_min + (pchr->ori_old.pos.y - pchr->ori.pos.y);
   y_max = pcv->y_max + (pchr->ori_old.pos.y - pchr->ori.pos.y);
 
-  if ( x_max < MESH_FAN_TO_INT( parea->left ) || x_min > MESH_FAN_TO_INT( parea->right + 1 ) ) return bfalse;
-  if ( y_max < MESH_FAN_TO_INT( parea->top )  || y_min > MESH_FAN_TO_INT( parea->bottom + 1 ) ) return bfalse;
+  was_inside = ( x_max >= MESH_FAN_TO_INT( parea->left ) && x_min <= MESH_FAN_TO_INT( parea->right + 1 ) ) &&
+               ( y_max >= MESH_FAN_TO_INT( parea->top )  && y_min <= MESH_FAN_TO_INT( parea->bottom + 1 ) );
 
-  signal_target( gs, 0, iowner, SIGNAL_ENTERPASSAGE, REF_TO_INT(ichr) );
+  if( is_inside && !was_inside)
+  {
+    signal_target( gs, 0, iowner, SIGNAL_ENTERPASSAGE, REF_TO_INT(ichr) );
+  }
+  else if ( !is_inside && was_inside)
+  {
+    signal_target( gs, 0, iowner, SIGNAL_EXITPASSAGE, REF_TO_INT(ichr) );
+  }
 
-  if ( NULL != powner )
+  if ( is_inside && NULL != powner )
   {
     *powner = iowner;
   }
 
-  return btrue;
+  return is_inside;
 };
 
 //--------------------------------------------------------------------------------------------
@@ -499,8 +515,8 @@ bool_t passage_check( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powner )
 {
   // BB > character ichr's center is inside passage pass
 
-  bool_t retval = bfalse;
   Orientation_t * pori;
+  bool_t    is_inside = bfalse, was_inside = bfalse;
   IRect_t * parea;
   CHR_REF   iowner;
   Chr_t   * pchr;
@@ -519,31 +535,32 @@ bool_t passage_check( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powner )
 
   pchr = gs->ChrList + ichr;
 
-  pori = &(pchr->ori);
   parea = &(gs->PassList[pass].area);
 
-  retval = ( pori->pos.x > MESH_FAN_TO_INT( parea->left ) && pori->pos.x < MESH_FAN_TO_INT( parea->right + 1 ) ) &&
-           ( pori->pos.y > MESH_FAN_TO_INT( parea->top ) && pori->pos.y < MESH_FAN_TO_INT( parea->bottom + 1 ) );
+  pori = &(pchr->ori);
+  is_inside = ( pori->pos.x > MESH_FAN_TO_INT( parea->left ) && pori->pos.x < MESH_FAN_TO_INT( parea->right + 1 ) ) &&
+              ( pori->pos.y > MESH_FAN_TO_INT( parea->top ) && pori->pos.y < MESH_FAN_TO_INT( parea->bottom + 1 ) );
 
-  if ( retval )
+
+  pori = &(pchr->ori_old);
+  was_inside = ( pori->pos.x > MESH_FAN_TO_INT( parea->left ) && pori->pos.x < MESH_FAN_TO_INT( parea->right + 1 ) ) &&
+               ( pori->pos.y > MESH_FAN_TO_INT( parea->top ) && pori->pos.y < MESH_FAN_TO_INT( parea->bottom + 1 ) );
+
+  if( is_inside && !was_inside)
   {
-    pori = &(pchr->ori_old);
+    signal_target( gs, 0, iowner, SIGNAL_ENTERPASSAGE, REF_TO_INT(ichr) );
+  }
+  else if ( !is_inside && was_inside)
+  {
+    signal_target( gs, 0, iowner, SIGNAL_EXITPASSAGE, REF_TO_INT(ichr) );
+  }
 
-    retval = ( pori->pos.x > MESH_FAN_TO_INT( parea->left ) && pori->pos.x < MESH_FAN_TO_INT( parea->right + 1 ) ) &&
-            ( pori->pos.y > MESH_FAN_TO_INT( parea->top ) && pori->pos.y < MESH_FAN_TO_INT( parea->bottom + 1 ) );
+  if ( is_inside && NULL != powner )
+  {
+    *powner = iowner;
+  }
 
-    if ( retval )
-    {
-      signal_target( gs, 0, iowner, SIGNAL_ENTERPASSAGE, REF_TO_INT(ichr) );
-
-      if ( NULL != powner )
-      {
-        *powner = iowner;
-      }
-    }
-  };
-
-  return retval;
+  return is_inside;
 };
 //--------------------------------------------------------------------------------------------
 Uint32 ShopList_add( Game_t * gs, CHR_REF owner, PASS_REF passage )

@@ -2343,7 +2343,7 @@
 	"egoboo_math.inl"
 	"egoboo_types.inl"
 
-1219194693 source:c:\projects\ego\zefz-sourceforge\trunk\game\astar.c
+1219293191 source:c:\projects\ego\zefz-sourceforge\trunk\game\astar.c
 	"AStar.h"
 	"game.h"
 	"mesh.inl"
@@ -2351,12 +2351,12 @@
 1219194694 c:\projects\ego\zefz-sourceforge\trunk\game\astar.h
 	"egoboo_types.h"
 
-1219216182 c:\projects\ego\zefz-sourceforge\trunk\game\egoboo_types.h
+1219221333 c:\projects\ego\zefz-sourceforge\trunk\game\egoboo_types.h
 	"egoboo_config.h"
 	<SDL_endian.h>
 	<SDL_types.h>
 
-1218839491 c:\projects\ego\zefz-sourceforge\trunk\game\egoboo_config.h
+1219292689 c:\projects\ego\zefz-sourceforge\trunk\game\egoboo_config.h
 	<SDL_endian.h>
 
 1199080116 c:\sdks\sdl\include\sdl_endian.h
@@ -2435,7 +2435,7 @@
 1199080116 c:\sdks\sdl\include\sdl_types.h
 	"SDL_stdinc.h"
 
-1219208740 c:\projects\ego\zefz-sourceforge\trunk\game\game.h
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\game.h
 	"input.h"
 	"module.h"
 	"char.h"
@@ -2447,7 +2447,7 @@
 	"script.h"
 	"graphic.h"
 
-1219197492 c:\projects\ego\zefz-sourceforge\trunk\game\input.h
+1219280441 c:\projects\ego\zefz-sourceforge\trunk\game\input.h
 	"egoboo_types.h"
 	<SDL.h>
 
@@ -2594,7 +2594,7 @@
 	"ogl_texture.h"
 	"egoboo_types.h"
 
-1218433539 c:\projects\ego\zefz-sourceforge\trunk\game\ogl_texture.h
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\ogl_texture.h
 	"ogl_include.h"
 	<SDL.h>
 
@@ -2614,24 +2614,24 @@
 	<windows.h>
 	<stddef.h>
 
-1219215736 c:\projects\ego\zefz-sourceforge\trunk\game\egoboo_math.h
+1219293141 c:\projects\ego\zefz-sourceforge\trunk\game\egoboo_math.h
 	<math.h>
 	"egoboo_types.h"
 	"egoboo_config.h"
 
-1219216181 c:\projects\ego\zefz-sourceforge\trunk\game\char.h
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\char.h
 	"object.h"
 	"input.h"
 	"Mad.h"
 	"egoboo_utility.h"
 
-1219194695 c:\projects\ego\zefz-sourceforge\trunk\game\object.h
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\object.h
 	"egoboo_types.h"
 	"egoboo_utility.h"
 	"egoboo_math.h"
 	"Physics.h"
 
-1219211158 c:\projects\ego\zefz-sourceforge\trunk\game\egoboo_utility.h
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\egoboo_utility.h
 	"egoboo_types.h"
 	"egoboo_config.h"
 	<stdio.h>
@@ -2639,13 +2639,13 @@
 1218564848 c:\projects\ego\zefz-sourceforge\trunk\game\physics.h
 	"egoboo_math.h"
 
-1219214187 c:\projects\ego\zefz-sourceforge\trunk\game\mad.h
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\mad.h
 	"object.h"
 	"egoboo_math.h"
 	"egoboo.h"
 	"Md2.h"
 
-1219214187 c:\projects\ego\zefz-sourceforge\trunk\game\egoboo.h
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\egoboo.h
 	"proto.h"
 	"Menu.h"
 	"configfile.h"
@@ -2670,38 +2670,38 @@
 	"egoboo_types.h"
 	"module.h"
 
-1218064584 c:\projects\ego\zefz-sourceforge\trunk\game\configfile.h
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\configfile.h
 	"egoboo_types.h"
 	<stdio.h>
 	<stdlib.h>
 
-1218433539 c:\projects\ego\zefz-sourceforge\trunk\game\md2.h
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\md2.h
 	"id_md2.h"
 	<SDL_opengl.h>
 	<memory.h>
 
-1218069548 c:\projects\ego\zefz-sourceforge\trunk\game\id_md2.h
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\id_md2.h
 	"egoboo_types.h"
 
-1219210895 c:\projects\ego\zefz-sourceforge\trunk\game\particle.h
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\particle.h
 	"egoboo.h"
 	"object.h"
 
-1219216181 c:\projects\ego\zefz-sourceforge\trunk\game\enchant.h
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\enchant.h
 	"egoboo_types.h"
 	"object.h"
 
 1219042969 c:\projects\ego\zefz-sourceforge\trunk\game\passage.h
 	"egoboo_types.h"
 
-1219214187 c:\projects\ego\zefz-sourceforge\trunk\game\mesh.h
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\mesh.h
 	"egoboo_types.h"
 	"egoboo_math.h"
 
-1219199392 c:\projects\ego\zefz-sourceforge\trunk\game\script.h
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\script.h
 	"egoboo_types.h"
 
-1219214309 c:\projects\ego\zefz-sourceforge\trunk\game\graphic.h
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\graphic.h
 	"ogl_texture.h"
 	"Font.h"
 	"mesh.h"
@@ -2709,11 +2709,11 @@
 	"egoboo_types.h"
 	<SDL.h>
 
-1218433539 c:\projects\ego\zefz-sourceforge\trunk\game\font.h
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\font.h
 	"ogl_texture.h"
 	<SDL.h>
 
-1219216182 c:\projects\ego\zefz-sourceforge\trunk\game\mesh.inl
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\mesh.inl
 	"mesh.h"
 	"game.h"
 	"particle.inl"
@@ -2739,15 +2739,15 @@
 	"egoboo_types.h"
 	"egoboo_math.inl"
 
-1219196301 c:\projects\ego\zefz-sourceforge\trunk\game\clock.h
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\clock.h
 	<SDL_types.h>
 	"egoboo_types.h"
 
-1219194695 c:\projects\ego\zefz-sourceforge\trunk\game\egoboo_math.inl
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\egoboo_math.inl
 	"egoboo_math.h"
 	"egoboo_types.inl"
 
-1219207369 source:c:\projects\ego\zefz-sourceforge\trunk\game\client.c
+1219292684 source:c:\projects\ego\zefz-sourceforge\trunk\game\client.c
 	"Client.h"
 	"Log.h"
 	"NetFile.h"
@@ -2759,7 +2759,7 @@
 	<enet/enet.h>
 	<assert.h>
 
-1219199393 c:\projects\ego\zefz-sourceforge\trunk\game\client.h
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\client.h
 	<enet/enet.h>
 	"Network.h"
 	"egoboo_types.h"
@@ -2794,16 +2794,16 @@
 1217834548 c:\projects\ego\zefz-sourceforge\trunk\enet\include\enet\callbacks.h
 	<stdlib.h>
 
-1219215735 c:\projects\ego\zefz-sourceforge\trunk\game\network.h
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\network.h
 	"input.h"
 	"char.h"
 	"egoboo.h"
 	<enet/enet.h>
 	<SDL_thread.h>
 
-1211212380 c:\projects\ego\zefz-sourceforge\trunk\game\log.h
+1219292898 c:\projects\ego\zefz-sourceforge\trunk\game\log.h
 
-1218069321 c:\projects\ego\zefz-sourceforge\trunk\game\netfile.h
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\netfile.h
 	"Network.h"
 	"egoboo_types.h"
 
@@ -2813,11 +2813,11 @@
 	<string.h>
 	<ctype.h>
 
-1219216182 c:\projects\ego\zefz-sourceforge\trunk\game\network.inl
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\network.inl
 	"Network.h"
 	"egoboo_types.inl"
 
-1219216182 source:c:\projects\ego\zefz-sourceforge\trunk\game\clock.c
+1219292684 source:c:\projects\ego\zefz-sourceforge\trunk\game\clock.c
 	"Clock.h"
 	"System.h"
 	"Log.h"
@@ -2825,9 +2825,9 @@
 	<stdlib.h>
 	<memory.h>
 
-1218264718 c:\projects\ego\zefz-sourceforge\trunk\game\system.h
+1219292558 c:\projects\ego\zefz-sourceforge\trunk\game\system.h
 
-1219216182 source:c:\projects\ego\zefz-sourceforge\trunk\game\font.c
+1219292685 source:c:\projects\ego\zefz-sourceforge\trunk\game\font.c
 	"Font.h"
 	"ogl_texture.h"
 	"Log.h"
@@ -2844,11 +2844,11 @@
 	<SDL_ttf.h>
 	<assert.h>
 
-1219194696 c:\projects\ego\zefz-sourceforge\trunk\game\file_common.h
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\file_common.h
 	"egoboo_types.h"
 	<stdio.h>
 
-1219194693 c:\projects\ego\zefz-sourceforge\trunk\game\graphic.inl
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\graphic.inl
 	"graphic.h"
 	"egoboo_types.inl"
 
@@ -2865,14 +2865,14 @@
 1218066716 c:\projects\ego\zefz-sourceforge\trunk\game\frustum.h
 	"egoboo_types.h"
 
-1219194695 source:c:\projects\ego\zefz-sourceforge\trunk\game\log.c
+1219292898 source:c:\projects\ego\zefz-sourceforge\trunk\game\log.c
 	"Log.h"
 	"game.h"
 	<stdlib.h>
 	<stdio.h>
 	<stdarg.h>
 
-1219210153 source:c:\projects\ego\zefz-sourceforge\trunk\game\mad.c
+1219292685 source:c:\projects\ego\zefz-sourceforge\trunk\game\mad.c
 	"Mad.h"
 	"script.h"
 	"Log.h"
@@ -2884,17 +2884,17 @@
 	"graphic.inl"
 	"egoboo_types.inl"
 
-1219194695 c:\projects\ego\zefz-sourceforge\trunk\game\md2.inl
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\md2.inl
 	"Md2.h"
 
-1219210153 source:c:\projects\ego\zefz-sourceforge\trunk\game\md2.c
+1219292685 source:c:\projects\ego\zefz-sourceforge\trunk\game\md2.c
 	"Md2.inl"
 	"id_md2.h"
 	<SDL_endian.h>
 	"egoboo_math.inl"
 	<stdio.h>
 
-1219215889 source:c:\projects\ego\zefz-sourceforge\trunk\game\menu.c
+1219292685 source:c:\projects\ego\zefz-sourceforge\trunk\game\menu.c
 	"Menu.h"
 	"Ui.h"
 	"Log.h"
@@ -2912,7 +2912,7 @@
 	"Network.inl"
 	"egoboo_types.inl"
 
-1219196301 c:\projects\ego\zefz-sourceforge\trunk\game\ui.h
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\ui.h
 	"Font.h"
 	"ogl_texture.h"
 	"egoboo_types.h"
@@ -2949,7 +2949,7 @@
 	"char.inl"
 	"egoboo_types.inl"
 
-1219194695 source:c:\projects\ego\zefz-sourceforge\trunk\game\netfile.c
+1219292685 source:c:\projects\ego\zefz-sourceforge\trunk\game\netfile.c
 	"NetFile.h"
 	"file_common.h"
 	"egoboo_utility.h"
@@ -2959,7 +2959,7 @@
 	<assert.h>
 	<time.h>
 
-1219197492 source:c:\projects\ego\zefz-sourceforge\trunk\game\network.c
+1219292685 source:c:\projects\ego\zefz-sourceforge\trunk\game\network.c
 	"Network.inl"
 	"Client.h"
 	"Server.h"
@@ -3025,14 +3025,14 @@
 	"egoboo_types.inl"
 	<windows.h>
 
-1219196301 source:c:\projects\ego\zefz-sourceforge\trunk\game\task.c
+1219292847 source:c:\projects\ego\zefz-sourceforge\trunk\game\task.c
 	"Task.h"
 	"Clock.h"
 	<stddef.h>
 	<string.h>
 	<stdlib.h>
 
-1219196301 c:\projects\ego\zefz-sourceforge\trunk\game\task.h
+1219292847 c:\projects\ego\zefz-sourceforge\trunk\game\task.h
 
 1219196301 source:c:\projects\ego\zefz-sourceforge\trunk\game\ticker.c
 	"Ticker.h"
@@ -3049,10 +3049,10 @@
 	<stdlib.h>
 	<assert.h>
 
-1218069321 c:\projects\ego\zefz-sourceforge\trunk\game\timer.h
+1219292558 c:\projects\ego\zefz-sourceforge\trunk\game\timer.h
 	"Clock.h"
 
-1219194694 source:c:\projects\ego\zefz-sourceforge\trunk\game\ui.c
+1219292685 source:c:\projects\ego\zefz-sourceforge\trunk\game\ui.c
 	"Ui.h"
 	"Log.h"
 	"egoboo.h"
@@ -3078,7 +3078,7 @@
 1219215735 c:\projects\ego\zefz-sourceforge\trunk\game\camera.h
 	"ogl_include.h"
 
-1219215735 source:c:\projects\ego\zefz-sourceforge\trunk\game\char.c
+1219292684 source:c:\projects\ego\zefz-sourceforge\trunk\game\char.c
 	"char.inl"
 	"Client.h"
 	"Server.h"
@@ -3111,13 +3111,13 @@
 	"enchant.h"
 	"particle.h"
 
-1219194696 c:\projects\ego\zefz-sourceforge\trunk\game\object.inl
+1219292685 c:\projects\ego\zefz-sourceforge\trunk\game\object.inl
 	"object.h"
 	"game.h"
 	"char.inl"
 	"egoboo_types.inl"
 
-1219030105 source:c:\projects\ego\zefz-sourceforge\trunk\game\configfile.c
+1219292684 source:c:\projects\ego\zefz-sourceforge\trunk\game\configfile.c
 	"configfile.h"
 	"file_common.h"
 	"egoboo_strutil.h"
@@ -3134,7 +3134,7 @@
 	"egoboo_strutil.h"
 	"egoboo_config.h"
 
-1219211158 source:c:\projects\ego\zefz-sourceforge\trunk\game\egoboo_utility.c
+1219292684 source:c:\projects\ego\zefz-sourceforge\trunk\game\egoboo_utility.c
 	"egoboo_utility.h"
 	"Mad.h"
 	"Log.h"
@@ -3146,7 +3146,7 @@
 	"egoboo_math.inl"
 	"egoboo_types.inl"
 
-1219215735 source:c:\projects\ego\zefz-sourceforge\trunk\game\enchant.c
+1219292684 source:c:\projects\ego\zefz-sourceforge\trunk\game\enchant.c
 	"enchant.h"
 	"Log.h"
 	"passage.h"
@@ -3166,11 +3166,11 @@
 	"egoboo_math.inl"
 	"egoboo_types.inl"
 
-1219194696 source:c:\projects\ego\zefz-sourceforge\trunk\game\file_common.c
+1219292684 source:c:\projects\ego\zefz-sourceforge\trunk\game\file_common.c
 	"file_common.h"
 	"Log.h"
 
-1219030658 source:c:\projects\ego\zefz-sourceforge\trunk\game\file_win.c
+1219292685 source:c:\projects\ego\zefz-sourceforge\trunk\game\file_win.c
 	"file_common.h"
 	"Log.h"
 	"game.h"
@@ -3179,7 +3179,7 @@
 	<shlobj.h>
 	<shlwapi.h>
 
-1219216574 source:c:\projects\ego\zefz-sourceforge\trunk\game\game.c
+1219292685 source:c:\projects\ego\zefz-sourceforge\trunk\game\game.c
 	"game.h"
 	"Ui.h"
 	"Font.h"
@@ -3215,7 +3215,7 @@
 	"egoboo_math.inl"
 	"egoboo_types.inl"
 
-1219210073 source:c:\projects\ego\zefz-sourceforge\trunk\game\graphic_mad.c
+1219292685 source:c:\projects\ego\zefz-sourceforge\trunk\game\graphic_mad.c
 	"ogl_include.h"
 	"Mad.h"
 	"id_md2.h"
@@ -3230,7 +3230,7 @@
 	"egoboo_math.inl"
 	"egoboo_types.inl"
 
-1219210113 source:c:\projects\ego\zefz-sourceforge\trunk\game\graphic_prt.c
+1219293085 source:c:\projects\ego\zefz-sourceforge\trunk\game\graphic_prt.c
 	"ogl_include.h"
 	"Log.h"
 	"camera.h"
@@ -3244,13 +3244,13 @@
 	"egoboo_types.inl"
 	"mesh.inl"
 
-1211212379 source:c:\projects\ego\zefz-sourceforge\trunk\game\id_normals.c
+1219292685 source:c:\projects\ego\zefz-sourceforge\trunk\game\id_normals.c
 	"id_md2.h"
 	"id_normals.h"
 
 1219194695 c:\projects\ego\zefz-sourceforge\trunk\game\id_normals.h
 
-1219216574 source:c:\projects\ego\zefz-sourceforge\trunk\game\input.c
+1219292685 source:c:\projects\ego\zefz-sourceforge\trunk\game\input.c
 	"input.inl"
 	"Ui.h"
 	"Log.h"
@@ -3261,7 +3261,7 @@
 	"Network.inl"
 	"egoboo_types.inl"
 
-1219211230 source:c:\projects\ego\zefz-sourceforge\trunk\game\module.c
+1219292685 source:c:\projects\ego\zefz-sourceforge\trunk\game\module.c
 	"module.h"
 	"Log.h"
 	"sound.h"
@@ -3282,7 +3282,7 @@
 	"mesh.inl"
 	"egoboo_types.inl"
 
-1219214187 source:c:\projects\ego\zefz-sourceforge\trunk\game\graphic.c
+1219292685 source:c:\projects\ego\zefz-sourceforge\trunk\game\graphic.c
 	"graphic.inl"
 	"Log.h"
 	"Ui.h"
@@ -3310,7 +3310,7 @@
 	<time.h>
 	<unistd.h>
 
-1219214187 source:c:\projects\ego\zefz-sourceforge\trunk\game\mesh.c
+1219292322 source:c:\projects\ego\zefz-sourceforge\trunk\game\mesh.c
 	"mesh.inl"
 	"Log.h"
 	"file_common.h"
@@ -3320,7 +3320,7 @@
 	"particle.inl"
 	"egoboo_types.inl"
 
-1219216574 source:c:\projects\ego\zefz-sourceforge\trunk\game\object.c
+1219292685 source:c:\projects\ego\zefz-sourceforge\trunk\game\object.c
 	"object.inl"
 	"Mad.h"
 	"enchant.h"
@@ -3335,12 +3335,12 @@
 	"char.inl"
 	"egoboo_types.inl"
 
-1219197492 source:c:\projects\ego\zefz-sourceforge\trunk\game\ogl_include.c
+1219292685 source:c:\projects\ego\zefz-sourceforge\trunk\game\ogl_include.c
 	"ogl_include.h"
 	"Log.h"
 	"egoboo_math.inl"
 
-1219197492 source:c:\projects\ego\zefz-sourceforge\trunk\game\ogl_texture.c
+1219292685 source:c:\projects\ego\zefz-sourceforge\trunk\game\ogl_texture.c
 	"ogl_texture.h"
 	"game.h"
 	"graphic.inl"
@@ -3353,7 +3353,7 @@
 	"begin_code.h"
 	"close_code.h"
 
-1219194693 source:c:\projects\ego\zefz-sourceforge\trunk\game\passage.c
+1219280443 source:c:\projects\ego\zefz-sourceforge\trunk\game\passage.c
 	"passage.h"
 	"script.h"
 	"sound.h"
@@ -3364,7 +3364,7 @@
 	"mesh.inl"
 	"egoboo_types.inl"
 
-1218697620 source:c:\projects\ego\zefz-sourceforge\trunk\game\sound.c
+1219292685 source:c:\projects\ego\zefz-sourceforge\trunk\game\sound.c
 	"sound.h"
 	"Log.h"
 	"camera.h"
@@ -3375,7 +3375,7 @@
 	"egoboo_math.inl"
 	"egoboo_types.inl"
 
-1219215736 source:c:\projects\ego\zefz-sourceforge\trunk\game\graphic_fan.c
+1219292322 source:c:\projects\ego\zefz-sourceforge\trunk\game\graphic_fan.c
 	"ogl_include.h"
 	"Log.h"
 	"Frustum.h"
@@ -3387,7 +3387,7 @@
 	"egoboo_math.inl"
 	"egoboo_types.inl"
 
-1219215736 source:c:\projects\ego\zefz-sourceforge\trunk\game\particle.c
+1219292685 source:c:\projects\ego\zefz-sourceforge\trunk\game\particle.c
 	"particle.inl"
 	"Log.h"
 	"camera.h"
@@ -3408,7 +3408,7 @@
 	"egoboo_math.inl"
 	"egoboo_types.inl"
 
-1219215736 source:c:\projects\ego\zefz-sourceforge\trunk\game\script.c
+1219292685 source:c:\projects\ego\zefz-sourceforge\trunk\game\script.c
 	<assert.h>
 	"script.h"
 	"Log.h"

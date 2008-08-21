@@ -201,7 +201,7 @@ bool_t input_read_joystick(JOYSTICK * pj)
 {
   int button;
   float jx, jy;
-  const float jthresh = .25;
+  EGO_CONST float jthresh = .25;
 
   if(NULL == pj) return bfalse;
 

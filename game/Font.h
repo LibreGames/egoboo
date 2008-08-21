@@ -61,15 +61,15 @@ int    BMFont_word_size( BMFont_t * pfnt, char *szText );
 
 typedef struct sTTFont TTFont_t;
 
-extern struct sTTFont *fnt_loadFont( const char *fileName, int pointSize );
+extern struct sTTFont *fnt_loadFont( EGO_CONST char *fileName, int pointSize );
 extern bool_t  fnt_freeFont( struct sTTFont *font );
 
-extern void  fnt_drawText( struct sTTFont *font, int x, int y, const char *text );
-extern void  fnt_drawTextFormatted( struct sTTFont *font, int x, int y, const char *format, ... );
-extern void  fnt_drawTextBox( struct sTTFont *font, const char *text, int x, int y, int width, int height, int spacing );
+extern void  fnt_drawText( struct sTTFont *font, int x, int y, EGO_CONST char *text );
+extern void  fnt_drawTextFormatted( struct sTTFont *font, int x, int y, EGO_CONST char *format, ... );
+extern void  fnt_drawTextBox( struct sTTFont *font, EGO_CONST char *text, int x, int y, int width, int height, int spacing );
 
 // Only works properly on a single line of text
-extern void  fnt_getTextSize( struct sTTFont *font, const char *text, int *width, int *height );
+extern void  fnt_getTextSize( struct sTTFont *font, EGO_CONST char *text, int *width, int *height );
 
 // Works for multiple-line strings, using the user-supplied spacing
-extern void  fnt_getTextBoxSize( struct sTTFont *font, const char *text, int spacing, int *width, int *height );
+extern void  fnt_getTextBoxSize( struct sTTFont *font, EGO_CONST char *text, int spacing, int *width, int *height );

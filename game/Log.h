@@ -21,8 +21,7 @@
 //*
 //********************************************************************************************
 
-#ifndef egoboo_Log_h
-#define egoboo_Log_h
+#pragma once
 
 void log_init();
 void log_shutdown( void );
@@ -37,5 +36,3 @@ void log_error( const char *format, ... );
 
 // these send messages to "debug.txt"
 void log_debug( const char *format, ... );
-
-#endif // include guard

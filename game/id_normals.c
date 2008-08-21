@@ -25,7 +25,7 @@
 
 #include "id_md2.h"
 
-const float kMd2Normals[][3] =
+EGO_CONST float kMd2Normals[][3] =
 {
 #include "id_normals.h"
   ,

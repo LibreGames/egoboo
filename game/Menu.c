@@ -180,17 +180,17 @@ static PLA_REF mnu_selectedPlayer[PLALST_COUNT];
 //static Uint32 mnu_modelIndex = 0;
 
 /* Copyright text variables.  Change these to change how the copyright text appears */
-const char mnu_copyrightText[] = "Welcome to Egoboo!\nhttp://egoboo.sourceforge.net\nVersion 2.7.x";
+EGO_CONST char mnu_copyrightText[] = "Welcome to Egoboo!\nhttp://egoboo.sourceforge.net\nVersion 2.7.x";
 static int mnu_copyrightLeft = 0;
 static int mnu_copyrightTop  = 0;
 
 /* Options info text variables.  Change these to change how the options text appears */
-const char mnu_optionsText[] = "Change your audio, input and video\nsettings here.";
+EGO_CONST char mnu_optionsText[] = "Change your audio, input and video\nsettings here.";
 static int mnu_optionsTextLeft = 0;
 static int mnu_optionsTextTop  = 0;
 
 /* Button labels.  Defined here for consistency's sake, rather than leaving them as constants */
-static const char *mnu_mainMenuButtons[] =
+static EGO_CONST char *mnu_mainMenuButtons[] =
 {
   "New Game",
   "Load Game",
@@ -200,7 +200,7 @@ static const char *mnu_mainMenuButtons[] =
   ""
 };
 
-static const char *mnu_singlePlayerButtons[] =
+static EGO_CONST char *mnu_singlePlayerButtons[] =
 {
   "New Player_t",
   "Load Saved Player_t",
@@ -208,7 +208,7 @@ static const char *mnu_singlePlayerButtons[] =
   ""
 };
 
-const char *netMenuButtons[] =
+EGO_CONST char *netMenuButtons[] =
 {
   "Host Game",
   "Join Game",
@@ -216,14 +216,14 @@ const char *netMenuButtons[] =
   ""
 };
 
-//static const char *mnu_multiPlayerButtons[] =
+//static EGO_CONST char *mnu_multiPlayerButtons[] =
 //{
 //  "Start Game",
 //  "Back",
 //  ""
 //};
 
-static const char *mnu_optionsButtons[] =
+static EGO_CONST char *mnu_optionsButtons[] =
 {
   "Audio Options",
   "Input Controls",
@@ -232,7 +232,7 @@ static const char *mnu_optionsButtons[] =
   ""
 };
 
-static const char *mnu_audioOptionsText[] =
+static EGO_CONST char *mnu_audioOptionsText[] =
 {
   "N/A",    //Enable sound
   "N/A",    //Sound volume
@@ -244,7 +244,7 @@ static const char *mnu_audioOptionsText[] =
   ""
 };
 
-static const char * mnu_videoOptionsText[] =
+static EGO_CONST char * mnu_videoOptionsText[] =
 {
   "N/A",  // Antialaising
   "N/A",  // Particle Effects
@@ -402,7 +402,7 @@ struct sSlidyButtonState
 struct sSlidyButtonState SlidyButtonState_t;
 
 //--------------------------------------------------------------------------------------------
-int mnu_initWidgetsList( ui_Widget_t wlist[], int wmax, const char * text[] )
+int mnu_initWidgetsList( ui_Widget_t wlist[], int wmax, EGO_CONST char * text[] )
 {
   int i, cnt;
   cnt = 0;
@@ -1229,7 +1229,6 @@ int mnu_doChoosePlayer( MenuProc_t * mproc, float deltaTime )
 
   Game_t   * gs = Graphics_getGame(&gfxState);
   Graphics_Data_t * gfx = Game_getGfx(gs);
-  //Client_t * cl = mproc->cl;
   Server_t * sv = mproc->sv;
 
   switch ( menuState )
@@ -2460,7 +2459,7 @@ int mnu_doVideoOptions( MenuProc_t * mproc, float deltaTime )
       {
         // buffer graphics update so we can restore the old state if there is an error
         Graphics_t *pgfx, gfx_new = gfxState;
-        Graphics_synch(&gfx_new, &CData);
+        Graphics_synchronize(&gfx_new, &CData);
 
         // ??? do we have to free this surface ???
         gfxState.surface = NULL;
@@ -4855,7 +4854,7 @@ size_t mnu_load_mod_data(MenuProc_t * mproc, MOD_INFO * mi_ary, size_t mi_len)
 
   char searchname[15];
   STRING loadname;
-  const char *FileName;
+  EGO_CONST char *FileName;
   FILE* filesave;
   size_t modcount;
 
@@ -5033,14 +5032,13 @@ void check_player_import(Game_t * gs)
   STRING searchname, filename, filepath;
   int skin;
   bool_t keeplooking;
-  const char *foundfile;
+  EGO_CONST char *foundfile;
   FS_FIND_INFO fs_finfo;
 
   Obj_t otmp;
 
   OBJ_REF iobj;
   Obj_t  * pobj;
-  //PObj_t objlst = gs->ObjList;
 
   LOAD_PLAYER_INFO * ploadplayer;
 

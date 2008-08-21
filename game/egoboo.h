@@ -62,7 +62,7 @@ struct sGraphics_Data;
 #define MEG              0x00100000
 #define BUFFER_SIZE     (4 * MEG)
 
-EXTERN const char VERSION[] EQ( "2.8.x" );   // Version of the game
+EXTERN EGO_CONST char VERSION[] EQ( "2.8.x" );   // Version of the game
 
 #define DEFAULT_SCREEN_W 640
 #define DEFAULT_SCREEN_H 480
@@ -109,7 +109,8 @@ typedef enum e_SIGNAL
   SIGNAL_BUY     = 0,
   SIGNAL_SELL,
   SIGNAL_REJECT,
-  SIGNAL_ENTERPASSAGE
+  SIGNAL_ENTERPASSAGE,
+  SIGNAL_EXITPASSAGE
 } SIGNAL;
 
 
@@ -394,10 +395,10 @@ typedef struct s_dynalight_info DYNALIGHT_INFO;
 
 #ifdef __cplusplus
   typedef TList<DYNALIGHT_INFO, MAXDYNA> DLightList_t;
-  typedef TPList<DYNALIGHT_INFO, MAXDYNA> PDLight;
+  typedef TPList<DYNALIGHT_INFO, MAXDYNA> PDLight_t;
 #else
   typedef DYNALIGHT_INFO   DLightList_t[MAXDYNA];
-  typedef DYNALIGHT_INFO * PDLight;
+  typedef DYNALIGHT_INFO * PDLight_t;
 #endif
 
 size_t DLightList_clear( struct sGraphics_Data * gfx );
@@ -478,8 +479,8 @@ bool_t            Graphics_Data_delete(Graphics_Data_t * gd);
 EXTERN float           textureoffset[256];         // For moving textures
 
 
-EXTERN const Uint32 particletrans_fp8  EQ( 0x80 );
-EXTERN const Uint32 antialiastrans_fp8  EQ( 0xC0 );
+EXTERN EGO_CONST Uint32 particletrans_fp8  EQ( 0x80 );
+EXTERN EGO_CONST Uint32 antialiastrans_fp8  EQ( 0xC0 );
 
 
 //Network Stuff

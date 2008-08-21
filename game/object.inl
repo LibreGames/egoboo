@@ -26,7 +26,7 @@ INLINE CHR_REF team_get_leader( Game_t * gs, TEAM_REF iteam )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const SLOT grip_to_slot( GRIP g )
+INLINE EGO_CONST SLOT grip_to_slot( GRIP g )
 {
   SLOT s = SLOT_NONE;
 
@@ -48,7 +48,7 @@ INLINE const SLOT grip_to_slot( GRIP g )
       if ( 0 == ( g % GRIP_SIZE ) )
       {
         s = (SLOT)(( g / GRIP_SIZE ) - 1);
-        if ( s <  0          ) s = SLOT_NONE;
+        /* if ( s <  0          ) s = SLOT_NONE; */
         if ( s >= SLOT_COUNT ) s = SLOT_NONE;
       }
       else
@@ -64,7 +64,7 @@ INLINE const SLOT grip_to_slot( GRIP g )
 
 
 //--------------------------------------------------------------------------------------------
-INLINE const GRIP slot_to_grip( SLOT s )
+INLINE EGO_CONST GRIP slot_to_grip( SLOT s )
 {
   GRIP g = GRIP_ORIGIN;
 
@@ -88,7 +88,7 @@ INLINE const GRIP slot_to_grip( SLOT s )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint16 slot_to_offset( SLOT s )
+INLINE EGO_CONST Uint16 slot_to_offset( SLOT s )
 {
   Uint16 o = 1;
 
@@ -111,7 +111,7 @@ INLINE const Uint16 slot_to_offset( SLOT s )
 };
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint16 slot_to_latch( PChr_t lst, size_t count, CHR_REF object, SLOT s )
+INLINE EGO_CONST Uint16 slot_to_latch( PChr_t lst, size_t count, CHR_REF object, SLOT s )
 {
   Uint16 latch = LATCHBUTTON_NONE;
   bool_t in_hand = bfalse;

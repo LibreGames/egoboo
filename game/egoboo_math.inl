@@ -275,7 +275,7 @@ INLINE matrix_4x4 ZeroMatrix( void )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE matrix_4x4 MatrixTranspose( const matrix_4x4 a )
+INLINE matrix_4x4 MatrixTranspose( EGO_CONST matrix_4x4 a )
 {
   matrix_4x4 ret;
   int i, j;
@@ -288,7 +288,7 @@ INLINE matrix_4x4 MatrixTranspose( const matrix_4x4 a )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE matrix_4x4 MatrixMult( const matrix_4x4 a, const matrix_4x4 b )
+INLINE matrix_4x4 MatrixMult( EGO_CONST matrix_4x4 a, EGO_CONST matrix_4x4 b )
 {
   matrix_4x4 ret;
   int i, j, k;
@@ -305,7 +305,7 @@ INLINE matrix_4x4 MatrixMult( const matrix_4x4 a, const matrix_4x4 b )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE matrix_4x4 Translate( const float dx, const float dy, const float dz )
+INLINE matrix_4x4 Translate( EGO_CONST float dx, EGO_CONST float dy, EGO_CONST float dz )
 {
   matrix_4x4 ret = IdentityMatrix();
   ret.CNV( 3, 0 ) = dx;
@@ -315,7 +315,7 @@ INLINE matrix_4x4 Translate( const float dx, const float dy, const float dz )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE matrix_4x4 RotateX( const float rads )
+INLINE matrix_4x4 RotateX( EGO_CONST float rads )
 {
   float cosine = ( float ) cos( rads );
   float sine   = ( float ) sin( rads );
@@ -329,7 +329,7 @@ INLINE matrix_4x4 RotateX( const float rads )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE matrix_4x4 RotateY( const float rads )
+INLINE matrix_4x4 RotateY( EGO_CONST float rads )
 {
   float cosine = ( float ) cos( rads );
   float sine   = ( float ) sin( rads );
@@ -342,7 +342,7 @@ INLINE matrix_4x4 RotateY( const float rads )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE matrix_4x4 RotateZ( const float rads )
+INLINE matrix_4x4 RotateZ( EGO_CONST float rads )
 {
   float cosine = ( float ) cos( rads );
   float sine   = ( float ) sin( rads );
@@ -355,7 +355,7 @@ INLINE matrix_4x4 RotateZ( const float rads )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE matrix_4x4 ScaleXYZ( const float sizex, const float sizey, const float sizez )
+INLINE matrix_4x4 ScaleXYZ( EGO_CONST float sizex, EGO_CONST float sizey, EGO_CONST float sizez )
 {
   matrix_4x4 ret = IdentityMatrix();
   ret.CNV( 0, 0 ) = sizex;   //0,0
@@ -365,7 +365,7 @@ INLINE matrix_4x4 ScaleXYZ( const float sizex, const float sizey, const float si
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE matrix_4x4 ScaleXYZRotateXYZTranslate( const float sizex, const float sizey, const float sizez, Uint16 turnz, Uint16 turnx, Uint16 turny, float tx, float ty, float tz )
+INLINE matrix_4x4 ScaleXYZRotateXYZTranslate( EGO_CONST float sizex, EGO_CONST float sizey, EGO_CONST float sizez, Uint16 turnz, Uint16 turnx, Uint16 turny, float tx, float ty, float tz )
 {
   matrix_4x4 ret;
 
@@ -415,9 +415,9 @@ INLINE matrix_4x4 FourPoints( vect4 ori, vect4 wid, vect4 frw, vect4 up, float s
   wid.z -= ori.z;  frw.z -= ori.z;  up.z -= ori.z;
 
   // fix -x scaling on the input
-  //wid.x *= -1.0; // HUK
-  //wid.y *= -1.0; // HUK
-  //wid.z *= -1.0; // HUK
+  wid.x *= -1.0; // HUK
+  wid.y *= -1.0; // HUK
+  wid.z *= -1.0; // HUK
 
   wid = Normalize4( wid );
   frw = Normalize4( frw );
@@ -673,7 +673,7 @@ INLINE bool_t matrix_compare_3x3(matrix_4x4 * pm1, matrix_4x4 * pm2)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const BBOX_LIST * bbox_list_new(BBOX_LIST * lst)
+INLINE EGO_CONST BBOX_LIST * bbox_list_new(BBOX_LIST * lst)
 {
   if(NULL == lst) return NULL;
   memset(lst, 0, sizeof(BBOX_LIST));
@@ -681,7 +681,7 @@ INLINE const BBOX_LIST * bbox_list_new(BBOX_LIST * lst)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const BBOX_LIST * bbox_list_delete(BBOX_LIST * lst)
+INLINE EGO_CONST BBOX_LIST * bbox_list_delete(BBOX_LIST * lst)
 {
   if(NULL == lst) return NULL;
 
@@ -697,7 +697,7 @@ INLINE const BBOX_LIST * bbox_list_delete(BBOX_LIST * lst)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const BBOX_LIST * bbox_list_renew(BBOX_LIST * lst)
+INLINE EGO_CONST BBOX_LIST * bbox_list_renew(BBOX_LIST * lst)
 {
   if(NULL == lst) return NULL;
 
@@ -706,7 +706,7 @@ INLINE const BBOX_LIST * bbox_list_renew(BBOX_LIST * lst)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const BBOX_LIST * bbox_list_alloc(BBOX_LIST * lst, int count)
+INLINE EGO_CONST BBOX_LIST * bbox_list_alloc(BBOX_LIST * lst, int count)
 {
   if(NULL == lst) return NULL;
 
@@ -725,7 +725,7 @@ INLINE const BBOX_LIST * bbox_list_alloc(BBOX_LIST * lst, int count)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const BBOX_LIST * bbox_list_realloc(BBOX_LIST * lst, int count)
+INLINE EGO_CONST BBOX_LIST * bbox_list_realloc(BBOX_LIST * lst, int count)
 {
   // check for bad list
   if(NULL == lst) return NULL;
@@ -756,7 +756,7 @@ INLINE const BBOX_LIST * bbox_list_realloc(BBOX_LIST * lst, int count)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const BBOX_ARY * bbox_ary_new(BBOX_ARY * ary)
+INLINE EGO_CONST BBOX_ARY * bbox_ary_new(BBOX_ARY * ary)
 {
   if(NULL == ary) return NULL;
   memset(ary, 0, sizeof(BBOX_ARY));
@@ -764,7 +764,7 @@ INLINE const BBOX_ARY * bbox_ary_new(BBOX_ARY * ary)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const BBOX_ARY * bbox_ary_delete(BBOX_ARY * ary)
+INLINE EGO_CONST BBOX_ARY * bbox_ary_delete(BBOX_ARY * ary)
 {
   int i;
 
@@ -787,7 +787,7 @@ INLINE const BBOX_ARY * bbox_ary_delete(BBOX_ARY * ary)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const BBOX_ARY * bbox_ary_renew(BBOX_ARY * ary)
+INLINE EGO_CONST BBOX_ARY * bbox_ary_renew(BBOX_ARY * ary)
 {
   if(NULL == ary) return NULL;
   bbox_ary_delete(ary);
@@ -795,7 +795,7 @@ INLINE const BBOX_ARY * bbox_ary_renew(BBOX_ARY * ary)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const BBOX_ARY * bbox_ary_alloc(BBOX_ARY * ary, int count)
+INLINE EGO_CONST BBOX_ARY * bbox_ary_alloc(BBOX_ARY * ary, int count)
 {
   if(NULL == ary) return NULL;
 

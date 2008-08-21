@@ -641,7 +641,7 @@ typedef struct s_chr_spawn_info CHR_SPAWN_INFO;
 CHR_SPAWN_INFO * chr_spawn_info_new(CHR_SPAWN_INFO * psi, struct sGame * gs );
 bool_t           chr_spawn_info_init( CHR_SPAWN_INFO * psi, vect3 pos, vect3 vel,
                                       OBJ_REF iobj, TEAM_REF team, Uint8 skin, Uint16 facing,
-                                      const char *name, CHR_REF override );
+                                      EGO_CONST char *name, CHR_REF override );
 //--------------------------------------------------------------------------------------------
 struct s_chr_spawn_queue
 {
@@ -919,10 +919,10 @@ INLINE CHR_REF chr_get_aihitlast( PChr_t lst, size_t lst_size, Chr_t * pchr );
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-INLINE const SLOT   grip_to_slot( GRIP g );
-INLINE const GRIP   slot_to_grip( SLOT s );
-INLINE const Uint16 slot_to_latch( PChr_t lst, size_t count, Uint16 object, SLOT s );
-INLINE const Uint16 slot_to_offset( SLOT s );
+INLINE EGO_CONST SLOT   grip_to_slot( GRIP g );
+INLINE EGO_CONST GRIP   slot_to_grip( SLOT s );
+INLINE EGO_CONST Uint16 slot_to_latch( PChr_t lst, size_t count, Uint16 object, SLOT s );
+INLINE EGO_CONST Uint16 slot_to_offset( SLOT s );
 
 
 // Character data
@@ -977,11 +977,11 @@ void move_characters( struct sGame * gs,float dUpdate );
 
 OBJ_REF object_generate_index( char *szLoadName );
 
-CAP_REF CapList_load_one( struct sGame * gs, const char * szModpath, const char *szObjectname, CAP_REF irequest );
+CAP_REF CapList_load_one( struct sGame * gs, EGO_CONST char * szModpath, EGO_CONST char *szObjectname, CAP_REF irequest );
 
 bool_t chr_bdata_reinit(Chr_t * pchr, BData_t * pbd);
 
-int fget_skin( char * szModpath, const char * szObjectname );
+int fget_skin( char * szModpath, EGO_CONST char * szObjectname );
 
 
 void calc_cap_experience( struct sGame * gs, CHR_REF object );
@@ -1006,7 +1006,7 @@ bool_t ai_state_advance_wp(AI_STATE * a, bool_t do_atlastwaypoint);
 extern int chr_collisions;
 
 CHR_REF chr_spawn( struct sGame * gs,  vect3 pos, vect3 vel, OBJ_REF iobj, TEAM_REF team,
-                   Uint8 skin, Uint16 facing, const char *name, CHR_REF override );
+                   Uint8 skin, Uint16 facing, EGO_CONST char *name, CHR_REF override );
 
 CHR_REF force_chr_spawn( CHR_SPAWN_INFO si );
 bool_t  activate_chr_spawn( struct sGame * gs, CHR_REF ichr );

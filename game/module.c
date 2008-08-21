@@ -50,7 +50,7 @@
 
 static void   module_load_all_objects( Game_t * gs, char * szModname );
 static bool_t module_load_all_waves( Game_t * gs, char *modname );
-static bool_t module_read_egomap_extra( Game_t * gs, const char * szModPath );
+static bool_t module_read_egomap_extra( Game_t * gs, EGO_CONST char * szModPath );
 
 //--------------------------------------------------------------------------------------------
 void release_bumplist(MeshInfo_t * mi)
@@ -409,7 +409,7 @@ void module_load_all_objects( Game_t * gs, char * szModpath )
 {
   // ZZ> This function loads a module's objects
 
-  const char *filehandle;
+  EGO_CONST char *filehandle;
   STRING szObjectpath, szTempdir, tmpstr;
   int cnt;
   int skin;
@@ -741,7 +741,7 @@ void ModInfo_clear_all_titleimages( MOD_INFO * mi_ary, size_t mi_count )
 
 
 //---------------------------------------------------------------------------------------------
-bool_t module_read_egomap_extra( Game_t * gs, const char * szModPath )
+bool_t module_read_egomap_extra( Game_t * gs, EGO_CONST char * szModPath )
 {
   FILE * ftmp;
   STRING fname;

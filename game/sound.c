@@ -250,7 +250,7 @@ void snd_apply_mods( int channel, float intensity, vect3 snd_pos, vect3 ear_pos,
   float dist_xyz2, dist_xy2, volume;
   float vl, vr, dx, dy;
   int vol_left, vol_right;
-  const float reverbdistance = 128 * 2.5;  // there will effectively be "no change"  in the sound volume for distances less than 2.5 tiles away
+  EGO_CONST float reverbdistance = 128 * 2.5;  // there will effectively be "no change"  in the sound volume for distances less than 2.5 tiles away
 
   if ( !_sndState.soundActive || INVALID_CHANNEL == channel ) return;
 

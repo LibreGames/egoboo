@@ -55,26 +55,26 @@ struct s_bumplist
 };
 typedef struct s_bumplist BUMPLIST;
 
-INLINE const BUMPLIST * bumplist_new(BUMPLIST * b);
-INLINE const bool_t     bumplist_delete(BUMPLIST * b);
-INLINE const BUMPLIST * bumplist_renew(BUMPLIST * b);
-INLINE const bool_t     bumplist_allocate(BUMPLIST * b, int size);
-INLINE const bool_t     bumplist_clear( BUMPLIST * b );
+INLINE EGO_CONST BUMPLIST * bumplist_new(BUMPLIST * b);
+INLINE EGO_CONST bool_t     bumplist_delete(BUMPLIST * b);
+INLINE EGO_CONST BUMPLIST * bumplist_renew(BUMPLIST * b);
+INLINE EGO_CONST bool_t     bumplist_allocate(BUMPLIST * b, int size);
+INLINE EGO_CONST bool_t     bumplist_clear( BUMPLIST * b );
 
-INLINE const Uint32     bumplist_get_free(BUMPLIST * b);
+INLINE EGO_CONST Uint32     bumplist_get_free(BUMPLIST * b);
 
-INLINE const bool_t     bumplist_insert_chr(BUMPLIST * b, Uint32 block, CHR_REF chr_ref);
-INLINE const bool_t     bumplist_insert_prt(BUMPLIST * b, Uint32 block, PRT_REF prt_ref);
+INLINE EGO_CONST bool_t     bumplist_insert_chr(BUMPLIST * b, Uint32 block, CHR_REF chr_ref);
+INLINE EGO_CONST bool_t     bumplist_insert_prt(BUMPLIST * b, Uint32 block, PRT_REF prt_ref);
 
-INLINE const Uint32     bumplist_get_chr_head(BUMPLIST * b, Uint32 block);
-INLINE const Uint32     bumplist_get_prt_head(BUMPLIST * b, Uint32 block);
-INLINE const Uint32     bumplist_get_chr_count(BUMPLIST * b, Uint32 block );
-INLINE const Uint32     bumplist_get_prt_count(BUMPLIST * b, Uint32 block );
+INLINE EGO_CONST Uint32     bumplist_get_chr_head(BUMPLIST * b, Uint32 block);
+INLINE EGO_CONST Uint32     bumplist_get_prt_head(BUMPLIST * b, Uint32 block);
+INLINE EGO_CONST Uint32     bumplist_get_chr_count(BUMPLIST * b, Uint32 block );
+INLINE EGO_CONST Uint32     bumplist_get_prt_count(BUMPLIST * b, Uint32 block );
 
-INLINE const Uint32     bumplist_get_next(BUMPLIST * b, Uint32 node );
-INLINE const Uint32     bumplist_get_ref(BUMPLIST * b, Uint32 node );
-INLINE const Uint32     bumplist_get_next_prt(struct sGame * gs, BUMPLIST * b, Uint32 node );
-INLINE const Uint32     bumplist_get_next_chr(struct sGame * gs, BUMPLIST * b, Uint32 node );
+INLINE EGO_CONST Uint32     bumplist_get_next(BUMPLIST * b, Uint32 node );
+INLINE EGO_CONST Uint32     bumplist_get_ref(BUMPLIST * b, Uint32 node );
+INLINE EGO_CONST Uint32     bumplist_get_next_prt(struct sGame * gs, BUMPLIST * b, Uint32 node );
+INLINE EGO_CONST Uint32     bumplist_get_next_chr(struct sGame * gs, BUMPLIST * b, Uint32 node );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -163,11 +163,11 @@ struct sMeshInfo
 
   int     tiles_x;                          // Mesh size in tiles
   int     tiles_y;
-  int     tile_count;
+  size_t  tile_count;
 
   int     blocks_x;
   int     blocks_y;
-  int     block_count;
+  size_t  block_count;
 
   float   edge_x;                                          // floating point size of mesh
   float   edge_y;                                          //
@@ -215,7 +215,7 @@ struct sMeshMem
   float*  vrt_lg_fp8;                                           // Vertex light
   float*  vrt_lb_fp8;                                           // Vertex light
 
-  int         tile_count;
+  Uint32        tile_count;
   MeshTile_t  * tilelst;
 };
 typedef struct sMeshMem MeshMem_t;
@@ -274,44 +274,44 @@ float mesh_get_level( MeshMem_t * mm, Uint32 fan, float x, float y, bool_t water
 
 Uint32 mesh_hitawall( Mesh_t * pmesh, vect3 pos, float tiles_x, float tiles_y, Uint32 collision_bits, vect3 * nrm );
 
-INLINE const Uint32 mesh_get_fan( Mesh_t * pmesh, vect3 pos );
-INLINE const Uint32 mesh_get_block( MeshInfo_t * mi, vect3 pos );
+INLINE EGO_CONST Uint32 mesh_get_fan( Mesh_t * pmesh, vect3 pos );
+INLINE EGO_CONST Uint32 mesh_get_block( MeshInfo_t * mi, vect3 pos );
 
 INLINE void mesh_set_colora( Mesh_t * pmesh, int fan_x, int fan_y, int color );
 
-INLINE const bool_t mesh_fan_clear_bits( Mesh_t * pmesh,  int fan_x, int fan_y, Uint32 bits );
-INLINE const bool_t mesh_fan_add_bits( Mesh_t * pmesh,  int fan_x, int fan_y, Uint32 bits );
-INLINE const bool_t mesh_fan_set_bits( Mesh_t * pmesh, int fan_x, int fan_y, Uint32 bits );
+INLINE EGO_CONST bool_t mesh_fan_clear_bits( Mesh_t * pmesh,  int fan_x, int fan_y, Uint32 bits );
+INLINE EGO_CONST bool_t mesh_fan_add_bits( Mesh_t * pmesh,  int fan_x, int fan_y, Uint32 bits );
+INLINE EGO_CONST bool_t mesh_fan_set_bits( Mesh_t * pmesh, int fan_x, int fan_y, Uint32 bits );
 
-INLINE const int   mesh_bump_tile( Mesh_t * pmesh, int fan_x, int fan_y );
-INLINE const Uint16 mesh_get_tile( Mesh_t * pmesh, int fan_x, int fan_y );
-INLINE const bool_t mesh_set_tile( Mesh_t * pmesh, int fan_x, int fan_y, Uint32 become );
+INLINE EGO_CONST int   mesh_bump_tile( Mesh_t * pmesh, int fan_x, int fan_y );
+INLINE EGO_CONST Uint16 mesh_get_tile( Mesh_t * pmesh, int fan_x, int fan_y );
+INLINE EGO_CONST bool_t mesh_set_tile( Mesh_t * pmesh, int fan_x, int fan_y, Uint32 become );
 
-INLINE const Uint32 mesh_convert_fan( MeshInfo_t * mi, int fan_x, int fan_y );
-INLINE const Uint32 mesh_convert_block( MeshInfo_t * mi, int block_x, int block_y );
+INLINE EGO_CONST Uint32 mesh_convert_fan( MeshInfo_t * mi, int fan_x, int fan_y );
+INLINE EGO_CONST Uint32 mesh_convert_block( MeshInfo_t * mi, int block_x, int block_y );
 
-INLINE const float mesh_fraction_x( MeshInfo_t * mi, float x );
-INLINE const float mesh_fraction_y( MeshInfo_t * mi, float y );
+INLINE EGO_CONST float mesh_fraction_x( MeshInfo_t * mi, float x );
+INLINE EGO_CONST float mesh_fraction_y( MeshInfo_t * mi, float y );
 
-INLINE const bool_t mesh_fan_is_in_renderlist(  MeshTile_t * mf_list, Uint32 fan );
+INLINE EGO_CONST bool_t mesh_fan_is_in_renderlist(  MeshTile_t * mf_list, Uint32 fan );
 INLINE       void   mesh_fan_remove_renderlist( MeshTile_t * mf_list, Uint32 fan );
 INLINE       void   mesh_fan_add_renderlist( MeshTile_t * mf_list, Uint32 fan );
 
-INLINE const float mesh_clip_x( MeshInfo_t * mi, float x );
-INLINE const float mesh_clip_y( MeshInfo_t * mi, float y );
-INLINE const int mesh_clip_fan_x( MeshInfo_t * mi, int fan_x );
-INLINE const int mesh_clip_fan_y( MeshInfo_t * mi, int fan_y );
-INLINE const int mesh_clip_block_x( MeshInfo_t * mi, int block_x );
-INLINE const int mesh_clip_block_y( MeshInfo_t * mi, int block_y );
+INLINE EGO_CONST float mesh_clip_x( MeshInfo_t * mi, float x );
+INLINE EGO_CONST float mesh_clip_y( MeshInfo_t * mi, float y );
+INLINE EGO_CONST int mesh_clip_fan_x( MeshInfo_t * mi, int fan_x );
+INLINE EGO_CONST int mesh_clip_fan_y( MeshInfo_t * mi, int fan_y );
+INLINE EGO_CONST int mesh_clip_block_x( MeshInfo_t * mi, int block_x );
+INLINE EGO_CONST int mesh_clip_block_y( MeshInfo_t * mi, int block_y );
 
-INLINE const bool_t mesh_check( MeshInfo_t * mi, float x, float y );
-INLINE const bool_t mesh_check_fan( MeshInfo_t * mi, int fan_x, int fan_y );
+INLINE EGO_CONST bool_t mesh_check( MeshInfo_t * mi, float x, float y );
+INLINE EGO_CONST bool_t mesh_check_fan( MeshInfo_t * mi, int fan_x, int fan_y );
 
-INLINE const Uint32 mesh_test_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits );
-INLINE const bool_t mesh_has_some_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits );
-INLINE const bool_t mesh_has_no_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits );
-INLINE const bool_t mesh_has_all_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits );
+INLINE EGO_CONST Uint32 mesh_test_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits );
+INLINE EGO_CONST bool_t mesh_has_some_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits );
+INLINE EGO_CONST bool_t mesh_has_no_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits );
+INLINE EGO_CONST bool_t mesh_has_all_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits );
 
-INLINE const Uint8 mesh_get_twist( MeshTile_t * mf_list, Uint32 fan );
+INLINE EGO_CONST Uint8 mesh_get_twist( MeshTile_t * mf_list, Uint32 fan );
 
 bool_t mesh_reset_bumplist(MeshInfo_t * mi);

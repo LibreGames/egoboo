@@ -555,12 +555,12 @@ void render_water_fan_lit( Uint32 fan, Uint8 layer, Uint8 mode )
   // badvertex is a value that references the actual vertex number
 
   // To make life easier
-  type  = 0;                             // Command type ( index to points in fan )
+  type  = 0;                                  // Command type ( index to points in fan )
   off.u  = gfx->Water.layer[layer].u;         // Texture offsets
   off.v  = gfx->Water.layer[layer].v;         //
-  frame = gfx->Water.layer[layer].frame;     // Frame
+  frame = gfx->Water.layer[layer].frame;      // Frame
 
-  texture  = layer + TX_WATER_TOP;       // Water starts at texture 5
+  texture  = layer + TX_WATER_TOP;              // Water starts at texture TX_WATER_TOP == 5
   vertices = pmesh->TileDict[type].vrt_count;   // Number of vertices
   commands = pmesh->TileDict[type].cmd_count;   // Number of commands
 
@@ -620,7 +620,7 @@ void render_water_fan_lit( Uint32 fan, Uint8 layer, Uint8 mode )
 bool_t make_renderlist(RENDERLIST * prlst)
 {
   Uint32 fan;
-  int    tile_count;
+  Uint32 tile_count;
   bool_t inview;
   static Uint32 next_wldframe = 0;
 
@@ -799,11 +799,9 @@ void do_dyna_light(Game_t * gs)
   Mesh_t * pmesh   = NULL;
   MeshMem_t *  mm  = NULL;
 
-  PPrt_t prtlst        = NULL;
-  //size_t prtlst_size   = PRTLST_COUNT;
-
-  PDLight dynalst      = NULL;
-  //size_t  dynalst_size = MAXDYNA;
+  PPrt_t  prtlst       = NULL;
+  size_t  prtlst_size  = PRTLST_COUNT;
+  PDLight_t dynalst      = NULL;
 
   Graphics_Data_t * gfx = gfxState.pGfx;
 
@@ -828,7 +826,7 @@ void do_dyna_light(Game_t * gs)
   {
     // Set base light level in explore mode...
 
-    for ( prt_cnt = 0; prt_cnt < PRTLST_COUNT; prt_cnt++ )
+    for ( prt_cnt = 0; prt_cnt < prtlst_size; prt_cnt++ )
     {
       if ( !ACTIVE_PRT( prtlst, prt_cnt ) || !prtlst[prt_cnt].dyna.on ) continue;
 
@@ -898,10 +896,6 @@ void do_dyna_light(Game_t * gs)
           }
 
           // Do light particles
-          //light_r = mm->vrt_lr_fp8[vertex];
-          //light_g = mm->vrt_lg_fp8[vertex];
-          //light_b = mm->vrt_lb_fp8[vertex];
-
           light_r = 0;
           light_g = 0;
           light_b = 0;
@@ -928,7 +922,7 @@ void do_dyna_light(Game_t * gs)
                 if ( dist2 > 0.0f )
                 {
                   // little kludge to soften the normal-dependent lighting
-                  // the dot ptoduct factor will vary between 1 for fill lighting
+                  // the dot ptoduct factor will vary between 1 for full lighting
                   // down to m*m for "shadowed" lighting
                   float m, k1, k2;
                   m = 0.5f;

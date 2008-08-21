@@ -296,7 +296,7 @@ void make_newloadname( char *modname, char *appendname, char *newloadname )
 //}
 
 //---------------------------------------------------------------------------------------------
-bool_t export_all_enchants( Game_t * gs, CHR_REF ichr, const char * todirname )
+bool_t export_all_enchants( Game_t * gs, CHR_REF ichr, EGO_CONST char * todirname )
 {
   // BB> Export all of the enchant info associated with an enchant to a file called rechantXXXX.txt
   //     Note that this does not save the sounds, particles, or any other asset associated with the enchant
@@ -371,16 +371,6 @@ bool_t export_one_character( Game_t * gs, CHR_REF ichr, CHR_REF iowner, int numb
   STRING todirfullname;
 
   PChr_t chrlst     = gs->ChrList;
-  //size_t chrlst_size = CHRLST_COUNT;
-
-  //PObj_t objlst     = gs->ObjList;
-  //size_t  objlst_size = OBJLST_COUNT;
-
-  //PCap_t caplst      = gs->CapList;
-  //size_t caplst_size = CAPLST_COUNT;
-
-  //PMad_t madlst      = gs->MadList;
-  //size_t madlst_size = MADLST_COUNT;
 
   OBJ_REF iobj;
   Obj_t  * pobj;
@@ -630,7 +620,7 @@ int MessageQueue_get_free(MessageQueue_t * mq)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t decode_escape_sequence( Game_t * gs, char * buffer, size_t buffer_size, const char * message, CHR_REF chr_ref )
+bool_t decode_escape_sequence( Game_t * gs, char * buffer, size_t buffer_size, EGO_CONST char * message, CHR_REF chr_ref )
 {
   // BB> expands escape sequences
 
@@ -1612,7 +1602,7 @@ void move_water( WATER_LAYER wlayer[], size_t layer_count, float dUpdate )
 {
   // ZZ> This function animates the water overlays
 
-  int layer;
+  Uint32 layer;
 
   if( NULL == wlayer ) return;
 
@@ -1639,14 +1629,17 @@ CHR_REF search_best_leader( Game_t * gs, TEAM_REF team, CHR_REF exclude )
   bool_t  bfound = bfalse;
   CHR_REF exclude_sissy = team_get_sissy( gs, team );
 
-  for ( chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++ )
-  {
-    if ( !ACTIVE_CHR( gs->ChrList, chr_cnt ) || chr_cnt == exclude || chr_cnt == exclude_sissy || gs->ChrList[chr_cnt].team != team ) continue;
+  PChr_t chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
 
-    if ( !bfound || gs->ChrList[chr_cnt].experience > best_experience )
+  for ( chr_cnt = 0; chr_cnt < chrlst_size; chr_cnt++ )
+  {
+    if ( !ACTIVE_CHR( chrlst, chr_cnt ) || chr_cnt == exclude || chr_cnt == exclude_sissy || chrlst[chr_cnt].team != team ) continue;
+
+    if ( !bfound || chrlst[chr_cnt].experience > best_experience )
     {
       best_leader     = chr_cnt;
-      best_experience = gs->ChrList[chr_cnt].experience;
+      best_experience = chrlst[chr_cnt].experience;
       bfound = btrue;
     }
   }
@@ -1662,21 +1655,22 @@ void call_for_help( Game_t * gs, CHR_REF character )
   TEAM_REF team;
   CHR_REF chr_cnt;
 
-  team = gs->ChrList[character].team;
+  PChr_t chrlst = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
 
+  team = chrlst[character].team;
 
   // make the character in who needs help the sissy
   gs->TeamList[team].leader = search_best_leader( gs, team, character );
   gs->TeamList[team].sissy  = character;
 
-
   // send the help message
-  for ( chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++ )
+  for ( chr_cnt = 0; chr_cnt < chrlst_size; chr_cnt++ )
   {
-    if ( !ACTIVE_CHR( gs->ChrList, chr_cnt ) || chr_cnt == character ) continue;
-    if ( !gs->TeamList[gs->ChrList[chr_cnt].team_base].hatesteam[REF_TO_INT(team)] )
+    if ( !ACTIVE_CHR( chrlst, chr_cnt ) || chr_cnt == character ) continue;
+    if ( !gs->TeamList[chrlst[chr_cnt].team_base].hatesteam[REF_TO_INT(team)] )
     {
-      gs->ChrList[chr_cnt].aistate.alert |= ALERT_CALLEDFORHELP;
+      chrlst[chr_cnt].aistate.alert |= ALERT_CALLEDFORHELP;
     };
   }
 
@@ -1800,11 +1794,14 @@ void give_team_experience( Game_t * gs, TEAM_REF team, int amount, EXPERIENCE xp
 
   CHR_REF chr_cnt;
 
-  for ( chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++ )
-  {
-    if( !ACTIVE_CHR(gs->ChrList, chr_cnt) ) continue;
+  PChr_t chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
 
-    if ( gs->ChrList[chr_cnt].team == team )
+  for ( chr_cnt = 0; chr_cnt < chrlst_size; chr_cnt++ )
+  {
+    if( !ACTIVE_CHR(chrlst, chr_cnt) ) continue;
+
+    if ( chrlst[chr_cnt].team == team )
     {
       give_experience( gs, chr_cnt, amount, xptype );
     }
@@ -1844,20 +1841,23 @@ void check_respawn( Game_t * gs )
 {
   CHR_REF chr_cnt;
 
-  for ( chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++ )
+  PChr_t chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
+
+  for ( chr_cnt = 0; chr_cnt < chrlst_size; chr_cnt++ )
   {
     // Let players respawn
-    if ( gs->modstate.respawnvalid && !gs->ChrList[chr_cnt].alive && HAS_SOME_BITS( gs->ChrList[chr_cnt].aistate.latch.b, LATCHBUTTON_RESPAWN ) )
+    if ( gs->modstate.respawnvalid && !chrlst[chr_cnt].alive && HAS_SOME_BITS( chrlst[chr_cnt].aistate.latch.b, LATCHBUTTON_RESPAWN ) )
     {
       respawn_character( gs, chr_cnt );
-      gs->TeamList[gs->ChrList[chr_cnt].team].leader = chr_cnt;
-      gs->ChrList[chr_cnt].aistate.alert |= ALERT_CLEANEDUP;
+      gs->TeamList[chrlst[chr_cnt].team].leader = chr_cnt;
+      chrlst[chr_cnt].aistate.alert |= ALERT_CLEANEDUP;
 
       // Cost some experience for doing this...
-      gs->ChrList[chr_cnt].experience *= EXPKEEP;
+      chrlst[chr_cnt].experience *= EXPKEEP;
     }
 
-    gs->ChrList[chr_cnt].aistate.latch.b &= ~LATCHBUTTON_RESPAWN;
+    chrlst[chr_cnt].aistate.latch.b &= ~LATCHBUTTON_RESPAWN;
   }
 
 };
@@ -1873,18 +1873,24 @@ void begin_integration( Game_t * gs )
   PRT_REF prt_cnt;
   Prt_t * pprt;
 
-  for( chr_cnt=0; chr_cnt<CHRLST_COUNT; chr_cnt++)
+  PChr_t chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
+
+  PPrt_t prtlst      = gs->PrtList;
+  size_t prtlst_size = PRTLST_COUNT;
+
+  for( chr_cnt=0; chr_cnt<chrlst_size; chr_cnt++)
   {
-    if( !ACTIVE_CHR(gs->ChrList, chr_cnt) ) continue;
-    pchr = gs->ChrList + chr_cnt;
+    if( !ACTIVE_CHR(chrlst, chr_cnt) ) continue;
+    pchr = chrlst + chr_cnt;
 
     CPhysAccum_clear( &(pchr->accum) );
   };
 
-  for( prt_cnt=0; prt_cnt<PRTLST_COUNT; prt_cnt++)
+  for( prt_cnt=0; prt_cnt<prtlst_size; prt_cnt++)
   {
-    if( !ACTIVE_PRT(gs->PrtList, prt_cnt) ) continue;
-    pprt = gs->PrtList + prt_cnt;
+    if( !ACTIVE_PRT(prtlst, prt_cnt) ) continue;
+    pprt = prtlst + prt_cnt;
 
     CPhysAccum_clear( &(pprt->accum) );
 
@@ -2091,11 +2097,17 @@ void do_integration(Game_t * gs, float dFrame)
   PRT_REF prt_cnt;
   Prt_t   *pprt;
 
-  for( chr_cnt=0; chr_cnt<CHRLST_COUNT; chr_cnt++)
-  {
-    if( !ACTIVE_CHR(gs->ChrList, chr_cnt) ) continue;
+  PChr_t chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
 
-    pchr = gs->ChrList + chr_cnt;
+  PPrt_t prtlst      = gs->PrtList;
+  size_t prtlst_size = PRTLST_COUNT;
+
+  for( chr_cnt=0; chr_cnt<chrlst_size; chr_cnt++)
+  {
+    if( !ACTIVE_CHR(chrlst, chr_cnt) ) continue;
+
+    pchr = chrlst + chr_cnt;
 
     ori_tmp = pchr->ori_old;
     phys_integrate( &(pchr->ori), &(pchr->ori_old), &(pchr->accum), dFrame );
@@ -2127,11 +2139,11 @@ void do_integration(Game_t * gs, float dFrame)
     }
   };
 
-  for( prt_cnt=0; prt_cnt<PRTLST_COUNT; prt_cnt++)
+  for( prt_cnt=0; prt_cnt<prtlst_size; prt_cnt++)
   {
-    if( !ACTIVE_PRT(gs->PrtList, prt_cnt) ) continue;
+    if( !ACTIVE_PRT(prtlst, prt_cnt) ) continue;
 
-    pprt = gs->PrtList + prt_cnt;
+    pprt = prtlst + prt_cnt;
 
     ori_tmp = pprt->ori_old;
     phys_integrate( &(pprt->ori), &(pprt->ori_old), &(pprt->accum), dFrame );
@@ -2786,7 +2798,7 @@ retval_t main_doGraphics()
   // blank the screen, if required
   do_clear();
 
-  do_game_frame = Graphics_hasGame(&gfxState) && Graphics_requireGame(&gfxState)->proc.Active;
+  do_game_frame = Graphics_hasGame(&gfxState) && gfxState.gs->proc.Active;
   if(do_game_frame)
   {
     // update the game graphics
@@ -2794,7 +2806,7 @@ retval_t main_doGraphics()
   };
 
   // figure out if we need to process the menus
-  if(do_menu_frame)
+  if(do_game_frame)
   {
     // the game has written into the frame buffer
     // put the menus on top
@@ -2816,7 +2828,6 @@ retval_t main_doGraphics()
     {
       Game_t * gs               = Graphics_requireGame(&gfxState);
       MenuProc_t  * ig_mnu_proc = Game_getMenuProc(gs);
-      //ProcState_t * game_proc   = Game_getProcedure(gs);
 
       if(ig_mnu_proc->proc.Active)
       {
@@ -3751,10 +3762,6 @@ int proc_gameLoop( ProcState_t * gproc, Game_t * gs )
 {
   // if we are being told to exit, jump to PROC_Leaving
   double frameDuration, frameTicks;
-  //static SDL_Thread       * pThread = NULL;
-  //static SDL_Callback_Ptr   pCallback = NULL;
-
-  //Gui_t * gui = gui_getState();
 
   if(NULL == gproc || gproc->Terminated)
   {
@@ -4047,7 +4054,7 @@ int SDL_main( int argc, char **argv )
 }
 
 //--------------------------------------------------------------------------------------------
-int load_all_messages( Game_t * gs, const char *szObjectpath, const char *szObjectname )
+int load_all_messages( Game_t * gs, EGO_CONST char *szObjectpath, EGO_CONST char *szObjectname )
 {
   // ZZ> This function loads all of an objects messages
 
@@ -4074,12 +4081,15 @@ void update_looped_sounds( Game_t * gs )
 {
   CHR_REF ichr;
 
-  for(ichr=0; ichr<CHRLST_COUNT; ichr++)
-  {
-    if( !ACTIVE_CHR(gs->ChrList, ichr) ) continue;
-    if( INVALID_CHANNEL == gs->ChrList[ichr].loopingchannel ) continue;
+  PChr_t chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
 
-    snd_apply_mods( gs->ChrList[ichr].loopingchannel, gs->ChrList[ichr].loopingvolume, gs->ChrList[ichr].ori.pos, GCamera.trackpos, GCamera.turn_lr);
+  for(ichr=0; ichr<chrlst_size; ichr++)
+  {
+    if( !ACTIVE_CHR(chrlst, ichr) ) continue;
+    if( INVALID_CHANNEL == chrlst[ichr].loopingchannel ) continue;
+
+    snd_apply_mods( chrlst[ichr].loopingchannel, chrlst[ichr].loopingvolume, chrlst[ichr].ori.pos, GCamera.trackpos, GCamera.turn_lr);
   };
 
 }
@@ -4241,21 +4251,24 @@ bool_t chr_search_nearby( Game_t * gs, SearchInfo_t * psearch, CHR_REF character
   int ix,ix_min,ix_max, iy,iy_min,iy_max;
   bool_t seeinvisible;
 
+  PChr_t chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
+
   Mesh_t * pmesh = Game_getMesh(gs);
 
-  if ( !ACTIVE_CHR( gs->ChrList, character ) || chr_in_pack( gs->ChrList, CHRLST_COUNT, character ) ) return bfalse;
+  if ( !ACTIVE_CHR( chrlst, character ) || chr_in_pack( chrlst, chrlst_size, character ) ) return bfalse;
 
   // initialize the search
   SearchInfo_new(psearch);
 
   // grab seeinvisible from the character
-  seeinvisible = gs->ChrList[character].prop.canseeinvisible;
+  seeinvisible = chrlst[character].prop.canseeinvisible;
 
   // Current fanblock
-  ix_min = MESH_FLOAT_TO_BLOCK( mesh_clip_x( &(pmesh->Info), gs->ChrList[character].bmpdata.cv.x_min ) );
-  ix_max = MESH_FLOAT_TO_BLOCK( mesh_clip_x( &(pmesh->Info), gs->ChrList[character].bmpdata.cv.x_max ) );
-  iy_min = MESH_FLOAT_TO_BLOCK( mesh_clip_y( &(pmesh->Info), gs->ChrList[character].bmpdata.cv.y_min ) );
-  iy_max = MESH_FLOAT_TO_BLOCK( mesh_clip_y( &(pmesh->Info), gs->ChrList[character].bmpdata.cv.y_max ) );
+  ix_min = MESH_FLOAT_TO_BLOCK( mesh_clip_x( &(pmesh->Info), chrlst[character].bmpdata.cv.x_min ) );
+  ix_max = MESH_FLOAT_TO_BLOCK( mesh_clip_x( &(pmesh->Info), chrlst[character].bmpdata.cv.x_max ) );
+  iy_min = MESH_FLOAT_TO_BLOCK( mesh_clip_y( &(pmesh->Info), chrlst[character].bmpdata.cv.y_min ) );
+  iy_max = MESH_FLOAT_TO_BLOCK( mesh_clip_y( &(pmesh->Info), chrlst[character].bmpdata.cv.y_max ) );
 
   for( ix = ix_min; ix<=ix_max; ix++ )
   {
@@ -4270,7 +4283,7 @@ bool_t chr_search_nearby( Game_t * gs, SearchInfo_t * psearch, CHR_REF character
     psearch->besttarget = INVALID_CHR;
   }
 
-  return ACTIVE_CHR( gs->ChrList, psearch->besttarget);
+  return ACTIVE_CHR( chrlst, psearch->besttarget);
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4285,32 +4298,35 @@ bool_t chr_search_distant( Game_t * gs, SearchInfo_t * psearch, CHR_REF characte
   bool_t require_alive = !ask_dead;
   TEAM_REF team;
 
-  if ( !ACTIVE_CHR( gs->ChrList, character ) ) return bfalse;
+  PChr_t chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
+
+  if ( !ACTIVE_CHR( chrlst, character ) ) return bfalse;
 
   SearchInfo_new(psearch);
 
-  team = gs->ChrList[character].team;
+  team = chrlst[character].team;
   psearch->bestdistance = maxdist;
-  for ( charb = 0; charb < CHRLST_COUNT; charb++ )
+  for ( charb = 0; charb < chrlst_size; charb++ )
   {
     // don't find stupid items
-    if ( !ACTIVE_CHR( gs->ChrList, charb ) || 0.0f == gs->ChrList[charb].bumpstrength ) continue;
+    if ( !ACTIVE_CHR( chrlst, charb ) || 0.0f == chrlst[charb].bumpstrength ) continue;
 
     // don't find yourself or items you are carrying
-    if ( character == charb || gs->ChrList[charb].attachedto == character || gs->ChrList[charb].inwhichpack == character ) continue;
+    if ( character == charb || chrlst[charb].attachedto == character || chrlst[charb].inwhichpack == character ) continue;
 
     // don't find thigs you can't see
-    if (( !gs->ChrList[character].prop.canseeinvisible && chr_is_invisible( gs->ChrList, CHRLST_COUNT, charb ) ) || chr_in_pack( gs->ChrList, CHRLST_COUNT, charb ) ) continue;
+    if (( !chrlst[character].prop.canseeinvisible && chr_is_invisible( chrlst, chrlst_size, charb ) ) || chr_in_pack( chrlst, chrlst_size, charb ) ) continue;
 
     // don't find dead things if not asked for
-    if ( require_alive && ( !gs->ChrList[charb].alive || gs->ChrList[charb].prop.isitem ) ) continue;
+    if ( require_alive && ( !chrlst[charb].alive || chrlst[charb].prop.isitem ) ) continue;
 
     // don't find enemies unless asked for
-    if ( ask_enemies && ( !gs->TeamList[team].hatesteam[gs->ChrList[charb].REF_TO_INT(team)] || gs->ChrList[charb].prop.invictus ) ) continue;
+    if ( ask_enemies && ( !gs->TeamList[team].hatesteam[chrlst[charb].REF_TO_INT(team)] || chrlst[charb].prop.invictus ) ) continue;
 
-    xdist = gs->ChrList[charb].ori.pos.x - gs->ChrList[character].ori.pos.x;
-    ydist = gs->ChrList[charb].ori.pos.y - gs->ChrList[character].ori.pos.y;
-    zdist = gs->ChrList[charb].ori.pos.z - gs->ChrList[character].ori.pos.z;
+    xdist = chrlst[charb].ori.pos.x - chrlst[character].ori.pos.x;
+    ydist = chrlst[charb].ori.pos.y - chrlst[character].ori.pos.y;
+    zdist = chrlst[charb].ori.pos.z - chrlst[character].ori.pos.z;
     psearch->bestdistance = xdist * xdist + ydist * ydist + zdist * zdist;
 
     if ( psearch->bestdistance < psearch->bestdistance )
@@ -4320,7 +4336,7 @@ bool_t chr_search_distant( Game_t * gs, SearchInfo_t * psearch, CHR_REF characte
     };
   }
 
-  return ACTIVE_CHR( gs->ChrList, psearch->besttarget);
+  return ACTIVE_CHR( chrlst, psearch->besttarget);
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4541,7 +4557,7 @@ void attach_particle_to_character( Game_t * gs, PRT_REF particle, CHR_REF chr_re
     return;
   }
 
-  if( chr_in_pack( chrlst, CHRLST_COUNT, chr_ref ) )
+  if( chr_in_pack( chrlst, chrlst_size, chr_ref ) )
   {
     pprt->gopoof = btrue;
     return;
@@ -4572,7 +4588,7 @@ void attach_particle_to_character( Game_t * gs, PRT_REF particle, CHR_REF chr_re
 
     Uint32      ilast, inext;
     MD2_Model_t * pmdl;
-    const MD2_Frame_t * plast, * pnext;
+    EGO_CONST MD2_Frame_t * plast, * pnext;
 
     inext = pchr->anim.next;
     ilast = pchr->anim.last;
@@ -4732,13 +4748,13 @@ retval_t MachineState_update(MachineState_t * mac)
   //        - Calclate the Bishopia date
 
   // seconds from Jan 1, 1970 to "birth" of Bishopia
-  const time_t i_dif  = 10030 * 24 * 60 * 60;
+  EGO_CONST time_t i_dif  = 10030 * 24 * 60 * 60;
 
   // 1 game day every 15 minutes
-  const double clock_magnification = 96;
+  EGO_CONST double clock_magnification = 96;
 
   // seconds in one day
-  const double secs_per_day = 24.0 * 60.0 * 60.0;
+  EGO_CONST double secs_per_day = 24.0 * 60.0 * 60.0;
 
   if ( !EKEY_PVALID(mac) ) return rv_error;
 
@@ -5054,7 +5070,6 @@ bool_t do_setup_chracter(CHR_SETUP_INFO * pinfo, CHR_SPAWN_INFO * psi)
 
 void do_setup_inputs(CHR_SETUP_INFO * pinfo, CHR_SPAWN_INFO * psi)
 {
-  //Gui_t * gui = gui_getState();
   Game_t * gs = pinfo->gs;
   PChr_t chrlst = gs->ChrList;
   Client_t * cl = gs->cl;
@@ -5245,42 +5260,45 @@ void ChrList_resynch(Game_t * gs)
 
   CHR_REF chr_ref;
 
-  // poof all characters that have reserved poof requests
-  for ( chr_ref = 0; chr_ref < CHRLST_COUNT; chr_ref++ )
-  {
-    if ( !VALID_CHR( gs->ChrList, chr_ref ) || !gs->ChrList[chr_ref].gopoof ) continue;
+  PChr_t chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
 
-    // detach from any imount
+  // poof all characters that have reserved poof requests
+  for ( chr_ref = 0; chr_ref < chrlst_size; chr_ref++ )
+  {
+    if ( !VALID_CHR( chrlst, chr_ref ) || !chrlst[chr_ref].gopoof ) continue;
+
+    // detach from any mount
     detach_character_from_mount( gs, chr_ref, btrue, bfalse );
 
     // Drop all possesions
     for ( _slot = SLOT_BEGIN; _slot < SLOT_COUNT; _slot = ( SLOT )( _slot + 1 ) )
     {
-      if ( chr_using_slot( gs->ChrList, CHRLST_COUNT, chr_ref, _slot ) )
+      if ( chr_using_slot( chrlst, chrlst_size, chr_ref, _slot ) )
       {
-        detach_character_from_mount( gs, chr_get_holdingwhich( gs->ChrList, CHRLST_COUNT, chr_ref, _slot ), btrue, bfalse );
+        detach_character_from_mount( gs, chr_get_holdingwhich( chrlst, chrlst_size, chr_ref, _slot ), btrue, bfalse );
       }
     };
 
-    chr_free_inventory( gs->ChrList, CHRLST_COUNT, chr_ref );
-    gs->ChrList[chr_ref].freeme = btrue;
+    chr_free_inventory( chrlst, chrlst_size, chr_ref );
+    chrlst[chr_ref].freeme = btrue;
   };
 
   // free all characters that requested destruction last round
-  for ( chr_ref = 0; chr_ref < CHRLST_COUNT; chr_ref++ )
+  for ( chr_ref = 0; chr_ref < chrlst_size; chr_ref++ )
   {
-    if ( !VALID_CHR( gs->ChrList, chr_ref ) || !gs->ChrList[chr_ref].freeme ) continue;
+    if ( !VALID_CHR( chrlst, chr_ref ) || !chrlst[chr_ref].freeme ) continue;
     ChrList_free_one( gs, chr_ref );
   }
 
   // activate all characters that are requested for next round
-  for ( chr_ref = 0; chr_ref < CHRLST_COUNT; chr_ref++ )
+  for ( chr_ref = 0; chr_ref < chrlst_size; chr_ref++ )
   {
-    if ( !PENDING_CHR( gs->ChrList, chr_ref ) ) continue;
+    if ( !PENDING_CHR( chrlst, chr_ref ) ) continue;
 
-    gs->ChrList[chr_ref].req_active = bfalse;
-    gs->ChrList[chr_ref].reserved   = bfalse;
-    gs->ChrList[chr_ref].active     = btrue;
+    chrlst[chr_ref].req_active = bfalse;
+    chrlst[chr_ref].reserved   = bfalse;
+    chrlst[chr_ref].active     = btrue;
   };
 
 };
@@ -5295,12 +5313,14 @@ void PrtList_resynch(Game_t * gs)
   PIP_REF pip;
   CHR_REF prt_target, prt_owner, prt_attachedto;
 
-  PPrt_t prtlst = gs->PrtList;
+  PPrt_t prtlst       = gs->PrtList;
+  size_t prtlst_size = PRTLST_COUNT;
+
   PPip_t piplst = gs->PipList;
   Prt_t * pprt;
 
   // actually destroy all particles that requested destruction last time through the loop
-  for ( iprt = 0; iprt < PRTLST_COUNT; iprt++ )
+  for ( iprt = 0; iprt < prtlst_size; iprt++ )
   {
     if ( !VALID_PRT( prtlst,  iprt ) ) continue;
     pprt = prtlst + iprt;
@@ -5327,7 +5347,7 @@ void PrtList_resynch(Game_t * gs)
   }
 
   // turn on all particles requested in the last turn
-  for(iprt = 0; iprt < PRTLST_COUNT; iprt++)
+  for(iprt = 0; iprt < prtlst_size; iprt++)
   {
     if( !PENDING_PRT(prtlst, iprt) ) continue;
     pprt = prtlst + iprt;
@@ -5613,7 +5633,7 @@ Game_t * Game_new(Game_t * gs, Net_t * ns, Client_t * cl, Server_t * sv)
   Weather_init( &(gs->Weather) );
 
   // mesh and tile stuff
-  MeshInfo_new( &(gs->Mesh) );
+  Mesh_new( &(gs->Mesh) );
   tile_animated_reset( &(gs->Tile_Anim) );
   tile_damage_reset( &(gs->Tile_Dam) );
 
@@ -5757,11 +5777,7 @@ void set_alerts( Game_t * gs, CHR_REF ichr, float dUpdate )
 {
   // ZZ> This function polls some alert conditions
 
-  //PCap_t caplst      = gs->CapList;
-  //size_t caplst_size = CAPLST_COUNT;
-
   PChr_t chrlst      = gs->ChrList;
-  //size_t chrlst_size = CHRLST_COUNT;
 
   AI_STATE * pstate;
   Chr_t      * pchr;
@@ -6009,12 +6025,11 @@ bool_t PassList_delete( Game_t * gs )
 
   if(!EKEY_PVALID(gs)) return bfalse;
 
-  gs->PassList_count = 0;
-
   for(i=0; i<PASSLST_COUNT; i++)
   {
     Passage_delete(gs->PassList + i);
   };
+  gs->PassList_count = 0;
 
   return btrue;
 }
@@ -6059,7 +6074,7 @@ bool_t CapList_delete( Game_t * gs )
 
   if(!EKEY_PVALID(gs)) return bfalse;
 
-  for(icap=0; icap<PASSLST_COUNT; icap++)
+  for(icap=0; icap<CAPLST_COUNT; icap++)
   {
     Cap_delete(gs->CapList + icap);
   };
@@ -6074,7 +6089,7 @@ bool_t CapList_renew( Game_t * gs )
 
   if(!EKEY_PVALID(gs)) return bfalse;
 
-  for(icap=0; icap<PASSLST_COUNT; icap++)
+  for(icap=0; icap<CAPLST_COUNT; icap++)
   {
     Cap_renew(gs->CapList + icap);
   };
@@ -6197,7 +6212,6 @@ bool_t PlaList_new( Game_t * gs )
 
   if(!EKEY_PVALID(gs)) return bfalse;
 
-  gs->PlaList_count      = 0;
   if(NULL != gs->cl)
   {
     gs->cl->loc_pla_count  = 0;
@@ -6208,6 +6222,7 @@ bool_t PlaList_new( Game_t * gs )
   {
     Player_new( gs->PlaList + pla_cnt );
   }
+  gs->PlaList_count = 0;
 
   return btrue;
 }
@@ -6976,10 +6991,6 @@ void reset_players( Game_t * gs )
 {
   // ZZ> This function clears the player list data
 
-  //PChr_t chrlst      = gs->ChrList;
-  //size_t chrlst_size = CHRLST_COUNT;
-
-
   // Reset the local data stuff
   if(NULL != gs->cl)
   {
@@ -7004,7 +7015,7 @@ Uint16 terp_dir( Uint16 majordir, float dx, float dy, float dUpdate )
 
   Uint16 rotate_sin, minordir;
   Sint16 diff_dir;
-  const float turnspeed = 2000.0f;
+  EGO_CONST float turnspeed = 2000.0f;
 
   if ( ABS( dx ) + ABS( dy ) > TURNSPD )
   {

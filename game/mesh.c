@@ -73,7 +73,7 @@ bool_t mesh_allocate_bumplist(MeshInfo_t * mi, int blocks)
 
   if( bumplist_allocate(pbump, blocks) )
   {
-    // set up nodes and the list of free nodes    
+    // set up nodes and the list of free nodes
     pbump->free_max = 8*(CHRLST_COUNT + PRTLST_COUNT);
     pbump->free_lst = EGOBOO_NEW_ARY( Uint32, pbump->free_max );
     pbump->node_lst = EGOBOO_NEW_ARY( BUMPLIST_NODE, pbump->free_max );

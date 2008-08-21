@@ -4,7 +4,7 @@
 #include "egoboo_types.inl"
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t bbox_gl_draw(AA_BBOX * pbbox)
+INLINE EGO_CONST bool_t bbox_gl_draw(AA_BBOX * pbbox)
 {
   vect3 * pmin, * pmax;
 

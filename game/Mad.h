@@ -200,10 +200,10 @@ void   make_mad_equally_lit( struct sGame * gs, MAD_REF model );
 bool_t mad_generate_bbox_tree(int max_level, Mad_t * pmad);
 
 
-MAD_REF MadList_load_one( struct sGame * gs, const char * szModpath, const char * szObjectname, MAD_REF irequest );
+MAD_REF MadList_load_one( struct sGame * gs, EGO_CONST char * szModpath, EGO_CONST char * szObjectname, MAD_REF irequest );
 
 bool_t mad_display_bbox_tree(int level, matrix_4x4 matrix, Mad_t * pmad, int frame1, int frame2);
-void load_copy_file( struct sGame * gs, const char * szModpath, const char * szObjectname, MAD_REF object );
+void load_copy_file( struct sGame * gs, EGO_CONST char * szModpath, EGO_CONST char * szObjectname, MAD_REF object );
 
 void ObjList_log_used( struct sGame * gs, char *savename );
 

@@ -365,14 +365,14 @@ enum e_script_opcode
   F_AddQuest,                           // Scripted AI functions (v1.00)
   F_BeatQuest,
   F_IfTargetHasQuest,
-  F_SetQuestLevel, 					
-  F_IfTargetHasNotFullMana,		
-  F_IfDoingAction,						
-  F_IfOperatorIsLinux,				
+  F_SetQuestLevel,
+  F_IfTargetHasNotFullMana,
+  F_IfDoingAction,
+  F_IfOperatorIsLinux,
   F_IfTargetIsOwner,                    // Scripted AI functions (v1.05)
-  F_SetCameraSwing,					
-  F_EnableRespawn,					
-  F_DisableRespawn,					
+  F_SetCameraSwing,
+  F_EnableRespawn,
+  F_DisableRespawn,
   F_IfButtonPressed,
   F_IfHolderScoredAHit					        // Scripted AI functions (v1.10)
 };
@@ -490,5 +490,5 @@ void append_end_text( struct sGame * gs, int message, CHR_REF character );
 
 
 void load_ai_codes( char* loadname );
-Uint32 load_ai_script( ScriptInfo_t * slist, const char * szModpath, const char * szObjectname );
+Uint32 load_ai_script( ScriptInfo_t * slist, EGO_CONST char * szModpath, EGO_CONST char * szObjectname );
 void reset_ai_script(struct sGame * gs);

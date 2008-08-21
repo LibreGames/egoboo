@@ -101,25 +101,25 @@ void md2_delete(MD2_Model_t * m);
 void md2_delete_vector(MD2_Model_t * v, int n);
 
 
-MD2_Model_t * md2_load(const char * szFilename, MD2_Model_t* m);
+MD2_Model_t * md2_load(EGO_CONST char * szFilename, MD2_Model_t* m);
 
 void md2_deallocate(MD2_Model_t * m);
 
 //char * rip_md2_frame_name( MD2_Model_t * m, int frame );
 void md2_scale_model(MD2_Model_t * pmd2, float scale);
 
-INLINE const int md2_get_numVertices(MD2_Model_t * m);
-INLINE const int md2_get_numTexCoords(MD2_Model_t * m);
-INLINE const int md2_get_numTriangles(MD2_Model_t * m);
-INLINE const int md2_get_numSkins(MD2_Model_t * m);
-INLINE const int md2_get_numFrames(MD2_Model_t * m);
+INLINE EGO_CONST int md2_get_numVertices(MD2_Model_t * m);
+INLINE EGO_CONST int md2_get_numTexCoords(MD2_Model_t * m);
+INLINE EGO_CONST int md2_get_numTriangles(MD2_Model_t * m);
+INLINE EGO_CONST int md2_get_numSkins(MD2_Model_t * m);
+INLINE EGO_CONST int md2_get_numFrames(MD2_Model_t * m);
 
-INLINE const MD2_SkinName_t  *md2_get_SkinNames(MD2_Model_t * m);
-INLINE const MD2_TexCoord_t  *md2_get_TexCoords(MD2_Model_t * m);
-INLINE const MD2_Triangle_t  *md2_get_Triangles(MD2_Model_t * m);
-INLINE const MD2_Frame_t     *md2_get_Frames   (MD2_Model_t * m);
-INLINE const MD2_GLCommand_t *md2_get_Commands (MD2_Model_t * m);
+INLINE EGO_CONST MD2_SkinName_t  *md2_get_SkinNames(MD2_Model_t * m);
+INLINE EGO_CONST MD2_TexCoord_t  *md2_get_TexCoords(MD2_Model_t * m);
+INLINE EGO_CONST MD2_Triangle_t  *md2_get_Triangles(MD2_Model_t * m);
+INLINE EGO_CONST MD2_Frame_t     *md2_get_Frames   (MD2_Model_t * m);
+INLINE EGO_CONST MD2_GLCommand_t *md2_get_Commands (MD2_Model_t * m);
 
-INLINE const MD2_SkinName_t  *md2_get_Skin     (MD2_Model_t * m, int index);
-INLINE const MD2_Frame_t     *md2_get_Frame    (MD2_Model_t * m, int index);
-INLINE const MD2_Triangle_t  *md2_get_Triangle (MD2_Model_t * m, int index);
+INLINE EGO_CONST MD2_SkinName_t  *md2_get_Skin     (MD2_Model_t * m, int index);
+INLINE EGO_CONST MD2_Frame_t     *md2_get_Frame    (MD2_Model_t * m, int index);
+INLINE EGO_CONST MD2_Triangle_t  *md2_get_Triangle (MD2_Model_t * m, int index);

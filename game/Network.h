@@ -431,10 +431,10 @@ ENetPeer * net_disconnectPeer(ENetPeer * peer, int granularity_ms, int timeout_m
 retval_t   net_waitForPacket(NetAsynchData_t * asynch_list, ENetPeer * peer, Uint32 timeout, Uint16 packet_type, size_t * data_size);
 
 ENetPeer * net_startPeer(ENetHost * host, ENetAddress * address );
-ENetPeer * net_startPeerByName(ENetHost * host, const char* connect_name, const int connect_port );
+ENetPeer * net_startPeerByName(ENetHost * host, EGO_CONST char* connect_name, EGO_CONST int connect_port );
 ENetPeer * net_stopPeer(ENetPeer * peer);
 
-void net_logf(const char *format, ...);
+void net_logf(EGO_CONST char *format, ...);
 
 bool_t net_sendSysPacketToAllPeers(ENetHost * host, SYS_PACKET * egop);
 bool_t net_sendSysPacketToAllPeersGuaranteed(ENetHost * host, SYS_PACKET * egop);
@@ -475,8 +475,8 @@ INLINE void sys_packet_addUint16(SYS_PACKET * egop, Uint16 us);
 INLINE void sys_packet_addSint16(SYS_PACKET * egop, Sint16 ss);
 INLINE void sys_packet_addUint32(SYS_PACKET * egop, Uint32 ui);
 INLINE void sys_packet_addSint32(SYS_PACKET * egop, Sint32 si);
-INLINE void sys_packet_addFString(SYS_PACKET * egop, const char *format, ...);
-INLINE void sys_packet_addString(SYS_PACKET * egop, const char *string);
+INLINE void sys_packet_addFString(SYS_PACKET * egop, EGO_CONST char *format, ...);
+INLINE void sys_packet_addString(SYS_PACKET * egop, EGO_CONST char *string);
 
 INLINE bool_t stream_startFile(STREAM * pwrapper, FILE * pfile);
 INLINE bool_t stream_startRaw(STREAM * pwrapper, Uint8 * buffer, size_t buffer_size);

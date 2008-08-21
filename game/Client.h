@@ -132,13 +132,13 @@ void Client_bufferLatches(Client_t * cs);
 
 
 
-bool_t CClient_connect(Client_t * cs, const char* hostname);
+bool_t CClient_connect(Client_t * cs, EGO_CONST char* hostname);
 bool_t CClient_disconnect(Client_t * cs);
 
-ENetPeer * cl_startPeer( const char* hostname );
+ENetPeer * cl_startPeer( EGO_CONST char* hostname );
 
 void     Client_talkToHost(Client_t * cs);
-retval_t Client_joinGame(Client_t * cs, const char *hostname);
+retval_t Client_joinGame(Client_t * cs, EGO_CONST char *hostname);
 bool_t   Client_unjoinGame(Client_t * cs);
 
 bool_t Client_sendPacketToHost(Client_t * cs, SYS_PACKET * egop);

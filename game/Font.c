@@ -281,7 +281,7 @@ static void fnt_quit(void)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-TTFont_t* fnt_loadFont( const char *fileName, int pointSize )
+TTFont_t* fnt_loadFont( EGO_CONST char *fileName, int pointSize )
 {
   TTFont_t *newFont;
   TTF_Font *ttfFont;
@@ -332,7 +332,7 @@ bool_t fnt_freeFont( TTFont_t *font )
 }
 
 //--------------------------------------------------------------------------------------------
-void fnt_drawText( TTFont_t *font, int x, int y, const char *text )
+void fnt_drawText( TTFont_t *font, int x, int y, EGO_CONST char *text )
 {
   SDL_Surface *textSurf;
   SDL_Color color = { 0xFF, 0xFF, 0xFF, 0 };
@@ -370,7 +370,7 @@ void fnt_drawText( TTFont_t *font, int x, int y, const char *text )
 }
 
 //--------------------------------------------------------------------------------------------
-void fnt_getTextSize( TTFont_t *font, const char *text, int *pwidth, int *pheight )
+void fnt_getTextSize( TTFont_t *font, EGO_CONST char *text, int *pwidth, int *pheight )
 {
   if ( font )
   {
@@ -391,7 +391,7 @@ void fnt_getTextSize( TTFont_t *font, const char *text, int *pwidth, int *pheigh
 //   height  - Maximum height of the box (not implemented)
 //   spacing - Amount of space to move down between lines. (usually close to your font size)
 
-void fnt_drawTextBox( TTFont_t *font, const char *text, int x, int y,  int width, int height, int spacing )
+void fnt_drawTextBox( TTFont_t *font, EGO_CONST char *text, int x, int y,  int width, int height, int spacing )
 {
   //GLint matrix_mode;
   //GLint viewport_save[4];
@@ -442,7 +442,7 @@ void fnt_drawTextBox( TTFont_t *font, const char *text, int x, int y,  int width
 }
 
 //--------------------------------------------------------------------------------------------
-void fnt_getTextBoxSize( TTFont_t *font, const char *text, int spacing, int *width, int *height )
+void fnt_getTextBoxSize( TTFont_t *font, EGO_CONST char *text, int spacing, int *width, int *height )
 {
   char *buffer, *line;
   size_t len;
@@ -470,7 +470,7 @@ void fnt_getTextBoxSize( TTFont_t *font, const char *text, int spacing, int *wid
 }
 
 //--------------------------------------------------------------------------------------------
-void fnt_drawTextFormatted( TTFont_t * fnt, int x, int y, const char *format, ... )
+void fnt_drawTextFormatted( TTFont_t * fnt, int x, int y, EGO_CONST char *format, ... )
 {
   va_list args;
   char buffer[256];

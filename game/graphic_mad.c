@@ -59,7 +59,7 @@ static void   chr_draw_BBox(CHR_REF ichr);
 void md2_blend_vertices(Chr_t * pchr, Sint32 vrtmin, Sint32 vrtmax)
 {
   MD2_Model_t * pmd2;
-  const MD2_Frame_t *pfrom, *pto;
+  EGO_CONST MD2_Frame_t *pfrom, *pto;
 
   Sint32 numVertices, i;
   vect2  off;
@@ -402,7 +402,7 @@ void md2_blend_lighting(Chr_t * pchr)
 // using OpenGL commands in the MD2 for acceleration
 void draw_textured_md2_opengl(CHR_REF ichr)
 {
-  const MD2_GLCommand_t * cmd;
+  EGO_CONST MD2_GLCommand_t * cmd;
   Uint32 cmd_count;
   vect2  off;
 
@@ -479,7 +479,7 @@ void draw_textured_md2_opengl(CHR_REF ichr)
 // using OpenGL commands in the MD2 for acceleration
 void draw_enviromapped_md2_opengl(CHR_REF ichr)
 {
-  const MD2_GLCommand_t * cmd;
+  EGO_CONST MD2_GLCommand_t * cmd;
   Uint32 cmd_count;
 
   Game_t * gs    = Graphics_requireGame(&gfxState);

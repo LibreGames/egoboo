@@ -327,7 +327,7 @@ Uint32 prt_hitawall( struct sGame * gs, PRT_REF particle, vect3 * norm );
 
 
 
-PIP_REF PipList_load_one( struct sGame * gs, const char * szModpath, const char * szObjectname, const char * szFname, PIP_REF override );
+PIP_REF PipList_load_one( struct sGame * gs, EGO_CONST char * szModpath, EGO_CONST char * szObjectname, EGO_CONST char * szFname, PIP_REF override );
 
 bool_t prt_calculate_bumpers(struct sGame * gs, PRT_REF iprt);
 

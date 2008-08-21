@@ -288,7 +288,7 @@ bool_t AStar_prepare_path( Game_t * gs, Uint32 stoppedby, int src_ix, int src_iy
         }
       }
 
-    qsort( AStar_open_list, AStar_open_count, sizeof( AStar_Node_t ), AStar_cmp_nodes );
+    qsort( (void *)AStar_open_list, AStar_open_count, sizeof( AStar_Node_t ), AStar_cmp_nodes );
 
     // remove the "closeme" nodes from the open list
     open_fraction = AStar_open_count;
@@ -381,7 +381,7 @@ int AStar_get_path( int src_ix, int src_iy, AStar_Node_t buffer[], int buffer_si
   }
 //------------------------------------------------------------------------------
 int AStar_cmp_nodes( const void * pleft, const void * pright )
-  {
+{
   AStar_Node_t * as_lft = ( AStar_Node_t * )pleft;
   AStar_Node_t * as_rgt = ( AStar_Node_t * )pright;
 

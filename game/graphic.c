@@ -275,7 +275,7 @@ void release_all_textures( Graphics_Data_t * gfx )
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 load_one_icon( Graphics_Data_t * gfx, char * szPathname, const char * szObjectname, char * szFilename )
+Uint32 load_one_icon( Graphics_Data_t * gfx, char * szPathname, EGO_CONST char * szObjectname, char * szFilename )
 {
   // ZZ> This function is used to load an icon.  Most icons are loaded
   //     without this function though...
@@ -374,7 +374,7 @@ void release_all_models(Game_t * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-static bool_t write_debug_message( int time, const char *format, va_list args )
+static bool_t write_debug_message( int time, EGO_CONST char *format, va_list args )
 {
   // ZZ> This function sticks a message in the display queue and sets its timer
 
@@ -400,7 +400,7 @@ static bool_t write_debug_message( int time, const char *format, va_list args )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t debug_message( int time, const char *format, ... )
+bool_t debug_message( int time, EGO_CONST char *format, ... )
 {
   bool_t retval;
   va_list args;
@@ -494,7 +494,7 @@ void animate_tiles( TILE_ANIMATED * t, float dUpdate )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t load_particle_texture( Game_t * gs, const char *szModPath  )
+bool_t load_particle_texture( Game_t * gs, EGO_CONST char *szModPath  )
 {
   // BB> Load the particle bitmap. Check the gamedat dir first for a module override
 
@@ -566,7 +566,7 @@ bool_t load_particle_texture( Game_t * gs, const char *szModPath  )
 
 
 //--------------------------------------------------------------------------------------------
-bool_t load_basic_textures( Game_t * gs, const char *szModPath )
+bool_t load_basic_textures( Game_t * gs, EGO_CONST char *szModPath )
 {
   // ZZ> This function loads the standard textures for a module
   // BB> In each case, try to load one stored with the module first.
@@ -1299,6 +1299,7 @@ void do_prt_dynalight(Game_t * gs)
   Mesh_t * pmesh = NULL;
   PChr_t   chrlst  = NULL;
   PPrt_t   prtlst  = NULL;
+  size_t   prtlst_size = PRTLST_COUNT;
 
   PRT_REF prt_cnt;
   CHR_REF character;
@@ -1308,7 +1309,7 @@ void do_prt_dynalight(Game_t * gs)
   prtlst = gs->PrtList;
   pmesh  = Game_getMesh(gs);
 
-  for ( prt_cnt = 0; prt_cnt < PRTLST_COUNT; prt_cnt++ )
+  for ( prt_cnt = 0; prt_cnt < prtlst_size; prt_cnt++ )
   {
     if ( !ACTIVE_PRT(prtlst,  prt_cnt ) ) continue;
 
@@ -2640,6 +2641,7 @@ int draw_status( BMFont_t * pfnt, Status_t * pstat )
 
   PObj_t objlst;
   PChr_t chrlst;
+  size_t chrlst_size = CHRLST_COUNT;
 
   Game_t * gs;
 
@@ -2658,8 +2660,6 @@ int draw_status( BMFont_t * pfnt, Status_t * pstat )
 
   objlst = gs->ObjList;
   chrlst = gs->ChrList;
-  //madlst = gs->MadList;
-  //caplst = gs->CapList;
 
   if(NULL == pstat) return 0;
   ichr = pstat->chr_ref;
@@ -2711,7 +2711,7 @@ int draw_status( BMFont_t * pfnt, Status_t * pstat )
 
   // Draw the icons
   draw_one_icon( gs->skintoicon[pchr->skin_ref + pobj->skinstart], ix + 40, iy, pchr->sparkle );
-  item = chr_get_holdingwhich( chrlst, CHRLST_COUNT, ichr, SLOT_LEFT );
+  item = chr_get_holdingwhich( chrlst, chrlst_size, ichr, SLOT_LEFT );
   if ( ACTIVE_CHR( chrlst,  item ) && VALID_OBJ( objlst, chrlst[item].model) )
   {
     Chr_t * tmppchr = ChrList_getPChr(gs, item);
@@ -2736,7 +2736,7 @@ int draw_status( BMFont_t * pfnt, Status_t * pstat )
   else
     draw_one_icon( gfx->ico_lst[ICO_NULL], ix + 8, iy, NOSPARKLE );
 
-  item = chr_get_holdingwhich( chrlst, CHRLST_COUNT, ichr, SLOT_RIGHT );
+  item = chr_get_holdingwhich( chrlst, chrlst_size, ichr, SLOT_RIGHT );
   if ( ACTIVE_CHR( chrlst,  item ) && VALID_OBJ( objlst, chrlst[item].model) )
   {
     Chr_t * tmppchr = ChrList_getPChr(gs, item);
@@ -2822,7 +2822,6 @@ int do_messages( BMFont_t * pfnt, int x, int y )
   int cnt, tnc;
   int ystt = y;
 
-  //Game_t * gs  = Graphics_requireGame(&gfxState);
   Gui_t  * gui = gui_getState();
   MessageQueue_t * mq = &(gui->msgQueue);
   MESSAGE_ELEMENT * msg;
@@ -2885,8 +2884,9 @@ void draw_text( BMFont_t *  pfnt )
   KeyboardBuffer_t * kbuffer = KeyboardBuffer_getState();
   Game_t * gs  = Graphics_requireGame(&gfxState);
   Graphics_Data_t * gfx = gfxState.pGfx;
-  PChr_t chrlst  = gs->ChrList;
-  //Gui_t  * gui = gui_getState();
+
+  PChr_t chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
 
   Begin2DMode();
   {
@@ -2940,19 +2940,19 @@ void draw_text( BMFont_t *  pfnt )
       ichr = PlaList_getRChr( gs, PLA_REF(0) );
       if( ACTIVE_CHR( chrlst,  ichr) )
       {
-        iref = chr_get_attachedto( chrlst, CHRLST_COUNT,ichr);
+        iref = chr_get_attachedto( chrlst, chrlst_size,ichr);
         if( ACTIVE_CHR( chrlst, iref) )
         {
           y += draw_string( pfnt, 0, y, tint.v, "PLA0 holder == %s(%s)", chrlst[iref].name, ChrList_getPCap(gs, iref)->classname );
         };
 
-        iref = chr_get_inwhichpack( chrlst, CHRLST_COUNT,ichr);
+        iref = chr_get_inwhichpack( chrlst, chrlst_size,ichr);
         if( ACTIVE_CHR( chrlst, iref) )
         {
           y += draw_string( pfnt, 0, y, tint.v, "PLA0 packer == %s(%s)", chrlst[iref].name, ChrList_getPCap(gs, iref)->classname );
         };
 
-        iref = chr_get_onwhichplatform( chrlst, CHRLST_COUNT,ichr);
+        iref = chr_get_onwhichplatform( chrlst, chrlst_size,ichr);
         if( ACTIVE_CHR( chrlst, iref) )
         {
           y += draw_string( pfnt, 0, y, tint.v, "PLA0 platform == %s(%s)", chrlst[iref].name, ChrList_getPCap(gs, iref)->classname );
@@ -3384,7 +3384,7 @@ Graphics_t * Graphics_new(Graphics_t * g, ConfigData_t * cd)
 
   g->gui = gui_getState();
 
-  Graphics_synch(g, cd);
+  Graphics_synchronize(g, cd);
 
   // put a reasonable value in here
   g->est_max_fps           = 30;
@@ -3450,7 +3450,7 @@ retval_t Graphics_removeGame(Graphics_t * g, Game_t * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t Graphics_synch(Graphics_t * g, ConfigData_t * cd)
+bool_t Graphics_synchronize(Graphics_t * g, ConfigData_t * cd)
 {
   bool_t changed = bfalse;
 
@@ -3589,7 +3589,9 @@ void dolist_add( CHR_REF chr_ref )
   Uint32 fan;
 
   Game_t * gs = Graphics_requireGame(&gfxState);
-  PChr_t chrlst = gs->ChrList;
+
+  PChr_t chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
 
   if ( !ACTIVE_CHR( chrlst,  chr_ref ) || chrlst[chr_ref].indolist ) return;
 
@@ -3630,7 +3632,7 @@ void dolist_add( CHR_REF chr_ref )
   // Add its weapons too
   for ( _slot = SLOT_BEGIN; _slot < SLOT_COUNT; _slot = ( SLOT )( _slot + 1 ) )
   {
-    dolist_add( chr_get_holdingwhich(  chrlst, CHRLST_COUNT, chr_ref, _slot ) );
+    dolist_add( chr_get_holdingwhich(  chrlst, chrlst_size, chr_ref, _slot ) );
   };
 
 }
@@ -3647,7 +3649,7 @@ void dolist_sort( void )
 
   CHR_REF chr_ref, olddolist[CHRLST_COUNT];
   int cnt, tnc, order;
-  int dist[CHRLST_COUNT];
+  Sint32 dist[CHRLST_COUNT];
 
   // Figure the distance of each
   cnt = 0;
@@ -3693,7 +3695,9 @@ void dolist_make( void )
   // ZZ> This function finds the characters that need to be drawn and puts them in the list
 
   Game_t * gs = Graphics_requireGame(&gfxState);
-  PChr_t   chrlst = gs->ChrList;
+
+  PChr_t chrlst      = gs->ChrList;
+  size_t chrlst_size = CHRLST_COUNT;
 
   int cnt;
   CHR_REF chr_ref, chr_cnt;
@@ -3711,11 +3715,11 @@ void dolist_make( void )
 
 
   // Now fill it up again
-  for ( chr_cnt = 0; chr_cnt < CHRLST_COUNT; chr_cnt++)
+  for ( chr_cnt = 0; chr_cnt < chrlst_size; chr_cnt++)
   {
     if( !ACTIVE_CHR(chrlst, chr_cnt) ) continue;
 
-    if ( !chr_in_pack( chrlst, CHRLST_COUNT, chr_cnt ) )
+    if ( !chr_in_pack( chrlst, chrlst_size, chr_cnt ) )
     {
       dolist_add( chr_cnt );
     }

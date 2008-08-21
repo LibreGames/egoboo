@@ -96,7 +96,6 @@ void get_vectors( PRT_REF prt, vect3 * vert, vect3 * horiz, float * dist )
   PChr_t  chrlst = gs->ChrList;
 
   Prt_t * pprt = PrtList_getPPrt(gs, prt);
-  //Pip_t * ppip = PrtList_getPPip(gs, prt);
 
   if ( NULL == pprt ) return;
 
@@ -594,7 +593,7 @@ void sort_particles( GLVertex v[], int numparticle )
 
   if(NULL == v || 0 == numparticle) return;
 
-  qsort(v, numparticle, sizeof(GLVertex), cmp_particle_vertices);
+  qsort( (void*)v, numparticle, sizeof(GLVertex), cmp_particle_vertices);
 }
 
 //--------------------------------------------------------------------------------------------
@@ -604,7 +603,9 @@ void render_particles()
 
   Game_t *gs = Graphics_requireGame(&gfxState);
   Graphics_Data_t * gfx = gfxState.pGfx;
-  PPrt_t   prtlst = gs->PrtList;
+
+  PPrt_t prtlst      = gs->PrtList;
+  size_t prtlst_size = PRTLST_COUNT;
 
   GLVertex v[PRTLST_COUNT];
   Uint16 numparticle;
@@ -614,7 +615,7 @@ void render_particles()
 
   // Original points
   numparticle = 0;
-  for ( prt_cnt = 0; prt_cnt < PRTLST_COUNT; prt_cnt++ )
+  for ( prt_cnt = 0; prt_cnt < prtlst_size; prt_cnt++ )
   {
     if ( !ACTIVE_PRT( prtlst, prt_cnt ) || /* !prtlst[prt_cnt].inview  || */ prtlst[prt_cnt].gopoof || prtlst[prt_cnt].size_fp8 == 0 ) continue;
 
@@ -930,7 +931,9 @@ void render_particle_reflections()
   Game_t * gs    = Graphics_requireGame(&gfxState);
   Graphics_Data_t * gfx = gfxState.pGfx;
 
-  PPrt_t   prtlst = gs->PrtList;
+  PPrt_t   prtlst      = gs->PrtList;
+  size_t   prtlst_size = PRTLST_COUNT;
+
   Mesh_t * pmesh = Game_getMesh(gs);
 
   GLVertex v[PRTLST_COUNT];
@@ -943,7 +946,7 @@ void render_particle_reflections()
 
   // Original points
   numparticle = 0;
-  for ( prt_cnt = 0; prt_cnt < PRTLST_COUNT; prt_cnt++ )
+  for ( prt_cnt = 0; prt_cnt < prtlst_size; prt_cnt++ )
   {
     if ( !ACTIVE_PRT( prtlst, prt_cnt ) || !prtlst[prt_cnt].inview || prtlst[prt_cnt].size_fp8 == 0 ) continue;
 

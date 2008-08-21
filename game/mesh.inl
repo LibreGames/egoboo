@@ -11,7 +11,7 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const BUMPLIST_NODE * bumplist_node_new(BUMPLIST_NODE * n)
+INLINE EGO_CONST BUMPLIST_NODE * bumplist_node_new(BUMPLIST_NODE * n)
 {
   if(NULL == n) return NULL;
 
@@ -22,7 +22,7 @@ INLINE const BUMPLIST_NODE * bumplist_node_new(BUMPLIST_NODE * n)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 bumplist_node_get_ref(BUMPLIST_NODE * n)
+INLINE EGO_CONST Uint32 bumplist_node_get_ref(BUMPLIST_NODE * n)
 {
   if(NULL == n) return INVALID_BUMPLIST_NODE;
 
@@ -31,7 +31,7 @@ INLINE const Uint32 bumplist_node_get_ref(BUMPLIST_NODE * n)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const BUMPLIST * bumplist_new(BUMPLIST * b)
+INLINE EGO_CONST BUMPLIST * bumplist_new(BUMPLIST * b)
 {
   if(NULL == b) return NULL;
 
@@ -45,7 +45,7 @@ INLINE const BUMPLIST * bumplist_new(BUMPLIST * b)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t bumplist_delete(BUMPLIST * b)
+INLINE EGO_CONST bool_t bumplist_delete(BUMPLIST * b)
 {
   if(NULL == b) return bfalse;
 
@@ -72,7 +72,7 @@ INLINE const bool_t bumplist_delete(BUMPLIST * b)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const BUMPLIST * bumplist_renew(BUMPLIST * b)
+INLINE EGO_CONST BUMPLIST * bumplist_renew(BUMPLIST * b)
 {
   if(NULL == b) return NULL;
 
@@ -81,7 +81,7 @@ INLINE const BUMPLIST * bumplist_renew(BUMPLIST * b)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t bumplist_clear(BUMPLIST * b)
+INLINE EGO_CONST bool_t bumplist_clear(BUMPLIST * b)
 {
   Uint32 i;
 
@@ -103,7 +103,7 @@ INLINE const bool_t bumplist_clear(BUMPLIST * b)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t bumplist_allocate(BUMPLIST * b, int size)
+INLINE EGO_CONST bool_t bumplist_allocate(BUMPLIST * b, int size)
 {
   if( !EKEY_PVALID(b) ) return bfalse;
 
@@ -139,7 +139,7 @@ INLINE const bool_t bumplist_allocate(BUMPLIST * b, int size)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 bumplist_get_free(BUMPLIST * b)
+INLINE EGO_CONST Uint32 bumplist_get_free(BUMPLIST * b)
 {
   if(NULL == b || b->free_count<=0) return INVALID_BUMPLIST_NODE;
 
@@ -148,7 +148,7 @@ INLINE const Uint32 bumplist_get_free(BUMPLIST * b)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t bumplist_return_free(BUMPLIST * b, Uint32 ref)
+INLINE EGO_CONST bool_t bumplist_return_free(BUMPLIST * b, Uint32 ref)
 {
   if(!EKEY_PVALID(b) || ref >= b->free_max) return bfalse;
 
@@ -159,7 +159,7 @@ INLINE const bool_t bumplist_return_free(BUMPLIST * b, Uint32 ref)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t bumplist_insert_chr(BUMPLIST * b, Uint32 block, CHR_REF chr_ref)
+INLINE EGO_CONST bool_t bumplist_insert_chr(BUMPLIST * b, Uint32 block, CHR_REF chr_ref)
 {
   // BB > insert a character into the bumplist at fanblock.
 
@@ -187,7 +187,7 @@ INLINE const bool_t bumplist_insert_chr(BUMPLIST * b, Uint32 block, CHR_REF chr_
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t bumplist_insert_prt(BUMPLIST * b, Uint32 block, PRT_REF prt_ref)
+INLINE EGO_CONST bool_t bumplist_insert_prt(BUMPLIST * b, Uint32 block, PRT_REF prt_ref)
 {
   // BB > insert a particle into the bumplist at fanblock.
 
@@ -215,7 +215,7 @@ INLINE const bool_t bumplist_insert_prt(BUMPLIST * b, Uint32 block, PRT_REF prt_
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 bumplist_get_next( BUMPLIST * b, Uint32 node )
+INLINE EGO_CONST Uint32 bumplist_get_next( BUMPLIST * b, Uint32 node )
 {
   if(!EKEY_PVALID(b) || INVALID_BUMPLIST_NODE == node) return INVALID_BUMPLIST_NODE;
 
@@ -223,7 +223,7 @@ INLINE const Uint32 bumplist_get_next( BUMPLIST * b, Uint32 node )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 bumplist_get_next_chr( Game_t * gs, BUMPLIST * b, Uint32 node )
+INLINE EGO_CONST Uint32 bumplist_get_next_chr( Game_t * gs, BUMPLIST * b, Uint32 node )
 {
   Uint32  nodenext;
   CHR_REF bumpnext;
@@ -243,7 +243,7 @@ INLINE const Uint32 bumplist_get_next_chr( Game_t * gs, BUMPLIST * b, Uint32 nod
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 bumplist_get_next_prt( Game_t * gs, BUMPLIST * b, Uint32 node )
+INLINE EGO_CONST Uint32 bumplist_get_next_prt( Game_t * gs, BUMPLIST * b, Uint32 node )
 {
   Uint32  nodenext;
   PRT_REF bumpnext;
@@ -263,7 +263,7 @@ INLINE const Uint32 bumplist_get_next_prt( Game_t * gs, BUMPLIST * b, Uint32 nod
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 bumplist_get_chr_head(BUMPLIST * b, Uint32 block)
+INLINE EGO_CONST Uint32 bumplist_get_chr_head(BUMPLIST * b, Uint32 block)
 {
   if(!EKEY_PVALID(b)) return INVALID_BUMPLIST_NODE;
   if(block > b->num_blocks)  return INVALID_BUMPLIST_NODE;
@@ -272,7 +272,7 @@ INLINE const Uint32 bumplist_get_chr_head(BUMPLIST * b, Uint32 block)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 bumplist_get_prt_head(BUMPLIST * b, Uint32 block)
+INLINE EGO_CONST Uint32 bumplist_get_prt_head(BUMPLIST * b, Uint32 block)
 {
   if(!EKEY_PVALID(b)) return INVALID_BUMPLIST_NODE;
   if(block > b->num_blocks)  return INVALID_BUMPLIST_NODE;
@@ -281,7 +281,7 @@ INLINE const Uint32 bumplist_get_prt_head(BUMPLIST * b, Uint32 block)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 bumplist_get_chr_count(BUMPLIST * b, Uint32 block)
+INLINE EGO_CONST Uint32 bumplist_get_chr_count(BUMPLIST * b, Uint32 block)
 {
   if(!EKEY_PVALID(b)) return INVALID_BUMPLIST_NODE;
   if(block > b->num_blocks)  return INVALID_BUMPLIST_NODE;
@@ -290,7 +290,7 @@ INLINE const Uint32 bumplist_get_chr_count(BUMPLIST * b, Uint32 block)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 bumplist_get_prt_count(BUMPLIST * b, Uint32 block)
+INLINE EGO_CONST Uint32 bumplist_get_prt_count(BUMPLIST * b, Uint32 block)
 {
   if(!EKEY_PVALID(b)) return INVALID_BUMPLIST_NODE;
   if(block > b->num_blocks)  return INVALID_BUMPLIST_NODE;
@@ -299,7 +299,7 @@ INLINE const Uint32 bumplist_get_prt_count(BUMPLIST * b, Uint32 block)
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 bumplist_get_ref(BUMPLIST * b, Uint32 node)
+INLINE EGO_CONST Uint32 bumplist_get_ref(BUMPLIST * b, Uint32 node)
 {
   if(!EKEY_PVALID(b)) return INVALID_BUMPLIST_NODE;
   if(node > b->free_max)    return INVALID_BUMPLIST_NODE;
@@ -309,7 +309,7 @@ INLINE const Uint32 bumplist_get_ref(BUMPLIST * b, Uint32 node)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_fan_is_in_renderlist( MeshTile_t * mf_list, Uint32 fan )
+INLINE EGO_CONST bool_t mesh_fan_is_in_renderlist( MeshTile_t * mf_list, Uint32 fan )
 {
   if ( INVALID_FAN == fan ) return bfalse;
 
@@ -331,7 +331,7 @@ INLINE void mesh_fan_add_renderlist( MeshTile_t * mf_list, Uint32 fan )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const float mesh_clip_x( MeshInfo_t * mi, float x )
+INLINE EGO_CONST float mesh_clip_x( MeshInfo_t * mi, float x )
 {
   if ( x <      0.0f )  x = 0.0f;
   if ( x > mi->edge_x )  x = mi->edge_x;
@@ -340,7 +340,7 @@ INLINE const float mesh_clip_x( MeshInfo_t * mi, float x )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const float mesh_clip_y( MeshInfo_t * mi, float y )
+INLINE EGO_CONST float mesh_clip_y( MeshInfo_t * mi, float y )
 {
   if ( y <      0.0f )  y = 0.0f;
   if ( y > mi->edge_y )  y = mi->edge_y;
@@ -349,7 +349,7 @@ INLINE const float mesh_clip_y( MeshInfo_t * mi, float y )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const int mesh_clip_fan_x( MeshInfo_t * mi, int ix )
+INLINE EGO_CONST int mesh_clip_fan_x( MeshInfo_t * mi, int ix )
 {
   if ( ix < 0 )  ix = 0;
   if ( ix > mi->tiles_x - 1 )  ix = mi->tiles_x - 1;
@@ -358,7 +358,7 @@ INLINE const int mesh_clip_fan_x( MeshInfo_t * mi, int ix )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const int mesh_clip_fan_y( MeshInfo_t * mi, int iy )
+INLINE EGO_CONST int mesh_clip_fan_y( MeshInfo_t * mi, int iy )
 {
   if ( iy < 0 )  iy = 0;
   if ( iy > mi->tiles_y - 1 )  iy = mi->tiles_y - 1;
@@ -367,7 +367,7 @@ INLINE const int mesh_clip_fan_y( MeshInfo_t * mi, int iy )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const int mesh_clip_block_x( MeshInfo_t * mi, int ix )
+INLINE EGO_CONST int mesh_clip_block_x( MeshInfo_t * mi, int ix )
 {
   if ( ix < 0 )  ix = 0;
   if ( ix > ( mi->tiles_x >> 2 ) - 1 )  ix = ( mi->tiles_x >> 2 ) - 1;
@@ -376,7 +376,7 @@ INLINE const int mesh_clip_block_x( MeshInfo_t * mi, int ix )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const int mesh_clip_block_y( MeshInfo_t * mi, int iy )
+INLINE EGO_CONST int mesh_clip_block_y( MeshInfo_t * mi, int iy )
 {
   if ( iy < 0 )  iy = 0;
   if ( iy > ( mi->tiles_y >> 2 ) - 1 )  iy = ( mi->tiles_y >> 2 ) - 1;
@@ -385,7 +385,7 @@ INLINE const int mesh_clip_block_y( MeshInfo_t * mi, int iy )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_check( MeshInfo_t * mi, float x, float y )
+INLINE EGO_CONST bool_t mesh_check( MeshInfo_t * mi, float x, float y )
 {
   if ( x < 0 || x > mi->edge_x ) return bfalse;
   if ( y < 0 || y > mi->edge_y ) return bfalse;
@@ -394,7 +394,7 @@ INLINE const bool_t mesh_check( MeshInfo_t * mi, float x, float y )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_check_fan( MeshInfo_t * mi, int fan_x, int fan_y )
+INLINE EGO_CONST bool_t mesh_check_fan( MeshInfo_t * mi, int fan_x, int fan_y )
 {
   if ( fan_x < 0 || fan_x >= mi->tiles_x ) return bfalse;
   if ( fan_y < 0 || fan_y >= mi->tiles_y ) return bfalse;
@@ -427,7 +427,7 @@ INLINE void mesh_set_colora( Mesh_t * pmesh, int fan_x, int fan_y, int color )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 mesh_get_fan( Mesh_t * pmesh, vect3 pos )
+INLINE EGO_CONST Uint32 mesh_get_fan( Mesh_t * pmesh, vect3 pos )
 {
   // BB > find the tile under <pos.x,pos.y>, but MAKE SURE we have the right tile.
 
@@ -473,7 +473,7 @@ INLINE const Uint32 mesh_get_fan( Mesh_t * pmesh, vect3 pos )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 mesh_get_block( MeshInfo_t * mi, vect3 pos )
+INLINE EGO_CONST Uint32 mesh_get_block( MeshInfo_t * mi, vect3 pos )
 {
   // BB > find the block under <x,y>
 
@@ -485,7 +485,7 @@ INLINE const Uint32 mesh_get_block( MeshInfo_t * mi, vect3 pos )
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_fan_clear_bits( Mesh_t * pmesh, int fan_x, int fan_y, Uint32 bits )
+INLINE EGO_CONST bool_t mesh_fan_clear_bits( Mesh_t * pmesh, int fan_x, int fan_y, Uint32 bits )
 {
   bool_t retval = bfalse;
   Uint32 fan;
@@ -504,7 +504,7 @@ INLINE const bool_t mesh_fan_clear_bits( Mesh_t * pmesh, int fan_x, int fan_y, U
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_fan_add_bits( Mesh_t * pmesh, int fan_x, int fan_y, Uint32 bits )
+INLINE EGO_CONST bool_t mesh_fan_add_bits( Mesh_t * pmesh, int fan_x, int fan_y, Uint32 bits )
 {
   bool_t retval = bfalse;
   Uint32 fan;
@@ -523,7 +523,7 @@ INLINE const bool_t mesh_fan_add_bits( Mesh_t * pmesh, int fan_x, int fan_y, Uin
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_fan_set_bits( Mesh_t * pmesh, int fan_x, int fan_y, Uint32 bits )
+INLINE EGO_CONST bool_t mesh_fan_set_bits( Mesh_t * pmesh, int fan_x, int fan_y, Uint32 bits )
 {
   bool_t retval = bfalse;
   Uint32 fan;
@@ -544,7 +544,7 @@ INLINE const bool_t mesh_fan_set_bits( Mesh_t * pmesh, int fan_x, int fan_y, Uin
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const int mesh_bump_tile( Mesh_t * pmesh, int fan_x, int fan_y )
+INLINE EGO_CONST int mesh_bump_tile( Mesh_t * pmesh, int fan_x, int fan_y )
 {
   Uint32 fan;
 
@@ -560,7 +560,7 @@ INLINE const int mesh_bump_tile( Mesh_t * pmesh, int fan_x, int fan_y )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint16 mesh_get_tile( Mesh_t * pmesh, int fan_x, int fan_y )
+INLINE EGO_CONST Uint16 mesh_get_tile( Mesh_t * pmesh, int fan_x, int fan_y )
 {
   Uint32 fan;
 
@@ -574,7 +574,7 @@ INLINE const Uint16 mesh_get_tile( Mesh_t * pmesh, int fan_x, int fan_y )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_set_tile( Mesh_t * pmesh, int fan_x, int fan_y, Uint32 become )
+INLINE EGO_CONST bool_t mesh_set_tile( Mesh_t * pmesh, int fan_x, int fan_y, Uint32 become )
 {
   bool_t retval = bfalse;
   Uint32 fan;
@@ -595,7 +595,7 @@ INLINE const bool_t mesh_set_tile( Mesh_t * pmesh, int fan_x, int fan_y, Uint32 
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 mesh_convert_fan( MeshInfo_t * mi, int fan_x, int fan_y )
+INLINE EGO_CONST Uint32 mesh_convert_fan( MeshInfo_t * mi, int fan_x, int fan_y )
 {
   // BB > convert <fan_x,fan_y> to a fanblock
 
@@ -605,7 +605,7 @@ INLINE const Uint32 mesh_convert_fan( MeshInfo_t * mi, int fan_x, int fan_y )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 mesh_convert_block( MeshInfo_t * mi, int block_x, int block_y )
+INLINE EGO_CONST Uint32 mesh_convert_block( MeshInfo_t * mi, int block_x, int block_y )
 {
   // BB > convert <block_x,block_y> to a fanblock
   //      be careful, since there is no guarantee that block_x or block_y are multiples of 4
@@ -618,7 +618,7 @@ INLINE const Uint32 mesh_convert_block( MeshInfo_t * mi, int block_x, int block_
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const Uint32 mesh_get_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits )
+INLINE EGO_CONST Uint32 mesh_get_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits )
 {
   if ( INVALID_FAN == fan ) return 0;
 
@@ -626,7 +626,7 @@ INLINE const Uint32 mesh_get_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_has_some_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits )
+INLINE EGO_CONST bool_t mesh_has_some_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits )
 {
   if ( INVALID_FAN == fan ) return 0;
 
@@ -634,7 +634,7 @@ INLINE const bool_t mesh_has_some_bits( MeshTile_t * mf_list, Uint32 fan, Uint32
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_has_no_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits )
+INLINE EGO_CONST bool_t mesh_has_no_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits )
 {
   if ( INVALID_FAN == fan ) return 0;
 
@@ -642,7 +642,7 @@ INLINE const bool_t mesh_has_no_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 b
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const bool_t mesh_has_all_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits )
+INLINE EGO_CONST bool_t mesh_has_all_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits )
 {
   if ( INVALID_FAN == fan ) return 0;
 
@@ -650,20 +650,20 @@ INLINE const bool_t mesh_has_all_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const float mesh_fraction_x( MeshInfo_t * mi, float x )
+INLINE EGO_CONST float mesh_fraction_x( MeshInfo_t * mi, float x )
 {
   return x / mi->edge_x;
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const float mesh_fraction_y( MeshInfo_t * mi, float y )
+INLINE EGO_CONST float mesh_fraction_y( MeshInfo_t * mi, float y )
 {
   return y / mi->edge_y;
 }
 
 
 //--------------------------------------------------------------------------------------------
-INLINE const Uint8 mesh_get_twist( MeshTile_t * mf_list, Uint32 fan )
+INLINE EGO_CONST Uint8 mesh_get_twist( MeshTile_t * mf_list, Uint32 fan )
 {
   Uint8 retval = 0x77;
 
@@ -693,6 +693,7 @@ INLINE bool_t Mesh_delete( Mesh_t * pmesh )
   if(NULL == pmesh) return bfalse;
 
   MeshMem_delete(&(pmesh->Mem));				                       //Free the mesh memory
+  MeshInfo_delete( &(pmesh->Info) );
   memset( pmesh->TileDict, 0, sizeof(pmesh->TileDict) );
 
   return bfalse;

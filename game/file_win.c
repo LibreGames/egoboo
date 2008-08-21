@@ -120,28 +120,28 @@ void fs_init()
             win32_gamePath, win32_tempPath, win32_savePath, win32_importPath );
 }
 
-const char *fs_getTempDirectory()
+EGO_CONST char *fs_getTempDirectory()
 {
   return win32_tempPath;
 }
 
-const char *fs_getImportDirectory()
+EGO_CONST char *fs_getImportDirectory()
 {
   return win32_importPath;
 }
 
-const char *fs_getGameDirectory()
+EGO_CONST char *fs_getGameDirectory()
 {
   return win32_gamePath;
 }
 
-const char *fs_getSaveDirectory()
+EGO_CONST char *fs_getSaveDirectory()
 {
   return win32_savePath;
 }
 
 //---------------------------------------------------------------------------------------------
-int fs_fileIsDirectory( const char *filename )
+int fs_fileIsDirectory( EGO_CONST char *filename )
 {
   // Returns 1 if this filename is a directory
   DWORD fileAttrs;
@@ -152,25 +152,25 @@ int fs_fileIsDirectory( const char *filename )
 }
 
 // Had to revert back to prog x code to prevent import/skin bug
-int fs_createDirectory( const char *dirname )
+int fs_createDirectory( EGO_CONST char *dirname )
 {
   return ( CreateDirectory( dirname, NULL ) != 0 );
 }
 
-int fs_removeDirectory( const char *dirname )
+int fs_removeDirectory( EGO_CONST char *dirname )
 {
   return ( RemoveDirectory( dirname ) != 0 );
 }
 
 //---------------------------------------------------------------------------------------------
-void fs_deleteFile( const char *filename )
+void fs_deleteFile( EGO_CONST char *filename )
 {
   // ZZ> This function deletes a file
 
   DeleteFile( filename );
 }
 
-void fs_copyFile( const char *source, const char *dest )
+void fs_copyFile( EGO_CONST char *source, EGO_CONST char *dest )
 {
   CopyFile( source, dest, btrue );
 }
@@ -183,7 +183,7 @@ HANDLE win32_hFind;
 
 //---------------------------------------------------------------------------------------------
 // Read the first directory entry
-const char *fs_findFirstFile( FS_FIND_INFO * i, const char *searchDir, const char *searchBody, const char *searchExtension )
+EGO_CONST char *fs_findFirstFile( FS_FIND_INFO * i, EGO_CONST char *searchDir, EGO_CONST char *searchBody, EGO_CONST char *searchExtension )
 {
   size_t szlen;
   char searchSpec[MAX_PATH];
@@ -232,7 +232,7 @@ const char *fs_findFirstFile( FS_FIND_INFO * i, const char *searchDir, const cha
 
 //---------------------------------------------------------------------------------------------
 // Read the next directory entry (NULL if done)
-const char *fs_findNextFile( FS_FIND_INFO * i )
+EGO_CONST char *fs_findNextFile( FS_FIND_INFO * i )
 {
   if(NULL == i || FS_WIN32 != i->type) return NULL;
 

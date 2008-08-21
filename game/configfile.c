@@ -317,7 +317,7 @@ Sint32 ReadConfigCommentary( ConfigFilePtr_t pConfigFile, ConfigFileValuePtr_t p
 // If the path doesn't exist, OpenConfigFile returns NULL.
 // OpenConfigFile allocates the memory for the ConfigFile_t. To
 // deallocate the memory, use CloseConfigFile
-ConfigFilePtr_t OpenConfigFile( const char *pPath )
+ConfigFilePtr_t OpenConfigFile( EGO_CONST char *pPath )
 {
   ConfigFilePtr_t   lTempConfig = NULL;
   FILE     *lTempFile;
@@ -448,7 +448,7 @@ ConfigFilePtr_t OpenConfigFile( const char *pPath )
 // Set the current section of pConfigFile to the one specified by pSection
 // If the section doesn't exist, the current section is set to NULL and the
 // function returns 0, otherwise the it returns 1.
-long SetConfigCurrentSection( ConfigFilePtr_t pConfigFile, const char *pSection )
+long SetConfigCurrentSection( ConfigFilePtr_t pConfigFile, EGO_CONST char *pSection )
 {
   long lFound = 0;
   if ( NULL == pConfigFile  || NULL == pSection  )
@@ -501,7 +501,7 @@ long SetConfigCurrentSection( ConfigFilePtr_t pConfigFile, const char *pSection 
 //
 // If a value is found, the function returns 1, otherwise the function returns 0
 // and CurrentValue is set to NULL.
-Sint32 SetConfigCurrentValueFromCurrentSection( ConfigFilePtr_t pConfigFile, const char *pKey )
+Sint32 SetConfigCurrentValueFromCurrentSection( ConfigFilePtr_t pConfigFile, EGO_CONST char *pKey )
 {
   Sint32 lFound = 0;
 
@@ -529,7 +529,7 @@ Sint32 SetConfigCurrentValueFromCurrentSection( ConfigFilePtr_t pConfigFile, con
 // SetConfigCurrentValue set the current value of pConfigFile to the one specified by
 // pSection and pKey
 // Returns 0 if failed
-Sint32 SetConfigCurrentValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey )
+Sint32 SetConfigCurrentValue( ConfigFilePtr_t pConfigFile, EGO_CONST char *pSection, EGO_CONST char *pKey )
 {
   Sint32 lFound = 0;
   // search for section
@@ -547,7 +547,7 @@ Sint32 SetConfigCurrentValue( ConfigFilePtr_t pConfigFile, const char *pSection,
 // If the value is found, the value is copied in pValue and the function returns 1.
 // If the length of pValue is less than the length of the string value, the string is truncated.
 // If the value isn't found, the function returns 0.
-Sint32 GetConfigValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, char *pValue,
+Sint32 GetConfigValue( ConfigFilePtr_t pConfigFile, EGO_CONST char *pSection, EGO_CONST char *pKey, char *pValue,
                        Sint32 pValueBufferLength )
 {
   if ( NULL == pConfigFile  || NULL == pValue  || NULL == pSection  || NULL == pKey  || pValueBufferLength <= 0 )
@@ -573,7 +573,7 @@ Sint32 GetConfigValue( ConfigFilePtr_t pConfigFile, const char *pSection, const 
 
 // GetConfigBooleanValue set to true or false pBool. If the function can't find the value, it
 // returns 0. If the value can't be identified as true or false, the default is false.
-Sint32 GetConfigBooleanValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, bool_t *pBool )
+Sint32 GetConfigBooleanValue( ConfigFilePtr_t pConfigFile, EGO_CONST char *pSection, EGO_CONST char *pKey, bool_t *pBool )
 {
   char lBoolStr[16];
   Sint32 lRet;
@@ -597,7 +597,7 @@ Sint32 GetConfigBooleanValue( ConfigFilePtr_t pConfigFile, const char *pSection,
 
 // GetConfigIntValue set pInt. If the function can't find the value, it
 // returns 0.
-Sint32 GetConfigIntValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, Sint32 *pInt )
+Sint32 GetConfigIntValue( ConfigFilePtr_t pConfigFile, EGO_CONST char *pSection, EGO_CONST char *pKey, Sint32 *pInt )
 {
   char lIntStr[24];
   Sint32 lRet;
@@ -614,7 +614,7 @@ Sint32 GetConfigIntValue( ConfigFilePtr_t pConfigFile, const char *pSection, con
 
 // SetConfigValue set the value specified by pSection and pKey. If the value
 // doesn't exist, it is created
-Sint32 SetConfigValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, const char *pValue )
+Sint32 SetConfigValue( ConfigFilePtr_t pConfigFile, EGO_CONST char *pSection, EGO_CONST char *pKey, EGO_CONST char *pValue )
 {
   ConfigFileSectionPtr_t lTempSection = NULL;
   ConfigFileValuePtr_t  lTempValue = NULL;
@@ -705,7 +705,7 @@ Sint32 SetConfigValue( ConfigFilePtr_t pConfigFile, const char *pSection, const 
 }
 
 // SetConfigBooleanValue saves a boolean in a value specified by pSection and pKey
-Sint32 SetConfigBooleanValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, bool_t pBool )
+Sint32 SetConfigBooleanValue( ConfigFilePtr_t pConfigFile, EGO_CONST char *pSection, EGO_CONST char *pKey, bool_t pBool )
 {
   if ( pBool )
   {
@@ -718,7 +718,7 @@ Sint32 SetConfigBooleanValue( ConfigFilePtr_t pConfigFile, const char *pSection,
 }
 
 // SetConfigIntValue saves an integer in a value specified by pSection and pKey
-Sint32 SetConfigIntValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, int pInt )
+Sint32 SetConfigIntValue( ConfigFilePtr_t pConfigFile, EGO_CONST char *pSection, EGO_CONST char *pKey, int pInt )
 {
   static char lIntStr[16];
 
@@ -727,7 +727,7 @@ Sint32 SetConfigIntValue( ConfigFilePtr_t pConfigFile, const char *pSection, con
 }
 
 // SetConfigFloatValue saves a float in a value specified by pSection and pKey
-Sint32 SetConfigFloatValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, float pFloat )
+Sint32 SetConfigFloatValue( ConfigFilePtr_t pConfigFile, EGO_CONST char *pSection, EGO_CONST char *pKey, float pFloat )
 {
   static char lFloatStr[16];
 
@@ -837,7 +837,7 @@ void SaveConfigFile( ConfigFilePtr_t pConfigFile )
 
 // SaveConfigFileAs saves pConfigFile at pPath
 // pConfigFile's file is close and set to the new file
-Sint32 SaveConfigFileAs( ConfigFilePtr_t pConfigFile, const char *pPath )
+Sint32 SaveConfigFileAs( ConfigFilePtr_t pConfigFile, EGO_CONST char *pPath )
 {
   FILE *lFileTemp;
 

@@ -38,7 +38,7 @@ bool_t fs_find_info_delete(FS_FIND_INFO * i)
   if(NULL == i) return bfalse;
   if(FS_UNKNOWN == i->type) return bfalse;
 
-  // this is not strictly necessary in C, since EGOBOO_DELETE() or free() 
+  // this is not strictly necessary in C, since EGOBOO_DELETE() or free()
   // doesn't care about the type of its argument
   switch(i->type)
   {
@@ -71,13 +71,13 @@ bool_t fs_find_info_delete(FS_FIND_INFO * i)
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // FIXME: Doesn't handle deleting directories recursively yet.
-void fs_removeDirectoryAndContents( const char *dirname )
+void fs_removeDirectoryAndContents( EGO_CONST char *dirname )
 {
   // ZZ> This function deletes all files in a directory,
   //     and the directory itself
 
   char filePath[MAX_PATH];
-  const char *fileName;
+  EGO_CONST char *fileName;
   FS_FIND_INFO fs_finfo;
 
   fs_find_info_new( &fs_finfo );
@@ -108,12 +108,12 @@ void fs_removeDirectoryAndContents( const char *dirname )
 }
 
 //--------------------------------------------------------------------------------------------
-void fs_copyDirectory( const char *sourceDir, const char *destDir )
+void fs_copyDirectory( EGO_CONST char *sourceDir, EGO_CONST char *destDir )
 {
   // ZZ> This function copies all files in a directory
 
   char srcPath[MAX_PATH], destPath[MAX_PATH];
-  const char *fileName;
+  EGO_CONST char *fileName;
   FS_FIND_INFO fs_finfo;
 
   fs_find_info_new( &fs_finfo );
@@ -166,7 +166,7 @@ void fs_copyDirectory( const char *sourceDir, const char *destDir )
 
 
 //--------------------------------------------------------------------------------------------
-FILE * fs_fileOpen( PRIORITY priority, const char * src, const char * fname, const char * mode )
+FILE * fs_fileOpen( PRIORITY priority, EGO_CONST char * src, EGO_CONST char * fname, EGO_CONST char * mode )
 {
   // BB > an alias to the standard fopen() command.  Allows proper logging of
   //      bad calls to fopen()

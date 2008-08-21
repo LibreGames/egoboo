@@ -64,25 +64,25 @@ typedef struct sConfigFile
 void ConvertToKeyCharacters( char *pStr );
 
 //
-ConfigFilePtr_t OpenConfigFile( const char *pPath );
+ConfigFilePtr_t OpenConfigFile( EGO_CONST char *pPath );
 
 //
-Sint32 GetConfigValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, char *pValue, Sint32 pValueBufferLength );
-Sint32 GetConfigBooleanValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, bool_t *pBool );
-Sint32 GetConfigIntValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, Sint32 *pInt );
+Sint32 GetConfigValue( ConfigFilePtr_t pConfigFile, EGO_CONST char *pSection, EGO_CONST char *pKey, char *pValue, Sint32 pValueBufferLength );
+Sint32 GetConfigBooleanValue( ConfigFilePtr_t pConfigFile, EGO_CONST char *pSection, EGO_CONST char *pKey, bool_t *pBool );
+Sint32 GetConfigIntValue( ConfigFilePtr_t pConfigFile, EGO_CONST char *pSection, EGO_CONST char *pKey, Sint32 *pInt );
 
 //
-Sint32 SetConfigValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, const char *pValue );
-Sint32 SetConfigBooleanValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, bool_t pBool );
-Sint32 SetConfigIntValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, int pInt );
-Sint32 SetConfigFloatValue( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, float pFloat );
+Sint32 SetConfigValue( ConfigFilePtr_t pConfigFile, EGO_CONST char *pSection, EGO_CONST char *pKey, EGO_CONST char *pValue );
+Sint32 SetConfigBooleanValue( ConfigFilePtr_t pConfigFile, EGO_CONST char *pSection, EGO_CONST char *pKey, bool_t pBool );
+Sint32 SetConfigIntValue( ConfigFilePtr_t pConfigFile, EGO_CONST char *pSection, EGO_CONST char *pKey, int pInt );
+Sint32 SetConfigFloatValue( ConfigFilePtr_t pConfigFile, EGO_CONST char *pSection, EGO_CONST char *pKey, float pFloat );
 
 //
 void CloseConfigFile( ConfigFilePtr_t pConfigFile );
 
 //
 void SaveConfigFile( ConfigFilePtr_t pConfigFile );
-Sint32 SaveConfigFileAs( ConfigFilePtr_t pConfigFile, const char *pPath );
+Sint32 SaveConfigFileAs( ConfigFilePtr_t pConfigFile, EGO_CONST char *pPath );
 
 
 #endif // #ifndef _CONFIGFILE_H_

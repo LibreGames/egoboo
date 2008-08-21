@@ -21,8 +21,7 @@
 //*
 //********************************************************************************************
 
-#ifndef egoboo_Task_h
-#define egoboo_Task_h
+#pragma once
 
 typedef void ( *TaskCallback )( float timeElapsed );
 
@@ -32,5 +31,3 @@ void Task_pause( const char *taskName );
 void Task_play( const char *taskName );
 
 void Task_updateAllTasks();
-
-#endif // include guard

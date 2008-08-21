@@ -47,7 +47,7 @@ void fs_init()
   // JF> This function determines the temporary, import,
   // game data and save paths
   NSString *tempDir, *homeDir, *gameDir, *workingDir;
-  const char *str;
+  EGO_CONST char *str;
 
   tempDir = NSTemporaryDirectory();
   homeDir = NSHomeDirectory();
@@ -77,27 +77,27 @@ void fs_init()
   // Don't release the working directory; it's kept as a global.
 }
 
-const char *fs_getTempDirectory()
+EGO_CONST char *fs_getTempDirectory()
 {
   return fs_tempPath;
 }
 
-const char *fs_getImportDirectory()
+EGO_CONST char *fs_getImportDirectory()
 {
   return fs_importPath;
 }
 
-const char *fs_getSaveDirectory()
+EGO_CONST char *fs_getSaveDirectory()
 {
   return fs_savePath;
 }
 
-const char *fs_getGameDirectory()
+EGO_CONST char *fs_getGameDirectory()
 {
   return fs_gamePath;
 }
 
-int fs_createDirectory(const char *dirName)
+int fs_createDirectory(EGO_CONST char *dirName)
 {
   BOOL ok;
 
@@ -109,7 +109,7 @@ int fs_createDirectory(const char *dirName)
   return 0;
 }
 
-int fs_removeDirectory(const char *dirName)
+int fs_removeDirectory(EGO_CONST char *dirName)
 {
   BOOL ok;
   NSString *path = [[NSString alloc] initWithCString:dirName];
@@ -120,14 +120,14 @@ int fs_removeDirectory(const char *dirName)
   return 0;
 }
 
-void fs_deleteFile(const char *fileName)
+void fs_deleteFile(EGO_CONST char *fileName)
 {
   NSString *path = [[NSString alloc] initWithCString:fileName];
   [[NSFileManager defaultManager] removeFileAtPath:path handler:nil];
   [path release];
 }
 
-void fs_copyFile(const char *source, const char *dest)
+void fs_copyFile(EGO_CONST char *source, EGO_CONST char *dest)
 {
   NSString *srcPath, *destPath;
 
@@ -140,7 +140,7 @@ void fs_copyFile(const char *source, const char *dest)
   [destPath release];
 }
 
-int fs_fileIsDirectory(const char *filename)
+int fs_fileIsDirectory(EGO_CONST char *filename)
 {
   // Returns 1 if this file is a directory
   BOOL isDir = NO;
@@ -164,7 +164,7 @@ int fs_fileIsDirectory(const char *filename)
 //---------------------------------------------------------------------------------------------
 
 // Return the next file in the directory that matches the criteria specified in fs_findFirstFile
-const char *fs_findNextFile()
+EGO_CONST char *fs_findNextFile()
 {
   NSString *fileName;
   NSString *pathName;
@@ -224,7 +224,7 @@ void fs_findClose(&fs_finfo)
 // Begin enumerating files in a directory.  The enumeration is not recursive; subdirectories
 // won't be searched.  If 'extension' is not NULL, only files with the given extension will
 // be returned.
-const char *fs_findFirstFile(const char *path, const char *extension)
+EGO_CONST char *fs_findFirstFile(EGO_CONST char *path, EGO_CONST char *extension)
 {
   NSString *searchPath;
 

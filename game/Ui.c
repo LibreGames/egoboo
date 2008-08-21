@@ -109,7 +109,7 @@ void ui_Reset()
 
 
 //--------------------------------------------------------------------------------------------
-int ui_initialize( const char *default_font, int default_font_size )
+int ui_initialize( EGO_CONST char *default_font, int default_font_size )
 {
   UiContext_new( &ui_context );
 
@@ -365,7 +365,7 @@ bool_t ui_shrinkWidget( ui_Widget_t * pw2, ui_Widget_t * pw1, int pixels )
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_initWidget( ui_Widget_t * pw, ui_id_t id, TTFont_t * pfont, const char *text, GLtexture *img, int x, int y, int width, int height )
+bool_t ui_initWidget( ui_Widget_t * pw, ui_id_t id, TTFont_t * pfont, EGO_CONST char *text, GLtexture *img, int x, int y, int width, int height )
 {
   if ( NULL == pw ) return bfalse;
 

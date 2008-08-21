@@ -22,8 +22,7 @@
 //********************************************************************************************
 
 
-#ifndef Egoboo_Timer_h
-#define Egoboo_Timer_h
+#pragma once
 
 /* For ClockState_t */
 #include "Clock.h"
@@ -43,5 +42,3 @@ void timer_update(); // Update all registered timers
 
 void timer_addTimer( Timer_t *t );   // Add a timer for the system to watch
 void timer_removeTimer( Timer_t *t );  // Tell the system to stop watching this timer
-
-#endif // include guard

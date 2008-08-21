@@ -34,7 +34,7 @@
 #include <stdio.h>
 
 
-MD2_Model_t* md2_load(const char * szFilename, MD2_Model_t* mdl)
+MD2_Model_t* md2_load(EGO_CONST char * szFilename, MD2_Model_t* mdl)
 {
   FILE * f;
   md2_header header;
@@ -255,7 +255,7 @@ MD2_Model_t* md2_load(const char * szFilename, MD2_Model_t* mdl)
 
 
 
-//MD2_Model_t* MD2_Manager::loadFromFile(const char *fileName, MD2_Model_t* mdl)
+//MD2_Model_t* MD2_Manager::loadFromFile(EGO_CONST char *fileName, MD2_Model_t* mdl)
 //{
 //  // ignore garbage input
 //  if (!fileName || !fileName[0]) return NULL;
@@ -626,7 +626,7 @@ void md2_scale_model(MD2_Model_t * pmd2, float scale)
 //  int iNumVertices;
 //  int iNumFrames;
 //  int cnt;
-//  const MD2_Frame_t * pFrame;
+//  EGO_CONST MD2_Frame_t * pFrame;
 //  char      * pFrameName;
 //  bool_t foundname;
 //
@@ -712,7 +712,7 @@ void md2_scale_model(MD2_Model_t * pmd2, float scale)
 //
 //  for( cnt = 0; cnt < iNumFrames; cnt++ )
 //  {
-//    const MD2_Frame_t * = MD2_Frame_t(m, cnt);
+//    EGO_CONST MD2_Frame_t * = MD2_Frame_t(m, cnt);
 //
 //    fScalex = fpFloatPointer[iFrameOffset]; iFrameOffset++;
 //    fScaley = fpFloatPointer[iFrameOffset]; iFrameOffset++;
