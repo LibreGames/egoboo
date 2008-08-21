@@ -36,7 +36,7 @@ INLINE EGO_CONST SLOT grip_to_slot( GRIP g )
     case GRIP_LAST:   s = SLOT_NONE; break;
     case GRIP_RIGHT:  s = SLOT_RIGHT; break;
 
-      // TODO : differentiate between GRIP_SADDLE and GRIP_LEFT
+      /// @todo  differentiate between GRIP_SADDLE and GRIP_LEFT
     case GRIP_LEFT:   s = SLOT_LEFT;  break;
       // case GRIP_SADDLE: s = SLOT_SADDLE; break;
 

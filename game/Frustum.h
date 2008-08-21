@@ -1,6 +1,10 @@
-// This file is an experimental addition to Egoboo.
-
 #pragma once
+
+///
+/// @file
+/// @brief Frustum Culling.
+/// @details This file originally developed by DigiBen  <digiben@gametutorials.com>
+///   This file is not an official part of Egoboo. It has been added to experiment with frustum culling.
 
 #include "egoboo_types.h"
 

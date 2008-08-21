@@ -28,7 +28,7 @@
 
 void str_trim( char *pStr )
 {
-  // ZZ> str_trim remove all space and tabs in the beginning and at the end of the string
+  /// @details ZZ> str_trim remove all space and tabs in the beginning and at the end of the string
 
   Sint32 DebPos = 0, EndPos = 0, CurPos = 0;
 
@@ -71,7 +71,7 @@ void str_trim( char *pStr )
 
 char * str_decode( char *strout, size_t insize, char * strin )
 {
-  // BB> str_decode converts a string from "storage mode" to an actual string
+  /// @details BB> str_decode converts a string from "storage mode" to an actual string
 
   char *pin = strin, *pout = strout, *plast = pout + insize;
 
@@ -93,7 +93,7 @@ char * str_decode( char *strout, size_t insize, char * strin )
 
 char * str_encode( char *strout, size_t insize, char * strin )
 {
-  // BB> str_encode converts an actual string to "storage mode"
+  /// @details BB> str_encode converts an actual string to "storage mode"
 
   char chrlast = 0;
   char *pin = strin, *pout = strout, *plast = pout + insize;
@@ -146,7 +146,7 @@ char * str_encode( char *strout, size_t insize, char * strin )
 
 char * str_convert_slash_net(char * str, size_t size)
 {
-  // BB> converts the slashes in a string to those appropriate for the Net
+  /// @details BB> converts the slashes in a string to those appropriate for the Net
 
   if( !VALID_CSTR(str) ) return str;
 
@@ -168,7 +168,7 @@ char * str_convert_slash_net(char * str, size_t size)
 
 char * str_convert_slash_sys(char * str, size_t size)
 {
-  // BB> converts the slashes in a string to those appropriate this system
+  /// @details BB> converts the slashes in a string to those appropriate this system
 
   if( !VALID_CSTR(str) ) return str;
 
@@ -190,7 +190,7 @@ char * str_convert_slash_sys(char * str, size_t size)
 
 char * str_append_slash_net(char * str, size_t size)
 {
-  // BB> appends a network-type slash to a string, if it does not already have one
+  /// @details BB> appends a network-type slash to a string, if it does not already have one
 
   size_t len;
 
@@ -207,7 +207,7 @@ char * str_append_slash_net(char * str, size_t size)
 
 char * str_append_slash(char * str, size_t size)
 {
-  // BB> appends this system's slash to a string, if it does not already have one
+  /// @details BB> appends this system's slash to a string, if it does not already have one
 
   size_t len;
 

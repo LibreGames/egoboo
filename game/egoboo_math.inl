@@ -655,7 +655,7 @@ INLINE void VectorClear4( float v[] )
 //--------------------------------------------------------------------------------------------
 INLINE bool_t matrix_compare_3x3(matrix_4x4 * pm1, matrix_4x4 * pm2)
 {
-  // BB > compare two 3x3 matrices to see if the transformation is the same
+  /// @details BB> compare two 3x3 matrices to see if the transformation is the same
 
   int i,j;
 

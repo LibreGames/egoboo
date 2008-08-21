@@ -1,7 +1,5 @@
-//********************************************************************************************
-//* Egoboo - menu.h
-//*
-//* Implements the main menu tree, using the code in Ui.*.
+#pragma once
+
 //********************************************************************************************
 //*
 //*    This file is part of Egoboo.
@@ -21,7 +19,10 @@
 //*
 //********************************************************************************************
 
-#pragma once
+///
+/// @file
+/// @brief Game Menu Definitions
+/// @details Implements the main menu tree, using the code in Ui.
 
 #include "ogl_texture.h"
 #include "egoboo_types.h"

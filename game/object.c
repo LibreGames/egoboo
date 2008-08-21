@@ -42,7 +42,7 @@
 //--------------------------------------------------------------------------------------------
 int load_one_object( Game_t * gs, int skin_count, EGO_CONST char * szObjectpath, char* szObjectname, OBJ_REF slot_override )
 {
-  // ZZ> This function loads one object and returns the number of skins
+  /// @details ZZ> This function loads one object and returns the number of skins
 
   int numskins, TxIcon_count, skin_index;
   STRING newloadname, loc_loadpath, wavename;
@@ -219,7 +219,7 @@ int load_one_object( Game_t * gs, int skin_count, EGO_CONST char * szObjectpath,
 //--------------------------------------------------------------------------------------------
 void switch_team( Game_t * gs, CHR_REF chr_ref, TEAM_REF team )
 {
-  // ZZ> This function makes a character join another team...
+  /// @details ZZ> This function makes a character join another team...
 
   PChr_t chrlst      = gs->ChrList;
 
@@ -247,7 +247,7 @@ void switch_team( Game_t * gs, CHR_REF chr_ref, TEAM_REF team )
 //--------------------------------------------------------------------------------------------
 int restock_ammo( Game_t * gs, CHR_REF chr_ref, IDSZ idsz )
 {
-  // ZZ> This function restocks the characters ammo, if it needs ammo and if
+  /// @details ZZ> This function restocks the characters ammo, if it needs ammo and if
   //     either its parent or type idsz match the given idsz.  This
   //     function returns the amount of ammo given.
 
@@ -278,7 +278,7 @@ int restock_ammo( Game_t * gs, CHR_REF chr_ref, IDSZ idsz )
 //--------------------------------------------------------------------------------------------
 void issue_clean( Game_t * gs, CHR_REF chr_ref )
 {
-  // ZZ> This function issues a clean up order to all teammates
+  /// @details ZZ> This function issues a clean up order to all teammates
 
   TEAM_REF team;
   CHR_REF chr_cnt;
@@ -343,7 +343,7 @@ Team_t * CTeam_renew(Team_t *pteam)
 //--------------------------------------------------------------------------------------------
 void ObjList_free_one( Game_t * gs, OBJ_REF obj_ref )
 {
-  // BB> This function sticks a profile back on the free profile stack
+  /// @details BB> This function sticks a profile back on the free profile stack
 
   PCap_t    caplst      = gs->CapList;
 
@@ -527,7 +527,7 @@ PIP_REF ObjList_getRPip(Game_t * gs, OBJ_REF iobj, int i)
 //--------------------------------------------------------------------------------------------
 void ObjList_log_used( Game_t * gs, char *savename )
 {
-  // ZZ> This is a debug function for checking model loads
+  /// @details ZZ> This is a debug function for checking model loads
 
   FILE* hFileWrite;
   OBJ_REF obj_cnt;

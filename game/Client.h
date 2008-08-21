@@ -1,7 +1,4 @@
-/* Egoboo - Client.h
- * Basic skeleton for the client portion of a client-server architecture,
- * this is totally not in use yet.
- */
+#pragma once
 
 //********************************************************************************************
 //*
@@ -22,7 +19,11 @@
 //*
 //********************************************************************************************
 
-#pragma once
+///
+/// @file
+/// @brief Client definitions for network gaming.
+/// @details Basic skeleton for the client portion of a client-server architecture.
+///   This is not totally working yet.
 
 #include <enet/enet.h>
 #include "Network.h"
@@ -74,7 +75,7 @@ struct sClient
   // game info
   ENetPeer   * gamePeer;
   Uint32       gameID;
-  bool_t       outofsync;   // is the client too far out of synch with the server?
+  bool_t       outofsync;   ///< is the client too far out of synch with the server?
 
   // connection to the host handling TO_REMOTE_* type transfers
   NetHost_t  * host;
@@ -82,13 +83,13 @@ struct sClient
   // local states
   Status_t StatList[MAXSTAT];
   size_t StatList_count;
-  Uint8  stat_clock;                        // For stat regeneration
+  Uint8  stat_clock;                        ///< For stat regeneration
 
   Uint32 loc_pla_count;
   bool_t seeinvisible;
   bool_t seekurse;
 
-  bool_t waiting;                          // Has everyone talked to the host?
+  bool_t waiting;                          ///< Has everyone talked to the host?
   int    selectedPlayer;
   int    selectedModule;
   bool_t logged_on;

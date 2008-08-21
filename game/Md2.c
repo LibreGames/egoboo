@@ -25,7 +25,7 @@
 #include "Md2.inl"
 
 #include "id_md2.h"
-#include <SDL_endian.h>    // TODO: Roll my own endian stuff so that I don't have to include
+#include <SDL_endian.h>    /// @todo  Roll my own endian stuff so that I don't have to include
                            // SDL outside of the stuff that touches video/audio/input/etc.
                            // Not a high priority
 
@@ -420,7 +420,7 @@ void md2_delete_vector(MD2_Model_t * v, int n)
 //---------------------------------------------------------------------------------------------
 void md2_scale_model(MD2_Model_t * pmd2, float scale)
 {
-  // BB > scale every vertex in the md2 by the given amount
+  /// @details BB> scale every vertex in the md2 by the given amount
 
   int cnt, tnc, i;
   int num_frames, num_verts;
@@ -452,7 +452,7 @@ void md2_scale_model(MD2_Model_t * pmd2, float scale)
 ////---------------------------------------------------------------------------------------------
 //int rip_md2_header( void )
 //{
-//  // ZZ> This function makes sure an md2 is really an md2
+//  /// @details ZZ> This function makes sure an md2 is really an md2
 //
 //  int iTmp;
 //  int* ipIntPointer;
@@ -473,7 +473,7 @@ void md2_scale_model(MD2_Model_t * pmd2, float scale)
 ////---------------------------------------------------------------------------------------------
 //void fix_md2_normals( Uint16 modelindex )
 //{
-//  // ZZ> This function helps light not flicker so much
+//  /// @details ZZ> This function helps light not flicker so much
 //
 //  int cnt, tnc;
 //  Uint8 indexofcurrent, indexofnext, indexofnextnext, indexofnextnextnext;
@@ -531,7 +531,7 @@ void md2_scale_model(MD2_Model_t * pmd2, float scale)
 //---------------------------------------------------------------------------------------------
 //void rip_md2_commands( Uint16 modelindex )
 //{
-//  // ZZ> This function converts an md2's GL commands into our little command list thing
+//  /// @details ZZ> This function converts an md2's GL commands into our little command list thing
 //
 //  int iTmp;
 //  float fTmpu, fTmpv;
@@ -619,7 +619,7 @@ void md2_scale_model(MD2_Model_t * pmd2, float scale)
 //---------------------------------------------------------------------------------------------
 //char * rip_md2_frame_name( MD2_Model_t * m, int frame )
 //{
-//  // ZZ> This function gets frame names from the load buffer, it returns
+//  /// @details ZZ> This function gets frame names from the load buffer, it returns
 //  //     btrue if the name in cFrameName[] is valid
 //
 //  int iFrameOffset;
@@ -681,7 +681,7 @@ void md2_scale_model(MD2_Model_t * pmd2, float scale)
 //---------------------------------------------------------------------------------------------
 //void rip_md2_frames( MD2_Model_t * m )
 //{
-//  // ZZ> This function gets frames from the load buffer and adds them to
+//  /// @details ZZ> This function gets frames from the load buffer and adds them to
 //  //     the indexed model
 //
 //  Uint8 cTmpx, cTmpy, cTmpz;

@@ -1,5 +1,29 @@
 #pragma once
 
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
+
+///
+/// @file
+/// @brief Input Definitions
+/// @details Definition of the interfaces for external devices like mice, keyboard(s), joysticks...
+
 #include "egoboo_types.h"
 
 #include <SDL.h>
@@ -79,11 +103,12 @@ typedef enum e_input_type INPUT_TYPE;
 
 enum e_input_bits
 {
-  INBITS_NONE  =               0,                         //
-  INBITS_MOUS  = 1 << INPUT_MOUS,                         // Input devices
-  INBITS_KEYB  = 1 << INPUT_KEYB,                         //
-  INBITS_JOYA  = 1 << INPUT_JOYA,                         //
-  INBITS_JOYB  = 1 << INPUT_JOYB                          //
+  /// @detail Input devices
+  INBITS_NONE  =               0,
+  INBITS_MOUS  = 1 << INPUT_MOUS,
+  INBITS_KEYB  = 1 << INPUT_KEYB,
+  INBITS_JOYA  = 1 << INPUT_JOYA,
+  INBITS_JOYB  = 1 << INPUT_JOYB
 };
 typedef enum e_input_bits INPUT_BITS;
 
@@ -117,9 +142,9 @@ struct sGame;
 //--------------------------------------------------------------------------------------------
 struct sLatch
 {
-  float    x;        // x value
-  float    y;        // y value
-  Uint32   b;        // button(s) mask
+  float    x;        ///< x value
+  float    y;        ///< y value
+  Uint32   b;        ///< button(s) mask
 };
 typedef struct sLatch Latch_t;
 
@@ -137,9 +162,9 @@ struct sPlayer
 
   bool_t            is_local;
 
-  CHR_REF           chr_ref;                 // Which character?
-  Latch_t            latch;                   // Local latches
-  Uint8             device;                  // Input device
+  CHR_REF           chr_ref;                 ///< Which character?
+  Latch_t            latch;                   ///< Local latches
+  Uint8             device;                  ///< Input device
 };
 typedef struct sPlayer Player_t;
 
@@ -165,30 +190,30 @@ INLINE CHR_REF PlaList_getRChr( struct sGame * gs, PLA_REF iplayer );
 
 struct s_mouse
 {
-  bool_t   ui;                   // Is the mouse connected to the ui?
-  bool_t   game;                 // Is the mouse connected to the game?
-  float    sense;                // Sensitivity threshold
-  float    sustain;              // Falloff rate for old movement
-  float    cover;                // For falloff
+  bool_t   ui;                   ///< Is the mouse connected to the ui?
+  bool_t   game;                 ///< Is the mouse connected to the game?
+  float    sense;                ///< Sensitivity threshold
+  float    sustain;              ///< Falloff rate for old movement
+  float    cover;                ///< For falloff
   Latch_t  latch;
-  Latch_t  latch_old;            // For sustain
+  Latch_t  latch_old;            ///< For sustain
   Latch_t  dlatch;
-  Sint32   z;                    // Mouse wheel movement counter
-  Uint8    button[MOUSEBUTTON];  // Mouse button states
+  Sint32   z;                    ///< Mouse wheel movement counter
+  Uint8    button[MOUSEBUTTON];  ///< Mouse button states
 };
 typedef struct s_mouse MOUSE;
 
 extern MOUSE mous;
 
 //--------------------------------------------------------------------------------------------
-#define JOYBUTTON           8                       // Maximum number of joystick buttons
+#define JOYBUTTON           8                        ///< Maximum number of joystick buttons
 
 struct s_joystick
 {
   SDL_Joystick *sdl_device;
-  bool_t        on;                     // Is the holy joystick live?
-  Latch_t         latch;                  //
-  Uint8         button[JOYBUTTON];      //
+  bool_t        on;                     ///< Is the holy joystick live?
+  Latch_t         latch;
+  Uint8         button[JOYBUTTON];
 };
 typedef struct s_joystick JOYSTICK;
 
@@ -198,9 +223,9 @@ extern JOYSTICK joy[2];
 // SDL specific declarations
 struct s_keyboard
 {
-  bool_t   on;                 // Is the keyboard live?
+  bool_t   on;                 ///< Is the keyboard live?
   bool_t   mode;
-  Uint8    delay;              // For slowing down chat input
+  Uint8    delay;              ///< For slowing down chat input
 
   Uint8   *state;
   Latch_t    latch;
@@ -226,9 +251,9 @@ INLINE bool_t control_joy_is_pressed( int joy_num, CONTROL control );
 struct sKeyboardBuffer
 {
   bool_t done;
-  int    write;                 // The cursor position
-  int    writemin;              // The starting cursor position
-  STRING buffer;                // The input message
+  int    write;                 ///< The cursor position
+  int    writemin;              ///< The starting cursor position
+  STRING buffer;                ///< The input message
 };
 typedef struct sKeyboardBuffer KeyboardBuffer_t;
 

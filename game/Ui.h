@@ -1,7 +1,4 @@
-/* Egoboo - Ui.h
- * A basic library for implementing user interfaces, based off of Casey Muratori's
- * IMGUI.  (https://mollyrocket.com/forums/viewtopic.php?t=134)
- */
+#pragma once
 
 //********************************************************************************************
 //*
@@ -22,7 +19,11 @@
 //*
 //********************************************************************************************
 
-#pragma once
+///
+/// @file
+/// @brief Egoboo User Interface Definitions
+/// @details A basic library for implementing user interfaces, based off of Casey Muratori's
+///   IMGUI.  (https://mollyrocket.com/forums/viewtopic.php?t=134)
 
 #include "Font.h"
 #include "ogl_texture.h"

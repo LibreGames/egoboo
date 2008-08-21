@@ -90,7 +90,7 @@ bool_t mesh_allocate_bumplist(MeshInfo_t * mi, int blocks)
 //--------------------------------------------------------------------------------------------
 bool_t mesh_load( Mesh_t * pmesh, char *modname )
 {
-  // ZZ> This function loads the "LEVEL.MPD" file
+  /// @details ZZ> This function loads the "LEVEL.MPD" file
 
   FILE* fileread;
   STRING newloadname;
@@ -225,7 +225,7 @@ bool_t mesh_load( Mesh_t * pmesh, char *modname )
 //--------------------------------------------------------------------------------------------
 bool_t TileDictionary_load(TileDictionary_t * pdict)
 {
-  // ZZ> This function loads fan types for the terrain
+  /// @details ZZ> This function loads fan types for the terrain
 
   int cnt, entry;
   int numfantype, fantype, bigfantype, vertices;
@@ -346,7 +346,7 @@ bool_t TileDictionary_load(TileDictionary_t * pdict)
 //--------------------------------------------------------------------------------------------
 void mesh_make_fanstart(MeshInfo_t * mi)
 {
-  // ZZ> This function builds a look up table to ease calculating the
+  /// @details ZZ> This function builds a look up table to ease calculating the
   //     fan number given an x,y pair
 
   int cnt;
@@ -365,7 +365,7 @@ void mesh_make_fanstart(MeshInfo_t * mi)
 //--------------------------------------------------------------------------------------------
 void mesh_make_twist()
 {
-  // ZZ> This function precomputes surface normals and steep hill acceleration for
+  /// @details ZZ> This function precomputes surface normals and steep hill acceleration for
   //     the mesh
 
   int cnt;
@@ -638,7 +638,7 @@ bool_t mesh_calc_normal( Mesh_t * pmesh, PhysicsData_t * phys, vect3 pos, vect3 
 //---------------------------------------------------------------------------------------------
 float mesh_get_level( MeshMem_t * mm, Uint32 fan, float x, float y, bool_t waterwalk, WATER_INFO * wi )
 {
-  // ZZ> This function returns the height of a point within a mesh fan, precise
+  /// @details ZZ> This function returns the height of a point within a mesh fan, precise
   //     If waterwalk is nonzero and the fan is wi->y, then the level returned is the
   //     level of the Water.
 
@@ -764,7 +764,7 @@ static bool_t MeshMem_alloc_fans(MeshMem_t * mem, int fancount)
 //--------------------------------------------------------------------------------------------
 MeshMem_t * MeshMem_new(MeshMem_t * mem, int vertcount, int fancount)
 {
-  // ZZ> This function gets a load of memory for the terrain mesh
+  /// @details ZZ> This function gets a load of memory for the terrain mesh
 
   if(NULL == mem) return mem;
 
@@ -827,7 +827,7 @@ void set_fan_colorl( Game_t * gs, int fan_x, int fan_y, int color )
 //--------------------------------------------------------------------------------------------
 Uint32 mesh_hitawall( Mesh_t * pmesh, vect3 pos, float tiles_x, float tiles_y, Uint32 collision_bits, vect3 * nrm )
 {
-  // ZZ> This function returns nonzero if <pos.x, pos.y> is in an invalid tile
+  /// @details ZZ> This function returns nonzero if <pos.x, pos.y> is in an invalid tile
 
   vect3 loc_pos;
   int fan_x, fan_x_min, fan_x_max, fan_y, fan_y_min, fan_y_max;

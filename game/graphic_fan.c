@@ -22,6 +22,12 @@
 //*
 //********************************************************************************************
 
+///
+/// @file
+/// @brief Render game tiles.
+/// @todo Implement OpenGL fog effects.
+
+
 #include "ogl_include.h"
 #include "Log.h"
 #include "Frustum.h"
@@ -41,7 +47,7 @@ RENDERLIST renderlist;
 //--------------------------------------------------------------------------------------------
 void render_fan_ref( Uint32 fan, char tex_loaded, float level )
 {
-  // ZZ> This function draws a mesh fan
+  /// @details ZZ> This function draws a mesh fan
 
   Game_t * gs = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
@@ -183,7 +189,7 @@ void render_fan_ref( Uint32 fan, char tex_loaded, float level )
 //--------------------------------------------------------------------------------------------
 void render_fan( Uint32 fan, char tex_loaded )
 {
-  // ZZ> This function draws a mesh fan
+  /// @details ZZ> This function draws a mesh fan
 
   Game_t * gs = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
@@ -391,7 +397,6 @@ void render_fan( Uint32 fan, char tex_loaded )
 
 // float z;
 // Uint8 red, grn, blu;
-//TODO: Implement OpenGL fog effects
 /*  if(gfx->Fog.on)
 {
 // The full fog value
@@ -439,7 +444,7 @@ badvertex++;
 //--------------------------------------------------------------------------------------------
 void render_water_fan( Uint32 fan, Uint8 layer, Uint8 mode )
 {
-  // ZZ> This function draws a water fan
+  /// @details ZZ> This function draws a water fan
 
   Game_t * gs = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
@@ -531,7 +536,7 @@ void render_water_fan( Uint32 fan, Uint8 layer, Uint8 mode )
 //--------------------------------------------------------------------------------------------
 void render_water_fan_lit( Uint32 fan, Uint8 layer, Uint8 mode )
 {
-  // ZZ> This function draws a water fan
+  /// @details ZZ> This function draws a water fan
 
   Game_t * gs = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
@@ -706,7 +711,7 @@ bool_t make_renderlist(RENDERLIST * prlst)
 //--------------------------------------------------------------------------------------------
 void set_fan_dyna_light( int fanx, int fany, PRT_REF particle )
 {
-  // ZZ> This function is a little helper, lighting the selected fan
+  /// @details ZZ> This function is a little helper, lighting the selected fan
   //     with the chosen particle
 
   vect3 dif, nrm;
@@ -788,7 +793,7 @@ void set_fan_dyna_light( int fanx, int fany, PRT_REF particle )
 //--------------------------------------------------------------------------------------------
 void do_dyna_light(Game_t * gs)
 {
-  // ZZ> This function does dynamic lighting of visible fans
+  /// @details ZZ> This function does dynamic lighting of visible fans
 
   PRT_REF prt_cnt;
   int cnt, lastvertex, vertex, fan, entry, fanx, fany, addx, addy;
@@ -997,7 +1002,7 @@ void do_dyna_light(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 //void make_renderlist()
 //{
-//  // ZZ> This function figures out which mesh fans to draw
+//  /// @details ZZ> This function figures out which mesh fans to draw
 //
 //  int cnt, fan, fanx, fany;
 //  int row, run, numrow;

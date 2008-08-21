@@ -62,7 +62,7 @@ size_t DLightList_clear( Graphics_Data_t * gfx )
 //--------------------------------------------------------------------------------------------
 size_t DLightList_prune( Graphics_Data_t * gfx )
 {
-  // BB > remove all dynalights that are not permanent
+  /// @details BB> remove all dynalights that are not permanent
 
   int i,j;
   PDLight_t dynalst = gfx->DLightList;
@@ -154,7 +154,7 @@ size_t DLightList_add( Graphics_Data_t * gfx, DYNALIGHT_INFO * di )
 //--------------------------------------------------------------------------------------------
 void make_prtlist(Game_t * gs)
 {
-  // ZZ> This function figures out which particles are visible, and it sets up dynamic
+  /// @details ZZ> This function figures out which particles are visible, and it sets up dynamic
   //     lighting
 
   PRT_REF        prt_cnt;
@@ -204,7 +204,7 @@ void make_prtlist(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 void PrtList_free_one( Game_t * gs, PRT_REF particle )
 {
-  // ZZ> This function sticks a particle back on the free particle stack
+  /// @details ZZ> This function sticks a particle back on the free particle stack
 
   Prt_t * pprt;
 
@@ -223,7 +223,7 @@ void PrtList_free_one( Game_t * gs, PRT_REF particle )
 //--------------------------------------------------------------------------------------------
 void end_one_particle( Game_t * gs, PRT_REF particle )
 {
-  // ZZ> This function sticks a particle back on the free particle stack and
+  /// @details ZZ> This function sticks a particle back on the free particle stack and
   //     plays the sound associated with the particle
 
   PChr_t chrlst      = gs->ChrList;
@@ -251,7 +251,7 @@ void end_one_particle( Game_t * gs, PRT_REF particle )
 //--------------------------------------------------------------------------------------------
 PRT_REF PrtList_get_free( Game_t * gs, bool_t is_critical )
 {
-  // ZZ> This function gets an unused particle.  If all particles are in use
+  /// @details ZZ> This function gets an unused particle.  If all particles are in use
   //     and is_critical is set, it grabs the first unimportant one.  The particle
   //     index is the return value
   //
@@ -318,7 +318,7 @@ PRT_REF prt_spawn_info_init( PRT_SPAWN_INFO * psi, Game_t * gs, float intensity,
                            CHR_REF characterattach, Uint32 offset, TEAM_REF team,
                            CHR_REF characterorigin, Uint16 multispawn, CHR_REF oldtarget )
 {
-  // ZZ> This function spawns a new particle, and returns the number of that particle
+  /// @details ZZ> This function spawns a new particle, and returns the number of that particle
 
   PPrt_t prtlst      = gs->PrtList;
   PPip_t piplst      = gs->PipList;
@@ -392,7 +392,7 @@ PRT_REF prt_spawn_info_init( PRT_SPAWN_INFO * psi, Game_t * gs, float intensity,
 //--------------------------------------------------------------------------------------------
 PRT_REF _prt_spawn( PRT_SPAWN_INFO si, bool_t activate )
 {
-  // ZZ> This function requests a particle to spawn on the local machine
+  /// @details ZZ> This function requests a particle to spawn on the local machine
   //     it will not actually spawn until a confirmation is received from the server
 
   Uint32 loc_rand;
@@ -712,7 +712,7 @@ PRT_REF prt_spawn( Game_t * gs, float intensity, vect3 pos, vect3 vel,
 ////--------------------------------------------------------------------------------------------
 //PRT_REF req_spawn_one_particle( PRT_SPAWN_INFO si )
 //{
-//  // ZZ> This function requests a particle to spawn on the local machine
+//  /// @details ZZ> This function requests a particle to spawn on the local machine
 //  //     it will not actually spawn until a confirmation is received from the server
 //
 //  Uint32 loc_rand;
@@ -993,7 +993,7 @@ PRT_REF prt_spawn( Game_t * gs, float intensity, vect3 pos, vect3 vel,
 //--------------------------------------------------------------------------------------------
 Uint32 prt_hitawall( Game_t * gs, PRT_REF particle, vect3 * norm )
 {
-  // ZZ> This function returns nonzero if the particle hit a wall
+  /// @details ZZ> This function returns nonzero if the particle hit a wall
 
   PPrt_t prtlst      = gs->PrtList;
   PPip_t piplst      = gs->PipList;
@@ -1055,7 +1055,7 @@ Uint32 prt_hitawall( Game_t * gs, PRT_REF particle, vect3 * norm )
 //--------------------------------------------------------------------------------------------
 void disaffirm_attached_particles( Game_t * gs, CHR_REF character )
 {
-  // ZZ> This function makes sure a character has no attached particles
+  /// @details ZZ> This function makes sure a character has no attached particles
 
   PPrt_t prtlst      = gs->PrtList;
   size_t prtlst_size = PRTLST_COUNT;
@@ -1089,7 +1089,7 @@ void disaffirm_attached_particles( Game_t * gs, CHR_REF character )
 //--------------------------------------------------------------------------------------------
 Uint16 number_of_attached_particles( Game_t * gs, CHR_REF character )
 {
-  // ZZ> This function returns the number of particles attached to the given character
+  /// @details ZZ> This function returns the number of particles attached to the given character
 
   PPrt_t prtlst      = gs->PrtList;
   size_t prtlst_size = PRTLST_COUNT;
@@ -1112,7 +1112,7 @@ Uint16 number_of_attached_particles( Game_t * gs, CHR_REF character )
 //--------------------------------------------------------------------------------------------
 void reaffirm_attached_particles( Game_t * gs, CHR_REF character )
 {
-  // ZZ> This function makes sure a character has all of it's particles
+  /// @details ZZ> This function makes sure a character has all of it's particles
 
   PPrt_t prtlst      = gs->PrtList;
   Chr_t  * pchr      = gs->ChrList + character;
@@ -1138,7 +1138,7 @@ void reaffirm_attached_particles( Game_t * gs, CHR_REF character )
 //--------------------------------------------------------------------------------------------
 void move_particles( Game_t * gs, float dUpdate )
 {
-  // ZZ> This is the particle physics function
+  /// @details ZZ> This is the particle physics function
 
   Graphics_Data_t * gfx = Game_getGfx( gs );
 
@@ -1324,7 +1324,7 @@ void move_particles( Game_t * gs, float dUpdate )
 //--------------------------------------------------------------------------------------------
 void attach_particles(Game_t * gs)
 {
-  // ZZ> This function attaches particles to their characters so everything gets
+  /// @details ZZ> This function attaches particles to their characters so everything gets
   //     drawn right
 
   PRT_REF prt_cnt;
@@ -1359,7 +1359,7 @@ void attach_particles(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 void setup_particles( Game_t * gs )
 {
-  // ZZ> This function sets up particle data
+  /// @details ZZ> This function sets up particle data
 
   // re-load the particle texture from ./basicdat
   load_particle_texture( gs, NULL );
@@ -1371,7 +1371,7 @@ void setup_particles( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 void spawn_bump_particles( Game_t * gs, CHR_REF character, PRT_REF particle )
 {
-  // ZZ> This function is for catching characters on fire and such
+  /// @details ZZ> This function is for catching characters on fire and such
 
   int cnt;
   Sint16 x, y, z;
@@ -1547,7 +1547,7 @@ bool_t prt_is_over_water( Game_t * gs, PRT_REF prt_cnt )
 //--------------------------------------------------------------------------------------------
 void do_weather_spawn( Game_t * gs, float dUpdate )
 {
-  // ZZ> This function drops snowflakes or rain or whatever, also swings the camera
+  /// @details ZZ> This function drops snowflakes or rain or whatever, also swings the camera
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -1605,7 +1605,7 @@ void do_weather_spawn( Game_t * gs, float dUpdate )
 //--------------------------------------------------------------------------------------------
 PIP_REF PipList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST char * szObjectname, EGO_CONST char * szFname, PIP_REF override)
 {
-  // ZZ> This function loads a particle template, returning PIPLST_COUNT if the file wasn't
+  /// @details ZZ> This function loads a particle template, returning PIPLST_COUNT if the file wasn't
   //     found
 
   PPip_t piplst      = gs->PipList;
@@ -1802,7 +1802,7 @@ PIP_REF PipList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST 
 //--------------------------------------------------------------------------------------------
 void PipList_load_global(Game_t * gs)
 {
-  // ZF> Load in the standard global particles ( the coins for example )
+  /// @details ZF> Load in the standard global particles ( the coins for example )
   //     This should only be needed done once at the start of the game
 
   log_info("PipList_load_global() - \n\tLoading global particles into memory... ");
@@ -1850,7 +1850,7 @@ void PipList_load_global(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 void reset_particles( Game_t * gs, char* modname )
 {
-  // ZZ> This resets all particle data and reads in the coin and water particles
+  /// @details ZZ> This resets all particle data and reads in the coin and water particles
 
   // Load in the standard global particles ( the coins for example )
   //BAD! This should only be needed once at the start of the game, using PipList_load_global

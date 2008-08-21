@@ -1,21 +1,44 @@
 #pragma once
 
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
+
+///
+/// @file
+/// @brief Game Physics Definitions
+
 #include "egoboo_math.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 struct sOrientation
 {
-  vect3           pos;             // position
-  vect3           vel;             // velocity
+  vect3           pos;             ///< position
+  vect3           vel;             ///< velocity
 
-  quaternion      rot;             // angular "position"
-  vect3           omega;           // angular velocity
+  quaternion      rot;             ///< angular "position"
+  vect3           omega;           ///< angular velocity
 
   // Euler angles
-  Uint16          turn_lr;         // rotation about body z-axis, 0 to 65535
-  Uint16          mapturn_lr;      // rotation about x-axis, 0 to 65535, 32768 is no rotation
-  Uint16          mapturn_ud;      // rotation about y-axis, rotation 0 to 65535, 32768 is no rotation
+  Uint16          turn_lr;         ///< rotation about body z-axis, 0 to 65535
+  Uint16          mapturn_lr;      ///< rotation about x-axis, 0 to 65535, 32768 is no rotation
+  Uint16          mapturn_ud;      ///< rotation about y-axis, rotation 0 to 65535, 32768 is no rotation
 
 };
 typedef struct sOrientation Orientation_t;
@@ -36,14 +59,14 @@ struct sPhysicsData
 {
   egoboo_key_t ekey;
 
-  float    hillslide;                 // Friction
+  float    hillslide;                 ///< Friction
   float    slippyfriction;            //
   float    airfriction;               //
   float    waterfriction;             //
   float    noslipfriction;            //
   float    platstick;                 //
 
-  float    gravity;                   // Gravitational accel
+  float    gravity;                   ///< Gravitational accel
 };
 typedef struct sPhysicsData PhysicsData_t;
 

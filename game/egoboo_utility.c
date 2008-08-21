@@ -153,7 +153,7 @@ DYNA_MODE fget_next_dynamode( FILE *fileread )
 //--------------------------------------------------------------------------------------------
 char * undo_idsz( IDSZ idsz )
 {
-  // ZZ> This function takes an integer and makes an text IDSZ out of it.
+  /// @details ZZ> This function takes an integer and makes an text IDSZ out of it.
   //     It will set valueidsz to "NONE" if the idsz is 0
 
   static char value_string[5] = {"NONE"};
@@ -199,7 +199,7 @@ bool_t ftest_idsz( FILE* fileread )
 //--------------------------------------------------------------------------------------------
 IDSZ fget_idsz( FILE* fileread )
 {
-  // ZZ> This function reads and returns an IDSZ tag, or IDSZ_NONE if there wasn't one
+  /// @details ZZ> This function reads and returns an IDSZ tag, or IDSZ_NONE if there wasn't one
 
   char sTemp[4], cTmp;
   IDSZ idsz = IDSZ_NONE;
@@ -221,7 +221,7 @@ IDSZ fget_idsz( FILE* fileread )
 //--------------------------------------------------------------------------------------------
 IDSZ fget_next_idsz( FILE* fileread )
 {
-  // ZZ> This function reads and returns an IDSZ tag, or IDSZ_NONE if there wasn't one
+  /// @details ZZ> This function reads and returns an IDSZ tag, or IDSZ_NONE if there wasn't one
 
   IDSZ idsz = IDSZ_NONE;
 
@@ -236,7 +236,7 @@ IDSZ fget_next_idsz( FILE* fileread )
 //--------------------------------------------------------------------------------------------
 bool_t fget_pair_fp8( FILE* fileread, PAIR * ppair )
 {
-  // ZZ> This function reads a damage/stat pair ( eg. 5-9 )
+  /// @details ZZ> This function reads a damage/stat pair ( eg. 5-9 )
 
   char   cTmp;
   int    iBase, iRand;
@@ -275,7 +275,7 @@ bool_t fget_pair_fp8( FILE* fileread, PAIR * ppair )
 //--------------------------------------------------------------------------------------------
 bool_t fget_next_pair_fp8( FILE* fileread, PAIR * ppair )
 {
-  // ZZ> This function reads the next damage/stat pair ( eg. 5-9 )
+  /// @details ZZ> This function reads the next damage/stat pair ( eg. 5-9 )
 
   bool_t retval = bfalse;
 
@@ -291,7 +291,7 @@ bool_t fget_next_pair_fp8( FILE* fileread, PAIR * ppair )
 //--------------------------------------------------------------------------------------------
 bool_t fget_pair( FILE* fileread, PAIR * ppair )
 {
-  // ZZ> This function reads a damage/stat pair ( eg. 5-9 )
+  /// @details ZZ> This function reads a damage/stat pair ( eg. 5-9 )
 
   char   cTmp;
   int    iBase, iRand;
@@ -330,7 +330,7 @@ bool_t fget_pair( FILE* fileread, PAIR * ppair )
 //--------------------------------------------------------------------------------------------
 bool_t fget_next_pair( FILE* fileread, PAIR * ppair )
 {
-  // ZZ> This function reads the next damage/stat pair ( eg. 5-9 )
+  /// @details ZZ> This function reads the next damage/stat pair ( eg. 5-9 )
 
   bool_t retval = bfalse;
 
@@ -346,7 +346,7 @@ bool_t fget_next_pair( FILE* fileread, PAIR * ppair )
 //--------------------------------------------------------------------------------------------
 bool_t undo_pair_fp8( PAIR * ppair, RANGE * prange )
 {
-  // ZZ> This function generates a damage/stat pair ( eg. 3-6.5 )
+  /// @details ZZ> This function generates a damage/stat pair ( eg. 3-6.5 )
   //     from the base and random values.  It set prange->ffrom and
   //     prange->fto
 
@@ -374,7 +374,7 @@ bool_t undo_pair_fp8( PAIR * ppair, RANGE * prange )
 //--------------------------------------------------------------------------------------------
 bool_t undo_pair( PAIR * ppair, RANGE * prange )
 {
-  // ZZ> This function generates a damage/stat pair ( eg. 3-6.5 )
+  /// @details ZZ> This function generates a damage/stat pair ( eg. 3-6.5 )
   //     from the base and random values.  It set prange->ffrom and
   //     prange->fto
 
@@ -402,7 +402,7 @@ bool_t undo_pair( PAIR * ppair, RANGE * prange )
 //--------------------------------------------------------------------------------------------
 void ftruthf( FILE* filewrite, char* text, bool_t truth )
 {
-  // ZZ> This function kinda mimics fprintf for the output of
+  /// @details ZZ> This function kinda mimics fprintf for the output of
   //     btrue bfalse statements
 
   fprintf( filewrite, text );
@@ -419,7 +419,7 @@ void ftruthf( FILE* filewrite, char* text, bool_t truth )
 //--------------------------------------------------------------------------------------------
 void fdamagf( FILE* filewrite, char* text, DAMAGE damagetype )
 {
-  // ZZ> This function kinda mimics fprintf for the output of
+  /// @details ZZ> This function kinda mimics fprintf for the output of
   //     SLASH CRUSH POKE HOLY EVIL FIRE ICE ZAP statements
 
   fprintf( filewrite, text );
@@ -441,7 +441,7 @@ void fdamagf( FILE* filewrite, char* text, DAMAGE damagetype )
 //--------------------------------------------------------------------------------------------
 void factiof( FILE* filewrite, char* text, ACTION action )
 {
-  // ZZ> This function kinda mimics fprintf for the output of
+  /// @details ZZ> This function kinda mimics fprintf for the output of
   //     SLASH CRUSH POKE HOLY EVIL FIRE ICE ZAP statements
 
   fprintf( filewrite, text );
@@ -473,7 +473,7 @@ void factiof( FILE* filewrite, char* text, ACTION action )
 //--------------------------------------------------------------------------------------------
 void fgendef( FILE* filewrite, char* text, GENDER gender )
 {
-  // ZZ> This function kinda mimics fprintf for the output of
+  /// @details ZZ> This function kinda mimics fprintf for the output of
   //     MALE FEMALE OTHER statements
 
   fprintf( filewrite, text );
@@ -492,7 +492,7 @@ void fgendef( FILE* filewrite, char* text, GENDER gender )
 //--------------------------------------------------------------------------------------------
 void fpairof( FILE* filewrite, char* text, PAIR * ppair )
 {
-  // ZZ> This function mimics fprintf in spitting out
+  /// @details ZZ> This function mimics fprintf in spitting out
   //     damage/stat pairs
 
   RANGE rng;
@@ -512,7 +512,7 @@ void fpairof( FILE* filewrite, char* text, PAIR * ppair )
 //--------------------------------------------------------------------------------------------
 void funderf( FILE* filewrite, char* text, char* usename )
 {
-  // ZZ> This function mimics fprintf in spitting out
+  /// @details ZZ> This function mimics fprintf in spitting out
   //     a name with underscore spaces
 
   STRING tmpstr;
@@ -524,7 +524,7 @@ void funderf( FILE* filewrite, char* text, char* usename )
 //--------------------------------------------------------------------------------------------
 bool_t fget_message( FILE* fileread, MessageData_t * msglst )
 {
-  // ZZ> This function loads a string into the message buffer, making sure it
+  /// @details ZZ> This function loads a string into the message buffer, making sure it
   //     is null terminated.
 
   bool_t retval = bfalse;
@@ -568,7 +568,7 @@ bool_t fget_message( FILE* fileread, MessageData_t * msglst )
 //--------------------------------------------------------------------------------------------
 bool_t fget_next_message( FILE* fileread, MessageData_t * msglst )
 {
-  // ZZ> This function loads a string into the message buffer, making sure it
+  /// @details ZZ> This function loads a string into the message buffer, making sure it
   //     is null terminated.
 
   bool_t retval = bfalse;
@@ -584,7 +584,7 @@ bool_t fget_next_message( FILE* fileread, MessageData_t * msglst )
 //--------------------------------------------------------------------------------------------
 void fgoto_colon( FILE* fileread )
 {
-  // BB > this calls fgoto_colon_buffer() with no buffer
+  /// @details BB> this calls fgoto_colon_buffer() with no buffer
 
   fgoto_colon_buffer( fileread, NULL, 0 );
 }
@@ -592,7 +592,7 @@ void fgoto_colon( FILE* fileread )
 //--------------------------------------------------------------------------------------------
 bool_t fgoto_colon_yesno( FILE* fileread )
 {
-  // BB > this calls fgoto_colon_yesno_buffer() with no buffer
+  /// @details BB> this calls fgoto_colon_yesno_buffer() with no buffer
 
   return fgoto_colon_yesno_buffer( fileread, NULL, 0 );
 }
@@ -600,7 +600,7 @@ bool_t fgoto_colon_yesno( FILE* fileread )
 //--------------------------------------------------------------------------------------------
 void fgoto_colon_buffer( FILE* fileread, char * buffer, size_t buffer_len )
 {
-  // BB> This function scans the file for the next colon. If there is no colon,
+  /// @details BB> This function scans the file for the next colon. If there is no colon,
   //     it forces the program to quit. It also stores any text
   //     before the colon in the optional array "buffer"
 
@@ -615,7 +615,7 @@ void fgoto_colon_buffer( FILE* fileread, char * buffer, size_t buffer_len )
 //--------------------------------------------------------------------------------------------
 bool_t fgoto_colon_yesno_buffer( FILE* fileread, char * buffer, size_t buffer_len  )
 {
-  // BB> This function scans the file for the next colon. If there is no colon,
+  /// @details BB> This function scans the file for the next colon. If there is no colon,
   //     it returns bfalse. It also stores any text before the colon in the optional array "buffer"
 
   char cTmp, * pchar, * pchar_end;
@@ -660,7 +660,7 @@ bool_t fgoto_colon_yesno_buffer( FILE* fileread, char * buffer, size_t buffer_le
 //--------------------------------------------------------------------------------------------
 char fget_first_letter( FILE* fileread )
 {
-  // ZZ> This function returns the next non-whitespace character
+  /// @details ZZ> This function returns the next non-whitespace character
 
   char cTmp = EOS;
   bool_t bfound = bfalse;
@@ -677,7 +677,7 @@ char fget_first_letter( FILE* fileread )
 //--------------------------------------------------------------------------------------------
 bool_t fget_name( FILE* fileread, char *szName, size_t lnName )
 {
-  // ZZ> This function loads a string of up to MAXCAPNAMESIZE characters, parsing
+  /// @details ZZ> This function loads a string of up to MAXCAPNAMESIZE characters, parsing
   //     it for underscores.  The szName argument is rewritten with the null terminated
   //     string
 
@@ -907,7 +907,7 @@ PRTALPHA fget_next_prttype( FILE * fileread )
 //--------------------------------------------------------------------------------------------
 bool_t fget_string( FILE* fileread, char *szLine, size_t lnLine )
 {
-  // BB > this is a size-sensitive replacement for fscanf(fileread, "%s", &szLine)
+  /// @details BB> this is a size-sensitive replacement for fscanf(fileread, "%s", &szLine)
 
   size_t len;
   char cTmp, *pout = szLine, *plast = szLine + lnLine;
@@ -1170,7 +1170,7 @@ retval_t util_calculateCRC(char * filename, Uint32 seed, Uint32 * pCRC)
 //--------------------------------------------------------------------------------------------
 Uint32 generate_unsigned( Uint32 * seed, PAIR * ppair )
 {
-  // ZZ> This function generates a random number
+  /// @details ZZ> This function generates a random number
 
   Uint32 itmp = 0;
 
@@ -1194,7 +1194,7 @@ Uint32 generate_unsigned( Uint32 * seed, PAIR * ppair )
 //--------------------------------------------------------------------------------------------
 Sint32 generate_signed( Uint32 * seed, PAIR * ppair )
 {
-  // ZZ> This function generates a random number
+  /// @details ZZ> This function generates a random number
 
   Sint32 itmp = 0;
 
@@ -1220,7 +1220,7 @@ Sint32 generate_signed( Uint32 * seed, PAIR * ppair )
 //--------------------------------------------------------------------------------------------
 Sint32 generate_dither( Uint32 * seed, PAIR * ppair, Uint16 strength_fp8 )
 {
-  // ZZ> This function generates a random number
+  /// @details ZZ> This function generates a random number
 
   Sint32 itmp = 0;
 
@@ -1247,7 +1247,7 @@ Sint32 generate_dither( Uint32 * seed, PAIR * ppair, Uint16 strength_fp8 )
 //--------------------------------------------------------------------------------------------
 void make_randie()
 {
-  // ZZ> This function makes the random number table
+  /// @details ZZ> This function makes the random number table
 
   int tnc, cnt;
 

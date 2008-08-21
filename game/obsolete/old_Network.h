@@ -1,26 +1,28 @@
-/* Egoboo - Network.h
- * Definitions for Egoboo network functionality
- */
+#pragma once
 
-/*
-    This file is part of Egoboo.
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
 
-    Egoboo is free software: you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Egoboo is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-#ifndef egoboo_Network_h
-#define egoboo_Network_h
+///
+/// @file
+/// @brief Old version of the networking Network.h file. Depreciated.
+/// @depricated All files depreciated.
 
 #include "enet.h"
 #include "egoboo.h"
@@ -219,4 +221,3 @@ void find_open_sessions();
 void stop_players_from_joining();
 //int create_player(int host);
 //void turn_on_service(int service);
-#endif

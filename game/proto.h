@@ -1,6 +1,4 @@
-/* Egoboo - proto.h
- * Function prototypes for a huge portion of the game code.
- */
+#pragma once
 
 //********************************************************************************************
 //*
@@ -21,8 +19,10 @@
 //*
 //********************************************************************************************
 
-#pragma once
-
-// This file has evaporated!!!! :)
+///
+/// @file
+/// @brief Egoboo Prototypes
+/// @details Function prototypes for a huge portion of the game code.
+///   This file has evaporated!!!! :)
 
 

@@ -1,7 +1,4 @@
-/* Egoboo - graphic.h
- *
- *
- */
+#pragma once
 
 //********************************************************************************************
 //*
@@ -22,7 +19,9 @@
 //*
 //********************************************************************************************
 
-#pragma once
+///
+/// @file
+/// @brief Basic Graphics Header
 
 #include "ogl_texture.h"
 #include "Font.h"
@@ -35,9 +34,9 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-#define TABAND              31          // Tab size
+#define TABAND              31           ///< Tab size
 
-#define TRANSCOLOR          0           // Transparent color
+#define TRANSCOLOR          0            ///< Transparent color
 
 #define SPARKLESIZE 28
 #define SPARKLEADD 2
@@ -54,20 +53,20 @@ struct sGraphics_Data;
 //--------------------------------------------------------------------------------------------
 struct s_renderlist
 {
-  int     num_totl;                            // Number to render, total
-  Uint32  totl[MAXMESHRENDER];                 // List of which to render, total
+  int     num_totl;                            ///< Number to render, total
+  Uint32  totl[MAXMESHRENDER];                 ///< List of which to render, total
 
-  int     num_shine;                           // ..., reflective
-  Uint32  shine[MAXMESHRENDER];                // ..., reflective
+  int     num_shine;                           ///< ..., reflective
+  Uint32  shine[MAXMESHRENDER];                ///< ..., reflective
 
-  int     num_reflc;                           // ..., has reflection
-  Uint32  reflc[MAXMESHRENDER];                // ..., has reflection
+  int     num_reflc;                           ///< ..., has reflection
+  Uint32  reflc[MAXMESHRENDER];                ///< ..., has reflection
 
-  int     num_norm;                            // ..., not reflective, has no reflection
-  Uint32  norm[MAXMESHRENDER];                 // ..., not reflective, has no reflection
+  int     num_norm;                            ///< ..., not reflective, has no reflection
+  Uint32  norm[MAXMESHRENDER];                 ///< ..., not reflective, has no reflection
 
-  int     num_watr;                            // ..., water
-  Uint32  watr[MAXMESHRENDER];                 // ..., water
+  int     num_watr;                            ///< ..., water
+  Uint32  watr[MAXMESHRENDER];                 ///< ..., water
   Uint32  watr_mode[MAXMESHRENDER];
 };
 typedef struct s_renderlist RENDERLIST;
@@ -75,16 +74,16 @@ typedef struct s_renderlist RENDERLIST;
 //--------------------------------------------------------------------------------------------
 // Display messages
 
-#define MAXMESSAGE          6                       // Number of messages
-#define MAXTOTALMESSAGE     1024                    //
-#define MESSAGESIZE         80                      //
+#define MAXMESSAGE          6                        ///< Number of messages
+#define MAXTOTALMESSAGE     1024
+#define MESSAGESIZE         80
 #define MESSAGEBUFFERSIZE   (MAXTOTALMESSAGE*40)
-#define DELAY_MESSAGE         200                     // Time to keep the message alive
+#define DELAY_MESSAGE         200                      ///< Time to keep the message alive
 
 struct s_message_element
 {
-  Sint16    time;                                //
-  char      textdisplay[MESSAGESIZE];            // The displayed text
+  Sint16    time;
+  char      textdisplay[MESSAGESIZE];            ///< The displayed text
 
 };
 typedef struct s_message_element MESSAGE_ELEMENT;
@@ -92,11 +91,11 @@ typedef struct s_message_element MESSAGE_ELEMENT;
 struct sMessageData
 {
   // Message files
-  Uint16  total;                                         // The number of messages
-  Uint32  totalindex;                                    // Where to put letter
+  Uint16  total;                                         ///< The number of messages
+  Uint32  totalindex;                                    ///< Where to put letter
 
-  Uint32  index[MAXTOTALMESSAGE];                        // Where it is
-  char    text[MESSAGEBUFFERSIZE];                       // The text buffer
+  Uint32  index[MAXTOTALMESSAGE];                        ///< Where it is
+  char    text[MESSAGEBUFFERSIZE];                       ///< The text buffer
 };
 typedef struct sMessageData MessageData_t;
 
@@ -150,30 +149,30 @@ struct sGraphics
   // JF - Added so that the video mode might be determined outside of the graphics code
   SDL_Surface * surface;
 
-  STRING        szDriver;                   // graphics driver name;
+  STRING        szDriver;                   ///< graphics driver name;
 
   bool_t        texture_on;
 
-  bool_t        fullscreen;                 // current value of the fullscreen
-  bool_t        gfxacceleration;            // current value of the gfx acceleration
+  bool_t        fullscreen;                 ///< current value of the fullscreen
+  bool_t        gfxacceleration;            ///< current value of the gfx acceleration
 
   int           colordepth;
-  int           scrd;                       // current screen bit depth
-  int           scrx;                       // current screen X size
-  int           scry;                       // current screen Y size
-  int           scrz;                       // current screen z-buffer depth ( 8 unsupported )
+  int           scrd;                       ///< current screen bit depth
+  int           scrx;                       ///< current screen X size
+  int           scry;                       ///< current screen Y size
+  int           scrz;                       ///< current screen z-buffer depth ( 8 unsupported )
 
-  bool_t        antialiasing;               // current antialiasing value
-  int           texturefilter;              // current texture filter
-  GLenum        perspective;                // current correction hint
-  bool_t        dither;                     // current dithering flag
-  GLenum        shading;                    // current shading type
-  bool_t        vsync;                      // current vsync flag
-  bool_t        phongon;                    // current phongon flag
+  bool_t        antialiasing;               ///< current antialiasing value
+  int           texturefilter;              ///< current texture filter
+  GLenum        perspective;                ///< current correction hint
+  bool_t        dither;                     ///< current dithering flag
+  GLenum        shading;                    ///< current shading type
+  bool_t        vsync;                      ///< current vsync flag
+  bool_t        phongon;                    ///< current phongon flag
 
-  float         maxAnisotropy;                     // Max anisotropic filterings (Between 1.00 and 16.00)
-  int           userAnisotropy;                    // Requested anisotropic level
-  int           log2Anisotropy;                    // Max levels of anisotropy
+  float         maxAnisotropy;                     ///< Max anisotropic filterings (Between 1.00 and 16.00)
+  int           userAnisotropy;                    ///< Requested anisotropic level
+  int           log2Anisotropy;                    ///< Max levels of anisotropy
 
   SDL_Rect **   video_mode_list;
 
@@ -191,8 +190,8 @@ struct sGraphics
 
   // fps stuff
   float  est_max_fps;
-  Sint32 fps_clock;               // The number of ticks this second
-  Uint32 fps_loops;               // The number of frames drawn this second
+  Sint32 fps_clock;               ///< The number of ticks this second
+  Uint32 fps_loops;               ///< The number of frames drawn this second
   float  stabilized_fps;
   float  stabilized_fps_sum;
   float  stabilized_fps_weight;

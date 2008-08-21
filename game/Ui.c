@@ -691,7 +691,7 @@ ui_buttonValues ui_doImageButtonWithText( ui_Widget_t * pWidget )
 //--------------------------------------------------------------------------------------------
 void ui_doCursor()
 {
-  // BB > Use the "normal" Egoboo cursor drawing routines to handle the cursor
+  /// @details BB> Use the "normal" Egoboo cursor drawing routines to handle the cursor
   //      Turn off the mouse as a Game Controller while the menu is on.
   // !!!! This is a pretty ugly patch !!!!
 

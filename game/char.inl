@@ -265,7 +265,7 @@ INLINE bool_t wp_list_clear(WP_LIST * w)
 //--------------------------------------------------------------------------------------------
 INLINE bool_t wp_list_advance(WP_LIST * wl)
 {
-  // BB > return value of btrue means wp_list is empty
+  /// @details BB> return value of btrue means wp_list is empty
 
   if(NULL == wl || wp_list_empty(wl)) return bfalse;
 
@@ -278,7 +278,7 @@ INLINE bool_t wp_list_advance(WP_LIST * wl)
 //--------------------------------------------------------------------------------------------
 INLINE bool_t wp_list_add(WP_LIST * wl, float x, float y)
 {
-  // BB > add a point to the waypoint list.
+  /// @details BB> add a point to the waypoint list.
   //      returns bfalse if the list is full (?or should it advance the tail?)
 
   bool_t retval = bfalse;

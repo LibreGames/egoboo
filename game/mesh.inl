@@ -161,7 +161,7 @@ INLINE EGO_CONST bool_t bumplist_return_free(BUMPLIST * b, Uint32 ref)
 //--------------------------------------------------------------------------------------------
 INLINE EGO_CONST bool_t bumplist_insert_chr(BUMPLIST * b, Uint32 block, CHR_REF chr_ref)
 {
-  // BB > insert a character into the bumplist at fanblock.
+  /// @details BB> insert a character into the bumplist at fanblock.
 
   Uint32 ref;
 
@@ -189,7 +189,7 @@ INLINE EGO_CONST bool_t bumplist_insert_chr(BUMPLIST * b, Uint32 block, CHR_REF 
 //--------------------------------------------------------------------------------------------
 INLINE EGO_CONST bool_t bumplist_insert_prt(BUMPLIST * b, Uint32 block, PRT_REF prt_ref)
 {
-  // BB > insert a particle into the bumplist at fanblock.
+  /// @details BB> insert a particle into the bumplist at fanblock.
 
   Uint32 ref;
 
@@ -429,7 +429,7 @@ INLINE void mesh_set_colora( Mesh_t * pmesh, int fan_x, int fan_y, int color )
 //--------------------------------------------------------------------------------------------
 INLINE EGO_CONST Uint32 mesh_get_fan( Mesh_t * pmesh, vect3 pos )
 {
-  // BB > find the tile under <pos.x,pos.y>, but MAKE SURE we have the right tile.
+  /// @details BB> find the tile under <pos.x,pos.y>, but MAKE SURE we have the right tile.
 
   Uint32 ivert, testfan = INVALID_FAN;
   float minx, maxx, miny, maxy;
@@ -475,7 +475,7 @@ INLINE EGO_CONST Uint32 mesh_get_fan( Mesh_t * pmesh, vect3 pos )
 //--------------------------------------------------------------------------------------------
 INLINE EGO_CONST Uint32 mesh_get_block( MeshInfo_t * mi, vect3 pos )
 {
-  // BB > find the block under <x,y>
+  /// @details BB> find the block under <x,y>
 
   return mesh_convert_block( mi, MESH_FLOAT_TO_BLOCK( pos.x ), MESH_FLOAT_TO_BLOCK( pos.y ) );
 }
@@ -597,7 +597,7 @@ INLINE EGO_CONST bool_t mesh_set_tile( Mesh_t * pmesh, int fan_x, int fan_y, Uin
 //--------------------------------------------------------------------------------------------
 INLINE EGO_CONST Uint32 mesh_convert_fan( MeshInfo_t * mi, int fan_x, int fan_y )
 {
-  // BB > convert <fan_x,fan_y> to a fanblock
+  /// @details BB> convert <fan_x,fan_y> to a fanblock
 
   if ( fan_x < 0 || fan_x >= mi->tiles_x || fan_y < 0 || fan_y >= mi->tiles_y ) return INVALID_FAN;
 
@@ -607,7 +607,7 @@ INLINE EGO_CONST Uint32 mesh_convert_fan( MeshInfo_t * mi, int fan_x, int fan_y 
 //--------------------------------------------------------------------------------------------
 INLINE EGO_CONST Uint32 mesh_convert_block( MeshInfo_t * mi, int block_x, int block_y )
 {
-  // BB > convert <block_x,block_y> to a fanblock
+  /// @details BB> convert <block_x,block_y> to a fanblock
   //      be careful, since there is no guarantee that block_x or block_y are multiples of 4
 
   if ( block_x < 0 || block_x > ( mi->tiles_x >> 2 ) || block_y < 0 || block_y > ( mi->tiles_y >> 2 ) ) return INVALID_FAN;

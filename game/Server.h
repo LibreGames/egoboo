@@ -1,7 +1,4 @@
-/* Egoboo - Server.h
- * Basic skeleton for the server portion of a client-server architecture,
- * this is totally not in use yet.
- */
+#pragma once
 
 //********************************************************************************************
 //*
@@ -22,7 +19,11 @@
 //*
 //********************************************************************************************
 
-#pragma once
+///
+/// @file
+/// @brief Egoboo Game Server Defintions
+/// @details Basic skeleton for the server portion of a client-server architecture.
+///   This not totally working yet.
 
 #include "Network.h"
 #include "object.h"
@@ -55,7 +56,7 @@ struct sServer
   NetHost_t  * host;
 
   // server states
-  bool_t ready;                             // Ready to hit the Start Game button?
+  bool_t ready;                             ///< Ready to hit the Start Game button?
   Uint32 rand_idx;
 
   // a copy of all the character latches

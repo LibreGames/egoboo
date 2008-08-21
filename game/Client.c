@@ -304,7 +304,7 @@ void cl_frameStep()
 //--------------------------------------------------------------------------------------------
 ENetPeer * cl_startPeer(EGO_CONST char* hostname)
 {
-  // BB > start the peer connection process, do not wait for confirmation
+  /// @details BB> start the peer connection process, do not wait for confirmation
 
   ENetPeer * peer;
   NetHost_t  * cs_host;
@@ -331,7 +331,7 @@ ENetPeer * cl_startPeer(EGO_CONST char* hostname)
 //--------------------------------------------------------------------------------------------
 //bool_t cl_connectRemote(Client_t * cs, EGO_CONST char* hostname, int slot)
 //{
-//  // ZZ> This function tries to connect onto a server
+//  /// @details ZZ> This function tries to connect onto a server
 //
 //  int cnt;
 //
@@ -388,7 +388,7 @@ bool_t CClient_disconnect(Client_t * cs)
 //--------------------------------------------------------------------------------------------
 bool_t CClient_connect(Client_t * cs, EGO_CONST char* hostname)
 {
-  // ZZ> This function tries to connect onto a server
+  /// @details ZZ> This function tries to connect onto a server
 
   int cnt;
 
@@ -454,7 +454,7 @@ bool_t CClient_connect(Client_t * cs, EGO_CONST char* hostname)
 //--------------------------------------------------------------------------------------------
 retval_t Client_joinGame(Client_t * cs, EGO_CONST char * hostname)
 {
-  // ZZ> This function tries to join one of the sessions we found
+  /// @details ZZ> This function tries to join one of the sessions we found
 
   SYS_PACKET   egopkt;
   STREAM   stream;
@@ -528,7 +528,7 @@ bool_t Client_unjoinGame(Client_t * cs)
 //--------------------------------------------------------------------------------------------
 void Client_talkToHost(Client_t * cs)
 {
-  // ZZ> This function sends the latch packets to the host machine
+  /// @details ZZ> This function sends the latch packets to the host machine
   PLA_REF player;
   SYS_PACKET egopkt;
   Game_t * gs;
@@ -568,7 +568,7 @@ void Client_talkToHost(Client_t * cs)
 //--------------------------------------------------------------------------------------------
 void Client_unbufferLatches(Client_t * cs)
 {
-  // ZZ> This function sets character latches based on player input to the host
+  /// @details ZZ> This function sets character latches based on player input to the host
   CHR_REF chr_cnt;
   Uint32  uiTime, stamp;
   Sint32  dframes;
@@ -930,7 +930,7 @@ void Client_resetTimeLatches(Client_t * cs, CHR_REF ichr)
 //--------------------------------------------------------------------------------------------
 void Client_bufferLatches(Client_t * cs)
 {
-  // ZZ> This function buffers the player data
+  /// @details ZZ> This function buffers the player data
   Uint32 stamp, uiTime;
   PLA_REF player;
   CHR_REF ichr;
@@ -1176,7 +1176,7 @@ bool_t cl_end_request_module(Client_t * cs)
 //--------------------------------------------------------------------------------------------
 void cl_request_module_info(Client_t * cs)
 {
-  // BB > begin the asynchronous transfer of hosted module info from each of the
+  /// @details BB> begin the asynchronous transfer of hosted module info from each of the
   //      potential hosts
 
   int i;
@@ -1207,7 +1207,7 @@ void cl_request_module_info(Client_t * cs)
 //--------------------------------------------------------------------------------------------
 bool_t cl_load_module_info(Client_t * cs)
 {
-  // BB > finish downloading any module info from a given host
+  /// @details BB> finish downloading any module info from a given host
 
   STREAM stream;
   MOD_INFO * mi;
@@ -1261,7 +1261,7 @@ bool_t cl_load_module_info(Client_t * cs)
 //--------------------------------------------------------------------------------------------
 void cl_request_module_images(Client_t * cs)
 {
-  // BB > send a request to the server to download the module images
+  /// @details BB> send a request to the server to download the module images
   //      images will not be downloaded unless the local CRC does not match the
   //      remote CRC (or the file does not exist locally)
 
@@ -1334,7 +1334,7 @@ void cl_request_module_images(Client_t * cs)
 //--------------------------------------------------------------------------------------------
 bool_t Client_sendPacketToHost(Client_t * cs, SYS_PACKET * egop)
 {
-  // ZZ> This function sends a packet to the host
+  /// @details ZZ> This function sends a packet to the host
 
   net_logf("NET INFO: Client_sendPacketToHost()\n");
 
@@ -1356,7 +1356,7 @@ bool_t Client_sendPacketToHost(Client_t * cs, SYS_PACKET * egop)
 //--------------------------------------------------------------------------------------------
 bool_t Client_sendPacketToHostGuaranteed(Client_t * cs, SYS_PACKET * egop)
 {
-  // ZZ> This function sends a packet to the host
+  /// @details ZZ> This function sends a packet to the host
 
   net_logf("NET INFO: Client_sendPacketToHostGuaranteed()\n");
 
@@ -1392,7 +1392,7 @@ size_t StatList_add( Status_t lst[], size_t lst_size, CHR_REF ichr )
 //--------------------------------------------------------------------------------------------
 void StatList_move_to_top( Status_t lst[], size_t lst_size, CHR_REF character )
 {
-  // ZZ> This function puts the character on top of the lst
+  /// @details ZZ> This function puts the character on top of the lst
 
   size_t cnt, oldloc;
 

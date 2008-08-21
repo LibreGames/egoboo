@@ -1,5 +1,29 @@
 #pragma once
 
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
+
+///
+/// @file
+/// @brief Declarations for the Game.
+/// @details Definitions of all the basic structures needed to create and run egoboo games.
+
 #include "input.h"
 #include "module.h"
 
@@ -35,17 +59,17 @@ enum e_Experience;
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // This is for random naming
-#define CHOPPERMODEL                    32          //
+#define CHOPPERMODEL                    32
 #define MAXCHOP                         (OBJLST_COUNT*CHOPPERMODEL)
 #define CHOPSIZE                        8
 #define CHOPBUFFERSIZE                   (MAXCHOP*CHOPSIZE)
 
 struct sChopData
 {
-  Uint16   count;                  // The number of name parts
-  Uint32   write;                  // The data pointer
-  char     text[CHOPBUFFERSIZE];    // The name parts
-  Uint16   start[MAXCHOP];         // The first character of each part
+  Uint16   count;                  ///< The number of name parts
+  Uint32   write;                  ///< The data pointer
+  char     text[CHOPBUFFERSIZE];    ///< The name parts
+  Uint16   start[MAXCHOP];         ///< The first character of each part
 };
 typedef struct sChopData ChopData_t;
 
@@ -54,8 +78,8 @@ typedef struct sChopData ChopData_t;
 struct s_weather_info
 {
   bool_t    active;
-  bool_t    require_water;    // Only spawn over water?
-  int       timereset;        // Rate at which weather particles spawn
+  bool_t    require_water;    ///< Only spawn over water?
+  int       timereset;        ///< Rate at which weather particles spawn
   float     time;
   PLA_REF   player;
 };
@@ -81,14 +105,14 @@ struct sGame
 
   ProcState_t  proc;
 
-  bool_t Single_frame;       // Is the game in single frame mode?
-  bool_t Do_frame;           // Tell the game to process one frame
+  bool_t Single_frame;       ///< Is the game in single frame mode?
+  bool_t Do_frame;           ///< Tell the game to process one frame
 
   // in-game menu stuff
   MenuProc_t igm;
 
   // random stuff
-  Uint32 randie_index;       // The current index of the random number table
+  Uint32 randie_index;       ///< The current index of the random number table
 
   // module parameters
   MOD_INFO      mod;
@@ -109,8 +133,8 @@ struct sGame
   int        ObjFreeList_count;
   OBJ_REF    ObjFreeList[CHRLST_COUNT];
   ObjList_t  ObjList;
-  Uint16     skintoicon[MAXTEXTURE];       // convert object skins to texture references
-  ChopData_t chop;                         // per-object random naming data
+  Uint16     skintoicon[MAXTEXTURE];       ///< convert object skins to texture references
+  ChopData_t chop;                         ///< per-object random naming data
 
   // profiles
   CapList_t CapList;
@@ -145,12 +169,12 @@ struct sGame
 
   // local variables
   float     PlaList_level;
-  int       PlaList_count;                                 // Number of players
+  int       PlaList_count;                                 ///< Number of players
   PlaList_t PlaList;
 
   // environmant info
-  WEATHER_INFO  Weather;    // particles for weather spawning
-  PhysicsData_t phys;       // gravity, friction, etc.
+  WEATHER_INFO  Weather;    ///< particles for weather spawning
+  PhysicsData_t phys;       ///< gravity, friction, etc.
 
   // Mesh and Tile stuff
   Mesh_t        Mesh;
@@ -167,24 +191,24 @@ struct sGame
   Graphics_Data_t GfxData;
 
   // Game clocks
-  Sint32 stt_clock;             // SDL_GetTickCount() at start
-  Sint32 lst_clock;             // The last total of ticks so far
-  Sint32 all_clock;             // The total number of ticks so far
+  Sint32 stt_clock;             ///< SDL_GetTickCount() at start
+  Sint32 lst_clock;             ///< The last total of ticks so far
+  Sint32 all_clock;             ///< The total number of ticks so far
 
-  Sint32 wld_clock;             // The sync clock
-  Uint32 wld_frame;             // The number of frames that should have been drawn
+  Sint32 wld_clock;             ///< The sync clock
+  Uint32 wld_frame;             ///< The number of frames that should have been drawn
 
-  Uint8  timeron;               // Game timer displayed?
-  Uint32 timervalue;            // Timer_t time ( 50ths of a second )
+  Uint8  timeron;               ///< Game timer displayed?
+  Uint32 timervalue;            ///< Timer_t time ( 50ths of a second )
 
   // Misc stuff
-  float  pits_clock;             // For pit kills
-  bool_t pits_kill;              // Do they kill?
+  float  pits_clock;             ///< For pit kills
+  bool_t pits_kill;              ///< Do they kill?
 
-  bool_t somepladead;           // someone is dead
-  bool_t allpladead;            // everyone is dead?
+  bool_t somepladead;           ///< someone is dead
+  bool_t allpladead;            ///< everyone is dead?
 
-  char endtext[MAXENDTEXT];     // The end-module text
+  char endtext[MAXENDTEXT];     ///< The end-module text
 
 };
 typedef struct sGame Game_t;
@@ -346,52 +370,52 @@ struct sConfigData
   //------------------------------------
   //Setup Variables
   //------------------------------------
-  bool_t zreflect;                   // Reflection z buffering?
-  int    maxtotalmeshvertices;       // of vertices
-  bool_t fullscreen;                 // Start in fullscreen?
-  int    scrd;                       // Screen bit depth
-  int    scrx;                       // Screen X size
-  int    scry;                       // Screen Y size
-  int    scrz;                       // Screen z-buffer depth ( 8 unsupported )
+  bool_t zreflect;                   ///< Reflection z buffering?
+  int    maxtotalmeshvertices;       ///< of vertices
+  bool_t fullscreen;                 ///< Start in fullscreen?
+  int    scrd;                       ///< Screen bit depth
+  int    scrx;                       ///< Screen X size
+  int    scry;                       ///< Screen Y size
+  int    scrz;                       ///< Screen z-buffer depth ( 8 unsupported )
   int    maxmessage;                 //
-  bool_t messageon;                  // Messages?
-  int    wraptolerance;              // Status_t bar
-  bool_t  staton;                    // Draw the status bars?
-  bool_t  render_overlay;            // Draw overlay?
-  bool_t  render_background;         // Do we render the water as a background?
-  GLenum  perspective;               // Perspective correct textures?
-  bool_t  dither;                    // Dithering?
-  Uint8   reffadeor;                 // 255 = Don't fade reflections
-  GLenum  shading;                   // Gourad shading?
-  bool_t  antialiasing;              // Antialiasing?
-  bool_t  refon;                     // Reflections?
-  bool_t  shaon;                     // Shadows?
-  int     texturefilter;             // Texture filtering?
-  bool_t  wateron;                   // Water overlays?
-  bool_t  shasprite;                 // Shadow sprites?
-  bool_t  phongon;                   // Do phong overlay? (Outdated?)
-  bool_t  twolayerwateron;           // Two layer water?
-  bool_t  overlayvalid;              // Allow large overlay?
-  bool_t  backgroundvalid;           // Allow large background?
-  bool_t  fogallowed;                // Draw fog? (Not implemented!)
-  int     particletype;              // Particle Effects image
-  bool_t  vsync;                     // Wait for vertical sync?
-  bool_t  gfxacceleration;           // Force OpenGL graphics acceleration?
+  bool_t messageon;                  ///< Messages?
+  int    wraptolerance;              ///< Status_t bar
+  bool_t  staton;                    ///< Draw the status bars?
+  bool_t  render_overlay;            ///< Draw overlay?
+  bool_t  render_background;         ///< Do we render the water as a background?
+  GLenum  perspective;               ///< Perspective correct textures?
+  bool_t  dither;                    ///< Dithering?
+  Uint8   reffadeor;                 ///< 255 = Don't fade reflections
+  GLenum  shading;                   ///< Gourad shading?
+  bool_t  antialiasing;              ///< Antialiasing?
+  bool_t  refon;                     ///< Reflections?
+  bool_t  shaon;                     ///< Shadows?
+  int     texturefilter;             ///< Texture filtering?
+  bool_t  wateron;                   ///< Water overlays?
+  bool_t  shasprite;                 ///< Shadow sprites?
+  bool_t  phongon;                   ///< Do phong overlay? (Outdated?)
+  bool_t  twolayerwateron;           ///< Two layer water?
+  bool_t  overlayvalid;              ///< Allow large overlay?
+  bool_t  backgroundvalid;           ///< Allow large background?
+  bool_t  fogallowed;                ///< Draw fog? (Not implemented!)
+  int     particletype;              ///< Particle Effects image
+  bool_t  vsync;                     ///< Wait for vertical sync?
+  bool_t  gfxacceleration;           ///< Force OpenGL graphics acceleration?
 
-  bool_t  allow_sound;       // Allow playing of sound?
-  bool_t  allow_music;       // Allow music and loops?
-  int     musicvolume;       // The sound volume of music
-  int     soundvolume;       // Volume of sounds played
-  int     maxsoundchannel;   // Max number of sounds playing at the same time
-  int     buffersize;        // Buffer size set in setup.txt
+  bool_t  allow_sound;       ///< Allow playing of sound?
+  bool_t  allow_music;       ///< Allow music and loops?
+  int     musicvolume;       ///< The sound volume of music
+  int     soundvolume;       ///< Volume of sounds played
+  int     maxsoundchannel;   ///< Max number of sounds playing at the same time
+  int     buffersize;        ///< Buffer size set in setup.txt
 
-  Uint8 autoturncamera;           // Type of camera control...
+  Uint8 autoturncamera;           ///< Type of camera control...
 
-  bool_t  request_network;              // Try to connect?
-  int     lag;                    // Lag tolerance
-  STRING  net_hosts[8];                            // Name for hosting session
-  STRING  net_messagename;         // Name for messages
-  Uint8   fpson;                    // FPS displayed?
+  bool_t  request_network;              ///< Try to connect?
+  int     lag;                    ///< Lag tolerance
+  STRING  net_hosts[8];                            ///< Name for hosting session
+  STRING  net_messagename;         ///< Name for messages
+  Uint8   fpson;                    ///< FPS displayed?
 
   // Debug options
   SDL_GrabMode GrabMouse;
@@ -411,9 +435,9 @@ extern ConfigData_t CData;
 struct sSearchInfo
 {
   bool_t  initialize;
-  CHR_REF besttarget;                                      // For find_target
-  Uint16  bestangle;                                       //
-  Uint16  useangle;                                        //
+  CHR_REF besttarget;                                      ///< For find_target
+  Uint16  bestangle;
+  Uint16  useangle;
   int     bestdistance;
   CHR_REF nearest;
   float   distance;

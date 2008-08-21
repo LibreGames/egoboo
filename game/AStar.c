@@ -253,8 +253,8 @@ bool_t AStar_prepare_path( Game_t * gs, Uint32 stoppedby, int src_ix, int src_iy
             continue;
             }
 
-          // TODO: I need to check for collisions with static objects, like trees
-
+          ///
+          /// @todo  I need to check for collisions with static objects, like trees
 
           // is this already in the closed list?
           if ( AStar_closed_find( &tmp_node ) > 0 )
@@ -318,7 +318,7 @@ bool_t AStar_prepare_path( Game_t * gs, Uint32 stoppedby, int src_ix, int src_iy
 //------------------------------------------------------------------------------
 int AStar_get_path( int src_ix, int src_iy, AStar_Node_t buffer[], int buffer_size )
   {
-  // BB > Fill buffer with the AStar_Node_t's that connect the source with the destination.
+  /// @details BB> Fill buffer with the AStar_Node_t's that connect the source with the destination.
   //      The best destination tile will be the first in the AStar_open_list.
   //      The node list that is placed in buffer[] is actually reversed.
   //      Returns the number of nodes in buffer[], -1 if the buffer is too small

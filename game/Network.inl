@@ -21,7 +21,7 @@ INLINE void net_packet_doneReading(NET_PACKET * p)
 //--------------------------------------------------------------------------------------------
 INLINE bool_t packet_readString(NET_PACKET * p, char *buffer, int maxLen)
 {
-  // ZZ> This function reads a null terminated string from the packet
+  /// @details ZZ> This function reads a null terminated string from the packet
 
   if(NULL ==p) return bfalse;
 
@@ -31,7 +31,7 @@ INLINE bool_t packet_readString(NET_PACKET * p, char *buffer, int maxLen)
 //--------------------------------------------------------------------------------------------
 INLINE Uint8 net_packet_readUint8(NET_PACKET * p)
 {
-  // ZZ> This function reads an Uint8 from the packet
+  /// @details ZZ> This function reads an Uint8 from the packet
   if(NULL ==p) return 0;
 
   return stream_readUint8(&(p->wrapper));
@@ -40,7 +40,7 @@ INLINE Uint8 net_packet_readUint8(NET_PACKET * p)
 //--------------------------------------------------------------------------------------------
 INLINE Sint8 net_packet_readSint8(NET_PACKET * p)
 {
-  // ZZ> This function reads a Sint8 from the packet
+  /// @details ZZ> This function reads a Sint8 from the packet
   if(NULL ==p) return 0;
 
   return stream_readSint8(&(p->wrapper));
@@ -49,7 +49,7 @@ INLINE Sint8 net_packet_readSint8(NET_PACKET * p)
 //--------------------------------------------------------------------------------------------
 INLINE Uint16 net_packet_readUint16(NET_PACKET * p)
 {
-  // ZZ> This function reads an Uint16 from the packet
+  /// @details ZZ> This function reads an Uint16 from the packet
   if(NULL ==p) return 0;
 
   return stream_readUint16(&(p->wrapper));
@@ -58,7 +58,7 @@ INLINE Uint16 net_packet_readUint16(NET_PACKET * p)
 //--------------------------------------------------------------------------------------------
 INLINE Uint16 net_packet_peekUint16(NET_PACKET * p)
 {
-  // ZZ> This function reads an Uint16 from the packet
+  /// @details ZZ> This function reads an Uint16 from the packet
   if(NULL ==p) return 0;
 
   return stream_peekUint16(&(p->wrapper));
@@ -67,7 +67,7 @@ INLINE Uint16 net_packet_peekUint16(NET_PACKET * p)
 //--------------------------------------------------------------------------------------------
 INLINE Sint16 net_packet_readSint16(NET_PACKET * p)
 {
-  // ZZ> This function reads a Sint16 from the packet
+  /// @details ZZ> This function reads a Sint16 from the packet
   if(NULL ==p) return 0;
 
   return stream_readSint16(&(p->wrapper));
@@ -76,7 +76,7 @@ INLINE Sint16 net_packet_readSint16(NET_PACKET * p)
 //--------------------------------------------------------------------------------------------
 INLINE Uint32 net_packet_readUint32(NET_PACKET * p)
 {
-  // ZZ> This function reads an Uint32 from the packet
+  /// @details ZZ> This function reads an Uint32 from the packet
   if(NULL ==p) return 0;
 
   return stream_readUint32(&(p->wrapper));
@@ -85,7 +85,7 @@ INLINE Uint32 net_packet_readUint32(NET_PACKET * p)
 //--------------------------------------------------------------------------------------------
 INLINE Sint32 net_packet_readSint32(NET_PACKET * p)
 {
-  // ZZ> This function reads a Sint32 from the packet
+  /// @details ZZ> This function reads a Sint32 from the packet
   if(NULL ==p) return 0;
 
   return stream_readSint32(&(p->wrapper));
@@ -94,7 +94,7 @@ INLINE Sint32 net_packet_readSint32(NET_PACKET * p)
 //--------------------------------------------------------------------------------------------
 INLINE size_t net_packet_remainingSize(NET_PACKET * p)
 {
-  // ZZ> This function tells if there's still data left in the packet
+  /// @details ZZ> This function tells if there's still data left in the packet
   if(NULL ==p) return 0;
 
   return stream_remainingSize(&(p->wrapper));
@@ -103,7 +103,7 @@ INLINE size_t net_packet_remainingSize(NET_PACKET * p)
 //--------------------------------------------------------------------------------------------
 INLINE void sys_packet_addUint8(SYS_PACKET * egop, Uint8 uc)
 {
-  // ZZ> This function appends an Uint8 to the packet
+  /// @details ZZ> This function appends an Uint8 to the packet
   Uint8* ucp;
   ucp = (Uint8*)(&egop->buffer[egop->head]);
   *ucp = uc;
@@ -114,7 +114,7 @@ INLINE void sys_packet_addUint8(SYS_PACKET * egop, Uint8 uc)
 //--------------------------------------------------------------------------------------------
 INLINE void sys_packet_addSint8(SYS_PACKET * egop, Sint8 sc)
 {
-  // ZZ> This function appends a Sint8 to the packet
+  /// @details ZZ> This function appends a Sint8 to the packet
   Sint8* scp;
   scp = (Sint8*)(&egop->buffer[egop->head]);
   *scp = sc;
@@ -125,7 +125,7 @@ INLINE void sys_packet_addSint8(SYS_PACKET * egop, Sint8 sc)
 //--------------------------------------------------------------------------------------------
 INLINE void sys_packet_addUint16(SYS_PACKET * egop, Uint16 us)
 {
-  // ZZ> This function appends an Uint16 to the packet
+  /// @details ZZ> This function appends an Uint16 to the packet
   Uint16* usp;
   usp = (Uint16*)(&egop->buffer[egop->head]);
 
@@ -137,7 +137,7 @@ INLINE void sys_packet_addUint16(SYS_PACKET * egop, Uint16 us)
 //--------------------------------------------------------------------------------------------
 INLINE void sys_packet_addSint16(SYS_PACKET * egop, Sint16 ss)
 {
-  // ZZ> This function appends a Sint16 to the packet
+  /// @details ZZ> This function appends a Sint16 to the packet
   Sint16* ssp;
   ssp = (Sint16*)(&egop->buffer[egop->head]);
 
@@ -150,7 +150,7 @@ INLINE void sys_packet_addSint16(SYS_PACKET * egop, Sint16 ss)
 //--------------------------------------------------------------------------------------------
 INLINE void sys_packet_addUint32(SYS_PACKET * egop, Uint32 ui)
 {
-  // ZZ> This function appends an Uint32 to the packet
+  /// @details ZZ> This function appends an Uint32 to the packet
   Uint32* uip;
   uip = (Uint32*)(&egop->buffer[egop->head]);
 
@@ -163,7 +163,7 @@ INLINE void sys_packet_addUint32(SYS_PACKET * egop, Uint32 ui)
 //--------------------------------------------------------------------------------------------
 INLINE void sys_packet_addSint32(SYS_PACKET * egop, Sint32 si)
 {
-  // ZZ> This function appends a Sint32 to the packet
+  /// @details ZZ> This function appends a Sint32 to the packet
   Sint32* sip;
   sip = (Sint32*)(&egop->buffer[egop->head]);
 
@@ -189,7 +189,7 @@ INLINE void sys_packet_addFString(SYS_PACKET * egop, EGO_CONST char *format, ...
 //--------------------------------------------------------------------------------------------
 INLINE void sys_packet_addString(SYS_PACKET * egop, EGO_CONST char *string)
 {
-  // ZZ> This function appends a null terminated string to the packet
+  /// @details ZZ> This function appends a null terminated string to the packet
   char* cp;
   char cTmp;
   int cnt;
@@ -305,7 +305,7 @@ INLINE bool_t stream_done(STREAM * pwrapper)
 //--------------------------------------------------------------------------------------------
 INLINE bool_t stream_readString(STREAM * p, char *buffer, size_t maxLen)
 {
-  // ZZ> This function reads a NULL terminated string from the packet
+  /// @details ZZ> This function reads a NULL terminated string from the packet
   size_t copy_length;
 
   if(NULL ==p) return bfalse;
@@ -327,7 +327,7 @@ INLINE bool_t stream_readString(STREAM * p, char *buffer, size_t maxLen)
 //--------------------------------------------------------------------------------------------
 INLINE Uint8 stream_readUint8(STREAM * p)
 {
-  // ZZ> This function reads an Uint8 from the packet
+  /// @details ZZ> This function reads an Uint8 from the packet
   Uint8 uc;
   uc = (Uint8)(p->data[p->readLocation]);
   p->readLocation += sizeof(Uint8);
@@ -337,7 +337,7 @@ INLINE Uint8 stream_readUint8(STREAM * p)
 //--------------------------------------------------------------------------------------------
 INLINE Sint8 stream_readSint8(STREAM * p)
 {
-  // ZZ> This function reads a Sint8 from the packet
+  /// @details ZZ> This function reads a Sint8 from the packet
   Sint8 sc;
   sc = (Sint8)(p->data[p->readLocation]);
   p->readLocation += sizeof(Sint8);
@@ -347,7 +347,7 @@ INLINE Sint8 stream_readSint8(STREAM * p)
 //--------------------------------------------------------------------------------------------
 INLINE Uint16 stream_readUint16(STREAM * p)
 {
-  // ZZ> This function reads an Uint16 from the packet
+  /// @details ZZ> This function reads an Uint16 from the packet
   Uint16 us;
   Uint16* usp;
   usp = (Uint16*)(&p->data[p->readLocation]);
@@ -361,7 +361,7 @@ INLINE Uint16 stream_readUint16(STREAM * p)
 //--------------------------------------------------------------------------------------------
 INLINE Uint16 stream_peekUint16(STREAM * p)
 {
-  // ZZ> This function reads an Uint16 from the packet
+  /// @details ZZ> This function reads an Uint16 from the packet
   Uint16 us;
   Uint16* usp;
   usp = (Uint16*)(&p->data[p->readLocation]);
@@ -374,7 +374,7 @@ INLINE Uint16 stream_peekUint16(STREAM * p)
 //--------------------------------------------------------------------------------------------
 INLINE Sint16 stream_readSint16(STREAM * p)
 {
-  // ZZ> This function reads a Sint16 from the packet
+  /// @details ZZ> This function reads a Sint16 from the packet
   Sint16 ss;
   Sint16* ssp;
   ssp = (Sint16*)(&p->data[p->readLocation]);
@@ -388,7 +388,7 @@ INLINE Sint16 stream_readSint16(STREAM * p)
 //--------------------------------------------------------------------------------------------
 INLINE Uint32 stream_readUint32(STREAM * p)
 {
-  // ZZ> This function reads an Uint32 from the packet
+  /// @details ZZ> This function reads an Uint32 from the packet
   Uint32 ui;
   Uint32* uip;
   uip = (Uint32*)(&p->data[p->readLocation]);
@@ -402,7 +402,7 @@ INLINE Uint32 stream_readUint32(STREAM * p)
 //--------------------------------------------------------------------------------------------
 INLINE Sint32 stream_readSint32(STREAM * p)
 {
-  // ZZ> This function reads a Sint32 from the packet
+  /// @details ZZ> This function reads a Sint32 from the packet
   Sint32 si;
   Sint32* sip;
   sip = (Sint32*)(&p->data[p->readLocation]);
@@ -416,7 +416,7 @@ INLINE Sint32 stream_readSint32(STREAM * p)
 //--------------------------------------------------------------------------------------------
 INLINE size_t stream_remainingSize(STREAM * p)
 {
-  // ZZ> This function tells if there's still data left in the packet
+  /// @details ZZ> This function tells if there's still data left in the packet
   return p->data_size - p->readLocation;
 }
 
@@ -425,7 +425,7 @@ INLINE size_t stream_remainingSize(STREAM * p)
 //--------------------------------------------------------------------------------------------
 INLINE bool_t net_startNewSysPacket(SYS_PACKET * egop)
 {
-  // ZZ> This function starts building a network packet
+  /// @details ZZ> This function starts building a network packet
 
   if(NULL == egop)
   {

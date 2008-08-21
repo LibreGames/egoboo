@@ -31,7 +31,7 @@ float turntocos[TRIGTABLE_SIZE];
 //--------------------------------------------------------------------------------------------
 void make_turntosin( void )
 {
-  // ZZ> This function makes the lookup table for chrturn...
+  /// @details ZZ> This function makes the lookup table for chrturn...
 
   int cnt;
 

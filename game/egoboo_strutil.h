@@ -1,6 +1,4 @@
-/* Egoboo - egoboostrutil.h
- * String manipulation functions.  Not currently in use.
- */
+#pragma once
 
 //********************************************************************************************
 //*
@@ -21,7 +19,10 @@
 //*
 //********************************************************************************************
 
-#pragma once
+///
+/// @file
+/// @brief Egoboo String Utilities.
+/// @details String manipulation functions.
 
 #include "egoboo_types.h"
 #include "egoboo_config.h"

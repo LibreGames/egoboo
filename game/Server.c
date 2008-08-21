@@ -114,7 +114,7 @@ static bool_t    Server_delete(Server_t * ss);
 //--------------------------------------------------------------------------------------------
 retval_t Server_startUp(Server_t * ss)
 {
-  // ZZ> This function tries to host a new session
+  /// @details ZZ> This function tries to host a new session
 
   NetHost_t * sv_host;
 
@@ -270,7 +270,7 @@ void sv_frameStep(Server_t * ss)
 //--------------------------------------------------------------------------------------------
 void Server_bufferLatches(Server_t * ss)
 {
-  // ZZ> This function buffers the character latches
+  /// @details ZZ> This function buffers the character latches
   Game_t * gs;
   Uint32 uiTime, ichr;
 
@@ -297,7 +297,7 @@ void Server_bufferLatches(Server_t * ss)
 //--------------------------------------------------------------------------------------------
 void sv_talkToRemotes(Server_t * ss)
 {
-  // ZZ> This function sends the character data to all the remote machines
+  /// @details ZZ> This function sends the character data to all the remote machines
   Uint32 uiTime;
   CHR_REF ichr;
   SYS_PACKET egopkt;
@@ -360,7 +360,7 @@ void sv_talkToRemotes(Server_t * ss)
 //--------------------------------------------------------------------------------------------
 //void sv_letPlayersJoin(Server_t * ss)
 //{
-//  // ZZ> This function finds all the players in the game
+//  /// @details ZZ> This function finds all the players in the game
 //  ENetEvent event;
 //  char hostName[64];
 //
@@ -787,7 +787,7 @@ bool_t sv_handlePacket(Server_t * ss, ENetEvent *event)
 //--------------------------------------------------------------------------------------------
 void Server_unbufferLatches(Server_t * ss)
 {
-  // ZZ> This function sets character latches based on player input to the host
+  /// @details ZZ> This function sets character latches based on player input to the host
   CHR_REF chr_cnt;
   Uint32  uiTime;
   Game_t * gs = ss->parent;
@@ -1043,7 +1043,7 @@ int _sv_HostCallback(void * data)
 //--------------------------------------------------------------------------------------------
 bool_t sv_sendPacketToAllClients(Server_t * ss, SYS_PACKET * egop)
 {
-  // ZZ> This function sends a packet to all the players
+  /// @details ZZ> This function sends a packet to all the players
 
   NetHost_t * sv_host;
 
@@ -1072,7 +1072,7 @@ bool_t sv_sendPacketToAllClients(Server_t * ss, SYS_PACKET * egop)
 //--------------------------------------------------------------------------------------------
 bool_t sv_sendPacketToAllClientsGuaranteed(Server_t * ss, SYS_PACKET * egop)
 {
-  // ZZ> This function sends a packet to all the players
+  /// @details ZZ> This function sends a packet to all the players
 
   NetHost_t * sv_host;
 

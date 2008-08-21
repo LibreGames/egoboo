@@ -1,6 +1,4 @@
-/* Egoboo - configfile.h
- * Configuration file loading code.
- */
+#pragma once
 
 //********************************************************************************************
 //*
@@ -21,9 +19,8 @@
 //*
 //********************************************************************************************
 
-
-#ifndef _CONFIGFILE_H_
-#define _CONFIGFILE_H_
+///
+/// Configuration file loading.
 
 #include "egoboo_types.h"
 
@@ -83,7 +80,4 @@ void CloseConfigFile( ConfigFilePtr_t pConfigFile );
 //
 void SaveConfigFile( ConfigFilePtr_t pConfigFile );
 Sint32 SaveConfigFileAs( ConfigFilePtr_t pConfigFile, EGO_CONST char *pPath );
-
-
-#endif // #ifndef _CONFIGFILE_H_
 

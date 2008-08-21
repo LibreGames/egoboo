@@ -49,7 +49,7 @@
 //--------------------------------------------------------------------------------------------
 void enc_spawn_particles( Game_t * gs, float dUpdate )
 {
-  // ZZ> This function lets enchantments spawn particles
+  /// @details ZZ> This function lets enchantments spawn particles
 
   ENC_REF enc_cnt;
   int tnc;
@@ -106,7 +106,7 @@ void enc_spawn_particles( Game_t * gs, float dUpdate )
 //--------------------------------------------------------------------------------------------
 void disenchant_character( Game_t * gs, CHR_REF cnt )
 {
-  // ZZ> This function removes all enchantments from a character
+  /// @details ZZ> This function removes all enchantments from a character
 
   PChr_t chrlst      = gs->ChrList;
 
@@ -119,7 +119,7 @@ void disenchant_character( Game_t * gs, CHR_REF cnt )
 //--------------------------------------------------------------------------------------------
 void spawn_poof( Game_t * gs, CHR_REF character, OBJ_REF profile )
 {
-  // ZZ> This function spawns a character poof
+  /// @details ZZ> This function spawns a character poof
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -149,7 +149,7 @@ void spawn_poof( Game_t * gs, CHR_REF character, OBJ_REF profile )
 //--------------------------------------------------------------------------------------------
 char * naming_generate( Game_t * gs, Obj_t * pobj )
 {
-  // ZZ> This function generates a random name
+  /// @details ZZ> This function generates a random name
 
   static STRING name; // The name returned by the function
   Uint32 loc_rand;
@@ -190,7 +190,7 @@ char * naming_generate( Game_t * gs, Obj_t * pobj )
 //--------------------------------------------------------------------------------------------
 void naming_read( Game_t * gs, EGO_CONST char * szModpath, EGO_CONST char * szObjectname, Obj_t * pobj)
 {
-  // ZZ> This function reads a naming file
+  /// @details ZZ> This function reads a naming file
 
   ChopData_t * pchop;
 
@@ -240,7 +240,7 @@ void naming_read( Game_t * gs, EGO_CONST char * szModpath, EGO_CONST char * szOb
 //--------------------------------------------------------------------------------------------
 void naming_prime( Game_t * gs )
 {
-  // ZZ> This function prepares the name chopper for use
+  /// @details ZZ> This function prepares the name chopper for use
 
   OBJ_REF obj_cnt;
   int tnc;
@@ -278,7 +278,7 @@ void tilt_character(Game_t * gs, CHR_REF ichr)
 //--------------------------------------------------------------------------------------------
 void tilt_characters_to_terrain(Game_t * gs)
 {
-  // ZZ> This function sets all of the character's starting tilt values
+  /// @details ZZ> This function sets all of the character's starting tilt values
 
   CHR_REF chr_cnt;
 
@@ -297,7 +297,7 @@ void tilt_characters_to_terrain(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 Uint16 change_armor( Game_t * gs, CHR_REF character, Uint16 iskin )
 {
-  // ZZ> This function changes the armor of the character
+  /// @details ZZ> This function changes the armor of the character
 
   PEnc_t enclst      = gs->EncList;
   PChr_t chrlst      = gs->ChrList;
@@ -359,7 +359,7 @@ Uint16 change_armor( Game_t * gs, CHR_REF character, Uint16 iskin )
 //--------------------------------------------------------------------------------------------
 void change_character( Game_t * gs, CHR_REF ichr, OBJ_REF new_profile, Uint8 new_skin, Uint8 leavewhich )
 {
-  // ZZ> This function polymorphs a character, changing stats, dropping weapons
+  /// @details ZZ> This function polymorphs a character, changing stats, dropping weapons
 
   PChr_t chrlst      = gs->ChrList;
   PEnc_t enclst      = gs->EncList;
@@ -582,7 +582,7 @@ void change_character( Game_t * gs, CHR_REF ichr, OBJ_REF new_profile, Uint8 new
 //--------------------------------------------------------------------------------------------
 bool_t cost_mana( Game_t * gs, CHR_REF chr_ref, int amount, Uint16 killer )
 {
-  // ZZ> This function takes mana from a character ( or gives mana ),
+  /// @details ZZ> This function takes mana from a character ( or gives mana ),
   //     and returns btrue if the character had enough to pay, or bfalse
   //     otherwise
 
@@ -730,7 +730,7 @@ bool_t fput_damage_modifier( FILE * filewrite, Uint32 mod )
 //--------------------------------------------------------------------------------------------
 bool_t EveList_save_one( Game_t * gs, EGO_CONST char * szFilename, EVE_REF ieve )
 {
-  // BB> This exports a given enchantment
+  /// @details BB> This exports a given enchantment
 
   FILE* filewrite;
 
@@ -959,7 +959,7 @@ bool_t EveList_save_one( Game_t * gs, EGO_CONST char * szFilename, EVE_REF ieve 
 //--------------------------------------------------------------------------------------------
 ENC_REF EveList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST char * szObjectname, EVE_REF irequest )
 {
-  // ZZ> This function loads the enchantment associated with an object
+  /// @details ZZ> This function loads the enchantment associated with an object
 
   FILE* fileread;
   char cTmp;
@@ -1209,7 +1209,7 @@ ENC_REF EveList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST 
 //--------------------------------------------------------------------------------------------
 ENC_REF EncList_get_free( Game_t * gs, ENC_REF irequest )
 {
-  // ZZ> This function returns the next free enchantment or ENCLST_COUNT if there are none
+  /// @details ZZ> This function returns the next free enchantment or ENCLST_COUNT if there are none
 
   ENC_REF   retval = INVALID_ENC;
   EncHeap_t * pheap;
@@ -1243,7 +1243,7 @@ ENC_REF EncList_get_free( Game_t * gs, ENC_REF irequest )
 //--------------------------------------------------------------------------------------------
 void unset_enchant_value( Game_t * gs, ENC_REF enchantindex, Uint8 valueindex )
 {
-  // ZZ> This function unsets a set value
+  /// @details ZZ> This function unsets a set value
 
   PEnc_t enclst      = gs->EncList;
   PChr_t chrlst      = gs->ChrList;
@@ -1358,7 +1358,7 @@ void unset_enchant_value( Game_t * gs, ENC_REF enchantindex, Uint8 valueindex )
 //--------------------------------------------------------------------------------------------
 void remove_enchant_value( Game_t * gs, ENC_REF enchantindex, Uint8 valueindex )
 {
-  // ZZ> This function undoes cumulative modification to character stats
+  /// @details ZZ> This function undoes cumulative modification to character stats
 
   PEnc_t enclst      = gs->EncList;
   PChr_t chrlst      = gs->ChrList;
@@ -1505,7 +1505,7 @@ Eve_t * Eve_renew( Eve_t * peve )
 //--------------------------------------------------------------------------------------------
 void reset_character_alpha( Game_t * gs, CHR_REF character )
 {
-  // ZZ> This function fixes an item's transparency
+  /// @details ZZ> This function fixes an item's transparency
 
   PEnc_t enclst      = gs->EncList;
   PChr_t chrlst      = gs->ChrList;
@@ -1548,7 +1548,7 @@ void reset_character_alpha( Game_t * gs, CHR_REF character )
 //--------------------------------------------------------------------------------------------
 void remove_enchant( Game_t * gs, ENC_REF enchantindex )
 {
-  // ZZ> This function removes a specific enchantment and adds it to the unused list
+  /// @details ZZ> This function removes a specific enchantment and adds it to the unused list
 
   int add, cnt;
 
@@ -1694,7 +1694,7 @@ void remove_enchant( Game_t * gs, ENC_REF enchantindex )
 //--------------------------------------------------------------------------------------------
 ENC_REF enchant_value_filled( Game_t * gs, ENC_REF enchantindex, Uint8 valueindex )
 {
-  // ZZ> This function returns INVALID_ENC if the enchantment's target has no conflicting
+  /// @details ZZ> This function returns INVALID_ENC if the enchantment's target has no conflicting
   //     set values in its other enchantments.  Otherwise it returns the enchantindex
   //     of the conflicting enchantment
 
@@ -1729,7 +1729,7 @@ ENC_REF enchant_value_filled( Game_t * gs, ENC_REF enchantindex, Uint8 valueinde
 void set_enchant_value( Game_t * gs, ENC_REF enchantindex, Uint8 valueindex,
                         EVE_REF enchanttype )
 {
-  // ZZ> This function sets and saves one of the character's stats
+  /// @details ZZ> This function sets and saves one of the character's stats
 
   PEve_t evelst      = gs->EveList;
   PEnc_t enclst      = gs->EncList;
@@ -1904,7 +1904,7 @@ void set_enchant_value( Game_t * gs, ENC_REF enchantindex, Uint8 valueindex,
 //--------------------------------------------------------------------------------------------
 void getadd( int MIN, int value, int MAX, int* valuetoadd )
 {
-  // ZZ> This function figures out what value to add should be in order
+  /// @details ZZ> This function figures out what value to add should be in order
   //     to not overflow the MIN and MAX bounds
 
   int newvalue;
@@ -1930,7 +1930,7 @@ void getadd( int MIN, int value, int MAX, int* valuetoadd )
 //--------------------------------------------------------------------------------------------
 void fgetadd( float MIN, float value, float MAX, float* valuetoadd )
 {
-  // ZZ> This function figures out what value to add should be in order
+  /// @details ZZ> This function figures out what value to add should be in order
   //     to not overflow the MIN and MAX bounds
 
   float newvalue;
@@ -1958,7 +1958,7 @@ void fgetadd( float MIN, float value, float MAX, float* valuetoadd )
 void add_enchant_value( Game_t * gs, ENC_REF enchantindex, Uint8 valueindex,
                         EVE_REF enchanttype )
 {
-  // ZZ> This function does cumulative modification to character stats
+  /// @details ZZ> This function does cumulative modification to character stats
 
   PEve_t evelst      = gs->EveList;
   PEnc_t enclst      = gs->EncList;
@@ -2139,7 +2139,7 @@ ENC_SPAWN_INFO * enc_spawn_info_new(ENC_SPAWN_INFO * psi, Game_t * gs)
 ENC_REF enc_spawn_info_init( ENC_SPAWN_INFO * psi, Game_t * gs, CHR_REF owner, CHR_REF target,
                          CHR_REF spawner, ENC_REF enc_request, OBJ_REF obj_optional )
 {
-  // ZZ> This function enchants a target, returning the enchantment index or INVALID_ENC
+  /// @details ZZ> This function enchants a target, returning the enchantment index or INVALID_ENC
   //     if failed
 
   PEve_t evelst      = gs->EveList;
@@ -2243,7 +2243,7 @@ ENC_REF enc_spawn_info_init( ENC_SPAWN_INFO * psi, Game_t * gs, CHR_REF owner, C
 //--------------------------------------------------------------------------------------------
 ENC_REF req_spawn_one_enchant( ENC_SPAWN_INFO si )
 {
-  // ZZ> This function enchants a si.target, returning the enchantment index or INVALID_ENC
+  /// @details ZZ> This function enchants a si.target, returning the enchantment index or INVALID_ENC
   //     if failed
 
   PEnc_t enclst = si.gs->EncList;

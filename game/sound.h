@@ -1,5 +1,29 @@
 #pragma once
 
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
+
+///
+/// @file
+/// @brief Egoboo Sound System
+/// @details Wrapper using SDL_mixer to play game sounds.
+
 #include "egoboo_math.h"
 #include "egoboo_types.h"
 
@@ -12,8 +36,8 @@ struct sGame;
 
 //------------------------------------------------------------------------------
 
-#define VOLMIN          -4000                         // Minumum Volume level
-#define VOLUMERATIO     7                             // Volume ratio
+#define VOLMIN          -4000                           ///<  Minumum Volume level
+#define VOLUMERATIO     7                               ///<  Volume ratio
 
 //Sound using SDL_Mixer
 
@@ -24,13 +48,13 @@ struct sGame;
 
 enum e_global_sound
 {
-  GSOUND_COINGET = 0,              // 0 - Pick up coin
-  GSOUND_DEFEND,                   // 1 - Defend clank
-  GSOUND_WEATHER,                  // 2 - Weather Effect
-  GSOUND_SPLASH,                   // 3 - Hit Water tile (Splash)
-  GSOUND_COINFALL,                 // 4 - Coin falls on ground
-  GSOUND_LEVELUP,				           // 5 - Level up sound
-  GSOUND_COUNT                     // no more global sounds above this
+  GSOUND_COINGET = 0,              ///< 0 - Pick up coin
+  GSOUND_DEFEND,                   ///< 1 - Defend clank
+  GSOUND_WEATHER,                  ///< 2 - Weather Effect
+  GSOUND_SPLASH,                   ///< 3 - Hit Water tile (Splash)
+  GSOUND_COINFALL,                 ///< 4 - Coin falls on ground
+  GSOUND_LEVELUP,				           ///< 5 - Level up sound
+  GSOUND_COUNT                     ///< no more global sounds above this
 };
 
 //------------------------------------------------------------------------------
@@ -40,28 +64,28 @@ struct sConfigData;
 //------------------------------------------------------------------------------
 
 //Music using SDL_Mixer
-#define MAXPLAYLISTLENGTH   25      // Max number of different tracks loaded into memory
+#define MAXPLAYLISTLENGTH   25        ///<  Max number of different tracks loaded into memory
 
 struct sSoundState
 {
-  egoboo_key_t  ekey;                  // egoboo_key_t valid if SoundState_new() been run on this data
-  bool_t      mixer_loaded;          // Is the SDL_Mixer loaded?
-  bool_t      music_loaded;          // Is the music loaded in memory?
+  egoboo_key_t  ekey;                  ///< egoboo_key_t valid if SoundState_new() been run on this data
+  bool_t      mixer_loaded;          ///< Is the SDL_Mixer loaded?
+  bool_t      music_loaded;          ///< Is the music loaded in memory?
 
-  int         channel_count;         // actual number of sound channels
-  int         buffersize;            // actual sound buffer size
+  int         channel_count;         ///< actual number of sound channels
+  int         buffersize;            ///< actual sound buffer size
   int         frequency;
 
-  int         sound_volume;          // Volume of sounds played
+  int         sound_volume;          ///< Volume of sounds played
   bool_t      soundActive;
 
   bool_t      musicActive;
-  int         music_volume;          // The sound volume of music
+  int         music_volume;          ///< The sound volume of music
   int         song_loops;
-  int         song_index;            // index of the cullrently playing song
+  int         song_index;            ///< index of the cullrently playing song
 
-  Mix_Chunk * mc_list[GSOUND_COUNT];       // All sounds loaded into memory
-  Mix_Music * mus_list[MAXPLAYLISTLENGTH]; // This is a specific music file loaded into memory
+  Mix_Chunk * mc_list[GSOUND_COUNT];       ///< All sounds loaded into memory
+  Mix_Music * mus_list[MAXPLAYLISTLENGTH]; ///< This is a specific music file loaded into memory
 
 };
 typedef struct sSoundState SoundState_t;

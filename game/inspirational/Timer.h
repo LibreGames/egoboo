@@ -24,8 +24,8 @@
 
 #pragma once
 
-/* For ClockState_t */
-#include "Clock.h"
+
+#include "Clock.h"         ///< For ClockState_t
 
 struct sTimer
 {
@@ -36,9 +36,9 @@ struct sTimer
 };
 typedef struct sTimer Timer_t;
 
-void timer_init( ClockState_t * cs );   // Initialize the timer code
-void timer_shutdown( void ); // Turn off the timer code
-void timer_update( void ); // Update all registered timers
+void timer_init( ClockState_t * cs );   ///< Initialize the timer code
+void timer_shutdown( void );            ///< Turn off the timer code
+void timer_update( void );              ///< Update all registered timers
 
-void timer_addTimer( Timer_t *t );   // Add a timer for the system to watch
-void timer_removeTimer( Timer_t *t );  // Tell the system to stop watching this timer
+void timer_addTimer( Timer_t *t );      ///< Add a timer for the system to watch
+void timer_removeTimer( Timer_t *t );   ///< Tell the system to stop watching this timer

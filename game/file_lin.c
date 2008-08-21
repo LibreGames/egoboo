@@ -72,28 +72,28 @@ int fs_fileIsDirectory( EGO_CONST char *filename )
 
 int fs_createDirectory( EGO_CONST char *dirname )
 {
-  // ZZ> This function makes a new directory
+  /// @details ZZ> This function makes a new directory
 
   return mkdir( dirname, 0755 );
 }
 
 int fs_removeDirectory( EGO_CONST char *dirname )
 {
-  // ZZ> This function removes a directory
+  /// @details ZZ> This function removes a directory
 
   return rmdir( dirname );
 }
 
 void fs_deleteFile( EGO_CONST char *filename )
 {
-  // ZZ> This function deletes a file
+  /// @details ZZ> This function deletes a file
 
   unlink( filename );
 }
 
 void fs_copyFile( EGO_CONST char *source, EGO_CONST char *dest )
 {
-  // ZZ> This function copies a file on the local machine
+  /// @details ZZ> This function copies a file on the local machine
 
   FILE *sourcef;
   FILE *destf;
@@ -120,7 +120,7 @@ void fs_copyFile( EGO_CONST char *source, EGO_CONST char *dest )
 
 void empty_import_directory( void )
 {
-  // ZZ> This function deletes all the TEMP????.OBJ subdirectories in the IMPORT directory
+  /// @details ZZ> This function deletes all the TEMP????.OBJ subdirectories in the IMPORT directory
 
   system( "rm -rf import/temp*.obj\n" );
 }

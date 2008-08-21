@@ -1,8 +1,4 @@
-/* Egoboo - Clock.c
- * Clock & timer functionality
- * This implementation was adapted from Noel Lopis' article in
- * Game Programming Gems 4.
- */
+#pragma once
 
 //********************************************************************************************
 //*
@@ -23,7 +19,11 @@
 //*
 //********************************************************************************************
 
-#pragma once
+///
+/// @file
+/// @brief Clock & timer functionality.
+/// @details This implementation was adapted from Noel Lopis' article in
+///   Game Programming Gems 4.
 
 #include <SDL_types.h>
 #include "egoboo_types.h"
@@ -33,20 +33,20 @@ struct sClockState;
 typedef double( *clock_source_ptr_t )( void );
 typedef struct sClockState ClockState_t;
 
-void clock_init( void );      // Init the clock module
-void clock_shutdown( void );  // Shut down the clock module
-void clock_setTimeSource( clock_source_ptr_t tsrc );     // Specify where the clock gets its time values from
+void clock_init( void );      ///< Init the clock module
+void clock_shutdown( void );  ///< Shut down the clock module
+void clock_setTimeSource( clock_source_ptr_t tsrc );     ///< Specify where the clock gets its time values from
 
 ClockState_t * Clock_create( EGO_CONST char * name, int size );
 bool_t       Clock_destroy( ClockState_t ** cs );
 ClockState_t * Clock_renew( ClockState_t * cs );
 
-void   Clock_frameStep( ClockState_t * cs );          // Update the clock.
-double Clock_getTime( ClockState_t * cs );            // Returns the current time.  The clock's time only
+void   Clock_frameStep( ClockState_t * cs );          ///< Update the clock.
+double Clock_getTime( ClockState_t * cs );            ///< Returns the current time.  The clock's time only
                                                          // updates when Clock_frameStep() is called
-double Clock_getFrameDuration( ClockState_t * cs );   // Return the length of the current frame. (Sort of.)
-Uint32 Clock_getFrameNumber( ClockState_t * cs );     // Return which frame we're on
-float  Clock_getFrameRate( ClockState_t * cs );       // Return the current instantaneous FPS
+double Clock_getFrameDuration( ClockState_t * cs );   ///< Return the length of the current frame. (Sort of.)
+Uint32 Clock_getFrameNumber( ClockState_t * cs );     ///< Return which frame we're on
+float  Clock_getFrameRate( ClockState_t * cs );       ///< Return the current instantaneous FPS
 
 //-----------------------------------------------------------------
 // macros to use the high resolution timer for profiling

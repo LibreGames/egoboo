@@ -131,7 +131,7 @@ void frustum_jitter( GLdouble left, GLdouble right,
 //--------------------------------------------------------------------------------------------
 void camera_calc_turn_lr()
 {
-  // ZZ> This function makes the camera turn to face the character
+  /// @details ZZ> This function makes the camera turn to face the character
 
   GCamera.turn_lr = vec_to_turn(GCamera.trackpos.x - GCamera.pos.x, GCamera.trackpos.y - GCamera.pos.y);
 }
@@ -178,7 +178,7 @@ void stdout_dump_matrix( matrix_4x4 a )
 //--------------------------------------------------------------------------------------------
 void make_camera_matrix()
 {
-  // ZZ> This function sets GCamera.mView to the camera's location and rotation
+  /// @details ZZ> This function sets GCamera.mView to the camera's location and rotation
 
   Game_t * gs = Graphics_requireGame(&gfxState);
   vect3 worldup = VECT3(0, 0, -gs->phys.gravity);
@@ -204,7 +204,7 @@ void make_camera_matrix()
 //--------------------------------------------------------------------------------------------
 void camera_move( float dUpdate )
 {
-  // ZZ> This function moves the camera
+  /// @details ZZ> This function moves the camera
 
   Game_t * gs = Graphics_requireGame(&gfxState);
 
@@ -446,7 +446,7 @@ void camera_move( float dUpdate )
 //--------------------------------------------------------------------------------------------
 void camera_reset()
 {
-  // ZZ> This function makes sure the camera starts in a suitable position
+  /// @details ZZ> This function makes sure the camera starts in a suitable position
 
   int cnt, save;
   float fov2;
@@ -499,7 +499,7 @@ void camera_reset()
 //--------------------------------------------------------------------------------------------
 //void project_view()
 //{
-//  // ZZ> This function figures out where the corners of the view area
+//  /// @details ZZ> This function figures out where the corners of the view area
 //  //     go when projected onto the plane of the pmesh->Info.  Used later for
 //  //     determining which mesh fans need to be rendered
 //

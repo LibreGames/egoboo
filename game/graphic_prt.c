@@ -40,10 +40,10 @@
 
 enum e_prt_ori
 {
-  ori_v,  // vertical
-  ori_h,  // horizontal
-  ori_p,  // ?? can't remember (arrow) ??
-  ori_b   // billboard
+  ori_v,  ///< vertical
+  ori_h,  ///< horizontal
+  ori_p,  ///< ?? can't remember (arrow) ??
+  ori_b   ///< billboard
 };
 
 typedef enum e_prt_ori PRT_ORI;
@@ -599,7 +599,7 @@ void sort_particles( GLVertex v[], int numparticle )
 //--------------------------------------------------------------------------------------------
 void render_particles()
 {
-  // ZZ> This function draws the sprites for particle systems
+  /// @details ZZ> This function draws the sprites for particle systems
 
   Game_t *gs = Graphics_requireGame(&gfxState);
   Graphics_Data_t * gfx = gfxState.pGfx;
@@ -926,7 +926,7 @@ void render_light_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 //--------------------------------------------------------------------------------------------
 void render_particle_reflections()
 {
-  // ZZ> This function draws the sprites for particle systems
+  /// @details ZZ> This function draws the sprites for particle systems
 
   Game_t * gs    = Graphics_requireGame(&gfxState);
   Graphics_Data_t * gfx = gfxState.pGfx;

@@ -61,7 +61,7 @@ void release_bumplist(MeshInfo_t * mi)
 //--------------------------------------------------------------------------------------------
 void module_release( Game_t * gs )
 {
-  // ZZ> This function frees up memory used by the module
+  /// @details ZZ> This function frees up memory used by the module
 
   Mesh_t     * pmesh = Game_getMesh(gs);
   ModState_t * ms    = &(gs->modstate);
@@ -109,7 +109,7 @@ void module_release( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 bool_t module_reference_matches( char *szLoadName, IDSZ idsz )
 {
-  // ZZ> This function returns btrue if the named module has the required IDSZ
+  /// @details ZZ> This function returns btrue if the named module has the required IDSZ
 
   FILE *fileread;
   STRING newloadname;
@@ -167,7 +167,7 @@ bool_t module_reference_matches( char *szLoadName, IDSZ idsz )
 //--------------------------------------------------------------------------------------------
 void module_add_idsz( char *szLoadName, IDSZ idsz )
 {
-  // ZZ> This function appends an IDSZ to the module's menu.txt file
+  /// @details ZZ> This function appends an IDSZ to the module's menu.txt file
 
   FILE *filewrite;
   STRING newloadname;
@@ -189,7 +189,7 @@ void module_add_idsz( char *szLoadName, IDSZ idsz )
 //--------------------------------------------------------------------------------------------
 int module_find( char *smallname, MOD_INFO * mi_ary, size_t mi_size )
 {
-  // ZZ> This function returns -1 if the module does not exist locally, the module
+  /// @details ZZ> This function returns -1 if the module does not exist locally, the module
   //     index otherwise
 
   size_t cnt, index;
@@ -210,7 +210,7 @@ int module_find( char *smallname, MOD_INFO * mi_ary, size_t mi_size )
 //--------------------------------------------------------------------------------------------
 bool_t module_load( Game_t * gs, char *smallname )
 {
-  // ZZ> This function loads a module
+  /// @details ZZ> This function loads a module
 
   STRING szModpath;
   Graphics_Data_t * gfx = Game_getGfx( gs );
@@ -310,7 +310,7 @@ bool_t module_load( Game_t * gs, char *smallname )
 //--------------------------------------------------------------------------------------------
 bool_t module_read_data( MOD_INFO * pmod, char *szLoadName )
 {
-  // ZZ> This function loads the module data file
+  /// @details ZZ> This function loads the module data file
 
   FILE *fileread;
   char reference[128];
@@ -363,7 +363,7 @@ bool_t module_read_data( MOD_INFO * pmod, char *szLoadName )
 //--------------------------------------------------------------------------------------------
 bool_t module_read_summary( char *szLoadName, ModSummary_t * ms )
 {
-  // ZZ> This function gets the quest description out of the module's menu file
+  /// @details ZZ> This function gets the quest description out of the module's menu file
 
   FILE *fileread;
   char szLine[160];
@@ -407,7 +407,7 @@ bool_t module_read_summary( char *szLoadName, ModSummary_t * ms )
 //--------------------------------------------------------------------------------------------
 void module_load_all_objects( Game_t * gs, char * szModpath )
 {
-  // ZZ> This function loads a module's objects
+  /// @details ZZ> This function loads a module's objects
 
   EGO_CONST char *filehandle;
   STRING szObjectpath, szTempdir, tmpstr;
@@ -531,7 +531,7 @@ ModState_t * ModState_renew(ModState_t * ms, MOD_INFO * mi, Uint32 seed)
 //--------------------------------------------------------------------------------------------
 bool_t module_load_all_waves( Game_t * gs, char *modname )
 {
-  // ZZ> This function loads the global waves used in a given modules
+  /// @details ZZ> This function loads the global waves used in a given modules
 
   STRING tmploadname, newloadname;
   Uint8 cnt;
@@ -576,22 +576,21 @@ bool_t module_load_all_waves( Game_t * gs, char *modname )
   };
 
 
-  /*  The Global Sounds
-  * 0 - Pick up coin
-  * 1 - Defend clank
-  * 2 - Weather Effect
-  * 3 - Hit Water tile (Splash)
-  * 4 - Coin falls on ground
-  * 5 - Level up
+  // The Global Sounds
+  //   0 - Pick up coin
+  //   1 - Defend clank
+  //   2 - Weather Effect
+  //   3 - Hit Water tile (Splash)
+  //   4 - Coin falls on ground
+  //   5 - Level up
 
-  //TODO: These new values should determine sound and particle effects (examples below)
-  Weather Type: DROPS, RAIN, SNOW, LAVABUBBLE (Which weather effect to spawn)
-  Water Type: LAVA, WATER, DARK (To determine sound and particle effects)
-
-  //We shold also add standard particles that can be used everywhere (Located and
-  //loaded in globalparticles folder) such as these below.
-  Particle Effect: REDBLOOD, SMOKE, HEALCLOUD
-  */
+  /// @todo These new values should determine sound and particle effects (examples below)
+  /// Weather Type: DROPS, RAIN, SNOW, LAVABUBBLE (Which weather effect to spawn)
+  /// Water Type: LAVA, WATER, DARK (To determine sound and particle effects)
+  ///
+  /// We shold also add standard particles that can be used everywhere (Located and
+  /// loaded in globalparticles folder) such as these below.
+  /// Particle Effect: REDBLOOD, SMOKE, HEALCLOUD
 
   return btrue;
 }
@@ -599,7 +598,7 @@ bool_t module_load_all_waves( Game_t * gs, char *modname )
 //---------------------------------------------------------------------------------------------
 void module_quit( Game_t * gs )
 {
-  // ZZ> This function forces a return to the menu
+  /// @details ZZ> This function forces a return to the menu
 
   ModState_t * ms = &(gs->modstate);
 
@@ -782,7 +781,7 @@ bool_t module_read_egomap_extra( Game_t * gs, EGO_CONST char * szModPath )
     di.pos.y = ypos * (1 << 7);
     di.pos.z = 1.0f * (1 << 7);
 
-    // TODO :: I need to figure out the scaling for this!!!
+    /// @todo : I need to figure out the scaling for this!!!
     di.falloff = radius;
     di.level   = level;
     di.permanent = btrue;
@@ -798,7 +797,7 @@ bool_t module_read_egomap_extra( Game_t * gs, EGO_CONST char * szModPath )
 //--------------------------------------------------------------------------------------------
 void release_map( Graphics_Data_t * gfx )
 {
-  // ZZ> This function releases all the map images
+  /// @details ZZ> This function releases all the map images
 
   GLtexture_Release( &gfx->Map_tex );
 }

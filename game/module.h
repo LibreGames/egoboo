@@ -1,8 +1,5 @@
-//********************************************************************************************
-//* Egoboo - module,h
-//*
-//* A manager for egoboo modules
-//*
+#pragma once
+
 //********************************************************************************************
 //*
 //*    This file is part of Egoboo.
@@ -22,7 +19,10 @@
 //*
 //********************************************************************************************
 
-#pragma once
+///
+/// @file
+/// @brief Egoboo Module Manager
+/// @details Definitions for managing egoboo modules
 
 #include "ogl_texture.h"
 #include "egoboo_types.h"
@@ -41,13 +41,13 @@ struct sGraphics_Data;
 #define SUMMARYLINES 8
 #define SUMMARYSIZE  80
 
-#define MAXMODULE           100                     // Number of modules
+#define MAXMODULE           100                      ///< Number of modules
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 struct s_import_info
 {
-  bool_t valid;                // Can it import?
+  bool_t valid;                ///< Can it import?
 
   OBJ_REF object;
   int     player;
@@ -70,20 +70,20 @@ typedef struct s_mod_info
 {
   egoboo_key_t ekey;
 
-  char            rank[RANKSIZE];               // Number of stars
-  char            longname[32];                 // Module names
-  char            loadname[32];                 // Module load names
-  Uint8           importamount;                 // # of import characters
-  bool_t          allowexport;                  // Export characters?
-  Uint8           minplayers;                   // Number of players
+  char            rank[RANKSIZE];               ///< Number of stars
+  char            longname[32];                 ///< Module names
+  char            loadname[32];                 ///< Module load names
+  Uint8           importamount;                 ///< # of import characters
+  bool_t          allowexport;                  ///< Export characters?
+  Uint8           minplayers;                   ///< Number of players
   Uint8           maxplayers;                   //
-  bool_t          monstersonly;                 // Only allow monsters
-  RESPAWN_MODE    respawnmode;                // What kind of respawn is allowed?
+  bool_t          monstersonly;                 ///< Only allow monsters
+  RESPAWN_MODE    respawnmode;                ///< What kind of respawn is allowed?
   bool_t          rts_control;
 
-  STRING host;                         // what is the host of this module? blank if network not being used.
-  Uint32 tx_title_idx;                  // which texture do we use?
-  bool_t is_hosted;                    // is this module here, or on the server?
+  STRING host;                         ///< what is the host of this module? blank if network not being used.
+  Uint32 tx_title_idx;                  ///< which texture do we use?
+  bool_t is_hosted;                    ///< is this module here, or on the server?
   bool_t is_verified;
 } MOD_INFO;
 
@@ -96,9 +96,9 @@ struct sModSummary
 {
   egoboo_key_t ekey;
 
-  int    numlines;                                   // Lines in summary
+  int    numlines;                                   ///< Lines in summary
   char   val;
-  char   summary[SUMMARYLINES][SUMMARYSIZE];      // Quest description
+  char   summary[SUMMARYLINES][SUMMARYSIZE];      ///< Quest description
 };
 typedef struct sModSummary ModSummary_t;
 
@@ -111,16 +111,16 @@ struct sModState
 {
   egoboo_key_t ekey;
 
-  bool_t Active;                     // Is the control loop still going?
-  bool_t Paused;                     // Is the control loop paused?
+  bool_t Active;                     ///< Is the control loop still going?
+  bool_t Paused;                     ///< Is the control loop paused?
 
   bool_t loaded;
-  Uint32 seed;                       // the seed for the module
-  bool_t respawnvalid;               // Can players respawn with Spacebar?
-  bool_t respawnanytime;             // True if it's a small level...
-  bool_t exportvalid;                // Can it export?
-  bool_t rts_control;                // Play as a real-time stragedy? BAD REMOVE
-  bool_t beat;                       // Show Module Ended text?
+  Uint32 seed;                       ///< the seed for the module
+  bool_t respawnvalid;               ///< Can players respawn with Spacebar?
+  bool_t respawnanytime;             ///< True if it's a small level...
+  bool_t exportvalid;                ///< Can it export?
+  bool_t rts_control;                ///< Play as a real-time stragedy? BAD REMOVE
+  bool_t beat;                       ///< Show Module Ended text?
 
   int    import_amount;
   int    import_min_pla;

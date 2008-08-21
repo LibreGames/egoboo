@@ -1,7 +1,4 @@
-/* Egoboo - id_normals.c
- * Md2 model lighting normal lookup table
- * I think this looks very ugly - Zefz
- */
+#pragma once
 
 //********************************************************************************************
 //*
@@ -21,6 +18,12 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief MD2 Normals
+/// @details Md2 model lighting normal lookup table
+///  "I think this looks very ugly" - Zefz
 
 { -0.525731f, 0.000000f, 0.850651f},
 { -0.442863f, 0.238856f, 0.864188f},

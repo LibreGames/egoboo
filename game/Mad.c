@@ -29,7 +29,7 @@ static bool_t test_frame_name( char * szName, char letter );
 //--------------------------------------------------------------------------------------------
 ACTION action_number(char * szName)
 {
-  // ZZ> This function returns the number of the action in cFrameName, or
+  /// @details ZZ> This function returns the number of the action in cFrameName, or
   //     it returns ACTION_INVALID if it could not find a match
 
   ACTION cnt;
@@ -47,7 +47,7 @@ ACTION action_number(char * szName)
 //--------------------------------------------------------------------------------------------
 Uint16 action_frame()
 {
-  // ZZ> This function returns the frame number in the third and fourth characters
+  /// @details ZZ> This function returns the frame number in the third and fourth characters
   //     of cFrameName
 
   int number;
@@ -58,7 +58,7 @@ Uint16 action_frame()
 //--------------------------------------------------------------------------------------------
 bool_t test_frame_name( char * szName, char letter )
 {
-  // ZZ> This function returns btrue if the 4th, 5th, 6th, or 7th letters
+  /// @details ZZ> This function returns btrue if the 4th, 5th, 6th, or 7th letters
   //     of the frame name matches the input argument
 
   int i;
@@ -78,7 +78,7 @@ bool_t test_frame_name( char * szName, char letter )
 //--------------------------------------------------------------------------------------------
 void action_copy_correct( Game_t * gs, MAD_REF imad, ACTION actiona, ACTION actionb )
 {
-  // ZZ> This function makes sure both actions are valid if either of them
+  /// @details ZZ> This function makes sure both actions are valid if either of them
   //     are valid.  It will copy start and ends to mirror the valid action.
 
   Mad_t * pmad;
@@ -113,7 +113,7 @@ void action_copy_correct( Game_t * gs, MAD_REF imad, ACTION actiona, ACTION acti
 //--------------------------------------------------------------------------------------------
 void get_walk_frame( Game_t * gs, MAD_REF imad, LIPT lip_trans, ACTION action )
 {
-  // ZZ> This helps make walking look right
+  /// @details ZZ> This helps make walking look right
 
   Mad_t * pmad;
   int frame = 0;
@@ -140,7 +140,7 @@ void get_walk_frame( Game_t * gs, MAD_REF imad, LIPT lip_trans, ACTION action )
 //--------------------------------------------------------------------------------------------
 Uint16 get_framefx( char * szName )
 {
-  // ZZ> This function figures out the IFrame invulnerability, and Attack, Grab, and
+  /// @details ZZ> This function figures out the IFrame invulnerability, and Attack, Grab, and
   //     Drop timings
 
   Uint16 fx = 0;
@@ -176,7 +176,7 @@ Uint16 get_framefx( char * szName )
 //--------------------------------------------------------------------------------------------
 void make_framelip( Game_t * gs, MAD_REF imad, ACTION action )
 {
-  // ZZ> This helps make walking look right
+  /// @details ZZ> This helps make walking look right
 
   Mad_t * pmad;
   int frame, framesinaction;
@@ -200,7 +200,7 @@ void make_framelip( Game_t * gs, MAD_REF imad, ACTION action )
 //--------------------------------------------------------------------------------------------
 void get_actions( Game_t * gs, MAD_REF imad )
 {
-  // ZZ> This function creates the iframe lists for each action based on the
+  /// @details ZZ> This function creates the iframe lists for each action based on the
   //     name of each md2 iframe in the model
 
   ACTION      action, lastaction;
@@ -344,7 +344,7 @@ void get_actions( Game_t * gs, MAD_REF imad )
 //--------------------------------------------------------------------------------------------
 void make_mad_equally_lit( Game_t * gs, MAD_REF imad )
 {
-  // ZZ> This function makes ultra low poly models look better
+  /// @details ZZ> This function makes ultra low poly models look better
 
   int frame, vert;
   int iFrames, iVerts;
@@ -374,7 +374,7 @@ void make_mad_equally_lit( Game_t * gs, MAD_REF imad )
 //--------------------------------------------------------------------------------------------
 void load_copy_file( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST char * szObjectname, MAD_REF object )
 {
-  // ZZ> This function copies a model's actions
+  /// @details ZZ> This function copies a model's actions
 
   FILE *fileread;
   ACTION actiona, actionb;
@@ -403,7 +403,7 @@ void load_copy_file( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST char 
 //--------------------------------------------------------------------------------------------
 bool_t bbox_list_contract(BBOX_LIST *pnew)
 {
-  // BB > make the list as small as possible by removing dead nodes
+  /// @details BB> make the list as small as possible by removing dead nodes
 
   int i, j;
 
@@ -699,7 +699,7 @@ bool_t mad_cull_bbox_list(int max_lod, BBOX_LIST *plst, BBOX_LIST *pcull)
 //--------------------------------------------------------------------------------------------
 bool_t mad_optimize_bbox_tree(Mad_t * pmad)
 {
-  // BB > optimize the bbox tree by culling inefficient bboxes from the more detailed lists
+  /// @details BB> optimize the bbox tree by culling inefficient bboxes from the more detailed lists
 
   int i,j,k, iframes, max_lod;
   BBOX_ARY  * pary;
@@ -936,7 +936,7 @@ bool_t mad_delete_bbox_tree(Mad_t * pmad)
 //--------------------------------------------------------------------------------------------
 static bool_t mad_scale_bbox_tree(Mad_t * pmad)
 {
-  // BB > scale bounding boxes to the size of the object
+  /// @details BB> scale bounding boxes to the size of the object
 
   int i, j, k;
   int iframes;
@@ -1006,7 +1006,7 @@ static bool_t mad_scale_bbox_tree(Mad_t * pmad)
 //--------------------------------------------------------------------------------------------
 //bool_t mad_optimize_bbox_tree(int max_level, Mad_t * pmad)
 //{
-//  // BB > try to collapse some of the bounding boxes on the more detailed levels
+//  /// @details BB> try to collapse some of the bounding boxes on the more detailed levels
 //
 //  int i, j, k;
 //  int iframes;
@@ -1089,7 +1089,7 @@ static bool_t mad_scale_bbox_tree(Mad_t * pmad)
 //--------------------------------------------------------------------------------------------
 bool_t mad_generate_bbox_tree(int max_level, Mad_t * pmad)
 {
-  // BB > Make a series of progressively refined BBox lists.
+  /// @details BB> Make a series of progressively refined BBox lists.
   //      The list will have null nodes for every level of detail where
   //      the bounding volumes are not significantly different from a single bounding box
 
@@ -1207,7 +1207,7 @@ Mad_t *  Mad_renew(Mad_t * pmad)
 //---------------------------------------------------------------------------------------------
 MAD_REF MadList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST char * szObjectname, MAD_REF imad )
 {
-  // ZZ> This function loads an id md2 file, storing the converted data in the indexed model
+  /// @details ZZ> This function loads an id md2 file, storing the converted data in the indexed model
   //    int iFileHandleRead;
 
   int iFrames;
@@ -1235,7 +1235,7 @@ MAD_REF MadList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST 
   pmad->md2_ptr = md2_load( inherit_fname(szObjectpath, szObjectname, "tris.md2"), NULL );
   if(NULL == pmad->md2_ptr) return INVALID_MAD;
 
-  // BB > Egoboo md2 models were designed with 1 tile = 32x32 units, but internally Egoboo uses
+  /// @details BB> Egoboo md2 models were designed with 1 tile = 32x32 units, but internally Egoboo uses
   //      1 tile = 128x128 units. Previously, this was handled by sprinkling a bunch of
   //      commands that multiplied various quantities by 4 or by 4.125 throughout the code.
   //      It was very counterintuitive, and caused me no end of headaches...  Of course the
@@ -1278,7 +1278,7 @@ MAD_REF MadList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST 
 //---------------------------------------------------------------------------------------------
 void MadList_free_one( Game_t * gs, MAD_REF imad )
 {
-  // ZZ> This function loads an id md2 file, storing the converted data in the indexed model
+  /// @details ZZ> This function loads an id md2 file, storing the converted data in the indexed model
   //    int iFileHandleRead;
 
   if( !VALID_MAD(gs->MadList, imad) ) return;
@@ -1384,7 +1384,7 @@ bool_t mad_display_bbox_tree(int level, matrix_4x4 matrix, Mad_t * pmad, int fra
 //---------------------------------------------------------------------------------------------
 int mad_vertexconnected( MD2_Model_t * m, int vertex )
 {
-  // ZZ> This function returns 1 if the model vertex is connected, 0 otherwise
+  /// @details ZZ> This function returns 1 if the model vertex is connected, 0 otherwise
 
   EGO_CONST MD2_GLCommand_t * g;
   int commands, entry;
@@ -1413,7 +1413,7 @@ int mad_vertexconnected( MD2_Model_t * m, int vertex )
 //---------------------------------------------------------------------------------------------
 int mad_calc_transvertices( MD2_Model_t * m )
 {
-  // ZZ> This function gets the number of vertices to transform for a model...
+  /// @details ZZ> This function gets the number of vertices to transform for a model...
   //     That means every one except the grip ( unconnected ) vertices
 
   int cnt, vrtcount, trans = 0;

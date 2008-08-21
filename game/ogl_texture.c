@@ -145,8 +145,8 @@ Uint32 GLtexture_Convert( GLenum tx_target, GLtexture *texture, SDL_Surface * im
   if ( 0 != ( image->flags & ( SDL_SRCALPHA | SDL_SRCCOLORKEY ) ) )
   {
     // the source image has an alpha channel
-    // TO DO : need to take into account the possible SDL_PixelFormat::Rloss, SDL_PixelFormat::Gloss, ...
-    //         parameters
+    /// @todo need to take into account the possible SDL_PixelFormat::Rloss, SDL_PixelFormat::Gloss, ...
+    /// parameters
 
     int i;
 

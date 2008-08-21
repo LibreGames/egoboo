@@ -1,6 +1,4 @@
-/* Egoboo - Network.h
- * Definitions for Egoboo network functionality
- */
+#pragma once
 
 //********************************************************************************************
 //*
@@ -21,7 +19,10 @@
 //*
 //********************************************************************************************
 
-#pragma once
+///
+/// @file
+/// @brief Egoboo Networking Module
+/// @details Definitions for Egoboo network functionality
 
 #include "input.h"
 #include "char.h"
@@ -42,7 +43,7 @@ typedef retval_t (*EventHandler_Ptr_t) (void * data, ENetEvent * event);
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
 
-#define NETREFRESH          1000                    // Every second
+#define NETREFRESH          1000                     ///< Every second
 #define NONETWORK           numservice              //
 
 #define SHORTLATCH 1024.0
@@ -95,31 +96,17 @@ enum e_network_packet_types
   TO_REMOTE_CHR_SPAWN     = 0x9840,
 
 
-  NET_CHECK_CRC           = 0x88CF,  // Someone is asking us to check the CRC of a certain file
-  NET_ACKNOWLEDGE_CRC     = 0x6240,  // Someone is acknowledging a CRC request from us
-  NET_SEND_CRC            = 0xA0E1,  // Someone is sending us a CRC
-  NET_TRANSFER_FILE       = 0x16B5,  // Packet contains a file.
-  NET_REQUEST_FILE        = 0x9ABF,  // Someone has asked us to send them a file
-  NET_TRANSFER_ACK        = 0x2B22,  // Acknowledgement packet for a file send
-  NET_CREATE_DIRECTORY    = 0xCFC9,  // Tell the peer to create the named directory
-  NET_DONE_SENDING_FILES  = 0xCB08,  // Sent when there are no more files to send.
-  NET_NUM_FILES_TO_SEND   = 0x9E40,  // Let the other person know how many files you're sending
+  NET_CHECK_CRC           = 0x88CF,  ///< Someone is asking us to check the CRC of a certain file
+  NET_ACKNOWLEDGE_CRC     = 0x6240,  ///< Someone is acknowledging a CRC request from us
+  NET_SEND_CRC            = 0xA0E1,  ///< Someone is sending us a CRC
+  NET_TRANSFER_FILE       = 0x16B5,  ///< Packet contains a file.
+  NET_REQUEST_FILE        = 0x9ABF,  ///< Someone has asked us to send them a file
+  NET_TRANSFER_ACK        = 0x2B22,  ///< Acknowledgement packet for a file send
+  NET_CREATE_DIRECTORY    = 0xCFC9,  ///< Tell the peer to create the named directory
+  NET_DONE_SENDING_FILES  = 0xCB08,  ///< Sent when there are no more files to send.
+  NET_NUM_FILES_TO_SEND   = 0x9E40,  ///< Let the other person know how many files you're sending
 
   // Unused values
-  //XXXX                    = ,
-  //XXXX                    = ,
-  //XXXX                    = ,
-  //XXXX                    = ,
-  //XXXX                    = ,
-  //XXXX                    = ,
-  //XXXX                    = ,
-  //XXXX                    = ,
-  //XXXX                    = ,
-  //XXXX                    = ,
-  //XXXX                    = ,
-  //XXXX                    = ,
-  //XXXX                    = ,
-  //XXXX                    = ,
   //XXXX                    = 0xB312,
   //XXXX                    = 0x9D13,
   //XXXX                    = 0xEB6C,
@@ -137,7 +124,7 @@ enum e_NetworkConstant
   NET_GUARANTEED_CHANNEL  = 1,
   NET_EGOBOO_NUM_CHANNELS,
   NET_MAX_FILE_NAME       = 128,
-  NET_MAX_FILE_TRANSFERS  = 1024, // Maximum files queued up at once
+  NET_MAX_FILE_TRANSFERS  = 1024,    ///< Maximum files queued up at once
   NET_EGOBOO_NETWORK_PORT = 0x8741,
   NET_EGOBOO_SERVER_PORT  = 0x8742,
   NET_EGOBOO_CLIENT_PORT  = 0x8743
@@ -158,10 +145,10 @@ struct sNetThread
   egoboo_key_t ekey;
 
   // thread status
-  bool_t Active;             // Keep looping or quit?
-  bool_t Paused;             // Is it paused?
-  bool_t KillMe;             // someone requested that we terminate!
-  bool_t Terminated;         // We are completely done.
+  bool_t Active;             ///< Keep looping or quit?
+  bool_t Paused;             ///< Is it paused?
+  bool_t KillMe;             ///< someone requested that we terminate!
+  bool_t Terminated;         ///< We are completely done.
 
   // thread callback info
   SDL_Thread     * Thread;
@@ -257,9 +244,9 @@ void       CListOut_close(CListOut_t * clo, void * client_data);
 
 struct sCListIn_Info
 {
-  char          Name[NETNAMESIZE];       // logon/screen name
-  char          Hostname[NETNAMESIZE];   // Net name of connected machine
-  ENetAddress   Address;                 // Network address of machine
+  char          Name[NETNAMESIZE];       ///< logon/screen name
+  char          Hostname[NETNAMESIZE];   ///< Net name of connected machine
+  ENetAddress   Address;                 ///< Network address of machine
   int           Slot;
 
   // a pointer to an event handler for events commming in to this cinnection
@@ -375,9 +362,9 @@ bool_t CNet_initialize(Net_t * ns);
 // Packet writing
 struct s_local_packet
 {
-  Uint32 head;                             // The write head
-  Uint32 size;                             // The size of the packet
-  Uint8  buffer[MAXSENDSIZE];              // The data packet
+  Uint32 head;                             ///< The write head
+  Uint32 size;                             ///< The size of the packet
+  Uint8  buffer[MAXSENDSIZE];              ///< The data packet
 };
 typedef struct s_local_packet SYS_PACKET;
 
@@ -413,7 +400,7 @@ typedef TIME_LATCH CHR_TIME_LATCH[MAXLAG];
 struct s_time_latch_buffer
 {
   Uint32 numtimes;
-  Uint32 nextstamp;                    // Expected timestamp
+  Uint32 nextstamp;                    ///< Expected timestamp
   CHR_TIME_LATCH buffer[CHRLST_COUNT];
 };
 typedef struct s_time_latch_buffer TIME_LATCH_BUFFER;

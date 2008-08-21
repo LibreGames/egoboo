@@ -1,9 +1,5 @@
 #pragma once
 
-/* Egoboo - gltexture.c
- * Loads BMP files into OpenGL textures.
- */
-
 //********************************************************************************************
 //*
 //*    This file is part of Egoboo.
@@ -23,12 +19,18 @@
 //*
 //********************************************************************************************
 
-#ifndef _GLTEXTURE_H_
-#define _GLTEXTURE_H_
+///
+/// @file
+/// @brief Basic OpenGL Wrapper
+/// @details Basic definitions for loading and managing OpenGL textures in Egoboo.
+///   Uses SDL_image to load .tif, .png, .bmp, .dib, .xpm, and other formats into
+///   OpenGL texures
 
 #include "ogl_include.h"
 
 #include <SDL.h>
+
+struct sGraphics;
 
 #define INVALID_TEXTURE (~(GLuint)0)
 #define INVALID_KEY     (~(Uint32)0)
@@ -65,10 +67,4 @@ void    GLtexture_SetAlpha( GLtexture *texture, GLfloat alpha );
 GLfloat GLtexture_GetAlpha( GLtexture *texture );
 void    GLtexture_Release( GLtexture *texture );
 
-struct sGraphics;
-
 void    GLtexture_Bind( GLtexture * texture, struct sGraphics * g );
-
-
-#endif
-

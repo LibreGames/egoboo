@@ -1,5 +1,29 @@
 #pragma once
 
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
+
+///
+/// @file
+/// @brief Utility functions for game Input/Output.
+
+
 #include "egoboo_types.h"
 #include "egoboo_config.h"
 
@@ -9,7 +33,7 @@ enum e_blud_level
 {
   BLUD_NONE = 0,
   BLUD_NORMAL,
-  BLUD_ULTRA                         // This makes any damage draw blud
+  BLUD_ULTRA                         ///< This makes any damage draw blud
 };
 typedef enum e_blud_level BLUD_LEVEL;
 
@@ -40,7 +64,7 @@ extern  Uint16 randie[RANDIE_COUNT];
 #define RAND(PSEED, MINVAL, MAXVAL) ((((ego_rand_32(PSEED) >> 16) * (MAXVAL-MINVAL)) >> 16)  + MINVAL)
 #define IRAND(PSEED, BITS) ( ego_rand_32(PSEED) & ((1<<BITS)-1) )
 
-extern EGO_CONST char *globalname;   // For debuggin' fgoto_colon
+extern EGO_CONST char *globalname;   ///< For debuggin' fgoto_colon
 
 bool_t undo_pair_fp8( PAIR * ppair, RANGE * prange );
 bool_t fget_pair_fp8( FILE* fileread, PAIR * ppair );

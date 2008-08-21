@@ -21,12 +21,12 @@
 // This way it makes it more understandable and readable when dealing with frustum sides.
 enum e_frustum_side
 {
-  RIGHT = 0,  // The RIGHT side of the frustum
-  LEFT = 1,  // The LEFT  side of the frustum
-  BOTTOM = 2,  // The BOTTOM side of the frustum
-  TOP  = 3,  // The TOP side of the frustum
-  BACK = 4,  // The BACK side of the frustum
-  FRONT = 5   // The FRONT side of the frustum
+  RIGHT = 0,  ///< The RIGHT side of the frustum
+  LEFT = 1,   ///< The LEFT  side of the frustum
+  BOTTOM = 2, ///< The BOTTOM side of the frustum
+  TOP  = 3,   ///< The TOP side of the frustum
+  BACK = 4,   ///< The BACK side of the frustum
+  FRONT = 5   ///< The FRONT side of the frustum
 };
 
 typedef enum e_frustum_side FrustumSide;
@@ -35,10 +35,10 @@ typedef enum e_frustum_side FrustumSide;
 // want to be more descriptive.
 enum e_plane_data
 {
-  A = 0,    // The X value of the plane's normal
-  B = 1,    // The Y value of the plane's normal
-  C = 2,    // The Z value of the plane's normal
-  D = 3    // The distance the plane is from the origin
+  A = 0,    ///< The X value of the plane's normal
+  B = 1,    ///< The Y value of the plane's normal
+  C = 2,    ///< The Z value of the plane's normal
+  D = 3     ///< The distance the plane is from the origin
 };
 
 typedef enum e_plane_data PlaneData;

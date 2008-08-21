@@ -747,7 +747,7 @@ int mnu_doSinglePlayer( MenuProc_t * mproc, float deltaTime )
 }
 
 //--------------------------------------------------------------------------------------------
-// TODO: I totally fudged the layout of this menu by adding an offset for when
+/// @todo  I totally fudged the layout of this menu by adding an offset for when
 // the game isn't in 640x480.  Needs to be fixed.
 int mnu_doChooseModule( MenuProc_t * mproc, float deltaTime )
 {
@@ -1177,7 +1177,7 @@ static bool_t mnu_removeSelectedPlayerInput( PLA_REF player, Uint32 input )
 //--------------------------------------------------------------------------------------------
 void import_selected_players()
 {
-  // ZZ > Build the import directory
+  /// @details ZZ> Build the import directory
 
   char srcDir[64], destDir[64];
   int i;
@@ -1214,7 +1214,7 @@ void import_selected_players()
 //--------------------------------------------------------------------------------------------
 int mnu_doChoosePlayer( MenuProc_t * mproc, float deltaTime )
 {
-  // TODO : work on auto formatting
+  /// @todo  work on auto formatting
   //      : add buttons to scan through the player list in case there are more than can be displayed
 
   static MenuProcs menuState = MM_Begin;
@@ -1669,7 +1669,7 @@ int mnu_doAudioOptions( MenuProc_t * mproc, float deltaTime )
       glColor4f( 1, 1, 1, 1 );
       ui_drawImage( &wBackground );
 
-      // TODO : need to make this interactive
+      /// @todo  need to make this interactive
       fnt_drawTextBox( mnu_Font, "Sound:", mnu_buttonLeft, gfxState.surface->h - 270, 0, 0, 20 );
       // Buttons
       if ( BUTTON_UP == ui_doButton( mnu_widgetList + 0 ) )
@@ -1686,7 +1686,7 @@ int mnu_doAudioOptions( MenuProc_t * mproc, float deltaTime )
         }
       }
 
-      // TODO : need to make this interactive
+      /// @todo  need to make this interactive
       fnt_drawTextBox( mnu_Font, "Sound Volume:", mnu_buttonLeft, gfxState.surface->h - 235, 0, 0, 20 );
       if ( BUTTON_UP == ui_doButton( mnu_widgetList + 1 ) )
       {
@@ -1697,7 +1697,7 @@ int mnu_doAudioOptions( MenuProc_t * mproc, float deltaTime )
         mnu_widgetList[1].text = OData.sz_soundvolume;
       }
 
-      // TODO : need to make this interactive
+      /// @todo  need to make this interactive
       fnt_drawTextBox( mnu_Font, "Music:", mnu_buttonLeft, gfxState.surface->h - 165, 0, 0, 20 );
       if ( BUTTON_UP == ui_doButton( mnu_widgetList + 2 ) )
       {
@@ -1713,7 +1713,7 @@ int mnu_doAudioOptions( MenuProc_t * mproc, float deltaTime )
         }
       }
 
-      // TODO : need to make this interactive
+      /// @todo  need to make this interactive
       fnt_drawTextBox( mnu_Font, "Music Volume:", mnu_buttonLeft, gfxState.surface->h - 130, 0, 0, 20 );
       if ( BUTTON_UP == ui_doButton( mnu_widgetList + 3 ) )
       {
@@ -4838,7 +4838,7 @@ bool_t MenuProc_init_ingame(MenuProc_t * ms)
 //--------------------------------------------------------------------------------------------
 Uint32 mnu_load_titleimage(MenuProc_t * mproc, Uint32 titleimage, char *szLoadName)
 {
-  // ZZ> This function loads a title in the specified image slot, forcing it into
+  /// @details ZZ> This function loads a title in the specified image slot, forcing it into
   //     system memory.  Returns btrue if it worked
   Uint32 retval = MAXMODULE;
 
@@ -4853,7 +4853,7 @@ Uint32 mnu_load_titleimage(MenuProc_t * mproc, Uint32 titleimage, char *szLoadNa
 //--------------------------------------------------------------------------------------------
 size_t mnu_load_mod_data(MenuProc_t * mproc, MOD_INFO * mi_ary, size_t mi_len)
 {
-  // ZZ> This function loads the title image for each module.  Modules without a
+  /// @details ZZ> This function loads the title image for each module.  Modules without a
   //     title are marked as invalid
 
   char searchname[15];
@@ -4917,7 +4917,7 @@ size_t mnu_load_mod_data(MenuProc_t * mproc, MOD_INFO * mi_ary, size_t mi_len)
 //--------------------------------------------------------------------------------------------
 bool_t mnu_load_cl_images(MenuProc_t *mproc)
 {
-  // BB> This function loads the title image(s) for the modules that the client
+  /// @details BB> This function loads the title image(s) for the modules that the client
   //     is browsing
 
   int cnt;
@@ -4948,7 +4948,7 @@ bool_t mnu_load_cl_images(MenuProc_t *mproc)
 //---------------------------------------------------------------------------------------------
 void mnu_free_all_titleimages(MenuProc_t * mproc)
 {
-  // ZZ> This function clears out all of the title images
+  /// @details ZZ> This function clears out all of the title images
 
   int cnt;
   for ( cnt = 0; cnt < MAXMODULE; cnt++ )
@@ -5016,7 +5016,7 @@ retval_t mnu_ensure_game(MenuProc_t * mproc, Game_t ** optional)
 //---------------------------------------------------------------------------------------------
 retval_t mnu_upload_game_info(Game_t * gs, MenuProc_t * ms)
 {
-  // BB > register the various networking modules with the given game
+  /// @details BB> register the various networking modules with the given game
 
   if( !EKEY_PVALID(gs) || !EKEY_PVALID(ms)) return rv_fail;
 
@@ -5030,7 +5030,7 @@ retval_t mnu_upload_game_info(Game_t * gs, MenuProc_t * ms)
 //--------------------------------------------------------------------------------------------
 void check_player_import(Game_t * gs)
 {
-  // ZZ> This function figures out which players may be imported, and loads basic
+  /// @details ZZ> This function figures out which players may be imported, and loads basic
   //     data for each
 
   STRING searchname, filename, filepath;

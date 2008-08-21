@@ -171,7 +171,7 @@ static void   log_code( ScriptInfo_t * slist, int ainumber, char* savename );
 //------------------------------------------------------------------------------
 void insert_space( size_t position )
 {
-  // ZZ> This function adds a space into the load line if there isn't one
+  /// @details ZZ> This function adds a space into the load line if there isn't one
   //     there already
 
   Uint8 cTmp, cSwap;
@@ -196,7 +196,7 @@ void insert_space( size_t position )
 //------------------------------------------------------------------------------
 void copy_one_line( size_t write )
 {
-  // ZZ> This function copies the line back to the load buffer
+  /// @details ZZ> This function copies the line back to the load buffer
 
   size_t read;
   Uint8 cTmp;
@@ -217,7 +217,7 @@ void copy_one_line( size_t write )
 //------------------------------------------------------------------------------
 size_t load_one_line( size_t read )
 {
-  // ZZ> This function loads a line into the line buffer
+  /// @details ZZ> This function loads a line into the line buffer
 
   bool_t stillgoing, foundtext;
   Uint8 cTmp;
@@ -293,7 +293,7 @@ size_t load_one_line( size_t read )
 //------------------------------------------------------------------------------
 size_t load_parsed_line( size_t read )
 {
-  // ZZ> This function loads a line into the line buffer
+  /// @details ZZ> This function loads a line into the line buffer
 
   Uint8 cTmp;
 
@@ -326,7 +326,7 @@ void surround_space( size_t position )
 //------------------------------------------------------------------------------
 void parse_null_terminate_comments()
 {
-  // ZZ> This function removes comments and endline codes, replacing
+  /// @details ZZ> This function removes comments and endline codes, replacing
   //     them with a 0
 
   size_t read, write;
@@ -347,7 +347,7 @@ void parse_null_terminate_comments()
 //------------------------------------------------------------------------------
 int get_indentation()
 {
-  // ZZ> This function returns the number of starting spaces in a line
+  /// @details ZZ> This function returns the number of starting spaces in a line
 
   int cnt;
   Uint8 cTmp;
@@ -387,7 +387,7 @@ int get_indentation()
 //------------------------------------------------------------------------------
 void fix_operators()
 {
-  // ZZ> This function puts spaces around operators to seperate words
+  /// @details ZZ> This function puts spaces around operators to seperate words
   //     better
 
   Uint32 cnt;
@@ -411,7 +411,7 @@ void fix_operators()
 //------------------------------------------------------------------------------
 int starts_with_capital_letter()
 {
-  // ZZ> This function returns btrue if the line starts with a capital
+  /// @details ZZ> This function returns btrue if the line starts with a capital
 
   int cnt;
   Uint8 cTmp;
@@ -431,7 +431,7 @@ int starts_with_capital_letter()
 //------------------------------------------------------------------------------
 Uint32 get_high_bits()
 {
-  // ZZ> This function looks at the first word and generates the high
+  /// @details ZZ> This function looks at the first word and generates the high
   //     bit codes for it
 
   Uint32 highbits, indent;
@@ -449,7 +449,7 @@ Uint32 get_high_bits()
 //------------------------------------------------------------------------------
 size_t tell_code( size_t read )
 {
-  // ZZ> This function tells what code is being indexed by read, it
+  /// @details ZZ> This function tells what code is being indexed by read, it
   //     will return the next spot to read from and stick the code number
   //     in _cstate.index
 
@@ -575,7 +575,7 @@ void add_code( ScriptInfo_t * slist, Uint32 highbits )
 //------------------------------------------------------------------------------
 void parse_line_by_line(ScriptInfo_t * slist)
 {
-  // ZZ> This function removes comments and endline codes, replacing
+  /// @details ZZ> This function removes comments and endline codes, replacing
   //     them with a 0
 
   size_t read, line;
@@ -627,7 +627,7 @@ void parse_line_by_line(ScriptInfo_t * slist)
 //------------------------------------------------------------------------------
 size_t jump_goto( ScriptInfo_t * slist, size_t index )
 {
-  // ZZ> This function figures out where to jump to on a fail based on the
+  /// @details ZZ> This function figures out where to jump to on a fail based on the
   //     starting location and the following code.  The starting location
   //     should always be a function code with indentation
 
@@ -667,7 +667,7 @@ size_t jump_goto( ScriptInfo_t * slist, size_t index )
 //------------------------------------------------------------------------------
 void parse_jumps( ScriptInfo_t * slist, size_t index_stt, size_t index_end )
 {
-  // ZZ> This function sets up the fail jumps for the down-and-dirty code
+  /// @details ZZ> This function sets up the fail jumps for the down-and-dirty code
 
   size_t index;
   Uint32 value, iTmp;
@@ -702,7 +702,7 @@ void parse_jumps( ScriptInfo_t * slist, size_t index_stt, size_t index_end )
 //------------------------------------------------------------------------------
 void log_code( ScriptInfo_t * slist, int ainumber, char* savename )
 {
-  // ZZ> This function shows the actual code, saving it in a file
+  /// @details ZZ> This function shows the actual code, saving it in a file
 
   int index;
   Uint32 value;
@@ -727,7 +727,7 @@ void log_code( ScriptInfo_t * slist, int ainumber, char* savename )
 //------------------------------------------------------------------------------
 size_t ai_goto_colon( size_t read )
 {
-  // ZZ> This function goes to spot after the next colon
+  /// @details ZZ> This function goes to spot after the next colon
 
   Uint8 cTmp;
 
@@ -743,7 +743,7 @@ size_t ai_goto_colon( size_t read )
 //------------------------------------------------------------------------------
 void fget_code( FILE * pfile )
 {
-  // ZZ> This function gets code names and other goodies
+  /// @details ZZ> This function gets code names and other goodies
 
   char cTmp;
   int iTmp;
@@ -763,7 +763,7 @@ void fget_code( FILE * pfile )
 //------------------------------------------------------------------------------
 void load_ai_codes( char* loadname )
 {
-  // ZZ> This function loads all of the function and variable names
+  /// @details ZZ> This function loads all of the function and variable names
 
   FILE* fileread;
 
@@ -1414,7 +1414,7 @@ void load_ai_codes( char* loadname )
 //------------------------------------------------------------------------------
 Uint32 load_ai_script( ScriptInfo_t * slist, EGO_CONST char * szObjectpath, EGO_CONST char * szObjectname )
 {
-  // ZZ> This function loads a script to memory and
+  /// @details ZZ> This function loads a script to memory and
   //     returns bfalse if it fails to do so
 
   FILE * fileread;
@@ -1472,7 +1472,7 @@ bool_t ScriptInfo_reset( ScriptInfo_t * si )
 //------------------------------------------------------------------------------
 void reset_ai_script(Game_t * gs)
 {
-  // ZZ> This function starts ai loading in the right spot
+  /// @details ZZ> This function starts ai loading in the right spot
 
   OBJ_REF obj_cnt;
 
@@ -1488,7 +1488,7 @@ void reset_ai_script(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 {
-  // ZZ> This function runs a script function for the AI.
+  /// @details ZZ> This function runs a script function for the AI.
   //     It returns bfalse if the script should jump over the
   //     indented code that follows
 
@@ -1564,9 +1564,9 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
       // Proceed only if the character reached its last waypoint
       returncode = HAS_SOME_BITS( pstate->alert, ALERT_ATLASTWAYPOINT );
 
-      // TODO: should this be
+      /// @todo  should this be
       //returncode = wp_list_empty( &(pstate->wp) );
-      // TODO: then we could separate PUTAWAY from ATLASTWAYPOINT
+      /// @todo  then we could separate PUTAWAY from ATLASTWAYPOINT
       break;
 
     case F_IfAttacked:
@@ -4608,7 +4608,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 //--------------------------------------------------------------------------------------------
 retval_t set_operand( AI_STATE * pstate, ScriptInfo_t * slist, Uint8 variable )
 {
-  // ZZ> This function sets one of the tmp* values for scripted AI
+  /// @details ZZ> This function sets one of the tmp* values for scripted AI
 
   retval_t retval = rv_succeed;
   char * scriptname = slist->fname[pstate->type];
@@ -4647,7 +4647,7 @@ retval_t set_operand( AI_STATE * pstate, ScriptInfo_t * slist, Uint8 variable )
 //--------------------------------------------------------------------------------------------
 retval_t run_operand( Game_t * gs, Uint32 value, CHR_REF ichr )
 {
-  // ZZ> This function does the scripted arithmetic in operator,operand pairs
+  /// @details ZZ> This function does the scripted arithmetic in operator,operand pairs
 
   retval_t retval = rv_succeed;
   int iTmp;
@@ -5115,7 +5115,7 @@ retval_t run_operand( Game_t * gs, Uint32 value, CHR_REF ichr )
 //--------------------------------------------------------------------------------------------
 retval_t run_script( Game_t * gs, CHR_REF ichr, float dUpdate )
 {
-  // ZZ> This function lets one character do AI stuff
+  /// @details ZZ> This function lets one character do AI stuff
 
   Uint16   type_stt;
   Uint32   offset_end, offset_last;
@@ -5298,7 +5298,7 @@ retval_t run_script( Game_t * gs, CHR_REF ichr, float dUpdate )
 //--------------------------------------------------------------------------------------------
 void run_all_scripts( Game_t * gs, float dUpdate )
 {
-  // ZZ> This function lets every computer controlled character do AI stuff
+  /// @details ZZ> This function lets every computer controlled character do AI stuff
 
   CHR_REF character;
   bool_t allow_thinking;
@@ -5350,7 +5350,7 @@ void run_all_scripts( Game_t * gs, float dUpdate )
 
 //void load_ai_codes(char* loadname)
 //{
-//  // ZZ> This function loads all of the function and variable names
+//  /// @details ZZ> This function loads all of the function and variable names
 //
 //  FILE* fileread;
 //  int read;

@@ -13,7 +13,7 @@
 //--------------------------------------------------------------------------------------------
 void snd_prt_spawn( PRT_SPAWN_INFO si )
 {
-  // BB > send a request to the server to spawn a particle with the properties in si
+  /// @details BB> send a request to the server to spawn a particle with the properties in si
 
   Game_t * gs = si.gs;
   if( !EKEY_PVALID(gs) ) return;
@@ -27,7 +27,7 @@ void snd_prt_spawn( PRT_SPAWN_INFO si )
 //--------------------------------------------------------------------------------------------
 void rec_prt_spawn( PRT_SPAWN_INFO si )
 {
-  // BB > act on a request from a server to spawn a particle with the properties in si
+  /// @details BB> act on a request from a server to spawn a particle with the properties in si
 
   Game_t * gs = si.gs;
   if( !EKEY_PVALID(gs) ) return;
@@ -43,7 +43,7 @@ void rec_prt_spawn( PRT_SPAWN_INFO si )
 //--------------------------------------------------------------------------------------------
 void snd_chr_spawn( CHR_SPAWN_INFO si )
 {
-  // BB > send a request to the server to spawn a character with the properties in si
+  /// @details BB> send a request to the server to spawn a character with the properties in si
 
   Game_t * gs = si.gs;
   if( !EKEY_PVALID(gs) ) return;
@@ -57,7 +57,7 @@ void snd_chr_spawn( CHR_SPAWN_INFO si )
 //--------------------------------------------------------------------------------------------
 void rec_chr_spawn( CHR_SPAWN_INFO si )
 {
-  // BB > act on a request from a server to spawn a character with the properties in si
+  /// @details BB> act on a request from a server to spawn a character with the properties in si
 
   Game_t * gs = si.gs;
   if( !EKEY_PVALID(gs) ) return;
@@ -73,7 +73,7 @@ void rec_chr_spawn( CHR_SPAWN_INFO si )
 //--------------------------------------------------------------------------------------------
 void snd_enc_spawn( ENC_SPAWN_INFO si )
 {
-  // BB > send a request to the server to spawn a enchant with the properties in si
+  /// @details BB> send a request to the server to spawn a enchant with the properties in si
 
   Game_t * gs = si.gs;
   if( !EKEY_PVALID(gs) ) return;
@@ -87,7 +87,7 @@ void snd_enc_spawn( ENC_SPAWN_INFO si )
 //--------------------------------------------------------------------------------------------
 void rec_enc_spawn( ENC_SPAWN_INFO si )
 {
-  // BB > act on a request from a server to spawn an enchant with the properties in si
+  /// @details BB> act on a request from a server to spawn an enchant with the properties in si
 
   Game_t * gs = si.gs;
   if( !EKEY_PVALID(gs) ) return;

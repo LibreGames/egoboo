@@ -245,7 +245,7 @@ bool_t snd_quit()
 
 void snd_apply_mods( int channel, float intensity, vect3 snd_pos, vect3 ear_pos, Uint16 ear_turn_lr  )
 {
-  // BB > This functions modifies an already playing 3d sound sound according position, orientation, etc.
+  /// @details BB> This functions modifies an already playing 3d sound sound according position, orientation, etc.
   //      Modeled after physical parameters, but does not model doppler shift...
   float dist_xyz2, dist_xy2, volume;
   float vl, vr, dx, dy;
@@ -298,7 +298,7 @@ void snd_apply_mods( int channel, float intensity, vect3 snd_pos, vect3 ear_pos,
 //------------------------------------------------------------------------------
 int snd_play_sound( Game_t * gs, float intensity, vect3 pos, Mix_Chunk *loadedwave, int loops, OBJ_REF whichobject, int soundnumber)
 {
-  // ZF> This function plays a specified sound
+  /// @details ZF> This function plays a specified sound
   // (Or returns -1 (INVALID_CHANNEL) if it failed to play the sound)
   Sint8 channel;
   Cap_t * pcap;
@@ -416,7 +416,7 @@ int snd_play_particle_sound( Game_t * gs, float intensity, PRT_REF particle, Sin
 //------------------------------------------------------------------------------
 void snd_stop_sound( int whichchannel )
 {
-  // ZF> This function is used for stopping a looped sound, but can be used to stop
+  /// @details ZF> This function is used for stopping a looped sound, but can be used to stop
   // a particular sound too. If whichchannel is -1, all playing channels will fade out.
 
   if( _sndState.mixer_loaded )
@@ -455,7 +455,7 @@ bool_t snd_unload_music()
 //------------------------------------------------------------------------------
 void snd_play_music( int songnumber, int fadetime, int loops )
 {
-  // ZF> This functions plays a specified track loaded into memory
+  /// @details ZF> This functions plays a specified track loaded into memory
   if ( _sndState.musicActive && _sndState.music_loaded && _sndState.song_index != songnumber)
   {
     Mix_FadeOutMusic( fadetime );
@@ -468,7 +468,7 @@ void snd_play_music( int songnumber, int fadetime, int loops )
 //------------------------------------------------------------------------------
 void snd_stop_music(int fadetime)
 {
-  //ZF> This function sets music track to pause
+  /// @details ZF> This function sets music track to pause
 
   Mix_FadeOutMusic(fadetime);
 }
@@ -477,7 +477,7 @@ void snd_stop_music(int fadetime)
 //------------------------------------------------------------------------------
 bool_t SoundState_synchronize(SoundState_t * snd, ConfigData_t * cd)
 {
-  // BB > update the current sound state from the config data
+  /// @details BB> update the current sound state from the config data
 
   if(NULL == snd || NULL == cd) return bfalse;
 
@@ -496,7 +496,7 @@ bool_t SoundState_synchronize(SoundState_t * snd, ConfigData_t * cd)
 //------------------------------------------------------------------------------
 bool_t snd_reopen()
 {
-  // BB > an attempt to automatically update the SDL_mixer state. This could probably be optimized
+  /// @details BB> an attempt to automatically update the SDL_mixer state. This could probably be optimized
   //      since not everything requires restarting the mixer.
 
   bool_t paused;
@@ -556,7 +556,7 @@ bool_t SoundState_delete(SoundState_t * snd)
 //------------------------------------------------------------------------------
 SoundState_t * SoundState_new(SoundState_t * snd, ConfigData_t * cd)
 {
-  // BB > do a raw initialization of the sound state
+  /// @details BB> do a raw initialization of the sound state
 
   //fprintf( stdout, "SoundState_new()\n");
 

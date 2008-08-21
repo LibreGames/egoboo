@@ -1,5 +1,28 @@
 #pragma once
 
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
+
+///
+/// @file
+/// @brief Egoboo Scripting Definitions
+
 #include "egoboo_types.h"
 
 struct sGame;
@@ -7,11 +30,11 @@ struct sGame;
 // These are for the AI script loading/parsing routines
 extern int                     iNumAis;
 
-#define PITNOSOUND          -256                    // Stop sound at bottom of pits...
-#define MSGDISTANCE         2000                 // Range for SendMessageNear
+#define PITNOSOUND          -256                     ///< Stop sound at bottom of pits...
+#define MSGDISTANCE         2000                  ///< Range for SendMessageNear
 
 #define AILST_COUNT         129                     //
-#define MAXCODE             1024                    // Number of lines in AICODES.TXT
+#define MAXCODE             1024                     ///< Number of lines in AICODES.TXT
 #define MAXCODENAMESIZE     64                      //
 #define AISMAXCOMPILESIZE   (AILST_COUNT*MAXCODE)         // For parsing AI scripts
 
@@ -21,7 +44,7 @@ extern bool_t parseerror;    //Do we have an script error?
 
 enum e_script_opcode
 {
-  F_IfSpawned = 0,                      // Scripted AI functions (v0.10)
+  F_IfSpawned = 0,                      ///< Scripted AI functions (v0.10)
   F_IfTimeOut,
   F_IfAtWaypoint,
   F_IfAtLastWaypoint,
@@ -75,26 +98,26 @@ enum e_script_opcode
   F_CallForHelp,
   F_AddIDSZ,
   F_End,
-  F_SetState,                          // Scripted AI functions (v0.20)
+  F_SetState,                          ///< Scripted AI functions (v0.20)
   F_GetState,
   F_IfStateIs,
-  F_IfTargetCanOpenStuff,              // Scripted AI functions (v0.30)
+  F_IfTargetCanOpenStuff,              ///< Scripted AI functions (v0.30)
   F_IfGrabbed,
   F_IfDropped,
   F_SetTargetToWhoeverIsHolding,
   F_DamageTarget,
   F_IfXIsLessThanY,
-  F_SetWeatherTime,                    // Scripted AI functions (v0.40)
+  F_SetWeatherTime,                    ///< Scripted AI functions (v0.40)
   F_GetBumpHeight,
   F_IfReaffirmed,
   F_UnkeepAction,
   F_IfTargetIsOnOtherTeam,
-  F_IfTargetIsOnHatedTeam,          // Scripted AI functions (v0.50)
+  F_IfTargetIsOnHatedTeam,          ///< Scripted AI functions (v0.50)
   F_PressLatchButton,
   F_SetTargetToTargetOfLeader,
   F_IfLeaderKilled,
   F_BecomeLeader,
-  F_ChangeTargetArmor,                // Scripted AI functions (v0.60)
+  F_ChangeTargetArmor,                ///< Scripted AI functions (v0.60)
   F_GiveMoneyToTarget,
   F_DropKeys,
   F_IfLeaderIsAlive,
@@ -122,7 +145,7 @@ enum e_script_opcode
   F_IfTargetIsSelf,
   F_IfTargetIsMale,
   F_IfTargetIsFemale,
-  F_SetTargetToSelf,            // Scripted AI functions (v0.70)
+  F_SetTargetToSelf,            ///< Scripted AI functions (v0.70)
   F_SetTargetToRider,
   F_GetAttackTurn,
   F_GetDamageType,
@@ -193,7 +216,7 @@ enum e_script_opcode
   F_IfStateIsNot,
   F_IfXIsEqualToY,
   F_DisplayDebugMessage,
-  F_BlackTarget,                        // Scripted AI functions (v0.80)
+  F_BlackTarget,                        ///< Scripted AI functions (v0.80)
   F_DisplayMessageNear,
   F_IfHitGround,
   F_IfNameIsKnown,
@@ -279,7 +302,7 @@ enum e_script_opcode
   F_SignalTarget,
   F_SetTargetToWhoeverIsInPassage,
   F_IfCharacterWasABook,
-  F_SetEnchantBoostValues,               // Scripted AI functions (v0.90)
+  F_SetEnchantBoostValues,               ///< Scripted AI functions (v0.90)
   F_SpawnCharacterXYZ,
   F_SpawnExactCharacterXYZ,
   F_ChangeTargetClass,
@@ -352,7 +375,7 @@ enum e_script_opcode
   F_SpawnExactParticleEndSpawn,
   F_SpawnPoofSpeedSpacingDamage,
   F_GiveExperienceToGoodTeam,
-  F_DoNothing,                          // Scripted AI functions (v0.95)
+  F_DoNothing,                          ///< Scripted AI functions (v0.95)
   F_DazeTarget,
   F_GrogTarget,
   F_IfEquipped,
@@ -362,32 +385,32 @@ enum e_script_opcode
   F_JoinTeam,
   F_TargetJoinTeam,
   F_ClearMusicPassage,
-  F_AddQuest,                           // Scripted AI functions (v1.00)
+  F_AddQuest,                           ///< Scripted AI functions (v1.00)
   F_BeatQuest,
   F_IfTargetHasQuest,
   F_SetQuestLevel,
   F_IfTargetHasNotFullMana,
   F_IfDoingAction,
   F_IfOperatorIsLinux,
-  F_IfTargetIsOwner,                    // Scripted AI functions (v1.05)
+  F_IfTargetIsOwner,                    ///< Scripted AI functions (v1.05)
   F_SetCameraSwing,
   F_EnableRespawn,
   F_DisableRespawn,
   F_IfButtonPressed,
-  F_IfHolderScoredAHit					        // Scripted AI functions (v1.10)
+  F_IfHolderScoredAHit					        ///< Scripted AI functions (v1.10)
 };
 typedef enum e_script_opcode OPCODE;
 
 enum e_script_operation
 {
-  OP_ADD = 0,     // +
-  OP_SUB,         // -
-  OP_AND,         // &
-  OP_SHR,         // >
-  OP_SHL,         // <
-  OP_MUL,         // *
-  OP_DIV,         // /
-  OP_MOD          // %
+  OP_ADD = 0,     ///< +
+  OP_SUB,         ///< -
+  OP_AND,         ///< &
+  OP_SHR,         ///< >
+  OP_SHL,         ///< <
+  OP_MUL,         ///< *
+  OP_DIV,         ///< /
+  OP_MOD          ///< %
 };
 typedef enum e_script_operation OPERATION;
 

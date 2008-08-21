@@ -1,6 +1,4 @@
-/* Egoboo - Md2.h
- * This code is not currently in use.
- */
+#pragma once
 
 //********************************************************************************************
 //*
@@ -21,14 +19,13 @@
 //*
 //********************************************************************************************
 
-/* Adapted from "Tactics - MD2_Model.h" by Jonathan Fischer
- * A class for loading/using Quake 2 and Egoboo md2 models.
- *
- * Creating/destroying objects of this class is done in the same fashion as
- * Textures, so see Texture.h for details.
- */
-
-#pragma once
+///
+/// @file
+/// @brief Md2 Model display routines
+/// @details Adapted from "Tactics - MD2_Model.h" by Jonathan Fischer
+///   A class for loading/using Quake 2 and Egoboo md2 models.
+///   Creating/destroying objects of this class is done in the same fashion as
+///   Textures, so see Texture.h for details.
 
 #include "id_md2.h"
 #include <SDL_opengl.h>
@@ -38,7 +35,7 @@
   typedef struct s_ego_md2_vertex
   {
     float x, y, z;
-    unsigned normal;  // index to id-normal array
+    unsigned normal;  ///< index to id-normal array
   } MD2_Vertex_t;
 
   typedef struct s_ego_md2_texcoord
@@ -49,7 +46,7 @@
   typedef struct s_ego_md2_frame
   {
     char name[16];
-    float bbmin[3], bbmax[3];    // axis-aligned bounding box limits
+    float bbmin[3], bbmax[3];    ///< axis-aligned bounding box limits
     MD2_Vertex_t *vertices;
   } MD2_Frame_t;
 #pragma pack(pop)

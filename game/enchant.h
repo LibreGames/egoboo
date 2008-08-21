@@ -1,10 +1,34 @@
 #pragma once
 
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
+
+///
+/// @file
+/// @brief Enchantment Definitions.
+/// @details Definitions needed to manage the egoboo buff/debuf dydtem, called enchantments.
+
 #include "egoboo_types.h"
 #include "object.h"
 
-#define EVELST_COUNT                          OBJLST_COUNT  // One enchant type per model
-#define ENCLST_COUNT                      128         // Number of enchantments
+#define EVELST_COUNT                          OBJLST_COUNT   ///< One enchant type per model
+#define ENCLST_COUNT                      128          ///< Number of enchantments
 
 struct sGame;
 
@@ -18,7 +42,7 @@ enum e_eve_set
   SETNUMBEROFJUMPS,
   SETLIFEBARCOLOR,
   SETMANABARCOLOR,
-  SETSLASHMODIFIER,       //Damage modifiers
+  SETSLASHMODIFIER,       ///< Damage modifiers
   SETCRUSHMODIFIER,
   SETPOKEMODIFIER,
   SETHOLYMODIFIER,
@@ -29,14 +53,14 @@ enum e_eve_set
   SETFLASHINGAND,
   SETLIGHTBLEND,
   SETALPHABLEND,
-  SETSHEEN,                //Shinyness
+  SETSHEEN,                ///< Shinyness
   SETFLYTOHEIGHT,
   SETWALKONWATER,
   SETCANSEEINVISIBLE,
   SETMISSILETREATMENT,
   SETCOSTFOREACHMISSILE,
-  SETMORPH,                //Morph character?
-  SETCHANNEL,               //Can channel life as mana?
+  SETMORPH,                 ///< Morph character?
+  SETCHANNEL,               ///< Can channel life as mana?
   EVE_SET_COUNT
 };
 typedef enum e_eve_set EVE_SET;
@@ -49,17 +73,17 @@ enum e_eve_add
   ADDDAMAGE,
   ADDSIZE,
   ADDACCEL,
-  ADDRED,             //Red shift
-  ADDGRN,             //Green shift
-  ADDBLU,             //Blue shift
-  ADDDEFENSE,         //Defence adjustments
+  ADDRED,             ///< Red shift
+  ADDGRN,             ///< Green shift
+  ADDBLU,             ///< Blue shift
+  ADDDEFENSE,         ///< Defence adjustments
   ADDMANA,
   ADDLIFE,
   ADDSTRENGTH,
   ADDWISDOM,
   ADDINTELLIGENCE,
   ADDDEXTERITY,
-  EVE_ADD_COUNT      // Number of adds
+  EVE_ADD_COUNT      ///< Number of adds
 };
 typedef enum e_eve_add EVE_ADD;
 
@@ -67,35 +91,35 @@ struct sEve
 {
   egoboo_key_t    ekey;
   STRING          loadname;
-  bool_t          Loaded;                      // Enchant.txt loaded?
+  bool_t          Loaded;                      ///< Enchant.txt loaded?
 
-  bool_t          override;                    // Override other enchants?
-  bool_t          removeoverridden;            // Remove other enchants?
-  bool_t          setyesno[EVE_SET_COUNT];     // Set this value?
-  Uint8           setvalue[EVE_SET_COUNT];     // Value to use
-  Sint8           addvalue[EVE_ADD_COUNT];     // The values to add
-  bool_t          retarget;                    // Pick a weapon?
-  bool_t          killonend;                   // Kill the target on end?
-  bool_t          poofonend;                   // Spawn a poof on end?
-  bool_t          endifcantpay;                // End on out of mana
-  bool_t          stayifnoowner;               // Stay if owner has died?
-  Sint16          time;                        // Time in seconds
-  Sint8           endmessage;                  // Message for end -1 for none
-  Sint16          ownermana_fp8;                   // Boost values
-  Sint16          ownerlife_fp8;                   //
-  Sint16          targetmana_fp8;                  //
-  Sint16          targetlife_fp8;                  //
-  DAMAGE          dontdamagetype;              // Don't work if ...
-  DAMAGE          onlydamagetype;              // Only work if ...
-  IDSZ            removedbyidsz;               // By particle or [NONE]
-  Uint16          contspawntime;               // Spawn timer
-  Uint8           contspawnamount;             // Spawn amount
-  Uint16          contspawnfacingadd;          // Spawn in circle
-  PIP_REF         contspawnpip;                // Spawn type ( local )
-  Sint8           endsound;                    // Sound on end (-1 for none)
-  Uint16          frequency;                   // Sound frequency
-  Uint16          overlay;                     // Spawn an overlay?
-  bool_t          canseekurse;                 // Allow target to see kurses?
+  bool_t          override;                    ///< Override other enchants?
+  bool_t          removeoverridden;            ///< Remove other enchants?
+  bool_t          setyesno[EVE_SET_COUNT];     ///<Set this value?
+  Uint8           setvalue[EVE_SET_COUNT];     ///< Value to use
+  Sint8           addvalue[EVE_ADD_COUNT];     ///< The values to add
+  bool_t          retarget;                    ///< Pick a weapon?
+  bool_t          killonend;                   ///< Kill the target on end?
+  bool_t          poofonend;                   ///< Spawn a poof on end?
+  bool_t          endifcantpay;                ///< End on out of mana
+  bool_t          stayifnoowner;               ///< Stay if owner has died?
+  Sint16          time;                        ///< Time in seconds
+  Sint8           endmessage;                  ///< Message for end -1 for none
+  Sint16          ownermana_fp8;               ///< Boost values
+  Sint16          ownerlife_fp8;               //
+  Sint16          targetmana_fp8;              //
+  Sint16          targetlife_fp8;              //
+  DAMAGE          dontdamagetype;              ///< Don't work if ...
+  DAMAGE          onlydamagetype;              ///< Only work if ...
+  IDSZ            removedbyidsz;               ///< By particle or [NONE]
+  Uint16          contspawntime;               ///< Spawn timer
+  Uint8           contspawnamount;             ///< Spawn amount
+  Uint16          contspawnfacingadd;          ///< Spawn in circle
+  PIP_REF         contspawnpip;                ///< Spawn type ( local )
+  Sint8           endsound;                    ///< Sound on end (-1 for none)
+  Uint16          frequency;                   ///< Sound frequency
+  Uint16          overlay;                     ///< Spawn an overlay?
+  bool_t          canseekurse;                 ///< Allow target to see kurses?
 };
 typedef struct sEve Eve_t;
 
@@ -140,31 +164,31 @@ struct sEnc
 {
   egoboo_key_t      ekey;
 
-  bool_t          reserved;         // Is it going to be used?
-  bool_t          req_active;      // Are we going to auto-activate ASAP?
-  bool_t          active;          // Is it currently on?
-  bool_t          gopoof;          // Is poof requested?
-  bool_t          freeme;          // Is EncList_free_one() requested?
+  bool_t          reserved;         ///< Is it going to be used?
+  bool_t          req_active;      ///< Are we going to auto-activate ASAP?
+  bool_t          active;          ///< Is it currently on?
+  bool_t          gopoof;          ///< Is poof requested?
+  bool_t          freeme;          ///< Is EncList_free_one() requested?
 
   ENC_SPAWN_INFO  spinfo;
 
-  OBJ_REF         profile;                 // The profile that the eve came from
-  EVE_REF         eve;                     // The eve
+  OBJ_REF         profile;                 ///< The profile that the eve came from
+  EVE_REF         eve;                     ///< The eve
 
-  CHR_REF         target;                  // Who it enchants
-  ENC_REF         nextenchant;             // Next in the list
-  CHR_REF         owner;                   // Who cast the enchant
-  CHR_REF         spawner;                 // The spellbook character
-  CHR_REF         overlay;                 // The overlay character
-  Sint16          ownermana_fp8;           // Boost values
+  CHR_REF         target;                  ///< Who it enchants
+  ENC_REF         nextenchant;             ///< Next in the list
+  CHR_REF         owner;                   ///< Who cast the enchant
+  CHR_REF         spawner;                 ///< The spellbook character
+  CHR_REF         overlay;                 ///< The overlay character
+  Sint16          ownermana_fp8;           ///< Boost values
   Sint16          ownerlife_fp8;           //
   Sint16          targetmana_fp8;          //
   Sint16          targetlife_fp8;          //
-  bool_t          setyesno[EVE_SET_COUNT]; // Was it set?
-  Uint8           setsave[EVE_SET_COUNT];  // The value to restore
-  Sint16          addsave[EVE_ADD_COUNT];  // The value to take away
-  Sint16          time;                    // Time before end
-  float           spawntime;               // Time before spawn
+  bool_t          setyesno[EVE_SET_COUNT]; ///< Was it set?
+  Uint8           setsave[EVE_SET_COUNT];  ///< The value to restore
+  Sint16          addsave[EVE_ADD_COUNT];  ///< The value to take away
+  Sint16          time;                    ///< Time before end
+  float           spawntime;               ///< Time before spawn
 };
 typedef struct sEnc Enc_t;
 
@@ -226,7 +250,7 @@ enum e_disenchant_mode
 };
 typedef enum e_disenchant_mode DISENCHANT_MODE;
 
-extern STRING namingnames;   // The name returned by the function
+extern STRING namingnames;   ///< The name returned by the function
 
 
 void reset_character_alpha( struct sGame * gs, CHR_REF character );

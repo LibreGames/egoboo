@@ -1,5 +1,29 @@
 #pragma once
 
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
+
+///
+/// @file
+/// @brief Basic OpenGL Wrapper
+/// @details Basic definitions for using OpenGL in Egoboo
+
 #include <SDL_opengl.h>
 #include "egoboo_math.h"
 
@@ -31,9 +55,9 @@ struct ogl_vertex_t
 {
   GLvector pos;
   GLvector col;
-  Uint32 color;  // should replace r,g,b,a and be called by glColor4ubv
+  Uint32 color;  ///< should replace r,g,b,a and be called by glColor4ubv
 
-  vect2 tx;      // u and v in D3D I guess
+  vect2 tx;      ///< u and v in D3D I guess
   vect3 nrm;
   vect3 up;
   vect3 rt;

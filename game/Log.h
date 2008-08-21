@@ -1,6 +1,4 @@
-/* Egoboo - Log.h
- * Basic logging functionality.
- */
+#pragma once
 
 //********************************************************************************************
 //*
@@ -21,7 +19,10 @@
 //*
 //********************************************************************************************
 
-#pragma once
+///
+/// @file
+/// @brief Message Logging
+/// @details Basic logging functionality.
 
 void log_init( void );
 void log_shutdown( void );

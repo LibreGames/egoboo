@@ -1,6 +1,4 @@
-/* Egoboo - id_md2.h
- * Md2 model file loading structures & constants.  This is not currently in use.
- */
+#pragma once
 
 //********************************************************************************************
 //*
@@ -21,6 +19,11 @@
 //*
 //********************************************************************************************
 
+///
+/// @file
+/// @brief Basic MD2 reader
+/// @details This file defines the structures needed to do a raw read of MD2 files.
+
 #include "egoboo_types.h"
 
 #ifndef Egoboo_id_md2_h
@@ -29,8 +32,8 @@
 #pragma pack(push,1)
 typedef struct id_md2_header_t
 {
-  int magic; // should be 844121161( or "IDP2")
-  int version; // should be 8
+  int magic; ///< should be 844121161( or "IDP2")
+  int version; ///< should be 8
   int skinWidth;
   int skinHeight;
   int frameSize;
@@ -93,7 +96,7 @@ enum e_id_md2_constant
   MD2_MAX_FRAMES  = 512,
   MD2_MAX_SKINS  = 32,
   MD2_MAX_FRAMESIZE = ( MD2_MAX_VERTICES * 4 + 128 ),
-  MD2_MAGIC_NUMBER = 844121161, // "IDP2"
+  MD2_MAGIC_NUMBER = 844121161,                           ///< "IDP2"
   MD2_VERSION   = 8
 };
 

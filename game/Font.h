@@ -1,7 +1,4 @@
-/* Egoboo - TTF_Font.h
- * True-type font drawing functionality.  Uses Freetype 2 & OpenGL
- * to do it's business.
- */
+#pragma once
 
 //********************************************************************************************
 //*
@@ -22,27 +19,30 @@
 //*
 //********************************************************************************************
 
-#pragma once
+///
+/// @file
+/// @brief Support for True-Type and Bitmapped Fonts.
+/// @details A wrapper for SDL_ttf, and an encapsulation of the old egoboo font code.
 
 #include "ogl_texture.h"
 
 #include <SDL.h>
 
-#define NUMFONTX                        16          // Number of fonts in the bitmap
-#define NUMFONTY                        6           //
+#define NUMFONTX                        16           ///< Number of fonts in the bitmap
+#define NUMFONTY                        6 
 #define NUMFONT                         (NUMFONTX*NUMFONTY)
-#define FONTADD                         4           // Gap between letters
+#define FONTADD                         4            ///< Gap between letters
 
 struct sBMFont
 {
   egoboo_key_t ekey;
 
-  GLtexture tex;                    // ogl texture
-  int       offset;                 // Line up fonts from top of screen
-  SDL_Rect  rect[NUMFONT];          // The font rectangles
-  Uint8     spacing_x[NUMFONT];     // The spacing stuff
+  GLtexture tex;                    ///< ogl texture
+  int       offset;                 ///< Line up fonts from top of screen
+  SDL_Rect  rect[NUMFONT];          ///< The font rectangles
+  Uint8     spacing_x[NUMFONT];     ///< The spacing stuff
   Uint8     spacing_y;              //
-  Uint8     ascii_table[256];       // Conversion table
+  Uint8     ascii_table[256];       ///< Conversion table
 };
 typedef struct sBMFont BMFont_t;
 

@@ -1,8 +1,10 @@
 #pragma once
 
-
-// A very ugly implementation of the AStar pathfinding agorithm
-// Lots of room for improvement
+///
+/// @file
+/// @brief A* pathfinding.
+/// @details A very ugly implementation of the AStar pathfinding agorithm.
+///   There is lots of room for improvement.
 
 #include "egoboo_types.h"
 

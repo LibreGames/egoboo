@@ -118,7 +118,7 @@ Uint16  chrcollisionlevel = 2;
 void flash_character_height( Game_t * gs, CHR_REF chr_ref, Uint8 valuelow, Sint16 low,
                              Uint8 valuehigh, Sint16 high )
 {
-  // ZZ> This function sets a character's lighting depending on vertex height...
+  /// @details ZZ> This function sets a character's lighting depending on vertex height...
   //     Can make feet dark and head light...
 
   int cnt;
@@ -178,7 +178,7 @@ void flash_character_height( Game_t * gs, CHR_REF chr_ref, Uint8 valuelow, Sint1
 //--------------------------------------------------------------------------------------------
 void flash_character( Game_t * gs, CHR_REF chr_ref, Uint8 value )
 {
-  // ZZ> This function sets a character's lighting
+  /// @details ZZ> This function sets a character's lighting
 
   Obj_t * pobj;
   Mad_t  * pmad;
@@ -206,7 +206,7 @@ void flash_character( Game_t * gs, CHR_REF chr_ref, Uint8 value )
 //--------------------------------------------------------------------------------------------
 void keep_weapons_with_holders(Game_t * gs)
 {
-  // ZZ> This function keeps weapons near their holders
+  /// @details ZZ> This function keeps weapons near their holders
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -280,7 +280,7 @@ void keep_weapons_with_holders(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 void ChrList_free_one( Game_t * gs, CHR_REF chr_ref )
 {
-  // ZZ> This function sticks a character back on the free character stack
+  /// @details ZZ> This function sticks a character back on the free character stack
 
   size_t chrlst_size = CHRLST_COUNT;
 
@@ -341,7 +341,7 @@ void ChrList_free_one( Game_t * gs, CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 void chr_free_inventory( ChrList_t chrlst, size_t chrlst_size, CHR_REF chr_ref )
 {
-  // ZZ> This function frees every item in the character's inventory
+  /// @details ZZ> This function frees every item in the character's inventory
 
   CHR_REF cnt;
 
@@ -356,7 +356,7 @@ void chr_free_inventory( ChrList_t chrlst, size_t chrlst_size, CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 bool_t make_one_character_matrix( ChrList_t chrlst, size_t chrlst_size, Chr_t * pchr )
 {
-  // ZZ> This function sets one character's matrix
+  /// @details ZZ> This function sets one character's matrix
 
   Chr_t * povl;
   CHR_REF chr_tnc;
@@ -431,7 +431,7 @@ bool_t make_one_character_matrix( ChrList_t chrlst, size_t chrlst_size, Chr_t * 
 //--------------------------------------------------------------------------------------------
 bool_t make_one_weapon_matrix( ChrList_t chrlst, size_t chrlst_size, CHR_REF chr_ref )
 {
-  // ZZ> This function sets one weapon's matrix, based on who it's attached to
+  /// @details ZZ> This function sets one weapon's matrix, based on who it's attached to
 
   int cnt;
   Chr_t * pchr;
@@ -525,7 +525,7 @@ bool_t make_one_weapon_matrix( ChrList_t chrlst, size_t chrlst_size, CHR_REF chr
 //--------------------------------------------------------------------------------------------
 void make_character_matrices(Game_t * gs)
 {
-  // ZZ> This function makes all of the character's matrices
+  /// @details ZZ> This function makes all of the character's matrices
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -582,7 +582,7 @@ void make_character_matrices(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 CHR_REF ChrList_get_free( Game_t * gs, CHR_REF irequest )
 {
-  // ZZ> This function gets an unused character and returns its index
+  /// @details ZZ> This function gets an unused character and returns its index
 
   ChrHeap_t * pheap;
   CHR_REF retval;
@@ -617,7 +617,7 @@ CHR_REF ChrList_get_free( Game_t * gs, CHR_REF irequest )
 //--------------------------------------------------------------------------------------------
 Chr_t * Chr_new(Chr_t * pchr)
 {
-  // BB > initialize the Chr_t data structure with safe values
+  /// @details BB> initialize the Chr_t data structure with safe values
 
   AI_STATE * pstate;
 
@@ -806,7 +806,7 @@ Chr_t * Chr_renew(Chr_t * pchr)
 //--------------------------------------------------------------------------------------------
 Uint32 chr_hitawall( Game_t * gs, Chr_t * pchr, vect3 * norm )
 {
-  // ZZ> This function returns nonzero if the character hit a wall that the
+  /// @details ZZ> This function returns nonzero if the character hit a wall that the
   //     character is not allowed to cross
 
   Uint32 retval;
@@ -923,7 +923,7 @@ Uint32 chr_hitawall( Game_t * gs, Chr_t * pchr, vect3 * norm )
 //--------------------------------------------------------------------------------------------
 void chr_reset_accel( Game_t * gs, CHR_REF chr_ref )
 {
-  // ZZ> This function fixes a character's MAX acceleration
+  /// @details ZZ> This function fixes a character's MAX acceleration
 
   PChr_t chrlst      = gs->ChrList;
 
@@ -959,7 +959,7 @@ void chr_reset_accel( Game_t * gs, CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 bool_t detach_character_from_mount( Game_t * gs, CHR_REF chr_ref, bool_t ignorekurse, bool_t doshop )
 {
-  // ZZ> This function drops an item
+  /// @details ZZ> This function drops an item
   Uint32 loc_rand;
 
   PChr_t chrlst      = gs->ChrList;
@@ -1157,7 +1157,7 @@ bool_t detach_character_from_mount( Game_t * gs, CHR_REF chr_ref, bool_t ignorek
 //--------------------------------------------------------------------------------------------
 bool_t attach_character_to_mount( Game_t * gs, CHR_REF chr_ref, CHR_REF mount_ref, SLOT slot )
 {
-  // ZZ> This function attaches one character to another ( the mount )
+  /// @details ZZ> This function attaches one character to another ( the mount )
   //     at either the left or right grip
 
   PChr_t chrlst      = gs->ChrList;
@@ -1286,7 +1286,7 @@ bool_t attach_character_to_mount( Game_t * gs, CHR_REF chr_ref, CHR_REF mount_re
 //--------------------------------------------------------------------------------------------
 CHR_REF pack_find_stack( Game_t * gs, CHR_REF item_ref, CHR_REF pack_chr_ref )
 {
-  // ZZ> This function looks in the chraracter's pack for an item similar
+  /// @details ZZ> This function looks in the chraracter's pack for an item similar
   //     to the one given.  If it finds one, it returns the similar item's
   //     index number, otherwise it returns CHRLST_COUNT.
 
@@ -1433,7 +1433,7 @@ static CHR_REF pack_pop_back( ChrList_t chrlst, size_t chrlst_size, CHR_REF pack
 //--------------------------------------------------------------------------------------------
 bool_t pack_add_item( Game_t * gs, CHR_REF item_ref, CHR_REF pack_chr_ref )
 {
-  // ZZ> This function puts one character inside the other's pack
+  /// @details ZZ> This function puts one character inside the other's pack
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -1518,7 +1518,7 @@ bool_t pack_add_item( Game_t * gs, CHR_REF item_ref, CHR_REF pack_chr_ref )
 //--------------------------------------------------------------------------------------------
 CHR_REF pack_get_item( Game_t * gs, CHR_REF pack_chr_ref, SLOT slot, bool_t ignorekurse )
 {
-  // ZZ> This function takes the last item in the character's pack and puts
+  /// @details ZZ> This function takes the last item in the character's pack and puts
   //     it into the designated hand.  It returns the item number or CHRLST_COUNT.
 
   PChr_t chrlst      = gs->ChrList;
@@ -1565,7 +1565,7 @@ CHR_REF pack_get_item( Game_t * gs, CHR_REF pack_chr_ref, SLOT slot, bool_t igno
 //--------------------------------------------------------------------------------------------
 void drop_keys( Game_t * gs, CHR_REF chr_ref )
 {
-  // ZZ> This function drops all keys ( [KEYA] to [KEYZ] ) that are in a character's
+  /// @details ZZ> This function drops all keys ( [KEYA] to [KEYZ] ) that are in a character's
   //     inventory ( Not hands ).
 
   PChr_t chrlst      = gs->ChrList;
@@ -1634,7 +1634,7 @@ void drop_keys( Game_t * gs, CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 void drop_all_items( Game_t * gs, CHR_REF chr_ref )
 {
-  // ZZ> This function drops all of a character's items
+  /// @details ZZ> This function drops all of a character's items
 
   PChr_t chrlst        = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -1682,7 +1682,7 @@ void drop_all_items( Game_t * gs, CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 bool_t chr_grab_stuff( Game_t * gs, CHR_REF chr_ref, SLOT slot, bool_t people )
 {
-  // ZZ> This function makes the character pick up an item if there's one around
+  /// @details ZZ> This function makes the character pick up an item if there's one around
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -1842,8 +1842,8 @@ bool_t chr_grab_stuff( Game_t * gs, CHR_REF chr_ref, SLOT slot, bool_t people )
       }
       else  // must be in a pack
       {
-        // TODO : figure out a way to get the thing out of the pack!!
-        //        pack_get_item() won't work?
+        /// @todo  figure out a way to get the thing out of the pack!!
+        ///        pack_get_item() won't work?
 
       };
     }
@@ -1860,7 +1860,7 @@ bool_t chr_grab_stuff( Game_t * gs, CHR_REF chr_ref, SLOT slot, bool_t people )
       }
       else
       {
-        // TODO : do the dismount
+        /// @todo  do the dismount
       };
     }
     else
@@ -1965,7 +1965,7 @@ bool_t chr_grab_stuff( Game_t * gs, CHR_REF chr_ref, SLOT slot, bool_t people )
 //--------------------------------------------------------------------------------------------
 void chr_swipe( Game_t * gs, CHR_REF ichr, SLOT slot )
 {
-  // ZZ> This function spawns an attack particle
+  /// @details ZZ> This function spawns an attack particle
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -2119,7 +2119,7 @@ void chr_swipe( Game_t * gs, CHR_REF ichr, SLOT slot )
 //--------------------------------------------------------------------------------------------
 bool_t chr_do_animation( Game_t * gs, float dUpdate, CHR_REF chr_ref, ChrEnviro_t * enviro, Uint32 * prand )
 {
-  // BB > Animate the character
+  /// @details BB> Animate the character
 
   Chr_t * pchr;
   Obj_t * pobj;
@@ -2479,7 +2479,7 @@ bool_t chr_do_environment(Game_t * gs, Chr_t * pchr, ChrEnviro_t * enviro)
 //--------------------------------------------------------------------------------------------
 bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dUpdate)
 {
-  // BB > do volontary movement
+  /// @details BB> do volontary movement
 
   CHR_REF weapon_ref, mount_ref, item_ref;
   float maxvel, dvx, dvy, dvmax;
@@ -2573,7 +2573,7 @@ bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dU
       dvy = 0;
     }
 
-    // TODO : change to line(s) below
+    // TODO :  change to line(s) below
     maxvel = pchr->skin.maxaccel / ( 1.0 - gs->phys.noslipfriction );
     // set a minimum speed of 6 to fix some stupid slow speeds
     //maxvel = 1.5f * MAX(MAX(3,pchr->spd_run), MAX(pchr->spd_walk,pchr->spd_sneak));
@@ -2586,7 +2586,7 @@ bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dU
       dvx = ( pstate->trgvel.x - pchr->ori.vel.x );
       dvy = ( pstate->trgvel.y - pchr->ori.vel.y );
 
-      // TODO : change to line(s) below
+      // TODO :  change to line(s) below
       dvmax = pchr->skin.maxaccel;
       // Limit to max acceleration
       //if(maxvel==0.0)
@@ -3017,7 +3017,7 @@ bool_t chr_do_physics( Game_t * gs, Chr_t * pchr, ChrEnviro_t * enviro, float dU
 //--------------------------------------------------------------------------------------------
 bool_t chr_check_passages(Game_t * gs, CHR_REF ichr)
 {
-  // BB> automatically signal passages when someone enters or leaves
+  /// @details BB> automatically signal passages when someone enters or leaves
 
   int cnt;
   PASS_REF ipass;
@@ -3045,7 +3045,7 @@ bool_t chr_check_passages(Game_t * gs, CHR_REF ichr)
 //--------------------------------------------------------------------------------------------
 void move_characters( Game_t * gs, float dUpdate )
 {
-  // ZZ> This function handles character physics
+  /// @details ZZ> This function handles character physics
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -3107,7 +3107,7 @@ void move_characters( Game_t * gs, float dUpdate )
 //--------------------------------------------------------------------------------------------
 bool_t PlaList_set_latch( Game_t * gs, Player_t * ppla )
 {
-  // ZZ> This function converts input readings to latch settings, so players can
+  /// @details ZZ> This function converts input readings to latch settings, so players can
   //     move around
 
   PChr_t chrlst      = gs->ChrList;
@@ -3391,7 +3391,7 @@ bool_t PlaList_set_latch( Game_t * gs, Player_t * ppla )
 //--------------------------------------------------------------------------------------------
 void set_local_latches( Game_t * gs )
 {
-  // ZZ> This function emulates AI thinkin' by setting latches from input devices
+  /// @details ZZ> This function emulates AI thinkin' by setting latches from input devices
 
   PLA_REF cnt;
 
@@ -3467,7 +3467,7 @@ void get_all_levels( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 void make_onwhichfan( Game_t * gs )
 {
-  // ZZ> This function figures out which fan characters are on and sets their level
+  /// @details ZZ> This function figures out which fan characters are on and sets their level
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -3777,7 +3777,7 @@ void fill_bumplists(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 bool_t find_collision_volume_0( vect3 * ppa, CVolume_t * pva, vect3 * ppb, CVolume_t * pvb, bool_t exclude_vert, CVolume_t * pcv)
 {
-  // BB > Find the simplest possible non-empty collision volume
+  /// @details BB> Find the simplest possible non-empty collision volume
 
   CVolume_t cv;
 
@@ -4063,7 +4063,7 @@ bool_t find_collision_volume( vect3 * ppa, CVolume_t * pva, vect3 * ppb, CVolume
 //--------------------------------------------------------------------------------------------
 bool_t chr_is_inside( Game_t * gs, CHR_REF chra_ref, float lerp, CHR_REF chrb_ref, bool_t exclude_vert )
 {
-  // BB > Find whether an active point of chra_ref is "inside" chrb_ref's bounding volume.
+  /// @details BB> Find whether an active point of chra_ref is "inside" chrb_ref's bounding volume.
   //      Abstraction of the old algorithm to see whether a character cpold be "above" another
 
   PChr_t chrlst      = gs->ChrList;
@@ -4106,7 +4106,7 @@ bool_t chr_is_inside( Game_t * gs, CHR_REF chra_ref, float lerp, CHR_REF chrb_re
 //--------------------------------------------------------------------------------------------
 bool_t chr_detect_collision( Game_t * gs, CHR_REF chra_ref, CHR_REF chrb_ref, bool_t exclude_height, CVolume_t * cv)
 {
-  // BB > use the bounding boxes to estimate whether a collision has occurred.
+  /// @details BB> use the bounding boxes to estimate whether a collision has occurred.
 
   PChr_t chrlst      = gs->ChrList;
 
@@ -4131,7 +4131,7 @@ bool_t chr_detect_collision( Game_t * gs, CHR_REF chra_ref, CHR_REF chrb_ref, bo
 //--------------------------------------------------------------------------------------------
 bool_t chr_do_collision( Game_t * gs, CHR_REF chra_ref, CHR_REF chrb_ref, bool_t exclude_height, CVolume_t * cv)
 {
-  // BB > use the bounding boxes to determine whether a collision has occurred.
+  /// @details BB> use the bounding boxes to determine whether a collision has occurred.
   //      there are currently 3 levels of collision detection.
   //      level 1 - the basic square axis-aligned bounding box
   //      level 2 - the octagon bounding box calculated from the actual vertex positions
@@ -4311,7 +4311,7 @@ bool_t prt_do_collision( Game_t * gs, CHR_REF chra_ref, PRT_REF prtb_ref, bool_t
 #define COLLISION_HASH_NODES (CHR_MAX_COLLISIONS*2)
 void do_bumping( Game_t * gs, float dUpdate )
 {
-  // ZZ> This function sets handles characters hitting other characters or particles
+  /// @details ZZ> This function sets handles characters hitting other characters or particles
 
   Uint32 fanblock;
   int cnt, tnc, chrinblock, prtinblock;
@@ -5387,7 +5387,7 @@ void do_bumping( Game_t * gs, float dUpdate )
 //--------------------------------------------------------------------------------------------
 void stat_return( Game_t * gs, float dUpdate )
 {
-  // ZZ> This function brings mana and life back
+  /// @details ZZ> This function brings mana and life back
 
   Client_t * cs = gs->cl;
 
@@ -5537,7 +5537,7 @@ void stat_return( Game_t * gs, float dUpdate )
 //--------------------------------------------------------------------------------------------
 void pit_kill( Game_t * gs, float dUpdate )
 {
-  // ZZ> This function kills any character in a deep pit...
+  /// @details ZZ> This function kills any character in a deep pit...
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -5596,7 +5596,7 @@ void pit_kill( Game_t * gs, float dUpdate )
 //--------------------------------------------------------------------------------------------
 void resize_characters( Game_t * gs, float dUpdate )
 {
-  // ZZ> This function makes the characters get bigger or smaller, depending
+  /// @details ZZ> This function makes the characters get bigger or smaller, depending
   //     on their sizegoto and sizegototime
 
   PChr_t chrlst      = gs->ChrList;
@@ -5685,7 +5685,7 @@ void resize_characters( Game_t * gs, float dUpdate )
 //--------------------------------------------------------------------------------------------
 void export_one_character_name( Game_t * gs, char *szSaveName, CHR_REF chr_ref )
 {
-  // ZZ> This function makes the "NAMING.TXT" file for the character
+  /// @details ZZ> This function makes the "NAMING.TXT" file for the character
 
   PChr_t chrlst      = gs->ChrList;
 
@@ -5710,7 +5710,7 @@ void export_one_character_name( Game_t * gs, char *szSaveName, CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 void CapList_save_one( Game_t * gs, char *szSaveName, CHR_REF ichr )
 {
-  // ZZ> This function creates a "DATA.TXT" file for the given character.
+  /// @details ZZ> This function creates a "DATA.TXT" file for the given character.
   //     it is assumed that all enchantments have been done away with
 
   FILE* filewrite;
@@ -5992,7 +5992,7 @@ void CapList_save_one( Game_t * gs, char *szSaveName, CHR_REF ichr )
 //--------------------------------------------------------------------------------------------
 void export_one_character_skin( Game_t * gs, char *szSaveName, CHR_REF ichr )
 {
-  // ZZ> This function creates a "SKIN.TXT" file for the given character.
+  /// @details ZZ> This function creates a "SKIN.TXT" file for the given character.
 
   PChr_t chrlst      = gs->ChrList;
 
@@ -6072,7 +6072,7 @@ float calc_chr_level( Game_t * gs, CHR_REF ichr )
 //--------------------------------------------------------------------------------------------
 OBJ_REF object_generate_index( char *szLoadName )
 {
-  // ZZ > This reads the object slot in "DATA.TXT" that the profile
+  /// @details ZZ> This reads the object slot in "DATA.TXT" that the profile
   //      is assigned to.  Errors in this number may cause the program to abort
 
   FILE* fileread;
@@ -6109,7 +6109,7 @@ OBJ_REF object_generate_index( char *szLoadName )
 //--------------------------------------------------------------------------------------------
 CAP_REF CapList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST char *szObjectname, CAP_REF irequest )
 {
-  // ZZ> This function fills a character profile with data from "DATA.TXT"
+  /// @details ZZ> This function fills a character profile with data from "DATA.TXT"
 
   FILE* fileread;
   int iskin, cnt;
@@ -6426,7 +6426,7 @@ CAP_REF CapList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST 
 //--------------------------------------------------------------------------------------------
 int fget_skin( char * szObjectpath, EGO_CONST char * szObjectname )
 {
-  // ZZ> This function reads the "SKIN.TXT" file...
+  /// @details ZZ> This function reads the "SKIN.TXT" file...
 
   FILE* fileread;
   Uint8 skin;
@@ -6446,7 +6446,7 @@ int fget_skin( char * szObjectpath, EGO_CONST char * szObjectname )
 //--------------------------------------------------------------------------------------------
 bool_t check_skills( Game_t * gs, CHR_REF who, Uint32 whichskill )
 {
-  // ZF> This checks if the specified character has the required skill. Returns btrue if true
+  /// @details ZF> This checks if the specified character has the required skill. Returns btrue if true
   // and bfalse if not. Also checks Skill expansions.
 
   PChr_t chrlst      = gs->ChrList;
@@ -6473,7 +6473,7 @@ bool_t check_skills( Game_t * gs, CHR_REF who, Uint32 whichskill )
 //--------------------------------------------------------------------------------------------
 int check_player_quest( char *whichplayer, IDSZ idsz )
 {
-  // ZF> This function checks if the specified player has the IDSZ in his or her quest.txt
+  /// @details ZF> This function checks if the specified player has the IDSZ in his or her quest.txt
   // and returns the quest level of that specific quest (Or NOQUEST if it is not found, QUESTBEATEN if it is finished)
 
   FILE *fileread;
@@ -6510,7 +6510,7 @@ int check_player_quest( char *whichplayer, IDSZ idsz )
 //--------------------------------------------------------------------------------------------
 bool_t add_quest_idsz( char *whichplayer, IDSZ idsz )
 {
-  // ZF> This function writes a IDSZ (With quest level 0) into a player quest.txt file, returns btrue if succeeded
+  /// @details ZF> This function writes a IDSZ (With quest level 0) into a player quest.txt file, returns btrue if succeeded
 
   FILE *filewrite;
   STRING newloadname;
@@ -6530,10 +6530,13 @@ bool_t add_quest_idsz( char *whichplayer, IDSZ idsz )
 }
 
 //--------------------------------------------------------------------------------------------
-//TODO: This should be moved to file_common.c
+
 bool_t fcopy_line(FILE * fileread, FILE * filewrite)
 {
-  // BB > copy a line of arbitrary length, in chunks of length
+  ///
+  /// @todo This should be moved to file_common.c
+
+  /// @details BB> copy a line of arbitrary length, in chunks of length
   //      sizeof(linebuffer)
 
   char linebuffer[64];
@@ -6556,7 +6559,7 @@ bool_t fcopy_line(FILE * fileread, FILE * filewrite)
 //--------------------------------------------------------------------------------------------
 int modify_quest_idsz( char *whichplayer, IDSZ idsz, int adjustment )
 {
-  // ZF> This function increases or decreases a Quest IDSZ quest level by the amount determined in
+  /// @details ZF> This function increases or decreases a Quest IDSZ quest level by the amount determined in
   //     adjustment. It then returns the current quest level it now has.
   //     It returns NOQUEST if failed and if the adjustment is 0, the quest is marked as beaten...
 
@@ -7530,7 +7533,7 @@ void damage_character( Game_t * gs, CHR_REF chr_ref, Uint16 direction,
                        PAIR * pdam, DAMAGE damagetype, TEAM_REF team,
                        CHR_REF attacker, Uint16 effects )
 {
-  // ZZ> This function calculates and applies damage to a character.  It also
+  /// @details ZZ> This function calculates and applies damage to a character.  It also
   //     sets alerts and begins actions.  Blocking and frame invincibility
   //     are done here too.  Direction is FRONT if the attack is coming head on,
   //     RIGHT if from the right, BEHIND if from the back, LEFT if from the
@@ -7799,9 +7802,9 @@ void damage_character( Game_t * gs, CHR_REF chr_ref, Uint16 direction,
             // Turn off all sounds if it's a player
             for ( tnc = 0; tnc < MAXWAVE; tnc++ )
             {
-              //TODO Zefz: Do we need this? This makes all sounds a character makes stop when it dies...
-              //           This may stop death sounds
-              //snd_stop_sound(pchr->model);
+              /// @todo <Zefz> Do we need snd_stop_sound()? This makes all sounds a character makes stop when it dies...
+              ///               This may stop death sounds...
+              //  snd_stop_sound(pchr->model);
             }
 
             // Afford it one last thought if it's an AI
@@ -7853,7 +7856,7 @@ void damage_character( Game_t * gs, CHR_REF chr_ref, Uint16 direction,
 //--------------------------------------------------------------------------------------------
 void kill_character( Game_t * gs, CHR_REF chr_ref, CHR_REF killer )
 {
-  // ZZ> This function kills a character...  CHRLST_COUNT killer for accidental death
+  /// @details ZZ> This function kills a character...  CHRLST_COUNT killer for accidental death
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -7917,7 +7920,7 @@ bool_t import_info_add(IMPORT_INFO * ii, OBJ_REF obj)
 //--------------------------------------------------------------------------------------------
 void play_action( Game_t * gs, CHR_REF ichr, ACTION action, bool_t ready )
 {
-  // ZZ> This function starts a generic action for a character
+  /// @details ZZ> This function starts a generic action for a character
 
   Chr_t * pchr;
   Mad_t * pmad;
@@ -7945,7 +7948,7 @@ void play_action( Game_t * gs, CHR_REF ichr, ACTION action, bool_t ready )
 //--------------------------------------------------------------------------------------------
 void set_frame( Game_t * gs, CHR_REF ichr, Uint16 frame, Uint8 lip )
 {
-  // ZZ> This function sets the frame for a character explicitly...  This is used to
+  /// @details ZZ> This function sets the frame for a character explicitly...  This is used to
   //     rotate Tank turrets
 
   Uint16 start, end;
@@ -7993,7 +7996,7 @@ void set_frame( Game_t * gs, CHR_REF ichr, Uint16 frame, Uint8 lip )
 //--------------------------------------------------------------------------------------------
 void drop_money( Game_t * gs, CHR_REF ichr, Uint16 money )
 {
-  // ZZ> This function drops some of a character's money
+  /// @details ZZ> This function drops some of a character's money
 
   PChr_t chrlst      = gs->ChrList;
 
@@ -8194,7 +8197,7 @@ bool_t chr_create_stats( Uint32 * pseed, Stats_t * pstats, StatData_t * pdata)
 //--------------------------------------------------------------------------------------------
 CHR_REF _chr_spawn( CHR_SPAWN_INFO si, bool_t activate )
 {
-  // ZZ> This function initializes a Chr_t data structure in the "reserved" state,
+  /// @details ZZ> This function initializes a Chr_t data structure in the "reserved" state,
   //     if the CHR_SPAWN_INFO is valid.
   //     On success, it returns the index, otherwise INVALID_CHR.
 
@@ -8449,7 +8452,7 @@ CHR_REF _chr_spawn( CHR_SPAWN_INFO si, bool_t activate )
 //--------------------------------------------------------------------------------------------
 void respawn_character( Game_t * gs, CHR_REF ichr )
 {
-  // ZZ> This function respawns a character
+  /// @details ZZ> This function respawns a character
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -8549,7 +8552,7 @@ void signal_target( Game_t * gs, Uint32 priority, CHR_REF target_ref, Uint16 upp
 //--------------------------------------------------------------------------------------------
 void signal_team( Game_t * gs, CHR_REF chr_ref, Uint32 message )
 {
-  // ZZ> This function issues an message for help to all teammates
+  /// @details ZZ> This function issues an message for help to all teammates
 
   PChr_t chrlst        = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -8584,7 +8587,7 @@ void signal_team( Game_t * gs, CHR_REF chr_ref, Uint32 message )
 //--------------------------------------------------------------------------------------------
 void signal_idsz_index( Game_t * gs, Uint32 priority, Uint32 data, IDSZ idsz, IDSZ_INDEX index )
 {
-  // ZZ> This function issues an data to all characters with the a matching special IDSZ
+  /// @details ZZ> This function issues an data to all characters with the a matching special IDSZ
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;

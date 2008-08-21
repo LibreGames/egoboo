@@ -1,6 +1,4 @@
-/* Egoboo - egobootypedef.h
- * Defines some basic types that are used throughout the game code.
- */
+#pragma once
 
 //********************************************************************************************
 //*
@@ -21,7 +19,11 @@
 //*
 //********************************************************************************************
 
-#pragma once
+///
+/// @file
+/// @brief Global Type Definitions.
+/// @details Defines basic types that are used throughout the game code.
+
 
 #include "egoboo_config.h"
 
@@ -228,13 +230,13 @@ typedef struct s_range RANGE;
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 #define OBJLST_COUNT              1024
-#define EVELST_COUNT              OBJLST_COUNT  // One enchant type per model
-#define ENCLST_COUNT          128         // Number of enchantments
+#define EVELST_COUNT              OBJLST_COUNT     ///<  One enchant type per model
+#define ENCLST_COUNT          128                  ///<  Number of enchantments
 #define CAPLST_COUNT              OBJLST_COUNT
-#define CHRLST_COUNT              350         // Max number of characters
-#define MADLST_COUNT              OBJLST_COUNT   // Max number of models
-#define PIPLST_COUNT           1024                    // Particle templates
-#define PRTLST_COUNT              512         // Max number of particles
+#define CHRLST_COUNT              350              ///<  Max number of characters
+#define MADLST_COUNT              OBJLST_COUNT     ///<  Max number of models
+#define PIPLST_COUNT           1024                ///<  Particle templates
+#define PRTLST_COUNT              512              ///<  Max number of particles
 
 struct sCap;
 struct sChr;
@@ -249,6 +251,11 @@ struct sProfile;
 
 template <typename _ty, unsigned _sz> struct TPList;
 
+/// @brief  Templated Typed List
+/// @detail An abstraction of the existing type of list used in Egoboo. With the templated
+///  "pointer type" template <typename _ty, unsigned _sz> struct TPList, it creates a system
+///  where someone cannot accidentally access a character profile when they are looking for
+///  a model...
 template <typename _ty, unsigned _sz>
 struct TList
 {
@@ -297,6 +304,10 @@ struct TList
   operator TPList<_ty, _sz> () { TPList<_ty, _sz> tmp; tmp.plist = (TPList<_ty, _sz>::myplist)this; return tmp; }
 };
 
+/// @brief Templated Typed List "Pointer"
+/// @detail This is actually an abstraction for the type of integer references
+///  that have always been in use in Egoboo. However, this allows for strict type
+///  checking in C++, to make sure we are getting what we want.
 template <typename _ty, unsigned _sz>
 struct TPList
 {
@@ -464,11 +475,11 @@ struct sProcState
   egoboo_key_t ekey;
 
   // process variables
-  ProcessStates State;              // what are we doing now?
-  bool_t        Active;             // Keep looping or quit?
-  bool_t        Paused;             // Is it paused?
-  bool_t        KillMe;             // someone requested that we terminate!
-  bool_t        Terminated;         // We are completely done.
+  ProcessStates State;              ///< what are we doing now?
+  bool_t        Active;             ///< Keep looping or quit?
+  bool_t        Paused;             ///< Is it paused?
+  bool_t        KillMe;             ///< someone requested that we terminate!
+  bool_t        Terminated;         ///< We are completely done.
 
   // each process has its own clock
   struct sClockState * clk;

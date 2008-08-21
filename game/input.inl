@@ -26,7 +26,7 @@ CONTROL_DATA control_list[INPUT_COUNT][CONTROL_COUNT];
 //--------------------------------------------------------------------------------------------
 INLINE bool_t key_is_pressed( int keycode )
 {
-  // ZZ> This function returns btrue if the given control is pressed...
+  /// @details ZZ> This function returns btrue if the given control is pressed...
 
   if ( keyb.mode )  return bfalse;
 
@@ -39,7 +39,7 @@ INLINE bool_t key_is_pressed( int keycode )
 //--------------------------------------------------------------------------------------------
 INLINE bool_t control_key_is_pressed( CONTROL control )
 {
-  // ZZ> This function returns btrue if the given control is pressed...
+  /// @details ZZ> This function returns btrue if the given control is pressed...
 
   if ( control_list[INPUT_KEYB][control].is_key )
     return key_is_pressed( control_list[INPUT_KEYB][control].value );
@@ -50,7 +50,7 @@ INLINE bool_t control_key_is_pressed( CONTROL control )
 //--------------------------------------------------------------------------------------------
 INLINE bool_t control_mouse_is_pressed( CONTROL control )
 {
-  // ZZ> This function returns btrue if the given control is pressed...
+  /// @details ZZ> This function returns btrue if the given control is pressed...
   bool_t retval = bfalse;
 
   if ( control_list[INPUT_MOUS][control].is_key )
@@ -68,7 +68,7 @@ INLINE bool_t control_mouse_is_pressed( CONTROL control )
 //--------------------------------------------------------------------------------------------
 INLINE bool_t control_joy_is_pressed( int joy_num, CONTROL control )
 {
-  // ZZ> This function returns btrue if the given control is pressed...
+  /// @details ZZ> This function returns btrue if the given control is pressed...
 
   INPUT_TYPE it;
   bool_t retval = bfalse;

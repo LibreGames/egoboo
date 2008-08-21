@@ -1,6 +1,4 @@
-/* Egoboo - mathstuff.h
- * The name's pretty self explanatory, doncha think?
- */
+#pragma once
 
 //********************************************************************************************
 //*
@@ -21,7 +19,10 @@
 //*
 //********************************************************************************************
 
-#pragma once
+///
+/// @file
+/// @brief Header files for math operations.
+/// @details The name's pretty self explanatory, doncha think?
 
 /**> HEADER FILES <**/
 #include <math.h>
@@ -149,8 +150,8 @@
 #define TRIGTABLE_MASK (TRIGTABLE_SIZE-1)
 #define TRIGTABLE_SHIFT (TRIGTABLE_SIZE>>2)       // TRIGTABLE_SIZE/4 == TWO_PI/4 == PI_OVER_2
 
-extern float turntosin[TRIGTABLE_SIZE];           // Convert chrturn>>2...  to sine
-extern float turntocos[TRIGTABLE_SIZE];           // Convert chrturn>>2...  to cosine
+extern float turntosin[TRIGTABLE_SIZE];           ///< Convert chrturn>>2...  to sine
+extern float turntocos[TRIGTABLE_SIZE];           ///< Convert chrturn>>2...  to cosine
 
 /**> FUNCTION PROTOTYPES <**/
 void make_turntosin( void );

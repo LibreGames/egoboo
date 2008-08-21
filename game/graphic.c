@@ -91,7 +91,7 @@ static void dolist_make( void );
 //--------------------------------------------------------------------------------------------
 bool_t gfx_find_anisotropy( Graphics_t * g )
 {
-  // BB> get the maximum anisotropy supported by the video vard
+  /// @details BB> get the maximum anisotropy supported by the video vard
   //     OpenGL and SDL must be loaded for this to work.
 
   if(NULL == g) return bfalse;
@@ -146,12 +146,12 @@ void DisableTexturing()
   //}
 }
 
-
-
-//TODO: This needs work
 static GLint threeDmode_begin_level = 0;
 void Begin3DMode()
 {
+  ///
+  /// @todo This needs work
+
   assert( 0 == threeDmode_begin_level );
 
   ATTRIB_GUARD_OPEN( threeDmode_begin_level );
@@ -264,7 +264,7 @@ void EndText()
 //---------------------------------------------------------------------------------------------
 void release_all_textures( Graphics_Data_t * gfx )
 {
-  // ZZ> This function clears out all of the textures
+  /// @details ZZ> This function clears out all of the textures
 
   int cnt;
 
@@ -277,7 +277,7 @@ void release_all_textures( Graphics_Data_t * gfx )
 //--------------------------------------------------------------------------------------------
 Uint32 load_one_icon( Graphics_Data_t * gfx, char * szPathname, EGO_CONST char * szObjectname, char * szFilename )
 {
-  // ZZ> This function is used to load an icon.  Most icons are loaded
+  /// @details ZZ> This function is used to load an icon.  Most icons are loaded
   //     without this function though...
 
   Uint32 retval = MAXICONTX;
@@ -294,7 +294,7 @@ Uint32 load_one_icon( Graphics_Data_t * gfx, char * szPathname, EGO_CONST char *
 //---------------------------------------------------------------------------------------------
 void mnu_prime_titleimage(MenuProc_t * mproc)
 {
-  // ZZ> This function sets the title image pointers to NULL
+  /// @details ZZ> This function sets the title image pointers to NULL
 
   mnu_free_all_titleimages(mproc);
 
@@ -313,7 +313,7 @@ void mnu_prime_titleimage(MenuProc_t * mproc)
 //---------------------------------------------------------------------------------------------
 void prime_icons(Game_t * gs)
 {
-  // ZZ> This function sets the icon pointers to NULL
+  /// @details ZZ> This function sets the icon pointers to NULL
 
   int cnt;
 
@@ -342,7 +342,7 @@ void prime_icons(Game_t * gs)
 //---------------------------------------------------------------------------------------------
 void release_all_icons( Graphics_Data_t * gfx )
 {
-  // ZZ> This function clears out all of the icons
+  /// @details ZZ> This function clears out all of the icons
 
   int cnt;
 
@@ -357,7 +357,7 @@ void release_all_icons( Graphics_Data_t * gfx )
 //---------------------------------------------------------------------------------------------
 void init_all_models(Game_t * gs)
 {
-  // ZZ> This function initializes the models
+  /// @details ZZ> This function initializes the models
 
   CapList_delete(gs);
   PipList_delete(gs);
@@ -367,7 +367,7 @@ void init_all_models(Game_t * gs)
 //---------------------------------------------------------------------------------------------
 void release_all_models(Game_t * gs)
 {
-  // ZZ> This function clears out all of the models
+  /// @details ZZ> This function clears out all of the models
 
   CapList_delete(gs);
   MadList_delete(gs);
@@ -376,7 +376,7 @@ void release_all_models(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 static bool_t write_debug_message( int time, EGO_CONST char *format, va_list args )
 {
-  // ZZ> This function sticks a message in the display queue and sets its timer
+  /// @details ZZ> This function sticks a message in the display queue and sets its timer
 
   STRING buffer;
 
@@ -418,7 +418,7 @@ bool_t debug_message( int time, EGO_CONST char *format, ... )
 //--------------------------------------------------------------------------------------------
 void reset_end_text( Game_t * gs )
 {
-  // ZZ> This function resets the end-module text
+  /// @details ZZ> This function resets the end-module text
 
   // blank the text
   gs->endtext[0] = EOS;
@@ -443,7 +443,7 @@ void reset_end_text( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 void append_end_text( Game_t * gs, int message, CHR_REF chr_ref )
 {
-  // ZZ> This function appends a message to the end-module text
+  /// @details ZZ> This function appends a message to the end-module text
 
   char * message_src;
 
@@ -456,7 +456,7 @@ void append_end_text( Game_t * gs, int message, CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 void make_textureoffset( void )
 {
-  // ZZ> This function sets up for moving textures
+  /// @details ZZ> This function sets up for moving textures
 
   int cnt;
   for ( cnt = 0; cnt < 256; cnt++ )
@@ -468,7 +468,7 @@ void make_textureoffset( void )
 //--------------------------------------------------------------------------------------------
 void figure_out_what_to_draw()
 {
-  // ZZ> This function determines the things that need to be drawn
+  /// @details ZZ> This function determines the things that need to be drawn
 
   // Make the render list for the mesh
   make_renderlist(&renderlist);
@@ -496,7 +496,7 @@ void animate_tiles( TILE_ANIMATED * t, float dUpdate )
 //--------------------------------------------------------------------------------------------
 bool_t load_particle_texture( Game_t * gs, EGO_CONST char *szModPath  )
 {
-  // BB> Load the particle bitmap. Check the gamedat dir first for a module override
+  /// @details BB> Load the particle bitmap. Check the gamedat dir first for a module override
 
   STRING szTemp;
   ConfigData_t * cd;
@@ -568,8 +568,8 @@ bool_t load_particle_texture( Game_t * gs, EGO_CONST char *szModPath  )
 //--------------------------------------------------------------------------------------------
 bool_t load_basic_textures( Game_t * gs, EGO_CONST char *szModPath )
 {
-  // ZZ> This function loads the standard textures for a module
-  // BB> In each case, try to load one stored with the module first.
+  /// @details ZZ> This function loads the standard textures for a module
+  /// @details BB> In each case, try to load one stored with the module first.
 
   ConfigData_t * cd;
   Graphics_Data_t * gfx = Game_getGfx(gs);
@@ -646,7 +646,7 @@ bool_t load_basic_textures( Game_t * gs, EGO_CONST char *szModPath )
   };
 
 
-  // BB > this is handled differently now and is not needed
+  /// @details BB> this is handled differently now and is not needed
   // Texture 7 is the phong map
   //snprintf(CStringTmp1, sizeof(CStringTmp1), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->phong_bitmap);
   //if(INVALID_TEXTURE==GLtexture_Load(GL_TEXTURE_2D,  gfx->TxTexture + TX_PHONG, CStringTmp1, INVALID_KEY))
@@ -665,7 +665,7 @@ bool_t load_basic_textures( Game_t * gs, EGO_CONST char *szModPath )
 //--------------------------------------------------------------------------------------------
 bool_t load_bars( char* szBitmap )
 {
-  // ZZ> This function loads the status bar bitmap
+  /// @details ZZ> This function loads the status bar bitmap
   Gui_t * gui = gui_getState();
   int cnt;
 
@@ -695,7 +695,7 @@ bool_t load_bars( char* szBitmap )
 //--------------------------------------------------------------------------------------------
 bool_t make_water(WATER_INFO * wi)
 {
-  // ZZ> This function sets up water movements
+  /// @details ZZ> This function sets up water movements
 
   int layer, frame, point, mode, cnt;
   float tmp_sin, tmp_cos, tmp;
@@ -795,7 +795,7 @@ bool_t setup_lighting( LIGHTING_INFO * li )
 //--------------------------------------------------------------------------------------------
 void render_background( Uint16 texture )
 {
-  // ZZ> This function draws the large background
+  /// @details ZZ> This function draws the large background
 
   Game_t * gs = Graphics_requireGame(&gfxState);
   Graphics_Data_t * gfx = gfxState.pGfx;
@@ -960,7 +960,7 @@ void render_foreground_overlay( Uint16 texture )
 //--------------------------------------------------------------------------------------------
 void render_shadow( CHR_REF character )
 {
-  // ZZ> This function draws a NIFTY shadow
+  /// @details ZZ> This function draws a NIFTY shadow
 
   Game_t * gs    = Graphics_requireGame(&gfxState);
   PChr_t chrlst  = gs->ChrList;
@@ -1188,7 +1188,7 @@ void calc_chr_lighting( vect3 pos, Uint16 tl, Uint16 tr, Uint16 bl, Uint16 br, U
 //--------------------------------------------------------------------------------------------
 void do_chr_dynalight(Game_t * gs)
 {
-  // ZZ> This function figures out character dynamic lighting from the mesh
+  /// @details ZZ> This function figures out character dynamic lighting from the mesh
 
   int cnt;
   CHR_REF chr_tnc;
@@ -1294,7 +1294,7 @@ void do_chr_dynalight(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 void do_prt_dynalight(Game_t * gs)
 {
-  // ZZ> This function figures out particle lighting
+  /// @details ZZ> This function figures out particle lighting
 
   Mesh_t * pmesh = NULL;
   PChr_t   chrlst  = NULL;
@@ -1363,7 +1363,7 @@ void do_prt_dynalight(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 void render_water()
 {
-  // ZZ> This function draws all of the water fans
+  /// @details ZZ> This function draws all of the water fans
 
   int cnt;
   Game_t * gs = Graphics_requireGame(&gfxState);
@@ -1394,7 +1394,7 @@ void render_water()
 
 void render_water_lit()
 {
-  // BB> This function draws the hilites for water tiles using global lighting
+  /// @details BB> This function draws the hilites for water tiles using global lighting
 
   int cnt;
   Game_t * gs = Graphics_requireGame(&gfxState);
@@ -1913,7 +1913,7 @@ void render_character_highlights()
 GLint inp_attrib_stack, out_attrib_stack;
 void draw_scene_zreflection()
 {
-  // ZZ> This function draws 3D objects
+  /// @details ZZ> This function draws 3D objects
   // do all the rendering of reflections
 
   Game_t * gs = Graphics_requireGame(&gfxState);
@@ -2066,7 +2066,7 @@ bool_t draw_texture_box( GLtexture * ptx, FRect_t * tx_rect, FRect_t * sc_rect )
 //--------------------------------------------------------------------------------------------
 void draw_blip( COLR color, float x, float y)
 {
-  // ZZ> This function draws a blip
+  /// @details ZZ> This function draws a blip
 
   Gui_t * gui = gui_getState();
   Graphics_Data_t * gfx = gfxState.pGfx;
@@ -2116,7 +2116,7 @@ void draw_blip( COLR color, float x, float y)
 //--------------------------------------------------------------------------------------------
 void draw_one_icon( int icontype, int x, int y, Uint8 sparkle )
 {
-  // ZZ> This function draws an icon
+  /// @details ZZ> This function draws an icon
 
   Game_t * gs = Graphics_requireGame(&gfxState);
   Graphics_Data_t * gfx = gfxState.pGfx;
@@ -2185,7 +2185,7 @@ void draw_one_icon( int icontype, int x, int y, Uint8 sparkle )
 //--------------------------------------------------------------------------------------------
 void BMFont_draw_one( BMFont_t * pfnt, int fonttype, float x, float y )
 {
-  // ZZ> This function draws a letter or number
+  /// @details ZZ> This function draws a letter or number
   // GAC> Very nasty version for starters.  Lots of room for improvement.
 
   GLfloat dx, dy, border;
@@ -2211,7 +2211,7 @@ void BMFont_draw_one( BMFont_t * pfnt, int fonttype, float x, float y )
 //--------------------------------------------------------------------------------------------
 void draw_map( float x, float y )
 {
-  // ZZ> This function draws the map
+  /// @details ZZ> This function draws the map
 
   FRect_t tx_rect, sc_rect;
   Game_t * gs = Graphics_requireGame(&gfxState);
@@ -2250,7 +2250,7 @@ void draw_map( float x, float y )
 //--------------------------------------------------------------------------------------------
 int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
 {
-  // ZZ> This function draws a bar and returns the y position for the next one
+  /// @details ZZ> This function draws a bar and returns the y position for the next one
 
   Gui_t * gui = gui_getState();
   Graphics_Data_t * gfx = gfxState.pGfx;
@@ -2430,7 +2430,7 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
 //--------------------------------------------------------------------------------------------
 int draw_string( BMFont_t * pfnt, float x, float y, GLfloat tint[], char * szFormat, ... )
 {
-  // ZZ> This function spits a line of null terminated text onto the backbuffer
+  /// @details ZZ> This function spits a line of null terminated text onto the backbuffer
   char cTmp;
   GLfloat current_tint[4], temp_tint[4];
   STRING szText;
@@ -2494,7 +2494,7 @@ int draw_string( BMFont_t * pfnt, float x, float y, GLfloat tint[], char * szFor
 //--------------------------------------------------------------------------------------------
 int BMFont_word_size( BMFont_t * pfnt, char *szText )
 {
-  // ZZ> This function returns the number of pixels the
+  /// @details ZZ> This function returns the number of pixels the
   //     next word will take on screen in the x direction
 
   // Count all preceeding spaces
@@ -2529,7 +2529,7 @@ int BMFont_word_size( BMFont_t * pfnt, char *szText )
 //--------------------------------------------------------------------------------------------
 int draw_wrap_string( BMFont_t * pfnt, float x, float y, GLfloat tint[], float maxx, char * szFormat, ... )
 {
-  // ZZ> This function spits a line of null terminated text onto the backbuffer,
+  /// @details ZZ> This function spits a line of null terminated text onto the backbuffer,
   //     wrapping over the right side and returning the new y value
 
   va_list args;
@@ -2627,7 +2627,7 @@ int draw_wrap_string( BMFont_t * pfnt, float x, float y, GLfloat tint[], float m
 //--------------------------------------------------------------------------------------------
 int draw_status( BMFont_t * pfnt, Status_t * pstat )
 {
-  // ZZ> This function shows a character's icon, status and inventory
+  /// @details ZZ> This function shows a character's icon, status and inventory
   //     The x,y coordinates are the top left point of the image to draw
 
   STRING szTmp;
@@ -2876,7 +2876,7 @@ int do_status( Client_t * cs, BMFont_t * pfnt, int x, int y)
 //--------------------------------------------------------------------------------------------
 void draw_text( BMFont_t *  pfnt )
 {
-  // ZZ> This function spits out some words
+  /// @details ZZ> This function spits out some words
 
   char text[512];
   int y, fifties, seconds, minutes;
@@ -3166,7 +3166,7 @@ bool_t request_pageflip_unpause()
 //--------------------------------------------------------------------------------------------
 bool_t do_pageflip()
 {
-  // BB > actualy attempt a pageflip. It is possible to freeze the whole pageflipping
+  /// @details BB> actualy attempt a pageflip. It is possible to freeze the whole pageflipping
   //      process by calling request_pageflip_pause(). It will freeze the screen after the next
   //      actual pageflip. This can be overriden by calling request_pageflip_unpause() at any time.
 
@@ -3260,7 +3260,7 @@ bool_t draw_scene(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 void draw_main( float frameDuration )
 {
-  // ZZ> This function does all the drawing stuff
+  /// @details ZZ> This function does all the drawing stuff
 
   draw_scene( NULL );
 
@@ -3301,7 +3301,7 @@ void load_blip_bitmap( struct sGraphics_Data * gfx, char * modname )
 //--------------------------------------------------------------------------------------------
 void load_menu()
 {
-  // ZZ> This function loads all of the menu data...  Images are loaded into system
+  /// @details ZZ> This function loads all of the menu data...  Images are loaded into system
   // memory
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.font_bitmap );
@@ -3552,7 +3552,7 @@ bool_t Graphics_synchronize(Graphics_t * g, ConfigData_t * cd)
 ////--------------------------------------------------------------------------------------------
 //void draw_titleimage(int image, int x, int y)
 //{
-//  // ZZ> This function draws a title image on the backbuffer
+//  /// @details ZZ> This function draws a title image on the backbuffer
 //
 //  GLfloat txWidth, txHeight;
 //
@@ -3640,7 +3640,7 @@ void dolist_add( CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 void dolist_sort( void )
 {
-  // ZZ> This function orders the dolist based on distance from camera,
+  /// @details ZZ> This function orders the dolist based on distance from camera,
   //     which is needed for reflections to properly clip themselves.
   //     Order from closest to farthest
 
@@ -3692,7 +3692,7 @@ void dolist_sort( void )
 //--------------------------------------------------------------------------------------------
 void dolist_make( void )
 {
-  // ZZ> This function finds the characters that need to be drawn and puts them in the list
+  /// @details ZZ> This function finds the characters that need to be drawn and puts them in the list
 
   Game_t * gs = Graphics_requireGame(&gfxState);
 
@@ -4115,7 +4115,7 @@ SDL_Surface * RequestVideoMode( video_parameters_t * v )
 //--------------------------------------------------------------------------------------------
 Graphics_t * sdl_set_mode(Graphics_t * g_old, Graphics_t * g_new, bool_t update_ogl)
 {
-  // BB > let SDL try to set a new video mode.
+  /// @details BB> let SDL try to set a new video mode.
 
   video_parameters_t param_old, param_new;
   Graphics_t * retval = NULL;
@@ -4199,7 +4199,7 @@ Graphics_t * sdl_set_mode(Graphics_t * g_old, Graphics_t * g_new, bool_t update_
 //--------------------------------------------------------------------------------------------
 bool_t gl_set_mode(Graphics_t * g)
 {
-  // BB > this function applies OpenGL settings. Must have a valid SDL_Surface to do any good.
+  /// @details BB> this function applies OpenGL settings. Must have a valid SDL_Surface to do any good.
 
   if(NULL == g || NULL == g->surface) return bfalse;
 
@@ -4308,7 +4308,7 @@ bool_t lighting_info_reset(LIGHTING_INFO * li)
 //---------------------------------------------------------------------------------------------
 void make_lightdirectionlookup()
 {
-  // ZZ> This function builds the lighting direction table
+  /// @details ZZ> This function builds the lighting direction table
   //     The table is used to find which direction the light is coming
   //     from, based on the four corner vertices of a mesh tile.
 
@@ -4333,7 +4333,7 @@ void make_lightdirectionlookup()
 //--------------------------------------------------------------------------------------------
 //void render_bad_shadow(CHR_REF character)
 //{
-//  // ZZ> This function draws a sprite shadow
+//  /// @details ZZ> This function draws a sprite shadow
 //
 //  Game_t * gs = Graphics_requireGame(&gfxState);
 //
