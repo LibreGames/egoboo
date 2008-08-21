@@ -785,9 +785,9 @@ struct sChr
 
   float           weight;          // Weight ( for pressure plates )
 
-  Uint8           passage;         // The passage associated with this character
+  Uint16          passage;         // The passage associated with this character
 
-  Signal_t         message;         // The last message given the character
+  Signal_t        message;         // The last message given the character
 
   CHR_REF         onwhichplatform; // What are we standing on?
   Uint16          holdingweight;   // For weighted buttons

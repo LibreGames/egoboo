@@ -433,10 +433,10 @@ bool_t display_message( Game_t * gs, int message, CHR_REF chr_ref );
 void load_action_names( char* loadname );
 void read_setup( char* filename );
 
-void make_lightdirectionlookup();
+void make_lightdirectionlookup( void );
 void make_enviro( void );
-void draw_chr_info();
-bool_t do_screenshot();
+void draw_chr_info( struct sGame * gs );
+bool_t do_screenshot( void );
 void move_water( WATER_LAYER wlayer[], size_t layer_count, float dUpdate );
 
 CHR_REF search_best_leader( Game_t * gs, TEAM_REF team, CHR_REF exclude );
@@ -489,7 +489,7 @@ void setup_characters( Game_t * gs, char *modname );
 void ChrList_resynch(Game_t * gs);
 
 
-struct sGameStack * Get_GameStack();
+struct sGameStack * Get_GameStack( void );
 
 void set_alerts( Game_t * gs, CHR_REF character, float dUpdate );
 

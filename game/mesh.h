@@ -261,7 +261,7 @@ extern TILE_TXBOX gTileTxBox[MAXTILETYPE];
 
 bool_t TileDictionary_load(TileDictionary_t * pdict);
 void mesh_make_fanstart(MeshInfo_t * mi);
-void mesh_make_twist();
+void mesh_make_twist( void );
 bool_t mesh_load( Mesh_t * pmesh, char *modname );
 
 

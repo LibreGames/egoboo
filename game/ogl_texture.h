@@ -51,7 +51,7 @@ typedef struct ogl_texture_t GLtexture;
 /**> FUNCTION PROTOTYPES: GLtexture <**/
 GLtexture * GLtexture_new( GLtexture * ptx );
 bool_t      GLtexture_delete( GLtexture * ptx );
-GLtexture * GLtexture_create();
+GLtexture * GLtexture_create( void );
 bool_t      GLtexture_destory( GLtexture ** ptx );
 
 Uint32  GLtexture_Convert( GLenum tx_target, GLtexture *texture, SDL_Surface * image, Uint32 key );

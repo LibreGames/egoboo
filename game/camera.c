@@ -42,8 +42,8 @@
 
 Camera_t GCamera;
 
-static void make_camera_matrix();
-static void camera_calc_turn_lr();
+static void make_camera_matrix( void );
+static void camera_calc_turn_lr( void );
 //static void adjust_camera_angle( int height );
 
 //--------------------------------------------------------------------------------------------

@@ -11,9 +11,9 @@
 struct s_nfile_SendState;
 struct s_nfile_ReceiveState;
 
-NetHost_t * nfile_getHost();
-void      nfile_quitHost();
-bool_t    nfile_Started();
+NetHost_t * nfile_getHost( void );
+void      nfile_quitHost( void );
+bool_t    nfile_Started( void );
 
 //--------------------------------------------------------------------------------------------
 

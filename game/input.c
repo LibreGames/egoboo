@@ -86,7 +86,7 @@ KEYBOARD keyb =
 
 //--------------------------------------------------------------------------------------------
 KeyboardBuffer_t * KeyboardBuffer_getState() { return &_keybuff; };
-void             input_init_keybuffer();
+void             input_init_keybuffer( void );
 
 //--------------------------------------------------------------------------------------------
 
@@ -115,7 +115,7 @@ SCANTAG_LIST tags;
 
 //--------------------------------------------------------------------------------------------
 // Tags
-static void reset_tags();
+static void reset_tags( void );
 static int read_tag( FILE *fileread );
 static int tag_value( char *string );
 

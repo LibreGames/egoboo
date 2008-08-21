@@ -233,14 +233,14 @@ struct sKeyboardBuffer
 typedef struct sKeyboardBuffer KeyboardBuffer_t;
 
 //--------------------------------------------------------------------------------------------
-void   input_setup();
-void   input_read();
+void   input_setup( void );
+void   input_read( void );
 bool_t input_reset_press(KEYBOARD * pk);
 
 bool_t input_read_mouse(MOUSE * pm);
 bool_t input_read_key(KEYBOARD * pk);
 bool_t input_read_joystick(JOYSTICK * pj);
 
-KeyboardBuffer_t * KeyboardBuffer_getState();
+KeyboardBuffer_t * KeyboardBuffer_getState( void );
 
 void check_add( Uint8 key, char bigletter, char littleletter );

@@ -17,11 +17,11 @@ enum e_priority
 typedef enum e_priority PRIORITY;
 
 //---------------------------------------------------------------------------------------------
-void fs_init();
-EGO_CONST char *fs_getTempDirectory();
-EGO_CONST char *fs_getImportDirectory();
-EGO_CONST char *fs_getGameDirectory();
-EGO_CONST char *fs_getSaveDirectory();
+void fs_init( void );
+EGO_CONST char *fs_getTempDirectory( void );
+EGO_CONST char *fs_getImportDirectory( void );
+EGO_CONST char *fs_getGameDirectory( void );
+EGO_CONST char *fs_getSaveDirectory( void );
 
 FILE * fs_fileOpen( PRIORITY pri, EGO_CONST char * src, EGO_CONST char * fname, EGO_CONST char * mode );
 void fs_fileClose( FILE * pfile );
@@ -32,7 +32,7 @@ void fs_deleteFile( EGO_CONST char *filename );
 void fs_copyFile( EGO_CONST char *source, EGO_CONST char *dest );
 void fs_removeDirectoryAndContents( EGO_CONST char *dirname );
 void fs_copyDirectory( EGO_CONST char *sourceDir, EGO_CONST char *destDir );
-void empty_import_directory();
+void empty_import_directory( void );
 int  DirGetAttrib( char *fromdir );
 
 //---------------------------------------------------------------------------------------------

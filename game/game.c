@@ -77,10 +77,10 @@ static bool_t         MachineState_delete( MachineState_t * ms );
 static Game_t * Game_new(Game_t * gs, Net_t * net, Client_t * cl, Server_t * sv);
 static bool_t   Game_delete(Game_t * gs);
 
-static bool_t   Gui_startUp();
+static bool_t   Gui_startUp( void );
 
-static retval_t main_doGameGraphics();
-static void     game_handleKeyboard();
+static retval_t main_doGameGraphics( void );
+static void     game_handleKeyboard( void );
 
 
 //---------------------------------------------------------------------------------------------
@@ -164,9 +164,9 @@ static bool_t load_all_music_sounds(ConfigData_t * cd);
 static void sdlinit( Graphics_t * g );
 
 static void update_game(Game_t * gs, float dFrame, Uint32 * rand_idx);
-static void memory_cleanUp(void);
+static void memory_cleanUp( void );
 
-GameStack_t * Get_GameStack();
+GameStack_t * Get_GameStack( void );
 
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
@@ -2300,7 +2300,7 @@ void reset_timers(Game_t * gs)
   gfxState.fps_clock = 0;
 }
 
-extern int initMenus();
+extern int initMenus( void );
 
 #define DO_CONFIGSTRING_COMPARE(XX) if(0 == strncmp(#XX, szin, strlen(#XX))) { if(NULL !=szout) *szout = szin + strlen(#XX); return cd->XX; }
 //--------------------------------------------------------------------------------------------
@@ -4009,7 +4009,7 @@ int proc_menuLoop( MenuProc_t  * mproc )
 //--------------------------------------------------------------------------------------------
 int SDL_main( int argc, char **argv )
 {
-  ProcState_t EgoProc = {bfalse };
+  ProcState_t EgoProc = { bfalse };
 
   int /* program_state = 0, */ i;
   MachineState_t * mach_state;
@@ -7195,6 +7195,7 @@ bool_t read_wawalite( Game_t * gs, char *modname )
   // Read extra data
   gfx_info->exploremode = fget_next_bool( fileread );
   gfx_info->usefaredge  = fget_next_bool( fileread );
+
   GCamera.swing = 0;
   GCamera.swingrate = fget_next_float( fileread );
   GCamera.swingamp = fget_next_float( fileread );
@@ -7256,6 +7257,9 @@ bool_t read_wawalite( Game_t * gs, char *modname )
       } while( fgoto_colon_yesno( fileread ) );
     }
   }
+
+  // let the usefaredge parameter control the "outdoors", as was intended
+  light_info->on = gfx_info->usefaredge;
 
   // Allow slow machines to ignore the fancy stuff
   if ( !CData.twolayerwateron && water_info->layer_count > 1 )

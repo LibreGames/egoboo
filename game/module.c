@@ -333,7 +333,7 @@ bool_t module_read_data( MOD_INFO * pmod, char *szLoadName )
   //Check all selected players directories
   playerhasquest = bfalse;
   iTmp = 0;
-  while ( !playerhasquest && iTmp < loadplayer_count)
+  while ( !playerhasquest && iTmp < loadplayer_count )
   {
     snprintf( playername, sizeof( playername ), "%s", loadplayer[iTmp].dir );
     if( check_player_quest( playername, idsz ) >= 0 ) playerhasquest = btrue;

@@ -423,8 +423,8 @@ typedef struct s_time_latch_buffer TIME_LATCH_BUFFER;
 //---------------------------------------------------------------------------------------------
 
 retval_t net_startUp(struct sConfigData * cd);
-retval_t net_shutDown();
-bool_t   net_Started();
+retval_t net_shutDown( void );
+bool_t   net_Started( void );
 
 bool_t     net_handlePacket(Net_t * ns, ENetEvent *event);
 ENetPeer * net_disconnectPeer(ENetPeer * peer, int granularity_ms, int timeout_ms);
@@ -498,7 +498,7 @@ INLINE size_t stream_remainingSize(STREAM * p);
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
 
-void    do_chat_input();
+void    do_chat_input( void );
 void    net_sayHello(struct sGame * gs);
 bool_t  net_beginGame(struct sGame * gs);
 

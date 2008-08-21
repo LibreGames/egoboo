@@ -150,8 +150,8 @@ INLINE TTFont_t * fnt_reg_pop(FNT_REGISTRY * r)
 
 static int    powerOfTwo( int input );
 static int    copySurfaceToTexture( SDL_Surface *surface, GLuint texture, GLfloat *texCoords );
-static bool_t fnt_init();
-static void   fnt_quit(void);
+static bool_t fnt_init( void );
+static void   fnt_quit( void );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -251,7 +251,7 @@ static bool_t fnt_init()
 }
 
 //--------------------------------------------------------------------------------------------
-static void fnt_quit(void)
+static void fnt_quit( void )
 {
   // BB > automatically unregister and delete all fonts that have been opened and TTF_Quit()
 

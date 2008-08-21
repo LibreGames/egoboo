@@ -23,12 +23,12 @@ struct s_nfile_ReceiveState;
 static bool_t    _nfile_atexit_registered = bfalse;
 static NetHost_t * _nfile_host = NULL;
 
-static retval_t  _nfile_Initialize(void);
-static void      _nfile_Quit(void);
-static retval_t  _nfile_startUp(void);
-static retval_t  _nfhost_shutDown(void);
-static retval_t  _nfile_receiveInitialize(void);
-static retval_t  _nfile_sendInitialize(void);
+static retval_t  _nfile_Initialize( void );
+static void      _nfile_Quit( void );
+static retval_t  _nfile_startUp( void );
+static retval_t  _nfhost_shutDown( void );
+static retval_t  _nfile_receiveInitialize( void );
+static retval_t  _nfile_sendInitialize( void );
 
 
 //--------------------------------------------------------------------------------------------
@@ -38,18 +38,18 @@ static bool_t       NFileState_delete(NFileState_t * nfs);
 
 //--------------------------------------------------------------------------------------------
 static int nfhost_HostCallback(void *);
-static retval_t nfhost_startThreads();
-static retval_t nfhost_stopThreads();
+static retval_t nfhost_startThreads( void );
+static retval_t nfhost_stopThreads( void );
 
 //--------------------------------------------------------------------------------------------
 static struct s_nfile_SendState * _nfile_snd  = NULL;
-struct s_nfile_SendState * _nfile_getSend();
-static retval_t           _nfile_Send_initialize();
+struct s_nfile_SendState * _nfile_getSend( void );
+static retval_t           _nfile_Send_initialize( void );
 static int                _nfile_sendCallback(void * snd);
 
 static struct s_nfile_ReceiveState * _nfile_rec  = NULL;
-struct s_nfile_ReceiveState * _nfile_getReceive();
-static retval_t              _nfile_Receive_initialize();
+struct s_nfile_ReceiveState * _nfile_getReceive( void );
+static retval_t              _nfile_Receive_initialize( void );
 static int                   _nfile_receiveCallback(void * nfs);
 
 //--------------------------------------------------------------------------------------------
@@ -148,7 +148,7 @@ struct s_nfile_SendState
 
 typedef struct s_nfile_SendState nfile_SendState_t;
 
-static nfile_SendState_t * nfile_SendState_create();
+static nfile_SendState_t * nfile_SendState_create( void );
 static bool_t            nfile_SendState_destroy(nfile_SendState_t ** snd);
 
 static nfile_SendState_t * nfile_SendState_new(nfile_SendState_t * snd);
@@ -159,7 +159,7 @@ static retval_t          nfile_SendState_shutDown(nfile_SendState_t * snd);
 static retval_t          nfile_SendState_startThread(nfile_SendState_t * snd);
 static retval_t          nfile_SendState_stopThread(nfile_SendState_t * snd);
 
-static retval_t          _nfile_Receive_initialize();
+static retval_t          _nfile_Receive_initialize( void );
 //--------------------------------------------------------------------------------------------
 
 struct s_nfile_ReceiveState
@@ -176,7 +176,7 @@ struct s_nfile_ReceiveState
 
 typedef struct s_nfile_ReceiveState nfile_ReceiveState_t;
 
-static nfile_ReceiveState_t * nfile_ReceiveState_create();
+static nfile_ReceiveState_t * nfile_ReceiveState_create( void );
 static bool_t               nfile_ReceiveState_destroy(nfile_ReceiveState_t ** rec);
 
 static nfile_ReceiveState_t * nfile_ReceiveState_new(nfile_ReceiveState_t * rec);
@@ -223,7 +223,7 @@ static retval_t             nfile_ReceiveState_stopThread(nfile_ReceiveState_t *
 //}
 
 //--------------------------------------------------------------------------------------------
-//void nfile_Quit(void)
+//void nfile_Quit( void )
 //{
 //  if(nfile_initialized)
 //  {
@@ -1714,7 +1714,7 @@ void nfile_quitHost()
 };
 
 //------------------------------------------------------------------------------
-void _nfile_Quit(void)
+void _nfile_Quit( void )
 {
   if( !_nfile_atexit_registered ) return;
   if( NULL == _nfile_host ) return;
@@ -1731,7 +1731,7 @@ void _nfile_Quit(void)
 }
 
 //------------------------------------------------------------------------------
-retval_t _nfile_startUp(void)
+retval_t _nfile_startUp( void )
 {
   NetHost_t * nh = nfile_getHost();
   if(NULL == nh) return rv_fail;
@@ -1742,7 +1742,7 @@ retval_t _nfile_startUp(void)
 };
 
 //------------------------------------------------------------------------------
-retval_t _nfhost_shutDown(void)
+retval_t _nfhost_shutDown( void )
 {
   if(NULL == _nfile_host) return rv_fail;
 
@@ -1778,7 +1778,7 @@ retval_t _nfile_Send_initialize()
 }
 
 ////------------------------------------------------------------------------------
-//retval_t _nfile_SendState_startUp(void)
+//retval_t _nfile_SendState_startUp( void )
 //{
 //  nfile_SendState_t * snd = _nfile_getSend();
 //  if(NULL == snd) return rv_fail;
@@ -1789,7 +1789,7 @@ retval_t _nfile_Send_initialize()
 //};
 //
 ////------------------------------------------------------------------------------
-//retval_t _nfhost_shutDown(void)
+//retval_t _nfhost_shutDown( void )
 //{
 //  nfile_SendState_t * snd = nfile_getHost();
 //  if(NULL == snd) return rv_fail;
@@ -1830,7 +1830,7 @@ retval_t _nfile_Receive_initialize()
 }
 
 ////------------------------------------------------------------------------------
-//retval_t _nfile_ReceiveState_startUp(void)
+//retval_t _nfile_ReceiveState_startUp( void )
 //{
 //  nfile_ReceiveState_t * rec = _nfile_getReceive();
 //  if(NULL == rec) return rv_fail;
@@ -1841,7 +1841,7 @@ retval_t _nfile_Receive_initialize()
 //};
 //
 ////------------------------------------------------------------------------------
-//retval_t _nfhost_shutDown(void)
+//retval_t _nfhost_shutDown( void )
 //{
 //  nfile_ReceiveState_t * rec = nfile_getHost();
 //  if(NULL == rec) return rv_fail;

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_layout_file>
-	<ActiveTarget name="Debug Win32 - gcc" />
+	<ActiveTarget name="Release Win32 - gcc" />
 	<File name="AStar.c" open="0" top="0" tabpos="19">
 		<Cursor position="10828" topLine="373" />
 	</File>
-	<File name="Client.c" open="0" top="0" tabpos="20">
-		<Cursor position="12241" topLine="445" />
+	<File name="Client.c" open="0" top="0" tabpos="11">
+		<Cursor position="44939" topLine="1624" />
 	</File>
 	<File name="Client.h" open="0" top="0" tabpos="21">
 		<Cursor position="4158" topLine="131" />
@@ -46,8 +46,8 @@
 	<File name="Md2.inl" open="0" top="0" tabpos="30">
 		<Cursor position="1536" topLine="31" />
 	</File>
-	<File name="Menu.c" open="0" top="0" tabpos="2">
-		<Cursor position="157460" topLine="5025" />
+	<File name="Menu.c" open="0" top="0" tabpos="3">
+		<Cursor position="124116" topLine="3828" />
 	</File>
 	<File name="Menu.h" open="0" top="0" tabpos="0">
 		<Cursor position="4164" topLine="119" />
@@ -73,6 +73,9 @@
 	<File name="Physics.inl" open="0" top="0" tabpos="0">
 		<Cursor position="2273" topLine="66" />
 	</File>
+	<File name="SDL_Pixel.h" open="0" top="0" tabpos="10">
+		<Cursor position="14684" topLine="286" />
+	</File>
 	<File name="SDL_rotozoom.c" open="0" top="0" tabpos="0">
 		<Cursor position="357" topLine="17" />
 	</File>
@@ -84,15 +87,6 @@
 	</File>
 	<File name="System.h" open="0" top="0" tabpos="69">
 		<Cursor position="1388" topLine="23" />
-	</File>
-	<File name="Task.c" open="0" top="0" tabpos="36">
-		<Cursor position="3470" topLine="127" />
-	</File>
-	<File name="Task.h" open="0" top="0" tabpos="37">
-		<Cursor position="1008" topLine="16" />
-	</File>
-	<File name="Timer.h" open="0" top="0" tabpos="70">
-		<Cursor position="59" topLine="0" />
 	</File>
 	<File name="Ui.c" open="0" top="0" tabpos="38">
 		<Cursor position="10948" topLine="358" />
@@ -106,11 +100,11 @@
 	<File name="camera.h" open="0" top="0" tabpos="8">
 		<Cursor position="2338" topLine="54" />
 	</File>
-	<File name="char.c" open="0" top="0" tabpos="3">
-		<Cursor position="269844" topLine="8062" />
+	<File name="char.c" open="0" top="0" tabpos="4">
+		<Cursor position="323086" topLine="9810" />
 	</File>
-	<File name="char.h" open="0" top="0" tabpos="14">
-		<Cursor position="43796" topLine="999" />
+	<File name="char.h" open="0" top="0" tabpos="13">
+		<Cursor position="33805" topLine="781" />
 	</File>
 	<File name="char.inl" open="0" top="0" tabpos="5">
 		<Cursor position="2536" topLine="88" />
@@ -139,17 +133,17 @@
 	<File name="egoboo_strutil.c" open="0" top="0" tabpos="0">
 		<Cursor position="4446" topLine="191" />
 	</File>
-	<File name="egoboo_types.h" open="0" top="0" tabpos="26">
-		<Cursor position="12702" topLine="449" />
+	<File name="egoboo_types.h" open="0" top="0" tabpos="5">
+		<Cursor position="11675" topLine="401" />
 	</File>
 	<File name="egoboo_types.inl" open="0" top="0" tabpos="0">
 		<Cursor position="8087" topLine="331" />
 	</File>
-	<File name="egoboo_utility.c" open="0" top="0" tabpos="45">
-		<Cursor position="47519" topLine="1791" />
+	<File name="egoboo_utility.c" open="0" top="0" tabpos="6">
+		<Cursor position="11855" topLine="442" />
 	</File>
-	<File name="egoboo_utility.h" open="1" top="0" tabpos="1">
-		<Cursor position="5247" topLine="145" />
+	<File name="egoboo_utility.h" open="0" top="0" tabpos="1">
+		<Cursor position="4945" topLine="120" />
 	</File>
 	<File name="enchant.c" open="0" top="0" tabpos="47">
 		<Cursor position="30678" topLine="950" />
@@ -169,11 +163,11 @@
 	<File name="file_mac.m" open="0" top="0" tabpos="52">
 		<Cursor position="6103" topLine="217" />
 	</File>
-	<File name="file_win.c" open="0" top="0" tabpos="18">
-		<Cursor position="7719" topLine="225" />
+	<File name="file_win.c" open="0" top="0" tabpos="7">
+		<Cursor position="7305" topLine="212" />
 	</File>
-	<File name="game.c" open="0" top="0" tabpos="17">
-		<Cursor position="217332" topLine="7008" />
+	<File name="game.c" open="0" top="0" tabpos="8">
+		<Cursor position="131390" topLine="4005" />
 	</File>
 	<File name="game.h" open="0" top="0" tabpos="53">
 		<Cursor position="17729" topLine="509" />
@@ -214,8 +208,8 @@
 	<File name="inspirational\cartman.c" open="0" top="0" tabpos="59">
 		<Cursor position="607" topLine="17" />
 	</File>
-	<File name="mesh.c" open="0" top="0" tabpos="9">
-		<Cursor position="25774" topLine="903" />
+	<File name="mesh.c" open="0" top="0" tabpos="14">
+		<Cursor position="21313" topLine="744" />
 	</File>
 	<File name="mesh.h" open="0" top="0" tabpos="11">
 		<Cursor position="13607" topLine="305" />
@@ -256,19 +250,22 @@
 	<File name="passage.c" open="0" top="0" tabpos="1">
 		<Cursor position="2931" topLine="74" />
 	</File>
-	<File name="script.c" open="0" top="0" tabpos="67">
-		<Cursor position="58072" topLine="1411" />
+	<File name="passage.h" open="0" top="0" tabpos="12">
+		<Cursor position="914" topLine="26" />
+	</File>
+	<File name="script.c" open="0" top="0" tabpos="9">
+		<Cursor position="164659" topLine="4537" />
 	</File>
 	<File name="script.h" open="0" top="0" tabpos="68">
 		<Cursor position="11250" topLine="483" />
 	</File>
-	<File name="sound.c" open="1" top="0" tabpos="2">
+	<File name="sound.c" open="0" top="0" tabpos="2">
 		<Cursor position="4283" topLine="151" />
 	</File>
-	<File name="..\res\debug.rc" open="1" top="1" tabpos="3">
-		<Cursor position="959" topLine="5" />
+	<File name="..\res\debug.rc" open="0" top="0" tabpos="3">
+		<Cursor position="850" topLine="5" />
 	</File>
-	<File name="..\res\release.rc" open="1" top="0" tabpos="4">
+	<File name="..\res\release.rc" open="0" top="0" tabpos="4">
 		<Cursor position="792" topLine="2" />
 	</File>
 </CodeBlocks_layout_file>

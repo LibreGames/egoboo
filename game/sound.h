@@ -71,12 +71,12 @@ extern SoundState_t sndState;
 //------------------------------------------------------------------------------
 
 bool_t snd_initialize(struct sConfigData * cd);
-bool_t snd_quit();
+bool_t snd_quit( void );
 bool_t snd_synchronize(struct sConfigData * cd);
 SoundState_t * snd_getState(struct sConfigData * cd);
 
-bool_t snd_reopen();
-bool_t snd_unload_music();
+bool_t snd_reopen( void );
+bool_t snd_unload_music( void );
 void snd_stop_music(int fadetime);
 void snd_apply_mods( int channel, float intensity, vect3 snd_pos, vect3 ear_pos, Uint16 ear_turn_lr  );
 int snd_play_sound( struct sGame * gs, float intensity, vect3 pos, Mix_Chunk *loadedwave, int loops, OBJ_REF whichobject, int soundnumber);

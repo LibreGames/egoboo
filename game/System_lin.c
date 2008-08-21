@@ -42,7 +42,7 @@ void sys_shutdown()
 {
 }
 
-double sys_getTime(void)
+double sys_getTime( void )
 {
   struct timeval now;
   gettimeofday( &now, NULL );

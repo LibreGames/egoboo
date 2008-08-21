@@ -70,15 +70,15 @@ typedef struct s_ui_Widget ui_Widget_t;
 
 // Initialize or shut down the ui system
 int  ui_initialize( EGO_CONST char *default_font, int default_font_size );
-void ui_shutdown();
+void ui_shutdown( void );
 
 // Pass input data from SDL to the ui
 bool_t ui_handleSDLEvent( SDL_Event *evt );
 
 // Allow the ui to do work that needs to be done before and after each frame
-void ui_beginFrame();
-void ui_endFrame();
-void ui_Reset();
+void ui_beginFrame( void );
+void ui_endFrame( void );
+void ui_Reset( void );
 
 // UI widget
 
@@ -89,10 +89,10 @@ ui_buttonValues  ui_doImageButtonWithText( ui_Widget_t * pWidget );
 //int  ui_doTextBox(ui_Widget_t * pWidget);
 
 // Utility functions
-void      ui_doCursor();
+void      ui_doCursor( void );
 int       ui_mouseInside( int x, int y, int width, int height );
-TTFont_t* ui_getTTFont();
-BMFont_t* ui_getBMFont();
+TTFont_t* ui_getTTFont( void );
+BMFont_t* ui_getBMFont( void );
 
 bool_t ui_load_BMFont( char* szBitmap, char* szSpacing );
 
@@ -116,5 +116,5 @@ void ui_drawButton( ui_Widget_t * pWidget );
 void ui_drawImage( ui_Widget_t * pWidget );
 void ui_drawTextBox( ui_Widget_t * pWidget, int spacing );
 
-int ui_getMouseX();
-int ui_getMouseY();
+int ui_getMouseX( void );
+int ui_getMouseY( void );

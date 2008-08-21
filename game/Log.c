@@ -34,10 +34,10 @@
 static FILE * _logFile = NULL;
 static char   _logBuffer[MAX_LOG_MESSAGE];
 static int    _logLevel = 1;
-static FILE * _log_getFile();
+static FILE * _log_getFile( void );
 
 static FILE *_debugFile = NULL;
-static FILE * _log_getDebugFile();
+static FILE * _log_getDebugFile( void );
 
 
 FILE * _log_getFile()

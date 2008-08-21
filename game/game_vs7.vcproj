@@ -334,15 +334,6 @@
 				RelativePath=".\System_win32.c">
 			</File>
 			<File
-				RelativePath=".\Task.c">
-			</File>
-			<File
-				RelativePath=".\Ticker.c">
-			</File>
-			<File
-				RelativePath=".\Timer.c">
-			</File>
-			<File
 				RelativePath=".\Ui.c">
 			</File>
 		</Filter>
@@ -474,15 +465,6 @@
 				RelativePath=".\System.h">
 			</File>
 			<File
-				RelativePath=".\Task.h">
-			</File>
-			<File
-				RelativePath=".\Ticker.h">
-			</File>
-			<File
-				RelativePath=".\Timer.h">
-			</File>
-			<File
 				RelativePath=".\Ui.h">
 			</File>
 		</Filter>
@@ -506,7 +488,7 @@
 			</File>
 		</Filter>
 		<Filter
-			Name="cartman"
+			Name="Inspirational"
 			Filter="">
 			<File
 				RelativePath=".\inspirational\cartman.c">
@@ -525,6 +507,75 @@
 			</File>
 			<File
 				RelativePath=".\inspirational\cartman.h">
+			</File>
+			<File
+				RelativePath=".\inspirational\MainLoop.c">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\inspirational\Task.c">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\inspirational\Task.h">
+			</File>
+			<File
+				RelativePath=".\inspirational\Ticker.c">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\inspirational\Ticker.h">
+			</File>
+			<File
+				RelativePath=".\inspirational\Timer.c">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\inspirational\Timer.h">
 			</File>
 		</Filter>
 		<Filter

@@ -60,4 +60,4 @@ extern Camera_t GCamera;
 //extern int                     cornerhighy;                //
 
 void camera_move( float dUpdate );
-void camera_reset();
+void camera_reset( void );

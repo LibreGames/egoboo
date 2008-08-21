@@ -72,7 +72,7 @@ bool_t calc_billboard( Game_t * gs, GLVertex vrtlst[], GLVertex * vert, float si
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-extern void Begin3DMode();
+extern void Begin3DMode( void );
 
 GLint prt_attrib_open;
 GLint prt_attrib_close;

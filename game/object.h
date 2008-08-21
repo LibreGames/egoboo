@@ -188,7 +188,7 @@ struct sVData_Blended
 };
 typedef struct sVData_Blended VData_Blended_t;
 
-INLINE VData_Blended_t * VData_Blended_new();
+INLINE VData_Blended_t * VData_Blended_new( void );
 INLINE void VData_Blended_delete(VData_Blended_t * v);
 
 INLINE void VData_Blended_construct(VData_Blended_t * v);

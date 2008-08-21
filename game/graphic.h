@@ -131,8 +131,8 @@ struct sGui
 };
 typedef struct sGui Gui_t;
 
-Gui_t * gui_getState();
-bool_t  gui_shutDown();
+Gui_t * gui_getState( void );
+bool_t  gui_shutDown( void );
 
 //--------------------------------------------------------------------------------------------
 struct sGraphics
@@ -237,13 +237,13 @@ bool_t gfx_find_anisotropy( Graphics_t * g );
 
 bool_t make_renderlist(RENDERLIST * prlst);
 
-bool_t query_clear();
-bool_t query_pageflip();
-bool_t request_pageflip();
-bool_t request_pageflip_pause();
-bool_t request_pageflip_unpause();
-bool_t do_pageflip();
-bool_t do_clear();
+bool_t query_clear( void );
+bool_t query_pageflip( void );
+bool_t request_pageflip( void );
+bool_t request_pageflip_pause( void );
+bool_t request_pageflip_unpause( void );
+bool_t do_pageflip( void );
+bool_t do_clear( void );
 
 void md2_blend_vertices(struct sChr * pchr, Sint32 vrtmin, Sint32 vrtmax);
 void md2_blend_lighting(struct sChr * pchr);
@@ -262,22 +262,22 @@ void do_dyna_light(struct sGame * gs);
 void  make_spektable( vect3 lite );
 void  make_lighttospek( void );
 
-void render_particles();
-void render_particle_reflections();
+void render_particles( void );
+void render_particle_reflections( void );
 void render_mad_lit( CHR_REF character );
 void render_water_fan_lit( Uint32 fan, Uint8 layer, Uint8 mode );
 
 void   reset_end_text( struct sGame * gs );
 void make_textureoffset( void );
-void figure_out_what_to_draw();
+void figure_out_what_to_draw( void );
 
 bool_t load_bars( char* szBitmap );
 void load_map( struct sGraphics_Data * gfx, char* szModule );
 
-void render_prt();
+void render_prt( void );
 void render_shadow( CHR_REF character );
 //void render_bad_shadow( CHR_REF character );
-void render_refprt();
+void render_refprt( void );
 void render_fan( Uint32 fan, char tex_loaded );
 void render_fan_ref( Uint32 fan, char tex_loaded, float level );
 void render_water_fan( Uint32 fan, Uint8 layer, Uint8 mode );
@@ -289,8 +289,8 @@ void render_refmad( CHR_REF tnc, Uint16 trans );
 void do_chr_dynalight(struct sGame * gs);
 void do_prt_dynalight(struct sGame * gs);
 void set_fan_dyna_light( int fanx, int fany, PRT_REF particle );
-void render_water();
-void draw_scene_zreflection();
+void render_water( void );
+void draw_scene_zreflection( void );
 void draw_blip( enum e_color color, float x, float y );
 void draw_one_icon( int icontype, int x, int y, Uint8 sparkle );
 
@@ -303,10 +303,10 @@ void   draw_main( float );
 void load_blip_bitmap( struct sGraphics_Data * gfx,  char * modname );
 
 void render_mad_lit( CHR_REF character );
-void render_particle_reflections();
+void render_particle_reflections( void );
 void render_water_fan_lit( Uint32 fan, Uint8 layer, Uint8 mode );
 
-void make_speklut();
+void make_speklut( void );
 
 void   release_all_textures( struct sGraphics_Data * gfx );
 Uint32 load_one_icon( struct sGraphics_Data * gfx, char * szPathname, EGO_CONST char * szObjectname, char * szFilename );

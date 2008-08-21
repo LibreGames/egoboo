@@ -39,9 +39,6 @@ SOURCES=camera.c\
 	Server.c\
 	sound.c\
 	System_win32.c\
-	Task.c\
-	Ticker.c\
-	Timer.c\
 	Ui.c
 
 OBJECTS=$(SOURCES:%.c=%.o)

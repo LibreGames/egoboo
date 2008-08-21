@@ -23,8 +23,8 @@ struct sAStar_Node
 typedef struct sAStar_Node AStar_Node_t;
 
 bool_t AStar_open(int buffer_size);
-bool_t AStar_close();
-void   AStar_reinit();
+bool_t AStar_close( void );
+void   AStar_reinit( void );
 
 bool_t AStar_prepare_path(struct sGame * gs, Uint32 stoppedby, int src_ix, int src_iy, int dst_ix, int dst_iy);
 int AStar_get_path(int src_ix, int src_iy, AStar_Node_t buffer[], int buffer_size);

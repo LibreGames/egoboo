@@ -1206,7 +1206,7 @@ bool_t attach_character_to_mount( Game_t * gs, CHR_REF chr_ref, CHR_REF mount_re
     Uint16 vrtoffset = slot_to_offset( slot );
 
     assert( INVALID_MAD != VALIDATE_MAD( madlst, imad ) );
-    if ( vrtoffset >= 0 && vrtoffset < madlst[imad].vertices )
+    if ( /* vrtoffset >= 0 &&*/ vrtoffset < madlst[imad].vertices )
     {
       // attach to the given grip
       tnc = madlst[imad].vertices - vrtoffset;

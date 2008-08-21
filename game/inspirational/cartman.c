@@ -604,7 +604,7 @@ Uint8 get_fan_twist(cart_mesh * cmsh, Uint32 fan)
 }
 
 //------------------------------------------------------------------------------
-//void make_graypal(void)
+//void make_graypal( void )
 //{
 //  int cnt, level;
 //
@@ -2751,7 +2751,7 @@ void render_all_windows(cart_mesh * cmsh, cart_mouse_info * m)
 }
 
 //------------------------------------------------------------------------------
-void load_all_windows(void)
+void load_all_windows( void )
 {
   int cnt;
   cnt = 0;
@@ -2784,7 +2784,7 @@ void draw_window(cart_window_info * w)
 
 
 //------------------------------------------------------------------------------
-void draw_all_windows(void)
+void draw_all_windows( void )
 {
   int cnt;
   cnt = 0;
@@ -3551,7 +3551,7 @@ void check_keys(cart_mesh * cmsh, cart_mouse_info * m, char *modname)
 }
 
 //------------------------------------------------------------------------------
-//void setup_screen(void)
+//void setup_screen( void )
 //{
 //  set_color_depth(colordepth);
 //  set_gfx_mode(GFX_AUTODETECT, SCRX, SCRY, SCRX, SCRY);
@@ -3566,7 +3566,7 @@ void check_keys(cart_mesh * cmsh, cart_mouse_info * m, char *modname)
 //}
 
 //------------------------------------------------------------------------------
-//void create_imgcursor(void)
+//void create_imgcursor( void )
 //{
 //  int x, y;
 //  Uint8 col, loc;
@@ -3598,7 +3598,7 @@ void check_keys(cart_mesh * cmsh, cart_mouse_info * m, char *modname)
 //}
 
 //------------------------------------------------------------------------------
-void load_img(void)
+void load_img( void )
 {
   int cnt;
   SDL_Surface *bmp_other, *bmp_temp;
@@ -3818,7 +3818,7 @@ void draw_slider(int tlx, int tly, int brx, int bry, int* pvalue,
 }
 
 //------------------------------------------------------------------------------
-void cart_draw_main(void)
+void cart_draw_main( void )
 {
   do_clear();
 
@@ -3833,7 +3833,7 @@ void cart_draw_main(void)
 }
 
 //------------------------------------------------------------------------------
-void show_info(void)
+void show_info( void )
 {
   log_info("%s - Version %01d.%02d\n", CARTMAN_NAME, CARTMAN_VERSION/100, CARTMAN_VERSION%100);
   return;

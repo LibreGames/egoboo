@@ -23,7 +23,7 @@
 
 #pragma once
 
-void log_init();
+void log_init( void );
 void log_shutdown( void );
 
 void log_setLoggingLevel( int level );

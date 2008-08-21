@@ -47,10 +47,10 @@
 static bool_t    _sv_atexit_registered = bfalse;
 static NetHost_t * _sv_host = NULL;
 
-static retval_t  _sv_Initialize(void);
-static void      _sv_Quit(void);
-static retval_t  _sv_startUp(void);
-static retval_t  _sv_shutDown(void);
+static retval_t  _sv_Initialize( void );
+static void      _sv_Quit( void );
+static retval_t  _sv_startUp( void );
+static retval_t  _sv_shutDown( void );
 static int       _sv_HostCallback(void *);
 
 //--------------------------------------------------------------------------------------------
@@ -169,7 +169,7 @@ retval_t Server_shutDown(Server_t * ss)
 };
 
 //--------------------------------------------------------------------------------------------
-//void sv_Quit(void)
+//void sv_Quit( void )
 //{
 //  Server_delete(&ACServer);
 //}
@@ -1137,7 +1137,7 @@ void sv_quitHost()
 };
 
 //------------------------------------------------------------------------------
-void _sv_Quit(void)
+void _sv_Quit( void )
 {
   if( !_sv_atexit_registered ) return;
   if( NULL == _sv_host ) return;
@@ -1146,7 +1146,7 @@ void _sv_Quit(void)
 }
 
 //------------------------------------------------------------------------------
-retval_t _sv_startUp(void)
+retval_t _sv_startUp( void )
 {
   NetHost_t * nh = sv_getHost();
   if(NULL == nh) return rv_fail;
@@ -1155,7 +1155,7 @@ retval_t _sv_startUp(void)
 };
 
 //------------------------------------------------------------------------------
-retval_t _sv_shutDown(void)
+retval_t _sv_shutDown( void )
 {
   if(NULL == _sv_host) return rv_fail;
 

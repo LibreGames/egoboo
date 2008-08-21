@@ -48,10 +48,10 @@
 static bool_t    _cl_atexit_registered = bfalse;
 static NetHost_t * _cl_host = NULL;
 
-static retval_t  _cl_Initialize(void);
-static void      _cl_Quit(void);
-static retval_t  _cl_startUp(void);
-static retval_t  _cl_shutDown(void);
+static retval_t  _cl_Initialize( void );
+static void      _cl_Quit( void );
+static retval_t  _cl_startUp( void );
+static retval_t  _cl_shutDown( void );
 static int       _cl_HostCallback(void *);
 
 bool_t     cl_Running(Client_t * cs)  { return cl_Started() && !cs->waiting; }
@@ -183,7 +183,7 @@ retval_t Client_shutDown(Client_t * cs)
 }
 //--------------------------------------------------------------------------------------------
 //
-//void cl_Quit(void)
+//void cl_Quit( void )
 //{
 //  CClient_delete(&ACClient);
 //};
@@ -1555,7 +1555,7 @@ void cl_quitHost()
 };
 
 //------------------------------------------------------------------------------
-void _cl_Quit(void)
+void _cl_Quit( void )
 {
   if( !_cl_atexit_registered ) return;
   if( NULL == _cl_host ) return;
@@ -1566,7 +1566,7 @@ void _cl_Quit(void)
 }
 
 //------------------------------------------------------------------------------
-retval_t _cl_startUp(void)
+retval_t _cl_startUp( void )
 {
   NetHost_t * nh = cl_getHost();
   if(NULL == nh) return rv_fail;
@@ -1575,7 +1575,7 @@ retval_t _cl_startUp(void)
 };
 
 //------------------------------------------------------------------------------
-retval_t _cl_shutDown(void)
+retval_t _cl_shutDown( void )
 {
   if(NULL == _cl_host) return rv_fail;
 

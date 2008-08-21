@@ -189,7 +189,7 @@ void   MadList_free_one( struct sGame * gs, Uint16 imdl );
 #define LOADED_MAD(LST, XX)  ( VALID_MAD(LST, XX) && LST[XX].Loaded )
 
 ACTION action_number(char * szName);
-Uint16 action_frame();
+Uint16 action_frame( void );
 void   action_copy_correct( struct sGame * gs, MAD_REF object, ACTION actiona, ACTION actionb );
 void   get_walk_frame( struct sGame * gs, MAD_REF object, LIPT lip_trans, ACTION action );
 Uint16 get_framefx( char * szName );

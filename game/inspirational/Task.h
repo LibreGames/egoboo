@@ -1,4 +1,4 @@
-/* Egoboo - Timer_t.h
+/* Egoboo - Task_t.h
  * This code is not currently in use.
  */
 
@@ -21,24 +21,13 @@
 //*
 //********************************************************************************************
 
-
 #pragma once
 
-/* For ClockState_t */
-#include "Clock.h"
+typedef void ( *TaskCallback )( float timeElapsed );
 
-struct sTimer
-{
-  double currentTime;
-  double frameTime;
-  float timeScale;
-  int isPaused;
-};
-typedef struct sTimer Timer_t;
+void Task_register( const char *taskName, float timeInterval, TaskCallback f );
+void Task_remove( const char *taskName );
+void Task_pause( const char *taskName );
+void Task_play( const char *taskName );
 
-void timer_init( ClockState_t * cs );   // Initialize the timer code
-void timer_shutdown(); // Turn off the timer code
-void timer_update(); // Update all registered timers
-
-void timer_addTimer( Timer_t *t );   // Add a timer for the system to watch
-void timer_removeTimer( Timer_t *t );  // Tell the system to stop watching this timer
+void Task_updateAllTasks( void );

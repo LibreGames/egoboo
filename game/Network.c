@@ -65,7 +65,7 @@ static bool_t       _net_registered_atexit = bfalse;
 static FILE       * net_logfile           = NULL;
 
 // the network singleton
-static void _net_Quit(void);
+static void _net_Quit( void );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -512,7 +512,7 @@ bool_t CListOut_remove(CListOut_t * co, ENetPeer * peer)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void _net_Quit(void)
+void _net_Quit( void )
 {
   // shut down all network services
   // I guess can't be left for the  _xx_Quit() functions because

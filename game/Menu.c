@@ -47,9 +47,10 @@
 #include "Network.inl"
 #include "egoboo_types.inl"
 
-
+//Input player control
 int              loadplayer_count = 0;
 LOAD_PLAYER_INFO loadplayer[MAXLOADPLAYER];
+static void loadplayer_clear( void );
 
 static retval_t   MenuProc_ensure_server(MenuProc_t * ms, struct sGame * gs);
 static retval_t   MenuProc_ensure_client(MenuProc_t * ms, struct sGame * gs);
@@ -1213,6 +1214,9 @@ void import_selected_players()
 //--------------------------------------------------------------------------------------------
 int mnu_doChoosePlayer( MenuProc_t * mproc, float deltaTime )
 {
+  // TODO : work on auto formatting
+  //      : add buttons to scan through the player list in case there are more than can be displayed
+
   static MenuProcs menuState = MM_Begin;
   static int menuChoice = 0;
 
@@ -1279,8 +1283,8 @@ int mnu_doChoosePlayer( MenuProc_t * mproc, float deltaTime )
       check_player_import( gs );
 
       // set the configuration
-      ui_initWidget( mnu_widgetList + 0, 0, mnu_Font, "Select Module", NULL, 40, gfxState.scry - 35*3, 200, 30 );
-      ui_initWidget( mnu_widgetList + 1, 1, mnu_Font, "Back", NULL, 40, gfxState.scry - 35*2, 200, 30 );
+      //ui_initWidget( mnu_widgetList + 0, 0, mnu_Font, "Select Module", NULL, 40, gfxState.scry - 35*3, 200, 30 );
+      //ui_initWidget( mnu_widgetList + 1, 1, mnu_Font, "Back", NULL, 40, gfxState.scry - 35*2, 200, 30 );
 
       ui_initWidget(mnu_widgetList + 0, 0, mnu_Font, "Select Module", NULL, 40, 350, 200, 30);
       ui_initWidget(mnu_widgetList + 1, 1, mnu_Font, "Back", NULL, 40, 385, 200, 30);
@@ -1307,7 +1311,7 @@ int mnu_doChoosePlayer( MenuProc_t * mproc, float deltaTime )
 
           y += 47;
         }
-      x += 180;
+        x += 364;
       };
 
 
@@ -1338,7 +1342,7 @@ int mnu_doChoosePlayer( MenuProc_t * mproc, float deltaTime )
         {
           PLA_REF splayer;
 
-          mnu_widgetList[m].img  = gfx->TxIcon + REF_TO_INT(player);
+          mnu_widgetList[m].img  = gfx->TxIcon + loadplayer[REF_TO_INT(player)].icon;
           mnu_widgetList[m].text = loadplayer[REF_TO_INT(player)].name;
 
           splayer = mnu_getSelectedPlayer( player );
@@ -5035,72 +5039,82 @@ void check_player_import(Game_t * gs)
   EGO_CONST char *foundfile;
   FS_FIND_INFO fs_finfo;
 
-  Obj_t otmp;
-
   OBJ_REF iobj;
   Obj_t  * pobj;
 
   LOAD_PLAYER_INFO * ploadplayer;
 
   // Set up...
-  loadplayer_count = 0;
+  loadplayer_clear( );
+  naming_prime( gs );
 
   // Search for all objects
   fs_find_info_new( &fs_finfo );
   snprintf( searchname, sizeof( searchname ), "%s" SLASH_STRING "*.obj", CData.players_dir );
   foundfile = fs_findFirstFile( &fs_finfo, CData.players_dir, NULL, "*.obj" );
   keeplooking = 1;
-  if ( NULL != foundfile  )
+  while ( NULL != foundfile && loadplayer_count < MAXLOADPLAYER )
   {
     snprintf( filepath, sizeof( filename ), "%s" SLASH_STRING "%s" SLASH_STRING, CData.players_dir, foundfile );
 
-    while (loadplayer_count < MAXLOADPLAYER )
+    // grab the requested profile
     {
-      // grab the requested profile
-      {
-        iobj = ObjList_get_free(gs, OBJ_REF(loadplayer_count));
-        pobj = ObjList_getPObj(gs, iobj);
+      iobj = ObjList_get_free(gs, OBJ_REF(loadplayer_count));
+      pobj = ObjList_getPObj(gs, iobj);
 
-        // Make up a name for the profile...  IMPORT\TEMP0000.OBJ
-        strncpy( pobj->name, filepath, sizeof( pobj->name ) );
-      }
-      if(NULL == pobj)
-      {
-        assert(bfalse);
-        break;
-      }
-
-      // get the loadplayer data
-      ploadplayer = loadplayer + loadplayer_count;
-
-      naming_prime( gs );
-
-      strncpy( ploadplayer->dir, foundfile, sizeof( ploadplayer->dir ) );
-
-      skin = fget_skin( filepath, NULL );
-
-      // Load the AI script for this object
-      pobj->ai = load_ai_script( Game_getScriptInfo(gs), filepath, NULL );
-      if ( AILST_COUNT == pobj->ai )
-      {
-        // use the default script
-        pobj->ai = 0;
-      }
-
-      pobj->mad = MadList_load_one( gs, filepath, NULL, MAD_REF(loadplayer_count) );
-
-      snprintf( filename, sizeof( filename ), "icon%d.bmp", skin );
-      load_one_icon( Game_getGfx(gs), filepath, NULL, filename );
-
-      CProfile_new(&otmp);
-      naming_read( gs, filepath, NULL, &otmp);
-      strncpy( ploadplayer->name, naming_generate( gs, &otmp ), sizeof( ploadplayer->name ) );
-
-      loadplayer_count++;
-
-      foundfile = fs_findNextFile(&fs_finfo);
-      if (NULL == foundfile) break;
+      // Make up a name for the profile...  IMPORT\TEMP0000.OBJ
+      strncpy( pobj->name, filepath, sizeof( pobj->name ) );
     }
+    if(NULL == pobj)
+    {
+      assert(bfalse);
+      break;
+    }
+
+    // get the loadplayer data
+    ploadplayer = loadplayer + loadplayer_count;
+
+    strncpy( ploadplayer->dir, foundfile, sizeof( ploadplayer->dir ) );
+
+    skin = fget_skin( filepath, NULL );
+
+    // Load the AI script for this object
+    //pobj->ai = load_ai_script( Game_getScriptInfo(gs), filepath, NULL );
+    //if ( AILST_COUNT == pobj->ai )
+    //{
+    //  // use the default script
+    //  pobj->ai = 0;
+    //}
+
+    //pobj->mad = MadList_load_one( gs, filepath, NULL, MAD_REF(loadplayer_count) );
+
+    snprintf( filename, sizeof( filename ), "icon%d.bmp", skin );
+    ploadplayer->icon = load_one_icon( Game_getGfx(gs), filepath, NULL, filename );
+
+    naming_read( gs, filepath, NULL, pobj);
+    strncpy( ploadplayer->name, naming_generate( gs, pobj ), sizeof( ploadplayer->name ) );
+
+    loadplayer_count++;
+
+    foundfile = fs_findNextFile(&fs_finfo);
+    if (NULL == foundfile) break;
   }
+
   fs_findClose(&fs_finfo);
+}
+
+//--------------------------------------------------------------------------------------------
+void loadplayer_clear()
+{
+  int i;
+
+  loadplayer_count = 0;
+  for(i=0; i<MAXLOADPLAYER; i++)
+  {
+    loadplayer[i].name[0] = EOS;
+    loadplayer[i].dir[0]  = EOS;
+    loadplayer[i].icon    = MAXICONTX;
+    loadplayer[i].import  = bfalse;
+  };
+
 }

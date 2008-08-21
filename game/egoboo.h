@@ -515,5 +515,5 @@ struct sMachineState
 };
 typedef struct sMachineState MachineState_t;
 
-MachineState_t * get_MachineState(void);
+MachineState_t * get_MachineState( void );
 retval_t         MachineState_update(MachineState_t * mac);

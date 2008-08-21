@@ -7,7 +7,7 @@ EGO_SRC := \
 	Font.c Frustum.c game.c graphic.c graphic_fan.c graphic_mad.c graphic_prt.c id_normals.c input.c \
 	Log.c Mad.c Md2.c Menu.c mesh.c module.c NetFile.c Network.c object.c ogl_include.c \
 	ogl_texture.c particle.c passage.c Physics.c script.c SDL_GetPixel.c SDL_PutPixel.c SDL_rotozoom.c \
-	Server.c sound.c System_lin.c Task.c Ticker.c Timer.c Ui.c
+	Server.c sound.c System_lin.c Ui.c
 
 EGO_OBJ := $(EGO_SRC:.c=.o)
 

@@ -41,4 +41,4 @@ struct ogl_vertex_t
 typedef struct ogl_vertex_t GLVertex;
 
 
-bool_t handle_opengl_error();
+bool_t handle_opengl_error( void );

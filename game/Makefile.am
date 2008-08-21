@@ -55,9 +55,6 @@ egoboo_SOURCES = \
    Server.c  \
    sound.c  \
    System_lin.c  \
-   Task.c  \
-   Ticker.c  \
-   Timer.c  \
    Ui.c  \
    ../enet/callbacks.c  \
    ../enet/host.c  \

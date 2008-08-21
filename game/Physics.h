@@ -74,8 +74,8 @@ typedef struct sCVolume_Tree CVolume_Tree_t;
 
 //--------------------------------------------------------------------------------------------
 INLINE void cv_list_add( CVolume_t * cv);
-INLINE void cv_list_clear();
-INLINE void cv_list_draw();
+INLINE void cv_list_clear( void );
+INLINE void cv_list_draw( void );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

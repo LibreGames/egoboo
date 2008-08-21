@@ -6,15 +6,20 @@
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
-			<Target title="Debug Win32">
+			<Target title="Debug Win32 - msvc">
 				<Option platforms="Windows;" />
-				<Option output="Debug/libenet" prefix_auto="1" extension_auto="1" />
+				<Option output="Debug\enet" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="" />
-				<Option object_output="Debug" />
+				<Option object_output="Debug_msvc" />
 				<Option type="2" />
-				<Option compiler="gcc" />
+				<Option compiler="msvctk" />
 				<Option createDefFile="1" />
 				<Compiler>
+					<Add option="/Gd" />
+					<Add option="/Od" />
+					<Add option="/Wp64" />
+					<Add option="/Wall" />
+					<Add option="/Zi /D_DEBUG" />
 					<Add option="-Wall" />
 					<Add option="-g" />
 					<Add option="-O0" />
@@ -22,24 +27,32 @@
 					<Add option="-D_DEBUG" />
 					<Add option="-D_LIB" />
 					<Add option="-D_CRT_SECURE_NO_DEPRECATE" />
-					<Add directory="../enet/include" />
+					<Add directory="..\enet\include" />
 				</Compiler>
 				<ResourceCompiler>
-					<Add directory="/home/benjamin/SVN/sf_egoboo/trunk/enet/include" />
+					<Add directory="\home\benjamin\SVN\sf_egoboo\trunk\enet\include" />
 				</ResourceCompiler>
 				<Linker>
+					<Add option="/DEBUG" />
 					<Add option="-s" />
 				</Linker>
 			</Target>
-			<Target title="Release Win32">
+			<Target title="Release Win32 - msvc">
 				<Option platforms="Windows;" />
-				<Option output="Release/libenet" prefix_auto="1" extension_auto="1" />
+				<Option output="Release\enet" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="" />
-				<Option object_output="Release" />
+				<Option object_output="Release_msvc" />
 				<Option type="2" />
-				<Option compiler="gcc" />
+				<Option compiler="msvctk" />
 				<Option createDefFile="1" />
 				<Compiler>
+					<Add option="/Gd" />
+					<Add option="/GL" />
+					<Add option="/arch:SSE2" />
+					<Add option="/G7" />
+					<Add option="/Ox" />
+					<Add option="/Og" />
+					<Add option="/W1" />
 					<Add option="-fexpensive-optimizations" />
 					<Add option="-O3" />
 					<Add option="-pedantic" />
@@ -49,17 +62,17 @@
 					<Add option="-DNDEBUG" />
 					<Add option="-D_LIB" />
 					<Add option="-D_CRT_SECURE_NO_DEPRECATE" />
-					<Add directory="../enet/include" />
+					<Add directory="..\enet\include" />
 				</Compiler>
 				<ResourceCompiler>
-					<Add directory="/home/benjamin/SVN/sf_egoboo/trunk/enet/include" />
+					<Add directory="\home\benjamin\SVN\sf_egoboo\trunk\enet\include" />
 				</ResourceCompiler>
 			</Target>
 			<Target title="Debug Blah-nix">
 				<Option platforms="Unix;" />
-				<Option output="Debug/libenet" prefix_auto="1" extension_auto="1" />
+				<Option output="Debug\libenet" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="" />
-				<Option object_output="Debug" />
+				<Option object_output="Debug_nix" />
 				<Option type="2" />
 				<Option compiler="gcc" />
 				<Option createDefFile="1" />
@@ -69,10 +82,10 @@
 					<Add option="-O0" />
 					<Add option="-D_DEBUG" />
 					<Add option="-D_LIB" />
-					<Add directory="../enet/include" />
+					<Add directory="..\enet\include" />
 				</Compiler>
 				<ResourceCompiler>
-					<Add directory="/home/benjamin/SVN/sf_egoboo/trunk/enet/include" />
+					<Add directory="\home\benjamin\SVN\sf_egoboo\trunk\enet\include" />
 				</ResourceCompiler>
 				<Linker>
 					<Add option="-s" />
@@ -80,9 +93,9 @@
 			</Target>
 			<Target title="Release Blah-nix">
 				<Option platforms="Unix;" />
-				<Option output="Release/libenet" prefix_auto="1" extension_auto="1" />
+				<Option output="Release\libenet" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="" />
-				<Option object_output="Release" />
+				<Option object_output="Release_nix" />
 				<Option type="2" />
 				<Option compiler="gcc" />
 				<Option createDefFile="1" />
@@ -94,17 +107,17 @@
 					<Add option="-Wall" />
 					<Add option="-DNDEBUG" />
 					<Add option="-D_LIB" />
-					<Add directory="../enet/include" />
+					<Add directory="..\enet\include" />
 				</Compiler>
 				<ResourceCompiler>
-					<Add directory="/home/benjamin/SVN/sf_egoboo/trunk/enet/include" />
+					<Add directory="\home\benjamin\SVN\sf_egoboo\trunk\enet\include" />
 				</ResourceCompiler>
 			</Target>
 			<Target title="Debug OsX">
 				<Option platforms="Mac;" />
-				<Option output="Debug/libenet" prefix_auto="1" extension_auto="1" />
+				<Option output="Debug\libenet" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="" />
-				<Option object_output="Debug" />
+				<Option object_output="Debug_mac" />
 				<Option type="2" />
 				<Option compiler="gcc" />
 				<Option createDefFile="1" />
@@ -114,10 +127,10 @@
 					<Add option="-O0" />
 					<Add option="-D_DEBUG" />
 					<Add option="-D_LIB" />
-					<Add directory="../enet/include" />
+					<Add directory="..\enet\include" />
 				</Compiler>
 				<ResourceCompiler>
-					<Add directory="/home/benjamin/SVN/sf_egoboo/trunk/enet/include" />
+					<Add directory="\home\benjamin\SVN\sf_egoboo\trunk\enet\include" />
 				</ResourceCompiler>
 				<Linker>
 					<Add option="-s" />
@@ -125,9 +138,9 @@
 			</Target>
 			<Target title="Release OsX">
 				<Option platforms="Mac;" />
-				<Option output="Release/libenet" prefix_auto="1" extension_auto="1" />
+				<Option output="Release\libenet" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="" />
-				<Option object_output="Release" />
+				<Option object_output="Release_mac" />
 				<Option type="2" />
 				<Option compiler="gcc" />
 				<Option createDefFile="1" />
@@ -139,10 +152,59 @@
 					<Add option="-Wall" />
 					<Add option="-DNDEBUG" />
 					<Add option="-D_LIB" />
-					<Add directory="../enet/include" />
+					<Add directory="..\enet\include" />
 				</Compiler>
 				<ResourceCompiler>
-					<Add directory="/home/benjamin/SVN/sf_egoboo/trunk/enet/include" />
+					<Add directory="\home\benjamin\SVN\sf_egoboo\trunk\enet\include" />
+				</ResourceCompiler>
+			</Target>
+			<Target title="Debug Win32 - gcc">
+				<Option platforms="Windows;" />
+				<Option output="Debug\libenet" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="Debug_gcc" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Compiler>
+					<Add option="-Wall" />
+					<Add option="-g" />
+					<Add option="-O0" />
+					<Add option="-DWIN32" />
+					<Add option="-D_DEBUG" />
+					<Add option="-D_LIB" />
+					<Add option="-D_CRT_SECURE_NO_DEPRECATE" />
+					<Add directory="..\enet\include" />
+				</Compiler>
+				<ResourceCompiler>
+					<Add directory="\home\benjamin\SVN\sf_egoboo\trunk\enet\include" />
+				</ResourceCompiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+			<Target title="Release Win32 - gcc">
+				<Option platforms="Windows;" />
+				<Option output="Release\libenet" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="Release_gcc" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Compiler>
+					<Add option="-fexpensive-optimizations" />
+					<Add option="-O3" />
+					<Add option="-pedantic" />
+					<Add option="-W" />
+					<Add option="-Wall" />
+					<Add option="-DWIN32" />
+					<Add option="-DNDEBUG" />
+					<Add option="-D_LIB" />
+					<Add option="-D_CRT_SECURE_NO_DEPRECATE" />
+					<Add directory="..\enet\include" />
+				</Compiler>
+				<ResourceCompiler>
+					<Add directory="\home\benjamin\SVN\sf_egoboo\trunk\enet\include" />
 				</ResourceCompiler>
 			</Target>
 		</Build>
@@ -152,16 +214,16 @@
 		<Unit filename="host.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="include/enet/callbacks.h" />
-		<Unit filename="include/enet/enet.h" />
-		<Unit filename="include/enet/list.h" />
-		<Unit filename="include/enet/memory.h" />
-		<Unit filename="include/enet/protocol.h" />
-		<Unit filename="include/enet/time.h" />
-		<Unit filename="include/enet/types.h" />
-		<Unit filename="include/enet/unix.h" />
-		<Unit filename="include/enet/utility.h" />
-		<Unit filename="include/enet/win32.h" />
+		<Unit filename="include\enet\callbacks.h" />
+		<Unit filename="include\enet\enet.h" />
+		<Unit filename="include\enet\list.h" />
+		<Unit filename="include\enet\memory.h" />
+		<Unit filename="include\enet\protocol.h" />
+		<Unit filename="include\enet\time.h" />
+		<Unit filename="include\enet\types.h" />
+		<Unit filename="include\enet\unix.h" />
+		<Unit filename="include\enet\utility.h" />
+		<Unit filename="include\enet\win32.h" />
 		<Unit filename="list.c">
 			<Option compilerVar="CC" />
 		</Unit>

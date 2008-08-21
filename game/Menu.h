@@ -54,6 +54,23 @@ enum e_mnu
   mnu_EndGame
 };
 
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+//Input player control
+#define MAXLOADPLAYER     100
+struct s_load_player_info
+{
+  STRING name;
+  STRING dir;
+  Uint32 icon;
+  bool_t import;
+};
+typedef struct s_load_player_info LOAD_PLAYER_INFO;
+
+extern int              loadplayer_count;
+extern LOAD_PLAYER_INFO loadplayer[MAXLOADPLAYER];
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
@@ -96,32 +113,20 @@ bool_t       MenuProc_resynch(MenuProc_t * ms, struct sGame * gs);
 //--------------------------------------------------------------------------------------------
 // All the different menus.  yay!
 
-//Input player control
-#define MAXLOADPLAYER     100
-struct s_load_player_info
-{
-  STRING name;
-  STRING dir;
-};
-typedef struct s_load_player_info LOAD_PLAYER_INFO;
-
-extern int              loadplayer_count;
-extern LOAD_PLAYER_INFO loadplayer[MAXLOADPLAYER];
-
-void mnu_frameStep();
-void mnu_saveSettings();
-void mnu_service_select();
-void mnu_start_or_join();
+void mnu_frameStep( void );
+void mnu_saveSettings( void );
+void mnu_service_select( void );
+void mnu_start_or_join( void );
 void mnu_pick_player( int module );
 void mnu_module_loading( int module );
-void mnu_choose_host();
-void mnu_choose_module();
-void mnu_boot_players();
-void mnu_end_text();
-void mnu_initial_text();
+void mnu_choose_host( void );
+void mnu_choose_module( void );
+void mnu_boot_players( void );
+void mnu_end_text( void );
+void mnu_initial_text( void );
 
-void mnu_enterMenuMode();
-void mnu_exitMenuMode();
+void mnu_enterMenuMode( void );
+void mnu_exitMenuMode( void );
 
 int mnu_Run( MenuProc_t * ms );
 int mnu_RunIngame( MenuProc_t * ms );

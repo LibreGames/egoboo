@@ -138,9 +138,9 @@ static void copy_one_line( size_t write );
 static size_t load_one_line( size_t read );
 static size_t load_parsed_line( size_t read );
 static void surround_space( size_t position );
-static int  get_indentation();
-static void fix_operators();
-static int  starts_with_capital_letter();
+static int  get_indentation( void );
+static void fix_operators( void );
+static int  starts_with_capital_letter( void );
 
 static size_t ai_goto_colon( size_t read );
 static void   fget_code( FILE * pfile );
@@ -151,7 +151,7 @@ static bool_t run_function( Game_t * gs, Uint32 value, CHR_REF character );
 static bool_t scr_break_passage( Game_t * gs, AI_STATE * pstate );
 static bool_t scr_search_tile_in_passage( Game_t * gs, AI_STATE * pstate );
 
-static Uint32 get_high_bits();
+static Uint32 get_high_bits( void );
 static size_t tell_code( size_t read );
 
 static retval_t run_operand( Game_t * gs, Uint32 value, CHR_REF character );
@@ -160,7 +160,7 @@ static retval_t set_operand( AI_STATE * pstate, ScriptInfo_t * slist, Uint8 vari
 
 static void   add_code( ScriptInfo_t * slist, Uint32 highbits );
 static void   parse_line_by_line( ScriptInfo_t * slist );
-static void   parse_null_terminate_comments();
+static void   parse_null_terminate_comments( void );
 static size_t jump_goto( ScriptInfo_t * slist, size_t index );
 static void   parse_jumps( ScriptInfo_t * slist, size_t index_stt, size_t index_end );
 static void   log_code( ScriptInfo_t * slist, int ainumber, char* savename );
@@ -4541,7 +4541,7 @@ bool_t run_function( Game_t * gs, Uint32 value, CHR_REF ichr )
 
     case F_IfDoingAction:
       //This function proceeds if the character is preforming the animation specified in tmpargument
-      returncode = pchr->action.now >= pstate->tmpargument && pchr->action.now <= pstate->tmpargument;
+      returncode = (pchr->action.now >= pstate->tmpargument) && (pchr->action.now <= pstate->tmpargument);
       break;
 
     case F_IfOperatorIsLinux:

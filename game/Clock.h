@@ -30,11 +30,11 @@
 
 struct sClockState;
 
-typedef double( *clock_source_ptr_t )(void);
+typedef double( *clock_source_ptr_t )( void );
 typedef struct sClockState ClockState_t;
 
-void clock_init();      // Init the clock module
-void clock_shutdown();  // Shut down the clock module
+void clock_init( void );      // Init the clock module
+void clock_shutdown( void );  // Shut down the clock module
 void clock_setTimeSource( clock_source_ptr_t tsrc );     // Specify where the clock gets its time values from
 
 ClockState_t * Clock_create( EGO_CONST char * name, int size );

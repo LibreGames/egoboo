@@ -162,4 +162,4 @@ Uint32 generate_unsigned( Uint32 * pseed, PAIR * ppair );
 Sint32 generate_signed( Uint32 * pseed, PAIR * ppair );
 Sint32 generate_dither( Uint32 * pseed, PAIR * ppair, Uint16 strength_fp8 );
 
-void make_randie();
+void make_randie( void );

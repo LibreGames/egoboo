@@ -34,9 +34,9 @@
 //--------------------------------------------------------------------------------------------
 // Globally accesible client module functions
 
-NetHost_t * cl_getHost();
-void      cl_quitHost();
-bool_t    cl_Started();
+NetHost_t * cl_getHost( void );
+void      cl_quitHost( void );
+bool_t    cl_Started( void );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -170,5 +170,5 @@ void   StatList_move_to_top( Status_t lst[], size_t lst_size, CHR_REF ichr );
 // Much more to come...
 //int  cl_connectToServer(...);
 //int  cl_loadModule(...);
-//void     cl_frameStep();
+//void     cl_frameStep( void );
 
