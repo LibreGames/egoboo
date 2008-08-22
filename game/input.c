@@ -1,9 +1,4 @@
 //********************************************************************************************
-//* Egoboo - input.c
-//*
-//* Keyboard, mouse, and joystick handling code.
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -21,6 +16,11 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Keyboard, mouse, and joystick handling code.
+/// @details
 
 #include "input.inl"
 

@@ -1,9 +1,4 @@
 //********************************************************************************************
-//* Egoboo - char.c
-//*
-//*
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -21,6 +16,10 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Character/Item Implementation
 
 #include "char.inl"
 
@@ -407,10 +406,8 @@ bool_t make_one_character_matrix( ChrList_t chrlst, size_t chrlst_size, Chr_t * 
     mat_old = pchr->matrix;
 
     pchr->matrix = ScaleXYZRotateXYZTranslate( pchr->scale * pchr->pancakepos.x, pchr->scale * pchr->pancakepos.y, pchr->scale * pchr->pancakepos.z,
-                     pchr->ori.turn_lr,
-                     ( Uint16 )( pchr->ori.mapturn_ud + 32768 ),
-                     ( Uint16 )( pchr->ori.mapturn_lr + 32768 ),
-                     pchr->ori.pos.x, pchr->ori.pos.y, pchr->ori.pos.z );
+                     pchr->ori.turn_lr, ( Uint16 )( pchr->ori.mapturn_ud + 32768 ), ( Uint16 )( pchr->ori.mapturn_lr + 32768 ),
+                     pchr->ori.pos );
 
     pchr->matrix_valid = btrue;
 
@@ -454,6 +451,7 @@ bool_t make_one_weapon_matrix( ChrList_t chrlst, size_t chrlst_size, CHR_REF chr
     return bfalse;
   }
 
+  // copy the matrix to see if the bumper needs to be recalculated
   mat_old = pchr->matrix;
 
   if(UINT16_MAX == pchr->attachedgrip[0])
@@ -461,7 +459,7 @@ bool_t make_one_weapon_matrix( ChrList_t chrlst, size_t chrlst_size, CHR_REF chr
     // ??? Attached at origin ???
 
     // Calculate weapon's matrix
-    pchr->matrix = ScaleXYZRotateXYZTranslate( 1, 1, 1, 0, 0, pchr->ori.turn_lr + chrlst[mount_ref].ori.turn_lr, chrlst[mount_ref].ori.pos.x, chrlst[mount_ref].ori.pos.y, chrlst[mount_ref].ori.pos.z);
+    pchr->matrix = ScaleXYZRotateXYZTranslate( 1, 1, 1, 0, 0, pchr->ori.turn_lr + chrlst[mount_ref].ori.turn_lr, chrlst[mount_ref].ori.pos);
     pchr->matrix_valid = btrue;
 
     recalc_bumper = matrix_compare_3x3(&mat_old, &(pchr->matrix));
@@ -469,13 +467,19 @@ bool_t make_one_weapon_matrix( ChrList_t chrlst, size_t chrlst_size, CHR_REF chr
   else if(UINT16_MAX == pchr->attachedgrip[1])
   {
     // Attached at single grip point
+    vect3 grip_ori;
 
     // do the linear interpolation
     vertex = pchr->attachedgrip[0];
     md2_blend_vertices(chrlst + mount_ref, vertex, vertex);
 
+    // set the grip's origin
+    grip_ori.x = chrlst[mount_ref].vdata.Vertices[vertex].x;
+    grip_ori.y = chrlst[mount_ref].vdata.Vertices[vertex].y;
+    grip_ori.z = chrlst[mount_ref].vdata.Vertices[vertex].z;
+
     // Calculate weapon's matrix
-    pchr->matrix = ScaleXYZRotateXYZTranslate( 1, 1, 1, 0, 0, pchr->ori.turn_lr + chrlst[mount_ref].ori.turn_lr, chrlst[mount_ref].vdata.Vertices[vertex].x, chrlst[mount_ref].vdata.Vertices[vertex].y, chrlst[mount_ref].vdata.Vertices[vertex].z);
+    pchr->matrix = ScaleXYZRotateXYZTranslate( 1, 1, 1, 0, 0, pchr->ori.turn_lr + chrlst[mount_ref].ori.turn_lr, grip_ori);
     pchr->matrix_valid = btrue;
 
     recalc_bumper = matrix_compare_3x3(&mat_old, &(pchr->matrix));

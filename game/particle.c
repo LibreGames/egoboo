@@ -1,9 +1,4 @@
 //********************************************************************************************
-//* Egoboo - particle.c
-//*
-//* Manages the particle system.
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -21,6 +16,11 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Egoboo particle system
+/// @details Manages the particle system
 
 #include "particle.inl"
 
@@ -1369,41 +1369,39 @@ void setup_particles( Game_t * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-void spawn_bump_particles( Game_t * gs, CHR_REF character, PRT_REF particle )
+void spawn_bump_particles( Game_t * gs, CHR_REF ichr, PRT_REF iprt )
 {
   /// @details ZZ> This function is for catching characters on fire and such
 
-  int cnt;
-  Sint16 x, y, z;
-  int distance, bestdistance;
-  Uint16 facing, bestvertex;
+  int    cnt;
+  int    bestdistance;
+  Uint16 bestvertex;
   Uint16 amount;
-  Uint16 vertices;
+  size_t vrt_count;
   Uint16 direction, left, right;
-  float fsin, fcos;
   Uint32 loc_rand;
 
   PObj_t objlst     = gs->ObjList;
   PPrt_t prtlst     = gs->PrtList;
   PChr_t chrlst     = gs->ChrList;
 
-  Chr_t * pchr;
+  Chr_t  * pchr;
   Prt_t  * pprt;
 
-  OBJ_REF iobj;
+  OBJ_REF  iobj;
   Obj_t  * pobj;
 
   Mad_t  * pmad;
   Cap_t  * pcap;
   Pip_t  * ppip;
 
-  if(!ACTIVE_CHR(chrlst, character)) return;
-  pchr = ChrList_getPChr(gs, character);
+  if(!ACTIVE_CHR(chrlst, ichr)) return;
+  pchr = ChrList_getPChr(gs, ichr);
 
-  if(!ACTIVE_PRT(prtlst, particle)) return;
-  pprt = prtlst + particle;
+  if(!ACTIVE_PRT(prtlst, iprt)) return;
+  pprt = prtlst + iprt;
 
-  ppip = PrtList_getPPip(gs, particle);
+  ppip = PrtList_getPPip(gs, iprt);
   if(NULL == ppip) return;
 
   iobj = pchr->model = VALIDATE_OBJ(objlst, pchr->model);
@@ -1422,7 +1420,7 @@ void spawn_bump_particles( Game_t * gs, CHR_REF character, PRT_REF particle )
   if ( amount != 0 || ppip->spawnenchant )
   {
     // Only damage if hitting from proper direction
-    vertices = pmad->vertices;
+    vrt_count = pmad->vertices;
     direction = pchr->ori.turn_lr - vec_to_turn( -pprt->ori.vel.x, -pprt->ori.vel.y );
     if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_INVICTUS ) )
     {
@@ -1454,72 +1452,71 @@ void spawn_bump_particles( Game_t * gs, CHR_REF character, PRT_REF particle )
       if ( ppip->spawnenchant )
       {
         ENC_SPAWN_INFO enc_si;
-        enc_spawn_info_init( &enc_si, gs, prt_get_owner( gs, particle ), character, INVALID_CHR, INVALID_ENC, pprt->model );
+        enc_spawn_info_init( &enc_si, gs, prt_get_owner( gs, iprt ), ichr, INVALID_CHR, INVALID_ENC, pprt->model );
         req_spawn_one_enchant( enc_si );
       }
 
       // Spawn particles
-      if ( amount != 0 && !pcap->prop.resistbumpspawn && !pchr->prop.invictus &&
-           vertices != 0 && ( pchr->skin.damagemodifier_fp8[pprt->damagetype]&DAMAGE_SHIFT ) != DAMAGE_SHIFT )
+      if ( amount    != 0 && !pcap->prop.resistbumpspawn && !pchr->prop.invictus &&
+           vrt_count != 0 && ( pchr->skin.damagemodifier_fp8[pprt->damagetype]&DAMAGE_SHIFT ) != DAMAGE_SHIFT )
       {
         if ( amount == 1 )
         {
-          // A single particle ( arrow? ) has been stuck in the character...
+          // A single iprt ( arrow? ) has been stuck in the ichr...
           // Find best vertex to attach to
 
-          Uint32 ilast, inext;
-          MD2_Model_t * pmdl;
-          EGO_CONST MD2_Frame_t * plast, * pnext;
-          float flip;
+          int i;
+          float dx,dy,dz,diff;
+          GLvector *point, *nupoint;
 
-          inext = pchr->anim.next;
-          ilast = pchr->anim.last;
-          flip  = pchr->anim.flip;
+          // dynamically allocate a vertex array.
+          point   = EGOBOO_NEW_ARY(GLvector, vrt_count);
+          nupoint = EGOBOO_NEW_ARY(GLvector, vrt_count);
 
-          pmdl  = pmad->md2_ptr;
-          plast = md2_get_Frame(pmdl, ilast);
-          pnext = md2_get_Frame(pmdl, inext);
+          // make sure that all the vertices have been updated
+          md2_blend_vertices(pchr, -1, -1);
+
+          for(i=0; i<vrt_count; i++)
+          {
+            point[i].x = pchr->vdata.Vertices[i].x;
+            point[i].y = pchr->vdata.Vertices[i].y;
+            point[i].z = pchr->vdata.Vertices[i].z;
+            point[i].w = 1.0f;
+          }
+
+          // Transform the vertices into world space
+          Transform4_Full( 1.0f, 1.0f, &(pchr->matrix), point, nupoint, vrt_count );
 
           bestvertex = 0;
-          bestdistance = 9999999;
-
-          z =  pprt->ori.pos.z - ( pchr->ori.pos.z + RAISE );
-          facing = pprt->facing - pchr->ori.turn_lr - 16384;
-          facing >>= 2;
-          fsin = turntosin[facing & TRIGTABLE_MASK];
-          fcos = turntocos[facing & TRIGTABLE_MASK];
-          y = 8192;
-          x = -y * fsin;
-          y = y * fcos;
-
-          for (cnt = 0; cnt < vertices; cnt++ )
+          bestdistance = SINT32_MAX;
+          for(i=0; i<vrt_count; i++)
           {
-            vect3 vpos;
+            dx = nupoint[i].x - pprt->ori.pos.x;
+            dy = nupoint[i].y - pprt->ori.pos.y;
+            dz = nupoint[i].z - pprt->ori.pos.z;
+            diff = dx*dx + dy*dy + dz*dz;
 
-            vpos.x = pnext->vertices[cnt].x + (plast->vertices[cnt].x - pnext->vertices[cnt].x)*flip;
-            vpos.y = pnext->vertices[cnt].y + (plast->vertices[cnt].y - pnext->vertices[cnt].y)*flip;
-            vpos.z = pnext->vertices[cnt].z + (plast->vertices[cnt].z - pnext->vertices[cnt].z)*flip;
-
-            distance = ABS( x - vpos.x ) + ABS( y - vpos.y ) + ABS( z - vpos.z );
-            if ( distance < bestdistance )
+            if(diff < bestdistance)
             {
-              bestdistance = distance;
-              bestvertex = cnt;
+              bestdistance = diff;
+              bestvertex   = vrt_count - i;
             }
-
           }
 
           prt_spawn( gs, 1.0f, pchr->ori.pos, pchr->ori.vel, 0, pprt->model, ppip->bumpspawnpip,
-                              character, (GRIP)(bestvertex + 1), pprt->team, prt_get_owner( gs, particle ), cnt, character );
+                     ichr, (GRIP)(bestvertex + 1), pprt->team, prt_get_owner( gs, iprt ), 0, ichr );
+
+          EGOBOO_DELETE_ARY(point);
+          EGOBOO_DELETE_ARY(nupoint);
         }
         else
         {
-          amount = ( amount * vertices ) >> 5;  // Correct amount for size of character
+          amount = ( amount * vrt_count ) >> 5;  // Correct amount for size of ichr
 
           for ( cnt = 0; cnt < amount; cnt++ )
           {
             prt_spawn( gs, 1.0f, pchr->ori.pos, pchr->ori.vel, 0, pprt->model, ppip->bumpspawnpip,
-                                character, (GRIP)RAND(&loc_rand, 0, vertices), pprt->team, prt_get_owner( gs, particle ), cnt, character );
+                                ichr, (GRIP)RAND(&loc_rand, 0, vrt_count), pprt->team, prt_get_owner( gs, iprt ), cnt, ichr );
           }
         }
       }

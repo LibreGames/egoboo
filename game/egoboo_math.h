@@ -188,7 +188,7 @@ INLINE matrix_4x4 RotateX( EGO_CONST float rads );
 INLINE matrix_4x4 RotateY( EGO_CONST float rads );
 INLINE matrix_4x4 RotateZ( EGO_CONST float rads );
 INLINE matrix_4x4 ScaleXYZ( EGO_CONST float sizex, EGO_CONST float sizey, EGO_CONST float sizez );
-INLINE matrix_4x4 ScaleXYZRotateXYZTranslate( EGO_CONST float sizex, EGO_CONST float sizey, EGO_CONST float sizez, Uint16 turnz, Uint16 turnx, Uint16 turny, float tx, float ty, float tz );
+INLINE matrix_4x4 ScaleXYZRotateXYZTranslate( EGO_CONST float sizex, EGO_CONST float sizey, EGO_CONST float sizez, Uint16 turnz, Uint16 turnx, Uint16 turny, EGO_CONST vect3 pos );
 INLINE matrix_4x4 FourPoints( vect4 ori, vect4 wid, vect4 forw, vect4 up, float scale );
 INLINE matrix_4x4 MatrixConvert(quaternion q1);
 

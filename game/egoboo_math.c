@@ -1,9 +1,4 @@
 //********************************************************************************************
-//* Egoboo - egoboo_math.c
-//*
-//* Implementation of math functions
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -21,6 +16,11 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Implementation of math functions
+
 
 /**> HEADER FILES <**/
 #include "egoboo_math.inl"

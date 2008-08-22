@@ -1,9 +1,4 @@
 //********************************************************************************************
-//* Egoboo - module.c
-//*
-//* Handles ingame maps and levels, called Modules
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -21,6 +16,11 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Egoboo Model Manager
+/// @details Handles ingame maps and levels, called Modules
 
 #include "module.h"
 

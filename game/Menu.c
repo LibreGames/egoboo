@@ -1,9 +1,4 @@
 //********************************************************************************************
-//* Egoboo - Menu.c
-//*
-//* Implements the main menu tree, using the code in Ui.
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -22,9 +17,10 @@
 //*
 //********************************************************************************************
 
-//********************************************************************************************
-// New menu code
-//********************************************************************************************
+///
+/// @file
+/// @brief Menu Implementation
+/// @details Implements the main menu tree, using the code in Ui.
 
 #include "Menu.h"
 
@@ -1342,7 +1338,11 @@ int mnu_doChoosePlayer( MenuProc_t * mproc, float deltaTime )
         {
           PLA_REF splayer;
 
-          mnu_widgetList[m].img  = gfx->TxIcon + loadplayer[REF_TO_INT(player)].icon;
+          mnu_widgetList[m].img = NULL;
+          if( MAXICONTX != loadplayer[REF_TO_INT(player)].icon )
+          {
+            mnu_widgetList[m].img = gfx->TxIcon + loadplayer[REF_TO_INT(player)].icon;
+          };
           mnu_widgetList[m].text = loadplayer[REF_TO_INT(player)].name;
 
           splayer = mnu_getSelectedPlayer( player );

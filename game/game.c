@@ -3959,6 +3959,7 @@ int proc_menuLoop( MenuProc_t  * mproc )
         SDL_WM_GrabInput( SDL_GRAB_OFF );
         SDL_ShowCursor( SDL_DISABLE );
         mous.game = bfalse;
+        glClearColor(0,0,0,0);
       }
       proc->State = PROC_Entering;
       break;
@@ -4517,7 +4518,6 @@ void attach_particle_to_character( Game_t * gs, PRT_REF particle, CHR_REF chr_re
 
   Uint16 vertex;
   float flip;
-  GLvector point, nupoint;
 
   bool_t prt_valid;
 
@@ -4584,20 +4584,8 @@ void attach_particle_to_character( Game_t * gs, PRT_REF particle, CHR_REF chr_re
   else
   {
     // Transform the grip vertex position to world space
-
+    GLvector point[1], nupoint[1];
     Mad_t * pmad = ChrList_getPMad(gs, chr_ref);
-
-    Uint32      ilast, inext;
-    MD2_Model_t * pmdl;
-    EGO_CONST MD2_Frame_t * plast, * pnext;
-
-    inext = pchr->anim.next;
-    ilast = pchr->anim.last;
-    flip  = pchr->anim.flip;
-
-    pmdl  = pmad->md2_ptr;
-    plast = md2_get_Frame(pmdl, ilast);
-    pnext = md2_get_Frame(pmdl, inext);
 
     //handle possible invalid values
     vertex = pmad->vertices - vertoffset;
@@ -4606,30 +4594,19 @@ void attach_particle_to_character( Game_t * gs, PRT_REF particle, CHR_REF chr_re
       vertex = pmad->vertices - GRIP_LAST;
     }
 
-    // Calculate grip point locations with linear interpolation and other silly things
-    if ( inext == ilast )
-    {
-      point.x = plast->vertices[vertex].x;
-      point.y = plast->vertices[vertex].y;
-      point.z = plast->vertices[vertex].z;
-      point.w = 1.0f;
-    }
-    else
-    {
-      point.x = plast->vertices[vertex].x + ( pnext->vertices[vertex].x - plast->vertices[vertex].x ) * flip;
-      point.y = plast->vertices[vertex].y + ( pnext->vertices[vertex].y - plast->vertices[vertex].y ) * flip;
-      point.z = plast->vertices[vertex].z + ( pnext->vertices[vertex].z - plast->vertices[vertex].z ) * flip;
-      point.w = 1.0f;
-    }
+    md2_blend_vertices(pchr, vertex, vertex);
+
+    point[0].x = pchr->vdata.Vertices[vertex].x;
+    point[0].y = pchr->vdata.Vertices[vertex].y;
+    point[0].z = pchr->vdata.Vertices[vertex].z;
+    point[0].w = 1.0f;
 
     // Do the transform
-    Transform4_Full( 1.0f, 1.0f, &(pchr->matrix), &point, &nupoint, 1 );
+    Transform4_Full( 1.0f, 1.0f, &(pchr->matrix), point, nupoint, 1 );
 
-    pprt->ori.pos.x = nupoint.x;
-    pprt->ori.pos.y = nupoint.y;
-    pprt->ori.pos.z = nupoint.z;
-
-
+    pprt->ori.pos.x = nupoint[0].x;
+    pprt->ori.pos.y = nupoint[0].y;
+    pprt->ori.pos.z = nupoint[0].z;
   }
 
 

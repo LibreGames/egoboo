@@ -1,9 +1,4 @@
 //********************************************************************************************
-//* Egoboo - Mesh.c
-//*
-//* This part handles MPD mesh related stuff.
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -21,6 +16,11 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Raw MPD loader
+/// @details This part handles MPD mesh related stuff.
 
 #include "mesh.inl"
 

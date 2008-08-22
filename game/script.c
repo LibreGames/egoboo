@@ -1,9 +1,4 @@
 //********************************************************************************************
-//* Egoboo - script.c
-//*
-//* Implements the game's scripting language.
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -21,6 +16,11 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Egoboo scripting system
+/// @details
 
 #include <assert.h>
 

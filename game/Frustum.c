@@ -12,6 +12,13 @@
 //
 //***********************************************************************//
 
+///
+/// @file
+/// @brief Implementation of Frustum Culling
+/// @details Demonstrates checking if shapes are in view
+
+
+
 #include "Frustum.h"
 
 #include <SDL_opengl.h>

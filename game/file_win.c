@@ -1,9 +1,4 @@
 //********************************************************************************************
-//* Egoboo - file_win.c
-//*
-//* win32 compatible file handling
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -21,6 +16,11 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Implementation of Egoboo Virtual File System for Win32
+/// @details Win32 compatible file handling
 
 #include "file_common.h"
 #include "Log.h"

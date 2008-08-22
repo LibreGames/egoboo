@@ -1,13 +1,4 @@
 //********************************************************************************************
-//* Egoboo - Server.c
-//*
-//* Implements the game server for a network game
-//*
-//* Even if networking is not enabled, the local latches are routed through this code.
-//*
-//* This code is currently under development.
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -25,6 +16,13 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Egoboo Game Server
+/// @details Implements the game server for a network game
+/// Even if networking is not enabled, the local latches are routed through this code.
+/// This code is currently under development.
 
 #include "Server.h"
 

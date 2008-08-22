@@ -1,13 +1,4 @@
 //********************************************************************************************
-//* Egoboo - Network.c
-//*
-//* This module implements the basic network functions that are used by
-//* the modules that implement file transfers and network play
-//*
-//* Currently implemented using Enet.
-//* Networked play doesn't really work at the moment.
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -25,6 +16,15 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Basic Networking Implemntation
+/// @details This module implements the basic network functions that are used by
+/// the modules that implement file transfers and network play
+///
+/// Currently implemented using Enet.
+/// Networked play is under development.
 
 #include "Network.inl"
 

@@ -1,9 +1,4 @@
 //********************************************************************************************
-//* Egoboo - object.c
-//*
-//* Implements the object manager
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -21,6 +16,11 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Egoboo object manager
+/// @details Implements the Egoboo object manager
 
 #include "object.inl"
 

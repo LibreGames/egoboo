@@ -1,9 +1,4 @@
 //********************************************************************************************
-//* Egoboo - camera.c
-//*
-//* Various functions related to how the game camera works.
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -21,6 +16,11 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Camera Object Implementation
+/// @details Various functions related to how the game camera works.
 
 #include "camera.h"
 

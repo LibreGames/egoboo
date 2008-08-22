@@ -1,10 +1,4 @@
 //********************************************************************************************
-//* Egoboo - graphic.c
-//*
-//* A mish-mosh of code related to drawing the game.
-//* Some code, such as data loading, should be moved elsewhere.
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -22,6 +16,12 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Basic Graphics library for Egoboo
+/// @details A mish-mosh of code related to drawing the game.
+///  Some code, such as data loading, should be moved elsewhere.
 
 #include "graphic.inl"
 

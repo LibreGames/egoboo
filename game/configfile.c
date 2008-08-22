@@ -1,9 +1,4 @@
 //********************************************************************************************
-//* Egoboo - configfile.c
-//*
-//* Configuration file loading code.
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -22,48 +17,45 @@
 //*
 //********************************************************************************************
 
-//---------------------------------------------------------------------
-//
-// ConfigFile.c
-//
-// - All functions to manage a ConfigFile_t
-//
-//  A ConfigFile_t contains sections which themselves contains values.
-// A section name is contained between "{}" Ex: {Section Name}
-//
-// A value has a Key, a string value and an optional commentary.
-// The Key is contained between "[]" Ex: [Key Name]
-// The string value is contained between '"' Ex: "TRUE"
-//  To include a '"' in a string value, the '"' are doubled
-//  The commentary follows the string value on the same line and
-// begins with "//"
-//
-// Exemple of a ConfigFile_t:
-// {Section 1}
-// [Key1] : "TRUE" // This is a commentary
-// [Key2] : "Hello ""MAN""" // this will become : Hello "MAN"
-//
-// To do :
-//   optimisation
-//   error checking
-//   Run-time commentary editing
-//
-// Bugs:
-//  - Multiple section with the same name will be loaded and saved but only the first
-//   one will be looked for value. Should not load sections with same name.
-//
-//
-// History:
-//
-// 2001-01-09
-//  - Implemented ConvertToKeyCharacters in SetConfigValue
-//
-// 2000-12-10
-//  - Added the length of the string buffer used as parameter for GetConfigValue.
-//  - Added SetConfigBooleanValue, SetConfigIntVaalue and SetConfigFloatValue to standardise
-//   the way to set usual data types.
-//  - Added GetConfigBooleanValue, GetConfigIntValue and GetConfigFloatValue.
-//---------------------------------------------------------------------
+///
+/// @file
+/// @brief Configuration file loading implementation
+/// @details - All functions to manage a ConfigFile
+///
+///  A ConfigFile_t contains sections which themselves contains values.
+/// A section name is contained between "{}" Ex: {Section Name}
+///
+/// A value has a Key, a string value and an optional commentary.
+/// The Key is contained between "[]" Ex: [Key Name]
+/// The string value is contained between '"' Ex: "TRUE"
+///  To include a '"' in a string value, the '"' are doubled
+///  The commentary follows the string value on the same line and
+/// begins with "//"
+///
+/// Exemple of a ConfigFile_t:
+/// {Section 1}
+/// [Key1] : "TRUE" // This is a commentary
+/// [Key2] : "Hello ""MAN""" // this will become : Hello "MAN"
+///
+/// @todo optimisation
+///  @todo error checking
+///  @todo Run-time commentary editing
+///
+/// @bug Multiple section with the same name will be loaded and saved but only the first
+///   one will be looked for value. Should not load sections with same name.
+///
+///
+/// History:
+///
+/// 2001-01-09
+///  - Implemented ConvertToKeyCharacters in SetConfigValue
+///
+/// 2000-12-10
+///  - Added the length of the string buffer used as parameter for GetConfigValue.
+///  - Added SetConfigBooleanValue, SetConfigIntVaalue and SetConfigFloatValue to standardise
+///   the way to set usual data types.
+///  - Added GetConfigBooleanValue, GetConfigIntValue and GetConfigFloatValue.
+
 
 #include "configfile.h"
 #include "file_common.h"

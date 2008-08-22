@@ -1,9 +1,4 @@
 //********************************************************************************************
-//* Egoboo - graphic_mad.c
-//*
-//* Character model drawing code.
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -21,6 +16,11 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Drawing routines for MD2 files
+/// @details
 
 #include "ogl_include.h"
 #include "Mad.h"

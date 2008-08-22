@@ -1,9 +1,4 @@
 //********************************************************************************************
-//* Egoboo - System_lin.c
-//*
-//* Unix/GNU/Linux/*nix - specific code
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -21,6 +16,11 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief System Dependent Functions
+/// @details Unix/GNU/Linux/*nix - specific code
 
 #include "System.h"
 

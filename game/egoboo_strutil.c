@@ -1,9 +1,4 @@
 //********************************************************************************************
-//* Egoboo - egoboo_strutil.c
-//*
-//* String manipulation functions.
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -21,6 +16,11 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Implementation of String manipulation functions.
+/// @details
 
 #include "egoboo_strutil.h"
 

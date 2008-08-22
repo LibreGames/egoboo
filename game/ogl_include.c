@@ -1,9 +1,4 @@
 //********************************************************************************************
-//* Egoboo - ogl_include.c
-//*
-//* Implements the most basic code that Egoboo uses to interface with OpenGL
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -21,6 +16,11 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Egoboo OpenGL interface
+/// @details Implements the most basic code that Egoboo uses to interface with OpenGL
 
 #include "ogl_include.h"
 

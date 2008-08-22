@@ -1,10 +1,4 @@
 //********************************************************************************************
-//* Egoboo - Ui.c
-//*
-//* A basic library for implementing user interfaces, based off of Casey Muratori's IMGUI.
-//* (https://mollyrocket.com/forums/viewtopic.php?t=134)
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -22,6 +16,12 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Egoboo User Interface
+/// @details A basic library for implementing user interfaces, based off of Casey Muratori's IMGUI.
+///  (https://mollyrocket.com/forums/viewtopic.php?t=134) 
 
 #include "Ui.h"
 

@@ -1,9 +1,4 @@
 //********************************************************************************************
-//* Egoboo - file_lin.c
-//*
-//* *nix compatible file handling
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -21,6 +16,11 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Implementation of Egoboo Virtual File System for Linux
+/// @details *nix compatible file handling
 
 #include "file_common.h"
 #include "egoboo_strutil.h"

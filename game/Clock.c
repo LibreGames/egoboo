@@ -1,11 +1,4 @@
 //********************************************************************************************
-//* Egoboo - Client.c
-//*
-//* Clock & timer functionality
-//* This implementation was adapted from Noel Lopis' article in
-//* Game Programming Gems 4.
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -23,6 +16,12 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Clock & timer implementation
+/// @details This implementation was adapted from Noel Lopis' article in
+///  Game Programming Gems 4.
 
 #include "Clock.h"
 

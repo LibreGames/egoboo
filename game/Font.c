@@ -1,10 +1,4 @@
 //********************************************************************************************
-//* Egoboo - TTF_Font.c
-//*
-//* Code for implementing bitmapped and outline fonts.
-//* Outline fonts are currently handled through SDL_ttf
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -22,6 +16,13 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Implementation of Egoboo Fonts
+/// @details Code for implementing bitmapped and outline fonts.
+///  Outline fonts are currently handled through SDL_ttf
+
 #include "Font.h"
 
 #include "ogl_texture.h"

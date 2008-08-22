@@ -1,9 +1,4 @@
 //********************************************************************************************
-//* Egoboo - ogl_texture.c
-//*
-//* Implements OpenGL texture loading using SDL_image.
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -21,6 +16,12 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Egoboo OpenGL texture interface
+/// @details Implements OpenGL texture loading using SDL_image
+
 #include "ogl_texture.h"
 
 #include "game.h"

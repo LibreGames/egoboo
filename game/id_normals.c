@@ -1,10 +1,4 @@
 //********************************************************************************************
-//* Egoboo - id_normals.c
-//*
-//* Implements ID Software's normal lookup table.
-//* The file "id_md2.h" is supplied by ID Software.
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -22,6 +16,11 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Implements ID Software's normal lookup table.
+/// @details The file "id_md2.h" is supplied by ID Software.
 
 #include "id_md2.h"
 

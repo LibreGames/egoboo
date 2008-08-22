@@ -1,9 +1,4 @@
 //********************************************************************************************
-//* Egoboo - graphic_fan.c
-//*
-//* MPD (world mesh) drawing.
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -24,7 +19,8 @@
 
 ///
 /// @file
-/// @brief Render game tiles.
+/// @brief Drawing routines for MPD files (world mesh)
+/// @details Render game tiles.
 /// @todo Implement OpenGL fog effects.
 
 

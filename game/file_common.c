@@ -1,10 +1,4 @@
 //********************************************************************************************
-//* Egoboo - file_common.c
-//*
-//* File operations that are shared between various operating systems.
-//* OS-specific code goes in file_*.c (such as file_win.c)
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -22,6 +16,12 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Implementation of basic Egoboo Virtual File System
+/// @details File operations that are shared between various operating systems.
+/// OS-specific code goes in file_*.c (such as file_win.c)
 
 #include "file_common.h"
 #include "Log.h"

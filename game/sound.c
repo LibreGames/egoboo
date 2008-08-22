@@ -1,9 +1,4 @@
 //********************************************************************************************
-//* Egoboo - sound.c
-//*
-//* Implements music and sound effects using SDL_mixer.
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -21,6 +16,11 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Egoboo Sound System
+/// @details Implements music and sound effects using SDL_mixer.
 
 #include "sound.h"
 

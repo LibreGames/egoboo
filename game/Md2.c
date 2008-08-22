@@ -1,9 +1,4 @@
 //********************************************************************************************
-//* Egoboo - Md2.c
-//*
-//* Raw model loader for ID Software's MD2 file format
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -21,6 +16,11 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Raw MD2 loader
+/// @details Raw model loader for ID Software's MD2 file format
 
 #include "Md2.inl"
 

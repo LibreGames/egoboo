@@ -1,9 +1,4 @@
 //********************************************************************************************
-//* Egoboo - passage.c
-//*
-//* Manages passages and doors and whatnot.  Things that impede your progress!
-//*
-//********************************************************************************************
 //*
 //*    This file is part of Egoboo.
 //*
@@ -21,6 +16,11 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief Egoboo passage implementation
+/// @details Manages passages and doors and whatnot.  Things that impede your progress!
 
 #include "passage.h"
 

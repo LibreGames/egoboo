@@ -1,8 +1,5 @@
-//********************************************************************************************
-//* Egoboo - egoboo_math.inl
-//*
-//* Inlined math functions.
-//*
+#pragma once
+
 //********************************************************************************************
 //*
 //*    This file is part of Egoboo.
@@ -21,6 +18,11 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
+
+///
+/// @file
+/// @brief 
+/// @details functions that will be declared inside the base class
 
 #pragma once
 
@@ -365,7 +367,7 @@ INLINE matrix_4x4 ScaleXYZ( EGO_CONST float sizex, EGO_CONST float sizey, EGO_CO
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE matrix_4x4 ScaleXYZRotateXYZTranslate( EGO_CONST float sizex, EGO_CONST float sizey, EGO_CONST float sizez, Uint16 turnz, Uint16 turnx, Uint16 turny, float tx, float ty, float tz )
+INLINE matrix_4x4 ScaleXYZRotateXYZTranslate( EGO_CONST float sizex, EGO_CONST float sizey, EGO_CONST float sizez, Uint16 turnz, Uint16 turnx, Uint16 turny, EGO_CONST vect3 pos )
 {
   matrix_4x4 ret;
 
@@ -383,25 +385,25 @@ INLINE matrix_4x4 ScaleXYZRotateXYZTranslate( EGO_CONST float sizex, EGO_CONST f
   float sxcy = sx * cy;
   float cxcy = cx * cy;
 
-  ret.CNV( 0, 0 ) = sizex * ( cy * cz );    //0,0
-  ret.CNV( 0, 1 ) = sizex * ( sxsy * cz + cx * sz );  //0,1
-  ret.CNV( 0, 2 ) = sizex * ( -cxsy * cz + sx * sz );  //0,2
-  ret.CNV( 0, 3 ) = 0;      //0,3
+  ret.CNV( 0, 0 ) = sizex * ( cy * cz );
+  ret.CNV( 0, 1 ) = sizex * ( sxsy * cz + cx * sz );
+  ret.CNV( 0, 2 ) = sizex * ( -cxsy * cz + sx * sz );
+  ret.CNV( 0, 3 ) = 0.0f;
 
-  ret.CNV( 1, 0 ) = sizey * ( -cy * sz );    //1,0
-  ret.CNV( 1, 1 ) = sizey * ( -sxsy * sz + cx * cz );  //1,1
-  ret.CNV( 1, 2 ) = sizey * ( cxsy * sz + sx * cz );  //1,2
-  ret.CNV( 1, 3 ) = 0;      //1,3
+  ret.CNV( 1, 0 ) = sizey * ( -cy * sz );
+  ret.CNV( 1, 1 ) = sizey * ( -sxsy * sz + cx * cz );
+  ret.CNV( 1, 2 ) = sizey * ( cxsy * sz + sx * cz );
+  ret.CNV( 1, 3 ) = 0.0f;
 
-  ret.CNV( 2, 0 ) = sizez * ( sy );  //2,0
-  ret.CNV( 2, 1 ) = sizez * ( -sxcy );    //2,1
-  ret.CNV( 2, 2 ) = sizez * ( cxcy );    //2,2
-  ret.CNV( 2, 3 ) = 0;      //2,3
+  ret.CNV( 2, 0 ) = sizez * ( sy );
+  ret.CNV( 2, 1 ) = sizez * ( -sxcy );
+  ret.CNV( 2, 2 ) = sizez * ( cxcy );
+  ret.CNV( 2, 3 ) = 0.0f;
 
-  ret.CNV( 3, 0 ) = tx;      //3,0
-  ret.CNV( 3, 1 ) = ty;      //3,1
-  ret.CNV( 3, 2 ) = tz;      //3,2
-  ret.CNV( 3, 3 ) = 1;      //3,3
+  ret.CNV( 3, 0 ) = pos.x;
+  ret.CNV( 3, 1 ) = pos.y;
+  ret.CNV( 3, 2 ) = pos.z;
+  ret.CNV( 3, 3 ) = 1.0f; 
   return ret;
 }
 
@@ -415,9 +417,9 @@ INLINE matrix_4x4 FourPoints( vect4 ori, vect4 wid, vect4 frw, vect4 up, float s
   wid.z -= ori.z;  frw.z -= ori.z;  up.z -= ori.z;
 
   // fix -x scaling on the input
-  wid.x *= -1.0; // HUK
-  wid.y *= -1.0; // HUK
-  wid.z *= -1.0; // HUK
+  //wid.x *= -1.0; // HUK
+  //wid.y *= -1.0; // HUK
+  //wid.z *= -1.0; // HUK
 
   wid = Normalize4( wid );
   frw = Normalize4( frw );
