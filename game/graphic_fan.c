@@ -38,12 +38,16 @@
 #include "egoboo_math.inl"
 #include "egoboo_types.inl"
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
 RENDERLIST renderlist;
 
 //--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 void render_fan_ref( Uint32 fan, char tex_loaded, float level )
 {
-  /// @details ZZ> This function draws a mesh fan
+  /// @details ZZ@> This function draws a mesh fan
 
   Game_t * gs = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
@@ -185,7 +189,7 @@ void render_fan_ref( Uint32 fan, char tex_loaded, float level )
 //--------------------------------------------------------------------------------------------
 void render_fan( Uint32 fan, char tex_loaded )
 {
-  /// @details ZZ> This function draws a mesh fan
+  /// @details ZZ@> This function draws a mesh fan
 
   Game_t * gs = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
@@ -440,7 +444,7 @@ badvertex++;
 //--------------------------------------------------------------------------------------------
 void render_water_fan( Uint32 fan, Uint8 layer, Uint8 mode )
 {
-  /// @details ZZ> This function draws a water fan
+  /// @details ZZ@> This function draws a water fan
 
   Game_t * gs = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
@@ -532,7 +536,7 @@ void render_water_fan( Uint32 fan, Uint8 layer, Uint8 mode )
 //--------------------------------------------------------------------------------------------
 void render_water_fan_lit( Uint32 fan, Uint8 layer, Uint8 mode )
 {
-  /// @details ZZ> This function draws a water fan
+  /// @details ZZ@> This function draws a water fan
 
   Game_t * gs = Graphics_requireGame(&gfxState);
   Mesh_t * pmesh = Game_getMesh(gs);
@@ -707,8 +711,8 @@ bool_t make_renderlist(RENDERLIST * prlst)
 //--------------------------------------------------------------------------------------------
 void set_fan_dyna_light( int fanx, int fany, PRT_REF particle )
 {
-  /// @details ZZ> This function is a little helper, lighting the selected fan
-  //     with the chosen particle
+  /// @details ZZ@> This function is a little helper, lighting the selected fan
+  ///     with the chosen particle
 
   vect3 dif, nrm;
   Uint32 fan;
@@ -789,7 +793,7 @@ void set_fan_dyna_light( int fanx, int fany, PRT_REF particle )
 //--------------------------------------------------------------------------------------------
 void do_dyna_light(Game_t * gs)
 {
-  /// @details ZZ> This function does dynamic lighting of visible fans
+  /// @details ZZ@> This function does dynamic lighting of visible fans
 
   PRT_REF prt_cnt;
   int cnt, lastvertex, vertex, fan, entry, fanx, fany, addx, addy;
@@ -998,7 +1002,7 @@ void do_dyna_light(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 //void make_renderlist()
 //{
-//  /// @details ZZ> This function figures out which mesh fans to draw
+//  /// @details ZZ@> This function figures out which mesh fans to draw
 //
 //  int cnt, fan, fanx, fany;
 //  int row, run, numrow;

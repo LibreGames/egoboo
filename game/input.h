@@ -103,7 +103,7 @@ typedef enum e_input_type INPUT_TYPE;
 
 enum e_input_bits
 {
-  /// @detail Input devices
+  /// @details Input devices
   INBITS_NONE  =               0,
   INBITS_MOUS  = 1 << INPUT_MOUS,
   INBITS_KEYB  = 1 << INPUT_KEYB,

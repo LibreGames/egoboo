@@ -210,6 +210,7 @@ typedef Uint32 IDSZ;
 #define MAKE_IDSZ(idsz) ((IDSZ)((((idsz)[0]-'A') << 15) | (((idsz)[1]-'A') << 10) | (((idsz)[2]-'A') << 5) | (((idsz)[3]-'A') << 0)))
 #endif
 
+#define IDSZ_NONE            MAKE_IDSZ("NONE")       // [NONE]
 
 //--------------------------------------------------------------------------------------------
 struct s_pair

@@ -253,7 +253,9 @@ typedef enum e_disenchant_mode DISENCHANT_MODE;
 extern STRING namingnames;   ///< The name returned by the function
 
 
-void reset_character_alpha( struct sGame * gs, CHR_REF character );
+void chr_reset_alpha( struct sGame * gs, CHR_REF character );
+
+/// @details This function fixes a character's MAX acceleration
 void chr_reset_accel( struct sGame * gs, CHR_REF character );
 
 EVE_REF EveList_load_one( struct sGame * gs, EGO_CONST char * szObjectpath, EGO_CONST char * szObjectname, EVE_REF irequest );

@@ -63,8 +63,9 @@ char win32_gamePath[MAX_PATH] = NULL_STRING;
 //---------------------------------------------------------------------------------------------
 void fs_init()
 {
-  /// @details JF> This function determines the temporary, import,
-  // game data and save paths
+  /// @details JF@> This function determines the temporary, import,
+  /// game data and save paths
+
   HANDLE hFile;
   char basicdatPath[MAX_PATH];
 
@@ -165,7 +166,7 @@ int fs_removeDirectory( EGO_CONST char *dirname )
 //---------------------------------------------------------------------------------------------
 void fs_deleteFile( EGO_CONST char *filename )
 {
-  /// @details ZZ> This function deletes a file
+  /// @details ZZ@> This function deletes a file
 
   DeleteFile( filename );
 }
@@ -270,7 +271,7 @@ int DirGetAttrib( char *fromdir )
 //---------------------------------------------------------------------------------------------
 void empty_import_directory( void )
 {
-  /// @details ZZ> This function deletes all the TEMP????.OBJ subdirectories in the IMPORT directory
+  /// @details ZZ@> This function deletes all the TEMP????.OBJ subdirectories in the IMPORT directory
 
   WIN32_FIND_DATA wfdData;
   HANDLE hFind;

@@ -274,7 +274,7 @@ INLINE Uint32 make_key_8(Uint8 * seed)
 
 INLINE egoboo_key_t * egoboo_key_create(Uint32 itype, void * pdata)
 {
-  /// @details BB> dynamically allocate and initialize a new key
+  /// @details BB@> dynamically allocate and initialize a new key
 
   egoboo_key_t * ptmp, * pkey;
 
@@ -297,7 +297,7 @@ INLINE egoboo_key_t * egoboo_key_create(Uint32 itype, void * pdata)
 //--------------------------------------------------------------------------------------------
 INLINE bool_t egoboo_key_destroy(egoboo_key_t ** ppkey)
 {
-  /// @details BB> de-initialize the key and free it if necessary
+  /// @details BB@> de-initialize the key and free it if necessary
 
   if( NULL == ppkey || NULL == *ppkey) return bfalse;
 
@@ -315,7 +315,7 @@ INLINE bool_t egoboo_key_destroy(egoboo_key_t ** ppkey)
 //--------------------------------------------------------------------------------------------
 INLINE egoboo_key_t * egoboo_key_new(egoboo_key_t * pkey, Uint32 itype, void * pdata)
 {
-  /// @details BB> initialize the key
+  /// @details BB@> initialize the key
 
   if(NULL == pkey) return pkey;
 
@@ -335,7 +335,7 @@ INLINE egoboo_key_t * egoboo_key_new(egoboo_key_t * pkey, Uint32 itype, void * p
 //--------------------------------------------------------------------------------------------
 INLINE bool_t egoboo_key_invalidate(egoboo_key_t * pkey)
 {
-  /// @details BB> de-initialize the key
+  /// @details BB@> de-initialize the key
 
   if(NULL == pkey) return bfalse;
 
@@ -354,7 +354,7 @@ INLINE bool_t egoboo_key_invalidate(egoboo_key_t * pkey)
 //--------------------------------------------------------------------------------------------
 INLINE bool_t egoboo_key_validate(egoboo_key_t * pkey)
 {
-  /// @details BB> de-initialize the key
+  /// @details BB@> de-initialize the key
 
   //static Uint32 new_id_32 = (Uint32)(~0);
   //static Uint16 new_id_16 = (Uint16)(~0);
@@ -385,7 +385,7 @@ INLINE bool_t egoboo_key_validate(egoboo_key_t * pkey)
 //--------------------------------------------------------------------------------------------
 INLINE bool_t egoboo_key_valid(egoboo_key_t * pkey)
 {
-  /// @details BB> verify that a "key" is valid.
+  /// @details BB@> verify that a "key" is valid.
 
   Uint32 val_32;
   //Uint32 seed_32;
@@ -413,8 +413,8 @@ INLINE bool_t egoboo_key_valid(egoboo_key_t * pkey)
 //--------------------------------------------------------------------------------------------
 INLINE void * egoboo_key_get_data(egoboo_key_t * pkey, Uint32 type)
 {
-  /// @details BB> grab the data associated with the key, if and only if the key is valid and the
-  //      data type matches the key data
+  /// @details BB@> grab the data associated with the key, if and only if the key is valid and the
+  ///      data type matches the key data
 
   if(NULL == pkey) return NULL;
 

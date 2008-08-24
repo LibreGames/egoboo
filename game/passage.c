@@ -40,7 +40,7 @@
 //--------------------------------------------------------------------------------------------
 bool_t passage_open( Game_t * gs, PASS_REF passage )
 {
-  /// @details ZZ> This function makes a passage passable
+  /// @details ZZ@> This function makes a passage passable
 
   int fan_x, fan_y;
   bool_t useful = bfalse, btmp;
@@ -67,8 +67,8 @@ bool_t passage_open( Game_t * gs, PASS_REF passage )
 //--------------------------------------------------------------------------------------------
 bool_t passage_break_tiles( Game_t * gs, PASS_REF passage, Uint16 starttile, Uint16 frames, Uint16 become, Uint32 meshfxor, Sint32 *pix, Sint32 *piy )
 {
-  /// @details ZZ> This function breaks the tiles of a passage if there is a character standing
-  //     on 'em...  Turns the tiles into damage terrain if it reaches last frame.
+  /// @details ZZ@> This function breaks the tiles of a passage if there is a character standing
+  ///     on 'em...  Turns the tiles into damage terrain if it reaches last frame.
 
   int fan_x, fan_y;
   Uint16 tile, endtile;
@@ -120,7 +120,7 @@ bool_t passage_break_tiles( Game_t * gs, PASS_REF passage, Uint16 starttile, Uin
 //--------------------------------------------------------------------------------------------
 void passage_flash( Game_t * gs, PASS_REF passage, Uint8 color )
 {
-  /// @details ZZ> This function makes a passage flash white
+  /// @details ZZ@> This function makes a passage flash white
 
   int fan_x, fan_y;
 
@@ -141,9 +141,9 @@ void passage_flash( Game_t * gs, PASS_REF passage, Uint8 color )
 //--------------------------------------------------------------------------------------------
 bool_t passage_search_tile( Game_t * gs, PASS_REF passage, Uint32 tiletype, Sint32 tmpx, Sint32 tmpy, Sint32 * pix, Sint32 * piy )
 {
-  /// @details ZZ> This function finds the next tile in the passage, slist->tmpx and slist->tmpy
-  //     must be set first, and are set on a find...  Returns btrue or bfalse
-  //     depending on if it finds one or not
+  /// @details ZZ@> This function finds the next tile in the passage, slist->tmpx and slist->tmpy
+  ///     must be set first, and are set on a find...  Returns btrue or bfalse
+  ///     depending on if it finds one or not
 
   int fan_x, fan_y;
 
@@ -177,9 +177,9 @@ bool_t passage_search_tile( Game_t * gs, PASS_REF passage, Uint32 tiletype, Sint
 //--------------------------------------------------------------------------------------------
 CHR_REF passage_search_blocking( Game_t * gs, PASS_REF passage )
 {
-  /// @details ZZ> This function returns CHRLST_COUNT if there is no character in the passage,
-  //     otherwise the index of the first character found is returned...
-  //     Finds living ones, then items and corpses
+  /// @details ZZ@> This function returns CHRLST_COUNT if there is no character in the passage,
+  ///     otherwise the index of the first character found is returned...
+  ///     Finds living ones, then items and corpses
 
   CHR_REF character, foundother;
 
@@ -244,9 +244,9 @@ void passage_check_music(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 CHR_REF passage_search_blocking_ID( Game_t * gs, PASS_REF passage, IDSZ idsz )
 {
-  /// @details ZZ> This function returns CHRLST_COUNT if there is no character in the passage who
-  //     have an item with the given ID.  Otherwise, the index of the first character
-  //     found is returned...  Only finds living characters...
+  /// @details ZZ@> This function returns CHRLST_COUNT if there is no character in the passage who
+  ///     have an item with the given ID.  Otherwise, the index of the first character
+  ///     found is returned...  Only finds living characters...
 
   CHR_REF character;
   CHR_REF  sTmp;
@@ -297,7 +297,7 @@ CHR_REF passage_search_blocking_ID( Game_t * gs, PASS_REF passage, IDSZ idsz )
 //--------------------------------------------------------------------------------------------
 bool_t passage_close( Game_t * gs, Uint32 passage )
 {
-  /// @details ZZ> This function makes a passage impassable, and returns btrue if it isn't blocked
+  /// @details ZZ@> This function makes a passage impassable, and returns btrue if it isn't blocked
 
   int fan_x, fan_y, cnt;
   CHR_REF character;
@@ -369,7 +369,7 @@ bool_t passage_close( Game_t * gs, Uint32 passage )
 //--------------------------------------------------------------------------------------------
 void clear_all_passages(Game_t * gs)
 {
-  /// @details ZZ> This function clears the passage list ( for doors )
+  /// @details ZZ@> This function clears the passage list ( for doors )
 
   gs->PassList_count = 0;
   gs->ShopList_count = 0;
@@ -378,7 +378,7 @@ void clear_all_passages(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 bool_t passage_check_all( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powner )
 {
-  /// @details BB> character ichr is completely inside passage pass
+  /// @details BB@> character ichr is completely inside passage pass
 
   float x_min, x_max;
   float y_min, y_max;
@@ -445,9 +445,9 @@ bool_t passage_check_all( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * pown
 //--------------------------------------------------------------------------------------------
 bool_t passage_check_any( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powner )
 {
-  /// @details BB> character ichr is partially inside passage pass
+  /// @details BB@> character ichr is partially inside passage pass
 
-  /// @details BB> character ichr is completely inside passage pass
+  /// @details BB@> character ichr is completely inside passage pass
 
   float x_min, x_max;
   float y_min, y_max;
@@ -513,7 +513,7 @@ bool_t passage_check_any( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * pown
 //--------------------------------------------------------------------------------------------
 bool_t passage_check( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powner )
 {
-  /// @details BB> character ichr's center is inside passage pass
+  /// @details BB@> character ichr's center is inside passage pass
 
   Orientation_t * pori;
   bool_t    is_inside = bfalse, was_inside = bfalse;
@@ -565,7 +565,7 @@ bool_t passage_check( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powner )
 //--------------------------------------------------------------------------------------------
 Uint32 ShopList_add( Game_t * gs, CHR_REF owner, PASS_REF passage )
 {
-  /// @details ZZ> This function creates a shop passage
+  /// @details ZZ@> This function creates a shop passage
 
   Uint32 shop_passage = INVALID_PASS;
 
@@ -586,7 +586,7 @@ Uint32 ShopList_add( Game_t * gs, CHR_REF owner, PASS_REF passage )
 //--------------------------------------------------------------------------------------------
 Uint32 PassList_add( Game_t * gs, int tlx, int tly, int brx, int bry, bool_t open, Uint32 mask )
 {
-  /// @details ZZ> This function creates a passage area
+  /// @details ZZ@> This function creates a passage area
 
   Uint32   passage = PASSLST_COUNT;
   Mesh_t * pmesh = Game_getMesh(gs);
@@ -626,7 +626,7 @@ Uint32 PassList_add( Game_t * gs, int tlx, int tly, int brx, int bry, bool_t ope
 //--------------------------------------------------------------------------------------------
 void PassList_load( Game_t * gs, char *modname )
 {
-  /// @details ZZ> This function reads the passage file
+  /// @details ZZ@> This function reads the passage file
 
   STRING newloadname;
   int tlx, tly, brx, bry;

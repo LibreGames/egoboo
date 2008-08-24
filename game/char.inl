@@ -289,7 +289,7 @@ INLINE bool_t wp_list_clear(WP_LIST * w)
 //--------------------------------------------------------------------------------------------
 INLINE bool_t wp_list_advance(WP_LIST * wl)
 {
-  /// @details BB> return value of btrue means wp_list is empty
+  /// @details BB@> return value of btrue means wp_list is empty
 
   if(NULL == wl || wp_list_empty(wl)) return bfalse;
 
@@ -302,8 +302,8 @@ INLINE bool_t wp_list_advance(WP_LIST * wl)
 //--------------------------------------------------------------------------------------------
 INLINE bool_t wp_list_add(WP_LIST * wl, float x, float y)
 {
-  /// @details BB> add a point to the waypoint list.
-  //      returns bfalse if the list is full (?or should it advance the tail?)
+  /// @details BB@> add a point to the waypoint list.
+  ///      returns bfalse if the list is full (?or should it advance the tail?)
 
   bool_t retval = bfalse;
   int    test;
@@ -385,6 +385,10 @@ INLINE AI_STATE * ai_state_new(AI_STATE * a)
 
   Latch_clear( &(a->latch) );
 
+  // new stuff
+  a->iself = INVALID_CHR;
+  a->pself = NULL;
+
   return a;
 }
 
@@ -444,6 +448,10 @@ INLINE AI_STATE * ai_state_init(Game_t * gs, AI_STATE * a, CHR_REF ichr)
   a->trgvel.x = 0;
   a->trgvel.y = 0;
   a->trgvel.z = 0;
+
+  // new stuff
+  a->iself = ichr;
+  a->pself = pchr;
 
   return a;
 }

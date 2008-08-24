@@ -21,7 +21,7 @@
 
 ///
 /// @file
-/// @brief The camera object.
+/// @brief The camera object
 
 #include "ogl_include.h"
 
@@ -30,10 +30,10 @@
 #define CAMJOYTURN                      5            ///< Joystick camera rotation
 
 // Multi cam
-#define MINZOOM                         100          ///< Camera distance
-#define MAXZOOM                         600         //
-#define MINZADD                         100          ///< Camera height
-#define MAXZADD                         3000
+#define MINZOOM                         100          ///< Camera distance min
+#define MAXZOOM                         600          ///< Camera distance max
+#define MINZADD                         100          ///< Camera height min
+#define MAXZADD                         3000         ///< Camera height max
 
 //Camera control stuff
 
@@ -60,6 +60,8 @@ struct sCamera
   int       swingrate;       //
   float     swingamp;        //
 
+  float     doturntime;      ///< Time for smooth turn
+
   // for floor reflections
   float     tracklevel_stt;
   bool_t    tracklevel_stt_valid;
@@ -72,15 +74,14 @@ struct sCamera
 
 typedef struct sCamera Camera_t;
 
-extern Camera_t GCamera;
+extern Camera_t GCamera;      ///< The global camera object
 
-//extern float                   cornerx[4];                 ///< Render area corners
-//extern float                   cornery[4];                 //
-//extern int                     cornerlistlowtohighy[4];    ///< Ordered list
-//extern int                     cornerlowx;                 ///< Render area extremes
-//extern int                     cornerhighx;                //
-//extern int                     cornerlowy;                 //
-//extern int                     cornerhighy;                //
+/// @details This function moves the camera
+/// @author ZZ
+void cam_move( Camera_t * cam, float dUpdate );
 
-void camera_move( float dUpdate );
-void camera_reset( void );
+/// @details This function makes sure the camera starts in a suitable position
+/// @author ZZ
+void cam_reset( Camera_t * cam );
+
+

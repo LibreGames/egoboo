@@ -34,12 +34,10 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-#define TABAND              31           ///< Tab size
 
 #define TRANSCOLOR          0            ///< Transparent color
 
-#define SPARKLESIZE 28
-#define SPARKLEADD 2
+
 #define MAPSIZE 96
 
 //--------------------------------------------------------------------------------------------
@@ -70,6 +68,10 @@ struct s_renderlist
   Uint32  watr_mode[MAXMESHRENDER];
 };
 typedef struct s_renderlist RENDERLIST;
+
+bool_t make_renderlist(RENDERLIST * prlst);
+
+extern RENDERLIST renderlist;
 
 //--------------------------------------------------------------------------------------------
 // Display messages
@@ -233,8 +235,6 @@ INLINE EGO_CONST bool_t bbox_gl_draw(AA_BBOX * pbbox);
 
 bool_t gl_set_mode(Graphics_t * g);
 bool_t gfx_find_anisotropy( Graphics_t * g );
-
-bool_t make_renderlist(RENDERLIST * prlst);
 
 bool_t query_clear( void );
 bool_t query_pageflip( void );

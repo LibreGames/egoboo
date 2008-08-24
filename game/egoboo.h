@@ -60,9 +60,6 @@ struct sGraphics_Data;
 #    define EQ(x)
 #endif
 
-#define MEG              0x00100000
-#define BUFFER_SIZE     (4 * MEG)
-
 EXTERN EGO_CONST char VERSION[] EQ( "2.8.x" );   ///< Version of the game
 
 #define DEFAULT_SCREEN_W 640
@@ -148,13 +145,6 @@ typedef enum e_search_bits
 #define DELAY_DAMAGETILE      32                       ///< Invincibility time
 #define DELAY_DAMAGE          16                       ///< Invincibility time
 #define DELAY_DEFEND          16                       ///< Invincibility time
-
-
-#define MAXLINESIZE         1024                    //
-
-
-#define IDSZ_NONE            MAKE_IDSZ("NONE")       // [NONE]
-
 
 
 #define RAISE 5  ///< 25                               // Helps correct z level
@@ -488,9 +478,6 @@ EXTERN EGO_CONST Uint32 antialiastrans_fp8  EQ( 0xC0 );
 
 //Network Stuff
 //#define CHARVEL 5.0
-
-
-EXTERN float       doturntime;                     ///< Time for smooth turn
 
 EXTERN STRING      CStringTmp1, CStringTmp2;
 

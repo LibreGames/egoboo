@@ -30,7 +30,7 @@
 #include "enchant.h"
 #include "passage.h"
 #include "Menu.h"
-#include "script.h"
+#include "Script_run.h"
 #include "sound.h"
 #include "file_common.h"
 
@@ -117,8 +117,8 @@ Uint16  chrcollisionlevel = 2;
 void flash_character_height( Game_t * gs, CHR_REF chr_ref, Uint8 valuelow, Sint16 low,
                              Uint8 valuehigh, Sint16 high )
 {
-  /// @details ZZ> This function sets a character's lighting depending on vertex height...
-  //     Can make feet dark and head light...
+  /// @details ZZ@> This function sets a character's lighting depending on vertex height...
+  ///     Can make feet dark and head light...
 
   int cnt;
   float z, flip;
@@ -177,7 +177,7 @@ void flash_character_height( Game_t * gs, CHR_REF chr_ref, Uint8 valuelow, Sint1
 //--------------------------------------------------------------------------------------------
 void flash_character( Game_t * gs, CHR_REF chr_ref, Uint8 value )
 {
-  /// @details ZZ> This function sets a character's lighting
+  /// @details ZZ@> This function sets a character's lighting
 
   Obj_t * pobj;
   Mad_t  * pmad;
@@ -205,7 +205,7 @@ void flash_character( Game_t * gs, CHR_REF chr_ref, Uint8 value )
 //--------------------------------------------------------------------------------------------
 void keep_weapons_with_holders(Game_t * gs)
 {
-  /// @details ZZ> This function keeps weapons near their holders
+  /// @details ZZ@> This function keeps weapons near their holders
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -279,7 +279,7 @@ void keep_weapons_with_holders(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 void ChrList_free_one( Game_t * gs, CHR_REF chr_ref )
 {
-  /// @details ZZ> This function sticks a character back on the free character stack
+  /// @details This function sticks a character back on the free character stack
 
   size_t chrlst_size = CHRLST_COUNT;
 
@@ -340,7 +340,7 @@ void ChrList_free_one( Game_t * gs, CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 void chr_free_inventory( ChrList_t chrlst, size_t chrlst_size, CHR_REF chr_ref )
 {
-  /// @details ZZ> This function frees every item in the character's inventory
+  /// @details ZZ@> This function frees every item in the character's inventory
 
   CHR_REF cnt;
 
@@ -355,7 +355,7 @@ void chr_free_inventory( ChrList_t chrlst, size_t chrlst_size, CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 bool_t make_one_character_matrix( ChrList_t chrlst, size_t chrlst_size, Chr_t * pchr )
 {
-  /// @details ZZ> This function sets one character's matrix
+  /// @details ZZ@> This function sets one character's matrix
 
   Chr_t * povl;
   CHR_REF chr_tnc;
@@ -428,7 +428,7 @@ bool_t make_one_character_matrix( ChrList_t chrlst, size_t chrlst_size, Chr_t * 
 //--------------------------------------------------------------------------------------------
 bool_t make_one_weapon_matrix( ChrList_t chrlst, size_t chrlst_size, CHR_REF chr_ref )
 {
-  /// @details ZZ> This function sets one weapon's matrix, based on who it's attached to
+  /// @details ZZ@> This function sets one weapon's matrix, based on who it's attached to
 
   int cnt;
   Chr_t * pchr;
@@ -529,7 +529,7 @@ bool_t make_one_weapon_matrix( ChrList_t chrlst, size_t chrlst_size, CHR_REF chr
 //--------------------------------------------------------------------------------------------
 void make_character_matrices(Game_t * gs)
 {
-  /// @details ZZ> This function makes all of the character's matrices
+  /// @details ZZ@> This function makes all of the character's matrices
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -586,7 +586,7 @@ void make_character_matrices(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 CHR_REF ChrList_get_free( Game_t * gs, CHR_REF irequest )
 {
-  /// @details ZZ> This function gets an unused character and returns its index
+  /// @details ZZ@> This function gets an unused character and returns its index
 
   ChrHeap_t * pheap;
   CHR_REF retval;
@@ -621,7 +621,7 @@ CHR_REF ChrList_get_free( Game_t * gs, CHR_REF irequest )
 //--------------------------------------------------------------------------------------------
 Chr_t * Chr_new(Chr_t * pchr)
 {
-  /// @details BB> initialize the Chr_t data structure with safe values
+  /// @details BB@> initialize the Chr_t data structure with safe values
 
   AI_STATE * pstate;
 
@@ -810,8 +810,8 @@ Chr_t * Chr_renew(Chr_t * pchr)
 //--------------------------------------------------------------------------------------------
 Uint32 chr_hitawall( Game_t * gs, Chr_t * pchr, vect3 * norm )
 {
-  /// @details ZZ> This function returns nonzero if the character hit a wall that the
-  //     character is not allowed to cross
+  /// @details ZZ@> This function returns nonzero if the character hit a wall that the
+  ///     character is not allowed to cross
 
   Uint32 retval;
   vect3  pos, size, test_norm, tmp_norm;
@@ -927,7 +927,7 @@ Uint32 chr_hitawall( Game_t * gs, Chr_t * pchr, vect3 * norm )
 //--------------------------------------------------------------------------------------------
 void chr_reset_accel( Game_t * gs, CHR_REF chr_ref )
 {
-  /// @details ZZ> This function fixes a character's MAX acceleration
+  /// @details ZZ@> This function fixes a character's MAX acceleration
 
   PChr_t chrlst      = gs->ChrList;
 
@@ -963,7 +963,8 @@ void chr_reset_accel( Game_t * gs, CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 bool_t detach_character_from_mount( Game_t * gs, CHR_REF chr_ref, bool_t ignorekurse, bool_t doshop )
 {
-  /// @details ZZ> This function drops an item
+  /// @details ZZ@> This function drops an item
+
   Uint32 loc_rand;
 
   PChr_t chrlst      = gs->ChrList;
@@ -1066,8 +1067,6 @@ bool_t detach_character_from_mount( Game_t * gs, CHR_REF chr_ref, bool_t ignorek
 
     if ( doshop && inshop )
     {
-      //OBJ_REF model = pchr->model;
-
       assert( NULL != ChrList_getPMad(gs, chr_ref) );
 
       // Give the imount its money back, alert the shop iowner
@@ -1107,7 +1106,7 @@ bool_t detach_character_from_mount( Game_t * gs, CHR_REF chr_ref, bool_t ignorek
   // Turn looping off
   pchr->action.loop = bfalse;
 
-  // Reset the team if it is a imount
+  // Reset the team if it is a mount
   if ( pmount->prop.ismount )
   {
     pmount->team = pmount->team_base;
@@ -1119,8 +1118,6 @@ bool_t detach_character_from_mount( Game_t * gs, CHR_REF chr_ref, bool_t ignorek
   // Reset transparency
   if ( pchr->prop.isitem && pmount->transferblend )
   {
-    //OBJ_REF model = pchr->model;
-
     assert( NULL != ChrList_getPMad(gs, chr_ref) );
 
     // Okay, reset transparency
@@ -1161,8 +1158,8 @@ bool_t detach_character_from_mount( Game_t * gs, CHR_REF chr_ref, bool_t ignorek
 //--------------------------------------------------------------------------------------------
 bool_t attach_character_to_mount( Game_t * gs, CHR_REF chr_ref, CHR_REF mount_ref, SLOT slot )
 {
-  /// @details ZZ> This function attaches one character to another ( the mount )
-  //     at either the left or right grip
+  /// @details ZZ@> This function attaches one character to another ( the mount )
+  ///     at either the left or right grip
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -1242,7 +1239,7 @@ bool_t attach_character_to_mount( Game_t * gs, CHR_REF chr_ref, CHR_REF mount_re
   // Run the held animation
   if ( pmount->bmpdata.calc_is_mount && slot == SLOT_SADDLE )
   {
-    // Riding mount_ref
+    // Riding mount
     play_action( gs, chr_ref, ACTION_MI, btrue );
     pchr->action.loop = btrue;
   }
@@ -1290,9 +1287,9 @@ bool_t attach_character_to_mount( Game_t * gs, CHR_REF chr_ref, CHR_REF mount_re
 //--------------------------------------------------------------------------------------------
 CHR_REF pack_find_stack( Game_t * gs, CHR_REF item_ref, CHR_REF pack_chr_ref )
 {
-  /// @details ZZ> This function looks in the chraracter's pack for an item similar
-  //     to the one given.  If it finds one, it returns the similar item's
-  //     index number, otherwise it returns CHRLST_COUNT.
+  /// @details ZZ@> This function looks in the chraracter's pack for an item similar
+  ///     to the one given.  If it finds one, it returns the similar item's
+  ///     index number, otherwise it returns CHRLST_COUNT.
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -1437,7 +1434,7 @@ static CHR_REF pack_pop_back( ChrList_t chrlst, size_t chrlst_size, CHR_REF pack
 //--------------------------------------------------------------------------------------------
 bool_t pack_add_item( Game_t * gs, CHR_REF item_ref, CHR_REF pack_chr_ref )
 {
-  /// @details ZZ> This function puts one character inside the other's pack
+  /// @details ZZ@> This function puts one character inside the other's pack
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -1463,7 +1460,7 @@ bool_t pack_add_item( Game_t * gs, CHR_REF item_ref, CHR_REF pack_chr_ref )
     // put out torches, etc.
     disaffirm_attached_particles( gs, item_ref );
 
-    // We found a similar, stackable item_ref in the pack
+    // We found a similar, stackable item in the pack
     if ( chrlst[item_ref].prop.nameknown || chrlst[istack].prop.nameknown )
     {
       chrlst[item_ref].prop.nameknown = btrue;
@@ -1477,7 +1474,7 @@ bool_t pack_add_item( Game_t * gs, CHR_REF item_ref, CHR_REF pack_chr_ref )
     newammo = chrlst[item_ref].ammo + chrlst[istack].ammo;
     if ( newammo <= chrlst[istack].ammomax )
     {
-      // All transfered, so kill the in hand item_ref
+      // All transfered, so kill the in hand item
       chrlst[istack].ammo = newammo;
       detach_character_from_mount( gs, item_ref, btrue, bfalse );
       chrlst[item_ref].freeme = btrue;
@@ -1492,7 +1489,7 @@ bool_t pack_add_item( Game_t * gs, CHR_REF item_ref, CHR_REF pack_chr_ref )
   }
   else
   {
-    // Make sure we have room for another item_ref
+    // Make sure we have room for another item
     if ( chrlst[pack_chr_ref].numinpack >= MAXNUMINPACK )
     {
       chrlst[pack_chr_ref].aistate.alert |= ALERT_TOOMUCHBAGGAGE;
@@ -1511,7 +1508,7 @@ bool_t pack_add_item( Game_t * gs, CHR_REF item_ref, CHR_REF pack_chr_ref )
       disaffirm_attached_particles( gs, item_ref );
       chrlst[item_ref].aistate.alert |= ALERT_ATLASTWAYPOINT;
 
-      // Remove the item_ref from play
+      // Remove the item from play
       chrlst[item_ref].hitready    = bfalse;
     };
   }
@@ -1522,8 +1519,8 @@ bool_t pack_add_item( Game_t * gs, CHR_REF item_ref, CHR_REF pack_chr_ref )
 //--------------------------------------------------------------------------------------------
 CHR_REF pack_get_item( Game_t * gs, CHR_REF pack_chr_ref, SLOT slot, bool_t ignorekurse )
 {
-  /// @details ZZ> This function takes the last item in the character's pack and puts
-  //     it into the designated hand.  It returns the item number or CHRLST_COUNT.
+  /// @details ZZ@> This function takes the last item in the character's pack and puts
+  ///     it into the designated hand.  It returns the item number or CHRLST_COUNT.
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -1569,8 +1566,8 @@ CHR_REF pack_get_item( Game_t * gs, CHR_REF pack_chr_ref, SLOT slot, bool_t igno
 //--------------------------------------------------------------------------------------------
 void drop_keys( Game_t * gs, CHR_REF chr_ref )
 {
-  /// @details ZZ> This function drops all keys ( [KEYA] to [KEYZ] ) that are in a character's
-  //     inventory ( Not hands ).
+  /// @details ZZ@> This function drops all keys ( [KEYA] to [KEYZ] ) that are in a character's
+  ///     inventory ( Not hands ).
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -1638,7 +1635,7 @@ void drop_keys( Game_t * gs, CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 void drop_all_items( Game_t * gs, CHR_REF chr_ref )
 {
-  /// @details ZZ> This function drops all of a character's items
+  /// @details ZZ@> This function drops all of a character's items
 
   PChr_t chrlst        = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -1686,7 +1683,7 @@ void drop_all_items( Game_t * gs, CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 bool_t chr_grab_stuff( Game_t * gs, CHR_REF chr_ref, SLOT slot, bool_t people )
 {
-  /// @details ZZ> This function makes the character pick up an item if there's one around
+  /// @details ZZ@> This function makes the character pick up an item if there's one around
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -1696,7 +1693,7 @@ bool_t chr_grab_stuff( Game_t * gs, CHR_REF chr_ref, SLOT slot, bool_t people )
   vect4 posa, point;
   vect3 posb, posc;
   float dist, mindist;
-  CHR_REF object_ref, minchr_ref, holder_ref, packer_ref, owner_ref = INVALID_CHR;
+  CHR_REF item_ref, minchr_ref, holder_ref, packer_ref, owner_ref = INVALID_CHR;
   Uint16 vertex, passage, cnt, price;
   bool_t inshop, can_disarm, can_pickpocket, bfound, ballowed;
   GRIP grip;
@@ -1706,7 +1703,7 @@ bool_t chr_grab_stuff( Game_t * gs, CHR_REF chr_ref, SLOT slot, bool_t people )
   Sint16 trg_strength_fp8, trg_intelligence_fp8;
   TEAM_REF trg_team;
 
-  Chr_t * pchr;
+  Chr_t * pchr, *pitem;
   Cap_t * pcap;
   Mad_t * pmad;
 
@@ -1730,11 +1727,8 @@ bool_t chr_grab_stuff( Game_t * gs, CHR_REF chr_ref, SLOT slot, bool_t people )
   // !!!!base the grab distance off of the character size!!!!
   if( !pchr->bmpdata.valid )
   {
-    chr_calculate_bumpers( gs, chrlst + chr_ref, 0);
+    chr_calculate_bumpers( gs, pchr, 0);
   }
-
-  grab_width  = ( pchr->bmpdata.calc_size_big + pchr->bmpdata.calc_size ) / 2.0f * 1.5f;
-  grab_height = pchr->bmpdata.calc_height / 2.0f * 1.5f;
 
   // Do we have a matrix???
   if ( pchr->matrix_valid )
@@ -1772,19 +1766,21 @@ bool_t chr_grab_stuff( Game_t * gs, CHR_REF chr_ref, SLOT slot, bool_t people )
   can_disarm     = check_skills( gs, chr_ref, MAKE_IDSZ( "DISA" ) );
   can_pickpocket = check_skills( gs, chr_ref, MAKE_IDSZ( "PICK" ) );
   bfound = bfalse;
-  for ( object_ref = 0; object_ref < chrlst_size; object_ref++ )
+  for ( item_ref = 0; item_ref < chrlst_size; item_ref++ )
   {
     // Don't mess with stuff that doesn't exist
-    if ( !ACTIVE_CHR( chrlst, object_ref ) ) continue;
+    if ( !ACTIVE_CHR( chrlst, item_ref ) ) continue;
 
-    holder_ref = chr_get_attachedto(chrlst, chrlst_size, object_ref);
-    packer_ref = chr_get_inwhichpack(chrlst, chrlst_size, object_ref);
+    pitem = chrlst + item_ref;
+
+    holder_ref = chr_get_attachedto(chrlst, chrlst_size, item_ref);
+    packer_ref = chr_get_inwhichpack(chrlst, chrlst_size, item_ref);
 
     // don't mess with yourself or anything you're already holding
-    if ( object_ref == chr_ref || packer_ref == chr_ref || holder_ref == chr_ref ) continue;
+    if ( item_ref == chr_ref || packer_ref == chr_ref || holder_ref == chr_ref ) continue;
 
     // don't mess with stuff you can't see
-    if ( !pchr->prop.canseeinvisible && chr_is_invisible( chrlst, chrlst_size, object_ref ) ) continue;
+    if ( !pchr->prop.canseeinvisible && chr_is_invisible( chrlst, chrlst_size, item_ref ) ) continue;
 
     // if we can't pickpocket, don't mess with inventory items
     if ( !can_pickpocket && ACTIVE_CHR( chrlst, packer_ref ) ) continue;
@@ -1793,16 +1789,27 @@ bool_t chr_grab_stuff( Game_t * gs, CHR_REF chr_ref, SLOT slot, bool_t people )
     if ( !can_disarm && ACTIVE_CHR( chrlst, holder_ref ) ) continue;
 
     // if we can't grab people, don't mess with them
-    if ( !people && !chrlst[object_ref].prop.isitem ) continue;
+    if ( !people && !pitem->prop.isitem ) continue;
+
+    // !!!!base the grab distance off of the character size!!!!
+    if( !pitem->bmpdata.valid )
+    {
+      chr_calculate_bumpers( gs, pitem, 0);
+    }    
+
+    grab_width   = ( pchr->bmpdata.calc_size_big + pchr->bmpdata.calc_size ) / 2.0f * 1.5f;
+    grab_width  += ( pitem->bmpdata.calc_size_big + pitem->bmpdata.calc_size ) / 2.0f * 1.5f;
+    grab_height  = pchr->bmpdata.calc_height / 2.0f * 1.5f;
+    grab_height += pitem->bmpdata.calc_height / 2.0f * 1.5f;
 
     // get the target object position
     if ( !ACTIVE_CHR( chrlst, packer_ref ) && !ACTIVE_CHR(chrlst, holder_ref) )
     {
-      trg_strength_fp8     = chrlst[object_ref].stats.strength_fp8;
-      trg_intelligence_fp8 = chrlst[object_ref].stats.intelligence_fp8;
-      trg_team             = chrlst[object_ref].team;
+      trg_strength_fp8     = pitem->stats.strength_fp8;
+      trg_intelligence_fp8 = pitem->stats.intelligence_fp8;
+      trg_team             = pitem->team;
 
-      posb = chrlst[object_ref].ori.pos;
+      posb = pitem->ori.pos;
     }
     else if ( ACTIVE_CHR(chrlst, holder_ref) )
     {
@@ -1811,7 +1818,7 @@ bool_t chr_grab_stuff( Game_t * gs, CHR_REF chr_ref, SLOT slot, bool_t people )
       trg_intelligence_fp8 = chrlst[holder_ref].stats.intelligence_fp8;
 
       trg_team = chrlst[holder_ref].team;
-      posb     = chrlst[object_ref].ori.pos;
+      posb     = pitem->ori.pos;
     }
     else // must be in a pack
     {
@@ -1854,7 +1861,7 @@ bool_t chr_grab_stuff( Game_t * gs, CHR_REF chr_ref, SLOT slot, bool_t people )
     else if ( ACTIVE_CHR( chrlst, holder_ref ) )
     {
       // check for stealing item from hand
-      ballowed = !chrlst[object_ref].prop.iskursed && pchr->stats.strength_fp8 > trg_strength_fp8 && gs->TeamList[pchr->team].hatesteam[REF_TO_INT(trg_team)];
+      ballowed = !pitem->prop.iskursed && pchr->stats.strength_fp8 > trg_strength_fp8 && gs->TeamList[pchr->team].hatesteam[REF_TO_INT(trg_team)];
 
       if ( !ballowed )
       {
@@ -1875,7 +1882,7 @@ bool_t chr_grab_stuff( Game_t * gs, CHR_REF chr_ref, SLOT slot, bool_t people )
     if ( ballowed || !bfound )
     {
       mindist = dist;
-      minchr_ref  = object_ref;
+      minchr_ref  = item_ref;
       bfound  = btrue;
     };
 
@@ -1886,7 +1893,7 @@ bool_t chr_grab_stuff( Game_t * gs, CHR_REF chr_ref, SLOT slot, bool_t people )
   // Check for shop
   inshop = bfalse;
   ballowed = bfalse;
-  if ( mesh_check( (&pmesh->Info), chrlst[minchr_ref].ori.pos.x, chrlst[minchr_ref].ori.pos.y ) )
+  if ( mesh_check( &(pmesh->Info), chrlst[minchr_ref].ori.pos.x, chrlst[minchr_ref].ori.pos.y ) )
   {
     if ( gs->ShopList_count == 0 )
     {
@@ -1894,8 +1901,7 @@ bool_t chr_grab_stuff( Game_t * gs, CHR_REF chr_ref, SLOT slot, bool_t people )
     }
     else if ( chrlst[minchr_ref].prop.isitem )
     {
-
-      // loop through just in case there are overlapping shops with one owner_ref deceased
+      // loop through just in case there are overlapping shops with one owner deceased
       for ( cnt = 0; cnt < gs->ShopList_count && !inshop; cnt++ )
       {
         passage = gs->ShopList[cnt].passage;
@@ -1918,14 +1924,14 @@ bool_t chr_grab_stuff( Game_t * gs, CHR_REF chr_ref, SLOT slot, bool_t people )
     }
     else
     {
-      // Pay the shop owner_ref, or don't allow grab...
+      // Pay the shop owner, or don't allow grab...
       chrlst[owner_ref].aistate.alert |= ALERT_SIGNALED;
       price = ChrList_getPCap(gs, minchr_ref)->skin[chrlst[minchr_ref].skin_ref % MAXSKIN].cost;
       if ( chrlst[minchr_ref].prop.isstackable )
       {
         price *= chrlst[minchr_ref].ammo;
       }
-      chrlst[owner_ref].message.data = price;  // Tell owner_ref how much...
+      chrlst[owner_ref].message.data = price;  // Tell owner how much...
       if ( pchr->money >= price )
       {
         // Okay to buy
@@ -1969,7 +1975,7 @@ bool_t chr_grab_stuff( Game_t * gs, CHR_REF chr_ref, SLOT slot, bool_t people )
 //--------------------------------------------------------------------------------------------
 void chr_swipe( Game_t * gs, CHR_REF ichr, SLOT slot )
 {
-  /// @details ZZ> This function spawns an attack particle
+  /// @details ZZ@> This function spawns an attack particle
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -2123,7 +2129,7 @@ void chr_swipe( Game_t * gs, CHR_REF ichr, SLOT slot )
 //--------------------------------------------------------------------------------------------
 bool_t chr_do_animation( Game_t * gs, float dUpdate, CHR_REF chr_ref, ChrEnviro_t * enviro, Uint32 * prand )
 {
-  /// @details BB> Animate the character
+  /// @details BB@> Animate the character
 
   Chr_t * pchr;
   Obj_t * pobj;
@@ -2483,7 +2489,7 @@ bool_t chr_do_environment(Game_t * gs, Chr_t * pchr, ChrEnviro_t * enviro)
 //--------------------------------------------------------------------------------------------
 bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dUpdate)
 {
-  /// @details BB> do volontary movement
+  /// @details BB@> do volontary movement
 
   CHR_REF weapon_ref, mount_ref, item_ref;
   float maxvel, dvx, dvy, dvmax;
@@ -2528,7 +2534,7 @@ bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dU
   // get the mount_ref
   mount_ref = chr_get_attachedto(chrlst, chrlst_size, ichr);
 
-  // TURNMODE_VELOCITY acts strange when someone is mounted on a "bucking" mount_ref, like the gelfeet
+  // TURNMODE_VELOCITY acts strange when someone is mounted on a "bucking" mount, like the gelfeet
   loc_turnmode = pstate->turnmode;
   if ( ACTIVE_CHR( chrlst, mount_ref ) ) loc_turnmode = TURNMODE_NONE;
 
@@ -2733,12 +2739,12 @@ bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dU
       {
         if (( chrlst[item_ref].prop.iskursed || chrlst[item_ref].prop.istoobig ) && !chrlst[item_ref].prop.isequipment )
         {
-          // The item_ref couldn't be put away
+          // The item couldn't be put away
           chrlst[item_ref].aistate.alert |= ALERT_NOTPUTAWAY;
         }
         else
         {
-          // Put the item_ref into the pack
+          // Put the item into the pack
           pack_add_item( gs, item_ref, ichr );
         }
       }
@@ -2760,12 +2766,12 @@ bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dU
       {
         if (( chrlst[item_ref].prop.iskursed || chrlst[item_ref].prop.istoobig ) && !chrlst[item_ref].prop.isequipment )
         {
-          // The item_ref couldn't be put away
+          // The item couldn't be put away
           chrlst[item_ref].aistate.alert |= ALERT_NOTPUTAWAY;
         }
         else
         {
-          // Put the item_ref into the pack
+          // Put the item into the pack
           pack_add_item( gs, item_ref, ichr );
         }
       }
@@ -2781,11 +2787,11 @@ bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dU
 
     if ( HAS_SOME_BITS( pstate->latch.b, LATCHBUTTON_LEFT ) && pchr->reloadtime == 0 )
     {
-      // Which weapon_ref?
+      // Which weapon?
       weapon_ref = chr_get_holdingwhich( chrlst, chrlst_size, ichr, SLOT_LEFT );
       if ( !ACTIVE_CHR( chrlst, weapon_ref ) )
       {
-        // Unarmed means character itself is the weapon_ref
+        // Unarmed means character itself is the weapon
         weapon_ref = ichr;
       }
       action = ChrList_getPCap(gs, weapon_ref)->weaponaction;
@@ -2798,11 +2804,11 @@ bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dU
         allowedtoattack = bfalse;
         if ( chrlst[weapon_ref].reloadtime == 0 )
         {
-          // This character can't use this weapon_ref
+          // This character can't use this weapon
           chrlst[weapon_ref].reloadtime = 50;
           if ( pchr->staton )
           {
-            // Tell the player that they can't use this weapon_ref
+            // Tell the player that they can't use this weapon
             debug_message( 1, "%s can't use this item_ref...", pchr->name );
           }
         }
@@ -2819,7 +2825,7 @@ bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dU
 
       if ( allowedtoattack )
       {
-        // Rearing mount_ref
+        // Rearing mount
         if ( ACTIVE_CHR( chrlst, mount_ref ) )
         {
           allowedtoattack = chrlst[mount_ref].prop.ridercanattack;
@@ -2854,7 +2860,7 @@ bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dU
               play_action( gs,  ichr, action, ready );
               if ( weapon_ref != ichr )
               {
-                // Make the weapon_ref attack too
+                // Make the weapon attack too
                 play_action( gs,  weapon_ref, ACTION_MJ, bfalse );
                 chrlst[weapon_ref].aistate.alert |= ALERT_USED;
               }
@@ -2870,11 +2876,11 @@ bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dU
     }
     else if ( HAS_SOME_BITS( pstate->latch.b, LATCHBUTTON_RIGHT ) && pchr->reloadtime == 0 )
     {
-      // Which weapon_ref?
+      // Which weapon?
       weapon_ref = chr_get_holdingwhich( chrlst, chrlst_size, ichr, SLOT_RIGHT );
       if ( !ACTIVE_CHR( chrlst, weapon_ref ) )
       {
-        // Unarmed means character itself is the weapon_ref
+        // Unarmed means character itself is the weapon
         weapon_ref = ichr;
       }
       action = (ACTION)(ChrList_getPCap(gs, weapon_ref)->weaponaction + 2);
@@ -2887,11 +2893,11 @@ bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dU
         allowedtoattack = bfalse;
         if ( chrlst[weapon_ref].reloadtime == 0 )
         {
-          // This character can't use this weapon_ref
+          // This character can't use this weapon
           chrlst[weapon_ref].reloadtime = 50;
           if ( pchr->staton )
           {
-            // Tell the player that they can't use this weapon_ref
+            // Tell the player that they can't use this weapon
             debug_message( 1, "%s can't use this item_ref...", pchr->name );
           }
         }
@@ -2907,7 +2913,7 @@ bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dU
 
       if ( allowedtoattack )
       {
-        // Rearing mount_ref
+        // Rearing mount
         if ( ACTIVE_CHR( chrlst, mount_ref ) )
         {
           allowedtoattack = chrlst[mount_ref].prop.ridercanattack;
@@ -2942,7 +2948,7 @@ bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dU
               play_action( gs,  ichr, action, ready );
               if ( weapon_ref != ichr )
               {
-                // Make the weapon_ref attack too
+                // Make the weapon attack too
                 play_action( gs,  weapon_ref, ACTION_MJ, bfalse );
                 chrlst[weapon_ref].aistate.alert |= ALERT_USED;
               }
@@ -3021,7 +3027,7 @@ bool_t chr_do_physics( Game_t * gs, Chr_t * pchr, ChrEnviro_t * enviro, float dU
 //--------------------------------------------------------------------------------------------
 bool_t chr_check_passages(Game_t * gs, CHR_REF ichr)
 {
-  /// @details BB> automatically signal passages when someone enters or leaves
+  /// @details BB@> automatically signal passages when someone enters or leaves
 
   int cnt;
   PASS_REF ipass;
@@ -3049,7 +3055,7 @@ bool_t chr_check_passages(Game_t * gs, CHR_REF ichr)
 //--------------------------------------------------------------------------------------------
 void move_characters( Game_t * gs, float dUpdate )
 {
-  /// @details ZZ> This function handles character physics
+  /// @details ZZ@> This function handles character physics
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -3111,8 +3117,8 @@ void move_characters( Game_t * gs, float dUpdate )
 //--------------------------------------------------------------------------------------------
 bool_t PlaList_set_latch( Game_t * gs, Player_t * ppla )
 {
-  /// @details ZZ> This function converts input readings to latch settings, so players can
-  //     move around
+  /// @details ZZ@> This function converts input readings to latch settings, so players can
+  ///     move around
 
   PChr_t chrlst      = gs->ChrList;
 
@@ -3395,7 +3401,7 @@ bool_t PlaList_set_latch( Game_t * gs, Player_t * ppla )
 //--------------------------------------------------------------------------------------------
 void set_local_latches( Game_t * gs )
 {
-  /// @details ZZ> This function emulates AI thinkin' by setting latches from input devices
+  /// @details ZZ@> This function emulates AI thinkin' by setting latches from input devices
 
   PLA_REF cnt;
 
@@ -3471,7 +3477,7 @@ void get_all_levels( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 void make_onwhichfan( Game_t * gs )
 {
-  /// @details ZZ> This function figures out which fan characters are on and sets their level
+  /// @details ZZ@> This function figures out which fan characters are on and sets their level
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -3781,7 +3787,7 @@ void fill_bumplists(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 bool_t find_collision_volume_0( vect3 * ppa, CVolume_t * pva, vect3 * ppb, CVolume_t * pvb, bool_t exclude_vert, CVolume_t * pcv)
 {
-  /// @details BB> Find the simplest possible non-empty collision volume
+  /// @details BB@> Find the simplest possible non-empty collision volume
 
   CVolume_t cv;
 
@@ -3790,26 +3796,26 @@ bool_t find_collision_volume_0( vect3 * ppa, CVolume_t * pva, vect3 * ppb, CVolu
   //---- do the preliminary collision test ----
 
   // do diagonal
-  cv.xy_min = MAX(pva->xy_min + ppa->x + ppa->y, pvb->xy_min + ppb->x + ppb->y);
-  cv.xy_max = MIN(pva->xy_max + ppa->x + ppa->y, pvb->xy_max + ppb->x + ppb->y);
+  cv.xy_min = MAX(pva->xy_min, pvb->xy_min);
+  cv.xy_max = MIN(pva->xy_max, pvb->xy_max);
   if(cv.xy_min >= cv.xy_max) return bfalse;
 
-  cv.yx_min = MAX(pva->yx_min - ppa->x + ppa->y, pvb->yx_min - ppb->x + ppb->y);
-  cv.yx_max = MIN(pva->yx_max - ppa->x + ppa->y, pvb->yx_max - ppb->x + ppb->y);
+  cv.yx_min = MAX(pva->yx_min, pvb->yx_min);
+  cv.yx_max = MIN(pva->yx_max, pvb->yx_max);
   if(cv.yx_min >= cv.yx_max) return bfalse;
 
   // do square
-  cv.x_min = MAX(pva->x_min + ppa->x, pvb->x_min + ppb->x);
-  cv.x_max = MIN(pva->x_max + ppa->x, pvb->x_max + ppb->x);
+  cv.x_min = MAX(pva->x_min, pvb->x_min);
+  cv.x_max = MIN(pva->x_max, pvb->x_max);
   if(cv.x_min >= cv.x_max) return bfalse;
 
-  cv.y_min = MAX(pva->y_min + ppa->y, pvb->y_min + ppb->y);
-  cv.y_max = MIN(pva->y_max + ppa->y, pvb->y_max + ppb->y);
+  cv.y_min = MAX(pva->y_min, pvb->y_min);
+  cv.y_max = MIN(pva->y_max, pvb->y_max);
   if(cv.y_min >= cv.y_max) return bfalse;
 
   // do vert
-  cv.z_min = MAX(pva->z_min + ppa->z, pvb->z_min + ppb->z);
-  cv.z_max = MIN(pva->z_max + ppa->z, pvb->z_max + ppb->z);
+  cv.z_min = MAX(pva->z_min, pvb->z_min);
+  cv.z_max = MIN(pva->z_max, pvb->z_max);
   if(!exclude_vert && cv.z_min >= cv.z_max) return bfalse;
 
   if(NULL != pcv)
@@ -3819,6 +3825,53 @@ bool_t find_collision_volume_0( vect3 * ppa, CVolume_t * pva, vect3 * ppb, CVolu
 
   return btrue;
 }
+
+
+
+////--------------------------------------------------------------------------------------------
+//bool_t find_collision_volume_0( vect3 * ppa, CVolume_t * pva, vect3 * ppb, CVolume_t * pvb, bool_t exclude_vert, CVolume_t * pcv)
+//{
+//  /// @details BB@> Find the simplest possible non-empty collision volume
+//
+//  CVolume_t cv;
+//
+//  if( NULL == ppa || NULL == pva || NULL == ppb || NULL == pvb ) return bfalse;
+//
+//  //---- do the preliminary collision test ----
+//
+//  // do diagonal
+//  cv.xy_min = MAX(pva->xy_min + ppa->x + ppa->y, pvb->xy_min + ppb->x + ppb->y);
+//  cv.xy_max = MIN(pva->xy_max + ppa->x + ppa->y, pvb->xy_max + ppb->x + ppb->y);
+//  if(cv.xy_min >= cv.xy_max) return bfalse;
+//
+//  cv.yx_min = MAX(pva->yx_min - ppa->x + ppa->y, pvb->yx_min - ppb->x + ppb->y);
+//  cv.yx_max = MIN(pva->yx_max - ppa->x + ppa->y, pvb->yx_max - ppb->x + ppb->y);
+//  if(cv.yx_min >= cv.yx_max) return bfalse;
+//
+//  // do square
+//  cv.x_min = MAX(pva->x_min + ppa->x, pvb->x_min + ppb->x);
+//  cv.x_max = MIN(pva->x_max + ppa->x, pvb->x_max + ppb->x);
+//  if(cv.x_min >= cv.x_max) return bfalse;
+//
+//  cv.y_min = MAX(pva->y_min + ppa->y, pvb->y_min + ppb->y);
+//  cv.y_max = MIN(pva->y_max + ppa->y, pvb->y_max + ppb->y);
+//  if(cv.y_min >= cv.y_max) return bfalse;
+//
+//  // do vert
+//  cv.z_min = MAX(pva->z_min + ppa->z, pvb->z_min + ppb->z);
+//  cv.z_max = MIN(pva->z_max + ppa->z, pvb->z_max + ppb->z);
+//  if(!exclude_vert && cv.z_min >= cv.z_max) return bfalse;
+//
+//  if(NULL != pcv)
+//  {
+//    *pcv = cv;
+//  }
+//
+//  return btrue;
+//}
+//
+//
+
 
 
 //--------------------------------------------------------------------------------------------
@@ -4067,8 +4120,8 @@ bool_t find_collision_volume( vect3 * ppa, CVolume_t * pva, vect3 * ppb, CVolume
 //--------------------------------------------------------------------------------------------
 bool_t chr_is_inside( Game_t * gs, CHR_REF chra_ref, float lerp, CHR_REF chrb_ref, bool_t exclude_vert )
 {
-  /// @details BB> Find whether an active point of chra_ref is "inside" chrb_ref's bounding volume.
-  //      Abstraction of the old algorithm to see whether a character cpold be "above" another
+  /// @details BB@> Find whether an active point of chra_ref is "inside" chrb's bounding volume.
+  ///      Abstraction of the old algorithm to see whether a character could be "above" another
 
   PChr_t chrlst      = gs->ChrList;
 
@@ -4110,20 +4163,20 @@ bool_t chr_is_inside( Game_t * gs, CHR_REF chra_ref, float lerp, CHR_REF chrb_re
 //--------------------------------------------------------------------------------------------
 bool_t chr_detect_collision( Game_t * gs, CHR_REF chra_ref, CHR_REF chrb_ref, bool_t exclude_height, CVolume_t * cv)
 {
-  /// @details BB> use the bounding boxes to estimate whether a collision has occurred.
+  /// @details BB@> use the bounding boxes to estimate whether a collision has occurred.
 
   PChr_t chrlst      = gs->ChrList;
 
   // set the minimum bumper level for object a
-  if(chrlst[chra_ref].bmpdata.cv.lod < 0)
+  if(chrlst[chra_ref].bmpdata.cv.lod < 1)
   {
-    chr_calculate_bumpers( gs, chrlst + chra_ref, 0);
+    chr_calculate_bumpers( gs, chrlst + chra_ref, 1);
   }
 
   // set the minimum bumper level for object b
-  if(chrlst[chrb_ref].bmpdata.cv.lod < 0)
+  if(chrlst[chrb_ref].bmpdata.cv.lod < 1)
   {
-    chr_calculate_bumpers( gs, chrlst + chrb_ref, 0);
+    chr_calculate_bumpers( gs, chrlst + chrb_ref, 1);
   }
 
   // find the simplest collision volume
@@ -4135,12 +4188,11 @@ bool_t chr_detect_collision( Game_t * gs, CHR_REF chra_ref, CHR_REF chrb_ref, bo
 //--------------------------------------------------------------------------------------------
 bool_t chr_do_collision( Game_t * gs, CHR_REF chra_ref, CHR_REF chrb_ref, bool_t exclude_height, CVolume_t * cv)
 {
-  /// @details BB> use the bounding boxes to determine whether a collision has occurred.
-  //      there are currently 3 levels of collision detection.
-  //      level 1 - the basic square axis-aligned bounding box
-  //      level 2 - the octagon bounding box calculated from the actual vertex positions
-  //      level 3 - an "octree" of bounding bounding boxes calculated from the actual triangle positions
-  //  the level is chosen by the global variable chrcollisionlevel
+  /// @details BB@> use the bounding boxes to determine whether a collision has occurred.
+  ///      there are currently 3 levels of collision detection chosen by the global variable chrcollisionlevel
+  ///      @arg level 1 - the basic square axis-aligned bounding box
+  ///      @arg level 2 - the octagon bounding box calculated from the actual vertex positions
+  ///      @arg level 3 - an "octree" of bounding bounding boxes calculated from the actual triangle positions
 
   PChr_t chrlst      = gs->ChrList;
 
@@ -4315,7 +4367,7 @@ bool_t prt_do_collision( Game_t * gs, CHR_REF chra_ref, PRT_REF prtb_ref, bool_t
 #define COLLISION_HASH_NODES (CHR_MAX_COLLISIONS*2)
 void do_bumping( Game_t * gs, float dUpdate )
 {
-  /// @details ZZ> This function sets handles characters hitting other characters or particles
+  /// @details ZZ@> This function sets handles characters hitting other characters or particles
 
   Uint32 fanblock;
   int cnt, tnc, chrinblock, prtinblock;
@@ -4866,7 +4918,7 @@ void do_bumping( Game_t * gs, float dUpdate )
               diffb.y =-diffa.y;
             }
 
-            if(ovlap.y != 1.0)
+            if(ovlap.z != 1.0)
             {
               diffa.z = pchra->bmpdata.mids_lo.z - (cv.z_max + cv.z_min) * 0.5f;
               diffa.z += (pchra->bmpdata.mids_hi.z - pchra->bmpdata.mids_lo.z) * lerpa;
@@ -5391,7 +5443,7 @@ void do_bumping( Game_t * gs, float dUpdate )
 //--------------------------------------------------------------------------------------------
 void stat_return( Game_t * gs, float dUpdate )
 {
-  /// @details ZZ> This function brings mana and life back
+  /// @details ZZ@> This function brings mana and life back
 
   Client_t * cs = gs->cl;
 
@@ -5541,7 +5593,7 @@ void stat_return( Game_t * gs, float dUpdate )
 //--------------------------------------------------------------------------------------------
 void pit_kill( Game_t * gs, float dUpdate )
 {
-  /// @details ZZ> This function kills any character in a deep pit...
+  /// @details ZZ@> This function kills any character in a deep pit...
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -5600,8 +5652,8 @@ void pit_kill( Game_t * gs, float dUpdate )
 //--------------------------------------------------------------------------------------------
 void resize_characters( Game_t * gs, float dUpdate )
 {
-  /// @details ZZ> This function makes the characters get bigger or smaller, depending
-  //     on their sizegoto and sizegototime
+  /// @details ZZ@> This function makes the characters get bigger or smaller, depending
+  ///     on their sizegoto and sizegototime
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -5689,7 +5741,7 @@ void resize_characters( Game_t * gs, float dUpdate )
 //--------------------------------------------------------------------------------------------
 void export_one_character_name( Game_t * gs, char *szSaveName, CHR_REF chr_ref )
 {
-  /// @details ZZ> This function makes the "NAMING.TXT" file for the character
+  /// @details ZZ@> This function makes the "NAMING.TXT" file for the character
 
   PChr_t chrlst      = gs->ChrList;
 
@@ -5714,8 +5766,8 @@ void export_one_character_name( Game_t * gs, char *szSaveName, CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 void CapList_save_one( Game_t * gs, char *szSaveName, CHR_REF ichr )
 {
-  /// @details ZZ> This function creates a "DATA.TXT" file for the given character.
-  //     it is assumed that all enchantments have been done away with
+  /// @details ZZ@> This function creates a "DATA.TXT" file for the given character.
+  ///     it is assumed that all enchantments have been done away with
 
   FILE* filewrite;
   int damagetype, iskin;
@@ -5996,7 +6048,7 @@ void CapList_save_one( Game_t * gs, char *szSaveName, CHR_REF ichr )
 //--------------------------------------------------------------------------------------------
 void export_one_character_skin( Game_t * gs, char *szSaveName, CHR_REF ichr )
 {
-  /// @details ZZ> This function creates a "SKIN.TXT" file for the given character.
+  /// @details ZZ@> This function creates a "SKIN.TXT" file for the given character.
 
   PChr_t chrlst      = gs->ChrList;
 
@@ -6076,8 +6128,8 @@ float calc_chr_level( Game_t * gs, CHR_REF ichr )
 //--------------------------------------------------------------------------------------------
 OBJ_REF object_generate_index( char *szLoadName )
 {
-  /// @details ZZ> This reads the object slot in "DATA.TXT" that the profile
-  //      is assigned to.  Errors in this number may cause the program to abort
+  /// @details ZZ@> This reads the object slot in "DATA.TXT" that the profile
+  ///      is assigned to.  Errors in this number may cause the program to abort
 
   FILE* fileread;
   OBJ_REF retval = INVALID_OBJ;
@@ -6113,7 +6165,7 @@ OBJ_REF object_generate_index( char *szLoadName )
 //--------------------------------------------------------------------------------------------
 CAP_REF CapList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST char *szObjectname, CAP_REF irequest )
 {
-  /// @details ZZ> This function fills a character profile with data from "DATA.TXT"
+  /// @details ZZ@> This function fills a character profile with data from "DATA.TXT"
 
   FILE* fileread;
   int iskin, cnt;
@@ -6430,7 +6482,7 @@ CAP_REF CapList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST 
 //--------------------------------------------------------------------------------------------
 int fget_skin( char * szObjectpath, EGO_CONST char * szObjectname )
 {
-  /// @details ZZ> This function reads the "SKIN.TXT" file...
+  /// @details ZZ@> This function reads the "SKIN.TXT" file...
 
   FILE* fileread;
   Uint8 skin;
@@ -6450,8 +6502,8 @@ int fget_skin( char * szObjectpath, EGO_CONST char * szObjectname )
 //--------------------------------------------------------------------------------------------
 bool_t check_skills( Game_t * gs, CHR_REF who, Uint32 whichskill )
 {
-  /// @details ZF> This checks if the specified character has the required skill. Returns btrue if true
-  // and bfalse if not. Also checks Skill expansions.
+  /// @details ZF@> This checks if the specified character has the required skill. Returns btrue if true
+  /// and bfalse if not. Also checks Skill expansions.
 
   PChr_t chrlst      = gs->ChrList;
 
@@ -6477,8 +6529,8 @@ bool_t check_skills( Game_t * gs, CHR_REF who, Uint32 whichskill )
 //--------------------------------------------------------------------------------------------
 int check_player_quest( char *whichplayer, IDSZ idsz )
 {
-  /// @details ZF> This function checks if the specified player has the IDSZ in his or her quest.txt
-  // and returns the quest level of that specific quest (Or NOQUEST if it is not found, QUESTBEATEN if it is finished)
+  /// @details ZF@> This function checks if the specified player has the IDSZ in his or her quest.txt
+  /// and returns the quest level of that specific quest (Or NOQUEST if it is not found, QUESTBEATEN if it is finished)
 
   FILE *fileread;
   STRING newloadname;
@@ -6514,7 +6566,7 @@ int check_player_quest( char *whichplayer, IDSZ idsz )
 //--------------------------------------------------------------------------------------------
 bool_t add_quest_idsz( char *whichplayer, IDSZ idsz )
 {
-  /// @details ZF> This function writes a IDSZ (With quest level 0) into a player quest.txt file, returns btrue if succeeded
+  /// @details ZF@> This function writes a IDSZ (With quest level 0) into a player quest.txt file, returns btrue if succeeded
 
   FILE *filewrite;
   STRING newloadname;
@@ -6537,11 +6589,9 @@ bool_t add_quest_idsz( char *whichplayer, IDSZ idsz )
 
 bool_t fcopy_line(FILE * fileread, FILE * filewrite)
 {
-  ///
+  /// @details BB@> copy a line of arbitrary length, in chunks of length
+  ///      sizeof(linebuffer)
   /// @todo This should be moved to file_common.c
-
-  /// @details BB> copy a line of arbitrary length, in chunks of length
-  //      sizeof(linebuffer)
 
   char linebuffer[64];
 
@@ -6563,9 +6613,9 @@ bool_t fcopy_line(FILE * fileread, FILE * filewrite)
 //--------------------------------------------------------------------------------------------
 int modify_quest_idsz( char *whichplayer, IDSZ idsz, int adjustment )
 {
-  /// @details ZF> This function increases or decreases a Quest IDSZ quest level by the amount determined in
-  //     adjustment. It then returns the current quest level it now has.
-  //     It returns NOQUEST if failed and if the adjustment is 0, the quest is marked as beaten...
+  /// @details ZF@> This function increases or decreases a Quest IDSZ quest level by the amount determined in
+  ///     adjustment. It then returns the current quest level it now has.
+  ///     It returns NOQUEST if failed and if the adjustment is 0, the quest is marked as beaten...
 
   FILE *filewrite, *fileread;
   STRING newloadname, copybuffer;
@@ -6947,6 +6997,7 @@ bool_t chr_calculate_bumpers_1( Game_t * gs, Chr_t * pchr )
   float lerp;
   vect3 xdir, ydir, zdir, pos;
   vect3 points[8], bbmax, bbmin;
+  float tmp_x, tmp_y, tmp_z, tmp_xy, tmp_yx;
   int cnt;
 
   CVolume_t cv;
@@ -7094,8 +7145,6 @@ bool_t chr_calculate_bumpers_1( Game_t * gs, Chr_t * pchr )
 
   for(cnt=1; cnt<8; cnt++)
   {
-    float tmp_x, tmp_y, tmp_z, tmp_xy, tmp_yx;
-
     tmp_x = points[cnt].x*xdir.x + points[cnt].y*ydir.x + points[cnt].z*zdir.x + pos.x;
     if(tmp_x < cv.x_min) cv.x_min = tmp_x - 0.001f;
     else if(tmp_x > cv.x_max) cv.x_max = tmp_x + 0.001f;
@@ -7129,16 +7178,16 @@ bool_t chr_calculate_bumpers_1( Game_t * gs, Chr_t * pchr )
   bd->cv.xy_max = cv.xy_max;
   bd->cv.yx_max = cv.yx_max;
 
-  bd->mids_hi.x = (bd->cv.x_min + bd->cv.x_max) * 0.5f + pchr->ori.pos.x;
-  bd->mids_hi.y = (bd->cv.y_min + bd->cv.y_max) * 0.5f + pchr->ori.pos.y;
-  bd->mids_hi.z = (bd->cv.z_min + bd->cv.z_max) * 0.5f + pchr->ori.pos.z;
+  bd->mids_lo.x = bd->mids_hi.x = (bd->cv.x_min + bd->cv.x_max) * 0.5f;
+  bd->mids_lo.y = bd->mids_hi.y = (bd->cv.y_min + bd->cv.y_max) * 0.5f;
+  bd->mids_lo.z = bd->cv.z_min;
+  bd->mids_hi.z = (bd->cv.z_min + bd->cv.z_max) * 0.5f;
 
-  bd->mids_lo   = bd->mids_hi;
-  bd->mids_lo.z = bd->cv.z_min + pchr->ori.pos.z;
-
-  bd->calc_height   = bd->cv.z_max;
-  bd->calc_size     = MAX( MAX( bd->cv.x_max,  bd->cv.y_max ), - MIN( bd->cv.x_min,  bd->cv.y_min ) );
-  bd->calc_size_big = MAX( MAX( bd->cv.xy_max, bd->cv.yx_max), - MIN( bd->cv.xy_min, bd->cv.yx_min) );
+  tmp_xy = pos.x + pos.y;
+  tmp_yx = -pos.x + pos.y;
+  bd->calc_height   = bd->cv.z_max - bd->cv.z_min;
+  bd->calc_size     = MAX( MAX( bd->cv.x_max-pos.x,  bd->cv.y_max-pos.y ), - MIN( bd->cv.x_min-pos.x,  bd->cv.y_min-pos.y ) );
+  bd->calc_size_big = MAX( MAX( bd->cv.xy_max-tmp_xy, bd->cv.yx_max-tmp_yx), - MIN( bd->cv.xy_min-tmp_xy, bd->cv.yx_min-tmp_yx) );
 
   if(bd->calc_size_big < bd->calc_size*1.1)
   {
@@ -7159,7 +7208,7 @@ bool_t chr_calculate_bumpers_2( Game_t * gs, Chr_t * pchr, vect3 * vrt_ary)
 {
   BData_t * bd;
   MD2_Model_t * pmdl;
-  vect3 xdir, ydir, zdir, pos;
+  vect3 xdir, ydir, zdir;
   Uint32 cnt;
   Uint32  vrt_count;
   bool_t  free_array = bfalse;
@@ -7211,11 +7260,6 @@ bool_t chr_calculate_bumpers_2( Game_t * gs, Chr_t * pchr, vect3 * vrt_ary)
   zdir.x = (pchr->matrix).CNV(2,0);
   zdir.y = (pchr->matrix).CNV(2,1);
   zdir.z = (pchr->matrix).CNV(2,2);
-
-  pos.x = (pchr->matrix).CNV(3,0);
-  pos.y = (pchr->matrix).CNV(3,1);
-  pos.z = (pchr->matrix).CNV(3,2);
-
 
   bd->calc_is_platform  = bd->calc_is_platform && (zdir.z > xdir.z) && (zdir.z > ydir.z);
   bd->calc_is_mount     = bd->calc_is_mount    && (zdir.z > xdir.z) && (zdir.z > ydir.z);
@@ -7271,14 +7315,12 @@ bool_t chr_calculate_bumpers_2( Game_t * gs, Chr_t * pchr, vect3 * vrt_ary)
 
   bd->cv = cv;
 
-  bd->mids_lo.x = (cv.x_min + cv.x_max) * 0.5f + pchr->ori.pos.x;
-  bd->mids_lo.y = (cv.y_min + cv.y_max) * 0.5f + pchr->ori.pos.y;
-  bd->mids_hi.z = (cv.z_min + cv.z_max) * 0.5f + pchr->ori.pos.z;
+  bd->mids_lo.x = bd->mids_hi.x = (cv.x_min + cv.x_max) * 0.5f;
+  bd->mids_lo.y = bd->mids_hi.y = (cv.y_min + cv.y_max) * 0.5f;
+  bd->mids_lo.z = cv.z_min;
+  bd->mids_hi.z = (cv.z_min + cv.z_max) * 0.5f;
 
-  bd->mids_lo   = bd->mids_hi;
-  bd->mids_lo.z = cv.z_min + pchr->ori.pos.z;
-
-  bd->calc_height   = bd->cv.z_max - pos.z;
+  bd->calc_height   = bd->cv.z_max - bd->cv.z_min;
   bd->calc_size     = 0.5f * ( MAX( bd->cv.x_max, bd->cv.y_max ) - MIN( bd->cv.x_min, bd->cv.y_min ) );
   bd->calc_size_big = 0.5f * ( MAX( bd->cv.xy_max, bd->cv.yx_max) - MIN( bd->cv.xy_min, bd->cv.yx_min) );
 
@@ -7537,11 +7579,11 @@ void damage_character( Game_t * gs, CHR_REF chr_ref, Uint16 direction,
                        PAIR * pdam, DAMAGE damagetype, TEAM_REF team,
                        CHR_REF attacker, Uint16 effects )
 {
-  /// @details ZZ> This function calculates and applies damage to a character.  It also
-  //     sets alerts and begins actions.  Blocking and frame invincibility
-  //     are done here too.  Direction is FRONT if the attack is coming head on,
-  //     RIGHT if from the right, BEHIND if from the back, LEFT if from the
-  //     left.
+  /// @details ZZ@> This function calculates and applies damage to a character.  It also
+  ///     sets alerts and begins actions.  Blocking and frame invincibility
+  ///     are done here too.  Direction is FRONT if the attack is coming head on,
+  ///     RIGHT if from the right, BEHIND if from the back, LEFT if from the
+  ///     left.
 
   Uint32 loc_rand;
 
@@ -7806,7 +7848,7 @@ void damage_character( Game_t * gs, CHR_REF chr_ref, Uint16 direction,
             // Turn off all sounds if it's a player
             for ( tnc = 0; tnc < MAXWAVE; tnc++ )
             {
-              /// @todo <Zefz> Do we need snd_stop_sound()? This makes all sounds a character makes stop when it dies...
+              /// @todo ZF> Do we need snd_stop_sound()? This makes all sounds a character makes stop when it dies...
               ///               This may stop death sounds...
               //  snd_stop_sound(pchr->model);
             }
@@ -7817,7 +7859,7 @@ void damage_character( Game_t * gs, CHR_REF chr_ref, Uint16 direction,
             pstate->alert = ALERT_KILLED;
             pchr->sparkle = NOSPARKLE;
             pstate->time = 1;  // No timeout...
-            run_script( gs, chr_ref, 1.0f );
+            run_script( gs, ChrList_getPState(gs, chr_ref), 1.0f );
           }
           else
           {
@@ -7860,7 +7902,7 @@ void damage_character( Game_t * gs, CHR_REF chr_ref, Uint16 direction,
 //--------------------------------------------------------------------------------------------
 void kill_character( Game_t * gs, CHR_REF chr_ref, CHR_REF killer )
 {
-  /// @details ZZ> This function kills a character...  CHRLST_COUNT killer for accidental death
+  /// @details ZZ@> This function kills a character...  CHRLST_COUNT killer for accidental death
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -7924,7 +7966,7 @@ bool_t import_info_add(IMPORT_INFO * ii, OBJ_REF obj)
 //--------------------------------------------------------------------------------------------
 void play_action( Game_t * gs, CHR_REF ichr, ACTION action, bool_t ready )
 {
-  /// @details ZZ> This function starts a generic action for a character
+  /// @details ZZ@> This function starts a generic action for a character
 
   Chr_t * pchr;
   Mad_t * pmad;
@@ -7952,8 +7994,8 @@ void play_action( Game_t * gs, CHR_REF ichr, ACTION action, bool_t ready )
 //--------------------------------------------------------------------------------------------
 void set_frame( Game_t * gs, CHR_REF ichr, Uint16 frame, Uint8 lip )
 {
-  /// @details ZZ> This function sets the frame for a character explicitly...  This is used to
-  //     rotate Tank turrets
+  /// @details ZZ@> This function sets the frame for a character explicitly...  This is used to
+  ///     rotate Tank turrets
 
   Uint16 start, end;
   Chr_t * pchr;
@@ -8000,7 +8042,7 @@ void set_frame( Game_t * gs, CHR_REF ichr, Uint16 frame, Uint8 lip )
 //--------------------------------------------------------------------------------------------
 void drop_money( Game_t * gs, CHR_REF ichr, Uint16 money )
 {
-  /// @details ZZ> This function drops some of a character's money
+  /// @details ZZ@> This function drops some of a character's money
 
   PChr_t chrlst      = gs->ChrList;
 
@@ -8201,9 +8243,9 @@ bool_t chr_create_stats( Uint32 * pseed, Stats_t * pstats, StatData_t * pdata)
 //--------------------------------------------------------------------------------------------
 CHR_REF _chr_spawn( CHR_SPAWN_INFO si, bool_t activate )
 {
-  /// @details ZZ> This function initializes a Chr_t data structure in the "reserved" state,
-  //     if the CHR_SPAWN_INFO is valid.
-  //     On success, it returns the index, otherwise INVALID_CHR.
+  /// @details ZZ@> This function initializes a Chr_t data structure in the "reserved" state,
+  ///     if the CHR_SPAWN_INFO is valid.
+  ///     On success, it returns the index, otherwise INVALID_CHR.
 
   PChr_t chrlst      = si.gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -8456,7 +8498,7 @@ CHR_REF _chr_spawn( CHR_SPAWN_INFO si, bool_t activate )
 //--------------------------------------------------------------------------------------------
 void respawn_character( Game_t * gs, CHR_REF ichr )
 {
-  /// @details ZZ> This function respawns a character
+  /// @details ZZ@> This function respawns a character
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -8556,7 +8598,7 @@ void signal_target( Game_t * gs, Uint32 priority, CHR_REF target_ref, Uint16 upp
 //--------------------------------------------------------------------------------------------
 void signal_team( Game_t * gs, CHR_REF chr_ref, Uint32 message )
 {
-  /// @details ZZ> This function issues an message for help to all teammates
+  /// @details ZZ@> This function issues an message for help to all teammates
 
   PChr_t chrlst        = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -8591,7 +8633,7 @@ void signal_team( Game_t * gs, CHR_REF chr_ref, Uint32 message )
 //--------------------------------------------------------------------------------------------
 void signal_idsz_index( Game_t * gs, Uint32 priority, Uint32 data, IDSZ idsz, IDSZ_INDEX index )
 {
-  /// @details ZZ> This function issues an data to all characters with the a matching special IDSZ
+  /// @details ZZ@> This function issues an data to all characters with the a matching special IDSZ
 
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
@@ -9786,6 +9828,14 @@ Pip_t * ChrList_getPPip(Game_t * gs, CHR_REF ichr, int i)
   if(INVALID_OBJ == iobj) return NULL;
 
   return ObjList_getPPip(gs, iobj, i);
+}
+
+//--------------------------------------------------------------------------------------------
+AI_STATE * ChrList_getPState(struct sGame * gs, CHR_REF ichr)
+{
+  if(!VALID_CHR(gs->ChrList, ichr)) return NULL;
+
+  return &(gs->ChrList[ichr].aistate);
 }
 
 

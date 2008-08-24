@@ -254,7 +254,7 @@ static bool_t fnt_init()
 //--------------------------------------------------------------------------------------------
 static void fnt_quit( void )
 {
-  /// @details BB> automatically unregister and delete all fonts that have been opened and TTF_Quit()
+  /// @details BB@> automatically unregister and delete all fonts that have been opened and TTF_Quit()
 
   TTFont_t * pfnt;
   bool_t close_fonts;
@@ -516,8 +516,8 @@ bool_t BMFont_delete( BMFont_t * pfnt )
 //--------------------------------------------------------------------------------------------
 bool_t BMFont_load( BMFont_t * pfnt, int scr_height, char* szBitmap, char* szSpacing )
 {
-  /// @details ZZ> This function loads the font bitmap and sets up the coordinates
-  //     of each font on that bitmap...  Bitmap must have 16x6 fonts
+  /// @details ZZ@> This function loads the font bitmap and sets up the coordinates
+  ///     of each font on that bitmap...  Bitmap must have 16x6 fonts
 
   int cnt, y, xsize, ysize, xdiv, ydiv;
   int xstt, ystt;

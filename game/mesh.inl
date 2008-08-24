@@ -185,7 +185,7 @@ INLINE EGO_CONST bool_t bumplist_return_free(BUMPLIST * b, Uint32 ref)
 //--------------------------------------------------------------------------------------------
 INLINE EGO_CONST bool_t bumplist_insert_chr(BUMPLIST * b, Uint32 block, CHR_REF chr_ref)
 {
-  /// @details BB> insert a character into the bumplist at fanblock.
+  /// @details BB@> insert a character into the bumplist at fanblock.
 
   Uint32 ref;
 
@@ -213,7 +213,7 @@ INLINE EGO_CONST bool_t bumplist_insert_chr(BUMPLIST * b, Uint32 block, CHR_REF 
 //--------------------------------------------------------------------------------------------
 INLINE EGO_CONST bool_t bumplist_insert_prt(BUMPLIST * b, Uint32 block, PRT_REF prt_ref)
 {
-  /// @details BB> insert a particle into the bumplist at fanblock.
+  /// @details BB@> insert a particle into the bumplist at fanblock.
 
   Uint32 ref;
 
@@ -290,7 +290,7 @@ INLINE EGO_CONST Uint32 bumplist_get_next_prt( Game_t * gs, BUMPLIST * b, Uint32
 INLINE EGO_CONST Uint32 bumplist_get_chr_head(BUMPLIST * b, Uint32 block)
 {
   if(!EKEY_PVALID(b)) return INVALID_BUMPLIST_NODE;
-  if(block > b->num_blocks)  return INVALID_BUMPLIST_NODE;
+  if(block >= b->num_blocks)  return INVALID_BUMPLIST_NODE;
 
   return b->chr_ref[block].next;
 }
@@ -299,7 +299,7 @@ INLINE EGO_CONST Uint32 bumplist_get_chr_head(BUMPLIST * b, Uint32 block)
 INLINE EGO_CONST Uint32 bumplist_get_prt_head(BUMPLIST * b, Uint32 block)
 {
   if(!EKEY_PVALID(b)) return INVALID_BUMPLIST_NODE;
-  if(block > b->num_blocks)  return INVALID_BUMPLIST_NODE;
+  if(block >= b->num_blocks)  return INVALID_BUMPLIST_NODE;
 
   return b->prt_ref[block].next;
 }
@@ -308,7 +308,7 @@ INLINE EGO_CONST Uint32 bumplist_get_prt_head(BUMPLIST * b, Uint32 block)
 INLINE EGO_CONST Uint32 bumplist_get_chr_count(BUMPLIST * b, Uint32 block)
 {
   if(!EKEY_PVALID(b)) return INVALID_BUMPLIST_NODE;
-  if(block > b->num_blocks)  return INVALID_BUMPLIST_NODE;
+  if(block >= b->num_blocks)  return INVALID_BUMPLIST_NODE;
 
   return b->num_chr[block];
 }
@@ -317,7 +317,7 @@ INLINE EGO_CONST Uint32 bumplist_get_chr_count(BUMPLIST * b, Uint32 block)
 INLINE EGO_CONST Uint32 bumplist_get_prt_count(BUMPLIST * b, Uint32 block)
 {
   if(!EKEY_PVALID(b)) return INVALID_BUMPLIST_NODE;
-  if(block > b->num_blocks)  return INVALID_BUMPLIST_NODE;
+  if(block >= b->num_blocks)  return INVALID_BUMPLIST_NODE;
 
   return b->num_prt[block];
 }
@@ -326,7 +326,7 @@ INLINE EGO_CONST Uint32 bumplist_get_prt_count(BUMPLIST * b, Uint32 block)
 INLINE EGO_CONST Uint32 bumplist_get_ref(BUMPLIST * b, Uint32 node)
 {
   if(!EKEY_PVALID(b)) return INVALID_BUMPLIST_NODE;
-  if(node > b->free_max)    return INVALID_BUMPLIST_NODE;
+  if(node >= b->free_max)    return INVALID_BUMPLIST_NODE;
 
   return b->node_lst[node].ref;
 }
@@ -375,37 +375,25 @@ INLINE EGO_CONST float mesh_clip_y( MeshInfo_t * mi, float y )
 //--------------------------------------------------------------------------------------------
 INLINE EGO_CONST int mesh_clip_fan_x( MeshInfo_t * mi, int ix )
 {
-  if ( ix < 0 )  ix = 0;
-  if ( ix > mi->tiles_x - 1 )  ix = mi->tiles_x - 1;
-
-  return ix;
+  return CLIP(ix, 0, mi->tiles_x-1);
 }
 
 //--------------------------------------------------------------------------------------------
 INLINE EGO_CONST int mesh_clip_fan_y( MeshInfo_t * mi, int iy )
 {
-  if ( iy < 0 )  iy = 0;
-  if ( iy > mi->tiles_y - 1 )  iy = mi->tiles_y - 1;
-
-  return iy;
+  return CLIP(iy, 0, mi->tiles_y-1);
 }
 
 //--------------------------------------------------------------------------------------------
 INLINE EGO_CONST int mesh_clip_block_x( MeshInfo_t * mi, int ix )
 {
-  if ( ix < 0 )  ix = 0;
-  if ( ix > ( mi->tiles_x >> 2 ) - 1 )  ix = ( mi->tiles_x >> 2 ) - 1;
-
-  return ix;
+  return CLIP(ix, 0, mi->blocks_x-1);
 }
 
 //--------------------------------------------------------------------------------------------
 INLINE EGO_CONST int mesh_clip_block_y( MeshInfo_t * mi, int iy )
 {
-  if ( iy < 0 )  iy = 0;
-  if ( iy > ( mi->tiles_y >> 2 ) - 1 )  iy = ( mi->tiles_y >> 2 ) - 1;
-
-  return iy;
+  return CLIP(iy, 0, mi->blocks_y-1);
 }
 
 //--------------------------------------------------------------------------------------------
@@ -453,7 +441,7 @@ INLINE void mesh_set_colora( Mesh_t * pmesh, int fan_x, int fan_y, int color )
 //--------------------------------------------------------------------------------------------
 INLINE EGO_CONST Uint32 mesh_get_fan( Mesh_t * pmesh, vect3 pos )
 {
-  /// @details BB> find the tile under <pos.x,pos.y>, but MAKE SURE we have the right tile.
+  /// @details BB@> find the tile under \<pos.x,pos.y\>, but MAKE SURE we have the right tile.
 
   Uint32 ivert, testfan = INVALID_FAN;
   float minx, maxx, miny, maxy;
@@ -499,7 +487,7 @@ INLINE EGO_CONST Uint32 mesh_get_fan( Mesh_t * pmesh, vect3 pos )
 //--------------------------------------------------------------------------------------------
 INLINE EGO_CONST Uint32 mesh_get_block( MeshInfo_t * mi, vect3 pos )
 {
-  /// @details BB> find the block under <x,y>
+  /// @details BB@> find the block under \<x,y\>
 
   return mesh_convert_block( mi, MESH_FLOAT_TO_BLOCK( pos.x ), MESH_FLOAT_TO_BLOCK( pos.y ) );
 }
@@ -621,7 +609,7 @@ INLINE EGO_CONST bool_t mesh_set_tile( Mesh_t * pmesh, int fan_x, int fan_y, Uin
 //--------------------------------------------------------------------------------------------
 INLINE EGO_CONST Uint32 mesh_convert_fan( MeshInfo_t * mi, int fan_x, int fan_y )
 {
-  /// @details BB> convert <fan_x,fan_y> to a fanblock
+  /// @details BB@> convert \<fan_x, fan_y\> to a fanblock
 
   if ( fan_x < 0 || fan_x >= mi->tiles_x || fan_y < 0 || fan_y >= mi->tiles_y ) return INVALID_FAN;
 
@@ -631,11 +619,9 @@ INLINE EGO_CONST Uint32 mesh_convert_fan( MeshInfo_t * mi, int fan_x, int fan_y 
 //--------------------------------------------------------------------------------------------
 INLINE EGO_CONST Uint32 mesh_convert_block( MeshInfo_t * mi, int block_x, int block_y )
 {
-  /// @details BB> convert <block_x,block_y> to a fanblock
-  //      be careful, since there is no guarantee that block_x or block_y are multiples of 4
+  /// @details BB@> convert \<block_x, block_y\> to a fanblock
 
-  if ( block_x < 0 || block_x > ( mi->tiles_x >> 2 ) || block_y < 0 || block_y > ( mi->tiles_y >> 2 ) ) return INVALID_FAN;
-  assert( block_y < ((MAXMESHSIZEY >> 2) +1) );
+  if ( block_x < 0 || block_x >= mi->blocks_x || block_y < 0 || block_y >= mi->blocks_y ) return INVALID_FAN;
   return block_x + mi->Block_X[block_y];
 }
 

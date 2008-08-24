@@ -251,7 +251,7 @@ void md2_blend_lighting(Chr_t * pchr)
 
   // only calculate the lighting if it is "needed"
   /// @todo  this is only sensitive to changes in the character orientation and
-  //       vertex blending.  it needs to be sensitive to global lighting changes, too.
+  ///        vertex blending.  it needs to be sensitive to global lighting changes, too.
   if(!vd->needs_lighting) return;
 
   iobj = pchr->model = VALIDATE_OBJ(objlst, pchr->model);
@@ -588,7 +588,7 @@ void calc_lighting_data( Game_t * gs, Chr_t * pchr )
 //--------------------------------------------------------------------------------------------
 void render_mad_lit( CHR_REF ichr )
 {
-  /// @details ZZ> This function draws an environment mapped model
+  /// @details ZZ@> This function draws an environment mapped model
 
   Chr_t * pchr;
   Uint16 texture;
@@ -751,7 +751,7 @@ void render_enviromad(CHR_REF ichr, Uint8 trans)
 //--------------------------------------------------------------------------------------------
 void render_mad( CHR_REF ichr, Uint8 trans )
 {
-  /// @details ZZ> This function picks the actual function to use
+  /// @details ZZ@> This function picks the actual function to use
 
   Game_t * gs   = Graphics_requireGame(&gfxState);
   Chr_t  * pchr = ChrList_getPChr(gs, ichr);
@@ -778,7 +778,7 @@ void render_mad( CHR_REF ichr, Uint8 trans )
 //--------------------------------------------------------------------------------------------
 void render_refmad( CHR_REF ichr, Uint16 trans_fp8 )
 {
-  /// @details ZZ> This function draws characters reflected in the floor
+  /// @details ZZ@> This function draws characters reflected in the floor
 
   Game_t * gs   = Graphics_requireGame(&gfxState);
   Chr_t  * pchr = ChrList_getPChr(gs, ichr);
@@ -828,7 +828,7 @@ void render_refmad( CHR_REF ichr, Uint16 trans_fp8 )
 //---------------------------------------------------------------------------------------------
 float spek_global_lighting( int rotation, int normal, vect3 lite )
 {
-  /// @details ZZ> This function helps make_spektable()
+  /// @details ZZ@> This function helps make_spektable()
 
   float fTmp, flite;
   vect3 nrm;
@@ -854,7 +854,7 @@ float spek_global_lighting( int rotation, int normal, vect3 lite )
 //---------------------------------------------------------------------------------------------
 float spek_local_lighting( int rotation, int normal )
 {
-  /// @details ZZ> This function helps make_spektable()
+  /// @details ZZ@> This function helps make_spektable()
 
 
   float fTmp, fLite;
@@ -878,7 +878,7 @@ float spek_local_lighting( int rotation, int normal )
 //---------------------------------------------------------------------------------------------
 float spek_calc_local_lighting( Uint16 turn, vect3 nrm )
 {
-  /// @details ZZ> This function helps make_spektable
+  /// @details ZZ@> This function helps make_spektable
   float fTmp1, fTmp2, fLite;
   Uint16 turn_sin;
   float sinrot, cosrot;
@@ -912,7 +912,7 @@ float spek_calc_local_lighting( Uint16 turn, vect3 nrm )
 //---------------------------------------------------------------------------------------------
 void make_speklut()
 {
-  /// @details ZZ> Build a lookup table for sin/cos
+  /// @details ZZ@> Build a lookup table for sin/cos
 
   int cnt;
 
@@ -926,7 +926,7 @@ void make_speklut()
 //---------------------------------------------------------------------------------------------
 void make_spektable( vect3 lite )
 {
-  /// @details ZZ> This function makes a light table to fake directional lighting
+  /// @details ZZ@> This function makes a light table to fake directional lighting
 
   int cnt, tnc;
   float flight;
@@ -971,7 +971,7 @@ void make_spektable( vect3 lite )
 //---------------------------------------------------------------------------------------------
 void make_lighttospek( void )
 {
-  /// @details ZZ> This function makes a light table to fake directional lighting
+  /// @details ZZ@> This function makes a light table to fake directional lighting
 
   int cnt, tnc;
   //  Uint8 spek;

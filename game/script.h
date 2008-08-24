@@ -21,25 +21,21 @@
 
 ///
 /// @file
-/// @brief Egoboo Scripting Definitions
+/// @brief Shared Egoboo Scripting Definitions
 
 #include "egoboo_types.h"
 
 struct sGame;
+struct s_ai_state;
 
-// These are for the AI script loading/parsing routines
-extern int                     iNumAis;
 
 #define PITNOSOUND          -256                     ///< Stop sound at bottom of pits...
-#define MSGDISTANCE         2000                  ///< Range for SendMessageNear
+#define MSGDISTANCE         2000                     ///< Range for SendMessageNear
 
-#define AILST_COUNT         129                     //
-#define MAXCODE             1024                     ///< Number of lines in AICODES.TXT
-#define MAXCODENAMESIZE     64                      //
-#define AISMAXCOMPILESIZE   (AILST_COUNT*MAXCODE)         // For parsing AI scripts
-
-extern bool_t parseerror;    //Do we have an script error?
-
+#define AILST_COUNT         129
+#define MAXCODE             1024                    ///< Number of lines in AICODES.TXT
+#define MAXCODENAMESIZE     64
+#define AISMAXCOMPILESIZE   (AILST_COUNT*MAXCODE)   ///< For parsing AI scripts
 
 
 enum e_script_opcode
@@ -493,6 +489,7 @@ enum e_script_variable
 };
 typedef enum e_script_variable VARIABLE;
 
+
 struct sScriptInfo
 {
   int    buffer_index;
@@ -505,13 +502,4 @@ struct sScriptInfo
 };
 typedef struct sScriptInfo ScriptInfo_t;
 
-
-retval_t run_script( struct sGame * gs, CHR_REF character, float dUpdate );
-void run_all_scripts( struct sGame * gs, float dUpdate );
-
 void append_end_text( struct sGame * gs, int message, CHR_REF character );
-
-
-void load_ai_codes( char* loadname );
-Uint32 load_ai_script( ScriptInfo_t * slist, EGO_CONST char * szModpath, EGO_CONST char * szObjectname );
-void reset_ai_script(struct sGame * gs);

@@ -162,7 +162,7 @@ typedef enum e_gender GENDER;
 
 enum e_latch_button
 {
-  /// @detail Character button presses
+  /// @details Character button presses
   LATCHBUTTON_NONE      =      0,
   LATCHBUTTON_LEFT      = 1 << 0,                    // 
   LATCHBUTTON_RIGHT     = 1 << 1,                    //
@@ -552,7 +552,7 @@ struct s_ai_state
   bool_t          morphed;       ///< Some various other stuff
 
   // internal variables - "short term" or temporary variables
-  int             content;       ///< A variable set by "setup.txt"
+  int             content;          ///< A variable set by "setup.txt"
   WP_LIST         wp;
   int             x[STOR_COUNT];    ///< Temporary values...  SetXY
   int             y[STOR_COUNT];    //
@@ -571,10 +571,9 @@ struct s_ai_state
   DAMAGE                 damagetypelast;  ///< Last damage type
   TURNMODE        turnmode;        ///< Turning mode
   vect3           trgvel;          ///< target's velocity
-  Latch_t          latch;           ///< latches
+  Latch_t         latch;           ///< latches
 
-  // "global" variables. Any character to character messages should be sent another way
-  // there is no guarantee that scripts will be processed in any specific order!
+  // old global variables.
   Uint32 offset;
   Uint32 indent;
   Uint32 lastindent;
@@ -585,6 +584,14 @@ struct s_ai_state
   Uint32 tmpturn;
   Sint32 tmpdistance;
   Sint32 tmpargument;
+
+  //some new variables
+  CHR_REF      iself;
+  struct sChr *pself;
+
+  bool_t active;
+  bool_t returncode;
+  Uint32 astar_timer;
 };
 typedef struct s_ai_state AI_STATE;
 
@@ -592,6 +599,7 @@ INLINE AI_STATE * ai_state_new(AI_STATE * a);
 INLINE bool_t     ai_state_delete(AI_STATE * a);
 INLINE AI_STATE * ai_state_init(struct sGame * gs, AI_STATE * a, CHR_REF ichr);
 INLINE AI_STATE * ai_state_reinit(AI_STATE * a, CHR_REF ichr);
+bool_t ai_state_advance_wp(AI_STATE * a, bool_t do_atlastwaypoint);
 
 
 //--------------------------------------------------------------------------------------------
@@ -869,6 +877,7 @@ typedef struct sChr Chr_t;
   typedef Chr_t * PChr_t;
 #endif
 
+/// @details initialize the Chr_t data structure with safe values
 Chr_t * Chr_new(Chr_t * pchr);
 bool_t Chr_delete(Chr_t * pchr);
 Chr_t * Chr_renew(Chr_t * pchr);
@@ -898,11 +907,12 @@ bool_t  ChrHeap_addFree( ChrHeap_t * pheap, CHR_REF ref );
 
 PROFILE_PROTOTYPE( ChrHeap )
 
-struct sChr * ChrList_getPChr(struct sGame * gs, CHR_REF ichr);
+struct sChr *     ChrList_getPChr(struct sGame * gs, CHR_REF ichr);
 struct sProfile * ChrList_getPObj(struct sGame * gs, CHR_REF ichr);
-struct sCap * ChrList_getPCap(struct sGame * gs, CHR_REF ichr);
-Mad_t * ChrList_getPMad(struct sGame * gs, CHR_REF ichr);
-struct sPip * ChrList_getPPip(struct sGame * gs, CHR_REF ichr, int i);
+struct sCap *     ChrList_getPCap(struct sGame * gs, CHR_REF ichr);
+Mad_t *           ChrList_getPMad(struct sGame * gs, CHR_REF ichr);
+struct sPip *     ChrList_getPPip(struct sGame * gs, CHR_REF ichr, int i);
+AI_STATE *        ChrList_getPState(struct sGame * gs, CHR_REF ichr);
 
 OBJ_REF ChrList_getRObj(struct sGame * gs, CHR_REF ichr);
 CAP_REF ChrList_getRCap(struct sGame * gs, CHR_REF ichr);
@@ -960,14 +970,21 @@ CHR_REF ChrList_get_free( struct sGame * gs, CHR_REF irequest );
 void ChrList_free_one( struct sGame * gs, CHR_REF character );
 
 bool_t make_one_character_matrix( ChrList_t chrlst, size_t chrlst_size, Chr_t * cnt );
+
 void chr_free_inventory( PChr_t lst, size_t lst_size, CHR_REF character );
+
 bool_t make_one_weapon_matrix( ChrList_t chrlst, size_t chrlst_size, Uint16 cnt );
+
 void make_character_matrices( struct sGame * gs );
 
 Uint32 chr_hitawall( struct sGame * gs, Chr_t * pchr, vect3 * norm );
+
 void play_action( struct sGame * gs, CHR_REF character, ACTION action, bool_t ready );
 void set_frame( struct sGame * gs, CHR_REF character, Uint16 frame, Uint8 lip );
+
+bool_t attach_character_to_mount( struct sGame * gs, CHR_REF character, CHR_REF mount, SLOT slot );
 bool_t detach_character_from_mount( struct sGame * gs, CHR_REF character, bool_t ignorekurse, bool_t doshop );
+
 void drop_money( struct sGame * gs, CHR_REF character, Uint16 money );
 
 void damage_character( struct sGame * gs, CHR_REF character, Uint16 direction,
@@ -987,7 +1004,7 @@ Uint16 change_armor( struct sGame * gs, CHR_REF character, Uint16 skin );
 void change_character( struct sGame * gs, CHR_REF cnt, OBJ_REF profile, Uint8 skin,
                        Uint8 leavewhich );
 bool_t cost_mana( struct sGame * gs, CHR_REF character, int amount, CHR_REF killer );
-bool_t attach_character_to_mount( struct sGame * gs, CHR_REF character, CHR_REF mount, SLOT slot );
+
 
 CHR_REF pack_find_stack( struct sGame * gs, CHR_REF item_ref, CHR_REF pack_chr_ref );
 bool_t  pack_add_item( struct sGame * gs, CHR_REF item_ref, CHR_REF pack_chr_ref );
@@ -1008,8 +1025,8 @@ bool_t chr_bdata_reinit(Chr_t * pchr, BData_t * pbd);
 int fget_skin( char * szModpath, EGO_CONST char * szObjectname );
 
 
-void calc_cap_experience( struct sGame * gs, CHR_REF object );
-int calc_chr_experience( struct sGame * gs, CHR_REF object, float level );
+void  calc_cap_experience( struct sGame * gs, CHR_REF object );
+int   calc_chr_experience( struct sGame * gs, CHR_REF object, float level );
 float calc_chr_level( struct sGame * gs, CHR_REF object );
 
 
@@ -1017,14 +1034,11 @@ bool_t chr_calculate_bumpers( struct sGame * gs, Chr_t * pchr, int level);
 
 void flash_character_height( struct sGame * gs, CHR_REF character, Uint8 valuelow, Sint16 low,
                              Uint8 valuehigh, Sint16 high );
-
 void flash_character( struct sGame * gs, CHR_REF character, Uint8 value );
 
 void signal_target( struct sGame * gs, Uint32 priority, CHR_REF target, Uint16 upper, Uint16 lower );
 void signal_team( struct sGame * gs, CHR_REF character, Uint32 order );
 void signal_idsz_index( struct sGame * gs, Uint32 priority, Uint32 order, IDSZ idsz, IDSZ_INDEX index );
-
-bool_t ai_state_advance_wp(AI_STATE * a, bool_t do_atlastwaypoint);
 
 #define CHR_MAX_COLLISIONS 512*16
 extern int chr_collisions;
@@ -1037,6 +1051,8 @@ bool_t  activate_chr_spawn( struct sGame * gs, CHR_REF ichr );
 
 bool_t chr_is_over_water( struct sGame * gs, CHR_REF cnt );
 
+/// @details This function keeps weapons near their holders
+/// @author ZZ
 void   keep_weapons_with_holders( struct sGame * gs );
 
 void export_one_character_name( struct sGame * gs, char *szSaveName, CHR_REF character );

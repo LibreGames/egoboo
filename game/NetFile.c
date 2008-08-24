@@ -345,9 +345,9 @@ retval_t NFileState_initialize(NFileState_t * nfs)
 //--------------------------------------------------------------------------------------------
 retval_t NFileState_startUp(NFileState_t * nfs)
 {
-  /// @details BB> Start the NFileState_t.
-  //      If it has not been initialized, initialize it.
-  //      If it was initialized, restart everything.
+  /// @details BB@> Start the NFileState_t.
+  ///      If it has not been initialized, initialize it.
+  ///      If it was initialized, restart everything.
 
   if(!EKEY_PVALID(nfs)) return rv_error;
 
@@ -375,7 +375,7 @@ retval_t NFileState_startUp(NFileState_t * nfs)
 //--------------------------------------------------------------------------------------------
 retval_t NFileState_shutDown(NFileState_t * nfs)
 {
-  /// @details BB> Shut or pause the NFileState_t.
+  /// @details BB@> Shut or pause the NFileState_t.
 
   if( !EKEY_PVALID(nfs) ) return rv_error;
 
@@ -456,7 +456,7 @@ bool_t nfile_SendState_delete(nfile_SendState_t * snd)
 //--------------------------------------------------------------------------------------------
 retval_t nfile_SendState_initialize(nfile_SendState_t * snd)
 {
-  /// @details BB> initializes an instance of nfile_SendState_t
+  /// @details BB@> initializes an instance of nfile_SendState_t
 
   if(NULL == snd) return rv_error;
 
@@ -583,7 +583,7 @@ bool_t nfile_ReceiveState_delete(nfile_ReceiveState_t * rec)
 //--------------------------------------------------------------------------------------------
 retval_t nfile_ReceiveState_initialize(nfile_ReceiveState_t * rec)
 {
-  /// @details BB> initializes an instance of nfile_ReceiveState_t
+  /// @details BB@> initializes an instance of nfile_ReceiveState_t
 
   if(NULL == rec) return rv_error;
 
@@ -936,8 +936,8 @@ static retval_t net_doFileTransfer(nfile_SendInfo_t *state)
 //------------------------------------------------------------------------------
 retval_t nfhost_startThreads()
 {
-  /// @details BB> start the main packet hosting thread and
-  //      start the worker threads
+  /// @details BB@> start the main packet hosting thread and
+  ///      start the worker threads
 
   NetHost_t * nh;
   retval_t retval, snd_return, rec_return;
@@ -979,7 +979,7 @@ retval_t nfhost_startThreads()
 //------------------------------------------------------------------------------
 retval_t nfhost_stopThreads()
 {
-  /// @details BB> do cleanup when exiting the "net file" thread
+  /// @details BB@> do cleanup when exiting the "net file" thread
 
   nfile_SendState_t    * snd;
   nfile_ReceiveState_t * rec;
@@ -1085,7 +1085,7 @@ int nfhost_HostCallback(void * data)
 
 retval_t nfile_SendState_startThread(nfile_SendState_t * snd)
 {
-  /// @details BB> start the "send file" worker thread
+  /// @details BB@> start the "send file" worker thread
 
   bool_t   thread_valid;
 
@@ -1112,7 +1112,7 @@ retval_t nfile_SendState_startThread(nfile_SendState_t * snd)
 //------------------------------------------------------------------------------
 retval_t nfile_SendState_stopThread(nfile_SendState_t * snd)
 {
-  /// @details BB> do cleanup when exiting a "send file" worker thread
+  /// @details BB@> do cleanup when exiting a "send file" worker thread
 
   // bad parameters
   if( !EKEY_PVALID(snd) )
@@ -1135,7 +1135,7 @@ retval_t nfile_SendState_stopThread(nfile_SendState_t * snd)
 //------------------------------------------------------------------------------
 retval_t nfile_ReceiveState_startThread(nfile_ReceiveState_t * rec)
 {
-  /// @details BB> start the "send file" worker thread
+  /// @details BB@> start the "send file" worker thread
 
   bool_t   thread_valid;
 
@@ -1162,7 +1162,7 @@ retval_t nfile_ReceiveState_startThread(nfile_ReceiveState_t * rec)
 //------------------------------------------------------------------------------
 retval_t nfile_ReceiveState_stopThread(nfile_ReceiveState_t * rec)
 {
-  /// @details BB> do cleanup when exiting a "receive file" worker thread
+  /// @details BB@> do cleanup when exiting a "receive file" worker thread
 
   // bad parameters
   if( !EKEY_PVALID(rec) )

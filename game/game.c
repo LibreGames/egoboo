@@ -36,7 +36,8 @@
 #include "System.h"
 #include "id_md2.h"
 #include "Menu.h"
-#include "script.h"
+#include "Script_compile.h"
+#include "Script_run.h"
 #include "enchant.h"
 #include "camera.h"
 #include "sound.h"
@@ -146,8 +147,8 @@ Game_t *      GameStack_remove(GameStack_t * stk, int i);
 
 GameStack_t * Get_GameStack()
 {
-  /// @details BB> a function to get the global game state stack.
-  //      Acts like a singleton, will initialize _game_stack if not already initialized
+  /// @details BB@> a function to get the global game state stack.
+  ///      Acts like a singleton, will initialize _game_stack if not already initialized
 
   if(!EKEY_VALID(_game_stack))
   {
@@ -173,7 +174,7 @@ GameStack_t * Get_GameStack( void );
 //---------------------------------------------------------------------------------------------
 ACTION what_action( char cTmp )
 {
-  /// @details ZZ> This function changes a letter into an action code
+  /// @details ZZ@> This function changes a letter into an action code
 
   ACTION action = ACTION_DA;
 
@@ -197,7 +198,7 @@ ACTION what_action( char cTmp )
 //------------------------------------------------------------------------------
 void memory_cleanUp()
 {
-  /// @details ZF> This function releases all loaded things in memory and cleans up everything properly
+  /// @details ZF@> This function releases all loaded things in memory and cleans up everything properly
 
   Game_t * gs;
   MachineState_t * mach_state;
@@ -234,7 +235,7 @@ void memory_cleanUp()
 //------------------------------------------------------------------------------
 void make_newloadname( char *modname, char *appendname, char *newloadname )
 {
-  /// @details ZZ> This function takes some names and puts 'em together
+  /// @details ZZ@> This function takes some names and puts 'em together
 
   strcpy(newloadname, modname);
   strcat(newloadname, appendname);
@@ -243,7 +244,7 @@ void make_newloadname( char *modname, char *appendname, char *newloadname )
 //--------------------------------------------------------------------------------------------
 //void module_load_all_waves( char *modname )
 //{
-//  /// @details ZZ> This function loads the global waves
+//  /// @details ZZ@> This function loads the global waves
 //
 //  STRING tmploadname, newloadname;
 //  int cnt;
@@ -298,8 +299,8 @@ void make_newloadname( char *modname, char *appendname, char *newloadname )
 //---------------------------------------------------------------------------------------------
 bool_t export_all_enchants( Game_t * gs, CHR_REF ichr, EGO_CONST char * todirname )
 {
-  /// @details BB> Export all of the enchant info associated with an enchant to a file called rechantXXXX.txt
-  //     Note that this does not save the sounds, particles, or any other asset associated with the enchant
+  /// @details BB@> Export all of the enchant info associated with an enchant to a file called rechantXXXX.txt
+  ///     Note that this does not save the sounds, particles, or any other asset associated with the enchant
 
   int cnt;
   ENC_REF ienc;
@@ -354,12 +355,12 @@ bool_t export_all_enchants( Game_t * gs, CHR_REF ichr, EGO_CONST char * todirnam
 //---------------------------------------------------------------------------------------------
 bool_t export_one_character( Game_t * gs, CHR_REF ichr, CHR_REF iowner, int number, bool_t export_profile )
 {
-  /// @details ZZ> This function exports a character
+  /// @details ZZ@> This function exports a character
 
-  /// @details BB> If export_profile is true, we have just exited a starter module. We should just export the base values
-  //     directly from the profile. Otherwise, we have just beaten some module or exited a town, and we SHOULD
-  //     carry all enchants, etc. with us. I'm not sure how to do this other than exporting all enchants to the
-  //     *.obj directory?
+  /// @details BB@> If export_profile is true, we have just exited a starter module. We should just export the base values
+  ///     directly from the profile. Otherwise, we have just beaten some module or exited a town, and we SHOULD
+  ///     carry all enchants, etc. with us. I'm not sure how to do this other than exporting all enchants to the
+  ///     *.obj directory?
 
   int tnc;
   STRING tmpname;
@@ -531,8 +532,8 @@ bool_t export_one_character( Game_t * gs, CHR_REF ichr, CHR_REF iowner, int numb
 //---------------------------------------------------------------------------------------------
 void export_all_local_players( Game_t * gs, bool_t export_profile )
 {
-  /// @details ZZ> This function saves all the local players in the
-  //     PLAYERS directory
+  /// @details ZZ@> This function saves all the local players in the
+  ///     PLAYERS directory
 
   int number;
   CHR_REF character, item;
@@ -581,7 +582,7 @@ void export_all_local_players( Game_t * gs, bool_t export_profile )
 //--------------------------------------------------------------------------------------------
 void quit_game( Game_t * gs )
 {
-  /// @details ZZ> This function exits the game entirely
+  /// @details ZZ@> This function exits the game entirely
 
   if(!gs->proc.Active) return;
 
@@ -599,7 +600,7 @@ void quit_game( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 int MessageQueue_get_free(MessageQueue_t * mq)
 {
-  /// @details BB> This function finds the first free message
+  /// @details BB@> This function finds the first free message
 
   int cnt, tnc;
   bool_t found = bfalse;
@@ -622,7 +623,7 @@ int MessageQueue_get_free(MessageQueue_t * mq)
 //--------------------------------------------------------------------------------------------
 bool_t decode_escape_sequence( Game_t * gs, char * buffer, size_t buffer_size, EGO_CONST char * message, CHR_REF chr_ref )
 {
-  /// @details BB> expands escape sequences
+  /// @details BB@> expands escape sequences
 
   STRING szTmp;
   char esc_code;
@@ -863,7 +864,7 @@ bool_t decode_escape_sequence( Game_t * gs, char * buffer, size_t buffer_size, E
 //--------------------------------------------------------------------------------------------
 bool_t display_message( Game_t * gs, int message, CHR_REF chr_ref )
 {
-  /// @details ZZ> This function sticks a message in the display queue and sets its timer
+  /// @details ZZ@> This function sticks a message in the display queue and sets its timer
 
   int slot;
 
@@ -893,7 +894,7 @@ bool_t display_message( Game_t * gs, int message, CHR_REF chr_ref )
 //--------------------------------------------------------------------------------------------
 void load_action_names( char* loadname )
 {
-  /// @details ZZ> This function loads all of the 2 letter action names
+  /// @details ZZ@> This function loads all of the 2 letter action names
 
   FILE* fileread;
   ACTION cnt;
@@ -925,7 +926,7 @@ void load_action_names( char* loadname )
 //--------------------------------------------------------------------------------------------
 void read_setup( char* filename )
 {
-  /// @details ZZ> This function loads the setup file
+  /// @details ZZ@> This function loads the setup file
 
   ConfigFilePtr_t lConfigSetup;
   char lCurSectionName[64];
@@ -1333,7 +1334,7 @@ void read_setup( char* filename )
 //--------------------------------------------------------------------------------------------
 void make_enviro( void )
 {
-  /// @details ZZ> This function sets up the environment mapping table
+  /// @details ZZ@> This function sets up the environment mapping table
 
   int cnt;
   float z;
@@ -1363,7 +1364,7 @@ void make_enviro( void )
 //--------------------------------------------------------------------------------------------
 void print_status( Game_t * gs, Uint16 statindex )
 {
-  /// @details ZZ> This function shows the more specific stats for a character
+  /// @details ZZ@> This function shows the more specific stats for a character
 
   CHR_REF character;
   char gender[8];
@@ -1410,7 +1411,7 @@ void print_status( Game_t * gs, Uint16 statindex )
 //--------------------------------------------------------------------------------------------
 void draw_chr_info( Game_t * gs )
 {
-  /// @details ZZ> This function lets the players check character stats
+  /// @details ZZ@> This function lets the players check character stats
 
   size_t cnt;
   Status_t * lst      = gs->cl->StatList;
@@ -1516,7 +1517,7 @@ bool_t do_screenshot()
 //--------------------------------------------------------------------------------------------
 bool_t add_status( Game_t * gs, CHR_REF character )
 {
-  /// @details ZZ> This function adds a status display to the do list
+  /// @details ZZ@> This function adds a status display to the do list
 
   bool_t was_added;
   size_t old_size = gs->cl->StatList_count;
@@ -1578,7 +1579,7 @@ bool_t remove_stat( Game_t * gs, Chr_t * pchr )
 //--------------------------------------------------------------------------------------------
 void sort_statlist( Game_t * gs )
 {
-  /// @details ZZ> This function puts all of the local players on top of the statlst
+  /// @details ZZ@> This function puts all of the local players on top of the statlst
 
   PLA_REF pla_cnt;
   Status_t * statlst;
@@ -1600,7 +1601,7 @@ void sort_statlist( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 void move_water( WATER_LAYER wlayer[], size_t layer_count, float dUpdate )
 {
-  /// @details ZZ> This function animates the water overlays
+  /// @details ZZ@> This function animates the water overlays
 
   Uint32 layer;
 
@@ -1621,7 +1622,7 @@ void move_water( WATER_LAYER wlayer[], size_t layer_count, float dUpdate )
 //--------------------------------------------------------------------------------------------
 CHR_REF search_best_leader( Game_t * gs, TEAM_REF team, CHR_REF exclude )
 {
-  /// @details BB> find the best (most experienced) character other than the sissy to be a team leader
+  /// @details BB@> find the best (most experienced) character other than the sissy to be a team leader
 
   CHR_REF chr_cnt;
   CHR_REF best_leader = INVALID_CHR;
@@ -1650,7 +1651,7 @@ CHR_REF search_best_leader( Game_t * gs, TEAM_REF team, CHR_REF exclude )
 //--------------------------------------------------------------------------------------------
 void call_for_help( Game_t * gs, CHR_REF character )
 {
-  /// @details ZZ> This function issues a call for help to all allies
+  /// @details ZZ@> This function issues a call for help to all allies
 
   TEAM_REF team;
   CHR_REF chr_cnt;
@@ -1681,8 +1682,8 @@ void call_for_help( Game_t * gs, CHR_REF character )
 //--------------------------------------------------------------------------------------------
 void give_experience( Game_t * gs, CHR_REF character, int amount, EXPERIENCE xptype )
 {
-  /// @details ZZ> This function gives a character experience, and pawns off level gains to
-  //     another function
+  /// @details ZZ@> This function gives a character experience, and pawns off level gains to
+  ///     another function
 
   int newamount;
   int curlevel, nextexperience;
@@ -1789,8 +1790,8 @@ void give_experience( Game_t * gs, CHR_REF character, int amount, EXPERIENCE xpt
 //--------------------------------------------------------------------------------------------
 void give_team_experience( Game_t * gs, TEAM_REF team, int amount, EXPERIENCE xptype )
 {
-  /// @details ZZ> This function gives a character experience, and pawns off level gains to
-  //     another function
+  /// @details ZZ@> This function gives a character experience, and pawns off level gains to
+  ///     another function
 
   CHR_REF chr_cnt;
 
@@ -1812,7 +1813,7 @@ void give_team_experience( Game_t * gs, TEAM_REF team, int amount, EXPERIENCE xp
 //--------------------------------------------------------------------------------------------
 void setup_alliances( Game_t * gs, char *modname )
 {
-  /// @details ZZ> This function reads the alliance file
+  /// @details ZZ@> This function reads the alliance file
 
   STRING newloadname, szTemp;
   TEAM_REF teama, teamb;
@@ -2082,10 +2083,10 @@ bool_t prt_collide_mesh(Game_t * gs, PRT_REF iprt)
 //--------------------------------------------------------------------------------------------
 void do_integration(Game_t * gs, float dFrame)
 {
-  /// @details BB> Integrate the position of the characters/items and particles.
-  //      Handle the interaction with the walls. Make sure that all positions
-  //      are on valid mesh tiles. This routine could be fooled if the character
-  //      was standing on a tile that became invalid since the last frame.
+  /// @details BB@> Integrate the position of the characters/items and particles.
+  ///      Handle the interaction with the walls. Make sure that all positions
+  ///      are on valid mesh tiles. This routine could be fooled if the character
+  ///      was standing on a tile that became invalid since the last frame.
 
   int tnc;
   bool_t collide;
@@ -2180,7 +2181,7 @@ void do_integration(Game_t * gs, float dFrame)
 //--------------------------------------------------------------------------------------------
 void update_timers(Game_t * gs)
 {
-  /// @details ZZ> This function updates the game timers
+  /// @details ZZ@> This function updates the game timers
 
   gs->lst_clock = gs->all_clock;
 
@@ -2232,7 +2233,7 @@ void update_timers(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 void reset_teams(Game_t * gs)
 {
-  /// @details ZZ> This function makes everyone hate everyone else
+  /// @details ZZ@> This function makes everyone hate everyone else
 
   TEAM_REF teama, teamb;
 
@@ -2269,7 +2270,7 @@ void reset_teams(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 void reset_messages(Game_t * gs)
 {
-  /// @details ZZ> This makes messages safe to use
+  /// @details ZZ@> This makes messages safe to use
   Gui_t * gui = gui_getState();
 
   clear_messages( &(gs->MsgList) );
@@ -2279,7 +2280,7 @@ void reset_messages(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 void reset_timers(Game_t * gs)
 {
-  /// @details ZZ> This function resets the timers...
+  /// @details ZZ@> This function resets the timers...
 
   gs->stt_clock  = SDL_GetTicks();
   gs->all_clock  = 0;
@@ -2306,7 +2307,7 @@ extern int initMenus( void );
 //--------------------------------------------------------------------------------------------
 char * get_config_string(ConfigData_t * cd, char * szin, char ** szout)
 {
-  /// @details BB> localize a string by converting the name of the string to the string itself
+  /// @details BB@> localize a string by converting the name of the string to the string itself
 
   DO_CONFIGSTRING_COMPARE(basicdat_dir)
   else DO_CONFIGSTRING_COMPARE(gamedat_dir)
@@ -2390,7 +2391,7 @@ char * get_config_string(ConfigData_t * cd, char * szin, char ** szout)
 //--------------------------------------------------------------------------------------------
 char * get_config_string_name(ConfigData_t * cd, STRING * pconfig_string)
 {
-  /// @details BB> localize a string by converting the name of the string to the string itself
+  /// @details BB@> localize a string by converting the name of the string to the string itself
 
   if(pconfig_string == &(cd->basicdat_dir)) return "basicdat_dir";
   else if(pconfig_string == &(cd->gamedat_dir)) return "gamedat_dir";
@@ -2618,6 +2619,7 @@ int proc_gameLoop( ProcState_t * gproc, Game_t * gs);
 int proc_menuLoop( MenuProc_t  * mproc );
 
 //--------------------------------------------------------------------------------------------
+/// @detail trap all key events that are important to the main loop
 void main_handleKeyboard()
 {
   bool_t control, alt, shift, mod;
@@ -2640,9 +2642,10 @@ void main_handleKeyboard()
 };
 
 //--------------------------------------------------------------------------------------------
+/// @brief calculate the direct lighting and sky color for the simulated sunlight
 void do_sunlight(LIGHTING_INFO * info)
 {
-  /// @details BB> simulate sunlight
+  /// @details BB@> simulate sunlight
 
   static bool_t first_time = btrue;
   static time_t i_time_last;
@@ -2736,6 +2739,7 @@ void do_sunlight(LIGHTING_INFO * info)
 };
 
 //--------------------------------------------------------------------------------------------
+/// @brief in-game graphics routine
 retval_t main_doGameGraphics()
 {
   Game_t * gs           = Graphics_requireGame(&gfxState);
@@ -2744,7 +2748,7 @@ retval_t main_doGameGraphics()
   if( !EKEY_PVALID(gs) ) return rv_error;
   if( !gs->proc.Active ) { gs->dFrame = 0; return rv_succeed; };
 
-  camera_move( UPDATESCALE );
+  cam_move( &GCamera, UPDATESCALE );
 
   // simulate sunlight. runs on its own clock.
   do_sunlight(&gfx->Light);
@@ -2768,8 +2772,7 @@ retval_t main_doGameGraphics()
   return rv_succeed;
 }
 //--------------------------------------------------------------------------------------------
-// the main loop. Processes all graphics
-
+/// @brief Main loop graphics routine
 retval_t main_doGraphics()
 {
   Gui_t * gui;
@@ -2836,7 +2839,8 @@ retval_t main_doGraphics()
           mnu_RunIngame( ig_mnu_proc );
           switch ( ig_mnu_proc->MenuResult  )
           {
-            case 1: /* nothing */
+            case 1: 
+              /* nothing */
               break;
 
             case - 1:
@@ -2891,7 +2895,7 @@ retval_t main_doGraphics()
 //--------------------------------------------------------------------------------------------
 int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
 {
-  /// @details ZZ> This is where the program starts and all the high level stuff happens
+  /// @details ZZ@> This is where the program starts and all the high level stuff happens
   static double frameDuration /*, frameTicks */;
   Game_t    * gs;
   GameStack_t      * stk;
@@ -3066,6 +3070,7 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
           mnu_proc->lastMenu = mnu_proc->whichMenu = mnu_Main;
           mnu_enterMenuMode();
           snd_play_music( 0, 500, -1 ); //Play the menu music
+          glClearColor(0,0,0,1);
         }
 
         if ( no_games_active && mnu_proc->proc.Terminated )
@@ -3316,8 +3321,9 @@ void game_handleIO(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 void cl_update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
 {
-  /// @details ZZ> This function does several iterations of character movements and such
-  //     to keep the game in sync.
+  /// @details ZZ@> This function does several iterations of character movements and such
+  ///     to keep the game in sync.
+
   int cnt;
 
   Gui_t * gui = gui_getState();
@@ -3327,8 +3333,6 @@ void cl_update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
   // This is the main game loop
   gui->msgQueue.timechange = 0;
 
-  // [claforte Jan 6th 2001]
-  /// @todo  Put that back in place once networking is functional.
   // Important stuff to keep in sync
   while ( (gs->wld_clock<gs->all_clock) && (gs->cl->tlb.numtimes > 0))
   {
@@ -3442,14 +3446,12 @@ void cl_update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
 //--------------------------------------------------------------------------------------------
 void sv_update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
 {
-  /// @details ZZ> This function does several iterations of character movements and such
-  //     to keep the game in sync.
+  /// @details ZZ@> This function does several iterations of character movements and such
+  ///     to keep the game in sync.
 
 
   count_players(gs);
 
-  // [claforte Jan 6th 2001]
-  /// @todo  Put that back in place once networking is functional.
   // Important stuff to keep in sync
 
   // gs->wld_clock<gs->all_clock  will this work with multiple game states?
@@ -3526,8 +3528,8 @@ void sv_update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
 //--------------------------------------------------------------------------------------------
 void update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
 {
-  /// @details ZZ> This function does several iterations of character movements and such
-  //     to keep the game in sync.
+  /// @details ZZ@> This function does several iterations of character movements and such
+  ///     to keep the game in sync.
 
   int cnt;
   Gui_t    * gui = gui_getState();
@@ -3539,8 +3541,6 @@ void update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
   // This is the main game loop
   gui->msgQueue.timechange = 0;
 
-  // [claforte Jan 6th 2001]
-  /// @todo  Put that back in place once networking is functional.
   // Important stuff to keep in sync
 
   // gs->wld_clock<gs->all_clock  will this work with multiple game states?
@@ -3822,7 +3822,7 @@ int proc_gameLoop( ProcState_t * gproc, Game_t * gs )
         }
 
         make_onwhichfan( gs );
-        camera_reset();
+        cam_reset(&GCamera);
         reset_timers( gs );
         figure_out_what_to_draw();
         make_character_matrices( gs );
@@ -3959,7 +3959,7 @@ int proc_menuLoop( MenuProc_t  * mproc )
         SDL_WM_GrabInput( SDL_GRAB_OFF );
         SDL_ShowCursor( SDL_DISABLE );
         mous.game = bfalse;
-        glClearColor(0,0,0,0);
+        glClearColor(0,0,0,1);
       }
       proc->State = PROC_Entering;
       break;
@@ -4058,7 +4058,7 @@ int SDL_main( int argc, char **argv )
 //--------------------------------------------------------------------------------------------
 int load_all_messages( Game_t * gs, EGO_CONST char *szObjectpath, EGO_CONST char *szObjectname )
 {
-  /// @details ZZ> This function loads all of an objects messages
+  /// @details ZZ@> This function loads all of an objects messages
 
   int retval;
   FILE *fileread;
@@ -4156,7 +4156,7 @@ bool_t chr_search_block( Game_t * gs, SearchInfo_t * psearch, int block_x, int b
                          bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, bool_t seeinvisible, IDSZ idsz,
                          bool_t invert_idsz )
 {
-  /// @details ZZ> This is a good little helper. returns btrue if a suitable target was found
+  /// @details ZZ@> This is a good little helper. returns btrue if a suitable target was found
 
   int cnt;
   CHR_REF charb;
@@ -4248,7 +4248,7 @@ bool_t chr_search_block( Game_t * gs, SearchInfo_t * psearch, int block_x, int b
 bool_t chr_search_nearby( Game_t * gs, SearchInfo_t * psearch, CHR_REF character, bool_t ask_items,
                           bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, IDSZ ask_idsz )
 {
-  /// @details ZZ> This function finds a target from the blocks that the character is overlapping. Returns btrue if found.
+  /// @details ZZ@> This function finds a target from the blocks that the character is overlapping. Returns btrue if found.
 
   int ix,ix_min,ix_max, iy,iy_min,iy_max;
   bool_t seeinvisible;
@@ -4291,9 +4291,9 @@ bool_t chr_search_nearby( Game_t * gs, SearchInfo_t * psearch, CHR_REF character
 //--------------------------------------------------------------------------------------------
 bool_t chr_search_distant( Game_t * gs, SearchInfo_t * psearch, CHR_REF character, int maxdist, bool_t ask_enemies, bool_t ask_dead )
 {
-  /// @details ZZ> This function finds a target, or it returns bfalse if it can't find one...
-  //     maxdist should be the square of the actual distance you want to use
-  //     as the cutoff...
+  /// @details ZZ@> This function finds a target, or it returns bfalse if it can't find one...
+  ///     maxdist should be the square of the actual distance you want to use
+  ///     as the cutoff...
 
   CHR_REF charb;
   int xdist, ydist, zdist;
@@ -4345,7 +4345,7 @@ bool_t chr_search_distant( Game_t * gs, SearchInfo_t * psearch, CHR_REF characte
 bool_t chr_search_block_nearest( Game_t * gs, SearchInfo_t * psearch, int block_x, int block_y, CHR_REF chra_ref, bool_t ask_items,
                                bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, bool_t seeinvisible, IDSZ idsz )
 {
-  /// @details ZZ> This is a good little helper
+  /// @details ZZ@> This is a good little helper
 
   float dis, xdis, ydis, zdis;
   int   cnt;
@@ -4426,7 +4426,7 @@ bool_t chr_search_block_nearest( Game_t * gs, SearchInfo_t * psearch, int block_
 bool_t chr_search_wide_nearest( Game_t * gs, SearchInfo_t * psearch, CHR_REF chr_ref, bool_t ask_items,
                                  bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, IDSZ idsz )
 {
-  /// @details ZZ> This function finds an target, or it returns CHRLST_COUNT if it can't find one
+  /// @details ZZ@> This function finds an target, or it returns CHRLST_COUNT if it can't find one
 
   int x, y;
   bool_t seeinvisible = gs->ChrList[chr_ref].prop.canseeinvisible;
@@ -4468,7 +4468,7 @@ bool_t chr_search_wide_nearest( Game_t * gs, SearchInfo_t * psearch, CHR_REF chr
 bool_t chr_search_wide( Game_t * gs, SearchInfo_t * psearch, CHR_REF chr_ref, bool_t ask_items,
                         bool_t ask_friends, bool_t ask_enemies, bool_t ask_dead, IDSZ idsz, bool_t excludeid )
 {
-  /// @details ZZ> This function finds an object, or it returns bfalse if it can't find one
+  /// @details ZZ@> This function finds an object, or it returns bfalse if it can't find one
 
   int     ix, iy;
   bool_t  seeinvisible;
@@ -4513,12 +4513,10 @@ bool_t chr_search_wide( Game_t * gs, SearchInfo_t * psearch, CHR_REF chr_ref, bo
 //--------------------------------------------------------------------------------------------
 void attach_particle_to_character( Game_t * gs, PRT_REF particle, CHR_REF chr_ref, Uint16 vertoffset )
 {
-  /// @details ZZ> This function sets one particle's position to be attached to a character.
-  //     It will kill the particle if the character is no longer around
+  /// @details ZZ@> This function sets one particle's position to be attached to a character.
+  ///     It will kill the particle if the character is no longer around
 
   Uint16 vertex;
-  float flip;
-
   bool_t prt_valid;
 
   PChr_t chrlst      = gs->ChrList;
@@ -4617,7 +4615,7 @@ void attach_particle_to_character( Game_t * gs, PRT_REF particle, CHR_REF chr_re
 //--------------------------------------------------------------------------------------------
 bool_t load_all_music_sounds(ConfigData_t * cd)
 {
-  /// @details ZF> This function loads all of the music sounds
+  /// @details ZF@> This function loads all of the music sounds
   STRING songname;
   FILE *playlist;
   Uint8 cnt;
@@ -4722,8 +4720,8 @@ void sdlinit( Graphics_t * g )
 //--------------------------------------------------------------------------------------------
 retval_t MachineState_update(MachineState_t * mac)
 {
-  /// @details BB> Update items related to this computer.
-  //        - Calclate the Bishopia date
+  /// @details BB@> Update items related to this computer.
+  ///        - Calclate the Bishopia date
 
   // seconds from Jan 1, 1970 to "birth" of Bishopia
   EGO_CONST time_t i_dif  = 10030 * 24 * 60 * 60;
@@ -4752,7 +4750,7 @@ retval_t MachineState_update(MachineState_t * mac)
 //--------------------------------------------------------------------------------------------
 MachineState_t * get_MachineState()
 {
-  /// @details BB> give access to the machine state singleton
+  /// @details BB@> give access to the machine state singleton
 
   if(!EKEY_VALID(_macState))
   {
@@ -4986,7 +4984,7 @@ bool_t do_setup_chracter(CHR_SETUP_INFO * pinfo, CHR_SPAWN_INFO * psi)
 
     // tell the chr that it has been grabbed
     pitem->aistate.alert |= ALERT_GRABBED;                    // Make spellbooks change
-    run_script( pinfo->gs, pinfo->last_item, 1.0f );                     // Empty the grabbed messages
+    run_script( pinfo->gs, ChrList_getPState(pinfo->gs, pinfo->last_item), 1.0f );                     // Empty the grabbed messages
 
     // restore any old item
     chrlst[pinfo->last_chr].holdingwhich[SLOT_LEFT] = itmp;
@@ -5004,7 +5002,7 @@ bool_t do_setup_chracter(CHR_SETUP_INFO * pinfo, CHR_SPAWN_INFO * psi)
     // Attach the pinfo->last_item to the appropriate slot of pinfo->last_chr
     if ( attach_character_to_mount( pinfo->gs, pinfo->last_item, pinfo->last_chr, psi->slot ) )
     {
-      run_script( pinfo->gs, pinfo->last_item, 1.0f );   // Empty the grabbed messages
+      run_script( pinfo->gs, ChrList_getPState(pinfo->gs, pinfo->last_item), 1.0f );   // Empty the grabbed messages
     };
 
     // set the item position to the holder's position
@@ -5102,7 +5100,7 @@ void do_setup_inputs(CHR_SETUP_INFO * pinfo, CHR_SPAWN_INFO * psi)
 //--------------------------------------------------------------------------------------------
 void setup_characters( Game_t * gs, char *modname )
 {
-  /// @details ZZ> This function sets up character data, loaded from "SPAWN.TXT"
+  /// @details ZZ@> This function sets up character data, loaded from "SPAWN.TXT"
   STRING newloadname;
   FILE * fileread;
   Gui_t * gui = NULL;
@@ -5234,7 +5232,7 @@ int cl_proc_setup_character(Game_t * gs, CHR_SETUP_INFO * pinfo, ProcState_t * p
 //--------------------------------------------------------------------------------------------
 void ChrList_resynch(Game_t * gs)
 {
-  /// @details BB> handle all allocation and deallocation requests
+  /// @details BB@> handle all allocation and deallocation requests
 
   CHR_REF chr_ref;
 
@@ -5351,7 +5349,7 @@ bool_t prt_search_block( Game_t * gs, SearchInfo_t * psearch, int block_x, int b
                          bool_t request_friends, bool_t allow_anyone, TEAM_REF team,
                          CHR_REF donttarget_ref, CHR_REF oldtarget_ref )
 {
-  /// @details ZZ> This function helps find a target, returning btrue if it found a decent target
+  /// @details ZZ@> This function helps find a target, returning btrue if it found a decent target
 
   Uint32 cnt;
   Uint16 local_angle;
@@ -5492,8 +5490,8 @@ Game_t * GameStack_get(GameStack_t * stk, int i)
 //--------------------------------------------------------------------------------------------
 bool_t GameStack_add(GameStack_t * stk, Game_t * gs)
 {
-  /// @details BB> Adds a new game state into the stack.
-  //     Does not add a new wntry if the gamestate is already in the stack.
+  /// @details BB@> Adds a new game state into the stack.
+  ///     Does not add a new wntry if the gamestate is already in the stack.
 
   int i;
   bool_t bfound = bfalse, retval = bfalse;
@@ -5753,7 +5751,7 @@ bool_t Game_renew(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 void set_alerts( Game_t * gs, CHR_REF ichr, float dUpdate )
 {
-  /// @details ZZ> This function polls some alert conditions
+  /// @details ZZ@> This function polls some alert conditions
 
   PChr_t chrlst      = gs->ChrList;
 
@@ -5850,7 +5848,7 @@ retval_t Game_registerServer ( Game_t * gs, Server_t * sv, bool_t destroy )
 //--------------------------------------------------------------------------------------------
 retval_t Game_updateNetStatus( Game_t * gs )
 {
-  /// @details BB> update the network status variable so that we can know what kind of game we are playing
+  /// @details BB@> update the network status variable so that we can know what kind of game we are playing
 
   if( !EKEY_PVALID(gs) ) return rv_error;
 
@@ -6123,7 +6121,7 @@ bool_t MadList_renew( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 bool_t EncList_new( Game_t * gs )
 {
-  /// @details ZZ> This functions frees all of the enchantments
+  /// @details ZZ@> This functions frees all of the enchantments
 
   ENC_REF enc_cnt;
 
@@ -6144,7 +6142,7 @@ bool_t EncList_new( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 bool_t EncList_delete( Game_t * gs )
 {
-  /// @details ZZ> This functions frees all of the enchantments
+  /// @details ZZ@> This functions frees all of the enchantments
 
   ENC_REF enc_cnt;
 
@@ -6165,7 +6163,7 @@ bool_t EncList_delete( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 bool_t EncList_renew( Game_t * gs )
 {
-  /// @details ZZ> This functions frees all of the enchantments
+  /// @details ZZ@> This functions frees all of the enchantments
 
   int i;
 
@@ -6184,7 +6182,7 @@ bool_t EncList_renew( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 bool_t PlaList_new( Game_t * gs )
 {
-  /// @details ZZ> This functions frees all of the plahantments
+  /// @details ZZ@> This functions frees all of the plahantments
 
   PLA_REF pla_cnt;
 
@@ -6208,7 +6206,7 @@ bool_t PlaList_new( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 bool_t PlaList_delete( Game_t * gs )
 {
-  /// @details ZZ> This functions frees all of the plahantments
+  /// @details ZZ@> This functions frees all of the plahantments
 
   PLA_REF pla_cnt;
 
@@ -6232,7 +6230,7 @@ bool_t PlaList_delete( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 bool_t PlaList_renew( Game_t * gs )
 {
-  /// @details ZZ> This functions frees all of the plahantments
+  /// @details ZZ@> This functions frees all of the plahantments
 
   PLA_REF pla_cnt;
 
@@ -6259,7 +6257,7 @@ bool_t PlaList_renew( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 bool_t ChrList_new( Game_t * gs )
 {
-  /// @details ZZ> This functions frees all of the chrhantments
+  /// @details ZZ@> This functions frees all of the chrhantments
 
   CHR_REF chr_cnt;
 
@@ -6280,7 +6278,7 @@ bool_t ChrList_new( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 bool_t ChrList_delete( Game_t * gs )
 {
-  /// @details ZZ> This functions frees all of the chrhantments
+  /// @details ZZ@> This functions frees all of the chrhantments
 
   CHR_REF chr_cnt;
 
@@ -6301,7 +6299,7 @@ bool_t ChrList_delete( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 bool_t ChrList_renew( Game_t * gs )
 {
-  /// @details ZZ> This functions frees all of the chrhantments
+  /// @details ZZ@> This functions frees all of the chrhantments
 
   int i;
 
@@ -6366,7 +6364,7 @@ bool_t EveList_renew( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 bool_t PrtList_new( Game_t * gs )
 {
-  /// @details ZZ> This functions frees all of the particles
+  /// @details ZZ@> This functions frees all of the particles
 
   PRT_REF prt_cnt;
 
@@ -6387,7 +6385,7 @@ bool_t PrtList_new( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 bool_t PrtList_delete( Game_t * gs )
 {
-  /// @details ZZ> This functions frees all of the particles
+  /// @details ZZ@> This functions frees all of the particles
 
   PRT_REF prt_cnt;
 
@@ -6408,7 +6406,7 @@ bool_t PrtList_delete( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 bool_t PrtList_renew( Game_t * gs )
 {
-  /// @details ZZ> This function renews all the particles
+  /// @details ZZ@> This function renews all the particles
 
   int i;
 
@@ -6472,7 +6470,7 @@ bool_t TeamList_renew( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 bool_t reset_characters( Game_t * gs )
 {
-  /// @details ZZ> This function resets all the character data
+  /// @details ZZ@> This function resets all the character data
 
   if(!EKEY_PVALID(gs)) return bfalse;
 
@@ -6749,7 +6747,7 @@ bool_t count_players(Game_t * gs)
 //--------------------------------------------------------------------------------------------
 void clear_message_queue(MessageQueue_t * q)
 {
-  /// @details ZZ> This function empties the message queue
+  /// @details ZZ@> This function empties the message queue
 
   int cnt;
 
@@ -6967,7 +6965,7 @@ bool_t fog_info_reset(FOG_INFO * f)
 //--------------------------------------------------------------------------------------------
 void reset_players( Game_t * gs )
 {
-  /// @details ZZ> This function clears the player list data
+  /// @details ZZ@> This function clears the player list data
 
   // Reset the local data stuff
   if(NULL != gs->cl)
@@ -6988,8 +6986,8 @@ void reset_players( Game_t * gs )
 //--------------------------------------------------------------------------------------------
 Uint16 terp_dir( Uint16 majordir, float dx, float dy, float dUpdate )
 {
-  /// @details ZZ> This function returns a direction between the major and minor ones, closer
-  //     to the major.
+  /// @details ZZ@> This function returns a direction between the major and minor ones, closer
+  ///     to the major.
 
   Uint16 rotate_sin, minordir;
   Sint16 diff_dir;
@@ -7019,7 +7017,7 @@ Uint16 terp_dir( Uint16 majordir, float dx, float dy, float dUpdate )
 //--------------------------------------------------------------------------------------------
 void load_map( Graphics_Data_t * gfx, char* szModule )
 {
-  /// @details ZZ> This function loads the map bitmap and the blip bitmap
+  /// @details ZZ@> This function loads the map bitmap and the blip bitmap
 
   // Turn it all off
   gfx->Map_on = bfalse;
@@ -7046,7 +7044,7 @@ void load_map( Graphics_Data_t * gfx, char* szModule )
 //--------------------------------------------------------------------------------------------
 bool_t read_wawalite( Game_t * gs, char *modname )
 {
-  /// @details ZZ> This function sets up water and lighting for the module
+  /// @details ZZ@> This function sets up water and lighting for the module
 
   Mesh_t * pmesh;
   FILE* fileread;
@@ -7392,3 +7390,44 @@ bool_t Graphics_Data_delete( Graphics_Data_t * gd )
 
   return btrue;
 }
+
+
+//--------------------------------------------------------------------------------------------
+void screen_dump_matrix( Game_t * gs, matrix_4x4 a )
+{
+  int i, j;
+  STRING buffer1 = NULL_STRING;
+  STRING buffer2 = NULL_STRING;
+
+  reset_messages( gs );
+  for ( j = 0; j < 4; j++ )
+  {
+    snprintf( buffer1, sizeof( buffer1 ), "  " );
+    for ( i = 0; i < 4; i++ )
+    {
+      snprintf( buffer2, sizeof( buffer2 ), "%2.4f ", a.CNV( i, j ) );
+      strncat( buffer1, buffer2, sizeof( buffer1 ) );
+    };
+    debug_message( 1, buffer1 );
+    buffer1[0] = EOS;
+  }
+}
+
+//--------------------------------------------------------------------------------------------
+void stdout_dump_matrix( matrix_4x4 a )
+{
+  int i, j;
+
+  for ( j = 0; j < 4; j++ )
+  {
+    fprintf( stdout, "  " );
+    for ( i = 0; i < 4; i++ )
+    {
+      fprintf( stdout, "%2.4f ", a.CNV( i, j ) );
+    };
+    fprintf( stdout, "\n" );
+  }
+  fprintf( stdout, "\n" );
+}
+
+

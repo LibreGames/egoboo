@@ -29,7 +29,7 @@
 
 typedef enum e_cart_win_type_bits
 {
-  /// @detail Window display mode
+  /// @details Window display mode
   WINNOTHING = 0,     
   WINTILE    = 1 << 0,
   WINVERTEX  = 1 << 1,
@@ -785,7 +785,7 @@ void draw_cursor_in_window(cart_mouse_info * m, cart_window_info * w)
 //------------------------------------------------------------------------------
 int get_vertex(cart_mesh * cmsh, int x, int y, int num)
 {
-  /// @details ZZ> This function gets a vertex number or -1
+  /// @details ZZ@> This function gets a vertex number or -1
 
   int vert, cnt;
   Uint32 fan;
@@ -815,7 +815,7 @@ int get_vertex(cart_mesh * cmsh, int x, int y, int num)
 //------------------------------------------------------------------------------
 int nearest_vertex(cart_mesh * cmsh, int x, int y, float nearx, float neary)
 {
-  /// @details ZZ> This function gets a vertex number or -1
+  /// @details ZZ@> This function gets a vertex number or -1
 
   int vert, bestvert, cnt;
   Uint32 fan;
@@ -857,7 +857,7 @@ int nearest_vertex(cart_mesh * cmsh, int x, int y, float nearx, float neary)
 //------------------------------------------------------------------------------
 void weld_select(MeshMem_t * mm, cart_select_list * csel)
 {
-  /// @details ZZ> This function welds the highlighted vertices
+  /// @details ZZ@> This function welds the highlighted vertices
 
   int cnt, x, y, z, ar, ag, ab;
   Uint32 vert;
@@ -904,7 +904,7 @@ void weld_select(MeshMem_t * mm, cart_select_list * csel)
 //------------------------------------------------------------------------------
 void add_select(cart_select_list * csel, int vert)
 {
-  /// @details ZZ> This function highlights a vertex
+  /// @details ZZ@> This function highlights a vertex
 
   int cnt, found;
 
@@ -933,7 +933,7 @@ void add_select(cart_select_list * csel, int vert)
 //------------------------------------------------------------------------------
 void clear_select(cart_select_list * csel)
 {
-  /// @details ZZ> This function unselects all vertices
+  /// @details ZZ@> This function unselects all vertices
 
   csel->count = 0;
   return;
@@ -942,7 +942,7 @@ void clear_select(cart_select_list * csel)
 //------------------------------------------------------------------------------
 int vert_selected(cart_select_list * csel, int vert)
 {
-  /// @details ZZ> This function returns btrue if the vertex has been highlighted by user
+  /// @details ZZ@> This function returns btrue if the vertex has been highlighted by user
 
   int cnt;
 
@@ -962,7 +962,7 @@ int vert_selected(cart_select_list * csel, int vert)
 //------------------------------------------------------------------------------
 void remove_select(cart_select_list * csel, int vert)
 {
-  /// @details ZZ> This function makes sure the vertex is not highlighted
+  /// @details ZZ@> This function makes sure the vertex is not highlighted
 
   int cnt, stillgoing;
 
@@ -994,7 +994,7 @@ void remove_select(cart_select_list * csel, int vert)
 //------------------------------------------------------------------------------
 void fan_onscreen(cart_mesh * cmsh, Uint32 fan)
 {
-  /// @details ZZ> This function flags a fan's points as being "onscreen"
+  /// @details ZZ@> This function flags a fan's points as being "onscreen"
 
   int cnt;
   Uint32 vert;
@@ -1055,8 +1055,8 @@ void make_onscreen( cart_mesh * cmsh )
 //------------------------------------------------------------------------------
 void draw_top_fan(cart_mesh * cmsh, cart_window_info * w, Uint32 fan, int x, int y)
 {
-  /// @details ZZ> This function draws the line drawing preview of the tile type...
-  //     A wireframe tile from a vertex connection window
+  /// @details ZZ@> This function draws the line drawing preview of the tile type...
+  ///     A wireframe tile from a vertex connection window
 
   Uint32 faketoreal[MAXMESHVERTICES];
   int fantype;
@@ -1130,8 +1130,8 @@ void draw_top_fan(cart_mesh * cmsh, cart_window_info * w, Uint32 fan, int x, int
 //------------------------------------------------------------------------------
 void draw_side_fan(cart_mesh * cmsh, cart_window_info * w, Uint32 fan, int x, int y)
 {
-  /// @details ZZ> This function draws the line drawing preview of the tile type...
-  //     A wireframe tile from a vertex connection window ( Side view )
+  /// @details ZZ@> This function draws the line drawing preview of the tile type...
+  ///     A wireframe tile from a vertex connection window ( Side view )
 
   Uint32 faketoreal[MAXMESHVERTICES];
   int fantype;
@@ -1205,8 +1205,8 @@ void draw_side_fan(cart_mesh * cmsh, cart_window_info * w, Uint32 fan, int x, in
 //------------------------------------------------------------------------------
 void draw_schematic(MeshMem_t * mm, cart_mouse_info * m, cart_window_info * w, int fantype, int x, int y)
 {
-  /// @details ZZ> This function draws the line drawing preview of the tile type...
-  //     The wireframe on the left side of the screen.
+  /// @details ZZ@> This function draws the line drawing preview of the tile type...
+  ///     The wireframe on the left side of the screen.
 
   int cnt, stt, end;
   GLfloat * color;
@@ -1235,7 +1235,7 @@ void draw_schematic(MeshMem_t * mm, cart_mouse_info * m, cart_window_info * w, i
 //------------------------------------------------------------------------------
 void add_line(cart_fan_lines * clines, int fantype, int start, int end)
 {
-  /// @details ZZ> This function adds a line to the vertex schematic
+  /// @details ZZ@> This function adds a line to the vertex schematic
 
   int cnt;
 
@@ -1266,7 +1266,7 @@ void add_line(cart_fan_lines * clines, int fantype, int start, int end)
 //------------------------------------------------------------------------------
 void free_vertices(cart_mesh * cmsh)
 {
-  /// @details ZZ> This function sets all vertices to unused
+  /// @details ZZ@> This function sets all vertices to unused
 
   int cnt;
 
@@ -1284,8 +1284,8 @@ void free_vertices(cart_mesh * cmsh)
 //------------------------------------------------------------------------------
 int get_free_vertex(cart_mesh * cmsh)
 {
-  /// @details ZZ> This function returns btrue if it can find an unused vertex, and it
-  // will set cmsh->xvrt.index to that vertex index.  bfalse otherwise.
+  /// @details ZZ@> This function returns btrue if it can find an unused vertex, and it
+  /// will set cmsh->xvrt.index to that vertex index.  bfalse otherwise.
 
   int cnt;
 
@@ -1313,8 +1313,8 @@ int get_free_vertex(cart_mesh * cmsh)
 //------------------------------------------------------------------------------
 void remove_fan(cart_mesh * cmsh, Uint32 fan)
 {
-  /// @details ZZ> This function removes a fan's vertices from usage and sets the fan
-  //     to not be drawn
+  /// @details ZZ@> This function removes a fan's vertices from usage and sets the fan
+  ///     to not be drawn
 
   int cnt, vert;
   Uint32 numvert;
@@ -1337,7 +1337,7 @@ void remove_fan(cart_mesh * cmsh, Uint32 fan)
 //------------------------------------------------------------------------------
 int add_fan(cart_mesh *cmsh, Uint32 fan, int x, int y)
 {
-  /// @details ZZ> This function allocates the vertices needed for a fan
+  /// @details ZZ@> This function allocates the vertices needed for a fan
 
   int cnt;
   int numvert;
@@ -1390,7 +1390,7 @@ int add_fan(cart_mesh *cmsh, Uint32 fan, int x, int y)
 //------------------------------------------------------------------------------
 void num_free_vertex(cart_mesh * cmsh)
 {
-  /// @details ZZ> This function counts the unused vertices and sets cmsh->xvrt.free_count
+  /// @details ZZ@> This function counts the unused vertices and sets cmsh->xvrt.free_count
 
   int cnt, num;
 
@@ -1600,7 +1600,7 @@ void fix_vertices(cart_mesh * cmsh, int x, int y)
 //------------------------------------------------------------------------------
 void fix_mesh(cart_mesh * cmsh)
 {
-  /// @details ZZ> This function corrects corners across entire mesh
+  /// @details ZZ@> This function corrects corners across entire mesh
 
   int x, y;
 
@@ -1624,7 +1624,7 @@ void fix_mesh(cart_mesh * cmsh)
 char tile_is_different(cart_mesh * cmsh, int x, int y, Uint16 tileset,
                        Uint16 tileand)
 {
-  /// @details ZZ> bfalse if of same set, btrue if different
+  /// @details ZZ@> bfalse if of same set, btrue if different
 
   Uint32 fan;
   if(x < 0 || x >= cmsh->mi->tiles_x || y < 0 || y >= cmsh->mi->tiles_y)
@@ -1648,8 +1648,8 @@ char tile_is_different(cart_mesh * cmsh, int x, int y, Uint16 tileset,
 //------------------------------------------------------------------------------
 Uint16 trim_code(cart_mesh * cmsh, int x, int y, Uint16 tileset)
 {
-  /// @details ZZ> This function returns the standard tile set value thing...  For
-  //     Trimming tops of walls and floors
+  /// @details ZZ@> This function returns the standard tile set value thing...  For
+  ///     Trimming tops of walls and floors
 
   Uint16 code;
 
@@ -1733,8 +1733,8 @@ Uint16 trim_code(cart_mesh * cmsh, int x, int y, Uint16 tileset)
 //------------------------------------------------------------------------------
 Uint16 wall_code(cart_mesh * cmsh, int x, int y, Uint16 tileset)
 {
-  /// @details ZZ> This function returns the standard tile set value thing...  For
-  //     Trimming tops of walls and floors
+  /// @details ZZ@> This function returns the standard tile set value thing...  For
+  ///     Trimming tops of walls and floors
 
   Uint16 code;
 
@@ -1821,7 +1821,7 @@ Uint16 wall_code(cart_mesh * cmsh, int x, int y, Uint16 tileset)
 //------------------------------------------------------------------------------
 void trim_mesh_tile(cart_mesh * cmsh, Uint16 tileset, Uint16 tileand)
 {
-  /// @details ZZ> This function trims walls and floors and tops automagically
+  /// @details ZZ@> This function trims walls and floors and tops automagically
 
   Uint32 fan;
   int x, y, code;
@@ -1859,7 +1859,7 @@ void trim_mesh_tile(cart_mesh * cmsh, Uint16 tileset, Uint16 tileand)
 //------------------------------------------------------------------------------
 void fx_mesh_tile(cart_mesh * cmsh, Uint16 tileset, Uint16 tileand, Uint8 fx)
 {
-  /// @details ZZ> This function sets the fx for a group of tiles
+  /// @details ZZ@> This function sets the fx for a group of tiles
 
   Uint32 fan;
   int x, y;
@@ -1886,7 +1886,7 @@ void fx_mesh_tile(cart_mesh * cmsh, Uint16 tileset, Uint16 tileand, Uint8 fx)
 //------------------------------------------------------------------------------
 void set_mesh_tile(cart_mesh * cmsh, cart_mouse_info * m, Uint16 tiletoset)
 {
-  /// @details ZZ> This function sets one tile type to another
+  /// @details ZZ@> This function sets one tile type to another
 
   Uint32 fan;
   int x, y;
@@ -1926,7 +1926,7 @@ void set_mesh_tile(cart_mesh * cmsh, cart_mouse_info * m, Uint16 tiletoset)
 //------------------------------------------------------------------------------
 void setup_mesh(cart_mesh * cmsh)
 {
-  /// @details ZZ> This function makes the mesh
+  /// @details ZZ@> This function makes the mesh
 
   int x, y, fan, tile;
 
@@ -2045,7 +2045,7 @@ void rip_tiles(SDL_Surface * bmpload)
 //------------------------------------------------------------------------------
 void cart_load_basic_textures(char *modname)
 {
-  /// @details ZZ> This function loads the standard textures for a module
+  /// @details ZZ@> This function loads the standard textures for a module
 
   char newloadname[256];
   SDL_Surface * surface;
@@ -2822,7 +2822,7 @@ void bound_camera(cart_mesh * cmsh)
 //------------------------------------------------------------------------------
 void rect_select(MeshMem_t * mm, cart_select_list * csel, cart_mouse_info * m)
 {
-  /// @details ZZ> This function checks the rectangular selection
+  /// @details ZZ@> This function checks the rectangular selection
 
   int cnt;
   Uint32 vert;
@@ -2888,8 +2888,8 @@ void rect_select(MeshMem_t * mm, cart_select_list * csel, cart_mouse_info * m)
 //------------------------------------------------------------------------------
 void rect_unselect(MeshMem_t * mm, cart_select_list * csel, cart_mouse_info * m)
 {
-  /// @details ZZ> This function checks the rectangular selection, and removes any fans
-  //     in the selection area
+  /// @details ZZ@> This function checks the rectangular selection, and removes any fans
+  ///     in the selection area
 
   int cnt;
   Uint32 vert;
@@ -3224,7 +3224,7 @@ void clear_mesh(cart_mesh * cmsh, cart_mouse_info * m)
 //------------------------------------------------------------------------------
 void three_e_mesh(cart_mesh * cmsh, cart_mouse_info * m)
 {
-  /// @details ZZ> Replace all 3F tiles with 3E tiles...
+  /// @details ZZ@> Replace all 3F tiles with 3E tiles...
 
   int x, y;
   Uint32 fan;
@@ -3256,7 +3256,7 @@ void toggle_fx(cart_mouse_info * m, int fxmask)
 //------------------------------------------------------------------------------
 void ease_up_mesh(cart_mesh * cmsh, int zadd)
 {
-  /// @details ZZ> This function lifts the entire mesh
+  /// @details ZZ@> This function lifts the entire mesh
 
   int x, y, cnt;
   Uint32 fan, vert;
@@ -4046,7 +4046,7 @@ int cartman(char * modulename)
 //  return bfalse;
 //}
 
-//void camera_move(cart_mouse_info * m)
+//void cam_move(cart_mouse_info * m)
 //{
 //  if(((mous.latch.b&4) || SDLKEYDOWN(SDLK_m)) && m->data!=-1)
 //  {
@@ -4383,7 +4383,7 @@ int cartman(char * modulename)
 //  debugy = -1;
 //
 //  unbound_mouse();
-//  camera_move(m);
+//  cam_move(&GCamera, m);
 //  m->data = -1;
 //  m->x = -1;
 //  m->y = -1;

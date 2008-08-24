@@ -1,3 +1,5 @@
+#pragma once
+
 //********************************************************************************************
 //*
 //*    This file is part of Egoboo.
@@ -19,6 +21,17 @@
 
 ///
 /// @file
-/// @brief Egoboo scripting system
-/// @details
+/// @brief Egoscript execution
+/// @details Execute compiled egoboo scripts
 
+#include "script.h"
+
+struct sMad;
+struct sChr;
+struct sGame;
+
+bool_t _DoAction( struct sGame * gs, struct sChr * pchr, struct sMad * pmad, Uint16 iaction );
+bool_t _DoActionOverride( struct sGame * gs, struct sChr * pchr, struct sMad * pmad, Uint16 iaction );
+
+retval_t run_script( struct sGame * gs, struct s_ai_state * pstate, float dUpdate );
+void run_all_scripts( struct sGame * gs, float dUpdate );

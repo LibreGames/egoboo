@@ -42,12 +42,12 @@
 
 Camera_t GCamera;
 
-static void make_camera_matrix( void );
-static void camera_calc_turn_lr( void );
-//static void adjust_camera_angle( int height );
+static void cam_make_matrix( Camera_t * cam );
+static void cam_calc_turn_lr( Camera_t * cam );
+//static void cam_adjust_angle( Camera_t * cam, int height );
 
 //--------------------------------------------------------------------------------------------
-void ortho_jitter( GLfloat xoff, GLfloat yoff )
+void _cam_ortho_jitter( GLfloat xoff, GLfloat yoff )
 {
   GLint viewport[4];
   GLfloat ortho[16];
@@ -63,14 +63,14 @@ void ortho_jitter( GLfloat xoff, GLfloat yoff )
 }
 
 //--------------------------------------------------------------------------------------------
-void frustum_jitter_fov( GLdouble nearval, GLdouble farval, GLdouble fov, GLdouble xoff, GLdouble yoff )
+void _cam_frustum_jitter_fov( Camera_t * cam, GLdouble nearval, GLdouble farval, GLdouble fov, GLdouble xoff, GLdouble yoff )
 {
   GLfloat  scale;
   GLint    viewport[4];
   GLdouble hprime, wprime;
   GLdouble left, right, top, bottom;
 
-  ATTRIB_PUSH( "frustum_jitter_fov", GL_TRANSFORM_BIT );
+  ATTRIB_PUSH( "_cam_frustum_jitter_fov", GL_TRANSFORM_BIT );
   {
     glMatrixMode( GL_PROJECTION );
     glPushMatrix();
@@ -101,15 +101,15 @@ void frustum_jitter_fov( GLdouble nearval, GLdouble farval, GLdouble fov, GLdoub
                bottom - yoff * scale,
                nearval, farval );
 
-    glGetFloatv( GL_PROJECTION_MATRIX, GCamera.mProjection.v );
+    glGetFloatv( GL_PROJECTION_MATRIX, cam->mProjection.v );
 
     glPopMatrix();
   }
-  ATTRIB_POP( "frustum_jitter_fov" );
+  ATTRIB_POP( "_cam_frustum_jitter_fov" );
 }
 
 //--------------------------------------------------------------------------------------------
-void frustum_jitter( GLdouble left, GLdouble right,
+void _cam_frustum_jitter( GLdouble left, GLdouble right,
                      GLdouble bottom, GLdouble top,
                      GLdouble nearval, GLdouble farval,
                      GLdouble xoff, GLdouble yoff )
@@ -129,82 +129,43 @@ void frustum_jitter( GLdouble left, GLdouble right,
 }
 
 //--------------------------------------------------------------------------------------------
-void camera_calc_turn_lr()
+void cam_calc_turn_lr( Camera_t * cam )
 {
-  /// @details ZZ> This function makes the camera turn to face the character
+  /// @details ZZ@> This function makes the camera turn to face the character
 
-  GCamera.turn_lr = vec_to_turn(GCamera.trackpos.x - GCamera.pos.x, GCamera.trackpos.y - GCamera.pos.y);
+  cam->turn_lr = vec_to_turn(cam->trackpos.x - cam->pos.x, cam->trackpos.y - cam->pos.y);
 }
 
 //--------------------------------------------------------------------------------------------
-void screen_dump_matrix( Game_t * gs, matrix_4x4 a )
+void cam_make_matrix( Camera_t * cam )
 {
-  int i, j;
-  STRING buffer1 = NULL_STRING;
-  STRING buffer2 = NULL_STRING;
-
-  reset_messages( gs );
-  for ( j = 0; j < 4; j++ )
-  {
-    snprintf( buffer1, sizeof( buffer1 ), "  " );
-    for ( i = 0; i < 4; i++ )
-    {
-      snprintf( buffer2, sizeof( buffer2 ), "%2.4f ", a.CNV( i, j ) );
-      strncat( buffer1, buffer2, sizeof( buffer1 ) );
-    };
-    debug_message( 1, buffer1 );
-    buffer1[0] = EOS;
-  }
-}
-
-//--------------------------------------------------------------------------------------------
-void stdout_dump_matrix( matrix_4x4 a )
-{
-  int i, j;
-
-  for ( j = 0; j < 4; j++ )
-  {
-    fprintf( stdout, "  " );
-    for ( i = 0; i < 4; i++ )
-    {
-      fprintf( stdout, "%2.4f ", a.CNV( i, j ) );
-    };
-    fprintf( stdout, "\n" );
-  }
-  fprintf( stdout, "\n" );
-}
-
-
-//--------------------------------------------------------------------------------------------
-void make_camera_matrix()
-{
-  /// @details ZZ> This function sets GCamera.mView to the camera's location and rotation
+  /// @details ZZ@> This function sets cam->mView to the camera's location and rotation
 
   Game_t * gs = Graphics_requireGame(&gfxState);
   vect3 worldup = VECT3(0, 0, -gs->phys.gravity);
   float dither_x, dither_y;
 
-  if ( GCamera.swingamp > 0 )
+  if ( cam->swingamp > 0 )
   {
-    GCamera.roll = turntosin[GCamera.swing & TRIGTABLE_MASK] * GCamera.swingamp * 5;
-    GCamera.mView = ViewMatrix( GCamera.pos, GCamera.trackpos, worldup, GCamera.roll );
+    cam->roll = turntosin[cam->swing & TRIGTABLE_MASK] * cam->swingamp * 5;
+    cam->mView = ViewMatrix( cam->pos, cam->trackpos, worldup, cam->roll );
   }
   else
   {
-    GCamera.mView = ViewMatrix( GCamera.pos, GCamera.trackpos, worldup, 0 );
+    cam->mView = ViewMatrix( cam->pos, cam->trackpos, worldup, 0 );
   }
 
   dither_x = 2.0f*( float ) rand() / ( float ) RAND_MAX - 1.0f;
   dither_y = 2.0f*( float ) rand() / ( float ) RAND_MAX - 1.0f;
-  frustum_jitter_fov( 10.0f, 20000.0f, DEG_TO_RAD*FOV, dither_x, dither_y);
+  _cam_frustum_jitter_fov( cam, 10.0f, 20000.0f, DEG_TO_RAD*FOV, dither_x, dither_y);
 
-  Frustum_CalculateFrustum( &gFrustum, GCamera.mProjectionBig.v, GCamera.mView.v );
+  Frustum_CalculateFrustum( &gFrustum, cam->mProjectionBig.v, cam->mView.v );
 }
 
 //--------------------------------------------------------------------------------------------
-void camera_move( float dUpdate )
+void cam_move( Camera_t * cam, float dUpdate )
 {
-  /// @details ZZ> This function moves the camera
+  /// @details ZZ@> This function moves the camera
 
   Game_t * gs = Graphics_requireGame(&gfxState);
 
@@ -217,20 +178,20 @@ void camera_move( float dUpdate )
   float ftmp;
   float fkeep, fnew;
 
-  fkeep = pow( GCamera.sustain, dUpdate );
+  fkeep = pow( cam->sustain, dUpdate );
   fnew  = 1.0 - fkeep;
 
   if ( CData.autoturncamera )
   {
-    doturntime = 255;
+    cam->doturntime = 255;
   }
-  else if ( doturntime > dUpdate )
+  else if ( cam->doturntime > dUpdate )
   {
-    doturntime -= dUpdate;
+    cam->doturntime -= dUpdate;
   }
   else
   {
-    doturntime = 0;
+    cam->doturntime = 0;
   }
 
   pos.x = pos.y = pos.z = 0;
@@ -280,8 +241,8 @@ void camera_move( float dUpdate )
 
   if ( locoalive == 0 )
   {
-    pos = GCamera.trackpos;
-    vel = GCamera.trackvel;
+    pos = cam->trackpos;
+    vel = cam->trackvel;
   }
   else if ( locoalive > 1 )
   {
@@ -296,42 +257,42 @@ void camera_move( float dUpdate )
     vel.z /= locoalive;
   }
 
-  GCamera.trackpos.x = GCamera.trackpos.x * fkeep + pos.x * fnew;
-  GCamera.trackpos.y = GCamera.trackpos.y * fkeep + pos.y * fnew;
-  GCamera.trackpos.z = GCamera.trackpos.z * fkeep + pos.z * fnew;
+  cam->trackpos.x = cam->trackpos.x * fkeep + pos.x * fnew;
+  cam->trackpos.y = cam->trackpos.y * fkeep + pos.y * fnew;
+  cam->trackpos.z = cam->trackpos.z * fkeep + pos.z * fnew;
 
-  GCamera.tracklevel = GCamera.tracklevel * fkeep + level * fnew;
+  cam->tracklevel = cam->tracklevel * fkeep + level * fnew;
 
-  GCamera.trackvel.x = GCamera.trackvel.x * fkeep + vel.x * fnew;
-  GCamera.trackvel.y = GCamera.trackvel.y * fkeep + vel.y * fnew;
-  GCamera.trackvel.z = GCamera.trackvel.z * fkeep + vel.z * fnew;
+  cam->trackvel.x = cam->trackvel.x * fkeep + vel.x * fnew;
+  cam->trackvel.y = cam->trackvel.y * fkeep + vel.y * fnew;
+  cam->trackvel.z = cam->trackvel.z * fkeep + vel.z * fnew;
 
-  GCamera.zgoto      = GCamera.zgoto * fkeep + GCamera.zadd * fnew;
-  GCamera.zadd       = GCamera.zadd  * fkeep + GCamera.zaddgoto * fnew;
-  GCamera.pos.z      = GCamera.pos.z * fkeep + GCamera.zgoto    * fnew;
-  GCamera.turnadd   *= fkeep;
+  cam->zgoto      = cam->zgoto * fkeep + cam->zadd * fnew;
+  cam->zadd       = cam->zadd  * fkeep + cam->zaddgoto * fnew;
+  cam->pos.z      = cam->pos.z * fkeep + cam->zgoto    * fnew;
+  cam->turnadd   *= fkeep;
 
   // Camera controls
   if ( CData.autoturncamera == 255 && gs->cl->loc_pla_count >= 1 )
   {
     if ( mous.game && !control_mouse_is_pressed( CONTROL_CAMERA ) )
-      GCamera.turnadd -= ( mous.dlatch.x * .5 ) * dUpdate / gs->cl->loc_pla_count;
+      cam->turnadd -= ( mous.dlatch.x * .5 ) * dUpdate / gs->cl->loc_pla_count;
 
     if ( keyb.on )
     {
       if ( control_key_is_pressed( (CONTROL)KEY_CAMERA_LEFT ) )
-        GCamera.turnadd += CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
+        cam->turnadd += CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
 
       if ( control_key_is_pressed( (CONTROL)KEY_CAMERA_RIGHT ) )
-        GCamera.turnadd -= CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
+        cam->turnadd -= CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
     };
 
 
     if ( joy[0].on && !control_joy_is_pressed( 0, (CONTROL)CONTROL_CAMERA ) )
-      GCamera.turnadd -= joy[0].latch.x * CAMJOYTURN * dUpdate / gs->cl->loc_pla_count;
+      cam->turnadd -= joy[0].latch.x * CAMJOYTURN * dUpdate / gs->cl->loc_pla_count;
 
     if ( joy[1].on && !control_joy_is_pressed( 1, (CONTROL)CONTROL_CAMERA ) )
-      GCamera.turnadd -= joy[1].latch.x * CAMJOYTURN * dUpdate / gs->cl->loc_pla_count;
+      cam->turnadd -= joy[1].latch.x * CAMJOYTURN * dUpdate / gs->cl->loc_pla_count;
   }
 
   if ( gs->cl->loc_pla_count >= 1 )
@@ -340,11 +301,11 @@ void camera_move( float dUpdate )
     {
       if ( control_mouse_is_pressed( CONTROL_CAMERA ) )
       {
-        GCamera.turnadd += ( mous.dlatch.x / 3.0 ) * dUpdate / gs->cl->loc_pla_count;
-        GCamera.zaddgoto += ( float ) mous.dlatch.y / 3.0 * dUpdate / gs->cl->loc_pla_count;
-        if ( GCamera.zaddgoto < MINZADD )  GCamera.zaddgoto = MINZADD;
-        if ( GCamera.zaddgoto > MAXZADD )  GCamera.zaddgoto = MAXZADD;
-        doturntime = DELAY_TURN;  // Sticky turn...
+        cam->turnadd += ( mous.dlatch.x / 3.0 ) * dUpdate / gs->cl->loc_pla_count;
+        cam->zaddgoto += ( float ) mous.dlatch.y / 3.0 * dUpdate / gs->cl->loc_pla_count;
+        if ( cam->zaddgoto < MINZADD )  cam->zaddgoto = MINZADD;
+        if ( cam->zaddgoto > MAXZADD )  cam->zaddgoto = MAXZADD;
+        cam->doturntime = DELAY_TURN;  // Sticky turn...
       }
     }
 
@@ -353,11 +314,11 @@ void camera_move( float dUpdate )
     {
       if ( control_joy_is_pressed( 0, CONTROL_CAMERA ) )
       {
-        GCamera.turnadd  += joy[0].latch.x * CAMJOYTURN * dUpdate / gs->cl->loc_pla_count;
-        GCamera.zaddgoto += joy[0].latch.y * CAMJOYTURN * dUpdate / gs->cl->loc_pla_count;
-        if ( GCamera.zaddgoto < MINZADD )  GCamera.zaddgoto = MINZADD;
-        if ( GCamera.zaddgoto > MAXZADD )  GCamera.zaddgoto = MAXZADD;
-        doturntime = DELAY_TURN;  // Sticky turn...
+        cam->turnadd  += joy[0].latch.x * CAMJOYTURN * dUpdate / gs->cl->loc_pla_count;
+        cam->zaddgoto += joy[0].latch.y * CAMJOYTURN * dUpdate / gs->cl->loc_pla_count;
+        if ( cam->zaddgoto < MINZADD )  cam->zaddgoto = MINZADD;
+        if ( cam->zaddgoto > MAXZADD )  cam->zaddgoto = MAXZADD;
+        cam->doturntime = DELAY_TURN;  // Sticky turn...
       }
     }
 
@@ -366,11 +327,11 @@ void camera_move( float dUpdate )
     {
       if ( control_joy_is_pressed( 1, CONTROL_CAMERA ) )
       {
-        GCamera.turnadd  += joy[1].latch.x * CAMJOYTURN * dUpdate / gs->cl->loc_pla_count;
-        GCamera.zaddgoto += joy[1].latch.y * CAMJOYTURN * dUpdate / gs->cl->loc_pla_count;
-        if ( GCamera.zaddgoto < MINZADD )  GCamera.zaddgoto = MINZADD;
-        if ( GCamera.zaddgoto > MAXZADD )  GCamera.zaddgoto = MAXZADD;
-        doturntime = DELAY_TURN;  // Sticky turn...
+        cam->turnadd  += joy[1].latch.x * CAMJOYTURN * dUpdate / gs->cl->loc_pla_count;
+        cam->zaddgoto += joy[1].latch.y * CAMJOYTURN * dUpdate / gs->cl->loc_pla_count;
+        if ( cam->zaddgoto < MINZADD )  cam->zaddgoto = MINZADD;
+        if ( cam->zaddgoto > MAXZADD )  cam->zaddgoto = MAXZADD;
+        cam->doturntime = DELAY_TURN;  // Sticky turn...
       }
     }
 
@@ -379,28 +340,28 @@ void camera_move( float dUpdate )
     {
       if ( control_key_is_pressed( (CONTROL)KEY_CAMERA_LEFT ) )
       {
-        GCamera.turnadd += CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
-        doturntime = DELAY_TURN;  // Sticky turn...
+        cam->turnadd += CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
+        cam->doturntime = DELAY_TURN;  // Sticky turn...
       }
 
       if ( control_key_is_pressed( (CONTROL)KEY_CAMERA_RIGHT ) )
       {
-        GCamera.turnadd -= CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
-        doturntime = DELAY_TURN;  // Sticky turn...
+        cam->turnadd -= CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
+        cam->doturntime = DELAY_TURN;  // Sticky turn...
       }
 
       if ( control_key_is_pressed( (CONTROL)KEY_CAMERA_IN ) )
       {
-        GCamera.zaddgoto -= CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
+        cam->zaddgoto -= CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
       }
 
       if ( control_key_is_pressed( (CONTROL)KEY_CAMERA_OUT ) )
       {
-        GCamera.zaddgoto += CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
+        cam->zaddgoto += CAMKEYTURN * dUpdate / gs->cl->loc_pla_count;
       }
 
-      if ( GCamera.zaddgoto < MINZADD )  GCamera.zaddgoto = MINZADD;
-      if ( GCamera.zaddgoto > MAXZADD )  GCamera.zaddgoto = MAXZADD;
+      if ( cam->zaddgoto < MINZADD )  cam->zaddgoto = MINZADD;
+      if ( cam->zaddgoto > MAXZADD )  cam->zaddgoto = MAXZADD;
     }
   }
 
@@ -420,88 +381,88 @@ void camera_move( float dUpdate )
   }
 
   // Get ready to scroll...
-  move.x = GCamera.pos.x - GCamera.trackpos.x;
-  move.y = GCamera.pos.y - GCamera.trackpos.y;
+  move.x = cam->pos.x - cam->trackpos.x;
+  move.y = cam->pos.y - cam->trackpos.y;
   ftmp = move.x * move.x + move.y * move.y;
   if ( ftmp > 0 )
   {
     ftmp = sqrt( ftmp );
-    move.x *= GCamera.zoom / ftmp;
-    move.y *= GCamera.zoom / ftmp;
+    move.x *= cam->zoom / ftmp;
+    move.y *= cam->zoom / ftmp;
   }
   else
   {
-    move.x = GCamera.zoom;
+    move.x = cam->zoom;
     move.y = 0;
   }
-  turnsin = (( Uint16 ) GCamera.turnadd * 10 ) & TRIGTABLE_MASK;
-  GCamera.pos.x = ( move.x * turntocos[turnsin] + move.y * turntosin[turnsin] ) + GCamera.trackpos.x;
-  GCamera.pos.y = ( -move.x * turntosin[turnsin] + move.y * turntocos[turnsin] ) + GCamera.trackpos.y;
+  turnsin = (( Uint16 ) cam->turnadd * 10 ) & TRIGTABLE_MASK;
+  cam->pos.x = ( move.x * turntocos[turnsin] + move.y * turntosin[turnsin] ) + cam->trackpos.x;
+  cam->pos.y = ( -move.x * turntosin[turnsin] + move.y * turntocos[turnsin] ) + cam->trackpos.y;
 
   // Finish up the camera
-  camera_calc_turn_lr();
-  make_camera_matrix();
+  cam_calc_turn_lr( cam );
+  cam_make_matrix( cam );
 }
 
 //--------------------------------------------------------------------------------------------
-void camera_reset()
+void cam_reset(Camera_t * cam)
 {
-  /// @details ZZ> This function makes sure the camera starts in a suitable position
+  /// @details ZZ@> This function makes sure the camera starts in a suitable position
 
   int cnt, save;
   float fov2;
 
   //Game_t * gs = Graphics_requireGame(&gfxState);
 
-  GCamera.swing = 0;
-  GCamera.pos.x = 0;
-  GCamera.pos.y = 0;
-  GCamera.pos.z = 800;
-  GCamera.zoom = 1000;
-  GCamera.trackvel.x = 0;
-  GCamera.trackvel.y = 0;
-  GCamera.trackvel.z = 0;
-  GCamera.centerpos.x = GCamera.pos.x;
-  GCamera.centerpos.y = GCamera.pos.y;
-  GCamera.trackpos.x = GCamera.pos.x;
-  GCamera.trackpos.y = GCamera.pos.y;
-  GCamera.trackpos.z = 0;
-  GCamera.turnadd = 0;
-  GCamera.tracklevel = 0;
-  GCamera.zadd = 800;
-  GCamera.zaddgoto = 800;
-  GCamera.zgoto = 800;
-  GCamera.turn_lr     = 8192;
-  GCamera.turn_lr_one = GCamera.turn_lr / (float)(1<<16);
-  GCamera.roll = 0;
+  cam->swing = 0;
+  cam->pos.x = 0;
+  cam->pos.y = 0;
+  cam->pos.z = 800;
+  cam->zoom = 1000;
+  cam->trackvel.x = 0;
+  cam->trackvel.y = 0;
+  cam->trackvel.z = 0;
+  cam->centerpos.x = cam->pos.x;
+  cam->centerpos.y = cam->pos.y;
+  cam->trackpos.x = cam->pos.x;
+  cam->trackpos.y = cam->pos.y;
+  cam->trackpos.z = 0;
+  cam->turnadd = 0;
+  cam->tracklevel = 0;
+  cam->zadd = 800;
+  cam->zaddgoto = 800;
+  cam->zgoto = 800;
+  cam->turn_lr     = 8192;
+  cam->turn_lr_one = cam->turn_lr / (float)(1<<16);
+  cam->roll = 0;
 
-  GCamera.mProjection = ProjectionMatrix( 1.0f, 20000.0f, FOV );
+  cam->mProjection = ProjectionMatrix( 1.0f, 20000.0f, FOV );
 
   // calculate a second, larger, projection matrix
   fov2 = atan( tan(DEG_TO_RAD * FOV * 0.5f) * 1.5f) *2.0f * RAD_TO_DEG;
-  GCamera.mProjectionBig = ProjectionMatrix( 1.0f, 20000.0f, fov2 );
+  cam->mProjectionBig = ProjectionMatrix( 1.0f, 20000.0f, fov2 );
 
   save = CData.autoturncamera;
   CData.autoturncamera = btrue;
 
   for ( cnt = 0; cnt < 32; cnt++ )
   {
-    camera_move( 1.0 );
-    GCamera.centerpos.x = GCamera.trackpos.x;
-    GCamera.centerpos.y = GCamera.trackpos.y;
+    cam_move( &GCamera, 1.0 );
+    cam->centerpos.x = cam->trackpos.x;
+    cam->centerpos.y = cam->trackpos.y;
   }
 
   CData.autoturncamera = save;
-  doturntime = 0;
+  cam->doturntime = 0;
 }
 
 
 //--------------------------------------------------------------------------------------------
-//void project_view()
+//void cam_project_view(Camera_t * cam)
 //{
-//  /// @details ZZ> This function figures out where the corners of the view area
-//  //     go when projected onto the plane of the pmesh->Info.  Used later for
-//  //     determining which mesh fans need to be rendered
+//  /// @details ZZ@> This function figures out where the corners of the view area
+//  ///     go when projected onto the plane of the pmesh->Info.  Used later for
+//  ///     determining which mesh fans need to be rendered
 //
 //
 //  int cnt, tnc, extra[3];
@@ -512,18 +473,18 @@ void camera_reset()
 //  matrix_4x4 mTemp;
 //
 //  // Range
-//  ztemp = GCamera.pos.z;
+//  ztemp = cam->pos.z;
 //
 //  // Topleft
-//  mTemp = MatrixMult(RotateY(-rotmeshtopside * 0.5f * DEG_TO_RAD), GCamera.mView);
+//  mTemp = MatrixMult(RotateY(-rotmeshtopside * 0.5f * DEG_TO_RAD), cam->mView);
 //  mTemp = MatrixMult(RotateX(rotmeshup * 0.5f * DEG_TO_RAD), mTemp);
 //  zproject = mTemp.CNV(2, 2);        //2,2
 //  // Camera must look down
 //  if (zproject < 0)
 //  {
 //    numstep = -ztemp / zproject;
-//    xfin = GCamera.pos.x + (numstep * mTemp.CNV(0, 2));  // xgg   //0,2
-//    yfin = GCamera.pos.y + (numstep * mTemp.CNV(1, 2));     //1,2
+//    xfin = cam->pos.x + (numstep * mTemp.CNV(0, 2));  // xgg   //0,2
+//    yfin = cam->pos.y + (numstep * mTemp.CNV(1, 2));     //1,2
 //    zfin = 0;
 //    cornerx[0] = xfin;
 //    cornery[0] = yfin;
@@ -531,15 +492,15 @@ void camera_reset()
 //  }
 //
 //  // Topright
-//  mTemp = MatrixMult(RotateY(rotmeshtopside * 0.5f * DEG_TO_RAD), GCamera.mView);
+//  mTemp = MatrixMult(RotateY(rotmeshtopside * 0.5f * DEG_TO_RAD), cam->mView);
 //  mTemp = MatrixMult(RotateX(rotmeshup * 0.5f * DEG_TO_RAD), mTemp);
 //  zproject = mTemp.CNV(2, 2);        //2,2
 //  // Camera must look down
 //  if (zproject < 0)
 //  {
 //    numstep = -ztemp / zproject;
-//    xfin = GCamera.pos.x + (numstep * mTemp.CNV(0, 2));  // xgg   //0,2
-//    yfin = GCamera.pos.y + (numstep * mTemp.CNV(1, 2));     //1,2
+//    xfin = cam->pos.x + (numstep * mTemp.CNV(0, 2));  // xgg   //0,2
+//    yfin = cam->pos.y + (numstep * mTemp.CNV(1, 2));     //1,2
 //    zfin = 0;
 //    cornerx[1] = xfin;
 //    cornery[1] = yfin;
@@ -547,15 +508,15 @@ void camera_reset()
 //  }
 //
 //  // Bottomright
-//  mTemp = MatrixMult(RotateY(rotmeshbottomside * 0.5f * DEG_TO_RAD), GCamera.mView);
+//  mTemp = MatrixMult(RotateY(rotmeshbottomside * 0.5f * DEG_TO_RAD), cam->mView);
 //  mTemp = MatrixMult(RotateX(-rotmeshdown * 0.5f * DEG_TO_RAD), mTemp);
 //  zproject = mTemp.CNV(2, 2);        //2,2
 //  // Camera must look down
 //  if (zproject < 0)
 //  {
 //    numstep = -ztemp / zproject;
-//    xfin = GCamera.pos.x + (numstep * mTemp.CNV(0, 2));  // xgg   //0,2
-//    yfin = GCamera.pos.y + (numstep * mTemp.CNV(1, 2));     //1,2
+//    xfin = cam->pos.x + (numstep * mTemp.CNV(0, 2));  // xgg   //0,2
+//    yfin = cam->pos.y + (numstep * mTemp.CNV(1, 2));     //1,2
 //    zfin = 0;
 //    cornerx[2] = xfin;
 //    cornery[2] = yfin;
@@ -563,15 +524,15 @@ void camera_reset()
 //  }
 //
 //  // Bottomleft
-//  mTemp = MatrixMult(RotateY(-rotmeshbottomside * 0.5f * DEG_TO_RAD), GCamera.mView);
+//  mTemp = MatrixMult(RotateY(-rotmeshbottomside * 0.5f * DEG_TO_RAD), cam->mView);
 //  mTemp = MatrixMult(RotateX(-rotmeshdown * 0.5f * DEG_TO_RAD), mTemp);
 //  zproject = mTemp.CNV(2, 2);        //2,2
 //  // Camera must look down
 //  if (zproject < 0)
 //  {
 //    numstep = -ztemp / zproject;
-//    xfin = GCamera.pos.x + (numstep * mTemp.CNV(0, 2));  // xgg   //0,2
-//    yfin = GCamera.pos.y + (numstep * mTemp.CNV(1, 2));     //1,2
+//    xfin = cam->pos.x + (numstep * mTemp.CNV(0, 2));  // xgg   //0,2
+//    yfin = cam->pos.y + (numstep * mTemp.CNV(1, 2));     //1,2
 //    zfin = 0;
 //    cornerx[3] = xfin;
 //    cornery[3] = yfin;

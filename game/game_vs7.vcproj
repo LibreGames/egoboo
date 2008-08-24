@@ -295,6 +295,12 @@
 				RelativePath=".\script.c">
 			</File>
 			<File
+				RelativePath=".\Script_comple.c">
+			</File>
+			<File
+				RelativePath=".\Script_run.c">
+			</File>
+			<File
 				RelativePath=".\Server.c">
 			</File>
 			<File
@@ -454,6 +460,12 @@
 			</File>
 			<File
 				RelativePath=".\script.h">
+			</File>
+			<File
+				RelativePath=".\Script_compile.h">
+			</File>
+			<File
+				RelativePath=".\Script_run.h">
 			</File>
 			<File
 				RelativePath=".\Server.h">

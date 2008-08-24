@@ -48,7 +48,7 @@ NSString *fs_workingDir = nil;
 //---------------------------------------------------------------------------------------------
 void fs_init()
 {
-  /// @details JF> This function determines the temporary, import,
+  /// @details JF@> This function determines the temporary, import,
   // game data and save paths
   NSString *tempDir, *homeDir, *gameDir, *workingDir;
   EGO_CONST char *str;

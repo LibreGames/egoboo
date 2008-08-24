@@ -744,7 +744,7 @@ int mnu_doSinglePlayer( MenuProc_t * mproc, float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 /// @todo  I totally fudged the layout of this menu by adding an offset for when
-// the game isn't in 640x480.  Needs to be fixed.
+/// the game isn't in 640x480.  Needs to be fixed.
 int mnu_doChooseModule( MenuProc_t * mproc, float deltaTime )
 {
   static MenuProcs menuState = MM_Begin;
@@ -1173,7 +1173,7 @@ static bool_t mnu_removeSelectedPlayerInput( PLA_REF player, Uint32 input )
 //--------------------------------------------------------------------------------------------
 void import_selected_players()
 {
-  /// @details ZZ> Build the import directory
+  /// @details ZZ@> Build the import directory
 
   char srcDir[64], destDir[64];
   int i;
@@ -1211,7 +1211,7 @@ void import_selected_players()
 int mnu_doChoosePlayer( MenuProc_t * mproc, float deltaTime )
 {
   /// @todo  work on auto formatting
-  //      : add buttons to scan through the player list in case there are more than can be displayed
+  ///      : add buttons to scan through the player list in case there are more than can be displayed
 
   static MenuProcs menuState = MM_Begin;
   static int menuChoice = 0;
@@ -4838,8 +4838,8 @@ bool_t MenuProc_init_ingame(MenuProc_t * ms)
 //--------------------------------------------------------------------------------------------
 Uint32 mnu_load_titleimage(MenuProc_t * mproc, Uint32 titleimage, char *szLoadName)
 {
-  /// @details ZZ> This function loads a title in the specified image slot, forcing it into
-  //     system memory.  Returns btrue if it worked
+  /// @details ZZ@> This function loads a title in the specified image slot, forcing it into
+  ///     system memory.  Returns btrue if it worked
   Uint32 retval = MAXMODULE;
 
   if(INVALID_TEXTURE != GLtexture_Load(GL_TEXTURE_2D,  mproc->TxTitleImage + titleimage, szLoadName, INVALID_KEY))
@@ -4853,8 +4853,8 @@ Uint32 mnu_load_titleimage(MenuProc_t * mproc, Uint32 titleimage, char *szLoadNa
 //--------------------------------------------------------------------------------------------
 size_t mnu_load_mod_data(MenuProc_t * mproc, MOD_INFO * mi_ary, size_t mi_len)
 {
-  /// @details ZZ> This function loads the title image for each module.  Modules without a
-  //     title are marked as invalid
+  /// @details ZZ@> This function loads the title image for each module.  Modules without a
+  ///     title are marked as invalid
 
   char searchname[15];
   STRING loadname;
@@ -4917,8 +4917,8 @@ size_t mnu_load_mod_data(MenuProc_t * mproc, MOD_INFO * mi_ary, size_t mi_len)
 //--------------------------------------------------------------------------------------------
 bool_t mnu_load_cl_images(MenuProc_t *mproc)
 {
-  /// @details BB> This function loads the title image(s) for the modules that the client
-  //     is browsing
+  /// @details BB@> This function loads the title image(s) for the modules that the client
+  ///     is browsing
 
   int cnt;
   bool_t all_loaded = btrue;
@@ -4948,7 +4948,7 @@ bool_t mnu_load_cl_images(MenuProc_t *mproc)
 //---------------------------------------------------------------------------------------------
 void mnu_free_all_titleimages(MenuProc_t * mproc)
 {
-  /// @details ZZ> This function clears out all of the title images
+  /// @details ZZ@> This function clears out all of the title images
 
   int cnt;
   for ( cnt = 0; cnt < MAXMODULE; cnt++ )
@@ -5016,7 +5016,7 @@ retval_t mnu_ensure_game(MenuProc_t * mproc, Game_t ** optional)
 //---------------------------------------------------------------------------------------------
 retval_t mnu_upload_game_info(Game_t * gs, MenuProc_t * ms)
 {
-  /// @details BB> register the various networking modules with the given game
+  /// @details BB@> register the various networking modules with the given game
 
   if( !EKEY_PVALID(gs) || !EKEY_PVALID(ms)) return rv_fail;
 
@@ -5030,8 +5030,8 @@ retval_t mnu_upload_game_info(Game_t * gs, MenuProc_t * ms)
 //--------------------------------------------------------------------------------------------
 void check_player_import(Game_t * gs)
 {
-  /// @details ZZ> This function figures out which players may be imported, and loads basic
-  //     data for each
+  /// @details ZZ@> This function figures out which players may be imported, and loads basic
+  ///     data for each
 
   STRING searchname, filename, filepath;
   int skin;

@@ -73,8 +73,8 @@ bool_t fs_find_info_delete(FS_FIND_INFO * i)
 // FIXME: Doesn't handle deleting directories recursively yet.
 void fs_removeDirectoryAndContents( EGO_CONST char *dirname )
 {
-  /// @details ZZ> This function deletes all files in a directory,
-  //     and the directory itself
+  /// @details ZZ@> This function deletes all files in a directory,
+  ///     and the directory itself
 
   char filePath[MAX_PATH];
   EGO_CONST char *fileName;
@@ -110,7 +110,7 @@ void fs_removeDirectoryAndContents( EGO_CONST char *dirname )
 //--------------------------------------------------------------------------------------------
 void fs_copyDirectory( EGO_CONST char *sourceDir, EGO_CONST char *destDir )
 {
-  /// @details ZZ> This function copies all files in a directory
+  /// @details ZZ@> This function copies all files in a directory
 
   char srcPath[MAX_PATH], destPath[MAX_PATH];
   EGO_CONST char *fileName;
@@ -145,8 +145,8 @@ void fs_copyDirectory( EGO_CONST char *sourceDir, EGO_CONST char *destDir )
 //--------------------------------------------------------------------------------------------
 /*bool_t fcopy_line(FILE * fileread, FILE * filewrite)
 {
-  /// @details BB> copy a line of arbitrary length, in chunks of length
-  //      sizeof(linebuffer)
+  /// @details BB@> copy a line of arbitrary length, in chunks of length
+  ///     sizeof(linebuffer)
 
   char linebuffer[64];
 
@@ -168,8 +168,8 @@ void fs_copyDirectory( EGO_CONST char *sourceDir, EGO_CONST char *destDir )
 //--------------------------------------------------------------------------------------------
 FILE * fs_fileOpen( PRIORITY priority, EGO_CONST char * src, EGO_CONST char * fname, EGO_CONST char * mode )
 {
-  /// @details BB> an alias to the standard fopen() command.  Allows proper logging of
-  //      bad calls to fopen()
+  /// @details BB@> an alias to the standard fopen() command.  Allows proper logging of
+  ///      bad calls to fopen()
 
   FILE * fptmp = NULL;
 
@@ -224,7 +224,7 @@ FILE * fs_fileOpen( PRIORITY priority, EGO_CONST char * src, EGO_CONST char * fn
 //--------------------------------------------------------------------------------------------
 void fs_fileClose( FILE * pfile )
 {
-  /// @details BB> an alias to the standard fclose() command.
+  /// @details BB@> an alias to the standard fclose() command.
 
   if ( NULL == pfile )
   {

@@ -241,7 +241,7 @@ bool_t input_read_joystick(JOYSTICK * pj)
 //--------------------------------------------------------------------------------------------
 bool_t input_reset_press(KEYBOARD * pk)
 {
-  /// @details ZZ> This function resets key press information
+  /// @details ZZ@> This function resets key press information
 
   return (NULL != pk);
 
@@ -269,7 +269,7 @@ void reset_tags()
 //--------------------------------------------------------------------------------------------
 int read_tag( FILE *fileread )
 {
-  /// @details ZZ> This function finds the next tag, returning btrue if it found one
+  /// @details ZZ@> This function finds the next tag, returning btrue if it found one
 
   if ( tags.count < MAXTAG )
   {
@@ -286,7 +286,7 @@ int read_tag( FILE *fileread )
 //--------------------------------------------------------------------------------------------
 void read_all_tags( char *szFilename )
 {
-  /// @details ZZ> This function reads the scancode.txt file
+  /// @details ZZ@> This function reads the scancode.txt file
 
   FILE* fileread;
 
@@ -305,8 +305,8 @@ void read_all_tags( char *szFilename )
 //--------------------------------------------------------------------------------------------
 int tag_value( char *string )
 {
-  /// @details ZZ> This function matches the string with its tag, and returns the value...
-  //     It will return 255 if there are no matches.
+  /// @details ZZ@> This function matches the string with its tag, and returns the value...
+  ///     It will return 255 if there are no matches.
 
   int cnt;
 
@@ -326,7 +326,7 @@ int tag_value( char *string )
 //--------------------------------------------------------------------------------------------
 void read_controls( char *szFilename )
 {
-  /// @details ZZ> This function reads the "CONTROLS.TXT" file
+  /// @details ZZ@> This function reads the "CONTROLS.TXT" file
 
   FILE* fileread;
   char currenttag[TAGSIZE];
@@ -460,7 +460,7 @@ bool_t input_handleSDLEvent(SDL_Event * evt)
 //--------------------------------------------------------------------------------------------
 void input_read()
 {
-  /// @details ZZ> This function gets all the current player input states
+  /// @details ZZ@> This function gets all the current player input states
 
   int cnt;
   SDL_Event evt;
@@ -578,7 +578,7 @@ void input_init_keybuffer()
 //--------------------------------------------------------------------------------------------
 void check_add(Uint8 key, char bigletter, char littleletter)
 {
-  /// @details ZZ> This function adds letters to the net message
+  /// @details ZZ@> This function adds letters to the net message
   KeyboardBuffer_t * kbuffer = KeyboardBuffer_getState();
 
   if(SDLKEYDOWN(key))

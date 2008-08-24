@@ -230,8 +230,8 @@ bool_t NetHost_unregister(NetHost_t * nh, Uint32 id)
 //--------------------------------------------------------------------------------------------
 retval_t NetHost_dispatch( NetHost_t * nh )
 {
-  /// @details BB> Handle an ENet event.
-  //      If we received a packet, send it to the correct location
+  /// @details BB@> Handle an ENet event.
+  ///      If we received a packet, send it to the correct location
 
   NetThread_t  * nthread;
   PacketRequest_t * prequest;
@@ -545,7 +545,7 @@ bool_t net_Started()
 //--------------------------------------------------------------------------------------------
 retval_t net_startUp(ConfigData_t * cd)
 {
-  /// @details ZZ> This starts up the network and logs whatever goes on
+  /// @details ZZ@> This starts up the network and logs whatever goes on
 
   bool_t request_network = bfalse;
 
@@ -623,7 +623,7 @@ retval_t net_shutDown()
 //--------------------------------------------------------------------------------------------
 //retval_t net_startUp(Net_t * ns, Game_t * gs)
 //{
-//  /// @details ZZ> This starts up the network and logs whatever goes on
+//  /// @details ZZ@> This starts up the network and logs whatever goes on
 //
 //  if(NULL == ns) return rv_error;
 //
@@ -769,7 +769,7 @@ bool_t CNet_delete(Net_t * ns)
 //--------------------------------------------------------------------------------------------
 //bool_t CNet_initialize(Net_t * ns, Client_t * cs, Server_t * ss, NFileState_t * nfs, struct sGame * gs)
 //{
-//  /// @details BB> This connects the Net_t to the outside world
+//  /// @details BB@> This connects the Net_t to the outside world
 //
 //  // Link us with the client state
 //  ns->parent->cl = cs;
@@ -818,7 +818,7 @@ bool_t CNet_delete(Net_t * ns)
 //--------------------------------------------------------------------------------------------
 bool_t net_sendSysPacketToPeer(ENetPeer *peer, SYS_PACKET * egop)
 {
-  /// @details JF> This funciton sends a packet to a given peer, with guaranteed delivery
+  /// @details JF@> This funciton sends a packet to a given peer, with guaranteed delivery
     ENetPacket *packet;
 
   if(NULL ==peer || NULL == egop)
@@ -851,7 +851,7 @@ bool_t net_sendSysPacketToPeer(ENetPeer *peer, SYS_PACKET * egop)
 //--------------------------------------------------------------------------------------------
 bool_t net_sendSysPacketToPeerGuaranteed(ENetPeer *peer, SYS_PACKET * egop)
 {
-  /// @details JF> This funciton sends a packet to a given peer, with guaranteed delivery
+  /// @details JF@> This funciton sends a packet to a given peer, with guaranteed delivery
     ENetPacket *packet;
 
   if(NULL ==peer || NULL == egop)
@@ -926,7 +926,7 @@ bool_t net_sendSysPacketToPeerGuaranteed(ENetPeer *peer, SYS_PACKET * egop)
 //------------------------------------------------------------------------------
 retval_t net_copyFileToPeer(Net_t * ns, ENetPeer * peer, char *source, char *dest)
 {
-  //// @details JF> This function queues up files to send to all the hosts.
+  //// @details JF@> This function queues up files to send to all the hosts.
   ///     @todo Deal with having to send to up to PLALST_COUNT players...
 
   if( NULL == ns || NULL == peer ) return rv_error;
@@ -951,7 +951,7 @@ retval_t net_copyFileToPeer(Net_t * ns, ENetPeer * peer, char *source, char *des
 //------------------------------------------------------------------------------
 retval_t net_copyFileToAllPeers(Net_t * ns, char *source, char *dest)
 {
-  //// @details JF> This function queues up files to send to all the hosts.
+  //// @details JF@> This function queues up files to send to all the hosts.
   ///    @todo Deal with having to send to up to PLALST_COUNT players...
 
   if(NULL == ns)
@@ -987,7 +987,7 @@ retval_t net_copyFileToAllPeers(Net_t * ns, char *source, char *dest)
 //------------------------------------------------------------------------------
 retval_t net_copyFileToHost(Net_t * ns, char *source, char *dest)
 {
-  /// @details JF> New function merely queues up a new file to be sent
+  /// @details JF@> New function merely queues up a new file to be sent
 
   NetHost_t * cl_host, * sv_host;
 
@@ -1047,7 +1047,7 @@ retval_t net_copyFileToHost(Net_t * ns, char *source, char *dest)
 //--------------------------------------------------------------------------------------------
 retval_t net_copyDirectoryToHost(Net_t * ns, char *dirname, char *todirname)
 {
-  /// @details ZZ> This function copies all files in a directory
+  /// @details ZZ@> This function copies all files in a directory
   STRING searchname, fromname, toname;
   EGO_CONST char *searchResult;
   FS_FIND_INFO fnd_info;
@@ -1092,7 +1092,7 @@ retval_t net_copyDirectoryToHost(Net_t * ns, char *dirname, char *todirname)
 //--------------------------------------------------------------------------------------------
 retval_t net_copyDirectoryToAllPeers(Net_t * ns, char *dirname, char *todirname)
 {
-  /// @details ZZ> This function copies all files in a directory
+  /// @details ZZ@> This function copies all files in a directory
   STRING searchname, fromname, toname;
   EGO_CONST char *searchResult;
   FS_FIND_INFO fnd_info;
@@ -1133,7 +1133,7 @@ retval_t net_copyDirectoryToAllPeers(Net_t * ns, char *dirname, char *todirname)
 //--------------------------------------------------------------------------------------------
 retval_t net_copyDirectoryToPeer(Net_t * ns, ENetPeer * peer, char *dirname, char *todirname)
 {
-  /// @details ZZ> This function copies all files in a directory
+  /// @details ZZ@> This function copies all files in a directory
   STRING searchname, fromname, toname;
   EGO_CONST char *searchResult;
   retval_t retval;
@@ -1178,7 +1178,7 @@ retval_t net_copyDirectoryToPeer(Net_t * ns, ENetPeer * peer, char *dirname, cha
 //--------------------------------------------------------------------------------------------
 void net_sayHello(Game_t * gs)
 {
-  /// @details ZZ> This function lets everyone know we're here
+  /// @details ZZ@> This function lets everyone know we're here
 
   Client_t * cl = gs->cl;
   Server_t * sv = gs->sv;
@@ -1443,7 +1443,7 @@ bool_t net_handlePacket(Net_t * ns, ENetEvent *event)
 //--------------------------------------------------------------------------------------------
 void close_session(Net_t * ns)
 {
-  /// @details ZZ> This function gets the computer out of a network game
+  /// @details ZZ@> This function gets the computer out of a network game
 
   Client_t * cl = ns->parent->cl;
   Server_t * sv = ns->parent->sv;
@@ -1490,7 +1490,7 @@ bool_t net_beginGame(struct sGame * gs)
 //--------------------------------------------------------------------------------------------
 PLA_REF add_player(Game_t * gs, CHR_REF chr_ref, Uint8 device)
 {
-  /// @details ZZ> This function adds a pla_ref, returning bfalse if it fails, btrue otherwise
+  /// @details ZZ@> This function adds a player, returning bfalse if it fails, btrue otherwise
 
   PLA_REF pla_ref;
   Player_t * pla;
@@ -1568,8 +1568,8 @@ void net_send_chat(Game_t *gs, KeyboardBuffer_t * kbuffer)
 //--------------------------------------------------------------------------------------------
 void do_chat_input()
 {
-  /// @details ZZ> This function lets players communicate over network by hitting return, then
-  //     typing text, then return again
+  /// @details ZZ@> This function lets players communicate over network by hitting return, then
+  ///     typing text, then return again
 
   KeyboardBuffer_t * kbuffer = KeyboardBuffer_getState();
 
@@ -1885,7 +1885,7 @@ char * convert_host(Uint32 host)
 //--------------------------------------------------------------------------------------------
 ENetPeer * net_startPeer(ENetHost * host, ENetAddress * address )
 {
-  /// @details BB> start the peer connection process, do not wait for confirmation
+  /// @details BB@> start the peer connection process, do not wait for confirmation
 
   ENetPeer * peer = NULL;
 
@@ -1949,7 +1949,7 @@ ENetPeer * net_startPeer(ENetHost * host, ENetAddress * address )
 //--------------------------------------------------------------------------------------------
 ENetPeer * net_startPeerByName(ENetHost * host, EGO_CONST char* connect_name, EGO_CONST int connect_port )
 {
-  /// @details BB> start the peer connection process, do not wait for confirmation
+  /// @details BB@> start the peer connection process, do not wait for confirmation
 
   ENetAddress address;
   ENetPeer * peer = NULL;
@@ -1983,7 +1983,7 @@ ENetPeer * net_startPeerByName(ENetHost * host, EGO_CONST char* connect_name, EG
 //--------------------------------------------------------------------------------------------
 ENetPeer * net_stopPeer(ENetPeer * peer)
 {
-  /// @details BB> start the peer disconnection process, do not wait for confirmation
+  /// @details BB@> start the peer disconnection process, do not wait for confirmation
 
   if(NULL == peer)
   {
@@ -2038,7 +2038,7 @@ ENetPeer * net_stopPeer(ENetPeer * peer)
 //--------------------------------------------------------------------------------------------
 bool_t net_sendSysPacketToAllPeers(ENetHost * host, SYS_PACKET * egop)
 {
-  /// @details BB> This function wraps the enet_host_broadcast() command
+  /// @details BB@> This function wraps the enet_host_broadcast() command
   ENetPacket *packet;
 
   if(NULL ==host || NULL == egop)
@@ -2070,7 +2070,7 @@ bool_t net_sendSysPacketToAllPeers(ENetHost * host, SYS_PACKET * egop)
 //--------------------------------------------------------------------------------------------
 bool_t net_sendSysPacketToAllPeersGuaranteed(ENetHost * host, SYS_PACKET * egop)
 {
-  /// @details BB> This function wraps the enet_host_broadcast() command for the guaranteed channel
+  /// @details BB@> This function wraps the enet_host_broadcast() command for the guaranteed channel
   ENetPacket *packet;
 
   if(NULL ==host || NULL == egop)
@@ -2103,9 +2103,10 @@ bool_t net_sendSysPacketToAllPeersGuaranteed(ENetHost * host, SYS_PACKET * egop)
 //------------------------------------------------------------------------------
 //void net_copyFileToHostOld(Net_t * ns, char *source, char *dest)
 //{
-//  /// @details ZZ> This function copies a file on the remote to the host computer.
-//  //     Packets are sent in chunks of COPYSIZE bytes.  The MAX file size
-//  //     that can be sent is 2 Megs ( TOTALSIZE ).
+//  /// @details ZZ@> This function copies a file on the remote to the host computer.
+//  ///     Packets are sent in chunks of COPYSIZE bytes.  The MAX file size
+//  ///     that can be sent is 2 Megs ( TOTALSIZE ).
+//
 //  FILE* fileread;
 //  int packetend, packetstart;
 //  int filesize;
@@ -2192,9 +2193,9 @@ bool_t net_sendSysPacketToAllPeersGuaranteed(ENetHost * host, SYS_PACKET * egop)
 //------------------------------------------------------------------------------
 //void net_copyFileToAllPlayersOld(Net_t * ns, char *source, char *dest)
 //{
-//  /// @details ZZ> This function copies a file on the host to every remote computer.
-//  //     Packets are sent in chunks of COPYSIZE bytes.  The MAX file size
-//  //     that can be sent is 2 Megs ( TOTALSIZE ).
+//  /// @details ZZ@> This function copies a file on the host to every remote computer.
+//  ///     Packets are sent in chunks of COPYSIZE bytes.  The MAX file size
+//  ///     that can be sent is 2 Megs ( TOTALSIZE ).
 //  FILE* fileread;
 //  int packetend, packetstart;
 //  int filesize;

@@ -20,9 +20,9 @@
 ///
 /// @file
 /// @brief Configuration file loading implementation
-/// @details - All functions to manage a ConfigFile
+/// @details All functions to manage a ConfigFile
 ///
-///  A ConfigFile_t contains sections which themselves contains values.
+/// A ConfigFile_t contains sections which themselves contains values.
 /// A section name is contained between "{}" Ex: {Section Name}
 ///
 /// A value has a Key, a string value and an optional commentary.
@@ -38,8 +38,8 @@
 /// [Key2] : "Hello ""MAN""" // this will become : Hello "MAN"
 ///
 /// @todo optimisation
-///  @todo error checking
-///  @todo Run-time commentary editing
+/// @todo error checking
+/// @todo Run-time commentary editing
 ///
 /// @bug Multiple section with the same name will be loaded and saved but only the first
 ///   one will be looked for value. Should not load sections with same name.
@@ -48,13 +48,13 @@
 /// History:
 ///
 /// 2001-01-09
-///  - Implemented ConvertToKeyCharacters in SetConfigValue
+///  @li Implemented ConvertToKeyCharacters in SetConfigValue
 ///
 /// 2000-12-10
-///  - Added the length of the string buffer used as parameter for GetConfigValue.
-///  - Added SetConfigBooleanValue, SetConfigIntVaalue and SetConfigFloatValue to standardise
-///   the way to set usual data types.
-///  - Added GetConfigBooleanValue, GetConfigIntValue and GetConfigFloatValue.
+///  @li Added the length of the string buffer used as parameter for GetConfigValue.
+///  @li Added SetConfigBooleanValue, SetConfigIntVaalue and SetConfigFloatValue to standardise
+///      the way to set usual data types.
+///  @li Added GetConfigBooleanValue, GetConfigIntValue and GetConfigFloatValue.
 
 
 #include "configfile.h"

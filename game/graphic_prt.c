@@ -599,7 +599,7 @@ void sort_particles( GLVertex v[], int numparticle )
 //--------------------------------------------------------------------------------------------
 void render_particles()
 {
-  /// @details ZZ> This function draws the sprites for particle systems
+  /// @details ZZ@> This function draws the sprites for particle systems
 
   Game_t *gs = Graphics_requireGame(&gfxState);
   Graphics_Data_t * gfx = gfxState.pGfx;
@@ -926,7 +926,7 @@ void render_light_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 //--------------------------------------------------------------------------------------------
 void render_particle_reflections()
 {
-  /// @details ZZ> This function draws the sprites for particle systems
+  /// @details ZZ@> This function draws the sprites for particle systems
 
   Game_t * gs    = Graphics_requireGame(&gfxState);
   Graphics_Data_t * gfx = gfxState.pGfx;
