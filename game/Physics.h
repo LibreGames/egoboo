@@ -70,10 +70,6 @@ struct sPhysicsData
 };
 typedef struct sPhysicsData PhysicsData_t;
 
-INLINE PhysicsData_t * CPhysicsData_new(PhysicsData_t * phys);
-INLINE bool_t          CPhysicsData_delete(PhysicsData_t * phys);
-INLINE PhysicsData_t * CPhysicsData_renew(PhysicsData_t * phys);
-
 //--------------------------------------------------------------------------------------------
 // collision volume difinition
 struct sCVolume
@@ -94,11 +90,6 @@ bool_t    CVolume_draw( CVolume_t * cv, bool_t draw_square, bool_t draw_diamond 
 //--------------------------------------------------------------------------------------------
 struct sCVolume_Tree { CVolume_t leaf[8]; };
 typedef struct sCVolume_Tree CVolume_Tree_t;
-
-//--------------------------------------------------------------------------------------------
-INLINE void cv_list_add( CVolume_t * cv);
-INLINE void cv_list_clear( void );
-INLINE void cv_list_draw( void );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

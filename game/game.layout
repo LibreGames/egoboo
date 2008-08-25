@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_layout_file>
-	<ActiveTarget name="Release Win32 - gcc" />
+	<ActiveTarget name="Debug Win32 - gcc" />
 	<File name="AStar.c" open="0" top="0" tabpos="19">
 		<Cursor position="10828" topLine="373" />
 	</File>
-	<File name="Client.c" open="0" top="0" tabpos="11">
-		<Cursor position="44939" topLine="1624" />
+	<File name="Client.c" open="0" top="0" tabpos="13">
+		<Cursor position="43129" topLine="1568" />
 	</File>
 	<File name="Client.h" open="0" top="0" tabpos="21">
 		<Cursor position="4158" topLine="131" />
 	</File>
-	<File name="Clock.c" open="0" top="0" tabpos="22">
-		<Cursor position="3959" topLine="135" />
+	<File name="Clock.c" open="0" top="0" tabpos="11">
+		<Cursor position="2452" topLine="76" />
 	</File>
 	<File name="Clock.h" open="0" top="0" tabpos="23">
 		<Cursor position="1515" topLine="39" />
@@ -31,14 +31,14 @@
 	<File name="Log.h" open="0" top="0" tabpos="26">
 		<Cursor position="0" topLine="18" />
 	</File>
-	<File name="Mad.c" open="0" top="0" tabpos="7">
-		<Cursor position="42349" topLine="1434" />
+	<File name="Mad.c" open="0" top="0" tabpos="8">
+		<Cursor position="3455" topLine="81" />
 	</File>
 	<File name="Mad.h" open="0" top="0" tabpos="27">
 		<Cursor position="8663" topLine="202" />
 	</File>
-	<File name="Md2.c" open="0" top="0" tabpos="28">
-		<Cursor position="21621" topLine="705" />
+	<File name="Md2.c" open="0" top="0" tabpos="17">
+		<Cursor position="12570" topLine="410" />
 	</File>
 	<File name="Md2.h" open="0" top="0" tabpos="29">
 		<Cursor position="19" topLine="0" />
@@ -46,32 +46,32 @@
 	<File name="Md2.inl" open="0" top="0" tabpos="30">
 		<Cursor position="1536" topLine="31" />
 	</File>
-	<File name="Menu.c" open="0" top="0" tabpos="3">
-		<Cursor position="124116" topLine="3828" />
+	<File name="Menu.c" open="0" top="0" tabpos="12">
+		<Cursor position="139654" topLine="4333" />
 	</File>
 	<File name="Menu.h" open="0" top="0" tabpos="0">
 		<Cursor position="4164" topLine="119" />
 	</File>
-	<File name="NetFile.c" open="0" top="0" tabpos="31">
-		<Cursor position="43338" topLine="1530" />
+	<File name="NetFile.c" open="0" top="0" tabpos="13">
+		<Cursor position="29335" topLine="974" />
 	</File>
 	<File name="NetFile.h" open="0" top="0" tabpos="32">
 		<Cursor position="1795" topLine="47" />
 	</File>
-	<File name="Network.c" open="0" top="0" tabpos="33">
-		<Cursor position="55844" topLine="1940" />
+	<File name="Network.c" open="0" top="0" tabpos="14">
+		<Cursor position="5386" topLine="181" />
 	</File>
-	<File name="Network.h" open="0" top="0" tabpos="34">
-		<Cursor position="17260" topLine="469" />
+	<File name="Network.h" open="0" top="0" tabpos="12">
+		<Cursor position="4552" topLine="111" />
 	</File>
-	<File name="Network.inl" open="0" top="0" tabpos="35">
-		<Cursor position="5915" topLine="180" />
+	<File name="Network.inl" open="0" top="0" tabpos="38">
+		<Cursor position="16" topLine="0" />
 	</File>
-	<File name="Physics.c" open="0" top="0" tabpos="0">
-		<Cursor position="4563" topLine="153" />
+	<File name="Physics.c" open="0" top="0" tabpos="24">
+		<Cursor position="5596" topLine="194" />
 	</File>
-	<File name="Physics.inl" open="0" top="0" tabpos="0">
-		<Cursor position="2273" topLine="66" />
+	<File name="Physics.inl" open="0" top="0" tabpos="23">
+		<Cursor position="3043" topLine="82" />
 	</File>
 	<File name="SDL_Pixel.h" open="0" top="0" tabpos="10">
 		<Cursor position="14684" topLine="286" />
@@ -79,8 +79,20 @@
 	<File name="SDL_rotozoom.c" open="0" top="0" tabpos="0">
 		<Cursor position="357" topLine="17" />
 	</File>
-	<File name="Server.c" open="0" top="0" tabpos="7">
-		<Cursor position="7498" topLine="260" />
+	<File name="Script_compile.h" open="0" top="0" tabpos="2">
+		<Cursor position="3112" topLine="72" />
+	</File>
+	<File name="Script_comple.c" open="1" top="1" tabpos="1">
+		<Cursor position="1531" topLine="18" />
+	</File>
+	<File name="Script_run.c" open="0" top="0" tabpos="16">
+		<Cursor position="129660" topLine="4044" />
+	</File>
+	<File name="Script_run.h" open="0" top="0" tabpos="4">
+		<Cursor position="1455" topLine="24" />
+	</File>
+	<File name="Server.c" open="0" top="0" tabpos="26">
+		<Cursor position="33890" topLine="1147" />
 	</File>
 	<File name="Server.h" open="0" top="0" tabpos="4">
 		<Cursor position="3707" topLine="106" />
@@ -88,26 +100,26 @@
 	<File name="System.h" open="0" top="0" tabpos="69">
 		<Cursor position="1388" topLine="23" />
 	</File>
-	<File name="Ui.c" open="0" top="0" tabpos="38">
-		<Cursor position="10948" topLine="358" />
+	<File name="Ui.c" open="0" top="0" tabpos="27">
+		<Cursor position="21306" topLine="702" />
 	</File>
-	<File name="Ui.h" open="0" top="0" tabpos="39">
-		<Cursor position="2964" topLine="91" />
+	<File name="Ui.h" open="0" top="0" tabpos="18">
+		<Cursor position="1658" topLine="48" />
 	</File>
-	<File name="camera.c" open="0" top="0" tabpos="9">
-		<Cursor position="5387" topLine="166" />
+	<File name="camera.c" open="0" top="0" tabpos="28">
+		<Cursor position="4599" topLine="137" />
 	</File>
 	<File name="camera.h" open="0" top="0" tabpos="8">
 		<Cursor position="2338" topLine="54" />
 	</File>
-	<File name="char.c" open="0" top="0" tabpos="4">
-		<Cursor position="323086" topLine="9810" />
+	<File name="char.c" open="0" top="0" tabpos="17">
+		<Cursor position="168843" topLine="5413" />
 	</File>
-	<File name="char.h" open="0" top="0" tabpos="13">
-		<Cursor position="33805" topLine="781" />
+	<File name="char.h" open="0" top="0" tabpos="11">
+		<Cursor position="6427" topLine="153" />
 	</File>
-	<File name="char.inl" open="0" top="0" tabpos="5">
-		<Cursor position="2536" topLine="88" />
+	<File name="char.inl" open="0" top="0" tabpos="1">
+		<Cursor position="3359" topLine="66" />
 	</File>
 	<File name="configfile.c" open="0" top="0" tabpos="40">
 		<Cursor position="25462" topLine="830" />
@@ -115,8 +127,8 @@
 	<File name="configfile.h" open="0" top="0" tabpos="41">
 		<Cursor position="3026" topLine="75" />
 	</File>
-	<File name="egoboo.h" open="0" top="0" tabpos="42">
-		<Cursor position="15654" topLine="473" />
+	<File name="egoboo.h" open="0" top="0" tabpos="32">
+		<Cursor position="15583" topLine="469" />
 	</File>
 	<File name="egoboo_config.h" open="0" top="0" tabpos="43">
 		<Cursor position="359" topLine="9" />
@@ -130,8 +142,11 @@
 	<File name="egoboo_rpc.c" open="0" top="0" tabpos="0">
 		<Cursor position="2995" topLine="69" />
 	</File>
-	<File name="egoboo_strutil.c" open="0" top="0" tabpos="0">
-		<Cursor position="4446" topLine="191" />
+	<File name="egoboo_stream.inl" open="0" top="0" tabpos="10">
+		<Cursor position="7358" topLine="220" />
+	</File>
+	<File name="egoboo_strutil.c" open="0" top="0" tabpos="29">
+		<Cursor position="3439" topLine="136" />
 	</File>
 	<File name="egoboo_types.h" open="0" top="0" tabpos="5">
 		<Cursor position="11675" topLine="401" />
@@ -139,20 +154,20 @@
 	<File name="egoboo_types.inl" open="0" top="0" tabpos="0">
 		<Cursor position="8087" topLine="331" />
 	</File>
-	<File name="egoboo_utility.c" open="0" top="0" tabpos="6">
-		<Cursor position="11855" topLine="442" />
+	<File name="egoboo_utility.c" open="0" top="0" tabpos="8">
+		<Cursor position="25122" topLine="921" />
 	</File>
-	<File name="egoboo_utility.h" open="0" top="0" tabpos="1">
-		<Cursor position="4945" topLine="120" />
+	<File name="egoboo_utility.h" open="0" top="0" tabpos="9">
+		<Cursor position="3744" topLine="102" />
 	</File>
-	<File name="enchant.c" open="0" top="0" tabpos="47">
-		<Cursor position="30678" topLine="950" />
+	<File name="enchant.c" open="0" top="0" tabpos="30">
+		<Cursor position="76528" topLine="2512" />
 	</File>
 	<File name="enchant.h" open="0" top="0" tabpos="48">
 		<Cursor position="8177" topLine="226" />
 	</File>
-	<File name="file_common.c" open="0" top="0" tabpos="49">
-		<Cursor position="5230" topLine="159" />
+	<File name="file_common.c" open="0" top="0" tabpos="18">
+		<Cursor position="6559" topLine="209" />
 	</File>
 	<File name="file_common.h" open="0" top="0" tabpos="50">
 		<Cursor position="2047" topLine="63" />
@@ -163,32 +178,32 @@
 	<File name="file_mac.m" open="0" top="0" tabpos="52">
 		<Cursor position="6103" topLine="217" />
 	</File>
-	<File name="file_win.c" open="0" top="0" tabpos="7">
-		<Cursor position="7305" topLine="212" />
+	<File name="file_win.c" open="0" top="0" tabpos="9">
+		<Cursor position="6818" topLine="198" />
 	</File>
-	<File name="game.c" open="0" top="0" tabpos="8">
-		<Cursor position="131390" topLine="4005" />
+	<File name="game.c" open="0" top="0" tabpos="19">
+		<Cursor position="152876" topLine="4512" />
 	</File>
-	<File name="game.h" open="0" top="0" tabpos="53">
-		<Cursor position="17729" topLine="509" />
+	<File name="game.h" open="0" top="0" tabpos="6">
+		<Cursor position="19914" topLine="554" />
 	</File>
-	<File name="graphic.c" open="0" top="0" tabpos="4">
-		<Cursor position="16059" topLine="559" />
+	<File name="graphic.c" open="0" top="0" tabpos="20">
+		<Cursor position="129324" topLine="4087" />
 	</File>
 	<File name="graphic.h" open="0" top="0" tabpos="5">
-		<Cursor position="10942" topLine="305" />
+		<Cursor position="11054" topLine="304" />
 	</File>
 	<File name="graphic.inl" open="0" top="0" tabpos="54">
 		<Cursor position="177" topLine="0" />
 	</File>
-	<File name="graphic_fan.c" open="0" top="0" tabpos="10">
-		<Cursor position="19888" topLine="641" />
+	<File name="graphic_fan.c" open="0" top="0" tabpos="35">
+		<Cursor position="31487" topLine="992" />
 	</File>
-	<File name="graphic_mad.c" open="0" top="0" tabpos="13">
-		<Cursor position="16118" topLine="472" />
+	<File name="graphic_mad.c" open="0" top="0" tabpos="36">
+		<Cursor position="31333" topLine="1011" />
 	</File>
-	<File name="graphic_prt.c" open="0" top="0" tabpos="55">
-		<Cursor position="18417" topLine="556" />
+	<File name="graphic_prt.c" open="0" top="0" tabpos="37">
+		<Cursor position="29090" topLine="917" />
 	</File>
 	<File name="id_md2.h" open="0" top="0" tabpos="56">
 		<Cursor position="2492" topLine="90" />
@@ -199,41 +214,44 @@
 	<File name="id_normals.h" open="0" top="0" tabpos="0">
 		<Cursor position="7166" topLine="177" />
 	</File>
-	<File name="input.c" open="0" top="0" tabpos="58">
-		<Cursor position="5734" topLine="203" />
+	<File name="input.c" open="0" top="0" tabpos="39">
+		<Cursor position="15167" topLine="533" />
 	</File>
 	<File name="input.h" open="0" top="0" tabpos="32">
 		<Cursor position="3938" topLine="185" />
 	</File>
+	<File name="input.inl" open="0" top="0" tabpos="19">
+		<Cursor position="3877" topLine="108" />
+	</File>
 	<File name="inspirational\cartman.c" open="0" top="0" tabpos="59">
 		<Cursor position="607" topLine="17" />
 	</File>
-	<File name="mesh.c" open="0" top="0" tabpos="14">
-		<Cursor position="21313" topLine="744" />
+	<File name="mesh.c" open="0" top="0" tabpos="40">
+		<Cursor position="25684" topLine="902" />
 	</File>
 	<File name="mesh.h" open="0" top="0" tabpos="11">
 		<Cursor position="13607" topLine="305" />
 	</File>
-	<File name="mesh.inl" open="0" top="0" tabpos="12">
-		<Cursor position="20068" topLine="656" />
+	<File name="mesh.inl" open="0" top="0" tabpos="3">
+		<Cursor position="4641" topLine="88" />
 	</File>
-	<File name="module.c" open="0" top="0" tabpos="60">
-		<Cursor position="22543" topLine="734" />
+	<File name="module.c" open="0" top="0" tabpos="21">
+		<Cursor position="9235" topLine="293" />
 	</File>
-	<File name="object.c" open="0" top="0" tabpos="61">
-		<Cursor position="1554" topLine="42" />
+	<File name="object.c" open="0" top="0" tabpos="42">
+		<Cursor position="17867" topLine="572" />
 	</File>
 	<File name="object.h" open="0" top="0" tabpos="15">
 		<Cursor position="9038" topLine="243" />
 	</File>
-	<File name="object.inl" open="0" top="0" tabpos="8">
-		<Cursor position="3023" topLine="104" />
+	<File name="object.inl" open="0" top="0" tabpos="2">
+		<Cursor position="2460" topLine="45" />
 	</File>
 	<File name="ogl_include.c" open="0" top="0" tabpos="62">
 		<Cursor position="2610" topLine="57" />
 	</File>
-	<File name="ogl_include.h" open="0" top="0" tabpos="0">
-		<Cursor position="1988" topLine="35" />
+	<File name="ogl_include.h" open="0" top="0" tabpos="34">
+		<Cursor position="16" topLine="0" />
 	</File>
 	<File name="ogl_texture.c" open="0" top="0" tabpos="63">
 		<Cursor position="8699" topLine="255" />
@@ -241,26 +259,26 @@
 	<File name="ogl_texture.h" open="0" top="0" tabpos="64">
 		<Cursor position="2107" topLine="48" />
 	</File>
-	<File name="particle.c" open="0" top="0" tabpos="65">
-		<Cursor position="50168" topLine="1604" />
+	<File name="particle.c" open="0" top="0" tabpos="7">
+		<Cursor position="1532" topLine="44" />
 	</File>
 	<File name="particle.h" open="0" top="0" tabpos="66">
 		<Cursor position="14866" topLine="320" />
 	</File>
-	<File name="passage.c" open="0" top="0" tabpos="1">
-		<Cursor position="2931" topLine="74" />
+	<File name="particle.inl" open="0" top="0" tabpos="15">
+		<Cursor position="16" topLine="0" />
+	</File>
+	<File name="passage.c" open="0" top="0" tabpos="44">
+		<Cursor position="23450" topLine="739" />
 	</File>
 	<File name="passage.h" open="0" top="0" tabpos="12">
 		<Cursor position="914" topLine="26" />
 	</File>
-	<File name="script.c" open="0" top="0" tabpos="9">
-		<Cursor position="164659" topLine="4537" />
-	</File>
 	<File name="script.h" open="0" top="0" tabpos="68">
 		<Cursor position="11250" topLine="483" />
 	</File>
-	<File name="sound.c" open="0" top="0" tabpos="2">
-		<Cursor position="4283" topLine="151" />
+	<File name="sound.c" open="0" top="0" tabpos="4">
+		<Cursor position="4209" topLine="155" />
 	</File>
 	<File name="..\res\debug.rc" open="0" top="0" tabpos="3">
 		<Cursor position="850" topLine="5" />

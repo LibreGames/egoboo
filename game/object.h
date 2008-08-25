@@ -122,6 +122,7 @@ CAP_REF ObjList_getRCap(struct sGame * gs, OBJ_REF obj);
 MAD_REF ObjList_getRMad(struct sGame * gs, OBJ_REF obj);
 MAD_REF ObjList_getRAi (struct sGame * gs, OBJ_REF obj);
 PIP_REF ObjList_getRPip(struct sGame * gs, OBJ_REF iobj, int i);
+void    ObjList_log_used( struct sGame * gs, char *savename );
 
 #define VALID_OBJ_RANGE(XX)   ( /*(((XX)>=0) && */ ((XX)<OBJLST_COUNT) )
 #define VALID_OBJ(LST, XX)    ( VALID_OBJ_RANGE(XX) && EKEY_VALID(LST[XX]) )
@@ -150,10 +151,6 @@ struct sBData
   vect3   mids_hi, mids_lo;
 };
 typedef struct sBData BData_t;
-
-INLINE BData_t * BData_new(BData_t * b);
-INLINE bool_t  BData_delete(BData_t * b);
-INLINE BData_t * BData_renew(BData_t * b);
 
 //--------------------------------------------------------------------------------------------
 typedef enum e_Team
@@ -184,14 +181,11 @@ typedef struct sTeam Team_t;
   typedef Team_t * PTeam;
 #endif
 
-Team_t * CTeam_new(Team_t *pteam);
-bool_t  CTeam_delete(Team_t *pteam);
-Team_t * CTeam_renew(Team_t *pteam);
+Team_t * Team_new(Team_t *pteam);
+bool_t   Team_delete(Team_t *pteam);
+Team_t * Team_renew(Team_t *pteam);
 
 #define VALID_TEAM_RANGE(XX) ( /*(((XX)>=0) && */ ((XX)<TEAM_COUNT) )
-
-INLINE CHR_REF team_get_sissy( struct sGame * gs, TEAM_REF iteam );
-INLINE CHR_REF team_get_leader( struct sGame * gs, TEAM_REF iteam );
 
 //--------------------------------------------------------------------------------------------
 // struct for blended vertex data
@@ -212,14 +206,6 @@ struct sVData_Blended
   float *Ambient;      ///< Lighting hack ( Ooze )
 };
 typedef struct sVData_Blended VData_Blended_t;
-
-INLINE VData_Blended_t * VData_Blended_new( void );
-INLINE void VData_Blended_delete(VData_Blended_t * v);
-
-INLINE void VData_Blended_construct(VData_Blended_t * v);
-INLINE void VData_Blended_destruct(VData_Blended_t * v);
-INLINE void VData_Blended_Allocate(VData_Blended_t * v, size_t verts);
-INLINE void VData_Blended_Deallocate(VData_Blended_t * v);
 
 //--------------------------------------------------------------------------------------------
 enum e_damage
@@ -263,10 +249,6 @@ bool_t tile_damage_reset(TILE_DAMAGE * t);
 //--------------------------------------------------------------------------------------------
 
 
-void setup_particles( struct sGame * gs );
-
-void spawn_bump_particles( struct sGame * gs, CHR_REF character, PRT_REF particle );
-
 void   disaffirm_attached_particles( struct sGame * gs, CHR_REF character );
 Uint16 number_of_attached_particles( struct sGame * gs, CHR_REF character );
 void   reaffirm_attached_particles( struct sGame * gs, CHR_REF character );
@@ -276,6 +258,5 @@ int  restock_ammo( struct sGame * gs, CHR_REF character, IDSZ idsz );
 void issue_clean( struct sGame * gs, CHR_REF character );
 
 int load_one_object( struct sGame * gs, int skin_count, EGO_CONST char * szObjectpath, char* szObjectname, OBJ_REF slot_override );
-
 
 void obj_clear_pips( struct sGame * gs );

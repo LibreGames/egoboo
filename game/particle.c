@@ -47,9 +47,8 @@
 #include "egoboo_types.inl"
 
 
-Uint16 particletexture = MAXTEXTURE;     // All in one bitmap
-
 static PRT_REF _prt_spawn( PRT_SPAWN_INFO si, bool_t activate );
+static bool_t  _prt_is_over_water( struct sGame * gs, PRT_REF cnt );
 
 //--------------------------------------------------------------------------------------------
 size_t DLightList_clear( Graphics_Data_t * gfx )
@@ -1357,175 +1356,7 @@ void attach_particles(Game_t * gs)
 
 
 //--------------------------------------------------------------------------------------------
-void setup_particles( Game_t * gs )
-{
-  /// @details ZZ@> This function sets up particle data
-
-  // re-load the particle texture from ./basicdat
-  load_particle_texture( gs, NULL );
-
-  // Reset the allocation table
-  PrtList_new(gs);
-}
-
-//--------------------------------------------------------------------------------------------
-void spawn_bump_particles( Game_t * gs, CHR_REF ichr, PRT_REF iprt )
-{
-  /// @details ZZ@> This function is for catching characters on fire and such
-
-  int    cnt;
-  int    bestdistance;
-  Uint16 bestvertex;
-  Uint16 amount;
-  size_t vrt_count;
-  Uint16 direction, left, right;
-  Uint32 loc_rand;
-
-  PObj_t objlst     = gs->ObjList;
-  PPrt_t prtlst     = gs->PrtList;
-  PChr_t chrlst     = gs->ChrList;
-
-  Chr_t  * pchr;
-  Prt_t  * pprt;
-
-  OBJ_REF  iobj;
-  Obj_t  * pobj;
-
-  Mad_t  * pmad;
-  Cap_t  * pcap;
-  Pip_t  * ppip;
-
-  if(!ACTIVE_CHR(chrlst, ichr)) return;
-  pchr = ChrList_getPChr(gs, ichr);
-
-  if(!ACTIVE_PRT(prtlst, iprt)) return;
-  pprt = prtlst + iprt;
-
-  ppip = PrtList_getPPip(gs, iprt);
-  if(NULL == ppip) return;
-
-  iobj = pchr->model = VALIDATE_OBJ(objlst, pchr->model);
-  if(INVALID_OBJ == iobj) return;
-  pobj = gs->ObjList + iobj;
-
-  pmad = ObjList_getPMad(gs, iobj);
-  if(NULL == pmad) return;
-
-  pcap = ObjList_getPCap(gs, iobj);
-  if(NULL == pcap) return;
-
-  loc_rand = gs->randie_index;
-
-  amount = ppip->bumpspawnamount;
-  if ( amount != 0 || ppip->spawnenchant )
-  {
-    // Only damage if hitting from proper direction
-    vrt_count = pmad->vertices;
-    direction = pchr->ori.turn_lr - vec_to_turn( -pprt->ori.vel.x, -pprt->ori.vel.y );
-    if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_INVICTUS ) )
-    {
-      // I Frame
-      if ( HAS_SOME_BITS( ppip->damfx, DAMFX_BLOC ) )
-      {
-        left  = UINT16_MAX;
-        right = 0;
-      }
-      else
-      {
-        direction -= pcap->iframefacing;
-        left = ( ~pcap->iframeangle );
-        right = pcap->iframeangle;
-      }
-    }
-    else
-    {
-      // N Frame
-      direction -= pcap->nframefacing;
-      left = ( ~pcap->nframeangle );
-      right = pcap->nframeangle;
-    }
-
-    // Check that direction
-    if ( direction <= left && direction >= right )
-    {
-      // Spawn new enchantments
-      if ( ppip->spawnenchant )
-      {
-        ENC_SPAWN_INFO enc_si;
-        enc_spawn_info_init( &enc_si, gs, prt_get_owner( gs, iprt ), ichr, INVALID_CHR, INVALID_ENC, pprt->model );
-        req_spawn_one_enchant( enc_si );
-      }
-
-      // Spawn particles
-      if ( amount    != 0 && !pcap->prop.resistbumpspawn && !pchr->prop.invictus &&
-           vrt_count != 0 && ( pchr->skin.damagemodifier_fp8[pprt->damagetype]&DAMAGE_SHIFT ) != DAMAGE_SHIFT )
-      {
-        if ( amount == 1 )
-        {
-          // A single iprt ( arrow? ) has been stuck in the ichr...
-          // Find best vertex to attach to
-
-          int i;
-          float dx,dy,dz,diff;
-          GLvector *point, *nupoint;
-
-          // dynamically allocate a vertex array.
-          point   = EGOBOO_NEW_ARY(GLvector, vrt_count);
-          nupoint = EGOBOO_NEW_ARY(GLvector, vrt_count);
-
-          // make sure that all the vertices have been updated
-          md2_blend_vertices(pchr, -1, -1);
-
-          for(i=0; i<vrt_count; i++)
-          {
-            point[i].x = pchr->vdata.Vertices[i].x;
-            point[i].y = pchr->vdata.Vertices[i].y;
-            point[i].z = pchr->vdata.Vertices[i].z;
-            point[i].w = 1.0f;
-          }
-
-          // Transform the vertices into world space
-          Transform4_Full( 1.0f, 1.0f, &(pchr->matrix), point, nupoint, vrt_count );
-
-          bestvertex = 0;
-          bestdistance = SINT32_MAX;
-          for(i=0; i<vrt_count; i++)
-          {
-            dx = nupoint[i].x - pprt->ori.pos.x;
-            dy = nupoint[i].y - pprt->ori.pos.y;
-            dz = nupoint[i].z - pprt->ori.pos.z;
-            diff = dx*dx + dy*dy + dz*dz;
-
-            if(diff < bestdistance)
-            {
-              bestdistance = diff;
-              bestvertex   = vrt_count - i;
-            }
-          }
-
-          prt_spawn( gs, 1.0f, pchr->ori.pos, pchr->ori.vel, 0, pprt->model, ppip->bumpspawnpip,
-                     ichr, (GRIP)(bestvertex + 1), pprt->team, prt_get_owner( gs, iprt ), 0, ichr );
-
-          EGOBOO_DELETE_ARY(point);
-          EGOBOO_DELETE_ARY(nupoint);
-        }
-        else
-        {
-          amount = ( amount * vrt_count ) >> 5;  // Correct amount for size of ichr
-
-          for ( cnt = 0; cnt < amount; cnt++ )
-          {
-            prt_spawn( gs, 1.0f, pchr->ori.pos, pchr->ori.vel, 0, pprt->model, ppip->bumpspawnpip,
-                                ichr, (GRIP)RAND(&loc_rand, 0, vrt_count), pprt->team, prt_get_owner( gs, iprt ), cnt, ichr );
-          }
-        }
-      }
-    }
-  }
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t prt_is_over_water( Game_t * gs, PRT_REF prt_cnt )
+bool_t _prt_is_over_water( Game_t * gs, PRT_REF prt_cnt )
 {
   // This function returns btrue if the particle is over a water tile
 
@@ -1606,7 +1437,6 @@ PIP_REF PipList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST 
   ///     found
 
   PPip_t piplst      = gs->PipList;
-  size_t piplst_size = PIPLST_COUNT;
 
   EGO_CONST char * fname;
   FILE* fileread;
@@ -1910,7 +1740,7 @@ bool_t prt_calculate_bumpers(Game_t * gs, PRT_REF iprt)
   prtlst[iprt].bmpdata.cv.yx_max = prtlst[iprt].ori.pos.y + ftmp * SQRT_TWO + 0.001f;
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -1954,7 +1784,7 @@ Prt_t * Prt_new(Prt_t *pprt)
   pprt->alpha_fp8 = 255;
 
   return pprt;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t Prt_delete( Prt_t * pprt )
@@ -2199,7 +2029,7 @@ PrtHeap_t * PrtHeap_renew ( PrtHeap_t * pheap )
   if( !PrtHeap_delete( pheap ) ) return pheap;
 
   return PrtHeap_new( pheap );
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t PrtHeap_reset ( PrtHeap_t * pheap )
@@ -2221,7 +2051,7 @@ bool_t PrtHeap_reset ( PrtHeap_t * pheap )
   PROFILE_END2( PrtHeap );
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 PRT_REF PrtHeap_getFree( PrtHeap_t * pheap, PRT_REF request )
@@ -2257,7 +2087,7 @@ PRT_REF PrtHeap_getFree( PrtHeap_t * pheap, PRT_REF request )
   };
 
   { PROFILE_END2( PrtHeap ); return ret; }
-};
+}
 
 //--------------------------------------------------------------------------------------------
 PRT_REF PrtHeap_iterateUsed( PrtHeap_t * pheap, int * index )
@@ -2275,7 +2105,7 @@ PRT_REF PrtHeap_iterateUsed( PrtHeap_t * pheap, int * index )
   PROFILE_END2( PrtHeap );
 
   { PROFILE_END2( PrtHeap ); return ret; }
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t  PrtHeap_addUsed( PrtHeap_t * pheap, PRT_REF ref )

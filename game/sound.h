@@ -101,12 +101,12 @@ SoundState_t * snd_getState(struct sConfigData * cd);
 
 bool_t snd_reopen( void );
 bool_t snd_unload_music( void );
-void snd_stop_music(int fadetime);
-void snd_apply_mods( int channel, float intensity, vect3 snd_pos, vect3 ear_pos, Uint16 ear_turn_lr  );
-int snd_play_sound( struct sGame * gs, float intensity, vect3 pos, Mix_Chunk *loadedwave, int loops, OBJ_REF whichobject, int soundnumber);
-void snd_stop_sound( int whichchannel );
-void snd_play_music( int songnumber, int fadetime, int loops );
-int snd_play_global_sound( struct sGame * gs, float intensity, vect3 pos, Sint8 sound );
-int snd_play_particle_sound( struct sGame * gs, float intensity, PRT_REF particle, Sint8 sound );
+void   snd_stop_music(int fadetime);
+void   snd_apply_mods( int channel, float intensity, vect3 snd_pos, vect3 ear_pos, Uint16 ear_turn_lr  );
+int    snd_play_sound( struct sGame * gs, float intensity, vect3 pos, Mix_Chunk *loadedwave, int loops, OBJ_REF whichobject, int soundnumber);
+void   snd_stop_sound( int whichchannel );
+void   snd_play_music( int songnumber, int fadetime, int loops );
+int    snd_play_global_sound( struct sGame * gs, float intensity, vect3 pos, Sint8 sound );
+int    snd_play_particle_sound( struct sGame * gs, float intensity, PRT_REF particle, Sint8 sound );
 
 

@@ -21,7 +21,7 @@
 
 ///
 /// @file
-/// @brief 
+/// @brief
 /// @details functions that will be declared inside the base class
 
 #include "input.h"
@@ -32,6 +32,17 @@
 #include "char.inl"
 #include "egoboo_types.inl"
 
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+INLINE CHR_REF PlaList_getRChr( struct sGame * gs, PLA_REF iplayer );
+
+INLINE bool_t control_key_is_pressed( CONTROL control );
+INLINE bool_t control_mouse_is_pressed( CONTROL control );
+INLINE bool_t control_joy_is_pressed( int joy_num, CONTROL control );
+
+//--------------------------------------------------------------------------------------------
 extern KeyboardBuffer_t _keybuff;
 
 //--------------------------------------------------------------------------------------------
@@ -118,4 +129,4 @@ INLINE CHR_REF PlaList_getRChr( Game_t * gs, PLA_REF iplayer )
 
   gs->PlaList[iplayer].chr_ref = VALIDATE_CHR( gs->ChrList, gs->PlaList[iplayer].chr_ref );
   return gs->PlaList[iplayer].chr_ref;
-};
+}

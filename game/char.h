@@ -156,7 +156,7 @@ enum e_gender
   GEN_FEMALE = 0,
   GEN_MALE,
   GEN_OTHER,
-  GEN_RANDOM,
+  GEN_RANDOM
 };
 typedef enum e_gender GENDER;
 
@@ -164,7 +164,7 @@ enum e_latch_button
 {
   /// @details Character button presses
   LATCHBUTTON_NONE      =      0,
-  LATCHBUTTON_LEFT      = 1 << 0,                    // 
+  LATCHBUTTON_LEFT      = 1 << 0,                    //
   LATCHBUTTON_RIGHT     = 1 << 1,                    //
   LATCHBUTTON_JUMP      = 1 << 2,                    //
   LATCHBUTTON_ALTLEFT   = 1 << 3,                    ///< ( Alts are for grab/drop )
@@ -328,8 +328,8 @@ struct sProperties
   bool_t     canuseadvancedweapons;   ///< Advanced weapons usage [AWEP]
   bool_t     canusepoison;            ///< Use poison without err [POIS]
   bool_t     canread;                 ///< Can read books and scrolls [READ]
+  bool_t     shieldproficiency;       ///< Proficiency with shields [SHPR]
   // [END] Skill Expansions
-
 };
 typedef struct sProperties Properties_t;
 
@@ -500,8 +500,6 @@ struct s_action_info
 };
 typedef struct s_action_info ACTION_INFO;
 
-INLINE ACTION_INFO * action_info_new( ACTION_INFO * a);
-
 //--------------------------------------------------------------------------------------------
 struct s_animation_info
 {
@@ -511,8 +509,6 @@ struct s_animation_info
   Uint8           ilip;    ///< Character's low-res frame in betweening
 };
 typedef struct s_animation_info ANIM_INFO;
-
-INLINE ANIM_INFO * anim_info_new( ANIM_INFO * a );
 
 //--------------------------------------------------------------------------------------------
 #define MAXWAY              8                        ///< Waypoints
@@ -526,15 +522,6 @@ struct s_waypoint_list
   WAYPOINT pos[MAXWAY];
 };
 typedef struct s_waypoint_list WP_LIST;
-
-INLINE WP_LIST * wp_list_new(WP_LIST * w, vect3 * pos);
-INLINE bool_t    wp_list_clear(WP_LIST * w);
-INLINE bool_t    wp_list_advance(WP_LIST * wl);
-INLINE bool_t    wp_list_add(WP_LIST * wl, float x, float y);
-
-INLINE bool_t wp_list_empty( WP_LIST * wl );
-INLINE float  wp_list_x( WP_LIST * wl );
-INLINE float  wp_list_y( WP_LIST * wl );
 
 bool_t wp_list_prune(WP_LIST * wl);
 
@@ -595,10 +582,6 @@ struct s_ai_state
 };
 typedef struct s_ai_state AI_STATE;
 
-INLINE AI_STATE * ai_state_new(AI_STATE * a);
-INLINE bool_t     ai_state_delete(AI_STATE * a);
-INLINE AI_STATE * ai_state_init(struct sGame * gs, AI_STATE * a, CHR_REF ichr);
-INLINE AI_STATE * ai_state_reinit(AI_STATE * a, CHR_REF ichr);
 bool_t ai_state_advance_wp(AI_STATE * a, bool_t do_atlastwaypoint);
 
 
@@ -931,33 +914,8 @@ PIP_REF ChrList_getRPip(struct sGame * gs, CHR_REF ichr, int i);
 #define READVALID_CHR(LST, XX)   VALID_CHR(LST, XX)
 #define WRITEVALID_CHR(LST, XX)  SEMIACTIVE_CHR(LST, XX)
 
-INLINE bool_t chr_in_pack( PChr_t lst, size_t lst_size, CHR_REF character );
-INLINE bool_t chr_attached( PChr_t lst, size_t lst_size, CHR_REF character );
-INLINE bool_t chr_has_inventory( PChr_t lst, size_t lst_size, CHR_REF character );
-INLINE bool_t chr_is_invisible( PChr_t lst, size_t lst_size, CHR_REF character );
-INLINE bool_t chr_using_slot( PChr_t lst, size_t lst_size, CHR_REF character, SLOT slot );
-
-INLINE CHR_REF chr_get_nextinpack( PChr_t lst, size_t lst_size, CHR_REF ichr );
-INLINE CHR_REF chr_get_onwhichplatform( PChr_t lst, size_t lst_size, CHR_REF ichr );
-INLINE CHR_REF chr_get_inwhichpack( PChr_t lst, size_t lst_size, CHR_REF ichr );
-INLINE CHR_REF chr_get_attachedto( PChr_t lst, size_t lst_size, CHR_REF ichr );
-INLINE CHR_REF chr_get_holdingwhich( PChr_t lst, size_t lst_size, CHR_REF ichr, SLOT slot );
-
-INLINE CHR_REF chr_get_aitarget( PChr_t lst, size_t lst_size, Chr_t * pchr );
-INLINE CHR_REF chr_get_aiowner( PChr_t lst, size_t lst_size, Chr_t * pchr );
-INLINE CHR_REF chr_get_aichild( PChr_t lst, size_t lst_size, Chr_t * pchr );
-INLINE CHR_REF chr_get_aiattacklast( PChr_t lst, size_t lst_size, Chr_t * pchr );
-INLINE CHR_REF chr_get_aibumplast( PChr_t lst, size_t lst_size, Chr_t * pchr );
-INLINE CHR_REF chr_get_aihitlast( PChr_t lst, size_t lst_size, Chr_t * pchr );
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-
-INLINE EGO_CONST SLOT   grip_to_slot( GRIP g );
-INLINE EGO_CONST GRIP   slot_to_grip( SLOT s );
-INLINE EGO_CONST Uint16 slot_to_latch( PChr_t lst, size_t count, Uint16 object, SLOT s );
-INLINE EGO_CONST Uint16 slot_to_offset( SLOT s );
-
 
 // Character data
 
@@ -979,7 +937,8 @@ void make_character_matrices( struct sGame * gs );
 
 Uint32 chr_hitawall( struct sGame * gs, Chr_t * pchr, vect3 * norm );
 
-void play_action( struct sGame * gs, CHR_REF character, ACTION action, bool_t ready );
+bool_t play_action( struct sGame * gs, CHR_REF character, ACTION action, bool_t ready );
+bool_t request_action( struct sGame * gs, CHR_REF character, ACTION action, bool_t ready );
 void set_frame( struct sGame * gs, CHR_REF character, Uint16 frame, Uint8 lip );
 
 bool_t attach_character_to_mount( struct sGame * gs, CHR_REF character, CHR_REF mount, SLOT slot );

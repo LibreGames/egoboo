@@ -378,6 +378,9 @@
 				RelativePath=".\egoboo_rpc.h">
 			</File>
 			<File
+				RelativePath=".\egoboo_stream.h">
+			</File>
+			<File
 				RelativePath=".\egoboo_strutil.h">
 			</File>
 			<File
@@ -637,6 +640,9 @@
 			</File>
 			<File
 				RelativePath=".\egoboo_math.inl">
+			</File>
+			<File
+				RelativePath=".\egoboo_stream.inl">
 			</File>
 			<File
 				RelativePath=".\egoboo_types.inl">

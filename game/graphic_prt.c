@@ -231,8 +231,7 @@ void get_vectors( PRT_REF prt, vect3 * vert, vect3 * horiz, float * dist )
   ( *vert ).x  = sinsize * vector_right.x + cossize * vector_up.x;
   ( *vert ).y  = sinsize * vector_right.y + cossize * vector_up.y;
   ( *vert ).z  = sinsize * vector_right.z + cossize * vector_up.z;
-};
-
+}
 
 //--------------------------------------------------------------------------------------------
 void render_antialias_prt( Uint32 vrtcount, GLVertex * vrtlist )
@@ -300,7 +299,7 @@ void render_antialias_prt( Uint32 vrtcount, GLVertex * vrtlist )
     }
   }
   ATTRIB_POP( "render_antialias_prt" );
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void render_solid_prt( Uint32 vrtcount, GLVertex * vrtlist )
@@ -364,7 +363,8 @@ void render_solid_prt( Uint32 vrtcount, GLVertex * vrtlist )
     }
   }
   glPopAttrib();
-};
+}
+
 //--------------------------------------------------------------------------------------------
 void render_transparent_prt( Uint32 vrtcount, GLVertex * vrtlist )
 {
@@ -429,8 +429,7 @@ void render_transparent_prt( Uint32 vrtcount, GLVertex * vrtlist )
     }
   }
   glPopAttrib();
-};
-
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t calc_billboard(Game_t * gs, GLVertex vrtlst[], GLVertex * vert, float size, Uint16 image)
@@ -559,8 +558,7 @@ void render_light_prt( Uint32 vrtcount, GLVertex * vrtlist )
     }
   }
   glPopAttrib();
-};
-
+}
 
 //--------------------------------------------------------------------------------------------
 int cmp_particle_vertices( const void * pleft, const void * pright )
@@ -583,8 +581,7 @@ int cmp_particle_vertices( const void * pleft, const void * pright )
   {
     return 0;
   }
-
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void sort_particles( GLVertex v[], int numparticle )
@@ -611,7 +608,7 @@ void render_particles()
   Uint16 numparticle;
   PRT_REF prt_cnt;
 
-  if ( MAXTEXTURE == particletexture || INVALID_TEXTURE == GLtexture_GetTextureID( gfx->TxTexture + particletexture ) ) return;
+  if ( INVALID_TX_ID == gfx->TxTexture[TX_PARTICLE].textureID || INVALID_TX_ID == GLtexture_GetTextureID( gfx->TxTexture + TX_PARTICLE ) ) return;
 
   // Original points
   numparticle = 0;
@@ -645,7 +642,7 @@ void render_particles()
     glDisable( GL_DITHER );
 
     // Choose texture
-    GLtexture_Bind( gfx->TxTexture + particletexture, &gfxState );
+    GLtexture_Bind( gfx->TxTexture + TX_PARTICLE, &gfxState );
 
     // DO ANTIALIAS SOLID SPRITES FIRST
     render_antialias_prt( numparticle, v );
@@ -660,8 +657,7 @@ void render_particles()
     render_transparent_prt( numparticle, v );
   }
   glPopAttrib();
-
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void render_antialias_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
@@ -727,8 +723,7 @@ void render_antialias_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
     }
   }
   glPopAttrib();
-
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void render_solid_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
@@ -792,7 +787,7 @@ void render_solid_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
     }
   }
   glPopAttrib();
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void render_transparent_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
@@ -858,7 +853,7 @@ void render_transparent_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
     }
   }
   glPopAttrib();
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void render_light_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
@@ -921,7 +916,7 @@ void render_light_prt_ref( Uint32 vrtcount, GLVertex * vrtlist )
 
   }
   glPopAttrib();
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void render_particle_reflections()
@@ -941,7 +936,7 @@ void render_particle_reflections()
   PRT_REF prt_cnt;
   float level;
 
-  if ( INVALID_TEXTURE == GLtexture_GetTextureID( gfx->TxTexture + particletexture ) )
+  if ( INVALID_TX_ID == GLtexture_GetTextureID( gfx->TxTexture + TX_PARTICLE ) )
     return;
 
   // Original points
@@ -977,7 +972,7 @@ void render_particle_reflections()
     glShadeModel( gfxState.shading );
 
     // Choose texture and matrix
-    GLtexture_Bind( gfx->TxTexture + particletexture, &gfxState );
+    GLtexture_Bind( gfx->TxTexture + TX_PARTICLE, &gfxState );
 
     glDisable( GL_CULL_FACE );
     glDisable( GL_DITHER );

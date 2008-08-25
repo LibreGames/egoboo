@@ -21,7 +21,7 @@
 
 ///
 /// @file
-/// @brief 
+/// @brief
 /// @details functions that will be declared inside the base class
 
 #include "object.h"
@@ -31,13 +31,39 @@
 #include "egoboo_types.inl"
 
 //--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+INLINE BData_t * BData_new(BData_t * b);
+INLINE bool_t  BData_delete(BData_t * b);
+INLINE BData_t * BData_renew(BData_t * b);
+
+INLINE CHR_REF team_get_sissy( struct sGame * gs, TEAM_REF iteam );
+INLINE CHR_REF team_get_leader( struct sGame * gs, TEAM_REF iteam );
+INLINE bool_t  team_is_prey( struct sGame * gs, TEAM_REF iteam1, TEAM_REF iteam2 );
+INLINE bool_t  team_is_predator( struct sGame * gs, TEAM_REF iteam1, TEAM_REF iteam2 );
+INLINE bool_t  team_is_enemy( struct sGame * gs, TEAM_REF iteam1, TEAM_REF iteam2 );
+
+INLINE VData_Blended_t * VData_Blended_new( void );
+INLINE void VData_Blended_delete(VData_Blended_t * v);
+
+INLINE void VData_Blended_construct(VData_Blended_t * v);
+INLINE void VData_Blended_destruct(VData_Blended_t * v);
+INLINE void VData_Blended_Allocate(VData_Blended_t * v, size_t verts);
+INLINE void VData_Blended_Deallocate(VData_Blended_t * v);
+
+INLINE EGO_CONST SLOT   grip_to_slot( GRIP g );
+INLINE EGO_CONST GRIP   slot_to_grip( SLOT s );
+INLINE EGO_CONST Uint16 slot_to_latch( PChr_t lst, size_t count, Uint16 object, SLOT s );
+INLINE EGO_CONST Uint16 slot_to_offset( SLOT s );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 INLINE CHR_REF team_get_sissy( Game_t * gs, TEAM_REF iteam )
 {
   if ( !VALID_TEAM_RANGE( iteam ) ) return INVALID_CHR;
 
   gs->TeamList[iteam].sissy = VALIDATE_CHR( gs->ChrList, gs->TeamList[iteam].sissy );
   return gs->TeamList[iteam].sissy;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF team_get_leader( Game_t * gs, TEAM_REF iteam )
@@ -46,8 +72,36 @@ INLINE CHR_REF team_get_leader( Game_t * gs, TEAM_REF iteam )
 
   gs->TeamList[iteam].leader = VALIDATE_CHR( gs->ChrList, gs->TeamList[iteam].leader );
   return gs->TeamList[iteam].leader;
-};
+}
 
+//--------------------------------------------------------------------------------------------
+INLINE bool_t  team_is_prey( struct sGame * gs, TEAM_REF iteam1, TEAM_REF iteam2 )
+{
+  if ( !VALID_TEAM_RANGE( iteam1 ) ) return bfalse;
+  if ( !VALID_TEAM_RANGE( iteam2 ) ) return bfalse;
+
+  return gs->TeamList[iteam1].hatesteam[iteam2];
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE bool_t  team_is_predator( struct sGame * gs, TEAM_REF iteam1, TEAM_REF iteam2 )
+{
+  if ( !VALID_TEAM_RANGE( iteam1 ) ) return bfalse;
+  if ( !VALID_TEAM_RANGE( iteam2 ) ) return bfalse;
+
+  return gs->TeamList[iteam2].hatesteam[iteam1];
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE bool_t team_is_enemy( struct sGame * gs, TEAM_REF iteam1, TEAM_REF iteam2 )
+{
+  if ( !VALID_TEAM_RANGE( iteam1 ) ) return bfalse;
+  if ( !VALID_TEAM_RANGE( iteam2 ) ) return bfalse;
+
+  return gs->TeamList[iteam1].hatesteam[iteam2] && gs->TeamList[iteam2].hatesteam[iteam1];
+}
+
+//--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 INLINE EGO_CONST SLOT grip_to_slot( GRIP g )
 {
@@ -83,7 +137,7 @@ INLINE EGO_CONST SLOT grip_to_slot( GRIP g )
   };
 
   return s;
-};
+}
 
 
 //--------------------------------------------------------------------------------------------
@@ -108,7 +162,7 @@ INLINE EGO_CONST GRIP slot_to_grip( SLOT s )
   }
 
   return g;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE EGO_CONST Uint16 slot_to_offset( SLOT s )
@@ -131,7 +185,7 @@ INLINE EGO_CONST Uint16 slot_to_offset( SLOT s )
   }
 
   return o;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE EGO_CONST Uint16 slot_to_latch( PChr_t lst, size_t count, CHR_REF object, SLOT s )
@@ -150,7 +204,7 @@ INLINE EGO_CONST Uint16 slot_to_latch( PChr_t lst, size_t count, CHR_REF object,
   };
 
   return latch;
-};
+}
 
 
 
@@ -164,7 +218,7 @@ INLINE BData_t * BData_new(BData_t * b)
   b->valid = bfalse;
 
   return b;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE bool_t BData_delete(BData_t * b)
@@ -184,4 +238,77 @@ INLINE BData_t * BData_renew(BData_t * b)
 
   BData_delete(b);
   return BData_new(b);
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+INLINE void VData_Blended_construct(VData_Blended_t * v)
+{
+  if(NULL == v) return;
+
+  v->Vertices = NULL;
+  v->Normals  = NULL;
+  v->Colors   = NULL;
+  v->Texture  = NULL;
+  v->Ambient  = NULL;
+
+  v->frame0 = 0;
+  v->frame1 = 0;
+  v->vrtmin = 0;
+  v->vrtmax = 0;
+  v->lerp   = 0.0f;
+  v->needs_lighting = btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE void VData_Blended_destruct(VData_Blended_t * v)
+{
+  VData_Blended_Deallocate(v);
+}
+
+
+//--------------------------------------------------------------------------------------------
+INLINE void VData_Blended_Deallocate(VData_Blended_t * v)
+{
+  if(NULL == v) return;
+
+  EGOBOO_DELETE( v->Vertices );
+  EGOBOO_DELETE( v->Normals );
+  EGOBOO_DELETE( v->Colors );
+  EGOBOO_DELETE( v->Texture );
+  EGOBOO_DELETE( v->Ambient );
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE VData_Blended_t * VData_Blended_new()
+{
+  VData_Blended_t * retval = EGOBOO_NEW( VData_Blended_t );
+  if(NULL != retval)
+  {
+    VData_Blended_construct(retval);
+  };
+  return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE void VData_Blended_delete(VData_Blended_t * v)
+{
+  if(NULL != v) return;
+
+  VData_Blended_destruct(v);
+  EGOBOO_DELETE(v);
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE void VData_Blended_Allocate(VData_Blended_t * v, size_t verts)
+{
+  if(NULL == v) return;
+
+  VData_Blended_destruct(v);
+
+  v->Vertices = EGOBOO_NEW_ARY( vect3, verts );
+  v->Normals  = EGOBOO_NEW_ARY( vect3, verts );
+  v->Colors   = EGOBOO_NEW_ARY( vect4, verts );
+  v->Texture  = EGOBOO_NEW_ARY( vect2, verts );
+  v->Ambient  = EGOBOO_NEW_ARY( float, verts );
 }

@@ -213,7 +213,7 @@ void Begin2DMode( void )
   glDisable( GL_DEPTH_TEST );
 
   glColor4f( 1, 1, 1, 1 );
-};
+}
 
 /********************> End2DMode() <*****/
 void End2DMode( void )
@@ -289,7 +289,7 @@ Uint32 load_one_icon( Graphics_Data_t * gfx, char * szPathname, EGO_CONST char *
 
   Uint32 retval = MAXICONTX;
 
-  if ( INVALID_TEXTURE != GLtexture_Load( GL_TEXTURE_2D,  gfx->TxIcon + gfx->TxIcon_count,  inherit_fname(szPathname, szObjectname, szFilename), INVALID_KEY ) )
+  if ( INVALID_TX_ID != GLtexture_Load( GL_TEXTURE_2D,  gfx->TxIcon + gfx->TxIcon_count,  inherit_fname(szPathname, szObjectname, szFilename), INVALID_KEY ) )
   {
     retval = gfx->TxIcon_count;
     gfx->TxIcon_count++;
@@ -329,7 +329,7 @@ void prime_icons(Game_t * gs)
   gfx->TxIcon_count = 0;
   for ( cnt = 0; cnt < MAXICONTX; cnt++ )
   {
-    gfx->TxIcon[cnt].textureID = INVALID_TEXTURE;
+    gfx->TxIcon[cnt].textureID = INVALID_TX_ID;
     gs->skintoicon[cnt] = MAXICONTX;
   }
 
@@ -356,7 +356,7 @@ void release_all_icons( Graphics_Data_t * gfx )
   for ( cnt = 0; cnt < MAXICONTX; cnt++ )
   {
     GLtexture_Release( gfx->TxIcon + cnt );
-    gfx->TxIcon[cnt].textureID = INVALID_TEXTURE;
+    gfx->TxIcon[cnt].textureID = INVALID_TX_ID;
   }
   gfx->TxIcon_count = 0;
 }
@@ -419,8 +419,7 @@ bool_t debug_message( int time, EGO_CONST char *format, ... )
   va_end( args );
 
   return retval;
-};
-
+}
 
 //--------------------------------------------------------------------------------------------
 void reset_end_text( Game_t * gs )
@@ -445,19 +444,6 @@ void reset_end_text( Game_t * gs )
     snprintf( gs->endtext, sizeof( gs->endtext ), "Sadly, they were never heard from again..." );
   }
 
-}
-
-//--------------------------------------------------------------------------------------------
-void append_end_text( Game_t * gs, int message, CHR_REF chr_ref )
-{
-  /// @details ZZ@> This function appends a message to the end-module text
-
-  char * message_src;
-
-  if ( message < gs->MsgList.total ) return;
-
-  message_src = gs->MsgList.text + gs->MsgList.index[message];
-  decode_escape_sequence(gs, gs->endtext, sizeof(gs->endtext), message_src, chr_ref);
 }
 
 //--------------------------------------------------------------------------------------------
@@ -508,67 +494,53 @@ bool_t load_particle_texture( Game_t * gs, EGO_CONST char *szModPath  )
   STRING szTemp;
   ConfigData_t * cd;
   Graphics_Data_t * gfx = Game_getGfx(gs);
+  GLtexture * ptex;
 
   if( !EKEY_PVALID(gs) ) return bfalse;
+
+  ptex = gfx->TxTexture + TX_PARTICLE;
 
   cd = gs->cd;
   if(NULL == cd) cd = &CData;
 
   // release any old texture
-  if(MAXTEXTURE != particletexture)
-  {
-    GLtexture_delete( gfx->TxTexture + particletexture );
-    particletexture = MAXTEXTURE;
-  }
+  GLtexture_delete( ptex );
 
   if( VALID_CSTR(szModPath) )
   {
     // try to load it from the module's gamedat dir
-    if( MAXTEXTURE == particletexture )
+    if( INVALID_TX_ID == ptex->textureID )
     {
       snprintf( szTemp, sizeof( szTemp ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, "particle.bmp" );
-      if ( INVALID_TEXTURE != GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_PARTICLE, szTemp, TRANSCOLOR ) )
-      {
-        particletexture = TX_PARTICLE;
-      }
+      GLtexture_Load( GL_TEXTURE_2D,  ptex, szTemp, TRANSCOLOR );
     }
 
-    if( MAXTEXTURE == particletexture )
+    if( INVALID_TX_ID == ptex->textureID )
     {
       snprintf( szTemp, sizeof( szTemp ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, "particle.png" );
-      if ( INVALID_TEXTURE != GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_PARTICLE, szTemp, TRANSCOLOR ) )
-      {
-        particletexture = TX_PARTICLE;
-      }
+      GLtexture_Load( GL_TEXTURE_2D,  ptex, szTemp, TRANSCOLOR );
     }
 
-    if( MAXTEXTURE == particletexture )
+    if( INVALID_TX_ID == ptex->textureID )
     {
       snprintf( szTemp, sizeof( szTemp ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->particle_bitmap );
-      if ( INVALID_TEXTURE != GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_PARTICLE, szTemp, TRANSCOLOR ) )
-      {
-        particletexture = TX_PARTICLE;
-      }
+      GLtexture_Load( GL_TEXTURE_2D,  ptex, szTemp, TRANSCOLOR );
     }
   }
 
   // load the default
-  if( MAXTEXTURE == particletexture )
+  if( INVALID_TX_ID == ptex->textureID )
   {
     snprintf( szTemp, sizeof( szTemp ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->globalparticles_dir, cd->particle_bitmap );
-    if ( INVALID_TEXTURE != GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_PARTICLE, szTemp, TRANSCOLOR ) )
-    {
-      particletexture = TX_PARTICLE;
-    }
+    GLtexture_Load( GL_TEXTURE_2D,  ptex, szTemp, TRANSCOLOR );
   }
 
-
-  if( MAXTEXTURE == particletexture )
+  if( INVALID_TX_ID == ptex->textureID )
   {
     log_warning( "!!!!Particle bitmap could not be found!!!! Missing File = \"%s\"\n", szTemp );
   };
 
-  return (MAXTEXTURE != particletexture);
+  return (INVALID_TX_ID != ptex->textureID);
 }
 
 
@@ -590,40 +562,40 @@ bool_t load_basic_textures( Game_t * gs, EGO_CONST char *szModPath )
 
   // Module background tiles
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->tile0_bitmap );
-  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_TILE_0, CStringTmp1, TRANSCOLOR ) )
+  if ( INVALID_TX_ID == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_TILE_0, CStringTmp1, TRANSCOLOR ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->tile0_bitmap );
-    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_TILE_0, CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TX_ID == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_TILE_0, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Tile 0 could not be found. Missing File = \"%s\"\n", cd->tile0_bitmap );
     }
   };
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->tile1_bitmap );
-  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,   gfx->TxTexture + TX_TILE_1, CStringTmp1, TRANSCOLOR ) )
+  if ( INVALID_TX_ID == GLtexture_Load( GL_TEXTURE_2D,   gfx->TxTexture + TX_TILE_1, CStringTmp1, TRANSCOLOR ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->tile1_bitmap );
-    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_TILE_1, CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TX_ID == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_TILE_1, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Tile 1 could not be found. Missing File = \"%s\"\n", cd->tile1_bitmap );
     }
   };
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->tile2_bitmap );
-  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_TILE_2, CStringTmp1, TRANSCOLOR ) )
+  if ( INVALID_TX_ID == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_TILE_2, CStringTmp1, TRANSCOLOR ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->tile2_bitmap );
-    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_TILE_2, CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TX_ID == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_TILE_2, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Tile 2 could not be found. Missing File = \"%s\"\n", cd->tile2_bitmap );
     }
   };
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->tile3_bitmap );
-  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_TILE_3, CStringTmp1, TRANSCOLOR ) )
+  if ( INVALID_TX_ID == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_TILE_3, CStringTmp1, TRANSCOLOR ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->tile3_bitmap );
-    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_TILE_3, CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TX_ID == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_TILE_3, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Tile 3 could not be found. Missing File = \"%s\"\n", cd->tile3_bitmap );
     }
@@ -632,10 +604,10 @@ bool_t load_basic_textures( Game_t * gs, EGO_CONST char *szModPath )
 
   // Water textures
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->watertop_bitmap );
-  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_WATER_TOP, CStringTmp1, INVALID_KEY ) )
+  if ( INVALID_TX_ID == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_WATER_TOP, CStringTmp1, INVALID_KEY ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->watertop_bitmap );
-    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_WATER_TOP, CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TX_ID == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_WATER_TOP, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Water Layer 1 could not be found. Missing File = \"%s\"\n", cd->watertop_bitmap );
     }
@@ -643,10 +615,10 @@ bool_t load_basic_textures( Game_t * gs, EGO_CONST char *szModPath )
 
   // This is also used as far background
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->waterlow_bitmap );
-  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_WATER_LOW, CStringTmp1, INVALID_KEY ) )
+  if ( INVALID_TX_ID == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_WATER_LOW, CStringTmp1, INVALID_KEY ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->waterlow_bitmap );
-    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_WATER_LOW, CStringTmp1, TRANSCOLOR ) )
+    if ( INVALID_TX_ID == GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + TX_WATER_LOW, CStringTmp1, TRANSCOLOR ) )
     {
       log_warning( "Water Layer 0 could not be found. Missing File = \"%s\"\n", cd->waterlow_bitmap );
     }
@@ -656,7 +628,7 @@ bool_t load_basic_textures( Game_t * gs, EGO_CONST char *szModPath )
   // BB> this is handled differently now and is not needed
   // Texture 7 is the phong map
   //snprintf(CStringTmp1, sizeof(CStringTmp1), "%s%s" SLASH_STRING "%s", szModPath, cd->gamedat_dir, cd->phong_bitmap);
-  //if(INVALID_TEXTURE==GLtexture_Load(GL_TEXTURE_2D,  gfx->TxTexture + TX_PHONG, CStringTmp1, INVALID_KEY))
+  //if(INVALID_TX_ID==GLtexture_Load(GL_TEXTURE_2D,  gfx->TxTexture + TX_PHONG, CStringTmp1, INVALID_KEY))
   //{
   //  snprintf(CStringTmp1, sizeof(CStringTmp1), "%s" SLASH_STRING "%s", cd->basicdat_dir, cd->phong_bitmap);
   //  GLtexture_Load(GL_TEXTURE_2D,  gfx->TxTexture + TX_PHONG, CStringTmp1, TRANSCOLOR );
@@ -673,12 +645,12 @@ bool_t load_basic_textures( Game_t * gs, EGO_CONST char *szModPath )
 bool_t load_bars( char* szBitmap )
 {
   /// @details ZZ@> This function loads the status bar bitmap
-  Gui_t * gui = gui_getState();
+  //Gui_t * gui = gui_getState();
   int cnt;
 
   Graphics_Data_t * gfx = gfxState.pGfx;
 
-  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D, &gfx->TxBars, szBitmap, 0 ) )
+  if ( INVALID_TX_ID == GLtexture_Load( GL_TEXTURE_2D, &gfx->TxBars, szBitmap, 0 ) )
   {
     return bfalse;
   }
@@ -797,14 +769,14 @@ bool_t setup_lighting( LIGHTING_INFO * li )
   make_spektable( li->spekdir );
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void render_background( Uint16 texture )
 {
   /// @details ZZ@> This function draws the large background
 
-  Game_t * gs = Graphics_requireGame(&gfxState);
+  //Game_t * gs = Graphics_requireGame(&gfxState);
   Graphics_Data_t * gfx = gfxState.pGfx;
 
   GLVertex vtlist[4];
@@ -881,7 +853,7 @@ void render_background( Uint16 texture )
 //--------------------------------------------------------------------------------------------
 void render_foreground_overlay( Uint16 texture )
 {
-  Game_t * gs = Graphics_requireGame(&gfxState);
+  //Game_t * gs = Graphics_requireGame(&gfxState);
   Graphics_Data_t * gfx = gfxState.pGfx;
 
   GLVertex vtlist[4];
@@ -1082,13 +1054,13 @@ void render_shadow( CHR_REF character )
       glDepthFunc( GL_LESS );
 
       // Choose texture.
-      if( MAXTEXTURE == particletexture)
+      if( INVALID_TX_ID == gfx->TxTexture[TX_PARTICLE].textureID)
       {
         GLtexture_Bind( NULL, &gfxState );
       }
       else
       {
-        GLtexture_Bind( gfx->TxTexture + particletexture, &gfxState );
+        GLtexture_Bind( gfx->TxTexture + TX_PARTICLE, &gfxState );
       };
 
       glBegin( GL_TRIANGLE_FAN );
@@ -1132,13 +1104,13 @@ void render_shadow( CHR_REF character )
       glDepthFunc( GL_LEQUAL );
 
       // Choose texture.
-      if( MAXTEXTURE == particletexture)
+      if( INVALID_TX_ID == gfx->TxTexture[TX_PARTICLE].textureID)
       {
         GLtexture_Bind( NULL, &gfxState );
       }
       else
       {
-        GLtexture_Bind( gfx->TxTexture + particletexture, &gfxState );
+        GLtexture_Bind( gfx->TxTexture + TX_PARTICLE, &gfxState );
       };
 
       glBegin( GL_TRIANGLE_FAN );
@@ -1152,7 +1124,7 @@ void render_shadow( CHR_REF character )
     }
     ATTRIB_POP( "render_shadow" );
   };
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void calc_chr_lighting( vect3 pos, Uint16 tl, Uint16 tr, Uint16 bl, Uint16 br, Uint16 * spek, Uint16 * minv, Uint16 * maxv )
@@ -1190,7 +1162,7 @@ void calc_chr_lighting( vect3 pos, Uint16 tl, Uint16 tr, Uint16 bl, Uint16 br, U
       (*spek) = (dy*bot + (1.0f-dy)*top) - minval;
     };
   }
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void do_chr_dynalight(Game_t * gs)
@@ -1373,7 +1345,7 @@ void render_water()
   /// @details ZZ@> This function draws all of the water fans
 
   int cnt;
-  Game_t * gs = Graphics_requireGame(&gfxState);
+  //Game_t * gs = Graphics_requireGame(&gfxState);
   Graphics_Data_t * gfx = gfxState.pGfx;
 
   // Bottom layer first
@@ -1404,7 +1376,7 @@ void render_water_lit()
   /// @details BB@> This function draws the hilites for water tiles using global lighting
 
   int cnt;
-  Game_t * gs = Graphics_requireGame(&gfxState);
+  //Game_t * gs = Graphics_requireGame(&gfxState);
   Graphics_Data_t * gfx = gfxState.pGfx;
 
   // Bottom layer first
@@ -1546,8 +1518,7 @@ void render_character_reflections()
     }
   }
   ATTRIB_POP( "render_character_reflections" );
-
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void render_normal_fans()
@@ -1591,7 +1562,7 @@ void render_normal_fans()
     }
   }
   ATTRIB_POP( "render_normal_fans" );
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void render_shiny_fans()
@@ -1636,7 +1607,7 @@ void render_shiny_fans()
     }
   }
   ATTRIB_POP( "render_shiny_fans" );
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void render_reflected_fans_ref()
@@ -1684,7 +1655,7 @@ void render_reflected_fans_ref()
     }
   }
   ATTRIB_POP( "render_reflected_fans_ref" );
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void render_solid_characters()
@@ -1721,8 +1692,7 @@ void render_solid_characters()
     }
   }
   ATTRIB_POP( "render_solid_characters" );
-
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void render_alpha_characters()
@@ -1768,14 +1738,13 @@ void render_alpha_characters()
 
   }
   ATTRIB_POP( "render_alpha_characters" );
-
-};
+}
 
 //--------------------------------------------------------------------------------------------
 // render the water hilights, etc. using global lighting
 void render_water_highlights()
 {
-  Game_t * gs = Graphics_requireGame(&gfxState);
+  //Game_t * gs = Graphics_requireGame(&gfxState);
   Graphics_Data_t * gfx = gfxState.pGfx;
 
   ATTRIB_PUSH( "render_water_highlights", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_LIGHTING_BIT );
@@ -1810,7 +1779,7 @@ void render_water_highlights()
     glDisable( GL_LIGHTING );
   }
   ATTRIB_POP( "render_water_highlights" );
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void render_alpha_water()
@@ -1835,7 +1804,7 @@ void render_alpha_water()
     render_water();
   }
   ATTRIB_POP( "render_alpha_water" );
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void render_light_water()
@@ -1858,7 +1827,7 @@ void render_light_water()
     render_water();
   }
   ATTRIB_POP( "render_light_water" );
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void render_character_highlights()
@@ -1915,7 +1884,7 @@ void render_character_highlights()
     glDisable( GL_LIGHTING );
   }
   ATTRIB_POP( "render_character_highlights" );
-};
+}
 
 GLint inp_attrib_stack, out_attrib_stack;
 void draw_scene_zreflection()
@@ -1923,7 +1892,7 @@ void draw_scene_zreflection()
   /// @details ZZ@> This function draws 3D objects
   /// do all the rendering of reflections
 
-  Game_t * gs = Graphics_requireGame(&gfxState);
+  //Game_t * gs = Graphics_requireGame(&gfxState);
   Graphics_Data_t * gfx = gfxState.pGfx;
 
   if ( CData.refon )
@@ -2041,9 +2010,7 @@ void draw_scene_zreflection()
 //    }
 //  };
 //#endif
-
-};
-
+}
 
 bool_t draw_texture_box( GLtexture * ptx, FRect_t * tx_rect, FRect_t * sc_rect )
 {
@@ -2075,7 +2042,7 @@ void draw_blip( COLR color, float x, float y)
 {
   /// @details ZZ@> This function draws a blip
 
-  Gui_t * gui = gui_getState();
+  //Gui_t * gui = gui_getState();
   Graphics_Data_t * gfx = gfxState.pGfx;
 
   FRect_t tx_rect, sc_rect;
@@ -2132,7 +2099,7 @@ void draw_one_icon( int icontype, int x, int y, Uint8 sparkle )
   int width, height;
   FRect_t tx_rect, sc_rect;
 
-  if (MAXICONTX== icontype || INVALID_TEXTURE == gfx->TxIcon[icontype].textureID ) return;
+  if (MAXICONTX== icontype || INVALID_TX_ID == gfx->TxIcon[icontype].textureID ) return;
 
   ATTRIB_PUSH( "draw_one_icon", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT | GL_TEXTURE_BIT | GL_LIGHTING_BIT | GL_CURRENT_BIT );
   {
@@ -2221,7 +2188,7 @@ void draw_map( float x, float y )
   /// @details ZZ@> This function draws the map
 
   FRect_t tx_rect, sc_rect;
-  Game_t * gs = Graphics_requireGame(&gfxState);
+  //Game_t * gs = Graphics_requireGame(&gfxState);
   Graphics_Data_t * gfx = gfxState.pGfx;
 
   ATTRIB_PUSH( "draw_map", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT | GL_TEXTURE_BIT | GL_LIGHTING_BIT );
@@ -2259,7 +2226,7 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
 {
   /// @details ZZ@> This function draws a bar and returns the y position for the next one
 
-  Gui_t * gui = gui_getState();
+  //Gui_t * gui = gui_getState();
   Graphics_Data_t * gfx = gfxState.pGfx;
 
   int noticks;
@@ -2438,7 +2405,7 @@ int draw_one_bar( int bartype, int x, int y, int ticks, int maxticks )
 int draw_string( BMFont_t * pfnt, float x, float y, GLfloat tint[], char * szFormat, ... )
 {
   /// @details ZZ@> This function spits a line of null terminated text onto the backbuffer
-  char cTmp;
+  Uint8 cTmp;
   GLfloat current_tint[4], temp_tint[4];
   STRING szText;
   va_list args;
@@ -2542,7 +2509,7 @@ int draw_wrap_string( BMFont_t * pfnt, float x, float y, GLfloat tint[], float m
   va_list args;
   STRING szText;
   int xstt, ystt, newy, cnt;
-  char cTmp;
+  Uint8 cTmp;
   bool_t newword;
   GLfloat current_tint[4], temp_tint[4];
 
@@ -2878,7 +2845,7 @@ int do_status( Client_t * cs, BMFont_t * pfnt, int x, int y)
   };
 
   return y - ystt;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void draw_text( BMFont_t *  pfnt )
@@ -3135,13 +3102,13 @@ void draw_text( BMFont_t *  pfnt )
 bool_t query_clear()
 {
   return gfxState.clear_requested;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t query_pageflip()
 {
   return gfxState.pageflip_requested;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t request_pageflip()
@@ -3228,7 +3195,7 @@ bool_t do_clear()
   };
 
   return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t draw_scene(Game_t * gs)
@@ -3280,14 +3247,14 @@ void draw_main( float frameDuration )
 void load_blip_bitmap( struct sGraphics_Data * gfx, char * modname )
 {
   //This function loads the blip bitmaps
-  Gui_t * gui = gui_getState();
+  //Gui_t * gui = gui_getState();
   int cnt;
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.blip_bitmap );
-  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  &gfx->BlipList_tex, CStringTmp1, INVALID_KEY ) )
+  if ( INVALID_TX_ID == GLtexture_Load( GL_TEXTURE_2D,  &gfx->BlipList_tex, CStringTmp1, INVALID_KEY ) )
   {
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.blip_bitmap );
-    if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D,  &gfx->BlipList_tex, CStringTmp1, INVALID_KEY ) )
+    if ( INVALID_TX_ID == GLtexture_Load( GL_TEXTURE_2D,  &gfx->BlipList_tex, CStringTmp1, INVALID_KEY ) )
     {
       log_warning( "Blip bitmap not loaded. Missing file = \"%s\"\n", CStringTmp1 );
     }
@@ -3403,7 +3370,7 @@ Graphics_t * Graphics_new(Graphics_t * g, ConfigData_t * cd)
   g->clear_requested       = btrue;
 
   return g;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 Game_t * Graphics_getGame(Graphics_t * g)
@@ -3563,7 +3530,7 @@ bool_t Graphics_synchronize(Graphics_t * g, ConfigData_t * cd)
 //
 //  GLfloat txWidth, txHeight;
 //
-//  if ( INVALID_TEXTURE != GLtexture_GetTextureID(mproc->TxTitleImage + image) )
+//  if ( INVALID_TX_ID != GLtexture_GetTextureID(mproc->TxTitleImage + image) )
 //  {
 //    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 //    Begin2DMode();
@@ -3879,7 +3846,7 @@ bool_t CVolume_draw( CVolume_t * cv, bool_t draw_square, bool_t draw_diamond  )
   ATTRIB_POP( "CVolume_draw" );
 
   return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -3924,7 +3891,7 @@ bool_t video_parameters_default(video_parameters_t * v)
   v->depth  =  32;
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t video_parameters_download(video_parameters_t * p, Graphics_t * g )
@@ -3967,7 +3934,7 @@ bool_t video_parameters_download(video_parameters_t * p, Graphics_t * g )
   p->height       = g->scry;
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t video_parameters_upload( video_parameters_t * p, Graphics_t * g )
@@ -3983,7 +3950,7 @@ bool_t video_parameters_upload( video_parameters_t * p, Graphics_t * g )
   g->scry       = p->height;
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -4115,9 +4082,7 @@ SDL_Surface * RequestVideoMode( video_parameters_t * v )
 
   return ret;
 
-};
-
-
+}
 
 //--------------------------------------------------------------------------------------------
 Graphics_t * sdl_set_mode(Graphics_t * g_old, Graphics_t * g_new, bool_t update_ogl)
@@ -4126,7 +4091,7 @@ Graphics_t * sdl_set_mode(Graphics_t * g_old, Graphics_t * g_new, bool_t update_
 
   video_parameters_t param_old, param_new;
   Graphics_t * retval = NULL;
-  bool_t success = btrue;                      // hope for the best
+  //bool_t success = btrue;                      // hope for the best
 
   if(!_gfx_initialized) return g_old;
 
@@ -4415,13 +4380,13 @@ void make_lightdirectionlookup()
 //      glDepthFunc(GL_LEQUAL);
 //
 //      // Choose texture.
-//      if( MAXTEXTURE == particletexture)
+//      if( INVALID_TX_ID == gfx->TxTexture[TX_PARTICLE].textureID)
 //      {
 //        GLtexture_Bind( NULL, &gfxState );
 //      }
 //      else
 //      {
-//        GLtexture_Bind( gfx->TxTexture + particletexture, &gfxState );
+//        GLtexture_Bind( gfx->TxTexture + TX_PARTICLE, &gfxState );
 //      };
 //
 //      glColor4f(FP8_TO_FLOAT(ambi), FP8_TO_FLOAT(ambi), FP8_TO_FLOAT(ambi), FP8_TO_FLOAT(trans));

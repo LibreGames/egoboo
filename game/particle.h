@@ -297,10 +297,6 @@ bool_t  PrtHeap_addFree( PrtHeap_t * pheap, PRT_REF ref );
 
 PROFILE_PROTOTYPE( PrtHeap )
 
-INLINE CHR_REF prt_get_owner( struct sGame * gs, PRT_REF iprt );
-INLINE CHR_REF prt_get_target( struct sGame * gs, PRT_REF iprt );
-INLINE CHR_REF prt_get_attachedtochr( struct sGame * gs, PRT_REF iprt );
-
 void    PrtList_free_one( struct sGame * gs, PRT_REF particle );
 void    end_one_particle( struct sGame * gs, PRT_REF particle );
 PRT_REF PrtList_get_free( struct sGame * gs, bool_t is_critical );
@@ -315,8 +311,6 @@ PIP_REF PrtList_getRPip(struct sGame * gs, PRT_REF iprt);
 CAP_REF PrtList_getRCap(struct sGame * gs, PRT_REF iprt);
 MAD_REF PrtList_getRMad(struct sGame * gs, PRT_REF iprt);
 
-extern Uint16          particletexture;                            ///< All in one bitmap
-
 #define VALID_PRT_RANGE(XX)     ( /*(((XX)>=0) && */ ((XX)<PRTLST_COUNT) )
 #define VALID_PRT(LST, XX)      ( VALID_PRT_RANGE(XX) && EKEY_VALID(LST[XX]) )
 #define VALIDATE_PRT(LST, XX)   ( VALID_PRT(LST, XX) ? (XX) : (INVALID_PRT) )
@@ -325,10 +319,10 @@ extern Uint16          particletexture;                            ///< All in o
 #define SEMIACTIVE_PRT(LST, XX) ( VALID_PRT(LST, XX) && (LST[XX].active || LST[XX].req_active) && !LST[XX].reserved )
 #define PENDING_PRT(LST, XX)    ( VALID_PRT(LST, XX) && LST[XX].req_active && !LST[XX].reserved )
 
-#define CALCULATE_PRT_U0(CNT)  (((.05f+(CNT&15))/16.0f)*(( float ) gfx->TxTexture[particletexture].imgW / ( float ) gfx->TxTexture[particletexture].txW))
-#define CALCULATE_PRT_U1(CNT)  (((.95f+(CNT&15))/16.0f)*(( float ) gfx->TxTexture[particletexture].imgW / ( float ) gfx->TxTexture[particletexture].txW))
-#define CALCULATE_PRT_V0(CNT)  (((.05f+(CNT/16))/16.0f) * ((float)gfx->TxTexture[particletexture].imgW/(float)gfx->TxTexture[particletexture].imgH)*(( float ) gfx->TxTexture[particletexture].imgH / ( float ) gfx->TxTexture[particletexture].txH))
-#define CALCULATE_PRT_V1(CNT)  (((.95f+(CNT/16))/16.0f) * ((float)gfx->TxTexture[particletexture].imgW/(float)gfx->TxTexture[particletexture].imgH)*(( float ) gfx->TxTexture[particletexture].imgH / ( float ) gfx->TxTexture[particletexture].txH))
+#define CALCULATE_PRT_U0(CNT)  (((.05f+(CNT&15))/16.0f)*(( float ) gfx->TxTexture[TX_PARTICLE].imgW / ( float ) gfx->TxTexture[TX_PARTICLE].txW))
+#define CALCULATE_PRT_U1(CNT)  (((.95f+(CNT&15))/16.0f)*(( float ) gfx->TxTexture[TX_PARTICLE].imgW / ( float ) gfx->TxTexture[TX_PARTICLE].txW))
+#define CALCULATE_PRT_V0(CNT)  (((.05f+(CNT/16))/16.0f) * ((float)gfx->TxTexture[TX_PARTICLE].imgW/(float)gfx->TxTexture[TX_PARTICLE].imgH)*(( float ) gfx->TxTexture[TX_PARTICLE].imgH / ( float ) gfx->TxTexture[TX_PARTICLE].txH))
+#define CALCULATE_PRT_V1(CNT)  (((.95f+(CNT/16))/16.0f) * ((float)gfx->TxTexture[TX_PARTICLE].imgW/(float)gfx->TxTexture[TX_PARTICLE].imgH)*(( float ) gfx->TxTexture[TX_PARTICLE].imgH / ( float ) gfx->TxTexture[TX_PARTICLE].txH))
 
 void PrtList_resynch( struct sGame * gs );
 void move_particles( struct sGame * gs, float dUpdate );
@@ -348,13 +342,10 @@ PRT_REF req_spawn_one_particle( PRT_SPAWN_INFO si );
 
 Uint32 prt_hitawall( struct sGame * gs, PRT_REF particle, vect3 * norm );
 
-
-
 PIP_REF PipList_load_one( struct sGame * gs, EGO_CONST char * szModpath, EGO_CONST char * szObjectname, EGO_CONST char * szFname, PIP_REF override );
 
 bool_t prt_calculate_bumpers(struct sGame * gs, PRT_REF iprt);
 
-bool_t prt_is_over_water( struct sGame * gs, PRT_REF cnt );
 void reset_particles( struct sGame * gs, char* modname );
 
 void PipList_load_global( struct sGame * gs );

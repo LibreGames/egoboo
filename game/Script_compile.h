@@ -76,13 +76,10 @@
 
 #define IS_END(XX) ( GET_FUNCTION_BITS( XX ) == END_FUNCTION )
 
-
-
-
 extern bool_t parseerror;    ///< Do we have an script error?
 extern int    iNumAis;   ///< These are for the AI script loading/parsing routines
 
 
-void load_ai_codes( char* loadname );
+void   load_ai_codes( char* loadname );
 Uint32 load_ai_script( ScriptInfo_t * slist, EGO_CONST char * szModpath, EGO_CONST char * szObjectname );
-void reset_ai_script(struct sGame * gs);
+void   reset_ai_script(struct sGame * gs);

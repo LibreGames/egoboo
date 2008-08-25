@@ -205,32 +205,17 @@ Mad_t *  Mad_new(Mad_t * pmad);
 bool_t  Mad_delete(Mad_t *pmad);
 Mad_t *  Mad_renew(Mad_t * pmad);
 
-void   MadList_free_one( struct sGame * gs, Uint16 imdl );
+void    MadList_free_one( struct sGame * gs, Uint16 imdl );
+MAD_REF MadList_load_one( struct sGame * gs, EGO_CONST char * szModpath, EGO_CONST char * szObjectname, MAD_REF irequest );
 
 #define VALID_MAD_RANGE(XX) ( /*(((XX)>=0) && */ ((XX)<MADLST_COUNT) )
 #define VALID_MAD(LST, XX)   ( VALID_MAD_RANGE(XX) && EKEY_VALID(LST[XX]) )
 #define VALIDATE_MAD(LST,XX) ( VALID_MAD(LST, XX) ? (XX) : (INVALID_MAD) )
 #define LOADED_MAD(LST, XX)  ( VALID_MAD(LST, XX) && LST[XX].Loaded )
 
-ACTION action_number(char * szName);
-Uint16 action_frame( void );
-void   action_copy_correct( struct sGame * gs, MAD_REF object, ACTION actiona, ACTION actionb );
-void   get_walk_frame( struct sGame * gs, MAD_REF object, LIPT lip_trans, ACTION action );
-Uint16 get_framefx( char * szName );
-void   make_framelip( struct sGame * gs, MAD_REF object, ACTION action );
-void   get_actions( struct sGame * gs, MAD_REF object );
+
 void   make_mad_equally_lit( struct sGame * gs, MAD_REF model );
 
-bool_t mad_generate_bbox_tree(int max_level, Mad_t * pmad);
-
-
-MAD_REF MadList_load_one( struct sGame * gs, EGO_CONST char * szModpath, EGO_CONST char * szObjectname, MAD_REF irequest );
 
 bool_t mad_display_bbox_tree(int level, matrix_4x4 matrix, Mad_t * pmad, int frame1, int frame2);
-void load_copy_file( struct sGame * gs, EGO_CONST char * szModpath, EGO_CONST char * szObjectname, MAD_REF object );
-
-void ObjList_log_used( struct sGame * gs, char *savename );
-
-int mad_vertexconnected( struct s_ego_md2_model * m, int vertex );
-int mad_calc_transvertices( struct s_ego_md2_model * m );
 enum e_Action what_action( char cTmp );

@@ -88,7 +88,7 @@ char * str_decode( char *strout, size_t insize, char * strin )
   if ( pout < plast ) *pout = EOS;
 
   return strout;
-};
+}
 
 char * str_encode( char *strout, size_t insize, char * strin )
 {
@@ -140,8 +140,7 @@ char * str_encode( char *strout, size_t insize, char * strin )
   if ( pout < plast ) *pout = EOS;
 
   return strout;
-};
-
+}
 
 char * str_convert_slash_net(char * str, size_t size)
 {

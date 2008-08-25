@@ -65,7 +65,7 @@ DAMAGE fget_damage( FILE *fileread )
   };
 
   return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 DAMAGE fget_next_damage( FILE *fileread )
@@ -78,7 +78,7 @@ DAMAGE fget_next_damage( FILE *fileread )
   }
 
   return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 BLUD_LEVEL fget_blud( FILE *fileread )
@@ -96,7 +96,7 @@ BLUD_LEVEL fget_blud( FILE *fileread )
   };
 
   return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 BLUD_LEVEL fget_next_blud( FILE *fileread )
@@ -109,7 +109,7 @@ BLUD_LEVEL fget_next_blud( FILE *fileread )
   }
 
   return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 RESPAWN_MODE fget_respawn( FILE *fileread )
@@ -127,7 +127,7 @@ RESPAWN_MODE fget_respawn( FILE *fileread )
   };
 
   return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 RESPAWN_MODE fget_next_respawn( FILE *fileread )
@@ -140,7 +140,7 @@ RESPAWN_MODE fget_next_respawn( FILE *fileread )
   }
 
   return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 DYNA_MODE fget_dynamode( FILE *fileread )
@@ -158,7 +158,7 @@ DYNA_MODE fget_dynamode( FILE *fileread )
   };
 
   return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 DYNA_MODE fget_next_dynamode( FILE *fileread )
@@ -170,7 +170,7 @@ DYNA_MODE fget_next_dynamode( FILE *fileread )
   }
 
   return retval;
-};
+}
 
 
 //--------------------------------------------------------------------------------------------
@@ -217,7 +217,7 @@ bool_t ftest_idsz( FILE* fileread )
   fseek( fileread, pos, SEEK_SET );
 
   return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 IDSZ fget_idsz( FILE* fileread )
@@ -632,8 +632,7 @@ void fgoto_colon_buffer( FILE* fileread, char * buffer, size_t buffer_len )
     // not enough colons in file!
     log_error( "There are not enough colons in file! (%s)\n", globalname );
   };
-
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t fgoto_colon_yesno_buffer( FILE* fileread, char * buffer, size_t buffer_len  )
@@ -730,7 +729,7 @@ bool_t fget_next_name( FILE* fileread, char *szName, size_t lnName )
   };
 
   return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 int fget_int( FILE* fileread )
@@ -742,7 +741,7 @@ int fget_int( FILE* fileread )
   fscanf( fileread, "%d", &iTmp );
 
   return iTmp;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 int fget_next_int( FILE* fileread )
@@ -755,7 +754,7 @@ int fget_next_int( FILE* fileread )
   };
 
   return iTmp;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 float fget_float( FILE* fileread )
@@ -767,7 +766,7 @@ float fget_float( FILE* fileread )
   fscanf( fileread, "%f", &fTmp );
 
   return fTmp;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 float fget_next_float( FILE* fileread )
@@ -780,7 +779,7 @@ float fget_next_float( FILE* fileread )
   };
 
   return fTmp;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 Uint16 fget_fixed( FILE* fileread )
@@ -792,7 +791,7 @@ Uint16 fget_fixed( FILE* fileread )
   fscanf( fileread, "%f", &fTmp );
 
   return FLOAT_TO_FP8( fTmp );
-};
+}
 
 //--------------------------------------------------------------------------------------------
 Uint16 fget_next_fixed( FILE* fileread )
@@ -805,7 +804,7 @@ Uint16 fget_next_fixed( FILE* fileread )
   };
 
   return iTmp;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t fget_bool( FILE* fileread )
@@ -823,7 +822,7 @@ bool_t fget_bool( FILE* fileread )
   };
 
   return bTmp;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t fget_next_bool( FILE* fileread )
@@ -836,7 +835,7 @@ bool_t fget_next_bool( FILE* fileread )
   };
 
   return bTmp;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 GENDER fget_gender( FILE* fileread )
@@ -855,7 +854,7 @@ GENDER fget_gender( FILE* fileread )
   }
 
   return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 GENDER fget_next_gender( FILE* fileread )
@@ -868,7 +867,7 @@ GENDER fget_next_gender( FILE* fileread )
   };
 
   return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 ACTION fget_action( FILE* fileread )
@@ -893,7 +892,7 @@ ACTION fget_next_action( FILE* fileread )
   };
 
   return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 PRTALPHA fget_prttype( FILE * fileread )
@@ -912,7 +911,7 @@ PRTALPHA fget_prttype( FILE * fileread )
   };
 
   return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 PRTALPHA fget_next_prttype( FILE * fileread )
@@ -925,7 +924,7 @@ PRTALPHA fget_next_prttype( FILE * fileread )
   };
 
   return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t fget_string( FILE* fileread, char *szLine, size_t lnLine )
@@ -1137,11 +1136,9 @@ EGO_CONST char * inherit_fname(EGO_CONST char * szObjPath, EGO_CONST char * szOb
 
   };
 
-
   fs_fileClose(loc_pfile);
 
   return ret_fname;
-
 }
 
 //--------------------------------------------------------------------------------------------

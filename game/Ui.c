@@ -21,7 +21,7 @@
 /// @file
 /// @brief Egoboo User Interface
 /// @details A basic library for implementing user interfaces, based off of Casey Muratori's IMGUI.
-///  (https://mollyrocket.com/forums/viewtopic.php?t=134) 
+///  (https://mollyrocket.com/forums/viewtopic.php?t=134)
 
 #include "Ui.h"
 
@@ -36,14 +36,8 @@
 #include "input.inl"
 #include "graphic.inl"
 
-GLfloat ui_active_color[]  = {0.00f, 0.00f, 0.90f, 0.60f};
-GLfloat ui_hot_color[]     = {0.54f, 0.00f, 0.00f, 1.00f};
-GLfloat ui_normal_color[]  = {0.66f, 0.00f, 0.00f, 0.60f};
-
-GLfloat ui_active_color2[] = {0.00f, 0.45f, 0.45f, 0.60f};
-GLfloat ui_hot_color2[]    = {0.00f, 0.28f, 0.28f, 1.00f};
-GLfloat ui_normal_color2[] = {0.33f, 0.00f, 0.33f, 0.60f};
-
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 struct s_ui_Context
 {
   // Tracking control focus stuff
@@ -64,8 +58,25 @@ struct s_ui_Context
   BMFont_t bmfont;
 };
 
+static ui_Context_t * UiContext_new(ui_Context_t *pui);
+static bool_t         UiContext_delete(ui_Context_t *pui);
+
 static ui_Context_t ui_context;
 
+//--------------------------------------------------------------------------------------------
+GLfloat ui_active_color[]  = {0.00f, 0.00f, 0.90f, 0.60f};
+GLfloat ui_hot_color[]     = {0.54f, 0.00f, 0.00f, 1.00f};
+GLfloat ui_normal_color[]  = {0.66f, 0.00f, 0.00f, 0.60f};
+
+GLfloat ui_active_color2[] = {0.00f, 0.45f, 0.45f, 0.60f};
+GLfloat ui_hot_color2[]    = {0.00f, 0.28f, 0.28f, 1.00f};
+GLfloat ui_normal_color2[] = {0.33f, 0.00f, 0.33f, 0.60f};
+
+//--------------------------------------------------------------------------------------------
+// Behaviors
+static ui_buttonValues _ui_buttonBehavior( ui_Widget_t * pWidget );
+static void            _ui_doCursor(void);
+static int             _ui_mouseInside( int x, int y, int width, int height );
 //********************************************************************************************
 // Core functions
 //********************************************************************************************
@@ -84,7 +95,7 @@ static ui_Context_t * UiContext_new(ui_Context_t *pui)
   BMFont_new( &(pui->bmfont) );
 
   return pui;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 static bool_t UiContext_delete(ui_Context_t *pui)
@@ -98,14 +109,14 @@ static bool_t UiContext_delete(ui_Context_t *pui)
   memset( pui, 0, sizeof( ui_context ) );
 
   return btrue;
-};
+}
 
 
 //--------------------------------------------------------------------------------------------
 void ui_Reset()
 {
   ui_context.active = ui_context.hot = UI_Nothing;
-};
+}
 
 
 //--------------------------------------------------------------------------------------------
@@ -248,14 +259,14 @@ void ui_endFrame()
 
   ui_frame_enabled = bfalse;
 
-  ui_doCursor();
+  _ui_doCursor();
 }
 
 //********************************************************************************************
 // Utility functions
 //********************************************************************************************
 
-int ui_mouseInside( int x, int y, int width, int height )
+int _ui_mouseInside( int x, int y, int width, int height )
 {
   int right, bottom;
   right = x + width;
@@ -325,26 +336,26 @@ BMFont_t* ui_getBMFont()
 {
   BMFont_t * ret = NULL;
 
-  if( INVALID_TEXTURE != ui_context.bmfont.tex.textureID )
+  if( INVALID_TX_ID != ui_context.bmfont.tex.textureID )
   {
     ret = &(ui_context.bmfont);
   }
 
   return ret;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t ui_load_BMFont( char* szBitmap, char* szSpacing )
 {
   return BMFont_load( &(ui_context.bmfont), gfxState.scry, szBitmap, szSpacing );
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t ui_copyWidget( ui_Widget_t * pw2, ui_Widget_t * pw1 )
 {
   if ( NULL == pw2 || NULL == pw1 ) return bfalse;
   return NULL != memcpy( pw2, pw1, sizeof( ui_Widget_t ) );
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t ui_shrinkWidget( ui_Widget_t * pw2, ui_Widget_t * pw1, int pixels )
@@ -362,7 +373,7 @@ bool_t ui_shrinkWidget( ui_Widget_t * pw2, ui_Widget_t * pw1, int pixels )
   if ( pw2->height < 0 ) pw2->height = 0;
 
   return pw2->width > 0 && pw2->height > 0;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t ui_initWidget( ui_Widget_t * pw, ui_id_t id, TTFont_t * pfont, EGO_CONST char *text, GLtexture *img, int x, int y, int width, int height )
@@ -382,7 +393,7 @@ bool_t ui_initWidget( ui_Widget_t * pw, ui_id_t id, TTFont_t * pfont, EGO_CONST 
   pw->timeout = 0;
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t ui_widgetAddMask( ui_Widget_t * pw, Uint32 mbits )
@@ -422,12 +433,12 @@ bool_t ui_widgetSetMask( ui_Widget_t * pw, Uint32 mbits )
 // Behaviors
 //********************************************************************************************
 
-ui_buttonValues ui_buttonBehavior( ui_Widget_t * pWidget )
+ui_buttonValues _ui_buttonBehavior( ui_Widget_t * pWidget )
 {
   ui_buttonValues result = BUTTON_NOCHANGE;
 
   // If the mouse is over the button, try and set hotness so that it can be clicked
-  if ( ui_mouseInside( pWidget->x, pWidget->y, pWidget->width, pWidget->height ) )
+  if ( _ui_mouseInside( pWidget->x, pWidget->y, pWidget->width, pWidget->height ) )
   {
     ui_sethot( pWidget );
   }
@@ -586,7 +597,7 @@ ui_buttonValues ui_doButton( ui_Widget_t * pWidget )
   TTFont_t *font;
 
   // Do all the logic type work for the button
-  result = ui_buttonBehavior( pWidget );
+  result = _ui_buttonBehavior( pWidget );
 
   // Draw the button part of the button
   ui_drawButton( pWidget );
@@ -622,7 +633,7 @@ ui_buttonValues ui_doImageButton( ui_Widget_t * pWidget )
   ui_Widget_t wtmp;
 
   // Do all the logic type work for the button
-  result = ui_buttonBehavior( pWidget );
+  result = _ui_buttonBehavior( pWidget );
 
   // Draw the button part of the button
   ui_drawButton( pWidget );
@@ -649,7 +660,7 @@ ui_buttonValues ui_doImageButtonWithText( ui_Widget_t * pWidget )
   ui_Widget_t wtmp;
 
   // Do all the logic type work for the button
-  result = ui_buttonBehavior( pWidget );
+  result = _ui_buttonBehavior( pWidget );
 
   // Draw the button part of the button
   ui_drawButton( pWidget );
@@ -689,7 +700,7 @@ ui_buttonValues ui_doImageButtonWithText( ui_Widget_t * pWidget )
 
 
 //--------------------------------------------------------------------------------------------
-void ui_doCursor()
+void _ui_doCursor()
 {
   /// @details BB@> Use the "normal" Egoboo cursor drawing routines to handle the cursor
   ///      Turn off the mouse as a Game Controller while the menu is on.
@@ -706,10 +717,10 @@ void ui_doCursor()
   };
   EndText();
   End2DMode();
-};
+}
 
 //--------------------------------------------------------------------------------------------
-int ui_getMouseX() { return ui_context.mouseX; };
+int ui_getMouseX() { return ui_context.mouseX; }
 
 //--------------------------------------------------------------------------------------------
-int ui_getMouseY() { return ui_context.mouseY; };
+int ui_getMouseY() { return ui_context.mouseY; }

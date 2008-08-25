@@ -25,6 +25,7 @@
 /// @details Execute compiled egoboo scripts
 
 #include "script.h"
+#include "egoboo_math.h"
 
 struct sMad;
 struct sChr;
@@ -32,6 +33,7 @@ struct sGame;
 
 bool_t _DoAction( struct sGame * gs, struct sChr * pchr, struct sMad * pmad, Uint16 iaction );
 bool_t _DoActionOverride( struct sGame * gs, struct sChr * pchr, struct sMad * pmad, Uint16 iaction );
+bool_t _Teleport( struct sGame * gs, CHR_REF ichr, vect3 pos, Uint16 turn_lr );
 
 retval_t run_script( struct sGame * gs, struct s_ai_state * pstate, float dUpdate );
 void run_all_scripts( struct sGame * gs, float dUpdate );

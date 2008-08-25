@@ -285,7 +285,7 @@ void MD2_GLCommand_construct(MD2_GLCommand_t * m)
 {
   m->next = NULL;
   m->data = NULL;
-};
+}
 
 void MD2_GLCommand_destruct(MD2_GLCommand_t * m)
 {
@@ -298,7 +298,7 @@ void MD2_GLCommand_destruct(MD2_GLCommand_t * m)
   };
 
   EGOBOO_DELETE(m->data);
-};
+}
 
 MD2_GLCommand_t * MD2_GLCommand_new()
 {
@@ -308,7 +308,7 @@ MD2_GLCommand_t * MD2_GLCommand_new()
   m = EGOBOO_NEW( MD2_GLCommand_t );
   MD2_GLCommand_construct(m);
   return m;
-};
+}
 
 MD2_GLCommand_t * MD2_GLCommand_new_vector(int n)
 {
@@ -323,7 +323,7 @@ void MD2_GLCommand_delete(MD2_GLCommand_t * m)
   if(NULL ==m) return;
   MD2_GLCommand_destruct(m);
   EGOBOO_DELETE(m);
-};
+}
 
 void MD2_GLCommand_delete_vector(MD2_GLCommand_t * v, int n)
 {
@@ -331,7 +331,7 @@ void MD2_GLCommand_delete_vector(MD2_GLCommand_t * v, int n)
   if(NULL ==v || 0 == n) return;
   for(i=0; i<n; i++) MD2_GLCommand_destruct(v + i);
   EGOBOO_DELETE(v);
-};
+}
 
 
 void md2_construct(MD2_Model_t * m)
@@ -373,8 +373,7 @@ void md2_deallocate(MD2_Model_t * m)
 
   EGOBOO_DELETE(m->m_commands);
   m->m_numCommands = 0;
-
-};
+}
 
 void md2_destruct(MD2_Model_t * m)
 {
@@ -391,7 +390,7 @@ MD2_Model_t * md2_new()
   md2_construct(m);
 
   return m;
-};
+}
 
 MD2_Model_t * md2_new_vector(int n)
 {
@@ -406,7 +405,7 @@ void md2_delete(MD2_Model_t * m)
   if(NULL ==m) return;
   md2_destruct(m);
   EGOBOO_DELETE(m);
-};
+}
 
 void md2_delete_vector(MD2_Model_t * v, int n)
 {
@@ -414,8 +413,7 @@ void md2_delete_vector(MD2_Model_t * v, int n)
   if(NULL ==v || 0 == n) return;
   for(i=0; i<n; i++) md2_destruct(v + i);
   EGOBOO_DELETE(v);
-};
-
+}
 
 //---------------------------------------------------------------------------------------------
 void md2_scale_model(MD2_Model_t * pmd2, float scale)

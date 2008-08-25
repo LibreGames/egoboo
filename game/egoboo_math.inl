@@ -27,7 +27,72 @@
 #pragma once
 
 #include "egoboo_math.h"
-#include "egoboo_types.inl"
+#include "egoboo_types.h"
+
+/**> 3 component vector <**/
+INLINE vect3 VSub        ( vect3 A, vect3 B );
+INLINE vect3 Normalize   ( vect3 A );
+INLINE vect3 CrossProduct( vect3 A, vect3 B );
+INLINE float DotProduct  ( vect3 A, vect3 B );
+
+/**> 4 component vector <**/
+INLINE vect4 VSub4        ( vect4 A, vect4 B );
+INLINE vect4 Normalize4   ( vect4 A );
+INLINE vect4 CrossProduct4( vect4 A, vect4 B );
+INLINE float DotProduct4  ( vect4 A, vect4 B );
+
+/**> quaternion <**/
+INLINE quaternion QuatConjugate(quaternion q1);
+INLINE quaternion QuatNormalize(quaternion q1);
+INLINE quaternion QuatMultiply(quaternion q1, quaternion q2);
+INLINE quaternion QuatDotprod(quaternion q1, quaternion q2);
+INLINE quaternion QuatTransform(quaternion q1, quaternion q2, quaternion q3);
+INLINE quaternion QuatConvert(matrix_4x4 m);
+
+/**> 4x4 matrix <**/
+INLINE matrix_4x4 IdentityMatrix( void );
+INLINE matrix_4x4 ZeroMatrix( void );
+INLINE matrix_4x4 MatrixTranspose( EGO_CONST matrix_4x4 a );
+INLINE matrix_4x4 MatrixMult( EGO_CONST matrix_4x4 a, EGO_CONST matrix_4x4 b );
+INLINE matrix_4x4 Translate( EGO_CONST float dx, EGO_CONST float dy, EGO_CONST float dz );
+INLINE matrix_4x4 RotateX( EGO_CONST float rads );
+INLINE matrix_4x4 RotateY( EGO_CONST float rads );
+INLINE matrix_4x4 RotateZ( EGO_CONST float rads );
+INLINE matrix_4x4 ScaleXYZ( EGO_CONST float sizex, EGO_CONST float sizey, EGO_CONST float sizez );
+INLINE matrix_4x4 ScaleXYZRotateXYZTranslate( EGO_CONST float sizex, EGO_CONST float sizey, EGO_CONST float sizez, Uint16 turnz, Uint16 turnx, Uint16 turny, EGO_CONST vect3 pos );
+INLINE matrix_4x4 FourPoints( vect4 ori, vect4 wid, vect4 forw, vect4 up, float scale );
+INLINE matrix_4x4 MatrixConvert(quaternion q1);
+
+INLINE void Transform4_Full( float pre_scale, float post_scale, matrix_4x4 *pMatrix, vect4 pSourceV[], vect4 pDestV[], Uint32 NumVertor );
+INLINE void Transform4( float pre_scale, float post_scale, matrix_4x4 *pMatrix, vect4 pSourceV[], vect4 pDestV[], Uint32 NumVertor );
+INLINE void Translate4( matrix_4x4 *pMatrix, vect4 pSourceV[], vect4 pDestV[], Uint32 NumVertor );
+
+INLINE void Transform3_Full( float pre_scale, float post_scale, matrix_4x4 *pMatrix, vect3 pSourceV[], vect3 pDestV[], Uint32 NumVertor );
+INLINE void Transform3( float pre_scale, float post_scale, matrix_4x4 *pMatrix, vect3 pSourceV[], vect3 pDestV[], Uint32 NumVertor );
+INLINE void Translate3( matrix_4x4 *pMatrix, vect3 pSourceV[], vect3 pDestV[], Uint32 NumVertor );
+
+INLINE Uint16 vec_to_turn( float dx, float dy );
+INLINE void turn_to_vec( Uint16 turn, float * dx, float * dy );
+
+INLINE void VectorClear( float v[] );
+INLINE void VectorClear4( float v[] );
+
+INLINE EGO_CONST BBOX_LIST * bbox_list_new(BBOX_LIST * lst);
+INLINE EGO_CONST BBOX_LIST * bbox_list_delete(BBOX_LIST * lst);
+INLINE EGO_CONST BBOX_LIST * bbox_list_renew(BBOX_LIST * lst);
+INLINE EGO_CONST BBOX_LIST * bbox_list_alloc(BBOX_LIST * lst, int count);
+INLINE EGO_CONST BBOX_LIST * bbox_list_realloc(BBOX_LIST * lst, int count);
+
+INLINE EGO_CONST BBOX_ARY * bbox_ary_new(BBOX_ARY * ary);
+INLINE EGO_CONST BBOX_ARY * bbox_ary_delete(BBOX_ARY * ary);
+INLINE EGO_CONST BBOX_ARY * bbox_ary_renew(BBOX_ARY * ary);
+INLINE EGO_CONST BBOX_ARY * bbox_ary_alloc(BBOX_ARY * ary, int count);
+
+INLINE Uint32 ego_rand_32(Uint32 * seed);
+INLINE Uint16 ego_rand_16(Uint16 * seed);
+INLINE Uint8  ego_rand_8 (Uint8  * seed);
+
+INLINE bool_t matrix_compare_3x3(matrix_4x4 * pm1, matrix_4x4 * pm2);
 
 //---------------------------------------------------------------------------------------------
 INLINE void turn_to_vec( Uint16 turn, float * dx, float * dy )

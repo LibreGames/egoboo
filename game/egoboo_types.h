@@ -100,14 +100,6 @@ struct s_egoboo_key
 };
 typedef struct s_egoboo_key egoboo_key_t;
 
-INLINE egoboo_key_t * egoboo_key_create(Uint32 itype, void * pdata);
-INLINE bool_t         egoboo_key_destroy(egoboo_key_t ** pkey);
-INLINE egoboo_key_t * egoboo_key_new(egoboo_key_t * pkey, Uint32 itype, void * pdata);
-INLINE bool_t         egoboo_key_validate(egoboo_key_t * pkey);
-INLINE bool_t         egoboo_key_invalidate(egoboo_key_t * pkey);
-INLINE bool_t         egoboo_key_valid(egoboo_key_t * pkey);
-INLINE void *         egoboo_key_get_data(egoboo_key_t * pkey, Uint32 type);
-
 #define EKEY_NEW(XX,YY) egoboo_key_new( &(XX.ekey), ekey_##YY, &(XX) )
 #define EKEY_PNEW(XX,YY) egoboo_key_new( &(XX->ekey), ekey_##YY, XX )
 
@@ -376,10 +368,7 @@ typedef Uint16 SHOP_REF;
 //  size_t     size;
 //  void     * data;
 //} CList;
-//
-//INLINE CList * CList_new(CList * lst, size_t count, size_t size);
-//INLINE bool_t  CList_delete(CList * lst);
-//INLINE void  * CList_getData(CList * lst, int index);
+
 
 
 typedef Uint16 CAP_REF;
@@ -452,10 +441,6 @@ union u_float_int_convert
 
 typedef union u_float_int_convert FCONVERT;
 
-#if SDL_BYTEORDER != SDL_LIL_ENDIAN
-    INLINE float SwapLE_float( float val );
-#endif
-
 //--------------------------------------------------------------------------------------------
 enum e_ProcessStates
 {
@@ -517,12 +502,6 @@ struct sHashNode
 };
 typedef struct sHashNode HashNode_t;
 
-INLINE HashNode_t * HashNode_create(void * data);
-INLINE bool_t       HashNode_destroy(HashNode_t **);
-INLINE HashNode_t * HashNode_insert_after (HashNode_t lst[], HashNode_t * n);
-INLINE HashNode_t * HashNode_insert_before(HashNode_t lst[], HashNode_t * n);
-INLINE HashNode_t * HashNode_remove_after (HashNode_t lst[]);
-INLINE HashNode_t * HashNode_remove       (HashNode_t lst[]);
 
 struct sHashList
 {
@@ -532,8 +511,7 @@ struct sHashList
 };
 typedef struct sHashList HashList_t;
 
-INLINE HashList_t * HashList_create(int size);
-INLINE bool_t     HashList_destroy(HashList_t **);
+
 
 
 struct sBSP_node
@@ -546,8 +524,7 @@ struct sBSP_node
 };
 typedef struct sBSP_node BSP_node_t;
 
-INLINE BSP_node_t * BSP_node_new( BSP_node_t * t, void * data, int type );
-INLINE bool_t     BSP_node_delete( BSP_node_t * t );
+
 
 struct sBSP_leaf
 {
@@ -560,9 +537,7 @@ struct sBSP_leaf
 };
 typedef struct sBSP_leaf BSP_leaf_t;
 
-INLINE BSP_leaf_t * BSP_leaf_new( BSP_leaf_t * L, size_t size );
-INLINE bool_t       BSP_leaf_delete( BSP_leaf_t * L );
-INLINE bool_t       BSP_leaf_insert( BSP_leaf_t * L, BSP_node_t * n );
+
 
 
 struct sBSP_tree
@@ -579,10 +554,7 @@ struct sBSP_tree
 };
 typedef struct sBSP_tree BSP_tree_t;
 
-INLINE BSP_tree_t * BSP_tree_new( BSP_tree_t * t, Sint32 dim, Sint32 depth);
-INLINE bool_t     BSP_tree_delete( BSP_tree_t * t );
 
-INLINE Sint32 BSP_tree_count_nodes(Sint32 dim, Sint32 depth);
 
 #define PROFILE_PROTOTYPE(XX) struct sClockState; extern struct sClockState * clkstate_##XX; extern double clkcount_##XX; extern double clktime_##XX;
 

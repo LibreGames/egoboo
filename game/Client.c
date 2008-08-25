@@ -33,6 +33,7 @@
 #include "egoboo.h"
 
 #include "Network.inl"
+#include "egoboo_stream.inl"
 #include "egoboo_types.inl"
 
 #include <enet/enet.h>
@@ -156,7 +157,7 @@ retval_t Client_startUp(Client_t * cs)
   NFileState_startUp(cs->parent->ns->nfs);
 
   return cl_Started() ? rv_succeed : rv_fail;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 retval_t Client_shutDown(Client_t * cs)
@@ -239,7 +240,7 @@ Client_t * CClient_new(Client_t * cs, Game_t * gs)
   chr_spawn_queue_new(&(cs->chr_queue), 256);
 
   return cs;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t CClient_delete(Client_t * cs)
@@ -275,7 +276,7 @@ Client_t * Client_renew(Client_t * cs)
 //--------------------------------------------------------------------------------------------
 void cl_frameStep()
 {
-};
+}
 
 //--------------------------------------------------------------------------------------------
 //bool_t cl_stopClient(Client_t * cs)
@@ -322,7 +323,7 @@ ENetPeer * cl_startPeer(EGO_CONST char* hostname)
   }
 
   return peer;
-};
+}
 
 
 //--------------------------------------------------------------------------------------------
@@ -378,7 +379,7 @@ bool_t CClient_disconnect(Client_t * cs)
   };
 
   return btrue;
-};
+}
 
 
 
@@ -445,7 +446,7 @@ bool_t CClient_connect(Client_t * cs, EGO_CONST char* hostname)
   }
 
   return (ENET_PEER_STATE_CONNECTED == cs->gamePeer->state);
-};
+}
 
 
 //--------------------------------------------------------------------------------------------
@@ -491,7 +492,7 @@ retval_t Client_joinGame(Client_t * cs, EGO_CONST char * hostname)
 
   return rv_succeed;
 
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t Client_unjoinGame(Client_t * cs)
@@ -904,7 +905,7 @@ void Client_reset_latches(Client_t * cs)
 
   cs->tlb.nextstamp = INVALID_TIMESTAMP;
   cs->tlb.numtimes   = STARTTALK + 1;
-};
+}
 
 
 //--------------------------------------------------------------------------------------------
@@ -924,7 +925,7 @@ void Client_resetTimeLatches(Client_t * cs, CHR_REF ichr)
 
     Latch_clear( &((*ptl)[cnt].latch) );
   }
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void Client_bufferLatches(Client_t * cs)
@@ -958,7 +959,7 @@ void Client_bufferLatches(Client_t * cs)
   }
 
   cs->tlb.numtimes++;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 int _cl_HostCallback(void * data)
@@ -1199,7 +1200,7 @@ void cl_request_module_info(Client_t * cs)
     net_prepareWaitForPacket(cs->host->asynch, cs->rem_req_peer + i, 5000, TO_REMOTE_MODULEINFO);
   }
 
-};
+}
 
 
 
@@ -1329,7 +1330,7 @@ void cl_request_module_images(Client_t * cs)
   }
 
 
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t Client_sendPacketToHost(Client_t * cs, SYS_PACKET * egop)
@@ -1387,7 +1388,7 @@ size_t StatList_add( Status_t lst[], size_t lst_size, CHR_REF ichr )
   }
 
   return lst_size;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void StatList_move_to_top( Status_t lst[], size_t lst_size, CHR_REF character )
@@ -1552,7 +1553,7 @@ void cl_quitHost()
 {
   NetHost_shutDown(_cl_host);
   NetHost_destroy( &_cl_host );
-};
+}
 
 //------------------------------------------------------------------------------
 void _cl_Quit( void )
@@ -1572,7 +1573,7 @@ retval_t _cl_startUp( void )
   if(NULL == nh) return rv_fail;
 
   return NetHost_startUp(nh, NET_EGOBOO_CLIENT_PORT);
-};
+}
 
 //------------------------------------------------------------------------------
 retval_t _cl_shutDown( void )

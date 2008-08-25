@@ -61,7 +61,8 @@ SoundInfo_t * SoundInfo_new(SoundInfo_t * info)
   info->loops = -1;
 
   return info;
-};
+}
+
 bool_t SoundInfo_delete(SoundInfo_t * info)
 {
   if(NULL == info) return bfalse;
@@ -69,7 +70,7 @@ bool_t SoundInfo_delete(SoundInfo_t * info)
   memset(info, 0, sizeof(SoundInfo_t));
 
   return btrue;
-};
+}
 
 //------------------------------------------------------------------------------
 struct sSoundBuffer
@@ -99,7 +100,7 @@ bool_t SoundBuffer_delete(SoundBuffer_t * sb)
   sb->size = 0;
 
   return btrue;
-};
+}
 
 bool_t SoundBuffer_store( SoundBuffer_t * sb, SoundInfo_t * si)
 {
@@ -124,7 +125,7 @@ SoundInfo_t * SoundBuffer_retreive( SoundBuffer_t * sb)
   sb->buffer[sb->size] = si_tmp;
 
   return sb->buffer + sb->size;
-};
+}
 
 static SoundBuffer_t _snd_buffer;
 
@@ -153,8 +154,7 @@ void EgobooChannelFinishedCallback(int channel)
     //log_debug("snd_play_sound() - \n\tplaying delayed sound on channel %d\n", channel );
     snd_apply_mods( channel, si->intensity, si->pos, GCamera.trackpos, GCamera.turn_lr);
   };
-
-};
+}
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
@@ -293,8 +293,7 @@ void snd_apply_mods( int channel, float intensity, vect3 snd_pos, vect3 ear_pos,
   vol_right = MIN(255, 255 * vr * volume);
 
   Mix_SetPanning( channel, vol_left, vol_right );
-
-};
+}
 
 //------------------------------------------------------------------------------
 int snd_play_sound( Game_t * gs, float intensity, vect3 pos, Mix_Chunk *loadedwave, int loops, OBJ_REF whichobject, int soundnumber)

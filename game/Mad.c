@@ -46,12 +46,25 @@ Uint32 lighttospek[MAXSPEKLEVEL][256];                     //
 static char cFrameName[16]; // MD2 Frame Name
 
 
+static void   _mad_action_copy_correct( Mad_t * pmad, ACTION actiona, ACTION actionb );
+static void   _mad_make_framelip( Mad_t * pmad, ACTION action );
+static void   _mad_get_walk_frame( Mad_t * pmad, LIPT lip_trans, ACTION action );
+static void   _mad_get_actions( Mad_t * pmad );
+static ACTION _mad_action_number( const char * szName );
+static Uint16 _mad_action_frame( void );
+static Uint16 _mad_get_framefx( const char * szName );
+static bool_t _mad_generate_bbox_tree(int max_level, Mad_t * pmad);
+static int    _mad_vertexconnected( MD2_Model_t * m, int vertex );
+static int    _mad_calc_transvertices( MD2_Model_t * m );
+
+static void   load_copy_file( struct sGame * gs, EGO_CONST char * szModpath, EGO_CONST char * szObjectname, MAD_REF object );
+
 //--------------------------------------------------------------------------------------------
 
-static bool_t test_frame_name( char * szName, char letter );
+static bool_t test_frame_name( const char * szName, const char letter );
 
 //--------------------------------------------------------------------------------------------
-ACTION action_number(char * szName)
+ACTION _mad_action_number(const char * szName)
 {
   /// @details ZZ@> This function returns the number of the action in cFrameName, or
   ///     it returns ACTION_INVALID if it could not find a match
@@ -69,7 +82,7 @@ ACTION action_number(char * szName)
 }
 
 //--------------------------------------------------------------------------------------------
-Uint16 action_frame()
+Uint16 _mad_action_frame()
 {
   /// @details ZZ@> This function returns the frame number in the third and fourth characters
   ///     of cFrameName
@@ -80,7 +93,7 @@ Uint16 action_frame()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t test_frame_name( char * szName, char letter )
+bool_t test_frame_name( const char * szName, const char letter )
 {
   /// @details ZZ@> This function returns btrue if the 4th, 5th, 6th, or 7th letters
   ///     of the frame name matches the input argument
@@ -100,51 +113,45 @@ bool_t test_frame_name( char * szName, char letter )
 }
 
 //--------------------------------------------------------------------------------------------
-void action_copy_correct( Game_t * gs, MAD_REF imad, ACTION actiona, ACTION actionb )
+void _mad_action_copy_correct( Mad_t * pmad, ACTION actiona, ACTION actionb )
 {
   /// @details ZZ@> This function makes sure both actions are valid if either of them
   ///     are valid.  It will copy start and ends to mirror the valid action.
 
-  Mad_t * pmad;
-
-  if( !LOADED_MAD(gs->MadList, imad) ) return;
-  pmad = gs->MadList + imad;
+  // COPY ONLY ONE DIRECTION
 
   if ( pmad->actionvalid[actiona] == pmad->actionvalid[actionb] )
   {
     // They are either both valid or both invalid, in either case we can't help
   }
   else
-  {
+  //{
     // Fix the invalid one
-    if ( !pmad->actionvalid[actiona] )
-    {
-      // Fix actiona
-      pmad->actionvalid[actiona] = btrue;
-      pmad->actionstart[actiona] = pmad->actionstart[actionb];
-      pmad->actionend[actiona] = pmad->actionend[actionb];
-    }
-    else
+    if ( pmad->actionvalid[actiona] )
     {
       // Fix actionb
       pmad->actionvalid[actionb] = btrue;
       pmad->actionstart[actionb] = pmad->actionstart[actiona];
-      pmad->actionend[actionb] = pmad->actionend[actiona];
+      pmad->actionend[actionb]   = pmad->actionend[actiona];
     }
-  }
+    //else
+    //{
+    //  // Fix actiona
+    //  pmad->actionvalid[actiona] = btrue;
+    //  pmad->actionstart[actiona] = pmad->actionstart[actionb];
+    //  pmad->actionend[actiona]   = pmad->actionend[actionb];
+    //}
+
+  //}
 }
 
 //--------------------------------------------------------------------------------------------
-void get_walk_frame( Game_t * gs, MAD_REF imad, LIPT lip_trans, ACTION action )
+void _mad_get_walk_frame( Mad_t * pmad, LIPT lip_trans, ACTION action )
 {
   /// @details ZZ@> This helps make walking look right
 
-  Mad_t * pmad;
   int frame = 0;
   int framesinaction = 0;
-
-  if( !LOADED_MAD(gs->MadList, imad) ) return;
-  pmad = gs->MadList + imad;
 
   framesinaction = pmad->actionend[action] - pmad->actionstart[action];
 
@@ -162,7 +169,7 @@ void get_walk_frame( Game_t * gs, MAD_REF imad, LIPT lip_trans, ACTION action )
 }
 
 //--------------------------------------------------------------------------------------------
-Uint16 get_framefx( char * szName )
+Uint16 _mad_get_framefx( const char * szName )
 {
   /// @details ZZ@> This function figures out the IFrame invulnerability, and Attack, Grab, and
   ///     Drop timings
@@ -198,15 +205,11 @@ Uint16 get_framefx( char * szName )
 }
 
 //--------------------------------------------------------------------------------------------
-void make_framelip( Game_t * gs, MAD_REF imad, ACTION action )
+void _mad_make_framelip( Mad_t * pmad, ACTION action )
 {
   /// @details ZZ@> This helps make walking look right
 
-  Mad_t * pmad;
   int frame, framesinaction;
-
-  if( !LOADED_MAD(gs->MadList, imad) ) return;
-  pmad = gs->MadList + imad;
 
   if ( pmad->actionvalid[action] )
   {
@@ -222,21 +225,17 @@ void make_framelip( Game_t * gs, MAD_REF imad, ACTION action )
 }
 
 //--------------------------------------------------------------------------------------------
-void get_actions( Game_t * gs, MAD_REF imad )
+void _mad_get_actions( Mad_t * pmad )
 {
   /// @details ZZ@> This function creates the iframe lists for each action based on the
   ///     name of each md2 iframe in the model
 
   ACTION      action, lastaction;
   MD2_Model_t * pmd2;
-  Mad_t       * pmad;
 
   int    iframe, framesinaction;
   int    iFrameCount;
   char * szName;
-
-  if( !VALID_MAD(gs->MadList, imad) ) return;
-  pmad = gs->MadList + imad;
 
   pmd2 = pmad->md2_ptr;
   if(NULL == pmd2) return;
@@ -258,13 +257,13 @@ void get_actions( Game_t * gs, MAD_REF imad )
 
   // Now go huntin' to see what each iframe is, look for runs of same action
   szName = md2_get_Frame(pmd2, 0)->name;
-  lastaction = action_number(szName);
+  lastaction = _mad_action_number(szName);
   framesinaction = 0;
   for ( iframe = 0; iframe < iFrameCount; iframe++ )
   {
     EGO_CONST MD2_Frame_t * pFrame = md2_get_Frame(pmd2, iframe);
     szName = pFrame->name;
-    action = action_number(szName);
+    action = _mad_action_number(szName);
     if ( lastaction == action )
     {
       framesinaction++;
@@ -281,7 +280,7 @@ void get_actions( Game_t * gs, MAD_REF imad )
       framesinaction = 1;
       lastaction = action;
     }
-    pmad->framefx[iframe] = get_framefx( szName );
+    pmad->framefx[iframe] = _mad_get_framefx( szName );
   }
 
   // Write the old action
@@ -292,58 +291,86 @@ void get_actions( Game_t * gs, MAD_REF imad )
     pmad->actionend[lastaction]   = iframe;
   }
 
-  // Make sure actions are made valid if a similar one exists
-  action_copy_correct( gs, imad, ACTION_DA, ACTION_DB );   // All dances should be safe
-  action_copy_correct( gs, imad, ACTION_DB, ACTION_DC );
-  action_copy_correct( gs, imad, ACTION_DC, ACTION_DD );
-  action_copy_correct( gs, imad, ACTION_DB, ACTION_DC );
-  action_copy_correct( gs, imad, ACTION_DA, ACTION_DB );
-  action_copy_correct( gs, imad, ACTION_UA, ACTION_UB );
-  action_copy_correct( gs, imad, ACTION_UB, ACTION_UC );
-  action_copy_correct( gs, imad, ACTION_UC, ACTION_UD );
-  action_copy_correct( gs, imad, ACTION_TA, ACTION_TB );
-  action_copy_correct( gs, imad, ACTION_TC, ACTION_TD );
-  action_copy_correct( gs, imad, ACTION_CA, ACTION_CB );
-  action_copy_correct( gs, imad, ACTION_CC, ACTION_CD );
-  action_copy_correct( gs, imad, ACTION_SA, ACTION_SB );
-  action_copy_correct( gs, imad, ACTION_SC, ACTION_SD );
-  action_copy_correct( gs, imad, ACTION_BA, ACTION_BB );
-  action_copy_correct( gs, imad, ACTION_BC, ACTION_BD );
-  action_copy_correct( gs, imad, ACTION_LA, ACTION_LB );
-  action_copy_correct( gs, imad, ACTION_LC, ACTION_LD );
-  action_copy_correct( gs, imad, ACTION_XA, ACTION_XB );
-  action_copy_correct( gs, imad, ACTION_XC, ACTION_XD );
-  action_copy_correct( gs, imad, ACTION_FA, ACTION_FB );
-  action_copy_correct( gs, imad, ACTION_FC, ACTION_FD );
-  action_copy_correct( gs, imad, ACTION_PA, ACTION_PB );
-  action_copy_correct( gs, imad, ACTION_PC, ACTION_PD );
-  action_copy_correct( gs, imad, ACTION_ZA, ACTION_ZB );
-  action_copy_correct( gs, imad, ACTION_ZC, ACTION_ZD );
-  action_copy_correct( gs, imad, ACTION_WA, ACTION_WB );
-  action_copy_correct( gs, imad, ACTION_WB, ACTION_WC );
-  action_copy_correct( gs, imad, ACTION_WC, ACTION_WD );
-  action_copy_correct( gs, imad, ACTION_DA, ACTION_WD );   // All walks should be safe
-  action_copy_correct( gs, imad, ACTION_WC, ACTION_WD );
-  action_copy_correct( gs, imad, ACTION_WB, ACTION_WC );
-  action_copy_correct( gs, imad, ACTION_WA, ACTION_WB );
-  action_copy_correct( gs, imad, ACTION_JA, ACTION_JB );
-  action_copy_correct( gs, imad, ACTION_JB, ACTION_JC );
-  action_copy_correct( gs, imad, ACTION_DA, ACTION_JC );  // All jumps should be safe
-  action_copy_correct( gs, imad, ACTION_JB, ACTION_JC );
-  action_copy_correct( gs, imad, ACTION_JA, ACTION_JB );
-  action_copy_correct( gs, imad, ACTION_HA, ACTION_HB );
-  action_copy_correct( gs, imad, ACTION_HB, ACTION_HC );
-  action_copy_correct( gs, imad, ACTION_HC, ACTION_HD );
-  action_copy_correct( gs, imad, ACTION_HB, ACTION_HC );
-  action_copy_correct( gs, imad, ACTION_HA, ACTION_HB );
-  action_copy_correct( gs, imad, ACTION_KA, ACTION_KB );
-  action_copy_correct( gs, imad, ACTION_KB, ACTION_KC );
-  action_copy_correct( gs, imad, ACTION_KC, ACTION_KD );
-  action_copy_correct( gs, imad, ACTION_KB, ACTION_KC );
-  action_copy_correct( gs, imad, ACTION_KA, ACTION_KB );
-  action_copy_correct( gs, imad, ACTION_MH, ACTION_MI );
-  action_copy_correct( gs, imad, ACTION_DA, ACTION_MM );
-  action_copy_correct( gs, imad, ACTION_MM, ACTION_MN );
+  // Do replacement animations first
+  _mad_action_copy_correct( pmad, ACTION_ME, ACTION_UA ); // replace missing unarmed attack aimations with grab animations
+  _mad_action_copy_correct( pmad, ACTION_MF, ACTION_UC );
+
+  _mad_action_copy_correct( pmad, ACTION_MA, ACTION_UA ); // replace missing unarmed attack aimations with drop animations
+  _mad_action_copy_correct( pmad, ACTION_MB, ACTION_UC );
+
+  _mad_action_copy_correct( pmad, ACTION_MA, ACTION_ME ); // replace missing grab animations with drop animations
+  _mad_action_copy_correct( pmad, ACTION_MB, ACTION_MF );
+
+  _mad_action_copy_correct( pmad, ACTION_ME, ACTION_MA ); // replace missing drop animations with grab animations
+  _mad_action_copy_correct( pmad, ACTION_MF, ACTION_MB );
+
+  _mad_action_copy_correct( pmad, ACTION_DA, ACTION_WD ); // Copy "dance d" (bored 3) to "walk d" (push)
+
+  _mad_action_copy_correct( pmad, ACTION_DA, ACTION_JC ); // Copy "dance a" (Standing still) to "jump c" (Falling)
+
+  _mad_action_copy_correct( pmad, ACTION_MH, ACTION_MI ); // Copy "sit" to "ride"
+  _mad_action_copy_correct( pmad, ACTION_MI, ACTION_MH ); // Copy "ride" to "sit"
+
+  _mad_action_copy_correct( pmad, ACTION_DA, ACTION_MM ); // Copy "dance a" (Standing still) to "misc m" (Held left)
+
+  // Propagate actions to similar actions
+  _mad_action_copy_correct( pmad, ACTION_DA, ACTION_DB );   // Require all dances to be safe
+  _mad_action_copy_correct( pmad, ACTION_DB, ACTION_DC );
+  _mad_action_copy_correct( pmad, ACTION_DC, ACTION_DD );
+  _mad_action_copy_correct( pmad, ACTION_DD, ACTION_DC );
+  _mad_action_copy_correct( pmad, ACTION_DC, ACTION_DB );
+  _mad_action_copy_correct( pmad, ACTION_DB, ACTION_DA );
+
+  _mad_action_copy_correct( pmad, ACTION_JA, ACTION_JB );   // Require all jumps to be safe
+  _mad_action_copy_correct( pmad, ACTION_JB, ACTION_JC );
+  _mad_action_copy_correct( pmad, ACTION_JC, ACTION_JB );
+  _mad_action_copy_correct( pmad, ACTION_JB, ACTION_JA );
+
+  _mad_action_copy_correct( pmad, ACTION_HA, ACTION_HB );   // Require all damage anims to be safe
+  _mad_action_copy_correct( pmad, ACTION_HB, ACTION_HC );
+  _mad_action_copy_correct( pmad, ACTION_HC, ACTION_HD );
+  _mad_action_copy_correct( pmad, ACTION_HD, ACTION_HC );
+  _mad_action_copy_correct( pmad, ACTION_HC, ACTION_HB );
+  _mad_action_copy_correct( pmad, ACTION_HB, ACTION_HA );
+
+  _mad_action_copy_correct( pmad, ACTION_KA, ACTION_KB );   // Require all killed anims to be safe
+  _mad_action_copy_correct( pmad, ACTION_KB, ACTION_KC );
+  _mad_action_copy_correct( pmad, ACTION_KC, ACTION_KD );
+  _mad_action_copy_correct( pmad, ACTION_KD, ACTION_KC );
+  _mad_action_copy_correct( pmad, ACTION_KC, ACTION_KB );
+  _mad_action_copy_correct( pmad, ACTION_KB, ACTION_KA );
+
+  _mad_action_copy_correct( pmad, ACTION_UA, ACTION_UB );  // Propagate unarmed attacks
+  _mad_action_copy_correct( pmad, ACTION_UC, ACTION_UD );
+
+  _mad_action_copy_correct( pmad, ACTION_TA, ACTION_TB );
+  _mad_action_copy_correct( pmad, ACTION_TC, ACTION_TD );
+
+  _mad_action_copy_correct( pmad, ACTION_CA, ACTION_CB );
+  _mad_action_copy_correct( pmad, ACTION_CC, ACTION_CD );
+
+  _mad_action_copy_correct( pmad, ACTION_SA, ACTION_SB );
+  _mad_action_copy_correct( pmad, ACTION_SC, ACTION_SD );
+
+  _mad_action_copy_correct( pmad, ACTION_BA, ACTION_BB );
+  _mad_action_copy_correct( pmad, ACTION_BC, ACTION_BD );
+
+  _mad_action_copy_correct( pmad, ACTION_LA, ACTION_LB );
+  _mad_action_copy_correct( pmad, ACTION_LC, ACTION_LD );
+
+  _mad_action_copy_correct( pmad, ACTION_XA, ACTION_XB );
+  _mad_action_copy_correct( pmad, ACTION_XC, ACTION_XD );
+
+  _mad_action_copy_correct( pmad, ACTION_FA, ACTION_FB );
+  _mad_action_copy_correct( pmad, ACTION_FC, ACTION_FD );
+
+  _mad_action_copy_correct( pmad, ACTION_PA, ACTION_PB );
+  _mad_action_copy_correct( pmad, ACTION_PC, ACTION_PD );
+
+  _mad_action_copy_correct( pmad, ACTION_ZA, ACTION_ZB );
+  _mad_action_copy_correct( pmad, ACTION_ZC, ACTION_ZD );
+
+  _mad_action_copy_correct( pmad, ACTION_MM, ACTION_MN );
 
 
   // Create table for doing transition from one type of walk to another...
@@ -354,15 +381,15 @@ void get_actions( Game_t * gs, MAD_REF imad )
   }
 
   // Need to figure out how far into action each iframe is
-  make_framelip( gs, imad, ACTION_WA );
-  make_framelip( gs, imad, ACTION_WB );
-  make_framelip( gs, imad, ACTION_WC );
+  _mad_make_framelip( pmad, ACTION_WA );
+  _mad_make_framelip( pmad, ACTION_WB );
+  _mad_make_framelip( pmad, ACTION_WC );
 
   // Now do the same, in reverse, for walking animations
-  get_walk_frame( gs, imad, LIPT_DA, ACTION_DA );
-  get_walk_frame( gs, imad, LIPT_WA, ACTION_WA );
-  get_walk_frame( gs, imad, LIPT_WB, ACTION_WB );
-  get_walk_frame( gs, imad, LIPT_WC, ACTION_WC );
+  _mad_get_walk_frame( pmad, LIPT_DA, ACTION_DA );
+  _mad_get_walk_frame( pmad, LIPT_WA, ACTION_WA );
+  _mad_get_walk_frame( pmad, LIPT_WB, ACTION_WB );
+  _mad_get_walk_frame( pmad, LIPT_WC, ACTION_WC );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -396,13 +423,21 @@ void make_mad_equally_lit( Game_t * gs, MAD_REF imad )
 }
 
 //--------------------------------------------------------------------------------------------
-void load_copy_file( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST char * szObjectname, MAD_REF object )
+void load_copy_file( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST char * szObjectname, MAD_REF imad )
 {
   /// @details ZZ@> This function copies a model's actions
 
   FILE *fileread;
   ACTION actiona, actionb;
   char szOne[16], szTwo[16];
+  Mad_t * pmad;
+
+  if(!VALID_MAD(gs->MadList, imad))
+  {
+    log_warning("Could not apply copy file %s" SLASH_STRING "%s", szObjectpath, szObjectname);
+    return;
+  }
+  pmad = gs->MadList + imad;
 
   fileread = fs_fileOpen(PRI_NONE, "load_copy_file()", inherit_fname(szObjectpath, szObjectname, CData.copy_file), "r");
   if ( NULL != fileread )
@@ -414,10 +449,10 @@ void load_copy_file( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST char 
       fget_string( fileread, szTwo, sizeof( szTwo ) );
       actionb = what_action( szTwo[0] );
 
-      action_copy_correct( gs, object, (ACTION)(actiona + 0), (ACTION)(actionb + 0) );
-      action_copy_correct( gs, object, (ACTION)(actiona + 1), (ACTION)(actionb + 1) );
-      action_copy_correct( gs, object, (ACTION)(actiona + 2), (ACTION)(actionb + 2) );
-      action_copy_correct( gs, object, (ACTION)(actiona + 3), (ACTION)(actionb + 3) );
+      _mad_action_copy_correct( pmad, (ACTION)(actiona + 0), (ACTION)(actionb + 0) );
+      _mad_action_copy_correct( pmad, (ACTION)(actiona + 1), (ACTION)(actionb + 1) );
+      _mad_action_copy_correct( pmad, (ACTION)(actiona + 2), (ACTION)(actionb + 2) );
+      _mad_action_copy_correct( pmad, (ACTION)(actiona + 3), (ACTION)(actionb + 3) );
     }
     fs_fileClose( fileread );
   }
@@ -625,7 +660,8 @@ bool_t mad_generate_bbox_list(BBOX_LIST *plist, MD2_Model_t * pmd2, int frame, i
   {
     return bbox_list_contract(plist);
   };
-};
+}
+
 //--------------------------------------------------------------------------------------------
 bool_t mad_cull_bbox_list(int max_lod, BBOX_LIST *plst, BBOX_LIST *pcull)
 {
@@ -1111,7 +1147,7 @@ static bool_t mad_scale_bbox_tree(Mad_t * pmad)
 //}
 
 //--------------------------------------------------------------------------------------------
-bool_t mad_generate_bbox_tree(int max_level, Mad_t * pmad)
+bool_t _mad_generate_bbox_tree(int max_level, Mad_t * pmad)
 {
   /// @details BB@> Make a series of progressively refined BBox lists.
   ///      The list will have null nodes for every level of detail where
@@ -1218,15 +1254,14 @@ bool_t Mad_delete(Mad_t * pmad)
   pmad->Loaded = bfalse;
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 Mad_t *  Mad_renew(Mad_t * pmad)
 {
   Mad_delete(pmad);
   return Mad_new(pmad);
-};
-
+}
 
 //---------------------------------------------------------------------------------------------
 MAD_REF MadList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST char * szObjectname, MAD_REF imad )
@@ -1236,6 +1271,7 @@ MAD_REF MadList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST 
 
   int iFrames;
   Mad_t * pmad;
+  char * inherit_name;
 
   //PMad_t madlst = gs->MadList;
 
@@ -1256,8 +1292,13 @@ MAD_REF MadList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST 
   if(NULL == Mad_renew(pmad)) return INVALID_MAD;
 
   // load the actual md2 data
-  pmad->md2_ptr = md2_load( inherit_fname(szObjectpath, szObjectname, "tris.md2"), NULL );
-  if(NULL == pmad->md2_ptr) return INVALID_MAD;
+  inherit_name = inherit_fname(szObjectpath, szObjectname, "tris.md2");
+  pmad->md2_ptr = md2_load( inherit_name, NULL );
+  if(NULL == pmad->md2_ptr)
+  {
+    log_warning( "Can't find MD2 file %s.\n", inherit_name);
+    return INVALID_MAD;
+  };
 
   /// @details BB@> Egoboo md2 models were designed with 1 tile = 32x32 units, but internally Egoboo uses
   ///      1 tile = 128x128 units. Previously, this was handled by sprinkling a bunch of
@@ -1269,11 +1310,11 @@ MAD_REF MadList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST 
   // generate a bbox structure for each frame of the animation
   // this is dynamically allocated, Mad_delete() or Mad_renew() must be called
   // to make all of that go away
-  mad_generate_bbox_tree(2, pmad);
+  _mad_generate_bbox_tree(2, pmad);
 
   // Figure out how many vertices to transform
   pmad->vertices      = md2_get_numVertices( pmad->md2_ptr );
-  pmad->transvertices = mad_calc_transvertices( pmad->md2_ptr );
+  pmad->transvertices = _mad_calc_transvertices( pmad->md2_ptr );
 
   // allocate the extra animation data
   iFrames = md2_get_numFrames(pmad->md2_ptr);
@@ -1281,7 +1322,7 @@ MAD_REF MadList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST 
   pmad->framefx  = EGOBOO_NEW_ARY( Uint16, iFrames );
 
   // Create the actions table for this object
-  get_actions( gs, imad );
+  _mad_get_actions( pmad );
 
   // Copy entire actions to save frame space "COPY.TXT"
   load_copy_file( gs, szObjectpath, szObjectname, imad );
@@ -1340,7 +1381,7 @@ bool_t mad_display_bbox_ary(BBOX_ARY * pary, int level)
   };
 
   return btrue;
-};
+}
 
 bool_t mad_display_bbox_tree(int level, matrix_4x4 matrix, Mad_t * pmad, int frame1, int frame2 )
 {
@@ -1406,7 +1447,7 @@ bool_t mad_display_bbox_tree(int level, matrix_4x4 matrix, Mad_t * pmad, int fra
 }
 
 //---------------------------------------------------------------------------------------------
-int mad_vertexconnected( MD2_Model_t * m, int vertex )
+int _mad_vertexconnected( MD2_Model_t * m, int vertex )
 {
   /// @details ZZ@> This function returns 1 if the model vertex is connected, 0 otherwise
 
@@ -1435,7 +1476,7 @@ int mad_vertexconnected( MD2_Model_t * m, int vertex )
 }
 
 //---------------------------------------------------------------------------------------------
-int mad_calc_transvertices( MD2_Model_t * m )
+int _mad_calc_transvertices( MD2_Model_t * m )
 {
   /// @details ZZ@> This function gets the number of vertices to transform for a model...
   ///     That means every one except the grip ( unconnected ) vertices
@@ -1447,7 +1488,7 @@ int mad_calc_transvertices( MD2_Model_t * m )
   vrtcount = md2_get_numVertices(m);
 
   for ( cnt = 0; cnt < vrtcount; cnt++ )
-    trans += mad_vertexconnected( m, cnt );
+    trans += _mad_vertexconnected( m, cnt );
 
   return trans;
 }

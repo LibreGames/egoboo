@@ -57,7 +57,7 @@ GLtexture * GLtexture_new( GLtexture * ptx )
 
   EKEY_PNEW(ptx, GLtexture);
 
-  ptx->textureID = INVALID_TEXTURE;
+  ptx->textureID = INVALID_TX_ID;
 
   return ptx;
 }
@@ -71,7 +71,7 @@ bool_t GLtexture_delete( GLtexture * ptx )
 
   EKEY_PINVALIDATE( ptx );
 
-  ptx->textureID = INVALID_TEXTURE;
+  ptx->textureID = INVALID_TX_ID;
 
   return btrue;
 }
@@ -115,12 +115,12 @@ Uint32 GLtexture_Convert( GLenum tx_target, GLtexture *texture, SDL_Surface * im
   SDL_PixelFormat * pformat;
   SDL_PixelFormat   tmpformat;
 
-  if ( NULL == texture || NULL == image) return INVALID_TEXTURE;
+  if ( NULL == texture || NULL == image) return INVALID_TX_ID;
 
   // make sure the old texture has been freed
   GLtexture_Release( texture );
 
-  if ( NULL == image ) return INVALID_TEXTURE;
+  if ( NULL == image ) return INVALID_TX_ID;
 
   /* set the color key, if valid */
   if ( NULL != image->format && NULL != image->format->palette && INVALID_KEY != key )
@@ -260,8 +260,6 @@ Uint32 GLtexture_Convert( GLenum tx_target, GLtexture *texture, SDL_Surface * im
   return texture->textureID;
 }
 
-
-
 //--------------------------------------------------------------------------------------------
 Uint32 GLtexture_Load( GLenum tx_target, GLtexture *texture, EGO_CONST char *filename, Uint32 key )
 {
@@ -271,25 +269,20 @@ Uint32 GLtexture_Load( GLenum tx_target, GLtexture *texture, EGO_CONST char *fil
   // get rid of any old data
   GLtexture_delete(texture);
 
-  if ( !VALID_CSTR(filename)  ) return INVALID_TEXTURE;
+  if ( !VALID_CSTR(filename)  ) return INVALID_TX_ID;
 
   // initialize the texture
-  if ( NULL == GLtexture_new( texture ) ) return INVALID_TEXTURE;
+  if ( NULL == GLtexture_new( texture ) ) return INVALID_TX_ID;
 
   image = IMG_Load( filename );
-  if ( NULL == image ) return INVALID_TEXTURE;
+  if ( NULL == image ) return INVALID_TX_ID;
 
   retval = GLtexture_Convert( tx_target, texture, image, key );
   strncpy(texture->name, filename, sizeof(texture->name));
 
-  if(INVALID_TEXTURE == retval)
+  if(INVALID_TX_ID == retval)
   {
-    //printf("****GLtexture_Load() - failed to load texture \"%s\".\n", filename );
     GLtexture_delete(texture);
-  }
-  else
-  {
-    //printf("****GLtexture_Load() - loaded texture \"%s\". ID == %d.\n", filename, texture->textureID );
   }
 
   return retval;
@@ -343,11 +336,11 @@ void  GLtexture_Release( GLtexture *texture )
 {
   if ( !EKEY_PVALID(texture) ) return;
 
-  if( INVALID_TEXTURE != texture->textureID )
+  if( INVALID_TX_ID != texture->textureID )
   {
     /* Delete the OpenGL texture */
     glDeleteTextures( 1, &texture->textureID );
-    texture->textureID = INVALID_TEXTURE;
+    texture->textureID = INVALID_TX_ID;
     //printf("****GLtexture_Release() - releasing texture %s.\n", texture->name );
   }
 
@@ -366,7 +359,7 @@ void GLtexture_Bind( GLtexture *texture, Graphics_t * g )
   GLuint id;
 
   target = GL_TEXTURE_2D;
-  id     = INVALID_TEXTURE;
+  id     = INVALID_TX_ID;
   if ( NULL != texture )
   {
     target = texture->texture_target;

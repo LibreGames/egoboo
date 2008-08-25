@@ -21,7 +21,7 @@
 
 ///
 /// @file
-/// @brief 
+/// @brief
 /// @details functions that will be declared inside the base class
 
 #include "char.h"
@@ -34,6 +34,41 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
+INLINE ACTION_INFO * action_info_new( ACTION_INFO * a);
+INLINE ANIM_INFO * anim_info_new( ANIM_INFO * a );
+INLINE WP_LIST * wp_list_new(WP_LIST * w, vect3 * pos);
+
+INLINE bool_t    wp_list_clear(WP_LIST * w);
+INLINE bool_t    wp_list_advance(WP_LIST * wl);
+INLINE bool_t    wp_list_add(WP_LIST * wl, float x, float y);
+
+INLINE bool_t wp_list_empty( WP_LIST * wl );
+INLINE float  wp_list_x( WP_LIST * wl );
+INLINE float  wp_list_y( WP_LIST * wl );
+
+INLINE AI_STATE * ai_state_new(AI_STATE * a);
+INLINE bool_t     ai_state_delete(AI_STATE * a);
+INLINE AI_STATE * ai_state_init(struct sGame * gs, AI_STATE * a, CHR_REF ichr);
+INLINE AI_STATE * ai_state_reinit(AI_STATE * a, CHR_REF ichr);
+
+INLINE bool_t chr_in_pack( PChr_t lst, size_t lst_size, CHR_REF character );
+INLINE bool_t chr_attached( PChr_t lst, size_t lst_size, CHR_REF character );
+INLINE bool_t chr_has_inventory( PChr_t lst, size_t lst_size, CHR_REF character );
+INLINE bool_t chr_is_invisible( PChr_t lst, size_t lst_size, CHR_REF character );
+INLINE bool_t chr_using_slot( PChr_t lst, size_t lst_size, CHR_REF character, SLOT slot );
+
+INLINE CHR_REF chr_get_nextinpack( PChr_t lst, size_t lst_size, CHR_REF ichr );
+INLINE CHR_REF chr_get_onwhichplatform( PChr_t lst, size_t lst_size, CHR_REF ichr );
+INLINE CHR_REF chr_get_inwhichpack( PChr_t lst, size_t lst_size, CHR_REF ichr );
+INLINE CHR_REF chr_get_attachedto( PChr_t lst, size_t lst_size, CHR_REF ichr );
+INLINE CHR_REF chr_get_holdingwhich( PChr_t lst, size_t lst_size, CHR_REF ichr, SLOT slot );
+
+INLINE CHR_REF chr_get_aitarget( PChr_t lst, size_t lst_size, Chr_t * pchr );
+INLINE CHR_REF chr_get_aiowner( PChr_t lst, size_t lst_size, Chr_t * pchr );
+INLINE CHR_REF chr_get_aichild( PChr_t lst, size_t lst_size, Chr_t * pchr );
+INLINE CHR_REF chr_get_aiattacklast( PChr_t lst, size_t lst_size, Chr_t * pchr );
+INLINE CHR_REF chr_get_aibumplast( PChr_t lst, size_t lst_size, Chr_t * pchr );
+INLINE CHR_REF chr_get_aihitlast( PChr_t lst, size_t lst_size, Chr_t * pchr );
 
 INLINE ACTION_INFO * action_info_new( ACTION_INFO * a);
 
@@ -50,7 +85,7 @@ INLINE bool_t chr_attached( PChr_t lst, size_t lst_size, CHR_REF chr_ref )
   if(!ACTIVE_CHR(lst, chr_ref)) lst[chr_ref].inwhichslot = SLOT_NONE;
 
   return ACTIVE_CHR(lst, lst[chr_ref].attachedto );
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE bool_t chr_in_pack( PChr_t lst, size_t lst_size, CHR_REF chr_ref )
@@ -77,7 +112,7 @@ INLINE bool_t chr_has_inventory( PChr_t lst, size_t lst_size, CHR_REF chr_ref )
 #endif
 
   return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE bool_t chr_is_invisible( PChr_t lst, size_t lst_size, CHR_REF chr_ref )
@@ -369,7 +404,7 @@ INLINE AI_STATE * ai_state_new(AI_STATE * a)
 
   EKEY_PNEW(a, AI_STATE);
 
-  a->type = AILST_COUNT;          // The AI script to run
+  a->type = INVALID_AI;          // The AI script to run
 
   // "pointers" to various external data
   a->target     = INVALID_CHR;       // Who the AI is after
@@ -381,7 +416,7 @@ INLINE AI_STATE * ai_state_new(AI_STATE * a)
   a->hitlast    = INVALID_CHR;       // Last character it hit
 
   // other random stuff
-  a->turnmode       = TURNMODE_VELOCITY;        // Turning mode
+  a->turnmode   = TURNMODE_VELOCITY;        // Turning mode
 
   Latch_clear( &(a->latch) );
 
@@ -500,75 +535,4 @@ INLINE ANIM_INFO * anim_info_new( ANIM_INFO * a )
   return a;
 }
 
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-INLINE void VData_Blended_construct(VData_Blended_t * v)
-{
-  if(NULL == v) return;
 
-  v->Vertices = NULL;
-  v->Normals  = NULL;
-  v->Colors   = NULL;
-  v->Texture  = NULL;
-  v->Ambient  = NULL;
-
-  v->frame0 = 0;
-  v->frame1 = 0;
-  v->vrtmin = 0;
-  v->vrtmax = 0;
-  v->lerp   = 0.0f;
-  v->needs_lighting = btrue;
-}
-
-//--------------------------------------------------------------------------------------------
-INLINE void VData_Blended_destruct(VData_Blended_t * v)
-{
-  VData_Blended_Deallocate(v);
-}
-
-
-//--------------------------------------------------------------------------------------------
-INLINE void VData_Blended_Deallocate(VData_Blended_t * v)
-{
-  if(NULL == v) return;
-
-  EGOBOO_DELETE( v->Vertices );
-  EGOBOO_DELETE( v->Normals );
-  EGOBOO_DELETE( v->Colors );
-  EGOBOO_DELETE( v->Texture );
-  EGOBOO_DELETE( v->Ambient );
-}
-
-//--------------------------------------------------------------------------------------------
-INLINE VData_Blended_t * VData_Blended_new()
-{
-  VData_Blended_t * retval = EGOBOO_NEW( VData_Blended_t );
-  if(NULL != retval)
-  {
-    VData_Blended_construct(retval);
-  };
-  return retval;
-}
-
-//--------------------------------------------------------------------------------------------
-INLINE void VData_Blended_delete(VData_Blended_t * v)
-{
-  if(NULL != v) return;
-
-  VData_Blended_destruct(v);
-  EGOBOO_DELETE(v);
-}
-
-//--------------------------------------------------------------------------------------------
-INLINE void VData_Blended_Allocate(VData_Blended_t * v, size_t verts)
-{
-  if(NULL == v) return;
-
-  VData_Blended_destruct(v);
-
-  v->Vertices = EGOBOO_NEW_ARY( vect3, verts );
-  v->Normals  = EGOBOO_NEW_ARY( vect3, verts );
-  v->Colors   = EGOBOO_NEW_ARY( vect4, verts );
-  v->Texture  = EGOBOO_NEW_ARY( vect2, verts );
-  v->Ambient  = EGOBOO_NEW_ARY( float, verts );
-}

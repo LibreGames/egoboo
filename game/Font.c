@@ -525,7 +525,7 @@ bool_t BMFont_load( BMFont_t * pfnt, int scr_height, char* szBitmap, char* szSpa
   Uint8 cTmp;
   FILE *fileread;
 
-  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D, &(pfnt->tex), szBitmap, 0 ) ) return bfalse;
+  if ( INVALID_TX_ID == GLtexture_Load( GL_TEXTURE_2D, &(pfnt->tex), szBitmap, 0 ) ) return bfalse;
 
   // Clear out the conversion table
   for ( cnt = 0; cnt < 256; cnt++ )

@@ -424,7 +424,6 @@ struct sGraphics_Data
   bool_t     Map_on;
   bool_t     Map_youarehereon;
 
-
   // Bars
   GLtexture  TxBars;                              ///< status bar bitmap
   IRect_t    TxBars_rect[BAR_COUNT];              ///< The bar rectangles

@@ -50,8 +50,8 @@ static retval_t  _nfile_Initialize( void );
 static void      _nfile_Quit( void );
 static retval_t  _nfile_startUp( void );
 static retval_t  _nfhost_shutDown( void );
-static retval_t  _nfile_receiveInitialize( void );
-static retval_t  _nfile_sendInitialize( void );
+//static retval_t  _nfile_receiveInitialize( void );
+//static retval_t  _nfile_sendInitialize( void );
 
 
 //--------------------------------------------------------------------------------------------
@@ -1619,7 +1619,7 @@ retval_t nfhost_checkCRC(ENetPeer * peer, EGO_CONST char * source, Uint32 seed, 
   net_logf("Received. Local CRC == 0x%08x, Remote CRC == 0x%08x\n", CRC, usp);
 
   return (temp_CRC == CRC) ? rv_succeed : rv_fail;
-};
+}
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
@@ -1634,7 +1634,7 @@ nfile_SendQueue_t * nfile_SendQueue_new(nfile_SendQueue_t * q)
   EKEY_PNEW(q, nfile_SendQueue_t);
 
   return q;
-};
+}
 
 //------------------------------------------------------------------------------
 bool_t nfile_SendQueue_delete(nfile_SendQueue_t * q)
@@ -1673,7 +1673,7 @@ nfile_ReceiveQueue_t * nfile_ReceiveQueue_new(nfile_ReceiveQueue_t * q)
   EKEY_PNEW(q, nfile_ReceiveQueue_t);
 
   return q;
-};
+}
 
 //------------------------------------------------------------------------------
 bool_t nfile_ReceiveQueue_delete(nfile_ReceiveQueue_t * q)
@@ -1734,7 +1734,7 @@ void nfile_quitHost()
 {
   NetHost_shutDown( _nfile_host );
   NetHost_destroy( &_nfile_host );
-};
+}
 
 //------------------------------------------------------------------------------
 void _nfile_Quit( void )
@@ -1762,7 +1762,7 @@ retval_t _nfile_startUp( void )
   NetHost_startUp(nh, NET_EGOBOO_NETWORK_PORT);
 
   return nfhost_startThreads();
-};
+}
 
 //------------------------------------------------------------------------------
 retval_t _nfhost_shutDown( void )

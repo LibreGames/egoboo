@@ -80,7 +80,7 @@ struct sClockState
 static ClockState_t * Clock_new( ClockState_t * cs, EGO_CONST char * name, int size  );
 static bool_t Clock_delete( ClockState_t * cs );
 
-static void   Clock_initTime( ClockState_t * cs );
+//static void   Clock_initTime( ClockState_t * cs );
 static void   Clock_setFrameHistoryWindow( ClockState_t * cs, int size );
 static void   Clock_addToFrameHistory( ClockState_t * cs, double frame );
 static double Clock_getExactLastFrameDuration( ClockState_t * cs );

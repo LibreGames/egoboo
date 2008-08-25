@@ -26,6 +26,7 @@
 
 #include "input.h"
 #include "char.h"
+#include "egoboo_stream.h"
 
 #include "egoboo.h"
 
@@ -104,7 +105,7 @@ enum e_network_packet_types
   NET_TRANSFER_ACK        = 0x2B22,  ///< Acknowledgement packet for a file send
   NET_CREATE_DIRECTORY    = 0xCFC9,  ///< Tell the peer to create the named directory
   NET_DONE_SENDING_FILES  = 0xCB08,  ///< Sent when there are no more files to send.
-  NET_NUM_FILES_TO_SEND   = 0x9E40,  ///< Let the other person know how many files you're sending
+  NET_NUM_FILES_TO_SEND   = 0x9E40   ///< Let the other person know how many files you're sending
 
   // Unused values
   //XXXX                    = 0xB312,
@@ -369,15 +370,6 @@ struct s_local_packet
 typedef struct s_local_packet SYS_PACKET;
 
 //------------------------------------------------------------------
-struct s_stream
-{
-  FILE  * pfile;
-  Uint8 * data;
-  size_t data_size, readLocation;
-};
-typedef struct s_stream STREAM;
-
-//------------------------------------------------------------------
 struct s_remote_packet
 {
   ENetPacket * pkt;
@@ -441,46 +433,6 @@ retval_t net_copyDirectoryToPeer(Net_t * ns, ENetPeer * peer, char *dirname, cha
 
 bool_t net_sendSysPacketToPeer(ENetPeer *peer, SYS_PACKET * egop);
 bool_t net_sendSysPacketToPeerGuaranteed(ENetPeer *peer, SYS_PACKET * egop);
-
-INLINE bool_t net_startNewSysPacket(SYS_PACKET * egop);
-INLINE void   net_packet_startReading(NET_PACKET * p, ENetPacket * enpkt);
-INLINE void   net_packet_doneReading(NET_PACKET * p);
-INLINE size_t net_packet_remainingSize(NET_PACKET * p);
-
-INLINE bool_t packet_readString(NET_PACKET * p, char *buffer, int maxLen);
-INLINE Uint8  net_packet_readUint8(NET_PACKET * p);
-INLINE Sint8  net_packet_readSint8(NET_PACKET * p);
-INLINE Uint16 net_packet_readUint16(NET_PACKET * p);
-INLINE Uint16 net_packet_peekUint16(NET_PACKET * p);
-INLINE Sint16 net_packet_readSint16(NET_PACKET * p);
-INLINE Uint32 net_packet_readUint32(NET_PACKET * p);
-INLINE Sint32 net_packet_readSint32(NET_PACKET * p);
-
-INLINE void sys_packet_addUint8(SYS_PACKET * egop, Uint8 uc);
-INLINE void sys_packet_addSint8(SYS_PACKET * egop, Sint8 sc);
-INLINE void sys_packet_addUint16(SYS_PACKET * egop, Uint16 us);
-INLINE void sys_packet_addSint16(SYS_PACKET * egop, Sint16 ss);
-INLINE void sys_packet_addUint32(SYS_PACKET * egop, Uint32 ui);
-INLINE void sys_packet_addSint32(SYS_PACKET * egop, Sint32 si);
-INLINE void sys_packet_addFString(SYS_PACKET * egop, EGO_CONST char *format, ...);
-INLINE void sys_packet_addString(SYS_PACKET * egop, EGO_CONST char *string);
-
-INLINE bool_t stream_startFile(STREAM * pwrapper, FILE * pfile);
-INLINE bool_t stream_startRaw(STREAM * pwrapper, Uint8 * buffer, size_t buffer_size);
-INLINE bool_t stream_startLocal(STREAM * pwrapper, SYS_PACKET * pegopkt);
-INLINE bool_t stream_startENet(STREAM * pwrapper, ENetPacket * packet);
-INLINE bool_t stream_startRemote(STREAM * pwrapper, NET_PACKET * pnetpkt);
-INLINE bool_t stream_done(STREAM * pwrapper);
-
-INLINE bool_t stream_readString(STREAM * p, char *buffer, size_t maxLen);
-INLINE Uint8  stream_readUint8(STREAM * p);
-INLINE Sint8  stream_readSint8(STREAM * p);
-INLINE Uint16 stream_readUint16(STREAM * p);
-INLINE Uint16 stream_peekUint16(STREAM * p);
-INLINE Sint16 stream_readSint16(STREAM * p);
-INLINE Uint32 stream_readUint32(STREAM * p);
-INLINE Sint32 stream_readSint32(STREAM * p);
-INLINE size_t stream_remainingSize(STREAM * p);
 
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------

@@ -104,7 +104,7 @@ int load_one_object( Game_t * gs, int skin_count, EGO_CONST char * szObjectpath,
 
   // Load the AI script for this object
   pobj->ai = load_ai_script( Game_getScriptInfo(gs), szObjectpath, szObjectname );
-  if ( AILST_COUNT == pobj->ai )
+  if ( INVALID_AI == pobj->ai )
   {
     // use the default script
     pobj->ai = 0;
@@ -155,38 +155,38 @@ int load_one_object( Game_t * gs, int skin_count, EGO_CONST char * szObjectpath,
     snprintf( fname, sizeof( newloadname ), "tris%d.png", skin_index );
     tx_index = GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + skin_count+numskins, inherit_fname(szObjectpath, szObjectname, fname), TRANSCOLOR );
 
-    if(INVALID_TEXTURE == tx_index)
+    if(INVALID_TX_ID == tx_index)
     {
       snprintf( fname, sizeof( newloadname ), "tris%d.bmp", skin_index );
       tx_index = GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + skin_count+numskins, inherit_fname(szObjectpath, szObjectname, fname), TRANSCOLOR );
     }
 
-    if(INVALID_TEXTURE == tx_index)
+    if(INVALID_TX_ID == tx_index)
     {
       snprintf( fname, sizeof( newloadname ), "tris%d.pcx", skin_index );
       tx_index = GLtexture_Load( GL_TEXTURE_2D,  gfx->TxTexture + skin_count + numskins, inherit_fname(szObjectpath, szObjectname, fname), TRANSCOLOR );
     }
 
-    if ( INVALID_TEXTURE != tx_index )
+    if ( INVALID_TX_ID != tx_index )
     {
       numskins++;
 
       snprintf( fname, sizeof( newloadname ), "icon%d.png", skin_index );
       tx_index = GLtexture_Load( GL_TEXTURE_2D,  gfx->TxIcon + gfx->TxIcon_count, inherit_fname(szObjectpath, szObjectname, fname), INVALID_KEY );
 
-      if ( INVALID_TEXTURE == tx_index )
+      if ( INVALID_TX_ID == tx_index )
       {
         snprintf( fname, sizeof( newloadname ), "icon%d.bmp", skin_index );
         tx_index = GLtexture_Load( GL_TEXTURE_2D,  gfx->TxIcon + gfx->TxIcon_count, inherit_fname(szObjectpath, szObjectname, fname), INVALID_KEY );
       }
 
-      if ( INVALID_TEXTURE == tx_index )
+      if ( INVALID_TX_ID == tx_index )
       {
         snprintf( fname, sizeof( newloadname ), "icon%d.pcx", skin_index );
         tx_index = GLtexture_Load( GL_TEXTURE_2D,  gfx->TxIcon + gfx->TxIcon_count, inherit_fname(szObjectpath, szObjectname, fname), INVALID_KEY );
       }
 
-      if( INVALID_TEXTURE != tx_index )
+      if( INVALID_TX_ID != tx_index )
       {
         if ( iobj == SPELLBOOK && MAXICONTX == gfx->ico_lst[ICO_BOOK_0] )
         {
@@ -303,13 +303,13 @@ void issue_clean( Game_t * gs, CHR_REF chr_ref )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-Team_t * CTeam_new(Team_t *pteam)
+Team_t * Team_new(Team_t *pteam)
 {
-  //fprintf( stdout, "CTeam_new()\n");
+  //fprintf( stdout, "Team_new()\n");
 
   if(NULL ==pteam) return pteam;
 
-  CTeam_delete( pteam );
+  Team_delete( pteam );
 
   memset(pteam, 0, sizeof(Team_t));
 
@@ -317,10 +317,10 @@ Team_t * CTeam_new(Team_t *pteam)
 
 
   return pteam;
-};
+}
 
 //--------------------------------------------------------------------------------------------
-bool_t CTeam_delete(Team_t *pteam)
+bool_t Team_delete(Team_t *pteam)
 {
   if(NULL ==pteam) return bfalse;
   if(!EKEY_PVALID( pteam )) return btrue;
@@ -330,15 +330,14 @@ bool_t CTeam_delete(Team_t *pteam)
   memset(pteam, 0, sizeof(Team_t));
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
-Team_t * CTeam_renew(Team_t *pteam)
+Team_t * Team_renew(Team_t *pteam)
 {
-  CTeam_delete(pteam);
-  return CTeam_new(pteam);
-};
-
+  Team_delete(pteam);
+  return Team_new(pteam);
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -381,7 +380,7 @@ Profile_t * CProfile_new(Profile_t * p)
   p->eve = INVALID_EVE;
   p->cap = INVALID_CAP;
   p->mad = INVALID_MAD;
-  p->ai  = AILST_COUNT;                              // AI for this model
+  p->ai  = INVALID_AI;                              // AI for this model
 
   for(cnt=0; cnt<PRTPIP_PEROBJECT_COUNT; cnt++)
   {
@@ -583,4 +582,4 @@ bool_t tile_damage_reset(TILE_DAMAGE * t)
   t->type     = DAMAGE_FIRE;                      // Type of damage
 
   return btrue;
-};
+}

@@ -51,7 +51,7 @@ enum e_ui_button_bits
 {
   UI_BITS_NONE      = 0,
   UI_BITS_MOUSEOVER = 1 << 0,
-  UI_BITS_CLICKED   = 1 << 1,
+  UI_BITS_CLICKED   = 1 << 1
 };
 
 
@@ -69,6 +69,13 @@ struct s_ui_Widget
 };
 typedef struct s_ui_Widget ui_Widget_t;
 
+bool_t ui_copyWidget( ui_Widget_t * pw2, ui_Widget_t * pw1 );
+bool_t ui_shrinkWidget( ui_Widget_t * pw2, ui_Widget_t * pw1, int pixels );
+bool_t ui_initWidget( ui_Widget_t * pw, ui_id_t id, TTFont_t * pfont, EGO_CONST char *text, GLtexture *img, int x, int y, int width, int height );
+bool_t ui_widgetAddMask( ui_Widget_t * pw, Uint32 mbits );
+bool_t ui_widgetRemoveMask( ui_Widget_t * pw, Uint32 mbits );
+bool_t ui_widgetSetMask( ui_Widget_t * pw, Uint32 mbits );
+
 // Initialize or shut down the ui system
 int  ui_initialize( EGO_CONST char *default_font, int default_font_size );
 void ui_shutdown( void );
@@ -81,8 +88,6 @@ void ui_beginFrame( void );
 void ui_endFrame( void );
 void ui_Reset( void );
 
-// UI widget
-
 // UI controls
 ui_buttonValues  ui_doButton( ui_Widget_t * pWidget );
 ui_buttonValues  ui_doImageButton( ui_Widget_t * pWidget );
@@ -90,27 +95,15 @@ ui_buttonValues  ui_doImageButtonWithText( ui_Widget_t * pWidget );
 //int  ui_doTextBox(ui_Widget_t * pWidget);
 
 // Utility functions
-void      ui_doCursor( void );
-int       ui_mouseInside( int x, int y, int width, int height );
 TTFont_t* ui_getTTFont( void );
 BMFont_t* ui_getBMFont( void );
 
 bool_t ui_load_BMFont( char* szBitmap, char* szSpacing );
 
-bool_t ui_copyWidget( ui_Widget_t * pw2, ui_Widget_t * pw1 );
-bool_t ui_shrinkWidget( ui_Widget_t * pw2, ui_Widget_t * pw1, int pixels );
-bool_t ui_initWidget( ui_Widget_t * pw, ui_id_t id, TTFont_t * pfont, EGO_CONST char *text, GLtexture *img, int x, int y, int width, int height );
-bool_t ui_widgetAddMask( ui_Widget_t * pw, Uint32 mbits );
-bool_t ui_widgetRemoveMask( ui_Widget_t * pw, Uint32 mbits );
-bool_t ui_widgetSetMask( ui_Widget_t * pw, Uint32 mbits );
-
 /*****************************************************************************/
 // Most users won't need to worry about stuff below here; it's mostly for
 // implementing new controls.
 /*****************************************************************************/
-
-// Behaviors
-ui_buttonValues ui_buttonBehavior( ui_Widget_t * pWidget );
 
 // Drawing
 void ui_drawButton( ui_Widget_t * pWidget );

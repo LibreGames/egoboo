@@ -39,12 +39,13 @@
 #include "egoboo_utility.h"
 #include "egoboo_strutil.h"
 
+#include "egoboo_stream.inl"
+#include "input.inl"
+#include "egoboo_types.inl"
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <assert.h>
-
-#include "input.inl"
-#include "egoboo_types.inl"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -93,7 +94,7 @@ Uint32 net_nextGUID()
   guid = (guid * 0x0019660DL) + 0x3C6EF35FL;
 
   return guid;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 Uint32 net_addService(NetHost_t * host, void * data)
@@ -357,7 +358,7 @@ retval_t NetHost_dispatch( NetHost_t * nh )
   }
 
   return rv_succeed;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -534,7 +535,7 @@ void _net_Quit( void )
     fclose(net_logfile);
     net_logfile = NULL;
   }
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t net_Started()
@@ -1240,7 +1241,7 @@ bool_t localize_filename(char * szin, char * szout)
   };
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t net_handlePacket(Net_t * ns, ENetEvent *event)
@@ -1484,7 +1485,7 @@ bool_t net_beginGame(struct sGame * gs)
   };
 
   return retval;
-};
+}
 
 
 //--------------------------------------------------------------------------------------------
@@ -1652,7 +1653,7 @@ int NetRequest_getFreeIndex(NetAsynchData_t * asynch_list, size_t asynch_count)
   };
 
   return -1;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 PacketRequest_t * NetRequest_getFree(NetAsynchData_t * asynch_list, size_t asynch_count)
@@ -1669,14 +1670,14 @@ PacketRequest_t * NetRequest_getFree(NetAsynchData_t * asynch_list, size_t async
   };
 
   return NULL;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t NetRequest_test(PacketRequest_t * prequest)
 {
   if(NULL ==prequest) return bfalse;
   return prequest->received;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t NetRequest_release(PacketRequest_t * prequest)
@@ -1690,7 +1691,7 @@ bool_t NetRequest_release(PacketRequest_t * prequest)
   prequest->data     = NULL;
 
   return btrue;
-};
+}
 
 
 
@@ -1728,7 +1729,7 @@ PacketRequest_t * NetRequest_check(NetAsynchData_t * asynch_list, size_t asynch_
   };
 
   return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 PacketRequest_t * net_prepareWaitForPacket(NetAsynchData_t * asynch_list, ENetPeer ** peer, Uint32 timeout, Uint16 packet_type)
@@ -1762,7 +1763,7 @@ PacketRequest_t * net_prepareWaitForPacket(NetAsynchData_t * asynch_list, ENetPe
 
 
   return prequest;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 retval_t net_loopWaitForPacket(PacketRequest_t * prequest, Uint32 granularity, size_t * data_size)
@@ -1788,7 +1789,7 @@ retval_t net_loopWaitForPacket(PacketRequest_t * prequest, Uint32 granularity, s
   NetRequest_release(prequest);
 
   return rv_succeed;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 retval_t net_waitForPacket(NetAsynchData_t * asynch_list, ENetPeer * peer, Uint32 timeout, Uint16 packet_type, size_t * data_size)
@@ -1807,7 +1808,7 @@ retval_t net_waitForPacket(NetAsynchData_t * asynch_list, ENetPeer * peer, Uint3
   };
 
   return wait_return;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -1868,7 +1869,7 @@ ENetPeer * net_disconnectPeer(ENetPeer * peer, int granularity_ms, int timeout_m
   }
 
   return NULL;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 char * convert_host(Uint32 host)
@@ -1944,7 +1945,7 @@ ENetPeer * net_startPeer(ENetHost * host, ENetAddress * address )
 
 
   return peer;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 ENetPeer * net_startPeerByName(ENetHost * host, EGO_CONST char* connect_name, EGO_CONST int connect_port )
@@ -1978,7 +1979,7 @@ ENetPeer * net_startPeerByName(ENetHost * host, EGO_CONST char* connect_name, EG
   }
 
   return peer;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 ENetPeer * net_stopPeer(ENetPeer * peer)
@@ -2032,7 +2033,7 @@ ENetPeer * net_stopPeer(ENetPeer * peer)
   }
 
   return peer;
-};
+}
 
 
 //--------------------------------------------------------------------------------------------
@@ -2348,7 +2349,7 @@ void net_KickOnePlayer(ENetPeer * peer)
 
   // disconnect him rudely
   enet_peer_reset(peer);
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void CListOut_close(CListOut_t * co, void * client_data)
@@ -2675,7 +2676,7 @@ static bool_t NetHost_delete(NetHost_t * nh)
   memset(nh, 0, sizeof(NetHost_t));
 
   return btrue;
-};
+}
 
 
 //--------------------------------------------------------------------------------------------

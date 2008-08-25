@@ -141,9 +141,13 @@ void cam_make_matrix( Camera_t * cam )
 {
   /// @details ZZ@> This function sets cam->mView to the camera's location and rotation
 
-  Game_t * gs = Graphics_requireGame(&gfxState);
-  vect3 worldup = VECT3(0, 0, -gs->phys.gravity);
+  vect3 worldup;
   float dither_x, dither_y;
+  Game_t * gs = Graphics_requireGame(&gfxState);
+
+  worldup.x = 0;
+  worldup.y = 0;
+  worldup.z = -gs->phys.gravity;
 
   if ( cam->swingamp > 0 )
   {

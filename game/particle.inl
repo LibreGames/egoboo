@@ -21,7 +21,7 @@
 
 ///
 /// @file
-/// @brief 
+/// @brief
 /// @details functions that will be declared inside the base class
 
 #include "particle.h"
@@ -31,13 +31,20 @@
 #include "egoboo_types.inl"
 
 //--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+INLINE CHR_REF prt_get_owner( struct sGame * gs, PRT_REF iprt );
+INLINE CHR_REF prt_get_target( struct sGame * gs, PRT_REF iprt );
+INLINE CHR_REF prt_get_attachedtochr( struct sGame * gs, PRT_REF iprt );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 INLINE CHR_REF prt_get_owner( Game_t * gs, PRT_REF iprt )
 {
   if ( !ACTIVE_PRT( gs->PrtList, iprt ) ) return INVALID_CHR;
 
   gs->PrtList[iprt].owner = VALIDATE_CHR( gs->ChrList, gs->PrtList[iprt].owner );
   return gs->PrtList[iprt].owner;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF prt_get_target( Game_t * gs, PRT_REF iprt )

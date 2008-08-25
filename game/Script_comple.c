@@ -15,6 +15,16 @@
 #define REGISTER_FUNCTION(LIST,NAME)          { strncpy(LIST.opcode[LIST.count].name, #NAME, MAXCODENAMESIZE); LIST.opcode[LIST.count].type = (Uint8)'F'; LIST.opcode[LIST.count].value = (Uint16)F_##NAME; LIST.count++; }
 #define REGISTER_FUNCTION_ALIAS(LIST,NAME,ALIAS)          { strncpy(LIST.opcode[LIST.count].name, ALIAS, MAXCODENAMESIZE); LIST.opcode[LIST.count].type = (Uint8)'F'; LIST.opcode[LIST.count].value = (Uint16)F_##NAME; LIST.count++; }
 
+static Uint32 get_high_bits( void );
+static size_t tell_code( size_t read );
+static void   add_code( ScriptInfo_t * slist, Uint32 highbits );
+static void   parse_line_by_line( ScriptInfo_t * slist );
+static void   parse_null_terminate_comments( void );
+static size_t jump_goto( ScriptInfo_t * slist, size_t index );
+static void   parse_jumps( ScriptInfo_t * slist, size_t index_stt, size_t index_end );
+//static void   log_code( ScriptInfo_t * slist, int ainumber, char* savename );
+
+
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 struct s_opcode_element
@@ -72,7 +82,7 @@ static int    get_indentation( void );
 static void   fix_operators( void );
 static int    starts_with_capital_letter( void );
 
-static size_t ai_goto_colon( size_t read );
+//static size_t ai_goto_colon( size_t read );
 static void   fget_code( FILE * pfile );
 
 //------------------------------------------------------------------------------
@@ -607,45 +617,45 @@ void parse_jumps( ScriptInfo_t * slist, size_t index_stt, size_t index_end )
 }
 
 //------------------------------------------------------------------------------
-void log_code( ScriptInfo_t * slist, int ainumber, char* savename )
-{
-  /// @details ZZ@> This function shows the actual code, saving it in a file
-
-  int index;
-  Uint32 value;
-  FILE* filewrite;
-
-  filewrite = fs_fileOpen( PRI_NONE, NULL, savename, "w" );
-  if ( filewrite )
-  {
-    index = slist->offset_stt[ainumber];
-    value = slist->buffer[index];
-    while ( !IS_END( value ) ) // End Function
-    {
-      value = slist->buffer[index];
-      fprintf( filewrite, "0x%08x--0x%08x\n", index, value );
-      index++;
-    }
-    fs_fileClose( filewrite );
-  }
-  SDL_Quit();
-}
+//void log_code( ScriptInfo_t * slist, int ainumber, char* savename )
+//{
+//  /// @details ZZ@> This function shows the actual code, saving it in a file
+//
+//  int index;
+//  Uint32 value;
+//  FILE* filewrite;
+//
+//  filewrite = fs_fileOpen( PRI_NONE, NULL, savename, "w" );
+//  if ( filewrite )
+//  {
+//    index = slist->offset_stt[ainumber];
+//    value = slist->buffer[index];
+//    while ( !IS_END( value ) ) // End Function
+//    {
+//      value = slist->buffer[index];
+//      fprintf( filewrite, "0x%08x--0x%08x\n", index, value );
+//      index++;
+//    }
+//    fs_fileClose( filewrite );
+//  }
+//  SDL_Quit();
+//}
 
 //------------------------------------------------------------------------------
-size_t ai_goto_colon( size_t read )
-{
-  /// @details ZZ@> This function goes to spot after the next colon
-
-  Uint8 cTmp;
-
-  cTmp = _cstate.file_buffer[read];
-  while ( cTmp != ':' && read < _cstate.file_size )
-  {
-    read++;  cTmp = _cstate.file_buffer[read];
-  }
-  if ( read < _cstate.file_size )  read++;
-  return read;
-}
+//size_t ai_goto_colon( size_t read )
+//{
+//  /// @details ZZ@> This function goes to spot after the next colon
+//
+//  Uint8 cTmp;
+//
+//  cTmp = _cstate.file_buffer[read];
+//  while ( cTmp != ':' && read < _cstate.file_size )
+//  {
+//    read++;  cTmp = _cstate.file_buffer[read];
+//  }
+//  if ( read < _cstate.file_size )  read++;
+//  return read;
+//}
 
 //------------------------------------------------------------------------------
 void fget_code( FILE * pfile )
@@ -706,12 +716,12 @@ void load_ai_codes( char* loadname )
   REGISTER_OPCODE( opcode_lst, 'V', VAR_LEADER_Y,        "leadery" );   // 018
   REGISTER_OPCODE( opcode_lst, 'V', VAR_LEADER_DISTANCE, "leaderdistance" );   // 019
   REGISTER_OPCODE( opcode_lst, 'V', VAR_LEADER_TURN,     "leaderturn" );   // 020
-  REGISTER_OPCODE( opcode_lst, 'V', VAR_GOTO_X,          "gotox" );   // 021
-  REGISTER_OPCODE( opcode_lst, 'V', VAR_GOTO_Y,          "gotoy" );   // 022
-  REGISTER_OPCODE( opcode_lst, 'V', VAR_GOTO_DISTANCE,   "gotodistance" );   // 023
+  REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_GOTO_X,          "gotox" );   // 021
+  REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_GOTO_Y,          "gotoy" );   // 022
+  REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_GOTO_DISTANCE,   "gotodistance" );   // 023
   REGISTER_OPCODE( opcode_lst, 'V', VAR_TARGET_TURNTO,   "targetturnto" );   // 024
-  REGISTER_OPCODE( opcode_lst, 'V', VAR_PASSAGE,         "passage" );   // 025
-  REGISTER_OPCODE( opcode_lst, 'V', VAR_WEIGHT,          "weight" );   // 026
+  REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_PASSAGE,         "passage" );   // 025
+  REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_HOLDING_WEIGHT,          "weight" );   // 026
   REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_ALTITUDE,   "selfaltitude" );   // 027
   REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_ID,         "selfid" );   // 028
   REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_HATEID,     "selfhateid" );   // 029
@@ -736,7 +746,7 @@ void load_ai_codes( char* loadname )
   REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_MANAFLOW,   "selfmanaflow" );   // 048
   REGISTER_OPCODE( opcode_lst, 'V', VAR_TARGET_MANAFLOW, "targetmanaflow" );   // 049
   REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_ATTACHED,   "selfattached" );   // 050
-  REGISTER_OPCODE( opcode_lst, 'V', VAR_SWINGTURN,       "swingturn" );   // 051
+  REGISTER_OPCODE( opcode_lst, 'V', VAR_CAMERA_SWING,       "swingturn" );   // 051
   REGISTER_OPCODE( opcode_lst, 'V', VAR_XYDISTANCE,      "xydistance" );   // 052
   REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_Z,          "selfz" );   // 053
   REGISTER_OPCODE( opcode_lst, 'V', VAR_TARGET_ALTITUDE, "targetaltitude" );   // 054
@@ -756,9 +766,13 @@ void load_ai_codes( char* loadname )
   REGISTER_OPCODE( opcode_lst, 'V', VAR_TARGET_MONEY,    "targetmoney" );   // 068
   REGISTER_OPCODE( opcode_lst, 'V', VAR_TARGET_TURNAWAY, "targetturnfrom" );   // 069
   REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_LEVEL,      "selflevel" );   // 070
-  REGISTER_OPCODE( opcode_lst, 'V', VAR_SPAWN_DISTANCE,  "selfspawndistance" );   // 070
+  REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_SPAWN_DISTANCE,  "selfspawndistance" );   // 070
   REGISTER_OPCODE( opcode_lst, 'V', VAR_TARGET_MAX_LIFE, "targetmaxlife" );   // 070
   REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_CONTENT,    "selfcontent" );   // 070
+  REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_CONTENT,    "selfcontent" );   // 070
+  REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_CONTENT,    "selfcontent" );   // 070
+  REGISTER_OPCODE( opcode_lst, 'V', VAR_TARGET_RELOAD_TIME, "targetreloadtime" );   // 070
+
 
   // register internal constants
   REGISTER_OPCODE( opcode_lst, 'C', LATCHBUTTON_LEFT, "LATCHLEFT" );
@@ -1259,7 +1273,8 @@ void load_ai_codes( char* loadname )
   REGISTER_FUNCTION( opcode_lst, DisableRespawn);
   REGISTER_FUNCTION( opcode_lst, IfButtonPressed);
   REGISTER_FUNCTION( opcode_lst, IfHolderScoredAHit);
-
+  REGISTER_FUNCTION( opcode_lst, IfHolderBlocked);
+  REGISTER_FUNCTION( opcode_lst, GetShieldProficiency);
 
   // register all the function !!!ALIASES!!!
   REGISTER_FUNCTION_ALIAS( opcode_lst, IfAtLastWaypoint, "IfPutAway" );
@@ -1320,7 +1335,7 @@ Uint32 load_ai_script( ScriptInfo_t * slist, EGO_CONST char * szObjectpath, EGO_
 
   FILE * fileread;
   EGO_CONST char * loc_fname;
-  Uint32 script_idx = AILST_COUNT;
+  Uint32 script_idx = INVALID_AI;
 
   if(NULL == slist || slist->offset_count >= AILST_COUNT) return AILST_COUNT;
 
@@ -1368,7 +1383,7 @@ bool_t ScriptInfo_reset( ScriptInfo_t * si )
   si->offset_count = 0;
 
   return btrue;
-};
+}
 
 //------------------------------------------------------------------------------
 void reset_ai_script(Game_t * gs)

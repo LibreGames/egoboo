@@ -85,7 +85,7 @@ bool_t mesh_allocate_bumplist(MeshInfo_t * mi, int blocks)
   }
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t mesh_load( Mesh_t * pmesh, char *modname )
@@ -105,7 +105,11 @@ bool_t mesh_load( Mesh_t * pmesh, char *modname )
 
   snprintf( newloadname, sizeof( newloadname ), "%s%s" SLASH_STRING "%s", modname, CData.gamedat_dir, CData.mesh_file );
   fileread = fs_fileOpen( PRI_NONE, NULL, newloadname, "rb" );
-  if ( NULL == fileread ) return bfalse;
+  if ( NULL == fileread )
+  {
+    log_warning("Can't find the mesh file %s.\n", newloadname);
+    return bfalse;
+  };
 
   fread( &itmp, 4, 1, fileread );  if (SDL_SwapLE32( itmp ) != MAPID ) return bfalse;
   fread( &itmp, 4, 1, fileread );  mi->vert_count = SDL_SwapLE32( itmp );
@@ -489,8 +493,7 @@ bool_t mesh_calc_normal_fan( Mesh_t * pmesh, PhysicsData_t * phys, Uint32 fan, v
   };
 
   return retval;
-};
-
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t mesh_calc_normal_pos( Mesh_t * pmesh, PhysicsData_t * phys, Uint32 fan, vect3 pos, vect3 * pnrm )
@@ -560,7 +563,7 @@ bool_t mesh_calc_normal_pos( Mesh_t * pmesh, PhysicsData_t * phys, Uint32 fan, v
   };
 
   return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t mesh_calc_normal( Mesh_t * pmesh, PhysicsData_t * phys, vect3 pos, vect3 * pnrm )
@@ -633,7 +636,7 @@ bool_t mesh_calc_normal( Mesh_t * pmesh, PhysicsData_t * phys, vect3 pos, vect3 
   };
 
   return retval;
-};
+}
 
 //---------------------------------------------------------------------------------------------
 float mesh_get_level( MeshMem_t * mm, Uint32 fan, float x, float y, bool_t waterwalk, WATER_INFO * wi )
@@ -902,7 +905,7 @@ MeshInfo_t * MeshInfo_new(MeshInfo_t * mi)
   bumplist_new( &(mi->bumplist) );
 
   return mi;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t MeshInfo_delete(MeshInfo_t * mi)

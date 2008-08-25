@@ -440,7 +440,7 @@ bool_t passage_check_all( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * pown
   }
 
   return is_inside;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t passage_check_any( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powner )
@@ -508,7 +508,7 @@ bool_t passage_check_any( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * pown
   }
 
   return is_inside;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t passage_check( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powner )
@@ -561,7 +561,8 @@ bool_t passage_check( Game_t * gs, CHR_REF ichr, Uint16 pass, CHR_REF * powner )
   }
 
   return is_inside;
-};
+}
+
 //--------------------------------------------------------------------------------------------
 Uint32 ShopList_add( Game_t * gs, CHR_REF owner, PASS_REF passage )
 {
@@ -661,10 +662,9 @@ void PassList_load( Game_t * gs, char *modname )
 
     PassList_add( gs, tlx, tly, brx, bry, open, mask );
   }
+
   fs_fileClose( fileread );
-
-
-};
+}
 
 
 //--------------------------------------------------------------------------------------------
@@ -686,7 +686,7 @@ Passage_t * Passage_new(Passage_t *ppass)
   ppass->owner = INVALID_CHR;
 
   return ppass;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t Passage_delete(Passage_t *ppass)
@@ -701,14 +701,14 @@ bool_t Passage_delete(Passage_t *ppass)
   ppass->owner = INVALID_CHR;
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 Passage_t * Passage_renew(Passage_t *ppass)
 {
   Passage_delete(ppass);
   return Passage_new(ppass);
-};
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -728,7 +728,7 @@ Shop_t * Shop_new(Shop_t *pshop)
   pshop->owner   = INVALID_CHR;
 
   return pshop;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t Shop_delete(Shop_t *pshop)
@@ -742,11 +742,11 @@ bool_t Shop_delete(Shop_t *pshop)
   pshop->owner   = INVALID_CHR;
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 Shop_t * Shop_renew(Shop_t *pshop)
 {
   Shop_delete(pshop);
   return Shop_new(pshop);
-};
+}

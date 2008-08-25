@@ -89,7 +89,7 @@ enum e_mnu_states
   MM_Entering,
   MM_Running,
   MM_Leaving,
-  MM_Finish,
+  MM_Finish
 };
 
 typedef enum e_mnu_states MenuProcs;
@@ -325,7 +325,7 @@ static void init_options_data()
   OData.particletype   = CData.particletype;
   OData.autoturncamera = CData.autoturncamera;
   OData.vsync          = CData.vsync;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 static void update_options_data()
@@ -369,7 +369,7 @@ static void update_options_data()
   CData.fogallowed = OData.fogallowed;
   CData.autoturncamera = OData.autoturncamera;
   CData.vsync          = OData.vsync;
-};
+}
 
 
 //--------------------------------------------------------------------------------------------
@@ -409,7 +409,7 @@ int mnu_initWidgetsList( ui_Widget_t wlist[], int wmax, EGO_CONST char * text[] 
   };
 
   return cnt;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 static void initSlidyButtons( float lerp, ui_Widget_t * buttons, int count )
@@ -510,7 +510,7 @@ int mnu_doMain( MenuProc_t * mproc, float deltaTime )
 
       // set up menu variables
       snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_main_bitmap );
-      GLtexture_Load( GL_TEXTURE_2D, &background, CStringTmp1, INVALID_TEXTURE );
+      GLtexture_Load( GL_TEXTURE_2D, &background, CStringTmp1, INVALID_TX_ID );
 
       mnu_widgetCount = mnu_initWidgetsList( mnu_widgetList, MAXWIDGET, mnu_mainMenuButtons );
       initSlidyButtons( 1.0f, mnu_widgetList, mnu_widgetCount );
@@ -1039,7 +1039,7 @@ static bool_t mnu_checkSelectedPlayer( PLA_REF player )
   }
 
   return bfalse;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 static PLA_REF mnu_getSelectedPlayer( PLA_REF player )
@@ -1053,7 +1053,7 @@ static PLA_REF mnu_getSelectedPlayer( PLA_REF player )
   }
 
   return INVALID_PLA;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 static bool_t mnu_addSelectedPlayer( PLA_REF player )
@@ -1066,7 +1066,7 @@ static bool_t mnu_addSelectedPlayer( PLA_REF player )
   mnu_selectedPlayerCount++;
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 static bool_t mnu_removeSelectedPlayer( PLA_REF player )
@@ -1107,7 +1107,7 @@ static bool_t mnu_removeSelectedPlayer( PLA_REF player )
   };
 
   return found;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 static bool_t mnu_addSelectedPlayerInput( PLA_REF player, Uint32 input )
@@ -1148,7 +1148,7 @@ static bool_t mnu_addSelectedPlayerInput( PLA_REF player, Uint32 input )
   }
 
   return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 static bool_t mnu_removeSelectedPlayerInput( PLA_REF player, Uint32 input )
@@ -1168,7 +1168,7 @@ static bool_t mnu_removeSelectedPlayerInput( PLA_REF player, Uint32 input )
   }
 
   return bfalse;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void import_selected_players()
@@ -1205,7 +1205,7 @@ void import_selected_players()
       fs_copyDirectory( srcDir, destDir );
     }
   };
-};
+}
 
 //--------------------------------------------------------------------------------------------
 int mnu_doChoosePlayer( MenuProc_t * mproc, float deltaTime )
@@ -3421,7 +3421,7 @@ void mnu_enterMenuMode()
   SDL_WM_GrabInput( SDL_GRAB_OFF );
   SDL_ShowCursor( SDL_DISABLE );
   mous.game = bfalse;
-};
+}
 
 void mnu_exitMenuMode()
 {
@@ -3430,7 +3430,7 @@ void mnu_exitMenuMode()
   SDL_WM_GrabInput( CData.GrabMouse );
   SDL_ShowCursor( CData.HideMouse ? SDL_DISABLE : SDL_ENABLE );
   mous.game = btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 int mnu_doNetwork(MenuProc_t * mproc, float deltaTime)
@@ -3453,7 +3453,7 @@ int mnu_doNetwork(MenuProc_t * mproc, float deltaTime)
 
     // set up menu variables
     snprintf(CStringTmp1, sizeof(CStringTmp1), "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.basicdat_dir, CData.mnu_dir, CData.menu_main_bitmap);
-    GLtexture_Load(GL_TEXTURE_2D, &background, CStringTmp1, INVALID_TEXTURE);
+    GLtexture_Load(GL_TEXTURE_2D, &background, CStringTmp1, INVALID_TX_ID);
     ui_initWidget( &wBackground, UI_Invalid, ui_getTTFont(), NULL, &background, ( gfxState.surface->w - background.imgW ), 0, 0, 0 );
 
     mnu_widgetCount = mnu_initWidgetsList(mnu_widgetList, MAXWIDGET, netMenuButtons );
@@ -4325,7 +4325,7 @@ int mnu_handleKeyboard( MenuProc_t * mproc )
   }
 
   return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 int mnu_doIngameQuit( MenuProc_t * mproc, float deltaTime )
@@ -4337,7 +4337,7 @@ int mnu_doIngameQuit( MenuProc_t * mproc, float deltaTime )
 
   int result = 0;
 
-  Game_t * gs = Graphics_requireGame(&gfxState);
+  //Game_t * gs = Graphics_requireGame(&gfxState);
 
   switch ( menuState )
   {
@@ -4724,7 +4724,7 @@ retval_t MenuProc_ensure_server(MenuProc_t * ms, Game_t * gs)
   }
 
   return (NULL != ms->sv) ? rv_succeed : rv_error;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 retval_t   MenuProc_ensure_client(MenuProc_t * ms, Game_t * gs)
@@ -4737,7 +4737,7 @@ retval_t   MenuProc_ensure_client(MenuProc_t * ms, Game_t * gs)
   }
 
   return  (NULL != ms->cl) ? rv_succeed : rv_error;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 retval_t   MenuProc_ensure_network(MenuProc_t * ms, Game_t * gs)
@@ -4750,7 +4750,7 @@ retval_t   MenuProc_ensure_network(MenuProc_t * ms, Game_t * gs)
   }
 
   return  (NULL != ms->net) ? rv_succeed : rv_error;
-};
+}
 
 
 //--------------------------------------------------------------------------------------------
@@ -4803,7 +4803,7 @@ retval_t   MenuProc_start_netfile(MenuProc_t * ms, Game_t * gs)
   ret = NFileState_startUp( ms->net->nfs );
 
   return ret;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t MenuProc_resynch(MenuProc_t * ms, Game_t * gs)
@@ -4815,7 +4815,7 @@ bool_t MenuProc_resynch(MenuProc_t * ms, Game_t * gs)
   ms->net = gs->ns;
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t MenuProc_init_ingame(MenuProc_t * ms)
@@ -4842,7 +4842,7 @@ Uint32 mnu_load_titleimage(MenuProc_t * mproc, Uint32 titleimage, char *szLoadNa
   ///     system memory.  Returns btrue if it worked
   Uint32 retval = MAXMODULE;
 
-  if(INVALID_TEXTURE != GLtexture_Load(GL_TEXTURE_2D,  mproc->TxTitleImage + titleimage, szLoadName, INVALID_KEY))
+  if(INVALID_TX_ID != GLtexture_Load(GL_TEXTURE_2D,  mproc->TxTitleImage + titleimage, szLoadName, INVALID_KEY))
   {
     retval = titleimage;
   }
@@ -5025,7 +5025,7 @@ retval_t mnu_upload_game_info(Game_t * gs, MenuProc_t * ms)
   Game_registerServer ( gs, ms->sv,  btrue );
 
   return rv_succeed;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void check_player_import(Game_t * gs)

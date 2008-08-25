@@ -631,7 +631,7 @@ Enc_t * Enc_new(Enc_t *penc)
   penc->active = bfalse;
 
   return penc;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t Enc_delete( Enc_t * penc)
@@ -671,7 +671,7 @@ Uint32 fget_damage_modifier( FILE * fileread )
   tTmp = fget_int( fileread );
 
   return iTmp | tTmp;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t fput_damage_modifier_char( FILE * filewrite, Uint32 mod )
@@ -1478,7 +1478,7 @@ Eve_t * Eve_new(Eve_t *peve)
   EKEY_PNEW( peve, Eve_t );
 
   return peve;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t Eve_delete( Eve_t * peve )
@@ -2437,7 +2437,7 @@ EncHeap_t * EncHeap_renew ( EncHeap_t * pheap )
   if( !EncHeap_delete( pheap ) ) return pheap;
 
   return EncHeap_new( pheap );
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t EncHeap_reset ( EncHeap_t * pheap )
@@ -2459,7 +2459,7 @@ bool_t EncHeap_reset ( EncHeap_t * pheap )
   PROFILE_END2( EncHeap );
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 ENC_REF EncHeap_getFree( EncHeap_t * pheap, ENC_REF request )
@@ -2498,7 +2498,7 @@ ENC_REF EncHeap_getFree( EncHeap_t * pheap, ENC_REF request )
   PROFILE_END2( EncHeap );
 
   return ret;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 ENC_REF EncHeap_iterateUsed( EncHeap_t * pheap, int * index )
@@ -2516,7 +2516,7 @@ ENC_REF EncHeap_iterateUsed( EncHeap_t * pheap, int * index )
   PROFILE_END2( EncHeap );
 
   return ret;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t  EncHeap_addUsed( EncHeap_t * pheap, ENC_REF ref )

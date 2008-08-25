@@ -164,7 +164,7 @@ retval_t Server_shutDown(Server_t * ss)
   net_logf("Done.\n");
 
   return rv_succeed;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 //void sv_Quit( void )
@@ -290,7 +290,7 @@ void Server_bufferLatches(Server_t * ss)
     ss->tlb.numtimes++;
   };
 
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void sv_talkToRemotes(Server_t * ss)
@@ -442,7 +442,7 @@ void sv_sendModuleInfoToAllPlayers(Server_t * ss)
   sys_packet_addString(&egopkt, ss->mod.loadname);
 
   sv_sendPacketToAllClientsGuaranteed(ss, &egopkt);
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void sv_sendModuleInfoToOnePlayer(Server_t * ss, ENetPeer * peer)
@@ -456,7 +456,7 @@ void sv_sendModuleInfoToOnePlayer(Server_t * ss, ENetPeer * peer)
   sys_packet_addString(&egopkt, ss->mod.loadname);
 
   net_sendSysPacketToPeerGuaranteed(peer, &egopkt);
-};
+}
 
 
 //--------------------------------------------------------------------------------------------
@@ -781,7 +781,7 @@ bool_t sv_handlePacket(Server_t * ss, ENetEvent *event)
   }
 
   return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void Server_unbufferLatches(Server_t * ss)
@@ -837,7 +837,7 @@ void Server_reset_latches(Server_t * ss)
 
   ss->tlb.nextstamp = INVALID_TIMESTAMP;
   ss->tlb.numtimes   = STARTTALK + 1;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void Server_resetTimeLatches(Server_t * ss, CHR_REF ichr)
@@ -857,7 +857,7 @@ void Server_resetTimeLatches(Server_t * ss, CHR_REF ichr)
 
     Latch_clear( &(ss->tlb.buffer[chr_val][cnt].latch) );
   }
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t sv_unhostGame(Server_t * ss)
@@ -888,7 +888,7 @@ bool_t sv_unhostGame(Server_t * ss)
   };
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 int _sv_HostCallback(void * data)
@@ -1133,7 +1133,7 @@ void sv_quitHost()
 {
   NetHost_shutDown( _sv_host );
   NetHost_destroy( &_sv_host );
-};
+}
 
 //------------------------------------------------------------------------------
 void _sv_Quit( void )
@@ -1151,7 +1151,7 @@ retval_t _sv_startUp( void )
   if(NULL == nh) return rv_fail;
 
   return NetHost_startUp(nh, NET_EGOBOO_SERVER_PORT);
-};
+}
 
 //------------------------------------------------------------------------------
 retval_t _sv_shutDown( void )

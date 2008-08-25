@@ -21,7 +21,7 @@
 
 ///
 /// @file
-/// @brief 
+/// @brief
 /// @details functions that will be declared inside the base class
 
 #include "mesh.h"
@@ -32,6 +32,72 @@
 #include "egoboo_types.inl"
 
 #include <assert.h>
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+INLINE EGO_CONST BUMPLIST * bumplist_new(BUMPLIST * b);
+INLINE EGO_CONST bool_t     bumplist_delete(BUMPLIST * b);
+INLINE EGO_CONST BUMPLIST * bumplist_renew(BUMPLIST * b);
+INLINE EGO_CONST bool_t     bumplist_allocate(BUMPLIST * b, int size);
+INLINE EGO_CONST bool_t     bumplist_clear( BUMPLIST * b );
+
+INLINE EGO_CONST Uint32     bumplist_get_free(BUMPLIST * b);
+
+INLINE EGO_CONST bool_t     bumplist_insert_chr(BUMPLIST * b, Uint32 block, CHR_REF chr_ref);
+INLINE EGO_CONST bool_t     bumplist_insert_prt(BUMPLIST * b, Uint32 block, PRT_REF prt_ref);
+
+INLINE EGO_CONST Uint32     bumplist_get_chr_head(BUMPLIST * b, Uint32 block);
+INLINE EGO_CONST Uint32     bumplist_get_prt_head(BUMPLIST * b, Uint32 block);
+INLINE EGO_CONST Uint32     bumplist_get_chr_count(BUMPLIST * b, Uint32 block );
+INLINE EGO_CONST Uint32     bumplist_get_prt_count(BUMPLIST * b, Uint32 block );
+
+INLINE EGO_CONST Uint32     bumplist_get_next(BUMPLIST * b, Uint32 node );
+INLINE EGO_CONST Uint32     bumplist_get_ref(BUMPLIST * b, Uint32 node );
+INLINE EGO_CONST Uint32     bumplist_get_next_prt(struct sGame * gs, BUMPLIST * b, Uint32 node );
+INLINE EGO_CONST Uint32     bumplist_get_next_chr(struct sGame * gs, BUMPLIST * b, Uint32 node );
+
+INLINE Mesh_t * Mesh_new( Mesh_t * pmesh );
+INLINE bool_t   Mesh_delete( Mesh_t * pmesh );
+
+INLINE EGO_CONST Uint32 mesh_get_fan( Mesh_t * pmesh, vect3 pos );
+INLINE EGO_CONST Uint32 mesh_get_block( MeshInfo_t * mi, vect3 pos );
+
+INLINE void mesh_set_colora( Mesh_t * pmesh, int fan_x, int fan_y, int color );
+
+INLINE EGO_CONST bool_t mesh_fan_clear_bits( Mesh_t * pmesh,  int fan_x, int fan_y, Uint32 bits );
+INLINE EGO_CONST bool_t mesh_fan_add_bits( Mesh_t * pmesh,  int fan_x, int fan_y, Uint32 bits );
+INLINE EGO_CONST bool_t mesh_fan_set_bits( Mesh_t * pmesh, int fan_x, int fan_y, Uint32 bits );
+
+INLINE EGO_CONST int   mesh_bump_tile( Mesh_t * pmesh, int fan_x, int fan_y );
+INLINE EGO_CONST Uint16 mesh_get_tile( Mesh_t * pmesh, int fan_x, int fan_y );
+INLINE EGO_CONST bool_t mesh_set_tile( Mesh_t * pmesh, int fan_x, int fan_y, Uint32 become );
+
+INLINE EGO_CONST Uint32 mesh_convert_fan( MeshInfo_t * mi, int fan_x, int fan_y );
+INLINE EGO_CONST Uint32 mesh_convert_block( MeshInfo_t * mi, int block_x, int block_y );
+
+INLINE EGO_CONST float mesh_fraction_x( MeshInfo_t * mi, float x );
+INLINE EGO_CONST float mesh_fraction_y( MeshInfo_t * mi, float y );
+
+INLINE EGO_CONST bool_t mesh_fan_is_in_renderlist(  MeshTile_t * mf_list, Uint32 fan );
+INLINE       void   mesh_fan_remove_renderlist( MeshTile_t * mf_list, Uint32 fan );
+INLINE       void   mesh_fan_add_renderlist( MeshTile_t * mf_list, Uint32 fan );
+
+INLINE EGO_CONST float mesh_clip_x( MeshInfo_t * mi, float x );
+INLINE EGO_CONST float mesh_clip_y( MeshInfo_t * mi, float y );
+INLINE EGO_CONST int mesh_clip_fan_x( MeshInfo_t * mi, int fan_x );
+INLINE EGO_CONST int mesh_clip_fan_y( MeshInfo_t * mi, int fan_y );
+INLINE EGO_CONST int mesh_clip_block_x( MeshInfo_t * mi, int block_x );
+INLINE EGO_CONST int mesh_clip_block_y( MeshInfo_t * mi, int block_y );
+
+INLINE EGO_CONST bool_t mesh_check( MeshInfo_t * mi, float x, float y );
+INLINE EGO_CONST bool_t mesh_check_fan( MeshInfo_t * mi, int fan_x, int fan_y );
+
+//INLINE EGO_CONST Uint32 mesh_test_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits );
+INLINE EGO_CONST bool_t mesh_has_some_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits );
+INLINE EGO_CONST bool_t mesh_has_no_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits );
+INLINE EGO_CONST bool_t mesh_has_all_bits( MeshTile_t * mf_list, Uint32 fan, Uint32 bits );
+
+INLINE EGO_CONST Uint8 mesh_get_twist( MeshTile_t * mf_list, Uint32 fan );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

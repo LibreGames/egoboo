@@ -221,7 +221,7 @@ INLINE ScriptInfo_t    * Game_getScriptInfo(Game_t * gs) { if(NULL ==gs) return 
 INLINE ProcState_t     * Game_getProcedure(Game_t * gs)  { if(NULL ==gs) return NULL; return &(gs->proc); }
 INLINE MenuProc_t      * Game_getMenuProc(Game_t * gs)   { if(NULL ==gs) return NULL; return &(gs->igm); }
 INLINE Mesh_t          * Game_getMesh(Game_t * gs)       { if(NULL ==gs) return NULL; return &(gs->Mesh); }
-INLINE Graphics_Data_t * Game_getGfx(Game_t * gs)     { if(NULL ==gs) return NULL; return &(gs->GfxData); }
+INLINE Graphics_Data_t * Game_getGfx(Game_t * gs)        { if(NULL ==gs) return NULL; return &(gs->GfxData); }
 
 retval_t Game_registerNetwork( Game_t * gs, struct sNet    * net, bool_t destroy );
 retval_t Game_registerClient ( Game_t * gs, struct sClient * cl,  bool_t destroy  );
@@ -560,3 +560,8 @@ void resize_characters( struct sGame * gs, float dUpdate );
 
 Uint16 terp_dir( Uint16 majordir, float dx, float dy, float dUpdate );
 Uint16 terp_dir_fast( Uint16 majordir, float dx, float dy, float dUpdate );
+
+void   append_end_text( struct sGame * gs, int message, CHR_REF character );
+
+void spawn_bump_particles( struct sGame * gs, CHR_REF character, PRT_REF particle );
+void setup_particles( struct sGame * gs );

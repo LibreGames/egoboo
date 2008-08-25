@@ -33,6 +33,48 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
+INLINE egoboo_key_t * egoboo_key_create(Uint32 itype, void * pdata);
+INLINE bool_t         egoboo_key_destroy(egoboo_key_t ** pkey);
+INLINE egoboo_key_t * egoboo_key_new(egoboo_key_t * pkey, Uint32 itype, void * pdata);
+INLINE bool_t         egoboo_key_validate(egoboo_key_t * pkey);
+INLINE bool_t         egoboo_key_invalidate(egoboo_key_t * pkey);
+INLINE bool_t         egoboo_key_valid(egoboo_key_t * pkey);
+INLINE void *         egoboo_key_get_data(egoboo_key_t * pkey, Uint32 type);
+
+//INLINE CList * CList_new(CList * lst, size_t count, size_t size);
+//INLINE bool_t  CList_delete(CList * lst);
+//INLINE void  * CList_getData(CList * lst, int index);
+
+#if SDL_BYTEORDER != SDL_LIL_ENDIAN
+    INLINE float SwapLE_float( float val );
+#endif
+
+    
+INLINE HashNode_t * HashNode_create(void * data);
+INLINE bool_t       HashNode_destroy(HashNode_t **);
+INLINE HashNode_t * HashNode_insert_after (HashNode_t lst[], HashNode_t * n);
+INLINE HashNode_t * HashNode_insert_before(HashNode_t lst[], HashNode_t * n);
+INLINE HashNode_t * HashNode_remove_after (HashNode_t lst[]);
+INLINE HashNode_t * HashNode_remove       (HashNode_t lst[]);
+
+INLINE HashList_t * HashList_create(int size);
+INLINE bool_t     HashList_destroy(HashList_t **);
+
+INLINE BSP_node_t * BSP_node_new( BSP_node_t * t, void * data, int type );
+INLINE bool_t     BSP_node_delete( BSP_node_t * t );
+
+INLINE BSP_leaf_t * BSP_leaf_new( BSP_leaf_t * L, size_t size );
+INLINE bool_t       BSP_leaf_delete( BSP_leaf_t * L );
+INLINE bool_t       BSP_leaf_insert( BSP_leaf_t * L, BSP_node_t * n );
+
+INLINE BSP_tree_t * BSP_tree_new( BSP_tree_t * t, Sint32 dim, Sint32 depth);
+INLINE bool_t     BSP_tree_delete( BSP_tree_t * t );
+
+INLINE Sint32 BSP_tree_count_nodes(Sint32 dim, Sint32 depth);
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
 
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
 

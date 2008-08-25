@@ -204,5 +204,4 @@ void phys_integrate(Orientation_t * pori, Orientation_t * pori_old, PhysAccum_t 
   pori->vel.z += paccum->acc.z * dFrame + paccum->vel.z;
 
   CPhysAccum_clear( paccum );
-
-};
+}

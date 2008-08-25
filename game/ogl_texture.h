@@ -32,7 +32,7 @@
 
 struct sGraphics;
 
-#define INVALID_TEXTURE (~(GLuint)0)
+#define INVALID_TX_ID (~(GLuint)0)
 #define INVALID_KEY     (~(Uint32)0)
 
 /**> DATA STRUCTURE: GLtexture <**/

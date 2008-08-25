@@ -65,24 +65,12 @@ static bool_t scr_DoActionOverride( Game_t * gs, AI_STATE * pstate );
 static bool_t scr_GiveMoneyToTarget( Game_t * gs, AI_STATE * pstate );
 static bool_t scr_SpawnCharacter( Game_t * gs, AI_STATE * pstate );
 static bool_t scr_SpawnParticle( Game_t * gs, AI_STATE * pstate );
-static bool_t scr_TeleportTarget( Game_t * gs, AI_STATE * pstate );
 static bool_t scr_RestockTargetAmmoIDAll( Game_t * gs, AI_STATE * pstate );
 static bool_t scr_RestockTargetAmmoIDFirst( Game_t * gs, AI_STATE * pstate );
 static bool_t scr_ChildDoActionOverride( Game_t * gs, AI_STATE * pstate );
 
-static Uint32 get_high_bits( void );
-static size_t tell_code( size_t read );
-
 static retval_t run_operand( Game_t * gs, AI_STATE * pstate, Uint32 value );
 static retval_t set_operand(  Game_t * gs, AI_STATE * pstate, Uint8 variable );
-
-
-static void   add_code( ScriptInfo_t * slist, Uint32 highbits );
-static void   parse_line_by_line( ScriptInfo_t * slist );
-static void   parse_null_terminate_comments( void );
-static size_t jump_goto( ScriptInfo_t * slist, size_t index );
-static void   parse_jumps( ScriptInfo_t * slist, size_t index_stt, size_t index_end );
-static void   log_code( ScriptInfo_t * slist, int ainumber, char* savename );
 
 
 //------------------------------------------------------------------------------
@@ -107,6 +95,7 @@ bool_t _DoAction( Game_t * gs, Chr_t * pchr, Mad_t * pmad, Uint16 iaction )
   return returncode;
 }
 
+//------------------------------------------------------------------------------
 bool_t _DoActionOverride( Game_t * gs, Chr_t * pchr, Mad_t * pmad, Uint16 iaction )
 {
   bool_t returncode = bfalse;
@@ -127,6 +116,50 @@ bool_t _DoActionOverride( Game_t * gs, Chr_t * pchr, Mad_t * pmad, Uint16 iactio
 }
 
 //------------------------------------------------------------------------------
+bool_t _Teleport( Game_t * gs, CHR_REF ichr, vect3 pos, Uint16 turn_lr )
+{
+  bool_t returncode = bfalse;
+
+  Chr_t * pchr = ChrList_getPChr( gs, ichr );
+  Mesh_t * pmesh = &(gs->Mesh);
+
+  if ( mesh_check( &(pmesh->Info), pos.x, pos.y ) )
+  {
+    // Yeah!  We hvae a valid location.
+
+    // save the old orientation info in case there is an error
+    Orientation_t ori_save = pchr->ori;
+
+    // rip the character off it's mount
+    if( detach_character_from_mount( gs, ichr, btrue, bfalse ) )
+    {
+      pchr->ori_old.pos = pchr->ori.pos;
+      ori_save          = pchr->ori;
+    };
+
+    pchr->ori.pos.x   = pos.x;
+    pchr->ori.pos.y   = pos.y;
+    pchr->ori.pos.z   = pos.z;
+    pchr->ori.turn_lr = turn_lr;
+    if ( 0 != chr_hitawall( gs, pchr, NULL ) )
+    {
+      // Teleport hits a wall, reset the values
+      pchr->ori = ori_save;
+      returncode = bfalse;
+    }
+    else
+    {
+      // Teleport works completely.
+      // Make sure the "safe value" is at the new teleport location.
+      pchr->ori_old.pos = pchr->ori.pos;
+      returncode = btrue;
+    }
+  }
+
+  return returncode;
+}
+
+//------------------------------------------------------------------------------
 //AI Script Routines------------------------------------------------------------
 //------------------------------------------------------------------------------
 
@@ -137,7 +170,7 @@ void scr_restart(AI_STATE * pstate, Uint32 offset)
   pstate->operationsum = 0;
   pstate->offset       = offset;
   pstate->active       = btrue;
-};
+}
 
 
 //--------------------------------------------------------------------------------------------
@@ -159,12 +192,12 @@ bool_t run_function( Game_t * gs, AI_STATE * pstate, Uint32 value )
 
   CHR_REF tmpchr;
   PRT_REF tmpprt;
-    
+
   PChr_t chrlst      = gs->ChrList;
   size_t chrlst_size = CHRLST_COUNT;
 
   PPrt_t prtlst      = gs->PrtList;
-  size_t prtlst_size = PRTLST_COUNT;
+  //size_t prtlst_size = PRTLST_COUNT;
 
   PEnc_t enclst      = gs->EncList;
   size_t enclst_size = ENCLST_COUNT;
@@ -181,7 +214,7 @@ bool_t run_function( Game_t * gs, AI_STATE * pstate, Uint32 value )
 
   CHR_REF loc_leader  = team_get_leader( gs, pstate->pself->team );
 
-  Mad_t  * pmad = ChrList_getPMad(gs, pstate->iself);
+  //Mad_t  * pmad = ChrList_getPMad(gs, pstate->iself);
   Cap_t  * pcap = ChrList_getPCap(gs, pstate->iself);
 
   Mesh_t * pmesh = Game_getMesh(gs);
@@ -285,7 +318,7 @@ bool_t run_function( Game_t * gs, AI_STATE * pstate, Uint32 value )
 
   case F_SetTime:
     // This function resets the time
-    pstate->time = pstate->tmpargument;
+    pstate->time = MAX(1, pstate->tmpargument);
     break;
 
   case F_GetContent:
@@ -651,7 +684,7 @@ bool_t run_function( Game_t * gs, AI_STATE * pstate, Uint32 value )
 
   case F_IfTargetIsOnHatedTeam:
     // This function proceeds only if the target is on an enemy team
-    pstate->returncode = ( ptarget->alive && gs->TeamList[pstate->pself->team].hatesteam[ptarget->REF_TO_INT(team)] && !ptarget->prop.invictus );
+    pstate->returncode = ( ptarget->alive && team_is_prey( gs, pstate->pself->team, ptarget->team ) && !ptarget->prop.invictus );
     break;
 
   case F_PressLatchButton:
@@ -1031,7 +1064,10 @@ bool_t run_function( Game_t * gs, AI_STATE * pstate, Uint32 value )
   case F_TeleportTarget:
     // This function teleports the target to the X, Y location, failing if the
     // location is off the map or blocked. Z position is defined in tmpdistance
-    pstate->returncode = scr_TeleportTarget(gs, pstate);
+    {
+      vect3 pos = VECT3(pstate->tmpx, pstate->tmpy, pstate->tmpdistance);
+      pstate->returncode = _Teleport(gs, pstate->target, pos, pstate->tmpturn);
+    }
     break;
 
   case F_GiveExperienceToTarget:
@@ -1770,26 +1806,9 @@ bool_t run_function( Game_t * gs, AI_STATE * pstate, Uint32 value )
   case F_Teleport:
     // This function teleports the character to the X, Y location, failing if the
     // location is off the map or blocked
-    pstate->returncode = bfalse;
-    if ( mesh_check( &(pmesh->Info), pstate->tmpx, pstate->tmpy ) )
     {
-      // Yeah!  It worked!
-      detach_character_from_mount( gs, pstate->iself, btrue, bfalse );
-      pstate->pself->ori_old.pos = pstate->pself->ori.pos;
-
-      pstate->pself->ori.pos.x = pstate->tmpx;
-      pstate->pself->ori.pos.y = pstate->tmpy;
-      if ( 0 != chr_hitawall( gs, chrlst + pstate->iself, NULL ) )
-      {
-        // No it didn't...
-        pstate->pself->ori.pos = pstate->pself->ori_old.pos;
-        pstate->returncode = bfalse;
-      }
-      else
-      {
-        pstate->pself->ori_old.pos = pstate->pself->ori.pos;
-        pstate->returncode = btrue;
-      }
+      vect3 pos = VECT3(pstate->tmpx, pstate->tmpy, pstate->tmpdistance);
+      pstate->returncode = _Teleport(gs, pstate->iself, pos, pstate->tmpturn);
     }
     break;
 
@@ -2865,14 +2884,48 @@ bool_t run_function( Game_t * gs, AI_STATE * pstate, Uint32 value )
   case F_IfHolderScoredAHit:
     // Proceed only if the character holder scored a hit
     pstate->returncode = bfalse;
-
-    if ( chr_attached( chrlst, chrlst_size, pstate->iself ) )
     {
-      pstate->tmpargument = HAS_SOME_BITS( chrlst[pstate->target].aistate.alert, ALERT_SCOREDAHIT );
-      pstate->returncode = btrue;
+      CHR_REF iattached = chr_get_attachedto( chrlst, chrlst_size, pstate->iself );
+      if ( ACTIVE_CHR( chrlst, iattached ) )
+      {
+        if(HAS_SOME_BITS( chrlst[pstate->target].aistate.alert, ALERT_SCOREDAHIT ))
+        {
+          pstate->returncode = btrue;
+          pstate->target = chrlst[iattached].aistate.hitlast;
+        }
+      }
     }
     break;
 
+  case F_IfHolderBlocked:
+    // Proceed only if the character holder blocked an attack
+    pstate->returncode = bfalse;
+    {
+      CHR_REF iattached = chr_get_attachedto( chrlst, chrlst_size, pstate->iself );
+      if ( ACTIVE_CHR( chrlst, iattached ) )
+      {
+        if(HAS_SOME_BITS( chrlst[pstate->target].aistate.alert, ALERT_BLOCKED ))
+        {
+          pstate->returncode = btrue;
+          pstate->target = chrlst[iattached].aistate.hitlast;
+        }
+      }
+    }
+    break;
+
+  case F_GetShieldProficiency:
+    // This function sets tmpargument to the shield profficiency of the target
+    pstate->returncode  = bfalse;
+    pstate->tmpargument = 0;
+    {
+      CHR_REF iattached = chr_get_attachedto( chrlst, chrlst_size, pstate->iself );
+      if ( ACTIVE_CHR( chrlst, iattached ) )
+      {
+        pstate->returncode = btrue;
+        pstate->tmpargument = chrlst[iattached].prop.shieldproficiency;
+      }
+    }
+    break;
 
   case F_End:
     pstate->active = bfalse;
@@ -3084,7 +3137,7 @@ retval_t run_operand( Game_t * gs, AI_STATE * pstate, Uint32 value )
         iTmp = pleader->ori.turn_lr;
       break;
 
-    case VAR_GOTO_X:
+    case VAR_SELF_GOTO_X:
       if( wp_list_empty( &(pstate->wp) ) )
       {
         iTmp = pself->ori.pos.x;
@@ -3095,7 +3148,7 @@ retval_t run_operand( Game_t * gs, AI_STATE * pstate, Uint32 value )
       }
       break;
 
-    case VAR_GOTO_Y:
+    case VAR_SELF_GOTO_Y:
       if( wp_list_empty( &(pstate->wp) ) )
       {
         iTmp = pself->ori.pos.y;
@@ -3106,7 +3159,7 @@ retval_t run_operand( Game_t * gs, AI_STATE * pstate, Uint32 value )
       }
       break;
 
-    case VAR_GOTO_DISTANCE:
+    case VAR_SELF_GOTO_DISTANCE:
       if( wp_list_empty( &(pstate->wp) ) )
       {
         iTmp = 0;
@@ -3122,11 +3175,11 @@ retval_t run_operand( Game_t * gs, AI_STATE * pstate, Uint32 value )
       iTmp = vec_to_turn( ptarget->ori.pos.x - pself->ori.pos.x, ptarget->ori.pos.y - pself->ori.pos.y );
       break;
 
-    case VAR_PASSAGE:
+    case VAR_SELF_PASSAGE:
       iTmp = pself->passage;
       break;
 
-    case VAR_WEIGHT:
+    case VAR_SELF_HOLDING_WEIGHT:
       iTmp = pself->holdingweight;
       break;
 
@@ -3228,7 +3281,7 @@ retval_t run_operand( Game_t * gs, AI_STATE * pstate, Uint32 value )
       iTmp = number_of_attached_particles( gs, iself );
       break;
 
-    case VAR_SWINGTURN:
+    case VAR_CAMERA_SWING:
       iTmp = GCamera.swing << 2;
       break;
 
@@ -3310,7 +3363,7 @@ retval_t run_operand( Game_t * gs, AI_STATE * pstate, Uint32 value )
       iTmp = calc_chr_level( gs, iself );
       break;
 
-    case VAR_SPAWN_DISTANCE:
+    case VAR_SELF_SPAWN_DISTANCE:
       iTmp = sqrt(( pself->spinfo.pos.x - pself->ori.pos.x ) * ( pself->spinfo.pos.x - pself->ori.pos.x ) +
         ( pself->spinfo.pos.y - pself->ori.pos.y ) * ( pself->spinfo.pos.y - pself->ori.pos.y ) +
         ( pself->spinfo.pos.z - pself->ori.pos.z ) * ( pself->spinfo.pos.z - pself->ori.pos.z ) );
@@ -3322,6 +3375,10 @@ retval_t run_operand( Game_t * gs, AI_STATE * pstate, Uint32 value )
 
     case VAR_SELF_CONTENT:
       iTmp = pstate->content;
+      break;
+
+    case VAR_TARGET_RELOAD_TIME:
+      iTmp = ptarget->reloadtime;
       break;
 
     default:
@@ -3677,7 +3734,7 @@ bool_t scr_FindPath( Game_t * gs, AI_STATE * pstate )
   src_ix = MESH_FLOAT_TO_FAN(pstate->pself->ori.pos.x);
   src_iy = MESH_FLOAT_TO_FAN(pstate->pself->ori.pos.y);
 
-  // clip the destination 
+  // clip the destination
   dst_ix = MESH_FLOAT_TO_FAN( mesh_clip_x(&(pmesh->Info), ptarget->ori.pos.x) );
   dst_iy = MESH_FLOAT_TO_FAN( mesh_clip_y(&(pmesh->Info), ptarget->ori.pos.y) );
 
@@ -3685,10 +3742,10 @@ bool_t scr_FindPath( Game_t * gs, AI_STATE * pstate )
   {
     bool_t try_astar;
 
-    try_astar = (pstate->tmpdistance == MOVE_MELEE ) ||
-                (pstate->tmpdistance == MOVE_CHARGE) ||
-                (pstate->tmpdistance == MOVE_FOLLOW) &&
-                 pstate->astar_timer <= SDL_GetTicks();
+    try_astar = ((pstate->tmpdistance == MOVE_MELEE ) ||
+                 (pstate->tmpdistance == MOVE_CHARGE) ||
+                 (pstate->tmpdistance == MOVE_FOLLOW)) &&
+                  pstate->astar_timer <= SDL_GetTicks();
 
 
     if( try_astar && AStar_prepare_path(gs, pstate->pself->stoppedby, src_ix, src_iy, dst_ix, dst_iy) )
@@ -3984,48 +4041,12 @@ bool_t scr_SpawnParticle( Game_t * gs, AI_STATE * pstate )
   return returncode;
 }
 
-bool_t scr_TeleportTarget( Game_t * gs, AI_STATE * pstate )
-{
-  bool_t returncode = bfalse;
-  CHR_REF tmpchr;
-  Mesh_t * pmesh = &(gs->Mesh);
-
-  if ( mesh_check( &(pmesh->Info), pstate->tmpx, pstate->tmpy ) )
-  {
-    // Yeah!  It worked!
-    tmpchr = chr_get_aitarget( gs->ChrList, CHRLST_COUNT, gs->ChrList + pstate->iself );
-    detach_character_from_mount( gs, tmpchr, btrue, bfalse );
-    gs->ChrList[tmpchr].ori_old.pos = gs->ChrList[tmpchr].ori.pos;
-
-    gs->ChrList[tmpchr].ori.pos.x = pstate->tmpx;
-    gs->ChrList[tmpchr].ori.pos.y = pstate->tmpy;
-    gs->ChrList[tmpchr].ori.pos.z = pstate->tmpdistance;
-    gs->ChrList[tmpchr].ori.turn_lr = pstate->tmpturn;
-    if ( 0 != chr_hitawall( gs, gs->ChrList + tmpchr, NULL ) )
-    {
-      // No it didn't...
-      gs->ChrList[tmpchr].ori.pos = gs->ChrList[tmpchr].ori_old.pos;
-      returncode = bfalse;
-    }
-    else
-    {
-      gs->ChrList[tmpchr].ori_old.pos = gs->ChrList[tmpchr].ori.pos;
-      returncode = btrue;
-    }
-  }
-
-  return returncode;
-}
-
-
 bool_t scr_RestockTargetAmmoIDAll( Game_t * gs, AI_STATE * pstate )
 {
   bool_t returncode = btrue;
 
   CHR_REF tmpchr;
   int iTmp = 0;  // Amount of ammo given
-
-  CHR_REF tmp = pstate->iself;
 
   for ( _slot = SLOT_LEFT; _slot <= SLOT_RIGHT; _slot = ( SLOT )( _slot + 1 ) )
   {
@@ -4083,4 +4104,4 @@ bool_t scr_ChildDoActionOverride( Game_t * gs, AI_STATE * pstate )
   Mad_t * pmad = ChrList_getPMad(gs, pstate->child);
 
   return _DoActionOverride(gs, pchr, pmad, pstate->tmpargument);
-};
+}

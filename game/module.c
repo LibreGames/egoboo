@@ -56,7 +56,7 @@ static bool_t module_read_egomap_extra( Game_t * gs, EGO_CONST char * szModPath 
 void release_bumplist(MeshInfo_t * mi)
 {
   bumplist_renew( &(mi->bumplist) );
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void module_release( Game_t * gs )
@@ -241,8 +241,9 @@ bool_t module_load( Game_t * gs, char *smallname )
   load_basic_textures( gs, szModpath );
 
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s", szModpath, CData.gamedat_dir );
-  if ( AILST_COUNT == load_ai_script( Game_getScriptInfo(gs), CStringTmp1, NULL ) )
+  if ( INVALID_AI == load_ai_script( Game_getScriptInfo(gs), CStringTmp1, NULL ) )
   {
+    log_warning("Cannot find the requested script, using default.\n");
     snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s", CData.basicdat_dir, CData.script_file );
     load_ai_script( Game_getScriptInfo(gs), CStringTmp1, NULL );
   };
@@ -296,7 +297,7 @@ bool_t module_load( Game_t * gs, char *smallname )
   load_map( gfx, szModpath );
   load_blip_bitmap( gfx, szModpath );
 
-  //module_read_egomap_extra( gs, szModpath );
+  module_read_egomap_extra( gs, szModpath );
 
   if ( CData.DevMode )
   {
@@ -504,7 +505,7 @@ ModState_t * ModState_new(ModState_t * ms, MOD_INFO * mi, Uint32 seed)
   };
 
   return ms;
-};
+}
 
 
 //--------------------------------------------------------------------------------------------
@@ -661,7 +662,7 @@ ModSummary_t * ModSummary_new( ModSummary_t * ms )
   }
 
   return ms;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t ModSummary_delete( ModSummary_t * ms )
@@ -682,8 +683,7 @@ ModSummary_t * ModSummary_renew( ModSummary_t * ms )
   ModSummary_delete(ms);
 
   return ModSummary_new(ms);
-};
-
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

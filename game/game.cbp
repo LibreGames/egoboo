@@ -14,7 +14,7 @@
 				<Option compiler="gcc" />
 				<Option use_console_runner="0" />
 				<Compiler>
-					<Add option="-W" />
+					<Add option="-Wall" />
 					<Add option="-pg" />
 					<Add option="-g" />
 					<Add option="-O0" />
@@ -29,9 +29,6 @@
 					<Add directory="C:\SDKs\SDL_ttf" />
 					<Add directory="$(SolutionDir)\game" />
 				</Compiler>
-				<ResourceCompiler>
-					<Add directory="$(SolutionDir)\res" />
-				</ResourceCompiler>
 				<Linker>
 					<Add option="-pg -lgmon" />
 					<Add option="-pg" />
@@ -73,9 +70,6 @@
 					<Add directory="C:\SDKs\SDL_ttf" />
 					<Add directory="$(SolutionDir)\game" />
 				</Compiler>
-				<ResourceCompiler>
-					<Add directory="$(SolutionDir)\res" />
-				</ResourceCompiler>
 				<Linker>
 					<Add option="-s" />
 					<Add library="SDLmain" />
@@ -365,6 +359,14 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="SDL_rotozoom.h" />
+		<Unit filename="Script_compile.h" />
+		<Unit filename="Script_comple.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Script_run.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Script_run.h" />
 		<Unit filename="Server.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -417,6 +419,8 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="egoboo_rpc.h" />
+		<Unit filename="egoboo_stream.h" />
+		<Unit filename="egoboo_stream.inl" />
 		<Unit filename="egoboo_strutil.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -547,9 +551,6 @@
 		</Unit>
 		<Unit filename="passage.h" />
 		<Unit filename="proto.h" />
-		<Unit filename="script.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="script.h" />
 		<Unit filename="sound.c">
 			<Option compilerVar="CC" />

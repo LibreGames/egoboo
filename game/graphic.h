@@ -231,8 +231,6 @@ void EndText( void );
 void Begin2DMode( void );
 void End2DMode( void );
 
-INLINE EGO_CONST bool_t bbox_gl_draw(AA_BBOX * pbbox);
-
 bool_t gl_set_mode(Graphics_t * g);
 bool_t gfx_find_anisotropy( Graphics_t * g );
 

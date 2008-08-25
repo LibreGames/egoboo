@@ -72,7 +72,6 @@
 
 #endif
 
-
 #define NET_SLASH_STRING "/"
 #define NET_SLASH_CHAR   '/'
 
@@ -90,7 +89,7 @@
 
     // special win32 macro that lets windows know that you are going to be
     // starting from a console.  This is useful because you can get real-time
-    // output to the screen, just by using printf()!
+    // output to the screen just by using printf()!
 #    ifdef _CONSOLE
 #        define CONSOLE_MODE
 #    else
@@ -115,4 +114,4 @@
 
 #undef DEBUG_UPDATE_CLAMP
 #undef DEBUG_MESHFX
-#define DEBUG_CVOLUME
+#undef DEBUG_CVOLUME

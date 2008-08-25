@@ -156,7 +156,7 @@ GameStack_t * Get_GameStack()
   }
 
   return &_game_stack;
-};
+}
 
 //---------------------------------------------------------------------------------------------
 static void update_looped_sounds( Game_t * gs );
@@ -308,7 +308,7 @@ bool_t export_all_enchants( Game_t * gs, CHR_REF ichr, EGO_CONST char * todirnam
   FILE *  rechant_file;
 
   PChr_t chrlst      = gs->ChrList;
-  size_t chrlst_size = CHRLST_COUNT;
+  //size_t chrlst_size = CHRLST_COUNT;
 
   strncpy( exportname, todirname, sizeof(exportname));
   str_append_slash(exportname, sizeof(exportname));
@@ -1669,7 +1669,7 @@ void call_for_help( Game_t * gs, CHR_REF character )
   for ( chr_cnt = 0; chr_cnt < chrlst_size; chr_cnt++ )
   {
     if ( !ACTIVE_CHR( chrlst, chr_cnt ) || chr_cnt == character ) continue;
-    if ( !gs->TeamList[chrlst[chr_cnt].team_base].hatesteam[REF_TO_INT(team)] )
+    if ( team_is_prey(gs, chrlst[chr_cnt].team_base, team) )
     {
       chrlst[chr_cnt].aistate.alert |= ALERT_CALLEDFORHELP;
     };
@@ -1860,10 +1860,7 @@ void check_respawn( Game_t * gs )
 
     chrlst[chr_cnt].aistate.latch.b &= ~LATCHBUTTON_RESPAWN;
   }
-
-};
-
-
+}
 
 //--------------------------------------------------------------------------------------------
 void begin_integration( Game_t * gs )
@@ -1898,7 +1895,7 @@ void begin_integration( Game_t * gs )
     prt_calculate_bumpers(gs, prt_cnt);
   };
 
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t chr_collide_mesh(Game_t * gs, CHR_REF ichr)
@@ -1959,7 +1956,7 @@ bool_t chr_collide_mesh(Game_t * gs, CHR_REF ichr)
   }
 
   return hitmesh;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t prt_collide_mesh(Game_t * gs, PRT_REF iprt)
@@ -2078,7 +2075,7 @@ bool_t prt_collide_mesh(Game_t * gs, PRT_REF iprt)
   }
 
   return hitmesh;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void do_integration(Game_t * gs, float dFrame)
@@ -2176,7 +2173,7 @@ void do_integration(Game_t * gs, float dFrame)
     }
   };
 
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void update_timers(Game_t * gs)
@@ -2610,7 +2607,7 @@ void set_default_config_data(ConfigData_t * pcon)
   pcon->HideMouse = bfalse;
   pcon->DevMode  = btrue;
   // Debug option
-};
+}
 
 //--------------------------------------------------------------------------------------------
 
@@ -2638,8 +2635,7 @@ void main_handleKeyboard()
       log_warning( "Error writing screenshot\n" );    //Log the error in log.txt
     }
   }
-
-};
+}
 
 //--------------------------------------------------------------------------------------------
 /// @brief calculate the direct lighting and sky color for the simulated sunlight
@@ -2735,8 +2731,7 @@ void do_sunlight(LIGHTING_INFO * info)
     // update the spektable since the sunlight may have changes
     make_spektable( info->spekdir );
   }
-
-};
+}
 
 //--------------------------------------------------------------------------------------------
 /// @brief in-game graphics routine
@@ -2839,7 +2834,7 @@ retval_t main_doGraphics()
           mnu_RunIngame( ig_mnu_proc );
           switch ( ig_mnu_proc->MenuResult  )
           {
-            case 1: 
+            case 1:
               /* nothing */
               break;
 
@@ -3219,7 +3214,7 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
   };
 
   return ego_proc->returnValue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void game_handleKeyboard()
@@ -3316,7 +3311,7 @@ void game_handleIO(Game_t * gs)
     Client_talkToHost(gs->cl);        // client function
     sv_talkToRemotes(gs->sv);     // server function
   }
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void cl_update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
@@ -3849,7 +3844,7 @@ int proc_gameLoop( ProcState_t * gproc, Game_t * gs )
 
         /// seed the random number
         /// @todo for a network game, this needs to be set by the server...
-        gs->sv->rand_idx = time(NULL);      
+        gs->sv->rand_idx = time(NULL);
         srand( -(Sint32)gs->sv->rand_idx );
 
         // reset the timers
@@ -3912,7 +3907,7 @@ int proc_gameLoop( ProcState_t * gproc, Game_t * gs )
   };
 
   return gproc->returnValue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 int proc_menuLoop( MenuProc_t  * mproc )
@@ -4005,8 +4000,6 @@ int proc_menuLoop( MenuProc_t  * mproc )
 
   return proc->returnValue;
 };
-
-
 
 //--------------------------------------------------------------------------------------------
 int SDL_main( int argc, char **argv )
@@ -4111,7 +4104,7 @@ SearchInfo_t * SearchInfo_new(SearchInfo_t * psearch)
   psearch->bestangle    = 32768;
 
   return psearch;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t prt_search_wide( Game_t * gs, SearchInfo_t * psearch, PRT_REF iprt, Uint16 facing,
@@ -4202,10 +4195,10 @@ bool_t chr_search_block( Game_t * gs, SearchInfo_t * psearch, int block_x, int b
     if (( !seeinvisible && chr_is_invisible( gs->ChrList, CHRLST_COUNT, charb ) ) || chr_in_pack( gs->ChrList, CHRLST_COUNT, charb ) ) continue;
 
     // if we need to find friends, don't find enemies
-    if ( require_friends && gs->TeamList[team].hatesteam[gs->ChrList[charb].REF_TO_INT(team)] ) continue;
+    if ( require_friends && team_is_enemy(gs, team, gs->ChrList[charb].team) ) continue;
 
     // if we need to find enemies, don't find friends or invictus
-    if ( require_enemies && ( !gs->TeamList[team].hatesteam[gs->ChrList[charb].REF_TO_INT(team)] || gs->ChrList[charb].prop.invictus ) ) continue;
+    if ( require_enemies && ( !team_is_enemy(gs, team, gs->ChrList[charb].team) || gs->ChrList[charb].prop.invictus ) ) continue;
 
     // if we require being alive, don't accept dead things
     if ( require_alive && !gs->ChrList[charb].alive ) continue;
@@ -4324,7 +4317,7 @@ bool_t chr_search_distant( Game_t * gs, SearchInfo_t * psearch, CHR_REF characte
     if ( require_alive && ( !chrlst[charb].alive || chrlst[charb].prop.isitem ) ) continue;
 
     // don't find enemies unless asked for
-    if ( ask_enemies && ( !gs->TeamList[team].hatesteam[chrlst[charb].REF_TO_INT(team)] || chrlst[charb].prop.invictus ) ) continue;
+    if ( ask_enemies && ( !team_is_enemy(gs, team, chrlst[charb].team) || chrlst[charb].prop.invictus ) ) continue;
 
     xdist = chrlst[charb].ori.pos.x - chrlst[character].ori.pos.x;
     ydist = chrlst[charb].ori.pos.y - chrlst[character].ori.pos.y;
@@ -4390,10 +4383,10 @@ bool_t chr_search_block_nearest( Game_t * gs, SearchInfo_t * psearch, int block_
     if (( !seeinvisible && chr_is_invisible( gs->ChrList, CHRLST_COUNT, chrb_ref ) ) || chr_in_pack( gs->ChrList, CHRLST_COUNT, chrb_ref ) ) continue;
 
     // if we need to find friends, don't find enemies
-    if ( require_friends && gs->TeamList[team].hatesteam[gs->ChrList[chrb_ref].REF_TO_INT(team)] ) continue;
+    if ( require_friends && team_is_enemy(gs, team, gs->ChrList[chrb_ref].team) ) continue;
 
     // if we need to find enemies, don't find friends or invictus
-    if ( require_enemies && ( !gs->TeamList[team].hatesteam[gs->ChrList[chrb_ref].REF_TO_INT(team)] || gs->ChrList[chrb_ref].prop.invictus ) ) continue;
+    if ( require_enemies && ( !team_is_enemy(gs, team, gs->ChrList[chrb_ref].team) || gs->ChrList[chrb_ref].prop.invictus ) ) continue;
 
     // if we require being alive, don't accept dead things
     if ( require_alive && !gs->ChrList[chrb_ref].alive ) continue;
@@ -4523,7 +4516,7 @@ void attach_particle_to_character( Game_t * gs, PRT_REF particle, CHR_REF chr_re
   size_t chrlst_size = CHRLST_COUNT;
 
   PPrt_t prtlst      = gs->PrtList;
-  size_t prtlst_size = PRTLST_COUNT;
+  //size_t prtlst_size = PRTLST_COUNT;
 
   Prt_t * pprt;
   Chr_t * pchr;
@@ -4745,7 +4738,7 @@ retval_t MachineState_update(MachineState_t * mac)
   mac->f_bishop_time_h = (mac->f_bishop_time - (int)mac->f_bishop_time) * 24.0;
 
   return rv_succeed;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 MachineState_t * get_MachineState()
@@ -5276,9 +5269,7 @@ void ChrList_resynch(Game_t * gs)
     chrlst[chr_ref].reserved   = bfalse;
     chrlst[chr_ref].active     = btrue;
   };
-
-};
-
+}
 
 //--------------------------------------------------------------------------------------------
 void PrtList_resynch(Game_t * gs)
@@ -5341,8 +5332,7 @@ void PrtList_resynch(Game_t * gs)
     }
 
   }
-
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t prt_search_block( Game_t * gs, SearchInfo_t * psearch, int block_x, int block_y, PRT_REF prt_ref, Uint16 facing,
@@ -5384,8 +5374,8 @@ bool_t prt_search_block( Game_t * gs, SearchInfo_t * psearch, int block_x, int b
     if ( search_ref == donttarget_ref || search_ref == oldtarget_ref ) continue;
 
     if (   allow_anyone ||
-         ( request_friends && !gs->TeamList[team].hatesteam[gs->ChrList[search_ref].REF_TO_INT(team)] ) ||
-         ( request_enemies &&  gs->TeamList[team].hatesteam[gs->ChrList[search_ref].REF_TO_INT(team)] ) )
+         ( request_friends && !team_is_enemy(gs, team, gs->ChrList[search_ref].team) ) ||
+         ( request_enemies &&  team_is_enemy(gs, team, gs->ChrList[search_ref].team) ) )
     {
       local_distance = ABS( gs->ChrList[search_ref].ori.pos.x - gs->PrtList[prt_ref].ori.pos.x ) + ABS( gs->ChrList[search_ref].ori.pos.y - gs->PrtList[prt_ref].ori.pos.y );
       if ( psearch->initialize || local_distance < psearch->bestdistance )
@@ -5432,7 +5422,7 @@ GameStack_t * GameStack_new(GameStack_t * stk)
   stk->count = 0;
 
   return stk;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t GameStack_delete(GameStack_t * stk)
@@ -5455,7 +5445,7 @@ bool_t GameStack_delete(GameStack_t * stk)
   stk->count = 0;
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t GameStack_push(GameStack_t * stk, Game_t * gs)
@@ -5792,7 +5782,7 @@ bool_t Game_destroy(Game_t ** gs )
   bool_t ret = Game_delete(*gs);
   EGOBOO_DELETE(*gs);
   return ret;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 retval_t Game_registerNetwork( Game_t * gs, Net_t * net, bool_t destroy )
@@ -5865,8 +5855,7 @@ retval_t Game_updateNetStatus( Game_t * gs )
   }
 
   return rv_succeed;
-};
-
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t Game_isLocal( Game_t * gs )
@@ -5890,7 +5879,7 @@ bool_t Game_isClientServer( Game_t * gs )
   if( rv_succeed != Game_updateNetStatus(gs) ) return bfalse;
 
   return ((NET_STATUS_CLIENT | NET_STATUS_SERVER) == gs->net_status);
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t Game_isServer ( Game_t * gs )
@@ -5898,7 +5887,7 @@ bool_t Game_isServer ( Game_t * gs )
   if( rv_succeed != Game_updateNetStatus(gs) ) return bfalse;
 
   return (NET_STATUS_SERVER == gs->net_status);
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t Game_isClient ( Game_t * gs )
@@ -5906,7 +5895,7 @@ bool_t Game_isClient ( Game_t * gs )
   if( rv_succeed != Game_updateNetStatus(gs) ) return bfalse;
 
   return (NET_STATUS_CLIENT == gs->net_status);
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t Game_hasServer ( Game_t * gs )
@@ -6041,7 +6030,7 @@ bool_t CapList_new( Game_t * gs )
   };
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t CapList_delete( Game_t * gs )
@@ -6056,7 +6045,7 @@ bool_t CapList_delete( Game_t * gs )
   };
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t CapList_renew( Game_t * gs )
@@ -6071,7 +6060,7 @@ bool_t CapList_renew( Game_t * gs )
   };
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -6431,7 +6420,7 @@ bool_t TeamList_new( Game_t * gs )
 
   for(iteam = 0; iteam<TEAM_COUNT; iteam++)
   {
-    CTeam_new( gs->TeamList + iteam );
+    Team_new( gs->TeamList + iteam );
   };
 
   return btrue;
@@ -6446,7 +6435,7 @@ bool_t TeamList_delete( Game_t * gs )
 
   for(iteam = 0; iteam<TEAM_COUNT; iteam++)
   {
-    CTeam_delete( gs->TeamList + iteam );
+    Team_delete( gs->TeamList + iteam );
   };
 
   return btrue;
@@ -6461,7 +6450,7 @@ bool_t TeamList_renew( Game_t * gs )
 
   for(iteam = 0; iteam<TEAM_COUNT; iteam++)
   {
-    CTeam_renew( gs->TeamList + iteam );
+    Team_renew( gs->TeamList + iteam );
   };
 
   return btrue;
@@ -6553,7 +6542,7 @@ ProcState_t * ProcState_new(ProcState_t * ps)
   ps->clk    = Clock_create("ProcState_t", -1);
 
   return ps;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t ProcState_delete(ProcState_t * ps)
@@ -6581,7 +6570,7 @@ ProcState_t * ProcState_renew(ProcState_t * ps)
 {
   ProcState_delete(ps);
   return ProcState_new(ps);
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t ProcState_init(ProcState_t * ps)
@@ -6601,13 +6590,12 @@ bool_t ProcState_init(ProcState_t * ps)
   ps->returnValue = 0;
 
   return btrue;
-};
-
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 static Gui_t * CGui_new( Gui_t * g );
-static bool_t     CGui_delete( Gui_t * g );
+static bool_t  CGui_delete( Gui_t * g );
 
 //--------------------------------------------------------------------------------------------
 Gui_t * gui_getState()
@@ -6921,7 +6909,7 @@ bool_t Weather_init(WEATHER_INFO * w)
   w->player        = INVALID_PLA;
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -6941,7 +6929,7 @@ bool_t tile_animated_reset(TILE_ANIMATED * t)
   t->frameadd    =  0;                  // Current frame rate
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -6959,8 +6947,7 @@ bool_t fog_info_reset(FOG_INFO * f)
   f->affectswater = bfalse;
 
   return btrue;
-};
-
+}
 
 //--------------------------------------------------------------------------------------------
 void reset_players( Game_t * gs )
@@ -7026,7 +7013,7 @@ void load_map( Graphics_Data_t * gfx, char* szModule )
 
   // Load the images
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModule, CData.gamedat_dir, CData.plan_bitmap );
-  if ( INVALID_TEXTURE == GLtexture_Load( GL_TEXTURE_2D, &gfx->Map_tex, CStringTmp1, INVALID_KEY ) )
+  if ( INVALID_TX_ID == GLtexture_Load( GL_TEXTURE_2D, &gfx->Map_tex, CStringTmp1, INVALID_KEY ) )
   {
     log_warning( "Cannot load map: %s\n", CStringTmp1 );
   }
@@ -7256,8 +7243,7 @@ bool_t read_wawalite( Game_t * gs, char *modname )
   make_water( water_info );
 
   return btrue;
-};
-
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -7293,9 +7279,7 @@ static void Graphics_Data_new_textures( Graphics_Data_t * gd )
 
   // invalidate the bars
   GLtexture_new( &(gd->TxBars) );                        // "you are here" texture
-
-};
-
+}
 
 //--------------------------------------------------------------------------------------------
 Graphics_Data_t * Graphics_Data_new( Graphics_Data_t * gfx )
@@ -7375,8 +7359,7 @@ static void Graphics_Data_delete_textures( Graphics_Data_t * gd )
 
   // invalidate the bars
   GLtexture_delete( &(gd->TxBars) );                        // "you are here" texture
-
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t Graphics_Data_delete( Graphics_Data_t * gd )
@@ -7390,7 +7373,6 @@ bool_t Graphics_Data_delete( Graphics_Data_t * gd )
 
   return btrue;
 }
-
 
 //--------------------------------------------------------------------------------------------
 void screen_dump_matrix( Game_t * gs, matrix_4x4 a )
@@ -7430,4 +7412,187 @@ void stdout_dump_matrix( matrix_4x4 a )
   fprintf( stdout, "\n" );
 }
 
+//--------------------------------------------------------------------------------------------
+void append_end_text( Game_t * gs, int message, CHR_REF chr_ref )
+{
+  /// @details ZZ@> This function appends a message to the end-module text
+
+  char * message_src;
+
+  if ( message < gs->MsgList.total ) return;
+
+  message_src = gs->MsgList.text + gs->MsgList.index[message];
+  decode_escape_sequence(gs, gs->endtext, sizeof(gs->endtext), message_src, chr_ref);
+}
+
+
+
+//--------------------------------------------------------------------------------------------
+void spawn_bump_particles( Game_t * gs, CHR_REF ichr, PRT_REF iprt )
+{
+  /// @details ZZ@> This function is for catching characters on fire and such
+
+  int    cnt;
+  int    bestdistance;
+  Uint16 bestvertex;
+  Uint16 amount;
+  size_t vrt_count;
+  Uint16 direction, left, right;
+  Uint32 loc_rand;
+
+  PObj_t objlst     = gs->ObjList;
+  PPrt_t prtlst     = gs->PrtList;
+  PChr_t chrlst     = gs->ChrList;
+
+  Chr_t  * pchr;
+  Prt_t  * pprt;
+
+  OBJ_REF  iobj;
+  Obj_t  * pobj;
+
+  Mad_t  * pmad;
+  Cap_t  * pcap;
+  Pip_t  * ppip;
+
+  if(!ACTIVE_CHR(chrlst, ichr)) return;
+  pchr = ChrList_getPChr(gs, ichr);
+
+  if(!ACTIVE_PRT(prtlst, iprt)) return;
+  pprt = prtlst + iprt;
+
+  ppip = PrtList_getPPip(gs, iprt);
+  if(NULL == ppip) return;
+
+  iobj = pchr->model = VALIDATE_OBJ(objlst, pchr->model);
+  if(INVALID_OBJ == iobj) return;
+  pobj = gs->ObjList + iobj;
+
+  pmad = ObjList_getPMad(gs, iobj);
+  if(NULL == pmad) return;
+
+  pcap = ObjList_getPCap(gs, iobj);
+  if(NULL == pcap) return;
+
+  loc_rand = gs->randie_index;
+
+  amount = ppip->bumpspawnamount;
+  if ( amount != 0 || ppip->spawnenchant )
+  {
+    // Only damage if hitting from proper direction
+    vrt_count = pmad->vertices;
+    direction = pchr->ori.turn_lr - vec_to_turn( -pprt->ori.vel.x, -pprt->ori.vel.y );
+    if ( HAS_SOME_BITS( pmad->framefx[pchr->anim.next], MADFX_INVICTUS ) )
+    {
+      // I Frame
+      if ( HAS_SOME_BITS( ppip->damfx, DAMFX_BLOC ) )
+      {
+        left  = UINT16_MAX;
+        right = 0;
+      }
+      else
+      {
+        direction -= pcap->iframefacing;
+        left = ( ~pcap->iframeangle );
+        right = pcap->iframeangle;
+      }
+    }
+    else
+    {
+      // N Frame
+      direction -= pcap->nframefacing;
+      left = ( ~pcap->nframeangle );
+      right = pcap->nframeangle;
+    }
+
+    // Check that direction
+    if ( direction <= left && direction >= right )
+    {
+      // Spawn new enchantments
+      if ( ppip->spawnenchant )
+      {
+        ENC_SPAWN_INFO enc_si;
+        enc_spawn_info_init( &enc_si, gs, prt_get_owner( gs, iprt ), ichr, INVALID_CHR, INVALID_ENC, pprt->model );
+        req_spawn_one_enchant( enc_si );
+      }
+
+      // Spawn particles
+      if ( amount    != 0 && !pcap->prop.resistbumpspawn && !pchr->prop.invictus &&
+           vrt_count != 0 && ( pchr->skin.damagemodifier_fp8[pprt->damagetype]&DAMAGE_SHIFT ) != DAMAGE_SHIFT )
+      {
+        if ( amount == 1 )
+        {
+          // A single iprt ( arrow? ) has been stuck in the ichr...
+          // Find best vertex to attach to
+
+          int i;
+          float dx,dy,dz,diff;
+          GLvector *point, *nupoint;
+
+          // dynamically allocate a vertex array.
+          point   = EGOBOO_NEW_ARY(GLvector, vrt_count);
+          nupoint = EGOBOO_NEW_ARY(GLvector, vrt_count);
+
+          // make sure that all the vertices have been updated
+          md2_blend_vertices(pchr, -1, -1);
+
+          for(i=0; i<vrt_count; i++)
+          {
+            point[i].x = pchr->vdata.Vertices[i].x;
+            point[i].y = pchr->vdata.Vertices[i].y;
+            point[i].z = pchr->vdata.Vertices[i].z;
+            point[i].w = 1.0f;
+          }
+
+          // Transform the vertices into world space
+          Transform4_Full( 1.0f, 1.0f, &(pchr->matrix), point, nupoint, vrt_count );
+
+          bestvertex = 0;
+          bestdistance = SINT32_MAX;
+          for(i=0; i<vrt_count; i++)
+          {
+            dx = nupoint[i].x - pprt->ori.pos.x;
+            dy = nupoint[i].y - pprt->ori.pos.y;
+            dz = nupoint[i].z - pprt->ori.pos.z;
+            diff = dx*dx + dy*dy + dz*dz;
+
+            if(diff < bestdistance)
+            {
+              bestdistance = diff;
+              bestvertex   = vrt_count - i;
+            }
+          }
+
+          prt_spawn( gs, 1.0f, pchr->ori.pos, pchr->ori.vel, 0, pprt->model, ppip->bumpspawnpip,
+                     ichr, (GRIP)(bestvertex + 1), pprt->team, prt_get_owner( gs, iprt ), 0, ichr );
+
+          EGOBOO_DELETE_ARY(point);
+          EGOBOO_DELETE_ARY(nupoint);
+        }
+        else
+        {
+          amount = ( amount * vrt_count ) >> 5;  // Correct amount for size of ichr
+
+          for ( cnt = 0; cnt < amount; cnt++ )
+          {
+            prt_spawn( gs, 1.0f, pchr->ori.pos, pchr->ori.vel, 0, pprt->model, ppip->bumpspawnpip,
+                                ichr, (GRIP)RAND(&loc_rand, 0, vrt_count), pprt->team, prt_get_owner( gs, iprt ), cnt, ichr );
+          }
+        }
+      }
+    }
+  }
+}
+
+
+//--------------------------------------------------------------------------------------------
+void setup_particles( Game_t * gs )
+{
+  /// @details ZZ@> This function sets up particle data
+
+  // re-load the particle texture from ./basicdat
+  load_particle_texture( gs, NULL );
+
+  // Reset the allocation table
+  PrtList_new(gs);
+}
 

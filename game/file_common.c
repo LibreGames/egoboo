@@ -213,13 +213,17 @@ FILE * fs_fileOpen( PRIORITY priority, EGO_CONST char * src, EGO_CONST char * fn
         case PRI_FAIL:
           log_info( "%s - fs_fileOpen() - \n\tsuccessfully opened file \"%s\" in mode \"%s\"\n", src, fname, mode );
           break;
+        default:
+        case PRI_NONE:
+          /* do nothing */
+          break;
       };
 
     }
   }
 
   return fptmp;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void fs_fileClose( FILE * pfile )
@@ -234,4 +238,4 @@ void fs_fileClose( FILE * pfile )
   {
     fclose( pfile );
   };
-};
+}

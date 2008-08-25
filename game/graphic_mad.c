@@ -921,7 +921,7 @@ void make_speklut()
     sinlut[cnt] = sin( TWO_PI * cnt / MAXLIGHTROTATION );
     coslut[cnt] = cos( TWO_PI * cnt / MAXLIGHTROTATION );
   }
-};
+}
 
 //---------------------------------------------------------------------------------------------
 void make_spektable( vect3 lite )
@@ -1018,8 +1018,7 @@ void chr_draw_BBox(CHR_REF ichr)
   {
     CVolume_draw( &(bd->cv), bd->calc_size > 0, bd->calc_size_big > 0 );
   }
-
-};
+}
 
 
 

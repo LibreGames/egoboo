@@ -21,11 +21,21 @@
 
 ///
 /// @file
-/// @brief 
+/// @brief
 /// @details functions that will be declared inside the base class
 
 #include "Physics.h"
 #include "egoboo_types.inl"
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+INLINE PhysicsData_t * CPhysicsData_new(PhysicsData_t * phys);
+INLINE bool_t          CPhysicsData_delete(PhysicsData_t * phys);
+INLINE PhysicsData_t * CPhysicsData_renew(PhysicsData_t * phys);
+
+INLINE void cv_list_add( CVolume_t * cv);
+INLINE void cv_list_clear( void );
+INLINE void cv_list_draw( void );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -80,13 +90,13 @@ INLINE void cv_list_add( CVolume_t * cv)
   if(NULL == cv || cv_list_count > 1000) return;
 
   cv_list[cv_list_count++] = *cv;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE void cv_list_clear()
 {
   cv_list_count = 0;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 INLINE void cv_list_draw()

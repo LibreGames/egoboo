@@ -180,8 +180,6 @@ Player_t * Player_new(Player_t *ppla);
 bool_t    Player_delete(Player_t *ppla);
 Player_t * Player_renew(Player_t *ppla);
 
-INLINE CHR_REF PlaList_getRChr( struct sGame * gs, PLA_REF iplayer );
-
 #define VALID_PLA_RANGE(XX) ( /* ((XX)>=0) && */ ((XX)<PLALST_COUNT) )
 #define VALID_PLA(LST, XX)  ( VALID_PLA_RANGE(XX) && LST[XX].Active )
 
@@ -242,9 +240,7 @@ extern KEYBOARD keyb;
 void read_all_tags( char *szFilename );
 void read_controls( char *szFilename );
 
-INLINE bool_t control_key_is_pressed( CONTROL control );
-INLINE bool_t control_mouse_is_pressed( CONTROL control );
-INLINE bool_t control_joy_is_pressed( int joy_num, CONTROL control );
+
 
 
 //--------------------------------------------------------------------------------------------

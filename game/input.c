@@ -85,7 +85,7 @@ KEYBOARD keyb =
 };
 
 //--------------------------------------------------------------------------------------------
-KeyboardBuffer_t * KeyboardBuffer_getState() { return &_keybuff; };
+KeyboardBuffer_t * KeyboardBuffer_getState() { return &_keybuff; }
 void             input_init_keybuffer( void );
 
 //--------------------------------------------------------------------------------------------
@@ -516,7 +516,7 @@ Player_t * Player_new(Player_t *ppla)
   ppla->Active = bfalse;
 
   return ppla;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t   Player_delete(Player_t *ppla)
@@ -530,14 +530,14 @@ bool_t   Player_delete(Player_t *ppla)
   ppla->Active = bfalse;
 
   return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 Player_t * Player_renew(Player_t *ppla)
 {
   Player_delete(ppla);
   return Player_new(ppla);
-};
+}
 
 //--------------------------------------------------------------------------------------------
 void input_init_keybuffer()
