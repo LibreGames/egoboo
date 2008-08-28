@@ -47,10 +47,29 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+struct s_spawn_info
+{
+  STRING   name;
+  int      slot;
+  vect3    pos;
+  int      dir;
+  int      money;
+  int      skin;
+  PASS_REF passage;
+  int      content;
+  int      level;
+  bool_t   has_status;
+  bool_t   is_ghost;
+  TEAM_REF iteam;
+};
 
+typedef struct s_spawn_info spawn_info_t;
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 static void   module_load_all_objects( Game_t * gs, char * szModname );
 static bool_t module_load_all_waves( Game_t * gs, char *modname );
-static bool_t module_read_egomap_extra( Game_t * gs, EGO_CONST char * szModPath );
+static bool_t module_read_egomap_extra( Game_t * gs, const char * szModPath );
 
 //--------------------------------------------------------------------------------------------
 void release_bumplist(MeshInfo_t * mi)
@@ -107,7 +126,7 @@ void module_release( Game_t * gs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t module_reference_matches( char *szLoadName, IDSZ idsz )
+bool_t module_reference_matches( const char *szLoadName, IDSZ idsz )
 {
   /// @details ZZ@> This function returns btrue if the named module has the required IDSZ
 
@@ -165,7 +184,7 @@ bool_t module_reference_matches( char *szLoadName, IDSZ idsz )
 }
 
 //--------------------------------------------------------------------------------------------
-void module_add_idsz( char *szLoadName, IDSZ idsz )
+void module_add_idsz( const char *szLoadName, IDSZ idsz )
 {
   /// @details ZZ@> This function appends an IDSZ to the module's menu.txt file
 
@@ -187,7 +206,7 @@ void module_add_idsz( char *szLoadName, IDSZ idsz )
 }
 
 //--------------------------------------------------------------------------------------------
-int module_find( char *smallname, MOD_INFO * mi_ary, size_t mi_size )
+int module_find( const char *smallname, MOD_INFO * mi_ary, size_t mi_size )
 {
   /// @details ZZ@> This function returns -1 if the module does not exist locally, the module
   ///     index otherwise
@@ -208,7 +227,7 @@ int module_find( char *smallname, MOD_INFO * mi_ary, size_t mi_size )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t module_load( Game_t * gs, char *smallname )
+bool_t module_load( Game_t * gs, const char *smallname )
 {
   /// @details ZZ@> This function loads a module
 
@@ -309,7 +328,7 @@ bool_t module_load( Game_t * gs, char *smallname )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t module_read_data( MOD_INFO * pmod, char *szLoadName )
+bool_t module_read_data( MOD_INFO * pmod, const char *szLoadName )
 {
   /// @details ZZ@> This function loads the module data file
 
@@ -740,7 +759,7 @@ void ModInfo_clear_all_titleimages( MOD_INFO * mi_ary, size_t mi_count )
 
 
 //---------------------------------------------------------------------------------------------
-bool_t module_read_egomap_extra( Game_t * gs, EGO_CONST char * szModPath )
+bool_t module_read_egomap_extra( Game_t * gs, const char * szModPath )
 {
   FILE * ftmp;
   STRING fname;
@@ -802,3 +821,137 @@ void release_map( Graphics_Data_t * gfx )
   GLtexture_Release( &gfx->Map_tex );
 }
 
+//--------------------------------------------------------------------------------------------
+static bool_t fread_spawn_info(FILE * fileread, spawn_info_t * pinfo)
+{
+  if(NULL == fileread || NULL == pinfo) return bfalse;
+
+  fget_string(fileread, pinfo->name, sizeof(pinfo->name) );
+  pinfo->slot       = fget_int(fileread);
+  pinfo->pos.x      = fget_float(fileread);
+  pinfo->pos.y      = fget_float(fileread);
+  pinfo->pos.z      = fget_float(fileread);
+  pinfo->dir        = fget_int(fileread);
+  pinfo->money      = fget_int(fileread);
+  pinfo->skin       = fget_int(fileread);
+  pinfo->passage    = fget_int(fileread);
+  pinfo->content    = fget_int(fileread);
+  pinfo->level      = fget_int(fileread);
+  pinfo->has_status = fget_bool(fileread);
+  pinfo->is_ghost   = fget_bool(fileread);
+  pinfo->iteam      = fget_int(fileread);
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+static bool_t fwrite_spawn_info(FILE * filewrite, const char * objname, spawn_info_t * pinfo, const char * comment)
+{
+  if(NULL == filewrite || NULL == pinfo ) return bfalse;
+
+  if( VALID_CSTR(objname) )
+  {
+    fprintf(filewrite, "%s : ", objname);
+  }
+  else
+  {
+    fprintf(filewrite, "UNKNOWN : ");
+  }
+
+
+  fput_string(filewrite, pinfo->name );
+  fput_int  (filewrite, pinfo->slot      );
+  fput_float(filewrite, pinfo->pos.x     );
+  fput_float(filewrite, pinfo->pos.y     );
+  fput_float(filewrite, pinfo->pos.z     );
+  fput_int  (filewrite, pinfo->dir       );
+  fput_int  (filewrite, pinfo->money     );
+  fput_int  (filewrite, pinfo->skin      );
+  fput_int  (filewrite, pinfo->passage   );
+  fput_int  (filewrite, pinfo->content   );
+  fput_int  (filewrite, pinfo->level     );
+  fput_bool (filewrite, pinfo->has_status);
+  fput_bool (filewrite, pinfo->is_ghost  );
+  fput_int  (filewrite, pinfo->iteam     );
+
+  if( VALID_CSTR(comment) )
+  {
+    fputs( comment, filewrite );
+  }
+
+  fputs( "\n", filewrite );
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t translate_spawn_file( Game_t * gs, const char *modname )
+{
+  FILE * spawnfile, *spawnfile2;
+  STRING spawnname, spawnname2;
+  STRING objectname, comment;
+  spawn_info_t spinfo;
+  int cnt;
+
+  // load all of the objects
+  module_load_all_objects( gs, modname );
+
+  // open the source file
+  strncpy( spawnname, modname, sizeof(spawnname) );
+  str_append_slash( spawnname, sizeof(spawnname) );
+  strcat( spawnname, CData.spawn_file );
+  spawnfile = fs_fileOpen(PRI_NONE, "translate_spawn_file()", spawnname, "r");
+  if(NULL == spawnfile) return bfalse;
+
+  // open the dest file
+  strncpy( spawnname2, modname, sizeof(spawnname2) );
+  str_append_slash( spawnname2, sizeof(spawnname2) );
+  strcat( spawnname2, CData.spawn2_file );
+  spawnfile2 = fs_fileOpen(PRI_NONE, "translate_spawn_file()", spawnname2, "r");
+  if(NULL == spawnfile2)
+  {
+    fs_fileClose(spawnfile);
+    return bfalse;
+  }
+
+  for(cnt = 0; !feof(spawnfile); cnt++ )
+  {
+    if( !fgoto_colon_yesno_buffer(spawnfile, objectname, sizeof(objectname)) )
+    {
+      break;
+    }
+
+    // read the spawning info for this character/item
+    if( !fread_spawn_info(spawnfile, &spinfo) ) break;
+
+    // read any comment
+    fgets(comment, sizeof(comment), spawnfile);
+
+    // make sure that we have a correct name for the object
+    // this is the WHOLE POINT of the creation of spawn2.txt! :)
+    if( spinfo.slot < 0 )
+    {
+      // this object is to be imported from the import dir when the mosule is loaded
+      snprintf( objectname, sizeof(objectname), "import%02d.obj", cnt ); 
+    }
+    else if( NULL != ObjList_getPObj(gs, spinfo.slot) )
+    {
+      // we found the slot number in the object database
+      Obj_t * pobj = ObjList_getPObj(gs, spinfo.slot);
+      strncpy(objectname, pobj->name, sizeof(objectname));
+    }
+    else
+    {
+      // assume that the objectname that we loaded is the actual object name
+      /* nothing */
+    }
+
+    // write out the new line of text
+    fwrite_spawn_info(spawnfile2, objectname, &spinfo, comment);
+  }
+
+  fs_fileClose(spawnfile);
+  fs_fileClose(spawnfile2);
+
+  return btrue;
+};

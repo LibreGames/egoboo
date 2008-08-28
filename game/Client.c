@@ -300,7 +300,7 @@ void cl_frameStep()
 //};
 
 //--------------------------------------------------------------------------------------------
-ENetPeer * cl_startPeer(EGO_CONST char* hostname)
+ENetPeer * cl_startPeer(const char* hostname)
 {
   /// @details BB@> start the peer connection process, do not wait for confirmation
 
@@ -327,7 +327,7 @@ ENetPeer * cl_startPeer(EGO_CONST char* hostname)
 
 
 //--------------------------------------------------------------------------------------------
-//bool_t cl_connectRemote(Client_t * cs, EGO_CONST char* hostname, int slot)
+//bool_t cl_connectRemote(Client_t * cs, const char* hostname, int slot)
 //{
 //  /// @details ZZ@> This function tries to connect onto a server
 //
@@ -384,7 +384,7 @@ bool_t CClient_disconnect(Client_t * cs)
 
 
 //--------------------------------------------------------------------------------------------
-bool_t CClient_connect(Client_t * cs, EGO_CONST char* hostname)
+bool_t CClient_connect(Client_t * cs, const char* hostname)
 {
   /// @details ZZ@> This function tries to connect onto a server
 
@@ -450,7 +450,7 @@ bool_t CClient_connect(Client_t * cs, EGO_CONST char* hostname)
 
 
 //--------------------------------------------------------------------------------------------
-retval_t Client_joinGame(Client_t * cs, EGO_CONST char * hostname)
+retval_t Client_joinGame(Client_t * cs, const char * hostname)
 {
   /// @details ZZ@> This function tries to join one of the sessions we found
 

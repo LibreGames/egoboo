@@ -45,15 +45,15 @@ EGO_CONST char *fs_getImportDirectory( void );
 EGO_CONST char *fs_getGameDirectory( void );
 EGO_CONST char *fs_getSaveDirectory( void );
 
-FILE * fs_fileOpen( PRIORITY pri, EGO_CONST char * src, EGO_CONST char * fname, EGO_CONST char * mode );
+FILE * fs_fileOpen( PRIORITY pri, const char * src, const char * fname, const char * mode );
 void fs_fileClose( FILE * pfile );
-int  fs_fileIsDirectory( EGO_CONST char *filename );
-int  fs_createDirectory( EGO_CONST char *dirname );
-int  fs_removeDirectory( EGO_CONST char *dirname );
-void fs_deleteFile( EGO_CONST char *filename );
-void fs_copyFile( EGO_CONST char *source, EGO_CONST char *dest );
-void fs_removeDirectoryAndContents( EGO_CONST char *dirname );
-void fs_copyDirectory( EGO_CONST char *sourceDir, EGO_CONST char *destDir );
+int  fs_fileIsDirectory( const char *filename );
+int  fs_createDirectory( const char *dirname );
+int  fs_removeDirectory( const char *dirname );
+void fs_deleteFile( const char *filename );
+void fs_copyFile( const char *source, const char *dest );
+void fs_removeDirectoryAndContents( const char *dirname );
+void fs_copyDirectory( const char *sourceDir, const char *destDir );
 void empty_import_directory( void );
 int  DirGetAttrib( char *fromdir );
 
@@ -91,6 +91,6 @@ FS_FIND_INFO * fs_find_info_new(FS_FIND_INFO * i);
 bool_t         fs_find_info_delete(FS_FIND_INFO * i);
 
 //---------------------------------------------------------------------------------------------
-EGO_CONST char *fs_findFirstFile(FS_FIND_INFO * i, EGO_CONST char *searchPath, EGO_CONST char *searchBody, EGO_CONST char *searchExtension );
+EGO_CONST char *fs_findFirstFile(FS_FIND_INFO * i, const char *searchPath, const char *searchBody, const char *searchExtension );
 EGO_CONST char *fs_findNextFile(FS_FIND_INFO * i);
 void        fs_findClose(FS_FIND_INFO * i);

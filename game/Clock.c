@@ -77,7 +77,7 @@ struct sClockState
 };
 
 
-static ClockState_t * Clock_new( ClockState_t * cs, EGO_CONST char * name, int size  );
+static ClockState_t * Clock_new( ClockState_t * cs, const char * name, int size  );
 static bool_t Clock_delete( ClockState_t * cs );
 
 //static void   Clock_initTime( ClockState_t * cs );
@@ -87,7 +87,7 @@ static double Clock_getExactLastFrameDuration( ClockState_t * cs );
 static double Clock_guessFrameDuration( ClockState_t * cs );
 
 
-ClockState_t * Clock_create(EGO_CONST char * name, int size)
+ClockState_t * Clock_create(const char * name, int size)
 {
   ClockState_t * cs;
 
@@ -109,7 +109,7 @@ bool_t Clock_destroy( ClockState_t ** pcs )
 }
 
 
-ClockState_t * Clock_new( ClockState_t * cs, EGO_CONST char * name, int size )
+ClockState_t * Clock_new( ClockState_t * cs, const char * name, int size )
 {
   clock_source_ptr_t psrc;
   if(NULL == cs) return cs;

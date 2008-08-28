@@ -187,7 +187,7 @@ char * naming_generate( Game_t * gs, Obj_t * pobj )
 }
 
 //--------------------------------------------------------------------------------------------
-void naming_read( Game_t * gs, EGO_CONST char * szModpath, EGO_CONST char * szObjectname, Obj_t * pobj)
+void naming_read( Game_t * gs, const char * szModpath, const char * szObjectname, Obj_t * pobj)
 {
   /// @details ZZ@> This function reads a naming file
 
@@ -727,7 +727,7 @@ bool_t fput_damage_modifier( FILE * filewrite, Uint32 mod )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t EveList_save_one( Game_t * gs, EGO_CONST char * szFilename, EVE_REF ieve )
+bool_t EveList_save_one( Game_t * gs, const char * szFilename, EVE_REF ieve )
 {
   /// @details BB@> This exports a given enchantment
 
@@ -956,7 +956,7 @@ bool_t EveList_save_one( Game_t * gs, EGO_CONST char * szFilename, EVE_REF ieve 
 
 
 //--------------------------------------------------------------------------------------------
-ENC_REF EveList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST char * szObjectname, EVE_REF irequest )
+ENC_REF EveList_load_one( Game_t * gs, const char * szObjectpath, const char * szObjectname, EVE_REF irequest )
 {
   /// @details ZZ@> This function loads the enchantment associated with an object
 

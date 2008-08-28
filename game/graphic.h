@@ -250,8 +250,8 @@ void prime_icons( struct sGame * gs);
 Graphics_t * sdl_set_mode(Graphics_t * g_old, Graphics_t * g_new, bool_t update_ogl);
 bool_t       gl_set_mode(Graphics_t * g);
 
-bool_t load_basic_textures( struct sGame * gs, EGO_CONST char *szModPath );
-bool_t load_particle_texture( struct sGame * gs, EGO_CONST char *szModPath );
+bool_t load_basic_textures( struct sGame * gs, const char *szModPath );
+bool_t load_particle_texture( struct sGame * gs, const char *szModPath );
 
 bool_t read_wawalite( struct sGame * gs, char *modname );
 void do_dyna_light(struct sGame * gs);
@@ -306,10 +306,10 @@ void render_water_fan_lit( Uint32 fan, Uint8 layer, Uint8 mode );
 void make_speklut( void );
 
 void   release_all_textures( struct sGraphics_Data * gfx );
-Uint32 load_one_icon( struct sGraphics_Data * gfx, char * szPathname, EGO_CONST char * szObjectname, char * szFilename );
+Uint32 load_one_icon( struct sGraphics_Data * gfx, char * szPathname, const char * szObjectname, char * szFilename );
 void   release_all_icons( struct sGraphics_Data * gfx );
 
-bool_t debug_message( int time, EGO_CONST char *format, ... );
+bool_t debug_message( int time, const char *format, ... );
 void make_spektable( vect3 lite );
 void make_lighttospek( void );
 

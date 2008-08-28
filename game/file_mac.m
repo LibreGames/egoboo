@@ -101,7 +101,7 @@ EGO_CONST char *fs_getGameDirectory()
   return fs_gamePath;
 }
 
-int fs_createDirectory(EGO_CONST char *dirName)
+int fs_createDirectory(const char *dirName)
 {
   BOOL ok;
 
@@ -113,7 +113,7 @@ int fs_createDirectory(EGO_CONST char *dirName)
   return 0;
 }
 
-int fs_removeDirectory(EGO_CONST char *dirName)
+int fs_removeDirectory(const char *dirName)
 {
   BOOL ok;
   NSString *path = [[NSString alloc] initWithCString:dirName];
@@ -124,14 +124,14 @@ int fs_removeDirectory(EGO_CONST char *dirName)
   return 0;
 }
 
-void fs_deleteFile(EGO_CONST char *fileName)
+void fs_deleteFile(const char *fileName)
 {
   NSString *path = [[NSString alloc] initWithCString:fileName];
   [[NSFileManager defaultManager] removeFileAtPath:path handler:nil];
   [path release];
 }
 
-void fs_copyFile(EGO_CONST char *source, EGO_CONST char *dest)
+void fs_copyFile(const char *source, const char *dest)
 {
   NSString *srcPath, *destPath;
 
@@ -144,7 +144,7 @@ void fs_copyFile(EGO_CONST char *source, EGO_CONST char *dest)
   [destPath release];
 }
 
-int fs_fileIsDirectory(EGO_CONST char *filename)
+int fs_fileIsDirectory(const char *filename)
 {
   // Returns 1 if this file is a directory
   BOOL isDir = NO;
@@ -228,7 +228,7 @@ void fs_findClose(&fs_finfo)
 // Begin enumerating files in a directory.  The enumeration is not recursive; subdirectories
 // won't be searched.  If 'extension' is not NULL, only files with the given extension will
 // be returned.
-EGO_CONST char *fs_findFirstFile(EGO_CONST char *path, EGO_CONST char *extension)
+EGO_CONST char *fs_findFirstFile(const char *path, const char *extension)
 {
   NSString *searchPath;
 

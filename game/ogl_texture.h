@@ -57,7 +57,7 @@ GLtexture * GLtexture_create( void );
 bool_t      GLtexture_destory( GLtexture ** ptx );
 
 Uint32  GLtexture_Convert( GLenum tx_target, GLtexture *texture, SDL_Surface * image, Uint32 key );
-Uint32  GLtexture_Load( GLenum tx_target, GLtexture *texture, EGO_CONST char *filename, Uint32 key );
+Uint32  GLtexture_Load( GLenum tx_target, GLtexture *texture, const char *filename, Uint32 key );
 GLuint  GLtexture_GetTextureID( GLtexture *texture );
 GLsizei GLtexture_GetImageHeight( GLtexture *texture );
 GLsizei GLtexture_GetImageWidth( GLtexture *texture );

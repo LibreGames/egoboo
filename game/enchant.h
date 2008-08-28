@@ -258,8 +258,8 @@ void chr_reset_alpha( struct sGame * gs, CHR_REF character );
 /// @details This function fixes a character's MAX acceleration
 void chr_reset_accel( struct sGame * gs, CHR_REF character );
 
-EVE_REF EveList_load_one( struct sGame * gs, EGO_CONST char * szObjectpath, EGO_CONST char * szObjectname, EVE_REF irequest );
-bool_t  EveList_save_one( struct sGame * gs, EGO_CONST char * szFilename, EVE_REF ieve );
+EVE_REF EveList_load_one( struct sGame * gs, const char * szObjectpath, const char * szObjectname, EVE_REF irequest );
+bool_t  EveList_save_one( struct sGame * gs, const char * szFilename, EVE_REF ieve );
 void    unset_enchant_value( struct sGame * gs, ENC_REF enchantindex, Uint8 valueindex );
 void    remove_enchant_value( struct sGame * gs, ENC_REF enchantindex, Uint8 valueindex );
 

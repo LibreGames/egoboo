@@ -37,7 +37,7 @@ void clock_init( void );      ///< Init the clock module
 void clock_shutdown( void );  ///< Shut down the clock module
 void clock_setTimeSource( clock_source_ptr_t tsrc );     ///< Specify where the clock gets its time values from
 
-ClockState_t * Clock_create( EGO_CONST char * name, int size );
+ClockState_t * Clock_create( const char * name, int size );
 bool_t       Clock_destroy( ClockState_t ** cs );
 ClockState_t * Clock_renew( ClockState_t * cs );
 

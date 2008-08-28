@@ -1551,7 +1551,7 @@ retval_t nfile_SendQueue_add(NFileState_t * nfs, ENetAddress * target_address, c
 
 
 //--------------------------------------------------------------------------------------------
-retval_t nfhost_checkCRC(ENetPeer * peer, EGO_CONST char * source, Uint32 seed, Uint32 CRC)
+retval_t nfhost_checkCRC(ENetPeer * peer, const char * source, Uint32 seed, Uint32 CRC)
 {
   NetHost_t * nh;
   Uint8  buffer[NET_REQ_SIZE];

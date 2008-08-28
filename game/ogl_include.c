@@ -29,10 +29,10 @@
 
 //--------------------------------------------------------------------------------------------
 // MN This probably should be replaced by a call to gluLookAt, don't see why we need to make our own...
-GLmatrix ViewMatrix( EGO_CONST vect3 from,     // camera location
-                     EGO_CONST vect3 at,        // camera look-at target
-                     EGO_CONST vect3 world_up,  // world’s up, usually 0, 0, 1
-                     EGO_CONST float roll )     // clockwise roll around viewing direction, in radians
+GLmatrix ViewMatrix( const vect3 from,     // camera location
+                     const vect3 at,        // camera look-at target
+                     const vect3 world_up,  // world’s up, usually 0, 0, 1
+                     const float roll )     // clockwise roll around viewing direction, in radians
 {
 
   GLmatrix view;
@@ -62,9 +62,9 @@ GLmatrix ViewMatrix( EGO_CONST vect3 from,     // camera location
 }
 
 //--------------------------------------------------------------------------------------------
-GLmatrix ProjectionMatrix( EGO_CONST float near_plane,    // distance to near clipping plane
-                           EGO_CONST float far_plane,      // distance to far clipping plane
-                           EGO_CONST float fov )           // field of view angle, in radians
+GLmatrix ProjectionMatrix( const float near_plane,    // distance to near clipping plane
+                           const float far_plane,      // distance to far clipping plane
+                           const float fov )           // field of view angle, in radians
 {
   GLmatrix proj;
 

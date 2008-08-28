@@ -1812,7 +1812,7 @@ retval_t net_waitForPacket(NetAsynchData_t * asynch_list, ENetPeer * peer, Uint3
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-static void net_writeLogMessage(FILE * logFile, EGO_CONST char *format, va_list args)
+static void net_writeLogMessage(FILE * logFile, const char *format, va_list args)
 {
   static char logBuffer[MAX_NET_LOG_MESSAGE];
 
@@ -1828,7 +1828,7 @@ static void net_writeLogMessage(FILE * logFile, EGO_CONST char *format, va_list 
 }
 
 //--------------------------------------------------------------------------------------------
-void net_logf(EGO_CONST char *format, ...)
+void net_logf(const char *format, ...)
 {
   va_list args;
 
@@ -1948,7 +1948,7 @@ ENetPeer * net_startPeer(ENetHost * host, ENetAddress * address )
 }
 
 //--------------------------------------------------------------------------------------------
-ENetPeer * net_startPeerByName(ENetHost * host, EGO_CONST char* connect_name, EGO_CONST int connect_port )
+ENetPeer * net_startPeerByName(ENetHost * host, const char* connect_name, const int connect_port )
 {
   /// @details BB@> start the peer connection process, do not wait for confirmation
 

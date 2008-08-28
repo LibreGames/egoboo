@@ -71,7 +71,7 @@ bool_t fs_find_info_delete(FS_FIND_INFO * i)
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // FIXME: Doesn't handle deleting directories recursively yet.
-void fs_removeDirectoryAndContents( EGO_CONST char *dirname )
+void fs_removeDirectoryAndContents( const char *dirname )
 {
   /// @details ZZ@> This function deletes all files in a directory,
   ///     and the directory itself
@@ -108,7 +108,7 @@ void fs_removeDirectoryAndContents( EGO_CONST char *dirname )
 }
 
 //--------------------------------------------------------------------------------------------
-void fs_copyDirectory( EGO_CONST char *sourceDir, EGO_CONST char *destDir )
+void fs_copyDirectory( const char *sourceDir, const char *destDir )
 {
   /// @details ZZ@> This function copies all files in a directory
 
@@ -166,7 +166,7 @@ void fs_copyDirectory( EGO_CONST char *sourceDir, EGO_CONST char *destDir )
 
 
 //--------------------------------------------------------------------------------------------
-FILE * fs_fileOpen( PRIORITY priority, EGO_CONST char * src, EGO_CONST char * fname, EGO_CONST char * mode )
+FILE * fs_fileOpen( PRIORITY priority, const char * src, const char * fname, const char * mode )
 {
   /// @details BB@> an alias to the standard fopen() command.  Allows proper logging of
   ///      bad calls to fopen()

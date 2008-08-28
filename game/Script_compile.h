@@ -81,5 +81,5 @@ extern int    iNumAis;   ///< These are for the AI script loading/parsing routin
 
 
 void   load_ai_codes( char* loadname );
-Uint32 load_ai_script( ScriptInfo_t * slist, EGO_CONST char * szModpath, EGO_CONST char * szObjectname );
+Uint32 load_ai_script( ScriptInfo_t * slist, const char * szModpath, const char * szObjectname );
 void   reset_ai_script(struct sGame * gs);

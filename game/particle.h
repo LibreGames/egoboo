@@ -225,6 +225,7 @@ struct sPrt
   PhysAccum_t      accum;                       //
   Orientation_t    ori;
   Orientation_t    ori_old;
+  vect3            shift;                          ///< shift the particle center away from ori.pos
 
   float           level;                           ///< Height of tile
   Uint8           spawncharacterstate;             //
@@ -325,7 +326,7 @@ MAD_REF PrtList_getRMad(struct sGame * gs, PRT_REF iprt);
 #define CALCULATE_PRT_V1(CNT)  (((.95f+(CNT/16))/16.0f) * ((float)gfx->TxTexture[TX_PARTICLE].imgW/(float)gfx->TxTexture[TX_PARTICLE].imgH)*(( float ) gfx->TxTexture[TX_PARTICLE].imgH / ( float ) gfx->TxTexture[TX_PARTICLE].txH))
 
 void PrtList_resynch( struct sGame * gs );
-void move_particles( struct sGame * gs, float dUpdate );
+void move_all_particles( struct sGame * gs, float dUpdate );
 void attach_particles( struct sGame * gs );
 PRT_REF prt_spawn_info_init( PRT_SPAWN_INFO * psi, struct sGame * gs, float intensity, vect3 pos, vect3 vel,
                            Uint16 facing, OBJ_REF model, PIP_REF pip,
@@ -342,7 +343,7 @@ PRT_REF req_spawn_one_particle( PRT_SPAWN_INFO si );
 
 Uint32 prt_hitawall( struct sGame * gs, PRT_REF particle, vect3 * norm );
 
-PIP_REF PipList_load_one( struct sGame * gs, EGO_CONST char * szModpath, EGO_CONST char * szObjectname, EGO_CONST char * szFname, PIP_REF override );
+PIP_REF PipList_load_one( struct sGame * gs, const char * szModpath, const char * szObjectname, const char * szFname, PIP_REF override );
 
 bool_t prt_calculate_bumpers(struct sGame * gs, PRT_REF iprt);
 

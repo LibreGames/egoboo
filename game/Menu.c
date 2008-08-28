@@ -399,7 +399,7 @@ struct sSlidyButtonState
 struct sSlidyButtonState SlidyButtonState_t;
 
 //--------------------------------------------------------------------------------------------
-int mnu_initWidgetsList( ui_Widget_t wlist[], int wmax, EGO_CONST char * text[] )
+int mnu_initWidgetsList( ui_Widget_t wlist[], int wmax, const char * text[] )
 {
   int i, cnt;
   cnt = 0;

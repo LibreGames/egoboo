@@ -103,8 +103,8 @@ PROFILE_DECLARE( enc_spawn_particles );
 PROFILE_DECLARE( Client_unbufferLatches );
 PROFILE_DECLARE( CServer_unbufferLatches );
 PROFILE_DECLARE( check_respawn );
-PROFILE_DECLARE( move_characters );
-PROFILE_DECLARE( move_particles );
+PROFILE_DECLARE( move_all_characters );
+PROFILE_DECLARE( move_all_particles );
 PROFILE_DECLARE( make_character_matrices );
 PROFILE_DECLARE( attach_particles );
 PROFILE_DECLARE( make_onwhichfan );
@@ -297,7 +297,7 @@ void make_newloadname( char *modname, char *appendname, char *newloadname )
 //}
 
 //---------------------------------------------------------------------------------------------
-bool_t export_all_enchants( Game_t * gs, CHR_REF ichr, EGO_CONST char * todirname )
+bool_t export_all_enchants( Game_t * gs, CHR_REF ichr, const char * todirname )
 {
   /// @details BB@> Export all of the enchant info associated with an enchant to a file called rechantXXXX.txt
   ///     Note that this does not save the sounds, particles, or any other asset associated with the enchant
@@ -621,7 +621,7 @@ int MessageQueue_get_free(MessageQueue_t * mq)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t decode_escape_sequence( Game_t * gs, char * buffer, size_t buffer_size, EGO_CONST char * message, CHR_REF chr_ref )
+bool_t decode_escape_sequence( Game_t * gs, char * buffer, size_t buffer_size, const char * message, CHR_REF chr_ref )
 {
   /// @details BB@> expands escape sequences
 
@@ -2995,8 +2995,8 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
         PROFILE_INIT( Client_unbufferLatches );
         PROFILE_INIT( CServer_unbufferLatches );
         PROFILE_INIT( check_respawn );
-        PROFILE_INIT( move_characters );
-        PROFILE_INIT( move_particles );
+        PROFILE_INIT( move_all_characters );
+        PROFILE_INIT( move_all_particles );
         PROFILE_INIT( make_character_matrices );
         PROFILE_INIT( attach_particles );
         PROFILE_INIT( make_onwhichfan );
@@ -3161,8 +3161,8 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
         log_info( "\tCClient_unbufferLatches - %lf\n", 1e6*PROFILE_QUERY( Client_unbufferLatches ) );
         log_info( "\tCServer_unbufferLatches - %lf\n", 1e6*PROFILE_QUERY( CServer_unbufferLatches ) );
         log_info( "\tcheck_respawn - %lf\n", 1e6*PROFILE_QUERY( check_respawn ) );
-        log_info( "\tmove_characters - %lf\n", 1e6*PROFILE_QUERY( move_characters ) );
-        log_info( "\tmove_particles - %lf\n", 1e6*PROFILE_QUERY( move_particles ) );
+        log_info( "\tmove_characters - %lf\n", 1e6*PROFILE_QUERY( move_all_characters ) );
+        log_info( "\tmove_particles - %lf\n", 1e6*PROFILE_QUERY( move_all_particles ) );
         log_info( "\tmake_character_matrices - %lf\n", 1e6*PROFILE_QUERY( make_character_matrices ) );
         log_info( "\tattach_particles - %lf\n", 1e6*PROFILE_QUERY( attach_particles ) );
         log_info( "\tmake_onwhichfan - %lf\n", 1e6*PROFILE_QUERY( make_onwhichfan ) );
@@ -3182,8 +3182,8 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
         PROFILE_FREE( Client_unbufferLatches );
         PROFILE_FREE( CServer_unbufferLatches );
         PROFILE_FREE( check_respawn );
-        PROFILE_FREE( move_characters );
-        PROFILE_FREE( move_particles );
+        PROFILE_FREE( move_all_characters );
+        PROFILE_FREE( move_all_particles );
         PROFILE_FREE( make_character_matrices );
         PROFILE_FREE( attach_particles );
         PROFILE_FREE( make_onwhichfan );
@@ -3341,7 +3341,7 @@ void cl_update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
     keep_weapons_with_holders( gs );                  // client-ish function
     PROFILE_END( keep_weapons_with_holders );
 
-    // unbuffer the updated latches after run_all_scripts() and before move_characters()
+    // unbuffer the updated latches after run_all_scripts() and before move_all_characters()
     PROFILE_BEGIN( Client_unbufferLatches );
     Client_unbufferLatches( gs->cl );              // client function
     PROFILE_END( Client_unbufferLatches );
@@ -3360,13 +3360,13 @@ void cl_update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
     // client/server block
     begin_integration( gs );
     {
-      PROFILE_BEGIN( move_characters );
-      move_characters( gs, dUpdate );
-      PROFILE_END( move_characters );
+      PROFILE_BEGIN( move_all_characters );
+      move_all_characters( gs, dUpdate );
+      PROFILE_END( move_all_characters );
 
-      PROFILE_BEGIN( move_particles );
-      move_particles( gs, dUpdate );
-      PROFILE_END( move_particles );
+      PROFILE_BEGIN( move_all_particles );
+      move_all_particles( gs, dUpdate );
+      PROFILE_END( move_all_particles );
 
       PROFILE_BEGIN( attach_particles );
       attach_particles( gs );                      // client/server function
@@ -3470,7 +3470,7 @@ void sv_update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
     enc_spawn_particles( gs, dUpdate );                       // server function
     PROFILE_END( enc_spawn_particles );
 
-    // unbuffer the updated latches after run_all_scripts() and before move_characters()
+    // unbuffer the updated latches after run_all_scripts() and before move_all_characters()
     PROFILE_BEGIN( CServer_unbufferLatches );
     Server_unbufferLatches( gs->sv );              // server function
     PROFILE_END( CServer_unbufferLatches );
@@ -3483,13 +3483,13 @@ void sv_update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
    // client/server block
     begin_integration( gs );
     {
-      PROFILE_BEGIN( move_characters );
-      move_characters( gs, dUpdate );
-      PROFILE_END( move_characters );
+      PROFILE_BEGIN( move_all_characters );
+      move_all_characters( gs, dUpdate );
+      PROFILE_END( move_all_characters );
 
-      PROFILE_BEGIN( move_particles );
-      move_particles( gs, dUpdate );
-      PROFILE_END( move_particles );
+      PROFILE_BEGIN( move_all_particles );
+      move_all_particles( gs, dUpdate );
+      PROFILE_END( move_all_particles );
 
       PROFILE_BEGIN( attach_particles );
       attach_particles( gs );                      // client/server function
@@ -3563,7 +3563,7 @@ void update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
     enc_spawn_particles( gs, dUpdate );                       // server function
     PROFILE_END( enc_spawn_particles );
 
-    // unbuffer the updated latches after run_all_scripts() and before move_characters()
+    // unbuffer the updated latches after run_all_scripts() and before move_all_characters()
     PROFILE_BEGIN( Client_unbufferLatches );
     Client_unbufferLatches( cs );              // client function
     PROFILE_END( Client_unbufferLatches );
@@ -3585,13 +3585,13 @@ void update_game(Game_t * gs, float dUpdate, Uint32 * rand_idx)
     // client/server block
     begin_integration( gs );
     {
-      PROFILE_BEGIN( move_characters );
-      move_characters( gs, dUpdate );
-      PROFILE_END( move_characters );
+      PROFILE_BEGIN( move_all_characters );
+      move_all_characters( gs, dUpdate );
+      PROFILE_END( move_all_characters );
 
-      PROFILE_BEGIN( move_particles );
-      move_particles( gs, dUpdate );
-      PROFILE_END( move_particles );
+      PROFILE_BEGIN( move_all_particles );
+      move_all_particles( gs, dUpdate );
+      PROFILE_END( move_all_particles );
 
       PROFILE_BEGIN( attach_particles );
       attach_particles( gs );                      // client/server function
@@ -4049,7 +4049,7 @@ int SDL_main( int argc, char **argv )
 }
 
 //--------------------------------------------------------------------------------------------
-int load_all_messages( Game_t * gs, EGO_CONST char *szObjectpath, EGO_CONST char *szObjectname )
+int load_all_messages( Game_t * gs, const char *szObjectpath, const char *szObjectname )
 {
   /// @details ZZ@> This function loads all of an objects messages
 
@@ -5087,7 +5087,6 @@ void do_setup_inputs(CHR_SETUP_INFO * pinfo, CHR_SPAWN_INFO * psi)
     // Turn on the stat display
     add_status( pinfo->gs, pinfo->last_chr );
   }
-
 }
 
 //--------------------------------------------------------------------------------------------

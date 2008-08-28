@@ -979,7 +979,7 @@ bool_t fget_next_string( FILE* fileread, char *szLine, size_t lnLine )
 }
 
 //--------------------------------------------------------------------------------------------
-EGO_CONST char * inherit_fname(EGO_CONST char * szObjPath, EGO_CONST char * szObject, EGO_CONST char *szFname )
+EGO_CONST char * inherit_fname(const char * szObjPath, const char * szObject, const char *szFname )
 {
   static STRING ret_fname;
   FILE * loc_pfile;
@@ -1300,7 +1300,7 @@ void make_randie()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t fput_next( FILE* filewrite, EGO_CONST char * comment )
+bool_t fput_next( FILE* filewrite, const char * comment )
 {
   int written;
   if( NULL == filewrite) return bfalse;
@@ -1327,7 +1327,7 @@ bool_t fput_idsz( FILE* filewrite, IDSZ data )
 
 
 //--------------------------------------------------------------------------------------------
-bool_t fput_next_idsz( FILE* filewrite, EGO_CONST char * comment, IDSZ data )
+bool_t fput_next_idsz( FILE* filewrite, const char * comment, IDSZ data )
 {
   if( !fput_next(filewrite, comment) ) return bfalse;
   fput_idsz(filewrite, data);
@@ -1350,7 +1350,7 @@ bool_t fput_int( FILE* filewrite, int data )
 
 
 //--------------------------------------------------------------------------------------------
-bool_t fput_next_int( FILE* filewrite, EGO_CONST char * comment, int data )
+bool_t fput_next_int( FILE* filewrite, const char * comment, int data )
 {
   if( !fput_next(filewrite, comment) ) return bfalse;
   fput_int(filewrite, data);
@@ -1374,7 +1374,7 @@ bool_t fput_float( FILE* filewrite, float data )
 
 
 //--------------------------------------------------------------------------------------------
-bool_t fput_next_float( FILE* filewrite, EGO_CONST char * comment, float data )
+bool_t fput_next_float( FILE* filewrite, const char * comment, float data )
 {
   if( !fput_next(filewrite, comment) ) return bfalse;
   fput_float(filewrite, data);
@@ -1398,7 +1398,7 @@ bool_t fput_fixed( FILE* filewrite, Uint16 data )
 
 
 //--------------------------------------------------------------------------------------------
-bool_t fput_next_fixed( FILE* filewrite, EGO_CONST char * comment, Uint16 data )
+bool_t fput_next_fixed( FILE* filewrite, const char * comment, Uint16 data )
 {
   if( !fput_next(filewrite, comment) ) return bfalse;
   fput_fixed(filewrite, data);
@@ -1422,7 +1422,7 @@ bool_t fput_bool( FILE* filewrite, bool_t data )
 
 
 //--------------------------------------------------------------------------------------------
-bool_t fput_next_bool( FILE* filewrite, EGO_CONST char * comment, bool_t data )
+bool_t fput_next_bool( FILE* filewrite, const char * comment, bool_t data )
 {
   if( !fput_next(filewrite, comment) ) return bfalse;
   fput_bool(filewrite, data);
@@ -1457,7 +1457,7 @@ bool_t fput_gender( FILE* filewrite, enum e_gender data )
 
 
 //--------------------------------------------------------------------------------------------
-bool_t fput_next_gender( FILE* filewrite, EGO_CONST char * comment, enum e_gender data )
+bool_t fput_next_gender( FILE* filewrite, const char * comment, enum e_gender data )
 {
   if( !fput_next(filewrite, comment) ) return bfalse;
   fput_gender(filewrite, data);
@@ -1523,7 +1523,7 @@ bool_t fput_damage( FILE* filewrite, enum e_damage data )
 
 
 //--------------------------------------------------------------------------------------------
-bool_t fput_next_damage( FILE* filewrite, EGO_CONST char * comment, enum e_damage data )
+bool_t fput_next_damage( FILE* filewrite, const char * comment, enum e_damage data )
 {
   if( !fput_next(filewrite, comment) ) return bfalse;
   fput_damage(filewrite, data);
@@ -1557,7 +1557,7 @@ bool_t fput_blud( FILE* filewrite, enum e_blud_level data )
 
 
 //--------------------------------------------------------------------------------------------
-bool_t fput_next_blud( FILE* filewrite, EGO_CONST char * comment, enum e_blud_level data )
+bool_t fput_next_blud( FILE* filewrite, const char * comment, enum e_blud_level data )
 {
   if( !fput_next(filewrite, comment) ) return bfalse;
   fput_blud(filewrite, data);
@@ -1591,7 +1591,7 @@ bool_t fput_dynamode( FILE* filewrite, enum e_dyna_mode data )
 
 
 //--------------------------------------------------------------------------------------------
-bool_t fput_next_dynamode( FILE* filewrite, EGO_CONST char * comment, enum e_dyna_mode data )
+bool_t fput_next_dynamode( FILE* filewrite, const char * comment, enum e_dyna_mode data )
 {
   if( !fput_next(filewrite, comment) ) return bfalse;
   fput_dynamode(filewrite, data);
@@ -1619,7 +1619,7 @@ bool_t fput_name( FILE* filewrite, char * data )
 
 
 //--------------------------------------------------------------------------------------------
-bool_t fput_next_name( FILE* filewrite, EGO_CONST char * comment, char * data )
+bool_t fput_next_name( FILE* filewrite, const char * comment, char * data )
 {
   if( !fput_next(filewrite, comment) ) return bfalse;
 
@@ -1645,7 +1645,7 @@ bool_t fput_string( FILE* filewrite, char * data )
 
 
 //--------------------------------------------------------------------------------------------
-bool_t fput_next_string( FILE* filewrite, EGO_CONST char * comment, char * data )
+bool_t fput_next_string( FILE* filewrite, const char * comment, char * data )
 {
   if( !fput_next(filewrite, comment) ) return bfalse;
   fput_string(filewrite, data);
@@ -1679,7 +1679,7 @@ bool_t fput_alpha_type( FILE* filewrite, enum e_particle_alpha_type data )
 
 
 //--------------------------------------------------------------------------------------------
-bool_t fput_next_alpha_type( FILE* filewrite, EGO_CONST char * comment, enum e_particle_alpha_type data )
+bool_t fput_next_alpha_type( FILE* filewrite, const char * comment, enum e_particle_alpha_type data )
 {
   if( !fput_next(filewrite, comment) ) return bfalse;
   fput_alpha_type(filewrite, data);
@@ -1729,7 +1729,7 @@ bool_t fput_action( FILE* filewrite, enum e_Action data )
 
 
 //--------------------------------------------------------------------------------------------
-bool_t fput_next_action( FILE* filewrite, EGO_CONST char * comment, enum e_Action data )
+bool_t fput_next_action( FILE* filewrite, const char * comment, enum e_Action data )
 {
   if( !fput_next(filewrite, comment) ) return bfalse;
   fput_action(filewrite, data);
@@ -1766,7 +1766,7 @@ bool_t fput_message( FILE* filewrite, MessageData_t * data, int num )
 
 
 //--------------------------------------------------------------------------------------------
-bool_t fput_next_message( FILE* filewrite, EGO_CONST char * comment, MessageData_t * data, int num )
+bool_t fput_next_message( FILE* filewrite, const char * comment, MessageData_t * data, int num )
 {
   if( !fput_next(filewrite, comment) ) return bfalse;
 
@@ -1788,7 +1788,7 @@ bool_t fput_expansion( FILE* filewrite, char * idsz_string, int value )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t fput_next_expansion( FILE* filewrite, EGO_CONST char * comment, char * idsz_string, int value )
+bool_t fput_next_expansion( FILE* filewrite, const char * comment, char * idsz_string, int value )
 {
   if( !fput_next(filewrite, comment) ) return bfalse;
 
@@ -1818,7 +1818,7 @@ bool_t fput_pair( FILE* filewrite, PAIR * data )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t fput_next_pair( FILE* filewrite, EGO_CONST char * comment, PAIR * data )
+bool_t fput_next_pair( FILE* filewrite, const char * comment, PAIR * data )
 {
   if( !fput_next(filewrite, comment) ) return bfalse;
 

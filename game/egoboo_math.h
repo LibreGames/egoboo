@@ -155,8 +155,8 @@ extern float turntocos[TRIGTABLE_SIZE];           ///< Convert chrturn>>2...  to
 
 /**> FUNCTION PROTOTYPES <**/
 void make_turntosin( void );
-matrix_4x4 ViewMatrix( EGO_CONST vect3 from, EGO_CONST vect3 at, EGO_CONST vect3 world_up, EGO_CONST float roll );
-matrix_4x4 ProjectionMatrix( EGO_CONST float near_plane, EGO_CONST float far_plane, EGO_CONST float fov );
+matrix_4x4 ViewMatrix( const vect3 from, const vect3 at, const vect3 world_up, const float roll );
+matrix_4x4 ProjectionMatrix( const float near_plane, const float far_plane, const float fov );
 
 //--------------------------------------------------------------------------------------------
 struct s_aa_bbox

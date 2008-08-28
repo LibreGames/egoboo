@@ -282,7 +282,7 @@ void release_all_textures( Graphics_Data_t * gfx )
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 load_one_icon( Graphics_Data_t * gfx, char * szPathname, EGO_CONST char * szObjectname, char * szFilename )
+Uint32 load_one_icon( Graphics_Data_t * gfx, char * szPathname, const char * szObjectname, char * szFilename )
 {
   /// @details ZZ@> This function is used to load an icon.  Most icons are loaded
   ///     without this function though...
@@ -381,7 +381,7 @@ void release_all_models(Game_t * gs)
 }
 
 //--------------------------------------------------------------------------------------------
-static bool_t write_debug_message( int time, EGO_CONST char *format, va_list args )
+static bool_t write_debug_message( int time, const char *format, va_list args )
 {
   /// @details ZZ@> This function sticks a message in the display queue and sets its timer
 
@@ -407,7 +407,7 @@ static bool_t write_debug_message( int time, EGO_CONST char *format, va_list arg
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t debug_message( int time, EGO_CONST char *format, ... )
+bool_t debug_message( int time, const char *format, ... )
 {
   bool_t retval;
   va_list args;
@@ -487,7 +487,7 @@ void animate_tiles( TILE_ANIMATED * t, float dUpdate )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t load_particle_texture( Game_t * gs, EGO_CONST char *szModPath  )
+bool_t load_particle_texture( Game_t * gs, const char *szModPath  )
 {
   /// @details BB@> Load the particle bitmap. Check the gamedat dir first for a module override
 
@@ -545,7 +545,7 @@ bool_t load_particle_texture( Game_t * gs, EGO_CONST char *szModPath  )
 
 
 //--------------------------------------------------------------------------------------------
-bool_t load_basic_textures( Game_t * gs, EGO_CONST char *szModPath )
+bool_t load_basic_textures( Game_t * gs, const char *szModPath )
 {
   /// @details ZZ@> This function loads the standard textures for a module
   /// @details BB@> In each case, try to load one stored with the module first.

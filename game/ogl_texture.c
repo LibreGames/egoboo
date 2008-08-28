@@ -261,7 +261,7 @@ Uint32 GLtexture_Convert( GLenum tx_target, GLtexture *texture, SDL_Surface * im
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 GLtexture_Load( GLenum tx_target, GLtexture *texture, EGO_CONST char *filename, Uint32 key )
+Uint32 GLtexture_Load( GLenum tx_target, GLtexture *texture, const char *filename, Uint32 key )
 {
   Uint32 retval;
   SDL_Surface * image;

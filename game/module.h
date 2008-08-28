@@ -136,16 +136,18 @@ ModState_t * ModState_renew(ModState_t * ms, MOD_INFO * mi, Uint32 seed);
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-bool_t module_load( struct sGame * gs, char *smallname );
+bool_t module_load( struct sGame * gs, const char *smallname );
 void   module_release(  struct sGame * gs  );
 void   module_quit( struct sGame * gs );
 
-bool_t module_reference_matches( char *szLoadName, IDSZ idsz );
-void   module_add_idsz( char *szLoadName, IDSZ idsz );
-int    module_find( char *smallname, MOD_INFO * mi_ary, size_t mi_size );
-bool_t module_read_data( struct s_mod_info * pmod, char *szLoadName );
+bool_t module_reference_matches( const char *szLoadName, IDSZ idsz );
+void   module_add_idsz( const char *szLoadName, IDSZ idsz );
+int    module_find( const char *smallname, MOD_INFO * mi_ary, size_t mi_size );
+bool_t module_read_data( struct s_mod_info * pmod, const char *szLoadName );
 bool_t module_read_summary( char *szLoadName, ModSummary_t * ms );
 
 void ModInfo_clear_all_titleimages( MOD_INFO * mi_ary, size_t mi_count );
 
 void release_map(struct sGraphics_Data * gfx);
+
+bool_t translate_spawn_file( struct sGame * gs, const char * modname );

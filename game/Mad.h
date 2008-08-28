@@ -206,7 +206,7 @@ bool_t  Mad_delete(Mad_t *pmad);
 Mad_t *  Mad_renew(Mad_t * pmad);
 
 void    MadList_free_one( struct sGame * gs, Uint16 imdl );
-MAD_REF MadList_load_one( struct sGame * gs, EGO_CONST char * szModpath, EGO_CONST char * szObjectname, MAD_REF irequest );
+MAD_REF MadList_load_one( struct sGame * gs, const char * szModpath, const char * szObjectname, MAD_REF irequest );
 
 #define VALID_MAD_RANGE(XX) ( /*(((XX)>=0) && */ ((XX)<MADLST_COUNT) )
 #define VALID_MAD(LST, XX)   ( VALID_MAD_RANGE(XX) && EKEY_VALID(LST[XX]) )

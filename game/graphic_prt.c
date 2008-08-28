@@ -616,9 +616,9 @@ void render_particles()
   {
     if ( !ACTIVE_PRT( prtlst, prt_cnt ) || /* !prtlst[prt_cnt].inview  || */ prtlst[prt_cnt].gopoof || prtlst[prt_cnt].size_fp8 == 0 ) continue;
 
-    v[numparticle].pos.x = ( float ) prtlst[prt_cnt].ori.pos.x;
-    v[numparticle].pos.y = ( float ) prtlst[prt_cnt].ori.pos.y;
-    v[numparticle].pos.z = ( float ) prtlst[prt_cnt].ori.pos.z;
+    v[numparticle].pos.x = prtlst[prt_cnt].ori.pos.x + prtlst[prt_cnt].shift.x;
+    v[numparticle].pos.y = prtlst[prt_cnt].ori.pos.y + prtlst[prt_cnt].shift.y;
+    v[numparticle].pos.z = prtlst[prt_cnt].ori.pos.z + prtlst[prt_cnt].shift.z;
 
     // !!!!!PRE CALCULATE the billboard vectors so you only have to do it ONCE!!!!!!!
     get_vectors( prt_cnt, &v[numparticle].up, &v[numparticle].rt, &v[numparticle].col.r );
@@ -948,9 +948,10 @@ void render_particle_reflections()
     if ( mesh_has_some_bits( pmesh->Mem.tilelst, prtlst[prt_cnt].onwhichfan, MPDFX_SHINY ) )
     {
       level = prtlst[prt_cnt].level;
-      v[numparticle].pos.x = prtlst[prt_cnt].ori.pos.x;
-      v[numparticle].pos.y = prtlst[prt_cnt].ori.pos.y;
-      v[numparticle].pos.z = level + level - prtlst[prt_cnt].ori.pos.z;
+      v[numparticle].pos.x = prtlst[prt_cnt].ori.pos.x + prtlst[prt_cnt].shift.x;
+      v[numparticle].pos.y = prtlst[prt_cnt].ori.pos.y + prtlst[prt_cnt].shift.y;
+      v[numparticle].pos.z = level + level - (prtlst[prt_cnt].ori.pos.z + prtlst[prt_cnt].shift.z);
+
 
       // !!!!!PRE CALCULATE the billboard vectors so you only have to do it ONCE!!!!!!!
       get_vectors( prt_cnt, &v[numparticle].up, &v[numparticle].rt, &v[numparticle].col.r );

@@ -34,7 +34,7 @@
 #include <stdio.h>
 
 
-MD2_Model_t* md2_load(EGO_CONST char * szFilename, MD2_Model_t* mdl)
+MD2_Model_t* md2_load(const char * szFilename, MD2_Model_t* mdl)
 {
   FILE * f;
   md2_header header;
@@ -255,7 +255,7 @@ MD2_Model_t* md2_load(EGO_CONST char * szFilename, MD2_Model_t* mdl)
 
 
 
-//MD2_Model_t* MD2_Manager::loadFromFile(EGO_CONST char *fileName, MD2_Model_t* mdl)
+//MD2_Model_t* MD2_Manager::loadFromFile(const char *fileName, MD2_Model_t* mdl)
 //{
 //  // ignore garbage input
 //  if (!fileName || !fileName[0]) return NULL;

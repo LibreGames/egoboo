@@ -71,13 +71,13 @@ typedef struct s_ui_Widget ui_Widget_t;
 
 bool_t ui_copyWidget( ui_Widget_t * pw2, ui_Widget_t * pw1 );
 bool_t ui_shrinkWidget( ui_Widget_t * pw2, ui_Widget_t * pw1, int pixels );
-bool_t ui_initWidget( ui_Widget_t * pw, ui_id_t id, TTFont_t * pfont, EGO_CONST char *text, GLtexture *img, int x, int y, int width, int height );
+bool_t ui_initWidget( ui_Widget_t * pw, ui_id_t id, TTFont_t * pfont, const char *text, GLtexture *img, int x, int y, int width, int height );
 bool_t ui_widgetAddMask( ui_Widget_t * pw, Uint32 mbits );
 bool_t ui_widgetRemoveMask( ui_Widget_t * pw, Uint32 mbits );
 bool_t ui_widgetSetMask( ui_Widget_t * pw, Uint32 mbits );
 
 // Initialize or shut down the ui system
-int  ui_initialize( EGO_CONST char *default_font, int default_font_size );
+int  ui_initialize( const char *default_font, int default_font_size );
 void ui_shutdown( void );
 
 // Pass input data from SDL to the ui

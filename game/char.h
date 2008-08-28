@@ -656,7 +656,7 @@ typedef struct s_chr_spawn_info CHR_SPAWN_INFO;
 CHR_SPAWN_INFO * chr_spawn_info_new(CHR_SPAWN_INFO * psi, struct sGame * gs );
 bool_t           chr_spawn_info_init( CHR_SPAWN_INFO * psi, vect3 pos, vect3 vel,
                                       OBJ_REF iobj, TEAM_REF team, Uint8 skin, Uint16 facing,
-                                      EGO_CONST char *name, CHR_REF override );
+                                      const char *name, CHR_REF override );
 //--------------------------------------------------------------------------------------------
 struct s_chr_spawn_queue
 {
@@ -973,15 +973,15 @@ void drop_keys( struct sGame * gs,CHR_REF character );
 void drop_all_items( struct sGame * gs,CHR_REF character );
 bool_t chr_grab_stuff( struct sGame * gs,CHR_REF chara, SLOT slot, bool_t people );
 void chr_swipe( struct sGame * gs,Uint16 cnt, SLOT slot );
-void move_characters( struct sGame * gs,float dUpdate );
+void move_all_characters( struct sGame * gs,float dUpdate );
 
 OBJ_REF object_generate_index( char *szLoadName );
 
-CAP_REF CapList_load_one( struct sGame * gs, EGO_CONST char * szModpath, EGO_CONST char *szObjectname, CAP_REF irequest );
+CAP_REF CapList_load_one( struct sGame * gs, const char * szModpath, const char *szObjectname, CAP_REF irequest );
 
 bool_t chr_bdata_reinit(Chr_t * pchr, BData_t * pbd);
 
-int fget_skin( char * szModpath, EGO_CONST char * szObjectname );
+int fget_skin( char * szModpath, const char * szObjectname );
 
 
 void  calc_cap_experience( struct sGame * gs, CHR_REF object );
@@ -1003,7 +1003,7 @@ void signal_idsz_index( struct sGame * gs, Uint32 priority, Uint32 order, IDSZ i
 extern int chr_collisions;
 
 CHR_REF chr_spawn( struct sGame * gs,  vect3 pos, vect3 vel, OBJ_REF iobj, TEAM_REF team,
-                   Uint8 skin, Uint16 facing, EGO_CONST char *name, CHR_REF override );
+                   Uint8 skin, Uint16 facing, const char *name, CHR_REF override );
 
 CHR_REF force_chr_spawn( CHR_SPAWN_INFO si );
 bool_t  activate_chr_spawn( struct sGame * gs, CHR_REF ichr );

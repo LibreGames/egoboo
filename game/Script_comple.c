@@ -1328,7 +1328,7 @@ void load_ai_codes( char* loadname )
 
 
 //------------------------------------------------------------------------------
-Uint32 load_ai_script( ScriptInfo_t * slist, EGO_CONST char * szObjectpath, EGO_CONST char * szObjectname )
+Uint32 load_ai_script( ScriptInfo_t * slist, const char * szObjectpath, const char * szObjectname )
 {
   /// @details ZZ@> This function loads a script to memory and
   ///     returns bfalse if it fails to do so

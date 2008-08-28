@@ -43,6 +43,7 @@
 #include "mesh.inl"
 #include "object.inl"
 #include "input.inl"
+#include "Physics.inl"
 #include "egoboo_math.inl"
 #include "egoboo_types.inl"
 
@@ -1134,188 +1135,396 @@ void reaffirm_attached_particles( Game_t * gs, CHR_REF character )
   pchr->aistate.alert |= ALERT_REAFFIRMED;
 }
 
+struct sPrtEnvironment
+{
+  egoboo_key_t ekey;
+
+  bool_t  inwater;
+  bool_t  attached;
+  bool_t  flying;
+
+  float   level;
+  vect3   nrm;
+  float   buoyancy;
+  float   homingfriction;
+  float   homingaccel;
+  float   lerp_z;
+
+  PhysicsData_t phys;
+};
+
+typedef struct sPrtEnvironment PrtEnviro_t;
+
+PrtEnviro_t * PrtEnviro_new( PrtEnviro_t * penviro, PhysicsData_t * gphys);
+bool_t        PrtEnviro_delete( PrtEnviro_t * penviro );
+PrtEnviro_t * PrtEnviro_renew( PrtEnviro_t * penviro, PhysicsData_t * gphys);
+bool_t        PrtEnviro_init( PrtEnviro_t * penviro, float dUpdate);
+bool_t        PrtEnviro_synchronize( PrtEnviro_t * penviro, Pip_t * ppip, float dUpdate );
+
 //--------------------------------------------------------------------------------------------
-void move_particles( Game_t * gs, float dUpdate )
+bool_t prt_do_animation(Game_t * gs, float dUpdate, PRT_REF iprt, PrtEnviro_t * penviro, Uint32 * prand)
+{ 
+  // Animate particle
+
+  PPrt_t  prtlst;
+  Prt_t * pprt;
+
+  PPip_t  piplst;
+  PIP_REF ipip;
+  Pip_t * ppip;
+
+  if(NULL == gs || INVALID_PRT == iprt) return bfalse;
+
+  prtlst      = gs->PrtList;
+  piplst      = gs->PipList;
+
+  pprt = prtlst + iprt;
+  ipip = pprt->pip;
+  ppip = piplst + ipip;
+
+
+  pprt->image_fp8 += pprt->imageadd_fp8 * dUpdate;
+  if (pprt->image_fp8 >= pprt->imagemax_fp8)
+  {
+    if ( ppip->endlastframe )
+    {
+      pprt->image_fp8 =pprt->imagemax_fp8 - INT_TO_FP8( 1 );
+      pprt->gopoof    = btrue;
+    }
+    else if (pprt->imagemax_fp8 > 0 )
+    {
+      // if the prtlst[].image_fp8 is a fraction of an image over prtlst[].imagemax_fp8,
+      // keep the fraction
+      pprt->image_fp8 %= pprt->imagemax_fp8;
+    }
+    else
+    {
+      // a strange case
+      pprt->image_fp8 = 0;
+    }
+  };
+
+  pprt->facing += ppip->facingadd * dUpdate;
+  pprt->rotate += pprt->rotateadd * dUpdate;
+  pprt->size_fp8 = (pprt->size_fp8 + pprt->sizeadd_fp8 < 0 ) ? 0 : pprt->size_fp8 + pprt->sizeadd_fp8;
+
+  // Change dyna light values
+  pprt->dyna.level   += ppip->dyna.leveladd   * dUpdate;
+  pprt->dyna.falloff += ppip->dyna.falloffadd * dUpdate;
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t prt_do_environment( Game_t * gs, Prt_t * pprt, PrtEnviro_t * penviro)
+{
+  Graphics_Data_t * gfx = Game_getGfx(gs);
+  Mesh_t * pmesh = &(gs->Mesh);
+  Uint32 fan = INVALID_FAN;
+  Pip_t * ppip;
+  float level, radius, lerp;
+
+  ppip = gs->PipList + pprt->pip;
+
+  fan = pprt->onwhichfan;
+  level = ( INVALID_FAN == fan ) ? 0 : mesh_get_level( &(pmesh->Mem), fan, pprt->ori.pos.x, pprt->ori.pos.y, bfalse, &(gfx->Water) );
+
+  // calculate the radius based off the values used in graphic_prt.c
+  switch( pprt->type )
+  {
+    case PRTTYPE_LIGHT:
+      radius = FP8_TO_FLOAT(pprt->size_fp8) * 0.5f;
+      break;
+
+    default:
+    case PRTTYPE_SOLID:
+    case PRTTYPE_ALPHA:
+      radius = FP8_TO_FLOAT(pprt->size_fp8) * 0.25f;
+      break;
+  }
+
+  // adjust the image of the particle so that it is centered when in flight, but
+  // will rest rest on the floor
+  lerp = (pprt->ori.pos.z - level) / radius;
+  lerp = 1.0f - CLIP(lerp, 0.0f, 1.0f);
+  pprt->shift.x = pprt->shift.y = 0.0f;
+  pprt->shift.z = radius * lerp;
+
+  // find the distance above the surface
+  penviro->lerp_z = (pprt->ori.pos.z - (level + PLATTOLERANCE + radius)) / ( float ) (PLATTOLERANCE + radius);
+  penviro->lerp_z = CLIP(penviro->lerp_z, -1.0f, 1.0f);
+  
+  // Check underwater
+  penviro->inwater = bfalse;
+  if (pprt->ori.pos.z < gfx->Water.douselevel && mesh_has_some_bits( pmesh->Mem.tilelst,pprt->onwhichfan, MPDFX_WATER ) && ppip->endwater )
+  {
+    penviro->inwater = btrue;
+  }
+
+  // get attachment
+  penviro->attached = VALID_CHR(gs->ChrList, pprt->attachedtochr);
+
+  // is it flying on it's own?
+  penviro->flying = !penviro->attached && ppip->homing && VALID_CHR(gs->ChrList, pprt->target);
+
+  return btrue;
+};
+
+//--------------------------------------------------------------------------------------------
+bool_t prt_do_movement(Game_t * gs, PRT_REF iprt, PrtEnviro_t * penviro, float dUpdate)
+{
+  // Do volontary movement
+
+  CHR_REF prt_target;
+
+  Prt_t * pprt;
+  Pip_t * ppip;
+
+  PPrt_t  prtlst = gs->PrtList;
+  PChr_t  chrlst = gs->ChrList;
+
+  Chr_t * ptarget = NULL;
+
+  pprt = PrtList_getPPrt(gs, iprt);
+  if(NULL == pprt) return bfalse;
+
+  ppip = PrtList_getPPip(gs, iprt);
+  if(NULL == ppip) return bfalse;
+
+  // Do homing
+  prt_target = prt_get_target(gs, iprt);
+  if ( ppip->homing && ACTIVE_CHR( chrlst,  prt_target ) )
+  {
+    ptarget = chrlst + prt_target;
+
+    if ( !ptarget->alive )
+    {
+      pprt->gopoof = btrue;
+    }
+    else if ( !penviro->attached )
+    {
+      pprt->accum.acc.x += -(1.0f-penviro->homingfriction) * pprt->ori.vel.x;
+      pprt->accum.acc.y += -(1.0f-penviro->homingfriction) * pprt->ori.vel.y;
+      pprt->accum.acc.z += -(1.0f-penviro->homingfriction) * pprt->ori.vel.z;
+
+      pprt->accum.acc.x += ( ptarget->ori.pos.x - pprt->ori.pos.x ) * penviro->homingaccel * 4.0f;
+      pprt->accum.acc.y += ( ptarget->ori.pos.y - pprt->ori.pos.y ) * penviro->homingaccel * 4.0f;
+      pprt->accum.acc.z += ( ptarget->ori.pos.z + ( ptarget->bmpdata.calc_height * 0.5f ) - pprt->ori.pos.z ) * penviro->homingaccel * 4.0f;
+    }
+  }
+
+  return btrue;
+};
+
+//--------------------------------------------------------------------------------------------
+bool_t prt_do_physics(Game_t * gs, Prt_t * pprt, Pip_t * ppip, PrtEnviro_t * penviro, float dUpdate)
+{
+  PhysAccum_t * paccum = &(pprt->accum);
+  Mesh_t      * pmesh  = Game_getMesh(gs);
+
+  if(!EKEY_PVALID(gs) || !EKEY_PVALID(pprt)  || !EKEY_PVALID(ppip) || !EKEY_PVALID(penviro)) return bfalse;
+
+  if(penviro->attached)
+  {
+    Chr_t * pchr = ChrList_getPChr(gs, pprt->attachedtochr);
+
+    // attached particles apply their corrections to whatever they are attached to
+    if(NULL != pchr)
+    {
+      paccum = &(pchr->accum);
+    }
+  }
+
+
+  if ( penviro->flying )
+  {
+    // we are flying,swo our target must be valid
+    Chr_t * ptarget = gs->ChrList + pprt->target;
+    float flyheight = ptarget->ori.pos.z - ptarget->level;
+
+    if ( penviro->level < 0 ) paccum->pos.z += penviro->level - pprt->ori.pos.z; // Don't fall in pits...
+    paccum->acc.z += ( penviro->level + flyheight - pprt->ori.pos.z ) * FLYDAMPEN;
+  }
+  else
+  {
+    /// @todo separate physics for various particle types.
+    if(PRTTYPE_SOLID == pprt->type)
+    {
+      // Integrate the z direction
+      if ( pprt->ori.pos.z > penviro->level + PLATTOLERANCE )
+      {
+        paccum->acc.z += gs->phys.gravity;
+      }
+      else
+      {
+        /// @todo is fome kind of smoke follows the ground it needs to slide downhill, too
+
+        float lerp_normal, lerp_tang;
+
+        // set the the lerp for the friction effects
+        lerp_tang = 1.0f - penviro->lerp_z;
+        lerp_tang = CLIP(lerp_tang, 0.0f, 1.0f);
+
+        // set the lerp for vertical effects
+        //particles will hit the ground softly, but in a reasonable time
+        lerp_normal = 1.0f - lerp_tang;
+        lerp_normal = CLIP(lerp_normal, 0.2f, 1.0f);
+
+        // slippy hills make particles slide
+        if ( pprt->weight > 0 && gs->GfxData.Water.iswater && !penviro->inwater && INVALID_FAN != pprt->onwhichfan && mesh_has_some_bits( pmesh->Mem.tilelst, pprt->onwhichfan, MPDFX_SLIPPY ) )
+        {
+          paccum->acc.x -= penviro->nrm.x * gs->phys.gravity * lerp_tang * gs->phys.hillslide;
+          paccum->acc.y -= penviro->nrm.y * gs->phys.gravity * lerp_tang * gs->phys.hillslide;
+          paccum->acc.z += penviro->nrm.z * gs->phys.gravity * lerp_normal;
+        }
+        else
+        {
+          paccum->acc.z += gs->phys.gravity * lerp_normal;
+        };
+      }
+    }
+  }
+
+  // Do speed limit on Z
+  // this is related to buoyancy and air resistance. 
+  // Maybe we could pull these two effects apart?
+  if ( !penviro->flying && pprt->ori.vel.z < -ppip->spdlimit ) 
+  {
+    paccum->vel.z += -ppip->spdlimit - pprt->ori.vel.z;
+  };
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+void prt_do_spawning(Game_t * gs, float dUpdate, Prt_t * pprt, Pip_t * ppip, PrtEnviro_t * penviro, Uint32 * prand )
+{
+  int tnc;
+  Uint16 facing;
+  PRT_REF iprt;
+
+  PPrt_t prtlst = gs->PrtList;
+  PChr_t chrlst = gs->ChrList;
+  Graphics_Data_t * gfx = Game_getGfx( gs );
+
+
+  if(penviro->inwater)
+  {
+    vect3 prt_pos = VECT3(pprt->ori.pos.x, pprt->ori.pos.y, gfx->Water.surfacelevel);
+    vect3 prt_vel = ZERO_VECT3;
+
+    // Splash for particles is just a ripple
+    iprt = prt_spawn( gs, 1.0f, pprt->ori.pos, pprt->ori.vel, 0, INVALID_OBJ, PIP_REF(PRTPIP_RIPPLE), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, 0, INVALID_CHR );
+
+    // Check for disaffirming character
+    if ( ACTIVE_CHR( chrlst,  pprt->attachedtochr ) && prt_get_owner( gs, iprt ) == pprt->attachedtochr )
+    {
+      // Disaffirm the whole character
+      disaffirm_attached_particles( gs, pprt->attachedtochr );
+    }
+    else
+    {
+      pprt->gopoof = btrue;
+    }
+  }
+
+
+  // Spawn new particles if continually spawning
+  if ( ppip->contspawnamount > 0.0f )
+  {
+    pprt->spawntime -= dUpdate;
+    if (pprt->spawntime <= 0.0f )
+    {
+      pprt->spawntime = ppip->contspawntime;
+      facing = pprt->facing;
+
+      for ( tnc = 0; tnc < ppip->contspawnamount; tnc++ )
+      {
+        iprt = prt_spawn( gs, 1.0f, pprt->ori.pos, pprt->ori.vel,
+          facing, pprt->model, ppip->contspawnpip,
+          INVALID_CHR, GRIP_LAST, pprt->team, prt_get_owner( gs, iprt ),
+          tnc, pprt->target );
+
+        facing += ppip->contspawnfacingadd;
+      }
+    }
+  }
+}
+
+//--------------------------------------------------------------------------------------------
+void prt_do_timers(Prt_t * pprt, float dUpdate)
+{
+
+  // Down the particle timer
+  if (pprt->time > 0.0f )
+  {
+    pprt->time -= dUpdate;
+    if (pprt->time <= 0.0f ) pprt->gopoof = btrue;
+  };
+
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t move_particle( Game_t * gs, PRT_REF iprt, float dUpdate, PrtEnviro_t * penviro, Uint32 * prand )
+{
+  Prt_t * pprt;
+  Pip_t * ppip;
+
+  pprt = PrtList_getPPrt(gs, iprt);
+  if(NULL == pprt) return bfalse;
+
+  ppip = PrtList_getPPip(gs, iprt);
+  if(NULL == ppip) return bfalse;
+
+  // update the pip-dependent environment values
+  PrtEnviro_synchronize( penviro, ppip, dUpdate );
+
+  // detect the environment of this particle
+  prt_do_environment(gs, pprt, penviro);
+  pprt->level = penviro->level;
+
+  // do volountary particle movement (homing, etc.)
+  prt_do_movement(gs, iprt, penviro, dUpdate);
+
+  // do the particle physics
+  prt_do_physics(gs, pprt, ppip, penviro, dUpdate);
+
+  // do the animation
+  prt_do_animation(gs, dUpdate, iprt, penviro, prand);
+
+  // spawn all new particles
+  prt_do_spawning(gs, dUpdate, pprt, ppip, penviro, prand);
+
+  // update the particle timers
+  prt_do_timers(pprt, dUpdate); 
+
+  return btrue;
+};
+
+//--------------------------------------------------------------------------------------------
+void move_all_particles( Game_t * gs, float dUpdate )
 {
   /// @details ZZ@> This is the particle physics function
 
-  Graphics_Data_t * gfx = Game_getGfx( gs );
+  Uint32 loc_rand = gs->randie_index;
+  PRT_REF iprt;
+  Prt_t * pprt;
+  PrtEnviro_t enviro, enviro_save;
 
-  PPrt_t prtlst      = gs->PrtList;
+  PPrt_t prtlst = gs->PrtList;
   size_t prtlst_size = PRTLST_COUNT;
 
-  PPip_t piplst      = gs->PipList;
-  PChr_t chrlst      = gs->ChrList;
-
-  Mesh_t    * pmesh = Game_getMesh(gs);
-
-  PRT_REF iprt;
-  int tnc;
-  Uint32 fan;
-  Uint16 facing;
-  PIP_REF pip;
-  PRT_REF particle;
-  float level;
-  CHR_REF prt_target, prt_owner, prt_attachedto;
-  Prt_t * pprt;
-
-  float loc_noslipfriction, loc_homingfriction, loc_homingaccel;
-
-  loc_noslipfriction = pow( gs->phys.noslipfriction, dUpdate );
+  PrtEnviro_new(&enviro_save, &(gs->phys));
+  PrtEnviro_init(&enviro_save, dUpdate);
 
   for ( iprt = 0; iprt < prtlst_size; iprt++ )
   {
     if ( !ACTIVE_PRT( prtlst,  iprt ) ) continue;
     pprt = prtlst + iprt;
 
-    prt_target     = prt_get_target( gs, iprt );
-    prt_owner      = prt_get_owner( gs, iprt );
-    prt_attachedto = prt_get_attachedtochr( gs, iprt );
+    memcpy(&enviro, &enviro_save, sizeof(PrtEnviro_t));
 
-   pprt->ori_old.pos = pprt->ori.pos;
-
-   pprt->onwhichfan = INVALID_FAN;
-   pprt->level = 0;
-   fan = mesh_get_fan( pmesh, pprt->ori.pos );
-   pprt->onwhichfan = fan;
-   pprt->level = ( INVALID_FAN == fan ) ? 0 : mesh_get_level( &(pmesh->Mem), fan,pprt->ori.pos.x,pprt->ori.pos.y, bfalse, &(gfx->Water) );
-
-    // To make it easier
-    pip =pprt->pip;
-
-    loc_homingfriction = pow( piplst[pip].homingfriction, dUpdate );
-    loc_homingaccel    = piplst[pip].homingaccel;
-
-    // Animate particle
-   pprt->image_fp8 +=pprt->imageadd_fp8 * dUpdate;
-    if (pprt->image_fp8 >=pprt->imagemax_fp8 )
-    {
-      if ( piplst[pip].endlastframe )
-      {
-       pprt->image_fp8 =pprt->imagemax_fp8 - INT_TO_FP8( 1 );
-       pprt->gopoof    = btrue;
-      }
-      else if (pprt->imagemax_fp8 > 0 )
-      {
-        // if the prtlst[].image_fp8 is a fraction of an image over prtlst[].imagemax_fp8,
-        // keep the fraction
-       pprt->image_fp8 %=pprt->imagemax_fp8;
-      }
-      else
-      {
-        // a strange case
-       pprt->image_fp8 = 0;
-      }
-    };
-
-   pprt->rotate +=pprt->rotateadd * dUpdate;
-   pprt->size_fp8 = (pprt->size_fp8 +pprt->sizeadd_fp8 < 0 ) ? 0 :pprt->size_fp8 +pprt->sizeadd_fp8;
-
-    // Change dyna light values
-   pprt->dyna.level   += piplst[pip].dyna.leveladd * dUpdate;
-   pprt->dyna.falloff += piplst[pip].dyna.falloffadd * dUpdate;
-
-
-    // Make it sit on the floor...  Shift is there to correct for sprite size
-    level =pprt->level + FP8_TO_FLOAT(pprt->size_fp8 ) * 0.5f;
-
-    // do interaction with the floor
-    if(  !ACTIVE_CHR( chrlst,  prt_attachedto ) &&pprt->ori.pos.z > level )
-    {
-      float lerp = (pprt->ori.pos.z - (pprt->level + PLATTOLERANCE ) ) / ( float ) PLATTOLERANCE;
-      if ( lerp < 0.2f ) lerp = 0.2f;
-      if ( lerp > 1.0f ) lerp = 1.0f;
-
-     pprt->accum.acc.z += gs->phys.gravity * lerp;
-
-     pprt->accum.acc.x -= ( 1.0f - gs->phys.noslipfriction ) * lerp *pprt->ori.vel.x;
-     pprt->accum.acc.y -= ( 1.0f - gs->phys.noslipfriction ) * lerp *pprt->ori.vel.y;
-    }
-
-    // Do speed limit on Z
-    if (pprt->ori.vel.z < -piplst[pip].spdlimit ) pprt->accum.vel.z += -piplst[pip].spdlimit -pprt->ori.vel.z;
-
-    // Do homing
-    if ( piplst[pip].homing && ACTIVE_CHR( chrlst,  prt_target ) )
-    {
-      if ( !chrlst[prt_target].alive )
-      {
-       pprt->gopoof = btrue;
-      }
-      else
-      {
-        if ( !ACTIVE_CHR( chrlst,  prt_attachedto ) )
-        {
-         pprt->accum.acc.x += -(1.0f-loc_homingfriction) * pprt->ori.vel.x;
-         pprt->accum.acc.y += -(1.0f-loc_homingfriction) * pprt->ori.vel.y;
-         pprt->accum.acc.z += -(1.0f-loc_homingfriction) * pprt->ori.vel.z;
-
-         pprt->accum.acc.x += ( chrlst[prt_target].ori.pos.x - pprt->ori.pos.x ) * loc_homingaccel * 4.0f;
-         pprt->accum.acc.y += ( chrlst[prt_target].ori.pos.y - pprt->ori.pos.y ) * loc_homingaccel * 4.0f;
-         pprt->accum.acc.z += ( chrlst[prt_target].ori.pos.z + ( chrlst[prt_target].bmpdata.calc_height * 0.5f ) - pprt->ori.pos.z ) * loc_homingaccel * 4.0f;
-        }
-      }
-    }
-
-
-    // Spawn new particles if continually spawning
-    if ( piplst[pip].contspawnamount > 0.0f )
-    {
-      pprt->spawntime -= dUpdate;
-      if (pprt->spawntime <= 0.0f )
-      {
-        pprt->spawntime = piplst[pip].contspawntime;
-        facing =pprt->facing;
-
-        for ( tnc = 0; tnc < piplst[pip].contspawnamount; tnc++ )
-        {
-          particle = prt_spawn( gs, 1.0f, pprt->ori.pos, pprt->ori.vel,
-            facing, pprt->model, piplst[pip].contspawnpip,
-            INVALID_CHR, GRIP_LAST, pprt->team, prt_get_owner( gs, iprt ),
-            tnc, prt_target );
-
-          if ( RESERVED_PRT(prtlst, particle) && 0 != piplst[prtlst[iprt].pip].facingadd)
-          {
-            // Hack to fix velocity
-            prtlst[particle].ori.vel.x +=pprt->ori.vel.x;
-            prtlst[particle].ori.vel.y +=pprt->ori.vel.y;
-          }
-
-          facing += piplst[pip].contspawnfacingadd;
-        }
-      }
-    }
-
-
-    // Check underwater
-    if (pprt->ori.pos.z < gfx->Water.douselevel && mesh_has_some_bits( pmesh->Mem.tilelst,pprt->onwhichfan, MPDFX_WATER ) && piplst[pip].endwater )
-    {
-      vect3 prt_pos = VECT3(prtlst[iprt].ori.pos.x, pprt->ori.pos.y, gfx->Water.surfacelevel);
-      vect3 prt_vel = ZERO_VECT3;
-
-      // Splash for particles is just a ripple
-      iprt = prt_spawn( gs, 1.0f, prt_pos, prt_vel, 0, INVALID_OBJ, PIP_REF(PRTPIP_RIPPLE), INVALID_CHR, GRIP_LAST, TEAM_REF(TEAM_NULL), INVALID_CHR, 0, INVALID_CHR );
-
-      // Check for disaffirming character
-      if ( ACTIVE_CHR( chrlst,  prt_attachedto ) && prt_get_owner( gs, iprt ) == prt_attachedto )
-      {
-        // Disaffirm the whole character
-        disaffirm_attached_particles( gs, prt_attachedto );
-      }
-      else
-      {
-       pprt->gopoof = btrue;
-      }
-    }
-
-    // Down the particle timer
-    if (pprt->time > 0.0f )
-    {
-     pprt->time -= dUpdate;
-      if (pprt->time <= 0.0f )pprt->gopoof = btrue;
-    };
-
-   pprt->facing += piplst[pip].facingadd * dUpdate;
+    move_particle( gs, iprt, dUpdate, &enviro, &loc_rand );
   }
 
 }
@@ -1431,7 +1640,7 @@ void do_weather_spawn( Game_t * gs, float dUpdate )
 
 
 //--------------------------------------------------------------------------------------------
-PIP_REF PipList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST char * szObjectname, EGO_CONST char * szFname, PIP_REF override)
+PIP_REF PipList_load_one( Game_t * gs, const char * szObjectpath, const char * szObjectname, const char * szFname, PIP_REF override)
 {
   /// @details ZZ@> This function loads a particle template, returning PIPLST_COUNT if the file wasn't
   ///     found
@@ -1482,51 +1691,47 @@ PIP_REF PipList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST 
   rewind( fileread );
 
   // General data
-  ppip->force = fget_next_bool( fileread );
-  ppip->type = fget_next_prttype( fileread );
-  ppip->imagebase = fget_next_int( fileread );
-  ppip->numframes = fget_next_int( fileread );
+  ppip->force          = fget_next_bool( fileread );
+  ppip->type           = fget_next_prttype( fileread );
+  ppip->imagebase      = fget_next_int( fileread );
+  ppip->numframes      = fget_next_int( fileread );
   ppip->imageadd.ibase = fget_next_int( fileread );
   ppip->imageadd.irand = fget_next_int( fileread );
-  ppip->rotate.ibase = fget_next_int( fileread );
-  ppip->rotate.irand = fget_next_int( fileread );
-  ppip->rotateadd = fget_next_int( fileread );
-  ppip->sizebase_fp8 = fget_next_int( fileread );
-  ppip->sizeadd = fget_next_int( fileread );
-  ppip->spdlimit = fget_next_float( fileread );
-  ppip->facingadd = fget_next_int( fileread );
-
+  ppip->rotate.ibase   = fget_next_int( fileread );
+  ppip->rotate.irand   = fget_next_int( fileread );
+  ppip->rotateadd      = fget_next_int( fileread );
+  ppip->sizebase_fp8   = fget_next_int( fileread );
+  ppip->sizeadd        = fget_next_int( fileread );
+  ppip->spdlimit       = fget_next_float( fileread );
+  ppip->facingadd      = fget_next_int( fileread );
 
   // Ending conditions
-  ppip->endwater = fget_next_bool( fileread );
-  ppip->endbump = fget_next_bool( fileread );
-  ppip->endground = fget_next_bool( fileread );
+  ppip->endwater     = fget_next_bool( fileread );
+  ppip->endbump      = fget_next_bool( fileread );
+  ppip->endground    = fget_next_bool( fileread );
   ppip->endlastframe = fget_next_bool( fileread );
-  ppip->time = fget_next_int( fileread );
-
+  ppip->time         = fget_next_int ( fileread );
 
   // Collision data
-  ppip->dampen = fget_next_float( fileread );
-  ppip->bumpmoney = fget_next_int( fileread );
-  ppip->bumpsize = fget_next_int( fileread );
-  ppip->bumpheight = fget_next_int( fileread );
+  ppip->dampen       = fget_next_float( fileread );
+  ppip->bumpmoney    = fget_next_int( fileread );
+  ppip->bumpsize     = fget_next_int( fileread );
+  ppip->bumpheight   = fget_next_int( fileread );
   fget_next_pair_fp8( fileread, &ppip->damage_fp8 );
-  ppip->damagetype = fget_next_damage( fileread );
+  ppip->damagetype   = fget_next_damage( fileread );
   ppip->bumpstrength = 1.0f;
   if ( ppip->bumpsize == 0 )
   {
     ppip->bumpstrength = 0.0f;
-    ppip->bumpsize   = 0.5f * FP8_TO_FLOAT( ppip->sizebase_fp8 );
-    ppip->bumpheight = 0.5f * FP8_TO_FLOAT( ppip->sizebase_fp8 );
+    ppip->bumpsize     = 0.5f * FP8_TO_FLOAT( ppip->sizebase_fp8 );
+    ppip->bumpheight   = 0.5f * FP8_TO_FLOAT( ppip->sizebase_fp8 );
   };
 
   // Lighting data
-  ppip->dyna.mode = fget_next_dynamode( fileread );
-  ppip->dyna.level = fget_next_float( fileread );
+  ppip->dyna.mode    = fget_next_dynamode( fileread );
+  ppip->dyna.level   = fget_next_float( fileread );
   ppip->dyna.falloff = fget_next_int( fileread );
   if ( ppip->dyna.falloff > MAXFALLOFF )  ppip->dyna.falloff = MAXFALLOFF;
-
-
 
   // Initial spawning of this particle
   ppip->facing.ibase    = fget_next_int( fileread );
@@ -2150,3 +2355,72 @@ bool_t  PrtHeap_addFree( PrtHeap_t * pheap, PRT_REF ref )
 
   return btrue;
 }
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+PrtEnviro_t * PrtEnviro_new( PrtEnviro_t * penviro, PhysicsData_t * gphys)
+{
+  if(NULL == penviro) return penviro;
+
+  PrtEnviro_delete(penviro);
+
+  memset(penviro, 0, sizeof(PrtEnviro_t));
+
+  EKEY_PNEW( penviro, PrtEnviro_t );
+
+  if(NULL == gphys)
+  {
+    CPhysicsData_new( &(penviro->phys) );
+  }
+  else
+  {
+    memcpy( &(penviro->phys), gphys, sizeof(PhysicsData_t));
+  };
+
+  return penviro;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t PrtEnviro_delete( PrtEnviro_t * enviro )
+{
+  if(NULL == enviro) return bfalse;
+
+  if( !EKEY_PVALID(enviro) ) return btrue;
+
+  EKEY_PINVALIDATE(enviro);
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+PrtEnviro_t * PrtEnviro_renew( PrtEnviro_t * enviro, PhysicsData_t * gphys)
+{
+  PrtEnviro_delete(enviro);
+  return PrtEnviro_new( enviro, gphys);
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t PrtEnviro_init( PrtEnviro_t * penviro, float dUpdate)
+{
+  if(NULL == penviro) return bfalse;
+
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t PrtEnviro_synchronize( PrtEnviro_t * penviro, Pip_t * ppip, float dUpdate )
+{
+  if(NULL == penviro || NULL == ppip) return bfalse;
+
+  penviro->homingaccel    = ppip->homingaccel;
+  penviro->homingfriction = ppip->homingfriction;
+  if(penviro->homingfriction != 0.0f)
+  {
+    penviro->homingfriction = pow( ABS(penviro->homingfriction), dUpdate );
+  }
+
+  return btrue;
+}
+

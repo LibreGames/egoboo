@@ -41,7 +41,7 @@
 #include "egoboo_types.inl"
 
 //--------------------------------------------------------------------------------------------
-int load_one_object( Game_t * gs, int skin_count, EGO_CONST char * szObjectpath, char* szObjectname, OBJ_REF slot_override )
+int load_one_object( Game_t * gs, int skin_count, const char * szObjectpath, char* szObjectname, OBJ_REF slot_override )
 {
   /// @details ZZ@> This function loads one object and returns the number of skins
 

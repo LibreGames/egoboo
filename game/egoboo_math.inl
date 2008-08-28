@@ -52,14 +52,14 @@ INLINE quaternion QuatConvert(matrix_4x4 m);
 /**> 4x4 matrix <**/
 INLINE matrix_4x4 IdentityMatrix( void );
 INLINE matrix_4x4 ZeroMatrix( void );
-INLINE matrix_4x4 MatrixTranspose( EGO_CONST matrix_4x4 a );
-INLINE matrix_4x4 MatrixMult( EGO_CONST matrix_4x4 a, EGO_CONST matrix_4x4 b );
-INLINE matrix_4x4 Translate( EGO_CONST float dx, EGO_CONST float dy, EGO_CONST float dz );
-INLINE matrix_4x4 RotateX( EGO_CONST float rads );
-INLINE matrix_4x4 RotateY( EGO_CONST float rads );
-INLINE matrix_4x4 RotateZ( EGO_CONST float rads );
-INLINE matrix_4x4 ScaleXYZ( EGO_CONST float sizex, EGO_CONST float sizey, EGO_CONST float sizez );
-INLINE matrix_4x4 ScaleXYZRotateXYZTranslate( EGO_CONST float sizex, EGO_CONST float sizey, EGO_CONST float sizez, Uint16 turnz, Uint16 turnx, Uint16 turny, EGO_CONST vect3 pos );
+INLINE matrix_4x4 MatrixTranspose( const matrix_4x4 a );
+INLINE matrix_4x4 MatrixMult( const matrix_4x4 a, const matrix_4x4 b );
+INLINE matrix_4x4 Translate( const float dx, const float dy, const float dz );
+INLINE matrix_4x4 RotateX( const float rads );
+INLINE matrix_4x4 RotateY( const float rads );
+INLINE matrix_4x4 RotateZ( const float rads );
+INLINE matrix_4x4 ScaleXYZ( const float sizex, const float sizey, const float sizez );
+INLINE matrix_4x4 ScaleXYZRotateXYZTranslate( const float sizex, const float sizey, const float sizez, Uint16 turnz, Uint16 turnx, Uint16 turny, const vect3 pos );
 INLINE matrix_4x4 FourPoints( vect4 ori, vect4 wid, vect4 forw, vect4 up, float scale );
 INLINE matrix_4x4 MatrixConvert(quaternion q1);
 
@@ -342,7 +342,7 @@ INLINE matrix_4x4 ZeroMatrix( void )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE matrix_4x4 MatrixTranspose( EGO_CONST matrix_4x4 a )
+INLINE matrix_4x4 MatrixTranspose( const matrix_4x4 a )
 {
   matrix_4x4 ret;
   int i, j;
@@ -355,7 +355,7 @@ INLINE matrix_4x4 MatrixTranspose( EGO_CONST matrix_4x4 a )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE matrix_4x4 MatrixMult( EGO_CONST matrix_4x4 a, EGO_CONST matrix_4x4 b )
+INLINE matrix_4x4 MatrixMult( const matrix_4x4 a, const matrix_4x4 b )
 {
   matrix_4x4 ret;
   int i, j, k;
@@ -372,7 +372,7 @@ INLINE matrix_4x4 MatrixMult( EGO_CONST matrix_4x4 a, EGO_CONST matrix_4x4 b )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE matrix_4x4 Translate( EGO_CONST float dx, EGO_CONST float dy, EGO_CONST float dz )
+INLINE matrix_4x4 Translate( const float dx, const float dy, const float dz )
 {
   matrix_4x4 ret = IdentityMatrix();
   ret.CNV( 3, 0 ) = dx;
@@ -382,7 +382,7 @@ INLINE matrix_4x4 Translate( EGO_CONST float dx, EGO_CONST float dy, EGO_CONST f
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE matrix_4x4 RotateX( EGO_CONST float rads )
+INLINE matrix_4x4 RotateX( const float rads )
 {
   float cosine = ( float ) cos( rads );
   float sine   = ( float ) sin( rads );
@@ -396,7 +396,7 @@ INLINE matrix_4x4 RotateX( EGO_CONST float rads )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE matrix_4x4 RotateY( EGO_CONST float rads )
+INLINE matrix_4x4 RotateY( const float rads )
 {
   float cosine = ( float ) cos( rads );
   float sine   = ( float ) sin( rads );
@@ -409,7 +409,7 @@ INLINE matrix_4x4 RotateY( EGO_CONST float rads )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE matrix_4x4 RotateZ( EGO_CONST float rads )
+INLINE matrix_4x4 RotateZ( const float rads )
 {
   float cosine = ( float ) cos( rads );
   float sine   = ( float ) sin( rads );
@@ -422,7 +422,7 @@ INLINE matrix_4x4 RotateZ( EGO_CONST float rads )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE matrix_4x4 ScaleXYZ( EGO_CONST float sizex, EGO_CONST float sizey, EGO_CONST float sizez )
+INLINE matrix_4x4 ScaleXYZ( const float sizex, const float sizey, const float sizez )
 {
   matrix_4x4 ret = IdentityMatrix();
   ret.CNV( 0, 0 ) = sizex;   //0,0
@@ -432,7 +432,7 @@ INLINE matrix_4x4 ScaleXYZ( EGO_CONST float sizex, EGO_CONST float sizey, EGO_CO
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE matrix_4x4 ScaleXYZRotateXYZTranslate( EGO_CONST float sizex, EGO_CONST float sizey, EGO_CONST float sizez, Uint16 turnz, Uint16 turnx, Uint16 turny, EGO_CONST vect3 pos )
+INLINE matrix_4x4 ScaleXYZRotateXYZTranslate( const float sizex, const float sizey, const float sizez, Uint16 turnz, Uint16 turnx, Uint16 turny, const vect3 pos )
 {
   matrix_4x4 ret;
 

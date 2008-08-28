@@ -476,7 +476,7 @@ void reset_timers( Game_t * gs );
 
 void set_default_config_data(struct sConfigData * pcon);
 
-int load_all_messages( Game_t * gs, EGO_CONST char *szObjectpath, EGO_CONST char *szObjectname );
+int load_all_messages( Game_t * gs, const char *szObjectpath, const char *szObjectname );
 
 void attach_particle_to_character( Game_t * gs, PRT_REF particle, CHR_REF chr_ref, Uint16 vertoffset );
 
@@ -537,10 +537,10 @@ void load_global_icons( struct sGraphics_Data * gfx );
 void recalc_character_bumpers( Game_t * gs );
 
 char * naming_generate( Game_t * gs, Obj_t * pobj );
-void naming_read( struct sGame * gs, EGO_CONST char * szModpath, EGO_CONST char * szObjectname, Obj_t * pobj);
+void naming_read( struct sGame * gs, const char * szModpath, const char * szObjectname, Obj_t * pobj);
 void naming_prime( struct sGame * gs );
 
-bool_t decode_escape_sequence( Game_t * gs, char * buffer, size_t buffer_size, EGO_CONST char * message, CHR_REF chr_ref );
+bool_t decode_escape_sequence( Game_t * gs, char * buffer, size_t buffer_size, const char * message, CHR_REF chr_ref );
 void   animate_tiles( TILE_ANIMATED * t, float dUpdate );
 
 void    clear_all_passages(struct sGame * gs );

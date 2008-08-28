@@ -57,7 +57,7 @@ static bool_t _mad_generate_bbox_tree(int max_level, Mad_t * pmad);
 static int    _mad_vertexconnected( MD2_Model_t * m, int vertex );
 static int    _mad_calc_transvertices( MD2_Model_t * m );
 
-static void   load_copy_file( struct sGame * gs, EGO_CONST char * szModpath, EGO_CONST char * szObjectname, MAD_REF object );
+static void   load_copy_file( struct sGame * gs, const char * szModpath, const char * szObjectname, MAD_REF object );
 
 //--------------------------------------------------------------------------------------------
 
@@ -423,7 +423,7 @@ void make_mad_equally_lit( Game_t * gs, MAD_REF imad )
 }
 
 //--------------------------------------------------------------------------------------------
-void load_copy_file( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST char * szObjectname, MAD_REF imad )
+void load_copy_file( Game_t * gs, const char * szObjectpath, const char * szObjectname, MAD_REF imad )
 {
   /// @details ZZ@> This function copies a model's actions
 
@@ -1264,7 +1264,7 @@ Mad_t *  Mad_renew(Mad_t * pmad)
 }
 
 //---------------------------------------------------------------------------------------------
-MAD_REF MadList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST char * szObjectname, MAD_REF imad )
+MAD_REF MadList_load_one( Game_t * gs, const char * szObjectpath, const char * szObjectname, MAD_REF imad )
 {
   /// @details ZZ@> This function loads an id md2 file, storing the converted data in the indexed model
   ///    int iFileHandleRead;

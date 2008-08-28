@@ -96,10 +96,10 @@ struct sChrEnvironment
 
 typedef struct sChrEnvironment ChrEnviro_t;
 
-ChrEnviro_t * CChrEnviro_new( ChrEnviro_t * cphys, PhysicsData_t * gphys);
-bool_t       CChrEnviro_delete( ChrEnviro_t * cphys );
-ChrEnviro_t * CChrEnviro_renew( ChrEnviro_t * cphys, PhysicsData_t * gphys);
-bool_t       CChrEnviro_init( ChrEnviro_t * cphys, float dUpdate);
+ChrEnviro_t * ChrEnviro_new( ChrEnviro_t * cphys, PhysicsData_t * gphys);
+bool_t        ChrEnviro_delete( ChrEnviro_t * cphys );
+ChrEnviro_t * ChrEnviro_renew( ChrEnviro_t * cphys, PhysicsData_t * gphys);
+bool_t        ChrEnviro_init( ChrEnviro_t * cphys, float dUpdate);
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -2912,6 +2912,7 @@ bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dU
         // Unarmed means character itself is the weapon
         pweapon = pchr;
         iweapon = ichr;
+        pweapon_cap = ChrList_getPCap(gs, iweapon);
         weapon_action = ACTION_UC;
       }
       else
@@ -3103,7 +3104,60 @@ bool_t chr_check_passages(Game_t * gs, CHR_REF ichr)
 }
 
 //--------------------------------------------------------------------------------------------
-void move_characters( Game_t * gs, float dUpdate )
+bool_t chr_do_timers( Chr_t * pchr, float dUpdate )
+{
+  if(NULL == pchr) return bfalse;
+  if(0.0f == dUpdate) return btrue;
+
+  // Down the jump timer if we are on a valid surface
+  pchr->jumptime  -= dUpdate;
+  if ( pchr->jumptime < 0 ) pchr->jumptime = 0.0f;
+
+  // Do "Be careful!" delay
+  pchr->carefultime -= dUpdate;
+  if ( pchr->carefultime <= 0 ) pchr->carefultime = 0;
+
+  // Down that ol' damage timer
+  pchr->damagetime -= dUpdate;
+  if ( pchr->damagetime < 0 ) pchr->damagetime = 0.0f;
+
+  return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t move_character( Game_t * gs, CHR_REF ichr, float dUpdate, ChrEnviro_t * penviro, Uint32 * prand )
+{
+  Chr_t * pchr;
+  AI_STATE * pstate;
+
+  pchr = ChrList_getPChr(gs, ichr);
+  if(NULL == pchr) return bfalse;
+
+  pstate = &(pchr->aistate);
+
+  // Character's old location
+  pchr->ori_old.turn_lr = pchr->ori.turn_lr;
+
+  chr_do_environment(gs, pchr, penviro);
+
+  ChrEnviro_synchronize(penviro, dUpdate);
+
+  chr_do_latches(gs, ichr, penviro, dUpdate);
+
+  chr_do_physics(gs, pchr, penviro, dUpdate);
+
+  chr_do_animation(gs, dUpdate, ichr, penviro, prand);
+
+  chr_check_passages(gs, ichr);
+
+  chr_do_timers(pchr, dUpdate); 
+
+  return btrue;
+};
+
+
+//--------------------------------------------------------------------------------------------
+void move_all_characters( Game_t * gs, float dUpdate )
 {
   /// @details ZZ@> This function handles character physics
 
@@ -3114,52 +3168,23 @@ void move_characters( Game_t * gs, float dUpdate )
 
   ChrEnviro_t enviro, loc_enviro;
 
-  AI_STATE * pstate;
-  Chr_t * pchr;
-  Uint32 loc_rand;
+  Uint32 loc_rand = gs->randie_index;
 
-  CChrEnviro_new( &enviro, &(gs->phys) );
-  CChrEnviro_init( &enviro, dUpdate );
-
-  loc_rand = gs->randie_index;
+  ChrEnviro_new( &enviro, &(gs->phys) );
+  ChrEnviro_init( &enviro, dUpdate );
 
   // Move every character
   for ( chr_ref = 0; chr_ref < chrlst_size; chr_ref++ )
   {
-    pchr = ChrList_getPChr(gs, chr_ref);
-    if(NULL == pchr) continue;
+    if( !VALID_CHR(chrlst, chr_ref) ) continue;
 
-    pstate = &(pchr->aistate);
-
-    // Character's old location
-    pchr->ori_old.turn_lr = pchr->ori.turn_lr;
-
-    if ( chr_in_pack( chrlst, chrlst_size, chr_ref ) ) continue;
+    if ( chr_in_pack(chrlst, chrlst_size, chr_ref) ) continue;
 
     // initialize the physics data for this character
     memcpy(&loc_enviro, &enviro, sizeof(ChrEnviro_t));
 
-    chr_do_environment(gs, pchr, &enviro);
-
-    chr_do_latches( gs, chr_ref, &enviro, dUpdate);
-
-    chr_do_physics(  gs, pchr, &enviro, dUpdate );
-
-    chr_do_animation(gs, dUpdate, chr_ref, &enviro, &loc_rand);
-
-    chr_check_passages( gs, chr_ref );
-
-    // Down the jump timer if we are on a valid surface
-    pchr->jumptime  -= dUpdate;
-    if ( pchr->jumptime < 0 ) pchr->jumptime = 0.0f;
-
-    // Do "Be careful!" delay
-    pchr->carefultime -= dUpdate;
-    if ( pchr->carefultime <= 0 ) pchr->carefultime = 0;
-
-    // Down that ol' damage timer
-    pchr->damagetime -= dUpdate;
-    if ( pchr->damagetime < 0 ) pchr->damagetime = 0.0f;
+    // actually move the character
+    move_character(gs, chr_ref, dUpdate, &enviro, &loc_rand);
   }
 
 }
@@ -3170,14 +3195,14 @@ bool_t PlaList_set_latch( Game_t * gs, Player_t * ppla )
   /// @details ZZ@> This function converts input readings to latch settings, so players can
   ///     move around
 
-  PChr_t chrlst      = gs->ChrList;
-
   float newx, newy;
   Uint16 turnsin;
   CHR_REF character;
   Uint8 device;
   float dist;
   float inputx, inputy;
+
+  PChr_t chrlst      = gs->ChrList;
 
   // Check to see if we need to bother
   if( !EKEY_PVALID(ppla) || !ppla->Active || INBITS_NONE == ppla->device) return bfalse;
@@ -6351,7 +6376,7 @@ OBJ_REF object_generate_index( char *szLoadName )
 }
 
 //--------------------------------------------------------------------------------------------
-CAP_REF CapList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST char *szObjectname, CAP_REF irequest )
+CAP_REF CapList_load_one( Game_t * gs, const char * szObjectpath, const char *szObjectname, CAP_REF irequest )
 {
   /// @details ZZ@> This function fills a character profile with data from "DATA.TXT"
 
@@ -6670,7 +6695,7 @@ CAP_REF CapList_load_one( Game_t * gs, EGO_CONST char * szObjectpath, EGO_CONST 
 }
 
 //--------------------------------------------------------------------------------------------
-int fget_skin( char * szObjectpath, EGO_CONST char * szObjectname )
+int fget_skin( char * szObjectpath, const char * szObjectname )
 {
   /// @details ZZ@> This function reads the "SKIN.TXT" file...
 
@@ -8092,7 +8117,7 @@ void drop_money( Game_t * gs, CHR_REF ichr, Uint16 money )
 
 //--------------------------------------------------------------------------------------------
 CHR_REF chr_spawn( Game_t * gs,  vect3 pos, vect3 vel, OBJ_REF iobj, TEAM_REF team,
-                   Uint8 skin, Uint16 facing, EGO_CONST char *name, CHR_REF override )
+                   Uint8 skin, Uint16 facing, const char *name, CHR_REF override )
 {
   CHR_REF retval;
   CHR_SPAWN_INFO chr_si;
@@ -8126,7 +8151,7 @@ CHR_REF chr_spawn( Game_t * gs,  vect3 pos, vect3 vel, OBJ_REF iobj, TEAM_REF te
 
 //--------------------------------------------------------------------------------------------
 bool_t chr_spawn_info_init( CHR_SPAWN_INFO * psi, vect3 pos, vect3 vel, OBJ_REF iobj, TEAM_REF team,
-                            Uint8 skin, Uint16 facing, EGO_CONST char *name, CHR_REF override )
+                            Uint8 skin, Uint16 facing, const char *name, CHR_REF override )
 {
   if( !EKEY_PVALID(psi) ) return bfalse;
 
@@ -8742,11 +8767,13 @@ Cap_t * Cap_renew(Cap_t *pcap)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ChrEnviro_t * CChrEnviro_new( ChrEnviro_t * enviro, PhysicsData_t * gphys)
+ChrEnviro_t * ChrEnviro_new( ChrEnviro_t * enviro, PhysicsData_t * gphys)
 {
+  // BB> Set default environment values
+
   if(NULL == enviro) return enviro;
 
-  CChrEnviro_delete(enviro);
+  ChrEnviro_delete(enviro);
 
   memset(enviro, 0, sizeof(ChrEnviro_t));
 
@@ -8772,7 +8799,7 @@ ChrEnviro_t * CChrEnviro_new( ChrEnviro_t * enviro, PhysicsData_t * gphys)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CChrEnviro_delete( ChrEnviro_t * enviro )
+bool_t ChrEnviro_delete( ChrEnviro_t * enviro )
 {
   if(NULL == enviro) return bfalse;
 
@@ -8784,15 +8811,18 @@ bool_t CChrEnviro_delete( ChrEnviro_t * enviro )
 }
 
 //--------------------------------------------------------------------------------------------
-ChrEnviro_t * CChrEnviro_renew( ChrEnviro_t * enviro, PhysicsData_t * gphys)
+ChrEnviro_t * ChrEnviro_renew( ChrEnviro_t * enviro, PhysicsData_t * gphys)
 {
-  CChrEnviro_delete(enviro);
-  return CChrEnviro_new( enviro, gphys);
+  ChrEnviro_delete(enviro);
+  return ChrEnviro_new( enviro, gphys);
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CChrEnviro_init( ChrEnviro_t * enviro, float dUpdate)
+bool_t ChrEnviro_init( ChrEnviro_t * enviro, float dUpdate)
 {
+  // BB> Set the environment values that are true for all characters, but 
+  //     may be depend on dUpdate
+
   if(NULL == enviro) return bfalse;
 
   enviro->flydampen    = pow( FLYDAMPEN, dUpdate );
@@ -8801,11 +8831,13 @@ bool_t CChrEnviro_init( ChrEnviro_t * enviro, float dUpdate)
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CChrEnviro_synchronize( ChrEnviro_t * enviro )
+bool_t ChrEnviro_synchronize( ChrEnviro_t * enviro, Cap_t * pcap, float dUpdate )
 {
+  // BB> Set the environment values that are character-dependent
+
   if(NULL == enviro) return bfalse;
 
-  enviro->air_traction = enviro->flying ? ( 1.0 - enviro->phys.airfriction ) : enviro->phys.airfriction;
+  /* nothing */
 
   return btrue;
 }
@@ -9342,10 +9374,10 @@ bool_t wp_list_prune(WP_LIST * wl)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//ChrEnviro_t * CChrEnviro_new( ChrEnviro_t * enviro, PhysicsData_t * gphys)
+//ChrEnviro_t * ChrEnviro_new( ChrEnviro_t * enviro, PhysicsData_t * gphys)
 //{
 //  if(NULL == enviro) return enviro;
-//  if(EKEY_PVALID(enviro)) CChrEnviro_delete(enviro);
+//  if(EKEY_PVALID(enviro)) ChrEnviro_delete(enviro);
 //
 //  memset(enviro, 0, sizeof(ChrEnviro_t));
 //
@@ -9370,7 +9402,7 @@ bool_t wp_list_prune(WP_LIST * wl)
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//bool_t CChrEnviro_delete( ChrEnviro_t * enviro )
+//bool_t ChrEnviro_delete( ChrEnviro_t * enviro )
 //{
 //  if(NULL == enviro) return bfalse;
 //
@@ -9382,14 +9414,14 @@ bool_t wp_list_prune(WP_LIST * wl)
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//ChrEnviro_t * CChrEnviro_renew( ChrEnviro_t * enviro, PhysicsData_t * gphys)
+//ChrEnviro_t * ChrEnviro_renew( ChrEnviro_t * enviro, PhysicsData_t * gphys)
 //{
-//  CChrEnviro_delete(enviro);
-//  return CChrEnviro_new( enviro, gphys);
+//  ChrEnviro_delete(enviro);
+//  return ChrEnviro_new( enviro, gphys);
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//bool_t CChrEnviro_init( ChrEnviro_t * enviro, float dUpdate)
+//bool_t ChrEnviro_init( ChrEnviro_t * enviro, float dUpdate)
 //{
 //  if(NULL == enviro) return bfalse;
 //
@@ -9399,7 +9431,7 @@ bool_t wp_list_prune(WP_LIST * wl)
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//bool_t CChrEnviro_synchronize( ChrEnviro_t * enviro )
+//bool_t ChrEnviro_synchronize( ChrEnviro_t * enviro )
 //{
 //  if(NULL == enviro) return bfalse;
 //
