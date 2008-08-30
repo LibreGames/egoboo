@@ -1957,6 +1957,7 @@ int mnu_doVideoOptions( MenuProc_t * mproc, float deltaTime )
           break;
       }
 
+	  //Texture filtering
       if ( OData.texturefilter == TX_UNFILTERED )
       {
         snprintf( mnu_widgetList[5].text, sizeof( STRING ), "Unfiltered" );
@@ -2057,10 +2058,12 @@ int mnu_doVideoOptions( MenuProc_t * mproc, float deltaTime )
         mnu_widgetList[9].text = "Off";
       }
 
+	  //Pretty water
       if ( OData.twolayerwateron ) mnu_widgetList[10].text = "On";
       else mnu_widgetList[10].text = "Off";
 
 
+	  //Resolution
       if ( NULL == gfxState.video_mode_list[mnu_display_mode_index] )
       {
         mnu_display_mode_index = 0;
@@ -3045,6 +3048,7 @@ int mnu_Run( MenuProc_t * mproc )
       break;
 
     case mnu_ChooseModule:
+
       mproc->MenuResult = mnu_doChooseModule( mproc, frameDuration );
       if( mnu_handleKeyboard(mproc) < 0 ) mproc->MenuResult = -1;  // handle escape
 
@@ -3105,7 +3109,7 @@ int mnu_Run( MenuProc_t * mproc )
       }
       break;
 
-    default:
+    default: 
     case mnu_NotImplemented:
       mproc->MenuResult = mnu_doNotImplemented( mproc, frameDuration );
       if( mnu_handleKeyboard(mproc) < 0 ) mproc->MenuResult = -1;  // handle escape
@@ -4863,8 +4867,9 @@ size_t mnu_load_mod_data(MenuProc_t * mproc, MOD_INFO * mi_ary, size_t mi_len)
   size_t modcount;
 
   FS_FIND_INFO fs_finfo;
-
   fs_find_info_new( &fs_finfo );
+
+
 
   // Convert searchname
   strcpy( searchname, "modules" SLASH_STRING "*.mod" );
@@ -4889,7 +4894,7 @@ size_t mnu_load_mod_data(MenuProc_t * mproc, MOD_INFO * mi_ary, size_t mi_len)
     strncpy( mi_ary[modcount].loadname, FileName, sizeof( mi_ary[modcount].loadname ) );
     snprintf( loadname, sizeof( loadname ), "%s" SLASH_STRING "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.modules_dir, FileName, CData.gamedat_dir, CData.mnu_file );
     if ( module_read_data( mi_ary + modcount, loadname ) )
-    {
+    { 
       snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s" SLASH_STRING "%s" SLASH_STRING "%s" SLASH_STRING "%s", CData.modules_dir, FileName, CData.gamedat_dir, CData.title_bitmap );
       mi_ary[modcount].tx_title_idx = mnu_load_titleimage( mproc, modcount, CStringTmp1 );
       if ( MAXMODULE != mi_ary[modcount].tx_title_idx )

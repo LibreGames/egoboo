@@ -2836,7 +2836,7 @@ bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dU
           weapon_attack = btrue;
 
           if( pweapon_cap->needskillidtouse &&
-              !check_skills( gs, ichr, pweapon_cap->idsz[IDSZ_SKILL] ) )
+              check_skills( gs, ichr, pweapon_cap->idsz[IDSZ_SKILL] ) < 1 )
           {
             // the weapon requires a skill that the character doesn't have
             weapon_attack = bfalse;
@@ -2945,7 +2945,7 @@ bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dU
           weapon_attack = btrue;
 
           if( pweapon_cap->needskillidtouse &&
-              !check_skills( gs, ichr, pweapon_cap->idsz[IDSZ_SKILL] ) )
+              check_skills( gs, ichr, pweapon_cap->idsz[IDSZ_SKILL] ) < 1 )
           {
             // the weapon requires a skill that the character doesn't have
             weapon_attack = bfalse;
@@ -6715,10 +6715,10 @@ int fget_skin( char * szObjectpath, const char * szObjectname )
 
 
 //--------------------------------------------------------------------------------------------
-bool_t check_skills( Game_t * gs, CHR_REF who, Uint32 whichskill )
+int check_skills( Game_t * gs, CHR_REF who, Uint32 whichskill )
 {
-  /// @details ZF@> This checks if the specified character has the required skill. Returns btrue if true
-  /// and bfalse if not. Also checks Skill expansions.
+  /// @details ZF@> This checks if the specified character has the required skill. Returns the level
+  /// of the skill. Also checks Skill expansions.
 
   PChr_t chrlst      = gs->ChrList;
 

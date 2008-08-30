@@ -459,7 +459,7 @@ void snd_play_music( int songnumber, int fadetime, int loops )
   /// @details ZF@> This functions plays a specified track loaded into memory
   if ( _sndState.musicActive && _sndState.music_loaded && _sndState.song_index != songnumber)
   {
-    Mix_FadeOutMusic( fadetime );
+    Mix_FadeOutMusic( fadetime );         //TODO: needs to be done differently, this one pauses the game loop
     Mix_PlayMusic( _sndState.mus_list[songnumber], loops );
     _sndState.song_loops = loops;
     _sndState.song_index = songnumber;
@@ -470,8 +470,7 @@ void snd_play_music( int songnumber, int fadetime, int loops )
 void snd_stop_music(int fadetime)
 {
   /// @details ZF@> This function sets music track to pause
-
-  Mix_FadeOutMusic(fadetime);
+  Mix_FadeOutMusic(fadetime); //TODO: needs to be done differently, this one pauses the game loop
 }
 
 

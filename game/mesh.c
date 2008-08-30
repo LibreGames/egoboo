@@ -255,7 +255,6 @@ bool_t TileDictionary_load(TileDictionary_t * pdict)
     log_message("Failed!\n");
     return bfalse;
   }
-  log_message("Succeeded!\n");
 
   fantype    = 0;               // 32 x 32 tiles
   bigfantype = MAXMESHTYPE / 2; // 64 x 64 tiles
@@ -298,15 +297,15 @@ bool_t TileDictionary_load(TileDictionary_t * pdict)
 
   }
   fs_fileClose( fileread );
-
-
+  log_message("Succeeded!\n");
 
   // Correct silly Cartman 32-pixel-wide textures to Egoboo's 256 pixel wide textures
 
   for ( cnt = 0; cnt < MAXMESHTYPE / 2; cnt++ )
   {
-    for ( entry = 0; entry < (*pdict)[cnt].vrt_count; entry++ )
+  for ( entry = 0; entry < (*pdict)[cnt].vrt_count; entry++ )
     {
+
       (*pdict)[cnt].tx[entry].u = ( TX_FUDGE + (*pdict)[cnt].tx[entry].u * ( 31.0f - TX_FUDGE ) ) / 256.0f;
       (*pdict)[cnt].tx[entry].v = ( TX_FUDGE + (*pdict)[cnt].tx[entry].v * ( 31.0f - TX_FUDGE ) ) / 256.0f;
     }

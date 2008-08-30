@@ -394,8 +394,8 @@ enum e_script_opcode
   F_DisableRespawn,
   F_IfButtonPressed,
   F_IfHolderScoredAHit,					        ///< Scripted AI functions (v1.10)
-  F_IfHolderBlocked,
-  F_GetShieldProficiency
+  F_IfHolderBlocked,	
+  F_GetTargetSkillLevel
 };
 typedef enum e_script_opcode OPCODE;
 
@@ -456,6 +456,7 @@ enum e_script_variable
   VAR_SELF_SPAWN_DISTANCE,
   VAR_SELF_CONTENT,
   VAR_SELF_HOLDING_WEIGHT,
+  VAR_TARGET_RELOAD_TIME,
   VAR_SELF_PASSAGE,
 
   VAR_TARGET_X,
@@ -481,8 +482,7 @@ enum e_script_variable
   VAR_TARGET_MONEY,
   VAR_TARGET_TURNAWAY,
   VAR_TARGET_MAX_LIFE,
-  VAR_TARGET_RELOAD_TIME,
-
+  VAR_TARGET_RELOADTIME,
   VAR_OWNER_X,
   VAR_OWNER_Y,
   VAR_OWNER_TURN,

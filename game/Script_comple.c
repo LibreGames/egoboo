@@ -767,10 +767,8 @@ void load_ai_codes( char* loadname )
   REGISTER_OPCODE( opcode_lst, 'V', VAR_TARGET_TURNAWAY, "targetturnfrom" );   // 069
   REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_LEVEL,      "selflevel" );   // 070
   REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_SPAWN_DISTANCE,  "selfspawndistance" );   // 070
-  REGISTER_OPCODE( opcode_lst, 'V', VAR_TARGET_MAX_LIFE, "targetmaxlife" );   // 070
-  REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_CONTENT,    "selfcontent" );   // 070
-  REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_CONTENT,    "selfcontent" );   // 070
-  REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_CONTENT,    "selfcontent" );   // 070
+  REGISTER_OPCODE( opcode_lst, 'V', VAR_TARGET_MAX_LIFE, "targetmaxlife" );   // 072
+  REGISTER_OPCODE( opcode_lst, 'V', VAR_SELF_CONTENT,    "selfcontent" );   // 073
   REGISTER_OPCODE( opcode_lst, 'V', VAR_TARGET_RELOAD_TIME, "targetreloadtime" );   // 070
 
 
@@ -1274,7 +1272,7 @@ void load_ai_codes( char* loadname )
   REGISTER_FUNCTION( opcode_lst, IfButtonPressed);
   REGISTER_FUNCTION( opcode_lst, IfHolderScoredAHit);
   REGISTER_FUNCTION( opcode_lst, IfHolderBlocked);
-  REGISTER_FUNCTION( opcode_lst, GetShieldProficiency);
+  REGISTER_FUNCTION( opcode_lst, GetTargetSkillLevel);
 
   // register all the function !!!ALIASES!!!
   REGISTER_FUNCTION_ALIAS( opcode_lst, IfAtLastWaypoint, "IfPutAway" );

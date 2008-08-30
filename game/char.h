@@ -1019,7 +1019,7 @@ void CapList_save_one( struct sGame * gs, char *szSaveName, CHR_REF character );
 void export_one_character_skin( struct sGame * gs, char *szSaveName, CHR_REF character );
 
 
-bool_t check_skills( struct sGame * gs, CHR_REF who, Uint32 whichskill );
+int check_skills( struct sGame * gs, CHR_REF who, Uint32 whichskill );
 
 bool_t add_quest_idsz( char *whichplayer, IDSZ idsz );
 int    modify_quest_idsz( char *whichplayer, IDSZ idsz, int adjustment );

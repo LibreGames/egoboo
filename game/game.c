@@ -2965,7 +2965,7 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
 
         // Make lookup tables
         make_textureoffset();
-        make_lightdirectionlookup();
+		make_lightdirectionlookup();
         make_turntosin();
         make_enviro();
 
@@ -3014,7 +3014,6 @@ int proc_mainLoop( ProcState_t * ego_proc, int argc, char **argv )
         PROFILE_INIT( ChrHeap );
         PROFILE_INIT( EncHeap );
         PROFILE_INIT( PrtHeap );
-
 
         if( mnu_proc->proc.Active )
         {

@@ -2913,18 +2913,9 @@ bool_t run_function( Game_t * gs, AI_STATE * pstate, Uint32 value )
     }
     break;
 
-  case F_GetShieldProficiency:
-    // This function sets tmpargument to the shield profficiency of the target
-    pstate->returncode  = bfalse;
-    pstate->tmpargument = 0;
-    {
-      CHR_REF iattached = chr_get_attachedto( chrlst, chrlst_size, pstate->iself );
-      if ( ACTIVE_CHR( chrlst, iattached ) )
-      {
-        pstate->returncode = btrue;
-        pstate->tmpargument = chrlst[iattached].prop.shieldproficiency;
-      }
-    }
+  case F_GetTargetSkillLevel:
+    // This function sets tmpargument to the skill level of the target
+	pstate->tmpargument = check_skills( gs, pstate->target,pstate->tmpdistance);
     break;
 
   case F_End:
