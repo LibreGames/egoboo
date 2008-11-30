@@ -30,13 +30,18 @@ enet_initialize_with_callbacks (ENetVersion version, const ENetCallbacks * inits
            
 void *
 enet_malloc (size_t size)
-{
-   void * memory = callbacks.malloc (size);
+{	
+   //Outcommented for debugging
+   /*void * memory = callbacks.malloc (size);
 
    if (memory == NULL)
      abort ();
 
-   return memory;
+   return memory;*/
+   //Debug End
+
+	abort ();                   //Remove this line if the above is activated
+	return NULL;
 }
 
 void

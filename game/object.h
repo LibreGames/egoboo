@@ -42,7 +42,7 @@ struct sPrt;
 struct Mix_Chunk;
 
 #define MAXSECTION                      4            ///< T-wi-n-k...  Most of 4 sections
-#define MAXWAVE         16                             ///< Up to 16 waves per model
+#define MAXWAVE         20                             ///< Up to 20 waves per model
 
 
 typedef enum e_prtpip
@@ -56,7 +56,7 @@ typedef enum e_prtpip
   PRTPIP_SPLASH,                        ///< Water effects are next
   PRTPIP_RIPPLE,                        //
   PRTPIP_DEFEND,                        ///< Defend particle
-  PRTPIP_PEROBJECT_COUNT                //
+  PRTPIP_PEROBJECT_COUNT = 20                //
 } PRTPIP;
 
 //--------------------------------------------------------------------------------------------

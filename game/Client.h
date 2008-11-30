@@ -88,6 +88,7 @@ struct sClient
   Uint32 loc_pla_count;
   bool_t seeinvisible;
   bool_t seekurse;
+  bool_t listengood;
 
   bool_t waiting;                          ///< Has everyone talked to the host?
   int    selectedPlayer;

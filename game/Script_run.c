@@ -1883,9 +1883,9 @@ bool_t run_function( Game_t * gs, AI_STATE * pstate, Uint32 value )
     break;
 
   case F_ShowMap:
-    // Show the map...  Fails if map already visible
+    // Show the map...  Fails if map already visible or there is no map to load
     if ( gfx->Map_on )  pstate->returncode = bfalse;
-    gfx->Map_on = btrue;
+	gfx->Map_on = gfx->Map_valid;
     break;
 
   case F_ShowYouAreHere:
@@ -2916,6 +2916,12 @@ bool_t run_function( Game_t * gs, AI_STATE * pstate, Uint32 value )
   case F_GetTargetSkillLevel:
     // This function sets tmpargument to the skill level of the target
 	pstate->tmpargument = check_skills( gs, pstate->target,pstate->tmpdistance);
+    break;
+
+  case F_SetTargetToLastItemUsed:
+    // This function sets the target to the last item the character used
+	  if(pstate->lastitemused == pstate->iself) pstate->returncode = bfalse;	
+      else pstate->target = pstate->lastitemused;
     break;
 
   case F_End:

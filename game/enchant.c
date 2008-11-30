@@ -2025,7 +2025,7 @@ void add_enchant_value( Game_t * gs, ENC_REF enchantindex, Uint8 valueindex,
 
     case ADDACCEL:
       fnewvalue = pchr->skin.maxaccel;
-      fvaluetoadd = peve->addvalue[valueindex] / 25.0;
+      fvaluetoadd = peve->addvalue[valueindex] / 80.0;
       fgetadd( 0, fnewvalue, 1.5, &fvaluetoadd );
       valuetoadd = fvaluetoadd * 1000.0; // Get save value
       fvaluetoadd = valuetoadd / 1000.0;

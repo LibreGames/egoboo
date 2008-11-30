@@ -395,7 +395,8 @@ enum e_script_opcode
   F_IfButtonPressed,
   F_IfHolderScoredAHit,					        ///< Scripted AI functions (v1.10)
   F_IfHolderBlocked,	
-  F_GetTargetSkillLevel
+  F_GetTargetSkillLevel,
+  F_SetTargetToLastItemUsed
 };
 typedef enum e_script_opcode OPCODE;
 

@@ -3605,7 +3605,7 @@ int mnu_doHostGame(MenuProc_t * mproc, float deltaTime)
     mnu_prime_modules(mproc);
 
     // Find the module's that we want to allow hosting for.
-    // Only modules taht allow importing AND have modmaxplayers > 1
+    // Only modules that allow importing AND have modmaxplayers > 1
     for (i = 0; i<sv->loc_mod_count; i++)
     {
       if (sv->loc_mod[i].importamount > 0 && sv->loc_mod[i].maxplayers > 1)

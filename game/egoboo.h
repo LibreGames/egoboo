@@ -70,7 +70,6 @@ EXTERN EGO_CONST char VERSION[] EQ( "2.8.x" );   ///< Version of the game
 #define DELAY_RESIZE            50                       ///< Time it takes to resize a character
 
 
-#define EXPKEEP 0.85                                 ///< Experience to keep when respawning
 #define NOHIDE              127                      ///< Don't hide
 
 typedef enum e_damage_effects_bits
@@ -92,21 +91,12 @@ enum e_part_type
 };
 typedef enum e_part_type PART_TYPE;
 
-typedef enum e_ORDER
-{
-  MESSAGE_SIGNAL = 0,
-  MESSAGE_MOVE = 1,
-  MESSAGE_ATTACK,
-  MESSAGE_ASSIST,
-  MESSAGE_STAND,
-  MESSAGE_TERRAIN
-} ORDER;
-
 typedef enum e_SIGNAL
 {
   SIGNAL_BUY     = 0,
   SIGNAL_SELL,
   SIGNAL_REJECT,
+  SIGNAL_STEAL,
   SIGNAL_ENTERPASSAGE,
   SIGNAL_EXITPASSAGE
 } SIGNAL;
@@ -414,14 +404,12 @@ struct sGraphics_Data
   float  foregroundrepeat;
   float  backgroundrepeat;
 
-  // trim stuff (obsolete)
-  //extern IRect_t           trimrect;                   ///< The menu trim rectangle
-
   // Map stuff
   GLtexture  Map_tex;
   IRect_t    Map_rect;
   float      Map_scale;
   bool_t     Map_on;
+  bool_t     Map_valid;
   bool_t     Map_youarehereon;
 
   // Bars
@@ -456,12 +444,6 @@ typedef struct sGraphics_Data Graphics_Data_t;
 
 Graphics_Data_t * Graphics_Data_new(Graphics_Data_t * gd);
 bool_t            Graphics_Data_delete(Graphics_Data_t * gd);
-
-
-
-
-
-
 
 
 

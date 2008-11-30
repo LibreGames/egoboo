@@ -1059,7 +1059,7 @@ bool_t detach_character_from_mount( Game_t * gs, CHR_REF chr_ref, bool_t ignorek
 
       if ( passage_check_any( gs, chr_ref, passage, NULL ) )
       {
-        iowner = gs->ShopList[passage].owner;
+        iowner = gs->ShopList[cnt].owner;
         inshop = ( NOOWNER != iowner );
         break;
       }
@@ -1908,7 +1908,7 @@ bool_t chr_grab_stuff( Game_t * gs, CHR_REF chr_ref, SLOT slot, bool_t people )
 
         if ( passage_check_any( gs, minchr_ref, passage, NULL ) )
         {
-          owner_ref  = gs->ShopList[passage].owner;
+          owner_ref  = gs->ShopList[cnt].owner;
           inshop = ( NOOWNER != owner_ref );
         };
       };
@@ -1918,12 +1918,26 @@ bool_t chr_grab_stuff( Game_t * gs, CHR_REF chr_ref, SLOT slot, bool_t people )
 
   if ( inshop )
   {
-    if ( pchr->prop.isitem )
-    {
-      ballowed = btrue; // As in NetHack, Pets can shop for free =]
+  if(pchr->prop.isitem  || (pchr->alpha_fp8==0 && !chrlst[owner_ref].prop.canseeinvisible))
+  {
+        Uint32 seed;
+		// Pets can try to steal in addition to invisible characters
+		inshop = bfalse;
+		debug_message(1, "%s stole something! (%s)", pchr->name, chrlst[minchr_ref].name);
+		
+		//Check if it was detected. 50% chance +2% per pet DEX and -2% per shopkeeper wisdom
+		seed = RANDIE(gs->randie_index);
+		if(1 + (seed % 100) - (pchr->stats.dexterity_fp8>>7) + (chrlst[owner_ref].stats.wisdom_fp8>>7) > 50)
+		{
+			debug_message(1, "%s was detected!!", pchr->name);
+			chrlst[owner_ref].aistate.alert |= ALERT_SIGNALED;
+			chrlst[owner_ref].message.type = SIGNAL_STEAL;
+			chrlst[owner_ref].message.data = SIGNAL_STEAL;
+		}
+		ballowed = btrue;
     }
     else
-    {
+	{
       // Pay the shop owner, or don't allow grab...
       chrlst[owner_ref].aistate.alert |= ALERT_SIGNALED;
       price = ChrList_getPCap(gs, minchr_ref)->skin[chrlst[minchr_ref].skin_ref % MAXSKIN].cost;
@@ -2885,12 +2899,14 @@ bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dU
               {
                 // Flag for unarmed attack
                 pstate->alert |= ALERT_USED;
+				pstate->lastitemused = ichr;
               }
               else
               {
                 // play any weapon animation
                 request_action( gs,  iweapon, ACTION_MJ, bfalse );
                 pweapon->aistate.alert |= ALERT_USED;
+				pstate->lastitemused = iweapon;
               }
             }
           }
@@ -2955,6 +2971,7 @@ bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dU
             // weapon_action == ACTION_DA means that the "weapon" is an item to be used
             weapon_attack = bfalse;
             pweapon->aistate.alert |= ALERT_USED;
+			pstate->lastitemused = iweapon;
           }
           else if ( !pmad->actionvalid[weapon_action] )
           {
@@ -2994,12 +3011,14 @@ bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dU
               {
                 // Flag for unarmed attack
                 pstate->alert |= ALERT_USED;
+				pstate->lastitemused = ichr;
               }
               else
               {
                 // play any weapon animation
                 request_action( gs,  iweapon, ACTION_MJ, bfalse );
                 pweapon->aistate.alert |= ALERT_USED;
+				pstate->lastitemused = iweapon;
               }
             }
           }
@@ -3013,6 +3032,7 @@ bool_t chr_do_latches( Game_t * gs, CHR_REF ichr, ChrEnviro_t * enviro, float dU
   {
     play_action( gs,  imount, ( ACTION )( ACTION_UA + IRAND(&loc_rand, 1) ), bfalse );
     pmount->aistate.alert |= ALERT_USED;
+	pstate->lastitemused = imount;
   };
 
   return btrue;
@@ -5148,19 +5168,31 @@ bool_t do_chr_prt_collision( Game_t * gs, CoData_t * d, float dUpdate )
             }
 
             //Apply intelligence/wisdom bonus damage for particles with the [IDAM] and [WDAM] expansions (Low ability gives penality)
-            //+1 (256) bonus for every 4 points of intelligence and/or wisdom above 14. Below 14 gives -1 instead!
+            //+2% bonus for every point of intelligence and/or wisdom above 14. Below 14 gives -2% instead!
             //Enemy IDAM spells damage is reduced by 1% per defender's wisdom, opposite for WDAM spells
             if ( piplst[pip].intdamagebonus )
             {
-              pprtb->damage.ibase += (( chrlst[prt_owner].stats.intelligence_fp8 - 3584 ) * 0.25 );    //First increase damage by the attacker
+			  float percent = 1.00;
+			  percent += ((chrlst[prt_owner].stats.intelligence_fp8 - 3584) >> 7) / 100;     //Percent = particle owner intelligence - 14 * 2
+              pprtb->damage.ibase *= percent;    //First increase damage by the attacker
               if(!pchra->skin.damagemodifier_fp8[pprtb->damagetype]&DAMAGE_INVERT || !pchra->skin.damagemodifier_fp8[pprtb->damagetype]&DAMAGE_CHARGE)
+			  {
+			    percent = 1.00;
+				percent += ((chrlst[prt_owner].stats.wisdom_fp8) >> 8) / 100;     //Percent = target defender wisdom
                 pprtb->damage.ibase -= (pprtb->damage.ibase * ( pchra->stats.wisdom_fp8 > 8 ));    //Then reduce it by defender
-            }
+			  }
+			}
             if ( piplst[pip].wisdamagebonus )  //Same with divine spells
             {
-              pprtb->damage.ibase += (( chrlst[prt_owner].stats.wisdom_fp8 - 3584 ) * 0.25 );
+			  float percent = 1.00;
+			  percent += ((chrlst[prt_owner].stats.wisdom_fp8 - 3584) >> 7) / 100;     //Percent = particle owner intelligence - 14 * 2
+              pprtb->damage.ibase *= percent;    //First increase damage by the attacker
               if(!pchra->skin.damagemodifier_fp8[pprtb->damagetype]&DAMAGE_INVERT || !pchra->skin.damagemodifier_fp8[pprtb->damagetype]&DAMAGE_CHARGE)
-                pprtb->damage.ibase -= (pprtb->damage.ibase * ( pchra->stats.intelligence_fp8 > 8 ));
+			  {
+			    percent = 1.00;
+				percent += ((chrlst[prt_owner].stats.intelligence_fp8) >> 8) / 100;     //Percent = target defender wisdom
+                pprtb->damage.ibase -= (pprtb->damage.ibase * ( pchra->stats.wisdom_fp8 > 8 ));    //Then reduce it by defender
+			  }
             }
 
             //Force Pancake animation?
@@ -5193,7 +5225,7 @@ bool_t do_chr_prt_collision( Game_t * gs, CoData_t * d, float dUpdate )
               ptemp.irand = pprtb->damage.irand * 2.0f * bumpstrength;
               damage_character( gs, ichra, direction, &ptemp, pprtb->damagetype, pprtb->team, prt_owner, piplst[pip].damfx );
               pchra->aistate.alert |= ALERT_HITVULNERABLE;
-              cost_mana( gs, ichra, piplst[pip].manadrain*2, prt_owner );  //Do mana drain too
+              cost_mana( gs, ichra, piplst[pip].manadrain*2, prt_owner );  //Do mana drain too (double vs. weakness)
             }
             else
             {
@@ -6247,6 +6279,7 @@ void CapList_save_one( Game_t * gs, char *szSaveName, CHR_REF ichr )
   if ( pcap->prop.canuseadvancedweapons ) fput_next_expansion( filewrite, "Can use advanced weapons", "AWEP", 1 );
   if ( pcap->prop.canusepoison          ) fput_next_expansion( filewrite, "Can use poison          ", "POIS", 1 );
   if ( pcap->prop.canread               ) fput_next_expansion( filewrite, "Can read                ", "READ", 1 );
+  if ( pcap->prop.canlisten             ) fput_next_expansion( filewrite, "Can listen skill        ", "LIST", 1 );
 
   //General exported character information
   fput_next_expansion( filewrite, "Can use platforms", "PLAT",  pcap->prop.canuseplatforms );
@@ -6682,6 +6715,8 @@ CAP_REF CapList_load_one( Game_t * gs, const char * szObjectpath, const char *sz
     else if ( idsz == MAKE_IDSZ( "SHPR" ) )  pcap->prop.shieldproficiency = INT_TO_BOOL( iTmp );
     // [POIS] Use poison without err?
     else if ( idsz == MAKE_IDSZ( "POIS" ) )  pcap->prop.canusepoison = INT_TO_BOOL( iTmp );
+    // [LIST] Listen skill?
+    else if ( idsz == MAKE_IDSZ( "LIST" ) )  pcap->prop.canlisten = INT_TO_BOOL( iTmp );
   }
 
   fs_fileClose( fileread );
@@ -6715,7 +6750,7 @@ int fget_skin( char * szObjectpath, const char * szObjectname )
 
 
 //--------------------------------------------------------------------------------------------
-int check_skills( Game_t * gs, CHR_REF who, Uint32 whichskill )
+int check_skills( Game_t * gs, CHR_REF who, IDSZ whichskill )
 {
   /// @details ZF@> This checks if the specified character has the required skill. Returns the level
   /// of the skill. Also checks Skill expansions.
@@ -6738,6 +6773,7 @@ int check_skills( Game_t * gs, CHR_REF who, Uint32 whichskill )
   else if ( MAKE_IDSZ( "POIS" ) == whichskill ) result = chrlst[who].prop.canusepoison;
   else if ( MAKE_IDSZ( "READ" ) == whichskill ) result = chrlst[who].prop.canread;
   else if ( MAKE_IDSZ( "SHPR" ) == whichskill ) result = chrlst[who].prop.shieldproficiency;
+  else if ( MAKE_IDSZ( "LIST" ) == whichskill ) result = chrlst[who].prop.canlisten;
 
   return result;
 }
@@ -9979,6 +10015,8 @@ bool_t CProperties_init( Properties_t * p )
   p->canbackstab = bfalse;
   p->canusepoison = bfalse;
   p->canuseadvancedweapons = bfalse;
+  p->canlisten = bfalse;
+  p->shieldproficiency = bfalse;
 
   // dependent properties
   p->canuseplatforms = !p->isplatform;

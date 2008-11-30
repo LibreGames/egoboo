@@ -22,7 +22,7 @@
 /// @brief Old version of the networking network.c file. Depreciated.
 /// @depricated All files depreciated.
 
-#include "Network.h"
+#include "network.h"
 #include "Client.h"
 #include "Server.h"
 #include "Log.h"

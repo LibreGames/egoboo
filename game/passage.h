@@ -28,7 +28,7 @@
 struct sGame;
 
 #define PASSLST_COUNT             256                      ///< Maximum number of passages ( mul 32 )
-#define NOOWNER             INVALID_CHR
+#define NOOWNER             INVALID_CHR			//Shop has no owner
 
 //Passages
 struct sPassage

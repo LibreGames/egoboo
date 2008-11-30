@@ -516,13 +516,33 @@ bool_t export_one_character( Game_t * gs, CHR_REF ichr, CHR_REF iowner, int numb
   tnc = 0;
   while ( tnc < 4 )
   {
-    snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "tris%d.bmp", fromdir, tnc );
+
+    //First copy all .png format skins
+	snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "tris%d.png", fromdir, tnc );
+    snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "tris%d.png", todir,   tnc );
+    fs_copyFile( fromfile, tofile );
+
+    snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "icon%d.png", fromdir, tnc );
+    snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "icon%d.png", todir,   tnc );
+    fs_copyFile( fromfile, tofile );
+
+	//Also try the .pcx format
+	snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "tris%d.pcx", fromdir, tnc );
+    snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "tris%d.pcx", todir,   tnc );
+    fs_copyFile( fromfile, tofile );
+
+    snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "icon%d.pcx", fromdir, tnc );
+    snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "icon%d.pcx", todir,   tnc );
+
+	//Then copy the .bmp skins
+	snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "tris%d.bmp", fromdir, tnc );
     snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "tris%d.bmp", todir,   tnc );
     fs_copyFile( fromfile, tofile );
 
     snprintf( fromfile, sizeof( fromfile ), "%s" SLASH_STRING "icon%d.bmp", fromdir, tnc );
     snprintf( tofile,   sizeof( tofile ), "%s" SLASH_STRING "icon%d.bmp", todir,   tnc );
     fs_copyFile( fromfile, tofile );
+
     tnc++;
   }
 
@@ -4150,7 +4170,7 @@ bool_t chr_search_block( Game_t * gs, SearchInfo_t * psearch, int block_x, int b
 {
   /// @details ZZ@> This is a good little helper. returns btrue if a suitable target was found
 
-  int cnt;
+  Uint16 cnt;
   CHR_REF charb;
   Uint32 fanblock, blnode_b;
   TEAM_REF team;
@@ -6689,6 +6709,7 @@ bool_t count_players(Game_t * gs)
   gs->somepladead  = bfalse;
   cs->seeinvisible = bfalse;
   cs->seekurse     = bfalse;
+  cs->listengood   = bfalse;
   cs->loc_pla_count = 0;
   ss->rem_pla_count = 0;
   numdead = 0;
@@ -6721,6 +6742,11 @@ bool_t count_players(Game_t * gs)
     if ( chrlist[ichr].prop.canseekurse )
     {
       cs->seekurse = btrue;
+    }
+
+	if ( chrlist[ichr].prop.canlisten)
+    {
+		cs->listengood = btrue;
     }
   }
 
@@ -7010,10 +7036,12 @@ void load_map( Graphics_Data_t * gfx, char* szModule )
   gfx->BlipList_count = 0;
 
   // Load the images
+  gfx->Map_valid = btrue;
   snprintf( CStringTmp1, sizeof( CStringTmp1 ), "%s%s" SLASH_STRING "%s", szModule, CData.gamedat_dir, CData.plan_bitmap );
   if ( INVALID_TX_ID == GLtexture_Load( GL_TEXTURE_2D, &gfx->Map_tex, CStringTmp1, INVALID_KEY ) )
   {
-    log_warning( "Cannot load map: %s\n", CStringTmp1 );
+	gfx->Map_valid = bfalse;
+    //log_warning( "Cannot load map: %s\n", CStringTmp1 );
   }
 
   // Set up the rectangles

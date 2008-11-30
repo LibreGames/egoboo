@@ -29,6 +29,7 @@
 
 #include "egoboo_utility.h"
 #include "egoboo.h"
+#include "Client.h"
 
 #include "particle.inl"
 #include "char.inl"
@@ -306,6 +307,9 @@ int snd_play_sound( Game_t * gs, float intensity, vect3 pos, Mix_Chunk *loadedwa
 
   if( !_sndState.soundActive ) return INVALID_CHANNEL;
 
+  //Player with listen skill increases sound range (intensity) by 25%
+  if(gs->cl->listengood) intensity *= 1.25;
+  
   // the sound is too quiet hear
   if( 255.0f * intensity * ( CData.soundvolume / 100.0f ) < 1.0f )
     return INVALID_CHANNEL;

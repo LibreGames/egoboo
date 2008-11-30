@@ -9,7 +9,7 @@
 
 typedef struct
 {
-    void * (ENET_CALLBACK * malloc) (size_t size);
+    void (ENET_CALLBACK * malloc) (size_t size);
     void (ENET_CALLBACK * free) (void * memory);
     int (ENET_CALLBACK * rand) (void);
 } ENetCallbacks;

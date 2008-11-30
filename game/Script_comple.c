@@ -1273,6 +1273,7 @@ void load_ai_codes( char* loadname )
   REGISTER_FUNCTION( opcode_lst, IfHolderScoredAHit);
   REGISTER_FUNCTION( opcode_lst, IfHolderBlocked);
   REGISTER_FUNCTION( opcode_lst, GetTargetSkillLevel);
+  REGISTER_FUNCTION( opcode_lst, SetTargetToLastItemUsed);
 
   // register all the function !!!ALIASES!!!
   REGISTER_FUNCTION_ALIAS( opcode_lst, IfAtLastWaypoint, "IfPutAway" );

@@ -369,7 +369,7 @@ bool_t module_read_data( MOD_INFO * pmod, const char *szLoadName )
     pmod->minplayers   = fget_next_int( fileread );
     pmod->maxplayers   = fget_next_int( fileread );
     pmod->respawnmode  = fget_next_respawn( fileread );
-    pmod->rts_control  = fget_next_bool( fileread ) ;
+    fget_next_bool( fileread );
     fget_next_string( fileread, pmod->rank, sizeof( pmod->rank ) );
     pmod->rank[RANKSIZE-1] = EOS;
 
@@ -518,7 +518,7 @@ ModState_t * ModState_new(ModState_t * ms, MOD_INFO * mi, Uint32 seed)
     ms->import_valid   = (mi->importamount > 0) || (mi->maxplayers > 1);
 
     ms->exportvalid    = mi->allowexport;
-    ms->rts_control    = mi->rts_control;
+    //ms->rts_control    = mi->rts_control;
     ms->respawnvalid   = (RESPAWN_NONE != mi->respawnmode);
     ms->respawnanytime = (RESPAWN_ANYTIME == mi->respawnmode);
   };
@@ -623,8 +623,6 @@ void module_quit( Game_t * gs )
   ModState_t * ms = &(gs->modstate);
 
   if(!ms->Active) return;
-
-  reset_end_text(gs);
 
   // only export players if it makes sense
   if( (ms->beat && ms->exportvalid) || ms->respawnanytime )

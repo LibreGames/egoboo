@@ -1249,7 +1249,7 @@ bool_t cl_load_module_info(Client_t * cs)
     mi->minplayers   = stream_readUint8(&stream);                 // Number of players
     mi->maxplayers   = stream_readUint8(&stream);                 //
     mi->monstersonly = (0 != stream_readUint8(&stream));          // Only allow monsters
-    mi->rts_control  = (0 != stream_readUint8(&stream));          // Real Time Stragedy?
+    //mi->rts_control  = (0 != stream_readUint8(&stream));          // Real Time Stragedy?
     mi->respawnmode  = (RESPAWN_MODE)stream_readUint8(&stream);   // Allow respawn
     stream_done(&stream);
 

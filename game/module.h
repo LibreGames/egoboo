@@ -37,11 +37,11 @@ struct sGraphics_Data;
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-#define RANKSIZE 8
-#define SUMMARYLINES 8
-#define SUMMARYSIZE  80
+#define RANKSIZE 8						///< Max characters for module difficulity
+#define SUMMARYLINES 8                  ///< Max lines of module description
+#define SUMMARYSIZE  80					///< Max characters in a single description line
 
-#define MAXMODULE           100                      ///< Number of modules
+#define MAXMODULE           100         ///< Number of modules
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -79,7 +79,7 @@ typedef struct s_mod_info
   Uint8           maxplayers;                   //
   bool_t          monstersonly;                 ///< Only allow monsters
   RESPAWN_MODE    respawnmode;                ///< What kind of respawn is allowed?
-  bool_t          rts_control;
+  //bool_t          rts_control;
 
   STRING host;                         ///< what is the host of this module? blank if network not being used.
   Uint32 tx_title_idx;                  ///< which texture do we use?
@@ -119,7 +119,7 @@ struct sModState
   bool_t respawnvalid;               ///< Can players respawn with Spacebar?
   bool_t respawnanytime;             ///< True if it's a small level...
   bool_t exportvalid;                ///< Can it export?
-  bool_t rts_control;                ///< Play as a real-time stragedy? BAD REMOVE
+  //bool_t rts_control;                ///< Play as a real-time stragedy? BAD REMOVE
   bool_t beat;                       ///< Show Module Ended text?
 
   int    import_amount;

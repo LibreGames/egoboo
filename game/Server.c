@@ -597,7 +597,7 @@ bool_t sv_handlePacket(Server_t * ss, ENetEvent *event)
       sys_packet_addUint8(&egopkt, ss->mod.maxplayers);
       sys_packet_addUint8(&egopkt, ss->mod.monstersonly);
       sys_packet_addUint8(&egopkt, ss->mod.minplayers);
-      sys_packet_addUint8(&egopkt, ss->mod.rts_control);
+      //sys_packet_addUint8(&egopkt, ss->mod.rts_control);
       sys_packet_addUint8(&egopkt, ss->mod.respawnmode);
       net_sendSysPacketToPeerGuaranteed(event->peer, &egopkt);
     };

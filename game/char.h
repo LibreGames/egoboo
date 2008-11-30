@@ -35,6 +35,7 @@
 #define GRIP_SIZE           4
 #define GRIP_VERTICES      (2*GRIP_SIZE)   // Each model has 8 grip vertices
 
+#define EXPKEEP 0.85                                 ///< Experience to keep when respawning
 
 #define SPINRATE            200                      ///< How fast spinners spin
 #define FLYDAMPEN           .001                     ///< Levelling rate for flyers
@@ -72,9 +73,8 @@
 #define THROWFIX            30.0                     ///< To correct thrown velocities
 #define MINTHROWVELOCITY    15.0                    //
 #define MAXTHROWVELOCITY    45.0                    //
-
-#define RETURNAND           63                       ///< Return mana every so often
-#define MANARETURNSHIFT     4                       //
+                    
+#define MANARETURNSHIFT     4                       ///< Return mana every so often
 
 #define RIPPLEAND           15                       ///< How often ripples spawn
 #define RIPPLETOLERANCE     60                       ///< For deep water
@@ -299,7 +299,7 @@ struct sProperties
   bool_t        invictus;                      ///< Is it invincible?
   bool_t        canseeinvisible;               ///< Can it see invisible?
   bool_t        iskursed;                      ///< Can't be dropped?  Could this also mean damage debuff? Spell fizzle rate? etc.
-  bool_t        canchannel;                    //
+  bool_t        canchannel;                    ///< Can use life as mana
   bool_t        canopenstuff;                  ///< Can it open chests/doors?
   bool_t        isitem;                        ///< Is it an item?
   bool_t        ismount;                       ///< Can you ride it?
@@ -329,6 +329,7 @@ struct sProperties
   bool_t     canusepoison;            ///< Use poison without err [POIS]
   bool_t     canread;                 ///< Can read books and scrolls [READ]
   bool_t     shieldproficiency;       ///< Proficiency with shields [SHPR]
+  bool_t     canlisten;               ///< Good at listening? [LIST]
   // [END] Skill Expansions
 };
 typedef struct sProperties Properties_t;
@@ -552,7 +553,8 @@ struct s_ai_state
   CHR_REF         bumplast;        ///< Last character it was bumped by
   CHR_REF         attacklast;      ///< Last character it was attacked by
   CHR_REF         hitlast;         ///< Last character it hit
-
+  CHR_REF         lastitemused;    ///< Last character the character used
+  
   // other random stuff
   Uint16          directionlast;   ///< Direction of last attack/healing
   DAMAGE                 damagetypelast;  ///< Last damage type
