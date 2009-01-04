@@ -74,6 +74,7 @@ void _cam_frustum_jitter_fov( Camera_t * cam, GLdouble nearval, GLdouble farval,
   {
     glMatrixMode( GL_PROJECTION );
     glPushMatrix();
+	glLoadIdentity();
 
     glGetIntegerv( GL_VIEWPORT, viewport );
 
