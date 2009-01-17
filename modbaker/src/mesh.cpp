@@ -16,11 +16,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //---------------------------------------------------------------------
-#include <iostream>
-#include <fstream>
-#include <string>
-
-using namespace std;
 
 #include <SDL.h>
 #include <SDL_types.h>
@@ -30,6 +25,12 @@ using namespace std;
 #include "global.h"
 #include "mesh.h"
 #include "utility.h"
+
+#include <iostream>
+#include <fstream>
+#include <string>
+
+using namespace std;
 
 #define MAPID 0x4470614d
 
@@ -540,7 +541,7 @@ int c_mesh::get_nearest_vertex(float pos_x, float pos_y, float pos_z)
 {
 	int i;
 
-	int nearest_vertex;
+	int nearest_vertex = 0;
 
 	double dist_temp;
 	double dist_nearest;

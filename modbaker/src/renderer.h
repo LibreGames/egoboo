@@ -23,19 +23,17 @@
 //-   Everything related to OpenGL, SDL or rendering goes in here
 //-
 //---------------------------------------------------------------------
-#include <string>
 
-using namespace std;
-
-#include "SDL.h"
-#include "SDL_image.h"
-#include "SDL_ttf.h"
-
-#include <GL/gl.h>
-#include <GL/glu.h>
+#include <SDL.h>
+#include <SDL_opengl.h>
+#include <SDL_image.h>
+#include <SDL_ttf.h>
 
 #include "general.h"
 
+#include <string>
+
+using namespace std;
 
 //---------------------------------------------------------------------
 //-   Texture types (used for giving crenderer.texture index names)

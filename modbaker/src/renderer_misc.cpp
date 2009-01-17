@@ -223,6 +223,9 @@ bool c_renderlist::build()
 //			is_water = mesh_has_some_bits(mm->tilelst, fan, MPDFX_WATER);
 
 			is_norml = true; // TODO: Added by xenom
+      is_noref = false;
+      is_shine = false;
+      is_water = false;
 
 			// Put each tile in basic list
 			this->m_totl[this->m_num_totl] = fan;

@@ -21,11 +21,8 @@
 //-   Everything regarding the input
 //-
 //---------------------------------------------------------------------
-#include <iostream>
-
 #include <SDL.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
+#include <SDL_opengl.h>
 
 #include "global.h"
 #include "modbaker.h"
@@ -33,6 +30,7 @@
 #include "renderer.h"
 #include "edit.h"
 
+#include <iostream>
 
 //---------------------------------------------------------------------
 //-   Handle window events (focus, resize, ...)

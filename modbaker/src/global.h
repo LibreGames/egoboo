@@ -23,14 +23,15 @@
 //-   This file contains global defined stuff
 //-
 //---------------------------------------------------------------------
-#include <vector>
-
-using namespace std;
 
 #include "edit.h"
 #include "renderer.h"
 #include "mesh.h"
 #include "frustum.h"
+
+#include <vector>
+
+using namespace std;
 
 // Mouse / input stuff
 // Implemented in controls.cpp

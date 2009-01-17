@@ -16,23 +16,21 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //---------------------------------------------------------------------
-#include <iostream>
-#include <stdlib.h>
-#include <string>
-
-using namespace std;
 
 #include <SDL.h>
+#include <SDL_opengl.h>
 #include <SDL_types.h>
 #include <SDL_endian.h>
-
-#include <GL/gl.h>
-#include <GL/glu.h>
 
 #include "general.h"
 #include "modbaker.h"
 #include "global.h"
 
+#include <iostream>
+#include <stdlib.h>
+#include <string>
+
+using namespace std;
 
 //---------------------------------------------------------------------
 //-   The main function

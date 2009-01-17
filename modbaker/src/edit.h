@@ -19,11 +19,11 @@
 #ifndef edit_h
 #define edit_h
 
+#include "general.h"
+
 #include <vector>
 
 using namespace std;
-
-#include "general.h"
 
 class c_selection
 {

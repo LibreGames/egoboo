@@ -23,11 +23,11 @@
 //-   Utility functions for filesystem access
 //-
 //---------------------------------------------------------------------
-#include <iostream>
-#include <fstream>
 
 #include "global.h"
 
+#include <iostream>
+#include <fstream>
 using namespace std;
 
 void fgoto_colon(ifstream &);
