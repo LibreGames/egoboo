@@ -1,0 +1,39 @@
+<html>
+	<head>
+		<title>utility.cpp / utility.cpp</title>
+		<link rel="stylesheet" type="text/css" href="documentation.css"/>
+	</head>
+	<body>
+		<h1>utility.cpp / utility.h</h1>
+
+		<h2>General information</h2>
+		<p>Helper functions for the egoboo control files (like fans.txt).</p>
+
+
+		<h2>Functions</h2>
+
+		<h3>void fgoto_colon(ifstream &amp;);</h3>
+		<p>Calls fgoto_colon_buffer with an empty buffer.</p>
+
+		<h3>bool fgoto_colon_yesno(ifstream &amp;);</h3>
+		<p>Calls fgoto_colon_yesno_buffer with an empty buffer.</p>
+
+		<h3>void fgoto_colon_buffer(ifstream &amp;, string, size_t);</h3>
+		<p>Calls fgoto_colon_yesno_buffer and aborts on error.</p>
+
+		<h3>bool fgoto_colon_yesno_buffer(ifstream &amp;, string, size_t);</h3>
+		<p>Gets the next colon. If none found, return false.</p>
+
+		<h3>int fget_int(ifstream &amp;);</h3>
+		<p>Reads an integer value.</p>
+
+		<h3>int fget_next_int(ifstream &amp;);</h3>
+		<p>Reads the integer value after the next colon.</p>
+
+		<h3>float fget_float(ifstream &amp;);</h3>
+		<p>Reads a float value.</p>
+
+		<h3>float fget_next_float(ifstream &amp;);</h3>
+		<p>Reads the float value after the next colon.</p>
+	</body>
+</html>

@@ -1,0 +1,63 @@
+<html>
+	<head>
+		<title>edit.cpp / edit.h</title>
+		<link rel="stylesheet" type="text/css" href="documentation.css"/>
+	</head>
+	<body>
+		<h1>edit.cpp / edit.h</h1>
+
+		<h2>General information</h2>
+		<p>Stores all stuff needed for editing.</p>
+
+		<h2>Defines</h2>
+		<p>
+			<ul>
+				<li>none</li>
+			</ul>
+		</p>
+
+		<h2>Defined types</h2>
+		<p>
+			<ul>
+				<li>c_selection</li>
+			</ul>
+		</p>
+
+
+		<h1>edit.cpp: c_selection</h1>
+
+		<h2>General information</h2>
+		<p>The selection.</p>
+
+
+		<h2>Member variables</h2>
+
+		<h3>vector<int> selection;</h3>
+		<p>A vector of vertices.</p>
+
+
+		<h2>Methods</h2>
+
+		<h3>c_selection::c_selection()</h3>
+		<p>Reset member values.</p>
+
+		<h3>public void c_selection::add_vertex(int vertex_number)</h3>
+		<p>Adds a vertex to the selection.</p>
+		<p>Parameter vertex_number: Number of the vertex to add.</p>
+
+		<h3>public void c_selection::clear()</h3>
+		<p>Clears the selection.</p>
+
+		<h3>public int c_selection::add_vertices_at_position(vect3 ref)</h3>
+		<p>DUMMY - currently unused</p>
+
+		<h3>public void c_selection::modify(float off_y)</h3>
+		<p>Modifies all vertices in the selection</p>
+		<p>Parameter off_y: Y units to modify (+/-)</p>
+
+		<h3>public bool c_selection::in_selection(int vertex)</h3>
+		<p>Returns true if the specified vertex is in the selection.</p>
+		<p>Parameter vertex: vertex number</p>
+
+	</body>
+</html>

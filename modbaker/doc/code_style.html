@@ -1,0 +1,56 @@
+<html>
+	<head>
+		<title>Code Style</title>
+		<link rel="stylesheet" type="text/css" href="documentation.css"/>
+	</head>
+	<body>
+		<h1>Code Style</h1>
+
+		<h2>No CamelCase</h2>
+		<p>Function names should not be coded in CamelCase.<br/>
+		Please use underscores instead.</p>
+		<p>Example: do_something();</p>
+
+		<h2>Class names</h2>
+		<p>Class names start with a c_</p>
+		<p>Example: class c_class {};</p>
+
+		<h2>Member variables</h2>
+		<p>Member variables (variables within a class definition) start with a m_</p>
+		<p>Example:
+			<pre>
+	class c_test()
+	{
+		private:
+			int m_test_integer;
+	};
+			</pre>
+		</p>
+
+		<h2>Text indent</h2>
+		<p>Please use tabs to indent text, not spaces.</p>
+
+		<h2>{ and }</h2>
+		<p>To make the code more readable, place the brackets { and } in an own line.</p>
+		<p>Example:
+			<pre>
+	int one()
+	{
+		return 1;
+	}
+			</pre>
+		</p>
+
+		<h2>For and If: ( and )</h2>
+		<p>Do not use spacing within the brackets</p>
+		<p>Example:
+			<pre>
+	if(test == 1)
+	{
+		do_domething();
+	}
+			</pre>
+		</p>
+
+	</body>
+</html>

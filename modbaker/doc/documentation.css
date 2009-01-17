@@ -1,0 +1,50 @@
+* {
+	font-family:      Arial, "Bitstream Vera Sans";
+}
+
+h1 {
+	background-color: #eeeeff;
+	border:           1px solid #000099;
+	color:            #000099;
+	font-size:        1.2em;
+	padding:          5px;
+}
+
+h2 {
+	background-color: #eeeeff;
+	color:            #000099;
+	font-size:        1.0em;
+	padding:          2px;
+	margin-left:      10px;
+}
+
+h3 {
+	color:            #000099;
+	font-size:        1.0em;
+	padding:          2px;
+	margin-left:      10px;
+	border-top:       1px solid #cccccc;
+}
+
+p {
+	margin-left:      10px;
+}
+
+pre {
+	font-family:      "Courier", monospace;
+	margin-left:      15px;
+	border:           1px dotted #cccccc;
+}
+
+table {
+	margin-left:      15px;
+}
+
+th {
+	background-color: #eeeeff;
+	border:           1px solid #cccccc;
+}
+
+td {
+	border:           1px solid #cccccc;
+}

@@ -1,0 +1,117 @@
+<html>
+	<head>
+		<title>mesh.cpp / mesh.h</title>
+		<link rel="stylesheet" type="text/css" href="documentation.css"/>
+	</head>
+	<body>
+		<h1>mesh.h</h1>
+
+		<h2>General information</h2>
+		<p>Definition of all rendering stuff.</p>
+
+		<h2>Defines</h2>
+		<p>
+			<ul>
+				<li>MAXMESHFAN</li>
+				<li>MAXMESHCOMMAND</li>
+				<li>MAXMESHSIZEY</li>
+				<li>MAXMESHTYPE</li>
+				<li>MAXMESHCOMMANDENTRIES</li>
+				<li>MAXMESHVERTICES</li>
+				<li>BYTESFOREACHVERTEX</li>
+				<li>MAXTILETYPE</li>
+				<li>TX_FUDGE</li>
+			</ul>
+		</p>
+
+		<h2>Defined types</h2>
+		<p>
+			<ul>
+				<li>TILE_TXBOX</li>
+				<li>c_mesh_info</li>
+				<li>AA_BBOX</li>
+				<li>MeshTile_t</li>
+				<li>c_mesh_mem</li>
+				<li>c_tile_definition</li>
+				<li>c_mesh</li>
+			</ul>
+		</p>
+
+
+		<h1>mesh.cpp: c_mesh_info</h1>
+
+		<h2>General information</h2>
+		<p>Stores general information about the mesh (like mesh dimensions).</p>
+
+		<h2></h2>
+		<p></p>
+
+
+		<h1>mesh.cpp: c_mesh_mem</h1>
+
+		<h2>General information</h2>
+		<p>Stores the vertex data.</p>
+
+		<h2>c_mesh_mem(int, int);</h2>
+		<p></p>
+
+		<h2>~c_mesh_mem();</h2>
+		<p></p>
+
+		<h2>private bool alloc_verts(int);</h2>
+		<p></p>
+
+		<h2>private bool alloc_fans(int);</h2>
+		<p></p>
+
+		<h2>private void dealloc_verts();</h2>
+		<p></p>
+
+		<h2>private void dealloc_fans();</h2>
+		<p></p>
+
+
+		<h1>mesh.cpp: c_tile_definition</h1>
+
+		<h2>General information</h2>
+		<p>Stores information about each tile type.</p>
+
+		<h2></h2>
+		<p></p>
+
+
+		<h1>mesh.cpp: c_tile_dict</h1>
+
+		<h2>General information</h2>
+		<p>Stores information about each tile type.</p>
+
+		<h2></h2>
+		<p></p>
+
+
+		<h1>mesh.cpp: c_mesh</h1>
+
+		<h2>General information</h2>
+		<p>Acts like a container holding all the mesh information together.</p>
+
+		<h2>public bool load_mesh_mpd(string);</h2>
+		<p></p>
+		<p>Parameter(s): Name of the module (like "advent.mod")</p>
+
+		<h2>public bool save_mesh_mpd(string);</h2>
+		<p></p>
+		<p>Parameter(s): Name of the module (like "advent.mod")</p>
+
+		<h2>public bool tiledict_load();</h2>
+		<p>Builds the tile dictionary.</p>
+
+		<h2>public int modify_verts(float, int);</h2>
+		<p>Modifies all vertices at the position of the specified tile.</p>
+		<p>Parameter 1: New height (-/+)</p>
+		<p>Parameter 2: Number of a fan</p>
+
+		<h2>public int get_nearest_vertex(float, float, float);</h2>
+		<p>Get the nearest vertex for the specified position.</p>
+		<p>Parameter(s): x, y, z coorinates</p>
+	</body>
+</html>

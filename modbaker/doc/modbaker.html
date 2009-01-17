@@ -1,0 +1,52 @@
+<html>
+	<head>
+		<title>modbaker.cpp / modbaker.h</title>
+		<link rel="stylesheet" type="text/css" href="documentation.css"/>
+	</head>
+	<body>
+		<h1>modbaker.cpp / modbaker.h</h1>
+
+		<h2>General information</h2>
+		<p>Definition of all rendering stuff.</p>
+
+		<h2>Defined types</h2>
+		<p>
+			<ul>
+				<li>c_modbaker</li>
+			</ul>
+		</p>
+
+		<h2>Definition of c_modbaker</h2>
+
+
+		<h2>Properties</h2>
+
+
+		<h3>private bool done</h3>
+		<p>true if the user wants to quit</p>
+
+		<h3>private bool active</h3>
+		<p>false if the user switches to another window.</p>
+
+		<h3>private bool selection_add</h3>
+		<p>If true, the next vertex gets added to the selection.<br/>If false, it replaces the selection.</p>
+
+
+		<h2>Methods</h2>
+
+
+		<h3>int main(int argc, char **argv)</h3>
+		<p>The main function</p>
+		<p>argv[1] is the level to load.</p>
+
+		<h3>c_modbaker::c_modbaker()</h3>
+		<p>Reset member values.</p>
+
+		<h3>public void c_modbaker::init(string modname)</h3>
+		<p>Calls all initialization functions.</p>
+		<p>string modname: Module name to load (e.g. zippy.mod)</p>
+
+		<h3>public void c_modbaker::main_loop()</h3>
+		<p>The mian loop.</p>
+	</body>
+</html>

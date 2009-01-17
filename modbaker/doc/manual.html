@@ -1,0 +1,78 @@
+<html>
+	<head>
+		<title>Manual</title>
+		<link rel="stylesheet" type="text/css" href="documentation.css"/>
+	</head>
+	<body>
+		<h1>Manual</h1>
+
+		<h2>Controls</h2>
+		<table>
+			<tr>
+				<th>Key</th>
+				<th>Description</th>
+			</tr>
+
+			<tr>
+				<td>Arrow keys</td>
+				<td>Move the camera</td>
+			</tr>
+
+			<tr>
+				<td>Page up / down</td>
+				<td>Zoom in / out</td>
+			</tr>
+
+			<tr>
+				<td>Esc</td>
+				<td>Quit ModBaker</td>
+			</tr>
+
+			<tr>
+				<td>W</td>
+				<td>increase the height of the selected vertices</td>
+			</tr>
+
+			<tr>
+				<td>S</td>
+				<td>Decrease the height of the selected vertices</td>
+			</tr>
+
+			<tr>
+				<td>Space</td>
+				<td>Clear the selection</td>
+			</tr>
+
+			<tr>
+				<td>F10</td>
+				<td>Save the .mpd file</td>
+			</tr>
+
+			<tr>
+				<td>Shift</td>
+				<td>Move faster<br/>When holding shift while clicking, the vertex gets added to the selection.</td>
+			</tr>
+		</table>
+
+		<h2>Module loading</h2>
+		<p>Copy a module into the modules directory.<br/>
+		Then use the following command to load the module:<br/>
+		<pre>./modbaker "zippy.mod"</pre><br/>
+		Or for Windows:<br/>
+		<pre>modbaker.exe "zippy.mod"</pre></p>
+
+		<h2>Building ModBaker</h2>
+		<p>To build ModBaker, use the Makefile.</p>
+
+		<h2>Required libraries</h2>
+		<p>
+			<ul>
+				<li>libSDL</li>
+				<li>SDL_TTF</li>
+				<li>SDL_image</li>
+				<li>OpenGL</li>
+			</ul>
+		</p>
+
+	</body>
+</html>

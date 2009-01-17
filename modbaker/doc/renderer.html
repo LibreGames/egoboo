@@ -1,0 +1,247 @@
+<html>
+	<head>
+		<title>renderer.cpp / renderer_misc.cpp / renderer.h</title>
+		<link rel="stylesheet" type="text/css" href="documentation.css"/>
+	</head>
+	<body>
+		<h1>renderer.cpp / renderer_misc.cpp / renderer.h</h1>
+
+		<h2>General information</h2>
+		<p>Contains everything related to graphic rendering.</p>
+
+		<h2>Defines</h2>
+		<p>
+			<ul>
+				<li>WINDOW_WIDTH</li>
+				<li>WINDOW_HEIGHT</li>
+				<li>SCREEN_BPP</li>
+				<li>MAX_TEXTURES</li>
+				<li>SCROLLFACTOR_FAST</li>
+				<li>SCROLLFACTOR_SLOW</li>
+				<li>DEG_TO_RAD</li>
+				<li>RAD_TO_DEG</li>
+				<li>FOV</li>
+				<li>INVALID_TILE</li>
+				<li>MAXMESHRENDER</li>
+				<li>rmask, bmask, gmask, amask</li>
+			</ul>
+		</p>
+
+
+		<h2>Defined types</h2>
+		<p>
+			<ul>
+				<li>GLVertex</li>
+				<li>Graphics_t</li>
+				<li>c_camera</li>
+				<li>c_renderlist</li>
+				<li>c_renderer</li>
+			</ul>
+		</p>
+
+
+
+		<h1>renderer.cpp: c_renderer</h1>
+		<p></p>
+
+
+		<h2>General information</h2>
+		<p>Functions for rendering the .mpd file.</p>
+
+
+		<h2>Properties</h2>
+
+
+		<h3>private Graphics_t m_gfxState</h3>
+		<p></p>
+
+		<h3>private GLuint m_texture[MAX_TEXTURES]</h3>
+		<p>Holds the texture index for all loaded textures.</p>
+
+		<h3>public SDL_Surface *m_screen</h3>
+		<p>The screen surface.</p>
+
+		<h3>public TTF_Font *m_font</h3>
+		<p>The font for the text display.</p>
+
+		<h3>public GLfloat m_fps</h3>
+		<p>Number of frames per second.</p>
+
+		<h3>public c_camera *m_cam</h3>
+		<p>The camera object.</p>
+
+		<h3>private const SDL_VideoInfo *m_videoInfo</h3>
+		<p></p>
+
+		<h3>public int m_videoFlags</h3>
+		<p></p>
+
+
+		<h2>Methods</h2>
+
+
+		<h3>c_renderer::c_renderer()</h3>
+		<p>Reset member values.</p>
+
+		<h3>c_renderer::~c_renderer()</h3>
+		<p>Cleanup.</p>
+
+		<h3>private void c_renderer::initSDL()</h3>
+		<p>Initializes SDL.</p>
+
+		<h3>private void c_renderer::initGL()</h3>
+		<p>Initializes OpenGL.</p>
+
+		<h3>public void c_renderer::resize_window(int width, int height)</h3>
+		<p>Actions performed on window resize.</p>
+
+		<h3>public void c_renderer::load_basic_textures(string modname)</h3>
+		<p>Load all basic textures.</p>
+
+		<h3>private bool c_renderer::load_texture(string imgname, int tileset)</h3>
+		<p>Load one texture.</p>
+
+		<h3>public void c_renderer::render_positions()</h3>
+		<p>Render markers for the position, map origin, ...</p>
+
+		<h3>public void c_renderer::draw_GL_Scene()</h3>
+		<p>Draws the scene to the screen.</p>
+
+		<h3>public void c_renderer::render_mesh()</h3>
+		<p>Renders the whole mesh.</p>
+
+		<h3>private void c_renderer::render_fan(Uint32 fan)</h3>
+		<p>Renders a single fan.</p>
+
+		<h3>public void c_renderer::begin_3D_mode()</h3>
+		<p>Activates OpenGL states required in 3D mode.</p>
+
+		<h3>public void c_renderer::end_3D_mode()</h3>
+		<p>Deactivates OpenGL states required in 3D mode.</p>
+
+		<h3>public void c_renderer::begin_2D_mode()</h3>
+		<p>Activates OpenGL states required in 2D mode.</p>
+
+		<h3>public void c_renderer::end_2D_mode()</h3>
+		<p>Deactivates OpenGL states required in 2D mode.</p>
+
+		<h3>public void c_renderer::render_text()</h3>
+		<p>Renders all text elements (FPS + position).</p>
+
+		<h3>private void c_renderer::render_text(string text, vect3 pos)</h3>
+		<p>Renders a single text element.</p>
+
+
+
+		<h1>renderer_misc.cpp: c_camera</h1>
+		<p></p>
+
+
+		<h2>Variables / Properties</h2>
+
+
+		<h3>vect3 m_pos</h3>
+		<p>The camera position.</p>
+
+		<h3>vect3 m_trackpos</h3>
+		<p>The camera target.</p>
+
+		<h3>float m_movex</h3>
+		<p>x units to move in the next frame.</p>
+
+		<h3>float m_movey</h3>
+		<p>y units to move in the next frame.</p>
+
+		<h3>float m_movez</h3>
+		<p>z units to move in the next frame.</p>
+
+		<h3>float m_roll</h3>
+		<p>For camera rotation.</p>
+
+		<h3>float m_factor</h3>
+		<p>Scroll factor (for faster scrolling).</p>
+
+		<h3>GLmatrix m_projection</h3>
+		<p>The projection matrix.</p>
+
+		<h3>GLmatrix m_projection_big</h3>
+		<p>A bigger projection matrix for frustum culling.</p>
+
+		<h3>GLmatrix m_view</h3>
+		<p>The view matrix.</p>
+
+
+		<h2>Methods</h2>
+
+
+		<h3>c_camera::c_camera()</h3>
+		<p>Reset member values.</p>
+
+		<h3>void c_camera::reset()</h3>
+		<p>Cleanup.</p>
+
+		<h3>public void c_camera::move()</h3>
+		<p>Moves the camera.</p>
+
+		<h3>private GLmatrix c_camera::make_view_matrix(</h3>
+		<p>Stores the view matrix</p>
+
+		<h3>private GLmatrix c_camera::make_projection_matrix(</h3>
+		<p>Stores the projection matrix.</p>
+
+		<h3>private void c_camera::_cam_frustum_jitter_fov(</h3>
+		<p></p>
+
+		<h3>private void c_camera::make_matrix()</h3>
+		<p></p>
+
+
+
+		<h1>renderer_misc.cpp: c_renderlist</h1>
+		<p></p>
+
+
+		<h2>Variables / Properties</h2>
+
+
+		<h3>int m_num_totl</h3>
+		<p>Total number of tiles.</p>
+
+		<h3>Uint32 m_totl[MAXMESHRENDER]</h3>
+		<p>List of tiles.</p>
+
+		<h3>int m_num_shine</h3>
+		<p>Number of shiny tiles.</p>
+
+		<h3>Uint32 m_shine[MAXMESHRENDER]</h3>
+		<p>List of tiny tiles.</p>
+
+		<h3>int m_num_reflc</h3>
+		<p>Number of reflecting tiles.</p>
+
+		<h3>Uint32 m_reflc[MAXMESHRENDER]</h3>
+		<p>List of reflecting tiles.</p>
+
+		<h3>int m_num_norm</h3>
+		<p>Number of normal tiles.</p>
+
+		<h3>Uint32 m_norm[MAXMESHRENDER]</h3>
+		<p>List of normal tiles.</p>
+
+		<h3>int m_num_watr</h3>
+		<p>Number of water tiles.</p>
+
+		<h3>Uint32 m_watr[MAXMESHRENDER]</h3>
+		<p>List of water tiles.</p>
+
+		<h3>Uint32 m_watr_mode[MAXMESHRENDER]</h3>
+		<p>Water mode</p>
+
+
+		<h2>Methods</h2>
+
+
+		<h3>public bool c_renderlist::build()</h3>
+		<p>Builds the renderlist.</p>
+	</body>
+</html>
