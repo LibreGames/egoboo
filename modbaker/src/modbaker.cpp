@@ -86,30 +86,32 @@ void c_modbaker::init(string modname)
 //---------------------------------------------------------------------
 void c_modbaker::main_loop()
 {
-	g_renderer.m_cam->reset();
+	g_renderer.getPCam()->reset();
 
-	while (!this->done)
+	while ( !done )
 	{
-		if (this->active ) {
+		if ( active ) 
+    {
+      g_renderer.begin_frame();
 //			{ // TODO: move to crenderer::render()
 				// 3D mode
 				g_renderer.begin_3D_mode();
-				g_renderer.render_positions();
-				g_renderer.m_cam->move();
-				g_renderer.render_mesh();
-				this->get_GL_pos(g_mouse_x, g_mouse_y);
+				  g_renderer.render_positions();
+				  g_renderer.getPCam()->move();
+				  g_renderer.render_mesh();
+				  get_GL_pos(g_mouse_x, g_mouse_y);
 				g_renderer.end_3D_mode();
 
 				// 2D mode
 				g_renderer.begin_2D_mode();
-				g_renderer.render_text();
+				  g_renderer.render_text();
 				g_renderer.end_2D_mode();
 
-				g_renderer.draw_GL_Scene();  // Finally render the scene
+        g_renderer.end_frame();  // Finally render the scene
 //			}
 		}
 
-		this->handle_game_events();
-		this->handle_window_events();
+		handle_game_events();
+		handle_window_events();
 	}
 }

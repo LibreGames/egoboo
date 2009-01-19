@@ -27,11 +27,11 @@
 //---------------------------------------------------------------------
 c_camera::c_camera()
 {
-	this->m_movex  = 0.0f;
-	this->m_movey  = 0.0f;
-	this->m_movez  = 0.0f;
+	m_movex  = 0.0f;
+	m_movey  = 0.0f;
+	m_movez  = 0.0f;
 
-	this->m_factor = SCROLLFACTOR_SLOW;
+	m_factor = SCROLLFACTOR_SLOW;
 
 	this->reset();
 }
@@ -39,14 +39,14 @@ c_camera::c_camera()
 
 void c_camera::reset()
 {
-	this->m_pos.x = 0.0f;
-	this->m_pos.y = 0.0f;
-	this->m_pos.z = 0.0f;
-	this->m_pos.z = -3000.0f; // Move 3000 units up
+	m_pos.x = 0.0f;
+	m_pos.y = 0.0f;
+	m_pos.z = 0.0f;
+	m_pos.z = -3000.0f; // Move 3000 units up
 
-	this->m_trackpos.x = this->m_pos.x;
-	this->m_trackpos.y = this->m_pos.y;
-	this->m_trackpos.z = this->m_pos.z - 1.0f;
+	m_trackpos.x = m_pos.x;
+	m_trackpos.y = m_pos.y;
+	m_trackpos.z = m_pos.z - 1.0f;
 }
 
 
@@ -54,9 +54,9 @@ void c_camera::move()
 {
 	if (g_renderer.m_fps > 0)
 	{
-		this->m_pos.x += (this->m_movex / g_renderer.m_fps) * this->m_factor;
-		this->m_pos.y += (this->m_movey / g_renderer.m_fps) * this->m_factor;
-		this->m_pos.z += (this->m_movez / g_renderer.m_fps) * this->m_factor;
+		m_pos.x += (m_movex / g_renderer.m_fps) * m_factor;
+		m_pos.y += (m_movey / g_renderer.m_fps) * m_factor;
+		m_pos.z += (m_movez / g_renderer.m_fps) * m_factor;
 	}
 
 	this->make_matrix();
@@ -79,7 +79,7 @@ GLmatrix c_camera::make_view_matrix(
 	glLoadIdentity();
 
 	// Move the camera
-	glTranslatef(this->m_pos.x, this->m_pos.y, this->m_pos.z);
+	glTranslatef(m_pos.x, m_pos.y, m_pos.z);
 //	glScalef(-1, 1, 1);
 
 	// Load the current matrix stack to view
@@ -163,7 +163,7 @@ void c_camera::_cam_frustum_jitter_fov(
 		nearval, farval
 	);
 
-	glGetFloatv(GL_PROJECTION_MATRIX, this->m_projection.v);
+	glGetFloatv(GL_PROJECTION_MATRIX, m_projection.v);
 
 	glPopMatrix();
 }
@@ -181,7 +181,7 @@ void c_camera::make_matrix()
 	worldup.y = 1.0f;
 	worldup.z = 0;
 
-	this->m_view = this->make_view_matrix(this->m_pos, this->m_trackpos, worldup, 0);
+	m_view = this->make_view_matrix(m_pos, m_trackpos, worldup, 0);
 
 	dither_x = 2.0f * (float) rand() / (float) RAND_MAX - 1.0f;
 	dither_y = 2.0f * (float) rand() / (float) RAND_MAX - 1.0f;
@@ -189,7 +189,7 @@ void c_camera::make_matrix()
 //	this->_cam_frustum_jitter_fov(10.0f, 20000.0f, DEG_TO_RAD*FOV, dither_x, dither_y);
 	this->_cam_frustum_jitter_fov(10.0f, 20000.0f, DEG_TO_RAD*FOV, 1.0, 1.0);
 
-	g_frustum.CalculateFrustum(this->m_projection_big.v, this->m_view.v);
+	g_frustum.CalculateFrustum(m_projection_big.v, m_view.v);
 }
 
 
@@ -201,17 +201,17 @@ bool c_renderlist::build()
 	Uint32 fan;
 
 	// Reset the values
-	this->m_num_totl  = 0;
-	this->m_num_shine = 0;
-	this->m_num_reflc = 0;
-	this->m_num_norm  = 0;
-	this->m_num_watr  = 0;
+	m_num_totl  = 0;
+	m_num_shine = 0;
+	m_num_reflc = 0;
+	m_num_norm  = 0;
+	m_num_watr  = 0;
 
 	for (fan = 0; fan < g_mesh.mi->tile_count; fan++)
 	{
 		g_mesh.mem->tilelst[fan].inrenderlist = false;
 
-		if (this->m_num_totl < MAXMESHRENDER)
+		if (m_num_totl < MAXMESHRENDER)
 		{
 			bool is_shine, is_noref, is_norml, is_water;
 
@@ -228,27 +228,27 @@ bool c_renderlist::build()
       is_water = false;
 
 			// Put each tile in basic list
-			this->m_totl[this->m_num_totl] = fan;
-			this->m_num_totl++;
+			m_totl[m_num_totl] = fan;
+			m_num_totl++;
 //			mesh_fan_add_renderlist(mm->tilelst, fan);
 
 			// Put each tile
 			if (!is_noref)
 			{
-				this->m_reflc[this->m_num_reflc] = fan;
-				this->m_num_reflc++;
+				m_reflc[m_num_reflc] = fan;
+				m_num_reflc++;
 			}
 
 			if (is_shine)
 			{
-				this->m_shine[this->m_num_shine] = fan;
-				this->m_num_shine++;
+				m_shine[m_num_shine] = fan;
+				m_num_shine++;
 			}
 
 			if (is_norml)
 			{
-				this->m_norm[this->m_num_norm] = fan;
-				this->m_num_norm++;
+				m_norm[m_num_norm] = fan;
+				m_num_norm++;
 			}
 
 			if (is_water)
@@ -259,10 +259,10 @@ bool c_renderlist::build()
 				ty = fan / g_mesh.mi->tiles_x;
 				tx = fan % g_mesh.mi->tiles_x;
 
-				this->m_watr_mode[this->m_num_watr] = ((ty & 1) << 1) + (tx & 1);
-				this->m_watr[this->m_num_watr]      = fan;
+				m_watr_mode[m_num_watr] = ((ty & 1) << 1) + (tx & 1);
+				m_watr[m_num_watr]      = fan;
 
-				this->m_num_watr++;
+				m_num_watr++;
 			}
 		}
 	}

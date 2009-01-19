@@ -27,7 +27,11 @@
 #include "mesh.h"
 #include "renderer.h"
 
-class c_modbaker {
+#include <stdexcept>
+
+
+class c_modbaker 
+{
 	private:
 		bool done;
 		bool active;

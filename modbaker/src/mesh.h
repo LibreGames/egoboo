@@ -77,8 +77,6 @@ class c_mesh_info
 		float   edge_x;                     // floating point size of mesh
 		float   edge_y;                     //
 
-		Uint16  last_texture;               // Last texture used
-
 		Uint32  Block_X[(MAXMESHSIZEY >> 2) +1];
 		Uint32  Tile_X[MAXMESHSIZEY];       // Which fan to start a row with
 

@@ -21,14 +21,16 @@
 //-   Everything regarding the input
 //-
 //---------------------------------------------------------------------
-#include <SDL.h>
-#include <SDL_opengl.h>
 
 #include "global.h"
 #include "modbaker.h"
 #include "mesh.h"
 #include "renderer.h"
 #include "edit.h"
+#include "SDL_extensions.h"
+
+#include <SDL.h>
+#include <SDL_opengl.h>
 
 #include <iostream>
 
@@ -44,33 +46,43 @@ int c_modbaker::handle_window_events()
 	{
 		switch (event.type)
 		{
-			/* Something's happend with our focus
-			* If we lost focus or we are iconified, we
-			* shouldn't draw the screen
-			*/
 			case SDL_ACTIVEEVENT:
-				if (event.active.gain == 0)
-					this->active = false;
-				else
-					this->active = true;
-				break;			    
+			    /* Something's happend with our focus
+			     * If we lost focus or we are iconified, we
+			     * shouldn't draw the screen
+			     */
+					active = ((event.active.state == SDL_APPMOUSEFOCUS) || 
+                    (event.active.state == SDL_APPINPUTFOCUS) ||
+                    (event.active.state == SDL_APPACTIVE)) && 
+                    event.active.gain == 1;
+          break;
 
-
+      case SDL_VIDEOEXPOSE:
+        active = true;
+        break;
+		    
 			// Window resize
 			case SDL_VIDEORESIZE:
-				g_renderer.m_screen = SDL_SetVideoMode(event.resize.w, event.resize.h, SCREEN_BPP, g_renderer.m_videoFlags);
-				if (!g_renderer.m_screen)
-				{
-					cout << "Could not get a surface after resize: " << SDL_GetError() << endl;
-					Quit();
-				}
-				g_renderer.resize_window(event.resize.w, event.resize.h);
+        {
+          sdl_video_parameters_t new_scr = g_renderer.getSDL();
+
+          new_scr.width  = event.resize.w;
+          new_scr.height = event.resize.h;
+
+          if ( NULL == sdl_set_mode( &g_renderer.getSDL(), &new_scr, &g_renderer.getOGL()) )
+				  {
+					  cout << "Could not get a surface after resize: " << SDL_GetError() << endl;
+            throw modbaker_exception("Could not get a surface after resize");
+					  Quit();
+				  }
+				  g_renderer.resize_window(event.resize.w, event.resize.h);
+        }
 				break;
 
 
 			// Quit request
 			case SDL_QUIT:
-				this->done = true;
+				done = true;
 				break;
 
 			default:
@@ -148,37 +160,37 @@ void c_modbaker::handle_key_press(SDL_keysym *keysym)
 			break;
 
 		case SDLK_F1:
-			SDL_WM_ToggleFullScreen(g_renderer.m_screen);
+      SDL_WM_ToggleFullScreen(g_renderer.getSDL().surface);
 			break;
 
 		// Camera control
 		case SDLK_RIGHT:
-			g_renderer.m_cam->m_movex += 5.0f;
+			g_renderer.getPCam()->m_movex += 5.0f;
 			break;
 
 		case SDLK_LEFT:
-			g_renderer.m_cam->m_movex -= 5.0f;
+			g_renderer.getPCam()->m_movex -= 5.0f;
 			break;
 
 		case SDLK_UP:
-			g_renderer.m_cam->m_movey += 5.0f;
+			g_renderer.getPCam()->m_movey += 5.0f;
 			break;
 
 		case SDLK_DOWN:
-			g_renderer.m_cam->m_movey -= 5.0f;
+			g_renderer.getPCam()->m_movey -= 5.0f;
 			break;
 
 		case SDLK_PAGEUP:
-			g_renderer.m_cam->m_movez += 5.0f;
+			g_renderer.getPCam()->m_movez += 5.0f;
 			break;
 
 		case SDLK_PAGEDOWN:
-			g_renderer.m_cam->m_movez -= 5.0f;
+			g_renderer.getPCam()->m_movez -= 5.0f;
 			break;
 
 		case SDLK_LSHIFT:
 		case SDLK_RSHIFT:
-			g_renderer.m_cam->m_factor = SCROLLFACTOR_FAST;
+			g_renderer.getPCam()->m_factor = SCROLLFACTOR_FAST;
 			this->selection_add = true;
 			break;
 
@@ -215,32 +227,32 @@ void c_modbaker::handle_key_release(SDL_keysym *keysym)
 	{
 		// Camera control
 		case SDLK_RIGHT:
-			g_renderer.m_cam->m_movex = 0.0f;
+			g_renderer.getPCam()->m_movex = 0.0f;
 			break;
 
 		case SDLK_LEFT:
-			g_renderer.m_cam->m_movex = 0.0f;
+			g_renderer.getPCam()->m_movex = 0.0f;
 			break;
 
 		case SDLK_DOWN:
-			g_renderer.m_cam->m_movey = 0.0f;
+			g_renderer.getPCam()->m_movey = 0.0f;
 			break;
 
 		case SDLK_UP:
-			g_renderer.m_cam->m_movey = 0.0f;
+			g_renderer.getPCam()->m_movey = 0.0f;
 			break;
 
 		case SDLK_PAGEUP:
-			g_renderer.m_cam->m_movez = 0.0f;
+			g_renderer.getPCam()->m_movez = 0.0f;
 			break;
 
 		case SDLK_PAGEDOWN:
-			g_renderer.m_cam->m_movez = 0.0f;
+			g_renderer.getPCam()->m_movez = 0.0f;
 			break;
 
 		case SDLK_LSHIFT:
 		case SDLK_RSHIFT:
-			g_renderer.m_cam->m_factor = SCROLLFACTOR_SLOW;
+			g_renderer.getPCam()->m_factor = SCROLLFACTOR_SLOW;
 			this->selection_add = false;
 			break;
 

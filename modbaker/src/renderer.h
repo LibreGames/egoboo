@@ -18,18 +18,21 @@
 //---------------------------------------------------------------------
 #ifndef graphic_h
 #define graphic_h
+
 //---------------------------------------------------------------------
 //-
 //-   Everything related to OpenGL, SDL or rendering goes in here
 //-
 //---------------------------------------------------------------------
 
+#include "general.h"
+#include "SDL_extensions.h"
+#include "ogl_extensions.h"
+
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
-
-#include "general.h"
 
 #include <string>
 
@@ -55,7 +58,7 @@ enum
 //---------------------------------------------------------------------
 #define WINDOW_WIDTH    640
 #define WINDOW_HEIGHT   480
-#define SCREEN_BPP       16
+#define SCREEN_BPP       24
 
 #define MAX_TEXTURES      8    // Number of tileset images (default: 8)
 #define SCROLLFACTOR_FAST 200.0f // The default factor for scrolling
@@ -83,11 +86,13 @@ enum
 	const Uint32 amask = 0x000000ff;
 #endif
 
+struct Graphics_t;
+
 
 //---------------------------------------------------------------------
 //-   
 //---------------------------------------------------------------------
-struct ogl_vertex_t
+struct GLVertex
 {
 	vect4 pos;
 	vect4 col;
@@ -98,17 +103,39 @@ struct ogl_vertex_t
 	vect3 up;
 	vect3 rt;
 };
-typedef struct ogl_vertex_t GLVertex;
 
+
+//---------------------------------------------------------------------
+//-   Wrapper function for SDL and GL video initialization 
+//---------------------------------------------------------------------
+
+struct video_parameters : public sdl_video_parameters_t
+{
+  video_parameters()
+  {
+    // use the "base class constructor"
+    sdl_video_parameters_default( get_pbase() );
+
+    // set the window screen height with our default values
+    width  = WINDOW_WIDTH;
+    height = WINDOW_HEIGHT;
+  }
+
+  sdl_video_parameters_t * get_pbase() { return static_cast<sdl_video_parameters_t *>(this); }
+
+  static bool download( video_parameters * p, Graphics_t * g );
+  static bool upload  ( video_parameters * p, Graphics_t * g );
+};
 
 //---------------------------------------------------------------------
 //-                                                                   -
 //---------------------------------------------------------------------
-struct sGraphics
+struct Graphics_t
 {
-	GLenum shading; // current shading type
+  /// values set when initializing the video mode
+  sdl_video_parameters_t sdl_vid;
+  ogl_video_parameters_t ogl_vid;
 };
-typedef struct sGraphics Graphics_t;
 
 
 //---------------------------------------------------------------------
@@ -178,9 +205,13 @@ class c_renderlist
 //---------------------------------------------------------------------
 class c_renderer
 {
-	private:
+  enum TMODE {JLEFT, JRIGHT};
+
+  friend class c_camera;
+
+	protected:
 		Graphics_t m_gfxState;
-		GLuint m_texture[MAX_TEXTURES];
+		GLuint     m_texture[MAX_TEXTURES];
 
 		void initSDL();
 		void initGL();
@@ -188,24 +219,20 @@ class c_renderer
 		void render_fan(Uint32);
 		bool load_texture(string, int);
 
-		void render_text(string, vect3);
+		void render_text(string, vect3, TMODE mode = JLEFT);
 
-		const SDL_VideoInfo *m_videoInfo; // this holds some info about our display
+		TTF_Font    *m_font;
+		GLfloat      m_fps;
+		c_camera    *m_cam;
 
 	public:
 		c_renderer();
 		~c_renderer();
 
-		SDL_Surface *m_screen;
-		TTF_Font *m_font;
-		GLfloat m_fps;
-		c_camera *m_cam;
-
-		int m_videoFlags;                 // Flags to pass to SDL_SetVideoMode
-
 		void resize_window(int, int);
 		void render_positions();
-		void draw_GL_Scene();
+    void begin_frame();
+		void end_frame();
 
 		void begin_3D_mode();
 		void begin_2D_mode();
@@ -216,6 +243,14 @@ class c_renderer
 
 		void load_basic_textures(string);
 		void render_mesh();
+
+    SDL_Surface            * getPScreen() { return m_gfxState.sdl_vid.surface; };
+    Graphics_t             & getState()   { return m_gfxState; }
+    ogl_video_parameters_t & getOGL()     { return m_gfxState.ogl_vid; }
+    sdl_video_parameters_t & getSDL()     { return m_gfxState.sdl_vid; }
+
+    c_camera * getPCam()          { return m_cam; }
+
 
 		c_renderlist m_renderlist;
 };

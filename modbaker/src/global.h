@@ -16,8 +16,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //---------------------------------------------------------------------
-#ifndef global_h
+#pragma once
+
 #define global_h
+
 //---------------------------------------------------------------------
 //-
 //-   This file contains global defined stuff
@@ -58,4 +60,27 @@ extern vector<c_tile_definition> g_tiledict;
 // Implmented in global.cpp
 extern float calculate_distance(vect3, vect3); // TODO: Move to graphic stuff
 extern void Quit();
-#endif
+
+class modbaker_exception : public std::runtime_error
+{
+public:
+  // Constructors
+  modbaker_exception(const string &error)
+    : std::runtime_error(error) { };
+
+  modbaker_exception(const string &error, const string &filename)
+    : std::runtime_error(error), _which(filename) { };
+
+  virtual ~modbaker_exception() throw() { }
+
+public:
+  // Public interace
+  virtual const char *which() const throw() {
+    return _which.c_str();
+  }
+
+private:
+  // Member variables
+  string _which;
+};
+
