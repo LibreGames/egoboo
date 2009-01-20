@@ -32,6 +32,8 @@
 #include "frustum.h"
 
 #include <vector>
+#include <stdexcept>
+
 
 using namespace std;
 
@@ -61,26 +63,24 @@ extern vector<c_tile_definition> g_tiledict;
 extern float calculate_distance(vect3, vect3); // TODO: Move to graphic stuff
 extern void Quit();
 
-class modbaker_exception : public std::runtime_error
+class modbaker_exception : public runtime_error
 {
-public:
-  // Constructors
-  modbaker_exception(const string &error)
-    : std::runtime_error(error) { };
+	public:
+		// Constructors
+		modbaker_exception(const string &error)
+			: std::runtime_error(error) { };
 
-  modbaker_exception(const string &error, const string &filename)
-    : std::runtime_error(error), _which(filename) { };
+		modbaker_exception(const string &error, const string &filename)
+			: std::runtime_error(error), _which(filename) { };
 
-  virtual ~modbaker_exception() throw() { }
+		virtual ~modbaker_exception() throw() { }
 
-public:
-  // Public interace
-  virtual const char *which() const throw() {
-    return _which.c_str();
-  }
+		// Public interace
+		virtual const char *which() const throw() {
+			return _which.c_str();
+		}
 
-private:
-  // Member variables
-  string _which;
+	private:
+		// Member variables
+		string _which;
 };
-

@@ -27,9 +27,6 @@
 #include "mesh.h"
 #include "renderer.h"
 
-#include <stdexcept>
-
-
 class c_modbaker 
 {
 	private:
