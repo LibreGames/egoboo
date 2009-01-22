@@ -19,6 +19,7 @@
 
 
 #include "frustum.h"
+#include "ogl_debug.h"
 
 #include <SDL_opengl.h>
 #include <cmath>
@@ -33,9 +34,9 @@ void c_frustum::NormalizePlane(FrustumSide side)
 	// Remember that (A, B, C) is that same thing as the normal's (X, Y, Z).
 	// To calculate magnitude you use the equation:  magnitude = sqrt( x^2 + y^2 + z^2)
 	float magnitude = (float) sqrt(
-		this->planes[side][A] * this->planes[side][A] +
-		this->planes[side][B] * this->planes[side][B] +
-		this->planes[side][C] * this->planes[side][C] );
+						  this->planes[side][A] * this->planes[side][A] +
+						  this->planes[side][B] * this->planes[side][B] +
+						  this->planes[side][C] * this->planes[side][C] );
 
 	// Then we divide the plane's values by it's magnitude.
 	// This makes it easier to work with.
@@ -327,28 +328,28 @@ bool c_frustum::BBoxInFrustum(float corner1[], float corner2[])
 	for ( i = 0; i < 6; i++ )
 	{
 		if ( this->planes[i][A] * corner1[0] + this->planes[i][B] * corner1[1] + this->planes[i][C] * corner1[2] + this->planes[i][D] > 0 )
-		continue;
+			continue;
 
 		if ( this->planes[i][A] * corner1[0] + this->planes[i][B] * corner1[1] + this->planes[i][C] * corner2[2] + this->planes[i][D] > 0 )
-		continue;
+			continue;
 
 		if ( this->planes[i][A] * corner1[0] + this->planes[i][B] * corner2[1] + this->planes[i][C] * corner1[2] + this->planes[i][D] > 0 )
-		continue;
+			continue;
 
 		if ( this->planes[i][A] * corner1[0] + this->planes[i][B] * corner2[1] + this->planes[i][C] * corner2[2] + this->planes[i][D] > 0 )
-		continue;
+			continue;
 
 		if ( this->planes[i][A] * corner2[0] + this->planes[i][B] * corner1[1] + this->planes[i][C] * corner1[2] + this->planes[i][D] > 0 )
-		continue;
+			continue;
 
 		if ( this->planes[i][A] * corner2[0] + this->planes[i][B] * corner1[1] + this->planes[i][C] * corner2[2] + this->planes[i][D] > 0 )
-		continue;
+			continue;
 
 		if ( this->planes[i][A] * corner2[0] + this->planes[i][B] * corner2[1] + this->planes[i][C] * corner1[2] + this->planes[i][D] > 0 )
-		continue;
+			continue;
 
 		if ( this->planes[i][A] * corner2[0] + this->planes[i][B] * corner2[1] + this->planes[i][C] * corner2[2] + this->planes[i][D] > 0 )
-		continue;
+			continue;
 
 		// If we get here, it isn't in the frustum
 		return false;

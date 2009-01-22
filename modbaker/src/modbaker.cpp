@@ -72,7 +72,7 @@ c_modbaker::c_modbaker()
 //---------------------------------------------------------------------
 void c_modbaker::init(string modname)
 {
-	g_mesh.tiledict_load();
+	g_mesh.getTileDictioary().load();
 	g_mesh.load_mesh_mpd("modules/" + modname + "/gamedat/level.mpd");
 
 	g_renderer.load_basic_textures(modname);
@@ -90,24 +90,24 @@ void c_modbaker::main_loop()
 
 	while ( !done )
 	{
-		if ( active ) 
-    {
-      g_renderer.begin_frame();
+		if ( active )
+		{
+			g_renderer.begin_frame();
 //			{ // TODO: move to crenderer::render()
-				// 3D mode
-				g_renderer.begin_3D_mode();
-				  g_renderer.render_positions();
-				  g_renderer.getPCam()->move();
-				  g_renderer.render_mesh();
-				  get_GL_pos(g_mouse_x, g_mouse_y);
-				g_renderer.end_3D_mode();
+			// 3D mode
+			g_renderer.begin_3D_mode();
+			g_renderer.getPCam()->move();
+			g_renderer.render_mesh();
+			g_renderer.render_positions();
+			get_GL_pos(g_mouse_x, g_mouse_y);
+			g_renderer.end_3D_mode();
 
-				// 2D mode
-				g_renderer.begin_2D_mode();
-				  g_renderer.render_text();
-				g_renderer.end_2D_mode();
+			// 2D mode
+			g_renderer.begin_2D_mode();
+			g_renderer.render_text();
+			g_renderer.end_2D_mode();
 
-        g_renderer.end_frame();  // Finally render the scene
+			g_renderer.end_frame();  // Finally render the scene
 //			}
 		}
 

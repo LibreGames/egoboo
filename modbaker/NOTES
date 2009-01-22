@@ -1,0 +1,13 @@
+I propose that we use astyle to auto-format the code
+
+
+The current code is formatted with the command
+
+	astyle --mode=ansi -t4T4yCSKNwpoOX
+
+which comes closest to what xenom has proposed.
+
+
+astyle is available on all linux systems. It can be downloaded and installed on win32 systems from http://gnuwin32.sourceforge.net/packages.html.
+
+- Ben Birdsey

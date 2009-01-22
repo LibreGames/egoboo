@@ -27,7 +27,9 @@
 #include "mesh.h"
 #include "renderer.h"
 #include "edit.h"
+
 #include "SDL_extensions.h"
+#include "ogl_debug.h"
 
 #include <SDL.h>
 #include <SDL_opengl.h>
@@ -47,40 +49,40 @@ int c_modbaker::handle_window_events()
 		switch (event.type)
 		{
 			case SDL_ACTIVEEVENT:
-			    /* Something's happend with our focus
-			     * If we lost focus or we are iconified, we
-			     * shouldn't draw the screen
-			     */
-					active = ((event.active.state == SDL_APPMOUSEFOCUS) || 
-                    (event.active.state == SDL_APPINPUTFOCUS) ||
-                    (event.active.state == SDL_APPACTIVE)) && 
-                    event.active.gain == 1;
-          break;
+				/* Something's happend with our focus
+				 * If we lost focus or we are iconified, we
+				 * shouldn't draw the screen
+				 */
+				active = ((event.active.state == SDL_APPMOUSEFOCUS) ||
+						  (event.active.state == SDL_APPINPUTFOCUS) ||
+						  (event.active.state == SDL_APPACTIVE)) &&
+						 event.active.gain == 1;
+				break;
 
-      case SDL_VIDEOEXPOSE:
-        active = true;
-        break;
-		    
-			// Window resize
+			case SDL_VIDEOEXPOSE:
+				active = true;
+				break;
+
+				// Window resize
 			case SDL_VIDEORESIZE:
-        {
-          sdl_video_parameters_t new_scr = g_renderer.getSDL();
+				{
+					sdl_video_parameters_t new_scr = g_renderer.getSDL();
 
-          new_scr.width  = event.resize.w;
-          new_scr.height = event.resize.h;
+					new_scr.width  = event.resize.w;
+					new_scr.height = event.resize.h;
 
-          if ( NULL == sdl_set_mode( &g_renderer.getSDL(), &new_scr, &g_renderer.getOGL()) )
-				  {
-					  cout << "Could not get a surface after resize: " << SDL_GetError() << endl;
-            throw modbaker_exception("Could not get a surface after resize");
-					  Quit();
-				  }
-				  g_renderer.resize_window(event.resize.w, event.resize.h);
-        }
+					if ( NULL == sdl_set_mode( &g_renderer.getSDL(), &new_scr, &g_renderer.getOGL()) )
+					{
+						cout << "Could not get a surface after resize: " << SDL_GetError() << endl;
+						throw modbaker_exception("Could not get a surface after resize");
+						Quit();
+					}
+					g_renderer.resize_window(event.resize.w, event.resize.h);
+				}
 				break;
 
 
-			// Quit request
+				// Quit request
 			case SDL_QUIT:
 				done = true;
 				break;
@@ -106,25 +108,25 @@ int c_modbaker::handle_game_events()
 	{
 		switch (event.type)
 		{
-			// Keyboard input
-			// handle key presses
+				// Keyboard input
+				// handle key presses
 			case SDL_KEYDOWN:
 				handle_key_press(&event.key.keysym);
 				break;
 
-			// handle key releases
+				// handle key releases
 			case SDL_KEYUP:
 				handle_key_release(&event.key.keysym);
 				break;
 
 
-			// Mouse input
+				// Mouse input
 			case SDL_MOUSEMOTION:
 				g_mouse_x = event.motion.x;
 				g_mouse_y = event.motion.y;
 				break;
 
-			// TODO: Move to extra function (like key presses)
+				// TODO: Move to extra function (like key presses)
 			case SDL_MOUSEBUTTONDOWN:
 				if (event.button.button == SDL_BUTTON_LEFT)
 				{
@@ -154,16 +156,16 @@ void c_modbaker::handle_key_press(SDL_keysym *keysym)
 {
 	switch (keysym->sym)
 	{
-		// System controls
+			// System controls
 		case SDLK_ESCAPE:
 			Quit();
 			break;
 
 		case SDLK_F1:
-      SDL_WM_ToggleFullScreen(g_renderer.getSDL().surface);
+			SDL_WM_ToggleFullScreen(g_renderer.getSDL().surface);
 			break;
 
-		// Camera control
+			// Camera control
 		case SDLK_RIGHT:
 			g_renderer.getPCam()->m_movex += 5.0f;
 			break;
@@ -194,7 +196,7 @@ void c_modbaker::handle_key_press(SDL_keysym *keysym)
 			this->selection_add = true;
 			break;
 
-		// Editing
+			// Editing
 		case SDLK_w:
 			g_selection.modify(50.0f);
 			break;
@@ -207,7 +209,7 @@ void c_modbaker::handle_key_press(SDL_keysym *keysym)
 			g_selection.clear();
 			break;
 
-		// Save the file again
+			// Save the file again
 		case SDLK_F10:
 			g_mesh.save_mesh_mpd("level.mpd");
 			break;
@@ -225,7 +227,7 @@ void c_modbaker::handle_key_release(SDL_keysym *keysym)
 {
 	switch (keysym->sym)
 	{
-		// Camera control
+			// Camera control
 		case SDLK_RIGHT:
 			g_renderer.getPCam()->m_movex = 0.0f;
 			break;
@@ -282,10 +284,10 @@ void c_modbaker::get_GL_pos(int x, int y)
 	glGetIntegerv(GL_VIEWPORT, viewport);
 
 	// Get the window z coorinate
-	glReadPixels(x, viewport[3]-y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &z);
+	glReadPixels(x, viewport[3] - y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &z);
 
 	// get 3D coordinates based on window coordinates
-	gluUnProject(x, viewport[3]-y, z, model_view, projection, viewport, &pos3D_x, &pos3D_y, &pos3D_z);
+	gluUnProject(x, viewport[3] - y, z, model_view, projection, viewport, &pos3D_x, &pos3D_y, &pos3D_z);
 
 	g_mouse_gl_x = (float)pos3D_x;
 	g_mouse_gl_y = (float)pos3D_y;

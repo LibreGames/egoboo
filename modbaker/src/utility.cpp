@@ -105,7 +105,7 @@ bool fgoto_colon_yesno(ifstream &file)
 //---------------------------------------------------------------------
 void fgoto_colon_buffer(ifstream &file, string buffer, size_t buffer_len)
 {
-	if(!fgoto_colon_yesno_buffer(file, buffer, buffer_len))
+	if (!fgoto_colon_yesno_buffer(file, buffer, buffer_len))
 	{
 		cout << "There are not enough colons in file! " << endl;
 		Quit();
@@ -122,7 +122,8 @@ bool fgoto_colon_yesno_buffer(ifstream &file, string buffer, size_t buffer_len)
 	string pchar, pchar_end;
 	bool bfound = false;
 
-	if (buffer != "") {
+	if (buffer != "")
+	{
 		pchar = pchar_end = buffer;
 		pchar_end += buffer_len;
 	}
@@ -143,14 +144,14 @@ bool fgoto_colon_yesno_buffer(ifstream &file, string buffer, size_t buffer_len)
 			case '\n':
 				pchar = buffer;
 
-				if(pchar < pchar_end)
+				if (pchar < pchar_end)
 				{
 					pchar = '\0';
 				}
 				break;
 
 			default:
-				if(pchar < pchar_end)
+				if (pchar < pchar_end)
 				{
 					pchar += ctmp;
 				}

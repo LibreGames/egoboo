@@ -23,6 +23,7 @@
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
+				StructMemberAlignment="3"
 				UsePrecompiledHeader="0"
 				BrowseInformation="1"
 				WarningLevel="3"
@@ -134,6 +135,9 @@
 				RelativePath=".\modbaker.cpp">
 			</File>
 			<File
+				RelativePath=".\ogl_debug.c">
+			</File>
+			<File
 				RelativePath=".\ogl_extensions.c">
 			</File>
 			<File
@@ -147,6 +151,9 @@
 			</File>
 			<File
 				RelativePath=".\SDL_extensions.c">
+			</File>
+			<File
+				RelativePath=".\SDL_GL_extensions.c">
 			</File>
 			<File
 				RelativePath=".\utility.cpp">
@@ -178,6 +185,9 @@
 				RelativePath=".\modbaker.h">
 			</File>
 			<File
+				RelativePath=".\ogl_debug.h">
+			</File>
+			<File
 				RelativePath=".\ogl_extensions.h">
 			</File>
 			<File
@@ -188,6 +198,9 @@
 			</File>
 			<File
 				RelativePath=".\SDL_extensions.h">
+			</File>
+			<File
+				RelativePath=".\SDL_GL_extensions.h">
 			</File>
 			<File
 				RelativePath=".\utility.h">

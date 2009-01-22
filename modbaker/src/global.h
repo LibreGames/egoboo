@@ -56,7 +56,6 @@ extern c_selection g_selection;
 extern c_renderer g_renderer;
 extern c_mesh     g_mesh;
 extern c_frustum  g_frustum;                // TODO: Move to g_renderer
-extern vector<c_tile_definition> g_tiledict;
 
 // Misc stuff
 // Implmented in global.cpp
@@ -68,15 +67,16 @@ class modbaker_exception : public runtime_error
 	public:
 		// Constructors
 		modbaker_exception(const string &error)
-			: std::runtime_error(error) { };
+				: std::runtime_error(error) { };
 
 		modbaker_exception(const string &error, const string &filename)
-			: std::runtime_error(error), _which(filename) { };
+				: std::runtime_error(error), _which(filename) { };
 
 		virtual ~modbaker_exception() throw() { }
 
 		// Public interace
-		virtual const char *which() const throw() {
+		virtual const char *which() const throw()
+		{
 			return _which.c_str();
 		}
 

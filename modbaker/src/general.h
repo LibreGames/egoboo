@@ -45,25 +45,29 @@
 //---------------------------------------------------------------------
 //-   egoboo_math.h - Vector definitions
 //---------------------------------------------------------------------
-typedef struct matrix_4x4_t {
+typedef struct matrix_4x4_t
+{
 	float v[16];
 } matrix_4x4;
 
 typedef matrix_4x4 GLmatrix;
 
-typedef union vector2_t {
+typedef union vector2_t
+{
 	float _v[2];
 	struct { float x, y; };
 	struct { float u, v; };
 	struct { float s, t; };
 } vect2;
 
-typedef union vector3_t {
+typedef union vector3_t
+{
 	float v[3];
 	struct { float x, y, z; };
 } vect3;
 
-typedef union vector4_t {
+typedef union vector4_t
+{
 	float v[4];
 	struct { float x, y, z, w; };
 	struct { float r, g, b, a; };
@@ -74,7 +78,7 @@ typedef union vector4_t {
 //-   egoboo_types.h - Swap the byteorder on OTHER systems
 //---------------------------------------------------------------------
 #if SDL_BYTEORDER != SDL_LIL_ENDIAN
-    float SwapLE_float( float val );
+float SwapLE_float( float val );
 #endif
 
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
@@ -83,15 +87,15 @@ typedef union vector4_t {
 
 #else
 
-    float SwapLE_float( float val )
-    {
-      FCONVERT convert;
+float SwapLE_float( float val )
+{
+	FCONVERT convert;
 
-      convert.f = val;
-      convert.i = SDL_SwapLE32(convert.i);
+	convert.f = val;
+	convert.i = SDL_SwapLE32(convert.i);
 
-      return convert.f;
-    };
+	return convert.f;
+};
 
 #endif // SDL_BYTEORDER
 #endif // general_h

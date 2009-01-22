@@ -18,6 +18,7 @@
 //---------------------------------------------------------------------
 #include "global.h"
 #include "renderer.h"
+#include "ogl_debug.h"
 
 #include <iostream>
 #include <math.h>
@@ -54,9 +55,9 @@ void c_camera::move()
 {
 	if (g_renderer.m_fps > 0)
 	{
-		m_pos.x += (m_movex / g_renderer.m_fps) * m_factor;
-		m_pos.y += (m_movey / g_renderer.m_fps) * m_factor;
-		m_pos.z += (m_movez / g_renderer.m_fps) * m_factor;
+		m_pos.x -= (m_movex / g_renderer.m_fps) * m_factor;
+		m_pos.y -= (m_movey / g_renderer.m_fps) * m_factor;
+		m_pos.z -= (m_movez / g_renderer.m_fps) * m_factor;
 	}
 
 	this->make_matrix();
@@ -96,8 +97,8 @@ GLmatrix c_camera::make_view_matrix(
 //---------------------------------------------------------------------
 GLmatrix c_camera::make_projection_matrix(
 	const float near_plane, // distance to near clipping plane
-    const float far_plane,  // distance to far clipping plane
-    const float fov)        // field of view angle, in radians
+	const float far_plane,  // distance to far clipping plane
+	const float fov)        // field of view angle, in radians
 {
 	GLmatrix proj;
 	GLint viewport[4];
@@ -223,9 +224,9 @@ bool c_renderlist::build()
 //			is_water = mesh_has_some_bits(mm->tilelst, fan, MPDFX_WATER);
 
 			is_norml = true; // TODO: Added by xenom
-      is_noref = false;
-      is_shine = false;
-      is_water = false;
+			is_noref = false;
+			is_shine = false;
+			is_water = false;
 
 			// Put each tile in basic list
 			m_totl[m_num_totl] = fan;

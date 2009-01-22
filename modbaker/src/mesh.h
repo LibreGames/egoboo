@@ -50,12 +50,40 @@ using namespace std;
 //---------------------------------------------------------------------
 //-   Texture box?
 //---------------------------------------------------------------------
-struct s_mesh_tile_txbox
-{
-	vect2   off; // Tile texture offset
-};
-typedef struct s_mesh_tile_txbox TILE_TXBOX;
+typedef vect2 TILE_TXBOX;
 
+//---------------------------------------------------------------------
+//-   the definition of a single tile
+//---------------------------------------------------------------------
+class c_tile_definition
+{
+	private:
+	public:
+		Uint8   cmd_count;                  // Number of commands
+		Uint8   cmd_size[MAXMESHCOMMAND];   // Entries in each command
+		Uint16  vrt[MAXMESHCOMMANDENTRIES]; // Fansquare vertex list
+
+		Uint8   vrt_count;                  // Number of vertices
+		Uint8   ref[MAXMESHVERTICES];       // Lighting references
+		vect2   tx[MAXMESHVERTICES];        // Relative texture coordinates
+
+//		c_tile_definition();
+//		~c_tile_definition()
+};
+
+//---------------------------------------------------------------------
+//-   The dictionary, compiling all of the tile definitions
+//---------------------------------------------------------------------
+struct c_tile_dictionary : public vector<c_tile_definition>
+{
+	typedef vector<c_tile_definition> my_vector;
+
+	TILE_TXBOX TxBox[MAXTILETYPE];
+
+	my_vector & getData() { return *(static_cast<my_vector*>(this)); }
+
+	bool load();
+};
 
 //---------------------------------------------------------------------
 //-   The mesh info
@@ -153,44 +181,7 @@ class c_mesh_mem
 
 		c_mesh_mem(int, int);
 		~c_mesh_mem();
-
-		TILE_TXBOX gTileTxBox[MAXTILETYPE];
 };
-
-
-//---------------------------------------------------------------------
-//-   dictionary of all tiles
-//---------------------------------------------------------------------
-class c_tile_definition
-{
-	private:
-	public:
-		Uint8   cmd_count;                  // Number of commands
-		Uint8   cmd_size[MAXMESHCOMMAND];   // Entries in each command
-		Uint16  vrt[MAXMESHCOMMANDENTRIES]; // Fansquare vertex list
-
-		Uint8   vrt_count;                  // Number of vertices
-		Uint8   ref[MAXMESHVERTICES];       // Lighting references
-		vect2   tx[MAXMESHVERTICES];        // Relative texture coordinates
-
-//		c_tile_definition();
-//		~c_tile_definition()
-};
-
-
-//---------------------------------------------------------------------
-//-   The tile dictionary
-//---------------------------------------------------------------------
-class c_tile_dict
-{
-	private:
-	public:
-		c_tile_definition *dict[MAXMESHTYPE];
-//		c_tile_dict();
-//		~c_tile_dict();
-};
-
-typedef c_tile_definition *tTileDict[MAXMESHTYPE];
 
 
 //---------------------------------------------------------------------
@@ -201,6 +192,9 @@ class c_mesh
 	private:
 		void mesh_make_fanstart();
 
+	protected:
+		static c_tile_dictionary ms_tiledict;
+
 	public:
 		c_mesh_info  *mi;
 		c_mesh_mem   *mem;
@@ -210,8 +204,11 @@ class c_mesh
 		bool load_mesh_mpd(string);
 		bool save_mesh_mpd(string);
 
-		bool tiledict_load();
 		int modify_verts(float, int);
 		int get_nearest_vertex(float, float, float);
+
+		c_tile_dictionary & getTileDictioary()          { return ms_tiledict;             }
+		c_tile_definition & getTileDefinition(int tile) { return ms_tiledict[tile];       }
+		vect2             & getTileOffset(int tile)     { return ms_tiledict.TxBox[tile]; }
 };
 #endif

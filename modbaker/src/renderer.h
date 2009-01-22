@@ -72,25 +72,11 @@ enum
 #define INVALID_TILE      ((Uint16)(~(Uint16)0))   // Don't draw the fansquare if tile = this
 #define MAXMESHRENDER    (1024*8)       // Max number of tiles to draw
 
-
-
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN
-	const Uint32 rmask = 0x000000ff;
-	const Uint32 gmask = 0x0000ff00;
-	const Uint32 bmask = 0x00ff0000;
-	const Uint32 amask = 0xff000000;
-#else
-	const Uint32 rmask = 0xff000000;
-	const Uint32 gmask = 0x00ff0000;
-	const Uint32 bmask = 0x0000ff00;
-	const Uint32 amask = 0x000000ff;
-#endif
-
 struct Graphics_t;
 
 
 //---------------------------------------------------------------------
-//-   
+//-
 //---------------------------------------------------------------------
 struct GLVertex
 {
@@ -106,25 +92,25 @@ struct GLVertex
 
 
 //---------------------------------------------------------------------
-//-   Wrapper function for SDL and GL video initialization 
+//-   Wrapper function for SDL and GL video initialization
 //---------------------------------------------------------------------
 
 struct video_parameters : public sdl_video_parameters_t
 {
-  video_parameters()
-  {
-    // use the "base class constructor"
-    sdl_video_parameters_default( get_pbase() );
+	video_parameters()
+	{
+		// use the "base class constructor"
+		sdl_video_parameters_default( get_pbase() );
 
-    // set the window screen height with our default values
-    width  = WINDOW_WIDTH;
-    height = WINDOW_HEIGHT;
-  }
+		// set the window screen height with our default values
+		width  = WINDOW_WIDTH;
+		height = WINDOW_HEIGHT;
+	}
 
-  sdl_video_parameters_t * get_pbase() { return static_cast<sdl_video_parameters_t *>(this); }
+	sdl_video_parameters_t * get_pbase() { return static_cast<sdl_video_parameters_t *>(this); }
 
-  static bool download( video_parameters * p, Graphics_t * g );
-  static bool upload  ( video_parameters * p, Graphics_t * g );
+	static bool download( video_parameters * p, Graphics_t * g );
+	static bool upload  ( video_parameters * p, Graphics_t * g );
 };
 
 //---------------------------------------------------------------------
@@ -132,9 +118,15 @@ struct video_parameters : public sdl_video_parameters_t
 //---------------------------------------------------------------------
 struct Graphics_t
 {
-  /// values set when initializing the video mode
-  sdl_video_parameters_t sdl_vid;
-  ogl_video_parameters_t ogl_vid;
+	/// values set when initializing the video mode
+	sdl_video_parameters_t sdl_vid;
+	ogl_video_parameters_t ogl_vid;
+
+	Graphics_t()
+	{
+		sdl_video_parameters_default( &sdl_vid );
+		ogl_video_parameters_default( &ogl_vid );
+	}
 };
 
 
@@ -205,9 +197,9 @@ class c_renderlist
 //---------------------------------------------------------------------
 class c_renderer
 {
-  enum TMODE {JLEFT, JRIGHT};
+		enum TMODE {JLEFT, JRIGHT};
 
-  friend class c_camera;
+		friend class c_camera;
 
 	protected:
 		Graphics_t m_gfxState;
@@ -216,7 +208,7 @@ class c_renderer
 		void initSDL();
 		void initGL();
 
-		void render_fan(Uint32);
+		void render_fan(Uint32, bool set_texture = true);
 		bool load_texture(string, int);
 
 		void render_text(string, vect3, TMODE mode = JLEFT);
@@ -231,7 +223,7 @@ class c_renderer
 
 		void resize_window(int, int);
 		void render_positions();
-    void begin_frame();
+		void begin_frame();
 		void end_frame();
 
 		void begin_3D_mode();
@@ -244,12 +236,12 @@ class c_renderer
 		void load_basic_textures(string);
 		void render_mesh();
 
-    SDL_Surface            * getPScreen() { return m_gfxState.sdl_vid.surface; };
-    Graphics_t             & getState()   { return m_gfxState; }
-    ogl_video_parameters_t & getOGL()     { return m_gfxState.ogl_vid; }
-    sdl_video_parameters_t & getSDL()     { return m_gfxState.sdl_vid; }
+		SDL_Surface            * getPScreen() { return m_gfxState.sdl_vid.surface; };
+		Graphics_t             & getState()   { return m_gfxState; }
+		ogl_video_parameters_t & getOGL()     { return m_gfxState.ogl_vid; }
+		sdl_video_parameters_t & getSDL()     { return m_gfxState.sdl_vid; }
 
-    c_camera * getPCam()          { return m_cam; }
+		c_camera * getPCam()          { return m_cam; }
 
 
 		c_renderlist m_renderlist;

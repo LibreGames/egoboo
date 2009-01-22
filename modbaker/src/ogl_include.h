@@ -10,7 +10,8 @@
 #ifdef __cplusplus
 #    include <cassert>
 #    include <cstdio>
-     extern "C" {
+extern "C"
+{
 #else
 #    include <assert.h>
 #    include <stdio.h>
@@ -34,22 +35,22 @@
 #endif
 
 //--------------------------------------------------------------------------------------------
-typedef float glMatrix[16];
-typedef float glVector4[4];
-typedef float glVector3[3];
-typedef float glVector2[3];
+	typedef float glMatrix[16];
+	typedef float glVector4[4];
+	typedef float glVector3[3];
+	typedef float glVector2[3];
 
 //--------------------------------------------------------------------------------------------
 // generic OpenGL lighting struct
-struct s_glLight
-{
-  glVector4 emission, diffuse, specular;
-  float     shininess[1];
-};
-typedef struct s_glLight glLight_t;
+	struct s_glLight
+	{
+		glVector4 emission, diffuse, specular;
+		float     shininess[1];
+	};
+	typedef struct s_glLight glLight_t;
 
 //--------------------------------------------------------------------------------------------
-GLboolean handle_opengl_error( void );
+	GLboolean handle_opengl_error( void );
 
 #ifdef __cplusplus
 };

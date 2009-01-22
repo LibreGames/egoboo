@@ -50,7 +50,7 @@ void c_selection::clear()
 
 
 //---------------------------------------------------------------------
-//-   
+//-
 //---------------------------------------------------------------------
 int c_selection::add_vertices_at_position(vect3 ref)
 {
@@ -69,7 +69,7 @@ void c_selection::modify(float off_y)
 {
 	unsigned int i;
 
-	for(i = 0; i < this->selection.size(); i++)
+	for (i = 0; i < this->selection.size(); i++)
 	{
 		g_mesh.modify_verts(off_y, this->selection[i]);
 	}
@@ -83,7 +83,7 @@ bool c_selection::in_selection(int vertex)
 {
 	unsigned int i;
 
-	for(i = 0; i < this->selection.size(); i++)
+	for (i = 0; i < this->selection.size(); i++)
 	{
 		if (this->selection[i] == vertex)
 			return true;

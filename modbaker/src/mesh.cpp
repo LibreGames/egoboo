@@ -34,16 +34,17 @@ using namespace std;
 
 #define MAPID 0x4470614d
 
+c_tile_dictionary c_mesh::ms_tiledict;
 
 //---------------------------------------------------------------------
 //-   c_mesh_mem constructor
 //---------------------------------------------------------------------
 c_mesh_mem::c_mesh_mem(int vertcount, int fancount)
 {
-	if(fancount < 0)
+	if (fancount < 0)
 		fancount  = MAXMESHFAN;
 
-	if(vertcount >= 0 || fancount >= 0)
+	if (vertcount >= 0 || fancount >= 0)
 	{
 		this->alloc_verts(vertcount);
 		this->alloc_fans (fancount );
@@ -87,13 +88,13 @@ void c_mesh_mem::dealloc_verts()
 //---------------------------------------------------------------------
 bool c_mesh_mem::alloc_verts(int vertcount)
 {
-	if(vertcount == 0)
+	if (vertcount == 0)
 		return false;
 
-	if(vertcount < 0)
+	if (vertcount < 0)
 		vertcount = 100; // TODO: Read from config
 
-	if(this->vrt_count > vertcount)
+	if (this->vrt_count > vertcount)
 		return true;
 
 	this->dealloc_verts();
@@ -194,7 +195,8 @@ bool c_mesh::load_mesh_mpd(string filename)
 	// Open the file
 	file.open(filename.c_str(), ios::binary);
 
-	if (!file) {
+	if (!file)
+	{
 		cout << "File not found " << filename << endl;
 		return false;
 	}
@@ -202,16 +204,17 @@ bool c_mesh::load_mesh_mpd(string filename)
 	//-----------------------------------------------------------------
 	//- Read and check the map id
 	//-----------------------------------------------------------------
-	file.read( (char*)&itmp,sizeof(int) );
-	if (SDL_SwapLE32( itmp ) != MAPID ) {
+	file.read( (char*)&itmp, sizeof(int) );
+	if (SDL_SwapLE32( itmp ) != MAPID )
+	{
 		printf("Invalid map file %x %x %x\n", MAPID, itmp, SDL_SwapLE32( itmp ));
 		return false;
 	}
 
 
-	file.read((char*)&itmp,4); this->mi->vert_count = SDL_SwapLE32(itmp); // Read number of verts
-	file.read((char*)&itmp,4); this->mi->tiles_x    = SDL_SwapLE32(itmp); // Read map x data
-	file.read((char*)&itmp,4); this->mi->tiles_y    = SDL_SwapLE32(itmp); // Read map y data
+	file.read((char*)&itmp, 4); this->mi->vert_count = SDL_SwapLE32(itmp); // Read number of verts
+	file.read((char*)&itmp, 4); this->mi->tiles_x    = SDL_SwapLE32(itmp); // Read map x data
+	file.read((char*)&itmp, 4); this->mi->tiles_y    = SDL_SwapLE32(itmp); // Read map y data
 
 
 	//-----------------------------------------------------------------
@@ -223,10 +226,11 @@ bool c_mesh::load_mesh_mpd(string filename)
 	delete this->mem;
 	this->mem = new c_mesh_mem(this->mi->vert_count, this->mi->tile_count);
 
-	if (this->mem == NULL) {
+	if (this->mem == NULL)
+	{
 		cout << "mesh_load() - " << endl
-		     << "  Unable to initialize Mesh Memory. MPD file "
-		     << filename.c_str() << " has too many vertices." << endl;
+		<< "  Unable to initialize Mesh Memory. MPD file "
+		<< filename.c_str() << " has too many vertices." << endl;
 		return -1;
 	}
 
@@ -242,8 +246,9 @@ bool c_mesh::load_mesh_mpd(string filename)
 	//-----------------------------------------------------------------
 	mf_list = (MeshTile_t *)malloc(this->mi->tile_count * sizeof(MeshTile_t));
 
-	for (fan = 0; fan < this->mi->tile_count; fan++) {
-		file.read((char*)&itmp,4);
+	for (fan = 0; fan < this->mi->tile_count; fan++)
+	{
+		file.read((char*)&itmp, 4);
 		itmp = SDL_SwapLE32( itmp );
 
 		mf_list[fan].type = itmp >> 24;
@@ -255,8 +260,9 @@ bool c_mesh::load_mesh_mpd(string filename)
 	//-----------------------------------------------------------------
 	//- Read the twist data from the FAN
 	//-----------------------------------------------------------------
-	for (fan = 0; fan < this->mi->tile_count; fan++) {
-		file.read((char*)&itmp,1);
+	for (fan = 0; fan < this->mi->tile_count; fan++)
+	{
+		file.read((char*)&itmp, 1);
 		mf_list[fan].twist = itmp;
 	}
 
@@ -265,22 +271,25 @@ bool c_mesh::load_mesh_mpd(string filename)
 	//- Read vertex x,y and z data
 	//-----------------------------------------------------------------
 	// Load vertex fan_x data
-	for(cnt = 0;  cnt < this->mi->vert_count; cnt++) {
-		file.read((char*)&ftmp,4);
+	for (cnt = 0;  cnt < this->mi->vert_count; cnt++)
+	{
+		file.read((char*)&ftmp, 4);
 		this->mem->vrt_x[cnt] = SwapLE_float(ftmp);
 	}
 
 
 	// Load vertex fan_y data
-	for(cnt = 0; cnt < this->mi->vert_count; cnt++) {
-		file.read((char*)&ftmp,4);
+	for (cnt = 0; cnt < this->mi->vert_count; cnt++)
+	{
+		file.read((char*)&ftmp, 4);
 		this->mem->vrt_y[cnt] = SwapLE_float(ftmp);
 	}
 
 	// Load vertex z data
 	cnt = 0;
-	for(cnt = 0; cnt < this->mi->vert_count; cnt++) {
-		file.read((char*)&ftmp,4);
+	for (cnt = 0; cnt < this->mi->vert_count; cnt++)
+	{
+		file.read((char*)&ftmp, 4);
 		this->mem->vrt_z[cnt] = SwapLE_float(ftmp)  / 16.0;
 		// Cartman uses 4 bit fixed point for Z
 	}
@@ -289,20 +298,20 @@ bool c_mesh::load_mesh_mpd(string filename)
 	//-----------------------------------------------------------------
 	//- Load vertex lighting data
 	//-----------------------------------------------------------------
-/*
-	for (cnt = 0; cnt < mi->vert_count; cnt++)
-	{
-		infile.read((char*)&itmp,1);
+	/*
+		for (cnt = 0; cnt < mi->vert_count; cnt++)
+		{
+			infile.read((char*)&itmp,1);
 
-		mem->vrt_ar_fp8[cnt] = 0; // itmp;
-		mem->vrt_ag_fp8[cnt] = 0; // itmp;
-		mem->vrt_ab_fp8[cnt] = 0; // itmp;
+			mem->vrt_ar_fp8[cnt] = 0; // itmp;
+			mem->vrt_ag_fp8[cnt] = 0; // itmp;
+			mem->vrt_ab_fp8[cnt] = 0; // itmp;
 
-		mem->vrt_lr_fp8[cnt] = 0;
-		mem->vrt_lg_fp8[cnt] = 0;
-		mem->vrt_lb_fp8[cnt] = 0;
-	}
-*/
+			mem->vrt_lr_fp8[cnt] = 0;
+			mem->vrt_lg_fp8[cnt] = 0;
+			mem->vrt_lb_fp8[cnt] = 0;
+		}
+	*/
 	file.close();
 
 
@@ -313,13 +322,13 @@ bool c_mesh::load_mesh_mpd(string filename)
 
 
 	//-----------------------------------------------------------------
-	//- 
+	//-
 	//-----------------------------------------------------------------
 	vert = 0;
 
 	for (fan = 0; fan < mem->tile_count; fan++)
 	{
-		int vrtcount = g_tiledict[mf_list[fan].type].vrt_count;
+		int vrtcount = c_mesh::ms_tiledict[mf_list[fan].type].vrt_count;
 		int vrtstart = vert;
 
 		mf_list[fan].vrt_start = vrtstart;
@@ -353,13 +362,15 @@ bool c_mesh::load_mesh_mpd(string filename)
 //---------------------------------------------------------------------
 //-   This function loads fan types for the terrain
 //---------------------------------------------------------------------
-bool c_mesh::tiledict_load()
+bool c_tile_dictionary::load()
 {
 	int cnt, entry;
 	int numfantype, fantype, bigfantype, vertices;
 	int numcommand, command, commandsize;
 
 	ifstream if_fan;
+
+	my_vector & vect = getData();
 
 	// Used to initialize the vector
 	c_tile_definition filled_td;
@@ -370,7 +381,7 @@ bool c_mesh::tiledict_load()
 	entry = 0;
 	while ( entry < MAXMESHTYPE )
 	{
-		g_tiledict.push_back(filled_td);
+		this->push_back(filled_td);
 
 		entry++;
 	}
@@ -392,36 +403,36 @@ bool c_mesh::tiledict_load()
 	for ( /* nothing */; fantype < numfantype; fantype++, bigfantype++ )
 	{
 
-		vertices                        =
-		g_tiledict[   fantype].vrt_count =
-		g_tiledict[bigfantype].vrt_count = fget_next_int(if_fan);  // Dupe
+		vertices                   =
+			vect[   fantype].vrt_count =
+				vect[bigfantype].vrt_count = fget_next_int(if_fan);  // Dupe
 
 		for ( cnt = 0; cnt < vertices; cnt++ )
 		{
-			g_tiledict[   fantype].ref[cnt] =
-			g_tiledict[bigfantype].ref[cnt] = fget_next_int(if_fan);
+			vect[   fantype].ref[cnt] =
+				vect[bigfantype].ref[cnt] = fget_next_int(if_fan);
 
-			g_tiledict[   fantype].tx[cnt].u =
-			g_tiledict[bigfantype].tx[cnt].u = fget_next_float(if_fan);
+			vect[   fantype].tx[cnt].u =
+				vect[bigfantype].tx[cnt].u = fget_next_float(if_fan);
 
-			g_tiledict[   fantype].tx[cnt].v =
-			g_tiledict[bigfantype].tx[cnt].v = fget_next_float(if_fan);
+			vect[   fantype].tx[cnt].v =
+				vect[bigfantype].tx[cnt].v = fget_next_float(if_fan);
 		}
 
 		numcommand                     =
-		g_tiledict[   fantype].cmd_count =
-		g_tiledict[bigfantype].cmd_count = fget_next_int(if_fan);  // Dupe
+			vect[   fantype].cmd_count =
+				vect[bigfantype].cmd_count = fget_next_int(if_fan);  // Dupe
 
 		for ( entry = 0, command = 0; command < numcommand; command++ )
 		{
 			commandsize                            =
-			g_tiledict[   fantype].cmd_size[command] =
-			g_tiledict[bigfantype].cmd_size[command] = fget_next_int(if_fan);  // Dupe
+				vect[   fantype].cmd_size[command] =
+					vect[bigfantype].cmd_size[command] = fget_next_int(if_fan);  // Dupe
 
 			for ( cnt = 0; cnt < commandsize; cnt++ )
 			{
-				g_tiledict[   fantype].vrt[entry] =
-				g_tiledict[bigfantype].vrt[entry] = fget_next_int(if_fan);  // Dupe
+				vect[   fantype].vrt[entry] =
+					vect[bigfantype].vrt[entry] = fget_next_int(if_fan);  // Dupe
 				entry++;
 			}
 		}
@@ -430,39 +441,38 @@ bool c_mesh::tiledict_load()
 	if_fan.close();
 
 
-	// Correct silly Cartman 32-pixel-wide textures to Egoboo's 256 pixel wide textures
-
+	// Correct silly Cartman 31-pixel-wide textures to Egoboo's 256 pixel wide textures
 	for ( cnt = 0; cnt < MAXMESHTYPE / 2; cnt++ )
 	{
-		for ( entry = 0; entry < g_tiledict[cnt].vrt_count; entry++ )
+		for ( entry = 0; entry < vect[cnt].vrt_count; entry++ )
 		{
 
-			g_tiledict[cnt].tx[entry].u = ( TX_FUDGE + g_tiledict[cnt].tx[entry].u * ( 31.0f - TX_FUDGE ) ) / 256.0f;
-			g_tiledict[cnt].tx[entry].v = ( TX_FUDGE + g_tiledict[cnt].tx[entry].v * ( 31.0f - TX_FUDGE ) ) / 256.0f;
+			vect[cnt].tx[entry].u = ( TX_FUDGE + vect[cnt].tx[entry].u * ( 31.0f - TX_FUDGE ) ) / 256.0f;
+			vect[cnt].tx[entry].v = ( TX_FUDGE + vect[cnt].tx[entry].v * ( 31.0f - TX_FUDGE ) ) / 256.0f;
 		}
 
 		// blank the unused values
 		for ( /* nothing */; entry < MAXMESHVERTICES; entry++ )
 		{
-			g_tiledict[cnt].tx[entry].u = -1.0f;
-			g_tiledict[cnt].tx[entry].v = -1.0f;
+			vect[cnt].tx[entry].u = -1.0f;
+			vect[cnt].tx[entry].v = -1.0f;
 		}
 	}
 
-	// Correct silly Cartman 64-pixel-wide textures to Egoboo's 256 pixel wide textures
+	// Correct silly Cartman 63-pixel-wide textures to Egoboo's 256 pixel wide textures
 	for ( cnt = MAXMESHTYPE / 2; cnt < MAXMESHTYPE; cnt++ )
 	{
-		for ( entry = 0; entry < g_tiledict[cnt].vrt_count; entry++ )
+		for ( entry = 0; entry < vect[cnt].vrt_count; entry++ )
 		{
-			g_tiledict[cnt].tx[entry].u = ( TX_FUDGE  + g_tiledict[cnt].tx[entry].u * ( 63.0f - TX_FUDGE ) ) / 256.0f;
-			g_tiledict[cnt].tx[entry].v = ( TX_FUDGE  + g_tiledict[cnt].tx[entry].v * ( 63.0f - TX_FUDGE ) ) / 256.0f;
+			vect[cnt].tx[entry].u = ( TX_FUDGE  + vect[cnt].tx[entry].u * ( 63.0f - TX_FUDGE ) ) / 256.0f;
+			vect[cnt].tx[entry].v = ( TX_FUDGE  + vect[cnt].tx[entry].v * ( 63.0f - TX_FUDGE ) ) / 256.0f;
 		}
 
 		// blank the unused values
 		for ( /* nothing */; entry < MAXMESHVERTICES; entry++ )
 		{
-			g_tiledict[cnt].tx[entry].u = -1.0f;
-			g_tiledict[cnt].tx[entry].v = -1.0f;
+			vect[cnt].tx[entry].u = -1.0f;
+			vect[cnt].tx[entry].v = -1.0f;
 		}
 	}
 
@@ -470,8 +480,8 @@ bool c_mesh::tiledict_load()
 	// 64 tiles per texture, 4 textures
 	for ( cnt = 0; cnt < MAXTILETYPE; cnt++ )
 	{
-		this->mem->gTileTxBox[cnt].off.u = ( ( cnt >> 0 ) & 7 ) / 8.0f;
-		this->mem->gTileTxBox[cnt].off.v = ( ( cnt >> 3 ) & 7 ) / 8.0f;
+		TxBox[cnt].u = ( ( cnt >> 0 ) & 7 ) / 8.0f;
+		TxBox[cnt].v = ( ( cnt >> 3 ) & 7 ) / 8.0f;
 	}
 
 	return true;
@@ -517,8 +527,8 @@ int c_mesh::modify_verts(float newheight, int vert)
 	for (i = 0; i < this->mi->vert_count; i++)
 	{
 		if ((g_mesh.mem->vrt_x[i] == pos_old.x) &&
-		    (g_mesh.mem->vrt_y[i] == pos_old.y) &&
-		    (g_mesh.mem->vrt_z[i] == pos_old.z))
+				(g_mesh.mem->vrt_y[i] == pos_old.y) &&
+				(g_mesh.mem->vrt_z[i] == pos_old.z))
 		{
 			g_mesh.mem->vrt_z[i] += newheight;
 //			cout << "Modifying vert " << vert << ": " << newheight << endl;
@@ -593,7 +603,8 @@ bool c_mesh::save_mesh_mpd(string filename)
 	// Open the file
 	file.open(filename.c_str(), ios::binary);
 
-	if (!file) {
+	if (!file)
+	{
 		cout << "File not found " << filename << endl;
 		return false;
 	}
@@ -619,8 +630,8 @@ bool c_mesh::save_mesh_mpd(string filename)
 	//-----------------------------------------------------------------
 	for ( fan = 0; fan < this->mi->tile_count;  fan++)
 	{
-		itmp = (g_mesh.mem->tilelst[fan].type<<24)+(g_mesh.mem->tilelst[fan].fx<<16)+g_mesh.mem->tilelst[fan].tile;
-		file.write((char *)&itmp,4);
+		itmp = (g_mesh.mem->tilelst[fan].type << 24) + (g_mesh.mem->tilelst[fan].fx << 16) + g_mesh.mem->tilelst[fan].tile;
+		file.write((char *)&itmp, 4);
 	}
 
 
@@ -630,7 +641,7 @@ bool c_mesh::save_mesh_mpd(string filename)
 	for (fan = 0; fan < this->mi->tile_count; fan++)
 	{
 		itmp = this->mem->tilelst[fan].twist;
-		file.write((char *)&itmp,1);
+		file.write((char *)&itmp, 1);
 	}
 
 
@@ -638,26 +649,26 @@ bool c_mesh::save_mesh_mpd(string filename)
 	//- Read vertex x,y and z data
 	//-----------------------------------------------------------------
 	// Load vertex fan_x data
-	for(cnt = 0;  cnt < this->mi->vert_count; cnt++)
+	for (cnt = 0;  cnt < this->mi->vert_count; cnt++)
 	{
 		ftmp = this->mem->vrt_x[cnt];
-		file.write((char *)&ftmp,4);
+		file.write((char *)&ftmp, 4);
 	}
 
 
 	// Load vertex fan_y data
-	for(cnt = 0; cnt < this->mi->vert_count; cnt++)
+	for (cnt = 0; cnt < this->mi->vert_count; cnt++)
 	{
 		ftmp = this->mem->vrt_y[cnt];
-		file.write((char *)&ftmp,4);
+		file.write((char *)&ftmp, 4);
 	}
 
 	// Load vertex z data
 	cnt = 0;
-	for(cnt = 0; cnt < this->mi->vert_count; cnt++)
+	for (cnt = 0; cnt < this->mi->vert_count; cnt++)
 	{
 		ftmp = this->mem->vrt_z[cnt] * 16;
-		file.write((char *)&ftmp,4);
+		file.write((char *)&ftmp, 4);
 		// Cartman uses 4 bit fixed point for Z
 	}
 
@@ -668,7 +679,7 @@ bool c_mesh::save_mesh_mpd(string filename)
 	for (cnt = 0; cnt < mi->vert_count; cnt++)
 	{
 		itmp = 0;
-		file.write((char *)&itmp,1);
+		file.write((char *)&itmp, 1);
 	}
 
 	file.close();
