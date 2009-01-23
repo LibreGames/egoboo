@@ -1,1 +1,2 @@
 Copy the modbaker executable to the egoboo directory.
+modbaker.cfg must be in the same folder as that executable.
