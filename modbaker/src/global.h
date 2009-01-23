@@ -25,7 +25,7 @@
 //-   This file contains global defined stuff
 //-
 //---------------------------------------------------------------------
-
+#include "utility.h"
 #include "edit.h"
 #include "renderer.h"
 #include "mesh.h"
@@ -37,6 +37,12 @@
 
 using namespace std;
 
+
+class c_config;
+
+//---------------------------------------------------------------------
+//-   Class definition for the configuration file
+//---------------------------------------------------------------------
 // Mouse / input stuff
 // Implemented in controls.cpp
 extern int g_mouse_x;
@@ -56,6 +62,7 @@ extern c_selection g_selection;
 extern c_renderer g_renderer;
 extern c_mesh     g_mesh;
 extern c_frustum  g_frustum;                // TODO: Move to g_renderer
+extern c_config   g_config;
 
 // Misc stuff
 // Implmented in global.cpp
@@ -84,3 +91,30 @@ class modbaker_exception : public runtime_error
 		// Member variables
 		string _which;
 };
+
+
+//---------------------------------------------------------------------
+//-   Class definition for the configuration file
+//---------------------------------------------------------------------
+class c_config
+{
+	private:
+		string m_egoboo_path;
+		int    m_font_size;
+		string m_font_file;
+
+	public:
+		c_config();
+		~c_config();
+
+		string get_egoboo_path();
+		void   set_egoboo_path(string);
+
+		int    get_font_size();
+		void   set_font_size(int);
+
+		string get_font_file();
+		void   set_font_file(string);
+};
+
+

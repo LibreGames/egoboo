@@ -18,6 +18,7 @@
 //---------------------------------------------------------------------
 #include "utility.h"
 
+
 //---------------------------------------------------------------------
 //-   Read an integer value
 //---------------------------------------------------------------------
@@ -160,4 +161,35 @@ bool fgoto_colon_yesno_buffer(ifstream &file, string buffer, size_t buffer_len)
 	}
 
 	return bfound;
+}
+
+
+//---------------------------------------------------------------------
+//-   Tokenize a string on the first colon
+//---------------------------------------------------------------------
+bool tokenize_colon(const string& str, vector<string>& tokens)
+{
+	int delimiter_pos;
+
+	// Don't read comments
+	if (str.substr(0, 1) == "#")
+		return false;
+
+	delimiter_pos = str.find_first_of(':');
+
+	if (delimiter_pos == -1)
+		return false;
+
+	tokens.push_back(str.substr(0, delimiter_pos));
+
+	// Move one character forward, because we don't want the colon
+	delimiter_pos++;
+
+	// Also we don't want the first space after the colon
+	if (str.substr(delimiter_pos, 1) == " ")
+		delimiter_pos++;
+
+	tokens.push_back(str.substr(delimiter_pos, str.length()));
+
+	return true;
 }

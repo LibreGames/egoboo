@@ -96,7 +96,7 @@ void c_renderer::initSDL()
 
 	// start the font handler
 	m_font = NULL;
-	if ( TTF_Init() < 0)
+	if (TTF_Init() < 0)
 	{
 		cout << "ERROR: Unable to load the font handler: " << SDL_GetError() << endl;
 		throw modbaker_exception("Unable to load the font handler");
@@ -105,9 +105,9 @@ void c_renderer::initSDL()
 	{
 		atexit(TTF_Quit);
 
-		char * pfname = "basicdat/Negatori.ttf";
+		string pfname = g_config.get_egoboo_path() + "basicdat/" + g_config.get_font_file();
 
-		m_font = TTF_OpenFont(pfname, 16);
+		m_font = TTF_OpenFont(pfname.c_str(), g_config.get_font_size());
 		if (NULL == m_font)
 		{
 			cout << "ERROR: Error loading font \"" << pfname << "\": " << TTF_GetError() << endl;
@@ -127,7 +127,7 @@ void c_renderer::initSDL()
 	m_gfxState.sdl_vid.depth          = SCREEN_BPP;
 
 	// Get us a video mode
-	if ( NULL == sdl_set_mode(NULL, &(m_gfxState.sdl_vid), NULL) )
+	if (NULL == sdl_set_mode(NULL, &(m_gfxState.sdl_vid), NULL))
 	{
 		cout << "I can't get SDL to set any video mode: " << SDL_GetError() << endl;
 		throw modbaker_exception("I can't get SDL to set any video mode");
@@ -145,7 +145,7 @@ void c_renderer::initGL()
 
 	// glClear() stuff
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Set the background black
-	glClearDepth( 1.0 );
+	glClearDepth(1.0);
 
 	// depth buffer stuff
 	glDepthMask(GL_TRUE);
@@ -163,10 +163,10 @@ void c_renderer::initGL()
 	//glCullFace(GL_BACK);
 
 	// set up environment mapping
-	glTexGeni( GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP );  // Set The Texture Generation Mode For S To Sphere Mapping (NEW)
-	glTexGeni( GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP );  // Set The Texture Generation Mode For T To Sphere Mapping (NEW)
+	glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);  // Set The Texture Generation Mode For S To Sphere Mapping (NEW)
+	glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);  // Set The Texture Generation Mode For T To Sphere Mapping (NEW)
 
-	gl_grab_state( &tmp_ogl_state );
+	gl_grab_state(&tmp_ogl_state);
 }
 
 

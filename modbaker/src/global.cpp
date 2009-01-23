@@ -21,11 +21,15 @@
 #include "global.h"
 
 #include <cmath>
+#include <sstream>
+
+using namespace std;
 
 c_selection g_selection;
 c_renderer  g_renderer;
 c_mesh      g_mesh;
 c_frustum   g_frustum;
+c_config    g_config;
 vector<c_tile_definition> g_tiledict;
 
 
@@ -69,3 +73,94 @@ void Quit()
 }
 
 
+//---------------------------------------------------------------------
+//-   Constructor: Read the config
+//---------------------------------------------------------------------
+c_config::c_config()
+{
+	ifstream file;
+
+	// TODO: Also look in the home directories for a file called
+	// ~/.egoboo/modbaker.cfg
+	// C:\Documents and settings\egoboo\modbaker.cfg
+	file.open("modbaker.cfg");
+
+	string buffer;
+	vector <string> tokens;
+
+	while(!file.eof())
+	{
+		getline(file, buffer);
+
+		tokens.clear();
+		if(tokenize_colon(buffer, tokens))
+		{
+			if (tokens[0] == "egoboo_path")
+				this->set_egoboo_path(tokens[1]);
+
+			if (tokens[0] == "font_size")
+			{
+				// Convert the string to integer using stringstreams
+				int itmp;
+				stringstream sstr(tokens[1]);
+				sstr >> itmp;
+				this->set_font_size(itmp);
+			}
+
+			if (tokens[0] == "font_file")
+				this->set_font_file(tokens[1]);
+		}
+
+		cout << buffer << endl;
+	}
+
+	file.close();
+}
+
+
+//---------------------------------------------------------------------
+//-   Destructor
+//---------------------------------------------------------------------
+c_config::~c_config() {}
+
+
+//---------------------------------------------------------------------
+//-   Setter and Getter for m_egoboo_path
+//---------------------------------------------------------------------
+string c_config::get_egoboo_path()
+{
+	return this->m_egoboo_path;
+}
+
+void   c_config::set_egoboo_path(string p_egoboo_path)
+{
+	this->m_egoboo_path = p_egoboo_path;
+}
+
+
+//---------------------------------------------------------------------
+//-   Setter and Getter for m_font_size
+//---------------------------------------------------------------------
+int    c_config::get_font_size()
+{
+	return this->m_font_size;
+}
+
+void   c_config::set_font_size(int p_font_size)
+{
+	this->m_font_size = p_font_size;
+}
+
+
+//---------------------------------------------------------------------
+//-   Setter and Getter for m_font_file
+//---------------------------------------------------------------------
+string c_config::get_font_file()
+{
+	return this->m_font_file;
+}
+
+void   c_config::set_font_file(string p_font_file)
+{
+	this->m_font_file = p_font_file;
+}

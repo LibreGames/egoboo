@@ -73,7 +73,7 @@ c_modbaker::c_modbaker()
 void c_modbaker::init(string modname)
 {
 	g_mesh.getTileDictioary().load();
-	g_mesh.load_mesh_mpd("modules/" + modname + "/gamedat/level.mpd");
+	g_mesh.load_mesh_mpd(g_config.get_egoboo_path() + "modules/" + modname + "/gamedat/level.mpd");
 
 	g_renderer.load_basic_textures(modname);
 
