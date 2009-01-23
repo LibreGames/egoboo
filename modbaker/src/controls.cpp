@@ -198,11 +198,27 @@ void c_modbaker::handle_key_press(SDL_keysym *keysym)
 
 			// Editing
 		case SDLK_w:
-			g_selection.modify(50.0f);
+			g_selection.modify_y(10.0f);
 			break;
 
 		case SDLK_s:
-			g_selection.modify(-50.0f);
+			g_selection.modify_y(-10.0f);
+			break;
+
+		case SDLK_a:
+			g_selection.modify_x(10.0f);
+			break;
+
+		case SDLK_d:
+			g_selection.modify_x(-10.0f);
+			break;
+
+		case SDLK_q:
+			g_selection.modify_z(50.0f);
+			break;
+
+		case SDLK_e:
+			g_selection.modify_z(-50.0f);
 			break;
 
 		case SDLK_SPACE:

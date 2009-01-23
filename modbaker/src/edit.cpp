@@ -63,15 +63,43 @@ int c_selection::add_vertices_at_position(vect3 ref)
 
 
 //---------------------------------------------------------------------
-//-   Modify all vertices in the selection
+//-   Modify all vertices in the selection (X direction)
 //---------------------------------------------------------------------
-void c_selection::modify(float off_y)
+void c_selection::modify_x(float off_x)
+{
+	unsigned int i;
+
+	for (i = 0; i < this->selection.size(); i++)
+	{
+		g_mesh.modify_verts(off_x, this->selection[i]);
+	}
+}
+
+
+//---------------------------------------------------------------------
+//-   Modify all vertices in the selection (Z direction)
+//---------------------------------------------------------------------
+void c_selection::modify_y(float off_y)
 {
 	unsigned int i;
 
 	for (i = 0; i < this->selection.size(); i++)
 	{
 		g_mesh.modify_verts(off_y, this->selection[i]);
+	}
+}
+
+
+//---------------------------------------------------------------------
+//-   Modify all vertices in the selection (Z direction)
+//---------------------------------------------------------------------
+void c_selection::modify_z(float off_z)
+{
+	unsigned int i;
+
+	for (i = 0; i < this->selection.size(); i++)
+	{
+		g_mesh.modify_verts(off_z, this->selection[i]);
 	}
 }
 

@@ -38,7 +38,9 @@ class c_selection
 
 		void clear();
 
-		void modify(float);
+		void modify_x(float);
+		void modify_y(float);
+		void modify_z(float);
 
 		bool in_selection(int);
 };
