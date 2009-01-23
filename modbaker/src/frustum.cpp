@@ -34,9 +34,9 @@ void c_frustum::NormalizePlane(FrustumSide side)
 	// Remember that (A, B, C) is that same thing as the normal's (X, Y, Z).
 	// To calculate magnitude you use the equation:  magnitude = sqrt( x^2 + y^2 + z^2)
 	float magnitude = (float) sqrt(
-						  this->planes[side][A] * this->planes[side][A] +
-						  this->planes[side][B] * this->planes[side][B] +
-						  this->planes[side][C] * this->planes[side][C] );
+		this->planes[side][A] * this->planes[side][A] +
+		this->planes[side][B] * this->planes[side][B] +
+		this->planes[side][C] * this->planes[side][C] );
 
 	// Then we divide the plane's values by it's magnitude.
 	// This makes it easier to work with.
