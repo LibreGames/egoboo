@@ -51,9 +51,17 @@
 		<h3>public int c_selection::add_vertices_at_position(vect3 ref)</h3>
 		<p>DUMMY - currently unused</p>
 
-		<h3>public void c_selection::modify(float off_y)</h3>
+		<h3>public void c_selection::modify_x(float off_x)</h3>
+		<p>Modifies all vertices in the selection</p>
+		<p>Parameter off_x: X units to modify (+/-)</p>
+
+		<h3>public void c_selection::modify_y(float off_y)</h3>
 		<p>Modifies all vertices in the selection</p>
 		<p>Parameter off_y: Y units to modify (+/-)</p>
+
+		<h3>public void c_selection::modify_z(float off_z)</h3>
+		<p>Modifies all vertices in the selection</p>
+		<p>Parameter off_z: Z units to modify (+/-)</p>
 
 		<h3>public bool c_selection::in_selection(int vertex)</h3>
 		<p>Returns true if the specified vertex is in the selection.</p>
