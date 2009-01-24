@@ -60,29 +60,29 @@ extern "C"
 		int aca_d;  // SDL_GL_ACCUM_ALPHA_SIZE Size of the accumulation buffer alpha component, in bits
 
 		// selected SDL bitfields
-unsigned hw_available: 1;
-unsigned wm_available: 1;
-unsigned blit_hw: 1;
-unsigned blit_hw_CC: 1;
-unsigned blit_hw_A: 1;
-unsigned blit_sw: 1;
-unsigned blit_sw_CC: 1;
-unsigned blit_sw_A: 1;
+		unsigned hw_available: 1;
+		unsigned wm_available: 1;
+		unsigned blit_hw: 1;
+		unsigned blit_hw_CC: 1;
+		unsigned blit_hw_A: 1;
+		unsigned blit_sw: 1;
+		unsigned blit_sw_CC: 1;
+		unsigned blit_sw_A: 1;
 
-unsigned is_sw: 1;          // SDL_SWSURFACE Surface is stored in system memory
-unsigned is_hw: 1;          // SDL_HWSURFACE Surface is stored in video memory
-unsigned use_asynch_blit: 1; // SDL_ASYNCBLIT Surface uses asynchronous blits if possible
-unsigned use_anyformat: 1;  // SDL_ANYFORMAT Allows any pixel-format (Display surface)
-unsigned use_hwpalette: 1;    // SDL_HWPALETTE Surface has exclusive palette
-unsigned is_doublebuf: 1;    // SDL_DOUBLEBUF Surface is double buffered (Display surface)
-unsigned is_fullscreen: 1;   // SDL_FULLSCREEN Surface is full screen (Display Surface)
-unsigned use_opengl: 1;       // SDL_OPENGL Surface has an OpenGL context (Display Surface)
-unsigned use_openglblit: 1;   // SDL_OPENGLBLIT Surface supports OpenGL blitting (Display Surface)
-unsigned sdl_resizable: 1;    // SDL_RESIZABLE Surface is resizable (Display Surface)
-unsigned use_hwaccel: 1;      // SDL_HWACCEL Surface blit uses hardware acceleration
-unsigned has_srccolorkey: 1;  // SDL_SRCCOLORKEY Surface use colorkey blitting
-unsigned use_rleaccel: 1;     // SDL_RLEACCEL Colorkey blitting is accelerated with RLE
-unsigned use_srcalpha: 1;     // SDL_SRCALPHA Surface blit uses alpha blending
+		unsigned is_sw: 1;          // SDL_SWSURFACE Surface is stored in system memory
+		unsigned is_hw: 1;          // SDL_HWSURFACE Surface is stored in video memory
+		unsigned use_asynch_blit: 1; // SDL_ASYNCBLIT Surface uses asynchronous blits if possible
+		unsigned use_anyformat: 1;  // SDL_ANYFORMAT Allows any pixel-format (Display surface)
+		unsigned use_hwpalette: 1;    // SDL_HWPALETTE Surface has exclusive palette
+		unsigned is_doublebuf: 1;    // SDL_DOUBLEBUF Surface is double buffered (Display surface)
+		unsigned is_fullscreen: 1;   // SDL_FULLSCREEN Surface is full screen (Display Surface)
+		unsigned use_opengl: 1;       // SDL_OPENGL Surface has an OpenGL context (Display Surface)
+		unsigned use_openglblit: 1;   // SDL_OPENGLBLIT Surface supports OpenGL blitting (Display Surface)
+		unsigned sdl_resizable: 1;    // SDL_RESIZABLE Surface is resizable (Display Surface)
+		unsigned use_hwaccel: 1;      // SDL_HWACCEL Surface blit uses hardware acceleration
+		unsigned has_srccolorkey: 1;  // SDL_SRCCOLORKEY Surface use colorkey blitting
+		unsigned use_rleaccel: 1;     // SDL_RLEACCEL Colorkey blitting is accelerated with RLE
+		unsigned use_srcalpha: 1;     // SDL_SRCALPHA Surface blit uses alpha blending
 unsigned is_prealloc: 1;     // SDL_PREALLOC Surface uses preallocated memory
 	};
 	typedef struct s_sdl_screen_info sdl_screen_info_t;

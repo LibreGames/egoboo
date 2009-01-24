@@ -135,13 +135,13 @@
 				RelativePath=".\modbaker.cpp">
 			</File>
 			<File
-				RelativePath=".\ogl_debug.c">
+				RelativePath=".\ogl_debug.cpp">
 			</File>
 			<File
-				RelativePath=".\ogl_extensions.c">
+				RelativePath=".\ogl_extensions.cpp">
 			</File>
 			<File
-				RelativePath=".\ogl_include.c">
+				RelativePath=".\ogl_include.cpp">
 			</File>
 			<File
 				RelativePath=".\renderer.cpp">
@@ -150,10 +150,10 @@
 				RelativePath=".\renderer_misc.cpp">
 			</File>
 			<File
-				RelativePath=".\SDL_extensions.c">
+				RelativePath=".\SDL_extensions.cpp">
 			</File>
 			<File
-				RelativePath=".\SDL_GL_extensions.c">
+				RelativePath=".\SDL_GL_extensions.cpp">
 			</File>
 			<File
 				RelativePath=".\utility.cpp">

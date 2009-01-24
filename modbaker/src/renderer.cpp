@@ -197,13 +197,13 @@ void c_renderer::resize_window( int width, int height )
 //---------------------------------------------------------------------
 void c_renderer::load_basic_textures(string modname)
 {
-	load_texture("basicdat/globalparticles/particle.png",        TX_PARTICLE);
-	load_texture("modules/" + modname + "/gamedat/tile0.bmp",    TX_TILE_0);
-	load_texture("modules/" + modname + "/gamedat/tile1.bmp",    TX_TILE_1);
-	load_texture("modules/" + modname + "/gamedat/tile2.bmp",    TX_TILE_2);
-	load_texture("modules/" + modname + "/gamedat/tile3.bmp",    TX_TILE_3);
-	load_texture("modules/" + modname + "/gamedat/watertop.bmp", TX_WATER_TOP);
-	load_texture("modules/" + modname + "/gamedat/waterlow.bmp", TX_WATER_LOW);
+	load_texture(g_config.get_egoboo_path() + "basicdat/globalparticles/particle.png",        TX_PARTICLE);
+	load_texture(g_config.get_egoboo_path() + "modules/" + modname + "/gamedat/tile0.bmp",    TX_TILE_0);
+	load_texture(g_config.get_egoboo_path() + "modules/" + modname + "/gamedat/tile1.bmp",    TX_TILE_1);
+	load_texture(g_config.get_egoboo_path() + "modules/" + modname + "/gamedat/tile2.bmp",    TX_TILE_2);
+	load_texture(g_config.get_egoboo_path() + "modules/" + modname + "/gamedat/tile3.bmp",    TX_TILE_3);
+	load_texture(g_config.get_egoboo_path() + "modules/" + modname + "/gamedat/watertop.bmp", TX_WATER_TOP);
+	load_texture(g_config.get_egoboo_path() + "modules/" + modname + "/gamedat/waterlow.bmp", TX_WATER_LOW);
 }
 
 

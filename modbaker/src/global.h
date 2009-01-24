@@ -38,6 +38,7 @@
 using namespace std;
 
 
+// Dummy class
 class c_config;
 
 //---------------------------------------------------------------------
@@ -59,10 +60,10 @@ extern c_selection g_selection;
 
 // Global subsystems
 // Implmented in renderer.cpp, renderer_misc.cpp, mesh.cpp, frustum.cpp
+extern c_config   g_config;
 extern c_renderer g_renderer;
 extern c_mesh     g_mesh;
 extern c_frustum  g_frustum;                // TODO: Move to g_renderer
-extern c_config   g_config;
 
 // Misc stuff
 // Implmented in global.cpp

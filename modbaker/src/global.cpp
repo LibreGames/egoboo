@@ -25,11 +25,11 @@
 
 using namespace std;
 
+c_config    g_config;
 c_selection g_selection;
 c_renderer  g_renderer;
 c_mesh      g_mesh;
 c_frustum   g_frustum;
-c_config    g_config;
 vector<c_tile_definition> g_tiledict;
 
 
@@ -85,6 +85,12 @@ c_config::c_config()
 	// C:\Documents and settings\egoboo\modbaker.cfg
 	file.open("modbaker.cfg");
 
+	if (!file)
+	{
+		cout << "Config file not found!" << endl;
+		Quit();
+	}
+
 	string buffer;
 	vector <string> tokens;
 
@@ -110,8 +116,6 @@ c_config::c_config()
 			if (tokens[0] == "font_file")
 				this->set_font_file(tokens[1]);
 		}
-
-		cout << buffer << endl;
 	}
 
 	file.close();
@@ -132,7 +136,7 @@ string c_config::get_egoboo_path()
 	return this->m_egoboo_path;
 }
 
-void   c_config::set_egoboo_path(string p_egoboo_path)
+void c_config::set_egoboo_path(string p_egoboo_path)
 {
 	this->m_egoboo_path = p_egoboo_path;
 }
@@ -141,12 +145,12 @@ void   c_config::set_egoboo_path(string p_egoboo_path)
 //---------------------------------------------------------------------
 //-   Setter and Getter for m_font_size
 //---------------------------------------------------------------------
-int    c_config::get_font_size()
+int c_config::get_font_size()
 {
 	return this->m_font_size;
 }
 
-void   c_config::set_font_size(int p_font_size)
+void c_config::set_font_size(int p_font_size)
 {
 	this->m_font_size = p_font_size;
 }
@@ -160,7 +164,7 @@ string c_config::get_font_file()
 	return this->m_font_file;
 }
 
-void   c_config::set_font_file(string p_font_file)
+void c_config::set_font_file(string p_font_file)
 {
 	this->m_font_file = p_font_file;
 }

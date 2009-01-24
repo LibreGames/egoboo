@@ -6,8 +6,10 @@ CC = g++ -Wall
 # What to build ?
 MB_BIN := modbaker
 MB_SRC := controls.cpp edit.cpp frustum.cpp global.cpp \
-          mesh.cpp modbaker.cpp renderer.cpp renderer_misc.cpp \
-          utility.cpp window.cpp
+          mesh.cpp modbaker.cpp \
+          ogl_debug.cpp ogl_extensions.cpp ogl_include.cpp \
+          renderer.cpp renderer_misc.cpp \
+          SDL_extensions.cpp SDL_GL_extensions.cpp utility.cpp window.cpp
 MB_OBJ := ${MB_SRC:.cpp=.o}
 
 # Compiler flags
