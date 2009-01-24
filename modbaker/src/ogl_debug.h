@@ -24,7 +24,7 @@ extern "C"
 //------------------------------------------------------------------------------
 	struct s_gl_texture
 	{
-		GLuint binding[1];
+		GLint binding[1];
 
 		GLfloat width[1];
 		GLfloat height[1];

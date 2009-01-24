@@ -386,9 +386,12 @@ bool c_tile_dictionary::load()
 		entry++;
 	}
 
+	string filename_fans;
+	filename_fans = g_config.get_egoboo_path() + "basicdat/fans.txt";
+
 	// Open the file and go to it
 	cout << "Loading fan types of the terrain... " << endl;
-	if_fan.open("basicdat/fans.txt");
+	if_fan.open(filename_fans.c_str());
 
 	if (!if_fan)
 	{
