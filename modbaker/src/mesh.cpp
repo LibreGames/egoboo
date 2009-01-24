@@ -512,9 +512,9 @@ void c_mesh::mesh_make_fanstart()
 
 
 //---------------------------------------------------------------------
-//-   Modify all verts at the position of the  selected vertex
+//-   Modify all verts at the position of the selected vertex (X axis)
 //---------------------------------------------------------------------
-int c_mesh::modify_verts(float newheight, int vert)
+int c_mesh::modify_verts_x(float x_modifier, int vert)
 {
 	int i;
 	int num_modified;
@@ -530,18 +530,78 @@ int c_mesh::modify_verts(float newheight, int vert)
 	for (i = 0; i < this->mi->vert_count; i++)
 	{
 		if ((g_mesh.mem->vrt_x[i] == pos_old.x) &&
-				(g_mesh.mem->vrt_y[i] == pos_old.y) &&
-				(g_mesh.mem->vrt_z[i] == pos_old.z))
+			(g_mesh.mem->vrt_y[i] == pos_old.y) &&
+			(g_mesh.mem->vrt_z[i] == pos_old.z))
 		{
-			g_mesh.mem->vrt_z[i] += newheight;
-//			cout << "Modifying vert " << vert << ": " << newheight << endl;
-//			cout << " X,Y,Z " << g_mesh.mem->vrt_x[i] << ", " << g_mesh.mem->vrt_y[i] << ", " << g_mesh.mem->vrt_z[i] << endl;
+			g_mesh.mem->vrt_x[i] += x_modifier;
 
 			num_modified++;
 		}
 	}
 
-//	cout << " " << num_modified << " verts modified." << endl;
+	return num_modified;
+}
+
+
+//---------------------------------------------------------------------
+//-   Modify all verts at the position of the selected vertex (Y axis)
+//---------------------------------------------------------------------
+int c_mesh::modify_verts_y(float y_modifier, int vert)
+{
+	int i;
+	int num_modified;
+
+	num_modified = 0;
+
+	vect3 pos_old;
+
+	pos_old.x = g_mesh.mem->vrt_x[vert];
+	pos_old.y = g_mesh.mem->vrt_y[vert];
+	pos_old.z = g_mesh.mem->vrt_z[vert];
+
+	for (i = 0; i < this->mi->vert_count; i++)
+	{
+		if ((g_mesh.mem->vrt_x[i] == pos_old.x) &&
+			(g_mesh.mem->vrt_y[i] == pos_old.y) &&
+			(g_mesh.mem->vrt_z[i] == pos_old.z))
+		{
+			g_mesh.mem->vrt_y[i] += y_modifier;
+
+			num_modified++;
+		}
+	}
+
+	return num_modified;
+}
+
+
+//---------------------------------------------------------------------
+//-   Modify all verts at the position of the selected vertex (Z axis)
+//---------------------------------------------------------------------
+int c_mesh::modify_verts_z(float z_modifier, int vert)
+{
+	int i;
+	int num_modified;
+
+	num_modified = 0;
+
+	vect3 pos_old;
+
+	pos_old.x = g_mesh.mem->vrt_x[vert];
+	pos_old.y = g_mesh.mem->vrt_y[vert];
+	pos_old.z = g_mesh.mem->vrt_z[vert];
+
+	for (i = 0; i < this->mi->vert_count; i++)
+	{
+		if ((g_mesh.mem->vrt_x[i] == pos_old.x) &&
+			(g_mesh.mem->vrt_y[i] == pos_old.y) &&
+			(g_mesh.mem->vrt_z[i] == pos_old.z))
+		{
+			g_mesh.mem->vrt_z[i] += z_modifier;
+
+			num_modified++;
+		}
+	}
 
 	return num_modified;
 }

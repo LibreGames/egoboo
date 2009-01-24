@@ -71,7 +71,7 @@ void c_selection::modify_x(float off_x)
 
 	for (i = 0; i < this->selection.size(); i++)
 	{
-		g_mesh.modify_verts(off_x, this->selection[i]);
+		g_mesh.modify_verts_x(off_x, this->selection[i]);
 	}
 }
 
@@ -85,7 +85,7 @@ void c_selection::modify_y(float off_y)
 
 	for (i = 0; i < this->selection.size(); i++)
 	{
-		g_mesh.modify_verts(off_y, this->selection[i]);
+		g_mesh.modify_verts_y(off_y, this->selection[i]);
 	}
 }
 
@@ -99,7 +99,7 @@ void c_selection::modify_z(float off_z)
 
 	for (i = 0; i < this->selection.size(); i++)
 	{
-		g_mesh.modify_verts(off_z, this->selection[i]);
+		g_mesh.modify_verts_z(off_z, this->selection[i]);
 	}
 }
 
