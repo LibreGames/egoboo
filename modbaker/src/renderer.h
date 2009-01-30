@@ -232,6 +232,7 @@ class c_renderer
 		void end_2D_mode();
 
 		void render_text();
+		void render_models();
 
 		void load_basic_textures(string);
 		void render_mesh();

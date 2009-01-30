@@ -38,8 +38,9 @@
 using namespace std;
 
 
-// Dummy class
+// Dummy classes
 class c_config;
+class c_spawn_manager;
 
 //---------------------------------------------------------------------
 //-   Class definition for the configuration file
@@ -60,10 +61,11 @@ extern c_selection g_selection;
 
 // Global subsystems
 // Implmented in renderer.cpp, renderer_misc.cpp, mesh.cpp, frustum.cpp
-extern c_config   g_config;
-extern c_renderer g_renderer;
-extern c_mesh     g_mesh;
-extern c_frustum  g_frustum;                // TODO: Move to g_renderer
+extern c_config        g_config;
+extern c_renderer      g_renderer;
+extern c_mesh          g_mesh;
+extern c_frustum       g_frustum;           // TODO: Move to g_renderer
+extern c_spawn_manager g_spawn_manager;
 
 // Misc stuff
 // Implmented in global.cpp
@@ -119,3 +121,46 @@ class c_config
 };
 
 
+//---------------------------------------------------------------------
+//-   This resembles one entry in spawn.txt
+//---------------------------------------------------------------------
+class c_spawn
+{
+	public:
+		int id;               // ID for internal handling
+		string name;          // Display name
+		int slot_number;      // Egoboo slot number
+		vect3 pos;            // Position
+		char direction;       // Direction
+		int money;            // Bonus money for this module
+		int skin;             // The skin
+		int passage;          // Reference passage
+		int content;          // Content (for armor chests)
+		int lvl;              // Character level
+		char status_bar;      // Draw a status bar for this character?
+		char ghost;           // Is the character a ghost?
+		string team;          // Team
+};
+
+
+//---------------------------------------------------------------------
+//-   spawn.txt handling
+//---------------------------------------------------------------------
+class c_spawn_manager
+{
+//	private:
+	public:
+		vector<c_spawn> spawns;
+		c_spawn_manager();
+		~c_spawn_manager();
+
+		void load(string);
+		bool save(string);
+
+		void add(c_spawn);
+		void remove(int);
+
+		c_spawn get_spawn(int);
+		void    set_spawn(int, c_spawn);
+		void    render();
+};

@@ -25,11 +25,12 @@
 
 using namespace std;
 
-c_config    g_config;
-c_selection g_selection;
-c_renderer  g_renderer;
-c_mesh      g_mesh;
-c_frustum   g_frustum;
+c_config        g_config;
+c_selection     g_selection;
+c_renderer      g_renderer;
+c_mesh          g_mesh;
+c_frustum       g_frustum;
+c_spawn_manager g_spawn_manager;
 vector<c_tile_definition> g_tiledict;
 
 
@@ -168,3 +169,97 @@ void c_config::set_font_file(string p_font_file)
 {
 	this->m_font_file = p_font_file;
 }
+
+
+c_spawn_manager::c_spawn_manager()
+{
+	cout << "Creating the spawn manager" << endl;
+}
+
+
+c_spawn_manager::~c_spawn_manager()
+{
+	cout << "Deleting the spawn manager" << endl;
+}
+
+
+void c_spawn_manager::load(string p_modname)
+{
+	ifstream f_spawn;
+	c_spawn temp_spawn;
+
+	string filename;
+	filename = g_config.get_egoboo_path() + "modules/" + p_modname + "/gamedat/spawn.txt";
+
+	f_spawn.open(filename.c_str());
+
+	if (!f_spawn)
+	{
+		cout << "spawn.txt not found!" << endl;
+		Quit();
+	}
+
+	string sTmp;
+	int    iTmp;
+	float  fTmp;
+	char   cTmp;
+
+	while (!f_spawn.eof())
+	{
+		if (fgoto_colon_yesno(f_spawn))
+		{
+			f_spawn >> sTmp;  temp_spawn.name        = sTmp;
+			f_spawn >> iTmp;  temp_spawn.slot_number = iTmp;
+			f_spawn >> fTmp;  temp_spawn.pos.x       = fTmp;
+			f_spawn >> fTmp;  temp_spawn.pos.y       = fTmp;
+			f_spawn >> fTmp;  temp_spawn.pos.z       = fTmp;
+			f_spawn >> cTmp;  temp_spawn.direction   = cTmp;
+			f_spawn >> iTmp;  temp_spawn.money       = iTmp;
+			f_spawn >> iTmp;  temp_spawn.skin        = iTmp;
+			f_spawn >> iTmp;  temp_spawn.passage     = iTmp;
+			f_spawn >> iTmp;  temp_spawn.content     = iTmp;
+			f_spawn >> iTmp;  temp_spawn.lvl         = iTmp;
+			f_spawn >> cTmp;  temp_spawn.status_bar  = cTmp;
+			f_spawn >> cTmp;  temp_spawn.ghost       = cTmp;
+			f_spawn >> sTmp;  temp_spawn.team        = sTmp;
+
+			this->spawns.push_back(temp_spawn);
+		}
+	}
+
+	f_spawn.close();
+}
+
+
+bool c_spawn_manager::save(string p_modname)
+{
+	return false;
+}
+
+
+void c_spawn_manager::add(c_spawn)
+{
+
+}
+
+
+void c_spawn_manager::remove(int p_slot_number)
+{
+
+}
+
+
+c_spawn c_spawn_manager::get_spawn(int p_slot_number)
+{
+	return this->spawns[p_slot_number];
+}
+
+
+void c_spawn_manager::set_spawn(int p_slot_number, c_spawn p_spawn)
+{
+	this->spawns[p_slot_number] = p_spawn;
+}
+
+
+////         Name      Slot Xpos Ypos Zpos Dir Mon Skn Pas Con Lvl Stt Gho Team
+//Player 0:  NONE      0    14.5 60.5 6.0  N   2   0   0   0   0   T   F   Good

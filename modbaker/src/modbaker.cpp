@@ -78,6 +78,8 @@ void c_modbaker::init(string modname)
 	g_renderer.load_basic_textures(modname);
 
 	g_renderer.m_renderlist.build();
+
+	g_spawn_manager.load(modname);
 }
 
 
@@ -93,12 +95,12 @@ void c_modbaker::main_loop()
 		if ( active )
 		{
 			g_renderer.begin_frame();
-//			{ // TODO: move to crenderer::render()
 			// 3D mode
 			g_renderer.begin_3D_mode();
 			g_renderer.getPCam()->move();
 			g_renderer.render_mesh();
 			g_renderer.render_positions();
+			g_renderer.render_models();       // Render spawn.txt
 			get_GL_pos(g_mouse_x, g_mouse_y);
 			g_renderer.end_3D_mode();
 
@@ -108,7 +110,6 @@ void c_modbaker::main_loop()
 			g_renderer.end_2D_mode();
 
 			g_renderer.end_frame();  // Finally render the scene
-//			}
 		}
 
 		handle_game_events();

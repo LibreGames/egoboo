@@ -218,12 +218,12 @@ bool c_renderer::load_texture(string imgname, int tileset)
 
 	picture = IMG_Load(imgname.c_str());
 
-	glEnable( GL_TEXTURE_2D );
+	glEnable(GL_TEXTURE_2D);
 	glGenTextures(1, m_texture + tileset);
 
 	cout <<  "INFO: m_texture[" << tileset <<  "]==" << m_texture[tileset] << " (\"" << imgname << "\")" << endl;
 
-	if ( copySurfaceToTexture(picture, m_texture[tileset], tex_coords) )
+	if (copySurfaceToTexture(picture, m_texture[tileset], tex_coords))
 	{
 		// Free the SDL_Surface
 		SDL_FreeSurface(picture);
@@ -239,6 +239,7 @@ bool c_renderer::load_texture(string imgname, int tileset)
 //---------------------------------------------------------------------
 void c_renderer::render_positions()
 {
+	glDisable(GL_TEXTURE_2D);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// Render the origin (0,0,0)
@@ -251,7 +252,7 @@ void c_renderer::render_positions()
 	glVertex3i(-10, 10, 250); // Top    left
 	glEnd();
 
-	// TODO: Render a box and a line at the nearest vertex position
+	// Render a box and a line at the nearest vertex position
 	glBegin(GL_QUADS);
 	glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
 	glVertex3f((g_mesh.mem->vrt_x[g_nearest_vertex] - 10), (g_mesh.mem->vrt_y[g_nearest_vertex] - 10), g_mesh.mem->vrt_z[g_nearest_vertex] + 1); // Bottom left
@@ -286,17 +287,19 @@ void c_renderer::render_positions()
 	}
 	glEnd();
 
+	glEnable(GL_TEXTURE_2D);
 	// Now reset the colors
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
+
 
 //---------------------------------------------------------------------
 //-   Begin the frame
 //---------------------------------------------------------------------
 void c_renderer::begin_frame()
 {
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-	glViewport( 0, 0, getPScreen()->w, getPScreen()->h );
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glViewport(0, 0, getPScreen()->w, getPScreen()->h);
 }
 
 
@@ -308,10 +311,8 @@ void c_renderer::end_frame()
 	static GLint T0     = 0;
 	static GLint Frames = 0;
 
-
 	// Draw it to the screen
 	SDL_GL_SwapBuffers();
-
 
 	// Calculate the frames per second
 	Frames++;
@@ -321,7 +322,6 @@ void c_renderer::end_frame()
 		{
 			GLfloat seconds = (t - T0) / 1000.0;
 			m_fps = Frames / seconds;
-			//			cout << Frames << " frames in " << seconds << " seconds = " << this->fps << " FPS" << endl;
 			T0 = t;
 			Frames = 0;
 		}
@@ -339,8 +339,8 @@ void c_renderer::render_mesh()
 	ogl_state_t      loc_ogl_state;
 	ogl_state_comp_t loc_ogl_state_comp;
 
-	gl_grab_state( &loc_ogl_state );
-	gl_comp_state( &loc_ogl_state_comp, &loc_ogl_state, &tmp_ogl_state );
+	gl_grab_state(&loc_ogl_state);
+	gl_comp_state(&loc_ogl_state_comp, &loc_ogl_state, &tmp_ogl_state);
 
 	glEnable(GL_TEXTURE_2D);
 
@@ -544,17 +544,17 @@ void c_renderer::begin_2D_mode()
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadIdentity();         // Reset The Projection Matrix
-	glOrtho( 0, getPScreen()->w, getPScreen()->h, 0, -1, 1 );   // Set up an orthogonal projection
+	glOrtho(0, getPScreen()->w, getPScreen()->h, 0, -1, 1);   // Set up an orthogonal projection
 
-	glMatrixMode( GL_MODELVIEW );
+	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity();
 
-	glDisable( GL_DEPTH_TEST );
-	glDisable( GL_CULL_FACE );
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
 
-	glEnable( GL_BLEND );
-	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
@@ -565,10 +565,10 @@ void c_renderer::begin_2D_mode()
 
 void c_renderer::end_2D_mode()
 {
-	glMatrixMode( GL_PROJECTION );
+	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
 
-	glMatrixMode( GL_MODELVIEW );
+	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
 
 	glEnable(GL_DEPTH_TEST);
@@ -653,4 +653,40 @@ void c_renderer::render_text(string text, vect3 pos, c_renderer::TMODE mode)
 
 	// Done with the surface
 	SDL_FreeSurface( textSurf );
+}
+
+
+//---------------------------------------------------------------------
+//-   Render one model
+//---------------------------------------------------------------------
+void c_renderer::render_models()
+{
+	unsigned int i;
+	vect3 pos;
+
+	glDisable(GL_TEXTURE_2D);
+
+	for (i=0; i<g_spawn_manager.spawns.size(); i++)
+	{
+		pos = g_spawn_manager.get_spawn(i).pos;
+
+		pos.x =  pos.x * (1 << 7);
+		pos.y =  pos.y * (1 << 7);
+//		pos.z =  pos.z * (1 << 7);
+		pos.z =  1.0f  * (1 << 7);
+
+		glBegin(GL_QUADS);
+		glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
+
+		glVertex3i(pos.x-10, pos.y-10, pos.z); // Bottom left
+		glVertex3i(pos.x+10, pos.y-10, pos.z); // Bottom right
+		glVertex3i(pos.x+10, pos.y+10, pos.z); // Top    right
+		glVertex3i(pos.x-10, pos.y+10, pos.z); // Top    left
+		glEnd();
+
+		// Reset the colors
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	}
+
+	glEnable(GL_TEXTURE_2D);
 }

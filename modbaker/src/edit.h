@@ -44,5 +44,4 @@ class c_selection
 
 		bool in_selection(int);
 };
-
 #endif
