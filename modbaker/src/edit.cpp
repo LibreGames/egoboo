@@ -36,7 +36,34 @@ c_selection::c_selection()
 //---------------------------------------------------------------------
 void c_selection::add_vertex(int vertex_number)
 {
-	this->selection.push_back(vertex_number);
+	if (in_selection(vertex_number))
+	{
+		this->remove_vertex(vertex_number);
+	}
+	else
+	{
+		this->selection.push_back(vertex_number);
+	}
+}
+
+
+//---------------------------------------------------------------------
+//-   Clear the selection
+//---------------------------------------------------------------------
+void c_selection::remove_vertex(int vertex_number)
+{
+	vector <int> new_selection;
+	unsigned int i;
+
+	for (i=0; i<this->selection.size(); i++)
+	{
+		if (vertex_number != this->selection[i])
+		{
+			new_selection.push_back(this->selection[i]);
+		}
+	}
+
+	this->selection = new_selection;
 }
 
 

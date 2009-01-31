@@ -34,6 +34,7 @@ class c_selection
 		c_selection();
 //		~c_selection();
 		void add_vertex(int);
+		void remove_vertex(int);
 		int add_vertices_at_position(vect3);
 
 		void clear();
