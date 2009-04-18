@@ -9,7 +9,7 @@ using namespace std;
 
 
 //---------------------------------------------------------------------
-//-
+//-   General window formatting goes in here
 //---------------------------------------------------------------------
 c_modbaker_window::c_modbaker_window(string caption)
 {
@@ -20,7 +20,7 @@ c_modbaker_window::c_modbaker_window(string caption)
 
 
 //---------------------------------------------------------------------
-//-
+//-   c_window_manager constructor
 //---------------------------------------------------------------------
 c_window_manager::c_window_manager()
 {
@@ -28,7 +28,7 @@ c_window_manager::c_window_manager()
 
 
 //---------------------------------------------------------------------
-//-
+//-   c_window_manager destructor
 //---------------------------------------------------------------------
 c_window_manager::~c_window_manager()
 {
@@ -46,6 +46,9 @@ c_window_manager::~c_window_manager()
 }
 
 
+//---------------------------------------------------------------------
+//-   Update the FPS in the info window
+//---------------------------------------------------------------------
 void c_window_manager::set_fps(float p_fps)
 {
 	ostringstream tmp_fps;

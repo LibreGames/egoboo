@@ -595,18 +595,6 @@ void c_renderer::end_2D_mode()
 void c_renderer::render_text()
 {
 	return;
-	// Draw current FPS
-	vect3 fps_pos;
-	fps_pos.x = m_wm.screen->w;
-	fps_pos.y = 0;
-	fps_pos.z = 0;
-
-	ostringstream tmp_fps;
-	tmp_fps << "FPS: " << (float)m_fps;
-
-	glColor4f( 1, 1, 1, 1 );
-	render_text(tmp_fps.str(), fps_pos, JRIGHT);
-
 	// Draw current position
 	vect3 pos_pos;
 	pos_pos.x = m_wm.screen->w;

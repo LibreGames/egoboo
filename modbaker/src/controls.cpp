@@ -26,6 +26,7 @@
 #include "mesh.h"
 #include "renderer.h"
 #include "edit.h"
+#include "controls.h"
 
 #include "SDL_extensions.h"
 #include "ogl_debug.h"
@@ -76,7 +77,7 @@ int c_modbaker::handle_events()
 				handle_key_release(&event.key.keysym);
 				break;
 
-/*
+
 				// Mouse input
 			case SDL_MOUSEMOTION:
 				g_mouse_x = event.motion.x;
@@ -95,7 +96,7 @@ int c_modbaker::handle_events()
 					g_selection.add_vertex(g_nearest_vertex);
 				}
 				break;
-*/
+
 
 			default:
 				break;

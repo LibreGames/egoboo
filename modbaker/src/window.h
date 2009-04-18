@@ -23,7 +23,7 @@ class c_modbaker_window : public gcn::Window
 
 
 //---------------------------------------------------------------------
-//-
+//-   The list box model
 //---------------------------------------------------------------------
 class c_modbaker_list_model : public gcn::ListModel
 {
@@ -59,7 +59,7 @@ class c_modbaker_list_model : public gcn::ListModel
 
 
 //---------------------------------------------------------------------
-//-
+//-   The window manager class
 //---------------------------------------------------------------------
 class c_window_manager
 {
@@ -71,7 +71,6 @@ class c_window_manager
 		gcn::Container* top;
 
 		gcn::ImageFont* font;
-//		gcn::contrib::SDLTrueTypeFont* font;
 
 		// Texture window
 		c_modbaker_window* w_texture;
