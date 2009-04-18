@@ -43,6 +43,8 @@ class c_selection
 		void modify_y(float);
 		void modify_z(float);
 
+		void change_texture(int, int);
+
 		bool in_selection(int);
 };
 #endif

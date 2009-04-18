@@ -17,8 +17,8 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //---------------------------------------------------------------------
 
-#include "global.h"
 #include "renderer.h"
+#include "global.h"
 
 #include "SDL_GL_extensions.h"
 #include "ogl_debug.h"
@@ -33,17 +33,14 @@ static ogl_state_t tmp_ogl_state;
 //---------------------------------------------------------------------
 c_renderer::c_renderer()
 {
-	m_fps = 0.0f;
+	this->m_fps = 0.0f;
 
-	// modify the default video parameters in m_gfxState
-	m_gfxState.ogl_vid.shading = GL_FLAT;
+	this->initSDL();
+	this->initGUI();
+	this->initGL();
+	this->resize_window(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-	initSDL();
-	initGL();
-	resize_window(WINDOW_WIDTH, WINDOW_HEIGHT);
-
-
-	m_cam = new c_camera();
+	this->m_cam = new c_camera();
 }
 
 
@@ -52,12 +49,19 @@ c_renderer::c_renderer()
 //---------------------------------------------------------------------
 c_renderer::~c_renderer()
 {
-	glDeleteTextures(MAX_TEXTURES, m_texture);
+/*	glDeleteTextures(MAX_TEXTURES, m_texture);
 
 	if (NULL != m_font)
 	{
 		TTF_CloseFont(m_font);
 	}
+*/
+}
+
+
+void c_renderer::initGUI()
+{
+	m_wm.init();
 }
 
 
@@ -66,6 +70,12 @@ c_renderer::~c_renderer()
 //---------------------------------------------------------------------
 void c_renderer::initSDL()
 {
+	SDL_Init(SDL_INIT_VIDEO);
+	m_wm.screen = SDL_SetVideoMode(640, 480, 32, SDL_HWSURFACE | SDL_OPENGL | SDL_HWACCEL);
+	SDL_EnableUNICODE(1);
+	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
+
+/*
 	cout << "INFO: Initializing SDL version " << SDL_MAJOR_VERSION << "." << SDL_MINOR_VERSION << "." << SDL_PATCHLEVEL << "... ";
 	if ( SDL_Init( 0 ) < 0 )
 	{
@@ -77,6 +87,12 @@ void c_renderer::initSDL()
 		cout << "Success!" << endl;
 	}
 	atexit( SDL_Quit );
+
+	if (SDL_EnableUNICODE(1) < 0)
+	{
+		cout << "Unable to set Unicode" << endl;
+		throw modbaker_exception("Unable to set Unicode");
+	}
 
 	cout << "INFO: Initializing SDL video... ";
 	if (SDL_InitSubSystem( SDL_INIT_VIDEO ) < 0)
@@ -105,13 +121,13 @@ void c_renderer::initSDL()
 	{
 		atexit(TTF_Quit);
 
-		string pfname = g_config.get_egoboo_path() + "basicdat/" + g_config.get_font_file();
+//		string pfname = g_config.get_egoboo_path() + "basicdat/" + g_config.get_font_file();
 
-		m_font = TTF_OpenFont(pfname.c_str(), g_config.get_font_size());
-		if (NULL == m_font)
-		{
-			cout << "ERROR: Error loading font \"" << pfname << "\": " << TTF_GetError() << endl;
-		}
+//		m_font = TTF_OpenFont(pfname.c_str(), g_config.get_font_size());
+//		if (NULL == m_font)
+//		{
+//			cout << "ERROR: Error loading font \"" << pfname << "\": " << TTF_GetError() << endl;
+//		}
 	}
 
 	//	SDL_WM_SetIcon(tmp_surface, NULL);
@@ -132,6 +148,7 @@ void c_renderer::initSDL()
 		cout << "I can't get SDL to set any video mode: " << SDL_GetError() << endl;
 		throw modbaker_exception("I can't get SDL to set any video mode");
 	}
+*/
 }
 
 
@@ -140,9 +157,6 @@ void c_renderer::initSDL()
 //---------------------------------------------------------------------
 void c_renderer::initGL()
 {
-	// Load the current graphical settings
-	sdl_gl_set_mode(&(m_gfxState.ogl_vid));
-
 	// glClear() stuff
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Set the background black
 	glClearDepth(1.0);
@@ -175,7 +189,7 @@ void c_renderer::initGL()
 //---------------------------------------------------------------------
 void c_renderer::resize_window( int width, int height )
 {
-	/* Protect against a divide by zero */
+	// Protect against a divide by zero
 	if (height == 0)
 		height = 1;
 
@@ -213,7 +227,6 @@ void c_renderer::load_basic_textures(string modname)
 bool c_renderer::load_texture(string imgname, int tileset)
 {
 	SDL_Surface *picture;
-	SDL_Surface *img_temp;
 	float tex_coords[4];
 
 	picture = IMG_Load(imgname.c_str());
@@ -299,7 +312,7 @@ void c_renderer::render_positions()
 void c_renderer::begin_frame()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glViewport(0, 0, getPScreen()->w, getPScreen()->h);
+	glViewport(0, 0, m_wm.screen->w, m_wm.screen->h);
 }
 
 
@@ -312,6 +325,9 @@ void c_renderer::end_frame()
 	static GLint Frames = 0;
 
 	// Draw it to the screen
+	m_wm.gui->logic();
+	m_wm.gui->draw();
+
 	SDL_GL_SwapBuffers();
 
 	// Calculate the frames per second
@@ -322,6 +338,7 @@ void c_renderer::end_frame()
 		{
 			GLfloat seconds = (t - T0) / 1000.0;
 			m_fps = Frames / seconds;
+			m_wm.set_fps(m_fps);
 			T0 = t;
 			Frames = 0;
 		}
@@ -369,7 +386,7 @@ void c_renderer::render_mesh()
 			Uint8 this_tileset = this_tile >> 6;
 			if (this_tileset == tileset)
 			{
-				g_renderer.render_fan(this_fan, false);
+				render_fan(this_fan, false);
 			}
 		};
 	}
@@ -390,7 +407,6 @@ void c_renderer::render_fan(Uint32 fan, bool set_texture)
 	Uint32 badvertex;
 
 	vect2 off;
-	GLVertex v[MAXMESHVERTICES];
 
 	Uint16 tile = g_mesh.mem->tilelst[fan].tile; // Tile
 	Uint16 type = g_mesh.mem->tilelst[fan].type; // Command type ( index to points in fan )
@@ -411,7 +427,7 @@ void c_renderer::render_fan(Uint32 fan, bool set_texture)
 
 		GLint icurrent_tx;
 		glGetIntegerv(GL_TEXTURE_BINDING_2D, &icurrent_tx);
-		if (icurrent_tx != m_texture[itexture])
+		if ((GLuint)icurrent_tx != m_texture[itexture])
 		{
 			glBindTexture(GL_TEXTURE_2D, m_texture[itexture]);
 		}
@@ -544,7 +560,7 @@ void c_renderer::begin_2D_mode()
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadIdentity();         // Reset The Projection Matrix
-	glOrtho(0, getPScreen()->w, getPScreen()->h, 0, -1, 1);   // Set up an orthogonal projection
+	glOrtho(0, m_wm.screen->w, m_wm.screen->h, 0, -1, 1);   // Set up an orthogonal projection
 
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
@@ -578,9 +594,10 @@ void c_renderer::end_2D_mode()
 
 void c_renderer::render_text()
 {
+	return;
 	// Draw current FPS
 	vect3 fps_pos;
-	fps_pos.x = getPScreen()->w;
+	fps_pos.x = m_wm.screen->w;
 	fps_pos.y = 0;
 	fps_pos.z = 0;
 
@@ -592,7 +609,7 @@ void c_renderer::render_text()
 
 	// Draw current position
 	vect3 pos_pos;
-	pos_pos.x = getPScreen()->w;
+	pos_pos.x = m_wm.screen->w;
 	pos_pos.y = 35;
 	pos_pos.z = 0;
 
@@ -600,93 +617,4 @@ void c_renderer::render_text()
 	tmp_pos << "Position: (" << g_mesh.mem->vrt_x[g_nearest_vertex] << ", " << g_mesh.mem->vrt_y[g_nearest_vertex] << ")";
 
 	render_text(tmp_pos.str(), pos_pos, JRIGHT);
-}
-
-
-void c_renderer::render_text(string text, vect3 pos, c_renderer::TMODE mode)
-{
-	SDL_Surface *textSurf;
-	SDL_Color color = { 0xFF, 0xFF, 0xFF, 0 };
-	static GLuint font_tex = ~0;
-	static float  font_coords[4];
-
-	// Let TTF render the text
-	textSurf = TTF_RenderText_Blended( m_font, text.c_str(), color );
-
-	glEnable( GL_TEXTURE_2D );
-
-	// Does this font already have a texture?  If not, allocate it here
-	if (~0 == font_tex)
-	{
-		glGenTextures( 1, &font_tex );
-	}
-
-	// Copy the surface to the texture
-	if ( copySurfaceToTexture( textSurf, font_tex, font_coords ) )
-	{
-		float xl, xr;
-		float yt, yb;
-
-		if (mode == JLEFT)
-		{
-			xl = pos.x;
-			xr = pos.x + textSurf->w;
-			yb = pos.y;
-			yt = pos.y + textSurf->h;
-		}
-		else
-		{
-			xl = pos.x - textSurf->w;
-			xr = pos.x;
-			yb = pos.y;
-			yt = pos.y + textSurf->h;
-		}
-
-		// And draw the darn thing
-		glBegin( GL_TRIANGLE_STRIP );
-		glTexCoord2f( font_coords[0], font_coords[1] ); glVertex2f( xl, yb );
-		glTexCoord2f( font_coords[2], font_coords[1] ); glVertex2f( xr, yb );
-		glTexCoord2f( font_coords[0], font_coords[3] ); glVertex2f( xl, yt );
-		glTexCoord2f( font_coords[2], font_coords[3] ); glVertex2f( xr, yt );
-		glEnd();
-	}
-
-	// Done with the surface
-	SDL_FreeSurface( textSurf );
-}
-
-
-//---------------------------------------------------------------------
-//-   Render one model
-//---------------------------------------------------------------------
-void c_renderer::render_models()
-{
-	unsigned int i;
-	vect3 pos;
-
-	glDisable(GL_TEXTURE_2D);
-
-	for (i=0; i<g_spawn_manager.spawns.size(); i++)
-	{
-		pos = g_spawn_manager.get_spawn(i).pos;
-
-		pos.x =  pos.x * (1 << 7);
-		pos.y =  pos.y * (1 << 7);
-//		pos.z =  pos.z * (1 << 7);
-		pos.z =  1.0f  * (1 << 7);
-
-		glBegin(GL_QUADS);
-		glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
-
-		glVertex3i(pos.x-10, pos.y-10, pos.z); // Bottom left
-		glVertex3i(pos.x+10, pos.y-10, pos.z); // Bottom right
-		glVertex3i(pos.x+10, pos.y+10, pos.z); // Top    right
-		glVertex3i(pos.x-10, pos.y+10, pos.z); // Top    left
-		glEnd();
-
-		// Reset the colors
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	}
-
-	glEnable(GL_TEXTURE_2D);
 }

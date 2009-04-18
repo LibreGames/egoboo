@@ -1,43 +1,116 @@
-//---------------------------------------------------------------------
-// ModBaker - a module editor for Egoboo
-//---------------------------------------------------------------------
-// Copyright (C) 2009 Tobias Gall
-//
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// See the GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, see <http://www.gnu.org/licenses/>.
-//---------------------------------------------------------------------
 #ifndef window_h
 #define window_h
 
-#include <vector>
+#include <guichan.hpp>
+#include <guichan/sdl.hpp>
+#include <guichan/opengl.hpp>
+#include <guichan/opengl/openglsdlimageloader.hpp>
+
+
+#include <string>
 
 using namespace std;
 
-class cWindow
+
+//---------------------------------------------------------------------
+//-   A modbaker window
+//---------------------------------------------------------------------
+class c_modbaker_window : public gcn::Window
 {
-	private:
 	public:
-		cWindow();
-		~cWindow();
+		c_modbaker_window(string);
 };
 
-class cWindowManager
+
+//---------------------------------------------------------------------
+//-
+//---------------------------------------------------------------------
+class c_modbaker_list_model : public gcn::ListModel
 {
 	private:
-	public:
-		cWindowManager();
-		~cWindowManager();
+		int number_of_elements;
+		vector <string> elements;
 
-		vector<cWindow> window;
+	public:
+		bool add_element(string p_name)
+		{
+			this->elements.push_back(p_name);
+			this->number_of_elements++;
+			return true;
+		}
+
+		bool remove_element(int);
+
+		std::string getElementAt(int i)
+		{
+			if (i <= this->number_of_elements)
+			{
+				return elements[i];
+			}
+
+			return "error";
+		}
+
+		int getNumberOfElements()
+		{
+			return elements.size();
+		}
+};
+
+
+//---------------------------------------------------------------------
+//-
+//---------------------------------------------------------------------
+class c_window_manager
+{
+	private:
+		// GUI
+		gcn::OpenGLGraphics* graphics;
+		gcn::OpenGLSDLImageLoader* imageLoader;
+
+		gcn::Container* top;
+
+		gcn::ImageFont* font;
+//		gcn::contrib::SDLTrueTypeFont* font;
+
+		// Texture window
+		c_modbaker_window* w_texture;
+		gcn::Label* label2;
+
+		// Info window
+		gcn::Label* label_fps;
+		c_modbaker_window* w_info;
+
+		// Object window
+		c_modbaker_list_model* obj_list_model;
+		gcn::ListBox* obj_list_box;
+		c_modbaker_window* w_object;
+
+		// Other windows
+		c_modbaker_window* w_toolbar;
+
+	public:
+		c_window_manager();
+		~c_window_manager();
+
+		bool init();
+		void set_fps(float);
+
+		// TODO: create setter and getter and make it private
+		gcn::Gui* gui;
+		SDL_Surface *screen;
+		gcn::SDLInput* input;
+
+		bool create_texture_window();
+		bool destroy_texture_window();
+
+		bool create_info_window();
+		bool destroy_info_window();
+
+		bool create_object_window();
+		bool destroy_object_window();
+
+		bool create_toolbar();
+		bool destroy_toolbar();
 };
 #endif

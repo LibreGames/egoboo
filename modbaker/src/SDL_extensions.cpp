@@ -170,7 +170,7 @@ SDL_Surface * RequestVideoMode( sdl_video_parameters_t * v )
 		{
 			// Fedora 7 doesn't suuport SDL_GL_SWAP_CONTROL, but we use this  nvidia extension instead.
 #if defined(__unix__)
-			SDL_putenv("__GL_SYNC_TO_VBLANK=1");
+			SDL_putenv((char *) "__GL_SYNC_TO_VBLANK=1");
 #else
 			/* Turn on vsync, this works on Windows. */
 			if (SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1) < 0)
@@ -214,7 +214,7 @@ SDL_Surface * RequestVideoMode( sdl_video_parameters_t * v )
 	{
 		// report current graphics values
 
-		fprintf( stdout, "INFO: SDL set video mode to the current parameters\n", SDL_GetError() );
+		fprintf( stdout, "INFO: SDL set video mode to the current parameters %s\n", SDL_GetError() );
 
 		GetSDLScreen_Info(&sdl_scr);
 

@@ -66,20 +66,29 @@ c_modbaker::c_modbaker()
 	this->selection_add = false;
 }
 
+/*
+c_modbaker::~c_modbaker()
+{
+	delete input;
+}
+*/
+
 
 //---------------------------------------------------------------------
 //-   Init everything
 //---------------------------------------------------------------------
-void c_modbaker::init(string modname)
+void c_modbaker::init(string p_modname)
 {
 	g_mesh.getTileDictioary().load();
-	g_mesh.load_mesh_mpd(g_config.get_egoboo_path() + "modules/" + modname + "/gamedat/level.mpd");
+	g_mesh.load_mesh_mpd(g_config.get_egoboo_path() + "modules/" + p_modname + "/gamedat/level.mpd");
 
-	g_renderer.load_basic_textures(modname);
+	g_mesh.modname = p_modname;
+
+	g_renderer.load_basic_textures(p_modname);
 
 	g_renderer.m_renderlist.build();
 
-	g_spawn_manager.load(modname);
+	g_spawn_manager.load(p_modname);
 }
 
 
@@ -88,7 +97,7 @@ void c_modbaker::init(string modname)
 //---------------------------------------------------------------------
 void c_modbaker::main_loop()
 {
-	g_renderer.getPCam()->reset();
+//	g_renderer.getPCam()->reset();
 
 	while ( !done )
 	{
@@ -112,7 +121,6 @@ void c_modbaker::main_loop()
 			g_renderer.end_frame();  // Finally render the scene
 		}
 
-		handle_game_events();
-		handle_window_events();
+		handle_events();
 	}
 }

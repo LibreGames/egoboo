@@ -25,12 +25,13 @@
 
 using namespace std;
 
-c_config        g_config;
-c_selection     g_selection;
-c_renderer      g_renderer;
-c_mesh          g_mesh;
-c_frustum       g_frustum;
-c_spawn_manager g_spawn_manager;
+c_config         g_config;
+c_selection      g_selection;
+c_renderer       g_renderer;
+c_mesh           g_mesh;
+c_frustum        g_frustum;
+c_spawn_manager  g_spawn_manager;
+
 vector<c_tile_definition> g_tiledict;
 
 

@@ -21,7 +21,6 @@
 //-   Everything regarding the input
 //-
 //---------------------------------------------------------------------
-
 #include "global.h"
 #include "modbaker.h"
 #include "mesh.h"
@@ -36,23 +35,21 @@
 
 #include <iostream>
 
-//---------------------------------------------------------------------
-//-   Handle window events (focus, resize, ...)
-//---------------------------------------------------------------------
-int c_modbaker::handle_window_events()
-{
-	SDL_Event event;
 
+//---------------------------------------------------------------------
+//-   Handle input events
+//---------------------------------------------------------------------
+int c_modbaker::handle_events()
+{
 	// handle the events in the queue
 	while (SDL_PollEvent(&event))
 	{
 		switch (event.type)
 		{
 			case SDL_ACTIVEEVENT:
-				/* Something's happend with our focus
-				 * If we lost focus or we are iconified, we
-				 * shouldn't draw the screen
-				 */
+				// Something's happend with our focus
+				// If we lost focus or we are iconified, we
+				// shouldn't draw the screen
 				active = ((event.active.state == SDL_APPMOUSEFOCUS) ||
 						  (event.active.state == SDL_APPINPUTFOCUS) ||
 						  (event.active.state == SDL_APPACTIVE)) &&
@@ -63,51 +60,11 @@ int c_modbaker::handle_window_events()
 				active = true;
 				break;
 
-				// Window resize
-			case SDL_VIDEORESIZE:
-				{
-					sdl_video_parameters_t new_scr = g_renderer.getSDL();
-
-					new_scr.width  = event.resize.w;
-					new_scr.height = event.resize.h;
-
-					if ( NULL == sdl_set_mode( &g_renderer.getSDL(), &new_scr, &g_renderer.getOGL()) )
-					{
-						cout << "Could not get a surface after resize: " << SDL_GetError() << endl;
-						throw modbaker_exception("Could not get a surface after resize");
-						Quit();
-					}
-					g_renderer.resize_window(event.resize.w, event.resize.h);
-				}
-				break;
-
-
 				// Quit request
 			case SDL_QUIT:
 				done = true;
 				break;
 
-			default:
-				break;
-		}
-	}
-
-	return 0;
-}
-
-
-//---------------------------------------------------------------------
-//-   Handle game events (movement, editing, ...)
-//---------------------------------------------------------------------
-int c_modbaker::handle_game_events()
-{
-	SDL_Event event;
-
-	// handle the events in the queue
-	while (SDL_PollEvent(&event))
-	{
-		switch (event.type)
-		{
 				// Keyboard input
 				// handle key presses
 			case SDL_KEYDOWN:
@@ -119,7 +76,7 @@ int c_modbaker::handle_game_events()
 				handle_key_release(&event.key.keysym);
 				break;
 
-
+/*
 				// Mouse input
 			case SDL_MOUSEMOTION:
 				g_mouse_x = event.motion.x;
@@ -138,11 +95,13 @@ int c_modbaker::handle_game_events()
 					g_selection.add_vertex(g_nearest_vertex);
 				}
 				break;
-
+*/
 
 			default:
 				break;
 		}
+		// Guichan events
+		g_renderer.m_wm.input->pushInput(event);
 	}
 
 	return 0;
@@ -159,10 +118,6 @@ void c_modbaker::handle_key_press(SDL_keysym *keysym)
 			// System controls
 		case SDLK_ESCAPE:
 			Quit();
-			break;
-
-		case SDLK_F1:
-			SDL_WM_ToggleFullScreen(g_renderer.getSDL().surface);
 			break;
 
 			// Camera control
@@ -221,13 +176,17 @@ void c_modbaker::handle_key_press(SDL_keysym *keysym)
 			g_selection.modify_z(-50.0f);
 			break;
 
+		case SDLK_o:
+			g_selection.change_texture(0, 0);
+			break;
+
 		case SDLK_SPACE:
 			g_selection.clear();
 			break;
 
 			// Save the file again
 		case SDLK_F10:
-			g_mesh.save_mesh_mpd("level.mpd");
+			g_mesh.save_mesh_mpd(g_config.get_egoboo_path() + "modules/" + g_mesh.modname + "/gamedat/level.mpd");
 			break;
 
 		default:

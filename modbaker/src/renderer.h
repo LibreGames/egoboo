@@ -25,14 +25,15 @@
 //-
 //---------------------------------------------------------------------
 
-#include "general.h"
-#include "SDL_extensions.h"
-#include "ogl_extensions.h"
-
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
+
+#include "window.h"
+#include "general.h"
+#include "SDL_extensions.h"
+#include "ogl_extensions.h"
 
 #include <string>
 
@@ -88,45 +89,6 @@ struct GLVertex
 	vect3 nrm;
 	vect3 up;
 	vect3 rt;
-};
-
-
-//---------------------------------------------------------------------
-//-   Wrapper function for SDL and GL video initialization
-//---------------------------------------------------------------------
-
-struct video_parameters : public sdl_video_parameters_t
-{
-	video_parameters()
-	{
-		// use the "base class constructor"
-		sdl_video_parameters_default( get_pbase() );
-
-		// set the window screen height with our default values
-		width  = WINDOW_WIDTH;
-		height = WINDOW_HEIGHT;
-	}
-
-	sdl_video_parameters_t * get_pbase() { return static_cast<sdl_video_parameters_t *>(this); }
-
-	static bool download( video_parameters * p, Graphics_t * g );
-	static bool upload  ( video_parameters * p, Graphics_t * g );
-};
-
-//---------------------------------------------------------------------
-//-                                                                   -
-//---------------------------------------------------------------------
-struct Graphics_t
-{
-	/// values set when initializing the video mode
-	sdl_video_parameters_t sdl_vid;
-	ogl_video_parameters_t ogl_vid;
-
-	Graphics_t()
-	{
-		sdl_video_parameters_default( &sdl_vid );
-		ogl_video_parameters_default( &ogl_vid );
-	}
 };
 
 
@@ -202,15 +164,16 @@ class c_renderer
 		friend class c_camera;
 
 	protected:
-		Graphics_t m_gfxState;
 		GLuint     m_texture[MAX_TEXTURES];
 
 		void initSDL();
+		void initGUI();
 		void initGL();
 
 		void render_fan(Uint32, bool set_texture = true);
 		bool load_texture(string, int);
 
+		// Primitives
 		void render_text(string, vect3, TMODE mode = JLEFT);
 
 		TTF_Font    *m_font;
@@ -221,29 +184,29 @@ class c_renderer
 		c_renderer();
 		~c_renderer();
 
+		// TODO: Make private
+		c_window_manager m_wm;
+
+		// Window stuff
 		void resize_window(int, int);
 		void render_positions();
 		void begin_frame();
 		void end_frame();
 
+		// 2D / 3D modes
 		void begin_3D_mode();
 		void begin_2D_mode();
 		void end_3D_mode();
 		void end_2D_mode();
 
+		// Rendering containers
 		void render_text();
 		void render_models();
 
 		void load_basic_textures(string);
 		void render_mesh();
 
-		SDL_Surface            * getPScreen() { return m_gfxState.sdl_vid.surface; };
-		Graphics_t             & getState()   { return m_gfxState; }
-		ogl_video_parameters_t & getOGL()     { return m_gfxState.ogl_vid; }
-		sdl_video_parameters_t & getSDL()     { return m_gfxState.sdl_vid; }
-
 		c_camera * getPCam()          { return m_cam; }
-
 
 		c_renderlist m_renderlist;
 };

@@ -8,12 +8,13 @@ MB_BIN := modbaker
 MB_SRC := controls.cpp edit.cpp frustum.cpp global.cpp \
           mesh.cpp modbaker.cpp \
           ogl_debug.cpp ogl_extensions.cpp ogl_include.cpp \
-          renderer.cpp renderer_misc.cpp \
-          SDL_extensions.cpp SDL_GL_extensions.cpp utility.cpp window.cpp
+          renderer.cpp renderer_misc.cpp renderer_primitives.cpp \
+          SDL_extensions.cpp SDL_GL_extensions.cpp utility.cpp \
+          window.cpp
 MB_OBJ := ${MB_SRC:.cpp=.o}
 
 # Compiler flags
-LDFLAGS := $(shell sdl-config --cflags --libs) -lSDL_image -lSDL_ttf -lGL -lGLU
+LDFLAGS := $(shell sdl-config --cflags --libs) -lguichan -lguichan_sdl -lguichan_opengl -lSDL_image -lSDL_ttf -lGL -lGLU
 
 # Normal building
 ${MB_BIN}:

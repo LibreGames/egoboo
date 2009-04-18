@@ -36,11 +36,12 @@ class c_modbaker
 		bool selection_add;
 
 		// Keyboard input
+		SDL_Event event;
+
 		void handle_key_press(SDL_keysym*);
 		void handle_key_release(SDL_keysym*);
 
-		int handle_window_events();
-		int handle_game_events();
+		int handle_events();
 
 	public:
 		c_modbaker();

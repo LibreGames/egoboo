@@ -104,7 +104,7 @@ void c_selection::modify_x(float off_x)
 
 
 //---------------------------------------------------------------------
-//-   Modify all vertices in the selection (Z direction)
+//-   Modify all vertices in the selection (Y direction)
 //---------------------------------------------------------------------
 void c_selection::modify_y(float off_y)
 {
@@ -145,4 +145,10 @@ bool c_selection::in_selection(int vertex)
 	}
 
 	return false;
+}
+
+
+void c_selection::change_texture(int fan, int p_texture)
+{
+	g_mesh.mem->tilelst[fan].tile = p_texture;
 }

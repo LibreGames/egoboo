@@ -204,6 +204,8 @@ class c_mesh
 		bool load_mesh_mpd(string);
 		bool save_mesh_mpd(string);
 
+		string modname;
+
 		int modify_verts_x(float, int);
 		int modify_verts_y(float, int);
 		int modify_verts_z(float, int);
