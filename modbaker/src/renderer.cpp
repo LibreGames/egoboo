@@ -36,10 +36,10 @@ c_renderer::c_renderer()
 	this->m_fps = 0.0f;
 
 	this->initSDL();
-	this->initGUI();
 	this->initGL();
 	this->resize_window(WINDOW_WIDTH, WINDOW_HEIGHT);
 
+	this->m_wm = new c_window_manager();
 	this->m_cam = new c_camera();
 }
 
@@ -59,19 +59,13 @@ c_renderer::~c_renderer()
 }
 
 
-void c_renderer::initGUI()
-{
-	m_wm.init();
-}
-
-
 //---------------------------------------------------------------------
 //-   General SDL initialisation
 //---------------------------------------------------------------------
 void c_renderer::initSDL()
 {
 	SDL_Init(SDL_INIT_VIDEO);
-	m_wm.screen = SDL_SetVideoMode(640, 480, 32, SDL_HWSURFACE | SDL_OPENGL | SDL_HWACCEL);
+	m_screen = SDL_SetVideoMode(640, 480, 32, SDL_HWSURFACE | SDL_OPENGL | SDL_HWACCEL);
 	SDL_EnableUNICODE(1);
 	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 
@@ -250,8 +244,11 @@ bool c_renderer::load_texture(string imgname, int tileset)
 //---------------------------------------------------------------------
 //-   Draw certain helping positions
 //---------------------------------------------------------------------
-void c_renderer::render_positions()
+bool c_renderer::render_positions()
 {
+	if (g_mesh == NULL)
+		return false;
+
 	glDisable(GL_TEXTURE_2D);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -268,18 +265,18 @@ void c_renderer::render_positions()
 	// Render a box and a line at the nearest vertex position
 	glBegin(GL_QUADS);
 	glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
-	glVertex3f((g_mesh.mem->vrt_x[g_nearest_vertex] - 10), (g_mesh.mem->vrt_y[g_nearest_vertex] - 10), g_mesh.mem->vrt_z[g_nearest_vertex] + 1); // Bottom left
-	glVertex3f((g_mesh.mem->vrt_x[g_nearest_vertex] + 10), (g_mesh.mem->vrt_y[g_nearest_vertex] - 10), g_mesh.mem->vrt_z[g_nearest_vertex] + 1); // Bottom right
-	glVertex3f((g_mesh.mem->vrt_x[g_nearest_vertex] + 10), (g_mesh.mem->vrt_y[g_nearest_vertex] + 10), g_mesh.mem->vrt_z[g_nearest_vertex] + 1); // Top    right
-	glVertex3f((g_mesh.mem->vrt_x[g_nearest_vertex] - 10), (g_mesh.mem->vrt_y[g_nearest_vertex] + 10), g_mesh.mem->vrt_z[g_nearest_vertex] + 1); // Top    left
+	glVertex3f((g_mesh->mem->vrt_x[g_nearest_vertex] - 10), (g_mesh->mem->vrt_y[g_nearest_vertex] - 10), g_mesh->mem->vrt_z[g_nearest_vertex] + 1); // Bottom left
+	glVertex3f((g_mesh->mem->vrt_x[g_nearest_vertex] + 10), (g_mesh->mem->vrt_y[g_nearest_vertex] - 10), g_mesh->mem->vrt_z[g_nearest_vertex] + 1); // Bottom right
+	glVertex3f((g_mesh->mem->vrt_x[g_nearest_vertex] + 10), (g_mesh->mem->vrt_y[g_nearest_vertex] + 10), g_mesh->mem->vrt_z[g_nearest_vertex] + 1); // Top    right
+	glVertex3f((g_mesh->mem->vrt_x[g_nearest_vertex] - 10), (g_mesh->mem->vrt_y[g_nearest_vertex] + 10), g_mesh->mem->vrt_z[g_nearest_vertex] + 1); // Top    left
 	glEnd();
 
 	glBegin(GL_LINES);
 	glLineWidth(5.0f);
 	glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
 
-	glVertex3f((g_mesh.mem->vrt_x[g_nearest_vertex]), (g_mesh.mem->vrt_y[g_nearest_vertex]), g_mesh.mem->vrt_z[g_nearest_vertex] - 500);
-	glVertex3f((g_mesh.mem->vrt_x[g_nearest_vertex]), (g_mesh.mem->vrt_y[g_nearest_vertex]), g_mesh.mem->vrt_z[g_nearest_vertex] + 500);
+	glVertex3f((g_mesh->mem->vrt_x[g_nearest_vertex]), (g_mesh->mem->vrt_y[g_nearest_vertex]), g_mesh->mem->vrt_z[g_nearest_vertex] - 500);
+	glVertex3f((g_mesh->mem->vrt_x[g_nearest_vertex]), (g_mesh->mem->vrt_y[g_nearest_vertex]), g_mesh->mem->vrt_z[g_nearest_vertex] + 500);
 	glEnd();
 
 	int i;
@@ -288,14 +285,14 @@ void c_renderer::render_positions()
 	glBegin(GL_QUADS);
 	glColor4f(0.0f, 1.0f, 0.0f, 1);
 
-	for (i = 0; i < g_mesh.mi->vert_count; i++)
+	for (i = 0; i < g_mesh->mi->vert_count; i++)
 	{
 		if (g_selection.in_selection(i))
 		{
-			glVertex3f((g_mesh.mem->vrt_x[i] - 10), (g_mesh.mem->vrt_y[i] - 10), g_mesh.mem->vrt_z[i] + 1); // Bottom left
-			glVertex3f((g_mesh.mem->vrt_x[i] + 10), (g_mesh.mem->vrt_y[i] - 10), g_mesh.mem->vrt_z[i] + 1); // Bottom right
-			glVertex3f((g_mesh.mem->vrt_x[i] + 10), (g_mesh.mem->vrt_y[i] + 10), g_mesh.mem->vrt_z[i] + 1); // Top    right
-			glVertex3f((g_mesh.mem->vrt_x[i] - 10), (g_mesh.mem->vrt_y[i] + 10), g_mesh.mem->vrt_z[i] + 1); // Top    left
+			glVertex3f((g_mesh->mem->vrt_x[i] - 10), (g_mesh->mem->vrt_y[i] - 10), g_mesh->mem->vrt_z[i] + 1); // Bottom left
+			glVertex3f((g_mesh->mem->vrt_x[i] + 10), (g_mesh->mem->vrt_y[i] - 10), g_mesh->mem->vrt_z[i] + 1); // Bottom right
+			glVertex3f((g_mesh->mem->vrt_x[i] + 10), (g_mesh->mem->vrt_y[i] + 10), g_mesh->mem->vrt_z[i] + 1); // Top    right
+			glVertex3f((g_mesh->mem->vrt_x[i] - 10), (g_mesh->mem->vrt_y[i] + 10), g_mesh->mem->vrt_z[i] + 1); // Top    left
 		}
 	}
 	glEnd();
@@ -303,6 +300,8 @@ void c_renderer::render_positions()
 	glEnable(GL_TEXTURE_2D);
 	// Now reset the colors
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+	return true;
 }
 
 
@@ -312,7 +311,7 @@ void c_renderer::render_positions()
 void c_renderer::begin_frame()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glViewport(0, 0, m_wm.screen->w, m_wm.screen->h);
+	glViewport(0, 0, m_screen->w, m_screen->h);
 }
 
 
@@ -325,8 +324,8 @@ void c_renderer::end_frame()
 	static GLint Frames = 0;
 
 	// Draw it to the screen
-	m_wm.gui->logic();
-	m_wm.gui->draw();
+	m_wm->get_gui()->logic();
+	m_wm->get_gui()->draw();
 
 	SDL_GL_SwapBuffers();
 
@@ -338,7 +337,7 @@ void c_renderer::end_frame()
 		{
 			GLfloat seconds = (t - T0) / 1000.0;
 			m_fps = Frames / seconds;
-			m_wm.set_fps(m_fps);
+			m_wm->set_fps(m_fps);
 			T0 = t;
 			Frames = 0;
 		}
@@ -349,8 +348,11 @@ void c_renderer::end_frame()
 //---------------------------------------------------------------------
 //-   Call render_fan() for every fan in the mesh
 //---------------------------------------------------------------------
-void c_renderer::render_mesh()
+bool c_renderer::render_mesh()
 {
+	if (g_mesh == NULL)
+		return false;
+
 	// Reset the last used texture, so we HAVE to load a new one
 	// for the first tiles
 	ogl_state_t      loc_ogl_state;
@@ -379,7 +381,7 @@ void c_renderer::render_mesh()
 			Uint32 this_fan  = m_renderlist.m_norm[inorm];
 
 			// do not render invalid tiles
-			Uint16 this_tile = g_mesh.mem->tilelst[this_fan].tile;
+			Uint16 this_tile = g_mesh->mem->tilelst[this_fan].tile;
 			if (INVALID_TILE == this_tile) continue;
 
 			// keep one texture in memory as long as possible
@@ -390,6 +392,8 @@ void c_renderer::render_mesh()
 			}
 		};
 	}
+
+	return true;
 }
 
 
@@ -408,8 +412,8 @@ void c_renderer::render_fan(Uint32 fan, bool set_texture)
 
 	vect2 off;
 
-	Uint16 tile = g_mesh.mem->tilelst[fan].tile; // Tile
-	Uint16 type = g_mesh.mem->tilelst[fan].type; // Command type ( index to points in fan )
+	Uint16 tile = g_mesh->mem->tilelst[fan].tile; // Tile
+	Uint16 type = g_mesh->mem->tilelst[fan].type; // Command type ( index to points in fan )
 	// type <= 32 => small tile
 	// type >  32 => big tile
 
@@ -417,7 +421,7 @@ void c_renderer::render_fan(Uint32 fan, bool set_texture)
 
 	//	mesh_calc_normal_fan( pmesh, &(gs->phys), fan, &nrm, &pos );
 	tile &= 0xFF;
-	off = g_mesh.getTileOffset(tile);
+	off = g_mesh->getTileOffset(tile);
 
 	// Change the texture if we need to
 	if (set_texture)
@@ -439,15 +443,15 @@ void c_renderer::render_fan(Uint32 fan, bool set_texture)
 	//	light_flat.b =
 	//	light_flat.a = 0.0f;
 
-	vertices  = g_mesh.getTileDefinition(type).vrt_count;            // Number of vertices
-	badvertex = g_mesh.mem->tilelst[fan].vrt_start;   // Get big reference value
+	vertices  = g_mesh->getTileDefinition(type).vrt_count;            // Number of vertices
+	badvertex = g_mesh->mem->tilelst[fan].vrt_start;   // Get big reference value
 
 	// Fill in the vertex data from the mesh memory
 	//	for (cnt = 0; cnt < vertices; cnt++, badvertex++)
 	//	{
-	//		v[cnt].pos.x = g_mesh.mem->vrt_x[badvertex];
-	//		v[cnt].pos.y = g_mesh.mem->vrt_y[badvertex];
-	//		v[cnt].pos.z = g_mesh.mem->vrt_z[badvertex];
+	//		v[cnt].pos.x = g_mesh->mem->vrt_x[badvertex];
+	//		v[cnt].pos.y = g_mesh->mem->vrt_y[badvertex];
+	//		v[cnt].pos.z = g_mesh->mem->vrt_z[badvertex];
 	//
 	//		v[cnt].col.r = FP8_TO_FLOAT( mem->vrt_lr_fp8[badvertex] + mem->vrt_ar_fp8[badvertex] );
 	//		v[cnt].col.g = FP8_TO_FLOAT( mem->vrt_lg_fp8[badvertex] + mem->vrt_ag_fp8[badvertex] );
@@ -475,11 +479,11 @@ void c_renderer::render_fan(Uint32 fan, bool set_texture)
 	//		glColor4fv( light_flat.v );
 
 	// Render each command
-	commands = g_mesh.getTileDefinition(type).cmd_count;            // Number of commands
+	commands = g_mesh->getTileDefinition(type).cmd_count;            // Number of commands
 	glColor4f(1, 1, 1, 1);
 	for (cnt = 0, entry = 0; cnt < commands; cnt++)
 	{
-		c_tile_definition & tile_def = g_mesh.getTileDefinition(type);
+		c_tile_definition & tile_def = g_mesh->getTileDefinition(type);
 		Uint8 size = tile_def.cmd_size[cnt];
 
 		glBegin(GL_TRIANGLE_FAN);
@@ -490,7 +494,7 @@ void c_renderer::render_fan(Uint32 fan, bool set_texture)
 			Uint16 glb_vrt = loc_vrt + badvertex;
 
 			glTexCoord2f(tile_def.tx[loc_vrt].u + off.u, tile_def.tx[loc_vrt].v + off.v);
-			glVertex3f(g_mesh.mem->vrt_x[glb_vrt], g_mesh.mem->vrt_y[glb_vrt], g_mesh.mem->vrt_z[glb_vrt]);
+			glVertex3f(g_mesh->mem->vrt_x[glb_vrt], g_mesh->mem->vrt_y[glb_vrt], g_mesh->mem->vrt_z[glb_vrt]);
 
 			entry++;
 		}
@@ -508,9 +512,9 @@ void c_renderer::render_fan(Uint32 fan, bool set_texture)
 
 	for ( cnt = 0; cnt < commands; cnt++ )
 	{
-	for ( tnc = 0; tnc < g_mesh.getTileDefinition(type).cmd_size[cnt]; tnc++ )
+	for ( tnc = 0; tnc < g_mesh->getTileDefinition(type).cmd_size[cnt]; tnc++ )
 	{
-	vertex = g_mesh.getTileDefinition(type).vrt[entry];
+	vertex = g_mesh->getTileDefinition(type).vrt[entry];
 
 	//			glVertex3fv(v[vertex].pos.v);
 	glVertex3f(v[vertex].pos.x, v[vertex].pos.y, (v[vertex].pos.z-5.0f));
@@ -560,7 +564,7 @@ void c_renderer::begin_2D_mode()
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadIdentity();         // Reset The Projection Matrix
-	glOrtho(0, m_wm.screen->w, m_wm.screen->h, 0, -1, 1);   // Set up an orthogonal projection
+	glOrtho(0, m_screen->w, m_screen->h, 0, -1, 1);   // Set up an orthogonal projection
 
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
@@ -597,12 +601,36 @@ void c_renderer::render_text()
 	return;
 	// Draw current position
 	vect3 pos_pos;
-	pos_pos.x = m_wm.screen->w;
+	pos_pos.x = m_screen->w;
 	pos_pos.y = 35;
 	pos_pos.z = 0;
 
 	ostringstream tmp_pos;
-	tmp_pos << "Position: (" << g_mesh.mem->vrt_x[g_nearest_vertex] << ", " << g_mesh.mem->vrt_y[g_nearest_vertex] << ")";
+	tmp_pos << "Position: (" << g_mesh->mem->vrt_x[g_nearest_vertex] << ", " << g_mesh->mem->vrt_y[g_nearest_vertex] << ")";
 
 	render_text(tmp_pos.str(), pos_pos, JRIGHT);
+}
+
+
+c_window_manager* c_renderer::get_wm()
+{
+	return m_wm;
+}
+
+
+void c_renderer::set_wm(c_window_manager* p_wm)
+{
+	m_wm = p_wm;
+}
+
+
+SDL_Surface *c_renderer::get_screen()
+{
+	return m_screen;
+}
+
+
+void c_renderer::set_screen(SDL_Surface *p_screen)
+{
+	m_screen = p_screen;
 }

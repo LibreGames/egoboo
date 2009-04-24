@@ -163,11 +163,12 @@ class c_renderer
 
 		friend class c_camera;
 
+		SDL_Surface *m_screen;
+
 	protected:
 		GLuint     m_texture[MAX_TEXTURES];
 
 		void initSDL();
-		void initGUI();
 		void initGL();
 
 		void render_fan(Uint32, bool set_texture = true);
@@ -176,20 +177,25 @@ class c_renderer
 		// Primitives
 		void render_text(string, vect3, TMODE mode = JLEFT);
 
-		TTF_Font    *m_font;
-		GLfloat      m_fps;
-		c_camera    *m_cam;
+		GLfloat           m_fps;
+		TTF_Font*         m_font;
+		c_camera*         m_cam;
+		c_window_manager* m_wm;
+
 
 	public:
 		c_renderer();
 		~c_renderer();
 
-		// TODO: Make private
-		c_window_manager m_wm;
+		c_window_manager* get_wm();
+		void set_wm(c_window_manager*);
+
+		SDL_Surface *get_screen();
+		void set_screen(SDL_Surface *);
 
 		// Window stuff
 		void resize_window(int, int);
-		void render_positions();
+		bool render_positions();
 		void begin_frame();
 		void end_frame();
 
@@ -201,10 +207,10 @@ class c_renderer
 
 		// Rendering containers
 		void render_text();
-		void render_models();
+		bool render_models();
 
 		void load_basic_textures(string);
-		void render_mesh();
+		bool render_mesh();
 
 		c_camera * getPCam()          { return m_cam; }
 

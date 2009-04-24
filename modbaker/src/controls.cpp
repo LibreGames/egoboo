@@ -41,24 +41,38 @@ using namespace std;
 
 c_input_handler::c_input_handler()
 {
+	window_input = true;
 }
+
+//---------------------------------------------------------------------
+//-   Gets called at mouse events
+//---------------------------------------------------------------------
+void c_input_handler::mouseMoved(gcn::MouseEvent& event)
+{
+	if (event.isConsumed())
+		window_input = true;
+	else
+		window_input = false;
+
+	g_mouse_x = event.getX();
+	g_mouse_y = event.getY();
+	g_renderer.get_wm()->set_position(g_mouse_x, g_mouse_y);
+}
+
 
 //---------------------------------------------------------------------
 //-   Gets called at mouse events
 //---------------------------------------------------------------------
 void c_input_handler::mousePressed(gcn::MouseEvent& event)
 {
-	this->gui_clicked = false;
-
-	if (event.isConsumed())
-		this->gui_clicked = true;
+	int iid;
+	iid = -1;
 
 	if (event.getButton() == LEFT) {
-		if (this->gui_clicked)
+		if (window_input)
 		{
-			// Get the string and convert it into an integer
+			// Get the widget ID string and convert it to integer
 			istringstream sid;
-			int iid;
 			sid.str(event.getSource()->getId());
 			sid >> iid;
 			do_something(iid);
@@ -66,9 +80,7 @@ void c_input_handler::mousePressed(gcn::MouseEvent& event)
 		else
 		{
 			if (!g_selection.get_add_mode())
-			{
-				g_selection.clear();
-			}
+				do_something(ACTION_SELECTION_CLEAR);
 
 			g_selection.add_vertex(g_nearest_vertex);
 		}
@@ -77,20 +89,126 @@ void c_input_handler::mousePressed(gcn::MouseEvent& event)
 
 
 //---------------------------------------------------------------------
-//-   Gets called at mouse events
+//-   Gets called at key events
+//---------------------------------------------------------------------
+void c_input_handler::keyPressed(gcn::KeyEvent& event)
+{
+	// Don't overwrite the input for the GUI
+	if (window_input)
+		return;
+
+	// TODO: A switch ... case should do it, too
+	if (event.getKey().getValue() == 'o')
+		do_something(ACTION_PAINT_TEXTURE);
+
+	if (event.getKey().getValue() == 'w')
+		do_something(ACTION_VERTEX_UP);
+
+	if (event.getKey().getValue() == 's')
+		do_something(ACTION_VERTEX_DOWN);
+
+	if (event.getKey().getValue() == 'a')
+		do_something(ACTION_VERTEX_LEFT);
+
+	if (event.getKey().getValue() == 'd')
+		do_something(ACTION_VERTEX_RIGHT);
+
+	if (event.getKey().getValue() == 'q')
+		do_something(ACTION_VERTEX_INC);
+
+	if (event.getKey().getValue() == 'r')
+		do_something(ACTION_VERTEX_DEC);
+
+	if (event.getKey() == gcn::Key::UP)
+		do_something(SCROLL_UP);
+
+	if (event.getKey() == gcn::Key::LEFT)
+		do_something(SCROLL_LEFT);
+
+	if (event.getKey() == gcn::Key::RIGHT)
+		do_something(SCROLL_RIGHT);
+
+	if (event.getKey() == gcn::Key::DOWN)
+		do_something(SCROLL_DOWN);
+
+	if (event.getKey() == gcn::Key::PAGE_UP)
+		do_something(SCROLL_INC);
+
+	if (event.getKey() == gcn::Key::PAGE_DOWN)
+		do_something(SCROLL_DEC);
+
+	if (event.getKey() == gcn::Key::ESCAPE)
+		do_something(ACTION_EXIT);
+
+	if (event.getKey() == gcn::Key::LEFT_SHIFT)
+		do_something(ACTION_MODIFIER_ON);
+
+	if (event.getKey() == gcn::Key::RIGHT_SHIFT)
+		do_something(ACTION_MODIFIER_ON);
+
+	if (event.getKey() == gcn::Key::SPACE)
+		do_something(ACTION_SELECTION_CLEAR);
+}
+
+
+//---------------------------------------------------------------------
+//-   Gets called at key events
+//---------------------------------------------------------------------
+void c_input_handler::keyReleased(gcn::KeyEvent& event)
+{
+
+	if (event.getKey() == gcn::Key::UP)
+		do_something(SCROLL_Y_STOP);
+
+	if (event.getKey() == gcn::Key::DOWN)
+		do_something(SCROLL_Y_STOP);
+
+	if (event.getKey() == gcn::Key::LEFT)
+		do_something(SCROLL_X_STOP);
+
+	if (event.getKey() == gcn::Key::RIGHT)
+		do_something(SCROLL_X_STOP);
+
+	if (event.getKey() == gcn::Key::PAGE_UP)
+		do_something(SCROLL_Z_STOP);
+
+	if (event.getKey() == gcn::Key::PAGE_DOWN)
+		do_something(SCROLL_Z_STOP);
+
+
+	// Don't overwrite the input for the GUI
+	if (window_input)
+		return;
+
+
+	// TODO: A switch ... case should do it, too
+	if (event.getKey() == gcn::Key::LEFT_SHIFT)
+		do_something(ACTION_MODIFIER_OFF);
+
+	if (event.getKey() == gcn::Key::RIGHT_SHIFT)
+		do_something(ACTION_MODIFIER_OFF);
+}
+
+
+//---------------------------------------------------------------------
+//-   This function controls all actions
 //---------------------------------------------------------------------
 void c_input_handler::do_something(int p_action)
 {
 	switch (p_action)
 	{
 		case ACTION_MESH_NEW:
+			delete g_mesh;
+			g_mesh = NULL;
 			break;
 
 		case ACTION_MESH_LOAD:
+			g_renderer.get_wm()->set_filename_visibility(true);
+			g_mesh->load_mesh_mpd("palice.mod");
 			break;
 
 		case ACTION_MESH_SAVE:
-			g_mesh.save_mesh_mpd(g_config.get_egoboo_path() + "modules/" + g_mesh.modname + "/gamedat/level.mpd");
+			g_mesh->save_mesh_mpd(g_config.get_egoboo_path() + "modules/" + g_mesh->modname + "/gamedat/level.mpd");
 			break;
 
 		// Vertex editing
@@ -109,18 +227,74 @@ void c_input_handler::do_something(int p_action)
 		case ACTION_VERTEX_DOWN:
 			g_selection.modify_y(-10.0f);
 			break;
+
+		case ACTION_VERTEX_INC:
+			g_selection.modify_z(50.0f);
+			break;
+
+		case ACTION_VERTEX_DEC:
+			g_selection.modify_z(-50.0f);
+			break;
+
+		case ACTION_SELECTION_CLEAR:
+			g_selection.clear();
+			break;
+
+		case ACTION_EXIT:
+			// TODO: Set c_modbaker->done to true
+			Quit();
+			break;
+
+		case ACTION_MODIFIER_ON:
+			g_renderer.getPCam()->m_factor = SCROLLFACTOR_FAST;
+			g_selection.set_add_mode(true);
+			break;
+
+		case ACTION_MODIFIER_OFF:
+			g_renderer.getPCam()->m_factor = SCROLLFACTOR_SLOW;
+			g_selection.set_add_mode(false);
+			break;
+
+		case ACTION_PAINT_TEXTURE:
+			g_selection.change_texture(0, 0);
+			break;
+
+		case SCROLL_RIGHT:
+			g_renderer.getPCam()->m_movex += 5.0f;
+			break;
+
+		case SCROLL_LEFT:
+			g_renderer.getPCam()->m_movex -= 5.0f;
+			break;
+
+		case SCROLL_UP:
+			g_renderer.getPCam()->m_movey += 5.0f;
+			break;
+
+		case SCROLL_DOWN:
+			g_renderer.getPCam()->m_movey -= 5.0f;
+			break;
+
+		case SCROLL_INC:
+			g_renderer.getPCam()->m_movez += 5.0f;
+			break;
+
+		case SCROLL_DEC:
+			g_renderer.getPCam()->m_movez -= 5.0f;
+			break;
+
+		case SCROLL_X_STOP:
+			g_renderer.getPCam()->m_movex = 0.0f;
+			break;
+
+		case SCROLL_Y_STOP:
+			g_renderer.getPCam()->m_movey = 0.0f;
+			break;
+
+		case SCROLL_Z_STOP:
+			g_renderer.getPCam()->m_movez = 0.0f;
+			break;
 	}
-}
-
-
-//---------------------------------------------------------------------
-//-   Gets called at mouse events
-//---------------------------------------------------------------------
-void c_input_handler::mouseMoved(gcn::MouseEvent& event)
-{
-	g_mouse_x = event.getX();
-	g_mouse_y = event.getY();
-	g_renderer.m_wm.set_position(g_mouse_x, g_mouse_y);
 }
 
 
@@ -129,6 +303,8 @@ void c_input_handler::mouseMoved(gcn::MouseEvent& event)
 //---------------------------------------------------------------------
 int c_modbaker::handle_events()
 {
+	SDL_Event event;
+
 	// handle the events in the queue
 	while (SDL_PollEvent(&event))
 	{
@@ -153,23 +329,12 @@ int c_modbaker::handle_events()
 				done = true;
 				break;
 
-				// Keyboard input
-				// handle key presses
-			case SDL_KEYDOWN:
-				handle_key_press(&event.key.keysym);
-				break;
-
-				// handle key releases
-			case SDL_KEYUP:
-				handle_key_release(&event.key.keysym);
-				break;
-
 			default:
 				break;
 		}
 
 		// Guichan events
-		g_renderer.m_wm.input->pushInput(event);
+		g_renderer.get_wm()->input->pushInput(event);
 	}
 
 	return 0;
@@ -177,141 +342,13 @@ int c_modbaker::handle_events()
 
 
 //---------------------------------------------------------------------
-//-   Function to handle key press events                             -
-//---------------------------------------------------------------------
-void c_modbaker::handle_key_press(SDL_keysym *keysym)
-{
-	switch (keysym->sym)
-	{
-			// System controls
-		case SDLK_ESCAPE:
-			Quit();
-			break;
-
-			// Camera control
-		case SDLK_RIGHT:
-			g_renderer.getPCam()->m_movex += 5.0f;
-			break;
-
-		case SDLK_LEFT:
-			g_renderer.getPCam()->m_movex -= 5.0f;
-			break;
-
-		case SDLK_UP:
-			g_renderer.getPCam()->m_movey += 5.0f;
-			break;
-
-		case SDLK_DOWN:
-			g_renderer.getPCam()->m_movey -= 5.0f;
-			break;
-
-		case SDLK_PAGEUP:
-			g_renderer.getPCam()->m_movez += 5.0f;
-			break;
-
-		case SDLK_PAGEDOWN:
-			g_renderer.getPCam()->m_movez -= 5.0f;
-			break;
-
-		case SDLK_LSHIFT:
-		case SDLK_RSHIFT:
-			g_renderer.getPCam()->m_factor = SCROLLFACTOR_FAST;
-			g_selection.set_add_mode(true);
-			break;
-
-			// Editing
-		case SDLK_w:
-			g_input_handler.do_something(ACTION_VERTEX_UP);
-			break;
-
-		case SDLK_s:
-			g_input_handler.do_something(ACTION_VERTEX_DOWN);
-			break;
-
-		case SDLK_a:
-			g_input_handler.do_something(ACTION_VERTEX_LEFT);
-			break;
-
-		case SDLK_d:
-			g_input_handler.do_something(ACTION_VERTEX_RIGHT);
-			break;
-
-		case SDLK_q:
-			g_selection.modify_z(50.0f);
-			break;
-
-		case SDLK_e:
-			g_selection.modify_z(-50.0f);
-			break;
-
-		case SDLK_o:
-			g_selection.change_texture(0, 0);
-			break;
-
-		case SDLK_SPACE:
-			g_selection.clear();
-			break;
-
-			// Save the file again
-		case SDLK_F10:
-			g_input_handler.do_something(ACTION_MESH_SAVE);
-			break;
-
-		default:
-			break;
-	}
-}
-
-
-//---------------------------------------------------------------------
-//-   Function to handle key release events
-//---------------------------------------------------------------------
-void c_modbaker::handle_key_release(SDL_keysym *keysym)
-{
-	switch (keysym->sym)
-	{
-			// Camera control
-		case SDLK_RIGHT:
-			g_renderer.getPCam()->m_movex = 0.0f;
-			break;
-
-		case SDLK_LEFT:
-			g_renderer.getPCam()->m_movex = 0.0f;
-			break;
-
-		case SDLK_DOWN:
-			g_renderer.getPCam()->m_movey = 0.0f;
-			break;
-
-		case SDLK_UP:
-			g_renderer.getPCam()->m_movey = 0.0f;
-			break;
-
-		case SDLK_PAGEUP:
-			g_renderer.getPCam()->m_movez = 0.0f;
-			break;
-
-		case SDLK_PAGEDOWN:
-			g_renderer.getPCam()->m_movez = 0.0f;
-			break;
-
-		case SDLK_LSHIFT:
-		case SDLK_RSHIFT:
-			g_renderer.getPCam()->m_factor = SCROLLFACTOR_SLOW;
-			g_selection.set_add_mode(false);
-			break;
-
-		default:
-			break;
-	}
-}
-
-
-//---------------------------------------------------------------------
 //-   Get the 3d coordinates related to the 2d position of the cursor
 //---------------------------------------------------------------------
-void c_modbaker::get_GL_pos(int x, int y)
+bool c_modbaker::get_GL_pos(int x, int y)
 {
+	if (g_mesh == NULL)
+		return false;
+
 	GLdouble pos3D_x, pos3D_y, pos3D_z;
 
 	float z;
@@ -337,5 +374,7 @@ void c_modbaker::get_GL_pos(int x, int y)
 	g_mouse_gl_z = (float)pos3D_z;
 
 	// Calculate the nearest vertex
-	g_nearest_vertex = g_mesh.get_nearest_vertex(g_mouse_gl_x, g_mouse_gl_y, g_mouse_gl_z);
+	g_nearest_vertex = g_mesh->get_nearest_vertex(g_mouse_gl_x, g_mouse_gl_y, g_mouse_gl_z);
+
+	return true;
 }

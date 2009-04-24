@@ -40,19 +40,34 @@ using namespace std;
 // Action types for the input system
 enum
 {
-	ACTION_MESH_NEW     = 0,
-	ACTION_MESH_LOAD    = 1,
-	ACTION_MESH_SAVE    = 2,
-	ACTION_VERTEX_UP    = 3,
-	ACTION_VERTEX_LEFT  = 4,
-	ACTION_VERTEX_RIGHT = 5,
-	ACTION_VERTEX_DOWN  = 6,
+	ACTION_MESH_NEW        =  0,
+	ACTION_MESH_LOAD       =  1,
+	ACTION_MESH_SAVE       =  2,
+	ACTION_VERTEX_UP       =  3,
+	ACTION_VERTEX_LEFT     =  4,
+	ACTION_VERTEX_RIGHT    =  5,
+	ACTION_VERTEX_DOWN     =  6,
+	ACTION_VERTEX_INC      =  7,
+	ACTION_VERTEX_DEC      =  8,
+	ACTION_SELECTION_CLEAR =  9,
+	ACTION_EXIT            = 10,
+	SCROLL_UP              = 11,
+	SCROLL_LEFT            = 12,
+	SCROLL_RIGHT           = 13,
+	SCROLL_DOWN            = 14,
+	SCROLL_INC             = 15,
+	SCROLL_DEC             = 16,
+	SCROLL_X_STOP          = 17,
+	SCROLL_Y_STOP          = 18,
+	SCROLL_Z_STOP          = 19,
+	ACTION_MODIFIER_ON     = 20,
+	ACTION_MODIFIER_OFF    = 21,
+	ACTION_PAINT_TEXTURE   = 22
 };
 
 
 // Dummy classes
 class c_config;
-class c_spawn_manager;
 
 //---------------------------------------------------------------------
 //-   Class definition for the configuration file
@@ -73,12 +88,11 @@ extern c_selection g_selection;
 
 // Global subsystems
 // Implmented in renderer.cpp, renderer_misc.cpp, mesh.cpp, frustum.cpp
-extern c_input_handler  g_input_handler;
+extern c_input_handler* g_input_handler;
 extern c_config         g_config;
 extern c_renderer       g_renderer;
-extern c_mesh           g_mesh;
+extern c_mesh*          g_mesh;
 extern c_frustum        g_frustum;           // TODO: Move to g_renderer
-extern c_spawn_manager  g_spawn_manager;
 
 // Misc stuff
 // Implmented in global.cpp
@@ -131,49 +145,4 @@ class c_config
 
 		string get_font_file();
 		void   set_font_file(string);
-};
-
-
-//---------------------------------------------------------------------
-//-   This resembles one entry in spawn.txt
-//---------------------------------------------------------------------
-class c_spawn
-{
-	public:
-		int id;               // ID for internal handling
-		string name;          // Display name
-		int slot_number;      // Egoboo slot number
-		vect3 pos;            // Position
-		char direction;       // Direction
-		int money;            // Bonus money for this module
-		int skin;             // The skin
-		int passage;          // Reference passage
-		int content;          // Content (for armor chests)
-		int lvl;              // Character level
-		char status_bar;      // Draw a status bar for this character?
-		char ghost;           // Is the character a ghost?
-		string team;          // Team
-};
-
-
-//---------------------------------------------------------------------
-//-   spawn.txt handling
-//---------------------------------------------------------------------
-class c_spawn_manager
-{
-//	private:
-	public:
-		vector<c_spawn> spawns;
-		c_spawn_manager();
-		~c_spawn_manager();
-
-		void load(string);
-		bool save(string);
-
-		void add(c_spawn);
-		void remove(int);
-
-		c_spawn get_spawn(int);
-		void    set_spawn(int, c_spawn);
-		void    render();
 };

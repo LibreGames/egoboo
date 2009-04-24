@@ -82,16 +82,19 @@ void c_renderer::render_text(string text, vect3 pos, c_renderer::TMODE mode)
 //---------------------------------------------------------------------
 //-   Render one model
 //---------------------------------------------------------------------
-void c_renderer::render_models()
+bool c_renderer::render_models()
 {
+	if (g_mesh == NULL)
+		return false;
+
 	unsigned int i;
 	vect3 pos;
 
 	glDisable(GL_TEXTURE_2D);
 
-	for (i=0; i<g_spawn_manager.spawns.size(); i++)
+	for (i=0; i<g_mesh->get_spawn_manager()->get_spawns_size(); i++)
 	{
-		pos = g_spawn_manager.get_spawn(i).pos;
+		pos = g_mesh->get_spawn_manager()->get_spawn(i).pos;
 
 		pos.x =  pos.x * (1 << 7);
 		pos.y =  pos.y * (1 << 7);
@@ -112,4 +115,6 @@ void c_renderer::render_models()
 	}
 
 	glEnable(GL_TEXTURE_2D);
+
+	return true;
 }

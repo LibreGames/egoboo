@@ -17,11 +17,14 @@ using namespace std;
 class c_widget_input_handler : public gcn::MouseListener
 {
 	public:
-		c_widget_input_handler()
-		{
-		}
+		c_widget_input_handler() {}
 
 		void mousePressed (gcn::MouseEvent &mouseEvent)
+		{
+			mouseEvent.consume();
+		}
+
+		void mouseMoved (gcn::MouseEvent &mouseEvent)
 		{
 			mouseEvent.consume();
 		}
@@ -31,34 +34,31 @@ class c_widget_input_handler : public gcn::MouseListener
 //---------------------------------------------------------------------
 //-    Input handler
 //---------------------------------------------------------------------
-class c_input_handler : public gcn::MouseListener
-//, gcn::KeyListener
+class c_input_handler : public gcn::MouseListener, public gcn::KeyListener
 {
 	private:
-		bool gui_clicked;
-		bool top;
+		bool window_input;
 
 	public:
-		void init(bool p_top)
-		{
-			cout << "input handler created" << endl;
-			this->top = p_top;
-		}
-
 		c_input_handler();
 
 		void do_something(int);
 
 		void mousePressed(gcn::MouseEvent&);
 		void mouseMoved(gcn::MouseEvent&);
-
-		bool get_gui_clicked()          { return this->gui_clicked; }
-		void set_gui_clicked(bool guic) { this->gui_clicked = guic; }
-
-		bool get_top()           { return this->top; }
-		void set_top(bool p_top) { this->top = p_top; }
+		void keyPressed(gcn::KeyEvent&);
+		void keyReleased(gcn::KeyEvent&);
 };
 
+/*
+class c_key_input_handler : public gcn::KeyListener
+{
+	public:
+		c_key_input_handler();
+
+		void KeyPressed(gcn::KeyEvent&);
+};
+*/
 
 //---------------------------------------------------------------------
 //-   A modbaker window
@@ -78,10 +78,25 @@ class c_mb_image_button : public gcn::ImageButton
 };
 
 
+class c_mb_button : public gcn::Button
+{
+	public:
+		c_mb_button();
+//		virtual void mousePressed(gcn::MouseEvent &);
+};
+
+
 class c_mb_tab : public gcn::Tab
 {
 	public:
 		c_mb_tab(string);
+};
+
+
+class c_mb_textfield : public gcn::TextField
+{
+	public:
+		c_mb_textfield();
 };
 
 
@@ -158,8 +173,9 @@ class c_window_manager
 		gcn::OpenGLSDLImageLoader* imageLoader;
 
 		gcn::Container* top;
-
 		gcn::ImageFont* font;
+
+		gcn::Gui* gui;
 
 		// The palette tab
 		c_mb_tabbedarea *t_palette;
@@ -179,6 +195,7 @@ class c_window_manager
 		// The windows
 		c_mb_window* w_palette;
 		c_mb_window* w_info;
+		c_mb_window* w_filename;
 
 		// Append an icon to a widget
 		void add_icon(c_mb_container*, string, int, int, int);
@@ -187,20 +204,26 @@ class c_window_manager
 		c_window_manager();
 		~c_window_manager();
 
-		bool init();
 		void set_fps(float);
 		void set_position(float, float);
 
+		void set_filename_visibility(bool);
+		void toggle_filename_visibility();
+
 		// TODO: create setter and getter and make it private
-		gcn::Gui* gui;
-		SDL_Surface *screen;
 		gcn::SDLInput* input;
+
+		gcn::Gui* get_gui();
+		void set_gui(gcn::Gui*);
 
 		bool create_texture_window();
 		bool destroy_texture_window();
 
 		bool create_info_window();
 		bool destroy_info_window();
+
+		bool create_filename_window();
+		bool destroy_filename_window();
 
 		bool create_object_window();
 		bool destroy_object_window();

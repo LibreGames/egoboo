@@ -173,10 +173,32 @@ c_mesh::c_mesh()
 }
 
 
+c_mesh::~c_mesh()
+{
+	delete spawn_manager;
+	spawn_manager = NULL;
+
+	delete this->mem;
+	delete this->mi;
+}
+
+
+c_spawn_manager* c_mesh::get_spawn_manager()
+{
+	return spawn_manager;
+}
+
+
+void c_mesh::set_spawn_manager(c_spawn_manager* p_spawn_manager)
+{
+	spawn_manager = p_spawn_manager;
+}
+
+
 //---------------------------------------------------------------------
 //-   Load the .mpd file
 //---------------------------------------------------------------------
-bool c_mesh::load_mesh_mpd(string filename)
+bool c_mesh::load_mesh_mpd(string p_modname)
 {
 	// Temp. variables
 	int itmp;
@@ -184,7 +206,10 @@ bool c_mesh::load_mesh_mpd(string filename)
 	int cnt;
 	int vert, vrt;
 
+	string filename;
 	ifstream file;
+
+	filename = g_config.get_egoboo_path() + "modules/" + p_modname + "/gamedat/level.mpd";
 
 	// FAN data
 	Uint32 fan = 0;
@@ -355,6 +380,9 @@ bool c_mesh::load_mesh_mpd(string filename)
 	// Store it in the tilelst again
 	this->mem->tilelst = mf_list;
 
+	spawn_manager = new c_spawn_manager();
+	spawn_manager->load(p_modname);
+
 	return true;
 }
 
@@ -499,14 +527,14 @@ void c_mesh::mesh_make_fanstart()
 {
 	int cnt;
 
-	for (cnt = 0; cnt < g_mesh.mi->tiles_y; cnt++)
+	for (cnt = 0; cnt < this->mi->tiles_y; cnt++)
 	{
-		g_mesh.mi->Tile_X[cnt] = g_mesh.mi->tiles_x * cnt;
+		this->mi->Tile_X[cnt] = this->mi->tiles_x * cnt;
 	}
 
-	for (cnt = 0; cnt < g_mesh.mi->blocks_y; cnt++)
+	for (cnt = 0; cnt < this->mi->blocks_y; cnt++)
 	{
-		g_mesh.mi->Block_X[cnt] = g_mesh.mi->blocks_x * cnt;
+		this->mi->Block_X[cnt] = this->mi->blocks_x * cnt;
 	}
 }
 
@@ -523,17 +551,17 @@ int c_mesh::modify_verts_x(float x_modifier, int vert)
 
 	vect3 pos_old;
 
-	pos_old.x = g_mesh.mem->vrt_x[vert];
-	pos_old.y = g_mesh.mem->vrt_y[vert];
-	pos_old.z = g_mesh.mem->vrt_z[vert];
+	pos_old.x = this->mem->vrt_x[vert];
+	pos_old.y = this->mem->vrt_y[vert];
+	pos_old.z = this->mem->vrt_z[vert];
 
 	for (i = 0; i < this->mi->vert_count; i++)
 	{
-		if ((g_mesh.mem->vrt_x[i] == pos_old.x) &&
-			(g_mesh.mem->vrt_y[i] == pos_old.y) &&
-			(g_mesh.mem->vrt_z[i] == pos_old.z))
+		if ((this->mem->vrt_x[i] == pos_old.x) &&
+			(this->mem->vrt_y[i] == pos_old.y) &&
+			(this->mem->vrt_z[i] == pos_old.z))
 		{
-			g_mesh.mem->vrt_x[i] += x_modifier;
+			this->mem->vrt_x[i] += x_modifier;
 
 			num_modified++;
 		}
@@ -555,17 +583,17 @@ int c_mesh::modify_verts_y(float y_modifier, int vert)
 
 	vect3 pos_old;
 
-	pos_old.x = g_mesh.mem->vrt_x[vert];
-	pos_old.y = g_mesh.mem->vrt_y[vert];
-	pos_old.z = g_mesh.mem->vrt_z[vert];
+	pos_old.x = this->mem->vrt_x[vert];
+	pos_old.y = this->mem->vrt_y[vert];
+	pos_old.z = this->mem->vrt_z[vert];
 
 	for (i = 0; i < this->mi->vert_count; i++)
 	{
-		if ((g_mesh.mem->vrt_x[i] == pos_old.x) &&
-			(g_mesh.mem->vrt_y[i] == pos_old.y) &&
-			(g_mesh.mem->vrt_z[i] == pos_old.z))
+		if ((this->mem->vrt_x[i] == pos_old.x) &&
+			(this->mem->vrt_y[i] == pos_old.y) &&
+			(this->mem->vrt_z[i] == pos_old.z))
 		{
-			g_mesh.mem->vrt_y[i] += y_modifier;
+			this->mem->vrt_y[i] += y_modifier;
 
 			num_modified++;
 		}
@@ -587,17 +615,17 @@ int c_mesh::modify_verts_z(float z_modifier, int vert)
 
 	vect3 pos_old;
 
-	pos_old.x = g_mesh.mem->vrt_x[vert];
-	pos_old.y = g_mesh.mem->vrt_y[vert];
-	pos_old.z = g_mesh.mem->vrt_z[vert];
+	pos_old.x = this->mem->vrt_x[vert];
+	pos_old.y = this->mem->vrt_y[vert];
+	pos_old.z = this->mem->vrt_z[vert];
 
 	for (i = 0; i < this->mi->vert_count; i++)
 	{
-		if ((g_mesh.mem->vrt_x[i] == pos_old.x) &&
-			(g_mesh.mem->vrt_y[i] == pos_old.y) &&
-			(g_mesh.mem->vrt_z[i] == pos_old.z))
+		if ((this->mem->vrt_x[i] == pos_old.x) &&
+			(this->mem->vrt_y[i] == pos_old.y) &&
+			(this->mem->vrt_z[i] == pos_old.z))
 		{
-			g_mesh.mem->vrt_z[i] += z_modifier;
+			this->mem->vrt_z[i] += z_modifier;
 
 			num_modified++;
 		}
@@ -630,9 +658,9 @@ int c_mesh::get_nearest_vertex(float pos_x, float pos_y, float pos_z)
 
 	for (i = 0; i < this->mi->vert_count; i++)
 	{
-		vertex.x = g_mesh.mem->vrt_x[i];
-		vertex.y = g_mesh.mem->vrt_y[i];
-		vertex.z = g_mesh.mem->vrt_z[i];
+		vertex.x = this->mem->vrt_x[i];
+		vertex.y = this->mem->vrt_y[i];
+		vertex.z = this->mem->vrt_z[i];
 
 		dist_temp = calculate_distance(vertex, ref);
 
@@ -693,7 +721,7 @@ bool c_mesh::save_mesh_mpd(string filename)
 	//-----------------------------------------------------------------
 	for ( fan = 0; fan < this->mi->tile_count;  fan++)
 	{
-		itmp = (g_mesh.mem->tilelst[fan].type << 24) + (g_mesh.mem->tilelst[fan].fx << 16) + g_mesh.mem->tilelst[fan].tile;
+		itmp = (this->mem->tilelst[fan].type << 24) + (this->mem->tilelst[fan].fx << 16) + this->mem->tilelst[fan].tile;
 		file.write((char *)&itmp, 4);
 	}
 
@@ -750,4 +778,100 @@ bool c_mesh::save_mesh_mpd(string filename)
 	cout << "File saved: " << filename << endl;
 
 	return true;
+}
+
+
+c_spawn_manager::c_spawn_manager()
+{
+	cout << "Creating the spawn manager" << endl;
+}
+
+
+c_spawn_manager::~c_spawn_manager()
+{
+	cout << "Deleting the spawn manager" << endl;
+}
+
+
+void c_spawn_manager::load(string p_modname)
+{
+	ifstream f_spawn;
+	c_spawn temp_spawn;
+
+	string filename;
+	filename = g_config.get_egoboo_path() + "modules/" + p_modname + "/gamedat/spawn.txt";
+
+	f_spawn.open(filename.c_str());
+
+	if (!f_spawn)
+	{
+		cout << "spawn.txt not found!" << endl;
+		Quit();
+	}
+
+	string sTmp;
+	int    iTmp;
+	float  fTmp;
+	char   cTmp;
+
+	while (!f_spawn.eof())
+	{
+		if (fgoto_colon_yesno(f_spawn))
+		{
+			f_spawn >> sTmp;  temp_spawn.name        = sTmp;
+			f_spawn >> iTmp;  temp_spawn.slot_number = iTmp;
+			f_spawn >> fTmp;  temp_spawn.pos.x       = fTmp;
+			f_spawn >> fTmp;  temp_spawn.pos.y       = fTmp;
+			f_spawn >> fTmp;  temp_spawn.pos.z       = fTmp;
+			f_spawn >> cTmp;  temp_spawn.direction   = cTmp;
+			f_spawn >> iTmp;  temp_spawn.money       = iTmp;
+			f_spawn >> iTmp;  temp_spawn.skin        = iTmp;
+			f_spawn >> iTmp;  temp_spawn.passage     = iTmp;
+			f_spawn >> iTmp;  temp_spawn.content     = iTmp;
+			f_spawn >> iTmp;  temp_spawn.lvl         = iTmp;
+			f_spawn >> cTmp;  temp_spawn.status_bar  = cTmp;
+			f_spawn >> cTmp;  temp_spawn.ghost       = cTmp;
+			f_spawn >> sTmp;  temp_spawn.team        = sTmp;
+
+			this->spawns.push_back(temp_spawn);
+		}
+	}
+
+	f_spawn.close();
+}
+
+
+bool c_spawn_manager::save(string p_modname)
+{
+	return false;
+}
+
+
+void c_spawn_manager::add(c_spawn)
+{
+
+}
+
+
+void c_spawn_manager::remove(int p_slot_number)
+{
+
+}
+
+
+unsigned int c_spawn_manager::get_spawns_size()
+{
+	return this->spawns.size();
+}
+
+
+c_spawn c_spawn_manager::get_spawn(int p_slot_number)
+{
+	return this->spawns[p_slot_number];
+}
+
+
+void c_spawn_manager::set_spawn(int p_slot_number, c_spawn p_spawn)
+{
+	this->spawns[p_slot_number] = p_spawn;
 }

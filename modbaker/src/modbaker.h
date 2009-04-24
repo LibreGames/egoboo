@@ -33,12 +33,6 @@ class c_modbaker
 		bool done;
 		bool active;
 
-		// Keyboard input
-		SDL_Event event;
-
-		void handle_key_press(SDL_keysym*);
-		void handle_key_release(SDL_keysym*);
-
 		int handle_events();
 
 	public:
@@ -47,6 +41,6 @@ class c_modbaker
 
 		void init(string);
 		void main_loop();
-		void get_GL_pos(int, int);
+		bool get_GL_pos(int, int);
 };
 #endif

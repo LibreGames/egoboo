@@ -208,15 +208,15 @@ bool c_renderlist::build()
 	m_num_norm  = 0;
 	m_num_watr  = 0;
 
-	for (fan = 0; fan < g_mesh.mi->tile_count; fan++)
+	for (fan = 0; fan < g_mesh->mi->tile_count; fan++)
 	{
-		g_mesh.mem->tilelst[fan].inrenderlist = false;
+		g_mesh->mem->tilelst[fan].inrenderlist = false;
 
 		if (m_num_totl < MAXMESHRENDER)
 		{
 			bool is_shine, is_noref, is_norml, is_water;
 
-			g_mesh.mem->tilelst[fan].inrenderlist = true;
+			g_mesh->mem->tilelst[fan].inrenderlist = true;
 
 //			is_shine = mesh_has_all_bits(mm->tilelst, fan, MPDFX_SHINY);
 //			is_noref = mesh_has_all_bits(mm->tilelst, fan, MPDFX_NOREFLECT);
@@ -257,8 +257,8 @@ bool c_renderlist::build()
 				// precalculate the "mode" variable so that we don't waste time rendering the waves
 				int tx, ty;
 
-				ty = fan / g_mesh.mi->tiles_x;
-				tx = fan % g_mesh.mi->tiles_x;
+				ty = fan / g_mesh->mi->tiles_x;
+				tx = fan % g_mesh->mi->tiles_x;
 
 				m_watr_mode[m_num_watr] = ((ty & 1) << 1) + (tx & 1);
 				m_watr[m_num_watr]      = fan;

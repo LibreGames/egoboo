@@ -48,6 +48,53 @@ using namespace std;
 
 
 //---------------------------------------------------------------------
+//-   This resembles one entry in spawn.txt
+//---------------------------------------------------------------------
+class c_spawn
+{
+	public:
+		int id;               // ID for internal handling
+		string name;          // Display name
+		int slot_number;      // Egoboo slot number
+		vect3 pos;            // Position
+		char direction;       // Direction
+		int money;            // Bonus money for this module
+		int skin;             // The skin
+		int passage;          // Reference passage
+		int content;          // Content (for armor chests)
+		int lvl;              // Character level
+		char status_bar;      // Draw a status bar for this character?
+		char ghost;           // Is the character a ghost?
+		string team;          // Team
+};
+
+
+//---------------------------------------------------------------------
+//-   spawn.txt handling
+//---------------------------------------------------------------------
+class c_spawn_manager
+{
+	private:
+		vector<c_spawn> spawns;
+
+	public:
+		c_spawn_manager();
+		~c_spawn_manager();
+
+		void load(string);
+		bool save(string);
+
+		void add(c_spawn);
+		void remove(int);
+
+		unsigned int get_spawns_size();
+		c_spawn get_spawn(int);
+		void    set_spawn(int, c_spawn);
+		void    render();
+};
+
+
+//---------------------------------------------------------------------
 //-   Texture box?
 //---------------------------------------------------------------------
 typedef vect2 TILE_TXBOX;
@@ -128,7 +175,6 @@ struct s_aa_bbox
 	vect3  mins;
 	vect3  maxs;
 };
-
 typedef struct s_aa_bbox AA_BBOX;
 
 
@@ -191,6 +237,7 @@ class c_mesh
 {
 	private:
 		void mesh_make_fanstart();
+		c_spawn_manager *spawn_manager;
 
 	protected:
 		static c_tile_dictionary ms_tiledict;
@@ -199,10 +246,13 @@ class c_mesh
 		c_mesh_info  *mi;
 		c_mesh_mem   *mem;
 
+		c_spawn_manager* get_spawn_manager();
+		void set_spawn_manager(c_spawn_manager*);
+
 		c_mesh();
-//		~c_mesh();
-		bool load_mesh_mpd(string);
+		~c_mesh();
 		bool save_mesh_mpd(string);
+		bool load_mesh_mpd(string);
 
 		string modname;
 
