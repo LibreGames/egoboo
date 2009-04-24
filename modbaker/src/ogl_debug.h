@@ -1,6 +1,9 @@
 #pragma once
 
+#include <string>
 #include "ogl_include.h"
+
+using namespace std;
 
 #ifdef __cplusplus
 extern "C"

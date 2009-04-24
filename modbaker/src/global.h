@@ -37,6 +37,19 @@
 using namespace std;
 
 
+// Action types for the input system
+enum
+{
+	ACTION_MESH_NEW     = 0,
+	ACTION_MESH_LOAD    = 1,
+	ACTION_MESH_SAVE    = 2,
+	ACTION_VERTEX_UP    = 3,
+	ACTION_VERTEX_LEFT  = 4,
+	ACTION_VERTEX_RIGHT = 5,
+	ACTION_VERTEX_DOWN  = 6,
+};
+
+
 // Dummy classes
 class c_config;
 class c_spawn_manager;
@@ -60,6 +73,7 @@ extern c_selection g_selection;
 
 // Global subsystems
 // Implmented in renderer.cpp, renderer_misc.cpp, mesh.cpp, frustum.cpp
+extern c_input_handler  g_input_handler;
 extern c_config         g_config;
 extern c_renderer       g_renderer;
 extern c_mesh           g_mesh;

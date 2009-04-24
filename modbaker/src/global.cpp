@@ -25,6 +25,7 @@
 
 using namespace std;
 
+c_input_handler  g_input_handler;
 c_config         g_config;
 c_selection      g_selection;
 c_renderer       g_renderer;

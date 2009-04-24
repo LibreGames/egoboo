@@ -63,7 +63,6 @@ c_modbaker::c_modbaker()
 {
 	this->done          = false;
 	this->active        = true;
-	this->selection_add = false;
 }
 
 /*
@@ -84,6 +83,8 @@ void c_modbaker::init(string p_modname)
 
 	g_mesh.modname = p_modname;
 
+	g_input_handler.init(false);
+
 	g_renderer.load_basic_textures(p_modname);
 
 	g_renderer.m_renderlist.build();
@@ -97,13 +98,16 @@ void c_modbaker::init(string p_modname)
 //---------------------------------------------------------------------
 void c_modbaker::main_loop()
 {
-//	g_renderer.getPCam()->reset();
+	g_renderer.getPCam()->reset();
 
 	while ( !done )
 	{
+		handle_events();
+
 		if ( active )
 		{
 			g_renderer.begin_frame();
+
 			// 3D mode
 			g_renderer.begin_3D_mode();
 			g_renderer.getPCam()->move();
@@ -120,7 +124,5 @@ void c_modbaker::main_loop()
 
 			g_renderer.end_frame();  // Finally render the scene
 		}
-
-		handle_events();
 	}
 }

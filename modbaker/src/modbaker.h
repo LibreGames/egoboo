@@ -33,8 +33,6 @@ class c_modbaker
 		bool done;
 		bool active;
 
-		bool selection_add;
-
 		// Keyboard input
 		SDL_Event event;
 

@@ -28,6 +28,7 @@ using namespace std;
 //---------------------------------------------------------------------
 c_selection::c_selection()
 {
+	this->add_mode = false;
 }
 
 

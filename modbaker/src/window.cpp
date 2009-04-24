@@ -1,5 +1,6 @@
 //#include "global.h"
 
+#include "global.h"
 #include "window.h"
 
 #include <iostream>
@@ -9,13 +10,67 @@ using namespace std;
 
 
 //---------------------------------------------------------------------
-//-   General window formatting goes in here
+//-   Set default actions for the widgets
 //---------------------------------------------------------------------
-c_modbaker_window::c_modbaker_window(string caption)
+c_mb_window::c_mb_window(string caption)
 {
 	this->setBaseColor(gcn::Color(255, 255, 255, 230));
 	this->setMovable(true);
 	this->setCaption(caption);
+
+	// Catch all events withing gui windows
+	c_widget_input_handler *wil;
+	wil = new c_widget_input_handler();
+	this->addMouseListener(wil);
+}
+
+
+c_mb_label::c_mb_label(string p_caption)
+{
+	this->setCaption(p_caption);
+
+	this->setBackgroundColor(gcn::Color(255, 255, 255, 230));
+	this->setBaseColor(gcn::Color(255, 255, 255, 230));
+}
+
+
+c_mb_tab::c_mb_tab(string p_caption)
+{
+	this->setCaption(p_caption);
+
+	this->setBackgroundColor(gcn::Color(255, 255, 255, 230));
+	this->setBaseColor(gcn::Color(255, 255, 255, 230));
+}
+
+
+c_mb_tabbedarea::c_mb_tabbedarea()
+{
+	this->setBackgroundColor(gcn::Color(255, 255, 255, 230));
+	this->setBaseColor(gcn::Color(255, 255, 255, 230));
+
+	this->setBackgroundColor(gcn::Color(255, 255, 255, 230));
+	this->setBaseColor(gcn::Color(255, 255, 255, 230));
+}
+
+
+c_mb_image_button::c_mb_image_button(gcn::Image* image)
+{
+	this->setImage(image);
+
+	this->setBackgroundColor(gcn::Color(255, 255, 255, 230));
+	this->setBaseColor(gcn::Color(255, 255, 255, 230));
+}
+
+
+c_mb_container::c_mb_container()
+{
+	this->setBackgroundColor(gcn::Color(255, 255, 255, 230));
+	this->setBaseColor(gcn::Color(255, 255, 255, 230));
+}
+
+
+void c_mb_image_button::mousePressed(gcn::MouseEvent &event)
+{
 }
 
 
@@ -32,10 +87,12 @@ c_window_manager::c_window_manager()
 //---------------------------------------------------------------------
 c_window_manager::~c_window_manager()
 {
-	delete this->w_texture;
+	// TODO: Add missing objects
+	delete this->c_mesh;
+	delete this->c_texture;
+	delete this->c_object;
 	delete this->w_info;
-	delete this->w_object;
-//	delete this->w_toolbar;
+	delete this->w_palette;
 
 	delete this->font;
 	delete this->top;
@@ -51,10 +108,22 @@ c_window_manager::~c_window_manager()
 //---------------------------------------------------------------------
 void c_window_manager::set_fps(float p_fps)
 {
-	ostringstream tmp_fps;
-	tmp_fps << "FPS: " << p_fps;
+	ostringstream tmp_str;
+	tmp_str << "FPS: " << p_fps;
 
-	this->label_fps->setCaption(tmp_fps.str());
+//	this->label_fps->setCaption(tmp_str.str());
+}
+
+
+//---------------------------------------------------------------------
+//-   Update the FPS in the info window
+//---------------------------------------------------------------------
+void c_window_manager::set_position(float p_x, float p_y)
+{
+	ostringstream tmp_str;
+	tmp_str << "Pos: " << p_x << ", " << p_y;
+
+//	this->label_position->setCaption(tmp_str.str());
 }
 
 
@@ -74,7 +143,7 @@ bool c_window_manager::init()
 	// Load the font
 //	string pfname = g_config.get_egoboo_path() + "basicdat/" + g_config.get_font_file();
 //	font = new gcn::contrib::OGLFTFont(pfname.c_str(), g_config.get_font_size());
-	font = new gcn::ImageFont("rpgfont.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&``*#=[]'");
+	font = new gcn::ImageFont("data/rpgfont.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&``*#=[]'");
 	gcn::Widget::setGlobalFont(font);
 
 	// Setup the GUI
@@ -88,32 +157,83 @@ bool c_window_manager::init()
 	top = new gcn::Container();
 	top->setDimension(gcn::Rectangle(0, 0, screen->w, screen->h));
 	top->setOpaque(false);
+	top->addMouseListener(&g_input_handler);
 	gui->setTop(top);
 
+	// Create the palette container
+	this->t_palette = new c_mb_tabbedarea();
+	this->t_palette->setSize(200, 200);
+
+	this->w_palette = new c_mb_window("Palette");
+	this->top->add(this->w_palette);
+	this->w_palette->setDimension(gcn::Rectangle(0, 0, 200, 200));
+	this->w_palette->setPosition(0, 0);
+	this->w_palette->add(t_palette);
 
 	// Create the windows
+	this->create_mesh_window();
 	this->create_texture_window();
 	this->create_info_window();
 	this->create_object_window();
-//	this->create_toolbar();
 	return true;
 }
 
 
+void c_window_manager::add_icon(c_mb_container* p_container, string p_filename, int p_x, int p_y, int p_id)
+{
+	try {
+		c_mb_image_button* icon;
+		gcn::Image* image;
+
+		image = gcn::Image::load(p_filename);
+		icon = new c_mb_image_button(image);
+		icon->setSize(32, 32);
+
+		ostringstream tmp_id;
+		tmp_id << p_id;
+
+		icon->setId(tmp_id.str());
+
+		p_container->add(icon, p_x, p_y);
+	}
+	catch (gcn::Exception e)
+	{
+		cout << e.getMessage() << endl;
+	}
+	catch (std::exception e)
+	{
+		cout << "Std exception: " << e.what() << endl;
+	}
+	catch (...)
+	{
+		cout << "Unknown exception" << endl;
+	}
+}
+
 //---------------------------------------------------------------------
-//-
+//-   Create the mesh window
 //---------------------------------------------------------------------
-bool c_window_manager::create_texture_window()
+bool c_window_manager::create_mesh_window()
 {
 	try
 	{
-		this->label2 = new gcn::Label("Test 2");
-		this->label2->setPosition(0, 0);
+		c_mb_tab* tab;
+		tab = new c_mb_tab("Mesh");
 
-		this->w_texture = new c_modbaker_window("Textures");
-		this->w_texture->add(this->label2);
-		this->top->add(this->w_texture);
-		this->w_texture->setDimension(gcn::Rectangle(0, 0, 150, 50));
+		this->c_mesh = new c_mb_container();
+		this->c_mesh->setSize(200, 200);
+
+		// Add the icons
+		this->add_icon(this->c_mesh, "data/document-new.png",   0,  0, ACTION_MESH_NEW);
+		this->add_icon(this->c_mesh, "data/document-open.png", 32,  0, ACTION_MESH_LOAD);
+		this->add_icon(this->c_mesh, "data/document-save.png", 64,  0, ACTION_MESH_SAVE);
+
+		this->add_icon(this->c_mesh, "data/go-up.png",         32, 32, ACTION_VERTEX_UP);
+		this->add_icon(this->c_mesh, "data/go-previous.png",    0, 64, ACTION_VERTEX_LEFT);
+		this->add_icon(this->c_mesh, "data/go-next.png",       64, 64, ACTION_VERTEX_RIGHT);
+		this->add_icon(this->c_mesh, "data/go-down.png",       32, 96, ACTION_VERTEX_DOWN);
+
+		this->t_palette->addTab(tab, this->c_mesh);
 
 		return true;
 	}
@@ -134,20 +254,104 @@ bool c_window_manager::create_texture_window()
 
 
 //---------------------------------------------------------------------
-//-
+//-   Create the texture tab
 //---------------------------------------------------------------------
-bool c_window_manager::create_info_window()
+bool c_window_manager::create_texture_window()
 {
 	try
 	{
-		// The info window
-		this->label_fps = new gcn::Label("FPS: ???");
+		gcn::Label* tmp_label;
+		tmp_label = new gcn::Label("Test 2");
+
+		c_mb_tab* tab;
+		tab = new c_mb_tab("Textures");
+
+		this->c_texture = new c_mb_container();
+		this->c_texture->setSize(200, 200);
+		this->c_texture->add(tmp_label);
+		this->t_palette->addTab(tab, this->c_texture);
+
+		return true;
+	}
+	catch (gcn::Exception e)
+	{
+		cout << e.getMessage() << endl;
+	}
+	catch (std::exception e)
+	{
+		cout << "Std exception: " << e.what() << endl;
+	}
+	catch (...)
+	{
+		cout << "Unknown exception" << endl;
+	}
+	return false;
+}
+
+
+//---------------------------------------------------------------------
+//-   Create the object tab
+//---------------------------------------------------------------------
+bool c_window_manager::create_object_window()
+{
+	try
+	{
+		// The object window
+		this->obj_list_model = new c_mb_list_model();
+		this->obj_list_box = new gcn::ListBox(this->obj_list_model);
+
+		this->obj_list_model->add_element("test.obj");
+		this->obj_list_model->add_element("test2.obj");
+		this->obj_list_model->add_element("test3.obj");
+		this->obj_list_model->add_element("advent.obj");
+
+		this->obj_list_box->setDimension(gcn::Rectangle(0, 0, 200, 200));
+
+		c_mb_tab* tab;
+		tab = new c_mb_tab("Objects");
+
+		this->c_object = new c_mb_container();
+		this->c_object->add(this->obj_list_box);
+		this->c_object->setSize(200, 200);
+		this->t_palette->addTab(tab, this->c_object);
+
+		return true;
+	}
+	catch (gcn::Exception e)
+	{
+		cout << e.getMessage() << endl;
+	}
+	catch (std::exception e)
+	{
+		cout << "Std exception: " << e.what() << endl;
+	}
+	catch (...)
+	{
+		cout << "Unknown exception" << endl;
+	}
+	return false;
+}
+
+
+//---------------------------------------------------------------------
+//-   Create the info window
+//---------------------------------------------------------------------
+bool c_window_manager::create_info_window()
+{
+	return false;
+	try
+	{
+		this->label_fps = new c_mb_label("FPS: ???");
 		this->label_fps->setPosition(0, 0);
 
-		this->w_info = new c_modbaker_window("Info");
+		this->label_position = new c_mb_label("Position: ???");
+//		this->label_position->setPosition(50, 0);
+
+		this->w_info = new c_mb_window("Info");
 		this->w_info->add(this->label_fps);
+		this->w_info->add(this->label_position);
 		this->top->add(this->w_info);
-		this->w_info->setDimension(gcn::Rectangle(0, 0, 100, 50));
+		this->w_info->setDimension(gcn::Rectangle(0, 0, 100, 100));
 		this->w_info->setPosition(500, 0);
 
 		return true;
@@ -164,54 +368,5 @@ bool c_window_manager::create_info_window()
 	{
 		cout << "Unknown exception" << endl;
 	}
-	return false;
-}
-
-
-//---------------------------------------------------------------------
-//-
-//---------------------------------------------------------------------
-bool c_window_manager::create_object_window()
-{
-	try
-	{
-		// The object window
-		this->obj_list_model = new c_modbaker_list_model();
-		this->obj_list_box = new gcn::ListBox(this->obj_list_model);
-
-		this->obj_list_model->add_element("test.obj");
-		this->obj_list_model->add_element("test2.obj");
-		this->obj_list_model->add_element("test3.obj");
-		this->obj_list_model->add_element("advent.obj");
-
-		this->w_object = new c_modbaker_window("Objects");
-		this->w_object->add(this->obj_list_box);
-		this->top->add(this->w_object);
-		this->w_object->setDimension(gcn::Rectangle(0, 0, 200, 50));
-		this->w_object->setPosition(0, 300);
-
-		return true;
-	}
-	catch (gcn::Exception e)
-	{
-		cout << e.getMessage() << endl;
-	}
-	catch (std::exception e)
-	{
-		cout << "Std exception: " << e.what() << endl;
-	}
-	catch (...)
-	{
-		cout << "Unknown exception" << endl;
-	}
-	return false;
-}
-
-
-//---------------------------------------------------------------------
-//-
-//---------------------------------------------------------------------
-bool c_window_manager::create_toolbar()
-{
 	return false;
 }

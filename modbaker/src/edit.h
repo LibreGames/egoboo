@@ -29,6 +29,7 @@ class c_selection
 {
 	private:
 		vector<int> selection;
+		bool add_mode;
 
 	public:
 		c_selection();
@@ -36,6 +37,9 @@ class c_selection
 		void add_vertex(int);
 		void remove_vertex(int);
 		int add_vertices_at_position(vect3);
+
+		void set_add_mode(bool mode) { this->add_mode = mode; }
+		bool get_add_mode()          { return this->add_mode; }
 
 		void clear();
 

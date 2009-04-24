@@ -26,7 +26,6 @@
 #include "mesh.h"
 #include "renderer.h"
 #include "edit.h"
-#include "controls.h"
 
 #include "SDL_extensions.h"
 #include "ogl_debug.h"
@@ -35,6 +34,94 @@
 #include <SDL_opengl.h>
 
 #include <iostream>
+#include <sstream>
+
+using namespace std;
+
+
+c_input_handler::c_input_handler()
+{
+}
+
+//---------------------------------------------------------------------
+//-   Gets called at mouse events
+//---------------------------------------------------------------------
+void c_input_handler::mousePressed(gcn::MouseEvent& event)
+{
+	this->gui_clicked = false;
+
+	if (event.isConsumed())
+		this->gui_clicked = true;
+
+	if (event.getButton() == LEFT) {
+		if (this->gui_clicked)
+		{
+			// Get the string and convert it into an integer
+			istringstream sid;
+			int iid;
+			sid.str(event.getSource()->getId());
+			sid >> iid;
+			do_something(iid);
+		}
+		else
+		{
+			if (!g_selection.get_add_mode())
+			{
+				g_selection.clear();
+			}
+
+			g_selection.add_vertex(g_nearest_vertex);
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------
+//-   Gets called at mouse events
+//---------------------------------------------------------------------
+void c_input_handler::do_something(int p_action)
+{
+	switch (p_action)
+	{
+		case ACTION_MESH_NEW:
+			break;
+
+		case ACTION_MESH_LOAD:
+			break;
+
+		case ACTION_MESH_SAVE:
+			g_mesh.save_mesh_mpd(g_config.get_egoboo_path() + "modules/" + g_mesh.modname + "/gamedat/level.mpd");
+			break;
+
+		// Vertex editing
+		case ACTION_VERTEX_UP:
+			g_selection.modify_y(10.0f);
+			break;
+
+		case ACTION_VERTEX_LEFT:
+			g_selection.modify_x(-10.0f);
+			break;
+
+		case ACTION_VERTEX_RIGHT:
+			g_selection.modify_x(10.0f);
+			break;
+
+		case ACTION_VERTEX_DOWN:
+			g_selection.modify_y(-10.0f);
+			break;
+	}
+}
+
+
+//---------------------------------------------------------------------
+//-   Gets called at mouse events
+//---------------------------------------------------------------------
+void c_input_handler::mouseMoved(gcn::MouseEvent& event)
+{
+	g_mouse_x = event.getX();
+	g_mouse_y = event.getY();
+	g_renderer.m_wm.set_position(g_mouse_x, g_mouse_y);
+}
 
 
 //---------------------------------------------------------------------
@@ -77,30 +164,10 @@ int c_modbaker::handle_events()
 				handle_key_release(&event.key.keysym);
 				break;
 
-
-				// Mouse input
-			case SDL_MOUSEMOTION:
-				g_mouse_x = event.motion.x;
-				g_mouse_y = event.motion.y;
-				break;
-
-				// TODO: Move to extra function (like key presses)
-			case SDL_MOUSEBUTTONDOWN:
-				if (event.button.button == SDL_BUTTON_LEFT)
-				{
-					if (!this->selection_add)
-					{
-						g_selection.clear();
-					}
-
-					g_selection.add_vertex(g_nearest_vertex);
-				}
-				break;
-
-
 			default:
 				break;
 		}
+
 		// Guichan events
 		g_renderer.m_wm.input->pushInput(event);
 	}
@@ -149,24 +216,24 @@ void c_modbaker::handle_key_press(SDL_keysym *keysym)
 		case SDLK_LSHIFT:
 		case SDLK_RSHIFT:
 			g_renderer.getPCam()->m_factor = SCROLLFACTOR_FAST;
-			this->selection_add = true;
+			g_selection.set_add_mode(true);
 			break;
 
 			// Editing
 		case SDLK_w:
-			g_selection.modify_y(10.0f);
+			g_input_handler.do_something(ACTION_VERTEX_UP);
 			break;
 
 		case SDLK_s:
-			g_selection.modify_y(-10.0f);
+			g_input_handler.do_something(ACTION_VERTEX_DOWN);
 			break;
 
 		case SDLK_a:
-			g_selection.modify_x(10.0f);
+			g_input_handler.do_something(ACTION_VERTEX_LEFT);
 			break;
 
 		case SDLK_d:
-			g_selection.modify_x(-10.0f);
+			g_input_handler.do_something(ACTION_VERTEX_RIGHT);
 			break;
 
 		case SDLK_q:
@@ -187,7 +254,7 @@ void c_modbaker::handle_key_press(SDL_keysym *keysym)
 
 			// Save the file again
 		case SDLK_F10:
-			g_mesh.save_mesh_mpd(g_config.get_egoboo_path() + "modules/" + g_mesh.modname + "/gamedat/level.mpd");
+			g_input_handler.do_something(ACTION_MESH_SAVE);
 			break;
 
 		default:
@@ -231,7 +298,7 @@ void c_modbaker::handle_key_release(SDL_keysym *keysym)
 		case SDLK_LSHIFT:
 		case SDLK_RSHIFT:
 			g_renderer.getPCam()->m_factor = SCROLLFACTOR_SLOW;
-			this->selection_add = false;
+			g_selection.set_add_mode(false);
 			break;
 
 		default:
