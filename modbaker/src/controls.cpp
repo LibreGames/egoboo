@@ -209,8 +209,12 @@ void c_input_handler::do_something(int p_action)
 			filename = g_renderer->get_wm()->tf_load->getText();
 			cout << filename << endl;
 			if(g_mesh->load_mesh_mpd(filename))
+			{
 				g_renderer->get_wm()->set_load_visibility(false);
+				g_renderer->load_basic_textures(filename);
 
+				g_renderer->m_renderlist.build();
+			}
 			break;
 
 		case ACTION_MESH_SAVE:

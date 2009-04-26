@@ -240,6 +240,8 @@ class c_mesh
 		c_spawn_manager *spawn_manager;
 
 	protected:
+		// TODO: The tile dictionary doesn't really belong to the mesh
+		//       It's more a general Egoboo thing
 		static c_tile_dictionary ms_tiledict;
 
 	public:
