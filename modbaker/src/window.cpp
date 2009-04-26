@@ -203,7 +203,8 @@ c_window_manager::c_window_manager(c_renderer* p_renderer)
 	this->create_texture_window();
 	this->create_info_window();
 	this->create_object_window();
-	this->create_filename_window();
+	this->create_load_window();
+	this->create_save_window();
 }
 
 
@@ -217,6 +218,8 @@ c_window_manager::~c_window_manager()
 	delete this->c_object;
 	delete this->w_info;
 	delete this->w_palette;
+	delete this->w_save;
+	delete this->w_load;
 
 	delete this->font;
 	delete this->top;
@@ -534,9 +537,9 @@ bool c_window_manager::create_info_window()
 
 
 //---------------------------------------------------------------------
-//-   Create the window for saving and loading
+//-   Create the window for loading
 //---------------------------------------------------------------------
-bool c_window_manager::create_filename_window()
+bool c_window_manager::create_load_window()
 {
 	try
 	{
@@ -544,26 +547,92 @@ bool c_window_manager::create_filename_window()
 		tmp_label = new c_mb_label("Filename:");
 		tmp_label->setPosition(0, 0);
 
-		c_mb_textfield* textfield;
-		textfield = new c_mb_textfield();
-		textfield->setText("level.mpd");
-		textfield->setPosition(0, 20);
-		textfield->setSize(100, 20);
+		tf_load = new c_mb_textfield();
+		tf_load->setText("name.mod");
+		tf_load->setPosition(0, 20);
+		tf_load->setSize(100, 20);
 
-		c_mb_button* button;
-		button = new c_mb_button();
-		button->setCaption("OK");
-		button->setPosition(0, 40);
-		button->setSize(100, 20);
+		c_mb_button* button_ok;
+		button_ok = new c_mb_button();
+		button_ok->setCaption("OK");
+		button_ok->setPosition(0, 40);
+		button_ok->setSize(100, 20);
+		button_ok->set_type(BUTTON_LOAD_OK);
 
-		this->w_filename = new c_mb_window("Load / save file");
-		this->w_filename->add(tmp_label);
-		this->w_filename->add(textfield);
-		this->w_filename->add(button);
-		this->top->add(this->w_filename);
-		this->w_filename->setDimension(gcn::Rectangle(0, 0, 200, 100));
-		this->w_filename->setPosition(250, 0);
-		this->w_filename->setVisible(false);
+		c_mb_button* button_cancel;
+		button_cancel = new c_mb_button();
+		button_cancel->setCaption("Cancel");
+		button_cancel->setPosition(0, 60);
+		button_cancel->setSize(100, 20);
+		button_cancel->set_type(BUTTON_LOAD_CANCEL);
+
+		this->w_load = new c_mb_window("Load file");
+		this->w_load->add(tmp_label);
+		this->w_load->add(tf_load);
+		this->w_load->add(button_ok);
+		this->w_load->add(button_cancel);
+		this->top->add(this->w_load);
+		this->w_load->setDimension(gcn::Rectangle(0, 0, 200, 100));
+		this->w_load->setPosition(250, 0);
+		this->w_load->setVisible(false);
+
+		return true;
+	}
+	catch (gcn::Exception e)
+	{
+		cout << e.getMessage() << endl;
+	}
+	catch (std::exception e)
+	{
+		cout << "Std exception: " << e.what() << endl;
+	}
+	catch (...)
+	{
+		cout << "Unknown exception" << endl;
+	}
+	return false;
+}
+
+
+//---------------------------------------------------------------------
+//-   Create the window for saving
+//---------------------------------------------------------------------
+bool c_window_manager::create_save_window()
+{
+	try
+	{
+		gcn::Label* tmp_label;
+		tmp_label = new c_mb_label("Save file:");
+		tmp_label->setPosition(0, 0);
+
+		tf_save = new c_mb_textfield();
+		tf_save->setText("name.mpd");
+		tf_save->setPosition(0, 20);
+		tf_save->setSize(100, 20);
+
+		c_mb_button* button_ok;
+		button_ok = new c_mb_button();
+		button_ok->setCaption("OK");
+		button_ok->setPosition(0, 40);
+		button_ok->setSize(100, 20);
+		button_ok->set_type(BUTTON_SAVE_OK);
+
+		c_mb_button* button_cancel;
+		button_cancel = new c_mb_button();
+		button_cancel->setCaption("Cancel");
+		button_cancel->setPosition(0, 60);
+		button_cancel->setSize(100, 20);
+		button_cancel->set_type(BUTTON_SAVE_CANCEL);
+
+		this->w_save = new c_mb_window("Save file");
+		this->w_save->add(tmp_label);
+		this->w_save->add(tf_save);
+		this->w_save->add(button_ok);
+		this->w_save->add(button_cancel);
+		this->top->add(this->w_save);
+		this->w_save->setDimension(gcn::Rectangle(0, 0, 200, 100));
+		this->w_save->setPosition(250, 0);
+		this->w_save->setVisible(false);
 
 		return true;
 	}
@@ -595,18 +664,33 @@ void c_window_manager::set_gui(gcn::Gui* p_gui)
 }
 
 
-void c_window_manager::set_filename_visibility(bool p_visibility)
+void c_window_manager::set_load_visibility(bool p_visibility)
 {
-	this->w_filename->setVisible(p_visibility);
+	this->w_load->setVisible(p_visibility);
 }
 
 
-void c_window_manager::toggle_filename_visibility()
+void c_window_manager::toggle_load_visibility()
 {
-	if (this->w_filename->isVisible())
-		this->w_filename->setVisible(false);
+	if (this->w_load->isVisible())
+		this->w_load->setVisible(false);
 	else
-		this->w_filename->setVisible(true);
+		this->w_load->setVisible(true);
+}
+
+
+void c_window_manager::set_save_visibility(bool p_visibility)
+{
+	this->w_save->setVisible(p_visibility);
+}
+
+
+void c_window_manager::toggle_save_visibility()
+{
+	if (this->w_save->isVisible())
+		this->w_save->setVisible(false);
+	else
+		this->w_save->setVisible(true);
 }
 
 
@@ -622,4 +706,38 @@ void c_window_manager::toggle_texture_visibility()
 		this->w_texture->setVisible(false);
 	else
 		this->w_texture->setVisible(true);
+}
+
+
+void c_mb_button::set_type(int p_type)
+{
+	this->type = p_type;
+}
+
+int c_mb_button::get_type()
+{
+	return this->type;
+}
+
+
+void c_mb_button::mousePressed(gcn::MouseEvent &event)
+{
+	switch (this->type)
+	{
+		case BUTTON_SAVE_OK:
+			g_input_handler->do_something(ACTION_MESH_SAVE);
+			break;
+
+		case BUTTON_LOAD_OK:
+			g_input_handler->do_something(ACTION_MESH_LOAD);
+			break;
+
+		case BUTTON_SAVE_CANCEL:
+			g_input_handler->do_something(WINDOW_SAVE_HIDE);
+			break;
+
+		case BUTTON_LOAD_CANCEL:
+			g_input_handler->do_something(WINDOW_LOAD_HIDE);
+			break;
+	}
 }

@@ -37,40 +37,6 @@
 using namespace std;
 
 
-// Action types for the input system
-enum
-{
-	ACTION_MESH_NEW        =  0,
-	ACTION_MESH_LOAD       =  1,
-	ACTION_MESH_SAVE       =  2,
-	ACTION_VERTEX_UP       =  3,
-	ACTION_VERTEX_LEFT     =  4,
-	ACTION_VERTEX_RIGHT    =  5,
-	ACTION_VERTEX_DOWN     =  6,
-	ACTION_VERTEX_INC      =  7,
-	ACTION_VERTEX_DEC      =  8,
-	ACTION_SELECTION_CLEAR =  9,
-	ACTION_EXIT            = 10,
-	SCROLL_UP              = 11,
-	SCROLL_LEFT            = 12,
-	SCROLL_RIGHT           = 13,
-	SCROLL_DOWN            = 14,
-	SCROLL_INC             = 15,
-	SCROLL_DEC             = 16,
-	SCROLL_X_STOP          = 17,
-	SCROLL_Y_STOP          = 18,
-	SCROLL_Z_STOP          = 19,
-	ACTION_MODIFIER_ON     = 20,
-	ACTION_MODIFIER_OFF    = 21,
-	ACTION_PAINT_TEXTURE   = 22,
-	WINDOW_TEXTURE_TOGGLE  = 23,
-	WINDOW_SAVE_SHOW       = 24,
-	WINDOW_SAVE_HIDE       = 25,
-	WINDOW_LOAD_SHOW       = 26,
-	WINDOW_LOAD_HIDE       = 27
-};
-
-
 // Dummy classes
 class c_config;
 

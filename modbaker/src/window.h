@@ -11,6 +11,48 @@ using namespace std;
 #include <guichan/opengl/openglsdlimageloader.hpp>
 #include <guichan/opengl/openglimage.hpp>
 
+// Action types for the input system
+enum
+{
+	ACTION_MESH_NEW        =  0,
+	ACTION_MESH_LOAD       =  1,
+	ACTION_MESH_SAVE       =  2,
+	ACTION_VERTEX_UP       =  3,
+	ACTION_VERTEX_LEFT     =  4,
+	ACTION_VERTEX_RIGHT    =  5,
+	ACTION_VERTEX_DOWN     =  6,
+	ACTION_VERTEX_INC      =  7,
+	ACTION_VERTEX_DEC      =  8,
+	ACTION_SELECTION_CLEAR =  9,
+	ACTION_EXIT            = 10,
+	SCROLL_UP              = 11,
+	SCROLL_LEFT            = 12,
+	SCROLL_RIGHT           = 13,
+	SCROLL_DOWN            = 14,
+	SCROLL_INC             = 15,
+	SCROLL_DEC             = 16,
+	SCROLL_X_STOP          = 17,
+	SCROLL_Y_STOP          = 18,
+	SCROLL_Z_STOP          = 19,
+	ACTION_MODIFIER_ON     = 20,
+	ACTION_MODIFIER_OFF    = 21,
+	ACTION_PAINT_TEXTURE   = 22,
+	WINDOW_TEXTURE_TOGGLE  = 23,
+	WINDOW_SAVE_SHOW       = 24,
+	WINDOW_SAVE_HIDE       = 25,
+	WINDOW_LOAD_SHOW       = 26,
+	WINDOW_LOAD_HIDE       = 27
+};
+
+
+enum
+{
+	BUTTON_SAVE_OK     = 0,
+	BUTTON_LOAD_OK     = 1,
+	BUTTON_SAVE_CANCEL = 2,
+	BUTTON_LOAD_CANCEL = 3
+};
+
 //---------------------------------------------------------------------
 //-    Image loader
 //---------------------------------------------------------------------
@@ -81,9 +123,15 @@ class c_mb_image_button : public gcn::ImageButton
 
 class c_mb_button : public gcn::Button
 {
+	private:
+		int type;
+
 	public:
 		c_mb_button();
-//		virtual void mousePressed(gcn::MouseEvent &);
+		void set_type(int);
+		int  get_type();
+
+		virtual void mousePressed(gcn::MouseEvent &);
 };
 
 
@@ -197,7 +245,8 @@ class c_window_manager
 		// The windows
 		c_mb_window* w_palette;
 		c_mb_window* w_info;
-		c_mb_window* w_filename;
+		c_mb_window* w_save;
+		c_mb_window* w_load;
 		c_mb_window* w_texture;
 
 		// Append an icon to a widget
@@ -211,11 +260,18 @@ class c_window_manager
 		void set_fps(float);
 		void set_position(float, float);
 
-		void set_filename_visibility(bool);
-		void toggle_filename_visibility();
+		void set_load_visibility(bool);
+		void toggle_load_visibility();
+
+		void set_save_visibility(bool);
+		void toggle_save_visibility();
 
 		void set_texture_visibility(bool);
 		void toggle_texture_visibility();
+
+		// TODO: Make private
+		c_mb_textfield* tf_load;
+		c_mb_textfield* tf_save;
 
 		// TODO: create setter and getter and make it private
 		gcn::SDLInput* input;
@@ -229,8 +285,8 @@ class c_window_manager
 		bool create_info_window();
 		bool destroy_info_window();
 
-		bool create_filename_window();
-		bool destroy_filename_window();
+		bool create_save_window();
+		bool create_load_window();
 
 		bool create_object_window();
 		bool destroy_object_window();

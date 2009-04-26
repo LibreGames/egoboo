@@ -35,6 +35,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <string>
 
 using namespace std;
 
@@ -195,6 +196,8 @@ void c_input_handler::keyReleased(gcn::KeyEvent& event)
 //---------------------------------------------------------------------
 void c_input_handler::do_something(int p_action)
 {
+	string filename;
+
 	switch (p_action)
 	{
 		case ACTION_MESH_NEW:
@@ -203,12 +206,19 @@ void c_input_handler::do_something(int p_action)
 			break;
 
 		case ACTION_MESH_LOAD:
-			g_renderer->get_wm()->set_filename_visibility(true);
-			g_mesh->load_mesh_mpd("palice.mod");
+			filename = g_renderer->get_wm()->tf_load->getText();
+			cout << filename << endl;
+			if(g_mesh->load_mesh_mpd(filename))
+				g_renderer->get_wm()->set_load_visibility(false);
+
 			break;
 
 		case ACTION_MESH_SAVE:
-			g_mesh->save_mesh_mpd(g_config->get_egoboo_path() + "modules/" + g_mesh->modname + "/gamedat/level.mpd");
+			filename = g_renderer->get_wm()->tf_load->getText();
+			cout << filename << endl;
+			if (g_mesh->save_mesh_mpd(g_config->get_egoboo_path() + "modules/" + g_mesh->modname + "/gamedat/" + filename))
+				g_renderer->get_wm()->set_save_visibility(false);
+
 			break;
 
 		// Vertex editing
@@ -296,11 +306,19 @@ void c_input_handler::do_something(int p_action)
 			break;
 
 		case WINDOW_LOAD_SHOW:
-			g_renderer->get_wm()->set_filename_visibility(true);
+			g_renderer->get_wm()->set_load_visibility(true);
 			break;
 
 		case WINDOW_SAVE_SHOW:
-			g_renderer->get_wm()->set_filename_visibility(true);
+			g_renderer->get_wm()->set_save_visibility(true);
+			break;
+
+		case WINDOW_LOAD_HIDE:
+			g_renderer->get_wm()->set_load_visibility(false);
+			break;
+
+		case WINDOW_SAVE_HIDE:
+			g_renderer->get_wm()->set_save_visibility(false);
 			break;
 	}
 }
