@@ -209,7 +209,7 @@ bool c_mesh::load_mesh_mpd(string p_modname)
 	string filename;
 	ifstream file;
 
-	filename = g_config.get_egoboo_path() + "modules/" + p_modname + "/gamedat/level.mpd";
+	filename = g_config->get_egoboo_path() + "modules/" + p_modname + "/gamedat/level.mpd";
 
 	// FAN data
 	Uint32 fan = 0;
@@ -415,7 +415,7 @@ bool c_tile_dictionary::load()
 	}
 
 	string filename_fans;
-	filename_fans = g_config.get_egoboo_path() + "basicdat/fans.txt";
+	filename_fans = g_config->get_egoboo_path() + "basicdat/fans.txt";
 
 	// Open the file and go to it
 	cout << "Loading fan types of the terrain... " << endl;
@@ -799,7 +799,7 @@ void c_spawn_manager::load(string p_modname)
 	c_spawn temp_spawn;
 
 	string filename;
-	filename = g_config.get_egoboo_path() + "modules/" + p_modname + "/gamedat/spawn.txt";
+	filename = g_config->get_egoboo_path() + "modules/" + p_modname + "/gamedat/spawn.txt";
 
 	f_spawn.open(filename.c_str());
 

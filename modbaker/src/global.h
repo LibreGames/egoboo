@@ -62,7 +62,12 @@ enum
 	SCROLL_Z_STOP          = 19,
 	ACTION_MODIFIER_ON     = 20,
 	ACTION_MODIFIER_OFF    = 21,
-	ACTION_PAINT_TEXTURE   = 22
+	ACTION_PAINT_TEXTURE   = 22,
+	WINDOW_TEXTURE_TOGGLE  = 23,
+	WINDOW_SAVE_SHOW       = 24,
+	WINDOW_SAVE_HIDE       = 25,
+	WINDOW_LOAD_SHOW       = 26,
+	WINDOW_LOAD_HIDE       = 27
 };
 
 
@@ -89,8 +94,8 @@ extern c_selection g_selection;
 // Global subsystems
 // Implmented in renderer.cpp, renderer_misc.cpp, mesh.cpp, frustum.cpp
 extern c_input_handler* g_input_handler;
-extern c_config         g_config;
-extern c_renderer       g_renderer;
+extern c_config*        g_config;
+extern c_renderer*      g_renderer;
 extern c_mesh*          g_mesh;
 extern c_frustum        g_frustum;           // TODO: Move to g_renderer
 

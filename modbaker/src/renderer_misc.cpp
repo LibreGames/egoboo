@@ -53,11 +53,11 @@ void c_camera::reset()
 
 void c_camera::move()
 {
-	if (g_renderer.m_fps > 0)
+	if (g_renderer->m_fps > 0)
 	{
-		m_pos.x -= (m_movex / g_renderer.m_fps) * m_factor;
-		m_pos.y -= (m_movey / g_renderer.m_fps) * m_factor;
-		m_pos.z -= (m_movez / g_renderer.m_fps) * m_factor;
+		m_pos.x -= (m_movex / g_renderer->m_fps) * m_factor;
+		m_pos.y -= (m_movey / g_renderer->m_fps) * m_factor;
+		m_pos.z -= (m_movez / g_renderer->m_fps) * m_factor;
 	}
 
 	this->make_matrix();

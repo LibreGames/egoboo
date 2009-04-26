@@ -56,7 +56,7 @@ void c_input_handler::mouseMoved(gcn::MouseEvent& event)
 
 	g_mouse_x = event.getX();
 	g_mouse_y = event.getY();
-	g_renderer.get_wm()->set_position(g_mouse_x, g_mouse_y);
+	g_renderer->get_wm()->set_position(g_mouse_x, g_mouse_y);
 }
 
 
@@ -93,6 +93,9 @@ void c_input_handler::mousePressed(gcn::MouseEvent& event)
 //---------------------------------------------------------------------
 void c_input_handler::keyPressed(gcn::KeyEvent& event)
 {
+	if (event.getKey() == gcn::Key::ESCAPE)
+		do_something(ACTION_EXIT);
+
 	// Don't overwrite the input for the GUI
 	if (window_input)
 		return;
@@ -136,9 +139,6 @@ void c_input_handler::keyPressed(gcn::KeyEvent& event)
 
 	if (event.getKey() == gcn::Key::PAGE_DOWN)
 		do_something(SCROLL_DEC);
-
-	if (event.getKey() == gcn::Key::ESCAPE)
-		do_something(ACTION_EXIT);
 
 	if (event.getKey() == gcn::Key::LEFT_SHIFT)
 		do_something(ACTION_MODIFIER_ON);
@@ -203,12 +203,12 @@ void c_input_handler::do_something(int p_action)
 			break;
 
 		case ACTION_MESH_LOAD:
-			g_renderer.get_wm()->set_filename_visibility(true);
+			g_renderer->get_wm()->set_filename_visibility(true);
 			g_mesh->load_mesh_mpd("palice.mod");
 			break;
 
 		case ACTION_MESH_SAVE:
-			g_mesh->save_mesh_mpd(g_config.get_egoboo_path() + "modules/" + g_mesh->modname + "/gamedat/level.mpd");
+			g_mesh->save_mesh_mpd(g_config->get_egoboo_path() + "modules/" + g_mesh->modname + "/gamedat/level.mpd");
 			break;
 
 		// Vertex editing
@@ -246,12 +246,12 @@ void c_input_handler::do_something(int p_action)
 			break;
 
 		case ACTION_MODIFIER_ON:
-			g_renderer.getPCam()->m_factor = SCROLLFACTOR_FAST;
+			g_renderer->getPCam()->m_factor = SCROLLFACTOR_FAST;
 			g_selection.set_add_mode(true);
 			break;
 
 		case ACTION_MODIFIER_OFF:
-			g_renderer.getPCam()->m_factor = SCROLLFACTOR_SLOW;
+			g_renderer->getPCam()->m_factor = SCROLLFACTOR_SLOW;
 			g_selection.set_add_mode(false);
 			break;
 
@@ -260,39 +260,47 @@ void c_input_handler::do_something(int p_action)
 			break;
 
 		case SCROLL_RIGHT:
-			g_renderer.getPCam()->m_movex += 5.0f;
+			g_renderer->getPCam()->m_movex += 5.0f;
 			break;
 
 		case SCROLL_LEFT:
-			g_renderer.getPCam()->m_movex -= 5.0f;
+			g_renderer->getPCam()->m_movex -= 5.0f;
 			break;
 
 		case SCROLL_UP:
-			g_renderer.getPCam()->m_movey += 5.0f;
+			g_renderer->getPCam()->m_movey += 5.0f;
 			break;
 
 		case SCROLL_DOWN:
-			g_renderer.getPCam()->m_movey -= 5.0f;
+			g_renderer->getPCam()->m_movey -= 5.0f;
 			break;
 
 		case SCROLL_INC:
-			g_renderer.getPCam()->m_movez += 5.0f;
+			g_renderer->getPCam()->m_movez += 5.0f;
 			break;
 
 		case SCROLL_DEC:
-			g_renderer.getPCam()->m_movez -= 5.0f;
+			g_renderer->getPCam()->m_movez -= 5.0f;
 			break;
 
 		case SCROLL_X_STOP:
-			g_renderer.getPCam()->m_movex = 0.0f;
+			g_renderer->getPCam()->m_movex = 0.0f;
 			break;
 
 		case SCROLL_Y_STOP:
-			g_renderer.getPCam()->m_movey = 0.0f;
+			g_renderer->getPCam()->m_movey = 0.0f;
 			break;
 
-		case SCROLL_Z_STOP:
-			g_renderer.getPCam()->m_movez = 0.0f;
+		case WINDOW_TEXTURE_TOGGLE:
+			g_renderer->get_wm()->toggle_texture_visibility();
+			break;
+
+		case WINDOW_LOAD_SHOW:
+			g_renderer->get_wm()->set_filename_visibility(true);
+			break;
+
+		case WINDOW_SAVE_SHOW:
+			g_renderer->get_wm()->set_filename_visibility(true);
 			break;
 	}
 }
@@ -334,7 +342,7 @@ int c_modbaker::handle_events()
 		}
 
 		// Guichan events
-		g_renderer.get_wm()->input->pushInput(event);
+		g_renderer->get_wm()->input->pushInput(event);
 	}
 
 	return 0;

@@ -9,6 +9,17 @@ using namespace std;
 #include <guichan/sdl.hpp>
 #include <guichan/opengl.hpp>
 #include <guichan/opengl/openglsdlimageloader.hpp>
+#include <guichan/opengl/openglimage.hpp>
+
+//---------------------------------------------------------------------
+//-    Image loader
+//---------------------------------------------------------------------
+class c_mb_image_loader : public gcn::OpenGLSDLImageLoader
+{
+	public:
+		c_mb_image_loader();
+		gcn::Image* load_part(string, int, int, int, int);
+};
 
 
 //---------------------------------------------------------------------
@@ -49,16 +60,6 @@ class c_input_handler : public gcn::MouseListener, public gcn::KeyListener
 		void keyPressed(gcn::KeyEvent&);
 		void keyReleased(gcn::KeyEvent&);
 };
-
-/*
-class c_key_input_handler : public gcn::KeyListener
-{
-	public:
-		c_key_input_handler();
-
-		void KeyPressed(gcn::KeyEvent&);
-};
-*/
 
 //---------------------------------------------------------------------
 //-   A modbaker window
@@ -120,6 +121,7 @@ class c_mb_container : public gcn::Container
 		c_mb_container();
 };
 
+class c_renderer;
 
 //---------------------------------------------------------------------
 //-   The list box model
@@ -170,7 +172,7 @@ class c_window_manager
 		c_input_handler m_input_handler;
 		// GUI
 		gcn::OpenGLGraphics* graphics;
-		gcn::OpenGLSDLImageLoader* imageLoader;
+		c_mb_image_loader* imageLoader;
 
 		gcn::Container* top;
 		gcn::ImageFont* font;
@@ -179,10 +181,10 @@ class c_window_manager
 
 		// The palette tab
 		c_mb_tabbedarea *t_palette;
+		c_mb_tabbedarea *t_texture;
 
 		// The tabs
 		c_mb_container* c_mesh;
-		c_mb_container* c_texture;
 		c_mb_list_model* obj_list_model;
 
 		gcn::ListBox* obj_list_box;
@@ -196,12 +198,14 @@ class c_window_manager
 		c_mb_window* w_palette;
 		c_mb_window* w_info;
 		c_mb_window* w_filename;
+		c_mb_window* w_texture;
 
 		// Append an icon to a widget
 		void add_icon(c_mb_container*, string, int, int, int);
+		void add_texture_set(c_mb_container*, string, int, int, int);
 
 	public:
-		c_window_manager();
+		c_window_manager(c_renderer*);
 		~c_window_manager();
 
 		void set_fps(float);
@@ -209,6 +213,9 @@ class c_window_manager
 
 		void set_filename_visibility(bool);
 		void toggle_filename_visibility();
+
+		void set_texture_visibility(bool);
+		void toggle_texture_visibility();
 
 		// TODO: create setter and getter and make it private
 		gcn::SDLInput* input;

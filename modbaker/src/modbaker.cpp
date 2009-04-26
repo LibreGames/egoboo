@@ -63,6 +63,13 @@ c_modbaker::c_modbaker()
 {
 	this->done          = false;
 	this->active        = true;
+
+	// Reset the global objects
+	g_config            = NULL;
+	g_renderer          = NULL;
+	g_input_handler     = NULL;
+	g_mesh              = NULL;
+//	g_frustum           = NULL;
 }
 
 /*
@@ -78,6 +85,8 @@ c_modbaker::~c_modbaker()
 //---------------------------------------------------------------------
 void c_modbaker::init(string p_modname)
 {
+	g_config   = new c_config();
+
 	// Load the mesh
 	g_mesh = new c_mesh();
 	g_mesh->getTileDictioary().load();
@@ -85,9 +94,11 @@ void c_modbaker::init(string p_modname)
 
 	g_mesh->modname = p_modname;
 
-	g_renderer.load_basic_textures(p_modname);
+	g_renderer = new c_renderer();
 
-	g_renderer.m_renderlist.build();
+	g_renderer->load_basic_textures(p_modname);
+
+	g_renderer->m_renderlist.build();
 }
 
 
@@ -96,29 +107,29 @@ void c_modbaker::init(string p_modname)
 //---------------------------------------------------------------------
 void c_modbaker::main_loop()
 {
-	g_renderer.getPCam()->reset();
+	g_renderer->getPCam()->reset();
 
 	while ( !done )
 	{
 		if ( active )
 		{
-			g_renderer.begin_frame();
+			g_renderer->begin_frame();
 
 			// 3D mode
-			g_renderer.begin_3D_mode();
-			g_renderer.getPCam()->move();
-			g_renderer.render_mesh();
-			g_renderer.render_positions();
-			g_renderer.render_models();       // Render spawn.txt
+			g_renderer->begin_3D_mode();
+			g_renderer->getPCam()->move();
+			g_renderer->render_mesh();
+			g_renderer->render_positions();
+			g_renderer->render_models();       // Render spawn.txt
 			get_GL_pos(g_mouse_x, g_mouse_y);
-			g_renderer.end_3D_mode();
+			g_renderer->end_3D_mode();
 
 			// 2D mode
-			g_renderer.begin_2D_mode();
-			g_renderer.render_text();
-			g_renderer.end_2D_mode();
+			g_renderer->begin_2D_mode();
+			g_renderer->render_text();
+			g_renderer->end_2D_mode();
 
-			g_renderer.end_frame();  // Finally render the scene
+			g_renderer->end_frame();  // Finally render the scene
 		}
 
 		handle_events();

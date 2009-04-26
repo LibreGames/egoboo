@@ -34,12 +34,13 @@ static ogl_state_t tmp_ogl_state;
 c_renderer::c_renderer()
 {
 	this->m_fps = 0.0f;
+	this->m_screen = NULL;
 
 	this->initSDL();
 	this->initGL();
 	this->resize_window(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-	this->m_wm = new c_window_manager();
+	this->m_wm  = new c_window_manager(this);
 	this->m_cam = new c_camera();
 }
 
@@ -64,23 +65,19 @@ c_renderer::~c_renderer()
 //---------------------------------------------------------------------
 void c_renderer::initSDL()
 {
-	SDL_Init(SDL_INIT_VIDEO);
-	m_screen = SDL_SetVideoMode(640, 480, 32, SDL_HWSURFACE | SDL_OPENGL | SDL_HWACCEL);
-	SDL_EnableUNICODE(1);
-	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
-
-/*
-	cout << "INFO: Initializing SDL version " << SDL_MAJOR_VERSION << "." << SDL_MINOR_VERSION << "." << SDL_PATCHLEVEL << "... ";
-	if ( SDL_Init( 0 ) < 0 )
+	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 	{
-		cout << "Failed! Unable to initialize SDL:" << SDL_GetError() << endl;
+		cout << "Failed! Unable to initialize SDL: " << SDL_GetError() << endl;
 		throw modbaker_exception("Unable to initialize SDL");
 	}
-	else
-	{
-		cout << "Success!" << endl;
-	}
 	atexit( SDL_Quit );
+
+	m_screen = SDL_SetVideoMode(640, 480, 32, SDL_HWSURFACE | SDL_OPENGL | SDL_HWACCEL);
+	if (m_screen == NULL)
+	{
+		cout << "Failed! Unable to set video mode: " << SDL_GetError() << endl;
+		throw modbaker_exception("Unable to set video mode");
+	}
 
 	if (SDL_EnableUNICODE(1) < 0)
 	{
@@ -88,6 +85,12 @@ void c_renderer::initSDL()
 		throw modbaker_exception("Unable to set Unicode");
 	}
 
+	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
+
+	//	SDL_WM_SetIcon(tmp_surface, NULL);
+	SDL_WM_SetCaption("MODBaker", "MODBaker");
+
+/*
 	cout << "INFO: Initializing SDL video... ";
 	if (SDL_InitSubSystem( SDL_INIT_VIDEO ) < 0)
 	{
@@ -115,17 +118,14 @@ void c_renderer::initSDL()
 	{
 		atexit(TTF_Quit);
 
-//		string pfname = g_config.get_egoboo_path() + "basicdat/" + g_config.get_font_file();
+//		string pfname = g_config->get_egoboo_path() + "basicdat/" + g_config->get_font_file();
 
-//		m_font = TTF_OpenFont(pfname.c_str(), g_config.get_font_size());
+//		m_font = TTF_OpenFont(pfname.c_str(), g_config->get_font_size());
 //		if (NULL == m_font)
 //		{
 //			cout << "ERROR: Error loading font \"" << pfname << "\": " << TTF_GetError() << endl;
 //		}
 	}
-
-	//	SDL_WM_SetIcon(tmp_surface, NULL);
-	SDL_WM_SetCaption("MODBaker", "MODBaker");
 
 	// the flags to pass to SDL_SetVideoMode
 	m_gfxState.sdl_vid.flags          = SDL_RESIZABLE;
@@ -205,13 +205,13 @@ void c_renderer::resize_window( int width, int height )
 //---------------------------------------------------------------------
 void c_renderer::load_basic_textures(string modname)
 {
-	load_texture(g_config.get_egoboo_path() + "basicdat/globalparticles/particle.png",        TX_PARTICLE);
-	load_texture(g_config.get_egoboo_path() + "modules/" + modname + "/gamedat/tile0.bmp",    TX_TILE_0);
-	load_texture(g_config.get_egoboo_path() + "modules/" + modname + "/gamedat/tile1.bmp",    TX_TILE_1);
-	load_texture(g_config.get_egoboo_path() + "modules/" + modname + "/gamedat/tile2.bmp",    TX_TILE_2);
-	load_texture(g_config.get_egoboo_path() + "modules/" + modname + "/gamedat/tile3.bmp",    TX_TILE_3);
-	load_texture(g_config.get_egoboo_path() + "modules/" + modname + "/gamedat/watertop.bmp", TX_WATER_TOP);
-	load_texture(g_config.get_egoboo_path() + "modules/" + modname + "/gamedat/waterlow.bmp", TX_WATER_LOW);
+	load_texture(g_config->get_egoboo_path() + "basicdat/globalparticles/particle.png",        TX_PARTICLE);
+	load_texture(g_config->get_egoboo_path() + "modules/" + modname + "/gamedat/tile0.bmp",    TX_TILE_0);
+	load_texture(g_config->get_egoboo_path() + "modules/" + modname + "/gamedat/tile1.bmp",    TX_TILE_1);
+	load_texture(g_config->get_egoboo_path() + "modules/" + modname + "/gamedat/tile2.bmp",    TX_TILE_2);
+	load_texture(g_config->get_egoboo_path() + "modules/" + modname + "/gamedat/tile3.bmp",    TX_TILE_3);
+	load_texture(g_config->get_egoboo_path() + "modules/" + modname + "/gamedat/watertop.bmp", TX_WATER_TOP);
+	load_texture(g_config->get_egoboo_path() + "modules/" + modname + "/gamedat/waterlow.bmp", TX_WATER_LOW);
 }
 
 
@@ -626,6 +626,10 @@ void c_renderer::set_wm(c_window_manager* p_wm)
 
 SDL_Surface *c_renderer::get_screen()
 {
+	if (m_screen == NULL)
+	{
+		cout << "WARNING: c_renderer::get_screen() returning an empty surface" << endl;
+	}
 	return m_screen;
 }
 

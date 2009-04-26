@@ -170,6 +170,7 @@ class c_renderer
 
 		void initSDL();
 		void initGL();
+		void initWM();
 
 		void render_fan(Uint32, bool set_texture = true);
 		bool load_texture(string, int);
