@@ -434,9 +434,9 @@ bool c_tile_dictionary::load()
 	for ( /* nothing */; fantype < numfantype; fantype++, bigfantype++ )
 	{
 
-		vertices                   =
+		vertices                       =
 			vect[   fantype].vrt_count =
-				vect[bigfantype].vrt_count = fget_next_int(if_fan);  // Dupe
+			vect[bigfantype].vrt_count = fget_next_int(if_fan);  // Dupe
 
 		for ( cnt = 0; cnt < vertices; cnt++ )
 		{
@@ -452,7 +452,7 @@ bool c_tile_dictionary::load()
 
 		numcommand                     =
 			vect[   fantype].cmd_count =
-				vect[bigfantype].cmd_count = fget_next_int(if_fan);  // Dupe
+			vect[bigfantype].cmd_count = fget_next_int(if_fan);  // Dupe
 
 		for ( entry = 0, command = 0; command < numcommand; command++ )
 		{
@@ -673,6 +673,50 @@ int c_mesh::get_nearest_vertex(float pos_x, float pos_y, float pos_z)
 	}
 
 	return nearest_vertex;
+}
+
+
+//---------------------------------------------------------------------
+//-   Get the nearest tile
+//---------------------------------------------------------------------
+int c_mesh::get_nearest_tile(float pos_x, float pos_y, float pos_z)
+{
+	int i;
+	int vert_start;
+
+	int nearest_tile = 0;
+
+	double dist_temp;
+	double dist_nearest;
+
+	vect3 ref;   // The reference point
+	vect3 tile;  // Used for each tile
+
+	ref.x = pos_x;
+	ref.y = pos_y;
+	ref.z = pos_z;
+
+	dist_nearest = 999999.9f;
+
+	for (i = 0; i < (int)this->mem->tile_count; i++)
+	{
+		vert_start = g_mesh->mem->tilelst[i].vrt_start;
+
+		tile.x = this->mem->vrt_x[vert_start];
+		tile.y = this->mem->vrt_y[vert_start];
+		tile.z = this->mem->vrt_z[vert_start];
+
+		dist_temp = calculate_distance(tile, ref);
+
+		if (dist_temp < dist_nearest)
+		{
+			dist_nearest = calculate_distance(tile, ref);
+
+			nearest_tile = i;
+		}
+	}
+
+	return nearest_tile;
 }
 
 

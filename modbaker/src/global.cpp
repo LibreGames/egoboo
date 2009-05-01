@@ -50,6 +50,7 @@ float g_mouse_gl_z;
 //-   Selection
 //---------------------------------------------------------------------
 int g_nearest_vertex;
+int g_nearest_tile;
 extern c_selection g_selection;
 
 

@@ -61,17 +61,65 @@ void c_input_handler::mouseMoved(gcn::MouseEvent& event)
 }
 
 
+// TODO: Move somewhere else (maybe utility.cpp or global.cpp)
+bool tokenize_semicolon(const string str, vector<string>& tokens)
+{
+	string token;
+	istringstream iss(str);
+
+	if (str.length() == 0)
+	{
+		cout << "tokenizer: input string is empty" << endl;
+		return false;
+	}
+
+	while (getline(iss, token, ';'))
+	{
+		tokens.push_back(token);
+	}
+	return true;
+}
+
+
 //---------------------------------------------------------------------
 //-   Gets called at mouse events
 //---------------------------------------------------------------------
 void c_input_handler::mousePressed(gcn::MouseEvent& event)
 {
+	string sid;
 	int iid;
 	iid = -1;
+
+	vector<string> tokens;
 
 	if (event.getButton() == LEFT) {
 		if (window_input)
 		{
+			sid = event.getSource()->getId();
+
+			if (sid.substr(0, 3) == "tex")
+			{
+				if (!tokenize_semicolon(sid, tokens))
+				{
+					cout << "WARNING: Could not tokenize " << sid << endl;
+				}
+
+				istringstream iss_set(tokens[1]);
+				istringstream iss_y(tokens[2]);
+				istringstream iss_x(tokens[3]);
+				int texture;
+				int set, y, x;
+				iss_set >> set;
+				iss_y >> y;
+				iss_x >> x;
+
+				// TODO: calculate the texture ID
+				texture = (set * 64) + (y * 8) + x;
+
+				g_selection.set_texture(texture);
+				return;
+			}
+
 			// Get the widget ID string and convert it to integer
 			istringstream sid;
 			sid.str(event.getSource()->getId());
@@ -80,10 +128,24 @@ void c_input_handler::mousePressed(gcn::MouseEvent& event)
 		}
 		else
 		{
+			// TODO: move get_nearest_vertex / get_nearest_tile here
 			if (!g_selection.get_add_mode())
 				do_something(ACTION_SELECTION_CLEAR);
 
-			g_selection.add_vertex(g_nearest_vertex);
+			switch (g_selection.get_selection_mode())
+			{
+				case SELECTION_MODE_VERTEX:
+					g_selection.add_vertex(g_nearest_vertex);
+					break;
+
+				case SELECTION_MODE_TILE:
+					g_selection.add_tile(g_nearest_tile);
+					break;
+
+				default:
+					cout << "Invalid selection mode" << endl;
+					break;
+			}
 		}
 	}
 }
@@ -122,6 +184,12 @@ void c_input_handler::keyPressed(gcn::KeyEvent& event)
 
 	if (event.getKey().getValue() == 'r')
 		do_something(ACTION_VERTEX_DEC);
+
+	if (event.getKey().getValue() == 'b')
+		do_something(ACTION_SELMODE_TILE);
+
+	if (event.getKey().getValue() == 'n')
+		do_something(ACTION_SELMODE_VERTEX);
 
 	if (event.getKey() == gcn::Key::UP)
 		do_something(SCROLL_UP);
@@ -254,6 +322,20 @@ void c_input_handler::do_something(int p_action)
 			g_selection.clear();
 			break;
 
+		case ACTION_SELMODE_VERTEX:
+			if (g_selection.get_selection_mode() != SELECTION_MODE_VERTEX)
+				g_selection.clear();
+
+			g_selection.set_selection_mode(SELECTION_MODE_VERTEX);
+			break;
+
+		case ACTION_SELMODE_TILE:
+			if (g_selection.get_selection_mode() != SELECTION_MODE_TILE)
+				g_selection.clear();
+
+			g_selection.set_selection_mode(SELECTION_MODE_TILE);
+			break;
+
 		case ACTION_EXIT:
 			// TODO: Set c_modbaker->done to true
 			Quit();
@@ -269,10 +351,12 @@ void c_input_handler::do_something(int p_action)
 			g_selection.set_add_mode(false);
 			break;
 
+		// Texture painting
 		case ACTION_PAINT_TEXTURE:
-			g_selection.change_texture(0, 0);
+			g_selection.change_texture();
 			break;
 
+		// Scrolling
 		case SCROLL_RIGHT:
 			g_renderer->getPCam()->m_movex += 5.0f;
 			break;
@@ -305,6 +389,11 @@ void c_input_handler::do_something(int p_action)
 			g_renderer->getPCam()->m_movey = 0.0f;
 			break;
 
+		case SCROLL_Z_STOP:
+			g_renderer->getPCam()->m_movez = 0.0f;
+			break;
+
+		// Guichan window handling
 		case WINDOW_TEXTURE_TOGGLE:
 			g_renderer->get_wm()->toggle_texture_visibility();
 			break;
@@ -405,6 +494,7 @@ bool c_modbaker::get_GL_pos(int x, int y)
 
 	// Calculate the nearest vertex
 	g_nearest_vertex = g_mesh->get_nearest_vertex(g_mouse_gl_x, g_mouse_gl_y, g_mouse_gl_z);
+	g_nearest_tile   = g_mesh->get_nearest_tile(g_mouse_gl_x, g_mouse_gl_y, g_mouse_gl_z);
 
 	return true;
 }

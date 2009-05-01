@@ -41,7 +41,10 @@ enum
 	WINDOW_SAVE_SHOW       = 24,
 	WINDOW_SAVE_HIDE       = 25,
 	WINDOW_LOAD_SHOW       = 26,
-	WINDOW_LOAD_HIDE       = 27
+	WINDOW_LOAD_HIDE       = 27,
+	ACTION_SET_TEXTURE     = 28,
+	ACTION_SELMODE_VERTEX  = 29,
+	ACTION_SELMODE_TILE    = 30
 };
 
 
@@ -251,7 +254,7 @@ class c_window_manager
 
 		// Append an icon to a widget
 		void add_icon(c_mb_container*, string, int, int, int);
-		void add_texture_set(c_mb_container*, string, int, int, int);
+		void add_texture_set(c_mb_container*, string, int, int, int, int);
 
 	public:
 		c_window_manager(c_renderer*);

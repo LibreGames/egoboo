@@ -29,6 +29,8 @@ using namespace std;
 c_selection::c_selection()
 {
 	this->add_mode = false;
+	this->selection_mode = SELECTION_MODE_VERTEX;
+	this->texture = 0;
 }
 
 
@@ -69,6 +71,42 @@ void c_selection::remove_vertex(int vertex_number)
 
 
 //---------------------------------------------------------------------
+//-   Select a tile to the selection
+//---------------------------------------------------------------------
+void c_selection::add_tile(int tile_number)
+{
+	if (in_selection(tile_number))
+	{
+		this->remove_tile(tile_number);
+	}
+	else
+	{
+		this->selection.push_back(tile_number);
+	}
+}
+
+
+//---------------------------------------------------------------------
+//-   Clear the selection
+//---------------------------------------------------------------------
+void c_selection::remove_tile(int tile_number)
+{
+	vector <int> new_selection;
+	unsigned int i;
+
+	for (i=0; i<this->selection.size(); i++)
+	{
+		if (tile_number != this->selection[i])
+		{
+			new_selection.push_back(this->selection[i]);
+		}
+	}
+
+	this->selection = new_selection;
+}
+
+
+//---------------------------------------------------------------------
 //-   Clear the selection
 //---------------------------------------------------------------------
 void c_selection::clear()
@@ -80,6 +118,7 @@ void c_selection::clear()
 //---------------------------------------------------------------------
 //-
 //---------------------------------------------------------------------
+// TODO
 int c_selection::add_vertices_at_position(vect3 ref)
 {
 	int num_vertices;
@@ -97,6 +136,9 @@ void c_selection::modify_x(float off_x)
 {
 	unsigned int i;
 
+	if (selection_mode != SELECTION_MODE_VERTEX)
+		return;
+
 	for (i = 0; i < this->selection.size(); i++)
 	{
 		g_mesh->modify_verts_x(off_x, this->selection[i]);
@@ -111,6 +153,9 @@ void c_selection::modify_y(float off_y)
 {
 	unsigned int i;
 
+	if (selection_mode != SELECTION_MODE_VERTEX)
+		return;
+
 	for (i = 0; i < this->selection.size(); i++)
 	{
 		g_mesh->modify_verts_y(off_y, this->selection[i]);
@@ -124,6 +169,9 @@ void c_selection::modify_y(float off_y)
 void c_selection::modify_z(float off_z)
 {
 	unsigned int i;
+
+	if (selection_mode != SELECTION_MODE_VERTEX)
+		return;
 
 	for (i = 0; i < this->selection.size(); i++)
 	{
@@ -149,7 +197,27 @@ bool c_selection::in_selection(int vertex)
 }
 
 
-void c_selection::change_texture(int fan, int p_texture)
+//---------------------------------------------------------------------
+//-   Change all textures in the selection
+//---------------------------------------------------------------------
+void c_selection::change_texture()
 {
-	g_mesh->mem->tilelst[fan].tile = p_texture;
+	unsigned int i;
+	int fan;
+
+	for (i = 0; i < this->selection.size(); i++)
+	{
+		fan = this->selection[i];
+		g_mesh->mem->tilelst[fan].tile = this->texture;
+	}
+
+/*
+	// TODO: Switch to a selection based edit, not only tile based
+	g_mesh->mem->tilelst[fan].tile = this->texture;
+
+	if (this->texture > 64)
+		g_mesh->mem->tilelst[fan].type = 32;
+	else
+		g_mesh->mem->tilelst[fan].type = 1;
+*/
 }

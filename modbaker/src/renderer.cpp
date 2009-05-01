@@ -281,21 +281,24 @@ bool c_renderer::render_positions()
 
 	int i;
 
-	// Render all tiles in the selection
-	glBegin(GL_QUADS);
-	glColor4f(0.0f, 1.0f, 0.0f, 1);
-
-	for (i = 0; i < g_mesh->mi->vert_count; i++)
+	if (g_selection.get_selection_mode() == SELECTION_MODE_VERTEX)
 	{
-		if (g_selection.in_selection(i))
+		// Render all tiles in the selection
+		glBegin(GL_QUADS);
+		glColor4f(0.0f, 1.0f, 0.0f, 1);
+
+		for (i = 0; i < g_mesh->mi->vert_count; i++)
 		{
-			glVertex3f((g_mesh->mem->vrt_x[i] - 10), (g_mesh->mem->vrt_y[i] - 10), g_mesh->mem->vrt_z[i] + 1); // Bottom left
-			glVertex3f((g_mesh->mem->vrt_x[i] + 10), (g_mesh->mem->vrt_y[i] - 10), g_mesh->mem->vrt_z[i] + 1); // Bottom right
-			glVertex3f((g_mesh->mem->vrt_x[i] + 10), (g_mesh->mem->vrt_y[i] + 10), g_mesh->mem->vrt_z[i] + 1); // Top    right
-			glVertex3f((g_mesh->mem->vrt_x[i] - 10), (g_mesh->mem->vrt_y[i] + 10), g_mesh->mem->vrt_z[i] + 1); // Top    left
+			if (g_selection.in_selection(i))
+			{
+				glVertex3f((g_mesh->mem->vrt_x[i] - 10), (g_mesh->mem->vrt_y[i] - 10), g_mesh->mem->vrt_z[i] + 1); // Bottom left
+				glVertex3f((g_mesh->mem->vrt_x[i] + 10), (g_mesh->mem->vrt_y[i] - 10), g_mesh->mem->vrt_z[i] + 1); // Bottom right
+				glVertex3f((g_mesh->mem->vrt_x[i] + 10), (g_mesh->mem->vrt_y[i] + 10), g_mesh->mem->vrt_z[i] + 1); // Top    right
+				glVertex3f((g_mesh->mem->vrt_x[i] - 10), (g_mesh->mem->vrt_y[i] + 10), g_mesh->mem->vrt_z[i] + 1); // Top    left
+			}
 		}
+		glEnd();
 	}
-	glEnd();
 
 	glEnable(GL_TEXTURE_2D);
 	// Now reset the colors
@@ -481,6 +484,15 @@ void c_renderer::render_fan(Uint32 fan, bool set_texture)
 	// Render each command
 	commands = g_mesh->getTileDefinition(type).cmd_count;            // Number of commands
 	glColor4f(1, 1, 1, 1);
+
+	// Highlight the nearest tile and tiles in the selection
+	if ((g_selection.get_selection_mode() == SELECTION_MODE_TILE) &&
+		(g_selection.in_selection((int)fan) || (int)fan == g_nearest_tile))
+	{
+		glEnable(GL_TEXTURE_2D);
+		glColor4f(0, 1, 0, 1);
+	}
+
 	for (cnt = 0, entry = 0; cnt < commands; cnt++)
 	{
 		c_tile_definition & tile_def = g_mesh->getTileDefinition(type);
@@ -596,6 +608,7 @@ void c_renderer::end_2D_mode()
 }
 
 
+// TODO: Remove
 void c_renderer::render_text()
 {
 	return;

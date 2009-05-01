@@ -55,6 +55,7 @@ extern float g_mouse_gl_z;
 // Selection
 // Implemented in edit.cpp
 extern int g_nearest_vertex;
+extern int g_nearest_tile;
 extern c_selection g_selection;
 
 // Global subsystems

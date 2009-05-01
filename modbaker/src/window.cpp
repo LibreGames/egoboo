@@ -182,7 +182,7 @@ c_window_manager::c_window_manager(c_renderer* p_renderer)
 
 		this->w_palette = new c_mb_window("Palette");
 		this->top->add(this->w_palette);
-		this->w_palette->setDimension(gcn::Rectangle(0, 0, 132, 320));
+		this->w_palette->setDimension(gcn::Rectangle(0, 0, 132, 244));
 		this->w_palette->setPosition(0, 0);
 		this->w_palette->add(t_palette);
 	}
@@ -292,13 +292,15 @@ void c_window_manager::add_icon(c_mb_container* p_container, string p_filename, 
 //---------------------------------------------------------------------
 //-   Add a set of textures
 //---------------------------------------------------------------------
-void c_window_manager::add_texture_set(c_mb_container* p_container, string p_filename, int p_x, int p_y, int p_size)
+void c_window_manager::add_texture_set(c_mb_container* p_container, string p_filename, int p_set, int p_x, int p_y, int p_size)
 {
 	c_mb_image_button* icon;
 	gcn::Image* image;
 
 	c_mb_image_loader* ilo;
 	ilo = new c_mb_image_loader();
+
+	ostringstream tmp_str;
 
 	int t_y, t_x;
 
@@ -307,9 +309,16 @@ void c_window_manager::add_texture_set(c_mb_container* p_container, string p_fil
 		{
 			for (t_x=0; t_x<8; t_x++)
 			{
+
+				tmp_str.str("");
+				tmp_str.clear();
+
+				tmp_str << "tex;" << p_set << ";" << t_y << ";" << t_x;
+
 				image = ilo->load_part(p_filename, (t_y * p_size), (t_x * p_size), p_size, p_size);
 				icon = new c_mb_image_button(image);
 				icon->setSize(p_size, p_size);
+				icon->setId(tmp_str.str());
 
 				p_container->add(icon, (p_x + (t_x * p_size)), (p_y + (t_y * p_size)));
 				icon = NULL;
@@ -359,6 +368,9 @@ bool c_window_manager::create_mesh_window()
 
 		this->add_icon(this->c_mesh, "data/edit-clear.png",    64, 128, ACTION_SELECTION_CLEAR);
 		this->add_icon(this->c_mesh, "data/applications-graphics.png", 32, 128, WINDOW_TEXTURE_TOGGLE);
+
+		this->add_icon(this->c_mesh, "data/selection-tile.png",   0, 128, ACTION_SELMODE_TILE);
+		this->add_icon(this->c_mesh, "data/selection-vertex.png", 0, 96,  ACTION_SELMODE_VERTEX);
 
 		this->t_palette->addTab(tab, this->c_mesh);
 
@@ -425,7 +437,7 @@ bool c_window_manager::create_texture_window()
 			tmp_container->setSize(256, 256);
 
 			file = g_config->get_egoboo_path() + "modules/" + g_mesh->modname + "/gamedat/tile" + tmp_str.str() + ".bmp";
-			this->add_texture_set(tmp_container, file, 0, 0, size);
+			this->add_texture_set(tmp_container, file, tab, 0, 0, size);
 			this->t_texture->addTab(tmp_tab, tmp_container);
 
 			this->w_texture->add(t_texture);

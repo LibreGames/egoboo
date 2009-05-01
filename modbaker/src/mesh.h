@@ -262,6 +262,7 @@ class c_mesh
 		int modify_verts_y(float, int);
 		int modify_verts_z(float, int);
 		int get_nearest_vertex(float, float, float);
+		int get_nearest_tile(float, float, float);
 
 		c_tile_dictionary & getTileDictioary()          { return ms_tiledict;             }
 		c_tile_definition & getTileDefinition(int tile) { return ms_tiledict[tile];       }
