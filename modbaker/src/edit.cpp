@@ -209,15 +209,11 @@ void c_selection::change_texture()
 	{
 		fan = this->selection[i];
 		g_mesh->mem->tilelst[fan].tile = this->texture;
+
+		// Change the tile type (for big tiles)
+		if (this->texture >= 64)
+			g_mesh->mem->tilelst[fan].type = 32;
+		else
+			g_mesh->mem->tilelst[fan].type = 0;
 	}
-
-/*
-	// TODO: Switch to a selection based edit, not only tile based
-	g_mesh->mem->tilelst[fan].tile = this->texture;
-
-	if (this->texture > 64)
-		g_mesh->mem->tilelst[fan].type = 32;
-	else
-		g_mesh->mem->tilelst[fan].type = 1;
-*/
 }
