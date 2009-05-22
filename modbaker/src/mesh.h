@@ -26,6 +26,9 @@
 
 #include "general.h"
 
+#include "SDL_extensions.h"
+#include "ogl_extensions.h"
+
 #include <fstream>
 #include <string>
 #include <vector>
@@ -70,19 +73,52 @@ class c_spawn
 
 
 //---------------------------------------------------------------------
-//-   spawn.txt handling
+//-   This represents one object in the module/objects folder
 //---------------------------------------------------------------------
-class c_spawn_manager
+class c_object
 {
 	private:
-		vector<c_spawn> spawns;
+		string name;
+		int slot;
+		GLuint icon[1];
 
 	public:
-		c_spawn_manager();
-		~c_spawn_manager();
+		c_object();
+		~c_object();
 
-		void load(string);
-		bool save(string);
+		string get_name()              { return this->name; }
+		void   set_name(string p_name) { this->name = p_name; }
+
+		int    get_slot()           { return this->slot; }
+		void   set_slot(int p_slot) { this->slot = p_slot; }
+
+		GLuint get_icon()            { return this->icon[0]; }
+		GLuint *get_icon_array()     { return this->icon; }
+		void set_icon(GLuint p_icon) { this->icon[0] = p_icon; }
+
+		bool read_data_file(string);
+		bool render();
+};
+
+
+//---------------------------------------------------------------------
+//-   spawn.txt handling
+//---------------------------------------------------------------------
+class c_object_manager
+{
+	private:
+		vector<c_spawn>  spawns;
+		vector<c_object*> objects;
+
+	public:
+		c_object_manager();
+		~c_object_manager();
+
+		void load_spawns(string);
+		bool save_spawns(string);
+
+		void load_objects(string);
+		bool save_objects(string);
 
 		void add(c_spawn);
 		void remove(int);
@@ -90,6 +126,14 @@ class c_spawn_manager
 		unsigned int get_spawns_size();
 		c_spawn get_spawn(int);
 		void    set_spawn(int, c_spawn);
+
+		unsigned int get_objects_size();
+		c_object* get_object(int);
+		c_object* get_object_by_slot(int);
+		void      set_object(int, c_object*);
+
+		vector<c_object*> get_objects();
+
 		void    render();
 };
 
@@ -237,7 +281,6 @@ class c_mesh
 {
 	private:
 		void mesh_make_fanstart();
-		c_spawn_manager *spawn_manager;
 
 	protected:
 		// TODO: The tile dictionary doesn't really belong to the mesh
@@ -247,9 +290,6 @@ class c_mesh
 	public:
 		c_mesh_info  *mi;
 		c_mesh_mem   *mem;
-
-		c_spawn_manager* get_spawn_manager();
-		void set_spawn_manager(c_spawn_manager*);
 
 		c_mesh();
 		~c_mesh();
@@ -261,6 +301,15 @@ class c_mesh
 		int modify_verts_x(float, int);
 		int modify_verts_y(float, int);
 		int modify_verts_z(float, int);
+
+		void set_verts_x(float, int);
+		void set_verts_y(float, int);
+		void set_verts_z(float, int);
+
+		float get_verts_x(int);
+		float get_verts_y(int);
+		float get_verts_z(int);
+
 		int get_nearest_vertex(float, float, float);
 		int get_nearest_tile(float, float, float);
 

@@ -60,11 +60,12 @@ extern c_selection g_selection;
 
 // Global subsystems
 // Implmented in renderer.cpp, renderer_misc.cpp, mesh.cpp, frustum.cpp
-extern c_input_handler* g_input_handler;
-extern c_config*        g_config;
-extern c_renderer*      g_renderer;
-extern c_mesh*          g_mesh;
-extern c_frustum        g_frustum;           // TODO: Move to g_renderer
+extern c_input_handler*  g_input_handler;
+extern c_config*         g_config;
+extern c_renderer*       g_renderer;
+extern c_mesh*           g_mesh;
+extern c_object_manager* g_object_manager;
+extern c_frustum         g_frustum;           // TODO: Move to g_renderer
 
 // Misc stuff
 // Implmented in global.cpp

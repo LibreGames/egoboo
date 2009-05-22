@@ -38,13 +38,18 @@ enum
 	ACTION_MODIFIER_OFF    = 21,
 	ACTION_PAINT_TEXTURE   = 22,
 	WINDOW_TEXTURE_TOGGLE  = 23,
-	WINDOW_SAVE_SHOW       = 24,
-	WINDOW_SAVE_HIDE       = 25,
-	WINDOW_LOAD_SHOW       = 26,
-	WINDOW_LOAD_HIDE       = 27,
-	ACTION_SET_TEXTURE     = 28,
-	ACTION_SELMODE_VERTEX  = 29,
-	ACTION_SELMODE_TILE    = 30
+	WINDOW_OBJECT_TOGGLE   = 24,
+	WINDOW_INFO_TOGGLE     = 25,
+	WINDOW_SAVE_SHOW       = 26,
+	WINDOW_SAVE_HIDE       = 27,
+	WINDOW_LOAD_SHOW       = 28,
+	WINDOW_LOAD_HIDE       = 29,
+	ACTION_SET_TEXTURE     = 30,
+	ACTION_SELMODE_VERTEX  = 31,
+	ACTION_SELMODE_TILE    = 32,
+	ACTION_SELMODE_OBJECT  = 33,
+	ACTION_QUIT            = 34,
+	ACTION_WELD_VERTICES   = 35
 };
 
 
@@ -116,11 +121,40 @@ class c_mb_window : public gcn::Window
 };
 
 
-class c_mb_image_button : public gcn::ImageButton
+class c_mb_tab : public gcn::Tab
 {
 	public:
+		c_mb_tab(string);
+};
+
+
+class c_mb_tabbedarea : public gcn::TabbedArea
+{
+	public:
+		c_mb_tabbedarea();
+};
+
+
+class c_mb_scroll_area : public gcn::ScrollArea
+{
+	public:
+		c_mb_scroll_area();
+};
+
+
+class c_mb_image_button : public gcn::ImageButton
+{
+	private:
+		string tooltip;
+
+	public:
 		c_mb_image_button(gcn::Image*);
+
 		virtual void mousePressed(gcn::MouseEvent &);
+		virtual void mouseMoved(gcn::MouseEvent &);
+
+		void set_tooltip(string p_tooltip) { this->tooltip = p_tooltip; }
+		string get_tooltip()               { return this->tooltip; }
 };
 
 
@@ -138,24 +172,10 @@ class c_mb_button : public gcn::Button
 };
 
 
-class c_mb_tab : public gcn::Tab
-{
-	public:
-		c_mb_tab(string);
-};
-
-
 class c_mb_textfield : public gcn::TextField
 {
 	public:
 		c_mb_textfield();
-};
-
-
-class c_mb_tabbedarea : public gcn::TabbedArea
-{
-	public:
-		c_mb_tabbedarea();
 };
 
 
@@ -199,7 +219,7 @@ class c_mb_list_model : public gcn::ListModel
 
 		std::string getElementAt(int i)
 		{
-			if (i <= this->number_of_elements)
+			if (i < this->number_of_elements)
 			{
 				return elements[i];
 			}
@@ -229,31 +249,37 @@ class c_window_manager
 		gcn::ImageFont* font;
 
 		gcn::Gui* gui;
-
-		// The palette tab
-		c_mb_tabbedarea *t_palette;
-		c_mb_tabbedarea *t_texture;
+		gcn::SDLInput* input;
 
 		// The tabs
+		c_mb_tabbedarea* t_texture;
+
+		// Object list
 		c_mb_container* c_mesh;
 		c_mb_list_model* obj_list_model;
 
+		// Object picker
 		gcn::ListBox* obj_list_box;
 		c_mb_container* c_object;
+		c_mb_scroll_area* sc_object;
 
 		// Info window
 		c_mb_label* label_fps;
 		c_mb_label* label_position;
 
+		// The tooltip
+		c_mb_label* label_tooltip;
+
 		// The windows
 		c_mb_window* w_palette;
+		c_mb_window* w_object;
 		c_mb_window* w_info;
 		c_mb_window* w_save;
 		c_mb_window* w_load;
 		c_mb_window* w_texture;
 
 		// Append an icon to a widget
-		void add_icon(c_mb_container*, string, int, int, int);
+		void add_icon(c_mb_container*, string, int, int, int, string);
 		void add_texture_set(c_mb_container*, string, int, int, int, int);
 
 	public:
@@ -269,15 +295,32 @@ class c_window_manager
 		void set_save_visibility(bool);
 		void toggle_save_visibility();
 
-		void set_texture_visibility(bool);
-		void toggle_texture_visibility();
+		// TODO: Merge those functions
+		// Provide a c_window as parameter (with a get_window(string) function)
+		bool set_texture_visibility(bool);
+		bool toggle_texture_visibility();
+
+		bool set_object_visibility(bool);
+		bool toggle_object_visibility();
+
+		bool set_info_visibility(bool);
+		bool toggle_info_visibility();
 
 		// TODO: Make private
 		c_mb_textfield* tf_load;
 		c_mb_textfield* tf_save;
 
-		// TODO: create setter and getter and make it private
-		gcn::SDLInput* input;
+		gcn::SDLInput* get_input() { return this->input; }
+
+		void set_tooltip(string p_tooltip)
+		{
+			this->label_tooltip->setCaption(p_tooltip);
+		}
+
+		string get_tooltip()
+		{
+			return this->label_tooltip->getCaption();
+		}
 
 		gcn::Gui* get_gui();
 		void set_gui(gcn::Gui*);

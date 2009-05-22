@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //---------------------------------------------------------------------
-
 #include "edit.h"
 #include "global.h"
 
@@ -112,6 +111,27 @@ void c_selection::remove_tile(int tile_number)
 void c_selection::clear()
 {
 	this->selection.clear();
+}
+
+
+//---------------------------------------------------------------------
+//-   Weld several vertices together
+//---------------------------------------------------------------------
+bool c_selection::weld(c_mesh *p_mesh)
+{
+	unsigned int i;
+
+	if (selection_mode != SELECTION_MODE_VERTEX)
+		return false;
+
+	for (i = 1; i < this->selection.size(); i++)
+	{
+		p_mesh->set_verts_x(p_mesh->get_verts_x(this->selection[0]), this->selection[i]);
+		p_mesh->set_verts_y(p_mesh->get_verts_y(this->selection[0]), this->selection[i]);
+		p_mesh->set_verts_z(p_mesh->get_verts_z(this->selection[0]), this->selection[i]);
+	}
+
+	return true;
 }
 
 

@@ -32,6 +32,7 @@
 
 #include "window.h"
 #include "general.h"
+#include "mesh.h" // For object rendering
 #include "SDL_extensions.h"
 #include "ogl_extensions.h"
 
@@ -166,7 +167,7 @@ class c_renderer
 		SDL_Surface *m_screen;
 
 	protected:
-		GLuint     m_texture[MAX_TEXTURES];
+		GLuint m_texture[MAX_TEXTURES];
 
 		void initSDL();
 		void initGL();
@@ -194,6 +195,9 @@ class c_renderer
 		SDL_Surface *get_screen();
 		void set_screen(SDL_Surface *);
 
+		// Load an object icon
+		bool load_icon(string, c_object*);
+
 		// Window stuff
 		void resize_window(int, int);
 		bool render_positions();
@@ -208,12 +212,12 @@ class c_renderer
 
 		// Rendering containers
 		void render_text();
-		bool render_models();
+		bool render_models(c_object_manager*);
 
 		void load_basic_textures(string);
 		bool render_mesh();
 
-		c_camera * getPCam()          { return m_cam; }
+		c_camera * getPCam() { return m_cam; }
 
 		c_renderlist m_renderlist;
 };

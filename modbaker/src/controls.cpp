@@ -336,6 +336,13 @@ void c_input_handler::do_something(int p_action)
 			g_selection.set_selection_mode(SELECTION_MODE_TILE);
 			break;
 
+		case ACTION_SELMODE_OBJECT:
+			if (g_selection.get_selection_mode() != SELECTION_MODE_OBJECT)
+				g_selection.clear();
+
+			g_selection.set_selection_mode(SELECTION_MODE_OBJECT);
+			break;
+
 		case ACTION_EXIT:
 			// TODO: Set c_modbaker->done to true
 			Quit();
@@ -354,6 +361,11 @@ void c_input_handler::do_something(int p_action)
 		// Texture painting
 		case ACTION_PAINT_TEXTURE:
 			g_selection.change_texture();
+			break;
+
+		// Weld the selected vertices together
+		case ACTION_WELD_VERTICES:
+			g_selection.weld(g_mesh);
 			break;
 
 		// Scrolling
@@ -396,6 +408,14 @@ void c_input_handler::do_something(int p_action)
 		// Guichan window handling
 		case WINDOW_TEXTURE_TOGGLE:
 			g_renderer->get_wm()->toggle_texture_visibility();
+			break;
+
+		case WINDOW_OBJECT_TOGGLE:
+			g_renderer->get_wm()->toggle_object_visibility();
+			break;
+
+		case WINDOW_INFO_TOGGLE:
+			g_renderer->get_wm()->toggle_info_visibility();
 			break;
 
 		case WINDOW_LOAD_SHOW:
@@ -453,7 +473,7 @@ int c_modbaker::handle_events()
 		}
 
 		// Guichan events
-		g_renderer->get_wm()->input->pushInput(event);
+		g_renderer->get_wm()->get_input()->pushInput(event);
 	}
 
 	return 0;

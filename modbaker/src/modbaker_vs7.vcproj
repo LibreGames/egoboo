@@ -132,6 +132,9 @@
 				RelativePath=".\mesh.cpp">
 			</File>
 			<File
+				RelativePath=".\mesh_misc.cpp">
+			</File>
+			<File
 				RelativePath=".\modbaker.cpp">
 			</File>
 			<File

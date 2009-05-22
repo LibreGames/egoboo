@@ -28,7 +28,9 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <vector>
+#include <string>
 using namespace std;
 
 void fgoto_colon(ifstream &);
@@ -44,4 +46,7 @@ float fget_float(ifstream &);
 float fget_next_float(ifstream &);
 
 bool tokenize_colon(const string&, vector<string>&);
+string fread_skip_comments(ifstream&);
+
+bool read_files(string, string, vector<string>&);
 #endif

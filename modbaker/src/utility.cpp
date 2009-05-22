@@ -193,3 +193,29 @@ bool tokenize_colon(const string& str, vector<string>& tokens)
 
 	return true;
 }
+
+
+string fread_skip_comments(ifstream &file)
+{
+	string buffer;
+
+	if (!file)
+	{
+		cout << "WARNING: fread_skip_comments: File is unknown" << endl;
+		return "";
+	}
+
+	while(!file.eof())
+	{
+		getline(file, buffer);
+
+		// No comment found: Return the value
+		if (buffer.find("//") == string::npos)
+		{
+			return buffer;
+		}
+	}
+
+	// No comments found
+	return "";
+}

@@ -199,6 +199,12 @@ void c_camera::make_matrix()
 //---------------------------------------------------------------------
 bool c_renderlist::build()
 {
+	if (g_mesh == NULL)
+	{
+		cout << "WARNING: No mesh found" << endl;
+		return false;
+	}
+
 	Uint32 fan;
 
 	// Reset the values

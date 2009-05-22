@@ -70,6 +70,8 @@ c_modbaker::c_modbaker()
 	g_input_handler     = NULL;
 	g_mesh              = NULL;
 //	g_frustum           = NULL;
+	g_mouse_x           = 0;
+	g_mouse_x           = 0;
 }
 
 /*
@@ -87,18 +89,25 @@ void c_modbaker::init(string p_modname)
 {
 	g_config   = new c_config();
 
+	// Load the renderer
+	g_renderer = new c_renderer();
+	g_renderer->load_basic_textures(p_modname);
+
 	// Load the mesh
 	g_mesh = new c_mesh();
 	g_mesh->getTileDictioary().load();
 	g_mesh->load_mesh_mpd(p_modname);
 
-	g_mesh->modname = p_modname;
-
-	g_renderer = new c_renderer();
-
-	g_renderer->load_basic_textures(p_modname);
+	g_object_manager = new c_object_manager();
+	g_object_manager->load_objects(g_config->get_egoboo_path() + "modules/" + p_modname + "/objects/");
+	g_object_manager->load_objects(g_config->get_egoboo_path() + "basicdat/globalobjects/");
+	g_object_manager->load_spawns(p_modname);
 
 	g_renderer->m_renderlist.build();
+
+	// Set the module name
+	// TODO: Remove the global modname variable
+	g_mesh->modname = p_modname;
 }
 
 
@@ -120,7 +129,7 @@ void c_modbaker::main_loop()
 			g_renderer->getPCam()->move();
 			g_renderer->render_mesh();
 			g_renderer->render_positions();
-			g_renderer->render_models();       // Render spawn.txt
+			g_renderer->render_models(g_object_manager); // Render spawn.txt
 			get_GL_pos(g_mouse_x, g_mouse_y);
 			g_renderer->end_3D_mode();
 

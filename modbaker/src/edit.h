@@ -19,7 +19,12 @@
 #ifndef edit_h
 #define edit_h
 
+#include <SDL.h>
+#include <SDL_types.h>
+#include <SDL_endian.h>
+
 #include "general.h"
+#include "mesh.h"
 
 #include <vector>
 
@@ -28,7 +33,8 @@ using namespace std;
 enum
 {
 	SELECTION_MODE_VERTEX,
-	SELECTION_MODE_TILE
+	SELECTION_MODE_TILE,
+	SELECTION_MODE_OBJECT
 };
 
 class c_selection
@@ -58,6 +64,8 @@ class c_selection
 
 		void set_texture(int p_texture) { this->texture = p_texture; }
 		int  get_texture()              { return this->texture; }
+
+		bool weld(c_mesh *);
 
 		void clear();
 

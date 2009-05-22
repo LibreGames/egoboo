@@ -175,23 +175,8 @@ c_mesh::c_mesh()
 
 c_mesh::~c_mesh()
 {
-	delete spawn_manager;
-	spawn_manager = NULL;
-
 	delete this->mem;
 	delete this->mi;
-}
-
-
-c_spawn_manager* c_mesh::get_spawn_manager()
-{
-	return spawn_manager;
-}
-
-
-void c_mesh::set_spawn_manager(c_spawn_manager* p_spawn_manager)
-{
-	spawn_manager = p_spawn_manager;
 }
 
 
@@ -379,9 +364,6 @@ bool c_mesh::load_mesh_mpd(string p_modname)
 
 	// Store it in the tilelst again
 	this->mem->tilelst = mf_list;
-
-	spawn_manager = new c_spawn_manager();
-	spawn_manager->load(p_modname);
 
 	return true;
 }
@@ -636,6 +618,60 @@ int c_mesh::modify_verts_z(float z_modifier, int vert)
 
 
 //---------------------------------------------------------------------
+//-   Set the X position of a vertex
+//---------------------------------------------------------------------
+void c_mesh::set_verts_x(float p_new_x, int p_vertex_number)
+{
+	this->mem->vrt_x[p_vertex_number] = p_new_x;
+}
+
+
+//---------------------------------------------------------------------
+//-   Set the Y position of a vertex
+//---------------------------------------------------------------------
+void c_mesh::set_verts_y(float p_new_y, int p_vertex_number)
+{
+	this->mem->vrt_y[p_vertex_number] = p_new_y;
+}
+
+
+//---------------------------------------------------------------------
+//-   Set the Z position of a vertex
+//---------------------------------------------------------------------
+void c_mesh::set_verts_z(float p_new_z, int p_vertex_number)
+{
+	this->mem->vrt_z[p_vertex_number] = p_new_z;
+}
+
+
+//---------------------------------------------------------------------
+//-   Get the X position of a vertex
+//---------------------------------------------------------------------
+float c_mesh::get_verts_x(int p_vertex_number)
+{
+	return this->mem->vrt_x[p_vertex_number];
+}
+
+
+//---------------------------------------------------------------------
+//-   Get the Y position of a vertex
+//---------------------------------------------------------------------
+float c_mesh::get_verts_y(int p_vertex_number)
+{
+	return this->mem->vrt_y[p_vertex_number];
+}
+
+
+//---------------------------------------------------------------------
+//-   Get the Z position of a vertex
+//---------------------------------------------------------------------
+float c_mesh::get_verts_z(int p_vertex_number)
+{
+	return this->mem->vrt_z[p_vertex_number];
+}
+
+
+//---------------------------------------------------------------------
 //-   Get the nearest vertex
 //---------------------------------------------------------------------
 int c_mesh::get_nearest_vertex(float pos_x, float pos_y, float pos_z)
@@ -822,100 +858,4 @@ bool c_mesh::save_mesh_mpd(string filename)
 	cout << "File saved: " << filename << endl;
 
 	return true;
-}
-
-
-c_spawn_manager::c_spawn_manager()
-{
-	cout << "Creating the spawn manager" << endl;
-}
-
-
-c_spawn_manager::~c_spawn_manager()
-{
-	cout << "Deleting the spawn manager" << endl;
-}
-
-
-void c_spawn_manager::load(string p_modname)
-{
-	ifstream f_spawn;
-	c_spawn temp_spawn;
-
-	string filename;
-	filename = g_config->get_egoboo_path() + "modules/" + p_modname + "/gamedat/spawn.txt";
-
-	f_spawn.open(filename.c_str());
-
-	if (!f_spawn)
-	{
-		cout << "spawn.txt not found!" << endl;
-		Quit();
-	}
-
-	string sTmp;
-	int    iTmp;
-	float  fTmp;
-	char   cTmp;
-
-	while (!f_spawn.eof())
-	{
-		if (fgoto_colon_yesno(f_spawn))
-		{
-			f_spawn >> sTmp;  temp_spawn.name        = sTmp;
-			f_spawn >> iTmp;  temp_spawn.slot_number = iTmp;
-			f_spawn >> fTmp;  temp_spawn.pos.x       = fTmp;
-			f_spawn >> fTmp;  temp_spawn.pos.y       = fTmp;
-			f_spawn >> fTmp;  temp_spawn.pos.z       = fTmp;
-			f_spawn >> cTmp;  temp_spawn.direction   = cTmp;
-			f_spawn >> iTmp;  temp_spawn.money       = iTmp;
-			f_spawn >> iTmp;  temp_spawn.skin        = iTmp;
-			f_spawn >> iTmp;  temp_spawn.passage     = iTmp;
-			f_spawn >> iTmp;  temp_spawn.content     = iTmp;
-			f_spawn >> iTmp;  temp_spawn.lvl         = iTmp;
-			f_spawn >> cTmp;  temp_spawn.status_bar  = cTmp;
-			f_spawn >> cTmp;  temp_spawn.ghost       = cTmp;
-			f_spawn >> sTmp;  temp_spawn.team        = sTmp;
-
-			this->spawns.push_back(temp_spawn);
-		}
-	}
-
-	f_spawn.close();
-}
-
-
-bool c_spawn_manager::save(string p_modname)
-{
-	return false;
-}
-
-
-void c_spawn_manager::add(c_spawn)
-{
-
-}
-
-
-void c_spawn_manager::remove(int p_slot_number)
-{
-
-}
-
-
-unsigned int c_spawn_manager::get_spawns_size()
-{
-	return this->spawns.size();
-}
-
-
-c_spawn c_spawn_manager::get_spawn(int p_slot_number)
-{
-	return this->spawns[p_slot_number];
-}
-
-
-void c_spawn_manager::set_spawn(int p_slot_number, c_spawn p_spawn)
-{
-	this->spawns[p_slot_number] = p_spawn;
 }

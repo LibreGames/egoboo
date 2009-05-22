@@ -25,12 +25,13 @@
 
 using namespace std;
 
-c_input_handler* g_input_handler;
-c_config*        g_config;
-c_selection      g_selection;
-c_renderer*      g_renderer;
-c_mesh*          g_mesh;
-c_frustum        g_frustum;
+c_input_handler*  g_input_handler;
+c_config*         g_config;
+c_selection       g_selection;
+c_renderer*       g_renderer;
+c_mesh*           g_mesh;
+c_object_manager* g_object_manager;
+c_frustum         g_frustum;
 
 vector<c_tile_definition> g_tiledict;
 

@@ -242,6 +242,38 @@ bool c_renderer::load_texture(string imgname, int tileset)
 
 
 //---------------------------------------------------------------------
+//-   Load a single icon
+//---------------------------------------------------------------------
+bool c_renderer::load_icon(string imgname, c_object *p_object)
+{
+	SDL_Surface *picture;
+	float tex_coords[4];
+
+	picture = IMG_Load(imgname.c_str());
+
+	glEnable(GL_TEXTURE_2D); // TODO: Do we need this?
+	glGenTextures(1, p_object->get_icon_array());
+
+	cout <<  "INFO: icon: " << p_object->get_icon() << " (\"" << imgname << "\")" << endl;
+
+	if (picture == NULL)
+	{
+		p_object->set_icon(0);
+		return false;
+	}
+
+	if (copySurfaceToTexture(picture, p_object->get_icon(), tex_coords))
+	{
+		// Free the SDL_Surface
+		SDL_FreeSurface(picture);
+		picture = NULL;
+	}
+
+	return true;
+}
+
+
+//---------------------------------------------------------------------
 //-   Draw certain helping positions
 //---------------------------------------------------------------------
 bool c_renderer::render_positions()

@@ -19,7 +19,7 @@ gcn::Image* c_mb_image_loader::load_part(string p_filename, int p_y, int p_x, in
 	SDL_Surface *loadedSurface = loadSDLSurface(p_filename);
 	SDL_Surface *s_part;
 
-	// TODO: Are width and height in the right oder?
+	// Create a new surface
 	s_part = SDL_CreateRGBSurface(SDL_SWSURFACE, p_width, p_height,
 		32, rmask, gmask, bmask, amask);
 
@@ -79,15 +79,6 @@ c_mb_window::c_mb_window(string caption)
 }
 
 
-c_mb_label::c_mb_label(string p_caption)
-{
-	this->setCaption(p_caption);
-
-	this->setBackgroundColor(gcn::Color(255, 255, 255, 230));
-	this->setBaseColor(gcn::Color(255, 255, 255, 230));
-}
-
-
 c_mb_tab::c_mb_tab(string p_caption)
 {
 	this->setCaption(p_caption);
@@ -104,7 +95,23 @@ c_mb_tabbedarea::c_mb_tabbedarea()
 }
 
 
+c_mb_label::c_mb_label(string p_caption)
+{
+	this->setCaption(p_caption);
+
+	this->setBackgroundColor(gcn::Color(255, 255, 255, 230));
+	this->setBaseColor(gcn::Color(255, 255, 255, 230));
+}
+
+
 c_mb_textfield::c_mb_textfield()
+{
+	this->setBackgroundColor(gcn::Color(255, 255, 255, 230));
+	this->setBaseColor(gcn::Color(255, 255, 255, 230));
+}
+
+
+c_mb_scroll_area::c_mb_scroll_area()
 {
 	this->setBackgroundColor(gcn::Color(255, 255, 255, 230));
 	this->setBaseColor(gcn::Color(255, 255, 255, 230));
@@ -114,6 +121,7 @@ c_mb_textfield::c_mb_textfield()
 c_mb_image_button::c_mb_image_button(gcn::Image* image)
 {
 	this->setImage(image);
+	this->tooltip = "";
 
 	this->setBackgroundColor(gcn::Color(255, 255, 255, 230));
 	this->setBaseColor(gcn::Color(255, 255, 255, 230));
@@ -137,6 +145,16 @@ c_mb_container::c_mb_container()
 void c_mb_image_button::mousePressed(gcn::MouseEvent &event)
 {
 }
+
+
+void c_mb_image_button::mouseMoved(gcn::MouseEvent &event)
+{
+	if (g_renderer->get_wm()->get_tooltip() == this->tooltip)
+		return;
+
+	g_renderer->get_wm()->set_tooltip(this->tooltip);
+}
+
 
 //---------------------------------------------------------------------
 //-   c_window_manager constructor
@@ -172,22 +190,14 @@ c_window_manager::c_window_manager(c_renderer* p_renderer)
 		top = new gcn::Container();
 		top->setDimension(gcn::Rectangle(0, 0, p_renderer->get_screen()->w, p_renderer->get_screen()->h));
 		top->setOpaque(false);
+		top->setFocusable(true);
 		top->addMouseListener(g_input_handler);
 		top->addKeyListener(g_input_handler);
 		gui->setTop(top);
-
-		// Create the palette container
-		this->t_palette = new c_mb_tabbedarea();
-		this->t_palette->setSize(130, 320);
-
-		this->w_palette = new c_mb_window("Palette");
-		this->top->add(this->w_palette);
-		this->w_palette->setDimension(gcn::Rectangle(0, 0, 132, 244));
-		this->w_palette->setPosition(0, 0);
-		this->w_palette->add(t_palette);
 	}
 	catch (gcn::Exception e)
 	{
+		cout << "Guichan exception: " << endl;
 		cout << e.getMessage() << endl;
 	}
 	catch (std::exception e)
@@ -198,10 +208,13 @@ c_window_manager::c_window_manager(c_renderer* p_renderer)
 	{
 		cout << "Unknown exception" << endl;
 	}
+
 	// Create the windows
 	this->create_mesh_window();
-	this->create_texture_window();
+	// TODO: Call this on mapchange!
+//	this->create_texture_window();
 	this->create_info_window();
+	// TODO: Call this on mapchange!
 	this->create_object_window();
 	this->create_load_window();
 	this->create_save_window();
@@ -238,7 +251,10 @@ void c_window_manager::set_fps(float p_fps)
 	ostringstream tmp_str;
 	tmp_str << "FPS: " << p_fps;
 
-//	this->label_fps->setCaption(tmp_str.str());
+	if (this->label_fps == NULL)
+		return;
+
+	this->label_fps->setCaption(tmp_str.str());
 }
 
 
@@ -250,14 +266,17 @@ void c_window_manager::set_position(float p_x, float p_y)
 	ostringstream tmp_str;
 	tmp_str << "Pos: " << p_x << ", " << p_y;
 
-//	this->label_position->setCaption(tmp_str.str());
+	if (this->label_position == NULL)
+		return;
+
+	this->label_position->setCaption(tmp_str.str());
 }
 
 
 //---------------------------------------------------------------------
 //-   Add an icon to a container
 //---------------------------------------------------------------------
-void c_window_manager::add_icon(c_mb_container* p_container, string p_filename, int p_x, int p_y, int p_id)
+void c_window_manager::add_icon(c_mb_container* p_container, string p_filename, int p_x, int p_y, int p_id, string p_tooltip)
 {
 	try {
 		c_mb_image_button* icon;
@@ -266,6 +285,7 @@ void c_window_manager::add_icon(c_mb_container* p_container, string p_filename, 
 		image = gcn::Image::load(p_filename);
 		icon = new c_mb_image_button(image);
 		icon->setSize(32, 32);
+		icon->set_tooltip(p_tooltip);
 
 		ostringstream tmp_id;
 		tmp_id << p_id;
@@ -319,6 +339,7 @@ void c_window_manager::add_texture_set(c_mb_container* p_container, string p_fil
 				icon = new c_mb_image_button(image);
 				icon->setSize(p_size, p_size);
 				icon->setId(tmp_str.str());
+				icon->set_tooltip("Select texture");
 
 				p_container->add(icon, (p_x + (t_x * p_size)), (p_y + (t_y * p_size)));
 				icon = NULL;
@@ -347,32 +368,47 @@ bool c_window_manager::create_mesh_window()
 {
 	try
 	{
-		c_mb_tab* tab;
-		tab = new c_mb_tab("Mesh");
-
 		this->c_mesh = new c_mb_container();
-		this->c_mesh->setSize(128, 200);
+		this->c_mesh->setWidth(128);
+		this->c_mesh->setHeight(220);
 
 		// Add the icons
-		this->add_icon(this->c_mesh, "data/document-new.png",   0,  0, ACTION_MESH_NEW);
-		this->add_icon(this->c_mesh, "data/document-open.png", 32,  0, WINDOW_LOAD_SHOW);
-		this->add_icon(this->c_mesh, "data/document-save.png", 64,  0, WINDOW_SAVE_SHOW);
+		this->add_icon(this->c_mesh, "data/window-texture.png",   0,  0, WINDOW_TEXTURE_TOGGLE, "Textures");
+		this->add_icon(this->c_mesh, "data/window-object.png",   32,  0, WINDOW_OBJECT_TOGGLE,  "Objects");
+		this->add_icon(this->c_mesh, "data/window-info.png",     64,  0, WINDOW_INFO_TOGGLE,    "Info");
+		this->add_icon(this->c_mesh, "data/system-log-out.png",  96,  0, ACTION_QUIT, "Quit");
 
-		this->add_icon(this->c_mesh, "data/list-add.png",       0, 32, ACTION_VERTEX_INC);
-		this->add_icon(this->c_mesh, "data/list-remove.png",   64, 32, ACTION_VERTEX_DEC);
+		this->add_icon(this->c_mesh, "data/document-new.png",   0, 32, ACTION_MESH_NEW, "New mesh");
+		this->add_icon(this->c_mesh, "data/document-open.png", 32, 32, WINDOW_LOAD_SHOW, "Load mesh");
+		this->add_icon(this->c_mesh, "data/document-save.png", 64, 32, WINDOW_SAVE_SHOW, "Save mesh");
 
-		this->add_icon(this->c_mesh, "data/go-up.png",         32, 32, ACTION_VERTEX_UP);
-		this->add_icon(this->c_mesh, "data/go-previous.png",    0, 64, ACTION_VERTEX_LEFT);
-		this->add_icon(this->c_mesh, "data/go-next.png",       64, 64, ACTION_VERTEX_RIGHT);
-		this->add_icon(this->c_mesh, "data/go-down.png",       32, 96, ACTION_VERTEX_DOWN);
+		this->add_icon(this->c_mesh, "data/list-add.png",       0, 64, ACTION_VERTEX_INC, "Incr. height");
+		this->add_icon(this->c_mesh, "data/list-remove.png",   64, 64, ACTION_VERTEX_DEC, "Decr. height");
 
-		this->add_icon(this->c_mesh, "data/edit-clear.png",    64, 128, ACTION_SELECTION_CLEAR);
-		this->add_icon(this->c_mesh, "data/applications-graphics.png", 32, 128, WINDOW_TEXTURE_TOGGLE);
+		this->add_icon(this->c_mesh, "data/go-up.png",         32,  64, ACTION_VERTEX_UP, "Vertex up");
+		this->add_icon(this->c_mesh, "data/go-previous.png",    0,  96, ACTION_VERTEX_LEFT, "Vertex left");
+		this->add_icon(this->c_mesh, "data/go-next.png",       64,  96, ACTION_VERTEX_RIGHT, "Vertex right");
+		this->add_icon(this->c_mesh, "data/go-down.png",       32, 128, ACTION_VERTEX_DOWN, "Vertex down");
+		this->add_icon(this->c_mesh, "data/edit-clear.png",    32,  96, ACTION_SELECTION_CLEAR, "Clear sel.");
 
-		this->add_icon(this->c_mesh, "data/selection-tile.png",   0, 128, ACTION_SELMODE_TILE);
-		this->add_icon(this->c_mesh, "data/selection-vertex.png", 0, 96,  ACTION_SELMODE_VERTEX);
+		this->add_icon(this->c_mesh, "data/weld-vertices.png",    64, 128, ACTION_WELD_VERTICES, "Weld sel.");
 
-		this->t_palette->addTab(tab, this->c_mesh);
+		this->add_icon(this->c_mesh, "data/selection-tile.png",    0, 160, ACTION_SELMODE_TILE,   "Tile select");
+		this->add_icon(this->c_mesh, "data/selection-vertex.png", 32, 160, ACTION_SELMODE_VERTEX, "Vertex select");
+		this->add_icon(this->c_mesh, "data/selection-object.png", 64, 160, ACTION_SELMODE_OBJECT, "Object select");
+
+		this->label_tooltip = new c_mb_label("Tooltip");
+		this->c_mesh->add(this->label_tooltip);
+		this->label_tooltip->setPosition(0, 192);
+		this->label_tooltip->setSize(130, 20);
+
+		this->w_palette = new c_mb_window("Palette");
+		this->w_palette->setDimension(gcn::Rectangle(0, 0, 132, 244));
+		this->w_palette->setPosition(0, 0);
+
+		// Create the palette container
+		this->w_palette->add(c_mesh);    // Add container to the window
+		this->top->add(this->w_palette); // Add window to the GUI
 
 		return true;
 	}
@@ -402,16 +438,13 @@ bool c_window_manager::create_texture_window()
 	int tab;
 	int size;
 
-	c_mb_tab*       tmp_tab;
-	c_mb_container* tmp_container;
-
 	try
 	{
 		if (g_config == NULL)
 			cout << "Warning: Config is NULL!" << endl;
 
 		// The window
-		this->w_texture = new c_mb_window("Textures");
+		this->w_texture = new c_mb_window("Texture");
 		this->top->add(this->w_texture);
 		this->w_texture->setPosition(50, 0);
 		this->w_texture->setVisible(false);
@@ -419,6 +452,9 @@ bool c_window_manager::create_texture_window()
 		// The tabbed area
 		this->t_texture = new c_mb_tabbedarea();
 		this->t_texture->setSize(256, 300);
+
+		c_mb_tab* tmp_tab;
+		c_mb_container* tmp_container;
 
 		// Create the tabs
 		for (tab=0; tab<=2; tab++)
@@ -442,7 +478,7 @@ bool c_window_manager::create_texture_window()
 
 			this->w_texture->add(t_texture);
 			// The tabbed area is ~40 pixels high
-			this->w_texture->setDimension(gcn::Rectangle(0, 0, 258, 298));
+			this->w_texture->setDimension(gcn::Rectangle(100, 100, 258, 298));
 			tmp_tab       = NULL;
 			tmp_container = NULL;
 		}
@@ -476,20 +512,35 @@ bool c_window_manager::create_object_window()
 		this->obj_list_model = new c_mb_list_model();
 		this->obj_list_box = new gcn::ListBox(this->obj_list_model);
 
-		this->obj_list_model->add_element("test.obj");
-		this->obj_list_model->add_element("test2.obj");
-		this->obj_list_model->add_element("test3.obj");
-		this->obj_list_model->add_element("advent.obj");
+		unsigned int i;
 
-		this->obj_list_box->setDimension(gcn::Rectangle(0, 0, 128, 200));
+		if (g_object_manager == NULL)
+			return false;
 
-		c_mb_tab* tab;
-		tab = new c_mb_tab("Objects");
+		// Append all objects to the area
+		for (i=0; i<g_object_manager->get_objects_size(); i++)
+		{
 
-		this->c_object = new c_mb_container();
-		this->c_object->add(this->obj_list_box);
-		this->c_object->setSize(128, 200);
-		this->t_palette->addTab(tab, this->c_object);
+			cout << "Getting object" << i << endl;
+
+			this->obj_list_model->add_element(g_object_manager->get_object(i)->get_name());
+		}
+
+		this->obj_list_box->adjustSize();
+
+		this->sc_object = new c_mb_scroll_area();
+		this->sc_object->setSize(128, 180);
+
+		this->sc_object->setContent(this->obj_list_box);
+
+		w_object = new c_mb_window("Object");
+		w_object->setSize(130, 200);
+		w_object->setPosition(100, 0);
+		w_object->setVisible(false);
+
+		// Create the palette container
+		this->w_object->add(sc_object); // Add container to the window
+		this->top->add(this->w_object); // Add window to the GUI
 
 		return true;
 	}
@@ -514,21 +565,21 @@ bool c_window_manager::create_object_window()
 //---------------------------------------------------------------------
 bool c_window_manager::create_info_window()
 {
-	return false;
 	try
 	{
 		this->label_fps = new c_mb_label("FPS: ???");
 		this->label_fps->setPosition(0, 0);
+		this->label_fps->setSize(145, 20);
 
 		this->label_position = new c_mb_label("Position: ???");
-//		this->label_position->setPosition(50, 0);
+		this->label_position->setPosition(0, 20);
+		this->label_position->setSize(145, 20);
 
 		this->w_info = new c_mb_window("Info");
 		this->w_info->add(this->label_fps);
 		this->w_info->add(this->label_position);
 		this->top->add(this->w_info);
-		this->w_info->setDimension(gcn::Rectangle(0, 0, 100, 100));
-		this->w_info->setPosition(500, 0);
+		this->w_info->setDimension(gcn::Rectangle(500, 0, 150, 70));
 
 		return true;
 	}
@@ -706,18 +757,111 @@ void c_window_manager::toggle_save_visibility()
 }
 
 
-void c_window_manager::set_texture_visibility(bool p_visibility)
+//---------------------------------------------------------------------
+//-   Set the visibility of the texture window
+//---------------------------------------------------------------------
+bool c_window_manager::set_texture_visibility(bool p_visibility)
 {
+	if (w_texture == NULL)
+	{
+		cout << "WARNING: No texture window defined!" << endl;
+		return false;
+	}
+
 	this->w_texture->setVisible(p_visibility);
+	return true;
 }
 
 
-void c_window_manager::toggle_texture_visibility()
+//---------------------------------------------------------------------
+//-   Toggle the visibility of the texture window
+//---------------------------------------------------------------------
+bool c_window_manager::toggle_texture_visibility()
 {
+	if (w_texture == NULL)
+	{
+		cout << "WARNING: No texture window defined!" << endl;
+		return false;
+	}
+
 	if (this->w_texture->isVisible())
 		this->w_texture->setVisible(false);
 	else
 		this->w_texture->setVisible(true);
+
+	return true;
+}
+
+
+//---------------------------------------------------------------------
+//-   Set the visibility of the object window
+//---------------------------------------------------------------------
+bool c_window_manager::set_object_visibility(bool p_visibility)
+{
+	if (w_object == NULL)
+	{
+		cout << "WARNING: No object window defined!" << endl;
+		return false;
+	}
+
+	this->w_object->setVisible(p_visibility);
+	return true;
+}
+
+
+//---------------------------------------------------------------------
+//-   Toggle the visibility of the object window
+//---------------------------------------------------------------------
+bool c_window_manager::toggle_object_visibility()
+{
+	if (w_object == NULL)
+	{
+		cout << "WARNING: No object window defined!" << endl;
+		return false;
+	}
+
+	if (this->w_object->isVisible())
+		this->w_object->setVisible(false);
+	else
+		this->w_object->setVisible(true);
+
+	return true;
+}
+
+
+//---------------------------------------------------------------------
+//-   Set the visibility of the info window
+//---------------------------------------------------------------------
+bool c_window_manager::set_info_visibility(bool p_visibility)
+{
+	if (w_info == NULL)
+	{
+		cout << "WARNING: No info window defined!" << endl;
+		return false;
+	}
+
+	this->w_info->setVisible(p_visibility);
+	return true;
+}
+
+
+//---------------------------------------------------------------------
+//-   Toggle the visibility of the texture window
+//---------------------------------------------------------------------
+bool c_window_manager::toggle_info_visibility()
+{
+	if (w_info == NULL)
+	{
+		cout << "WARNING: No info window defined!" << endl;
+		return false;
+	}
+
+	if (this->w_info->isVisible())
+		this->w_info->setVisible(false);
+	else
+		this->w_info->setVisible(true);
+
+	return true;
 }
 
 

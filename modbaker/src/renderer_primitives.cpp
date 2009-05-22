@@ -82,39 +82,66 @@ void c_renderer::render_text(string text, vect3 pos, c_renderer::TMODE mode)
 //---------------------------------------------------------------------
 //-   Render one model
 //---------------------------------------------------------------------
-bool c_renderer::render_models()
+bool c_renderer::render_models(c_object_manager *p_obj_manager)
 {
-	if (g_mesh == NULL)
+	if (p_obj_manager == NULL)
 		return false;
 
 	unsigned int i;
+	int slot;
 	vect3 pos;
 
-	glDisable(GL_TEXTURE_2D);
-
-	for (i=0; i<g_mesh->get_spawn_manager()->get_spawns_size(); i++)
+	for (i=0; i<p_obj_manager->get_spawns_size(); i++)
 	{
-		pos = g_mesh->get_spawn_manager()->get_spawn(i).pos;
+		pos = p_obj_manager->get_spawn(i).pos;
 
-		pos.x =  pos.x * (1 << 7);
-		pos.y =  pos.y * (1 << 7);
-//		pos.z =  pos.z * (1 << 7);
-		pos.z =  1.0f  * (1 << 7);
+		// Get the object slot number
+		slot = p_obj_manager->get_spawn(i).slot_number;
 
-		glBegin(GL_QUADS);
-		glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
+		if (p_obj_manager->get_object_by_slot(slot) != NULL)
+		{
+			p_obj_manager->get_object_by_slot(slot)->render();
 
-		glVertex3i(pos.x-10, pos.y-10, pos.z); // Bottom left
-		glVertex3i(pos.x+10, pos.y-10, pos.z); // Bottom right
-		glVertex3i(pos.x+10, pos.y+10, pos.z); // Top    right
-		glVertex3i(pos.x-10, pos.y+10, pos.z); // Top    left
-		glEnd();
+			if (p_obj_manager->get_object_by_slot(slot)->get_icon() == 0)
+			{
+				// No icon found: Render a blue box
+				glDisable(GL_TEXTURE_2D);
+				glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
+			}
+			else
+			{
+				// Load the icon
+				glEnable(GL_TEXTURE_2D);
+				glBindTexture(GL_TEXTURE_2D, p_obj_manager->get_object_by_slot(slot)->get_icon());
+			}
+			pos.x =  pos.x * (1 << 7);
+			pos.y =  pos.y * (1 << 7);
+//			pos.z =  pos.z * (1 << 7);
+			pos.z =  1.0f  * (1 << 7);
 
-		// Reset the colors
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+			glBegin(GL_QUADS);
+				glTexCoord2f(0, 1);
+				glVertex3i(pos.x-30, pos.y-30, pos.z); // Bottom left
+				glTexCoord2f(1, 1);
+				glVertex3i(pos.x+30, pos.y-30, pos.z); // Bottom right
+				glTexCoord2f(1, 0);
+				glVertex3i(pos.x+30, pos.y+30, pos.z); // Top    right
+				glTexCoord2f(0, 0);
+				glVertex3i(pos.x-30, pos.y+30, pos.z); // Top    left
+			glEnd();
+
+			// Reset the colors
+			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		}
 	}
 
 	glEnable(GL_TEXTURE_2D);
 
 	return true;
+}
+
+
+bool c_object::render()
+{
+	return false;
 }
