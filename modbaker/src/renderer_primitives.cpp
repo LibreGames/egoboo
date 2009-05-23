@@ -121,13 +121,13 @@ bool c_renderer::render_models(c_object_manager *p_obj_manager)
 
 			glBegin(GL_QUADS);
 				glTexCoord2f(0, 1);
-				glVertex3i(pos.x-30, pos.y-30, pos.z); // Bottom left
+				glVertex3f(pos.x-30, pos.y-30, pos.z); // Bottom left
 				glTexCoord2f(1, 1);
-				glVertex3i(pos.x+30, pos.y-30, pos.z); // Bottom right
+				glVertex3f(pos.x+30, pos.y-30, pos.z); // Bottom right
 				glTexCoord2f(1, 0);
-				glVertex3i(pos.x+30, pos.y+30, pos.z); // Top    right
+				glVertex3f(pos.x+30, pos.y+30, pos.z); // Top    right
 				glTexCoord2f(0, 0);
-				glVertex3i(pos.x-30, pos.y+30, pos.z); // Top    left
+				glVertex3f(pos.x-30, pos.y+30, pos.z); // Top    left
 			glEnd();
 
 			// Reset the colors
