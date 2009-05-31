@@ -14,42 +14,45 @@ using namespace std;
 // Action types for the input system
 enum
 {
-	ACTION_MESH_NEW        =  0,
-	ACTION_MESH_LOAD       =  1,
-	ACTION_MESH_SAVE       =  2,
-	ACTION_VERTEX_UP       =  3,
-	ACTION_VERTEX_LEFT     =  4,
-	ACTION_VERTEX_RIGHT    =  5,
-	ACTION_VERTEX_DOWN     =  6,
-	ACTION_VERTEX_INC      =  7,
-	ACTION_VERTEX_DEC      =  8,
-	ACTION_SELECTION_CLEAR =  9,
-	ACTION_EXIT            = 10,
-	SCROLL_UP              = 11,
-	SCROLL_LEFT            = 12,
-	SCROLL_RIGHT           = 13,
-	SCROLL_DOWN            = 14,
-	SCROLL_INC             = 15,
-	SCROLL_DEC             = 16,
-	SCROLL_X_STOP          = 17,
-	SCROLL_Y_STOP          = 18,
-	SCROLL_Z_STOP          = 19,
-	ACTION_MODIFIER_ON     = 20,
-	ACTION_MODIFIER_OFF    = 21,
-	ACTION_PAINT_TEXTURE   = 22,
-	WINDOW_TEXTURE_TOGGLE  = 23,
-	WINDOW_OBJECT_TOGGLE   = 24,
-	WINDOW_INFO_TOGGLE     = 25,
-	WINDOW_SAVE_SHOW       = 26,
-	WINDOW_SAVE_HIDE       = 27,
-	WINDOW_LOAD_SHOW       = 28,
-	WINDOW_LOAD_HIDE       = 29,
-	ACTION_SET_TEXTURE     = 30,
-	ACTION_SELMODE_VERTEX  = 31,
-	ACTION_SELMODE_TILE    = 32,
-	ACTION_SELMODE_OBJECT  = 33,
-	ACTION_QUIT            = 34,
-	ACTION_WELD_VERTICES   = 35
+	ACTION_MESH_NEW         =  0,
+	ACTION_MESH_LOAD        =  1,
+	ACTION_MESH_SAVE        =  2,
+	ACTION_VERTEX_UP        =  3,
+	ACTION_VERTEX_LEFT      =  4,
+	ACTION_VERTEX_RIGHT     =  5,
+	ACTION_VERTEX_DOWN      =  6,
+	ACTION_VERTEX_INC       =  7,
+	ACTION_VERTEX_DEC       =  8,
+	ACTION_SELECTION_CLEAR  =  9,
+	ACTION_EXIT             = 10,
+	SCROLL_UP               = 11,
+	SCROLL_LEFT             = 12,
+	SCROLL_RIGHT            = 13,
+	SCROLL_DOWN             = 14,
+	SCROLL_INC              = 15,
+	SCROLL_DEC              = 16,
+	SCROLL_X_STOP           = 17,
+	SCROLL_Y_STOP           = 18,
+	SCROLL_Z_STOP           = 19,
+	ACTION_MODIFIER_ON      = 20,
+	ACTION_MODIFIER_OFF     = 21,
+	ACTION_PAINT_TEXTURE    = 22,
+	WINDOW_TEXTURE_TOGGLE   = 23,
+	WINDOW_OBJECT_TOGGLE    = 24,
+	WINDOW_INFO_TOGGLE      = 25,
+	WINDOW_SAVE_SHOW        = 26,
+	WINDOW_SAVE_HIDE        = 27,
+	WINDOW_LOAD_SHOW        = 28,
+	WINDOW_LOAD_HIDE        = 29,
+	ACTION_SET_TEXTURE      = 30,
+	ACTION_SELMODE_VERTEX   = 31,
+	ACTION_SELMODE_TILE     = 32,
+	ACTION_SELMODE_OBJECT   = 33,
+	ACTION_QUIT             = 34,
+	ACTION_WELD_VERTICES    = 35,
+	ACTION_SHOW_TILEFLAGS   = 36,
+	ACTION_HIDE_TILEFLAGS   = 37,
+	ACTION_TOGGLE_TILEFLAGS = 38
 };
 
 
@@ -325,8 +328,12 @@ class c_window_manager
 		gcn::Gui* get_gui();
 		void set_gui(gcn::Gui*);
 
-		bool create_texture_window();
-		bool destroy_texture_window();
+		bool create_texture_window(string);
+		void destroy_texture_window()
+		{
+			if (this->w_texture != NULL)
+				delete w_texture;
+		}
 
 		bool create_info_window();
 		bool destroy_info_window();
@@ -334,8 +341,12 @@ class c_window_manager
 		bool create_save_window();
 		bool create_load_window();
 
-		bool create_object_window();
-		bool destroy_object_window();
+		bool create_object_window(string);
+		void destroy_object_window()
+		{
+			if (this->w_object != NULL)
+				delete w_object;
+		}
 
 		bool create_mesh_window();
 		bool destroy_mesh_window();

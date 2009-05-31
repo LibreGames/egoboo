@@ -56,6 +56,32 @@ extern c_selection g_selection;
 
 
 //---------------------------------------------------------------------
+//-   Load a module (and call all functions required for this)
+//---------------------------------------------------------------------
+bool load_module(string p_modname)
+{
+	// Read the mesh mpd
+	if(!g_mesh->load_mesh_mpd(p_modname))
+		return false;
+
+	// Read the object and spawn.txt information
+	g_object_manager->clear_objects();
+	g_object_manager->clear_spawns();
+	g_object_manager->load_objects(g_config->get_egoboo_path() + "modules/" + p_modname + "/objects/");
+	g_object_manager->load_objects(g_config->get_egoboo_path() + "basicdat/globalobjects/");
+	g_object_manager->load_spawns(p_modname);
+
+	// Reset module specific windows
+	g_renderer->get_wm()->destroy_object_window();
+	g_renderer->get_wm()->create_object_window(p_modname);
+	g_renderer->get_wm()->destroy_texture_window();
+	g_renderer->get_wm()->create_texture_window(p_modname);
+
+	return true;
+}
+
+
+//---------------------------------------------------------------------
 //-   Calculate the distance between two points
 //---------------------------------------------------------------------
 float calculate_distance(vect3 start, vect3 end)
@@ -145,8 +171,6 @@ c_config::c_config()
 
 	file.close();
 	cout << "Config file parsed successfully" << endl;
-	cout << "Width: "  << this->get_width() << endl;
-	cout << "Height: " << this->get_height() << endl;
 }
 
 

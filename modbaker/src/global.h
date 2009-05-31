@@ -67,6 +67,8 @@ extern c_mesh*           g_mesh;
 extern c_object_manager* g_object_manager;
 extern c_frustum         g_frustum;           // TODO: Move to g_renderer
 
+bool load_module(string);
+
 // Misc stuff
 // Implmented in global.cpp
 extern float calculate_distance(vect3, vect3); // TODO: Move to graphic stuff

@@ -51,6 +51,23 @@ using namespace std;
 
 
 //---------------------------------------------------------------------
+//-   Mesh FX bits
+//---------------------------------------------------------------------
+enum e_mpd_fx
+{
+	MESHFX_REF     =       0,  // 0 This tile is drawn 1st
+	MESHFX_SHA     = (1 << 0), // 0 This tile is drawn 2nd
+	MESHFX_DRAWREF = (1 << 1), // 1 Draw reflection of characters
+	MESHFX_ANIM    = (1 << 2), // 2 Animated tile ( 4 frame )
+	MESHFX_WATER   = (1 << 3), // 3 Render water above surface ( Water details are set per module )
+	MESHFX_WALL    = (1 << 4), // 4 Wall ( Passable by ghosts, particles )
+	MESHFX_IMPASS  = (1 << 5), // 5 Impassable
+	MESHFX_DAMAGE  = (1 << 6), // 6 Damage
+	MESHFX_SLIPPY  = (1 << 7), // 7 Ice or normal
+};
+
+
+//---------------------------------------------------------------------
 //-   This resembles one entry in spawn.txt
 //---------------------------------------------------------------------
 class c_spawn
@@ -113,6 +130,15 @@ class c_object_manager
 	public:
 		c_object_manager();
 		~c_object_manager();
+
+		void clear_objects()
+		{
+			this->objects.clear();
+		}
+		void clear_spawns()
+		{
+			this->spawns.clear();
+		}
 
 		void load_spawns(string);
 		bool save_spawns(string);

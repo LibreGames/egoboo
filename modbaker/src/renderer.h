@@ -56,6 +56,17 @@ enum
 
 
 //---------------------------------------------------------------------
+//-   Mesh render modes
+//---------------------------------------------------------------------
+enum
+{
+	RENDER_NORMAL,
+	RENDER_TILE_FLAGS,
+	RENDER_TILE_TYPES
+};
+
+
+//---------------------------------------------------------------------
 //-   Definitions for the renderer
 //---------------------------------------------------------------------
 #define SCREEN_BPP       24
@@ -172,6 +183,7 @@ class c_renderer
 		void initWM();
 
 		void render_fan(Uint32, bool set_texture = true);
+		void render_tile_flag(Uint16);
 		bool load_texture(string, int);
 
 		// Primitives
@@ -182,6 +194,7 @@ class c_renderer
 		c_camera*         m_cam;
 		c_window_manager* m_wm;
 
+		int render_mode;
 
 	public:
 		c_renderer();
@@ -211,6 +224,10 @@ class c_renderer
 		// Rendering containers
 		void render_text();
 		bool render_models(c_object_manager*);
+
+		// Mesh render mode
+		int get_render_mode();
+		void set_render_mode(int);
 
 		void load_basic_textures(string);
 		bool render_mesh();

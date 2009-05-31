@@ -96,12 +96,9 @@ void c_modbaker::init(string p_modname)
 	// Load the mesh
 	g_mesh = new c_mesh();
 	g_mesh->getTileDictioary().load();
-	g_mesh->load_mesh_mpd(p_modname);
 
 	g_object_manager = new c_object_manager();
-	g_object_manager->load_objects(g_config->get_egoboo_path() + "modules/" + p_modname + "/objects/");
-	g_object_manager->load_objects(g_config->get_egoboo_path() + "basicdat/globalobjects/");
-	g_object_manager->load_spawns(p_modname);
+	load_module(p_modname);
 
 	g_renderer->m_renderlist.build();
 

@@ -210,12 +210,9 @@ c_window_manager::c_window_manager(c_renderer* p_renderer)
 	}
 
 	// Create the windows
+	// The texture and object window get created on module load
 	this->create_mesh_window();
-	// TODO: Call this on mapchange!
-//	this->create_texture_window();
 	this->create_info_window();
-	// TODO: Call this on mapchange!
-	this->create_object_window();
 	this->create_load_window();
 	this->create_save_window();
 }
@@ -376,7 +373,7 @@ bool c_window_manager::create_mesh_window()
 		this->add_icon(this->c_mesh, "data/window-texture.png",   0,  0, WINDOW_TEXTURE_TOGGLE, "Textures");
 		this->add_icon(this->c_mesh, "data/window-object.png",   32,  0, WINDOW_OBJECT_TOGGLE,  "Objects");
 		this->add_icon(this->c_mesh, "data/window-info.png",     64,  0, WINDOW_INFO_TOGGLE,    "Info");
-		this->add_icon(this->c_mesh, "data/system-log-out.png",  96,  0, ACTION_QUIT, "Quit");
+		this->add_icon(this->c_mesh, "data/system-log-out.png",  96,  0, ACTION_EXIT, "Quit");
 
 		this->add_icon(this->c_mesh, "data/document-new.png",   0, 32, ACTION_MESH_NEW, "New mesh");
 		this->add_icon(this->c_mesh, "data/document-open.png", 32, 32, WINDOW_LOAD_SHOW, "Load mesh");
@@ -384,6 +381,8 @@ bool c_window_manager::create_mesh_window()
 
 		this->add_icon(this->c_mesh, "data/list-add.png",       0, 64, ACTION_VERTEX_INC, "Incr. height");
 		this->add_icon(this->c_mesh, "data/list-remove.png",   64, 64, ACTION_VERTEX_DEC, "Decr. height");
+
+		this->add_icon(this->c_mesh, "data/tile_flags.png",    96,  32, ACTION_TOGGLE_TILEFLAGS, "Show tile flags");
 
 		this->add_icon(this->c_mesh, "data/go-up.png",         32,  64, ACTION_VERTEX_UP, "Vertex up");
 		this->add_icon(this->c_mesh, "data/go-previous.png",    0,  96, ACTION_VERTEX_LEFT, "Vertex left");
@@ -431,8 +430,9 @@ bool c_window_manager::create_mesh_window()
 //---------------------------------------------------------------------
 //-   Create the texture tab
 //---------------------------------------------------------------------
-bool c_window_manager::create_texture_window()
+bool c_window_manager::create_texture_window(string p_modname)
 {
+	// TODO: Error: Tile0 does not get changed on module change
 	string file;
 	ostringstream tmp_str;
 	int tab;
@@ -472,7 +472,7 @@ bool c_window_manager::create_texture_window()
 			tmp_container = new c_mb_container();
 			tmp_container->setSize(256, 256);
 
-			file = g_config->get_egoboo_path() + "modules/" + g_mesh->modname + "/gamedat/tile" + tmp_str.str() + ".bmp";
+			file = g_config->get_egoboo_path() + "modules/" + p_modname + "/gamedat/tile" + tmp_str.str() + ".bmp";
 			this->add_texture_set(tmp_container, file, tab, 0, 0, size);
 			this->t_texture->addTab(tmp_tab, tmp_container);
 
@@ -504,7 +504,7 @@ bool c_window_manager::create_texture_window()
 //---------------------------------------------------------------------
 //-   Create the object tab
 //---------------------------------------------------------------------
-bool c_window_manager::create_object_window()
+bool c_window_manager::create_object_window(string p_modname)
 {
 	try
 	{
@@ -520,9 +520,6 @@ bool c_window_manager::create_object_window()
 		// Append all objects to the area
 		for (i=0; i<g_object_manager->get_objects_size(); i++)
 		{
-
-			cout << "Getting object" << i << endl;
-
 			this->obj_list_model->add_element(g_object_manager->get_object(i)->get_name());
 		}
 

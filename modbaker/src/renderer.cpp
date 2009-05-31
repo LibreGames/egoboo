@@ -35,6 +35,7 @@ c_renderer::c_renderer()
 {
 	this->m_fps = 0.0f;
 	this->m_screen = NULL;
+	this->render_mode = RENDER_NORMAL;
 
 	this->initSDL();
 	this->initGL();
@@ -230,6 +231,12 @@ bool c_renderer::load_texture(string imgname, int tileset)
 	glGenTextures(1, m_texture + tileset);
 
 	cout <<  "INFO: m_texture[" << tileset <<  "]==" << m_texture[tileset] << " (\"" << imgname << "\")" << endl;
+
+	if (picture == NULL)
+	{
+		cout << "     WARNING: Cannot open file " << imgname << endl;
+		return false;
+	}
 
 	if (copySurfaceToTexture(picture, m_texture[tileset], tex_coords))
 	{
@@ -449,6 +456,7 @@ void c_renderer::render_fan(Uint32 fan, bool set_texture)
 	vect2 off;
 
 	Uint16 tile = g_mesh->mem->tilelst[fan].tile; // Tile
+	Uint16 fx   = g_mesh->mem->tilelst[fan].fx;   // Tile FX
 	Uint16 type = g_mesh->mem->tilelst[fan].type; // Command type ( index to points in fan )
 	// type <= 32 => small tile
 	// type >  32 => big tile
@@ -525,6 +533,9 @@ void c_renderer::render_fan(Uint32 fan, bool set_texture)
 		glEnable(GL_TEXTURE_2D);
 		glColor4f(0, 1, 0, 1);
 	}
+
+	// Render the FX bits
+	this->render_tile_flag(fx);
 
 	for (cnt = 0, entry = 0; cnt < commands; cnt++)
 	{
@@ -683,4 +694,58 @@ SDL_Surface *c_renderer::get_screen()
 void c_renderer::set_screen(SDL_Surface *p_screen)
 {
 	m_screen = p_screen;
+}
+
+
+// Mesh render mode
+int c_renderer::get_render_mode()
+{
+	return this->render_mode;
+}
+
+void c_renderer::set_render_mode(int p_render_mode)
+{
+	this->render_mode = p_render_mode;
+}
+
+
+//---------------------------------------------------------------------
+//-   Render the tile flags
+//---------------------------------------------------------------------
+void c_renderer::render_tile_flag(Uint16 p_fx)
+{
+	// Slippy is rendered in green
+	if ((g_renderer->get_render_mode() == RENDER_TILE_FLAGS) && (0 != (p_fx & MESHFX_SLIPPY)))
+	{
+		glEnable(GL_TEXTURE_2D);
+		glColor4f(0, 1, 0, 1);
+	}
+
+	// Water is rendered in blue
+	if ((g_renderer->get_render_mode() == RENDER_TILE_FLAGS) && (0 != (p_fx & MESHFX_WATER)))
+	{
+		glEnable(GL_TEXTURE_2D);
+		glColor4f(0, 0, 1, 1);
+	}
+
+	// Damage is rendered in red
+	if ((g_renderer->get_render_mode() == RENDER_TILE_FLAGS) && (0 != (p_fx & MESHFX_DAMAGE)))
+	{
+		glEnable(GL_TEXTURE_2D);
+		glColor4f(1, 0, 0, 1);
+	}
+
+	// Wall is rendered in violet
+	if ((g_renderer->get_render_mode() == RENDER_TILE_FLAGS) && (0 != (p_fx & MESHFX_WALL)))
+	{
+		glEnable(GL_TEXTURE_2D);
+		glColor4f(1, 0, 1, 1);
+	}
+
+	// Impassable is rendered in orange
+	if ((g_renderer->get_render_mode() == RENDER_TILE_FLAGS) && (0 != (p_fx & MESHFX_IMPASS)))
+	{
+		glEnable(GL_TEXTURE_2D);
+		glColor4f(1, 0.5, 0, 1);
+	}
 }
