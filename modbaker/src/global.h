@@ -105,6 +105,8 @@ class c_config
 		string m_egoboo_path;
 		int    m_font_size;
 		string m_font_file;
+		int    m_width;
+		int    m_height;
 
 	public:
 		c_config();
@@ -118,4 +120,10 @@ class c_config
 
 		string get_font_file();
 		void   set_font_file(string);
+
+		int    get_width();
+		void   set_width(int);
+
+		int    get_height();
+		void   set_height(int);
 };

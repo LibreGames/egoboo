@@ -84,6 +84,9 @@ c_config::c_config()
 {
 	ifstream file;
 
+	this->set_width(1024);
+	this->set_height(786);
+
 	// TODO: Also look in the home directories for a file called
 	// ~/.egoboo/modbaker.cfg
 	// C:\Documents and settings\egoboo\modbaker.cfg
@@ -117,12 +120,33 @@ c_config::c_config()
 				this->set_font_size(itmp);
 			}
 
+			if (tokens[0] == "screen_width")
+			{
+				// Convert the string to integer using stringstreams
+				int itmp;
+				stringstream sstr(tokens[1]);
+				sstr >> itmp;
+				this->set_width(itmp);
+			}
+
+			if (tokens[0] == "screen_height")
+			{
+				// Convert the string to integer using stringstreams
+				int itmp;
+				stringstream sstr(tokens[1]);
+				sstr >> itmp;
+				this->set_height(itmp);
+			}
+
 			if (tokens[0] == "font_file")
 				this->set_font_file(tokens[1]);
 		}
 	}
 
 	file.close();
+	cout << "Config file parsed successfully" << endl;
+	cout << "Width: "  << this->get_width() << endl;
+	cout << "Height: " << this->get_height() << endl;
 }
 
 
@@ -130,7 +154,7 @@ c_config::c_config()
 //-   Destructor
 //---------------------------------------------------------------------
 c_config::~c_config() {
-	cout << "Config loaded" << endl;
+	cout << "Config deleted" << endl;
 }
 
 
@@ -174,3 +198,33 @@ void c_config::set_font_file(string p_font_file)
 {
 	this->m_font_file = p_font_file;
 }
+
+
+//---------------------------------------------------------------------
+//-   Setter and Getter for m_width
+//---------------------------------------------------------------------
+int c_config::get_width()
+{
+	return this->m_width;
+}
+
+void c_config::set_width(int p_width)
+{
+	this->m_width = p_width;
+}
+
+
+//---------------------------------------------------------------------
+//-   Setter and Getter for m_height
+//---------------------------------------------------------------------
+int c_config::get_height()
+{
+	return this->m_height;
+}
+
+void c_config::set_height(int p_height)
+{
+	this->m_height = p_height;
+}
+
+
