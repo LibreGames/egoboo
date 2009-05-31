@@ -38,7 +38,7 @@ c_renderer::c_renderer()
 
 	this->initSDL();
 	this->initGL();
-	this->resize_window(WINDOW_WIDTH, WINDOW_HEIGHT);
+	this->resize_window(g_config->get_width(), g_config->get_height());
 
 	this->m_wm  = new c_window_manager(this);
 	this->m_cam = new c_camera();
@@ -72,7 +72,8 @@ void c_renderer::initSDL()
 	}
 	atexit( SDL_Quit );
 
-	m_screen = SDL_SetVideoMode(640, 480, 32, SDL_HWSURFACE | SDL_OPENGL | SDL_HWACCEL);
+	// TODO: Get BPP from config
+	m_screen = SDL_SetVideoMode(g_config->get_width(), g_config->get_height(), 32, SDL_HWSURFACE | SDL_OPENGL | SDL_HWACCEL);
 	if (m_screen == NULL)
 	{
 		cout << "Failed! Unable to set video mode: " << SDL_GetError() << endl;

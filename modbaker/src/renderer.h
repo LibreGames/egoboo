@@ -58,8 +58,6 @@ enum
 //---------------------------------------------------------------------
 //-   Definitions for the renderer
 //---------------------------------------------------------------------
-#define WINDOW_WIDTH    640
-#define WINDOW_HEIGHT   480
 #define SCREEN_BPP       24
 
 #define MAX_TEXTURES      8    // Number of tileset images (default: 8)

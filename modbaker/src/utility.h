@@ -26,6 +26,12 @@
 
 #include "global.h"
 
+#ifdef WIN32
+#include "helper/dirent.h"
+#else
+#include <dirent.h>
+#endif
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
