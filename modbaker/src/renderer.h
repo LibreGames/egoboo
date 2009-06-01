@@ -222,7 +222,6 @@ class c_renderer
 		void end_2D_mode();
 
 		// Rendering containers
-		void render_text();
 		bool render_models(c_object_manager*);
 
 		// Mesh render mode

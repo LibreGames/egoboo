@@ -526,6 +526,9 @@ void c_renderer::render_fan(Uint32 fan, bool set_texture)
 	commands = g_mesh->getTileDefinition(type).cmd_count;            // Number of commands
 	glColor4f(1, 1, 1, 1);
 
+	// Render the FX bits
+	this->render_tile_flag(fx);
+
 	// Highlight the nearest tile and tiles in the selection
 	if ((g_selection.get_selection_mode() == SELECTION_MODE_TILE) &&
 		(g_selection.in_selection((int)fan) || (int)fan == g_nearest_tile))
@@ -533,9 +536,6 @@ void c_renderer::render_fan(Uint32 fan, bool set_texture)
 		glEnable(GL_TEXTURE_2D);
 		glColor4f(0, 1, 0, 1);
 	}
-
-	// Render the FX bits
-	this->render_tile_flag(fx);
 
 	for (cnt = 0, entry = 0; cnt < commands; cnt++)
 	{
@@ -652,23 +652,6 @@ void c_renderer::end_2D_mode()
 }
 
 
-// TODO: Remove
-void c_renderer::render_text()
-{
-	return;
-	// Draw current position
-	vect3 pos_pos;
-	pos_pos.x = m_screen->w;
-	pos_pos.y = 35;
-	pos_pos.z = 0;
-
-	ostringstream tmp_pos;
-	tmp_pos << "Position: (" << g_mesh->mem->vrt_x[g_nearest_vertex] << ", " << g_mesh->mem->vrt_y[g_nearest_vertex] << ")";
-
-	render_text(tmp_pos.str(), pos_pos, JRIGHT);
-}
-
-
 c_window_manager* c_renderer::get_wm()
 {
 	return m_wm;
@@ -714,6 +697,20 @@ void c_renderer::set_render_mode(int p_render_mode)
 //---------------------------------------------------------------------
 void c_renderer::render_tile_flag(Uint16 p_fx)
 {
+	// Render 1st is rendered in pink
+	if ((g_renderer->get_render_mode() == RENDER_TILE_FLAGS) && (0 != (p_fx & MESHFX_REF)))
+	{
+		glEnable(GL_TEXTURE_2D);
+		glColor4f(1, 0.5, 1, 1);
+	}
+
+	// Reflecting is rendered in bright blue
+	if ((g_renderer->get_render_mode() == RENDER_TILE_FLAGS) && (0 != (p_fx & MESHFX_DRAWREF)))
+	{
+		glEnable(GL_TEXTURE_2D);
+		glColor4f(0.5, 1, 0.5, 1);
+	}
+
 	// Slippy is rendered in green
 	if ((g_renderer->get_render_mode() == RENDER_TILE_FLAGS) && (0 != (p_fx & MESHFX_SLIPPY)))
 	{
@@ -724,7 +721,7 @@ void c_renderer::render_tile_flag(Uint16 p_fx)
 	// Water is rendered in blue
 	if ((g_renderer->get_render_mode() == RENDER_TILE_FLAGS) && (0 != (p_fx & MESHFX_WATER)))
 	{
-		glEnable(GL_TEXTURE_2D);
+		glEnable(GL_BLEND);
 		glColor4f(0, 0, 1, 1);
 	}
 

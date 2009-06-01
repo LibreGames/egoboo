@@ -9,6 +9,9 @@
 using namespace std;
 
 
+//---------------------------------------------------------------------
+//-   Functions for the modbaker image loader
+//---------------------------------------------------------------------
 c_mb_image_loader::c_mb_image_loader()
 {
 }
@@ -142,6 +145,9 @@ c_mb_container::c_mb_container()
 }
 
 
+//---------------------------------------------------------------------
+//-   A modbaker image button
+//---------------------------------------------------------------------
 void c_mb_image_button::mousePressed(gcn::MouseEvent &event)
 {
 }
@@ -163,6 +169,10 @@ c_window_manager::c_window_manager(c_renderer* p_renderer)
 {
 	try
 	{
+		this->selected_object    = -1;
+		this->selected_tile_flag = -1;
+		this->selected_tile_type = -1;
+
 		// Init the image loader
 		imageLoader = new c_mb_image_loader();
 		gcn::Image::setImageLoader(imageLoader);
@@ -215,6 +225,9 @@ c_window_manager::c_window_manager(c_renderer* p_renderer)
 	this->create_info_window();
 	this->create_load_window();
 	this->create_save_window();
+
+	this->create_tile_flag_window();
+	this->create_tile_type_window();
 }
 
 
@@ -367,7 +380,7 @@ bool c_window_manager::create_mesh_window()
 	{
 		this->c_mesh = new c_mb_container();
 		this->c_mesh->setWidth(128);
-		this->c_mesh->setHeight(220);
+		this->c_mesh->setHeight(320);
 
 		// Add the icons
 		this->add_icon(this->c_mesh, "data/window-texture.png",   0,  0, WINDOW_TEXTURE_TOGGLE, "Textures");
@@ -375,34 +388,42 @@ bool c_window_manager::create_mesh_window()
 		this->add_icon(this->c_mesh, "data/window-info.png",     64,  0, WINDOW_INFO_TOGGLE,    "Info");
 		this->add_icon(this->c_mesh, "data/system-log-out.png",  96,  0, ACTION_EXIT, "Quit");
 
-		this->add_icon(this->c_mesh, "data/document-new.png",   0, 32, ACTION_MESH_NEW, "New mesh");
-		this->add_icon(this->c_mesh, "data/document-open.png", 32, 32, WINDOW_LOAD_SHOW, "Load mesh");
-		this->add_icon(this->c_mesh, "data/document-save.png", 64, 32, WINDOW_SAVE_SHOW, "Save mesh");
+		this->add_icon(this->c_mesh, "data/window-tile-flag.png",  0,  32, WINDOW_TILE_FLAG_TOGGLE, "Tile flags");
+		this->add_icon(this->c_mesh, "data/window-tile-type.png", 32,  32, WINDOW_TILE_TYPE_TOGGLE, "Tile types");
 
-		this->add_icon(this->c_mesh, "data/list-add.png",       0, 64, ACTION_VERTEX_INC, "Incr. height");
-		this->add_icon(this->c_mesh, "data/list-remove.png",   64, 64, ACTION_VERTEX_DEC, "Decr. height");
+		this->add_icon(this->c_mesh, "data/document-new.png",   0, 64, ACTION_MESH_NEW, "New mesh");
+		this->add_icon(this->c_mesh, "data/document-open.png", 32, 64, WINDOW_LOAD_SHOW, "Load mesh");
+		this->add_icon(this->c_mesh, "data/document-save.png", 64, 64, WINDOW_SAVE_SHOW, "Save mesh");
 
-		this->add_icon(this->c_mesh, "data/tile_flags.png",    96,  32, ACTION_TOGGLE_TILEFLAGS, "Show tile flags");
 
-		this->add_icon(this->c_mesh, "data/go-up.png",         32,  64, ACTION_VERTEX_UP, "Vertex up");
-		this->add_icon(this->c_mesh, "data/go-previous.png",    0,  96, ACTION_VERTEX_LEFT, "Vertex left");
-		this->add_icon(this->c_mesh, "data/go-next.png",       64,  96, ACTION_VERTEX_RIGHT, "Vertex right");
-		this->add_icon(this->c_mesh, "data/go-down.png",       32, 128, ACTION_VERTEX_DOWN, "Vertex down");
-		this->add_icon(this->c_mesh, "data/edit-clear.png",    32,  96, ACTION_SELECTION_CLEAR, "Clear sel.");
+		this->add_icon(this->c_mesh, "data/list-add.png",       0, 256, ACTION_TILE_FLAG_PAINT, "Set tile flag");
+		this->add_icon(this->c_mesh, "data/list-add.png",      32, 256, ACTION_TILE_TYPE_PAINT, "Set tile type");
 
-		this->add_icon(this->c_mesh, "data/weld-vertices.png",    64, 128, ACTION_WELD_VERTICES, "Weld sel.");
 
-		this->add_icon(this->c_mesh, "data/selection-tile.png",    0, 160, ACTION_SELMODE_TILE,   "Tile select");
-		this->add_icon(this->c_mesh, "data/selection-vertex.png", 32, 160, ACTION_SELMODE_VERTEX, "Vertex select");
-		this->add_icon(this->c_mesh, "data/selection-object.png", 64, 160, ACTION_SELMODE_OBJECT, "Object select");
+		this->add_icon(this->c_mesh, "data/list-add.png",       0, 96, ACTION_VERTEX_INC, "Incr. height");
+		this->add_icon(this->c_mesh, "data/list-remove.png",   64, 96, ACTION_VERTEX_DEC, "Decr. height");
+
+		this->add_icon(this->c_mesh, "data/tile_flags.png",       96,  64, ACTION_TOGGLE_TILEFLAGS, "Show tile flags");
+
+		this->add_icon(this->c_mesh, "data/go-up.png",         32,  96, ACTION_VERTEX_UP, "Vertex up");
+		this->add_icon(this->c_mesh, "data/go-previous.png",    0, 128, ACTION_VERTEX_LEFT, "Vertex left");
+		this->add_icon(this->c_mesh, "data/go-next.png",       64, 128, ACTION_VERTEX_RIGHT, "Vertex right");
+		this->add_icon(this->c_mesh, "data/go-down.png",       32, 160, ACTION_VERTEX_DOWN, "Vertex down");
+		this->add_icon(this->c_mesh, "data/edit-clear.png",    32, 128, ACTION_SELECTION_CLEAR, "Clear sel.");
+
+		this->add_icon(this->c_mesh, "data/weld-vertices.png",    64, 160, ACTION_WELD_VERTICES, "Weld sel.");
+
+		this->add_icon(this->c_mesh, "data/selection-tile.png",    0, 192, ACTION_SELMODE_TILE,   "Tile select");
+		this->add_icon(this->c_mesh, "data/selection-vertex.png", 32, 192, ACTION_SELMODE_VERTEX, "Vertex select");
+		this->add_icon(this->c_mesh, "data/selection-object.png", 64, 192, ACTION_SELMODE_OBJECT, "Object select");
 
 		this->label_tooltip = new c_mb_label("Tooltip");
 		this->c_mesh->add(this->label_tooltip);
-		this->label_tooltip->setPosition(0, 192);
+		this->label_tooltip->setPosition(0, 300);
 		this->label_tooltip->setSize(130, 20);
 
 		this->w_palette = new c_mb_window("Palette");
-		this->w_palette->setDimension(gcn::Rectangle(0, 0, 132, 244));
+		this->w_palette->setDimension(gcn::Rectangle(0, 0, 132, 340));
 		this->w_palette->setPosition(0, 0);
 
 		// Create the palette container
@@ -510,7 +531,7 @@ bool c_window_manager::create_object_window(string p_modname)
 	{
 		// The object window
 		this->obj_list_model = new c_mb_list_model();
-		this->obj_list_box = new gcn::ListBox(this->obj_list_model);
+		this->obj_list_box   = new c_mb_list_box(this->obj_list_model);
 
 		unsigned int i;
 
@@ -538,6 +559,133 @@ bool c_window_manager::create_object_window(string p_modname)
 		// Create the palette container
 		this->w_object->add(sc_object); // Add container to the window
 		this->top->add(this->w_object); // Add window to the GUI
+
+		return true;
+	}
+	catch (gcn::Exception e)
+	{
+		cout << e.getMessage() << endl;
+	}
+	catch (std::exception e)
+	{
+		cout << "Std exception: " << e.what() << endl;
+	}
+	catch (...)
+	{
+		cout << "Unknown exception" << endl;
+	}
+	return false;
+}
+
+
+//---------------------------------------------------------------------
+//-   Create the tile flag window
+//---------------------------------------------------------------------
+bool c_window_manager::create_tile_flag_window()
+{
+	try
+	{
+		// The object window
+		this->lm_tile_flag = new c_mb_list_model();
+		this->lb_tile_flag = new c_mb_list_box(this->lm_tile_flag);
+
+		this->lm_tile_flag->add_element("Draw 1st");
+		this->lm_tile_flag->add_element("Draw 2nd (Normal)");
+		this->lm_tile_flag->add_element("Reflection");
+		this->lm_tile_flag->add_element("Animated");
+		this->lm_tile_flag->add_element("Water");
+		this->lm_tile_flag->add_element("Wall");
+		this->lm_tile_flag->add_element("Impassable");
+		this->lm_tile_flag->add_element("Damage");
+		this->lm_tile_flag->add_element("Ice / Slippy");
+
+		this->lb_tile_flag->setSize(160, 175);
+
+		this->sc_tile_flag = new c_mb_scroll_area();
+		this->sc_tile_flag->setSize(168, 180);
+
+		this->sc_tile_flag->setContent(this->lb_tile_flag);
+
+		w_tile_flag = new c_mb_window("Tile flags");
+		w_tile_flag->setSize(170, 200);
+		w_tile_flag->setPosition(100, 0);
+		w_tile_flag->setVisible(false);
+
+		// Create the palette container
+		this->w_tile_flag->add(sc_tile_flag); // Add container to the window
+		this->top->add(this->w_tile_flag);    // Add window to the GUI
+
+		return true;
+	}
+	catch (gcn::Exception e)
+	{
+		cout << e.getMessage() << endl;
+	}
+	catch (std::exception e)
+	{
+		cout << "Std exception: " << e.what() << endl;
+	}
+	catch (...)
+	{
+		cout << "Unknown exception" << endl;
+	}
+	return false;
+}
+
+
+//---------------------------------------------------------------------
+//-   Create the tile type window
+//---------------------------------------------------------------------
+bool c_window_manager::create_tile_type_window()
+{
+	try
+	{
+		// The object window
+		this->lm_tile_type = new c_mb_list_model();
+		this->lb_tile_type = new c_mb_list_box(this->lm_tile_type);
+
+		this->lm_tile_type->add_element("Two Faced Ground");
+		this->lm_tile_type->add_element("Two Faced Ground");
+		this->lm_tile_type->add_element("Four Faced Ground");
+		this->lm_tile_type->add_element("Eight Faced Ground");
+		this->lm_tile_type->add_element("Ten Face Pillar");
+		this->lm_tile_type->add_element("Eighteen Faced Pillar");
+		this->lm_tile_type->add_element("Blank");
+		this->lm_tile_type->add_element("Blank");
+		this->lm_tile_type->add_element("Six Faced Wall (WE)");
+		this->lm_tile_type->add_element("Six Faced Wall (NS)");
+		this->lm_tile_type->add_element("Blank");
+		this->lm_tile_type->add_element("Blank");
+		this->lm_tile_type->add_element("Eight Faced Wall (W)");
+		this->lm_tile_type->add_element("Eight Faced Wall (N)");
+		this->lm_tile_type->add_element("Eight Faced Wall (E)");
+		this->lm_tile_type->add_element("Eight Faced Wall (S)");
+		this->lm_tile_type->add_element("Ten Faced Wall (WS)");
+		this->lm_tile_type->add_element("Ten Faced Wall (NW)");
+		this->lm_tile_type->add_element("Ten Faced Wall (NE)");
+		this->lm_tile_type->add_element("Ten Faced Wall (ES)");
+		this->lm_tile_type->add_element("Twelve Faced Wall (WSE)");
+		this->lm_tile_type->add_element("Twelve Faced Wall (NWS)");
+		this->lm_tile_type->add_element("Twelve Faced Wall (ENW)");
+		this->lm_tile_type->add_element("Twelve Faced Wall (SEN)");
+		this->lm_tile_type->add_element("Twelve Faced Stair (WE)");
+		this->lm_tile_type->add_element("Twelve Faced Stair (NS)");
+
+		this->lb_tile_type->setSize(280, 178);
+
+		this->sc_tile_type = new c_mb_scroll_area();
+		this->sc_tile_type->setSize(298, 180);
+
+		this->sc_tile_type->setContent(this->lb_tile_type);
+
+		w_tile_type = new c_mb_window("Tile flags");
+		w_tile_type->setSize(300, 200);
+		w_tile_type->setPosition(100, 50);
+		w_tile_type->setVisible(false);
+
+		// Create the palette container
+		this->w_tile_type->add(sc_tile_type); // Add container to the window
+		this->top->add(this->w_tile_type);    // Add window to the GUI
 
 		return true;
 	}
@@ -754,6 +902,36 @@ void c_window_manager::toggle_save_visibility()
 }
 
 
+void c_window_manager::set_tile_flag_visibility(bool p_visibility)
+{
+	this->w_tile_flag->setVisible(p_visibility);
+}
+
+
+void c_window_manager::toggle_tile_flag_visibility()
+{
+	if (this->w_tile_flag->isVisible())
+		this->w_tile_flag->setVisible(false);
+	else
+		this->w_tile_flag->setVisible(true);
+}
+
+
+void c_window_manager::set_tile_type_visibility(bool p_visibility)
+{
+	this->w_tile_type->setVisible(p_visibility);
+}
+
+
+void c_window_manager::toggle_tile_type_visibility()
+{
+	if (this->w_tile_type->isVisible())
+		this->w_tile_type->setVisible(false);
+	else
+		this->w_tile_type->setVisible(true);
+}
+
+
 //---------------------------------------------------------------------
 //-   Set the visibility of the texture window
 //---------------------------------------------------------------------
@@ -893,4 +1071,40 @@ void c_mb_button::mousePressed(gcn::MouseEvent &event)
 			g_input_handler->do_something(WINDOW_LOAD_HIDE);
 			break;
 	}
+}
+
+
+int c_window_manager::get_selected_object()
+{
+	return this->obj_list_box->getSelected();
+}
+
+
+int c_window_manager::get_selected_tile_flag()
+{
+	return g_mesh->get_meshfx(this->lb_tile_flag->getSelected());
+}
+
+
+int c_window_manager::get_selected_tile_type()
+{
+	return g_mesh->get_meshfx(this->lb_tile_type->getSelected());
+}
+
+
+void c_window_manager::set_selected_object(int p_object)
+{
+	this->selected_object = p_object;
+}
+
+
+void c_window_manager::set_selected_tile_flag(int p_tile_flag)
+{
+	this->selected_tile_flag = p_tile_flag;
+}
+
+
+void c_window_manager::set_selected_tile_type(int p_tile_type)
+{
+	this->selected_tile_type = p_tile_type;
 }

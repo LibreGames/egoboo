@@ -433,18 +433,54 @@ void c_input_handler::do_something(int p_action)
 			g_renderer->get_wm()->set_save_visibility(false);
 			break;
 
+		case WINDOW_TILE_FLAG_HIDE:
+			g_renderer->get_wm()->set_tile_flag_visibility(false);
+			break;
+
+		case WINDOW_TILE_TYPE_HIDE:
+			g_renderer->get_wm()->set_tile_type_visibility(false);
+			break;
+
+		case WINDOW_TILE_FLAG_SHOW:
+			g_renderer->get_wm()->set_tile_flag_visibility(true);
+			break;
+
+		case WINDOW_TILE_TYPE_SHOW:
+			g_renderer->get_wm()->set_tile_type_visibility(true);
+			break;
+
+		case WINDOW_TILE_FLAG_TOGGLE:
+			g_renderer->get_wm()->toggle_tile_flag_visibility();
+			break;
+
+		case WINDOW_TILE_TYPE_TOGGLE:
+			g_renderer->get_wm()->toggle_tile_type_visibility();
+			break;
+
 		// Tile flag rendering
 		case ACTION_SHOW_TILEFLAGS:
 			g_renderer->set_render_mode(RENDER_TILE_FLAGS);
 			break;
+
 		case ACTION_HIDE_TILEFLAGS:
 			g_renderer->set_render_mode(RENDER_NORMAL);
 			break;
+
 		case ACTION_TOGGLE_TILEFLAGS:
 			if (g_renderer->get_render_mode() == RENDER_TILE_FLAGS)
 				g_renderer->set_render_mode(RENDER_NORMAL);
 			else
 				g_renderer->set_render_mode(RENDER_TILE_FLAGS);
+			break;
+
+		// Tile flags
+		case ACTION_TILE_FLAG_PAINT:
+			g_selection.set_tile_flag(g_renderer->get_wm()->get_selected_tile_flag());
+			break;
+
+		// Tile types
+		case ACTION_TILE_TYPE_PAINT:
+			g_selection.set_tile_type(g_renderer->get_wm()->get_selected_tile_type());
 			break;
 	}
 }

@@ -132,7 +132,6 @@ void c_modbaker::main_loop()
 
 			// 2D mode
 			g_renderer->begin_2D_mode();
-			g_renderer->render_text();
 			g_renderer->end_2D_mode();
 
 			g_renderer->end_frame();  // Finally render the scene

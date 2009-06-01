@@ -11,7 +11,20 @@ using namespace std;
 #include <guichan/opengl/openglsdlimageloader.hpp>
 #include <guichan/opengl/openglimage.hpp>
 
-// Action types for the input system
+//---------------------------------------------------------------------
+//-   Types for the list box
+//---------------------------------------------------------------------
+enum
+{
+	LIST_BOX_OBJECT,
+	LIST_BOX_TILE_FLAG,
+	LIST_BOX_TILE_TYPE
+};
+
+
+//---------------------------------------------------------------------
+//-   Action types for the input system
+//---------------------------------------------------------------------
 enum
 {
 	ACTION_MESH_NEW         =  0,
@@ -52,7 +65,15 @@ enum
 	ACTION_WELD_VERTICES    = 35,
 	ACTION_SHOW_TILEFLAGS   = 36,
 	ACTION_HIDE_TILEFLAGS   = 37,
-	ACTION_TOGGLE_TILEFLAGS = 38
+	ACTION_TOGGLE_TILEFLAGS = 38,
+	WINDOW_TILE_FLAG_SHOW   = 39,
+	WINDOW_TILE_FLAG_HIDE   = 40,
+	WINDOW_TILE_FLAG_TOGGLE = 41,
+	WINDOW_TILE_TYPE_SHOW   = 42,
+	WINDOW_TILE_TYPE_HIDE   = 43,
+	WINDOW_TILE_TYPE_TOGGLE = 44,
+	ACTION_TILE_FLAG_PAINT  = 45,
+	ACTION_TILE_TYPE_PAINT  = 46
 };
 
 
@@ -197,8 +218,9 @@ class c_mb_container : public gcn::Container
 
 class c_renderer;
 
+
 //---------------------------------------------------------------------
-//-   The list box model
+//-   The list model
 //---------------------------------------------------------------------
 class c_mb_list_model : public gcn::ListModel
 {
@@ -238,6 +260,19 @@ class c_mb_list_model : public gcn::ListModel
 
 
 //---------------------------------------------------------------------
+//-   The list box
+//---------------------------------------------------------------------
+class c_mb_list_box : public gcn::ListBox
+{
+	public:
+		c_mb_list_box(c_mb_list_model *model)
+		{
+			this->setListModel(model);
+		}
+};
+
+
+//---------------------------------------------------------------------
 //-   The window manager class
 //---------------------------------------------------------------------
 class c_window_manager
@@ -259,12 +294,24 @@ class c_window_manager
 
 		// Object list
 		c_mb_container* c_mesh;
-		c_mb_list_model* obj_list_model;
 
 		// Object picker
-		gcn::ListBox* obj_list_box;
+		c_mb_list_box* obj_list_box;
+		c_mb_list_model* obj_list_model;
 		c_mb_container* c_object;
 		c_mb_scroll_area* sc_object;
+
+		// Tile types
+		c_mb_list_box* lb_tile_type;
+		c_mb_list_model* lm_tile_type;
+		c_mb_container* c_tile_type;
+		c_mb_scroll_area* sc_tile_type;
+
+		// Tile flags
+		c_mb_list_box* lb_tile_flag;
+		c_mb_list_model* lm_tile_flag;
+		c_mb_container* c_tile_flag;
+		c_mb_scroll_area* sc_tile_flag;
 
 		// Info window
 		c_mb_label* label_fps;
@@ -276,10 +323,16 @@ class c_window_manager
 		// The windows
 		c_mb_window* w_palette;
 		c_mb_window* w_object;
+		c_mb_window* w_tile_type;
+		c_mb_window* w_tile_flag;
 		c_mb_window* w_info;
 		c_mb_window* w_save;
 		c_mb_window* w_load;
 		c_mb_window* w_texture;
+
+		int selected_object;
+		int selected_tile_flag;
+		int selected_tile_type;
 
 		// Append an icon to a widget
 		void add_icon(c_mb_container*, string, int, int, int, string);
@@ -298,8 +351,14 @@ class c_window_manager
 		void set_save_visibility(bool);
 		void toggle_save_visibility();
 
+		void set_tile_flag_visibility(bool);
+		void toggle_tile_flag_visibility();
+
+		void set_tile_type_visibility(bool);
+		void toggle_tile_type_visibility();
+
 		// TODO: Merge those functions
-		// Provide a c_window as parameter (with a get_window(string) function)
+		// Provide a c_window as parameter (via a get_window(string) function)
 		bool set_texture_visibility(bool);
 		bool toggle_texture_visibility();
 
@@ -308,6 +367,14 @@ class c_window_manager
 
 		bool set_info_visibility(bool);
 		bool toggle_info_visibility();
+
+		int get_selected_object();
+		int get_selected_tile_flag();
+		int get_selected_tile_type();
+
+		void set_selected_object(int);
+		void set_selected_tile_flag(int);
+		void set_selected_tile_type(int);
 
 		// TODO: Make private
 		c_mb_textfield* tf_load;
@@ -337,6 +404,12 @@ class c_window_manager
 
 		bool create_info_window();
 		bool destroy_info_window();
+
+		bool create_tile_flag_window();
+//		bool destroy_tile_flag_window();
+
+		bool create_tile_type_window();
+//		bool destroy_tile_type_window();
 
 		bool create_save_window();
 		bool create_load_window();

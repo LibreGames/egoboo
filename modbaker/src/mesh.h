@@ -307,6 +307,9 @@ class c_mesh
 {
 	private:
 		void mesh_make_fanstart();
+		void init_meshfx();
+
+		vector<int> m_meshfx;
 
 	protected:
 		// TODO: The tile dictionary doesn't really belong to the mesh
@@ -323,6 +326,8 @@ class c_mesh
 		bool load_mesh_mpd(string);
 
 		string modname;
+
+		int get_meshfx(int);
 
 		int modify_verts_x(float, int);
 		int modify_verts_y(float, int);

@@ -237,3 +237,23 @@ void c_selection::change_texture()
 			g_mesh->mem->tilelst[fan].type = 0;
 	}
 }
+
+
+void c_selection::set_tile_flag(unsigned char p_flag)
+{
+	unsigned int i;
+	int fan;
+
+	for (i = 0; i < this->selection.size(); i++)
+	{
+		fan = this->selection[i];
+
+		g_mesh->mem->tilelst[fan].fx = p_flag;
+	}
+}
+
+
+void c_selection::set_tile_type(unsigned char p_type)
+{
+}
+

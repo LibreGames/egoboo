@@ -75,6 +75,9 @@ class c_selection
 
 		void change_texture();
 
+		void set_tile_flag(unsigned char);
+		void set_tile_type(unsigned char);
+
 		bool in_selection(int);
 };
 #endif

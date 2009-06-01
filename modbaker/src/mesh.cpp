@@ -170,6 +170,7 @@ c_mesh::c_mesh()
 {
 	this->mem = new c_mesh_mem(0, 0);
 	this->mi  = new c_mesh_info();
+	this->init_meshfx();
 }
 
 
@@ -858,4 +859,50 @@ bool c_mesh::save_mesh_mpd(string filename)
 	cout << "File saved: " << filename << endl;
 
 	return true;
+}
+
+
+
+//---------------------------------------------------------------------
+//-   Init the meshfx vector
+//---------------------------------------------------------------------
+void c_mesh::init_meshfx()
+{
+	int tmpi;
+
+	tmpi = MESHFX_REF;
+	this->m_meshfx.push_back(tmpi);
+
+	tmpi = MESHFX_SHA;
+	this->m_meshfx.push_back(tmpi);
+
+	tmpi = MESHFX_DRAWREF;
+	this->m_meshfx.push_back(tmpi);
+
+	tmpi = MESHFX_ANIM;
+	this->m_meshfx.push_back(tmpi);
+
+	tmpi = MESHFX_WATER;
+	this->m_meshfx.push_back(tmpi);
+
+	tmpi = MESHFX_WALL;
+	this->m_meshfx.push_back(tmpi);
+
+	tmpi = MESHFX_IMPASS;
+	this->m_meshfx.push_back(tmpi);
+
+	tmpi = MESHFX_DAMAGE;
+	this->m_meshfx.push_back(tmpi);
+
+	tmpi = MESHFX_SLIPPY;
+	this->m_meshfx.push_back(tmpi);
+}
+
+
+//---------------------------------------------------------------------
+//-   Get the Mesh FX based on the vector entry
+//---------------------------------------------------------------------
+int c_mesh::get_meshfx(int p_entry)
+{
+	return this->m_meshfx[p_entry];
 }
