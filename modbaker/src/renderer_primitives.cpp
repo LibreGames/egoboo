@@ -119,6 +119,14 @@ bool c_renderer::render_models(c_object_manager *p_obj_manager)
 //			pos.z =  pos.z * (1 << 7);
 			pos.z =  1.0f  * (1 << 7);
 
+			// Highlight the object if it is in the selection
+			if ((g_selection.get_selection_mode() == SELECTION_MODE_OBJECT) &&
+				(g_selection.in_selection((int)i)))
+			{
+				glEnable(GL_TEXTURE_2D);
+				glColor4f(0, 1, 0, 1);
+			}
+
 			glBegin(GL_QUADS);
 				glTexCoord2f(0, 1);
 				glVertex3f(pos.x-30, pos.y-30, pos.z); // Bottom left

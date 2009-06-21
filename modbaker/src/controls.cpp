@@ -142,6 +142,11 @@ void c_input_handler::mousePressed(gcn::MouseEvent& event)
 					g_selection.add_tile(g_nearest_tile);
 					break;
 
+				case SELECTION_MODE_OBJECT:
+					// TODO: Different action if we want to place an object
+					g_selection.add_object(g_nearest_object);
+					break;
+
 				default:
 					cout << "Invalid selection mode" << endl;
 					break;
@@ -162,6 +167,9 @@ void c_input_handler::keyPressed(gcn::KeyEvent& event)
 	// Don't overwrite the input for the GUI
 	if (window_input)
 		return;
+
+	if (event.getKey().getValue() == 'l')
+		do_something(ACTION_OBJECT_REMOVE);
 
 	if (event.getKey().getValue() == 'o')
 		do_something(ACTION_PAINT_TEXTURE);
@@ -482,6 +490,12 @@ void c_input_handler::do_something(int p_action)
 		case ACTION_TILE_TYPE_PAINT:
 			g_selection.set_tile_type(g_renderer->get_wm()->get_selected_tile_type());
 			break;
+
+		// Remove an object
+		case ACTION_OBJECT_REMOVE:
+			g_selection.remove_objects();
+			g_selection.clear();
+			break;
 	}
 }
 
@@ -563,7 +577,8 @@ bool c_modbaker::get_GL_pos(int x, int y)
 
 	// Calculate the nearest vertex
 	g_nearest_vertex = g_mesh->get_nearest_vertex(g_mouse_gl_x, g_mouse_gl_y, g_mouse_gl_z);
-	g_nearest_tile   = g_mesh->get_nearest_tile(g_mouse_gl_x, g_mouse_gl_y, g_mouse_gl_z);
+	g_nearest_tile   = g_mesh->get_nearest_tile(  g_mouse_gl_x, g_mouse_gl_y, g_mouse_gl_z);
+	g_nearest_object = g_mesh->get_nearest_object(g_mouse_gl_x, g_mouse_gl_y, g_mouse_gl_z);
 
 	return true;
 }

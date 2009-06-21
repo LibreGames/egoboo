@@ -50,7 +50,7 @@ void c_selection::add_vertex(int vertex_number)
 
 
 //---------------------------------------------------------------------
-//-   Clear the selection
+//-   Remove a vertex from the selection
 //---------------------------------------------------------------------
 void c_selection::remove_vertex(int vertex_number)
 {
@@ -86,7 +86,7 @@ void c_selection::add_tile(int tile_number)
 
 
 //---------------------------------------------------------------------
-//-   Clear the selection
+//-   Remove a tile from the selection
 //---------------------------------------------------------------------
 void c_selection::remove_tile(int tile_number)
 {
@@ -96,6 +96,42 @@ void c_selection::remove_tile(int tile_number)
 	for (i=0; i<this->selection.size(); i++)
 	{
 		if (tile_number != this->selection[i])
+		{
+			new_selection.push_back(this->selection[i]);
+		}
+	}
+
+	this->selection = new_selection;
+}
+
+
+//---------------------------------------------------------------------
+//-   Select a tile to the selection
+//---------------------------------------------------------------------
+void c_selection::add_object(int object_number)
+{
+	if (in_selection(object_number))
+	{
+		this->remove_object(object_number);
+	}
+	else
+	{
+		this->selection.push_back(object_number);
+	}
+}
+
+
+//---------------------------------------------------------------------
+//-   Remove an object from the selection
+//---------------------------------------------------------------------
+void c_selection::remove_object(int object_number)
+{
+	vector <int> new_selection;
+	unsigned int i;
+
+	for (i=0; i<this->selection.size(); i++)
+	{
+		if (object_number != this->selection[i])
 		{
 			new_selection.push_back(this->selection[i]);
 		}
@@ -201,15 +237,15 @@ void c_selection::modify_z(float off_z)
 
 
 //---------------------------------------------------------------------
-//-   Returns true if a vertex is in the selection
+//-   Returns true if a vertex / object / tile is in the selection
 //---------------------------------------------------------------------
-bool c_selection::in_selection(int vertex)
+bool c_selection::in_selection(int p_needle)
 {
 	unsigned int i;
 
 	for (i = 0; i < this->selection.size(); i++)
 	{
-		if (this->selection[i] == vertex)
+		if (this->selection[i] == p_needle)
 			return true;
 	}
 
@@ -224,6 +260,10 @@ void c_selection::change_texture()
 {
 	unsigned int i;
 	int fan;
+
+	if ((selection_mode != SELECTION_MODE_TILE) &&
+		(selection_mode != SELECTION_MODE_VERTEX))
+		return;
 
 	for (i = 0; i < this->selection.size(); i++)
 	{
@@ -253,7 +293,54 @@ void c_selection::set_tile_flag(unsigned char p_flag)
 }
 
 
-void c_selection::set_tile_type(unsigned char p_type)
+void c_selection::set_tile_type(int p_type)
 {
+	unsigned int i;
+	int fan;
+
+	// TODO: Set fan FX to MESHFXWALL | MESHFXIMPASS | MESHFXSHA
+
+	for (i = 0; i < this->selection.size(); i++)
+	{
+		fan = this->selection[i];
+
+		g_mesh->mem->tilelst[fan].type = p_type;
+	}
 }
 
+
+//---------------------------------------------------------------------
+//-   Add one object
+//---------------------------------------------------------------------
+bool c_selection::add_mesh_object(int p_object_number, float p_x, float p_y, float p_z)
+{
+	return false;
+}
+
+
+//---------------------------------------------------------------------
+//-   Remove all objects in the selection
+//---------------------------------------------------------------------
+bool c_selection::remove_objects()
+{
+	unsigned int i;
+
+	if (this->selection.size() == 0)
+		return false;
+
+	for (i = 0; i < this->selection.size(); i++)
+	{
+		g_object_manager->remove_spawn(this->selection[i]);
+	}
+
+	return true;
+}
+
+
+//---------------------------------------------------------------------
+//-   Move one object
+//---------------------------------------------------------------------
+bool c_selection::move_mesh_object(int p_spawn_number, float p_new_x, float p_new_y, float p_new_z)
+{
+	return false;
+}

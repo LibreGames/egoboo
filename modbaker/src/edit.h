@@ -54,6 +54,9 @@ class c_selection
 		void add_tile(int);
 		void remove_tile(int);
 
+		void add_object(int);
+		void remove_object(int);
+
 		int add_vertices_at_position(vect3);
 
 		void set_add_mode(bool mode) { this->add_mode = mode; }
@@ -76,8 +79,12 @@ class c_selection
 		void change_texture();
 
 		void set_tile_flag(unsigned char);
-		void set_tile_type(unsigned char);
+		void set_tile_type(int);
 
 		bool in_selection(int);
+
+		bool add_mesh_object(int, float, float, float);
+		bool remove_objects();
+		bool move_mesh_object(int, float, float, float);
 };
 #endif

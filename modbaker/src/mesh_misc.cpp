@@ -99,15 +99,15 @@ bool c_object_manager::save_spawns(string p_modname)
 }
 
 
-void c_object_manager::add(c_spawn)
+void c_object_manager::add_spawn(c_spawn)
 {
 
 }
 
 
-void c_object_manager::remove(int p_slot_number)
+void c_object_manager::remove_spawn(int p_slot_number)
 {
-
+	this->spawns.erase(this->spawns.begin()+p_slot_number);
 }
 
 
@@ -268,4 +268,13 @@ bool c_object::read_data_file(string p_filename)
 vector<c_object*> c_object_manager::get_objects()
 {
 	return this->objects;
+}
+
+
+//---------------------------------------------------------------------
+//-   Return all spawns
+//---------------------------------------------------------------------
+vector<c_spawn> c_object_manager::get_spawns()
+{
+	return this->spawns;
 }

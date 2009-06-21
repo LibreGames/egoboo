@@ -63,7 +63,37 @@ enum e_mpd_fx
 	MESHFX_WALL    = (1 << 4), // 4 Wall ( Passable by ghosts, particles )
 	MESHFX_IMPASS  = (1 << 5), // 5 Impassable
 	MESHFX_DAMAGE  = (1 << 6), // 6 Damage
-	MESHFX_SLIPPY  = (1 << 7), // 7 Ice or normal
+	MESHFX_SLIPPY  = (1 << 7)  // 7 Ice or normal
+};
+
+
+//---------------------------------------------------------------------
+//-   Fan / tile types
+//---------------------------------------------------------------------
+enum e_fan_type
+{
+	TTYPE_TWO_FACED_GROUND1  =  0,
+	TTYPE_TWO_FACED_GROUND2  =  1,
+	TTYPE_FOUR_FACED_GROUND  =  2,
+	TTYPE_EIGHT_FACED_GROUND =  3,
+	TTYPE_PILLER_TEN         =  4,
+	TTYPE_PILLER_EIGHTEEN    =  5,
+	TTYPE_WALL_SIX_WE        =  9,
+	TTYPE_WALL_SIX_NS        = 10,
+	TTYPE_WALL_EIGHT_W       = 13,
+	TTYPE_WALL_EIGHT_N       = 14,
+	TTYPE_WALL_EIGHT_E       = 15,
+	TTYPE_WALL_EIGHT_S       = 16,
+	TTYPE_WALL_TEN_WS        = 17,
+	TTYPE_WALL_TEN_NW        = 18,
+	TTYPE_WALL_TEN_NE        = 19,
+	TTYPE_WALL_TEN_ES        = 20,
+	TTYPE_WALL_TWELVE_WSE    = 21,
+	TTYPE_WALL_TWELVE_NWS    = 22,
+	TTYPE_WALL_TWELVE_ENW    = 23,
+	TTYPE_WALL_TWELVE_SEN    = 24,
+	TTYPE_STAIR_TWELVE_WE    = 25,
+	TTYPE_STAIR_TWELVE_NS    = 26
 };
 
 
@@ -146,8 +176,8 @@ class c_object_manager
 		void load_objects(string);
 		bool save_objects(string);
 
-		void add(c_spawn);
-		void remove(int);
+		void add_spawn(c_spawn);
+		void remove_spawn(int);
 
 		unsigned int get_spawns_size();
 		c_spawn get_spawn(int);
@@ -158,6 +188,7 @@ class c_object_manager
 		c_object* get_object_by_slot(int);
 		void      set_object(int, c_object*);
 
+		vector<c_spawn>  get_spawns();
 		vector<c_object*> get_objects();
 
 		void    render();
@@ -343,6 +374,7 @@ class c_mesh
 
 		int get_nearest_vertex(float, float, float);
 		int get_nearest_tile(float, float, float);
+		int get_nearest_object(float, float, float);
 
 		c_tile_dictionary & getTileDictioary()          { return ms_tiledict;             }
 		c_tile_definition & getTileDefinition(int tile) { return ms_tiledict[tile];       }

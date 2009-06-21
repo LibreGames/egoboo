@@ -54,8 +54,10 @@ extern float g_mouse_gl_z;
 
 // Selection
 // Implemented in edit.cpp
+// TODO: Merge g_nearest_* into g_nearest
 extern int g_nearest_vertex;
 extern int g_nearest_tile;
+extern int g_nearest_object;
 extern c_selection g_selection;
 
 // Global subsystems

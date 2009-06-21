@@ -758,6 +758,49 @@ int c_mesh::get_nearest_tile(float pos_x, float pos_y, float pos_z)
 
 
 //---------------------------------------------------------------------
+//-   Get the nearest object
+//---------------------------------------------------------------------
+int c_mesh::get_nearest_object(float pos_x, float pos_y, float pos_z)
+{
+	int i;
+
+	int nearest_object = 0;
+
+	double dist_temp;
+	double dist_nearest;
+
+	vect3 ref;   // The reference point
+	vect3 object;  // Used for each object
+
+	ref.x = pos_x;
+	ref.y = pos_y;
+	ref.z = pos_z;
+
+	dist_nearest = 999999.9f;
+
+	for (i = 0; i < (int)g_object_manager->get_spawns_size(); i++)
+	{
+
+		object.x = g_object_manager->get_spawn(i).pos.x * (1 << 7);
+		object.y = g_object_manager->get_spawn(i).pos.y * (1 << 7);
+//		object.z = g_object_manager->get_spawn(i).pos.z * (1 << 7);
+		object.z = 1.0f                                 * (1 << 7);
+
+		dist_temp = calculate_distance(object, ref);
+
+		if (dist_temp < dist_nearest)
+		{
+			dist_nearest = calculate_distance(object, ref);
+
+			nearest_object = i;
+		}
+	}
+
+	return nearest_object;
+}
+
+
+//---------------------------------------------------------------------
 //-   Save the .mpd file
 //---------------------------------------------------------------------
 bool c_mesh::save_mesh_mpd(string filename)
