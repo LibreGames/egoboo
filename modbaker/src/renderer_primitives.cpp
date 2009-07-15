@@ -26,6 +26,7 @@
 #include <iostream>
 #include <sstream>
 
+// TODO: Remove
 void c_renderer::render_text(string text, vect3 pos, c_renderer::TMODE mode)
 {
 	SDL_Surface *textSurf;

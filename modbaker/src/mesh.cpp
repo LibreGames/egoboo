@@ -200,7 +200,7 @@ bool c_mesh::load_mesh_mpd(string p_modname)
 	// FAN data
 	Uint32 fan = 0;
 
-	MeshTile_t  *mf_list; // TODO: Replace with mem.tilelst
+	MeshTile_t  *mf_list; // TODO: Replace with mem->tilelst
 
 
 	// Open the file
@@ -948,4 +948,42 @@ void c_mesh::init_meshfx()
 int c_mesh::get_meshfx(int p_entry)
 {
 	return this->m_meshfx[p_entry];
+}
+
+
+//---------------------------------------------------------------------
+//-   Get all vertices of the fan
+//---------------------------------------------------------------------
+vector<int> c_mesh::get_fan_vertices(int p_fan)
+{
+	int cnt;
+	vector<int> vec_vertices;
+
+	Uint16 type      = g_mesh->mem->tilelst[p_fan].type; // Command type ( index to points in fan )
+	int vertices     = g_mesh->getTileDefinition(type).vrt_count;
+	Uint32 badvertex = g_mesh->mem->tilelst[p_fan].vrt_start;   // Actual vertex number
+
+	for (cnt = 0; cnt < vertices; cnt++, badvertex++)
+	{
+		vec_vertices.push_back(badvertex);
+	}
+	return vec_vertices;
+}
+
+
+//---------------------------------------------------------------------
+//-   Change the size of the mesh mem
+//---------------------------------------------------------------------
+bool c_mesh::change_mem_size(int p_new_vertices, int p_new_fans)
+{
+	if (this->mem == NULL)
+	{
+		cout << "change_mem_size: Aborting: mem is NULL" << endl;
+		return false;
+	}
+
+	// TODO: Change the size of the mesh mem
+
+	this->mem->vrt_count += 2;
+	return true;
 }

@@ -208,9 +208,30 @@ void c_renderer::resize_window( int width, int height )
 void c_renderer::load_basic_textures(string modname)
 {
 	load_texture(g_config->get_egoboo_path() + "basicdat/globalparticles/particle.png",        TX_PARTICLE);
+/*
+	if (!load_texture(g_config->get_egoboo_path() + "modules/" + modname + "/gamedat/tile0.bmp",    TX_TILE_0))
+		load_texture("data/tiles/tile0.bmp", TX_TILE_0);
+
+	if (!load_texture(g_config->get_egoboo_path() + "modules/" + modname + "/gamedat/tile1.bmp",    TX_TILE_1))
+		load_texture("data/tiles/tile1.bmp", TX_TILE_1);
+
+	if (!load_texture(g_config->get_egoboo_path() + "modules/" + modname + "/gamedat/tile2.bmp",    TX_TILE_2))
+		load_texture("data/tiles/tile2.bmp", TX_TILE_2);
+
+	if (!load_texture(g_config->get_egoboo_path() + "modules/" + modname + "/gamedat/tile3.bmp",    TX_TILE_3))
+		load_texture("data/tiles/tile3.bmp", TX_TILE_3);
+
+	if (!load_texture(g_config->get_egoboo_path() + "modules/" + modname + "/gamedat/watertop.bmp", TX_WATER_TOP))
+		load_texture("data/tiles/watertop.bmp", TX_WATER_TOP);
+
+	if (!load_texture(g_config->get_egoboo_path() + "modules/" + modname + "/gamedat/waterlow.bmp", TX_WATER_LOW))
+		load_texture("data/tiles/waterlow.bmp", TX_WATER_LOW);
+*/
+
 	load_texture(g_config->get_egoboo_path() + "modules/" + modname + "/gamedat/tile0.bmp",    TX_TILE_0);
 	load_texture(g_config->get_egoboo_path() + "modules/" + modname + "/gamedat/tile1.bmp",    TX_TILE_1);
-	load_texture(g_config->get_egoboo_path() + "modules/" + modname + "/gamedat/tile2.bmp",    TX_TILE_2);
+//	load_texture(g_config->get_egoboo_path() + "modules/" + modname + "/gamedat/tile2.bmp",    TX_TILE_2);
+	load_texture("data/tiles/tile2.bmp",    TX_TILE_2);
 	load_texture(g_config->get_egoboo_path() + "modules/" + modname + "/gamedat/tile3.bmp",    TX_TILE_3);
 	load_texture(g_config->get_egoboo_path() + "modules/" + modname + "/gamedat/watertop.bmp", TX_WATER_TOP);
 	load_texture(g_config->get_egoboo_path() + "modules/" + modname + "/gamedat/waterlow.bmp", TX_WATER_LOW);
@@ -227,16 +248,18 @@ bool c_renderer::load_texture(string imgname, int tileset)
 
 	picture = IMG_Load(imgname.c_str());
 
-	glEnable(GL_TEXTURE_2D);
-	glGenTextures(1, m_texture + tileset);
-
-	cout <<  "INFO: m_texture[" << tileset <<  "]==" << m_texture[tileset] << " (\"" << imgname << "\")" << endl;
+	cout <<  "INFO: Generating texture " << imgname << ": ";
 
 	if (picture == NULL)
 	{
 		cout << "     WARNING: Cannot open file " << imgname << endl;
 		return false;
 	}
+
+	glEnable(GL_TEXTURE_2D);
+	glGenTextures(1, m_texture + tileset);
+
+	cout << "Slot is m_texture[" << tileset <<  "]==" << m_texture[tileset] << endl;
 
 	if (copySurfaceToTexture(picture, m_texture[tileset], tex_coords))
 	{

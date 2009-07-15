@@ -55,4 +55,12 @@ bool tokenize_colon(const string&, vector<string>&);
 string fread_skip_comments(ifstream&);
 
 bool read_files(string, string, vector<string>&);
+bool translate_into_bool(string);
+string translate_into_egobool(bool);
+string translate_into_string(unsigned int);
+unsigned int translate_into_uint(string);
+
+string find_and_replace(string, string, string);
+string add_underscores(string);
+string remove_underscores(string);
 #endif

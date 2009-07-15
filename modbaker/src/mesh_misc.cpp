@@ -164,7 +164,7 @@ void c_object_manager::set_object(int p_slot_number, c_object *p_object)
 }
 
 
-void c_object_manager::load_objects(string p_dirname)
+void c_object_manager::load_objects(string p_dirname, bool p_gor)
 {
 	unsigned int i, j, start, end;
 
@@ -185,6 +185,7 @@ void c_object_manager::load_objects(string p_dirname)
 
 		temp_object = new c_object();
 		temp_object->set_name(objnames[j]);
+		temp_object->set_gor(p_gor);
 		temp_object->set_slot(0);     // TODO: Read slot from data.txt
 		temp_object->set_icon(0);
 
@@ -277,4 +278,192 @@ vector<c_object*> c_object_manager::get_objects()
 vector<c_spawn> c_object_manager::get_spawns()
 {
 	return this->spawns;
+}
+
+
+//---------------------------------------------------------------------
+//-   Constructor for c_menu_txt
+//---------------------------------------------------------------------
+c_menu_txt::c_menu_txt()
+{
+}
+
+//---------------------------------------------------------------------
+//-   Load the menu.txt file
+//---------------------------------------------------------------------
+bool c_menu_txt::load(string p_filename)
+{
+	ifstream file;
+	vector <string> tokens;
+
+	// Open the file
+	file.open(p_filename.c_str());
+
+	if (!file)
+	{
+		cout << "File not found " << p_filename << endl;
+		return false;
+	}
+
+	string sTmp;
+	int    iTmp;
+	vector<string> tmp_summary;
+
+	fgoto_colon_yesno(file);
+	file >> sTmp;  this->name              = sTmp;
+	fgoto_colon_yesno(file);
+	file >> sTmp;  this->reference_module  = sTmp;
+	fgoto_colon_yesno(file);
+	file >> sTmp;  this->required_idsz     = sTmp;
+	fgoto_colon_yesno(file);
+	file >> iTmp;  this->number_of_imports = iTmp;
+	fgoto_colon_yesno(file);
+	file >> sTmp;  this->allow_export      = translate_into_bool(sTmp);
+	fgoto_colon_yesno(file);
+	file >> iTmp;  this->min_players       = iTmp;
+	fgoto_colon_yesno(file);
+	file >> iTmp;  this->max_players       = iTmp;
+	fgoto_colon_yesno(file);
+	file >> sTmp;  this->allow_respawn     = translate_into_bool(sTmp);
+	fgoto_colon_yesno(file);
+	file >> sTmp;  this->not_used          = translate_into_bool(sTmp);
+	fgoto_colon_yesno(file);
+	file >> sTmp;  this->rating            = sTmp;
+	fgoto_colon_yesno(file);
+
+	// Read the summary
+	file >> sTmp;  tmp_summary.push_back(sTmp);
+	fgoto_colon_yesno(file);
+	file >> sTmp;  tmp_summary.push_back(sTmp);
+	fgoto_colon_yesno(file);
+	file >> sTmp;  tmp_summary.push_back(sTmp);
+	fgoto_colon_yesno(file);
+	file >> sTmp;  tmp_summary.push_back(sTmp);
+	fgoto_colon_yesno(file);
+	file >> sTmp;  tmp_summary.push_back(sTmp);
+	fgoto_colon_yesno(file);
+	file >> sTmp;  tmp_summary.push_back(sTmp);
+	fgoto_colon_yesno(file);
+	file >> sTmp;  tmp_summary.push_back(sTmp);
+	fgoto_colon_yesno(file);
+	file >> sTmp;  tmp_summary.push_back(sTmp);
+	this->summary = tmp_summary;
+
+	file.close();
+
+	return true;
+}
+
+
+//---------------------------------------------------------------------
+//-   Save the menu.txt file
+//---------------------------------------------------------------------
+bool c_menu_txt::save(string p_filename)
+{
+	ofstream file;
+	string buffer;
+	vector <string> tokens;
+
+	// Open the file
+	file.open(p_filename.c_str());
+
+	if (!file)
+	{
+		cout << "There was an error opening the file" << endl;
+		return false;
+	}
+
+	vector<string> tmp_summary;
+
+	buffer = "// This file contains info for the module's menu description";
+	file << buffer << endl;
+
+	buffer = "Name ( with underscores for spaces )		: " + this->name;
+	file << buffer << endl;
+
+	buffer = "Reference module ( Directory name or NONE )     	: " + this->reference_module;
+	file << buffer << endl;
+
+	buffer = "Required reference IDSZ ( or [NONE] )           	: " + this->required_idsz;
+	file << buffer << endl;
+
+	buffer = "Number of imports ( 0 to 4 )                    		: " + translate_into_string(this->number_of_imports);
+	file << buffer << endl;
+
+	buffer = "Allow exporting of characters ( TRUE or FALSE ) 	: " + translate_into_egobool(this->allow_export);
+	file << buffer << endl;
+
+	buffer = "Minimum number of players ( 1 to 4 )		: " + translate_into_string(this->min_players);
+	file << buffer << endl;
+
+	buffer = "Maximum number of players ( 1 to 4 )		: " + translate_into_string(this->max_players);
+	file << buffer << endl;
+
+	buffer = "Allow respawning ( TRUE or FALSE )		: " + translate_into_egobool(this->allow_respawn);
+	file << buffer << endl;
+
+	buffer = "NOT USED				: " + translate_into_egobool(this->not_used);
+	file << buffer << endl;
+
+	buffer = "Level rating ( *, **, ***, ****, or ***** )    		 : " + this->rating;
+	file << buffer << endl;
+
+	buffer = "";
+	file << buffer << endl;
+
+	buffer = "";
+	file << buffer << endl;
+
+	buffer = "// Module summary ( Must be 8 lines...  Each line mush have at least an _ )";
+	file << buffer << endl;
+
+	buffer = ":" + this->summary[0];
+	file << buffer << endl;
+
+	buffer = ":" + this->summary[1];
+	file << buffer << endl;
+
+	buffer = ":" + this->summary[2];
+	file << buffer << endl;
+
+	buffer = ":" + this->summary[3];
+	file << buffer << endl;
+
+	buffer = ":" + this->summary[4];
+	file << buffer << endl;
+
+	buffer = ":" + this->summary[5];
+	file << buffer << endl;
+
+	buffer = ":" + this->summary[6];
+	file << buffer << endl;
+
+	buffer = ":" + this->summary[7];
+	file << buffer << endl;
+
+	buffer = "";
+	file << buffer << endl;
+
+	buffer = "";
+	file << buffer << endl;
+
+	buffer = "// Module expansion IDSZs ( with a colon in front )";
+	file << buffer << endl;
+
+	buffer = "";
+	file << buffer << endl;
+
+	file.close();
+
+	return true;
+}
+
+
+//---------------------------------------------------------------------
+//-   Load the menu.txt file
+//---------------------------------------------------------------------
+void c_mesh::load_menu_txt(string p_modname)
+{
+	this->m_menu_txt = new c_menu_txt();
+	this->m_menu_txt->load(g_config->get_egoboo_path() + "modules/" + p_modname + "/gamedat/menu.txt");
 }

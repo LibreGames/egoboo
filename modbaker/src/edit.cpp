@@ -279,6 +279,9 @@ void c_selection::change_texture()
 }
 
 
+//---------------------------------------------------------------------
+//-   Change the tile flag (water, reflection, ...)
+//---------------------------------------------------------------------
 void c_selection::set_tile_flag(unsigned char p_flag)
 {
 	unsigned int i;
@@ -293,19 +296,72 @@ void c_selection::set_tile_flag(unsigned char p_flag)
 }
 
 
+//---------------------------------------------------------------------
+//-   Change the tile type (wall, floor, ...)
+//---------------------------------------------------------------------
 void c_selection::set_tile_type(int p_type)
 {
 	unsigned int i;
 	int fan;
-
-	// TODO: Set fan FX to MESHFXWALL | MESHFXIMPASS | MESHFXSHA
 
 	for (i = 0; i < this->selection.size(); i++)
 	{
 		fan = this->selection[i];
 
 		g_mesh->mem->tilelst[fan].type = p_type;
+		g_mesh->change_mem_size(g_mesh->mem->vrt_count + 2, g_mesh->mem->tile_count);
 	}
+}
+
+
+//---------------------------------------------------------------------
+//-   Transform the selection into wall tiles
+//---------------------------------------------------------------------
+void c_selection::make_wall()
+{
+	unsigned int i;
+	int fan;
+	vector<int> vec_vertices;
+	int vec;
+	float newheight;
+
+	for (i = 0; i < this->selection.size(); i++)
+	{
+		fan = this->selection[i];
+
+		// Is it a wall already?
+		if (0 == (g_mesh->mem->tilelst[fan].fx & MESHFX_WALL))
+		{
+			// Set the tile flag
+			g_mesh->mem->tilelst[fan].fx = MESHFX_WALL | MESHFX_IMPASS | MESHFX_SHA;
+
+			// Set the tile type
+			// TODO: randomize the floor types
+//			g_mesh->mem->tilelst[fan].type = get_proper_tile_type(fan);
+		}
+
+		vec_vertices = g_mesh->get_fan_vertices(fan);
+
+		// Get the height of the first vertex
+		newheight = g_mesh->get_verts_z(vec_vertices[0]) + 192;
+
+		for (vec = 0; vec < (int)vec_vertices.size(); vec++)
+		{
+			// Set the height
+			g_mesh->set_verts_z(newheight, vec_vertices[vec]);
+		}
+
+		// TODO: Modify the eight surrounding tiles
+		// TODO: Autoweld
+	}
+}
+
+
+//---------------------------------------------------------------------
+//-   Transform the selection into floor tiles
+//---------------------------------------------------------------------
+void c_selection::make_floor()
+{
 }
 
 

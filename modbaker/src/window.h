@@ -5,6 +5,8 @@
 #include <string>
 using namespace std;
 
+#include "mesh.h"
+
 #include <guichan.hpp>
 #include <guichan/sdl.hpp>
 #include <guichan/opengl.hpp>
@@ -53,10 +55,10 @@ enum
 	WINDOW_TEXTURE_TOGGLE   = 23,
 	WINDOW_OBJECT_TOGGLE    = 24,
 	WINDOW_INFO_TOGGLE      = 25,
-	WINDOW_SAVE_SHOW        = 26,
-	WINDOW_SAVE_HIDE        = 27,
-	WINDOW_LOAD_SHOW        = 28,
-	WINDOW_LOAD_HIDE        = 29,
+	WINDOW_MESH_SAVE_SHOW   = 26,
+	WINDOW_MESH_SAVE_HIDE   = 27,
+	WINDOW_MESH_LOAD_SHOW   = 28,
+	WINDOW_MESH_LOAD_HIDE   = 29,
 	ACTION_SET_TEXTURE      = 30,
 	ACTION_SELMODE_VERTEX   = 31,
 	ACTION_SELMODE_TILE     = 32,
@@ -74,16 +76,30 @@ enum
 	WINDOW_TILE_TYPE_TOGGLE = 44,
 	ACTION_TILE_FLAG_PAINT  = 45,
 	ACTION_TILE_TYPE_PAINT  = 46,
-	ACTION_OBJECT_REMOVE    = 47
+	ACTION_OBJECT_REMOVE    = 47,
+	ACTION_MAKE_WALL        = 48,
+	ACTION_MAKE_FLOOR       = 49,
+	WINDOW_MESH_NEW_SHOW    = 50,
+	WINDOW_MESH_NEW_HIDE    = 51,
+	WINDOW_MESH_NEW_TOGGLE  = 52,
+	WINDOW_MOD_MENU_SHOW    = 53,
+	WINDOW_MOD_MENU_HIDE    = 54,
+	WINDOW_MOD_MENU_TOGGLE  = 55,
+	ACTION_SAVE_MOD_MENU    = 56,
+	ACTION_LOAD_MOD_MENU    = 57
 };
 
 
 enum
 {
-	BUTTON_SAVE_OK     = 0,
-	BUTTON_LOAD_OK     = 1,
-	BUTTON_SAVE_CANCEL = 2,
-	BUTTON_LOAD_CANCEL = 3
+	BUTTON_MESH_SAVE_OK     = 0,
+	BUTTON_MESH_SAVE_CANCEL = 2,
+	BUTTON_MESH_LOAD_OK     = 1,
+	BUTTON_MESH_LOAD_CANCEL = 3,
+	BUTTON_MESH_NEW_OK      = 4,
+	BUTTON_MESH_NEW_CANCEL  = 5,
+	BUTTON_MOD_MENU_OK      = 6,
+	BUTTON_MOD_MENU_CANCEL  = 7
 };
 
 //---------------------------------------------------------------------
@@ -274,6 +290,54 @@ class c_mb_list_box : public gcn::ListBox
 
 
 //---------------------------------------------------------------------
+//-   The window for editing menu.txt
+//---------------------------------------------------------------------
+class c_mod_txt_window : public c_mb_window
+{
+	private:
+		c_mb_label*     label_name;
+		c_mb_textfield* tf_name;
+		c_mb_label*     label_ref;
+		c_mb_textfield* tf_ref;
+		c_mb_label*     label_req_idsz;
+		c_mb_textfield* tf_req_idsz;
+		c_mb_label*     label_num_imp;
+		c_mb_textfield* tf_num_imp;
+		c_mb_label*     label_export;
+		c_mb_textfield* tf_export;
+		c_mb_label*     label_pla_min;
+		c_mb_textfield* tf_pla_min;
+		c_mb_label*     label_pla_max;
+		c_mb_textfield* tf_pla_max;
+		c_mb_label*     label_respawn;
+		c_mb_textfield* tf_respawn;
+		c_mb_label*     label_not_used;
+		c_mb_textfield* tf_not_used;
+		c_mb_label*     label_rating;
+		c_mb_textfield* tf_rating;
+		// Elements for the summary
+		c_mb_label*     label_summary;
+		c_mb_textfield* tf_summary1;
+		c_mb_textfield* tf_summary2;
+		c_mb_textfield* tf_summary3;
+		c_mb_textfield* tf_summary4;
+		c_mb_textfield* tf_summary5;
+		c_mb_textfield* tf_summary6;
+		c_mb_textfield* tf_summary7;
+		c_mb_textfield* tf_summary8;
+		// The buttons
+		c_mb_button* button_ok;
+		c_mb_button* button_cancel;
+
+	public:
+		c_mod_txt_window();
+
+		c_menu_txt* get_menu_txt();
+		void set_menu_txt(c_menu_txt*);
+};
+
+
+//---------------------------------------------------------------------
 //-   The window manager class
 //---------------------------------------------------------------------
 class c_window_manager
@@ -297,21 +361,21 @@ class c_window_manager
 		c_mb_container* c_mesh;
 
 		// Object picker
-		c_mb_list_box* obj_list_box;
-		c_mb_list_model* obj_list_model;
-		c_mb_container* c_object;
+		c_mb_list_box*    obj_list_box;
+		c_mb_list_model*  obj_list_model;
+		c_mb_container*   c_object;
 		c_mb_scroll_area* sc_object;
 
 		// Tile types
-		c_mb_list_box* lb_tile_type;
-		c_mb_list_model* lm_tile_type;
-		c_mb_container* c_tile_type;
+		c_mb_list_box*    lb_tile_type;
+		c_mb_list_model*  lm_tile_type;
+		c_mb_container*   c_tile_type;
 		c_mb_scroll_area* sc_tile_type;
 
 		// Tile flags
-		c_mb_list_box* lb_tile_flag;
-		c_mb_list_model* lm_tile_flag;
-		c_mb_container* c_tile_flag;
+		c_mb_list_box*    lb_tile_flag;
+		c_mb_list_model*  lm_tile_flag;
+		c_mb_container*   c_tile_flag;
 		c_mb_scroll_area* sc_tile_flag;
 
 		// Info window
@@ -327,9 +391,14 @@ class c_window_manager
 		c_mb_window* w_tile_type;
 		c_mb_window* w_tile_flag;
 		c_mb_window* w_info;
-		c_mb_window* w_save;
-		c_mb_window* w_load;
+		c_mb_window* w_mesh_save;
+		c_mb_window* w_mesh_load;
+		c_mb_window* w_mesh_new;
+		c_mod_txt_window* w_mod_menu;
 		c_mb_window* w_texture;
+		c_mb_window* w_spawn;
+		c_mb_window* w_minimap;
+		c_mb_window* w_config;
 
 		int selected_object;
 		int selected_tile_flag;
@@ -346,28 +415,10 @@ class c_window_manager
 		void set_fps(float);
 		void set_position(float, float);
 
-		void set_load_visibility(bool);
-		void toggle_load_visibility();
+		bool set_visibility(string, bool);
+		bool toggle_visibility(string);
 
-		void set_save_visibility(bool);
-		void toggle_save_visibility();
-
-		void set_tile_flag_visibility(bool);
-		void toggle_tile_flag_visibility();
-
-		void set_tile_type_visibility(bool);
-		void toggle_tile_type_visibility();
-
-		// TODO: Merge those functions
-		// Provide a c_window as parameter (via a get_window(string) function)
-		bool set_texture_visibility(bool);
-		bool toggle_texture_visibility();
-
-		bool set_object_visibility(bool);
-		bool toggle_object_visibility();
-
-		bool set_info_visibility(bool);
-		bool toggle_info_visibility();
+		c_mb_window* get_window(string);
 
 		int get_selected_object();
 		int get_selected_tile_flag();
@@ -412,8 +463,14 @@ class c_window_manager
 		bool create_tile_type_window();
 //		bool destroy_tile_type_window();
 
-		bool create_save_window();
-		bool create_load_window();
+		bool create_mesh_save_window();
+//		bool destroy_mesh_save_window();
+		bool create_mesh_load_window();
+//		bool destroy_mesh_load_window();
+		bool create_mesh_new_window();
+//		bool destroy_mesh_new_window();
+		bool create_mod_menu_window();
+//		bool destroy_mod_menu_window();
 
 		bool create_object_window(string);
 		void destroy_object_window()
@@ -421,6 +478,9 @@ class c_window_manager
 			if (this->w_object != NULL)
 				delete w_object;
 		}
+
+		c_menu_txt* get_menu_txt() { return this->w_mod_menu->get_menu_txt(); }
+		void set_menu_txt(c_menu_txt* p_menu_txt) { this->w_mod_menu->set_menu_txt(p_menu_txt); }
 
 		bool create_mesh_window();
 		bool destroy_mesh_window();

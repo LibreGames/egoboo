@@ -40,6 +40,25 @@
 
 using namespace std;
 
+
+//---------------------------------------------------------------------
+//-   Texture definitions
+//---------------------------------------------------------------------
+#define IMG_TILE0    "[EGOBOO_PATH]/modules/[MODULENAME]/basicdat/tile0.bmp"
+#define IMG_TILE1    "[EGOBOO_PATH]/modules/[MODULENAME]/basicdat/tile1.bmp"
+#define IMG_TILE2    "[EGOBOO_PATH]/modules/[MODULENAME]/basicdat/tile2.bmp"
+#define IMG_TILE3    "[EGOBOO_PATH]/modules/[MODULENAME]/basicdat/tile3.bmp"
+#define IMG_WATERTOP "[EGOBOO_PATH]/modules/[MODULENAME]/basicdat/watertop.bmp"
+#define IMG_WATERLOW "[EGOBOO_PATH]/modules/[MODULENAME]/basicdat/waterlow.bmp"
+// Fallback textures
+#define IMG_TILE0_F    "data/tiles/tile0.bmp"
+#define IMG_TILE1_F    "data/tiles/tile1.bmp"
+#define IMG_TILE2_F    "data/tiles/tile2.bmp"
+#define IMG_TILE3_F    "data/tiles/tile3.bmp"
+#define IMG_WATERTOP_F "data/tiles/watertop.bmp"
+#define IMG_WATERLOW_F "data/tiles/waterlow.bmp"
+
+
 //---------------------------------------------------------------------
 //-   Texture types (used for giving crenderer.texture index names)
 //---------------------------------------------------------------------

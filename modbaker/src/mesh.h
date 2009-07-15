@@ -125,9 +125,10 @@ class c_spawn
 class c_object
 {
 	private:
-		string name;
-		int slot;
-		GLuint icon[1];
+		string name;    // the name, like object.obj
+		bool gor;       // Is it in the Global Object Repository?
+		int slot;       // The slot number
+		GLuint icon[1]; // The icon texture
 
 	public:
 		c_object();
@@ -135,6 +136,9 @@ class c_object
 
 		string get_name()              { return this->name; }
 		void   set_name(string p_name) { this->name = p_name; }
+
+		bool   get_gor()           { return this->gor; }
+		void   set_gor(bool p_gor) { this->gor = p_gor; }
 
 		int    get_slot()           { return this->slot; }
 		void   set_slot(int p_slot) { this->slot = p_slot; }
@@ -173,7 +177,7 @@ class c_object_manager
 		void load_spawns(string);
 		bool save_spawns(string);
 
-		void load_objects(string);
+		void load_objects(string, bool);
 		bool save_objects(string);
 
 		void add_spawn(c_spawn);
@@ -196,9 +200,69 @@ class c_object_manager
 
 
 //---------------------------------------------------------------------
+//-   menu.txt handling
+//---------------------------------------------------------------------
+class c_menu_txt
+{
+	private:
+		string name;
+		string reference_module;
+		string required_idsz;
+		unsigned int number_of_imports;
+		bool allow_export;
+		unsigned int min_players;
+		unsigned int max_players;
+		bool allow_respawn;
+		bool not_used;
+		string rating;
+		vector<string> summary;
+
+	public:
+		c_menu_txt();
+//		~c_menu_txt();
+		bool load(string);
+		bool save(string);
+
+		string get_name()            { return this->name; }
+		void set_name(string p_name) { this->name = p_name; }
+
+		string get_reference_module()                        { return this->reference_module; }
+		void set_reference_module(string p_reference_module) { this->reference_module = p_reference_module; }
+
+		string get_required_idsz()                     { return this->required_idsz; }
+		void set_required_idsz(string p_required_idsz) { this->required_idsz = p_required_idsz; }
+
+		unsigned int get_number_of_imports()                         { return this->number_of_imports; }
+		void set_number_of_imports(unsigned int p_number_of_imports) { this->number_of_imports = p_number_of_imports; }
+
+		bool get_allow_export()                    { return this->allow_export; }
+		void set_allow_export(bool p_allow_export) { this->allow_export = p_allow_export; }
+
+		unsigned int get_min_players()                   { return this->min_players; }
+		void set_min_players(unsigned int p_min_players) { this->min_players = min_players; }
+
+		unsigned int get_max_players()                   { return this->max_players; }
+		void set_max_players(unsigned int p_max_players) { this->max_players = max_players; }
+
+		bool get_allow_respawn()                     { return this->allow_respawn; }
+		void set_allow_respawn(bool p_allow_respawn) { this->allow_respawn = p_allow_respawn; }
+
+		bool get_not_used()                { return this->not_used; }
+		void set_not_used(bool p_not_used) { this->not_used = p_not_used; }
+
+		string get_rating()              { return this->rating; }
+		void set_rating(string p_rating) { this->rating = p_rating; }
+
+		vector<string> get_summary()               { return this->summary; }
+		void set_summary(vector<string> p_summary) { this->summary = p_summary; }
+};
+
+
+//---------------------------------------------------------------------
 //-   Texture box?
 //---------------------------------------------------------------------
 typedef vect2 TILE_TXBOX;
+
 
 //---------------------------------------------------------------------
 //-   the definition of a single tile
@@ -219,6 +283,7 @@ class c_tile_definition
 //		~c_tile_definition()
 };
 
+
 //---------------------------------------------------------------------
 //-   The dictionary, compiling all of the tile definitions
 //---------------------------------------------------------------------
@@ -232,6 +297,7 @@ struct c_tile_dictionary : public vector<c_tile_definition>
 
 	bool load();
 };
+
 
 //---------------------------------------------------------------------
 //-   The mesh info
@@ -311,6 +377,7 @@ class c_mesh_mem
 		int     vrt_count;
 		void *  base;             // For malloc
 
+		// Hint: Those pointers will act like an array
 		float*  vrt_x;            // Vertex position
 		float*  vrt_y;            //
 		float*  vrt_z;            // Vertex elevation
@@ -332,7 +399,7 @@ class c_mesh_mem
 
 
 //---------------------------------------------------------------------
-//-   container for all mesh related data                             -
+//-   container for all mesh related data
 //---------------------------------------------------------------------
 class c_mesh
 {
@@ -342,23 +409,34 @@ class c_mesh
 
 		vector<int> m_meshfx;
 
+		c_menu_txt   *m_menu_txt;
+
 	protected:
 		// TODO: The tile dictionary doesn't really belong to the mesh
 		//       It's more a general Egoboo thing
 		static c_tile_dictionary ms_tiledict;
 
 	public:
+		// TODO: Make private
 		c_mesh_info  *mi;
 		c_mesh_mem   *mem;
+
+		bool change_mem_size(int, int);
 
 		c_mesh();
 		~c_mesh();
 		bool save_mesh_mpd(string);
 		bool load_mesh_mpd(string);
 
+		void load_menu_txt(string);
+		c_menu_txt* get_menu_txt()                { return this->m_menu_txt; }
+		void set_menu_txt(c_menu_txt* p_menu_txt) { this->m_menu_txt = p_menu_txt; }
+
 		string modname;
 
 		int get_meshfx(int);
+
+		vector<int> get_fan_vertices(int);
 
 		int modify_verts_x(float, int);
 		int modify_verts_y(float, int);

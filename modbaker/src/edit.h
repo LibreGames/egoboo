@@ -81,6 +81,9 @@ class c_selection
 		void set_tile_flag(unsigned char);
 		void set_tile_type(int);
 
+		void make_wall();
+		void make_floor();
+
 		bool in_selection(int);
 
 		bool add_mesh_object(int, float, float, float);

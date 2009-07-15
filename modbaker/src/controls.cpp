@@ -61,6 +61,9 @@ void c_input_handler::mouseMoved(gcn::MouseEvent& event)
 }
 
 
+//---------------------------------------------------------------------
+//-   Tokenize a string based on a semicolon
+//---------------------------------------------------------------------
 // TODO: Move somewhere else (maybe utility.cpp or global.cpp)
 bool tokenize_semicolon(const string str, vector<string>& tokens)
 {
@@ -278,6 +281,8 @@ void c_input_handler::do_something(int p_action)
 		case ACTION_MESH_NEW:
 			delete g_mesh;
 			g_mesh = NULL;
+			g_input_handler->do_something(WINDOW_MESH_NEW_HIDE);
+			// TODO: Remove objects / spawns
 			break;
 
 		case ACTION_MESH_LOAD:
@@ -285,7 +290,7 @@ void c_input_handler::do_something(int p_action)
 			cout << filename << endl;
 			if(load_module(filename))
 			{
-				g_renderer->get_wm()->set_load_visibility(false);
+				g_renderer->get_wm()->set_visibility("load", false);
 				g_renderer->load_basic_textures(filename);
 
 				g_renderer->m_renderlist.build();
@@ -293,10 +298,10 @@ void c_input_handler::do_something(int p_action)
 			break;
 
 		case ACTION_MESH_SAVE:
-			filename = g_renderer->get_wm()->tf_load->getText();
+			filename = g_renderer->get_wm()->tf_save->getText();
 			cout << filename << endl;
 			if (g_mesh->save_mesh_mpd(g_config->get_egoboo_path() + "modules/" + g_mesh->modname + "/gamedat/" + filename))
-				g_renderer->get_wm()->set_save_visibility(false);
+				g_renderer->get_wm()->set_visibility("save", false);
 
 			break;
 
@@ -327,6 +332,14 @@ void c_input_handler::do_something(int p_action)
 
 		case ACTION_SELECTION_CLEAR:
 			g_selection.clear();
+			break;
+
+		case ACTION_MAKE_WALL:
+			g_selection.make_wall();
+			break;
+
+		case ACTION_MAKE_FLOOR:
+			g_selection.make_floor();
 			break;
 
 		case ACTION_SELMODE_VERTEX:
@@ -414,55 +427,72 @@ void c_input_handler::do_something(int p_action)
 
 		// Guichan window handling
 		case WINDOW_TEXTURE_TOGGLE:
-			g_renderer->get_wm()->toggle_texture_visibility();
+			g_renderer->get_wm()->toggle_visibility("texture");
 			break;
 
 		case WINDOW_OBJECT_TOGGLE:
-			g_renderer->get_wm()->toggle_object_visibility();
+			g_renderer->get_wm()->toggle_visibility("object");
 			break;
 
 		case WINDOW_INFO_TOGGLE:
-			g_renderer->get_wm()->toggle_info_visibility();
+			g_renderer->get_wm()->toggle_visibility("info");
 			break;
 
-		case WINDOW_LOAD_SHOW:
-			g_renderer->get_wm()->set_load_visibility(true);
+		case WINDOW_MESH_LOAD_SHOW:
+			g_renderer->get_wm()->set_visibility("mesh_load", true);
 			break;
 
-		case WINDOW_SAVE_SHOW:
-			g_renderer->get_wm()->set_save_visibility(true);
+		case WINDOW_MESH_SAVE_SHOW:
+			g_renderer->get_wm()->set_visibility("mesh_save", true);
 			break;
 
-		case WINDOW_LOAD_HIDE:
-			g_renderer->get_wm()->set_load_visibility(false);
+		case WINDOW_MESH_LOAD_HIDE:
+			g_renderer->get_wm()->set_visibility("mesh_load", false);
 			break;
 
-		case WINDOW_SAVE_HIDE:
-			g_renderer->get_wm()->set_save_visibility(false);
+		case WINDOW_MESH_SAVE_HIDE:
+			g_renderer->get_wm()->set_visibility("mesh_save", false);
+			break;
+
+		case WINDOW_MESH_NEW_HIDE:
+			g_renderer->get_wm()->set_visibility("mesh_new", false);
+			break;
+
+		case WINDOW_MESH_NEW_SHOW:
+			g_renderer->get_wm()->set_visibility("mesh_new", true);
+			break;
+
+		case WINDOW_MOD_MENU_HIDE:
+			g_renderer->get_wm()->set_visibility("mod_menu", false);
+			break;
+
+		case WINDOW_MOD_MENU_SHOW:
+			g_renderer->get_wm()->set_menu_txt(g_mesh->get_menu_txt());
+			g_renderer->get_wm()->set_visibility("mod_menu", true);
 			break;
 
 		case WINDOW_TILE_FLAG_HIDE:
-			g_renderer->get_wm()->set_tile_flag_visibility(false);
+			g_renderer->get_wm()->set_visibility("tile_flag", false);
 			break;
 
 		case WINDOW_TILE_TYPE_HIDE:
-			g_renderer->get_wm()->set_tile_type_visibility(false);
+			g_renderer->get_wm()->set_visibility("tile_type", false);
 			break;
 
 		case WINDOW_TILE_FLAG_SHOW:
-			g_renderer->get_wm()->set_tile_flag_visibility(true);
+			g_renderer->get_wm()->set_visibility("tile_flag", true);
 			break;
 
 		case WINDOW_TILE_TYPE_SHOW:
-			g_renderer->get_wm()->set_tile_type_visibility(true);
+			g_renderer->get_wm()->set_visibility("tile_type", true);
 			break;
 
 		case WINDOW_TILE_FLAG_TOGGLE:
-			g_renderer->get_wm()->toggle_tile_flag_visibility();
+			g_renderer->get_wm()->toggle_visibility("tile_flag");
 			break;
 
 		case WINDOW_TILE_TYPE_TOGGLE:
-			g_renderer->get_wm()->toggle_tile_type_visibility();
+			g_renderer->get_wm()->toggle_visibility("tile_type");
 			break;
 
 		// Tile flag rendering
@@ -495,6 +525,12 @@ void c_input_handler::do_something(int p_action)
 		case ACTION_OBJECT_REMOVE:
 			g_selection.remove_objects();
 			g_selection.clear();
+			break;
+
+		// Save the file menu.txt
+		case ACTION_SAVE_MOD_MENU:
+			g_mesh->set_menu_txt(g_renderer->get_wm()->get_menu_txt());
+			g_mesh->get_menu_txt()->save(g_config->get_egoboo_path() + "modules/" + g_mesh->modname + "/gamedat/menu.txt");
 			break;
 	}
 }

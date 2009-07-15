@@ -247,3 +247,93 @@ bool read_files(string p_dirname, string needle, vector<string>& p_files)
 	closedir(dir_handler);
 	return true;
 }
+
+
+//---------------------------------------------------------------------
+//-   Translate an Egoboo boolean into a real boolean value
+//---------------------------------------------------------------------
+bool translate_into_bool(string p_string)
+{
+	if (p_string == "FALSE")
+		return false;
+
+	if (p_string == "TRUE")
+		return true;
+
+	cout << "WARNING: Unknown BOOLEAN" << p_string << endl;
+	cout << "  Returning FALSE" << endl;
+	return false;
+}
+
+
+//---------------------------------------------------------------------
+//-   Translate a boolean into an Egoboo boolean
+//---------------------------------------------------------------------
+string translate_into_egobool(bool p_bool)
+{
+	if (p_bool)
+		return "TRUE";
+
+	return "FALSE";
+}
+
+
+//---------------------------------------------------------------------
+//-   Translate an unsigned int into a string
+//---------------------------------------------------------------------
+string translate_into_string(unsigned int p_number)
+{
+	stringstream sstr;
+	sstr << (int)p_number;
+	return sstr.str();
+}
+
+
+//---------------------------------------------------------------------
+//-   Translate astring into an unsigned
+//---------------------------------------------------------------------
+unsigned int translate_into_uint(string p_string)
+{
+	int iTmp;
+	stringstream sstr(p_string);
+	sstr >> iTmp;
+	return (unsigned int)iTmp;
+}
+
+
+//---------------------------------------------------------------------
+//-   Replace blanks with underscores
+//---------------------------------------------------------------------
+string find_and_replace(string p_string, string p_needle, string p_replace)
+{
+	string tmp_str;
+	tmp_str = p_string;
+
+	size_t pos = tmp_str.find(p_needle);
+
+	while (pos != string::npos)
+	{
+		tmp_str.replace(pos, p_needle.length(), p_replace);
+		pos = tmp_str.find(p_needle);
+	}
+
+	return tmp_str;
+}
+
+
+//---------------------------------------------------------------------
+//-   Replace blanks with underscores
+//---------------------------------------------------------------------
+string add_underscores(string p_string)
+{
+	return find_and_replace(p_string, " ", "_");
+}
+
+
+//---------------------------------------------------------------------
+//-   Replace underscores with blanks
+//---------------------------------------------------------------------
+string remove_underscores(string p_string)
+{
+	return find_and_replace(p_string, "_", " ");
+}
