@@ -37,6 +37,7 @@ using namespace std;
 //---------------------------------------------------------------------
 int main(int argc, char **argv)
 {
+	cout << "entering main" << endl;
 	c_modbaker modbaker;
 
 	string modname;

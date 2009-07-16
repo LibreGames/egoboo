@@ -346,19 +346,35 @@ typedef struct s_aa_bbox AA_BBOX;
 
 
 //---------------------------------------------------------------------
-//-   mesh tile - this stores information about a single tile (fan)
+//-   One single tile
 //---------------------------------------------------------------------
-struct sMeshTile
+class c_tile
 {
-	Uint8   type;         // Command type
-	Uint8   fx;           // Special effects flags
-	Uint8   twist;        //
-	bool    inrenderlist; //
-	Uint16  tile;         // Get texture from this
-	Uint32  vrt_start;    // Which vertex to start at
-	AA_BBOX bbox;         // what is the minimum extent of the fan
+	private:
+		bool wall;
+	public:
+		int vert_count;
+		int pos_x;                     // The X position of the tile
+		int pos_y;                     // The Y position of the tile
+		vector<vect3> vertices;        // x, y, z values
+		vector<vect3> vert_base_light; // r, g, b values
+		vector<vect3> vert_light;      // r, g, b values
+
+		Uint8   type;         // Command type
+		Uint8   fx;           // Special effects flags
+		Uint8   twist;        //
+		bool    inrenderlist; //
+		Uint16  tile;         // Get texture from this
+		Uint32  vrt_start;    // Which vertex to start at
+		AA_BBOX bbox;         // what is the minimum extent of the fan
+
+		c_tile();
+		~c_tile();
+		bool get_wall() { return this->wall; }
+		void set_wall(bool p_wall) { this->wall = p_wall; }
+
+		vect3* get_vertex(int);
 };
-typedef struct sMeshTile MeshTile_t;
 
 
 //---------------------------------------------------------------------
@@ -375,26 +391,32 @@ class c_mesh_mem
 
 	public:
 		int     vrt_count;
-		void *  base;             // For malloc
 
-		// Hint: Those pointers will act like an array
-		float*  vrt_x;            // Vertex position
-		float*  vrt_y;            //
-		float*  vrt_z;            // Vertex elevation
+		vector<c_tile> tiles;
 
-		Uint8*  vrt_ar_fp8;       // Vertex base light
-		Uint8*  vrt_ag_fp8;       // Vertex base light
-		Uint8*  vrt_ab_fp8;       // Vertex base light
+		Uint32 tile_count;
 
-		float*  vrt_lr_fp8;       // Vertex light
-		float*  vrt_lg_fp8;       // Vertex light
-		float*  vrt_lb_fp8;       // Vertex light
+		// Vertex lookup table
+		vector<unsigned int> vert_lookup;
 
-		Uint32        tile_count;
-		MeshTile_t  * tilelst;
+		void build_tile_lookup_table();
 
 		c_mesh_mem(int, int);
 		~c_mesh_mem();
+		int get_vert_start(int);
+		vect3 get_vert(int);
+
+		void modify_verts_x(float, int);
+		void modify_verts_y(float, int);
+		void modify_verts_z(float, int);
+
+		void set_verts_x(float, int);
+		void set_verts_y(float, int);
+		void set_verts_z(float, int);
+
+		float get_verts_x(int);
+		float get_verts_y(int);
+		float get_verts_z(int);
 };
 
 
@@ -441,14 +463,6 @@ class c_mesh
 		int modify_verts_x(float, int);
 		int modify_verts_y(float, int);
 		int modify_verts_z(float, int);
-
-		void set_verts_x(float, int);
-		void set_verts_y(float, int);
-		void set_verts_z(float, int);
-
-		float get_verts_x(int);
-		float get_verts_y(int);
-		float get_verts_z(int);
 
 		int get_nearest_vertex(float, float, float);
 		int get_nearest_tile(float, float, float);

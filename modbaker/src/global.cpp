@@ -63,7 +63,10 @@ bool load_module(string p_modname)
 {
 	// Read the mesh mpd
 	if(!g_mesh->load_mesh_mpd(p_modname))
+	{
+		cout << "There was an error loading the module" << endl;
 		return false;
+	}
 
 	// Read the object and spawn.txt information
 	g_object_manager->clear_objects();
@@ -71,7 +74,6 @@ bool load_module(string p_modname)
 	g_object_manager->load_objects(g_config->get_egoboo_path() + "modules/" + p_modname + "/objects/", false);
 	g_object_manager->load_objects(g_config->get_egoboo_path() + "basicdat/globalobjects/", true);
 	g_object_manager->load_spawns(p_modname);
-
 	g_mesh->load_menu_txt(p_modname);
 
 	// Reset module specific windows

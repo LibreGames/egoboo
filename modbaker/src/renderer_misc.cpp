@@ -216,13 +216,13 @@ bool c_renderlist::build()
 
 	for (fan = 0; fan < g_mesh->mi->tile_count; fan++)
 	{
-		g_mesh->mem->tilelst[fan].inrenderlist = false;
+		g_mesh->mem->tiles[fan].inrenderlist = false;
 
 		if (m_num_totl < MAXMESHRENDER)
 		{
 			bool is_shine, is_noref, is_norml, is_water;
 
-			g_mesh->mem->tilelst[fan].inrenderlist = true;
+			g_mesh->mem->tiles[fan].inrenderlist = true;
 
 //			is_shine = mesh_has_all_bits(mm->tilelst, fan, MPDFX_SHINY);
 //			is_noref = mesh_has_all_bits(mm->tilelst, fan, MPDFX_NOREFLECT);

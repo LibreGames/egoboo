@@ -162,9 +162,9 @@ bool c_selection::weld(c_mesh *p_mesh)
 
 	for (i = 1; i < this->selection.size(); i++)
 	{
-		p_mesh->set_verts_x(p_mesh->get_verts_x(this->selection[0]), this->selection[i]);
-		p_mesh->set_verts_y(p_mesh->get_verts_y(this->selection[0]), this->selection[i]);
-		p_mesh->set_verts_z(p_mesh->get_verts_z(this->selection[0]), this->selection[i]);
+		p_mesh->mem->set_verts_x(p_mesh->mem->get_verts_x(this->selection[0]), this->selection[i]);
+		p_mesh->mem->set_verts_y(p_mesh->mem->get_verts_y(this->selection[0]), this->selection[i]);
+		p_mesh->mem->set_verts_z(p_mesh->mem->get_verts_z(this->selection[0]), this->selection[i]);
 	}
 
 	return true;
@@ -268,13 +268,13 @@ void c_selection::change_texture()
 	for (i = 0; i < this->selection.size(); i++)
 	{
 		fan = this->selection[i];
-		g_mesh->mem->tilelst[fan].tile = this->texture;
+		g_mesh->mem->tiles[fan].tile = this->texture;
 
 		// Change the tile type (for big tiles)
 		if (this->texture >= 64)
-			g_mesh->mem->tilelst[fan].type = 32;
+			g_mesh->mem->tiles[fan].type = 32;
 		else
-			g_mesh->mem->tilelst[fan].type = 0;
+			g_mesh->mem->tiles[fan].type = 0;
 	}
 }
 
@@ -291,7 +291,7 @@ void c_selection::set_tile_flag(unsigned char p_flag)
 	{
 		fan = this->selection[i];
 
-		g_mesh->mem->tilelst[fan].fx = p_flag;
+		g_mesh->mem->tiles[fan].fx = p_flag;
 	}
 }
 
@@ -308,7 +308,7 @@ void c_selection::set_tile_type(int p_type)
 	{
 		fan = this->selection[i];
 
-		g_mesh->mem->tilelst[fan].type = p_type;
+		g_mesh->mem->tiles[fan].type = p_type;
 		g_mesh->change_mem_size(g_mesh->mem->vrt_count + 2, g_mesh->mem->tile_count);
 	}
 }
@@ -330,10 +330,10 @@ void c_selection::make_wall()
 		fan = this->selection[i];
 
 		// Is it a wall already?
-		if (0 == (g_mesh->mem->tilelst[fan].fx & MESHFX_WALL))
+		if (0 == (g_mesh->mem->tiles[fan].fx & MESHFX_WALL))
 		{
 			// Set the tile flag
-			g_mesh->mem->tilelst[fan].fx = MESHFX_WALL | MESHFX_IMPASS | MESHFX_SHA;
+			g_mesh->mem->tiles[fan].fx = MESHFX_WALL | MESHFX_IMPASS | MESHFX_SHA;
 
 			// Set the tile type
 			// TODO: randomize the floor types
@@ -343,12 +343,12 @@ void c_selection::make_wall()
 		vec_vertices = g_mesh->get_fan_vertices(fan);
 
 		// Get the height of the first vertex
-		newheight = g_mesh->get_verts_z(vec_vertices[0]) + 192;
+		newheight = g_mesh->mem->get_verts_z(vec_vertices[0]) + 192;
 
 		for (vec = 0; vec < (int)vec_vertices.size(); vec++)
 		{
 			// Set the height
-			g_mesh->set_verts_z(newheight, vec_vertices[vec]);
+			g_mesh->mem->set_verts_z(newheight, vec_vertices[vec]);
 		}
 
 		// TODO: Modify the eight surrounding tiles
