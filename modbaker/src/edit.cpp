@@ -322,24 +322,30 @@ void c_selection::make_wall()
 	unsigned int i;
 	int fan;
 	vector<int> vec_vertices;
-	int vec;
-	float newheight;
 
 	for (i = 0; i < this->selection.size(); i++)
 	{
 		fan = this->selection[i];
 
 		// Is it a wall already?
-		if (0 == (g_mesh->mem->tiles[fan].fx & MESHFX_WALL))
+		if (0 != (g_mesh->mem->tiles[fan].fx & MESHFX_WALL))
 		{
-			// Set the tile flag
-			g_mesh->mem->tiles[fan].fx = MESHFX_WALL | MESHFX_IMPASS | MESHFX_SHA;
-
-			// Set the tile type
-			// TODO: randomize the floor types
-//			g_mesh->mem->tilelst[fan].type = get_proper_tile_type(fan);
+			cout << "Tile already is a wall" << endl;
+			// Nothing to do
+			break;
 		}
 
+		// Set the tile flags to "wall"
+		g_mesh->mem->tiles[fan].fx = MESHFX_WALL | MESHFX_IMPASS | MESHFX_SHA;
+
+		// Set the tile type
+		// TODO: make type dependent on the surrounding tiles
+		// TODO: randomize floor tiles for a nicer look
+
+		// Change the number of vertices in the tile
+		g_mesh->mem->change_tile_type(fan, TTYPE_PILLER_TEN);
+
+/*
 		vec_vertices = g_mesh->get_fan_vertices(fan);
 
 		// Get the height of the first vertex
@@ -350,8 +356,9 @@ void c_selection::make_wall()
 			// Set the height
 			g_mesh->mem->set_verts_z(newheight, vec_vertices[vec]);
 		}
+*/
 
-		// TODO: Modify the eight surrounding tiles
+		// TODO: Change the texture
 		// TODO: Autoweld
 	}
 }

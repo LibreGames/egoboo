@@ -312,6 +312,9 @@ bool c_renderer::render_positions()
 	if (g_mesh == NULL)
 		return false;
 
+	if (g_mesh->mem == NULL)
+		return false;
+
 	glDisable(GL_TEXTURE_2D);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -350,7 +353,7 @@ bool c_renderer::render_positions()
 		glBegin(GL_QUADS);
 		glColor4f(0.0f, 1.0f, 0.0f, 1);
 
-		for (i = 0; i < g_mesh->mi->vert_count; i++)
+		for (i = 0; i < g_mesh->mem->vrt_count; i++)
 		{
 			if (g_selection.in_selection(i))
 			{
@@ -513,7 +516,6 @@ void c_renderer::render_fan(Uint32 fan, bool set_texture)
 
 	vertices  = g_mesh->getTileDefinition(type).vrt_count;            // Number of vertices
 	badvertex = g_mesh->mem->tiles[fan].vrt_start;   // Get big reference value
-
 
 	// Fill in the vertex data from the mesh memory
 	//	for (cnt = 0; cnt < vertices; cnt++, badvertex++)

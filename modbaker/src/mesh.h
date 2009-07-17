@@ -306,8 +306,6 @@ class c_mesh_info
 {
 	private:
 	public:
-		int     vert_count;                 // Total number of vertices
-
 		int     tiles_x;                    // Mesh size in tiles
 		int     tiles_y;
 		size_t  tile_count;
@@ -400,10 +398,10 @@ class c_mesh_mem
 		vector<unsigned int> vert_lookup;
 
 		void build_tile_lookup_table();
+		void change_tile_type(int, int);
 
 		c_mesh_mem(int, int);
 		~c_mesh_mem();
-		int get_vert_start(int);
 		vect3 get_vert(int);
 
 		void modify_verts_x(float, int);
@@ -431,7 +429,9 @@ class c_mesh
 
 		vector<int> m_meshfx;
 
-		c_menu_txt   *m_menu_txt;
+		c_menu_txt  *m_menu_txt;
+
+		vect2 new_size;
 
 	protected:
 		// TODO: The tile dictionary doesn't really belong to the mesh
@@ -445,8 +445,12 @@ class c_mesh
 
 		bool change_mem_size(int, int);
 
+		void  set_size(vect2 p_size) { this->new_size = p_size; }
+		vect2 get_size()             { return this->new_size; }
+
 		c_mesh();
 		~c_mesh();
+		bool new_mesh_mpd(int, int);
 		bool save_mesh_mpd(string);
 		bool load_mesh_mpd(string);
 

@@ -279,15 +279,17 @@ void c_input_handler::do_something(int p_action)
 	switch (p_action)
 	{
 		case ACTION_MESH_NEW:
-			delete g_mesh;
-			g_mesh = NULL;
 			g_input_handler->do_something(WINDOW_MESH_NEW_HIDE);
+			g_nearest_vertex = 0;
+			g_mesh->new_mesh_mpd(g_mesh->get_size().x, g_mesh->get_size().y);
+			g_renderer->m_renderlist.build();
 			// TODO: Remove objects / spawns
 			break;
 
 		case ACTION_MESH_LOAD:
 			filename = g_renderer->get_wm()->tf_load->getText();
 			cout << filename << endl;
+			g_nearest_vertex = 0;
 			if(load_module(filename))
 			{
 				g_renderer->get_wm()->set_visibility("load", false);

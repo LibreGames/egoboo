@@ -400,6 +400,12 @@ class c_window_manager
 		c_mb_window* w_minimap;
 		c_mb_window* w_config;
 
+		// input fields
+		c_mb_textfield* tf_name;   // New mesh: module name
+		c_mb_textfield* tf_size_x; // New mesh: x size
+		c_mb_textfield* tf_size_y; // New mesh: y size
+
+
 		int selected_object;
 		int selected_tile_flag;
 		int selected_tile_type;
@@ -411,6 +417,15 @@ class c_window_manager
 	public:
 		c_window_manager(c_renderer*);
 		~c_window_manager();
+
+		void            set_tf_name(c_mb_textfield* p_name)   { this->tf_name = p_name; }
+		c_mb_textfield* get_tf_name()                         { return this->tf_name; }
+
+		void            set_tf_size_x(c_mb_textfield* p_size_x) { this->tf_size_x = p_size_x; }
+		c_mb_textfield* get_tf_size_x()                         { return this->tf_size_x; }
+
+		void            set_tf_size_y(c_mb_textfield* p_size_y) { this->tf_size_x = p_size_y; }
+		c_mb_textfield* get_tf_size_y()                         { return this->tf_size_y; }
 
 		void set_fps(float);
 		void set_position(float, float);
@@ -450,8 +465,10 @@ class c_window_manager
 		bool create_texture_window(string);
 		void destroy_texture_window()
 		{
-			if (this->w_texture != NULL)
-				delete w_texture;
+			if (this->w_texture == NULL)
+				return;
+
+			delete w_texture;
 		}
 
 		bool create_info_window();
@@ -475,8 +492,10 @@ class c_window_manager
 		bool create_object_window(string);
 		void destroy_object_window()
 		{
-			if (this->w_object != NULL)
-				delete w_object;
+			if (this->w_object == NULL)
+				return;
+
+			delete this->w_object;
 		}
 
 		c_menu_txt* get_menu_txt() { return this->w_mod_menu->get_menu_txt(); }

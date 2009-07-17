@@ -167,6 +167,9 @@ void c_mb_image_button::mouseMoved(gcn::MouseEvent &event)
 //---------------------------------------------------------------------
 c_window_manager::c_window_manager(c_renderer* p_renderer)
 {
+	this->w_object  = NULL;
+	this->w_texture = NULL;
+
 	try
 	{
 		this->selected_object    = -1;
@@ -1179,18 +1182,15 @@ bool c_window_manager::create_mesh_new_window()
 		c_mb_label* label_meshname;
 		c_mb_label* label_meshsize;
 		c_mb_label* label_meshsize_x;
-		c_mb_textfield* tf_name;
-		c_mb_textfield* tf_size_x;
-		c_mb_textfield* tf_size_y;
 
 		label_meshname = new c_mb_label("Module name");
 		label_meshname->setPosition(0, 0);
 		label_meshname->setSize(200, 20);
 
-		tf_name = new c_mb_textfield();
-		tf_name->setText("level.mpd");
-		tf_name->setPosition(200, 0);
-		tf_name->setSize(100, 20);
+		this->tf_name = new c_mb_textfield();
+		this->tf_name->setText("level.mpd");
+		this->tf_name->setPosition(200, 0);
+		this->tf_name->setSize(100, 20);
 
 		// Mesh size
 		label_meshsize = new c_mb_label("Mesh size (width x height)");
@@ -1201,15 +1201,15 @@ bool c_window_manager::create_mesh_new_window()
 		label_meshsize_x->setPosition(40, 40);
 		label_meshsize_x->setSize(10, 20);
 
-		tf_size_x = new c_mb_textfield();
-		tf_size_x->setText("64");
-		tf_size_x->setPosition(0, 40);
-		tf_size_x->setSize(35, 20);
+		this->tf_size_x = new c_mb_textfield();
+		this->tf_size_x->setText("3");
+		this->tf_size_x->setPosition(0, 40);
+		this->tf_size_x->setSize(35, 20);
 
-		tf_size_y = new c_mb_textfield();
-		tf_size_y->setText("64");
-		tf_size_y->setPosition(50, 40);
-		tf_size_y->setSize(35, 20);
+		this->tf_size_y = new c_mb_textfield();
+		this->tf_size_y->setText("3");
+		this->tf_size_y->setPosition(50, 40);
+		this->tf_size_y->setSize(35, 20);
 
 		c_mb_button* button_ok;
 		button_ok = new c_mb_button();
@@ -1229,9 +1229,9 @@ bool c_window_manager::create_mesh_new_window()
 		this->w_mesh_new->add(label_meshname);
 		this->w_mesh_new->add(label_meshsize);
 		this->w_mesh_new->add(label_meshsize_x);
-		this->w_mesh_new->add(tf_name);
-		this->w_mesh_new->add(tf_size_x);
-		this->w_mesh_new->add(tf_size_y);
+		this->w_mesh_new->add(this->tf_name);
+		this->w_mesh_new->add(this->tf_size_x);
+		this->w_mesh_new->add(this->tf_size_y);
 		this->w_mesh_new->add(button_ok);
 		this->w_mesh_new->add(button_cancel);
 		this->top->add(this->w_mesh_new);
@@ -1349,6 +1349,11 @@ void c_mb_button::mousePressed(gcn::MouseEvent &event)
 			break;
 
 		case BUTTON_MESH_NEW_OK:
+			vect2 new_size;
+			new_size.x = translate_into_uint(g_renderer->get_wm()->get_tf_size_x()->getText());
+			new_size.y = translate_into_uint(g_renderer->get_wm()->get_tf_size_y()->getText());
+			g_mesh->set_size(new_size);
+
 			g_input_handler->do_something(ACTION_MESH_NEW);
 			g_input_handler->do_something(WINDOW_MESH_NEW_HIDE);
 			break;
