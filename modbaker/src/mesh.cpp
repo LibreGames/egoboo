@@ -161,7 +161,7 @@ bool c_mesh::load_mesh_mpd(string p_modname)
 	int vert, vrt;
 
 	vector<vect3> vertices;
-	vect3 tmp_vec;
+	vect3 tmp_vec = {0, 0, 0};
 
 	string filename;
 	ifstream file;
@@ -218,7 +218,7 @@ bool c_mesh::load_mesh_mpd(string p_modname)
 		cout << "mesh_load() - " << endl
 		<< "  Unable to initialize Mesh Memory. MPD file "
 		<< filename.c_str() << " has too many vertices." << endl;
-		return -1;
+		return false;
 	}
 
 	// Get the right down edge
@@ -1254,7 +1254,7 @@ bool c_mesh::new_mesh_mpd(int p_tiles_x, int p_tiles_y)
 	{
 		cout << "mesh_load() - " << endl
 		<< "  Unable to initialize Mesh Memory. Too many vertices." << endl;
-		return -1;
+		return false;
 	}
 
 	// Get the right down edge

@@ -42,6 +42,21 @@
 #define MIN(a,b) ( ((a)>(b))? (b):(a) )
 #endif
 
+//Visual Studio specific defenitions
+#if defined (_MSC_VER)
+#define SPACE		Space
+#define ESCAPE		Escape
+#define UP			Up
+#define DOWN		Down
+#define LEFT		Left
+#define RIGHT		Right
+#define PAGE_UP		PageUp
+#define PAGE_DOWN	PageDown
+#define LEFT_SHIFT	LeftShift
+#define RIGHT_SHIFT	RightShift
+#endif
+
+
 //---------------------------------------------------------------------
 //-   egoboo_math.h - Vector definitions
 //---------------------------------------------------------------------
