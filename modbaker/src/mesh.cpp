@@ -162,6 +162,7 @@ bool c_mesh::load_mesh_mpd(string p_modname)
 
 	vector<vect3> vertices;
 	vect3 tmp_vec = {0, 0, 0};
+	c_tile tmp_tile;
 
 	string filename;
 	ifstream file;
@@ -235,11 +236,14 @@ bool c_mesh::load_mesh_mpd(string p_modname)
 		file.read((char*)&itmp, 4);
 		itmp = SDL_SwapLE32( itmp );
 
-		this->mem->tiles[fan].type = itmp >> 24;
-		this->mem->tiles[fan].fx   = itmp >> 16;
-		this->mem->tiles[fan].tile = itmp;
-		this->mem->tiles[fan].vert_count = g_mesh->getTileDefinition(this->mem->tiles[fan].type).vrt_count;
-		this->mem->tiles[fan].vertices.reserve(this->mem->tiles[fan].vert_count);
+		tmp_tile.type = itmp >> 24;
+		tmp_tile.fx   = itmp >> 16;
+		tmp_tile.tile = itmp;
+		tmp_tile.vert_count = g_mesh->getTileDefinition(tmp_tile.type).vrt_count;
+
+		this->mem->tiles.push_back(tmp_tile);
+
+		this->mem->tiles[fan].vertices.reserve(tmp_tile.vert_count);
 	}
 
 
