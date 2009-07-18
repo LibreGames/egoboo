@@ -9,12 +9,14 @@
  - SDL_image (+ dev files)
  - SDL_ttf (+ dev files)
  - Guichan 0.8.1 (with guichan_sdl and guichan_opengl support) (+ dev files)
+ - dirent library [1] (Windows only)
 
 === Windows ===
  - Get the ModBaker source code and put it into [MODBAKER_ROOT]\src
  - Extract the Guichan development files in another temp. directory
    Copy all files / directories from the guichan\include directory into [MODBAKER_ROOT]\include
  - Extract the SDL headers and put them into [MODBAKER_ROOT]\include
+ - Grab the dirent.zip archive and add the files to your project
 
  - Set up your project (tested with Code::Bocks 8.02):
    - Add all *.cpp files in the [MODBAKER_ROOT]\src directory as source files
@@ -34,3 +36,7 @@
 === Linux ===
  - Setup the mentioned libraries
  - Run "make" from the [MODBAKER_ROOT]/src directory
+
+
+=== Links ===
+[1] http://www.gimp.org/~tml/gimp/win32/dirent.zip
