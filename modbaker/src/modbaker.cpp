@@ -17,6 +17,11 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //---------------------------------------------------------------------
 
+/// @file
+/// @brief ModBaker implementation
+/// @details Implementation of the logic between all core elements
+
+
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <SDL_types.h>
@@ -33,7 +38,10 @@
 using namespace std;
 
 //---------------------------------------------------------------------
-//-   The main function
+///   The main function
+///   \param argc the parameters
+///   \param argv number of parameters
+///   \return error code or 0 on success
 //---------------------------------------------------------------------
 int main(int argc, char **argv)
 {
@@ -58,7 +66,7 @@ int main(int argc, char **argv)
 
 
 //---------------------------------------------------------------------
-//-   Constructor
+///   Class constructor
 //---------------------------------------------------------------------
 c_modbaker::c_modbaker()
 {
@@ -69,22 +77,24 @@ c_modbaker::c_modbaker()
 	g_config            = NULL;
 	g_renderer          = NULL;
 	g_input_handler     = NULL;
-	g_mesh              = NULL;
+//	g_module              = NULL;
 //	g_frustum           = NULL;
 	g_mouse_x           = 0;
 	g_mouse_x           = 0;
 }
 
-/*
+
+//---------------------------------------------------------------------
+///   Class destructor
+//---------------------------------------------------------------------
 c_modbaker::~c_modbaker()
 {
-	delete input;
 }
-*/
 
 
 //---------------------------------------------------------------------
-//-   Init everything
+///   Initializes everything
+///   \param p_modname module name to start with
 //---------------------------------------------------------------------
 void c_modbaker::init(string p_modname)
 {
@@ -94,23 +104,21 @@ void c_modbaker::init(string p_modname)
 	g_renderer = new c_renderer();
 	g_renderer->load_basic_textures(p_modname);
 
-	// Load the mesh
-	g_mesh = new c_mesh();
-	g_mesh->getTileDictioary().load();
+	// Create a new module
+	g_module = new c_module();
 
-	g_object_manager = new c_object_manager();
-	load_module(p_modname);
+	g_module->load_module(p_modname);
 
 	g_renderer->m_renderlist.build();
 
 	// Set the module name
 	// TODO: Remove the global modname variable
-	g_mesh->modname = p_modname;
+	g_module->modname = p_modname;
 }
 
 
 //---------------------------------------------------------------------
-//-   The main loop
+///   Main loop
 //---------------------------------------------------------------------
 void c_modbaker::main_loop()
 {
@@ -127,7 +135,7 @@ void c_modbaker::main_loop()
 			g_renderer->getPCam()->move();
 			g_renderer->render_mesh();
 			g_renderer->render_positions();
-			g_renderer->render_models(g_object_manager); // Render spawn.txt
+			g_renderer->render_models(g_module); // Render spawn.txt
 			get_GL_pos(g_mouse_x, g_mouse_y);
 			g_renderer->end_3D_mode();
 
@@ -140,4 +148,54 @@ void c_modbaker::main_loop()
 
 		handle_events();
 	}
+}
+
+
+//---------------------------------------------------------------------
+///   Load a module
+///   \param p_modname the module name to load
+///   \return true on success
+//---------------------------------------------------------------------
+bool c_module::load_module(string p_modname)
+{
+	string filename;
+
+	filename = g_config->get_egoboo_path() + "modules/" + p_modname + "/gamedat/level.mpd";
+
+	this->getTileDictioary().load();
+	this->load_mesh_mpd(p_modname); // TODO: Change load_mesh_mpd so the complete filename is a parameter
+
+	// Read the object and spawn.txt information
+	g_module->load_all_for_module(p_modname);
+	this->load_menu_txt(p_modname);
+
+	// Reset module specific windows
+	g_renderer->get_wm()->destroy_object_window();
+	g_renderer->get_wm()->create_object_window(p_modname);
+	g_renderer->get_wm()->destroy_texture_window();
+	g_renderer->get_wm()->create_texture_window(p_modname);
+
+	return false;
+}
+
+
+//---------------------------------------------------------------------
+///   Save a module
+///   \param p_modname the module name to save
+///   \return true on success
+//---------------------------------------------------------------------
+bool c_module::save_module(string p_modname)
+{
+	return false;
+}
+
+
+//---------------------------------------------------------------------
+///   Create a new module
+///   \param p_modname the module name to create
+///   \return true on success
+//---------------------------------------------------------------------
+bool c_module::new_module(string p_modname)
+{
+	return false;
 }

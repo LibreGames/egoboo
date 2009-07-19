@@ -16,6 +16,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //---------------------------------------------------------------------
+
+/// @file
+/// @brief General stuff
+/// @details Definition of stuff that doesn't fit anywhere else
+
 #ifndef general_h
 #define general_h
 //---------------------------------------------------------------------
@@ -25,13 +30,10 @@
 //---------------------------------------------------------------------
 
 
-//---------------------------------------------------------------------
-//-   egoboo_types.h - Some helper functions
-//---------------------------------------------------------------------
-#define EGOBOO_NEW_ARY( TYPE, COUNT ) new TYPE [ COUNT ]
-#define EGOBOO_DELETE_ARY(PTR) if(NULL != PTR) { delete [] PTR; PTR = NULL; }
-
-
+///   \def MAX
+///        Helper function that retruns the bigger one of two values
+///   \def MIN
+///        Helper function that retruns the smaller one of two values
 /* Neither Linux nor Mac OS X seem to have MIN and MAX defined, so if they
  * haven't already been found, define them here. */
 #ifndef MAX
@@ -42,7 +44,28 @@
 #define MIN(a,b) ( ((a)>(b))? (b):(a) )
 #endif
 
-//Visual Studio specific defenitions
+
+//Visual Studio specific definitions
+///   \def SPACE
+///        Definition of the SPACE key for Visual Studio (req. MixedCase)
+///   \def ESCAPE
+///        Definition of the ESCAPE key for Visual Studio (req. MixedCase)
+///   \def UP
+///        Definition of the UP arrow key for Visual Studio (req. MixedCase)
+///   \def DOWN
+///        Definition of the DOWN arrow key for Visual Studio (req. MixedCase)
+///   \def LEFT
+///        Definition of the LEFT arrow key for Visual Studio (req. MixedCase)
+///   \def RIGHT
+///        Definition of the RIGHT arrow key for Visual Studio (req. MixedCase)
+///   \def PAGE_UP
+///        Definition of the PAGE_UP key for Visual Studio (req. MixedCase)
+///   \def PAGE_DOWN
+///        Definition of the PAGE_DOWN key for Visual Studio (req. MixedCase)
+///   \def LEFT_SHIFT
+///        Definition of the LEFT_SHIFT key for Visual Studio (req. MixedCase)
+///   \def RIGHT_SHIFT
+///        Definition of the RIGHT_SHIFT key for Visual Studio (req. MixedCase)
 #if defined (_MSC_VER)
 #define SPACE		Space
 #define ESCAPE		Escape
@@ -58,18 +81,26 @@
 
 
 //---------------------------------------------------------------------
-//-   egoboo_math.h - Vector definitions
+///   Vector and matrix definitions (stolen from egoboo_math.h)
+///   \struct matrix_4x4
+///           Matrix with a size 4x4
+///   \union vector2_t
+///           A vector with 2 coordinates
+///   \union vector3_t
+///           A vector with 3 coordinates
+///   \union vector4_t
+///           A vector with 4 coordinates
 //---------------------------------------------------------------------
 typedef struct matrix_4x4_t
 {
-	float v[16];
+	float v[16]; ///< Space
 } matrix_4x4;
 
 typedef matrix_4x4 GLmatrix;
 
 typedef union vector2_t
 {
-	float _v[2];
+	float _v[2]; ///< Space
 	struct { float x, y; };
 	struct { float u, v; };
 	struct { float s, t; };
@@ -77,13 +108,13 @@ typedef union vector2_t
 
 typedef union vector3_t
 {
-	float v[3];
+	float v[3]; ///< Space
 	struct { float x, y, z; };
 } vect3;
 
 typedef union vector4_t
 {
-	float v[4];
+	float v[4]; ///< Space
 	struct { float x, y, z, w; };
 	struct { float r, g, b, a; };
 } vect4;
@@ -102,6 +133,12 @@ float SwapLE_float( float val );
 
 #else
 
+
+//---------------------------------------------------------------------
+///   Function to spawn left / right endian based on the OS
+///   \param val Float value
+///   \return (swapped) float value
+//---------------------------------------------------------------------
 float SwapLE_float( float val )
 {
 	FCONVERT convert;

@@ -16,6 +16,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //---------------------------------------------------------------------
+
+/// @file
+/// @brief Renderer definition
+/// @details Definition of the rendering system
+
 #ifndef graphic_h
 #define graphic_h
 
@@ -42,7 +47,14 @@ using namespace std;
 
 
 //---------------------------------------------------------------------
-//-   Texture definitions
+///   \def IMG_TILE0
+///        relative filename for tile0.bmp
+///   \def IMG_TILE1
+///        relative filename for tile1.bmp
+///   \def IMG_TILE2
+///        relative filename for tile2.bmp
+///   \def IMG_TILE3
+///        relative filename for tile3.bmp
 //---------------------------------------------------------------------
 #define IMG_TILE0    "[EGOBOO_PATH]/modules/[MODULENAME]/basicdat/tile0.bmp"
 #define IMG_TILE1    "[EGOBOO_PATH]/modules/[MODULENAME]/basicdat/tile1.bmp"
@@ -60,7 +72,7 @@ using namespace std;
 
 
 //---------------------------------------------------------------------
-//-   Texture types (used for giving crenderer.texture index names)
+///   \enum Texture types (used for giving crenderer.texture index names)
 //---------------------------------------------------------------------
 enum
 {
@@ -75,7 +87,7 @@ enum
 
 
 //---------------------------------------------------------------------
-//-   Mesh render modes
+///   \enum Mesh render modes
 //---------------------------------------------------------------------
 enum
 {
@@ -86,43 +98,58 @@ enum
 
 
 //---------------------------------------------------------------------
-//-   Definitions for the renderer
+///   Definitions for the renderer
+///   \def SCREEN_BPP
+///        video depth
+///   \def MAX_TEXTURES
+///        maximum number of tileset images
+///   \def SCROLLFACTOR_FAST
+///        factor for fast scrolling
+///   \def SCROLLFACTOR_SLOW
+///        factor for slow scrolling
+///   \def DEG_TO_RAD
+///        Camera factor
+///   \def RAD_TO_DEG
+///        Camera factor
+///   \def FOV
+///        Camera field of view
+///   \def INVALID_TILE
+///        Don't draw the fansquare if tile = this
+///   \def MAXMESHRENDER
+///        Maximum number of tiles to draw
 //---------------------------------------------------------------------
 #define SCREEN_BPP       24
-
-#define MAX_TEXTURES      8    // Number of tileset images (default: 8)
-#define SCROLLFACTOR_FAST 200.0f // The default factor for scrolling
-#define SCROLLFACTOR_SLOW 100.0f // The default factor for scrolling
-
+#define MAX_TEXTURES      8
+#define SCROLLFACTOR_FAST 200.0f
+#define SCROLLFACTOR_SLOW 100.0f
 // Camera stuff
 #define DEG_TO_RAD       0.017453292519943295769236907684886f
 #define RAD_TO_DEG       57.295779513082320876798154814105
-#define FOV              40  // Field of view
-
-#define INVALID_TILE      ((Uint16)(~(Uint16)0))   // Don't draw the fansquare if tile = this
-#define MAXMESHRENDER    (1024*8)       // Max number of tiles to draw
+#define FOV              40
+#define INVALID_TILE      ((Uint16)(~(Uint16)0))
+#define MAXMESHRENDER    (1024*8)
 
 struct Graphics_t;
 
 
 //---------------------------------------------------------------------
-//-
+///   \struct GLVertex Definition of an OpenGL vertex
 //---------------------------------------------------------------------
 struct GLVertex
 {
-	vect4 pos;
+	vect4 pos;     ///< Position
 	vect4 col;
 	Uint32 color;  ///< should replace r,g,b,a and be called by glColor4ubv
 
 	vect2 tx;      ///< u and v in D3D I guess
 	vect3 nrm;
-	vect3 up;
-	vect3 rt;
+	vect3 up;      ///< Up
+	vect3 rt;      ///< Right
 };
 
 
 //---------------------------------------------------------------------
-//-   The camera
+///   Definition of the camera
 //---------------------------------------------------------------------
 class c_camera
 {
@@ -157,7 +184,7 @@ class c_camera
 
 
 //---------------------------------------------------------------------
-//-   The renderlist
+///   Definition of the renderlist
 //---------------------------------------------------------------------
 class c_renderlist
 {
@@ -184,7 +211,7 @@ class c_renderlist
 
 
 //---------------------------------------------------------------------
-//-   The renderer
+///   Definition of the rendering system
 //---------------------------------------------------------------------
 class c_renderer
 {

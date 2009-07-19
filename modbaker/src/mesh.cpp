@@ -161,7 +161,11 @@ bool c_mesh::load_mesh_mpd(string p_modname)
 	int vert, vrt;
 
 	vector<vect3> vertices;
-	vect3 tmp_vec = {0, 0, 0};
+	vect3 tmp_vec;
+	tmp_vec.x = 0;
+	tmp_vec.y = 0;
+	tmp_vec.z = 0;
+
 	c_tile tmp_tile;
 
 	string filename;
@@ -239,7 +243,7 @@ bool c_mesh::load_mesh_mpd(string p_modname)
 		tmp_tile.type = itmp >> 24;
 		tmp_tile.fx   = itmp >> 16;
 		tmp_tile.tile = itmp;
-		tmp_tile.vert_count = g_mesh->getTileDefinition(tmp_tile.type).vrt_count;
+		tmp_tile.vert_count = this->getTileDefinition(tmp_tile.type).vrt_count;
 
 		this->mem->tiles.push_back(tmp_tile);
 
@@ -328,7 +332,7 @@ bool c_mesh::load_mesh_mpd(string p_modname)
 	for (cnt = 0; cnt < this->mem->vrt_count; cnt++)
 	{
 		// Did we reach the vrt_count for the current tile?
-		if (cnt_vert >= g_mesh->getTileDefinition(this->mem->tiles[cnt_tile].type).vrt_count)
+		if (cnt_vert >= this->getTileDefinition(this->mem->tiles[cnt_tile].type).vrt_count)
 		{
 			cnt_tile++;
 			cnt_vert = 0;
@@ -395,7 +399,8 @@ bool c_mesh::load_mesh_mpd(string p_modname)
 
 
 //---------------------------------------------------------------------
-//-   This function loads fan types for the terrain
+///   This function loads fan types for the terrain
+///   \return true if everything went right, else false
 //---------------------------------------------------------------------
 bool c_tile_dictionary::load()
 {
@@ -710,7 +715,7 @@ int c_mesh::get_nearest_tile(float pos_x, float pos_y, float pos_z)
 
 	for (i = 0; i < (int)this->mem->tile_count; i++)
 	{
-		vert_start = g_mesh->mem->tiles[i].vrt_start;
+		vert_start = this->mem->tiles[i].vrt_start;
 
 		dist_temp = calculate_distance(this->mem->get_vert(vert_start), ref);
 
@@ -723,49 +728,6 @@ int c_mesh::get_nearest_tile(float pos_x, float pos_y, float pos_z)
 	}
 
 	return nearest_tile;
-}
-
-
-//---------------------------------------------------------------------
-//-   Get the nearest object
-//---------------------------------------------------------------------
-int c_mesh::get_nearest_object(float pos_x, float pos_y, float pos_z)
-{
-	int i;
-
-	int nearest_object = 0;
-
-	double dist_temp;
-	double dist_nearest;
-
-	vect3 ref;   // The reference point
-	vect3 object;  // Used for each object
-
-	ref.x = pos_x;
-	ref.y = pos_y;
-	ref.z = pos_z;
-
-	dist_nearest = 999999.9f;
-
-	for (i = 0; i < (int)g_object_manager->get_spawns_size(); i++)
-	{
-
-		object.x = g_object_manager->get_spawn(i).pos.x * (1 << 7);
-		object.y = g_object_manager->get_spawn(i).pos.y * (1 << 7);
-//		object.z = g_object_manager->get_spawn(i).pos.z * (1 << 7);
-		object.z = 1.0f                                 * (1 << 7);
-
-		dist_temp = calculate_distance(object, ref);
-
-		if (dist_temp < dist_nearest)
-		{
-			dist_nearest = calculate_distance(object, ref);
-
-			nearest_object = i;
-		}
-	}
-
-	return nearest_object;
 }
 
 
@@ -952,9 +914,9 @@ vector<int> c_mesh::get_fan_vertices(int p_fan)
 	int cnt;
 	vector<int> vec_vertices;
 
-	Uint16 type      = g_mesh->mem->tiles[p_fan].type; // Command type ( index to points in fan )
-	int vertices     = g_mesh->getTileDefinition(type).vrt_count;
-	Uint32 badvertex = g_mesh->mem->tiles[p_fan].vrt_start;   // Actual vertex number
+	Uint16 type      = this->mem->tiles[p_fan].type; // Command type ( index to points in fan )
+	int vertices     = this->getTileDefinition(type).vrt_count;
+	Uint32 badvertex = this->mem->tiles[p_fan].vrt_start;   // Actual vertex number
 
 	for (cnt = 0; cnt < vertices; cnt++, badvertex++)
 	{
@@ -1121,7 +1083,9 @@ void c_mesh_mem::set_verts_z(float p_new, int p_vertex)
 
 
 //---------------------------------------------------------------------
-//-   Get the vertex x position
+///   Get the vertex x position
+///   \param p_vertex vertex number
+///   \return x position
 //---------------------------------------------------------------------
 float c_mesh_mem::get_verts_x(int p_vertex)
 {
@@ -1135,7 +1099,9 @@ float c_mesh_mem::get_verts_x(int p_vertex)
 
 
 //---------------------------------------------------------------------
-//-   Get the vertex y position
+///   Get the vertex y position
+///   \param p_vertex vertex number
+///   \return y position
 //---------------------------------------------------------------------
 float c_mesh_mem::get_verts_y(int p_vertex)
 {
@@ -1149,7 +1115,9 @@ float c_mesh_mem::get_verts_y(int p_vertex)
 
 
 //---------------------------------------------------------------------
-//-   Get the vertex z position
+///   Get the vertex z position
+///   \param p_vertex vertex number
+///   \return z position
 //---------------------------------------------------------------------
 float c_mesh_mem::get_verts_z(int p_vertex)
 {
@@ -1162,12 +1130,22 @@ float c_mesh_mem::get_verts_z(int p_vertex)
 }
 
 
+//---------------------------------------------------------------------
+///   Get a vertex based on the vertex ID
+///   \param p_vertex vertex ID
+///   \return 3d vector
+//---------------------------------------------------------------------
 vect3* c_tile::get_vertex(int p_vertex)
 {
 	return &this->vertices[p_vertex];
 }
 
 
+//---------------------------------------------------------------------
+///   Change the type of a tile
+///   \param p_tile tile number
+///   \param p_new_type new type
+//---------------------------------------------------------------------
 void c_mesh_mem::change_tile_type(int p_tile, int p_new_type)
 {
 	unsigned int cnt_tile;
@@ -1176,7 +1154,7 @@ void c_mesh_mem::change_tile_type(int p_tile, int p_new_type)
 	int diff;
 	unsigned int cnt;
 
-	number_of_vertices = g_mesh->getTileDefinition(this->tiles[p_tile].type).vrt_count;
+	number_of_vertices = g_module->getTileDefinition(this->tiles[p_tile].type).vrt_count;
 
 	// Set the type
 	this->tiles[p_tile].type = TTYPE_PILLER_TEN;
@@ -1194,7 +1172,7 @@ void c_mesh_mem::change_tile_type(int p_tile, int p_new_type)
 		for (cnt = 0; cnt < number_of_vertices; cnt++)
 		{
 			vect3 tmp_vec;
-//			tmp_vec = g_mesh->getTileDefinition(this->tiles[p_tile].type).vrt[cnt];
+//			tmp_vec = g_module->getTileDefinition(this->tiles[p_tile].type).vrt[cnt];
 			tmp_vec.x = 0;
 			tmp_vec.y = 0;
 			tmp_vec.z = 0;
@@ -1211,10 +1189,10 @@ void c_mesh_mem::change_tile_type(int p_tile, int p_new_type)
 		this->tiles[cnt_tile].vrt_start += diff;
 	}
 
-cout << "TD.vrt_count: " << (int)g_mesh->getTileDefinition(this->tiles[p_tile].type).vrt_count << endl;
-cout << "TD.cmd_count: " << (int)g_mesh->getTileDefinition(this->tiles[p_tile].type).cmd_count << endl;
+cout << "TD.vrt_count: " << (int)g_module->getTileDefinition(this->tiles[p_tile].type).vrt_count << endl;
+cout << "TD.cmd_count: " << (int)g_module->getTileDefinition(this->tiles[p_tile].type).cmd_count << endl;
 
-	g_mesh->mem->vrt_count += diff;
+	g_module->mem->vrt_count += diff;
 	this->vrt_count        += diff;
 
 	this->build_tile_lookup_table();
@@ -1249,7 +1227,7 @@ bool c_mesh::new_mesh_mpd(int p_tiles_x, int p_tiles_y)
 
 	// Every tile is a floor
 	int tmp_vert_count;
-	tmp_vert_count = this->mi->tile_count * g_mesh->getTileDefinition(TTYPE_TWO_FACED_GROUND1).vrt_count;
+	tmp_vert_count = this->mi->tile_count * this->getTileDefinition(TTYPE_TWO_FACED_GROUND1).vrt_count;
 
 	this->mem = new c_mesh_mem(tmp_vert_count, this->mi->tile_count);
 	this->mem->vrt_count = this->mem->vrt_count;
@@ -1279,7 +1257,7 @@ bool c_mesh::new_mesh_mpd(int p_tiles_x, int p_tiles_y)
 		tmp_tile.tile  = 0; // TODO: dummy value
 		tmp_tile.twist = 0; // TODO: dummy value
 
-		tmp_tile.vert_count = g_mesh->getTileDefinition(tmp_tile.type).vrt_count;
+		tmp_tile.vert_count = this->getTileDefinition(tmp_tile.type).vrt_count;
 
 		this->mem->tiles.push_back(tmp_tile);
 	}

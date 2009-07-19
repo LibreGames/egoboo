@@ -1,3 +1,7 @@
+/// @file
+/// @brief GUI system
+/// @details Definition of the GUI system
+
 #ifndef window_h
 #define window_h
 
@@ -14,18 +18,18 @@ using namespace std;
 #include <guichan/opengl/openglimage.hpp>
 
 //---------------------------------------------------------------------
-//-   Types for the list box
+///   Types for the list box
 //---------------------------------------------------------------------
-enum
+enum list_boxes
 {
-	LIST_BOX_OBJECT,
-	LIST_BOX_TILE_FLAG,
-	LIST_BOX_TILE_TYPE
+	LIST_BOX_OBJECT,    ///< Object list box
+	LIST_BOX_TILE_FLAG, ///< Tile flag list box
+	LIST_BOX_TILE_TYPE  ///< Tile type selection list box
 };
 
 
 //---------------------------------------------------------------------
-//-   Action types for the input system
+///   Action types for the input system
 //---------------------------------------------------------------------
 enum
 {
@@ -90,6 +94,9 @@ enum
 };
 
 
+//---------------------------------------------------------------------
+///   GI Button types
+//---------------------------------------------------------------------
 enum
 {
 	BUTTON_MESH_SAVE_OK     = 0,
@@ -103,7 +110,7 @@ enum
 };
 
 //---------------------------------------------------------------------
-//-    Image loader
+///    Definition of the image loader
 //---------------------------------------------------------------------
 class c_mb_image_loader : public gcn::OpenGLSDLImageLoader
 {
@@ -114,18 +121,22 @@ class c_mb_image_loader : public gcn::OpenGLSDLImageLoader
 
 
 //---------------------------------------------------------------------
-//-    Handles widget input
+///   Definition of the widget input handler
 //---------------------------------------------------------------------
 class c_widget_input_handler : public gcn::MouseListener
 {
 	public:
 		c_widget_input_handler() {}
 
+		/// Gets called when the user clicks on a widget
+		/// \param mouseEvent mouse event
 		void mousePressed (gcn::MouseEvent &mouseEvent)
 		{
 			mouseEvent.consume();
 		}
 
+		/// Gets called when the mouse got moved on a widget
+		/// \param mouseEvent mouse event
 		void mouseMoved (gcn::MouseEvent &mouseEvent)
 		{
 			mouseEvent.consume();
@@ -134,7 +145,7 @@ class c_widget_input_handler : public gcn::MouseListener
 
 
 //---------------------------------------------------------------------
-//-    Input handler
+///   Definition of the general input handler
 //---------------------------------------------------------------------
 class c_input_handler : public gcn::MouseListener, public gcn::KeyListener
 {
@@ -152,8 +163,9 @@ class c_input_handler : public gcn::MouseListener, public gcn::KeyListener
 		void keyReleased(gcn::KeyEvent&);
 };
 
+
 //---------------------------------------------------------------------
-//-   A modbaker window
+///   Definition of a modbaker window
 //---------------------------------------------------------------------
 class c_mb_window : public gcn::Window
 {
@@ -162,6 +174,9 @@ class c_mb_window : public gcn::Window
 };
 
 
+//---------------------------------------------------------------------
+///   Definition of a modbaker GUI tab
+//---------------------------------------------------------------------
 class c_mb_tab : public gcn::Tab
 {
 	public:
@@ -169,6 +184,9 @@ class c_mb_tab : public gcn::Tab
 };
 
 
+//---------------------------------------------------------------------
+///   Definition of a modbaker GUI tabbed area
+//---------------------------------------------------------------------
 class c_mb_tabbedarea : public gcn::TabbedArea
 {
 	public:
@@ -176,6 +194,9 @@ class c_mb_tabbedarea : public gcn::TabbedArea
 };
 
 
+//---------------------------------------------------------------------
+///   Definition of a modbaker GUI scroll area
+//---------------------------------------------------------------------
 class c_mb_scroll_area : public gcn::ScrollArea
 {
 	public:
@@ -183,6 +204,9 @@ class c_mb_scroll_area : public gcn::ScrollArea
 };
 
 
+//---------------------------------------------------------------------
+///   Definition of a modbaker GUI image button
+//---------------------------------------------------------------------
 class c_mb_image_button : public gcn::ImageButton
 {
 	private:
@@ -199,6 +223,9 @@ class c_mb_image_button : public gcn::ImageButton
 };
 
 
+//---------------------------------------------------------------------
+///   Definition of a modbaker GUI button
+//---------------------------------------------------------------------
 class c_mb_button : public gcn::Button
 {
 	private:
@@ -213,6 +240,9 @@ class c_mb_button : public gcn::Button
 };
 
 
+//---------------------------------------------------------------------
+///   Definition of a modbaker GUI text field
+//---------------------------------------------------------------------
 class c_mb_textfield : public gcn::TextField
 {
 	public:
@@ -220,6 +250,9 @@ class c_mb_textfield : public gcn::TextField
 };
 
 
+//---------------------------------------------------------------------
+///   Definition of a modbaker GUI label
+//---------------------------------------------------------------------
 class c_mb_label : public gcn::Label
 {
 	public:
@@ -227,6 +260,9 @@ class c_mb_label : public gcn::Label
 };
 
 
+//---------------------------------------------------------------------
+///   Definition of a modbaker GUI container
+//---------------------------------------------------------------------
 class c_mb_container : public gcn::Container
 {
 	public:
@@ -237,7 +273,7 @@ class c_renderer;
 
 
 //---------------------------------------------------------------------
-//-   The list model
+///   Definition of a modbaker GUI list model
 //---------------------------------------------------------------------
 class c_mb_list_model : public gcn::ListModel
 {
@@ -277,7 +313,7 @@ class c_mb_list_model : public gcn::ListModel
 
 
 //---------------------------------------------------------------------
-//-   The list box
+///   Definition of a modbaker GUI list box
 //---------------------------------------------------------------------
 class c_mb_list_box : public gcn::ListBox
 {
@@ -290,7 +326,7 @@ class c_mb_list_box : public gcn::ListBox
 
 
 //---------------------------------------------------------------------
-//-   The window for editing menu.txt
+///   Definition of the window for editing menu.txt
 //---------------------------------------------------------------------
 class c_mod_txt_window : public c_mb_window
 {
@@ -338,7 +374,7 @@ class c_mod_txt_window : public c_mb_window
 
 
 //---------------------------------------------------------------------
-//-   The window manager class
+///   Definition of the window manager
 //---------------------------------------------------------------------
 class c_window_manager
 {
@@ -418,13 +454,25 @@ class c_window_manager
 		c_window_manager(c_renderer*);
 		~c_window_manager();
 
+		/// Set the text for the "name" textfield
+		/// \param p_name new name
 		void            set_tf_name(c_mb_textfield* p_name)   { this->tf_name = p_name; }
+		/// Get the text for the "name" textfield
+		/// \return name
 		c_mb_textfield* get_tf_name()                         { return this->tf_name; }
 
+		/// Set the text for the "x size" textfield
+		/// \param p_size_x new x size
 		void            set_tf_size_x(c_mb_textfield* p_size_x) { this->tf_size_x = p_size_x; }
+		/// Get the text for the "x size" textfield
+		/// \return x size
 		c_mb_textfield* get_tf_size_x()                         { return this->tf_size_x; }
 
+		/// Set the text for the "y size" textfield
+		/// \param p_size_y new y size
 		void            set_tf_size_y(c_mb_textfield* p_size_y) { this->tf_size_x = p_size_y; }
+		/// Get the text for the "y size" textfield
+		/// \return y size
 		c_mb_textfield* get_tf_size_y()                         { return this->tf_size_y; }
 
 		void set_fps(float);
@@ -444,35 +492,39 @@ class c_window_manager
 		void set_selected_tile_type(int);
 
 		// TODO: Make private
-		c_mb_textfield* tf_load;
-		c_mb_textfield* tf_save;
+		c_mb_textfield* tf_load; ///< "Load mesh" textfield
+		c_mb_textfield* tf_save; ///< "Save mesh" textfield
 
+
+		/// Get the input object
+		/// \return input object
 		gcn::SDLInput* get_input() { return this->input; }
 
+
+		/// Set the current tooltip
+		/// \param p_tooltip new tooltip
 		void set_tooltip(string p_tooltip)
 		{
 			this->label_tooltip->setCaption(p_tooltip);
 		}
 
+
+		/// Get the current tooltip
+		/// \return tooltip
 		string get_tooltip()
 		{
 			return this->label_tooltip->getCaption();
 		}
 
+
 		gcn::Gui* get_gui();
 		void set_gui(gcn::Gui*);
 
 		bool create_texture_window(string);
-		void destroy_texture_window()
-		{
-			if (this->w_texture == NULL)
-				return;
-
-			delete w_texture;
-		}
+		void destroy_texture_window();
 
 		bool create_info_window();
-		bool destroy_info_window();
+//		bool destroy_info_window();
 
 		bool create_tile_flag_window();
 //		bool destroy_tile_flag_window();
@@ -490,18 +542,16 @@ class c_window_manager
 //		bool destroy_mod_menu_window();
 
 		bool create_object_window(string);
-		void destroy_object_window()
-		{
-			if (this->w_object == NULL)
-				return;
+		void destroy_object_window();
 
-			delete this->w_object;
-		}
-
+		/// Get the menu.txt object
+		/// \return menu.txt object
 		c_menu_txt* get_menu_txt() { return this->w_mod_menu->get_menu_txt(); }
+		/// Set the menu.txt object
+		/// \param p_menu_txt new menu.txt object
 		void set_menu_txt(c_menu_txt* p_menu_txt) { this->w_mod_menu->set_menu_txt(p_menu_txt); }
 
 		bool create_mesh_window();
-		bool destroy_mesh_window();
+//		bool destroy_mesh_window();
 };
 #endif

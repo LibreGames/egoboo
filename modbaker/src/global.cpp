@@ -29,8 +29,7 @@ c_input_handler*  g_input_handler;
 c_config*         g_config;
 c_selection       g_selection;
 c_renderer*       g_renderer;
-c_mesh*           g_mesh;
-c_object_manager* g_object_manager;
+c_module*         g_module;
 c_frustum         g_frustum;
 
 vector<c_tile_definition> g_tiledict;
@@ -62,19 +61,15 @@ extern c_selection g_selection;
 bool load_module(string p_modname)
 {
 	// Read the mesh mpd
-	if(!g_mesh->load_mesh_mpd(p_modname))
+	if(!g_module->load_mesh_mpd(p_modname))
 	{
 		cout << "There was an error loading the module" << endl;
 		return false;
 	}
 
 	// Read the object and spawn.txt information
-	g_object_manager->clear_objects();
-	g_object_manager->clear_spawns();
-	g_object_manager->load_objects(g_config->get_egoboo_path() + "modules/" + p_modname + "/objects/", false);
-	g_object_manager->load_objects(g_config->get_egoboo_path() + "basicdat/globalobjects/", true);
-	g_object_manager->load_spawns(p_modname);
-	g_mesh->load_menu_txt(p_modname);
+	g_module->load_all_for_module(p_modname);
+	g_module->load_menu_txt(p_modname);
 
 	// Reset module specific windows
 	g_renderer->get_wm()->destroy_object_window();

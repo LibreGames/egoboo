@@ -16,10 +16,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //---------------------------------------------------------------------
+
+/// @file
+/// @brief Input system (DEPRECATED)
+/// @details Definition of the input system (DEPRECATED)
+
 //---------------------------------------------------------------------
-//-
 //-   Everything regarding the input
-//-
 //---------------------------------------------------------------------
 #include "global.h"
 #include "modbaker.h"
@@ -40,13 +43,18 @@
 using namespace std;
 
 
+//---------------------------------------------------------------------
+///   The constuctor
+//---------------------------------------------------------------------
 c_input_handler::c_input_handler()
 {
 	window_input = true;
 }
 
+
 //---------------------------------------------------------------------
-//-   Gets called at mouse events
+///   Gets called when the mouse gets moved
+///   \param event A mouse event
 //---------------------------------------------------------------------
 void c_input_handler::mouseMoved(gcn::MouseEvent& event)
 {
@@ -62,30 +70,8 @@ void c_input_handler::mouseMoved(gcn::MouseEvent& event)
 
 
 //---------------------------------------------------------------------
-//-   Tokenize a string based on a semicolon
-//---------------------------------------------------------------------
-// TODO: Move somewhere else (maybe utility.cpp or global.cpp)
-bool tokenize_semicolon(const string str, vector<string>& tokens)
-{
-	string token;
-	istringstream iss(str);
-
-	if (str.length() == 0)
-	{
-		cout << "tokenizer: input string is empty" << endl;
-		return false;
-	}
-
-	while (getline(iss, token, ';'))
-	{
-		tokens.push_back(token);
-	}
-	return true;
-}
-
-
-//---------------------------------------------------------------------
-//-   Gets called at mouse events
+///   Gets called at mouse button presses
+///   \param event A mouse event
 //---------------------------------------------------------------------
 void c_input_handler::mousePressed(gcn::MouseEvent& event)
 {
@@ -160,7 +146,8 @@ void c_input_handler::mousePressed(gcn::MouseEvent& event)
 
 
 //---------------------------------------------------------------------
-//-   Gets called at key events
+///   Gets called at when a keyboard button gets pressed
+///   \param event A keyboard event
 //---------------------------------------------------------------------
 void c_input_handler::keyPressed(gcn::KeyEvent& event)
 {
@@ -231,7 +218,8 @@ void c_input_handler::keyPressed(gcn::KeyEvent& event)
 
 
 //---------------------------------------------------------------------
-//-   Gets called at key events
+///   Gets called at when a keyboard button gets released
+///   \param event A keyboard event
 //---------------------------------------------------------------------
 void c_input_handler::keyReleased(gcn::KeyEvent& event)
 {
@@ -270,7 +258,8 @@ void c_input_handler::keyReleased(gcn::KeyEvent& event)
 
 
 //---------------------------------------------------------------------
-//-   This function controls all actions
+///   This function controls all actions
+///   \param p_action Action-ID (see window.h for all IDs)
 //---------------------------------------------------------------------
 void c_input_handler::do_something(int p_action)
 {
@@ -281,7 +270,7 @@ void c_input_handler::do_something(int p_action)
 		case ACTION_MESH_NEW:
 			g_input_handler->do_something(WINDOW_MESH_NEW_HIDE);
 			g_nearest_vertex = 0;
-			g_mesh->new_mesh_mpd(g_mesh->get_size().x, g_mesh->get_size().y);
+			g_module->new_mesh_mpd(g_module->get_size().x, g_module->get_size().y);
 			g_renderer->m_renderlist.build();
 			// TODO: Remove objects / spawns
 			break;
@@ -302,7 +291,7 @@ void c_input_handler::do_something(int p_action)
 		case ACTION_MESH_SAVE:
 			filename = g_renderer->get_wm()->tf_save->getText();
 			cout << filename << endl;
-			if (g_mesh->save_mesh_mpd(g_config->get_egoboo_path() + "modules/" + g_mesh->modname + "/gamedat/" + filename))
+			if (g_module->save_mesh_mpd(g_config->get_egoboo_path() + "modules/" + g_module->modname + "/gamedat/" + filename))
 				g_renderer->get_wm()->set_visibility("save", false);
 
 			break;
@@ -387,7 +376,7 @@ void c_input_handler::do_something(int p_action)
 
 		// Weld the selected vertices together
 		case ACTION_WELD_VERTICES:
-			g_selection.weld(g_mesh);
+			g_selection.weld(g_module);
 			break;
 
 		// Scrolling
@@ -469,7 +458,7 @@ void c_input_handler::do_something(int p_action)
 			break;
 
 		case WINDOW_MOD_MENU_SHOW:
-			g_renderer->get_wm()->set_menu_txt(g_mesh->get_menu_txt());
+			g_renderer->get_wm()->set_menu_txt(g_module->get_menu_txt());
 			g_renderer->get_wm()->set_visibility("mod_menu", true);
 			break;
 
@@ -531,15 +520,16 @@ void c_input_handler::do_something(int p_action)
 
 		// Save the file menu.txt
 		case ACTION_SAVE_MOD_MENU:
-			g_mesh->set_menu_txt(g_renderer->get_wm()->get_menu_txt());
-			g_mesh->get_menu_txt()->save(g_config->get_egoboo_path() + "modules/" + g_mesh->modname + "/gamedat/menu.txt");
+			g_module->set_menu_txt(g_renderer->get_wm()->get_menu_txt());
+			g_module->get_menu_txt()->save(g_config->get_egoboo_path() + "modules/" + g_module->modname + "/gamedat/menu.txt");
 			break;
 	}
 }
 
 
 //---------------------------------------------------------------------
-//-   Handle input events
+///   Handle all input events
+///   \return error code or 0 on success
 //---------------------------------------------------------------------
 int c_modbaker::handle_events()
 {
@@ -582,11 +572,14 @@ int c_modbaker::handle_events()
 
 
 //---------------------------------------------------------------------
-//-   Get the 3d coordinates related to the 2d position of the cursor
+///   Get the 3d coordinates depending on a 2d screen position
+///   \param x screen x coordicate
+///   \param x screen y coordicate
+///   \return true on success, else false
 //---------------------------------------------------------------------
 bool c_modbaker::get_GL_pos(int x, int y)
 {
-	if (g_mesh == NULL)
+	if (g_module == NULL)
 		return false;
 
 	GLdouble pos3D_x, pos3D_y, pos3D_z;
@@ -614,9 +607,9 @@ bool c_modbaker::get_GL_pos(int x, int y)
 	g_mouse_gl_z = (float)pos3D_z;
 
 	// Calculate the nearest vertex
-	g_nearest_vertex = g_mesh->get_nearest_vertex(g_mouse_gl_x, g_mouse_gl_y, g_mouse_gl_z);
-	g_nearest_tile   = g_mesh->get_nearest_tile(  g_mouse_gl_x, g_mouse_gl_y, g_mouse_gl_z);
-	g_nearest_object = g_mesh->get_nearest_object(g_mouse_gl_x, g_mouse_gl_y, g_mouse_gl_z);
+	g_nearest_vertex = g_module->get_nearest_vertex(g_mouse_gl_x, g_mouse_gl_y, g_mouse_gl_z);
+	g_nearest_tile   = g_module->get_nearest_tile(  g_mouse_gl_x, g_mouse_gl_y, g_mouse_gl_z);
+	g_nearest_object = g_module->get_nearest_object(g_mouse_gl_x, g_mouse_gl_y, g_mouse_gl_z);
 
 	return true;
 }

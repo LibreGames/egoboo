@@ -18,9 +18,15 @@
 //---------------------------------------------------------------------
 #include "utility.h"
 
+/// @file
+/// @brief Misc. helper functions
+/// @details Implementation of string modification and format conversion functions
+
 
 //---------------------------------------------------------------------
-//-   Read an integer value
+///   Reads an integer value from a file
+///   \param file the file to read
+///   \return integer value
 //---------------------------------------------------------------------
 int fget_int(ifstream &file)
 {
@@ -36,7 +42,9 @@ int fget_int(ifstream &file)
 
 
 //---------------------------------------------------------------------
-//-   Read the integer after the next colon
+///   Read the integer after the next colon
+///   \param file the file to read
+///   \return integer value
 //---------------------------------------------------------------------
 int fget_next_int(ifstream &file)
 {
@@ -52,7 +60,9 @@ int fget_next_int(ifstream &file)
 
 
 //---------------------------------------------------------------------
-//-   Read a float value
+///   Read a float value
+///   \param file the file to read
+///   \return float value
 //---------------------------------------------------------------------
 float fget_float(ifstream &file)
 {
@@ -68,7 +78,9 @@ float fget_float(ifstream &file)
 
 
 //---------------------------------------------------------------------
-//-   Read the float after the next colon
+///   Read the float after the next colon
+///   \param file the file to read
+///   \return float value
 //---------------------------------------------------------------------
 float fget_next_float(ifstream &file)
 {
@@ -84,7 +96,8 @@ float fget_next_float(ifstream &file)
 
 
 //---------------------------------------------------------------------
-//-   Go to the next colon (without buffer)
+///   Go to the next colon (without buffer)
+///   \param file the file to read
 //---------------------------------------------------------------------
 void fgoto_colon(ifstream &file)
 {
@@ -93,7 +106,9 @@ void fgoto_colon(ifstream &file)
 
 
 //---------------------------------------------------------------------
-//-   Call fgoto_colon_yesno_buffer() without a buffer
+///   Call fgoto_colon_yesno_buffer() without a buffer
+///   \param file the file to read
+///   \return true if a colon got found
 //---------------------------------------------------------------------
 bool fgoto_colon_yesno(ifstream &file)
 {
@@ -102,7 +117,10 @@ bool fgoto_colon_yesno(ifstream &file)
 
 
 //---------------------------------------------------------------------
-//-   Go to the next colon. If none found, quit the program
+///   Go to the next colon. If none found, quit the program
+///   \param file the file to read
+///   \param buffer string in front of the colon
+///   \param buffer_len the length of the buffer
 //---------------------------------------------------------------------
 void fgoto_colon_buffer(ifstream &file, string buffer, size_t buffer_len)
 {
@@ -115,7 +133,11 @@ void fgoto_colon_buffer(ifstream &file, string buffer, size_t buffer_len)
 
 
 //---------------------------------------------------------------------
-//-   Gets the next colon. If none found, return false
+///   Gets the next colon. If none found, return false
+///   \param file the file to read
+///   \param buffer string in front of the colon
+///   \param buffer_len length of the buffer
+///   \return false if no colon was found
 //---------------------------------------------------------------------
 bool fgoto_colon_yesno_buffer(ifstream &file, string buffer, size_t buffer_len)
 {
@@ -165,36 +187,10 @@ bool fgoto_colon_yesno_buffer(ifstream &file, string buffer, size_t buffer_len)
 
 
 //---------------------------------------------------------------------
-//-   Tokenize a string on the first colon
+///   Reads the file until the first non-comment line was found
+///   \param file the file to read
+///   \return string buffer with the line
 //---------------------------------------------------------------------
-bool tokenize_colon(const string& str, vector<string>& tokens)
-{
-	int delimiter_pos;
-
-	// Don't read comments
-	if (str.substr(0, 1) == "#")
-		return false;
-
-	delimiter_pos = str.find_first_of(':');
-
-	if (delimiter_pos == -1)
-		return false;
-
-	tokens.push_back(str.substr(0, delimiter_pos));
-
-	// Move one character forward, because we don't want the colon
-	delimiter_pos++;
-
-	// Also we don't want the first space after the colon
-	if (str.substr(delimiter_pos, 1) == " ")
-		delimiter_pos++;
-
-	tokens.push_back(str.substr(delimiter_pos, str.length()));
-
-	return true;
-}
-
-
 string fread_skip_comments(ifstream &file)
 {
 	string buffer;
@@ -222,7 +218,11 @@ string fread_skip_comments(ifstream &file)
 
 
 //---------------------------------------------------------------------
-//-   Get all files from a directory
+///   Get all files from a directory
+///   \param p_dirname directory to read
+///   \param needle a file extension to search for
+///   \param p_files the file vector for all found files
+///   \return false if the directory was not found
 //---------------------------------------------------------------------
 bool read_files(string p_dirname, string needle, vector<string>& p_files)
 {
@@ -250,7 +250,9 @@ bool read_files(string p_dirname, string needle, vector<string>& p_files)
 
 
 //---------------------------------------------------------------------
-//-   Translate an Egoboo boolean into a real boolean value
+///   Translate an Egoboo boolean into a real boolean value
+///   \param p_string input string
+///   \return true or false
 //---------------------------------------------------------------------
 bool translate_into_bool(string p_string)
 {
@@ -267,7 +269,9 @@ bool translate_into_bool(string p_string)
 
 
 //---------------------------------------------------------------------
-//-   Translate a boolean into an Egoboo boolean
+///   Translate a boolean into an Egoboo boolean
+///   \param p_bool the boolean value
+///   \return the egobool value ("TRUE" or "FALSE")
 //---------------------------------------------------------------------
 string translate_into_egobool(bool p_bool)
 {
@@ -279,7 +283,9 @@ string translate_into_egobool(bool p_bool)
 
 
 //---------------------------------------------------------------------
-//-   Translate an unsigned int into a string
+///   Translate an unsigned int into a string
+///   \param p_number the unsigned int to convert
+///   \return the value as a string
 //---------------------------------------------------------------------
 string translate_into_string(unsigned int p_number)
 {
@@ -290,7 +296,9 @@ string translate_into_string(unsigned int p_number)
 
 
 //---------------------------------------------------------------------
-//-   Translate astring into an unsigned
+///   Translate a string into an unsigned int
+///   \param p_string the string to convert
+///   \return the value as an unsigned int
 //---------------------------------------------------------------------
 unsigned int translate_into_uint(string p_string)
 {
@@ -302,7 +310,11 @@ unsigned int translate_into_uint(string p_string)
 
 
 //---------------------------------------------------------------------
-//-   Replace blanks with underscores
+///   Find and replace within a string
+///   \param p_string the input string
+///   \param p_needle the string to search for
+///   \param p_replace the string to replace
+///   \return the replaced string
 //---------------------------------------------------------------------
 string find_and_replace(string p_string, string p_needle, string p_replace)
 {
@@ -322,7 +334,9 @@ string find_and_replace(string p_string, string p_needle, string p_replace)
 
 
 //---------------------------------------------------------------------
-//-   Replace blanks with underscores
+///   Replace blanks with underscores
+///   \param p_string input string
+///   \return string with replaced values
 //---------------------------------------------------------------------
 string add_underscores(string p_string)
 {
@@ -331,9 +345,70 @@ string add_underscores(string p_string)
 
 
 //---------------------------------------------------------------------
-//-   Replace underscores with blanks
+///   Replace underscores with blanks
+///   \param p_string input string
+///   \return string with replaced values
 //---------------------------------------------------------------------
 string remove_underscores(string p_string)
 {
 	return find_and_replace(p_string, "_", " ");
+}
+
+
+//---------------------------------------------------------------------
+///   Tokenize a string based on a semicolon
+///   \param str input string
+///   \param tokens the output tokens
+///   \return false if the input string is empty
+//---------------------------------------------------------------------
+bool tokenize_semicolon(const string str, vector<string>& tokens)
+{
+	string token;
+	istringstream iss(str);
+
+	if (str.length() == 0)
+	{
+		cout << "tokenizer: input string is empty" << endl;
+		return false;
+	}
+
+	while (getline(iss, token, ';'))
+	{
+		tokens.push_back(token);
+	}
+	return true;
+}
+
+
+//---------------------------------------------------------------------
+///   Tokenize a string by the first colon found
+///   \param str input string
+///   \param tokens the output tokens
+///   \return string with replaced values
+//---------------------------------------------------------------------
+bool tokenize_colon(const string& str, vector<string>& tokens)
+{
+	int delimiter_pos;
+
+	// Don't read comments
+	if (str.substr(0, 1) == "#")
+		return false;
+
+	delimiter_pos = str.find_first_of(':');
+
+	if (delimiter_pos == -1)
+		return false;
+
+	tokens.push_back(str.substr(0, delimiter_pos));
+
+	// Move one character forward, because we don't want the colon
+	delimiter_pos++;
+
+	// Also we don't want the first space after the colon
+	if (str.substr(delimiter_pos, 1) == " ")
+		delimiter_pos++;
+
+	tokens.push_back(str.substr(delimiter_pos, str.length()));
+
+	return true;
 }

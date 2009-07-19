@@ -23,7 +23,7 @@
 using namespace std;
 
 //---------------------------------------------------------------------
-//-   c_selection constructor
+///   c_selection constructor
 //---------------------------------------------------------------------
 c_selection::c_selection()
 {
@@ -34,32 +34,34 @@ c_selection::c_selection()
 
 
 //---------------------------------------------------------------------
-//-   Select a single vertex to the selection
+///   Add a single vertex to the selection
+///   \param p_vertex_number a vertex number
 //---------------------------------------------------------------------
-void c_selection::add_vertex(int vertex_number)
+void c_selection::add_vertex(int p_vertex_number)
 {
-	if (in_selection(vertex_number))
+	if (in_selection(p_vertex_number))
 	{
-		this->remove_vertex(vertex_number);
+		this->remove_vertex(p_vertex_number);
 	}
 	else
 	{
-		this->selection.push_back(vertex_number);
+		this->selection.push_back(p_vertex_number);
 	}
 }
 
 
 //---------------------------------------------------------------------
-//-   Remove a vertex from the selection
+///   Remove a vertex from the selection
+///   \param p_vertex_number a vertex number
 //---------------------------------------------------------------------
-void c_selection::remove_vertex(int vertex_number)
+void c_selection::remove_vertex(int p_vertex_number)
 {
 	vector <int> new_selection;
 	unsigned int i;
 
 	for (i=0; i<this->selection.size(); i++)
 	{
-		if (vertex_number != this->selection[i])
+		if (p_vertex_number != this->selection[i])
 		{
 			new_selection.push_back(this->selection[i]);
 		}
@@ -70,32 +72,34 @@ void c_selection::remove_vertex(int vertex_number)
 
 
 //---------------------------------------------------------------------
-//-   Select a tile to the selection
+///   Add a tile to the selection
+///   \param p_tile_number a tile number
 //---------------------------------------------------------------------
-void c_selection::add_tile(int tile_number)
+void c_selection::add_tile(int p_tile_number)
 {
-	if (in_selection(tile_number))
+	if (in_selection(p_tile_number))
 	{
-		this->remove_tile(tile_number);
+		this->remove_tile(p_tile_number);
 	}
 	else
 	{
-		this->selection.push_back(tile_number);
+		this->selection.push_back(p_tile_number);
 	}
 }
 
 
 //---------------------------------------------------------------------
-//-   Remove a tile from the selection
+///   Remove a tile from the selection
+///   \param p_tile_number a tile number
 //---------------------------------------------------------------------
-void c_selection::remove_tile(int tile_number)
+void c_selection::remove_tile(int p_tile_number)
 {
 	vector <int> new_selection;
 	unsigned int i;
 
 	for (i=0; i<this->selection.size(); i++)
 	{
-		if (tile_number != this->selection[i])
+		if (p_tile_number != this->selection[i])
 		{
 			new_selection.push_back(this->selection[i]);
 		}
@@ -106,32 +110,34 @@ void c_selection::remove_tile(int tile_number)
 
 
 //---------------------------------------------------------------------
-//-   Select a tile to the selection
+///   Add a tile to the selection
+//    \param p_object_number an object number
 //---------------------------------------------------------------------
-void c_selection::add_object(int object_number)
+void c_selection::add_object(int p_object_number)
 {
-	if (in_selection(object_number))
+	if (in_selection(p_object_number))
 	{
-		this->remove_object(object_number);
+		this->remove_object(p_object_number);
 	}
 	else
 	{
-		this->selection.push_back(object_number);
+		this->selection.push_back(p_object_number);
 	}
 }
 
 
 //---------------------------------------------------------------------
-//-   Remove an object from the selection
+///   Remove an object from the selection
+///   \param p_object_number an object number
 //---------------------------------------------------------------------
-void c_selection::remove_object(int object_number)
+void c_selection::remove_object(int p_object_number)
 {
 	vector <int> new_selection;
 	unsigned int i;
 
 	for (i=0; i<this->selection.size(); i++)
 	{
-		if (object_number != this->selection[i])
+		if (p_object_number != this->selection[i])
 		{
 			new_selection.push_back(this->selection[i]);
 		}
@@ -142,7 +148,7 @@ void c_selection::remove_object(int object_number)
 
 
 //---------------------------------------------------------------------
-//-   Clear the selection
+///   Clear the selection
 //---------------------------------------------------------------------
 void c_selection::clear()
 {
@@ -151,7 +157,9 @@ void c_selection::clear()
 
 
 //---------------------------------------------------------------------
-//-   Weld several vertices together
+///   Weld several vertices together
+///   \param p_mesh a mesh object
+///   \return true is everything is ok, else false
 //---------------------------------------------------------------------
 bool c_selection::weld(c_mesh *p_mesh)
 {
@@ -172,10 +180,12 @@ bool c_selection::weld(c_mesh *p_mesh)
 
 
 //---------------------------------------------------------------------
-//-
+///   Add vertices at a vertain position to the selection
+///   TODO: Currently this function does nothing
+///   \param p_ref reference point
+///   \return number of vertices added to the function
 //---------------------------------------------------------------------
-// TODO
-int c_selection::add_vertices_at_position(vect3 ref)
+int c_selection::add_vertices_at_position(vect3 p_ref)
 {
 	int num_vertices;
 
@@ -186,9 +196,10 @@ int c_selection::add_vertices_at_position(vect3 ref)
 
 
 //---------------------------------------------------------------------
-//-   Modify all vertices in the selection (X direction)
+///   Modify all vertices in the selection (X direction)
+///   \param p_off_x x offset
 //---------------------------------------------------------------------
-void c_selection::modify_x(float off_x)
+void c_selection::modify_x(float p_off_x)
 {
 	unsigned int i;
 
@@ -197,15 +208,16 @@ void c_selection::modify_x(float off_x)
 
 	for (i = 0; i < this->selection.size(); i++)
 	{
-		g_mesh->modify_verts_x(off_x, this->selection[i]);
+		g_module->modify_verts_x(p_off_x, this->selection[i]);
 	}
 }
 
 
 //---------------------------------------------------------------------
-//-   Modify all vertices in the selection (Y direction)
+///   Modify all vertices in the selection (Y direction)
+///   \param p_off_y y offset
 //---------------------------------------------------------------------
-void c_selection::modify_y(float off_y)
+void c_selection::modify_y(float p_off_y)
 {
 	unsigned int i;
 
@@ -214,15 +226,16 @@ void c_selection::modify_y(float off_y)
 
 	for (i = 0; i < this->selection.size(); i++)
 	{
-		g_mesh->modify_verts_y(off_y, this->selection[i]);
+		g_module->modify_verts_y(p_off_y, this->selection[i]);
 	}
 }
 
 
 //---------------------------------------------------------------------
-//-   Modify all vertices in the selection (Z direction)
+///   Modify all vertices in the selection (Z direction)
+///   \param p_off_z z offset
 //---------------------------------------------------------------------
-void c_selection::modify_z(float off_z)
+void c_selection::modify_z(float p_off_z)
 {
 	unsigned int i;
 
@@ -231,13 +244,15 @@ void c_selection::modify_z(float off_z)
 
 	for (i = 0; i < this->selection.size(); i++)
 	{
-		g_mesh->modify_verts_z(off_z, this->selection[i]);
+		g_module->modify_verts_z(p_off_z, this->selection[i]);
 	}
 }
 
 
 //---------------------------------------------------------------------
-//-   Returns true if a vertex / object / tile is in the selection
+///   Returns true if a vertex / object / tile is in the selection
+///   \param p_needle item to search
+///   \return true if item is in the selection, else false
 //---------------------------------------------------------------------
 bool c_selection::in_selection(int p_needle)
 {
@@ -254,7 +269,7 @@ bool c_selection::in_selection(int p_needle)
 
 
 //---------------------------------------------------------------------
-//-   Change all textures in the selection
+///   Change all textures in the selection
 //---------------------------------------------------------------------
 void c_selection::change_texture()
 {
@@ -268,19 +283,20 @@ void c_selection::change_texture()
 	for (i = 0; i < this->selection.size(); i++)
 	{
 		fan = this->selection[i];
-		g_mesh->mem->tiles[fan].tile = this->texture;
+		g_module->mem->tiles[fan].tile = this->texture;
 
 		// Change the tile type (for big tiles)
 		if (this->texture >= 64)
-			g_mesh->mem->tiles[fan].type = 32;
+			g_module->mem->tiles[fan].type = 32;
 		else
-			g_mesh->mem->tiles[fan].type = 0;
+			g_module->mem->tiles[fan].type = 0;
 	}
 }
 
 
 //---------------------------------------------------------------------
-//-   Change the tile flag (water, reflection, ...)
+///   Change the tile flag (water, reflection, ...)
+///   \param p_flag new flag
 //---------------------------------------------------------------------
 void c_selection::set_tile_flag(unsigned char p_flag)
 {
@@ -291,13 +307,14 @@ void c_selection::set_tile_flag(unsigned char p_flag)
 	{
 		fan = this->selection[i];
 
-		g_mesh->mem->tiles[fan].fx = p_flag;
+		g_module->mem->tiles[fan].fx = p_flag;
 	}
 }
 
 
 //---------------------------------------------------------------------
-//-   Change the tile type (wall, floor, ...)
+///   Change the tile type (wall, floor, ...)
+///   \param p_type new type
 //---------------------------------------------------------------------
 void c_selection::set_tile_type(int p_type)
 {
@@ -308,14 +325,15 @@ void c_selection::set_tile_type(int p_type)
 	{
 		fan = this->selection[i];
 
-		g_mesh->mem->tiles[fan].type = p_type;
-		g_mesh->change_mem_size(g_mesh->mem->vrt_count + 2, g_mesh->mem->tile_count);
+		g_module->mem->tiles[fan].type = p_type;
+		g_module->change_mem_size(g_module->mem->vrt_count + 2, g_module->mem->tile_count);
 	}
 }
 
 
 //---------------------------------------------------------------------
-//-   Transform the selection into wall tiles
+///   Transform the selection into wall tiles
+///   TODO: This function has to be done yet
 //---------------------------------------------------------------------
 void c_selection::make_wall()
 {
@@ -328,7 +346,7 @@ void c_selection::make_wall()
 		fan = this->selection[i];
 
 		// Is it a wall already?
-		if (0 != (g_mesh->mem->tiles[fan].fx & MESHFX_WALL))
+		if (0 != (g_module->mem->tiles[fan].fx & MESHFX_WALL))
 		{
 			cout << "Tile already is a wall" << endl;
 			// Nothing to do
@@ -336,25 +354,25 @@ void c_selection::make_wall()
 		}
 
 		// Set the tile flags to "wall"
-		g_mesh->mem->tiles[fan].fx = MESHFX_WALL | MESHFX_IMPASS | MESHFX_SHA;
+		g_module->mem->tiles[fan].fx = MESHFX_WALL | MESHFX_IMPASS | MESHFX_SHA;
 
 		// Set the tile type
 		// TODO: make type dependent on the surrounding tiles
 		// TODO: randomize floor tiles for a nicer look
 
 		// Change the number of vertices in the tile
-		g_mesh->mem->change_tile_type(fan, TTYPE_PILLER_TEN);
+		g_module->mem->change_tile_type(fan, TTYPE_PILLER_TEN);
 
 /*
-		vec_vertices = g_mesh->get_fan_vertices(fan);
+		vec_vertices = g_module->get_fan_vertices(fan);
 
 		// Get the height of the first vertex
-		newheight = g_mesh->mem->get_verts_z(vec_vertices[0]) + 192;
+		newheight = g_module->mem->get_verts_z(vec_vertices[0]) + 192;
 
 		for (vec = 0; vec < (int)vec_vertices.size(); vec++)
 		{
 			// Set the height
-			g_mesh->mem->set_verts_z(newheight, vec_vertices[vec]);
+			g_module->mem->set_verts_z(newheight, vec_vertices[vec]);
 		}
 */
 
@@ -365,7 +383,8 @@ void c_selection::make_wall()
 
 
 //---------------------------------------------------------------------
-//-   Transform the selection into floor tiles
+///   Transform the selection into floor tiles
+///   TODO: This function has to be done yet
 //---------------------------------------------------------------------
 void c_selection::make_floor()
 {
@@ -373,7 +392,13 @@ void c_selection::make_floor()
 
 
 //---------------------------------------------------------------------
-//-   Add one object
+///   Add one object
+///   TODO: This function has to be done yet
+///   \param p_object_number object number
+///   \param p_x x position
+///   \param p_y y position
+///   \param p_z z position
+///   \return true if it was successful, else false
 //---------------------------------------------------------------------
 bool c_selection::add_mesh_object(int p_object_number, float p_x, float p_y, float p_z)
 {
@@ -382,7 +407,8 @@ bool c_selection::add_mesh_object(int p_object_number, float p_x, float p_y, flo
 
 
 //---------------------------------------------------------------------
-//-   Remove all objects in the selection
+///   Remove all objects in the selection
+///   \return true on success, else false
 //---------------------------------------------------------------------
 bool c_selection::remove_objects()
 {
@@ -393,7 +419,7 @@ bool c_selection::remove_objects()
 
 	for (i = 0; i < this->selection.size(); i++)
 	{
-		g_object_manager->remove_spawn(this->selection[i]);
+		g_module->remove_spawn(this->selection[i]);
 	}
 
 	return true;
@@ -401,7 +427,13 @@ bool c_selection::remove_objects()
 
 
 //---------------------------------------------------------------------
-//-   Move one object
+///   Move one object
+///   TODO: This function has to be done yet
+///   \param p_spawn_number spawn number
+///   \param p_new_x new x position
+///   \param p_new_y new y position
+///   \param p_new_z new z position
+///   \return true on success, else false
 //---------------------------------------------------------------------
 bool c_selection::move_mesh_object(int p_spawn_number, float p_new_x, float p_new_y, float p_new_z)
 {

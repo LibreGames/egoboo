@@ -16,16 +16,35 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //---------------------------------------------------------------------
+
+/// @file
+/// @brief ModBaker class definition
+/// @details Defines the modbaker class (a big container holding everything together)
+
 #ifndef modbaker_h
 #define modbaker_h
 //---------------------------------------------------------------------
-//-
 //-   The main class
-//-
 //---------------------------------------------------------------------
+class c_module;
+
 #include "global.h"
 #include "mesh.h"
 #include "renderer.h"
+
+
+
+//---------------------------------------------------------------------
+///   The modbaker class
+//---------------------------------------------------------------------
+class c_module : public c_mesh, public c_passage_manager, public c_menu_txt, public c_object_manager
+{
+	private:
+	public:
+		bool load_module(string);
+		bool save_module(string);
+		bool new_module(string);
+};
 
 class c_modbaker
 {
@@ -37,7 +56,7 @@ class c_modbaker
 
 	public:
 		c_modbaker();
-//		~c_modbaker();
+		~c_modbaker();
 
 		void init(string);
 		void main_loop();

@@ -309,10 +309,10 @@ bool c_renderer::load_icon(string imgname, c_object *p_object)
 //---------------------------------------------------------------------
 bool c_renderer::render_positions()
 {
-	if (g_mesh == NULL)
+	if (g_module == NULL)
 		return false;
 
-	if (g_mesh->mem == NULL)
+	if (g_module->mem == NULL)
 		return false;
 
 	glDisable(GL_TEXTURE_2D);
@@ -331,18 +331,18 @@ bool c_renderer::render_positions()
 	// Render a box and a line at the nearest vertex position
 	glBegin(GL_QUADS);
 	glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
-	glVertex3f((g_mesh->mem->get_vert(g_nearest_vertex).x - 10), (g_mesh->mem->get_vert(g_nearest_vertex).y - 10), g_mesh->mem->get_vert(g_nearest_vertex).z + 1); // Bottom left
-	glVertex3f((g_mesh->mem->get_vert(g_nearest_vertex).x + 10), (g_mesh->mem->get_vert(g_nearest_vertex).y - 10), g_mesh->mem->get_vert(g_nearest_vertex).z + 1); // Bottom right
-	glVertex3f((g_mesh->mem->get_vert(g_nearest_vertex).x + 10), (g_mesh->mem->get_vert(g_nearest_vertex).y + 10), g_mesh->mem->get_vert(g_nearest_vertex).z + 1); // Top    right
-	glVertex3f((g_mesh->mem->get_vert(g_nearest_vertex).x - 10), (g_mesh->mem->get_vert(g_nearest_vertex).y + 10), g_mesh->mem->get_vert(g_nearest_vertex).z + 1); // Top    left
+	glVertex3f((g_module->mem->get_vert(g_nearest_vertex).x - 10), (g_module->mem->get_vert(g_nearest_vertex).y - 10), g_module->mem->get_vert(g_nearest_vertex).z + 1); // Bottom left
+	glVertex3f((g_module->mem->get_vert(g_nearest_vertex).x + 10), (g_module->mem->get_vert(g_nearest_vertex).y - 10), g_module->mem->get_vert(g_nearest_vertex).z + 1); // Bottom right
+	glVertex3f((g_module->mem->get_vert(g_nearest_vertex).x + 10), (g_module->mem->get_vert(g_nearest_vertex).y + 10), g_module->mem->get_vert(g_nearest_vertex).z + 1); // Top    right
+	glVertex3f((g_module->mem->get_vert(g_nearest_vertex).x - 10), (g_module->mem->get_vert(g_nearest_vertex).y + 10), g_module->mem->get_vert(g_nearest_vertex).z + 1); // Top    left
 	glEnd();
 
 	glBegin(GL_LINES);
 	glLineWidth(5.0f);
 	glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
 
-	glVertex3f((g_mesh->mem->get_vert(g_nearest_vertex).x), (g_mesh->mem->get_vert(g_nearest_vertex).y), g_mesh->mem->get_vert(g_nearest_vertex).z - 500);
-	glVertex3f((g_mesh->mem->get_vert(g_nearest_vertex).x), (g_mesh->mem->get_vert(g_nearest_vertex).y), g_mesh->mem->get_vert(g_nearest_vertex).z + 500);
+	glVertex3f((g_module->mem->get_vert(g_nearest_vertex).x), (g_module->mem->get_vert(g_nearest_vertex).y), g_module->mem->get_vert(g_nearest_vertex).z - 500);
+	glVertex3f((g_module->mem->get_vert(g_nearest_vertex).x), (g_module->mem->get_vert(g_nearest_vertex).y), g_module->mem->get_vert(g_nearest_vertex).z + 500);
 	glEnd();
 
 	int i;
@@ -353,14 +353,14 @@ bool c_renderer::render_positions()
 		glBegin(GL_QUADS);
 		glColor4f(0.0f, 1.0f, 0.0f, 1);
 
-		for (i = 0; i < g_mesh->mem->vrt_count; i++)
+		for (i = 0; i < g_module->mem->vrt_count; i++)
 		{
 			if (g_selection.in_selection(i))
 			{
-				glVertex3f((g_mesh->mem->get_vert(i).x - 10), (g_mesh->mem->get_vert(i).y - 10), g_mesh->mem->get_vert(i).z + 1); // Bottom left
-				glVertex3f((g_mesh->mem->get_vert(i).x + 10), (g_mesh->mem->get_vert(i).y - 10), g_mesh->mem->get_vert(i).z + 1); // Bottom right
-				glVertex3f((g_mesh->mem->get_vert(i).x + 10), (g_mesh->mem->get_vert(i).y + 10), g_mesh->mem->get_vert(i).z + 1); // Top    right
-				glVertex3f((g_mesh->mem->get_vert(i).x - 10), (g_mesh->mem->get_vert(i).y + 10), g_mesh->mem->get_vert(i).z + 1); // Top    left
+				glVertex3f((g_module->mem->get_vert(i).x - 10), (g_module->mem->get_vert(i).y - 10), g_module->mem->get_vert(i).z + 1); // Bottom left
+				glVertex3f((g_module->mem->get_vert(i).x + 10), (g_module->mem->get_vert(i).y - 10), g_module->mem->get_vert(i).z + 1); // Bottom right
+				glVertex3f((g_module->mem->get_vert(i).x + 10), (g_module->mem->get_vert(i).y + 10), g_module->mem->get_vert(i).z + 1); // Top    right
+				glVertex3f((g_module->mem->get_vert(i).x - 10), (g_module->mem->get_vert(i).y + 10), g_module->mem->get_vert(i).z + 1); // Top    left
 			}
 		}
 		glEnd();
@@ -419,7 +419,7 @@ void c_renderer::end_frame()
 //---------------------------------------------------------------------
 bool c_renderer::render_mesh()
 {
-	if (g_mesh == NULL)
+	if (g_module == NULL)
 		return false;
 
 	// Reset the last used texture, so we HAVE to load a new one
@@ -450,7 +450,7 @@ bool c_renderer::render_mesh()
 			Uint32 this_fan  = m_renderlist.m_norm[inorm];
 
 			// do not render invalid tiles
-			Uint16 this_tile = g_mesh->mem->tiles[this_fan].tile;
+			Uint16 this_tile = g_module->mem->tiles[this_fan].tile;
 			if (INVALID_TILE == this_tile) continue;
 
 			// keep one texture in memory as long as possible
@@ -482,9 +482,9 @@ void c_renderer::render_fan(Uint32 fan, bool set_texture)
 	vect2 off;
 	vect3 tmp_vertex;
 
-	Uint16 tile = g_mesh->mem->tiles[fan].tile; // Tile
-	Uint16 fx   = g_mesh->mem->tiles[fan].fx;   // Tile FX
-	Uint16 type = g_mesh->mem->tiles[fan].type; // Command type ( index to points in fan )
+	Uint16 tile = g_module->mem->tiles[fan].tile; // Tile
+	Uint16 fx   = g_module->mem->tiles[fan].fx;   // Tile FX
+	Uint16 type = g_module->mem->tiles[fan].type; // Command type ( index to points in fan )
 	// type <= 32 => small tile
 	// type >  32 => big tile
 
@@ -492,7 +492,7 @@ void c_renderer::render_fan(Uint32 fan, bool set_texture)
 
 	//	mesh_calc_normal_fan( pmesh, &(gs->phys), fan, &nrm, &pos );
 	tile &= 0xFF;
-	off = g_mesh->getTileOffset(tile);
+	off = g_module->getTileOffset(tile);
 
 	// Change the texture if we need to
 	if (set_texture)
@@ -514,15 +514,15 @@ void c_renderer::render_fan(Uint32 fan, bool set_texture)
 	//	light_flat.b =
 	//	light_flat.a = 0.0f;
 
-	vertices  = g_mesh->getTileDefinition(type).vrt_count;            // Number of vertices
-	badvertex = g_mesh->mem->tiles[fan].vrt_start;   // Get big reference value
+	vertices  = g_module->getTileDefinition(type).vrt_count;            // Number of vertices
+	badvertex = g_module->mem->tiles[fan].vrt_start;   // Get big reference value
 
 	// Fill in the vertex data from the mesh memory
 	//	for (cnt = 0; cnt < vertices; cnt++, badvertex++)
 	//	{
-	//		v[cnt].pos.x = g_mesh->mem->vrt_x[badvertex];
-	//		v[cnt].pos.y = g_mesh->mem->vrt_y[badvertex];
-	//		v[cnt].pos.z = g_mesh->mem->vrt_z[badvertex];
+	//		v[cnt].pos.x = g_module->mem->vrt_x[badvertex];
+	//		v[cnt].pos.y = g_module->mem->vrt_y[badvertex];
+	//		v[cnt].pos.z = g_module->mem->vrt_z[badvertex];
 	//
 	//		v[cnt].col.r = FP8_TO_FLOAT( mem->vrt_lr_fp8[badvertex] + mem->vrt_ar_fp8[badvertex] );
 	//		v[cnt].col.g = FP8_TO_FLOAT( mem->vrt_lg_fp8[badvertex] + mem->vrt_ag_fp8[badvertex] );
@@ -550,7 +550,7 @@ void c_renderer::render_fan(Uint32 fan, bool set_texture)
 	//		glColor4fv( light_flat.v );
 
 	// Render each command
-	commands = g_mesh->getTileDefinition(type).cmd_count;            // Number of commands
+	commands = g_module->getTileDefinition(type).cmd_count;            // Number of commands
 	glColor4f(1, 1, 1, 1);
 
 	// Render the FX bits
@@ -567,7 +567,7 @@ void c_renderer::render_fan(Uint32 fan, bool set_texture)
 
 	for (cnt = 0, entry = 0; cnt < commands; cnt++)
 	{
-		c_tile_definition & tile_def = g_mesh->getTileDefinition(type);
+		c_tile_definition & tile_def = g_module->getTileDefinition(type);
 		Uint8 size = tile_def.cmd_size[cnt];
 
 		glBegin(GL_TRIANGLE_FAN);
@@ -577,7 +577,7 @@ void c_renderer::render_fan(Uint32 fan, bool set_texture)
 			Uint16 loc_vrt = tile_def.vrt[entry];
 			Uint16 glb_vrt = loc_vrt + badvertex;
 
-			tmp_vertex = g_mesh->mem->get_vert(glb_vrt);
+			tmp_vertex = g_module->mem->get_vert(glb_vrt);
 
 			glTexCoord2f(tile_def.tx[loc_vrt].u + off.u, tile_def.tx[loc_vrt].v + off.v);
 			glVertex3f(tmp_vertex.x, tmp_vertex.y, tmp_vertex.z);
@@ -599,9 +599,9 @@ void c_renderer::render_fan(Uint32 fan, bool set_texture)
 
 	for ( cnt = 0; cnt < commands; cnt++ )
 	{
-	for ( tnc = 0; tnc < g_mesh->getTileDefinition(type).cmd_size[cnt]; tnc++ )
+	for ( tnc = 0; tnc < g_module->getTileDefinition(type).cmd_size[cnt]; tnc++ )
 	{
-	vertex = g_mesh->getTileDefinition(type).vrt[entry];
+	vertex = g_module->getTileDefinition(type).vrt[entry];
 
 	//			glVertex3fv(v[vertex].pos.v);
 	glVertex3f(v[vertex].pos.x, v[vertex].pos.y, (v[vertex].pos.z-5.0f));

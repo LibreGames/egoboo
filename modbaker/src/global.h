@@ -30,6 +30,7 @@
 #include "renderer.h"
 #include "mesh.h"
 #include "frustum.h"
+#include "modbaker.h"
 
 #include <vector>
 #include <stdexcept>
@@ -61,12 +62,12 @@ extern int g_nearest_object;
 extern c_selection g_selection;
 
 // Global subsystems
-// Implmented in renderer.cpp, renderer_misc.cpp, mesh.cpp, frustum.cpp
+// Implmented in renderer.cpp, renderer_misc.cpp, frustum.cpp
+extern c_module*         g_module;
+
 extern c_input_handler*  g_input_handler;
 extern c_config*         g_config;
 extern c_renderer*       g_renderer;
-extern c_mesh*           g_mesh;
-extern c_object_manager* g_object_manager;
 extern c_frustum         g_frustum;           // TODO: Move to g_renderer
 
 bool load_module(string);

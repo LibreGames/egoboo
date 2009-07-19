@@ -16,6 +16,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //---------------------------------------------------------------------
+
+/// @file
+/// @brief mesh and module definition
+/// @details Definition of all files in the module/gamedat/ folder
+
 #ifndef mesh_h
 #define mesh_h
 //---------------------------------------------------------------------
@@ -98,29 +103,29 @@ enum e_fan_type
 
 
 //---------------------------------------------------------------------
-//-   This resembles one entry in spawn.txt
+///   Definition of one spawn (= one entry in spawn.txt)
 //---------------------------------------------------------------------
 class c_spawn
 {
 	public:
-		int id;               // ID for internal handling
-		string name;          // Display name
-		int slot_number;      // Egoboo slot number
-		vect3 pos;            // Position
-		char direction;       // Direction
-		int money;            // Bonus money for this module
-		int skin;             // The skin
-		int passage;          // Reference passage
-		int content;          // Content (for armor chests)
-		int lvl;              // Character level
-		char status_bar;      // Draw a status bar for this character?
-		char ghost;           // Is the character a ghost?
-		string team;          // Team
+		int id;               ///< ID for internal handling
+		string name;          ///< Display name
+		int slot_number;      ///< Egoboo slot number
+		vect3 pos;            ///< Position
+		char direction;       ///< Direction
+		int money;            ///< Bonus money for this module
+		int skin;             ///< The skin
+		int passage;          ///< Reference passage
+		int content;          ///< Content (for armor chests)
+		int lvl;              ///< Character level
+		char status_bar;      ///< Draw a status bar for this character?
+		char ghost;           ///< Is the character a ghost?
+		string team;          ///< Team
 };
 
 
 //---------------------------------------------------------------------
-//-   This represents one object in the module/objects folder
+///   Definition of one object in the module/objects/ folder
 //---------------------------------------------------------------------
 class c_object
 {
@@ -149,11 +154,12 @@ class c_object
 
 		bool read_data_file(string);
 		bool render();
+		void debug_data();
 };
 
 
 //---------------------------------------------------------------------
-//-   spawn.txt handling
+///   Object and spawn manager
 //---------------------------------------------------------------------
 class c_object_manager
 {
@@ -195,12 +201,16 @@ class c_object_manager
 		vector<c_spawn>  get_spawns();
 		vector<c_object*> get_objects();
 
+		void load_all_for_module(string);
+
+		int get_nearest_object(float, float, float);
+
 		void    render();
 };
 
 
 //---------------------------------------------------------------------
-//-   menu.txt handling
+///   Definition of the module menu file (menu.txt)
 //---------------------------------------------------------------------
 class c_menu_txt
 {
@@ -259,25 +269,25 @@ class c_menu_txt
 
 
 //---------------------------------------------------------------------
-//-   Texture box?
+///   Texture box?
 //---------------------------------------------------------------------
 typedef vect2 TILE_TXBOX;
 
 
 //---------------------------------------------------------------------
-//-   the definition of a single tile
+///   Definition of a single tile definition
 //---------------------------------------------------------------------
 class c_tile_definition
 {
 	private:
 	public:
-		Uint8   cmd_count;                  // Number of commands
-		Uint8   cmd_size[MAXMESHCOMMAND];   // Entries in each command
-		Uint16  vrt[MAXMESHCOMMANDENTRIES]; // Fansquare vertex list
+		Uint8   cmd_count;                  ///< Number of commands
+		Uint8   cmd_size[MAXMESHCOMMAND];   ///< Entries in each command
+		Uint16  vrt[MAXMESHCOMMANDENTRIES]; ///< Fansquare vertex list
 
-		Uint8   vrt_count;                  // Number of vertices
-		Uint8   ref[MAXMESHVERTICES];       // Lighting references
-		vect2   tx[MAXMESHVERTICES];        // Relative texture coordinates
+		Uint8   vrt_count;                  ///< Number of vertices
+		Uint8   ref[MAXMESHVERTICES];       ///< Lighting references
+		vect2   tx[MAXMESHVERTICES];        ///< Relative texture coordinates
 
 //		c_tile_definition();
 //		~c_tile_definition()
@@ -285,14 +295,17 @@ class c_tile_definition
 
 
 //---------------------------------------------------------------------
-//-   The dictionary, compiling all of the tile definitions
+///   The tile dictionary, compiling all tile definitions
+///   TODO: Make this a class
 //---------------------------------------------------------------------
 struct c_tile_dictionary : public vector<c_tile_definition>
 {
-	typedef vector<c_tile_definition> my_vector;
+	typedef vector<c_tile_definition> my_vector; ///< vector with all tile definitions
 
-	TILE_TXBOX TxBox[MAXTILETYPE];
+	TILE_TXBOX TxBox[MAXTILETYPE]; ///< The texture box
 
+	/// Get the vector data
+	/// \return vector
 	my_vector & getData() { return *(static_cast<my_vector*>(this)); }
 
 	bool load();
@@ -300,7 +313,7 @@ struct c_tile_dictionary : public vector<c_tile_definition>
 
 
 //---------------------------------------------------------------------
-//-   The mesh info
+///   The mesh info
 //---------------------------------------------------------------------
 class c_mesh_info
 {
@@ -326,7 +339,7 @@ class c_mesh_info
 
 
 //---------------------------------------------------------------------
-//-   TODO: What is this?
+///   \struct TODO: What is this?
 //---------------------------------------------------------------------
 struct s_aa_bbox
 {
@@ -344,31 +357,37 @@ typedef struct s_aa_bbox AA_BBOX;
 
 
 //---------------------------------------------------------------------
-//-   One single tile
+///   Definition of one single tile
 //---------------------------------------------------------------------
 class c_tile
 {
 	private:
-		bool wall;
+		bool wall;                     ///< Is it a wall?
 	public:
-		int vert_count;
-		int pos_x;                     // The X position of the tile
-		int pos_y;                     // The Y position of the tile
-		vector<vect3> vertices;        // x, y, z values
-		vector<vect3> vert_base_light; // r, g, b values
-		vector<vect3> vert_light;      // r, g, b values
+		int vert_count;                ///< Number of vertices
+		int pos_x;                     ///< The X position of the tile
+		int pos_y;                     ///< The Y position of the tile
+		vector<vect3> vertices;        ///< x, y, z values
+		vector<vect3> vert_base_light; ///< r, g, b values
+		vector<vect3> vert_light;      ///< r, g, b values
 
-		Uint8   type;         // Command type
-		Uint8   fx;           // Special effects flags
+		Uint8   type;         ///< Command type
+		Uint8   fx;           ///< Special effects flags
 		Uint8   twist;        //
-		bool    inrenderlist; //
-		Uint16  tile;         // Get texture from this
-		Uint32  vrt_start;    // Which vertex to start at
-		AA_BBOX bbox;         // what is the minimum extent of the fan
+		bool    inrenderlist; ///< Is it in the renderlist?
+		Uint16  tile;         ///< Get texture from this
+		Uint32  vrt_start;    ///< Which vertex to start at
+		AA_BBOX bbox;         ///< what is the minimum extent of the fan
 
 		c_tile();
 		~c_tile();
+
+		/// Is it a wall?
+		/// \return true if tile is a wall
 		bool get_wall() { return this->wall; }
+
+		/// Set it to wall or floor
+		/// \param p_wall true for wall, false for floor
 		void set_wall(bool p_wall) { this->wall = p_wall; }
 
 		vect3* get_vertex(int);
@@ -376,7 +395,7 @@ class c_tile
 
 
 //---------------------------------------------------------------------
-//-   mesh memory - this stores the vertex data
+///   mesh memory - this stores the vertex data
 //---------------------------------------------------------------------
 class c_mesh_mem
 {
@@ -419,7 +438,7 @@ class c_mesh_mem
 
 
 //---------------------------------------------------------------------
-//-   container for all mesh related data
+///   Container for all mesh related data
 //---------------------------------------------------------------------
 class c_mesh
 {
@@ -470,10 +489,85 @@ class c_mesh
 
 		int get_nearest_vertex(float, float, float);
 		int get_nearest_tile(float, float, float);
-		int get_nearest_object(float, float, float);
 
 		c_tile_dictionary & getTileDictioary()          { return ms_tiledict;             }
 		c_tile_definition & getTileDefinition(int tile) { return ms_tiledict[tile];       }
 		vect2             & getTileOffset(int tile)     { return ms_tiledict.TxBox[tile]; }
+};
+
+
+//---------------------------------------------------------------------
+///   A passage (=one entry in passage.txt)
+//---------------------------------------------------------------------
+// TODO: Does it really make sense to make those private?
+class c_passage
+{
+	private:
+		unsigned int id;
+		string name;
+		vect2 pos_top;
+		vect2 pos_bot;
+		bool open;
+		bool shoot_through;
+		bool slippy_close;
+
+	public:
+		unsigned int get_id()                  { return this->id; }
+		void         set_id(unsigned int p_id) { this->id = p_id; }
+
+		string get_name()              { return this->name; }
+		void   set_name(string p_name) { this->name = p_name; }
+
+		vect2 get_pos_top()                { return this->pos_top; }
+		void  set_pos_top(vect2 p_pos_top) { this->pos_top = p_pos_top; }
+
+		vect2 get_pos_bot()                { return this->pos_bot; }
+		void  set_pos_bot(vect2 p_pos_bot) { this->pos_bot = p_pos_bot; }
+
+		bool get_open()            { return this->open; }
+		void set_open(bool p_open) { this->open = p_open; }
+
+		bool get_shoot_through()                     { return this->shoot_through; }
+		void set_shoot_through(bool p_shoot_through) { this->shoot_through = p_shoot_through; }
+
+		bool get_slippy_close()                    { return this->slippy_close; }
+		void set_slippy_close(bool p_slippy_close) { this->slippy_close = p_slippy_close; }
+
+	c_passage()
+	{
+		this->id            = 0;
+		this->name          = "";
+		this->pos_top.x     = 0;
+		this->pos_top.y     = 0;
+		this->pos_bot.x     = 0;
+		this->pos_bot.y     = 0;
+		this->open          = false;
+		this->shoot_through = false;
+		this->slippy_close  = false;
+	}
+};
+
+
+//---------------------------------------------------------------------
+///   The passage manager
+//---------------------------------------------------------------------
+class c_passage_manager
+{
+	private:
+		vector<c_passage> passages;
+
+	public:
+		c_passage_manager();
+		~c_passage_manager();
+
+		c_passage get_passage(int p_num)                      { return this->passages[p_num]; }
+		void      set_passage(c_passage p_passage, int p_num) { this->passages[p_num] = p_passage; };
+
+		bool load_passage_txt(string);
+		bool save_passage_txt(string);
+		void clear_passages();
+		void add_passage(c_passage);
+		void remove_passage_by_id(unsigned int);
+		int get_passages_size();
 };
 #endif

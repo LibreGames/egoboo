@@ -16,6 +16,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //---------------------------------------------------------------------
+
+/// @file
+/// @brief Editing functions (DEPRECATED)
+/// @details Editing functions WARNING: THIS FILE IS DEPRECATED
+
 #ifndef edit_h
 #define edit_h
 
@@ -30,13 +35,22 @@
 
 using namespace std;
 
-enum
+
+//---------------------------------------------------------------------
+///   \enum SEL_MODES
+///         Selection modes
+//---------------------------------------------------------------------
+enum selection_modes
 {
-	SELECTION_MODE_VERTEX,
-	SELECTION_MODE_TILE,
-	SELECTION_MODE_OBJECT
+	SELECTION_MODE_VERTEX, ///< Vertex selection mode
+	SELECTION_MODE_TILE,   ///< Tile selection mode
+	SELECTION_MODE_OBJECT  ///< Object selection mode
 };
 
+
+//---------------------------------------------------------------------
+///   Definition of the selection class
+//---------------------------------------------------------------------
 class c_selection
 {
 	private:
@@ -59,13 +73,25 @@ class c_selection
 
 		int add_vertices_at_position(vect3);
 
-		void set_add_mode(bool mode) { this->add_mode = mode; }
-		bool get_add_mode()          { return this->add_mode; }
+		///   Set add mode
+		///   \param p_mode true for "add", false for "overwrite current selection"
+		void set_add_mode(bool p_mode) { this->add_mode = p_mode; }
+		///   Get add mode
+		///   \return true for "add", false for "overwrite current selection"
+		bool get_add_mode()            { return this->add_mode; }
 
-		void set_selection_mode(int mode) { this->selection_mode = mode; }
-		int get_selection_mode()          { return this->selection_mode; }
+		///   Set the selction mode
+		///   \param p_mode selection mode
+		void set_selection_mode(int p_mode) { this->selection_mode = p_mode; }
+		///   Get the selction mode
+		///   \return selection mode
+		int get_selection_mode()            { return this->selection_mode; }
 
+		///   Set current texture
+		///   \param p_texture new current texture
 		void set_texture(int p_texture) { this->texture = p_texture; }
+		///   Get current texture
+		///   \return current texture
 		int  get_texture()              { return this->texture; }
 
 		bool weld(c_mesh *);

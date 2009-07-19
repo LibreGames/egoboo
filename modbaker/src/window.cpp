@@ -10,13 +10,22 @@ using namespace std;
 
 
 //---------------------------------------------------------------------
-//-   Functions for the modbaker image loader
+///   Class constructor
 //---------------------------------------------------------------------
 c_mb_image_loader::c_mb_image_loader()
 {
 }
 
 
+//---------------------------------------------------------------------
+///   Load only a part of an image
+///   \param p_filename filename of the image to load
+///   \param p_y y starting position
+///   \param p_x x starting position
+///   \param p_width width of the extract
+///   \param p_height height of the extract
+///   \return image containing the extract
+//---------------------------------------------------------------------
 gcn::Image* c_mb_image_loader::load_part(string p_filename, int p_y, int p_x, int p_width, int p_height)
 {
 	SDL_Surface *loadedSurface = loadSDLSurface(p_filename);
@@ -66,13 +75,14 @@ gcn::Image* c_mb_image_loader::load_part(string p_filename, int p_y, int p_x, in
 
 
 //---------------------------------------------------------------------
-//-   Set default actions for the widgets
+///   Class constructor
+///   \param p_caption caption of the window
 //---------------------------------------------------------------------
-c_mb_window::c_mb_window(string caption)
+c_mb_window::c_mb_window(string p_caption)
 {
 	this->setBaseColor(gcn::Color(255, 255, 255, 230));
 	this->setMovable(true);
-	this->setCaption(caption);
+	this->setCaption(p_caption);
 
 	// Catch all events withing the gui
 	c_widget_input_handler *wil;
@@ -82,6 +92,10 @@ c_mb_window::c_mb_window(string caption)
 }
 
 
+//---------------------------------------------------------------------
+///   Class constructor
+///   \param p_caption caption of the tab
+//---------------------------------------------------------------------
 c_mb_tab::c_mb_tab(string p_caption)
 {
 	this->setCaption(p_caption);
@@ -91,6 +105,9 @@ c_mb_tab::c_mb_tab(string p_caption)
 }
 
 
+//---------------------------------------------------------------------
+///   Class constructor
+//---------------------------------------------------------------------
 c_mb_tabbedarea::c_mb_tabbedarea()
 {
 	this->setBackgroundColor(gcn::Color(255, 255, 255, 230));
@@ -98,6 +115,10 @@ c_mb_tabbedarea::c_mb_tabbedarea()
 }
 
 
+//---------------------------------------------------------------------
+///   Class constructor
+///   \param p_caption caption of the label
+//---------------------------------------------------------------------
 c_mb_label::c_mb_label(string p_caption)
 {
 	this->setCaption(p_caption);
@@ -107,6 +128,9 @@ c_mb_label::c_mb_label(string p_caption)
 }
 
 
+//---------------------------------------------------------------------
+///   Class constructor
+//---------------------------------------------------------------------
 c_mb_textfield::c_mb_textfield()
 {
 	this->setBackgroundColor(gcn::Color(255, 255, 255, 230));
@@ -114,6 +138,9 @@ c_mb_textfield::c_mb_textfield()
 }
 
 
+//---------------------------------------------------------------------
+///   Class constructor
+//---------------------------------------------------------------------
 c_mb_scroll_area::c_mb_scroll_area()
 {
 	this->setBackgroundColor(gcn::Color(255, 255, 255, 230));
@@ -121,6 +148,10 @@ c_mb_scroll_area::c_mb_scroll_area()
 }
 
 
+//---------------------------------------------------------------------
+///   Class constructor
+///   \param image image object for the image button
+//---------------------------------------------------------------------
 c_mb_image_button::c_mb_image_button(gcn::Image* image)
 {
 	this->setImage(image);
@@ -131,6 +162,9 @@ c_mb_image_button::c_mb_image_button(gcn::Image* image)
 }
 
 
+//---------------------------------------------------------------------
+///   Class constructor
+//---------------------------------------------------------------------
 c_mb_button::c_mb_button()
 {
 	this->setBackgroundColor(gcn::Color(255, 255, 255, 230));
@@ -138,6 +172,9 @@ c_mb_button::c_mb_button()
 }
 
 
+//---------------------------------------------------------------------
+///   Class destructor
+//---------------------------------------------------------------------
 c_mb_container::c_mb_container()
 {
 	this->setBackgroundColor(gcn::Color(255, 255, 255, 230));
@@ -146,13 +183,18 @@ c_mb_container::c_mb_container()
 
 
 //---------------------------------------------------------------------
-//-   A modbaker image button
+///   Gets called when a mouse button got pressed withing the image button
+///   \param event mouse event
 //---------------------------------------------------------------------
 void c_mb_image_button::mousePressed(gcn::MouseEvent &event)
 {
 }
 
 
+//---------------------------------------------------------------------
+///   Gets called when the mouse got moved withing the image button
+///   \param event mouse event
+//---------------------------------------------------------------------
 void c_mb_image_button::mouseMoved(gcn::MouseEvent &event)
 {
 	if (g_renderer->get_wm()->get_tooltip() == this->tooltip)
@@ -163,7 +205,8 @@ void c_mb_image_button::mouseMoved(gcn::MouseEvent &event)
 
 
 //---------------------------------------------------------------------
-//-   c_window_manager constructor
+///   Class constructor
+///   \param p_renderer rendering system object
 //---------------------------------------------------------------------
 c_window_manager::c_window_manager(c_renderer* p_renderer)
 {
@@ -237,7 +280,7 @@ c_window_manager::c_window_manager(c_renderer* p_renderer)
 
 
 //---------------------------------------------------------------------
-//-   c_window_manager destructor
+///   Class destructor
 //---------------------------------------------------------------------
 c_window_manager::~c_window_manager()
 {
@@ -261,7 +304,8 @@ c_window_manager::~c_window_manager()
 
 
 //---------------------------------------------------------------------
-//-   Update the FPS in the info window
+///   Set the FPS for the "info" window
+///   \param p_fps new FPS
 //---------------------------------------------------------------------
 void c_window_manager::set_fps(float p_fps)
 {
@@ -276,7 +320,9 @@ void c_window_manager::set_fps(float p_fps)
 
 
 //---------------------------------------------------------------------
-//-   Update the FPS in the info window
+///   Set the position for the "info" window
+///   \param p_x cursor x position
+///   \param p_y cursor y position
 //---------------------------------------------------------------------
 void c_window_manager::set_position(float p_x, float p_y)
 {
@@ -291,7 +337,13 @@ void c_window_manager::set_position(float p_x, float p_y)
 
 
 //---------------------------------------------------------------------
-//-   Add an icon to a container
+///   Add an icon to a container
+///   \param p_conatiner container to add the icon to
+///   \param p_filename filename of the icon
+///   \param p_x x position of the icon
+///   \param p_y y position of the icon
+///   \param p_id event ID of the icon
+///   \param p_tooltip tooltip for the icon
 //---------------------------------------------------------------------
 void c_window_manager::add_icon(c_mb_container* p_container, string p_filename, int p_x, int p_y, int p_id, string p_tooltip)
 {
@@ -327,7 +379,13 @@ void c_window_manager::add_icon(c_mb_container* p_container, string p_filename, 
 
 
 //---------------------------------------------------------------------
-//-   Add a set of textures
+///   Add a texture selection area
+///   \param p_container container the area will go to
+///   \param p_filename filename of the texture set to load
+///   \param p_set texture set to load
+///   \param p_x x position of the selection area
+///   \param p_y y position of the selection area
+///   \param p_size site of each tile
 //---------------------------------------------------------------------
 void c_window_manager::add_texture_set(c_mb_container* p_container, string p_filename, int p_set, int p_x, int p_y, int p_size)
 {
@@ -379,7 +437,8 @@ void c_window_manager::add_texture_set(c_mb_container* p_container, string p_fil
 
 
 //---------------------------------------------------------------------
-//-   Create the main window
+///   Create the "palette" (main) window
+///   \return true if everything went right
 //---------------------------------------------------------------------
 bool c_window_manager::create_mesh_window()
 {
@@ -458,7 +517,8 @@ bool c_window_manager::create_mesh_window()
 
 
 //---------------------------------------------------------------------
-//-   Create the texture tab
+///   Create the "texture" window
+///   \return true if everything went right
 //---------------------------------------------------------------------
 bool c_window_manager::create_texture_window(string p_modname)
 {
@@ -532,7 +592,8 @@ bool c_window_manager::create_texture_window(string p_modname)
 
 
 //---------------------------------------------------------------------
-//-   Create the object tab
+///   Create the "object" window
+///   \return true if everything went right
 //---------------------------------------------------------------------
 bool c_window_manager::create_object_window(string p_modname)
 {
@@ -546,15 +607,15 @@ bool c_window_manager::create_object_window(string p_modname)
 
 		unsigned int i;
 
-		if (g_object_manager == NULL)
+		if (g_module == NULL)
 			return false;
 
 		// Append all objects to the area
-		for (i=0; i<g_object_manager->get_objects_size(); i++)
+		for (i=0; i<g_module->get_objects_size(); i++)
 		{
-			obj_showname = g_object_manager->get_object(i)->get_name();
+			obj_showname = g_module->get_object(i)->get_name();
 
-			if (g_object_manager->get_object(i)->get_gor())
+			if (g_module->get_object(i)->get_gor())
 				obj_showname += " (GOR)";
 
 			this->obj_list_model->add_element(obj_showname);
@@ -595,7 +656,8 @@ bool c_window_manager::create_object_window(string p_modname)
 
 
 //---------------------------------------------------------------------
-//-   Create the tile flag window
+///   Create the "tile flag" window
+///   \return true if everything went right
 //---------------------------------------------------------------------
 bool c_window_manager::create_tile_flag_window()
 {
@@ -650,7 +712,8 @@ bool c_window_manager::create_tile_flag_window()
 
 
 //---------------------------------------------------------------------
-//-   Create the tile type window
+///   Create the "tile type" window
+///   \return true if everything went right
 //---------------------------------------------------------------------
 bool c_window_manager::create_tile_type_window()
 {
@@ -722,7 +785,8 @@ bool c_window_manager::create_tile_type_window()
 
 
 //---------------------------------------------------------------------
-//-   Create the info window
+///   Create the "info" window
+///   \return true if everything went right
 //---------------------------------------------------------------------
 bool c_window_manager::create_info_window()
 {
@@ -761,7 +825,7 @@ bool c_window_manager::create_info_window()
 
 
 //---------------------------------------------------------------------
-//-   Window definition for the info window
+///   Window definition for the info window
 //---------------------------------------------------------------------
 c_mod_txt_window::c_mod_txt_window() : c_mb_window("Module menu")
 {
@@ -961,7 +1025,8 @@ c_mod_txt_window::c_mod_txt_window() : c_mb_window("Module menu")
 
 
 //---------------------------------------------------------------------
-//-   Return the text of the input boxes
+///   Get the module.txt window
+///   \return window object
 //---------------------------------------------------------------------
 c_menu_txt* c_mod_txt_window::get_menu_txt() {
 	c_menu_txt *tmp_menu_txt;
@@ -994,7 +1059,8 @@ c_menu_txt* c_mod_txt_window::get_menu_txt() {
 
 
 //---------------------------------------------------------------------
-//-   Set the text of the input boxes based on a c_menu_txt object
+///   Set the text of the input boxes based on a c_menu_txt object
+///   \param p_menu_txt Content of the menu.txt window
 //---------------------------------------------------------------------
 void c_mod_txt_window::set_menu_txt(c_menu_txt* p_menu_txt)
 {
@@ -1027,7 +1093,8 @@ void c_mod_txt_window::set_menu_txt(c_menu_txt* p_menu_txt)
 
 
 //---------------------------------------------------------------------
-//-   Create the window for the module menu
+///   Creates the "menu.txt" window
+///   \return true is everything went right
 //---------------------------------------------------------------------
 // TODO: Merge all create window functions into one function
 bool c_window_manager::create_mod_menu_window()
@@ -1057,7 +1124,8 @@ bool c_window_manager::create_mod_menu_window()
 
 
 //---------------------------------------------------------------------
-//-   Create the window for loading
+///   Creates the "load mesh" window
+///   \return true is everything went right
 //---------------------------------------------------------------------
 bool c_window_manager::create_mesh_load_window()
 {
@@ -1115,7 +1183,8 @@ bool c_window_manager::create_mesh_load_window()
 
 
 //---------------------------------------------------------------------
-//-   Create the window for saving
+///   Creates the "save mesh" window
+///   \return true is everything went right
 //---------------------------------------------------------------------
 bool c_window_manager::create_mesh_save_window()
 {
@@ -1173,7 +1242,8 @@ bool c_window_manager::create_mesh_save_window()
 
 
 //---------------------------------------------------------------------
-//-   Create the window for creating a new mesh
+///   Creates the "new mesh" window
+///   \return true is everything went right
 //---------------------------------------------------------------------
 bool c_window_manager::create_mesh_new_window()
 {
@@ -1258,7 +1328,8 @@ bool c_window_manager::create_mesh_new_window()
 
 
 //---------------------------------------------------------------------
-//-   Return the GUI object
+///   Get the GUI object
+///   \return GUI object
 //---------------------------------------------------------------------
 gcn::Gui* c_window_manager::get_gui()
 {
@@ -1267,7 +1338,8 @@ gcn::Gui* c_window_manager::get_gui()
 
 
 //---------------------------------------------------------------------
-//-   Set the GUI object
+///   Set the GUI
+///   \param p_gui new GUI object
 //---------------------------------------------------------------------
 void c_window_manager::set_gui(gcn::Gui* p_gui)
 {
@@ -1276,7 +1348,10 @@ void c_window_manager::set_gui(gcn::Gui* p_gui)
 
 
 //---------------------------------------------------------------------
-//-   Set the visibility of a window
+///   Set the visibility of a window
+///   \param p_window_name name of a window
+///   \param p_visibility should it be visible?
+///   \return false if window was not found, else true
 //---------------------------------------------------------------------
 bool c_window_manager::set_visibility(string p_window_name, bool p_visibility)
 {
@@ -1295,7 +1370,9 @@ bool c_window_manager::set_visibility(string p_window_name, bool p_visibility)
 
 
 //---------------------------------------------------------------------
-//-   Toggle the visibility of a window
+///   Toggle the visibility of a window
+///   \param p_window_name name of a window
+///   \return false if window was not found, else true
 //---------------------------------------------------------------------
 bool c_window_manager::toggle_visibility(string p_window_name)
 {
@@ -1318,13 +1395,19 @@ bool c_window_manager::toggle_visibility(string p_window_name)
 
 
 //---------------------------------------------------------------------
-//-   Setter & getter for the button type
+///   Set button type
+///   \param p_type type of the button
 //---------------------------------------------------------------------
 void c_mb_button::set_type(int p_type)
 {
 	this->type = p_type;
 }
 
+
+//---------------------------------------------------------------------
+///   Get button type
+///   \return type of the button
+//---------------------------------------------------------------------
 int c_mb_button::get_type()
 {
 	return this->type;
@@ -1332,7 +1415,8 @@ int c_mb_button::get_type()
 
 
 //---------------------------------------------------------------------
-//-   Mouse input handling
+///   Handle mouse presses on the button
+///   \param event mouse event
 //---------------------------------------------------------------------
 void c_mb_button::mousePressed(gcn::MouseEvent &event)
 {
@@ -1352,7 +1436,7 @@ void c_mb_button::mousePressed(gcn::MouseEvent &event)
 			vect2 new_size;
 			new_size.x = translate_into_uint(g_renderer->get_wm()->get_tf_size_x()->getText());
 			new_size.y = translate_into_uint(g_renderer->get_wm()->get_tf_size_y()->getText());
-			g_mesh->set_size(new_size);
+			g_module->set_size(new_size);
 
 			g_input_handler->do_something(ACTION_MESH_NEW);
 			g_input_handler->do_something(WINDOW_MESH_NEW_HIDE);
@@ -1382,36 +1466,60 @@ void c_mb_button::mousePressed(gcn::MouseEvent &event)
 }
 
 
+//---------------------------------------------------------------------
+///   Get the selected object
+///   \return selected object
+//---------------------------------------------------------------------
 int c_window_manager::get_selected_object()
 {
 	return this->obj_list_box->getSelected();
 }
 
 
+//---------------------------------------------------------------------
+///   Get the selected tile flag
+///   \return selected tile flag
+//---------------------------------------------------------------------
 int c_window_manager::get_selected_tile_flag()
 {
-	return g_mesh->get_meshfx(this->lb_tile_flag->getSelected());
+	return g_module->get_meshfx(this->lb_tile_flag->getSelected());
 }
 
 
+//---------------------------------------------------------------------
+///   Get the selected tile type
+///   \return selected tile type
+//---------------------------------------------------------------------
 int c_window_manager::get_selected_tile_type()
 {
 	return this->lb_tile_type->getSelected();
 }
 
 
+//---------------------------------------------------------------------
+///   Set the selected object
+///   \param p_object new object
+//---------------------------------------------------------------------
 void c_window_manager::set_selected_object(int p_object)
 {
 	this->selected_object = p_object;
 }
 
 
+//---------------------------------------------------------------------
+///   Set the selected tile flag
+///   \param p_tile_flag new tile flag
+//---------------------------------------------------------------------
 void c_window_manager::set_selected_tile_flag(int p_tile_flag)
 {
 	this->selected_tile_flag = p_tile_flag;
 }
 
 
+//---------------------------------------------------------------------
+///   Set the selected tile type
+///   \param p_tile_type new tile type
+//---------------------------------------------------------------------
 void c_window_manager::set_selected_tile_type(int p_tile_type)
 {
 	this->selected_tile_type = p_tile_type;
@@ -1419,7 +1527,9 @@ void c_window_manager::set_selected_tile_type(int p_tile_type)
 
 
 //---------------------------------------------------------------------
-//-   Return a window object based on a string
+///   Return a window object based on a string
+///   \param p_window window identifier
+///   \return window object
 //---------------------------------------------------------------------
 c_mb_window* c_window_manager::get_window(string p_window)
 {
@@ -1463,4 +1573,30 @@ c_mb_window* c_window_manager::get_window(string p_window)
 		return this->w_mod_menu;
 
 	return NULL;
+}
+
+
+//---------------------------------------------------------------------
+///   Destroys the object window
+///   TODO: Create one function to destroy all windows
+//---------------------------------------------------------------------
+void c_window_manager::destroy_object_window()
+{
+	if (this->w_object == NULL)
+		return;
+
+	delete this->w_object;
+}
+
+
+//---------------------------------------------------------------------
+///   Destroys the texture window
+///   TODO: Create one function to destroy all windows
+//---------------------------------------------------------------------
+void c_window_manager::destroy_texture_window()
+{
+	if (this->w_texture == NULL)
+		return;
+
+	delete this->w_texture;
 }
