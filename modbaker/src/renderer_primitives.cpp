@@ -26,62 +26,11 @@
 #include <iostream>
 #include <sstream>
 
-// TODO: Remove
-void c_renderer::render_text(string text, vect3 pos, c_renderer::TMODE mode)
-{
-	SDL_Surface *textSurf;
-	SDL_Color color = { 0xFF, 0xFF, 0xFF, 0 };
-	static GLuint font_tex = ~0;
-	static float  font_coords[4];
-
-	// Let TTF render the text
-	textSurf = TTF_RenderText_Blended( m_font, text.c_str(), color );
-
-	glEnable( GL_TEXTURE_2D );
-
-	// Does this font already have a texture?  If not, allocate it here
-	if (~0 == (int)font_tex)
-	{
-		glGenTextures( 1, &font_tex );
-	}
-
-	// Copy the surface to the texture
-	if ( copySurfaceToTexture( textSurf, font_tex, font_coords ) )
-	{
-		float xl, xr;
-		float yt, yb;
-
-		if (mode == JLEFT)
-		{
-			xl = pos.x;
-			xr = pos.x + textSurf->w;
-			yb = pos.y;
-			yt = pos.y + textSurf->h;
-		}
-		else
-		{
-			xl = pos.x - textSurf->w;
-			xr = pos.x;
-			yb = pos.y;
-			yt = pos.y + textSurf->h;
-		}
-
-		// And draw the darn thing
-		glBegin( GL_TRIANGLE_STRIP );
-		glTexCoord2f( font_coords[0], font_coords[1] ); glVertex2f( xl, yb );
-		glTexCoord2f( font_coords[2], font_coords[1] ); glVertex2f( xr, yb );
-		glTexCoord2f( font_coords[0], font_coords[3] ); glVertex2f( xl, yt );
-		glTexCoord2f( font_coords[2], font_coords[3] ); glVertex2f( xr, yt );
-		glEnd();
-	}
-
-	// Done with the surface
-	SDL_FreeSurface( textSurf );
-}
-
 
 //---------------------------------------------------------------------
-//-   Render one model
+///   Render all models
+///   \param p_obj_manager object manager containing the objects
+///   \return true on success, else false
 //---------------------------------------------------------------------
 bool c_renderer::render_models(c_object_manager *p_obj_manager)
 {
@@ -150,6 +99,10 @@ bool c_renderer::render_models(c_object_manager *p_obj_manager)
 }
 
 
+//---------------------------------------------------------------------
+///   Unused
+///   \return false
+//---------------------------------------------------------------------
 bool c_object::render()
 {
 	return false;

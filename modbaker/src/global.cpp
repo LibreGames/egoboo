@@ -68,8 +68,8 @@ bool load_module(string p_modname)
 	}
 
 	// Read the object and spawn.txt information
-	g_module->load_all_for_module(p_modname);
-	g_module->load_menu_txt(p_modname);
+	g_module->load_all_for_module(g_config->get_egoboo_path(), p_modname);
+	g_module->load_menu_txt(g_config->get_egoboo_path() + "modules/" + p_modname + "/gamedat/menu.txt");
 
 	// Reset module specific windows
 	g_renderer->get_wm()->destroy_object_window();

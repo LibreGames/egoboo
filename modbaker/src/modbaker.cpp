@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 
 	modname = "advent.mod";
 
-	// TODO: Read from argv
+	// Read the module name from the command line
 	if (argc >= 2)
 	{
 		modname = argv[1];
@@ -112,7 +112,6 @@ void c_modbaker::init(string p_modname)
 	g_renderer->m_renderlist.build();
 
 	// Set the module name
-	// TODO: Remove the global modname variable
 	g_module->modname = p_modname;
 }
 
@@ -163,11 +162,11 @@ bool c_module::load_module(string p_modname)
 	filename = g_config->get_egoboo_path() + "modules/" + p_modname + "/gamedat/level.mpd";
 
 	this->getTileDictioary().load();
-	this->load_mesh_mpd(p_modname); // TODO: Change load_mesh_mpd so the complete filename is a parameter
+	this->load_mesh_mpd(p_modname);
 
 	// Read the object and spawn.txt information
-	g_module->load_all_for_module(p_modname);
-	this->load_menu_txt(p_modname);
+	this->load_all_for_module(g_config->get_egoboo_path(), p_modname);
+	this->load_menu_txt(g_config->get_egoboo_path() + "modules/" + p_modname + "/gamedat/menu.txt");
 
 	// Reset module specific windows
 	g_renderer->get_wm()->destroy_object_window();

@@ -30,6 +30,9 @@ class c_module;
 
 #include "global.h"
 #include "mesh.h"
+#include "core/passage.h"
+#include "core/modmenu.h"
+#include "core/object.h"
 #include "renderer.h"
 
 
@@ -45,6 +48,7 @@ class c_module : public c_mesh, public c_passage_manager, public c_menu_txt, pub
 		bool save_module(string);
 		bool new_module(string);
 };
+
 
 class c_modbaker
 {

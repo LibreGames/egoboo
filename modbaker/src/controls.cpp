@@ -102,7 +102,7 @@ void c_input_handler::mousePressed(gcn::MouseEvent& event)
 				iss_y >> y;
 				iss_x >> x;
 
-				// TODO: calculate the texture ID
+				/// \todo calculate the texture ID
 				texture = (set * 64) + (y * 8) + x;
 
 				g_selection.set_texture(texture);
@@ -117,7 +117,7 @@ void c_input_handler::mousePressed(gcn::MouseEvent& event)
 		}
 		else
 		{
-			// TODO: move get_nearest_vertex / get_nearest_tile here
+			/// \todo move get_nearest_vertex / get_nearest_tile here
 			if (!g_selection.get_add_mode())
 				do_something(ACTION_SELECTION_CLEAR);
 
@@ -132,7 +132,7 @@ void c_input_handler::mousePressed(gcn::MouseEvent& event)
 					break;
 
 				case SELECTION_MODE_OBJECT:
-					// TODO: Different action if we want to place an object
+					/// \todo Different action if we want to place an object
 					g_selection.add_object(g_nearest_object);
 					break;
 
@@ -248,7 +248,7 @@ void c_input_handler::keyReleased(gcn::KeyEvent& event)
 		return;
 
 
-	// TODO: A switch ... case should do it, too
+	/// \todo A switch ... case should do it, too
 	if (event.getKey() == gcn::Key::LEFT_SHIFT)
 		do_something(ACTION_MODIFIER_OFF);
 
@@ -272,7 +272,7 @@ void c_input_handler::do_something(int p_action)
 			g_nearest_vertex = 0;
 			g_module->new_mesh_mpd(g_module->get_size().x, g_module->get_size().y);
 			g_renderer->m_renderlist.build();
-			// TODO: Remove objects / spawns
+			/// \todo Remove objects / spawns
 			break;
 
 		case ACTION_MESH_LOAD:
@@ -355,7 +355,7 @@ void c_input_handler::do_something(int p_action)
 			break;
 
 		case ACTION_EXIT:
-			// TODO: Set c_modbaker->done to true
+			/// \todo Set c_modbaker->done to true
 			Quit();
 			break;
 
@@ -521,7 +521,7 @@ void c_input_handler::do_something(int p_action)
 		// Save the file menu.txt
 		case ACTION_SAVE_MOD_MENU:
 			g_module->set_menu_txt(g_renderer->get_wm()->get_menu_txt());
-			g_module->get_menu_txt()->save(g_config->get_egoboo_path() + "modules/" + g_module->modname + "/gamedat/menu.txt");
+			g_module->save_menu_txt(g_config->get_egoboo_path() + "modules/" + g_module->modname + "/gamedat/menu.txt");
 			break;
 	}
 }

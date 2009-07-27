@@ -29,7 +29,7 @@
 static ogl_state_t tmp_ogl_state;
 
 //---------------------------------------------------------------------
-//-   Constructor: Set the basic renderer values
+///   Constructor: Set the basic renderer values
 //---------------------------------------------------------------------
 c_renderer::c_renderer()
 {
@@ -47,7 +47,7 @@ c_renderer::c_renderer()
 
 
 //---------------------------------------------------------------------
-//-   Destructor: Cleanup
+///   Destructor: Cleanup
 //---------------------------------------------------------------------
 c_renderer::~c_renderer()
 {
@@ -62,7 +62,7 @@ c_renderer::~c_renderer()
 
 
 //---------------------------------------------------------------------
-//-   General SDL initialisation
+///   General SDL initialisation
 //---------------------------------------------------------------------
 void c_renderer::initSDL()
 {
@@ -149,7 +149,7 @@ void c_renderer::initSDL()
 
 
 //---------------------------------------------------------------------
-//-   General OpenGL initialisation
+///   General OpenGL initialisation
 //---------------------------------------------------------------------
 void c_renderer::initGL()
 {
@@ -181,7 +181,9 @@ void c_renderer::initGL()
 
 
 //---------------------------------------------------------------------
-//-   Reset our viewport after a window resize
+///   Reset our viewport after a window resize
+///   \param width new window width
+///   \param height new window height
 //---------------------------------------------------------------------
 void c_renderer::resize_window( int width, int height )
 {
@@ -203,7 +205,7 @@ void c_renderer::resize_window( int width, int height )
 
 
 //---------------------------------------------------------------------
-//-   Load all basic textures
+///   Load all basic textures
 //---------------------------------------------------------------------
 void c_renderer::load_basic_textures(string modname)
 {
@@ -239,7 +241,10 @@ void c_renderer::load_basic_textures(string modname)
 
 
 //---------------------------------------------------------------------
-//-   Load a single texture
+///   Load a single texture
+///   \param imgname name of the image to load
+///   \param tileset type where the image gets stored
+///   \return true on success, else false
 //---------------------------------------------------------------------
 bool c_renderer::load_texture(string imgname, int tileset)
 {
@@ -273,7 +278,10 @@ bool c_renderer::load_texture(string imgname, int tileset)
 
 
 //---------------------------------------------------------------------
-//-   Load a single icon
+///   Load a single icon for a game object
+///   \param imgname name of the image
+///   \param p_object object to add the image to
+///   \return true on success, else false
 //---------------------------------------------------------------------
 bool c_renderer::load_icon(string imgname, c_object *p_object)
 {
@@ -305,7 +313,8 @@ bool c_renderer::load_icon(string imgname, c_object *p_object)
 
 
 //---------------------------------------------------------------------
-//-   Draw certain helping positions
+///   Draw certain helping positions
+///   \return true on success, else false
 //---------------------------------------------------------------------
 bool c_renderer::render_positions()
 {
@@ -375,7 +384,7 @@ bool c_renderer::render_positions()
 
 
 //---------------------------------------------------------------------
-//-   Begin the frame
+///   Begin the frame: Reset the scene
 //---------------------------------------------------------------------
 void c_renderer::begin_frame()
 {
@@ -385,7 +394,7 @@ void c_renderer::begin_frame()
 
 
 //---------------------------------------------------------------------
-//-   Finally draw the scene to the screen
+///   Finally draw the scene to the screen and calculate the FPS
 //---------------------------------------------------------------------
 void c_renderer::end_frame()
 {
@@ -415,7 +424,8 @@ void c_renderer::end_frame()
 
 
 //---------------------------------------------------------------------
-//-   Call render_fan() for every fan in the mesh
+///   Call render_fan() for every fan in the mesh
+///   \return true on success, else false
 //---------------------------------------------------------------------
 bool c_renderer::render_mesh()
 {
@@ -467,7 +477,9 @@ bool c_renderer::render_mesh()
 
 
 //---------------------------------------------------------------------
-//-   Render a single fan / tile
+///   Render a single fan / tile
+///   \param fan the fan to render
+///   \param set_texture do we need to change the texture?
 //---------------------------------------------------------------------
 void c_renderer::render_fan(Uint32 fan, bool set_texture)
 {
@@ -617,6 +629,9 @@ void c_renderer::render_fan(Uint32 fan, bool set_texture)
 }
 
 
+//---------------------------------------------------------------------
+///   Begin the 3D mode: set the GLview etc...
+//---------------------------------------------------------------------
 void c_renderer::begin_3D_mode()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -634,6 +649,9 @@ void c_renderer::begin_3D_mode()
 }
 
 
+//---------------------------------------------------------------------
+///   End the 3D mode: cleanup
+//---------------------------------------------------------------------
 void c_renderer::end_3D_mode()
 {
 	// Remove the projection matrix from the stack
@@ -646,6 +664,9 @@ void c_renderer::end_3D_mode()
 }
 
 
+//---------------------------------------------------------------------
+///   Begin the 2D mode: set the GLview etc...
+//---------------------------------------------------------------------
 void c_renderer::begin_2D_mode()
 {
 	glMatrixMode(GL_PROJECTION);
@@ -670,6 +691,9 @@ void c_renderer::begin_2D_mode()
 }
 
 
+//---------------------------------------------------------------------
+///   End the 2D mode: cleanup
+//---------------------------------------------------------------------
 void c_renderer::end_2D_mode()
 {
 	glMatrixMode(GL_PROJECTION);
@@ -683,18 +707,30 @@ void c_renderer::end_2D_mode()
 }
 
 
+//---------------------------------------------------------------------
+///   Returns the window manager object
+///   \return window manager object
+//---------------------------------------------------------------------
 c_window_manager* c_renderer::get_wm()
 {
 	return m_wm;
 }
 
 
+//---------------------------------------------------------------------
+///   Sets the window manager object
+///   \param p_wm new window manager object
+//---------------------------------------------------------------------
 void c_renderer::set_wm(c_window_manager* p_wm)
 {
 	m_wm = p_wm;
 }
 
 
+//---------------------------------------------------------------------
+///   Return the screen
+///   \return the SDL screen object
+//---------------------------------------------------------------------
 SDL_Surface *c_renderer::get_screen()
 {
 	if (m_screen == NULL)
@@ -705,18 +741,29 @@ SDL_Surface *c_renderer::get_screen()
 }
 
 
+//---------------------------------------------------------------------
+///   Set the screen
+///   \param p_screen new screen
+//---------------------------------------------------------------------
 void c_renderer::set_screen(SDL_Surface *p_screen)
 {
 	m_screen = p_screen;
 }
 
 
-// Mesh render mode
+//---------------------------------------------------------------------
+///   Get the mesh render mode
+///   \return render mode
+//---------------------------------------------------------------------
 int c_renderer::get_render_mode()
 {
 	return this->render_mode;
 }
 
+//---------------------------------------------------------------------
+///   Set the mesh render mode
+///   \param p_render_mode new render mode
+//---------------------------------------------------------------------
 void c_renderer::set_render_mode(int p_render_mode)
 {
 	this->render_mode = p_render_mode;
@@ -724,7 +771,9 @@ void c_renderer::set_render_mode(int p_render_mode)
 
 
 //---------------------------------------------------------------------
-//-   Render the tile flags
+///   Render the tile flags
+///   This gets called for every fan
+///   \param p_fx flag to render
 //---------------------------------------------------------------------
 void c_renderer::render_tile_flag(Uint16 p_fx)
 {

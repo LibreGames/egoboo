@@ -24,7 +24,7 @@
 #include <math.h>
 
 //---------------------------------------------------------------------
-//-   Constructur: Set the basic camera values
+///   Constructur: Set the basic camera values
 //---------------------------------------------------------------------
 c_camera::c_camera()
 {
@@ -38,6 +38,9 @@ c_camera::c_camera()
 }
 
 
+//---------------------------------------------------------------------
+///   Reset the camera data
+//---------------------------------------------------------------------
 void c_camera::reset()
 {
 	m_pos.x = 0.0f;
@@ -51,6 +54,9 @@ void c_camera::reset()
 }
 
 
+//---------------------------------------------------------------------
+///   Move the camera
+//---------------------------------------------------------------------
 void c_camera::move()
 {
 	if (g_renderer->m_fps > 0)
@@ -65,7 +71,8 @@ void c_camera::move()
 
 
 //---------------------------------------------------------------------
-//-   The view matrix (for the camera view)
+///   The view matrix (for the camera view)
+///   \return the created view matrix
 //---------------------------------------------------------------------
 GLmatrix c_camera::make_view_matrix(
 	const vect3 from,     // camera location
@@ -93,7 +100,8 @@ GLmatrix c_camera::make_view_matrix(
 
 
 //---------------------------------------------------------------------
-//-   The projection matrix (for the mesh)
+///   The projection matrix (for the mesh)
+///   \return the created projection matrix
 //---------------------------------------------------------------------
 GLmatrix c_camera::make_projection_matrix(
 	const float near_plane, // distance to near clipping plane
@@ -123,7 +131,7 @@ GLmatrix c_camera::make_projection_matrix(
 
 
 //---------------------------------------------------------------------
-//-   Set up the projection (world) matrix
+///   Set up the projection (world) matrix
 //---------------------------------------------------------------------
 void c_camera::_cam_frustum_jitter_fov(
 	GLdouble nearval,
@@ -171,7 +179,7 @@ void c_camera::_cam_frustum_jitter_fov(
 
 
 //---------------------------------------------------------------------
-//-   This function sets cam->m_view to the camera's location and rotation
+///   This function sets cam->m_view to the camera's location and rotation
 //---------------------------------------------------------------------
 void c_camera::make_matrix()
 {
@@ -195,7 +203,8 @@ void c_camera::make_matrix()
 
 
 //---------------------------------------------------------------------
-//-   Build the renderlist
+///   Build the renderlist
+///   \return true on success, else false
 //---------------------------------------------------------------------
 bool c_renderlist::build()
 {
@@ -214,7 +223,7 @@ bool c_renderlist::build()
 	m_num_norm  = 0;
 	m_num_watr  = 0;
 
-	for (fan = 0; fan < g_module->mi->tile_count; fan++)
+	for (fan = 0; fan < g_module->mem->tile_count; fan++)
 	{
 		g_module->mem->tiles[fan].inrenderlist = false;
 
@@ -263,8 +272,8 @@ bool c_renderlist::build()
 				// precalculate the "mode" variable so that we don't waste time rendering the waves
 				int tx, ty;
 
-				ty = fan / g_module->mi->tiles_x;
-				tx = fan % g_module->mi->tiles_x;
+				ty = fan / g_module->mem->tiles_x;
+				tx = fan % g_module->mem->tiles_x;
 
 				m_watr_mode[m_num_watr] = ((ty & 1) << 1) + (tx & 1);
 				m_watr[m_num_watr]      = fan;

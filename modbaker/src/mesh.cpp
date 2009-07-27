@@ -37,23 +37,25 @@ using namespace std;
 c_tile_dictionary c_mesh::ms_tiledict;
 
 //---------------------------------------------------------------------
-//-   c_mesh_mem constructor
+///   c_mesh_mem constructor
+///   \param p_vertcount number of vertices
+///   \param p_fancount number of fans
 //---------------------------------------------------------------------
-c_mesh_mem::c_mesh_mem(int vertcount, int fancount)
+c_mesh_mem::c_mesh_mem(int p_vertcount, int p_fancount)
 {
-	if (fancount < 0)
-		fancount  = MAXMESHFAN;
+	if (p_fancount < 0)
+		p_fancount  = MAXMESHFAN;
 
-	if (vertcount >= 0 || fancount >= 0)
+	if (p_vertcount >= 0 || p_fancount >= 0)
 	{
-		this->alloc_verts(vertcount);
-		this->alloc_fans (fancount );
+		this->alloc_verts(p_vertcount);
+		this->alloc_fans (p_fancount );
 	}
 }
 
 
 //---------------------------------------------------------------------
-//-   c_mesh_mem destructor
+///   c_mesh_mem destructor
 //---------------------------------------------------------------------
 c_mesh_mem::~c_mesh_mem()
 {
@@ -63,7 +65,7 @@ c_mesh_mem::~c_mesh_mem()
 
 
 //---------------------------------------------------------------------
-//-   Deallocate the vertex data
+///   Deallocate the vertex data
 //---------------------------------------------------------------------
 void c_mesh_mem::dealloc_verts()
 {
@@ -72,29 +74,32 @@ void c_mesh_mem::dealloc_verts()
 
 
 //---------------------------------------------------------------------
-//-   Allocate the vertex data
+///   Allocate the vertex data
+///   \param p_vertcount number of vertices
+///   \return true on success, else false
+///   \todo read the upper vert limit from config
 //---------------------------------------------------------------------
-bool c_mesh_mem::alloc_verts(int vertcount)
+bool c_mesh_mem::alloc_verts(int p_vertcount)
 {
-	if (vertcount == 0)
+	if (p_vertcount == 0)
 		return false;
 
-	if (vertcount < 0)
-		vertcount = 100; // TODO: Read from config
+	if (p_vertcount < 0)
+		p_vertcount = 100;
 
-	if (this->vrt_count > vertcount)
+	if (this->vrt_count > p_vertcount)
 		return true;
 
 	this->dealloc_verts();
 
-	this->vrt_count  = vertcount;
+	this->vrt_count  = p_vertcount;
 
 	return true;
 }
 
 
 //---------------------------------------------------------------------
-//-   Deallocate the fan data
+///   Deallocate the fan data
 //---------------------------------------------------------------------
 void c_mesh_mem::dealloc_fans()
 {
@@ -104,52 +109,57 @@ void c_mesh_mem::dealloc_fans()
 
 
 //---------------------------------------------------------------------
-//-   Allocate the fan data
+///   Allocate the fan data
+///   \param p_fancount number of fans
+///   \return true on success, else false
 //---------------------------------------------------------------------
-bool c_mesh_mem::alloc_fans(int fancount)
+bool c_mesh_mem::alloc_fans(int p_fancount)
 {
-	if (fancount == 0)
+	if (p_fancount == 0)
 		return false;
 
-	if (fancount < 0)
-		fancount = MAXMESHFAN;
+	if (p_fancount < 0)
+		p_fancount = MAXMESHFAN;
 
-	if ((int)this->tile_count > fancount)
+	if ((int)this->tile_count > p_fancount)
 		return true;
 
 	this->dealloc_fans();
 
-	this->tiles.reserve(fancount);
+	this->tiles.reserve(p_fancount);
 
-	this->tile_count  = fancount;
+	this->tile_count  = p_fancount;
 
 	return true;
 }
 
 
 //---------------------------------------------------------------------
-//-   c_mesh constructor
+///   c_mesh constructor
 //---------------------------------------------------------------------
 c_mesh::c_mesh()
 {
 	this->mem = new c_mesh_mem(0, 0);
-	this->mi  = new c_mesh_info();
 	this->init_meshfx();
 }
 
 
+//---------------------------------------------------------------------
+///   c_mesh destructor
+//---------------------------------------------------------------------
 c_mesh::~c_mesh()
 {
 	delete this->mem;
-	delete this->mi;
 
 	this->mem = NULL;
-	this->mi  = NULL;
 }
 
 
 //---------------------------------------------------------------------
-//-   Load the .mpd file
+///   Load the .mpd file
+///   \param p_modname module to load
+///   \return true on success, else false
+///   \todo path + filename as parameter
 //---------------------------------------------------------------------
 bool c_mesh::load_mesh_mpd(string p_modname)
 {
@@ -197,23 +207,28 @@ bool c_mesh::load_mesh_mpd(string p_modname)
 		return false;
 	}
 
-	int tmp_vert_count;
+	int tmp_vert_count, tmp_tiles_x, tmp_tiles_y, tmp_tile_count;
 
-	file.read((char*)&itmp, 4); tmp_vert_count    = SDL_SwapLE32(itmp); // Read number of verts
-	file.read((char*)&itmp, 4); this->mi->tiles_x = SDL_SwapLE32(itmp); // Read map x data
-	file.read((char*)&itmp, 4); this->mi->tiles_y = SDL_SwapLE32(itmp); // Read map y data
+	file.read((char*)&itmp, 4); tmp_vert_count = SDL_SwapLE32(itmp); // Read number of verts
+	file.read((char*)&itmp, 4); tmp_tiles_x    = SDL_SwapLE32(itmp); // Read map x data
+	file.read((char*)&itmp, 4); tmp_tiles_y    = SDL_SwapLE32(itmp); // Read map y data
 
 
 	//-----------------------------------------------------------------
 	//- Fill the mpd structure
 	//-----------------------------------------------------------------
 	// Store the number of tiles
-	this->mi->tile_count = this->mi->tiles_x * this->mi->tiles_y;
+	tmp_tile_count = tmp_tiles_x * tmp_tiles_y;
 
 	cout << "reallocating the mesh memory" << endl;
 	delete this->mem;
 	this->mem = NULL;
-	this->mem = new c_mesh_mem(tmp_vert_count, this->mi->tile_count);
+	this->mem = new c_mesh_mem(tmp_vert_count, tmp_tile_count);
+
+	this->mem->tiles_x    = tmp_tiles_x;
+	this->mem->tiles_y    = tmp_tiles_y;
+	this->mem->tile_count = tmp_tile_count;
+
 	vertices.reserve(tmp_vert_count);
 	cout << " ...done." << endl;
 
@@ -226,16 +241,12 @@ bool c_mesh::load_mesh_mpd(string p_modname)
 		return false;
 	}
 
-	// Get the right down edge
-	this->mi->edge_x = this->mi->tiles_x * 128;
-	this->mi->edge_y = this->mi->tiles_y * 128;
-
 
 	cout << "getting the basic fan data" << endl;
 	//-----------------------------------------------------------------
 	//- Get the basic fan data
 	//-----------------------------------------------------------------
-	for (fan = 0; fan < this->mi->tile_count; fan++)
+	for (fan = 0; fan < this->mem->tile_count; fan++)
 	{
 		file.read((char*)&itmp, 4);
 		itmp = SDL_SwapLE32( itmp );
@@ -254,7 +265,7 @@ bool c_mesh::load_mesh_mpd(string p_modname)
 	//-----------------------------------------------------------------
 	//- Read the twist data from the FAN
 	//-----------------------------------------------------------------
-	for (fan = 0; fan < this->mi->tile_count; fan++)
+	for (fan = 0; fan < this->mem->tile_count; fan++)
 	{
 		file.read((char*)&itmp, 1);
 		this->mem->tiles[fan].twist = itmp;
@@ -348,11 +359,8 @@ bool c_mesh::load_mesh_mpd(string p_modname)
 	cout << "...done." << endl;
 
 
-	cout << "mesh_make_fanstart()" << endl;
-	//-----------------------------------------------------------------
-	//- Build the lookup table for each fan
-	//-----------------------------------------------------------------
-	this->mesh_make_fanstart();
+	cout << "build_vert_lookup_table()" << endl;
+	this->mem->build_vert_lookup_table();
 	cout << "...done." << endl;
 
 	cout << "build_tile_lookup_table()" << endl;
@@ -400,7 +408,7 @@ bool c_mesh::load_mesh_mpd(string p_modname)
 
 //---------------------------------------------------------------------
 ///   This function loads fan types for the terrain
-///   \return true if everything went right, else false
+///   \return true on success, else false
 //---------------------------------------------------------------------
 bool c_tile_dictionary::load()
 {
@@ -532,27 +540,10 @@ bool c_tile_dictionary::load()
 
 
 //---------------------------------------------------------------------
-//   This function builds a look up table to ease calculating the
-//   fan number given an x,y pair
-//---------------------------------------------------------------------
-void c_mesh::mesh_make_fanstart()
-{
-	int cnt;
-
-	for (cnt = 0; cnt < this->mi->tiles_y; cnt++)
-	{
-		this->mi->Tile_X[cnt] = this->mi->tiles_x * cnt;
-	}
-
-	for (cnt = 0; cnt < this->mi->blocks_y; cnt++)
-	{
-		this->mi->Block_X[cnt] = this->mi->blocks_x * cnt;
-	}
-}
-
-
-//---------------------------------------------------------------------
-//-   Modify all verts at the position of the selected vertex (X axis)
+///   Modify all verts at the position of the selected vertex (X axis)
+///   \param p_modifier x modifier
+///   \param p_vert vertex to modify
+///   \return number of modified vertices
 //---------------------------------------------------------------------
 int c_mesh::modify_verts_x(float p_modifier, int p_vert)
 {
@@ -583,7 +574,10 @@ int c_mesh::modify_verts_x(float p_modifier, int p_vert)
 
 
 //---------------------------------------------------------------------
-//-   Modify all verts at the position of the selected vertex (Y axis)
+///   Modify all verts at the position of the selected vertex (Y axis)
+///   \param p_modifier y modifier
+///   \param p_vert vertex to modify
+///   \return number of modified vertices
 //---------------------------------------------------------------------
 int c_mesh::modify_verts_y(float p_modifier, int p_vert)
 {
@@ -614,7 +608,10 @@ int c_mesh::modify_verts_y(float p_modifier, int p_vert)
 
 
 //---------------------------------------------------------------------
-//-   Modify all verts at the position of the selected vertex (Z axis)
+///   Modify all verts at the position of the selected vertex (Z axis)
+///   \param p_modifier z modifier
+///   \param p_vert vertex to modify
+///   \return number of modified vertices
 //---------------------------------------------------------------------
 int c_mesh::modify_verts_z(float p_modifier, int p_vert)
 {
@@ -645,7 +642,11 @@ int c_mesh::modify_verts_z(float p_modifier, int p_vert)
 
 
 //---------------------------------------------------------------------
-//-   Get the nearest vertex
+///   Get the nearest vertex
+///   \param pos_x reference x position
+///   \param pos_y reference y position
+///   \param pos_z reference z position
+///   \return number of the nearest vertex
 //---------------------------------------------------------------------
 int c_mesh::get_nearest_vertex(float pos_x, float pos_y, float pos_z)
 {
@@ -687,7 +688,11 @@ int c_mesh::get_nearest_vertex(float pos_x, float pos_y, float pos_z)
 
 
 //---------------------------------------------------------------------
-//-   Get the nearest tile
+///   Get the nearest tile
+///   \param pos_x reference x position
+///   \param pos_y reference y position
+///   \param pos_z reference z position
+///   \return number of the nearest tile
 //---------------------------------------------------------------------
 int c_mesh::get_nearest_tile(float pos_x, float pos_y, float pos_z)
 {
@@ -732,7 +737,9 @@ int c_mesh::get_nearest_tile(float pos_x, float pos_y, float pos_z)
 
 
 //---------------------------------------------------------------------
-//-   Save the .mpd file
+///   Save the .mpd file
+///   \param filename path + filename to save
+///   \return true on success, else false
 //---------------------------------------------------------------------
 bool c_mesh::save_mesh_mpd(string filename)
 {
@@ -755,7 +762,7 @@ bool c_mesh::save_mesh_mpd(string filename)
 	vertices.reserve(this->mem->vrt_count);
 
 	// Go through all tiles
-	for (cnt_tile = 0; cnt_tile < (int)this->mi->tile_count; cnt_tile++)
+	for (cnt_tile = 0; cnt_tile < (int)this->mem->tile_count; cnt_tile++)
 	{
 		// Go through all vertices
 		for (cnt_vert = 0; cnt_vert < this->mem->tiles[cnt_tile].vert_count; cnt_vert++)
@@ -788,17 +795,17 @@ bool c_mesh::save_mesh_mpd(string filename)
 	itmp = this->mem->vrt_count;
 	file.write((char *)&itmp, 4);
 
-	itmp = this->mi->tiles_x;
+	itmp = this->mem->tiles_x;
 	file.write((char *)&itmp, 4);
 
-	itmp = this->mi->tiles_y;
+	itmp = this->mem->tiles_y;
 	file.write((char *)&itmp, 4);
 
 
 	//-----------------------------------------------------------------
 	//- Fill the mpd structure
 	//-----------------------------------------------------------------
-	for ( fan = 0; fan < this->mi->tile_count;  fan++)
+	for ( fan = 0; fan < this->mem->tile_count;  fan++)
 	{
 		itmp = (this->mem->tiles[fan].type << 24) + (this->mem->tiles[fan].fx << 16) + this->mem->tiles[fan].tile;
 		file.write((char *)&itmp, 4);
@@ -808,7 +815,7 @@ bool c_mesh::save_mesh_mpd(string filename)
 	//-----------------------------------------------------------------
 	//- Read the twist data from the FAN
 	//-----------------------------------------------------------------
-	for (fan = 0; fan < this->mi->tile_count; fan++)
+	for (fan = 0; fan < this->mem->tile_count; fan++)
 	{
 		itmp = this->mem->tiles[fan].twist;
 		file.write((char *)&itmp, 1);
@@ -862,7 +869,7 @@ bool c_mesh::save_mesh_mpd(string filename)
 
 
 //---------------------------------------------------------------------
-//-   Init the meshfx vector
+///   Init the meshfx vector
 //---------------------------------------------------------------------
 void c_mesh::init_meshfx()
 {
@@ -898,7 +905,9 @@ void c_mesh::init_meshfx()
 
 
 //---------------------------------------------------------------------
-//-   Get the Mesh FX based on the vector entry
+///   Get the Mesh FX based on the vector entry
+///   \param p_entry entry to get
+///   \return mesh FX
 //---------------------------------------------------------------------
 int c_mesh::get_meshfx(int p_entry)
 {
@@ -907,7 +916,9 @@ int c_mesh::get_meshfx(int p_entry)
 
 
 //---------------------------------------------------------------------
-//-   Get all vertices of the fan
+///   Get all vertices of the fan
+///   \param p_fan fan to look for
+///   \return vector of vertices found
 //---------------------------------------------------------------------
 vector<int> c_mesh::get_fan_vertices(int p_fan)
 {
@@ -927,7 +938,11 @@ vector<int> c_mesh::get_fan_vertices(int p_fan)
 
 
 //---------------------------------------------------------------------
-//-   Change the size of the mesh mem
+///   Change the size of the mesh mem
+///   \param p_new_vertices new number of vertices
+///   \param p_new_fans new number of fans
+///   \return true on success, else false
+///   \todo implement everything
 //---------------------------------------------------------------------
 bool c_mesh::change_mem_size(int p_new_vertices, int p_new_fans)
 {
@@ -945,9 +960,9 @@ bool c_mesh::change_mem_size(int p_new_vertices, int p_new_fans)
 
 
 //---------------------------------------------------------------------
-//-   Build a vertex => tile lookup vector
+///   Build a vertex => tile lookup vector
 //---------------------------------------------------------------------
-void c_mesh_mem::build_tile_lookup_table()
+void c_mesh_mem::build_vert_lookup_table()
 {
 	unsigned int cnt, cnt_tile, cnt_vert;
 
@@ -973,7 +988,48 @@ void c_mesh_mem::build_tile_lookup_table()
 
 
 //---------------------------------------------------------------------
-//-   Get the vertex data based on a big vertex
+///   Build a x,y => tile ID lookup table
+//---------------------------------------------------------------------
+void c_mesh_mem::build_tile_lookup_table()
+{
+	unsigned int cnty, cntx, cnt_tile;
+	vector<unsigned int> tmp_vec;
+
+	cnt_tile = 0;
+
+	this->tile_lookup.clear();
+	tmp_vec.clear();
+
+	for (cnty = 0; cnty < (unsigned int)this->tiles_y; cnty++)
+	{
+		this->tile_lookup.push_back(tmp_vec);
+
+		for (cntx = 0; cntx < (unsigned int)this->tiles_x; cntx++)
+		{
+			tile_lookup[cnty].push_back(cnt_tile);
+
+			cnt_tile++;
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------
+///   Get the tile ID based on an Y/X pair
+///   \param p_y Y position
+///   \param p_x X position
+///   \return tile ID
+//---------------------------------------------------------------------
+int c_mesh_mem::get_tile_by_pos(int p_y, int p_x)
+{
+	return this->tile_lookup[p_y][p_x];
+}
+
+
+//---------------------------------------------------------------------
+///   Get the vertex data based on a big vertex
+///   \param p_vert vertex number
+///   \return vertex position
 //---------------------------------------------------------------------
 vect3 c_mesh_mem::get_vert(int p_vert)
 {
@@ -997,16 +1053,28 @@ vect3 c_mesh_mem::get_vert(int p_vert)
 }
 
 
+//---------------------------------------------------------------------
+///   c_tile constructor
+//---------------------------------------------------------------------
 c_tile::c_tile()
 {
 	this->vertices.clear();
 }
 
+
+//---------------------------------------------------------------------
+///   c_tile destructor
+//---------------------------------------------------------------------
 c_tile::~c_tile()
 {
 }
 
 
+//---------------------------------------------------------------------
+///   Modify the x position of one vertex
+///   \param p_modifier x modifier
+///   \param p_vertex vertex number to modify
+//---------------------------------------------------------------------
 void c_mesh_mem::modify_verts_x(float p_modifier, int p_vertex)
 {
 	unsigned int tile, vertex;
@@ -1018,6 +1086,11 @@ void c_mesh_mem::modify_verts_x(float p_modifier, int p_vertex)
 }
 
 
+//---------------------------------------------------------------------
+///   Modify the y position of one vertex
+///   \param p_modifier y modifier
+///   \param p_vertex vertex number to modify
+//---------------------------------------------------------------------
 void c_mesh_mem::modify_verts_y(float p_modifier, int p_vertex)
 {
 	unsigned int tile, vertex;
@@ -1029,6 +1102,11 @@ void c_mesh_mem::modify_verts_y(float p_modifier, int p_vertex)
 }
 
 
+//---------------------------------------------------------------------
+///   Modify the z position of one vertex
+///   \param p_modifier z modifier
+///   \param p_vertex vertex number to modify
+//---------------------------------------------------------------------
 void c_mesh_mem::modify_verts_z(float p_modifier, int p_vertex)
 {
 	unsigned int tile, vertex;
@@ -1041,7 +1119,9 @@ void c_mesh_mem::modify_verts_z(float p_modifier, int p_vertex)
 
 
 //---------------------------------------------------------------------
-//-   Set the vertex x position
+///   Set the vertex x position
+///   \param p_new new x position
+///   \param p_vertex vertex number to modify
 //---------------------------------------------------------------------
 void c_mesh_mem::set_verts_x(float p_new, int p_vertex)
 {
@@ -1055,7 +1135,9 @@ void c_mesh_mem::set_verts_x(float p_new, int p_vertex)
 
 
 //---------------------------------------------------------------------
-//-   Set the vertex y position
+///   Set the vertex y position
+///   \param p_new new y position
+///   \param p_vertex vertex number to modify
 //---------------------------------------------------------------------
 void c_mesh_mem::set_verts_y(float p_new, int p_vertex)
 {
@@ -1069,7 +1151,9 @@ void c_mesh_mem::set_verts_y(float p_new, int p_vertex)
 
 
 //---------------------------------------------------------------------
-//-   Set the vertex z position
+///   Set the vertex z position
+///   \param p_new new z position
+///   \param p_vertex vertex number to modify
 //---------------------------------------------------------------------
 void c_mesh_mem::set_verts_z(float p_new, int p_vertex)
 {
@@ -1195,12 +1279,15 @@ cout << "TD.cmd_count: " << (int)g_module->getTileDefinition(this->tiles[p_tile]
 	g_module->mem->vrt_count += diff;
 	this->vrt_count        += diff;
 
-	this->build_tile_lookup_table();
+	this->build_vert_lookup_table();
 }
 
 
 //---------------------------------------------------------------------
-//-   Create a new mesh
+///   Create a new mesh
+///   \param p_tile_x mesh width in tiles (x axis)
+///   \param p_tile_y mesh height in tiles (y axis)
+///   \return true on success, else false
 //---------------------------------------------------------------------
 bool c_mesh::new_mesh_mpd(int p_tiles_x, int p_tiles_y)
 {
@@ -1221,15 +1308,15 @@ bool c_mesh::new_mesh_mpd(int p_tiles_x, int p_tiles_y)
 
 
 
-	this->mi->tiles_x    = p_tiles_x;
-	this->mi->tiles_y    = p_tiles_y;
-	this->mi->tile_count = this->mi->tiles_x * this->mi->tiles_y;
+	this->mem->tiles_x    = p_tiles_x;
+	this->mem->tiles_y    = p_tiles_y;
+	this->mem->tile_count = this->mem->tiles_x * this->mem->tiles_y;
 
 	// Every tile is a floor
 	int tmp_vert_count;
-	tmp_vert_count = this->mi->tile_count * this->getTileDefinition(TTYPE_TWO_FACED_GROUND1).vrt_count;
+	tmp_vert_count = this->mem->tile_count * this->getTileDefinition(TTYPE_TWO_FACED_GROUND1).vrt_count;
 
-	this->mem = new c_mesh_mem(tmp_vert_count, this->mi->tile_count);
+	this->mem = new c_mesh_mem(tmp_vert_count, this->mem->tile_count);
 	this->mem->vrt_count = this->mem->vrt_count;
 
 	if (this->mem == NULL)
@@ -1239,10 +1326,6 @@ bool c_mesh::new_mesh_mpd(int p_tiles_x, int p_tiles_y)
 		return false;
 	}
 
-	// Get the right down edge
-	this->mi->edge_x = this->mi->tiles_x * 128;
-	this->mi->edge_y = this->mi->tiles_y * 128;
-
 
 	this->mem->tiles.clear();
 
@@ -1250,12 +1333,12 @@ bool c_mesh::new_mesh_mpd(int p_tiles_x, int p_tiles_y)
 	//-----------------------------------------------------------------
 	//- Get the basic fan data
 	//-----------------------------------------------------------------
-	for (fan = 0; fan < this->mi->tile_count; fan++)
+	for (fan = 0; fan < this->mem->tile_count; fan++)
 	{
 		tmp_tile.type  = TTYPE_TWO_FACED_GROUND1;
 		tmp_tile.fx    = MESHFX_REF;
-		tmp_tile.tile  = 0; // TODO: dummy value
-		tmp_tile.twist = 0; // TODO: dummy value
+		tmp_tile.tile  = 0; /// \todo replace the .tile dummy values
+		tmp_tile.twist = 0; /// \todo replace the .twist dummy value
 
 		tmp_tile.vert_count = this->getTileDefinition(tmp_tile.type).vrt_count;
 
@@ -1276,17 +1359,17 @@ bool c_mesh::new_mesh_mpd(int p_tiles_x, int p_tiles_y)
 	cnt_vert = 0;
 
 	// Loop through all tiles
-	for (tmp_y = 0; tmp_y < this->mi->tiles_y; tmp_y++)
+	for (tmp_y = 0; tmp_y < this->mem->tiles_y; tmp_y++)
 	{
-		for (tmp_x = 0; tmp_x < (unsigned int)this->mi->tiles_x; tmp_x++)
+		for (tmp_x = 0; tmp_x < (unsigned int)this->mem->tiles_x; tmp_x++)
 		{
-			cnt_tile = (tmp_y * this->mi->tiles_x) + tmp_x;
+			cnt_tile = (tmp_y * this->mem->tiles_x) + tmp_x;
 
 			tmp_tile = this->mem->tiles[cnt_tile];
 
 			tmp_tile.vrt_start = cnt_vert;
 
-			// TODO: Use tile templates for this
+			/// \todo calculate wall / floor etc.
 			// Loop trough all vertices
 /*			for (tmp_v = 0; tmp_v < this->mem->tiles[tmp_file].vert_count; tmp_v++)
 			{
@@ -1352,11 +1435,8 @@ bool c_mesh::new_mesh_mpd(int p_tiles_x, int p_tiles_y)
 	*/
 
 
-	cout << "mesh_make_fanstart()" << endl;
-	//-----------------------------------------------------------------
-	//- Build the lookup table for each fan
-	//-----------------------------------------------------------------
-	this->mesh_make_fanstart();
+	cout << "build_vert_lookup_table()" << endl;
+	this->mem->build_vert_lookup_table();
 	cout << "...done." << endl;
 
 	cout << "build_tile_lookup_table()" << endl;

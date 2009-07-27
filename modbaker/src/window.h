@@ -10,6 +10,7 @@
 using namespace std;
 
 #include "mesh.h"
+#include "core/modmenu.h"
 
 #include <guichan.hpp>
 #include <guichan/sdl.hpp>
@@ -491,7 +492,7 @@ class c_window_manager
 		void set_selected_tile_flag(int);
 		void set_selected_tile_type(int);
 
-		// TODO: Make private
+		/// \todo make the text fields private
 		c_mb_textfield* tf_load; ///< "Load mesh" textfield
 		c_mb_textfield* tf_save; ///< "Save mesh" textfield
 
