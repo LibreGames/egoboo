@@ -7,4 +7,5 @@ import sys
 
 if __name__ == '__main__':
     data = ObjBaker.EgoObjData(sys.argv[1])
-    print data.data
+    for key in data.data:
+	print "%s: %s" % (key, data.data[key])

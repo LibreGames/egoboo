@@ -161,7 +161,18 @@ class EgoObjData:
 	data['footfallsound'] = EgoObj.getInt(fh)
 	data['jumpsound'] = EgoObj.getInt(fh)
 	# Expansions
-	## TODO!!!
+	data['expansions'] = {}
+	try:
+	    while True:
+		tmpExp = EgoObj.getExpansion(fh)
+		if tmpExp[0] == 'DRES':
+		    if not data['expansions'].has_key('DRES'):
+			data['expansions']['DRES'] = 0
+		    data['expansions']['DRES'] += 1 << int(tmpExp[1])
+		else:
+		    data['expansions'][tmpExp[0]] = tmpExp[1]
+	except ObjBaker.Error:
+	    pass
 	# end of __init__
 	self.data = data
     

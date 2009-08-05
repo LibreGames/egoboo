@@ -2,6 +2,6 @@
 
 class Error(Exception):
     def __init__(self, value):
-	self.message = value
+	self.mess = value
     def __str__(self):
-	return repr(self.message)
+	return repr(self.mess)

@@ -2,6 +2,7 @@
 
 import wx
 import os
+import ObjBaker
 
 class EgoObject:
     
@@ -100,19 +101,45 @@ def getBool(fh):
 
 def getIDSZ(fh):
     ch = getFirstChar(fh)
+    while ch != '[':
+	ch = fh.read(1)
+	if len(ch) == 0: 
+	    raise ObjBaker.Error("Hit end of file!")
     idsz = fh.read(4)
-    if len(idsz) != 4:
-	raise ObjBaker.Error("Hit end of file (got %d chars, expected 4)" % len(idsz))
+    ch = fh.read(1)
+    if len(idsz) != 4 or len(ch) == 0:
+	raise ObjBaker.Error("Hit end of file (got %d chars, expected 5)" % len(idsz)+len(ch))
+    if ch != ']':
+	raise ObjBaker.Error("Error, got a [%s with no ]" % idsz)
     print "getIDSZ got [%s]" % idsz
     return idsz
 
 def getPair(fh):
     ch = getFirstChar(fh)
     string = ''
-    while ch.isdigit() or ch == '-':
+    while ch.isdigit() or ch == '-' or ch == '.':
 	string += ch
 	ch = fh.read(1)
 	if len(ch) == 0:
 	    raise ObjBaker.Error("Hit end of file")
     print "getPair got %s" % string
-    return string.split('-')
+    splittedString = string.split('-')
+    if len(splittedString) == 1:
+	splittedString.append(splittedString[0])
+    return [float(splittedString[0]), float(splittedString[1])]
+
+def getExpansion(fh):
+    idsz = getIDSZ(fh)
+    ch = ' '
+    string = ''
+    while ch.isspace():
+	ch = fh.read(1)
+	if len(ch) == 0:
+	    raise ObjBaker.Error("Hit end of file")
+    while ch.isdigit() or ch == '-' or ch == '.':
+	string += ch
+	ch = fh.read(1)
+	if len(ch) == 0:
+	    raise ObjBaker.Error("Hit end of file")
+    print "getExpansion got [%s] %s" % (idsz, string)
+    return (idsz, float(string))
