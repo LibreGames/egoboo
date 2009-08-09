@@ -31,6 +31,7 @@
 #include "../general.h"
 #include "../SDL_extensions.h"
 #include "../ogl_extensions.h"
+#include "../graphics/image_loader.h"
 
 #include <string>
 #include <vector>
@@ -63,13 +64,12 @@ class c_spawn
 //---------------------------------------------------------------------
 ///   Definition of one object in the module/objects/ folder
 //---------------------------------------------------------------------
-class c_object
+class c_object : public c_image_loader
 {
 	private:
 		string name;    ///< the name, like object.obj
 		bool gor;       ///< Is it in the Global Object Repository?
 		int slot;       ///< The slot number
-		GLuint icon[1]; ///< The icon texture
 
 	public:
 		c_object();
@@ -98,16 +98,26 @@ class c_object
 
 		///   Get the OpenGL icon
 		///   \return OpenGL icon
-		GLuint get_icon()            { return this->icon[0]; }
+		GLuint get_icon()
+		{
+			return this->gl_image[0];
+		}
 		///   Get the whole OpenGL icon array
 		///   \return OpenGL icon array
-		GLuint *get_icon_array()     { return this->icon; }
+		GLuint *get_icon_array()
+		{
+			return this->gl_image;
+		}
+
 		///   Set the OpenGL icon
 		///   \param p_icon new OpenGL icon
-		void set_icon(GLuint p_icon) { this->icon[0] = p_icon; }
+		void set_icon(GLuint p_icon)
+		{
+			this->gl_image[0] = p_icon;
+		}
 
+		bool load_icon(string);
 		bool read_data_file(string);
-		bool render();
 		void debug_data();
 };
 
@@ -125,10 +135,7 @@ class c_object_manager
 		c_object_manager();
 		~c_object_manager();
 
-		void clear_objects()
-		{
-			this->objects.clear();
-		}
+		void clear_objects();
 		void clear_spawns()
 		{
 			this->spawns.clear();

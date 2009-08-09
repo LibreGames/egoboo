@@ -56,7 +56,7 @@ class c_menu_txt
 
 	public:
 		c_menu_txt();
-//		~c_menu_txt();
+		~c_menu_txt();
 		bool load_menu_txt(string);
 		bool save_menu_txt(string);
 

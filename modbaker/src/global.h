@@ -26,9 +26,7 @@
 //-
 //---------------------------------------------------------------------
 #include "utility.h"
-#include "edit.h"
 #include "renderer.h"
-#include "mesh.h"
 #include "frustum.h"
 #include "modbaker.h"
 
@@ -46,9 +44,6 @@ class c_config;
 //---------------------------------------------------------------------
 // Mouse / input stuff
 // Implemented in controls.cpp
-extern int g_mouse_x;
-extern int g_mouse_y;
-
 extern float g_mouse_gl_x;
 extern float g_mouse_gl_y;
 extern float g_mouse_gl_z;
@@ -59,18 +54,11 @@ extern float g_mouse_gl_z;
 extern int g_nearest_vertex;
 extern int g_nearest_tile;
 extern int g_nearest_object;
-extern c_selection g_selection;
 
 // Global subsystems
 // Implmented in renderer.cpp, renderer_misc.cpp, frustum.cpp
-extern c_module*         g_module;
-
-extern c_input_handler*  g_input_handler;
 extern c_config*         g_config;
-extern c_renderer*       g_renderer;
 extern c_frustum         g_frustum;           // TODO: Move to g_renderer
-
-bool load_module(string);
 
 // Misc stuff
 // Implmented in global.cpp

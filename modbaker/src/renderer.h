@@ -21,25 +21,14 @@
 /// @brief Renderer definition
 /// @details Definition of the rendering system
 
-#ifndef graphic_h
-#define graphic_h
-
-//---------------------------------------------------------------------
-//-
-//-   Everything related to OpenGL, SDL or rendering goes in here
-//-
-//---------------------------------------------------------------------
+#ifndef renderer_h
+#define renderer_h
 
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <SDL_image.h>
-#include <SDL_ttf.h>
 
-#include "window.h"
 #include "general.h"
-#include "core/object.h"
-#include "SDL_extensions.h"
-#include "ogl_extensions.h"
 
 #include <string>
 
@@ -115,8 +104,6 @@ enum
 ///        Camera field of view
 ///   \def INVALID_TILE
 ///        Don't draw the fansquare if tile = this
-///   \def MAXMESHRENDER
-///        Maximum number of tiles to draw
 //---------------------------------------------------------------------
 #define SCREEN_BPP       24
 #define MAX_TEXTURES      8
@@ -127,7 +114,6 @@ enum
 #define RAD_TO_DEG       57.295779513082320876798154814105
 #define FOV              40
 #define INVALID_TILE      ((Uint16)(~(Uint16)0))
-#define MAXMESHRENDER    (1024*8)
 
 struct Graphics_t;
 
@@ -175,8 +161,8 @@ class c_camera
 		GLmatrix m_projection_big;
 		GLmatrix m_view;
 
-		void move();
-		void reset();
+		void move_camera(int);
+		void reset_camera();
 
 		c_camera();
 		~c_camera();
@@ -184,99 +170,69 @@ class c_camera
 
 
 //---------------------------------------------------------------------
-///   Definition of the renderlist
+///   Definition of the basic renderer
 //---------------------------------------------------------------------
-class c_renderlist
+class c_basic_renderer : public c_camera
 {
 	private:
+		GLfloat m_fps;  ///< Number of frames per second (FPS)
+		SDL_Surface *m_screen;
+
+	protected:
+		GLuint m_texture[MAX_TEXTURES]; ///< Used to store all OpenGL textures
+
 	public:
-		int     m_num_totl;                 ///< Number to render, total
-		Uint32  m_totl[MAXMESHRENDER];      ///< List of which to render, total
+		c_basic_renderer();
+		~c_basic_renderer();
 
-		int     m_num_shine;                ///< ..., reflective
-		Uint32  m_shine[MAXMESHRENDER];     ///< ..., reflective
+		virtual void init_renderer(int, int, int) = 0;
 
-		int     m_num_reflc;                ///< ..., has reflection
-		Uint32  m_reflc[MAXMESHRENDER];     ///< ..., has reflection
+		void initSDL(int, int, int);
+		void initGL();
+		bool load_texture(string, int);
 
-		int     m_num_norm;                 ///< ..., not reflective, has no reflection
-		Uint32  m_norm[MAXMESHRENDER];      ///< ..., not reflective, has no reflection
+		void  set_fps(float);
+		float get_fps();
 
-		int     m_num_watr;                 ///< ..., water
-		Uint32  m_watr[MAXMESHRENDER];      ///< ..., water
-		Uint32  m_watr_mode[MAXMESHRENDER]; ///< the water mode
+		SDL_Surface *get_screen();
+		void set_screen(SDL_Surface *);
 
-		bool build();
+		// Window stuff
+		void resize_window(int, int);
+		void begin_frame();
+		void end_frame();
+
+		// 3D mode
+		void begin_3D_mode();
+		void end_3D_mode();
 };
 
 
 //---------------------------------------------------------------------
 ///   Definition of the rendering system
 //---------------------------------------------------------------------
-class c_renderer
+class c_renderer : public c_basic_renderer
 {
-		enum TMODE {JLEFT, JRIGHT};
-
-		friend class c_camera;
-
-		SDL_Surface *m_screen;
-
 	protected:
-		GLuint m_texture[MAX_TEXTURES]; ///< Used to store all OpenGL textures
-
-		void initSDL();
-		void initGL();
-
-		void render_fan(Uint32, bool set_texture = true);
-		void render_tile_flag(Uint16);
-		bool load_texture(string, int);
-
-		GLfloat           m_fps;  ///< Number of frames per second (FPS)
-		TTF_Font*         m_font; ///< SDL TTF object (currently unused)
-		c_camera*         m_cam;  ///< Camera object
-		c_window_manager* m_wm;   ///< Window manager object
-
 		int render_mode; ///< The current render mode
 
 	public:
 		c_renderer();
 		~c_renderer();
 
-		c_window_manager* get_wm();
-		void set_wm(c_window_manager*);
-
-		SDL_Surface *get_screen();
-		void set_screen(SDL_Surface *);
-
-		// Load an object icon
-		bool load_icon(string, c_object*);
-
-		// Window stuff
-		void resize_window(int, int);
-		bool render_positions();
-		void begin_frame();
-		void end_frame();
-
-		// 2D / 3D modes
-		void begin_3D_mode();
-		void begin_2D_mode();
-		void end_3D_mode();
-		void end_2D_mode();
+		void init_renderer(int, int, int);
 
 		// Rendering containers
-		bool render_models(c_object_manager*);
+		virtual bool render_positions() = 0;
+		virtual bool render_models() = 0;
+		virtual bool render_mesh() = 0;
+		virtual void render_fan(Uint32, bool set_texture = true) = 0;
+		void render_tile_flag(Uint16);
 
 		// Mesh render mode
 		int get_render_mode();
 		void set_render_mode(int);
 
-		void load_basic_textures(string);
-		bool render_mesh();
-
-		///   Get the camera object
-		///   \return camera object
-		c_camera * getPCam() { return m_cam; }
-
-		c_renderlist m_renderlist; ///< the render list
+		virtual void load_basic_textures(string) = 0;
 };
 #endif

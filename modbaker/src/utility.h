@@ -51,7 +51,7 @@ int fget_next_int(ifstream &);
 float fget_float(ifstream &);
 float fget_next_float(ifstream &);
 
-bool tokenize_semicolon(const string, vector<string>&);
+int tokenize_semicolon(const string, vector<string>&);
 bool tokenize_colon(const string&, vector<string>&);
 string fread_skip_comments(ifstream&);
 

@@ -113,6 +113,9 @@ class c_passage
 			this->shoot_through = false;
 			this->slippy_close  = false;
 		}
+		~c_passage()
+		{
+		}
 };
 
 

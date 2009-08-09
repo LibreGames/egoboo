@@ -43,6 +43,13 @@ c_menu_txt::c_menu_txt()
 }
 
 //---------------------------------------------------------------------
+///   c_menu_txt destructor
+//---------------------------------------------------------------------
+c_menu_txt::~c_menu_txt()
+{
+}
+
+//---------------------------------------------------------------------
 ///   Load the menu.txt file
 ///   \param p_filename path + filename for the menu.txt file
 ///   \return true on success, else false

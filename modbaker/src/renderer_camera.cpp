@@ -18,13 +18,12 @@
 //---------------------------------------------------------------------
 #include "global.h"
 #include "renderer.h"
-#include "ogl_debug.h"
 
 #include <iostream>
 #include <math.h>
 
 //---------------------------------------------------------------------
-///   Constructur: Set the basic camera values
+///   c_camera constructur
 //---------------------------------------------------------------------
 c_camera::c_camera()
 {
@@ -34,14 +33,22 @@ c_camera::c_camera()
 
 	m_factor = SCROLLFACTOR_SLOW;
 
-	this->reset();
+	this->reset_camera();
+}
+
+
+//---------------------------------------------------------------------
+///   c_camera destructur
+//---------------------------------------------------------------------
+c_camera::~c_camera()
+{
 }
 
 
 //---------------------------------------------------------------------
 ///   Reset the camera data
 //---------------------------------------------------------------------
-void c_camera::reset()
+void c_camera::reset_camera()
 {
 	m_pos.x = 0.0f;
 	m_pos.y = 0.0f;
@@ -57,13 +64,13 @@ void c_camera::reset()
 //---------------------------------------------------------------------
 ///   Move the camera
 //---------------------------------------------------------------------
-void c_camera::move()
+void c_camera::move_camera(int p_fps)
 {
-	if (g_renderer->m_fps > 0)
+	if (p_fps > 0)
 	{
-		m_pos.x -= (m_movex / g_renderer->m_fps) * m_factor;
-		m_pos.y -= (m_movey / g_renderer->m_fps) * m_factor;
-		m_pos.z -= (m_movez / g_renderer->m_fps) * m_factor;
+		m_pos.x -= (m_movex / p_fps) * m_factor;
+		m_pos.y -= (m_movey / p_fps) * m_factor;
+		m_pos.z -= (m_movez / p_fps) * m_factor;
 	}
 
 	this->make_matrix();
@@ -72,13 +79,14 @@ void c_camera::move()
 
 //---------------------------------------------------------------------
 ///   The view matrix (for the camera view)
+///   \param from camera location
+///   \param at camera look-at target
+///   \param world_up world's up, usally 0, 0, 1
+///   \param roll clockwise roll around viewing direction, in radians
 ///   \return the created view matrix
 //---------------------------------------------------------------------
 GLmatrix c_camera::make_view_matrix(
-	const vect3 from,     // camera location
-	const vect3 at,       // camera look-at target
-	const vect3 world_up, // world's up, usually 0, 0, 1
-	const float roll)     // clockwise roll around viewing direction, in radians
+	const vect3 from, const vect3 at, const vect3 world_up, const float roll)
 {
 	GLmatrix view;
 
@@ -199,89 +207,4 @@ void c_camera::make_matrix()
 	this->_cam_frustum_jitter_fov(10.0f, 20000.0f, DEG_TO_RAD*FOV, 1.0, 1.0);
 
 	g_frustum.CalculateFrustum(m_projection_big.v, m_view.v);
-}
-
-
-//---------------------------------------------------------------------
-///   Build the renderlist
-///   \return true on success, else false
-//---------------------------------------------------------------------
-bool c_renderlist::build()
-{
-	if (g_module == NULL)
-	{
-		cout << "WARNING: No mesh found" << endl;
-		return false;
-	}
-
-	Uint32 fan;
-
-	// Reset the values
-	m_num_totl  = 0;
-	m_num_shine = 0;
-	m_num_reflc = 0;
-	m_num_norm  = 0;
-	m_num_watr  = 0;
-
-	for (fan = 0; fan < g_module->mem->tile_count; fan++)
-	{
-		g_module->mem->tiles[fan].inrenderlist = false;
-
-		if (m_num_totl < MAXMESHRENDER)
-		{
-			bool is_shine, is_noref, is_norml, is_water;
-
-			g_module->mem->tiles[fan].inrenderlist = true;
-
-//			is_shine = mesh_has_all_bits(mm->tilelst, fan, MPDFX_SHINY);
-//			is_noref = mesh_has_all_bits(mm->tilelst, fan, MPDFX_NOREFLECT);
-//			is_norml = !is_shine;
-//			is_water = mesh_has_some_bits(mm->tilelst, fan, MPDFX_WATER);
-
-			is_norml = true; // TODO: Added by xenom
-			is_noref = false;
-			is_shine = false;
-			is_water = false;
-
-			// Put each tile in basic list
-			m_totl[m_num_totl] = fan;
-			m_num_totl++;
-//			mesh_fan_add_renderlist(mm->tilelst, fan);
-
-			// Put each tile
-			if (!is_noref)
-			{
-				m_reflc[m_num_reflc] = fan;
-				m_num_reflc++;
-			}
-
-			if (is_shine)
-			{
-				m_shine[m_num_shine] = fan;
-				m_num_shine++;
-			}
-
-			if (is_norml)
-			{
-				m_norm[m_num_norm] = fan;
-				m_num_norm++;
-			}
-
-			if (is_water)
-			{
-				// precalculate the "mode" variable so that we don't waste time rendering the waves
-				int tx, ty;
-
-				ty = fan / g_module->mem->tiles_x;
-				tx = fan % g_module->mem->tiles_x;
-
-				m_watr_mode[m_num_watr] = ((ty & 1) << 1) + (tx & 1);
-				m_watr[m_num_watr]      = fan;
-
-				m_num_watr++;
-			}
-		}
-	}
-
-	return true;
 }

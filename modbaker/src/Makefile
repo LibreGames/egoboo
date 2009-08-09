@@ -4,7 +4,7 @@
 CC = g++ -Wall
 
 # What to build ?
-MODULES := core
+MODULES := core graphics
 
 # Look for include files in each of the modules
 CFLAGS += $(patsubst %, -I%, $(MODULES))
@@ -19,12 +19,11 @@ include $(patsubst %, %/module.mk, $(MODULES))
 MOD_OBJ := $(patsubst %.cpp, %.o, $(filter %.cpp, $(MOD_SRC)))
 
 MB_BIN := modbaker
-MB_SRC := controls.cpp edit.cpp frustum.cpp global.cpp \
-          mesh.cpp modbaker.cpp \
+MB_SRC := frustum.cpp global.cpp modbaker.cpp \
+          renderer.cpp renderer_base.cpp renderer_camera.cpp \
           ogl_debug.cpp ogl_extensions.cpp ogl_include.cpp \
-          renderer.cpp renderer_misc.cpp renderer_primitives.cpp \
-          SDL_extensions.cpp SDL_GL_extensions.cpp utility.cpp \
-          window.cpp
+          SDL_extensions.cpp SDL_GL_extensions.cpp \
+          utility.cpp
 MB_OBJ := ${MB_SRC:.cpp=.o}
 
 # Compiler flags

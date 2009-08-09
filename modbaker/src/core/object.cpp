@@ -274,25 +274,11 @@ void c_object_manager::load_objects(string p_dirname, bool p_gor)
 		temp_object = new c_object();
 		temp_object->set_name(objnames[j]);
 		temp_object->set_gor(p_gor);
-		temp_object->set_slot(0);     /// \todo read slot from data.txt
-		temp_object->set_icon(0);
+		temp_object->set_slot(0);     ///< \todo read slot from data.txt
+		temp_object->load_icon(p_dirname);
 
 		data_file = p_dirname + temp_object->get_name() + "/data.txt";
 		temp_object->read_data_file(data_file);
-
-		if (g_renderer == NULL)
-		{
-			cout << "WARNING: No renderer!" << endl;
-		}
-
-		if (!g_renderer->load_icon(p_dirname + objnames[j] + "/icon0.bmp", temp_object))
-		{
-			// icon0.bmp not found, so try to load the tris0.bmp instead
-			if(!g_renderer->load_icon(p_dirname + objnames[j] + "/tris0.bmp", temp_object))
-			{
-				temp_object->set_icon(0);
-			}
-		}
 
 		this->objects.push_back(temp_object);
 	}
@@ -363,7 +349,7 @@ int c_object_manager::get_nearest_object(float pos_x, float pos_y, float pos_z)
 c_object::c_object()
 {
 	this->name    = "";
-	this->icon[0] = (GLuint)0;
+	this->set_icon((GLuint)0);
 }
 
 
@@ -389,7 +375,28 @@ void c_object::debug_data()
 	else
 		cout << ".in GOR?:  no" << endl;
 	cout << ".slot:     " << this->slot << endl;
-	cout << ".icon:     " << (int)this->icon[0] << endl;
+	cout << ".icon:     " << (int)this->get_icon() << endl;
+}
+
+
+
+//---------------------------------------------------------------------
+///   Load the icon for this object
+///   \param p_dirname directory name for the objects folder
+///   \return true on success, else false
+//---------------------------------------------------------------------
+bool c_object::load_icon(string p_dirname)
+{
+	if (this->load_image(p_dirname + this->name + "/icon0.bmp"))
+		return true;
+
+	// icon0.bmp not found, so try to load the tris0.bmp instead
+	if(this->load_image(p_dirname + this->name + "/tris0.bmp"))
+		return true;
+
+	// Else set the icon to 0
+	this->set_icon(0);
+	return false;
 }
 
 
@@ -447,4 +454,19 @@ vector<c_object*> c_object_manager::get_objects()
 vector<c_spawn> c_object_manager::get_spawns()
 {
 	return this->spawns;
+}
+
+
+//---------------------------------------------------------------------
+///   Clear all objects
+//---------------------------------------------------------------------
+void c_object_manager::clear_objects()
+{
+	unsigned int cnt;
+
+	for (cnt = 0; cnt < this->objects.size(); cnt++)
+	{
+		glDeleteTextures(1, this->objects[cnt]->get_icon_array());
+	}
+	this->objects.clear();
 }

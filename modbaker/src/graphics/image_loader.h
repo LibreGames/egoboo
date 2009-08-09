@@ -18,49 +18,32 @@
 //---------------------------------------------------------------------
 
 /// @file
-/// @brief ModBaker class definition
-/// @details Defines the modbaker class (a big container holding everything together)
+/// @brief Image definition
+/// @details Definition of an image
 
-#ifndef modbaker_h
-#define modbaker_h
-//---------------------------------------------------------------------
-//-   The main class
-//---------------------------------------------------------------------
-#include "global.h"
-#include "core/module.h"
-#include "renderer.h"
-#include "graphics/ui.h"
+#ifndef image_loader_h
+#define image_loader_h
 
+#include <SDL.h>
+#include <SDL_opengl.h>
+#include <SDL_image.h>
 
+#include <string>
+
+using namespace std;
 
 //---------------------------------------------------------------------
-///   the modbaker class
+///   c_image definition
 //---------------------------------------------------------------------
-class c_modbaker : public c_ui, public c_module_editor,
-	public c_renderer
+class c_image_loader
 {
 	private:
 	protected:
+		GLuint gl_image[1];      ///< an OpenGL image ID
+		SDL_Surface *sdl_image; ///< a SDL surface
 	public:
-		c_modbaker();
-		~c_modbaker();
-
-		void init(string);
-		void main_loop();
-		bool get_GL_pos(int, int);
-		bool perform_nongui_action(int);
-		bool perform_gui_action(int);
-		void action(const gcn::ActionEvent &);
-		bool load_complete_module(string, string);
-		void mousePressed(gcn::MouseEvent &);
-
-		bool render_positions();
-		bool render_models();
-		bool render_mesh();
-		void render_fan(Uint32, bool set_texture);
-		void load_basic_textures(string);
-
-		int get_selected_tile_flag();
-		void reload_object_window();
+		bool load_image(string); ///< load the image
+		c_image_loader();
+		~c_image_loader();
 };
 #endif

@@ -25,11 +25,7 @@
 
 using namespace std;
 
-c_input_handler*  g_input_handler;
 c_config*         g_config;
-c_selection       g_selection;
-c_renderer*       g_renderer;
-c_module*         g_module;
 c_frustum         g_frustum;
 
 vector<c_tile_definition> g_tiledict;
@@ -38,9 +34,6 @@ vector<c_tile_definition> g_tiledict;
 //---------------------------------------------------------------------
 //-   Variables for mouse handling
 //---------------------------------------------------------------------
-int g_mouse_x;
-int g_mouse_y;
-
 float g_mouse_gl_x;
 float g_mouse_gl_y;
 float g_mouse_gl_z;
@@ -52,33 +45,6 @@ float g_mouse_gl_z;
 int g_nearest_vertex;
 int g_nearest_tile;
 int g_nearest_object;
-extern c_selection g_selection;
-
-
-//---------------------------------------------------------------------
-//-   Load a module (and call all functions required for this)
-//---------------------------------------------------------------------
-bool load_module(string p_modname)
-{
-	// Read the mesh mpd
-	if(!g_module->load_mesh_mpd(p_modname))
-	{
-		cout << "There was an error loading the module" << endl;
-		return false;
-	}
-
-	// Read the object and spawn.txt information
-	g_module->load_all_for_module(g_config->get_egoboo_path(), p_modname);
-	g_module->load_menu_txt(g_config->get_egoboo_path() + "modules/" + p_modname + "/gamedat/menu.txt");
-
-	// Reset module specific windows
-	g_renderer->get_wm()->destroy_object_window();
-	g_renderer->get_wm()->create_object_window(p_modname);
-	g_renderer->get_wm()->destroy_texture_window();
-	g_renderer->get_wm()->create_texture_window(p_modname);
-
-	return true;
-}
 
 
 //---------------------------------------------------------------------

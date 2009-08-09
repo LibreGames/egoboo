@@ -359,9 +359,9 @@ string remove_underscores(string p_string)
 ///   Tokenize a string based on a semicolon
 ///   \param str input string
 ///   \param tokens the output tokens
-///   \return false if the input string is empty
+///   \return number of tokens, else false
 //---------------------------------------------------------------------
-bool tokenize_semicolon(const string str, vector<string>& tokens)
+int tokenize_semicolon(const string str, vector<string>& tokens)
 {
 	string token;
 	istringstream iss(str);
@@ -369,14 +369,14 @@ bool tokenize_semicolon(const string str, vector<string>& tokens)
 	if (str.length() == 0)
 	{
 		cout << "tokenizer: input string is empty" << endl;
-		return false;
+		return -1;
 	}
 
 	while (getline(iss, token, ';'))
 	{
 		tokens.push_back(token);
 	}
-	return true;
+	return tokens.size();
 }
 
 
