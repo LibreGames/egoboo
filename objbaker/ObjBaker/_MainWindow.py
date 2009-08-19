@@ -4,17 +4,20 @@ import wx
 import os
 import ObjBaker.About
 import ObjBaker.Images as images
+import ObjBaker
 
 class MainWindow(wx.Frame):
     
     def __init__(self):
-	wx.Frame.__init__(self, None, title="ObjBaker")
+	wx.Frame.__init__(self, None, title="ObjBaker", size=(800,600))
 	## Blah, Windows :(
 	self.SetIcon(wx.Icon(os.path.join('icons', 'icon.ico'), wx.BITMAP_TYPE_ICO))
 	images.loadImages()
 	self.loadMenuBar()
 	self.loadToolBar()
 	self.loadStatusBar()
+	self.loadNotebook()
+	self.Bind(wx.EVT_CLOSE, self.dowxQuit)
     
     def loadMenuBar(self):
 	self.menuBar = menuBar = wx.MenuBar()
@@ -104,17 +107,34 @@ class MainWindow(wx.Frame):
     def loadStatusBar(self):
 	self.statusBar = statusBar = self.CreateStatusBar()
     
+    def loadNotebook(self):
+	self.notebook = wx.Notebook(self, -1)
+    
     def doNewObject(self, event):
 	print "MainWindow.doNewObject called!"
 	self.statusBar.PushStatusText("MainWindow.doNewObject called!")
+	self.object = ObjBaker.EgoObject()
+	for i in range(0, self.notebook.GetPageCount()):
+	    self.notebook.RemovePage(0)
+	panels = self.object.getPanels(self.notebook)
+	for key in panels:
+	    self.notebook.AddPage(panels[key], key)
     
     def doOpenObject(self, event):
 	print "MainWindow.doOpenObject called!"
 	self.statusBar.PushStatusText("MainWindow.doOpenObject called!")
+	self.object = ObjBaker.EgoObject('.')
+	for i in range(0, self.notebook.GetPageCount()):
+	    self.notebook.RemovePage(0)
+	panels = self.object.getPanels(self.notebook)
+	for key in panels:
+	    self.notebook.AddPage(panels[key], key)
     
     def doSaveObject(self, event):
 	print "MainWindow.doSaveObject called!"
 	self.statusBar.PushStatusText("MainWindow.doSaveObject called!")
+	if self.object is not None:
+	    self.object.save('.')
     
     def doSaveAsObject(self, event):
 	print "MainWindow.doSaveAsObject called!"
@@ -123,6 +143,19 @@ class MainWindow(wx.Frame):
     def doQuit(self, event):
 	print "MainWindow.doQuit called!"
 	self.Close()
+    
+    def dowxQuit(self, event):
+	print "MainWindow.dowxQuit called!"
+	if self.object is None or not self.object.wasEdited():
+	    event.Skip()
+	    return
+	userInput = wx.MessageBox("Would you like to save?\n(Cancel prevents quitting)",
+	    "ObjBaker Message", wx.YES_NO | wx.CANCEL | wx.ICON_QUESTION, self)
+	if userInput == wx.CANCEL:
+	    return
+	if userInput == wx.YES:
+	    self.object.save('.')
+	event.Skip() # Close window
     
     def doHelp(self, event):
 	print "MainWindow.doHelp called!"
