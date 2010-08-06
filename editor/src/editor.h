@@ -46,7 +46,6 @@
 
 #define VERSION 005             // Version number
 #define YEAR 1999               // Year
-#define NAME "Cartman"          // Program name
 #define KEYDELAY 12             // Delay for keyboard
 #define MAXTILE 256             //
 #define TINYXY   4              // Plan tiles
@@ -57,7 +56,6 @@
 #define FOURNUM   ((1<<7)/((float)(SMALLXY)))          // Magic number
 #define FIXNUM    4 // 4.129           // 4.150
 #define TILEDIV   SMALLXY
-#define MAPID     0x4470614d        // The string... MapD
 
 #define FADEBORDER 64           // Darkness at the edge of map
 #define SLOPE 50            // Twist stuff
@@ -66,8 +64,8 @@
 
 #define MAXMESHTYPE                     64          // Number of mesh types
 #define MAXMESHLINE                     64          // Number of lines in a fan schematic
-#define MAXMESHVERTICES                 16      // Max number of vertices in a fan
-#define MAXMESHFAN                      (512*512)        // Size of map in fans
+#define MAXMESHVERTICES                 16          // Max number of vertices in a fan
+#define MAXMESHFAN                      (128*128)   // Size of map in fans
 #define MAXTOTALMESHVERTICES            (MAXMESHFAN*MAXMESHVERTICES)
 #define MAXMESHTILEY                    1024       // Max fans in y direction
 #define MAXMESHBLOCKY                   (( MAXMESHTILEY >> 2 )+1)  // max blocks in the y direction
@@ -116,19 +114,14 @@
 *******************************************************************************/
 
 typedef struct {
-    unsigned char numvertices;                // Number of vertices
 
-    unsigned char ref[MAXMESHVERTICES];       // Lighting references
-
-    int     x[MAXMESHVERTICES];         // Vertex texture posi
-    int     y[MAXMESHVERTICES];         //
-
-    float   u[MAXMESHVERTICES];         // Vertex texture posi
-    float   v[MAXMESHVERTICES];         //
-
-    int     count;                      // how many commands
-    int     size[MAXMESHCOMMAND];      // how many command entries
-    int     vrt[MAXMESHCOMMANDENTRIES];       // which vertex for each command entry
+    int   numvertices;			            // meshcommandnumvertices
+    int   count;			                // meshcommands
+    int   size[MAXMESHCOMMAND];             // meshcommandsize
+    int   vertexno[MAXMESHCOMMANDENTRIES];  // meshcommandvrt, number of vertex
+    float uv[MAXMESHVERTICES * 2];          // meshcommandu, meshcommandv
+    float biguv[MAXMESHVERTICES * 2];       // meshcommandu, meshcommandv
+                                            // For big texture images
 } COMMAND_T;
 
 typedef struct {
@@ -137,42 +130,47 @@ typedef struct {
 } LINE_DATA_T;
 
 typedef struct {
+
     unsigned char exploremode;
+    unsigned char map_loaded;   // A map is loaded  into this struct
+    
+    int numvert;        // Number of vertices
+    int tiles_x;        // Size of mesh in tiles
+    int tiles_y;        //
+    int numfan;
+    int watershift;     // Depends on size of map
+    char wireframe;     // Display in wireframe mode yes/no
 
-    int               tiles_x;           // Size of mesh
-    int               tiles_y;           //
-    unsigned int fanstart[MAXMESHTILEY];           // Y to fan number
+    int blocksx;        // Size of mesh
+    int blocksy;        //
 
-    int               blocksx;          // Size of mesh
-    int               blocksy;          //
-    unsigned int blockstart[(MAXMESHTILEY >> 4) + 1];
+    float edgex;        // Borders of mesh
+    float edgey;        //
+    float edgez;        //
+    
+    int textures[4];    // OpenGL-Number of Textures used for map
 
-    int               edgex;            // Borders of mesh
-    int               edgey;            //
-    int               edgez;            //
-
-    unsigned char fantype[MAXMESHFAN];  // Tile fan type
-    unsigned char fx[MAXMESHFAN];       // Tile special effects flags
+    unsigned char  fantype[MAXMESHFAN];  // Tile fan type
+    unsigned char  fx[MAXMESHFAN];       // Tile special effects flags
     unsigned short tx_bits[MAXMESHFAN]; // Tile texture bits and special tile bits
-    unsigned char twist[MAXMESHFAN];    // Surface normal
+    unsigned char  twist[MAXMESHFAN];    // Surface normal
 
-    unsigned int vrtstart[MAXMESHFAN];              // Which vertex to start at
-    unsigned int vrtnext[MAXTOTALMESHVERTICES];     // Next vertex in fan
-
-    unsigned int vrtx[MAXTOTALMESHVERTICES];        // Vertex position
-    unsigned int vrty[MAXTOTALMESHVERTICES];        //
-    short int vrtz[MAXTOTALMESHVERTICES];           // Vertex elevation
-    unsigned char vrta[MAXTOTALMESHVERTICES];       // Vertex base light, 0=unused
-
-    unsigned int numline[MAXMESHTYPE];              // Number of lines to draw
+    float vrtx[MAXTOTALMESHVERTICES];           // Vertex position
+    float vrty[MAXTOTALMESHVERTICES];           //
+    float vrtz[MAXTOTALMESHVERTICES];           // Vertex elevation
+    unsigned char vrta[MAXTOTALMESHVERTICES];   // Vertex base light, 0=unused
+    
+    int  vrtstart[MAXTOTALMESHVERTICES];        // First vertex of given fan     
+    char visible[MAXTOTALMESHVERTICES];         // Is visible yes/no
+    
+    int numline[MAXMESHTYPE];                   // Number of lines to draw
     LINE_DATA_T  line[MAXMESHLINE];
-    COMMAND_T    command[MAXMESHTYPE];
+
 } MESH_T;
 
 /*******************************************************************************
 * CODE 								                                           *
 *******************************************************************************/
-
 
 #endif /* _EDITOR_H_	*/
 
