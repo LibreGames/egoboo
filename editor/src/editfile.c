@@ -47,7 +47,7 @@
  */
 int editfileLoadMapMesh(MESH_T *mesh)
 {
-
+	return 0;			//todo
 }
 
 /*
@@ -61,8 +61,5 @@ int editfileLoadMapMesh(MESH_T *mesh)
  */
 int editfileSaveMapMesh(MESH_T *mesh)
 {
-
-
+	return 0;		//todo
 }
-
-#endif  /* _EDITFILE_H_ */

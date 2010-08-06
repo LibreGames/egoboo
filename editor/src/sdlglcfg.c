@@ -27,9 +27,9 @@
 #include <stdio.h>
 #include <memory.h>
 #include <string.h>
-#include <alloc.h>      /* malloc(), free() */
+#include <stdlib.h>      /* malloc(), free(), don't use alloc.h it's obsolete*/
 
-
+#include "platform.h"
 #include "sdlglcfg.h"
 
 /*******************************************************************************
@@ -243,7 +243,7 @@ static void sdlglcfgGetNamedValue(char *line, SDLGLCFG_NAMEDVALUE *vallist)
         sscanf(line, "%s", namestr);
         sscanf(pval, "%s", valstr);
         
-        if (pval != "") {
+        if ( strcmp( pval, "" ) != 0 ) {
             
             strlwr(namestr); /* To lower for comparision */
 

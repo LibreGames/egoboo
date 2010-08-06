@@ -37,6 +37,6 @@
 *******************************************************************************/
 
 int editfileLoadMapMesh(MESH_T *mesh);
-int editfileSaveMapMesh(MESH_T *mesh, char *filename);
+int editfileSaveMapMesh(MESH_T *mesh);
 
 #endif  /* _EDITFILE_H_ */

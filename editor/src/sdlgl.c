@@ -296,7 +296,7 @@ static int sdlglITranslateKeyboardInput(SDLGL_EVENT *event, char pressed)
 
     SDLGL_CMDKEY *sk, *sk_list;
     int i;
-    unsigned char mask;
+    unsigned char mask = 0;
     
 
     /* 1) Check if there are command keys to translate */
@@ -304,7 +304,7 @@ static int sdlglITranslateKeyboardInput(SDLGL_EVENT *event, char pressed)
     if (! sk_list) {
 
         return 0;
-        
+ 
     }
     
     /* 2) Check if there's a code to translate */
@@ -446,7 +446,7 @@ static void sdlglITranslateMouseInput(SDLGL_EVENT *event, SDLGL_FIELD *fields, i
 {
 
     static SDLGL_FIELD *MouseArea = DefaultArea; /* Never NULL   */ 
-    static tooltipticks = 0;
+    static int tooltipticks = 0;
     
     SDLGL_FIELD *base;              /* Save base    */
 
