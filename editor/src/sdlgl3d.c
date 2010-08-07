@@ -85,14 +85,13 @@ typedef struct {
 * DATA								             *
 *****************************************************************************/
 
-/* static SDLGL3D_OBJECT BasePoint; */       /* Position 0, 0, 0 */
-/* This one owns the camera        */
-static SDLGL3D_CAMERA Camera = {
+/* This are the cameras. 0: Standard camera */
+static SDLGL3D_CAMERA Camera[4] = {
 
-    SDLGL3D_CAMERATYPE_THIRDPERSON,
-    SDLGL3D_I_VIEWWIDTH, SDLGL3D_I_VIEWHEIGHT,
-    SDLGL3D_I_ZMIN, SDLGL3D_I_ZMAX,
-    256.0
+    { SDLGL3D_CAMERATYPE_THIRDPERSON,
+      SDLGL3D_I_VIEWWIDTH, SDLGL3D_I_VIEWHEIGHT,
+      SDLGL3D_I_ZMIN, SDLGL3D_I_ZMAX,
+      256.0 }
 
 };
 
@@ -334,27 +333,27 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, float secondspassed)
             if (moveobj -> move_dir > 0) {
                 /* Zoom in: Reduce size of view */
                 speed = 1.0 - speed;
-                Camera.viewwidth  *= speed;
-                Camera.viewheight *= speed;
+                Camera[0].viewwidth  *= speed;
+                Camera[0].viewheight *= speed;
 
             }
             else if (moveobj -> move_dir < 0) {
 
                 speed = 1.0 + speed;
-                Camera.viewwidth  *= speed;
-                Camera.viewheight *= speed;
+                Camera[0].viewwidth  *= speed;
+                Camera[0].viewheight *= speed;
 
             }
             break;
 
     }
 
-    if (Camera.object == moveobj) {
+    if (Camera[0].object == moveobj) {
 
         /* FIXME: Move camera according to movement of attached object */
-        sdlgl3dIMoveAttachedCamera(&Camera);
+        sdlgl3dIMoveAttachedCamera(&Camera[0]);
         /* If the camera was moved, set the frustum normals... */
-        sdlgl3dSetupFrustumNormals(&Camera, SDLGL3D_CAMERA_FOV);
+        sdlgl3dSetupFrustumNormals(&Camera[0], SDLGL3D_CAMERA_FOV);
 
         /* And recalculate the display list */
 
@@ -380,28 +379,26 @@ SDLGL3D_OBJECT *sdlgl3dBegin(int solid)
     SDLGL3D_OBJECT *viewobj;
 
 
-    glEnable(GL_TEXTURE_2D);
-
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();                 /* Save the callers View-Mode */
     glLoadIdentity();
 
     /* Set the view mode */
-    glFrustum(-(Camera.viewwidth / 2), (Camera.viewwidth / 2),
-              -(Camera.viewheight / 2), (Camera.viewheight / 2),
-              Camera.zmin, Camera.zmax);
+    glFrustum(-(Camera[0].viewwidth / 2), (Camera[0].viewwidth / 2),
+              -(Camera[0].viewheight / 2), (Camera[0].viewheight / 2),
+              Camera[0].zmin, Camera[0].zmax);
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
 
-    if (Camera.type == SDLGL3D_CAMERATYPE_FIRSTPERSON) {
+    if (Camera[0].type == SDLGL3D_CAMERATYPE_FIRSTPERSON) {
 
-        viewobj = Camera.object;
+        viewobj = Camera[0].object;
         if (viewobj == 0) {
 
             /* Play it save */
-            viewobj = &Camera.campos;
+            viewobj = &Camera[0].campos;
 
         }
 
@@ -409,7 +406,7 @@ SDLGL3D_OBJECT *sdlgl3dBegin(int solid)
     }
     else {
 
-        viewobj = &Camera.campos;
+        viewobj = &Camera[0].campos;
 
     }
 
@@ -442,8 +439,6 @@ void sdlgl3dEnd(void)
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
 
-    glDisable(GL_TEXTURE_2D);
-
 }
 
 /*
@@ -461,34 +456,36 @@ void sdlgl3dAttachCameraToObj(int object_no, char camtype)
     float distance;
 
 
-    Camera.object = &Object_List[object_no];    /* Attach object to camera */
+    Camera[0].object = &Object_List[object_no];    /* Attach object to camera */
 
     if (camtype == SDLGL3D_CAMERATYPE_FIRSTPERSON) {
 
-        Camera.cameradist = 0;
+        Camera[0].cameradist = 0;
 
     }
     else {
 
         /* Create a third person camera behind the given 'moveobj' */
         distance = 2 * SDLGL3D_TILESIZE;
-        Camera.cameradist = distance;
+        Camera[0].cameradist = distance;
 
-        Camera.campos.pos[0] = Camera.object -> pos[0] - (Camera.object -> direction[0] * distance);
-        Camera.campos.pos[1] = Camera.object -> pos[1] - (Camera.object -> direction[1] * distance);
-        Camera.campos.pos[2] = SDLGL3D_TILESIZE;
+        Camera[0].campos.pos[0] = Camera[0].object -> pos[0]
+                                  - (Camera[0].object -> direction[0] * distance);
+        Camera[0].campos.pos[1] = Camera[0].object -> pos[1]
+                                  - (Camera[0].object -> direction[1] * distance);
+        Camera[0].campos.pos[2] = SDLGL3D_TILESIZE;
 
-        Camera.campos.rot[2] = 30.0;
+        Camera[0].campos.rot[2] = 30.0;
 
-        Camera.campos.extent[0]  = SDLGL3D_CAMERA_EXTENT;
-        Camera.campos.extenttype = SDLGL3D_EXTENT_CIRCLE;
+        Camera[0].campos.extent[0]  = SDLGL3D_CAMERA_EXTENT;
+        Camera[0].campos.extenttype = SDLGL3D_EXTENT_CIRCLE;
 
     }
 
-    Camera.type = camtype;
+    Camera[0].type = camtype;
 
     /* Set the frustum normals... */
-    sdlgl3dSetupFrustumNormals(&Camera, SDLGL3D_CAMERA_FOV);
+    sdlgl3dSetupFrustumNormals(&Camera[0], SDLGL3D_CAMERA_FOV);
 
 }
 
@@ -505,22 +502,22 @@ void sdlgl3dAttachCameraToObj(int object_no, char camtype)
 void sdlgl3dInitCamera(float x, float y, float z, int rotx, int roty, int rotz)
 {
 
-    Camera.campos.pos[0] = x;
-    Camera.campos.pos[1] = y;
-    Camera.campos.pos[SDLGL3D_Z] = z;
+    Camera[0].campos.pos[0] = x;
+    Camera[0].campos.pos[1] = y;
+    Camera[0].campos.pos[SDLGL3D_Z] = z;
 
-    Camera.campos.rot[0] = rotx;
-    Camera.campos.rot[1] = roty;
-    Camera.campos.rot[SDLGL3D_Z] = rotz;
+    Camera[0].campos.rot[0] = rotx;
+    Camera[0].campos.rot[1] = roty;
+    Camera[0].campos.rot[SDLGL3D_Z] = rotz;
 
-    Camera.campos.direction[0] = sin(DEG2RAD(rotz));
-    Camera.campos.direction[1] = cos(DEG2RAD(rotz));
+    Camera[0].campos.direction[0] = sin(DEG2RAD(rotz));
+    Camera[0].campos.direction[1] = cos(DEG2RAD(rotz));
 
-    Camera.campos.speed   = 100.0;  /* Speed of camera in units / second    */
-    Camera.campos.turnvel =  60.0;  /* Degrees per second                   */
+    Camera[0].campos.speed   = 150.0;  /* Speed of camera in units / second    */
+    Camera[0].campos.turnvel =  60.0;  /* Degrees per second                   */
 
     /* If the camera was moved, set the frustum normals... */
-    sdlgl3dSetupFrustumNormals(&Camera, SDLGL3D_CAMERA_FOV);
+    sdlgl3dSetupFrustumNormals(&Camera[0], SDLGL3D_CAMERA_FOV);
 
 }
 
@@ -531,14 +528,14 @@ void sdlgl3dInitCamera(float x, float y, float z, int rotx, int roty, int rotz)
  *     Initializes the 3D-Camera. Moves the camera to given position with
  *     given rotations.
  * Input:
- *     None
+ *     Nuber of camera to get info for
  * Output:
  *      Pointer on camera position
  */
-SDLGL3D_OBJECT *sdlgl3dGetCameraInfo(void)
+SDLGL3D_OBJECT *sdlgl3dGetCameraInfo(int camera_no)
 {
 
-    return &Camera.campos;
+    return &Camera[camera_no].campos;
 
 }
 
@@ -563,6 +560,24 @@ void sdlgl3dInitObject(SDLGL3D_OBJECT *moveobj)
 
 /*
  * Name:
+ *     sdlgl3dManageCamera
+ * Description:
+ *     Sets the commands for object with given number. < 0: Is camera
+ * Input:
+ *      camera_no: Number of object to manage
+ *      move_cmd:  Kind of movement
+ *      move_dir:  Prefix additional to movement code
+ */
+void sdlgl3dManageCamera(int camera_no, char move_cmd, char move_dir)
+{
+
+    Camera[camera_no].campos.move_cmd = move_cmd;
+    Camera[camera_no].campos.move_dir = move_dir;
+
+}
+
+/*
+ * Name:
  *     sdlgl3dManageObject
  * Description:
  *     Sets the commands for object with given number. < 0: Is camera
@@ -574,17 +589,11 @@ void sdlgl3dInitObject(SDLGL3D_OBJECT *moveobj)
 void sdlgl3dManageObject(int object_no, char move_cmd, char move_dir)
 {
 
-    if (object_no < 0) {
+    if (object_no > 0) {
 
-        /* Manage the camera */
-        Camera.campos.move_cmd = move_cmd;
-        Camera.campos.move_dir = move_dir;
-
-    }
-    else if (object_no > 0) {
-
-        /* Manage this object */
-
+        /* Manage this object. Set commands */
+        Object_List[object_no].move_cmd = move_cmd;
+        Object_List[object_no].move_dir = move_dir;
 
     }
 
@@ -620,15 +629,13 @@ void sdlgl3dMoveObjects(float secondspassed)
 
     }
 
-
-
-    if (Camera.campos.move_cmd > 0) {
+    if (Camera[0].campos.move_cmd > 0) {
 
         /* FIXME: Take into account if camera is 'attached' as 3rd-Person camera */
-        sdlgl3dIMoveSingleObj(&Camera.campos, secondspassed);
+        sdlgl3dIMoveSingleObj(&Camera[0].campos, secondspassed);
 
         /* If the camera was moved, set the frustum normals... */
-        sdlgl3dSetupFrustumNormals(&Camera, SDLGL3D_CAMERA_FOV);
+        sdlgl3dSetupFrustumNormals(&Camera[0], SDLGL3D_CAMERA_FOV);
 
     }
 

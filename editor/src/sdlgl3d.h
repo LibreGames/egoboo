@@ -222,9 +222,9 @@
 #define SDLGL3D_MOVE_ROTZ      0x08
 
 /* ----- Results of collision detection in movement ----- */
-#define SDLGL3D_EVENT_TILECHANGED         2
-#define SDLGL3D_EVENT_MOVED               1
-#define SDLGL3D_EVENT_NONE                0
+#define SDLGL3D_EVENT_TILECHANGED   2
+#define SDLGL3D_EVENT_MOVED         1
+#define SDLGL3D_EVENT_NONE          0
 
 /* ----- Camera behaviour ----- */
 #define SDLGL3D_CAMERA_ZOOM 0x10
@@ -269,6 +269,7 @@ typedef struct SDLGL3D_OBJECT_TYPE {
     SDLGL3D_VECTOR pos;        /* Position                             */
     SDLGL3D_VECTOR direction;  /* Actual direction, unit vector        */
     SDLGL3D_VECTOR rot;        /* Rotation angles                      */
+    int     move_cmd_bits;     /* Multiple movements at same time      */  
     char    move_cmd;          /* Kind of movement of this one         */  
     char    move_dir;          /* Direction prefix                     */  
     float   speed;             /* Ahead speed in units/second          */
@@ -293,8 +294,9 @@ SDLGL3D_OBJECT *sdlgl3dBegin(int solid);
 void sdlgl3dEnd(void);
 void sdlgl3dAttachCameraToObj(int obj_no, char camtype);
 void sdlgl3dInitCamera(float x, float y, float z, int rotx, int roty, int rotz);
-SDLGL3D_OBJECT *sdlgl3dGetCameraInfo(void);
+SDLGL3D_OBJECT *sdlgl3dGetCameraInfo(int camera_no);
 void sdlgl3dInitObject(SDLGL3D_OBJECT *moveobj);
+void sdlgl3dManageCamera(int camera_no, char move_cmd, char move_dir);
 void sdlgl3dManageObject(int obj_no, char move_cmd, char move_dir);
 void sdlgl3dMoveObjects(float secondspassed);
 int  sdlgl3dCollided(SDLGL3D_OBJECT *o1, SDLGL3D_OBJECT *o2);

@@ -331,7 +331,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE / 2] = {
     }
 };
 
-static float meshtileoffuv[EDITDRAW_MAX_TEXIMAGE * 2];
+static float MeshTileOffUV[EDITDRAW_MAX_TEXIMAGE * 2];
 
 /*******************************************************************************
 * CODE 								                                           *
@@ -354,7 +354,7 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
     static unsigned char blue[3] = { 0, 0, 255 };
 
     COMMAND_T *mc;
-    float *vert_x, *vert_y, *vert_z;
+    int *vert_x, *vert_y, *vert_z;
     int cnt, tnc, entry, *vertexno;
     int vert_base;
     char type;
@@ -365,26 +365,25 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
     unsigned char color[3];
 
 
-    
     mc = &MeshCommand[mesh -> fantype[fan_no]];
     vert_base = mesh -> vrtstart[fan_no];
-    type      = mesh -> fantype[fan_no]; 
-    
+    type      = mesh -> fantype[fan_no];
+
     vert_x = &mesh -> vrtx[vert_base];
     vert_y = &mesh -> vrty[vert_base];
     vert_z = &mesh -> vrtz[vert_base];
     
     if (mesh -> wireframe) {
 
-        if (type & 0x20) {	/* It's one with hi res texture */
-            glColor3ubv(&blue[0]);	/* color like cartman */
+        if (type & 0x20) {	        /* It's one with hi res texture */
+            glColor3ubv(&blue[0]);	/* color like cartman           */
     	}
     	else {
             glColor3ubv(&red[0]);
         }
 
-    } else { /* if wireframe */
-    	/* draw texture */
+    } else { /* draw texture */
+    
         glColor3ubv(&white[0]);
 
         if (type & 0x20) {	/* It's one with hi res texture */
@@ -395,12 +394,12 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
         }
     }
 
-    offuv = &meshtileoffuv[(mesh -> tx_bits[fan_no] % EDITDRAW_MAX_TEXIMAGE) * 2];
+    offuv = &MeshTileOffUV[(mesh -> tx_bits[fan_no] & 0x3F) * 2];
 
     /* Now bind the texture */
     if (! mesh -> wireframe) {
 
-        glBindTexture(GL_TEXTURE_2D, mesh -> textures[mesh -> tx_bits[fan_no] / EDITDRAW_MAX_TEXIMAGE]);
+        glBindTexture(GL_TEXTURE_2D, mesh -> textures[((mesh -> tx_bits[fan_no] >> 7) & 3)]);
 
     }
 
@@ -427,7 +426,7 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
 
                 }
 
-                glVertex3f(vert_x[actvertex], vert_y[actvertex], vert_z[actvertex]);
+                glVertex3i(vert_x[actvertex], vert_y[actvertex], vert_z[actvertex]);
 
                 entry++;
             }
@@ -435,6 +434,29 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
         glEnd();
 
     } /* for meshcommand[type].count */
+
+}
+
+/*
+ *  Name:
+ *	    editdrawMap
+ *  Description:
+ *	    Draws a single fan with given number from given mesh
+ * Input:
+ *      mesh *: Pointer on mesh to draw
+ */
+static void editdrawMap(MESH_T *mesh)
+{
+
+    if (! mesh -> map_loaded) {
+
+        return;
+
+    }
+
+    /* TODO: Draw the map, using different edit flags           */
+    /* Needs list of visible tiles
+       ( which must be built every time after the camera moved) */
 
 }
 
@@ -482,8 +504,8 @@ COMMAND_T *editdrawInitData(void)
     for (entry = 0; entry < (EDITDRAW_MAX_TEXIMAGE * 2); entry += 2) {
 
         // Make tile texture offsets
-        meshtileoffuv[entry]     = (((entry / 2) & 7) * 0.125) + 0.001;
-        meshtileoffuv[entry + 1] = (((entry / 2) / 8) * 0.125) + 0.001;
+        MeshTileOffUV[entry]     = (((entry / 2) & 7) * 0.125) + 0.001;
+        MeshTileOffUV[entry + 1] = (((entry / 2) / 8) * 0.125) + 0.001;
 
     }
 
@@ -497,16 +519,16 @@ COMMAND_T *editdrawInitData(void)
  * Description:
  *     Draws the whole 3D-View  
  * Input:
- *     None 
+ *     mesh *: Pointer on mesh to draw
  */
-void editdraw3DView(void)
+void editdraw3DView(MESH_T *mesh)
 {
 
     int w, h;
     int x, y, x2, y2;
 
 
-    sdlgl3dBegin(1);
+    sdlgl3dBegin(0);        /* Draw not solid */
 
     /* Draw a grid 64 x 64 squares for test of the camera view */
     glColor3f(1.0, 1.0, 1.0);
@@ -519,16 +541,18 @@ void editdraw3DView(void)
             y = h * 128;
             x2 = x + 128;
             y2 = y + 128;
-            glBegin(GL_LINE_LOOP);
-                glVertex2i(x, y2);
-                glVertex2i(x2, y2);
+            glBegin(GL_TRIANGLE_FAN);  /* Draw clockwise */
+                glVertex2i(x, y);
                 glVertex2i(x2, y);
-    	        glVertex2i(x, y);
+                glVertex2i(x2, y2);
+                glVertex2i(x, y2);
             glEnd();
 
         }
 
     }
+
+    editdrawMap(mesh);
 
     sdlgl3dEnd();
 

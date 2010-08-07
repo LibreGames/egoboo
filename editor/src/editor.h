@@ -33,9 +33,9 @@
 * DEFINES								                                       *
 *******************************************************************************/
 
-#define MAXMESSAGE          6                       // Number of messages
-#define TOTALMAXDYNA                    64          // Absolute max number of dynamic lights
-#define TOTALMAXPRT             2048                // True max number of particles
+#define MAXMESSAGE         6    // Number of messages
+#define TOTALMAXDYNA      64    // Absolute max number of dynamic lights
+#define TOTALMAXPRT     2048    // True max number of particles
 
 
 #define MAXLIGHT 100
@@ -54,13 +54,12 @@
 #define CAMRATE 8               // Arrow key movement rate
 #define MAXSELECT 2560          // Max points that can be select_vertsed
 #define FOURNUM   ((1<<7)/((float)(SMALLXY)))          // Magic number
-#define FIXNUM    4 // 4.129           // 4.150
-#define TILEDIV   SMALLXY
+#define FIXNUM    4             // 4.129           // 4.150
 
 #define FADEBORDER 64           // Darkness at the edge of map
-#define SLOPE 50            // Twist stuff
+#define SLOPE 50                // Twist stuff
 
-#define ONSIZE 264          // Max size of raise mesh
+#define ONSIZE 264              // Max size of raise mesh
 
 #define MAXMESHTYPE                     64          // Number of mesh types
 #define MAXMESHLINE                     64          // Number of lines in a fan schematic
@@ -155,9 +154,9 @@ typedef struct {
     unsigned short tx_bits[MAXMESHFAN]; // Tile texture bits and special tile bits
     unsigned char  twist[MAXMESHFAN];    // Surface normal
 
-    float vrtx[MAXTOTALMESHVERTICES];           // Vertex position
-    float vrty[MAXTOTALMESHVERTICES];           //
-    float vrtz[MAXTOTALMESHVERTICES];           // Vertex elevation
+    int vrtx[MAXTOTALMESHVERTICES];             // Vertex position
+    int vrty[MAXTOTALMESHVERTICES];             //
+    int vrtz[MAXTOTALMESHVERTICES];             // Vertex elevation
     unsigned char vrta[MAXTOTALMESHVERTICES];   // Vertex base light, 0=unused
     
     int  vrtstart[MAXTOTALMESHVERTICES];        // First vertex of given fan     

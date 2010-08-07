@@ -37,6 +37,6 @@
 *******************************************************************************/
 
 COMMAND_T *editdrawInitData(void);
-void editdraw3DView(void);
+void editdraw3DView(MESH_T *mesh);
 
 #endif  /* _EDITDRAW_H_ */

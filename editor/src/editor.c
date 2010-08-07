@@ -34,7 +34,7 @@
 #include "sdlglstr.h"
 #include "sdlglcfg.h"
 #include "sdlgl3d.h"
-#include "editdraw.h"
+#include "editmain.h"
 
 /*******************************************************************************
 * DEFINES								                                       *
@@ -209,9 +209,16 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
 
 
     glClear(GL_COLOR_BUFFER_BIT);
+    
+    /* First move the camera */
+    sdlgl3dMoveObjects(event -> secondspassed); 
 
     /* Draw the 3D-View before the 2D-Screen */
-    editdraw3DView();
+    editmainMap(EDITMAIN_DRAWMAP);
+    
+    /* ---- Prepare drawing in 2D-Mode ---- */
+    glPolygonMode(GL_FRONT, GL_FILL);
+    glShadeModel(GL_FLAT);		            /* No smoothing	of edges */
     
     /* Draw the menu -- open/close dropdown, if needed */
     mouse_over = 0;
@@ -267,9 +274,7 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
 
         editorSetMenu(0);
 
-    }
-
-    sdlgl3dMoveObjects(event -> secondspassed); /* Move camera */
+    }    
 
 }
 
@@ -290,12 +295,12 @@ static int editorInputHandler(SDLGL_EVENT *event)
             /* Move the camera */
             if (event -> pressed) {
                 /* Start movement */
-                sdlgl3dManageObject(-1, event -> code, event -> sub_code);
+                sdlgl3dManageCamera(0, event -> code, event -> sub_code);
 
             }
             else {
                 /* Stop movement */
-                sdlgl3dManageObject(-1, 0, 0);
+                sdlgl3dManageCamera(0, 0, 0);
 
             }
 
@@ -380,10 +385,7 @@ int main(int argc, char **argv)
 
     SdlGlConfig.wincaption = EDITOR_CAPTION;
 
-    sdlglInit(&SdlGlConfig);
-
-    glPolygonMode(GL_FRONT, GL_FILL);
-    glShadeModel(GL_FLAT);		/* No smoothing	of edges */
+    sdlglInit(&SdlGlConfig);  
 
     /* Init Camera +Z is up, -Y is near plane, X is left/right */
     sdlgl3dInitCamera(32 * 128.0, -128.0, 64.0, 270, 0, 0);
