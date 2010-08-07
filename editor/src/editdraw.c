@@ -365,9 +365,11 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
     unsigned char color[3];
 
 
-    mc = &MeshCommand[mesh -> fantype[fan_no]];
+    type = mesh -> fan[fan_no].type;
+
+    mc   = &MeshCommand[type];
+
     vert_base = mesh -> vrtstart[fan_no];
-    type      = mesh -> fantype[fan_no];
 
     vert_x = &mesh -> vrtx[vert_base];
     vert_y = &mesh -> vrty[vert_base];
@@ -394,12 +396,12 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
         }
     }
 
-    offuv = &MeshTileOffUV[(mesh -> tx_bits[fan_no] & 0x3F) * 2];
+    offuv = &MeshTileOffUV[(mesh -> fan[fan_no].tx_bits & 0x3F) * 2];
 
     /* Now bind the texture */
     if (! mesh -> wireframe) {
 
-        glBindTexture(GL_TEXTURE_2D, mesh -> textures[((mesh -> tx_bits[fan_no] >> 7) & 3)]);
+        glBindTexture(GL_TEXTURE_2D, mesh -> textures[((mesh -> fan[fan_no].tx_bits >> 7) & 3)]);
 
     }
 
@@ -457,6 +459,7 @@ static void editdrawMap(MESH_T *mesh)
     /* TODO: Draw the map, using different edit flags           */
     /* Needs list of visible tiles
        ( which must be built every time after the camera moved) */
+    editdrawSingleFan(mesh, 0);
 
 }
 

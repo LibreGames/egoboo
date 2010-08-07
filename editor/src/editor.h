@@ -1,8 +1,8 @@
 /*******************************************************************************
 *  EDITOR.H                                                                    *
-*	- Entrypoint for the library, starts the menu-loop.		                   *
+*	- General definitions for the editor                	                   *
 *									                                           *
-*   Copyright (C) 2001  Paul Mueller <pmtech@swissonline.ch>                   *
+*   Copyright (C) 2010  Paul Mueller <pmtech@swissonline.ch>                   *
 *                                                                              *
 *   This program is free software; you can redistribute it and/or modify       *
 *   it under the terms of the GNU General Public License as published by       *
@@ -19,7 +19,6 @@
 *   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. *
 *                                                                              *
 *                                                                              *
-* Last change: 2008-06-21                                                      *
 *******************************************************************************/
 
 #ifndef _EDITOR_H_
@@ -54,11 +53,8 @@
 #define CAMRATE 8               // Arrow key movement rate
 #define MAXSELECT 2560          // Max points that can be select_vertsed
 #define FOURNUM   ((1<<7)/((float)(SMALLXY)))          // Magic number
-#define FIXNUM    4             // 4.129           // 4.150
 
 #define FADEBORDER 64           // Darkness at the edge of map
-#define SLOPE 50                // Twist stuff
-
 #define ONSIZE 264              // Max size of raise mesh
 
 #define MAXMESHTYPE                     64          // Number of mesh types
@@ -66,8 +62,6 @@
 #define MAXMESHVERTICES                 16          // Max number of vertices in a fan
 #define MAXMESHFAN                      (128*128)   // Size of map in fans
 #define MAXTOTALMESHVERTICES            (MAXMESHFAN*MAXMESHVERTICES)
-#define MAXMESHTILEY                    1024       // Max fans in y direction
-#define MAXMESHBLOCKY                   (( MAXMESHTILEY >> 2 )+1)  // max blocks in the y direction
 #define MAXMESHCOMMAND                  4             // Draw up to 4 fans
 #define MAXMESHCOMMANDENTRIES           32            // Fansquare command list size
 #define MAXMESHCOMMANDSIZE              32            // Max trigs in each command
@@ -75,18 +69,18 @@
 #define FANOFF   0xFFFF         // Don't draw
 #define CHAINEND 0xFFFFFFFF     // End of vertex chain
 
-#define VERTEXUNUSED 0          // Check mesh.vrta to see if used
+#define VERTEXUNUSED 0          // Check mesh -> vrta to see if used
 #define MAXPOINTS 20480         // Max number of points to draw
 
-#define MPDFX_REF 0            // MeshFX
-#define MPDFX_SHA 1            //
-#define MPDFX_DRAWREF 2      //
-#define MPDFX_ANIM 4             //
-#define MPDFX_WATER 8            //
-#define MPDFX_WALL 16            //
-#define MPDFX_IMPASS 32         //
-#define MPDFX_DAMAGE 64         //
-#define MPDFX_SLIPPY 128        //
+#define MPDFX_REF       0x00    /* MeshFX   */
+#define MPDFX_SHA       0x01    
+#define MPDFX_DRAWREF   0x02    
+#define MPDFX_ANIM      0x04    
+#define MPDFX_WATER     0x08    
+#define MPDFX_WALL      0x10    
+#define MPDFX_IMPASS    0x20    
+#define MPDFX_DAMAGE    0x40    
+#define MPDFX_SLIPPY    0x80    
 
 #define INVALID_BLOCK ((unsigned int )(~0))
 #define INVALID_TILE  ((unsigned int )(~0))
@@ -124,9 +118,14 @@ typedef struct {
 } COMMAND_T;
 
 typedef struct {
-    unsigned char start[MAXMESHTYPE];
-    unsigned char end[MAXMESHTYPE];
-} LINE_DATA_T;
+
+    unsigned short tx_bits; /* Tile texture bits and special tile bits      */
+                            /* The upper byte could be abused for some	    */
+                            /* "decoration" - index.			            */
+    unsigned char  fx;		/* Tile special effects flags                   */
+    unsigned char  type;	/* Tile fan type            			        */
+
+} FANDATA_T;
 
 typedef struct {
 
@@ -149,21 +148,16 @@ typedef struct {
     
     int textures[4];    // OpenGL-Number of Textures used for map
 
-    unsigned char  fantype[MAXMESHFAN];  // Tile fan type
-    unsigned char  fx[MAXMESHFAN];       // Tile special effects flags
-    unsigned short tx_bits[MAXMESHFAN]; // Tile texture bits and special tile bits
-    unsigned char  twist[MAXMESHFAN];    // Surface normal
-
+    FANDATA_T fan[MAXMESHFAN];             
+    unsigned char twist[MAXMESHFAN];            // Surface normal
+    
     int vrtx[MAXTOTALMESHVERTICES];             // Vertex position
     int vrty[MAXTOTALMESHVERTICES];             //
     int vrtz[MAXTOTALMESHVERTICES];             // Vertex elevation
     unsigned char vrta[MAXTOTALMESHVERTICES];   // Vertex base light, 0=unused
     
-    int  vrtstart[MAXTOTALMESHVERTICES];        // First vertex of given fan     
+    int  vrtstart[MAXMESHFAN];                  // First vertex of given fan  
     char visible[MAXTOTALMESHVERTICES];         // Is visible yes/no
-    
-    int numline[MAXMESHTYPE];                   // Number of lines to draw
-    LINE_DATA_T  line[MAXMESHLINE];
 
 } MESH_T;
 

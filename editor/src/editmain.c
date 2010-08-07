@@ -90,6 +90,13 @@ void editmainCompleteMapData(MESH_T *mesh)
     mesh -> edgex = (mesh -> tiles_x * EDITMAIN_TILEDIV) - 1;
     mesh -> edgey = (mesh -> tiles_y * EDITMAIN_TILEDIV) - 1;
     mesh -> edgez = 180 * 16;
+    
+    mesh -> watershift = 3;
+    if (mesh -> tiles_x > 16)   mesh -> watershift++;
+    if (mesh -> tiles_x > 32)   mesh -> watershift++;
+    if (mesh -> tiles_x > 64)   mesh -> watershift++;
+    if (mesh -> tiles_x > 128)  mesh -> watershift++;
+    if (mesh -> tiles_x > 256)  mesh -> watershift++;
 
     /* Now set the number of first vertex for each fan */
     vertex_no = 0;
@@ -97,12 +104,14 @@ void editmainCompleteMapData(MESH_T *mesh)
     for (cnt = 0; cnt < mesh -> numvert; cnt++) {
 
         mesh -> vrtstart[cnt] = vertex_no;		/* meshvrtstart       */
-        mesh -> visible[cnt] = 1;
-        vertex_no += Commands[mesh -> fantype[cnt]].numvertices;
+        mesh -> visible[cnt]  = 1;
+        vertex_no += Commands[mesh -> fan[cnt].type].numvertices;
 
     }
 
-    NumFreeVertices = MAXTOTALMESHVERTICES - Mesh.numvert;
+    NumFreeVertices = MAXTOTALMESHVERTICES - mesh -> numvert;
+
+    /* TODO: Load textures for this map by a 'editdraw'-function    */
 
 }
 
@@ -124,20 +133,7 @@ static void editmainCreateNewMap(MESH_T *mesh)
 
     mesh -> tiles_x = EDITFILE_MAX_MAPSIZE;
     mesh -> tiles_y = EDITFILE_MAX_MAPSIZE;
-
-
-    mesh -> edgex = (mesh -> tiles_x * EDITMAIN_TILEDIV) - 1;
-    mesh -> edgey = (mesh -> tiles_y * EDITMAIN_TILEDIV) - 1;
-    mesh -> edgez = 180 * 16;
-
-    mesh -> watershift = 3;
-
-    NumFreeVertices = MAXTOTALMESHVERTICES - Mesh.numvert;
-    if (mesh -> tiles_x > 16)   mesh -> watershift++;
-    if (mesh -> tiles_x > 32)   mesh -> watershift++;
-    if (mesh -> tiles_x > 64)   mesh -> watershift++;
-    if (mesh -> tiles_x > 128)  mesh -> watershift++;
-    if (mesh -> tiles_x > 256)  mesh -> watershift++;
+    
 
     /* Fill the map with flag tiles */
     for (y = 0; y < EDITFILE_MAX_MAPSIZE; y++) {
@@ -145,13 +141,103 @@ static void editmainCreateNewMap(MESH_T *mesh)
         for (x = 0; x < EDITFILE_MAX_MAPSIZE; x++) {
 
             /* TODO: Generate empty map */
+            /* mesh -> vrta[vertexlist[cnt]] = 60; */
 
         }
     
     }
 
+}
+
+static int editfileSetVrta(MESH_T *mesh, int vert)
+{
+    /* TODO: Get all needed functions from cartman code */
+    /*
+    int newa, x, y, z, brx, bry, brz, deltaz, dist, cnt;
+    int newlevel, distance, disx, disy;
+
+    // To make life easier
+    x = mesh -> vrtx[vert];
+    y = mesh -> vrty[vert];
+    z = mesh -> vrtz[vert];
+
+    // Directional light
+    brx = x + 64;
+    bry = y + 64;
+    brz = get_level(brx, y) +
+          get_level(x, bry) +
+          get_level(x + 46, y + 46);
+    if (z < -128) z = -128;
+    if (brz < -128) brz = -128;
+    deltaz = z + z + z - brz;
+    newa = (deltaz * direct >> 8);
+
+    // Point lights !!!BAD!!!
+    newlevel = 0;
+    cnt = 0;
+    while (cnt < numlight)
+    {
+        disx = x - light_lst[cnt].x;
+        disy = y - light_lst[cnt].y;
+        distance = sqrt(disx * disx + disy * disy);
+        if (distance < light_lst[cnt].radius)
+        {
+            newlevel += ((light_lst[cnt].level * (light_lst[cnt].radius - distance)) / light_lst[cnt].radius);
+        }
+        cnt++;
+    }
+    newa += newlevel;
+
+    // Bounds
+    if (newa < -ambicut) newa = -ambicut;
+    newa += ambi;
+    if (newa <= 0) newa = 1;
+    if (newa > 255) newa = 255;
+    mesh -> vrta[vert] = newa;
+
+    // Edge fade
+    dist = dist_from_border(mesh  -> vrtx[vert], mesh -> vrty[vert]);
+    if (dist <= FADEBORDER)
+    {
+        newa = newa * dist / FADEBORDER;
+        if (newa == VERTEXUNUSED)  newa = 1;
+        mesh  ->  vrta[vert] = newa;
+    }
+
+    return newa;
+    */
+    return 60;
+}
+
+/*
+ * Name:
+ *     editmainCalcVrta
+ * Description:
+ *     Generates the 'a'  numbers for all files
+ * Input:
+ *     mesh*: Pointer on mesh to set twists for
+ */
+static void editmainCalcVrta(MESH_T *mesh)
+{
+    int num, cnt;
+    int vert;
+    int fan;
 
 
+    for (fan = 0; fan < mesh -> numfan; fan++) {
+
+        vert = mesh -> vrtstart[fan];
+        num  = Commands[mesh -> fan[fan].type].numvertices;
+        
+        for (cnt = 0; cnt < num; cnt++) {
+        
+            editfileSetVrta(mesh, vert);
+            vert++;
+            
+        }
+
+    }
+   
 }
 
 /* ========================================================================== */
@@ -202,6 +288,7 @@ void editmainMap(int command)
             break;
 
         case EDITMAIN_SAVEMAP:
+            editmainCalcVrta(&Mesh);
             editfileSaveMapMesh(&Mesh);
             break;
 
