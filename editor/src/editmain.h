@@ -47,7 +47,8 @@
 *******************************************************************************/
 
 void editmainInit(void);
-void editmainMap(int command);
+void editmainExit(void);
+int  editmainMap(int command);
 
 #endif /* _EDITMAIN_H_	*/
 

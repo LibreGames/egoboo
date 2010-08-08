@@ -78,6 +78,8 @@ typedef struct {
     float nx[3], ny[3];         /* Normals of the side lines.  They should point in towards the viewable area.	*/
     float leftangle, rightangle;
     float fow;
+    char bound;                 /* Camera is bound to an x,y-rectangle */
+    float bx, by, bx2, by2;
 
 } SDLGL3D_CAMERA;
 
@@ -496,29 +498,50 @@ void sdlgl3dAttachCameraToObj(int object_no, char camtype)
  *     Initializes the 3D-Camera. Moves the camera to given position with
  *     given rotations.
  * Input:
- *      x, ,y, z:
- *      rotx, roty, rotz:
+ *      camera_no:        Initialize this camera  
+ *      x, ,y, z:         Position of camera  
+ *      rotx, roty, rotz: Roatation in each axis
  */
-void sdlgl3dInitCamera(float x, float y, float z, int rotx, int roty, int rotz)
+void sdlgl3dInitCamera(int camera_no, float x, float y, float z, int rotx, int roty, int rotz)
 {
 
-    Camera[0].campos.pos[0] = x;
-    Camera[0].campos.pos[1] = y;
-    Camera[0].campos.pos[SDLGL3D_Z] = z;
+    Camera[camera_no].campos.pos[0] = x;
+    Camera[camera_no].campos.pos[1] = y;
+    Camera[camera_no].campos.pos[SDLGL3D_Z] = z;
 
-    Camera[0].campos.rot[0] = rotx;
-    Camera[0].campos.rot[1] = roty;
-    Camera[0].campos.rot[SDLGL3D_Z] = rotz;
+    Camera[camera_no].campos.rot[0] = rotx;
+    Camera[camera_no].campos.rot[1] = roty;
+    Camera[camera_no].campos.rot[SDLGL3D_Z] = rotz;
 
-    Camera[0].campos.direction[0] = sin(DEG2RAD(rotz));
-    Camera[0].campos.direction[1] = cos(DEG2RAD(rotz));
+    Camera[camera_no].campos.direction[0] = sin(DEG2RAD(rotz));
+    Camera[camera_no].campos.direction[1] = cos(DEG2RAD(rotz));
 
-    Camera[0].campos.speed   = 150.0;  /* Speed of camera in units / second    */
-    Camera[0].campos.turnvel =  60.0;  /* Degrees per second                   */
+    Camera[camera_no].campos.speed   = 150.0;  /* Speed of camera in units / second    */
+    Camera[camera_no].campos.turnvel =  60.0;  /* Degrees per second                   */
 
     /* If the camera was moved, set the frustum normals... */
-    sdlgl3dSetupFrustumNormals(&Camera[0], SDLGL3D_CAMERA_FOV);
+    sdlgl3dSetupFrustumNormals(&Camera[camera_no], SDLGL3D_CAMERA_FOV);
 
+}
+
+/*
+ * Name:
+ *     sdlgl3dBindCamera
+ * Description:
+ *     Sets the maximum movement in x,y- direction for the camera 
+ * Input:
+ *      camera_no:        Set bounding for this camera 
+ *      x, ,y, x2, y2:       Position of camera  
+ */
+void sdlgl3dBindCamera(int camera_no, float x, float y, float x2, float y2)
+{
+
+    Camera[camera_no].bound = 1;
+    Camera[camera_no].bx    = x;
+    Camera[camera_no].by    = y;
+    Camera[camera_no].bx2   = x2;
+    Camera[camera_no].by2   = y2;
+    
 }
 
 /*
@@ -636,6 +659,23 @@ void sdlgl3dMoveObjects(float secondspassed)
 
         /* If the camera was moved, set the frustum normals... */
         sdlgl3dSetupFrustumNormals(&Camera[0], SDLGL3D_CAMERA_FOV);
+
+        if (Camera[0].bound) {
+            /* TODO: Do not bind if attached to an object */
+            if (Camera[0].campos.pos[0] < Camera[0].bx) {
+                Camera[0].campos.pos[0] = Camera[0].bx;
+            }
+            if (Camera[0].campos.pos[1] < Camera[0].by) {
+                Camera[0].campos.pos[1] = Camera[0].by;
+            }
+            if (Camera[0].campos.pos[0] > Camera[0].bx2) {
+                Camera[0].campos.pos[0] = Camera[0].bx2;
+            }
+            if (Camera[0].campos.pos[1] > Camera[0].by2) {
+                Camera[0].campos.pos[1] = Camera[0].by2;
+            }
+        
+        }
 
     }
 

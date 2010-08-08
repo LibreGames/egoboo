@@ -42,6 +42,7 @@
 #define EDITFILE_MAX_COMMAND 30
 
 #define EDITFILE_MAX_MAPSIZE 64
+#define DEFAULT_TILE         62   
 
 /*******************************************************************************
 * TYPEDEFS							                                           *
@@ -67,13 +68,81 @@ static COMMAND_T *Commands;
 
 /*
  * Name:
+ *     editmainAddFan
+ * Description:
+ *     This function allocates the vertices needed for a fan
+ *     -- TODO: Split this one into 'AddFan' and 'ReplaceFan' 
+ * Input:
+ *     mesh*: Pointer on mesh to handle
+ *     fan:   Number of fan to allocate vertices for
+ *     x, y:  Position of fan   
+ * Output:
+ *    None
+ */
+static int editmainAddFan(MESH_T *mesh, int fan, int x, int y)
+{
+     
+    int cnt;
+    int fan_type;
+    int numvert;
+    int vertex;
+    int vertexlist[17];
+    
+
+    /* 1. Get number of vertices of existing fan    */
+    fan_type = mesh -> fan[fan].type;
+    numvert  = Commands[fan_type].numvertices;
+    
+    /* 1. Remove old fan (count it's vertices)  */
+    /* 2. Replace it by fan with new type  ?    */      
+    
+    /* mesh -> vrta[vertexlist[cnt]] = 60; --- FOR each Vertex --- */
+    /* 
+    if (NumFreeVertices >= numvert)
+    {
+        mesh -> fan[fan].fx = MPDFX_SHA;
+        for (cnt = 0; cnt < numvert; cnt++) {
+        
+            if (get_free_vertex() == bfalse)
+            {
+                // Reset to unused
+                numvert = cnt;
+                for (cnt = 0; cnt < numvert;  cnt++) {
+                    mesh.vrta[vertexlist[cnt]] = 60;
+
+                }
+                return 0;
+            }
+            vertexlist[cnt] = atvertex;
+            
+        }
+        vertexlist[cnt] = CHAINEND;
+
+        for (cnt = 0; cnt < numvert; cnt++;) {
+            vertex = vertexlist[cnt];
+            mesh.vrtx[vertex] = x + (Commands[fan_type].x[cnt] >> 2);
+            mesh.vrty[vertex] = y + (Commands[fan_type].y[cnt] >> 2);
+            mesh.vrtz[vertex] = 0;
+            mesh.vrtnext[vertex] = vertexlist[cnt+1];
+
+        }
+        mesh.vrtstart[fan] = vertexlist[0];
+        NumFreeVertices -= numvert;
+        return 1;
+    }
+    */
+    return 0;
+}
+
+/*
+ * Name:
  *     editmainCompleteMapData
  * Description:
  *     Completes loaded / generated map data with additional values needed
  *     for work.
  *       - Set number of fans
  *       - Set size of complete mesh
- *       - Set number of first vertex for fans  
+ *       - Set number of first vertex for fans
  * Input:
  *     mesh*: Pointer on mesh to handle
  * Output:
@@ -82,7 +151,7 @@ static COMMAND_T *Commands;
 void editmainCompleteMapData(MESH_T *mesh)
 {
 
-    int cnt, vertex_no;
+    int fan_no, vertex_no;
 
 
     mesh -> numfan  = mesh -> tiles_x * mesh -> tiles_y;
@@ -99,19 +168,17 @@ void editmainCompleteMapData(MESH_T *mesh)
     if (mesh -> tiles_x > 256)  mesh -> watershift++;
 
     /* Now set the number of first vertex for each fan */
-    vertex_no = 0;
+    for (fan_no = 0, vertex_no = 0; fan_no < mesh -> numfan; fan_no++) {
 
-    for (cnt = 0; cnt < mesh -> numvert; cnt++) {
-
-        mesh -> vrtstart[cnt] = vertex_no;		/* meshvrtstart       */
-        mesh -> visible[cnt]  = 1;
-        vertex_no += Commands[mesh -> fan[cnt].type].numvertices;
+        mesh -> vrtstart[fan_no] = vertex_no;		/* meshvrtstart       */
+        mesh -> visible[fan_no]  = 1;
+        vertex_no += Commands[mesh -> fan[fan_no].type & 0x1F].numvertices;
 
     }
 
     NumFreeVertices = MAXTOTALMESHVERTICES - mesh -> numvert;
-
-    /* TODO: Load textures for this map by a 'editdraw'-function    */
+    /* Set flag that map has been loaded */
+    mesh -> map_loaded = 1;
 
 }
 
@@ -119,33 +186,45 @@ void editmainCompleteMapData(MESH_T *mesh)
  * Name:
  *     editmainCreateNewMap
  * Description:
- *     Does the work for editing and sets edit states, if needed 
+ *     Does the work for editing and sets edit states, if needed
  * Input:
- *     mesh *: Pointer on mesh  to fill with default values 
+ *     mesh *: Pointer on mesh  to fill with default values
  */
-static void editmainCreateNewMap(MESH_T *mesh)
+static int editmainCreateNewMap(MESH_T *mesh)
 {
-    
-    int x, y;
+
+    int x, y, fan;
 
 
     memset(mesh, 0, sizeof(MESH_T));
 
     mesh -> tiles_x = EDITFILE_MAX_MAPSIZE;
     mesh -> tiles_y = EDITFILE_MAX_MAPSIZE;
-    
+
 
     /* Fill the map with flag tiles */
-    for (y = 0; y < EDITFILE_MAX_MAPSIZE; y++) {
+    for (y = 0; y < mesh -> tiles_y; y++) {
 
-        for (x = 0; x < EDITFILE_MAX_MAPSIZE; x++) {
+        for (x = 0; x < mesh -> tiles_x; x++) {
 
             /* TODO: Generate empty map */
-            /* mesh -> vrta[vertexlist[cnt]] = 60; */
+            mesh -> fan[fan].type    = 0;
+            mesh -> fan[fan].tx_bits = (((x & 1) + (y & 1)) & 1) + DEFAULT_TILE;
+
+            /* TODO:
+            if ( !editmainAddFan(fan, x*TILEDIV, y*TILEDIV) )
+            {
+                printf("NOT ENOUGH VERTICES!!!\n\n");
+                exit(-1);
+            }
+            */
+            fan++;
 
         }
-    
+
     }
+
+    return 0;   /* TODO: Return 1 if mesh is created */
 
 }
 
@@ -261,37 +340,65 @@ void editmainInit(void)
 
 /*
  * Name:
+ *     editmainExit
+ * Description:
+ *     Frees all data set an initialized by init code
+ * Input:
+ *     None
+ */
+void editmainExit(void)
+{
+
+    /* Free all data initialized by draw code */
+    editdrawFreeData();
+
+}
+
+/*
+ * Name:
  *     editmainMap
  * Description:
  *      Does the work for editing and sets edit states, if needed 
  * Input:
- *      command: What to do    
+ *      command: What to do
+ * Output:
+ *      Result of given command
  */
-void editmainMap(int command)
+int editmainMap(int command)
 {
 
     switch(command) {
 
         case EDITMAIN_DRAWMAP:
             editdraw3DView(&Mesh);
-            break;
+            return 1;
 
         case EDITMAIN_NEWMAP:
-            editmainCreateNewMap(&Mesh);
-            editmainCompleteMapData(&Mesh);
+            if (editmainCreateNewMap(&Mesh)) {
+
+                editmainCompleteMapData(&Mesh);
+                return 1;
+
+            }
             break;
 
         case EDITMAIN_LOADMAP:
             memset(&Mesh, 0, sizeof(MESH_T));
-            editfileLoadMapMesh(&Mesh);
-            editmainCompleteMapData(&Mesh);
+            if (editfileLoadMapMesh(&Mesh)) {
+
+                editmainCompleteMapData(&Mesh);
+
+                return 1;
+
+            }
             break;
 
         case EDITMAIN_SAVEMAP:
             editmainCalcVrta(&Mesh);
-            editfileSaveMapMesh(&Mesh);
-            break;
+            return editfileSaveMapMesh(&Mesh);
 
     }
+
+    return 0;
 
 }

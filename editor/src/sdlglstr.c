@@ -3,7 +3,7 @@
 *      - Output of text in an OpenGL-Window.                                   *
 *                                                                              *
 *   SDLGL - Library                                                            *
-*      Copyright (c)2004 Paul Mueller <pmtech@swissonline.ch>                  *
+*      Copyright (c) 2004-2010 Paul Mueller <pmtech@swissonline.ch>            *
 *                                                                              *
 *  This program is free software; you can redistribute it and/or modify        *
 *  it under the terms of the GNU General Public License as published by        *
@@ -466,7 +466,7 @@ static FONT _wFonts[SDLGLSTR_MAXFONT] = {
     { _Font8, 8, 8, 8 },
     /* ---------------	*/
     /* Installed Font(s)	*/
-     { _Font8, 8, 8, 8 }
+    { _Font8, 8, 8, 8 }
 
 };
 
@@ -478,48 +478,14 @@ static SDLGLSTR_STYLE Styles[SDLGLSTR_MAXSTYLE] = {
       {  80, 196, 252 },        /* Color of buttons mid            */
       {  80, 136, 252 },        /* Color of buttons topside        */
       {  56,  60, 220 },        /* Color of buttons bottomside     */
-      { 255, 255, 255 },	/* Color of non highlighted text   */
+      { 255, 255, 255 },	    /* Color of non highlighted text   */
       { 100, 100, 100 },        /* Color of non highlighted hotkey */
-      { 170,   0,   0 },	/* Color of highlighted text       */
-      { 170,   0, 100 },	/* Color of highlighted hotkey     */
-      {   0,   0,   0 },	/* Color for label text in dialog  */
-      {  40,  32, 172 },	/* Color for scrollbox background  */
-      { 255, 255, 255 },	/* Color for labels in map	   */
+      { 170,   0,   0 },	    /* Color of highlighted text       */
+      { 170,   0, 100 },	    /* Color of highlighted hotkey     */
+      {   0,   0,   0 },	    /* Color for label text in dialog  */
+      {  40,  32, 172 },	    /* Color for scrollbox background  */
+      { 255, 255, 255 },	    /* Color for labels in map	   */
       {   0,   0,   0 }         /* Color for the shadow for mapl.  */
-    },
-    /* SDLGLSTR_STYLEWOOD	*/
-    { SDLGLSTR_FONT8,			/* Font to use for drawing         */
-      { 128,  64,  64 },        /* Color of buttons mid            */
-      { 154,  78,  78 },        /* Color of buttons topside        */
-      { 18,    9,   9 },        /* Color of buttons bottomside     */
-      { 75,  230,  95 },	/* Color of non highlighted text   */
-      { 255, 255,  85 },        /* Color of non highlighted hotkey */
-      { 0,   170,   0 },	/* Color of highlighted text       */
-      { 170, 170,   0 },        /* Color of highlighted hotkey     */
-      {   0,   0,   0 },	/* Color for label text in dialog  */
-      { 255, 255,  80 },	/* Color for scrollbox background  */
-      { 255, 255, 255 },	/* Color for labels in map	   */
-      {   0,   0,   0 },         /* Color for the shadow for mapl. */
-      13, 0			/* Texlistno and number of texture */
-      				/* MAPTILE_ICONBACKGROUND,	   */
-                                /* MAPTILE_BACKGROUNDWOOD	   */
-    },
-    /* SDLGLSTR_STYLEEUROPE 	*/
-    { SDLGLSTR_FONT8,			/* Font to use for drawing         */
-      { 140, 169, 213 },        /* Color of buttons mid            */
-      {  64,  89, 156 },        /* Color of buttons topside        */
-      { 215, 236, 255 },        /* Color of buttons bottomside     */
-      { 246, 253, 255 },	/* Color of non highlighted text   */
-      { 246, 249, 118 },        /* Color of non highlighted hotkey */
-      { 120, 120, 120 },	/* Color of highlighted text       */
-      { 170, 170, 0   },	/* Color of highlighted hotkey     */
-      {   0,   0,  0  },	/* Color for label text in dialog  */
-      {   0,   0, 255 },	/* Color for scrollbox background  */
-      { 255, 255, 255 },	/* Color for labels in map	   */
-      {   0,   0,   0 },        /* Color for the shadow for mapl.  */
-      13, 0			/* Texlistno and number of texture */
-      				/* MAPTILE_ICONBACKGROUND,	   */
-                                /* MAPTILE_BACKGROUNDWOOD	   */
     }
 
 };
@@ -527,20 +493,19 @@ static SDLGLSTR_STYLE Styles[SDLGLSTR_MAXSTYLE] = {
 static SDLGLSTR_STYLE ActualStyle = {
 
       SDLGLSTR_FONT8,  
-      {  80, 196, 252 },        /* Color of buttons mid            */
-      {  80, 136, 252 },        /* Color of buttons topside        */
-      {  56,  60, 220 },        /* Color of buttons bottomside     */
-      { 255, 255, 255 },	/* Color of non highlighted text   */
+      {  64, 157, 201 },        /* Color of buttons mid            */
+      {  64, 109, 201 },        /* Color of buttons topside        */
+      {  45,  48, 176 },        /* Color of buttons bottomside     */
+      { 255, 255, 255 },	    /* Color of non highlighted text   */
       { 100, 100, 100 },        /* Color of non highlighted hotkey */
-      { 170,   0,   0 },	/* Color of highlighted text       */
-      { 170,   0, 100 },	/* Color of highlighted hotkey     */
-      {   0,   0,   0 },	/* Color for label text in dialog  */
-      {  40,  32, 172 },	/* Color for scrollbox background  */
-      { 255, 255, 255 },	/* Color for labels in map	   */
+      { 170,   0,   0 },	    /* Color of highlighted text       */
+      { 170,   0, 100 },	    /* Color of highlighted hotkey     */
+      {   0,   0,   0 },	    /* Color for label text in dialog  */
+      {  40,  32, 172 },	    /* Color for scrollbox background  */
+      { 255, 255, 255 },	    /* Color for labels in map	       */
       {   0,   0,   0 }         /* Color for the shadow for mapl.  */
 
 };
-
 
 /*******************************************************************************
 * CODE								                                           *
@@ -586,7 +551,6 @@ void sdlglstrIString(SDLGL_RECT *pos, char *text, unsigned char *textcolor,
     
     glColor3ubv(textcolor);
 
-
     fptr = &_wFonts[ActFont];
 
     /* Because OpenGL draws the bitmaps from bottom to top, we have to  */
@@ -597,9 +561,7 @@ void sdlglstrIString(SDLGL_RECT *pos, char *text, unsigned char *textcolor,
     cx = sx;
     cy = sy;				/* Save for Scrolling 		*/
 
-
     glRasterPos2i(cx, cy);		/* Set Start-Position for draw	*/
-
 
     /****** Put Text itself ***********************************/
     ptext = (GLubyte *)text;
@@ -672,8 +634,6 @@ void sdlglstrIString(SDLGL_RECT *pos, char *text, unsigned char *textcolor,
 
         }
 
-
-
         ptext++;		/* next char */
 
         cx += fptr -> fontw;	/* hold charpos for Carriage-Return */
@@ -710,13 +670,11 @@ static void sdlglstrIDrawShadowedRect(SDLGL_RECT *rect, SDLGLSTR_STYLE *style, i
     if (! (flags & SDLGLSTR_FEMPTYBUTTON)) {
 
     	glBegin(GL_QUADS);	/* First the Background */
-
             glColor3ubv(style -> buttonmid);
             glVertex2i(x, y2);
             glVertex2i(x2, y2);
             glVertex2i(x2, y);
             glVertex2i(x, y);
-
     	glEnd();
 
     }
@@ -735,7 +693,6 @@ static void sdlglstrIDrawShadowedRect(SDLGL_RECT *rect, SDLGLSTR_STYLE *style, i
     }
 
     glBegin(GL_LINES);
-
         /* Top Edge Line */
         glColor3ubv(topcolor);
         glVertex2i(x, y);
@@ -743,27 +700,26 @@ static void sdlglstrIDrawShadowedRect(SDLGL_RECT *rect, SDLGLSTR_STYLE *style, i
         glVertex2i(x2, y);
         glVertex2i(x2, y2);
 
-	/* Bottom Edge Line */
-	glColor3ubv(bottomcolor);
+    	/* Bottom Edge Line */
+    	glColor3ubv(bottomcolor);
         glVertex2i(x2, y2);
         glVertex2i(x, y2);
         glVertex2i(x, y2);
         glVertex2i(x, y);
 
         x  += 1;
-	y  += 1;
-	x2 -= 1;
+    	y  += 1;
+    	x2 -= 1;
         y2 -= 1;
 
-
         /* Top Edge Line */
-	glColor3ubv(topcolor);
+    	glColor3ubv(topcolor);
         glVertex2i(x, y);
         glVertex2i(x2, y);
         glVertex2i(x2, y);
         glVertex2i(x2, y2);
 
-	/* Bottom Edge Line */
+        /* Bottom Edge Line */
         glColor3ubv(bottomcolor); 
         glVertex2i(x2, y2);
         glVertex2i(x, y2);
@@ -1214,8 +1170,6 @@ void sdlglstrStringBackground(SDLGL_RECT *pos, int len, int color)
 
     memset(strepbuf, 127, len);         /* Fill with filled char */
     strepbuf[len] = 0;			/* Terminate it		 */
-
-
 
     oldcolor = ActColor;
     ActColor = color;
@@ -1690,15 +1644,11 @@ void sdlglstrAddFont(unsigned char * font, int fontw, int fonth, int fontno)
     FONT *fptr;
 
 
-
     if (fontno < 0 ||fontno > SDLGLSTR_MAXFONT) {
     	fontno = 2;
     }
 
-
     fptr = &_wFonts[fontno];
-
-
 
     fptr -> font = font;
     fptr -> fontw = fontw;

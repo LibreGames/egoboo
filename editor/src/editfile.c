@@ -126,7 +126,7 @@ int editfileLoadMapMesh(MESH_T *mesh)
     int numfan;
 
 
-    fileread = fopen("level.mpd", "rb");
+    fileread = fopen("module/level.mpd", "rb");
 
     if (NULL == fileread)
     {
@@ -135,7 +135,6 @@ int editfileLoadMapMesh(MESH_T *mesh)
 
     if (fileread)
     {
-        /* free_vertices(); */
 
         fread( &uiTmp32, 4, 1, fileread );
         if ( uiTmp32 != MAPID ) {
@@ -144,9 +143,9 @@ int editfileLoadMapMesh(MESH_T *mesh)
 
         }
 
-        fread( &mesh -> numvert, 4, 1, fileread );
-        fread( &mesh -> tiles_x, 4, 1, fileread );
-        fread( &mesh -> tiles_y, 4, 1, fileread );
+        fread(&mesh -> numvert, 4, 1, fileread);
+        fread(&mesh -> tiles_x, 4, 1, fileread);
+        fread(&mesh -> tiles_y, 4, 1, fileread);
 
         numfan = mesh -> tiles_x * mesh -> tiles_y;
 
@@ -158,29 +157,30 @@ int editfileLoadMapMesh(MESH_T *mesh)
 
         /* Load vertex x data   */
         for (cnt = 0; cnt < mesh -> numvert; cnt++) {
-            /* Convert float to int for editing */
+            /* TODO: Convert float to int for editing */
             fread(&ftmp, 4, 1, fileread);
             mesh -> vrtx[cnt] = ftmp;
         }
 
         /* Load vertex y data   */
         for (cnt = 0; cnt < mesh -> numvert; cnt++) {
-            /* Convert float to int for editing */
+            /* TODO: Convert float to int for editing */
             fread(&ftmp, 4, 1, fileread);
             mesh -> vrty[cnt] = ftmp;
         }
 
         /* Load vertex z data   */
         for (cnt = 0; cnt < mesh -> numvert; cnt++) {
-            /* Convert float to int for editing */
+            /* TODO: Convert float to int for editing */
             fread(&ftmp, 4, 1, fileread);
-            mesh -> vrtz[cnt] = ftmp;
+            mesh -> vrtz[cnt] = ftmp / 16.0;  /* Z is fixpoint int in cartman */
             cnt++;
         }
 
-        /* Load vertex 'a' ambient data ?! */
         fread(&mesh -> vrta[0], 1, mesh -> numvert, fileread);   // !!!BAD!!!
 
+        fclose(fileread);
+        
         return 1;
 
     }
@@ -191,7 +191,7 @@ int editfileLoadMapMesh(MESH_T *mesh)
 
 /*
  * Name:
- *     editfileLoadMapMesh
+ *     editfileSaveMapMesh
  * Description:
  *     Saves the mesh in the data pointed on.
  *     Name of the save file is always 'level.mpd' 
@@ -210,7 +210,6 @@ int editfileSaveMapMesh(MESH_T *mesh)
     int numwritten;
 
 
-    /* TODO: Save map to file */
     if (mesh -> map_loaded) {
 
         /* Generate the 'up'-vector-numbers */
@@ -218,7 +217,7 @@ int editfileSaveMapMesh(MESH_T *mesh)
 
         numwritten = 0;
 
-        filewrite = fopen("level.mpd", "wb");
+        filewrite = fopen("module/level.mpd", "wb");
         if (filewrite) {
 
             itmp = MAPID;

@@ -293,7 +293,8 @@ typedef struct SDLGL3D_OBJECT_TYPE {
 SDLGL3D_OBJECT *sdlgl3dBegin(int solid);
 void sdlgl3dEnd(void);
 void sdlgl3dAttachCameraToObj(int obj_no, char camtype);
-void sdlgl3dInitCamera(float x, float y, float z, int rotx, int roty, int rotz);
+void sdlgl3dInitCamera(int camera_no, float x, float y, float z, int rotx, int roty, int rotz);
+void sdlgl3dBindCamera(int camera_no, float x, float y, float x2, float y2); 
 SDLGL3D_OBJECT *sdlgl3dGetCameraInfo(int camera_no);
 void sdlgl3dInitObject(SDLGL3D_OBJECT *moveobj);
 void sdlgl3dManageCamera(int camera_no, char move_cmd, char move_dir);

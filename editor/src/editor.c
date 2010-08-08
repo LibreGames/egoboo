@@ -51,6 +51,9 @@
 #define EDITOR_FILE       ((char)101)
 #define EDITOR_MAP        ((char)102)
 
+
+#define EDITOR_FILEEXIT   ((char)3)
+
 /*******************************************************************************
 * DATA									                                       *
 *******************************************************************************/
@@ -112,12 +115,12 @@ static SDLGL_FIELD MainMenu[EDITOR_MAXFLD + 2] = {
 static SDLGL_FIELD SubMenu[] = {
     /* File-Menu */
     { SDLGL_TYPE_STD,  {   0, 16, 80, 16 }, EDITOR_FILE, -1 },     /* Menu-Background */
-    { SDLGL_TYPE_MENU, {   4, 20, 72,  8 }, EDITOR_FILE, 3, "Exit" },
+    { SDLGL_TYPE_MENU, {   4, 20, 72,  8 }, EDITOR_FILE, EDITOR_FILEEXIT, "Exit" },
     /* --- Maze-Menu */
     { SDLGL_TYPE_STD,  {  40, 16, 64, 56 }, EDITOR_MAP, -1 },    /* Menu-Background */
-    { SDLGL_TYPE_MENU, {  44, 20, 56,  8 }, EDITOR_MAP, 1, "New" },
-    { SDLGL_TYPE_MENU, {  44, 36, 56,  8 }, EDITOR_MAP, 2, "Load..." },
-    { SDLGL_TYPE_MENU, {  44, 52, 56,  8 }, EDITOR_MAP, 3, "Save" },
+    { SDLGL_TYPE_MENU, {  44, 20, 56,  8 }, EDITOR_MAP, EDITMAIN_NEWMAP,  "New" },
+    { SDLGL_TYPE_MENU, {  44, 36, 56,  8 }, EDITOR_MAP, EDITMAIN_LOADMAP, "Load..." },
+    { SDLGL_TYPE_MENU, {  44, 52, 56,  8 }, EDITOR_MAP, EDITMAIN_SAVEMAP, "Save" },
     { 0 }
 };
 
@@ -310,13 +313,19 @@ static int editorInputHandler(SDLGL_EVENT *event)
             switch(event -> code) {
 
                 case EDITOR_FILE:
-                    if (event -> sub_code == 3) {
+                    if (event -> sub_code == EDITOR_FILEEXIT) {
                         return SDLGL_INPUT_EXIT;
                     }
-                 break;
+                    break;
+                case EDITOR_MAP:
+                    if (! editmainMap(event -> sub_code)) {
+                        /* TODO: Display message, what has gone wrong */
+                    }
+                    break;
+
                 case EDITOR_EXITPROGRAM:
                     return SDLGL_INPUT_EXIT;
-                    
+
             }
 
         }
@@ -378,26 +387,23 @@ int main(int argc, char **argv)
     /* Read configuration from file */
     sdlglcfgReadSimple("data/editor.cfg", CfgValues);
 
-    /* Now read the configuration file and the global data, if available */
-
-    /* Now overwrite the win caption, because in this stage it displays */
-    /* the version number and the compile data.				            */
-
     SdlGlConfig.wincaption = EDITOR_CAPTION;
 
     sdlglInit(&SdlGlConfig);  
 
     /* Init Camera +Z is up, -Y is near plane, X is left/right */
-    sdlgl3dInitCamera(32 * 128.0, -128.0, 64.0, 270, 0, 0);
+    sdlgl3dInitCamera(0, 2 * 128.0, -128.0, 192.0, 300.0, 0.0, 0.0);
 
     /* Set the input handlers and do other stuff before  */
+    editmainInit();
     editorStart();
 
     /* Now enter the mainloop */
     sdlglExecute();
 
     /* Do any shutdown stuff. */
-
+    editmainExit();
+    
     sdlglShutdown();
     return 0;
 

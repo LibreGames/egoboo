@@ -23,8 +23,10 @@
 * INCLUDES								                                       *
 *******************************************************************************/
 
+#include <stdio.h>
 #include "sdlgl.h"      /* OpenGL-Stuff                                 */
 #include "sdlgl3d.h"    /* Helper routines for drawing of 3D-Screen     */    
+#include "sdlgltex.h"   /* Texture handling                             */
 
 
 #include "editdraw.h"   /* Own header                                   */   
@@ -33,8 +35,9 @@
 * DEFINES								                                       *
 *******************************************************************************/
 
-#define EDITDRAW_MAX_TEXIMAGE			 64     // Images per texture
-
+#define EDITDRAW_MAXWALLSUBTEX  64     /* Images per wall texture   */
+#define EDITDRAW_MAXWALLTEX      4     /* Maximum wall textures     */ 
+  
 /*******************************************************************************
 * TYPEDEFS                                                                     *
 *******************************************************************************/
@@ -43,7 +46,7 @@
 * DATA                                                                         *
 *******************************************************************************/
 
-static COMMAND_T MeshCommand[MAXMESHTYPE / 2] = {
+static COMMAND_T MeshCommand[MAXMESHTYPE] = {
     { /* 0:  Two Faced Ground... */
         4,		    /* Total number of vertices */
     	1,    		/*  1 Command */
@@ -331,7 +334,8 @@ static COMMAND_T MeshCommand[MAXMESHTYPE / 2] = {
     }
 };
 
-static float MeshTileOffUV[EDITDRAW_MAX_TEXIMAGE * 2];
+static float MeshTileOffUV[EDITDRAW_MAXWALLSUBTEX * 2];
+static GLint WallTex[EDITDRAW_MAXWALLTEX];
 
 /*******************************************************************************
 * CODE 								                                           *
@@ -349,12 +353,8 @@ static float MeshTileOffUV[EDITDRAW_MAX_TEXIMAGE * 2];
 static void editdrawSingleFan(MESH_T *mesh, int fan_no)
 {
 
-    static unsigned char white[3] = { 255, 255, 255 };
-    static unsigned char red[3] = { 255, 0, 0 };
-    static unsigned char blue[3] = { 0, 0, 255 };
-
     COMMAND_T *mc;
-    int *vert_x, *vert_y, *vert_z;
+    float *vert_x, *vert_y, *vert_z;
     int cnt, tnc, entry, *vertexno;
     int vert_base;
     char type;
@@ -365,7 +365,8 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
     unsigned char color[3];
 
 
-    type = mesh -> fan[fan_no].type;
+    type = (mesh -> fan[fan_no].type & 0x1F);  /* Maximum 31 fan types */
+                                               /* Others are flags     */
 
     mc   = &MeshCommand[type];
 
@@ -374,19 +375,22 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
     vert_x = &mesh -> vrtx[vert_base];
     vert_y = &mesh -> vrty[vert_base];
     vert_z = &mesh -> vrtz[vert_base];
-    
-    if (mesh -> wireframe) {
 
-        if (type & 0x20) {	        /* It's one with hi res texture */
-            glColor3ubv(&blue[0]);	/* color like cartman           */
+    if (mesh -> draw_mode & EDIT_MODE_SOLID) {
+        /* Draw solid */
+        sdlglSetColor(SDLGL_COL_WHITE);
+    }
+    else {
+
+        if (type & 0x20) {	                /* It's one with hi res texture */
+            sdlglSetColor(SDLGL_COL_BLUE);  /* color like cartman           */
     	}
     	else {
-            glColor3ubv(&red[0]);
+            sdlglSetColor(SDLGL_COL_RED);
         }
 
-    } else { /* draw texture */
-    
-        glColor3ubv(&white[0]);
+    }
+    if (mesh -> draw_mode & EDIT_MODE_TEXTURED ) {
 
         if (type & 0x20) {	/* It's one with hi res texture */
             uv = &mc -> biguv[0];
@@ -394,14 +398,15 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
     	else {
             uv = &mc -> uv[0];
         }
+
     }
 
     offuv = &MeshTileOffUV[(mesh -> fan[fan_no].tx_bits & 0x3F) * 2];
 
     /* Now bind the texture */
-    if (! mesh -> wireframe) {
+    if (mesh -> draw_mode & EDIT_MODE_TEXTURED) {
 
-        glBindTexture(GL_TEXTURE_2D, mesh -> textures[((mesh -> fan[fan_no].tx_bits >> 7) & 3)]);
+        glBindTexture(GL_TEXTURE_2D, WallTex[((mesh -> fan[fan_no].tx_bits >> 7) & 3)]);
 
     }
 
@@ -416,26 +421,30 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
 
                 actvertex = vertexno[entry]; 	/* Number of vertex to draw */
 
-                if (! mesh -> wireframe) {
+                if (mesh -> draw_mode & EDIT_MODE_SOLID) {
 
                     /*  if (mesh -> vrta[actvertex] > 0) {
                         color[0] = color[1] = color[2] = mesh -> vrta[actvertex];
+                        -- TODO: Set this color -- instead white
                     }
                     */
-                    color[0] = color[1] = color[2] = 255;
+                    color[0] = color[1] = color[2] = 60;
                     glColor3ubv(&color[0]);		/* Set the light color */
-                    glTexCoord2f(uv[(actvertex * 2) + 0] + offuv[0], uv[(actvertex * 2) + 1] + offuv[1]);
 
                 }
-
-                glVertex3i(vert_x[actvertex], vert_y[actvertex], vert_z[actvertex]);
+                if (mesh -> draw_mode & EDIT_MODE_TEXTURED) {
+                    glTexCoord2f(uv[(actvertex * 2) + 0] + offuv[0], uv[(actvertex * 2) + 1] + offuv[1]);
+                }
+                /* DEBUG: Only draw X/Y, because Z-Values are strange: 2010-08-08 / bitnapper */
+                glVertex2f(vert_x[actvertex], vert_y[actvertex]);
 
                 entry++;
+
             }
 
         glEnd();
 
-    } /* for meshcommand[type].count */
+    } 
 
 }
 
@@ -450,6 +459,9 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
 static void editdrawMap(MESH_T *mesh)
 {
 
+    int fan_no;
+
+
     if (! mesh -> map_loaded) {
 
         return;
@@ -459,7 +471,11 @@ static void editdrawMap(MESH_T *mesh)
     /* TODO: Draw the map, using different edit flags           */
     /* Needs list of visible tiles
        ( which must be built every time after the camera moved) */
-    editdrawSingleFan(mesh, 0);
+    for (fan_no = 0; fan_no < mesh -> numfan;  fan_no++) {
+
+        editdrawSingleFan(mesh, fan_no);
+
+    }
 
 }
 
@@ -480,6 +496,7 @@ static void editdrawMap(MESH_T *mesh)
 COMMAND_T *editdrawInitData(void)
 {
 
+    char texturename[128];
     COMMAND_T *mcmd;
     int entry, cnt;
 
@@ -504,17 +521,43 @@ COMMAND_T *editdrawInitData(void)
     }
 
     // Make tile texture offsets
-    for (entry = 0; entry < (EDITDRAW_MAX_TEXIMAGE * 2); entry += 2) {
+    for (entry = 0; entry < (EDITDRAW_MAXWALLSUBTEX * 2); entry += 2) {
 
         // Make tile texture offsets
         MeshTileOffUV[entry]     = (((entry / 2) & 7) * 0.125) + 0.001;
         MeshTileOffUV[entry + 1] = (((entry / 2) / 8) * 0.125) + 0.001;
 
     }
-
+    
+    /* TODO: Load the basic textures */
+    for (cnt = 0; cnt < 4; cnt++) {
+        /*
+        sprintf(texturename, "module/tile%d.bmp");
+        
+        WallTex[cnt] = sdlgltexLoadSingle(texturename);        
+        */
+    
+    }
+    
     return MeshCommand;
 
 }
+
+/*
+ * Name:
+ *     editdrawFreeData
+ * Description:
+ *     Freses all data loaded by initialization code
+ * Input:
+ *     None
+ */
+void editdrawFreeData(void)
+{
+    
+    /* TODO: Free the basic textures */
+    /* glDeleteTextures(4,         WallTex);    */
+ 
+} 
 
 /*
  * Name:
@@ -534,7 +577,7 @@ void editdraw3DView(MESH_T *mesh)
     sdlgl3dBegin(0);        /* Draw not solid */
 
     /* Draw a grid 64 x 64 squares for test of the camera view */
-    glColor3f(1.0, 1.0, 1.0);
+    sdlglSetColor(SDLGL_COL_CYAN);
 
     for (h = 0; h < 64; h++) {
 

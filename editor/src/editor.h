@@ -101,6 +101,10 @@
 #define TILE_IS_FANOFF(XX)              ( FANOFF == (XX) )
 
 #define TILE_HAS_INVALID_IMAGE(XX)      HAS_SOME_BITS( TILE_UPPER_MASK, (XX).img )
+
+// Editor modes
+#define EDIT_MODE_SOLID     0x01        /* Draw solid, yes/no       */
+#define EDIT_MODE_TEXTURED  0x02        /* Draw textured, yes/no    */
                                             
 /*******************************************************************************
 * TYPEDEFS							                                           *
@@ -131,29 +135,27 @@ typedef struct {
 
     unsigned char exploremode;
     unsigned char map_loaded;   // A map is loaded  into this struct
+    unsigned char draw_mode;    // Flags for display of map, replaces 'wireframe'
     
-    int numvert;        // Number of vertices
+    int numvert;        // Number of vertices in map
     int tiles_x;        // Size of mesh in tiles
     int tiles_y;        //
     int numfan;
     int watershift;     // Depends on size of map
-    char wireframe;     // Display in wireframe mode yes/no
-
+    
     int blocksx;        // Size of mesh
     int blocksy;        //
 
     float edgex;        // Borders of mesh
     float edgey;        //
     float edgez;        //
-    
-    int textures[4];    // OpenGL-Number of Textures used for map
 
-    FANDATA_T fan[MAXMESHFAN];             
+    FANDATA_T fan[MAXMESHFAN];                  // Fan desription            
     unsigned char twist[MAXMESHFAN];            // Surface normal
     
-    int vrtx[MAXTOTALMESHVERTICES];             // Vertex position
-    int vrty[MAXTOTALMESHVERTICES];             //
-    int vrtz[MAXTOTALMESHVERTICES];             // Vertex elevation
+    float vrtx[MAXTOTALMESHVERTICES];           // Vertex position
+    float vrty[MAXTOTALMESHVERTICES];           //
+    float vrtz[MAXTOTALMESHVERTICES];           // Vertex elevation
     unsigned char vrta[MAXTOTALMESHVERTICES];   // Vertex base light, 0=unused
     
     int  vrtstart[MAXMESHFAN];                  // First vertex of given fan  
