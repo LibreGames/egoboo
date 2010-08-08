@@ -124,6 +124,9 @@ static SDLGL_FIELD SubMenu[] = {
     { 0 }
 };
 
+static SDLGL_RECT MapRect = { 0, 16, 256, 256 };
+static EDITMAIN_STATE_T EditState;
+
 /*******************************************************************************
 * CODE									                                       *
 *******************************************************************************/
@@ -278,6 +281,13 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
         editorSetMenu(0);
 
     }    
+    
+    /* Draw map if needed */
+    if (EditState.draw_mode & EDITMAIN_SHOW2DMAP) {
+    
+        editmainDrawMap2D(MapRect.x, MapRect.y, MapRect.w, MapRect.h);
+        
+    }
 
 }
 
@@ -356,6 +366,9 @@ static void editorStart(void)
     sdlglAdjustRectToScreen(&MainMenu[1].rect,
                             &MainMenu[1].rect,
                             SDLGL_FRECT_SCRWIDTH);
+    /* Map-Rectangle    */
+    sdlglAdjustRectToScreen(&MapRect, &MapRect, SDLGL_FRECT_SCRRIGHT);
+    
     /* -------- Now create the output screen ---------- */
     sdlglInputNew(editorDrawFunc,
                   editorInputHandler,     /* Handler for input    */
@@ -392,10 +405,10 @@ int main(int argc, char **argv)
     sdlglInit(&SdlGlConfig);  
 
     /* Init Camera +Z is up, -Y is near plane, X is left/right */
-    sdlgl3dInitCamera(0, 2 * 128.0, -128.0, 192.0, 300.0, 0.0, 0.0);
+    sdlgl3dInitCamera(0, 2 * 128.0, -128.0, 192.0, 300, 0, 0, 0.75);
 
     /* Set the input handlers and do other stuff before  */
-    editmainInit();
+    editmainInit(&EditState);
     editorStart();
 
     /* Now enter the mainloop */

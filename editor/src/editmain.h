@@ -36,19 +36,33 @@
 #define EDITMAIN_DRAWMAP 0
 #define EDITMAIN_NEWMAP  1
 #define EDITMAIN_LOADMAP 2  
-#define EDITMAIN_SAVEMAP 3  
+#define EDITMAIN_SAVEMAP 3
+
+/* ---------- Edit-Flags -------- */
+#define EDITMAIN_SHOW2DMAP 0x10        /* Display the 2DMap        */
                                             
 /*******************************************************************************
 * TYPEDEFS							                                           *
 *******************************************************************************/
 
+typedef struct {
+
+    int act_fan;                    /* Actual chosen fan for editing          */
+    unsigned char draw_mode;        /* For copy into mesh - struct            */
+    unsigned char fx;               /* Fx for chosen fan                      */
+    unsigned short maintex_no;      /* Number of main texture to use for fan  */
+    unsigned short subtex_no;       /* Number of 'sub-texture' to use for fan */
+
+} EDITMAIN_STATE_T;
+
 /*******************************************************************************
 * CODE 								                                           *
 *******************************************************************************/
 
-void editmainInit(void);
+void editmainInit(EDITMAIN_STATE_T *edit_state);
 void editmainExit(void);
 int  editmainMap(int command);
+void editmainDrawMap2D(int x, int y, int w, int h);
 
 #endif /* _EDITMAIN_H_	*/
 

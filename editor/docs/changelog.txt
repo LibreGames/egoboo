@@ -1,3 +1,11 @@
+2010-08-08 <bitnapper>
+- Added possible bounding of camera to an x/y extent
+- Better view position for camera
+- Bound basic edit functions to menu
+- Bugfix in map data completion for loaded maps
+- Loading and drawing map, (only flat and wireframe)
+- There's a bug in the z-values for the fans
+
 2010-08-06 <bitnapper>
 - Read in Screen-Configuration from EDITOR.CFG
 - Menu-Bars are adjusted to screen size

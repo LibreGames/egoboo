@@ -44,11 +44,12 @@
 
 #define SDLGL3D_VISITILEDEPTH 5       /* Number of squares visible in depth */
 
-#define SDLGL3D_I_VIEWWIDTH  96 /* 96 */ /* 128 */ /* 176 */
-#define SDLGL3D_I_VIEWHEIGHT 72  /* 72 */ /* 96 */ /* 128 */
+#define SDLGL3D_I_VIEWMINWIDTH  48      /* For zoom...              */
+#define SDLGL3D_I_VIEWWIDTH     96      /* 96 */ /* 128 */ /* 176   */
+#define SDLGL3D_I_ASPECTRATIO   0.75    /* HAnded over by caller    */
 
 #define SDLGL3D_I_ZMIN 48.0     /* 100.0 */
-#define SDLGL3D_I_ZMAX 1385.0    /* 900.0 -- 64 / 48       */
+#define SDLGL3D_I_ZMAX 900.0    /* 1385.0 900.0 -- 64 / 48       */
 
 /* ------- GRID_DATA ------ */
 #define SDLGL3D_TILESIZE     128.0
@@ -69,8 +70,9 @@ typedef struct {
 
     /* Type of camera and size of frustum for zooming */
     int   type;
-    float viewwidth, viewheight,
-          zmin, zmax;
+    float viewwidth;
+    float aspect_ratio;         /* For zoom and setup of frustum        */
+    float zmin, zmax;
     float cameradist;           /* Distance behind object for third person camera */
     SDLGL3D_OBJECT *object;     /* The object the camera is attached to           */
     SDLGL3D_OBJECT campos;
@@ -78,8 +80,9 @@ typedef struct {
     float nx[3], ny[3];         /* Normals of the side lines.  They should point in towards the viewable area.	*/
     float leftangle, rightangle;
     float fow;
-    char bound;                 /* Camera is bound to an x,y-rectangle */
+    char bound;                 /* Camera is bound to an x,y-rectangle  */
     float bx, by, bx2, by2;
+    
 
 } SDLGL3D_CAMERA;
 
@@ -91,7 +94,7 @@ typedef struct {
 static SDLGL3D_CAMERA Camera[4] = {
 
     { SDLGL3D_CAMERATYPE_THIRDPERSON,
-      SDLGL3D_I_VIEWWIDTH, SDLGL3D_I_VIEWHEIGHT,
+      SDLGL3D_I_VIEWWIDTH, SDLGL3D_I_ASPECTRATIO,
       SDLGL3D_I_ZMIN, SDLGL3D_I_ZMAX,
       256.0 }
 
@@ -331,19 +334,21 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, float secondspassed)
             break;
 
         case SDLGL3D_CAMERA_ZOOM:
-            speed = (0.05 * secondspassed);
+            speed = (5.0 * secondspassed);
             if (moveobj -> move_dir > 0) {
                 /* Zoom in: Reduce size of view */
-                speed = 1.0 - speed;
-                Camera[0].viewwidth  *= speed;
-                Camera[0].viewheight *= speed;
+                Camera[0].viewwidth  -= speed;
+                if (Camera[0].viewwidth < SDLGL3D_I_VIEWMINWIDTH) {
+
+                    Camera[0].viewwidth = SDLGL3D_I_VIEWMINWIDTH;
+
+                }
 
             }
             else if (moveobj -> move_dir < 0) {
 
-                speed = 1.0 + speed;
-                Camera[0].viewwidth  *= speed;
-                Camera[0].viewheight *= speed;
+                Camera[0].viewwidth  += speed;
+                /* TODO: Set maximum */
 
             }
             break;
@@ -379,6 +384,7 @@ SDLGL3D_OBJECT *sdlgl3dBegin(int solid)
 {
 
     SDLGL3D_OBJECT *viewobj;
+    float viewwidth, viewheight;
 
 
     glMatrixMode(GL_PROJECTION);
@@ -386,9 +392,10 @@ SDLGL3D_OBJECT *sdlgl3dBegin(int solid)
     glLoadIdentity();
 
     /* Set the view mode */
-    glFrustum(-(Camera[0].viewwidth / 2), (Camera[0].viewwidth / 2),
-              -(Camera[0].viewheight / 2), (Camera[0].viewheight / 2),
-              Camera[0].zmin, Camera[0].zmax);
+    viewwidth  = Camera[0].viewwidth / 2;
+    viewheight = (viewwidth * Camera[0].aspect_ratio) / 2;
+    
+    glFrustum(-viewwidth, viewwidth, -viewheight, viewheight, Camera[0].zmin, Camera[0].zmax);
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -501,8 +508,9 @@ void sdlgl3dAttachCameraToObj(int object_no, char camtype)
  *      camera_no:        Initialize this camera  
  *      x, ,y, z:         Position of camera  
  *      rotx, roty, rotz: Roatation in each axis
+ *      aspect_ratio:     Of screen for 3D-View   
  */
-void sdlgl3dInitCamera(int camera_no, float x, float y, float z, int rotx, int roty, int rotz)
+void sdlgl3dInitCamera(int camera_no, float x, float y, float z, int rotx, int roty, int rotz, float aspect_ratio)
 {
 
     Camera[camera_no].campos.pos[0] = x;
@@ -518,7 +526,8 @@ void sdlgl3dInitCamera(int camera_no, float x, float y, float z, int rotx, int r
 
     Camera[camera_no].campos.speed   = 150.0;  /* Speed of camera in units / second    */
     Camera[camera_no].campos.turnvel =  60.0;  /* Degrees per second                   */
-
+    
+    Camera[camera_no].aspect_ratio = aspect_ratio;
     /* If the camera was moved, set the frustum normals... */
     sdlgl3dSetupFrustumNormals(&Camera[camera_no], SDLGL3D_CAMERA_FOV);
 

@@ -365,8 +365,8 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
     unsigned char color[3];
 
 
-    type = (mesh -> fan[fan_no].type & 0x1F);  /* Maximum 31 fan types */
-                                               /* Others are flags     */
+    type = (char)(mesh -> fan[fan_no].type & 0x1F);  /* Maximum 31 fan types */
+                                                     /* Others are flags     */
 
     mc   = &MeshCommand[type];
 
@@ -474,6 +474,7 @@ static void editdrawMap(MESH_T *mesh)
     for (fan_no = 0; fan_no < mesh -> numfan;  fan_no++) {
 
         editdrawSingleFan(mesh, fan_no);
+        /* TODO: Sign fan, if it's chosen */
 
     }
 
@@ -601,5 +602,75 @@ void editdraw3DView(MESH_T *mesh)
     editdrawMap(mesh);
 
     sdlgl3dEnd();
+
+}
+
+/*
+ * Name:
+ *     editdraw2DMap
+ * Description:
+ *     Draws the map as 2D-View into given rectangle
+ * Input:
+ *     mesh *: Pointer on mesh to draw
+ */
+void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h)
+{
+
+    static int mapcolors[] = { SDLGL_COL_BLUE, SDLGL_COL_BLUE, SDLGL_COL_BLUE, SDLGL_COL_BLUE, /* Ground */
+                               1, 1,	  /* Pillar */
+                               2, 2,	  /* ------ */
+                               SDLGL_COL_BLACK, SDLGL_COL_BLACK,	  /* Wall   */
+                               2, 2,	  /* ------ */
+                               3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+                               4, 4,	  /* Stair  */
+                               5, 5, 5, 5, 5, 5 };   /* Unknown */	 
+    SDLGL_RECT draw_rect;
+    int rx2, ry2;  
+    int fan_no;
+
+
+    if (! mesh -> map_loaded) {
+
+        return;         /* Draw only if a mpa is loaded */
+
+    }
+
+    draw_rect.x = x;
+    draw_rect.y = y;
+    draw_rect.w = w / mesh -> tiles_x;   /* With generates size of square */
+    draw_rect.h = draw_rect.w;
+    
+    fan_no = 0;
+    glBegin(GL_QUADS);
+        for (h = 0; h < mesh -> tiles_y; h++) {
+
+            for (w = 0; w < mesh -> tiles_x; w++) {
+                            
+                sdlglSetColor(mapcolors[mesh -> fan[fan_no].type & 0x1F]);
+                
+                rx2 = draw_rect.x + draw_rect.w;
+                ry2 = draw_rect.y + draw_rect.h;
+                
+                glVertex2i(draw_rect.x,  ry2);
+                glVertex2i(rx2, ry2);
+                glVertex2i(rx2, draw_rect.y);
+            	glVertex2i(draw_rect.x,  draw_rect.y);
+            
+                draw_rect.x += draw_rect.w;
+                fan_no++;
+        
+            }
+            
+            /* Next line    */
+            draw_rect.x = x;
+            draw_rect.y += draw_rect.h;
+        
+        }
+    
+    glEnd();
+
+    /* TODO: Draw chosen tile                   */
+    /* TODO: Draw the Camera-Frustum over map   */
+
 
 }

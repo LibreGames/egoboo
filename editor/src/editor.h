@@ -142,9 +142,6 @@ typedef struct {
     int tiles_y;        //
     int numfan;
     int watershift;     // Depends on size of map
-    
-    int blocksx;        // Size of mesh
-    int blocksy;        //
 
     float edgex;        // Borders of mesh
     float edgey;        //

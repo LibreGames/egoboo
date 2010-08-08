@@ -60,7 +60,8 @@
 
 static int NumFreeVertices;
 static MESH_T Mesh;
-static COMMAND_T *Commands;
+static COMMAND_T *pCommands;
+EDITMAIN_STATE_T *pEditState;
 
 /*******************************************************************************
 * CODE 								                                           *
@@ -91,7 +92,7 @@ static int editmainAddFan(MESH_T *mesh, int fan, int x, int y)
 
     /* 1. Get number of vertices of existing fan    */
     fan_type = mesh -> fan[fan].type;
-    numvert  = Commands[fan_type].numvertices;
+    numvert  = pCommands[fan_type].numvertices;
     
     /* 1. Remove old fan (count it's vertices)  */
     /* 2. Replace it by fan with new type  ?    */      
@@ -120,8 +121,8 @@ static int editmainAddFan(MESH_T *mesh, int fan, int x, int y)
 
         for (cnt = 0; cnt < numvert; cnt++;) {
             vertex = vertexlist[cnt];
-            mesh.vrtx[vertex] = x + (Commands[fan_type].x[cnt] >> 2);
-            mesh.vrty[vertex] = y + (Commands[fan_type].y[cnt] >> 2);
+            mesh.vrtx[vertex] = x + (pCommands[fan_type].x[cnt] >> 2);
+            mesh.vrty[vertex] = y + (pCommands[fan_type].y[cnt] >> 2);
             mesh.vrtz[vertex] = 0;
             mesh.vrtnext[vertex] = vertexlist[cnt+1];
 
@@ -172,7 +173,7 @@ void editmainCompleteMapData(MESH_T *mesh)
 
         mesh -> vrtstart[fan_no] = vertex_no;		/* meshvrtstart       */
         mesh -> visible[fan_no]  = 1;
-        vertex_no += Commands[mesh -> fan[fan_no].type & 0x1F].numvertices;
+        vertex_no += pCommands[mesh -> fan[fan_no].type & 0x1F].numvertices;
 
     }
 
@@ -306,7 +307,7 @@ static void editmainCalcVrta(MESH_T *mesh)
     for (fan = 0; fan < mesh -> numfan; fan++) {
 
         vert = mesh -> vrtstart[fan];
-        num  = Commands[mesh -> fan[fan].type].numvertices;
+        num  = pCommands[mesh -> fan[fan].type].numvertices;
         
         for (cnt = 0; cnt < num; cnt++) {
         
@@ -331,11 +332,15 @@ static void editmainCalcVrta(MESH_T *mesh)
  * Input:
  *     None    
  */
-void editmainInit(void)
+void editmainInit(EDITMAIN_STATE_T *edit_state)
 {
 
-    Commands = editdrawInitData();
-
+    pCommands = editdrawInitData();
+     
+    memset(edit_state, 0, sizeof(EDITMAIN_STATE_T));
+    
+    edit_state -> draw_mode |= EDITMAIN_SHOW2DMAP;
+    
 }
 
 /*
@@ -400,5 +405,22 @@ int editmainMap(int command)
     }
 
     return 0;
+
+}
+
+/*
+ * Name:
+ *     editmainDrawMap2D
+ * Description:
+ *      Draws the map as 2D-Map into given rectangle 
+ * Input:
+ *      command: What to do
+ * Output:
+ *      Result of given command
+ */
+void editmainDrawMap2D(int x, int y, int w, int h)
+{ 
+    
+    editdraw2DMap(&Mesh, x, y, w, h);       
 
 }
