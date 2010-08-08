@@ -85,6 +85,8 @@
 #define INVALID_BLOCK ((unsigned int )(~0))
 #define INVALID_TILE  ((unsigned int )(~0))
 
+#define COMMAND_TEXTUREHI_FLAG 0x20
+
 #define DAMAGENULL          255
 
 // handle the upper and lower bits for the tile image
@@ -150,9 +152,9 @@ typedef struct {
     FANDATA_T fan[MAXMESHFAN];                  // Fan desription            
     unsigned char twist[MAXMESHFAN];            // Surface normal
     
-    float vrtx[MAXTOTALMESHVERTICES];           // Vertex position
-    float vrty[MAXTOTALMESHVERTICES];           //
-    float vrtz[MAXTOTALMESHVERTICES];           // Vertex elevation
+    int vrtx[MAXTOTALMESHVERTICES];             // Vertex position
+    int vrty[MAXTOTALMESHVERTICES];             //
+    int vrtz[MAXTOTALMESHVERTICES];             // Vertex elevation
     unsigned char vrta[MAXTOTALMESHVERTICES];   // Vertex base light, 0=unused
     
     int  vrtstart[MAXMESHFAN];                  // First vertex of given fan  

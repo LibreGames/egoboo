@@ -34,6 +34,7 @@
 #include "sdlglstr.h"
 #include "sdlglcfg.h"
 #include "sdlgl3d.h"
+#include "editor.h"
 #include "editmain.h"
 
 /*******************************************************************************
@@ -50,9 +51,13 @@
 /* Menu commands -- Don't collid with 3D-Commands */
 #define EDITOR_FILE       ((char)101)
 #define EDITOR_MAP        ((char)102)
+#define EDITOR_FX         ((char)103)
+#define EDITOR_STATE      ((char)104)
 
+/* Sub-commands for main commands, if needed */
+#define EDITOR_STATE_SHOWMAP ((char)1)
 
-#define EDITOR_FILEEXIT   ((char)3)
+#define EDITOR_FILE_EXIT   ((char)3)
 
 /*******************************************************************************
 * DATA									                                       *
@@ -95,6 +100,7 @@ static SDLGL_CMDKEY EditorCmd[] = {
     { { SDLK_KP9 }, SDLGL3D_MOVE_TURN,   +1, SDLGL3D_MOVE_TURN },
     { { SDLK_KP_PLUS },  SDLGL3D_CAMERA_ZOOM, +1, SDLGL3D_CAMERA_ZOOM },
     { { SDLK_KP_MINUS }, SDLGL3D_CAMERA_ZOOM, -1, SDLGL3D_CAMERA_ZOOM },
+    { { SDLK_LCTRL, SDLK_m }, EDITOR_STATE, EDITOR_STATE_SHOWMAP },
     /* -------- Switch the player with given number ------- */
     { { SDLK_ESCAPE }, EDITOR_EXITPROGRAM },
     { { 0 } }
@@ -115,17 +121,31 @@ static SDLGL_FIELD MainMenu[EDITOR_MAXFLD + 2] = {
 static SDLGL_FIELD SubMenu[] = {
     /* File-Menu */
     { SDLGL_TYPE_STD,  {   0, 16, 80, 16 }, EDITOR_FILE, -1 },     /* Menu-Background */
-    { SDLGL_TYPE_MENU, {   4, 20, 72,  8 }, EDITOR_FILE, EDITOR_FILEEXIT, "Exit" },
+    { SDLGL_TYPE_MENU, {   4, 20, 72,  8 }, EDITOR_FILE, EDITOR_FILE_EXIT, "Exit" },
     /* --- Maze-Menu */
     { SDLGL_TYPE_STD,  {  40, 16, 64, 56 }, EDITOR_MAP, -1 },    /* Menu-Background */
     { SDLGL_TYPE_MENU, {  44, 20, 56,  8 }, EDITOR_MAP, EDITMAIN_NEWMAP,  "New" },
     { SDLGL_TYPE_MENU, {  44, 36, 56,  8 }, EDITOR_MAP, EDITMAIN_LOADMAP, "Load..." },
     { SDLGL_TYPE_MENU, {  44, 52, 56,  8 }, EDITOR_MAP, EDITMAIN_SAVEMAP, "Save" },
+    /* TODO: Add EDITOR_MAP, 'EDITMAIN_LOADSPAWN'               */
     { 0 }
 };
 
 static SDLGL_RECT MapRect = { 0, 16, 256, 256 };
 static EDITMAIN_STATE_T EditState;
+
+/* Prepared Dialog for changing of Flags of a fan */
+static SDLGL_FIELD FanFlagsDlg[] = {
+    { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_SHA,     "Reflective" },    
+    { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_DRAWREF, "Draw Reflection" },    
+    { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_ANIM,    "Animated" }, 
+    { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_WATER,   "Overlay (Water)" },  
+    { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_WALL,    "Barrier (Slit)" },    
+    { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_IMPASS,  "Impassable (Wall)" }, 
+    { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_DAMAGE,  "Damage" }, 
+    { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_SLIPPY,  "Slippy" }, 
+    { 0 }
+};
 
 /*******************************************************************************
 * CODE									                                       *
@@ -281,9 +301,9 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
         editorSetMenu(0);
 
     }    
-    
+
     /* Draw map if needed */
-    if (EditState.draw_mode & EDITMAIN_SHOW2DMAP) {
+    if (EditState.display_flags & EDITMAIN_SHOW2DMAP) {
     
         editmainDrawMap2D(MapRect.x, MapRect.y, MapRect.w, MapRect.h);
         
@@ -323,13 +343,21 @@ static int editorInputHandler(SDLGL_EVENT *event)
             switch(event -> code) {
 
                 case EDITOR_FILE:
-                    if (event -> sub_code == EDITOR_FILEEXIT) {
+                    if (event -> sub_code == EDITOR_FILE_EXIT) {
                         return SDLGL_INPUT_EXIT;
                     }
                     break;
                 case EDITOR_MAP:
                     if (! editmainMap(event -> sub_code)) {
-                        /* TODO: Display message, what has gone wrong */
+                        /* TODO: Display message, what has gone wrong   */
+                        /* TODO: Add 'EDITMAIN_LOADSPAWN'               */
+                    }
+                    break;
+                case EDITOR_STATE:
+                    if (event -> sub_code == EDITOR_STATE_SHOWMAP) {
+
+                        EditState.display_flags ^= EDITMAIN_SHOW2DMAP;
+
                     }
                     break;
 

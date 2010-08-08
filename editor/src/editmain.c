@@ -42,7 +42,7 @@
 #define EDITFILE_MAX_COMMAND 30
 
 #define EDITFILE_MAX_MAPSIZE 64
-#define DEFAULT_TILE         62   
+#define DEFAULT_TILE         62
 
 /*******************************************************************************
 * TYPEDEFS							                                           *
@@ -61,7 +61,7 @@
 static int NumFreeVertices;
 static MESH_T Mesh;
 static COMMAND_T *pCommands;
-EDITMAIN_STATE_T *pEditState;
+SPAWN_OBJECT_T SpawnObjects[EDITMAIN_MAXSPAWN + 2];
 
 /*******************************************************************************
 * CODE 								                                           *
@@ -338,8 +338,9 @@ void editmainInit(EDITMAIN_STATE_T *edit_state)
     pCommands = editdrawInitData();
      
     memset(edit_state, 0, sizeof(EDITMAIN_STATE_T));
-    
-    edit_state -> draw_mode |= EDITMAIN_SHOW2DMAP;
+
+    edit_state -> display_flags |= EDITMAIN_SHOW2DMAP;
+    edit_state -> fan_chosen = -1;  /* No fan chosen    */
     
 }
 
@@ -412,7 +413,7 @@ int editmainMap(int command)
  * Name:
  *     editmainDrawMap2D
  * Description:
- *      Draws the map as 2D-Map into given rectangle 
+ *      Draws the map as 2D-Map into given rectangle
  * Input:
  *      command: What to do
  * Output:
@@ -424,3 +425,78 @@ void editmainDrawMap2D(int x, int y, int w, int h)
     editdraw2DMap(&Mesh, x, y, w, h);       
 
 }
+
+/*
+ * Name:
+ *     editmainLoadSpawn
+ * Description:
+ *     Load the 'spawn.txt' list into given list
+ * Input:
+ *     None
+ * Output:
+ *     spawn_list *: Pointer on list of objects to be spawned
+ */
+SPAWN_OBJECT_T *editmainLoadSpawn(void)
+{
+
+    memset(SpawnObjects, 0, EDITMAIN_MAXSPAWN * sizeof(SPAWN_OBJECT_T));
+
+    /* TODO: Load this list, if available */
+
+    return SpawnObjects;
+
+}
+
+/*
+ * Name:
+ *     editmainToggleFlag
+ * Description:
+ *     Toggles the given flag using 'EditInfo'.
+ *     Adjust accompanied
+ * Input:
+ *     edit_state *: To return the toggle states to caller
+ *     which:        Which flag to change
+ *
+ */
+void editmainSetFlags(EDITMAIN_STATE_T *edit_state, int which, unsigned char flag)
+{
+
+    unsigned short tx_bits;
+
+
+    switch(which) {
+
+        case EDITMAIN_TOGGLE_DRAWMODE:
+            flag &= 0x03;
+            /* Change it in actual map */
+            Mesh.draw_mode ^= flag;
+            /* Show it in edit_state */
+            edit_state -> draw_mode = Mesh.draw_mode;
+            break;
+
+        case EDITMAIN_TOGGLE_FX:
+            if (edit_state -> fan_chosen >= 0
+                && edit_state -> fan_chosen < Mesh.numfan){
+                /* Toggle it in chosen fan */
+                Mesh.fan[edit_state -> fan_chosen].fx ^= flag;
+                /* Now copy the actual state for display    */
+                edit_state -> fx = Mesh.fan[edit_state -> fan_chosen].fx;
+            }
+            else {
+                edit_state -> fx = 0;
+            }
+            break;
+
+        case EDITMAIN_TOGGLE_TXHILO:
+            if (edit_state -> fan_chosen >= 0) {
+                tx_bits = 0;
+                tx_bits |= flag;
+                Mesh.fan[edit_state -> fan_chosen].tx_bits ^= tx_bits;
+            }
+            break;
+
+    }
+
+}
+
+

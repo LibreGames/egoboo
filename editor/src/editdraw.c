@@ -354,7 +354,7 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
 {
 
     COMMAND_T *mc;
-    float *vert_x, *vert_y, *vert_z;
+    int *vert_x, *vert_y, *vert_z;
     int cnt, tnc, entry, *vertexno;
     int vert_base;
     char type;
@@ -436,7 +436,7 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
                     glTexCoord2f(uv[(actvertex * 2) + 0] + offuv[0], uv[(actvertex * 2) + 1] + offuv[1]);
                 }
                 /* DEBUG: Only draw X/Y, because Z-Values are strange: 2010-08-08 / bitnapper */
-                glVertex2f(vert_x[actvertex], vert_y[actvertex]);
+                glVertex2i(vert_x[actvertex], vert_y[actvertex]);
 
                 entry++;
 
