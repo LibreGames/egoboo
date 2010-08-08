@@ -180,6 +180,7 @@ void editmainCompleteMapData(MESH_T *mesh)
     NumFreeVertices = MAXTOTALMESHVERTICES - mesh -> numvert;
     /* Set flag that map has been loaded */
     mesh -> map_loaded = 1;
+    /* mesh -> draw_mode |= (EDIT_MODE_SOLID | EDIT_MODE_TEXTURED); */
 
 }
 

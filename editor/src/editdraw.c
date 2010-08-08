@@ -423,20 +423,21 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
 
                 if (mesh -> draw_mode & EDIT_MODE_SOLID) {
 
-                    /*  if (mesh -> vrta[actvertex] > 0) {
+                    if (mesh -> vrta[actvertex] > 60) {
                         color[0] = color[1] = color[2] = mesh -> vrta[actvertex];
-                        -- TODO: Set this color -- instead white
+
                     }
-                    */
-                    color[0] = color[1] = color[2] = 60;
+                    else {
+                        color[0] = color[1] = color[2] = 60;
+                    }
                     glColor3ubv(&color[0]);		/* Set the light color */
 
                 }
                 if (mesh -> draw_mode & EDIT_MODE_TEXTURED) {
                     glTexCoord2f(uv[(actvertex * 2) + 0] + offuv[0], uv[(actvertex * 2) + 1] + offuv[1]);
                 }
-                /* DEBUG: Only draw X/Y, because Z-Values are strange: 2010-08-08 / bitnapper */
-                glVertex2i(vert_x[actvertex], vert_y[actvertex]);
+                
+                glVertex3i(vert_x[actvertex], vert_y[actvertex], vert_z[actvertex]);
 
                 entry++;
 
@@ -468,6 +469,7 @@ static void editdrawMap(MESH_T *mesh)
 
     }
 
+    glPolygonMode(GL_FRONT, mesh -> draw_mode & EDIT_MODE_SOLID ? GL_FILL : GL_LINE);
     /* TODO: Draw the map, using different edit flags           */
     /* Needs list of visible tiles
        ( which must be built every time after the camera moved) */
@@ -529,17 +531,16 @@ COMMAND_T *editdrawInitData(void)
         MeshTileOffUV[entry + 1] = (((entry / 2) / 8) * 0.125) + 0.001;
 
     }
-    
+
     /* TODO: Load the basic textures */
     for (cnt = 0; cnt < 4; cnt++) {
-        /*
-        sprintf(texturename, "module/tile%d.bmp");
+    
+        sprintf(texturename, "module/tile%d.bmp", cnt);
+
+        WallTex[cnt] = sdlgltexLoadSingle(texturename);
         
-        WallTex[cnt] = sdlgltexLoadSingle(texturename);        
-        */
-    
     }
-    
+
     return MeshCommand;
 
 }
@@ -556,7 +557,7 @@ void editdrawFreeData(void)
 {
     
     /* TODO: Free the basic textures */
-    /* glDeleteTextures(4,         WallTex);    */
+    glDeleteTextures(4, WallTex);
  
 } 
 

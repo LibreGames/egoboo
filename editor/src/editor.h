@@ -43,9 +43,6 @@
 #define MAXLEVEL 255
 #define MINLEVEL 50
 
-#define VERSION 005             // Version number
-#define YEAR 1999               // Year
-#define KEYDELAY 12             // Delay for keyboard
 #define MAXTILE 256             //
 #define TINYXY   4              // Plan tiles
 #define SMALLXY 32              // Small tiles
