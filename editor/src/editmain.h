@@ -55,13 +55,13 @@
 
 typedef struct {
 
-    int fan_chosen;             /* Actual chosen fan for editing            */
-    unsigned char display_flags;/* For display in main editor               */
-    unsigned char draw_mode;    /* For copy into mesh - struct              */
-    unsigned char fx;           /* Fx for chosen fan                        */
-    unsigned char cmd_txhiflag; /* COMMAND_TEXTUREHI_FLAG to or with cmd    */
-    unsigned short maintex_no;  /* Number of main texture to use for fan    */
-    unsigned short subtex_no;   /* Number of 'sub-texture' to use for fan   */
+    int fan_chosen;             /* Actual chosen fan for editing    */
+    unsigned char display_flags;/* For display in main editor       */
+    unsigned char draw_mode;    /* For copy into mesh - struct      */
+    char brush_size;            /* From 'cartman'  0-3, (slider)    */    
+    char brush_amount;          /* From 'cartman' -50,  50 (slider) */    
+    FANDATA_T act_fan;          /* Data of actual fan chosen        */
+    FANDATA_T new_fan;          /* Data of fan to place on map      */
 
 } EDITMAIN_STATE_T;
 

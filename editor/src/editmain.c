@@ -340,7 +340,9 @@ void editmainInit(EDITMAIN_STATE_T *edit_state)
     memset(edit_state, 0, sizeof(EDITMAIN_STATE_T));
 
     edit_state -> display_flags |= EDITMAIN_SHOW2DMAP;
-    edit_state -> fan_chosen = -1;  /* No fan chosen    */
+    edit_state -> fan_chosen   = -1;    /* No fan chosen                        */
+    edit_state -> brush_size   = 3;     /* Size of raise/lower terrain brush    */
+    edit_state -> brush_amount = 50;    /* Amount of raise/lower                */
     
 }
 
@@ -480,10 +482,10 @@ void editmainSetFlags(EDITMAIN_STATE_T *edit_state, int which, unsigned char fla
                 /* Toggle it in chosen fan */
                 Mesh.fan[edit_state -> fan_chosen].fx ^= flag;
                 /* Now copy the actual state for display    */
-                edit_state -> fx = Mesh.fan[edit_state -> fan_chosen].fx;
+                edit_state -> act_fan.fx = Mesh.fan[edit_state -> fan_chosen].fx;
             }
             else {
-                edit_state -> fx = 0;
+                edit_state -> act_fan.fx = 0;
             }
             break;
 
@@ -492,6 +494,8 @@ void editmainSetFlags(EDITMAIN_STATE_T *edit_state, int which, unsigned char fla
                 tx_bits = 0;
                 tx_bits |= flag;
                 Mesh.fan[edit_state -> fan_chosen].tx_bits ^= tx_bits;
+                /* And copy it for display */
+                edit_state -> act_fan.tx_bits = Mesh.fan[edit_state -> fan_chosen].tx_bits;
             }
             break;
 

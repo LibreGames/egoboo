@@ -124,7 +124,7 @@ typedef struct {
 } COMMAND_T;
 
 typedef struct {
-
+  
     unsigned short tx_bits; /* Tile texture bits and special tile bits      */
                             /* The upper byte could be abused for some	    */
                             /* "decoration" - index.			            */

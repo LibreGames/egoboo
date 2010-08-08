@@ -37,7 +37,7 @@
 *******************************************************************************/
 
 #define SDLGL3D_CAMERA_EXTENT  15.0
-#define SDLGL3D_CAMERA_FOV     90.0
+#define SDLGL3D_CAMERA_FOV     60.0     /* Instead of 90.0 degrees */
 
 /* ------- */
 #define SDLGL3D_I_MAXVISITILES (9 + 7 + 5 + 3 + 3 + 3 + 9 + 9 + 11)
@@ -96,7 +96,7 @@ static SDLGL3D_CAMERA Camera[4] = {
     { SDLGL3D_CAMERATYPE_THIRDPERSON,
       SDLGL3D_I_VIEWWIDTH, SDLGL3D_I_ASPECTRATIO,
       SDLGL3D_I_ZMIN, SDLGL3D_I_ZMAX,
-      256.0 }
+      800.0 }
 
 };
 
