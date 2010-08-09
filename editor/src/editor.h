@@ -64,7 +64,6 @@
 #define MAXMESHCOMMANDSIZE              32            // Max trigs in each command
 
 #define FANOFF   0xFFFF         // Don't draw
-#define CHAINEND 0xFFFFFFFF     // End of vertex chain
 
 #define VERTEXUNUSED 0          // Check mesh -> vrta to see if used
 #define MAXPOINTS 20480         // Max number of points to draw
@@ -101,9 +100,10 @@
 
 #define TILE_HAS_INVALID_IMAGE(XX)      HAS_SOME_BITS( TILE_UPPER_MASK, (XX).img )
 
-// Editor modes
+// Editor modes: How to draw the map
 #define EDIT_MODE_SOLID     0x01        /* Draw solid, yes/no       */
 #define EDIT_MODE_TEXTURED  0x02        /* Draw textured, yes/no    */
+#define EDIT_MODE_LIGHTMAX  0x04        /* Is drawn all white       */    
                                             
 /*******************************************************************************
 * TYPEDEFS							                                           *
@@ -122,13 +122,22 @@ typedef struct {
 
 typedef struct {
   
-    unsigned short tx_bits; /* Tile texture bits and special tile bits      */
-                            /* The upper byte could be abused for some	    */
-                            /* "decoration" - index.			            */
+    unsigned char tx_no;    /* Number of texture:                           */
+                            /* (tx_no >> 6) & 3: Number of wall texture     */
+                            /* tx_no & 0x3F:     Number of part of texture  */ 
+    unsigned char tx_flags; /* Special flags                                */
     unsigned char  fx;		/* Tile special effects flags                   */
     unsigned char  type;	/* Tile fan type            			        */
 
 } FANDATA_T;
+
+typedef struct {
+
+    int pt[3];              /* Point x / y / z                  */
+    unsigned char a;        /* Ambient lighting                 */
+    unsigned char l;        /* Light intensity (not used yet)   */
+
+} MESH_VTXI_T;              /* Planned for later adjustement how to store vertices */
 
 typedef struct {
 

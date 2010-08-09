@@ -62,6 +62,7 @@ typedef struct {
     char brush_amount;          /* From 'cartman' -50,  50 (slider) */    
     FANDATA_T act_fan;          /* Data of actual fan chosen        */
     FANDATA_T new_fan;          /* Data of fan to place on map      */
+    char msg[256];              /* Possible message from editor     */
 
 } EDITMAIN_STATE_T;
 
@@ -89,12 +90,12 @@ typedef struct {
 * CODE 								                                           *
 *******************************************************************************/
 
-void editmainInit(EDITMAIN_STATE_T *edit_state);
+EDITMAIN_STATE_T *editmainInit(void);
 void editmainExit(void);
 int  editmainMap(int command);
 void editmainDrawMap2D(int x, int y, int w, int h);
 SPAWN_OBJECT_T *editmainLoadSpawn(void);
-void editmainToggleFlag(EDITMAIN_STATE_T *edit_state, int which, unsigned char flag);
+void editmainToggleFlag(int which, unsigned char flag);
 
 #endif /* _EDITMAIN_H_	*/
 

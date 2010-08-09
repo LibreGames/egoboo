@@ -48,8 +48,8 @@
 #define SDLGL3D_I_VIEWWIDTH     96      /* 96 */ /* 128 */ /* 176   */
 #define SDLGL3D_I_ASPECTRATIO   0.75    /* HAnded over by caller    */
 
-#define SDLGL3D_I_ZMIN 48.0     /* 100.0 */
-#define SDLGL3D_I_ZMAX 900.0    /* 1385.0 900.0 -- 64 / 48       */
+#define SDLGL3D_I_ZMIN   48.0   /* 100.0 */
+#define SDLGL3D_I_ZMAX 1385.0   /* 1385.0 900.0 -- 64 / 48       */
 
 /* ------- GRID_DATA ------ */
 #define SDLGL3D_TILESIZE     128.0

@@ -37,7 +37,7 @@
 *******************************************************************************/
 
 void editFileSetVertStart(MESH_T *mesh);
-int  editfileLoadMapMesh(MESH_T *mesh);
-int  editfileSaveMapMesh(MESH_T *mesh);
+int  editfileLoadMapMesh(MESH_T *mesh, char *msg);
+int  editfileSaveMapMesh(MESH_T *mesh, char *msg);
 
 #endif  /* _EDITFILE_H_ */

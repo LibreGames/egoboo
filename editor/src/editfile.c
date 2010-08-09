@@ -113,10 +113,11 @@ static void editfileMakeTwist(MESH_T *mesh)
  *     Loads the map mesh into the data pointed on
  * Input:
  *     mesh*: Pointer on mesh to load
+ *     msg *: Pointer on buffer for a message 
  * Output:
  *     Mesh could be loaded yes/no
  */
-int editfileLoadMapMesh(MESH_T *mesh)
+int editfileLoadMapMesh(MESH_T *mesh, char *msg)
 {
 
     FILE* fileread;
@@ -130,6 +131,7 @@ int editfileLoadMapMesh(MESH_T *mesh)
 
     if (NULL == fileread)
     {
+        sprintf(msg, "%s", "Map file not found.");
         return 0;
     }
 
@@ -137,8 +139,9 @@ int editfileLoadMapMesh(MESH_T *mesh)
     {
 
         fread( &uiTmp32, 4, 1, fileread );
-        if ( uiTmp32 != MAPID ) {
-
+        if ( uiTmp32 != MAPID ) 
+        {
+            sprintf(msg, "%s", "Map file has invalid Map-ID.");
             return 0;
 
         }
@@ -148,10 +151,10 @@ int editfileLoadMapMesh(MESH_T *mesh)
         fread(&mesh -> tiles_y, 4, 1, fileread);
 
         numfan = mesh -> tiles_x * mesh -> tiles_y;
-
+        
         /* Load fan data    */
         fread(&mesh -> fan[0], sizeof(FANDATA_T), numfan, fileread);
-
+        /* TODO: Check if enough space is available for loading map */
         /* Load normal data */
         fread(&mesh -> twist[0], 1, numfan, fileread);
 
@@ -173,7 +176,7 @@ int editfileLoadMapMesh(MESH_T *mesh)
         for (cnt = 0; cnt < mesh -> numvert; cnt++) {
             /* TODO: Convert float to int for editing */
             fread(&ftmp, 4, 1, fileread);
-            mesh -> vrtz[cnt] = ftmp / 64;  /* Z is fixpoint int in cartman */
+            mesh -> vrtz[cnt] = ftmp / 32;  /* Z is fixpoint int in cartman */
         }
 
         fread(&mesh -> vrta[0], 1, mesh -> numvert, fileread);   // !!!BAD!!!
@@ -199,7 +202,7 @@ int editfileLoadMapMesh(MESH_T *mesh)
  * Output:
  *     Save worked yes/no
  */
-int editfileSaveMapMesh(MESH_T *mesh)
+int editfileSaveMapMesh(MESH_T *mesh, char *msg)
 {
 
     FILE* filewrite;
@@ -260,6 +263,8 @@ int editfileSaveMapMesh(MESH_T *mesh)
         }
 
     }
+
+    sprintf(msg, "%s", "Saving map has failed.");
 
 	return 0;
 

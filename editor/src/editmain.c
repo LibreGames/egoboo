@@ -17,9 +17,6 @@
 *   You should have received a copy of the GNU General Public License          *
 *   along with this program; if not, write to the Free Software                *
 *   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. *
-*                                                                              *
-*                                                                              *
-* Last change: 2008-06-21                                                      *
 *******************************************************************************/
 
 /*******************************************************************************
@@ -61,7 +58,8 @@
 static int NumFreeVertices;
 static MESH_T Mesh;
 static COMMAND_T *pCommands;
-SPAWN_OBJECT_T SpawnObjects[EDITMAIN_MAXSPAWN + 2];
+static SPAWN_OBJECT_T SpawnObjects[EDITMAIN_MAXSPAWN + 2];
+static EDITMAIN_STATE_T EditState;
 
 /*******************************************************************************
 * CODE 								                                           *
@@ -180,7 +178,7 @@ void editmainCompleteMapData(MESH_T *mesh)
     NumFreeVertices = MAXTOTALMESHVERTICES - mesh -> numvert;
     /* Set flag that map has been loaded */
     mesh -> map_loaded = 1;
-    /* mesh -> draw_mode |= (EDIT_MODE_SOLID | EDIT_MODE_TEXTURED); */
+    mesh -> draw_mode  = EditState.draw_mode;
 
 }
 
@@ -205,13 +203,14 @@ static int editmainCreateNewMap(MESH_T *mesh)
 
 
     /* Fill the map with flag tiles */
+    fan = 0;
     for (y = 0; y < mesh -> tiles_y; y++) {
 
         for (x = 0; x < mesh -> tiles_x; x++) {
 
             /* TODO: Generate empty map */
-            mesh -> fan[fan].type    = 0;
-            mesh -> fan[fan].tx_bits = (((x & 1) + (y & 1)) & 1) + DEFAULT_TILE;
+            mesh -> fan[fan].type  = 0;
+            mesh -> fan[fan].tx_no = (char)((((x & 1) + (y & 1)) & 1) + DEFAULT_TILE);
 
             /* TODO:
             if ( !editmainAddFan(fan, x*TILEDIV, y*TILEDIV) )
@@ -230,6 +229,15 @@ static int editmainCreateNewMap(MESH_T *mesh)
 
 }
 
+/*
+ * Name:
+ *     editfileSetVrta
+ * Description:
+ *     Does the work for editing and sets edit states, if needed
+ * Input:
+ *     mesh *: Pointer on mesh  to handle
+ *     vert:   Number of vertex to set 
+ */
 static int editfileSetVrta(MESH_T *mesh, int vert)
 {
     /* TODO: Get all needed functions from cartman code */
@@ -331,19 +339,25 @@ static void editmainCalcVrta(MESH_T *mesh)
  * Description:
  *     Does all initalizations for the editor
  * Input:
- *     None    
+ *     None
+ * Output:
+ *     Pointer on EditState
  */
-void editmainInit(EDITMAIN_STATE_T *edit_state)
+EDITMAIN_STATE_T *editmainInit(void)
 {
 
     pCommands = editdrawInitData();
      
-    memset(edit_state, 0, sizeof(EDITMAIN_STATE_T));
+    memset(&EditState, 0, sizeof(EDITMAIN_STATE_T));
 
-    edit_state -> display_flags |= EDITMAIN_SHOW2DMAP;
-    edit_state -> fan_chosen   = -1;    /* No fan chosen                        */
-    edit_state -> brush_size   = 3;     /* Size of raise/lower terrain brush    */
-    edit_state -> brush_amount = 50;    /* Amount of raise/lower                */
+    EditState.display_flags |= EDITMAIN_SHOW2DMAP;
+    EditState.fan_chosen    = -1;   /* No fan chosen                        */
+    EditState.brush_size    = 3;    /* Size of raise/lower terrain brush    */
+    EditState.brush_amount  = 50;   /* Amount of raise/lower                */
+
+    EditState.draw_mode     = (EDIT_MODE_SOLID | EDIT_MODE_TEXTURED | EDIT_MODE_LIGHTMAX);
+
+    return &EditState;
     
 }
 
@@ -379,7 +393,7 @@ int editmainMap(int command)
     switch(command) {
 
         case EDITMAIN_DRAWMAP:
-            editdraw3DView(&Mesh);
+            editdraw3DView(&Mesh, EditState.fan_chosen);
             return 1;
 
         case EDITMAIN_NEWMAP:
@@ -393,7 +407,7 @@ int editmainMap(int command)
 
         case EDITMAIN_LOADMAP:
             memset(&Mesh, 0, sizeof(MESH_T));
-            if (editfileLoadMapMesh(&Mesh)) {
+            if (editfileLoadMapMesh(&Mesh, EditState.msg)) {
 
                 editmainCompleteMapData(&Mesh);
 
@@ -404,7 +418,7 @@ int editmainMap(int command)
 
         case EDITMAIN_SAVEMAP:
             editmainCalcVrta(&Mesh);
-            return editfileSaveMapMesh(&Mesh);
+            return editfileSaveMapMesh(&Mesh, EditState.msg);
 
     }
 
@@ -425,7 +439,7 @@ int editmainMap(int command)
 void editmainDrawMap2D(int x, int y, int w, int h)
 { 
     
-    editdraw2DMap(&Mesh, x, y, w, h);       
+    editdraw2DMap(&Mesh, x, y, w, h, EditState.fan_chosen);
 
 }
 
@@ -461,42 +475,35 @@ SPAWN_OBJECT_T *editmainLoadSpawn(void)
  *     which:        Which flag to change
  *
  */
-void editmainSetFlags(EDITMAIN_STATE_T *edit_state, int which, unsigned char flag)
+void editmainToggleFlag(int which, unsigned char flag)
 {
 
-    unsigned short tx_bits;
-
-
-    switch(which) {
+    switch(which) {            
 
         case EDITMAIN_TOGGLE_DRAWMODE:
-            flag &= 0x03;
             /* Change it in actual map */
             Mesh.draw_mode ^= flag;
             /* Show it in edit_state */
-            edit_state -> draw_mode = Mesh.draw_mode;
+            EditState.draw_mode = Mesh.draw_mode;
             break;
 
         case EDITMAIN_TOGGLE_FX:
-            if (edit_state -> fan_chosen >= 0
-                && edit_state -> fan_chosen < Mesh.numfan){
+            if (EditState.fan_chosen >= 0 && EditState.fan_chosen < Mesh.numfan){
                 /* Toggle it in chosen fan */
-                Mesh.fan[edit_state -> fan_chosen].fx ^= flag;
+                Mesh.fan[EditState.fan_chosen].fx ^= flag;
                 /* Now copy the actual state for display    */
-                edit_state -> act_fan.fx = Mesh.fan[edit_state -> fan_chosen].fx;
+                EditState.act_fan.fx = Mesh.fan[EditState.fan_chosen].fx;
             }
             else {
-                edit_state -> act_fan.fx = 0;
+                EditState.act_fan.fx = 0;
             }
             break;
 
         case EDITMAIN_TOGGLE_TXHILO:
-            if (edit_state -> fan_chosen >= 0) {
-                tx_bits = 0;
-                tx_bits |= flag;
-                Mesh.fan[edit_state -> fan_chosen].tx_bits ^= tx_bits;
+            if (EditState.fan_chosen >= 0) {
+                Mesh.fan[EditState.fan_chosen].tx_flags ^= flag;
                 /* And copy it for display */
-                edit_state -> act_fan.tx_bits = Mesh.fan[edit_state -> fan_chosen].tx_bits;
+                EditState.act_fan.tx_flags = Mesh.fan[EditState.fan_chosen].tx_flags;
             }
             break;
 

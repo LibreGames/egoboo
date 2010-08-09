@@ -53,6 +53,7 @@
 #define EDITOR_MAP        ((char)102)
 #define EDITOR_FX         ((char)103)
 #define EDITOR_STATE      ((char)104)
+#define EDITOR_SETTINGS   ((char)105)
 
 /* Sub-commands for main commands, if needed */
 #define EDITOR_STATE_SHOWMAP ((char)1)
@@ -84,9 +85,10 @@ static SDLGLCFG_NAMEDVALUE CfgValues[] = {
     { SDLGLCFG_VAL_INT, &SdlGlConfig.screenmode, "screenmode" },
     { SDLGLCFG_VAL_INT, &SdlGlConfig.debugmode, "debugmode" },
     { 0 }
-    
+
 };
 
+static EDITMAIN_STATE_T *pEditState;
 static char StatusBar[80];
 
 static SDLGL_CMDKEY EditorCmd[] = {
@@ -113,6 +115,7 @@ static SDLGL_FIELD MainMenu[EDITOR_MAXFLD + 2] = {
     { SDLGL_TYPE_STD,  {   0, 0, 800, 16 }, -1 }, /* Menu-Background:  */
     { SDLGL_TYPE_MENU, {   4, 4, 32, 8 }, EDITOR_FILE, 0, "File" },
     { SDLGL_TYPE_MENU, {  44, 4, 24, 8 }, EDITOR_MAP, 0, "Map" },
+    { SDLGL_TYPE_MENU, {  76, 4, 64, 8 }, EDITOR_SETTINGS, 0, "Settings" },
     { 0 }
 
 };
@@ -120,19 +123,23 @@ static SDLGL_FIELD MainMenu[EDITOR_MAXFLD + 2] = {
 /* ------ Sub-Menus ------- */
 static SDLGL_FIELD SubMenu[] = {
     /* File-Menu */
-    { SDLGL_TYPE_STD,  {   0, 16, 80, 16 }, EDITOR_FILE, -1 },     /* Menu-Background */
+    { SDLGL_TYPE_STD,  {   0, 16, 80, 16 }, EDITOR_FILE, -1 },  /* Menu-Background */
     { SDLGL_TYPE_MENU, {   4, 20, 72,  8 }, EDITOR_FILE, EDITOR_FILE_EXIT, "Exit" },
     /* --- Maze-Menu */
-    { SDLGL_TYPE_STD,  {  40, 16, 64, 56 }, EDITOR_MAP, -1 },    /* Menu-Background */
+    { SDLGL_TYPE_STD,  {  40, 16, 64, 56 }, EDITOR_MAP, -1 },   /* Menu-Background */
     { SDLGL_TYPE_MENU, {  44, 20, 56,  8 }, EDITOR_MAP, EDITMAIN_NEWMAP,  "New" },
     { SDLGL_TYPE_MENU, {  44, 36, 56,  8 }, EDITOR_MAP, EDITMAIN_LOADMAP, "Load..." },
     { SDLGL_TYPE_MENU, {  44, 52, 56,  8 }, EDITOR_MAP, EDITMAIN_SAVEMAP, "Save" },
+    /* ---- Settings menu for view ---- */
+    { SDLGL_TYPE_STD,  {  68, 16, 136, 56 }, EDITOR_SETTINGS, -1 },   /* Menu-Background */
+    { SDLGL_TYPE_MENU, {  72, 20, 128,  8 }, EDITOR_SETTINGS, EDIT_MODE_SOLID,    "[ ] Draw Solid" },
+    { SDLGL_TYPE_MENU, {  72, 36, 128,  8 }, EDITOR_SETTINGS, EDIT_MODE_TEXTURED, "[ ] Draw Texture"  },
+    { SDLGL_TYPE_MENU, {  72, 52, 128,  8 }, EDITOR_SETTINGS, EDIT_MODE_LIGHTMAX, "[ ] Max Light" },
     /* TODO: Add EDITOR_MAP, 'EDITMAIN_LOADSPAWN'               */
     { 0 }
 };
 
 static SDLGL_RECT MapRect = { 0, 16, 256, 256 };
-static EDITMAIN_STATE_T EditState;
 
 /* Prepared Dialog for changing of Flags of a fan */
 static SDLGL_FIELD FanFlagsDlg[] = {
@@ -143,7 +150,7 @@ static SDLGL_FIELD FanFlagsDlg[] = {
     { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_WALL,    "Barrier (Slit)" },    
     { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_IMPASS,  "Impassable (Wall)" }, 
     { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_DAMAGE,  "Damage" }, 
-    { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_SLIPPY,  "Slippy" }, 
+    { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_SLIPPY,  "Slippy" },
     { 0 }
 };
 
@@ -218,6 +225,43 @@ static void editorSetMenu(char which)
 
 /*
  * Name:
+ *     editorSetMenuViewToggle
+ * Description:
+ *     Show toggled values as 'X' in menu string
+ * Input:
+ *     None
+ */
+static void editorSetMenuViewToggle(void)
+{
+
+    SDLGL_FIELD *first;
+
+
+    first = &SubMenu[7];
+    if (pEditState -> draw_mode & EDIT_MODE_SOLID) {
+        first[0].pdata[1] = 'X';
+    }
+    else {  /* Remove toogle */
+        first[0].pdata[1] = ' ';
+    }
+
+    if (pEditState -> draw_mode & EDIT_MODE_TEXTURED) {
+        first[1].pdata[1] = 'X';
+    }
+    else {  /* Remove toogle */
+        first[1].pdata[1] = ' ';
+    }
+    if (pEditState -> draw_mode & EDIT_MODE_LIGHTMAX) {
+        first[2].pdata[1] = 'X';
+    }
+    else {  /* Remove toogle */
+        first[2].pdata[1] = ' ';
+    }
+
+}
+
+/*
+ * Name:
  *     editorDrawFunc
  * Description:
  *     Draw anything on screen
@@ -235,7 +279,7 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
 
 
     glClear(GL_COLOR_BUFFER_BIT);
-    
+
     /* First move the camera */
     sdlgl3dMoveObjects(event -> secondspassed); 
 
@@ -303,7 +347,7 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
     }    
 
     /* Draw map if needed */
-    if (EditState.display_flags & EDITMAIN_SHOW2DMAP) {
+    if (pEditState -> display_flags & EDITMAIN_SHOW2DMAP) {
     
         editmainDrawMap2D(MapRect.x, MapRect.y, MapRect.w, MapRect.h);
         
@@ -356,9 +400,13 @@ static int editorInputHandler(SDLGL_EVENT *event)
                 case EDITOR_STATE:
                     if (event -> sub_code == EDITOR_STATE_SHOWMAP) {
 
-                        EditState.display_flags ^= EDITMAIN_SHOW2DMAP;
+                        pEditState -> display_flags ^= EDITMAIN_SHOW2DMAP;
 
                     }
+                    break;
+                case EDITOR_SETTINGS:
+                    editmainToggleFlag(EDITMAIN_TOGGLE_DRAWMODE, event -> sub_code);
+                    editorSetMenuViewToggle();
                     break;
 
                 case EDITOR_EXITPROGRAM:
@@ -385,6 +433,8 @@ static int editorInputHandler(SDLGL_EVENT *event)
 static void editorStart(void)
 {
 
+    /* Initalize the maze editor */
+    pEditState = editmainInit();
     /* -------- Adjust the menu bar sizes to screen ------- */
     /* Status-Bar   */
     sdlglAdjustRectToScreen(&MainMenu[0].rect,
@@ -396,7 +446,7 @@ static void editorStart(void)
                             SDLGL_FRECT_SCRWIDTH);
     /* Map-Rectangle    */
     sdlglAdjustRectToScreen(&MapRect, &MapRect, SDLGL_FRECT_SCRRIGHT);
-    
+
     /* -------- Now create the output screen ---------- */
     sdlglInputNew(editorDrawFunc,
                   editorInputHandler,     /* Handler for input    */
@@ -433,10 +483,9 @@ int main(int argc, char **argv)
     sdlglInit(&SdlGlConfig);  
 
     /* Init Camera +Z is up, -Y is near plane, X is left/right */
-    sdlgl3dInitCamera(0, 2 * 128.0, -128.0, 192.0, 300, 0, 0, 0.75);
+    sdlgl3dInitCamera(0, 2 * 128.0, -128.0, 560.0, 320, 0, 0, 0.75);
 
     /* Set the input handlers and do other stuff before  */
-    editmainInit(&EditState);
     editorStart();
 
     /* Now enter the mainloop */

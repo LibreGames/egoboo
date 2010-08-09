@@ -334,8 +334,8 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
     }
 };
 
-static float MeshTileOffUV[EDITDRAW_MAXWALLSUBTEX * 2];
-static GLint WallTex[EDITDRAW_MAXWALLTEX];
+static float  MeshTileOffUV[EDITDRAW_MAXWALLSUBTEX * 2];
+static GLuint WallTex[EDITDRAW_MAXWALLTEX];
 
 /*******************************************************************************
 * CODE 								                                           *
@@ -382,7 +382,7 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
     }
     else {
 
-        if (type & 0x20) {	                /* It's one with hi res texture */
+        if (type & COMMAND_TEXTUREHI_FLAG) {/* It's one with hi res texture */
             sdlglSetColor(SDLGL_COL_BLUE);  /* color like cartman           */
     	}
     	else {
@@ -392,7 +392,7 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
     }
     if (mesh -> draw_mode & EDIT_MODE_TEXTURED ) {
 
-        if (type & 0x20) {	/* It's one with hi res texture */
+        if (type & COMMAND_TEXTUREHI_FLAG) {	/* It's one with hi res texture */
             uv = &mc -> biguv[0];
     	}
     	else {
@@ -401,12 +401,12 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
 
     }
 
-    offuv = &MeshTileOffUV[(mesh -> fan[fan_no].tx_bits & 0x3F) * 2];
+    offuv = &MeshTileOffUV[(mesh -> fan[fan_no].tx_no & 0x3F) * 2];
 
     /* Now bind the texture */
     if (mesh -> draw_mode & EDIT_MODE_TEXTURED) {
 
-        glBindTexture(GL_TEXTURE_2D, WallTex[((mesh -> fan[fan_no].tx_bits >> 7) & 3)]);
+        glBindTexture(GL_TEXTURE_2D, WallTex[((mesh -> fan[fan_no].tx_no >> 6) & 3)]);
 
     }
 
@@ -429,6 +429,10 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
                     }
                     else {
                         color[0] = color[1] = color[2] = 60;
+                    }
+
+                    if (mesh -> draw_mode & EDIT_MODE_LIGHTMAX) {
+                        color[0] = color[1] = color[2] = 255;
                     }
                     glColor3ubv(&color[0]);		/* Set the light color */
 
@@ -455,9 +459,10 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
  *  Description:
  *	    Draws a single fan with given number from given mesh
  * Input:
- *      mesh *: Pointer on mesh to draw
+ *      mesh *:     Pointer on mesh to draw
+ *      chosen_fan: Sign this fan as chosen in 3D-Map
  */
-static void editdrawMap(MESH_T *mesh)
+static void editdrawMap(MESH_T *mesh, int chosen_fan)
 {
 
     int fan_no;
@@ -470,14 +475,24 @@ static void editdrawMap(MESH_T *mesh)
     }
 
     glPolygonMode(GL_FRONT, mesh -> draw_mode & EDIT_MODE_SOLID ? GL_FILL : GL_LINE);
+    if (mesh -> draw_mode & EDIT_MODE_TEXTURED) {
+        glEnable(GL_TEXTURE_2D);
+    }
     /* TODO: Draw the map, using different edit flags           */
     /* Needs list of visible tiles
        ( which must be built every time after the camera moved) */
     for (fan_no = 0; fan_no < mesh -> numfan;  fan_no++) {
 
         editdrawSingleFan(mesh, fan_no);
-        /* TODO: Sign fan, if it's chosen */
 
+        if (chosen_fan == fan_no) {
+            /* TODO: Sign fan, if it's chosen */
+        }
+
+    }
+    
+    if (mesh -> draw_mode & EDIT_MODE_TEXTURED) {
+        glDisable(GL_TEXTURE_2D);
     }
 
 }
@@ -556,10 +571,10 @@ COMMAND_T *editdrawInitData(void)
 void editdrawFreeData(void)
 {
     
-    /* TODO: Free the basic textures */
-    glDeleteTextures(4, WallTex);
- 
-} 
+    /* Free the basic textures */
+    glDeleteTextures(4, &WallTex[0]);
+
+}
 
 /*
  * Name:
@@ -567,9 +582,10 @@ void editdrawFreeData(void)
  * Description:
  *     Draws the whole 3D-View  
  * Input:
- *     mesh *: Pointer on mesh to draw
+ *      mesh *:     Pointer on mesh to draw
+ *      chosen_fan: Sign this fan as chosen in 3D-Map
  */
-void editdraw3DView(MESH_T *mesh)
+void editdraw3DView(MESH_T *mesh, int chosen_fan)
 {
 
     int w, h;
@@ -600,7 +616,7 @@ void editdraw3DView(MESH_T *mesh)
 
     }
 
-    editdrawMap(mesh);
+    editdrawMap(mesh, chosen_fan);
 
     sdlgl3dEnd();
 
@@ -612,9 +628,11 @@ void editdraw3DView(MESH_T *mesh)
  * Description:
  *     Draws the map as 2D-View into given rectangle
  * Input:
- *     mesh *: Pointer on mesh to draw
+ *     mesh *:     Pointer on mesh to draw
+ *     x, y, w, h: Draw into this rectangle
+ *     chosen_fan: This fan is chosen by user
  */
-void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h)
+void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int chosen_fan)
 {
 
     static int mapcolors[] = { SDLGL_COL_BLUE, SDLGL_COL_BLUE, SDLGL_COL_BLUE, SDLGL_COL_BLUE, /* Ground */
@@ -671,6 +689,24 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h)
     glEnd();
 
     /* TODO: Draw chosen tile                   */
+    if (chosen_fan >= 0) {
+        
+        draw_rect.x = (chosen_fan % mesh -> tiles_x) * draw_rect.w;
+        draw_rect.y = (chosen_fan / mesh -> tiles_x) * draw_rect.h;
+        
+        rx2 = draw_rect.x + draw_rect.w;
+        ry2 = draw_rect.y + draw_rect.h;
+                
+        sdlglSetColor(SDLGL_COL_YELLOW);
+        glBegin(GL_LINE_LOOP);
+            glVertex2i(draw_rect.x,  ry2);
+            glVertex2i(rx2, ry2);
+            glVertex2i(rx2, draw_rect.y);
+            glVertex2i(draw_rect.x,  draw_rect.y);
+        glEnd(); 
+
+    }
+    
     /* TODO: Draw the Camera-Frustum over map   */
 
 
