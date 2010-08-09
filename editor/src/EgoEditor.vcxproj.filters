@@ -39,6 +39,9 @@
     <ClCompile Include="sdlgltex.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="editmain.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="editdraw.h">
@@ -66,6 +69,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="platform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="editmain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

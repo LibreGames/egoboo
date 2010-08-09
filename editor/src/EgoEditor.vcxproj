@@ -46,7 +46,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MultiProcessorCompilation>false</MultiProcessorCompilation>
-      <DisableSpecificWarnings>4244; 4098;</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4244; 4098; 4305;</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <TargetMachine>MachineX86</TargetMachine>
@@ -76,6 +76,7 @@
   <ItemGroup>
     <ClCompile Include="editdraw.c" />
     <ClCompile Include="editfile.c" />
+    <ClCompile Include="editmain.c" />
     <ClCompile Include="editor.c" />
     <ClCompile Include="sdlgl.c" />
     <ClCompile Include="sdlgl3d.c" />
@@ -86,6 +87,7 @@
   <ItemGroup>
     <ClInclude Include="editdraw.h" />
     <ClInclude Include="editfile.h" />
+    <ClInclude Include="editmain.h" />
     <ClInclude Include="editor.h" />
     <ClInclude Include="platform.h" />
     <ClInclude Include="sdlgl.h" />
