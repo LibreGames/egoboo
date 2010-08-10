@@ -506,16 +506,15 @@ void sdlgl3dAttachCameraToObj(int object_no, char camtype)
  *     given rotations.
  * Input:
  *      camera_no:        Initialize this camera  
- *      x, ,y, z:         Position of camera  
  *      rotx, roty, rotz: Roatation in each axis
  *      aspect_ratio:     Of screen for 3D-View   
  */
-void sdlgl3dInitCamera(int camera_no, float x, float y, float z, int rotx, int roty, int rotz, float aspect_ratio)
+void sdlgl3dInitCamera(int camera_no, int rotx, int roty, int rotz, float aspect_ratio)
 {
 
-    Camera[camera_no].campos.pos[0] = x;
-    Camera[camera_no].campos.pos[1] = y;
-    Camera[camera_no].campos.pos[SDLGL3D_Z] = z;
+    Camera[camera_no].campos.pos[0] = 0;
+    Camera[camera_no].campos.pos[1] = 0;
+    Camera[camera_no].campos.pos[SDLGL3D_Z] = 0;
 
     Camera[camera_no].campos.rot[0] = rotx;
     Camera[camera_no].campos.rot[1] = roty;
@@ -596,7 +595,7 @@ void sdlgl3dInitObject(SDLGL3D_OBJECT *moveobj)
  * Description:
  *     Sets the commands for object with given number. < 0: Is camera
  * Input:
- *      camera_no: Number of object to manage
+ *      camera_no: Number of camera to manage
  *      move_cmd:  Kind of movement
  *      move_dir:  Prefix additional to movement code
  */
@@ -605,6 +604,24 @@ void sdlgl3dManageCamera(int camera_no, char move_cmd, char move_dir)
 
     Camera[camera_no].campos.move_cmd = move_cmd;
     Camera[camera_no].campos.move_dir = move_dir;
+
+}
+
+/*
+ * Name:
+ *     sdlgl3dMoveToPosCamera
+ * Description:
+ *      Moves the camera to given position x/y/z
+ * Input:
+ *      camera_no: Number of camera to set to position
+ *      x, y, z:   Position of camera to move to
+ */
+void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z)
+{
+
+    Camera[camera_no].campos.pos[0] = x;
+    Camera[camera_no].campos.pos[1] = y;
+    Camera[camera_no].campos.pos[SDLGL3D_Z] = z;
 
 }
 

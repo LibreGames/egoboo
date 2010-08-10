@@ -511,4 +511,32 @@ void editmainToggleFlag(int which, unsigned char flag)
 
 }
 
+/*
+ * Name:
+ *     editmainChooseFan
+ * Description:
+ *     Choose a fan from given position in rectangle of size w/h.
+ *     Does an update on the 'EditState'
+ * Input:
+ *     cx, cy: Position chosen
+ *     w, h:   Extent of rectangle
+ */
+void editmainChooseFan(int cx, int cy, int w, int h)
+{
 
+    int x_tile, y_tile;
+    int fan_no;
+    
+    
+    x_tile = Mesh.tiles_x * cx / w;
+    y_tile = Mesh.tiles_y * cy / h;
+    
+    fan_no = (y_tile * Mesh.tiles_x) + x_tile;
+    
+    if (fan_no >= 0 && fan_no < Mesh.numfan) {
+    
+        EditState.fan_chosen = fan_no;
+    
+    }
+ 
+}

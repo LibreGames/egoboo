@@ -176,7 +176,7 @@ int editfileLoadMapMesh(MESH_T *mesh, char *msg)
         for (cnt = 0; cnt < mesh -> numvert; cnt++) {
             /* TODO: Convert float to int for editing */
             fread(&ftmp, 4, 1, fileread);
-            mesh -> vrtz[cnt] = ftmp / 32;  /* Z is fixpoint int in cartman */
+            mesh -> vrtz[cnt] = ftmp / 16;  /* Z is fixpoint int in cartman */
         }
 
         fread(&mesh -> vrta[0], 1, mesh -> numvert, fileread);   // !!!BAD!!!

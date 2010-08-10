@@ -422,15 +422,9 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
                 actvertex = vertexno[entry]; 	/* Number of vertex to draw */
 
                 if (mesh -> draw_mode & EDIT_MODE_SOLID) {
-
-                    if (mesh -> vrta[actvertex] > 60) {
-                        color[0] = color[1] = color[2] = mesh -> vrta[actvertex];
-
-                    }
-                    else {
-                        color[0] = color[1] = color[2] = 60;
-                    }
-
+                    /* Show ambient lighting */
+                    color[0] = color[1] = color[2] = mesh -> vrta[actvertex];
+                    
                     if (mesh -> draw_mode & EDIT_MODE_LIGHTMAX) {
                         color[0] = color[1] = color[2] = 255;
                     }
@@ -691,22 +685,22 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int chosen_fan)
     /* TODO: Draw chosen tile                   */
     if (chosen_fan >= 0) {
         
-        draw_rect.x = (chosen_fan % mesh -> tiles_x) * draw_rect.w;
-        draw_rect.y = (chosen_fan / mesh -> tiles_x) * draw_rect.h;
-        
+        draw_rect.x = x + ((chosen_fan % mesh -> tiles_x) * draw_rect.w);
+        draw_rect.y = y + ((chosen_fan / mesh -> tiles_x) * draw_rect.h);
+
         rx2 = draw_rect.x + draw_rect.w;
         ry2 = draw_rect.y + draw_rect.h;
-                
+
         sdlglSetColor(SDLGL_COL_YELLOW);
         glBegin(GL_LINE_LOOP);
             glVertex2i(draw_rect.x,  ry2);
             glVertex2i(rx2, ry2);
             glVertex2i(rx2, draw_rect.y);
             glVertex2i(draw_rect.x,  draw_rect.y);
-        glEnd(); 
+        glEnd();
 
     }
-    
+
     /* TODO: Draw the Camera-Frustum over map   */
 
 

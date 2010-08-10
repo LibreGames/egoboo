@@ -1,10 +1,16 @@
+2010-08-10 <bitnapper>
+- Fan can be chosen on 2D-Map
+- Fans are drawn with original ambient light
+- Camera moves near chosen fan/tile 
+- Fixex bug in code for combined command-keys
+
 2010-08-09 <bitnapper>
 - File functions return a message string on error
 - Added menu "Settings" for display
 - Added drawing of textures
 - Changed division of Z-height on load 
 - Changed start position of camera (view looks a little bit distorted)
-- Added display od map in 2D
+- Added display of map in 2D
 
 2010-08-08 <bitnapper>
 - Added possible bounding of camera to an x/y extent
@@ -17,7 +23,7 @@
 2010-08-06 <bitnapper>
 - Read in Screen-Configuration from EDITOR.CFG
 - Menu-Bars are adjusted to screen size
-- Added some code from other editors for drawin of map
+- Added some code from other editors for drawing of map
 - Added hard coded command definitions
 
 2010-08-05 <bitnapper>

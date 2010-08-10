@@ -403,7 +403,7 @@ static int sdlglITranslateKeyboardInput(SDLGL_EVENT *event, char pressed)
         sk = sk_list;
         while (sk -> keys[0] > 0) {
         
-            for (i = 0; i < 2; i++) {
+            for (i = 0, mask = 0x01; i < 2; i++, mask <<= 1) {
                     
                 if (sk -> keys[i] == event -> sdlcode) {  
                 

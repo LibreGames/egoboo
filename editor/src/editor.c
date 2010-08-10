@@ -41,7 +41,7 @@
 * DEFINES								                                       *
 *******************************************************************************/
 
-#define EDITOR_CAPTION "EGOBOO - Editor"
+#define EDITOR_CAPTION "EGOBOO - An Editor V 0.1"
 
 #define EDITOR_MAXFLD   60
 
@@ -49,11 +49,12 @@
 #define EDITOR_EXITPROGRAM    ((char)100)
 
 /* Menu commands -- Don't collid with 3D-Commands */
-#define EDITOR_FILE       ((char)101)
-#define EDITOR_MAP        ((char)102)
-#define EDITOR_FX         ((char)103)
-#define EDITOR_STATE      ((char)104)
-#define EDITOR_SETTINGS   ((char)105)
+#define EDITOR_FILE     ((char)101)
+#define EDITOR_MAP      ((char)102)
+#define EDITOR_FX       ((char)103)
+#define EDITOR_STATE    ((char)104)
+#define EDITOR_SETTINGS ((char)105)
+#define EDITOR_2DMAP    ((char)106)           /* Displayed map */
 
 /* Sub-commands for main commands, if needed */
 #define EDITOR_STATE_SHOWMAP ((char)1)
@@ -110,9 +111,10 @@ static SDLGL_CMDKEY EditorCmd[] = {
 };
 
 static SDLGL_FIELD MainMenu[EDITOR_MAXFLD + 2] = {
-    { SDLGL_TYPE_STD,  {   0, 584, 800, 16 } },
-    /* 'Code' needed in menu-background' for support of 'mouse-over' */
-    { SDLGL_TYPE_STD,  {   0, 0, 800, 16 }, -1 }, /* Menu-Background:  */
+    { SDLGL_TYPE_STD,  {   0, 584, 800,  16 } },            /* Status bar       */
+    { SDLGL_TYPE_MENU + 10,  { 0, 16, 256, 256 }, EDITOR_2DMAP }, /* Map-Rectangle    */
+    /* 'Code' needed in menu-background' for support of 'mouse-over'    */
+    { SDLGL_TYPE_STD,  {   0, 0, 800, 16 }, -1 },           /* Menu-Background  */
     { SDLGL_TYPE_MENU, {   4, 4, 32, 8 }, EDITOR_FILE, 0, "File" },
     { SDLGL_TYPE_MENU, {  44, 4, 24, 8 }, EDITOR_MAP, 0, "Map" },
     { SDLGL_TYPE_MENU, {  76, 4, 64, 8 }, EDITOR_SETTINGS, 0, "Settings" },
@@ -139,10 +141,9 @@ static SDLGL_FIELD SubMenu[] = {
     { 0 }
 };
 
-static SDLGL_RECT MapRect = { 0, 16, 256, 256 };
-
 /* Prepared Dialog for changing of Flags of a fan */
-static SDLGL_FIELD FanFlagsDlg[] = {
+static SDLGL_FIELD FanInfoDlg[] = {
+    { SDLGL_TYPE_STD, { 0, 0, 0, 0 } }, /* Background of dialog */ 
     { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_SHA,     "Reflective" },    
     { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_DRAWREF, "Draw Reflection" },    
     { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_ANIM,    "Animated" }, 
@@ -349,7 +350,8 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
     /* Draw map if needed */
     if (pEditState -> display_flags & EDITMAIN_SHOW2DMAP) {
     
-        editmainDrawMap2D(MapRect.x, MapRect.y, MapRect.w, MapRect.h);
+        editmainDrawMap2D(MainMenu[1].rect.x, MainMenu[1].rect.y,
+                          MainMenu[1].rect.w, MainMenu[1].rect.h);
         
     }
 
@@ -365,6 +367,9 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
  */
 static int editorInputHandler(SDLGL_EVENT *event)
 {
+
+    SDLGL_FIELD *field;
+
 
     if (event -> code > 0) {
 
@@ -409,6 +414,22 @@ static int editorInputHandler(SDLGL_EVENT *event)
                     editorSetMenuViewToggle();
                     break;
 
+                case EDITOR_2DMAP:
+                    /* TODO: Make this a 'dynamic' input field */
+                    if (pEditState -> display_flags & EDITMAIN_SHOW2DMAP) {
+
+                        field = event -> field;
+                        editmainChooseFan(event -> mou.x, event -> mou.y,
+                                          field -> rect.w, field -> rect.h);
+                        /* And now move camera to this position */
+                        sdlgl3dMoveToPosCamera(0,
+                                               32.0 * event -> mou.x,
+                                               32.0 * event -> mou.y,
+                                               600.0);
+
+                    }
+                    break;
+
                 case EDITOR_EXITPROGRAM:
                     return SDLGL_INPUT_EXIT;
 
@@ -435,17 +456,22 @@ static void editorStart(void)
 
     /* Initalize the maze editor */
     pEditState = editmainInit();
+    /* Display initally chosen values */    
+    editorSetMenuViewToggle();
     /* -------- Adjust the menu bar sizes to screen ------- */
     /* Status-Bar   */
     sdlglAdjustRectToScreen(&MainMenu[0].rect,
                             &MainMenu[0].rect,
                             (SDLGL_FRECT_SCRWIDTH | SDLGL_FRECT_SCRBOTTOM));
-    /* Menu-Bar     */
+    /* Map-Rectangle    */
     sdlglAdjustRectToScreen(&MainMenu[1].rect,
                             &MainMenu[1].rect,
+                            SDLGL_FRECT_SCRRIGHT);
+    /* Menu-Bar     */
+    sdlglAdjustRectToScreen(&MainMenu[2].rect,
+                            &MainMenu[2].rect,
                             SDLGL_FRECT_SCRWIDTH);
-    /* Map-Rectangle    */
-    sdlglAdjustRectToScreen(&MapRect, &MapRect, SDLGL_FRECT_SCRRIGHT);
+
 
     /* -------- Now create the output screen ---------- */
     sdlglInputNew(editorDrawFunc,
@@ -482,8 +508,10 @@ int main(int argc, char **argv)
 
     sdlglInit(&SdlGlConfig);  
 
+
+    sdlgl3dInitCamera(0, 330, 0, 0, 0.75);
     /* Init Camera +Z is up, -Y is near plane, X is left/right */
-    sdlgl3dInitCamera(0, 2 * 128.0, -128.0, 560.0, 320, 0, 0, 0.75);
+    sdlgl3dMoveToPosCamera(0, 4 * 128.0, -128.0, 600.0);
 
     /* Set the input handlers and do other stuff before  */
     editorStart();
