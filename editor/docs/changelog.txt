@@ -1,3 +1,7 @@
+2010-08-11 <bitnapper>
+- Extended map menu for new maps to "flat" and "solid"
+- Added points from the forum to my todo-list
+
 2010-08-10 <bitnapper>
 - Fan can be chosen on 2D-Map
 - Fans are drawn with original ambient light

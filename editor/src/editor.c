@@ -128,10 +128,11 @@ static SDLGL_FIELD SubMenu[] = {
     { SDLGL_TYPE_STD,  {   0, 16, 80, 16 }, EDITOR_FILE, -1 },  /* Menu-Background */
     { SDLGL_TYPE_MENU, {   4, 20, 72,  8 }, EDITOR_FILE, EDITOR_FILE_EXIT, "Exit" },
     /* --- Maze-Menu */
-    { SDLGL_TYPE_STD,  {  40, 16, 64, 56 }, EDITOR_MAP, -1 },   /* Menu-Background */
-    { SDLGL_TYPE_MENU, {  44, 20, 56,  8 }, EDITOR_MAP, EDITMAIN_NEWMAP,  "New" },
-    { SDLGL_TYPE_MENU, {  44, 36, 56,  8 }, EDITOR_MAP, EDITMAIN_LOADMAP, "Load..." },
-    { SDLGL_TYPE_MENU, {  44, 52, 56,  8 }, EDITOR_MAP, EDITMAIN_SAVEMAP, "Save" },
+    { SDLGL_TYPE_STD,  {  40, 16, 80, 72 }, EDITOR_MAP, -1 },   /* Menu-Background */
+    { SDLGL_TYPE_MENU, {  44, 20, 72,  8 }, EDITOR_MAP, EDITMAIN_NEWFLATMAP,  "New Flat" },
+    { SDLGL_TYPE_MENU, {  44, 36, 72,  8 }, EDITOR_MAP, EDITMAIN_NEWSOLIDMAP,  "New Solid" },
+    { SDLGL_TYPE_MENU, {  44, 52, 72,  8 }, EDITOR_MAP, EDITMAIN_LOADMAP, "Load..." },
+    { SDLGL_TYPE_MENU, {  44, 68, 72,  8 }, EDITOR_MAP, EDITMAIN_SAVEMAP, "Save" },
     /* ---- Settings menu for view ---- */
     { SDLGL_TYPE_STD,  {  68, 16, 136, 56 }, EDITOR_SETTINGS, -1 },   /* Menu-Background */
     { SDLGL_TYPE_MENU, {  72, 20, 128,  8 }, EDITOR_SETTINGS, EDIT_MODE_SOLID,    "[ ] Draw Solid" },
@@ -238,7 +239,8 @@ static void editorSetMenuViewToggle(void)
     SDLGL_FIELD *first;
 
 
-    first = &SubMenu[7];
+    first = &SubMenu[8];
+    
     if (pEditState -> draw_mode & EDIT_MODE_SOLID) {
         first[0].pdata[1] = 'X';
     }
@@ -400,6 +402,7 @@ static int editorInputHandler(SDLGL_EVENT *event)
                     if (! editmainMap(event -> sub_code)) {
                         /* TODO: Display message, what has gone wrong   */
                         /* TODO: Add 'EDITMAIN_LOADSPAWN'               */
+                        /* TODO: Close menu, if menu-point is chosen    */
                     }
                     break;
                 case EDITOR_STATE:
@@ -423,8 +426,8 @@ static int editorInputHandler(SDLGL_EVENT *event)
                                           field -> rect.w, field -> rect.h);
                         /* And now move camera to this position */
                         sdlgl3dMoveToPosCamera(0,
-                                               32.0 * event -> mou.x,
-                                               32.0 * event -> mou.y,
+                                               (pEditState -> tile_x * 128.0) - 450.0,
+                                               (pEditState -> tile_y * 128.0) - 450.0,
                                                600.0);
 
                     }

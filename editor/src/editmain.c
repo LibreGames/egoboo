@@ -189,8 +189,9 @@ void editmainCompleteMapData(MESH_T *mesh)
  *     Does the work for editing and sets edit states, if needed
  * Input:
  *     mesh *: Pointer on mesh  to fill with default values
+ *     which:  Type of map to create : EDITMAIN_NEWFLATMAP / EDITMAIN_NEWSOLIDMAP 
  */
-static int editmainCreateNewMap(MESH_T *mesh)
+static int editmainCreateNewMap(MESH_T *mesh, int which)
 {
 
     int x, y, fan;
@@ -202,6 +203,16 @@ static int editmainCreateNewMap(MESH_T *mesh)
     mesh -> tiles_y = EDITFILE_MAX_MAPSIZE;
 
 
+    if (which == EDITMAIN_NEWFLATMAP) {
+    
+    }
+    else if (which == EDITMAIN_NEWSOLIDMAP) {
+    
+    
+    }
+    else {
+    
+    }
     /* Fill the map with flag tiles */
     fan = 0;
     for (y = 0; y < mesh -> tiles_y; y++) {
@@ -211,7 +222,7 @@ static int editmainCreateNewMap(MESH_T *mesh)
             /* TODO: Generate empty map */
             mesh -> fan[fan].type  = 0;
             mesh -> fan[fan].tx_no = (char)((((x & 1) + (y & 1)) & 1) + DEFAULT_TILE);
-
+            
             /* TODO:
             if ( !editmainAddFan(fan, x*TILEDIV, y*TILEDIV) )
             {
@@ -396,8 +407,9 @@ int editmainMap(int command)
             editdraw3DView(&Mesh, EditState.fan_chosen);
             return 1;
 
-        case EDITMAIN_NEWMAP:
-            if (editmainCreateNewMap(&Mesh)) {
+        case EDITMAIN_NEWFLATMAP:
+        case EDITMAIN_NEWSOLIDMAP:
+            if (editmainCreateNewMap(&Mesh, EDITMAIN_NEWFLATMAP)) {
 
                 editmainCompleteMapData(&Mesh);
                 return 1;
@@ -524,14 +536,14 @@ void editmainToggleFlag(int which, unsigned char flag)
 void editmainChooseFan(int cx, int cy, int w, int h)
 {
 
-    int x_tile, y_tile;
     int fan_no;
     
+
+    /* Save it as x/y-position, too */
+    EditState.tile_x = Mesh.tiles_x * cx / w;
+    EditState.tile_y = Mesh.tiles_y * cy / h;
     
-    x_tile = Mesh.tiles_x * cx / w;
-    y_tile = Mesh.tiles_y * cy / h;
-    
-    fan_no = (y_tile * Mesh.tiles_x) + x_tile;
+    fan_no = (EditState.tile_y * Mesh.tiles_x) + EditState.tile_x;
     
     if (fan_no >= 0 && fan_no < Mesh.numfan) {
     

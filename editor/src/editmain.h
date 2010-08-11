@@ -33,10 +33,11 @@
 * DEFINES								                                       *
 *******************************************************************************/
 
-#define EDITMAIN_DRAWMAP    0
-#define EDITMAIN_NEWMAP     1
-#define EDITMAIN_LOADMAP    2
-#define EDITMAIN_SAVEMAP    3
+#define EDITMAIN_DRAWMAP     0
+#define EDITMAIN_NEWFLATMAP  1
+#define EDITMAIN_NEWSOLIDMAP 2
+#define EDITMAIN_LOADMAP     3
+#define EDITMAIN_SAVEMAP     4
 
 /* ---------- Edit-Flags -------- */
 #define EDITMAIN_SHOW2DMAP 0x01         /* Display the 2DMap        */
@@ -56,6 +57,7 @@
 typedef struct {
 
     int fan_chosen;             /* Actual chosen fan for editing    */
+    int tile_x, tile_y;         /* Position of fan as x/y tile      */
     unsigned char display_flags;/* For display in main editor       */
     unsigned char draw_mode;    /* For copy into mesh - struct      */
     char brush_size;            /* From 'cartman'  0-3, (slider)    */    
