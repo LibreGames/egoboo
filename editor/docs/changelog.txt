@@ -1,6 +1,8 @@
 2010-08-11 <bitnapper>
 - Extended map menu for new maps to "flat" and "solid"
 - Added points from the forum to my todo-list
+- Added display of camera frustum on 2D-Map
+- BUG: Left and right of map are swapped in 3D-View :-((
 
 2010-08-10 <bitnapper>
 - Fan can be chosen on 2D-Map

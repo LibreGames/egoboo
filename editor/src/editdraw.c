@@ -636,9 +636,12 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int chosen_fan)
                                2, 2,	  /* ------ */
                                3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
                                4, 4,	  /* Stair  */
-                               5, 5, 5, 5, 5, 5 };   /* Unknown */	 
+                               5, 5, 5, 5, 5, 5 };   /* Unknown */
+    SDLGL3D_OBJECT *campos;
     SDLGL_RECT draw_rect;
-    int rx2, ry2;  
+    float nx[4], ny[4];         /* For the frustum normals              */
+    float zmax;                 /* Far plane: Extent of frustum normals */
+    int rx2, ry2;
     int fan_no;
 
 
@@ -652,23 +655,23 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int chosen_fan)
     draw_rect.y = y;
     draw_rect.w = w / mesh -> tiles_x;   /* With generates size of square */
     draw_rect.h = draw_rect.w;
-    
+
     fan_no = 0;
     glBegin(GL_QUADS);
         for (h = 0; h < mesh -> tiles_y; h++) {
 
             for (w = 0; w < mesh -> tiles_x; w++) {
-                            
+
                 sdlglSetColor(mapcolors[mesh -> fan[fan_no].type & 0x1F]);
-                
+
                 rx2 = draw_rect.x + draw_rect.w;
                 ry2 = draw_rect.y + draw_rect.h;
-                
+
                 glVertex2i(draw_rect.x,  ry2);
                 glVertex2i(rx2, ry2);
                 glVertex2i(rx2, draw_rect.y);
             	glVertex2i(draw_rect.x,  draw_rect.y);
-            
+
                 draw_rect.x += draw_rect.w;
                 fan_no++;
         
@@ -679,12 +682,12 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int chosen_fan)
             draw_rect.y += draw_rect.h;
         
         }
-    
+
     glEnd();
 
     /* TODO: Draw chosen tile                   */
     if (chosen_fan >= 0) {
-        
+
         draw_rect.x = x + ((chosen_fan % mesh -> tiles_x) * draw_rect.w);
         draw_rect.y = y + ((chosen_fan / mesh -> tiles_x) * draw_rect.h);
 
@@ -701,7 +704,31 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int chosen_fan)
 
     }
 
-    /* TODO: Draw the Camera-Frustum over map   */
+    /* Draw the Camera-Frustum over map   */
+    /* TODO: Calculate now hardcoded value of '32.0' */
+    campos = sdlgl3dGetCameraInfo(0, &nx[0], &ny[0], &zmax);
+
+    draw_rect.x = x + (campos -> pos[0] / 32.0);
+    draw_rect.y = y + (campos -> pos[1] / 32.0);
+    zmax /= 32.0;
+
+    /* Now draw the camera angle */
+    glBegin(GL_LINES);
+        sdlglSetColor(SDLGL_COL_LIGHTGREEN);
+        glVertex2i(draw_rect.x, draw_rect.y);       /* Right edge of frustum */
+        glVertex2i(draw_rect.x + (nx[0] * zmax),
+                   draw_rect.y + (ny[0] * zmax));
+
+        sdlglSetColor(SDLGL_COL_LIGHTRED);          /* Left edge of frustum */
+        glVertex2i(draw_rect.x, draw_rect.y);
+        glVertex2i(draw_rect.x + (nx[1] * zmax),
+                   draw_rect.y + (ny[1] * zmax));
+        sdlglSetColor(SDLGL_COL_WHITE);
+        glVertex2i(draw_rect.x, draw_rect.y);       /* Direction */
+        glVertex2i(draw_rect.x, draw_rect.y);
+        glVertex2i(draw_rect.x + (nx[2] * zmax),
+                   draw_rect.y + (ny[2] * zmax));
+    glEnd();
 
 
 }

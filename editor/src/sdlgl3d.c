@@ -77,7 +77,7 @@ typedef struct {
     SDLGL3D_OBJECT *object;     /* The object the camera is attached to           */
     SDLGL3D_OBJECT campos;
     /* Frustum data for calculation of visibility */
-    float nx[3], ny[3];         /* Normals of the side lines.  They should point in towards the viewable area.	*/
+    float nx[3], ny[3];         /* Normals of the side lines. They should point in towards the viewable area. */
     float leftangle, rightangle;
     float fow;
     char bound;                 /* Camera is bound to an x,y-rectangle  */
@@ -119,30 +119,30 @@ static SDLGL3D_OBJECT Object_List[SDLGL3D_MAXOBJECT + 2];  /* List of objects to
  *	      "Loose Octrees"
  *	       -thatcher 4/6/2000 Copyright Thatcher Ulrich
  */
-static void sdlgl3dSetupFrustumNormals(SDLGL3D_CAMERA *f, float FOV)
+static void sdlgl3dSetupFrustumNormals(SDLGL3D_CAMERA *cam, float FOV)
 {
 
     int rotz;
 
     
-    if (f -> type == SDLGL3D_CAMERATYPE_FIRSTPERSON) {
-        rotz = f -> object -> rot[2];
+    if (cam -> type == SDLGL3D_CAMERATYPE_FIRSTPERSON) {
+        rotz = cam -> object -> rot[2];
     }
     else {
-        rotz = f -> campos.rot[2];
+        rotz = cam -> campos.rot[2];
     }
 
-    f -> rightangle = rotz - FOV/2;
-    f -> leftangle  = rotz + FOV/2;
+    cam -> rightangle = rotz - FOV/2;
+    cam -> leftangle  = rotz + FOV/2;
 
-    f -> nx[0] = sin(DEG2RAD(f -> rightangle));
-    f -> ny[0] = cos(DEG2RAD(f -> rightangle));
+    cam -> nx[0] = sin(DEG2RAD(cam -> rightangle));
+    cam -> ny[0] = cos(DEG2RAD(cam -> rightangle));
 
-    f -> nx[1] = sin(DEG2RAD(f -> leftangle));
-    f -> ny[1] = cos(DEG2RAD(f -> leftangle));
+    cam -> nx[1] = sin(DEG2RAD(cam -> leftangle));
+    cam -> ny[1] = cos(DEG2RAD(cam -> leftangle));
 
-    f -> nx[2] = sin(DEG2RAD(rotz));
-    f -> ny[2] = cos(DEG2RAD(rotz));
+    cam -> nx[2] = sin(DEG2RAD(rotz));
+    cam -> ny[2] = cos(DEG2RAD(rotz));
 
 }
 
@@ -559,13 +559,27 @@ void sdlgl3dBindCamera(int camera_no, float x, float y, float x2, float y2)
  *     Initializes the 3D-Camera. Moves the camera to given position with
  *     given rotations.
  * Input:
- *     Nuber of camera to get info for
+ *     Number of camera to get info for
+ *     nx *, ny *: Where to return the frustum normals
+ *     zmax *:     Where to return the distance of far plane      
  * Output:
  *      Pointer on camera position
  */
-SDLGL3D_OBJECT *sdlgl3dGetCameraInfo(int camera_no)
+SDLGL3D_OBJECT *sdlgl3dGetCameraInfo(int camera_no, float *nx, float *ny, float *zmax)
 {
 
+    int i;
+    
+    
+    for (i = 0; i < 3; i++) {
+        /* Return frustum normals */
+        nx[i] = Camera[camera_no].nx[i]; 
+        ny[i] = Camera[camera_no].ny[i]; 
+        
+    }
+    
+    (*zmax) = Camera[camera_no].zmax;
+    
     return &Camera[camera_no].campos;
 
 }
@@ -622,6 +636,8 @@ void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z)
     Camera[camera_no].campos.pos[0] = x;
     Camera[camera_no].campos.pos[1] = y;
     Camera[camera_no].campos.pos[SDLGL3D_Z] = z;
+    /* Adjust the frustum normals */
+    sdlgl3dSetupFrustumNormals(&Camera[camera_no], SDLGL3D_CAMERA_FOV);
 
 }
 
