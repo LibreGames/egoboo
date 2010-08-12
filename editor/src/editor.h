@@ -111,6 +111,13 @@
 
 typedef struct {
 
+    float u, v;
+    float x, y, z;
+
+} EDITOR_VTX;
+
+typedef struct {
+
     int   numvertices;			            // meshcommandnumvertices
     int   count;			                // meshcommands
     int   size[MAXMESHCOMMAND];             // meshcommandsize
@@ -118,6 +125,8 @@ typedef struct {
     float uv[MAXMESHVERTICES * 2];          // meshcommandu, meshcommandv
     float biguv[MAXMESHVERTICES * 2];       // meshcommandu, meshcommandv
                                             // For big texture images
+    EDITOR_VTX vtx;                         // Holds default position and it's u/v position
+    
 } COMMAND_T;
 
 typedef struct {

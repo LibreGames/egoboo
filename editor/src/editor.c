@@ -104,6 +104,8 @@ static SDLGL_CMDKEY EditorCmd[] = {
     { { SDLK_KP_PLUS },  SDLGL3D_CAMERA_ZOOM, +1, SDLGL3D_CAMERA_ZOOM },
     { { SDLK_KP_MINUS }, SDLGL3D_CAMERA_ZOOM, -1, SDLGL3D_CAMERA_ZOOM },
     { { SDLK_LCTRL, SDLK_m }, EDITOR_STATE, EDITOR_STATE_SHOWMAP },
+    { { SDLK_x }, SDLGL3D_MOVE_ROTX, +1, SDLGL3D_MOVE_ROTX },
+    { { SDLK_y }, SDLGL3D_MOVE_ROTY, +1, SDLGL3D_MOVE_ROTY },
     /* -------- Switch the player with given number ------- */
     { { SDLK_ESCAPE }, EDITOR_EXITPROGRAM },
     { { 0 } }
@@ -277,6 +279,10 @@ static void editorSetMenuViewToggle(void)
 static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
 {
 
+    static SDLGL_RECT StrPos = { 10, 100, 0, 0 };
+
+    SDLGL3D_OBJECT *cam;
+    float nx[4], ny[4], dist;
     int color;
     char mouse_over;
 
@@ -284,15 +290,16 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
     glClear(GL_COLOR_BUFFER_BIT);
 
     /* First move the camera */
-    sdlgl3dMoveObjects(event -> secondspassed); 
+    sdlgl3dMoveObjects(event -> secondspassed);
 
     /* Draw the 3D-View before the 2D-Screen */
     editmainMap(EDITMAIN_DRAWMAP);
-    
+
     /* ---- Prepare drawing in 2D-Mode ---- */
     glPolygonMode(GL_FRONT, GL_FILL);
-    glShadeModel(GL_FLAT);		            /* No smoothing	of edges */
-    
+    glShadeModel(GL_FLAT);		            /* No smoothing	of edges    */
+    glFrontFace(GL_CCW);                    /* Draws counterclockwise   */
+
     /* Draw the menu -- open/close dropdown, if needed */
     mouse_over = 0;
     sdlglstrSetFont(SDLGLSTR_FONT8);
@@ -347,15 +354,21 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
 
         editorSetMenu(0);
 
-    }    
+    }
 
     /* Draw map if needed */
     if (pEditState -> display_flags & EDITMAIN_SHOW2DMAP) {
-    
+
         editmainDrawMap2D(MainMenu[1].rect.x, MainMenu[1].rect.y,
                           MainMenu[1].rect.w, MainMenu[1].rect.h);
-        
+
     }
+
+    /* TODO: Display camera position */
+    cam = sdlgl3dGetCameraInfo(0, nx, nx, &dist);
+    sdlglstrStringF(&StrPos, "RotX: %f\n\nRotY: %f\n\nRotZ: %f\n\n",
+                    cam -> rot[0], cam -> rot[1], cam -> rot[2]);
+
 
 }
 
@@ -427,7 +440,7 @@ static int editorInputHandler(SDLGL_EVENT *event)
                         /* And now move camera to this position */
                         sdlgl3dMoveToPosCamera(0,
                                                (pEditState -> tile_x * 128.0) - 450.0,
-                                               (pEditState -> tile_y * 128.0) - 450.0,
+                                               (pEditState -> tile_y * 128.0),
                                                600.0);
 
                     }
@@ -512,9 +525,9 @@ int main(int argc, char **argv)
     sdlglInit(&SdlGlConfig);  
 
 
-    sdlgl3dInitCamera(0, 330, 0, 0, 0.75);
+    sdlgl3dInitCamera(0, 320, 0, 90, 0.75);
     /* Init Camera +Z is up, -Y is near plane, X is left/right */
-    sdlgl3dMoveToPosCamera(0, 4 * 128.0, -128.0, 600.0);
+    sdlgl3dMoveToPosCamera(0, 384.0, 384.0, 600.0);
 
     /* Set the input handlers and do other stuff before  */
     editorStart();
@@ -524,7 +537,7 @@ int main(int argc, char **argv)
 
     /* Do any shutdown stuff. */
     editmainExit();
-    
+
     sdlglShutdown();
     return 0;
 

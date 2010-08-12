@@ -290,7 +290,7 @@ typedef struct SDLGL3D_OBJECT_TYPE {
 * CODE                                                                         *
 *******************************************************************************/
 
-SDLGL3D_OBJECT *sdlgl3dBegin(int solid);
+SDLGL3D_OBJECT *sdlgl3dBegin(int camera_no, int solid);
 void sdlgl3dEnd(void);
 void sdlgl3dAttachCameraToObj(int obj_no, char camtype);
 void sdlgl3dInitCamera(int camera_no, 

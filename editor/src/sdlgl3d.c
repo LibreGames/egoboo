@@ -37,15 +37,15 @@
 *******************************************************************************/
 
 #define SDLGL3D_CAMERA_EXTENT  15.0
-#define SDLGL3D_CAMERA_FOV     60.0     /* Instead of 90.0 degrees */
+#define SDLGL3D_CAMERA_FOV     60.0   
 
 /* ------- */
 #define SDLGL3D_I_MAXVISITILES (9 + 7 + 5 + 3 + 3 + 3 + 9 + 9 + 11)
 
 #define SDLGL3D_VISITILEDEPTH 5       /* Number of squares visible in depth */
 
-#define SDLGL3D_I_VIEWMINWIDTH  48      /* For zoom...              */
-#define SDLGL3D_I_VIEWWIDTH     96      /* 96 */ /* 128 */ /* 176   */
+#define SDLGL3D_I_VIEWMINWIDTH  96      /* For zoom...              */
+#define SDLGL3D_I_VIEWWIDTH     128      /* 96 */ /* 128 */ /* 176   */
 #define SDLGL3D_I_ASPECTRATIO   0.75    /* HAnded over by caller    */
 
 #define SDLGL3D_I_ZMIN   48.0   /* 100.0 */
@@ -267,8 +267,8 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, float secondspassed)
         case SDLGL3D_MOVE_STRAFE:  /* SDLGL3D_MOVE_STRAFE: */
             speed = moveobj -> speed * moveobj -> move_dir;
             /* Only in x/y plane */
-            moveobj -> pos[0] += (moveobj -> direction[1] * speed * secondspassed);
-            moveobj -> pos[1] -= (moveobj -> direction[0] * speed * secondspassed);
+            moveobj -> pos[0] -= (moveobj -> direction[1] * speed * secondspassed);
+            moveobj -> pos[1] += (moveobj -> direction[0] * speed * secondspassed);
             break;
 
         case SDLGL3D_MOVE_3D:
@@ -285,15 +285,15 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, float secondspassed)
         case SDLGL3D_MOVE_TURN:
             speed = moveobj -> turnvel * moveobj -> move_dir;
             /* Clockwise */
-            moveobj -> rot[SDLGL3D_Z] += (speed * secondspassed);
-            if (moveobj -> rot[SDLGL3D_Z] > 360.0) {
-
-                moveobj -> rot[SDLGL3D_Z] -= 360.0;
-
-            }
-            else if (moveobj -> rot[SDLGL3D_Z] < 0.0) {
+            moveobj -> rot[SDLGL3D_Z] -= (speed * secondspassed);
+            if (moveobj -> rot[SDLGL3D_Z] < 0.0 ) {
 
                 moveobj -> rot[SDLGL3D_Z] += 360.0;
+
+            }
+            else if (moveobj -> rot[SDLGL3D_Z]> 360.0) {
+
+                moveobj -> rot[SDLGL3D_Z] -= 360.0;
 
             }
 
@@ -378,9 +378,10 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, float secondspassed)
  * Description:
  *     Draws the whole view. Preserves the callers view state
  * Input:
- *     solid: Draw it solid, true or false
+ *     camera_no: Number of camera
+ *     solid:     Draw it solid, true or false
  */
-SDLGL3D_OBJECT *sdlgl3dBegin(int solid)
+SDLGL3D_OBJECT *sdlgl3dBegin(int camera_no, int solid)
 {
 
     SDLGL3D_OBJECT *viewobj;
@@ -392,22 +393,22 @@ SDLGL3D_OBJECT *sdlgl3dBegin(int solid)
     glLoadIdentity();
 
     /* Set the view mode */
-    viewwidth  = Camera[0].viewwidth / 2;
-    viewheight = (viewwidth * Camera[0].aspect_ratio) / 2;
+    viewwidth  = Camera[camera_no].viewwidth / 2;
+    viewheight = (viewwidth * Camera[camera_no].aspect_ratio) / 2;
     
-    glFrustum(-viewwidth, viewwidth, -viewheight, viewheight, Camera[0].zmin, Camera[0].zmax);
+    glFrustum(viewwidth, -viewwidth, -viewheight, viewheight, Camera[camera_no].zmin, Camera[camera_no].zmax);
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
 
-    if (Camera[0].type == SDLGL3D_CAMERATYPE_FIRSTPERSON) {
+    if (Camera[camera_no].type == SDLGL3D_CAMERATYPE_FIRSTPERSON) {
 
-        viewobj = Camera[0].object;
+        viewobj = Camera[camera_no].object;
         if (viewobj == 0) {
 
             /* Play it save */
-            viewobj = &Camera[0].campos;
+            viewobj = &Camera[camera_no].campos;
 
         }
 
@@ -415,7 +416,7 @@ SDLGL3D_OBJECT *sdlgl3dBegin(int solid)
     }
     else {
 
-        viewobj = &Camera[0].campos;
+        viewobj = &Camera[camera_no].campos;
 
     }
 
@@ -426,6 +427,8 @@ SDLGL3D_OBJECT *sdlgl3dBegin(int solid)
 
     /* Now we're ready to draw the grid */
     glPolygonMode(GL_FRONT, solid ? GL_FILL : GL_LINE);
+
+    glFrontFace(GL_CW); 
 
     return viewobj;
 

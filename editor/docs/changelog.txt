@@ -1,4 +1,9 @@
 2010-08-11 <bitnapper>
+- Fixed displaying map 'swapped' in 3D-View
+- Added display of chosen fan in 3D-View
+
+
+2010-08-11 <bitnapper>
 - Extended map menu for new maps to "flat" and "solid"
 - Added points from the forum to my todo-list
 - Added display of camera frustum on 2D-Map

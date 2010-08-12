@@ -349,8 +349,9 @@ static GLuint WallTex[EDITDRAW_MAXWALLTEX];
  * Input:
  *      mesh *: Pointer on mesh info
  *      fan_no: Number of fan to draw
+ *      col_no: Override for setting by texture-flag
  */
-static void editdrawSingleFan(MESH_T *mesh, int fan_no)
+static void editdrawSingleFan(MESH_T *mesh, int fan_no, int col_no)
 {
 
     COMMAND_T *mc;
@@ -376,17 +377,16 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
     vert_y = &mesh -> vrty[vert_base];
     vert_z = &mesh -> vrtz[vert_base];
 
-    if (mesh -> draw_mode & EDIT_MODE_SOLID) {
-        /* Draw solid */
-        sdlglSetColor(SDLGL_COL_WHITE);
-    }
-    else {
-
+    if (! (mesh -> draw_mode & EDIT_MODE_SOLID)) {
+        /* Set color depending on texturing type */
         if (type & COMMAND_TEXTUREHI_FLAG) {/* It's one with hi res texture */
             sdlglSetColor(SDLGL_COL_BLUE);  /* color like cartman           */
     	}
     	else {
             sdlglSetColor(SDLGL_COL_RED);
+        }
+        if (col_no > 0) {
+            sdlglSetColor(col_no);
         }
 
     }
@@ -459,6 +459,7 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no)
 static void editdrawMap(MESH_T *mesh, int chosen_fan)
 {
 
+    char save_mode;
     int fan_no;
 
 
@@ -477,12 +478,18 @@ static void editdrawMap(MESH_T *mesh, int chosen_fan)
        ( which must be built every time after the camera moved) */
     for (fan_no = 0; fan_no < mesh -> numfan;  fan_no++) {
 
-        editdrawSingleFan(mesh, fan_no);
+        editdrawSingleFan(mesh, fan_no, 0);       
 
-        if (chosen_fan == fan_no) {
-            /* TODO: Sign fan, if it's chosen */
-        }
-
+    }
+    
+    /* Sign fan, if chosen */
+    if (chosen_fan >= 0) {
+    
+        save_mode = mesh -> draw_mode;
+        mesh -> draw_mode = 0;      /* EDIT_MODE_SOLID; */
+        editdrawSingleFan(mesh, chosen_fan, SDLGL_COL_YELLOW);
+        mesh -> draw_mode = save_mode;
+    
     }
     
     if (mesh -> draw_mode & EDIT_MODE_TEXTURED) {
@@ -513,24 +520,25 @@ COMMAND_T *editdrawInitData(void)
     int entry, cnt;
 
 
-    mcmd = &MeshCommand[2];
+    mcmd = &MeshCommand[2]; 
 
     /* Correct all of them silly texture positions for seamless tiling */
-    for (entry = 2; entry < (MAXMESHTYPE/2); entry++) {
 
+	for (entry = 2; entry < (MAXMESHTYPE/2); entry++) {
+ 	
         for (cnt = 0; cnt < (mcmd -> numvertices * 2); cnt += 2) {
 
-            mcmd -> uv[cnt]        = ((.6/32)+(mcmd -> uv[cnt]*30.8/32))/8;
-            mcmd -> uv[cnt + 1]    = ((.6/32)+(mcmd -> uv[cnt + 1]*30.8/32))/8;
-            /* Do for big tiles too */
-            mcmd -> biguv[cnt]	   = ((.6/64)+(mcmd -> biguv[cnt]*62.8/64))/4;
-            mcmd -> biguv[cnt + 1] = ((.6/64)+(mcmd -> biguv[cnt + 1]*62.8/64))/4;
-
-        }
-
-        mcmd++;
-
-    }
+         	mcmd -> uv[cnt] = ((.6/32)+(mcmd -> uv[cnt]*30.8/32))/8;
+         	mcmd -> uv[cnt + 1] = ((.6/32)+(mcmd -> uv[cnt + 1]*30.8/32))/8;
+         	/* Do for big tiles too */
+         	mcmd -> biguv[cnt] = ((.6/64)+(mcmd -> biguv[cnt]*62.8/64))/4;
+         	mcmd -> biguv[cnt + 1] = ((.6/64)+(mcmd -> biguv[cnt + 1]*62.8/64))/4;
+     	
+     	}
+     	
+     	mcmd++;
+ 	
+ 	}     
 
     // Make tile texture offsets
     for (entry = 0; entry < (EDITDRAW_MAXWALLSUBTEX * 2); entry += 2) {
@@ -541,7 +549,7 @@ COMMAND_T *editdrawInitData(void)
 
     }
 
-    /* TODO: Load the basic textures */
+    /* Load the basic textures */
     for (cnt = 0; cnt < 4; cnt++) {
     
         sprintf(texturename, "module/tile%d.bmp", cnt);
@@ -586,7 +594,7 @@ void editdraw3DView(MESH_T *mesh, int chosen_fan)
     int x, y, x2, y2;
 
 
-    sdlgl3dBegin(0);        /* Draw not solid */
+    sdlgl3dBegin(0, 0);        /* Draw not solid */
 
     /* Draw a grid 64 x 64 squares for test of the camera view */
     sdlglSetColor(SDLGL_COL_CYAN);
@@ -599,17 +607,31 @@ void editdraw3DView(MESH_T *mesh, int chosen_fan)
             y = h * 128;
             x2 = x + 128;
             y2 = y + 128;
+
+            sdlglSetColor(SDLGL_COL_LIGHTGREEN);
             glBegin(GL_TRIANGLE_FAN);  /* Draw clockwise */
                 glVertex2i(x, y);
                 glVertex2i(x2, y);
                 glVertex2i(x2, y2);
                 glVertex2i(x, y2);
             glEnd();
-
+            
         }
 
     }
 
+    /* Draw Axes */
+    glBegin(GL_LINES);
+        sdlglSetColor(SDLGL_COL_RED);   /* X-Axis   */
+        glVertex3i(  0,   0, 10);
+        glVertex3i(256,   0, 10);
+        sdlglSetColor(SDLGL_COL_GREEN);
+        glVertex3i(  0,   0, 10);
+        glVertex3i(  0, 256, 10);       /* Y-Axis   */
+        sdlglSetColor(SDLGL_COL_BLUE);
+        glVertex3i(  0, 0, 10);
+        glVertex3i(  0, 0, 266);        /* Z-Axis   */
+    glEnd();
     editdrawMap(mesh, chosen_fan);
 
     sdlgl3dEnd();
@@ -629,12 +651,17 @@ void editdraw3DView(MESH_T *mesh, int chosen_fan)
 void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int chosen_fan)
 {
 
-    static int mapcolors[] = { SDLGL_COL_BLUE, SDLGL_COL_BLUE, SDLGL_COL_BLUE, SDLGL_COL_BLUE, /* Ground */
+    static int mapcolors[] = { SDLGL_COL_BLUE, SDLGL_COL_BLUE,
+                               SDLGL_COL_BLUE, SDLGL_COL_BLUE, /* Ground */
                                1, 1,	  /* Pillar */
                                2, 2,	  /* ------ */
                                SDLGL_COL_BLACK, SDLGL_COL_BLACK,	  /* Wall   */
                                2, 2,	  /* ------ */
-                               3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+                               SDLGL_COL_BLACK, SDLGL_COL_BLACK,
+                               SDLGL_COL_BLACK, SDLGL_COL_BLACK,
+                               SDLGL_COL_BLACK, SDLGL_COL_BLACK,
+                               SDLGL_COL_BLACK, SDLGL_COL_BLACK,
+                               3, 3, 3, 3,
                                4, 4,	  /* Stair  */
                                5, 5, 5, 5, 5, 5 };   /* Unknown */
     SDLGL3D_OBJECT *campos;
@@ -663,7 +690,7 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int chosen_fan)
             for (w = 0; w < mesh -> tiles_x; w++) {
 
                 sdlglSetColor(mapcolors[mesh -> fan[fan_no].type & 0x1F]);
-
+                /* TODO: Get color on base of FX-Flags: ISWALL = black */
                 rx2 = draw_rect.x + draw_rect.w;
                 ry2 = draw_rect.y + draw_rect.h;
 
@@ -674,9 +701,9 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int chosen_fan)
 
                 draw_rect.x += draw_rect.w;
                 fan_no++;
-        
+
             }
-            
+
             /* Next line    */
             draw_rect.x = x;
             draw_rect.y += draw_rect.h;
