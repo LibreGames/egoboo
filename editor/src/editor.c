@@ -64,8 +64,8 @@
 /* Sub-Commands */
 #define EDITOR_2DMAP_CHOOSEFAN  ((char)1)
 #define EDITOR_2DMAP_FANINFO    ((char)2)
-#define EDITOR_2DMAP_FANROTATE  ((char)3)
-#define EDITOR_2DMAP_FANBROWSE  ((char)4)
+#define EDITOR_2DMAP_FANROTATE  ((char)4)
+#define EDITOR_2DMAP_FANBROWSE  ((char)8)
 
 /*******************************************************************************
 * DATA									                                       *
@@ -111,7 +111,7 @@ static SDLGL_CMDKEY EditorCmd[] = {
     { { SDLK_KP_PLUS },  SDLGL3D_CAMERA_ZOOM, +1, SDLGL3D_CAMERA_ZOOM },
     { { SDLK_KP_MINUS }, SDLGL3D_CAMERA_ZOOM, -1, SDLGL3D_CAMERA_ZOOM },
     { { SDLK_LCTRL, SDLK_m }, EDITOR_STATE, EDITOR_STATE_SHOWMAP },
-    { { SDLK_x }, SDLGL3D_MOVE_ROTX, +1, SDLGL3D_MOVE_ROTX },
+    /* { { SDLK_x }, SDLGL3D_MOVE_ROTX, +1, SDLGL3D_MOVE_ROTX }, */
     { { SDLK_i }, EDITOR_2DMAP, EDITOR_2DMAP_FANINFO, EDITOR_2DMAP },
     { { SDLK_r }, EDITOR_2DMAP, EDITOR_2DMAP_FANROTATE, EDITOR_2DMAP },
     { { SDLK_b }, EDITOR_2DMAP, EDITOR_2DMAP_FANBROWSE, EDITOR_2DMAP },
@@ -157,14 +157,15 @@ static SDLGL_FIELD SubMenu[] = {
 static SDLGL_FIELD FanInfoDlg[] = {
     { SDLGL_TYPE_STD, { 0,  16, 320, 208 } },        /* Background of dialog */
     { SDLGL_TYPE_STD, { 8,  24, 320, 208 }, 0, 0, "Info about Fan" },
-    { SDLGL_TYPE_STD, { 8,  40, 120, 8 }, EDITOR_FX, MPDFX_SHA,     "Reflective" },
-    { SDLGL_TYPE_STD, { 8,  56, 120, 8 }, EDITOR_FX, MPDFX_DRAWREF, "Draw Reflection" },
-    { SDLGL_TYPE_STD, { 8,  72, 120, 8 }, EDITOR_FX, MPDFX_ANIM,    "Animated" },
-    { SDLGL_TYPE_STD, { 8,  88, 120, 8 }, EDITOR_FX, MPDFX_WATER,   "Overlay (Water)" },
-    { SDLGL_TYPE_STD, { 8, 104, 120, 8 }, EDITOR_FX, MPDFX_WALL,    "Barrier (Slit)" },
-    { SDLGL_TYPE_STD, { 8, 120, 120, 8 }, EDITOR_FX, MPDFX_IMPASS,  "Impassable (Wall)" },
-    { SDLGL_TYPE_STD, { 8, 136, 120, 8 }, EDITOR_FX, MPDFX_DAMAGE,  "Damage" },
-    { SDLGL_TYPE_STD, { 8, 154, 120, 8 }, EDITOR_FX, MPDFX_SLIPPY,  "Slippy" },
+    { SDLGL_TYPE_STD, { 8,  40, 320, 208 }, 0, 0, "" },
+    { SDLGL_TYPE_STD, { 8,  56, 120, 8 }, EDITOR_FX, MPDFX_SHA,     "[ ]Reflective" },
+    { SDLGL_TYPE_STD, { 8,  72, 120, 8 }, EDITOR_FX, MPDFX_DRAWREF, "[ ]Draw Reflection" },
+    { SDLGL_TYPE_STD, { 8,  88, 120, 8 }, EDITOR_FX, MPDFX_ANIM,    "[ ]Animated" },
+    { SDLGL_TYPE_STD, { 8, 104, 120, 8 }, EDITOR_FX, MPDFX_WATER,   "[ ]Overlay (Water)" },
+    { SDLGL_TYPE_STD, { 8, 120, 120, 8 }, EDITOR_FX, MPDFX_WALL,    "[ ]Barrier (Slit)" },
+    { SDLGL_TYPE_STD, { 8, 136, 120, 8 }, EDITOR_FX, MPDFX_IMPASS,  "[ ]Impassable (Wall)" },
+    { SDLGL_TYPE_STD, { 8, 154, 120, 8 }, EDITOR_FX, MPDFX_DAMAGE,  "[ ]Damage" },
+    { SDLGL_TYPE_STD, { 8, 170, 120, 8 }, EDITOR_FX, MPDFX_SLIPPY,  "[ ]Slippy" },
     { 0 }
 };
 
@@ -239,6 +240,26 @@ static void editorSetMenu(char which)
 
 /*
  * Name:
+ *     editorSetToggleChar
+ * Description:
+ *     Sets or removes the char 'X' in given string at second position,
+ *     based on state of given value 'is_set'
+ * Input:
+ *     is_set:
+ *     name *:
+ */
+static void editorSetToggleChar(char is_set, char *name)
+{
+    if (is_set) {
+        name[1] = 'X';
+    }
+    else {
+        name[1] = ' ';
+    }
+}
+
+/*
+ * Name:
  *     editorSetMenuViewToggle
  * Description:
  *     Show toggled values as 'X' in menu string
@@ -247,32 +268,9 @@ static void editorSetMenu(char which)
  */
 static void editorSetMenuViewToggle(void)
 {
-
-    SDLGL_FIELD *first;
-
-
-    first = &SubMenu[8];
-    
-    if (pEditState -> draw_mode & EDIT_MODE_SOLID) {
-        first[0].pdata[1] = 'X';
-    }
-    else {  /* Remove toogle */
-        first[0].pdata[1] = ' ';
-    }
-
-    if (pEditState -> draw_mode & EDIT_MODE_TEXTURED) {
-        first[1].pdata[1] = 'X';
-    }
-    else {  /* Remove toogle */
-        first[1].pdata[1] = ' ';
-    }
-    if (pEditState -> draw_mode & EDIT_MODE_LIGHTMAX) {
-        first[2].pdata[1] = 'X';
-    }
-    else {  /* Remove toogle */
-        first[2].pdata[1] = ' ';
-    }
-
+    editorSetToggleChar(pEditState -> draw_mode & EDIT_MODE_SOLID, SubMenu[8].pdata);
+    editorSetToggleChar(pEditState -> draw_mode & EDIT_MODE_TEXTURED, SubMenu[8 + 1].pdata);
+    editorSetToggleChar(pEditState -> draw_mode & EDIT_MODE_LIGHTMAX, SubMenu[8 + 2].pdata);
 }
 
 /*
@@ -287,10 +285,10 @@ static void editor2DMap(SDLGL_EVENT *event)
 {
 
     SDLGL_FIELD *field;
-    
-    
+
+
     switch(event -> sub_code) {
-    
+
         case EDITOR_2DMAP_CHOOSEFAN:
             if (pEditState -> display_flags & EDITMAIN_SHOW2DMAP) {
 
@@ -308,12 +306,12 @@ static void editor2DMap(SDLGL_EVENT *event)
                 else if (event -> modflags == SDL_BUTTON_RIGHT){
                     /* TODO: Do action based on number 'Map2DState'  */
                 }
-                
+
             }
             break;
         case EDITOR_2DMAP_FANINFO:
             if (event -> pressed) {
-                Map2DState = event -> sub_code;
+                Map2DState ^= event -> sub_code;
                 /* TODO: Display string in Statusbar according to action */
             }
             else {
@@ -343,13 +341,28 @@ static void editorDrawFanInfo(void)
 {
 
     SDLGL_FIELD *fields;
+    int i;
+
 
     if (Map2DState == EDITOR_2DMAP_FANINFO && pEditState -> fan_chosen >= 0) {
 
+        /* Set the display of state flags */
+        for (i = 3; i < 11; i++) {
+            editorSetToggleChar(pEditState -> act_fan.fx & FanInfoDlg[i].sub_code,
+                                FanInfoDlg[i].pdata);
+        }
         /* Draw info about chosen fan: EditState.act_fan */
         fields = &FanInfoDlg[0];
         /* Draw background */
         sdlglstrDrawButton(&fields -> rect, 0, 0);
+        fields++;
+        /* Draw title */
+        sdlglSetColor(SDLGL_COL_BLACK);
+        sdlglstrString(&fields -> rect, fields -> pdata);
+        fields++;
+        /* Draw fan type name */
+        sdlglSetColor(SDLGL_COL_GREEN);
+        sdlglstrString(&fields -> rect, editmainFanTypeName(pEditState -> act_fan.type));
         fields++;
         /* Draw all strings */
         sdlglstrSetColorNo(SDLGLSTR_COL_WHITE);
@@ -448,7 +461,6 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
     sdlglstrSetColorNo(SDLGLSTR_COL_WHITE);
     sdlglstrString(&fields -> rect, StatusBar);
 
-
     if (! mouse_over) {
 
         editorSetMenu(0);
@@ -467,7 +479,7 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
     cam = sdlgl3dGetCameraInfo(0, nx, nx, &dist);
     sdlglstrStringF(&StrPos, "RotX: %f\n\nRotY: %f\n\nRotZ: %f\n\n",
                     cam -> rot[0], cam -> rot[1], cam -> rot[2]);
-    /* Display info about actual chosen fan, if asked for */                   
+    /* Display info about actual chosen fan, if asked for */
     editorDrawFanInfo();
 
 }

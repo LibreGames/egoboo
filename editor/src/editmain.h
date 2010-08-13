@@ -99,6 +99,7 @@ void editmainDrawMap2D(int x, int y, int w, int h);
 SPAWN_OBJECT_T *editmainLoadSpawn(void);
 void editmainToggleFlag(int which, unsigned char flag);
 void editmainChooseFan(int cx, int cy, int w, int h);
+char *editmainFanTypeName(int type_no);
 
 #endif /* _EDITMAIN_H_	*/
 

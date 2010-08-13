@@ -554,3 +554,29 @@ void editmainChooseFan(int cx, int cy, int w, int h)
     }
  
 }
+
+/*
+ * Name:
+ *     editmainFanTypeName
+ * Description:
+ *     Returns the description of given fan-type 
+ * Input:
+ *     type_no: Number of fan type
+ * Output:
+ *     Pointer on a valid string, may be empty 
+ */
+char *editmainFanTypeName(int type_no)
+{
+
+    if (type_no >= 0 && type_no < MAXMESHTYPE) {
+
+        if (pCommands[type_no & 0x1F].name != 0) {
+        
+            return pCommands[type_no & 0x1F].name; 
+        
+        }
+    
+    }
+    return "";
+
+}

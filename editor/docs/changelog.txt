@@ -1,4 +1,8 @@
-2010-08-12 <bitnapper>
+2010-08-13 <bitnapper>
+- Added names for fan types
+- Added display 'I'nfo for chosen fan, flags and Name of fan type 
+
+2010-08-13 <bitnapper>
 - Added some basic fans extents, save z-values
 - Added basic code for implementation of new key commands for map
 

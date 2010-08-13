@@ -47,7 +47,7 @@
 *******************************************************************************/
 
 static COMMAND_T MeshCommand[MAXMESHTYPE] = {
-    { /* 0:  Two Faced Ground... */
+    {  "0: Two Faced Ground",
         4,		    /* Total number of vertices */
     	1,    		/*  1 Command */
     	{ 4 },		/* Commandsize (how much vertices per command)  */
@@ -60,7 +60,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
           { 12, 0.00, 1.00,   0.00, 128.00, 0.00 }
         }
     },
-    { /* 1: Two Faced Ground... */
+    {   "1: Two Faced Ground",
     	4,
         1,
         { 4 },
@@ -75,7 +75,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         }
 
     },
-    { /* 2: Four Faced Ground... */
+    {   "2: Four Faced Ground",
         5,
         1,
         { 6 },
@@ -86,17 +86,17 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
           {  3, 1.00, 0.00, 128.00,   0.00, 0.00 },
           { 15, 1.00, 1.00, 128.00, 128.00, 0.00 },
           { 12, 0.00, 1.00,   0.00, 128.00, 0.00 },
-          {  2, 0.50, 0.00,  64.00,   0.00, 0.00 },  
-          { 11, 1.00, 0.50, 128.00,  64.00, 0.00 },  
-          { 13, 0.50, 1.00,  64.00, 128.00, 0.00 },   
-          {  4, 0.00, 0.50,   0.00,  64.00, 0.00 }, 
-          {  5, 0.50, 0.50,  64.00,  64.00, 0.00 }  
+          {  2, 0.50, 0.00,  64.00,   0.00, 0.00 },
+          { 11, 1.00, 0.50, 128.00,  64.00, 0.00 },
+          { 13, 0.50, 1.00,  64.00, 128.00, 0.00 },
+          {  4, 0.00, 0.50,   0.00,  64.00, 0.00 },
+          {  5, 0.50, 0.50,  64.00,  64.00, 0.00 }
         }
     },
-    { /* 3:  Eight Faced Ground... */
+    {   "3: Eight Faced Ground",
         9,
         1,
-	{ 10 },
+	    { 10 },
         { 8, 3, 7, 0, 4, 1, 5, 2, 6, 3 }, /* Number of vertices */
         { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,  0.50, 0.00,
           1.00, 0.50,  0.50, 1.00,  0.00, 0.50,  0.50, 0.50 },
@@ -113,7 +113,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
           {  5, 0.50, 0.50,  64.00,  64.00, 0.00 }
         }
     },
-    {  /* 4:  Ten Face Pillar... */
+    {   "4:  Ten Face Pillar",
         8,
         2,
         { 8, 6 },
@@ -124,8 +124,8 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
           0.33, 0.33,  0.66, 0.33,  0.66, 0.66,  0.33, 0.66 }
     },
-    { /* 5  Eighteen Faced Pillar... */
-  	16,
+    {   "5: Eighteen Faced Pillar",
+  	    16,
         4,
         { 10, 8, 4, 4 },
         { 15, 3, 10, 11, 12, 13, 14, 8, 9, 3,
@@ -141,16 +141,16 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
           0.66, 1.00,  0.33, 1.00,  0.00, 0.66,  0.00, 0.33,
           0.33, 0.33,  0.66, 0.33,  0.66, 0.66,  0.33, 0.66 }
     },
-    { /* 6  Blank... */
+    {   "6: Blank",
       	0,
       	0
     },
-    { /* 7  Blank... */
+    {   "7: Blank",
       	0,
       	0
     },
-    { /* 8 Six Faced Wall (WE)... */
-	8,
+    {   "8: Six Faced Wall (WE)",
+	    8,
       	2,
       	{ 6, 4 },
       	{  5, 2, 3, 6, 7, 4,
@@ -170,8 +170,8 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         }  
 
     },
-    { /* 9  Six Faced Wall (NS)... */
-	8,
+    {   "9  Six Faced Wall (NS)",
+	    8,
       	2,
       	{ 6, 4 },
       	{ 7, 3, 0, 4, 5, 6,
@@ -181,16 +181,16 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
           0.33, 0.00,  0.66, 0.00,  0.66, 1.00,  0.33, 1.00 }
     },
-    { /* 10  Blank... */
+    {   "10: Blank",
       	0,
       	0
     },
-    { /* 11  Blank... */
+    {   "11: Blank",
     	0,
         0
     },
-    { /* 12  Eight Faced Wall (W)... */
-	8,
+    {   "12: Eight Faced Wall (W)",
+	    8,
         2,
         { 8, 4 },
         { 7, 3, 4, 5, 6, 1, 2, 3,
@@ -200,7 +200,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
           0.00, 0.66,  0.00, 0.33,  0.66, 0.33,  0.66, 0.66 }
     },
-    {  /* 13  Eight Faced Wall (N)... */
+    {   "13: Eight Faced Wall (N)",
     	8,
         2,
         { 8, 4 },
@@ -211,7 +211,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
           0.33, 0.00,  0.66, 0.00,  0.66, 0.66,  0.33, 0.66 }
     },
-    {  /* 14  Eight Faced Wall (E)... */
+    {  "14: Eight Faced Wall (E)",
        8,
        2,
        { 8, 4 },
@@ -222,7 +222,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
        { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
          1.00, 0.33,  1.00, 0.66,  0.33, 0.33,  0.33, 0.66 }
     },
-    { /* 15  Eight Faced Wall (S)... */
+    {   "15: Eight Faced Wall (S)",
     	8,
        	2,
        	{ 8, 4 },
@@ -233,7 +233,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
           0.66, 1.00,  0.33, 1.00,  0.33, 0.33,  0.66, 0.33 }
     },
-    { /* 16  Ten Faced Wall (WS)... */
+    {   "16: Ten Faced Wall (WS)",
     	10,
          2,
         { 8, 6 },
@@ -246,8 +246,8 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
 	  0.66, 1.00,  0.33, 1.00,  0.00, 0.66,  0.00, 0.33,
           0.66, 0.33,  0.33, 0.66 }
     },
-    { /* 17  Ten Faced Wall (NW)... */
-	10,
+    {   "17: Ten Faced Wall (NW)",
+	    10,
         2,
         { 8, 6 },
         { 8, 6, 7, 0, 4, 5, 9, 6,
@@ -259,7 +259,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
           0.33, 0.00,  0.66, 0.00,  0.00, 0.66,  0.00, 0.33,
           0.33, 0.33,  0.66, 0.66 }
     },
-    { /* 18  Ten Faced Wall (NE)... */
+    {   "18: Ten Faced Wall (NE)",
     	10,
         2,
         { 8, 6 },
@@ -272,20 +272,20 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
           0.33, 0.00,  0.66, 0.00,  1.00, 0.33,  1.00, 0.66,
           0.66, 0.33,  0.33, 0.66 }
     },
-    { /* 19  Ten Faced Wall (ES)... */
-	10,
+    {   "19:  Ten Faced Wall (ES)",
+	    10,
         2,
         { 8, 6 },
         { 9, 7, 8, 4, 5, 2, 6, 7,
           8, 7, 3, 0, 1, 4 },
         { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
           1.00, 0.33,  1.00, 0.66,  0.66, 1.00,  0.33, 1.00,
-	  0.33, 0.33,  0.66, 0.66 },
+	      0.33, 0.33,  0.66, 0.66 },
         { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
           1.00, 0.33,  1.00, 0.66,  0.66, 1.00,  0.33, 1.00,
-	  0.33, 0.33,  0.66, 0.66 }
+	      0.33, 0.33,  0.66, 0.66 }
     },
-    { /* 20  Twelve Faced Wall (WSE)... */
+    {   "20: Twelve Faced Wall (WSE)",
         12,
         3,
         { 9, 5, 4 },
@@ -299,8 +299,8 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
           1.00, 0.33,  1.00, 0.66,  0.66, 1.00,  0.33, 1.00,
           0.00, 0.66,  0.00, 0.33,  0.66, 0.66,  0.33, 0.66 }
     },
-    {  /* 21  Twelve Faced Wall (NWS)... */
-	12,
+    {   "21: Twelve Faced Wall (NWS)",
+	    12,
         3,
         { 9, 5, 4 },
         { 10, 8, 9, 0, 4, 5, 6, 11, 8,
@@ -313,8 +313,8 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
 	  0.33, 0.00,  0.66, 0.00,  0.66, 1.00,  0.33, 1.00,
 	  0.00, 0.66,  0.00, 0.33,  0.33, 0.33,  0.33, 0.66 }
     },
-    { /* 22  Twelve Faced Wall (ENW)... */
-	12,
+    {    "22: Twelve Faced Wall (ENW)",
+	     12,
          3,
          { 9, 5, 4 },
          { 11, 8, 10, 4, 5, 1, 6, 7, 8,
@@ -327,8 +327,8 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
 	  0.33, 0.00,  0.66, 0.00,  0.66, 1.00,  0.33, 1.00,
 	  0.00, 0.66,  0.00, 0.33,  0.33, 0.33,  0.33, 0.66 }
     },
-    { /* 23  Twelve Faced Wall (SEN)... */
-	12,
+    {   "23:  Twelve Faced Wall (SEN)",
+	    12,
         3,
         { 9, 5, 4 },
         { 11, 9, 4, 10, 6, 7, 2, 8, 9,
@@ -341,8 +341,8 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
           0.33, 0.00,  0.66, 0.00,  1.00, 0.33,  1.00, 0.66,
           0.66, 1.00,  0.33, 1.00,  0.66, 0.33,  0.66, 0.66 }
     },
-    { /* 24  Twelve Faced Stair (WE)... */
-	14,
+    {   "24: Twelve Faced Stair (WE)",
+	    14,
         3,
         { 6, 6, 6 },
         { 13, 3, 0, 4, 5, 12,
@@ -357,7 +357,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
             0.83, 0.00,  0.83, 1.00,  0.66, 1.00,  0.50, 1.00,
             0.33, 1.00,  0.16, 1.00 }
     },
-    { /* 25  Twelve Faced Stair (NS)... */
+    {   "25: Twelve Faced Stair (NS)",
     	14,
         3,
         { 6, 6, 6 },
@@ -753,7 +753,7 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int chosen_fan)
 
     glEnd();
 
-    /* TODO: Draw chosen tile                   */
+    /* Draw chosen tile                   */
     if (chosen_fan >= 0) {
 
         draw_rect.x = x + ((chosen_fan % mesh -> tiles_x) * draw_rect.w);
@@ -793,7 +793,6 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int chosen_fan)
                    draw_rect.y + (ny[1] * zmax));
         sdlglSetColor(SDLGL_COL_WHITE);
         glVertex2i(draw_rect.x, draw_rect.y);       /* Direction */
-        glVertex2i(draw_rect.x, draw_rect.y);
         glVertex2i(draw_rect.x + (nx[2] * zmax),
                    draw_rect.y + (ny[2] * zmax));
     glEnd();

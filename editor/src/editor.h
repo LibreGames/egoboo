@@ -119,6 +119,7 @@ typedef struct {
 
 typedef struct {
 
+    char *name;                             // Name of this fan type
     unsigned char numvertices;			    // meshcommandnumvertices
     int   count;			                // meshcommands
     int   size[MAXMESHCOMMAND];             // meshcommandsize
@@ -136,8 +137,8 @@ typedef struct {
                             /* (tx_no >> 6) & 3: Number of wall texture     */
                             /* tx_no & 0x3F:     Number of part of texture  */ 
     unsigned char tx_flags; /* Special flags                                */
-    unsigned char  fx;		/* Tile special effects flags                   */
-    unsigned char  type;	/* Tile fan type            			        */
+    unsigned char fx;		/* Tile special effects flags                   */
+    unsigned char type;     /* Tile fan type            			        */
 
 } FANDATA_T;
 
