@@ -32,6 +32,10 @@
 * DEFINES								                                       *
 *******************************************************************************/
 
+#define EDITDRAW_OBJ_TILE   0x01    /* 	==> First always the tile       */
+#define EDITDRAW_OBJ_CHAR   0x02    /* Characters (MD2)                 */
+#define EDITDRAW_OBJ_PART   0x03    /* Particles (can be transparent)   */
+
 /*******************************************************************************
 * CODE 								                                           *
 *******************************************************************************/

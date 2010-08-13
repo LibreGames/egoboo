@@ -1,4 +1,8 @@
-2010-08-11 <bitnapper>
+2010-08-12 <bitnapper>
+- Added some basic fans extents, save z-values
+- Added basic code for implementation of new key commands for map
+
+2010-08-12 <bitnapper>
 - Fixed displaying map 'swapped' in 3D-View
 - Added display of chosen fan in 3D-View
 

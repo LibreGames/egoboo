@@ -548,6 +548,8 @@ void editmainChooseFan(int cx, int cy, int w, int h)
     if (fan_no >= 0 && fan_no < Mesh.numfan) {
     
         EditState.fan_chosen = fan_no;
+        /* And fill it into 'EditState' for display */
+        memcpy(&EditState.act_fan, &Mesh.fan[fan_no], sizeof(FANDATA_T));
     
     }
  

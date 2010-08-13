@@ -61,6 +61,12 @@
 
 #define EDITOR_FILE_EXIT   ((char)3)
 
+/* Sub-Commands */
+#define EDITOR_2DMAP_CHOOSEFAN  ((char)1)
+#define EDITOR_2DMAP_FANINFO    ((char)2)
+#define EDITOR_2DMAP_FANROTATE  ((char)3)
+#define EDITOR_2DMAP_FANBROWSE  ((char)4)
+
 /*******************************************************************************
 * DATA									                                       *
 *******************************************************************************/
@@ -91,6 +97,7 @@ static SDLGLCFG_NAMEDVALUE CfgValues[] = {
 
 static EDITMAIN_STATE_T *pEditState;
 static char StatusBar[80];
+static char Map2DState;     /* EDITOR_2DMAP_ */
 
 static SDLGL_CMDKEY EditorCmd[] = {
 
@@ -105,7 +112,9 @@ static SDLGL_CMDKEY EditorCmd[] = {
     { { SDLK_KP_MINUS }, SDLGL3D_CAMERA_ZOOM, -1, SDLGL3D_CAMERA_ZOOM },
     { { SDLK_LCTRL, SDLK_m }, EDITOR_STATE, EDITOR_STATE_SHOWMAP },
     { { SDLK_x }, SDLGL3D_MOVE_ROTX, +1, SDLGL3D_MOVE_ROTX },
-    { { SDLK_y }, SDLGL3D_MOVE_ROTY, +1, SDLGL3D_MOVE_ROTY },
+    { { SDLK_i }, EDITOR_2DMAP, EDITOR_2DMAP_FANINFO, EDITOR_2DMAP },
+    { { SDLK_r }, EDITOR_2DMAP, EDITOR_2DMAP_FANROTATE, EDITOR_2DMAP },
+    { { SDLK_b }, EDITOR_2DMAP, EDITOR_2DMAP_FANBROWSE, EDITOR_2DMAP },
     /* -------- Switch the player with given number ------- */
     { { SDLK_ESCAPE }, EDITOR_EXITPROGRAM },
     { { 0 } }
@@ -114,7 +123,7 @@ static SDLGL_CMDKEY EditorCmd[] = {
 
 static SDLGL_FIELD MainMenu[EDITOR_MAXFLD + 2] = {
     { SDLGL_TYPE_STD,  {   0, 584, 800,  16 } },            /* Status bar       */
-    { SDLGL_TYPE_MENU + 10,  { 0, 16, 256, 256 }, EDITOR_2DMAP }, /* Map-Rectangle    */
+    { SDLGL_TYPE_MENU + 10,  { 0, 16, 256, 256 }, EDITOR_2DMAP, EDITOR_2DMAP_CHOOSEFAN }, /* Map-Rectangle    */
     /* 'Code' needed in menu-background' for support of 'mouse-over'    */
     { SDLGL_TYPE_STD,  {   0, 0, 800, 16 }, -1 },           /* Menu-Background  */
     { SDLGL_TYPE_MENU, {   4, 4, 32, 8 }, EDITOR_FILE, 0, "File" },
@@ -144,17 +153,18 @@ static SDLGL_FIELD SubMenu[] = {
     { 0 }
 };
 
-/* Prepared Dialog for changing of Flags of a fan */
+/* Prepared Dialog for changing of Flags of a fan. TODO: Make it dynamic */
 static SDLGL_FIELD FanInfoDlg[] = {
-    { SDLGL_TYPE_STD, { 0, 0, 0, 0 } }, /* Background of dialog */ 
-    { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_SHA,     "Reflective" },    
-    { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_DRAWREF, "Draw Reflection" },    
-    { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_ANIM,    "Animated" }, 
-    { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_WATER,   "Overlay (Water)" },  
-    { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_WALL,    "Barrier (Slit)" },    
-    { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_IMPASS,  "Impassable (Wall)" }, 
-    { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_DAMAGE,  "Damage" }, 
-    { SDLGL_TYPE_STD, { 0, 0, 0, 0 }, EDITOR_FX, MPDFX_SLIPPY,  "Slippy" },
+    { SDLGL_TYPE_STD, { 0,  16, 320, 208 } },        /* Background of dialog */
+    { SDLGL_TYPE_STD, { 8,  24, 320, 208 }, 0, 0, "Info about Fan" },
+    { SDLGL_TYPE_STD, { 8,  40, 120, 8 }, EDITOR_FX, MPDFX_SHA,     "Reflective" },
+    { SDLGL_TYPE_STD, { 8,  56, 120, 8 }, EDITOR_FX, MPDFX_DRAWREF, "Draw Reflection" },
+    { SDLGL_TYPE_STD, { 8,  72, 120, 8 }, EDITOR_FX, MPDFX_ANIM,    "Animated" },
+    { SDLGL_TYPE_STD, { 8,  88, 120, 8 }, EDITOR_FX, MPDFX_WATER,   "Overlay (Water)" },
+    { SDLGL_TYPE_STD, { 8, 104, 120, 8 }, EDITOR_FX, MPDFX_WALL,    "Barrier (Slit)" },
+    { SDLGL_TYPE_STD, { 8, 120, 120, 8 }, EDITOR_FX, MPDFX_IMPASS,  "Impassable (Wall)" },
+    { SDLGL_TYPE_STD, { 8, 136, 120, 8 }, EDITOR_FX, MPDFX_DAMAGE,  "Damage" },
+    { SDLGL_TYPE_STD, { 8, 154, 120, 8 }, EDITOR_FX, MPDFX_SLIPPY,  "Slippy" },
     { 0 }
 };
 
@@ -267,6 +277,95 @@ static void editorSetMenuViewToggle(void)
 
 /*
  * Name:
+ *     editor2DMap
+ * Description:
+ *     Handles all functions for the code 'EDITOR_2DMAP' 
+ * Input:
+ *     event *: Pointer on event
+ */
+static void editor2DMap(SDLGL_EVENT *event)
+{
+
+    SDLGL_FIELD *field;
+    
+    
+    switch(event -> sub_code) {
+    
+        case EDITOR_2DMAP_CHOOSEFAN:
+            if (pEditState -> display_flags & EDITMAIN_SHOW2DMAP) {
+
+                field = event -> field;
+                editmainChooseFan(event -> mou.x, event -> mou.y,
+                                  field -> rect.w, field -> rect.h);
+                /* And now move camera to this position */
+                sdlgl3dMoveToPosCamera(0,
+                                       (pEditState -> tile_x * 128.0) - 450.0,
+                                       (pEditState -> tile_y * 128.0),
+                                       600.0);
+                if (event -> modflags == SDL_BUTTON_LEFT) {
+                    /* TODO: Replace type of chosen fan by new type of fan */
+                }
+                else if (event -> modflags == SDL_BUTTON_RIGHT){
+                    /* TODO: Do action based on number 'Map2DState'  */
+                }
+                
+            }
+            break;
+        case EDITOR_2DMAP_FANINFO:
+            if (event -> pressed) {
+                Map2DState = event -> sub_code;
+                /* TODO: Display string in Statusbar according to action */
+            }
+            else {
+                Map2DState = 0;
+            }
+            break;
+        case EDITOR_2DMAP_FANROTATE:
+            /* TODO: Rotate the chosen fan type */
+            break;
+        case EDITOR_2DMAP_FANBROWSE:
+            /* TODO: Browse trough the available fan types */
+            break;
+
+    }
+
+}
+
+/*
+ * Name:
+ *     editorDrawFanInfo
+ * Description:
+ *     Print info about chosen fan on screen
+ * Input:
+ *     None
+ */
+static void editorDrawFanInfo(void)
+{
+
+    SDLGL_FIELD *fields;
+
+    if (Map2DState == EDITOR_2DMAP_FANINFO && pEditState -> fan_chosen >= 0) {
+
+        /* Draw info about chosen fan: EditState.act_fan */
+        fields = &FanInfoDlg[0];
+        /* Draw background */
+        sdlglstrDrawButton(&fields -> rect, 0, 0);
+        fields++;
+        /* Draw all strings */
+        sdlglstrSetColorNo(SDLGLSTR_COL_WHITE);
+        while (fields -> sdlgl_type > 0) {
+
+            sdlglstrString(&fields -> rect, fields -> pdata);
+            fields++;
+
+        }
+
+    }
+
+}
+
+/*
+ * Name:
  *     editorDrawFunc
  * Description:
  *     Draw anything on screen
@@ -364,11 +463,12 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
 
     }
 
-    /* TODO: Display camera position */
+    /* Display camera position */
     cam = sdlgl3dGetCameraInfo(0, nx, nx, &dist);
     sdlglstrStringF(&StrPos, "RotX: %f\n\nRotY: %f\n\nRotZ: %f\n\n",
                     cam -> rot[0], cam -> rot[1], cam -> rot[2]);
-
+    /* Display info about actual chosen fan, if asked for */                   
+    editorDrawFanInfo();
 
 }
 
@@ -382,9 +482,6 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
  */
 static int editorInputHandler(SDLGL_EVENT *event)
 {
-
-    SDLGL_FIELD *field;
-
 
     if (event -> code > 0) {
 
@@ -432,18 +529,7 @@ static int editorInputHandler(SDLGL_EVENT *event)
 
                 case EDITOR_2DMAP:
                     /* TODO: Make this a 'dynamic' input field */
-                    if (pEditState -> display_flags & EDITMAIN_SHOW2DMAP) {
-
-                        field = event -> field;
-                        editmainChooseFan(event -> mou.x, event -> mou.y,
-                                          field -> rect.w, field -> rect.h);
-                        /* And now move camera to this position */
-                        sdlgl3dMoveToPosCamera(0,
-                                               (pEditState -> tile_x * 128.0) - 450.0,
-                                               (pEditState -> tile_y * 128.0),
-                                               600.0);
-
-                    }
+                    editor2DMap(event);     
                     break;
 
                 case EDITOR_EXITPROGRAM:

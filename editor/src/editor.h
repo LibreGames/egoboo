@@ -111,21 +111,22 @@
 
 typedef struct {
 
-    float u, v;
-    float x, y, z;
+    unsigned char ref;      /* Light reference      */
+    float u, v;             /* Texture mapping info: Has to be multiplied by 'sub-uv' */    
+    float x, y, z;          /* Default position of vertex at 0, 0, 0    */
 
 } EDITOR_VTX;
 
 typedef struct {
 
-    int   numvertices;			            // meshcommandnumvertices
+    unsigned char numvertices;			    // meshcommandnumvertices
     int   count;			                // meshcommands
     int   size[MAXMESHCOMMAND];             // meshcommandsize
     int   vertexno[MAXMESHCOMMANDENTRIES];  // meshcommandvrt, number of vertex
     float uv[MAXMESHVERTICES * 2];          // meshcommandu, meshcommandv
     float biguv[MAXMESHVERTICES * 2];       // meshcommandu, meshcommandv
                                             // For big texture images
-    EDITOR_VTX vtx;                         // Holds default position and it's u/v position
+    EDITOR_VTX vtx[MAXMESHVERTICES];        // Holds it's u/v position and default extent x/y/z
     
 } COMMAND_T;
 

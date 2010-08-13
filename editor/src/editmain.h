@@ -57,7 +57,7 @@
 typedef struct {
 
     int fan_chosen;             /* Actual chosen fan for editing    */
-    int tile_x, tile_y;         /* Position of fan as x/y tile      */
+    int tile_x, tile_y;         /* Position of fan as x/y on map    */
     unsigned char display_flags;/* For display in main editor       */
     unsigned char draw_mode;    /* For copy into mesh - struct      */
     char brush_size;            /* From 'cartman'  0-3, (slider)    */    
