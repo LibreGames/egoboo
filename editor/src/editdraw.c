@@ -37,8 +37,9 @@
 * DEFINES								                                       *
 *******************************************************************************/
 
-#define EDITDRAW_MAXWALLSUBTEX  64     /* Images per wall texture   */
-#define EDITDRAW_MAXWALLTEX      4     /* Maximum wall textures     */ 
+#define EDITDRAW_MAXWALLSUBTEX   64     /* Images per wall texture   */
+#define EDITDRAW_MAXWALLTEX       4     /* Maximum wall textures     */ 
+#define EDITDRAW_TILEDIV        128
   
 /*******************************************************************************
 * TYPEDEFS                                                                     *
@@ -50,8 +51,9 @@
 
 static COMMAND_T MeshCommand[MAXMESHTYPE] = {
     {  "0: Two Faced Ground",
+        0,          /* Default FX: None         */
         4,		    /* Total number of vertices */
-    	1,    		/*  1 Command */
+    	1,    		/*  1 Command               */
     	{ 4 },		/* Commandsize (how much vertices per command)  */
     	{ 1, 2, 3, 0 },
     	{ 0.001, 0.001, 0.124, 0.001, 0.124, 0.124, 0.001, 0.124 },
@@ -63,6 +65,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         }
     },
     {   "1: Two Faced Ground",
+        0,          /* Default FX: None         */
     	4,
         1,
         { 4 },
@@ -78,6 +81,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
 
     },
     {   "2: Four Faced Ground",
+        0,          /* Default FX: None         */
         5,
         1,
         { 6 },
@@ -92,6 +96,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         }
     },
     {   "3: Eight Faced Ground",
+        0,          /* Default FX: None         */
         9,
         1,
 	    { 10 },
@@ -112,6 +117,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         }
     },
     {   "4:  Ten Face Pillar",
+        (MPDFX_WALL | MPDFX_IMPASS),    /* Defualt FX   */
         8,
         2,
         { 8, 6 },
@@ -132,6 +138,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         }
     },
     {   "5: Eighteen Faced Pillar",
+        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
   	    16,
         4,
         { 10, 8, 4, 4 },
@@ -157,7 +164,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
           { 11, 1.00, 0.66, 128.00,  84.00, 0.00 },
           { 14, 0.66, 1.00,  84.00, 128.00, 0.00 },
           { 13, 0.33, 1.00,  42.00, 128.00, 0.00 },
-          {  8, 0.00, 0.66, 128.00,  84.00, 0.00 },
+          {  8, 0.00, 0.66,   0.00,  84.00, 0.00 },
           {  4, 0.00, 0.33,   0.00,  42.00, 0.00 },
           {  5, 0.33, 0.33,  42.00,  42.00, 0.00 },
           {  6, 0.66, 0.33,  84.00,  42.00, 0.00 },
@@ -165,15 +172,10 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
           {  9, 0.33, 0.66,  42.00,  84.00, 0.00 }
         }
     },
-    {   "6: Blank",
-      	0,
-      	0
-    },
-    {   "7: Blank",
-      	0,
-      	0
-    },
+    {   "6: Blank", 0, 0, 0 },
+    {   "7: Blank", 0, 0, 0 },
     {   "8: Six Faced Wall (WE)",
+        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
 	    8,
       	2,
       	{ 6, 4 },
@@ -195,6 +197,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
 
     },
     {   "9  Six Faced Wall (NS)",
+        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
 	    8,
       	2,
       	{ 6, 4 },
@@ -214,20 +217,15 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
           { 13, 0.33, 1.00,  42.00, 128.00, 0.00 }, 
         }
     },
-    {   "10: Blank",
-      	0,
-      	0
-    },
-    {   "11: Blank",
-    	0,
-        0
-    },
+    {   "10: Blank", 0, 0, 0 },
+    {   "11: Blank", 0, 0, 0 },
     {   "12: Eight Faced Wall (W)",
+        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
 	    8,
         2,
         { 8, 4 },
         { 7, 3, 4, 5, 6, 1, 2, 3,
- 	  1, 6, 5, 0 },
+          1, 6, 5, 0 },
         { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
           0.00, 0.66,  0.00, 0.33,  0.66, 0.33,  0.66, 0.66 },
         { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
@@ -236,13 +234,14 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
           {  3, 1.00, 0.00, 128.00,   0.00, 0.00 },
           { 15, 1.00, 1.00, 128.00, 128.00, 0.00 },
           { 12, 0.00, 1.00,   0.00, 128.00, 0.00 },
-          {  8, 0.00, 0.66,  84.00,   0.00, 0.00 },
+          {  8, 0.00, 0.66,   0.00,  84.00, 0.00 },
           {  4, 0.00, 0.33,   0.00,  42.00, 0.00 },
           {  6, 0.66, 0.33,  84.00,  42.00, 0.00 },
           { 10, 0.66, 0.66,  84.00,  84.00, 0.00 }
         }
     },
     {   "13: Eight Faced Wall (N)",
+        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
     	8,
         2,
         { 8, 4 },
@@ -263,26 +262,28 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         }
     },
     {  "14: Eight Faced Wall (E)",
-       8,
-       2,
-       { 8, 4 },
-       { 6, 3, 0, 1, 4, 5, 7, 3,
-         3, 7, 5, 2 },
-       { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
-         1.00, 0.33,  1.00, 0.66,  0.33, 0.33,  0.33, 0.66 },
-       { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
-         1.00, 0.33,  1.00, 0.66,  0.33, 0.33,  0.33, 0.66 },
-       { {  0, 0.00, 0.00,   0.00,   0.00, 0.00 },
-         {  3, 1.00, 0.00, 128.00,   0.00, 0.00 },
-         { 15, 1.00, 1.00, 128.00, 128.00, 0.00 },
-         { 12, 0.00, 1.00,   0.00, 128.00, 0.00 },
-         {  7, 1.00, 0.33, 128.00,  42.00, 0.00 },
-         { 11, 1.00, 0.66, 128.00,  84.00, 0.00 },
-         {  5, 0.33, 0.33,  42.00,  42.00, 0.00 },
-         {  9, 0.33, 0.66,  42.00,  84.00, 0.00 },
-       } 
+        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
+        8,
+        2,
+        { 8, 4 },
+        { 6, 3, 0, 1, 4, 5, 7, 3,
+          3, 7, 5, 2 },
+        { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
+          1.00, 0.33,  1.00, 0.66,  0.33, 0.33,  0.33, 0.66 },
+        { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
+          1.00, 0.33,  1.00, 0.66,  0.33, 0.33,  0.33, 0.66 },
+        { {  0, 0.00, 0.00,   0.00,   0.00, 0.00 },
+          {  3, 1.00, 0.00, 128.00,   0.00, 0.00 },
+          { 15, 1.00, 1.00, 128.00, 128.00, 0.00 },
+          { 12, 0.00, 1.00,   0.00, 128.00, 0.00 },
+          {  7, 1.00, 0.33, 128.00,  42.00, 0.00 },
+          { 11, 1.00, 0.66, 128.00,  84.00, 0.00 },
+          {  5, 0.33, 0.33,  42.00,  42.00, 0.00 },
+          {  9, 0.33, 0.66,  42.00,  84.00, 0.00 },
+        } 
     },
     {   "15: Eight Faced Wall (S)",
+        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
     	8,
        	2,
        	{ 8, 4 },
@@ -303,6 +304,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         }
     },
     {   "16: Ten Faced Wall (WS)",
+        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
     	10,
          2,
         { 8, 6 },
@@ -328,6 +330,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
           
     },
     {   "17: Ten Faced Wall (NW)",
+        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
 	    10,
         2,
         { 8, 6 },
@@ -352,6 +355,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         }
     },
     {   "18: Ten Faced Wall (NE)",
+        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
     	10,
         2,
         { 8, 6 },
@@ -376,6 +380,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         }
     },
     {   "19:  Ten Faced Wall (ES)",
+        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
 	    10,
         2,
         { 8, 6 },
@@ -401,6 +406,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         
     },
     {   "20: Twelve Faced Wall (WSE)",
+        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
         12,
         3,
         { 9, 5, 4 },
@@ -428,6 +434,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         }
     },
     {   "21: Twelve Faced Wall (NWS)",
+        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
 	    12,
         3,
         { 9, 5, 4 },
@@ -455,6 +462,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         }
     },
     {   "22: Twelve Faced Wall (ENW)",
+        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
 	    12,
         3,
         { 9, 5, 4 },
@@ -482,6 +490,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         }
     },
     {   "23:  Twelve Faced Wall (SEN)",
+        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
 	    12,
         3,
         { 9, 5, 4 },
@@ -509,6 +518,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         }
     },
     {   "24: Twelve Faced Stair (WE)",
+        MPDFX_IMPASS,           /* Default FX   */
 	    14,
         3,
         { 6, 6, 6 },
@@ -540,6 +550,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         }
     },
     {   "25: Twelve Faced Stair (NS)",
+        MPDFX_IMPASS,           /* Default FX   */
     	14,
         3,
         { 6, 6, 6 },
@@ -584,9 +595,10 @@ static COMMAND_T ChosenFanType;                             /* For display of th
  *  Name:
  *	    editdrawChosenFanType
  *  Description:
- *      Draws the fan 'ChosenFanType' in wireframe-mode in whit color
+ *      Draws the fan 'ChosenFanType' in wireframe-mode in white color.
+ *      Elevated by 10 Units above Z=0
  * Input:
-
+ *     None
  */
 static void editdrawChosenFanType(void)
 {
@@ -607,7 +619,9 @@ static void editdrawChosenFanType(void)
 
             for (tnc = 0; tnc < ChosenFanType.size[cnt]; tnc++) {       
                 
-                glVertex3fv(&ChosenFanType.vtx[ChosenFanType.vertexno[entry]].x);
+                glVertex3f(ChosenFanType.vtx[ChosenFanType.vertexno[entry]].x,
+                           ChosenFanType.vtx[ChosenFanType.vertexno[entry]].y,
+                           ChosenFanType.vtx[ChosenFanType.vertexno[entry]].z + 10);
 
                 entry++;
 
@@ -658,11 +672,11 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no, int col_no)
 
     if (! (mesh -> draw_mode & EDIT_MODE_SOLID)) {
         /* Set color depending on texturing type */
-        if (type & COMMAND_TEXTUREHI_FLAG) {/* It's one with hi res texture */
-            sdlglSetColor(SDLGL_COL_BLUE);  /* color like cartman           */
+        if (type & COMMAND_TEXTUREHI_FLAG) {    /* It's one with hi res texture */
+            sdlglSetColor(SDLGL_COL_LIGHTBLUE);  /* color like cartman           */
     	}
     	else {
-            sdlglSetColor(SDLGL_COL_RED);
+            sdlglSetColor(SDLGL_COL_LIGHTRED);
         }
         if (col_no > 0) {
             sdlglSetColor(col_no);
@@ -771,17 +785,60 @@ static void editdrawMap(MESH_T *mesh, int chosen_fan, int chosen_fan_type)
         mesh -> draw_mode = save_mode;
     
     }
-    
-    /* Draw the chosen fan type, if any */
-    if (chosen_fan_type >= 0) {
-        
-        editdrawChosenFanType();
-        
-    }
-    
+
     if (mesh -> draw_mode & EDIT_MODE_TEXTURED) {
         glDisable(GL_TEXTURE_2D);
     }
+
+    /* Draw the chosen fan type, if any */
+    if (chosen_fan_type >= 0) {
+
+        editdrawChosenFanType();
+
+    }
+
+}
+
+/*
+ *  Name:
+ *	    editdraw2DCameraPos
+ *  Description:
+ *	    Draw the Camera-Frustum in size od 2D-Map
+ * Input:
+ *      x, y: Positon in 2D
+ */
+static void editdraw2DCameraPos(int x, int y)
+{
+
+    SDLGL3D_OBJECT *campos;
+    float nx[4], ny[4];         /* For the frustum normals              */
+    float zmax;                 /* Far plane: Extent of frustum normals */
+    SDLGL_RECT draw_rect;
+    
+    
+    /* TODO: Calculate now hardcoded value of '32.0' */
+    campos = sdlgl3dGetCameraInfo(0, &nx[0], &ny[0], &zmax);
+
+    draw_rect.x = x + (campos -> pos[0] / 32.0);
+    draw_rect.y = y + (campos -> pos[1] / 32.0);
+    zmax /= 32.0;
+
+    /* Now draw the camera angle */
+    glBegin(GL_LINES);
+        sdlglSetColor(SDLGL_COL_LIGHTGREEN);
+        glVertex2i(draw_rect.x, draw_rect.y);       /* Right edge of frustum */
+        glVertex2i(draw_rect.x + (nx[0] * zmax),
+                   draw_rect.y + (ny[0] * zmax));
+
+        sdlglSetColor(SDLGL_COL_LIGHTRED);          /* Left edge of frustum */
+        glVertex2i(draw_rect.x, draw_rect.y);
+        glVertex2i(draw_rect.x + (nx[1] * zmax),
+                   draw_rect.y + (ny[1] * zmax));
+        sdlglSetColor(SDLGL_COL_WHITE);
+        glVertex2i(draw_rect.x, draw_rect.y);       /* Direction */
+        glVertex2i(draw_rect.x + (nx[2] * zmax),
+                   draw_rect.y + (ny[2] * zmax));
+    glEnd();
 
 }
 
@@ -887,11 +944,9 @@ void editdrawChooseFanType(int fan_type, int x, int y)
     x *= 128;
     y *= 128;
     
-    for (i = 0; i < ChosenFanType.numvertices; i++) {
-    
+    for (i = 0; i < ChosenFanType.numvertices; i++) { 
         ChosenFanType.vtx[i].x += x;
         ChosenFanType.vtx[i].y += y;
-        ChosenFanType.vtx[i].z += 10;   /* Elevate it a little above bottom */
     }
 
 }
@@ -916,41 +971,46 @@ void editdraw3DView(MESH_T *mesh, int chosen_fan, int chosen_fan_type)
     sdlgl3dBegin(0, 0);        /* Draw not solid */
 
     /* Draw a grid 64 x 64 squares for test of the camera view */
-    sdlglSetColor(SDLGL_COL_CYAN);
+    /* Draw only if no map is loaded */
+    if (! mesh -> map_loaded) {
+    
+        sdlglSetColor(SDLGL_COL_LIGHTGREEN);
 
-    for (h = 0; h < 64; h++) {
+        for (h = 0; h < 64; h++) {
 
-        for (w = 0; w < 64; w++) {
+            for (w = 0; w < 64; w++) {
 
-            x = w * 128;
-            y = h * 128;
-            x2 = x + 128;
-            y2 = y + 128;
+                x = w * 128;
+                y = h * 128;
+                x2 = x + 128;
+                y2 = y + 128;
 
-            sdlglSetColor(SDLGL_COL_LIGHTGREEN);
-            glBegin(GL_TRIANGLE_FAN);  /* Draw clockwise */
-                glVertex2i(x, y);
-                glVertex2i(x2, y);
-                glVertex2i(x2, y2);
-                glVertex2i(x, y2);
-            glEnd();
-            
+                
+                glBegin(GL_TRIANGLE_FAN);  /* Draw clockwise */
+                    glVertex2i(x, y);
+                    glVertex2i(x2, y);
+                    glVertex2i(x2, y2);
+                    glVertex2i(x, y2);
+                glEnd();
+                
+            }
+
         }
 
+        /* Draw Axes */
+        glBegin(GL_LINES);
+            sdlglSetColor(SDLGL_COL_RED);   /* X-Axis   */
+            glVertex3i(  0,   0, 10);
+            glVertex3i(256,   0, 10);
+            sdlglSetColor(SDLGL_COL_GREEN);
+            glVertex3i(  0,   0, 10);
+            glVertex3i(  0, 256, 10);       /* Y-Axis   */
+            sdlglSetColor(SDLGL_COL_BLUE);
+            glVertex3i(  0, 0, 10);
+            glVertex3i(  0, 0, 266);        /* Z-Axis   */
+        glEnd();
+        
     }
-
-    /* Draw Axes */
-    glBegin(GL_LINES);
-        sdlglSetColor(SDLGL_COL_RED);   /* X-Axis   */
-        glVertex3i(  0,   0, 10);
-        glVertex3i(256,   0, 10);
-        sdlglSetColor(SDLGL_COL_GREEN);
-        glVertex3i(  0,   0, 10);
-        glVertex3i(  0, 256, 10);       /* Y-Axis   */
-        sdlglSetColor(SDLGL_COL_BLUE);
-        glVertex3i(  0, 0, 10);
-        glVertex3i(  0, 0, 266);        /* Z-Axis   */
-    glEnd();
     
     editdrawMap(mesh, chosen_fan, chosen_fan_type);     
     
@@ -971,23 +1031,7 @@ void editdraw3DView(MESH_T *mesh, int chosen_fan, int chosen_fan_type)
 void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int chosen_fan)
 {
 
-    static int mapcolors[] = { SDLGL_COL_BLUE, SDLGL_COL_BLUE,
-                               SDLGL_COL_BLUE, SDLGL_COL_BLUE, /* Ground */
-                               1, 1,	  /* Pillar */
-                               2, 2,	  /* ------ */
-                               SDLGL_COL_BLACK, SDLGL_COL_BLACK,	  /* Wall   */
-                               2, 2,	  /* ------ */
-                               SDLGL_COL_BLACK, SDLGL_COL_BLACK,
-                               SDLGL_COL_BLACK, SDLGL_COL_BLACK,
-                               SDLGL_COL_BLACK, SDLGL_COL_BLACK,
-                               SDLGL_COL_BLACK, SDLGL_COL_BLACK,
-                               3, 3, 3, 3,
-                               4, 4,	  /* Stair  */
-                               5, 5, 5, 5, 5, 5 };   /* Unknown */
-    SDLGL3D_OBJECT *campos;
     SDLGL_RECT draw_rect;
-    float nx[4], ny[4];         /* For the frustum normals              */
-    float zmax;                 /* Far plane: Extent of frustum normals */
     int rx2, ry2;
     int fan_no;
 
@@ -1008,9 +1052,17 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int chosen_fan)
         for (h = 0; h < mesh -> tiles_y; h++) {
 
             for (w = 0; w < mesh -> tiles_x; w++) {
-
-                sdlglSetColor(mapcolors[mesh -> fan[fan_no].type & 0x1F]);
-                /* TODO: Get color on base of FX-Flags: ISWALL = black */
+                /* Set color depeding on WALL-FX-Flags    */
+                if (mesh -> fan[fan_no].fx & MPDFX_WALL) {
+                    sdlglSetColor(SDLGL_COL_BLACK);
+                }
+                else if (0 == mesh -> fan[fan_no].fx) {
+                    sdlglSetColor(SDLGL_COL_BLUE);
+                }
+                else {
+                    /* Colors >= 15: Others then standard colors */
+                    sdlglSetColor(mesh -> fan[fan_no].type + 15);
+                }
                 rx2 = draw_rect.x + draw_rect.w;
                 ry2 = draw_rect.y + draw_rect.h;
 
@@ -1051,29 +1103,6 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int chosen_fan)
 
     }
 
-    /* Draw the Camera-Frustum over map   */
-    /* TODO: Calculate now hardcoded value of '32.0' */
-    campos = sdlgl3dGetCameraInfo(0, &nx[0], &ny[0], &zmax);
-
-    draw_rect.x = x + (campos -> pos[0] / 32.0);
-    draw_rect.y = y + (campos -> pos[1] / 32.0);
-    zmax /= 32.0;
-
-    /* Now draw the camera angle */
-    glBegin(GL_LINES);
-        sdlglSetColor(SDLGL_COL_LIGHTGREEN);
-        glVertex2i(draw_rect.x, draw_rect.y);       /* Right edge of frustum */
-        glVertex2i(draw_rect.x + (nx[0] * zmax),
-                   draw_rect.y + (ny[0] * zmax));
-
-        sdlglSetColor(SDLGL_COL_LIGHTRED);          /* Left edge of frustum */
-        glVertex2i(draw_rect.x, draw_rect.y);
-        glVertex2i(draw_rect.x + (nx[1] * zmax),
-                   draw_rect.y + (ny[1] * zmax));
-        sdlglSetColor(SDLGL_COL_WHITE);
-        glVertex2i(draw_rect.x, draw_rect.y);       /* Direction */
-        glVertex2i(draw_rect.x + (nx[2] * zmax),
-                   draw_rect.y + (ny[2] * zmax));
-    glEnd();
+    editdraw2DCameraPos(x, y);
 
 }

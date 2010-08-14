@@ -23,6 +23,7 @@
 * INCLUDES								                                       *
 *******************************************************************************/
 
+#include <stdio.h>
 #include <memory.h>
 
 #include "editor.h"             /* Global needed definitions    */
@@ -36,10 +37,10 @@
 * DEFINES								                                       *
 *******************************************************************************/
 
-#define EDITFILE_MAX_COMMAND 30
+#define EDITMAIN_MAX_COMMAND 30
 
-#define EDITFILE_MAX_MAPSIZE 64
-#define DEFAULT_TILE         62
+#define EDITMAIN_MAX_MAPSIZE 64
+#define EDITMAIN_DEFAULT_TILE         62
 
 /*******************************************************************************
 * TYPEDEFS							                                           *
@@ -67,69 +68,84 @@ static EDITMAIN_STATE_T EditState;
 
 /*
  * Name:
+ *     editmainReplaceFan
+ * Description:
+ *     This function replaces the given fan with the 'new_fan_type'
+ * Input:
+ *     mesh*:   Pointer on mesh to handle
+ *     fan:     Number of fan to allocate vertices for
+ *     x, y:    Position of fan
+ *     new_fan:  Elevation to add to given default z-value
+ * Output:
+ *    Fan could be added, yes/no
+ */
+static int editmainReplaceFan(MESH_T *mesh, int fan, int x, int y, int new_fan_type)
+{
+
+    COMMAND_T *ft, *new_ft;
+
+
+    ft     = &pCommands[mesh -> fan[fan].type];
+    new_ft = &pCommands[new_fan_type];
+
+    /* Solve this by handling a it with insert/delete as in a string */
+    /* 1. Get number of vertices of existing fan    */
+    /* 1. Remove old fan (count it's vertices)      */
+    /* 2. Replace it by fan with new type  ?        */
+    /* Set new fan starts for all fans from here, if number of vertices has
+       changed */
+    return 0;   /* Failed */
+
+}
+
+/*
+ * Name:
  *     editmainAddFan
  * Description:
- *     This function allocates the vertices needed for a fan
- *     -- TODO: Split this one into 'AddFan' and 'ReplaceFan' 
+ *     This functionsa adds a new fan to the actual map, if there are enough
+ *     vertices left for it
  * Input:
  *     mesh*: Pointer on mesh to handle
  *     fan:   Number of fan to allocate vertices for
- *     x, y:  Position of fan   
+ *     x, y:  Position of fan
+ *     zadd:  Elevation to add to given default z-value
  * Output:
- *    None
+ *    Fan could be added, yes/no
  */
-static int editmainAddFan(MESH_T *mesh, int fan, int x, int y)
+static int editmainAddFan(MESH_T *mesh, int fan, int x, int y, int zadd)
 {
-     
+
+    COMMAND_T *ft;
     int cnt;
-    int fan_type;
-    int numvert;
     int vertex;
     int vertexlist[17];
-    
 
-    /* 1. Get number of vertices of existing fan    */
-    fan_type = mesh -> fan[fan].type;
-    numvert  = pCommands[fan_type].numvertices;
-    
-    /* 1. Remove old fan (count it's vertices)  */
-    /* 2. Replace it by fan with new type  ?    */      
-    
-    /* mesh -> vrta[vertexlist[cnt]] = 60; --- FOR each Vertex --- */
-    /* 
-    if (NumFreeVertices >= numvert)
+
+    /* TODO: Test it
+    ft = &pCommands[mesh -> fan[fan].type];
+
+    if (NumFreeVertices >= ft -> numvertices)
     {
-        mesh -> fan[fan].fx = MPDFX_SHA;
-        for (cnt = 0; cnt < numvert; cnt++) {
-        
-            if (get_free_vertex() == bfalse)
-            {
-                // Reset to unused
-                numvert = cnt;
-                for (cnt = 0; cnt < numvert;  cnt++) {
-                    mesh.vrta[vertexlist[cnt]] = 60;
 
-                }
-                return 0;
-            }
-            vertexlist[cnt] = atvertex;
-            
-        }
-        vertexlist[cnt] = CHAINEND;
+        vertex = MAXTOTALMESHVERTICES - NumFreeVertices;
 
-        for (cnt = 0; cnt < numvert; cnt++;) {
-            vertex = vertexlist[cnt];
-            mesh.vrtx[vertex] = x + (pCommands[fan_type].x[cnt] >> 2);
-            mesh.vrty[vertex] = y + (pCommands[fan_type].y[cnt] >> 2);
-            mesh.vrtz[vertex] = 0;
-            mesh.vrtnext[vertex] = vertexlist[cnt+1];
+        mesh -> vrtstart[fan] = vertex;     
+
+        for (cnt = 0; cnt < ft -> numvertices; cnt++) {
+
+            mesh -> vrtx[vertex] = x + ft -> vtx[cnt].x;
+            mesh -> vrty[vertex] = y + ft -> vtx[cnt].y;
+            mesh -> vrtz[vertex] = zadd + ft -> vtx[cnt].z;
+            vertex++;
 
         }
-        mesh.vrtstart[fan] = vertexlist[0];
-        NumFreeVertices -= numvert;
+
+        NumFreeVertices -= ft -> numvertices;
         return 1;
+
     }
     */
+
     return 0;
 }
 
@@ -189,30 +205,26 @@ void editmainCompleteMapData(MESH_T *mesh)
  *     Does the work for editing and sets edit states, if needed
  * Input:
  *     mesh *: Pointer on mesh  to fill with default values
- *     which:  Type of map to create : EDITMAIN_NEWFLATMAP / EDITMAIN_NEWSOLIDMAP 
+ *     which:  Type of map to create : EDITMAIN_NEWFLATMAP / EDITMAIN_NEWSOLIDMAP
  */
 static int editmainCreateNewMap(MESH_T *mesh, int which)
 {
 
-    int x, y, fan;
+    int x, y, fan, zadd;
+    char fan_fx;
 
 
     memset(mesh, 0, sizeof(MESH_T));
 
-    mesh -> tiles_x = EDITFILE_MAX_MAPSIZE;
-    mesh -> tiles_y = EDITFILE_MAX_MAPSIZE;
+    mesh -> tiles_x = EDITMAIN_MAX_MAPSIZE;
+    mesh -> tiles_y = EDITMAIN_MAX_MAPSIZE;
+    zadd = 0;
+    fan_fx = 0;
+    if (which == EDITMAIN_NEWSOLIDMAP) {
+        zadd   = 192;                           /* All walls resp. top tiles  */
+        fan_fx = (MPDFX_WALL | MPDFX_IMPASS);   /* All impassable walls       */
+    }
 
-
-    if (which == EDITMAIN_NEWFLATMAP) {
-    
-    }
-    else if (which == EDITMAIN_NEWSOLIDMAP) {
-    
-    
-    }
-    else {
-    
-    }
     /* Fill the map with flag tiles */
     fan = 0;
     for (y = 0; y < mesh -> tiles_y; y++) {
@@ -221,15 +233,15 @@ static int editmainCreateNewMap(MESH_T *mesh, int which)
 
             /* TODO: Generate empty map */
             mesh -> fan[fan].type  = 0;
-            mesh -> fan[fan].tx_no = (char)((((x & 1) + (y & 1)) & 1) + DEFAULT_TILE);
-            
-            /* TODO:
-            if ( !editmainAddFan(fan, x*TILEDIV, y*TILEDIV) )
+            mesh -> fan[fan].tx_no = (char)((((x & 1) + (y & 1)) & 1) + EDITMAIN_DEFAULT_TILE);
+            mesh -> fan[fan].fx    = fan_fx;
+
+            if (! editmainAddFan(mesh, fan, x*EDITMAIN_TILEDIV, y*EDITMAIN_TILEDIV, zadd))
             {
-                printf("NOT ENOUGH VERTICES!!!\n\n");
-                exit(-1);
+                sprintf(EditState.msg, "%s", "NOT ENOUGH VERTICES!!!");
+                return 0;
             }
-            */
+
             fan++;
 
         }
@@ -586,14 +598,40 @@ char *editmainFanTypeName(int type_no)
  * Name:
  *     editmainChooseFanType
  * Description:
- *     Chooses a fan type
+ *     Chooses a fan type and sets it for display.
+ *     TODO: Ignore 'empty' fan types
  * Input:
- *     type_no: Number of fan type
+ *     type_no:    Number of fan type  (-2: Switch off, 0: Switch on)
+ *     direction:  != 0: Browsing direction trough list...
+ *     fan_name *: Where to print hte name of chosen fan
  */
-void editmainChooseFanType(int type_no)
+void editmainChooseFanType(int dir, char *fan_name)
 {
 
-    editdrawChooseFanType(type_no, EditState.tile_x, EditState.tile_y);
+
+    if (dir == -2) {
+        /* Reset browsing */
+        EditState.new_fan.type = -1;
+        fan_name = "";
+        return;
+    }
+    else if (dir == 0) {
+        /* Start browsing */
+        EditState.new_fan.type = 0;
+    }
+    else if (dir == -1) {
+        if (EditState.new_fan.type > 0) {
+            EditState.new_fan.type--;
+        }
+    }
+    else {
+        if (EditState.new_fan.type < 30) {
+            EditState.new_fan.type++;
+        }
+    }
+
+    editdrawChooseFanType(EditState.new_fan.type, EditState.tile_x, EditState.tile_y);
+    sprintf(fan_name, "%s", editmainFanTypeName(EditState.new_fan.type));
 
 }
 

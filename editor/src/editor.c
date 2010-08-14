@@ -66,6 +66,8 @@
 #define EDITOR_2DMAP_FANINFO    ((char)2)
 #define EDITOR_2DMAP_FANROTATE  ((char)4)
 #define EDITOR_2DMAP_FANBROWSE  ((char)8)
+#define EDITOR_2DMAP_FANBLEFT   ((char)16)
+#define EDITOR_2DMAP_FANBRIGHT  ((char)32)
 
 /*******************************************************************************
 * DATA									                                       *
@@ -112,9 +114,11 @@ static SDLGL_CMDKEY EditorCmd[] = {
     { { SDLK_KP_MINUS }, SDLGL3D_CAMERA_ZOOM, -1, SDLGL3D_CAMERA_ZOOM },
     { { SDLK_LCTRL, SDLK_m }, EDITOR_STATE, EDITOR_STATE_SHOWMAP },
     /* { { SDLK_x }, SDLGL3D_MOVE_ROTX, +1, SDLGL3D_MOVE_ROTX }, */
-    { { SDLK_i }, EDITOR_2DMAP, EDITOR_2DMAP_FANINFO, EDITOR_2DMAP },
-    { { SDLK_r }, EDITOR_2DMAP, EDITOR_2DMAP_FANROTATE, EDITOR_2DMAP },
-    { { SDLK_b }, EDITOR_2DMAP, EDITOR_2DMAP_FANBROWSE, EDITOR_2DMAP },
+    { { SDLK_i }, EDITOR_2DMAP, EDITOR_2DMAP_FANINFO },
+    { { SDLK_r }, EDITOR_2DMAP, EDITOR_2DMAP_FANROTATE },
+    { { SDLK_b }, EDITOR_2DMAP, EDITOR_2DMAP_FANBROWSE },
+    { { SDLK_LEFT },  EDITOR_2DMAP, EDITOR_2DMAP_FANBLEFT },
+    { { SDLK_RIGHT }, EDITOR_2DMAP, EDITOR_2DMAP_FANBRIGHT },
     /* -------- Switch the player with given number ------- */
     { { SDLK_ESCAPE }, EDITOR_EXITPROGRAM },
     { { 0 } }
@@ -248,7 +252,7 @@ static void editorSetMenu(char which)
  *     is_set:
  *     name *:
  */
-static void editorSetToggleChar(char is_set, char *name)
+static void editorSetToggleChar(unsigned char is_set, char *name)
 {
     if (is_set) {
         name[1] = 'X';
@@ -268,9 +272,9 @@ static void editorSetToggleChar(char is_set, char *name)
  */
 static void editorSetMenuViewToggle(void)
 {
-    editorSetToggleChar(pEditState -> draw_mode & EDIT_MODE_SOLID, SubMenu[8].pdata);
-    editorSetToggleChar(pEditState -> draw_mode & EDIT_MODE_TEXTURED, SubMenu[8 + 1].pdata);
-    editorSetToggleChar(pEditState -> draw_mode & EDIT_MODE_LIGHTMAX, SubMenu[8 + 2].pdata);
+    editorSetToggleChar((char)(pEditState -> draw_mode & EDIT_MODE_SOLID), SubMenu[8].pdata);
+    editorSetToggleChar((char)(pEditState -> draw_mode & EDIT_MODE_TEXTURED), SubMenu[8 + 1].pdata);
+    editorSetToggleChar((char)(pEditState -> draw_mode & EDIT_MODE_LIGHTMAX), SubMenu[8 + 2].pdata);
 }
 
 /*
@@ -312,17 +316,36 @@ static void editor2DMap(SDLGL_EVENT *event)
         case EDITOR_2DMAP_FANINFO:
             if (event -> pressed) {
                 Map2DState ^= event -> sub_code;
-                /* TODO: Display string in Statusbar according to action */
-            }
-            else {
-                Map2DState = 0;
             }
             break;
         case EDITOR_2DMAP_FANROTATE:
             /* TODO: Rotate the chosen fan type */
             break;
         case EDITOR_2DMAP_FANBROWSE:
-            /* TODO: Browse trough the available fan types */
+            if (event -> pressed) {
+                Map2DState ^= event -> sub_code;
+                if (Map2DState & event -> sub_code) {
+                    editmainChooseFanType(0, StatusBar);    /* Switched on */
+                    sprintf(StatusBar, "%s", "Browsing Fan-Types. Use arrow keys.");
+                }
+                else {
+                    editmainChooseFanType(-2, StatusBar);   /* Switched off */
+                    pEditState -> new_fan.type = -1;
+                }
+            }            
+            break;
+            
+        case EDITOR_2DMAP_FANBLEFT:
+            /* Browse toward start of fan-list */
+            if (Map2DState & EDITOR_2DMAP_FANBROWSE) {
+                editmainChooseFanType(-1, StatusBar);
+            }
+            break;
+            
+        case EDITOR_2DMAP_FANBRIGHT:
+            if (Map2DState & EDITOR_2DMAP_FANBROWSE) {
+                editmainChooseFanType(+1, StatusBar); 
+            }
             break;
 
     }
@@ -344,11 +367,11 @@ static void editorDrawFanInfo(void)
     int i;
 
 
-    if (Map2DState == EDITOR_2DMAP_FANINFO && pEditState -> fan_chosen >= 0) {
+    if (Map2DState & EDITOR_2DMAP_FANINFO && pEditState -> fan_chosen >= 0) {
 
         /* Set the display of state flags */
         for (i = 3; i < 11; i++) {
-            editorSetToggleChar(pEditState -> act_fan.fx & FanInfoDlg[i].sub_code,
+            editorSetToggleChar((char)(pEditState -> act_fan.fx & FanInfoDlg[i].sub_code),
                                 FanInfoDlg[i].pdata);
         }
         /* Draw info about chosen fan: EditState.act_fan */
@@ -394,6 +417,7 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
     static SDLGL_RECT StrPos = { 10, 100, 0, 0 };
 
     SDLGL3D_OBJECT *cam;
+    SDLGL_RECT status_bar;
     float nx[4], ny[4], dist;
     int color;
     char mouse_over;
@@ -459,7 +483,11 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
 
     /* Draw the string in the status bar */
     sdlglstrSetColorNo(SDLGLSTR_COL_WHITE);
-    sdlglstrString(&fields -> rect, StatusBar);
+    status_bar.x = MainMenu[0].rect.x + 4;
+    status_bar.y = MainMenu[0].rect.y + 4;
+    status_bar.w = MainMenu[0].rect.w;
+    status_bar.h = MainMenu[0].rect.h;
+    sdlglstrString(&status_bar, StatusBar);
 
     if (! mouse_over) {
 

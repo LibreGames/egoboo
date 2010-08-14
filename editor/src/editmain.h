@@ -56,15 +56,15 @@
 
 typedef struct {
 
-    int fan_chosen;             /* Actual chosen fan for editing    */
-    int tile_x, tile_y;         /* Position of fan as x/y on map    */
-    unsigned char display_flags;/* For display in main editor       */
-    unsigned char draw_mode;    /* For copy into mesh - struct      */
-    char brush_size;            /* From 'cartman'  0-3, (slider)    */    
-    char brush_amount;          /* From 'cartman' -50,  50 (slider) */    
-    FANDATA_T act_fan;          /* Data of actual fan chosen        */
-    FANDATA_T new_fan;          /* Data of fan to place on map      */
-    char msg[256];              /* Possible message from editor     */
+    int fan_chosen;         /* Actual chosen fan for editing    */
+    int tile_x, tile_y;     /* Position of fan as x/y on map    */
+    char display_flags;     /* For display in main editor       */
+    char draw_mode;         /* For copy into mesh - struct      */
+    char brush_size;        /* From 'cartman'  0-3, (slider)    */    
+    char brush_amount;      /* From 'cartman' -50,  50 (slider) */    
+    FANDATA_T act_fan;      /* Data of actual fan chosen        */
+    FANDATA_T new_fan;      /* Data of fan to place on map      */
+    char msg[256];          /* Possible message from editor     */
 
 } EDITMAIN_STATE_T;
 
@@ -100,7 +100,7 @@ SPAWN_OBJECT_T *editmainLoadSpawn(void);
 void editmainToggleFlag(int which, unsigned char flag);
 void editmainChooseFan(int cx, int cy, int w, int h);
 char *editmainFanTypeName(int type_no);
-void editmainChooseFanType(int type_no);
+void editmainChooseFanType(int dir, char *fan_name);
 
 #endif /* _EDITMAIN_H_	*/
 

@@ -176,7 +176,7 @@ int editfileLoadMapMesh(MESH_T *mesh, char *msg)
         for (cnt = 0; cnt < mesh -> numvert; cnt++) {
             /* TODO: Convert float to int for editing */
             fread(&ftmp, 4, 1, fileread);
-            mesh -> vrtz[cnt] = ftmp / 16;  /* Z is fixpoint int in cartman */
+            mesh -> vrtz[cnt] = ftmp / 32;  /* Z is fixpoint int in cartman (16)*/
         }
 
         fread(&mesh -> vrta[0], 1, mesh -> numvert, fileread);   // !!!BAD!!!
@@ -253,7 +253,7 @@ int editfileSaveMapMesh(MESH_T *mesh, char *msg)
             /* Write z-vertices */
             for (cnt = 0; cnt < mesh -> numvert; cnt++) {
                 /* Change int to float for game */
-                ftmp = mesh -> vrtz[cnt] * 16;   /* Multiply it again to file format */
+                ftmp = mesh -> vrtz[cnt] * 32;   /* Multiply it again to file format */
                 numwritten += fwrite(&ftmp, 4, 1, filewrite);
 
             }

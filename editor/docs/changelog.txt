@@ -1,4 +1,9 @@
 2010-08-14 <bitnapper>
+- Added command 'B'rowsing trough fan types (displayed at chosen fan)
+- Added default fx-flags in fan types
+- Added display of name of chosen fan type in status bar
+
+2010-08-14 <bitnapper>
 - Added more data for 'fixed' fan sizes
 - Added code for choosing and displaying a fan type at a chosen position
 
