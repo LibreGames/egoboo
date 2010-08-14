@@ -623,7 +623,7 @@ int main(int argc, char **argv)
     sdlglInit(&SdlGlConfig);  
 
 
-    sdlgl3dInitCamera(0, 320, 0, 90, 0.75);
+    sdlgl3dInitCamera(0, 310, 0, 90, 0.75);
     /* Init Camera +Z is up, -Y is near plane, X is left/right */
     sdlgl3dMoveToPosCamera(0, 384.0, 384.0, 600.0);
 

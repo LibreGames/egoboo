@@ -363,6 +363,7 @@ EDITMAIN_STATE_T *editmainInit(void)
 
     EditState.display_flags |= EDITMAIN_SHOW2DMAP;
     EditState.fan_chosen    = -1;   /* No fan chosen                        */
+    EditState.new_fan.type  = -1;   /* No fan-type chosen                   */    
     EditState.brush_size    = 3;    /* Size of raise/lower terrain brush    */
     EditState.brush_amount  = 50;   /* Amount of raise/lower                */
 
@@ -404,7 +405,7 @@ int editmainMap(int command)
     switch(command) {
 
         case EDITMAIN_DRAWMAP:
-            editdraw3DView(&Mesh, EditState.fan_chosen);
+            editdraw3DView(&Mesh, EditState.fan_chosen, EditState.new_fan.type);
             return 1;
 
         case EDITMAIN_NEWFLATMAP:
@@ -550,7 +551,7 @@ void editmainChooseFan(int cx, int cy, int w, int h)
         EditState.fan_chosen = fan_no;
         /* And fill it into 'EditState' for display */
         memcpy(&EditState.act_fan, &Mesh.fan[fan_no], sizeof(FANDATA_T));
-    
+            
     }
  
 }
@@ -580,3 +581,19 @@ char *editmainFanTypeName(int type_no)
     return "";
 
 }
+
+/*
+ * Name:
+ *     editmainChooseFanType
+ * Description:
+ *     Chooses a fan type
+ * Input:
+ *     type_no: Number of fan type
+ */
+void editmainChooseFanType(int type_no)
+{
+
+    editdrawChooseFanType(type_no, EditState.tile_x, EditState.tile_y);
+
+}
+

@@ -42,14 +42,14 @@
 /* ------- */
 #define SDLGL3D_I_MAXVISITILES (9 + 7 + 5 + 3 + 3 + 3 + 9 + 9 + 11)
 
-#define SDLGL3D_VISITILEDEPTH 5       /* Number of squares visible in depth */
+#define SDLGL3D_VISITILEDEPTH 5         /* Number of squares visible in depth */
 
 #define SDLGL3D_I_VIEWMINWIDTH  96      /* For zoom...              */
-#define SDLGL3D_I_VIEWWIDTH     128      /* 96 */ /* 128 */ /* 176   */
-#define SDLGL3D_I_ASPECTRATIO   0.75    /* HAnded over by caller    */
+#define SDLGL3D_I_VIEWWIDTH     128     
+#define SDLGL3D_I_ASPECTRATIO   0.75    /* Handed over by caller    */
 
-#define SDLGL3D_I_ZMIN   48.0   /* 100.0 */
-#define SDLGL3D_I_ZMAX 1385.0   /* 1385.0 900.0 -- 64 / 48       */
+#define SDLGL3D_I_ZMIN  100.0   
+#define SDLGL3D_I_ZMAX 1385.0   
 
 /* ------- GRID_DATA ------ */
 #define SDLGL3D_TILESIZE     128.0
@@ -60,7 +60,7 @@
 #define NOT_VISIBLE 0x02
 
 
-#define SDLGL3D_MAXOBJECT 256
+#define SDLGL3D_MAXOBJECT 512 
 
 /*******************************************************************************
 * TYPEDEFS							                                           *
@@ -100,7 +100,8 @@ static SDLGL3D_CAMERA Camera[4] = {
 
 };
 
-static SDLGL3D_OBJECT Object_List[SDLGL3D_MAXOBJECT + 2];  /* List of objects to handle    */
+static SDLGL3D_OBJECT Object_List[SDLGL3D_MAXOBJECT + 62];  /* List of objects to handle    */
+/* Additional objects are used for visible tiles */
 
 /*******************************************************************************
 * CODE									                                       *
@@ -489,9 +490,6 @@ void sdlgl3dAttachCameraToObj(int object_no, char camtype)
 
         Camera[0].campos.rot[2] = 30.0;
 
-        Camera[0].campos.extent[0]  = SDLGL3D_CAMERA_EXTENT;
-        Camera[0].campos.extenttype = SDLGL3D_EXTENT_CIRCLE;
-
     }
 
     Camera[0].type = camtype;
@@ -723,161 +721,5 @@ void sdlgl3dMoveObjects(float secondspassed)
         }
 
     }
-
-
-}
-
-/*
- * Name:
- *     sdlgl3dCollided
- * Description:
- *     Tests the two given objects for collision. Both objects can be
- *     either a SDLGL3D_EXTENT_CIRCLE or EXTENT_TYPESQUARE. If the two
- *     object did collide, the first objects position is adjusted that
- *     way, that the two objects doesn't overlap.
- * Input:
- *      o1, o2: Pointer on objects to test for collison.
- * Output:
- *      != 0, if the two objects collided.
- */
-int sdlgl3dCollided(SDLGL3D_OBJECT *o1, SDLGL3D_OBJECT *o2)
-{
-
-    float DistanceMiddle;
-    float DistanceX, DistanceY;
-    float CollisionDistance, edgeCollisionDistance;
-    float DifferenceX,DifferenceY;
-    float edgeX, edgeY, edgeDist, edgeOverlap;
-    SDLGL3D_OBJECT *saveo1, *otemp;
-
-    if (o1 -> collisionflags & o2 -> collisionflags) {
-        /* No collsion checking needed */
-        return 0;
-    }
-
-    DistanceX = o1 -> pos[0] - o2 -> pos[0];
-    DistanceY = o1 -> pos[1] - o2 -> pos[1];
-    DistanceMiddle = sqrt((DistanceX * DistanceX) + (DistanceY * DistanceY));
-
-    CollisionDistance = o1 -> extent[0] + o2 -> extent[0];        /* Radius */
-    edgeCollisionDistance = CollisionDistance;
-
-    if ( o1 -> extenttype == SDLGL3D_EXTENT_RECT) {
-        edgeCollisionDistance += o1 -> extent[0] * 0.41421356;
-    }
-
-    if ( o2 -> extenttype == SDLGL3D_EXTENT_RECT) {
-        edgeCollisionDistance +=  o2 -> extent[0] * 0.41421356;
-    }
-
-    if (DistanceMiddle <  edgeCollisionDistance) {
-
-        if ((o2 -> extenttype == SDLGL3D_EXTENT_CIRCLE) && (o1 -> extenttype == SDLGL3D_EXTENT_CIRCLE)) {
-
-            /* Correct object positions */
-            o1 -> pos[0] = o2 -> pos[0] + (DistanceX * edgeCollisionDistance / DistanceMiddle);
-            o1 -> pos[1] = o2 -> pos[1] + (DistanceY * edgeCollisionDistance / DistanceMiddle);
-            return 1;
-
-        }
-
-
-        saveo1 = o1;
-
-        if ((o2 -> extenttype == SDLGL3D_EXTENT_RECT) && (o1 -> extenttype == SDLGL3D_EXTENT_RECT)) {
-            edgeX = -1;
-            edgeY = -1;
-        }
-        else {
-
-            if (o2 -> extenttype == SDLGL3D_EXTENT_CIRCLE){
-
-                otemp = o1;
-                o1 = o2;
-                o2 = otemp;
-
-            }
-
-            edgeX = abs(DistanceX) - o2 -> extent[0];
-            edgeY = abs(DistanceY) - o2 -> extent[0];
-
-        }
-
-        if (( edgeX <= 0 ) || (edgeY <= 0 )) {
-
-
-            DifferenceX = CollisionDistance - abs(DistanceX);
-            DifferenceY = CollisionDistance - abs(DistanceY);
-
-            if ( DistanceX < 0 ){
-                DifferenceX = -DifferenceX;
-            }
-
-            if ( DistanceY < 0 ){
-                DifferenceY = -DifferenceY;
-            }
-
-            DistanceX = fabs(DistanceX);
-            DistanceY = fabs(DistanceY);
-
-
-            if ( DistanceY <  DistanceX ) {
-                DistanceMiddle = DistanceX;
-                DifferenceY = 0;
-
-            }
-            else {
-
-                DistanceMiddle = DistanceY;
-                DifferenceX = 0;
-
-            }
-
-
-            if (DistanceMiddle < CollisionDistance) {
-
-                saveo1 -> pos[0] += DifferenceX;
-                saveo1 -> pos[1] += DifferenceY;
-                return 1;
-
-            }
-
-        }
-        else {
-
-            if (( o1 -> extenttype == SDLGL3D_EXTENT_CIRCLE) && (o2 -> extenttype == SDLGL3D_EXTENT_RECT)){
-
-                edgeDist = sqrt((edgeX * edgeX) + (edgeY * edgeY));
-                edgeOverlap = o1 -> extent[0] - edgeDist;
-
-                if ( edgeOverlap > 0) {
-
-                    /* Calculate correction measure */
-                    DifferenceX = fabs(edgeX * edgeOverlap / edgeDist) ;
-                    DifferenceY = fabs(edgeY * edgeOverlap / edgeDist) ;
-
-                    if ( DistanceX < 0 ){
-                        DifferenceX = -DifferenceX;
-                    }
-
-                    if ( DistanceY < 0 ){
-                        DifferenceY = -DifferenceY;
-                    }
-
-
-                    /* Correct object positions */
-                    saveo1 -> pos[0] += DifferenceX;
-                    saveo1 -> pos[1] += DifferenceY;
-                    return 1;
-
-                }
-
-           }
-
-        }
-
-    }
-
-    return 0;
 
 }

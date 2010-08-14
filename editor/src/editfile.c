@@ -253,7 +253,7 @@ int editfileSaveMapMesh(MESH_T *mesh, char *msg)
             /* Write z-vertices */
             for (cnt = 0; cnt < mesh -> numvert; cnt++) {
                 /* Change int to float for game */
-                ftmp = mesh -> vrtz[cnt];   /* Multiply with 64 again ? */
+                ftmp = mesh -> vrtz[cnt] * 16;   /* Multiply it again to file format */
                 numwritten += fwrite(&ftmp, 4, 1, filewrite);
 
             }

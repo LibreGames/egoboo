@@ -277,13 +277,10 @@ typedef struct SDLGL3D_OBJECT_TYPE {
                                /*             +towards ceiling         */
                                /*              in units/second         */
     float   turnvel;           /* Rotation velocity in degrees/second  */
-    int     collisionflags;    /* can be passed by...                  */
     /* Link for object list in collision - detection                   */
     int     on_tile;           /* Object is on this tile               */
     char    visi_code;         /* Visibility ob object in frustum      */ 
-    int     extent[3];
-    char    extenttype;   
-
+    
 } SDLGL3D_OBJECT;
 
 /*******************************************************************************
@@ -293,9 +290,7 @@ typedef struct SDLGL3D_OBJECT_TYPE {
 SDLGL3D_OBJECT *sdlgl3dBegin(int camera_no, int solid);
 void sdlgl3dEnd(void);
 void sdlgl3dAttachCameraToObj(int obj_no, char camtype);
-void sdlgl3dInitCamera(int camera_no, 
-                       int rotx, int roty, int rotz, 
-                       float aspect_ratio);
+void sdlgl3dInitCamera(int camera_no, int rotx, int roty, int rotz, float aspect_ratio);
 void sdlgl3dBindCamera(int camera_no, float x, float y, float x2, float y2); 
 SDLGL3D_OBJECT *sdlgl3dGetCameraInfo(int camera_no, float *nx, float *ny, float *zmax);
 void sdlgl3dInitObject(SDLGL3D_OBJECT *moveobj);
@@ -303,7 +298,6 @@ void sdlgl3dManageCamera(int camera_no, char move_cmd, char move_dir);
 void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z);
 void sdlgl3dManageObject(int obj_no, char move_cmd, char move_dir);
 void sdlgl3dMoveObjects(float secondspassed);
-int  sdlgl3dCollided(SDLGL3D_OBJECT *o1, SDLGL3D_OBJECT *o2);
 /* TODO:
     --- List of objects for drawing by caller, sorted from farest to nearest ---
     int sdlgl3dVisibleObjects(SDLGL3D_OBJECT **objects);

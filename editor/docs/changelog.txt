@@ -1,3 +1,7 @@
+2010-08-14 <bitnapper>
+- Added more data for 'fixed' fan sizes
+- Added code for choosing and displaying a fan type at a chosen position
+
 2010-08-13 <bitnapper>
 - Added names for fan types
 - Added display 'I'nfo for chosen fan, flags and Name of fan type 
