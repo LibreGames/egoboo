@@ -39,18 +39,20 @@
 
 #define EDITMAIN_MAX_COMMAND 30
 
-#define EDITMAIN_MAX_MAPSIZE 64
-#define EDITMAIN_DEFAULT_TILE         62
+#define EDITMAIN_MAX_MAPSIZE    64
+#define EDITMAIN_DEFAULT_TILE   62
+#define EDITMAIN_WALL_HEIGHT    192
+#define EDITMAIN_TILEDIV   128           // SMALLXY
 
 /*******************************************************************************
 * TYPEDEFS							                                           *
 *******************************************************************************/
 
-/*******************************************************************************
-* DEFINES								                                       *
-*******************************************************************************/
+typedef struct {
 
-#define EDITMAIN_TILEDIV   128           // SMALLXY
+    int x, y;
+
+} EDITMAIN_XY;
 
 /*******************************************************************************
 * DATA							                                               *
@@ -59,12 +61,69 @@
 static int NumFreeVertices;
 static MESH_T Mesh;
 static COMMAND_T *pCommands;
-static SPAWN_OBJECT_T SpawnObjects[EDITMAIN_MAXSPAWN + 2];
 static EDITMAIN_STATE_T EditState;
+static SPAWN_OBJECT_T   SpawnObjects[EDITMAIN_MAXSPAWN + 2];
+static EDITOR_PASSAGE_T Passages[EDITMAIN_MAXPASSAGE + 2];
+
+/* ------ Data for checking of adjacent tiles ------ */
+static EDITMAIN_XY AdjacentXY[8] = {
+
+    {  0, -1 }, { +1, -1 }, { +1,  0 }, { +1, +1 },
+    {  0, +1 }, { -1, +1 }, { -1,  0 }, { -1, -1 }
+
+};
 
 /*******************************************************************************
 * CODE 								                                           *
 *******************************************************************************/
+
+/*
+ * Name:
+ *     editmainGetAdjacent
+ * Description:
+ *     Creates a list of fans which are adjacent to given 'fan'. 
+ *     If a fan is of map, the field is filled by a value of -1.
+ *     The list starts from North', clockwise.  
+ * Input:
+ *     mesh*:      Pointer on mesh with info about map size
+ *     adjacent *: Where to return the list of fan-positions 
+ * Output: 
+ *     Number of adjacent tiles 
+ */
+static int editmainGetAdjacent(MESH_T *mesh, int fan, int adjacent[8])
+{
+    
+    int dir, adj_pos;
+    int num_adj;
+    EDITMAIN_XY src_xy, dest_xy;
+    
+    
+    num_adj = 0;            /* Count them */
+    for (dir = 0; dir < 8; dir++) {
+    
+        adj_pos = -1;       /* Assume invalid */
+                
+        src_xy.x = fan % mesh -> tiles_x;
+        src_xy.y = fan / mesh -> tiles_x;
+        
+        dest_xy.x = src_xy.x + AdjacentXY[dir].x;
+        dest_xy.y = src_xy.y + AdjacentXY[dir].y;
+        
+        if ((dest_xy.x >= 0) && (dest_xy.x < mesh -> tiles_x)
+            && (dest_xy.y >= 0) && (dest_xy.y < mesh -> tiles_y)) {
+
+            adj_pos = (dest_xy.y * mesh -> tiles_x) + dest_xy.x;
+            num_adj++;
+            
+        }
+        
+        adjacent[dir] = adj_pos;       /* Starting north */ 
+    
+    }
+    
+    return num_adj;
+
+}
 
 /*
  * Name:
@@ -608,11 +667,10 @@ char *editmainFanTypeName(int type_no)
 void editmainChooseFanType(int dir, char *fan_name)
 {
 
-
     if (dir == -2) {
         /* Reset browsing */
         EditState.new_fan.type = -1;
-        fan_name = "";
+        fan_name[0] = 0;
         return;
     }
     else if (dir == 0) {
@@ -635,3 +693,64 @@ void editmainChooseFanType(int dir, char *fan_name)
 
 }
 
+/*
+ * Name:
+ *     editmainSetFloor
+ * Description:
+ *     For 'simple' mode. Set a floor tile, if possible 
+ *     Adjusts the adjacent tiles accordingly, using the 'default' fan set. 
+ * Input:
+ *     fan_no:   Where to place the floor in map
+ *     is_floor: Is it a floor yes/no 
+ * Output:
+ *     Success yes/no  
+ */
+int editmainSetFloor(int fan_no, int is_floor)
+{
+    
+    int adjacent[8];
+    int num_adj, dir;
+    
+    
+    num_adj = editmainGetAdjacent(&Mesh, fan_no, adjacent); 
+    if (num_adj < 8) {
+        /* There moust be at least one tile left to edge of map */
+        return 0;  
+    }
+    
+    for (dir = 0; dir < 8; dir++) {
+        /* Adjust any adjacent tile */
+        if  (is_floor) {
+            /* Build and adjust walls surrounding this fan, if needed. Uses FX */
+        }
+        else {
+            /* Adjust walls surrounding this fan, if needed. Uses FX-Flag */
+        }
+
+    }
+    
+    return 0;
+
+}
+
+/*
+ * Name:
+ *     editmain2DTex
+ * Description:
+ *     Draws the texture and chosen texture-part of actual chosen fan
+ *     into given rectangle.
+ * Input:
+ *     x, y, w, h: Rectangle to draw into 
+ *     ft *:       Pointer on fandata to use for drawing 
+ *     tx_no:      From fan 
+ */
+void editmain2DTex(int x, int y, int w, int h, FANDATA_T *ft)
+{
+
+    if (EditState.fan_chosen >= 0) {
+    
+        editdraw2DTex(x, y, w, h, ft -> tx_no, ft -> type & COMMAND_TEXTUREHI_FLAG);
+        
+    }
+    
+}

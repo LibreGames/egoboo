@@ -44,6 +44,7 @@
 
 /* --------- Other values ------- */
 #define EDITMAIN_MAXSPAWN   150         /* Maximum Lines in spawn list  */
+#define EDITMAIN_MAXPASSAGE  30
 
 /* ---- Flags to toggle --------- */
 #define EDITMAIN_TOGGLE_DRAWMODE    1
@@ -88,6 +89,20 @@ typedef struct {
 
 } SPAWN_OBJECT_T;       /* Description of a spawned object */
 
+typedef struct {
+    char line_name[25];
+    char item_name[20+1];
+    int  slot_no;       /* Use it for coloring the bounding boxes */
+    float x_pos, y_pos, z_pos;
+    int  view_dir;
+} EDITOR_SPAWNPT_T;     /* Spawn-Point for display on map. From 'spawn.txt' */
+
+typedef struct {
+    char line_name[25];
+    int  top_left[2];       /* X, Y, in tiles */
+    int  bottom_right[2];   /* X, Y, in tiles */ 
+} EDITOR_PASSAGE_T;
+
 /*******************************************************************************
 * CODE 								                                           *
 *******************************************************************************/
@@ -101,6 +116,9 @@ void editmainToggleFlag(int which, unsigned char flag);
 void editmainChooseFan(int cx, int cy, int w, int h);
 char *editmainFanTypeName(int type_no);
 void editmainChooseFanType(int dir, char *fan_name);
+int  editmainSetSimple(int fan_no, int is_floor);
+void editmain2DTex(int x, int y, int w, int h, FANDATA_T *ft);
+
 
 #endif /* _EDITMAIN_H_	*/
 

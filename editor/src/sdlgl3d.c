@@ -48,7 +48,7 @@
 #define SDLGL3D_I_VIEWWIDTH     128     
 #define SDLGL3D_I_ASPECTRATIO   0.75    /* Handed over by caller    */
 
-#define SDLGL3D_I_ZMIN  100.0   
+#define SDLGL3D_I_ZMIN   48.0   
 #define SDLGL3D_I_ZMAX 1385.0   
 
 /* ------- GRID_DATA ------ */

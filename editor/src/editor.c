@@ -41,7 +41,7 @@
 * DEFINES								                                       *
 *******************************************************************************/
 
-#define EDITOR_CAPTION "EGOBOO - An Editor V 0.1"
+#define EDITOR_CAPTION "EGOBOO - An Editor V 0.0.8"
 
 #define EDITOR_MAXFLD   60
 
@@ -159,17 +159,19 @@ static SDLGL_FIELD SubMenu[] = {
 
 /* Prepared Dialog for changing of Flags of a fan. TODO: Make it dynamic */
 static SDLGL_FIELD FanInfoDlg[] = {
-    { SDLGL_TYPE_STD, { 0,  16, 320, 208 } },        /* Background of dialog */
-    { SDLGL_TYPE_STD, { 8,  24, 320, 208 }, 0, 0, "Info about Fan" },
-    { SDLGL_TYPE_STD, { 8,  40, 320, 208 }, 0, 0, "" },
-    { SDLGL_TYPE_STD, { 8,  56, 120, 8 }, EDITOR_FX, MPDFX_SHA,     "[ ]Reflective" },
-    { SDLGL_TYPE_STD, { 8,  72, 120, 8 }, EDITOR_FX, MPDFX_DRAWREF, "[ ]Draw Reflection" },
-    { SDLGL_TYPE_STD, { 8,  88, 120, 8 }, EDITOR_FX, MPDFX_ANIM,    "[ ]Animated" },
-    { SDLGL_TYPE_STD, { 8, 104, 120, 8 }, EDITOR_FX, MPDFX_WATER,   "[ ]Overlay (Water)" },
-    { SDLGL_TYPE_STD, { 8, 120, 120, 8 }, EDITOR_FX, MPDFX_WALL,    "[ ]Barrier (Slit)" },
-    { SDLGL_TYPE_STD, { 8, 136, 120, 8 }, EDITOR_FX, MPDFX_IMPASS,  "[ ]Impassable (Wall)" },
-    { SDLGL_TYPE_STD, { 8, 154, 120, 8 }, EDITOR_FX, MPDFX_DAMAGE,  "[ ]Damage" },
-    { SDLGL_TYPE_STD, { 8, 170, 120, 8 }, EDITOR_FX, MPDFX_SLIPPY,  "[ ]Slippy" },
+    { SDLGL_TYPE_STD, {   0,  16, 320, 208 } },        /* Background of dialog */
+    { SDLGL_TYPE_STD, {   8,  24, 320, 208 }, 0, 0, "Info about Fan" },
+    { SDLGL_TYPE_STD, {   8,  40, 320, 208 }, 0, 0, "" },
+    { SDLGL_TYPE_STD, {   8,  56, 120, 8 }, EDITOR_FX, MPDFX_SHA,     "[ ]Reflective" },
+    { SDLGL_TYPE_STD, {   8,  72, 120, 8 }, EDITOR_FX, MPDFX_DRAWREF, "[ ]Draw Reflection" },
+    { SDLGL_TYPE_STD, {   8,  88, 120, 8 }, EDITOR_FX, MPDFX_ANIM,    "[ ]Animated" },
+    { SDLGL_TYPE_STD, {   8, 104, 120, 8 }, EDITOR_FX, MPDFX_WATER,   "[ ]Overlay (Water)" },
+    { SDLGL_TYPE_STD, {   8, 120, 120, 8 }, EDITOR_FX, MPDFX_WALL,    "[ ]Barrier (Slit)" },
+    { SDLGL_TYPE_STD, {   8, 136, 120, 8 }, EDITOR_FX, MPDFX_IMPASS,  "[ ]Impassable (Wall)" },
+    { SDLGL_TYPE_STD, {   8, 154, 120, 8 }, EDITOR_FX, MPDFX_DAMAGE,  "[ ]Damage" },
+    { SDLGL_TYPE_STD, {   8, 170, 120, 8 }, EDITOR_FX, MPDFX_SLIPPY,  "[ ]Slippy" },
+    { SDLGL_TYPE_STD, { 190,  78, 128, 128 } },  /* The actuale Texture */
+    
     { 0 }
 };
 
@@ -389,12 +391,16 @@ static void editorDrawFanInfo(void)
         fields++;
         /* Draw all strings */
         sdlglstrSetColorNo(SDLGLSTR_COL_WHITE);
-        while (fields -> sdlgl_type > 0) {
+        for (i = 0; i < 8; i++) {
 
             sdlglstrString(&fields -> rect, fields -> pdata);
             fields++;
 
         }
+        
+        /* Draw the actual chosen texture */
+        editmain2DTex(fields -> rect.x, fields -> rect.y,
+                      fields -> rect.w, fields -> rect.h, &pEditState -> act_fan);
 
     }
 

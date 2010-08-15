@@ -40,7 +40,7 @@
 #define EDITDRAW_MAXWALLSUBTEX   64     /* Images per wall texture   */
 #define EDITDRAW_MAXWALLTEX       4     /* Maximum wall textures     */ 
 #define EDITDRAW_TILEDIV        128
-  
+
 /*******************************************************************************
 * TYPEDEFS                                                                     *
 *******************************************************************************/
@@ -49,6 +49,7 @@
 * DATA                                                                         *
 *******************************************************************************/
 
+static float DefaultUV[] = { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00 };
 static COMMAND_T MeshCommand[MAXMESHTYPE] = {
     {  "0: Two Faced Ground",
         0,          /* Default FX: None         */
@@ -86,8 +87,8 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         1,
         { 6 },
         { 4, 3, 0, 1, 2, 3 },
-        { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,  0.50, 0.50 },
-        { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,  0.50, 0.50 },
+        { 0.001, 0.001, 0.124, 0.001, 0.124, 0.124, 0.001, 0.124, 0.0625, 0.0625 },
+        { 0.001, 0.001, 0.249, 0.001, 0.249, 0.249, 0.001, 0.249, 0.125, 0.125 },
         { {  0, 0.00, 0.00,   0.00,   0.00, 0.00 },
           {  3, 1.00, 0.00, 128.00,   0.00, 0.00 },
           { 15, 1.00, 1.00, 128.00, 128.00, 0.00 },
@@ -185,18 +186,18 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
           1.00, 0.33,  1.00, 0.66,  0.00, 0.66,  0.00, 0.33 },
         { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
           1.00, 0.33,  1.00, 0.66,  0.00, 0.66,  0.00, 0.33 },
-        { {  0, 0.00, 0.00,   0.00,   0.00, 0.00 },
-          {  3, 1.00, 0.00, 128.00,   0.00, 0.00 },
-          { 15, 1.00, 1.00, 128.00, 128.00, 0.00 },
-          { 12, 0.00, 1.00,   0.00, 128.00, 0.00 },
-          {  7, 1.00, 0.33, 128.00,  42.00, 0.00 },
-          { 11, 1.00, 0.66, 128.00,  84.00, 0.00 },
-          {  8, 0.00, 0.66,   0.00,  84.00, 0.00 },
-          {  4, 0.00, 0.33,   0.00,  42.00, 0.00 },
+        { {  0, 0.00, 0.00,   0.00,   0.00,   0.00 },
+          {  3, 1.00, 0.00, 128.00,   0.00,   0.00 },
+          { 15, 1.00, 1.00, 128.00, 128.00, 192.00 },
+          { 12, 0.00, 1.00,   0.00, 128.00, 192.00 },
+          {  7, 1.00, 0.33, 128.00,  42.00, 128.00 },
+          { 11, 1.00, 0.66, 128.00,  84.00, 192.00 },
+          {  8, 0.00, 0.66,   0.00,  84.00, 192.00 },
+          {  4, 0.00, 0.33,   0.00,  42.00, 128.00 },
         }  
 
     },
-    {   "9  Six Faced Wall (NS)",
+    {   "9: Six Faced Wall (NS)",
         (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
 	    8,
       	2,
@@ -316,16 +317,16 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
     	  0.66, 1.00,  0.33, 1.00,  0.00, 0.66,  0.00, 0.33,
           0.66, 0.33,  0.33, 0.66 },
-        { {  0, 0.00, 0.00,   0.00,   0.00, 0.00 },
-          {  3, 1.00, 0.00, 128.00,   0.00, 0.00 },
-          { 15, 1.00, 1.00, 128.00, 128.00, 0.00 },
-          { 12, 0.00, 1.00,   0.00, 128.00, 0.00 },
-          { 14, 0.66, 1.00,  84.00, 128.00, 0.00 },
-          { 13, 0.33, 1.00,  42.00, 128.00, 0.00 },
-          {  8, 0.00, 0.66,   0.00,  84.00, 0.00 },
-          {  4, 0.00, 0.33,   0.00,  42.00, 0.00 },
-          {  6, 0.66, 0.33,  84.00,  42.00, 0.00 },
-          {  9, 0.33, 0.66,  42.00,  84.00, 0.00 }
+        { {  0, 0.00, 0.00,   0.00,   0.00,   0.00 },
+          {  3, 1.00, 0.00, 128.00,   0.00,   0.00 },
+          { 15, 1.00, 1.00, 128.00, 128.00,   0.00 },
+          { 12, 0.00, 1.00,   0.00, 128.00, 192.00 },
+          { 14, 0.66, 1.00,  84.00, 128.00, 128.00 },
+          { 13, 0.33, 1.00,  42.00, 128.00, 192.00 },
+          {  8, 0.00, 0.66,   0.00,  84.00, 192.00 },
+          {  4, 0.00, 0.33,   0.00,  42.00, 128.00 },
+          {  6, 0.66, 0.33,  84.00,  42.00, 128.00 },
+          {  9, 0.33, 0.66,  42.00,  84.00, 192.00 }
         }
           
     },
@@ -392,16 +393,16 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
           1.00, 0.33,  1.00, 0.66,  0.66, 1.00,  0.33, 1.00,
 	      0.33, 0.33,  0.66, 0.66 },
-        { {  0, 0.00, 0.00,   0.00,   0.00, 0.00 },
-          {  3, 1.00, 0.00, 128.00,   0.00, 0.00 },
-          { 15, 1.00, 1.00, 128.00, 128.00, 0.00 },
-          { 12, 0.00, 1.00,   0.00, 128.00, 0.00 },
-          {  7, 1.00, 0.33, 128.00,  42.00, 0.00 },
-          { 11, 1.00, 0.66, 128.00,  84.00, 0.00 },
-          { 14, 0.66, 1.00,  84.00, 128.00, 0.00 },
-          { 13, 0.33, 1.00,  42.00, 128.00, 0.00 },
-          {  5, 0.33, 0.33,  42.00,  42.00, 0.00 },
-          { 10, 0.66, 0.66,  84.00,  84.00, 0.00 }
+        { {  0, 0.00, 0.00,   0.00,   0.00, 192.00 },
+          {  3, 1.00, 0.00, 128.00,   0.00, 192.00 },
+          { 15, 1.00, 1.00, 128.00, 128.00,   0.00 },
+          { 12, 0.00, 1.00,   0.00, 128.00, 192.00 },
+          {  7, 1.00, 0.33, 128.00,  42.00, 192.00 },
+          { 11, 1.00, 0.66, 128.00,  84.00, 128.00 },
+          { 14, 0.66, 1.00,  84.00, 128.00, 128.00 },
+          { 13, 0.33, 1.00,  42.00, 128.00, 192.00 },
+          {  5, 0.33, 0.33,  42.00,  42.00, 192.00 },
+          { 10, 0.66, 0.66,  84.00,  84.00, 128.00 }
         }
         
     },
@@ -543,7 +544,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
           {  3, 0.66, 0.00,  85.00,   0.00, 0.00 },
           {  3, 0.83, 0.00, 106.00,   0.00, 0.00 },
           { 14, 0.83, 1.00, 106.00, 128.00, 0.00 }, 
-          { 14, 0.66, 1.00,  85.00, 128.00, 0.00 }, 
+          { 14, 0.66, 1.00,  85.00, 128.00, 0.00 },
           { 13, 0.50, 1.00,  64.00, 128.00, 0.00 }, 
           { 13, 0.33, 1.00,  42.00, 128.00, 0.00 }, 
           { 12, 0.16, 1.00,  21.00, 128.00, 0.00 }, 
@@ -630,7 +631,6 @@ static void editdrawChosenFanType(void)
         glEnd();
 
     } 
-
 
 }
 
@@ -864,7 +864,7 @@ COMMAND_T *editdrawInitData(void)
     int entry, cnt;
 
 
-    mcmd = &MeshCommand[2]; 
+    mcmd = &MeshCommand[3];
 
     /* Correct all of them silly texture positions for seamless tiling */
 
@@ -872,11 +872,12 @@ COMMAND_T *editdrawInitData(void)
  	
         for (cnt = 0; cnt < (mcmd -> numvertices * 2); cnt += 2) {
 
-         	mcmd -> uv[cnt] = ((.6/32)+(mcmd -> uv[cnt]*30.8/32))/8;
-         	mcmd -> uv[cnt + 1] = ((.6/32)+(mcmd -> uv[cnt + 1]*30.8/32))/8;
+         	mcmd -> uv[cnt]     = mcmd -> uv[cnt] / 8;
+         	mcmd -> uv[cnt + 1] = mcmd -> uv[cnt + 1] / 8;
          	/* Do for big tiles too */
-         	mcmd -> biguv[cnt] = ((.6/64)+(mcmd -> biguv[cnt]*62.8/64))/4;
-         	mcmd -> biguv[cnt + 1] = ((.6/64)+(mcmd -> biguv[cnt + 1]*62.8/64))/4;
+         	mcmd -> biguv[cnt]     = mcmd -> biguv[cnt] / 4;
+         	mcmd -> biguv[cnt + 1] = mcmd -> biguv[cnt + 1] / 4;
+            /* FIXME: Adjust the texture offsets by +/- 0.001 */
      	
      	}
      	
@@ -1105,4 +1106,69 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int chosen_fan)
 
     editdraw2DCameraPos(x, y);
 
+}
+
+/*
+ * Name:
+ *     editdraw2DTex
+ * Description:
+ *     Draws the texture into chosen rectangle and draws a rectangle
+ *     around the texture part used.
+ * Input:
+ *     x, y, w, h: Draw into this rectangle
+ *     tx_no:      This texture
+ *     tx_big:     Is a big texture
+ */
+void editdraw2DTex(int x, int y, int w, int h, char tx_no, char tx_big)
+{
+
+    int x2, y2;
+    int part_size, sub_x, sub_y;
+    int main_tx_no, subtex_no;  
+    
+    
+    main_tx_no = (tx_no >> 6) & 3;    
+    subtex_no  = tx_no & 0x3F;
+
+    x2 = x + w;
+    y2 = y + h;
+    /* Draw the texture, counter-clockwise */
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, WallTex[main_tx_no]);
+    sdlglSetColor(SDLGL_COL_WHITE);
+    glBegin(GL_TRIANGLE_FAN);
+        glTexCoord2fv(&DefaultUV[0]);
+        glVertex2i(x, y);
+        glTexCoord2fv(&DefaultUV[6]);
+        glVertex2i(x, y2);
+        glTexCoord2fv(&DefaultUV[4]);
+        glVertex2i(x2, y2);
+        glTexCoord2fv(&DefaultUV[2]);
+        glVertex2i(x2, y);
+    glEnd();
+    glDisable(GL_TEXTURE_2D);
+    /* ---- Draw a rectangle around the chosen texture-part */
+    if (tx_big) {
+        part_size = w / 4;
+        sub_x = ((subtex_no & 0xF) % 4);
+        sub_y = ((subtex_no & 0xF) / 4);
+    }
+    else {
+        part_size = w / 8;
+        sub_x = (subtex_no % 8);
+        sub_y = (subtex_no / 8);
+    }
+    
+    x += sub_x * part_size;
+    y += sub_y * part_size;
+    x2 = x + part_size;
+    y2 = y + part_size;
+    glBegin(GL_LINE_LOOP);
+    glBegin(GL_QUADS);
+        glVertex2i(x, y);
+        glVertex2i(x, y2);
+        glVertex2i(x2, y2);
+        glVertex2i(x2, y);            
+    glEnd();
+    
 }
