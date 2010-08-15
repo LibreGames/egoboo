@@ -33,6 +33,8 @@ position) Browse with arrow keys.<br>
 Planned commands (if a tile is chosen in map):<br>
 - 'R': 'R'otate chosen fan shape<br>
 - 'S': Toggle 'S'olid mode<br>
+- 2D Map: Mouse Right-Click: Set Floor tile / Mouse left-Click: Set Wall Tile
+<br>
 </p>
 
 <p><b>Camera movement commands</b><br>
@@ -53,9 +55,25 @@ Keypad-: Zoom out<br>
 '[module.obj]/gamedat' directory<br>
 - 'src': Holds the complete source code of the editor<br>
 </p>
+<p>
+  <b>Technical info</b><br>
+  Fan-Commands used for 'simple' mode:<br>
+  - &nbsp;0: Floor<br>
+  - &nbsp;1: Top, impassable<br>
+  - &nbsp;8: Wall, looking north<br>
+  - 16: Outer edge north-east<br>
+  - 19: Inner edge north-west<br>
+  <br>
+  The vertices are 'rotated' in other direction, if needed<br>
+  The 'tx_flags' of the fan are used to sign for the editor, which way a wall is oriented:<br>
+  0: North<br>
+  1: East<br>
+  2: South<br>
+  3: West<br>
+</p>
 <br>
 <br>
-Date: 2010-08-14 / bitnapper<br>
+Date: 2010-08-15 / bitnapper<br>
 <br>
 <br>
 </body>

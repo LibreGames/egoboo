@@ -118,7 +118,7 @@ char *editmainFanTypeName(int type_no);
 void editmainChooseFanType(int dir, char *fan_name);
 int  editmainSetSimple(int fan_no, int is_floor);
 void editmain2DTex(int x, int y, int w, int h, FANDATA_T *ft);
-
+int  editmainFanUpdate(FANDATA_T *new_fan);
 
 #endif /* _EDITMAIN_H_	*/
 

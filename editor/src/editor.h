@@ -158,6 +158,7 @@ typedef struct {
     unsigned char draw_mode;    // Flags for display of map, replaces 'wireframe'
     
     int numvert;        // Number of vertices in map
+    int numfreevert;    // Number of free vertices for edit
     int tiles_x;        // Size of mesh in tiles
     int tiles_y;        //
     int numfan;

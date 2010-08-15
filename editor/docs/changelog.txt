@@ -1,32 +1,25 @@
 2010-08-15 <bitnapper>
-- Fixed bug in display of texture and its sub-part
-
-2010-08-15 <bitnapper>
 - Added display of chosen Texture and it's part in 'Fan-Info'
-- Display of texture part has a bug :((
+- Added info for 'preset' tiles 
+- 'solid' and 'flat' maps are now generated on click in menu
 
 2010-08-14 <bitnapper>
 - Added command 'B'rowsing trough fan types (displayed at chosen fan)
 - Added default fx-flags in fan types
 - Added display of name of chosen fan type in status bar
 - Prepared code for 'simple' mode for generation of maps
-
-2010-08-14 <bitnapper>
 - Added more data for 'fixed' fan sizes
 - Added code for choosing and displaying a fan type at a chosen position
 
 2010-08-13 <bitnapper>
 - Added names for fan types
 - Added display 'I'nfo for chosen fan, flags and Name of fan type 
-
-2010-08-13 <bitnapper>
 - Added some basic fans extents, save z-values
 - Added basic code for implementation of new key commands for map
 
 2010-08-12 <bitnapper>
 - Fixed displaying map 'swapped' in 3D-View
 - Added display of chosen fan in 3D-View
-
 
 2010-08-11 <bitnapper>
 - Extended map menu for new maps to "flat" and "solid"

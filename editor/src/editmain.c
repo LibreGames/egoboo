@@ -40,9 +40,18 @@
 #define EDITMAIN_MAX_COMMAND 30
 
 #define EDITMAIN_MAX_MAPSIZE    64
-#define EDITMAIN_DEFAULT_TILE   62
+#define EDITMAIN_DEFAULT_TILE   ((char)54)
+#define EDITMAIN_TOP_TILE       ((char)63)  /* Black texture    */
 #define EDITMAIN_WALL_HEIGHT    192
-#define EDITMAIN_TILEDIV   128           // SMALLXY
+#define EDITMAIN_TILEDIV        128         /* Size of tile     */
+
+/* --------- Info for preset tiles ------- */
+#define EDITMAIN_PRESET_MAX     5
+
+#define EDITMAIN_NORTH  0x00
+#define EDITMAIN_EAST   0x01
+#define EDITMAIN_SOUTH  0x02
+#define EDITMAIN_WEST   0x03
 
 /*******************************************************************************
 * TYPEDEFS							                                           *
@@ -54,18 +63,37 @@ typedef struct {
 
 } EDITMAIN_XY;
 
+typedef struct {
+
+    char fan_type;          /* This fan type                        */
+    unsigned char fan_tx;   /* Default texture to use for this one  */
+    unsigned char fan_fx;   /* Default fx for this one              */
+
+} EDITMAIN_PRESET_T;
+
 /*******************************************************************************
 * DATA							                                               *
 *******************************************************************************/
 
-static int NumFreeVertices;
 static MESH_T Mesh;
 static COMMAND_T *pCommands;
 static EDITMAIN_STATE_T EditState;
 static SPAWN_OBJECT_T   SpawnObjects[EDITMAIN_MAXSPAWN + 2];
 static EDITOR_PASSAGE_T Passages[EDITMAIN_MAXPASSAGE + 2];
 
-/* ------ Data for checking of adjacent tiles ------ */
+/* --- Definition of preset tiels for 'simple' mode -- */
+static EDITMAIN_PRESET_T PresetTiles[] = {
+
+    {  0, EDITMAIN_DEFAULT_TILE, 0 },                           /* Floor    */
+    {  1, EDITMAIN_DEFAULT_TILE, (MPDFX_WALL | MPDFX_IMPASS) }, /* Top      */
+    /* Walls, x/y values are rotated, if needed */
+    {  8, 64 + 10, (MPDFX_WALL | MPDFX_IMPASS) },   /* Wall north */
+    { 16, 64 + 1, (MPDFX_WALL | MPDFX_IMPASS)  },   /* Outer edge north/east */
+    { 19, 64 + 3, (MPDFX_WALL | MPDFX_IMPASS)  },   /* Inner edge north/west */
+    { 0 }
+};
+
+/* ------ Data for checking of adjacent tiles -------- */
 static EDITMAIN_XY AdjacentXY[8] = {
 
     {  0, -1 }, { +1, -1 }, { +1,  0 }, { +1, +1 },
@@ -92,7 +120,7 @@ static EDITMAIN_XY AdjacentXY[8] = {
  */
 static int editmainGetAdjacent(MESH_T *mesh, int fan, int adjacent[8])
 {
-    
+
     int dir, adj_pos;
     int num_adj;
     EDITMAIN_XY src_xy, dest_xy;
@@ -114,52 +142,20 @@ static int editmainGetAdjacent(MESH_T *mesh, int fan, int adjacent[8])
 
             adj_pos = (dest_xy.y * mesh -> tiles_x) + dest_xy.x;
             num_adj++;
-            
+
         }
-        
-        adjacent[dir] = adj_pos;       /* Starting north */ 
-    
+
+        adjacent[dir] = adj_pos;       /* Starting north */
+
     }
-    
+
     return num_adj;
 
 }
 
 /*
  * Name:
- *     editmainReplaceFan
- * Description:
- *     This function replaces the given fan with the 'new_fan_type'
- * Input:
- *     mesh*:   Pointer on mesh to handle
- *     fan:     Number of fan to allocate vertices for
- *     x, y:    Position of fan
- *     new_fan:  Elevation to add to given default z-value
- * Output:
- *    Fan could be added, yes/no
- */
-static int editmainReplaceFan(MESH_T *mesh, int fan, int x, int y, int new_fan_type)
-{
-
-    COMMAND_T *ft, *new_ft;
-
-
-    ft     = &pCommands[mesh -> fan[fan].type];
-    new_ft = &pCommands[new_fan_type];
-
-    /* Solve this by handling a it with insert/delete as in a string */
-    /* 1. Get number of vertices of existing fan    */
-    /* 1. Remove old fan (count it's vertices)      */
-    /* 2. Replace it by fan with new type  ?        */
-    /* Set new fan starts for all fans from here, if number of vertices has
-       changed */
-    return 0;   /* Failed */
-
-}
-
-/*
- * Name:
- *     editmainAddFan
+ *     editmainFanAdd
  * Description:
  *     This functionsa adds a new fan to the actual map, if there are enough
  *     vertices left for it
@@ -171,24 +167,22 @@ static int editmainReplaceFan(MESH_T *mesh, int fan, int x, int y, int new_fan_t
  * Output:
  *    Fan could be added, yes/no
  */
-static int editmainAddFan(MESH_T *mesh, int fan, int x, int y, int zadd)
+static int editmainFanAdd(MESH_T *mesh, int fan, int x, int y, int zadd)
 {
 
     COMMAND_T *ft;
     int cnt;
     int vertex;
-    int vertexlist[17];
 
 
-    /* TODO: Test it
     ft = &pCommands[mesh -> fan[fan].type];
 
-    if (NumFreeVertices >= ft -> numvertices)
+    if (mesh -> numfreevert >= ft -> numvertices)
     {
 
-        vertex = MAXTOTALMESHVERTICES - NumFreeVertices;
+        vertex = mesh -> numvert;
 
-        mesh -> vrtstart[fan] = vertex;     
+        mesh -> vrtstart[fan] = vertex;
 
         for (cnt = 0; cnt < ft -> numvertices; cnt++) {
 
@@ -199,13 +193,88 @@ static int editmainAddFan(MESH_T *mesh, int fan, int x, int y, int zadd)
 
         }
 
-        NumFreeVertices -= ft -> numvertices;
+        mesh -> numvert     += ft -> numvertices;   /* Actual number of vertices used   */
+        mesh -> numfreevert -= ft -> numvertices;   /* Vertices left for edit           */
+
         return 1;
 
     }
-    */
 
     return 0;
+}
+
+/*
+ * Name:
+ *     editmainDoFanUpdate
+ * Description:
+ *     This function updates the fan at given 'fan 'with the
+ *     info in 'new_ft'.
+ *     If the type has changed, the vertice data is updated.
+ * Input:
+ *     mesh *:    Pointer on mesh to handle
+ *     fan:       Number of fan to allocate vertices for
+ *     x, y:      Position of fan
+ *     new_fan *: Pointer on description of new fan data
+ * Output:
+ *    Fan could be updated, yes/no
+ */
+static int editmainDoFanUpdate(MESH_T *mesh, int fan, int x, int y, FANDATA_T *new_fan)
+{
+
+    COMMAND_T *act_ft, *new_ft;
+    FANDATA_T *act_fan;
+    int cnt;
+    int vrt_diff, vertex;
+
+
+    act_fan = &mesh -> fan[fan];
+
+    act_ft  = &pCommands[act_fan -> type];
+    new_ft  = &pCommands[new_fan -> type];
+
+    /* Do an update on the 'static' data of the fan */
+    act_fan -> tx_no    = new_fan -> tx_no;
+    act_fan -> tx_flags = new_fan -> tx_flags;
+    act_fan -> fx       = new_fan -> fx;
+
+    if (act_fan -> type == new_fan -> type) {
+
+        return 1;       /* No vertices to change */
+
+    }
+
+    vrt_diff = new_ft -> numvertices - act_ft -> numvertices;
+
+    if (0 == vrt_diff) {
+        /* Same number of vertices, only overwrite is needed */
+        /* Set the new type of fan */
+        act_fan -> type = new_fan -> type;
+
+    }
+    else {
+        /* Number of vertices has changed */
+        /* Solve this by handling a it with insert/delete as in a string */
+        /* 1. Get number of vertices of existing fan    */
+        /* 1. Remove old fan (count it's vertices)      */
+        /* 2. Replace it by fan with new type  ?        */
+        /* Set new fan starts for all fans from here, if number of vertices has
+       changed */
+       return 0;
+    }
+
+
+    /* Fill in the vertex values from type definition */
+    vertex = mesh -> vrtstart[fan];
+    for (cnt = 0; cnt < new_ft -> numvertices; cnt++) {
+        /* Replace actual values by new values */
+        mesh -> vrtx[vertex] = x + new_ft -> vtx[cnt].x;
+        mesh -> vrty[vertex] = y + new_ft -> vtx[cnt].y;
+        mesh -> vrtz[vertex] = new_ft -> vtx[cnt].z;
+        vertex++;
+    }
+
+    return 1;
+
 }
 
 /*
@@ -250,7 +319,7 @@ void editmainCompleteMapData(MESH_T *mesh)
 
     }
 
-    NumFreeVertices = MAXTOTALMESHVERTICES - mesh -> numvert;
+    mesh -> numfreevert = MAXTOTALMESHVERTICES - mesh -> numvert;
     /* Set flag that map has been loaded */
     mesh -> map_loaded = 1;
     mesh -> draw_mode  = EditState.draw_mode;
@@ -275,16 +344,19 @@ static int editmainCreateNewMap(MESH_T *mesh, int which)
 
     memset(mesh, 0, sizeof(MESH_T));
 
-    mesh -> tiles_x = EDITMAIN_MAX_MAPSIZE;
-    mesh -> tiles_y = EDITMAIN_MAX_MAPSIZE;
-    zadd = 0;
+    mesh -> tiles_x     = EDITMAIN_MAX_MAPSIZE;
+    mesh -> tiles_y     = EDITMAIN_MAX_MAPSIZE;
+    mesh -> numvert     = 0;                        /* Vertices used in map    */
+    mesh -> numfreevert = MAXTOTALMESHVERTICES;     /* Vertices left in memory */
+
+    zadd   = 0;
     fan_fx = 0;
+
     if (which == EDITMAIN_NEWSOLIDMAP) {
         zadd   = 192;                           /* All walls resp. top tiles  */
         fan_fx = (MPDFX_WALL | MPDFX_IMPASS);   /* All impassable walls       */
     }
 
-    /* Fill the map with flag tiles */
     fan = 0;
     for (y = 0; y < mesh -> tiles_y; y++) {
 
@@ -292,10 +364,15 @@ static int editmainCreateNewMap(MESH_T *mesh, int which)
 
             /* TODO: Generate empty map */
             mesh -> fan[fan].type  = 0;
-            mesh -> fan[fan].tx_no = (char)((((x & 1) + (y & 1)) & 1) + EDITMAIN_DEFAULT_TILE);
+            if (which == EDITMAIN_NEWSOLIDMAP) {
+                mesh -> fan[fan].tx_no = (unsigned char)((((x & 1) + (y & 1)) & 1) + EDITMAIN_DEFAULT_TILE);
+            }
+            else {
+                mesh -> fan[fan].tx_no = EDITMAIN_TOP_TILE;
+            }
             mesh -> fan[fan].fx    = fan_fx;
 
-            if (! editmainAddFan(mesh, fan, x*EDITMAIN_TILEDIV, y*EDITMAIN_TILEDIV, zadd))
+            if (! editmainFanAdd(mesh, fan, x*EDITMAIN_TILEDIV, y*EDITMAIN_TILEDIV, zadd))
             {
                 sprintf(EditState.msg, "%s", "NOT ENOUGH VERTICES!!!");
                 return 0;
@@ -307,7 +384,7 @@ static int editmainCreateNewMap(MESH_T *mesh, int which)
 
     }
 
-    return 0;   /* TODO: Return 1 if mesh is created */
+    return 1;   /* TODO: Return 1 if mesh is created */
 
 }
 
@@ -481,7 +558,7 @@ int editmainMap(int command)
 
         case EDITMAIN_NEWFLATMAP:
         case EDITMAIN_NEWSOLIDMAP:
-            if (editmainCreateNewMap(&Mesh, EDITMAIN_NEWFLATMAP)) {
+            if (editmainCreateNewMap(&Mesh, command)) {
 
                 editmainCompleteMapData(&Mesh);
                 return 1;
@@ -644,7 +721,7 @@ char *editmainFanTypeName(int type_no)
 
         if (pCommands[type_no & 0x1F].name != 0) {
         
-            return pCommands[type_no & 0x1F].name; 
+            return pCommands[type_no & 0x1F].name;
         
         }
     
@@ -728,7 +805,7 @@ int editmainSetFloor(int fan_no, int is_floor)
         }
 
     }
-    
+
     return 0;
 
 }
@@ -740,9 +817,9 @@ int editmainSetFloor(int fan_no, int is_floor)
  *     Draws the texture and chosen texture-part of actual chosen fan
  *     into given rectangle.
  * Input:
- *     x, y, w, h: Rectangle to draw into 
- *     ft *:       Pointer on fandata to use for drawing 
- *     tx_no:      From fan 
+ *     x, y, w, h: Rectangle to draw into
+ *     ft *:       Pointer on fandata to use for drawing
+ *     tx_no:      From fan
  */
 void editmain2DTex(int x, int y, int w, int h, FANDATA_T *ft)
 {
@@ -753,4 +830,27 @@ void editmain2DTex(int x, int y, int w, int h, FANDATA_T *ft)
         
     }
     
+}
+
+/*
+ * Name:
+ *     editmainFanUpdate
+ * Description:
+ *     Does an update on given fan. Including changed number of vertices,
+ *     if needed.
+ * Input:
+ *     new_fan * : New fan data to replace old ones with
+ */
+int editmainFanUpdate(FANDATA_T *new_fan)
+{
+
+    if (EditState.fan_chosen >= 0) {
+        return editmainDoFanUpdate(&Mesh,
+                                   EditState.fan_chosen,
+                                   EditState.tile_x,
+                                   EditState.tile_y,
+                                   new_fan);
+    }
+    
+    return 0;
 }
