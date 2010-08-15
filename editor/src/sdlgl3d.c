@@ -524,7 +524,7 @@ void sdlgl3dInitCamera(int camera_no, int rotx, int roty, int rotz, float aspect
     Camera[camera_no].campos.direction[0] = sin(DEG2RAD(rotz));
     Camera[camera_no].campos.direction[1] = cos(DEG2RAD(rotz));
 
-    Camera[camera_no].campos.speed   = 150.0;  /* Speed of camera in units / second    */
+    Camera[camera_no].campos.speed   = 300.0;  /* Speed of camera in units / second    */
     Camera[camera_no].campos.turnvel =  60.0;  /* Degrees per second                   */
     
     Camera[camera_no].aspect_ratio = aspect_ratio;

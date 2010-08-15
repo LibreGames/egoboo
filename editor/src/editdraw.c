@@ -1119,16 +1119,16 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int chosen_fan)
  *     tx_no:      This texture
  *     tx_big:     Is a big texture
  */
-void editdraw2DTex(int x, int y, int w, int h, char tx_no, char tx_big)
+void editdraw2DTex(int x, int y, int w, int h, unsigned char tx_no, char tx_big)
 {
 
     int x2, y2;
-    int part_size, sub_x, sub_y;
-    int main_tx_no, subtex_no;  
+    int spart_size, part_size;
+    unsigned char main_tx_no, subtex_no;
     
     
-    main_tx_no = (tx_no >> 6) & 3;    
-    subtex_no  = tx_no & 0x3F;
+    main_tx_no = (unsigned char)((tx_no >> 6) & 3);
+    subtex_no  = (unsigned char)(tx_no & 0x3F);
 
     x2 = x + w;
     y2 = y + h;
@@ -1148,19 +1148,14 @@ void editdraw2DTex(int x, int y, int w, int h, char tx_no, char tx_big)
     glEnd();
     glDisable(GL_TEXTURE_2D);
     /* ---- Draw a rectangle around the chosen texture-part */
+    spart_size = w / 8;
+    part_size = w / 8;
     if (tx_big) {
-        part_size = w / 4;
-        sub_x = ((subtex_no & 0xF) % 4);
-        sub_y = ((subtex_no & 0xF) / 4);
+        part_size *= 2;
     }
-    else {
-        part_size = w / 8;
-        sub_x = (subtex_no % 8);
-        sub_y = (subtex_no / 8);
-    }
-    
-    x += sub_x * part_size;
-    y += sub_y * part_size;
+
+    x += (subtex_no % 8) * spart_size;
+    y += (subtex_no / 8) * spart_size;
     x2 = x + part_size;
     y2 = y + part_size;
     glBegin(GL_LINE_LOOP);
@@ -1168,7 +1163,7 @@ void editdraw2DTex(int x, int y, int w, int h, char tx_no, char tx_big)
         glVertex2i(x, y);
         glVertex2i(x, y2);
         glVertex2i(x2, y2);
-        glVertex2i(x2, y);            
+        glVertex2i(x2, y);
     glEnd();
-    
+
 }

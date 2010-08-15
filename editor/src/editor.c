@@ -365,6 +365,7 @@ static void editor2DMap(SDLGL_EVENT *event)
 static void editorDrawFanInfo(void)
 {
 
+    SDLGL_RECT InfoPos;
     SDLGL_FIELD *fields;
     int i;
 
@@ -401,6 +402,13 @@ static void editorDrawFanInfo(void)
         /* Draw the actual chosen texture */
         editmain2DTex(fields -> rect.x, fields -> rect.y,
                       fields -> rect.w, fields -> rect.h, &pEditState -> act_fan);
+        /* Display number of textures */
+        fields--;
+        InfoPos.x = fields -> rect.x;
+        InfoPos.y = fields -> rect.y + 16;    
+        sdlglstrStringF(&InfoPos, "Texture: %d Subpart: %d", 
+                        (int)((pEditState -> act_fan.tx_no >> 6) & 3),
+                        (int)(pEditState -> act_fan.tx_no & 0x3F));
 
     }
 

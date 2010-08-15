@@ -1,4 +1,7 @@
 2010-08-15 <bitnapper>
+- Fixed bug in display of texture and its sub-part
+
+2010-08-15 <bitnapper>
 - Added display of chosen Texture and it's part in 'Fan-Info'
 - Display of texture part has a bug :((
 
