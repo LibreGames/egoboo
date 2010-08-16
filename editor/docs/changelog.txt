@@ -1,3 +1,8 @@
+2010-08-16 <bitnapper>
+- Moved menu points for load/save of map to 'File'-Menu
+- Added menu point for edit-state (how to edit)
+- Prepared code for 'simple' editing
+
 2010-08-15 <bitnapper>
 - Added display of chosen Texture and it's part in 'Fan-Info'
 - Added info for 'preset' tiles 

@@ -58,10 +58,14 @@
 
 /* Sub-commands for main commands, if needed */
 #define EDITOR_STATE_SHOWMAP ((char)1)
-
-#define EDITOR_FILE_EXIT   ((char)3)
+#define EDITOR_STATE_EDIT    ((char)2) 
 
 /* Sub-Commands */
+#define EDITOR_FILE_LOAD  ((char)1)
+#define EDITOR_FILE_SAVE  ((char)2)  
+#define EDITOR_FILE_EXIT  ((char)3)
+
+
 #define EDITOR_2DMAP_CHOOSEFAN  ((char)1)
 #define EDITOR_2DMAP_FANINFO    ((char)2)
 #define EDITOR_2DMAP_FANROTATE  ((char)4)
@@ -99,7 +103,14 @@ static SDLGLCFG_NAMEDVALUE CfgValues[] = {
 
 static EDITMAIN_STATE_T *pEditState;
 static char StatusBar[80];
-static char Map2DState;     /* EDITOR_2DMAP_ */
+static char Map2DState;         /* EDITOR_2DMAP_ */
+static char EditorEditType;     /* Type of edit: 'No Edit', 'Simple Edit', 'Full Edit' */
+static char *EditTypeNames[] = {
+    "No Edit",
+    "Simple Edit",
+    "Full Edit"
+};
+
 
 static SDLGL_CMDKEY EditorCmd[] = {
 
@@ -130,9 +141,10 @@ static SDLGL_FIELD MainMenu[EDITOR_MAXFLD + 2] = {
     { SDLGL_TYPE_MENU + 10,  { 0, 16, 256, 256 }, EDITOR_2DMAP, EDITOR_2DMAP_CHOOSEFAN }, /* Map-Rectangle    */
     /* 'Code' needed in menu-background' for support of 'mouse-over'    */
     { SDLGL_TYPE_STD,  {   0, 0, 800, 16 }, -1 },           /* Menu-Background  */
-    { SDLGL_TYPE_MENU, {   4, 4, 32, 8 }, EDITOR_FILE, 0, "File" },
-    { SDLGL_TYPE_MENU, {  44, 4, 24, 8 }, EDITOR_MAP, 0, "Map" },
+    { SDLGL_TYPE_MENU, {   4, 4, 32, 8 }, EDITOR_FILE,     0, "File" },
+    { SDLGL_TYPE_MENU, {  44, 4, 24, 8 }, EDITOR_MAP,      0, "Map" },
     { SDLGL_TYPE_MENU, {  76, 4, 64, 8 }, EDITOR_SETTINGS, 0, "Settings" },
+    { SDLGL_TYPE_MENU, { 148, 4, 64, 8 }, EDITOR_STATE,    0, "Edit" },
     { 0 }
 
 };
@@ -140,20 +152,22 @@ static SDLGL_FIELD MainMenu[EDITOR_MAXFLD + 2] = {
 /* ------ Sub-Menus ------- */
 static SDLGL_FIELD SubMenu[] = {
     /* File-Menu */
-    { SDLGL_TYPE_STD,  {   0, 16, 80, 16 }, EDITOR_FILE, -1 },  /* Menu-Background */
-    { SDLGL_TYPE_MENU, {   4, 20, 72,  8 }, EDITOR_FILE, EDITOR_FILE_EXIT, "Exit" },
-    /* --- Maze-Menu */
-    { SDLGL_TYPE_STD,  {  40, 16, 80, 72 }, EDITOR_MAP, -1 },   /* Menu-Background */
+    { SDLGL_TYPE_STD,  {   0, 16, 72, 56 }, EDITOR_FILE, -1 },  /* Menu-Background */
+    { SDLGL_TYPE_MENU, {   4, 20, 64,  8 }, EDITOR_FILE, EDITOR_FILE_LOAD, "Load..." },
+    { SDLGL_TYPE_MENU, {   4, 36, 64,  8 }, EDITOR_FILE, EDITOR_FILE_SAVE, "Save" },
+    { SDLGL_TYPE_MENU, {   4, 52, 64,  8 }, EDITOR_FILE, EDITOR_FILE_EXIT, "Exit" },
+    /* Map-Menu */
+    { SDLGL_TYPE_STD,  {  40, 16, 80, 40 }, EDITOR_MAP, -1 },   /* Menu-Background */
     { SDLGL_TYPE_MENU, {  44, 20, 72,  8 }, EDITOR_MAP, EDITMAIN_NEWFLATMAP,  "New Flat" },
-    { SDLGL_TYPE_MENU, {  44, 36, 72,  8 }, EDITOR_MAP, EDITMAIN_NEWSOLIDMAP,  "New Solid" },
-    { SDLGL_TYPE_MENU, {  44, 52, 72,  8 }, EDITOR_MAP, EDITMAIN_LOADMAP, "Load..." },
-    { SDLGL_TYPE_MENU, {  44, 68, 72,  8 }, EDITOR_MAP, EDITMAIN_SAVEMAP, "Save" },
-    /* ---- Settings menu for view ---- */
+    { SDLGL_TYPE_MENU, {  44, 36, 72,  8 }, EDITOR_MAP, EDITMAIN_NEWSOLIDMAP, "New Solid" },
+    /* Settings menu for view */
     { SDLGL_TYPE_STD,  {  68, 16, 136, 56 }, EDITOR_SETTINGS, -1 },   /* Menu-Background */
     { SDLGL_TYPE_MENU, {  72, 20, 128,  8 }, EDITOR_SETTINGS, EDIT_MODE_SOLID,    "[ ] Draw Solid" },
     { SDLGL_TYPE_MENU, {  72, 36, 128,  8 }, EDITOR_SETTINGS, EDIT_MODE_TEXTURED, "[ ] Draw Texture"  },
     { SDLGL_TYPE_MENU, {  72, 52, 128,  8 }, EDITOR_SETTINGS, EDIT_MODE_LIGHTMAX, "[ ] Max Light" },
-    /* TODO: Add EDITOR_MAP, 'EDITMAIN_LOADSPAWN'               */
+    /* Edit-Menu */
+    { SDLGL_TYPE_STD,  { 144, 16,  96, 16 }, EDITOR_STATE, -1 },   /* Menu-Background */
+    { SDLGL_TYPE_MENU, { 148, 20, 128,  8 }, EDITOR_STATE, EDITOR_STATE_EDIT },
     { 0 }
 };
 
@@ -303,14 +317,22 @@ static void editor2DMap(SDLGL_EVENT *event)
                                   field -> rect.w, field -> rect.h);
                 /* And now move camera to this position */
                 sdlgl3dMoveToPosCamera(0,
-                                       (pEditState -> tile_x * 128.0) - 450.0,
-                                       (pEditState -> tile_y * 128.0),
-                                       600.0);
-                if (event -> modflags == SDL_BUTTON_LEFT) {
-                    /* TODO: Replace type of chosen fan by new type of fan */
-                }
-                else if (event -> modflags == SDL_BUTTON_RIGHT){
-                    /* TODO: Do action based on number 'Map2DState'  */
+                                       (pEditState -> tile_x * 128.0) - 128.0,
+                                       (pEditState -> tile_y * 128.0) - 128.0,
+                                       600.0, 0);
+                if (EditorEditType > 0) {
+
+                    if (event -> modflags == SDL_BUTTON_LEFT) {
+                        /* Replace type of chosen fan by new type of fan    */
+                        /* or set a wall in 'simple' mode                   */
+                        editmainFanSet(EditorEditType,
+                                       &pEditState -> new_fan,
+                                       0);
+                    }
+                    else if (event -> modflags == SDL_BUTTON_RIGHT){
+                        /* TODO: Do action based on number 'Map2DState'  */
+                        editmainFanSet(EditorEditType, 0, 1);
+                    }
                 }
 
             }
@@ -323,6 +345,7 @@ static void editor2DMap(SDLGL_EVENT *event)
         case EDITOR_2DMAP_FANROTATE:
             /* TODO: Rotate the chosen fan type */
             break;
+            
         case EDITOR_2DMAP_FANBROWSE:
             if (event -> pressed) {
                 Map2DState ^= event -> sub_code;
@@ -351,6 +374,64 @@ static void editor2DMap(SDLGL_EVENT *event)
             break;
 
     }
+
+}
+
+/*
+ * Name:
+ *     editorFileMenu
+ * Description:
+ *     Handles the input of the editors file menu
+ * Input:
+ *     which: Menu-Point to translate
+ * Output:
+ *     Result for SDLGL-Handler  
+ */
+static int editorFileMenu(char which) 
+{
+
+    switch(which) {
+        case EDITOR_FILE_LOAD:
+            editmainMap(EDITMAIN_LOADMAP);
+            break;
+            
+        case EDITOR_FILE_SAVE:
+            editmainMap(EDITMAIN_SAVEMAP);
+            break;
+            
+        case EDITOR_FILE_EXIT:
+            return SDLGL_INPUT_EXIT;
+
+    }
+    
+    return SDLGL_INPUT_OK;
+
+}
+
+/*
+ * Name:
+ *     editorFileMenu
+ * Description:
+ *     Handles the input of the editors 'edit' menu
+ * Input:
+ *     which: Menu-Point to translate
+ */
+static void editorState(char which)
+{
+
+    switch(which) {
+        case EDITOR_STATE_SHOWMAP:
+            pEditState -> display_flags ^= EDITMAIN_SHOW2DMAP;
+            break;
+        case EDITOR_STATE_EDIT:
+            EditorEditType++;           /* Type of edit: 'No Edit', 'Simple Edit', 'Full Edit' */
+            if (EditorEditType > 2) {
+                EditorEditType = 0;     /* Set the state            */
+            }
+            SubMenu[12].pdata = EditTypeNames[EditorEditType];
+            sprintf(StatusBar, "%s", EditTypeNames[EditorEditType]);
+            break;
+    }        
 
 }
 
@@ -558,10 +639,7 @@ static int editorInputHandler(SDLGL_EVENT *event)
             switch(event -> code) {
 
                 case EDITOR_FILE:
-                    if (event -> sub_code == EDITOR_FILE_EXIT) {
-                        return SDLGL_INPUT_EXIT;
-                    }
-                    break;
+                    return editorFileMenu(event -> sub_code);
                 case EDITOR_MAP:
                     if (! editmainMap(event -> sub_code)) {
                         /* TODO: Display message, what has gone wrong   */
@@ -570,11 +648,7 @@ static int editorInputHandler(SDLGL_EVENT *event)
                     }
                     break;
                 case EDITOR_STATE:
-                    if (event -> sub_code == EDITOR_STATE_SHOWMAP) {
-
-                        pEditState -> display_flags ^= EDITMAIN_SHOW2DMAP;
-
-                    }
+                    editorState(event -> sub_code);  
                     break;
                 case EDITOR_SETTINGS:
                     editmainToggleFlag(EDITMAIN_TOGGLE_DRAWMODE, event -> sub_code);
@@ -627,8 +701,10 @@ static void editorStart(void)
     sdlglAdjustRectToScreen(&MainMenu[2].rect,
                             &MainMenu[2].rect,
                             SDLGL_FRECT_SCRWIDTH);
-
-
+    /* Edit-Menu */
+    EditorEditType = 0;     /* Set the state            */
+    SubMenu[12].pdata = EditTypeNames[EditorEditType];
+    
     /* -------- Now create the output screen ---------- */
     sdlglInputNew(editorDrawFunc,
                   editorInputHandler,     /* Handler for input    */
@@ -667,7 +743,7 @@ int main(int argc, char **argv)
 
     sdlgl3dInitCamera(0, 310, 0, 90, 0.75);
     /* Init Camera +Z is up, -Y is near plane, X is left/right */
-    sdlgl3dMoveToPosCamera(0, 384.0, 384.0, 600.0);
+    sdlgl3dMoveToPosCamera(0, 384.0, 384.0, 600.0, 0);
 
     /* Set the input handlers and do other stuff before  */
     editorStart();

@@ -295,7 +295,7 @@ void sdlgl3dBindCamera(int camera_no, float x, float y, float x2, float y2);
 SDLGL3D_OBJECT *sdlgl3dGetCameraInfo(int camera_no, float *nx, float *ny, float *zmax);
 void sdlgl3dInitObject(SDLGL3D_OBJECT *moveobj);
 void sdlgl3dManageCamera(int camera_no, char move_cmd, char move_dir);
-void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z);
+void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z, int relative);
 void sdlgl3dManageObject(int obj_no, char move_cmd, char move_dir);
 void sdlgl3dMoveObjects(float secondspassed);
 /* TODO:

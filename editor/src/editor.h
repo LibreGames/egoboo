@@ -153,7 +153,6 @@ typedef struct {
 
 typedef struct {
 
-    unsigned char exploremode;
     unsigned char map_loaded;   // A map is loaded  into this struct
     unsigned char draw_mode;    // Flags for display of map, replaces 'wireframe'
     

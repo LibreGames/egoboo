@@ -41,6 +41,10 @@
 
 /* ---------- Edit-Flags -------- */
 #define EDITMAIN_SHOW2DMAP 0x01         /* Display the 2DMap        */
+/* --- Edit-States (how to set fans) */ 
+#define EDITMAIN_EDIT_NONE      0x00
+#define EDITMAIN_EDIT_SIMPLE    0x01
+#define EDITMAIN_EDIT_FULL      0x02
 
 /* --------- Other values ------- */
 #define EDITMAIN_MAXSPAWN   150         /* Maximum Lines in spawn list  */
@@ -118,7 +122,7 @@ char *editmainFanTypeName(int type_no);
 void editmainChooseFanType(int dir, char *fan_name);
 int  editmainSetSimple(int fan_no, int is_floor);
 void editmain2DTex(int x, int y, int w, int h, FANDATA_T *ft);
-int  editmainFanUpdate(FANDATA_T *new_fan);
+int  editmainFanSet(char edit_state, FANDATA_T *new_fan, char is_floor);
 
 #endif /* _EDITMAIN_H_	*/
 

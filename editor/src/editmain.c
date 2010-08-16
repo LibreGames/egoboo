@@ -25,10 +25,12 @@
 
 #include <stdio.h>
 #include <memory.h>
+#include <math.h>
 
 #include "editor.h"             /* Global needed definitions    */
 #include "editfile.h"           /* Load and save map files      */
 #include "editdraw.h"           /* Draw anything                */
+#include "sdlgl3d.h"
 
 
 #include "editmain.h"           /* My own header                */
@@ -274,6 +276,94 @@ static int editmainDoFanUpdate(MESH_T *mesh, int fan, int x, int y, FANDATA_T *n
     }
 
     return 1;
+
+}
+
+/*
+ * Name:
+ *     editmainFanTypeRotate
+ * Description:
+ *     For 'simple' mode. Rotates the given fan type
+ *     Adjusts the adjacent tiles accordingly, using the 'default' fan set. 
+ * Input:
+ *     type_no:        This type
+ *     dir:            To which direction
+ *     fan_type_rot *: Pointer on where to return the data of the rotated fan
+ */
+static void editmainFanTypeRotate(int type_no, int dir, COMMAND_T *fan_type_rot)
+{
+    
+    int cnt;
+    float rotval;
+    
+    
+    /* Get copy of chosen type */
+    memcpy(fan_type_rot, &pCommands[type_no], sizeof(COMMAND_T));
+    if (dir != EDITMAIN_NORTH) {
+    
+        rotval = DEG2RAD(90.0 * dir);
+        for (cnt = 0; fan_type_rot -> numvertices; cnt++) {
+        
+            /* First translate to have rotation center in middle of fan square */
+            fan_type_rot -> vtx[cnt].x -= 64.0;
+            fan_type_rot -> vtx[cnt].y -= 64.0;
+            /* And now rotate it */
+            fan_type_rot -> vtx[cnt].x *= sin(DEG2RAD(rotval));
+            fan_type_rot -> vtx[cnt].y *= cos(DEG2RAD(rotval));
+        
+        }
+    
+    }      
+    
+    /* Otherwise no rotation is needed */
+}
+
+/*
+ * Name:
+ *     editmainSetFanSimple
+ * Description:
+ *     For 'simple' mode. Sets a tile, if possible .
+ *     Adjusts the adjacent tiles accordingly, using the 'default' fan set. 
+ * Input:
+ *     mesh *:   Pointer on mesh to handle 
+ *     fan_no:   Where to place the tile on map
+ *     x, y:     Position on map    
+ *     is_floor: Is it a floor yes/no 
+ * Output:
+ *     Success yes/no  
+ */
+static int editmainSetFanSimple(MESH_T *mesh, int fan_no, int x, int y, char is_floor)
+{
+
+    COMMAND_T fan_type_rot;
+    COMMAND_T *ft_adj;
+    int adjacent[8];
+    int num_adj, dir;
+
+
+    num_adj = editmainGetAdjacent(&Mesh, fan_no, adjacent);
+    if (num_adj < 8) {
+        /* There moust be at least one tile left to edge of map */
+        return 0;
+    }
+
+
+    if (is_floor) {
+        /* Build and adjust walls surrounding this fan, if needed. Uses FX */
+        for (dir = 0; dir < 8; dir++) {
+            /* Adjust any adjacent tile */
+            ft_adj = &pCommands[mesh -> fan[fan_no].type];
+        }
+    }
+    else {
+        for (dir = 0; dir < 8; dir++) {
+            /* Adjust walls surrounding this fan, if needed. Uses FX-Flag */
+            ft_adj = &pCommands[mesh -> fan[fan_no].type];
+        }
+
+    }
+
+    return 0;
 
 }
 
@@ -772,46 +862,6 @@ void editmainChooseFanType(int dir, char *fan_name)
 
 /*
  * Name:
- *     editmainSetFloor
- * Description:
- *     For 'simple' mode. Set a floor tile, if possible 
- *     Adjusts the adjacent tiles accordingly, using the 'default' fan set. 
- * Input:
- *     fan_no:   Where to place the floor in map
- *     is_floor: Is it a floor yes/no 
- * Output:
- *     Success yes/no  
- */
-int editmainSetFloor(int fan_no, int is_floor)
-{
-    
-    int adjacent[8];
-    int num_adj, dir;
-    
-    
-    num_adj = editmainGetAdjacent(&Mesh, fan_no, adjacent); 
-    if (num_adj < 8) {
-        /* There moust be at least one tile left to edge of map */
-        return 0;  
-    }
-    
-    for (dir = 0; dir < 8; dir++) {
-        /* Adjust any adjacent tile */
-        if  (is_floor) {
-            /* Build and adjust walls surrounding this fan, if needed. Uses FX */
-        }
-        else {
-            /* Adjust walls surrounding this fan, if needed. Uses FX-Flag */
-        }
-
-    }
-
-    return 0;
-
-}
-
-/*
- * Name:
  *     editmain2DTex
  * Description:
  *     Draws the texture and chosen texture-part of actual chosen fan
@@ -834,22 +884,42 @@ void editmain2DTex(int x, int y, int w, int h, FANDATA_T *ft)
 
 /*
  * Name:
- *     editmainFanUpdate
+ *     editmainFanSet
  * Description:
+ *     Sets a fan at the actual chosen position, depending on edit_state. 
  *     Does an update on given fan. Including changed number of vertices,
  *     if needed.
  * Input:
+ *     edit_state: How to handle the command 
  *     new_fan * : New fan data to replace old ones with
+ *     is_floor:   Set floor in simple mode       
  */
-int editmainFanUpdate(FANDATA_T *new_fan)
+int editmainFanSet(char edit_state, FANDATA_T *new_fan, char is_floor)
 {
 
     if (EditState.fan_chosen >= 0) {
-        return editmainDoFanUpdate(&Mesh,
-                                   EditState.fan_chosen,
-                                   EditState.tile_x,
-                                   EditState.tile_y,
-                                   new_fan);
+        
+        if (edit_state == EDITMAIN_EDIT_NONE) {
+            /* Do nothing, is view-mode */
+            return 1;
+        }
+        else if (edit_state == EDITMAIN_EDIT_SIMPLE) {
+ 
+            return editmainSetFanSimple(&Mesh, 
+                                        EditState.fan_chosen,
+                                        EditState.tile_x,
+                                        EditState.tile_y,                
+                                        is_floor);
+
+        }
+        else if (edit_state == EDITMAIN_EDIT_FULL) {
+            /* Do 'simple' editing */
+            return editmainDoFanUpdate(&Mesh,
+                                       EditState.fan_chosen,
+                                       EditState.tile_x,
+                                       EditState.tile_y,
+                                       new_fan);
+        }
     }
     
     return 0;

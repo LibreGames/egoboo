@@ -630,13 +630,22 @@ void sdlgl3dManageCamera(int camera_no, char move_cmd, char move_dir)
  * Input:
  *      camera_no: Number of camera to set to position
  *      x, y, z:   Position of camera to move to
+ *      relative:  Move relative to actual position
  */
-void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z)
+void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z, int relative)
 {
 
-    Camera[camera_no].campos.pos[0] = x;
-    Camera[camera_no].campos.pos[1] = y;
-    Camera[camera_no].campos.pos[SDLGL3D_Z] = z;
+    if (relative) {
+    
+        Camera[camera_no].campos.pos[0] += x;
+        Camera[camera_no].campos.pos[1] += y;
+        Camera[camera_no].campos.pos[SDLGL3D_Z] += z;
+    }
+    else {
+        Camera[camera_no].campos.pos[0] = x;
+        Camera[camera_no].campos.pos[1] = y;
+        Camera[camera_no].campos.pos[SDLGL3D_Z] = z;
+    }
     /* Adjust the frustum normals */
     sdlgl3dSetupFrustumNormals(&Camera[camera_no], SDLGL3D_CAMERA_FOV);
 
