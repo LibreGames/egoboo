@@ -30,7 +30,6 @@
 #include "editor.h"             /* Global needed definitions    */
 #include "editfile.h"           /* Load and save map files      */
 #include "editdraw.h"           /* Draw anything                */
-#include "sdlgl3d.h"
 
 
 #include "editmain.h"           /* My own header                */
@@ -48,7 +47,18 @@
 #define EDITMAIN_TILEDIV        128         /* Size of tile     */
 
 /* --------- Info for preset tiles ------- */
+#define EDITMAIN_PRESET_FLOOR   0
+#define EDITMAIN_PRESET_TOP     1
+#define EDITMAIN_PRESET_WALL    2
+#define EDITMAIN_PRESET_EDGEO   3
+#define EDITMAIN_PRESET_EDGEI   4
 #define EDITMAIN_PRESET_MAX     5
+
+#define EDITMAIN_PRESET_TFLOOR  0
+#define EDITMAIN_PRESET_TTOP    1
+#define EDITMAIN_PRESET_TWALL   8
+#define EDITMAIN_PRESET_TEDGEO 16
+#define EDITMAIN_PRESET_TEDGEI 19
 
 #define EDITMAIN_NORTH  0x00
 #define EDITMAIN_EAST   0x01
@@ -65,14 +75,6 @@ typedef struct {
 
 } EDITMAIN_XY;
 
-typedef struct {
-
-    char fan_type;          /* This fan type                        */
-    unsigned char fan_tx;   /* Default texture to use for this one  */
-    unsigned char fan_fx;   /* Default fx for this one              */
-
-} EDITMAIN_PRESET_T;
-
 /*******************************************************************************
 * DATA							                                               *
 *******************************************************************************/
@@ -84,14 +86,13 @@ static SPAWN_OBJECT_T   SpawnObjects[EDITMAIN_MAXSPAWN + 2];
 static EDITOR_PASSAGE_T Passages[EDITMAIN_MAXPASSAGE + 2];
 
 /* --- Definition of preset tiels for 'simple' mode -- */
-static EDITMAIN_PRESET_T PresetTiles[] = {
-
-    {  0, EDITMAIN_DEFAULT_TILE, 0 },                           /* Floor    */
-    {  1, EDITMAIN_DEFAULT_TILE, (MPDFX_WALL | MPDFX_IMPASS) }, /* Top      */
+static FANDATA_T PresetTiles[] = {
+    {  EDITMAIN_DEFAULT_TILE, 0, 0,  0 },                          /* Floor    */
+    {  EDITMAIN_TOP_TILE,     0, (MPDFX_WALL | MPDFX_IMPASS), 1 }, /* Top      */
     /* Walls, x/y values are rotated, if needed */
-    {  8, 64 + 10, (MPDFX_WALL | MPDFX_IMPASS) },   /* Wall north */
-    { 16, 64 + 1, (MPDFX_WALL | MPDFX_IMPASS)  },   /* Outer edge north/east */
-    { 19, 64 + 3, (MPDFX_WALL | MPDFX_IMPASS)  },   /* Inner edge north/west */
+    {  64 + 10, 0, (MPDFX_WALL | MPDFX_IMPASS), 8  },   /* Wall north */
+    {  64 + 1,  0, (MPDFX_WALL | MPDFX_IMPASS), 16 },   /* Outer edge north/east */
+    {  64 + 3,  0, (MPDFX_WALL | MPDFX_IMPASS), 19 },   /* Inner edge north/west */
     { 0 }
 };
 
@@ -132,7 +133,7 @@ static int editmainGetAdjacent(MESH_T *mesh, int fan, int adjacent[8])
     for (dir = 0; dir < 8; dir++) {
     
         adj_pos = -1;       /* Assume invalid */
-                
+
         src_xy.x = fan % mesh -> tiles_x;
         src_xy.y = fan / mesh -> tiles_x;
         
@@ -217,13 +218,15 @@ static int editmainFanAdd(MESH_T *mesh, int fan, int x, int y, int zadd)
  *     fan:       Number of fan to allocate vertices for
  *     x, y:      Position of fan
  *     new_fan *: Pointer on description of new fan data
+ *     new_ft *:  Pointer on dat to create new fan off
  * Output:
  *    Fan could be updated, yes/no
  */
-static int editmainDoFanUpdate(MESH_T *mesh, int fan, int x, int y, FANDATA_T *new_fan)
+static int editmainDoFanUpdate(MESH_T *mesh, int fan, int x, int y, FANDATA_T *new_fan,
+                               COMMAND_T *new_ft)
 {
 
-    COMMAND_T *act_ft, *new_ft;
+    COMMAND_T *act_ft;
     FANDATA_T *act_fan;
     int cnt;
     int vrt_diff, vertex;
@@ -232,7 +235,6 @@ static int editmainDoFanUpdate(MESH_T *mesh, int fan, int x, int y, FANDATA_T *n
     act_fan = &mesh -> fan[fan];
 
     act_ft  = &pCommands[act_fan -> type];
-    new_ft  = &pCommands[new_fan -> type];
 
     /* Do an update on the 'static' data of the fan */
     act_fan -> tx_no    = new_fan -> tx_no;
@@ -264,7 +266,6 @@ static int editmainDoFanUpdate(MESH_T *mesh, int fan, int x, int y, FANDATA_T *n
        return 0;
     }
 
-
     /* Fill in the vertex values from type definition */
     vertex = mesh -> vrtstart[fan];
     for (cnt = 0; cnt < new_ft -> numvertices; cnt++) {
@@ -284,33 +285,37 @@ static int editmainDoFanUpdate(MESH_T *mesh, int fan, int x, int y, FANDATA_T *n
  *     editmainFanTypeRotate
  * Description:
  *     For 'simple' mode. Rotates the given fan type
- *     Adjusts the adjacent tiles accordingly, using the 'default' fan set. 
+ *     Adjusts the adjacent tiles accordingly, using the 'default' fan set.
  * Input:
- *     type_no:        This type
- *     dir:            To which direction
- *     fan_type_rot *: Pointer on where to return the data of the rotated fan
+ *     src *:  Fan type to rotate
+ *     dest *: Rotated result
+ *     dir:    Into which direction to rotate
  */
-static void editmainFanTypeRotate(int type_no, int dir, COMMAND_T *fan_type_rot)
+static void editmainFanTypeRotate(COMMAND_T *src, COMMAND_T *dest, char dir)
 {
-    
+
+    int rottable[8] = {  0, 1, 1, 0, 0, -1, -1, 0, };
+
     int cnt;
-    float rotval;
-    
-    
+
+
     /* Get copy of chosen type */
-    memcpy(fan_type_rot, &pCommands[type_no], sizeof(COMMAND_T));
+    memcpy(dest, src, sizeof(COMMAND_T));
+
     if (dir != EDITMAIN_NORTH) {
-    
-        rotval = DEG2RAD(90.0 * dir);
-        for (cnt = 0; fan_type_rot -> numvertices; cnt++) {
-        
+
+        for (cnt = 0; dest -> numvertices; cnt++) {
+
             /* First translate to have rotation center in middle of fan square */
-            fan_type_rot -> vtx[cnt].x -= 64.0;
-            fan_type_rot -> vtx[cnt].y -= 64.0;
+            dest -> vtx[cnt].x -= 64.0;
+            dest -> vtx[cnt].y -= 64.0;
             /* And now rotate it */
-            fan_type_rot -> vtx[cnt].x *= sin(DEG2RAD(rotval));
-            fan_type_rot -> vtx[cnt].y *= cos(DEG2RAD(rotval));
-        
+            dest -> vtx[cnt].x *= rottable[dir * 2];
+            dest -> vtx[cnt].y *= rottable[(dir * 2) + 1];
+            /* And move it back to start position */
+            dest -> vtx[cnt].x += 64.0;
+            dest -> vtx[cnt].y += 64.0;
+
         }
     
     }      
@@ -327,18 +332,20 @@ static void editmainFanTypeRotate(int type_no, int dir, COMMAND_T *fan_type_rot)
  * Input:
  *     mesh *:   Pointer on mesh to handle 
  *     fan_no:   Where to place the tile on map
- *     x, y:     Position on map    
- *     is_floor: Is it a floor yes/no 
+ *     x, y:     Position on map
+ *     is_floor: Is it a floor yes/no
  * Output:
- *     Success yes/no  
+ *     Success yes/no
  */
 static int editmainSetFanSimple(MESH_T *mesh, int fan_no, int x, int y, char is_floor)
 {
 
+    static int adj_xy[] = { +0, -128, +128, -128, +128, +0, +128, +128,
+                            +0, +128, -128, +128, -128 + 0, -128, -128 };
     COMMAND_T fan_type_rot;
-    COMMAND_T *ft_adj;
+    char t1, t2, t3, rotdir;
     int adjacent[8];
-    int num_adj, dir;
+    int num_adj, dir, dir2, adjfan_no;
 
 
     num_adj = editmainGetAdjacent(&Mesh, fan_no, adjacent);
@@ -349,16 +356,93 @@ static int editmainSetFanSimple(MESH_T *mesh, int fan_no, int x, int y, char is_
 
 
     if (is_floor) {
-        /* Build and adjust walls surrounding this fan, if needed. Uses FX */
-        for (dir = 0; dir < 8; dir++) {
-            /* Adjust any adjacent tile */
-            ft_adj = &pCommands[mesh -> fan[fan_no].type];
+        if (mesh -> fan[fan_no].type == EDITMAIN_PRESET_FLOOR) {
+            /* No change at all */
+            return 1;
+            
+        }
+        /* Change me to floor */
+        editmainDoFanUpdate(mesh, fan_no, x, y,
+                            &PresetTiles[EDITMAIN_PRESET_FLOOR],
+                            &pCommands[EDITMAIN_PRESET_TFLOOR]);
+
+        for (dir = 0; dir < 8; dir += 2) {
+            dir2 = ((dir + 2) & 0x07);
+            rotdir = ((dir >> 1)^0x03);
+            
+            t1 = mesh -> fan[adjacent[dir]].type;
+            t2 = mesh -> fan[adjacent[(dir + 2) & 0x07]].type;
+
+            if (t1 == EDITMAIN_PRESET_TTOP) {
+                editmainFanTypeRotate(&pCommands[EDITMAIN_PRESET_TTOP], &fan_type_rot, rotdir);
+                editmainDoFanUpdate(mesh, adjacent[dir],
+                                    x + adj_xy[(dir * 2)], 
+                                    y + adj_xy[(dir * 2) + 1],
+                                    &PresetTiles[EDITMAIN_PRESET_TOP],
+                                    &fan_type_rot);
+            }
+            if (t2 == EDITMAIN_PRESET_TTOP) {
+                editmainFanTypeRotate(&pCommands[EDITMAIN_PRESET_TWALL], &fan_type_rot, rotdir);
+                editmainDoFanUpdate(mesh, adjacent[(dir + 2) & 0x07], 
+                                    x + adj_xy[(((dir + 2) & 0x07) * 2)], 
+                                    y + adj_xy[(((dir + 2) & 0x07) * 2) + 1],
+                                    &PresetTiles[EDITMAIN_PRESET_WALL],
+                                    &fan_type_rot);
+            }
+            if (t1 == EDITMAIN_PRESET_TTOP && t2 == EDITMAIN_PRESET_TTOP) {
+                editmainFanTypeRotate(&pCommands[EDITMAIN_PRESET_TEDGEI], &fan_type_rot, rotdir);
+                editmainDoFanUpdate(mesh, adjacent[dir + 1], 
+                                    x + adj_xy[((dir + 1) * 2)], 
+                                    y + adj_xy[((dir + 1) * 2) + 1],
+                                    &PresetTiles[EDITMAIN_PRESET_EDGEI],
+                                    &fan_type_rot);
+            }
         }
     }
     else {
-        for (dir = 0; dir < 8; dir++) {
-            /* Adjust walls surrounding this fan, if needed. Uses FX-Flag */
-            ft_adj = &pCommands[mesh -> fan[fan_no].type];
+         if (mesh -> fan[fan_no].type == EDITMAIN_PRESET_TTOP) {
+            /* No change at all */
+            return 1;
+            
+        }
+        /* Change me to solid */
+        /* My shape depens on the surrounding tiles */
+        /*
+        editmainDoFanUpdate(mesh, fan_no, x, y, &PresetTiles[EDITMAIN_PRESET_TOP]);
+        */
+
+        for (dir = 0; dir < 8; dir += 2) {
+            /* TODO: Adjust walls surrounding this fan, if needed */
+            dir2 = ((dir + 2) & 0x07);
+            rotdir = (dir >> 1)^0x03;
+            
+            t1 = mesh -> fan[adjacent[dir]].type;
+            t2 = mesh -> fan[adjacent[dir + 1]].type;
+            t3 = mesh -> fan[adjacent[dir2]].type;          
+
+            if (t1 == EDITMAIN_PRESET_TFLOOR) {
+                if (t3 == EDITMAIN_PRESET_TFLOOR) {
+                    /*
+                    editmainFanTypeRotate(&PresetTiles[EDITMAIN_PRESET_EDGEO], &fan_type_rot, rotdir);
+                    editmainDoFanUpdate(mesh, fan_no, x, y, &fan_type_rot);
+                    */
+                }
+                else if (t3 == EDITMAIN_PRESET_TWALL) {
+                    /* TODO: Adjust walls in direction */
+                }
+            }
+            if (t3 == EDITMAIN_PRESET_TFLOOR) {
+                /* TODO: Rotate wall to correct direction */
+                /*
+                editmainDoFanUpdate(mesh, fan_no, x, y, &PresetTiles[EDITMAIN_PRESET_WALL]);
+                */
+            }
+            if (t1 == EDITMAIN_PRESET_TFLOOR && t3 == EDITMAIN_PRESET_TFLOOR) {
+                /* TODO: Rotate wall to correct direction */
+                /*
+                editmainDoFanUpdate(mesh, fan_no, x, y, &PresetTiles[EDITMAIN_PRESET_EDGEO]);
+                */
+            }
         }
 
     }
@@ -875,7 +959,7 @@ void editmain2DTex(int x, int y, int w, int h, FANDATA_T *ft)
 {
 
     if (EditState.fan_chosen >= 0) {
-    
+
         editdraw2DTex(x, y, w, h, ft -> tx_no, ft -> type & COMMAND_TEXTUREHI_FLAG);
         
     }
@@ -914,13 +998,15 @@ int editmainFanSet(char edit_state, FANDATA_T *new_fan, char is_floor)
         }
         else if (edit_state == EDITMAIN_EDIT_FULL) {
             /* Do 'simple' editing */
+            /*
             return editmainDoFanUpdate(&Mesh,
                                        EditState.fan_chosen,
                                        EditState.tile_x,
                                        EditState.tile_y,
                                        new_fan);
+            */
         }
     }
-    
+
     return 0;
 }
