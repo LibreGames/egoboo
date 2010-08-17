@@ -54,12 +54,6 @@
 #define EDITMAIN_PRESET_EDGEI   4
 #define EDITMAIN_PRESET_MAX     5
 
-#define EDITMAIN_PRESET_TFLOOR  0
-#define EDITMAIN_PRESET_TTOP    1
-#define EDITMAIN_PRESET_TWALL   8
-#define EDITMAIN_PRESET_TEDGEO 16
-#define EDITMAIN_PRESET_TEDGEI 19
-
 #define EDITMAIN_NORTH  0x00
 #define EDITMAIN_EAST   0x01
 #define EDITMAIN_SOUTH  0x02
@@ -74,6 +68,13 @@ typedef struct {
     int x, y;
 
 } EDITMAIN_XY;
+
+typedef struct {
+
+     char my_shape;         /* To set, if needed for 'around other type of shape'  */
+     char adj_shapes[3];    /* Shapes to set adjacent from left to right    */
+
+} EDITMAIN_AUTO_LUT;        /* Lookup-Table for auto-placement of walls     *&
 
 /*******************************************************************************
 * DATA							                                               *
@@ -94,6 +95,28 @@ static FANDATA_T PresetTiles[] = {
     {  64 + 1,  0, (MPDFX_WALL | MPDFX_IMPASS), 16 },   /* Outer edge north/east */
     {  64 + 3,  0, (MPDFX_WALL | MPDFX_IMPASS), 19 },   /* Inner edge north/west */
     { 0 }
+};
+
+static EDITMAIN_AUTO_LUT LutFloor[] = {
+    { EDITMAIN_PRESET_FLOOR, { -1, -1, -1 } },          /* Set a floor at 'my_shape'    */
+    { EDITMAIN_PRESET_FLOOR, { -1, -1, EDITMAIN_PRESET_EDGEO   } },
+    { EDITMAIN_PRESET_FLOOR, { -1, EDITMAIN_PRESET_EDGEO, -1  } },
+    { EDITMAIN_PRESET_FLOOR, { -1, EDITMAIN_PRESET_WALL, EDITMAIN_PRESET_WALL   } },
+	{ EDITMAIN_PRESET_FLOOR, { EDITMAIN_PRESET_EDGEO, -1, -1  } },
+    { EDITMAIN_PRESET_FLOOR, { EDITMAIN_PRESET_EDGEO, -1, EDITMAIN_PRESET_EDGEO } },
+    { EDITMAIN_PRESET_FLOOR, { EDITMAIN_PRESET_WALL, EDITMAIN_PRESET_WALL, -1   } },
+    { EDITMAIN_PRESET_FLOOR, { EDITMAIN_PRESET_WALL, EDITMAIN_PRESET_EDGEI, EDITMAIN_PRESET_WALL } }
+};
+
+static EDITMAIN_AUTO_LUT LutWall[] = {
+    { EDITMAIN_PRESET_EDGEO, { -1, -1, -1 } },
+    { EDITMAIN_PRESET_WALL,  { EDITMAIN_PRESET_WALL, -1, -1  } },
+    { EDITMAIN_PRESET_EDGEO, { -1, EDITMAIN_PRESET_EDGEO, -1 } },
+    { EDITMAIN_PRESET_WALL,  { EDITMAIN_PRESET_EDGEI, EDITMAIN_PRESET_WALL, -1 } },
+    { EDITMAIN_PRESET_WALL,  { -1, -1, -1 } }, 
+    { EDITMAIN_PRESET_EDGEI, { EDITMAIN_PRESET_WALL, -1, EDITMAIN_PRESET_WALL  } },
+    { EDITMAIN_PRESET_WALL,  { EDITMAIN_PRESET_EDGEI, EDITMAIN_PRESET_WALL, -1 } }, 
+    { EDITMAIN_PRESET_TOP,   { -1, -1, -1 } }
 };
 
 /* ------ Data for checking of adjacent tiles -------- */
@@ -214,16 +237,12 @@ static int editmainFanAdd(MESH_T *mesh, int fan, int x, int y, int zadd)
  *     info in 'new_ft'.
  *     If the type has changed, the vertice data is updated.
  * Input:
- *     mesh *:    Pointer on mesh to handle
- *     fan:       Number of fan to allocate vertices for
- *     x, y:      Position of fan
- *     new_fan *: Pointer on description of new fan data
- *     new_ft *:  Pointer on dat to create new fan off
+ *     mesh *:       Pointer on mesh to handle
+ *     edit_state *: Pointer on edit state, holding all data neede for work
  * Output:
  *    Fan could be updated, yes/no
  */
-static int editmainDoFanUpdate(MESH_T *mesh, int fan, int x, int y, FANDATA_T *new_fan,
-                               COMMAND_T *new_ft)
+static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_STATE_T *edit_state)
 {
 
     COMMAND_T *act_ft;
@@ -232,27 +251,26 @@ static int editmainDoFanUpdate(MESH_T *mesh, int fan, int x, int y, FANDATA_T *n
     int vrt_diff, vertex;
 
 
-    act_fan = &mesh -> fan[fan];
-
+    act_fan = &mesh -> fan[edit_state -> fan_chosen];
     act_ft  = &pCommands[act_fan -> type];
 
     /* Do an update on the 'static' data of the fan */
-    act_fan -> tx_no    = new_fan -> tx_no;
-    act_fan -> tx_flags = new_fan -> tx_flags;
-    act_fan -> fx       = new_fan -> fx;
+    act_fan -> tx_no    = edit_state -> new_ft.tx_no;
+    act_fan -> tx_flags = edit_state -> new_ft.tx_flags;
+    act_fan -> fx       = edit_state -> new_ft.fx;
 
-    if (act_fan -> type == new_fan -> type) {
+    if (act_fan -> type == edit_state -> new_ft.type) {
 
         return 1;       /* No vertices to change */
 
     }
 
-    vrt_diff = new_ft -> numvertices - act_ft -> numvertices;
+    vrt_diff = edit_state -> new_fd.numvertices - act_ft -> numvertices;
 
     if (0 == vrt_diff) {
         /* Same number of vertices, only overwrite is needed */
         /* Set the new type of fan */
-        act_fan -> type = new_fan -> type;
+        act_fan -> type = edit_state -> new_ft.type;
 
     }
     else {
@@ -267,12 +285,12 @@ static int editmainDoFanUpdate(MESH_T *mesh, int fan, int x, int y, FANDATA_T *n
     }
 
     /* Fill in the vertex values from type definition */
-    vertex = mesh -> vrtstart[fan];
-    for (cnt = 0; cnt < new_ft -> numvertices; cnt++) {
+    vertex = mesh -> vrtstart[edit_state -> fan_chosen];
+    for (cnt = 0; cnt < edit_state -> new_fd.numvertices; cnt++) {
         /* Replace actual values by new values */
-        mesh -> vrtx[vertex] = x + new_ft -> vtx[cnt].x;
-        mesh -> vrty[vertex] = y + new_ft -> vtx[cnt].y;
-        mesh -> vrtz[vertex] = new_ft -> vtx[cnt].z;
+        mesh -> vrtx[vertex] = edit_state -> tile_x + edit_state -> new_fd.vtx[cnt].x;
+        mesh -> vrty[vertex] = edit_state -> tile_y + edit_state -> new_fd.vtx[cnt].y;
+        mesh -> vrtz[vertex] = edit_state -> new_fd.vtx[cnt].z;
         vertex++;
     }
 
@@ -330,123 +348,144 @@ static void editmainFanTypeRotate(COMMAND_T *src, COMMAND_T *dest, char dir)
  *     For 'simple' mode. Sets a tile, if possible .
  *     Adjusts the adjacent tiles accordingly, using the 'default' fan set. 
  * Input:
- *     mesh *:   Pointer on mesh to handle 
- *     fan_no:   Where to place the tile on map
- *     x, y:     Position on map
- *     is_floor: Is it a floor yes/no
+ *     mesh *:       Pointer on mesh to handle 
+ *     edit_state *: Pointer on Edit-state holding all info needed
+ *     is_floor:     Is it a floor yes/no
  * Output:
  *     Success yes/no
  */
-static int editmainSetFanSimple(MESH_T *mesh, int fan_no, int x, int y, char is_floor)
+static int editmainSetFanSimple(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int is_floor)
 {
 
     static int adj_xy[] = { +0, -128, +128, -128, +128, +0, +128, +128,
                             +0, +128, -128, +128, -128 + 0, -128, -128 };
-    COMMAND_T fan_type_rot;
-    char t1, t2, t3, rotdir;
-    int adjacent[8];
-    int num_adj, dir, dir2, adjfan_no;
+               
+    int adjacent[8];            
+    char shape_no, rotdir;
+    int lut_idx;
+    int dir, i;
+    int base_x, base_y;
+    int check_flags, flags;
 
 
-    num_adj = editmainGetAdjacent(&Mesh, fan_no, adjacent);
-    if (num_adj < 8) {
-        /* There moust be at least one tile left to edge of map */
-        return 0;
-    }
-
+    editmainGetAdjacent(mesh, edit_state -> fan_chosen, adjacent);
+    /* Fill in the flags for the look-up-table */
+    check_flags = 0;
+    for (dir = 0, flags = 0x01; dir < 8; dir++, flags <<= 0x01) {
+        if (-1 == adjacent[dir]) {
+            check_flags |= flags;
+        }
+        else if (mesh -> fan[adjacent[dir]].type == PresetTiles[EDITMAIN_PRESET_FLOOR].type) {
+            check_flags |= flags;
+        }      
+    }   
+    
+    check_flags |= (check_flags << 8);      /* Dupe it for end of radius */ 
+    base_x = edit_state -> tile_x;
+    base_y = edit_state -> tile_y;
 
     if (is_floor) {
-        if (mesh -> fan[fan_no].type == EDITMAIN_PRESET_FLOOR) {
+        
+        if (mesh -> fan[edit_state -> fan_chosen].type == PresetTiles[EDITMAIN_PRESET_FLOOR].type) {
             /* No change at all */
             return 1;
             
         }
-        /* Change me to floor */
-        editmainDoFanUpdate(mesh, fan_no, x, y,
-                            &PresetTiles[EDITMAIN_PRESET_FLOOR],
-                            &pCommands[EDITMAIN_PRESET_TFLOOR]);
-
-        for (dir = 0; dir < 8; dir += 2) {
-            dir2 = ((dir + 2) & 0x07);
-            rotdir = ((dir >> 1)^0x03);
+        
+        /* Change me to floor */ /*  tx_no, tx_flags, fx, type */
+        /* Set the fan-description  */
+        edit_state -> new_ft.type     = PresetTiles[EDITMAIN_PRESET_FLOOR].type;
+        edit_state -> new_ft.fx       = PresetTiles[EDITMAIN_PRESET_FLOOR].fx; 
+        edit_state -> new_ft.tx_flags = PresetTiles[EDITMAIN_PRESET_FLOOR].tx_flags; 
+        edit_state -> new_ft.tx_no    = PresetTiles[EDITMAIN_PRESET_FLOOR].tx_no;      
+        /* Edit-State needs a copy, because it can be rotated by the user */
+        memcpy(&edit_state -> new_fd, &pCommands[edit_state -> new_ft.type], sizeof(COMMAND_T));
+        
+        editmainDoFanUpdate(mesh, edit_state);
+        
+        for (dir = 0; dir < 8; dir += 2, check_flags >>= 2) {                      
             
-            t1 = mesh -> fan[adjacent[dir]].type;
-            t2 = mesh -> fan[adjacent[(dir + 2) & 0x07]].type;
-
-            if (t1 == EDITMAIN_PRESET_TTOP) {
-                editmainFanTypeRotate(&pCommands[EDITMAIN_PRESET_TTOP], &fan_type_rot, rotdir);
-                editmainDoFanUpdate(mesh, adjacent[dir],
-                                    x + adj_xy[(dir * 2)], 
-                                    y + adj_xy[(dir * 2) + 1],
-                                    &PresetTiles[EDITMAIN_PRESET_TOP],
-                                    &fan_type_rot);
-            }
-            if (t2 == EDITMAIN_PRESET_TTOP) {
-                editmainFanTypeRotate(&pCommands[EDITMAIN_PRESET_TWALL], &fan_type_rot, rotdir);
-                editmainDoFanUpdate(mesh, adjacent[(dir + 2) & 0x07], 
-                                    x + adj_xy[(((dir + 2) & 0x07) * 2)], 
-                                    y + adj_xy[(((dir + 2) & 0x07) * 2) + 1],
-                                    &PresetTiles[EDITMAIN_PRESET_WALL],
-                                    &fan_type_rot);
-            }
-            if (t1 == EDITMAIN_PRESET_TTOP && t2 == EDITMAIN_PRESET_TTOP) {
-                editmainFanTypeRotate(&pCommands[EDITMAIN_PRESET_TEDGEI], &fan_type_rot, rotdir);
-                editmainDoFanUpdate(mesh, adjacent[dir + 1], 
-                                    x + adj_xy[((dir + 1) * 2)], 
-                                    y + adj_xy[((dir + 1) * 2) + 1],
-                                    &PresetTiles[EDITMAIN_PRESET_EDGEI],
-                                    &fan_type_rot);
-            }
+            lut_idx = check_flags & 0x03;    
+            rotdir = (char)((dir >> 1)^0x02);
+            
+            for (i = 0; i < 3; i++) {
+                /* Set all adjacent fields according to lookup-table */
+                edit_state -> new_fan_no = adjacent[dir + i];
+                if (edit_state -> new_fan_no >= 0) {
+                
+                    shape_no = LutFloor[lut_idx].adj_shapes[i];
+                    
+                    if (shape_no >= 0) {
+                        edit_state -> new_ft.type     = PresetTiles[shape_no].type;
+                        edit_state -> new_ft.fx       = PresetTiles[shape_no].fx; 
+                        edit_state -> new_ft.tx_flags = PresetTiles[shape_no].tx_flags; 
+                        edit_state -> new_ft.tx_no    = PresetTiles[shape_no].tx_no; 
+                        /* TODO: Rotate and the set the shape */
+                        /*  
+                            editmainFanTypeRotate(&pCommands[edit_state -> new_ft.type], 
+                                                  &edit_state -> new_fd, 
+                                                  rotdir);        
+                            editmainDoFanUpdate(mesh, edit_state);
+                        */
+                    }                
+                }           
+            }            
         }
+        
     }
     else {
-         if (mesh -> fan[fan_no].type == EDITMAIN_PRESET_TTOP) {
+
+        if (mesh -> fan[edit_state -> fan_chosen].type != PresetTiles[EDITMAIN_PRESET_FLOOR].type) {
             /* No change at all */
             return 1;
             
         }
-        /* Change me to solid */
-        /* My shape depens on the surrounding tiles */
-        /*
-        editmainDoFanUpdate(mesh, fan_no, x, y, &PresetTiles[EDITMAIN_PRESET_TOP]);
-        */
-
-        for (dir = 0; dir < 8; dir += 2) {
-            /* TODO: Adjust walls surrounding this fan, if needed */
-            dir2 = ((dir + 2) & 0x07);
-            rotdir = (dir >> 1)^0x03;
+        
+        for (dir = 0; dir < 8; dir += 2, check_flags >>= 2) { 
             
-            t1 = mesh -> fan[adjacent[dir]].type;
-            t2 = mesh -> fan[adjacent[dir + 1]].type;
-            t3 = mesh -> fan[adjacent[dir2]].type;          
-
-            if (t1 == EDITMAIN_PRESET_TFLOOR) {
-                if (t3 == EDITMAIN_PRESET_TFLOOR) {
-                    /*
-                    editmainFanTypeRotate(&PresetTiles[EDITMAIN_PRESET_EDGEO], &fan_type_rot, rotdir);
-                    editmainDoFanUpdate(mesh, fan_no, x, y, &fan_type_rot);
-                    */
-                }
-                else if (t3 == EDITMAIN_PRESET_TWALL) {
-                    /* TODO: Adjust walls in direction */
-                }
-            }
-            if (t3 == EDITMAIN_PRESET_TFLOOR) {
-                /* TODO: Rotate wall to correct direction */
-                /*
-                editmainDoFanUpdate(mesh, fan_no, x, y, &PresetTiles[EDITMAIN_PRESET_WALL]);
-                */
-            }
-            if (t1 == EDITMAIN_PRESET_TFLOOR && t3 == EDITMAIN_PRESET_TFLOOR) {
-                /* TODO: Rotate wall to correct direction */
-                /*
-                editmainDoFanUpdate(mesh, fan_no, x, y, &PresetTiles[EDITMAIN_PRESET_EDGEO]);
-                */
-            }
+            lut_idx = check_flags & 0x03;    
+            rotdir = (char)((dir >> 1)^0x02);
+            
+            /* Set the type for myself */
+            shape_no = LutWall[lut_idx].my_shape;
+            
+            edit_state -> new_ft.type     = PresetTiles[shape_no].type;  
+            edit_state -> new_ft.fx       = PresetTiles[shape_no].fx; 
+            edit_state -> new_ft.tx_flags = PresetTiles[shape_no].tx_flags; 
+            edit_state -> new_ft.tx_no    = PresetTiles[shape_no].tx_no;
+            /* TODO: Rotate and the set the shape */
+            /*  
+                editmainFanTypeRotate(&pCommands[edit_state -> new_ft.type], 
+                                      &edit_state -> new_fd, 
+                                      rotdir);        
+            */
+            
+            for (i = 0; i < 3; i++) {
+                /* Set all adjacent fields according to lookup-table */
+                edit_state -> new_fan_no = adjacent[dir + i];
+                if (edit_state -> new_fan_no >= 0) {
+                    
+                    shape_no = LutWall[lut_idx].adj_shapes[i];
+                    if (shape_no >= 0) {
+                        edit_state -> new_ft.type     = PresetTiles[shape_no].type;  
+                        edit_state -> new_ft.fx       = PresetTiles[shape_no].fx; 
+                        edit_state -> new_ft.tx_flags = PresetTiles[shape_no].tx_flags; 
+                        edit_state -> new_ft.tx_no    = PresetTiles[shape_no].tx_no;  
+                        /* TODO: Rotate and the set the shape */
+                        /*  
+                            editmainFanTypeRotate(&pCommands[edit_state -> new_ft.type], 
+                                                  &edit_state -> new_fd, 
+                                                  rotdir); 
+                            editmainDoFanUpdate(mesh, edit_state);                                    
+                        */
+                    }                
+                }           
+            }   
+            
         }
-
+        
     }
-
+    
     return 0;
 
 }
@@ -685,7 +724,7 @@ EDITMAIN_STATE_T *editmainInit(void)
 
     EditState.display_flags |= EDITMAIN_SHOW2DMAP;
     EditState.fan_chosen    = -1;   /* No fan chosen                        */
-    EditState.new_fan.type  = -1;   /* No fan-type chosen                   */    
+    EditState.new_ft.type   = -1;   /* No fan-type chosen                   */    
     EditState.brush_size    = 3;    /* Size of raise/lower terrain brush    */
     EditState.brush_amount  = 50;   /* Amount of raise/lower                */
 
@@ -717,7 +756,7 @@ void editmainExit(void)
  * Description:
  *      Does the work for editing and sets edit states, if needed 
  * Input:
- *      command: What to do
+ *      command:  What to do
  * Output:
  *      Result of given command
  */
@@ -727,7 +766,7 @@ int editmainMap(int command)
     switch(command) {
 
         case EDITMAIN_DRAWMAP:
-            editdraw3DView(&Mesh, EditState.fan_chosen, EditState.new_fan.type);
+            editdraw3DView(&Mesh, EditState.fan_chosen, EditState.new_ft.type);
             return 1;
 
         case EDITMAIN_NEWFLATMAP:
@@ -753,7 +792,7 @@ int editmainMap(int command)
 
         case EDITMAIN_SAVEMAP:
             editmainCalcVrta(&Mesh);
-            return editfileSaveMapMesh(&Mesh, EditState.msg);
+            return editfileSaveMapMesh(&Mesh, EditState.msg);         
 
     }
 
@@ -827,10 +866,10 @@ void editmainToggleFlag(int which, unsigned char flag)
                 /* Toggle it in chosen fan */
                 Mesh.fan[EditState.fan_chosen].fx ^= flag;
                 /* Now copy the actual state for display    */
-                EditState.act_fan.fx = Mesh.fan[EditState.fan_chosen].fx;
+                EditState.act_ft.fx = Mesh.fan[EditState.fan_chosen].fx;
             }
             else {
-                EditState.act_fan.fx = 0;
+                EditState.act_ft.fx = 0;
             }
             break;
 
@@ -838,7 +877,7 @@ void editmainToggleFlag(int which, unsigned char flag)
             if (EditState.fan_chosen >= 0) {
                 Mesh.fan[EditState.fan_chosen].tx_flags ^= flag;
                 /* And copy it for display */
-                EditState.act_fan.tx_flags = Mesh.fan[EditState.fan_chosen].tx_flags;
+                EditState.act_ft.tx_flags = Mesh.fan[EditState.fan_chosen].tx_flags;
             }
             break;
 
@@ -872,7 +911,7 @@ void editmainChooseFan(int cx, int cy, int w, int h)
     
         EditState.fan_chosen = fan_no;
         /* And fill it into 'EditState' for display */
-        memcpy(&EditState.act_fan, &Mesh.fan[fan_no], sizeof(FANDATA_T));
+        memcpy(&EditState.act_ft, &Mesh.fan[fan_no], sizeof(FANDATA_T));
             
     }
  
@@ -920,27 +959,27 @@ void editmainChooseFanType(int dir, char *fan_name)
 
     if (dir == -2) {
         /* Reset browsing */
-        EditState.new_fan.type = -1;
+        EditState.new_ft.type = -1;
         fan_name[0] = 0;
         return;
     }
     else if (dir == 0) {
         /* Start browsing */
-        EditState.new_fan.type = 0;
+        EditState.new_ft.type = 0;
     }
     else if (dir == -1) {
-        if (EditState.new_fan.type > 0) {
-            EditState.new_fan.type--;
+        if (EditState.new_ft.type > 0) {
+            EditState.new_ft.type--;
         }
     }
     else {
-        if (EditState.new_fan.type < 30) {
-            EditState.new_fan.type++;
+        if (EditState.new_ft.type < 30) {
+            EditState.new_ft.type++;
         }
     }
 
-    editdrawChooseFanType(EditState.new_fan.type, EditState.tile_x, EditState.tile_y);
-    sprintf(fan_name, "%s", editmainFanTypeName(EditState.new_fan.type));
+    editdrawChooseFanType(EditState.new_ft.type, EditState.tile_x, EditState.tile_y);
+    sprintf(fan_name, "%s", editmainFanTypeName(EditState.new_ft.type));
 
 }
 
@@ -989,21 +1028,13 @@ int editmainFanSet(char edit_state, FANDATA_T *new_fan, char is_floor)
         }
         else if (edit_state == EDITMAIN_EDIT_SIMPLE) {
  
-            return editmainSetFanSimple(&Mesh, 
-                                        EditState.fan_chosen,
-                                        EditState.tile_x,
-                                        EditState.tile_y,                
-                                        is_floor);
-
+            return editmainSetFanSimple(&Mesh, &EditState, is_floor);          
+                                        
         }
         else if (edit_state == EDITMAIN_EDIT_FULL) {
             /* Do 'simple' editing */
             /*
-            return editmainDoFanUpdate(&Mesh,
-                                       EditState.fan_chosen,
-                                       EditState.tile_x,
-                                       EditState.tile_y,
-                                       new_fan);
+            return editmainDoFanUpdate(&Mesh, &EditState);
             */
         }
     }

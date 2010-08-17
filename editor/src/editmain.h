@@ -29,6 +29,8 @@
 * INCLUDES								                                       *
 *******************************************************************************/
 
+#include "editor.h"             /* Definition FANDATA_T and COMMAND_T   */
+
 /*******************************************************************************
 * DEFINES								                                       *
 *******************************************************************************/
@@ -38,6 +40,7 @@
 #define EDITMAIN_NEWSOLIDMAP 2
 #define EDITMAIN_LOADMAP     3
 #define EDITMAIN_SAVEMAP     4
+#define EDITMAIN_DRAW3DMODE  5      /* Set the draw mode for the 3D-Window */
 
 /* ---------- Edit-Flags -------- */
 #define EDITMAIN_SHOW2DMAP 0x01         /* Display the 2DMap        */
@@ -67,8 +70,11 @@ typedef struct {
     char draw_mode;         /* For copy into mesh - struct      */
     char brush_size;        /* From 'cartman'  0-3, (slider)    */    
     char brush_amount;      /* From 'cartman' -50,  50 (slider) */    
-    FANDATA_T act_fan;      /* Data of actual fan chosen        */
-    FANDATA_T new_fan;      /* Data of fan to place on map      */
+    FANDATA_T act_ft;       /* Actual fan type chosen           */
+    int  new_fan_no;        /* Numberof new fan                 */
+    FANDATA_T new_ft;       /* New fan type to place on map     */
+                            /* tx_flags: dir' of fan-type       */ 
+    COMMAND_T new_fd;       /* Extent data for new fan          */
     char msg[256];          /* Possible message from editor     */
 
 } EDITMAIN_STATE_T;

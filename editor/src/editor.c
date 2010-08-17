@@ -105,12 +105,12 @@ static EDITMAIN_STATE_T *pEditState;
 static char StatusBar[80];
 static char Map2DState;         /* EDITOR_2DMAP_ */
 static char EditorEditType;     /* Type of edit: 'No Edit', 'Simple Edit', 'Full Edit' */
+static char EditTypeStr[20];    /* Actual string    */
 static char *EditTypeNames[] = {
     "No Edit",
     "Simple Edit",
     "Full Edit"
-};
-
+};         
 
 static SDLGL_CMDKEY EditorCmd[] = {
 
@@ -326,7 +326,7 @@ static void editor2DMap(SDLGL_EVENT *event)
                         /* Replace type of chosen fan by new type of fan    */
                         /* or set a wall in 'simple' mode                   */
                         editmainFanSet(EditorEditType,
-                                       &pEditState -> new_fan,
+                                       &pEditState -> new_ft,
                                        0);
                     }
                     else if (event -> modflags == SDL_BUTTON_RIGHT){
@@ -355,7 +355,7 @@ static void editor2DMap(SDLGL_EVENT *event)
                 }
                 else {
                     editmainChooseFanType(-2, StatusBar);   /* Switched off */
-                    pEditState -> new_fan.type = -1;
+                    pEditState -> new_ft.type = -1;
                 }
             }            
             break;
@@ -428,7 +428,7 @@ static void editorState(char which)
             if (EditorEditType > 2) {
                 EditorEditType = 0;     /* Set the state            */
             }
-            SubMenu[12].pdata = EditTypeNames[EditorEditType];
+            sprintf(EditTypeStr, "%s", EditTypeNames[EditorEditType]);
             sprintf(StatusBar, "%s", EditTypeNames[EditorEditType]);
             break;
     }        
@@ -455,10 +455,10 @@ static void editorDrawFanInfo(void)
 
         /* Set the display of state flags */
         for (i = 3; i < 11; i++) {
-            editorSetToggleChar((char)(pEditState -> act_fan.fx & FanInfoDlg[i].sub_code),
+            editorSetToggleChar((char)(pEditState -> act_ft.fx & FanInfoDlg[i].sub_code),
                                 FanInfoDlg[i].pdata);
         }
-        /* Draw info about chosen fan: EditState.act_fan */
+        /* Draw info about chosen fan: EditState.act_ft */
         fields = &FanInfoDlg[0];
         /* Draw background */
         sdlglstrDrawButton(&fields -> rect, 0, 0);
@@ -469,7 +469,7 @@ static void editorDrawFanInfo(void)
         fields++;
         /* Draw fan type name */
         sdlglSetColor(SDLGL_COL_GREEN);
-        sdlglstrString(&fields -> rect, editmainFanTypeName(pEditState -> act_fan.type));
+        sdlglstrString(&fields -> rect, editmainFanTypeName(pEditState -> act_ft.type));
         fields++;
         /* Draw all strings */
         sdlglstrSetColorNo(SDLGLSTR_COL_WHITE);
@@ -482,14 +482,14 @@ static void editorDrawFanInfo(void)
         
         /* Draw the actual chosen texture */
         editmain2DTex(fields -> rect.x, fields -> rect.y,
-                      fields -> rect.w, fields -> rect.h, &pEditState -> act_fan);
+                      fields -> rect.w, fields -> rect.h, &pEditState -> act_ft);
         /* Display number of textures */
         fields--;
         InfoPos.x = fields -> rect.x;
         InfoPos.y = fields -> rect.y + 16;    
         sdlglstrStringF(&InfoPos, "Texture: %d Subpart: %d", 
-                        (int)((pEditState -> act_fan.tx_no >> 6) & 3),
-                        (int)(pEditState -> act_fan.tx_no & 0x3F));
+                        (int)((pEditState -> act_ft.tx_no >> 6) & 3),
+                        (int)(pEditState -> act_ft.tx_no & 0x3F));
 
     }
 
@@ -703,7 +703,8 @@ static void editorStart(void)
                             SDLGL_FRECT_SCRWIDTH);
     /* Edit-Menu */
     EditorEditType = 0;     /* Set the state            */
-    SubMenu[12].pdata = EditTypeNames[EditorEditType];
+    sprintf(EditTypeStr, "%s", EditTypeNames[EditorEditType]);
+    SubMenu[12].pdata = EditTypeStr;
     
     /* -------- Now create the output screen ---------- */
     sdlglInputNew(editorDrawFunc,

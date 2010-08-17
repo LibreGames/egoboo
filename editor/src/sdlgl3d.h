@@ -221,11 +221,6 @@
 #define SDLGL3D_MOVE_ROTY      0x07
 #define SDLGL3D_MOVE_ROTZ      0x08
 
-/* ----- Results of collision detection in movement ----- */
-#define SDLGL3D_EVENT_TILECHANGED   2
-#define SDLGL3D_EVENT_MOVED         1
-#define SDLGL3D_EVENT_NONE          0
-
 /* ----- Camera behaviour ----- */
 #define SDLGL3D_CAMERA_ZOOM 0x10
 #define SDLGL3D_CAMERA_DIST 0x11
@@ -238,10 +233,6 @@
 #define SDLGL3D_CAMERATYPE_FIRSTPERSON  0x01
 #define SDLGL3D_CAMERATYPE_THIRDPERSON  0x02
 
-/* ----- Extents for collision ------- */
-#define SDLGL3D_EXTENT_CIRCLE 0x01
-#define SDLGL3D_EXTENT_RECT   0x02 
-
 /* -------- Object-Types ------ */
 #define SDLGL3D_OBJ_NONE     0
 
@@ -249,6 +240,15 @@
 #define SDLGL3D_X   0
 #define SDLGL3D_Y   1
 #define SDLGL3D_Z   2
+
+/* ----- Extents for collision ------- */
+#define SDLGL3D_EXTENT_CIRCLE 0x01
+#define SDLGL3D_EXTENT_RECT   0x02 
+
+/* ----- Results of collision detection in movement ----- */
+#define SDLGL3D_EVENT_TILECHANGED   2
+#define SDLGL3D_EVENT_MOVED         1
+#define SDLGL3D_EVENT_NONE          0
 
 /*******************************************************************************
 * TYPEDEFS                                                                     *
