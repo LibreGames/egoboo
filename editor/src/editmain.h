@@ -40,7 +40,7 @@
 #define EDITMAIN_NEWSOLIDMAP 2
 #define EDITMAIN_LOADMAP     3
 #define EDITMAIN_SAVEMAP     4
-#define EDITMAIN_DRAW3DMODE  5      /* Set the draw mode for the 3D-Window */
+#define EDITMAIN_ROTFAN      5      /* Rotates the actual chosen fan if browsing */ 
 
 /* ---------- Edit-Flags -------- */
 #define EDITMAIN_SHOW2DMAP 0x01         /* Display the 2DMap        */
@@ -71,7 +71,8 @@ typedef struct {
     char brush_size;        /* From 'cartman'  0-3, (slider)    */    
     char brush_amount;      /* From 'cartman' -50,  50 (slider) */    
     FANDATA_T act_ft;       /* Actual fan type chosen           */
-    int  new_fan_no;        /* Numberof new fan                 */
+    char new_fan_dir;       /* Direction of new fan             */
+    int  new_fan_no;        /* Number of new fan                */
     FANDATA_T new_ft;       /* New fan type to place on map     */
                             /* tx_flags: dir' of fan-type       */ 
     COMMAND_T new_fd;       /* Extent data for new fan          */

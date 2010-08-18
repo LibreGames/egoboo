@@ -71,10 +71,12 @@ typedef struct {
 
 typedef struct {
 
-     char my_shape;         /* To set, if needed for 'around other type of shape'  */
+     char center_shape;     /* Shape of tile in center                      */
+     char center_rotdir;    /* Turn-Dir for center shape, if any            */
      char adj_shapes[3];    /* Shapes to set adjacent from left to right    */
+     char adj_rotdir[3];    /* Rotation angle of 'adj_shape'                */
 
-} EDITMAIN_AUTO_LUT;        /* Lookup-Table for auto-placement of walls     *&
+} EDITMAIN_AUTO_LUT;        /* Lookup-Table for auto-placement of walls     */
 
 /*******************************************************************************
 * DATA							                                               *
@@ -98,25 +100,25 @@ static FANDATA_T PresetTiles[] = {
 };
 
 static EDITMAIN_AUTO_LUT LutFloor[] = {
-    { EDITMAIN_PRESET_FLOOR, { -1, -1, -1 } },          /* Set a floor at 'my_shape'    */
-    { EDITMAIN_PRESET_FLOOR, { -1, -1, EDITMAIN_PRESET_EDGEO   } },
-    { EDITMAIN_PRESET_FLOOR, { -1, EDITMAIN_PRESET_EDGEO, -1  } },
-    { EDITMAIN_PRESET_FLOOR, { -1, EDITMAIN_PRESET_WALL, EDITMAIN_PRESET_WALL   } },
-	{ EDITMAIN_PRESET_FLOOR, { EDITMAIN_PRESET_EDGEO, -1, -1  } },
-    { EDITMAIN_PRESET_FLOOR, { EDITMAIN_PRESET_EDGEO, -1, EDITMAIN_PRESET_EDGEO } },
-    { EDITMAIN_PRESET_FLOOR, { EDITMAIN_PRESET_WALL, EDITMAIN_PRESET_WALL, -1   } },
-    { EDITMAIN_PRESET_FLOOR, { EDITMAIN_PRESET_WALL, EDITMAIN_PRESET_EDGEI, EDITMAIN_PRESET_WALL } }
+    { EDITMAIN_PRESET_FLOOR, EDITMAIN_NORTH, { -1, -1, -1 } },          /* Set a floor at 'my_shape'    */
+    { EDITMAIN_PRESET_FLOOR, EDITMAIN_NORTH, { -1, -1, EDITMAIN_PRESET_EDGEO   } },
+    { EDITMAIN_PRESET_FLOOR, EDITMAIN_NORTH, { -1, EDITMAIN_PRESET_EDGEO, -1  } },
+    { EDITMAIN_PRESET_FLOOR, EDITMAIN_NORTH, { -1, EDITMAIN_PRESET_WALL, EDITMAIN_PRESET_WALL   } },
+	{ EDITMAIN_PRESET_FLOOR, EDITMAIN_NORTH, { EDITMAIN_PRESET_EDGEO, -1, -1  } },
+    { EDITMAIN_PRESET_FLOOR, EDITMAIN_NORTH, { EDITMAIN_PRESET_EDGEO, -1, EDITMAIN_PRESET_EDGEO } },
+    { EDITMAIN_PRESET_FLOOR, EDITMAIN_NORTH, { EDITMAIN_PRESET_WALL, EDITMAIN_PRESET_WALL, -1   } },
+    { EDITMAIN_PRESET_FLOOR, EDITMAIN_NORTH, { EDITMAIN_PRESET_WALL, EDITMAIN_PRESET_EDGEI, EDITMAIN_PRESET_WALL } }
 };
 
 static EDITMAIN_AUTO_LUT LutWall[] = {
-    { EDITMAIN_PRESET_EDGEO, { -1, -1, -1 } },
-    { EDITMAIN_PRESET_WALL,  { EDITMAIN_PRESET_WALL, -1, -1  } },
-    { EDITMAIN_PRESET_EDGEO, { -1, EDITMAIN_PRESET_EDGEO, -1 } },
-    { EDITMAIN_PRESET_WALL,  { EDITMAIN_PRESET_EDGEI, EDITMAIN_PRESET_WALL, -1 } },
-    { EDITMAIN_PRESET_WALL,  { -1, -1, -1 } }, 
-    { EDITMAIN_PRESET_EDGEI, { EDITMAIN_PRESET_WALL, -1, EDITMAIN_PRESET_WALL  } },
-    { EDITMAIN_PRESET_WALL,  { EDITMAIN_PRESET_EDGEI, EDITMAIN_PRESET_WALL, -1 } }, 
-    { EDITMAIN_PRESET_TOP,   { -1, -1, -1 } }
+    { EDITMAIN_PRESET_EDGEO, EDITMAIN_NORTH, { -1, -1, -1 } },
+    { EDITMAIN_PRESET_WALL,  EDITMAIN_NORTH, { EDITMAIN_PRESET_WALL, -1, -1  } },
+    { EDITMAIN_PRESET_EDGEO, EDITMAIN_NORTH, { -1, EDITMAIN_PRESET_EDGEO, -1 } },
+    { EDITMAIN_PRESET_WALL,  EDITMAIN_NORTH, { EDITMAIN_PRESET_EDGEI, EDITMAIN_PRESET_WALL, -1 } },
+    { EDITMAIN_PRESET_WALL,  EDITMAIN_NORTH, { -1, -1, -1 } }, 
+    { EDITMAIN_PRESET_EDGEI, EDITMAIN_NORTH, { EDITMAIN_PRESET_WALL, -1, EDITMAIN_PRESET_WALL  } },
+    { EDITMAIN_PRESET_WALL,  EDITMAIN_NORTH, { EDITMAIN_PRESET_EDGEI, EDITMAIN_PRESET_WALL, -1 } }, 
+    { EDITMAIN_PRESET_TOP,   EDITMAIN_NORTH, { -1, -1, -1 } }
 };
 
 /* ------ Data for checking of adjacent tiles -------- */
@@ -248,7 +250,8 @@ static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_STATE_T *edit_state)
     COMMAND_T *act_ft;
     FANDATA_T *act_fan;
     int cnt;
-    int vrt_diff, vertex;
+    int vrt_diff, vertex, vrt_size;
+    int *first_vtx;
 
 
     act_fan = &mesh -> fan[edit_state -> fan_chosen];
@@ -266,22 +269,59 @@ static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_STATE_T *edit_state)
     }
 
     vrt_diff = edit_state -> new_fd.numvertices - act_ft -> numvertices;
-
+    
     if (0 == vrt_diff) {
         /* Same number of vertices, only overwrite is needed */
         /* Set the new type of fan */
         act_fan -> type = edit_state -> new_ft.type;
 
     }
-    else {
-        /* Number of vertices has changed */
-        /* Solve this by handling a it with insert/delete as in a string */
-        /* 1. Get number of vertices of existing fan    */
-        /* 1. Remove old fan (count it's vertices)      */
-        /* 2. Replace it by fan with new type  ?        */
-        /* Set new fan starts for all fans from here, if number of vertices has
-       changed */
-       return 0;
+    else {           
+               
+        if (vrt_diff > 0) {
+            /* Insert more vertices -- check for space */
+            if (vrt_diff > mesh -> numfreevert) {
+                /* Not enough vertices left in buffer */
+                return 0;
+            }
+            
+        }
+        
+        vertex    = mesh -> vrtstart[edit_state -> fan_chosen]; /* Number of first vertex   */
+        vrt_size  = (mesh -> numvert - vertex) * sizeof(int);   /* Number of vertices to copy */
+        
+        mesh -> numfreevert -= vrt_diff;        /* Add/remove vertices */
+        mesh -> numvert     += vrt_diff;    
+                        
+        if (vrt_diff > 0) {
+            /* Insert space for this vertices */
+            vrt_diff *= sizeof(int);
+            
+            first_vtx = &mesh -> vrtx[vertex];
+            memmove(first_vtx + vrt_diff, first_vtx, vrt_size);  
+            first_vtx = &mesh -> vrty[vertex];
+            memmove(first_vtx + vrt_diff, first_vtx, vrt_size);
+            first_vtx = &mesh -> vrtz[vertex];
+            memmove(first_vtx + vrt_diff, first_vtx, vrt_size);    
+  
+       }
+       else {
+       
+            vrt_diff = -vrt_diff;           /* Change sign  */
+            vrt_diff *= sizeof(int);
+            
+            /* Now for X/Y and Z                            */
+            first_vtx = &mesh -> vrtx[vertex];
+            memmove(first_vtx, first_vtx + vrt_diff, vrt_size);  
+            first_vtx = &mesh -> vrty[vertex];
+            memmove(first_vtx, first_vtx + vrt_diff, vrt_size);
+            first_vtx = &mesh -> vrtz[vertex];
+            memmove(first_vtx, first_vtx + vrt_diff, vrt_size);         
+       
+       }
+       
+       return 1;
+        
     }
 
     /* Fill in the vertex values from type definition */
@@ -312,27 +352,31 @@ static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_STATE_T *edit_state)
 static void editmainFanTypeRotate(COMMAND_T *src, COMMAND_T *dest, char dir)
 {
 
-    int rottable[8] = {  0, 1, 1, 0, 0, -1, -1, 0, };
+    static int rottable[8] = {  0, 1, 1, 0, 0, -1, -1, 0, };
 
     int cnt;
+    int diff_x, diff_y;
 
 
     /* Get copy of chosen type */
     memcpy(dest, src, sizeof(COMMAND_T));
 
+    diff_x = dest -> vtx[0].x;
+    diff_y = dest -> vtx[0].y;
+
     if (dir != EDITMAIN_NORTH) {
 
-        for (cnt = 0; dest -> numvertices; cnt++) {
+        for (cnt = 0; cnt < dest -> numvertices; cnt++) {
 
             /* First translate to have rotation center in middle of fan square */
-            dest -> vtx[cnt].x -= 64.0;
-            dest -> vtx[cnt].y -= 64.0;
+            dest -> vtx[cnt].x -= (64.0 + diff_x);
+            dest -> vtx[cnt].y -= (64.0 + diff_y);
             /* And now rotate it */
             dest -> vtx[cnt].x *= rottable[dir * 2];
             dest -> vtx[cnt].y *= rottable[(dir * 2) + 1];
             /* And move it back to start position */
-            dest -> vtx[cnt].x += 64.0;
-            dest -> vtx[cnt].y += 64.0;
+            dest -> vtx[cnt].x += (64.0 + diff_x);
+            dest -> vtx[cnt].y += (64.0 + diff_y);
 
         }
     
@@ -369,6 +413,7 @@ static int editmainSetFanSimple(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int 
 
 
     editmainGetAdjacent(mesh, edit_state -> fan_chosen, adjacent);
+
     /* Fill in the flags for the look-up-table */
     check_flags = 0;
     for (dir = 0, flags = 0x01; dir < 8; dir++, flags <<= 0x01) {
@@ -406,7 +451,6 @@ static int editmainSetFanSimple(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int 
         for (dir = 0; dir < 8; dir += 2, check_flags >>= 2) {                      
             
             lut_idx = check_flags & 0x03;    
-            rotdir = (char)((dir >> 1)^0x02);
             
             for (i = 0; i < 3; i++) {
                 /* Set all adjacent fields according to lookup-table */
@@ -414,6 +458,7 @@ static int editmainSetFanSimple(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int 
                 if (edit_state -> new_fan_no >= 0) {
                 
                     shape_no = LutFloor[lut_idx].adj_shapes[i];
+                    rotdir   = LutFloor[lut_idx].adj_rotdir[i];
                     
                     if (shape_no >= 0) {
                         edit_state -> new_ft.type     = PresetTiles[shape_no].type;
@@ -444,10 +489,10 @@ static int editmainSetFanSimple(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int 
         for (dir = 0; dir < 8; dir += 2, check_flags >>= 2) { 
             
             lut_idx = check_flags & 0x03;    
-            rotdir = (char)((dir >> 1)^0x02);
             
             /* Set the type for myself */
-            shape_no = LutWall[lut_idx].my_shape;
+            shape_no = LutWall[lut_idx].center_shape;
+            rotdir   = LutWall[lut_idx].center_rotdir;
             
             edit_state -> new_ft.type     = PresetTiles[shape_no].type;  
             edit_state -> new_ft.fx       = PresetTiles[shape_no].fx; 
@@ -466,6 +511,8 @@ static int editmainSetFanSimple(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int 
                 if (edit_state -> new_fan_no >= 0) {
                     
                     shape_no = LutWall[lut_idx].adj_shapes[i];
+                    rotdir   = LutWall[lut_idx].adj_rotdir[i];
+                    
                     if (shape_no >= 0) {
                         edit_state -> new_ft.type     = PresetTiles[shape_no].type;  
                         edit_state -> new_ft.fx       = PresetTiles[shape_no].fx; 
@@ -766,6 +813,7 @@ int editmainMap(int command)
     switch(command) {
 
         case EDITMAIN_DRAWMAP:
+            /* FIXME: Hand over 'EditState.new_fd' for drawing */
             editdraw3DView(&Mesh, EditState.fan_chosen, EditState.new_ft.type);
             return 1;
 
@@ -792,7 +840,20 @@ int editmainMap(int command)
 
         case EDITMAIN_SAVEMAP:
             editmainCalcVrta(&Mesh);
-            return editfileSaveMapMesh(&Mesh, EditState.msg);         
+            return editfileSaveMapMesh(&Mesh, EditState.msg);
+
+        case EDITMAIN_ROTFAN:
+            if (-1 != EditState.fan_chosen) {
+                EditState.new_fan_dir++;
+                EditState.new_fan_dir &= 0x03;
+
+                editmainFanTypeRotate(&pCommands[EditState.new_ft.type],
+                                      &EditState.new_fd,
+                                      EditState.new_fan_dir);
+
+            }
+            return 1;
+
 
     }
 
@@ -957,6 +1018,10 @@ char *editmainFanTypeName(int type_no)
 void editmainChooseFanType(int dir, char *fan_name)
 {
 
+    char i;
+    int  x, y;
+
+
     if (dir == -2) {
         /* Reset browsing */
         EditState.new_ft.type = -1;
@@ -978,7 +1043,21 @@ void editmainChooseFanType(int dir, char *fan_name)
         }
     }
 
+    /* FIXME: Draw fan in 'EditDraw' from 'EditState.new_fd' */
+    EditState.new_ft.type &= 0x1F;    /* Be on the save side with MAXTYPES */
+       
+    memcpy(&EditState.new_fd, &pCommands[EditState.new_ft.type], sizeof(COMMAND_T));
+    /* Now move it to the chosen position */
+    x = EditState.tile_x * 128;
+    y = EditState.tile_y * 128;
+    
+    for (i = 0; i < EditState.new_fd.numvertices; i++) {
+        EditState.new_fd.vtx[i].x += x;
+        EditState.new_fd.vtx[i].y += y;
+    }
+    
     editdrawChooseFanType(EditState.new_ft.type, EditState.tile_x, EditState.tile_y);
+    
     sprintf(fan_name, "%s", editmainFanTypeName(EditState.new_ft.type));
 
 }

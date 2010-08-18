@@ -51,10 +51,11 @@
 /* Menu commands -- Don't collid with 3D-Commands */
 #define EDITOR_FILE     ((char)101)
 #define EDITOR_MAP      ((char)102)
-#define EDITOR_FX       ((char)103)
+#define EDITOR_FANFX    ((char)103)
 #define EDITOR_STATE    ((char)104)
 #define EDITOR_SETTINGS ((char)105)
 #define EDITOR_2DMAP    ((char)106)           /* Displayed map */
+#define EDITOR_FANTEX   ((char)107)    
 
 /* Sub-commands for main commands, if needed */
 #define EDITOR_STATE_SHOWMAP ((char)1)
@@ -176,15 +177,15 @@ static SDLGL_FIELD FanInfoDlg[] = {
     { SDLGL_TYPE_STD, {   0,  16, 320, 208 } },        /* Background of dialog */
     { SDLGL_TYPE_STD, {   8,  24, 320, 208 }, 0, 0, "Info about Fan" },
     { SDLGL_TYPE_STD, {   8,  40, 320, 208 }, 0, 0, "" },
-    { SDLGL_TYPE_STD, {   8,  56, 120, 8 }, EDITOR_FX, MPDFX_SHA,     "[ ]Reflective" },
-    { SDLGL_TYPE_STD, {   8,  72, 120, 8 }, EDITOR_FX, MPDFX_DRAWREF, "[ ]Draw Reflection" },
-    { SDLGL_TYPE_STD, {   8,  88, 120, 8 }, EDITOR_FX, MPDFX_ANIM,    "[ ]Animated" },
-    { SDLGL_TYPE_STD, {   8, 104, 120, 8 }, EDITOR_FX, MPDFX_WATER,   "[ ]Overlay (Water)" },
-    { SDLGL_TYPE_STD, {   8, 120, 120, 8 }, EDITOR_FX, MPDFX_WALL,    "[ ]Barrier (Slit)" },
-    { SDLGL_TYPE_STD, {   8, 136, 120, 8 }, EDITOR_FX, MPDFX_IMPASS,  "[ ]Impassable (Wall)" },
-    { SDLGL_TYPE_STD, {   8, 154, 120, 8 }, EDITOR_FX, MPDFX_DAMAGE,  "[ ]Damage" },
-    { SDLGL_TYPE_STD, {   8, 170, 120, 8 }, EDITOR_FX, MPDFX_SLIPPY,  "[ ]Slippy" },
-    { SDLGL_TYPE_STD, { 190,  78, 128, 128 } },  /* The actuale Texture */
+    { SDLGL_TYPE_STD, {   8,  56, 120, 8 }, EDITOR_FANFX, MPDFX_SHA,     "[ ]Reflective" },
+    { SDLGL_TYPE_STD, {   8,  72, 120, 8 }, EDITOR_FANFX, MPDFX_DRAWREF, "[ ]Draw Reflection" },
+    { SDLGL_TYPE_STD, {   8,  88, 120, 8 }, EDITOR_FANFX, MPDFX_ANIM,    "[ ]Animated" },
+    { SDLGL_TYPE_STD, {   8, 104, 120, 8 }, EDITOR_FANFX, MPDFX_WATER,   "[ ]Overlay (Water)" },
+    { SDLGL_TYPE_STD, {   8, 120, 120, 8 }, EDITOR_FANFX, MPDFX_WALL,    "[ ]Barrier (Slit)" },
+    { SDLGL_TYPE_STD, {   8, 136, 120, 8 }, EDITOR_FANFX, MPDFX_IMPASS,  "[ ]Impassable (Wall)" },
+    { SDLGL_TYPE_STD, {   8, 154, 120, 8 }, EDITOR_FANFX, MPDFX_DAMAGE,  "[ ]Damage" },
+    { SDLGL_TYPE_STD, {   8, 170, 120, 8 }, EDITOR_FANFX, MPDFX_SLIPPY,  "[ ]Slippy" },
+    { SDLGL_TYPE_STD, { 190,  78, 128, 128 }, EDITOR_FANTEX },  /* The actuale Texture */
     
     { 0 }
 };
@@ -343,9 +344,12 @@ static void editor2DMap(SDLGL_EVENT *event)
             }
             break;
         case EDITOR_2DMAP_FANROTATE:
-            /* TODO: Rotate the chosen fan type */
+            /* Rotate the chosen fan type */
+            if (Map2DState & EDITOR_2DMAP_FANBROWSE) {
+                editmainMap(EDITMAIN_ROTFAN);
+            }
             break;
-            
+
         case EDITOR_2DMAP_FANBROWSE:
             if (event -> pressed) {
                 Map2DState ^= event -> sub_code;
@@ -357,9 +361,9 @@ static void editor2DMap(SDLGL_EVENT *event)
                     editmainChooseFanType(-2, StatusBar);   /* Switched off */
                     pEditState -> new_ft.type = -1;
                 }
-            }            
+            }
             break;
-            
+
         case EDITOR_2DMAP_FANBLEFT:
             /* Browse toward start of fan-list */
             if (Map2DState & EDITOR_2DMAP_FANBROWSE) {
@@ -649,6 +653,12 @@ static int editorInputHandler(SDLGL_EVENT *event)
                     break;
                 case EDITOR_STATE:
                     editorState(event -> sub_code);  
+                    break;
+                case EDITOR_FANFX:
+                    /* TODO: Change the FX of the chosen fan        */
+                    break;
+                case EDITOR_FANTEX:
+                    /* TODO: Change the Texture of the chosen fan   */
                     break;
                 case EDITOR_SETTINGS:
                     editmainToggleFlag(EDITMAIN_TOGGLE_DRAWMODE, event -> sub_code);

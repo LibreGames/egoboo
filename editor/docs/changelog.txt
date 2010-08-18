@@ -1,3 +1,8 @@
+2010-08-18 <bitnapper>
+- Adjusted Look-up-Tables for 'auto'-walls
+- Added code for inserting / deleting vertices in map
+- Prepared rotating of chosen fan type
+
 2010-08-17 <bitnapper>
 - Built Look-up-Tables for 'auto'-walls
 - Basic rewrite of code for setting auto-walls
