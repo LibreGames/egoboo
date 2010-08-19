@@ -3,6 +3,7 @@
 - Added rotating of chosen fan type (needs tests...)
 - New maps are 8 x 8 Tiles for test purposes
 - Added possibility of 'simple' edit (needs lot of tests...)
+- Some adjustements to code for auto-setting walls
 
 2010-08-18 <bitnapper>
 - Adjusted Look-up-Tables for 'auto'-walls
