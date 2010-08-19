@@ -585,7 +585,6 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
 
 static float  MeshTileOffUV[EDITDRAW_MAXWALLSUBTEX * 2];    /* Offset into wall texture */
 static GLuint WallTex[EDITDRAW_MAXWALLTEX];
-static COMMAND_T ChosenFanType;                             /* For display of this one  */
 
 /*******************************************************************************
 * CODE 								                                           *
@@ -598,9 +597,10 @@ static COMMAND_T ChosenFanType;                             /* For display of th
  *      Draws the fan 'ChosenFanType' in wireframe-mode in white color.
  *      Elevated by 10 Units above Z=0
  * Input:
- *     None
+ *     ft *: Fantype holding possible texture number of this fan
+ *     fd *: Data of fan to draw 
  */
-static void editdrawChosenFanType(void)
+static void editdrawChosenFanType(FANDATA_T *ft, COMMAND_T *fd)
 {
     
     int cnt, tnc;
@@ -609,19 +609,23 @@ static void editdrawChosenFanType(void)
     
     /* FIXME: Save and restore state */
     glPolygonMode(GL_FRONT, GL_LINE);
-    sdlglSetColor(SDLGL_COL_WHITE);    
+    sdlglSetColor(SDLGL_COL_WHITE);
+
+    if (ft -> tx_no > 0) {
+        /* Empty code to keep compiler quiet: 2010-08-18 */
+    }
     
     entry = 0;
     
-    for (cnt = 0; cnt < ChosenFanType.count; cnt++) {
+    for (cnt = 0; cnt < fd -> count; cnt++) {
 
         glBegin (GL_TRIANGLE_FAN);
 
-            for (tnc = 0; tnc < ChosenFanType.size[cnt]; tnc++) {       
+            for (tnc = 0; tnc < fd -> size[cnt]; tnc++) {
                 
-                glVertex3f(ChosenFanType.vtx[ChosenFanType.vertexno[entry]].x,
-                           ChosenFanType.vtx[ChosenFanType.vertexno[entry]].y,
-                           ChosenFanType.vtx[ChosenFanType.vertexno[entry]].z + 10);
+                glVertex3f(fd -> vtx[fd -> vertexno[entry]].x,
+                           fd -> vtx[fd -> vertexno[entry]].y,
+                           fd -> vtx[fd -> vertexno[entry]].z + 10);
 
                 entry++;
 
@@ -745,11 +749,12 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no, int col_no)
  *  Description:
  *	    Draws a single fan with given number from given mesh
  * Input:
- *      mesh *:          Pointer on mesh to draw
- *      chosen_fan:      Sign this fan as chosen in 3D-Map
- *      chosen_fan_type: Draw this fan-type at 'chosen_fan'
+ *      mesh *:     Pointer on mesh to draw
+ *      chosen_fan: Sign this fan as chosen in 3D-Map
+ *      ft *:       Pointer on chosen fan type
+ *      fd *:       ft -> type >= 0 Display it over the position of chosen fan  
  */
-static void editdrawMap(MESH_T *mesh, int chosen_fan, int chosen_fan_type)
+static void editdrawMap(MESH_T *mesh, int chosen_fan, FANDATA_T *ft, COMMAND_T *fd)
 {
 
     char save_mode;
@@ -790,9 +795,9 @@ static void editdrawMap(MESH_T *mesh, int chosen_fan, int chosen_fan_type)
     }
 
     /* Draw the chosen fan type, if any */
-    if (chosen_fan_type >= 0) {
+    if (ft -> type > 0) {
 
-        editdrawChosenFanType();
+        editdrawChosenFanType(ft, fd);
 
     }
 
@@ -923,45 +928,17 @@ void editdrawFreeData(void)
 }
 
 /*
- *  Name:
- *	    editdrawChooseFanType
- *  Description:
- *      Sets up the drawing-data for the chosen fan-type at given position
- * Input:
- *      fan_type: Type of fan to draw
- *      x, y:     Position in mesh
- */
-void editdrawChooseFanType(int fan_type, int x, int y)
-{
-    
-    char i;
-    
-    
-    fan_type &= 0x1F;            /* Be on the save side with MAXTYPES */
-       
-    memcpy(&ChosenFanType, &MeshCommand[fan_type], sizeof(COMMAND_T));
-    /* Now move it to the chosen position */
-    x *= 128;
-    y *= 128;
-    
-    for (i = 0; i < ChosenFanType.numvertices; i++) { 
-        ChosenFanType.vtx[i].x += x;
-        ChosenFanType.vtx[i].y += y;
-    }
-
-}
-
-/*
  * Name:
  *     editdraw3DView
  * Description:
  *     Draws the whole 3D-View  
  * Input:
- *      mesh *:          Pointer on mesh to draw
- *      chosen_fan:      >= 0 Sign this fan as chosen in 3D-Map
- *      chosen_fan_type: >= 0 Display it over the position of chosen fan     
+ *      mesh *:     Pointer on mesh to draw
+ *      chosen_fan: >= 0 Sign this fan as chosen in 3D-Map
+ *      ft *:       Pointer on chosen fan type
+ *      fd *:       ft -> type >= 0 Display it over the position of chosen fan     
  */
-void editdraw3DView(MESH_T *mesh, int chosen_fan, int chosen_fan_type)
+void editdraw3DView(MESH_T *mesh, int chosen_fan, FANDATA_T *ft, COMMAND_T *fd)
 {
 
     int w, h;
@@ -1012,7 +989,7 @@ void editdraw3DView(MESH_T *mesh, int chosen_fan, int chosen_fan_type)
         
     }
     
-    editdrawMap(mesh, chosen_fan, chosen_fan_type);     
+    editdrawMap(mesh, chosen_fan, ft, fd);     
     
     sdlgl3dEnd();
 

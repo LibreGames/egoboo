@@ -1,3 +1,9 @@
+2010-08-10 <bitnapper>
+- Moved choosing fan type to 'editmain'
+- Added rotating of chosen fan type (needs tests...)
+- New maps are 8 x 8 Tiles for test purposes
+- Added possibility of 'simple' edit (needs lot of tests...)
+
 2010-08-18 <bitnapper>
 - Adjusted Look-up-Tables for 'auto'-walls
 - Added code for inserting / deleting vertices in map

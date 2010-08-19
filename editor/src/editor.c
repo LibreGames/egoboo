@@ -326,13 +326,11 @@ static void editor2DMap(SDLGL_EVENT *event)
                     if (event -> modflags == SDL_BUTTON_LEFT) {
                         /* Replace type of chosen fan by new type of fan    */
                         /* or set a wall in 'simple' mode                   */
-                        editmainFanSet(EditorEditType,
-                                       &pEditState -> new_ft,
-                                       0);
+                        editmainFanSet(EditorEditType, 0);
                     }
                     else if (event -> modflags == SDL_BUTTON_RIGHT){
-                        /* TODO: Do action based on number 'Map2DState'  */
-                        editmainFanSet(EditorEditType, 0, 1);
+                        /* Set a floor fan in 'simple' edit mode */
+                        editmainFanSet(EditorEditType, 1);
                     }
                 }
 

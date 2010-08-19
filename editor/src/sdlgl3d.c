@@ -429,7 +429,7 @@ SDLGL3D_OBJECT *sdlgl3dBegin(int camera_no, int solid)
     /* Now we're ready to draw the grid */
     glPolygonMode(GL_FRONT, solid ? GL_FILL : GL_LINE);
 
-    glFrontFace(GL_CW); 
+    glFrontFace(GL_CW);
 
     return viewobj;
 
@@ -636,10 +636,14 @@ void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z, int relati
 {
 
     if (relative) {
-    
         Camera[camera_no].campos.pos[0] += x;
         Camera[camera_no].campos.pos[1] += y;
         Camera[camera_no].campos.pos[SDLGL3D_Z] += z;
+        /* And take distance into account */
+        Camera[camera_no].campos.pos[0] +=
+            (Camera[camera_no].campos.direction[0] * Camera[camera_no].cameradist);
+        Camera[camera_no].campos.pos[1] +=
+            (Camera[camera_no].campos.direction[1] * Camera[camera_no].cameradist);
     }
     else {
         Camera[camera_no].campos.pos[0] = x;

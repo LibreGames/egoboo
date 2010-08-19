@@ -139,7 +139,7 @@ typedef struct {
                             /* tx_no & 0x3F:     Number of part of texture  */ 
     unsigned char tx_flags; /* Special flags                                */
     unsigned char fx;		/* Tile special effects flags                   */
-    unsigned char type;     /* Tile fan type (COMMAND_T)   			        */
+    char type;              /* Tile fan type (COMMAND_T)   			        */
 
 } FANDATA_T;
 

@@ -42,8 +42,7 @@
 
 COMMAND_T *editdrawInitData(void);
 void editdrawFreeData(void);
-void editdrawChooseFanType(int type_no, int x, int y);
-void editdraw3DView(MESH_T *mesh, int chosen_fan, int chosen_fan_type);
+void editdraw3DView(MESH_T *mesh, int chosen_fan, FANDATA_T *ft, COMMAND_T *fd);
 void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int chosen_fan);
 void editdraw2DTex(int x, int y, int w, int h, unsigned char tx_no, char tx_big); 
 
