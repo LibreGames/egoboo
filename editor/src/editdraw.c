@@ -809,9 +809,10 @@ static void editdrawMap(MESH_T *mesh, int chosen_fan, FANDATA_T *ft, COMMAND_T *
  *  Description:
  *	    Draw the Camera-Frustum in size od 2D-Map
  * Input:
- *      x, y: Positon in 2D
+ *      x, y:   Positon in 2D
+ *      tw, th: Size of tile in 2D   
  */
-static void editdraw2DCameraPos(int x, int y)
+static void editdraw2DCameraPos(int x, int y, int tw, int th)
 {
 
     SDLGL3D_OBJECT *campos;
@@ -823,9 +824,9 @@ static void editdraw2DCameraPos(int x, int y)
     /* TODO: Calculate now hardcoded value of '32.0' */
     campos = sdlgl3dGetCameraInfo(0, &nx[0], &ny[0], &zmax);
 
-    draw_rect.x = x + (campos -> pos[0] / 32.0);
-    draw_rect.y = y + (campos -> pos[1] / 32.0);
-    zmax /= 32.0;
+    draw_rect.x = x + (campos -> pos[0] / tw);
+    draw_rect.y = y + (campos -> pos[1] / th);
+    zmax /= 32.0;       /* Fixme: Do correct division -- resive by diff to full*/
 
     /* Now draw the camera angle */
     glBegin(GL_LINES);
@@ -1080,7 +1081,7 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int chosen_fan)
 
     }
 
-    editdraw2DCameraPos(x, y);
+    editdraw2DCameraPos(x, y, draw_rect.w, draw_rect.h);
 
 }
 

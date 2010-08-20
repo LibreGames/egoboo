@@ -175,7 +175,7 @@ static SDLGL_FIELD SubMenu[] = {
 /* Prepared Dialog for changing of Flags of a fan. TODO: Make it dynamic */
 static SDLGL_FIELD FanInfoDlg[] = {
     { SDLGL_TYPE_STD, {   0,  16, 320, 208 } },        /* Background of dialog */
-    { SDLGL_TYPE_STD, {   8,  24, 320, 208 }, 0, 0, "Info about Fan" },
+    { SDLGL_TYPE_STD, {   8,  24, 120,  8 }, 0, 0, "Info about Fan" },
     { SDLGL_TYPE_STD, {   8,  40, 320, 208 }, 0, 0, "" },
     { SDLGL_TYPE_STD, {   8,  56, 120, 8 }, EDITOR_FANFX, MPDFX_SHA,     "[ ]Reflective" },
     { SDLGL_TYPE_STD, {   8,  72, 120, 8 }, EDITOR_FANFX, MPDFX_DRAWREF, "[ ]Draw Reflection" },
@@ -186,7 +186,17 @@ static SDLGL_FIELD FanInfoDlg[] = {
     { SDLGL_TYPE_STD, {   8, 154, 120, 8 }, EDITOR_FANFX, MPDFX_DAMAGE,  "[ ]Damage" },
     { SDLGL_TYPE_STD, {   8, 170, 120, 8 }, EDITOR_FANFX, MPDFX_SLIPPY,  "[ ]Slippy" },
     { SDLGL_TYPE_STD, { 190,  78, 128, 128 }, EDITOR_FANTEX },  /* The actuale Texture */
-    
+    { 0 }
+};
+
+/* Prepared dialog for setting values for maps */
+static SDLGL_FIELD MapInfoDlg[] = {
+    { SDLGL_TYPE_STD,  {   0,  16, 240, 108 } },        /* Background of dialog */
+    { SDLGL_TYPE_STD,  {   8,  24, 120,   8 }, 0, 0, "New Map" },
+    { SDLGL_TYPE_RB,   {   8,  40, 40,    8 }, 0, 0, "Flat" },  /* Belong together */     
+    { SDLGL_TYPE_RB,   {   8,  56, 40,    8 }, 0, 0, "Solid" }, 
+    { SDLGL_TYPE_EDIT, {   8,  72, 40,   16 }, 0, 0, "Width" },
+    { SDLGL_TYPE_EDIT, { 108,  72, 40,   16 }, 0, 0, "Height" },
     { 0 }
 };
 
@@ -316,11 +326,7 @@ static void editor2DMap(SDLGL_EVENT *event)
                 field = event -> field;
                 editmainChooseFan(event -> mou.x, event -> mou.y,
                                   field -> rect.w, field -> rect.h);
-                /* And now move camera to this position */
-                sdlgl3dMoveToPosCamera(0,
-                                       (pEditState -> tile_x * 128.0) - 128.0,
-                                       (pEditState -> tile_y * 128.0) - 128.0,
-                                       600.0, 0);
+                
                 if (EditorEditType > 0) {
 
                     if (event -> modflags == SDL_BUTTON_LEFT) {
@@ -513,7 +519,6 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
 
     static SDLGL_RECT StrPos = { 10, 100, 0, 0 };
 
-    SDLGL3D_OBJECT *cam;
     SDLGL_RECT status_bar;
     float nx[4], ny[4], dist;
     int color;
@@ -592,7 +597,7 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
 
     }
 
-    /* Draw map if needed */
+    /* Draw map if needed -- TODO: Make this one a dynamic dialog */
     if (pEditState -> display_flags & EDITMAIN_SHOW2DMAP) {
 
         editmainDrawMap2D(MainMenu[1].rect.x, MainMenu[1].rect.y,
@@ -600,10 +605,6 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
 
     }
 
-    /* Display camera position */
-    cam = sdlgl3dGetCameraInfo(0, nx, nx, &dist);
-    sdlglstrStringF(&StrPos, "RotX: %f\n\nRotY: %f\n\nRotZ: %f\n\n",
-                    cam -> rot[0], cam -> rot[1], cam -> rot[2]);
     /* Display info about actual chosen fan, if asked for */
     editorDrawFanInfo();
 

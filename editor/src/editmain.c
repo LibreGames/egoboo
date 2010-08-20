@@ -27,6 +27,7 @@
 #include <memory.h>
 #include <math.h>
 
+#include "sdlgl3d.h"
 #include "editor.h"             /* Global needed definitions    */
 #include "editfile.h"           /* Load and save map files      */
 #include "editdraw.h"           /* Draw anything                */
@@ -392,34 +393,39 @@ static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int t
 static void editmainFanTypeRotate(COMMAND_T *src, COMMAND_T *dest, char dir, char copy)
 {
 
-    static int rottable[8] = {  1, 1, -1, 1, -1, -1, -1, 1, };
-
     int cnt;
     int diff_x, diff_y;
+    double angle;
+    double result_x, result_y;
 
 
     /* Get copy of chosen type, if needed, else rotate the actual fan */
     if (copy > 0) {
         /* Take it from source */
         memcpy(dest, src, sizeof(COMMAND_T));
-    }
-
-    diff_x = dest -> vtx[0].x;
-    diff_y = dest -> vtx[0].y;
+    }      
 
     if (dir != EDITMAIN_NORTH) {
 
+        angle  = DEG2RAD(dir * 90.0);
+        diff_x = dest -> vtx[0].x + 64.0;
+        diff_y = dest -> vtx[0].y + 64.0;
+
         for (cnt = 0; cnt < dest -> numvertices; cnt++) {
 
+
             /* First translate to have rotation center in middle of fan square */
-            dest -> vtx[cnt].x -= (64.0 + diff_x);
-            dest -> vtx[cnt].y -= (64.0 + diff_y);
+            dest -> vtx[cnt].x -= diff_x;
+            dest -> vtx[cnt].y -= diff_y;
             /* And now rotate it */
-            dest -> vtx[cnt].x *= rottable[dir * 2];
-            dest -> vtx[cnt].y *= rottable[(dir * 2) + 1];
+            result_x = (cos(angle) * dest -> vtx[cnt].x - sin(angle) * dest -> vtx[cnt].y);
+            result_y = (sin(angle) * dest -> vtx[cnt].x + cos(angle) * dest -> vtx[cnt].y);
+            /* And store it back */
+            dest -> vtx[cnt].x = (int)result_x;
+            dest -> vtx[cnt].y = (int)result_y;
             /* And move it back to start position */
-            dest -> vtx[cnt].x += (64.0 + diff_x);
-            dest -> vtx[cnt].y += (64.0 + diff_y);
+            dest -> vtx[cnt].x += diff_x;
+            dest -> vtx[cnt].y += diff_y;
 
         }
 
@@ -1008,6 +1014,12 @@ void editmainChooseFan(int cx, int cy, int w, int h)
         EditState.fan_chosen = fan_no;
         /* And fill it into 'EditState' for display */
         memcpy(&EditState.act_ft, &Mesh.fan[fan_no], sizeof(FANDATA_T));
+        
+        /* And now set camera to move/look at this position */
+        sdlgl3dMoveToPosCamera(0,
+                               (EditState.tile_x * 128.0),
+                               (EditState.tile_y * 128.0),
+                               600.0, 0);
             
     }
  

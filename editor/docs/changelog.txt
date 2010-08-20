@@ -1,4 +1,9 @@
-2010-08-10 <bitnapper>
+2010-08-20 <bitnapper>
+- Update of fan rotation code
+- Some Code-Reorganisation for automatic camera handling
+- Update of drawing code for camera in 2D
+
+2010-08-19 <bitnapper>
 - Moved choosing fan type to 'editmain'
 - Added rotating of chosen fan type (needs tests...)
 - New maps are 8 x 8 Tiles for test purposes

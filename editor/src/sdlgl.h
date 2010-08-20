@@ -145,7 +145,7 @@ typedef unsigned short wchar_t;
 #define SDLGL_TYPE_EDIT        0x02     /* Handled in module 'SDLGLFLD      */
 #define SDLGL_TYPE_CHECKBOX    0x03 
 #define SDLGL_TYPE_RBGROUP     0x04 
-#define SDLGL_TYPE_RADIOBUTTON 0x05
+#define SDLGL_TYPE_RB          0x05
 #define SDLGL_TYPE_SLI_BOX     0x06 
 #define SDLGL_TYPE_SLI_BK      0x07
 #define SDLGL_TYPE_SLI_BUTTON  0x08
