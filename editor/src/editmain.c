@@ -382,50 +382,43 @@ static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int t
  * Name:
  *     editmainFanTypeRotate
  * Description:
- *     For 'simple' mode. Rotates the given fan type in 'dest'.
- *     If 'copy', the 'dest' is copied from 'src'
+ *     For 'simple' mode. Rotates the given fan type and returns it in
+ *     'dest'. The translation has to be done by the caller
  * Input:
- *     src *:  Fan type to rotate
- *     dest *: Rotated result
+ *     type:   Number of fan type to rotate
+ *     dest *: Copy of base type, rotated
  *     dir:    Into which direction to rotate
- *     copy:   Copy it from source (
  */
-static void editmainFanTypeRotate(COMMAND_T *src, COMMAND_T *dest, char dir, char copy)
+static void editmainFanTypeRotate(int type, COMMAND_T *dest, char dir)
 {
 
     int cnt;
-    int diff_x, diff_y;
     double angle;
     double result_x, result_y;
 
 
-    /* Get copy of chosen type, if needed, else rotate the actual fan */
-    if (copy > 0) {
-        /* Take it from source */
-        memcpy(dest, src, sizeof(COMMAND_T));
-    }      
+
+    /* Get a copy from  the fan type list */
+    memcpy(dest, &pCommands[type], sizeof(COMMAND_T));
 
     if (dir != EDITMAIN_NORTH) {
 
         angle  = DEG2RAD(dir * 90.0);
-        diff_x = dest -> vtx[0].x + 64.0;
-        diff_y = dest -> vtx[0].y + 64.0;
 
         for (cnt = 0; cnt < dest -> numvertices; cnt++) {
 
-
-            /* First translate to have rotation center in middle of fan square */
-            dest -> vtx[cnt].x -= diff_x;
-            dest -> vtx[cnt].y -= diff_y;
+            /* First translate it to have rotation center in middle of fan */
+            dest -> vtx[cnt].x -= 64.0;
+            dest -> vtx[cnt].y -= 64.0;
             /* And now rotate it */
             result_x = (cos(angle) * dest -> vtx[cnt].x - sin(angle) * dest -> vtx[cnt].y);
             result_y = (sin(angle) * dest -> vtx[cnt].x + cos(angle) * dest -> vtx[cnt].y);
             /* And store it back */
-            dest -> vtx[cnt].x = (int)result_x;
-            dest -> vtx[cnt].y = (int)result_y;
+            dest -> vtx[cnt].x = result_x;
+            dest -> vtx[cnt].y = result_y;
             /* And move it back to start position */
-            dest -> vtx[cnt].x += diff_x;
-            dest -> vtx[cnt].y += diff_y;
+            dest -> vtx[cnt].x += 64.0;
+            dest -> vtx[cnt].y += 64.0;
 
         }
 
@@ -509,9 +502,9 @@ static int editmainSetFanSimple(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int 
                     if (shape_no >= 0) {
                         memcpy(&edit_state -> new_ft, &PresetTiles[shape_no], sizeof(FANDATA_T));
                         /* Rotate and the set the shape */
-                        editmainFanTypeRotate(&pCommands[edit_state -> new_ft.type],
+                        editmainFanTypeRotate(edit_state -> new_ft.type,
                                               &edit_state -> new_fd,
-                                              rotdir, 1);
+                                              rotdir);
                         editmainDoFanUpdate(mesh,
                                             edit_state,
                                             base_x + adj_xy[dir + i].x,
@@ -538,10 +531,9 @@ static int editmainSetFanSimple(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int 
 
         memcpy(&edit_state -> new_ft, &PresetTiles[shape_no], sizeof(FANDATA_T));
         /* Rotate and the set the shape */
-        editmainFanTypeRotate(&pCommands[edit_state -> new_ft.type],
+        editmainFanTypeRotate(edit_state -> new_ft.type,
                               &edit_state -> new_fd,
-                              rotdir,
-                              1);
+                              rotdir);
         edit_state -> new_ft.type |= 0x20;    /* Walls have 'big' textures */
         editmainDoFanUpdate(mesh, edit_state, base_x, base_y);
 
@@ -560,10 +552,9 @@ static int editmainSetFanSimple(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int 
                     if (shape_no >= 0) {
                         memcpy(&edit_state -> new_ft, &PresetTiles[shape_no], sizeof(FANDATA_T));
                         /* Rotate and the set the shape */
-                        editmainFanTypeRotate(&pCommands[edit_state -> new_ft.type],
+                        editmainFanTypeRotate(edit_state -> new_ft.type,
                                               &edit_state -> new_fd,
-                                              rotdir,
-                                              1);
+                                              rotdir);
                         /* Walls have 'big' textures */
                         edit_state -> new_ft.type |= 0x20;
                         editmainDoFanUpdate(mesh,
@@ -826,7 +817,7 @@ EDITMAIN_STATE_T *editmainInit(void)
  * Description:
  *     Frees all data set an initialized by init code
  * Input:
- *     None
+ *     None                                                      
  */
 void editmainExit(void)
 {
@@ -848,6 +839,9 @@ void editmainExit(void)
  */
 int editmainMap(int command)
 {
+
+    int cnt, x, y;
+
 
     switch(command) {
 
@@ -888,9 +882,17 @@ int editmainMap(int command)
                 EditState.new_fan_dir++;
                 EditState.new_fan_dir &= 0x03;
 
-                editmainFanTypeRotate(&pCommands[EditState.new_ft.type],
+                editmainFanTypeRotate(EditState.new_ft.type,
                                       &EditState.new_fd,
-                                      EditState.new_fan_dir, 0);
+                                      EditState.new_fan_dir);
+                /* Now translate the fan to chosen fan position */
+                x = EditState.tile_x * 128;
+                y = EditState.tile_y * 128;
+
+                for (cnt = 0; cnt < EditState.new_fd.numvertices; cnt++) {
+                    EditState.new_fd.vtx[cnt].x += x;
+                    EditState.new_fd.vtx[cnt].y += y;
+                }
 
             }
             return 1;
@@ -954,7 +956,7 @@ SPAWN_OBJECT_T *editmainLoadSpawn(void)
 void editmainToggleFlag(int which, unsigned char flag)
 {
 
-    switch(which) {            
+    switch(which) {
 
         case EDITMAIN_TOGGLE_DRAWMODE:
             /* Change it in actual map */
@@ -1017,8 +1019,8 @@ void editmainChooseFan(int cx, int cy, int w, int h)
         
         /* And now set camera to move/look at this position */
         sdlgl3dMoveToPosCamera(0,
-                               (EditState.tile_x * 128.0),
-                               (EditState.tile_y * 128.0),
+                               (EditState.tile_x * 128.0) - 128.0,
+                               (EditState.tile_y * 128.0) - 128.0,
                                600.0, 0);
             
     }
