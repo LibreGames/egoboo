@@ -1,8 +1,14 @@
+2010-08-21 <bitnapper>
+- Update of fan dialog
+- Streamlined and extended the map-edit commands
+- Camera follows now proper the chosen tile (keeps camera distance)
+- Worked on code for replacing fan types by others
+
 2010-08-20 <bitnapper>
 - Update of fan rotation code
 - Some Code-Reorganisation for automatic camera handling
 - Update of drawing code for camera in 2D
-- Fixef roation code and dide some code cleanup
+- Fixed roation code and did some code cleanup
 
 2010-08-19 <bitnapper>
 - Moved choosing fan type to 'editmain'

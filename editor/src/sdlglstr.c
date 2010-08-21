@@ -1096,8 +1096,6 @@ void sdlglstrStringToRect(SDLGL_RECT *rect, char *string)
 
             }
 
-
-
             /* Now get the size, of the string */
             sdlglstrGetStringSize(string, &sizerect);
 
@@ -1132,7 +1130,6 @@ void sdlglstrStringToRect(SDLGL_RECT *rect, char *string)
                 pprevbreak  = pnextbreak;    /* Move one word further.   */
 
             }
-
 
             if (pnextbreak) {
 
@@ -1305,7 +1302,7 @@ void sdlglstrDrawButton(SDLGL_RECT *rect, char *text, int flags)
             if (flags & SDLGLSTR_FVCENTER) {
 
             	/* Center the text vertically. Text may overlap rect */
-                sizerect.y = ((rect -> h - sizerect.h) / 2);
+                sizerect.y += ((rect -> h - sizerect.h) / 2);
 
             }
 
@@ -1410,6 +1407,7 @@ void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int info)
     SDLGLSTR_STYLE *style = &ActualStyle;
     unsigned char *textcolor, *hotkeycolor;
     int arrownum, arrowflag;
+    int save_color;
 
 
     if (info & SDLGLSTR_FHIGHLIGHT) {
@@ -1425,10 +1423,9 @@ void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int info)
 
     }
 
-
     memcpy(&sizerect ,rect, sizeof(SDLGL_RECT));  /* Hold copy for later use */
     ActFont = SDLGLSTR_FONT8;
-
+    
     switch(which) {
 
     	case SDLGLSTR_PUSHBUTTON:
@@ -1456,8 +1453,10 @@ void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int info)
 
             }
 
+            save_color = ActColor;
             ActColor = SDLGLSTR_COL_BLACK;
             sdlglstrChar(rect, *pbc);
+            ActColor = save_color;
 
             /* 3: Draw the name of this special field, may be highlighted */
             ActFont = style -> fontno;
@@ -1487,7 +1486,19 @@ void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int info)
         case SDLGLSTR_EMPTYBUTTON:
             sdlglstrDrawButton(rect, 0, 0);
             break;
-
+        
+        case SDLGLSTR_SLI_AU:   /* Arrow up                     */
+        case SDLGLSTR_SLI_AD:   /* Arrow Down                   */
+        case SDLGLSTR_SLI_AL:   /* Arrow left                   */
+        case SDLGLSTR_SLI_AR:   /* Arrow right                  */ 
+            /* 1: Draw the button */
+            sdlglstrDrawButton(rect, 0, 0);
+            sizerect.x = (rect -> w - 8) / 2;
+            sizerect.y = (rect -> h - 8) / 2;
+            /* 2. Draw the arrow in chosen direction */
+            ActColor = SDLGLSTR_COL_BLACK;
+            sdlglstrChar(&sizerect, buttonchars[6 + (which - SDLGLSTR_SLI_AU)]);
+            break;
         case SDLGLSTR_SCROLLBUTTON:
 
             /* 1: Draw the button */

@@ -59,12 +59,16 @@
 #define SDLGLSTR_RADIOBUTTON    2
 #define SDLGLSTR_RBGROUP	    3
 #define SDLGLSTR_SCROLLBUTTON   4
-#define SDLGLSTR_SCROLLBK	    5	/* Background of a scroll bar  */
+#define SDLGLSTR_SCROLLBK	    5	/* Background of a scroll bar   */
 #define SDLGLSTR_GROUPRECT	    6
-#define SDLGLSTR_SELECTBOX	    7	/* Box with a black background */
-#define SDLGLSTR_RECTANGLE	    8	/*Draw a simple rectangle      */
-#define SDLGLSTR_PROGRESSBAR    9   /* Draw a progressbar          */
+#define SDLGLSTR_SELECTBOX	    7	/* Box with a black background  */
+#define SDLGLSTR_RECTANGLE	    8	/*Draw a simple rectangle       */
+#define SDLGLSTR_PROGRESSBAR    9   /* Draw a progressbar           */
 #define SDLGLSTR_EMPTYBUTTON   10 
+#define SDLGLSTR_SLI_AU        11   /* Arrow up                     */
+#define SDLGLSTR_SLI_AD        12   /* Arrow Down                   */ 
+#define SDLGLSTR_SLI_AL        13   /* Arrow left                   */
+#define SDLGLSTR_SLI_AR        14   /* Arrow right                  */   
 
 /* Flags for drawing routines */
 #define SDLGLSTR_FINVISIBLE   0x80000000    /* Is invisible                 */

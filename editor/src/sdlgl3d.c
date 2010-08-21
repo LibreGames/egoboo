@@ -3,7 +3,7 @@
 *      - Structs and functions for handling a 3D - View with Z-Axis up         *
 *                                                                              *
 *   SDLGL - Library                                                            *
-*      Copyright (c)2004-201 Paul Mueller <pmtech@swissonline.ch>              *
+*      Copyright (c)2004-2010 Paul Mueller <pmtech@swissonline.ch>             *
 *                                                                              *
 *  This program is free software; you can redistribute it and/or modify        *
 *  it under the terms of the GNU General Public License as published by        *
@@ -635,17 +635,17 @@ void sdlgl3dManageCamera(int camera_no, char move_cmd, char move_dir)
 void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z, int relative)
 {
 
-    float diff_x, diff_y, cameradist;
+    float cameradist;
    
     
     if (relative) {        
-        diff_x = x - Camera[camera_no].campos.pos[0];
-        diff_y = y - Camera[camera_no].campos.pos[1];
-        cameradist = Camera[camera_no].cameradist / 10;
+        cameradist = Camera[camera_no].cameradist;
         /* Calculate now position for camera */
-        Camera[camera_no].campos.pos[0] += cameradist * diff_x;
-        Camera[camera_no].campos.pos[1] += cameradist * diff_y;
-        /* TODO: Adjust direction, adjust distance */
+        Camera[camera_no].campos.pos[0] = x;
+        Camera[camera_no].campos.pos[1] = y;
+        /* TODO: Move back 'cameradist' from chosen position */
+        Camera[camera_no].campos.pos[0] -= Camera[camera_no].campos.direction[0] * cameradist;
+        Camera[camera_no].campos.pos[1] -= Camera[camera_no].campos.direction[1] * cameradist;
 
     }
     else {

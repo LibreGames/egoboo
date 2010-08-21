@@ -40,7 +40,8 @@
 #define EDITMAIN_NEWSOLIDMAP 2
 #define EDITMAIN_LOADMAP     3
 #define EDITMAIN_SAVEMAP     4
-#define EDITMAIN_ROTFAN      5      /* Rotates the actual chosen fan if browsing */ 
+#define EDITMAIN_ROTFAN      5      /* Rotates the actual chosen fan if browsing        */ 
+#define EDITMAIN_UPDATEFAN   6      /* Does an update on the actual fan from 'new_fan'  */
 
 /* ---------- Edit-Flags -------- */
 #define EDITMAIN_SHOW2DMAP 0x01         /* Display the 2DMap        */
@@ -64,19 +65,18 @@
 
 typedef struct {
 
-    int fan_chosen;         /* Actual chosen fan for editing    */
-    int tile_x, tile_y;     /* Position of fan as x/y on map    */
-    char display_flags;     /* For display in main editor       */
-    char draw_mode;         /* For copy into mesh - struct      */
-    char brush_size;        /* From 'cartman'  0-3, (slider)    */    
-    char brush_amount;      /* From 'cartman' -50,  50 (slider) */    
-    FANDATA_T act_ft;       /* Actual fan type chosen           */
-    char new_fan_dir;       /* Direction of new fan             */
-    int  new_fan_no;        /* Number of new fan                */
-    FANDATA_T new_ft;       /* New fan type to place on map     */
-                            /* tx_flags: dir' of fan-type       */ 
-    COMMAND_T new_fd;       /* Extent data for new fan          */
-    char msg[256];          /* Possible message from editor     */
+    int  fan_chosen;    /* Actual chosen fan for info or editing */
+    int  tx, ty;        /* Position of fan as x/y on map    */
+    char display_flags; /* For display in main editor       */
+    char draw_mode;     /* For copy into mesh - struct      */
+    char brush_size;    /* From 'cartman'  0-3, (slider)    */    
+    char brush_amount;  /* From 'cartman' -50,  50 (slider) */    
+    char bft_type;      /* Fantype for 'browsing            */
+    char fan_dir;       /* Direction of new fan             */
+    int  fan_no;        /* Number of new fan                */
+    FANDATA_T ft;       /* Copy of type of chosen fan       */ 
+    COMMAND_T fd;       /* Extent data for new fan (bt_type)*/
+    char msg[256];      /* Possible message from editor     */
 
 } EDITMAIN_STATE_T;
 
@@ -128,7 +128,7 @@ void editmainChooseFan(int cx, int cy, int w, int h);
 char *editmainFanTypeName(int type_no);
 void editmainChooseFanType(int dir, char *fan_name);
 int  editmainSetSimple(int fan_no, int is_floor);
-void editmain2DTex(int x, int y, int w, int h, FANDATA_T *ft);
+void editmain2DTex(int x, int y, int w, int h);
 int  editmainFanSet(char edit_state, char is_floor);
 
 #endif /* _EDITMAIN_H_	*/

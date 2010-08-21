@@ -240,7 +240,7 @@ static int editmainFanAdd(MESH_T *mesh, int fan, int x, int y, int zadd)
     int vertex;
 
 
-    ft = &pCommands[mesh -> fan[fan].type];
+    ft = &pCommands[mesh -> fan[fan].type & 0x1F];
 
     if (mesh -> numfreevert >= ft -> numvertices)
     {
@@ -273,7 +273,7 @@ static int editmainFanAdd(MESH_T *mesh, int fan, int x, int y, int zadd)
  *     editmainDoFanUpdate
  * Description:
  *     This function updates the fan at given 'fan 'with the
- *     info in 'new_ft'.
+ *     info in 'EditState.ft'.
  *     If the type has changed, the vertice data is updated.
  * Input:
  *     mesh *:       Pointer on mesh to handle
@@ -285,33 +285,34 @@ static int editmainFanAdd(MESH_T *mesh, int fan, int x, int y, int zadd)
 static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int tx, int ty)
 {
 
-    COMMAND_T *act_ft;
-    FANDATA_T *act_fan;
+    COMMAND_T *act_fd;
+    FANDATA_T *act_ft;
     int cnt;
-    int vrt_diff, vertex, vrt_size;
-    int *first_vtx;
+    int vrt_diff, vrt_size;
+    int src_vtx, dst_vtx;
+    int vertex;
+    
 
-
-    act_fan = &mesh -> fan[edit_state -> fan_chosen];
-    act_ft  = &pCommands[act_fan -> type];
+    act_ft = &mesh -> fan[edit_state -> fan_chosen];
+    act_fd = &pCommands[act_ft -> type];
 
     /* Do an update on the 'static' data of the fan */
-    act_fan -> tx_no    = edit_state -> new_ft.tx_no;
-    act_fan -> tx_flags = edit_state -> new_ft.tx_flags;
-    act_fan -> fx       = edit_state -> new_ft.fx;
+    act_ft -> tx_no    = edit_state -> ft.tx_no;
+    act_ft -> tx_flags = edit_state -> ft.tx_flags;
+    act_ft -> fx       = edit_state -> ft.fx;
 
-    if (act_fan -> type == edit_state -> new_ft.type) {
+    if (act_ft -> type == edit_state -> ft.type) {
 
         return 1;       /* No vertices to change */
 
     }
 
-    vrt_diff = edit_state -> new_fd.numvertices - act_ft -> numvertices;
+    vrt_diff = edit_state -> fd.numvertices - act_fd -> numvertices;
 
     if (0 == vrt_diff) {
         /* Same number of vertices, only overwrite is needed */
         /* Set the new type of fan */
-        act_fan -> type = edit_state -> new_ft.type;
+        act_ft -> type = edit_state -> ft.type;
 
     }
     else {
@@ -325,47 +326,31 @@ static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int t
 
         }
         /* Set the new type of fan */
-        act_fan -> type = edit_state -> new_ft.type;
+        act_ft -> type = edit_state -> ft.type;
 
-        vertex    = mesh -> vrtstart[edit_state -> fan_chosen]; /* Number of first vertex   */
-        vrt_size  = (mesh -> numvert - vertex) * sizeof(int);   /* Number of vertices to copy */
-
-        mesh -> numfreevert -= vrt_diff;        /* Add/remove vertices */
+        /* Copy from start vertex of next fan */
+        src_vtx = mesh -> vrtstart[edit_state -> fan_chosen] + act_fd -> numvertices;
+        dst_vtx = mesh -> vrtstart[edit_state -> fan_chosen] + edit_state -> fd.numvertices;
+        /* Number of vertices to copy */
+        vrt_size = (mesh -> numvert - src_vtx) * sizeof(int);
+        /* Add/remove vertices -- update it's numbers */
+        mesh -> numfreevert -= vrt_diff;
         mesh -> numvert     += vrt_diff;
-
-        if (vrt_diff > 0) {
-            /* Insert space for this vertices */
-            first_vtx = &mesh -> vrtx[vertex];
-            memmove(&first_vtx[vrt_diff], first_vtx, vrt_size);
-            first_vtx = &mesh -> vrty[vertex];
-            memmove(&first_vtx[vrt_diff], first_vtx, vrt_size);
-            first_vtx = &mesh -> vrtz[vertex];
-            memmove(&first_vtx[vrt_diff], first_vtx, vrt_size);
-
-       }
-       else {
-
-            vrt_diff = -vrt_diff;           /* Change sign  */
-
-            /* Now for X/Y and Z                            */
-            first_vtx = &mesh -> vrtx[vertex];
-            memmove(first_vtx, &first_vtx[vrt_diff], vrt_size);
-            first_vtx = &mesh -> vrty[vertex];
-            memmove(first_vtx, &first_vtx[vrt_diff], vrt_size);
-            first_vtx = &mesh -> vrtz[vertex];
-            memmove(first_vtx, &first_vtx[vrt_diff], vrt_size);
-
-       }
+        /* Now, clear space or new vertices or remove superfluos vertices */
+        /* dest, src, size */
+        memmove(&mesh -> vrtx[dst_vtx], &mesh -> vrtx[src_vtx], vrt_size);
+        memmove(&mesh -> vrty[dst_vtx], &mesh -> vrty[src_vtx], vrt_size);
+        memmove(&mesh -> vrtz[dst_vtx], &mesh -> vrtz[src_vtx], vrt_size);
 
     }
 
     /* Fill in the vertex values from type definition */
     vertex = mesh -> vrtstart[edit_state -> fan_chosen];
-    for (cnt = 0; cnt < edit_state -> new_fd.numvertices; cnt++) {
+    for (cnt = 0; cnt < edit_state -> fd.numvertices; cnt++) {
         /* Replace actual values by new values */
-        mesh -> vrtx[vertex] = tx + edit_state -> new_fd.vtx[cnt].x;
-        mesh -> vrty[vertex] = ty + edit_state -> new_fd.vtx[cnt].y;
-        mesh -> vrtz[vertex] = edit_state -> new_fd.vtx[cnt].z;
+        mesh -> vrtx[vertex] = tx + edit_state -> fd.vtx[cnt].x;
+        mesh -> vrty[vertex] = ty + edit_state -> fd.vtx[cnt].y;
+        mesh -> vrtz[vertex] = edit_state -> fd.vtx[cnt].z;
         vertex++;
     }
 
@@ -373,7 +358,7 @@ static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int t
     if (vrt_diff != 0) {
         editmainSetFanStart(mesh);
     }
-    
+
     return 1;
 
 }
@@ -471,8 +456,8 @@ static int editmainSetFanSimple(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int 
 
     check_flags |= (check_flags >> 8);      /* Dupe it for end of radius */
 
-    base_x = edit_state -> tile_x * EDITMAIN_TILEDIV;
-    base_y = edit_state -> tile_y * EDITMAIN_TILEDIV;
+    base_x = edit_state -> tx * EDITMAIN_TILEDIV;
+    base_y = edit_state -> ty * EDITMAIN_TILEDIV;
 
     if (is_floor) {
 
@@ -482,8 +467,8 @@ static int editmainSetFanSimple(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int 
         }
 
         /* Change me to floor, set the fan-description  */
-        memcpy(&edit_state -> new_ft, &PresetTiles[EDITMAIN_PRESET_FLOOR], sizeof(FANDATA_T));
-        memcpy(&edit_state -> new_fd, &pCommands[edit_state -> new_ft.type], sizeof(COMMAND_T));
+        memcpy(&edit_state -> ft, &PresetTiles[EDITMAIN_PRESET_FLOOR], sizeof(FANDATA_T));
+        memcpy(&edit_state -> fd, &pCommands[edit_state -> ft.type], sizeof(COMMAND_T));
 
         editmainDoFanUpdate(mesh, edit_state, base_x, base_y);
 
@@ -493,17 +478,17 @@ static int editmainSetFanSimple(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int 
 
             for (i = 0; i < 3; i++) {
                 /* Set all adjacent fields according to lookup-table */
-                edit_state -> new_fan_no = adjacent[dir + i];
-                if (edit_state -> new_fan_no >= 0) {
+                edit_state -> fan_no = adjacent[dir + i];
+                if (edit_state -> fan_no >= 0) {
 
                     shape_no = LutFloor[lut_idx].adj_shapes[i];
                     rotdir   = LutFloor[lut_idx].adj_rotdir[i];
 
                     if (shape_no >= 0) {
-                        memcpy(&edit_state -> new_ft, &PresetTiles[shape_no], sizeof(FANDATA_T));
+                        memcpy(&edit_state -> ft, &PresetTiles[shape_no], sizeof(FANDATA_T));
                         /* Rotate and the set the shape */
-                        editmainFanTypeRotate(edit_state -> new_ft.type,
-                                              &edit_state -> new_fd,
+                        editmainFanTypeRotate(edit_state -> ft.type,
+                                              &edit_state -> fd,
                                               rotdir);
                         editmainDoFanUpdate(mesh,
                                             edit_state,
@@ -529,12 +514,12 @@ static int editmainSetFanSimple(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int 
         shape_no = LutWall[lut_idx].center_shape;
         rotdir   = LutWall[lut_idx].center_rotdir;
 
-        memcpy(&edit_state -> new_ft, &PresetTiles[shape_no], sizeof(FANDATA_T));
+        memcpy(&edit_state -> ft, &PresetTiles[shape_no], sizeof(FANDATA_T));
         /* Rotate and the set the shape */
-        editmainFanTypeRotate(edit_state -> new_ft.type,
-                              &edit_state -> new_fd,
+        editmainFanTypeRotate(edit_state -> ft.type,
+                              &edit_state -> fd,
                               rotdir);
-        edit_state -> new_ft.type |= 0x20;    /* Walls have 'big' textures */
+        edit_state -> ft.type |= 0x20;    /* Walls have 'big' textures */
         editmainDoFanUpdate(mesh, edit_state, base_x, base_y);
 
         for (dir = 0; dir < 8; dir += 2, check_flags <<= 2) {
@@ -543,20 +528,20 @@ static int editmainSetFanSimple(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int 
 
             for (i = 0; i < 3; i++) {
                 /* Set all adjacent fields according to lookup-table */
-                edit_state -> new_fan_no = adjacent[dir + i];
-                if (edit_state -> new_fan_no >= 0) {
+                edit_state -> fan_no = adjacent[dir + i];
+                if (edit_state -> fan_no >= 0) {
 
                     shape_no = LutWall[lut_idx].adj_shapes[i];
                     rotdir   = LutWall[lut_idx].adj_rotdir[i];
 
                     if (shape_no >= 0) {
-                        memcpy(&edit_state -> new_ft, &PresetTiles[shape_no], sizeof(FANDATA_T));
+                        memcpy(&edit_state -> ft, &PresetTiles[shape_no], sizeof(FANDATA_T));
                         /* Rotate and the set the shape */
-                        editmainFanTypeRotate(edit_state -> new_ft.type,
-                                              &edit_state -> new_fd,
+                        editmainFanTypeRotate(edit_state -> ft.type,
+                                              &edit_state -> fd,
                                               rotdir);
                         /* Walls have 'big' textures */
-                        edit_state -> new_ft.type |= 0x20;
+                        edit_state -> ft.type |= 0x20;
                         editmainDoFanUpdate(mesh,
                                             edit_state,
                                             base_x + adj_xy[dir + i].x,
@@ -801,7 +786,7 @@ EDITMAIN_STATE_T *editmainInit(void)
 
     EditState.display_flags |= EDITMAIN_SHOW2DMAP;
     EditState.fan_chosen    = -1;   /* No fan chosen                        */
-    EditState.new_ft.type   = -1;   /* No fan-type chosen                   */    
+    EditState.ft.type       = -1;   /* No fan-type chosen                   */    
     EditState.brush_size    = 3;    /* Size of raise/lower terrain brush    */
     EditState.brush_amount  = 50;   /* Amount of raise/lower                */
 
@@ -846,10 +831,7 @@ int editmainMap(int command)
     switch(command) {
 
         case EDITMAIN_DRAWMAP:
-            editdraw3DView(&Mesh,
-                           EditState.fan_chosen,
-                           &EditState.new_ft,
-                           &EditState.new_fd);
+            editdraw3DView(&Mesh, EditState.fan_chosen, &EditState.ft, &EditState.fd);
             return 1;
 
         case EDITMAIN_NEWFLATMAP:
@@ -879,24 +861,30 @@ int editmainMap(int command)
 
         case EDITMAIN_ROTFAN:
             if (-1 != EditState.fan_chosen) {
-                EditState.new_fan_dir++;
-                EditState.new_fan_dir &= 0x03;
+                EditState.fan_dir++;
+                EditState.fan_dir &= 0x03;
 
-                editmainFanTypeRotate(EditState.new_ft.type,
-                                      &EditState.new_fd,
-                                      EditState.new_fan_dir);
+                editmainFanTypeRotate(EditState.bft_type,
+                                      &EditState.fd,
+                                      EditState.fan_dir);
                 /* Now translate the fan to chosen fan position */
-                x = EditState.tile_x * 128;
-                y = EditState.tile_y * 128;
+                x = EditState.tx * 128;
+                y = EditState.ty * 128;
 
-                for (cnt = 0; cnt < EditState.new_fd.numvertices; cnt++) {
-                    EditState.new_fd.vtx[cnt].x += x;
-                    EditState.new_fd.vtx[cnt].y += y;
+                for (cnt = 0; cnt < EditState.fd.numvertices; cnt++) {
+                    EditState.fd.vtx[cnt].x += x;
+                    EditState.fd.vtx[cnt].y += y;
                 }
 
             }
             return 1;
-
+            
+        case EDITMAIN_UPDATEFAN:
+            editmainDoFanUpdate(&Mesh,
+                                &EditState,
+                                EditState.tx * 128.0,
+                                EditState.ty * 128.0);
+            break;
 
     }
 
@@ -970,10 +958,10 @@ void editmainToggleFlag(int which, unsigned char flag)
                 /* Toggle it in chosen fan */
                 Mesh.fan[EditState.fan_chosen].fx ^= flag;
                 /* Now copy the actual state for display    */
-                EditState.act_ft.fx = Mesh.fan[EditState.fan_chosen].fx;
+                EditState.ft.fx = Mesh.fan[EditState.fan_chosen].fx;
             }
             else {
-                EditState.act_ft.fx = 0;
+                EditState.ft.fx = 0;
             }
             break;
 
@@ -981,7 +969,7 @@ void editmainToggleFlag(int which, unsigned char flag)
             if (EditState.fan_chosen >= 0) {
                 Mesh.fan[EditState.fan_chosen].tx_flags ^= flag;
                 /* And copy it for display */
-                EditState.act_ft.tx_flags = Mesh.fan[EditState.fan_chosen].tx_flags;
+                EditState.ft.tx_flags = Mesh.fan[EditState.fan_chosen].tx_flags;
             }
             break;
 
@@ -1006,22 +994,19 @@ void editmainChooseFan(int cx, int cy, int w, int h)
     
 
     /* Save it as x/y-position, too */
-    EditState.tile_x = Mesh.tiles_x * cx / w;
-    EditState.tile_y = Mesh.tiles_y * cy / h;
-    
-    fan_no = (EditState.tile_y * Mesh.tiles_x) + EditState.tile_x;
+    EditState.tx = Mesh.tiles_x * cx / w;
+    EditState.ty = Mesh.tiles_y * cy / h;
+
+    fan_no = (EditState.ty * Mesh.tiles_x) + EditState.tx;
     
     if (fan_no >= 0 && fan_no < Mesh.numfan) {
     
         EditState.fan_chosen = fan_no;
         /* And fill it into 'EditState' for display */
-        memcpy(&EditState.act_ft, &Mesh.fan[fan_no], sizeof(FANDATA_T));
+        memcpy(&EditState.ft, &Mesh.fan[fan_no], sizeof(FANDATA_T));
         
         /* And now set camera to move/look at this position */
-        sdlgl3dMoveToPosCamera(0,
-                               (EditState.tile_x * 128.0) - 128.0,
-                               (EditState.tile_y * 128.0) - 128.0,
-                               600.0, 0);
+        sdlgl3dMoveToPosCamera(0, EditState.tx * 128.0, EditState.ty * 128.0, 0, 1);
             
     }
  
@@ -1073,38 +1058,38 @@ void editmainChooseFanType(int dir, char *fan_name)
 
     if (dir == -2) {
         /* Reset browsing */
-        EditState.new_ft.type = -1;
+        EditState.bft_type = -1;
         fan_name[0] = 0;
         return;
     }
     else if (dir == 0) {
         /* Start browsing */
-        EditState.new_ft.type = 0;
+        EditState.bft_type = 0;
     }
     else if (dir == -1) {
-        if (EditState.new_ft.type > 0) {
-            EditState.new_ft.type--;
+        if (EditState.bft_type > 0) {
+            EditState.bft_type--;
         }
     }
     else {
-        if (EditState.new_ft.type < 30) {
-            EditState.new_ft.type++;
+        if (EditState.bft_type < 30) {
+            EditState.bft_type++;
         }
     }
 
-    EditState.new_ft.type &= 0x1F;    /* Be on the save side with MAXTYPES */
+    EditState.bft_type &= 0x1F;    /* Be on the save side with MAXTYPES */
 
-    memcpy(&EditState.new_fd, &pCommands[EditState.new_ft.type], sizeof(COMMAND_T));
+    memcpy(&EditState.fd, &pCommands[EditState.bft_type], sizeof(COMMAND_T));
     /* Now move it to the chosen position */
-    x = EditState.tile_x * 128;
-    y = EditState.tile_y * 128;
+    x = EditState.tx * 128;
+    y = EditState.ty * 128;
 
-    for (i = 0; i < EditState.new_fd.numvertices; i++) {
-        EditState.new_fd.vtx[i].x += x;
-        EditState.new_fd.vtx[i].y += y;
+    for (i = 0; i < EditState.fd.numvertices; i++) {
+        EditState.fd.vtx[i].x += x;
+        EditState.fd.vtx[i].y += y;
     }
 
-    sprintf(fan_name, "%s", editmainFanTypeName(EditState.new_ft.type));
+    sprintf(fan_name, "%s", editmainFanTypeName(EditState.bft_type));
 
 }
 
@@ -1113,18 +1098,18 @@ void editmainChooseFanType(int dir, char *fan_name)
  *     editmain2DTex
  * Description:
  *     Draws the texture and chosen texture-part of actual chosen fan
- *     into given rectangle.
+ *     into given rectangle. Uses data from EditState
  * Input:
  *     x, y, w, h: Rectangle to draw into
- *     ft *:       Pointer on fandata to use for drawing
- *     tx_no:      From fan
  */
-void editmain2DTex(int x, int y, int w, int h, FANDATA_T *ft)
+void editmain2DTex(int x, int y, int w, int h)
 {
 
     if (EditState.fan_chosen >= 0) {
 
-        editdraw2DTex(x, y, w, h, ft -> tx_no, ft -> type & COMMAND_TEXTUREHI_FLAG);
+        editdraw2DTex(x, y, w, h,
+                      EditState.ft.tx_no,
+                      EditState.ft.type & COMMAND_TEXTUREHI_FLAG);
         
     }
     
