@@ -302,7 +302,7 @@ void sdlglSetViewSize(int width, int height);
 /* ----------- Functions for dynamic input fields -------- */
 void sdlglInputSetFocus(SDLGL_FIELD *field, int dir);
 void sdlglInputRemove(char block_sign);
-void sdlglInputAdd(char block_sign, SDLGL_FIELD *psrc);
+void sdlglInputAdd(char block_sign, SDLGL_FIELD *psrc, int x, int y);
 
 /* Set up for C function definitions, even when using C++ */
 #ifdef __cplusplus

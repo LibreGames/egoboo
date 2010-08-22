@@ -212,20 +212,41 @@
 *******************************************************************************/
 
 /* ------ Movement of objects using the movement vector ---------- */
-#define SDLGL3D_MOVE_AHEAD     0x01    /* Straight                 */
-#define SDLGL3D_MOVE_STRAFE    0x02    /* Strafe                   */
-#define SDLGL3D_MOVE_VERTICAL  0x03    /* Z - Axis                 */
-#define SDLGL3D_MOVE_TURN      0x04    /* Turn left/right around Z */
-#define SDLGL3D_MOVE_3D        0x05    /* along movement Vector    */
+/*
+#define SDLGL3D_MOVE_AHEAD     0x01    
+#define SDLGL3D_MOVE_STRAFE    0x02    
+#define SDLGL3D_MOVE_VERTICAL  0x03    
+#define SDLGL3D_MOVE_TURN      0x04    
+#define SDLGL3D_MOVE_3D        0x05    
 #define SDLGL3D_MOVE_ROTX      0x06
 #define SDLGL3D_MOVE_ROTY      0x07
 #define SDLGL3D_MOVE_ROTZ      0x08
+*/
+#define SDLGL3D_MOVE_FORWARD	0x01	/* ------ Number of flag --- */
+#define SDLGL3D_MOVE_BACKWARD	0x02
+#define SDLGL3D_MOVE_LEFT	    0x03
+#define SDLGL3D_MOVE_RIGHT	    0x04
+#define SDLGL3D_MOVE_UP		    0x05
+#define SDLGL3D_MOVE_DOWN	    0x06
+#define SDLGL3D_MOVE_TURNLEFT	0x07    /* Z-Rotation               */
+#define SDLGL3D_MOVE_TURNRIGHT	0x08
+#define SDLGL3D_MOVE_3D		    0x09	/* Along movement-vector, for 'auto-move' eg. particles */
+#define SDLGL3D_MOVE_ROTX	    0x0A
+#define SDLGL3D_MOVE_ROTY	    0x0B
+    /* Camera commands */
+#define SDLGL3D_MOVE_ZOOMIN	    0x0C
+#define SDLGL3D_MOVE_ZOOMOUT	0x0D
+#define SDLGL3D_MOVE_CAMDIST	0x0E	/* Change distance to object attached to */
+#define SDLGL3D_MOVE_STOPMOVE   0x0F 
+#define SDLGL3D_MOVE_MAXCMD     0x0F
 
 /* ----- Camera behaviour ----- */
+/*
 #define SDLGL3D_CAMERA_ZOOM 0x10
 #define SDLGL3D_CAMERA_DIST 0x11
-#define SDLGL3D_CAMERA_TURN 0x12  /* If 3rd-person-camera */
-#define SDLGL3D_CAMERA_VERT 0x13  /* If 3rd-person-camera */  
+#define SDLGL3D_CAMERA_TURN 0x12  // If 3rd-person-camera
+#define SDLGL3D_CAMERA_VERT 0x13  // If 3rd-person-camera  
+*/
 
 
 /* ----- Camera types ------- */
@@ -269,9 +290,7 @@ typedef struct SDLGL3D_OBJECT_TYPE {
     SDLGL3D_VECTOR pos;        /* Position                             */
     SDLGL3D_VECTOR direction;  /* Actual direction, unit vector        */
     SDLGL3D_VECTOR rot;        /* Rotation angles                      */
-    int     move_cmd_bits;     /* Multiple movements at same time      */  
-    char    move_cmd;          /* Kind of movement of this one         */  
-    char    move_dir;          /* Direction prefix                     */  
+    int     move_cmd;          /* Commands for movement (combined)     */  
     float   speed;             /* Ahead speed in units/second          */
     float   zspeed;            /* Z-Movement: -towards bottom          */
                                /*             +towards ceiling         */
@@ -294,9 +313,9 @@ void sdlgl3dInitCamera(int camera_no, int rotx, int roty, int rotz, float aspect
 void sdlgl3dBindCamera(int camera_no, float x, float y, float x2, float y2); 
 SDLGL3D_OBJECT *sdlgl3dGetCameraInfo(int camera_no, float *nx, float *ny, float *zmax);
 void sdlgl3dInitObject(SDLGL3D_OBJECT *moveobj);
-void sdlgl3dManageCamera(int camera_no, char move_cmd, char move_dir);
+void sdlgl3dManageCamera(int camera_no, char move_cmd, char set);
 void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z, int relative);
-void sdlgl3dManageObject(int obj_no, char move_cmd, char move_dir);
+void sdlgl3dManageObject(int obj_no, char move_cmd, char set);
 void sdlgl3dMoveObjects(float secondspassed);
 /* TODO:
     --- List of objects for drawing by caller, sorted from farest to nearest ---

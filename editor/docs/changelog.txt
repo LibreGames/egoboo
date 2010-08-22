@@ -1,3 +1,8 @@
+2010-08-22 <bitnapper>
+- Some code cleanup, preparation for input dialogs
+- Camera now supports combined keys
+- Additional data for map dialog
+
 2010-08-21 <bitnapper>
 - Update of fan dialog
 - Streamlined and extended the map-edit commands

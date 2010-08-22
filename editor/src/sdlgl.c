@@ -21,11 +21,7 @@
 *   You should have received a copy of the GNU General Public License          *
 *   along with this program; if not, write to the Free Software                *
 *   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. *
-*                                                                              *
-*                                                                              *
-* Last change: 2010-08-01                                                      *
 *******************************************************************************/
-
 
 /******************************************************************************
 * INCLUDES                                                                    *
@@ -1754,11 +1750,14 @@ void sdlglInputRemove(char block_sign)
  * Input:
  *     block_sign: To set, replaces possible existing block
  *     psrc *:     Fields to add to Input-Fields.
+ *     x, y:       Start at this position on screen (add to given pos)
+ *                 (< 0: center it) 
  */
-void sdlglInputAdd(char block_sign, SDLGL_FIELD *psrc)
+void sdlglInputAdd(char block_sign, SDLGL_FIELD *psrc, int x, int y)
 {
 
     SDLGL_FIELD *pdest, *pend;
+    SDLGL_RECT center_pos;
     int num_act, num_src, num_total;
 
 
@@ -1789,12 +1788,23 @@ void sdlglInputAdd(char block_sign, SDLGL_FIELD *psrc)
 
     /* 6) Copy the fields, if there's enough space  */
     if ((num_total - num_act) >= num_src) {
+            
+        sdlglAdjustRectToScreen(&psrc -> rect, &center_pos, SDLGL_FRECT_SCRCENTER);
+        if (x < 0) {
+            x = center_pos.x;
+        }
+        if (y < 0) {
+            y = center_pos.y;
+        }
     
-        pend = sdlglIFindTypeInAreas(0, pdest);
-        
+        pend = sdlglIFindTypeInAreas(0, pdest);           
+                 
         while(psrc -> sdlgl_type != 0) {
 
             memcpy(pend, psrc,  sizeof(SDLGL_FIELD));
+            /* Adjust x,y, if needed */
+            pend -> rect.x += x;    
+            pend -> rect.y += y;
             /* Set block_sign' for handling 'remove' */
             pend -> block_sign = block_sign;
             pend++;

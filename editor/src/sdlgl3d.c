@@ -249,42 +249,48 @@ static void sdlgl3dIMoveAttachedCamera(SDLGL3D_CAMERA *camera)
  * Input:
  *      moveobj *:     Pointer on object to move. If NULL, move camera
  *      secondspassed: Seconds passed since last call
+ *      move_cmd:      Command to execute
  */
-static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, float secondspassed)
+static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, char move_cmd, float secondspassed)
 {
 
     float speed;
+    char  move_dir;
 
 
-    switch(moveobj -> move_cmd) {
+    /* Allways presume its a positive direction */
+    move_dir = +1;
+    switch(move_cmd) {
 
-        case SDLGL3D_MOVE_AHEAD:
-            speed = moveobj -> speed * moveobj -> move_dir;
+        case SDLGL3D_MOVE_BACKWARD:
+            move_dir = -1;
+        case SDLGL3D_MOVE_FORWARD:        
+            speed = moveobj -> speed * move_dir;
             /* Only in x/y plane */
             moveobj -> pos[0] += (moveobj -> direction[0] * speed * secondspassed);
             moveobj -> pos[1] += (moveobj -> direction[1] * speed * secondspassed);
             break;
 
-        case SDLGL3D_MOVE_STRAFE:  /* SDLGL3D_MOVE_STRAFE: */
-            speed = moveobj -> speed * moveobj -> move_dir;
+        case SDLGL3D_MOVE_LEFT:
+            move_dir = -1;
+        case SDLGL3D_MOVE_RIGHT:
+            speed = moveobj -> speed * move_dir;
             /* Only in x/y plane */
             moveobj -> pos[0] -= (moveobj -> direction[1] * speed * secondspassed);
             moveobj -> pos[1] += (moveobj -> direction[0] * speed * secondspassed);
             break;
 
-        case SDLGL3D_MOVE_3D:
-            moveobj -> pos[0] += (moveobj -> direction[0] * moveobj -> speed * secondspassed);
-            moveobj -> pos[1] += (moveobj -> direction[1] * moveobj -> speed * secondspassed);
-            moveobj -> pos[SDLGL3D_Z] += (moveobj -> zspeed * secondspassed);
-            break;
-
-        case SDLGL3D_MOVE_VERTICAL:
-            speed = moveobj -> zspeed * moveobj -> move_dir;
+        case SDLGL3D_MOVE_DOWN:
+            move_dir = -1;
+        case SDLGL3D_MOVE_UP:
+            speed = moveobj -> zspeed * move_dir;
             moveobj -> pos[SDLGL3D_Z] += (speed * secondspassed);
             break;
 
-        case SDLGL3D_MOVE_TURN:
-            speed = moveobj -> turnvel * moveobj -> move_dir;
+        case SDLGL3D_MOVE_TURNLEFT:
+            move_dir = -1;
+        case SDLGL3D_MOVE_TURNRIGHT:
+            speed = moveobj -> turnvel * move_dir;
             /* Clockwise */
             moveobj -> rot[SDLGL3D_Z] -= (speed * secondspassed);
             if (moveobj -> rot[SDLGL3D_Z] < 0.0 ) {
@@ -301,9 +307,15 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, float secondspassed)
             moveobj -> direction[0] = sin(DEG2RAD(moveobj -> rot[SDLGL3D_Z]));
             moveobj -> direction[1] = cos(DEG2RAD(moveobj -> rot[SDLGL3D_Z]));
             break;
+            
+        case SDLGL3D_MOVE_3D:
+            moveobj -> pos[0] += (moveobj -> direction[0] * moveobj -> speed * secondspassed);
+            moveobj -> pos[1] += (moveobj -> direction[1] * moveobj -> speed * secondspassed);
+            moveobj -> pos[SDLGL3D_Z] += (moveobj -> zspeed * secondspassed);
+            break;
 
         case SDLGL3D_MOVE_ROTX:
-            speed = moveobj -> turnvel * moveobj -> move_dir;
+            speed = moveobj -> turnvel * move_dir;
 
             moveobj -> rot[0] += (speed * secondspassed);      /* Clockwise */
             if (moveobj -> rot[0] > 360.0) {
@@ -319,7 +331,7 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, float secondspassed)
             break;
 
         case SDLGL3D_MOVE_ROTY:
-            speed = moveobj -> turnvel * moveobj -> move_dir;
+            speed = moveobj -> turnvel * move_dir;
 
             moveobj -> rot[1] += (speed * secondspassed);      /* Clockwise */
             if (moveobj -> rot[1] > 360.0) {
@@ -334,24 +346,22 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, float secondspassed)
             }
             break;
 
-        case SDLGL3D_CAMERA_ZOOM:
-            speed = (5.0 * secondspassed);
-            if (moveobj -> move_dir > 0) {
-                /* Zoom in: Reduce size of view */
-                Camera[0].viewwidth  -= speed;
-                if (Camera[0].viewwidth < SDLGL3D_I_VIEWMINWIDTH) {
+        case SDLGL3D_MOVE_ZOOMOUT:
+            Camera[0].viewwidth  += (5.0 * secondspassed);
+            /* TODO: Set a maximum for zoom out */
+            break;   
+        case SDLGL3D_MOVE_ZOOMIN:
+            /* Zoom in: Reduce size of view */
+            Camera[0].viewwidth  -= (5.0 * secondspassed);
+            if (Camera[0].viewwidth < SDLGL3D_I_VIEWMINWIDTH) {
 
-                    Camera[0].viewwidth = SDLGL3D_I_VIEWMINWIDTH;
-
-                }
-
-            }
-            else if (moveobj -> move_dir < 0) {
-
-                Camera[0].viewwidth  += speed;
-                /* TODO: Set maximum */
+                Camera[0].viewwidth = SDLGL3D_I_VIEWMINWIDTH;
 
             }
+            break;
+        
+        case SDLGL3D_MOVE_CAMDIST:
+            /* TODO: This one */
             break;
 
     }
@@ -575,7 +585,7 @@ SDLGL3D_OBJECT *sdlgl3dGetCameraInfo(int camera_no, float *nx, float *ny, float 
     for (i = 0; i < 3; i++) {
         /* Return frustum normals */
         nx[i] = Camera[camera_no].nx[i]; 
-        ny[i] = Camera[camera_no].ny[i]; 
+        ny[i] = Camera[camera_no].ny[i];
         
     }
     
@@ -612,13 +622,27 @@ void sdlgl3dInitObject(SDLGL3D_OBJECT *moveobj)
  * Input:
  *      camera_no: Number of camera to manage
  *      move_cmd:  Kind of movement
- *      move_dir:  Prefix additional to movement code
+ *      set:       Set it, yes no
  */
-void sdlgl3dManageCamera(int camera_no, char move_cmd, char move_dir)
+void sdlgl3dManageCamera(int camera_no, char move_cmd, char set)
 {
 
-    Camera[camera_no].campos.move_cmd = move_cmd;
-    Camera[camera_no].campos.move_dir = move_dir;
+    int flag;
+
+
+    if (move_cmd == SDLGL3D_MOVE_STOPMOVE) {
+        /* Stop all movement */
+        Camera[camera_no].campos.move_cmd = 0;
+        return;
+    }
+
+    flag = (1 << move_cmd);
+    if (set) {
+        Camera[camera_no].campos.move_cmd |= flag;
+    }
+    else {
+        Camera[camera_no].campos.move_cmd &= ~flag;
+    }
 
 }
 
@@ -636,8 +660,8 @@ void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z, int relati
 {
 
     float cameradist;
-   
-    
+
+
     if (relative) {        
         cameradist = Camera[camera_no].cameradist;
         /* Calculate now position for camera */
@@ -666,16 +690,29 @@ void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z, int relati
  * Input:
  *      object_no: Number of object to manage
  *      move_cmd:  Kind of movement
- *      move_dir:  Prefix additional to movement code
+ *      set:       Set Command yes/no
  */
-void sdlgl3dManageObject(int object_no, char move_cmd, char move_dir)
+void sdlgl3dManageObject(int object_no, char move_cmd, char set)
 {
+
+    int flag;
+
 
     if (object_no > 0) {
 
-        /* Manage this object. Set commands */
-        Object_List[object_no].move_cmd = move_cmd;
-        Object_List[object_no].move_dir = move_dir;
+        if (move_cmd == SDLGL3D_MOVE_STOPMOVE) {
+            /* Stop all movement */
+           Object_List[object_no].move_cmd = 0;
+           return;
+        }
+        /* Manage this object. Set command */
+        flag = (1 << move_cmd);
+        if (set) {
+            Object_List[object_no].move_cmd |= flag;
+        }
+        else {
+            Object_List[object_no].move_cmd &= ~flag;
+        }
 
     }
 
@@ -695,6 +732,8 @@ void sdlgl3dMoveObjects(float secondspassed)
 {
 
     SDLGL3D_OBJECT *objects;
+    int  flags;
+    char move_cmd;
 
 
     objects = Object_List;
@@ -703,7 +742,15 @@ void sdlgl3dMoveObjects(float secondspassed)
 
         if (objects -> move_cmd) {
 
-            sdlgl3dIMoveSingleObj(objects, secondspassed);
+            for (move_cmd = 1, flags = 0x02; move_cmd < SDLGL3D_MOVE_MAXCMD; move_cmd++, flags <<= 1) {
+
+                if (flags & objects -> move_cmd) {
+                    /* Move command is active */
+                    sdlgl3dIMoveSingleObj(objects, move_cmd, secondspassed);
+
+                }
+
+            }
 
         }
 
@@ -711,10 +758,19 @@ void sdlgl3dMoveObjects(float secondspassed)
 
     }
 
+    /* TODO: Move each camera which is active -- Add an 'active'-flag*/
     if (Camera[0].campos.move_cmd > 0) {
 
         /* FIXME: Take into account if camera is 'attached' as 3rd-Person camera */
-        sdlgl3dIMoveSingleObj(&Camera[0].campos, secondspassed);
+        for (move_cmd = 1, flags = 0x02; move_cmd < SDLGL3D_MOVE_MAXCMD; move_cmd++, flags <<= 1) {
+
+            if (flags & Camera[0].campos.move_cmd) {
+                /* Move command is active */  
+                sdlgl3dIMoveSingleObj(&Camera[0].campos, move_cmd, secondspassed);
+
+            }
+
+        }
 
         /* If the camera was moved, set the frustum normals... */
         sdlgl3dSetupFrustumNormals(&Camera[0], SDLGL3D_CAMERA_FOV);
