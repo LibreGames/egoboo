@@ -139,7 +139,7 @@ typedef struct {
                             /* tx_no & 0x3F:     Number of part of texture  */ 
     unsigned char tx_flags; /* Special flags                                */
     unsigned char fx;		/* Tile special effects flags                   */
-    char type;              /* Tile fan type (COMMAND_T)   			        */
+    char type;              /* Tile fan type (index into COMMAND_T)         */
 
 } FANDATA_T;
 
@@ -154,18 +154,17 @@ typedef struct {
 typedef struct {
 
     unsigned char map_loaded;   // A map is loaded  into this struct
-    unsigned char draw_mode;    // Flags for display of map, replaces 'wireframe'
+    unsigned char draw_mode;    // Flags for display of map
     
-    int numvert;        // Number of vertices in map
-    int numfreevert;    // Number of free vertices for edit
-    int tiles_x;        // Size of mesh in tiles
-    int tiles_y;        //
-    int numfan;
-    int watershift;     // Depends on size of map
+    int numvert;                // Number of vertices in map
+    int numfreevert;            // Number of free vertices for edit
+    int tiles_x, tiles_y;       // Size of mesh in tiles          
+    int numfan;                 // Size of map in 'fans' (tiles_x * tiles_y)
+    int watershift;             // Depends on size of map
 
-    float edgex;        // Borders of mesh
-    float edgey;        //
-    float edgez;        //
+    float edgex;                // Borders of mesh
+    float edgey;                
+    float edgez;                
 
     FANDATA_T fan[MAXMESHFAN];                  // Fan desription            
     unsigned char twist[MAXMESHFAN];            // Surface normal

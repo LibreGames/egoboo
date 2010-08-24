@@ -31,6 +31,7 @@
 #include "editor.h"             /* Global needed definitions    */
 #include "editfile.h"           /* Load and save map files      */
 #include "editdraw.h"           /* Draw anything                */
+#include "wallmake.h"           /* Create walls/floors simple   */
 
 
 #include "editmain.h"           /* My own header                */
@@ -156,6 +157,7 @@ static EDITMAIN_XY AdjacentXY[8] = {
  *     The list starts from North', clockwise.  
  * Input:
  *     mesh*:      Pointer on mesh with info about map size
+ *     fan:        To find the adjacent tiles for  
  *     adjacent *: Where to return the list of fan-positions 
  * Output: 
  *     Number of adjacent tiles 
@@ -1045,9 +1047,8 @@ char *editmainFanTypeName(int type_no)
  *     Chooses a fan type and sets it for display.
  *     TODO: Ignore 'empty' fan types
  * Input:
- *     type_no:    Number of fan type  (-2: Switch off, 0: Switch on)
- *     direction:  != 0: Browsing direction trough list...
- *     fan_name *: Where to print hte name of chosen fan
+ *     dir:       Direction to browse trough list
+ *     fan_name *: Where to print the name of chosen fan
  */
 void editmainChooseFanType(int dir, char *fan_name)
 {
@@ -1129,16 +1130,27 @@ void editmain2DTex(int x, int y, int w, int h)
 int editmainFanSet(char edit_state, char is_floor)
 {
 
+    int num_fan;
+    WALLMAKER_INFO_T wi[40];            /* List of fans to create */
+
+
     if (EditState.fan_chosen >= 0) {
-        
+
         if (edit_state == EDITMAIN_EDIT_NONE) {
             /* Do nothing, is view-mode */
             return 1;
         }
         else if (edit_state == EDITMAIN_EDIT_SIMPLE) {
- 
+
+            num_fan = wallmakeMakeTile(&Mesh,
+                                       EditState.fan_chosen,
+                                       is_floor,
+                                       wi);
+            return num_fan;
+            /*
             return editmainSetFanSimple(&Mesh, &EditState, is_floor);
-                                        
+            */
+
         }
         else if (edit_state == EDITMAIN_EDIT_FULL) {
             /* Do 'simple' editing */

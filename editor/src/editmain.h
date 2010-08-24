@@ -71,7 +71,7 @@ typedef struct {
     char draw_mode;     /* For copy into mesh - struct      */
     char brush_size;    /* From 'cartman'  0-3, (slider)    */    
     char brush_amount;  /* From 'cartman' -50,  50 (slider) */    
-    char bft_type;      /* Fantype for 'browsing            */
+    char bft_type;      /* Fantype for 'browsing'           */
     char fan_dir;       /* Direction of new fan             */
     int  fan_no;        /* Number of new fan                */
     FANDATA_T ft;       /* Copy of type of chosen fan       */ 

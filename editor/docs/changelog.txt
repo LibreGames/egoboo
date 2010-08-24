@@ -1,7 +1,11 @@
+2010-08-24 <bitnapper>
+- Prepared to port the wallmaker-code from EgoMap
+- Added new module for wallmaker-code
+
 2010-08-22 <bitnapper>
 - Some code cleanup, preparation for input dialogs
 - Camera now supports combined keys
-- Additional data for map dialog
+- Added data for planned map dialog
 
 2010-08-21 <bitnapper>
 - Update of fan dialog
