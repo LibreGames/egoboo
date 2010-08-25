@@ -466,7 +466,7 @@ static int editmainSetFanSimple(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int 
         if (mesh -> fan[edit_state -> fan_chosen].type == PresetTiles[EDITMAIN_PRESET_FLOOR].type) {
             /* No change at all */
             return 1;
-        }
+        }               
 
         /* Change me to floor, set the fan-description  */
         memcpy(&edit_state -> ft, &PresetTiles[EDITMAIN_PRESET_FLOOR], sizeof(FANDATA_T));
@@ -1141,11 +1141,12 @@ int editmainFanSet(char edit_state, char is_floor)
             return 1;
         }
         else if (edit_state == EDITMAIN_EDIT_SIMPLE) {
-
+        
             num_fan = wallmakeMakeTile(&Mesh,
                                        EditState.fan_chosen,
                                        is_floor,
                                        wi);
+            /* TODO: Add function which creates tiles from WALLMAKER_INFO_T */ 
             return num_fan;
             /*
             return editmainSetFanSimple(&Mesh, &EditState, is_floor);

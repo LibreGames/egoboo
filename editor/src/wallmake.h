@@ -39,8 +39,8 @@
 typedef struct {
 
     int pos;            /* Position of fan                      */
-    int type;           /* Type of fan to create                */
     int dir;            /* Direction the fan has to rotated to  */
+    FANDATA_T ft;       /* Type of fan to create                */
     
 } WALLMAKER_INFO_T;
 
@@ -49,5 +49,5 @@ typedef struct {
 *******************************************************************************/
 
 int wallmakeMakeTile(MESH_T *mesh, int fan, int is_floor, WALLMAKER_INFO_T *wi);
- 
+
 #endif  /* _WALLMAKE_H_ */
