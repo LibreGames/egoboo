@@ -1,3 +1,6 @@
+2010-08-26 <bitnapper>
+- Added some more patterns for wallmaker
+
 2010-08-25 <bitnapper>
 - Added pattern data for wallmaker
 
