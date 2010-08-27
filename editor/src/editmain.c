@@ -765,6 +765,62 @@ static void editmainCalcVrta(MESH_T *mesh)
    
 }
 
+/*
+ * Name:
+ *     editmainCreateWallMakeInfo
+ * Description:
+ *     Fills the given list in a square 5 x 5 from left top to right bottom
+ *     with infos about fans. 'fan is the center of the square.
+ *     Tiles off the map are signed as 'top' tiles    
+ *     Generates the 'a'  numbers for all files
+ * Input:
+ *     mesh*: Pointer on mesh to get the info from
+ *     fan:   This is the center fan
+ *            
+ */
+static void editmainCreateWallMakeInfo(MESH_T *mesh, int fan, WALLMAKER_INFO_T *wi)
+{
+
+    int mid_x, mid_y;
+    int tx, ty;
+    int x, y;
+    int index;
+    int pos;
+    
+    mid_x = fan % mesh -> tiles_x;
+    mid_y = fan / mesh -> tiles_x;
+    
+    /* Now create a square 5 x 5 of tile info */
+    index = 0;
+    for (y = -2; y < 3; y++) {
+    
+        for (x = -2; x < 3; x++) {
+        
+            tx  = mid_x + x;
+            ty  = mid_y + y; 
+                        
+            if ((tx >= 0) && (tx < mesh -> tiles_x)
+                && (ty >= 0) && (ty < mesh -> tiles_y)) {
+
+                wi[index].pos  = (ty * mesh -> tiles_x) + tx;
+                wi[index].type = mesh -> fan[wi[index].pos].type;
+                
+            }
+            else {
+            
+                wi[index].pos  =  -1;
+                wi[index].type = WALLMAKE_TOP;  /* Handle as wall */
+            
+            }         
+            
+            index++;
+        
+        }
+    
+    }
+
+}
+
 /* ========================================================================== */
 /* ========================= PUBLIC FUNCTIONS =============================== */
 /* ========================================================================== */
@@ -1131,7 +1187,7 @@ int editmainFanSet(char edit_state, char is_floor)
 {
 
     int num_fan;
-    WALLMAKER_INFO_T wi[40];            /* List of fans to create */
+    WALLMAKER_INFO_T wi[30];            /* List of fans to create */
 
 
     if (EditState.fan_chosen >= 0) {
@@ -1139,18 +1195,18 @@ int editmainFanSet(char edit_state, char is_floor)
         if (edit_state == EDITMAIN_EDIT_NONE) {
             /* Do nothing, is view-mode */
             return 1;
-        }
-        else if (edit_state == EDITMAIN_EDIT_SIMPLE) {
+        }               
         
-            num_fan = wallmakeMakeTile(&Mesh,
-                                       EditState.fan_chosen,
+        if (edit_state == EDITMAIN_EDIT_SIMPLE) {
+        
+            /* Get a list of fans surrounding this one */
+            editmainCreateWallMakeInfo(&Mesh, EditState.fan_chosen, wi);
+            
+            num_fan = wallmakeMakeTile(EditState.fan_chosen,
                                        is_floor,
                                        wi);
             /* TODO: Add function which creates tiles from WALLMAKER_INFO_T */ 
             return num_fan;
-            /*
-            return editmainSetFanSimple(&Mesh, &EditState, is_floor);
-            */
 
         }
         else if (edit_state == EDITMAIN_EDIT_FULL) {

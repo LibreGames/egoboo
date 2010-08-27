@@ -44,21 +44,10 @@
 #define WALLMAKE_PRESET_EDGEI   4
 #define WALLMAKE_PRESET_MAX     5
 
-/* Now the tile numbers used by the wallmaker... */
-#define WALLMAKE_FLOOR  ((char)0)
-#define WALLMAKE_TOP    ((char)1)
-#define WALLMAKE_WALL   ((char)8)
-#define WALLMAKE_EDGEO  ((char)16)
-#define WALLMAKE_EDGEI  ((char)19)
-
-#define WALLMAKE_NORTH  0x00
-#define WALLMAKE_EAST   0x01
-#define WALLMAKE_SOUTH  0x02
-#define WALLMAKE_WEST   0x03
-
-
 #define WALLMAKE_NUMPATTERN_WALL    9
 #define WALLMAKE_NUMPATTERN_FLOOR   4
+
+#define WALLMAKE_MIDDLE     12
 
 /*******************************************************************************
 * TYPEDEFS							                                           *
@@ -90,6 +79,8 @@ static WALLMAKE_XY AdjacentXY[8] = {
     {  0, +1 }, { -1, +1 }, { -1,  0 }, { -1, -1 }
 
 };
+
+static int AdjacentAdd[8] = { -5, -4, +1, +6, +5, +4, -1, -6 };
 
 /* --- Definition of preset tiles for 'simple' mode -- */
 static FANDATA_T PresetTiles[] = {
@@ -135,46 +126,33 @@ static WALLMAKE_PATTERN_T PatternsF[WALLMAKE_NUMPATTERN_FLOOR] = {
  * Description:
  *     Creates a list of fans which are adjacent to given 'fan'. 
  *     If a fan is of map, the field is filled by a value of -1.
- *     The list starts from North', clockwise.  
+ *     The list starts from 'North', clockwise.  
  * Input:
  *     mesh*:      Pointer on mesh with info about map size
- *     fan:        To find the adjacent tiles for  
- *     adjacent *: Where to return the list of fan-positions 
- * Output: 
- *     Number of valid adjacent tiles 
+ *     fan:        Position in 'wi'-map 
+ *     adjacent *: Where to return the positions in 'wi'-map
  */
-static int wallmakeGetAdjacent(MESH_T *mesh, int fan, int adjacent[8])
+static void wallmakeGetAdjacent(WALLMAKER_INFO_T *wi, int fan, int adjacent[8])
 {
-
-    int dir, adj_pos;
-    int num_adj;
-    WALLMAKE_XY src_xy, dest_xy;
+     
+    int pos, dir;
+        
     
-    
-    num_adj = 0;            /* Count them       */
     for (dir = 0; dir < 8; dir++) {
-    
-        adj_pos = -1;       /* Assume invalid   */
+        /* Make it fail-save */
+        pos = fan + AdjacentAdd[dir];
 
-        src_xy.x = fan % mesh -> tiles_x;
-        src_xy.y = fan / mesh -> tiles_x;
+        if (pos >= 0 && pos < 25) {
         
-        dest_xy.x = src_xy.x + AdjacentXY[dir].x;
-        dest_xy.y = src_xy.y + AdjacentXY[dir].y;
-        
-        if ((dest_xy.x >= 0) && (dest_xy.x < mesh -> tiles_x)
-            && (dest_xy.y >= 0) && (dest_xy.y < mesh -> tiles_y)) {
-
-            adj_pos = (dest_xy.y * mesh -> tiles_x) + dest_xy.x;
-            num_adj++;
-
+            adjacent[dir] = pos;
+               
+        }
+        else {
+            /* A valid vaule in any case */
+            pos = 0;        
         }
 
-        adjacent[dir] = adj_pos;       /* Starting north */
-
     }
-
-    return num_adj;
 
 }
 
@@ -187,9 +165,9 @@ static int wallmakeGetAdjacent(MESH_T *mesh, int fan, int adjacent[8])
  * Input:
  *     pattern:  Pattern surrounding the fan as bits     
  *     adjacent: Numbers of adjacent fans 
- *     wi *;     To fill with info about fan-types needed 
+ *     wi *;     Info in a square 5x5 for checking an changing
  */
-static void wallmakeFloor(char pattern, int  adjacent[8], WALLMAKER_INFO_T *wi)
+static void wallmakeFloor(char pattern, WALLMAKER_INFO_T *wi)
 {
 
 }
@@ -203,13 +181,12 @@ static void wallmakeFloor(char pattern, int  adjacent[8], WALLMAKER_INFO_T *wi)
  * Input:
  *     pattern:  Pattern surrounding the fan as bits     
  *     adjacent: Numbers of adjacent fans 
- *     wi *;     To fill with info about fan-types needed 
+ *     wi *;     Info in a square 5x5 for checking an changing
  */
-static void wallmakeWall(char pattern, int  adjacent[8], WALLMAKER_INFO_T *wi)
+static void wallmakeWall(char pattern, WALLMAKER_INFO_T *wi)
 {
 
 }
-
 
 /* ========================================================================== */
 /* ============================= THE PUBLIC ROUTINES ======================== */
@@ -224,24 +201,23 @@ static void wallmakeWall(char pattern, int  adjacent[8], WALLMAKER_INFO_T *wi)
  *     mesh*:    Pointer on mesh with info about map size
  *     fan:      To find the adjacent tiles for  
  *     is_floor: True: Set a floor, otherwie create a wall    
- *     wi *:     List with fan numbers and walltypes to create
-  * Output: 
+ *     wi *:     List with fan numbers and walltypes in a square 5 x 5
+ *               Middle is the 'fan' changed   
+ *               Is updated with changed fan types, if needed 
+ * Output: 
  *     Number of fans to create in fan-list
  */
-int wallmakeMakeTile(MESH_T *mesh, int fan, int is_floor, WALLMAKER_INFO_T *wi)
+int wallmakeMakeTile(int fan, int is_floor, WALLMAKER_INFO_T *wi)
 {
 
     int  adjacent[8];
-    char shape_no, rotdir;
-    int  lut_idx;
-    int  dir, i;
     char pattern, flags;
-    int  base_x, base_y;    
+    int dir;
   
 
     if (is_floor) {
 
-        if (mesh -> fan[fan].type == WALLMAKE_FLOOR) {
+        if (wi[WALLMAKE_MIDDLE].type == WALLMAKE_FLOOR) {
             /* No change at all */
             return 0;
         }
@@ -249,7 +225,7 @@ int wallmakeMakeTile(MESH_T *mesh, int fan, int is_floor, WALLMAKER_INFO_T *wi)
     }
     else {
 
-        if (mesh -> fan[fan].type != WALLMAKE_FLOOR) {
+        if (wi[WALLMAKE_MIDDLE].type != WALLMAKE_FLOOR) {
             /* No change at all */
             return 0;
         }
@@ -257,20 +233,17 @@ int wallmakeMakeTile(MESH_T *mesh, int fan, int is_floor, WALLMAKER_INFO_T *wi)
     }
 
     /* Set the chosen fan itself for changing */
-    wi[0].pos     = fan;
-    wi[0].ft.type = is_floor ? WALLMAKE_FLOOR : WALLMAKE_TOP; /* Set a 'top' tile for start, if wall */
-    wi[0].dir     = 0;
-
-
-    wallmakeGetAdjacent(mesh, fan, adjacent);   /* Sampling area    */
+    wi[WALLMAKE_MIDDLE].pos  = fan;
+    wi[WALLMAKE_MIDDLE].type = is_floor ? WALLMAKE_FLOOR : WALLMAKE_TOP; /* Set a 'top' tile for start, if wall */
+    wi[WALLMAKE_MIDDLE].dir  = 0;
+    
 
     /* Fill in the flags for the look-up-table */
+    wallmakeGetAdjacent(wi, WALLMAKE_MIDDLE, adjacent);
+    
     pattern = 0;
     for (dir = 0, flags = 0x01; dir < 8; dir++, flags <<= 0x01) {
-        if (-1 == adjacent[dir]) {
-            pattern |= flags;       /* Handle it like a wall */
-        }
-        else if (mesh -> fan[adjacent[dir]].type != WALLMAKE_FLOOR) {
+        if (wi[dir].type != WALLMAKE_FLOOR) {
             pattern |= flags;       /* It's a wall          */
         }
     }
@@ -280,14 +253,14 @@ int wallmakeMakeTile(MESH_T *mesh, int fan, int is_floor, WALLMAKER_INFO_T *wi)
     if (is_floor) {
 
         /* Handle creating floor */
-        wallmakeFloor(pattern, adjacent, wi);
+        wallmakeFloor(pattern, wi);
         
 
     }
     else {
 
         /* Handle creating a wall */
-        wallmakeWall(pattern, adjacent, wi);
+        wallmakeWall(pattern, wi);
     }
 
     return 0;

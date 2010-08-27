@@ -26,11 +26,21 @@
 * INCLUDES								                                       *
 *******************************************************************************/
 
-#include "editor.h"
-
 /*******************************************************************************
 * DEFINES								                                       *
 *******************************************************************************/
+
+/* Now the tile numbers used by the wallmaker... */
+#define WALLMAKE_FLOOR  ((char)0)
+#define WALLMAKE_TOP    ((char)1)
+#define WALLMAKE_WALL   ((char)8)
+#define WALLMAKE_EDGEO  ((char)16)
+#define WALLMAKE_EDGEI  ((char)19)
+
+#define WALLMAKE_NORTH  0x00
+#define WALLMAKE_EAST   0x01
+#define WALLMAKE_SOUTH  0x02
+#define WALLMAKE_WEST   0x03
 
 /*******************************************************************************
 * TYPEDEFS								                                       *
@@ -38,9 +48,9 @@
 
 typedef struct {
 
-    int pos;            /* Position of fan                      */
-    int dir;            /* Direction the fan has to rotated to  */
-    FANDATA_T ft;       /* Type of fan to create                */
+    int  pos;           /* Position of fan                      */
+    char type;          /* Type of fan to create                */
+    char dir;           /* Direction the fan has to rotated to  */
     
 } WALLMAKER_INFO_T;
 
@@ -48,6 +58,6 @@ typedef struct {
 * CODE 								                                           *
 *******************************************************************************/
 
-int wallmakeMakeTile(MESH_T *mesh, int fan, int is_floor, WALLMAKER_INFO_T *wi);
+int wallmakeMakeTile(int fan, int is_floor, WALLMAKER_INFO_T *wi);
 
 #endif  /* _WALLMAKE_H_ */
