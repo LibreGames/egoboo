@@ -42,7 +42,6 @@
 
 #define EDITMAIN_MAX_COMMAND 30
 
-#define EDITMAIN_MAX_MAPSIZE    64
 #define EDITMAIN_DEFAULT_TILE   ((char)1)
 #define EDITMAIN_TOP_TILE       ((char)63)  /* Black texture    */
 #define EDITMAIN_WALL_HEIGHT    192
@@ -615,10 +614,9 @@ static int editmainCreateNewMap(MESH_T *mesh, int which)
 
 
     memset(mesh, 0, sizeof(MESH_T));
-
-    /* Size of 8 for test purposes -- 2010-08-19 / bitnapper */
-    mesh -> tiles_x     = 8;    /* EDITMAIN_MAX_MAPSIZE;    */
-    mesh -> tiles_y     = 8;    /* EDITMAIN_MAX_MAPSIZE;    */
+   
+    mesh -> tiles_x     = EditState.map_size;
+    mesh -> tiles_y     = EditState.map_size;    
     mesh -> numvert     = 0;                         /* Vertices used in map    */
     mesh -> numfreevert = MAXTOTALMESHVERTICES - 10; /* Vertices left in memory */
 
@@ -831,11 +829,11 @@ static void editmainCreateWallMakeInfo(MESH_T *mesh, int fan, WALLMAKER_INFO_T *
  * Description:
  *     Does all initalizations for the editor
  * Input:
- *     None
+ *     map_size: Default map size
  * Output:
  *     Pointer on EditState
  */
-EDITMAIN_STATE_T *editmainInit(void)
+EDITMAIN_STATE_T *editmainInit(int map_size)
 {
 
     pCommands = editdrawInitData();
@@ -847,6 +845,7 @@ EDITMAIN_STATE_T *editmainInit(void)
     EditState.ft.type       = -1;   /* No fan-type chosen                   */    
     EditState.brush_size    = 3;    /* Size of raise/lower terrain brush    */
     EditState.brush_amount  = 50;   /* Amount of raise/lower                */
+    EditState.map_size      = map_size;
 
     EditState.draw_mode     = (EDIT_MODE_SOLID | EDIT_MODE_TEXTURED | EDIT_MODE_LIGHTMAX);
 
@@ -1166,7 +1165,7 @@ void editmain2DTex(int x, int y, int w, int h)
 
         editdraw2DTex(x, y, w, h,
                       EditState.ft.tx_no,
-                      EditState.ft.type & COMMAND_TEXTUREHI_FLAG);
+                      (char)(EditState.ft.type & COMMAND_TEXTUREHI_FLAG));
         
     }
     
@@ -1193,8 +1192,7 @@ int editmainFanSet(char edit_state, char is_floor)
     if (EditState.fan_chosen >= 0) {
 
         if (edit_state == EDITMAIN_EDIT_NONE) {
-            /* Do nothing, is view-mode */
-            return 1;
+            return 1;       /* Do nothing, is view-mode */
         }               
         
         if (edit_state == EDITMAIN_EDIT_SIMPLE) {
@@ -1210,12 +1208,65 @@ int editmainFanSet(char edit_state, char is_floor)
 
         }
         else if (edit_state == EDITMAIN_EDIT_FULL) {
-            /* Do 'simple' editing */
-            /*
-            return editmainDoFanUpdate(&Mesh, &EditState);
-            */
+            return editmainDoFanUpdate(&Mesh, &EditState, EditState.tx, EditState.ty);
         }
     }
 
     return 0;
+}
+
+/*
+ * Name:
+ *     editmainChooseTex
+ * Description:
+ *     Choses Texture from square with given coordinates 'cx/cy' from
+ *     Rectangle with given size 'w/h'
+ *     The texture extent to choose is allways 8x8 squares 
+ * Input:
+ *     cx, cy: Chosen point in rectangle
+ *     w,h:    Extent of rectangle      
+ */
+void editmainChooseTex(int cx, int cy, int w, int h, int big)
+{
+
+    int tex_x, tex_y;
+    char tex_no;
+    char new_tex;
+ 
+    
+    /* Save it as x/y-position, too */
+    tex_x = 8 * cx / w;
+    tex_y = 8 * cy / h;
+    if (big) {
+        if (tex_x > 6) tex_x = 6;
+        if (tex_y > 6) tex_y = 6;
+    }
+
+    tex_no = (char)((tex_y * 8) + tex_x);
+    if (tex_no >= 0 && tex_no < 63) {
+        /* Valid texture_no, merge it with number of main texture */
+        new_tex = (char)(EditState.ft.tx_no & 0xC0);
+        new_tex |= tex_no;
+        /* Do an update of the edit-state and the mesh */
+        EditState.ft.tx_no = new_tex;
+    }      
+  
+}
+
+/*
+ * Name:
+ *     editmainFanUpdate
+ * Description:
+ *     Does an update on the actual chosen fan in the map with the 
+ *     values from 'EditState' 
+ * Input:
+ *     None     
+ */
+void editmainFanUpdate(void)
+{
+    /* Do update the chosen texture */
+    Mesh.fan[EditState.fan_chosen].tx_no = EditState.ft.tx_no;
+    /* Do update on flags */
+    Mesh.fan[EditState.fan_chosen].fx = EditState.ft.fx;
+    /* TODO: Do update on fan vertices, fan type */
 }

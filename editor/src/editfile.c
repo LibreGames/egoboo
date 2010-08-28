@@ -36,7 +36,8 @@
 
 #define EDITFILE_SLOPE      50          /* Twist stuff          */
 #define MAPID               0x4470614d  /*  The string... MapD  */
-#define EDITFILE_ZADJUST    32          /* Read/Write Z-Value   */
+#define EDITFILE_ZADJUST    16          /* Read/Write Z-Value   */
+                                        /* Cartman uses 4 bit fixed point for Z */
 
 /*******************************************************************************
 * CODE 								                                           *

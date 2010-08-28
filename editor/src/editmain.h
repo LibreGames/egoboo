@@ -51,8 +51,9 @@
 #define EDITMAIN_EDIT_FULL      0x02
 
 /* --------- Other values ------- */
-#define EDITMAIN_MAXSPAWN   150         /* Maximum Lines in spawn list  */
-#define EDITMAIN_MAXPASSAGE  30
+#define EDITMAIN_MAXSPAWN    150        /* Maximum Lines in spawn list  */
+#define EDITMAIN_MAXPASSAGE   30
+#define EDITMAIN_MAX_MAPSIZE  64
 
 /* ---- Flags to toggle --------- */
 #define EDITMAIN_TOGGLE_DRAWMODE    1
@@ -77,6 +78,7 @@ typedef struct {
     FANDATA_T ft;       /* Copy of type of chosen fan       */ 
     COMMAND_T fd;       /* Extent data for new fan (bt_type)*/
     char msg[256];      /* Possible message from editor     */
+    int map_size;       /* Map-Size chosen by user          */
 
 } EDITMAIN_STATE_T;
 
@@ -118,7 +120,7 @@ typedef struct {
 * CODE 								                                           *
 *******************************************************************************/
 
-EDITMAIN_STATE_T *editmainInit(void);
+EDITMAIN_STATE_T *editmainInit(int map_size);
 void editmainExit(void);
 int  editmainMap(int command);
 void editmainDrawMap2D(int x, int y, int w, int h);
@@ -130,6 +132,8 @@ void editmainChooseFanType(int dir, char *fan_name);
 int  editmainSetSimple(int fan_no, int is_floor);
 void editmain2DTex(int x, int y, int w, int h);
 int  editmainFanSet(char edit_state, char is_floor);
+void editmainChooseTex(int cx, int cy, int w, int h, int big);
+void editmainFanUpdate(void);
 
 #endif /* _EDITMAIN_H_	*/
 

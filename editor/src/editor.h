@@ -58,7 +58,7 @@
 #define MAXMESHLINE                     64          // Number of lines in a fan schematic
 #define MAXMESHVERTICES                 16          // Max number of vertices in a fan
 #define MAXMESHFAN                      (128*128)   // Size of map in fans
-#define MAXTOTALMESHVERTICES            (MAXMESHFAN*MAXMESHVERTICES)
+#define MAXTOTALMESHVERTICES            ((MAXMESHFAN*MAXMESHVERTICES) - 10)
 #define MAXMESHCOMMAND                  4             // Draw up to 4 fans
 #define MAXMESHCOMMANDENTRIES           32            // Fansquare command list size
 #define MAXMESHCOMMANDSIZE              32            // Max trigs in each command
@@ -84,21 +84,6 @@
 #define COMMAND_TEXTUREHI_FLAG 0x20
 
 #define DAMAGENULL          255
-
-// handle the upper and lower bits for the tile image
-#define TILE_UPPER_SHIFT                8
-#define TILE_LOWER_MASK                 ((1 << TILE_UPPER_SHIFT)-1)
-#define TILE_UPPER_MASK                 (~TILE_LOWER_MASK)
-
-#define TILE_GET_LOWER_BITS(XX)         ( TILE_LOWER_MASK & (XX) )
-
-#define TILE_GET_UPPER_BITS(XX)         (( TILE_UPPER_MASK & (XX) ) >> TILE_UPPER_SHIFT )
-#define TILE_SET_UPPER_BITS(XX)         (( (XX) << TILE_UPPER_SHIFT ) & TILE_UPPER_MASK )
-#define TILE_SET_BITS(HI,LO)            (TILE_SET_UPPER_BITS(HI) | TILE_GET_LOWER_BITS(LO))
-
-#define TILE_IS_FANOFF(XX)              ( FANOFF == (XX) )
-
-#define TILE_HAS_INVALID_IMAGE(XX)      HAS_SOME_BITS( TILE_UPPER_MASK, (XX).img )
 
 // Editor modes: How to draw the map
 #define EDIT_MODE_SOLID     0x01        /* Draw solid, yes/no       */
@@ -169,13 +154,13 @@ typedef struct {
     FANDATA_T fan[MAXMESHFAN];                  // Fan desription            
     unsigned char twist[MAXMESHFAN];            // Surface normal
     
-    int vrtx[MAXTOTALMESHVERTICES];             // Vertex position
-    int vrty[MAXTOTALMESHVERTICES];             //
-    int vrtz[MAXTOTALMESHVERTICES];             // Vertex elevation
-    unsigned char vrta[MAXTOTALMESHVERTICES];   // Vertex base light, 0=unused
+    int vrtx[MAXTOTALMESHVERTICES + 10];             // Vertex position
+    int vrty[MAXTOTALMESHVERTICES + 10];             //
+    int vrtz[MAXTOTALMESHVERTICES + 10];             // Vertex elevation
+    unsigned char vrta[MAXTOTALMESHVERTICES + 10];   // Vertex base light, 0=unused
     
     int  vrtstart[MAXMESHFAN];                  // First vertex of given fan  
-    char visible[MAXTOTALMESHVERTICES];         // Is visible yes/no
+    char visible[MAXTOTALMESHVERTICES + 10];         // Is visible yes/no
 
 } MESH_T;
 

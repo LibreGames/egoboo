@@ -59,6 +59,7 @@
 #define EDITOR_FANDLG   ((char)108)         /* Result of fan dialog */
 #define EDITOR_CAMERA   ((char)109)         /* Movement of camera   */
 #define EDITOR_MAPDLG   ((char)110)         /* Settings for new map */
+#define EDITOR_FANUPDATE ((char)111)
 
 /* Sub-commands for main commands, if needed */
 #define EDITOR_STATE_SHOWMAP ((char)1)
@@ -76,8 +77,8 @@
 #define EDITOR_2DMAP_FANBLEFT   ((char)16)
 #define EDITOR_2DMAP_FANBRIGHT  ((char)32)
 
-#define EDITOR_FANDLG_UPDATE    ((char)1)
-#define EDITOR_FANDLG_CANCEL    ((char)2)
+#define EDITOR_FANTEX_CHOOSE    ((char)1)
+#define EDITOR_FANTEX_SIZE      ((char)2)
 
 #define EDITOR_MAPDLG_FLAT      ((char)1)
 #define EDITOR_MAPDLG_SOLID     ((char)2)
@@ -85,7 +86,10 @@
 #define EDITOR_MAPDLG_INCSIZE   ((char)4)
 #define EDITOR_MAPDLG_CANCEL    ((char)5)
 #define EDITOR_MAPDLG_OK        ((char)6)
-   
+
+/* ------- Drawing types ----- */
+#define EDITOR_DRAW2DMAP    ((char)SDLGL_TYPE_MENU + 10)
+#define EDITOR_DRAWTEXTURE  ((char)SDLGL_TYPE_MENU + 11)  
 
 /*******************************************************************************
 * DATA									                                       *
@@ -151,14 +155,14 @@ static SDLGL_CMDKEY EditorCmd[] = {
 };
 
 static SDLGL_FIELD MainMenu[EDITOR_MAXFLD + 2] = {
-    { SDLGL_TYPE_STD,  {   0, 584, 800,  16 } },            /* Status bar       */
-    { SDLGL_TYPE_MENU + 10,  { 0, 16, 256, 256 }, EDITOR_2DMAP, EDITOR_2DMAP_CHOOSEFAN }, /* Map-Rectangle    */
+    { SDLGL_TYPE_STD,   {   0, 584, 800,  16 } },            /* Status bar       */
+    { EDITOR_DRAW2DMAP, { 0, 16, 256, 256 }, EDITOR_2DMAP, EDITOR_2DMAP_CHOOSEFAN }, /* Map-Rectangle    */
     /* 'Code' needed in menu-background' for support of 'mouse-over'    */
-    { SDLGL_TYPE_STD,  {   0, 0, 800, 16 }, -1 },           /* Menu-Background  */
-    { SDLGL_TYPE_MENU, {   4, 4, 32, 8 }, EDITOR_FILE,     0, "File" },
-    { SDLGL_TYPE_MENU, {  44, 4, 24, 8 }, EDITOR_MAP,      0, "Map" },
-    { SDLGL_TYPE_MENU, {  76, 4, 64, 8 }, EDITOR_SETTINGS, 0, "Settings" },
-    { SDLGL_TYPE_MENU, { 148, 4, 64, 8 }, EDITOR_STATE,    0, "Edit" },
+    { SDLGL_TYPE_STD,   {   0, 0, 800, 16 }, -1 },           /* Menu-Background  */
+    { SDLGL_TYPE_MENU,  {   4, 4, 32, 8 }, EDITOR_FILE,     0, "File" },
+    { SDLGL_TYPE_MENU,  {  44, 4, 24, 8 }, EDITOR_MAP,      0, "Map" },
+    { SDLGL_TYPE_MENU,  {  76, 4, 64, 8 }, EDITOR_SETTINGS, 0, "Settings" },
+    { SDLGL_TYPE_MENU,  { 148, 4, 64, 8 }, EDITOR_STATE,    0, "Edit" },
     { 0 }
 
 };
@@ -187,9 +191,7 @@ static SDLGL_FIELD SubMenu[] = {
 
 /* Prepared Dialog for changing of Flags of a fan. TODO: Make it dynamic */
 static SDLGL_FIELD FanInfoDlg[] = {
-    { SDLGL_TYPE_STD, {   0,  16, 320, 224  } },        /* Background of dialog */
-    { SDLGL_TYPE_STD, {   8,  24, 120,  8 }, 0, 0, "Info about Fan" },
-    { SDLGL_TYPE_STD, {   8,  40, 320, 208 }, 0, 0, "" },
+    { SDLGL_TYPE_BUTTON, {   0,  16, 320, 224  }, 0, 0, "Info about chosen Fan" },
     { SDLGL_TYPE_CHECKBOX, {   8,  56, 120, 8 }, EDITOR_FANFX, MPDFX_SHA,     "Reflective" },
     { SDLGL_TYPE_CHECKBOX, {   8,  72, 120, 8 }, EDITOR_FANFX, MPDFX_DRAWREF, "Draw Reflection" },
     { SDLGL_TYPE_CHECKBOX, {   8,  88, 120, 8 }, EDITOR_FANFX, MPDFX_ANIM,    "Animated" },
@@ -198,10 +200,10 @@ static SDLGL_FIELD FanInfoDlg[] = {
     { SDLGL_TYPE_CHECKBOX, {   8, 136, 120, 8 }, EDITOR_FANFX, MPDFX_IMPASS,  "Impassable (Wall)" },
     { SDLGL_TYPE_CHECKBOX, {   8, 154, 120, 8 }, EDITOR_FANFX, MPDFX_DAMAGE,  "Damage" },
     { SDLGL_TYPE_CHECKBOX, {   8, 170, 120, 8 }, EDITOR_FANFX, MPDFX_SLIPPY,  "Slippy" },
-    { SDLGL_TYPE_STD,      { 190,  78, 128, 128 }, EDITOR_FANTEX },  /* The actuale Texture */
+    { EDITOR_DRAWTEXTURE,  { 190,  78, 128, 128 }, EDITOR_FANTEX, EDITOR_FANTEX_CHOOSE },  /* The actuale Texture  */
+    { SDLGL_TYPE_CHECKBOX, { 190,  62, 128,  16 }, EDITOR_FANTEX, EDITOR_FANTEX_SIZE, "Big Texture"  }, 
     /* -------- Buttons for 'Cancel' and 'Update' ----- */
-    { SDLGL_TYPE_BUTTON,   {   4, 220, 56, 16 }, EDITOR_FANDLG, EDITOR_FANDLG_UPDATE, "Update"},
-    { SDLGL_TYPE_BUTTON,   { 260, 220, 56, 16 }, EDITOR_FANDLG, EDITOR_FANDLG_CANCEL, "Close"},
+    { SDLGL_TYPE_BUTTON,   {   4, 220, 56, 16 }, EDITOR_FANUPDATE, 0, "Update"},
     { 0 }
 };
 
@@ -222,6 +224,12 @@ static SDLGL_FIELD MapInfoDlg[] = {
 /*******************************************************************************
 * CODE									                                       *
 *******************************************************************************/
+
+/* =================== Map-Settings-Dialog ================ */
+
+
+
+/* =================== Main-Screen ======================== */
 
 /*
  * Name:
@@ -365,6 +373,13 @@ static void editor2DMap(SDLGL_EVENT *event)
             if (event -> pressed) {
                 Map2DState ^= event -> sub_code;
             }
+            /* Add this Dialog at position */
+            if (Map2DState & event -> sub_code) {
+                sdlglInputAdd(EDITOR_FANDLG, FanInfoDlg, 20, 20);
+            }
+            else {
+                sdlglInputRemove(EDITOR_FANDLG);
+            }    
             break;
         case EDITOR_2DMAP_FANROTATE:
             /* Rotate the chosen fan type */
@@ -464,66 +479,32 @@ static void editorState(char which)
 
 /*
  * Name:
- *     editorDrawFanInfo
+ *     editorDrawCheckBox
  * Description:
- *     Print info about chosen fan on screen
+ *     Draws the push  button with state taken based on fields -> code
  * Input:
- *     None
+ *     field *: Pointer on field to draw 
  */
-static void editorDrawFanInfo(void)
+static void editorDrawCheckBox(SDLGL_FIELD *field)
 {
 
-    SDLGL_RECT InfoPos;
-    SDLGL_FIELD *fields;
-    int i;
-
-
-    if (Map2DState & EDITOR_2DMAP_FANINFO && pEditState -> fan_chosen >= 0) {
-
-        /* Draw info about chosen fan: EditState.ft */
-        fields = &FanInfoDlg[0];
-        /* Draw background */
-        sdlglstrDrawButton(&fields -> rect, 0, 0);
-        fields++;
-        /* Draw title */
-        sdlglSetColor(SDLGL_COL_BLACK);
-        sdlglstrString(&fields -> rect, fields -> pdata);
-        fields++;
-        /* Draw fan type name */
-        sdlglSetColor(SDLGL_COL_GREEN);
-        sdlglstrString(&fields -> rect, editmainFanTypeName(pEditState -> ft.type));
-        fields++;
-        /* Draw all strings */
-        sdlglstrSetColorNo(SDLGLSTR_COL_WHITE);
-        for (i = 0; i < 8; i++) {
-
-            sdlglstrDrawSpecial(&fields -> rect,
-                                fields -> pdata,
-                                SDLGLSTR_PUSHBUTTON,
-                                pEditState -> ft.fx & fields -> sub_code ?
-                                SDLGLSTR_FBUTTONSTATE : 0);
-            /*  sdlglstrString(&fields -> rect, fields -> pdata); */
-            fields++;
-
-        }
-        
-        /* Draw the actual chosen texture */
-        editmain2DTex(fields -> rect.x, fields -> rect.y,
-                      fields -> rect.w, fields -> rect.h);
-        /* Display number of textures */
-        InfoPos.x = fields[-1].rect.x;
-        InfoPos.y = fields[-1].rect.y + 32;
-        sdlglstrStringF(&InfoPos, "Texture: %d Subpart: %d",
-                        (int)((pEditState -> ft.tx_no >> 6) & 3),
-                        (int)(pEditState -> ft.tx_no & 0x3F));
-        /* Draw the buttons */
-        fields++;
-        while(fields -> sdlgl_type > 0) {
-            sdlglstrDrawButton(&fields -> rect, fields -> pdata, SDLGLSTR_FCENTERED);
-            fields++;
-        }
-
+    int state;
+    
+    
+    switch(field -> code) {
+    
+        case EDITOR_FANTEX:
+            state = pEditState -> ft.type & 0x20 ? SDLGLSTR_FBUTTONSTATE : 0;
+            break;
+            
+        case EDITOR_FANFX:
+            state = pEditState -> ft.fx & field -> sub_code ? SDLGLSTR_FBUTTONSTATE : 0;
+            break;
+            
     }
+    
+    /* sdlglstrSetColorNo(SDLGLSTR_COL_WHITE); */
+    sdlglstrDrawSpecial(&field -> rect, field -> pdata, SDLGLSTR_PUSHBUTTON, state);
 
 }
 
@@ -541,8 +522,6 @@ static void editorDrawFanInfo(void)
 static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
 {
 
-    SDLGL_RECT status_bar;
-    float nx[4], ny[4], dist;
     int color;
     char mouse_over;
 
@@ -572,33 +551,58 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
 
         }
 
+        switch(fields -> sdlgl_type) {
+        
+            case SDLGL_TYPE_STD:
+                /* Draw the background of the menu and the status bar */
+                sdlglstrDrawButton(&fields -> rect, 0, 0);
+                break;
+                
+            case SDLGL_TYPE_MENU:                    
+                if (fields -> fstate & SDLGL_FSTATE_MOUSEOVER) {
 
-        if (fields -> sdlgl_type == SDLGL_TYPE_STD) {
-            /* Draw the background of the menu and the status bar */
-            sdlglstrDrawButton(&fields -> rect, 0, 0);
-        }
-        else if (fields -> sdlgl_type == SDLGL_TYPE_MENU) {
+                    color = SDLGLSTR_COL_RED;
 
-            if (fields -> fstate & SDLGL_FSTATE_MOUSEOVER) {
+                    if (fields -> code > 0 && fields -> sub_code == 0) {
 
-                color = SDLGLSTR_COL_RED;
+                        editorSetMenu(fields -> code);
 
-                if (fields -> code > 0 && fields -> sub_code == 0) {
+                    }
 
-                    editorSetMenu(fields -> code);
+                }
+                else {
+
+                        color = SDLGLSTR_COL_WHITE;
 
                 }
 
-            }
-            else {
+                sdlglstrSetColorNo(color);
+                sdlglstrString(&fields -> rect, fields -> pdata);
+                break;
 
-                color = SDLGLSTR_COL_WHITE;
+            case EDITOR_DRAW2DMAP:  
+                if (pEditState -> display_flags & EDITMAIN_SHOW2DMAP) {
 
-            }
+                    editmainDrawMap2D(fields -> rect.x, fields -> rect.y,
+                                      fields -> rect.w, fields -> rect.h);
 
-            sdlglstrSetColorNo(color);
-            sdlglstrString(&fields -> rect, fields -> pdata);
-
+                }
+                break;
+                
+            case EDITOR_DRAWTEXTURE:
+                editmain2DTex(fields -> rect.x, fields -> rect.y,
+                              fields -> rect.w, fields -> rect.h);
+                break;
+                
+            case SDLGL_TYPE_CHECKBOX:
+                editorDrawCheckBox(fields);
+                break;
+                
+            case SDLGL_TYPE_BUTTON:
+                sdlglstrDrawButton(&fields -> rect, fields -> pdata, 0);
+                break;
+            
+                
         }
 
         fields++;
@@ -606,12 +610,7 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
     }
 
     /* Draw the string in the status bar */
-    sdlglstrSetColorNo(SDLGLSTR_COL_WHITE);
-    status_bar.x = MainMenu[0].rect.x + 4;
-    status_bar.y = MainMenu[0].rect.y + 4;
-    status_bar.w = MainMenu[0].rect.w;
-    status_bar.h = MainMenu[0].rect.h;
-    sdlglstrString(&status_bar, StatusBar);
+    sdlglstrDrawButton(&MainMenu[0].rect, StatusBar, 0);
 
     if (! mouse_over) {
 
@@ -619,16 +618,9 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
 
     }
 
-    /* Draw map if needed -- TODO: Make this one a dynamic dialog */
-    if (pEditState -> display_flags & EDITMAIN_SHOW2DMAP) {
-
-        editmainDrawMap2D(MainMenu[1].rect.x, MainMenu[1].rect.y,
-                          MainMenu[1].rect.w, MainMenu[1].rect.h);
-
-    }
-
     /* Display info about actual chosen fan, if asked for */
-    editorDrawFanInfo();
+    /* editorDrawFanInfo(); */
+    
 
 }
 
@@ -642,6 +634,8 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
  */
 static int editorInputHandler(SDLGL_EVENT *event)
 {
+
+    SDLGL_FIELD *field;
 
     if (event -> code > 0) {
 
@@ -674,10 +668,25 @@ static int editorInputHandler(SDLGL_EVENT *event)
                 editorState(event -> sub_code);
                 break;
             case EDITOR_FANFX:
-                /* TODO: Change the FX of the chosen fan        */
+                /* Change the FX of the chosen fan        */
+                pEditState -> ft.fx ^= event -> sub_code;
                 break;
+
             case EDITOR_FANTEX:
-                /* TODO: Change the Texture of the chosen fan   */
+                /* Change the Texture of the chosen fan   */
+                field = event -> field;
+                if (event -> sub_code == EDITOR_FANTEX_CHOOSE) {
+                    editmainChooseTex(event -> mou.x, event -> mou.y,
+                                      field -> rect.w, field -> rect.h,
+                                      pEditState -> ft.type & 0x20);
+                }
+                else if (event -> sub_code == EDITOR_FANTEX_SIZE){
+                    pEditState -> ft.type ^= 0x20;  /* Switch 'size' flag */
+                }
+                break;
+
+            case EDITOR_FANUPDATE:
+                editmainFanUpdate();
                 break;
             case EDITOR_SETTINGS:
                 editmainToggleFlag(EDITMAIN_TOGGLE_DRAWMODE, event -> sub_code);
@@ -712,7 +721,9 @@ static void editorStart(void)
 {
 
     /* Initalize the maze editor */
-    pEditState = editmainInit();
+    /* Map-Size of 8 for test purposes -- 2010-08-19 / bitnapper */
+    pEditState = editmainInit(8);
+    
     /* Display initally chosen values */    
     editorSetMenuViewToggle();
     /* -------- Adjust the menu bar sizes to screen ------- */

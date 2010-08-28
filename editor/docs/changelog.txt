@@ -1,3 +1,8 @@
+2010-08-28 <bitnapper>
+- Cleanup in main editor code
+- Activated the dialog for textures and flags
+- FX-Flags and textures now can be changed 'per tile' in map
+
 2010-08-27 <bitnapper>
 - Added simple base code for wallmaker
 
