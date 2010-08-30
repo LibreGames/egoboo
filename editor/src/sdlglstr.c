@@ -1493,8 +1493,8 @@ void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int info)
         case SDLGLSTR_SLI_AR:   /* Arrow right                  */ 
             /* 1: Draw the button */
             sdlglstrDrawButton(rect, 0, 0);
-            sizerect.x = (rect -> w - 8) / 2;
-            sizerect.y = (rect -> h - 8) / 2;
+            sizerect.x = rect -> x + (rect -> w - 8) / 2;
+            sizerect.y = rect -> y + (rect -> h - 8) / 2;
             /* 2. Draw the arrow in chosen direction */
             ActColor = SDLGLSTR_COL_BLACK;
             sdlglstrChar(&sizerect, buttonchars[6 + (which - SDLGLSTR_SLI_AU)]);

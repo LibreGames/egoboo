@@ -79,9 +79,11 @@
 
 #define EDITOR_FANTEX_CHOOSE    ((char)1)
 #define EDITOR_FANTEX_SIZE      ((char)2)
+#define EDITOR_FANTEX_DEC       ((char)3)
+#define EDITOR_FANTEX_INC       ((char)4)
 
-#define EDITOR_MAPDLG_FLAT      ((char)1)
-#define EDITOR_MAPDLG_SOLID     ((char)2)
+#define EDITOR_MAPDLG_SOLID     ((char)1)
+#define EDITOR_MAPDLG_SIZE      ((char)2)
 #define EDITOR_MAPDLG_DECSIZE   ((char)3)
 #define EDITOR_MAPDLG_INCSIZE   ((char)4)
 #define EDITOR_MAPDLG_CANCEL    ((char)5)
@@ -94,6 +96,9 @@
 /*******************************************************************************
 * DATA									                                       *
 *******************************************************************************/
+
+/* Map-Size of 8 for test purposes -- 2010-08-19 / bitnapper */
+static int NewMapSize = 8;         /* Inital mapsize for new maps */
 
 static SDLGL_CONFIG SdlGlConfig = {
 
@@ -115,6 +120,7 @@ static SDLGLCFG_NAMEDVALUE CfgValues[] = {
     { SDLGLCFG_VAL_INT, &SdlGlConfig.colordepth, "colordepth" },
     { SDLGLCFG_VAL_INT, &SdlGlConfig.screenmode, "screenmode" },
     { SDLGLCFG_VAL_INT, &SdlGlConfig.debugmode, "debugmode" },
+    { SDLGLCFG_VAL_INT, &NewMapSize, "mapsize" },
     { 0 }
 
 };
@@ -202,6 +208,8 @@ static SDLGL_FIELD FanInfoDlg[] = {
     { SDLGL_TYPE_CHECKBOX, {   8, 170, 120, 8 }, EDITOR_FANFX, MPDFX_SLIPPY,  "Slippy" },
     { EDITOR_DRAWTEXTURE,  { 190,  78, 128, 128 }, EDITOR_FANTEX, EDITOR_FANTEX_CHOOSE },  /* The actuale Texture  */
     { SDLGL_TYPE_CHECKBOX, { 190,  62, 128,  16 }, EDITOR_FANTEX, EDITOR_FANTEX_SIZE, "Big Texture"  }, 
+    { SDLGL_TYPE_SLI_AL,   { 190, 210,  16,  16 }, EDITOR_FANTEX, EDITOR_FANTEX_DEC }, 
+    { SDLGL_TYPE_SLI_AR,   { 222, 210,  16,  16 }, EDITOR_FANTEX, EDITOR_FANTEX_INC }, 
     /* -------- Buttons for 'Cancel' and 'Update' ----- */
     { SDLGL_TYPE_BUTTON,   {   4, 220, 56, 16 }, EDITOR_FANUPDATE, 0, "Update"},
     { 0 }
@@ -209,15 +217,13 @@ static SDLGL_FIELD FanInfoDlg[] = {
 
 /* Prepared dialog for setting values for maps */
 static SDLGL_FIELD MapInfoDlg[] = {
-    { SDLGL_TYPE_STD,    {   0,  16, 240, 112 } },                    /* Background of dialog */
-    { SDLGL_TYPE_STD,    {   8,  24, 120,   8 }, 0, 0, "New Map" },   /* Title                */
-    { SDLGL_TYPE_RB,     {   8,  40,  40,   8 }, EDITOR_MAPDLG, EDITOR_MAPDLG_FLAT, "Flat" },  /* Belong together */     
-    { SDLGL_TYPE_RB,     {   8,  56,  40,   8 }, EDITOR_MAPDLG, EDITOR_MAPDLG_SOLID, "Solid" },
-    { SDLGL_TYPE_EDIT,   {   8,  72,  40,  16 }, EDITOR_MAPDLG, 0, "Size" },
-    { SDLGL_TYPE_SLI_AL, {   8,  72,  16,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_DECSIZE },
-    { SDLGL_TYPE_SLI_AR, { 120,  72,  16,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_INCSIZE },
-    { SDLGL_TYPE_BUTTON, {   8,  88,  56,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_CANCEL, "Cancel"  },
-    { SDLGL_TYPE_BUTTON, { 112,  88,  24,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_OK, "Ok" },
+    { SDLGL_TYPE_BUTTON,   {   0,  16, 240, 112 }, 0, 0, "New Map" }, 
+    { SDLGL_TYPE_CHECKBOX, {   8,  40,  40,   8 }, EDITOR_MAPDLG, EDITOR_MAPDLG_SOLID, "Solid" },  
+    { SDLGL_TYPE_EDIT,     {   8,  72,  40,  16 }, EDITOR_MAPDLG, 0, "Size" },
+    { SDLGL_TYPE_SLI_AL,   {   8,  72,  16,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_DECSIZE },
+    { SDLGL_TYPE_SLI_AR,   { 120,  72,  16,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_INCSIZE },
+    { SDLGL_TYPE_BUTTON,   {   8,  88,  56,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_CANCEL, "Cancel"  },
+    { SDLGL_TYPE_BUTTON,   { 112,  88,  24,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_OK, "Ok" },
     { 0 }
 };
 
@@ -601,6 +607,14 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
             case SDLGL_TYPE_BUTTON:
                 sdlglstrDrawButton(&fields -> rect, fields -> pdata, 0);
                 break;
+                
+            case SDLGL_TYPE_SLI_AL:
+                sdlglstrDrawSpecial(&fields -> rect, 0, SDLGLSTR_SLI_AL, 0);
+                break;
+                
+            case SDLGL_TYPE_SLI_AR:
+                sdlglstrDrawSpecial(&fields -> rect, 0, SDLGLSTR_SLI_AR, 0);
+                break;
             
                 
         }
@@ -616,11 +630,7 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
 
         editorSetMenu(0);
 
-    }
-
-    /* Display info about actual chosen fan, if asked for */
-    /* editorDrawFanInfo(); */
-    
+    }    
 
 }
 
@@ -636,6 +646,7 @@ static int editorInputHandler(SDLGL_EVENT *event)
 {
 
     SDLGL_FIELD *field;
+    char tex_no;
 
     if (event -> code > 0) {
 
@@ -683,6 +694,25 @@ static int editorInputHandler(SDLGL_EVENT *event)
                 else if (event -> sub_code == EDITOR_FANTEX_SIZE){
                     pEditState -> ft.type ^= 0x20;  /* Switch 'size' flag */
                 }
+                else if (event -> sub_code == EDITOR_FANTEX_DEC) {
+                    tex_no = pEditState -> ft.tx_no >> 6;
+                    tex_no--;
+                    if (tex_no < 0) {
+                        tex_no = 3;
+                    }
+                    pEditState -> ft.tx_no &= 0x3F;
+                    pEditState -> ft.tx_no |= ((tex_no & 0x03) << 6);
+                }
+                else if (event -> sub_code == EDITOR_FANTEX_INC) {
+                    tex_no = pEditState -> ft.tx_no >> 6;
+                    tex_no++;
+                    if (tex_no > 3) {
+                        tex_no = 0;
+                    }
+                    pEditState -> ft.tx_no &= 0x3F;
+                    pEditState -> ft.tx_no |= ((tex_no & 0x03) << 6);
+                    
+                }
                 break;
 
             case EDITOR_FANUPDATE:
@@ -720,9 +750,8 @@ static int editorInputHandler(SDLGL_EVENT *event)
 static void editorStart(void)
 {
 
-    /* Initalize the maze editor */
-    /* Map-Size of 8 for test purposes -- 2010-08-19 / bitnapper */
-    pEditState = editmainInit(8);
+    /* Initalize the maze editor */    
+    pEditState = editmainInit(NewMapSize);
     
     /* Display initally chosen values */    
     editorSetMenuViewToggle();
