@@ -30,12 +30,13 @@
 * DEFINES								                                       *
 *******************************************************************************/
 
-/* Now the tile numbers used by the wallmaker... */
-#define WALLMAKE_FLOOR  ((char)0)
-#define WALLMAKE_TOP    ((char)1)
-#define WALLMAKE_WALL   ((char)8)
-#define WALLMAKE_EDGEO  ((char)16)
-#define WALLMAKE_EDGEI  ((char)19)
+/* --------- Info for preset tiles ------- */
+#define WALLMAKE_PRESET_FLOOR   0
+#define WALLMAKE_PRESET_TOP     1
+#define WALLMAKE_PRESET_WALL    2
+#define WALLMAKE_PRESET_EDGEO   3
+#define WALLMAKE_PRESET_EDGEI   4
+#define WALLMAKE_PRESET_MAX     4
 
 #define WALLMAKE_NORTH  0x00
 #define WALLMAKE_EAST   0x01
@@ -48,9 +49,11 @@
 
 typedef struct {
 
-    int  pos;           /* Position of fan                      */
-    char type;          /* Type of fan to create                */
-    char dir;           /* Direction the fan has to rotated to  */
+    int  pos;       /* Position of fan                      */
+    char type;      /* Old fan type                         */
+    char dir;       /* Direction the fan has to rotated to  */   
+    char new_type;  /* To be filled by wallmaker            */
+    char new_dir;   /* To be filled by wallmaker            */
     
 } WALLMAKER_INFO_T;
 

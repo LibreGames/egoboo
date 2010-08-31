@@ -1,3 +1,7 @@
+2010-08-31 <bitnapper>
+- Additional code for wallmaker
+- 'Fan-Browsing' reduced to 'Wallmake-Types'
+
 2010-08-30 <bitnapper>
 - Added changing of main texture to fan-dialog
 - Tile flags and texture data can be changed using the 'Update' button in the fan info dialog

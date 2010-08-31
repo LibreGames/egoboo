@@ -48,12 +48,12 @@
 #define EDITMAIN_TILEDIV        128         /* Size of tile     */
 
 /* --------- Info for preset tiles ------- */
-#define EDITMAIN_PRESET_FLOOR   0
-#define EDITMAIN_PRESET_TOP     1
-#define EDITMAIN_PRESET_WALL    2
-#define EDITMAIN_PRESET_EDGEO   3
-#define EDITMAIN_PRESET_EDGEI   4
-#define EDITMAIN_PRESET_MAX     5
+#define EDITMAIN_FLOOR   0
+#define EDITMAIN_TOP     1
+#define EDITMAIN_WALL    2
+#define EDITMAIN_EDGEO   3
+#define EDITMAIN_EDGEI   4
+#define EDITMAIN_PRESET_MAX     4
 
 #define EDITMAIN_NORTH  0x00
 #define EDITMAIN_EAST   0x01
@@ -70,15 +70,6 @@ typedef struct {
 
 } EDITMAIN_XY;
 
-typedef struct {
-
-     char center_shape;     /* Shape of tile in center                      */
-     char center_rotdir;    /* Turn-Dir for center shape, if any            */
-     char adj_shapes[3];    /* Shapes to set adjacent from left to right    */
-     char adj_rotdir[3];    /* Rotation angle of 'adj_shape'                */
-
-} EDITMAIN_AUTO_LUT;        /* Lookup-Table for auto-placement of walls     */
-
 /*******************************************************************************
 * DATA							                                               *
 *******************************************************************************/
@@ -91,49 +82,17 @@ static EDITOR_PASSAGE_T Passages[EDITMAIN_MAXPASSAGE + 2];
 
 /* --- Definition of preset tiles for 'simple' mode -- */
 static FANDATA_T PresetTiles[] = {
-    {  EDITMAIN_DEFAULT_TILE, 0, 0,  0 },                          /* Floor    */
-    {  EDITMAIN_TOP_TILE,     0, (MPDFX_WALL | MPDFX_IMPASS), 1 }, /* Top      */
+
+    {  EDITMAIN_DEFAULT_TILE, 0, 0,  EDITMAIN_FLOOR },
+    {  EDITMAIN_TOP_TILE,     0, (MPDFX_WALL | MPDFX_IMPASS), EDITMAIN_TOP },
     /* Walls, x/y values are rotated, if needed */
-    {  64 + 10, 0, (MPDFX_WALL | MPDFX_IMPASS), 8  },   /* Wall north */
-    {  64 + 1,  0, (MPDFX_WALL | MPDFX_IMPASS), 16 },   /* Outer edge north/east */
-    {  64 + 3,  0, (MPDFX_WALL | MPDFX_IMPASS), 19 },   /* Inner edge north/west */
+    {  64 + 10, 0, (MPDFX_WALL | MPDFX_IMPASS), EDITMAIN_WALL  },   /* Wall north            */
+    {  64 + 1,  0, (MPDFX_WALL | MPDFX_IMPASS), EDITMAIN_EDGEO },   /* Outer edge north/east */
+    {  64 + 3,  0, (MPDFX_WALL | MPDFX_IMPASS), EDITMAIN_EDGEI },   /* Inner edge north/west */
     { 0 }
+    
 };
 
-static EDITMAIN_AUTO_LUT LutFloor[] = {
-    { EDITMAIN_PRESET_FLOOR, EDITMAIN_NORTH, { -1, -1, -1 } },          /* Set a floor at 'my_shape'    */
-    { EDITMAIN_PRESET_FLOOR, EDITMAIN_NORTH, { -1, -1, EDITMAIN_PRESET_EDGEO  },
-                                             { -1, -1, EDITMAIN_WEST          } },
-    { EDITMAIN_PRESET_FLOOR, EDITMAIN_NORTH, { -1, EDITMAIN_PRESET_EDGEO, -1  },
-                                             { -1, EDITMAIN_SOUTH, -1         } },
-    { EDITMAIN_PRESET_FLOOR, EDITMAIN_NORTH, { -1, EDITMAIN_PRESET_WALL, EDITMAIN_PRESET_WALL },
-                                             { -1, EDITMAIN_WEST, EDITMAIN_WEST } },
-	{ EDITMAIN_PRESET_FLOOR, EDITMAIN_NORTH, { EDITMAIN_PRESET_EDGEO, -1, -1  },
-                                             { EDITMAIN_EAST, -1, -1          } },
-    { EDITMAIN_PRESET_FLOOR, EDITMAIN_NORTH, { EDITMAIN_PRESET_EDGEO, -1, EDITMAIN_PRESET_EDGEO },
-                                             { EDITMAIN_EAST, -1, EDITMAIN_WEST                 } },
-    { EDITMAIN_PRESET_FLOOR, EDITMAIN_NORTH, { EDITMAIN_PRESET_WALL, EDITMAIN_PRESET_WALL, -1   },
-                                             { EDITMAIN_SOUTH, EDITMAIN_SOUTH, -1               } },
-    { EDITMAIN_PRESET_FLOOR, EDITMAIN_NORTH, { EDITMAIN_PRESET_WALL, EDITMAIN_PRESET_EDGEI, EDITMAIN_PRESET_WALL },
-                                             { EDITMAIN_SOUTH, EDITMAIN_WEST, EDITMAIN_WEST } }
-};
-
-static EDITMAIN_AUTO_LUT LutWall[] = {
-    { EDITMAIN_PRESET_EDGEO, EDITMAIN_NORTH, { -1, -1, -1 } },
-    { EDITMAIN_PRESET_WALL,  EDITMAIN_NORTH, { EDITMAIN_PRESET_WALL, -1, -1  },
-                                             { EDITMAIN_NORTH, -1, -1        } },
-    { EDITMAIN_PRESET_EDGEO, EDITMAIN_NORTH, { -1, EDITMAIN_PRESET_EDGEO, -1 },
-                                             { -1, EDITMAIN_SOUTH, -1        } },
-    { EDITMAIN_PRESET_WALL,  EDITMAIN_NORTH, { -1, EDITMAIN_PRESET_WALL, EDITMAIN_PRESET_EDGEI },
-                                             { -1, EDITMAIN_WEST, EDITMAIN_NORTH               } },
-    { EDITMAIN_PRESET_WALL,  EDITMAIN_EAST,  { EDITMAIN_PRESET_WALL, -1, -1 }, 
-                                             { EDITMAIN_EAST, -1, -1        } }, 
-    { EDITMAIN_PRESET_EDGEI, EDITMAIN_EAST,  { EDITMAIN_PRESET_WALL, -1, EDITMAIN_PRESET_WALL  },
-                                             { EDITMAIN_EAST, -1, EDITMAIN_NORTH               } },
-    { EDITMAIN_PRESET_WALL,  EDITMAIN_EAST,  { EDITMAIN_PRESET_EDGEI, EDITMAIN_PRESET_WALL, -1 },    
-                                             { EDITMAIN_SOUTH, EDITMAIN_SOUTH, -1              } }, 
-    { EDITMAIN_PRESET_TOP,   EDITMAIN_NORTH, { -1, -1, -1 } }
-};
 
 /* ------ Data for checking of adjacent tiles -------- */
 static EDITMAIN_XY AdjacentXY[8] = {
@@ -413,149 +372,7 @@ static void editmainFanTypeRotate(int type, COMMAND_T *dest, char dir)
     /* Otherwise no rotation is needed */
 }
 
-/*
- * Name:
- *     editmainSetFanSimple
- * Description:
- *     For 'simple' mode. Sets a tile, if possible .
- *     Adjusts the adjacent tiles accordingly, using the 'default' fan set.
- * Input:
- *     mesh *:       Pointer on mesh to handle
- *     edit_state *: Pointer on Edit-state holding all info needed
- *     is_floor:     Is it a floor yes/no
- * Output:
- *     Success yes/no
- */
-static int editmainSetFanSimple(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int is_floor)
-{
 
-    static EDITMAIN_XY adj_xy[] =
-            { { +0, -128 } , { +128, -128 }, { +128, +0 }, { +128, +128 },
-              { +0, +128 } , { -128, +128 }, { -128 + 0 }, { -128, -128 },
-              { +0, -128 } , { +128, -128 } };
-
-    int adjacent[8];
-    char shape_no, rotdir;
-    int lut_idx;
-    int dir, i;
-    int check_flags, flags;
-    int base_x, base_y;
-
-
-    editmainGetAdjacent(mesh, edit_state -> fan_chosen, adjacent);
-
-    /* Fill in the flags for the look-up-table */
-    check_flags = 0;
-    for (dir = 0, flags = 0x8000; dir < 8; dir++, flags >>= 0x01) {
-        if (-1 == adjacent[dir]) {
-            check_flags |= flags;       /* Handle it like a wall */
-        }
-        else if (mesh -> fan[adjacent[dir]].type != PresetTiles[EDITMAIN_PRESET_FLOOR].type) {
-            check_flags |= flags;       /* It's a wall          */
-        }
-    }
-
-    check_flags |= (check_flags >> 8);      /* Dupe it for end of radius */
-
-    base_x = edit_state -> tx * EDITMAIN_TILEDIV;
-    base_y = edit_state -> ty * EDITMAIN_TILEDIV;
-
-    if (is_floor) {
-
-        if (mesh -> fan[edit_state -> fan_chosen].type == PresetTiles[EDITMAIN_PRESET_FLOOR].type) {
-            /* No change at all */
-            return 1;
-        }               
-
-        /* Change me to floor, set the fan-description  */
-        memcpy(&edit_state -> ft, &PresetTiles[EDITMAIN_PRESET_FLOOR], sizeof(FANDATA_T));
-        memcpy(&edit_state -> fd, &pCommands[edit_state -> ft.type], sizeof(COMMAND_T));
-
-        editmainDoFanUpdate(mesh, edit_state, base_x, base_y);
-
-        for (dir = 0; dir < 8; dir += 2, check_flags <<= 2) {
-
-            lut_idx = (check_flags & 0xE000) >> 13;
-
-            for (i = 0; i < 3; i++) {
-                /* Set all adjacent fields according to lookup-table */
-                edit_state -> fan_no = adjacent[dir + i];
-                if (edit_state -> fan_no >= 0) {
-
-                    shape_no = LutFloor[lut_idx].adj_shapes[i];
-                    rotdir   = LutFloor[lut_idx].adj_rotdir[i];
-
-                    if (shape_no >= 0) {
-                        memcpy(&edit_state -> ft, &PresetTiles[shape_no], sizeof(FANDATA_T));
-                        /* Rotate and the set the shape */
-                        editmainFanTypeRotate(edit_state -> ft.type,
-                                              &edit_state -> fd,
-                                              rotdir);
-                        editmainDoFanUpdate(mesh,
-                                            edit_state,
-                                            base_x + adj_xy[dir + i].x,
-                                            base_y + adj_xy[dir + i].y);
-                    }
-                }
-            }
-        }
-
-    }
-    else {
-
-        if (mesh -> fan[edit_state -> fan_chosen].type != PresetTiles[EDITMAIN_PRESET_FLOOR].type) {
-            /* No change at all */
-            return 1;
-
-        }
-
-        /* Set the middle position depending on the adjacent tiles 'North-East' */
-        lut_idx = (check_flags & 0xE000) >> 13;
-
-        shape_no = LutWall[lut_idx].center_shape;
-        rotdir   = LutWall[lut_idx].center_rotdir;
-
-        memcpy(&edit_state -> ft, &PresetTiles[shape_no], sizeof(FANDATA_T));
-        /* Rotate and the set the shape */
-        editmainFanTypeRotate(edit_state -> ft.type,
-                              &edit_state -> fd,
-                              rotdir);
-        edit_state -> ft.type |= 0x20;    /* Walls have 'big' textures */
-        editmainDoFanUpdate(mesh, edit_state, base_x, base_y);
-
-        for (dir = 0; dir < 8; dir += 2, check_flags <<= 2) {
-
-            lut_idx = (check_flags & 0xE000) >> 13;
-
-            for (i = 0; i < 3; i++) {
-                /* Set all adjacent fields according to lookup-table */
-                edit_state -> fan_no = adjacent[dir + i];
-                if (edit_state -> fan_no >= 0) {
-
-                    shape_no = LutWall[lut_idx].adj_shapes[i];
-                    rotdir   = LutWall[lut_idx].adj_rotdir[i];
-
-                    if (shape_no >= 0) {
-                        memcpy(&edit_state -> ft, &PresetTiles[shape_no], sizeof(FANDATA_T));
-                        /* Rotate and the set the shape */
-                        editmainFanTypeRotate(edit_state -> ft.type,
-                                              &edit_state -> fd,
-                                              rotdir);
-                        /* Walls have 'big' textures */
-                        edit_state -> ft.type |= 0x20;
-                        editmainDoFanUpdate(mesh,
-                                            edit_state,
-                                            base_x + adj_xy[dir + i].x,
-                                            base_y + adj_xy[dir + i].y);
-                    }
-                }
-            }
-        }
-    }
-    
-    return 0;
-
-}
 
 /*
  * Name:
@@ -760,7 +577,7 @@ static void editmainCalcVrta(MESH_T *mesh)
         }
 
     }
-   
+
 }
 
 /*
@@ -769,12 +586,13 @@ static void editmainCalcVrta(MESH_T *mesh)
  * Description:
  *     Fills the given list in a square 5 x 5 from left top to right bottom
  *     with infos about fans. 'fan is the center of the square.
- *     Tiles off the map are signed as 'top' tiles    
+ *     Tiles off the map are signed as 'top' tiles
  *     Generates the 'a'  numbers for all files
  * Input:
  *     mesh*: Pointer on mesh to get the info from
  *     fan:   This is the center fan
- *            
+ *     wi *:  Array to fill with info needed by the wallmaker-code
+ *
  */
 static void editmainCreateWallMakeInfo(MESH_T *mesh, int fan, WALLMAKER_INFO_T *wi)
 {
@@ -805,16 +623,58 @@ static void editmainCreateWallMakeInfo(MESH_T *mesh, int fan, WALLMAKER_INFO_T *
                 
             }
             else {
-            
+
                 wi[index].pos  =  -1;
-                wi[index].type = WALLMAKE_TOP;  /* Handle as wall */
-            
-            }         
-            
+                wi[index].type = EDITMAIN_TOP;  /* Handle as wall */
+
+            }
+
             index++;
-        
+
         }
-    
+
+    }
+
+}
+
+/*
+ * Name:
+ *     editmainTranslateWallMakeInfo
+ * Description:
+ *     Fills the given list in a square 5 x 5 from left top to right bottom
+ *     with infos about fans. 'fan is the center of the square.
+ *     Tiles off the map are signed as 'top' tiles
+ *     Generates the 'a'  numbers for all files
+ * Input:
+ *     mesh*: Pointer on mesh to get the info from
+ *     wi *:  Array from wallmaker to create walls from
+ *
+ */
+static void editmainTranslateWallMakeInfo(MESH_T *mesh, WALLMAKER_INFO_T *wi)
+{
+
+    int i;
+
+
+    for (i = 0; i < 25; i++) {
+
+        if (wi[i].pos >= 0 && ( wi[i].new_type != wi[i].type)) {
+
+            EditState.ft.type     = wi[i].type;
+            EditState.ft.tx_flags = 0;
+            /*
+            EditState.ft.tx_no    =
+
+            ;
+    act_ft -> tx_flags = edit_state -> ft.tx_flags;
+    act_ft -> fx       = edit_state -> ft.fx;
+            editmainDoFanUpdate(mesh,
+            */
+
+
+        }
+
+
     }
 
 }
@@ -921,7 +781,7 @@ int editmainMap(int command)
                 EditState.fan_dir++;
                 EditState.fan_dir &= 0x03;
 
-                editmainFanTypeRotate(EditState.bft_type,
+                editmainFanTypeRotate(PresetTiles[EditState.bft_no].type,
                                       &EditState.fd,
                                       EditState.fan_dir);
                 /* Now translate the fan to chosen fan position */
@@ -935,7 +795,7 @@ int editmainMap(int command)
 
             }
             return 1;
-            
+
         case EDITMAIN_UPDATEFAN:
             editmainDoFanUpdate(&Mesh,
                                 &EditState,
@@ -1061,7 +921,7 @@ void editmainChooseFan(int cx, int cy, int w, int h)
         EditState.fan_chosen = fan_no;
         /* And fill it into 'EditState' for display */
         memcpy(&EditState.ft, &Mesh.fan[fan_no], sizeof(FANDATA_T));
-        
+
         /* And now set camera to move/look at this position */
         sdlgl3dMoveToPosCamera(0, EditState.tx * 128.0, EditState.ty * 128.0, 0, 1);
             
@@ -1110,32 +970,34 @@ void editmainChooseFanType(int dir, char *fan_name)
 
     char i;
     int  x, y;
+    char new_type;
 
 
     if (dir == -2) {
         /* Reset browsing */
-        EditState.bft_type = -1;
+        EditState.bft_no = -1;
         fan_name[0] = 0;
         return;
     }
     else if (dir == 0) {
         /* Start browsing */
-        EditState.bft_type = 0;
+        EditState.bft_no = 0;
     }
     else if (dir == -1) {
-        if (EditState.bft_type > 0) {
-            EditState.bft_type--;
+        if (EditState.bft_no > 0) {
+            EditState.bft_no--;
         }
     }
     else {
-        if (EditState.bft_type < 30) {
-            EditState.bft_type++;
+        if (EditState.bft_no < WALLMAKE_PRESET_MAX) {
+            EditState.bft_no++;
         }
     }
 
-    EditState.bft_type &= 0x1F;    /* Be on the save side with MAXTYPES */
+    new_type =  PresetTiles[EditState.bft_no].type;   
+    new_type &= 0x1F;           /* Be on the save side with MAXTYPES */
 
-    memcpy(&EditState.fd, &pCommands[EditState.bft_type], sizeof(COMMAND_T));
+    memcpy(&EditState.fd, &pCommands[new_type], sizeof(COMMAND_T));
     /* Now move it to the chosen position */
     x = EditState.tx * 128;
     y = EditState.ty * 128;
@@ -1145,7 +1007,7 @@ void editmainChooseFanType(int dir, char *fan_name)
         EditState.fd.vtx[i].y += y;
     }
 
-    sprintf(fan_name, "%s", editmainFanTypeName(EditState.bft_type));
+    sprintf(fan_name, "%s", editmainFanTypeName(new_type));
 
 }
 
@@ -1203,7 +1065,9 @@ int editmainFanSet(char edit_state, char is_floor)
             num_fan = wallmakeMakeTile(EditState.fan_chosen,
                                        is_floor,
                                        wi);
-            /* TODO: Add function which creates tiles from WALLMAKER_INFO_T */ 
+            /* Create tiles from WALLMAKER_INFO_T */
+            editmainTranslateWallMakeInfo(&Mesh, wi);
+
             return num_fan;
 
         }
@@ -1221,10 +1085,10 @@ int editmainFanSet(char edit_state, char is_floor)
  * Description:
  *     Choses Texture from square with given coordinates 'cx/cy' from
  *     Rectangle with given size 'w/h'
- *     The texture extent to choose is allways 8x8 squares 
+ *     The texture extent to choose is allways 8x8 squares
  * Input:
  *     cx, cy: Chosen point in rectangle
- *     w,h:    Extent of rectangle      
+ *     w,h:    Extent of rectangle
  */
 void editmainChooseTex(int cx, int cy, int w, int h, int big)
 {
