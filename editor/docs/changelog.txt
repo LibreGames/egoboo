@@ -1,3 +1,7 @@
+2010-09-01 <bitnapper>
+- Further coding for editing of mesh
+- Fan-Browsing is now active in 'Edit-Mode'
+
 2010-08-31 <bitnapper>
 - Additional code for wallmaker
 - 'Fan-Browsing' reduced to 'Wallmake-Types'

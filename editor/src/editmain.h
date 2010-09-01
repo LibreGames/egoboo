@@ -42,13 +42,15 @@
 #define EDITMAIN_SAVEMAP     4
 #define EDITMAIN_ROTFAN      5      /* Rotates the actual chosen fan if browsing        */ 
 #define EDITMAIN_UPDATEFAN   6      /* Does an update on the actual fan from 'new_fan'  */
+#define EDITMAIN_EDITSTATE   7      /* Change the state for editing                     */
 
 /* ---------- Edit-Flags -------- */
 #define EDITMAIN_SHOW2DMAP 0x01         /* Display the 2DMap        */
+
 /* --- Edit-States (how to set fans) */ 
 #define EDITMAIN_EDIT_NONE      0x00
 #define EDITMAIN_EDIT_SIMPLE    0x01
-#define EDITMAIN_EDIT_FULL      0x02
+#define EDITMAIN_EDIT_FREE      0x02
 
 /* --------- Other values ------- */
 #define EDITMAIN_MAXSPAWN    150        /* Maximum Lines in spawn list  */
@@ -70,13 +72,11 @@ typedef struct {
     int  tx, ty;        /* Position of fan as x/y on map    */
     char display_flags; /* For display in main editor       */
     char draw_mode;     /* For copy into mesh - struct      */
-    char brush_size;    /* From 'cartman'  0-3, (slider)    */    
-    char brush_amount;  /* From 'cartman' -50,  50 (slider) */    
+    char edit_mode;     /* None/simple/free                 */
     char bft_no;        /* Number of fan-type in fan-set    */
     char fan_dir;       /* Direction of new fan             */
-    int  fan_no;        /* Number of new fan                */
     FANDATA_T ft;       /* Copy of type of chosen fan       */ 
-    COMMAND_T fd;       /* Extent data for new fan (bt_type)*/
+    COMMAND_T fd;       /* Extent data for new fan type     */
     char msg[256];      /* Possible message from editor     */
     int map_size;       /* Map-Size chosen by user          */
 
@@ -125,13 +125,13 @@ void editmainExit(void);
 int  editmainMap(int command);
 void editmainDrawMap2D(int x, int y, int w, int h);
 SPAWN_OBJECT_T *editmainLoadSpawn(void);
-void editmainToggleFlag(int which, unsigned char flag);
+char editmainToggleFlag(int which, unsigned char flag);
 void editmainChooseFan(int cx, int cy, int w, int h);
 char *editmainFanTypeName(int type_no);
 void editmainChooseFanType(int dir, char *fan_name);
 int  editmainSetSimple(int fan_no, int is_floor);
 void editmain2DTex(int x, int y, int w, int h);
-int  editmainFanSet(char edit_state, char is_floor);
+int  editmainFanSet(char is_floor);
 void editmainChooseTex(int cx, int cy, int w, int h, int big);
 void editmainFanUpdate(void);
 

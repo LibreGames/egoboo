@@ -73,9 +73,8 @@
 #define EDITOR_2DMAP_CHOOSEFAN  ((char)1)
 #define EDITOR_2DMAP_FANINFO    ((char)2)
 #define EDITOR_2DMAP_FANROTATE  ((char)4)
-#define EDITOR_2DMAP_FANBROWSE  ((char)8)
-#define EDITOR_2DMAP_FANBLEFT   ((char)16)
-#define EDITOR_2DMAP_FANBRIGHT  ((char)32)
+#define EDITOR_2DMAP_FANBLEFT   ((char)8)
+#define EDITOR_2DMAP_FANBRIGHT  ((char)16)
 
 #define EDITOR_FANTEX_CHOOSE    ((char)1)
 #define EDITOR_FANTEX_SIZE      ((char)2)
@@ -128,7 +127,6 @@ static SDLGLCFG_NAMEDVALUE CfgValues[] = {
 static EDITMAIN_STATE_T *pEditState;
 static char StatusBar[80];
 static char Map2DState;         /* EDITOR_2DMAP_ */
-static char EditorEditType;     /* Type of edit: 'No Edit', 'Simple Edit', 'Full Edit' */
 static char EditTypeStr[20];    /* Actual string    */
 static char *EditTypeNames[] = {
     "No Edit",
@@ -151,7 +149,6 @@ static SDLGL_CMDKEY EditorCmd[] = {
     /* { { SDLK_x }, SDLGL3D_MOVE_ROTX, +1, SDLGL3D_MOVE_ROTX }, */
     { { SDLK_i }, EDITOR_2DMAP, EDITOR_2DMAP_FANINFO },
     { { SDLK_r }, EDITOR_2DMAP, EDITOR_2DMAP_FANROTATE },
-    { { SDLK_b }, EDITOR_2DMAP, EDITOR_2DMAP_FANBROWSE },
     { { SDLK_LEFT },  EDITOR_2DMAP, EDITOR_2DMAP_FANBLEFT },
     { { SDLK_RIGHT }, EDITOR_2DMAP, EDITOR_2DMAP_FANBRIGHT },
     /* -------- Switch the player with given number ------- */
@@ -357,19 +354,30 @@ static void editor2DMap(SDLGL_EVENT *event)
             if (pEditState -> display_flags & EDITMAIN_SHOW2DMAP) {
 
                 field = event -> field;
-                editmainChooseFan(event -> mou.x, event -> mou.y,
-                                  field -> rect.w, field -> rect.h);
-                
-                if (EditorEditType > 0) {
+
+                if (pEditState -> edit_mode == EDITMAIN_EDIT_NONE) {
+                    editmainChooseFan(event -> mou.x, event -> mou.y,
+                                      field -> rect.w, field -> rect.h);
+                }
+                else if (pEditState -> edit_mode == EDITMAIN_EDIT_SIMPLE) {
 
                     if (event -> modflags == SDL_BUTTON_LEFT) {
                         /* Replace type of chosen fan by new type of fan    */
                         /* or set a wall in 'simple' mode                   */
-                        editmainFanSet(EditorEditType, 0);
+                        editmainFanSet(0);
                     }
-                    else if (event -> modflags == SDL_BUTTON_RIGHT){
+                    else if (event -> modflags == SDL_BUTTON_RIGHT) {
                         /* Set a floor fan in 'simple' edit mode */
-                        editmainFanSet(EditorEditType, 1);
+                        editmainFanSet(1);
+                    }
+                }
+                else if (pEditState -> edit_mode == EDITMAIN_EDIT_FREE) {
+                    if (event -> modflags == SDL_BUTTON_LEFT) {
+                        editmainFanSet(0);   /* Set the fan */
+                    }
+                    else if (event -> modflags == SDL_BUTTON_RIGHT) {
+                        editmainChooseFan(event -> mou.x, event -> mou.y,
+                                          field -> rect.w, field -> rect.h);
                     }
                 }
 
@@ -385,39 +393,25 @@ static void editor2DMap(SDLGL_EVENT *event)
             }
             else {
                 sdlglInputRemove(EDITOR_FANDLG);
-            }    
+            }
             break;
         case EDITOR_2DMAP_FANROTATE:
             /* Rotate the chosen fan type */
-            if (Map2DState & EDITOR_2DMAP_FANBROWSE) {
+            if (pEditState -> edit_mode > 0) {
                 editmainMap(EDITMAIN_ROTFAN);
-            }
-            break;
-
-        case EDITOR_2DMAP_FANBROWSE:
-            if (event -> pressed) {
-                Map2DState ^= event -> sub_code;
-                if (Map2DState & event -> sub_code) {
-                    editmainChooseFanType(0, StatusBar);    /* Switched on */
-                    sprintf(StatusBar, "%s", "Browsing Fan-Types. Use arrow keys.");
-                }
-                else {
-                    editmainChooseFanType(-2, StatusBar);   /* Switched off */
-                    pEditState -> ft.type = -1;
-                }
             }
             break;
 
         case EDITOR_2DMAP_FANBLEFT:
             /* Browse toward start of fan-list */
-            if (Map2DState & EDITOR_2DMAP_FANBROWSE) {
+            if (pEditState -> edit_mode > 0) {
                 editmainChooseFanType(-1, StatusBar);
             }
             break;
-            
+
         case EDITOR_2DMAP_FANBRIGHT:
-            if (Map2DState & EDITOR_2DMAP_FANBROWSE) {
-                editmainChooseFanType(+1, StatusBar); 
+            if (pEditState -> edit_mode > 0) {
+                editmainChooseFanType(+1, StatusBar);
             }
             break;
 
@@ -451,7 +445,7 @@ static int editorFileMenu(char which)
             return SDLGL_INPUT_EXIT;
 
     }
-    
+
     return SDLGL_INPUT_OK;
 
 }
@@ -467,19 +461,30 @@ static int editorFileMenu(char which)
 static void editorState(char which)
 {
 
+    char edit_mode;
+
+
     switch(which) {
         case EDITOR_STATE_SHOWMAP:
             pEditState -> display_flags ^= EDITMAIN_SHOW2DMAP;
             break;
+
         case EDITOR_STATE_EDIT:
-            EditorEditType++;           /* Type of edit: 'No Edit', 'Simple Edit', 'Full Edit' */
-            if (EditorEditType > 2) {
-                EditorEditType = 0;     /* Set the state            */
+            /* Type of edit: 'No Edit', 'Simple Edit', 'Free Edit' */
+            edit_mode = editmainToggleFlag(EDITMAIN_EDITSTATE, 1);
+            sprintf(EditTypeStr, "%s", EditTypeNames[edit_mode]);
+            sprintf(StatusBar, "%s", EditTypeNames[edit_mode]);
+            
+            if (edit_mode > 0) {
+                editmainChooseFanType(0, StatusBar);    /* Switched on */
+                sprintf(StatusBar, "%s", "Browsing Fan-Types. Use arrow keys.");
             }
-            sprintf(EditTypeStr, "%s", EditTypeNames[EditorEditType]);
-            sprintf(StatusBar, "%s", EditTypeNames[EditorEditType]);
+            else {
+                editmainChooseFanType(-2, StatusBar);   /* Switched off */
+                pEditState -> ft.type = -1;
+            }
             break;
-    }        
+    }
 
 }
 
@@ -695,22 +700,22 @@ static int editorInputHandler(SDLGL_EVENT *event)
                     pEditState -> ft.type ^= 0x20;  /* Switch 'size' flag */
                 }
                 else if (event -> sub_code == EDITOR_FANTEX_DEC) {
-                    tex_no = pEditState -> ft.tx_no >> 6;
+                    tex_no = (char)(pEditState -> ft.tx_no >> 6);
                     tex_no--;
                     if (tex_no < 0) {
                         tex_no = 3;
                     }
                     pEditState -> ft.tx_no &= 0x3F;
-                    pEditState -> ft.tx_no |= ((tex_no & 0x03) << 6);
+                    pEditState -> ft.tx_no |= (char)((tex_no & 0x03) << 6);
                 }
                 else if (event -> sub_code == EDITOR_FANTEX_INC) {
-                    tex_no = pEditState -> ft.tx_no >> 6;
+                    tex_no = (char)(pEditState -> ft.tx_no >> 6);
                     tex_no++;
                     if (tex_no > 3) {
                         tex_no = 0;
                     }
                     pEditState -> ft.tx_no &= 0x3F;
-                    pEditState -> ft.tx_no |= ((tex_no & 0x03) << 6);
+                    pEditState -> ft.tx_no |= (char)((tex_no & 0x03) << 6);
                     
                 }
                 break;
@@ -769,8 +774,7 @@ static void editorStart(void)
                             &MainMenu[2].rect,
                             SDLGL_FRECT_SCRWIDTH);
     /* Edit-Menu */
-    EditorEditType = 0;     /* Set the state            */
-    sprintf(EditTypeStr, "%s", EditTypeNames[EditorEditType]);
+    sprintf(EditTypeStr, "%s", EditTypeNames[0]);
     SubMenu[12].pdata = EditTypeStr;
     
     /* -------- Now create the output screen ---------- */

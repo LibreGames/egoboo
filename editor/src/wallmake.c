@@ -36,13 +36,6 @@
 #define WALLMAKE_NUMPATTERN_WALL    9
 #define WALLMAKE_NUMPATTERN_FLOOR   4
 
-/* Now the tile numbers used by the wallmaker... */
-#define WALLMAKE_FLOOR  ((char)0)
-#define WALLMAKE_TOP    ((char)1)
-#define WALLMAKE_WALL   ((char)8)
-#define WALLMAKE_EDGEO  ((char)16)
-#define WALLMAKE_EDGEI  ((char)19)
-
 #define WALLMAKE_MIDDLE     12
 
 /*******************************************************************************

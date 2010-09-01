@@ -30,13 +30,13 @@
 * DEFINES								                                       *
 *******************************************************************************/
 
-/* --------- Info for preset tiles ------- */
-#define WALLMAKE_PRESET_FLOOR   0
-#define WALLMAKE_PRESET_TOP     1
-#define WALLMAKE_PRESET_WALL    2
-#define WALLMAKE_PRESET_EDGEO   3
-#define WALLMAKE_PRESET_EDGEI   4
-#define WALLMAKE_PRESET_MAX     4
+/* Now the tile numbers used by the wallmaker... */
+#define WALLMAKE_FLOOR  ((char)0)
+#define WALLMAKE_TOP    ((char)1)
+#define WALLMAKE_WALL   ((char)8 +32)       /* Big textures */
+#define WALLMAKE_EDGEO  ((char)16+32)       /* Big textures */
+#define WALLMAKE_EDGEI  ((char)19+32)       /* Big textures */
+
 
 #define WALLMAKE_NORTH  0x00
 #define WALLMAKE_EAST   0x01

@@ -47,13 +47,8 @@
 #define EDITMAIN_WALL_HEIGHT    192
 #define EDITMAIN_TILEDIV        128         /* Size of tile     */
 
-/* --------- Info for preset tiles ------- */
-#define EDITMAIN_FLOOR   0
-#define EDITMAIN_TOP     1
-#define EDITMAIN_WALL    2
-#define EDITMAIN_EDGEO   3
-#define EDITMAIN_EDGEI   4
-#define EDITMAIN_PRESET_MAX     4
+#define EDITMAIN_PRESET_MAX 4
+
 
 #define EDITMAIN_NORTH  0x00
 #define EDITMAIN_EAST   0x01
@@ -83,14 +78,14 @@ static EDITOR_PASSAGE_T Passages[EDITMAIN_MAXPASSAGE + 2];
 /* --- Definition of preset tiles for 'simple' mode -- */
 static FANDATA_T PresetTiles[] = {
 
-    {  EDITMAIN_DEFAULT_TILE, 0, 0,  EDITMAIN_FLOOR },
-    {  EDITMAIN_TOP_TILE,     0, (MPDFX_WALL | MPDFX_IMPASS), EDITMAIN_TOP },
+    {  EDITMAIN_DEFAULT_TILE, 0, 0,  WALLMAKE_FLOOR },
+    {  EDITMAIN_TOP_TILE,     0, (MPDFX_WALL | MPDFX_IMPASS), WALLMAKE_TOP },
     /* Walls, x/y values are rotated, if needed */
-    {  64 + 10, 0, (MPDFX_WALL | MPDFX_IMPASS), EDITMAIN_WALL  },   /* Wall north            */
-    {  64 + 1,  0, (MPDFX_WALL | MPDFX_IMPASS), EDITMAIN_EDGEO },   /* Outer edge north/east */
-    {  64 + 3,  0, (MPDFX_WALL | MPDFX_IMPASS), EDITMAIN_EDGEI },   /* Inner edge north/west */
+    {  64 + 10, 0, (MPDFX_WALL | MPDFX_IMPASS), WALLMAKE_WALL  },   /* Wall north            */
+    {  64 + 1,  0, (MPDFX_WALL | MPDFX_IMPASS), WALLMAKE_EDGEO },   /* Outer edge north/east */
+    {  64 + 3,  0, (MPDFX_WALL | MPDFX_IMPASS), WALLMAKE_EDGEI },   /* Inner edge north/west */
     { 0 }
-    
+
 };
 
 
@@ -251,10 +246,10 @@ static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int t
     int vrt_diff, vrt_size;
     int src_vtx, dst_vtx;
     int vertex;
-    
+
 
     act_ft = &mesh -> fan[edit_state -> fan_chosen];
-    act_fd = &pCommands[act_ft -> type];
+    act_fd = &pCommands[act_ft -> type & 0x1F];
 
     /* Do an update on the 'static' data of the fan */
     act_ft -> tx_no    = edit_state -> ft.tx_no;
@@ -263,11 +258,14 @@ static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int t
 
     if (act_ft -> type == edit_state -> ft.type) {
 
-        return 1;       /* No vertices to change */
+        vrt_diff = 0;       /* May be rotated */
 
     }
+    else {
 
-    vrt_diff = edit_state -> fd.numvertices - act_fd -> numvertices;
+        vrt_diff = edit_state -> fd.numvertices - act_fd -> numvertices;
+
+    }
 
     if (0 == vrt_diff) {
         /* Same number of vertices, only overwrite is needed */
@@ -292,7 +290,7 @@ static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int t
         src_vtx = mesh -> vrtstart[edit_state -> fan_chosen] + act_fd -> numvertices;
         dst_vtx = mesh -> vrtstart[edit_state -> fan_chosen] + edit_state -> fd.numvertices;
         /* Number of vertices to copy */
-        vrt_size = (mesh -> numvert - src_vtx) * sizeof(int);
+        vrt_size = (mesh -> numvert - src_vtx + 1) * sizeof(int);
         /* Add/remove vertices -- update it's numbers */
         mesh -> numfreevert -= vrt_diff;
         mesh -> numvert     += vrt_diff;
@@ -625,7 +623,7 @@ static void editmainCreateWallMakeInfo(MESH_T *mesh, int fan, WALLMAKER_INFO_T *
             else {
 
                 wi[index].pos  =  -1;
-                wi[index].type = EDITMAIN_TOP;  /* Handle as wall */
+                wi[index].type = WALLMAKE_TOP;  /* Handle as wall */
 
             }
 
@@ -703,8 +701,6 @@ EDITMAIN_STATE_T *editmainInit(int map_size)
     EditState.display_flags |= EDITMAIN_SHOW2DMAP;
     EditState.fan_chosen    = -1;   /* No fan chosen                        */
     EditState.ft.type       = -1;   /* No fan-type chosen                   */    
-    EditState.brush_size    = 3;    /* Size of raise/lower terrain brush    */
-    EditState.brush_amount  = 50;   /* Amount of raise/lower                */
     EditState.map_size      = map_size;
 
     EditState.draw_mode     = (EDIT_MODE_SOLID | EDIT_MODE_TEXTURED | EDIT_MODE_LIGHTMAX);
@@ -781,7 +777,7 @@ int editmainMap(int command)
                 EditState.fan_dir++;
                 EditState.fan_dir &= 0x03;
 
-                editmainFanTypeRotate(PresetTiles[EditState.bft_no].type,
+                editmainFanTypeRotate(EditState.ft.type,
                                       &EditState.fd,
                                       EditState.fan_dir);
                 /* Now translate the fan to chosen fan position */
@@ -797,8 +793,8 @@ int editmainMap(int command)
             return 1;
 
         case EDITMAIN_UPDATEFAN:
-            editmainDoFanUpdate(&Mesh,
-                                &EditState,
+            editmainDoFanUpdate(&Mesh, 
+                                &EditState, 
                                 EditState.tx * 128.0,
                                 EditState.ty * 128.0);
             break;
@@ -858,7 +854,7 @@ SPAWN_OBJECT_T *editmainLoadSpawn(void)
  *     which:        Which flag to change
  *
  */
-void editmainToggleFlag(int which, unsigned char flag)
+char editmainToggleFlag(int which, unsigned char flag)
 {
 
     switch(which) {
@@ -889,8 +885,22 @@ void editmainToggleFlag(int which, unsigned char flag)
                 EditState.ft.tx_flags = Mesh.fan[EditState.fan_chosen].tx_flags;
             }
             break;
+            
+        case EDITMAIN_EDITSTATE:
+            if (flag == 0) {
+                EditState.edit_mode = 0;
+            }
+            else {
+                EditState.edit_mode++;
+                if (EditState.edit_mode > 2) {
+                    EditState.edit_mode = 0;
+                }
+            }
+            return EditState.edit_mode;
 
     }
+    
+    return 0;
 
 }
 
@@ -970,7 +980,6 @@ void editmainChooseFanType(int dir, char *fan_name)
 
     char i;
     int  x, y;
-    char new_type;
 
 
     if (dir == -2) {
@@ -989,15 +998,14 @@ void editmainChooseFanType(int dir, char *fan_name)
         }
     }
     else {
-        if (EditState.bft_no < WALLMAKE_PRESET_MAX) {
+        if (EditState.bft_no < EDITMAIN_PRESET_MAX) {
             EditState.bft_no++;
         }
     }
 
-    new_type =  PresetTiles[EditState.bft_no].type;   
-    new_type &= 0x1F;           /* Be on the save side with MAXTYPES */
+    memcpy(&EditState.ft, &PresetTiles[EditState.bft_no], sizeof(FANDATA_T));
+    memcpy(&EditState.fd, &pCommands[EditState.ft.type & 0x1F], sizeof(COMMAND_T));
 
-    memcpy(&EditState.fd, &pCommands[new_type], sizeof(COMMAND_T));
     /* Now move it to the chosen position */
     x = EditState.tx * 128;
     y = EditState.ty * 128;
@@ -1007,7 +1015,7 @@ void editmainChooseFanType(int dir, char *fan_name)
         EditState.fd.vtx[i].y += y;
     }
 
-    sprintf(fan_name, "%s", editmainFanTypeName(new_type));
+    sprintf(fan_name, "%s", editmainFanTypeName(EditState.ft.type & 0x1F));
 
 }
 
@@ -1044,7 +1052,7 @@ void editmain2DTex(int x, int y, int w, int h)
  *     edit_state: How to handle the command 
  *     is_floor:   Set floor in simple mode       
  */
-int editmainFanSet(char edit_state, char is_floor)
+int editmainFanSet(char is_floor)
 {
 
     int num_fan;
@@ -1053,11 +1061,11 @@ int editmainFanSet(char edit_state, char is_floor)
 
     if (EditState.fan_chosen >= 0) {
 
-        if (edit_state == EDITMAIN_EDIT_NONE) {
+        if (EditState.edit_mode == EDITMAIN_EDIT_NONE) {
             return 1;       /* Do nothing, is view-mode */
         }               
         
-        if (edit_state == EDITMAIN_EDIT_SIMPLE) {
+        if (EditState.edit_mode == EDITMAIN_EDIT_SIMPLE) {
         
             /* Get a list of fans surrounding this one */
             editmainCreateWallMakeInfo(&Mesh, EditState.fan_chosen, wi);
@@ -1071,7 +1079,7 @@ int editmainFanSet(char edit_state, char is_floor)
             return num_fan;
 
         }
-        else if (edit_state == EDITMAIN_EDIT_FULL) {
+        else if (EditState.edit_mode == EDITMAIN_EDIT_FREE) {
             return editmainDoFanUpdate(&Mesh, &EditState, EditState.tx, EditState.ty);
         }
     }
@@ -1101,6 +1109,7 @@ void editmainChooseTex(int cx, int cy, int w, int h, int big)
     /* Save it as x/y-position, too */
     tex_x = 8 * cx / w;
     tex_y = 8 * cy / h;
+    
     if (big) {
         if (tex_x > 6) tex_x = 6;
         if (tex_y > 6) tex_y = 6;
