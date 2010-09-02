@@ -768,10 +768,13 @@ static void editdrawMap(MESH_T *mesh, int chosen_fan, FANDATA_T *ft, COMMAND_T *
     }
 
     glPolygonMode(GL_FRONT, mesh -> draw_mode & EDIT_MODE_SOLID ? GL_FILL : GL_LINE);
+    glFrontFace(GL_CW); 
+    
     if (mesh -> draw_mode & EDIT_MODE_TEXTURED) {
         glEnable(GL_TEXTURE_2D);
     }
-    /* TODO: Draw the map, using different edit flags           */
+    
+    /* Draw the map, using different edit flags           */
     /* Needs list of visible tiles
        ( which must be built every time after the camera moved) */
     for (fan_no = 0; fan_no < mesh -> numfan;  fan_no++) {
@@ -810,7 +813,7 @@ static void editdrawMap(MESH_T *mesh, int chosen_fan, FANDATA_T *ft, COMMAND_T *
  *	    Draw the Camera-Frustum in size od 2D-Map
  * Input:
  *      x, y:   Positon in 2D
- *      tw, th: Size of tile in 2D   
+ *      tw, th: Downsize-Factor of map to minimap
  */
 static void editdraw2DCameraPos(int x, int y, int tw, int th)
 {
@@ -826,7 +829,7 @@ static void editdraw2DCameraPos(int x, int y, int tw, int th)
 
     draw_rect.x = x + (campos -> pos[0] / tw);
     draw_rect.y = y + (campos -> pos[1] / th);
-    zmax /= 32.0;       /* Fixme: Do correct division -- resive by diff to full*/
+    zmax /= tw;       /* Fixme: Do correct division -- resive by diff to full*/
 
     /* Now draw the camera angle */
     glBegin(GL_LINES);
@@ -1081,7 +1084,7 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int chosen_fan)
 
     }
 
-    editdraw2DCameraPos(x, y, draw_rect.w, draw_rect.h);
+    editdraw2DCameraPos(x, y, 128 / draw_rect.w, 128 / draw_rect.h);
 
 }
 

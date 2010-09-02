@@ -247,7 +247,7 @@ int editfileSaveMapMesh(MESH_T *mesh, char *msg)
             /* Write y-vertices */
             for (cnt = 0; cnt < mesh -> numvert; cnt++) {
                 /* Change int to float for game */
-                ftmp = mesh -> vrtz[cnt];
+                ftmp = mesh -> vrty[cnt];
                 numwritten += fwrite(&ftmp, 4, 1, filewrite);
 
             }
@@ -255,7 +255,7 @@ int editfileSaveMapMesh(MESH_T *mesh, char *msg)
             /* Write z-vertices */
             for (cnt = 0; cnt < mesh -> numvert; cnt++) {
                 /* Change int to float for game */
-                ftmp = mesh -> vrtz[cnt] * EDITFILE_ZADJUST;   /* Multiply it again to file format */
+                ftmp = (mesh -> vrtz[cnt] * EDITFILE_ZADJUST);   /* Multiply it again to file format */
                 numwritten += fwrite(&ftmp, 4, 1, filewrite);
 
             }

@@ -81,9 +81,9 @@ static FANDATA_T PresetTiles[] = {
     {  EDITMAIN_DEFAULT_TILE, 0, 0,  WALLMAKE_FLOOR },
     {  EDITMAIN_TOP_TILE,     0, (MPDFX_WALL | MPDFX_IMPASS), WALLMAKE_TOP },
     /* Walls, x/y values are rotated, if needed */
-    {  64 + 10, 0, (MPDFX_WALL | MPDFX_IMPASS), WALLMAKE_WALL  },   /* Wall north            */
-    {  64 + 1,  0, (MPDFX_WALL | MPDFX_IMPASS), WALLMAKE_EDGEO },   /* Outer edge north/east */
-    {  64 + 3,  0, (MPDFX_WALL | MPDFX_IMPASS), WALLMAKE_EDGEI },   /* Inner edge north/west */
+    {  63 + 33, 0, (MPDFX_WALL | MPDFX_IMPASS), WALLMAKE_WALL  },   /* Wall north            */
+    {  63 + 51, 0, (MPDFX_WALL | MPDFX_IMPASS), WALLMAKE_EDGEO },   /* Outer edge north/east */
+    {  63 +  1, 0, (MPDFX_WALL | MPDFX_IMPASS), WALLMAKE_EDGEI },   /* Inner edge north/west */
     { 0 }
 
 };
@@ -341,8 +341,8 @@ static void editmainFanTypeRotate(int type, COMMAND_T *dest, char dir)
 
 
 
-    /* Get a copy from  the fan type list */
-    memcpy(dest, &pCommands[type], sizeof(COMMAND_T));
+    /* Get a copy from  the fan type list, get only the 'lower' numbers */
+    memcpy(dest, &pCommands[type & 0x1F], sizeof(COMMAND_T));
 
     if (dir != EDITMAIN_NORTH) {
 
@@ -635,7 +635,7 @@ static void editmainCreateWallMakeInfo(MESH_T *mesh, int fan, WALLMAKER_INFO_T *
 
 }
 
-/*
+/*                                             
  * Name:
  *     editmainTranslateWallMakeInfo
  * Description:
@@ -762,7 +762,6 @@ int editmainMap(int command)
             if (editfileLoadMapMesh(&Mesh, EditState.msg)) {
 
                 editmainCompleteMapData(&Mesh);
-
                 return 1;
 
             }
@@ -911,32 +910,54 @@ char editmainToggleFlag(int which, unsigned char flag)
  *     Choose a fan from given position in rectangle of size w/h.
  *     Does an update on the 'EditState'
  * Input:
- *     cx, cy: Position chosen
- *     w, h:   Extent of rectangle
+ *     cx, cy:   Position chosen
+ *     w, h:     Extent of rectangle
+ *     get_info: Get info from chosen fan yes/no
  */
-void editmainChooseFan(int cx, int cy, int w, int h)
+void editmainChooseFan(int cx, int cy, int w, int h, int get_info)
 {
 
     int fan_no;
-    
+    int x, y, i;
+    int old_tx, old_ty;
+
+
+    /* ------------------------- */
+    old_tx = EditState.tx;
+    old_ty = EditState.ty;
 
     /* Save it as x/y-position, too */
     EditState.tx = Mesh.tiles_x * cx / w;
     EditState.ty = Mesh.tiles_y * cy / h;
 
     fan_no = (EditState.ty * Mesh.tiles_x) + EditState.tx;
-    
+
     if (fan_no >= 0 && fan_no < Mesh.numfan) {
-    
+
         EditState.fan_chosen = fan_no;
-        /* And fill it into 'EditState' for display */
-        memcpy(&EditState.ft, &Mesh.fan[fan_no], sizeof(FANDATA_T));
+        /* And fill it into 'EditState' for display, if asked for */
+        if (get_info) {
+
+            memcpy(&EditState.ft, &Mesh.fan[fan_no], sizeof(FANDATA_T));
+
+        }
+        else {
+            /* 'Move' actual 'fd'-data to new position */
+            /* Now move it to the chosen position */
+            x = (EditState.tx - old_tx) * 128;
+            y = (EditState.ty - old_ty) * 128;
+
+            for (i = 0; i < EditState.fd.numvertices; i++) {
+                EditState.fd.vtx[i].x += x;
+                EditState.fd.vtx[i].y += y;
+            }
+        }
 
         /* And now set camera to move/look at this position */
         sdlgl3dMoveToPosCamera(0, EditState.tx * 128.0, EditState.ty * 128.0, 0, 1);
-            
+
     }
- 
+
 }
 
 /*
@@ -1014,6 +1035,8 @@ void editmainChooseFanType(int dir, char *fan_name)
         EditState.fd.vtx[i].x += x;
         EditState.fd.vtx[i].y += y;
     }
+
+    EditState.fan_dir = 0;
 
     sprintf(fan_name, "%s", editmainFanTypeName(EditState.ft.type & 0x1F));
 

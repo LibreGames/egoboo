@@ -54,22 +54,6 @@
 #define SDLGLSTR_COL_YELLOW 	  14
 #define SDLGLSTR_COL_WHITE 	      15
 
-/* Special drawing functions for dialog boxes */
-#define SDLGLSTR_PUSHBUTTON     1
-#define SDLGLSTR_RADIOBUTTON    2
-#define SDLGLSTR_RBGROUP	    3
-#define SDLGLSTR_SCROLLBUTTON   4
-#define SDLGLSTR_SCROLLBK	    5	/* Background of a scroll bar   */
-#define SDLGLSTR_GROUPRECT	    6
-#define SDLGLSTR_SELECTBOX	    7	/* Box with a black background  */
-#define SDLGLSTR_RECTANGLE	    8	/*Draw a simple rectangle       */
-#define SDLGLSTR_PROGRESSBAR    9   /* Draw a progressbar           */
-#define SDLGLSTR_EMPTYBUTTON   10 
-#define SDLGLSTR_SLI_AU        11   /* Arrow up                     */
-#define SDLGLSTR_SLI_AD        12   /* Arrow Down                   */ 
-#define SDLGLSTR_SLI_AL        13   /* Arrow left                   */
-#define SDLGLSTR_SLI_AR        14   /* Arrow right                  */   
-
 /* Flags for drawing routines */
 #define SDLGLSTR_FINVISIBLE   0x80000000    /* Is invisible                 */
 #define SDLGLSTR_FHIGHLIGHT   0x40000000    /* is highlighted               */
@@ -83,12 +67,7 @@
 #define SDLGLSTR_FTEXTURED    0x00800000    /* Draw button with texture     */
 #define SDLGLSTR_FEMPTYBUTTON 0x00400000	/* Draw now middle color for button */
 
-
 #define SDLGLSTR_FBUTTONSTATE 0x00400000        /* State for radio/push buttons */
-#define SDLGLSTR_FARROWUP     0x00200000        /* Arrow bits _must_ be in oder */
-#define SDLGLSTR_FARROWDOWN   0x00100000
-#define SDLGLSTR_FARROWLEFT   0x00080000
-#define SDLGLSTR_FARROWRIGHT  0x00040000
 #define SDLGLSTR_FCENTERED    (SDLGLSTR_FHCENTER | SDLGLSTR_FVCENTER)
 
 /* The basic styles available	*/

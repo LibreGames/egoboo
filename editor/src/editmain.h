@@ -126,7 +126,7 @@ int  editmainMap(int command);
 void editmainDrawMap2D(int x, int y, int w, int h);
 SPAWN_OBJECT_T *editmainLoadSpawn(void);
 char editmainToggleFlag(int which, unsigned char flag);
-void editmainChooseFan(int cx, int cy, int w, int h);
+void editmainChooseFan(int cx, int cy, int w, int h, int get_info);
 char *editmainFanTypeName(int type_no);
 void editmainChooseFanType(int dir, char *fan_name);
 int  editmainSetSimple(int fan_no, int is_floor);

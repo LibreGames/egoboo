@@ -1406,7 +1406,6 @@ void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int info)
     char percenttext[30];
     SDLGLSTR_STYLE *style = &ActualStyle;
     unsigned char *textcolor, *hotkeycolor;
-    int arrownum, arrowflag;
     int save_color;
 
 
@@ -1428,12 +1427,20 @@ void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int info)
     
     switch(which) {
 
-    	case SDLGLSTR_PUSHBUTTON:
-        case SDLGLSTR_RADIOBUTTON:
+        case SDLGL_TYPE_STD:
+            sdlglstrDrawButton(rect, 0, 0);
+            break;
+            
+        case SDLGL_TYPE_EDIT:
+            /* TODO: Draw an edit box */
+            break;    
+            
+        case SDLGL_TYPE_CHECKBOX:
+        case SDLGL_TYPE_RB:        
 
-	    pbc = buttonchars;
+            pbc = buttonchars;
 
-            if (which == SDLGLSTR_RADIOBUTTON) {
+            if (which == SDLGL_TYPE_RB) {
 
             	pbc += 3;	/* Point on radio button bitmaps */
 
@@ -1443,11 +1450,10 @@ void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int info)
             ActColor = SDLGLSTR_COL_WHITE;
             sdlglstrChar(rect, *pbc);
 
-
             /* 2: Draw the state */
             pbc++;		/* Point on state bitmaps	*/
 
-            if (info & SDLGLSTR_FBUTTONSTATE) {
+            if (info) {
 
                 pbc++;		/* Point on number of bitmap for state set */
 
@@ -1464,8 +1470,7 @@ void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int info)
 	        sdlglstrIString(&sizerect, text, textcolor, hotkeycolor);
             break;
 
-        case SDLGLSTR_GROUPRECT:
-        case SDLGLSTR_RBGROUP:
+        case SDLGL_TYPE_RBGROUP:
 
             /* 1. Draw the rectangle 	     */
             sdlglstrDrawRect(rect, fontcolors[SDLGLSTR_COL_BLACK], 0);
@@ -1482,59 +1487,28 @@ void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int info)
             ActFont = style -> fontno;
             sdlglstrIString(&sizerect, text,textcolor, hotkeycolor);
             break;
-
-        case SDLGLSTR_EMPTYBUTTON:
-            sdlglstrDrawButton(rect, 0, 0);
-            break;
         
-        case SDLGLSTR_SLI_AU:   /* Arrow up                     */
-        case SDLGLSTR_SLI_AD:   /* Arrow Down                   */
-        case SDLGLSTR_SLI_AL:   /* Arrow left                   */
-        case SDLGLSTR_SLI_AR:   /* Arrow right                  */ 
+        case SDLGL_TYPE_SLI_AU:   /* Arrow up                     */
+        case SDLGL_TYPE_SLI_AD:   /* Arrow Down                   */
+        case SDLGL_TYPE_SLI_AL:   /* Arrow left                   */
+        case SDLGL_TYPE_SLI_AR:   /* Arrow right                  */
             /* 1: Draw the button */
             sdlglstrDrawButton(rect, 0, 0);
             sizerect.x = rect -> x + (rect -> w - 8) / 2;
             sizerect.y = rect -> y + (rect -> h - 8) / 2;
             /* 2. Draw the arrow in chosen direction */
             ActColor = SDLGLSTR_COL_BLACK;
-            sdlglstrChar(&sizerect, buttonchars[6 + (which - SDLGLSTR_SLI_AU)]);
+            sdlglstrChar(&sizerect, buttonchars[6 + (which - SDLGL_TYPE_SLI_AU)]);
             break;
-        case SDLGLSTR_SCROLLBUTTON:
-
-            /* 1: Draw the button */
-            sdlglstrDrawButton(rect, 0, 0);
-
-            /* 2: Draw the arrow, if any */
-            arrowflag = SDLGLSTR_FARROWUP;
-
-            for (arrownum = 0; arrownum < 4; arrownum++) {
-
-                if (info & arrowflag) { /* We found the arrow to draw */
-
-                    sizerect.x = (rect -> w - 8) / 2;
-                    sizerect.y = (rect -> h - 8) / 2;
-                    ActColor = SDLGLSTR_COL_BLACK;
-             	    sdlglstrChar(&sizerect, buttonchars[6 + arrownum]);
-                    return;
-
-                }
-
-                arrowflag >>= 1;
-
-            }
-            break;
-
-        case SDLGLSTR_SCROLLBK:			/* Background of a scroll box */
-
+        
+        case SDLGL_TYPE_SLI_BK:			/* Background of a scroll box */
             sdlglstrDrawRect(rect, style -> scrollbk, 1);
             break;
 
-        case SDLGLSTR_SELECTBOX:
-
+        case SDLGL_TYPE_SLI_BOX:
             ActFont = style -> fontno;
             /* 1: Draw the title, if any is given */
             if (text) {
-
                 sdlglstrGetStringSize(text, &sizerect);
                 sizerect.x += rect -> x + ((rect -> w - sizerect.w) / 2);
                 sizerect.y += rect -> y + 4;
@@ -1545,7 +1519,7 @@ void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int info)
     	    sdlglstrIDrawShadowedRect(rect, style, SDLGLSTR_FINVERTED);
             break;
 
-        case SDLGLSTR_PROGRESSBAR:
+        case SDLGL_TYPE_PROGBAR:
 
             /* 1: Draw the background*/
             sdlglstrIDrawShadowedRect(rect, style, SDLGLSTR_FINVERTED);

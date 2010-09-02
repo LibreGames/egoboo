@@ -126,6 +126,7 @@ static SDLGLCFG_NAMEDVALUE CfgValues[] = {
 
 static EDITMAIN_STATE_T *pEditState;
 static char StatusBar[80];
+static char FanName[80];
 static char Map2DState;         /* EDITOR_2DMAP_ */
 static char EditTypeStr[20];    /* Actual string    */
 static char *EditTypeNames[] = {
@@ -357,7 +358,7 @@ static void editor2DMap(SDLGL_EVENT *event)
 
                 if (pEditState -> edit_mode == EDITMAIN_EDIT_NONE) {
                     editmainChooseFan(event -> mou.x, event -> mou.y,
-                                      field -> rect.w, field -> rect.h);
+                                      field -> rect.w, field -> rect.h, 1);
                 }
                 else if (pEditState -> edit_mode == EDITMAIN_EDIT_SIMPLE) {
 
@@ -377,7 +378,7 @@ static void editor2DMap(SDLGL_EVENT *event)
                     }
                     else if (event -> modflags == SDL_BUTTON_RIGHT) {
                         editmainChooseFan(event -> mou.x, event -> mou.y,
-                                          field -> rect.w, field -> rect.h);
+                                          field -> rect.w, field -> rect.h, 0);
                     }
                 }
 
@@ -405,13 +406,13 @@ static void editor2DMap(SDLGL_EVENT *event)
         case EDITOR_2DMAP_FANBLEFT:
             /* Browse toward start of fan-list */
             if (pEditState -> edit_mode > 0) {
-                editmainChooseFanType(-1, StatusBar);
+                editmainChooseFanType(-1, FanName);
             }
             break;
 
         case EDITOR_2DMAP_FANBRIGHT:
             if (pEditState -> edit_mode > 0) {
-                editmainChooseFanType(+1, StatusBar);
+                editmainChooseFanType(+1, FanName);
             }
             break;
 
@@ -494,28 +495,27 @@ static void editorState(char which)
  * Description:
  *     Draws the push  button with state taken based on fields -> code
  * Input:
- *     field *: Pointer on field to draw 
+ *     field *: Pointer on field to draw
  */
 static void editorDrawCheckBox(SDLGL_FIELD *field)
 {
 
     int state;
-    
-    
+
+
     switch(field -> code) {
-    
+
         case EDITOR_FANTEX:
             state = pEditState -> ft.type & 0x20 ? SDLGLSTR_FBUTTONSTATE : 0;
             break;
-            
+
         case EDITOR_FANFX:
             state = pEditState -> ft.fx & field -> sub_code ? SDLGLSTR_FBUTTONSTATE : 0;
             break;
-            
-    }
-    
-    /* sdlglstrSetColorNo(SDLGLSTR_COL_WHITE); */
-    sdlglstrDrawSpecial(&field -> rect, field -> pdata, SDLGLSTR_PUSHBUTTON, state);
+
+    }  
+
+    sdlglstrDrawSpecial(&field -> rect, field -> pdata, SDLGL_TYPE_CHECKBOX, state);
 
 }
 
@@ -566,7 +566,7 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
         
             case SDLGL_TYPE_STD:
                 /* Draw the background of the menu and the status bar */
-                sdlglstrDrawButton(&fields -> rect, 0, 0);
+                sdlglstrDrawSpecial(&fields -> rect, 0, SDLGL_TYPE_STD, 0);
                 break;
                 
             case SDLGL_TYPE_MENU:                    
@@ -614,11 +614,11 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
                 break;
                 
             case SDLGL_TYPE_SLI_AL:
-                sdlglstrDrawSpecial(&fields -> rect, 0, SDLGLSTR_SLI_AL, 0);
+                sdlglstrDrawSpecial(&fields -> rect, 0, SDLGL_TYPE_SLI_AL, 0);
                 break;
                 
             case SDLGL_TYPE_SLI_AR:
-                sdlglstrDrawSpecial(&fields -> rect, 0, SDLGLSTR_SLI_AR, 0);
+                sdlglstrDrawSpecial(&fields -> rect, 0, SDLGL_TYPE_SLI_AR, 0);
                 break;
             
                 
@@ -776,7 +776,9 @@ static void editorStart(void)
     /* Edit-Menu */
     sprintf(EditTypeStr, "%s", EditTypeNames[0]);
     SubMenu[12].pdata = EditTypeStr;
-    
+    /* ------ Name of fan-type in dialog ------ */
+    FanInfoDlg[0].pdata = FanName;
+
     /* -------- Now create the output screen ---------- */
     sdlglInputNew(editorDrawFunc,
                   editorInputHandler,     /* Handler for input    */

@@ -151,12 +151,13 @@ typedef unsigned short wchar_t;
 #define SDLGL_TYPE_SLI_BUTTON  0x08
 #define SDLGL_TYPE_SLI_AU      0x09     /* Arrow up, arrow down             */
 #define SDLGL_TYPE_SLI_AD      0x0A
-#define SDLGL_TYPE_SLI_ELEMENT 0x0B 
-#define SDLGL_TYPE_SLI_AL      0x0C     /* Arrow left, Arrow right          */
-#define SDLGL_TYPE_SLI_AR      0x0D 
+#define SDLGL_TYPE_SLI_AL      0x0B     /* Arrow left, Arrow right          */
+#define SDLGL_TYPE_SLI_AR      0x0C
+#define SDLGL_TYPE_SLI_ELEMENT 0x0D 
 #define SDLGL_TYPE_SLIDER      0x0E
 #define SDLGL_TYPE_BUTTON      0x0F     /* Simple Button                    */
 #define SDLGL_TYPE_HORCHOOSE   0x10
+#define SDLGL_TYPE_PROGBAR     0x11
 #define SDLGL_TYPE_MENU        0x20     /* Drawing menu strings             */  
                                        
 /* --- Special 'codes' for special movements if input is cleared --- */
