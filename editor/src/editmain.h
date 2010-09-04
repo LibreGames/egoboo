@@ -43,6 +43,7 @@
 #define EDITMAIN_ROTFAN      5      /* Rotates the actual chosen fan if browsing        */ 
 #define EDITMAIN_UPDATEFAN   6      /* Does an update on the actual fan from 'new_fan'  */
 #define EDITMAIN_EDITSTATE   7      /* Change the state for editing                     */
+#define EDITMAIN_SETFANPROPERTY 8
 
 /* ---------- Edit-Flags -------- */
 #define EDITMAIN_SHOW2DMAP 0x01         /* Display the 2DMap        */
@@ -133,7 +134,6 @@ int  editmainSetSimple(int fan_no, int is_floor);
 void editmain2DTex(int x, int y, int w, int h);
 int  editmainFanSet(char is_floor);
 void editmainChooseTex(int cx, int cy, int w, int h, int big);
-void editmainFanUpdate(void);
 
 #endif /* _EDITMAIN_H_	*/
 

@@ -797,7 +797,15 @@ int editmainMap(int command)
                                 EditState.tx * 128.0,
                                 EditState.ty * 128.0);
             break;
-
+            
+        case EDITMAIN_SETFANPROPERTY:
+            /* Do update the chosen texture */
+            Mesh.fan[EditState.fan_chosen].tx_no = EditState.ft.tx_no;
+            /* Do update on flags */
+            Mesh.fan[EditState.fan_chosen].fx = EditState.ft.fx;
+            /* TODO: Do update on fan vertices, fan type */
+            break;
+ 
     }
 
     return 0;

@@ -41,7 +41,7 @@
 * DEFINES								                                       *
 *******************************************************************************/
 
-#define EDITOR_CAPTION "EGOBOO - Map Editor V 0.0.9"
+#define EDITOR_CAPTION "EGOBOO - Map Editor V 0.1.0"
 
 #define EDITOR_MAXFLD   60
 
@@ -374,6 +374,8 @@ static void editor2DMap(SDLGL_EVENT *event)
                 }
                 else if (pEditState -> edit_mode == EDITMAIN_EDIT_FREE) {
                     if (event -> modflags == SDL_BUTTON_LEFT) {
+                        editmainChooseFan(event -> mou.x, event -> mou.y,
+                                          field -> rect.w, field -> rect.h, 0);
                         editmainFanSet(0);   /* Set the fan */
                     }
                     else if (event -> modflags == SDL_BUTTON_RIGHT) {
@@ -651,7 +653,7 @@ static int editorInputHandler(SDLGL_EVENT *event)
 {
 
     SDLGL_FIELD *field;
-    char tex_no;
+    char tex_no, edit_mode;
 
     if (event -> code > 0) {
 
@@ -662,12 +664,10 @@ static int editorInputHandler(SDLGL_EVENT *event)
                 if (event -> pressed) {
                     /* Start movement */
                     sdlgl3dManageCamera(0, event -> sub_code, 1);
-
                 }
                 else {
                     /* Stop movement */
                     sdlgl3dManageCamera(0, event -> sub_code, 0);
-
                 }
                 break;
 
@@ -676,13 +676,23 @@ static int editorInputHandler(SDLGL_EVENT *event)
             case EDITOR_MAP:
                 if (! editmainMap(event -> sub_code)) {
                     /* TODO: Display message, what has gone wrong   */
-                    /* TODO: Add 'EDITMAIN_LOADSPAWN'               */
                     /* TODO: Close menu, if menu-point is chosen    */
                 }
+                else {
+                    /* Do additional actions */
+                    editmainChooseFan(1, 1, 256, 256, 0);
+                    Map2DState |= EDITOR_2DMAP_FANINFO;
+                    sdlglInputAdd(EDITOR_FANDLG, FanInfoDlg, 20, 20);
+                    /* Type of edit: 'No Edit', 'Simple Edit', 'Free Edit' */
+                    edit_mode = editmainToggleFlag(EDITMAIN_EDITSTATE, 1);
+                    sprintf(EditTypeStr, "%s", EditTypeNames[edit_mode]);
+                }
                 break;
+                
             case EDITOR_STATE:
                 editorState(event -> sub_code);
                 break;
+                
             case EDITOR_FANFX:
                 /* Change the FX of the chosen fan        */
                 pEditState -> ft.fx ^= event -> sub_code;
@@ -721,8 +731,9 @@ static int editorInputHandler(SDLGL_EVENT *event)
                 break;
 
             case EDITOR_FANUPDATE:
-                editmainFanUpdate();
+                editmainMap(EDITMAIN_SETFANPROPERTY);
                 break;
+                
             case EDITOR_SETTINGS:
                 editmainToggleFlag(EDITMAIN_TOGGLE_DRAWMODE, event -> sub_code);
                 editorSetMenuViewToggle();

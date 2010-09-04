@@ -1,3 +1,10 @@
+2010-09-04 <bitnapper>
+- Choosen fan is now signed with transparent instead of full color
+- Editmode is automatically chosen, if a new map is generated
+- Adjusted calculation of texture positions
+- Choose and set fan direct in 'Free' mode with left mouse click
+- Bugfix about texturing in draw code for fans
+
 2010-09-02 <bitnapper>
 - Bugfix in fan rotation code 
 - Added code for 'Free' edit mode

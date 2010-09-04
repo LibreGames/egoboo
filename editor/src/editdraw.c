@@ -639,6 +639,74 @@ static void editdrawChosenFanType(FANDATA_T *ft, COMMAND_T *fd)
 
 /*
  *  Name:
+ *	    editdrawTransparentFan
+ *  Description:
+ *	    Draws a single fan with given number from given mesh.
+ *      Transparent, with no texture 
+ * Input:
+ *      mesh *: Pointer on mesh info
+ *      fan_no: Number of fan to draw
+ *      col_no: Override for setting by texture-flag
+ */
+static void editdrawTransparentFan(MESH_T *mesh, int fan_no, int col_no)
+{
+
+    COMMAND_T *mc;
+    int *vert_x, *vert_y, *vert_z;
+    int cnt, tnc, entry, *vertexno;
+    int vert_base;
+    char type;
+    int actvertex;
+    unsigned char color[4];
+
+
+    type = (char)(mesh -> fan[fan_no].type & 0x1F);  /* Maximum 31 fan types */
+                                                     /* Others are flags     */
+
+    mc   = &MeshCommand[type];
+
+    vert_base = mesh -> vrtstart[fan_no];
+
+    vert_x = &mesh -> vrtx[vert_base];
+    vert_y = &mesh -> vrty[vert_base];
+    vert_z = &mesh -> vrtz[vert_base];
+
+    sdlglGetColor(col_no, color);
+    
+    color[3] = 128;
+    glColor4ubv(color);
+    
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);     
+    glPolygonMode(GL_FRONT, GL_FILL);
+    
+    entry    = 0;
+    vertexno = mc -> vertexno;
+
+    for (cnt = 0; cnt < mc -> count; cnt++) {
+
+        glBegin (GL_TRIANGLE_FAN);
+
+            for (tnc = 0; tnc < mc -> size[cnt]; tnc++) {
+
+                actvertex = vertexno[entry]; 	/* Number of vertex to draw */               
+                
+                glVertex3i(vert_x[actvertex], vert_y[actvertex], vert_z[actvertex] + 2);
+
+                entry++;
+
+            }
+
+        glEnd();
+
+    } 
+    
+    glDisable(GL_BLEND);
+
+}
+
+/*
+ *  Name:
  *	    editdrawSingleFan
  *  Description:
  *	    Draws a single fan with given number from given mesh
@@ -654,7 +722,7 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no, int col_no)
     int *vert_x, *vert_y, *vert_z;
     int cnt, tnc, entry, *vertexno;
     int vert_base;
-    char type;
+    char type, bigtex;
     int actvertex;
     float *uv;			/* Pointer on Texture - coordinates	        */
     float *offuv;		/* Pointer on additional offset for start   */
@@ -662,9 +730,11 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no, int col_no)
     unsigned char color[3];
 
 
-    type = (char)(mesh -> fan[fan_no].type & 0x1F);  /* Maximum 31 fan types */
-                                                     /* Others are flags     */
+    type   = (char)mesh -> fan[fan_no].type;
+    bigtex = (char)(type & 0x20);
+    type   &= 0x1F;     /* Maximum 31 fan types for drawing         */
 
+    
     mc   = &MeshCommand[type];
 
     vert_base = mesh -> vrtstart[fan_no];
@@ -675,8 +745,8 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no, int col_no)
 
     if (! (mesh -> draw_mode & EDIT_MODE_SOLID)) {
         /* Set color depending on texturing type */
-        if (type & COMMAND_TEXTUREHI_FLAG) {    /* It's one with hi res texture */
-            sdlglSetColor(SDLGL_COL_LIGHTBLUE);  /* color like cartman           */
+        if (bigtex) {                           /* It's one with hi res texture */
+            sdlglSetColor(SDLGL_COL_LIGHTBLUE); /* color like cartman           */
     	}
     	else {
             sdlglSetColor(SDLGL_COL_LIGHTRED);
@@ -688,7 +758,7 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no, int col_no)
     }
     if (mesh -> draw_mode & EDIT_MODE_TEXTURED ) {
 
-        if (type & COMMAND_TEXTUREHI_FLAG) {	/* It's one with hi res texture */
+        if (bigtex) {               /* It's one with hi res texture */
             uv = &mc -> biguv[0];
     	}
     	else {
@@ -757,7 +827,6 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no, int col_no)
 static void editdrawMap(MESH_T *mesh, int chosen_fan, FANDATA_T *ft, COMMAND_T *fd)
 {
 
-    char save_mode;
     int fan_no;
 
 
@@ -784,12 +853,9 @@ static void editdrawMap(MESH_T *mesh, int chosen_fan, FANDATA_T *ft, COMMAND_T *
     }
     
     /* Sign fan, if chosen */
-    if (chosen_fan >= 0) {
-    
-        save_mode = mesh -> draw_mode;
-        mesh -> draw_mode = 0;      /* EDIT_MODE_SOLID; */
-        editdrawSingleFan(mesh, chosen_fan, SDLGL_COL_YELLOW);
-        mesh -> draw_mode = save_mode;
+    if (chosen_fan >= 0) {  
+
+        editdrawTransparentFan(mesh, chosen_fan, SDLGL_COL_YELLOW);
     
     }
 
@@ -875,16 +941,15 @@ COMMAND_T *editdrawInitData(void)
     mcmd = &MeshCommand[3];
 
     /* Correct all of them silly texture positions for seamless tiling */
-
 	for (entry = 2; entry < (MAXMESHTYPE/2); entry++) {
  	
         for (cnt = 0; cnt < (mcmd -> numvertices * 2); cnt += 2) {
 
-         	mcmd -> uv[cnt]     = mcmd -> uv[cnt] / 8;
-         	mcmd -> uv[cnt + 1] = mcmd -> uv[cnt + 1] / 8;
+         	mcmd -> uv[cnt]     = ((.6/32)+(mcmd -> uv[cnt]*30.8/32))/8;
+         	mcmd -> uv[cnt + 1] = ((.6/32)+(mcmd -> uv[cnt + 1]*30.8/32))/8;
          	/* Do for big tiles too */
-         	mcmd -> biguv[cnt]     = mcmd -> biguv[cnt] / 4;
-         	mcmd -> biguv[cnt + 1] = mcmd -> biguv[cnt + 1] / 4;
+         	mcmd -> biguv[cnt]     = ((.6/64)+(mcmd -> biguv[cnt]*62.8/64))/4;
+         	mcmd -> biguv[cnt + 1] = ((.6/64)+(mcmd -> biguv[cnt + 1]*62.8/64))/4;
             /* FIXME: Adjust the texture offsets by +/- 0.001 */
      	
      	}
@@ -976,20 +1041,7 @@ void editdraw3DView(MESH_T *mesh, int chosen_fan, FANDATA_T *ft, COMMAND_T *fd)
                 
             }
 
-        }
-
-        /* Draw Axes */
-        glBegin(GL_LINES);
-            sdlglSetColor(SDLGL_COL_RED);   /* X-Axis   */
-            glVertex3i(  0,   0, 10);
-            glVertex3i(256,   0, 10);
-            sdlglSetColor(SDLGL_COL_GREEN);
-            glVertex3i(  0,   0, 10);
-            glVertex3i(  0, 256, 10);       /* Y-Axis   */
-            sdlglSetColor(SDLGL_COL_BLUE);
-            glVertex3i(  0, 0, 10);
-            glVertex3i(  0, 0, 266);        /* Z-Axis   */
-        glEnd();
+        }      
         
     }
     
