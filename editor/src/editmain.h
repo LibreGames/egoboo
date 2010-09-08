@@ -54,8 +54,6 @@
 #define EDITMAIN_EDIT_FREE      0x02
 
 /* --------- Other values ------- */
-#define EDITMAIN_MAXSPAWN    150        /* Maximum Lines in spawn list  */
-#define EDITMAIN_MAXPASSAGE   30
 #define EDITMAIN_MAX_MAPSIZE  64
 
 /* ---- Flags to toggle --------- */
@@ -103,19 +101,8 @@ typedef struct {
 
 } SPAWN_OBJECT_T;       /* Description of a spawned object */
 
-typedef struct {
-    char line_name[25];
-    char item_name[20+1];
-    int  slot_no;       /* Use it for coloring the bounding boxes */
-    float x_pos, y_pos, z_pos;
-    int  view_dir;
-} EDITOR_SPAWNPT_T;     /* Spawn-Point for display on map. From 'spawn.txt' */
 
-typedef struct {
-    char line_name[25];
-    int  top_left[2];       /* X, Y, in tiles */
-    int  bottom_right[2];   /* X, Y, in tiles */ 
-} EDITOR_PASSAGE_T;
+
 
 /*******************************************************************************
 * CODE 								                                           *

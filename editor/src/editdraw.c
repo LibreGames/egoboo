@@ -1199,3 +1199,18 @@ void editdraw2DTex(int x, int y, int w, int h, unsigned char tx_no, char tx_big)
     glEnd();
 
 }
+
+/*
+ * Name:
+ *     editdrawAdjustCamera
+ * Description:
+ *     Adjusts camera to view at given tile at tx/ty
+ * Input:
+ *     tx, ty:    Where to look
+ */
+void editdrawAdjustCamera(int tx, int ty)
+{
+
+    sdlgl3dMoveToPosCamera(0, tx * 128, ty * 128, 0, 1);
+    
+}

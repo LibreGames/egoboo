@@ -1,3 +1,6 @@
+2010-09-08 <bitnapper>
+- Added code and struct definitions for later reading files 'SPAWN.TXT' and 'PASSAGE.TXT'
+
 2010-09-04 <bitnapper>
 - Choosen fan is now signed with transparent instead of full color
 - Editmode is automatically chosen, if a new map is generated

@@ -27,11 +27,12 @@
 #include <memory.h>
 #include <math.h>
 
-#include "sdlgl3d.h"
-#include "editor.h"             /* Global needed definitions    */
-#include "editfile.h"           /* Load and save map files      */
-#include "editdraw.h"           /* Draw anything                */
-#include "wallmake.h"           /* Create walls/floors simple   */
+#include "sdlgl3d.h"            /* DEG2RAD                              */
+#include "sdlglcfg.h"           /* Reading passages and spawn points    */
+#include "editor.h"             /* Global needed definitions            */
+#include "editfile.h"           /* Load and save map files              */
+#include "editdraw.h"           /* Draw anything                        */
+#include "wallmake.h"           /* Create walls/floors simple           */
 
 
 #include "editmain.h"           /* My own header                */
@@ -49,11 +50,13 @@
 
 #define EDITMAIN_PRESET_MAX 4
 
-
 #define EDITMAIN_NORTH  0x00
 #define EDITMAIN_EAST   0x01
 #define EDITMAIN_SOUTH  0x02
 #define EDITMAIN_WEST   0x03
+
+#define EDITMAIN_MAXSPAWN    500        /* Maximum Lines in spawn list  */
+#define EDITMAIN_MAXPASSAGE   50
 
 /*******************************************************************************
 * TYPEDEFS							                                           *
@@ -65,6 +68,35 @@ typedef struct {
 
 } EDITMAIN_XY;
 
+typedef struct {
+    
+    char line_name[25];         /* Only for information purposes */
+    EDITMAIN_XY topleft;
+    EDITMAIN_XY bottomright;
+    char open;
+    char shoot_trough;
+    char slippy_close;
+    
+} EDITMAIN_PASSAGE_T;
+
+typedef struct {
+
+    char line_name[25];
+    char item_name[20+1];
+    int  slot_no;           /* Use it for coloring the bounding boxes */
+    float x_pos, y_pos, z_pos;
+    char view_dir;
+    int  money;
+    int  skin;
+    int  pas;
+    int  con;
+    int  lvl;
+    char stt;
+    char gho;
+    char team;
+    
+} EDITMAIN_SPAWNPT_T;     /* Spawn-Point for display on map. From 'spawn.txt' */
+
 /*******************************************************************************
 * DATA							                                               *
 *******************************************************************************/
@@ -72,8 +104,10 @@ typedef struct {
 static MESH_T Mesh;
 static COMMAND_T *pCommands;
 static EDITMAIN_STATE_T EditState;
-static SPAWN_OBJECT_T   SpawnObjects[EDITMAIN_MAXSPAWN + 2];
-static EDITOR_PASSAGE_T Passages[EDITMAIN_MAXPASSAGE + 2];
+static EDITMAIN_PASSAGE_T Passages[EDITMAIN_MAXPASSAGE + 2];
+static EDITMAIN_SPAWNPT_T SpawnObjects[EDITMAIN_MAXSPAWN + 2];
+
+
 
 /* --- Definition of preset tiles for 'simple' mode -- */
 static FANDATA_T PresetTiles[] = {
@@ -962,7 +996,7 @@ void editmainChooseFan(int cx, int cy, int w, int h, int get_info)
         }
 
         /* And now set camera to move/look at this position */
-        sdlgl3dMoveToPosCamera(0, EditState.tx * 128.0, EditState.ty * 128.0, 0, 1);
+        editdrawAdjustCamera(EditState.tx, EditState.ty);         
 
     }
 

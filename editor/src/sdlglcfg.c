@@ -276,14 +276,19 @@ static void sdlglcfgGetNamedValue(char *line, SDLGLCFG_NAMEDVALUE *vallist)
  *     line *:    Line to read values from
  *     rcf *:     Description of values on given line to read from
  *     fixedpos:  Values have a fixed position in line given in value-lenght
+ *     delimiter: Delimiter to use 
  */
-static void sdlglcfgRecordFromLine(char *line, SDLGLCFG_VALUE *rcf, int fixedpos)
+static void sdlglcfgRecordFromLine(char *line, SDLGLCFG_VALUE *rcf, int fixedpos, char delimiter)
 {
 
     char *pbuf, *pbrk;
+    char delimit_str[2];
 
 
-    strcat(line, ",");      /* Just in case it lacks... : Delimiter for last value in string */
+    delimit_str[0] = delimiter;
+    delimit_str[1] = 0;
+    
+    strcat(line, delimit_str);      /* Just in case it lacks... : Delimiter for last value in string */
     pbuf = &line[0];
 
     /* Scan trough all descriptors */
@@ -298,7 +303,7 @@ static void sdlglcfgRecordFromLine(char *line, SDLGLCFG_VALUE *rcf, int fixedpos
         else  {
         
             /* data in 'buffer' is decomma-limited  */
-            pbrk = strchr(pbuf, ',');
+            pbrk = strchr(pbuf, delimiter);
             if (pbrk) {
 
                 *pbrk = 0;          /* End of string to scan value from */
@@ -603,7 +608,7 @@ int sdlglcfgReadRecordLines(SDLGLCFG_LINEINFO *lineinfo, int fixedpos)
 
             if (maxrec > 0) {   /* if not filled yet */
 
-                sdlglcfgRecordFromLine(line, lineinfo -> rcf, fixedpos);
+                sdlglcfgRecordFromLine(line, lineinfo -> rcf, fixedpos, ',');
                 /* Copy data to actial rec */
                 memcpy(pactrec, pbaserec, lineinfo -> recsize);
 
@@ -794,6 +799,65 @@ void sdlglcfgFreeFile(SDLGLCFG_FILE *fdesc)
         
         fdesc++;
     
+    }
+
+}
+
+/*
+ * Name:
+ *     sdlglcfgReadEgoboo
+ * Description:
+ *     Special function to read egoboo files SPAWN.TXT and PASSAGE.TXT
+ * Input:
+ *     fname *:    Name of file to read 
+ *     lineinfo *: Pointer on description how to read the data
+ */
+void sdlglcfgReadEgoboo(char *fname, SDLGLCFG_LINEINFO *lineinfo)
+{
+
+    FILE *f;
+    char line[SDLGLCFG_LINELEN];
+    char *pbaserec, *pactrec;
+    int  maxrec;
+    char *pbrk;
+
+
+    pbaserec = (char *)lineinfo -> recdata;
+    pactrec  = pbaserec + lineinfo -> recsize;
+    maxrec   = lineinfo -> maxrec;
+    
+    
+    f = fopen(fname, "rt");
+    if (f) {
+    
+        while (sdlglcfgGetValidLine(f, line, SDLGLCFG_LINELEN - 2)) {
+      
+            if (maxrec > 0) {   /* if not filled yet */
+            
+                pbrk = strchr(line, ':');
+                if (pbrk) {
+            
+                    *pbrk = 0;
+                    /* Copy the description */
+                    strncpy(pactrec, line, lineinfo -> rcf[0].len);
+                    pactrec[lineinfo -> rcf[0].len] = 0;
+                    
+                    sdlglcfgRecordFromLine(&pbrk[1], &lineinfo -> rcf[1], 0, ' ');
+                    /* Copy data to actual rec */
+                    memcpy(pactrec, pbaserec, lineinfo -> recsize);
+                    
+                    pactrec += lineinfo -> recsize;        
+               
+                    maxrec--;
+                    
+                }
+                
+            }
+     
+        }
+        
+        fclose(f);
+        
     }
 
 }
