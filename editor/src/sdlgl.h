@@ -2,7 +2,7 @@
 *  SDLGL.H                                                                     *
 *	- Entrypoint for the library, starts the menu-loop.		                   *
 *									                                           *
-*   Copyright (C) 2001  Paul Mueller <pmtech@swissonline.ch>                   *
+*   Copyright (C) 2001-2010  Paul Mueller <pmtech@swissonline.ch>              *
 *                                                                              *
 *   This program is free software; you can redistribute it and/or modify       *
 *   it under the terms of the GNU General Public License as published by       *

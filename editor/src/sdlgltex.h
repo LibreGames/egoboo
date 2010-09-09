@@ -2,7 +2,7 @@
  *  SDLGLTEX.H -
  *	Declarations and functions for loading and rendering of pictures
  *
- *  Copyright (C) 2002  Paul Mueller <pmtech@swissonline.ch>
+ *  Copyright (C) 2002-2010  Paul Mueller <pmtech@swissonline.ch>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

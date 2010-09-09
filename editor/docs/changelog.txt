@@ -1,3 +1,8 @@
+2010-09-09 <bitnapper>
+- Added code to read in spawn points and passages from file
+- Added code to draw spawn points and passages on map
+
+
 2010-09-08 <bitnapper>
 - Added code and struct definitions for later reading files 'SPAWN.TXT' and 'PASSAGE.TXT'
 

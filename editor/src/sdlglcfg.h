@@ -2,8 +2,8 @@
 *  SDLGLCFG.H                                                                  *
 *      - Read procedures for the configuration of SDLGL                        *
 *                                                                              *
-*  FREE SPACE COLONISATION                                                     *
-*      (c)2005 Paul Mueller <pmtech@swissonline.ch>                            *
+*  SDLGL_Lybrary                                                               *
+*      (c)2005-2010 Paul Mueller <pmtech@swissonline.ch>                       *
 *                                                                              *
 *  This program is free software; you can redistribute it and/or modify        *
 *  it under the terms of the GNU General Public License as published by        *

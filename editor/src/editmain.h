@@ -81,29 +81,6 @@ typedef struct {
 
 } EDITMAIN_STATE_T;
 
-typedef struct {
-
-    char line_name[25];
-    char item_name[20+1];
-    char slot_no[3 + 1];
-    char xpos[4 + 1];
-    char ypos[4 + 1];
-    char zpos[4 + 1];
-    char dir[1 + 1];
-    char mon[3 + 1];
-    char skin[1 + 1];
-    char pas[2 + 1];
-    char con[2 + 1];
-    char lvl[2 + 1];
-    char stt[1 + 1];
-    char gho[1 + 1];
-    char team[12 + 1];
-
-} SPAWN_OBJECT_T;       /* Description of a spawned object */
-
-
-
-
 /*******************************************************************************
 * CODE 								                                           *
 *******************************************************************************/
@@ -112,7 +89,6 @@ EDITMAIN_STATE_T *editmainInit(int map_size);
 void editmainExit(void);
 int  editmainMap(int command);
 void editmainDrawMap2D(int x, int y, int w, int h);
-SPAWN_OBJECT_T *editmainLoadSpawn(void);
 char editmainToggleFlag(int which, unsigned char flag);
 void editmainChooseFan(int cx, int cy, int w, int h, int get_info);
 char *editmainFanTypeName(int type_no);

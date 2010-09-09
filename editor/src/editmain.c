@@ -69,7 +69,7 @@ typedef struct {
 } EDITMAIN_XY;
 
 typedef struct {
-    
+
     char line_name[25];         /* Only for information purposes */
     EDITMAIN_XY topleft;
     EDITMAIN_XY bottomright;
@@ -104,10 +104,52 @@ typedef struct {
 static MESH_T Mesh;
 static COMMAND_T *pCommands;
 static EDITMAIN_STATE_T EditState;
-static EDITMAIN_PASSAGE_T Passages[EDITMAIN_MAXPASSAGE + 2];
+
+/* -------------Data for Spawn-Points ---------------- */
 static EDITMAIN_SPAWNPT_T SpawnObjects[EDITMAIN_MAXSPAWN + 2];
 
+static SDLGLCFG_VALUE SpawnVal[] = {
+	{ SDLGLCFG_VAL_STRING,  &SpawnObjects[0].line_name, 24 },
+	{ SDLGLCFG_VAL_STRING,  &SpawnObjects[0].item_name, 20 },
+	{ SDLGLCFG_VAL_INT,     &SpawnObjects[0].slot_no },
+	{ SDLGLCFG_VAL_FLOAT,   &SpawnObjects[0].x_pos },
+	{ SDLGLCFG_VAL_FLOAT,   &SpawnObjects[0].y_pos },
+	{ SDLGLCFG_VAL_FLOAT,   &SpawnObjects[0].z_pos },
+	{ SDLGLCFG_VAL_ONECHAR, &SpawnObjects[0].view_dir },
+	{ SDLGLCFG_VAL_INT,     &SpawnObjects[0].money },
+	{ SDLGLCFG_VAL_INT,     &SpawnObjects[0].skin },
+	{ SDLGLCFG_VAL_INT,     &SpawnObjects[0].pas },
+	{ 0 }
+};
 
+static SDLGLCFG_LINEINFO SpawnRec = {
+	&SpawnObjects[0],
+	EDITMAIN_MAXSPAWN,
+	sizeof(EDITMAIN_SPAWNPT_T),
+	&SpawnVal[0]
+};
+
+/* ------------ Data for passages -------------------- */
+static EDITMAIN_PASSAGE_T Passages[EDITMAIN_MAXPASSAGE + 2];
+
+static SDLGLCFG_VALUE PassageVal[] = {
+	{ SDLGLCFG_VAL_STRING,  &Passages[0].line_name, 24 },
+	{ SDLGLCFG_VAL_INT,     &Passages[0].topleft.x },
+	{ SDLGLCFG_VAL_INT,     &Passages[0].topleft.y },
+	{ SDLGLCFG_VAL_INT,     &Passages[0].bottomright.x },
+	{ SDLGLCFG_VAL_INT,     &Passages[0].bottomright.y },
+	{ SDLGLCFG_VAL_ONECHAR, &Passages[0].open },
+	{ SDLGLCFG_VAL_ONECHAR, &Passages[0].shoot_trough },
+	{ SDLGLCFG_VAL_ONECHAR, &Passages[0].slippy_close },
+	{ 0 }
+};
+
+static SDLGLCFG_LINEINFO PassageRec = {
+	&Passages[0],
+    EDITMAIN_MAXPASSAGE,
+	sizeof(EDITMAIN_PASSAGE_T),
+	&PassageVal[0]
+};
 
 /* --- Definition of preset tiles for 'simple' mode -- */
 static FANDATA_T PresetTiles[] = {
@@ -673,10 +715,7 @@ static void editmainCreateWallMakeInfo(MESH_T *mesh, int fan, WALLMAKER_INFO_T *
  * Name:
  *     editmainTranslateWallMakeInfo
  * Description:
- *     Fills the given list in a square 5 x 5 from left top to right bottom
- *     with infos about fans. 'fan is the center of the square.
- *     Tiles off the map are signed as 'top' tiles
- *     Generates the 'a'  numbers for all files
+ *     Translates the given wallmaker info into fans on map 
  * Input:
  *     mesh*: Pointer on mesh to get the info from
  *     wi *:  Array from wallmaker to create walls from
@@ -709,6 +748,47 @@ static void editmainTranslateWallMakeInfo(MESH_T *mesh, WALLMAKER_INFO_T *wi)
 
     }
 
+}
+
+/*                                             
+ * Name:
+ *     editmainLoadAdditionalData
+ * Description:
+ *     Loads additional data needed for map. SPAWN-Points an Passages 
+ * Input:
+ *     mesh*: Pointer on mesh to get the info from
+ *     wi *:  Array from wallmaker to create walls from
+ *
+ */
+static void editmainLoadAdditionalData(void)
+{
+    
+    EDITDRAW_PASSAGE_T psg[EDITDRAW_MAXPASSAGE + 2];
+    EDITDRAW_SPAWNPOS_T sp[EDITDRAW_MAXSPAWNPOS + 2];
+    EDITMAIN_PASSAGE_T *ppsg;
+    EDITMAIN_SPAWNPT_T *psp;
+    int i;
+        
+
+    sdlglcfgReadEgoboo("module/passage.txt", &PassageRec);
+    sdlglcfgReadEgoboo("module/spawn.txt", &SpawnRec);
+    /* ----- First passages / second spawn points ----- */
+    i = 0;
+    ppsg = &Passages[1];
+    while(ppsg -> topleft.x > 0) {
+        /* ---- TODO: Translate it to data usable by 'editdraw' ------- */
+        ppsg++;
+        i++;
+    }
+    
+    i = 0;
+    psp = &SpawnObjects[1];
+    while(psp -> x_pos > 0.1) {
+        /* ---- TODO: Translate it to data usable by 'editdraw' ------- */
+        psp++;
+        i++;
+    }
+        
 }
 
 /* ========================================================================== */
@@ -796,6 +876,8 @@ int editmainMap(int command)
             if (editfileLoadMapMesh(&Mesh, EditState.msg)) {
 
                 editmainCompleteMapData(&Mesh);
+                /* -------- Now read the data for spawn points and passages */
+                editmainLoadAdditionalData();
                 return 1;
 
             }
@@ -860,27 +942,6 @@ void editmainDrawMap2D(int x, int y, int w, int h)
 { 
     
     editdraw2DMap(&Mesh, x, y, w, h, EditState.fan_chosen);
-
-}
-
-/*
- * Name:
- *     editmainLoadSpawn
- * Description:
- *     Load the 'spawn.txt' list into given list
- * Input:
- *     None
- * Output:
- *     spawn_list *: Pointer on list of objects to be spawned
- */
-SPAWN_OBJECT_T *editmainLoadSpawn(void)
-{
-
-    memset(SpawnObjects, 0, EDITMAIN_MAXSPAWN * sizeof(SPAWN_OBJECT_T));
-
-    /* TODO: Load this list, if available */
-
-    return SpawnObjects;
 
 }
 
@@ -1189,22 +1250,4 @@ void editmainChooseTex(int cx, int cy, int w, int h, int big)
         EditState.ft.tx_no = new_tex;
     }      
   
-}
-
-/*
- * Name:
- *     editmainFanUpdate
- * Description:
- *     Does an update on the actual chosen fan in the map with the 
- *     values from 'EditState' 
- * Input:
- *     None     
- */
-void editmainFanUpdate(void)
-{
-    /* Do update the chosen texture */
-    Mesh.fan[EditState.fan_chosen].tx_no = EditState.ft.tx_no;
-    /* Do update on flags */
-    Mesh.fan[EditState.fan_chosen].fx = EditState.ft.fx;
-    /* TODO: Do update on fan vertices, fan type */
 }

@@ -586,6 +586,10 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
 static float  MeshTileOffUV[EDITDRAW_MAXWALLSUBTEX * 2];    /* Offset into wall texture */
 static GLuint WallTex[EDITDRAW_MAXWALLTEX];
 
+/* ------- Additional drawing info for spawn points and passages ------ */
+static EDITDRAW_SPAWNPOS_T SpawnPos[EDITDRAW_MAXSPAWNPOS + 2];
+static EDITDRAW_PASSAGE_T  PassageFans[EDITDRAW_MAXPASSAGE + 2];	
+
 /*******************************************************************************
 * CODE 								                                           *
 *******************************************************************************/
@@ -647,8 +651,9 @@ static void editdrawChosenFanType(FANDATA_T *ft, COMMAND_T *fd)
  *      mesh *: Pointer on mesh info
  *      fan_no: Number of fan to draw
  *      col_no: Override for setting by texture-flag
+ *      trans:  Transparency of fan drawn
  */
-static void editdrawTransparentFan(MESH_T *mesh, int fan_no, int col_no)
+static void editdrawTransparentFan(MESH_T *mesh, int fan_no, int col_no, unsigned char trans)
 {
 
     COMMAND_T *mc;
@@ -673,7 +678,7 @@ static void editdrawTransparentFan(MESH_T *mesh, int fan_no, int col_no)
 
     sdlglGetColor(col_no, color);
     
-    color[3] = 128;
+    color[3] = trans;
     glColor4ubv(color);
     
     glEnable(GL_BLEND);
@@ -855,7 +860,7 @@ static void editdrawMap(MESH_T *mesh, int chosen_fan, FANDATA_T *ft, COMMAND_T *
     /* Sign fan, if chosen */
     if (chosen_fan >= 0) {  
 
-        editdrawTransparentFan(mesh, chosen_fan, SDLGL_COL_YELLOW);
+        editdrawTransparentFan(mesh, chosen_fan, SDLGL_COL_YELLOW, 128);
     
     }
 
@@ -863,12 +868,31 @@ static void editdrawMap(MESH_T *mesh, int chosen_fan, FANDATA_T *ft, COMMAND_T *
         glDisable(GL_TEXTURE_2D);
     }
 
+    /* ------------ Draw passages ---------------------- */
+    /*
+    i = 0;
+    while (PassageFans[i].no > 0) {
+    
+        editdrawTransparentFan(mesh, PassageFans[i].fan_no, SDLGL_COL_YELLOW, 196);
+        i++;
+    }
+    */
+    /* ------------ Draw spawn positions --------------- */
+    /*
+    i = 0;
+    while (SpawnPos[i].x > 0.1) {
+        editdrawTransparentFan(mesh, PassageFans[i].fan_no, SDLGL_COL_YELLOW, 196);
+        i++;
+    }
+    */
     /* Draw the chosen fan type, if any */
     if (ft -> type > 0) {
 
         editdrawChosenFanType(ft, fd);
 
     }
+    
+    
 
 }
 
@@ -1067,6 +1091,8 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int chosen_fan)
     SDLGL_RECT draw_rect;
     int rx2, ry2;
     int fan_no;
+    int i;
+    unsigned char color[4];
 
 
     if (! mesh -> map_loaded) {
@@ -1136,6 +1162,46 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int chosen_fan)
 
     }
 
+    /* ------------ Draw passages ---------------------- */     
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);     
+    glPolygonMode(GL_FRONT, GL_FILL);
+    
+    sdlglGetColor(SDLGL_COL_BLUE, color);
+    
+    color[3] = 196;
+    glColor4ubv(color);
+    
+    i = 0;
+    while (PassageFans[i].no > 0) {
+    
+        chosen_fan = PassageFans[i].fan_no;
+        
+        draw_rect.x = x + ((chosen_fan % mesh -> tiles_x) * draw_rect.w);
+        draw_rect.y = y + ((chosen_fan / mesh -> tiles_x) * draw_rect.h);
+
+        rx2 = draw_rect.x + draw_rect.w;
+        ry2 = draw_rect.y + draw_rect.h;
+
+        glBegin(GL_TRIANGLE_FAN);
+            glVertex2i(draw_rect.x,  ry2);
+            glVertex2i(rx2, ry2);
+            glVertex2i(rx2, draw_rect.y);
+            glVertex2i(draw_rect.x,  draw_rect.y);
+        glEnd();
+        
+        i++;
+    }
+        
+    /* ------------ Draw spawn positions --------------- */
+    i = 0;
+    while (SpawnPos[i].x > 0.1) {
+        
+        i++;
+    }
+    glDisable(GL_BLEND);
+    
+    /* ------------ Draw the camera as last one -------- */
     editdraw2DCameraPos(x, y, 128 / draw_rect.w, 128 / draw_rect.h);
 
 }
@@ -1213,4 +1279,50 @@ void editdrawAdjustCamera(int tx, int ty)
 
     sdlgl3dMoveToPosCamera(0, tx * 128, ty * 128, 0, 1);
     
+}
+
+/*
+ * Name:
+ *     editdrawSetPassage
+ * Description:
+ *      
+ *     Adjusts camera to view at given tile at tx/ty
+ * Input:
+ *     tx, ty:    Where to look
+ */
+void editdrawSetPassage(EDITDRAW_PASSAGE_T *psg)
+{
+
+    int i;
+    
+    
+    i = 0;
+    while(psg -> no) {
+
+
+    }
+
+}
+
+/*
+ * Name:
+ *     editdrawSetSpawn
+ * Description:
+ *     Adjusts camera to view at given tile at tx/ty
+ * Input:
+ *     tx, ty:    Where to look
+ */
+void editdrawSetSpawn(EDITDRAW_SPAWNPOS_T *sp)
+{
+
+    int i;
+    
+    
+    i = 0;
+    while(sp -> x > 0.1) {
+
+
+    }
+
+
 }

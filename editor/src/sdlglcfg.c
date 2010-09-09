@@ -62,11 +62,14 @@ static char BlockSigns[4];
  *     Gets a line from the textfile. Comments ( ";" will be stripped ).
  *     The returned line holds at least one char.
  * Input:
- *      data *: Where to put the line, must be 254 or more chars long!
+ *      f *:      This file
+ *      data *:   Where to put the line, must be 254 or more chars long!
+ *      bufsize:  Size of buffer for line
+ *      com_sign: Signs used for comment
  * Output:
  *      Is a valid line, yes/no   0: No more line available
  */
-static int sdlglcfgGetValidLine(FILE *f, char *data, int bufsize)
+static int sdlglcfgGetValidLine(FILE *f, char *data, int bufsize, char com_sign)
 {
 
     char *outstr,
@@ -85,7 +88,7 @@ static int sdlglcfgGetValidLine(FILE *f, char *data, int bufsize)
     	}
 
     	/* Look for comments: */
-        pcomment = strchr(outstr,';');
+        pcomment = strchr(outstr, com_sign);
         if (pcomment != 0) {
 
             *pcomment = 0;
@@ -301,7 +304,11 @@ static void sdlglcfgRecordFromLine(char *line, SDLGLCFG_VALUE *rcf, int fixedpos
         
         }
         else  {
-        
+
+            /* Remove leading spaces */
+            while(*pbuf == ' ' || *pbuf == '\t') {
+                pbuf++;
+            }
             /* data in 'buffer' is decomma-limited  */
             pbrk = strchr(pbuf, delimiter);
             if (pbrk) {
@@ -393,7 +400,7 @@ static int sdlglcfgFindNextBlock(void)
     char line[SDLGLCFG_LINELEN];
     
 
-    while (sdlglcfgGetValidLine(TextFile, line, SDLGLCFG_LINELEN - 2)) {
+    while (sdlglcfgGetValidLine(TextFile, line, SDLGLCFG_LINELEN - 2, ';')) {
 
         /* Read the type of configuration */
         if (sdlglcfgCheckBlockName(line)) {
@@ -513,7 +520,7 @@ int sdlglcfgReadNamedValues(SDLGLCFG_NAMEDVALUE *vallist)
     char line[SDLGLCFG_LINELEN];
 
 
-    while (sdlglcfgGetValidLine(TextFile, line, SDLGLCFG_LINELEN -  2)) {
+    while (sdlglcfgGetValidLine(TextFile, line, SDLGLCFG_LINELEN -  2, ';')) {
 
         if (sdlglcfgCheckBlockName(line)) {       /* Start of a new block */
 
@@ -549,7 +556,7 @@ int sdlglcfgReadValues(SDLGLCFG_VALUE *vallist)
     char line[SDLGLCFG_LINELEN];
 
 
-    while (sdlglcfgGetValidLine(TextFile, line, SDLGLCFG_LINELEN -  2)) {
+    while (sdlglcfgGetValidLine(TextFile, line, SDLGLCFG_LINELEN -  2, ';')) {
 
         if (sdlglcfgCheckBlockName(line)) {       /* Start of a new block */
 
@@ -597,7 +604,7 @@ int sdlglcfgReadRecordLines(SDLGLCFG_LINEINFO *lineinfo, int fixedpos)
     pactrec  = pbaserec + lineinfo -> recsize;
     maxrec   = lineinfo -> maxrec;
 
-    while (sdlglcfgGetValidLine(TextFile, line, SDLGLCFG_LINELEN - 2)) {
+    while (sdlglcfgGetValidLine(TextFile, line, SDLGLCFG_LINELEN - 2, ';')) {
 
         if (sdlglcfgCheckBlockName(line)) {       /* Start of a new block */
 
@@ -647,7 +654,7 @@ int sdlglcfgReadStrings(char *buffer, int bufsize)
     buffer[0] = 0;
     ptarget = buffer;
 
-    while (sdlglcfgGetValidLine(TextFile, line, SDLGLCFG_LINELEN - 2)) {
+    while (sdlglcfgGetValidLine(TextFile, line, SDLGLCFG_LINELEN - 2, ';')) {
 
         if (sdlglcfgCheckBlockName(line)) {       /* Start of a new block */
 
@@ -714,7 +721,7 @@ void sdlglcfgReadSimple(char *filename, SDLGLCFG_NAMEDVALUE *vallist)
     f = fopen(filename, "rt");
     if (f) {
 
-        while (sdlglcfgGetValidLine(f, line, SDLGLCFG_LINELEN - 2)) {
+        while (sdlglcfgGetValidLine(f, line, SDLGLCFG_LINELEN - 2, ';')) {
 
             sdlglcfgGetNamedValue(line, vallist);
 
@@ -830,7 +837,7 @@ void sdlglcfgReadEgoboo(char *fname, SDLGLCFG_LINEINFO *lineinfo)
     f = fopen(fname, "rt");
     if (f) {
     
-        while (sdlglcfgGetValidLine(f, line, SDLGLCFG_LINELEN - 2)) {
+        while (sdlglcfgGetValidLine(f, line, SDLGLCFG_LINELEN - 2, '/')) {
       
             if (maxrec > 0) {   /* if not filled yet */
             
@@ -839,14 +846,14 @@ void sdlglcfgReadEgoboo(char *fname, SDLGLCFG_LINEINFO *lineinfo)
             
                     *pbrk = 0;
                     /* Copy the description */
-                    strncpy(pactrec, line, lineinfo -> rcf[0].len);
-                    pactrec[lineinfo -> rcf[0].len] = 0;
-                    
+                    strncpy(pbaserec, line, lineinfo -> rcf[0].len);
+                    pbaserec[lineinfo -> rcf[0].len] = 0;
+
                     sdlglcfgRecordFromLine(&pbrk[1], &lineinfo -> rcf[1], 0, ' ');
                     /* Copy data to actual rec */
                     memcpy(pactrec, pbaserec, lineinfo -> recsize);
                     
-                    pactrec += lineinfo -> recsize;        
+                    pactrec += lineinfo -> recsize;
                
                     maxrec--;
                     
