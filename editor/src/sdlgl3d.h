@@ -56,14 +56,6 @@
 #define M_SQRT2 1.41421356237309504880
 #endif /* M_SQRT2 */
 
-#define LINE_LEN_VLONG	1024		   /* Lines read from stdin/files... */
-#define LINE_LEN_LONG	256		   /* Lines read from stdin/files... */
-#define LINE_LEN	81		   /* Lines read from stdin/files... */
-#define LINE_LEN_SHORT	31		   /* Lines read from stdin/files... */
-#define FILE_NAME_LEN	13		   /* Name (8) + Type (3) + Dot (1). */
-#define PATH_NAME_LEN	80		              /* Name with full Path */
-
-
 /* Follows by general purpose helpfull macros: */
 #ifndef MIN
 #define MIN(x, y)		((x) > (y) ? (y) : (x))
@@ -212,16 +204,6 @@
 *******************************************************************************/
 
 /* ------ Movement of objects using the movement vector ---------- */
-/*
-#define SDLGL3D_MOVE_AHEAD     0x01    
-#define SDLGL3D_MOVE_STRAFE    0x02    
-#define SDLGL3D_MOVE_VERTICAL  0x03    
-#define SDLGL3D_MOVE_TURN      0x04    
-#define SDLGL3D_MOVE_3D        0x05    
-#define SDLGL3D_MOVE_ROTX      0x06
-#define SDLGL3D_MOVE_ROTY      0x07
-#define SDLGL3D_MOVE_ROTZ      0x08
-*/
 #define SDLGL3D_MOVE_FORWARD	0x01	/* ------ Number of flag --- */
 #define SDLGL3D_MOVE_BACKWARD	0x02
 #define SDLGL3D_MOVE_LEFT	    0x03
@@ -239,15 +221,6 @@
 #define SDLGL3D_MOVE_CAMDIST	0x0E	/* Change distance to object attached to */
 #define SDLGL3D_MOVE_STOPMOVE   0x0F 
 #define SDLGL3D_MOVE_MAXCMD     0x0F
-
-/* ----- Camera behaviour ----- */
-/*
-#define SDLGL3D_CAMERA_ZOOM 0x10
-#define SDLGL3D_CAMERA_DIST 0x11
-#define SDLGL3D_CAMERA_TURN 0x12  // If 3rd-person-camera
-#define SDLGL3D_CAMERA_VERT 0x13  // If 3rd-person-camera  
-*/
-
 
 /* ----- Camera types ------- */
 #define SDLGL3D_CAMERATYPE_STANDARD     0x00
@@ -299,8 +272,20 @@ typedef struct SDLGL3D_OBJECT_TYPE {
     /* Link for object list in collision - detection                   */
     int     on_tile;           /* Object is on this tile               */
     char    visi_code;         /* Visibility ob object in frustum      */ 
+    char    speed_modifier;    /* Multiply speed with this one, if > 0 */ 
     
 } SDLGL3D_OBJECT;
+
+typedef struct {
+
+    float fow;
+    float viewwidth;
+    float aspect_ratio;         /* For zoom and setup of frustum        */
+    float zmin, zmax;           
+    float nx[3], ny[3];           
+    float leftangle, rightangle;
+
+} SDLGL3D_FRUSTUM;
 
 /*******************************************************************************
 * CODE                                                                         *
@@ -313,7 +298,7 @@ void sdlgl3dInitCamera(int camera_no, int rotx, int roty, int rotz, float aspect
 void sdlgl3dBindCamera(int camera_no, float x, float y, float x2, float y2); 
 SDLGL3D_OBJECT *sdlgl3dGetCameraInfo(int camera_no, float *nx, float *ny, float *zmax);
 void sdlgl3dInitObject(SDLGL3D_OBJECT *moveobj);
-void sdlgl3dManageCamera(int camera_no, char move_cmd, char set);
+void sdlgl3dManageCamera(int camera_no, char move_cmd, char set, char speed_modifier);
 void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z, int relative);
 void sdlgl3dManageObject(int obj_no, char move_cmd, char set);
 void sdlgl3dMoveObjects(float secondspassed);

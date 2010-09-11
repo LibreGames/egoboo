@@ -53,6 +53,7 @@ static float DefaultUV[] = { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00 }
 static COMMAND_T MeshCommand[MAXMESHTYPE] = {
     {  "0: Two Faced Ground",
         0,          /* Default FX: None         */
+        1,          /* Default texture          */
         4,		    /* Total number of vertices */
     	1,    		/*  1 Command               */
     	{ 4 },		/* Commandsize (how much vertices per command)  */
@@ -65,8 +66,9 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
           { 12, 0.00, 1.00,   0.00, 128.00, 0.00 }
         }
     },
-    {   "1: Two Faced Top",             /* Top-Tile for 'simple' edit mode */
-        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX:                     */
+    {   "1: Two Faced Top",             /* Top-Tile for 'simple' edit mode  */
+        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX:                      */
+        63,                             /* Default texture                  */
     	4,
         1,
         { 4 },
@@ -82,6 +84,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
     },
     {   "2: Four Faced Ground",
         0,          /* Default FX: None         */
+        0,          /* Default texture          */
         5,
         1,
         { 6 },
@@ -97,6 +100,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
     },
     {   "3: Eight Faced Ground",
         0,          /* Default FX: None         */
+        0,          /* Default texture          */
         9,
         1,
 	    { 10 },
@@ -117,7 +121,8 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         }
     },
     {   "4:  Ten Face Pillar",
-        (MPDFX_WALL | MPDFX_IMPASS),    /* Defualt FX   */
+        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
+        0,                              /* Default texture          */
         8,
         2,
         { 8, 6 },
@@ -139,6 +144,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
     },
     {   "5: Eighteen Faced Pillar",
         (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
+        0,                              /* Default texture          */
   	    16,
         4,
         { 10, 8, 4, 4 },
@@ -175,7 +181,8 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
     {   "6: Blank", 0, 0, 0 },
     {   "7: Blank", 0, 0, 0 },
     {   "8: Six Faced Wall (WE)",
-        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
+        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX       */
+        63 + 33,                        /* Default texture  */
 	    8,
       	2,
       	{ 6, 4 },
@@ -198,6 +205,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
     },
     {   "9: Six Faced Wall (NS)",
         (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
+        0,                              /* Default texture          */
 	    8,
       	2,
       	{ 6, 4 },
@@ -221,6 +229,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
     {   "11: Blank", 0, 0, 0 },
     {   "12: Eight Faced Wall (W)",
         (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
+        0,                              /* Default texture          */
 	    8,
         2,
         { 8, 4 },
@@ -242,6 +251,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
     },
     {   "13: Eight Faced Wall (N)",
         (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
+        0,                              /* Default texture          */
     	8,
         2,
         { 8, 4 },
@@ -263,6 +273,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
     },
     {  "14: Eight Faced Wall (E)",
         (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
+        0,                              /* Default texture          */
         8,
         2,
         { 8, 4 },
@@ -284,6 +295,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
     },
     {   "15: Eight Faced Wall (S)",
         (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
+        0,                              /* Default texture          */
     	8,
        	2,
        	{ 8, 4 },
@@ -304,7 +316,8 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         }
     },
     {   "16: Ten Faced Wall (WS)",
-        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
+        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX       */
+        63 + 51,                        /* Default texture  */
     	10,
          2,
         { 8, 6 },
@@ -331,6 +344,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
     },
     {   "17: Ten Faced Wall (NW)",
         (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
+        0,                              /* Default texture          */
 	    10,
         2,
         { 8, 6 },
@@ -356,6 +370,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
     },
     {   "18: Ten Faced Wall (NE)",
         (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
+        0,                              /* Default texture          */
     	10,
         2,
         { 8, 6 },
@@ -380,7 +395,8 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         }
     },
     {   "19:  Ten Faced Wall (ES)",
-        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
+        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX       */
+        63 +  1,                        /* Default texture  */
 	    10,
         2,
         { 8, 6 },
@@ -407,6 +423,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
     },
     {   "20: Twelve Faced Wall (WSE)",
         (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
+        0,                              /* Default texture          */
         12,
         3,
         { 9, 5, 4 },
@@ -435,6 +452,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
     },
     {   "21: Twelve Faced Wall (NWS)",
         (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
+        0,                              /* Default texture          */
 	    12,
         3,
         { 9, 5, 4 },
@@ -463,6 +481,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
     },
     {   "22: Twelve Faced Wall (ENW)",
         (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
+        0,                              /* Default texture          */
 	    12,
         3,
         { 9, 5, 4 },
@@ -491,6 +510,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
     },
     {   "23:  Twelve Faced Wall (SEN)",
         (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
+        0,                              /* Default texture          */
 	    12,
         3,
         { 9, 5, 4 },
@@ -518,7 +538,8 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         }
     },
     {   "24: Twelve Faced Stair (WE)",
-        MPDFX_IMPASS,           /* Default FX   */
+        MPDFX_IMPASS,           /* Default FX       */
+        0,                      /* Default texture  */
 	    14,
         3,
         { 6, 6, 6 },
@@ -550,7 +571,8 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         }
     },
     {   "25: Twelve Faced Stair (NS)",
-        MPDFX_IMPASS,           /* Default FX   */
+        MPDFX_IMPASS,           /* Default FX       */
+        0,                      /* Default texture  */
     	14,
         3,
         { 6, 6, 6 },
@@ -1293,13 +1315,10 @@ void editdrawAdjustCamera(int tx, int ty)
 void editdrawSetPassage(EDITDRAW_PASSAGE_T *psg)
 {
 
-    int i;
-    
-    
-    i = 0;
-    while(psg -> no) {
+    while(psg -> no > 0) {
 
-
+        /* TODO: Copy it to internal buffer */
+        psg++;
     }
 
 }
@@ -1315,14 +1334,9 @@ void editdrawSetPassage(EDITDRAW_PASSAGE_T *psg)
 void editdrawSetSpawn(EDITDRAW_SPAWNPOS_T *sp)
 {
 
-    int i;
-    
-    
-    i = 0;
     while(sp -> x > 0.1) {
-
-
+        /* TODO: Copy it to internal buffer */
+        sp++;
     }
-
 
 }

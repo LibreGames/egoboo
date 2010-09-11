@@ -147,11 +147,13 @@ static SDLGL_CMDKEY EditorCmd[] = {
     { { SDLK_KP_PLUS },  EDITOR_CAMERA, SDLGL3D_MOVE_ZOOMIN, SDLGL3D_MOVE_ZOOMIN },
     { { SDLK_KP_MINUS }, EDITOR_CAMERA, SDLGL3D_MOVE_ZOOMOUT, SDLGL3D_MOVE_ZOOMOUT },
     { { SDLK_LCTRL, SDLK_m }, EDITOR_STATE, EDITOR_STATE_SHOWMAP },
-    /* { { SDLK_x }, SDLGL3D_MOVE_ROTX, +1, SDLGL3D_MOVE_ROTX }, */
     { { SDLK_i }, EDITOR_2DMAP, EDITOR_2DMAP_FANINFO },
     { { SDLK_r }, EDITOR_2DMAP, EDITOR_2DMAP_FANROTATE },
-    { { SDLK_LEFT },  EDITOR_2DMAP, EDITOR_2DMAP_FANBLEFT },
-    { { SDLK_RIGHT }, EDITOR_2DMAP, EDITOR_2DMAP_FANBRIGHT },
+    { { SDLK_SPACE }, EDITOR_2DMAP,  EDITOR_2DMAP_FANBRIGHT },   /* Browse trough fan types */
+    { { SDLK_LEFT },  EDITOR_CAMERA, SDLGL3D_MOVE_LEFT,  SDLGL3D_MOVE_LEFT },
+    { { SDLK_RIGHT }, EDITOR_CAMERA, SDLGL3D_MOVE_RIGHT, SDLGL3D_MOVE_RIGHT },
+    { { SDLK_UP },    EDITOR_CAMERA, SDLGL3D_MOVE_FORWARD,   SDLGL3D_MOVE_FORWARD },
+    { { SDLK_DOWN },  EDITOR_CAMERA, SDLGL3D_MOVE_BACKWARD,  SDLGL3D_MOVE_BACKWARD },
     /* -------- Switch the player with given number ------- */
     { { SDLK_ESCAPE }, EDITOR_EXITPROGRAM },
     { { 0 } }
@@ -662,12 +664,13 @@ static int editorInputHandler(SDLGL_EVENT *event)
             case EDITOR_CAMERA:
                 /* Move the camera */
                 if (event -> pressed) {
-                    /* Start movement */
-                    sdlgl3dManageCamera(0, event -> sub_code, 1);
+                    /* Start movement */                    
+                    sdlgl3dManageCamera(0, event -> sub_code, 1, 
+                                        event -> modflags & KMOD_LSHIFT ? 3 : 1);
                 }
                 else {
                     /* Stop movement */
-                    sdlgl3dManageCamera(0, event -> sub_code, 0);
+                    sdlgl3dManageCamera(0, event -> sub_code, 0, 1);
                 }
                 break;
 

@@ -37,7 +37,6 @@
 #define WALLMAKE_EDGEO  ((char)16+32)       /* Big textures */
 #define WALLMAKE_EDGEI  ((char)19+32)       /* Big textures */
 
-
 #define WALLMAKE_NORTH  0x00
 #define WALLMAKE_EAST   0x01
 #define WALLMAKE_SOUTH  0x02
@@ -52,8 +51,6 @@ typedef struct {
     int  pos;       /* Position of fan                      */
     char type;      /* Old fan type                         */
     char dir;       /* Direction the fan has to rotated to  */   
-    char new_type;  /* To be filled by wallmaker            */
-    char new_dir;   /* To be filled by wallmaker            */
     
 } WALLMAKER_INFO_T;
 

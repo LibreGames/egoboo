@@ -106,6 +106,7 @@ typedef struct {
 
     char *name;                             // Name of this fan type
     char default_fx;                        // Default flags to set, if new fan (for walls)
+    unsigned char default_tx_no;            // Default texture to set
     unsigned char numvertices;			    // meshcommandnumvertices
     int   count;			                // meshcommands
     int   size[MAXMESHCOMMAND];             // meshcommandsize

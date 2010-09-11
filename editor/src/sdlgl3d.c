@@ -265,7 +265,7 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, char move_cmd, float 
         case SDLGL3D_MOVE_BACKWARD:
             move_dir = -1;
         case SDLGL3D_MOVE_FORWARD:        
-            speed = moveobj -> speed * move_dir;
+            speed = moveobj -> speed * move_dir * moveobj -> speed_modifier;
             /* Only in x/y plane */
             moveobj -> pos[0] += (moveobj -> direction[0] * speed * secondspassed);
             moveobj -> pos[1] += (moveobj -> direction[1] * speed * secondspassed);
@@ -274,7 +274,7 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, char move_cmd, float 
         case SDLGL3D_MOVE_LEFT:
             move_dir = -1;
         case SDLGL3D_MOVE_RIGHT:
-            speed = moveobj -> speed * move_dir;
+            speed = moveobj -> speed * move_dir * moveobj -> speed_modifier;
             /* Only in x/y plane */
             moveobj -> pos[0] -= (moveobj -> direction[1] * speed * secondspassed);
             moveobj -> pos[1] += (moveobj -> direction[0] * speed * secondspassed);
@@ -623,8 +623,9 @@ void sdlgl3dInitObject(SDLGL3D_OBJECT *moveobj)
  *      camera_no: Number of camera to manage
  *      move_cmd:  Kind of movement
  *      set:       Set it, yes no
+ *      speed_modifier: Multiply movement speed with this one   
  */
-void sdlgl3dManageCamera(int camera_no, char move_cmd, char set)
+void sdlgl3dManageCamera(int camera_no, char move_cmd, char set, char speed_modifier)
 {
 
     int flag;
@@ -639,6 +640,10 @@ void sdlgl3dManageCamera(int camera_no, char move_cmd, char set)
     flag = (1 << move_cmd);
     if (set) {
         Camera[camera_no].campos.move_cmd |= flag;
+        if (speed_modifier < 1) {
+            speed_modifier = 1;
+        }
+        Camera[camera_no].campos.speed_modifier = speed_modifier;
     }
     else {
         Camera[camera_no].campos.move_cmd &= ~flag;
