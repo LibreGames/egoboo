@@ -679,7 +679,7 @@ static void editdrawTransparentFan(MESH_T *mesh, int fan_no, int col_no, unsigne
 {
 
     COMMAND_T *mc;
-    int *vert_x, *vert_y, *vert_z;
+    float *vert_x, *vert_y, *vert_z;
     int cnt, tnc, entry, *vertexno;
     int vert_base;
     char type;
@@ -718,7 +718,7 @@ static void editdrawTransparentFan(MESH_T *mesh, int fan_no, int col_no, unsigne
 
                 actvertex = vertexno[entry]; 	/* Number of vertex to draw */               
                 
-                glVertex3i(vert_x[actvertex], vert_y[actvertex], vert_z[actvertex] + 2);
+                glVertex3f(vert_x[actvertex], vert_y[actvertex], vert_z[actvertex] + 2);
 
                 entry++;
 
@@ -746,7 +746,7 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no, int col_no)
 {
 
     COMMAND_T *mc;
-    int *vert_x, *vert_y, *vert_z;
+    float *vert_x, *vert_y, *vert_z;
     int cnt, tnc, entry, *vertexno;
     int vert_base;
     char type, bigtex;
@@ -828,7 +828,7 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no, int col_no)
                     glTexCoord2f(uv[(actvertex * 2) + 0] + offuv[0], uv[(actvertex * 2) + 1] + offuv[1]);
                 }
                 
-                glVertex3i(vert_x[actvertex], vert_y[actvertex], vert_z[actvertex]);
+                glVertex3f(vert_x[actvertex], vert_y[actvertex], vert_z[actvertex]);
 
                 entry++;
 

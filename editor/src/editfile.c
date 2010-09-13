@@ -36,7 +36,7 @@
 
 #define EDITFILE_SLOPE      50          /* Twist stuff          */
 #define MAPID               0x4470614d  /*  The string... MapD  */
-#define EDITFILE_ZADJUST    16          /* Read/Write Z-Value   */
+#define EDITFILE_ZADJUST    16.0        /* Read/Write Z-Value   */
                                         /* Cartman uses 4 bit fixed point for Z */
 
 /*******************************************************************************
@@ -162,21 +162,18 @@ int editfileLoadMapMesh(MESH_T *mesh, char *msg)
 
         /* Load vertex x data   */
         for (cnt = 0; cnt < mesh -> numvert; cnt++) {
-            /* Convert float to int for editing */
             fread(&ftmp, 4, 1, fileread);
             mesh -> vrtx[cnt] = ftmp;
         }
 
         /* Load vertex y data   */
         for (cnt = 0; cnt < mesh -> numvert; cnt++) {
-            /* Convert float to int for editing */
             fread(&ftmp, 4, 1, fileread);
             mesh -> vrty[cnt] = ftmp;
         }
 
         /* Load vertex z data   */
         for (cnt = 0; cnt < mesh -> numvert; cnt++) {
-            /* Convert float to int for editing */
             fread(&ftmp, 4, 1, fileread);
             mesh -> vrtz[cnt] = ftmp / EDITFILE_ZADJUST;  /* Z is fixpoint int in cartman (16)*/
         }

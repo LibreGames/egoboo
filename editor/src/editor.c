@@ -60,6 +60,7 @@
 #define EDITOR_CAMERA   ((char)109)         /* Movement of camera   */
 #define EDITOR_MAPDLG   ((char)110)         /* Settings for new map */
 #define EDITOR_FANUPDATE ((char)111)
+#define EDITOR_TOOLS     ((char)112)        /* Tools for the map    */
 
 /* Sub-commands for main commands, if needed */
 #define EDITOR_STATE_SHOWMAP ((char)1)
@@ -88,9 +89,11 @@
 #define EDITOR_MAPDLG_CANCEL    ((char)5)
 #define EDITOR_MAPDLG_OK        ((char)6)
 
+#define EDITOR_TOOL_TILE        ((char)1)
+
 /* ------- Drawing types ----- */
 #define EDITOR_DRAW2DMAP    ((char)SDLGL_TYPE_MENU + 10)
-#define EDITOR_DRAWTEXTURE  ((char)SDLGL_TYPE_MENU + 11)  
+#define EDITOR_DRAWTEXTURE  ((char)SDLGL_TYPE_MENU + 11)
 
 /*******************************************************************************
 * DATA									                                       *
@@ -168,7 +171,8 @@ static SDLGL_FIELD MainMenu[EDITOR_MAXFLD + 2] = {
     { SDLGL_TYPE_MENU,  {   4, 4, 32, 8 }, EDITOR_FILE,     0, "File" },
     { SDLGL_TYPE_MENU,  {  44, 4, 24, 8 }, EDITOR_MAP,      0, "Map" },
     { SDLGL_TYPE_MENU,  {  76, 4, 64, 8 }, EDITOR_SETTINGS, 0, "Settings" },
-    { SDLGL_TYPE_MENU,  { 148, 4, 64, 8 }, EDITOR_STATE,    0, "Edit" },
+    { SDLGL_TYPE_MENU,  { 148, 4, 32, 8 }, EDITOR_STATE,    0, "Edit" },
+    { SDLGL_TYPE_MENU,  { 188, 4, 40, 8 }, EDITOR_TOOLS,    0, "Tools" },
     { 0 }
 
 };
@@ -192,6 +196,9 @@ static SDLGL_FIELD SubMenu[] = {
     /* Edit-Menu */
     { SDLGL_TYPE_STD,  { 144, 16,  96, 16 }, EDITOR_STATE, -1 },   /* Menu-Background */
     { SDLGL_TYPE_MENU, { 148, 20, 128,  8 }, EDITOR_STATE, EDITOR_STATE_EDIT },
+    /* Tools-Menu */
+    { SDLGL_TYPE_STD,  { 184, 16, 128, 16 }, EDITOR_TOOLS, -1 },   /* Menu-Background */
+    { SDLGL_TYPE_MENU, { 188, 20, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_TILE, "Tile Properties" },
     { 0 }
 };
 
@@ -207,18 +214,19 @@ static SDLGL_FIELD FanInfoDlg[] = {
     { SDLGL_TYPE_CHECKBOX, {   8, 154, 120, 8 }, EDITOR_FANFX, MPDFX_DAMAGE,  "Damage" },
     { SDLGL_TYPE_CHECKBOX, {   8, 170, 120, 8 }, EDITOR_FANFX, MPDFX_SLIPPY,  "Slippy" },
     { EDITOR_DRAWTEXTURE,  { 190,  78, 128, 128 }, EDITOR_FANTEX, EDITOR_FANTEX_CHOOSE },  /* The actuale Texture  */
-    { SDLGL_TYPE_CHECKBOX, { 190,  62, 128,  16 }, EDITOR_FANTEX, EDITOR_FANTEX_SIZE, "Big Texture"  }, 
-    { SDLGL_TYPE_SLI_AL,   { 190, 210,  16,  16 }, EDITOR_FANTEX, EDITOR_FANTEX_DEC }, 
-    { SDLGL_TYPE_SLI_AR,   { 222, 210,  16,  16 }, EDITOR_FANTEX, EDITOR_FANTEX_INC }, 
+    { SDLGL_TYPE_CHECKBOX, { 190,  62, 128,  16 }, EDITOR_FANTEX, EDITOR_FANTEX_SIZE, "Big Texture"  },
+    { SDLGL_TYPE_SLI_AL,   { 190, 210,  16,  16 }, EDITOR_FANTEX, EDITOR_FANTEX_DEC },
+    { SDLGL_TYPE_SLI_AR,   { 222, 210,  16,  16 }, EDITOR_FANTEX, EDITOR_FANTEX_INC },
     /* -------- Buttons for 'Cancel' and 'Update' ----- */
     { SDLGL_TYPE_BUTTON,   {   4, 220, 56, 16 }, EDITOR_FANUPDATE, 0, "Update"},
+    { SDLGL_TYPE_BUTTON,   { 268, 220, 48, 16 }, EDITOR_FANUPDATE, 1, "Close"},
     { 0 }
 };
 
 /* Prepared dialog for setting values for maps */
 static SDLGL_FIELD MapInfoDlg[] = {
-    { SDLGL_TYPE_BUTTON,   {   0,  16, 240, 112 }, 0, 0, "New Map" }, 
-    { SDLGL_TYPE_CHECKBOX, {   8,  40,  40,   8 }, EDITOR_MAPDLG, EDITOR_MAPDLG_SOLID, "Solid" },  
+    { SDLGL_TYPE_BUTTON,   {   0,  16, 240, 112 }, 0, 0, "New Map" },
+    { SDLGL_TYPE_CHECKBOX, {   8,  40,  40,   8 }, EDITOR_MAPDLG, EDITOR_MAPDLG_SOLID, "Solid" },
     { SDLGL_TYPE_EDIT,     {   8,  72,  40,  16 }, EDITOR_MAPDLG, 0, "Size" },
     { SDLGL_TYPE_SLI_AL,   {   8,  72,  16,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_DECSIZE },
     { SDLGL_TYPE_SLI_AR,   { 120,  72,  16,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_INCSIZE },
@@ -367,10 +375,14 @@ static void editor2DMap(SDLGL_EVENT *event)
                     if (event -> modflags == SDL_BUTTON_LEFT) {
                         /* Replace type of chosen fan by new type of fan    */
                         /* or set a wall in 'simple' mode                   */
+                        editmainChooseFan(event -> mou.x, event -> mou.y,
+                                          field -> rect.w, field -> rect.h, 0);
                         editmainFanSet(0);
                     }
                     else if (event -> modflags == SDL_BUTTON_RIGHT) {
                         /* Set a floor fan in 'simple' edit mode */
+                        editmainChooseFan(event -> mou.x, event -> mou.y,
+                                          field -> rect.w, field -> rect.h, 0);
                         editmainFanSet(1);
                     }
                 }
@@ -434,7 +446,7 @@ static void editor2DMap(SDLGL_EVENT *event)
  * Output:
  *     Result for SDLGL-Handler  
  */
-static int editorFileMenu(char which) 
+static int editorFileMenu(char which)
 {
 
     switch(which) {
@@ -457,9 +469,9 @@ static int editorFileMenu(char which)
 
 /*
  * Name:
- *     editorFileMenu
+ *     editorState
  * Description:
- *     Handles the input of the editors 'edit' menu
+ *     Handles the state settings for the editor
  * Input:
  *     which: Menu-Point to translate
  */
@@ -479,10 +491,10 @@ static void editorState(char which)
             edit_mode = editmainToggleFlag(EDITMAIN_EDITSTATE, 1);
             sprintf(EditTypeStr, "%s", EditTypeNames[edit_mode]);
             sprintf(StatusBar, "%s", EditTypeNames[edit_mode]);
-            
+
             if (edit_mode > 0) {
                 editmainChooseFanType(0, StatusBar);    /* Switched on */
-                sprintf(StatusBar, "%s", "Browsing Fan-Types. Use arrow keys.");
+                sprintf(StatusBar, "%s", "Browsing Fan-Types. Use space key.");
             }
             else {
                 editmainChooseFanType(-2, StatusBar);   /* Switched off */
@@ -691,11 +703,11 @@ static int editorInputHandler(SDLGL_EVENT *event)
                     sprintf(EditTypeStr, "%s", EditTypeNames[edit_mode]);
                 }
                 break;
-                
+
             case EDITOR_STATE:
                 editorState(event -> sub_code);
                 break;
-                
+
             case EDITOR_FANFX:
                 /* Change the FX of the chosen fan        */
                 pEditState -> ft.fx ^= event -> sub_code;
@@ -729,14 +741,19 @@ static int editorInputHandler(SDLGL_EVENT *event)
                     }
                     pEditState -> ft.tx_no &= 0x3F;
                     pEditState -> ft.tx_no |= (char)((tex_no & 0x03) << 6);
-                    
+
                 }
                 break;
 
             case EDITOR_FANUPDATE:
-                editmainMap(EDITMAIN_SETFANPROPERTY);
+                if (event -> sub_code == 0) {
+                    editmainMap(EDITMAIN_SETFANPROPERTY);
+                }
+                else {
+                    sdlglInputRemove(EDITOR_FANDLG);
+                }
                 break;
-                
+
             case EDITOR_SETTINGS:
                 editmainToggleFlag(EDITMAIN_TOGGLE_DRAWMODE, event -> sub_code);
                 editorSetMenuViewToggle();
@@ -747,6 +764,12 @@ static int editorInputHandler(SDLGL_EVENT *event)
                 editor2DMap(event);
                 break;
 
+            case EDITOR_TOOLS:
+                /* Add this Dialog at position */
+                Map2DState |= event -> sub_code;
+                sdlglInputAdd(EDITOR_FANDLG, FanInfoDlg, 20, 20);
+                break;
+                
             case EDITOR_EXITPROGRAM:
                 return SDLGL_INPUT_EXIT;
 

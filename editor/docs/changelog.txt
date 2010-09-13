@@ -1,3 +1,10 @@
+2010-09-13 <bitnapper>
+- Additional wallmaker code
+- Bugfixes in code for creation of new maps
+- Some cleanup in code comments
+- Added 'Close'-Button to tile properties dialog
+- Added 'Tool'-Menu
+
 2010-09-11 <bitnapper>
 - Added data and further code for wallmaker functionality
 - Arrow keys now move the camera, too

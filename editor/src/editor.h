@@ -155,9 +155,10 @@ typedef struct {
     FANDATA_T fan[MAXMESHFAN];                  // Fan desription            
     unsigned char twist[MAXMESHFAN];            // Surface normal
     
-    int vrtx[MAXTOTALMESHVERTICES + 10];             // Vertex position
-    int vrty[MAXTOTALMESHVERTICES + 10];             //
-    int vrtz[MAXTOTALMESHVERTICES + 10];             // Vertex elevation
+    float vrtx[MAXTOTALMESHVERTICES + 10];             // Vertex position
+    float vrty[MAXTOTALMESHVERTICES + 10];             //
+    float vrtz[MAXTOTALMESHVERTICES + 10];             // Vertex elevation
+    
     unsigned char vrta[MAXTOTALMESHVERTICES + 10];   // Vertex base light, 0=unused
     
     int  vrtstart[MAXMESHFAN];                  // First vertex of given fan  

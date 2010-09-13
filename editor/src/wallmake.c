@@ -59,11 +59,11 @@ static int AdjacentCheck[8] = { 6, 7, 8, 11, 13, 16, 17, 18 };
 static int AdjacentAdd[8]   = { -5, -4, +1, +6, +5, +4, -1, -6 };
 
 static WALLMAKE_PATTERN_T PatternsW[WALLMAKE_NUMPATTERN_WALL] = {
-    /* Patterns, if a wall is in the middle       */    
-    { 0x1F, 0x11, WALLMAKE_WALL,  WALLMAKE_EAST  }, 
+    /* Patterns, if a wall is in the middle       */
+    { 0x1F, 0x11, WALLMAKE_WALL,  WALLMAKE_EAST  },
     { 0x7C, 0x44, WALLMAKE_WALL,  WALLMAKE_SOUTH },
     { 0XF1, 0x11, WALLMAKE_WALL,  WALLMAKE_WEST  },
-    { 0xC7, 0x44, WALLMAKE_WALL,  WALLMAKE_NORTH },     
+    { 0xC7, 0x44, WALLMAKE_WALL,  WALLMAKE_NORTH },
     { 0x07, 0x00, WALLMAKE_EDGEO, WALLMAKE_NORTH }, /* Outside North & West */
     { 0x1C, 0x00, WALLMAKE_EDGEO, WALLMAKE_EAST  }, /* Outside North & East */
     { 0x70, 0x00, WALLMAKE_EDGEO, WALLMAKE_SOUTH }, /* Outside South & East */
@@ -71,12 +71,12 @@ static WALLMAKE_PATTERN_T PatternsW[WALLMAKE_NUMPATTERN_WALL] = {
     { 0x55, 0x55, WALLMAKE_TOP,   WALLMAKE_NORTH }  /* Top Wall             */
 };
 
-/* TODO: Add  patterns for case floor */
+/* Patterns for case floor is in set */
 static WALLMAKE_PATTERN_T PatternsF[WALLMAKE_NUMPATTERN_FLOOR] = {
     { 0x07, 0x07, WALLMAKE_EDGEI, WALLMAKE_EAST  }, /* Inside North & West  */
-    { 0x1C, 0x1C, WALLMAKE_EDGEI, WALLMAKE_SOUTH }, /* Inside South & East  */  
-    { 0x70, 0x70, WALLMAKE_EDGEI, WALLMAKE_WEST  }, /* Inside South & West  */  
-    { 0xC1, 0xC1, WALLMAKE_EDGEI, WALLMAKE_NORTH } /* Inside North & East  */      
+    { 0x1C, 0x1C, WALLMAKE_EDGEI, WALLMAKE_SOUTH }, /* Inside South & East  */
+    { 0x70, 0x70, WALLMAKE_EDGEI, WALLMAKE_WEST  }, /* Inside South & West  */
+    { 0xC1, 0xC1, WALLMAKE_EDGEI, WALLMAKE_NORTH } /* Inside North & East  */
 };
 
 /*******************************************************************************
@@ -87,32 +87,32 @@ static WALLMAKE_PATTERN_T PatternsF[WALLMAKE_NUMPATTERN_FLOOR] = {
  * Name:
  *     wallmakeGetAdjacent
  * Description:
- *     Creates a list of fans which are adjacent to given 'fan'. 
+ *     Creates a list of fans which are adjacent to given 'fan'.
  *     If a fan is of map, the field is filled by a value of -1.
- *     The list starts from 'North', clockwise.  
+ *     The list starts from 'North', clockwise.
  * Input:
- *     fan:        Position in 'wi'-map 
+ *     fan:        Position in 'wi'-map
  *     adjacent *: Where to return the positions in 'wi'-map
  */
 static void wallmakeGetAdjacent(int fan, int adjacent[8])
 {
-     
+
     int pos, dir;
-        
-    
+
+
     for (dir = 0; dir < 8; dir++) {
-    
+
         /* Make it fail-save */
         pos = fan + AdjacentAdd[dir];
 
         if (pos >= 0 && pos < 25) {
-        
+
             adjacent[dir] = pos;
-               
+
         }
         else {
             /* A valid vaule in any case */
-            pos = 0;        
+            pos = 0;
         }
 
     }
@@ -124,9 +124,9 @@ static void wallmakeGetAdjacent(int fan, int adjacent[8])
  *     wallmakeFloor
  * Description:
  *     A floor is created at given fan-position.
- *     Fills the given list with tile-types needed  
+ *     Fills the given list with tile-types needed to set around center tile
  * Input:
- *     pattern:  Pattern surrounding the fan as bits 
+ *     pattern:  Pattern surrounding the fan as bits
  *     adjacent: Numbers of adjacent tiles
  *     wi *:     Info in a square 5x5 for checking an changing
  */
@@ -162,11 +162,11 @@ static void wallmakeFloor(char pattern, WALLMAKER_INFO_T *wi)
                 wi[mid_fan].dir  = PatternsF[j].dir;
                 break;
             }
-            
+
         }
-    
+
     }
-    
+
 }
 
 /*
@@ -174,9 +174,9 @@ static void wallmakeFloor(char pattern, WALLMAKER_INFO_T *wi)
  *     wallmakeWall
  * Description:
  *     A wall is created at given fan-position.
- *     Fills the given list with tile-types needed  
+ *     Fills the given list with tile-types needed to set around center tile
  * Input:
- *     pattern:  Pattern surrounding the fan as bits     
+ *     pattern:  Pattern surrounding the fan as bits
  *     wi *;     Info in a square 5x5 for checking an changing
  */
 static void wallmakeWall(char pattern, WALLMAKER_INFO_T *wi)
@@ -187,8 +187,8 @@ static void wallmakeWall(char pattern, WALLMAKER_INFO_T *wi)
     char flags;
     int dir;
     int i, j;
-    
-    
+
+
     /* Adjust first wall based on given 'pattern' */
     for (j = 0; j < WALLMAKE_NUMPATTERN_WALL; j++) {
 
@@ -202,12 +202,12 @@ static void wallmakeWall(char pattern, WALLMAKER_INFO_T *wi)
     }
 
     for(i = 0; i < 8; i++) {
-        
+
         mid_fan = AdjacentCheck[i];
-        
+
         /* Fill in the flags for the look-up-table */
         wallmakeGetAdjacent(mid_fan, adjacent);
-        
+
         pattern = 0;
         for (dir = 0, flags = 0x01; dir < 8; dir++, flags <<= 0x01) {
             if (wi[adjacent[dir]].type != WALLMAKE_FLOOR) {
@@ -241,14 +241,13 @@ static void wallmakeWall(char pattern, WALLMAKER_INFO_T *wi)
  * Description:
  *     Set a tile wall/floor, depending on the given argument 
  * Input:
- *     mesh*:    Pointer on mesh with info about map size
- *     fan:      To find the adjacent tiles for  
- *     is_floor: True: Set a floor, otherwie create a wall    
+ *     fan:      To find the adjacent tiles for
+ *     is_floor: True: Set a floor, otherwie create a wall
  *     wi *:     List with fan numbers and walltypes in a square 5 x 5
- *               Middle is the 'fan' changed   
- *               Is updated with changed fan types, where needed 
- * Output: 
- *     Number of fans to create in fan-list
+ *               Middle is the 'fan' changed
+ *               Is updated with changed fan types, where needed
+ * Output:
+ *     Number of fans to change in 'wi'-list
  */
 int wallmakeMakeTile(int fan, int is_floor, WALLMAKER_INFO_T *wi)
 {
@@ -256,7 +255,8 @@ int wallmakeMakeTile(int fan, int is_floor, WALLMAKER_INFO_T *wi)
     int  adjacent[8];
     char pattern, flags;
     int dir;
-  
+    int i;
+
 
     if (is_floor) {
 
@@ -264,7 +264,7 @@ int wallmakeMakeTile(int fan, int is_floor, WALLMAKER_INFO_T *wi)
             /* No change at all */
             return 0;
         }
-        
+
         wi[WALLMAKE_MIDDLE].type = WALLMAKE_FLOOR;
 
     }
@@ -282,10 +282,10 @@ int wallmakeMakeTile(int fan, int is_floor, WALLMAKER_INFO_T *wi)
     /* Set the chosen fan itself for changing */
     wi[WALLMAKE_MIDDLE].pos = fan;
     wi[WALLMAKE_MIDDLE].dir = 0;
-    
+
     /* Fill in the flags for the look-up-table */
     wallmakeGetAdjacent(WALLMAKE_MIDDLE, adjacent);
-    
+
     pattern = 0;
     for (dir = 0, flags = 0x01; dir < 8; dir++, flags <<= 0x01) {
         if (wi[adjacent[dir]].type != WALLMAKE_FLOOR) {
@@ -305,10 +305,20 @@ int wallmakeMakeTile(int fan, int is_floor, WALLMAKER_INFO_T *wi)
         /* Handle creating a wall */
         wallmakeWall(pattern, wi);
     }
-    
-    /* -------- Now return the list of walls needed to change (including middle) -- */
-    
 
-    return 1;
+    /* -------- Now return the list of walls needed to change (including middle) -- */
+    wi[8].pos  = wi[WALLMAKE_MIDDLE].pos;
+    wi[8].type = wi[WALLMAKE_MIDDLE].type;
+    wi[8].dir  = wi[WALLMAKE_MIDDLE].dir;
+
+    for (i = 0; i < 8; i++) {
+        wi[i].pos  = wi[AdjacentCheck[i]].pos;
+        wi[i].type = wi[AdjacentCheck[i]].type;
+        wi[i].dir  = wi[AdjacentCheck[i]].dir;
+
+    }
+
+
+    return 9;
 
 }

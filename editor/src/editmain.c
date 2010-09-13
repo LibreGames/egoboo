@@ -164,67 +164,9 @@ static FANDATA_T PresetTiles[] = {
 
 };
 
-
-/* ------ Data for checking of adjacent tiles -------- */
-static EDITMAIN_XY AdjacentXY[8] = {
-
-    {  0, -1 }, { +1, -1 }, { +1,  0 }, { +1, +1 },
-    {  0, +1 }, { -1, +1 }, { -1,  0 }, { -1, -1 }
-
-};
-
 /*******************************************************************************
 * CODE 								                                           *
 *******************************************************************************/
-
-/*
- * Name:
- *     editmainGetAdjacent
- * Description:
- *     Creates a list of fans which are adjacent to given 'fan'. 
- *     If a fan is of map, the field is filled by a value of -1.
- *     The list starts from 'North', clockwise.
- * Input:
- *     mesh*:      Pointer on mesh with info about map size
- *     fan:        To find the adjacent tiles for  
- *     adjacent *: Where to return the list of fan-positions 
- * Output: 
- *     Number of adjacent tiles 
- */
-static int editmainGetAdjacent(MESH_T *mesh, int fan, int adjacent[8])
-{
-
-    int dir, adj_pos;
-    int num_adj;
-    EDITMAIN_XY src_xy, dest_xy;
-    
-    
-    num_adj = 0;            /* Count them */
-    for (dir = 0; dir < 8; dir++) {
-    
-        adj_pos = -1;       /* Assume invalid */
-
-        src_xy.x = fan % mesh -> tiles_x;
-        src_xy.y = fan / mesh -> tiles_x;
-        
-        dest_xy.x = src_xy.x + AdjacentXY[dir].x;
-        dest_xy.y = src_xy.y + AdjacentXY[dir].y;
-        
-        if ((dest_xy.x >= 0) && (dest_xy.x < mesh -> tiles_x)
-            && (dest_xy.y >= 0) && (dest_xy.y < mesh -> tiles_y)) {
-
-            adj_pos = (dest_xy.y * mesh -> tiles_x) + dest_xy.x;
-            num_adj++;
-
-        }
-
-        adjacent[dir] = adj_pos;       /* Starting north */
-
-    }
-
-    return num_adj;
-
-}
 
 /*
  * Name:
@@ -492,7 +434,8 @@ void editmainCompleteMapData(MESH_T *mesh)
  * Name:
  *     editmainCreateNewMap
  * Description:
- *     Does the work for editing and sets edit states, if needed
+ *     Creates a new, empty map consisting of all floor or wall types,
+ *     depending on 'which'
  * Input:
  *     mesh *: Pointer on mesh  to fill with default values
  *     which:  Type of map to create : EDITMAIN_NEWFLATMAP / EDITMAIN_NEWSOLIDMAP
@@ -501,22 +444,30 @@ static int editmainCreateNewMap(MESH_T *mesh, int which)
 {
 
     int x, y, fan, zadd;
-    char fan_fx;
+    char fan_fx, fan_type;
+    unsigned char tx_no;
 
 
     memset(mesh, 0, sizeof(MESH_T));
-   
+
     mesh -> tiles_x     = EditState.map_size;
-    mesh -> tiles_y     = EditState.map_size;    
+    mesh -> tiles_y     = EditState.map_size;
     mesh -> numvert     = 0;                         /* Vertices used in map    */
     mesh -> numfreevert = MAXTOTALMESHVERTICES - 10; /* Vertices left in memory */
 
-    zadd   = 0;
-    fan_fx = 0;
-
+    /* ------- Init for flat ---- */
     if (which == EDITMAIN_NEWSOLIDMAP) {
-        zadd   = 192;                           /* All walls resp. top tiles  */
-        fan_fx = (MPDFX_WALL | MPDFX_IMPASS);   /* All impassable walls       */
+        /* All 'top' tiles */
+        fan_type = WALLMAKE_TOP;
+        fan_fx   = (MPDFX_WALL | MPDFX_IMPASS);   /* All impassable walls       */
+        tx_no    = EDITMAIN_TOP_TILE;
+        zadd     = 192;
+    }
+    else {
+        fan_fx   = 0;
+        fan_type = WALLMAKE_FLOOR;
+        tx_no    = EDITMAIN_DEFAULT_TILE;
+        zadd     = 0;
     }
 
     fan = 0;
@@ -524,15 +475,9 @@ static int editmainCreateNewMap(MESH_T *mesh, int which)
 
         for (x = 0; x < mesh -> tiles_x; x++) {
 
-            mesh -> fan[fan].type  = 0;
-            if (which != EDITMAIN_NEWSOLIDMAP) {
-                mesh -> fan[fan].tx_no = (unsigned char)((((x & 1) + (y & 1)) & 1) + EDITMAIN_DEFAULT_TILE);
-            }
-            else {
-                mesh -> fan[fan].tx_no = EDITMAIN_TOP_TILE;
-            }
-
-            mesh -> fan[fan].fx = fan_fx;
+            mesh -> fan[fan].type  = fan_type;
+            mesh -> fan[fan].fx    = fan_fx;
+            mesh -> fan[fan].tx_no = tx_no;
 
             if (! editmainFanAdd(mesh, fan, x*EDITMAIN_TILEDIV, y*EDITMAIN_TILEDIV, zadd))
             {
@@ -546,7 +491,7 @@ static int editmainCreateNewMap(MESH_T *mesh, int which)
 
     }
 
-    return 1;   /* TODO: Return 1 if mesh is created */
+    return 1;
 
 }
 
@@ -703,6 +648,8 @@ static void editmainCreateWallMakeInfo(MESH_T *mesh, int fan, WALLMAKER_INFO_T *
 
             }
 
+            wi[index].dir = 0;      /* Initialize with default value */
+            
             index++;
 
         }
@@ -1017,7 +964,7 @@ char editmainToggleFlag(int which, unsigned char flag)
                 EditState.ft.tx_flags = Mesh.fan[EditState.fan_chosen].tx_flags;
             }
             break;
-            
+
         case EDITMAIN_EDITSTATE:
             if (flag == 0) {
                 EditState.edit_mode = 0;
@@ -1031,7 +978,7 @@ char editmainToggleFlag(int which, unsigned char flag)
             return EditState.edit_mode;
 
     }
-    
+
     return 0;
 
 }
