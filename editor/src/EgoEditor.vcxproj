@@ -34,9 +34,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IntDir>$(SolutionDir)$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)</OutDir>
+    <TargetName>EgoEditor_debug</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LinkIncremental>true</LinkIncremental>
+    <LinkIncremental>false</LinkIncremental>
+    <IntDir>$(SolutionDir)$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -46,7 +51,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MultiProcessorCompilation>false</MultiProcessorCompilation>
-      <DisableSpecificWarnings>4244; 4098; 4305;</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4244; 4098; 4305; 4305;</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <TargetMachine>MachineX86</TargetMachine>
@@ -83,6 +88,7 @@
     <ClCompile Include="sdlglcfg.c" />
     <ClCompile Include="sdlglstr.c" />
     <ClCompile Include="sdlgltex.c" />
+    <ClCompile Include="wallmake.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="editdraw.h" />
@@ -95,6 +101,7 @@
     <ClInclude Include="sdlglcfg.h" />
     <ClInclude Include="sdlglstr.h" />
     <ClInclude Include="sdlgltex.h" />
+    <ClInclude Include="wallmake.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
