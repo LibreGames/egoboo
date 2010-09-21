@@ -53,7 +53,8 @@ typedef enum e_tx_filters
     TX_TRILINEAR_2,
     TX_ANISOTROPIC,
     TX_FILTER_COUNT
-} TX_FILTERS;
+}
+ TX_FILTERS;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -76,8 +77,8 @@ GLuint  oglx_texture_Load( oglx_texture_t *texture, const char *filename, Uint32
 GLuint  oglx_texture_GetTextureID( oglx_texture_t *texture );
 GLsizei oglx_texture_GetImageHeight( oglx_texture_t *texture );
 GLsizei oglx_texture_GetImageWidth( oglx_texture_t *texture );
-GLsizei oglx_texture_GetTextureWidth( oglx_texture_t *texture );
-GLsizei oglx_texture_GetTextureHeight( oglx_texture_t *texture );
+GLfloat oglx_texture_GetTextureWidth( oglx_texture_t *texture );
+GLfloat oglx_texture_GetTextureHeight( oglx_texture_t *texture );
 void    oglx_texture_SetAlpha( oglx_texture_t *texture, GLfloat alpha );
 GLfloat oglx_texture_GetAlpha( oglx_texture_t *texture );
 void    oglx_texture_Release( oglx_texture_t *texture );

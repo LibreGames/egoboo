@@ -51,7 +51,7 @@ static int ego_rpc_system_get_guid();
 //--------------------------------------------------------------------------------------------
 ego_rpc_base_t * ego_rpc_base_ctor( ego_rpc_base_t * prpc, int data_type, void * data )
 {
-    /// @details BB@> construct the somple rpc data element
+    /// @details BB@> construct the sample rpc data element
 
     if ( ego_rpc_valid( prpc ) ) return NULL;
 
@@ -69,7 +69,7 @@ ego_rpc_base_t * ego_rpc_base_ctor( ego_rpc_base_t * prpc, int data_type, void *
 //--------------------------------------------------------------------------------------------
 ego_rpc_base_t * ego_rpc_base_dtor( ego_rpc_base_t * prpc )
 {
-    /// @details BB@> deconstruct the somple rpc data element
+    /// @details BB@> deconstruct the sample rpc data element
 
     if ( NULL == prpc ) return NULL;
     if ( !ego_rpc_valid( prpc ) ) return prpc;
@@ -106,7 +106,7 @@ tx_request_t * tx_request_dtor( tx_request_t * preq )
     // store the deconstructed base
     memcpy( &save_base, &( preq->ego_rpc_base ), sizeof( save_base ) );
 
-    // zro out the memory
+    // zero out the memory
     memset( preq, 0, sizeof( *preq ) );
 
     // restore the deconstructed base
@@ -250,14 +250,14 @@ bool_t TxReqList_free_one( int ireq )
     // destruct the request
     tx_request_dtor( preq );
 
-#if defined(_DEBUG)
+#if EGO_DEBUG
     {
-        int cnt;
+        size_t cnt;
         // determine whether this character is already in the list of free textures
         // that is an error
         for ( cnt = 0; cnt < TxReqList.free_count; cnt++ )
         {
-            if ( ireq == TxReqList.free_ref[cnt] ) return bfalse;
+            if ( (TREQ_REF)ireq == TxReqList.free_ref[cnt] ) return bfalse;
         }
     }
 #endif
@@ -368,3 +368,4 @@ tx_request_t * ego_rpc_load_TxTitleImage( const char *filename )
 
     return preq;
 }
+

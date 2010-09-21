@@ -148,7 +148,7 @@ bool_t ui_handleSDLEvent( SDL_Event *evt )
         case SDL_VIDEORESIZE:
             if ( SDL_VIDEORESIZE == evt->resize.type )
             {
-                // the video has been resized, if the game is active, the
+                // the video has been re-sized, if the game is active, the
                 // view matrix needs to be recalculated and possibly the
                 // auto-formatting for the menu system and the ui system must be
                 // recalculated
@@ -762,8 +762,8 @@ bool_t ui_widgetAddMask( ui_Widget_t * pw, BIT_FIELD mbits )
 {
     if ( NULL == pw ) return bfalse;
 
-	SET_BIT( pw->mask, mbits );
-	UNSET_BIT( pw->state, mbits );
+    ADD_BITS( pw->mask, mbits );
+    REMOVE_BITS( pw->state, mbits );
 
     return btrue;
 }
@@ -773,8 +773,8 @@ bool_t ui_widgetRemoveMask( ui_Widget_t * pw, BIT_FIELD mbits )
 {
     if ( NULL == pw ) return bfalse;
 
-	UNSET_BIT( pw->mask, mbits );
-	UNSET_BIT( pw->state, mbits );
+    REMOVE_BITS( pw->mask, mbits );
+    REMOVE_BITS( pw->state, mbits );
 
     return btrue;
 }
@@ -785,7 +785,7 @@ bool_t ui_widgetSetMask( ui_Widget_t * pw, BIT_FIELD mbits )
     if ( NULL == pw ) return bfalse;
 
     pw->mask  = mbits;
-    UNSET_BIT( pw->state, mbits );
+    REMOVE_BITS( pw->state, mbits );
 
     return btrue;
 }
@@ -859,3 +859,4 @@ Font * ui_loadFont( const char * font_name, float vpointSize )
 
     return fnt_loadFont( font_name, pointSize );
 }
+

@@ -36,6 +36,7 @@
 #include "input.h"
 #include "texture.h"
 #include "lighting.h"
+#include "network.h"
 
 #include "egoboo_setup.h"
 #include "egoboo.h"
@@ -144,7 +145,7 @@ bool_t render_one_mad_enviro( const CHR_REF by_reference character, GLXvector4f 
 
                     pvrt   = pinst->vrt_lst + vertex;
 
-                    // normalize the color so it can be modulated by the phong/environment map
+                    // normalize the color so it can be modulated by the Phong/environment map
                     col[RR] = pvrt->color_dir * INV_FF;
                     col[GG] = pvrt->color_dir * INV_FF;
                     col[BB] = pvrt->color_dir * INV_FF;
@@ -170,8 +171,8 @@ bool_t render_one_mad_enviro( const CHR_REF by_reference character, GLXvector4f 
 
                     if ( 0 != ( bits & CHR_PHONG ) )
                     {
-                        // determine the phong texture coordinates
-                        // the default phong is bright in both the forward and back directions...
+                        // determine the Phong texture coordinates
+                        // the default Phong is bright in both the forward and back directions...
                         tex[1] = tex[1] * 0.5f + 0.5f;
                     }
 
@@ -231,11 +232,13 @@ if(fogon && pinst->light==255)
         }
     }
 }
+
 else
 {
     for (cnt = 0; cnt < pmad->transvertices; cnt++)
         pinst->vrt_lst[cnt].specular = 0;
 }
+
 */
 
 //--------------------------------------------------------------------------------------------
@@ -437,7 +440,7 @@ bool_t render_one_mad( const CHR_REF by_reference character, GLXvector4f tint, B
         retval = render_one_mad_tex( character, tint, bits );
     }
 
-#if defined(_DEBUG) && defined(DEBUG_CHR_BBOX)
+#if EGO_DEBUG && defined(DEBUG_CHR_BBOX)
     // don't draw the debug stuff for reflections
     if ( 0 == ( bits & CHR_REFLECT ) )
     {
@@ -472,7 +475,7 @@ bool_t render_one_mad_ref( const CHR_REF by_reference ichr )
 
     if ( !pinst->ref.matrix_valid )
     {
-        if ( !apply_reflection_matrix( &( pchr->inst ), pchr->enviro.floor_level ) )
+        if ( !apply_reflection_matrix( &( pchr->inst ), pchr->enviro.grid_level ) )
         {
             return bfalse;
         }
@@ -528,16 +531,36 @@ bool_t render_one_mad_ref( const CHR_REF by_reference ichr )
 //--------------------------------------------------------------------------------------------
 void render_chr_bbox( chr_t * pchr )
 {
+    PLA_REF ipla;
+    bool_t render_player_platforms;
+
     if ( !ACTIVE_PCHR( pchr ) ) return;
 
+    render_player_platforms = pchr->platform;
+    //for( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    //{
+    //    CHR_REF ichr;
+
+    //    if( !VALID_PLA(ipla) ) continue;
+
+    //    ichr = PlaStack.lst[ipla].index;
+    //    if( !INGAME_CHR(ichr) ) continue;
+
+    //    if( pchr->obj_base.index == ChrList.lst[ichr].onwhichplatform_ref )
+    //    {
+    //        render_player_platforms = btrue;
+    //        break;
+    //    }
+    //}
+
     // draw the object bounding box as a part of the graphics debug mode F7
-    if ( cfg.dev_mode && SDLKEYDOWN( SDLK_F7 ) )
+    if ( cfg.dev_mode && (SDLKEYDOWN( SDLK_F7 ) || render_player_platforms) )
     {
         GL_DEBUG( glDisable )( GL_TEXTURE_2D );
         {
             oct_bb_t bb;
 
-            oct_bb_add_vector( pchr->chr_prt_cv, pchr->pos, &bb );
+            oct_bb_add_vector( pchr->chr_min_cv, pchr->pos, &bb );
 
             GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
             render_oct_bb( &bb, btrue, btrue );
@@ -576,7 +599,7 @@ void draw_points( chr_t * pchr, int vrt_offset, int verts )
     vmax = vmin + verts;
 
     if ( vmin < 0 || vmax < 0 ) return;
-    if ( vmin > pchr->inst.vrt_count || vmax > pchr->inst.vrt_count ) return;
+    if ( (size_t)vmin > pchr->inst.vrt_count || (size_t)vmax > pchr->inst.vrt_count ) return;
 
     texture_1d_enabled = GL_DEBUG( glIsEnabled )( GL_TEXTURE_1D );
     texture_2d_enabled = GL_DEBUG( glIsEnabled )( GL_TEXTURE_2D );
@@ -651,7 +674,7 @@ void _draw_one_grip_raw( chr_instance_t * pinst, mad_t * pmad, int slot )
     vmin = ( int )pinst->vrt_count - ( int )slot_to_grip_offset(( slot_t )slot );
     vmax = vmin + GRIP_VERTS;
 
-    if ( vmin >= 0 && vmax >= 0 && vmax <= pinst->vrt_count )
+    if ( vmin >= 0 && vmax >= 0 && (size_t)vmax <= pinst->vrt_count )
     {
         fvec3_t   src, dst, diff;
 
@@ -970,7 +993,7 @@ egoboo_rv chr_instance_needs_update( chr_instance_t * pinst, int vmin, int vmax,
 //--------------------------------------------------------------------------------------------
 egoboo_rv chr_instance_update_vertices( chr_instance_t * pinst, int vmin, int vmax, bool_t force )
 {
-    int    i, maxvert, frame_count;
+    int    i, maxvert, frame_count, md2_vertices;
     bool_t vertices_match, frames_match;
 
     egoboo_rv retval;
@@ -997,7 +1020,13 @@ egoboo_rv chr_instance_update_vertices( chr_instance_t * pinst, int vmin, int vm
     if ( NULL == pmd2 ) return rv_error;
 
     // make sure we have valid data
-    if ( pinst->vrt_count != md2_get_numVertices( pmd2 ) )
+    md2_vertices = md2_get_numVertices( pmd2 );
+    if( md2_vertices < 0 )
+    {
+        log_error( "chr_instance_update_vertices() - md2 model has negative number of vertices.... is it corrupted?\n" );
+    }
+
+    if ( pinst->vrt_count != (size_t)md2_vertices )
     {
         log_error( "chr_instance_update_vertices() - character instance vertex data does not match its md2\n" );
     }
@@ -1016,7 +1045,7 @@ egoboo_rv chr_instance_update_vertices( chr_instance_t * pinst, int vmin, int vm
     {
         // force an update of vertices
 
-        // select a range that encompases the requested vertices and the saved vertices
+        // select a range that encompasses the requested vertices and the saved vertices
         // if this is the 1st update, the saved vertices may be set to invalid values, as well
         vmin = ( psave->vmin < 0 ) ? vmin : MIN( vmin, psave->vmin );
         vmax = ( psave->vmax < 0 ) ? vmax : MAX( vmax, psave->vmax );
@@ -1161,8 +1190,8 @@ egoboo_rv chr_instance_update_vlst_cache( chr_instance_t * pinst, int vmax, int 
         // The only way to get here is to fail the vertices_match test, and pass frames_match test
 
         // There was no update to the animation,  but there was an update to some of the vertices
-        // The clean verrices should be the union of the sets of the vertices updated this time
-        // and the oned updated last time.
+        // The clean vertices should be the union of the sets of the vertices updated this time
+        // and the ones updated last time.
         //
         //If these ranges are disjoint, then only one of them can be saved. Choose the larger set
 
@@ -1415,7 +1444,7 @@ egoboo_rv chr_instance_increment_frame( chr_instance_t * pinst, mad_t * pmad, co
 
         if ( pinst->action_keep )
         {
-            // Freeze that anumation at the last frame
+            // Freeze that animation at the last frame
             pinst->frame_nxt = pinst->frame_lst;
 
             // Break a kept action at any time

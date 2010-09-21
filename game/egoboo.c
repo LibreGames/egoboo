@@ -79,8 +79,6 @@ static ego_process_t * ego_process_init( ego_process_t * eproc, int argc, char *
 static ClockState_t    * _gclock = NULL;
 static ego_process_t     _eproc;
 
-static bool_t  screenshot_keyready  = btrue;
-
 static bool_t _sdl_atexit_registered    = bfalse;
 static bool_t _sdl_initialized_base     = bfalse;
 
@@ -94,9 +92,11 @@ ego_process_t     * EProc   = &_eproc;
 //--------------------------------------------------------------------------------------------
 int do_ego_proc_begin( ego_process_t * eproc )
 {
+    const char * tmpname = NULL;
+
     // initialize the virtual filesystem first
     vfs_init();
-	egoboo_setup_vfs_paths();
+    egoboo_setup_vfs_paths();
 
     // Initialize logging next, so that we can use it everywhere.
     log_init( vfs_resolveWriteFilename( "/debug/log.txt" ) );
@@ -111,7 +111,24 @@ int do_ego_proc_begin( ego_process_t * eproc )
     _gclock = clk_create( "global clock", -1 );
 
     // read the "setup.txt" file
-    setup_read_vfs( "setup.txt" );
+    tmpname = vfs_resolveWriteFilename( "setup.txt" );
+    if ( setup_read_vfs( tmpname ) )
+    {
+        log_info( "Loaded local setup file \"%s\".\n", tmpname );
+    }
+    else
+    {
+        //Try load the default local setup.txt instead
+        tmpname = "/setup.txt";
+        if ( setup_read_vfs( tmpname ) )
+        {
+            log_info( "Loaded the default setup file \"%s\".\n", tmpname );
+        }
+        else 
+        {
+            log_error("Could not load setup settings: \"%s\"\n", tmpname);
+        }
+    }
 
     // download the "setup.txt" values into the cfg struct
     setup_download( &cfg );
@@ -128,13 +145,13 @@ int do_ego_proc_begin( ego_process_t * eproc )
     // read all the scantags
     scantag_read_all_vfs( "mp_data/scancode.txt" );
 
-	if( fs_ensureUserFile( "controls.txt", btrue ) )
-	{
+    if( fs_ensureUserFile( "controls.txt", btrue ) )
+    {
         input_settings_load_vfs( "/controls.txt" );
     }
 
-    // synchronoze the config values with the various game subsystems
-    // do this acter the ego_init_SDL() and ogl_init() in case the config values are clamped
+    // synchronize the config values with the various game subsystems
+    // do this after the ego_init_SDL() and ogl_init() in case the config values are clamped
     // to valid values
     setup_synch( &cfg );
 
@@ -150,7 +167,7 @@ int do_ego_proc_begin( ego_process_t * eproc )
     profile_system_begin();
 
     // setup the menu system's gui
-    ui_begin( vfs_resolveReadFilename( "mp_data/font.ttf" ), 24 );
+    ui_begin( vfs_resolveReadFilename( "mp_data/Bo_Chen.ttf" ), 24 );
     font_bmp_load_vfs( "mp_data/font_new_shadow", "mp_data/font.txt" );  // must be done after init_all_graphics()
 
     // clear out the import directory
@@ -247,18 +264,17 @@ int do_ego_proc_running( ego_process_t * eproc )
             single_update_requested = btrue;
             single_frame_keyready   = bfalse;
         }
-
     }
 
     // Check for screenshots
     if ( !SDLKEYDOWN( SDLK_F11 ) )
     {
-        screenshot_keyready = btrue;
+        eproc->screenshot_keyready = btrue;
     }
-    else if ( screenshot_keyready && SDLKEYDOWN( SDLK_F11 ) && keyb.on )
+    else if ( eproc->screenshot_keyready && SDLKEYDOWN( SDLK_F11 ) && keyb.on )
     {
-        screenshot_keyready = bfalse;
-        screenshot_requested = btrue;
+        eproc->screenshot_keyready = bfalse;
+        eproc->screenshot_requested = btrue;
     }
 
     if ( cfg.dev_mode && SDLKEYDOWN( SDLK_F9 ) && NULL != PMod && PMod->active )
@@ -458,7 +474,7 @@ void memory_cleanUp( void )
     // quit any existing game
     _quit_game( EProc );
 
-    // synchronoze the config values with the various game subsystems
+    // synchronize the config values with the various game subsystems
     setup_synch( &cfg );
 
     // quit the setup system, making sure that the setup file is written
@@ -567,7 +583,7 @@ void console_begin()
     ///     otherwise sdl_scr.x == sdl_scr.y == 0 and the screen will be defined to
     ///     have no area...
 
-    SDL_Rect blah = {0, 0, sdl_scr.x, sdl_scr.y / 4};
+    SDL_Rect blah = {0, 0, (Uint16)sdl_scr.x, (Uint16)(sdl_scr.y / 4)};
 
 #if defined(USE_LUA_CONSOLE)
     _top_con = lua_console_create( NULL, blah );
@@ -643,6 +659,8 @@ ego_process_t * ego_process_init( ego_process_t * eproc, int argc, char **argv )
 
     process_init( PROC_PBASE( eproc ) );
 
+    eproc->screenshot_keyready = btrue;
+
     eproc->argv0 = ( argc > 0 ) ? argv[0] : NULL;
 
     return eproc;
@@ -682,9 +700,9 @@ void egoboo_setup_vfs_paths()
     vfs_add_mount_point( fs_getUserDirectory(), "players", "mp_players", 1 );
 
     // Create a mount point for the /data/players directory
-    //vfs_add_mount_point( fs_getDataDirectory(), "players", "mp_players", 1 );		//ZF> Let's remove the local players folder since it caused so many problems for people
+    //vfs_add_mount_point( fs_getDataDirectory(), "players", "mp_players", 1 );        //ZF> Let's remove the local players folder since it caused so many problems for people
 
-    // Create a mount point for the /user/remote directory
+    // Create a mount point for the /user/import directory
     vfs_add_mount_point( fs_getUserDirectory(), "import", "mp_import", 1 );
 
     // Create a mount point for the /user/remote directory
@@ -707,3 +725,4 @@ Uint32 egoboo_get_ticks( void )
 
     return ticks;
 }
+

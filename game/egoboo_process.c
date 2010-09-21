@@ -126,3 +126,4 @@ bool_t process_running( process_t * proc )
 
     return !proc->paused;
 }
+

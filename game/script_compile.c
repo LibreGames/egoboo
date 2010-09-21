@@ -28,9 +28,9 @@
 #include "egoboo_vfs.h"
 #include "egoboo_setup.h"
 #include "egoboo_strutil.h"
-#include "egoboo_math.h"
 #include "egoboo.h"
 
+#include "egoboo_math.inl"
 
 //--------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------
@@ -490,8 +490,8 @@ const char * script_function_names[SCRIPT_FUNCTIONS_COUNT] =
     "FTARGETDAMAGESELF",           // == 381
     "FSETTARGETSIZE",              // == 382
     "FIFTARGETISFACINGSELF",       // == 383
-    "FDRAWBILLBOARD",		       // == 384
-	"FSETTARGETTOBLAHINPASSAGE"    // == 385
+    "FDRAWBILLBOARD",               // == 384
+    "FSETTARGETTOBLAHINPASSAGE"    // == 385
 };
 
 //--------------------------------------------------------------------------------------------
@@ -512,7 +512,7 @@ static void   get_code( int read );
 static void load_ai_codes_vfs( const char* loadname );
 
 // functions for debugging the scripts
-#if (DEBUG_SCRIPT_LEVEL > 2) && defined(_DEBUG)
+#if (DEBUG_SCRIPT_LEVEL > 2) && EGO_DEBUG
 static void print_token();
 static void print_line();
 #else
@@ -524,7 +524,7 @@ static void print_line();
 //--------------------------------------------------------------------------------------------
 void script_compiler_init()
 {
-    /// @details BB@> initalize the sctipt compiling module
+    /// @details BB@> initialize the sctipt compiling module
 
     // necessary for loading up the ai script
     init_all_ai_scripts();
@@ -861,7 +861,7 @@ void emit_opcode( BIT_FIELD highbits )
     // detect a constant value
     if ( 'C' == Token.cType || 'F' == Token.cType )
     {
-		SET_BIT( highbits, FUNCTION_BIT );
+        ADD_BITS( highbits, FUNCTION_BIT );
     }
     if ( AisCompiled_offset < AISMAXCOMPILESIZE )
     {
@@ -890,7 +890,7 @@ void parse_line_by_line()
         read = load_one_line( read );
         if ( 0 == iLineSize ) continue;
 
-#if (DEBUG_SCRIPT_LEVEL > 2) && defined(_DEBUG)
+#if (DEBUG_SCRIPT_LEVEL > 2) && EGO_DEBUG
         print_line();
 #endif
 
@@ -968,7 +968,7 @@ void parse_line_by_line()
                 parseposition = parse_token( parseposition );
             }
 
-            // expects a OPERATOR VALUE OPERATOR VALUE OPERATOR VALUE pattern
+            // expects an OPERATOR VALUE OPERATOR VALUE OPERATOR VALUE pattern
             while ( parseposition < iLineSize )
             {
                 // the current token should be an operator
@@ -1243,7 +1243,7 @@ void init_all_ai_scripts()
 }
 
 //--------------------------------------------------------------------------------------------
-#if (DEBUG_SCRIPT_LEVEL > 2) && defined(_DEBUG)
+#if (DEBUG_SCRIPT_LEVEL > 2) && EGO_DEBUG
 void print_token()
 {
     printf( "------------\n", globalparsename, Token.iLine );
@@ -1252,10 +1252,11 @@ void print_token()
     printf( "\tToken.cType  == \'%c\'\n", Token.cType );
     printf( "\tToken.cWord  == \"%s\"\n", Token.cWord );
 }
+
 #endif
 
 //--------------------------------------------------------------------------------------------
-#if (DEBUG_SCRIPT_LEVEL > 2) && defined(_DEBUG)
+#if (DEBUG_SCRIPT_LEVEL > 2) && EGO_DEBUG
 void print_line()
 {
     int i;
@@ -1280,6 +1281,7 @@ void print_line()
 
     printf( "\", length == %d\n", iLineSize );
 }
+
 #endif
 
 /** Preparation for eliminating aicodes.txt except for introducing aliases

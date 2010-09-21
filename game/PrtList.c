@@ -78,7 +78,7 @@ void PrtList_init()
 
     for ( cnt = 0; cnt < TOTAL_MAX_PRT; cnt++ )
     {
-        PRT_REF iprt = (TOTAL_MAX_PRT-1) - cnt;
+        PRT_REF iprt = (PRT_REF)((TOTAL_MAX_PRT-1) - cnt);
         prt_t * pprt = PrtList.lst + iprt;
 
         // blank out all the data, including the obj_base data
@@ -115,7 +115,7 @@ void PrtList_prune_used()
 {
     // prune the used list
 
-    int cnt;
+    size_t  cnt;
     PRT_REF iprt;
 
     for ( cnt = 0; cnt < PrtList.used_count; cnt++ )
@@ -141,7 +141,7 @@ void PrtList_prune_free()
 {
     // prune the free list
 
-    int cnt;
+    size_t  cnt;
     PRT_REF iprt;
 
     for ( cnt = 0; cnt < PrtList.free_count; cnt++ )
@@ -441,7 +441,8 @@ void PrtList_free_all()
 //--------------------------------------------------------------------------------------------
 int PrtList_get_free_list_index( const PRT_REF by_reference iprt )
 {
-    int retval = -1, cnt;
+    int    retval = -1;
+    size_t cnt;
 
     if( !VALID_PRT_RANGE(iprt) ) return retval;
 
@@ -465,7 +466,7 @@ bool_t PrtList_add_free( const PRT_REF by_reference iprt )
 
     if( !VALID_PRT_RANGE(iprt) ) return bfalse;
 
-#if defined(_DEBUG) && defined(DEBUG_PRT_LIST)
+#if EGO_DEBUG && defined(DEBUG_PRT_LIST)
     if( PrtList_get_free_list_index(iprt) > 0 )
     {
         return bfalse;
@@ -496,7 +497,7 @@ bool_t PrtList_remove_free_index( int index )
     PRT_REF iprt;
 
     // was it found?
-    if( index < 0 || index >= PrtList.free_count ) return bfalse;
+    if( index < 0 || (size_t)index >= PrtList.free_count ) return bfalse;
 
     iprt = PrtList.free_ref[index];
 
@@ -558,7 +559,7 @@ bool_t PrtList_add_used( const PRT_REF by_reference iprt )
 
     if( !VALID_PRT_RANGE(iprt) ) return bfalse;
 
-#if defined(_DEBUG) && defined(DEBUG_PRT_LIST)
+#if EGO_DEBUG && defined(DEBUG_PRT_LIST)
     if( PrtList_get_used_list_index(iprt) > 0 )
     {
         return bfalse;
@@ -589,7 +590,7 @@ bool_t PrtList_remove_used_index( int index )
     PRT_REF iprt;
 
     // was it found?
-    if( index < 0 || index >= PrtList.used_count ) return bfalse;
+    if( index < 0 || (size_t)index >= PrtList.used_count ) return bfalse;
 
     iprt = PrtList.used_ref[index];
 
@@ -627,7 +628,7 @@ bool_t PrtList_remove_used( const PRT_REF by_reference iprt )
 //--------------------------------------------------------------------------------------------
 void PrtList_cleanup()
 {
-    int     cnt;
+    size_t  cnt;
     prt_t * pprt;
 
     // go through the list and activate all the particles that
@@ -698,3 +699,4 @@ bool_t PrtList_add_termination( PRT_REF iprt )
 
     return retval;
 }
+

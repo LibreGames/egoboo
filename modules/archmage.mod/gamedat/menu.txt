@@ -12,15 +12,14 @@ Level rating ( *, **, ***, ****, or ***** )     : ******
 
 
 // Module summary ( Must be 8 lines...  Each line mush have at least an _ )
-:The_Archmage_Trials!_To_gain_access
-:to_the_ultimate_arcane_power,_you
-:first_need_to_complete_8_challenges
-:and_survive_them_all._Only_then_will
-:you_have_proven_your_worth_to_wield
-:these_godly_powers._Remember_to_bring
-:along_the_five_basic_spells_of_wizardry!
-:_
-
+:The_Archmage_Trials!
+:Are_you_worthy_to_wield_the_power
+:of_an_Arcane_Demigod?_Prove_it_by_surviving
+:the Eight_Chellenges_of_Wizardry.
+:Only_then_can_you_be_trusted_to_access
+:this_ultimate_power.
+:Remember_to_bring_along_the_five
+:basic_spells_of_wizardry!
 
 // Module expansion IDSZs ( with a colon in front )
 :[TYPE] SIDEQUEST                //Module Type (MAINQUEST, SIDEQUEST or TOWN)

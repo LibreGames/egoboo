@@ -69,7 +69,7 @@ void ChrList_init()
 
     for ( cnt = 0; cnt < MAX_CHR; cnt++ )
     {
-        CHR_REF ichr = (MAX_CHR-1) - cnt;
+        CHR_REF ichr = (CHR_REF)((MAX_CHR-1) - cnt);
         chr_t * pchr = ChrList.lst + ichr;
 
         // blank out all the data, including the obj_base data
@@ -214,7 +214,7 @@ bool_t ChrList_free_one( const CHR_REF by_reference ichr )
     pbase = POBJ_GET_PBASE( pchr );
     if( NULL == pbase ) return bfalse;
 
-#if (DEBUG_SCRIPT_LEVEL > 0) && defined(DEBUG_PROFILE) && defined(_DEBUG)
+#if (DEBUG_SCRIPT_LEVEL > 0) && defined(DEBUG_PROFILE) && EGO_DEBUG
     chr_log_script_time( ichr );
 #endif
 
@@ -293,7 +293,8 @@ void ChrList_free_all()
 //--------------------------------------------------------------------------------------------
 int ChrList_get_free_list_index( const CHR_REF by_reference ichr )
 {
-    int retval = -1, cnt;
+    int    retval = -1;
+    size_t cnt;
 
     if( !VALID_CHR_RANGE(ichr) ) return retval;
 
@@ -317,7 +318,7 @@ bool_t ChrList_add_free( const CHR_REF by_reference ichr )
 
     if( !VALID_CHR_RANGE(ichr) ) return bfalse;
 
-#if defined(_DEBUG) && defined(DEBUG_CHR_LIST)
+#if EGO_DEBUG && defined(DEBUG_CHR_LIST)
     if( ChrList_get_free_list_index(ichr) > 0 )
     {
         return bfalse;
@@ -348,7 +349,7 @@ bool_t ChrList_remove_free_index( int index )
     CHR_REF ichr;
 
     // was it found?
-    if( index < 0 || index >= ChrList.free_count ) return bfalse;
+    if( index < 0 || (size_t)index >= ChrList.free_count ) return bfalse;
 
     ichr = ChrList.free_ref[index];
 
@@ -386,7 +387,8 @@ bool_t ChrList_remove_free( const CHR_REF by_reference ichr )
 //--------------------------------------------------------------------------------------------
 int ChrList_get_used_list_index( const CHR_REF by_reference ichr )
 {
-    int retval = -1, cnt;
+    int   retval = -1;
+    size_t cnt;
 
     if( !VALID_CHR_RANGE(ichr) ) return retval;
 
@@ -410,7 +412,7 @@ bool_t ChrList_add_used( const CHR_REF by_reference ichr )
 
     if( !VALID_CHR_RANGE(ichr) ) return bfalse;
 
-#if defined(_DEBUG) && defined(DEBUG_CHR_LIST)
+#if EGO_DEBUG && defined(DEBUG_CHR_LIST)
     if( ChrList_get_used_list_index(ichr) > 0 )
     {
         return bfalse;
@@ -441,7 +443,7 @@ bool_t ChrList_remove_used_index( int index )
     CHR_REF ichr;
 
     // was it found?
-    if( index < 0 || index >= ChrList.used_count ) return bfalse;
+    if( index < 0 || (size_t)index >= ChrList.used_count ) return bfalse;
 
     ichr = ChrList.used_ref[index];
 
@@ -488,7 +490,7 @@ CHR_REF ChrList_allocate( const CHR_REF by_reference override )
         {
             int override_index = ChrList_get_free_list_index( override );
 
-            if( override_index < 0 || override_index >= ChrList.free_count )
+            if( override_index < 0 || (size_t)override_index >= ChrList.free_count )
             {
                 ichr = (CHR_REF)MAX_CHR;
             }
@@ -543,7 +545,7 @@ CHR_REF ChrList_allocate( const CHR_REF by_reference override )
 //--------------------------------------------------------------------------------------------
 void ChrList_cleanup()
 {
-    int     cnt;
+    size_t  cnt;
     chr_t * pchr;
 
     // go through the list and activate all the characters that
@@ -614,3 +616,4 @@ bool_t ChrList_add_termination( CHR_REF ichr )
 
     return retval;
 }
+

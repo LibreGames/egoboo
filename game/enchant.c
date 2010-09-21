@@ -196,17 +196,17 @@ bool_t unlink_enchant( const ENC_REF by_reference ienc, ENC_REF * enc_parent )
 bool_t remove_all_enchants_with_idsz( CHR_REF ichr, IDSZ remove_idsz )
 {
     /// @details ZF@> This function removes all enchants with the character that has the specified
-	///               IDSZ. If idsz [NONE] is specified, all enchants will be removed. Return btrue
-	///               if at least one enchant was removed.
+    ///               IDSZ. If idsz [NONE] is specified, all enchants will be removed. Return btrue
+    ///               if at least one enchant was removed.
 
-	ENC_REF enc_now, enc_next;
+    ENC_REF enc_now, enc_next;
     eve_t * peve;
-	bool_t retval = bfalse;
-	chr_t *pchr;
+    bool_t retval = bfalse;
+    chr_t *pchr;
 
-	// Stop invalid pointers
-	if( !ACTIVE_CHR(ichr) ) return bfalse;
-	pchr = ChrList.lst + ichr;
+    // Stop invalid pointers
+    if( !ACTIVE_CHR(ichr) ) return bfalse;
+    pchr = ChrList.lst + ichr;
 
     // clean up the enchant list before doing anything
     cleanup_character_enchants( pchr );
@@ -221,12 +221,12 @@ bool_t remove_all_enchants_with_idsz( CHR_REF ichr, IDSZ remove_idsz )
         if ( NULL != peve && ( IDSZ_NONE == remove_idsz || remove_idsz == peve->removedbyidsz ) )
         {
             remove_enchant( enc_now, NULL );
-			retval = btrue;
+            retval = btrue;
         }
 
         enc_now = enc_next;
-	}
-	return retval;
+    }
+    return retval;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -268,13 +268,13 @@ bool_t remove_enchant( const ENC_REF by_reference ienc, ENC_REF * enc_parent )
     // Remove all of the cumulative values first, since we did it
     for ( add_type = ENC_ADD_LAST; add_type >= ENC_ADD_FIRST; add_type-- )
     {
-        enchant_remove_add( ienc, add_type );
+        enc_remove_add( ienc, add_type );
     }
 
     // unset them in the reverse order of setting them, doing morph last
     for ( set_type = ENC_SET_LAST; set_type >= ENC_SET_FIRST; set_type-- )
     {
-        enchant_remove_set( ienc, set_type );
+        enc_remove_set( ienc, set_type );
     }
 
     // Now fix dem weapons
@@ -302,7 +302,7 @@ bool_t remove_enchant( const ENC_REF by_reference ienc, ENC_REF * enc_parent )
         kill_character( overlay_ref, ( CHR_REF )MAX_CHR, btrue );
     }
 
-    // nothing above this demends on having a valid enchant profile
+    // nothing above this depends on having a valid enchant profile
     if ( NULL != peve )
     {
         // Play the end sound
@@ -357,7 +357,7 @@ bool_t remove_enchant( const ENC_REF by_reference ienc, ENC_REF * enc_parent )
     {
         chr_t * ptarget = ChrList.lst + itarget;
         if ( ptarget->invictus )  chr_get_pteam_base( itarget )->morale++;
-		
+
         kill_character( itarget, ( CHR_REF )MAX_CHR, btrue );
     }
 
@@ -365,7 +365,7 @@ bool_t remove_enchant( const ENC_REF by_reference ienc, ENC_REF * enc_parent )
 }
 
 //--------------------------------------------------------------------------------------------
-ENC_REF enchant_value_filled( const ENC_REF by_reference  ienc, int value_idx )
+ENC_REF enc_value_filled( const ENC_REF by_reference  ienc, int value_idx )
 {
     /// @details ZZ@> This function returns MAX_ENC if the enchantment's target has no conflicting
     ///    set values in its other enchantments.  Otherwise it returns the ienc
@@ -402,7 +402,7 @@ ENC_REF enchant_value_filled( const ENC_REF by_reference  ienc, int value_idx )
 }
 
 //--------------------------------------------------------------------------------------------
-void enchant_apply_set( const ENC_REF by_reference  ienc, int value_idx, const PRO_REF by_reference profile )
+void enc_apply_set( const ENC_REF by_reference  ienc, int value_idx, const PRO_REF by_reference profile )
 {
     /// @details ZZ@> This function sets and saves one of the character's stats
 
@@ -423,8 +423,8 @@ void enchant_apply_set( const ENC_REF by_reference  ienc, int value_idx, const P
     penc->setyesno[value_idx] = bfalse;
     if ( peve->setyesno[value_idx] )
     {
-        conflict = enchant_value_filled( ienc, value_idx );
-		if ( peve->override || MAX_ENC == conflict )
+        conflict = enc_value_filled( ienc, value_idx );
+        if ( peve->override || MAX_ENC == conflict )
         {
             // Check for multiple enchantments
             if ( DEFINED_ENC( conflict ) )
@@ -438,7 +438,7 @@ void enchant_apply_set( const ENC_REF by_reference  ienc, int value_idx, const P
                 else
                 {
                     // Just unset the old enchantment's value
-                    enchant_remove_set( conflict, value_idx );
+                    enc_remove_set( conflict, value_idx );
                 }
             }
 
@@ -458,8 +458,8 @@ void enchant_apply_set( const ENC_REF by_reference  ienc, int value_idx, const P
                         break;
 
                     case SETNUMBEROFJUMPS:
-                        penc->setsave[value_idx] = ptarget->jumpnumberreset;
-                        ptarget->jumpnumberreset = peve->setvalue[value_idx];
+                        penc->setsave[value_idx] = ptarget->jump_number_reset;
+                        chr_set_jump_number_reset( ptarget, peve->setvalue[value_idx] );
                         break;
 
                     case SETLIFEBARCOLOR:
@@ -533,10 +533,10 @@ void enchant_apply_set( const ENC_REF by_reference  ienc, int value_idx, const P
                         break;
 
                     case SETFLYTOHEIGHT:
-                        penc->setsave[value_idx] = ptarget->flyheight;
-                        if ( ptarget->flyheight == 0 && ptarget->pos.z > -2 )
+                        penc->setsave[value_idx] = ptarget->fly_height;
+                        if ( ptarget->pos.z > -2.0f )
                         {
-                            ptarget->flyheight = peve->setvalue[value_idx];
+                            chr_set_fly_height( ptarget, peve->setvalue[value_idx] );
                         }
                         break;
 
@@ -581,7 +581,7 @@ void enchant_apply_set( const ENC_REF by_reference  ienc, int value_idx, const P
 }
 
 //--------------------------------------------------------------------------------------------
-void enchant_apply_add( const ENC_REF by_reference ienc, int value_idx, const EVE_REF by_reference ieve )
+void enc_apply_add( const ENC_REF by_reference ienc, int value_idx, const EVE_REF by_reference ieve )
 {
     /// @details ZZ@> This function does cumulative modification to character stats
 
@@ -696,8 +696,8 @@ void enchant_apply_add( const ENC_REF by_reference ienc, int value_idx, const EV
             valuetoadd = peve->addvalue[value_idx];
             getadd( 0, newvalue, PERFECTBIG, &valuetoadd );
             ptarget->manamax += valuetoadd;
-            //ptarget->mana    += valuetoadd;						//ZF> bit of a problem here, we dont want players to heal or lose life by requipping magic ornaments
-			ptarget->mana = CLIP(ptarget->mana, 0, ptarget->manamax);
+            //ptarget->mana    += valuetoadd;                        //ZF> bit of a problem here, we don't want players to heal or lose life by requipping magic ornaments
+            ptarget->mana = CLIP(ptarget->mana, 0, ptarget->manamax);
             fvaluetoadd = valuetoadd;
             break;
 
@@ -706,8 +706,8 @@ void enchant_apply_add( const ENC_REF by_reference ienc, int value_idx, const EV
             valuetoadd = peve->addvalue[value_idx];
             getadd( LOWSTAT, newvalue, PERFECTBIG, &valuetoadd );
             ptarget->lifemax += valuetoadd;
-            //ptarget->life += valuetoadd;                        //ZF> bit of a problem here, we dont want players to heal or lose life by requipping magic ornaments
-			ptarget->life = CLIP(ptarget->life, 1, ptarget->lifemax);
+            //ptarget->life += valuetoadd;                        //ZF> bit of a problem here, we don't want players to heal or lose life by requipping magic ornaments
+            ptarget->life = CLIP(ptarget->life, 1, ptarget->lifemax);
             fvaluetoadd = valuetoadd;
             break;
 
@@ -833,13 +833,13 @@ enc_t * enc_config_do_init( enc_t * penc )
     // Now set all of the specific values, morph first
     for ( set_type = ENC_SET_FIRST; set_type <= ENC_SET_LAST; set_type++ )
     {
-        enchant_apply_set( ienc, set_type, pdata->profile_ref );
+        enc_apply_set( ienc, set_type, pdata->profile_ref );
     }
 
     // Now do all of the stat adds
     for ( add_type = ENC_ADD_FIRST; add_type <= ENC_ADD_LAST; add_type++ )
     {
-        enchant_apply_add( ienc, add_type, pdata->eve_ref );
+        enc_apply_add( ienc, add_type, pdata->eve_ref );
     }
 
     // Add it as first in the list
@@ -1502,7 +1502,7 @@ EVE_REF load_one_enchant_profile_vfs( const char* szLoadName, const EVE_REF by_r
 }
 
 //--------------------------------------------------------------------------------------------
-void enchant_remove_set( const ENC_REF by_reference ienc, int value_idx )
+void enc_remove_set( const ENC_REF by_reference ienc, int value_idx )
 {
     /// @details ZZ@> This function unsets a set value
     CHR_REF character;
@@ -1527,7 +1527,7 @@ void enchant_remove_set( const ENC_REF by_reference ienc, int value_idx )
             break;
 
         case SETNUMBEROFJUMPS:
-            ptarget->jumpnumberreset = penc->setsave[value_idx];
+            chr_set_jump_number_reset( ptarget, penc->setsave[value_idx] );
             break;
 
         case SETLIFEBARCOLOR:
@@ -1587,7 +1587,7 @@ void enchant_remove_set( const ENC_REF by_reference ienc, int value_idx )
             break;
 
         case SETFLYTOHEIGHT:
-            ptarget->flyheight = penc->setsave[value_idx];
+            chr_set_fly_height( ptarget, penc->setsave[value_idx] );
             break;
 
         case SETWALKONWATER:
@@ -1621,7 +1621,7 @@ void enchant_remove_set( const ENC_REF by_reference ienc, int value_idx )
 }
 
 //--------------------------------------------------------------------------------------------
-void enchant_remove_add( const ENC_REF by_reference ienc, int value_idx )
+void enc_remove_add( const ENC_REF by_reference ienc, int value_idx )
 {
     /// @details ZZ@> This function undoes cumulative modification to character stats
 
@@ -1799,6 +1799,7 @@ ENC_REF cleanup_enchant_list( const ENC_REF by_reference ienc, ENC_REF * enc_par
 
     bool_t enc_used[MAX_ENC];
 
+    int cnt;
     ENC_REF first_valid_enchant;
     ENC_REF enc_now, enc_next;
 
@@ -1810,7 +1811,7 @@ ENC_REF cleanup_enchant_list( const ENC_REF by_reference ienc, ENC_REF * enc_par
     // scan the list of enchants
     enc_next            = (ENC_REF) MAX_ENC;
     first_valid_enchant = enc_now = ienc;
-    while ( enc_now < MAX_ENC )
+    for( cnt = 0; enc_now < MAX_ENC && enc_next != enc_now && cnt < MAX_ENC; cnt++ )
     {
         enc_next = EncList.lst[enc_now].nextenchant_ref;
 
@@ -1827,9 +1828,8 @@ ENC_REF cleanup_enchant_list( const ENC_REF by_reference ienc, ENC_REF * enc_par
             break;
         }
 
-		
-		//( !INGAME_CHR( EncList.lst[enc_now].target_ref ) && !EveStack.lst[EncList.lst[enc_now].eve_ref].stayiftargetdead )
-		
+        //( !INGAME_CHR( EncList.lst[enc_now].target_ref ) && !EveStack.lst[EncList.lst[enc_now].eve_ref].stayiftargetdead )
+
         // remove any expired enchants
         if ( !INGAME_ENC( enc_now ) )
         {
@@ -1852,6 +1852,14 @@ ENC_REF cleanup_enchant_list( const ENC_REF by_reference ienc, ENC_REF * enc_par
         enc_now    = enc_next;
     }
 
+    if( enc_now == enc_next || cnt >= MAX_ENC )
+    {
+        // break the loop. this will only happen if the list is messed up.
+        EncList.lst[enc_now].nextenchant_ref = (ENC_REF) MAX_ENC;
+
+        EGOBOO_ASSERT( bfalse );
+    }
+
     return first_valid_enchant;
 }
 
@@ -1866,26 +1874,25 @@ void cleanup_all_enchants()
         ENC_REF * enc_lst;
         eve_t   * peve;
         bool_t    do_remove;
-		bool_t valid_owner, valid_target;
+        bool_t valid_owner, valid_target;
 
         // try to determine something about the parent
         enc_lst = NULL;
-		valid_target = bfalse;
+        valid_target = bfalse;
         if ( INGAME_CHR( penc->target_ref ) )
         {
-			valid_target = ChrList.lst[penc->target_ref].alive;
+            valid_target = ChrList.lst[penc->target_ref].alive;
 
             // this is linked to a known character
             enc_lst = &( ChrList.lst[penc->target_ref].firstenchant );
         }
 
-		//try to determine if the owner exists and is alive
-		valid_owner = bfalse;
-		if ( INGAME_CHR( penc->owner_ref ) )
+        //try to determine if the owner exists and is alive
+        valid_owner = bfalse;
+        if ( INGAME_CHR( penc->owner_ref ) )
         {
-			valid_owner = ChrList.lst[penc->owner_ref].alive;
+            valid_owner = ChrList.lst[penc->owner_ref].alive;
         }
-
 
         if ( !LOADED_EVE( penc->eve_ref ) )
         {
@@ -1901,12 +1908,12 @@ void cleanup_all_enchants()
             // the enchant has been marked for removal
             do_remove = btrue;
         }
-		else if ( !valid_owner && !peve->stayifnoowner )
+        else if ( !valid_owner && !peve->stayifnoowner )
         {
             // the enchant's owner has died
             do_remove = btrue;
         }
-		else if ( !valid_target && !peve->stayiftargetdead )
+        else if ( !valid_target && !peve->stayiftargetdead )
         {
             // the enchant's target has died
             do_remove = btrue;
@@ -1931,7 +1938,7 @@ void cleanup_all_enchants()
 }
 
 //--------------------------------------------------------------------------------------------
-void bump_all_enchants_update_counters()
+void increment_all_enchant_update_counters()
 {
     ENC_REF cnt;
 
@@ -1955,3 +1962,4 @@ bool_t enc_request_terminate( const ENC_REF by_reference ienc )
 
     return btrue;
 }
+

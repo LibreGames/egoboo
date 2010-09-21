@@ -93,7 +93,7 @@ static const char * wavenames[GSND_COUNT] =
     "coinfall",
     "lvlup",
     "pitfall",
-	"shieldblock"
+    "shieldblock"
 };
 
 static bool_t sound_atexit_registered = bfalse;
@@ -115,7 +115,7 @@ bool_t _update_channel_volume( int channel, int volume, fvec3_t   diff );
 #define MUSIC_STACK_COUNT 20
 static int music_stack_depth = 0;
 
-/// The data needed to store a dsingle music track on the music_stack[]
+/// The data needed to store a single music track on the music_stack[]
 struct s_music_stack_element
 {
     Mix_Music * mus;
@@ -242,7 +242,7 @@ bool_t sdl_audio_initialize()
 //--------------------------------------------------------------------------------------------
 bool_t sdl_mixer_initialize()
 {
-    /// @details ZF@> This intitializes the SDL_mixer services
+    /// @details ZF@> This initializes the SDL_mixer services
 
     if ( !mixeron && ( snd.musicvalid || snd.soundvalid ) )
     {
@@ -562,7 +562,7 @@ bool_t _update_channel_volume( int channel, int volume, fvec3_t   diff )
 //--------------------------------------------------------------------------------------------
 int sound_play_chunk_looped( fvec3_t pos, Mix_Chunk * pchunk, int loops, const CHR_REF by_reference owner )
 {
-    /// ZF@> This function plays a specified sound and returns which channel it's using
+    /// ZF@> This function plays a specified sound and returns which channel its using
     int channel = INVALID_SOUND_CHANNEL;
     fvec3_t   diff;
     int volume;
@@ -606,7 +606,7 @@ int sound_play_chunk_looped( fvec3_t pos, Mix_Chunk * pchunk, int loops, const C
 //--------------------------------------------------------------------------------------------
 int sound_play_chunk_full( Mix_Chunk * pchunk )
 {
-    /// ZF@> This function plays a specified sound at full possible volume and returns which channel it's using
+    /// ZF@> This function plays a specified sound at full possible volume and returns which channel its using
     int channel = INVALID_SOUND_CHANNEL;
 
     if ( !snd.soundvalid || !mixeron || NULL == pchunk ) return INVALID_SOUND_CHANNEL;
@@ -737,7 +737,7 @@ void load_global_waves()
     snprintf( wavename, SDL_arraysize( wavename ), "mp_data/%s", wavenames[GSND_PITFALL] );
     g_wavelist[GSND_PITFALL] = sound_load_chunk_vfs( wavename );
 
-	snprintf( wavename, SDL_arraysize( wavename ), "mp_data/%s", wavenames[GSND_SHIELDBLOCK] );
+    snprintf( wavename, SDL_arraysize( wavename ), "mp_data/%s", wavenames[GSND_SHIELDBLOCK] );
     g_wavelist[GSND_SHIELDBLOCK] = sound_load_chunk_vfs( wavename );
 
     /*
@@ -916,7 +916,7 @@ bool_t LoopedList_validate()
 bool_t LoopedList_free_one( size_t index )
 {
     /// @details BB@> free a looped sound only if it is actually being used
-    int   cnt;
+    size_t   cnt;
     LOOP_REF ref;
 
     if ( !LoopedList_validate() ) return bfalse;
@@ -1026,7 +1026,7 @@ bool_t LoopedList_remove( int channel )
 {
     /// @details BB@> remove a looped sound from the used list
 
-    int cnt;
+    size_t cnt;
     bool_t retval;
 
     if ( 0 == LoopedList.used_count ) return bfalse;
@@ -1069,7 +1069,7 @@ bool_t _update_stereo_channel( int channel, fvec3_t   diff )
 //--------------------------------------------------------------------------------------------
 void looped_update_all_sound()
 {
-    int cnt;
+    size_t cnt;
 
     for ( cnt = 0; cnt < LoopedList.used_count; cnt++ )
     {
@@ -1107,8 +1107,8 @@ void looped_update_all_sound()
 bool_t looped_stop_object_sounds( const CHR_REF by_reference  ichr )
 {
     /// @details BB@> free any looped sound(s) being made by a certain character
-    int freed;
-    int cnt;
+    int    freed;
+    size_t cnt;
     bool_t found;
 
     if ( !ALLOCATED_CHR( ichr ) ) return bfalse;
@@ -1168,6 +1168,7 @@ void sound_free_chunk( Mix_Chunk * pchunk )
 //--------------------------------------------------------------------------------------------
 int get_current_song_playing()
 {
-	//ZF> This gives read access to the private variable 'songplaying'
-	return songplaying;
+    //ZF> This gives read access to the private variable 'songplaying'
+    return songplaying;
 }
+

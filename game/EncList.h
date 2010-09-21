@@ -47,9 +47,9 @@
 #define DEFINED_PENC( IENC )     ( VALID_ENC_PTR( PENC ) && ALLOCATED_PBASE(POBJ_GET_PBASE(PENC)) && !TERMINATED_PBASE (POBJ_GET_PBASE(PENC)) )
 
 // Macros automate looping through the EncList. This hides code which defers the creation and deletion of
-// objects until the loop terminates, so tha the length of the list will not change during the loop.
-#define ENC_BEGIN_LOOP_ACTIVE(IT, PENC)  {int IT##_internal; int enc_loop_start_depth = enc_loop_depth; enc_loop_depth++; for(IT##_internal=0;IT##_internal<EncList.used_count;IT##_internal++) { ENC_REF IT; enc_t * PENC = NULL; IT = (ENC_REF)EncList.used_ref[IT##_internal]; if(!ACTIVE_ENC (IT)) continue; PENC =  EncList.lst + IT;
-#define ENC_END_LOOP() } enc_loop_depth--; EGOBOO_ASSERT(enc_loop_start_depth == enc_loop_depth); EncList_cleanup(); }
+// objects until the loop terminates, so that the length of the list will not change during the loop.
+#define ENC_BEGIN_LOOP_ACTIVE(IT, PENC)  {size_t IT##_internal; int enc_loop_start_depth = enc_loop_depth; enc_loop_depth++; for(IT##_internal=0;IT##_internal<EncList.used_count;IT##_internal++) { ENC_REF IT; enc_t * PENC = NULL; IT = (ENC_REF)EncList.used_ref[IT##_internal]; if(!ACTIVE_ENC (IT)) continue; PENC =  EncList.lst + IT;
+#define ENC_END_LOOP() } enc_loop_depth--; if(enc_loop_start_depth != enc_loop_depth) EGOBOO_ASSERT(bfalse); EncList_cleanup(); }
 
 // Macros to determine whether the enchant is in the game or not.
 // If objects are being spawned, then any object that is just "defined" is treated as "in game"

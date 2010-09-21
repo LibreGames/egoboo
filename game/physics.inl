@@ -42,6 +42,8 @@
 
 #include "physics.h"
 
+#include "egoboo_math.inl"
+
 //--------------------------------------------------------------------------------------------
 // FORWARD DECLARATIONS
 //--------------------------------------------------------------------------------------------
@@ -59,6 +61,16 @@ INLINE bool_t get_depth_2( oct_bb_t cv_a,   fvec3_t pos_a, oct_bb_t   cv_b, fvec
 INLINE bool_t get_depth_close_0( bumper_t bump_a, fvec3_t pos_a, bumper_t bump_b, fvec3_t pos_b, bool_t break_out, oct_vec_t depth );
 INLINE bool_t get_depth_close_1( oct_bb_t cv_a,   fvec3_t pos_a, bumper_t bump_b, fvec3_t pos_b, bool_t break_out, oct_vec_t depth );
 INLINE bool_t get_depth_close_2( oct_bb_t cv_a,   fvec3_t pos_a, oct_bb_t   cv_b, fvec3_t pos_b, bool_t break_out, oct_vec_t depth );
+
+INLINE void phys_data_blank_accumulators( phys_data_t * pdata );
+
+INLINE bool_t phys_data_accumulate_apos_coll( phys_data_t * pdata, const fvec3_base_t acc );
+INLINE bool_t phys_data_accumulate_apos_plat( phys_data_t * pdata, const fvec3_base_t acc );
+INLINE bool_t phys_data_accumulate_avel( phys_data_t * pdata, const fvec3_base_t acc );
+
+INLINE bool_t phys_data_accumulate_apos_coll_index( phys_data_t * pdata, const float acc, const int index );
+INLINE bool_t phys_data_accumulate_apos_plat_index( phys_data_t * pdata, const float acc, const int index );
+INLINE bool_t phys_data_accumulate_avel_index( phys_data_t * pdata, const float acc, const int index );
 
 //--------------------------------------------------------------------------------------------
 // IMPLEMENTATION
@@ -327,3 +339,110 @@ INLINE bool_t get_depth_2( oct_bb_t cv_a, fvec3_t pos_a, oct_bb_t cv_b, fvec3_t 
     return valid;
 }
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+INLINE void phys_data_blank_accumulators( phys_data_t * pdata )
+{
+    if( NULL == pdata ) return;
+
+    fvec3_self_clear( pdata->apos_plat.v );
+    fvec3_self_clear( pdata->apos_coll.v );
+    fvec3_self_clear( pdata->avel.v      );
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE bool_t phys_data_accumulate_avel( phys_data_t * pdata, const fvec3_base_t acc )
+{
+    if( NULL == pdata ) return bfalse;
+
+    //if( fvec3_length_abs(acc) > 100.0f )
+    //    acc[kX] = 0.0f;
+
+    return fvec3_self_sum( pdata->avel.v, acc );
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE bool_t phys_data_accumulate_apos_coll( phys_data_t * pdata, const fvec3_base_t acc )
+{
+    if( NULL == pdata ) return bfalse;
+
+    //if( fvec3_length_abs(acc) > 100.0f )
+    //    acc[kX] = 0.0f;
+
+    return fvec3_self_sum( pdata->apos_coll.v, acc );
+}
+
+
+//--------------------------------------------------------------------------------------------
+INLINE bool_t phys_data_accumulate_apos_plat( phys_data_t * pdata, const fvec3_base_t acc )
+{
+    if( NULL == pdata ) return bfalse;
+
+    //if( fvec3_length_abs(acc) > 100.0f )
+    //    acc[kX] = 0.0f;
+
+    return fvec3_self_sum( pdata->apos_plat.v, acc );
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE bool_t phys_data_accumulate_avel_index( phys_data_t * pdata, const float acc, const int index )
+{
+    bool_t retval = bfalse;
+
+    if( NULL == pdata ) return bfalse;
+
+    if( 0.0f == acc ) return btrue;
+
+    //if( ABS(acc) > 100.0f )
+    //    acc = 0.0f;
+
+    if( index >= 0 && index <= kZ )
+    {
+        pdata->avel.v[index] += acc;
+        retval = btrue;
+    }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE bool_t phys_data_accumulate_apos_coll_index( phys_data_t * pdata, const float acc, const int index )
+{
+    bool_t retval = bfalse;
+
+    if( NULL == pdata ) return bfalse;
+
+    if( 0.0f == acc ) return btrue;
+
+    //if( ABS(acc) > 100.0f )
+    //    acc = 0.0f;
+
+    if( index >= 0 && index <= kZ )
+    {
+        pdata->apos_coll.v[index] += acc;
+        retval = btrue;
+    }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE bool_t phys_data_accumulate_apos_plat_index( phys_data_t * pdata, const float acc, const int index )
+{
+    bool_t retval = bfalse;
+
+    if( NULL == pdata ) return bfalse;
+
+    if( 0.0f == acc ) return btrue;
+
+    //if( ABS(acc) > 100.0f )
+    //    acc = 0.0f;
+
+    if( index >= 0 && index <= kZ )
+    {
+        pdata->apos_plat.v[index] += acc;
+        retval = btrue;
+    }
+
+    return retval;
+}

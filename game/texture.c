@@ -137,7 +137,7 @@ TX_REF TxTexture_get_free( const TX_REF by_reference itex )
     }
     else
     {
-        int i;
+        size_t i;
 
         // grab the specified index
         oglx_texture_Release( TxTexture.lst + ( TX_REF )itex );
@@ -170,9 +170,10 @@ bool_t TxTexture_free_one( const TX_REF by_reference itex )
     // release the texture
     oglx_texture_Release( TxTexture.lst + itex );
 
-#if defined(_DEBUG)
+#if EGO_DEBUG
     {
-        int cnt;
+        size_t cnt;
+
         // determine whether this texture is already in the list of free textures
         // that is an error
         for ( cnt = 0; cnt < TxTexture.free_count; cnt++ )
@@ -235,3 +236,4 @@ oglx_texture_t * TxTexture_get_ptr( const TX_REF by_reference itex )
 
     return ptex;
 }
+

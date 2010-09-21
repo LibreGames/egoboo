@@ -21,7 +21,7 @@
 
 /// @file font_ttf.h
 /// @details True-type font drawing functionality.  Uses the SDL_ttf module
-/// to do it's business. This depends on Freetype 2 & OpenGL.
+/// to do its business. This depends on Freetype 2 & OpenGL.
 
 #include <SDL.h>
 #include <SDL_opengl.h>

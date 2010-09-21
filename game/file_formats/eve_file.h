@@ -27,7 +27,7 @@
 //--------------------------------------------------------------------------------------------
 
 /// Special modes for particle reflections from characters
-enum e_missle_treatment
+enum e_missile_treatment
 {
     MISSILE_NORMAL   = 0,                           ///< Treat missiles normally
     MISSILE_DEFLECT,                                ///< Deflect incoming missiles

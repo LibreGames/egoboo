@@ -128,6 +128,7 @@ GLuint ErrorImage_get_binding()
 
     return ErrorImage_binding;
 }
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 oglx_texture_t * oglx_texture_ctor( oglx_texture_t * ptex )
@@ -193,7 +194,7 @@ void oglx_texture_dtor( oglx_texture_t * ptex )
 //--------------------------------------------------------------------------------------------
 GLuint oglx_texture_Convert( oglx_texture_t *ptex, SDL_Surface * image, Uint32 key )
 {
-    /// @detalis BB@> an oglx_texture_t wrapper for the SDL_GL_convert_surface() function
+    /// @details BB@> an oglx_texture_t wrapper for the SDL_GL_convert_surface() function
 
     if ( NULL == ptex ) return INVALID_TX_ID;
 
@@ -288,15 +289,15 @@ GLsizei  oglx_texture_GetImageWidth( oglx_texture_t *texture )
 }
 
 //--------------------------------------------------------------------------------------------
-GLsizei  oglx_texture_GetTextureWidth( oglx_texture_t *texture )
+GLfloat  oglx_texture_GetTextureWidth( oglx_texture_t *texture )
 {
-    return ( NULL == texture ) ? 0 : texture->base.width;
+    return ( NULL == texture ) ? 0.0f : texture->base.width;
 }
 
 //--------------------------------------------------------------------------------------------
-GLsizei  oglx_texture_GetTextureHeight( oglx_texture_t *texture )
+GLfloat  oglx_texture_GetTextureHeight( oglx_texture_t *texture )
 {
-    return ( NULL == texture ) ? 0 : texture->base.height;
+    return ( NULL == texture ) ? 0.0f : texture->base.height;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -480,3 +481,4 @@ GLuint oglx_bind_to_tex_params( GLuint binding, GLenum target, GLint wrap_s, GLi
 
     return local_binding;
 }
+

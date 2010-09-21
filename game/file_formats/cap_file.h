@@ -34,6 +34,9 @@
 
 #define GRIP_VERTS                       4
 
+#define CAP_INFINITE_WEIGHT  0xFF
+#define CAP_MAX_WEIGHT       (CAP_INFINITE_WEIGHT - 1)
+
 /// The various ID strings that every character has
 enum e_idsz_type
 {
@@ -196,7 +199,7 @@ struct s_cap
     Uint8        ammo;
     Sint16       money;                         ///< Money
 
-    // characer stats
+    // character stats
     Uint8        gender;                        ///< Gender
 
     // life
@@ -209,7 +212,7 @@ struct s_cap
     cap_stat_t   mana_stat;                     ///< Mana statistics
     cap_stat_t   manareturn_stat;               ///< Mana regeneration statistics
     cap_stat_t   manaflow_stat;                 ///< Mana channeling
-    Uint16       mana_spawn;                      ///< Life left from last module
+    UFP8_T       mana_spawn;                    ///< Mana left from last module
 
     cap_stat_t   strength_stat;                 ///< Strength
     cap_stat_t   wisdom_stat;                   ///< Wisdom
@@ -222,20 +225,23 @@ struct s_cap
     float        bumpdampen;                    ///< Mass
 
     float        size;                          ///< Scale of model
-    float        size_perlevel;                  ///< Scale increases
-    Uint32       shadow_size;                    ///< Shadow size
+    float        size_perlevel;                 ///< Scale increases
+    Uint32       shadow_size;                   ///< Shadow size
     Uint32       bump_size;                     ///< Bounding octagon
+    bool_t       bump_override_size;            ///< let bump_size override the measured object size
     Uint32       bump_sizebig;                  ///< For octagonal bumpers
-    Uint32       bump_height;
+    bool_t       bump_override_sizebig;         ///< let bump_sizebig override the measured object size
+    Uint32       bump_height;                   ///< the height of the object
+    bool_t       bump_override_height;          ///< let bump_height overrride the measured height of the object
     Uint8        stoppedby;                     ///< Collision Mask
 
     // movement
     float        jump;                          ///< Jump power
-    Uint8        jumpnumber;                    ///< Number of jumps ( Ninja )
+    Uint8        jump_number;                    ///< Number of jumps ( Ninja )
     float        anim_speed_sneak;                      ///< Sneak threshold
     float        anim_speed_walk;                       ///< Walk threshold
     float        anim_speed_run;                        ///< Run threshold
-    Uint8        flyheight;                     ///< Fly height
+    Uint8        fly_height;                     ///< Fly height
     bool_t       waterwalk;                     ///< Walk on water?
 
     // status graphics
@@ -310,7 +316,7 @@ struct s_cap
     Sint16       manacost;                       ///< How much mana to use this object?
     Uint8        attack_attached;                ///< Do we have attack particles?
     Sint8        attack_pip;                     ///< What kind of attack partickes?
-	bool_t       attack_fast;					 ///< Ignores the default reload time?
+    bool_t       attack_fast;                     ///< Ignores the default reload time?
 
     float        str_bonus;                      ///< Strength     damage factor
     float        wis_bonus;                      ///< Wisdom       damage factor
@@ -342,7 +348,7 @@ struct s_cap
     int       canread;                         ///< Can it read?
     int       hascodeofconduct;                ///< Is it bound by a lawful code of conduct?
     int       darkvision_level;                ///< Does it have the ability to see in the dark?
-    int       block_rating;					   ///< How good is the character with a shield?
+    int       block_rating;                       ///< How good is the character with a shield?
 
     // random stuff
     bool_t       stickybutt;                    ///< Stick to the ground?

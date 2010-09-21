@@ -30,7 +30,8 @@ typedef struct ServerState_t
 {
     int dummy;
 // GameState gameState;
-} ServerState_t;
+}
+ ServerState_t;
 
 /// Globally accessible server state
 extern ServerState_t ServerState;

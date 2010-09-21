@@ -48,9 +48,9 @@ DECLARE_LIST_EXTERN( chr_t, ChrList, MAX_CHR );
 #define TERMINATED_PCHR( PCHR )     ( VALID_CHR_PTR( PCHR ) && TERMINATED_PBASE( POBJ_GET_PBASE(PCHR) ) )
 
 // Macros automate looping through the ChrList. This hides code which defers the creation and deletion of
-// objects until the loop terminates, so tha the length of the list will not change during the loop.
-#define CHR_BEGIN_LOOP_ACTIVE(IT, PCHR)  {int IT##_internal; int chr_loop_start_depth = chr_loop_depth; chr_loop_depth++; for(IT##_internal=0;IT##_internal<ChrList.used_count;IT##_internal++) { CHR_REF IT; chr_t * PCHR = NULL; IT = (CHR_REF)ChrList.used_ref[IT##_internal]; if(!ACTIVE_CHR (IT)) continue; PCHR =  ChrList.lst + IT;
-#define CHR_END_LOOP() } chr_loop_depth--; EGOBOO_ASSERT(chr_loop_start_depth == chr_loop_depth); ChrList_cleanup(); }
+// objects until the loop terminates, so that the length of the list will not change during the loop.
+#define CHR_BEGIN_LOOP_ACTIVE(IT, PCHR)  {size_t IT##_internal; int chr_loop_start_depth = chr_loop_depth; chr_loop_depth++; for(IT##_internal=0;IT##_internal<ChrList.used_count;IT##_internal++) { CHR_REF IT; chr_t * PCHR = NULL; IT = (CHR_REF)ChrList.used_ref[IT##_internal]; if(!ACTIVE_CHR (IT)) continue; PCHR =  ChrList.lst + IT;
+#define CHR_END_LOOP() } chr_loop_depth--; if(chr_loop_start_depth != chr_loop_depth) EGOBOO_ASSERT(bfalse); ChrList_cleanup(); }
 
 extern int chr_loop_depth;
 

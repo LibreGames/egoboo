@@ -78,7 +78,7 @@ bool_t        chop_export_vfs( const char *szSaveName, const char * szChop );
 
 //--------------------------------------------------------------------------------------------
 
-/// Defintion of a single chop section
+/// Definition of a single chop section
 struct s_chop_section
 {
     int size;     ///< Number of choices, 0
@@ -88,7 +88,7 @@ typedef struct s_chop_section chop_section_t;
 
 //--------------------------------------------------------------------------------------------
 
-/// Defintion of the chop info needed to create a name
+/// Definition of the chop info needed to create a name
 struct s_chop_definition
 {
     chop_section_t  section[MAXSECTION];

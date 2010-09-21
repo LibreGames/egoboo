@@ -165,3 +165,4 @@ FILE * log_get_file()
 {
     return logFile;
 }
+

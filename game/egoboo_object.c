@@ -51,3 +51,4 @@ ego_object_base_t * ego_object_dtor( ego_object_base_t * pbase )
 
     return pbase;
 }
+

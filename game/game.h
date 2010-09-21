@@ -64,15 +64,15 @@ enum e_order
 /// functions like chr_find_target() or find_object_in_passage()
 enum e_targeting_bits
 {
-    TARGET_DEAD			= ( 1 << 0 ),		///< Target dead stuff
-    TARGET_ENEMIES		= ( 1 << 1 ),		///< Target enemies
-    TARGET_FRIENDS		= ( 1 << 2 ),		///< Target friends
-    TARGET_ITEMS		= ( 1 << 3 ),		///< Target items
-    TARGET_INVERTID		= ( 1 << 4 ),		///< Target everything but the specified IDSZ
-    TARGET_PLAYERS		= ( 1 << 5 ),		///< Target only players
-    TARGET_SKILL		= ( 1 << 6 ),		///< Target needs the specified skill IDSZ
-    TARGET_QUEST		= ( 1 << 7 ),		///< Target needs the specified quest IDSZ
-	TARGET_SELF			= ( 1 << 8 )		///< Allow self as a target?
+    TARGET_DEAD            = ( 1 << 0 ),        ///< Target dead stuff
+    TARGET_ENEMIES        = ( 1 << 1 ),        ///< Target enemies
+    TARGET_FRIENDS        = ( 1 << 2 ),        ///< Target friends
+    TARGET_ITEMS        = ( 1 << 3 ),        ///< Target items
+    TARGET_INVERTID        = ( 1 << 4 ),        ///< Target everything but the specified IDSZ
+    TARGET_PLAYERS        = ( 1 << 5 ),        ///< Target only players
+    TARGET_SKILL        = ( 1 << 6 ),        ///< Target needs the specified skill IDSZ
+    TARGET_QUEST        = ( 1 << 7 ),        ///< Target needs the specified quest IDSZ
+    TARGET_SELF            = ( 1 << 8 )        ///< Allow self as a target?
 };
 
 //--------------------------------------------------------------------------------------------
@@ -161,7 +161,7 @@ extern damagetile_instance_t damagetile;
 
 //--------------------------------------------------------------------------------------------
 
-/// The data descibing the weather state
+/// The data describing the weather state
 struct s_weather_instance
 {
     int     timer_reset;        ///< How long between each spawn?
@@ -176,7 +176,7 @@ extern weather_instance_t weather;
 
 //--------------------------------------------------------------------------------------------
 
-/// The data descibing the state of a water layer
+/// The data describing the state of a water layer
 struct s_water_layer_instance
 {
     Uint16    frame;        ///< Frame
@@ -198,7 +198,7 @@ struct s_water_layer_instance
 };
 typedef struct s_water_layer_instance water_instance_layer_t;
 
-/// The data descibing the water state
+/// The data describing the water state
 struct s_water_instance
 {
     float  surface_level;          ///< Surface level for water striders
@@ -244,7 +244,7 @@ struct s_game_module
 {
     Uint8   importamount;               ///< Number of imports for this module
     bool_t  exportvalid;                ///< Can it export?
-	bool_t  exportreset;				///< Allow to export when module is reset?
+    bool_t  exportreset;                ///< Allow to export when module is reset?
     Uint8   playeramount;               ///< How many players?
     bool_t  importvalid;                ///< Can it import?
     bool_t  respawnvalid;               ///< Can players respawn with Spacebar?
@@ -294,7 +294,7 @@ typedef struct s_pit_info pit_info_t;
 
 extern pit_info_t pits;
 
-extern FACING_T  glouseangle;                                        ///< actually still used
+extern FACING_T  glo_useangle;                                        ///< actually still used
 
 /// Sense enemies
 extern TEAM_REF local_senseenemiesTeam;

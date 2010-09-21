@@ -13,8 +13,8 @@ Level rating ( * to  ***** ) 		:***
 :Prove_your_worth_to_become_a
 :Paladin_by_destroying_the_evil
 :altar_that_sustains_the_undead.
-:Then_you_must_escape_the_crypt
-:again...
+:_
+:Can_you_escape_alive?
 :_
 :_
 :_

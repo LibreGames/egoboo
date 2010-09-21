@@ -58,7 +58,7 @@ void camera_rotmesh_init()
 //--------------------------------------------------------------------------------------------
 camera_t * camera_ctor( camera_t * pcam )
 {
-    /// @detalis BB@> initialize the camera structure
+    /// @details BB@> initialize the camera structure
 
     fvec3_t   t1 = {{0, 0, 0}};
     fvec3_t   t2 = {{0, 0, -1}};
@@ -92,7 +92,7 @@ camera_t * camera_ctor( camera_t * pcam )
     pcam->mProjection = MatrixMult( Translate( 0, 0, -0.999996f ), pcam->mProjection ); // Fix Z value...
     pcam->mProjection = MatrixMult( ScaleXYZ( -1, -1, 100000 ), pcam->mProjection );  // HUK // ...'cause it needs it
 
-    // [claforte] Fudge the values.
+    // claforte> Fudge the values.
     pcam->mProjection.v[10] /= 2.0f;
     pcam->mProjection.v[11] /= 2.0f;
 
@@ -105,7 +105,7 @@ camera_t * camera_ctor( camera_t * pcam )
 //--------------------------------------------------------------------------------------------
 void dump_matrix( fmat_4x4_t a )
 {
-    /// @detalis ZZ@> dump a text representation of a 4x4 matrix to stdout
+    /// @details ZZ@> dump a text representation of a 4x4 matrix to stdout
 
     int i; int j;
 
@@ -244,7 +244,7 @@ void camera_move( camera_t * pcam, ego_mpd_t * pmesh )
 
         sum_wt    = 0.0f;
         sum_level = 0.0f;
-        fvec3_clear( &sum_pos );
+        fvec3_self_clear( sum_pos.v );
 
         for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
         {
@@ -255,8 +255,8 @@ void camera_move( camera_t * pcam, ego_mpd_t * pmesh )
 
             sum_pos.x += pchr->pos.x;
             sum_pos.y += pchr->pos.y;
-            sum_pos.z += pchr->pos.z + pchr->chr_chr_cv.maxs[OCT_Z] * 0.9f;
-            sum_level += pchr->enviro.level;
+            sum_pos.z += pchr->pos.z + pchr->chr_min_cv.maxs[OCT_Z] * 0.9f;
+            sum_level += pchr->enviro.walk_level;
             sum_wt    += 1.0f;
         }
 
@@ -302,18 +302,18 @@ void camera_move( camera_t * pcam, ego_mpd_t * pmesh )
             x = local_chr_ptrs[0]->pos.x;
             y = local_chr_ptrs[0]->pos.y;
             z = local_chr_ptrs[0]->pos.z;
-            level = local_chr_ptrs[0]->enviro.level;
+            level = local_chr_ptrs[0]->enviro.walk_level;
         }
         else
         {
-            // use the characer's "activity" to average the position the camera is viewing
+            // use the character's "activity" to average the position the camera is viewing
 
             fvec3_t sum_pos;
             float   sum_wt, sum_level;
 
             sum_wt    = 0.0f;
             sum_level = 0.0f;
-            fvec3_clear( &sum_pos );
+            fvec3_self_clear( sum_pos.v );
 
             for ( cnt = 0; cnt < local_chr_count; cnt++ )
             {
@@ -328,7 +328,7 @@ void camera_move( camera_t * pcam, ego_mpd_t * pmesh )
                 weight1 = fvec3_dot_product( pchr->vel.v, pchr->vel.v );
 
                 // make another weight based on button-pushing
-                weight2 = ( 0 == pchr->latch.b ) ? 0 : 127;
+                weight2 = ( 0 == pchr->latch.trans_b ) ? 0 : 127;
 
                 // I would weight this by the amount of damage that the character just sustained,
                 // but there is no real way to do this?
@@ -340,7 +340,7 @@ void camera_move( camera_t * pcam, ego_mpd_t * pmesh )
                 sum_pos.x += pchr->pos.x * weight;
                 sum_pos.y += pchr->pos.y * weight;
                 sum_pos.z += pchr->pos.z * weight;
-                sum_level += pchr->enviro.level * weight;
+                sum_level += pchr->enviro.walk_level * weight;
                 sum_wt    += weight;
             }
 
@@ -610,3 +610,4 @@ bool_t camera_reset_target( camera_t * pcam, ego_mpd_t * pmesh )
 
     return btrue;
 }
+

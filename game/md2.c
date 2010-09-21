@@ -26,7 +26,7 @@
 
 #include "log.h"
 
-#include "egoboo_endian.h"
+#include "egoboo_typedef.h"
 #include "egoboo_math.inl"
 
 #include "egoboo_mem.h"
@@ -488,7 +488,8 @@ MD2_Model_t* md2_load( const char * szFilename, MD2_Model_t* mdl )
     //Load up the pre-computed OpenGL optimizations
     if ( md2_header.size_glcmds > 0 )
     {
-        Uint32            cmd_cnt = 0, cmd_size;
+        Uint32            cmd_cnt = 0;
+        int               cmd_size;
         MD2_GLCommand_t * cmd     = NULL;
         fseek( f, md2_header.offset_glcmds, SEEK_SET );
 
@@ -555,4 +556,6 @@ MD2_Model_t* md2_load( const char * szFilename, MD2_Model_t* mdl )
 
     return model;
 }
+
+
 

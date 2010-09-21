@@ -54,7 +54,7 @@
 
 #define VERSION "2.8.0b"                            ///< Version of the game
 
-#define NOSPARKLE           255                     ///< Dont sparkle icons
+#define NOSPARKLE           255                     ///< Don't sparkle icons
 #define SPELLBOOK           127                     ///< The spellbook model
 
 /// Messaging stuff
@@ -81,7 +81,7 @@
 // Timers
 //------------------------------------
 // Display
-EXTERN Uint8           timeron     EQ( bfalse );          ///< Game timer displayed?
+EXTERN bool_t          timeron     EQ( bfalse );          ///< Game timer displayed?
 EXTERN Uint32          timervalue  EQ( 0 );           ///< Timer time ( 50ths of a second )
 
 // fps stuff
@@ -113,23 +113,23 @@ EXTERN float           stabilized_ups_sum    EQ( 0 );
 EXTERN float           stabilized_ups_weight EQ( 0 );
 
 /// Timers
-EXTERN Sint32          ticks_last  EQ( 0 );
-EXTERN Sint32          ticks_now   EQ( 0 );
-EXTERN Sint32          clock_stt   EQ( 0 );             ///< GetTickCount at start
-EXTERN Sint32          clock_all   EQ( 0 );             ///< The total number of ticks so far
-EXTERN Sint32          clock_lst   EQ( 0 );             ///< The last total of ticks so far
-EXTERN Sint32          clock_wld   EQ( 0 );             ///< The sync clock
-EXTERN Sint32          clock_fps   EQ( 0 );             ///< The number of ticks this second
-EXTERN Uint32          update_wld  EQ( 0 );             ///< The number of times the game has been updated
-EXTERN Uint32          frame_all   EQ( 0 );             ///< The total number of frames drawn so far
-EXTERN Uint32          frame_fps   EQ( 0 );             ///< The number of frames drawn this second
+EXTERN signed          ticks_last  EQ( 0 );
+EXTERN signed          ticks_now   EQ( 0 );
+EXTERN signed          clock_stt   EQ( 0 );             ///< GetTickCount at start
+EXTERN signed          clock_all   EQ( 0 );             ///< The total number of ticks so far
+EXTERN signed          clock_lst   EQ( 0 );             ///< The last total of ticks so far
+EXTERN signed          clock_wld   EQ( 0 );             ///< The sync clock
+EXTERN signed          clock_fps   EQ( 0 );             ///< The number of ticks this second
+EXTERN unsigned        update_wld  EQ( 0 );             ///< The number of times the game has been updated
+EXTERN unsigned        frame_all   EQ( 0 );             ///< The total number of frames drawn so far
+EXTERN unsigned        frame_fps   EQ( 0 );             ///< The number of frames drawn this second
 EXTERN Uint32          clock_enc_stat  EQ( 0 );         ///< For character stat regeneration
 EXTERN Uint32          clock_chr_stat  EQ( 0 );         ///< For enchant stat regeneration
 EXTERN Uint32          clock_pit   EQ( 0 );             ///< For pit kills
-EXTERN Uint32          outofsync   EQ( 0 );
-EXTERN Uint32          true_update EQ( 0 );
-EXTERN Uint32          true_frame  EQ( 0 );
-EXTERN int             update_lag  EQ( 0 );
+EXTERN bool_t          outofsync   EQ( 0 );
+EXTERN unsigned        true_update EQ( 0 );
+EXTERN unsigned        true_frame  EQ( 0 );
+EXTERN signed          update_lag  EQ( 0 );
 EXTERN bool_t          soundon  EQ( btrue );              ///< Is the sound alive?
 
 EXTERN bool_t          pickedmodule_ready EQ(bfalse);   ///< Is there a new picked module?
@@ -148,7 +148,7 @@ EXTERN BIT_FIELD               local_import_control[16];             ///< Input 
 EXTERN int                     local_import_slot[16];                ///< For local imports
 
 /// Setup values
-EXTERN Uint8                   messageon      EQ( btrue );         ///< Messages?
+EXTERN bool_t                  messageon      EQ( btrue );         ///< Messages?
 EXTERN int                     maxmessage     EQ( MAX_MESSAGE );
 EXTERN int                     wraptolerance  EQ( 80 );            ///< Status bar
 EXTERN bool_t                  wateron        EQ( btrue );         ///< Water overlays?
@@ -184,6 +184,8 @@ struct s_ego_process
     bool_t was_active;
     bool_t escape_requested, escape_latch;
 
+    bool_t screenshot_requested, screenshot_keyready;
+
     int    ticks_next, ticks_now;
 
     char * argv0;
@@ -193,8 +195,6 @@ typedef struct s_ego_process ego_process_t;
 extern ego_process_t * EProc;
 
 void ego_init_SDL_base(void);
-
-EXTERN bool_t screenshot_requested EQ( bfalse );
 
 EXTERN bool_t single_frame_mode EQ( bfalse );
 EXTERN bool_t single_frame_keyready EQ( btrue );

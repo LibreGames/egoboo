@@ -574,8 +574,8 @@ bool_t fget_pair( vfs_FILE* fileread, IPair * ppair )
     if ( NULL != ppair )
     {
         // convert the range to a pair
-        ppair->base = FLOAT_TO_FP8( loc_range.from );
-        ppair->rand = FLOAT_TO_FP8( loc_range.to - loc_range.from );
+        ppair->base = FLOAT_TO_SFP8( loc_range.from );
+        ppair->rand = FLOAT_TO_SFP8( loc_range.to - loc_range.from );
     }
 
     return btrue;
@@ -997,7 +997,7 @@ Uint32  ego_texture_load_vfs( oglx_texture_t *texture, const char *filename, Uin
 }
 
 //--------------------------------------------------------------------------------------------
-Uint8 fget_damage_modifier( vfs_FILE * fileread )
+Uint32 fget_damage_modifier( vfs_FILE * fileread )
 {
     int  iTmp, tTmp;
     char cTmp;
@@ -1006,11 +1006,11 @@ Uint8 fget_damage_modifier( vfs_FILE * fileread )
 
     switch ( toupper( cTmp ) )
     {
-        case 'T': iTmp = DAMAGEINVERT;		break;
-        case 'C': iTmp = DAMAGECHARGE;		break;
-        case 'M': iTmp = DAMAGEMANA;		break;
-        case 'I': iTmp = DAMAGEINVICTUS;	break;
-        default:  iTmp = 0;					break;
+        case 'T': iTmp = DAMAGEINVERT;        break;
+        case 'C': iTmp = DAMAGECHARGE;        break;
+        case 'M': iTmp = DAMAGEMANA;        break;
+        case 'I': iTmp = DAMAGEINVICTUS;    break;
+        default:  iTmp = 0;                    break;
     };
 
     tTmp = fget_int( fileread );

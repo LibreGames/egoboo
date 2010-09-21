@@ -426,7 +426,7 @@ bool_t OVolume_refine( OVolume_t * pov, fvec3_t * pcenter, float * pvolume )
     pd[cnt].pos.y = -pov->oct.maxs[OCT_X] + pov->oct.maxs[OCT_XY];
 
     // which points are outside both volumes
-    fvec3_clear( &center );
+    fvec3_self_clear( center.v );
     count = 0;
     for ( cnt = 0; cnt < 16; cnt++ )
     {
@@ -455,7 +455,9 @@ bool_t OVolume_refine( OVolume_t * pov, fvec3_t * pcenter, float * pvolume )
     if ( count < 3 ) return bfalse;
 
     // find the centroid
-    fvec3_scale( &center, 1.0f / ( float )count );
+    center.x *= 1.0f / ( float )count;
+    center.y *= 1.0f / ( float )count;
+    center.z *= 1.0f / ( float )count;
 
     // move the valid points to the beginning of the list
     for ( cnt = 0, tnc = 0; cnt < 16 && tnc < count; cnt++ )
@@ -468,7 +470,7 @@ bool_t OVolume_refine( OVolume_t * pov, fvec3_t * pcenter, float * pvolume )
             pd[tnc] = pd[cnt];
         }
 
-        // record the cartesian rotation angle relative to center
+        // record the Cartesian rotation angle relative to center
         pd[tnc].rads = atan2( pd[cnt].pos.y - center.y, pd[cnt].pos.x - center.x );
         tnc++;
     }
@@ -478,7 +480,7 @@ bool_t OVolume_refine( OVolume_t * pov, fvec3_t * pcenter, float * pvolume )
     qsort(( void * )pd, count, sizeof( cv_point_data_t ), cv_point_data_cmp );
 
     // now we can use geometry to find the area of the planar collision area
-    fvec3_clear( &centroid );
+    fvec3_self_clear( centroid.v );
     {
         float ftmp;
         fvec3_t diff1, diff2;
@@ -517,7 +519,7 @@ bool_t OVolume_refine( OVolume_t * pov, fvec3_t * pcenter, float * pvolume )
 
             darea = diff1.x * diff2.y - diff1.y * diff2.x;
 
-            // esitmate the centroid
+            // estimate the centroid
             area += darea;
             centroid.x += ( pd[cnt].pos.x + pd[tnc].pos.x + center.x ) / 3.0f * darea;
             centroid.y += ( pd[cnt].pos.y + pd[tnc].pos.y + center.y ) / 3.0f * darea;
@@ -1080,7 +1082,7 @@ bool_t oct_bb_empty( oct_bb_t src1 )
 }
 
 //--------------------------------------------------------------------------------------------
-void oct_bb_downgrade( oct_bb_t * psrc_bb, bumper_t bump_base, bumper_t * pdst_bump, oct_bb_t * pdst_bb )
+void oct_bb_downgrade( oct_bb_t * psrc_bb, bumper_t bump_stt, bumper_t bump_base, bumper_t * pdst_bump, oct_bb_t * pdst_bb )
 {
     /// @details BB@> convert a level 1 bumper to an "equivalent" level 0 bumper
 
@@ -1092,7 +1094,7 @@ void oct_bb_downgrade( oct_bb_t * psrc_bb, bumper_t bump_base, bumper_t * pdst_b
     //---- handle all of the pdst_bump data first
     if ( NULL != pdst_bump )
     {
-        if ( 0 == bump_base.height )
+        if ( 0.0f == bump_stt.height )
         {
             pdst_bump->height = 0.0f;
         }
@@ -1105,7 +1107,7 @@ void oct_bb_downgrade( oct_bb_t * psrc_bb, bumper_t bump_base, bumper_t * pdst_b
             pdst_bump->height = MAX( bump_base.height, psrc_bb->maxs[OCT_Z] );
         }
 
-        if ( 0 == bump_base.size )
+        if ( 0.0f == bump_stt.size )
         {
             pdst_bump->size = 0.0f;
         }
@@ -1118,16 +1120,16 @@ void oct_bb_downgrade( oct_bb_t * psrc_bb, bumper_t bump_base, bumper_t * pdst_b
             pdst_bump->size = MAX( MAX( val1, val2 ), MAX( val3, val4 ) );
         }
 
-        if ( 0 == bump_base.size_big )
+        if ( 0.0f == bump_stt.size_big )
         {
             pdst_bump->size_big = 0;
         }
         else
         {
-            val1 =  psrc_bb->maxs[OCT_YX];
-            val2 = -psrc_bb->mins[OCT_YX];
-            val3 =  psrc_bb->maxs[OCT_XY];
-            val4 = -psrc_bb->mins[OCT_XY];
+            val1 = ABS( psrc_bb->maxs[OCT_YX] );
+            val2 = ABS( psrc_bb->mins[OCT_YX] );
+            val3 = ABS( psrc_bb->maxs[OCT_XY] );
+            val4 = ABS( psrc_bb->mins[OCT_XY] );
             pdst_bump->size_big = MAX( MAX( val1, val2 ), MAX( val3, val4 ) );
         }
     }
@@ -1141,7 +1143,7 @@ void oct_bb_downgrade( oct_bb_t * psrc_bb, bumper_t bump_base, bumper_t * pdst_b
             memmove( pdst_bb, psrc_bb, sizeof( *pdst_bb ) );
         }
 
-        if ( 0 == bump_base.height )
+        if ( 0.0f == bump_stt.height )
         {
             pdst_bb->mins[OCT_Z] = pdst_bb->maxs[OCT_Z] = 0.0f;
         }
@@ -1151,10 +1153,9 @@ void oct_bb_downgrade( oct_bb_t * psrc_bb, bumper_t bump_base, bumper_t * pdst_b
             pdst_bb->maxs[OCT_Z] = MAX( bump_base.height, psrc_bb->maxs[OCT_Z] );
         }
 
-        // 0 == bump_base.size is supposed to be shorthand for "this object doesn't interact
-        // with anything", so we have to set all of the horizontal pdst_bb data to zero to
-        // make
-        if ( 0 == bump_base.size )
+        // 0.0f == bump_stt.size is supposed to be shorthand for "this object doesn't interact
+        // with anything", so we have to set all of the horizontal pdst_bb data to zero
+        if ( 0.0f == bump_stt.size )
         {
             pdst_bb->mins[OCT_X ] = pdst_bb->maxs[OCT_X ] = 0.0f;
             pdst_bb->mins[OCT_Y ] = pdst_bb->maxs[OCT_Y ] = 0.0f;
@@ -1163,3 +1164,4 @@ void oct_bb_downgrade( oct_bb_t * psrc_bb, bumper_t bump_base, bumper_t * pdst_b
         }
     }
 }
+

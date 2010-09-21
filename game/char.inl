@@ -110,7 +110,7 @@ INLINE bool_t cap_is_type_idsz( const CAP_REF by_reference icap, IDSZ test_idsz 
 //--------------------------------------------------------------------------------------------
 INLINE bool_t cap_has_idsz( const CAP_REF by_reference icap, IDSZ idsz )
 {
-    /// @detalis BB@> does idsz match any of the stored values in pcap->idsz[]?
+    /// @details BB@> does idsz match any of the stored values in pcap->idsz[]?
     ///               Matches anything if not picky (idsz == IDSZ_NONE)
 
     int     cnt;
@@ -378,7 +378,7 @@ INLINE IDSZ chr_get_idsz( const CHR_REF by_reference ichr, int type )
 //--------------------------------------------------------------------------------------------
 INLINE bool_t chr_has_idsz( const CHR_REF by_reference ichr, IDSZ idsz )
 {
-    /// @detalis BB@> a wrapper for cap_has_idsz
+    /// @details BB@> a wrapper for cap_has_idsz
 
     CAP_REF icap = chr_get_icap( ichr );
 
@@ -401,7 +401,7 @@ INLINE bool_t chr_is_type_idsz( const CHR_REF by_reference item, IDSZ test_idsz 
 //--------------------------------------------------------------------------------------------
 INLINE bool_t chr_has_vulnie( const CHR_REF by_reference item, const PRO_REF by_reference test_profile )
 {
-    /// @detalis BB@> is item vulnerable to the type in profile test_profile?
+    /// @details BB@> is item vulnerable to the type in profile test_profile?
 
     IDSZ vulnie;
 
@@ -461,7 +461,7 @@ INLINE bool_t chr_getMatRight( chr_t *pchr, fvec3_t   *pvec )
 
     if ( chr_matrix_valid( pchr ) )
     {
-        ( *pvec ) = mat_getChrRight( pchr->inst.matrix );
+        ( *pvec ) = mat_getChrForward( pchr->inst.matrix );
     }
     else
     {
@@ -489,7 +489,7 @@ INLINE bool_t chr_getMatForward( chr_t *pchr, fvec3_t   *pvec )
 
     if ( chr_matrix_valid( pchr ) )
     {
-        ( *pvec ) = mat_getChrForward( pchr->inst.matrix );
+        ( *pvec ) = mat_getChrRight( pchr->inst.matrix );
     }
     else
     {
@@ -535,10 +535,10 @@ INLINE void chr_update_size( chr_t * pchr )
 
     if ( !ALLOCATED_PCHR( pchr ) ) return;
 
-    pchr->shadow_size  = pchr->shadow_size_save  * pchr->fat;
-    pchr->bump.size    = pchr->bump_save.size    * pchr->fat;
+    pchr->shadow_size   = pchr->shadow_size_save   * pchr->fat;
+    pchr->bump.size     = pchr->bump_save.size     * pchr->fat;
     pchr->bump.size_big = pchr->bump_save.size_big * pchr->fat;
-    pchr->bump.height  = pchr->bump_save.height  * pchr->fat;
+    pchr->bump.height   = pchr->bump_save.height   * pchr->fat;
 
     chr_update_collision_size( pchr, btrue );
 }
@@ -546,16 +546,22 @@ INLINE void chr_update_size( chr_t * pchr )
 //--------------------------------------------------------------------------------------------
 INLINE void chr_init_size( chr_t * pchr, cap_t * pcap )
 {
-    /// @details BB@> initalize the character size info
+    /// @details BB@> initialize the character size info
 
     if ( !ALLOCATED_PCHR( pchr ) ) return;
     if ( NULL == pcap || !pcap->loaded ) return;
 
-    pchr->fat                = pcap->size;
-    pchr->shadow_size_save   = pcap->shadow_size;
-    pchr->bump_save.size     = pcap->bump_size;
-    pchr->bump_save.size_big = pcap->bump_sizebig;
-    pchr->bump_save.height   = pcap->bump_height;
+    pchr->fat_stt           = pcap->size;
+    pchr->shadow_size_stt   = pcap->shadow_size;
+    pchr->bump_stt.size     = (pcap->bump_override_size    ? 1.0f : -1.0f ) * pcap->bump_size;
+    pchr->bump_stt.size_big = (pcap->bump_override_sizebig ? 1.0f : -1.0f ) * pcap->bump_sizebig;
+    pchr->bump_stt.height   = (pcap->bump_override_height  ? 1.0f : -1.0f ) * pcap->bump_height;
+
+    pchr->fat                = pchr->fat_stt;
+    pchr->shadow_size_save   = pchr->shadow_size_stt;
+    pchr->bump_save.size     = pchr->bump_stt.size;
+    pchr->bump_save.size_big = pchr->bump_stt.size_big;
+    pchr->bump_save.height   = pchr->bump_stt.height;
 
     chr_update_size( pchr );
 }
@@ -571,10 +577,10 @@ INLINE void chr_set_size( chr_t * pchr, float size )
 
     ratio = size / pchr->bump.size;
 
-    pchr->shadow_size_save  *= ratio;
-    pchr->bump_save.size    *= ratio;
+    pchr->shadow_size_save   *= ratio;
+    pchr->bump_save.size     *= ratio;
     pchr->bump_save.size_big *= ratio;
-    pchr->bump_save.height  *= ratio;
+    pchr->bump_save.height   *= ratio;
 
     chr_update_size( pchr );
 }
@@ -590,9 +596,9 @@ INLINE void chr_set_width( chr_t * pchr, float width )
 
     ratio = width / pchr->bump.size;
 
-    pchr->shadow_size_save    *= ratio;
-    pchr->bump_save.size    *= ratio;
-    pchr->bump_save.size_big *= ratio;
+    pchr->shadow_size_stt    *= ratio;
+    pchr->bump_stt.size    *= ratio;
+    pchr->bump_stt.size_big *= ratio;
 
     chr_update_size( pchr );
 }
@@ -604,7 +610,7 @@ INLINE void chr_set_shadow( chr_t * pchr, float width )
 
     if ( !DEFINED_PCHR( pchr ) ) return;
 
-    pchr->shadow_size_save = width;
+    pchr->shadow_size_stt = width;
 
     chr_update_size( pchr );
 }
@@ -634,3 +640,4 @@ INLINE void chr_set_height( chr_t * pchr, float height )
 
     chr_update_size( pchr );
 }
+

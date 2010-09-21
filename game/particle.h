@@ -46,13 +46,14 @@ DECLARE_STACK_EXTERN( pip_t, PipStack, MAX_PIP );
 struct s_prt_environment
 {
     // floor stuff
-    Uint8  twist;
-    float  floor_level;           ///< Height of tile
-    float  level;                 ///< Height of a tile or a platform
-    float  zlerp;
+    float  grid_level;           ///< Height the current grid
+    float  grid_lerp;
+    Uint8  grid_twist;
+    float  grid_adj;              ///< The level for the particle to sit on the floor or a platform
 
-    float adj_level;              ///< The level for the particle to sit on the floor or a platform
-    float adj_floor;              ///< The level for the particle to sit on the floor or a platform
+    float  floor_level;           ///< Height of tile, platform
+    float  floor_lerp;
+    float  floor_adj;             ///< The level for the particle to sit on the floor or a platform
 
     // friction stuff
     bool_t is_slipping;
@@ -109,7 +110,7 @@ struct s_prt
     CHR_REF owner_ref;                       ///< The character that is attacking
     CHR_REF target_ref;                      ///< Who it's chasing
     PRT_REF parent_ref;                      ///< Did a another particle spawn this one?
-    Uint32  parent_guid;                     ///< Just in case, the parent particle was despawned and a differnt particle now has the parent_ref
+    Uint32  parent_guid;                     ///< Just in case, the parent particle was despawned and a different particle now has the parent_ref
 
     Uint16   attachedto_vrt_off;              ///< It's vertex offset
     Uint8    type;                            ///< Transparency mode, 0-2
@@ -125,7 +126,7 @@ struct s_prt
     bool_t  is_hidden;                       ///< Is the particle related to a hidden character?
 
     // platforms
-    float   targetplatform_level;             ///< What is the height of the target platform?
+    float   targetplatform_overlap;             ///< What is the height of the target platform?
     CHR_REF targetplatform_ref;               ///< Am I trying to attach to a platform?
     CHR_REF onwhichplatform_ref;              ///< Is the particle on a platform?
     Uint32  onwhichplatform_update;           ///< When was the last platform attachment made?
@@ -151,8 +152,10 @@ struct s_prt
 
     Uint32            bump_size_stt;                   ///< the starting size of the particle (8.8-bit fixed point)
     bumper_t          bump_real;                       ///< Actual size of the particle
-    bumper_t          bump_padded;                     ///< The size of the particle with the additional bumpers added in
-    oct_bb_t          chr_prt_cv;                      ///< Collision volume for chr-prt interactions
+    bumper_t          bump_padded;                     ///< The maximum of the "real" bumper and the "bump size" bumper
+    bumper_t          bump_min;                        ///< The minimum of the "real" bumper and the "bump size" bumper
+    oct_bb_t          prt_cv;                          ///< Collision volume for chr-prt interactions
+    oct_bb_t          prt_min_cv;                      ///< Collision volume for chr-platform interactions
     PRT_REF           bumplist_next;                   ///< Next particle on fanblock
     IPair             damage;                          ///< For strength
     Uint8             damagetype;                      ///< Damage type
@@ -202,7 +205,7 @@ struct s_prt_bundle
 {
     PRT_REF   prt_ref;
     prt_t   * prt_ptr;
-    
+
     PIP_REF   pip_ref;
     pip_t   * pip_ptr;
 };
@@ -218,8 +221,8 @@ prt_bundle_t * prt_bundle_set( prt_bundle_t * pbundle, prt_t * pprt );
 void particle_system_begin();
 void particle_system_end();
 
-prt_t * prt_ctor( prt_t * pprt );
-prt_t * prt_dtor( prt_t * pprt );
+void initialize_particle_physics();
+void finalize_all_particle_physics( float dt );
 
 void   init_all_pip();
 void   release_all_pip();
@@ -230,7 +233,7 @@ void   free_one_particle_in_game( const PRT_REF by_reference particle );
 void update_all_particles( void );
 void move_all_particles( void );
 void cleanup_all_particles( void );
-void bump_all_particles_update_counters( void );
+void increment_all_particle_update_counters( void );
 
 void play_particle_sound( const PRT_REF by_reference particle, Sint8 sound );
 
@@ -240,22 +243,19 @@ PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF by_refer
 
 #define spawn_one_particle_global( pos, facing, ipip, multispawn ) spawn_one_particle( pos, facing, (PRO_REF)MAX_PROFILE, ipip, (CHR_REF)MAX_CHR, GRIP_LAST, (TEAM_REF)TEAM_NULL, (CHR_REF)MAX_CHR, (PRT_REF)TOTAL_MAX_PRT, multispawn, (CHR_REF)MAX_CHR );
 
-int     prt_count_free();
+prt_t *   prt_ctor( prt_t * pprt );
+prt_t *   prt_dtor( prt_t * pprt );
+BIT_FIELD prt_hit_wall( prt_t * pprt, float test_pos[], float nrm[], float * pressure );
+bool_t    prt_test_wall( prt_t * pprt, float test_pos[] );
+bool_t    prt_is_over_water( const PRT_REF by_reference particle );
+bool_t    prt_request_terminate( prt_bundle_t * pbdl_prt );
+bool_t    prt_request_terminate_ref( const PRT_REF by_reference iprt );
+void      prt_set_level( prt_t * pprt, float level );
+
+int     PrtList_count_free();
 
 PIP_REF load_one_particle_profile_vfs( const char *szLoadName, const PIP_REF by_reference pip_override );
 void    reset_particles();
-
-BIT_FIELD prt_hit_wall( prt_t * pprt, float test_pos[], float nrm[], float * pressure );
-bool_t prt_test_wall( prt_t * pprt, float test_pos[] );
-
-bool_t prt_is_over_water( const PRT_REF by_reference particle );
-
-bool_t release_one_pip( const PIP_REF by_reference ipip );
-
-bool_t prt_request_terminate( prt_bundle_t * pbdl_prt );
-bool_t prt_request_terminate_ref( const PRT_REF by_reference iprt );
-
-void prt_set_level( prt_t * pprt, float level );
 
 prt_t * prt_run_config( prt_t * pprt );
 prt_t * prt_config_construct( prt_t * pprt, int max_iterations );
@@ -268,4 +268,6 @@ bool_t prt_set_pos( prt_t * pprt, fvec3_base_t pos );
 float * prt_get_pos_v( prt_t * pprt );
 fvec3_t prt_get_pos( prt_t * pprt );
 
-prt_bundle_t * move_one_particle_get_environment( prt_bundle_t * pbdl_prt );
+prt_bundle_t * prt_get_environment( prt_bundle_t * pbdl );
+
+#define PARTICLE_H

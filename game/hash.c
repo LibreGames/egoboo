@@ -354,7 +354,7 @@ bool_t hash_list_iterator_done( hash_list_iterator_t * it, hash_list_t * hlst )
 {
     if ( NULL == it || NULL == hlst ) return btrue;
 
-    // the end consition
+    // the end position
     if ( it->hash >= hlst->allocated ) return btrue;
 
     return bfalse;
@@ -405,3 +405,4 @@ void * hash_list_iterator_ptr( hash_list_iterator_t * it )
 
     return it->pnode->data;
 }
+

@@ -12,8 +12,8 @@ Level rating ( * to  ***** )    :******
 // Module summary
 :You_enter_the_portal_to_the_second
 :level_and_are_instantly_greeted
-:by_a_great_evil_grinning_demonic
-:being_in_a_cage._You_feel_strong
+:by_a_great_evil_grinning_deamonic
+:Being_in_a_cage._You_feel_strong
 :magic_buzzing_in_the_air.
 :_
 :Time_is_running_out...

@@ -28,6 +28,7 @@
 #include "char.inl"
 #include "mad.h"
 #include "profile.inl"
+#include "mesh.inl"
 
 #include "log.h"
 #include "camera.h"
@@ -37,7 +38,8 @@
 #include "egoboo_vfs.h"
 #include "egoboo_setup.h"
 #include "egoboo_strutil.h"
-#include "egoboo_math.h"
+
+#include "egoboo_math.inl"
 
 #include <assert.h>
 
@@ -53,12 +55,12 @@ static bool_t scr_increment_exe( ai_state_t * pself );
 static bool_t scr_set_exe( ai_state_t * pself, size_t offset );
 
 // static Uint8 run_function_obsolete( script_state_t * pstate, ai_state_t * pself );
-static Uint8 scr_run_function( script_state_t * pstate, ai_state_t * pself );
+static Uint8 scr_run_function( script_state_t * pstate, ai_state_bundle_t * pself );
 static void  scr_set_operand( script_state_t * pstate, Uint8 variable );
-static void  scr_run_operand( script_state_t * pstate, ai_state_t * pself );
+static void  scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pself );
 
-static bool_t scr_run_operation( script_state_t * pstate, ai_state_t * pself );
-static bool_t scr_run_function_call( script_state_t * pstate, ai_state_t * pself );
+static bool_t scr_run_operation( script_state_t * pstate, ai_state_bundle_t * pself );
+static bool_t scr_run_function_call( script_state_t * pstate, ai_state_bundle_t * pself );
 
 PROFILE_DECLARE( script_function )
 
@@ -94,7 +96,7 @@ void scripting_system_end()
     {
         PROFILE_FREE( script_function );
 
-#if (DEBUG_SCRIPT_LEVEL > 1 ) && defined(DEBUG_PROFILE) && defined(_DEBUG)
+#if (DEBUG_SCRIPT_LEVEL > 1 ) && defined(DEBUG_PROFILE) && EGO_DEBUG
         {
             FILE * ftmp = fopen( vfs_resolveWriteFilename( "/debug/script_function_timing.txt" ), "a+" );
 
@@ -123,38 +125,48 @@ void scripting_system_end()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void scr_run_chr_script( const CHR_REF by_reference character )
+void scr_run_chr_script( ai_state_bundle_t * pbdl_ai )
 {
     /// @details ZZ@> This function lets one character do AI stuff
 
-    script_state_t   my_state;
-    chr_t          * pchr;
-    ai_state_t     * pself;
+    script_state_t    my_state;
 
-    // make sure that this module is initialized
+    ai_state_t * pai;
+    chr_t      * pchr;
+
+    // make sure that the scripting module is initialized
     scripting_system_begin();
 
-    if ( !INGAME_CHR( character ) )  return;
-    pchr  = ChrList.lst + character;
-    pself = &( pchr->ai );
+    if( NULL == pbdl_ai || NULL == pbdl_ai->chr_ptr ) return;
 
-    // has the time for this character to die come and gone?
-    if ( pself->poof_time >= 0 && pself->poof_time <= ( Sint32 )update_wld ) return;
+    // alias a couple of pointers to make the notation easier to read
+    pai  = pbdl_ai->ai_state_ptr;
+    pchr = pbdl_ai->chr_ptr;
+
+    // clear the latches on every single object
+    pchr->latch.raw_valid = bfalse;
+    fvec2_self_clear( pchr->latch.raw.v );
+
+    pchr->latch.trans_valid = bfalse;
+    fvec3_self_clear( pchr->latch.trans.v );
+
+    // has the time for this pbdl_ai->chr_ref to die come and gone?
+    if ( pai->poof_time >= 0 && pai->poof_time <= ( Sint32 )update_wld ) return;
 
     // grab the "changed" value from the last time the script was run
-    if ( pself->changed )
+    if ( pai->changed )
     {
-        SET_BIT( pself->alert, ALERTIF_CHANGED );
-        pself->changed = bfalse;
+        ADD_BITS( pai->alert, ALERTIF_CHANGED );
+        pai->changed = bfalse;
     }
 
-    PROFILE_BEGIN_STRUCT( pself );
+    PROFILE_BEGIN_STRUCT( pai );
 
     // debug a certain script
-    // debug_scripts = ( pself->index == 385 && pchr->profile_ref == 76 );
+    // debug_scripts = ( pai->index == 385 && pchr->profile_ref == 76 );
 
     // target_old is set to the target every time the script is run
-    pself->target_old = pself->target;
+    pai->target_old = pai->target;
 
     // Make life easier
     script_error_classname = "UNKNOWN";
@@ -163,11 +175,9 @@ void scr_run_chr_script( const CHR_REF by_reference character )
     script_error_name      = "UNKNOWN";
     if ( script_error_model < MAX_PROFILE )
     {
-        CAP_REF icap = pro_get_icap( script_error_model );
+        script_error_classname = pbdl_ai->cap_ptr->classname;
 
-        script_error_classname = CapStack.lst[ icap ].classname;
-
-        script_error_index = ProList.lst[script_error_model].iai;
+        script_error_index = pbdl_ai->ai_state_ref;
         if ( script_error_index < MAX_AI )
         {
             script_error_name = AisStorage.ary[script_error_index].szName;
@@ -182,137 +192,157 @@ void scr_run_chr_script( const CHR_REF by_reference character )
         fprintf( scr_file,  "%d - %s\n", REF_TO_INT( script_error_model ), script_error_classname );
 
         // who are we related to?
-        fprintf( scr_file,  "\tindex  == %d\n", REF_TO_INT( pself->index ) );
-        fprintf( scr_file,  "\ttarget == %d\n", REF_TO_INT( pself->target ) );
-        fprintf( scr_file,  "\towner  == %d\n", REF_TO_INT( pself->owner ) );
-        fprintf( scr_file,  "\tchild  == %d\n", REF_TO_INT( pself->child ) );
+        fprintf( scr_file,  "\tindex  == %d\n", REF_TO_INT( pai->index ) );
+        fprintf( scr_file,  "\ttarget == %d\n", REF_TO_INT( pai->target ) );
+        fprintf( scr_file,  "\towner  == %d\n", REF_TO_INT( pai->owner ) );
+        fprintf( scr_file,  "\tchild  == %d\n", REF_TO_INT( pai->child ) );
 
         // some local storage
-        fprintf( scr_file,  "\talert     == %x\n", pself->alert );
-        fprintf( scr_file,  "\tstate     == %d\n", pself->state );
-        fprintf( scr_file,  "\tcontent   == %d\n", pself->content );
-        fprintf( scr_file,  "\ttimer     == %d\n", pself->timer );
+        fprintf( scr_file,  "\talert     == %x\n", pai->alert );
+        fprintf( scr_file,  "\tstate     == %d\n", pai->state );
+        fprintf( scr_file,  "\tcontent   == %d\n", pai->content );
+        fprintf( scr_file,  "\ttimer     == %d\n", pai->timer );
         fprintf( scr_file,  "\tupdate_wld == %d\n", update_wld );
 
         // ai memory from the last event
-        fprintf( scr_file,  "\tbumplast       == %d\n", REF_TO_INT( pself->bumplast ) );
-        fprintf( scr_file,  "\tattacklast     == %d\n", REF_TO_INT( pself->attacklast ) );
-        fprintf( scr_file,  "\thitlast        == %d\n", REF_TO_INT( pself->hitlast ) );
-        fprintf( scr_file,  "\tdirectionlast  == %d\n", pself->directionlast );
-        fprintf( scr_file,  "\tdamagetypelast == %d\n", pself->damagetypelast );
-        fprintf( scr_file,  "\tlastitemused   == %d\n", REF_TO_INT( pself->lastitemused ) );
-        fprintf( scr_file,  "\ttarget_old     == %d\n", REF_TO_INT( pself->target_old ) );
+        fprintf( scr_file,  "\tbumplast       == %d\n", REF_TO_INT( pai->bumplast ) );
+        fprintf( scr_file,  "\tattacklast     == %d\n", REF_TO_INT( pai->attacklast ) );
+        fprintf( scr_file,  "\thitlast        == %d\n", REF_TO_INT( pai->hitlast ) );
+        fprintf( scr_file,  "\tdirectionlast  == %d\n", pai->directionlast );
+        fprintf( scr_file,  "\tdamagetypelast == %d\n", pai->damagetypelast );
+        fprintf( scr_file,  "\tlastitemused   == %d\n", REF_TO_INT( pai->lastitemused ) );
+        fprintf( scr_file,  "\ttarget_old     == %d\n", REF_TO_INT( pai->target_old ) );
 
         // message handling
-        fprintf( scr_file,  "\torder == %d\n", pself->order_value );
-        fprintf( scr_file,  "\tcounter == %d\n", pself->order_counter );
+        fprintf( scr_file,  "\torder == %d\n", pai->order_value );
+        fprintf( scr_file,  "\tcounter == %d\n", pai->order_counter );
 
         // waypoints
-        fprintf( scr_file,  "\twp_tail == %d\n", pself->wp_lst.tail );
-        fprintf( scr_file,  "\twp_head == %d\n\n", pself->wp_lst.head );
+        fprintf( scr_file,  "\twp_tail == %d\n", pai->wp_lst.tail );
+        fprintf( scr_file,  "\twp_head == %d\n\n", pai->wp_lst.head );
     }
 
     // Clear the button latches
     if ( !VALID_PLA( pchr->is_which_player ) )
     {
-		RESET_BIT_FIELD( pchr->latch.b );
+        CLEAR_BIT_FIELD( pchr->latch.trans_b );
     }
 
     // Reset the target if it can't be seen
-    if (( pself->target != pself->index ) && !chr_can_see_object( character, pself->target ) )
+    if (( pai->target != pai->index ) && !chr_can_see_object( pbdl_ai->chr_ref, pai->target ) )
     {
-        pself->target = pself->index;
+        pai->target = pai->index;
     }
 
     // reset the script state
     memset( &my_state, 0, sizeof( my_state ) );
 
     // reset the ai
-    pself->terminate = bfalse;
-    pself->indent    = 0;
-    pself->exe_stt   = AisStorage.ary[pself->type].iStartPosition;
-    pself->exe_end   = AisStorage.ary[pself->type].iEndPosition;
+    pai->terminate = bfalse;
+    pai->indent    = 0;
+    pai->exe_stt   = AisStorage.ary[pai->type].iStartPosition;
+    pai->exe_end   = AisStorage.ary[pai->type].iEndPosition;
 
     // Run the AI Script
-    scr_set_exe( pself, pself->exe_stt );
-    while ( !pself->terminate && pself->exe_pos < pself->exe_end )
+    scr_set_exe( pai, pai->exe_stt );
+    while ( !pai->terminate && pai->exe_pos < pai->exe_end )
     {
         // This is used by the Else function
         // it only keeps track of functions
-        pself->indent_last = pself->indent;
-        pself->indent = GET_DATA_BITS( pself->opcode );
+        pai->indent_last = pai->indent;
+        pai->indent = GET_DATA_BITS( pai->opcode );
 
         // Was it a function
-        if ( HAS_SOME_BITS( pself->opcode, FUNCTION_BIT ) )
+        if ( HAS_SOME_BITS( pai->opcode, FUNCTION_BIT ) )
         {
-            if ( !scr_run_function_call( &my_state, pself ) )
+            if ( !scr_run_function_call( &my_state, pbdl_ai ) )
             {
                 break;
             }
         }
         else
         {
-            if ( !scr_run_operation( &my_state, pself ) )
+            if ( !scr_run_operation( &my_state, pbdl_ai ) )
             {
                 break;
             }
         }
     }
 
-    // Set latches
-    if ( !VALID_PLA( pchr->is_which_player ) )
+    // Set the oject's latches, but only if it is "alive"
+    if ( pchr->alive && !VALID_PLA( pchr->is_which_player ) )
     {
-        float latch2;
+        float scale;
+        CHR_REF rider_ref = pchr->holdingwhich[SLOT_LEFT];
 
-        ai_state_ensure_wp( pself );
+        ai_state_ensure_wp( pai );
 
-        if ( pchr->ismount && INGAME_CHR( pchr->holdingwhich[SLOT_LEFT] ) )
+        if ( pchr->ismount && INGAME_CHR( rider_ref ) )
         {
+            chr_t * prider = ChrList.lst + rider_ref;
+
             // Mount
-            pchr->latch.x = ChrList.lst[pchr->holdingwhich[SLOT_LEFT]].latch.x;
-            pchr->latch.y = ChrList.lst[pchr->holdingwhich[SLOT_LEFT]].latch.y;
+            pchr->latch.raw_valid = prider->latch.raw_valid;
+            pchr->latch.raw       = prider->latch.raw;
+
+            pchr->latch.trans_valid = prider->latch.trans_valid;
+            pchr->latch.trans       = prider->latch.trans;
         }
-        else if ( pself->wp_valid )
+        else if ( pai->wp_valid )
         {
             // Normal AI
-            pchr->latch.x = ( pself->wp[kX] - pchr->pos.x ) / ( TILE_ISIZE << 2 );
-            pchr->latch.y = ( pself->wp[kY] - pchr->pos.y ) / ( TILE_ISIZE << 2 );
-        }
-        else
-        {
-            // AI, but no valid waypoints
-            pchr->latch.x = 0;
-            pchr->latch.y = 0;
+            pchr->latch.raw_valid = bfalse;
+            fvec2_self_clear( pchr->latch.raw.v );
+
+            pchr->latch.trans_valid = btrue;
+            pchr->latch.trans = fvec3_sub( pai->wp, pchr->pos.v );
         }
 
-        latch2 = pchr->latch.x * pchr->latch.x + pchr->latch.y * pchr->latch.y;
-        if ( latch2 > 1.0f )
+        scale = 1.0f;
+        if( pchr->latch.trans_valid && fvec3_length_abs( pchr->latch.trans.v ) > 0.0f )
         {
-            float scale = 1.0f / SQRT( latch2 );
-            pchr->latch.x *= scale;
-            pchr->latch.y *= scale;
+            float horiz_len2 = pchr->latch.trans.x * pchr->latch.trans.x + pchr->latch.trans.y * pchr->latch.trans.y;
+            float vert_len2  = pchr->latch.trans.z * pchr->latch.trans.z;
+            
+            if ( vert_len2 > 1.0f && vert_len2 >= horiz_len2 )
+            {
+                scale = 1.0f / ABS( pchr->latch.trans.z );
+            }
+            else if ( horiz_len2 > 1.0f && horiz_len2 > vert_len2 )
+            {
+                scale = 1.0f / SQRT( horiz_len2 );
+            }
+        }
+
+        if( 1.0f != scale )
+        {
+            fvec3_self_scale( pchr->latch.trans.v, scale );
         }
     }
 
     // Clear alerts for next time around
-    RESET_BIT_FIELD( pself->alert );
+    CLEAR_BIT_FIELD( pai->alert );
 
-    PROFILE_END2_STRUCT( pself );
+    PROFILE_END2_STRUCT( pai );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t scr_run_function_call( script_state_t * pstate, ai_state_t * pself )
+bool_t scr_run_function_call( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
 {
     Uint8  functionreturn;
+    ai_state_t * pself;
 
     // check for valid pointers
-    if ( NULL == pstate || NULL == pself ) return bfalse;
+    if ( NULL == pstate || NULL == pbdl_ai || NULL == pbdl_ai->ai_state_ptr ) return bfalse;
+
+    // use aliases to simplify the notation
+    pself = pbdl_ai->ai_state_ptr;
 
     // check for valid execution pointer
     if ( pself->exe_pos < pself->exe_stt || pself->exe_pos >= pself->exe_end ) return bfalse;
 
     // Run the function
-    functionreturn = scr_run_function( pstate, pself );
+    functionreturn = scr_run_function( pstate, pbdl_ai );
 
     // move the execution pointer to the jump code
     scr_increment_exe( pself );
@@ -337,13 +367,17 @@ bool_t scr_run_function_call( script_state_t * pstate, ai_state_t * pself )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t scr_run_operation( script_state_t * pstate, ai_state_t * pself )
+bool_t scr_run_operation( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
 {
     const char * variable;
     Uint32 var_value, operand_count, i;
+    ai_state_t * pself;
 
     // check for valid pointers
-    if ( NULL == pstate || NULL == pself ) return bfalse;
+    if ( NULL == pstate || NULL == pbdl_ai || NULL == pbdl_ai->ai_state_ptr ) return bfalse;
+
+    // use aliases to simplify the notation
+    pself = pbdl_ai->ai_state_ptr;
 
     // check for valid execution pointer
     if ( pself->exe_pos < pself->exe_stt || pself->exe_pos >= pself->exe_end ) return bfalse;
@@ -379,7 +413,7 @@ bool_t scr_run_operation( script_state_t * pstate, ai_state_t * pself )
     for ( i = 0; i < operand_count && pself->exe_pos < pself->exe_end; i++ )
     {
         scr_increment_exe( pself );
-        scr_run_operand( pstate, pself );
+        scr_run_operand( pstate, pbdl_ai );
     }
     if ( debug_scripts )
     {
@@ -397,15 +431,24 @@ bool_t scr_run_operation( script_state_t * pstate, ai_state_t * pself )
 }
 
 //--------------------------------------------------------------------------------------------
-Uint8 scr_run_function( script_state_t * pstate, ai_state_t * pself )
+Uint8 scr_run_function( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
 {
     /// @details BB@> This is about half-way to what is needed for Lua integration
 
     // Mask out the indentation
-    Uint32 valuecode = pself->opcode & VALUE_BITS;
+    Uint32       valuecode;
+    Uint8        returncode;
+    ai_state_t * pself;
+
+    if( NULL == pstate || NULL == pbdl_ai || NULL == pbdl_ai->ai_state_ptr ) return bfalse;
+
+    // use aliases to simplify the notation
+    pself = pbdl_ai->ai_state_ptr;
+
+    valuecode = pself->opcode & VALUE_BITS;
 
     // Assume that the function will pass, as most do
-    Uint8 returncode = btrue;
+    returncode = btrue;
     if ( MAX_OPCODE == valuecode )
     {
         log_message( "SCRIPT ERROR: scr_run_function() - model == %d, class name == \"%s\" - Unknown opcode found!\n", REF_TO_INT( script_error_model ), script_error_classname );
@@ -442,395 +485,395 @@ Uint8 scr_run_function( script_state_t * pstate, ai_state_t * pself )
             // Figure out which function to run
             switch ( valuecode )
             {
-                case FIFSPAWNED: returncode = scr_Spawned( pstate, pself ); break;
-                case FIFTIMEOUT: returncode = scr_TimeOut( pstate, pself ); break;
-                case FIFATWAYPOINT: returncode = scr_AtWaypoint( pstate, pself ); break;
-                case FIFATLASTWAYPOINT: returncode = scr_AtLastWaypoint( pstate, pself ); break;
-                case FIFATTACKED: returncode = scr_Attacked( pstate, pself ); break;
-                case FIFBUMPED: returncode = scr_Bumped( pstate, pself ); break;
-                case FIFORDERED: returncode = scr_Ordered( pstate, pself ); break;
-                case FIFCALLEDFORHELP: returncode = scr_CalledForHelp( pstate, pself ); break;
-                case FSETCONTENT: returncode = scr_set_Content( pstate, pself ); break;
-                case FIFKILLED: returncode = scr_Killed( pstate, pself ); break;
-                case FIFTARGETKILLED: returncode = scr_TargetKilled( pstate, pself ); break;
-                case FCLEARWAYPOINTS: returncode = scr_ClearWaypoints( pstate, pself ); break;
-                case FADDWAYPOINT: returncode = scr_AddWaypoint( pstate, pself ); break;
-                case FFINDPATH: returncode = scr_FindPath( pstate, pself ); break;
-                case FCOMPASS: returncode = scr_Compass( pstate, pself ); break;
-                case FGETTARGETARMORPRICE: returncode = scr_get_TargetArmorPrice( pstate, pself ); break;
-                case FSETTIME: returncode = scr_set_Time( pstate, pself ); break;
-                case FGETCONTENT: returncode = scr_get_Content( pstate, pself ); break;
-                case FJOINTARGETTEAM: returncode = scr_JoinTargetTeam( pstate, pself ); break;
-                case FSETTARGETTONEARBYENEMY: returncode = scr_set_TargetToNearbyEnemy( pstate, pself ); break;
-                case FSETTARGETTOTARGETLEFTHAND: returncode = scr_set_TargetToTargetLeftHand( pstate, pself ); break;
-                case FSETTARGETTOTARGETRIGHTHAND: returncode = scr_set_TargetToTargetRightHand( pstate, pself ); break;
-                case FSETTARGETTOWHOEVERATTACKED: returncode = scr_set_TargetToWhoeverAttacked( pstate, pself ); break;
-                case FSETTARGETTOWHOEVERBUMPED: returncode = scr_set_TargetToWhoeverBumped( pstate, pself ); break;
-                case FSETTARGETTOWHOEVERCALLEDFORHELP: returncode = scr_set_TargetToWhoeverCalledForHelp( pstate, pself ); break;
-                case FSETTARGETTOOLDTARGET: returncode = scr_set_TargetToOldTarget( pstate, pself ); break;
-                case FSETTURNMODETOVELOCITY: returncode = scr_set_TurnModeToVelocity( pstate, pself ); break;
-                case FSETTURNMODETOWATCH: returncode = scr_set_TurnModeToWatch( pstate, pself ); break;
-                case FSETTURNMODETOSPIN: returncode = scr_set_TurnModeToSpin( pstate, pself ); break;
-                case FSETBUMPHEIGHT: returncode = scr_set_BumpHeight( pstate, pself ); break;
-                case FIFTARGETHASID: returncode = scr_TargetHasID( pstate, pself ); break;
-                case FIFTARGETHASITEMID: returncode = scr_TargetHasItemID( pstate, pself ); break;
-                case FIFTARGETHOLDINGITEMID: returncode = scr_TargetHoldingItemID( pstate, pself ); break;
-                case FIFTARGETHASSKILLID: returncode = scr_TargetHasSkillID( pstate, pself ); break;
-                case FELSE: returncode = scr_Else( pstate, pself ); break;
-                case FRUN: returncode = scr_Run( pstate, pself ); break;
-                case FWALK: returncode = scr_Walk( pstate, pself ); break;
-                case FSNEAK: returncode = scr_Sneak( pstate, pself ); break;
-                case FDOACTION: returncode = scr_DoAction( pstate, pself ); break;
-                case FKEEPACTION: returncode = scr_KeepAction( pstate, pself ); break;
-                case FISSUEORDER: returncode = scr_IssueOrder( pstate, pself ); break;
-                case FDROPWEAPONS: returncode = scr_DropWeapons( pstate, pself ); break;
-                case FTARGETDOACTION: returncode = scr_TargetDoAction( pstate, pself ); break;
-                case FOPENPASSAGE: returncode = scr_OpenPassage( pstate, pself ); break;
-                case FCLOSEPASSAGE: returncode = scr_ClosePassage( pstate, pself ); break;
-                case FIFPASSAGEOPEN: returncode = scr_PassageOpen( pstate, pself ); break;
-                case FGOPOOF: returncode = scr_GoPoof( pstate, pself ); break;
-                case FCOSTTARGETITEMID: returncode = scr_CostTargetItemID( pstate, pself ); break;
-                case FDOACTIONOVERRIDE: returncode = scr_DoActionOverride( pstate, pself ); break;
-                case FIFHEALED: returncode = scr_Healed( pstate, pself ); break;
-                case FSENDMESSAGE: returncode = scr_SendPlayerMessage( pstate, pself ); break;
-                case FCALLFORHELP: returncode = scr_CallForHelp( pstate, pself ); break;
-                case FADDIDSZ: returncode = scr_AddIDSZ( pstate, pself ); break;
-                case FSETSTATE: returncode = scr_set_State( pstate, pself ); break;
-                case FGETSTATE: returncode = scr_get_State( pstate, pself ); break;
-                case FIFSTATEIS: returncode = scr_StateIs( pstate, pself ); break;
-                case FIFTARGETCANOPENSTUFF: returncode = scr_TargetCanOpenStuff( pstate, pself ); break;
-                case FIFGRABBED: returncode = scr_Grabbed( pstate, pself ); break;
-                case FIFDROPPED: returncode = scr_Dropped( pstate, pself ); break;
-                case FSETTARGETTOWHOEVERISHOLDING: returncode = scr_set_TargetToWhoeverIsHolding( pstate, pself ); break;
-                case FDAMAGETARGET: returncode = scr_DamageTarget( pstate, pself ); break;
-                case FIFXISLESSTHANY: returncode = scr_XIsLessThanY( pstate, pself ); break;
-                case FSETWEATHERTIME: returncode = scr_set_WeatherTime( pstate, pself ); break;
-                case FGETBUMPHEIGHT: returncode = scr_get_BumpHeight( pstate, pself ); break;
-                case FIFREAFFIRMED: returncode = scr_Reaffirmed( pstate, pself ); break;
-                case FUNKEEPACTION: returncode = scr_UnkeepAction( pstate, pself ); break;
-                case FIFTARGETISONOTHERTEAM: returncode = scr_TargetIsOnOtherTeam( pstate, pself ); break;
-                case FIFTARGETISONHATEDTEAM: returncode = scr_TargetIsOnHatedTeam( pstate, pself ); break;
-                case FPRESSLATCHBUTTON: returncode = scr_PressLatchButton( pstate, pself ); break;
-                case FSETTARGETTOTARGETOFLEADER: returncode = scr_set_TargetToTargetOfLeader( pstate, pself ); break;
-                case FIFLEADERKILLED: returncode = scr_LeaderKilled( pstate, pself ); break;
-                case FBECOMELEADER: returncode = scr_BecomeLeader( pstate, pself ); break;
-                case FCHANGETARGETARMOR: returncode = scr_ChangeTargetArmor( pstate, pself ); break;
-                case FGIVEMONEYTOTARGET: returncode = scr_GiveMoneyToTarget( pstate, pself ); break;
-                case FDROPKEYS: returncode = scr_DropKeys( pstate, pself ); break;
-                case FIFLEADERISALIVE: returncode = scr_LeaderIsAlive( pstate, pself ); break;
-                case FIFTARGETISOLDTARGET: returncode = scr_TargetIsOldTarget( pstate, pself ); break;
-                case FSETTARGETTOLEADER: returncode = scr_set_TargetToLeader( pstate, pself ); break;
-                case FSPAWNCHARACTER: returncode = scr_SpawnCharacter( pstate, pself ); break;
-                case FRESPAWNCHARACTER: returncode = scr_RespawnCharacter( pstate, pself ); break;
-                case FCHANGETILE: returncode = scr_ChangeTile( pstate, pself ); break;
-                case FIFUSED: returncode = scr_Used( pstate, pself ); break;
-                case FDROPMONEY: returncode = scr_DropMoney( pstate, pself ); break;
-                case FSETOLDTARGET: returncode = scr_set_OldTarget( pstate, pself ); break;
-                case FDETACHFROMHOLDER: returncode = scr_DetachFromHolder( pstate, pself ); break;
-                case FIFTARGETHASVULNERABILITYID: returncode = scr_TargetHasVulnerabilityID( pstate, pself ); break;
-                case FCLEANUP: returncode = scr_CleanUp( pstate, pself ); break;
-                case FIFCLEANEDUP: returncode = scr_CleanedUp( pstate, pself ); break;
-                case FIFSITTING: returncode = scr_Sitting( pstate, pself ); break;
-                case FIFTARGETISHURT: returncode = scr_TargetIsHurt( pstate, pself ); break;
-                case FIFTARGETISAPLAYER: returncode = scr_TargetIsAPlayer( pstate, pself ); break;
-                case FPLAYSOUND: returncode = scr_PlaySound( pstate, pself ); break;
-                case FSPAWNPARTICLE: returncode = scr_SpawnParticle( pstate, pself ); break;
-                case FIFTARGETISALIVE: returncode = scr_TargetIsAlive( pstate, pself ); break;
-                case FSTOP: returncode = scr_Stop( pstate, pself ); break;
-                case FDISAFFIRMCHARACTER: returncode = scr_DisaffirmCharacter( pstate, pself ); break;
-                case FREAFFIRMCHARACTER: returncode = scr_ReaffirmCharacter( pstate, pself ); break;
-                case FIFTARGETISSELF: returncode = scr_TargetIsSelf( pstate, pself ); break;
-                case FIFTARGETISMALE: returncode = scr_TargetIsMale( pstate, pself ); break;
-                case FIFTARGETISFEMALE: returncode = scr_TargetIsFemale( pstate, pself ); break;
-                case FSETTARGETTOSELF: returncode = scr_set_TargetToSelf( pstate, pself ); break;
-                case FSETTARGETTORIDER: returncode = scr_set_TargetToRider( pstate, pself ); break;
-                case FGETATTACKTURN: returncode = scr_get_AttackTurn( pstate, pself ); break;
-                case FGETDAMAGETYPE: returncode = scr_get_DamageType( pstate, pself ); break;
-                case FBECOMESPELL: returncode = scr_BecomeSpell( pstate, pself ); break;
-                case FBECOMESPELLBOOK: returncode = scr_BecomeSpellbook( pstate, pself ); break;
-                case FIFSCOREDAHIT: returncode = scr_ScoredAHit( pstate, pself ); break;
-                case FIFDISAFFIRMED: returncode = scr_Disaffirmed( pstate, pself ); break;
-                case FTRANSLATEORDER: returncode = scr_TranslateOrder( pstate, pself ); break;
-                case FSETTARGETTOWHOEVERWASHIT: returncode = scr_set_TargetToWhoeverWasHit( pstate, pself ); break;
-                case FSETTARGETTOWIDEENEMY: returncode = scr_set_TargetToWideEnemy( pstate, pself ); break;
-                case FIFCHANGED: returncode = scr_Changed( pstate, pself ); break;
-                case FIFINWATER: returncode = scr_InWater( pstate, pself ); break;
-                case FIFBORED: returncode = scr_Bored( pstate, pself ); break;
-                case FIFTOOMUCHBAGGAGE: returncode = scr_TooMuchBaggage( pstate, pself ); break;
-                case FIFGROGGED: returncode = scr_Grogged( pstate, pself ); break;
-                case FIFDAZED: returncode = scr_Dazed( pstate, pself ); break;
-                case FIFTARGETHASSPECIALID: returncode = scr_TargetHasSpecialID( pstate, pself ); break;
-                case FPRESSTARGETLATCHBUTTON: returncode = scr_PressTargetLatchButton( pstate, pself ); break;
-                case FIFINVISIBLE: returncode = scr_Invisible( pstate, pself ); break;
-                case FIFARMORIS: returncode = scr_ArmorIs( pstate, pself ); break;
-                case FGETTARGETGROGTIME: returncode = scr_get_TargetGrogTime( pstate, pself ); break;
-                case FGETTARGETDAZETIME: returncode = scr_get_TargetDazeTime( pstate, pself ); break;
-                case FSETDAMAGETYPE: returncode = scr_set_DamageType( pstate, pself ); break;
-                case FSETWATERLEVEL: returncode = scr_set_WaterLevel( pstate, pself ); break;
-                case FENCHANTTARGET: returncode = scr_EnchantTarget( pstate, pself ); break;
-                case FENCHANTCHILD: returncode = scr_EnchantChild( pstate, pself ); break;
-                case FTELEPORTTARGET: returncode = scr_TeleportTarget( pstate, pself ); break;
-                case FGIVEEXPERIENCETOTARGET: returncode = scr_GiveExperienceToTarget( pstate, pself ); break;
-                case FINCREASEAMMO: returncode = scr_IncreaseAmmo( pstate, pself ); break;
-                case FUNKURSETARGET: returncode = scr_UnkurseTarget( pstate, pself ); break;
-                case FGIVEEXPERIENCETOTARGETTEAM: returncode = scr_GiveExperienceToTargetTeam( pstate, pself ); break;
-                case FIFUNARMED: returncode = scr_Unarmed( pstate, pself ); break;
-                case FRESTOCKTARGETAMMOIDALL: returncode = scr_RestockTargetAmmoIDAll( pstate, pself ); break;
-                case FRESTOCKTARGETAMMOIDFIRST: returncode = scr_RestockTargetAmmoIDFirst( pstate, pself ); break;
-                case FFLASHTARGET: returncode = scr_FlashTarget( pstate, pself ); break;
-                case FSETREDSHIFT: returncode = scr_set_RedShift( pstate, pself ); break;
-                case FSETGREENSHIFT: returncode = scr_set_GreenShift( pstate, pself ); break;
-                case FSETBLUESHIFT: returncode = scr_set_BlueShift( pstate, pself ); break;
-                case FSETLIGHT: returncode = scr_set_Light( pstate, pself ); break;
-                case FSETALPHA: returncode = scr_set_Alpha( pstate, pself ); break;
-                case FIFHITFROMBEHIND: returncode = scr_HitFromBehind( pstate, pself ); break;
-                case FIFHITFROMFRONT: returncode = scr_HitFromFront( pstate, pself ); break;
-                case FIFHITFROMLEFT: returncode = scr_HitFromLeft( pstate, pself ); break;
-                case FIFHITFROMRIGHT: returncode = scr_HitFromRight( pstate, pself ); break;
-                case FIFTARGETISONSAMETEAM: returncode = scr_TargetIsOnSameTeam( pstate, pself ); break;
-                case FKILLTARGET: returncode = scr_KillTarget( pstate, pself ); break;
-                case FUNDOENCHANT: returncode = scr_UndoEnchant( pstate, pself ); break;
-                case FGETWATERLEVEL: returncode = scr_get_WaterLevel( pstate, pself ); break;
-                case FCOSTTARGETMANA: returncode = scr_CostTargetMana( pstate, pself ); break;
-                case FIFTARGETHASANYID: returncode = scr_TargetHasAnyID( pstate, pself ); break;
-                case FSETBUMPSIZE: returncode = scr_set_BumpSize( pstate, pself ); break;
-                case FIFNOTDROPPED: returncode = scr_NotDropped( pstate, pself ); break;
-                case FIFYISLESSTHANX: returncode = scr_YIsLessThanX( pstate, pself ); break;
-                case FSETFLYHEIGHT: returncode = scr_set_FlyHeight( pstate, pself ); break;
-                case FIFBLOCKED: returncode = scr_Blocked( pstate, pself ); break;
-                case FIFTARGETISDEFENDING: returncode = scr_TargetIsDefending( pstate, pself ); break;
-                case FIFTARGETISATTACKING: returncode = scr_TargetIsAttacking( pstate, pself ); break;
-                case FIFSTATEIS0: returncode = scr_StateIs0( pstate, pself ); break;
-                case FIFSTATEIS1: returncode = scr_StateIs1( pstate, pself ); break;
-                case FIFSTATEIS2: returncode = scr_StateIs2( pstate, pself ); break;
-                case FIFSTATEIS3: returncode = scr_StateIs3( pstate, pself ); break;
-                case FIFSTATEIS4: returncode = scr_StateIs4( pstate, pself ); break;
-                case FIFSTATEIS5: returncode = scr_StateIs5( pstate, pself ); break;
-                case FIFSTATEIS6: returncode = scr_StateIs6( pstate, pself ); break;
-                case FIFSTATEIS7: returncode = scr_StateIs7( pstate, pself ); break;
-                case FIFCONTENTIS: returncode = scr_ContentIs( pstate, pself ); break;
-                case FSETTURNMODETOWATCHTARGET: returncode = scr_set_TurnModeToWatchTarget( pstate, pself ); break;
-                case FIFSTATEISNOT: returncode = scr_StateIsNot( pstate, pself ); break;
-                case FIFXISEQUALTOY: returncode = scr_XIsEqualToY( pstate, pself ); break;
-                case FDEBUGMESSAGE: returncode = scr_DebugMessage( pstate, pself ); break;
-                case FBLACKTARGET: returncode = scr_BlackTarget( pstate, pself ); break;
-                case FSENDMESSAGENEAR: returncode = scr_SendMessageNear( pstate, pself ); break;
-                case FIFHITGROUND: returncode = scr_HitGround( pstate, pself ); break;
-                case FIFNAMEISKNOWN: returncode = scr_NameIsKnown( pstate, pself ); break;
-                case FIFUSAGEISKNOWN: returncode = scr_UsageIsKnown( pstate, pself ); break;
-                case FIFHOLDINGITEMID: returncode = scr_HoldingItemID( pstate, pself ); break;
-                case FIFHOLDINGRANGEDWEAPON: returncode = scr_HoldingRangedWeapon( pstate, pself ); break;
-                case FIFHOLDINGMELEEWEAPON: returncode = scr_HoldingMeleeWeapon( pstate, pself ); break;
-                case FIFHOLDINGSHIELD: returncode = scr_HoldingShield( pstate, pself ); break;
-                case FIFKURSED: returncode = scr_Kursed( pstate, pself ); break;
-                case FIFTARGETISKURSED: returncode = scr_TargetIsKursed( pstate, pself ); break;
-                case FIFTARGETISDRESSEDUP: returncode = scr_TargetIsDressedUp( pstate, pself ); break;
-                case FIFOVERWATER: returncode = scr_OverWater( pstate, pself ); break;
-                case FIFTHROWN: returncode = scr_Thrown( pstate, pself ); break;
-                case FMAKENAMEKNOWN: returncode = scr_MakeNameKnown( pstate, pself ); break;
-                case FMAKEUSAGEKNOWN: returncode = scr_MakeUsageKnown( pstate, pself ); break;
-                case FSTOPTARGETMOVEMENT: returncode = scr_StopTargetMovement( pstate, pself ); break;
-                case FSETXY: returncode = scr_set_XY( pstate, pself ); break;
-                case FGETXY: returncode = scr_get_XY( pstate, pself ); break;
-                case FADDXY: returncode = scr_AddXY( pstate, pself ); break;
-                case FMAKEAMMOKNOWN: returncode = scr_MakeAmmoKnown( pstate, pself ); break;
-                case FSPAWNATTACHEDPARTICLE: returncode = scr_SpawnAttachedParticle( pstate, pself ); break;
-                case FSPAWNEXACTPARTICLE: returncode = scr_SpawnExactParticle( pstate, pself ); break;
-                case FACCELERATETARGET: returncode = scr_AccelerateTarget( pstate, pself ); break;
-                case FIFDISTANCEISMORETHANTURN: returncode = scr_distanceIsMoreThanTurn( pstate, pself ); break;
-                case FIFCRUSHED: returncode = scr_Crushed( pstate, pself ); break;
-                case FMAKECRUSHVALID: returncode = scr_MakeCrushValid( pstate, pself ); break;
-                case FSETTARGETTOLOWESTTARGET: returncode = scr_set_TargetToLowestTarget( pstate, pself ); break;
-                case FIFNOTPUTAWAY: returncode = scr_NotPutAway( pstate, pself ); break;
-                case FIFTAKENOUT: returncode = scr_TakenOut( pstate, pself ); break;
-                case FIFAMMOOUT: returncode = scr_AmmoOut( pstate, pself ); break;
-                case FPLAYSOUNDLOOPED: returncode = scr_PlaySoundLooped( pstate, pself ); break;
-                case FSTOPSOUND: returncode = scr_StopSound( pstate, pself ); break;
-                case FHEALSELF: returncode = scr_HealSelf( pstate, pself ); break;
-                case FEQUIP: returncode = scr_Equip( pstate, pself ); break;
-                case FIFTARGETHASITEMIDEQUIPPED: returncode = scr_TargetHasItemIDEquipped( pstate, pself ); break;
-                case FSETOWNERTOTARGET: returncode = scr_set_OwnerToTarget( pstate, pself ); break;
-                case FSETTARGETTOOWNER: returncode = scr_set_TargetToOwner( pstate, pself ); break;
-                case FSETFRAME: returncode = scr_set_Frame( pstate, pself ); break;
-                case FBREAKPASSAGE: returncode = scr_BreakPassage( pstate, pself ); break;
-                case FSETRELOADTIME: returncode = scr_set_ReloadTime( pstate, pself ); break;
-                case FSETTARGETTOWIDEBLAHID: returncode = scr_set_TargetToWideBlahID( pstate, pself ); break;
-                case FPOOFTARGET: returncode = scr_PoofTarget( pstate, pself ); break;
-                case FCHILDDOACTIONOVERRIDE: returncode = scr_ChildDoActionOverride( pstate, pself ); break;
-                case FSPAWNPOOF: returncode = scr_SpawnPoof( pstate, pself ); break;
-                case FSETSPEEDPERCENT: returncode = scr_set_SpeedPercent( pstate, pself ); break;
-                case FSETCHILDSTATE: returncode = scr_set_ChildState( pstate, pself ); break;
-                case FSPAWNATTACHEDSIZEDPARTICLE: returncode = scr_SpawnAttachedSizedParticle( pstate, pself ); break;
-                case FCHANGEARMOR: returncode = scr_ChangeArmor( pstate, pself ); break;
-                case FSHOWTIMER: returncode = scr_ShowTimer( pstate, pself ); break;
-                case FIFFACINGTARGET: returncode = scr_FacingTarget( pstate, pself ); break;
-                case FPLAYSOUNDVOLUME: returncode = scr_PlaySoundVolume( pstate, pself ); break;
-                case FSPAWNATTACHEDFACEDPARTICLE: returncode = scr_SpawnAttachedFacedParticle( pstate, pself ); break;
-                case FIFSTATEISODD: returncode = scr_StateIsOdd( pstate, pself ); break;
-                case FSETTARGETTODISTANTENEMY: returncode = scr_set_TargetToDistantEnemy( pstate, pself ); break;
-                case FTELEPORT: returncode = scr_Teleport( pstate, pself ); break;
-                case FGIVESTRENGTHTOTARGET: returncode = scr_GiveStrengthToTarget( pstate, pself ); break;
-                case FGIVEWISDOMTOTARGET: returncode = scr_GiveWisdomToTarget( pstate, pself ); break;
-                case FGIVEINTELLIGENCETOTARGET: returncode = scr_GiveIntelligenceToTarget( pstate, pself ); break;
-                case FGIVEDEXTERITYTOTARGET: returncode = scr_GiveDexterityToTarget( pstate, pself ); break;
-                case FGIVELIFETOTARGET: returncode = scr_GiveLifeToTarget( pstate, pself ); break;
-                case FGIVEMANATOTARGET: returncode = scr_GiveManaToTarget( pstate, pself ); break;
-                case FSHOWMAP: returncode = scr_ShowMap( pstate, pself ); break;
-                case FSHOWYOUAREHERE: returncode = scr_ShowYouAreHere( pstate, pself ); break;
-                case FSHOWBLIPXY: returncode = scr_ShowBlipXY( pstate, pself ); break;
-                case FHEALTARGET: returncode = scr_HealTarget( pstate, pself ); break;
-                case FPUMPTARGET: returncode = scr_PumpTarget( pstate, pself ); break;
-                case FCOSTAMMO: returncode = scr_CostAmmo( pstate, pself ); break;
-                case FMAKESIMILARNAMESKNOWN: returncode = scr_MakeSimilarNamesKnown( pstate, pself ); break;
-                case FSPAWNATTACHEDHOLDERPARTICLE: returncode = scr_SpawnAttachedHolderParticle( pstate, pself ); break;
-                case FSETTARGETRELOADTIME: returncode = scr_set_TargetReloadTime( pstate, pself ); break;
-                case FSETFOGLEVEL: returncode = scr_set_FogLevel( pstate, pself ); break;
-                case FGETFOGLEVEL: returncode = scr_get_FogLevel( pstate, pself ); break;
-                case FSETFOGTAD: returncode = scr_set_FogTAD( pstate, pself ); break;
-                case FSETFOGBOTTOMLEVEL: returncode = scr_set_FogBottomLevel( pstate, pself ); break;
-                case FGETFOGBOTTOMLEVEL: returncode = scr_get_FogBottomLevel( pstate, pself ); break;
-                case FCORRECTACTIONFORHAND: returncode = scr_CorrectActionForHand( pstate, pself ); break;
-                case FIFTARGETISMOUNTED: returncode = scr_TargetIsMounted( pstate, pself ); break;
-                case FSPARKLEICON: returncode = scr_SparkleIcon( pstate, pself ); break;
-                case FUNSPARKLEICON: returncode = scr_UnsparkleIcon( pstate, pself ); break;
-                case FGETTILEXY: returncode = scr_get_TileXY( pstate, pself ); break;
-                case FSETTILEXY: returncode = scr_set_TileXY( pstate, pself ); break;
-                case FSETSHADOWSIZE: returncode = scr_set_ShadowSize( pstate, pself ); break;
-                case FORDERTARGET: returncode = scr_OrderTarget( pstate, pself ); break;
-                case FSETTARGETTOWHOEVERISINPASSAGE: returncode = scr_set_TargetToWhoeverIsInPassage( pstate, pself ); break;
-                case FIFCHARACTERWASABOOK: returncode = scr_CharacterWasABook( pstate, pself ); break;
-                case FSETENCHANTBOOSTVALUES: returncode = scr_set_EnchantBoostValues( pstate, pself ); break;
-                case FSPAWNCHARACTERXYZ: returncode = scr_SpawnCharacterXYZ( pstate, pself ); break;
-                case FSPAWNEXACTCHARACTERXYZ: returncode = scr_SpawnExactCharacterXYZ( pstate, pself ); break;
-                case FCHANGETARGETCLASS: returncode = scr_ChangeTargetClass( pstate, pself ); break;
-                case FPLAYFULLSOUND: returncode = scr_PlayFullSound( pstate, pself ); break;
-                case FSPAWNEXACTCHASEPARTICLE: returncode = scr_SpawnExactChaseParticle( pstate, pself ); break;
-                case FCREATEORDER: returncode = scr_CreateOrder( pstate, pself ); break;
-                case FORDERSPECIALID: returncode = scr_OrderSpecialID( pstate, pself ); break;
-                case FUNKURSETARGETINVENTORY: returncode = scr_UnkurseTargetInventory( pstate, pself ); break;
-                case FIFTARGETISSNEAKING: returncode = scr_TargetIsSneaking( pstate, pself ); break;
-                case FDROPITEMS: returncode = scr_DropItems( pstate, pself ); break;
-                case FRESPAWNTARGET: returncode = scr_RespawnTarget( pstate, pself ); break;
-                case FTARGETDOACTIONSETFRAME: returncode = scr_TargetDoActionSetFrame( pstate, pself ); break;
-                case FIFTARGETCANSEEINVISIBLE: returncode = scr_TargetCanSeeInvisible( pstate, pself ); break;
-                case FSETTARGETTONEARESTBLAHID: returncode = scr_set_TargetToNearestBlahID( pstate, pself ); break;
-                case FSETTARGETTONEARESTENEMY: returncode = scr_set_TargetToNearestEnemy( pstate, pself ); break;
-                case FSETTARGETTONEARESTFRIEND: returncode = scr_set_TargetToNearestFriend( pstate, pself ); break;
-                case FSETTARGETTONEARESTLIFEFORM: returncode = scr_set_TargetToNearestLifeform( pstate, pself ); break;
-                case FFLASHPASSAGE: returncode = scr_FlashPassage( pstate, pself ); break;
-                case FFINDTILEINPASSAGE: returncode = scr_FindTileInPassage( pstate, pself ); break;
-                case FIFHELDINLEFTHAND: returncode = scr_HeldInLeftHand( pstate, pself ); break;
-                case FNOTANITEM: returncode = scr_NotAnItem( pstate, pself ); break;
-                case FSETCHILDAMMO: returncode = scr_set_ChildAmmo( pstate, pself ); break;
-                case FIFHITVULNERABLE: returncode = scr_HitVulnerable( pstate, pself ); break;
-                case FIFTARGETISFLYING: returncode = scr_TargetIsFlying( pstate, pself ); break;
-                case FIDENTIFYTARGET: returncode = scr_IdentifyTarget( pstate, pself ); break;
-                case FBEATMODULE: returncode = scr_BeatModule( pstate, pself ); break;
-                case FENDMODULE: returncode = scr_EndModule( pstate, pself ); break;
-                case FDISABLEEXPORT: returncode = scr_DisableExport( pstate, pself ); break;
-                case FENABLEEXPORT: returncode = scr_EnableExport( pstate, pself ); break;
-                case FGETTARGETSTATE: returncode = scr_get_TargetState( pstate, pself ); break;
-                case FIFEQUIPPED: returncode = scr_Equipped( pstate, pself ); break;
-                case FDROPTARGETMONEY: returncode = scr_DropTargetMoney( pstate, pself ); break;
-                case FGETTARGETCONTENT: returncode = scr_get_TargetContent( pstate, pself ); break;
-                case FDROPTARGETKEYS: returncode = scr_DropTargetKeys( pstate, pself ); break;
-                case FJOINTEAM: returncode = scr_JoinTeam( pstate, pself ); break;
-                case FTARGETJOINTEAM: returncode = scr_TargetJoinTeam( pstate, pself ); break;
-                case FCLEARMUSICPASSAGE: returncode = scr_ClearMusicPassage( pstate, pself ); break;
-                case FCLEARENDMESSAGE: returncode = scr_ClearEndMessage( pstate, pself ); break;
-                case FADDENDMESSAGE: returncode = scr_AddEndMessage( pstate, pself ); break;
-                case FPLAYMUSIC: returncode = scr_PlayMusic( pstate, pself ); break;
-                case FSETMUSICPASSAGE: returncode = scr_set_MusicPassage( pstate, pself ); break;
-                case FMAKECRUSHINVALID: returncode = scr_MakeCrushInvalid( pstate, pself ); break;
-                case FSTOPMUSIC: returncode = scr_StopMusic( pstate, pself ); break;
-                case FFLASHVARIABLE: returncode = scr_FlashVariable( pstate, pself ); break;
-                case FACCELERATEUP: returncode = scr_AccelerateUp( pstate, pself ); break;
-                case FFLASHVARIABLEHEIGHT: returncode = scr_FlashVariableHeight( pstate, pself ); break;
-                case FSETDAMAGETIME: returncode = scr_set_DamageTime( pstate, pself ); break;
-                case FIFSTATEIS8: returncode = scr_StateIs8( pstate, pself ); break;
-                case FIFSTATEIS9: returncode = scr_StateIs9( pstate, pself ); break;
-                case FIFSTATEIS10: returncode = scr_StateIs10( pstate, pself ); break;
-                case FIFSTATEIS11: returncode = scr_StateIs11( pstate, pself ); break;
-                case FIFSTATEIS12: returncode = scr_StateIs12( pstate, pself ); break;
-                case FIFSTATEIS13: returncode = scr_StateIs13( pstate, pself ); break;
-                case FIFSTATEIS14: returncode = scr_StateIs14( pstate, pself ); break;
-                case FIFSTATEIS15: returncode = scr_StateIs15( pstate, pself ); break;
-                case FIFTARGETISAMOUNT: returncode = scr_TargetIsAMount( pstate, pself ); break;
-                case FIFTARGETISAPLATFORM: returncode = scr_TargetIsAPlatform( pstate, pself ); break;
-                case FADDSTAT: returncode = scr_AddStat( pstate, pself ); break;
-                case FDISENCHANTTARGET: returncode = scr_DisenchantTarget( pstate, pself ); break;
-                case FDISENCHANTALL: returncode = scr_DisenchantAll( pstate, pself ); break;
-                case FSETVOLUMENEARESTTEAMMATE: returncode = scr_set_VolumeNearestTeammate( pstate, pself ); break;
-                case FADDSHOPPASSAGE: returncode = scr_AddShopPassage( pstate, pself ); break;
-                case FTARGETPAYFORARMOR: returncode = scr_TargetPayForArmor( pstate, pself ); break;
-                case FJOINEVILTEAM: returncode = scr_JoinEvilTeam( pstate, pself ); break;
-                case FJOINNULLTEAM: returncode = scr_JoinNullTeam( pstate, pself ); break;
-                case FJOINGOODTEAM: returncode = scr_JoinGoodTeam( pstate, pself ); break;
-                case FPITSKILL: returncode = scr_PitsKill( pstate, pself ); break;
-                case FSETTARGETTOPASSAGEID: returncode = scr_set_TargetToPassageID( pstate, pself ); break;
-                case FMAKENAMEUNKNOWN: returncode = scr_MakeNameUnknown( pstate, pself ); break;
-                case FSPAWNEXACTPARTICLEENDSPAWN: returncode = scr_SpawnExactParticleEndSpawn( pstate, pself ); break;
-                case FSPAWNPOOFSPEEDSPACINGDAMAGE: returncode = scr_SpawnPoofSpeedSpacingDamage( pstate, pself ); break;
-                case FGIVEEXPERIENCETOGOODTEAM: returncode = scr_GiveExperienceToGoodTeam( pstate, pself ); break;
-                case FDONOTHING: returncode = scr_DoNothing( pstate, pself ); break;
-                case FGROGTARGET: returncode = scr_GrogTarget( pstate, pself ); break;
-                case FDAZETARGET: returncode = scr_DazeTarget( pstate, pself ); break;
-                case FENABLERESPAWN: returncode = scr_EnableRespawn( pstate, pself ); break;
-                case FDISABLERESPAWN: returncode = scr_DisableRespawn( pstate, pself ); break;
-                case FDISPELTARGETENCHANTID: returncode = scr_DispelTargetEnchantID( pstate, pself ); break;
-                case FIFHOLDERBLOCKED: returncode = scr_HolderBlocked( pstate, pself ); break;
-                    // case FGETSKILLLEVEL: returncode = scr_get_SkillLevel( pstate, pself ); break;
-                case FIFTARGETHASNOTFULLMANA: returncode = scr_TargetHasNotFullMana( pstate, pself ); break;
-                case FENABLELISTENSKILL: returncode = scr_EnableListenSkill( pstate, pself ); break;
-                case FSETTARGETTOLASTITEMUSED: returncode = scr_set_TargetToLastItemUsed( pstate, pself ); break;
-                case FFOLLOWLINK: returncode = scr_FollowLink( pstate, pself ); break;
-                case FIFOPERATORISLINUX: returncode = scr_OperatorIsLinux( pstate, pself ); break;
-                case FIFTARGETISAWEAPON: returncode = scr_TargetIsAWeapon( pstate, pself ); break;
-                case FIFSOMEONEISSTEALING: returncode = scr_SomeoneIsStealing( pstate, pself ); break;
-                case FIFTARGETISASPELL: returncode = scr_TargetIsASpell( pstate, pself ); break;
-                case FIFBACKSTABBED: returncode = scr_Backstabbed( pstate, pself ); break;
-                case FGETTARGETDAMAGETYPE: returncode = scr_get_TargetDamageType( pstate, pself ); break;
-                case FADDQUEST: returncode = scr_AddQuest( pstate, pself ); break;
-                case FBEATQUESTALLPLAYERS: returncode = scr_BeatQuestAllPlayers( pstate, pself ); break;
-                case FIFTARGETHASQUEST: returncode = scr_TargetHasQuest( pstate, pself ); break;
-                case FSETQUESTLEVEL: returncode = scr_set_QuestLevel( pstate, pself ); break;
-                case FADDQUESTALLPLAYERS: returncode = scr_AddQuestAllPlayers( pstate, pself ); break;
-                case FADDBLIPALLENEMIES: returncode = scr_AddBlipAllEnemies( pstate, pself ); break;
-                case FPITSFALL: returncode = scr_PitsFall( pstate, pself ); break;
-                case FIFTARGETISOWNER: returncode = scr_TargetIsOwner( pstate, pself ); break;
-                case FEND: returncode = scr_End( pstate, pself ); break;
+                case FIFSPAWNED: returncode = scr_Spawned( pstate, pbdl_ai ); break;
+                case FIFTIMEOUT: returncode = scr_TimeOut( pstate, pbdl_ai ); break;
+                case FIFATWAYPOINT: returncode = scr_AtWaypoint( pstate, pbdl_ai ); break;
+                case FIFATLASTWAYPOINT: returncode = scr_AtLastWaypoint( pstate, pbdl_ai ); break;
+                case FIFATTACKED: returncode = scr_Attacked( pstate, pbdl_ai ); break;
+                case FIFBUMPED: returncode = scr_Bumped( pstate, pbdl_ai ); break;
+                case FIFORDERED: returncode = scr_Ordered( pstate, pbdl_ai ); break;
+                case FIFCALLEDFORHELP: returncode = scr_CalledForHelp( pstate, pbdl_ai ); break;
+                case FSETCONTENT: returncode = scr_set_Content( pstate, pbdl_ai ); break;
+                case FIFKILLED: returncode = scr_Killed( pstate, pbdl_ai ); break;
+                case FIFTARGETKILLED: returncode = scr_TargetKilled( pstate, pbdl_ai ); break;
+                case FCLEARWAYPOINTS: returncode = scr_ClearWaypoints( pstate, pbdl_ai ); break;
+                case FADDWAYPOINT: returncode = scr_AddWaypoint( pstate, pbdl_ai ); break;
+                case FFINDPATH: returncode = scr_FindPath( pstate, pbdl_ai ); break;
+                case FCOMPASS: returncode = scr_Compass( pstate, pbdl_ai ); break;
+                case FGETTARGETARMORPRICE: returncode = scr_get_TargetArmorPrice( pstate, pbdl_ai ); break;
+                case FSETTIME: returncode = scr_set_Time( pstate, pbdl_ai ); break;
+                case FGETCONTENT: returncode = scr_get_Content( pstate, pbdl_ai ); break;
+                case FJOINTARGETTEAM: returncode = scr_JoinTargetTeam( pstate, pbdl_ai ); break;
+                case FSETTARGETTONEARBYENEMY: returncode = scr_set_TargetToNearbyEnemy( pstate, pbdl_ai ); break;
+                case FSETTARGETTOTARGETLEFTHAND: returncode = scr_set_TargetToTargetLeftHand( pstate, pbdl_ai ); break;
+                case FSETTARGETTOTARGETRIGHTHAND: returncode = scr_set_TargetToTargetRightHand( pstate, pbdl_ai ); break;
+                case FSETTARGETTOWHOEVERATTACKED: returncode = scr_set_TargetToWhoeverAttacked( pstate, pbdl_ai ); break;
+                case FSETTARGETTOWHOEVERBUMPED: returncode = scr_set_TargetToWhoeverBumped( pstate, pbdl_ai ); break;
+                case FSETTARGETTOWHOEVERCALLEDFORHELP: returncode = scr_set_TargetToWhoeverCalledForHelp( pstate, pbdl_ai ); break;
+                case FSETTARGETTOOLDTARGET: returncode = scr_set_TargetToOldTarget( pstate, pbdl_ai ); break;
+                case FSETTURNMODETOVELOCITY: returncode = scr_set_TurnModeToVelocity( pstate, pbdl_ai ); break;
+                case FSETTURNMODETOWATCH: returncode = scr_set_TurnModeToWatch( pstate, pbdl_ai ); break;
+                case FSETTURNMODETOSPIN: returncode = scr_set_TurnModeToSpin( pstate, pbdl_ai ); break;
+                case FSETBUMPHEIGHT: returncode = scr_set_BumpHeight( pstate, pbdl_ai ); break;
+                case FIFTARGETHASID: returncode = scr_TargetHasID( pstate, pbdl_ai ); break;
+                case FIFTARGETHASITEMID: returncode = scr_TargetHasItemID( pstate, pbdl_ai ); break;
+                case FIFTARGETHOLDINGITEMID: returncode = scr_TargetHoldingItemID( pstate, pbdl_ai ); break;
+                case FIFTARGETHASSKILLID: returncode = scr_TargetHasSkillID( pstate, pbdl_ai ); break;
+                case FELSE: returncode = scr_Else( pstate, pbdl_ai ); break;
+                case FRUN: returncode = scr_Run( pstate, pbdl_ai ); break;
+                case FWALK: returncode = scr_Walk( pstate, pbdl_ai ); break;
+                case FSNEAK: returncode = scr_Sneak( pstate, pbdl_ai ); break;
+                case FDOACTION: returncode = scr_DoAction( pstate, pbdl_ai ); break;
+                case FKEEPACTION: returncode = scr_KeepAction( pstate, pbdl_ai ); break;
+                case FISSUEORDER: returncode = scr_IssueOrder( pstate, pbdl_ai ); break;
+                case FDROPWEAPONS: returncode = scr_DropWeapons( pstate, pbdl_ai ); break;
+                case FTARGETDOACTION: returncode = scr_TargetDoAction( pstate, pbdl_ai ); break;
+                case FOPENPASSAGE: returncode = scr_OpenPassage( pstate, pbdl_ai ); break;
+                case FCLOSEPASSAGE: returncode = scr_ClosePassage( pstate, pbdl_ai ); break;
+                case FIFPASSAGEOPEN: returncode = scr_PassageOpen( pstate, pbdl_ai ); break;
+                case FGOPOOF: returncode = scr_GoPoof( pstate, pbdl_ai ); break;
+                case FCOSTTARGETITEMID: returncode = scr_CostTargetItemID( pstate, pbdl_ai ); break;
+                case FDOACTIONOVERRIDE: returncode = scr_DoActionOverride( pstate, pbdl_ai ); break;
+                case FIFHEALED: returncode = scr_Healed( pstate, pbdl_ai ); break;
+                case FSENDMESSAGE: returncode = scr_SendPlayerMessage( pstate, pbdl_ai ); break;
+                case FCALLFORHELP: returncode = scr_CallForHelp( pstate, pbdl_ai ); break;
+                case FADDIDSZ: returncode = scr_AddIDSZ( pstate, pbdl_ai ); break;
+                case FSETSTATE: returncode = scr_set_State( pstate, pbdl_ai ); break;
+                case FGETSTATE: returncode = scr_get_State( pstate, pbdl_ai ); break;
+                case FIFSTATEIS: returncode = scr_StateIs( pstate, pbdl_ai ); break;
+                case FIFTARGETCANOPENSTUFF: returncode = scr_TargetCanOpenStuff( pstate, pbdl_ai ); break;
+                case FIFGRABBED: returncode = scr_Grabbed( pstate, pbdl_ai ); break;
+                case FIFDROPPED: returncode = scr_Dropped( pstate, pbdl_ai ); break;
+                case FSETTARGETTOWHOEVERISHOLDING: returncode = scr_set_TargetToWhoeverIsHolding( pstate, pbdl_ai ); break;
+                case FDAMAGETARGET: returncode = scr_DamageTarget( pstate, pbdl_ai ); break;
+                case FIFXISLESSTHANY: returncode = scr_XIsLessThanY( pstate, pbdl_ai ); break;
+                case FSETWEATHERTIME: returncode = scr_set_WeatherTime( pstate, pbdl_ai ); break;
+                case FGETBUMPHEIGHT: returncode = scr_get_BumpHeight( pstate, pbdl_ai ); break;
+                case FIFREAFFIRMED: returncode = scr_Reaffirmed( pstate, pbdl_ai ); break;
+                case FUNKEEPACTION: returncode = scr_UnkeepAction( pstate, pbdl_ai ); break;
+                case FIFTARGETISONOTHERTEAM: returncode = scr_TargetIsOnOtherTeam( pstate, pbdl_ai ); break;
+                case FIFTARGETISONHATEDTEAM: returncode = scr_TargetIsOnHatedTeam( pstate, pbdl_ai ); break;
+                case FPRESSLATCHBUTTON: returncode = scr_PressLatchButton( pstate, pbdl_ai ); break;
+                case FSETTARGETTOTARGETOFLEADER: returncode = scr_set_TargetToTargetOfLeader( pstate, pbdl_ai ); break;
+                case FIFLEADERKILLED: returncode = scr_LeaderKilled( pstate, pbdl_ai ); break;
+                case FBECOMELEADER: returncode = scr_BecomeLeader( pstate, pbdl_ai ); break;
+                case FCHANGETARGETARMOR: returncode = scr_ChangeTargetArmor( pstate, pbdl_ai ); break;
+                case FGIVEMONEYTOTARGET: returncode = scr_GiveMoneyToTarget( pstate, pbdl_ai ); break;
+                case FDROPKEYS: returncode = scr_DropKeys( pstate, pbdl_ai ); break;
+                case FIFLEADERISALIVE: returncode = scr_LeaderIsAlive( pstate, pbdl_ai ); break;
+                case FIFTARGETISOLDTARGET: returncode = scr_TargetIsOldTarget( pstate, pbdl_ai ); break;
+                case FSETTARGETTOLEADER: returncode = scr_set_TargetToLeader( pstate, pbdl_ai ); break;
+                case FSPAWNCHARACTER: returncode = scr_SpawnCharacter( pstate, pbdl_ai ); break;
+                case FRESPAWNCHARACTER: returncode = scr_RespawnCharacter( pstate, pbdl_ai ); break;
+                case FCHANGETILE: returncode = scr_ChangeTile( pstate, pbdl_ai ); break;
+                case FIFUSED: returncode = scr_Used( pstate, pbdl_ai ); break;
+                case FDROPMONEY: returncode = scr_DropMoney( pstate, pbdl_ai ); break;
+                case FSETOLDTARGET: returncode = scr_set_OldTarget( pstate, pbdl_ai ); break;
+                case FDETACHFROMHOLDER: returncode = scr_DetachFromHolder( pstate, pbdl_ai ); break;
+                case FIFTARGETHASVULNERABILITYID: returncode = scr_TargetHasVulnerabilityID( pstate, pbdl_ai ); break;
+                case FCLEANUP: returncode = scr_CleanUp( pstate, pbdl_ai ); break;
+                case FIFCLEANEDUP: returncode = scr_CleanedUp( pstate, pbdl_ai ); break;
+                case FIFSITTING: returncode = scr_Sitting( pstate, pbdl_ai ); break;
+                case FIFTARGETISHURT: returncode = scr_TargetIsHurt( pstate, pbdl_ai ); break;
+                case FIFTARGETISAPLAYER: returncode = scr_TargetIsAPlayer( pstate, pbdl_ai ); break;
+                case FPLAYSOUND: returncode = scr_PlaySound( pstate, pbdl_ai ); break;
+                case FSPAWNPARTICLE: returncode = scr_SpawnParticle( pstate, pbdl_ai ); break;
+                case FIFTARGETISALIVE: returncode = scr_TargetIsAlive( pstate, pbdl_ai ); break;
+                case FSTOP: returncode = scr_Stop( pstate, pbdl_ai ); break;
+                case FDISAFFIRMCHARACTER: returncode = scr_DisaffirmCharacter( pstate, pbdl_ai ); break;
+                case FREAFFIRMCHARACTER: returncode = scr_ReaffirmCharacter( pstate, pbdl_ai ); break;
+                case FIFTARGETISSELF: returncode = scr_TargetIsSelf( pstate, pbdl_ai ); break;
+                case FIFTARGETISMALE: returncode = scr_TargetIsMale( pstate, pbdl_ai ); break;
+                case FIFTARGETISFEMALE: returncode = scr_TargetIsFemale( pstate, pbdl_ai ); break;
+                case FSETTARGETTOSELF: returncode = scr_set_TargetToSelf( pstate, pbdl_ai ); break;
+                case FSETTARGETTORIDER: returncode = scr_set_TargetToRider( pstate, pbdl_ai ); break;
+                case FGETATTACKTURN: returncode = scr_get_AttackTurn( pstate, pbdl_ai ); break;
+                case FGETDAMAGETYPE: returncode = scr_get_DamageType( pstate, pbdl_ai ); break;
+                case FBECOMESPELL: returncode = scr_BecomeSpell( pstate, pbdl_ai ); break;
+                case FBECOMESPELLBOOK: returncode = scr_BecomeSpellbook( pstate, pbdl_ai ); break;
+                case FIFSCOREDAHIT: returncode = scr_ScoredAHit( pstate, pbdl_ai ); break;
+                case FIFDISAFFIRMED: returncode = scr_Disaffirmed( pstate, pbdl_ai ); break;
+                case FTRANSLATEORDER: returncode = scr_TranslateOrder( pstate, pbdl_ai ); break;
+                case FSETTARGETTOWHOEVERWASHIT: returncode = scr_set_TargetToWhoeverWasHit( pstate, pbdl_ai ); break;
+                case FSETTARGETTOWIDEENEMY: returncode = scr_set_TargetToWideEnemy( pstate, pbdl_ai ); break;
+                case FIFCHANGED: returncode = scr_Changed( pstate, pbdl_ai ); break;
+                case FIFINWATER: returncode = scr_InWater( pstate, pbdl_ai ); break;
+                case FIFBORED: returncode = scr_Bored( pstate, pbdl_ai ); break;
+                case FIFTOOMUCHBAGGAGE: returncode = scr_TooMuchBaggage( pstate, pbdl_ai ); break;
+                case FIFGROGGED: returncode = scr_Grogged( pstate, pbdl_ai ); break;
+                case FIFDAZED: returncode = scr_Dazed( pstate, pbdl_ai ); break;
+                case FIFTARGETHASSPECIALID: returncode = scr_TargetHasSpecialID( pstate, pbdl_ai ); break;
+                case FPRESSTARGETLATCHBUTTON: returncode = scr_PressTargetLatchButton( pstate, pbdl_ai ); break;
+                case FIFINVISIBLE: returncode = scr_Invisible( pstate, pbdl_ai ); break;
+                case FIFARMORIS: returncode = scr_ArmorIs( pstate, pbdl_ai ); break;
+                case FGETTARGETGROGTIME: returncode = scr_get_TargetGrogTime( pstate, pbdl_ai ); break;
+                case FGETTARGETDAZETIME: returncode = scr_get_TargetDazeTime( pstate, pbdl_ai ); break;
+                case FSETDAMAGETYPE: returncode = scr_set_DamageType( pstate, pbdl_ai ); break;
+                case FSETWATERLEVEL: returncode = scr_set_WaterLevel( pstate, pbdl_ai ); break;
+                case FENCHANTTARGET: returncode = scr_EnchantTarget( pstate, pbdl_ai ); break;
+                case FENCHANTCHILD: returncode = scr_EnchantChild( pstate, pbdl_ai ); break;
+                case FTELEPORTTARGET: returncode = scr_TeleportTarget( pstate, pbdl_ai ); break;
+                case FGIVEEXPERIENCETOTARGET: returncode = scr_GiveExperienceToTarget( pstate, pbdl_ai ); break;
+                case FINCREASEAMMO: returncode = scr_IncreaseAmmo( pstate, pbdl_ai ); break;
+                case FUNKURSETARGET: returncode = scr_UnkurseTarget( pstate, pbdl_ai ); break;
+                case FGIVEEXPERIENCETOTARGETTEAM: returncode = scr_GiveExperienceToTargetTeam( pstate, pbdl_ai ); break;
+                case FIFUNARMED: returncode = scr_Unarmed( pstate, pbdl_ai ); break;
+                case FRESTOCKTARGETAMMOIDALL: returncode = scr_RestockTargetAmmoIDAll( pstate, pbdl_ai ); break;
+                case FRESTOCKTARGETAMMOIDFIRST: returncode = scr_RestockTargetAmmoIDFirst( pstate, pbdl_ai ); break;
+                case FFLASHTARGET: returncode = scr_FlashTarget( pstate, pbdl_ai ); break;
+                case FSETREDSHIFT: returncode = scr_set_RedShift( pstate, pbdl_ai ); break;
+                case FSETGREENSHIFT: returncode = scr_set_GreenShift( pstate, pbdl_ai ); break;
+                case FSETBLUESHIFT: returncode = scr_set_BlueShift( pstate, pbdl_ai ); break;
+                case FSETLIGHT: returncode = scr_set_Light( pstate, pbdl_ai ); break;
+                case FSETALPHA: returncode = scr_set_Alpha( pstate, pbdl_ai ); break;
+                case FIFHITFROMBEHIND: returncode = scr_HitFromBehind( pstate, pbdl_ai ); break;
+                case FIFHITFROMFRONT: returncode = scr_HitFromFront( pstate, pbdl_ai ); break;
+                case FIFHITFROMLEFT: returncode = scr_HitFromLeft( pstate, pbdl_ai ); break;
+                case FIFHITFROMRIGHT: returncode = scr_HitFromRight( pstate, pbdl_ai ); break;
+                case FIFTARGETISONSAMETEAM: returncode = scr_TargetIsOnSameTeam( pstate, pbdl_ai ); break;
+                case FKILLTARGET: returncode = scr_KillTarget( pstate, pbdl_ai ); break;
+                case FUNDOENCHANT: returncode = scr_UndoEnchant( pstate, pbdl_ai ); break;
+                case FGETWATERLEVEL: returncode = scr_get_WaterLevel( pstate, pbdl_ai ); break;
+                case FCOSTTARGETMANA: returncode = scr_CostTargetMana( pstate, pbdl_ai ); break;
+                case FIFTARGETHASANYID: returncode = scr_TargetHasAnyID( pstate, pbdl_ai ); break;
+                case FSETBUMPSIZE: returncode = scr_set_BumpSize( pstate, pbdl_ai ); break;
+                case FIFNOTDROPPED: returncode = scr_NotDropped( pstate, pbdl_ai ); break;
+                case FIFYISLESSTHANX: returncode = scr_YIsLessThanX( pstate, pbdl_ai ); break;
+                case FSETFLYHEIGHT: returncode = scr_set_FlyHeight( pstate, pbdl_ai ); break;
+                case FIFBLOCKED: returncode = scr_Blocked( pstate, pbdl_ai ); break;
+                case FIFTARGETISDEFENDING: returncode = scr_TargetIsDefending( pstate, pbdl_ai ); break;
+                case FIFTARGETISATTACKING: returncode = scr_TargetIsAttacking( pstate, pbdl_ai ); break;
+                case FIFSTATEIS0: returncode = scr_StateIs0( pstate, pbdl_ai ); break;
+                case FIFSTATEIS1: returncode = scr_StateIs1( pstate, pbdl_ai ); break;
+                case FIFSTATEIS2: returncode = scr_StateIs2( pstate, pbdl_ai ); break;
+                case FIFSTATEIS3: returncode = scr_StateIs3( pstate, pbdl_ai ); break;
+                case FIFSTATEIS4: returncode = scr_StateIs4( pstate, pbdl_ai ); break;
+                case FIFSTATEIS5: returncode = scr_StateIs5( pstate, pbdl_ai ); break;
+                case FIFSTATEIS6: returncode = scr_StateIs6( pstate, pbdl_ai ); break;
+                case FIFSTATEIS7: returncode = scr_StateIs7( pstate, pbdl_ai ); break;
+                case FIFCONTENTIS: returncode = scr_ContentIs( pstate, pbdl_ai ); break;
+                case FSETTURNMODETOWATCHTARGET: returncode = scr_set_TurnModeToWatchTarget( pstate, pbdl_ai ); break;
+                case FIFSTATEISNOT: returncode = scr_StateIsNot( pstate, pbdl_ai ); break;
+                case FIFXISEQUALTOY: returncode = scr_XIsEqualToY( pstate, pbdl_ai ); break;
+                case FDEBUGMESSAGE: returncode = scr_DebugMessage( pstate, pbdl_ai ); break;
+                case FBLACKTARGET: returncode = scr_BlackTarget( pstate, pbdl_ai ); break;
+                case FSENDMESSAGENEAR: returncode = scr_SendMessageNear( pstate, pbdl_ai ); break;
+                case FIFHITGROUND: returncode = scr_HitGround( pstate, pbdl_ai ); break;
+                case FIFNAMEISKNOWN: returncode = scr_NameIsKnown( pstate, pbdl_ai ); break;
+                case FIFUSAGEISKNOWN: returncode = scr_UsageIsKnown( pstate, pbdl_ai ); break;
+                case FIFHOLDINGITEMID: returncode = scr_HoldingItemID( pstate, pbdl_ai ); break;
+                case FIFHOLDINGRANGEDWEAPON: returncode = scr_HoldingRangedWeapon( pstate, pbdl_ai ); break;
+                case FIFHOLDINGMELEEWEAPON: returncode = scr_HoldingMeleeWeapon( pstate, pbdl_ai ); break;
+                case FIFHOLDINGSHIELD: returncode = scr_HoldingShield( pstate, pbdl_ai ); break;
+                case FIFKURSED: returncode = scr_Kursed( pstate, pbdl_ai ); break;
+                case FIFTARGETISKURSED: returncode = scr_TargetIsKursed( pstate, pbdl_ai ); break;
+                case FIFTARGETISDRESSEDUP: returncode = scr_TargetIsDressedUp( pstate, pbdl_ai ); break;
+                case FIFOVERWATER: returncode = scr_OverWater( pstate, pbdl_ai ); break;
+                case FIFTHROWN: returncode = scr_Thrown( pstate, pbdl_ai ); break;
+                case FMAKENAMEKNOWN: returncode = scr_MakeNameKnown( pstate, pbdl_ai ); break;
+                case FMAKEUSAGEKNOWN: returncode = scr_MakeUsageKnown( pstate, pbdl_ai ); break;
+                case FSTOPTARGETMOVEMENT: returncode = scr_StopTargetMovement( pstate, pbdl_ai ); break;
+                case FSETXY: returncode = scr_set_XY( pstate, pbdl_ai ); break;
+                case FGETXY: returncode = scr_get_XY( pstate, pbdl_ai ); break;
+                case FADDXY: returncode = scr_AddXY( pstate, pbdl_ai ); break;
+                case FMAKEAMMOKNOWN: returncode = scr_MakeAmmoKnown( pstate, pbdl_ai ); break;
+                case FSPAWNATTACHEDPARTICLE: returncode = scr_SpawnAttachedParticle( pstate, pbdl_ai ); break;
+                case FSPAWNEXACTPARTICLE: returncode = scr_SpawnExactParticle( pstate, pbdl_ai ); break;
+                case FACCELERATETARGET: returncode = scr_AccelerateTarget( pstate, pbdl_ai ); break;
+                case FIFDISTANCEISMORETHANTURN: returncode = scr_distanceIsMoreThanTurn( pstate, pbdl_ai ); break;
+                case FIFCRUSHED: returncode = scr_Crushed( pstate, pbdl_ai ); break;
+                case FMAKECRUSHVALID: returncode = scr_MakeCrushValid( pstate, pbdl_ai ); break;
+                case FSETTARGETTOLOWESTTARGET: returncode = scr_set_TargetToLowestTarget( pstate, pbdl_ai ); break;
+                case FIFNOTPUTAWAY: returncode = scr_NotPutAway( pstate, pbdl_ai ); break;
+                case FIFTAKENOUT: returncode = scr_TakenOut( pstate, pbdl_ai ); break;
+                case FIFAMMOOUT: returncode = scr_AmmoOut( pstate, pbdl_ai ); break;
+                case FPLAYSOUNDLOOPED: returncode = scr_PlaySoundLooped( pstate, pbdl_ai ); break;
+                case FSTOPSOUND: returncode = scr_StopSound( pstate, pbdl_ai ); break;
+                case FHEALSELF: returncode = scr_HealSelf( pstate, pbdl_ai ); break;
+                case FEQUIP: returncode = scr_Equip( pstate, pbdl_ai ); break;
+                case FIFTARGETHASITEMIDEQUIPPED: returncode = scr_TargetHasItemIDEquipped( pstate, pbdl_ai ); break;
+                case FSETOWNERTOTARGET: returncode = scr_set_OwnerToTarget( pstate, pbdl_ai ); break;
+                case FSETTARGETTOOWNER: returncode = scr_set_TargetToOwner( pstate, pbdl_ai ); break;
+                case FSETFRAME: returncode = scr_set_Frame( pstate, pbdl_ai ); break;
+                case FBREAKPASSAGE: returncode = scr_BreakPassage( pstate, pbdl_ai ); break;
+                case FSETRELOADTIME: returncode = scr_set_ReloadTime( pstate, pbdl_ai ); break;
+                case FSETTARGETTOWIDEBLAHID: returncode = scr_set_TargetToWideBlahID( pstate, pbdl_ai ); break;
+                case FPOOFTARGET: returncode = scr_PoofTarget( pstate, pbdl_ai ); break;
+                case FCHILDDOACTIONOVERRIDE: returncode = scr_ChildDoActionOverride( pstate, pbdl_ai ); break;
+                case FSPAWNPOOF: returncode = scr_SpawnPoof( pstate, pbdl_ai ); break;
+                case FSETSPEEDPERCENT: returncode = scr_set_SpeedPercent( pstate, pbdl_ai ); break;
+                case FSETCHILDSTATE: returncode = scr_set_ChildState( pstate, pbdl_ai ); break;
+                case FSPAWNATTACHEDSIZEDPARTICLE: returncode = scr_SpawnAttachedSizedParticle( pstate, pbdl_ai ); break;
+                case FCHANGEARMOR: returncode = scr_ChangeArmor( pstate, pbdl_ai ); break;
+                case FSHOWTIMER: returncode = scr_ShowTimer( pstate, pbdl_ai ); break;
+                case FIFFACINGTARGET: returncode = scr_FacingTarget( pstate, pbdl_ai ); break;
+                case FPLAYSOUNDVOLUME: returncode = scr_PlaySoundVolume( pstate, pbdl_ai ); break;
+                case FSPAWNATTACHEDFACEDPARTICLE: returncode = scr_SpawnAttachedFacedParticle( pstate, pbdl_ai ); break;
+                case FIFSTATEISODD: returncode = scr_StateIsOdd( pstate, pbdl_ai ); break;
+                case FSETTARGETTODISTANTENEMY: returncode = scr_set_TargetToDistantEnemy( pstate, pbdl_ai ); break;
+                case FTELEPORT: returncode = scr_Teleport( pstate, pbdl_ai ); break;
+                case FGIVESTRENGTHTOTARGET: returncode = scr_GiveStrengthToTarget( pstate, pbdl_ai ); break;
+                case FGIVEWISDOMTOTARGET: returncode = scr_GiveWisdomToTarget( pstate, pbdl_ai ); break;
+                case FGIVEINTELLIGENCETOTARGET: returncode = scr_GiveIntelligenceToTarget( pstate, pbdl_ai ); break;
+                case FGIVEDEXTERITYTOTARGET: returncode = scr_GiveDexterityToTarget( pstate, pbdl_ai ); break;
+                case FGIVELIFETOTARGET: returncode = scr_GiveLifeToTarget( pstate, pbdl_ai ); break;
+                case FGIVEMANATOTARGET: returncode = scr_GiveManaToTarget( pstate, pbdl_ai ); break;
+                case FSHOWMAP: returncode = scr_ShowMap( pstate, pbdl_ai ); break;
+                case FSHOWYOUAREHERE: returncode = scr_ShowYouAreHere( pstate, pbdl_ai ); break;
+                case FSHOWBLIPXY: returncode = scr_ShowBlipXY( pstate, pbdl_ai ); break;
+                case FHEALTARGET: returncode = scr_HealTarget( pstate, pbdl_ai ); break;
+                case FPUMPTARGET: returncode = scr_PumpTarget( pstate, pbdl_ai ); break;
+                case FCOSTAMMO: returncode = scr_CostAmmo( pstate, pbdl_ai ); break;
+                case FMAKESIMILARNAMESKNOWN: returncode = scr_MakeSimilarNamesKnown( pstate, pbdl_ai ); break;
+                case FSPAWNATTACHEDHOLDERPARTICLE: returncode = scr_SpawnAttachedHolderParticle( pstate, pbdl_ai ); break;
+                case FSETTARGETRELOADTIME: returncode = scr_set_TargetReloadTime( pstate, pbdl_ai ); break;
+                case FSETFOGLEVEL: returncode = scr_set_FogLevel( pstate, pbdl_ai ); break;
+                case FGETFOGLEVEL: returncode = scr_get_FogLevel( pstate, pbdl_ai ); break;
+                case FSETFOGTAD: returncode = scr_set_FogTAD( pstate, pbdl_ai ); break;
+                case FSETFOGBOTTOMLEVEL: returncode = scr_set_FogBottomLevel( pstate, pbdl_ai ); break;
+                case FGETFOGBOTTOMLEVEL: returncode = scr_get_FogBottomLevel( pstate, pbdl_ai ); break;
+                case FCORRECTACTIONFORHAND: returncode = scr_CorrectActionForHand( pstate, pbdl_ai ); break;
+                case FIFTARGETISMOUNTED: returncode = scr_TargetIsMounted( pstate, pbdl_ai ); break;
+                case FSPARKLEICON: returncode = scr_SparkleIcon( pstate, pbdl_ai ); break;
+                case FUNSPARKLEICON: returncode = scr_UnsparkleIcon( pstate, pbdl_ai ); break;
+                case FGETTILEXY: returncode = scr_get_TileXY( pstate, pbdl_ai ); break;
+                case FSETTILEXY: returncode = scr_set_TileXY( pstate, pbdl_ai ); break;
+                case FSETSHADOWSIZE: returncode = scr_set_ShadowSize( pstate, pbdl_ai ); break;
+                case FORDERTARGET: returncode = scr_OrderTarget( pstate, pbdl_ai ); break;
+                case FSETTARGETTOWHOEVERISINPASSAGE: returncode = scr_set_TargetToWhoeverIsInPassage( pstate, pbdl_ai ); break;
+                case FIFCHARACTERWASABOOK: returncode = scr_CharacterWasABook( pstate, pbdl_ai ); break;
+                case FSETENCHANTBOOSTVALUES: returncode = scr_set_EnchantBoostValues( pstate, pbdl_ai ); break;
+                case FSPAWNCHARACTERXYZ: returncode = scr_SpawnCharacterXYZ( pstate, pbdl_ai ); break;
+                case FSPAWNEXACTCHARACTERXYZ: returncode = scr_SpawnExactCharacterXYZ( pstate, pbdl_ai ); break;
+                case FCHANGETARGETCLASS: returncode = scr_ChangeTargetClass( pstate, pbdl_ai ); break;
+                case FPLAYFULLSOUND: returncode = scr_PlayFullSound( pstate, pbdl_ai ); break;
+                case FSPAWNEXACTCHASEPARTICLE: returncode = scr_SpawnExactChaseParticle( pstate, pbdl_ai ); break;
+                case FCREATEORDER: returncode = scr_CreateOrder( pstate, pbdl_ai ); break;
+                case FORDERSPECIALID: returncode = scr_OrderSpecialID( pstate, pbdl_ai ); break;
+                case FUNKURSETARGETINVENTORY: returncode = scr_UnkurseTargetInventory( pstate, pbdl_ai ); break;
+                case FIFTARGETISSNEAKING: returncode = scr_TargetIsSneaking( pstate, pbdl_ai ); break;
+                case FDROPITEMS: returncode = scr_DropItems( pstate, pbdl_ai ); break;
+                case FRESPAWNTARGET: returncode = scr_RespawnTarget( pstate, pbdl_ai ); break;
+                case FTARGETDOACTIONSETFRAME: returncode = scr_TargetDoActionSetFrame( pstate, pbdl_ai ); break;
+                case FIFTARGETCANSEEINVISIBLE: returncode = scr_TargetCanSeeInvisible( pstate, pbdl_ai ); break;
+                case FSETTARGETTONEARESTBLAHID: returncode = scr_set_TargetToNearestBlahID( pstate, pbdl_ai ); break;
+                case FSETTARGETTONEARESTENEMY: returncode = scr_set_TargetToNearestEnemy( pstate, pbdl_ai ); break;
+                case FSETTARGETTONEARESTFRIEND: returncode = scr_set_TargetToNearestFriend( pstate, pbdl_ai ); break;
+                case FSETTARGETTONEARESTLIFEFORM: returncode = scr_set_TargetToNearestLifeform( pstate, pbdl_ai ); break;
+                case FFLASHPASSAGE: returncode = scr_FlashPassage( pstate, pbdl_ai ); break;
+                case FFINDTILEINPASSAGE: returncode = scr_FindTileInPassage( pstate, pbdl_ai ); break;
+                case FIFHELDINLEFTHAND: returncode = scr_HeldInLeftHand( pstate, pbdl_ai ); break;
+                case FNOTANITEM: returncode = scr_NotAnItem( pstate, pbdl_ai ); break;
+                case FSETCHILDAMMO: returncode = scr_set_ChildAmmo( pstate, pbdl_ai ); break;
+                case FIFHITVULNERABLE: returncode = scr_HitVulnerable( pstate, pbdl_ai ); break;
+                case FIFTARGETISFLYING: returncode = scr_TargetIsFlying( pstate, pbdl_ai ); break;
+                case FIDENTIFYTARGET: returncode = scr_IdentifyTarget( pstate, pbdl_ai ); break;
+                case FBEATMODULE: returncode = scr_BeatModule( pstate, pbdl_ai ); break;
+                case FENDMODULE: returncode = scr_EndModule( pstate, pbdl_ai ); break;
+                case FDISABLEEXPORT: returncode = scr_DisableExport( pstate, pbdl_ai ); break;
+                case FENABLEEXPORT: returncode = scr_EnableExport( pstate, pbdl_ai ); break;
+                case FGETTARGETSTATE: returncode = scr_get_TargetState( pstate, pbdl_ai ); break;
+                case FIFEQUIPPED: returncode = scr_Equipped( pstate, pbdl_ai ); break;
+                case FDROPTARGETMONEY: returncode = scr_DropTargetMoney( pstate, pbdl_ai ); break;
+                case FGETTARGETCONTENT: returncode = scr_get_TargetContent( pstate, pbdl_ai ); break;
+                case FDROPTARGETKEYS: returncode = scr_DropTargetKeys( pstate, pbdl_ai ); break;
+                case FJOINTEAM: returncode = scr_JoinTeam( pstate, pbdl_ai ); break;
+                case FTARGETJOINTEAM: returncode = scr_TargetJoinTeam( pstate, pbdl_ai ); break;
+                case FCLEARMUSICPASSAGE: returncode = scr_ClearMusicPassage( pstate, pbdl_ai ); break;
+                case FCLEARENDMESSAGE: returncode = scr_ClearEndMessage( pstate, pbdl_ai ); break;
+                case FADDENDMESSAGE: returncode = scr_AddEndMessage( pstate, pbdl_ai ); break;
+                case FPLAYMUSIC: returncode = scr_PlayMusic( pstate, pbdl_ai ); break;
+                case FSETMUSICPASSAGE: returncode = scr_set_MusicPassage( pstate, pbdl_ai ); break;
+                case FMAKECRUSHINVALID: returncode = scr_MakeCrushInvalid( pstate, pbdl_ai ); break;
+                case FSTOPMUSIC: returncode = scr_StopMusic( pstate, pbdl_ai ); break;
+                case FFLASHVARIABLE: returncode = scr_FlashVariable( pstate, pbdl_ai ); break;
+                case FACCELERATEUP: returncode = scr_AccelerateUp( pstate, pbdl_ai ); break;
+                case FFLASHVARIABLEHEIGHT: returncode = scr_FlashVariableHeight( pstate, pbdl_ai ); break;
+                case FSETDAMAGETIME: returncode = scr_set_DamageTime( pstate, pbdl_ai ); break;
+                case FIFSTATEIS8: returncode = scr_StateIs8( pstate, pbdl_ai ); break;
+                case FIFSTATEIS9: returncode = scr_StateIs9( pstate, pbdl_ai ); break;
+                case FIFSTATEIS10: returncode = scr_StateIs10( pstate, pbdl_ai ); break;
+                case FIFSTATEIS11: returncode = scr_StateIs11( pstate, pbdl_ai ); break;
+                case FIFSTATEIS12: returncode = scr_StateIs12( pstate, pbdl_ai ); break;
+                case FIFSTATEIS13: returncode = scr_StateIs13( pstate, pbdl_ai ); break;
+                case FIFSTATEIS14: returncode = scr_StateIs14( pstate, pbdl_ai ); break;
+                case FIFSTATEIS15: returncode = scr_StateIs15( pstate, pbdl_ai ); break;
+                case FIFTARGETISAMOUNT: returncode = scr_TargetIsAMount( pstate, pbdl_ai ); break;
+                case FIFTARGETISAPLATFORM: returncode = scr_TargetIsAPlatform( pstate, pbdl_ai ); break;
+                case FADDSTAT: returncode = scr_AddStat( pstate, pbdl_ai ); break;
+                case FDISENCHANTTARGET: returncode = scr_DisenchantTarget( pstate, pbdl_ai ); break;
+                case FDISENCHANTALL: returncode = scr_DisenchantAll( pstate, pbdl_ai ); break;
+                case FSETVOLUMENEARESTTEAMMATE: returncode = scr_set_VolumeNearestTeammate( pstate, pbdl_ai ); break;
+                case FADDSHOPPASSAGE: returncode = scr_AddShopPassage( pstate, pbdl_ai ); break;
+                case FTARGETPAYFORARMOR: returncode = scr_TargetPayForArmor( pstate, pbdl_ai ); break;
+                case FJOINEVILTEAM: returncode = scr_JoinEvilTeam( pstate, pbdl_ai ); break;
+                case FJOINNULLTEAM: returncode = scr_JoinNullTeam( pstate, pbdl_ai ); break;
+                case FJOINGOODTEAM: returncode = scr_JoinGoodTeam( pstate, pbdl_ai ); break;
+                case FPITSKILL: returncode = scr_PitsKill( pstate, pbdl_ai ); break;
+                case FSETTARGETTOPASSAGEID: returncode = scr_set_TargetToPassageID( pstate, pbdl_ai ); break;
+                case FMAKENAMEUNKNOWN: returncode = scr_MakeNameUnknown( pstate, pbdl_ai ); break;
+                case FSPAWNEXACTPARTICLEENDSPAWN: returncode = scr_SpawnExactParticleEndSpawn( pstate, pbdl_ai ); break;
+                case FSPAWNPOOFSPEEDSPACINGDAMAGE: returncode = scr_SpawnPoofSpeedSpacingDamage( pstate, pbdl_ai ); break;
+                case FGIVEEXPERIENCETOGOODTEAM: returncode = scr_GiveExperienceToGoodTeam( pstate, pbdl_ai ); break;
+                case FDONOTHING: returncode = scr_DoNothing( pstate, pbdl_ai ); break;
+                case FGROGTARGET: returncode = scr_GrogTarget( pstate, pbdl_ai ); break;
+                case FDAZETARGET: returncode = scr_DazeTarget( pstate, pbdl_ai ); break;
+                case FENABLERESPAWN: returncode = scr_EnableRespawn( pstate, pbdl_ai ); break;
+                case FDISABLERESPAWN: returncode = scr_DisableRespawn( pstate, pbdl_ai ); break;
+                case FDISPELTARGETENCHANTID: returncode = scr_DispelTargetEnchantID( pstate, pbdl_ai ); break;
+                case FIFHOLDERBLOCKED: returncode = scr_HolderBlocked( pstate, pbdl_ai ); break;
+                    // case FGETSKILLLEVEL: returncode = scr_get_SkillLevel( pstate, pbdl_ai ); break;
+                case FIFTARGETHASNOTFULLMANA: returncode = scr_TargetHasNotFullMana( pstate, pbdl_ai ); break;
+                case FENABLELISTENSKILL: returncode = scr_EnableListenSkill( pstate, pbdl_ai ); break;
+                case FSETTARGETTOLASTITEMUSED: returncode = scr_set_TargetToLastItemUsed( pstate, pbdl_ai ); break;
+                case FFOLLOWLINK: returncode = scr_FollowLink( pstate, pbdl_ai ); break;
+                case FIFOPERATORISLINUX: returncode = scr_OperatorIsLinux( pstate, pbdl_ai ); break;
+                case FIFTARGETISAWEAPON: returncode = scr_TargetIsAWeapon( pstate, pbdl_ai ); break;
+                case FIFSOMEONEISSTEALING: returncode = scr_SomeoneIsStealing( pstate, pbdl_ai ); break;
+                case FIFTARGETISASPELL: returncode = scr_TargetIsASpell( pstate, pbdl_ai ); break;
+                case FIFBACKSTABBED: returncode = scr_Backstabbed( pstate, pbdl_ai ); break;
+                case FGETTARGETDAMAGETYPE: returncode = scr_get_TargetDamageType( pstate, pbdl_ai ); break;
+                case FADDQUEST: returncode = scr_AddQuest( pstate, pbdl_ai ); break;
+                case FBEATQUESTALLPLAYERS: returncode = scr_BeatQuestAllPlayers( pstate, pbdl_ai ); break;
+                case FIFTARGETHASQUEST: returncode = scr_TargetHasQuest( pstate, pbdl_ai ); break;
+                case FSETQUESTLEVEL: returncode = scr_set_QuestLevel( pstate, pbdl_ai ); break;
+                case FADDQUESTALLPLAYERS: returncode = scr_AddQuestAllPlayers( pstate, pbdl_ai ); break;
+                case FADDBLIPALLENEMIES: returncode = scr_AddBlipAllEnemies( pstate, pbdl_ai ); break;
+                case FPITSFALL: returncode = scr_PitsFall( pstate, pbdl_ai ); break;
+                case FIFTARGETISOWNER: returncode = scr_TargetIsOwner( pstate, pbdl_ai ); break;
+                case FEND: returncode = scr_End( pstate, pbdl_ai ); break;
 
-                case FSETSPEECH:           returncode = scr_set_Speech( pstate, pself );           break;
-                case FSETMOVESPEECH:       returncode = scr_set_MoveSpeech( pstate, pself );       break;
-                case FSETSECONDMOVESPEECH: returncode = scr_set_SecondMoveSpeech( pstate, pself ); break;
-                case FSETATTACKSPEECH:     returncode = scr_set_AttackSpeech( pstate, pself );     break;
-                case FSETASSISTSPEECH:     returncode = scr_set_AssistSpeech( pstate, pself );     break;
-                case FSETTERRAINSPEECH:    returncode = scr_set_TerrainSpeech( pstate, pself );    break;
-                case FSETSELECTSPEECH:     returncode = scr_set_SelectSpeech( pstate, pself );     break;
+                case FSETSPEECH:           returncode = scr_set_Speech( pstate, pbdl_ai );           break;
+                case FSETMOVESPEECH:       returncode = scr_set_MoveSpeech( pstate, pbdl_ai );       break;
+                case FSETSECONDMOVESPEECH: returncode = scr_set_SecondMoveSpeech( pstate, pbdl_ai ); break;
+                case FSETATTACKSPEECH:     returncode = scr_set_AttackSpeech( pstate, pbdl_ai );     break;
+                case FSETASSISTSPEECH:     returncode = scr_set_AssistSpeech( pstate, pbdl_ai );     break;
+                case FSETTERRAINSPEECH:    returncode = scr_set_TerrainSpeech( pstate, pbdl_ai );    break;
+                case FSETSELECTSPEECH:     returncode = scr_set_SelectSpeech( pstate, pbdl_ai );     break;
 
-                case FTAKEPICTURE:           returncode = scr_TakePicture( pstate, pself );         break;
-                case FIFOPERATORISMACINTOSH: returncode = scr_OperatorIsMacintosh( pstate, pself ); break;
-                case FIFMODULEHASIDSZ:       returncode = scr_ModuleHasIDSZ( pstate, pself );       break;
-                case FMORPHTOTARGET:         returncode = scr_MorphToTarget( pstate, pself );       break;
-                case FGIVEMANAFLOWTOTARGET:  returncode = scr_GiveManaFlowToTarget( pstate, pself ); break;
-                case FGIVEMANARETURNTOTARGET:returncode = scr_GiveManaReturnToTarget( pstate, pself ); break;
-                case FSETMONEY:              returncode = scr_set_Money( pstate, pself );           break;
-                case FIFTARGETCANSEEKURSES:  returncode = scr_TargetCanSeeKurses( pstate, pself );  break;
-                case FSPAWNATTACHEDCHARACTER:returncode = scr_SpawnAttachedCharacter( pstate, pself ); break;
-                case FKURSETARGET:           returncode = scr_KurseTarget( pstate, pself );            break;
-                case FSETCHILDCONTENT:       returncode = scr_set_ChildContent( pstate, pself );    break;
-                case FSETTARGETTOCHILD:      returncode = scr_set_TargetToChild( pstate, pself );   break;
-                case FSETDAMAGETHRESHOLD:     returncode = scr_set_DamageThreshold( pstate, pself );   break;
-                case FACCELERATETARGETUP:    returncode = scr_AccelerateTargetUp( pstate, pself ); break;
-                case FSETTARGETAMMO:         returncode = scr_set_TargetAmmo( pstate, pself ); break;
-                case FENABLEINVICTUS:        returncode = scr_EnableInvictus( pstate, pself ); break;
-                case FDISABLEINVICTUS:       returncode = scr_DisableInvictus( pstate, pself ); break;
-                case FTARGETDAMAGESELF:      returncode = scr_TargetDamageSelf( pstate, pself ); break;
-                case FSETTARGETSIZE:         returncode = scr_SetTargetSize( pstate, pself ); break;
-                case FIFTARGETISFACINGSELF:  returncode = scr_TargetIsFacingSelf( pstate, pself ); break;
-                case FDRAWBILLBOARD:         returncode = scr_DrawBillboard( pstate, pself ); break;
-				case FSETTARGETTOFIRSTBLAHINPASSAGE: returncode = scr_set_TargetToBlahInPassage( pstate, pself ); break;
-                
+                case FTAKEPICTURE:           returncode = scr_TakePicture( pstate, pbdl_ai );         break;
+                case FIFOPERATORISMACINTOSH: returncode = scr_OperatorIsMacintosh( pstate, pbdl_ai ); break;
+                case FIFMODULEHASIDSZ:       returncode = scr_ModuleHasIDSZ( pstate, pbdl_ai );       break;
+                case FMORPHTOTARGET:         returncode = scr_MorphToTarget( pstate, pbdl_ai );       break;
+                case FGIVEMANAFLOWTOTARGET:  returncode = scr_GiveManaFlowToTarget( pstate, pbdl_ai ); break;
+                case FGIVEMANARETURNTOTARGET:returncode = scr_GiveManaReturnToTarget( pstate, pbdl_ai ); break;
+                case FSETMONEY:              returncode = scr_set_Money( pstate, pbdl_ai );           break;
+                case FIFTARGETCANSEEKURSES:  returncode = scr_TargetCanSeeKurses( pstate, pbdl_ai );  break;
+                case FSPAWNATTACHEDCHARACTER:returncode = scr_SpawnAttachedCharacter( pstate, pbdl_ai ); break;
+                case FKURSETARGET:           returncode = scr_KurseTarget( pstate, pbdl_ai );            break;
+                case FSETCHILDCONTENT:       returncode = scr_set_ChildContent( pstate, pbdl_ai );    break;
+                case FSETTARGETTOCHILD:      returncode = scr_set_TargetToChild( pstate, pbdl_ai );   break;
+                case FSETDAMAGETHRESHOLD:     returncode = scr_set_DamageThreshold( pstate, pbdl_ai );   break;
+                case FACCELERATETARGETUP:    returncode = scr_AccelerateTargetUp( pstate, pbdl_ai ); break;
+                case FSETTARGETAMMO:         returncode = scr_set_TargetAmmo( pstate, pbdl_ai ); break;
+                case FENABLEINVICTUS:        returncode = scr_EnableInvictus( pstate, pbdl_ai ); break;
+                case FDISABLEINVICTUS:       returncode = scr_DisableInvictus( pstate, pbdl_ai ); break;
+                case FTARGETDAMAGESELF:      returncode = scr_TargetDamageSelf( pstate, pbdl_ai ); break;
+                case FSETTARGETSIZE:         returncode = scr_SetTargetSize( pstate, pbdl_ai ); break;
+                case FIFTARGETISFACINGSELF:  returncode = scr_TargetIsFacingSelf( pstate, pbdl_ai ); break;
+                case FDRAWBILLBOARD:         returncode = scr_DrawBillboard( pstate, pbdl_ai ); break;
+                case FSETTARGETTOFIRSTBLAHINPASSAGE: returncode = scr_set_TargetToBlahInPassage( pstate, pbdl_ai ); break;
+
                 // if none of the above, skip the line and log an error
                 default:
                     log_message( "SCRIPT ERROR: scr_run_function() - ai script %d - unhandled script function %d\n", pself->type, valuecode );
@@ -881,7 +924,7 @@ void scr_set_operand( script_state_t * pstate, Uint8 variable )
 }
 
 //--------------------------------------------------------------------------------------------
-void scr_run_operand( script_state_t * pstate, ai_state_t * pself )
+void scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
 {
     /// @details ZZ@> This function does the scripted arithmetic in OPERATOR, OPERAND pairs
 
@@ -894,9 +937,15 @@ void scr_run_operand( script_state_t * pstate, ai_state_t * pself )
     Uint32 iTmp;
 
     chr_t * pchr = NULL, * ptarget = NULL, * powner = NULL;
+    ai_state_t * pself;
 
-    if( !DEFINED_CHR( pself->index) ) return;
-    pchr = ChrList.lst + pself->index;
+    if( NULL == pstate || NULL == pbdl_ai || NULL == pbdl_ai->ai_state_ptr ) return;
+
+    if( !DEFINED_CHR( pbdl_ai->chr_ref ) ) return;
+
+    // use an alias to make the notation easier
+    pchr  = pbdl_ai->chr_ptr;
+    pself = pbdl_ai->ai_state_ptr;
 
     if( DEFINED_CHR( pself->target ) )
     {
@@ -1008,7 +1057,7 @@ void scr_run_operand( script_state_t * pstate, ai_state_t * pself )
                 }
                 else
                 {
-                    iTmp = ABS(ptarget->pos.x - pchr->pos.x ) + ABS( ptarget->pos.y - pchr->pos.y );
+                    iTmp = fvec2_dist_abs(ptarget->pos.v, pchr->pos.v );
                 }
                 break;
 
@@ -1046,7 +1095,7 @@ void scr_run_operand( script_state_t * pstate, ai_state_t * pself )
                     }
                     else
                     {
-                        iTmp = ABS( pleader->pos.x - pchr->pos.x ) + ABS( pleader->pos.y - pchr->pos.y );
+                        iTmp = fvec2_dist_abs( pleader->pos.v, pchr->pos.v );
                     }
                 }
                 break;
@@ -1130,17 +1179,17 @@ void scr_run_operand( script_state_t * pstate, ai_state_t * pself )
 
             case VARSELFALTITUDE:
                 varname = "SELFALTITUDE";
-                iTmp = pchr->pos.z - pchr->enviro.floor_level;
+                iTmp = pchr->pos.z - pchr->enviro.grid_level;
                 break;
 
             case VARSELFID:
                 varname = "SELFID";
-                iTmp = chr_get_idsz( pself->index, IDSZ_TYPE );
+                iTmp = chr_get_idsz( pbdl_ai->chr_ref, IDSZ_TYPE );
                 break;
 
             case VARSELFHATEID:
                 varname = "SELFHATEID";
-                iTmp = chr_get_idsz( pself->index, IDSZ_HATE );
+                iTmp = chr_get_idsz( pbdl_ai->chr_ref, IDSZ_HATE );
                 break;
 
             case VARSELFMANA:
@@ -1261,7 +1310,7 @@ void scr_run_operand( script_state_t * pstate, ai_state_t * pself )
 
             case VARSELFATTACHED:
                 varname = "SELFATTACHED";
-                iTmp = number_of_attached_particles( pself->index );
+                iTmp = number_of_attached_particles( pbdl_ai->chr_ref );
                 break;
 
             case VARSWINGTURN:
@@ -1281,7 +1330,7 @@ void scr_run_operand( script_state_t * pstate, ai_state_t * pself )
 
             case VARTARGETALTITUDE:
                 varname = "TARGETALTITUDE";
-                iTmp = (NULL == ptarget) ? 0 : ptarget->pos.z - ptarget->enviro.floor_level;
+                iTmp = (NULL == ptarget) ? 0 : ptarget->pos.z - ptarget->enviro.grid_level;
                 break;
 
             case VARTARGETZ:
@@ -1291,7 +1340,7 @@ void scr_run_operand( script_state_t * pstate, ai_state_t * pself )
 
             case VARSELFINDEX:
                 varname = "SELFINDEX";
-                iTmp = REF_TO_INT( pself->index );
+                iTmp = REF_TO_INT( pbdl_ai->chr_ref );
                 break;
 
             case VAROWNERX:
@@ -1317,7 +1366,7 @@ void scr_run_operand( script_state_t * pstate, ai_state_t * pself )
                 }
                 else
                 {
-                    iTmp = ABS( powner->pos.x - pchr->pos.x ) + ABS( powner->pos.y - pchr->pos.y );
+                    iTmp = fvec2_dist_abs( powner->pos.v, pchr->pos.v );
                 }
                 break;
 
@@ -1395,7 +1444,7 @@ void scr_run_operand( script_state_t * pstate, ai_state_t * pself )
 
             case VARSPAWNDISTANCE:
                 varname = "SPAWNDISTANCE";
-                iTmp = ABS( pchr->pos_stt.x - pchr->pos.x ) + ABS( pchr->pos_stt.y - pchr->pos.y );
+                iTmp = fvec2_dist_abs( pchr->pos_stt.v, pchr->pos.v );
                 break;
 
             case VARTARGETMAXLIFE:
@@ -1520,6 +1569,7 @@ void scr_run_operand( script_state_t * pstate, ai_state_t * pself )
     }
 }
 
+//--------------------------------------------------------------------------------------------
 bool_t scr_increment_exe( ai_state_t * pself )
 {
     if ( NULL == pself ) return bfalse;
@@ -1584,16 +1634,24 @@ bool_t waypoint_list_peek( waypoint_list_t * plst, waypoint_t wp )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t waypoint_list_push( waypoint_list_t * plst, int x, int y )
+bool_t waypoint_list_push( waypoint_list_t * plst, float x, float y, float z )
 {
     /// @details BB@> Add a waypoint to the waypoint list
 
+    float level;
+
     if ( NULL == plst ) return bfalse;
+
+    level = 0.0f;
+    if( INVALID_TILE != mesh_get_tile(PMesh, x, y ) )
+    {
+        level = mesh_get_level( PMesh, x, y );
+    }
 
     // add the value
     plst->pos[plst->head][kX] = x;
     plst->pos[plst->head][kY] = y;
-    plst->pos[plst->head][kZ] = 0;
+    plst->pos[plst->head][kZ] = z + level;
 
     // do not let the list overflow
     plst->head++;
@@ -1628,7 +1686,7 @@ bool_t waypoint_list_clear( waypoint_list_t * plst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t waypoint_list_empty( waypoint_list_t * plst )
+bool_t waypoint_list_empty( const waypoint_list_t * plst )
 {
     if ( NULL == plst ) return btrue;
 
@@ -1636,7 +1694,7 @@ bool_t waypoint_list_empty( waypoint_list_t * plst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t waypoint_list_finished( waypoint_list_t * plst )
+bool_t waypoint_list_finished( const waypoint_list_t * plst )
 {
     if ( NULL == plst || 0 == plst->head ) return btrue;
 
@@ -1695,20 +1753,27 @@ bool_t ai_state_ensure_wp( ai_state_t * pself )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void set_alerts( const CHR_REF by_reference character )
+void set_alerts( ai_state_bundle_t * pbdl_ai )
 {
     /// @details ZZ@> This function polls some alert conditions
 
-    chr_t      * pchr;
-    ai_state_t * pai;
-    bool_t at_waypoint;
+    chr_t           * pchr;
+    ai_state_t      * pself;
+    waypoint_list_t * pwaypoints;
+    bool_t            at_waypoint;
+
+    // if the bundle does not exist, return
+    if( NULL == pbdl_ai ) return;
 
     // invalid characters do not think
-    if ( !INGAME_CHR( character ) ) return;
-    pchr = ChrList.lst + character;
-    pai  = chr_get_pai( character );
+    if ( NULL == pbdl_ai || !INGAME_CHR( pbdl_ai->chr_ref ) ) return;
 
-    if ( waypoint_list_empty( &( pai->wp_lst ) ) ) return;
+    // use aliases to make the notation easier
+    pself      = pbdl_ai->ai_state_ptr;
+    pchr       = pbdl_ai->chr_ptr;
+    pwaypoints = &( pself->wp_lst );
+
+    if ( waypoint_list_empty( pwaypoints ) ) return;
 
     // let's let mounts get alert updates...
     // imagine a mount, like a racecar, that needs to make sure that it follows X
@@ -1718,40 +1783,40 @@ void set_alerts( const CHR_REF by_reference character )
     // if ( INGAME_CHR(pchr->attachedto) ) return;
 
     // is the current waypoint is not valid, try to load up the top waypoint
-    ai_state_ensure_wp( pai );
+    ai_state_ensure_wp( pself );
 
     at_waypoint = bfalse;
-    if ( pai->wp_valid )
+    if ( pself->wp_valid )
     {
-        at_waypoint = ( ABS( pchr->pos.x - pai->wp[kX] ) < WAYTHRESH ) &&
-                      ( ABS( pchr->pos.y - pai->wp[kY] ) < WAYTHRESH );
+        at_waypoint = ( ABS( pchr->pos.x - pself->wp[kX] ) < WAYTHRESH ) &&
+                      ( ABS( pchr->pos.y - pself->wp[kY] ) < WAYTHRESH );
     }
 
     if ( at_waypoint )
     {
-        SET_BIT( pai->alert, ALERTIF_ATWAYPOINT );
+        ADD_BITS( pself->alert, ALERTIF_ATWAYPOINT );
 
-        if ( waypoint_list_finished( &( pai->wp_lst ) ) )
+        if ( waypoint_list_finished( pwaypoints ) )
         {
             // we are now at the last waypoint
             // if the object can be alerted to last waypoint, do it
             // this test needs to be done because the ALERTIF_ATLASTWAYPOINT
             // doubles for "at last waypoint" and "not put away"
-            if ( !chr_get_pcap( character )->isequipment )
+            if ( !chr_get_pcap( pbdl_ai->chr_ref )->isequipment )
             {
-                SET_BIT( pai->alert, ALERTIF_ATLASTWAYPOINT );
+                ADD_BITS( pself->alert, ALERTIF_ATLASTWAYPOINT );
             }
 
             // !!!!restart the waypoint list, do not clear them!!!!
-            waypoint_list_reset( &( pai->wp_lst ) );
+            waypoint_list_reset( pwaypoints );
 
             // load the top waypoint
-            ai_state_get_wp( pai );
+            ai_state_get_wp( pself );
         }
-        else if ( waypoint_list_advance( &( pai->wp_lst ) ) )
+        else if ( waypoint_list_advance( pwaypoints ) )
         {
             // load the top waypoint
-            ai_state_get_wp( pai );
+            ai_state_get_wp( pself );
         }
     }
 }
@@ -1859,3 +1924,87 @@ ai_state_t * ai_state_dtor( ai_state_t * pself )
     return pself;
 }
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+ai_state_bundle_t * ai_state_bundle_ctor( ai_state_bundle_t * pbundle )
+{
+    if( NULL == pbundle ) return NULL;
+
+    pbundle->ai_state_ref = (REF_T) MAX_AI;
+    pbundle->ai_state_ptr = NULL;
+
+    pbundle->chr_ref = (CHR_REF) MAX_CHR;
+    pbundle->chr_ptr = NULL;
+
+    pbundle->cap_ref = (CAP_REF) MAX_CAP;
+    pbundle->cap_ptr = NULL;
+
+    pbundle->pro_ref = (PRO_REF) MAX_PROFILE;
+    pbundle->pro_ptr = NULL;
+
+    return pbundle;
+}
+
+//--------------------------------------------------------------------------------------------
+ai_state_bundle_t * ai_state_bundle_validate( ai_state_bundle_t * pbundle )
+{
+    if( NULL == pbundle ) return NULL;
+
+    // get the character info from the reference or the pointer
+    if( ALLOCATED_CHR(pbundle->chr_ref) )
+    {
+        pbundle->chr_ptr = ChrList.lst + pbundle->chr_ref;
+    }
+    else if( NULL != pbundle->chr_ptr )
+    {
+        pbundle->chr_ref = GET_REF_PCHR( pbundle->chr_ptr );
+    }
+    else
+    {
+        pbundle->chr_ref = MAX_CHR;
+        pbundle->chr_ptr = NULL;
+    }
+
+    if( NULL == pbundle->chr_ptr ) goto ai_state_bundle_validate_fail;
+
+    // get the profile info
+    pbundle->pro_ref = pbundle->chr_ptr->profile_ref;
+    if( !LOADED_PRO(pbundle->pro_ref) ) goto ai_state_bundle_validate_fail;
+
+    pbundle->pro_ptr = ProList.lst + pbundle->pro_ref;
+
+    // get the cap info
+    pbundle->cap_ref = pbundle->pro_ptr->icap;
+
+    if( !LOADED_CAP(pbundle->cap_ref) ) goto ai_state_bundle_validate_fail;
+    pbundle->cap_ptr = CapStack.lst + pbundle->cap_ref;
+
+    // get the script info
+    pbundle->ai_state_ref = pbundle->chr_ptr->ai.type;
+    pbundle->ai_state_ptr = &(pbundle->chr_ptr->ai);
+
+    return pbundle;
+
+ai_state_bundle_validate_fail:
+
+    return ai_state_bundle_ctor( pbundle );
+}
+
+//--------------------------------------------------------------------------------------------
+ai_state_bundle_t * ai_state_bundle_set( ai_state_bundle_t * pbundle, chr_t * pchr )
+{
+    if( NULL == pbundle ) return NULL;
+
+    // blank out old data
+    pbundle = ai_state_bundle_ctor( pbundle );
+
+    if( NULL == pbundle || NULL == pchr ) return pbundle;
+
+    // set the particle pointer
+    pbundle->chr_ptr = pchr;
+
+    // validate the particle data
+    pbundle = ai_state_bundle_validate( pbundle );
+
+    return pbundle;
+}

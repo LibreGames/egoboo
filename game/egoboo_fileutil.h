@@ -75,7 +75,7 @@ float  fget_float( vfs_FILE * fileread );
 int    fget_damage_type( vfs_FILE * fileread );
 int    fget_next_damage_type( vfs_FILE * fileread );
 bool_t fget_bool( vfs_FILE * fileread );
-Uint8  fget_damage_modifier( vfs_FILE * fileread );
+Uint32 fget_damage_modifier( vfs_FILE * fileread );
 bool_t fget_name( vfs_FILE* fileread,  char *szName, size_t max_len );
 bool_t fget_string( vfs_FILE * fileread, char * str, size_t str_len );
 bool_t fget_range( vfs_FILE* fileread, FRange * prange );

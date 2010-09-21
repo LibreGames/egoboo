@@ -35,7 +35,7 @@ float   airfriction     =  0.91f;
 float   waterfriction   =  0.80f;
 float   noslipfriction  =  0.91f;
 float   gravity         = -1.00f;
-float   platstick       =  0.01f;
+float   platstick       =  0.50f;
 fvec3_t windspeed       = ZERO_VECT3;
 fvec3_t waterspeed      = ZERO_VECT3;
 
@@ -43,6 +43,10 @@ static int breadcrumb_guid = 0;
 
 const float air_friction = 0.9868f;
 const float ice_friction = 0.9738f;  // the square of air_friction
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+static bool_t  phys_apply_normal_acceleration( fvec3_base_t acc, fvec3_base_t nrm, float para_factor, float perp_factor, fvec3_t * pnrm_acc );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -119,7 +123,7 @@ bool_t phys_estimate_chr_chr_normal( oct_vec_t opos_a, oct_vec_t opos_b, oct_vec
     }
 
     retval = bfalse;
-    if ( ABS( nrm[kX] ) + ABS( nrm[kY] ) + ABS( nrm[kZ] ) > 0.0f )
+    if ( fvec3_length_abs( nrm ) > 0.0f )
     {
         fvec3_t vtmp = fvec3_normalize( nrm );
         memcpy( nrm, vtmp.v, sizeof( fvec3_base_t ) );
@@ -130,10 +134,10 @@ bool_t phys_estimate_chr_chr_normal( oct_vec_t opos_a, oct_vec_t opos_b, oct_vec
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv oct_bb_intersect_index( int index, oct_bb_t src1, oct_vec_t opos1, oct_vec_t ovel1, oct_bb_t src2, oct_vec_t opos2, oct_vec_t ovel2, int test_platform, float *tmin, float *tmax )
+egoboo_rv oct_bb_intersect_index( int index, oct_bb_t src1, oct_vec_t opos1, oct_vec_t ovel1, oct_bb_t src2, oct_vec_t opos2, oct_vec_t ovel2, float *tmin, float *tmax )
 {
-    float tolerance1, tolerance2;
     float diff;
+    float time[4];
 
     if ( NULL == tmin || NULL == tmax ) return rv_error;
 
@@ -142,56 +146,13 @@ egoboo_rv oct_bb_intersect_index( int index, oct_bb_t src1, oct_vec_t opos1, oct
     diff = ovel2[index] - ovel1[index];
     if ( diff == 0.0f ) return rv_fail;
 
-    tolerance1 = (( OCT_Z == index ) && ( test_platform & PHYS_PLATFORM_OBJ1 ) ) ? PLATTOLERANCE : 0.0f;
-    tolerance2 = (( OCT_Z == index ) && ( test_platform & PHYS_PLATFORM_OBJ2 ) ) ? PLATTOLERANCE : 0.0f;
+    time[0] = (( src1.mins[index] + opos1[index] ) - ( src2.mins[index] + opos2[index] ) ) / diff;
+    time[1] = (( src1.mins[index] + opos1[index] ) - ( src2.maxs[index] + opos2[index] ) ) / diff;
+    time[2] = (( src1.maxs[index] + opos1[index] ) - ( src2.mins[index] + opos2[index] ) ) / diff;
+    time[3] = (( src1.maxs[index] + opos1[index] ) - ( src2.maxs[index] + opos2[index] ) ) / diff;
 
-    if ( 0.0f == tolerance1 && 0.0f == tolerance2 )
-    {
-        float time[4];
-
-        time[0] = (( src1.mins[index] + opos1[index] ) - ( src2.mins[index] + opos2[index] ) ) / diff;
-        time[1] = (( src1.mins[index] + opos1[index] ) - ( src2.maxs[index] + opos2[index] ) ) / diff;
-        time[2] = (( src1.maxs[index] + opos1[index] ) - ( src2.mins[index] + opos2[index] ) ) / diff;
-        time[3] = (( src1.maxs[index] + opos1[index] ) - ( src2.maxs[index] + opos2[index] ) ) / diff;
-
-        *tmin = MIN( MIN( time[0], time[1] ), MIN( time[2], time[3] ) );
-        *tmax = MAX( MAX( time[0], time[1] ), MAX( time[2], time[3] ) );
-    }
-    else if ( tolerance1 > 0.0f && tolerance2 > 0.0f )
-    {
-        float time[8];
-        float tmp_min1, tmp_max1;
-        float tmp_min2, tmp_max2;
-
-        time[0] = (( src1.mins[index] + opos1[index] ) - ( src2.mins[index] - tolerance2 + opos2[index] ) ) / diff;
-        time[1] = (( src1.mins[index] + opos1[index] ) - ( src2.maxs[index] + tolerance2 + opos2[index] ) ) / diff;
-        time[2] = (( src1.maxs[index] + opos1[index] ) - ( src2.mins[index] - tolerance2 + opos2[index] ) ) / diff;
-        time[3] = (( src1.maxs[index] + opos1[index] ) - ( src2.maxs[index] + tolerance2 + opos2[index] ) ) / diff;
-        tmp_min1 = MIN( MIN( time[0], time[1] ), MIN( time[2], time[3] ) );
-        tmp_max1 = MAX( MAX( time[0], time[1] ), MAX( time[2], time[3] ) );
-
-        time[4] = (( src1.mins[index] - tolerance1 + opos1[index] ) - ( src2.mins[index] + opos2[index] ) ) / diff;
-        time[5] = (( src1.mins[index] - tolerance1 + opos1[index] ) - ( src2.maxs[index] + opos2[index] ) ) / diff;
-        time[6] = (( src1.maxs[index] + tolerance1 + opos1[index] ) - ( src2.mins[index] + opos2[index] ) ) / diff;
-        time[7] = (( src1.maxs[index] + tolerance1 + opos1[index] ) - ( src2.maxs[index] + opos2[index] ) ) / diff;
-        tmp_min2 = MIN( MIN( time[4], time[5] ), MIN( time[6], time[7] ) );
-        tmp_max2 = MAX( MAX( time[4], time[5] ), MAX( time[6], time[7] ) );
-
-        *tmin = MIN( tmp_min1, tmp_min2 );
-        *tmax = MAX( tmp_max1, tmp_max2 );
-    }
-    else
-    {
-        float time[4];
-
-        time[0] = (( src1.mins[index] - tolerance1 + opos1[index] ) - ( src2.mins[index] - tolerance2 + opos2[index] ) ) / diff;
-        time[1] = (( src1.mins[index] - tolerance1 + opos1[index] ) - ( src2.maxs[index] + tolerance2 + opos2[index] ) ) / diff;
-        time[2] = (( src1.maxs[index] + tolerance1 + opos1[index] ) - ( src2.mins[index] - tolerance2 + opos2[index] ) ) / diff;
-        time[3] = (( src1.maxs[index] + tolerance1 + opos1[index] ) - ( src2.maxs[index] + tolerance2 + opos2[index] ) ) / diff;
-
-        *tmin = MIN( MIN( time[0], time[1] ), MIN( time[2], time[3] ) );
-        *tmax = MAX( MAX( time[0], time[1] ), MAX( time[2], time[3] ) );
-    }
+    *tmin = MIN( MIN( time[0], time[1] ), MIN( time[2], time[3] ) );
+    *tmax = MAX( MAX( time[0], time[1] ), MAX( time[2], time[3] ) );
 
     // normalize the results for the diagonal directions
     if ( OCT_XY == index || OCT_YX == index )
@@ -206,26 +167,23 @@ egoboo_rv oct_bb_intersect_index( int index, oct_bb_t src1, oct_vec_t opos1, oct
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv oct_bb_intersect_close_index( int index, oct_bb_t src1, oct_vec_t opos1, oct_vec_t ovel1, oct_bb_t src2, oct_vec_t opos2, oct_vec_t ovel2, int test_platform, float *tmin, float *tmax )
+egoboo_rv oct_bb_intersect_close_index( int index, oct_bb_t src1, oct_vec_t opos1, oct_vec_t ovel1, oct_bb_t src2, oct_vec_t opos2, oct_vec_t ovel2, float *tmin, float *tmax )
 {
-    float tolerance1, tolerance2;
-    float diff;
+    egoboo_rv retval = rv_error;
+    float     diff;
 
     if ( NULL == tmin || NULL == tmax ) return rv_error;
 
     if ( index < 0 || index >= OCT_COUNT ) return rv_error;
 
-    // in the z-direction you always have to deal with the bounding box size
-    if ( OCT_Z == index ) return oct_bb_intersect_index( index, src1, opos1, ovel1, src2, opos2, ovel2, test_platform, tmin, tmax );
-
     diff = ovel2[index] - ovel1[index];
     if ( diff == 0.0f ) return rv_fail;
 
-    tolerance1 = (( OCT_Z == index ) && ( test_platform & PHYS_PLATFORM_OBJ1 ) ) ? PLATTOLERANCE : 0.0f;
-    tolerance2 = (( OCT_Z == index ) && ( test_platform & PHYS_PLATFORM_OBJ2 ) ) ? PLATTOLERANCE : 0.0f;
-
-    if ( 0.0f == tolerance1 && 0.0f == tolerance2 )
+    if ( OCT_Z != index )
     {
+        // in the horizontal distances, it is just the depth between the center of one object
+        // and the edge of the other.
+
         float time[8];
         float tmp_min1, tmp_max1;
         float tmp_min2, tmp_max2;
@@ -246,36 +204,20 @@ egoboo_rv oct_bb_intersect_close_index( int index, oct_bb_t src1, oct_vec_t opos
 
         *tmin = MIN( tmp_min1, tmp_min2 );
         *tmax = MAX( tmp_max1, tmp_max2 );
+
+        // normalize the results for the diagonal directions
+        if ( OCT_XY == index || OCT_YX == index )
+        {
+            *tmin *= INV_SQRT_TWO;
+            *tmax *= INV_SQRT_TWO;
+        }
+
+        retval = rv_success;
     }
     else
     {
-        float time[8];
-        float tmp_min1, tmp_max1;
-        float tmp_min2, tmp_max2;
-
-        time[0] = ( opos1[index] - ( src2.mins[index] - tolerance2 + opos2[index] ) ) / diff;
-        time[1] = ( opos1[index] - ( src2.maxs[index] + tolerance2 + opos2[index] ) ) / diff;
-        time[2] = ( opos1[index] - ( src2.mins[index] - tolerance2 + opos2[index] ) ) / diff;
-        time[3] = ( opos1[index] - ( src2.maxs[index] + tolerance2 + opos2[index] ) ) / diff;
-        tmp_min1 = MIN( MIN( time[0], time[1] ), MIN( time[2], time[3] ) );
-        tmp_max1 = MAX( MAX( time[0], time[1] ), MAX( time[2], time[3] ) );
-
-        time[4] = (( src1.mins[index] - tolerance1 + opos1[index] ) - opos2[index] ) / diff;
-        time[5] = (( src1.mins[index] - tolerance1 + opos1[index] ) - opos2[index] ) / diff;
-        time[6] = (( src1.maxs[index] + tolerance1 + opos1[index] ) - opos2[index] ) / diff;
-        time[7] = (( src1.maxs[index] + tolerance1 + opos1[index] ) - opos2[index] ) / diff;
-        tmp_min2 = MIN( MIN( time[4], time[5] ), MIN( time[6], time[7] ) );
-        tmp_max2 = MAX( MAX( time[4], time[5] ), MAX( time[6], time[7] ) );
-
-        *tmin = MIN( tmp_min1, tmp_min2 );
-        *tmax = MAX( tmp_max1, tmp_max2 );
-    }
-
-    // normalize the results for the diagonal directions
-    if ( OCT_XY == index || OCT_YX == index )
-    {
-        *tmin *= INV_SQRT_TWO;
-        *tmax *= INV_SQRT_TWO;
+        // there is no special treatment in the z direction
+        retval = oct_bb_intersect_index( index, src1, opos1, ovel1, src2, opos2, ovel2, tmin, tmax );
     }
 
     if ( *tmax < *tmin ) return rv_fail;
@@ -289,16 +231,13 @@ bool_t phys_intersect_oct_bb( oct_bb_t src1_orig, fvec3_t pos1, fvec3_t vel1, oc
     /// @details BB@> A test to determine whether two "fast moving" objects are interacting within a frame.
     ///               Designed to determine whether a bullet particle will interact with character.
 
-    oct_bb_t src1, src2;
-
-    oct_bb_t exp1, exp2;
-
+    oct_bb_t  src1, src2;
+    oct_bb_t  exp1, exp2;
     oct_vec_t opos1, opos2;
     oct_vec_t ovel1, ovel2;
 
     int    cnt, index;
     bool_t found;
-    float  tolerance;
     float  local_tmin, local_tmax;
     float  tmp_min, tmp_max;
 
@@ -308,21 +247,6 @@ bool_t phys_intersect_oct_bb( oct_bb_t src1_orig, fvec3_t pos1, fvec3_t vel1, oc
     // handle optional parameters
     if ( NULL == tmin ) tmin = &local_tmin;
     if ( NULL == tmax ) tmax = &local_tmax;
-
-    //// do the objects interact at the very beginning of the update?
-    //if ( test_interaction_2( src1_orig, pos2, src2_orig, pos2, test_platform ) )
-    //{
-    //    oct_bb_t tmp1, tmp2;
-
-    //    oct_bb_add_vector( src1_orig, pos1, &tmp1 );
-    //    oct_bb_add_vector( src2_orig, pos2, &tmp2 );
-
-    //    oct_bb_intersection( tmp1, tmp2, pdst );
-
-    //    *tmin = *tmax = -1.0f;
-
-    //    return btrue;
-    //}
 
     // convert the position and velocity vectors to octagonal format
     oct_vec_ctor( ovel1, vel1 );
@@ -334,7 +258,7 @@ bool_t phys_intersect_oct_bb( oct_bb_t src1_orig, fvec3_t pos1, fvec3_t vel1, oc
     // cycle through the coordinates to see when the two volumes might coincide
     found = bfalse;
     *tmin = *tmax = -1.0f;
-    if( 0 == fvec3_dist_abs(vel1.v, vel2.v) )
+    if( 0.0f == fvec3_dist_abs(vel1.v, vel2.v) )
     {
         // no relative motion, so avoid the loop to save time
         failure_count = OCT_COUNT;
@@ -345,7 +269,15 @@ bool_t phys_intersect_oct_bb( oct_bb_t src1_orig, fvec3_t pos1, fvec3_t vel1, oc
         {
             egoboo_rv retval;
 
-            retval = oct_bb_intersect_index( index, src1_orig, opos1, ovel1, src2_orig, opos2, ovel2, test_platform, &tmp_min, &tmp_max );
+            if( PHYS_CLOSE_TOLERANCE_NONE != test_platform )
+            {
+                retval = oct_bb_intersect_close_index( index, src1_orig, opos1, ovel1, src2_orig, opos2, ovel2, &tmp_min, &tmp_max );
+            }
+            else
+            {
+                retval = oct_bb_intersect_index( index, src1_orig, opos1, ovel1, src2_orig, opos2, ovel2, &tmp_min, &tmp_max );
+            }
+
             if ( rv_fail == retval )
             {
                 // This case will only occur if the objects are not moving relative to each other.
@@ -393,119 +325,29 @@ bool_t phys_intersect_oct_bb( oct_bb_t src1_orig, fvec3_t pos1, fvec3_t vel1, oc
         if( (*tmin) + update_wld < 0 ) *tmin = -((Sint32)update_wld);
     }
 
-    // clip the interaction time to just one frame
-    tmp_min = CLIP( *tmin, 0.0f, 1.0f );
-    tmp_max = CLIP( *tmax, 0.0f, 1.0f );
-
-    // shift the source bounding boxes to be centered on the given positions
-    oct_bb_add_vector( src1_orig, pos1, &src1 );
-    oct_bb_add_vector( src2_orig, pos2, &src2 );
-
-    // determine the expanded collision volumes for both objects
-    phys_expand_oct_bb( src1, vel1, tmp_min, tmp_max, &exp1 );
-    phys_expand_oct_bb( src2, vel2, tmp_min, tmp_max, &exp2 );
-
-    // determine the intersection of these two volumes
-    oct_bb_intersection( exp1, exp2, pdst );
-
-    // check to see if there is any possibility of interaction at all
-    for ( cnt = 0; cnt < OCT_Z; cnt++ )
+    if( NULL != pdst )
     {
-        if ( pdst->mins[cnt] > pdst->maxs[cnt] ) return bfalse;
-    }
+        // clip the interaction time to just one frame
+        tmp_min = CLIP( *tmin, 0.0f, 1.0f );
+        tmp_max = CLIP( *tmax, 0.0f, 1.0f );
 
-    tolerance = ( 0 == test_platform ) ? 0.0f : PLATTOLERANCE;
-    if ( pdst->mins[OCT_Z] > pdst->maxs[OCT_Z] + tolerance ) return bfalse;
+        // shift the source bounding boxes to be centered on the given positions
+        oct_bb_add_vector( src1_orig, pos1, &src1 );
+        oct_bb_add_vector( src2_orig, pos2, &src2 );
 
-    return btrue;
-}
+        // determine the expanded collision volumes for both objects
+        phys_expand_oct_bb( src1, vel1, tmp_min, tmp_max, &exp1 );
+        phys_expand_oct_bb( src2, vel2, tmp_min, tmp_max, &exp2 );
 
-//--------------------------------------------------------------------------------------------
-bool_t oct_bb_intersect_close( oct_bb_t src1, fvec3_t pos1, fvec3_t vel1, oct_bb_t src2, fvec3_t pos2, fvec3_t vel2, int test_platform, oct_bb_t * pdst, float *tmin, float *tmax )
-{
-    /// @details BB@> A test to determine whether two "fast moving" objects are interacting within a frame.
-    ///               Designed to determine whether a bullet particle will interact with character.
+        // determine the intersection of these two volumes
+        oct_bb_intersection( exp1, exp2, pdst );
 
-    oct_bb_t exp1, exp2;
-    oct_bb_t intersection;
-
-    oct_vec_t opos1, opos2;
-    oct_vec_t ovel1, ovel2;
-
-    int    cnt, index;
-    bool_t found;
-    float  tolerance;
-    float  local_tmin, local_tmax;
-
-    // handle optional parameters
-    if ( NULL == tmin ) tmin = &local_tmin;
-    if ( NULL == tmax ) tmax = &local_tmax;
-
-    // do the objects interact at the very beginning of the update?
-    if ( test_interaction_2( src1, pos2, src2, pos2, test_platform ) )
-    {
-        if ( NULL != pdst )
+        // check to see if there is any possibility of interaction at all
+        for ( cnt = 0; cnt < OCT_COUNT; cnt++ )
         {
-            oct_bb_intersection( src1, src2, pdst );
+            if ( pdst->mins[cnt] >= pdst->maxs[cnt] ) return bfalse;
         }
-
-        return btrue;
     }
-
-    // convert the position and velocity vectors to octagonal format
-    oct_vec_ctor( ovel1, vel1 );
-    oct_vec_ctor( opos1, pos1 );
-
-    oct_vec_ctor( ovel2, vel2 );
-    oct_vec_ctor( opos2, pos2 );
-
-    // cycle through the coordinates to see when the two volumes might coincide
-    found = bfalse;
-    *tmin = *tmax = -1.0f;
-    for ( index = 0; index < OCT_COUNT; index ++ )
-    {
-        egoboo_rv retval;
-        float tmp_min, tmp_max;
-
-        retval = oct_bb_intersect_close_index( index, src1, opos1, ovel1, src2, opos2, ovel2, test_platform, &tmp_min, &tmp_max );
-        if ( rv_fail == retval ) return bfalse;
-
-        if ( rv_success == retval )
-        {
-            if ( !found )
-            {
-                *tmin = tmp_min;
-                *tmax = tmp_max;
-                found = btrue;
-            }
-            else
-            {
-                *tmin = MAX( *tmin, tmp_min );
-                *tmax = MIN( *tmax, tmp_max );
-            }
-        }
-
-        if ( *tmax < *tmin ) return bfalse;
-    }
-
-    // if the objects do not interact this frame let the caller know
-    if ( *tmin > 1.0f || *tmax < 0.0f ) return bfalse;
-
-    // determine the expanded collision volumes for both objects
-    phys_expand_oct_bb( src1, vel1, *tmin, *tmax, &exp1 );
-    phys_expand_oct_bb( src2, vel2, *tmin, *tmax, &exp2 );
-
-    // determine the intersection of these two volumes
-    oct_bb_intersection( exp1, exp2, &intersection );
-
-    // check to see if there is any possibility of interaction at all
-    for ( cnt = 0; cnt < OCT_Z; cnt++ )
-    {
-        if ( intersection.mins[cnt] > intersection.maxs[cnt] ) return bfalse;
-    }
-
-    tolerance = ( 0 == test_platform ) ? 0.0f : PLATTOLERANCE;
-    if ( intersection.mins[OCT_Z] > intersection.maxs[OCT_Z] + tolerance ) return bfalse;
 
     return btrue;
 }
@@ -521,7 +363,7 @@ bool_t phys_expand_oct_bb( oct_bb_t src, fvec3_t vel, float tmin, float tmax, oc
     float abs_vel;
     oct_bb_t tmp_min, tmp_max;
 
-    abs_vel = ABS( vel.x ) + ABS( vel.y ) + ABS( vel.z );
+    abs_vel = fvec3_length_abs( vel.v );
     if ( 0.0f == abs_vel )
     {
         if ( NULL != pdst )
@@ -575,7 +417,7 @@ bool_t phys_expand_oct_bb( oct_bb_t src, fvec3_t vel, float tmin, float tmax, oc
 bool_t phys_expand_chr_bb( chr_t * pchr, float tmin, float tmax, oct_bb_t * pdst )
 {
     /// @details BB@> use the object velocity to figure out where the volume that the character will
-    ///               occupy during this update. Use the loser chr_prt_cv and include extra height if
+    ///               occupy during this update. Use the loser prt_cv and include extra height if
     ///               it is a platform.
 
     oct_bb_t tmp_oct1, tmp_oct2;
@@ -583,18 +425,13 @@ bool_t phys_expand_chr_bb( chr_t * pchr, float tmin, float tmax, oct_bb_t * pdst
     if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
 
     // copy the volume
-    tmp_oct1 = pchr->chr_prt_cv;
-
-    if ( pchr->platform )
-    {
-        // expand the interaction range so that we will correctly detect interactions with platforms
-        tmp_oct1.maxs[OCT_Z] += PLATTOLERANCE;
-    }
+    // the "platform" version was expanded in the z direction, but only if it was needed
+    tmp_oct1 = pchr->chr_max_cv;
 
     // add in the current position to the bounding volume
     oct_bb_add_vector( tmp_oct1, pchr->pos, &tmp_oct2 );
 
-    // streach the bounging volume to cover the path of the object
+    // stretch the bounding volume to cover the path of the object
     return phys_expand_oct_bb( tmp_oct2, pchr->vel, tmin, tmax, pdst );
 }
 
@@ -609,9 +446,9 @@ bool_t phys_expand_prt_bb( prt_t * pprt, float tmin, float tmax, oct_bb_t * pdst
     if ( !ACTIVE_PPRT( pprt ) ) return bfalse;
 
     // add in the current position to the bounding volume
-    oct_bb_add_vector( pprt->chr_prt_cv, prt_get_pos(pprt), &tmp_oct );
+    oct_bb_add_vector( pprt->prt_cv, prt_get_pos(pprt), &tmp_oct );
 
-    // streach the bounging volume to cover the path of the object
+    // stretch the bounding volume to cover the path of the object
     return phys_expand_oct_bb( tmp_oct, pprt->vel, tmin, tmax, pdst );
 }
 
@@ -657,7 +494,7 @@ breadcrumb_t * breadcrumb_init_prt( breadcrumb_t * bc, prt_t * pprt )
     if( NULL == ppip ) return bc;
 
     bits = MPDFX_IMPASS;
-    if ( 0 != ppip->bump_money ) SET_BIT( bits, MPDFX_WALL );
+    if ( 0 != ppip->bump_money ) ADD_BITS( bits, MPDFX_WALL );
 
     bc->bits   = bits;
     bc->radius = pprt->bump_real.size;
@@ -1041,3 +878,266 @@ bool_t breadcrumb_list_add( breadcrumb_list_t * lst, breadcrumb_t * pnew )
 
     return retval;
 }
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t phys_apply_normal_acceleration( fvec3_base_t acc, fvec3_base_t nrm, float para_factor, float perp_factor, fvec3_t * pnrm_acc )
+{
+    fvec3_t sum = ZERO_VECT3;
+
+    if( NULL == acc || NULL == nrm ) return bfalse;
+
+    // clear the normal acceleration here
+    fvec3_self_clear( pnrm_acc->v );
+
+    // if there is no acceleration, there is nothing to do
+    if( 0.0f == fvec3_length_abs( acc ) ) return btrue;
+
+    // if the object scale factors are 1, there is nothing to do
+    if( 1.0f == perp_factor && 1.0f == para_factor ) return btrue;
+
+    // make a shortcut for the simple case of both scale factors being zero
+    if( 0.0f == perp_factor && 0.0 == para_factor )
+    {
+        fvec3_self_clear( sum.v );
+    }
+    else
+    {
+        float   dot;
+        fvec3_t para = ZERO_VECT3, perp = ZERO_VECT3;
+
+        if( 0.0f == fvec3_length_abs( nrm ) )
+        {
+            nrm[kX] = nrm[kY] = 0.0f;
+            nrm[kZ] = -SGN(gravity);
+        }
+
+        // perpendicular to the ground
+        if( 1.0f == ABS(nrm[kZ]) )
+        {
+            dot = acc[kZ] * nrm[kZ];
+
+            perp.x = 0.0f;
+            perp.y = 0.0f;
+            perp.z = dot;
+
+            // parallel to the ground
+            para.x = acc[kX];
+            para.y = acc[kY];
+            para.z = acc[kZ] - perp.z;
+        }
+        else
+        {
+            // the vector parallel to the normal is perpendicular to the surface
+            dot = fvec3_decompose( acc, nrm, perp.v, para.v );
+        }
+
+        // kill the acceleration perpendicular to the ground to take the net effect of the 
+        // ground's "normal force" into account
+        if( dot < 0.0f && 1.0f != perp_factor )
+        {
+            fvec3_self_scale( perp.v, perp_factor );
+        }
+
+        // scale the parallel vector
+        if( 1.0f != para_factor )
+        {
+            fvec3_self_scale( para.v, para_factor );
+        }
+
+        // calculate the new acceleration
+        sum = fvec3_add( para.v, perp.v );
+    }
+
+    // make a shortcut for the simple case
+    if( NULL == pnrm_acc )
+    {
+        acc[kX] = sum.v[kX];
+        acc[kY] = sum.v[kY];
+        acc[kZ] = sum.v[kZ];
+    }
+    else
+    {
+        // calculate the effective "normal acceleration"
+        *pnrm_acc = fvec3_sub( sum.v, acc );
+
+        // apply the normal acceleration
+        fvec3_self_sum( acc, pnrm_acc->v );
+    }
+    
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t phys_data_integrate_accumulators( fvec3_t * ppos, fvec3_t * pvel, phys_data_t * pdata, float dt )
+{
+    fvec3_t loc_pos = ZERO_VECT3;
+    fvec3_t loc_vel = ZERO_VECT3;
+    fvec3_t displacement = ZERO_VECT3;
+
+    if( NULL == pdata ) return bfalse;
+    if( 0.0f == dt    ) return btrue;
+
+    // handle optional parameters
+    if( NULL == ppos ) ppos = &loc_pos;
+    if( NULL == pvel ) pvel = &loc_vel;
+
+    // sum the displacements
+    displacement = fvec3_add( pdata->apos_plat.v, pdata->apos_coll.v );
+
+    //if( fvec3_length_abs(displacement.v) > 100.0f )
+    //{
+    //    displacement.x = 0.0f;
+    //}
+
+    // integrate the position
+    ppos->x += pvel->x * dt + displacement.x;
+    ppos->y += pvel->y * dt + displacement.y;
+    ppos->z += pvel->z * dt + displacement.z;
+
+    //if( fvec3_length_abs(pdata->avel.v) > 100.0f )
+    //{
+    //    pdata->avel.x = 0.0f;
+    //}
+
+    // integrate the velocity
+    pvel->x += pdata->avel.x * dt;
+    pvel->y += pdata->avel.y * dt;
+    pvel->z += pdata->avel.z * dt;
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t phys_data_apply_normal_acceleration( phys_data_t * pphys, fvec3_t nrm, float para_factor, float perp_factor, fvec3_t * pnrm_acc )
+{
+    /// @details BB@> break the acceleration up into parts that are parallel and perpendicular to the floor
+    /// and partially kill the acceleration perpendicular to the ground.
+    /// This takes the net effect of the ground's "normal force" into account.
+
+    /// @note BB@> don't apply this to the platform accumulator since it has some special "physics"
+    ///     like sucking an object onto the platform, which keeps object attached
+    ///     when a platform starts to descend
+   
+    if( NULL == pphys ) return bfalse;
+
+    // use a short-cut if the vectors are going to be scaled to 0.0f, anyway
+    if( 0.0f == para_factor && 0.0f == perp_factor )
+    {
+        fvec3_self_clear( pphys->apos_coll.v );
+        // fvec3_self_clear( pphys->apos_plat.v );
+    }
+    else
+    {
+
+        phys_apply_normal_acceleration( pphys->apos_coll.v, nrm.v, para_factor, perp_factor, NULL     );
+        // phys_apply_normal_acceleration( pphys->apos_plat.v, nrm.v, para_factor, perp_factor, NULL     );
+    }
+
+    // can't use the same short-cut this calculation because we my still need to know nrm_acc
+    if( 0.0f == para_factor && 0.0f == perp_factor && NULL == pnrm_acc )
+    {
+        fvec3_self_clear( pphys->avel.v );
+    }
+    else
+    {
+        phys_apply_normal_acceleration( pphys->avel.v, nrm.v, para_factor, perp_factor, pnrm_acc );
+    }
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+// OBSOLETE CODE
+//--------------------------------------------------------------------------------------------
+
+//bool_t oct_bb_intersect_close( oct_bb_t src1, fvec3_t pos1, fvec3_t vel1, oct_bb_t src2, fvec3_t pos2, fvec3_t vel2, int test_platform, oct_bb_t * pdst, float *tmin, float *tmax )
+//{
+//    /// @details BB@> A test to determine whether two "fast moving" objects are interacting within a frame.
+//    ///               Designed to determine whether a bullet particle will interact with character.
+//
+//    oct_bb_t exp1, exp2;
+//    oct_bb_t intersection;
+//
+//    oct_vec_t opos1, opos2;
+//    oct_vec_t ovel1, ovel2;
+//
+//    int    cnt, index;
+//    bool_t found;
+//    float  tolerance;
+//    float  local_tmin, local_tmax;
+//
+//    // handle optional parameters
+//    if ( NULL == tmin ) tmin = &local_tmin;
+//    if ( NULL == tmax ) tmax = &local_tmax;
+//
+//    // do the objects interact at the very beginning of the update?
+//    if ( test_interaction_2( src1, pos2, src2, pos2, test_platform ) )
+//    {
+//        if ( NULL != pdst )
+//        {
+//            oct_bb_intersection( src1, src2, pdst );
+//        }
+//
+//        return btrue;
+//    }
+//
+//    // convert the position and velocity vectors to octagonal format
+//    oct_vec_ctor( ovel1, vel1 );
+//    oct_vec_ctor( opos1, pos1 );
+//
+//    oct_vec_ctor( ovel2, vel2 );
+//    oct_vec_ctor( opos2, pos2 );
+//
+//    // cycle through the coordinates to see when the two volumes might coincide
+//    found = bfalse;
+//    *tmin = *tmax = -1.0f;
+//    for ( index = 0; index < OCT_COUNT; index ++ )
+//    {
+//        egoboo_rv retval;
+//        float tmp_min, tmp_max;
+//
+//        retval = oct_bb_intersect_close_index( index, src1, opos1, ovel1, src2, opos2, ovel2, test_platform, &tmp_min, &tmp_max );
+//        if ( rv_fail == retval ) return bfalse;
+//
+//        if ( rv_success == retval )
+//        {
+//            if ( !found )
+//            {
+//                *tmin = tmp_min;
+//                *tmax = tmp_max;
+//                found = btrue;
+//            }
+//            else
+//            {
+//                *tmin = MAX( *tmin, tmp_min );
+//                *tmax = MIN( *tmax, tmp_max );
+//            }
+//        }
+//
+//        if ( *tmax < *tmin ) return bfalse;
+//    }
+//
+//    // if the objects do not interact this frame let the caller know
+//    if ( *tmin > 1.0f || *tmax < 0.0f ) return bfalse;
+//
+//    // determine the expanded collision volumes for both objects
+//    phys_expand_oct_bb( src1, vel1, *tmin, *tmax, &exp1 );
+//    phys_expand_oct_bb( src2, vel2, *tmin, *tmax, &exp2 );
+//
+//    // determine the intersection of these two volumes
+//    oct_bb_intersection( exp1, exp2, &intersection );
+//
+//    // check to see if there is any possibility of interaction at all
+//    for ( cnt = 0; cnt < OCT_Z; cnt++ )
+//    {
+//        if ( intersection.mins[cnt] > intersection.maxs[cnt] ) return bfalse;
+//    }
+//
+//    tolerance = ( 0 == test_platform ) ? 0.0f : PLATTOLERANCE;
+//    if ( intersection.mins[OCT_Z] > intersection.maxs[OCT_Z] + tolerance ) return bfalse;
+//
+//    return btrue;
+//}
+//

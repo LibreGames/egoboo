@@ -69,7 +69,7 @@ void EncList_init()
 
     for ( cnt = 0; cnt < MAX_ENC; cnt++ )
     {
-        ENC_REF ienc = (MAX_ENC-1) - cnt;
+        ENC_REF ienc = (ENC_REF)((MAX_ENC-1) - cnt);
         enc_t * penc = EncList.lst + ienc;
 
         // blank out all the data, including the obj_base data
@@ -215,7 +215,7 @@ bool_t EncList_free_one( const ENC_REF by_reference ienc )
     pbase = POBJ_GET_PBASE( penc );
     if( NULL == pbase ) return bfalse;
 
-#if (DEBUG_SCRIPT_LEVEL > 0) && defined(DEBUG_PROFILE) && defined(_DEBUG)
+#if (DEBUG_SCRIPT_LEVEL > 0) && defined(DEBUG_PROFILE) && EGO_DEBUG
     enc_log_script_time( ienc );
 #endif
 
@@ -294,7 +294,8 @@ void EncList_free_all()
 //--------------------------------------------------------------------------------------------
 int EncList_get_free_list_index( const ENC_REF by_reference ienc )
 {
-    int retval = -1, cnt;
+    int retval = -1;
+    size_t cnt;
 
     if( !VALID_ENC_RANGE(ienc) ) return retval;
 
@@ -318,7 +319,7 @@ bool_t EncList_add_free( const ENC_REF by_reference ienc )
 
     if( !VALID_ENC_RANGE(ienc) ) return bfalse;
 
-#if defined(_DEBUG) && defined(DEBUG_ENC_LIST)
+#if EGO_DEBUG && defined(DEBUG_ENC_LIST)
     if( EncList_get_free_list_index(ienc) > 0 )
     {
         return bfalse;
@@ -349,7 +350,7 @@ bool_t EncList_remove_free_index( int index )
     ENC_REF ienc;
 
     // was it found?
-    if( index < 0 || index >= EncList.free_count ) return bfalse;
+    if( index < 0 || (size_t)index >= EncList.free_count ) return bfalse;
 
     ienc = EncList.free_ref[index];
 
@@ -387,7 +388,8 @@ bool_t EncList_remove_free( const ENC_REF by_reference ienc )
 //--------------------------------------------------------------------------------------------
 int EncList_get_used_list_index( const ENC_REF by_reference ienc )
 {
-    int retval = -1, cnt;
+    int retval = -1;
+    size_t cnt;
 
     if( !VALID_ENC_RANGE(ienc) ) return retval;
 
@@ -411,7 +413,7 @@ bool_t EncList_add_used( const ENC_REF by_reference ienc )
 
     if( !VALID_ENC_RANGE(ienc) ) return bfalse;
 
-#if defined(_DEBUG) && defined(DEBUG_ENC_LIST)
+#if EGO_DEBUG && defined(DEBUG_ENC_LIST)
     if( EncList_get_used_list_index(ienc) > 0 )
     {
         return bfalse;
@@ -442,7 +444,7 @@ bool_t EncList_remove_used_index( int index )
     ENC_REF ienc;
 
     // was it found?
-    if( index < 0 || index >= EncList.used_count ) return bfalse;
+    if( index < 0 || (size_t)index >= EncList.used_count ) return bfalse;
 
     ienc = EncList.used_ref[index];
 
@@ -489,7 +491,7 @@ ENC_REF EncList_allocate( const ENC_REF by_reference override )
         {
             int override_index = EncList_get_free_list_index( override );
 
-            if( override_index < 0 || override_index >= EncList.free_count )
+            if( override_index < 0 || (size_t)override_index >= EncList.free_count )
             {
                 ienc = (ENC_REF)MAX_ENC;
             }
@@ -544,7 +546,7 @@ ENC_REF EncList_allocate( const ENC_REF by_reference override )
 //--------------------------------------------------------------------------------------------
 void EncList_cleanup()
 {
-    int     cnt;
+    size_t  cnt;
     enc_t * penc;
 
     // go through the list and activate all the enchants that
@@ -615,3 +617,4 @@ bool_t EncList_add_termination( ENC_REF ienc )
 
     return retval;
 }
+

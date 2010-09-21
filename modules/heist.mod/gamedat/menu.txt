@@ -12,7 +12,7 @@ Level rating ( * to  ***** ) 		:*****
 // Module summary
 :Your_buddy_K'nife_has_a_big
 :plan_of_robbing_a_well_guarded
-:treasury!_Use_your_rougish_skills
+:treasury!_Use_your_rogueish_skills
 :to_preform_this_task!
 :_
 :_

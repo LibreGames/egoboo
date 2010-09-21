@@ -25,7 +25,7 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-// compliation flags
+// compilation flags
 
 // object pre-allocations
 #define MAX_CHR            512             ///< Maximum number of characters
@@ -47,6 +47,15 @@
 #define MAX_PIP_PER_PROFILE  13        ///< Maximum number of part*.txt per object
 #define MAX_PIP             (MAX_PROFILE * MAX_PIP_PER_PROFILE)
 
+// the basic debugging switch
+#if defined(_DEBUG) && !defined(NDEBUG)
+#    define EGO_DEBUG 1
+#else
+#    define EGO_DEBUG 0
+#endif
+
+#define EGO_DEBUG 1
+
 // Some macro switches
 #undef  OLD_CAMERA_MODE       ///< Use the old camera style
 #undef  ENABLE_BODY_GRAB      ///< Enable the grabbing of bodies?
@@ -64,7 +73,7 @@
 
 #undef  DEBUG_PROFILE         ///< Switch the profiling functions on and off
 #undef  DEBUG_PROFILE_DISPLAY ///< Display the results for the performance profiling
-#undef  DEBUG_PROFILE_RENDER  ///< Display the results for the performance profiling of the generric rendering
+#undef  DEBUG_PROFILE_RENDER  ///< Display the results for the performance profiling of the generic rendering
 #undef  DEBUG_PROFILE_MESH    ///< Display the results for the performance profiling of the mesh rendering sub-system
 #undef  DEBUG_PROFILE_INIT    ///< Display the results for the performance profiling of the rendering initialization
 
@@ -77,19 +86,19 @@
 #define CLIP_LIGHT_FANS      ///< is the light_fans() function going to be throttled?
 #define CLIP_ALL_LIGHT_FANS  ///< a switch for selecting how the fans will be updated
 
-#undef  DEBUG_WAYPOINTS      ///< display error messages when adding waypoints. It will also prevent "unsafe" waypoint being added to the waypoint list.
+#undef  DEBUG_WAYPOINTS      ///< display error messages when adding waypoints
 
 /// How much script debugging.
-///    0 -- debugging off ( requires defined(_DEBUG) )
-/// >= 1 -- Log the amount of script time that every object uses (requires defined(_DEBUG) and DEBUG_PROFILE)
-/// >= 2 -- Log the amount of time that every single script command uses (requires defined(_DEBUG) and DEBUG_PROFILE)
-/// >= 3 -- decompile every script (requires defined(_DEBUG))
+///    0 -- debugging off ( requires EGO_DEBUG )
+/// >= 1 -- Log the amount of script time that every object uses (requires EGO_DEBUG and DEBUG_PROFILE)
+/// >= 2 -- Log the amount of time that every single script command uses (requires EGO_DEBUG and DEBUG_PROFILE)
+/// >= 3 -- decompile every script (requires EGO_DEBUG)
 #define DEBUG_SCRIPT_LEVEL 0
 
 #undef DEBUG_CPP_LISTS
 
-#undef DEBUG_CHR_BBOX        ///< display the all character bounding boxes
-#define DEBUG_PRT_BBOX        ///< display the all particle bounding boxes
+#define DEBUG_CHR_BBOX        ///< display the all character bounding boxes
+#undef  DEBUG_PRT_BBOX        ///< display the all particle bounding boxes
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

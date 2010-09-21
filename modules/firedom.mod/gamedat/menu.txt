@@ -10,7 +10,7 @@ Is a RTS module (TRUE or FALSE)			      : FALSE
 Level rating ( * to  ***** ) 			: -
 
 // Module summary
-:A_four-player_free-for-all!
+:A_multi-player_free-for-all!
 :Watch_out_for_falling_rocks,_and
 :take_care_not_to_fall_into_the
 :lava--_it_burns!

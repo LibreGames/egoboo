@@ -14,10 +14,10 @@ Level rating ( *, **, ***, ****, or ***** )     		: *****
 // Module summary ( Must be 8 lines...  Each line mush have at least an _ )
 :Within_the_wet_and_moist_halls
 :of_the_water_palace,_one_of
-:the_sporks_of_power_is_hidden
-:for_the_right_adventurer_to
-:claim_it...
+:the_Sporks_of_Yore_is_hidden.
 :_
+:Are_you_the_right_adventurer_to
+:claim_it?
 :_
 :_
 

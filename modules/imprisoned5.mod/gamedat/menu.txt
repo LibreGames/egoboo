@@ -12,8 +12,8 @@ Level rating ( * to  ***** ) :**********
 // Module summary
 :Few_creatures_are_as_feared_as_the
 :Imprisoned_One._Even_the_gods_feared
-:this_being_and_imprisoned_it_in_this
-:tower_you_have_ventured_through.
+:this_being_and_created_this_tower_as_an
+:eternal_prison.
 :The_fate_of_the_world_now_lies_in_your
 :hands.
 :_

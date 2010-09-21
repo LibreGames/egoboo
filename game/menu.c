@@ -46,7 +46,6 @@
 #include "camera.h"
 #include "graphic.h"
 
-#include "egoboo_math.h"
 #include "egoboo_vfs.h"
 #include "egoboo_typedef.h"
 #include "egoboo_fileutil.h"
@@ -54,6 +53,8 @@
 #include "egoboo_strutil.h"
 
 #include "egoboo.h"
+
+#include "egoboo_math.inl"
 
 #include "SDL_extensions.h"
 
@@ -493,10 +494,10 @@ int menu_system_begin()
 
     autoformat_init( &gfx );
 
-    menuFont = ui_loadFont( vfs_resolveReadFilename( "mp_data/font.ttf" ), 18 );
+    menuFont = ui_loadFont( vfs_resolveReadFilename( "mp_data/Bo_Chen.ttf" ), 18 );
     if ( NULL == menuFont )
     {
-        log_error( "Could not load the menu font! (\"mp_data/font.ttf\")\n" );
+        log_error( "Could not load the menu font! (\"mp_data/Bo_Chen.ttf\")\n" );
         return 0;
     }
 
@@ -556,6 +557,7 @@ int mnu_get_menu_depth()
 {
     return mnu_stack_index;
 }
+
 //--------------------------------------------------------------------------------------------
 // Implementations of the various menus
 //--------------------------------------------------------------------------------------------
@@ -991,7 +993,7 @@ int doChooseModule( float deltaTime )
                 }
             }
 
-            // sort the modules by difficulty. easiest to hardeest for starting a new character
+            // sort the modules by difficulty. easiest to hardest for starting a new character
             // hardest to easiest for loading a module
             cmp_mod_ref_mult = start_new_player ? 1 : -1;
             qsort( validModules, numValidModules, sizeof(MOD_REF), cmp_mod_ref );
@@ -1114,7 +1116,7 @@ int doChooseModule( float deltaTime )
 
                     if( mnu_ModList.lst[imod].base.beaten )
                     {
-						img_tint = beat_tint;
+                        img_tint = beat_tint;
                     }
 
                     if ( ui_doImageButton( i, ptex, moduleMenuOffsetX + x, moduleMenuOffsetY + y, 138, 138, img_tint ) )
@@ -1122,11 +1124,11 @@ int doChooseModule( float deltaTime )
                         selectedModule = i;
                     }
 
-					//Draw a text over the image explaining what it means
-					if( mnu_ModList.lst[imod].base.beaten )
-					{
-						ui_drawTextBox( NULL, "BEATEN", moduleMenuOffsetX + x + 32, moduleMenuOffsetY + y + 64, 64, 30, 20 );
-					}
+                    //Draw a text over the image explaining what it means
+                    if( mnu_ModList.lst[imod].base.beaten )
+                    {
+                        ui_drawTextBox( NULL, "BEATEN", moduleMenuOffsetX + x + 32, moduleMenuOffsetY + y + 64, 64, 30, 20 );
+                    }
 
                     x += 138 + 20;  // Width of the button, and the spacing between buttons
                 }
@@ -1216,7 +1218,7 @@ int doChooseModule( float deltaTime )
                 {
                     bool_t click_button;
 
-                    // unly display the filter name
+                    // only display the filter name
                     ui_doButton( 55, filterText, NULL, moduleMenuOffsetX + 327, moduleMenuOffsetY + 390, 200, 30 );
 
                     // use the ">" button to change since we are already using arrows to indicate "spin control"-like widgets
@@ -1419,7 +1421,7 @@ bool_t doChoosePlayer_show_stats( int player, int mode, int x, int y, int width,
         if ( LOADED_CAP( icap ) )
         {
             cap_t * pcap = CapStack.lst + icap;
-            Uint8 skin = MAX( 0, pcap->skin_override );
+            Uint8 skin = (Uint8)MAX( 0, pcap->skin_override );
 
             ui_drawButton( UI_Nothing, x, y, width, height, NULL );
 
@@ -1439,13 +1441,13 @@ bool_t doChoosePlayer_show_stats( int player, int mode, int x, int y, int width,
             // Life and mana (can be less than maximum if not in easy mode)
             if ( cfg.difficulty >= GAME_NORMAL )
             {
-                fnt_drawText( menuFont, NULL, x1, y1, "Life: %d/%d", MIN( FP8_TO_INT( pcap->life_spawn ), ( int )pcap->life_stat.val.from ), ( int )pcap->life_stat.val.from ); y1 += 20;
-                y1 = draw_one_bar( pcap->lifecolor, x1, y1, FP8_TO_INT( pcap->life_spawn ), ( int )pcap->life_stat.val.from );
+                fnt_drawText( menuFont, NULL, x1, y1, "Life: %d/%d", MIN( (signed)UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from ), ( int )pcap->life_stat.val.from ); y1 += 20;
+                y1 = draw_one_bar( pcap->lifecolor, x1, y1, (signed)UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from );
 
                 if ( pcap->mana_stat.val.from > 0 )
                 {
-                    fnt_drawText( menuFont, NULL, x1, y1, "Mana: %d/%d", MIN( FP8_TO_INT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from ), ( int )pcap->mana_stat.val.from ); y1 += 20;
-                    y1 = draw_one_bar( pcap->manacolor, x1, y1, FP8_TO_INT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from );
+                    fnt_drawText( menuFont, NULL, x1, y1, "Mana: %d/%d", MIN( (signed)UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from ), ( int )pcap->mana_stat.val.from ); y1 += 20;
+                    y1 = draw_one_bar( pcap->manacolor, x1, y1, (signed)UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from );
                 }
             }
             else
@@ -1686,11 +1688,11 @@ int doChoosePlayer( float deltaTime )
                 mnu_widgetList[m].text = loadplayer[player].name;
                 if ( INVALID_PLAYER != splayer )
                 {
-                    SET_BIT( mnu_widgetList[m].state, UI_BITS_CLICKED);
+                    ADD_BITS( mnu_widgetList[m].state, UI_BITS_CLICKED);
                 }
                 else
                 {
-                    UNSET_BIT( mnu_widgetList[m].state, UI_BITS_CLICKED);
+                    REMOVE_BITS( mnu_widgetList[m].state, UI_BITS_CLICKED);
                 }
 
                 if ( BUTTON_DOWN == ui_doWidget( mnu_widgetList + m ) )
@@ -1741,11 +1743,11 @@ int doChoosePlayer( float deltaTime )
                     // make the button states reflect the chosen input devices
                     if ( INVALID_PLAYER == splayer || HAS_NO_BITS( mnu_selectedInput[ splayer ], BitsInput[j] ) )
                     {
-                        UNSET_BIT( mnu_widgetList[m].state, UI_BITS_CLICKED );
+                        REMOVE_BITS( mnu_widgetList[m].state, UI_BITS_CLICKED );
                     }
                     else if ( HAS_SOME_BITS( mnu_selectedInput[splayer], BitsInput[j] ) )
                     {
-                        SET_BIT( mnu_widgetList[m].state, UI_BITS_CLICKED );
+                        ADD_BITS( mnu_widgetList[m].state, UI_BITS_CLICKED );
                     }
 
                     if ( BUTTON_DOWN == ui_doWidget( mnu_widgetList + m ) )
@@ -2046,14 +2048,14 @@ int doInputOptions( float deltaTime )
     static STRING inputOptionsButtons[CONTROL_COMMAND_COUNT + 2];
 
     Sint8  result = 0;
-    static Sint32 player = 0;
+    static Uint32 player = 0;
 
     Uint32              i;
     Sint32              idevice, iicon;
     device_controls_t * pdevice;
 
     pdevice = NULL;
-    if ( player >= 0 && player < input_device_count )
+    if ( player < input_device_count )
     {
         pdevice = controls + player;
     };
@@ -2113,13 +2115,13 @@ int doInputOptions( float deltaTime )
             // Grab the key/button input from the selected device
             if ( waitingforinput != -1 )
             {
-                if ( NULL == pdevice || idevice < 0 || idevice >= input_device_count )
+                if ( NULL == pdevice || idevice < 0 || (Uint32)idevice >= input_device_count )
                 {
                     waitingforinput = -1;
                 }
                 else
                 {
-                    if ( waitingforinput >= pdevice->count )
+                    if ( waitingforinput < 0 || (size_t)waitingforinput >= pdevice->count )
                     {
                         // invalid input range for this device
                         waitingforinput = -1;
@@ -2142,15 +2144,17 @@ int doInputOptions( float deltaTime )
                                 {
                                     if ( 0 != scantag[tag].value && ( Uint32 )scantag[tag].value == joy[ijoy].b )
                                     {
-                                        pcontrol->tag    = scantag[tag].value;
+                                        pcontrol->tag    = ( Uint32 )scantag[tag].value;
                                         pcontrol->is_key = bfalse;
-                                        waitingforinput = -1;
+                                        waitingforinput  = -1;
                                     }
                                 }
 
                                 for ( tag = 0; tag < scantag_count; tag++ )
                                 {
-                                    if ( scantag[tag].value < SDLK_NUMLOCK && SDLKEYDOWN( scantag[tag].value ) )
+                                    if ( scantag[tag].value < 0 || scantag[tag].value >= SDLK_NUMLOCK ) continue;
+
+                                    if( SDLKEYDOWN( (Uint32)scantag[tag].value ) )
                                     {
                                         pcontrol->tag    = scantag[tag].value;
                                         pcontrol->is_key = btrue;
@@ -2167,7 +2171,9 @@ int doInputOptions( float deltaTime )
                                     {
                                         for ( tag = 0; tag < scantag_count; tag++ )
                                         {
-                                            if ( scantag[tag].value < SDLK_NUMLOCK && SDLKEYDOWN( scantag[tag].value ) )
+                                            if ( scantag[tag].value < 0 || scantag[tag].value >= SDLK_NUMLOCK ) continue;
+
+                                            if ( SDLKEYDOWN( (Uint32)scantag[tag].value ) )
                                             {
                                                 pcontrol->tag    = scantag[tag].value;
                                                 pcontrol->is_key = btrue;
@@ -2191,7 +2197,9 @@ int doInputOptions( float deltaTime )
 
                                         for ( tag = 0; tag < scantag_count; tag++ )
                                         {
-                                            if ( scantag[tag].value < SDLK_NUMLOCK && SDLKEYDOWN( scantag[tag].value ) )
+                                            if ( scantag[tag].value < 0 || scantag[tag].value >= SDLK_NUMLOCK ) continue;
+                                            
+                                            if( SDLKEYDOWN( (Uint32)scantag[tag].value ) )
                                             {
                                                 pcontrol->tag    = scantag[tag].value;
                                                 pcontrol->is_key = btrue;
@@ -2489,7 +2497,8 @@ int doGameOptions( float deltaTime )
             {
                 case GAME_HARD: snprintf( Cdifficulty, SDL_arraysize( Cdifficulty ), "Punishing" ); break;
                 case GAME_EASY: snprintf( Cdifficulty, SDL_arraysize( Cdifficulty ), "Forgiving" ); break;
-				default: cfg.difficulty = GAME_NORMAL; /* fall through */
+
+                default: cfg.difficulty = GAME_NORMAL; /* fall through */
 				case GAME_NORMAL:  snprintf( Cdifficulty, SDL_arraysize( Cdifficulty ), "Challenging" ); break;
             }
             sz_buttons[0] = Cdifficulty;
@@ -2541,7 +2550,7 @@ int doGameOptions( float deltaTime )
 
             // Fall trough
             menuState = MM_Running;
-            //break;
+            break;
 
         case MM_Running:
             // Do normal run
@@ -2704,7 +2713,7 @@ int doGameOptions( float deltaTime )
             // Save settings
             if ( BUTTON_UP == ui_doButton( 7, sz_buttons[6], menuFont, buttonLeft, GFX_HEIGHT - 60, 200, 30 ) )
             {
-                // synchronoze the config values with the various game subsystems
+                // synchronize the config values with the various game subsystems
                 setup_synch( &cfg );
 
                 // save the setup file
@@ -2769,7 +2778,7 @@ int doAudioOptions( float deltaTime )
         "N/A",        // Sound channels
         "N/A",        // Sound buffer
         "N/A",        // Sound quality
-		"N/A",		  // Play footsteps
+        "N/A",		  // Play footsteps
         "Save Settings",
         ""
     };
@@ -2820,7 +2829,7 @@ int doAudioOptions( float deltaTime )
 
             sz_buttons[6] = cfg.sound_highquality ?  "Normal" : "High";
 
-			sz_buttons[7] = cfg.sound_footfall ? "Enabled" : "Disabled";
+            sz_buttons[7] = cfg.sound_footfall ? "Enabled" : "Disabled";
 
             // Fall trough
             menuState = MM_Running;
@@ -2932,7 +2941,7 @@ int doAudioOptions( float deltaTime )
             //Save settings
             if ( BUTTON_UP == ui_doButton( 9, sz_buttons[8], menuFont, buttonLeft, GFX_HEIGHT - 60, 200, 30 ) )
             {
-                // synchronoze the config values with the various game subsystems
+                // synchronize the config values with the various game subsystems
                 setup_synch( &cfg );
 
                 // save the setup file
@@ -3280,11 +3289,11 @@ int doVideoOptions( float deltaTime )
 
 
 #if defined(__unix__)
-			//Clip linux defaults to valid values so that the game doesn't crash on startup
-			if ( cfg.scrz_req == 32 ) cfg.scrz_req = 24;
-			if ( cfg.scrd_req == 32 ) cfg.scrd_req = 24;
+            //Clip linux defaults to valid values so that the game doesn't crash on startup
+            if ( cfg.scrz_req == 32 ) cfg.scrz_req = 24;
+            if ( cfg.scrd_req == 32 ) cfg.scrd_req = 24;
 #endif
-			
+            
             if ( cfg.scrz_req != 32 && cfg.scrz_req != 16 && cfg.scrz_req != 24 )
             {
                 cfg.scrz_req = 16;              // Set to default
@@ -3537,9 +3546,9 @@ int doVideoOptions( float deltaTime )
 
 
 #if defined(__unix__)
-                if ( cfg.scrz_req > 24 ) cfg.scrz_req = 8;			//Linux max is 24
+                if ( cfg.scrz_req > 24 ) cfg.scrz_req = 8;            //Linux max is 24
 #else
-                if ( cfg.scrz_req > 32 ) cfg.scrz_req = 8;			//Others can have up to 32 bit!
+                if ( cfg.scrz_req > 32 ) cfg.scrz_req = 8;            //Others can have up to 32 bit!
 #endif
 
                 snprintf( Cscrz, SDL_arraysize( Cscrz ), "%d", cfg.scrz_req );
@@ -3568,7 +3577,7 @@ int doVideoOptions( float deltaTime )
                 sz_buttons[but_maxlights] = Cmaxdyna;
             }
 
-            // Perspective correction, overlay, underlay and phong mapping
+            // Perspective correction, overlay, underlay and Phong mapping
             ui_drawTextBox( menuFont, "3D Effects:", buttonLeft + 300, GFX_HEIGHT - 250, 0, 0, 20 );
             if ( BUTTON_UP == ui_doButton( 10, sz_buttons[but_3dfx], menuFont, buttonLeft + 450, GFX_HEIGHT - 250, 100, 30 ) )
             {
@@ -3625,7 +3634,7 @@ int doVideoOptions( float deltaTime )
 
             if ( PMod->active )
             {
-                snprintf( Cmaxparticles, SDL_arraysize( Cmaxparticles ), "%i (%i currently used)", maxparticles, maxparticles - prt_count_free() );
+                snprintf( Cmaxparticles, SDL_arraysize( Cmaxparticles ), "%i (%i currently used)", maxparticles, maxparticles - PrtList_count_free() );
                 ui_drawTextBox( menuFont, Cmaxparticles, buttonLeft + 450, GFX_HEIGHT - 180, 0, 100, 30 );
             }
             else if ( BUTTON_UP == ui_doButton( 15, sz_buttons[but_maxparticles], menuFont, buttonLeft + 450, GFX_HEIGHT - 180, 100, 30 ) )
@@ -3732,7 +3741,7 @@ int doVideoOptions( float deltaTime )
             {
                 menuChoice = 1;
 
-                // synchronoze the config values with the various game subsystems
+                // synchronize the config values with the various game subsystems
                 setup_synch( &cfg );
 
                 // save the setup file
@@ -3815,7 +3824,7 @@ int doShowResults( float deltaTime )
                 game_hint = CSTR_END;
                 if ( cfg.difficulty <= GAME_NORMAL )
                 {
-                    // Should be okay to randomize the seed here, the random seed isnt standarized or
+                    // Should be okay to randomize the seed here, the random seed isn't standardized or
                     // used elsewhere before the module is loaded.
                     srand( time( NULL ) );
                     if ( mnu_GameTip_load_local_vfs() )       game_hint = mnu_GameTip.local_hint[rand() % mnu_GameTip.local_count];
@@ -3851,7 +3860,7 @@ int doShowResults( float deltaTime )
                     fnt_getTextSize( menuFont, "GAME TIP", &text_w, &text_h );
                     fnt_drawText( menuFont, NULL, ( GFX_WIDTH / 2 )  - text_w / 2, GFX_HEIGHT - 150, "GAME TIP" );
 
-                    fnt_getTextSize( menuFont, game_hint, &text_w, &text_h );       /// @todo ZF@> : this doesnt work as I intended, fnt_get_TextSize() does not take line breaks into account
+                    fnt_getTextSize( menuFont, game_hint, &text_w, &text_h );       /// @todo ZF@> : this doesn't work as I intended, fnt_get_TextSize() does not take line breaks into account
                     ui_drawTextBox( menuFont, game_hint, ( GFX_WIDTH / 2 ) - text_w / 2, GFX_HEIGHT - 110, GFX_WIDTH + 150, GFX_HEIGHT, 20 );
                 }
 
@@ -4516,7 +4525,7 @@ TX_REF mnu_get_icon_ref( const CAP_REF by_reference icap, const TX_REF by_refere
     }
     else if ( draw_book )
     {
-        int iskin = 0;
+        size_t iskin = 0;
 
         if ( pitem_cap->spelleffect_type != 0 )
         {
@@ -4585,7 +4594,6 @@ bool_t mnu_test_by_index( const MOD_REF by_reference modnumber, size_t buffer_le
                 break;
             }
         }
-
     }
 
     return allowed;
@@ -5113,13 +5121,13 @@ bool_t mnu_Selected_add_input( int loadplayer_idx, BIT_FIELD input_bits )
             if ( i == selected_index )
             {
                 // add in the selected bits for the selected loadplayer_idx
-                SET_BIT( mnu_selectedInput[i], input_bits);
+                ADD_BITS( mnu_selectedInput[i], input_bits);
                 retval = btrue;
             }
             else
             {
                 // remove the selectd bits from all other players
-                UNSET_BIT( mnu_selectedInput[i], input_bits);
+                REMOVE_BITS( mnu_selectedInput[i], input_bits);
             }
         }
     }
@@ -5157,7 +5165,7 @@ bool_t mnu_Selected_remove_input( int loadplayer_idx, Uint32 input_bits )
     {
         if ( mnu_selectedPlayer[i] == loadplayer_idx )
         {
-			UNSET_BIT( mnu_selectedInput[i], input_bits );
+            REMOVE_BITS( mnu_selectedInput[i], input_bits );
 
             // This part is not so tricky as in mnu_Selected_add_input.
             // Even though we are modding the loop control variable, it is never
@@ -5255,3 +5263,4 @@ void mnu_player_check_import( const char *dirname, bool_t initialize )
     }
     vfs_findClose( &ctxt );
 }
+

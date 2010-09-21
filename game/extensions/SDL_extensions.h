@@ -81,7 +81,7 @@ extern "C"
         unsigned full_screen: 1;      ///< SDL_FULLSCREEN  - Surface is a full screen display
         unsigned opengl: 1;           ///< SDL_OPENGL      - Create an OpenGL rendering context
         unsigned opengl_blit: 1;      ///< SDL_OPENGLBLIT  - Create an OpenGL rendering context and use it for blitting
-        unsigned resizable: 1;        ///< SDL_RESIZABLE   - This video mode may be resized
+        unsigned resizable: 1;        ///< SDL_RESIZABLE   - This video mode may be re-sized
         unsigned no_frame: 1;         ///< SDL_NOFRAME     - No window caption or edge frame
 
         // read-only data

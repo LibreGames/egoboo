@@ -35,7 +35,7 @@
 enum e_ego_object_state
 {
     ego_object_invalid        = ego_state_invalid,
-    ego_object_constructing   = ego_state_begin,     ///< The object has been allocated and had it's critical variables filled with safe values
+    ego_object_constructing   = ego_state_begin,     ///< The object has been allocated and had its critical variables filled with safe values
     ego_object_initializing   = ego_state_entering,  ///< The object is being initialized/re-initialized
     ego_object_active         = ego_state_running,   ///< The object is fully activated
     ego_object_deinitializing = ego_state_leaving,   ///< The object is being de-initialized

@@ -179,7 +179,7 @@ BSP_branch_t * BSP_tree_ensure_branch( BSP_tree_t * t, BSP_branch_t * B, int ind
 Sint32         BSP_tree_count_nodes( Sint32 dim, Sint32 depth );
 bool_t         BSP_tree_insert( BSP_tree_t * t, BSP_branch_t * B, BSP_leaf_t * n, int index );
 bool_t         BSP_tree_insert_leaf( BSP_tree_t * ptree, BSP_leaf_t * pleaf );
-bool_t         BSP_tree_prune_branch( BSP_tree_t * t, int cnt );
+bool_t         BSP_tree_prune_branch( BSP_tree_t * t, size_t cnt );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

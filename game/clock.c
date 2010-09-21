@@ -328,3 +328,4 @@ EGO_TIME getCurrentTime()
 
     return timeinfo;
 }
+

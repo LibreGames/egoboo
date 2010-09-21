@@ -23,6 +23,14 @@
 
 #include "clock.h"
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct s_cap;
+struct s_chr;
+struct s_object_profile;
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 #define MSGDISTANCE         2000                    ///< Range for SendMessageNear
 #define PITNOSOUND          -256                    ///< Stop sound at bottom of pits...
 
@@ -111,13 +119,13 @@ struct s_waypoint_list
 };
 typedef struct s_waypoint_list waypoint_list_t;
 
-bool_t waypoint_list_peek( waypoint_list_t * plst, waypoint_t wp );
-bool_t waypoint_list_push( waypoint_list_t * plst, int x, int y );
+bool_t waypoint_list_push( waypoint_list_t * plst, float x, float y, float z );
 bool_t waypoint_list_reset( waypoint_list_t * plst );
 bool_t waypoint_list_clear( waypoint_list_t * plst );
-bool_t waypoint_list_empty( waypoint_list_t * plst );
-bool_t waypoint_list_finished( waypoint_list_t * plst );
 bool_t waypoint_list_advance( waypoint_list_t * plst );
+bool_t waypoint_list_peek( waypoint_list_t * plst, waypoint_t wp );
+bool_t waypoint_list_empty( const waypoint_list_t * plst );
+bool_t waypoint_list_finished( const waypoint_list_t * plst );
 
 /// the state variables for a script / AI
 struct s_ai_state
@@ -145,11 +153,11 @@ struct s_ai_state
     CHR_REF        child;         ///< The character's child
 
     // some local storage
-    BIT_FIELD      alert;         ///< Alerts for AI script
-    int            state;         ///< Short term memory for AI
-    int            content;       ///< More short term memory
-    int            passage;       ///< The passage associated with this character
-    Uint32         timer;         ///< AI Timer
+    BIT_FIELD      alert;            ///< Alerts for AI script
+    int            state;            ///< Short term memory for AI
+    int            content;          ///< More short term memory
+    int            passage;          ///< The passage associated with this character
+    Uint32         timer;            ///< AI Timer
     int            x[STOR_COUNT];    ///< Temporary values...  SetXY
     int            y[STOR_COUNT];
 
@@ -202,13 +210,35 @@ typedef struct s_script_state script_state_t;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+struct s_ai_state_bundle
+{
+    CHR_REF        chr_ref;
+    struct s_chr * chr_ptr;
+
+    PRO_REF                   pro_ref;
+    struct s_object_profile * pro_ptr;
+
+    REF_T          ai_state_ref;
+    ai_state_t   * ai_state_ptr;
+
+    CAP_REF        cap_ref;
+    struct s_cap * cap_ptr;
+};
+typedef struct s_ai_state_bundle ai_state_bundle_t;
+
+ai_state_bundle_t * ai_state_bundle_ctor( ai_state_bundle_t * pbundle );
+ai_state_bundle_t * ai_state_bundle_validate( ai_state_bundle_t * pbundle );
+ai_state_bundle_t * ai_state_bundle_set( ai_state_bundle_t * pbundle, struct s_chr * pchr );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 // Prototypes
 
-void  scr_run_chr_script( const CHR_REF by_reference character );
+void  scr_run_chr_script( ai_state_bundle_t * pbdl_ai );
 
 void issue_order( const CHR_REF by_reference character, Uint32 order );
 void issue_special_order( Uint32 order, IDSZ idsz );
-void set_alerts( const CHR_REF by_reference character );
+void set_alerts( ai_state_bundle_t * pbdl_ai );
 
 void scripting_system_begin();
 void scripting_system_end();

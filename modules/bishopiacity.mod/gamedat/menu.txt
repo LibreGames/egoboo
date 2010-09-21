@@ -11,15 +11,14 @@ Is a RTS module (TRUE or FALSE)			      : FALSE
 Level rating ( * to  ***** ) 	: -
 
 // Module summary
-:Bishopia_lies_near_the_Northern
+:Bishopia_lies_in_the_Northern
 :centre_of_the_plains_region_and
-:is_the_seat_of_power_for_King
-:Bishop._King_Bishop_is_the
-:latest_ruler_in_a_long_line_of
-:nobles._The_continent_has_been
+:is_the_seat_of_power_for_Lord
+:Bishop._The_continent_has_been
 :put_in_a_state_of_unrest_with
 :his_abduction_and_the_rising_evil.
-
+:_
+:_
 
 // Module expansion IDSZs ( with a colon in front )
 :[TYPE] TOWN                //Module Type (MAINQUEST, SIDEQUEST or TOWN)

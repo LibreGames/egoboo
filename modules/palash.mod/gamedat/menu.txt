@@ -13,7 +13,7 @@ Level rating ( *, **, ***, ****, or ***** )     		: ****
 
 // Module summary ( Must be 8 lines...  Each line mush have at least an _ )
 :The_Ash_Palace_is_home_to_some_of
-:the_most_fearsome_creatures.__Any
+:the_most_fearsome_creatures._Any
 :adventurers_entering_should_be_well
 :prepared!
 :_

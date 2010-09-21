@@ -10,13 +10,13 @@ Is a RTS module (TRUE or FALSE)			      : FALSE
 Level rating ( * to  ***** )    :*******
 
 // Module summary
-:The_elemental_demon_lies_slain_and
-:you_enter_the_portal_down_to_the
-:next_level._You_are_greeted_by
-:three_new_portals!_What_could_this
-:mean?
+:The_elemental_Deamon_lies_slain.
+:As_you_enter_the_portal_down_to_the
+:next_level,_you_are_greeted_by
+:three_new_portals!
 :_
-:Is_there_enough_time_left?
+:What_could_this_mean?
+:Is_there_enough_time?
 :_
 
 // IDZs

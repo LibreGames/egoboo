@@ -90,13 +90,11 @@ bool_t frect_point_inside( frect_t * prect, float fx, float fy )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void latch_init( latch_t * platch )
+void latch_input_init( latch_input_t * platch )
 {
     if ( NULL == platch ) return;
 
-    platch->x = 0.0f;
-    platch->y = 0.0f;
-    platch->b = 0;
+    memset( platch, 0, sizeof(*platch) );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -119,8 +117,8 @@ void pair_to_range( IPair pair, FRange * prange )
     {
         float fFrom, fTo;
 
-        fFrom = FP8_TO_FLOAT( pair.base );
-        fTo   = FP8_TO_FLOAT( pair.base + pair.rand );
+        fFrom = SFP8_TO_FLOAT( pair.base );
+        fTo   = SFP8_TO_FLOAT( pair.base + pair.rand );
 
         prange->from = MIN( fFrom, fTo );
         prange->to   = MAX( fFrom, fTo );
@@ -144,8 +142,8 @@ void range_to_pair( FRange range, IPair * ppair )
         fFrom = MIN( range.from, range.to );
         fTo   = MAX( range.from, range.to );
 
-        ppair->base = FLOAT_TO_FP8( fFrom );
-        ppair->rand = FLOAT_TO_FP8( fTo - fFrom );
+        ppair->base = FLOAT_TO_SFP8( fFrom );
+        ppair->rand = FLOAT_TO_SFP8( fTo - fFrom );
     }
 }
 
@@ -170,3 +168,4 @@ void floats_to_pair( float vmin, float vmax, IPair * ppair )
 
     range_to_pair( range_tmp, ppair );
 }
+

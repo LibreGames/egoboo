@@ -123,3 +123,4 @@ FILE * set_ogl_include_stderr( FILE * pfile )
 
     return pfile_old;
 }
+

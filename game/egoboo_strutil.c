@@ -360,3 +360,4 @@ void str_add_linebreaks( char * text, size_t text_len, size_t line_len )
         text++;
     }
 }
+

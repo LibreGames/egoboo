@@ -62,7 +62,7 @@ IFrame Invulnerability angle ( 0 to 32768 )	: 32768
 
 
 // Skin defenses
-  Base defense rating of skin ( eg. 2 5 10 17 )	: 10 10 10 10
+Base defense rating of skin ( eg. 2 5 10 17 )	: 10 10 10 10
 SLASH defense shift ( eg. 1 1 1 1 )		:  1  1  1  1
 CRUSH defense shift ( eg. 1 1 1 1 )		:  1  1  1  1
 POKE defense shift ( eg. 1 1 1 1 )		:  1  1  1  1
@@ -79,7 +79,7 @@ EVIL inversion ( eg. F F F T )			:  F  F  F  F
 FIRE inversion ( eg. F F F T )			:  F  F  F  F
 ICE inversion ( eg. F F F T )			:  F  F  F  F
 ZAP inversion ( eg. F F F T )			:  F  F  F  F
-Acceleration rate ( eg. 40 38 30 20 )		: 35 35 35 35
+Acceleration rate ( eg. 40 38 30 20 )		: 20 20 20 20
 
 
 // Experience and level data

@@ -93,3 +93,4 @@ INLINE EGO_CONST MD2_Triangle_t  *md2_get_Triangle( MD2_Model_t * m, int index )
     }
     return NULL;
 }
+

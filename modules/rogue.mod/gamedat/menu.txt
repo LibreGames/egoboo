@@ -15,11 +15,11 @@ Level rating ( *, **, ***, ****, or ***** )     : ****
 :After_the_guards_caught_you
 :"admiring"_Lord_Bishop's_treasure
 :horde,_you_were_sentenced_to_2
-:years_forced_labor_in_the_Cobol
-:Mines.__Since_your_computer_will
+:years_forced_labor_in_the_COBOL
+:Mines._Since_your_computer_will
 :be_outdated_in_half_that_time,
 :you've_opted_for_an_early
-:release...__Good_Luck!
+:release..._Good_Luck!
 
 
 // Module expansion IDSZs ( with a colon in front )

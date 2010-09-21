@@ -245,7 +245,7 @@ int mad_get_action( const MAD_REF by_reference imad, int action )
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 mad_get_madfx( const MAD_REF by_reference imad, int action )
+Uint32 mad_get_actionfx( const MAD_REF by_reference imad, int action )
 {
     BIT_FIELD retval = EMPTY_BIT_FIELD;
     int cnt;
@@ -268,7 +268,7 @@ Uint32 mad_get_madfx( const MAD_REF by_reference imad, int action )
     {
         pframe = frame_lst + cnt;
 
-        SET_BIT( retval, pframe->framefx );
+        ADD_BITS( retval, pframe->framefx );
     }
 
     return retval;
@@ -409,7 +409,7 @@ void mad_get_framefx( const char * cFrameName, const MAD_REF by_reference imad, 
     pframe = ( MD2_Frame_t * )md2_get_Frames( md2 );
     pframe = pframe + frame;
 
-    // this should only be initializwd the first time through
+    // this should only be initialized the first time through
     if ( token_count < 0 )
     {
         token_count = 0;
@@ -475,19 +475,19 @@ void mad_get_framefx( const char * cFrameName, const MAD_REF by_reference imad, 
             switch ( token_index )
             {
                 case  0: // "I" == invulnerable
-                    SET_BIT( fx, MADFX_INVICTUS );
+                    ADD_BITS( fx, MADFX_INVICTUS );
                     break;
 
                 case  1: // "S" == stop
-                    SET_BIT( fx, MADFX_STOP );
+                    ADD_BITS( fx, MADFX_STOP );
                     break;
 
                 case  2: // "F" == footfall
-                    SET_BIT( fx, MADFX_FOOTFALL );
+                    ADD_BITS( fx, MADFX_FOOTFALL );
                     break;
 
                 case  3: // "P" == poof
-                    SET_BIT( fx, MADFX_POOF );
+                    ADD_BITS( fx, MADFX_POOF );
                     break;
 
                 case  4: // "A" == action
@@ -495,7 +495,7 @@ void mad_get_framefx( const char * cFrameName, const MAD_REF by_reference imad, 
                     // get any modifiers
                     while (( CSTR_END != *ptmp && ptmp < ptmp_end ) && ( 'R' == *ptmp || 'L' == *ptmp ) )
                     {
-                        SET_BIT( fx, ( 'L' == *ptmp ) ? MADFX_ACTLEFT : MADFX_ACTRIGHT );
+                        ADD_BITS( fx, ( 'L' == *ptmp ) ? MADFX_ACTLEFT : MADFX_ACTRIGHT );
                         ptmp++;
                     }
                     break;
@@ -505,7 +505,7 @@ void mad_get_framefx( const char * cFrameName, const MAD_REF by_reference imad, 
                     // get any modifiers
                     while (( CSTR_END != *ptmp && ptmp < ptmp_end ) && ( 'R' == *ptmp || 'L' == *ptmp ) )
                     {
-                        SET_BIT( fx, ( 'L' == *ptmp ) ? MADFX_GRABLEFT : MADFX_GRABRIGHT );
+                        ADD_BITS( fx, ( 'L' == *ptmp ) ? MADFX_GRABLEFT : MADFX_GRABRIGHT );
                         ptmp++;
                     }
                     break;
@@ -525,49 +525,49 @@ void mad_get_framefx( const char * cFrameName, const MAD_REF by_reference imad, 
                     // get any modifiers
                     while (( CSTR_END != *ptmp && ptmp < ptmp_end ) && ( 'R' == *ptmp || 'L' == *ptmp ) )
                     {
-                        SET_BIT( fx, ( 'L' == *ptmp ) ? MADFX_CHARLEFT : MADFX_CHARRIGHT );
+                        ADD_BITS( fx, ( 'L' == *ptmp ) ? MADFX_CHARLEFT : MADFX_CHARRIGHT );
                         ptmp++;
                     }
                     break;
 
                 case  8: // "LA"
                     bad_form = btrue;
-                    SET_BIT( fx, MADFX_ACTLEFT );
+                    ADD_BITS( fx, MADFX_ACTLEFT );
                     break;
 
                 case  9: // "LG"
                     bad_form = btrue;
-                    SET_BIT( fx, MADFX_GRABLEFT );
+                    ADD_BITS( fx, MADFX_GRABLEFT );
                     break;
 
                 case 10: // "LD"
                     bad_form = btrue;
-                    SET_BIT( fx, MADFX_DROPLEFT );
+                    ADD_BITS( fx, MADFX_DROPLEFT );
                     break;
 
                 case 11: // "LC"
                     bad_form = btrue;
-                    SET_BIT( fx, MADFX_CHARLEFT );
+                    ADD_BITS( fx, MADFX_CHARLEFT );
                     break;
 
                 case 12: // "RA"
                     bad_form = btrue;
-                    SET_BIT( fx, MADFX_ACTRIGHT );
+                    ADD_BITS( fx, MADFX_ACTRIGHT );
                     break;
 
                 case 13: // "RG"
                     bad_form = btrue;
-                    SET_BIT( fx, MADFX_GRABRIGHT );
+                    ADD_BITS( fx, MADFX_GRABRIGHT );
                     break;
 
                 case 14: // "RD"
                     bad_form = btrue;
-                    SET_BIT( fx, MADFX_DROPRIGHT );
+                    ADD_BITS( fx, MADFX_DROPRIGHT );
                     break;
 
                 case 15: // "RC"
                     bad_form = btrue;
-                    SET_BIT( fx, MADFX_CHARRIGHT );
+                    ADD_BITS( fx, MADFX_CHARRIGHT );
                     break;
             }
 
@@ -730,7 +730,7 @@ MAD_REF load_one_model_profile_vfs( const char* tmploadname, const MAD_REF by_re
         /// @details BB@> Egoboo md2 models were designed with 1 tile = 32x32 units, but internally Egoboo uses
         ///      1 tile = 128x128 units. Previously, this was handled by sprinkling a bunch of
         ///      commands that multiplied various quantities by 4 or by 4.125 throughout the code.
-        ///      It was very counterintuitive, and caused me no end of headaches...  Of course the
+        ///      It was very counter-intuitive, and caused me no end of headaches...  Of course the
         ///      solution is to scale the model!
         md2_scale_model( pmad->md2_ptr, -3.5, 3.5, 3.5 );
     }
@@ -1212,7 +1212,8 @@ int randomize_action( int action, int slot )
 
     // The vertex is not used
     return 0;
-}*/
+}
+*/
 
 ////--------------------------------------------------------------------------------------------
 //int action_frame()

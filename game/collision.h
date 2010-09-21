@@ -95,3 +95,5 @@ void bump_all_objects( struct s_obj_BSP * pbsp );
 
 bool_t detach_character_from_platform( struct s_chr * pchr );
 bool_t detach_particle_from_platform ( struct s_prt * pprt );
+
+void update_all_platform_attachments();

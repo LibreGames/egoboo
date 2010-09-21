@@ -114,11 +114,25 @@ Uint32  instance_update = ( Uint32 )~0;
 int cmp_prt_registry_entity( const void * vlhs, const void * vrhs )
 {
     const prt_registry_entity_t * lhs, * rhs;
+    float diff;
+    int   retval;
 
     lhs = ( prt_registry_entity_t * ) vlhs;
     rhs = ( prt_registry_entity_t * ) vrhs;
 
-    return lhs->dist - rhs->dist;
+    diff = lhs->dist - rhs->dist;
+
+    retval = 0;
+    if( diff > 0.0f )
+    {
+        retval = 1;
+    }
+    if( diff < 0.0f )
+    {
+        retval = -1;
+    }
+
+    return retval;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -352,15 +366,16 @@ void render_all_prt_trans( camera_t * pcam, prt_registry_entity_t reg[], size_t 
 {
     /// @details BB@> do all kinds of transparent sprites next
 
-    int cnt;
+    signed rcnt;
 
     gfx_begin_3d( pcam );
     {
         // apply transparent particles from far to near
-        for ( cnt = (( int )numparticle ) - 1; cnt >= 0; cnt-- )
+        // this must be iterated with a signed variable or it fails horribly
+        for ( rcnt = (( signed )numparticle ) - 1; rcnt >= 0; rcnt-- )
         {
             // Get the index from the color slot
-            render_one_prt_trans(( PRT_REF )reg[cnt].index );
+            render_one_prt_trans(( PRT_REF )reg[rcnt].index );
         }
     }
     gfx_end_3d();
@@ -450,7 +465,7 @@ bool_t render_one_prt_ref( const PRT_REF by_reference iprt )
     calc_billboard_verts( vtlist, pinst, pinst->size, btrue );
 
     // Fill in the rest of the data
-    startalpha = 255 - ( pprt->enviro.floor_level - pinst->ref_pos.z );
+    startalpha = 255 - ( pprt->enviro.grid_level - pinst->ref_pos.z );
     startalpha = CLIP( startalpha, 0, 255 );
     startalpha /= 2;
 
@@ -648,7 +663,6 @@ void render_all_prt_attachment()
     PRT_END_LOOP();
 }
 
-
 //--------------------------------------------------------------------------------------------
 void render_all_prt_bbox()
 {
@@ -776,52 +790,52 @@ void prt_instance_update_vertices( camera_t * pcam, prt_instance_t * pinst, prt_
 
     pinst->type = pprt->type;
 
-    pinst->image_ref = FP8_TO_INT( pprt->image + pprt->image_stt );
+    pinst->image_ref = UFP8_TO_UINT( pprt->image + pprt->image_stt );
 
     // set the position
     pinst->pos         = prt_get_pos(pprt);
     pinst->orientation = ppip->orientation;
 
-    // calculate the billboard vectors for the reflecions
+    // calculate the billboard vectors for the reflections
     pinst->ref_pos      = prt_get_pos(pprt);
-    pinst->ref_pos.z    = 2 * pprt->enviro.floor_level - pinst->pos.z;
+    pinst->ref_pos.z    = 2 * pprt->enviro.grid_level - pinst->pos.z;
 
     // get the vector from the camera to the particle
     vfwd = fvec3_sub( pinst->pos.v, pcam->pos.v );
-    vfwd = fvec3_normalize( vfwd.v );
+    fvec3_self_normalize( vfwd.v );
 
     vfwd_ref = fvec3_sub( pinst->ref_pos.v, pcam->pos.v );
-    vfwd_ref = fvec3_normalize( vfwd_ref.v );
+    fvec3_self_normalize( vfwd_ref.v );
 
     // set the up and right vectors
-    if ( ppip->rotatetoface && !INGAME_CHR( pprt->attachedto_ref ) && ( ABS( pprt->vel.x ) + ABS( pprt->vel.y ) + ABS( pprt->vel.z ) > 0 ) )
+    if ( ppip->rotatetoface && !INGAME_CHR( pprt->attachedto_ref ) && ( fvec3_length_abs( pprt->vel.v ) > 0.0f ) )
     {
         // the particle points along its direction of travel
 
         vup = pprt->vel;
-        vup   = fvec3_normalize( vup.v );
+        fvec3_self_normalize( vup.v );
 
         // get the correct "right" vector
         vright = fvec3_cross_product( vfwd.v, vup.v );
-        vright = fvec3_normalize( vright.v );
+        fvec3_self_normalize( vright.v );
 
         vup_ref    = vup;
         vright_ref = fvec3_cross_product( vfwd_ref.v, vup.v );
-        vright_ref = fvec3_normalize( vright_ref.v );
+        fvec3_self_normalize( vright_ref.v );
     }
     else if ( ORIENTATION_B == pinst->orientation )
     {
         // use the camera up vector
         vup = pcam->vup;
-        vup = fvec3_normalize( vup.v );
+        fvec3_self_normalize( vup.v );
 
         // get the correct "right" vector
         vright = fvec3_cross_product( vfwd.v, vup.v );
-        vright = fvec3_normalize( vright.v );
+        fvec3_self_normalize( vright.v );
 
         vup_ref    = vup;
         vright_ref = fvec3_cross_product( vfwd_ref.v, vup.v );
-        vright_ref = fvec3_normalize( vright_ref.v );
+        fvec3_self_normalize( vright_ref.v );
     }
     else if ( ORIENTATION_V == pinst->orientation )
     {
@@ -848,18 +862,18 @@ void prt_instance_update_vertices( camera_t * pcam, prt_instance_t * pinst, prt_
         vup.x = vup.x + weight * vup_cam.x;
         vup.y = vup.y + weight * vup_cam.y;
         vup.z = vup.z + weight * vup_cam.z;
-        vup = fvec3_normalize( vup.v );
+        fvec3_self_normalize( vup.v );
 
         // get the correct "right" vector
         vright = fvec3_cross_product( vfwd.v, vup.v );
-        vright = fvec3_normalize( vright.v );
+        fvec3_self_normalize( vright.v );
 
         vright_ref = fvec3_cross_product( vfwd.v, vup_ref.v );
-        vright_ref = fvec3_normalize( vright_ref.v );
+        fvec3_self_normalize( vright_ref.v );
 
         vup_ref    = vup;
         vright_ref = fvec3_cross_product( vfwd_ref.v, vup.v );
-        vright_ref = fvec3_normalize( vright_ref.v );
+        fvec3_self_normalize( vright_ref.v );
     }
     else if ( ORIENTATION_H == pinst->orientation )
     {
@@ -874,8 +888,8 @@ void prt_instance_update_vertices( camera_t * pcam, prt_instance_t * pinst, prt_
         vup_ref = fvec3_cross_product( vup.v, vright_ref.v );
 
         // normalize them
-        vright = fvec3_normalize( vright.v );
-        vup    = fvec3_normalize( vup.v );
+        fvec3_self_normalize( vright.v );
+        fvec3_self_normalize( vup.v );
 
         vright_ref = vright;
         vup_ref    = vup;
@@ -892,14 +906,14 @@ void prt_instance_update_vertices( camera_t * pcam, prt_instance_t * pinst, prt_
 
             switch ( pinst->orientation )
             {
-                case ORIENTATION_X: vup = mat_getChrForward( cinst->matrix ); break;
-                case ORIENTATION_Y: vup = mat_getChrRight( cinst->matrix ); break;
+                case ORIENTATION_X: vup = mat_getChrRight( cinst->matrix ); break;
+                case ORIENTATION_Y: vup = mat_getChrForward( cinst->matrix ); break;
 
                 default:
                 case ORIENTATION_Z: vup = mat_getChrUp( cinst->matrix ); break;
             }
 
-            vup = fvec3_normalize( vup.v );
+            fvec3_self_normalize( vup.v );
         }
         else
         {
@@ -914,29 +928,29 @@ void prt_instance_update_vertices( camera_t * pcam, prt_instance_t * pinst, prt_
             }
         }
 
-        vup = fvec3_normalize( vup.v );
+        fvec3_self_normalize( vup.v );
 
         // get the correct "right" vector
         vright = fvec3_cross_product( vfwd.v, vup.v );
-        vright = fvec3_normalize( vright.v );
+        fvec3_self_normalize( vright.v );
 
         vup_ref    = vup;
         vright_ref = fvec3_cross_product( vfwd_ref.v, vup.v );
-        vright_ref = fvec3_normalize( vright_ref.v );
+        fvec3_self_normalize( vright_ref.v );
     }
     else
     {
         // use the camera up vector
         vup = pcam->vup;
-        vup = fvec3_normalize( vup.v );
+        fvec3_self_normalize( vup.v );
 
         // get the correct "right" vector
         vright = fvec3_cross_product( vfwd.v, vup.v );
-        vright = fvec3_normalize( vright.v );
+        fvec3_self_normalize( vright.v );
 
         vup_ref    = vup;
         vright_ref = fvec3_cross_product( vfwd_ref.v, vup.v );
-        vright_ref = fvec3_normalize( vright_ref.v );
+        fvec3_self_normalize( vright_ref.v );
     }
 
     // calculate the actual vectors using the particle rotation
@@ -990,11 +1004,11 @@ void prt_instance_update_vertices( camera_t * pcam, prt_instance_t * pinst, prt_
     //
     // This is easy to think about in a couple of examples:
     // 1) If the quad is like a picture frame then whatever component (up or right)
-    //    that actually points in the wodld up direction is reversed.
+    //    that actually points in the world up direction is reversed.
     //    This corresponds to the case where zdot == +/- 1 in the code below
     //
     // 2) If the particle is like a rug, then basically nothing happens since
-    //    neither the up or right vectors point in the wodld up direction.
+    //    neither the up or right vectors point in the world up direction.
     //    This corresponds to ndot == 0 in the code below.
     //
     // This process does not affect the normal the length of the vector, or the
@@ -1053,7 +1067,7 @@ void prt_instance_update_vertices( camera_t * pcam, prt_instance_t * pinst, prt_
 
     // set some particle dependent properties
     pinst->scale = prt_get_scale( pprt );
-    pinst->size  = FP8_TO_FLOAT( pprt->size ) * pinst->scale;
+    pinst->size  = UFP8_TO_FLOAT( pprt->size ) * pinst->scale;
 
     if ( cfg.dev_mode && SDLKEYDOWN( SDLK_F8 ) )
     {
@@ -1163,25 +1177,26 @@ void render_prt_bbox( prt_bundle_t * pbdl_prt )
     loc_pprt = pbdl_prt->prt_ptr;
     loc_ppip = pbdl_prt->pip_ptr;
 
-    // only draw bullets
-    if( 50 != loc_ppip->vel_hrz_pair.base ) return;
+    // only draw damaging particles
+    if( 0 == ABS(loc_pprt->damage.base) + ABS(loc_pprt->damage.rand) ) return;
 
     if ( !DISPLAY_PPRT( loc_pprt ) ) return;
 
      // draw the object bounding box as a part of the graphics debug mode F7
     if ( (cfg.dev_mode && SDLKEYDOWN( SDLK_F7 )) || single_frame_mode )
     {
+        int cnt;
         oct_bb_t loc_bb, tmp_bb, exp_bb;
 
         // copy the bounding volume
-        tmp_bb = loc_pprt->chr_prt_cv;
+        tmp_bb = loc_pprt->prt_cv;
 
         // make sure that it has some minimum extent
-        //for(cnt = 0; cnt < OCT_COUNT; cnt++ )
-        //{
-        //    tmp_bb.mins[cnt] = MIN( tmp_bb.mins[cnt], -1 );
-        //    tmp_bb.maxs[cnt] = MAX( tmp_bb.mins[cnt],  1 );
-        //}
+        for(cnt = 0; cnt < OCT_COUNT; cnt++ )
+        {
+            tmp_bb.mins[cnt] = MIN( tmp_bb.mins[cnt], -1 );
+            tmp_bb.maxs[cnt] = MAX( tmp_bb.maxs[cnt],  1 );
+        }
 
         // determine the expanded collision volumes for both objects
         phys_expand_oct_bb( tmp_bb, loc_pprt->vel, 0, 1, &exp_bb );
@@ -1197,3 +1212,4 @@ void render_prt_bbox( prt_bundle_t * pbdl_prt )
         GL_DEBUG( glEnable )( GL_TEXTURE_2D );
     }
 }
+

@@ -14,12 +14,12 @@ Level rating ( *, **, ***, ****, or ***** )   		: ***
 // Module summary ( Must be 8 lines...  Each line mush have at least an _ )
 :Lost_in_the_Great_Big_Desert_for
 :generations,_the_Sand_Palace_is
-:thought_to_be_of_ancient_G'nomish
-:origin.__Though_some_claim_it's_an
+:thought_to_be_of_ancient_G'Nomish
+:origin._Though_some_claim_it's_an
 :elaborate_trap_to_protect_one_of
 :the_Sporks_of_Yore,_nobody_knows
-:for_sure.__Now_the_mystery_is_yours
-:to_unravel.__Good_Luck!
+:for_sure._Now_the_mystery_is_yours
+:to_unravel._Good_Luck!
 
 
 // Module expansion IDSZs ( with a colon in front )

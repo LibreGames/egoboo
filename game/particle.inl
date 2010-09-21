@@ -80,10 +80,11 @@ INLINE bool_t prt_set_size( prt_t * pprt, int size )
         // make the particle non-interacting if the initial bumper size was 0
         pprt->bump_real.size   = 0;
         pprt->bump_padded.size = 0;
+        pprt->bump_min.size    = 0;
     }
     else
     {
-        float real_size  =     FP8_TO_FLOAT( size ) * prt_get_scale( pprt );
+        float real_size  = SFP8_TO_FLOAT( size ) * prt_get_scale( pprt );
 
         if ( 0.0f == pprt->bump_real.size || 0.0f == size )
         {
@@ -106,10 +107,15 @@ INLINE bool_t prt_set_size( prt_t * pprt, int size )
         pprt->bump_padded.size     = MAX( pprt->bump_real.size,     ppip->bump_size            );
         pprt->bump_padded.size_big = MAX( pprt->bump_real.size_big, ppip->bump_size * SQRT_TWO );
         pprt->bump_padded.height   = MAX( pprt->bump_real.height,   ppip->bump_height          );
+
+        pprt->bump_min.size        = MIN( pprt->bump_real.size,     ppip->bump_size            );
+        pprt->bump_min.size_big    = MIN( pprt->bump_real.size_big, ppip->bump_size * SQRT_TWO );
+        pprt->bump_min.height      = MIN( pprt->bump_real.height,   ppip->bump_height          );
     }
 
-    // use the padded bumper to figure out the chr_prt_cv
-    bumper_to_oct_bb_0( pprt->bump_padded, &( pprt->chr_prt_cv ) );
+    // use the padded bumper to figure out the prt_cv
+    bumper_to_oct_bb_0( pprt->bump_padded, &( pprt->prt_cv     ) );
+    bumper_to_oct_bb_0( pprt->bump_min,    &( pprt->prt_min_cv ) );
 
     return btrue;
 }
@@ -117,7 +123,7 @@ INLINE bool_t prt_set_size( prt_t * pprt, int size )
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF prt_get_iowner( const PRT_REF by_reference iprt, int depth )
 {
-    /// BB@> A helper function for determining the owner of a paricle
+    /// BB@> A helper function for determining the owner of a particle
     ///
     ///      @details There could be a possibility that a particle exists that was spawned by
     ///      another particle, but has lost contact with its original spawner. For instance

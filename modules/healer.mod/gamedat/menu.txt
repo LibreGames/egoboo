@@ -14,9 +14,9 @@ Level rating ( *, **, ***, ****, or ***** )     		: ***
 // Module summary ( Must be 8 lines...  Each line mush have at least an _ )
 :A_crypt_in_the_Bishopia_Graveyard
 :has_been_infested_with_the_undead!
-:Defeat_the_evil_necromancer_and
-:free_the_country_from_undeads.
 :_
+:Defeat_the_evil_lich_and
+:free_Bishopia_from_undeads.
 :_
 :_
 :_

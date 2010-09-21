@@ -262,3 +262,4 @@ FILE * oglx_set_stdout( FILE * pfile )
 
     return pfile_old;
 }
+

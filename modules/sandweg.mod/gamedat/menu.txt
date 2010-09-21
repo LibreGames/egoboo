@@ -12,12 +12,12 @@ Level rating ( * to ********** ) :-
 // Module summary
 :This_desert_city_greets_you_with_the
 :juicy_smell_of_Kabobs_and_merchants
-:bartering_and_crying_out_trying_to
-:sell_their_wares._This_town_is_the
-:perfect_place_for_new_heroes_to_buy
-:the_equipment_they_need_to_start
-:their_quest!
+:bartering_and_crying_out,_trying_to
+:sell_their_wares.
 :_
+:Sand_Weg_is_a_perfect_place_for_new
+:heroes_to_buy_unique_equipment_for
+:their_quests!
 
 // IDZs
 :[TYPE] TOWN                //Module Type (MAINQUEST, SIDEQUEST or TOWN)

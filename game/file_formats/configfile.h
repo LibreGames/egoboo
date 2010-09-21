@@ -46,7 +46,8 @@ typedef struct s_ConfigFileValue
     char *Value;
     char *Commentary;
     ConfigFileValue_t *NextValue;
-} *ConfigFileValuePtr_t;
+}
+ *ConfigFileValuePtr_t;
 
 /// One section of the congiguration file, delimited by {"BLAH"}
 typedef struct s_ConfigFileSection ConfigFileSection_t;
@@ -55,7 +56,8 @@ typedef struct s_ConfigFileSection
     char SectionName[MAX_CONFIG_SECTION_LENGTH];
     ConfigFileSection_t  *NextSection;
     ConfigFileValuePtr_t  FirstValue;
-} *ConfigFileSectionPtr_t;
+}
+ *ConfigFileSectionPtr_t;
 
 /// The congiguration file
 typedef struct s_ConfigFile ConfigFile_t;
@@ -67,7 +69,8 @@ typedef struct s_ConfigFile
     ConfigFileSectionPtr_t  ConfigSectionList;
     ConfigFileSectionPtr_t  CurrentSection;
     ConfigFileValuePtr_t    CurrentValue;
-} *ConfigFilePtr_t;
+}
+ *ConfigFilePtr_t;
 
 extern ConfigFilePtr_t   ConfigFile_create();
 extern ConfigFile_retval ConfigFile_destroy( ConfigFilePtr_t * ptmp );

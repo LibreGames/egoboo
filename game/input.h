@@ -97,14 +97,14 @@ struct s_keyboard
     int     count;
     Uint8  *state_ptr;
 
-    int     buffer_count;
+    size_t  buffer_count;
     char    buffer[KEYB_BUFFER_SIZE];
 };
 typedef struct s_keyboard keyboard_t;
 
 extern keyboard_t keyb;
 
-#define SDLKEYDOWN(k) ( !console_mode &&  (NULL != keyb.state_ptr) &&  ((k) < keyb.count) && ( 0 != keyb.state_ptr[k] ) )
+#define SDLKEYDOWN(k) ( !console_mode &&  (NULL != keyb.state_ptr) && (keyb.count > 0) && ((k) < (Uint32)keyb.count) && (0 != keyb.state_ptr[k]) )
 
 //--------------------------------------------------------------------------------------------
 // JOYSTICK

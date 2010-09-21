@@ -52,7 +52,7 @@ void prt_set_texture_params( const TX_REF by_reference itex );
 // Particle graphic data
 //--------------------------------------------------------------------------------------------
 
-/// All the data necessary to diaplay a partile
+/// All the data necessary to display a partile
 struct s_prt_instance
 {
     bool_t valid;

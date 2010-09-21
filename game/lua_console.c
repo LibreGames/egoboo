@@ -32,6 +32,7 @@ extern "C"
 
 #if defined(__cplusplus)
 }
+
 #endif
 
 #include "lua_console.h"
@@ -264,3 +265,4 @@ int lua_console_print( lua_State * L )
 
     return SDL_TRUE;
 }
+

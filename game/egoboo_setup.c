@@ -107,12 +107,12 @@ void egoboo_config_init( egoboo_config_t * pcfg )
     pcfg->reflect_prt           = bfalse;         // Reflect particles?
     pcfg->shadow_allowed        = bfalse;            // Shadows?
     pcfg->shadow_sprite         = bfalse;        // Shadow sprites?
-    pcfg->use_phong             = btrue;              // Do phong overlay?
+    pcfg->use_phong             = btrue;              // Do Phong overlay?
     pcfg->twolayerwater_allowed = btrue;      // Two layer water?
     pcfg->overlay_allowed       = bfalse;               // Allow large overlay?
     pcfg->background_allowed    = bfalse;            // Allow large background?
     pcfg->fog_allowed           = btrue;
-    pcfg->gourard_req           = btrue;              // Gourad shading?
+    pcfg->gourard_req           = btrue;              // Gouraud shading?
     pcfg->multisamples          = 0;                  // Antialiasing?
     pcfg->texturefilter_req     = TX_UNFILTERED;      // Texture filtering?
     pcfg->dyna_count_req        = 12;                 // Max number of lights to draw
@@ -122,12 +122,12 @@ void egoboo_config_init( egoboo_config_t * pcfg )
     // {SOUND}
     pcfg->sound_allowed         = bfalse;
     pcfg->music_allowed         = bfalse;
-    pcfg->music_volume          = 50;               // The sound volume of music
-    pcfg->sound_volume          = 75;				// Volume of sounds played
-    pcfg->sound_channel_count   = 16;				// Max number of sounds playing at the same time
-    pcfg->sound_buffer_size     = 2048;				// Buffer chunk size
+    pcfg->music_volume          = 50;                            // The sound volume of music
+    pcfg->sound_volume          = 75;          // Volume of sounds played
+    pcfg->sound_channel_count   = 16;      // Max number of sounds playing at the same time
+    pcfg->sound_buffer_size     = 2048;
 	pcfg->sound_highquality		= bfalse;			// High quality sounds
-	pcfg->sound_footfall			= btrue;			// Play footstep sounds
+	pcfg->sound_footfall		= btrue;			// Play footstep sounds
 
     // {GAME}
     pcfg->message_count_req     = 6;
@@ -197,14 +197,14 @@ bool_t setup_read_vfs( const char* filename )
 bool_t setup_write()
 {
     /// @details BB@> save the current setup file
-	bool_t success = bfalse;
+    bool_t success = bfalse;
 
     if ( INVALID_CSTR( _config_filename ) ) return bfalse;
 
-	success = ConfigFile_succeed == SaveConfigFileAs( lConfigSetup, _config_filename );
-	if( !success ) log_warning("Failed to save setup.txt!\n");
-    
-	return success;
+    success = ConfigFile_succeed == SaveConfigFileAs( lConfigSetup, _config_filename );
+    if( !success ) log_warning("Failed to save setup.txt!\n");
+
+    return success;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -264,7 +264,7 @@ bool_t setup_download( egoboo_config_t * pcfg )
     // Draw good shadows?
     GetKey_bool( "SHADOW_AS_SPRITE", pcfg->shadow_sprite, cfg_default.shadow_sprite );
 
-    // Draw phong mapping?
+    // Draw Phong mapping?
     GetKey_bool( "PHONG", pcfg->use_phong, cfg_default.use_phong );
 
     // Draw water with more layers?
@@ -279,7 +279,7 @@ bool_t setup_download( egoboo_config_t * pcfg )
     // Enable fog?
     GetKey_bool( "FOG", pcfg->fog_allowed, cfg_default.fog_allowed );
 
-    // Do gourad shading?
+    // Do Gouraud shading?
     GetKey_bool( "GOURAUD_SHADING", pcfg->gourard_req, cfg_default.gourard_req );
 
     // Enable antialiasing?
@@ -336,10 +336,10 @@ bool_t setup_download( egoboo_config_t * pcfg )
     GetKey_bool( "HIGH_SOUND_QUALITY", pcfg->sound_highquality, cfg_default.sound_highquality );
     pcfg->sound_highquality_base = pcfg->sound_highquality;
 
-	// Extra high sound quality?
+	// Footsteps?
     GetKey_bool( "ENABLE_FOOTSTEPS", pcfg->sound_footfall, cfg_default.sound_footfall );
 
-	//*********************************************
+    //*********************************************
     //* CONTROL Section
     //*********************************************
 
@@ -483,7 +483,7 @@ bool_t setup_upload( egoboo_config_t * pcfg )
     // Draw good shadows?
     SetKey_bool( "SHADOW_AS_SPRITE", pcfg->shadow_sprite );
 
-    // Draw phong mapping?
+    // Draw Phong mapping?
     SetKey_bool( "PHONG", pcfg->use_phong );
 
     // Draw water with more layers?
@@ -498,7 +498,7 @@ bool_t setup_upload( egoboo_config_t * pcfg )
     // Enable fog?
     SetKey_bool( "FOG", pcfg->fog_allowed );
 
-    // Do gourad shading?
+    // Do Gouraud shading?
     SetKey_bool( "GOURAUD_SHADING", pcfg->gourard_req );
 
     // Enable antialiasing?
@@ -554,8 +554,8 @@ bool_t setup_upload( egoboo_config_t * pcfg )
     // Extra high sound quality
     SetKey_bool( "HIGH_SOUND_QUALITY", pcfg->sound_highquality );
 
-	// Draw phong mapping?
-	SetKey_bool( "ENABLE_FOOTSTEPS", pcfg->sound_footfall );
+	// Footsteps?
+    SetKey_bool( "ENABLE_FOOTSTEPS", pcfg->sound_footfall );
 
     //*********************************************
     //* GAME Section
@@ -563,7 +563,7 @@ bool_t setup_upload( egoboo_config_t * pcfg )
 
     lCurSectionName = "GAME";
 
-    // Save diffculty mode
+    // Save difficulty mode
     switch ( pcfg->difficulty )
     {
         case GAME_EASY:         SetKey_string( "DIFFICULTY_MODE", "EASY" ); break;
@@ -628,4 +628,6 @@ bool_t setup_upload( egoboo_config_t * pcfg )
 
     return btrue;
 }
+
+
 

@@ -22,7 +22,8 @@
 /// @file mesh.inl
 
 #include "mesh.h"
-#include "egoboo_math.h"
+
+#include "egoboo_math.inl"
 
 //--------------------------------------------------------------------------------------------
 // FORWARD DECLARATIONS
@@ -173,7 +174,7 @@ INLINE bool_t mesh_clear_fx( ego_mpd_t * pmesh, Uint32 itile, BIT_FIELD flags )
     old_flags = pmesh->gmem.grid_list[itile].fx;
 
     // clear the wall and impass flags
-    UNSET_BIT( pmesh->gmem.grid_list[itile].fx, flags );
+    REMOVE_BITS( pmesh->gmem.grid_list[itile].fx, flags );
 
     // succeed only of something actually changed
     return 0 != ( old_flags & flags );
@@ -222,3 +223,4 @@ INLINE Uint32 mesh_test_fx( ego_mpd_t * pmesh, Uint32 itile, BIT_FIELD flags )
 
     return mesh_has_some_mpdfx(pmesh->gmem.grid_list[itile].fx, flags);
 }
+

@@ -41,6 +41,7 @@
 #include "enchant.inl"
 #include "mad.h"
 #include "profile.inl"
+#include "physics.inl"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -69,17 +70,23 @@ static prt_t * prt_config_do_init( prt_t * pprt );
 static prt_t * prt_config_do_active( prt_t * pprt );
 static prt_t * prt_config_do_deinit( prt_t * pprt );
 
-int prt_do_end_spawn( const PRT_REF by_reference iprt );
-int prt_do_contspawn( prt_bundle_t * pbdl_prt  );
-prt_bundle_t * prt_do_bump_damage( prt_bundle_t * pbdl_prt  );
+static int prt_do_end_spawn( const PRT_REF by_reference iprt );
+static int prt_do_contspawn( prt_bundle_t * pbdl_prt  );
+static prt_bundle_t * prt_do_bump_damage( prt_bundle_t * pbdl_prt  );
 
-prt_bundle_t * prt_update_animation( prt_bundle_t * pbdl_prt );
-prt_bundle_t * prt_update_dynalight( prt_bundle_t * pbdl_prt  );
-prt_bundle_t * prt_update_timers( prt_bundle_t * pbdl_prt );
-prt_bundle_t * prt_update_do_water( prt_bundle_t * pbdl_prt  );
-prt_bundle_t * prt_update_ingame( prt_bundle_t * pbdl_prt   );
-prt_bundle_t * prt_update_display( prt_bundle_t * pbdl_prt  );
-prt_bundle_t * prt_update( prt_bundle_t * pbdl_prt );
+static prt_bundle_t * prt_update_animation( prt_bundle_t * pbdl_prt );
+static prt_bundle_t * prt_update_dynalight( prt_bundle_t * pbdl_prt  );
+static prt_bundle_t * prt_update_timers( prt_bundle_t * pbdl_prt );
+static prt_bundle_t * prt_update_do_water( prt_bundle_t * pbdl_prt  );
+static prt_bundle_t * prt_update_ingame( prt_bundle_t * pbdl_prt   );
+static prt_bundle_t * prt_update_display( prt_bundle_t * pbdl_prt  );
+static prt_bundle_t * prt_update( prt_bundle_t * pbdl_prt );
+
+static prt_bundle_t * move_one_particle_get_environment( prt_bundle_t * pbdl_prt, prt_environment_t * penviro );
+static prt_bundle_t * move_one_particle_do_fluid_friction( prt_bundle_t * pbdl_prt );
+static prt_bundle_t * move_one_particle_do_homing( prt_bundle_t * pbdl_prt );
+static prt_bundle_t * move_one_particle_do_z_motion( prt_bundle_t * pbdl_prt );
+static prt_bundle_t * move_one_particle_do_floor( prt_bundle_t * pbdl_prt );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -169,7 +176,7 @@ s_prt::~s_prt() { prt_dtor( this ); }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-int prt_count_free()
+int PrtList_count_free()
 {
     return PrtList.free_count;
 }
@@ -338,8 +345,8 @@ prt_t * prt_config_do_init( prt_t * pprt )
             pprt->target_ref = prt_find_target( pdata->pos.x, pdata->pos.y, pdata->pos.z, loc_facing, pdata->ipip, pdata->team, loc_chr_origin, pdata->oldtarget );
             if ( DEFINED_CHR( pprt->target_ref ) && !ppip->homing )
             {
-                loc_facing -= glouseangle;        // ZF> ?What does this do?!
-                                                // BB> glouseangle is the angle found in prt_find_target()
+                loc_facing -= glo_useangle;        // ZF> ?What does this do?!
+                                                // BB> glo_useangle is the angle found in prt_find_target()
             }
 
             // Correct loc_facing for dexterity...
@@ -426,9 +433,9 @@ prt_t * prt_config_do_init( prt_t * pprt )
     pprt->size_stt      = ppip->size_base;
     pprt->size_add      = ppip->size_add;
 
-    pprt->image_stt     = INT_TO_FP8( ppip->image_base );
+    pprt->image_stt     = UINT_TO_UFP8( ppip->image_base );
     pprt->image_add     = generate_irand_pair( ppip->image_add );
-    pprt->image_max     = INT_TO_FP8( ppip->numframes );
+    pprt->image_max     = UINT_TO_UFP8( ppip->numframes );
 
     // figure out the actual particle lifetime
     prt_lifetime        = ppip->time;
@@ -524,7 +531,7 @@ prt_t * prt_config_do_init( prt_t * pprt )
 
     prt_set_size( pprt, ppip->size_base );
 
-#if defined(_DEBUG) && defined(DEBUG_PRT_LIST)
+#if EGO_DEBUG && defined(DEBUG_PRT_LIST)
 
     // some code to track all allocated particles, where they came from, how long they are going to last,
     // what they are being used for...
@@ -924,7 +931,7 @@ PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF by_refer
     iprt = PrtList_allocate( ppip->force );
     if ( !DEFINED_PRT( iprt ) )
     {
-#if defined(_DEBUG) && defined(DEBUG_PRT_LIST)
+#if EGO_DEBUG && defined(DEBUG_PRT_LIST)
         log_debug( "spawn_one_particle() - cannot allocate a particle owner == %d(\"%s\"), pip == %d(\"%s\"), profile == %d(\"%s\")\n",
                    chr_origin, INGAME_CHR( chr_origin ) ? ChrList.lst[chr_origin].Name : "INVALID",
                    ipip, LOADED_PIP( ipip ) ? PipStack.lst[ipip].name : "INVALID",
@@ -960,6 +967,7 @@ PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF by_refer
 
     return iprt;
 }
+
 //--------------------------------------------------------------------------------------------
 float prt_get_mesh_pressure( prt_t * pprt, float test_pos[] )
 {
@@ -973,7 +981,7 @@ float prt_get_mesh_pressure( prt_t * pprt, float test_pos[] )
     ppip = PipStack.lst + pprt->pip_ref;
 
     stoppedby = MPDFX_IMPASS;
-    if ( 0 != ppip->bump_money ) SET_BIT( stoppedby, MPDFX_WALL );
+    if ( 0 != ppip->bump_money ) ADD_BITS( stoppedby, MPDFX_WALL );
 
     // deal with the optional parameters
      if ( NULL == test_pos ) test_pos = prt_get_pos_v(pprt);
@@ -994,8 +1002,8 @@ float prt_get_mesh_pressure( prt_t * pprt, float test_pos[] )
 //--------------------------------------------------------------------------------------------
 fvec2_t prt_get_diff( prt_t * pprt, float test_pos[], float center_pressure )
 {
-    fvec2_t		retval = ZERO_VECT2;
-    float		radius;
+    fvec2_t        retval = ZERO_VECT2;
+    float        radius;
     BIT_FIELD   stoppedby;
     pip_t      * ppip;
 
@@ -1005,13 +1013,14 @@ fvec2_t prt_get_diff( prt_t * pprt, float test_pos[], float center_pressure )
     ppip = PipStack.lst + pprt->pip_ref;
 
     stoppedby = MPDFX_IMPASS;
-    if ( 0 != ppip->bump_money ) SET_BIT( stoppedby, MPDFX_WALL );
+    if ( 0 != ppip->bump_money ) ADD_BITS( stoppedby, MPDFX_WALL );
 
     // deal with the optional parameters
      if ( NULL == test_pos ) test_pos = prt_get_pos_v(pprt);
     if ( NULL == test_pos ) return retval;
 
     // calculate the radius based on whether the particle is on camera
+    // ZF> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
     radius = 0.0f;
     if ( mesh_grid_is_valid( PMesh, pprt->onwhichgrid ) )
     {
@@ -1049,7 +1058,7 @@ BIT_FIELD prt_hit_wall( prt_t * pprt, float test_pos[], float nrm[], float * pre
     ppip = PipStack.lst + pprt->pip_ref;
 
     stoppedby = MPDFX_IMPASS;
-    if ( 0 != ppip->bump_money ) SET_BIT( stoppedby, MPDFX_WALL );
+    if ( 0 != ppip->bump_money ) ADD_BITS( stoppedby, MPDFX_WALL );
 
     // deal with the optional parameters
      if ( NULL == test_pos ) test_pos = prt_get_pos_v(pprt);
@@ -1083,7 +1092,7 @@ bool_t prt_test_wall( prt_t * pprt, float test_pos[] )
     ppip = PipStack.lst + pprt->pip_ref;
 
     stoppedby = MPDFX_IMPASS;
-    if ( 0 != ppip->bump_money ) SET_BIT( stoppedby, MPDFX_WALL );
+    if ( 0 != ppip->bump_money ) ADD_BITS( stoppedby, MPDFX_WALL );
 
     // handle optional parameters
      if ( NULL == test_pos ) test_pos = prt_get_pos_v(pprt);
@@ -1130,24 +1139,34 @@ void prt_set_level( prt_t * pprt, float level )
 
     if ( !DISPLAY_PPRT( pprt ) ) return;
 
-    pprt->enviro.level = level;
+    pprt->enviro.floor_level = level;
 
-    loc_height = prt_get_scale(pprt) * MAX( FP8_TO_FLOAT( pprt->size ), pprt->offset.z * 0.5 );
+    loc_height = prt_get_scale(pprt) * MAX( UFP8_TO_FLOAT( pprt->size ), pprt->offset.z * 0.5 );
 
-    pprt->enviro.adj_level = pprt->enviro.level;
-    pprt->enviro.adj_floor = pprt->enviro.floor_level;
+    pprt->enviro.grid_adj  = pprt->enviro.grid_level;
+    pprt->enviro.floor_adj = pprt->enviro.floor_level;
 
-    pprt->enviro.adj_level += loc_height;
-    pprt->enviro.adj_floor += loc_height;
+    pprt->enviro.grid_adj  += loc_height;
+    pprt->enviro.floor_adj += loc_height;
 
-    // set the zlerp after we have done everything to the particle's level we care to
-    pprt->enviro.zlerp = ( pprt->pos.z - pprt->enviro.adj_level ) / PLATTOLERANCE;
-    pprt->enviro.zlerp = CLIP( pprt->enviro.zlerp, 0.0f, 1.0f );
+    // set the lerp after we have done everything to the particle's level we care to
+    pprt->enviro.grid_lerp = ( pprt->pos.z - pprt->enviro.grid_adj ) / PLATTOLERANCE;
+    pprt->enviro.grid_lerp = CLIP( pprt->enviro.grid_lerp, 0.0f, 1.0f );
+
+    pprt->enviro.floor_lerp = ( pprt->pos.z - pprt->enviro.floor_adj ) / PLATTOLERANCE;
+    pprt->enviro.floor_lerp = CLIP( pprt->enviro.floor_lerp, 0.0f, 1.0f );
+
 }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-prt_bundle_t * move_one_particle_get_environment( prt_bundle_t * pbdl_prt )
+prt_bundle_t * prt_get_environment( prt_bundle_t * pbdl )
+{
+    return move_one_particle_get_environment( pbdl, NULL );
+}
+
+//--------------------------------------------------------------------------------------------
+prt_bundle_t * move_one_particle_get_environment( prt_bundle_t * pbdl_prt, prt_environment_t * penviro )
 {
     /// @details BB@> A helper function that gets all of the information about the particle's
     ///               environment (like friction, etc.) that will be necessary for the other
@@ -1156,30 +1175,31 @@ prt_bundle_t * move_one_particle_get_environment( prt_bundle_t * pbdl_prt )
     Uint32 itile;
     float loc_level = 0.0f;
 
-    prt_t             * loc_pprt;
-    prt_environment_t * penviro;
+    prt_t * loc_pprt;
 
     if( NULL == pbdl_prt ) return NULL;
     loc_pprt = pbdl_prt->prt_ptr;
-    penviro  = &(loc_pprt->enviro);
 
-    //---- character "floor" level
-    penviro->floor_level = mesh_get_level( PMesh, loc_pprt->pos.x, loc_pprt->pos.y );
-    penviro->level       = penviro->floor_level;
+    // handle the optional parameter
+    if( NULL == penviro ) penviro = &(loc_pprt->enviro);
 
-    //---- The actual level of the characer.
+    //---- particle "floor" level
+    penviro->grid_level = mesh_get_level( PMesh, loc_pprt->pos.x, loc_pprt->pos.y );
+    penviro->floor_level      = penviro->grid_level;
+
+    //---- The actual level of the character.
     //     Estimate platform attachment from whatever is in the onwhichplatform_ref variable from the
     //     last loop
-    loc_level = penviro->floor_level;
+    loc_level = penviro->grid_level;
     if ( INGAME_CHR( loc_pprt->onwhichplatform_ref ) )
     {
-        loc_level = MAX( penviro->floor_level, ChrList.lst[loc_pprt->onwhichplatform_ref].pos.z + ChrList.lst[loc_pprt->onwhichplatform_ref].chr_chr_cv.maxs[OCT_Z] );
+        loc_level = MAX( penviro->grid_level, ChrList.lst[loc_pprt->onwhichplatform_ref].pos.z + ChrList.lst[loc_pprt->onwhichplatform_ref].chr_min_cv.maxs[OCT_Z] );
     }
     prt_set_level( loc_pprt, loc_level );
 
     //---- the "twist" of the floor
-    penviro->twist = TWIST_FLAT;
-    itile              = INVALID_TILE;
+    penviro->grid_twist = TWIST_FLAT;
+    itile               = INVALID_TILE;
     if ( INGAME_CHR( loc_pprt->onwhichplatform_ref ) )
     {
         // this only works for 1 level of attachment
@@ -1192,7 +1212,7 @@ prt_bundle_t * move_one_particle_get_environment( prt_bundle_t * pbdl_prt )
 
     if ( mesh_grid_is_valid( PMesh, itile ) )
     {
-        penviro->twist = PMesh->gmem.grid_list[itile].twist;
+        penviro->grid_twist = PMesh->gmem.grid_list[itile].twist;
     }
 
     // the "watery-ness" of whatever water might be here
@@ -1215,22 +1235,22 @@ prt_bundle_t * move_one_particle_get_environment( prt_bundle_t * pbdl_prt )
         fvec3_t   platform_up;
 
         chr_getMatUp( ChrList.lst + loc_pprt->onwhichplatform_ref, &platform_up );
-        platform_up = fvec3_normalize( platform_up.v );
+        fvec3_self_normalize( platform_up.v );
 
-        penviro->traction = ABS( platform_up.z ) * ( 1.0f - penviro->zlerp ) + 0.25 * penviro->zlerp;
+        penviro->traction = ABS( platform_up.z ) * ( 1.0f - penviro->floor_lerp ) + 0.25 * penviro->floor_lerp;
 
         if ( penviro->is_slippy )
         {
-            penviro->traction /= hillslide * ( 1.0f - penviro->zlerp ) + 1.0f * penviro->zlerp;
+            penviro->traction /= hillslide * ( 1.0f - penviro->floor_lerp ) + 1.0f * penviro->floor_lerp;
         }
     }
     else if ( mesh_grid_is_valid( PMesh, loc_pprt->onwhichgrid ) )
     {
-        penviro->traction = ABS( map_twist_nrm[penviro->twist].z ) * ( 1.0f - penviro->zlerp ) + 0.25 * penviro->zlerp;
+        penviro->traction = ABS( map_twist_nrm[penviro->grid_twist].z ) * ( 1.0f - penviro->floor_lerp ) + 0.25 * penviro->floor_lerp;
 
         if ( penviro->is_slippy )
         {
-            penviro->traction /= hillslide * ( 1.0f - penviro->zlerp ) + 1.0f * penviro->zlerp;
+            penviro->traction /= hillslide * ( 1.0f - penviro->floor_lerp ) + 1.0f * penviro->floor_lerp;
         }
     }
 
@@ -1251,21 +1271,20 @@ prt_bundle_t * move_one_particle_get_environment( prt_bundle_t * pbdl_prt )
     if ( !loc_pprt->is_homing )
     {
         // Make the characters slide
-        float temp_friction_xy = noslipfriction;
+        penviro->friction_hrz = noslipfriction;
+
         if ( mesh_grid_is_valid( PMesh, loc_pprt->onwhichgrid ) && penviro->is_slippy )
         {
             // It's slippy all right...
-            temp_friction_xy = slippyfriction;
+            penviro->friction_hrz = slippyfriction;
         }
-
-        penviro->friction_hrz = penviro->zlerp * 1.0f + ( 1.0f - penviro->zlerp ) * temp_friction_xy;
     }
 
     return pbdl_prt;
 }
 
 //--------------------------------------------------------------------------------------------
-prt_bundle_t * move_one_particle_do_floor_friction( prt_bundle_t * pbdl_prt )
+prt_bundle_t * move_one_particle_do_fluid_friction( prt_bundle_t * pbdl_prt )
 {
     /// @details BB@> A helper function that computes particle friction with the floor
     ///
@@ -1274,109 +1293,24 @@ prt_bundle_t * move_one_particle_do_floor_friction( prt_bundle_t * pbdl_prt )
     ///       For instance, the only particles that is under their own control are the homing particles
     ///       but they do not have friction with the mesh, but that case is still treated in the code below.
 
-    float temp_friction_xy;
-    fvec3_t   vup, floor_acc, fric, fric_floor;
-
     prt_t             * loc_pprt;
     pip_t             * loc_ppip;
-    prt_environment_t * penviro;
+    prt_environment_t * loc_penviro;
+    phys_data_t       * loc_pphys;
+
+    fvec3_t fluid_acc;
 
     if( NULL == pbdl_prt ) return NULL;
-    loc_pprt = pbdl_prt->prt_ptr;
-    loc_ppip = pbdl_prt->pip_ptr;
-    penviro  = &(loc_pprt->enviro);
+    loc_pprt    = pbdl_prt->prt_ptr;
+    loc_ppip    = pbdl_prt->pip_ptr;
+    loc_penviro = &(loc_pprt->enviro);
+    loc_pphys   = &(loc_pprt->phys);
 
     // if the particle is homing in on something, ignore friction
     if ( loc_pprt->is_homing ) return pbdl_prt;
 
-    // limit floor friction effects to solid objects
-    if ( SPRITE_SOLID == loc_pprt->type )
-    {
-        // figure out the acceleration due to the current "floor"
-        floor_acc.x = floor_acc.y = floor_acc.z = 0.0f;
-        temp_friction_xy = 1.0f;
-        if ( INGAME_CHR( loc_pprt->onwhichplatform_ref ) )
-        {
-            chr_t * pplat = ChrList.lst + loc_pprt->onwhichplatform_ref;
-
-            temp_friction_xy = platstick;
-
-            floor_acc.x = pplat->vel.x - pplat->vel_old.x;
-            floor_acc.y = pplat->vel.y - pplat->vel_old.y;
-            floor_acc.z = pplat->vel.z - pplat->vel_old.z;
-
-            chr_getMatUp( pplat, &vup );
-        }
-        else
-        {
-            temp_friction_xy = 0.5f;
-            floor_acc.x = -loc_pprt->vel.x;
-            floor_acc.y = -loc_pprt->vel.y;
-            floor_acc.z = -loc_pprt->vel.z;
-
-            if ( TWIST_FLAT == penviro->twist )
-            {
-                vup.x = vup.y = 0.0f;
-                vup.z = 1.0f;
-            }
-            else
-            {
-                vup = map_twist_nrm[penviro->twist];
-            }
-        }
-
-        // the first guess about the floor friction
-        fric_floor.x = floor_acc.x * ( 1.0f - penviro->zlerp ) * ( 1.0f - temp_friction_xy ) * penviro->traction;
-        fric_floor.y = floor_acc.y * ( 1.0f - penviro->zlerp ) * ( 1.0f - temp_friction_xy ) * penviro->traction;
-        fric_floor.z = floor_acc.z * ( 1.0f - penviro->zlerp ) * ( 1.0f - temp_friction_xy ) * penviro->traction;
-
-        // the total "friction" due to the floor
-        fric.x = fric_floor.x + penviro->acc.x;
-        fric.y = fric_floor.y + penviro->acc.y;
-        fric.z = fric_floor.z + penviro->acc.z;
-
-        //---- limit the friction to whatever is horizontal to the mesh
-        if ( TWIST_FLAT == penviro->twist )
-        {
-            floor_acc.z = 0.0f;
-            fric.z      = 0.0f;
-        }
-        else
-        {
-            float ftmp;
-            fvec3_t   vup = map_twist_nrm[penviro->twist];
-
-            ftmp = fvec3_dot_product( floor_acc.v, vup.v );
-
-            floor_acc.x -= ftmp * vup.x;
-            floor_acc.y -= ftmp * vup.y;
-            floor_acc.z -= ftmp * vup.z;
-
-            ftmp = fvec3_dot_product( fric.v, vup.v );
-
-            fric.x -= ftmp * vup.x;
-            fric.y -= ftmp * vup.y;
-            fric.z -= ftmp * vup.z;
-        }
-
-        // test to see if the player has any more friction left?
-        penviro->is_slipping = ( ABS( fric.x ) + ABS( fric.y ) + ABS( fric.z ) > penviro->friction_hrz );
-
-        if ( penviro->is_slipping )
-        {
-            penviro->traction *= 0.5f;
-            temp_friction_xy  = SQRT( temp_friction_xy );
-
-            fric_floor.x = floor_acc.x * ( 1.0f - penviro->zlerp ) * ( 1.0f - temp_friction_xy ) * penviro->traction;
-            fric_floor.y = floor_acc.y * ( 1.0f - penviro->zlerp ) * ( 1.0f - temp_friction_xy ) * penviro->traction;
-            fric_floor.z = floor_acc.z * ( 1.0f - penviro->zlerp ) * ( 1.0f - temp_friction_xy ) * penviro->traction;
-        }
-
-        //apply the floor friction
-        loc_pprt->vel.x += fric_floor.x;
-        loc_pprt->vel.y += fric_floor.y;
-        loc_pprt->vel.z += fric_floor.z;
-    }
+    // assume no acceleration
+    fvec3_self_clear( fluid_acc.v );
 
     // Apply fluid friction for all particles
     if( loc_pprt->buoyancy > 0.0f )
@@ -1388,35 +1322,33 @@ prt_bundle_t * move_one_particle_do_floor_friction( prt_bundle_t * pbdl_prt )
         {
             float water_friction = POW( buoyancy_friction, 2.0f );
 
-            loc_pprt->vel.x += (waterspeed.x-loc_pprt->vel.x) * ( 1.0f - water_friction  );
-            loc_pprt->vel.y += (waterspeed.y-loc_pprt->vel.y) * ( 1.0f - water_friction  );
-            loc_pprt->vel.z += (waterspeed.z-loc_pprt->vel.z) * ( 1.0f - water_friction  );
+            fluid_acc = fvec3_sub( waterspeed.v, loc_pprt->vel.v );
+            fvec3_self_scale( fluid_acc.v, 1.0f - water_friction );
         }
         else
         {
-            loc_pprt->vel.x += (windspeed.x-loc_pprt->vel.x) * ( 1.0f - buoyancy_friction  );
-            loc_pprt->vel.y += (windspeed.y-loc_pprt->vel.y) * ( 1.0f - buoyancy_friction  );
-            loc_pprt->vel.z += (windspeed.z-loc_pprt->vel.z) * ( 1.0f - buoyancy_friction  );
+            fluid_acc = fvec3_sub( windspeed.v, loc_pprt->vel.v );
+            fvec3_self_scale( fluid_acc.v, 1.0f - buoyancy_friction );
         }
     }
 
-	//Light isnt affected by the wind
+    //Light isnt affected by the wind
     else if( loc_pprt->type != SPRITE_LIGHT )
     {
         // this is a normal particle
         if( loc_pprt->inwater )
         {
-            loc_pprt->vel.x += (waterspeed.x-loc_pprt->vel.x) * ( 1.0f - penviro->fluid_friction_hrz * loc_pprt->air_resistance );
-            loc_pprt->vel.y += (waterspeed.y-loc_pprt->vel.y) * ( 1.0f - penviro->fluid_friction_hrz * loc_pprt->air_resistance );
-            loc_pprt->vel.z += (waterspeed.z-loc_pprt->vel.z) * ( 1.0f - penviro->fluid_friction_vrt * loc_pprt->air_resistance );
+            fluid_acc = fvec3_sub( waterspeed.v, loc_pprt->vel.v );
+            fvec3_self_scale( fluid_acc.v, 1.0f - loc_penviro->fluid_friction_hrz * loc_pprt->air_resistance );
         }
         else
         {
-            loc_pprt->vel.x += (windspeed.x-loc_pprt->vel.x) * ( 1.0f - penviro->fluid_friction_hrz * loc_pprt->air_resistance );
-            loc_pprt->vel.y += (windspeed.y-loc_pprt->vel.y) * ( 1.0f - penviro->fluid_friction_hrz * loc_pprt->air_resistance );
-            loc_pprt->vel.z += (windspeed.z-loc_pprt->vel.z) * ( 1.0f - penviro->fluid_friction_vrt * loc_pprt->air_resistance );
+            fluid_acc = fvec3_sub( windspeed.v, loc_pprt->vel.v );
+            fvec3_self_scale( fluid_acc.v, 1.0f - loc_penviro->fluid_friction_hrz * loc_pprt->air_resistance );
         }
     }
+
+    phys_data_accumulate_avel( loc_pphys, fluid_acc.v );
 
     return pbdl_prt;
 }
@@ -1429,13 +1361,15 @@ prt_bundle_t * move_one_particle_do_homing( prt_bundle_t * pbdl_prt )
     prt_t             * loc_pprt;
     PRT_REF             loc_iprt;
     pip_t             * loc_ppip;
-    prt_environment_t * penviro;
+    prt_environment_t * loc_penviro;
+    phys_data_t       * loc_pphys;
 
     if( NULL == pbdl_prt ) return NULL;
-    loc_pprt = pbdl_prt->prt_ptr;
-    loc_iprt = pbdl_prt->prt_ref;
-    loc_ppip = pbdl_prt->pip_ptr;
-    penviro  = &(loc_pprt->enviro);
+    loc_pprt    = pbdl_prt->prt_ptr;
+    loc_iprt    = pbdl_prt->prt_ref;
+    loc_ppip    = pbdl_prt->pip_ptr;
+    loc_penviro = &(loc_pprt->enviro);
+    loc_pphys   = &(loc_pprt->phys);
 
     if ( !loc_pprt->is_homing || !INGAME_CHR( loc_pprt->target_ref ) ) return pbdl_prt;
 
@@ -1460,7 +1394,7 @@ prt_bundle_t * move_one_particle_do_homing( prt_bundle_t * pbdl_prt )
 
         min_length = ( 2 * 5 * 256 * ChrList.lst[loc_pprt->owner_ref].wisdom ) / PERFECTBIG;
 
-        // make a little incertainty about the target
+        // make a little uncertainty about the target
         uncertainty = 256 - ( 256 * ChrList.lst[loc_pprt->owner_ref].intelligence ) / PERFECTBIG;
 
         ival = RANDIE;
@@ -1491,7 +1425,7 @@ prt_bundle_t * move_one_particle_do_homing( prt_bundle_t * pbdl_prt )
         // Make sure that vdiff doesn't ever get too small.
         // That just makes the particle slooooowww down when it approaches the target.
         // Do a real kludge here. this should be a lot faster than a square root, but ...
-        vlen = ABS( vdiff.x ) + ABS( vdiff.y ) + ABS( vdiff.z );
+        vlen = fvec3_length_abs( vdiff.v );
         if ( vlen != 0.0f )
         {
             float factor = min_length / vlen;
@@ -1501,9 +1435,14 @@ prt_bundle_t * move_one_particle_do_homing( prt_bundle_t * pbdl_prt )
             vdiff.z *= factor;
         }
 
-        loc_pprt->vel.x = ( loc_pprt->vel.x + vdiff.x * loc_ppip->homingaccel ) * loc_ppip->homingfriction;
-        loc_pprt->vel.y = ( loc_pprt->vel.y + vdiff.y * loc_ppip->homingaccel ) * loc_ppip->homingfriction;
-        loc_pprt->vel.z = ( loc_pprt->vel.z + vdiff.z * loc_ppip->homingaccel ) * loc_ppip->homingfriction;
+        {
+            fvec3_t _tmp_vec_1 = fvec3_scale( loc_pprt->vel.v, -(1.0f - loc_ppip->homingfriction) );
+            fvec3_t _tmp_vec_2 = fvec3_scale( vdiff.v, loc_ppip->homingaccel * loc_ppip->homingfriction );
+
+            fvec3_self_sum( _tmp_vec_1.v, _tmp_vec_2.v );
+            
+            phys_data_accumulate_avel( loc_pphys, _tmp_vec_1.v );
+        }
     }
 
     return pbdl_prt;
@@ -1525,421 +1464,179 @@ prt_bundle_t * move_one_particle_do_z_motion( prt_bundle_t * pbdl_prt )
     prt_t             * loc_pprt;
     PRT_REF             loc_iprt;
     pip_t             * loc_ppip;
-    prt_environment_t * penviro;
+    prt_environment_t * loc_penviro;
+    phys_data_t       * loc_pphys;
 
     if( NULL == pbdl_prt ) return NULL;
-    loc_pprt = pbdl_prt->prt_ptr;
-    loc_iprt = pbdl_prt->prt_ref;
-    loc_ppip = pbdl_prt->pip_ptr;
-    penviro  = &(loc_pprt->enviro);
+    loc_pprt    = pbdl_prt->prt_ptr;
+    loc_iprt    = pbdl_prt->prt_ref;
+    loc_ppip    = pbdl_prt->pip_ptr;
+    loc_penviro = &(loc_pprt->enviro);
+    loc_pphys   = &(loc_pprt->phys);
 
-	//ZF> We really can't do gravity for Light! A lot of magical effects and attacks in the game depend on being able
-	//    to move forward in a straight line without being dragged down into the dust!
-	if ( loc_pprt->type == SPRITE_LIGHT || loc_pprt->is_homing || INGAME_CHR( loc_pprt->attachedto_ref ) ) return pbdl_prt;
+    //ZF> We really can't do gravity for Light! A lot of magical effects and attacks in the game depend on being able
+    //    to move forward in a straight line without being dragged down into the dust!
+    if ( loc_pprt->type == SPRITE_LIGHT || loc_pprt->is_homing || INGAME_CHR( loc_pprt->attachedto_ref ) ) return pbdl_prt;
 
-    loc_zlerp = CLIP( penviro->zlerp, 0.0f, 1.0f );
+    loc_zlerp = CLIP( loc_penviro->floor_lerp, 0.0f, 1.0f );
 
     // Do particle buoyancy. This is kinda BS the way it is calculated
-    loc_pprt->vel.z += loc_pprt->buoyancy - (1.0f - loc_zlerp) * gravity;
+    if( loc_pprt->buoyancy > 0.0f )
+    {
+        float loc_buoyancy = loc_pprt->buoyancy;
+
+        if( loc_zlerp < 1.0f )
+        {
+            // the particle is close to the ground
+            if( loc_pprt->buoyancy + gravity < 0.0f )
+            {
+                // the particle is not bouyant enough to hold itself up.
+                // this means that the normal force will overcome it as it gets close to the ground
+                // and the force needs to disappear close to the ground
+                loc_buoyancy *= loc_zlerp;
+            }
+            else
+            {
+                // the particle floats up in the air. it does not reduce its upward
+                // acceleration as we get closer to the floor.
+                loc_buoyancy += loc_zlerp * gravity;
+            }
+        }
+
+        phys_data_accumulate_avel_index( loc_pphys,  loc_buoyancy, kZ );
+    }
 
     // do gravity
-    if ( penviro->is_slippy && (TWIST_FLAT != penviro->twist) && loc_zlerp < 1.0f )
+    phys_data_accumulate_avel_index( loc_pphys,  loc_zlerp * gravity, kZ );
+
+    return pbdl_prt;
+}
+
+//--------------------------------------------------------------------------------------------
+prt_bundle_t * move_one_particle_do_floor( prt_bundle_t * pbdl_prt )
+{
+    /// @details BB@> A helper function that computes particle friction with the floor
+    ///
+    /// @note this is pretty much ripped from the character version of this function and may
+    ///       contain some features that are not necessary for any particles that are actually in game.
+    ///       For instance, the only particles that is under their own control are the homing particles
+    ///       but they do not have friction with the mesh, but that case is still treated in the code below.
+
+    float temp_friction_xy;
+    fvec3_t   vup, floor_acc, fric, fric_floor;
+
+    prt_t             * loc_pprt;
+    pip_t             * loc_ppip;
+    prt_environment_t * loc_penviro;
+    phys_data_t       * loc_pphys;
+
+    if( NULL == pbdl_prt ) return NULL;
+    loc_pprt     = pbdl_prt->prt_ptr;
+    loc_ppip     = pbdl_prt->pip_ptr;
+    loc_penviro  = &(loc_pprt->enviro);
+    loc_pphys    = &(loc_pprt->phys);
+
+    // no friction for attached particles
+    if( ACTIVE_CHR(loc_pprt->attachedto_ref) ) return pbdl_prt;
+
+    // determine the surface normal for the particle's "floor"
+    if ( INGAME_CHR( loc_pprt->onwhichplatform_ref ) )
     {
-        // hills make particles slide
-
-        fvec3_t   gperp;    // gravity perpendicular to the mesh
-        fvec3_t   gpara;    // gravity parallel      to the mesh (what pushes you)
-
-        gpara.x = map_twistvel_x[penviro->twist];
-        gpara.y = map_twistvel_y[penviro->twist];
-        gpara.z = map_twistvel_z[penviro->twist];
-
-        gperp.x = 0       - gpara.x;
-        gperp.y = 0       - gpara.y;
-        gperp.z = gravity - gpara.z;
-
-        loc_pprt->vel.x += gpara.x * (1.0f - loc_zlerp) + gperp.x * loc_zlerp;
-        loc_pprt->vel.y += gpara.y * (1.0f - loc_zlerp) + gperp.y * loc_zlerp;
-        loc_pprt->vel.z += gpara.z * (1.0f - loc_zlerp) + gperp.z * loc_zlerp;
+        chr_getMatUp( ChrList.lst + loc_pprt->onwhichplatform_ref, &vup );
+    }
+    else if ( TWIST_FLAT != loc_penviro->grid_twist )
+    {
+        vup = map_twist_nrm[loc_penviro->grid_twist];
     }
     else
     {
-        loc_pprt->vel.z += loc_zlerp * gravity;
+        vup.x = vup.y = 0.0f;
+        vup.z = -SGN(gravity);
     }
 
-    return pbdl_prt;
-}
-
-//--------------------------------------------------------------------------------------------
-prt_bundle_t * move_one_particle_integrate_motion_attached( prt_bundle_t * pbdl_prt )
-{
-    /// @details BB@> A helper function that figures out the next valid position of the particle.
-    ///               Collisions with the mesh are included in this step.
-
-    float loc_level;
-    bool_t hit_a_floor, hit_a_wall, needs_test, updated_2d;
-    fvec3_t nrm_total;
-    fvec3_t tmp_pos;
-
-    prt_t             * loc_pprt;
-    PRT_REF             loc_iprt;
-    pip_t             * loc_ppip;
-    prt_environment_t * penviro;
-
-    if( NULL == pbdl_prt ) return NULL;
-    loc_pprt = pbdl_prt->prt_ptr;
-    loc_iprt = pbdl_prt->prt_ref;
-    loc_ppip = pbdl_prt->pip_ptr;
-    penviro  = &(loc_pprt->enviro);
-
-    // if the particle is not still in "display mode" there is no point in going on
-    if ( !DISPLAY_PPRT( loc_pprt ) ) return pbdl_prt;
-
-    // capture the particle position
-    tmp_pos = prt_get_pos( loc_pprt );
-
-    // only deal with attached particles
-    if( MAX_CHR == loc_pprt->attachedto_ref ) return pbdl_prt;
-
-    hit_a_floor = bfalse;
-    hit_a_wall  = bfalse;
-    nrm_total.x = nrm_total.y = nrm_total.z = 0;
-
-    loc_level = penviro->adj_level;
-
-    // Move the particle
-    if ( tmp_pos.z < loc_level )
+    // only solid particles that are not "homing"
+    // have normal floor friction
+    if ( !loc_pprt->is_homing && SPRITE_SOLID == loc_pprt->type )
     {
-        hit_a_floor = btrue;
-    }
-
-    if ( hit_a_floor )
-    {
-        // Play the sound for hitting the floor [FSND]
-        play_particle_sound( loc_iprt, loc_ppip->end_sound_floor );
-    }
-
-    // handle the collision
-    if ( hit_a_floor && loc_ppip->end_ground )
-    {
-        prt_request_terminate( pbdl_prt );
-        return NULL;
-    }
-
-    // interaction with the mesh walls
-    hit_a_wall = bfalse;
-    updated_2d = bfalse;
-    needs_test = bfalse;
-    if ( ABS( loc_pprt->vel.x ) + ABS( loc_pprt->vel.y ) > 0.0f )
-    {
-        if ( prt_test_wall( loc_pprt, tmp_pos.v ) )
+        // figure out the acceleration due to the current "floor"
+        fvec3_self_clear( floor_acc.v );
+        temp_friction_xy = 1.0f;
+        if ( INGAME_CHR( loc_pprt->onwhichplatform_ref ) )
         {
-            Uint32  hit_bits;
-            fvec2_t nrm;
-            float   pressure;
+            chr_t * pplat = ChrList.lst + loc_pprt->onwhichplatform_ref;
 
-            // how is the character hitting the wall?
-            hit_bits = prt_hit_wall( loc_pprt, tmp_pos.v, nrm.v, &pressure );
+            temp_friction_xy = platstick;
 
-            if ( 0 != hit_bits )
-            {
-                hit_a_wall = btrue;
-            }
-        }
-    }
-
-    // handle the sounds
-    if ( hit_a_wall )
-    {
-        // Play the sound for hitting the floor [FSND]
-        play_particle_sound( loc_iprt, loc_ppip->end_sound_wall );
-    }
-
-    // handle the collision
-    if ( hit_a_wall && ( loc_ppip->end_wall || loc_ppip->end_bump ) )
-    {
-        prt_request_terminate( pbdl_prt );
-        return NULL;
-    }
-
-    prt_set_pos( loc_pprt, tmp_pos.v );
-
-    return pbdl_prt;
-}
-
-//--------------------------------------------------------------------------------------------
-prt_bundle_t * move_one_particle_integrate_motion( prt_bundle_t * pbdl_prt )
-{
-    /// @details BB@> A helper function that figures out the next valid position of the particle.
-    ///               Collisions with the mesh are included in this step.
-
-    float ftmp, loc_level;
-    bool_t hit_a_floor, hit_a_wall, needs_test, updated_2d;
-    bool_t touch_a_floor, touch_a_wall;
-    fvec3_t nrm_total;
-    fvec3_t tmp_pos;
-
-    prt_t             * loc_pprt;
-    PRT_REF             loc_iprt;
-    pip_t             * loc_ppip;
-    prt_environment_t * penviro;
-
-    if( NULL == pbdl_prt ) return NULL;
-    loc_pprt = pbdl_prt->prt_ptr;
-    loc_iprt = pbdl_prt->prt_ref;
-    loc_ppip = pbdl_prt->pip_ptr;
-    penviro  = &(loc_pprt->enviro);
-
-    // if the particle is not still in "display mode" there is no point in going on
-    if ( !DISPLAY_PPRT( loc_pprt ) ) return pbdl_prt;
-
-    // capture the position
-    tmp_pos = prt_get_pos( loc_pprt );
-
-    // no point in doing this if the particle thinks it's attached
-    if( MAX_CHR != loc_pprt->attachedto_ref )
-    {
-        return move_one_particle_integrate_motion_attached( pbdl_prt );
-    }
-
-    hit_a_floor   = bfalse;
-    hit_a_wall    = bfalse;
-    touch_a_floor = bfalse;
-    touch_a_wall  = bfalse;
-    nrm_total.x = nrm_total.y = nrm_total.z = 0.0f;
-
-    loc_level = penviro->adj_level;
-
-    // Move the particle
-    ftmp = tmp_pos.z;
-    tmp_pos.z += loc_pprt->vel.z;
-    LOG_NAN( tmp_pos.z );
-    if ( tmp_pos.z < loc_level )
-    {
-        fvec3_t floor_nrm = VECT3(0,0,1);
-        float vel_dot;
-        fvec3_t vel_perp, vel_para;
-        Uint8 tmp_twist = TWIST_FLAT;
-
-        touch_a_floor = btrue;
-
-        tmp_twist = cartman_get_fan_twist( PMesh, loc_pprt->onwhichgrid );
-
-        if( TWIST_FLAT != tmp_twist )
-        {
-            floor_nrm = map_twist_nrm[penviro->twist];
-        }
-
-        vel_dot = fvec3_dot_product(floor_nrm.v, loc_pprt->vel.v);
-
-        vel_perp.x = floor_nrm.x * vel_dot;
-        vel_perp.y = floor_nrm.y * vel_dot;
-        vel_perp.z = floor_nrm.z * vel_dot;
-
-        vel_para.x = loc_pprt->vel.x - vel_perp.x;
-        vel_para.y = loc_pprt->vel.y - vel_perp.y;
-        vel_para.z = loc_pprt->vel.z - vel_perp.z;
-
-        if ( vel_dot < - STOPBOUNCINGPART )
-        {
-            // the particle will bounce
-            nrm_total.x += floor_nrm.x;
-            nrm_total.y += floor_nrm.y;
-            nrm_total.z += floor_nrm.z;
-
-            tmp_pos.z = ftmp;
-            hit_a_floor = btrue;
-        }
-        else if ( vel_dot > 0.0f )
-        {
-            // the particle is not bouncing, it is just at the wrong height
-            tmp_pos.z = loc_level;
+            floor_acc.x = pplat->vel.x - pplat->vel_old.x;
+            floor_acc.y = pplat->vel.y - pplat->vel_old.y;
+            floor_acc.z = pplat->vel.z - pplat->vel_old.z;
         }
         else
         {
-            // the particle is in the "stop bouncing zone"
-            tmp_pos.z     = loc_level + 0.0001f;
-            loc_pprt->vel = vel_para;
+            temp_friction_xy = 0.5f;
+            floor_acc.x = -loc_pprt->vel.x;
+            floor_acc.y = -loc_pprt->vel.y;
+            floor_acc.z = -loc_pprt->vel.z;
         }
-    }
 
-	// handle the sounds
-    if ( hit_a_floor )
-    {
-        // Play the sound for hitting the floor [FSND]
-        play_particle_sound( loc_iprt, loc_ppip->end_sound_floor );
-    }
+        // the first guess about the floor friction
+        fric_floor.x = floor_acc.x * ( 1.0f - loc_penviro->floor_lerp ) * ( 1.0f - temp_friction_xy ) * loc_penviro->traction;
+        fric_floor.y = floor_acc.y * ( 1.0f - loc_penviro->floor_lerp ) * ( 1.0f - temp_friction_xy ) * loc_penviro->traction;
+        fric_floor.z = floor_acc.z * ( 1.0f - loc_penviro->floor_lerp ) * ( 1.0f - temp_friction_xy ) * loc_penviro->traction;
 
-    // handle the collision
-    if ( touch_a_floor && loc_ppip->end_ground )
-    {
-        prt_request_terminate( pbdl_prt );
-        return NULL;
-    }
+        // the total "friction" due to the floor
+        fric.x = fric_floor.x + loc_penviro->acc.x;
+        fric.y = fric_floor.y + loc_penviro->acc.y;
+        fric.z = fric_floor.z + loc_penviro->acc.z;
 
-    // interaction with the mesh walls
-    hit_a_wall = bfalse;
-    updated_2d = bfalse;
-    needs_test = bfalse;
-    if ( ABS( loc_pprt->vel.x ) + ABS( loc_pprt->vel.y ) > 0.0f )
-    {
-        float old_x, old_y, new_x, new_y;
-
-        old_x = tmp_pos.x; LOG_NAN( old_x );
-        old_y = tmp_pos.y; LOG_NAN( old_y );
-
-        new_x = old_x + loc_pprt->vel.x; LOG_NAN( new_x );
-        new_y = old_y + loc_pprt->vel.y; LOG_NAN( new_y );
-
-        tmp_pos.x = new_x;
-        tmp_pos.y = new_y;
-
-        if ( !prt_test_wall( loc_pprt, tmp_pos.v ) )
+        //---- limit the friction to whatever is horizontal to the mesh
+        if ( TWIST_FLAT == loc_penviro->grid_twist )
         {
-            updated_2d = btrue;
+            floor_acc.z = 0.0f;
+            fric.z      = 0.0f;
         }
         else
         {
-            BIT_FIELD  hit_bits;
-            fvec2_t nrm;
-            float   pressure;
+            float ftmp;
+            fvec3_t   vup = map_twist_nrm[loc_penviro->grid_twist];
 
-            // how is the character hitting the wall?
-            hit_bits = prt_hit_wall( loc_pprt, tmp_pos.v, nrm.v, &pressure );
+            ftmp = fvec3_dot_product( floor_acc.v, vup.v );
 
-            if ( 0 != hit_bits )
-            {
-                touch_a_wall = btrue;
+            floor_acc.x -= ftmp * vup.x;
+            floor_acc.y -= ftmp * vup.y;
+            floor_acc.z -= ftmp * vup.z;
 
-                tmp_pos.x = old_x;
-                tmp_pos.y = old_y;
+            ftmp = fvec3_dot_product( fric.v, vup.v );
 
-                nrm_total.x += nrm.x;
-                nrm_total.y += nrm.y;
-				
-				hit_a_wall = (fvec2_dot_product(loc_pprt->vel.v, nrm.v) < 0.0f);
-            }
+            fric.x -= ftmp * vup.x;
+            fric.y -= ftmp * vup.y;
+            fric.z -= ftmp * vup.z;
         }
-    }
 
-	// handle the sounds
-    if ( hit_a_wall )
-    {
-        // Play the sound for hitting the wall [WSND]
-        play_particle_sound( loc_iprt, loc_ppip->end_sound_wall );
-    }
+        // test to see if the player has any more friction left?
+        loc_penviro->is_slipping = ( fvec3_length_abs( fric.v ) > loc_penviro->friction_hrz );
 
-    // handle the collision
-    if ( touch_a_wall && ( loc_ppip->end_wall /*|| loc_ppip->end_bump*/ ) )
-    {
-        prt_request_terminate( pbdl_prt );
-        return NULL;
-    }
-
-    // do the reflections off the walls and floors
-    if ( !INGAME_CHR( loc_pprt->attachedto_ref ) && ( hit_a_wall || hit_a_floor ) )
-    {
-        if (( hit_a_wall && ( loc_pprt->vel.x * nrm_total.x + loc_pprt->vel.y * nrm_total.y ) < 0.0f ) ||
-            ( hit_a_floor && ( loc_pprt->vel.z * nrm_total.z ) < 0.0f ) )
+        if ( loc_penviro->is_slipping )
         {
-            float vdot;
-            fvec3_t   vpara, vperp;
+            loc_penviro->traction *= 0.5f;
+            temp_friction_xy  = SQRT( temp_friction_xy );
 
-            nrm_total = fvec3_normalize( nrm_total.v );
-
-            vdot  = fvec3_dot_product( nrm_total.v, loc_pprt->vel.v );
-
-            vperp.x = nrm_total.x * vdot;
-            vperp.y = nrm_total.y * vdot;
-            vperp.z = nrm_total.z * vdot;
-
-            vpara.x = loc_pprt->vel.x - vperp.x;
-            vpara.y = loc_pprt->vel.y - vperp.y;
-            vpara.z = loc_pprt->vel.z - vperp.z;
-
-            // we can use the impulse to determine how much velocity to kill in the parallel direction
-            //imp.x = vperp.x * (1.0f + loc_ppip->dampen);
-            //imp.y = vperp.y * (1.0f + loc_ppip->dampen);
-            //imp.z = vperp.z * (1.0f + loc_ppip->dampen);
-
-            // do the reflection
-            vperp.x *= -loc_ppip->dampen;
-            vperp.y *= -loc_ppip->dampen;
-            vperp.z *= -loc_ppip->dampen;
-
-            // fake the friction, for now
-            if ( 0.0f != nrm_total.y || 0.0f != nrm_total.z )
-            {
-                vpara.x *= loc_ppip->dampen;
-            }
-
-            if ( 0.0f != nrm_total.x || 0.0f != nrm_total.z )
-            {
-                vpara.y *= loc_ppip->dampen;
-            }
-
-            if ( 0.0f != nrm_total.x || 0.0f != nrm_total.y )
-            {
-                vpara.z *= loc_ppip->dampen;
-            }
-
-            // add the components back together
-            loc_pprt->vel.x = vpara.x + vperp.x;
-            loc_pprt->vel.y = vpara.y + vperp.y;
-            loc_pprt->vel.z = vpara.z + vperp.z;
+            fric_floor.x = floor_acc.x * ( 1.0f - loc_penviro->floor_lerp ) * ( 1.0f - temp_friction_xy ) * loc_penviro->traction;
+            fric_floor.y = floor_acc.y * ( 1.0f - loc_penviro->floor_lerp ) * ( 1.0f - temp_friction_xy ) * loc_penviro->traction;
+            fric_floor.z = floor_acc.z * ( 1.0f - loc_penviro->floor_lerp ) * ( 1.0f - temp_friction_xy ) * loc_penviro->traction;
         }
 
-        if ( nrm_total.z != 0.0f && loc_pprt->vel.z < STOPBOUNCINGPART )
-        {
-            // this is the very last bounce
-            loc_pprt->vel.z = 0.0f;
-            tmp_pos.z = loc_level + 0.0001f;
-        }
-
-        if ( hit_a_wall )
-        {
-            float fx, fy;
-
-            // fix the facing
-            facing_to_vec( loc_pprt->facing, &fx, &fy );
-
-            if ( 0.0f != nrm_total.x )
-            {
-                fx *= -1;
-            }
-
-            if ( 0.0f != nrm_total.y )
-            {
-                fy *= -1;
-            }
-
-            loc_pprt->facing = vec_to_facing( fx, fy );
-        }
+        // apply the floor friction
+        phys_data_accumulate_avel( loc_pphys, fric_floor.v );
     }
 
-    if ( loc_pprt->is_homing && tmp_pos.z < 0 )
+    // all particles that are not "light" are supported by the floor
+    if( SPRITE_LIGHT != loc_pprt->type )
     {
-        tmp_pos.z = 0;  // Don't fall in pits...
+        // apply the acceleration from the "normal force"
+        phys_data_apply_normal_acceleration( loc_pphys, vup, 1.0f, loc_penviro->floor_lerp, NULL );
     }
-
-    if ( loc_ppip->rotatetoface )
-    {
-        if ( ABS( loc_pprt->vel.x ) + ABS( loc_pprt->vel.y ) > 1e-6 )
-        {
-            // use velocity to find the angle
-            loc_pprt->facing = vec_to_facing( loc_pprt->vel.x, loc_pprt->vel.y );
-        }
-        else if ( INGAME_CHR( loc_pprt->target_ref ) )
-        {
-            chr_t * ptarget =  ChrList.lst +  loc_pprt->target_ref;
-
-            // face your target
-            loc_pprt->facing = vec_to_facing( ptarget->pos.x - tmp_pos.x , ptarget->pos.y - tmp_pos.y );
-        }
-    }
-
-    prt_set_pos( loc_pprt, tmp_pos.v );
-
+ 
     return pbdl_prt;
 }
 
@@ -1949,11 +1646,11 @@ bool_t move_one_particle( prt_bundle_t * pbdl_prt )
     /// @details BB@> The master function for controlling a particle's motion
 
     prt_t             * loc_pprt;
-    prt_environment_t * penviro;
+    prt_environment_t * loc_penviro;
 
     if( NULL == pbdl_prt ) return bfalse;
-    loc_pprt = pbdl_prt->prt_ptr;
-    penviro  = &(loc_pprt->enviro);
+    loc_pprt     = pbdl_prt->prt_ptr;
+    loc_penviro  = &(loc_pprt->enviro);
 
     if ( !DISPLAY_PPRT( loc_pprt ) ) return bfalse;
 
@@ -1961,7 +1658,11 @@ bool_t move_one_particle( prt_bundle_t * pbdl_prt )
     if ( loc_pprt->is_hidden ) return bfalse;
 
     // save the acceleration from the last time-step
-    penviro->acc = fvec3_sub( loc_pprt->vel.v, loc_pprt->vel_old.v );
+    loc_penviro->acc = fvec3_sub( loc_pprt->vel.v, loc_pprt->vel_old.v );
+
+    // Particle's old location
+    loc_pprt->pos_old = prt_get_pos(loc_pprt);
+    loc_pprt->vel_old = loc_pprt->vel;
 
     // determine the actual velocity for attached particles
     if ( INGAME_CHR( loc_pprt->attachedto_ref ) )
@@ -1969,26 +1670,28 @@ bool_t move_one_particle( prt_bundle_t * pbdl_prt )
         loc_pprt->vel = fvec3_sub( prt_get_pos_v(loc_pprt), loc_pprt->pos_old.v );
     }
 
-    // Particle's old location
-    loc_pprt->pos_old = prt_get_pos(loc_pprt);
-    loc_pprt->vel_old = loc_pprt->vel;
-
     // what is the local environment like?
-    pbdl_prt = move_one_particle_get_environment( pbdl_prt );
+    pbdl_prt = move_one_particle_get_environment( pbdl_prt, NULL );
     if( NULL == pbdl_prt || NULL == pbdl_prt->prt_ptr ) return bfalse;
 
-    // do friction with the floor before voluntary motion
-    pbdl_prt = move_one_particle_do_floor_friction( pbdl_prt );
+    // wind, current, and other fluid friction effects
+    pbdl_prt = move_one_particle_do_fluid_friction( pbdl_prt );
     if( NULL == pbdl_prt || NULL == pbdl_prt->prt_ptr ) return bfalse;
 
+    // particle homing effects
     pbdl_prt = move_one_particle_do_homing( pbdl_prt );
     if( NULL == pbdl_prt || NULL == pbdl_prt->prt_ptr ) return bfalse;
 
+    // gravity effects
     pbdl_prt = move_one_particle_do_z_motion( pbdl_prt );
     if( NULL == pbdl_prt || NULL == pbdl_prt->prt_ptr ) return bfalse;
 
-    pbdl_prt = move_one_particle_integrate_motion( pbdl_prt );
+    // do friction with the floor last so we can guess about slipping
+    pbdl_prt = move_one_particle_do_floor( pbdl_prt );
     if( NULL == pbdl_prt || NULL == pbdl_prt->prt_ptr ) return bfalse;
+
+    //pbdl_prt = move_one_particle_integrate_motion( pbdl_prt );
+    //if( NULL == pbdl_prt || NULL == pbdl_prt->prt_ptr ) return bfalse;
 
     return btrue;
 }
@@ -2007,7 +1710,7 @@ void move_all_particles( void )
         prt_bdl.prt_ptr->enviro.air_friction = air_friction;
         prt_bdl.prt_ptr->enviro.ice_friction = ice_friction;
 
-        move_one_particle( &prt_bdl);
+        move_one_particle( &prt_bdl );
     }
     PRT_END_LOOP();
 }
@@ -2086,7 +1789,7 @@ int spawn_bump_particles( const CHR_REF by_reference character, const PRT_REF by
 
         // Spawn particles - this has been modded to maximize the visual effect
         // on a given target. It is not the most optimal solution for lots of particles
-        // spawning. Thst would probably be to make the distance calculations and then
+        // spawning. That would probably be to make the distance calculations and then
         // to quicksort the list and choose the n closest points.
         //
         // however, it seems that the bump particles in game rarely attach more than
@@ -2167,7 +1870,7 @@ int spawn_bump_particles( const CHR_REF by_reference character, const PRT_REF by
 
                     bestvertex   = 0;
                     bestdistance = 0xFFFFFFFF;         //Really high number
-					
+
                     for ( cnt = 0; cnt < vertices; cnt++ )
                     {
                         if ( vertex_occupied[cnt] != TOTAL_MAX_PRT )
@@ -2452,7 +2155,6 @@ bool_t prt_request_terminate( prt_bundle_t * pbdl_prt )
     return retval;
 }
 
-
 //--------------------------------------------------------------------------------------------
 bool_t prt_request_terminate_ref( const PRT_REF by_reference iprt )
 {
@@ -2542,7 +2244,7 @@ void cleanup_all_particles()
 }
 
 //--------------------------------------------------------------------------------------------
-void bump_all_particles_update_counters()
+void increment_all_particle_update_counters()
 {
     PRT_REF cnt;
 
@@ -2561,7 +2263,7 @@ void bump_all_particles_update_counters()
 //--------------------------------------------------------------------------------------------
 prt_bundle_t * prt_do_bump_damage( prt_bundle_t * pbdl_prt )
 {
-    // apply damage from  attatched bump particles (about once a second)
+    // apply damage from attached bump particles (about once a second)
 
     CHR_REF ichr, iholder;
     Uint32  update_count;
@@ -2648,23 +2350,23 @@ int prt_do_contspawn( prt_bundle_t * pbdl_prt  )
             PRT_REF prt_child = spawn_one_particle( prt_get_pos(loc_pprt), facing, loc_pprt->profile_ref, loc_ppip->contspawn_pip,
                                                     ( CHR_REF )MAX_CHR, GRIP_LAST, loc_pprt->team, loc_pprt->owner_ref, pbdl_prt->prt_ref, tnc, loc_pprt->target_ref );
 
-			if ( ALLOCATED_PRT( prt_child ) )
+            if ( ALLOCATED_PRT( prt_child ) )
             {
-				// Inherit velocities from the particle we were spawned from, but only if it wasn't attached to something
+                // Inherit velocities from the particle we were spawned from, but only if it wasn't attached to something
 
                 // ZF> I have disabled this at the moment. This is what caused the erratic particle movement for the Adventurer Torch
                 // BB> taking out the test works, though  I should have checked vs. loc_pprt->attached_ref, anyway,
                 //     since we already specified that the particle is not attached in the function call :P
-				//if( !ACTIVE_CHR( loc_pprt->attachedto_ref ) )
-				/*{
-					PrtList.lst[prt_child].vel.x += loc_pprt->vel.x;
-					PrtList.lst[prt_child].vel.y += loc_pprt->vel.y;
-					PrtList.lst[prt_child].vel.z += loc_pprt->vel.z;
-				}*/
-				// ZF> I have again disabled this. Is this really needed? It wasn't implemented before and causes
-				//     many, many, many issues with all particles around the game.
+                //if( !ACTIVE_CHR( loc_pprt->attachedto_ref ) )
+                /*{
+                    PrtList.lst[prt_child].vel.x += loc_pprt->vel.x;
+                    PrtList.lst[prt_child].vel.y += loc_pprt->vel.y;
+                    PrtList.lst[prt_child].vel.z += loc_pprt->vel.z;
+                }*/
+                // ZF> I have again disabled this. Is this really needed? It wasn't implemented before and causes
+                //     many, many, many issues with all particles around the game.
 
-				//Keep count of how many were actually spawned
+                //Keep count of how many were actually spawned
                 spawn_count++;
             }
 
@@ -2756,7 +2458,7 @@ prt_bundle_t * prt_update_do_water( prt_bundle_t * pbdl_prt  )
         if ( spawn_valid )
         {
             // Splash for particles is just a ripple
-			spawn_one_particle_global( vtmp, 0, spawn_pip_index, 0);
+            spawn_one_particle_global( vtmp, 0, spawn_pip_index, 0);
         }
 
         pbdl_prt->prt_ptr->inwater  = btrue;
@@ -2792,7 +2494,7 @@ prt_bundle_t * prt_update_animation( prt_bundle_t * pbdl_prt )
     {
         int size_new;
 
-        // resize the paricle
+        // resize the particle
         size_new = loc_pprt->size + loc_pprt->size_add;
         size_new = CLIP( size_new, 0, 0xFFFF );
 
@@ -3166,7 +2868,7 @@ prt_bundle_t * prt_bundle_ctor( prt_bundle_t * pbundle )
 
     pbundle->prt_ref = (PRT_REF) TOTAL_MAX_PRT;
     pbundle->prt_ptr = NULL;
-    
+
     pbundle->pip_ref = (PIP_REF) MAX_PIP;
     pbundle->pip_ptr = NULL;
 
@@ -3228,3 +2930,1033 @@ prt_bundle_t * prt_bundle_set( prt_bundle_t * pbundle, prt_t * pprt )
 
     return pbundle;
 }
+
+//--------------------------------------------------------------------------------------------
+void initialize_particle_physics()
+{
+    PRT_BEGIN_LOOP_DISPLAY( cnt, bdl_prt )
+    {
+        phys_data_blank_accumulators( &(bdl_prt.prt_ptr->phys) );
+    }
+    PRT_END_LOOP();
+}
+
+//--------------------------------------------------------------------------------------------
+prt_bundle_t * prt_bump_mesh_attached( prt_bundle_t * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
+{
+    /// @details BB@> A helper function that figures out the next valid position of the particle.
+    ///               Collisions with the mesh are included in this step.
+
+    bool_t hit_a_mesh;
+
+    prt_t             * loc_pprt;
+    PRT_REF             loc_iprt;
+    pip_t             * loc_ppip;
+    prt_environment_t * loc_penviro;
+
+    if( NULL == pbdl ) return NULL;
+    loc_iprt = pbdl->prt_ref;
+    loc_pprt = pbdl->prt_ptr;
+    loc_ppip = pbdl->pip_ptr;
+    loc_penviro  = &(loc_pprt->enviro);
+
+    // if the particle is not still in "display mode" there is no point in going on
+    if ( !DISPLAY_PPRT( loc_pprt ) ) return pbdl;
+
+    // only deal with attached particles
+    if( MAX_CHR == loc_pprt->attachedto_ref ) return pbdl;
+
+    // Move the particle
+    hit_a_mesh = bfalse;
+    if ( test_pos.z < loc_penviro->grid_adj )
+    {
+        hit_a_mesh = btrue;
+    }
+
+    if ( hit_a_mesh )
+    {
+        // Play the sound for hitting the floor [FSND]
+        play_particle_sound( loc_iprt, loc_ppip->end_sound_floor );
+    }
+
+    // handle the collision
+    if ( hit_a_mesh && loc_ppip->end_ground )
+    {
+        prt_request_terminate( pbdl );
+        return NULL;
+    }
+
+    return pbdl;
+}
+
+//--------------------------------------------------------------------------------------------
+prt_bundle_t * prt_bump_grid_attached( prt_bundle_t * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
+{
+    /// @details BB@> A helper function that figures out the next valid position of the particle.
+    ///               Collisions with the mesh are included in this step.
+
+    float loc_level;
+    bool_t hit_a_grid, needs_test, updated_2d;
+    fvec3_t nrm_total;
+
+    prt_t             * loc_pprt;
+    PRT_REF             loc_iprt;
+    pip_t             * loc_ppip;
+    prt_environment_t * loc_penviro;
+
+    if( NULL == pbdl ) return NULL;
+    loc_pprt = pbdl->prt_ptr;
+    loc_iprt = pbdl->prt_ref;
+    loc_ppip = pbdl->pip_ptr;
+    loc_penviro  = &(loc_pprt->enviro);
+
+    // if the particle is not still in "display mode" there is no point in going on
+    if ( !DISPLAY_PPRT( loc_pprt ) ) return pbdl;
+
+    // only deal with attached particles
+    if( MAX_CHR == loc_pprt->attachedto_ref ) return pbdl;
+
+    hit_a_grid  = bfalse;
+    fvec3_self_clear( nrm_total.v );
+
+    loc_level = loc_penviro->grid_adj;
+
+    // interaction with the mesh walls
+    hit_a_grid = bfalse;
+    updated_2d = bfalse;
+    needs_test = bfalse;
+    if ( fvec2_length_abs( test_vel.v ) > 0.0f )
+    {
+        if ( prt_test_wall( loc_pprt, test_pos.v ) )
+        {
+            Uint32  hit_bits;
+            fvec2_t nrm;
+            float   pressure;
+
+            // how is the character hitting the wall?
+            hit_bits = prt_hit_wall( loc_pprt, test_pos.v, nrm.v, &pressure );
+
+            if ( 0 != hit_bits )
+            {
+                hit_a_grid = btrue;
+            }
+        }
+    }
+
+    // handle the sounds
+    if ( hit_a_grid )
+    {
+        // Play the sound for hitting the floor [FSND]
+        play_particle_sound( loc_iprt, loc_ppip->end_sound_wall );
+    }
+
+    // handle the collision
+    if ( hit_a_grid && ( loc_ppip->end_wall || loc_ppip->end_bump ) )
+    {
+        prt_request_terminate( pbdl );
+        return NULL;
+    }
+
+    return pbdl;
+}
+//--------------------------------------------------------------------------------------------
+prt_bundle_t *  prt_bump_mesh( prt_bundle_t * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt, bool_t * pbumped_mesh )
+{
+    /// @details BB@> A helper function that figures out the next valid position of the particle.
+    ///               Collisions with the mesh are included in this step.
+
+    float loc_level;
+    bool_t hit_a_mesh;
+    bool_t touch_a_mesh;
+    fvec3_t nrm_total;
+    bool_t loc_bumped_mesh;
+
+    prt_t             * loc_pprt;
+    PRT_REF             loc_iprt;
+    pip_t             * loc_ppip;
+    prt_environment_t * loc_penviro;
+    phys_data_t       * loc_pphys;
+
+    fvec3_t final_vel, final_pos;
+    fvec3_t save_apos_plat, save_avel; 
+    fvec3_t old_pos;
+
+    // handle optional parameters
+    if( NULL == pbumped_mesh ) pbumped_mesh = &loc_bumped_mesh;
+    *pbumped_mesh = bfalse;
+
+    if( NULL == pbdl ) return NULL;
+    loc_pprt = pbdl->prt_ptr;
+    loc_iprt = pbdl->prt_ref;
+    loc_ppip = pbdl->pip_ptr;
+    loc_penviro  = &(loc_pprt->enviro);
+    loc_pphys    = &(loc_pprt->phys);
+
+    // if the particle is not still in "display mode" there is no point in going on
+    if ( !DISPLAY_PPRT( loc_pprt ) ) return pbdl;
+
+    // no point in doing this if the particle thinks it's attached
+    if( MAX_CHR != loc_pprt->attachedto_ref )
+    {
+        return prt_bump_mesh_attached( pbdl, test_pos, test_vel, dt );
+    }
+
+    // save some parameters
+    save_apos_plat = loc_pphys->apos_plat;
+    save_avel      = loc_pphys->avel;
+    old_pos        = prt_get_pos( loc_pprt );
+
+    // assume no change
+    final_vel = test_vel;
+    final_pos = test_pos;
+    hit_a_mesh   = bfalse;
+    touch_a_mesh = bfalse;
+
+    // initialize the normal
+    fvec3_self_clear( nrm_total.v );
+
+    loc_level = loc_penviro->grid_adj;
+    if ( test_pos.z < loc_level )
+    {
+        fvec3_t floor_nrm = VECT3(0,0,1);
+        float vel_dot;
+        fvec3_t vel_perp, vel_para;
+        Uint8 tmp_twist = TWIST_FLAT;
+
+        touch_a_mesh = btrue;
+
+        tmp_twist = cartman_get_fan_twist( PMesh, loc_pprt->onwhichgrid );
+
+        if( TWIST_FLAT != tmp_twist )
+        {
+            floor_nrm = map_twist_nrm[loc_penviro->grid_twist];
+        }
+
+        vel_dot = fvec3_dot_product(floor_nrm.v, test_vel.v);
+
+        vel_perp.x = floor_nrm.x * vel_dot;
+        vel_perp.y = floor_nrm.y * vel_dot;
+        vel_perp.z = floor_nrm.z * vel_dot;
+
+        vel_para.x = test_vel.x - vel_perp.x;
+        vel_para.y = test_vel.y - vel_perp.y;
+        vel_para.z = test_vel.z - vel_perp.z;
+
+        if ( vel_dot < - STOPBOUNCINGPART )
+        {
+            // the particle will bounce
+            nrm_total.x += floor_nrm.x;
+            nrm_total.y += floor_nrm.y;
+            nrm_total.z += floor_nrm.z;
+
+            final_pos.z = old_pos.z;
+
+            hit_a_mesh = btrue;
+        }
+        else if ( vel_dot > 0.0f )
+        {
+            // the particle is not bouncing, it is just at the wrong height
+            final_pos.z = loc_level;
+        }
+        else
+        {
+            // the particle is in the "stop bouncing zone"
+            final_pos.z = loc_level + 0.0001f;
+            final_vel   = vel_para;
+        }
+    }
+
+    // handle the sounds
+    if ( hit_a_mesh )
+    {
+        // Play the sound for hitting the floor [FSND]
+        play_particle_sound( loc_iprt, loc_ppip->end_sound_floor );
+    }
+
+    // handle the collision
+    if ( touch_a_mesh && loc_ppip->end_ground )
+    {
+        prt_request_terminate( pbdl );
+        return NULL;
+    }
+
+    // do the reflections off the walls and floors
+    if ( !INGAME_CHR( loc_pprt->attachedto_ref ) && hit_a_mesh )
+    {
+        if ( hit_a_mesh && ( test_vel.z * nrm_total.z ) < 0.0f )
+        {
+            float vdot;
+            fvec3_t   vpara, vperp;
+
+            fvec3_self_normalize( nrm_total.v );
+
+            vdot  = fvec3_dot_product( nrm_total.v, test_vel.v );
+
+            vperp.x = nrm_total.x * vdot;
+            vperp.y = nrm_total.y * vdot;
+            vperp.z = nrm_total.z * vdot;
+
+            vpara.x = test_vel.x - vperp.x;
+            vpara.y = test_vel.y - vperp.y;
+            vpara.z = test_vel.z - vperp.z;
+
+            // we can use the impulse to determine how much velocity to kill in the parallel direction
+            //imp.x = vperp.x * (1.0f + loc_ppip->dampen);
+            //imp.y = vperp.y * (1.0f + loc_ppip->dampen);
+            //imp.z = vperp.z * (1.0f + loc_ppip->dampen);
+
+            // do the reflection
+            vperp.x *= -loc_ppip->dampen;
+            vperp.y *= -loc_ppip->dampen;
+            vperp.z *= -loc_ppip->dampen;
+
+            // fake the friction, for now
+            if ( 0.0f != nrm_total.y || 0.0f != nrm_total.z )
+            {
+                vpara.x *= loc_ppip->dampen;
+            }
+
+            if ( 0.0f != nrm_total.x || 0.0f != nrm_total.z )
+            {
+                vpara.y *= loc_ppip->dampen;
+            }
+
+            if ( 0.0f != nrm_total.x || 0.0f != nrm_total.y )
+            {
+                vpara.z *= loc_ppip->dampen;
+            }
+
+            // add the components back together
+            final_vel.x = vpara.x + vperp.x;
+            final_vel.y = vpara.y + vperp.y;
+            final_vel.z = vpara.z + vperp.z;
+        }
+
+        if ( nrm_total.z != 0.0f && ABS(final_vel.z) < STOPBOUNCINGPART )
+        {
+            // this is the very last bounce
+            final_vel.z = 0.0f;
+            final_pos.z = loc_level + 0.0001f;
+        }
+    }
+
+    {
+        fvec3_t _tmp_vec = fvec3_sub( final_vel.v, test_vel.v );
+        fvec3_self_scale( _tmp_vec.v, 1.0f / dt );
+        phys_data_accumulate_avel( loc_pphys,  _tmp_vec.v );
+    }
+
+    {
+        fvec3_t _tmp_vec = fvec3_sub( final_pos.v, test_pos.v );
+        phys_data_accumulate_apos_plat( loc_pphys,  _tmp_vec.v );
+    }
+
+    *pbumped_mesh = (fvec3_dist_abs( save_apos_plat.v, loc_pphys->apos_plat.v ) != 0.0f) ||
+                    (fvec3_dist_abs( save_avel.v, loc_pphys->avel.v ) * dt != 0.0f) ;
+    
+    return pbdl;
+}
+
+//--------------------------------------------------------------------------------------------
+prt_bundle_t *  prt_bump_grid( prt_bundle_t * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt, bool_t * pbumped_grid )
+{
+    /// @details BB@> A helper function that figures out the next valid position of the particle.
+    ///               Collisions with the mesh are included in this step.
+
+    float loc_level;
+    bool_t hit_a_grid, needs_test, updated_2d;
+    bool_t touch_a_grid;
+    fvec3_t nrm_total;
+    bool_t loc_bumped_grid;
+
+    prt_t             * loc_pprt;
+    PRT_REF             loc_iprt;
+    pip_t             * loc_ppip;
+    prt_environment_t * loc_penviro;
+    phys_data_t       * loc_pphys;
+
+    fvec3_t final_vel, final_pos;
+    fvec3_t save_apos_plat, save_avel; 
+    fvec3_t old_pos;
+
+    BIT_FIELD  hit_bits;
+    fvec2_t nrm;
+    float   pressure;
+
+    // handle optional parameters
+    if( NULL == pbumped_grid ) pbumped_grid = &loc_bumped_grid;
+    *pbumped_grid = bfalse;
+
+    if( NULL == pbdl ) return NULL;
+    loc_pprt = pbdl->prt_ptr;
+    loc_iprt = pbdl->prt_ref;
+    loc_ppip = pbdl->pip_ptr;
+    loc_penviro  = &(loc_pprt->enviro);
+    loc_pphys    = &(loc_pprt->phys);
+
+    // if the particle is not still in "display mode" there is no point in going on
+    if ( !DISPLAY_PPRT( loc_pprt ) ) return pbdl;
+
+    // no point in doing this if the particle thinks it's attached
+    if( MAX_CHR != loc_pprt->attachedto_ref )
+    {
+        return prt_bump_grid_attached(pbdl, test_pos, test_vel, dt );
+    }
+
+    // save some parameters
+    save_apos_plat = loc_pphys->apos_plat;
+    save_avel      = loc_pphys->avel;
+    old_pos        = prt_get_pos( loc_pprt );
+
+    // assume no change
+    final_vel = test_vel;
+    final_pos = test_pos;
+    hit_a_grid    = bfalse;
+    touch_a_grid  = bfalse;
+    updated_2d = bfalse;
+    needs_test = bfalse;
+
+    // initialize the normal
+    fvec3_self_clear( nrm_total.v );
+
+    loc_level = loc_penviro->grid_adj;
+
+    if ( !prt_test_wall( loc_pprt, test_pos.v ) )
+    {
+        // no detected interaction
+        return pbdl;
+    }
+
+    // how is the character hitting the wall?
+    hit_bits = prt_hit_wall( loc_pprt, test_pos.v, nrm.v, &pressure );
+
+    if ( 0 != hit_bits )
+    {
+        touch_a_grid = btrue;
+
+        final_pos.x = old_pos.x;
+        final_pos.y = old_pos.y;
+
+        nrm_total.x += nrm.x;
+        nrm_total.y += nrm.y;
+
+        hit_a_grid = (fvec2_dot_product(test_vel.v, nrm.v) < 0.0f);
+    }
+
+    // handle the sounds
+    if ( hit_a_grid )
+    {
+        // Play the sound for hitting the wall [WSND]
+        play_particle_sound( loc_iprt, loc_ppip->end_sound_wall );
+    }
+
+    // handle the collision
+    if ( touch_a_grid && ( loc_ppip->end_wall || loc_ppip->end_bump ) )
+    {
+        prt_request_terminate( pbdl );
+        return NULL;
+    }
+
+    // do the reflections off the walls and floors
+    if ( !INGAME_CHR( loc_pprt->attachedto_ref ) && hit_a_grid )
+    {
+        if ( hit_a_grid && ( test_vel.x * nrm_total.x + test_vel.y * nrm_total.y ) < 0.0f )
+        {
+            float vdot;
+            fvec3_t   vpara, vperp;
+
+            fvec3_self_normalize( nrm_total.v );
+
+            vdot  = fvec3_dot_product( nrm_total.v, test_vel.v );
+
+            vperp.x = nrm_total.x * vdot;
+            vperp.y = nrm_total.y * vdot;
+            vperp.z = nrm_total.z * vdot;
+
+            vpara.x = test_vel.x - vperp.x;
+            vpara.y = test_vel.y - vperp.y;
+            vpara.z = test_vel.z - vperp.z;
+
+            // we can use the impulse to determine how much velocity to kill in the parallel direction
+            //imp.x = vperp.x * (1.0f + loc_ppip->dampen);
+            //imp.y = vperp.y * (1.0f + loc_ppip->dampen);
+            //imp.z = vperp.z * (1.0f + loc_ppip->dampen);
+
+            // do the reflection
+            vperp.x *= -loc_ppip->dampen;
+            vperp.y *= -loc_ppip->dampen;
+            vperp.z *= -loc_ppip->dampen;
+
+            // fake the friction, for now
+            if ( 0.0f != nrm_total.y || 0.0f != nrm_total.z )
+            {
+                vpara.x *= loc_ppip->dampen;
+            }
+
+            if ( 0.0f != nrm_total.x || 0.0f != nrm_total.z )
+            {
+                vpara.y *= loc_ppip->dampen;
+            }
+
+            if ( 0.0f != nrm_total.x || 0.0f != nrm_total.y )
+            {
+                vpara.z *= loc_ppip->dampen;
+            }
+
+            // add the components back together
+            final_vel.x = vpara.x + vperp.x;
+            final_vel.y = vpara.y + vperp.y;
+            final_vel.z = vpara.z + vperp.z;
+        }
+
+        if ( nrm_total.z != 0.0f && ABS(test_vel.z) < STOPBOUNCINGPART )
+        {
+            // this is the very last bounce
+            final_vel.z = 0.0f;
+            final_pos.z = loc_level + 0.0001f;
+        }
+
+        if ( hit_a_grid )
+        {
+            float fx, fy;
+
+            // fix the facing
+            facing_to_vec( loc_pprt->facing, &fx, &fy );
+
+            if ( 0.0f != nrm_total.x )
+            {
+                fx *= -1;
+            }
+
+            if ( 0.0f != nrm_total.y )
+            {
+                fy *= -1;
+            }
+
+            loc_pprt->facing = vec_to_facing( fx, fy );
+        }
+    }
+
+    {
+        fvec3_t _tmp_vec = fvec3_sub( final_vel.v, test_vel.v );
+        fvec3_self_scale( _tmp_vec.v, 1.0f / dt );
+        phys_data_accumulate_avel( loc_pphys,  _tmp_vec.v );
+    }
+
+    {
+        fvec3_t _tmp_vec = fvec3_sub( final_pos.v, test_pos.v );
+        phys_data_accumulate_apos_plat( loc_pphys,  _tmp_vec.v );
+    }
+
+    *pbumped_grid = (fvec3_dist_abs( save_apos_plat.v, loc_pphys->apos_plat.v ) != 0.0f) ||
+                    (fvec3_dist_abs( save_avel.v, loc_pphys->avel.v ) * dt != 0.0f) ;
+    
+    return pbdl;
+}
+
+//--------------------------------------------------------------------------------------------
+egoboo_rv particle_physics_finalize_one( prt_bundle_t * pbdl, float dt )
+{
+    prt_t             * loc_pprt;
+    PRT_REF             loc_iprt;
+    pip_t             * loc_ppip;
+    prt_environment_t * loc_penviro;
+    phys_data_t       * loc_pphys;
+
+    bool_t bumped_mesh = bfalse, bumped_grid = bfalse, needs_update = bfalse;
+
+    fvec3_t test_pos, test_vel;
+
+    // aliases for easier notation
+    if( NULL == pbdl ) return rv_error;
+
+    // alias these parameter for easier notation
+    loc_iprt    = pbdl->prt_ref;
+    loc_pprt    = pbdl->prt_ptr;
+    loc_ppip    = pbdl->pip_ptr;
+    loc_penviro = &(loc_pprt->enviro);
+    loc_pphys   = &(loc_pprt->phys);
+
+    // work on test_pos and test velocity instead of the actual particle position and velocity
+    test_pos = prt_get_pos( loc_pprt );
+    test_vel = loc_pprt->vel; 
+
+    // do the "integration" of the accumulators
+    test_pos = prt_get_pos( loc_pprt );
+    test_vel = loc_pprt->vel; 
+    phys_data_integrate_accumulators( &test_pos, &test_vel, loc_pphys, dt );
+
+    // bump the particles with the mesh
+    bumped_mesh = bfalse;
+    if( ACTIVE_CHR(loc_pprt->attachedto_ref) )
+    {
+        pbdl = prt_bump_mesh_attached( pbdl, test_pos, test_vel, dt );
+    }
+    else
+    {
+        pbdl = prt_bump_mesh( pbdl, test_pos, test_vel, dt, &bumped_mesh );
+    }
+    if( NULL == pbdl ) return rv_success;
+
+    // if the particle hit the mesh, re-do the "integration" of the accumulators again,
+    // to make sure that it does not go through the mesh
+    if( bumped_mesh )
+    {
+        test_pos = prt_get_pos( loc_pprt );
+        test_vel = loc_pprt->vel; 
+        phys_data_integrate_accumulators( &test_pos, &test_vel, loc_pphys, dt );
+    }
+
+    bumped_grid = bfalse;
+    if( ACTIVE_CHR(loc_pprt->attachedto_ref) )
+    {
+        pbdl = prt_bump_grid_attached( pbdl, test_pos, test_vel, dt );
+    }
+    else
+    {
+        pbdl = prt_bump_grid( pbdl, test_pos, test_vel, dt, &bumped_grid );
+    }
+    if( NULL == pbdl ) return rv_success;
+
+    // if the particle hit the grid, re-do the "integration" of the accumulators again,
+    // to make sure that it does not go through the grid
+    if( bumped_grid )
+    {
+        test_pos = prt_get_pos( loc_pprt );
+        test_vel = loc_pprt->vel; 
+        phys_data_integrate_accumulators( &test_pos, &test_vel, loc_pphys, dt );
+    }
+
+    // do a special "non-physics" update
+    if ( loc_pprt->is_homing && test_pos.z < 0.0f )
+    {
+        test_pos.z = 0.0f;  // Don't fall in pits...
+    }
+
+    // fix the particle orientation
+    if ( !ACTIVE_CHR(loc_pprt->attachedto_ref) && loc_ppip->rotatetoface )
+    {
+        if ( fvec2_length_abs( test_vel.v ) > 1e-6 )
+        {
+            // use velocity to find the angle
+            loc_pprt->facing = vec_to_facing( test_vel.x, test_vel.y );
+        }
+        else if ( INGAME_CHR( loc_pprt->target_ref ) )
+        {
+            chr_t * ptarget =  ChrList.lst +  loc_pprt->target_ref;
+
+            // face your target
+            loc_pprt->facing = vec_to_facing( ptarget->pos.x - test_pos.x , ptarget->pos.y - test_pos.y );
+        }
+    }
+
+    // determine whether there is any need to update the particle's safe position
+    needs_update = bumped_mesh || bumped_grid;
+
+    // update the particle's position and velocity
+    prt_set_pos( loc_pprt, test_pos.v );
+    loc_pprt->vel = test_vel;
+
+    // we need to test the validity of the current position every 8 frames or so,
+    // no matter what
+    if ( !needs_update )
+    {
+        // make a timer that is individual for each object
+        Uint32 prt_update = loc_pprt->obj_base.guid + update_wld;
+
+        needs_update = ( 0 == ( prt_update & 7 ) );
+    }
+
+    if ( needs_update )
+    {
+        prt_update_safe( loc_pprt, needs_update );
+    }
+
+    return rv_success;
+}
+
+//--------------------------------------------------------------------------------------------
+void finalize_all_particle_physics( float dt )
+{
+    // accumulate the accumulators
+    PRT_BEGIN_LOOP_ACTIVE( iprt, bdl )
+    {
+        particle_physics_finalize_one( &bdl, dt );
+    }
+    PRT_END_LOOP();
+}
+
+//--------------------------------------------------------------------------------------------
+// OBSOLETE
+//--------------------------------------------------------------------------------------------
+// prt_bundle_t * move_one_particle_integrate_motion( prt_bundle_t * pbdl_prt )
+//{
+//    /// @details BB@> A helper function that figures out the next valid position of the particle.
+//    ///               Collisions with the mesh are included in this step.
+//
+//    float ftmp, loc_level;
+//    bool_t hit_a_floor, hit_a_wall, needs_test, updated_2d;
+//    bool_t touch_a_floor, touch_a_wall;
+//    fvec3_t nrm_total;
+//    fvec3_t tmp_pos;
+//
+//    prt_t             * loc_pprt;
+//    PRT_REF             loc_iprt;
+//    pip_t             * loc_ppip;
+//    prt_environment_t * penviro;
+//
+//    if( NULL == pbdl_prt ) return NULL;
+//    loc_pprt = pbdl_prt->prt_ptr;
+//    loc_iprt = pbdl_prt->prt_ref;
+//    loc_ppip = pbdl_prt->pip_ptr;
+//    penviro  = &(loc_pprt->enviro);
+//
+//    // if the particle is not still in "display mode" there is no point in going on
+//    if ( !DISPLAY_PPRT( loc_pprt ) ) return pbdl_prt;
+//
+//    // capture the position
+//    tmp_pos = prt_get_pos( loc_pprt );
+//
+//    // no point in doing this if the particle thinks it's attached
+//    if( MAX_CHR != loc_pprt->attachedto_ref )
+//    {
+//        return move_one_particle_integrate_motion_attached( pbdl_prt );
+//    }
+//
+//    hit_a_floor   = bfalse;
+//    hit_a_wall    = bfalse;
+//    touch_a_floor = bfalse;
+//    touch_a_wall  = bfalse;
+//    nrm_total.x = nrm_total.y = nrm_total.z = 0.0f;
+//
+//    loc_level = penviro->grid_adj;
+//
+//    // Move the particle
+//    ftmp = tmp_pos.z;
+//    tmp_pos.z += loc_pprt->vel.z;
+//    LOG_NAN( tmp_pos.z );
+//    if ( tmp_pos.z < loc_level )
+//    {
+//        fvec3_t floor_nrm = VECT3(0,0,1);
+//        float vel_dot;
+//        fvec3_t vel_perp, vel_para;
+//        Uint8 tmp_twist = TWIST_FLAT;
+//
+//        touch_a_floor = btrue;
+//
+//        tmp_twist = cartman_get_fan_twist( PMesh, loc_pprt->onwhichgrid );
+//
+//        if( TWIST_FLAT != tmp_twist )
+//        {
+//            floor_nrm = map_twist_nrm[penviro->grid_twist];
+//        }
+//
+//        vel_dot = fvec3_dot_product(floor_nrm.v, loc_pprt->vel.v);
+//
+//        vel_perp.x = floor_nrm.x * vel_dot;
+//        vel_perp.y = floor_nrm.y * vel_dot;
+//        vel_perp.z = floor_nrm.z * vel_dot;
+//
+//        vel_para.x = loc_pprt->vel.x - vel_perp.x;
+//        vel_para.y = loc_pprt->vel.y - vel_perp.y;
+//        vel_para.z = loc_pprt->vel.z - vel_perp.z;
+//
+//        if ( vel_dot < - STOPBOUNCINGPART )
+//        {
+//            // the particle will bounce
+//            nrm_total.x += floor_nrm.x;
+//            nrm_total.y += floor_nrm.y;
+//            nrm_total.z += floor_nrm.z;
+//
+//            tmp_pos.z = ftmp;
+//            hit_a_floor = btrue;
+//        }
+//        else if ( vel_dot > 0.0f )
+//        {
+//            // the particle is not bouncing, it is just at the wrong height
+//            tmp_pos.z = loc_level;
+//        }
+//        else
+//        {
+//            // the particle is in the "stop bouncing zone"
+//            tmp_pos.z     = loc_level + 0.0001f;
+//            loc_pprt->vel = vel_para;
+//        }
+//    }
+//
+//    // handle the sounds
+//    if ( hit_a_floor )
+//    {
+//        // Play the sound for hitting the floor [FSND]
+//        play_particle_sound( loc_iprt, loc_ppip->end_sound_floor );
+//    }
+//
+//    // handle the collision
+//    if ( touch_a_floor && loc_ppip->end_ground )
+//    {
+//        prt_request_terminate( pbdl_prt );
+//        return NULL;
+//    }
+//
+//    // interaction with the mesh walls
+//    hit_a_wall = bfalse;
+//    updated_2d = bfalse;
+//    needs_test = bfalse;
+//    if ( fvec2_length_abs( loc_pprt->vel.v ) > 0.0f )
+//    {
+//        float old_x, old_y, new_x, new_y;
+//
+//        old_x = tmp_pos.x; LOG_NAN( old_x );
+//        old_y = tmp_pos.y; LOG_NAN( old_y );
+//
+//        new_x = old_x + loc_pprt->vel.x; LOG_NAN( new_x );
+//        new_y = old_y + loc_pprt->vel.y; LOG_NAN( new_y );
+//
+//        tmp_pos.x = new_x;
+//        tmp_pos.y = new_y;
+//
+//        if ( !prt_test_wall( loc_pprt, tmp_pos.v ) )
+//        {
+//            updated_2d = btrue;
+//        }
+//        else
+//        {
+//            BIT_FIELD  hit_bits;
+//            fvec2_t nrm;
+//            float   pressure;
+//
+//            // how is the character hitting the wall?
+//            hit_bits = prt_hit_wall( loc_pprt, tmp_pos.v, nrm.v, &pressure );
+//
+//            if ( 0 != hit_bits )
+//            {
+//                touch_a_wall = btrue;
+//
+//                tmp_pos.x = old_x;
+//                tmp_pos.y = old_y;
+//
+//                nrm_total.x += nrm.x;
+//                nrm_total.y += nrm.y;
+//
+//                hit_a_wall = (fvec2_dot_product(loc_pprt->vel.v, nrm.v) < 0.0f);
+//            }
+//        }
+//    }
+//
+//    // handle the sounds
+//    if ( hit_a_wall )
+//    {
+//        // Play the sound for hitting the wall [WSND]
+//        play_particle_sound( loc_iprt, loc_ppip->end_sound_wall );
+//    }
+//
+//    // handle the collision
+//    if ( touch_a_wall && ( loc_ppip->end_wall || loc_ppip->end_bump ) )
+//    {
+//        prt_request_terminate( pbdl_prt );
+//        return NULL;
+//    }
+//
+//    // do the reflections off the walls and floors
+//    if ( !INGAME_CHR( loc_pprt->attachedto_ref ) && ( hit_a_wall || hit_a_floor ) )
+//    {
+//        if (( hit_a_wall && ( loc_pprt->vel.x * nrm_total.x + loc_pprt->vel.y * nrm_total.y ) < 0.0f ) ||
+//            ( hit_a_floor && ( loc_pprt->vel.z * nrm_total.z ) < 0.0f ) )
+//        {
+//            float vdot;
+//            fvec3_t   vpara, vperp;
+//
+//            fvec3_self_normalize( nrm_total.v );
+//
+//            vdot  = fvec3_dot_product( nrm_total.v, loc_pprt->vel.v );
+//
+//            vperp.x = nrm_total.x * vdot;
+//            vperp.y = nrm_total.y * vdot;
+//            vperp.z = nrm_total.z * vdot;
+//
+//            vpara.x = loc_pprt->vel.x - vperp.x;
+//            vpara.y = loc_pprt->vel.y - vperp.y;
+//            vpara.z = loc_pprt->vel.z - vperp.z;
+//
+//            // we can use the impulse to determine how much velocity to kill in the parallel direction
+//            //imp.x = vperp.x * (1.0f + loc_ppip->dampen);
+//            //imp.y = vperp.y * (1.0f + loc_ppip->dampen);
+//            //imp.z = vperp.z * (1.0f + loc_ppip->dampen);
+//
+//            // do the reflection
+//            vperp.x *= -loc_ppip->dampen;
+//            vperp.y *= -loc_ppip->dampen;
+//            vperp.z *= -loc_ppip->dampen;
+//
+//            // fake the friction, for now
+//            if ( 0.0f != nrm_total.y || 0.0f != nrm_total.z )
+//            {
+//                vpara.x *= loc_ppip->dampen;
+//            }
+//
+//            if ( 0.0f != nrm_total.x || 0.0f != nrm_total.z )
+//            {
+//                vpara.y *= loc_ppip->dampen;
+//            }
+//
+//            if ( 0.0f != nrm_total.x || 0.0f != nrm_total.y )
+//            {
+//                vpara.z *= loc_ppip->dampen;
+//            }
+//
+//            // add the components back together
+//            loc_pprt->vel.x = vpara.x + vperp.x;
+//            loc_pprt->vel.y = vpara.y + vperp.y;
+//            loc_pprt->vel.z = vpara.z + vperp.z;
+//        }
+//
+//        if ( nrm_total.z != 0.0f && loc_pprt->vel.z < STOPBOUNCINGPART )
+//        {
+//            // this is the very last bounce
+//            loc_pprt->vel.z = 0.0f;
+//            tmp_pos.z = loc_level + 0.0001f;
+//        }
+//
+//        if ( hit_a_wall )
+//        {
+//            float fx, fy;
+//
+//            // fix the facing
+//            facing_to_vec( loc_pprt->facing, &fx, &fy );
+//
+//            if ( 0.0f != nrm_total.x )
+//            {
+//                fx *= -1;
+//            }
+//
+//            if ( 0.0f != nrm_total.y )
+//            {
+//                fy *= -1;
+//            }
+//
+//            loc_pprt->facing = vec_to_facing( fx, fy );
+//        }
+//    }
+//
+//    if ( loc_pprt->is_homing && tmp_pos.z < 0 )
+//    {
+//        tmp_pos.z = 0;  // Don't fall in pits...
+//    }
+//
+//    if ( loc_ppip->rotatetoface )
+//    {
+//        if ( fvec2_length_abs( loc_pprt->vel.v ) > 1e-6 )
+//        {
+//            // use velocity to find the angle
+//            loc_pprt->facing = vec_to_facing( loc_pprt->vel.x, loc_pprt->vel.y );
+//        }
+//        else if ( INGAME_CHR( loc_pprt->target_ref ) )
+//        {
+//            chr_t * ptarget =  ChrList.lst +  loc_pprt->target_ref;
+//
+//            // face your target
+//            loc_pprt->facing = vec_to_facing( ptarget->pos.x - tmp_pos.x , ptarget->pos.y - tmp_pos.y );
+//        }
+//    }
+//
+//    prt_set_pos( loc_pprt, tmp_pos.v );
+//
+//    return pbdl_prt;
+//}
+
+//--------------------------------------------------------------------------------------------
+//prt_bundle_t * move_one_particle_integrate_motion_attached( prt_bundle_t * pbdl_prt )
+//{
+//    /// @details BB@> A helper function that figures out the next valid position of the particle.
+//    ///               Collisions with the mesh are included in this step.
+//
+//    float loc_level;
+//    bool_t hit_a_floor, hit_a_wall, needs_test, updated_2d;
+//    fvec3_t nrm_total;
+//    fvec3_t tmp_pos;
+//
+//    prt_t             * loc_pprt;
+//    PRT_REF             loc_iprt;
+//    pip_t             * loc_ppip;
+//    prt_environment_t * penviro;
+//
+//    if( NULL == pbdl_prt ) return NULL;
+//    loc_pprt = pbdl_prt->prt_ptr;
+//    loc_iprt = pbdl_prt->prt_ref;
+//    loc_ppip = pbdl_prt->pip_ptr;
+//    penviro  = &(loc_pprt->enviro);
+//
+//    // if the particle is not still in "display mode" there is no point in going on
+//    if ( !DISPLAY_PPRT( loc_pprt ) ) return pbdl_prt;
+//
+//    // capture the particle position
+//    tmp_pos = prt_get_pos( loc_pprt );
+//
+//    // only deal with attached particles
+//    if( MAX_CHR == loc_pprt->attachedto_ref ) return pbdl_prt;
+//
+//    hit_a_floor = bfalse;
+//    hit_a_wall  = bfalse;
+//    nrm_total.x = nrm_total.y = nrm_total.z = 0;
+//
+//    loc_level = penviro->grid_adj;
+//
+//    // Move the particle
+//    if ( tmp_pos.z < loc_level )
+//    {
+//        hit_a_floor = btrue;
+//    }
+//
+//    if ( hit_a_floor )
+//    {
+//        // Play the sound for hitting the floor [FSND]
+//        play_particle_sound( loc_iprt, loc_ppip->end_sound_floor );
+//    }
+//
+//    // handle the collision
+//    if ( hit_a_floor && loc_ppip->end_ground )
+//    {
+//        prt_request_terminate( pbdl_prt );
+//        return NULL;
+//    }
+//
+//    // interaction with the mesh walls
+//    hit_a_wall = bfalse;
+//    updated_2d = bfalse;
+//    needs_test = bfalse;
+//    if ( fvec2_length_abs( loc_pprt->vel.v ) > 0.0f )
+//    {
+//        if ( prt_test_wall( loc_pprt, tmp_pos.v ) )
+//        {
+//            Uint32  hit_bits;
+//            fvec2_t nrm;
+//            float   pressure;
+//
+//            // how is the character hitting the wall?
+//            hit_bits = prt_hit_wall( loc_pprt, tmp_pos.v, nrm.v, &pressure );
+//
+//            if ( 0 != hit_bits )
+//            {
+//                hit_a_wall = btrue;
+//            }
+//        }
+//    }
+//
+//    // handle the sounds
+//    if ( hit_a_wall )
+//    {
+//        // Play the sound for hitting the floor [FSND]
+//        play_particle_sound( loc_iprt, loc_ppip->end_sound_wall );
+//    }
+//
+//    // handle the collision
+//    if ( hit_a_wall && ( loc_ppip->end_wall || loc_ppip->end_bump ) )
+//    {
+//        prt_request_terminate( pbdl_prt );
+//        return NULL;
+//    }
+//
+//    prt_set_pos( loc_pprt, tmp_pos.v );
+//
+//    return pbdl_prt;
+//}

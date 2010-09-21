@@ -12,10 +12,10 @@ Level rating ( * to  ***** )    :*******
 // Module summary
 :Protect_the_portal_to_the_final_level
 :before_it_is_destroyed_by_the_invading
-:forces!_Escape_through_the_portal_to
-:the_final_level_as_soon_as_it_is_ready.
+:forces!
 :_
-:_
+:Escape_through_the_portal_to_the_final_level
+:as_soon_as_it_is_ready.
 :_
 :_
 

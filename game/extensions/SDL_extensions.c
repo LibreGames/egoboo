@@ -773,3 +773,4 @@ FILE * SDLX_set_stdout( FILE * pfile )
 
     return pfile_old;
 }
+

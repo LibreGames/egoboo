@@ -38,7 +38,7 @@
 struct s_scantag
 {
     char   name[TAGSIZE];             ///< Scancode names
-    Uint32 value;                     ///< Scancode values
+    int    value;                     ///< Scancode values
 };
 typedef struct s_scantag scantag_t;
 
@@ -53,4 +53,4 @@ extern scantag_t scantag[MAXTAG];
 
 void        scantag_read_all_vfs( const char *szFilename );
 int         scantag_get_value( const char *string );
-const char* scantag_get_string( Sint32 device, Uint32 tag, bool_t onlykeys );
+const char* scantag_get_string( Sint32 device, int tag, bool_t onlykeys );

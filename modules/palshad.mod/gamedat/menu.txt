@@ -13,10 +13,10 @@ Level rating ( *, **, ***, ****, or ***** )     		: ****
 
 // Module summary ( Must be 8 lines...  Each line mush have at least an _ )
 :In_the_darklands_the_ancient
-:dark_Shadow_Palace_is_hidden!
+:Shadow_Palace_is_hidden!
 :This_dreaded_place_of_evil_holds
 :the_most_unspeakable_evil_artifacts
-:waiting_for_the_foolish_adventurer
+:waiting_for_foolish_adventurers
 :to_claim_them...
 :_
 :_

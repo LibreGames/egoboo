@@ -54,6 +54,8 @@ typedef struct s_script_storage_info script_storage_info_t;
 DECLARE_STATIC_ARY_TYPE( AisStorageAry, script_storage_info_t, MAX_AI );
 DECLARE_EXTERN_STATIC_ARY( AisStorageAry, AisStorage );
 
+#define AI_LOADED(IAI) ( ((IAI) >= 0) && ((IAI) < MAX_AI) && ((IAI) >= AisStorage.count) && (AisStorage.ary[IAI].iStartPosition != AisStorage.ary[IAI].iEndPosition) )
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 extern int    AisCompiled_offset;
@@ -473,28 +475,28 @@ enum e_script_functions
     FSETSELECTSPEECH,            // == 363
 
     /// Scripted AI functions (v1.10)
-    FTAKEPICTURE,						// == 364
-    FIFOPERATORISMACINTOSH,				// == 365
-    FIFMODULEHASIDSZ,					// == 366
-    FMORPHTOTARGET,						// == 367
-    FGIVEMANAFLOWTOTARGET,				// == 368
-    FGIVEMANARETURNTOTARGET,			// == 369
-    FSETMONEY,							// == 370
-    FIFTARGETCANSEEKURSES,				// == 371
-    FSPAWNATTACHEDCHARACTER,			// == 372
-    FKURSETARGET,				        // == 373
-    FSETCHILDCONTENT,			        // == 374
-    FSETTARGETTOCHILD,			        // == 375
-    FSETDAMAGETHRESHOLD,		        // == 376
-    FACCELERATETARGETUP,			    // == 377
-    FSETTARGETAMMO,					    // == 378
-    FENABLEINVICTUS,				    // == 379
-    FDISABLEINVICTUS,				    // == 380
-    FTARGETDAMAGESELF,				    // == 381
-    FSETTARGETSIZE,						// == 382
-    FIFTARGETISFACINGSELF,			    // == 383
-    FDRAWBILLBOARD,						// == 384
-    FSETTARGETTOFIRSTBLAHINPASSAGE,		// == 385
+    FTAKEPICTURE,                        // == 364
+    FIFOPERATORISMACINTOSH,                // == 365
+    FIFMODULEHASIDSZ,                    // == 366
+    FMORPHTOTARGET,                        // == 367
+    FGIVEMANAFLOWTOTARGET,                // == 368
+    FGIVEMANARETURNTOTARGET,            // == 369
+    FSETMONEY,                            // == 370
+    FIFTARGETCANSEEKURSES,                // == 371
+    FSPAWNATTACHEDCHARACTER,            // == 372
+    FKURSETARGET,                        // == 373
+    FSETCHILDCONTENT,                    // == 374
+    FSETTARGETTOCHILD,                    // == 375
+    FSETDAMAGETHRESHOLD,                // == 376
+    FACCELERATETARGETUP,                // == 377
+    FSETTARGETAMMO,                        // == 378
+    FENABLEINVICTUS,                    // == 379
+    FDISABLEINVICTUS,                    // == 380
+    FTARGETDAMAGESELF,                    // == 381
+    FSETTARGETSIZE,                        // == 382
+    FIFTARGETISFACINGSELF,                // == 383
+    FDRAWBILLBOARD,                        // == 384
+    FSETTARGETTOFIRSTBLAHINPASSAGE,        // == 385
 
     SCRIPT_FUNCTIONS_COUNT
 };

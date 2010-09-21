@@ -53,7 +53,7 @@ struct Font;
 #define NUMTICK                         10// 50          ///< Number of ticks per row
 #define TICKX                           8// 4           ///< X size of each tick
 #define MAXTICK                         (NUMTICK*10) ///< Max number of ticks to draw
-#define XPTICK                          6.00f
+#define XPTICK                          6
 
 #define NUMBAR                          6               ///< Number of status bars
 #define NUMXPBAR                        2               ///< Number of xp bars
@@ -195,7 +195,7 @@ DECLARE_EXTERN_STATIC_ARY( DisplayMsgAry, DisplayMsg );
 #define CAM_ROTMESH_DOWN                     30
 
 // The ones that get used
-extern int rotmeshtopside;                                 
+extern int rotmeshtopside;
 extern int rotmeshbottomside;
 extern int rotmeshup;
 extern int rotmeshdown;
@@ -258,11 +258,11 @@ extern Uint8           blip_c[MAXBLIP];
 enum e_bb_opt
 {
     bb_opt_none          = EMPTY_BIT_FIELD,
-    bb_opt_randomize_pos = (1 << 0),		// Randomize the position of the bb to witin 1 grid
-    bb_opt_randomize_vel = (1 << 1),		// Randomize the velocity of the bb. Enough to move it by 2 tiles within its lifetime.
-    bb_opt_fade          = (1 << 2),		// Make the billboard fade out
-    bb_opt_burn          = (1 << 3),		// Make the tint fully saturate over time.
-    bb_opt_all           = FULL_BIT_FIELD	//(size_t)(~0)   Enum doesn't support unsigned integers, size_t is also unsigned.
+    bb_opt_randomize_pos = (1 << 0),        // Randomize the position of the bb to witin 1 grid
+    bb_opt_randomize_vel = (1 << 1),        // Randomize the velocity of the bb. Enough to move it by 2 tiles within its lifetime.
+    bb_opt_fade          = (1 << 2),        // Make the billboard fade out
+    bb_opt_burn          = (1 << 3),        // Make the tint fully saturate over time.
+    bb_opt_all           = FULL_BIT_FIELD    //(size_t)(~0)   Enum doesn't support unsigned integers, size_t is also unsigned.
 };
 
 /// Description of a generic bilboarded object.
@@ -273,7 +273,7 @@ struct s_billboard_data
 
     Uint32    time;         ///< the time when the billboard will expire
     TX_REF    tex_ref;      ///< our texture index
-    fvec3_t   pos;          ///< the position of the bottom-missle of the box
+    fvec3_t   pos;          ///< the position of the bottom-missile of the box
 
     CHR_REF   ichr;         ///< the character we are attached to
 

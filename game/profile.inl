@@ -205,3 +205,4 @@ INLINE Mix_Chunk * pro_get_chunk( const PRO_REF by_reference iobj, int index )
 
     return pobj->wavelist[index];
 }
+

@@ -69,3 +69,4 @@ void make_randie()
     // All done
     randindex = 0;
 }
+

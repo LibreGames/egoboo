@@ -164,7 +164,7 @@ typedef struct s_OVolume_Tree OVolume_Tree_t;
 
 //--------------------------------------------------------------------------------------------
 
-/// @details A covex polygon representation of the collision of two objects
+/// @details A convex polygon representation of the collision of two objects
 struct s_CVolume
 {
     float            volume;
@@ -184,7 +184,7 @@ bool_t CVolume_refine( CVolume_t * pcv );
 bool_t bumper_to_oct_bb_0( bumper_t src, oct_bb_t * pdst );
 bool_t bumper_to_oct_bb_1( bumper_t src, fvec3_t vel, oct_bb_t * pdst );
 
-void   oct_bb_downgrade( oct_bb_t * psrc, bumper_t bump_base, bumper_t * p_bump, oct_bb_t * pdst );
+void   oct_bb_downgrade( oct_bb_t * psrc, bumper_t bump_stt, bumper_t bump_base, bumper_t * p_bump, oct_bb_t * pdst );
 bool_t oct_bb_intersection( oct_bb_t src1, oct_bb_t src2, oct_bb_t * pdst );
 
 int    oct_bb_to_points( oct_bb_t * pbmp, fvec4_t pos[], size_t pos_count );

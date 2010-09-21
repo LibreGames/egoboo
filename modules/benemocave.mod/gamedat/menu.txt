@@ -14,10 +14,10 @@ Level rating ( * to  ***** ) :******
 :forest..._This_must_be_the_cave
 :Angus_was_talking_about._There
 :are_supposed_to_be_bandits_of_all
-:sorts_in_there..._You_are_to_find
-:the_stolen_heirloom_and_possibly
+:sorts_in_there...
+:Find_the_stolen_heirloom_and
 :kill_the_infamous_assasin
-:Bludhawk_while_doing_so...
+:Bludhawk,_if_you_can...
 
 
 // Module expansion IDSZs ( with a colon in front )

@@ -69,3 +69,4 @@ bool_t scan_passage_file( vfs_FILE * fileread, passage_t * ppass )
 
     return found;
 }
+

@@ -164,7 +164,7 @@ int font_bmp_length_of_word( const char *szText )
         cTmp = szText[cnt];
     }
 
-    while ( ' ' != cTmp && '~' != cTmp && '\n' != cTmp && cTmp != 0 )
+    while ( ' ' != cTmp && '~' != cTmp && '\n' != cTmp && 0 != cTmp )
     {
         x += fontxspacing[asciitofont[cTmp]];
         cnt++;
@@ -173,3 +173,4 @@ int font_bmp_length_of_word( const char *szText )
 
     return x;
 }
+

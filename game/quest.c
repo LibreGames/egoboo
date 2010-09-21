@@ -44,7 +44,7 @@ bool_t quest_add_idsz_vfs( const char *player_directory, const IDSZ idsz )
     if ( idsz == IDSZ_NONE || quest_check_vfs( player_directory, idsz, btrue ) != QUEST_NONE ) return bfalse;
 
 	// Figure out the file path
-	snprintf( newloadname, SDL_arraysize( newloadname ), "import%s/quest.txt", vfs_mount_info_strip_path( player_directory ) );
+	snprintf( newloadname, SDL_arraysize( newloadname ), "import%s/quest.txt", vfs_strip_path( player_directory ) );
 
     // Try to open the file in read and append mode
 	filewrite = vfs_openAppend( newloadname );
@@ -91,7 +91,7 @@ int quest_modify_idsz_vfs( const char *player_directory, const IDSZ idsz, const 
 
     // modify the CData.quest_file
     // create a "tmp_*" copy of the file
-	path = vfs_mount_info_strip_path( player_directory );
+	path = vfs_strip_path( player_directory );
     snprintf( newloadname, SDL_arraysize( newloadname ), "import%s/quest.txt", path );
     snprintf( copybuffer, SDL_arraysize( copybuffer ), "import%s/tmp_quest.txt", path );
     vfs_copyFile( newloadname, copybuffer );
@@ -162,7 +162,7 @@ int quest_check_vfs( const char *player_directory, const IDSZ idsz, bool_t impor
 	else			 prefix = "players";
 
 	// Figure out the file path
-	snprintf( newloadname, SDL_arraysize( newloadname ), "%s%s/quest.txt", prefix, vfs_mount_info_strip_path( player_directory ) );
+	snprintf( newloadname, SDL_arraysize( newloadname ), "%s%s/quest.txt", prefix, vfs_strip_path( player_directory ) );
     fileread = vfs_openRead( newloadname );
 
 	log_debug( "----quest_check_vfs(\"%s\",[%s]) - update == %d\n", newloadname, undo_idsz( idsz ), update_wld );
@@ -183,4 +183,3 @@ int quest_check_vfs( const char *player_directory, const IDSZ idsz, bool_t impor
 
     return result;
 }
-

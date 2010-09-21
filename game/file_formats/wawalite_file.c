@@ -139,10 +139,10 @@ wawalite_data_t * read_wawalite_light( vfs_FILE * fileread, wawalite_data_t * pd
 {
     if ( NULL == pdata ) return pdata;
 
-    pdata->light_x = 1.00;
-    pdata->light_y = 1.00;
-    pdata->light_z = 0.50;
-    pdata->light_a = 0.20;
+    pdata->light_x = 1.00f;
+    pdata->light_y = 1.00f;
+    pdata->light_z = 0.50f;
+    pdata->light_a = 0.20f;
 
     if ( NULL == fileread ) return pdata;
 
@@ -615,4 +615,6 @@ bool_t wawalite_damagetile_init( wawalite_damagetile_t * pdata )
 
     return btrue;
 }
+
+
 

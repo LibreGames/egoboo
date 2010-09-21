@@ -243,11 +243,11 @@ bool_t save_one_enchant_file_vfs( const char* szLoadName, const char * szTemplat
     template_put_int( filetemp, filewrite, peve->endmessage );
 
     // Drain stuff
-    template_put_float( filetemp, filewrite, FP8_TO_FLOAT( peve->owner_mana ) );
-    template_put_float( filetemp, filewrite, FP8_TO_FLOAT( peve->target_mana ) );
+    template_put_float( filetemp, filewrite, SFP8_TO_FLOAT( peve->owner_mana ) );
+    template_put_float( filetemp, filewrite, SFP8_TO_FLOAT( peve->target_mana ) );
     template_put_bool( filetemp, filewrite, peve->endifcantpay );
-    template_put_float( filetemp, filewrite, FP8_TO_FLOAT( peve->owner_life ) );
-    template_put_float( filetemp, filewrite, FP8_TO_FLOAT( peve->target_life ) );
+    template_put_float( filetemp, filewrite, SFP8_TO_FLOAT( peve->owner_life ) );
+    template_put_float( filetemp, filewrite, SFP8_TO_FLOAT( peve->target_life ) );
 
     // Specifics
     template_put_damage_type( filetemp, filewrite, peve->dontdamagetype );
@@ -401,4 +401,6 @@ bool_t save_one_enchant_file_vfs( const char* szLoadName, const char * szTemplat
 
     return btrue;
 }
+
+
 

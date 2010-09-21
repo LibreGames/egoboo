@@ -30,8 +30,9 @@
 #include "egoboo_fileutil.h"
 #include "egoboo_strutil.h"
 #include "egoboo_vfs.h"
-#include "egoboo_math.h"
 #include "egoboo.h"
+
+#include "egoboo_math.inl"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -174,11 +175,11 @@ cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
     pcap->bumpdampen = fget_next_float( fileread );
     pcap->weight = fget_next_int( fileread );
     pcap->jump = fget_next_float( fileread );
-    pcap->jumpnumber = fget_next_int( fileread );
+    pcap->jump_number = fget_next_int( fileread );
     pcap->anim_speed_sneak = fget_next_float( fileread );
     pcap->anim_speed_walk = fget_next_float( fileread );
     pcap->anim_speed_run = fget_next_float( fileread );
-    pcap->flyheight = fget_next_int( fileread );
+    pcap->fly_height = fget_next_int( fileread );
     pcap->flashand = fget_next_int( fileread );
     pcap->alpha = fget_next_int( fileread );
     pcap->light = fget_next_int( fileread );
@@ -234,15 +235,15 @@ cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
         {
             cTmp = toupper( fget_first_letter( fileread ) );
             switch(cTmp)
-			{
-				case 'T':	pcap->damagemodifier[damagetype][cnt] |= DAMAGEINVERT;		break;
-				case 'C':	pcap->damagemodifier[damagetype][cnt] |= DAMAGECHARGE;		break;
-				case 'M':	pcap->damagemodifier[damagetype][cnt] |= DAMAGEMANA;			break;
-				case 'I':	pcap->damagemodifier[damagetype][cnt] |= DAMAGEINVICTUS;		break;
-				
-				//F is nothing
-				default: break;
-			}
+            {
+                case 'T':    pcap->damagemodifier[damagetype][cnt] |= DAMAGEINVERT;        break;
+                case 'C':    pcap->damagemodifier[damagetype][cnt] |= DAMAGECHARGE;        break;
+                case 'M':    pcap->damagemodifier[damagetype][cnt] |= DAMAGEMANA;            break;
+                case 'I':    pcap->damagemodifier[damagetype][cnt] |= DAMAGEINVICTUS;        break;
+
+                //F is nothing
+                default: break;
+            }
         }
     }
 
@@ -339,7 +340,7 @@ cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
         pcap->skincost[cnt] = fget_next_int( fileread );
     }
 
-    pcap->str_bonus = fget_next_float( fileread );			//ZF> Deprecated, but keep here for backwards compatability
+    pcap->str_bonus = fget_next_float( fileread );            //ZF> Deprecated, but keep here for backwards compatability
 
     // Another memory lapse
     pcap->ridercanattack = !fget_next_bool( fileread );
@@ -348,7 +349,7 @@ cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
 
     goto_colon( NULL, fileread, bfalse );  // !!!BAD!!! Life add
     goto_colon( NULL, fileread, bfalse );  // !!!BAD!!! Mana add
-	if( fget_next_bool( fileread ) )   pcap->see_invisible_level = 1;
+    if( fget_next_bool( fileread ) )   pcap->see_invisible_level = 1;
 
     pcap->kursechance                 = fget_next_int( fileread );
     pcap->sound_index[SOUND_FOOTFALL] = fget_next_int( fileread );  // Footfall sound
@@ -371,7 +372,7 @@ cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
     {
         idsz = fget_idsz( fileread );
 
-        if      ( idsz == MAKE_IDSZ( 'D', 'R', 'E', 'S' ) ) SET_BIT( pcap->skindressy, 1 << fget_int( fileread ) );
+        if      ( idsz == MAKE_IDSZ( 'D', 'R', 'E', 'S' ) ) ADD_BITS( pcap->skindressy, 1 << fget_int( fileread ) );
         else if ( idsz == MAKE_IDSZ( 'G', 'O', 'L', 'D' ) ) pcap->money = fget_int( fileread );
         else if ( idsz == MAKE_IDSZ( 'S', 'T', 'U', 'K' ) ) pcap->resistbumpspawn = (0 != (1 - fget_int( fileread )));
         else if ( idsz == MAKE_IDSZ( 'P', 'A', 'C', 'K' ) ) pcap->istoobig = !( 0 != fget_int( fileread ) );
@@ -394,13 +395,13 @@ cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
         else if ( idsz == MAKE_IDSZ( 'L', 'I', 'F', 'E' ) ) pcap->life_spawn = 256.0f * fget_float( fileread );
         else if ( idsz == MAKE_IDSZ( 'M', 'A', 'N', 'A' ) ) pcap->mana_spawn = 256.0f * fget_float( fileread );
         else if ( idsz == MAKE_IDSZ( 'B', 'O', 'O', 'K' ) ) pcap->spelleffect_type = fget_int( fileread );
-		else if ( idsz == MAKE_IDSZ( 'F', 'A', 'S', 'T' ) ) pcap->attack_fast = ( 0 != fget_int( fileread ) );
+        else if ( idsz == MAKE_IDSZ( 'F', 'A', 'S', 'T' ) ) pcap->attack_fast = ( 0 != fget_int( fileread ) );
 
-		//Damage bonuses from stats
-		else if ( idsz == MAKE_IDSZ( 'S', 'T', 'R', 'D' ) ) pcap->str_bonus = fget_float( fileread );
-		else if ( idsz == MAKE_IDSZ( 'I', 'N', 'T', 'D' ) ) pcap->int_bonus = fget_float( fileread );
-		else if ( idsz == MAKE_IDSZ( 'W', 'I', 'S', 'D' ) ) pcap->wis_bonus = fget_float( fileread );
-		else if ( idsz == MAKE_IDSZ( 'D', 'E', 'X', 'D' ) ) pcap->dex_bonus = fget_float( fileread );
+        //Damage bonuses from stats
+        else if ( idsz == MAKE_IDSZ( 'S', 'T', 'R', 'D' ) ) pcap->str_bonus = fget_float( fileread );
+        else if ( idsz == MAKE_IDSZ( 'I', 'N', 'T', 'D' ) ) pcap->int_bonus = fget_float( fileread );
+        else if ( idsz == MAKE_IDSZ( 'W', 'I', 'S', 'D' ) ) pcap->wis_bonus = fget_float( fileread );
+        else if ( idsz == MAKE_IDSZ( 'D', 'E', 'X', 'D' ) ) pcap->dex_bonus = fget_float( fileread );
 
         // Read Skills
         else if ( idsz == MAKE_IDSZ( 'A', 'W', 'E', 'P' ) ) pcap->canuseadvancedweapons = fget_int( fileread );
@@ -416,6 +417,35 @@ cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
         else if ( idsz == MAKE_IDSZ( 'C', 'O', 'D', 'E' ) ) pcap->hascodeofconduct = fget_int( fileread );
         else if ( idsz == MAKE_IDSZ( 'D', 'A', 'R', 'K' ) ) pcap->darkvision_level = fget_int( fileread );
         else if ( idsz == MAKE_IDSZ( 'B', 'L', 'O', 'C' ) ) pcap->block_rating = fget_int( fileread );
+
+        // get some model customization
+        else if ( idsz == MAKE_IDSZ( 'M', 'O', 'D', 'L' ) )
+        {
+            STRING tmp_buffer;
+            if( fget_string( fileread, tmp_buffer, SDL_arraysize( tmp_buffer ) ) )
+            {
+                char * ptr;
+
+                ptr = strpbrk( tmp_buffer, "SBH" );
+                while( NULL != ptr )
+                {
+                    if( 'S' == *ptr )
+                    {
+                        pcap->bump_override_size = btrue;
+                    }
+                    else if( 'B' == *ptr )
+                    {
+                        pcap->bump_override_sizebig = btrue;
+                    }
+                    else if( 'H' == *ptr )
+                    {
+                        pcap->bump_override_height = btrue;
+                    }
+
+                    ptr = strpbrk( tmp_buffer, "SBH" );
+                }
+            }
+        }
     }
     vfs_close( fileread );
 
@@ -499,11 +529,11 @@ bool_t save_one_cap_file_vfs( const char * szSaveName, const char * szTemplateNa
     template_put_float( filetemp, filewrite, pcap->bumpdampen );
     template_put_int( filetemp, filewrite, pcap->weight );
     template_put_float( filetemp, filewrite, pcap->jump );
-    template_put_int( filetemp, filewrite, pcap->jumpnumber );
+    template_put_int( filetemp, filewrite, pcap->jump_number );
     template_put_float( filetemp, filewrite, pcap->anim_speed_sneak );
     template_put_float( filetemp, filewrite, pcap->anim_speed_walk );
     template_put_float( filetemp, filewrite, pcap->anim_speed_run );
-    template_put_int( filetemp, filewrite, pcap->flyheight );
+    template_put_int( filetemp, filewrite, pcap->fly_height );
     template_put_int( filetemp, filewrite, pcap->flashand );
     template_put_int( filetemp, filewrite, pcap->alpha );
     template_put_int( filetemp, filewrite, pcap->light );
@@ -640,8 +670,8 @@ bool_t save_one_cap_file_vfs( const char * szSaveName, const char * szTemplateNa
     template_put_float( filetemp, filewrite, pcap->dampen );
 
     // More stuff
-    template_put_float( filetemp, filewrite, FP8_TO_FLOAT( pcap->life_heal ) );     // These two are seriously outdated
-    template_put_float( filetemp, filewrite, FP8_TO_FLOAT( pcap->manacost ) );     // and shouldnt be used. Use scripts instead.
+    template_put_float( filetemp, filewrite, UFP8_TO_FLOAT( pcap->life_heal ) );     // These two are seriously outdated
+    template_put_float( filetemp, filewrite, SFP8_TO_FLOAT( pcap->manacost ) );     // and shouldnt be used. Use scripts instead.
     template_put_int( filetemp, filewrite, pcap->life_return );
     template_put_int( filetemp, filewrite, pcap->stoppedby );
     template_put_string_under( filetemp, filewrite, pcap->skinname[0] );
@@ -722,21 +752,20 @@ bool_t save_one_cap_file_vfs( const char * szSaveName, const char * szTemplateNa
     if ( NO_SKIN_OVERRIDE != pcap->spelleffect_type )
         fput_expansion( filewrite, "", MAKE_IDSZ( 'B', 'O', 'O', 'K' ), pcap->spelleffect_type );
 
-	if ( pcap->attack_fast )
-		fput_expansion( filewrite, "", MAKE_IDSZ( 'F', 'A', 'S', 'T' ), pcap->attack_fast );
+    if ( pcap->attack_fast )
+        fput_expansion( filewrite, "", MAKE_IDSZ( 'F', 'A', 'S', 'T' ), pcap->attack_fast );
 
-	if( pcap->str_bonus > 0 )
-		fput_expansion_float( filewrite, "", MAKE_IDSZ( 'S', 'T', 'R', 'D' ), pcap->str_bonus );
+    if( pcap->str_bonus > 0 )
+        fput_expansion_float( filewrite, "", MAKE_IDSZ( 'S', 'T', 'R', 'D' ), pcap->str_bonus );
 
-	if( pcap->int_bonus > 0 )
-		fput_expansion_float( filewrite, "", MAKE_IDSZ( 'I', 'N', 'T', 'D' ), pcap->int_bonus );
+    if( pcap->int_bonus > 0 )
+        fput_expansion_float( filewrite, "", MAKE_IDSZ( 'I', 'N', 'T', 'D' ), pcap->int_bonus );
 
-	if( pcap->dex_bonus > 0 )
-		fput_expansion_float( filewrite, "", MAKE_IDSZ( 'D', 'E', 'X', 'D' ), pcap->dex_bonus );
+    if( pcap->dex_bonus > 0 )
+        fput_expansion_float( filewrite, "", MAKE_IDSZ( 'D', 'E', 'X', 'D' ), pcap->dex_bonus );
 
-	if( pcap->wis_bonus > 0 )
-		fput_expansion_float( filewrite, "", MAKE_IDSZ( 'W', 'I', 'S', 'D' ), pcap->wis_bonus );
-
+    if( pcap->wis_bonus > 0 )
+        fput_expansion_float( filewrite, "", MAKE_IDSZ( 'W', 'I', 'S', 'D' ), pcap->wis_bonus );
 
     // Basic stuff that is always written
     fput_expansion( filewrite, "", MAKE_IDSZ( 'G', 'O', 'L', 'D' ), pcap->money );
@@ -745,9 +774,9 @@ bool_t save_one_cap_file_vfs( const char * szSaveName, const char * szTemplateNa
     fput_expansion( filewrite, "", MAKE_IDSZ( 'C', 'O', 'N', 'T' ), pcap->content_override );
     fput_expansion( filewrite, "", MAKE_IDSZ( 'S', 'T', 'A', 'T' ), pcap->state_override );
     fput_expansion( filewrite, "", MAKE_IDSZ( 'L', 'E', 'V', 'L' ), pcap->level_override );
-    fput_expansion_float( filewrite, "", MAKE_IDSZ( 'L', 'I', 'F', 'E' ), FP8_TO_FLOAT( pcap->life_spawn ) );
-    fput_expansion_float( filewrite, "", MAKE_IDSZ( 'M', 'A', 'N', 'A' ), FP8_TO_FLOAT( pcap->mana_spawn ) );
-	
+    fput_expansion_float( filewrite, "", MAKE_IDSZ( 'L', 'I', 'F', 'E' ), UFP8_TO_FLOAT( pcap->life_spawn ) );
+    fput_expansion_float( filewrite, "", MAKE_IDSZ( 'M', 'A', 'N', 'A' ), UFP8_TO_FLOAT( pcap->mana_spawn ) );
+
     // Copy all skill expansions
     if ( pcap->shieldproficiency > 0 )
         fput_expansion( filewrite, "", MAKE_IDSZ( 'S', 'H', 'P', 'R' ), pcap->shieldproficiency );
@@ -788,7 +817,7 @@ bool_t save_one_cap_file_vfs( const char * szSaveName, const char * szTemplateNa
     if ( pcap->darkvision_level > 0 )
         fput_expansion( filewrite, "", MAKE_IDSZ( 'D', 'A', 'R', 'K' ), pcap->darkvision_level );
 
-	if ( pcap->block_rating > 0 )
+    if ( pcap->block_rating > 0 )
         fput_expansion( filewrite, "", MAKE_IDSZ( 'B', 'L', 'O', 'C' ), pcap->block_rating );
 
     // dump the rest of the template file
@@ -800,3 +829,4 @@ bool_t save_one_cap_file_vfs( const char * szSaveName, const char * szTemplateNa
 
     return btrue;
 }
+

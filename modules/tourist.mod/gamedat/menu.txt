@@ -10,13 +10,13 @@ RTS control (TRUE, FALSE, ALL) :FALSE
 Level rating ( * to  ***** ) :******
 
 // Module summary
-:You_got_sepearated_from_your_group
-:and_fell_into_an_ancient_hole._Who
-:knows_what_wonders_you_can_find_in
-:this_dusty_place?_You_better_explore
-:and_take_some_great_pictures_while
-:you_are_here!_Something_down_here
-:must_be_worth_taking_a_picture_of...
+:Whle_looking_for_the_gift_shoppe_you_fell
+:through_a_weak_spot_in_the_floor.
+:That_will_teach_you_to_use_a_cheap_travel_agent!
+:_
+:Find_your_way_back_to_the_gift_shoppe
+:and_take_some_pictures_along_the_way.
+:Just_remeber, "you break it, you buy it"!
 :_
 
 // IDZs

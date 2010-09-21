@@ -273,3 +273,4 @@ int DirGetAttrib( const char *fromdir )
 {
     return( GetFileAttributes( fromdir ) );
 }
+

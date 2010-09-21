@@ -31,8 +31,9 @@
 #include "network.h"
 
 #include "egoboo_fileutil.h"
-#include "egoboo_math.h"
 #include "egoboo.h"
+
+#include "egoboo_math.inl"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -203,13 +204,13 @@ CHR_REF who_is_blocking_passage( const PASS_REF by_reference passage, const CHR_
 
     CHR_REF character, foundother;
     passage_t * ppass;
-	chr_t *psrc;
+    chr_t *psrc;
 
-	// Skip if the one who is looking doesn't exist
+    // Skip if the one who is looking doesn't exist
     if ( !INGAME_CHR( isrc ) ) return ( CHR_REF )MAX_CHR;
     psrc = ChrList.lst + isrc;
 
-	// Skip invalid passages
+    // Skip invalid passages
     if ( INVALID_PASSAGE( passage ) ) return ( CHR_REF )MAX_CHR;
     ppass = PassageStack.lst + passage;
 
@@ -221,26 +222,26 @@ CHR_REF who_is_blocking_passage( const PASS_REF by_reference passage, const CHR_
 
         if ( !INGAME_CHR( character ) ) continue;
         pchr = ChrList.lst + character;
-		
-        // dont do scenery objects unless we allow items
-		if ( !HAS_SOME_BITS( targeting_bits, TARGET_ITEMS ) && pchr->phys.weight == INFINITE_WEIGHT ) continue;
 
-		//Check if the object has the requirements
-		if ( !check_target( psrc, character, idsz, targeting_bits ) ) continue;
+        // don't do scenery objects unless we allow items
+        if ( !HAS_SOME_BITS( targeting_bits, TARGET_ITEMS ) && pchr->phys.weight == INFINITE_WEIGHT ) continue;
+
+        //Check if the object has the requirements
+        if ( !check_target( psrc, character, idsz, targeting_bits ) ) continue;
 
         //Now check if it actually is inside the passage area
-        if ( object_is_in_passage( passage, pchr->pos.x, pchr->pos.y, pchr->bump.size ) )
+        if ( object_is_in_passage( passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
         {
             // Found a live one, do we need to check for required items as well?
             if ( IDSZ_NONE == require_item )
-			{
-				return character;
-			}
+            {
+                return character;
+            }
 
             // It needs to have a specific item as well
             else
             {
-  	            CHR_REF item;
+                  CHR_REF item;
 
                 // I: Check left hand
                 if ( chr_is_type_idsz( pchr->holdingwhich[SLOT_LEFT], require_item ) )
@@ -289,7 +290,7 @@ void check_passage_music()
         PLA_REF ipla;
         passage_t * ppass = PassageStack.lst + passage;
 
-		if ( ppass->music == NO_MUSIC || ppass->music == get_current_song_playing() ) continue;
+        if ( ppass->music == NO_MUSIC || ppass->music == get_current_song_playing() ) continue;
 
         // Look at each player
         for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
@@ -301,10 +302,10 @@ void check_passage_music()
             if ( !INGAME_CHR( character ) ) continue;
             pchr = ChrList.lst + character;
 
-            if ( pchr->pack.is_packed || !pchr->alive || !VALID_PLA( pchr->is_which_player ) ) continue;
+            if ( !VALID_PLA( pchr->is_which_player ) || !pchr->alive || pchr->pack.is_packed ) continue;
 
             // Is it in the passage?
-            if ( object_is_in_passage( passage, pchr->pos.x, pchr->pos.y, pchr->bump.size ) )
+            if ( object_is_in_passage( passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
             {
                 // Found a player, start music track
                 sound_play_song( ppass->music, 0, -1 );
@@ -336,19 +337,19 @@ bool_t close_passage( const PASS_REF by_reference passage )
         CHR_REF crushedcharacters[MAX_CHR];
 
         // Make sure it isn't blocked
-		for( character = 0; character < MAX_CHR; character++ ) 
+        for( character = 0; character < MAX_CHR; character++ )
         {
-			chr_t *pchr;
+            chr_t *pchr;
 
-			if( !INGAME_CHR(character) ) continue;
-			pchr = ChrList.lst + character;
+            if( !INGAME_CHR(character) ) continue;
+            pchr = ChrList.lst + character;
 
-			//Don't do held items
-			if( pchr->pack.is_packed || INGAME_CHR( pchr->attachedto ) ) continue;
-            
-			if ( pchr->bump.size != 0 )
+            //Don't do held items
+            if( IS_ATTACHED_PCHR( pchr ) ) continue;
+
+            if ( 0.0f != pchr->bump_stt.size )
             {
-                if ( object_is_in_passage( passage, pchr->pos.x, pchr->pos.y, pchr->bump.size ) )
+                if ( object_is_in_passage( passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
                 {
                     if ( !pchr->canbecrushed )
                     {
@@ -368,7 +369,7 @@ bool_t close_passage( const PASS_REF by_reference passage )
         for ( cnt = 0; cnt < numcrushed; cnt++ )
         {
             character = crushedcharacters[cnt];
-            SET_BIT( chr_get_pai( character )->alert, ALERTIF_CRUSHED );
+            ADD_BITS( chr_get_pai( character )->alert, ALERTIF_CRUSHED );
         }
     }
 
@@ -422,9 +423,9 @@ void add_shop_passage( const CHR_REF by_reference owner, const PASS_REF by_refer
         if ( !INGAME_CHR( ichr ) ) continue;
         pchr = ChrList.lst + ichr;
 
-        if ( !INGAME_CHR( pchr->attachedto ) && pchr->isitem && !pchr->pack.is_packed )
+        if ( !IS_ATTACHED_PCHR( pchr ) && pchr->isitem )
         {
-            if ( object_is_in_passage( ShopStack.lst[ishop].passage, pchr->pos.x, pchr->pos.y, pchr->bump.size ) )
+            if ( object_is_in_passage( ShopStack.lst[ishop].passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
             {
                 pchr->isshopitem = btrue;               // Full value
                 pchr->iskursed   = bfalse;              // Shop items are never kursed

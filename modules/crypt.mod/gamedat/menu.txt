@@ -16,9 +16,9 @@ Level rating ( *, **, ***, ****, or ***** )     : ****
 :killed_an_evil_necromancer,
 :now_the_sorcerer_has_returned
 :as_an_undead_himself.
+:_
 :Enter_his_lair_and_slay_him
 :once_again..._
-:_
 :_
 
 

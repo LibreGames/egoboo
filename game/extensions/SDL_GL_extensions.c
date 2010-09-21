@@ -143,7 +143,7 @@ SDL_bool SDL_GL_set_gl_mode( struct s_oglx_video_parameters * v )
     if ( v->dither ) GL_DEBUG( glEnable )( GL_DITHER );
     else GL_DEBUG( glDisable )( GL_DITHER );
 
-    // Enable gourad v->shading? (Important!)
+    // Enable Gouraud v->shading? (Important!)
     GL_DEBUG( glShadeModel )( v->shading );
 
     // Enable v->antialiasing?
@@ -309,7 +309,7 @@ GLuint SDL_GL_convert_surface( GLenum binding, SDL_Surface * surface, GLint wrap
     // grab the screen information
     SDLX_Get_Screen_Info( &sdl_scr, SDL_FALSE );
 
-    /* Set the original local_surface's size (incase it's not an exact square of a power of two) */
+    /* Set the original local_surface's size (in case it's not an exact square of a power of two) */
     srf_h = local_surface->h;
     srf_w = local_surface->w;
 
@@ -440,4 +440,6 @@ GLuint SDL_GL_convert_surface( GLenum binding, SDL_Surface * surface, GLint wrap
 
     return binding;
 }
+
+
 

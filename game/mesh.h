@@ -101,7 +101,7 @@ struct s_ego_tile_info
 
     bool_t  fanoff;                            ///< display this tile?
     bool_t  inrenderlist;                      ///< Is the tile going to be rendered this frame?
-    int     inrenderlist_frame;                ///< What was the frame number the last time this tile was rendered?
+    signed  inrenderlist_frame;                ///< What was the frame number the last time this tile was rendered?
     bool_t  needs_lighting_update;             ///< Has this tile been tagged for a lighting update?
 
     oct_bb_t       oct;                        ///< the octagonal bounding box for this tile

@@ -52,7 +52,9 @@
 #define TO_REMOTE_START     51390
 #define TO_REMOTE_FILESENT  19903
 
-#define SHORTLATCH 1024.0f
+#define LATCH_TO_FFFF 1024.0f
+#define FFFF_TO_LATCH 0.0009765625f
+
 #define CHARVEL 5.0f
 #define MAXSENDSIZE 8192
 #define COPYSIZE    4096
@@ -70,10 +72,11 @@
 ///  network traffic
 struct s_time_latch
 {
-    float   x;
-    float   y;
-    Uint32  button;
-    Uint32  time;
+    float     raw[2];
+    float     dir[2];
+    BIT_FIELD button;
+
+    Uint32    time;
 };
 typedef struct s_time_latch time_latch_t;
 
@@ -86,13 +89,13 @@ struct s_input_device
     float                   sustain;         ///< Falloff rate for old movement
     float                   cover;           ///< For falloff
 
-    latch_t                 latch;
-    latch_t                 latch_old;       ///< For sustain
+    latch_input_t           latch;
+    latch_input_t           latch_old;       ///< For sustain
 };
 typedef struct s_input_device input_device_t;
 
 void input_device_init( input_device_t * pdevice );
-void input_device_add_latch( input_device_t * pdevice, float newx, float newy );
+void input_device_add_latch( input_device_t * pdevice, latch_input_t latch );
 
 //--------------------------------------------------------------------------------------------
 
@@ -106,16 +109,15 @@ struct s_player
     input_device_t          device;
 
     /// Local latch, set by set_one_player_latch(), read by sv_talkToRemotes()
-    latch_t                 local_latch;
+    latch_input_t           local_latch;
 
     // Timed latches
     Uint32                  tlatch_count;
     time_latch_t            tlatch[MAXLAG];
 
-    /// Network latch, set by unbuffer_player_latches(), used to set the local character's latch
-    latch_t                 net_latch;
+    /// Network latch, set by unbuffer_all_player_latches(), used to set the local character's latch
+    latch_input_t           net_latch;
 };
-
 typedef struct s_player player_t;
 
 extern int                     local_numlpla;                                   ///< Number of local players
@@ -181,7 +183,7 @@ extern Uint32                  numplatimes;
 //--------------------------------------------------------------------------------------------
 
 void listen_for_packets();
-void unbuffer_player_latches();
+void unbuffer_all_player_latches();
 void close_session();
 
 void net_initialize();

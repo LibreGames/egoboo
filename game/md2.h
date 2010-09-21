@@ -50,7 +50,8 @@ typedef struct s_ego_md2_vertex
     s_ego_md2_vertex() { memset( this, 0, sizeof( *this ) ); }
 #endif
 
-} MD2_Vertex_t;
+}
+ MD2_Vertex_t;
 
 //--------------------------------------------------------------------------------------------
 typedef struct s_ego_md2_texcoord
@@ -61,7 +62,8 @@ typedef struct s_ego_md2_texcoord
     s_ego_md2_texcoord() { memset( this, 0, sizeof( *this ) ); }
 #endif
 
-} MD2_TexCoord_t;
+}
+ MD2_TexCoord_t;
 
 //--------------------------------------------------------------------------------------------
 typedef struct s_ego_md2_frame
@@ -81,7 +83,8 @@ typedef struct s_ego_md2_frame
     ~s_ego_md2_frame();
 #endif
 
-} MD2_Frame_t;
+}
+ MD2_Frame_t;
 
 //--------------------------------------------------------------------------------------------
 typedef id_md2_triangle_t MD2_Triangle_t;

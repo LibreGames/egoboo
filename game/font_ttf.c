@@ -20,7 +20,7 @@
 /// @file font_ttf.c
 /// @brief TTF management
 /// @details True-type font drawing functionality.  Uses Freetype 2 & OpenGL
-/// to do it's business.
+/// to do its business.
 
 #include "font_ttf.h"
 #include "log.h"
@@ -405,3 +405,4 @@ void fnt_getTextBoxSize( Font *font, const char *text, int spacing, int *width, 
 
     EGOBOO_DELETE_ARY( buffer );
 }
+

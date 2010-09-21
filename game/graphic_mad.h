@@ -159,8 +159,8 @@ struct s_chr_instance
     // animation info
     Uint16         frame_nxt;       ///< Character's frame
     Uint16         frame_lst;       ///< Character's last frame
-    Uint8          ilip;            ///< Character's frame in betweening
-    float          flip;            ///< Character's frame in betweening
+    Uint8          ilip;            ///< Character's frame inbetweening
+    float          flip;            ///< Character's frame inbetweening
     float          rate;
 
     // action info
@@ -174,8 +174,8 @@ struct s_chr_instance
     Sint32         color_amb;
     fvec4_t        col_amb;
     int            max_light, min_light;
-    Uint32         lighting_update_wld;            ///< update some lighting info no more than once an update
-    Uint32         lighting_frame_all;             ///< update some lighting info no more than once a frame
+    unsigned       lighting_update_wld;            ///< update some lighting info no more than once an update
+    unsigned       lighting_frame_all;             ///< update some lighting info no more than once a frame
 
     // linear interpolated frame vertices
     size_t         vrt_count;

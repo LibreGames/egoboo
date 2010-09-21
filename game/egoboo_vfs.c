@@ -29,6 +29,7 @@
 #include "egoboo_strutil.h"
 #include "egoboo_endian.h"
 #include "egoboo_fileutil.h"
+#include "egoboo_typedef.h"
 
 #include <physfs.h>
 #include <stdlib.h>
@@ -97,10 +98,10 @@ struct vfs_FILE
 struct s_vfs_search_context
 {
     char **    file_list;
-    char **	   ptr;
+    char **       ptr;
 
     char       path[VFS_MAX_PATH];
-    char	   ext[255];
+    char       ext[255];
     BIT_FIELD  bits;
 
     VFS_PATH found;
@@ -540,7 +541,7 @@ const char * vfs_resolveReadFilename( const char * src_filename )
 
         if ( VALID_CSTR( retval ) )
         {
-            const char * ptmp = vfs_mount_info_strip_path( loc_fname );
+            const char * ptmp = vfs_strip_path( loc_fname );
 
             if ( VALID_CSTR( ptmp ) )
             {
@@ -572,7 +573,7 @@ const char * vfs_resolveReadFilename( const char * src_filename )
         }
         else
         {
-            ptmp = vfs_mount_info_strip_path( loc_fname );
+            ptmp = vfs_strip_path( loc_fname );
 
             snprintf( read_name_str, SDL_arraysize( read_name_str ), "%s/%s", tmp_dirname, ptmp );
             retval     = read_name_str;
@@ -1070,7 +1071,7 @@ size_t vfs_read( void * buffer, size_t size, size_t count, vfs_FILE * pfile )
     }
     else if ( vfs_physfs == pfile->type )
     {
-        int retval = PHYSFS_read( pfile->ptr.p, buffer, size, count );
+        Sint64 retval = PHYSFS_read( pfile->ptr.p, buffer, size, count );
 
         if ( retval < 0 ) { error = btrue; pfile->flags |= VFS_ERROR; }
 
@@ -2212,19 +2213,19 @@ void _vfs_translate_error( vfs_FILE * pfile )
     {
         if ( ferror( pfile->ptr.c ) )
         {
-            SET_BIT( pfile->flags, VFS_ERROR );
+            ADD_BITS( pfile->flags, VFS_ERROR );
         }
 
         if ( feof( pfile->ptr.c ) )
         {
-            SET_BIT( pfile->flags, VFS_EOF );
+            ADD_BITS( pfile->flags, VFS_EOF );
         }
     }
     else if ( vfs_physfs == pfile->type )
     {
         if ( PHYSFS_eof( pfile->ptr.p ) )
         {
-            SET_BIT( pfile->flags, VFS_EOF );
+            ADD_BITS( pfile->flags, VFS_EOF );
         }
     }
 }
@@ -2313,6 +2314,7 @@ int vfs_add_mount_point( const char * root_path, const char * relative_path, con
 int vfs_remove_mount_point( const char * mount_point )
 {
     /// @details BB@> Remove every single search path related to the given mount point.
+    ///               returns the number of vfs mounts removed.
 
     int retval, cnt;
 
@@ -2328,9 +2330,6 @@ int vfs_remove_mount_point( const char * mount_point )
     // see if we have the mount point
     cnt = _vfs_mount_info_matches( mount_point, NULL );
 
-    // does it exist in the list?
-    if ( cnt < 0 ) return bfalse;
-
     while ( cnt >= 0 )
     {
         // we have to use the path name to remove the search path, not the mount point name
@@ -2338,7 +2337,7 @@ int vfs_remove_mount_point( const char * mount_point )
 
         // remove the mount info from this index
         // PF> we remove it even if PHYSFS_removeFromSearchPath() fails or else we might get an infinite loop
-        _vfs_mount_info_remove( cnt );
+        if( _vfs_mount_info_remove( cnt ) ) retval++;
 
         cnt = _vfs_mount_info_matches( mount_point, NULL );
     }
@@ -2394,7 +2393,7 @@ int _vfs_mount_info_search( const char * some_path )
 }
 
 //--------------------------------------------------------------------------------------------
-const char * vfs_mount_info_strip_path( const char * some_path )
+const char * vfs_strip_path( const char * some_path )
 {
     int cnt;
     size_t offset;
@@ -2603,3 +2602,4 @@ void vfs_set_base_search_paths()
     // Put base path on search path...
     PHYSFS_addToSearchPath( fs_getDataDirectory(), 1);
 }
+

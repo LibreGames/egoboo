@@ -12,14 +12,13 @@ Level rating ( *, **, ***, ****, or ***** )     		: **
 
 
 // Module summary ( Must be 8 lines...  Each line mush have at least an _ )
-:Faeries_have_been_captured_by
-:lumpkins_while_trying_to_rescue
-:them_you_have_been_captured
-:too,_escape_and_lead_the_little
-:ones_to_the_mushroom_ring.
+:Two_of_your_Faerie_friends_have
+:been_captured_by_the_dispicable_Lumpkins.
+:You_tried_to_rescue_them,_but_ended
+:up_as_lunch...
+:Escape,_before_you_are_boiled_alive_and
+:lead_the_little_ones_to_the_safety_of
+:the_faerie_ring.
 :_
-:_
-:_
-
 
 // Module expansion IDSZs ( with a colon in front )

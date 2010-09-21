@@ -62,7 +62,7 @@
 #include "script.h"
 
 #include "egoboo_vfs.h"
-#include "egoboo_endian.h"
+#include "egoboo_typedef.h"
 #include "egoboo_setup.h"
 #include "egoboo_strutil.h"
 #include "egoboo_fileutil.h"
@@ -148,7 +148,7 @@ game_process_t    * GProc   = &_gproc;
 
 pit_info_t pits = { bfalse, bfalse, ZERO_VECT3 };
 
-FACING_T glouseangle = 0;                                        // actually still used
+FACING_T glo_useangle = 0;                                        // actually still used
 
 Uint32                animtile_update_and = 0;
 animtile_instance_t   animtile[2];
@@ -226,6 +226,8 @@ void export_one_character( const CHR_REF by_reference character, const CHR_REF b
     STRING todirname;
     STRING todirfullname;
 
+    if( !PMod->exportvalid ) return;
+
     // Don't export enchants
     disenchant_character( character );
 
@@ -235,125 +237,125 @@ void export_one_character( const CHR_REF by_reference character, const CHR_REF b
     pcap = chr_get_pcap( character );
     if ( NULL == pcap ) return;
 
-    if (( pcap->cancarrytonextmodule || !pcap->isitem ) && PMod->exportvalid )
+    // do not export items that can't be exported
+    if ( pcap->isitem && !pcap->cancarrytonextmodule ) return;
+
+    // TWINK_BO.OBJ
+    snprintf( todirname, SDL_arraysize( todirname ), "%s", str_encode_path( ChrList.lst[owner].Name ) );
+
+    // Is it a character or an item?
+    if ( owner != character )
     {
-        // TWINK_BO.OBJ
-        snprintf( todirname, SDL_arraysize( todirname ), "%s", str_encode_path( ChrList.lst[owner].Name ) );
+        // Item is a subdirectory of the owner directory...
+        snprintf( todirfullname, SDL_arraysize( todirfullname ), "%s/%d.obj", todirname, number );
+    }
+    else
+    {
+        // Character directory
+        snprintf( todirfullname, SDL_arraysize( todirfullname ), "%s", todirname );
+    }
 
-        // Is it a character or an item?
-        if ( owner != character )
+    // players/twink.obj or players/twink.obj/0.obj
+    if ( is_local )
+    {
+        snprintf( todir, SDL_arraysize( todir ), "/players/%s", todirfullname );
+    }
+    else
+    {
+        snprintf( todir, SDL_arraysize( todir ), "/remote/%s", todirfullname );
+    }
+
+    // modules/advent.mod/objects/advent.obj
+    snprintf( fromdir, SDL_arraysize( fromdir ), "%s", pobj->name );
+
+    // Delete all the old items
+    if ( owner == character )
+    {
+        for ( tnc = 0; tnc < MAXIMPORTOBJECTS; tnc++ )
         {
-            // Item is a subdirectory of the owner directory...
-            snprintf( todirfullname, SDL_arraysize( todirfullname ), "%s/%d.obj", todirname, number );
+            snprintf( tofile, SDL_arraysize( tofile ), "%s/%d.obj", todir, tnc ); /*.OBJ*/
+            vfs_removeDirectoryAndContents( tofile, btrue );
         }
-        else
+    }
+
+    // Make the directory
+    vfs_mkdir( todir );
+
+    // Build the DATA.TXT file
+    snprintf( tofile, SDL_arraysize( tofile ), "%s/data.txt", todir ); /*DATA.TXT*/
+    export_one_character_profile_vfs( tofile, character );
+
+    // Build the SKIN.TXT file
+    snprintf( tofile, SDL_arraysize( tofile ), "%s/skin.txt", todir ); /*SKIN.TXT*/
+    export_one_character_skin_vfs( tofile, character );
+
+    // Build the NAMING.TXT file
+    snprintf( tofile, SDL_arraysize( tofile ), "%s/naming.txt", todir ); /*NAMING.TXT*/
+    export_one_character_name_vfs( tofile, character );
+
+    // Copy all of the misc. data files
+    snprintf( fromfile, SDL_arraysize( fromfile ), "%s/message.txt", fromdir ); /*MESSAGE.TXT*/
+    snprintf( tofile, SDL_arraysize( tofile ), "%s/message.txt", todir ); /*MESSAGE.TXT*/
+    vfs_copyFile( fromfile, tofile );
+
+    snprintf( fromfile, SDL_arraysize( fromfile ), "%s/tris.md2", fromdir ); /*TRIS.MD2*/
+    snprintf( tofile, SDL_arraysize( tofile ),   "%s/tris.md2", todir ); /*TRIS.MD2*/
+    vfs_copyFile( fromfile, tofile );
+
+    snprintf( fromfile, SDL_arraysize( fromfile ), "%s/copy.txt", fromdir ); /*COPY.TXT*/
+    snprintf( tofile, SDL_arraysize( tofile ),   "%s/copy.txt", todir ); /*COPY.TXT*/
+    vfs_copyFile( fromfile, tofile );
+
+    snprintf( fromfile, SDL_arraysize( fromfile ), "%s/script.txt", fromdir );
+    snprintf( tofile, SDL_arraysize( tofile ),   "%s/script.txt", todir );
+    vfs_copyFile( fromfile, tofile );
+
+    snprintf( fromfile, SDL_arraysize( fromfile ), "%s/enchant.txt", fromdir );
+    snprintf( tofile, SDL_arraysize( tofile ),   "%s/enchant.txt", todir );
+    vfs_copyFile( fromfile, tofile );
+
+    snprintf( fromfile, SDL_arraysize( fromfile ), "%s/credits.txt", fromdir );
+    snprintf( tofile, SDL_arraysize( tofile ),   "%s/credits.txt", todir );
+    vfs_copyFile( fromfile, tofile );
+
+    snprintf( fromfile, SDL_arraysize( fromfile ), "%s/quest.txt", fromdir );
+    snprintf( tofile, SDL_arraysize( tofile ),   "%s/quest.txt", todir );
+    vfs_copyFile( fromfile, tofile );
+
+    // Copy all of the particle files
+    for ( tnc = 0; tnc < MAX_PIP_PER_PROFILE; tnc++ )
+    {
+        snprintf( fromfile, SDL_arraysize( fromfile ), "%s/part%d.txt", fromdir, tnc );
+        snprintf( tofile, SDL_arraysize( tofile ),   "%s/part%d.txt", todir,   tnc );
+        vfs_copyFile( fromfile, tofile );
+    }
+
+    // Copy all of the sound files
+    for ( tnc = 0; tnc < MAX_WAVE; tnc++ )
+    {
+        snprintf( fromfile, SDL_arraysize( fromfile ), "%s/sound%d.wav", fromdir, tnc );
+        snprintf( tofile, SDL_arraysize( tofile ),   "%s/sound%d.wav", todir,   tnc );
+        vfs_copyFile( fromfile, tofile );
+
+        snprintf( fromfile, SDL_arraysize( fromfile ), "%s/sound%d.ogg", fromdir, tnc );
+        snprintf( tofile, SDL_arraysize( tofile ),   "%s/sound%d.ogg", todir,   tnc );
+        vfs_copyFile( fromfile, tofile );
+    }
+
+    // Copy all of the image files (try to copy all supported formats too)
+    for ( tnc = 0; tnc < MAX_SKIN; tnc++ )
+    {
+        Uint8 type;
+
+        for ( type = 0; type < maxformattypes; type++ )
         {
-            // Character directory
-            snprintf( todirfullname, SDL_arraysize( todirfullname ), "%s", todirname );
-        }
-
-        // players/twink.obj or players/twink.obj/0.obj
-        if ( is_local )
-        {
-            snprintf( todir, SDL_arraysize( todir ), "/players/%s", todirfullname );
-        }
-        else
-        {
-            snprintf( todir, SDL_arraysize( todir ), "/remote/%s", todirfullname );
-        }
-
-        // modules/advent.mod/objects/advent.obj
-        snprintf( fromdir, SDL_arraysize( fromdir ), "%s", pobj->name );
-
-        // Delete all the old items
-        if ( owner == character )
-        {
-            for ( tnc = 0; tnc < MAXIMPORTOBJECTS; tnc++ )
-            {
-                snprintf( tofile, SDL_arraysize( tofile ), "%s/%d.obj", todir, tnc ); /*.OBJ*/
-                vfs_removeDirectoryAndContents( tofile, btrue );
-            }
-        }
-
-        // Make the directory
-        vfs_mkdir( todir );
-
-        // Build the DATA.TXT file
-        snprintf( tofile, SDL_arraysize( tofile ), "%s/data.txt", todir ); /*DATA.TXT*/
-        export_one_character_profile_vfs( tofile, character );
-
-        // Build the SKIN.TXT file
-        snprintf( tofile, SDL_arraysize( tofile ), "%s/skin.txt", todir ); /*SKIN.TXT*/
-        export_one_character_skin_vfs( tofile, character );
-
-        // Build the NAMING.TXT file
-        snprintf( tofile, SDL_arraysize( tofile ), "%s/naming.txt", todir ); /*NAMING.TXT*/
-        export_one_character_name_vfs( tofile, character );
-
-        // Copy all of the misc. data files
-        snprintf( fromfile, SDL_arraysize( fromfile ), "%s/message.txt", fromdir ); /*MESSAGE.TXT*/
-        snprintf( tofile, SDL_arraysize( tofile ), "%s/message.txt", todir ); /*MESSAGE.TXT*/
-        vfs_copyFile( fromfile, tofile );
-
-        snprintf( fromfile, SDL_arraysize( fromfile ), "%s/tris.md2", fromdir ); /*TRIS.MD2*/
-        snprintf( tofile, SDL_arraysize( tofile ),   "%s/tris.md2", todir ); /*TRIS.MD2*/
-        vfs_copyFile( fromfile, tofile );
-
-        snprintf( fromfile, SDL_arraysize( fromfile ), "%s/copy.txt", fromdir ); /*COPY.TXT*/
-        snprintf( tofile, SDL_arraysize( tofile ),   "%s/copy.txt", todir ); /*COPY.TXT*/
-        vfs_copyFile( fromfile, tofile );
-
-        snprintf( fromfile, SDL_arraysize( fromfile ), "%s/script.txt", fromdir );
-        snprintf( tofile, SDL_arraysize( tofile ),   "%s/script.txt", todir );
-        vfs_copyFile( fromfile, tofile );
-
-        snprintf( fromfile, SDL_arraysize( fromfile ), "%s/enchant.txt", fromdir );
-        snprintf( tofile, SDL_arraysize( tofile ),   "%s/enchant.txt", todir );
-        vfs_copyFile( fromfile, tofile );
-
-        snprintf( fromfile, SDL_arraysize( fromfile ), "%s/credits.txt", fromdir );
-        snprintf( tofile, SDL_arraysize( tofile ),   "%s/credits.txt", todir );
-        vfs_copyFile( fromfile, tofile );
-
-        snprintf( fromfile, SDL_arraysize( fromfile ), "%s/quest.txt", fromdir );
-        snprintf( tofile, SDL_arraysize( tofile ),   "%s/quest.txt", todir );
-        vfs_copyFile( fromfile, tofile );
-
-        // Copy all of the particle files
-        for ( tnc = 0; tnc < MAX_PIP_PER_PROFILE; tnc++ )
-        {
-            snprintf( fromfile, SDL_arraysize( fromfile ), "%s/part%d.txt", fromdir, tnc );
-            snprintf( tofile, SDL_arraysize( tofile ),   "%s/part%d.txt", todir,   tnc );
+            snprintf( fromfile, SDL_arraysize( fromfile ), "%s/tris%d%s", fromdir, tnc, TxFormatSupported[type] );
+            snprintf( tofile, SDL_arraysize( tofile ),   "%s/tris%d%s", todir,   tnc, TxFormatSupported[type] );
             vfs_copyFile( fromfile, tofile );
-        }
 
-        // Copy all of the sound files
-        for ( tnc = 0; tnc < MAX_WAVE; tnc++ )
-        {
-            snprintf( fromfile, SDL_arraysize( fromfile ), "%s/sound%d.wav", fromdir, tnc );
-            snprintf( tofile, SDL_arraysize( tofile ),   "%s/sound%d.wav", todir,   tnc );
+            snprintf( fromfile, SDL_arraysize( fromfile ), "%s/icon%d%s", fromdir, tnc, TxFormatSupported[type] );
+            snprintf( tofile, SDL_arraysize( tofile ),   "%s/icon%d%s", todir,   tnc, TxFormatSupported[type] );
             vfs_copyFile( fromfile, tofile );
-
-            snprintf( fromfile, SDL_arraysize( fromfile ), "%s/sound%d.ogg", fromdir, tnc );
-            snprintf( tofile, SDL_arraysize( tofile ),   "%s/sound%d.ogg", todir,   tnc );
-            vfs_copyFile( fromfile, tofile );
-        }
-
-        // Copy all of the image files (try to copy all supported formats too)
-        for ( tnc = 0; tnc < MAX_SKIN; tnc++ )
-        {
-            Uint8 type;
-
-            for ( type = 0; type < maxformattypes; type++ )
-            {
-                snprintf( fromfile, SDL_arraysize( fromfile ), "%s/tris%d%s", fromdir, tnc, TxFormatSupported[type] );
-                snprintf( tofile, SDL_arraysize( tofile ),   "%s/tris%d%s", todir,   tnc, TxFormatSupported[type] );
-                vfs_copyFile( fromfile, tofile );
-
-                snprintf( fromfile, SDL_arraysize( fromfile ), "%s/icon%d%s", fromdir, tnc, TxFormatSupported[type] );
-                snprintf( tofile, SDL_arraysize( tofile ),   "%s/icon%d%s", todir,   tnc, TxFormatSupported[type] );
-                vfs_copyFile( fromfile, tofile );
-            }
         }
     }
 }
@@ -372,7 +374,7 @@ void export_all_players( bool_t require_local )
     // Don't export if the module isn't running
     if ( !process_running( PROC_PBASE( GProc ) ) ) return;
 
-    // Stop if export isnt valid
+    // Stop if export isn't valid
     if ( !PMod->exportvalid ) return;
 
     // Check each player
@@ -631,11 +633,18 @@ void cleanup_all_objects()
 }
 
 //--------------------------------------------------------------------------------------------
-void bump_all_update_counters()
+void increment_all_object_update_counters()
 {
-    bump_all_characters_update_counters();
-    //bump_all_particles_update_counters();
-    bump_all_enchants_update_counters();
+    increment_all_character_update_counters();
+    increment_all_particle_update_counters();
+    increment_all_enchant_update_counters();
+}
+
+//--------------------------------------------------------------------------------------------
+void initialize_object_physics()
+{
+    character_physics_initialize();
+    initialize_particle_physics();
 }
 
 //--------------------------------------------------------------------------------------------
@@ -648,6 +657,16 @@ void initialize_all_objects()
 
     // fix the list optimization, in case update_all_objects() turned some objects off.
     update_used_lists();
+
+    initialize_object_physics();
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+void finalize_all_object_physics( float dt )
+{
+    character_physics_finalize_all( dt );
+    finalize_all_particle_physics( dt );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -655,8 +674,11 @@ void finalize_all_objects()
 {
     /// @details BB@> end the code for updating in-game objects
 
+    // actually move all of the objects
+    finalize_all_object_physics( 1.0f );
+
     // update the object's update counter for every active object
-    bump_all_update_counters();
+    increment_all_object_update_counters();
 
     // do end-of-life care for all objects
     cleanup_all_objects();
@@ -751,11 +773,11 @@ int update_game()
             if ( cfg.difficulty < GAME_HARD && local_allpladead && SDLKEYDOWN( SDLK_SPACE ) && PMod->respawnvalid && 0 == revivetimer )
             {
                 respawn_character( ichr );
-                pchr->experience *= EXPKEEP;        // Apply xp Penality
+                pchr->experience *= EXPKEEP;        // Apply xp Penalty
 
                 if ( cfg.difficulty > GAME_EASY )
                 {
-                    pchr->money *= EXPKEEP;        //Apply money loss
+                    pchr->money *= EXPKEEP;        // Apply money loss
                 }
             }
         }
@@ -799,15 +821,15 @@ int update_game()
                 //---- begin the code object I/O
                 {
                     let_all_characters_think();           // sets the non-player latches
-                    unbuffer_player_latches();            // sets the player latches
+                    unbuffer_all_player_latches();            // sets the player latches
                 }
                 //---- end the code object I/O
 
                 //---- begin the code for updating in-game objects
                 initialize_all_objects();
                 {
-                    move_all_objects();                   // clears some latches
-                    bump_all_objects( &obj_BSP_root );    // do the actual object interaction
+                    bump_all_objects( &obj_BSP_root );    // do the interactions
+                    move_all_objects();                   // this function may clear some latches
                 }
                 finalize_all_objects();
                 //---- end the code for updating in-game objects
@@ -950,7 +972,7 @@ void game_update_timers()
         stabilized_ups = stabilized_ups_sum / stabilized_ups_weight;
     }
 
-    // if it got this far and the funciton had been paused, it is time to unpause it
+    // if it got this far and the function had been paused, it is time to unpause it
     update_was_paused = bfalse;
 }
 
@@ -1049,7 +1071,7 @@ int do_game_proc_begin( game_process_t * gproc )
     // initialize the collision system
     collision_system_begin();
 
-    // intialize the "profile system"
+    // initialize the "profile system"
     profile_system_begin();
 
     // do some graphics initialization
@@ -1387,10 +1409,10 @@ CHR_REF prt_find_target( float pos_x, float pos_y, float pos_z, FACING_T facing,
     {
         bool_t target_friend, target_enemy;
 
-		if ( !pchr->alive || pchr->isitem || pchr->pack.is_packed ) continue;
+        if ( !pchr->alive || pchr->isitem || pchr->pack.is_packed ) continue;
 
 		// prefer targeting riders over the mount itself
-		if( pchr->ismount && ( INGAME_CHR(pchr->holdingwhich[SLOT_LEFT]) || INGAME_CHR(pchr->holdingwhich[SLOT_RIGHT]) ) ) continue;
+		if( pchr->ismount && (INGAME_CHR(pchr->holdingwhich[SLOT_LEFT]) || INGAME_CHR(pchr->holdingwhich[SLOT_RIGHT])) ) continue;
 
         // ignore invictus
         if ( pchr->invictus ) continue;
@@ -1420,7 +1442,7 @@ CHR_REF prt_find_target( float pos_x, float pos_y, float pos_z, FACING_T facing,
 
                 if ( dist2 < longdist2 && dist2 <= max_dist2 )
                 {
-                    glouseangle = angle;
+                    glo_useangle = angle;
                     besttarget = cnt;
                     longdist2 = dist2;
                 }
@@ -1448,45 +1470,45 @@ bool_t check_target( chr_t * psrc, const CHR_REF by_reference ichr_test, IDSZ id
     if ( !INGAME_CHR( ichr_test ) ) return bfalse;
     ptst = ChrList.lst + ichr_test;
 
-	// Skip hidden characters
-	if( ptst->is_hidden ) return bfalse;
+    // Skip hidden characters
+    if( ptst->is_hidden ) return bfalse;
 
-	// Players only?
+    // Players only?
     if ( ( HAS_SOME_BITS(targeting_bits, TARGET_PLAYERS) || HAS_SOME_BITS(targeting_bits, TARGET_QUEST) ) && !VALID_PLA(ptst->is_which_player) ) return bfalse;
 
     // Skip held objects
-    if ( INGAME_CHR( ptst->attachedto ) || ptst->pack.is_packed ) return bfalse;
+    if ( IS_ATTACHED_PCHR( ptst ) ) return bfalse;
 
-	// Allow to target ourselves?
-	if ( psrc == ptst && HAS_NO_BITS(targeting_bits, TARGET_SELF ) ) return bfalse;
+    // Allow to target ourselves?
+    if ( psrc == ptst && HAS_NO_BITS(targeting_bits, TARGET_SELF ) ) return bfalse;
 
-	// Dont target our holder if we are an item and being held
-	if( psrc->isitem && psrc->attachedto == GET_REF_PCHR(ptst) ) return bfalse;
+    // Don't target our holder if we are an item and being held
+    if( psrc->isitem && psrc->attachedto == GET_REF_PCHR(ptst) ) return bfalse;
 
-	// Allow to target dead stuff stuff?
+    // Allow to target dead stuff stuff?
     if ( ptst->alive == HAS_SOME_BITS(targeting_bits, TARGET_DEAD) ) return bfalse;
 
-    // Dont target invisible stuff, unless we can actually see them
+    // Don't target invisible stuff, unless we can actually see them
     if ( !chr_can_see_object( GET_REF_PCHR( psrc ), ichr_test ) ) return bfalse;
 
-	//Need specific skill? ([NONE] always passes)
-	if( HAS_SOME_BITS( targeting_bits, TARGET_SKILL ) && !check_skills( ichr_test, idsz ) ) return bfalse;
+    //Need specific skill? ([NONE] always passes)
+    if( HAS_SOME_BITS( targeting_bits, TARGET_SKILL ) && !check_skills( ichr_test, idsz ) ) return bfalse;
 
-	//Require player to have specific quest?
+    //Require player to have specific quest?
     if ( HAS_SOME_BITS( targeting_bits, TARGET_QUEST ) && 0 <= quest_check_vfs( chr_get_dir_name( ichr_test ), idsz, btrue ) ) return bfalse;
 
     is_hated = team_hates_team( psrc->team, ptst->team );
     hates_me = team_hates_team( ptst->team, psrc->team );
 
     // Target neutral items? (still target evil items, could be pets)
-	if ( (ptst->isitem || ptst->invictus) && !HAS_SOME_BITS(targeting_bits, TARGET_ITEMS) ) return bfalse;
+    if ( (ptst->isitem || ptst->invictus) && !HAS_SOME_BITS(targeting_bits, TARGET_ITEMS) ) return bfalse;
 
-	// Only target those of proper team. Skip this part if it's a item
-	if( !ptst->isitem )
-	{
-		if ( ( HAS_NO_BITS(targeting_bits, TARGET_ENEMIES) && is_hated ) ) return bfalse;
-		if ( ( HAS_NO_BITS(targeting_bits, TARGET_FRIENDS) && !is_hated ) ) return bfalse;
-	}
+    // Only target those of proper team. Skip this part if it's a item
+    if( !ptst->isitem )
+    {
+        if ( ( HAS_NO_BITS(targeting_bits, TARGET_ENEMIES) && is_hated ) ) return bfalse;
+        if ( ( HAS_NO_BITS(targeting_bits, TARGET_FRIENDS) && !is_hated ) ) return bfalse;
+    }
 
     // these options are here for ideas of ways to mod this function
     is_friend    = !is_hated && !hates_me;
@@ -1494,7 +1516,7 @@ bool_t check_target( chr_t * psrc, const CHR_REF by_reference ichr_test, IDSZ id
     is_predator  = !is_hated &&  hates_me;
     is_mutual    =  is_hated &&  hates_me;
 
-	//This is the last and final step! Check for specific IDSZ too?
+    //This is the last and final step! Check for specific IDSZ too?
     if ( IDSZ_NONE == idsz )
     {
         retval = btrue;
@@ -1513,7 +1535,6 @@ bool_t check_target( chr_t * psrc, const CHR_REF by_reference ichr_test, IDSZ id
             if ( HAS_SOME_BITS(targeting_bits, TARGET_INVERTID) ) retval = btrue;
         }
     }
-
 
     return retval;
 }
@@ -1534,8 +1555,8 @@ CHR_REF chr_find_target( chr_t * psrc, float max_dist, IDSZ idsz, BIT_FIELD targ
     CHR_REF search_list[MAX_CHR];
 
     if ( !ACTIVE_PCHR( psrc ) ) return ( CHR_REF )MAX_CHR;
-	
-	max_dist2 = max_dist * max_dist;
+
+    max_dist2 = max_dist * max_dist;
 
     if ( HAS_SOME_BITS( targeting_bits, TARGET_PLAYERS ) )
     {
@@ -1581,7 +1602,7 @@ CHR_REF chr_find_target( chr_t * psrc, float max_dist, IDSZ idsz, BIT_FIELD targ
 
         diff  = fvec3_sub( psrc->pos.v, ptst->pos.v );
         dist2 = fvec3_dot_product( diff.v, diff.v );
-		
+        
         if (( 0 == max_dist2 || dist2 <= max_dist2 ) && ( MAX_CHR == best_target || dist2 < best_dist2 ) )
         {
             //Invictus chars do not need a line of sight
@@ -1627,18 +1648,18 @@ void do_damage_tiles()
         if ( pchr->is_hidden || !pchr->alive ) continue;
 
         // if you are being held by something, you are protected
-        if ( pchr->pack.is_packed ) continue;
+        if ( IS_ATTACHED_PCHR(pchr) ) continue;
 
         // are we on a damage tile?
         if ( !mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) ) continue;
         if ( 0 == mesh_test_fx( PMesh, pchr->onwhichgrid, MPDFX_DAMAGE ) ) continue;
 
         // are we low enough?
-        if ( pchr->pos.z > pchr->enviro.floor_level + DAMAGERAISE ) continue;
+        if ( pchr->pos.z > pchr->enviro.grid_level + DAMAGERAISE ) continue;
 
         // allow reaffirming damage to things like torches, even if they are being held,
         // but make the tolerance closer so that books won't burn so easily
-        if ( !INGAME_CHR( pchr->attachedto ) || pchr->pos.z < pchr->enviro.floor_level + DAMAGERAISE )
+        if ( !INGAME_CHR( pchr->attachedto ) || pchr->pos.z < pchr->enviro.grid_level + DAMAGERAISE )
         {
             if ( pchr->reaffirmdamagetype == damagetile.type )
             {
@@ -1713,7 +1734,8 @@ void update_pits()
             {
                 // Is it a valid character?
                 if ( pchr->invictus || !pchr->alive ) continue;
-                if ( INGAME_CHR( pchr->attachedto ) || pchr->pack.is_packed ) continue;
+
+                if ( IS_ATTACHED_PCHR( pchr ) ) continue;
 
                 // Do we kill it?
                 if ( pits.kill && pchr->pos.z < PITDEPTH )
@@ -1852,11 +1874,10 @@ void set_one_player_latch( const PLA_REF by_reference player )
     /// @details ZZ@> This function converts input readings to latch settings, so players can
     ///    move around
 
-
     Uint16 turnsin;
     float dist, scale;
     float fsin, fcos;
-    latch_t sum;
+    latch_input_t sum;
 
     chr_t          * pchr;
     player_t       * ppla;
@@ -1874,7 +1895,7 @@ void set_one_player_latch( const PLA_REF by_reference player )
     if ( pdevice->bits == EMPTY_BIT_FIELD ) return;
 
     // Clear the player's latch buffers
-    latch_init( &( sum ) );
+    latch_input_init( &( sum ) );
 
     // generate the transforms relative to the camera
     turnsin = TO_TURN( PCamera->ori.facing_z );
@@ -1884,9 +1905,8 @@ void set_one_player_latch( const PLA_REF by_reference player )
     // Mouse routines
     if ( HAS_SOME_BITS( pdevice->bits, INPUT_BITS_MOUSE ) && mous.on )
     {
-        fvec2_t joy_pos, joy_new;
+        fvec2_t joy_pos = ZERO_VECT2, joy_new = ZERO_VECT2;
 
-        fvec2_clear( &joy_new );
         if (( CAM_TURN_GOOD == PCamera->turn_mode && 1 == local_numlpla ) ||
             !control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_CAMERA ) )  // Don't allow movement in camera control mode
         {
@@ -1912,32 +1932,34 @@ void set_one_player_latch( const PLA_REF by_reference player )
             }
         }
 
-        sum.x += joy_new.x;
-        sum.y += joy_new.y;
+        sum.raw[kX] += joy_pos.x;
+        sum.raw[kY] += joy_pos.y;
+
+        sum.dir[kX] += joy_new.x;
+        sum.dir[kY] += joy_new.y;
 
         // Read buttons
         if ( control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_JUMP ) )
-            SET_BIT( sum.b, LATCHBUTTON_JUMP );
+            ADD_BITS( sum.b, LATCHBUTTON_JUMP );
         if ( control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_LEFT_USE ) )
-            SET_BIT( sum.b, LATCHBUTTON_LEFT );
+            ADD_BITS( sum.b, LATCHBUTTON_LEFT );
         if ( control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_LEFT_GET ) )
-            SET_BIT( sum.b, LATCHBUTTON_ALTLEFT );
+            ADD_BITS( sum.b, LATCHBUTTON_ALTLEFT );
         if ( control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_LEFT_PACK ) )
-            SET_BIT( sum.b, LATCHBUTTON_PACKLEFT );
+            ADD_BITS( sum.b, LATCHBUTTON_PACKLEFT );
         if ( control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_RIGHT_USE ) )
-            SET_BIT( sum.b, LATCHBUTTON_RIGHT );
+            ADD_BITS( sum.b, LATCHBUTTON_RIGHT );
         if ( control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_RIGHT_GET ) )
-            SET_BIT( sum.b, LATCHBUTTON_ALTRIGHT );
+            ADD_BITS( sum.b, LATCHBUTTON_ALTRIGHT );
         if ( control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_RIGHT_PACK ) )
-            SET_BIT( sum.b, LATCHBUTTON_PACKRIGHT );
+            ADD_BITS( sum.b, LATCHBUTTON_PACKRIGHT );
     }
 
     // Joystick A routines
     if ( HAS_SOME_BITS( pdevice->bits, INPUT_BITS_JOYA ) && joy[0].on )
     {
-        fvec2_t joy_pos, joy_new;
+        fvec2_t joy_pos = ZERO_VECT2, joy_new = ZERO_VECT2;
 
-        fvec2_clear( &joy_new );
         if (( CAM_TURN_GOOD == PCamera->turn_mode && 1 == local_numlpla ) ||
             !control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_CAMERA ) )
         {
@@ -1960,32 +1982,34 @@ void set_one_player_latch( const PLA_REF by_reference player )
             joy_new.y = ( -joy_pos.x * fsin + joy_pos.y * fcos );
         }
 
-        sum.x += joy_new.x;
-        sum.y += joy_new.y;
+        sum.raw[kX] += joy_pos.x;
+        sum.raw[kY] += joy_pos.y;
+
+        sum.dir[kX] += joy_new.x;
+        sum.dir[kY] += joy_new.y;
 
         // Read buttons
         if ( control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_JUMP ) )
-            SET_BIT( sum.b, LATCHBUTTON_JUMP );
+            ADD_BITS( sum.b, LATCHBUTTON_JUMP );
         if ( control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_LEFT_USE ) )
-            SET_BIT( sum.b, LATCHBUTTON_LEFT );
+            ADD_BITS( sum.b, LATCHBUTTON_LEFT );
         if ( control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_LEFT_GET ) )
-            SET_BIT( sum.b, LATCHBUTTON_ALTLEFT );
+            ADD_BITS( sum.b, LATCHBUTTON_ALTLEFT );
         if ( control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_LEFT_PACK ) )
-            SET_BIT( sum.b, LATCHBUTTON_PACKLEFT );
+            ADD_BITS( sum.b, LATCHBUTTON_PACKLEFT );
         if ( control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_RIGHT_USE ) )
-            SET_BIT( sum.b, LATCHBUTTON_RIGHT );
+            ADD_BITS( sum.b, LATCHBUTTON_RIGHT );
         if ( control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_RIGHT_GET ) )
-            SET_BIT( sum.b, LATCHBUTTON_ALTRIGHT );
+            ADD_BITS( sum.b, LATCHBUTTON_ALTRIGHT );
         if ( control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_RIGHT_PACK ) )
-            SET_BIT( sum.b, LATCHBUTTON_PACKRIGHT );
+            ADD_BITS( sum.b, LATCHBUTTON_PACKRIGHT );
     }
 
     // Joystick B routines
     if ( HAS_SOME_BITS( pdevice->bits, INPUT_BITS_JOYB ) && joy[1].on )
     {
-        fvec2_t joy_pos, joy_new;
+        fvec2_t joy_pos = ZERO_VECT2, joy_new = ZERO_VECT2;
 
-        fvec2_clear( &joy_new );
         if (( CAM_TURN_GOOD == PCamera->turn_mode && 1 == local_numlpla ) ||
             !control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_CAMERA ) )
         {
@@ -2008,38 +2032,39 @@ void set_one_player_latch( const PLA_REF by_reference player )
             joy_new.y = ( -joy_pos.x * fsin + joy_pos.y * fcos );
         }
 
-        sum.x += joy_new.x;
-        sum.y += joy_new.y;
+        sum.raw[kX] += joy_pos.x;
+        sum.raw[kY] += joy_pos.y;
+
+        sum.dir[kX] += joy_new.x;
+        sum.dir[kY] += joy_new.y;
 
         // Read buttons
         if ( control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_JUMP ) )
-            SET_BIT( sum.b, LATCHBUTTON_JUMP );
+            ADD_BITS( sum.b, LATCHBUTTON_JUMP );
         if ( control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_LEFT_USE ) )
-            SET_BIT( sum.b, LATCHBUTTON_LEFT );
+            ADD_BITS( sum.b, LATCHBUTTON_LEFT );
         if ( control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_LEFT_GET ) )
-            SET_BIT( sum.b, LATCHBUTTON_ALTLEFT );
+            ADD_BITS( sum.b, LATCHBUTTON_ALTLEFT );
         if ( control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_LEFT_PACK ) )
-            SET_BIT( sum.b, LATCHBUTTON_PACKLEFT );
+            ADD_BITS( sum.b, LATCHBUTTON_PACKLEFT );
         if ( control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_RIGHT_USE ) )
-            SET_BIT( sum.b, LATCHBUTTON_RIGHT );
+            ADD_BITS( sum.b, LATCHBUTTON_RIGHT );
         if ( control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_RIGHT_GET ) )
-            SET_BIT( sum.b, LATCHBUTTON_ALTRIGHT );
+            ADD_BITS( sum.b, LATCHBUTTON_ALTRIGHT );
         if ( control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_RIGHT_PACK ) )
-            SET_BIT( sum.b, LATCHBUTTON_PACKRIGHT );
+            ADD_BITS( sum.b, LATCHBUTTON_PACKRIGHT );
     }
 
     // Keyboard routines
     if ( HAS_SOME_BITS( pdevice->bits, INPUT_BITS_KEYBOARD ) && keyb.on )
     {
-        fvec2_t joy_pos, joy_new;
-		
-        fvec2_clear( &joy_new );
-        fvec2_clear( &joy_pos );
+        fvec2_t joy_pos = ZERO_VECT2, joy_new = ZERO_VECT2;
+
         if (( CAM_TURN_GOOD == PCamera->turn_mode && 1 == local_numlpla ) ||
             !control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_CAMERA ) )
         {
-            joy_pos.x = ( control_is_pressed( INPUT_DEVICE_KEYBOARD,  CONTROL_RIGHT ) - control_is_pressed( INPUT_DEVICE_KEYBOARD,  CONTROL_LEFT ) );
-            joy_pos.y = ( control_is_pressed( INPUT_DEVICE_KEYBOARD,  CONTROL_DOWN ) - control_is_pressed( INPUT_DEVICE_KEYBOARD,  CONTROL_UP ) );
+            joy_pos.x = ( control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_RIGHT ) - control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_LEFT ) );
+            joy_pos.y = ( control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_DOWN ) - control_is_pressed( INPUT_DEVICE_KEYBOARD,  CONTROL_UP ) );
 
             if ( CAM_TURN_GOOD == PCamera->turn_mode &&
                  1 == local_numlpla )  joy_pos.x = 0;
@@ -2048,8 +2073,11 @@ void set_one_player_latch( const PLA_REF by_reference player )
             joy_new.y = ( -joy_pos.x * fsin + joy_pos.y * fcos );
         }
 
-        sum.x += joy_new.x;
-        sum.y += joy_new.y;
+        sum.raw[kX] += joy_pos.x;
+        sum.raw[kY] += joy_pos.y;
+
+        sum.dir[kX] += joy_new.x;
+        sum.dir[kY] += joy_new.y;
 
         // Read buttons
         if ( control_is_pressed( INPUT_DEVICE_KEYBOARD,  CONTROL_JUMP ) )
@@ -2068,10 +2096,11 @@ void set_one_player_latch( const PLA_REF by_reference player )
             sum.b |= LATCHBUTTON_PACKRIGHT;
     }
 
-    input_device_add_latch( pdevice, sum.x, sum.y );
+    // add in some sustain
+    input_device_add_latch( pdevice, sum );
 
-    ppla->local_latch.x = pdevice->latch.x;
-    ppla->local_latch.y = pdevice->latch.y;
+    // copy the latch
+    ppla->local_latch   = pdevice->latch;
     ppla->local_latch.b = sum.b;
 }
 
@@ -2278,8 +2307,8 @@ void show_stat( int statindex )
             }
 
             // Stats
-            debug_printf( "~STR:~%2d~WIS:~%2d~DEF:~%d", FP8_TO_INT( pchr->strength ), FP8_TO_INT( pchr->wisdom ), 255 - pchr->defense );
-            debug_printf( "~INT:~%2d~DEX:~%2d~EXP:~%d", FP8_TO_INT( pchr->intelligence ), FP8_TO_INT( pchr->dexterity ), pchr->experience );
+            debug_printf( "~STR:~%2d~WIS:~%2d~DEF:~%d", SFP8_TO_SINT( pchr->strength ), SFP8_TO_SINT( pchr->wisdom ), 255 - pchr->defense );
+            debug_printf( "~INT:~%2d~DEX:~%2d~EXP:~%d", SFP8_TO_SINT( pchr->intelligence ), SFP8_TO_SINT( pchr->dexterity ), pchr->experience );
         }
     }
 }
@@ -2328,13 +2357,13 @@ void show_armor( int statindex )
 
     // jumps
     tmps[0] = CSTR_END;
-    switch ( pcap->jumpnumber )
+    switch ( pcap->jump_number )
     {
-        case 0:  snprintf( tmps, SDL_arraysize( tmps ), "None    (%i)", pchr->jumpnumberreset ); break;
-        case 1:  snprintf( tmps, SDL_arraysize( tmps ), "Novice  (%i)", pchr->jumpnumberreset ); break;
-        case 2:  snprintf( tmps, SDL_arraysize( tmps ), "Skilled (%i)", pchr->jumpnumberreset ); break;
-        case 3:  snprintf( tmps, SDL_arraysize( tmps ), "Adept   (%i)", pchr->jumpnumberreset ); break;
-        default: snprintf( tmps, SDL_arraysize( tmps ), "Master  (%i)", pchr->jumpnumberreset ); break;
+        case 0:  snprintf( tmps, SDL_arraysize( tmps ), "None    (%i)", pchr->jump_number_reset ); break;
+        case 1:  snprintf( tmps, SDL_arraysize( tmps ), "Novice  (%i)", pchr->jump_number_reset ); break;
+        case 2:  snprintf( tmps, SDL_arraysize( tmps ), "Skilled (%i)", pchr->jump_number_reset ); break;
+        case 3:  snprintf( tmps, SDL_arraysize( tmps ), "Adept   (%i)", pchr->jump_number_reset ); break;
+        default: snprintf( tmps, SDL_arraysize( tmps ), "Master  (%i)", pchr->jump_number_reset ); break;
     };
 
     debug_printf( "~Speed:~%3.0f~Jump Skill:~%s", pchr->maxaccel_reset*80, tmps );
@@ -2415,7 +2444,7 @@ void show_full_status( int statindex )
 
     get_chr_regeneration( pchr, &liferegen, &manaregen );
 
-    debug_printf( "Mana Regen:~%4.2f Life Regen:~%4.2f", FP8_TO_FLOAT( manaregen ), FP8_TO_FLOAT( liferegen ) );
+    debug_printf( "Mana Regen:~%4.2f Life Regen:~%4.2f", SFP8_TO_FLOAT( manaregen ), SFP8_TO_FLOAT( liferegen ) );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2458,7 +2487,7 @@ void show_magic_status( int statindex )
         case MISSILE_NORMAL : missile_str = "None";    break;
     }
 
-    debug_printf( "~Flying: %s~~Missile Protection: %s", ( pchr->flyheight > 0 ) ? "Yes" : "No", missile_str );
+    debug_printf( "~Flying: %s~~Missile Protection: %s", IS_FLYING_PCHR(pchr) ? "Yes" : "No", missile_str );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2598,6 +2627,7 @@ void game_load_all_profiles( const char *modname )
 bool_t chr_setup_apply( const CHR_REF by_reference ichr, spawn_file_info_t *pinfo )
 {
     chr_t * pchr, *pparent;
+    ai_state_bundle_t tmp_bdl_ai;
 
     // trap bad pointers
     if ( NULL == pinfo ) return bfalse;
@@ -2618,11 +2648,11 @@ bool_t chr_setup_apply( const CHR_REF by_reference ichr, spawn_file_info_t *pinf
     if ( pinfo->attach == ATTACH_INVENTORY )
     {
         // Inventory character
-        inventory_add_item( ichr, pinfo->parent );
+        chr_inventory_add_item( ichr, pinfo->parent );
 
-        SET_BIT( pchr->ai.alert, ALERTIF_GRABBED );  // Make spellbooks change
+        ADD_BITS( pchr->ai.alert, ALERTIF_GRABBED );  // Make spellbooks change
         pchr->attachedto = pinfo->parent;  // Make grab work
-        scr_run_chr_script( ichr );  // Empty the grabbed messages
+        scr_run_chr_script( ai_state_bundle_set( &tmp_bdl_ai, pchr ) );  // Empty the grabbed messages
 
         pchr->attachedto = ( CHR_REF )MAX_CHR;  // Fix grab
 
@@ -2634,7 +2664,7 @@ bool_t chr_setup_apply( const CHR_REF by_reference ichr, spawn_file_info_t *pinf
         attach_character_to_mount( ichr, pinfo->parent, grip_off );
 
         // Handle the "grabbed" messages
-        scr_run_chr_script( ichr );
+        scr_run_chr_script( ai_state_bundle_set( &tmp_bdl_ai, pchr ) );
     }
 
     // Set the starting pinfo->level
@@ -2690,6 +2720,7 @@ int strlwr( char * str )
 
     return 0;
 }
+
 #endif
 
 //--------------------------------------------------------------------------------------------
@@ -2782,7 +2813,7 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
                 bits = 1 << local_numlpla;
                 for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
                 {
-                    UNSET_BIT( PlaStack.lst[ipla].device.bits, bits );
+                    REMOVE_BITS( PlaStack.lst[ipla].device.bits, bits );
                 }
 
                 player_added = add_player( new_object, ( PLA_REF )PlaStack.count, bits );
@@ -3002,7 +3033,7 @@ void game_load_all_assets( const char *modname )
 //--------------------------------------------------------------------------------------------
 void game_setup_module( const char *smallname )
 {
-    /// @details ZZ@> This runst the setup functions for a module
+    /// @details ZZ@> This runs the setup functions for a module
 
     STRING modname;
 
@@ -3080,7 +3111,7 @@ void disaffirm_attached_particles( const CHR_REF by_reference character )
     if ( INGAME_CHR( character ) )
     {
         // Set the alert for disaffirmation ( wet torch )
-        SET_BIT( ChrList.lst[character].ai.alert, ALERTIF_DISAFFIRMED );
+        ADD_BITS( ChrList.lst[character].ai.alert, ALERTIF_DISAFFIRMED );
     }
 }
 
@@ -3106,7 +3137,7 @@ int number_of_attached_particles( const CHR_REF by_reference character )
 //--------------------------------------------------------------------------------------------
 int reaffirm_attached_particles( const CHR_REF by_reference character )
 {
-    /// @details ZZ@> This function makes sure a character has all of it's particles
+    /// @details ZZ@> This function makes sure a character has all of its particles
 
     int     number_added, number_attached;
     int     amount, attempts;
@@ -3143,7 +3174,7 @@ int reaffirm_attached_particles( const CHR_REF by_reference character )
     }
 
     // Set the alert for reaffirmation ( for exploding barrels with fire )
-    SET_BIT( pchr->ai.alert, ALERTIF_REAFFIRMED );
+    ADD_BITS( pchr->ai.alert, ALERTIF_REAFFIRMED );
 
     return number_added;
 }
@@ -3227,13 +3258,15 @@ bool_t game_setup_vfs_paths( const char * mod_path )
     //---- add the "/modules/*.mod/objects" directories to mp_objects
     snprintf( tmpDir, sizeof( tmpDir ), "modules" SLASH_STR "%s" SLASH_STR "objects", mod_dir_string );
 
-    // mount the user's module objects directory at the beginning of the mount point list
+    // Mount the user's module objects directory at the BEGINNING of the mount point list.
+    // This will allow this directory to override all other directories
     vfs_add_mount_point( fs_getDataDirectory(), tmpDir, "mp_objects", 1 );
 
-    // mount the global module objects directory next in the mount point list
+    // The global module objects directory is next, which will override all default objects
     vfs_add_mount_point( fs_getUserDirectory(), tmpDir, "mp_objects", 1 );
 
     //---- add the "/basicdat/globalobjects/*" directories to mp_objects
+    // The global objects are last. The order should not matter, since the objects should be unique
     vfs_add_mount_point( fs_getDataDirectory(), "basicdat" SLASH_STR "globalobjects" SLASH_STR "items",            "mp_objects", 1 );
     vfs_add_mount_point( fs_getDataDirectory(), "basicdat" SLASH_STR "globalobjects" SLASH_STR "magic",            "mp_objects", 1 );
     vfs_add_mount_point( fs_getDataDirectory(), "basicdat" SLASH_STR "globalobjects" SLASH_STR "magic_item",       "mp_objects", 1 );
@@ -3250,13 +3283,16 @@ bool_t game_setup_vfs_paths( const char * mod_path )
     //---- add the "/modules/*.mod/gamedat" directory to mp_data
     snprintf( tmpDir, sizeof( tmpDir ), "modules" SLASH_STR "%s" SLASH_STR "gamedat",  mod_dir_string );
 
-    // mount the user's module gamedat directory at the beginning of the mount point list
-    vfs_add_mount_point( fs_getUserDirectory(), tmpDir, "mp_data", 1 );
+    // mount the global module gamedat directory before the global basicdat directory
+    // This will allow files in the global gamedat directory to override the basicdat directory
+    vfs_add_mount_point( fs_getDataDirectory(), tmpDir, "mp_data", 0 );
 
-    // append the global module gamedat directory
-    vfs_add_mount_point( fs_getDataDirectory(), tmpDir, "mp_data", 1 );
+    // mount the global module gamedat directory before the global module gamedat and before the global basicdat directory
+    // This will allow files in the local gamedat directory to override the other two directories
+    vfs_add_mount_point( fs_getUserDirectory(), tmpDir, "mp_data", 0 );
 
-	// put the global globalparticles data after the module gamedat data
+    // put the global globalparticles data after the module gamedat data
+    // this will allow the module's gamedat particles to override the globalparticles
     vfs_add_mount_point( fs_getDataDirectory(), "basicdat" SLASH_STR "globalparticles", "mp_data", 1 );
 
     return btrue;
@@ -3274,7 +3310,7 @@ bool_t game_begin_module( const char * modname, Uint32 seed )
 
     reset_timers();
 
-    // set up the birtual file system for the module
+    // set up the virtual file system for the module
     if ( !game_setup_vfs_paths( modname ) ) return bfalse;
 
     // load all the in-game module data
@@ -3510,7 +3546,7 @@ bool_t add_player( const CHR_REF by_reference character, const PLA_REF by_refere
 //--------------------------------------------------------------------------------------------
 void let_all_characters_think()
 {
-    /// @details ZZ@> This function funst the ai scripts for all eligible objects
+    /// @details ZZ@> This function runs the ai scripts for all eligible objects
 
     static Uint32 last_update = ( Uint32 )( ~0 );
 
@@ -3519,36 +3555,42 @@ void let_all_characters_think()
     last_update = update_wld;
 
     blip_count = 0;
-	
+
     CHR_BEGIN_LOOP_ACTIVE( character, pchr )
     {
         cap_t * pcap;
+        ai_state_t * pself;
+
+        ai_state_bundle_t bdl_ai;
 
         bool_t is_crushed, is_cleanedup, can_think;
 
-        pcap = chr_get_pcap( character );
-        if ( NULL == pcap ) continue;
+        if( NULL == ai_state_bundle_set( &bdl_ai, pchr ) ) continue;
+
+        // use some aliases to ease the notation
+        pcap  = bdl_ai.cap_ptr;
+        pself = bdl_ai.ai_state_ptr;
 
         // check for actions that must always be handled
-        is_cleanedup = HAS_SOME_BITS( pchr->ai.alert, ALERTIF_CLEANEDUP );
-        is_crushed   = HAS_SOME_BITS( pchr->ai.alert, ALERTIF_CRUSHED );
+        is_cleanedup = HAS_SOME_BITS( pself->alert, ALERTIF_CLEANEDUP );
+        is_crushed   = HAS_SOME_BITS( pself->alert, ALERTIF_CRUSHED );
 
         // let the script run sometimes even if the item is in your backpack
         can_think = !pchr->pack.is_packed || pcap->isequipment;
 
-        // only let dead/destroyed things think if they have beem crushed/cleanedup
+        // only let dead/destroyed things think if they have been crushed/cleanedup
         if (( pchr->alive && can_think ) || is_crushed || is_cleanedup )
         {
             // Figure out alerts that weren't already set
-            set_alerts( character );
+            set_alerts( &bdl_ai );
 
             // Cleaned up characters shouldn't be alert to anything else
             if ( is_cleanedup )  { pchr->ai.alert = ALERTIF_CLEANEDUP; /*pchr->ai.timer = update_wld + 1;*/ }
 
-			// Crushed characters shouldn't be alert to anything else
-            if ( is_crushed )  { pchr->ai.alert = ALERTIF_CRUSHED; pchr->ai.timer = update_wld + 1; }
+            // Crushed characters shouldn't be alert to anything else
+            if ( is_crushed )  { pself->alert = ALERTIF_CRUSHED; pself->timer = update_wld + 1; }
 
-            scr_run_chr_script( character );
+            scr_run_chr_script( &bdl_ai );
         }
     }
     CHR_END_LOOP();
@@ -3590,11 +3632,8 @@ void game_finish_module()
     // export all the local and remote characters
     game_update_imports();
 
-	// restart the menu song
-    sound_play_song( MENU_SONG, 0, -1 );
-
     // quit the old module
-    //game_quit_module();		//@note: ZF> uncommented, but might cause a texture allocation bug?
+    //game_quit_module();
 }
 
 //--------------------------------------------------------------------------------------------
@@ -3698,7 +3737,7 @@ bool_t make_water( water_instance_t * pinst, wawalite_water_t * pdata )
             spek = temp * pdata->spek_level;
         }
 
-        // [claforte] Probably need to replace this with a
+        // claforte> Probably need to replace this with a
         //           GL_DEBUG(glColor4f)(spek/256.0f, spek/256.0f, spek/256.0f, 1.0f) call:
         if ( gfx.shading == GL_FLAT )
             pinst->spek[cnt] = 0;
@@ -3768,7 +3807,7 @@ void expand_escape_codes( const CHR_REF by_reference ichr, script_state_t * psta
             ebuffer     = szTmp;
             ebuffer_end = szTmp + SDL_arraysize( szTmp ) - 1;
 
-            // make the excape buffer an empty string
+            // make the escape buffer an empty string
             *ebuffer = CSTR_END;
 
             switch ( *src )
@@ -4530,6 +4569,10 @@ bool_t upload_phys_data( wawalite_physics_t * pdata )
     waterfriction  = pdata->waterfriction;
     gravity        = pdata->gravity;
 
+    // estimate a value for platstick
+    platstick = MIN(slippyfriction, noslipfriction);
+    platstick = platstick  * platstick;
+
     return btrue;
 }
 
@@ -4578,18 +4621,19 @@ void upload_wawalite()
 //--------------------------------------------------------------------------------------------
 bool_t game_module_setup( game_module_t * pinst, mod_file_t * pdata, const char * loadname, Uint32 seed )
 {
-    //Prepeares a module to be played
+    // Prepares a module to be played
     if ( NULL == pdata ) return bfalse;
 
     if ( !game_module_init( pinst ) ) return bfalse;
 
     pinst->importamount   = pdata->importamount;
     pinst->exportvalid    = pdata->allowexport;
-	pinst->exportreset    = pdata->allowexport;
-	pinst->playeramount   = pdata->maxplayers;
+    pinst->exportreset    = pdata->allowexport;
+    pinst->playeramount   = pdata->maxplayers;
     pinst->importvalid    = ( pinst->importamount > 0 );
     pinst->respawnvalid   = ( bfalse != pdata->respawnvalid );
     pinst->respawnanytime = ( RESPAWN_ANYTIME == pdata->respawnvalid );
+
 
     strncpy( pinst->loadname, loadname, SDL_arraysize( pinst->loadname ) );
 
@@ -4618,7 +4662,7 @@ bool_t game_module_reset( game_module_t * pinst, Uint32 seed )
     if ( NULL == pinst ) return bfalse;
 
     pinst->beat        = bfalse;
-	pinst->exportvalid = pinst->exportreset;
+    pinst->exportvalid = pinst->exportreset;
     pinst->seed        = seed;
 
     return btrue;
@@ -4682,15 +4726,15 @@ wawalite_data_t * read_wawalite( /* const char *modname */ )
     }
 
     windspeed_count = 0;
-    fvec3_clear( &windspeed );
+    fvec3_self_clear( windspeed.v );
 
     waterspeed_count = 0;
-    fvec3_clear( &waterspeed );
+    fvec3_self_clear( waterspeed.v );
 
     ilayer = wawalite_data.water.layer + 0;
     if( wawalite_data.water.background_req )
     {
-        // this is a bit complicated. 
+        // this is a bit complicated.
         // it is the best I can do at reverse engineering what I did in render_world_background()
 
         const float cam_height = 1500.0f;
@@ -4783,9 +4827,9 @@ Uint8 get_local_alpha( int light )
 //--------------------------------------------------------------------------------------------
 Uint8 get_local_light( int light )
 {
-    if ( 0xFF == light ) return light;
+    if ( 0xFFL == light ) return light;
 
-    //if ( local_seedark_level > 0 )				//ZF> Why should Darkvision reveal invisible?
+    //if ( local_seedark_level > 0 )                //ZF> Why should Darkvision reveal invisible?
     if ( local_seeinvis_level > 0 )
     {
         light = MAX( light, INVISIBLE );
@@ -5083,8 +5127,8 @@ float get_mesh_max_vertex_2( ego_mpd_t * pmesh, chr_t * pchr )
 
     for ( corner = 0; corner < 4; corner++ )
     {
-        pos_x[corner] = pchr->pos.x + (( 0 == ix_off[corner] ) ? pchr->chr_chr_cv.mins[OCT_X] : pchr->chr_chr_cv.maxs[OCT_X] );
-        pos_y[corner] = pchr->pos.y + (( 0 == iy_off[corner] ) ? pchr->chr_chr_cv.mins[OCT_Y] : pchr->chr_chr_cv.maxs[OCT_Y] );
+        pos_x[corner] = pchr->pos.x + (( 0 == ix_off[corner] ) ? pchr->chr_min_cv.mins[OCT_X] : pchr->chr_min_cv.maxs[OCT_X] );
+        pos_y[corner] = pchr->pos.y + (( 0 == iy_off[corner] ) ? pchr->chr_min_cv.mins[OCT_Y] : pchr->chr_min_cv.maxs[OCT_Y] );
     }
 
     zmax = get_mesh_level( pmesh, pos_x[0], pos_y[0], pchr->waterwalk );
@@ -5113,18 +5157,18 @@ float get_chr_level( ego_mpd_t * pmesh, chr_t * pchr )
     if ( NULL == pmesh || !ACTIVE_PCHR( pchr ) ) return 0;
 
     // certain scenery items like doors and such just need to be able to
-    // collide with the mesh. They all have 0 == pchr->bump.size
-    if ( 0 == pchr->bump.size )
+    // collide with the mesh. They all have 0.0f == pchr->bump.size
+    if ( 0.0f == pchr->bump_stt.size )
     {
         return get_mesh_level( pmesh, pchr->pos.x, pchr->pos.y, pchr->waterwalk );
     }
 
     // otherwise, use the small collision volume to determine which tiles the object overlaps
     // move the collision volume so that it surrounds the object
-    bump.mins[OCT_X]  = pchr->chr_chr_cv.mins[OCT_X]  + pchr->pos.x;
-    bump.maxs[OCT_X]  = pchr->chr_chr_cv.maxs[OCT_X]  + pchr->pos.x;
-    bump.mins[OCT_Y]  = pchr->chr_chr_cv.mins[OCT_Y]  + pchr->pos.y;
-    bump.maxs[OCT_Y]  = pchr->chr_chr_cv.maxs[OCT_Y]  + pchr->pos.y;
+    bump.mins[OCT_X]  = pchr->chr_min_cv.mins[OCT_X]  + pchr->pos.x;
+    bump.maxs[OCT_X]  = pchr->chr_min_cv.maxs[OCT_X]  + pchr->pos.x;
+    bump.mins[OCT_Y]  = pchr->chr_min_cv.mins[OCT_Y]  + pchr->pos.y;
+    bump.maxs[OCT_Y]  = pchr->chr_min_cv.maxs[OCT_Y]  + pchr->pos.y;
 
     // determine the size of this object in tiles
     ixmin = bump.mins[OCT_X] / GRID_SIZE; ixmin = CLIP( ixmin, 0, pmesh->info.tiles_x - 1 );
@@ -5140,12 +5184,12 @@ float get_chr_level( ego_mpd_t * pmesh, chr_t * pchr )
     }
 
     // hold off on these calculations in case they are not necessary
-    bump.mins[OCT_Z]  = pchr->chr_chr_cv.mins[OCT_Z]  + pchr->pos.z;
-    bump.maxs[OCT_Z]  = pchr->chr_chr_cv.maxs[OCT_Z]  + pchr->pos.z;
-    bump.mins[OCT_XY] = pchr->chr_chr_cv.mins[OCT_XY] + ( pchr->pos.x + pchr->pos.y );
-    bump.maxs[OCT_XY] = pchr->chr_chr_cv.maxs[OCT_XY] + ( pchr->pos.x + pchr->pos.y );
-    bump.mins[OCT_YX] = pchr->chr_chr_cv.mins[OCT_YX] + ( -pchr->pos.x + pchr->pos.y );
-    bump.maxs[OCT_YX] = pchr->chr_chr_cv.maxs[OCT_YX] + ( -pchr->pos.x + pchr->pos.y );
+    bump.mins[OCT_Z]  = pchr->chr_min_cv.mins[OCT_Z]  + pchr->pos.z;
+    bump.maxs[OCT_Z]  = pchr->chr_min_cv.maxs[OCT_Z]  + pchr->pos.z;
+    bump.mins[OCT_XY] = pchr->chr_min_cv.mins[OCT_XY] + ( pchr->pos.x + pchr->pos.y );
+    bump.maxs[OCT_XY] = pchr->chr_min_cv.maxs[OCT_XY] + ( pchr->pos.x + pchr->pos.y );
+    bump.mins[OCT_YX] = pchr->chr_min_cv.mins[OCT_YX] + ( -pchr->pos.x + pchr->pos.y );
+    bump.maxs[OCT_YX] = pchr->chr_min_cv.maxs[OCT_YX] + ( -pchr->pos.x + pchr->pos.y );
 
     // otherwise, make up a list of tiles that the object might overlap
     for ( iy = iymin; iy <= iymax; iy++ )
@@ -5250,7 +5294,7 @@ void disenchant_character( const CHR_REF by_reference cnt )
 void cleanup_character_enchants( chr_t * pchr )
 {
     if( NULL == pchr ) return;
-	
+    
     // clean up the enchant list
     pchr->firstenchant = cleanup_enchant_list( pchr->firstenchant, &(pchr->firstenchant) );
 }

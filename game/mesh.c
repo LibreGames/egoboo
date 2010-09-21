@@ -27,11 +27,13 @@
 #include "graphic.h"
 
 #include "egoboo_math.inl"
-#include "egoboo_endian.h"
+#include "egoboo_typedef.h"
 #include "egoboo_fileutil.h"
 #include "egoboo_strutil.h"
-#include "egoboo_math.h"
 #include "egoboo.h"
+
+#include "egoboo_math.inl"
+
 #include "egoboo_mem.h"
 
 //--------------------------------------------------------------------------------------------
@@ -99,7 +101,7 @@ void mesh_info_init( ego_mpd_info_t * pinfo, int numvert, size_t tiles_x, size_t
     pinfo->tiles_y = tiles_y;
     pinfo->tiles_count = pinfo->tiles_x * pinfo->tiles_y;
 
-    // set the desired number of fertices
+    // set the desired number of vertices
     if ( numvert < 0 )
     {
         numvert = MAXMESHVERTICES * pinfo->tiles_count;
@@ -809,7 +811,7 @@ Uint8 cartman_get_fan_twist( ego_mpd_t * pmesh, Uint32 tile )
     // check for a valid tile
     if ( INVALID_TILE == tile  || tile > pmesh->info.tiles_count ) return TWIST_FLAT;
 
-    // if the tile is actually labelled as FANOFF, ignore it completely
+    // if the tile is actually labeled as FANOFF, ignore it completely
     if ( FANOFF == pmesh->tmem.tile_list[tile].img ) return TWIST_FLAT;
 
     vrtstart = pmesh->tmem.tile_list[tile].vrtstart;
@@ -1034,7 +1036,7 @@ bool_t mesh_make_normals( ego_mpd_t * pmesh )
                     }
                 }
 
-                vec_sum = fvec3_normalize( vec_sum.v );
+                fvec3_self_normalize( vec_sum.v );
 
                 ptmem->tile_list[fan0].ncache[i][XX] = vec_sum.x;
                 ptmem->tile_list[fan0].ncache[i][YY] = vec_sum.y;
@@ -1085,7 +1087,7 @@ bool_t mesh_make_normals( ego_mpd_t * pmesh )
 
     //            if ( wt_cnt > 1 )
     //            {
-    //                vec_sum = fvec3_normalize( vec_sum.v );
+    //                fvec3_self_normalize( vec_sum.v );
 
     //                ptmem->ncache[fan0][i][XX] = vec_sum.x;
     //                ptmem->ncache[fan0][i][YY] = vec_sum.y;
@@ -1468,15 +1470,15 @@ bool_t mesh_test_wall( ego_mpd_t * pmesh, float pos[], float radius, BIT_FIELD b
 
     for ( iy = pdata->iy_min; iy <= pdata->iy_max; iy++ )
     {
-        // since we KNOW that this is in range, allow raw access to the data strucutre
+        // since we KNOW that this is in range, allow raw access to the data structure
         int irow = pmesh->gmem.tilestart[iy];
 
         for ( ix = pdata->ix_min; ix <= pdata->ix_max; ix++ )
         {
             int itile = ix + irow;
 
-            // since we KNOW that this is in range, allow raw access to the data strucutre
-            SET_BIT( pass, pdata->glist[itile].fx );
+            // since we KNOW that this is in range, allow raw access to the data structure
+            ADD_BITS( pass, pdata->glist[itile].fx );
             mesh_mpdfx_tests++;
 
             if( HAS_SOME_BITS(pass, bits) ) return btrue;
@@ -1658,9 +1660,9 @@ fvec2_t mesh_get_diff( ego_mpd_t * pmesh, float pos[], float radius, float cente
 
     // find the pressure for the 9 points of jittering around the current position
     pressure_ary[4] = center_pressure;
-    for( cnt = 0, fy = pos[kY] - jitter_size; fy <= pos[kY] + jitter_size; fy += jitter_size )
+    for( cnt = 0, fy = pos[kY] - jitter_size; fy <= pos[kY] + jitter_size && cnt < 9; fy += jitter_size )
     {
-        for( fx = pos[kX] - jitter_size; fx <= pos[kX] + jitter_size; fx += jitter_size, cnt++ )
+        for( fx = pos[kX] - jitter_size; fx <= pos[kX] + jitter_size && cnt < 9; fx += jitter_size, cnt++ )
         {
             fvec2_t jitter_pos = VECT2( fx, fy );
 
@@ -1705,7 +1707,7 @@ fvec2_t mesh_get_diff( ego_mpd_t * pmesh, float pos[], float radius, float cente
     //}
 
     // limit the maximum displacement to less than one tile
-    if( ABS(diff.x) + ABS(diff.y) > 0.0f )
+    if( fvec2_length_abs(diff.v) > 0.0f )
     {
         float fmax = MAX( ABS(diff.x), ABS(diff.y) );
 
@@ -1721,7 +1723,7 @@ BIT_FIELD mesh_hit_wall( ego_mpd_t * pmesh, float pos[], float radius, BIT_FIELD
 {
     /// @details BB@> an abstraction of the functions of chr_hit_wall() and prt_hit_wall()
 
-	BIT_FIELD loc_pass;
+    BIT_FIELD loc_pass;
     Uint32 itile, pass;
     int ix, iy;
     bool_t invalid;
@@ -1800,7 +1802,7 @@ BIT_FIELD mesh_hit_wall( ego_mpd_t * pmesh, float pos[], float radius, BIT_FIELD
 
                     if ( is_blocked )
                     {
-                        SET_BIT( loc_pass,  mpdfx );
+                        ADD_BITS( loc_pass,  mpdfx );
 
                         if( needs_nrm )
                         {
@@ -2082,7 +2084,7 @@ bool_t mesh_BSP_free( mesh_BSP_t * pbsp )
 //--------------------------------------------------------------------------------------------
 bool_t mesh_BSP_fill( mesh_BSP_t * pbsp )
 {
-    int tile;
+    size_t tile;
 
     for ( tile = 0; tile < pbsp->nodes.top; tile++ )
     {
@@ -2090,7 +2092,7 @@ bool_t mesh_BSP_fill( mesh_BSP_t * pbsp )
         BSP_leaf_t      * pleaf = pbsp->nodes.ary + tile;
 
         // do not deal with uninitialized nodes
-        if ( pleaf->data_type < 0 ) continue;
+        if ( pleaf->data_type <= LEAF_UNKNOWN ) continue;
 
         // grab the leaf data, assume that it points to the correct data structure
         pdata = ( ego_tile_info_t* ) pleaf->data;

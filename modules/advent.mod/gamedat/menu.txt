@@ -16,7 +16,7 @@ Level rating ( *, **, ***, ****, or ***** )    		 : **
 :far_below_Lord_Bishop's_castle.
 :As_a_Royal_Torch_Bearer,_duty
 :requires_you_to_guide_his_majesty's
-:champions,_Brom_and_Mother_Mim,
+:champions,_Sir_Brom_and_Mother_Mim,
 :to_the_source_of_this_evil.
 :Good_Luck!
 :_

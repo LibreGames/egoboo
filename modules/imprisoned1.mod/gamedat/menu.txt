@@ -10,14 +10,14 @@ Is a RTS module (TRUE or FALSE)			      : FALSE
 Level rating ( * to  ***** ) :*****
 
 // Module summary
-:Your_quest_is_to_seal_the_ancient_evil
-:that_resides_within_this_old_tower.
-:The_ancient_evil_is_said_to_reside_in
-:the_bottom_level_and_you_have_to_seal
-:it_in_again_before_it_breaks_free_and
+:A_powerful,_ancient_Evil_radiates_from
+:this_old_tower._You_can_feel_its_reckless
+:hatred_and_destructiveness_growing_stronger
+:by_the_minute._Find_this_menace_and_neutralize
+:it_in_before_it_breaks_free_and
 :plunges_the_world_into_a_fiery_chaos!
-:You_need_to_hurry_before_it_is_too_late.
-:The_world_is_counting_on_you...
+:The_end_of_everything_approaches...
+:Hurry,_before_it_is_too_late!
 
 // IDZs
 :[TYPE] SIDEQUEST                //Module Type (MAINQUEST, SIDEQUEST or TOWN)

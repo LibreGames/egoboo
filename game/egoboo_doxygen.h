@@ -98,19 +98,14 @@
  * developers.</P>
  *
  * <UL>
- *  <LI><P>ZZ&gt;
- *  = &quot;Programmer X&quot; = &quot;Aaron Bishop&quot;</P>
- *  <LI><P>JF&gt;
- *  = &quot;Jonathan Fischer&quot;
- *  </P>
- *  <LI><P>ZF&gt;
- *  = &quot;Zefz&quot; = &quot;Johan Jansen&quot;
- *  </P>
- *  <LI><P>PF&gt;
- *  = &quot;Penguinflyer5234&quot; = &quot; n/a&quot;
- *  </P>
- *  <LI><P>BB&gt;
- *  = &quot;Ben Birdsey&quot;</P>
+ *  <LI><P>ZZ&gt;= &quot;Programmer X&quot; = &quot;Aaron Bishop&quot;</P>
+ *  <LI><P>JF&gt;= &quot;Jonathan Fischer&quot;</P>
+ *  <LI><P>ZF&gt;= &quot;Zefz&quot; = &quot;Johan Jansen&quot;</P>
+ *  <LI><P>PF&gt;= &quot;Penguinflyer5234&quot; = &quot; n/a&quot;</P>
+ *  <LI><P>BB&gt; = &quot;Ben Birdsey&quot;</P>
+ *  <LI><P>claforte&gt; = unknown</P>
+ *  <LI><P>xgg = unknown</P>
+ *  <LI><P>HUK = unknown</P>
  * </UL>
  *
  * <P>We have been very careful to maintain a proper &quot;chain of

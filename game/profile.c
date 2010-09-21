@@ -103,7 +103,7 @@ void release_all_profiles()
     // release the allocated data in all profiles (sounds, textures, etc.)
     release_all_pro_data();
 
-    // relese every type of sub-profile and re-initalize the lists
+    // release every type of sub-profile and re-initialize the lists
     release_all_pip();
     release_all_eve();
     release_all_cap();
@@ -117,7 +117,7 @@ void release_all_profiles()
 //--------------------------------------------------------------------------------------------
 void profile_system_begin()
 {
-    /// @details BB@> initialize the profile list and load up some intialization files
+    /// @details BB@> initialize the profile list and load up some initialization files
     ///     necessary for the the profile loading code to work
 
     if ( _profile_initialized )
@@ -153,7 +153,7 @@ void profile_system_begin()
 //--------------------------------------------------------------------------------------------
 void profile_system_end()
 {
-    /// @details BB@> initialize the profile list and load up some intialization files
+    /// @details BB@> initialize the profile list and load up some initialization files
     ///     necessary for the the profile loading code to work
 
     if ( _profile_initialized )
@@ -217,7 +217,8 @@ int ProList_search_free( const PRO_REF by_reference iobj )
     /// @details BB@> if an object of index iobj exists on the free list, return the free list index
     ///     otherwise return -1
 
-    int cnt, retval;
+    size_t cnt;
+    int    retval;
 
     // determine whether this character is already in the list of free textures
     // that is an error
@@ -241,7 +242,7 @@ size_t ProList_pop_free( int idx )
 
     size_t retval;
 
-    if ( idx >= 0 && idx < ProList.free_count )
+    if ( idx >= 0 && (size_t)idx < ProList.free_count )
     {
         // move the index idx to the top
         int idx_top, idx_bottom;
@@ -276,7 +277,7 @@ bool_t ProList_push_free( const PRO_REF by_reference iobj )
 
     bool_t retval;
 
-#if defined(_DEBUG)
+#if EGO_DEBUG
     // determine whether this character is already in the list of free objects
     // that is an error
     if ( -1 != ProList_search_free( iobj ) ) return bfalse;
@@ -357,7 +358,7 @@ bool_t ProList_free_one( const PRO_REF by_reference iobj )
     if ( !VALID_PRO_RANGE( iobj ) ) return bfalse;
 
     // object "destructor"
-    // inilializes an object to safe values
+    // initializes an object to safe values
     pro_init( ProList.lst + iobj );
 
     return ProList_push_free( iobj );
@@ -908,7 +909,7 @@ void reset_messages()
 //--------------------------------------------------------------------------------------------
 const char * pro_create_chop( const PRO_REF by_reference iprofile )
 {
-    /// BB@> use the profile's chop to generate a name. Return "*NONE*" on a falure.
+    /// BB@> use the profile's chop to generate a name. Return "*NONE*" on a failure.
 
     pro_t * ppro;
     cap_t * pcap;
@@ -992,7 +993,7 @@ chop_data_t * chop_data_init( chop_data_t * pdata )
 //--------------------------------------------------------------------------------------------
 const char * chop_create( chop_data_t * pdata, chop_definition_t * pdefinition )
 {
-    /// @details ZZ@> This function generates a random name.  Return "Blah" on a falure.
+    /// @details ZZ@> This function generates a random name.  Return "Blah" on a failure.
 
     int read, write, section, mychop;
     char cTmp;
@@ -1261,11 +1262,11 @@ bool_t obj_BSP_insert_chr( obj_BSP_t * pbsp, chr_t * pchr )
         // some kind of error. re-initialize the data.
         pleaf->data      = pchr;
         pleaf->index     = GET_INDEX_PCHR( pchr );
-        pleaf->data_type = 1;
+        pleaf->data_type = LEAF_CHR;
     };
 
     retval = bfalse;
-    if ( !oct_bb_empty( pchr->chr_prt_cv ) )
+    if ( !oct_bb_empty( pchr->chr_max_cv ) )
     {
         oct_bb_t tmp_oct;
 
@@ -1333,7 +1334,7 @@ bool_t obj_BSP_insert_prt( obj_BSP_t * pbsp, prt_bundle_t * pbdl_prt )
         // some kind of error. re-initialize the data.
         pleaf->data      = loc_pprt;
         pleaf->index     = GET_INDEX_PPRT( loc_pprt );
-        pleaf->data_type = 1;
+        pleaf->data_type = LEAF_PRT;
     };
 
     retval = bfalse;
@@ -1391,9 +1392,11 @@ bool_t obj_BSP_fill( obj_BSP_t * pbsp )
     CHR_BEGIN_LOOP_ACTIVE( ichr, pchr )
     {
         // reset a couple of things here
-        pchr->holdingweight		   = 0;
-        pchr->targetplatform_ref   = ( CHR_REF )MAX_CHR;
-        pchr->targetplatform_level = -1e32;
+        pchr->holdingweight             = 0;
+        pchr->targetplatform_ref     = ( CHR_REF )MAX_CHR;
+        pchr->targetplatform_overlap = 0.0f;
+        pchr->targetmount_ref        = ( CHR_REF )MAX_CHR;
+        pchr->targetmount_overlap    = 0.0f;
 
         // try to insert the character
         if ( obj_BSP_insert_chr( pbsp, pchr ) )
@@ -1408,8 +1411,8 @@ bool_t obj_BSP_fill( obj_BSP_t * pbsp )
     PRT_BEGIN_LOOP_DISPLAY( iprt, prt_bdl )
     {
         // reset a couple of things here
-        prt_bdl.prt_ptr->targetplatform_ref  = ( CHR_REF )MAX_CHR;
-        prt_bdl.prt_ptr->targetplatform_level = -1e32;
+        prt_bdl.prt_ptr->targetplatform_ref     = ( CHR_REF )MAX_CHR;
+        prt_bdl.prt_ptr->targetplatform_overlap = 0.0f;
 
         // try to insert the particle
         if ( obj_BSP_insert_prt( pbsp, &prt_bdl ) )
@@ -1484,7 +1487,7 @@ int obj_BSP_collide( obj_BSP_t * pbsp, BSP_aabb_t * paabb, BSP_leaf_pary_t * col
 //bool_t obj_BSP_collide_branch( BSP_branch_t * pbranch, oct_bb_t * pvbranch, oct_bb_t * pvobj, int_ary_t * colst )
 //{
 //    /// @details BB@> Recursively search the BSP tree for collisions with the pvobj
-//    //      Return bfalse if we need to break out of the recursive search for any reson.
+//    //      Return bfalse if we need to break out of the recursive search for any reason.
 //
 //    Uint32 i;
 //    oct_bb_t    int_ov, tmp_ov;
@@ -1580,15 +1583,15 @@ int obj_BSP_collide( obj_BSP_t * pbsp, BSP_aabb_t * paabb, BSP_leaf_pary_t * col
 //
 //        // get the volume of the node
 //        pnodevol = NULL;
-//        if ( 1 == pleaf->data_type )
+//        if ( LEAF_CHR == pleaf->data_type )
 //        {
 //            chr_t * pchr = ( chr_t* )pleaf->data;
-//            pnodevol = &( pchr->chr_prt_cv );
+//            pnodevol = &( pchr->prt_cv );
 //        }
-//        else if ( 2 == pleaf->data_type )
+//        else if ( LEAF_PRT == pleaf->data_type )
 //        {
 //            prt_t * pprt = ( prt_t* )pleaf->data;
-//            pnodevol = &( pprt->chr_prt_cv );
+//            pnodevol = &( pprt->prt_cv );
 //        }
 //        else
 //        {
@@ -1598,7 +1601,7 @@ int obj_BSP_collide( obj_BSP_t * pbsp, BSP_aabb_t * paabb, BSP_leaf_pary_t * col
 //        if ( oct_bb_intersection( *pvobj, *pnodevol, &int_ov ) )
 //        {
 //            // we have a possible intersection
-//            int_ary_push_back( colst, pleaf->index *(( 1 == pleaf->data_type ) ? 1 : -1 ) );
+//            int_ary_push_back( colst, pleaf->index *(( LEAF_CHR == pleaf->data_type ) ? 1 : -1 ) );
 //
 //            if ( int_ary_get_top( colst ) >= int_ary_get_size( colst ) )
 //            {

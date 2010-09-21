@@ -148,3 +148,4 @@ bool_t enc_is_removed( const ENC_REF by_reference ienc, const PRO_REF by_referen
 
     return bfalse;
 }
+

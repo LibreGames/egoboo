@@ -194,5 +194,5 @@ void   load_action_names_vfs( const char* loadname );
 void   mad_make_equally_lit( const MAD_REF by_reference imad );
 
 int    mad_get_action( const MAD_REF by_reference imad, int action );
-Uint32 mad_get_madfx( const MAD_REF by_reference imad, int action );
+Uint32 mad_get_actionfx( const MAD_REF by_reference imad, int action );
 int    randomize_action( int action, int slot );

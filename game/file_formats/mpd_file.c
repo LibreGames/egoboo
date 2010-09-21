@@ -25,7 +25,7 @@
 #include "log.h"
 
 #include "egoboo_math.inl"
-#include "egoboo_endian.h"
+#include "egoboo_typedef.h"
 #include "egoboo_fileutil.h"
 #include "egoboo_strutil.h"
 #include "egoboo.h"
@@ -460,3 +460,4 @@ bool_t twist_to_normal( Uint8 twist, float v[], float slide )
 
     return btrue;
 }
+

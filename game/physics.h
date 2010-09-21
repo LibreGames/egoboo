@@ -34,9 +34,17 @@ struct s_prt;
 
 enum
 {
-    PHYS_PLATFORM_NONE = 0,
-    PHYS_PLATFORM_OBJ1 = ( 1 << 0 ),
-    PHYS_PLATFORM_OBJ2 = ( 1 << 1 )
+    PHYS_CLOSE_TOLERANCE_NONE = 0,
+    PHYS_CLOSE_TOLERANCE_OBJ1 = ( 1 << 0 ),
+    PHYS_CLOSE_TOLERANCE_OBJ2 = ( 1 << 1 )
+};
+
+enum s_leaf_data_type
+{
+    LEAF_UNKNOWN = 0,
+    LEAF_CHR,
+    LEAF_PRT,
+    LEAF_MESH
 };
 
 //--------------------------------------------------------------------------------------------
@@ -56,8 +64,9 @@ typedef struct s_orientation orientation_t;
 /// @details should prevent you from being bumped into a wall
 struct s_phys_data
 {
-    fvec3_t        apos_0, apos_1;
-    fvec3_t        avel;
+    fvec3_t        apos_plat;                     ///< The accumulator for position shifts from platform interactions
+    fvec3_t        apos_coll;                     ///< The accumulator for position shifts from "pressure" effects
+    fvec3_t        avel;                          ///< The accumulator for velocity changes, mostly from collision impulses
 
     float          bumpdampen;                    ///< "Mass" = weight / bumpdampen
     Uint32         weight;                        ///< Weight
@@ -120,3 +129,5 @@ bool_t phys_expand_prt_bb( struct s_prt * pprt, float tmin, float tmax, oct_bb_t
 bool_t phys_estimate_chr_chr_normal( oct_vec_t opos_a, oct_vec_t opos_b, oct_vec_t odepth, float exponent, fvec3_base_t nrm );
 bool_t phys_intersect_oct_bb( oct_bb_t src1, fvec3_t pos1, fvec3_t vel1, oct_bb_t src2, fvec3_t pos2, fvec3_t vel2, int test_platform, oct_bb_t * pdst, float *tmin, float *tmax );
 
+bool_t phys_data_integrate_accumulators( fvec3_t * ppos, fvec3_t * pvel, phys_data_t * pdata, float dt );
+bool_t phys_data_apply_normal_acceleration( phys_data_t * pphys, fvec3_t nrm, float para_factor, float perp_factor, fvec3_t * pnrm_acc );

@@ -38,7 +38,8 @@ typedef enum e_feedback
     FEEDBACK_OFF = 0,           //None
     FEEDBACK_TEXT,              //Descriptive text
     FEEDBACK_NUMBER             //Show the damage as a number
-} FEEDBACK_TYPE;
+}
+ FEEDBACK_TYPE;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -59,12 +60,12 @@ struct s_egoboo_config
     bool_t                  reflect_prt;               ///< Reflect particles?
     bool_t                  shadow_allowed;            ///< Shadows?
     bool_t                  shadow_sprite;             ///< Shadow sprites?
-    bool_t                  use_phong;                 ///< Do phong overlay?
+    bool_t                  use_phong;                 ///< Do Phong overlay?
     bool_t                  twolayerwater_allowed;     ///< Two layer water?
     bool_t                  overlay_allowed;           ///< Allow large overlay?
     bool_t                  background_allowed;        ///< Allow large background?
     bool_t                  fog_allowed;
-    bool_t                  gourard_req;               ///< Gourad shading?
+    bool_t                  gourard_req;               ///< Gouraud shading?
     Uint8                   multisamples;          ///< Antialiasing?
     Uint8                   texturefilter_req;             ///< Texture filtering?
     int                     dyna_count_req;            ///< Max number of lights to draw
@@ -80,7 +81,7 @@ struct s_egoboo_config
     Uint16                  sound_buffer_size;
     bool_t                  sound_highquality;
     bool_t                  sound_highquality_base;
-	bool_t					sound_footfall;
+    bool_t					sound_footfall;
 
     // {NETWORK}
     bool_t                  network_allowed;            ///< Try to connect?

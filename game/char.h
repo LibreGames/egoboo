@@ -45,6 +45,8 @@ struct s_eve;
 struct s_pip;
 struct s_object_profile;
 struct s_billboard_data_t;
+struct s_object_profile;
+struct s_ai_state;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -76,17 +78,21 @@ struct s_billboard_data_t;
 typedef enum e_turn_modes
 {
     TURNMODE_VELOCITY = 0,                       ///< Character gets rotation from velocity (normal)
-    TURNMODE_WATCH,                              ///< For watch towers, look towards waypoint
+    TURNMODE_ACCELERATION,                              ///< For watch towers, look towards waypoint
     TURNMODE_SPIN,                               ///< For spinning objects
     TURNMODE_WATCHTARGET,                        ///< For combat intensive AI
+    TURNMODE_FLYING_JUMP,
+    TURNMODE_FLYING_PLATFORM,
     TURNMODE_COUNT
-} TURN_MODE;
+}
+ TURN_MODE;
 
 #define MANARETURNSHIFT     44                    ///< ChrList.lst[ichr].manareturn/MANARETURNSHIFT = mana regen per second
 
-#define TURNSPD             0.01f                 ///< Cutoff for turning or same direction
-#define SPINRATE            200                   ///< How fast spinners spin
-#define WATCHMIN            0.01f                 ///< Tolerance for TURNMODE_WATCH
+#define TURN_SPEED             0.1f                  ///< Cutoff for turning or same direction
+#define WATCH_SPEED            0.1f                  ///< Tolerance for TURNMODE_ACCELERATION
+#define FLYING_SPEED           1.0f                  ///< Tolerance for TURNMODE_FLY_*
+#define SPINRATE            200                      ///< How fast spinners spin
 
 /// The vertex offsets for the various grips
 enum e_grip_offset
@@ -140,18 +146,18 @@ slot_t        grip_offset_to_slot( grip_offset_t grip );
 #define GRABDELAY           25                      ///< Time before grab again
 
 /// Z velocity
-#define FLYDAMPEN           0.001f                    ///< Levelling rate for flyers
-#define JUMPDELAY           20                      ///< Time between jumps
-#define WATERJUMP           25                        ///< How good we jump in water
-#define JUMPINFINITE        255                     ///< Flying character
-#define SLIDETOLERANCE      10                      ///< Stick to ground better
-#define PLATADD             -10                     ///< Height add...
-#define PLATASCEND          0.10f                     ///< Ascension rate
-#define PLATKEEP            0.90f                     ///< Retention rate
-#define MOUNTTOLERANCE      (PLATTOLERANCE)
-#define STOPBOUNCING        0.1f // 1.0f                ///< To make objects stop bouncing
-#define DROPZVEL            7
-#define DROPXYVEL           12
+#define FLYDAMPEN            0.001f                    ///< Leveling rate for fliers
+#define JUMP_DELAY           20                      ///< Time between jumps
+#define JUMP_SPEED_WATER     25                        ///< How good we jump in water
+#define JUMP_NUMBER_INFINITE 255                     ///< Flying character
+#define SLIDETOLERANCE        10                      ///< Stick to ground better
+#define PLATADD              -10                     ///< Height add...
+#define PLATASCEND           0.10f                     ///< Ascension rate
+#define PLATKEEP             0.90f                     ///< Retention rate
+#define MOUNTTOLERANCE       (PLATTOLERANCE)
+#define STOPBOUNCING         0.1f // 1.0f                ///< To make objects stop bouncing
+#define DROPZVEL             7
+#define DROPXYVEL            12
 
 //Timer resets
 #define DAMAGETILETIME      32                            ///< Invincibility time
@@ -185,8 +191,17 @@ enum e_chr_movement_bits
     CHR_MOVEMENT_BITS_STOP  = 1 << CHR_MOVEMENT_STOP,
     CHR_MOVEMENT_BITS_SNEAK = 1 << CHR_MOVEMENT_SNEAK,
     CHR_MOVEMENT_BITS_WALK  = 1 << CHR_MOVEMENT_WALK,
-    CHR_MOVEMENT_BITS_RUN   = 1 << CHR_MOVEMENT_RUN  
+    CHR_MOVEMENT_BITS_RUN   = 1 << CHR_MOVEMENT_RUN
 };
+
+#define IS_FLYING_CHR(ICHR)   ( !DEFINED_CHR(ICHR) ? bfalse : (ChrList.lst[ICHR].is_flying_jump || ChrList.lst[ICHR].is_flying_platform) )
+#define IS_PACKED_CHR(ICHR)   ( !DEFINED_CHR(ICHR) ? bfalse : ChrList.lst[ICHR].pack.is_packed )
+#define IS_ATTACHED_CHR(ICHR) ( !DEFINED_CHR(ICHR) ? bfalse : (DEFINED_CHR(ChrList.lst[ICHR].attachedto) || ChrList.lst[ICHR].pack.is_packed) )
+
+
+#define IS_FLYING_PCHR(PCHR) ( !DEFINED_PCHR(PCHR) ? bfalse : ((PCHR)->is_flying_jump || (PCHR)->is_flying_platform) )
+#define IS_PACKED_PCHR(PCHR) ( !DEFINED_PCHR(PCHR) ? bfalse : (PCHR)->pack.is_packed )
+#define IS_ATTACHED_PCHR(PCHR)  ( !DEFINED_PCHR(PCHR) ? bfalse : (DEFINED_CHR((PCHR)->attachedto) || (PCHR)->pack.is_packed) )
 
 //------------------------------------
 // Team variables
@@ -216,19 +231,46 @@ struct s_team
 typedef struct s_team team_t;
 
 //--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+/// The latch used by the characters/ai's in the game
+struct s_latch_game
+{
+    bool_t     raw_valid; ///< does this latch have any valid data in it?
+    fvec2_t    raw;       ///< the raw control settings
+    BIT_FIELD  raw_b;     ///< the raw control action bits
+
+    bool_t     trans_valid; ///< does this latch have any valid data in it?
+    fvec3_t    trans;       ///< the translated control values, relative to the camera
+    BIT_FIELD  trans_b;     ///< the translated action bits
+};
+typedef struct s_latch_game latch_game_t;
+
+void latch_game_init( latch_game_t * platch );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 
 /// Everything that is necessary to compute the character's interaction with the environment
 struct s_chr_environment
 {
     // floor stuff
-    Uint8  twist;
+    float   grid_level;           ///< Height the current grid
+    float   grid_lerp;
+    Uint8   grid_twist;
 
-    float  floor_level;           ///< Height of tile
-    float  level;                 ///< Height of a tile or a platform
-    float  fly_level;             ///< Height of tile, platform, or water, whever is highest.
+    float   walk_level;           ///< Height of tile or platform (or water if the character has waterwalk)
+    float   walk_lerp;
+    fvec3_t walk_nrm;             ///< the normal to whatever the character is standing on
 
-    float  zlerp;
-    bool_t grounded;              ///< standing on something?
+    float   fly_level;            ///< Height of tile, platform, or water, whichever is highest.
+    float   fly_lerp;
+
+    // stuff related to the surface we are standing on (if any)
+    bool_t  grounded;            ///< standing on something?
+    fvec3_t ground_vel;          ///< the velocity of the current "ground"
+    fvec3_t ground_diff;         ///< the relative velocity between the character and the current "ground"
+    float   ground_fric;         ///< the current friction between the character and the ground
 
     // friction stuff
     bool_t is_slipping;
@@ -239,8 +281,10 @@ struct s_chr_environment
 
     // misc states
     bool_t   inwater;
-    float    new_vx, new_vy;
-    fvec3_t   acc;
+    fvec3_t  chr_vel, chr_acc;
+    fvec3_t  acc;
+
+    fvec3_t  legs_vel;
 };
 typedef struct s_chr_environment chr_environment_t;
 
@@ -253,6 +297,9 @@ struct s_pack
     int            count;       ///< How many
 };
 typedef struct s_pack pack_t;
+
+bool_t pack_add_item( pack_t * ppack, CHR_REF item );
+bool_t pack_remove_item( pack_t * ppack, CHR_REF iparent, CHR_REF iitem );
 
 #define PACK_BEGIN_LOOP(IT,INIT) IT = INIT; while( MAX_CHR != IT ) { CHR_REF IT##_internal = ChrList.lst[IT].pack.next;
 #define PACK_END_LOOP(IT) IT = IT##_internal; }
@@ -285,7 +332,7 @@ struct s_chr
 
     // character state
     ai_state_t     ai;              ///< ai data
-    latch_t        latch;
+    latch_game_t   latch;
 
     // character stats
     STRING         Name;            ///< My name
@@ -328,15 +375,16 @@ struct s_chr
     ENC_REF        undoenchant;                   ///< Last enchantment spawned
 
     float          fat;                           ///< Character's size
+    float          fat_stt;                       ///< Character's initial size
     float          fat_goto;                      ///< Character's size goto
-    Sint16         fat_goto_time;                  ///< Time left in size change
+    Sint16         fat_goto_time;                 ///< Time left in size change
 
     // jump stuff
     float          jump_power;                    ///< Jump power
-    Uint8          jumptime;                      ///< Delay until next jump
-    Uint8          jumpnumber;                    ///< Number of jumps remaining
-    Uint8          jumpnumberreset;               ///< Number of jumps total, 255=Flying
-    Uint8          jumpready;                     ///< For standing on a platform character
+    Uint8          jump_time;                     ///< Delay until next jump
+    Uint8          jump_number;                   ///< Number of jumps remaining
+    Uint8          jump_number_reset;             ///< Number of jumps total, 255=Flying
+    bool_t         jump_ready;                    ///< For standing on a platform character
 
     // attachments
     CHR_REF        attachedto;                    ///< !=MAX_CHR if character is a held weapon
@@ -345,11 +393,12 @@ struct s_chr
     // platform stuff
     bool_t         platform;                      ///< Can it be stood on
     bool_t         canuseplatforms;               ///< Can use platforms?
-    int            holdingweight;                 ///< For weighted buttons
-    float          targetplatform_level;          ///< What is the height of the target platform?
+    float          holdingweight;                 ///< For weighted buttons
+    float          targetplatform_overlap;        ///< What is the height of the target platform?
     CHR_REF        targetplatform_ref;            ///< Am I trying to attach to a platform?
     CHR_REF        onwhichplatform_ref;           ///< Am I on a platform?
     Uint32         onwhichplatform_update;        ///< When was the last platform attachment made?
+    float          onwhichplatform_weight;        ///< How much weight did I put on the platform?
 
     // combat stuff
     Uint8          damagetargettype;              ///< Type of damage for AI DamageTarget
@@ -363,7 +412,7 @@ struct s_chr
     Sint8          sound_index[SOUND_COUNT];       ///< a map for soundX.wav to sound types
     int            loopedsound_channel;           ///< Which sound channel it is looping on, -1 is none.
 
-    // missle handling
+    // missile handling
     Uint8          missiletreatment;              ///< For deflection, etc.
     Uint8          missilecost;                   ///< Mana cost for each one
     CHR_REF        missilehandler;                ///< Who pays the bill for each one...
@@ -400,7 +449,7 @@ struct s_chr
     Uint16         reloadtime;                    ///< Time before another shot
     Uint8          damagetime;                    ///< Invincibility timer
 
-    // graphica info
+    // graphics info
     Uint8          flashand;        ///< 1,3,7,15,31 = Flash, 255 = Don't
     bool_t         transferblend;   ///< Give transparency to weapons?
     bool_t         draw_icon;       ///< Show the icon?
@@ -408,8 +457,9 @@ struct s_chr
     bool_t         StatusList_on;   ///< Display stats?
     SFP8_T         uoffvel;         ///< Moving texture speed
     SFP8_T         voffvel;
-    Uint32         shadow_size;      ///< Size of shadow
-    Uint32         shadow_size_save; ///< Without size modifiers
+    float          shadow_size;      ///< Current size of shadow
+    float          shadow_size_save; ///< Without size modifiers
+    float          shadow_size_stt;  ///< Initial shadow size
     BBOARD_REF     ibillboard;       ///< The attached billboard
 
     // model info
@@ -446,12 +496,14 @@ struct s_chr
     ///        The old bumper data that is read from the data.txt file will be kept in
     ///        the struct "bump". A new bumper that actually matches the size of the object will
     ///        be kept in the struct "collision"
+    bumper_t     bump_stt;
     bumper_t     bump;
     bumper_t     bump_save;
 
     bumper_t     bump_1;       ///< the loosest collision volume that mimics the current bump
-    oct_bb_t     chr_prt_cv;   ///< a looser collision volume for chr-prt interactions
-    oct_bb_t     chr_chr_cv;   ///< the tightest collision volume for chr-chr interactions
+    oct_bb_t     chr_cv;       ///< the collision volume determined by the model's points.
+    oct_bb_t     chr_min_cv;   ///< the smallest collision volume.
+    oct_bb_t     chr_max_cv;   ///< the largest collision volume. For character, particle, and platform collisions.
 
     Uint8        stoppedby;                     ///< Collision mask
 
@@ -478,14 +530,20 @@ struct s_chr
     float          anim_speed_walk;               ///< Walking if above this speed
     float          anim_speed_run;                ///< Running if above this speed
     float          maxaccel;                      ///< The current maxaccel_reset
-    float          maxaccel_reset;                ///< The actual maximum acelleration
-    Uint8          flyheight;                     ///< Height to stabilize at
+    float          maxaccel_reset;                ///< The actual maximum acceleration
+
+    bool_t         is_flying_platform;             ///< The object is flying by manipulating the fly_height variable
+    bool_t         can_fly_jump;                   ///< The object can fly by jumping (jump_number_reset == JUMP_NUMBER_INFINITE)
+    bool_t         is_flying_jump;                 ///< The object can_fly_jump and has jumped
+    float          fly_height;                     ///< Height to stabilize at
 
     // data for doing the physics in bump_all_objects()
     phys_data_t       phys;
     chr_environment_t enviro;
     BSP_leaf_t        bsp_leaf;
 
+    float             targetmount_overlap;
+    CHR_REF           targetmount_ref;
     int               dismount_timer;                ///< a timer BB added in to make mounts and dismounts not so unpredictable
     CHR_REF           dismount_object;               ///< the object that you were dismounting from
 
@@ -547,6 +605,9 @@ void reset_character_alpha( const CHR_REF by_reference character );
 void reset_character_accel( const CHR_REF by_reference character );
 bool_t detach_character_from_mount( const CHR_REF by_reference character, Uint8 ignorekurse, Uint8 doshop );
 
+bool_t remove_item_from_pack( const CHR_REF by_reference pack_holder, const CHR_REF by_reference item_ref );
+
+
 void flash_character_height( const CHR_REF by_reference character, Uint8 valuelow, Sint16 low, Uint8 valuehigh, Sint16 high );
 void flash_character( const CHR_REF by_reference character, Uint8 value );
 
@@ -562,7 +623,7 @@ void update_all_characters( void );
 void move_all_characters( void );
 void cleanup_all_characters( void );
 
-void bump_all_characters_update_counters( void );
+void increment_all_character_update_counters( void );
 
 void do_level_up( const CHR_REF by_reference character );
 bool_t setup_xp_table( const CHR_REF by_reference character );
@@ -584,9 +645,9 @@ void    switch_team( const CHR_REF by_reference character, const TEAM_REF by_ref
 void    issue_clean( const CHR_REF by_reference character );
 int     restock_ammo( const CHR_REF by_reference character, IDSZ idsz );
 void    attach_character_to_mount( const CHR_REF by_reference character, const CHR_REF by_reference mount, grip_offset_t grip_off );
-bool_t  inventory_add_item( const CHR_REF by_reference item, const CHR_REF by_reference character );
-CHR_REF inventory_get_item( const CHR_REF by_reference character, grip_offset_t grip_off, bool_t ignorekurse );
-void    drop_keys( const CHR_REF by_reference character );
+bool_t  chr_inventory_add_item( const CHR_REF by_reference item, const CHR_REF by_reference character );
+CHR_REF chr_inventory_remove_item( const CHR_REF by_reference character, grip_offset_t grip_off, bool_t ignorekurse );
+void    drop_all_idsz( const CHR_REF by_reference character, IDSZ idsz_min, IDSZ idsz_max );
 bool_t  drop_all_items( const CHR_REF by_reference character );
 bool_t  character_grab_stuff( const CHR_REF by_reference chara, grip_offset_t grip, bool_t people );
 
@@ -610,40 +671,48 @@ const char * chr_get_name( const CHR_REF by_reference ichr, Uint32 bits );
 const char * chr_get_dir_name( const CHR_REF by_reference ichr );
 
 //--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct s_chr_bundle
+{
+    CHR_REF        chr_ref;
+    struct s_chr * chr_ptr;
+
+    PRO_REF                   pro_ref;
+    struct s_object_profile * pro_ptr;
+
+    CAP_REF        cap_ref;
+    struct s_cap * cap_ptr;
+};
+typedef struct s_chr_bundle chr_bundle_t;
+
+chr_bundle_t * chr_bundle_ctor( chr_bundle_t * pbundle );
+chr_bundle_t * chr_bundle_validate( chr_bundle_t * pbundle );
+chr_bundle_t * chr_bundle_set( chr_bundle_t * pbundle, struct s_chr * pchr );
+
+//--------------------------------------------------------------------------------------------
 // helper functions
 
-void init_all_cap();
-void release_all_cap();
-bool_t release_one_cap( const CAP_REF by_reference icap );
+void character_system_begin();
+void character_system_end();
 
-const char * describe_value( float value, float maxval, int * rank_ptr );
-const char* describe_damage( float value, float maxval, int * rank_ptr );
-const char* describe_wounds( float max, float current );
+void   init_all_cap();
+void   release_all_cap();
+bool_t release_one_cap( const CAP_REF by_reference icap );
 
 void reset_teams();
 
-egoboo_rv chr_update_matrix( chr_t * pchr, bool_t update_size );
-bool_t chr_teleport( const CHR_REF by_reference ichr, float x, float y, float z, FACING_T facing_z );
-
-bool_t chr_request_terminate( const CHR_REF by_reference ichr );
-
-chr_t * chr_update_hide( chr_t * pchr );
+bool_t    chr_request_terminate( const CHR_REF by_reference ichr );
 
 bool_t ai_state_set_changed( ai_state_t * pai );
 
-bool_t chr_matrix_valid( chr_t * pchr );
-
+egoboo_rv chr_update_matrix( chr_t * pchr, bool_t update_size );
+chr_t *   chr_update_hide( chr_t * pchr );
 egoboo_rv chr_update_collision_size( chr_t * pchr, bool_t update_matrix );
 
-CHR_REF chr_has_inventory_idsz( const CHR_REF by_reference ichr, IDSZ idsz, bool_t equipped, CHR_REF * pack_last );
-CHR_REF chr_holding_idsz( const CHR_REF by_reference ichr, IDSZ idsz );
-CHR_REF chr_has_item_idsz( const CHR_REF by_reference ichr, IDSZ idsz, bool_t equipped, CHR_REF * pack_last );
+bool_t chr_matrix_valid( chr_t * pchr );
+bool_t apply_reflection_matrix( chr_instance_t * pinst, float grid_level );
 
-bool_t apply_reflection_matrix( chr_instance_t * pinst, float floor_level );
-
-bool_t chr_can_see_object( const CHR_REF by_reference ichr, const CHR_REF by_reference iobj );
-int    chr_get_price( const CHR_REF by_reference ichr );
-
+// generic accessors
 void chr_set_floor_level( chr_t * pchr, float level );
 void chr_set_redshift( chr_t * pchr, int rs );
 void chr_set_grnshift( chr_t * pchr, int gs );
@@ -651,56 +720,67 @@ void chr_set_blushift( chr_t * pchr, int bs );
 void chr_set_sheen( chr_t * pchr, int sheen );
 void chr_set_alpha( chr_t * pchr, int alpha );
 void chr_set_light( chr_t * pchr, int light );
+void chr_set_fly_height( chr_t * pchr, float height );
+void chr_set_jump_number_reset( chr_t * pchr, int number );
+fvec3_t chr_get_pos( chr_t * pchr );
+bool_t  chr_set_pos( chr_t * pchr, fvec3_base_t pos );
+float * chr_get_pos_v( chr_t * pchr );
+bool_t chr_set_maxaccel( chr_t * pchr, float new_val );
 
-void chr_instance_get_tint( chr_instance_t * pinst, GLfloat * tint, Uint32 bits );
-
+// generic helper functions
+bool_t  chr_teleport( const CHR_REF by_reference ichr, float x, float y, float z, FACING_T facing_z );
+CHR_REF chr_has_inventory_idsz( const CHR_REF by_reference ichr, IDSZ idsz, bool_t equipped, CHR_REF * pack_last );
+CHR_REF chr_holding_idsz( const CHR_REF by_reference ichr, IDSZ idsz );
+CHR_REF chr_has_item_idsz( const CHR_REF by_reference ichr, IDSZ idsz, bool_t equipped, CHR_REF * pack_last );
+bool_t  chr_can_see_object( const CHR_REF by_reference ichr, const CHR_REF by_reference iobj );
+bool_t  chr_can_mount( const CHR_REF by_reference ichr_a, const CHR_REF by_reference ichr_b );
+bool_t  chr_is_attacking( chr_t *pchr );
+bool_t  chr_get_environment( chr_t * pchr );
+int     chr_get_price( const CHR_REF by_reference ichr );
 CHR_REF chr_get_lowest_attachment( const CHR_REF by_reference ichr, bool_t non_item );
+void    chr_instance_get_tint( chr_instance_t * pinst, GLfloat * tint, Uint32 bits );
+int     convert_grip_to_local_points( chr_t * pholder, Uint16 grip_verts[], fvec4_t   dst_point[] );
+int     convert_grip_to_global_points( const CHR_REF by_reference iholder, Uint16 grip_verts[], fvec4_t   dst_point[] );
 
-bool_t chr_get_mass_pair( chr_t * pchr_a, chr_t * pchr_b, float * wta, float * wtb );
+const char * describe_value( float value, float maxval, int * rank_ptr );
+const char * describe_damage( float value, float maxval, int * rank_ptr );
+const char * describe_wounds( float max, float current );
 
-bool_t chr_can_mount( const CHR_REF by_reference ichr_a, const CHR_REF by_reference ichr_b );
-
-bool_t chr_is_over_water( chr_t *pchr );
-
-Uint32 chr_get_framefx( chr_t * pchr );
-
+// animation stuff
+Uint32    chr_get_framefx( chr_t * pchr );
 void      chr_set_frame( const CHR_REF by_reference character, int action, int frame, int lip );
-
 egoboo_rv chr_set_action( chr_t * pchr, int action, bool_t action_ready, bool_t override_action );
-egoboo_rv chr_start_anim( chr_t * pchr, int action, bool_t action_ready, bool_t override_action );
 egoboo_rv chr_set_anim( chr_t * pchr, int action, int frame, bool_t action_ready, bool_t override_action );
+egoboo_rv chr_start_anim( chr_t * pchr, int action, bool_t action_ready, bool_t override_action );
 egoboo_rv chr_increment_action( chr_t * pchr );
 egoboo_rv chr_increment_frame( chr_t * pchr );
 egoboo_rv chr_play_action( chr_t * pchr, int action, bool_t action_ready );
 
-void character_system_begin();
-void character_system_end();
-
-// these accessor functions are to complex to be inlined
+// these accessor functions are too complex to be inlined
 MAD_REF        chr_get_imad( const CHR_REF by_reference ichr );
 struct s_mad * chr_get_pmad( const CHR_REF by_reference ichr );
 TX_REF         chr_get_icon_ref( const CHR_REF by_reference item );
 
-chr_t * chr_run_config( chr_t * pchr );
+// functions related to stored positions
+bool_t  chr_update_breadcrumb_raw( chr_t * pchr );
+bool_t  chr_update_breadcrumb( chr_t * pchr, bool_t force );
+bool_t  chr_update_safe_raw( chr_t * pchr );
+bool_t  chr_update_safe( chr_t * pchr, bool_t force );
+bool_t  chr_get_safe( chr_t * pchr, fvec3_base_t pos );
 
+// global chr configuration functions
+chr_t * chr_run_config( chr_t * pchr );
 chr_t * chr_config_construct( chr_t * pprt, int max_iterations );
 chr_t * chr_config_initialize( chr_t * pprt, int max_iterations );
 chr_t * chr_config_activate( chr_t * pprt, int max_iterations );
 chr_t * chr_config_deinitialize( chr_t * pprt, int max_iterations );
 chr_t * chr_config_deconstruct( chr_t * pprt, int max_iterations );
 
-bool_t chr_update_breadcrumb_raw( chr_t * pchr );
-bool_t chr_update_breadcrumb( chr_t * pchr, bool_t force );
-bool_t chr_update_safe_raw( chr_t * pchr );
-bool_t chr_update_safe( chr_t * pchr, bool_t force );
-bool_t chr_get_safe( chr_t * pchr, fvec3_base_t pos );
+// physics function
+void   character_physics_initialize();
+void   character_physics_finalize_all( float dt );
+bool_t character_physics_get_mass_pair( chr_t * pchr_a, chr_t * pchr_b, float * wta, float * wtb );
 
-fvec3_t chr_get_pos( chr_t * pchr );
-bool_t  chr_set_pos( chr_t * pchr, fvec3_base_t pos );
+bool_t chr_is_over_water( chr_t *pchr );
 
-float * chr_get_pos_v( chr_t * pchr );
-
-bool_t chr_set_maxaccel( chr_t * pchr, float new_val );
-bool_t character_is_attacking( chr_t *pchr );
-
-void move_one_character_get_environment( chr_t * pchr );
+#define CHAR_H

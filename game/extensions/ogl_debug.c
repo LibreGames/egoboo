@@ -711,3 +711,4 @@ FILE * set_ogl_debug_stderr( FILE * pfile )
 
     return pfile_old;
 }
+

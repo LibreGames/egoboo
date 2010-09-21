@@ -146,14 +146,14 @@
 #    pragma warning(disable : 4244) ///< conversion from 'double' to 'float'
 #    pragma warning(disable : 4305) ///< truncation from 'double' to 'float'
 
-#    if !defined(_DEBUG)
-#        pragma warning(disable : 4554) ///< possibly operator precendence error
+#    if !EGO_DEBUG
+#        pragma warning(disable : 4554) ///< possibly operator precedence error
 #    endif
 
 #endif
 
 //------------
-// fix the naming of some linux-flovored functions in MSVC
+// fix the naming of some linux-flavored functions in MSVC
 #if defined(_MSC_VER)
 #    define snprintf _snprintf
 #    define stricmp  _stricmp

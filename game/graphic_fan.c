@@ -144,7 +144,7 @@ void render_fan( ego_mpd_t * pmesh, Uint32 itile )
     {
         GL_DEBUG( glShadeModel )( GL_SMOOTH );
 
-        // [claforte] Put this in an initialization function.
+        // claforte> Put this in an initialization function.
         GL_DEBUG( glEnableClientState )( GL_VERTEX_ARRAY );
         GL_DEBUG( glVertexPointer )( 3, GL_FLOAT, 0, ptmem->plst + ptile->vrtstart );
 
@@ -171,7 +171,7 @@ void render_fan( ego_mpd_t * pmesh, Uint32 itile )
     }
     GL_DEBUG( glPopClientAttrib )();
 
-#if defined(DEBUG_MESH_NORMALS) && defined(_DEBUG)
+#if defined(DEBUG_MESH_NORMALS) && EGO_DEBUG
     GL_DEBUG( glDisable )( GL_TEXTURE_2D );
     GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
     entry = ptile->vrtstart;
@@ -475,4 +475,6 @@ void animate_tiles()
         animtile[1].frame_add = ( animtile[1].frame_add + 1 ) & animtile[1].frame_and;
     }
 }
+
+
 

@@ -52,7 +52,7 @@ enum e_ui_button_bits
     UI_BITS_CLICKED   = 1 << 1
 };
 
-/// The data descibing the state of a UI widget
+/// The data describing the state of a UI widget
 struct s_ui_Widget
 {
     ui_id_t       id;

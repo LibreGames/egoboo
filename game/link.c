@@ -299,3 +299,4 @@ bool_t link_load_parent( const char * modname, fvec3_t   pos )
     // now pop this "fake" module reference off the stack
     return link_pop_module();
 }
+

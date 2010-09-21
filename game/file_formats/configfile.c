@@ -608,7 +608,7 @@ ConfigFilePtr_t ConfigFile_open( ConfigFilePtr_t pConfigFile, const char *szFile
     // open a file stream for access using the szAttribute attribute
     lTempFile = fopen( szFileName, local_attribute );
     if ( NULL == lTempFile )
-    {		
+    {
         return pConfigFile;
     }
     // assign the file info
@@ -1195,5 +1195,6 @@ ConfigFile_retval SaveConfigFileAs( ConfigFilePtr_t pConfigFile, const char *szF
     // restore the old filename info
     strncpy( pConfigFile->filename, old_filename, SDL_arraysize( old_filename ) );
 
-	return retval;
+    return retval;
 }
+

@@ -25,8 +25,6 @@
 #include "ChrList.h"
 
 #include "mad.h"
-#include "md2.inl"
-#include "mesh.inl"
 
 #include "log.h"
 #include "script.h"
@@ -39,17 +37,34 @@
 #include "game.h"
 #include "texture.h"
 #include "ui.h"
-#include "collision.h"					//Only or detach_character_from_platform()
+#include "collision.h"                    //Only or detach_character_from_platform()
 
 #include "egoboo_vfs.h"
 #include "egoboo_setup.h"
 #include "egoboo_fileutil.h"
 #include "egoboo_strutil.h"
-#include "egoboo_math.inl"
 #include "egoboo.h"
+
+#include "md2.inl"
+#include "mesh.inl"
+#include "physics.inl"
+#include "egoboo_math.inl"
 
 #include <float.h>
 #include "egoboo_mem.h"
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct s_chr_anim_data
+{
+    bool_t allowed;
+    int    action;
+    int    lip;
+    float  speed;
+};
+typedef struct s_chr_anim_data chr_anim_data_t;
+
+int cmp_chr_anim_data( void const * vp_lhs, void const * vp_rhs );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -73,15 +88,15 @@ static bool_t           chr_spawn_instance( chr_instance_t * pinst, const PRO_RE
 static bool_t           chr_instance_set_mad( chr_instance_t * pinst, const MAD_REF by_reference imad );
 
 static CHR_REF chr_pack_has_a_stack( const CHR_REF by_reference item, const CHR_REF by_reference character );
-static bool_t  chr_add_pack_item( const CHR_REF by_reference item, const CHR_REF by_reference character );
-static CHR_REF chr_get_pack_item( const CHR_REF by_reference character, grip_offset_t grip_off, bool_t ignorekurse );
+static bool_t  chr_pack_add_item( const CHR_REF by_reference item, const CHR_REF by_reference character );
+static bool_t  chr_pack_remove_item( CHR_REF ichr, CHR_REF iparent, CHR_REF iitem );
+static CHR_REF chr_pack_get_item( const CHR_REF by_reference chr_ref, grip_offset_t grip_off, bool_t ignorekurse );
 
 static bool_t set_weapongrip( const CHR_REF by_reference iitem, const CHR_REF by_reference iholder, Uint16 vrt_off );
 
 static BBOARD_REF chr_add_billboard( const CHR_REF by_reference ichr, Uint32 lifetime_secs );
 
 static chr_t * resize_one_character( chr_t * pchr );
-//static void    resize_all_characters();
 
 static bool_t  chr_free( chr_t * pchr );
 
@@ -96,9 +111,6 @@ static int get_grip_verts( Uint16 grip_verts[], const CHR_REF by_reference imoun
 bool_t apply_one_character_matrix( chr_t * pchr, matrix_cache_t * mcache );
 bool_t apply_one_weapon_matrix( chr_t * pweap, matrix_cache_t * mcache );
 
-int convert_grip_to_local_points( chr_t * pholder, Uint16 grip_verts[], fvec4_t   dst_point[] );
-int convert_grip_to_global_points( const CHR_REF by_reference iholder, Uint16 grip_verts[], fvec4_t   dst_point[] );
-
 // definition that is consistent with using it as a callback in qsort() or some similar function
 static int  cmp_matrix_cache( const void * vlhs, const void * vrhs );
 
@@ -106,7 +118,7 @@ static bool_t chr_upload_cap( chr_t * pchr, cap_t * pcap );
 
 void cleanup_one_character( chr_t * pchr );
 
-static bool_t chr_instance_update_ref( chr_instance_t * pinst, float floor_level, bool_t need_matrix );
+static bool_t chr_instance_update_ref( chr_instance_t * pinst, float grid_level, bool_t need_matrix );
 
 static void chr_log_script_time( const CHR_REF by_reference ichr );
 
@@ -114,6 +126,24 @@ static bool_t update_chr_darkvision( const CHR_REF by_reference character );
 
 static fvec2_t chr_get_diff( chr_t * pchr, float test_pos[], float center_pressure );
 float          chr_get_mesh_pressure( chr_t * pchr, float test_pos[] );
+
+static breadcrumb_t * chr_get_last_breadcrumb( chr_t * pchr );
+
+static const float traction_min = 0.2f;
+
+static chr_bundle_t * move_one_character_get_environment( chr_bundle_t * pbdl, chr_environment_t * penviro );
+static chr_bundle_t * move_one_character_do_fluid_friction( chr_bundle_t * pbdl );
+static chr_bundle_t * move_one_character_do_voluntary_flying( chr_bundle_t * pbdl );
+static chr_bundle_t * move_one_character_do_voluntary( chr_bundle_t * pbdl );
+static chr_bundle_t * move_one_character_do_involuntary( chr_bundle_t * pbdl );
+static chr_bundle_t * move_one_character_do_orientation( chr_bundle_t * pbdl );
+static chr_bundle_t * move_one_character_do_z_motion( chr_bundle_t * pbdl );
+static chr_bundle_t * move_one_character_do_animation( chr_bundle_t * pbdl );
+static chr_bundle_t * move_one_character_limit_flying( chr_bundle_t * pbdl );
+static chr_bundle_t * move_one_character_do_jump( chr_bundle_t * pbdl );
+static chr_bundle_t * move_one_character_do_floor( chr_bundle_t * pbdl );
+
+static bool_t pack_validate( pack_t * ppack );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -216,7 +246,7 @@ chr_t * chr_ctor( chr_t * pchr )
     pchr->alive = btrue;
 
     // Jumping
-    pchr->jumptime = JUMPDELAY;
+    pchr->jump_time = JUMP_DELAY;
 
     // Grip info
     pchr->attachedto = ( CHR_REF )MAX_CHR;
@@ -273,15 +303,15 @@ chr_t * chr_ctor( chr_t * pchr )
 
     // initialize the bsp node for this character
     pchr->bsp_leaf.data      = pchr;
-    pchr->bsp_leaf.data_type = 1;
+    pchr->bsp_leaf.data_type = LEAF_CHR;
     pchr->bsp_leaf.index     = GET_INDEX_PCHR( pchr );
 
     //---- call the constructors of the "has a" classes
 
-    // set the insance values to safe values
+    // set the instance values to safe values
     chr_instance_ctor( &( pchr->inst ) );
 
-    // intialize the ai_state
+    // initialize the ai_state
     ai_state_ctor( &( pchr->ai ) );
 
     // initialize the bsp node for this character
@@ -482,11 +512,22 @@ void make_one_character_matrix( const CHR_REF by_reference ichr )
     }
     else
     {
-        pinst->matrix = ScaleXYZRotateXYZTranslate( pchr->fat, pchr->fat, pchr->fat,
-            TO_TURN( pchr->ori.facing_z ),
-            TO_TURN( pchr->ori.map_facing_x - MAP_TURN_OFFSET ),
-            TO_TURN( pchr->ori.map_facing_y - MAP_TURN_OFFSET ),
-            pchr->pos.x, pchr->pos.y, pchr->pos.z );
+        if( pchr->stickybutt )
+        {
+            pinst->matrix = ScaleXYZRotateXYZTranslate_SpaceFixed( pchr->fat, pchr->fat, pchr->fat,
+                TO_TURN( pchr->ori.facing_z ),
+                TO_TURN( pchr->ori.map_facing_x - MAP_TURN_OFFSET ),
+                TO_TURN( pchr->ori.map_facing_y - MAP_TURN_OFFSET ),
+                pchr->pos.x, pchr->pos.y, pchr->pos.z );
+        }
+        else
+        {
+            pinst->matrix = ScaleXYZRotateXYZTranslate_BodyFixed( pchr->fat, pchr->fat, pchr->fat,
+                TO_TURN( pchr->ori.facing_z ),
+                TO_TURN( pchr->ori.map_facing_x - MAP_TURN_OFFSET ),
+                TO_TURN( pchr->ori.map_facing_y - MAP_TURN_OFFSET ),
+                pchr->pos.x, pchr->pos.y, pchr->pos.z );
+        }
 
         pinst->matrix_cache.valid        = btrue;
         pinst->matrix_cache.matrix_valid = btrue;
@@ -587,13 +628,13 @@ void free_one_character_in_game( const CHR_REF by_reference character )
 
         if ( pai->target == character )
         {
-            SET_BIT( pai->alert, ALERTIF_TARGETKILLED );
+            ADD_BITS( pai->alert, ALERTIF_TARGETKILLED );
             pai->target = cnt;
         }
 
         if ( chr_get_pteam( cnt )->leader == character )
         {
-            SET_BIT( pai->alert, ALERTIF_LEADERKILLED );
+            ADD_BITS( pai->alert, ALERTIF_LEADERKILLED );
         }
     }
     CHR_END_LOOP();
@@ -720,7 +761,7 @@ prt_t * place_particle_at_vertex( prt_t * pprt, const CHR_REF by_reference chara
 
 place_particle_at_vertex_fail:
 
-	prt_request_terminate_ref( GET_REF_PPRT( pprt ) );
+    prt_request_terminate_ref( GET_REF_PPRT( pprt ) );
 
     return NULL;
 }
@@ -736,13 +777,13 @@ void make_all_character_matrices( bool_t do_physics )
     //// blank the accumulators
     //for ( ichr = 0; ichr < MAX_CHR; ichr++ )
     //{
-    //    ChrList.lst[ichr].phys.apos_0.x = 0.0f;
-    //    ChrList.lst[ichr].phys.apos_0.y = 0.0f;
-    //    ChrList.lst[ichr].phys.apos_0.z = 0.0f;
+    //    ChrList.lst[ichr].phys.apos_plat.x = 0.0f;
+    //    ChrList.lst[ichr].phys.apos_plat.y = 0.0f;
+    //    ChrList.lst[ichr].phys.apos_plat.z = 0.0f;
 
-    //    ChrList.lst[ichr].phys.apos_1.x = 0.0f;
-    //    ChrList.lst[ichr].phys.apos_1.y = 0.0f;
-    //    ChrList.lst[ichr].phys.apos_1.z = 0.0f;
+    //    ChrList.lst[ichr].phys.apos_coll.x = 0.0f;
+    //    ChrList.lst[ichr].phys.apos_coll.y = 0.0f;
+    //    ChrList.lst[ichr].phys.apos_coll.z = 0.0f;
 
     //    ChrList.lst[ichr].phys.avel.x = 0.0f;
     //    ChrList.lst[ichr].phys.avel.y = 0.0f;
@@ -777,10 +818,10 @@ void make_all_character_matrices( bool_t do_physics )
     ////        pchr->vel.z += pchr->phys.avel.z;
 
     ////        // do the "integration" on the position
-    ////        if ( ABS(pchr->phys.apos_1.x) > 0 )
+    ////        if ( ABS(pchr->phys.apos_coll.x) > 0 )
     ////        {
     ////            tmpx = tmp_pos.x;
-    ////            tmp_pos.x += pchr->phys.apos_1.x;
+    ////            tmp_pos.x += pchr->phys.apos_coll.x;
     ////            if ( chr_hit_wall(ichr, nrm, NULL) )
     ////            {
     ////                // restore the old values
@@ -788,15 +829,15 @@ void make_all_character_matrices( bool_t do_physics )
     ////            }
     ////            else
     ////            {
-    ////                // pchr->vel.x += pchr->phys.apos_1.x;
+    ////                // pchr->vel.x += pchr->phys.apos_coll.x;
     ////                pchr->safe_pos.x = tmpx;
     ////            }
     ////        }
 
-    ////        if ( ABS(pchr->phys.apos_1.y) > 0 )
+    ////        if ( ABS(pchr->phys.apos_coll.y) > 0 )
     ////        {
     ////            tmpy = tmp_pos.y;
-    ////            tmp_pos.y += pchr->phys.apos_1.y;
+    ////            tmp_pos.y += pchr->phys.apos_coll.y;
     ////            if ( chr_hit_wall(ichr, nrm, NULL) )
     ////            {
     ////                // restore the old values
@@ -804,15 +845,15 @@ void make_all_character_matrices( bool_t do_physics )
     ////            }
     ////            else
     ////            {
-    ////                // pchr->vel.y += pchr->phys.apos_1.y;
+    ////                // pchr->vel.y += pchr->phys.apos_coll.y;
     ////                pchr->safe_pos.y = tmpy;
     ////            }
     ////        }
 
-    ////        if ( ABS(pchr->phys.apos_1.z) > 0 )
+    ////        if ( ABS(pchr->phys.apos_coll.z) > 0 )
     ////        {
     ////            tmpz = tmp_pos.z;
-    ////            tmp_pos.z += pchr->phys.apos_1.z;
+    ////            tmp_pos.z += pchr->phys.apos_coll.z;
     ////            if ( tmp_pos.z < pchr->enviro.level )
     ////            {
     ////                // restore the old values
@@ -820,7 +861,7 @@ void make_all_character_matrices( bool_t do_physics )
     ////            }
     ////            else
     ////            {
-    ////                // pchr->vel.z += pchr->phys.apos_1.z;
+    ////                // pchr->vel.z += pchr->phys.apos_coll.z;
     ////                pchr->safe_pos.z = tmpz;
     ////            }
     ////        }
@@ -874,19 +915,19 @@ float chr_get_mesh_pressure( chr_t * pchr, float test_pos[] )
 
     if ( !DEFINED_PCHR( pchr ) ) return retval;
 
-    if ( 0 == pchr->bump.size || INFINITE_WEIGHT == pchr->phys.weight ) return retval;
+    if ( 0.0f == pchr->bump_stt.size || INFINITE_WEIGHT == pchr->phys.weight ) return retval;
 
     // deal with the optional parameters
     if ( NULL == test_pos ) test_pos = pchr->pos.v;
 
     // calculate the radius based on whether the character is on camera
-	// ZF> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
+    // ZF> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
     radius = 0.0f;
     if ( mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) )
     {
         if ( PMesh->tmem.tile_list[ pchr->onwhichgrid ].inrenderlist )
         {
-            radius = pchr->bump.size;
+            radius = pchr->bump_1.size;
         }
     }
 
@@ -910,19 +951,19 @@ fvec2_t chr_get_diff( chr_t * pchr, float test_pos[], float center_pressure )
 
     if ( !DEFINED_PCHR( pchr ) ) return retval;
 
-    if ( 0 == pchr->bump.size || INFINITE_WEIGHT == pchr->phys.weight ) return retval;
+    if ( 0.0f == pchr->bump_stt.size || INFINITE_WEIGHT == pchr->phys.weight ) return retval;
 
     // deal with the optional parameters
     if ( NULL == test_pos ) test_pos = pchr->pos.v;
 
     // calculate the radius based on whether the character is on camera
-	// ZF> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
+    // ZF> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
     radius = 0.0f;
     if ( mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) )
     {
         if ( PMesh->tmem.tile_list[ pchr->onwhichgrid ].inrenderlist )
         {
-            radius = pchr->bump.size;
+            radius = pchr->bump_1.size;
         }
     }
 
@@ -949,19 +990,19 @@ BIT_FIELD chr_hit_wall( chr_t * pchr, float test_pos[], float nrm[], float * pre
 
     if ( !DEFINED_PCHR( pchr ) ) return 0;
 
-    if ( 0 == pchr->bump.size || INFINITE_WEIGHT == pchr->phys.weight ) return 0;
+    if ( 0.0f == pchr->bump_stt.size || INFINITE_WEIGHT == pchr->phys.weight ) return 0;
 
     // deal with the optional parameters
     if ( NULL == test_pos ) test_pos = pchr->pos.v;
 
     // calculate the radius based on whether the character is on camera
-	// ZF> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
+    // ZF> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
     radius = 0.0f;
     if ( mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) )
     {
         if ( PMesh->tmem.tile_list[ pchr->onwhichgrid ].inrenderlist )
         {
-            radius = pchr->bump.size;
+            radius = pchr->bump_1.size;
         }
     }
 
@@ -988,10 +1029,10 @@ bool_t chr_test_wall( chr_t * pchr, float test_pos[] )
 
     if ( !ACTIVE_PCHR( pchr ) ) return 0;
 
-    if ( 0 == pchr->bump.size || INFINITE_WEIGHT == pchr->phys.weight ) return bfalse;
+    if ( 0.0f == pchr->bump_stt.size || INFINITE_WEIGHT == pchr->phys.weight ) return bfalse;
 
     // calculate the radius based on whether the character is on camera
-	// ZF> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
+    // ZF> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
     radius = 0.0f;
     if ( mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) )
     {
@@ -1017,18 +1058,6 @@ bool_t chr_test_wall( chr_t * pchr, float test_pos[] )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_is_over_water( chr_t *pchr )
-{
-    /// @details ZF@> This function returns true if the character is over a water tile
-
-	if ( !DEFINED_PCHR( pchr ) ) return bfalse;
-
-	if( !water.is_water || !mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) ) return bfalse; 
-
-    return 0 != mesh_test_fx( PMesh, pchr->onwhichgrid, MPDFX_WATER );
-}
-
-//--------------------------------------------------------------------------------------------
 void reset_character_accel( const CHR_REF by_reference character )
 {
     /// @details ZZ@> This function fixes a character's max acceleration
@@ -1047,7 +1076,7 @@ void reset_character_accel( const CHR_REF by_reference character )
     enchant = pchr->firstenchant;
     while ( enchant != MAX_ENC )
     {
-        enchant_remove_add( enchant, ADDACCEL );
+        enc_remove_add( enchant, ADDACCEL );
         enchant = EncList.lst[enchant].nextenchant_ref;
     }
 
@@ -1066,7 +1095,7 @@ void reset_character_accel( const CHR_REF by_reference character )
     enchant = pchr->firstenchant;
     while ( enchant != MAX_ENC )
     {
-        enchant_apply_add( enchant, ADDACCEL, enc_get_ieve( enchant ) );
+        enc_apply_add( enchant, ADDACCEL, enc_get_ieve( enchant ) );
         enchant = EncList.lst[enchant].nextenchant_ref;
     }
 }
@@ -1094,12 +1123,12 @@ bool_t detach_character_from_mount( const CHR_REF by_reference character, Uint8 
     // Don't allow living characters to drop kursed weapons
     if ( !ignorekurse && pchr->iskursed && pmount->alive && pchr->isitem )
     {
-        SET_BIT( pchr->ai.alert, ALERTIF_NOTDROPPED );
+        ADD_BITS( pchr->ai.alert, ALERTIF_NOTDROPPED );
         return bfalse;
     }
 
     // set the dismount timer
-	if( !pchr->isitem ) pchr->dismount_timer  = PHYS_DISMOUNT_TIME;
+    if( !pchr->isitem ) pchr->dismount_timer  = PHYS_DISMOUNT_TIME;
     pchr->dismount_object = mount;
 
     // Figure out which hand it's in
@@ -1179,11 +1208,11 @@ bool_t detach_character_from_mount( const CHR_REF by_reference character, Uint8 
     if ( pmount->ismount )
     {
         pmount->team = pmount->baseteam;
-        SET_BIT( pmount->ai.alert, ALERTIF_DROPPED );
+        ADD_BITS( pmount->ai.alert, ALERTIF_DROPPED );
     }
 
     pchr->team = pchr->baseteam;
-    SET_BIT( pchr->ai.alert, ALERTIF_DROPPED );
+    ADD_BITS( pchr->ai.alert, ALERTIF_DROPPED );
 
     // Reset transparency
     if ( pchr->isitem && pmount->transferblend )
@@ -1195,8 +1224,8 @@ bool_t detach_character_from_mount( const CHR_REF by_reference character, Uint8 
         enchant = pchr->firstenchant;
         while ( enchant != MAX_ENC )
         {
-            enchant_remove_set( enchant, SETALPHABLEND );
-            enchant_remove_set( enchant, SETLIGHTBLEND );
+            enc_remove_set( enchant, SETALPHABLEND );
+            enc_remove_set( enchant, SETLIGHTBLEND );
 
             enchant = EncList.lst[enchant].nextenchant_ref;
         }
@@ -1215,8 +1244,8 @@ bool_t detach_character_from_mount( const CHR_REF by_reference character, Uint8 
 
             if ( LOADED_PRO( ipro ) )
             {
-                enchant_apply_set( enchant, SETALPHABLEND, ipro );
-                enchant_apply_set( enchant, SETLIGHTBLEND, ipro );
+                enc_apply_set( enchant, SETALPHABLEND, ipro );
+                enc_apply_set( enchant, SETLIGHTBLEND, ipro );
             }
 
             enchant = EncList.lst[enchant].nextenchant_ref;
@@ -1259,8 +1288,8 @@ void reset_character_alpha( const CHR_REF by_reference character )
         enchant = pchr->firstenchant;
         while ( enchant != MAX_ENC )
         {
-            enchant_remove_set( enchant, SETALPHABLEND );
-            enchant_remove_set( enchant, SETLIGHTBLEND );
+            enc_remove_set( enchant, SETALPHABLEND );
+            enc_remove_set( enchant, SETLIGHTBLEND );
 
             enchant = EncList.lst[enchant].nextenchant_ref;
         }
@@ -1278,8 +1307,8 @@ void reset_character_alpha( const CHR_REF by_reference character )
 
             if ( LOADED_PRO( ipro ) )
             {
-                enchant_apply_set( enchant, SETALPHABLEND, ipro );
-                enchant_apply_set( enchant, SETLIGHTBLEND, ipro );
+                enc_apply_set( enchant, SETALPHABLEND, ipro );
+                enc_apply_set( enchant, SETLIGHTBLEND, ipro );
             }
 
             enchant = EncList.lst[enchant].nextenchant_ref;
@@ -1299,17 +1328,22 @@ void attach_character_to_mount( const CHR_REF by_reference iitem, const CHR_REF 
 
     // Make sure the character/item is valid
     // this could be called before the item is fully instantiated
-    if ( !DEFINED_CHR( iitem ) || ChrList.lst[iitem].pack.is_packed ) return;
+    if ( !DEFINED_CHR( iitem ) ) return;
     pitem = ChrList.lst + iitem;
+
+    // cannot be mounted if you are packed
+    if( pitem->pack.is_packed ) return;
 
     // make a reasonable time for the character to remount something
     // for characters jumping out of pots, etc
-    if ( !pitem->isitem && pitem->dismount_timer > 0 )
-        return;
+    if ( !pitem->isitem && pitem->dismount_timer > 0 ) return;
 
     // Make sure the holder/mount is valid
-    if ( !INGAME_CHR( iholder ) || ChrList.lst[iholder].pack.is_packed ) return;
+    if ( !INGAME_CHR( iholder ) ) return;
     pholder = ChrList.lst + iholder;
+
+    // cannot be a holder if you are packed
+    if( pholder->pack.is_packed ) return;
 
 #if !defined(ENABLE_BODY_GRAB)
     if ( !pitem->alive ) return;
@@ -1338,7 +1372,7 @@ void attach_character_to_mount( const CHR_REF by_reference iitem, const CHR_REF 
     chr_set_pos( pitem, mat_getTranslate_v( pitem->inst.matrix ) );
 
     pitem->enviro.inwater  = bfalse;
-    pitem->jumptime = JUMPDELAY * 4;
+    pitem->jump_time = 4 * JUMP_DELAY;
 
     // Run the held animation
     if ( pholder->ismount && grip_off == GRIP_ONLY )
@@ -1365,7 +1399,7 @@ void attach_character_to_mount( const CHR_REF by_reference iitem, const CHR_REF 
         // Set the alert
         if ( pitem->alive )
         {
-            SET_BIT( pitem->ai.alert, ALERTIF_GRABBED );
+            ADD_BITS( pitem->ai.alert, ALERTIF_GRABBED );
         }
     }
 
@@ -1376,7 +1410,7 @@ void attach_character_to_mount( const CHR_REF by_reference iitem, const CHR_REF 
         // Set the alert
         if ( !pholder->isitem && pholder->alive )
         {
-            SET_BIT( pholder->ai.alert, ALERTIF_GRABBED );
+            ADD_BITS( pholder->ai.alert, ALERTIF_GRABBED );
         }
     }
 
@@ -1384,526 +1418,70 @@ void attach_character_to_mount( const CHR_REF by_reference iitem, const CHR_REF 
     pitem->hitready = bfalse;
 }
 
-//--------------------------------------------------------------------------------------------
-bool_t inventory_add_item( const CHR_REF by_reference item, const CHR_REF by_reference character )
-{
-    chr_t * pchr, * pitem;
-    cap_t * pitem_cap;
-    bool_t  slot_found, pack_added;
-    int     slot_count;
-    int     cnt;
-
-    if ( !INGAME_CHR( item ) ) return bfalse;
-    pitem = ChrList.lst + item;
-
-    // don't allow sub-inventories
-    if ( pitem->pack.is_packed || pitem->isequipped ) return bfalse;
-
-    pitem_cap = pro_get_pcap( pitem->profile_ref );
-    if ( NULL == pitem_cap ) return bfalse;
-
-    if ( !INGAME_CHR( character ) ) return bfalse;
-    pchr = ChrList.lst + character;
-
-    // don't allow sub-inventories
-    if ( pchr->pack.is_packed || pchr->isequipped ) return bfalse;
-
-    slot_found = bfalse;
-    slot_count = 0;
-    for ( cnt = 0; cnt < INVEN_COUNT; cnt++ )
-    {
-        if ( IDSZ_NONE == inventory_idsz[cnt] ) continue;
-
-        if ( inventory_idsz[cnt] == pitem_cap->idsz[IDSZ_PARENT] )
-        {
-            slot_count = cnt;
-            slot_found = btrue;
-        }
-    }
-
-    if ( slot_found )
-    {
-        if ( INGAME_CHR( pchr->holdingwhich[slot_count] ) )
-        {
-            pchr->inventory[slot_count] = ( CHR_REF )MAX_CHR;
-        }
-    }
-
-    pack_added = chr_add_pack_item( item, character );
-
-    if ( slot_found && pack_added )
-    {
-        pchr->inventory[slot_count] = item;
-    }
-
-    return pack_added;
-}
 
 //--------------------------------------------------------------------------------------------
-CHR_REF inventory_get_item( const CHR_REF by_reference ichr, grip_offset_t grip_off, bool_t ignorekurse )
+void drop_all_idsz( const CHR_REF by_reference character, IDSZ idsz_min, IDSZ idsz_max )
 {
-    chr_t * pchr;
-    CHR_REF iitem;
-    int     cnt;
-
-    if ( !INGAME_CHR( ichr ) ) return ( CHR_REF )MAX_CHR;
-    pchr = ChrList.lst + ichr;
-
-    if ( pchr->pack.is_packed || pchr->isitem || MAX_CHR == pchr->pack.next )
-        return ( CHR_REF )MAX_CHR;
-
-    if ( pchr->pack.count == 0 ) return ( CHR_REF )MAX_CHR;
-
-    iitem = chr_get_pack_item( ichr, grip_off, ignorekurse );
-
-    // remove it from the "equipped" slots
-    if ( INGAME_CHR( iitem ) )
-    {
-        for ( cnt = 0; cnt < INVEN_COUNT; cnt++ )
-        {
-            if ( pchr->inventory[cnt] == iitem )
-            {
-                pchr->inventory[cnt] = iitem;
-                ChrList.lst[iitem].isequipped = bfalse;
-                break;
-            }
-        }
-    }
-
-    return iitem;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t pack_add_item( pack_t * ppack, CHR_REF item )
-{
-    CHR_REF oldfirstitem;
-    chr_t  * pitem;
-    cap_t  * pitem_cap;
-    pack_t * pitem_pack;
-
-    if ( NULL == ppack || !INGAME_CHR( item ) ) return bfalse;
-
-    if ( !INGAME_CHR( item ) ) return bfalse;
-    pitem      = ChrList.lst + item;
-    pitem_pack = &( pitem->pack );
-    pitem_cap  = chr_get_pcap( item );
-
-    oldfirstitem     = ppack->next;
-    ppack->next      = item;
-    pitem_pack->next = oldfirstitem;
-    ppack->count++;
-
-    return btrue;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t pack_remove_item( pack_t * ppack, CHR_REF iparent, CHR_REF iitem )
-{
-    CHR_REF old_next;
-    chr_t * pitem, * pparent;
-
-    // convert the iitem it to a pointer
-    old_next = ( CHR_REF )MAX_CHR;
-    pitem    = NULL;
-    if ( DEFINED_CHR( iitem ) )
-    {
-        pitem    = ChrList.lst + iitem;
-        old_next = pitem->pack.next;
-    }
-
-    // convert the pparent it to a pointer
-    pparent = NULL;
-    if ( DEFINED_CHR( iparent ) )
-    {
-        pparent = ChrList.lst + iparent;
-    }
-
-    // Remove the iitem from the pack
-    if ( NULL != pitem )
-    {
-        pitem->pack.was_packed = pitem->pack.is_packed;
-        pitem->pack.is_packed  = bfalse;
-    }
-
-    // adjust the iparent's next
-    if ( NULL != pparent )
-    {
-        pparent->pack.next = old_next;
-    }
-
-    if ( NULL != ppack )
-    {
-        ppack->count--;
-    }
-
-    return btrue;
-}
-
-//--------------------------------------------------------------------------------------------
-CHR_REF chr_pack_has_a_stack( const CHR_REF by_reference item, const CHR_REF by_reference character )
-{
-    /// @details ZZ@> This function looks in the character's pack for an item similar
-    ///    to the one given.  If it finds one, it returns the similar item's
-    ///    index number, otherwise it returns MAX_CHR.
-
-    CHR_REF istack;
-    Uint16  id;
-    bool_t  found;
-
-    chr_t * pitem;
-    cap_t * pitem_cap;
-
-    found  = bfalse;
-    istack = ( CHR_REF )MAX_CHR;
-
-    if ( !INGAME_CHR( item ) ) return istack;
-    pitem = ChrList.lst + item;
-    pitem_cap = chr_get_pcap( item );
-
-    if ( pitem_cap->isstackable )
-    {
-        PACK_BEGIN_LOOP( istack, ChrList.lst[character].pack.next )
-        {
-            if ( INGAME_CHR( istack ) )
-            {
-                chr_t * pstack     = ChrList.lst + istack;
-                cap_t * pstack_cap = chr_get_pcap( istack );
-
-                found = pstack_cap->isstackable;
-
-                if ( pstack->ammo >= pstack->ammomax )
-                {
-                    found = bfalse;
-                }
-
-                // you can still stack something even if the profiles don't match exactly,
-                // but they have to have all the same IDSZ properties
-                if ( found && ( pstack->profile_ref != pitem->profile_ref ) )
-                {
-                    for ( id = 0; id < IDSZ_COUNT && found; id++ )
-                    {
-                        if ( chr_get_idsz( istack, id ) != chr_get_idsz( item, id ) )
-                        {
-                            found = bfalse;
-                        }
-                    }
-                }
-            }
-
-            if ( found ) break;
-        }
-        PACK_END_LOOP( istack );
-
-        if ( !found )
-        {
-            istack = ( CHR_REF )MAX_CHR;
-        }
-    }
-
-    return istack;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t chr_add_pack_item( const CHR_REF by_reference item, const CHR_REF by_reference character )
-{
-    /// @details ZZ@> This function puts one character inside the other's pack
-
-    CHR_REF stack;
-    int     newammo;
-
-    chr_t  * pchr, * pitem;
-    cap_t  * pchr_cap,  * pitem_cap;
-    pack_t * pchr_pack, * pitem_pack;
-
-    if ( !INGAME_CHR( character ) ) return bfalse;
-    pchr      = ChrList.lst + character;
-    pchr_pack = &( pchr->pack );
-    pchr_cap  = chr_get_pcap( character );
-
-    if ( !INGAME_CHR( item ) ) return bfalse;
-    pitem      = ChrList.lst + item;
-    pitem_pack = &( pitem->pack );
-    pitem_cap  = chr_get_pcap( item );
-
-    // Make sure everything is hunkydori
-    if ( pitem_pack->is_packed || pchr_pack->is_packed || pchr->isitem )
-        return bfalse;
-
-    stack = chr_pack_has_a_stack( item, character );
-    if ( INGAME_CHR( stack ) )
-    {
-        // We found a similar, stackable item in the pack
-
-        chr_t  * pstack      = ChrList.lst + stack;
-        cap_t  * pstack_cap  = chr_get_pcap( stack );
-
-        // reveal the name of the item or the stack
-        if ( pitem->nameknown || pstack->nameknown )
-        {
-            pitem->nameknown  = btrue;
-            pstack->nameknown = btrue;
-        }
-
-        // reveal the usage of the item or the stack
-        if ( pitem_cap->usageknown || pstack_cap->usageknown )
-        {
-            pitem_cap->usageknown  = btrue;
-            pstack_cap->usageknown = btrue;
-        }
-
-        // add the item ammo to the stack
-        newammo = pitem->ammo + pstack->ammo;
-        if ( newammo <= pstack->ammomax )
-        {
-            // All transfered, so kill the in hand item
-            pstack->ammo = newammo;
-            if ( INGAME_CHR( pitem->attachedto ) )
-            {
-                detach_character_from_mount( item, btrue, bfalse );
-            }
-
-            chr_request_terminate( item );
-        }
-        else
-        {
-            // Only some were transfered,
-            pitem->ammo     = pitem->ammo + pstack->ammo - pstack->ammomax;
-            pstack->ammo    = pstack->ammomax;
-            SET_BIT( pchr->ai.alert, ALERTIF_TOOMUCHBAGGAGE );
-        }
-    }
-    else
-    {
-        // Make sure we have room for another item
-        if ( pchr_pack->count >= MAXNUMINPACK )
-        {
-            SET_BIT( pchr->ai.alert, ALERTIF_TOOMUCHBAGGAGE );
-            return bfalse;
-        }
-
-        // Take the item out of hand
-        if ( INGAME_CHR( pitem->attachedto ) )
-        {
-            detach_character_from_mount( item, btrue, bfalse );
-
-            // clear the dropped flag
-			UNSET_BIT( pitem->ai.alert, ALERTIF_DROPPED );
-        }
-
-        // Remove the item from play
-        pitem->hitready        = bfalse;
-        pitem_pack->was_packed = pitem_pack->is_packed;
-        pitem_pack->is_packed  = btrue;
-
-        // Insert the item into the pack as the first one
-        pack_add_item( pchr_pack, item );
-
-        // fix the flags
-        if ( pitem_cap->isequipment )
-        {
-            SET_BIT( pitem->ai.alert, ALERTIF_PUTAWAY );  // same as ALERTIF_ATLASTWAYPOINT;
-        }
-    }
-
-    return btrue;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t chr_remove_pack_item( CHR_REF ichr, CHR_REF iparent, CHR_REF iitem )
-{
-    chr_t  * pchr;
-    pack_t * pchr_pack;
-
-    bool_t removed;
-
-    if ( !DEFINED_CHR( ichr ) ) return bfalse;
-    pchr = ChrList.lst + ichr;
-    pchr_pack = &( pchr->pack );
-
-    // remove it from the pack
-    removed = pack_remove_item( pchr_pack, iparent, iitem );
-
-    // unequip the item
-    if ( removed && DEFINED_CHR( iitem ) )
-    {
-        ChrList.lst[iitem].isequipped = bfalse;
-        ChrList.lst[iitem].team       = chr_get_iteam( ichr );
-    }
-
-    return removed;
-}
-
-//--------------------------------------------------------------------------------------------
-CHR_REF chr_get_pack_item( const CHR_REF by_reference character, grip_offset_t grip_off, bool_t ignorekurse )
-{
-    /// @details ZZ@> This function takes the last item in the character's pack and puts
-    ///    it into the designated hand.  It returns the item number or MAX_CHR.
-
-    CHR_REF item, found_item, found_item_parent;
-
-    chr_t  * pchr, * pfound_item, *pfound_item_parent;
-    pack_t * pchr_pack, * pfound_item_pack, *pfound_item_parent_pack;
-
-    // does the character exist?
-    if ( !DEFINED_CHR( character ) ) return bfalse;
-    pchr      = ChrList.lst + character;
-    pchr_pack = &( pchr->pack );
-
-    // Can the character have a pack?
-    if ( pchr_pack->is_packed || pchr->isitem ) return ( CHR_REF )MAX_CHR;
-
-    // is the pack empty?
-    if ( MAX_CHR == pchr_pack->next || 0 == pchr_pack->count ) return ( CHR_REF )MAX_CHR;
-
-    // Find the last item in the pack
-    found_item_parent = character;
-    found_item        = character;
-    PACK_BEGIN_LOOP( item, pchr_pack->next )
-    {
-        found_item_parent = found_item;
-        found_item        = item;
-    }
-    PACK_END_LOOP( item );
-
-    // did we find anything?
-    if ( character == found_item || MAX_CHR == found_item ) return bfalse;
-
-    // convert the found_item it to a pointer
-    pfound_item      = NULL;
-    pfound_item_pack = NULL;
-    if ( DEFINED_CHR( found_item ) )
-    {
-        pfound_item = ChrList.lst + found_item;
-        pfound_item_pack = &( pfound_item->pack );
-    }
-
-    // convert the pfound_item_parent it to a pointer
-    pfound_item_parent      = NULL;
-    pfound_item_parent_pack = NULL;
-    if ( DEFINED_CHR( found_item_parent ) )
-    {
-        pfound_item_parent      = ChrList.lst + found_item_parent;
-        pfound_item_parent_pack = &( pfound_item_parent->pack );
-    }
-
-    // did we find a valid object?
-    if ( !INGAME_CHR( found_item ) )
-    {
-        chr_remove_pack_item( character, found_item_parent, found_item );
-
-        return bfalse;
-    }
-
-    // Figure out what to do with it
-    if ( pfound_item->iskursed && pfound_item->isequipped && !ignorekurse )
-    {
-        // Flag the last found_item as not removed
-        SET_BIT( pfound_item->ai.alert, ALERTIF_NOTTAKENOUT );  // Same as ALERTIF_NOTPUTAWAY
-
-        // Cycle it to the front
-        pfound_item_pack->next        = pchr_pack->next;
-        pfound_item_parent_pack->next = ( CHR_REF )MAX_CHR;
-        pchr_pack->next               = found_item;
-
-        if ( character == found_item_parent )
-        {
-            pfound_item_pack->next = ( CHR_REF )MAX_CHR;
-        }
-
-        found_item = ( CHR_REF )MAX_CHR;
-    }
-    else
-    {
-        // Remove the last found_item from the pack
-        chr_remove_pack_item( character, found_item_parent, found_item );
-
-        // Attach the found_item to the character's hand
-        attach_character_to_mount( found_item, character, grip_off );
-
-        // fix the flags
-		UNSET_BIT( pfound_item->ai.alert, ALERTIF_GRABBED );
-        SET_BIT( pfound_item->ai.alert, ALERTIF_TAKENOUT );
-    }
-
-    if ( MAX_CHR == pchr_pack->next )
-    {
-        pchr_pack->count = 0;
-    }
-
-    return found_item;
-}
-
-//--------------------------------------------------------------------------------------------
-void drop_keys( const CHR_REF by_reference character )
-{
-    /// @details ZZ@> This function drops all keys ( [KEYA] to [KEYZ] ) that are in a character's
+    /// @details ZZ@> This function drops all items ( idsz_min to idsz_max ) that are in a character's
     ///    inventory ( Not hands ).
 
     chr_t  * pchr;
     CHR_REF  item, lastitem;
     FACING_T direction;
-    IDSZ     testa, testz;
 
     if ( !INGAME_CHR( character ) ) return;
     pchr = ChrList.lst + character;
 
-    if ( pchr->pos.z > ( PITDEPTH >> 1 ) ) // Don't lose keys in pits...
+    if ( pchr->pos.z <= ( PITDEPTH >> 1 ) ) 
     {
-        // The IDSZs to find
-        testa = MAKE_IDSZ( 'K', 'E', 'Y', 'A' );  // [KEYA]
-        testz = MAKE_IDSZ( 'K', 'E', 'Y', 'Z' );  // [KEYZ]
+        // Don't lose items in pits...
+        return;
+    }
 
-        lastitem = character;
-        PACK_BEGIN_LOOP( item, pchr->pack.next )
+    lastitem = character;
+    PACK_BEGIN_LOOP( item, pchr->pack.next )
+    {
+        if ( INGAME_CHR( item ) && item != character )
         {
-            if ( INGAME_CHR( item ) && item != character )  // Should never happen...
+            chr_t * pitem = ChrList.lst + item;
+
+            if (( chr_get_idsz( item, IDSZ_PARENT ) >= idsz_min && chr_get_idsz( item, IDSZ_PARENT ) <= idsz_max ) ||
+                ( chr_get_idsz( item, IDSZ_TYPE   ) >= idsz_min && chr_get_idsz( item, IDSZ_TYPE   ) <= idsz_max ) )
             {
-                chr_t * pitem = ChrList.lst + item;
+                // We found a valid item...
+                TURN_T turn;
 
-                if (( chr_get_idsz( item, IDSZ_PARENT ) >= testa && chr_get_idsz( item, IDSZ_PARENT ) <= testz ) ||
-                    ( chr_get_idsz( item, IDSZ_TYPE ) >= testa && chr_get_idsz( item, IDSZ_TYPE ) <= testz ) )
+                direction = RANDIE;
+                turn      = TO_TURN( direction );
+
+                // unpack the item
+                if( chr_pack_remove_item( character, lastitem, item ) )
                 {
-                    // We found a key...
-                    TURN_T turn;
-
-                    direction = RANDIE;
-                    turn      = TO_TURN( direction );
-
-                    // unpack the item
-                    ChrList.lst[lastitem].pack.next = pitem->pack.next;
-                    pitem->pack.next = ( CHR_REF )MAX_CHR;
-                    pchr->pack.count--;
-                    pitem->attachedto = ( CHR_REF )MAX_CHR;
-					pitem->dismount_timer = PHYS_DISMOUNT_TIME;
-                    SET_BIT( pitem->ai.alert, ALERTIF_DROPPED );
-                    pitem->hitready = btrue;
-                    pitem->pack.was_packed = pitem->pack.is_packed;
-                    pitem->pack.is_packed  = bfalse;
-                    pitem->isequipped    = bfalse;
+                    ADD_BITS( pitem->ai.alert, ALERTIF_DROPPED );
+                    pitem->hitready       = btrue;
 
                     chr_set_pos( pitem, chr_get_pos_v( pchr ) );
 
                     pitem->ori.facing_z           = direction + ATK_BEHIND;
-                    pitem->enviro.floor_level     = pchr->enviro.floor_level;
-                    pitem->enviro.level           = pchr->enviro.level;
-                    pitem->enviro.fly_level       = pchr->enviro.fly_level;
                     pitem->onwhichplatform_ref    = pchr->onwhichplatform_ref;
                     pitem->onwhichplatform_update = pchr->onwhichplatform_update;
                     pitem->vel.x                  = turntocos[ turn ] * DROPXYVEL;
                     pitem->vel.y                  = turntosin[ turn ] * DROPXYVEL;
                     pitem->vel.z                  = DROPZVEL;
-                    pitem->team                   = pitem->baseteam;
+                    pitem->enviro                 = pchr->enviro;
+                    pitem->dismount_timer         = PHYS_DISMOUNT_TIME;
 
-                    chr_set_floor_level( pitem, pchr->enviro.floor_level );
-                }
-                else
-                {
-                    lastitem = item;
+                    chr_set_floor_level( pitem, pchr->enviro.grid_level );
                 }
             }
+            else
+            {
+                lastitem = item;
+            }
         }
-        PACK_END_LOOP( item );
     }
+    PACK_END_LOOP( item );
+
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1928,7 +1506,7 @@ bool_t drop_all_items( const CHR_REF by_reference character )
 
         while ( pchr->pack.count > 0 )
         {
-            item = inventory_get_item( character, GRIP_LEFT, bfalse );
+            item = chr_inventory_remove_item( character, GRIP_LEFT, bfalse );
 
             if ( INGAME_CHR( item ) )
             {
@@ -1938,14 +1516,11 @@ bool_t drop_all_items( const CHR_REF by_reference character )
 
                 chr_set_pos( pitem, chr_get_pos_v(pchr) );
                 pitem->hitready           = btrue;
-                SET_BIT( pitem->ai.alert, ALERTIF_DROPPED );
-				pitem->dismount_timer		  = PHYS_DISMOUNT_TIME;
-                pitem->enviro.floor_level     = pchr->enviro.floor_level;
-                pitem->enviro.level           = pchr->enviro.level;
-                pitem->enviro.fly_level       = pchr->enviro.fly_level;
+                ADD_BITS( pitem->ai.alert, ALERTIF_DROPPED );
+                pitem->dismount_timer          = PHYS_DISMOUNT_TIME;
+                pitem->enviro                 = pchr->enviro;
                 pitem->onwhichplatform_ref    = pchr->onwhichplatform_ref;
                 pitem->onwhichplatform_update = pchr->onwhichplatform_update;
-
                 pitem->ori.facing_z           = direction + ATK_BEHIND;
                 pitem->vel.x                  = turntocos[( direction>>2 ) & TRIG_TABLE_MASK ] * DROPXYVEL;
                 pitem->vel.y                  = turntosin[( direction>>2 ) & TRIG_TABLE_MASK ] * DROPXYVEL;
@@ -1955,7 +1530,7 @@ bool_t drop_all_items( const CHR_REF by_reference character )
                 pitem->dismount_timer         = PHYS_DISMOUNT_TIME;
                 pitem->dismount_object        = character;
 
-                chr_set_floor_level( pitem, pchr->enviro.floor_level );
+                chr_set_floor_level( pitem, pchr->enviro.grid_level );
             }
 
             direction += diradd;
@@ -2080,8 +1655,8 @@ bool_t character_grab_stuff( const CHR_REF by_reference ichr_a, grip_offset_t gr
         // do nothing to yourself
         if ( ichr_a == ichr_b ) continue;
 
-		// Dont do hidden objects
-		if ( pchr_b->is_hidden ) continue;
+        // Don't do hidden objects
+        if ( pchr_b->is_hidden ) continue;
 
         if ( pchr_b->pack.is_packed ) continue;        // pickpocket not allowed yet
         if ( INGAME_CHR( pchr_b->attachedto ) ) continue; // disarm not allowed yet
@@ -2118,36 +1693,12 @@ bool_t character_grab_stuff( const CHR_REF by_reference ichr_a, grip_offset_t gr
             grab_list[grab_count].ichr = ichr_b;
             grab_list[grab_count].dist = dxy;
             grab_count++;
-
-            //iline = get_free_line();
-            //if( iline >= 0)
-            //{
-            //    line_list[iline].src     = nupoint[0];
-            //    line_list[iline].dst     = pchr_b->pos;
-            //    line_list[iline].color.r = color_grn.r * INV_FF;
-            //    line_list[iline].color.g = color_grn.g * INV_FF;
-            //    line_list[iline].color.b = color_grn.b * INV_FF;
-            //    line_list[iline].color.a = 1.0f;
-            //    line_list[iline].time    = ticks + ONESECOND * 5;
-            //}
         }
         else
         {
             ungrab_list[grab_count].ichr = ichr_b;
             ungrab_list[grab_count].dist = dxy;
             ungrab_count++;
-
-            //iline = get_free_line();
-            //if( iline >= 0)
-            //{
-            //    line_list[iline].src     = nupoint[0];
-            //    line_list[iline].dst     = pchr_b->pos;
-            //    line_list[iline].color.r = color_red.r * INV_FF;
-            //    line_list[iline].color.g = color_red.g * INV_FF;
-            //    line_list[iline].color.b = color_red.b * INV_FF;
-            //    line_list[iline].color.a = 1.0f;
-            //    line_list[iline].time    = ticks + ONESECOND * 5;
-            //}
         }
     }
     CHR_END_LOOP();
@@ -2190,7 +1741,7 @@ bool_t character_grab_stuff( const CHR_REF by_reference ichr_a, grip_offset_t gr
             // Lift the item a little and quit...
             pchr_b->vel.z = DROPZVEL;
             pchr_b->hitready = btrue;
-            SET_BIT( pchr_b->ai.alert, ALERTIF_DROPPED );
+            ADD_BITS( pchr_b->ai.alert, ALERTIF_DROPPED );
             break;
         }
 
@@ -2309,18 +1860,11 @@ void character_swipe( const CHR_REF by_reference ichr, slot_t slot )
     if( iweapon != iholder && iweapon != ichr )
     {
         // This seems to be the "proper" place to activate the held object.
-        // If the attack action  of the character holding the weapon does not have 
-        // MADFX_ACTLEFT or MADFX_ACTRIGHT bits (and so character_swipe function is never called)
-        // then the action is played and the ALERTIF_USED bit is set in the chr_do_latch_attack()
-        // function.
-        //
-        // It would be better to move all of this to the character_swipe() function, but we cannot be assured
-        // that all models have the proper bits set.
 
-	    // Make the iweapon attack too
-	    chr_play_action( pweapon, ACTION_MJ, bfalse );
+        // Make the iweapon attack too
+        chr_play_action( pweapon, ACTION_MJ, bfalse );
 
-        SET_BIT( pweapon->ai.alert, ALERTIF_USED );
+        ADD_BITS( pweapon->ai.alert, ALERTIF_USED );
     }
 
     // What kind of attack are we going to do?
@@ -2334,15 +1878,17 @@ void character_swipe( const CHR_REF by_reference ichr, slot_t slot )
 
             pthrown->iskursed = bfalse;
             pthrown->ammo = 1;
-            SET_BIT( pthrown->ai.alert, ALERTIF_THROWN );
+            ADD_BITS( pthrown->ai.alert, ALERTIF_THROWN );
             velocity = pchr->strength / ( pthrown->phys.weight * THROWFIX );
             velocity += MINTHROWVELOCITY;
             velocity = MIN( velocity, MAXTHROWVELOCITY );
 
             turn = TO_TURN( pchr->ori.facing_z + ATK_BEHIND );
-            pthrown->vel.x += turntocos[ turn ] * velocity;
-            pthrown->vel.y += turntosin[ turn ] * velocity;
-            pthrown->vel.z = DROPZVEL;
+            {
+                fvec3_t _tmp_vec = VECT3(turntocos[ turn ] * velocity, turntocos[ turn ] * velocity, DROPZVEL ); 
+                phys_data_accumulate_avel( &(pthrown->phys), _tmp_vec.v );
+            }
+
             if ( pweapon->ammo <= 1 )
             {
                 // Poof the item
@@ -2497,7 +2043,7 @@ void call_for_help( const CHR_REF by_reference character )
     {
         if ( cnt != character && !team_hates_team( pchr->team, team ) )
         {
-            SET_BIT( pchr->ai.alert, ALERTIF_CALLEDFORHELP );
+            ADD_BITS( pchr->ai.alert, ALERTIF_CALLEDFORHELP );
         }
     }
     CHR_END_LOOP();
@@ -2640,8 +2186,8 @@ void give_experience( const CHR_REF by_reference character, int amount, xp_type 
 
     if ( !pchr->invictus || override_invictus )
     {
-        float intadd = ( FP8_TO_INT( pchr->intelligence ) - 10.0f ) / 200.0f;
-        float wisadd = ( FP8_TO_INT( pchr->wisdom )       - 10.0f ) / 400.0f;
+        float intadd = ( SFP8_TO_SINT( pchr->intelligence ) - 10.0f ) / 200.0f;
+        float wisadd = ( SFP8_TO_SINT( pchr->wisdom )       - 10.0f ) / 400.0f;
 
         // Figure out how much experience to give
         newamount = amount;
@@ -2653,7 +2199,7 @@ void give_experience( const CHR_REF by_reference character, int amount, xp_type 
         // Intelligence and slightly wisdom increases xp gained (0,5% per int and 0,25% per wisdom above 10)
         newamount *= 1.00f + intadd + wisadd;
 
-        // Apply XP bonus/penality depending on game difficulty
+        // Apply XP bonus/penalty depending on game difficulty
         if ( cfg.difficulty >= GAME_HARD ) newamount *= 1.20f;                // 20% extra on hard
         else if ( cfg.difficulty >= GAME_NORMAL ) newamount *= 1.10f;       // 10% extra on normal
 
@@ -2706,14 +2252,14 @@ chr_t * resize_one_character( chr_t * pchr )
         willgetcaught = bfalse;
         if ( pchr->fat_goto > pchr->fat )
         {
-            pchr->bump.size += bump_increase;
+            pchr->bump_1.size += bump_increase;
 
             if ( chr_test_wall( pchr, NULL ) )
             {
                 willgetcaught = btrue;
             }
 
-            pchr->bump.size -= bump_increase;
+            pchr->bump_1.size -= bump_increase;
         }
 
         // If it is getting caught, simply halt growth until later
@@ -2731,7 +2277,7 @@ chr_t * resize_one_character( chr_t * pchr )
             // Make it that big...
             chr_set_fat( pchr, newsize );
 
-            if ( pcap->weight == 0xFF )
+            if ( CAP_INFINITE_WEIGHT == pcap->weight )
             {
                 pchr->phys.weight = INFINITE_WEIGHT;
             }
@@ -2745,19 +2291,6 @@ chr_t * resize_one_character( chr_t * pchr )
 
     return pchr;
 }
-
-//--------------------------------------------------------------------------------------------
-//void resize_all_characters()
-//{
-//    /// @details ZZ@> This function makes the characters get bigger or smaller, depending
-//    ///    on their fat_goto and fat_goto_time. Spellbooks do not resize
-//
-//    CHR_BEGIN_LOOP_ACTIVE( ichr, pchr )
-//    {
-//        resize_one_character( pchr );
-//    }
-//    CHR_END_LOOP();
-//}
 
 //--------------------------------------------------------------------------------------------
 bool_t export_one_character_name_vfs( const char *szSaveName, const CHR_REF by_reference character )
@@ -2811,16 +2344,16 @@ bool_t chr_upload_cap( chr_t * pchr, cap_t * pcap )
     pcap->bumpdampen = pchr->phys.bumpdampen;
     if ( pchr->phys.weight == INFINITE_WEIGHT )
     {
-        pcap->weight = 0xFF;
+        pcap->weight = CAP_INFINITE_WEIGHT;
     }
     else
     {
         Uint32 itmp = pchr->phys.weight / pchr->fat / pchr->fat / pchr->fat;
-        pcap->weight = MIN( itmp, 0xFE );
+        pcap->weight = MIN( itmp, CAP_MAX_WEIGHT );
     }
 
     // Other junk
-    pcap->flyheight   = pchr->flyheight;
+    pcap->fly_height   = pchr->fly_height;
     pcap->alpha       = pchr->alpha_base;
     pcap->light       = pchr->light_base;
     pcap->flashand    = pchr->flashand;
@@ -2828,7 +2361,7 @@ bool_t chr_upload_cap( chr_t * pchr, cap_t * pcap )
 
     // Jumping
     pcap->jump       = pchr->jump_power;
-    pcap->jumpnumber = pchr->jumpnumberreset;
+    pcap->jump_number = pchr->jump_number_reset;
 
     // Flags
     pcap->stickybutt      = pchr->stickybutt;
@@ -3008,22 +2541,22 @@ bool_t chr_download_cap( chr_t * pchr, cap_t * pcap )
 
     // Jumping
     pchr->jump_power = pcap->jump;
-    pchr->jumpnumberreset = pcap->jumpnumber;
+    chr_set_jump_number_reset( pchr, pcap->jump_number );
 
     // Other junk
-    pchr->flyheight   = pcap->flyheight;
-    pchr->maxaccel = pchr->maxaccel_reset = pcap->maxaccel[pchr->skin];
-    pchr->alpha_base   = pcap->alpha;
-    pchr->light_base   = pcap->light;
+    chr_set_fly_height( pchr, pcap->fly_height );
+    pchr->maxaccel    = pchr->maxaccel_reset = pcap->maxaccel[pchr->skin];
+    pchr->alpha_base  = pcap->alpha;
+    pchr->light_base  = pcap->light;
     pchr->flashand    = pcap->flashand;
     pchr->phys.dampen = pcap->dampen;
 
     // Load current life and mana. this may be overridden later
-    pchr->life = CLIP( pcap->life_spawn, LOWSTAT, pchr->lifemax );
-    pchr->mana = CLIP( pcap->mana_spawn,       0, pchr->manamax );
+    pchr->life = CLIP( pcap->life_spawn, LOWSTAT, (UFP8_T)MAX(0, pchr->lifemax) );
+    pchr->mana = CLIP( pcap->mana_spawn,       0, (UFP8_T)MAX(0, pchr->manamax) );
 
     pchr->phys.bumpdampen = pcap->bumpdampen;
-    if ( pcap->weight == 0xFF )
+    if ( CAP_INFINITE_WEIGHT == pcap->weight )
     {
         pchr->phys.weight = INFINITE_WEIGHT;
     }
@@ -3210,7 +2743,7 @@ bool_t heal_character( const CHR_REF by_reference character, const CHR_REF by_re
     // Set alerts, but don't alert that we healed ourselves
     if ( healer != character && pchr_h->attachedto != character && ABS( amount ) > HURTDAMAGE )
     {
-        SET_BIT( pchr->ai.alert, ALERTIF_HEALED );
+        ADD_BITS( pchr->ai.alert, ALERTIF_HEALED );
         pchr->ai.attacklast = healer;
     }
 
@@ -3313,6 +2846,7 @@ void kill_character( const CHR_REF by_reference ichr, const CHR_REF by_reference
     int action;
     Uint16 experience;
     TEAM_REF killer_team;
+    ai_state_bundle_t tmp_bdl_ai;
 
     if ( !DEFINED_CHR( ichr ) ) return;
     pchr = ChrList.lst + ichr;
@@ -3365,7 +2899,7 @@ void kill_character( const CHR_REF by_reference ichr, const CHR_REF by_reference
 
     //Set various alerts to let others know it has died
     //and distribute experience to whoever needs it
-    SET_BIT( pchr->ai.alert, ALERTIF_KILLED );
+    ADD_BITS( pchr->ai.alert, ALERTIF_KILLED );
 
     CHR_BEGIN_LOOP_ACTIVE( tnc, plistener )
     {
@@ -3381,13 +2915,13 @@ void kill_character( const CHR_REF by_reference ichr, const CHR_REF by_reference
         if ( TeamStack.lst[pchr->team].leader == ichr && chr_get_iteam( tnc ) == pchr->team )
         {
             // All folks on the leaders team get the alert
-            SET_BIT( plistener->ai.alert, ALERTIF_LEADERKILLED );
+            ADD_BITS( plistener->ai.alert, ALERTIF_LEADERKILLED );
         }
 
         // Let the other characters know it died
         if ( plistener->ai.target == ichr )
         {
-            SET_BIT( plistener->ai.alert, ALERTIF_TARGETKILLED );
+            ADD_BITS( plistener->ai.alert, ALERTIF_TARGETKILLED );
         }
     }
     CHR_END_LOOP();
@@ -3398,14 +2932,65 @@ void kill_character( const CHR_REF by_reference ichr, const CHR_REF by_reference
     // If it's a player, let it die properly before enabling respawn
     if ( VALID_PLA( pchr->is_which_player ) ) revivetimer = ONESECOND; // 1 second
 
-    // Let it's AI script run one last time
+    // Let its AI script run one last time
     pchr->ai.timer = update_wld + 1;            // Prevent IfTimeOut in scr_run_chr_script()
-    scr_run_chr_script( ichr );
+    scr_run_chr_script( ai_state_bundle_set( &tmp_bdl_ai, pchr ) );
 
     // Stop any looped sounds
     if ( pchr->loopedsound_channel != INVALID_SOUND ) sound_stop_channel( pchr->loopedsound_channel );
     looped_stop_object_sounds( ichr );
     pchr->loopedsound_channel = INVALID_SOUND;
+}
+
+//--------------------------------------------------------------------------------------------
+int damage_character_hurt( chr_bundle_t * pbdl, int base_damage, int actual_damage, CHR_REF attacker, bool_t ignore_invictus )
+{
+    CHR_REF      loc_ichr;
+    chr_t      * loc_pchr;
+
+    if( 0 == actual_damage ) return 0;
+
+    if( NULL == pbdl || NULL == pbdl->chr_ptr ) return 0;
+
+    // alias some variables
+    loc_ichr = pbdl->chr_ref;
+    loc_pchr = pbdl->chr_ptr;
+
+    // Only actual_damage if not invincible
+    if( loc_pchr->damagetime > 0 && !ignore_invictus ) return 0;
+    
+    loc_pchr->life -= actual_damage;
+
+    // Taking actual_damage action
+    if ( loc_pchr->life <= 0 )
+    {
+        kill_character( loc_ichr, attacker, ignore_invictus );
+    }
+    else if ( base_damage > HURTDAMAGE )
+    {
+        chr_play_action( loc_pchr, randomize_action( ACTION_HA, 0 ), bfalse );
+    }
+
+    return actual_damage;
+}
+
+//--------------------------------------------------------------------------------------------
+int damage_character_heal( chr_bundle_t * pbdl, int heal_amount, CHR_REF attacker, bool_t ignore_invictus )
+{
+    CHR_REF      loc_ichr;
+    chr_t      * loc_pchr;
+    ai_state_t * loc_pai;
+
+    if( NULL == pbdl || NULL == pbdl->chr_ptr ) return 0;
+
+    // alias some variables
+    loc_ichr = pbdl->chr_ref;
+    loc_pchr = pbdl->chr_ptr;
+    loc_pai  = &(loc_pchr->ai);
+
+    heal_character( loc_ichr, attacker, heal_amount, ignore_invictus );
+
+    return heal_amount;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -3419,22 +3004,25 @@ int damage_character( const CHR_REF by_reference character, FACING_T direction,
     ///    ATK_RIGHT if from the right, ATK_BEHIND if from the back, ATK_LEFT if from the
     ///    left.
 
-    int     action;
+    chr_bundle_t bdl;
+    chr_t      * loc_pchr;
+    cap_t      * loc_pcap;
+    ai_state_t * loc_pai;
+    CHR_REF      loc_ichr;
+
     int     actual_damage, base_damage, max_damage;
-    chr_t * pchr;
-    cap_t * pcap;
-    bool_t do_feedback = (FEEDBACK_OFF != cfg.feedback);
+    int     mana_damage;
     bool_t friendly_fire = bfalse, immune_to_damage = bfalse;
+    bool_t do_feedback = (FEEDBACK_OFF != cfg.feedback);
 
     if ( !INGAME_CHR( character ) ) return 0;
-    pchr = ChrList.lst + character;
+    loc_pchr = ChrList.lst + character;
 
-    pcap = pro_get_pcap( pchr->profile_ref );
-    if ( NULL == pcap ) return 0;
-
-	//Don't continue if there is no damage or the character isn't alive
-	max_damage = ABS(damage.base) + ABS(damage.rand);
-    if ( !pchr->alive || max_damage == 0 ) return 0;
+    if( NULL == chr_bundle_set( &bdl, loc_pchr ) ) return 0;
+    loc_pchr = bdl.chr_ptr;
+    loc_pcap = bdl.cap_ptr;
+    loc_ichr = bdl.chr_ref;
+    loc_pai  = &(loc_pchr->ai);
 
     // determine some optional behavior
     if( !INGAME_CHR(attacker) )
@@ -3444,13 +3032,13 @@ int damage_character( const CHR_REF by_reference character, FACING_T direction,
     else
     {
         // do not show feedback for damaging yourself
-        if( attacker == character )
+        if( attacker == loc_ichr )
         {
             do_feedback = bfalse;
         }
 
         // identify friendly fire for color selection :)
-        if( chr_get_iteam(character) == chr_get_iteam(attacker) )
+        if( chr_get_iteam(loc_ichr) == chr_get_iteam(attacker) )
         {
             friendly_fire = btrue;
         }
@@ -3462,213 +3050,217 @@ int damage_character( const CHR_REF by_reference character, FACING_T direction,
         }
 
         // don't show damage to players since they get feedback from the status bars
-        if( pchr->StatusList_on || VALID_PLA( pchr->is_which_player ) )
+        if( loc_pchr->StatusList_on || VALID_PLA( loc_pchr->is_which_player ) )
         {
             do_feedback = bfalse;
         }
     }
-    
+
+    actual_damage = 0;
+    mana_damage   = 0;
+    max_damage    = ABS(damage.base) + ABS(damage.rand);
+
     // Lessen actual_damage for resistance, 0 = Weakness, 1 = Normal, 2 = Resist, 3 = Big Resist
     // This can also be used to lessen effectiveness of healing
     actual_damage = generate_irand_pair( damage );
     base_damage   = actual_damage;
-    actual_damage = actual_damage >> GET_DAMAGE_RESIST( pchr->damagemodifier[damagetype] );
+    actual_damage = actual_damage >> GET_DAMAGE_RESIST( loc_pchr->damagemodifier[damagetype] );
 
 	// Increase electric damage when in water
-	if( damagetype == DAMAGE_ZAP && chr_is_over_water( pchr ) )
+	if( damagetype == DAMAGE_ZAP && chr_is_over_water( loc_pchr ) )
 	{
 		// Only if actually in the water
-		if ( pchr->pos.z <= water.surface_level )
-			actual_damage = actual_damage << 1;		//@note: ZF> Is double damage too much?
+		if ( loc_pchr->pos.z <= water.surface_level )
+        {
+			actual_damage = actual_damage << 1;		/// @note: ZF> Is double damage too much?
+        }
 	}
 
     // Allow actual_damage to be dealt to mana (mana shield spell)
-    if ( HAS_SOME_BITS(pchr->damagemodifier[damagetype], DAMAGEMANA) )
+    if ( HAS_SOME_BITS(loc_pchr->damagemodifier[damagetype], DAMAGEMANA) )
     {
-        int manadamage;
-        manadamage = MAX( pchr->mana - actual_damage, 0 );
-        pchr->mana = manadamage;
-        actual_damage -= manadamage;
-        if ( pchr->ai.index != attacker )
-        {
-            SET_BIT( pchr->ai.alert, ALERTIF_ATTACKED );
-            pchr->ai.attacklast = attacker;
-        }
+        // determine the change to the mana
+        int tmp_final_mana = loc_pchr->mana - actual_damage;
+        int delta_mana;
+
+        // clip the final mana so it is within the range
+        tmp_final_mana = CLIP(tmp_final_mana, 0, loc_pchr->manamax);
+        delta_mana     = tmp_final_mana - loc_pchr->mana;
+
+        // modify the actual damage amounts
+        mana_damage   += delta_mana;
+        actual_damage -= delta_mana;
     }
 
-    // Allow charging (Invert actual_damage to mana)
-    if ( HAS_SOME_BITS(pchr->damagemodifier[damagetype], DAMAGECHARGE) )
+    // Allow charging (Invert actual_damage to mana_damage)
+    if ( HAS_SOME_BITS(loc_pchr->damagemodifier[damagetype], DAMAGECHARGE) )
     {
-        pchr->mana += actual_damage;
-        if ( pchr->mana > pchr->manamax )
-        {
-            pchr->mana = pchr->manamax;
-        }
-        return 0;
+        // determine the change to the mana
+        int tmp_final_mana = loc_pchr->mana + actual_damage;
+        int delta_mana;
+
+        // clip the final mana so it is within the range
+        tmp_final_mana = CLIP(tmp_final_mana, 0, loc_pchr->manamax);
+        delta_mana     = tmp_final_mana - loc_pchr->mana;
+
+        // modify the actual damage amounts
+        mana_damage   += delta_mana;
+        actual_damage -= delta_mana;
     }
 
     // Invert actual_damage to heal
-    if ( HAS_SOME_BITS(pchr->damagemodifier[damagetype], DAMAGEINVERT) )
+    if ( HAS_SOME_BITS(loc_pchr->damagemodifier[damagetype], DAMAGEINVERT) )
+    {
         actual_damage = -actual_damage;
+    }
 
     // Remember the actual_damage type
-    pchr->ai.damagetypelast = damagetype;
-    pchr->ai.directionlast  = direction;
-        
+    loc_pai->damagetypelast = damagetype;
+    loc_pai->directionlast  = direction;
+
     // Check for characters who are immune to this damage, no need to continue if they have
-	immune_to_damage = (actual_damage > 0 && actual_damage <= pchr->damagethreshold) || HAS_SOME_BITS(pchr->damagemodifier[damagetype], DAMAGEINVICTUS); 
-	if ( immune_to_damage )
+    immune_to_damage = (actual_damage > 0 && actual_damage <= loc_pchr->damagethreshold) || HAS_SOME_BITS(loc_pchr->damagemodifier[damagetype], DAMAGEINVICTUS); 
+    if ( immune_to_damage )
     {
-		//Dark green text
-		const float lifetime = 3;
-	    SDL_Color text_color = {0xFF, 0xFF, 0xFF, 0xFF};
-		GLXvector4f tint  = { 0.0f, 0.5f, 0.00f, 1.00f };
-            
+        //Dark green text
+        const float lifetime = 3;
+        SDL_Color text_color = {0xFF, 0xFF, 0xFF, 0xFF};
+        GLXvector4f tint  = { 0.0f, 0.5f, 0.00f, 1.00f };
+
         actual_damage = 0;
-        spawn_defense_ping( pchr, attacker );
+        spawn_defense_ping( loc_pchr, attacker );
 
-		//Character is simply immune to the damage
-		chr_make_text_billboard( character, "Immune!", text_color, tint, lifetime, bb_opt_all );
-	}
+        // Character is simply immune to the damage
+        chr_make_text_billboard( loc_ichr, "Immune!", text_color, tint, lifetime, (BIT_FIELD)bb_opt_all );
+    }
 
-    // Do it already
     if ( actual_damage > 0 )
     {
-        // Only actual_damage if not invincible
-        if ( 0 == pchr->damagetime || ignore_invictus )
+        // Hard mode deals 25% extra actual damage to players!
+        if ( cfg.difficulty >= GAME_HARD && VALID_PLA( loc_pchr->is_which_player ) && !VALID_PLA(ChrList.lst[attacker].is_which_player) ) 
         {
-            // Hard mode deals 25% extra actual damage to players!
-            if ( cfg.difficulty >= GAME_HARD && VALID_PLA( pchr->is_which_player ) && !VALID_PLA(ChrList.lst[attacker].is_which_player) ) actual_damage *= 1.25f;
+            actual_damage *= 1.25f;
+        }
 
-            // Easy mode deals 25% extra actual damage by players and 25% less to players
-            if ( cfg.difficulty <= GAME_EASY )
+        // Easy mode deals 25% extra actual damage by players and 25% less to players
+        if ( cfg.difficulty <= GAME_EASY )
+        {
+            if (  VALID_PLA(ChrList.lst[attacker].is_which_player) && !VALID_PLA( loc_pchr->is_which_player ) ) 
             {
-                if (  VALID_PLA(ChrList.lst[attacker].is_which_player) && !VALID_PLA( pchr->is_which_player ) ) actual_damage *= 1.25f;
-                if ( !VALID_PLA(ChrList.lst[attacker].is_which_player) &&  VALID_PLA( pchr->is_which_player ) ) actual_damage *= 0.75f;
+                actual_damage *= 1.25f;
             }
 
-            if ( actual_damage != 0 )
+            if ( !VALID_PLA(ChrList.lst[attacker].is_which_player) &&  VALID_PLA( loc_pchr->is_which_player ) ) 
             {
-                if ( HAS_NO_BITS( DAMFX_ARMO, effects ) )
-                {
-                    actual_damage = ( actual_damage * pchr->defense  * INV_FF );
-                }
-
-                pchr->life -= actual_damage;
-
-                // Spawn blud particles
-                if ( pcap->blud_valid )
-                {
-                    if ( pcap->blud_valid == ULTRABLUDY || ( base_damage > HURTDAMAGE && damagetype < DAMAGE_HOLY ) )
-                    {
-                        spawn_one_particle( pchr->pos, pchr->ori.facing_z + direction, pchr->profile_ref, pcap->blud_pip,
-                            ( CHR_REF )MAX_CHR, GRIP_LAST, pchr->team, character, ( PRT_REF )TOTAL_MAX_PRT, 0, ( CHR_REF )MAX_CHR );
-                    }
-                }
-
-                // Set attack alert if it wasn't an accident
-                if ( base_damage > HURTDAMAGE )
-                {
-                    if ( team == TEAM_DAMAGE )
-                    {
-                        pchr->ai.attacklast = ( CHR_REF )MAX_CHR;
-                    }
-                    else
-                    {
-                        // Don't alert the character too much if under constant fire
-                        if ( pchr->carefultime == 0 )
-                        {
-                            // Don't let characters chase themselves...  That would be silly
-                            if ( attacker != character )
-                            {
-                                SET_BIT( pchr->ai.alert, ALERTIF_ATTACKED );
-                                pchr->ai.attacklast = attacker;
-                                pchr->carefultime = CAREFULTIME;
-                            }
-                        }
-                    }
-                }
-
-                // Taking actual_damage action
-                if ( pchr->life <= 0 )
-                {
-                    kill_character( character, attacker, ignore_invictus );
-                }
-                else
-                {
-                    action = ACTION_HA;
-                    if ( base_damage > HURTDAMAGE )
-                    {
-                        action += generate_randmask( 0, 3 );
-                        chr_play_action( pchr, action, bfalse );
-
-                        // Make the character invincible for a limited time only
-                        if ( HAS_NO_BITS( effects, DAMFX_TIME ) )
-                        {
-                            pchr->damagetime = DAMAGETIME;
-                        }
-                    }
-                }
+                actual_damage *= 0.75f;
             }
+        }
 
-            /// @test spawn a fly-away damage indicator?
-            if ( do_feedback )
+        if ( HAS_NO_BITS( DAMFX_ARMO, effects ) )
+        {
+            actual_damage *= loc_pchr->defense * INV_FF;
+        }
+
+        // hurt the character
+        actual_damage = damage_character_hurt( &bdl, base_damage, actual_damage, attacker, ignore_invictus );
+
+        // Make the character invincible for a limited time only
+        if ( HAS_NO_BITS( effects, DAMFX_TIME ) )
+        {
+            loc_pchr->damagetime = DAMAGETIME;
+        }
+
+        // Spawn blud particles
+        if ( loc_pcap->blud_valid )
+        {
+            if ( loc_pcap->blud_valid == ULTRABLUDY || ( base_damage > HURTDAMAGE && damagetype < DAMAGE_HOLY ) )
             {
-                const char * tmpstr;
-                int rank;
+                spawn_one_particle( loc_pchr->pos, loc_pchr->ori.facing_z + direction, loc_pchr->profile_ref, loc_pcap->blud_pip,
+                    ( CHR_REF )MAX_CHR, GRIP_LAST, loc_pchr->team, loc_ichr, ( PRT_REF )TOTAL_MAX_PRT, 0, ( CHR_REF )MAX_CHR );
+            }
+        }
 
-                tmpstr = describe_wounds( pchr->lifemax, pchr->life );
-
-                tmpstr = describe_value( actual_damage, INT_TO_FP8(10), &rank );
-                if ( rank < 4 )
+        // Set attack alert if it wasn't an accident
+        if ( base_damage > HURTDAMAGE )
+        {
+            if ( team == TEAM_DAMAGE )
+            {
+                loc_pai->attacklast = ( CHR_REF )MAX_CHR;
+            }
+            else
+            {
+                // Don't alert the character too much if under constant fire
+                if ( loc_pchr->carefultime == 0 )
                 {
-                    tmpstr = describe_value( actual_damage, max_damage, &rank );
-                    if( rank < 0 )
+                    // Don't let characters chase themselves...  That would be silly
+                    if ( attacker != loc_ichr )
                     {
-                        tmpstr = "Fumble!";
+                        ADD_BITS( loc_pai->alert, ALERTIF_ATTACKED );
+                        loc_pai->attacklast = attacker;
+                        loc_pchr->carefultime = CAREFULTIME;
                     }
-                    else
-                    {
-                        tmpstr = describe_damage( actual_damage, pchr->lifemax, &rank );
-                        if ( rank >= -1 && rank <= 1 )
-                        {
-                            tmpstr = describe_wounds( pchr->lifemax, pchr->life );
-                        }
-                    }
-                }
-
-                if( NULL != tmpstr )
-                {
-                    const float lifetime = 3;
-                    STRING text_buffer = EMPTY_CSTR;
-
-                    // "white" text
-                    SDL_Color text_color = {0xFF, 0xFF, 0xFF, 0xFF};
-
-                    // friendly fire damage = "purple"
-                    GLXvector4f tint_friend = { 0.88f, 0.75f, 1.00f, 1.00f };
-
-                    // enemy damage = "red"
-                    GLXvector4f tint_enemy  = { 1.00f, 0.75f, 0.75f, 1.00f };
-
-                    // write the string into the buffer
-                    snprintf( text_buffer, SDL_arraysize( text_buffer ), "%s", tmpstr );
-
-                    chr_make_text_billboard( character, text_buffer, text_color, friendly_fire ? tint_friend : tint_enemy, lifetime, bb_opt_all );
                 }
             }
         }
-    }
 
-    // Heal 'em instead
+        /// @test spawn a fly-away damage indicator?
+        if ( do_feedback )
+        {
+            const char * tmpstr;
+            int rank;
+
+            tmpstr = describe_wounds( loc_pchr->lifemax, loc_pchr->life );
+
+            tmpstr = describe_value( actual_damage, UINT_TO_UFP8(10), &rank );
+            if ( rank < 4 )
+            {
+                tmpstr = describe_value( actual_damage, max_damage, &rank );
+                if( rank < 0 )
+                {
+                    tmpstr = "Fumble!";
+                }
+                else
+                {
+                    tmpstr = describe_damage( actual_damage, loc_pchr->lifemax, &rank );
+                    if ( rank >= -1 && rank <= 1 )
+                    {
+                        tmpstr = describe_wounds( loc_pchr->lifemax, loc_pchr->life );
+                    }
+                }
+            }
+
+            if( NULL != tmpstr )
+            {
+                const float lifetime = 3;
+                STRING text_buffer = EMPTY_CSTR;
+
+                // "white" text
+                SDL_Color text_color = {0xFF, 0xFF, 0xFF, 0xFF};
+
+                // friendly fire damage = "purple"
+                GLXvector4f tint_friend = { 0.88f, 0.75f, 1.00f, 1.00f };
+
+                // enemy damage = "red"
+                GLXvector4f tint_enemy  = { 1.00f, 0.75f, 0.75f, 1.00f };
+
+                // write the string into the buffer
+                snprintf( text_buffer, SDL_arraysize( text_buffer ), "%s", tmpstr );
+
+                chr_make_text_billboard( loc_ichr, text_buffer, text_color, friendly_fire ? tint_friend : tint_enemy, lifetime, (BIT_FIELD)bb_opt_all );
+            }
+        }
+    }
     else if ( actual_damage < 0 )
     {
-        heal_character( character, attacker, actual_damage, ignore_invictus );
+        int actual_heal = 0;
+
+        // heal the character
+        actual_heal = damage_character_heal( &bdl, -actual_damage, attacker, ignore_invictus );
 
         // Isssue an alert
         if ( team == TEAM_DAMAGE )
         {
-            pchr->ai.attacklast = ( CHR_REF )MAX_CHR;
+            loc_pai->attacklast = ( CHR_REF )MAX_CHR;
         }
 
         /// @test spawn a fly-away heal indicator?
@@ -3684,9 +3276,9 @@ int damage_character( const CHR_REF by_reference character, FACING_T direction,
             GLXvector4f tint = { 1.00f, 1.00f, 0.75f, 1.00f };
 
             // write the string into the buffer
-            snprintf( text_buffer, SDL_arraysize( text_buffer ), "%s", describe_value( -actual_damage, damage.base + damage.rand, NULL ) );
+            snprintf( text_buffer, SDL_arraysize( text_buffer ), "%s", describe_value( actual_heal, damage.base + damage.rand, NULL ) );
 
-            chr_make_text_billboard( character, text_buffer, text_color, tint, lifetime, bb_opt_all );
+            chr_make_text_billboard( loc_ichr, text_buffer, text_color, tint, lifetime, (BIT_FIELD)bb_opt_all );
         }
     }
 
@@ -3697,12 +3289,12 @@ int damage_character( const CHR_REF by_reference character, FACING_T direction,
 void spawn_defense_ping( chr_t *pchr, const CHR_REF by_reference attacker )
 {
     /// @details ZF@> Spawn a defend particle
-	if( pchr->damagetime != 0 ) return;
+    if( pchr->damagetime != 0 ) return;
 
     spawn_one_particle_global( pchr->pos, pchr->ori.facing_z, PIP_DEFEND, 0 );
 
     pchr->damagetime    = DEFENDTIME;
-    SET_BIT( pchr->ai.alert, ALERTIF_BLOCKED );
+    ADD_BITS( pchr->ai.alert, ALERTIF_BLOCKED );
     pchr->ai.attacklast = attacker;                 // For the ones attacking a shield
 }
 
@@ -3896,17 +3488,17 @@ chr_t * chr_config_do_init( chr_t * pchr )
     pchr->fat_goto_time = 0;
 
     // Set up position
-    pchr->enviro.floor_level = get_mesh_level( PMesh, pos_tmp.x, pos_tmp.y, pchr->waterwalk ) + RAISE;
-    pchr->enviro.level       = pchr->enviro.floor_level;
-    pchr->enviro.fly_level   = get_mesh_level( PMesh, pos_tmp.x, pos_tmp.y, btrue ) + RAISE;
+    pchr->enviro.grid_level = get_mesh_level( PMesh, pos_tmp.x, pos_tmp.y, pchr->waterwalk ) + RAISE;
+    pchr->enviro.walk_level = pchr->enviro.grid_level;
+    pchr->enviro.fly_level  = get_mesh_level( PMesh, pos_tmp.x, pos_tmp.y, btrue ) + RAISE;
 
-    if ( 0 != pchr->flyheight && pchr->enviro.fly_level < 0 )
+    if ( pchr->enviro.fly_level < 0.0f && (pchr->is_flying_platform || pchr->is_flying_jump) )
     {
         // fly above pits...
-        pchr->enviro.fly_level = 0;
+        pchr->enviro.fly_level = 0.0f;
     }
 
-    if ( pos_tmp.z < pchr->enviro.floor_level ) pos_tmp.z = pchr->enviro.floor_level;
+    if ( pos_tmp.z < pchr->enviro.grid_level ) pos_tmp.z = pchr->enviro.grid_level;
 
     chr_set_pos( pchr, pos_tmp.v );
 
@@ -3944,7 +3536,7 @@ chr_t * chr_config_do_init( chr_t * pchr )
     }
 
     // is the object part of a shop's inventory?
-    if ( !DEFINED_CHR( pchr->attachedto ) && pchr->isitem && !pchr->pack.is_packed )
+    if ( !IS_ATTACHED_PCHR( pchr ) && pchr->isitem )
     {
         SHOP_REF ishop;
 
@@ -3955,7 +3547,7 @@ chr_t * chr_config_do_init( chr_t * pchr )
             // Make sure the owner is not dead
             if ( SHOP_NOOWNER == ShopStack.lst[ishop].owner ) continue;
 
-            if ( object_is_in_passage( ShopStack.lst[ishop].passage, pchr->pos.x, pchr->pos.y, pchr->bump.size ) )
+            if ( object_is_in_passage( ShopStack.lst[ishop].passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
             {
                 pchr->isshopitem = btrue;               // Full value
                 pchr->iskursed   = bfalse;              // Shop items are never kursed
@@ -3976,17 +3568,17 @@ chr_t * chr_config_do_init( chr_t * pchr )
         pchr->isshopitem = btrue;
     }
 
-    // initalize the character instance
+    // initialize the character instance
     chr_spawn_instance( &( pchr->inst ), pchr->spawn_data.profile, pchr->spawn_data.skin );
     chr_update_matrix( pchr, btrue );
 
     // determine whether the object is hidden
     chr_update_hide( pchr );
 
-    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.floor_level, btrue );
+    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.grid_level, btrue );
 
-#if defined(_DEBUG) && defined(DEBUG_WAYPOINTS)
-    if ( DEFINED_CHR( pchr->attachedto ) && INFINITE_WEIGHT != pchr->phys.weight && !pchr->safe_valid )
+#if EGO_DEBUG && defined(DEBUG_WAYPOINTS)
+    if ( !IS_ATTACHED_PCHR( pchr ) && INFINITE_WEIGHT != pchr->phys.weight && !pchr->safe_valid )
     {
         log_warning( "spawn_one_character() - \n\tinitial spawn position <%f,%f> is \"inside\" a wall. Wall normal is <%f,%f>\n",
             pchr->pos.x, pchr->pos.y, nrm.x, nrm.y );
@@ -4009,7 +3601,7 @@ chr_t * chr_config_do_active( chr_t * pchr )
     //then do status updates
     chr_update_hide( pchr );
 
-	//Don't do items that are in inventory
+    //Don't do items that are in inventory
     if ( pchr->pack.is_packed ) return pchr;
 
     pcap = pro_get_pcap( pchr->profile_ref );
@@ -4028,18 +3620,18 @@ chr_t * chr_config_do_active( chr_t * pchr )
 
             if ( water.is_water )
             {
-                SET_BIT( pchr->ai.alert, ALERTIF_INWATER );
+                ADD_BITS( pchr->ai.alert, ALERTIF_INWATER );
             }
         }
         else
         {
             // Ripples
-			if ( !INGAME_CHR(pchr->attachedto) && pcap->ripple && pchr->pos.z + pchr->chr_chr_cv.maxs[OCT_Z] + RIPPLETOLERANCE > water.surface_level && pchr->pos.z + pchr->chr_chr_cv.mins[OCT_Z] < water.surface_level )
+            if ( !pchr->pack.is_packed && pcap->ripple && pchr->pos.z + pchr->chr_min_cv.maxs[OCT_Z] + RIPPLETOLERANCE > water.surface_level && pchr->pos.z + pchr->chr_min_cv.mins[OCT_Z] < water.surface_level )
             {
                 int ripple_suppression;
 
                 // suppress ripples if we are far below the surface
-                ripple_suppression = water.surface_level - ( pchr->pos.z + pchr->chr_chr_cv.maxs[OCT_Z] );
+                ripple_suppression = water.surface_level - ( pchr->pos.z + pchr->chr_min_cv.maxs[OCT_Z] );
                 ripple_suppression = ( 4 * ripple_suppression ) / RIPPLETOLERANCE;
                 ripple_suppression = CLIP( ripple_suppression, 0, 4 );
 
@@ -4065,8 +3657,8 @@ chr_t * chr_config_do_active( chr_t * pchr )
 
             if ( water.is_water && HAS_NO_BITS( update_wld, 7 ) )
             {
-                pchr->jumpready = btrue;
-                pchr->jumpnumber = 1;
+                pchr->jump_ready = btrue;
+                pchr->jump_number = 1;
             }
         }
 
@@ -4081,6 +3673,17 @@ chr_t * chr_config_do_active( chr_t * pchr )
     if ( 0 == update_wld ) return pchr;
 
     // Do timers and such
+
+    // decrement the dismount timer
+    if ( pchr->dismount_timer > 0 )
+    {
+        pchr->dismount_timer--;
+
+        if ( 0 == pchr->dismount_timer )
+        {
+            pchr->dismount_object = ( CHR_REF )MAX_CHR;
+        }
+    }
 
     // reduce attack cooldowns
     if ( pchr->reloadtime > 0 )
@@ -4102,6 +3705,12 @@ chr_t * chr_config_do_active( chr_t * pchr )
     if ( pchr->carefultime > 0 )
     {
         pchr->carefultime--;
+    }
+
+    // Down jump timer
+    if ( pchr->jump_time > 0 && ( INGAME_CHR(pchr->attachedto) || pchr->jump_ready || pchr->jump_number > 0) ) 
+    {
+        pchr->jump_time--;
     }
 
     // Do stats once every second
@@ -4519,7 +4128,7 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF by_reference profile, co
     // actually force the character to spawn
     chr_config_activate( pchr, 100 );
 
-#if defined(DEBUG_OBJECT_SPAWN) && defined(_DEBUG)
+#if defined(DEBUG_OBJECT_SPAWN) && EGO_DEBUG
     {
         CAP_REF icap = pro_get_icap( profile );
         log_debug("spawn_one_character() - slot: %i, index: %i, name: %s, class: %s\n", REF_TO_INT( profile ), REF_TO_INT( ichr ), name, CapStack.lst[icap].classname);
@@ -4540,8 +4149,10 @@ void respawn_character( const CHR_REF by_reference character )
     chr_t * pchr;
     cap_t * pcap;
 
-    if ( !INGAME_CHR( character ) || ChrList.lst[character].alive ) return;
+    if ( !INGAME_CHR( character ) ) return;
     pchr = ChrList.lst + character;
+
+    if ( pchr->alive ) return;
 
     pcap = chr_get_pcap( character );
     if ( NULL == pcap ) return;
@@ -4579,7 +4190,7 @@ void respawn_character( const CHR_REF by_reference character )
 
     pchr->platform        = pcap->platform;
     pchr->canuseplatforms = pcap->canuseplatforms;
-    pchr->flyheight       = pcap->flyheight;
+    chr_set_fly_height( pchr, pcap->fly_height );
     pchr->phys.bumpdampen = pcap->bumpdampen;
 
     pchr->ai.alert = ALERTIF_CLEANEDUP;
@@ -4595,7 +4206,7 @@ void respawn_character( const CHR_REF by_reference character )
         if ( INGAME_CHR( item ) && ChrList.lst[item].isequipped )
         {
             ChrList.lst[item].isequipped = bfalse;
-            SET_BIT( chr_get_pai( item )->alert, ALERTIF_PUTAWAY ); // same as ALERTIF_ATLASTWAYPOINT
+            ADD_BITS( chr_get_pai( item )->alert, ALERTIF_PUTAWAY ); // same as ALERTIF_ATLASTWAYPOINT
         }
     }
     PACK_END_LOOP( item );
@@ -4613,11 +4224,11 @@ void respawn_character( const CHR_REF by_reference character )
         new_attached_prt_count = number_of_attached_particles( character );
     }
 
-    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.floor_level, btrue );
+    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.grid_level, btrue );
 }
 
 //--------------------------------------------------------------------------------------------
-int chr_change_skin( const CHR_REF by_reference character, int skin )
+int chr_change_skin( const CHR_REF by_reference character, Uint32 skin )
 {
     chr_t * pchr;
     pro_t * ppro;
@@ -4705,14 +4316,14 @@ int change_armor( const CHR_REF by_reference character, int skin )
     enchant = pchr->firstenchant;
     while ( enchant < MAX_ENC )
     {
-        enchant_remove_set( enchant, SETSLASHMODIFIER );
-        enchant_remove_set( enchant, SETCRUSHMODIFIER );
-        enchant_remove_set( enchant, SETPOKEMODIFIER );
-        enchant_remove_set( enchant, SETHOLYMODIFIER );
-        enchant_remove_set( enchant, SETEVILMODIFIER );
-        enchant_remove_set( enchant, SETFIREMODIFIER );
-        enchant_remove_set( enchant, SETICEMODIFIER );
-        enchant_remove_set( enchant, SETZAPMODIFIER );
+        enc_remove_set( enchant, SETSLASHMODIFIER );
+        enc_remove_set( enchant, SETCRUSHMODIFIER );
+        enc_remove_set( enchant, SETPOKEMODIFIER );
+        enc_remove_set( enchant, SETHOLYMODIFIER );
+        enc_remove_set( enchant, SETEVILMODIFIER );
+        enc_remove_set( enchant, SETFIREMODIFIER );
+        enc_remove_set( enchant, SETICEMODIFIER );
+        enc_remove_set( enchant, SETZAPMODIFIER );
 
         enchant = EncList.lst[enchant].nextenchant_ref;
     }
@@ -4747,17 +4358,17 @@ int change_armor( const CHR_REF by_reference character, int skin )
         {
             EVE_REF ieve = pro_get_ieve( ipro );
 
-            enchant_apply_set( enchant, SETSLASHMODIFIER, ipro );
-            enchant_apply_set( enchant, SETCRUSHMODIFIER, ipro );
-            enchant_apply_set( enchant, SETPOKEMODIFIER,  ipro );
-            enchant_apply_set( enchant, SETHOLYMODIFIER,  ipro );
-            enchant_apply_set( enchant, SETEVILMODIFIER,  ipro );
-            enchant_apply_set( enchant, SETFIREMODIFIER,  ipro );
-            enchant_apply_set( enchant, SETICEMODIFIER,   ipro );
-            enchant_apply_set( enchant, SETZAPMODIFIER,   ipro );
+            enc_apply_set( enchant, SETSLASHMODIFIER, ipro );
+            enc_apply_set( enchant, SETCRUSHMODIFIER, ipro );
+            enc_apply_set( enchant, SETPOKEMODIFIER,  ipro );
+            enc_apply_set( enchant, SETHOLYMODIFIER,  ipro );
+            enc_apply_set( enchant, SETEVILMODIFIER,  ipro );
+            enc_apply_set( enchant, SETFIREMODIFIER,  ipro );
+            enc_apply_set( enchant, SETICEMODIFIER,   ipro );
+            enc_apply_set( enchant, SETZAPMODIFIER,   ipro );
 
-            enchant_apply_add( enchant, ADDACCEL,         ieve );
-            enchant_apply_add( enchant, ADDDEFENSE,       ieve );
+            enc_apply_add( enchant, ADDACCEL,         ieve );
+            enc_apply_add( enchant, ADDDEFENSE,       ieve );
         }
 
         enchant = EncList.lst[enchant].nextenchant_ref;
@@ -4897,7 +4508,7 @@ void change_character( const CHR_REF by_reference ichr, const PRO_REF by_referen
             fvec3_t tmp_pos;
 
             ChrList.lst[item_ref].vel.z    = DISMOUNTZVEL;
-            ChrList.lst[item_ref].jumptime = JUMPDELAY;
+            ChrList.lst[item_ref].jump_time = JUMP_DELAY;
 
             tmp_pos = chr_get_pos( ChrList.lst + item_ref );
             tmp_pos.z += DISMOUNTZVEL;
@@ -4917,7 +4528,7 @@ void change_character( const CHR_REF by_reference ichr, const PRO_REF by_referen
             fvec3_t tmp_pos;
 
             ChrList.lst[item_ref].vel.z    = DISMOUNTZVEL;
-            ChrList.lst[item_ref].jumptime = JUMPDELAY;
+            ChrList.lst[item_ref].jump_time = JUMP_DELAY;
 
             tmp_pos = chr_get_pos( ChrList.lst + item_ref );
             tmp_pos.z += DISMOUNTZVEL;
@@ -4984,7 +4595,7 @@ void change_character( const CHR_REF by_reference ichr, const PRO_REF by_referen
     pchr->ai.timer          = 0;
     pchr->turnmode          = TURNMODE_VELOCITY;
 
-    latch_init( &( pchr->latch ) );
+    latch_game_init( &( pchr->latch ) );
 
     // Flags
     pchr->stickybutt      = pcap_new->stickybutt;
@@ -4996,7 +4607,7 @@ void change_character( const CHR_REF by_reference ichr, const PRO_REF by_referen
     pchr->invictus        = pcap_new->invictus;
     pchr->ismount         = pcap_new->ismount;
     pchr->cangrabmoney    = pcap_new->cangrabmoney;
-    pchr->jumptime        = JUMPDELAY;
+    pchr->jump_time        = JUMP_DELAY;
     pchr->alpha_base       = pcap_new->alpha;
     pchr->light_base       = pcap_new->light;
 
@@ -5015,7 +4626,7 @@ void change_character( const CHR_REF by_reference ichr, const PRO_REF by_referen
     pchr->hascodeofconduct      = pcap_new->hascodeofconduct;
     pchr->darkvision_level      = pcap_new->darkvision_level;
 
-    /// @note BB@> changing this could be disasterous, in case you can't un-morph youself???
+    /// @note BB@> changing this could be disastrous, in case you can't un-morph yourself???
     /// pchr->canusearcane          = pcap_new->canusearcane;
     /// @note ZF@> No, we want this, I have specifically scripted morph books to handle unmorphing
     /// even if you cannot cast arcane spells. Some morph spells specifically morph the player
@@ -5028,7 +4639,7 @@ void change_character( const CHR_REF by_reference ichr, const PRO_REF by_referen
         float old_fat = pchr->fat;
         float new_fat;
 
-        if ( 0.0f == pchr->bump.size )
+        if ( 0.0f == pchr->bump_stt.size )
         {
             new_fat = pcap_new->size;
         }
@@ -5061,7 +4672,7 @@ void change_character( const CHR_REF by_reference ichr, const PRO_REF by_referen
     //Physics
     pchr->phys.bumpdampen     = pcap_new->bumpdampen;
 
-    if ( pcap_new->weight == 0xFF )
+    if ( CAP_INFINITE_WEIGHT == pcap_new->weight )
     {
         pchr->phys.weight = INFINITE_WEIGHT;
     }
@@ -5101,7 +4712,7 @@ void change_character( const CHR_REF by_reference ichr, const PRO_REF by_referen
     // Set the skin after changing the model in chr_spawn_instance()
     change_armor( ichr, skin );
 
-    // Must set the wepon grip AFTER the model is changed in chr_spawn_instance()
+    // Must set the weapon grip AFTER the model is changed in chr_spawn_instance()
     if ( INGAME_CHR( pchr->attachedto ) )
     {
         set_weapongrip( ichr, pchr->attachedto, slot_to_grip_offset( pchr->inwhich_slot ) );
@@ -5126,12 +4737,12 @@ void change_character( const CHR_REF by_reference ichr, const PRO_REF by_referen
 
     // Reaffirm them particles...
     pchr->reaffirmdamagetype = pcap_new->attachedprt_reaffirmdamagetype;
-    //reaffirm_attached_particles( ichr );              /// @note ZF@> so that books dont burn when dropped
+    //reaffirm_attached_particles( ichr );              /// @note ZF@> so that books don't burn when dropped
     new_attached_prt_count = number_of_attached_particles( ichr );
 
     ai_state_set_changed( &( pchr->ai ) );
 
-    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.floor_level, btrue );
+    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.grid_level, btrue );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -5241,7 +4852,7 @@ void issue_clean( const CHR_REF by_reference character )
             pchr->ai.timer  = update_wld + 2;  // Don't let it think too much...
         }
 
-        SET_BIT( pchr->ai.alert, ALERTIF_CLEANEDUP );
+        ADD_BITS( pchr->ai.alert, ALERTIF_CLEANEDUP );
     }
     CHR_END_LOOP();
 }
@@ -5297,7 +4908,7 @@ int check_skills( const CHR_REF by_reference who, IDSZ whichskill )
     else if ( MAKE_IDSZ( 'D', 'I', 'S', 'A' ) == whichskill ) result = ChrList.lst[who].candisarm;
     else if ( MAKE_IDSZ( 'S', 'T', 'A', 'B' ) == whichskill ) result = ChrList.lst[who].canbackstab;
     else if ( MAKE_IDSZ( 'R', 'E', 'A', 'D' ) == whichskill ) result = ChrList.lst[who].canread + ( ChrList.lst[who].see_invisible_level && ChrList.lst[who].canseekurse ? 1 : 0 ); // Truesight allows reading
-    else if ( MAKE_IDSZ( 'P', 'O', 'I', 'S' ) == whichskill && !ChrList.lst[who].hascodeofconduct ) result = ChrList.lst[who].canusepoison;                                //Only if not restriced by code of conduct
+    else if ( MAKE_IDSZ( 'P', 'O', 'I', 'S' ) == whichskill && !ChrList.lst[who].hascodeofconduct ) result = ChrList.lst[who].canusepoison;                                //Only if not restricted by code of conduct
     else if ( MAKE_IDSZ( 'C', 'O', 'D', 'E' ) == whichskill ) result = ChrList.lst[who].hascodeofconduct;
     else if ( MAKE_IDSZ( 'D', 'A', 'R', 'K' ) == whichskill ) result = ChrList.lst[who].darkvision_level;
 
@@ -5308,7 +4919,7 @@ int check_skills( const CHR_REF by_reference who, IDSZ whichskill )
 //--------------------------------------------------------------------------------------------
 bool_t update_chr_darkvision( const CHR_REF by_reference character )
 {
-    /// @detalis BB@> as an offset to negative status effects like things like poisoning, a
+    /// @details BB@> as an offset to negative status effects like things like poisoning, a
     ///               character gains darkvision ability the more they are "poisoned".
     ///               True poisoning can be removed by [HEAL] and tints the character green
     eve_t * peve;
@@ -5371,532 +4982,8 @@ void update_all_characters()
 
 }
 
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-void move_one_character_get_environment( chr_t * pchr )
-{
-    Uint32 itile = INVALID_TILE;
-    float floor_level;
-
-    if ( !ACTIVE_PCHR( pchr ) ) return;
-
-    // get the current tile
-    itile          = INVALID_TILE;
-    if ( INGAME_CHR( pchr->onwhichplatform_ref ) )
-    {
-        // this only works for 1 level of attachment
-        itile = ChrList.lst[pchr->onwhichplatform_ref].onwhichgrid;
-    }
-    else
-    {
-        itile = pchr->onwhichgrid;
-    }
-
-    //---- character "floor" level
-    //floor_level = get_chr_level( PMesh, pchr );
-    floor_level = get_mesh_level( PMesh, pchr->pos.x, pchr->pos.y, pchr->waterwalk ) + RAISE;
-
-    // use this function so that the reflections and some other stuff comes out correctly
-    // @note - using get_mesh_level() will actually force a water tile to have a reflection?
-    chr_set_floor_level( pchr, floor_level );
-
-    //---- The actual level of the characer.
-    //     Estimate platform attachment from whatever is in the onwhichplatform_ref variable from the
-    //     last loop
-    pchr->enviro.level = pchr->enviro.floor_level;
-    if ( INGAME_CHR( pchr->onwhichplatform_ref ) )
-    {
-        pchr->enviro.level = ChrList.lst[pchr->onwhichplatform_ref].pos.z + ChrList.lst[pchr->onwhichplatform_ref].chr_chr_cv.maxs[OCT_Z];
-    }
-
-    //---- The flying height of the character, the maximum of tile level, platform level and water level
-    if ( 0 != mesh_test_fx( PMesh, itile, MPDFX_WATER ) )
-    {
-        pchr->enviro.fly_level = MAX(pchr->enviro.level, water.surface_level);
-    }
-
-    if ( pchr->enviro.fly_level < 0 )
-    {
-        pchr->enviro.fly_level = 0;  // fly above pits...
-    }
-
-    // set the zlerp after we have done everything to the particle's level we care to
-    pchr->enviro.zlerp = ( pchr->pos.z - pchr->enviro.level ) / PLATTOLERANCE;
-    pchr->enviro.zlerp = CLIP( pchr->enviro.zlerp, 0, 1 );
-
-    pchr->enviro.grounded = ( 0 == pchr->flyheight ) && ( pchr->enviro.zlerp < 0.25f );
-
-    //---- the "twist" of the floor
-    pchr->enviro.twist = TWIST_FLAT;
-    if ( mesh_grid_is_valid( PMesh, itile ) )
-    {
-        pchr->enviro.twist = PMesh->gmem.grid_list[itile].twist;
-    }
-
-    // the "watery-ness" of whatever water might be here
-    pchr->enviro.is_watery = water.is_water && pchr->enviro.inwater;
-    pchr->enviro.is_slippy = !pchr->enviro.is_watery && ( 0 != mesh_test_fx( PMesh, pchr->onwhichgrid, MPDFX_SLIPPY ) );
-
-    //---- traction
-    pchr->enviro.traction = 1.0f;
-    if ( 0 != pchr->flyheight )
-    {
-        // any traction factor here
-        /* traction = ??; */
-    }
-    else if ( INGAME_CHR( pchr->onwhichplatform_ref ) )
-    {
-        // in case the platform is tilted
-        // unfortunately platforms are attached in the collision section
-        // which occurs after the movement section.
-
-        fvec3_t   platform_up;
-
-        chr_getMatUp( ChrList.lst + pchr->onwhichplatform_ref, &platform_up );
-        platform_up = fvec3_normalize( platform_up.v );
-
-        pchr->enviro.traction = ABS( platform_up.z ) * ( 1.0f - pchr->enviro.zlerp ) + 0.25 * pchr->enviro.zlerp;
-
-        if ( pchr->enviro.is_slippy )
-        {
-            pchr->enviro.traction /= 4.00f * hillslide * ( 1.0f - pchr->enviro.zlerp ) + 1.0f * pchr->enviro.zlerp;
-        }
-    }
-    else if ( mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) )
-    {
-        pchr->enviro.traction = ABS( map_twist_nrm[pchr->enviro.twist].z ) * ( 1.0f - pchr->enviro.zlerp ) + 0.25 * pchr->enviro.zlerp;
-
-        if ( pchr->enviro.is_slippy )
-        {
-            pchr->enviro.traction /= 4.00f * hillslide * ( 1.0f - pchr->enviro.zlerp ) + 1.0f * pchr->enviro.zlerp;
-        }
-    }
-
-    //---- the friction of the fluid we are in
-    if ( pchr->enviro.is_watery )
-    {
-        pchr->enviro.fluid_friction_vrt  = waterfriction;
-        pchr->enviro.fluid_friction_hrz = waterfriction;
-    }
-    else
-    {
-        pchr->enviro.fluid_friction_hrz = pchr->enviro.air_friction;       // like real-life air friction
-        pchr->enviro.fluid_friction_vrt  = pchr->enviro.air_friction;
-    }
-
-    //---- friction
-    pchr->enviro.friction_hrz       = 1.0f;
-    if ( 0 != pchr->flyheight )
-    {
-        if ( pchr->platform )
-        {
-            // override the z friction for platforms.
-            // friction in the z direction will make the bouncing stop
-            pchr->enviro.fluid_friction_vrt = 1.0f;
-        }
-    }
-    else
-    {
-        // Make the characters slide
-        float temp_friction_xy = noslipfriction;
-        if ( mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) && pchr->enviro.is_slippy )
-        {
-            // It's slippy all right...
-            temp_friction_xy = slippyfriction;
-        }
-
-        pchr->enviro.friction_hrz = pchr->enviro.zlerp * 1.0f + ( 1.0f - pchr->enviro.zlerp ) * temp_friction_xy;
-    }
-
-    //---- jump stuff
-    if ( 0 != pchr->flyheight )
-    {
-        // Flying
-        pchr->jumpready = bfalse;
-    }
-    else
-    {
-        // Character is in the air
-        pchr->jumpready = pchr->enviro.grounded;
-
-        // Down jump timer
-		if ( ( INGAME_CHR(pchr->attachedto) || pchr->jumpready || pchr->jumpnumber > 0) && pchr->jumptime > 0 ) pchr->jumptime--;
-
-        // Do ground hits
-        if ( pchr->enviro.grounded && pchr->vel.z < -STOPBOUNCING && pchr->hitready )
-        {
-            SET_BIT( pchr->ai.alert, ALERTIF_HITGROUND );
-            pchr->hitready = bfalse;
-        }
-
-        // Special considerations for slippy surfaces
-        if ( pchr->enviro.is_slippy )
-        {
-            if ( map_twist_flat[pchr->enviro.twist] )
-            {
-                // Reset jumping on flat areas of slippiness
-                if ( pchr->enviro.grounded && pchr->jumptime == 0 )
-                {
-                    pchr->jumpnumber = pchr->jumpnumberreset;
-                }
-            }
-        }
-        else if ( pchr->enviro.grounded && pchr->jumptime == 0 )
-        {
-            // Reset jumping
-            pchr->jumpnumber = pchr->jumpnumberreset;
-        }
-    }
-}
 
 //--------------------------------------------------------------------------------------------
-void move_one_character_do_floor_friction( chr_t * pchr )
-{
-    /// @details BB@> Friction is complicated when you want to have sliding characters :P
-
-    float temp_friction_xy;
-    fvec3_t   vup, floor_acc, fric, fric_floor;
-
-    if ( !ACTIVE_PCHR( pchr ) ) return;
-
-    if ( 0 != pchr->flyheight ) return;
-
-    // figure out the acceleration due to the current "floor"
-    floor_acc.x = floor_acc.y = floor_acc.z = 0.0f;
-    temp_friction_xy = 1.0f;
-    if ( INGAME_CHR( pchr->onwhichplatform_ref ) )
-    {
-        chr_t * pplat = ChrList.lst + pchr->onwhichplatform_ref;
-
-        temp_friction_xy = platstick;
-
-        floor_acc.x = pplat->vel.x - pplat->vel_old.x;
-        floor_acc.y = pplat->vel.y - pplat->vel_old.y;
-        floor_acc.z = pplat->vel.z - pplat->vel_old.z;
-
-		
-        chr_getMatUp( pplat, &vup );
-    }
-    else if ( !pchr->alive || pchr->isitem )
-    {
-        temp_friction_xy = 0.5f;
-        floor_acc.x = -pchr->vel.x;
-        floor_acc.y = -pchr->vel.y;
-        floor_acc.z = -pchr->vel.z;
-
-        if ( TWIST_FLAT == pchr->enviro.twist )
-        {
-            vup.x = vup.y = 0.0f;
-            vup.z = 1.0f;
-        }
-        else
-        {
-            vup = map_twist_nrm[pchr->enviro.twist];
-        }
-
-    }
-    else
-    {
-        temp_friction_xy = pchr->enviro.friction_hrz;
-
-        if ( TWIST_FLAT == pchr->enviro.twist )
-        {
-            vup.x = vup.y = 0.0f;
-            vup.z = 1.0f;
-        }
-        else
-        {
-            vup = map_twist_nrm[pchr->enviro.twist];
-        }
-
-        if ( ABS( pchr->vel.x ) + ABS( pchr->vel.y ) + ABS( pchr->vel.z ) > 0.0f )
-        {
-            float ftmp;
-            fvec3_t   vfront = mat_getChrForward( pchr->inst.matrix );
-
-            floor_acc.x = -pchr->vel.x;
-            floor_acc.y = -pchr->vel.y;
-            floor_acc.z = -pchr->vel.z;
-
-            //---- get the "bad" velocity (perpendicular to the direction of motion)
-            vfront = fvec3_normalize( vfront.v );
-            ftmp = fvec3_dot_product( floor_acc.v, vfront.v );
-
-            floor_acc.x -= ftmp * vfront.x;
-            floor_acc.y -= ftmp * vfront.y;
-            floor_acc.z -= ftmp * vfront.z;
-        }
-    }
-
-    // the first guess about the floor friction
-    fric_floor.x = floor_acc.x * ( 1.0f - pchr->enviro.zlerp ) * ( 1.0f - temp_friction_xy ) * pchr->enviro.traction;
-    fric_floor.y = floor_acc.y * ( 1.0f - pchr->enviro.zlerp ) * ( 1.0f - temp_friction_xy ) * pchr->enviro.traction;
-    fric_floor.z = floor_acc.z * ( 1.0f - pchr->enviro.zlerp ) * ( 1.0f - temp_friction_xy ) * pchr->enviro.traction;
-
-    // the total "friction" due to the floor
-    fric.x = fric_floor.x + pchr->enviro.acc.x;
-    fric.y = fric_floor.y + pchr->enviro.acc.y;
-    fric.z = fric_floor.z + pchr->enviro.acc.z;
-
-    //---- limit the friction to whatever is horizontal to the mesh
-    if ( TWIST_FLAT == pchr->enviro.twist )
-    {
-        floor_acc.z = 0.0f;
-        fric.z      = 0.0f;
-    }
-    else
-    {
-        float ftmp;
-        fvec3_t   vup = map_twist_nrm[pchr->enviro.twist];
-
-        ftmp = fvec3_dot_product( floor_acc.v, vup.v );
-
-        floor_acc.x -= ftmp * vup.x;
-        floor_acc.y -= ftmp * vup.y;
-        floor_acc.z -= ftmp * vup.z;
-
-        ftmp = fvec3_dot_product( fric.v, vup.v );
-
-        fric.x -= ftmp * vup.x;
-        fric.y -= ftmp * vup.y;
-        fric.z -= ftmp * vup.z;
-    }
-
-    // test to see if the player has any more friction left?
-	pchr->enviro.is_slipping = ( ABS( fric.x ) + ABS( fric.y ) + ABS( fric.z ) > pchr->enviro.friction_hrz );
-
-    if ( pchr->enviro.is_slipping )
-    {
-        pchr->enviro.traction *= 0.5f;
-        temp_friction_xy  = SQRT( temp_friction_xy );
-
-        fric_floor.x = floor_acc.x * ( 1.0f - pchr->enviro.zlerp ) * ( 1.0f - temp_friction_xy ) * pchr->enviro.traction;
-        fric_floor.y = floor_acc.y * ( 1.0f - pchr->enviro.zlerp ) * ( 1.0f - temp_friction_xy ) * pchr->enviro.traction;
-        fric_floor.z = floor_acc.z * ( 1.0f - pchr->enviro.zlerp ) * ( 1.0f - temp_friction_xy ) * pchr->enviro.traction;
-    }
-
-    //apply the floor friction
-	pchr->vel.x += fric_floor.x;
-	pchr->vel.y += fric_floor.y;
-	pchr->vel.z += fric_floor.z;
-	
-    // Apply fluid friction from last time
-    pchr->vel.x += -pchr->vel.x * ( 1.0f - pchr->enviro.fluid_friction_hrz );
-    pchr->vel.y += -pchr->vel.y * ( 1.0f - pchr->enviro.fluid_friction_hrz );
-    pchr->vel.z += -pchr->vel.z * ( 1.0f - pchr->enviro.fluid_friction_vrt );
-}
-
-//--------------------------------------------------------------------------------------------
-void move_one_character_do_voluntary( chr_t * pchr )
-{
-    // do voluntary motion
-
-    float dvx, dvy;
-    float maxspeed;
-    float dv2;
-    float new_ax, new_ay;
-    CHR_REF ichr;
-    bool_t sneak_mode_active = bfalse;
-
-    mad_t       * pmad;
-    int           frame_count;
-    MD2_Frame_t * frame_list;
-    MD2_Frame_t * pframe_nxt;
-
-    if ( !ACTIVE_PCHR( pchr ) ) return;
-
-    ichr = GET_REF_PCHR( pchr );
-
-    if ( !pchr->alive ) return;
-	
-    pchr->enviro.new_vx = pchr->vel.x;
-    pchr->enviro.new_vy = pchr->vel.y;
-
-    if ( INGAME_CHR( pchr->attachedto ) ) return;
-
-    pmad        = chr_get_pmad( GET_REF_PCHR( pchr ) );
-    frame_count = md2_get_numFrames( pmad->md2_ptr );
-    frame_list  = ( MD2_Frame_t * )md2_get_Frames( pmad->md2_ptr );
-    pframe_nxt  = frame_list + pchr->inst.frame_nxt;
-    EGOBOO_ASSERT( pchr->inst.frame_nxt < frame_count );
-
-    dvx = dvy = 0.0f;
-    new_ax = new_ay = 0.0f;
-
-    // Character latches for generalized movement
-    dvx = pchr->latch.x;
-    dvy = pchr->latch.y;
-
-    // Reverse movements for daze
-    if ( pchr->dazetime > 0 )
-    {
-        dvx = -dvx;
-        dvy = -dvy;
-    }
-
-    // Switch x and y for grog
-    if ( pchr->grogtime > 0 )
-    {
-        SWAP( float, dvx, dvy );
-    }
-
-    // this is the maximum speed that a character could go under the v2.22 system
-    maxspeed = pchr->maxaccel * airfriction / ( 1.0f - airfriction );
-	
-    sneak_mode_active = bfalse;
-    if ( VALID_PLA( pchr->is_which_player ) )
-    {
-        // determine whether the user is hitting the "sneak button"
-        player_t * ppla = PlaStack.lst + pchr->is_which_player;
-		
-        if( HAS_SOME_BITS(ppla->device.bits, INPUT_BITS_KEYBOARD ) )
-        {
-            // use the shift keys to enter sneak mode
-            sneak_mode_active = SDLKEYDOWN( SDLK_LSHIFT ) || SDLKEYDOWN( SDLK_RSHIFT );
-        }
-    }
-
-    pchr->enviro.new_vx = pchr->enviro.new_vy = 0.0f;
-    if ( ABS( dvx ) + ABS( dvy ) > 0 )
-    {
-        PLA_REF ipla = pchr->is_which_player;
-
-        dv2 = dvx * dvx + dvy * dvy;
-
-        if ( VALID_PLA( ipla ) )
-        {
-            player_t * ppla;
-            bool_t sneak_mode_active; 
-
-            float dv = POW( dv2, 0.25f );
-
-            ppla = PlaStack.lst + ipla;
-
-            // determine whether the character is sneaking
-            if( !HAS_SOME_BITS(ppla->device.bits, INPUT_BITS_KEYBOARD ) )
-            {
-                sneak_mode_active = ( dv2 < 1.0f / 9.0f );
-            }
-
-            pchr->enviro.new_vx = dvx;
-            pchr->enviro.new_vy = dvy;
-			pchr->enviro.new_vx = maxspeed * dvx / dv;
-            pchr->enviro.new_vy = maxspeed * dvy / dv;
-        }
-        else
-        {
-            float scale = 1.0f;
-
-            if ( dv2 < 1.0f )
-            {
-                scale = POW( dv2, 0.25f );
-            }
-
-            scale /= POW( dv2, 0.5f );
-
-            pchr->enviro.new_vx = dvx * maxspeed * scale;
-            pchr->enviro.new_vy = dvy * maxspeed * scale;
-        }
-    }
-
-    if( sneak_mode_active )
-    {
-        // sneak mode
-        pchr->maxaccel      = pchr->maxaccel_reset * 0.33f;
-        pchr->movement_bits = CHR_MOVEMENT_BITS_SNEAK | CHR_MOVEMENT_BITS_STOP;
-    }
-    else
-    {
-        // non-sneak mode
-        pchr->movement_bits = (unsigned)(~CHR_MOVEMENT_BITS_SNEAK);
-        pchr->maxaccel      = pchr->maxaccel_reset;
-    }
-
-    // do platform friction
-    if ( INGAME_CHR( pchr->onwhichplatform_ref ) )
-    {
-        chr_t * pplat = ChrList.lst + pchr->onwhichplatform_ref;
-
-        new_ax += ( pplat->vel.x + pchr->enviro.new_vx - pchr->vel.x );
-        new_ay += ( pplat->vel.y + pchr->enviro.new_vy - pchr->vel.y );
-    }
-    else
-    {
-        new_ax += ( pchr->enviro.new_vx - pchr->vel.x );
-        new_ay += ( pchr->enviro.new_vy - pchr->vel.y );
-    }
-
-    new_ax *= pchr->enviro.traction;
-    new_ay *= pchr->enviro.traction;
-
-    new_ax = CLIP(new_ax, -pchr->maxaccel, pchr->maxaccel );
-    new_ay = CLIP(new_ay, -pchr->maxaccel, pchr->maxaccel );
-
-    //Figure out how to turn around
-	if( pchr->maxaccel != 0 )
-    switch ( pchr->turnmode )
-    {
-        // Get direction from ACTUAL change in velocity
-    default:
-    case TURNMODE_VELOCITY:
-        {
-            if ( ABS( dvx ) > TURNSPD || ABS( dvy ) > TURNSPD )
-            {
-                if ( VALID_PLA( pchr->is_which_player ) )
-                {
-                    // Players turn quickly
-                    pchr->ori.facing_z = terp_dir_fast( pchr->ori.facing_z, vec_to_facing( dvx , dvy ) );
-                }
-                else
-                {
-                    // AI turn slowly
-                    pchr->ori.facing_z = terp_dir( pchr->ori.facing_z, vec_to_facing( dvx , dvy ) );
-                }
-            }
-        }
-        break;
-
-        // Get direction from the DESIRED change in velocity
-    case TURNMODE_WATCH:
-        {
-            if (( ABS( dvx ) > WATCHMIN || ABS( dvy ) > WATCHMIN ) )
-            {
-                pchr->ori.facing_z = terp_dir( pchr->ori.facing_z, vec_to_facing( dvx , dvy ) );
-            }
-        }
-        break;
-
-        // Face the target
-    case TURNMODE_WATCHTARGET:
-        {
-            if ( ichr != pchr->ai.target )
-            {
-                pchr->ori.facing_z = terp_dir( pchr->ori.facing_z, vec_to_facing( ChrList.lst[pchr->ai.target].pos.x - pchr->pos.x , ChrList.lst[pchr->ai.target].pos.y - pchr->pos.y ) );
-            }
-        }
-        break;
-
-        // Otherwise make it spin
-    case TURNMODE_SPIN:
-        {
-            pchr->ori.facing_z += SPINRATE;
-        }
-        break;
-
-    }
-
-    if ( chr_get_framefx( pchr ) & MADFX_STOP )
-    {
-        new_ax = 0;
-        new_ay = 0;
-    }
-    else
-    {
-        pchr->vel.x += new_ax;
-        pchr->vel.y += new_ay;
-    }
-}
-
 //--------------------------------------------------------------------------------------------
 bool_t chr_do_latch_attack( chr_t * pchr, slot_t which_slot )
 {
@@ -5927,9 +5014,6 @@ bool_t chr_do_latch_attack( chr_t * pchr, slot_t which_slot )
     pweapon     = ChrList.lst + iweapon;
     pweapon_cap = chr_get_pcap( iweapon );
 
-	//No need to continue if we have an attack cooldown
-	if( 0 != pweapon->reloadtime ) return bfalse;
-
     // grab the iweapon's action
     base_action = pweapon_cap->weaponaction;
     hand_action = randomize_action( base_action, which_slot );
@@ -5942,7 +5026,7 @@ bool_t chr_do_latch_attack( chr_t * pchr, slot_t which_slot )
     allowedtoattack = btrue;
 
     // First check if reload time and action is okay
-    if ( !action_valid )
+    if ( !action_valid || pweapon->reloadtime > 0 )
     {
         allowedtoattack = bfalse;
     }
@@ -5973,13 +5057,17 @@ bool_t chr_do_latch_attack( chr_t * pchr, slot_t which_slot )
 
     if ( !allowedtoattack )
     {
-        // This character can't use this iweapon
-        pweapon->reloadtime = 50;
-		if ( pchr->StatusList_on || cfg.dev_mode )
+        if ( 0 == pweapon->reloadtime )
         {
-            // Tell the player that they can't use this iweapon
-            debug_printf( "%s can't use this item...", chr_get_name( GET_REF_PCHR( pchr ), CHRNAME_ARTICLE | CHRNAME_CAPITAL ) );
+            // This character can't use this iweapon
+            pweapon->reloadtime = 50;
+            if ( pchr->StatusList_on || cfg.dev_mode )
+            {
+                // Tell the player that they can't use this iweapon
+                debug_printf( "%s can't use this item...", chr_get_name( GET_REF_PCHR( pchr ), CHRNAME_ARTICLE | CHRNAME_CAPITAL ) );
+            }
         }
+
         return bfalse;
     }
 
@@ -5988,7 +5076,7 @@ bool_t chr_do_latch_attack( chr_t * pchr, slot_t which_slot )
         allowedtoattack = bfalse;
         if ( 0 == pweapon->reloadtime )
         {
-            SET_BIT( pweapon->ai.alert, ALERTIF_USED );
+            ADD_BITS( pweapon->ai.alert, ALERTIF_USED );
         }
     }
 
@@ -6015,7 +5103,7 @@ bool_t chr_do_latch_attack( chr_t * pchr, slot_t which_slot )
                     if ( !ACTION_IS_TYPE( action, P ) || !pmount_cap->ridercanattack )
                     {
                         chr_play_action( pmount, generate_randmask( ACTION_UA, 1 ), bfalse );
-                        SET_BIT( pmount->ai.alert, ALERTIF_USED );
+                        ADD_BITS( pmount->ai.alert, ALERTIF_USED );
                         pchr->ai.lastitemused = mount;
 
                         retval = btrue;
@@ -6036,6 +5124,7 @@ bool_t chr_do_latch_attack( chr_t * pchr, slot_t which_slot )
             if ( mana_paid )
             {
                 Uint32 action_madfx = 0;
+                bool_t action_uses_MADFX_ACT = bfalse;
 
                 // Check life healing
                 pchr->life += pweapon->life_heal;
@@ -6048,7 +5137,16 @@ bool_t chr_do_latch_attack( chr_t * pchr, slot_t which_slot )
                 action = mad_get_action( imad, action );
 
                 // grab the MADFX_* flags for this action
-                action_madfx = mad_get_action( imad, action );
+                action_madfx = mad_get_actionfx( imad, action );
+
+                // If the attack action of the character holding the weapon does not have
+                // MADFX_ACTLEFT or MADFX_ACTRIGHT bits (and so character_swipe() is never called)
+                // then the action is played and the ALERTIF_USED bit is set in the chr_do_latch_attack()
+                // function.
+                //
+                // It would be better to move all of this to the character_swipe() function, but we cannot be assured
+                // that all models have the proper bits set.
+                action_uses_MADFX_ACT = HAS_SOME_BITS(action, MADFX_ACTLEFT | MADFX_ACTRIGHT );
 
                 if ( ACTION_IS_TYPE( action, P ) )
                 {
@@ -6057,52 +5155,52 @@ bool_t chr_do_latch_attack( chr_t * pchr, slot_t which_slot )
                 }
                 else
                 {
-					float chr_dex = FP8_TO_INT( pchr->dexterity );
+                    float chr_dex = SFP8_TO_FLOAT( pchr->dexterity );
 
                     chr_play_action( pchr, action, bfalse );
-					
-					// Make the weapon animate the attack as well as the character holding it
-					if ( HAS_NO_BITS(action, MADFX_ACTLEFT | MADFX_ACTRIGHT ) )
-					{
+
+                    // Make the weapon animate the attack as well as the character holding it
+                    if ( !action_uses_MADFX_ACT )
+                    {
                         if( iweapon != ichr )
                         {
                             // the attacking character has no bits in the animation telling it
                             // to use the weapon, so we play the animation here
 
-						    // Make the iweapon attack too
-						    chr_play_action( pweapon, ACTION_MJ, bfalse );
+                            // Make the iweapon attack too
+                            chr_play_action( pweapon, ACTION_MJ, bfalse );
                         }
-					}
-					
-					//Determine the attack speed (how fast we play the animation)
-					pchr->inst.rate = 0.125f;						//base attack speed
-					pchr->inst.rate += chr_dex / 40;					//+0.25f for every 10 dexterity
-					
-					//Add some reload time as a true limit to attacks per second
-					//Dexterity decreases the reload time for all weapons. We could allow other stats like intelligence
-					//reduce reload time for spells or gonnes here.
-					if( !pweapon_cap->attack_fast )
-					{
-						int base_reload_time = -chr_dex;
-						if     ( ACTION_IS_TYPE(action, U) ) base_reload_time += 50;		//Unarmed  (Fists)
-						else if( ACTION_IS_TYPE(action, T) ) base_reload_time += 45;		//Thrust   (Spear)
-						else if( ACTION_IS_TYPE(action, C) ) base_reload_time += 75;		//Chop     (Axe)
-						else if( ACTION_IS_TYPE(action, S) ) base_reload_time += 55;		//Slice    (Sword)
-						else if( ACTION_IS_TYPE(action, B) ) base_reload_time += 60;		//Bash	   (Mace)
-						else if( ACTION_IS_TYPE(action, L) ) base_reload_time += 50;		//Longbow  (Longbow)
-						else if( ACTION_IS_TYPE(action, X) ) base_reload_time += 100;		//Xbow	   (Crossbow)
-						else if( ACTION_IS_TYPE(action, F) ) base_reload_time += 50;		//Flinged  (Unused)
-						
-						//it is possible to have so high dex to eliminate all reload time
-						if( base_reload_time > 0 ) pweapon->reloadtime += base_reload_time;
-					}
+                    }
+
+                    //Determine the attack speed (how fast we play the animation)
+                    pchr->inst.rate = 0.125f;                       // base attack speed
+                    pchr->inst.rate += chr_dex / 40;                // +0.25f for every 10 dexterity
+
+                    // Add some reload time as a true limit to attacks per second
+                    // Dexterity decreases the reload time for all weapons. We could allow other stats like intelligence
+                    // reduce reload time for spells or gonnes here.
+                    if( !pweapon_cap->attack_fast )
+                    {
+                        int base_reload_time = -chr_dex;
+                        if     ( ACTION_IS_TYPE(action, U) ) base_reload_time += 50;        // Unarmed  (Fists)
+                        else if( ACTION_IS_TYPE(action, T) ) base_reload_time += 45;        // Thrust   (Spear)
+                        else if( ACTION_IS_TYPE(action, C) ) base_reload_time += 75;        // Chop     (Axe)
+                        else if( ACTION_IS_TYPE(action, S) ) base_reload_time += 55;        // Slice    (Sword)
+                        else if( ACTION_IS_TYPE(action, B) ) base_reload_time += 60;        // Bash     (Mace)
+                        else if( ACTION_IS_TYPE(action, L) ) base_reload_time += 50;        // Longbow  (Longbow)
+                        else if( ACTION_IS_TYPE(action, X) ) base_reload_time += 100;       // Xbow     (Crossbow)
+                        else if( ACTION_IS_TYPE(action, F) ) base_reload_time += 50;        // Flinged  (Unused)
+
+                        //it is possible to have so high dex to eliminate all reload time
+                        if( base_reload_time > 0 ) pweapon->reloadtime += base_reload_time;
+                    }
                 }
 
                 // let everyone know what we did
                 pchr->ai.lastitemused = iweapon;
-                if ( iweapon == ichr || HAS_NO_BITS(action, MADFX_ACTLEFT | MADFX_ACTRIGHT ) )
+                if ( iweapon == ichr || !action_uses_MADFX_ACT )
                 {
-                    SET_BIT( pweapon->ai.alert, ALERTIF_USED );
+                    ADD_BITS( pweapon->ai.alert, ALERTIF_USED );
                 }
 
                 retval = btrue;
@@ -6120,146 +5218,172 @@ bool_t chr_do_latch_attack( chr_t * pchr, slot_t which_slot )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_do_latch_button( chr_t * pchr )
+chr_bundle_t * chr_do_latch_button( chr_bundle_t * pbdl )
 {
     /// @details BB@> Character latches for generalized buttons
 
-    CHR_REF ichr;
-    ai_state_t * pai;
+    CHR_REF       loc_ichr;
+    chr_t       * loc_pchr;
+    phys_data_t * loc_pphys;
+    ai_state_t  * loc_pai;
 
     CHR_REF item;
     bool_t attack_handled;
 
-    if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
-    ichr = GET_REF_PCHR( pchr );
+    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
 
-    pai = &( pchr->ai );
+    // alias some variables
+    loc_ichr    = pbdl->chr_ref;
+    loc_pchr    = pbdl->chr_ptr;
+    loc_pphys   = &(loc_pchr->phys);
+    loc_pai     = &(loc_pchr->ai);
 
-    if ( !pchr->alive || 0 == pchr->latch.b ) return btrue;
+    if ( !loc_pchr->alive || 0 == loc_pchr->latch.trans_b ) return pbdl;
 
-    if ( HAS_SOME_BITS( pchr->latch.b, LATCHBUTTON_JUMP ) && 0 == pchr->jumptime )
+    if ( HAS_SOME_BITS( loc_pchr->latch.trans_b, LATCHBUTTON_JUMP ) && 0 == loc_pchr->jump_time )
     {
-		int ijump;
-		cap_t * pcap;
+        int ijump;
 
-		//Jump from our mount
-        if ( INGAME_CHR( pchr->attachedto ) )
+        bool_t can_jump;
+        float jump_vel, jump_pos;
+        int   jump_delay;
+
+        can_jump   = bfalse;
+        jump_delay = JUMP_DELAY;
+        jump_vel   = 0.0f;
+        jump_pos   = 0.0f;
+
+
+        if ( INGAME_CHR( loc_pchr->attachedto ) )
         {
-            fvec3_t tmp_pos;
+            // Jump from our mount
 
-            detach_character_from_mount( ichr, btrue, btrue );
-            detach_character_from_platform( ChrList.lst + ichr );
+            chr_t * pmount = ChrList.lst + loc_pchr->attachedto;
 
-            pchr->jumptime = JUMPDELAY;
-            if ( pchr->flyheight != 0 )
+            detach_character_from_mount( loc_ichr, btrue, btrue );
+            detach_character_from_platform( loc_pchr );
+
+            can_jump = btrue;
+
+            if ( pmount->is_flying_platform && pmount->platform )
             {
-                pchr->vel.z += DISMOUNTZVELFLY;
+                jump_vel = DISMOUNTZVELFLY;
             }
             else
             {
-                pchr->vel.z += DISMOUNTZVEL;
+                jump_vel = DISMOUNTZVEL;
             }
 
-            tmp_pos = chr_get_pos( pchr );
-            tmp_pos.z += pchr->vel.z;
-            chr_set_pos( pchr, tmp_pos.v );
-
-            if ( pchr->jumpnumberreset != JUMPINFINITE && pchr->jumpnumber != 0 )
-                pchr->jumpnumber--;
-
-            // Play the jump sound
-			pcap = pro_get_pcap( pchr->profile_ref );
-            if ( NULL != pcap )
-            {
-				ijump = pro_get_pcap( pchr->profile_ref )->sound_index[SOUND_JUMP];
-				if ( VALID_SND( ijump ) )
-				{
-					sound_play_chunk( pchr->pos, chr_get_chunk_ptr( pchr, ijump ) );
-				}
-			}
-
+            // make a slight offset so that you won't get sucked back into the mount point
+            jump_pos = jump_vel;
         }
-
-		//Normal jump
-        else if ( 0 != pchr->jumpnumber && 0 == pchr->flyheight )
+        else if ( loc_pchr->jump_number > 0 && !IS_FLYING_PCHR( loc_pchr ) )
         {
-            if ( pchr->jumpnumberreset != 1 || pchr->jumpready )
+            if( loc_pchr->can_fly_jump )
             {
+                // enter jump-flying mode?
+                loc_pchr->is_flying_jump = !loc_pchr->enviro.inwater;
 
-                // Make the character jump
-                pchr->hitready = btrue;
-                if ( pchr->enviro.inwater || pchr->enviro.is_slippy )
+                can_jump = btrue;
+            }
+            else if ( loc_pchr->jump_ready || (loc_pchr->jump_number_reset > 1 && 0 == loc_pchr->jump_time) )
+            {
+                // Normal jump
+                can_jump = btrue;
+            }
+
+            // Some environmental properties
+            if( can_jump )
+            {
+                if ( loc_pchr->enviro.inwater || loc_pchr->enviro.is_slippy )
                 {
-                    pchr->jumptime = JUMPDELAY * 4;         //To prevent 'bunny jumping' in water
-                    pchr->vel.z += WATERJUMP;
+                    jump_delay = JUMP_DELAY * 4;         //To prevent 'bunny jumping' in water
+                    jump_vel = JUMP_SPEED_WATER;
                 }
                 else
                 {
-                    pchr->jumptime = JUMPDELAY;
-                    pchr->vel.z += pchr->jump_power * 1.5f;
-                }
-
-                pchr->jumpready = bfalse;
-                if ( pchr->jumpnumberreset != JUMPINFINITE ) pchr->jumpnumber--;
-
-                // Set to jump animation if not doing anything better
-                if ( pchr->inst.action_ready )
-                {
-                    chr_play_action( pchr, ACTION_JA, btrue );
-                }
-
-                // Play the jump sound (Boing!)
-                pcap = pro_get_pcap( pchr->profile_ref );
-                if ( NULL != pcap )
-                {
-                    ijump = pcap->sound_index[SOUND_JUMP];
-                    if ( VALID_SND( ijump ) )
-                    {
-                        sound_play_chunk( pchr->pos, chr_get_chunk_ptr( pchr, ijump ) );
-                    }
+                    jump_delay = JUMP_DELAY;
+                    jump_vel   = loc_pchr->jump_power * 1.5f;
                 }
             }
         }
 
-    }
-    if ( HAS_SOME_BITS( pchr->latch.b, LATCHBUTTON_ALTLEFT ) && pchr->inst.action_ready && 0 == pchr->reloadtime )
-    {
-        //pchr->latch.b &= ~LATCHBUTTON_ALTLEFT;
+        // do the jump
+        if( can_jump )
+        {
+            // set some jump states
+            loc_pchr->hitready   = btrue;
+            loc_pchr->jump_ready = bfalse;
+            loc_pchr->jump_time = jump_delay;
 
-        pchr->reloadtime = GRABDELAY;
-        if ( !INGAME_CHR( pchr->holdingwhich[SLOT_LEFT] ) )
+            // make the character jump
+            phys_data_accumulate_avel_index( loc_pphys, jump_vel, kZ );
+            phys_data_accumulate_apos_plat_index( loc_pphys, jump_pos, kZ );
+
+            // Set to jump animation if not doing anything better
+            if ( loc_pchr->inst.action_ready )
+            {
+                chr_play_action( loc_pchr, ACTION_JA, btrue );
+            }
+
+            // down the jump counter
+            if ( JUMP_NUMBER_INFINITE != loc_pchr->jump_number_reset && loc_pchr->jump_number >= 0 ) 
+            {
+                loc_pchr->jump_number--;
+            }
+
+            // Play the jump sound (Boing!)
+            if ( NULL != pbdl->cap_ptr )
+            {
+                ijump = pbdl->cap_ptr->sound_index[SOUND_JUMP];
+                if ( VALID_SND( ijump ) )
+                {
+                    sound_play_chunk( loc_pchr->pos, chr_get_chunk_ptr( loc_pchr, ijump ) );
+                }
+            }
+        }
+    }
+
+    if ( HAS_SOME_BITS( loc_pchr->latch.trans_b, LATCHBUTTON_ALTLEFT ) && loc_pchr->inst.action_ready && 0 == loc_pchr->reloadtime )
+    {
+        //loc_pchr->latch.trans_b &= ~LATCHBUTTON_ALTLEFT;
+
+        loc_pchr->reloadtime = GRABDELAY;
+        if ( !INGAME_CHR( loc_pchr->holdingwhich[SLOT_LEFT] ) )
         {
             // Grab left
-            chr_play_action( pchr, ACTION_ME, bfalse );
+            chr_play_action( loc_pchr, ACTION_ME, bfalse );
         }
         else
         {
             // Drop left
-            chr_play_action( pchr, ACTION_MA, bfalse );
+            chr_play_action( loc_pchr, ACTION_MA, bfalse );
         }
     }
-    if ( HAS_SOME_BITS( pchr->latch.b, LATCHBUTTON_ALTRIGHT ) && pchr->inst.action_ready && 0 == pchr->reloadtime )
-    {
-        //pchr->latch.b &= ~LATCHBUTTON_ALTRIGHT;
 
-        pchr->reloadtime = GRABDELAY;
-        if ( !INGAME_CHR( pchr->holdingwhich[SLOT_RIGHT] ) )
+    if ( HAS_SOME_BITS( loc_pchr->latch.trans_b, LATCHBUTTON_ALTRIGHT ) && loc_pchr->inst.action_ready && 0 == loc_pchr->reloadtime )
+    {
+        //loc_pchr->latch.trans_b &= ~LATCHBUTTON_ALTRIGHT;
+
+        loc_pchr->reloadtime = GRABDELAY;
+        if ( !INGAME_CHR( loc_pchr->holdingwhich[SLOT_RIGHT] ) )
         {
             // Grab right
-            chr_play_action( pchr, ACTION_MF, bfalse );
+            chr_play_action( loc_pchr, ACTION_MF, bfalse );
         }
         else
         {
             // Drop right
-            chr_play_action( pchr, ACTION_MB, bfalse );
+            chr_play_action( loc_pchr, ACTION_MB, bfalse );
         }
     }
-    if ( HAS_SOME_BITS( pchr->latch.b, LATCHBUTTON_PACKLEFT ) && pchr->inst.action_ready && 0 == pchr->reloadtime )
-    {
-        //pchr->latch.b &= ~LATCHBUTTON_PACKLEFT;
 
-        pchr->reloadtime = PACKDELAY;
-        item = pchr->holdingwhich[SLOT_LEFT];
+    if ( HAS_SOME_BITS( loc_pchr->latch.trans_b, LATCHBUTTON_PACKLEFT ) && loc_pchr->inst.action_ready && 0 == loc_pchr->reloadtime )
+    {
+        //loc_pchr->latch.trans_b &= ~LATCHBUTTON_PACKLEFT;
+
+        loc_pchr->reloadtime = PACKDELAY;
+        item = loc_pchr->holdingwhich[SLOT_LEFT];
 
         if ( INGAME_CHR( item ) )
         {
@@ -6268,8 +5392,8 @@ bool_t chr_do_latch_button( chr_t * pchr )
             if (( pitem->iskursed || pro_get_pcap( pitem->profile_ref )->istoobig ) && !pro_get_pcap( pitem->profile_ref )->isequipment )
             {
                 // The item couldn't be put away
-                SET_BIT( pitem->ai.alert, ALERTIF_NOTPUTAWAY );
-                if ( VALID_PLA( pchr->is_which_player ) )
+                ADD_BITS( pitem->ai.alert, ALERTIF_NOTPUTAWAY );
+                if ( VALID_PLA( loc_pchr->is_which_player ) )
                 {
                     if ( pro_get_pcap( pitem->profile_ref )->istoobig )
                     {
@@ -6284,24 +5408,25 @@ bool_t chr_do_latch_button( chr_t * pchr )
             else
             {
                 // Put the item into the pack
-                inventory_add_item( item, ichr );
+                chr_inventory_add_item( item, loc_ichr );
             }
         }
         else
         {
             // Get a new one out and put it in hand
-            inventory_get_item( ichr, GRIP_LEFT, bfalse );
+            chr_inventory_remove_item( loc_ichr, GRIP_LEFT, bfalse );
         }
 
         // Make it take a little time
-        chr_play_action( pchr, ACTION_MG, bfalse );
+        chr_play_action( loc_pchr, ACTION_MG, bfalse );
     }
-    if ( HAS_SOME_BITS( pchr->latch.b, LATCHBUTTON_PACKRIGHT ) && pchr->inst.action_ready && 0 == pchr->reloadtime )
-    {
-        //pchr->latch.b &= ~LATCHBUTTON_PACKRIGHT;
 
-        pchr->reloadtime = PACKDELAY;
-        item = pchr->holdingwhich[SLOT_RIGHT];
+    if ( HAS_SOME_BITS( loc_pchr->latch.trans_b, LATCHBUTTON_PACKRIGHT ) && loc_pchr->inst.action_ready && 0 == loc_pchr->reloadtime )
+    {
+        //loc_pchr->latch.trans_b &= ~LATCHBUTTON_PACKRIGHT;
+
+        loc_pchr->reloadtime = PACKDELAY;
+        item = loc_pchr->holdingwhich[SLOT_RIGHT];
         if ( INGAME_CHR( item ) )
         {
             chr_t * pitem     = ChrList.lst + item;
@@ -6310,8 +5435,8 @@ bool_t chr_do_latch_button( chr_t * pchr )
             if (( pitem->iskursed || pitem_cap->istoobig ) && !pitem_cap->isequipment )
             {
                 // The item couldn't be put away
-                SET_BIT( pitem->ai.alert, ALERTIF_NOTPUTAWAY );
-                if ( VALID_PLA( pchr->is_which_player ) )
+                ADD_BITS( pitem->ai.alert, ALERTIF_NOTPUTAWAY );
+                if ( VALID_PLA( loc_pchr->is_which_player ) )
                 {
                     if ( pitem_cap->istoobig )
                     {
@@ -6326,579 +5451,39 @@ bool_t chr_do_latch_button( chr_t * pchr )
             else
             {
                 // Put the item into the pack
-                inventory_add_item( item, ichr );
+                chr_inventory_add_item( item, loc_ichr );
             }
         }
         else
         {
             // Get a new one out and put it in hand
-            inventory_get_item( ichr, GRIP_RIGHT, bfalse );
+            chr_inventory_remove_item( loc_ichr, GRIP_RIGHT, bfalse );
         }
 
         // Make it take a little time
-        chr_play_action( pchr, ACTION_MG, bfalse );
+        chr_play_action( loc_pchr, ACTION_MG, bfalse );
     }
 
     // LATCHBUTTON_LEFT and LATCHBUTTON_RIGHT are mutually exclusive
     attack_handled = bfalse;
-    if ( !attack_handled && HAS_SOME_BITS( pchr->latch.b, LATCHBUTTON_LEFT ) && 0 == pchr->reloadtime )
+    if ( !attack_handled && HAS_SOME_BITS( loc_pchr->latch.trans_b, LATCHBUTTON_LEFT ) && 0 == loc_pchr->reloadtime )
     {
-        //pchr->latch.b &= ~LATCHBUTTON_LEFT;
-        attack_handled = chr_do_latch_attack( pchr, SLOT_LEFT );
+        //loc_pchr->latch.trans_b &= ~LATCHBUTTON_LEFT;
+        attack_handled = chr_do_latch_attack( loc_pchr, SLOT_LEFT );
     }
-    if ( !attack_handled && HAS_SOME_BITS( pchr->latch.b, LATCHBUTTON_RIGHT ) && 0 == pchr->reloadtime )
+    if ( !attack_handled && HAS_SOME_BITS( loc_pchr->latch.trans_b, LATCHBUTTON_RIGHT ) && 0 == loc_pchr->reloadtime )
     {
-        //pchr->latch.b &= ~LATCHBUTTON_RIGHT;
+        //loc_pchr->latch.trans_b &= ~LATCHBUTTON_RIGHT;
 
-        attack_handled = chr_do_latch_attack( pchr, SLOT_RIGHT );
+        attack_handled = chr_do_latch_attack( loc_pchr, SLOT_RIGHT );
     }
 
-    return btrue;
+    return pbdl;
 }
+
+
 
 //--------------------------------------------------------------------------------------------
-void move_one_character_do_z_motion( chr_t * pchr )
-{
-    if ( !ACTIVE_PCHR( pchr ) ) return;
-
-    //---- do z acceleration
-    if ( 0 != pchr->flyheight )
-    {
-        pchr->vel.z += ( pchr->enviro.fly_level + pchr->flyheight - pchr->pos.z ) * FLYDAMPEN;
-    }
-    else
-    {
-        if ( pchr->enviro.is_slippy && pchr->phys.weight != INFINITE_WEIGHT &&
-            pchr->enviro.twist != TWIST_FLAT && pchr->enviro.zlerp < 1.0f )
-        {
-            // Slippy hills make characters slide
-
-            fvec3_t   gperp;    // gravity perpendicular to the mesh
-            fvec3_t   gpara;    // gravity parallel      to the mesh (what pushes you)
-
-            float     loc_zlerp = pchr->enviro.zlerp;
-
-            gpara.x = map_twistvel_x[pchr->enviro.twist];
-            gpara.y = map_twistvel_y[pchr->enviro.twist];
-            gpara.z = map_twistvel_z[pchr->enviro.twist];
-
-            gperp.x = 0       - gpara.x;
-            gperp.y = 0       - gpara.y;
-            gperp.z = gravity - gpara.z;
-
-            pchr->vel.x += gpara.x * (1.0f - loc_zlerp) + gperp.x * loc_zlerp;
-            pchr->vel.y += gpara.y * (1.0f - loc_zlerp) + gperp.y * loc_zlerp;
-            pchr->vel.z += gpara.z * (1.0f - loc_zlerp) + gperp.z * loc_zlerp;
-        }
-        else
-        {
-            pchr->vel.z += pchr->enviro.zlerp * gravity;
-        }
-    }
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t chr_update_safe_raw( chr_t * pchr )
-{
-    bool_t retval = bfalse;
-
-    bool_t hit_a_wall;
-
-    if( !ALLOCATED_PCHR( pchr ) ) return bfalse;
-
-    hit_a_wall = chr_hit_wall( pchr, NULL, NULL, NULL );
-    if( !hit_a_wall )
-    {
-        pchr->safe_valid = btrue;
-        pchr->safe_pos   = chr_get_pos( pchr );
-        pchr->safe_time  = update_wld;
-        pchr->safe_grid  = mesh_get_tile(PMesh, pchr->pos.x, pchr->pos.y);
-
-        retval = btrue;
-    }
-
-    return retval;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t chr_update_safe( chr_t * pchr, bool_t force )
-{
-    Uint32 new_grid;
-    bool_t retval = bfalse;
-    bool_t needs_update = bfalse;
-
-    if( !ALLOCATED_PCHR(pchr) ) return bfalse;
-
-    if( force || !pchr->safe_valid )
-    {
-        needs_update = btrue;
-    }
-    else
-    {
-        new_grid = mesh_get_tile( PMesh, pchr->pos.x, pchr->pos.y );
-
-        if( INVALID_TILE == new_grid )
-        {
-            if( ABS(pchr->pos.x - pchr->safe_pos.x) > GRID_SIZE ||
-                ABS(pchr->pos.y - pchr->safe_pos.y) > GRID_SIZE )
-            {
-                needs_update = btrue;
-            }
-        }
-        else if ( new_grid != pchr->safe_grid )
-        {
-            needs_update = btrue;
-        }
-    }
-
-    if( needs_update )
-    {
-        retval = chr_update_safe_raw( pchr );
-    }
-
-    return retval;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t chr_get_safe( chr_t * pchr, fvec3_base_t pos_v )
-{
-    bool_t found = bfalse;
-    fvec3_t loc_pos;
-
-    if( !ALLOCATED_PCHR(pchr) ) return bfalse;
-
-    // handle optional parameters
-    if( NULL == pos_v ) pos_v = loc_pos.v;
-
-    if( !found && pchr->safe_valid )
-    {
-        if( !chr_hit_wall( pchr, NULL, NULL, NULL ) )
-        {
-            found = btrue;
-            memmove( pos_v, pchr->safe_pos.v, sizeof(fvec3_base_t) );
-        }
-    }
-
-    if( !found )
-    {
-        breadcrumb_t * bc;
-
-        bc = breadcrumb_list_last_valid( &(pchr->crumbs) );
-
-        if ( NULL != bc )
-        {
-            found = btrue;
-            memmove( pos_v, bc->pos.v, sizeof(fvec3_base_t) );
-        }
-    }
-
-    // maybe there is one last fallback after this? we could check the character's current position?
-	if( !found )
-	{
-		log_debug("Uh oh! We could not find a valid non-wall position for %s!\n", chr_get_pcap(pchr->ai.index)->name);
-	}
-
-    return found;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t chr_update_breadcrumb_raw( chr_t * pchr )
-{
-    breadcrumb_t bc;
-    bool_t retval = bfalse;
-
-    if( !ALLOCATED_PCHR( pchr ) ) return bfalse;
-
-    breadcrumb_init_chr( &bc, pchr );
-
-    if( bc.valid )
-    {
-        retval = breadcrumb_list_add( &(pchr->crumbs), &bc );
-    }
-
-    return retval;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t chr_update_breadcrumb( chr_t * pchr, bool_t force )
-{
-    Uint32 new_grid;
-    bool_t retval = bfalse;
-    bool_t needs_update = bfalse;
-    breadcrumb_t * bc_ptr, bc;
-
-    if( !ALLOCATED_PCHR(pchr) ) return bfalse;
-
-    bc_ptr = breadcrumb_list_last_valid( &(pchr->crumbs) );
-    if( NULL == bc_ptr )
-    {
-        force  = btrue;
-        bc_ptr = &bc;
-        breadcrumb_init_chr( bc_ptr, pchr );
-    }
-
-    if( force )
-    {
-        needs_update = btrue;
-    }
-    else
-    {
-        new_grid = mesh_get_tile( PMesh, pchr->pos.x, pchr->pos.y );
-
-        if( INVALID_TILE == new_grid )
-        {
-            if( ABS(pchr->pos.x - bc_ptr->pos.x) > GRID_SIZE ||
-                ABS(pchr->pos.y - bc_ptr->pos.y) > GRID_SIZE )
-            {
-                needs_update = btrue;
-            }
-        }
-        else if ( new_grid != bc_ptr->grid )
-        {
-            needs_update = btrue;
-        }
-    }
-
-    if( needs_update )
-    {
-        retval = chr_update_breadcrumb_raw( pchr );
-    }
-
-    return retval;
-}
-
-//--------------------------------------------------------------------------------------------
-breadcrumb_t * chr_get_last_breadcrumb( chr_t * pchr )
-{
-    if( !ALLOCATED_PCHR(pchr) ) return NULL;
-
-    if( 0 == pchr->crumbs.count ) return NULL;
-
-    return breadcrumb_list_last_valid( &(pchr->crumbs) );
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t move_one_character_integrate_motion_attached( chr_t * pchr )
-{
-    Uint32 chr_update;
-
-    if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
-
-    // make a timer that is individual for each object
-    chr_update = pchr->obj_base.guid + update_wld;
-
-    if (  0 == ( chr_update & 7 ) )
-    {
-        chr_update_safe( pchr, btrue );
-    }
-
-    return btrue;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t move_one_character_integrate_motion( chr_t * pchr )
-{
-    /// @details BB@> Figure out the next position of the character.
-    ///    Include collisions with the mesh in this step.
-
-    CHR_REF  ichr;
-    ai_state_t * pai;
-
-    float   bumpdampen;
-    bool_t  needs_test, updated_2d;
-
-    fvec3_t tmp_pos;
-
-    if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
-
-    if( ACTIVE_CHR(pchr->attachedto) )
-    {
-        return move_one_character_integrate_motion_attached( pchr );
-    }
-
-    tmp_pos = chr_get_pos( pchr );
-
-    pai = &( pchr->ai );
-    ichr = pai->index;
-
-    bumpdampen = CLIP( pchr->phys.bumpdampen, 0.0f, 1.0f );
-    bumpdampen = ( bumpdampen + 1.0f ) / 2.0f;
-
-    // interaction with the mesh
-    //if ( ABS( pchr->vel.z ) > 0.0f )
-    {
-        tmp_pos.z += pchr->vel.z;
-        LOG_NAN( tmp_pos.z );
-        if ( tmp_pos.z < pchr->enviro.floor_level )
-        {
-            pchr->vel.z *= -pchr->phys.bumpdampen;
-
-            if ( ABS( pchr->vel.z ) < STOPBOUNCING )
-            {
-                pchr->vel.z = 0.0f;
-                tmp_pos.z = pchr->enviro.level;
-            }
-            else
-            {
-                float diff = pchr->enviro.level - tmp_pos.z;
-                tmp_pos.z = pchr->enviro.level + diff;
-            }
-        }
-    }
-
-    // fixes to the z-position
-    if ( 0.0f != pchr->flyheight )
-    {
-        if ( tmp_pos.z < 0.0f ) tmp_pos.z = 0.0f;  // Don't fall in pits...
-    }
-
-    updated_2d = bfalse;
-    needs_test = bfalse;
-
-    // interaction with the grid flags
-    updated_2d = bfalse;
-    needs_test = bfalse;
-    //if ( ABS( pchr->vel.x ) + ABS( pchr->vel.y ) > 0.0f )
-    {
-        float old_x, old_y, new_x, new_y;
-
-        old_x = tmp_pos.x; LOG_NAN( old_x );
-        old_y = tmp_pos.y; LOG_NAN( old_y );
-
-        new_x = old_x + pchr->vel.x; LOG_NAN( new_x );
-        new_y = old_y + pchr->vel.y; LOG_NAN( new_y );
-
-        tmp_pos.x = new_x;
-        tmp_pos.y = new_y;
-
-        if ( !chr_test_wall( pchr, tmp_pos.v ) )
-        {
-            updated_2d = btrue;
-        }
-        else
-        {
-            fvec2_t nrm;
-            float   pressure;
-            bool_t diff_function_called = bfalse;
-
-            chr_hit_wall( pchr, tmp_pos.v, nrm.v, &pressure );
-
-            // how is the character hitting the wall?
-            if ( 0.0f != pressure )
-            {
-                bool_t         found_nrm  = bfalse;
-                bool_t         found_safe = bfalse;
-                fvec3_t        safe_pos   = ZERO_VECT3;
-
-                bool_t         found_diff = bfalse;
-                fvec2_t        diff       = ZERO_VECT2;
-
-                breadcrumb_t * bc         = NULL;
-
-                // try to get the correct "outward" pressure from nrm
-                if( !found_nrm && ABS(nrm.x) + ABS(nrm.y) > 0.0f )
-                {
-                    found_nrm = btrue;
-                }
-
-                if( !found_diff && pchr->safe_valid )
-                {
-                    if( !found_safe )
-                    {
-                        found_safe = btrue;
-                        safe_pos   = pchr->safe_pos;
-                    }
-
-                    diff.x = pchr->safe_pos.x - pchr->pos.x;
-                    diff.y = pchr->safe_pos.y - pchr->pos.y;
-
-                    if( ABS(diff.x) + ABS(diff.y) > 0.0f )
-                    {
-                        found_diff = btrue;
-                    }
-                }
-
-                // try to get a diff from a breadcrumb
-                if( !found_diff )
-                {
-                    bc = chr_get_last_breadcrumb( pchr );
-
-                    if( NULL != bc && bc->valid )
-                    {
-                        if( !found_safe )
-                        {
-                            found_safe = btrue;
-                            safe_pos   = pchr->safe_pos;
-                        }
-
-                        diff.x = bc->pos.x - pchr->pos.x;
-                        diff.y = bc->pos.y - pchr->pos.y;
-
-                        if( ABS(diff.x) + ABS(diff.y) > 0.0f )
-                        {
-                            found_diff = btrue;
-                        }
-                    }
-                }
-
-                // try to get a normal from the mesh_get_diff() function
-                if( !found_nrm )
-                {
-                    fvec2_t diff;
-
-                    diff = chr_get_diff( pchr, tmp_pos.v, pressure );
-                    diff_function_called = btrue;
-
-                    nrm.x = diff.x;
-                    nrm.y = diff.y;
-
-                    if( ABS(nrm.x) + ABS(nrm.y) > 0.0f )
-                    {
-                        found_nrm = btrue;
-                    }
-                }
-
-                if( !found_diff )
-                {
-                    // try to get the diff from the character velocity
-                    diff.x = pchr->vel.x;
-                    diff.y = pchr->vel.y;
-
-                    // make sure that the diff is in the same direction as the velocity
-                    if( fvec2_dot_product(diff.v, nrm.v) < 0.0f  )
-                    {
-                        diff.x *= -1.0f;
-                        diff.y *= -1.0f;
-                    }
-
-                    if( ABS(diff.x) + ABS(diff.y) > 0.0f )
-                    {
-                        found_diff = btrue;
-                    }
-                }
-
-                if( !found_nrm )
-                {
-                    // After all of our best efforts, we can't generate a normal to the wall.
-                    // This can happen if the object is completely inside a wall,
-                    // (like if it got pushed in there) or if a passage closed around it.
-                    // Just teleport the character to a "safe" position.
-
-                    if( !found_safe && NULL == bc )
-                    {
-                        bc = chr_get_last_breadcrumb( pchr );
-
-                        if( NULL != bc && bc->valid )
-                        {
-                            found_safe = btrue;
-                            safe_pos   = pchr->safe_pos;
-                        }
-                    }
-
-                    if( !found_safe )
-                    {
-                        // the only safe position is the spawn point???
-                        found_safe = btrue;
-                        safe_pos = pchr->pos_stt;
-                    }
-
-                    tmp_pos = safe_pos;
-                }
-                else if( found_diff && found_nrm )
-                {
-                    const float tile_fraction = 0.1f;
-                    float ftmp, dot, pressure_old, pressure_new;
-                    fvec3_t save_pos;
-                    float nrm2;
-
-                    fvec2_t v_perp = ZERO_VECT2;
-                    fvec2_t diff_perp = ZERO_VECT2;
-
-                    nrm2 = fvec2_dot_product( nrm.v, nrm.v );
-
-                    save_pos = tmp_pos;
-
-                    // make the diff point "out"
-                    dot = fvec2_dot_product( diff.v, nrm.v );
-                    if( dot < 0.0f )
-                    {
-                        diff.x *= -1.0f;
-                        diff.y *= -1.0f;
-                        dot    *= -1.0f;
-                    }
-
-                    // find the part of the diff that is parallel to the normal
-                    diff_perp.x = nrm.x * dot / nrm2;
-                    diff_perp.y = nrm.y * dot / nrm2;
-
-                    // normalize the diff_perp so that it is at most tile_fraction of a grid in any direction
-                    ftmp = MAX(ABS(diff_perp.x), ABS(diff_perp.y));
-					if( ftmp == 0 ) ftmp = 1.00f;						//EGOBOO_ASSERT(ftmp > 0.0f);
-
-                    diff_perp.x *= tile_fraction * GRID_SIZE / ftmp;
-                    diff_perp.y *= tile_fraction * GRID_SIZE / ftmp;
-
-                    // try moving the character
-                    tmp_pos.x += diff_perp.x * pressure;
-                    tmp_pos.y += diff_perp.y * pressure;
-
-                    // determine whether the pressure is less at this location
-                    pressure_old = chr_get_mesh_pressure( pchr, save_pos.v );
-                    pressure_new = chr_get_mesh_pressure( pchr, tmp_pos.v );
-
-                    if( pressure_new < pressure_old )
-                    {
-                        // !!success!!
-                        needs_test = ( tmp_pos.x != save_pos.x ) || ( tmp_pos.y != save_pos.y );
-                    }
-                    else
-                    {
-                        // !!failure!! restore the saved position
-                        tmp_pos = save_pos;
-                    }
-
-                    dot = fvec2_dot_product( pchr->vel.v, nrm.v );
-                    if( dot < 0.0f )
-                    {
-                        float bumpdampen;
-                        cap_t * pcap = chr_get_pcap( GET_REF_PCHR(pchr) );
-
-                        bumpdampen = 0.0f;
-                        if( NULL == pcap )
-                        {
-                            bumpdampen = pcap->bumpdampen;
-                        }
-                        v_perp.x = nrm.x * dot / nrm2;
-                        v_perp.y = nrm.y * dot / nrm2;
-
-                        pchr->vel.x += - (1.0f + bumpdampen) * v_perp.x * pressure;
-                        pchr->vel.y += - (1.0f + bumpdampen) * v_perp.y * pressure;
-                    }
-                }
-            }
-        }
-    }
-
-    chr_set_pos( pchr, tmp_pos.v );
-
-    // we need to test the validity of the current position every 8 frames or so,
-    // no matter what
-    if ( !needs_test )
-    {
-        // make a timer that is individual for each object
-        Uint32 chr_update = pchr->obj_base.guid + update_wld;
-
-        needs_test = ( 0 == ( chr_update & 7 ) );
-    }
-
-    if ( needs_test || updated_2d )
-    {
-        chr_update_safe( pchr, needs_test );
-    }
-
-    return btrue;
-}
-
 //--------------------------------------------------------------------------------------------
 bool_t chr_handle_madfx( chr_t * pchr )
 {
@@ -6955,8 +5540,8 @@ bool_t chr_handle_madfx( chr_t * pchr )
     {
         pchr->ai.poof_time = update_wld;
     }
-	
-	if ( cfg.sound_footfall && HAS_SOME_BITS(framefx, MADFX_FOOTFALL) )
+
+    if ( HAS_SOME_BITS(framefx, MADFX_FOOTFALL) )
     {
         cap_t * pcap = pro_get_pcap( pchr->profile_ref );
         if ( NULL != pcap )
@@ -6972,15 +5557,7 @@ bool_t chr_handle_madfx( chr_t * pchr )
     return btrue;
 }
 
-struct s_chr_anim_data
-{
-    bool_t allowed;
-    int    action;
-    int    lip;
-    float  speed;
-};
-typedef struct s_chr_anim_data chr_anim_data_t;
-
+//--------------------------------------------------------------------------------------------
 int cmp_chr_anim_data( void const * vp_lhs, void const * vp_rhs )
 {
     /// @details BB@> Sort MOD REF values based on the rank of the module that they point to.
@@ -7017,16 +5594,13 @@ float set_character_animation_rate( chr_t * pchr )
 {
     /// @details ZZ@> Get running, walking, sneaking, or dancing, from speed
     ///
-    /// BB@> added automatic calculation of variable animation rates for movement animations
+    /// @note BB@> added automatic calculation of variable animation rates for movement animations
 
     float  speed;
+    int    action, lip;
     bool_t can_be_interrupted;
     bool_t is_walk_type;
-    int    cnt, anim_count;
-    int    action, lip;
     bool_t found;
-
-    chr_anim_data_t anim_info[CHR_MOVEMENT_COUNT];
 
     int           frame_count;
     MD2_Frame_t * frame_list, * pframe_nxt;
@@ -7036,18 +5610,22 @@ float set_character_animation_rate( chr_t * pchr )
     CHR_REF          ichr;
 
     // set the character speed to zero
-	speed = 0;
+    speed = 0;
 
     if( NULL == pchr ) return 1.0f;
     pinst = &(pchr->inst);
     ichr  = GET_REF_PCHR( pchr );
 
+    // get the model
+    pmad = chr_get_pmad( ichr );
+    if ( NULL == pmad ) return pinst->rate;
+
     // if the action is set to keep then do nothing
     can_be_interrupted = !pinst->action_keep;
     if( !can_be_interrupted ) return pinst->rate = 1.0f;
 
-	// dont change the rate if it is an attack animation
-    if( character_is_attacking(pchr) )	return pinst->rate;
+    // don't change the rate if it is an attack animation
+    if( chr_is_attacking(pchr) )    return pinst->rate;
 
     // if the animation is not a walking-type animation, ignore the variable animation rates
     // and the automatic determination of the walk animation
@@ -7057,7 +5635,7 @@ float set_character_animation_rate( chr_t * pchr )
 
     // if the action cannot be changed on the at this time, there's nothing to do.
     // keep the same animation rate
-    if ( !pinst->action_ready ) 
+    if ( !pinst->action_ready )
     {
         if( 0.0f == pinst->rate ) pinst->rate = 1.0f;
         return pinst->rate;
@@ -7068,135 +5646,150 @@ float set_character_animation_rate( chr_t * pchr )
     pinst->rate = 1.0f;
 
     // for non-flying objects, you have to be touching the ground
-    if ( !pchr->enviro.grounded && 0 == pchr->flyheight ) return pinst->rate;
-
-    // get the model
-    pmad = chr_get_pmad( ichr );
-    if ( NULL == pmad ) return pinst->rate;
-
-    //---- set up the anim_info structure
-    anim_info[CHR_MOVEMENT_STOP ].speed = 0;
-    anim_info[CHR_MOVEMENT_SNEAK].speed = pchr->anim_speed_sneak;
-    anim_info[CHR_MOVEMENT_WALK ].speed = pchr->anim_speed_walk;
-    anim_info[CHR_MOVEMENT_RUN  ].speed = pchr->anim_speed_run;
-
-    if ( 0 != pchr->flyheight )
-    {
-        // for flying characters, you have to flap like crazy to stand still and
-        // do nothing to move quickly
-        anim_info[CHR_MOVEMENT_STOP ].action = ACTION_WC;
-        anim_info[CHR_MOVEMENT_SNEAK].action = ACTION_WB;
-        anim_info[CHR_MOVEMENT_WALK ].action = ACTION_WA;
-        anim_info[CHR_MOVEMENT_RUN  ].action = ACTION_DA;
-    }
-    else
-    {
-        anim_info[CHR_MOVEMENT_STOP ].action = ACTION_DA;
-        anim_info[CHR_MOVEMENT_SNEAK].action = ACTION_WA;
-        anim_info[CHR_MOVEMENT_WALK ].action = ACTION_WB;
-        anim_info[CHR_MOVEMENT_RUN  ].action = ACTION_WC;
-    }
-
-    anim_info[CHR_MOVEMENT_STOP ].lip = 0;
-    anim_info[CHR_MOVEMENT_SNEAK].lip = LIPWA;
-    anim_info[CHR_MOVEMENT_WALK ].lip = LIPWB;
-    anim_info[CHR_MOVEMENT_RUN  ].lip = LIPWC;
-
-    // set up the arrays that are going tp
-    // determine whether the various movements are allowed
-    for( cnt = 0; cnt < CHR_MOVEMENT_COUNT; cnt++ )
-    {
-        anim_info[cnt].allowed = HAS_SOME_BITS(pchr->movement_bits, 1 << cnt );
-    }
-
-    if( ACTION_WA != pmad->action_map[ACTION_WA] )
-    {
-        // no specific walk animation exists
-        anim_info[CHR_MOVEMENT_SNEAK].allowed = bfalse;
-    }
-
-    if( ACTION_WB != pmad->action_map[ACTION_WB] )
-    {
-        // no specific walk animation exists
-        anim_info[CHR_MOVEMENT_WALK].allowed = bfalse;
-    }
-
-    if( ACTION_WC != pmad->action_map[ACTION_WC] )
-    {
-        // no specific walk animation exists
-        anim_info[CHR_MOVEMENT_RUN].allowed = bfalse;
-    }
-
-    // sort the allowed movement(s) data
-    qsort( anim_info, CHR_MOVEMENT_COUNT, sizeof(chr_anim_data_t), cmp_chr_anim_data );
-
-    // count the allowed movements
-    for( cnt = 0, anim_count = 0; cnt<CHR_MOVEMENT_COUNT; cnt++)
-    {
-        if( anim_info[cnt].allowed ) anim_count++;
-    }
-
-    // nothing to be done
-    if( 0 == anim_count )
-    {
-        return pinst->rate;
-    }
+    if ( !pchr->enviro.grounded && !pchr->is_flying_platform ) return pinst->rate;
 
     // estimate our speed
-    if ( 0 != pchr->flyheight )
+    if ( pchr->is_flying_platform )
     {
         // for flying objects, the speed is the actual speed
-        speed = ABS(pchr->vel.x) + ABS(pchr->vel.y) + ABS(pchr->vel.z);
+        speed = fvec3_length_abs(pchr->vel.v);
     }
     else
     {
         // for non-flying objects, we use the intended speed
 
-        if( pchr->enviro.is_slipping )
-        {
-            // the character is slipping as on ice. mke their little legs move based on 
-            // their intended speed, for comic effect! :)
-            speed = ABS( pchr->enviro.new_vx ) + ABS( pchr->enviro.new_vy );
-        }
-        else
-        {
-            // new_vx, new_vy is the speed before any latches are applied
-            speed = ABS( pchr->enviro.new_vx ) + ABS( pchr->enviro.new_vy );
-        }
+        // get the character animation speed from the speed of the character's legs.
+        // if it is slipping, then the leg speed can be comically fast! :)
+        speed = fvec3_length( pchr->enviro.legs_vel.v ) ;
     }
 
-    if( pchr->fat != 0.0f ) speed /= pchr->fat;
-
-    // handle a special case
-    if ( 1 == anim_count )
+    if( 0.0f != pchr->fat )
     {
-        if( 0.0f != anim_info[0].speed )
-        {
-            pinst->rate = speed / anim_info[0].speed ;
-        }
-
-        return pinst->rate;
+        // if pchr->fat == 0.0f we have much bigger problems
+        speed /= pchr->fat;
     }
 
-    // search for the correct animation
+    // get the rate based on the speed data in data.txt
     action = ACTION_DA;
-    lip    = 0;
-    found  = bfalse;
-    for( cnt = 0; cnt < anim_count-1; cnt++ )
+    lip    = LIPDA;
+    if( ABS(speed) > 0.0f )
     {
-        float speed_mid = 0.5f * (anim_info[cnt].speed + anim_info[cnt+1].speed);
+        int             anim_count;
+        chr_anim_data_t anim_info[CHR_MOVEMENT_COUNT];
+        int    cnt;
 
-        // make a special case for dance animation(s)
-        if( 0.0f == anim_info[cnt].speed && speed <= 1e-3 )
+        //---- set up the anim_info structure
+        anim_info[CHR_MOVEMENT_STOP ].speed = 0.0f;
+        anim_info[CHR_MOVEMENT_SNEAK].speed = pchr->anim_speed_sneak;
+        anim_info[CHR_MOVEMENT_WALK ].speed = pchr->anim_speed_walk;
+        anim_info[CHR_MOVEMENT_RUN  ].speed = pchr->anim_speed_run;
+
+        if ( pchr->is_flying_platform )
         {
-            found = btrue;
+            // for flying characters, you have to flap like crazy to stand still and
+            // do nothing to move quickly
+            anim_info[CHR_MOVEMENT_STOP ].action = ACTION_WC;
+            anim_info[CHR_MOVEMENT_SNEAK].action = ACTION_WB;
+            anim_info[CHR_MOVEMENT_WALK ].action = ACTION_WA;
+            anim_info[CHR_MOVEMENT_RUN  ].action = ACTION_DA;
         }
         else
         {
-            found = (speed < speed_mid);
+            anim_info[CHR_MOVEMENT_STOP ].action = ACTION_DA;
+            anim_info[CHR_MOVEMENT_SNEAK].action = ACTION_WA;
+            anim_info[CHR_MOVEMENT_WALK ].action = ACTION_WB;
+            anim_info[CHR_MOVEMENT_RUN  ].action = ACTION_WC;
         }
 
-        if( found )
+        anim_info[CHR_MOVEMENT_STOP ].lip = LIPDA;
+        anim_info[CHR_MOVEMENT_SNEAK].lip = LIPWA;
+        anim_info[CHR_MOVEMENT_WALK ].lip = LIPWB;
+        anim_info[CHR_MOVEMENT_RUN  ].lip = LIPWC;
+
+        // set up the arrays that are going tp
+        // determine whether the various movements are allowed
+        for( cnt = 0; cnt < CHR_MOVEMENT_COUNT; cnt++ )
+        {
+            anim_info[cnt].allowed = HAS_SOME_BITS(pchr->movement_bits, 1 << cnt );
+        }
+
+        if( ACTION_WA != pmad->action_map[ACTION_WA] )
+        {
+            // no specific walk animation exists
+            anim_info[CHR_MOVEMENT_SNEAK].allowed = bfalse;
+        }
+
+        if( ACTION_WB != pmad->action_map[ACTION_WB] )
+        {
+            // no specific walk animation exists
+            anim_info[CHR_MOVEMENT_WALK].allowed = bfalse;
+        }
+
+        if( ACTION_WC != pmad->action_map[ACTION_WC] )
+        {
+            // no specific walk animation exists
+            anim_info[CHR_MOVEMENT_RUN].allowed = bfalse;
+        }
+
+        // count the allowed movements
+        anim_count = 0;
+        for( cnt = 0; cnt<CHR_MOVEMENT_COUNT; cnt++)
+        {
+            if( anim_info[cnt].allowed )
+            {
+                anim_count++;
+            }
+        }
+
+        // nothing to be done
+        if( 0 == anim_count )
+        {
+            return pinst->rate;
+        }
+
+        // sort the allowed movement(s) data
+        qsort( anim_info, CHR_MOVEMENT_COUNT, sizeof(chr_anim_data_t), cmp_chr_anim_data );
+
+        // handle a special case
+        if ( 1 == anim_count )
+        {
+            if( 0.0f != anim_info[0].speed )
+            {
+                pinst->rate = speed / anim_info[0].speed ;
+            }
+
+            return pinst->rate;
+        }
+
+        // search for the correct animation
+        found  = bfalse;
+        for( cnt = 0; cnt < anim_count-1; cnt++ )
+        {
+            float speed_mid = 0.5f * (anim_info[cnt].speed + anim_info[cnt+1].speed);
+
+            // make a special case for dance animation(s)
+            if( 0.0f == anim_info[cnt].speed && speed <= 1e-3 )
+            {
+                found = btrue;
+            }
+            else
+            {
+                found = (speed < speed_mid);
+            }
+
+            if( found )
+            {
+                action = anim_info[cnt].action;
+                lip    = anim_info[cnt].lip;
+                if( 0.0f != anim_info[cnt].speed )
+                {
+                    pinst->rate = speed / anim_info[cnt].speed;
+                }
+                break;
+            }
+        }
+
+        if( !found )
         {
             action = anim_info[cnt].action;
             lip    = anim_info[cnt].lip;
@@ -7204,24 +5797,13 @@ float set_character_animation_rate( chr_t * pchr )
             {
                 pinst->rate = speed / anim_info[cnt].speed;
             }
-            break;
+            found = btrue;
         }
-    }
 
-    if( !found )
-    {
-        action = anim_info[cnt].action;
-        lip    = anim_info[cnt].lip;
-        if( 0.0f != anim_info[cnt].speed )
+        if( !found )
         {
-            pinst->rate = speed / anim_info[cnt].speed;
+            return pinst->rate;
         }
-        found = btrue;
-    }
-
-    if( !found )
-    {
-        return pinst->rate;
     }
 
     frame_count = md2_get_numFrames( pmad->md2_ptr );
@@ -7240,7 +5822,7 @@ float set_character_animation_rate( chr_t * pchr )
         {
             int tmp_action, rand_val;
 
-            SET_BIT( pchr->ai.alert, ALERTIF_BORED );
+            ADD_BITS( pchr->ai.alert, ALERTIF_BORED );
             pchr->boretime = BORETIME;
 
             // set the action to "bored", which is ACTION_DB, ACTION_DC, or ACTION_DD
@@ -7282,47 +5864,1052 @@ float set_character_animation_rate( chr_t * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t character_is_attacking( chr_t *pchr )
+bool_t chr_is_attacking( chr_t *pchr )
 {
-	return pchr->inst.action_which >= ACTION_UA && pchr->inst.action_which <= ACTION_FD;
+    return pchr->inst.action_which >= ACTION_UA && pchr->inst.action_which <= ACTION_FD;
 }
 
 //--------------------------------------------------------------------------------------------
-void move_one_character_do_animation( chr_t * pchr )
+bool_t chr_get_environment( chr_t * pchr )
+{
+    chr_bundle_t  bdl, *retval;
+
+    if( NULL == pchr ) return bfalse;
+
+    retval = move_one_character_get_environment( chr_bundle_set( &bdl, pchr ), &(pchr->enviro) );
+
+    return NULL != retval;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+chr_bundle_t * move_one_character_get_environment( chr_bundle_t * pbdl, chr_environment_t * penviro )
+{
+    Uint32 itile = INVALID_TILE;
+
+    chr_t             * loc_pchr;
+    phys_data_t       * loc_pphys;
+    chr_environment_t * loc_penviro;
+    ai_state_t        * loc_pai;
+
+    chr_t * pplatform = NULL;
+
+    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
+
+    // alias some variables    
+    loc_pchr  = pbdl->chr_ptr;
+    loc_pphys = &(loc_pchr->phys);
+    loc_pai   = &(loc_pchr->ai);
+
+    loc_penviro = penviro;
+    if( NULL == loc_penviro )
+    {
+        loc_penviro = &(loc_pchr->enviro);
+    }
+
+    // determine if the character is standing on a platform
+    pplatform = NULL;
+    if ( INGAME_CHR( loc_pchr->onwhichplatform_ref ) )
+    {
+        pplatform = ChrList.lst + loc_pchr->onwhichplatform_ref;
+    }
+
+    // get the current tile
+    itile = INVALID_TILE;
+    if ( NULL != pplatform )
+    {
+        // this only works for 1 level of attachment
+        itile = pplatform->onwhichgrid;
+    }
+    else
+    {
+        itile = loc_pchr->onwhichgrid;
+    }
+
+    //---- set the character's various levels
+
+    // character "floor" level
+    loc_penviro->grid_level = get_mesh_level( PMesh, loc_pchr->pos.x, loc_pchr->pos.y, bfalse ) + RAISE;
+
+    // The actual level of the character.
+    loc_penviro->walk_level = loc_penviro->grid_level;
+    if ( NULL != pplatform )
+    {
+        loc_penviro->walk_level = pplatform->pos.z + pplatform->chr_min_cv.maxs[OCT_Z];
+    }
+
+    // The flying height of the character, the maximum of tile level, platform level and water level
+    loc_penviro->fly_level = loc_penviro->walk_level;
+    if ( 0 != mesh_test_fx( PMesh, loc_pchr->onwhichgrid, MPDFX_WATER ) )
+    {
+        loc_penviro->fly_level = MAX(loc_penviro->walk_level, water.surface_level);
+    }
+
+    if ( loc_penviro->fly_level < 0 )
+    {
+        loc_penviro->fly_level = 0;  // fly above pits...
+    }
+
+    //---- set the character's actual floor level
+    // use this function so that the reflections and some other stuff comes out correctly
+    // @note - using get_mesh_level() will actually force a water tile to have a reflection?
+    chr_set_floor_level( loc_pchr, loc_penviro->grid_level );
+
+    //---- determine the character's various lerps after we have done everything to the character's levels we care to
+
+    loc_penviro->grid_lerp = ( loc_pchr->pos.z - loc_penviro->grid_level ) / PLATTOLERANCE;
+    loc_penviro->grid_lerp = CLIP( loc_penviro->grid_lerp, 0.0f, 1.0f );
+
+    loc_penviro->walk_lerp = ( loc_pchr->pos.z - loc_penviro->walk_level ) / PLATTOLERANCE;
+    loc_penviro->walk_lerp = CLIP( loc_penviro->walk_lerp, 0.0f, 1.0f );
+
+    loc_penviro->fly_lerp = ( loc_pchr->pos.z - loc_penviro->fly_level ) / PLATTOLERANCE;
+    loc_penviro->fly_lerp = CLIP( loc_penviro->fly_lerp, 0.0f, 1.0f );
+
+    loc_penviro->grounded = !IS_FLYING_PCHR(loc_pchr) && ( loc_penviro->walk_lerp < 0.25f );
+
+    //---- the "twist" of the floor
+    loc_penviro->grid_twist = TWIST_FLAT;
+    if ( mesh_grid_is_valid( PMesh, itile ) )
+    {
+        loc_penviro->grid_twist = PMesh->gmem.grid_list[itile].twist;
+    }
+
+    // get the "normal" vector for whatever the character is standing on
+    if ( NULL != pplatform )
+    {
+        chr_getMatUp( pplatform, &loc_penviro->walk_nrm );
+        fvec3_self_normalize( loc_penviro->walk_nrm.v );
+    }
+    else
+    {
+        loc_penviro->walk_nrm = map_twist_nrm[loc_penviro->grid_twist];
+    }
+
+    //---- the "watery-ness" of whatever water might be here
+
+    // we will be "watery" if we are under water, even if on a platform
+    loc_penviro->is_watery = water.is_water && loc_penviro->inwater;
+
+    // we should only get slippy, however, if we are not on a platform
+    loc_penviro->is_slippy = bfalse;
+    if( NULL == pplatform )
+    {
+        loc_penviro->is_slippy = !loc_penviro->is_watery && ( 0 != mesh_test_fx( PMesh, loc_pchr->onwhichgrid, MPDFX_SLIPPY ) );
+    }
+
+    //---- traction
+    loc_penviro->traction = 1.0f;
+    if ( loc_penviro->is_slippy )
+    {
+        loc_penviro->traction /= 4.00f * hillslide;
+        loc_penviro->traction = CLIP( loc_penviro->traction, 0.0f, 1.0f );
+    }
+
+    //---- the friction of the fluid we are in
+    if ( loc_penviro->is_watery )
+    {
+        loc_penviro->fluid_friction_vrt = waterfriction;
+        loc_penviro->fluid_friction_hrz = waterfriction;
+    }
+    else
+    {
+        loc_penviro->fluid_friction_hrz = loc_penviro->air_friction;       // like real-life air friction
+        loc_penviro->fluid_friction_vrt = loc_penviro->air_friction;
+    }
+
+    //---- friction
+    
+    // give "mario platforms" a special exemption from vertical air friction
+    // otherwise they will stop bouncing
+    if ( loc_pchr->is_flying_platform && loc_pchr->platform && INFINITE_WEIGHT == loc_pphys->weight )
+    {
+        // override the z friction for "mario platforms".
+        // friction in the z-direction will make the platform's bouncing motion stop
+        loc_penviro->fluid_friction_vrt = 1.0f;
+    }
+
+    // Make the characters slide on flippy surfaces
+    loc_penviro->friction_hrz = noslipfriction;
+    if ( mesh_grid_is_valid( PMesh, loc_pchr->onwhichgrid ) && loc_penviro->is_slippy )
+    {
+        // It's slippy all right...
+        loc_penviro->friction_hrz = slippyfriction;
+    }
+
+    //---- jump stuff
+    if ( IS_FLYING_PCHR( loc_pchr ) )
+    {
+        // Flying
+        loc_pchr->jump_ready = bfalse;
+    }
+    else
+    {
+        // Is the character in the air?
+        loc_pchr->jump_ready = loc_penviro->grounded;
+
+        // Do ground hits
+        if ( loc_penviro->grounded && loc_pchr->vel.z < -STOPBOUNCING && loc_pchr->hitready )
+        {
+            ADD_BITS( loc_pai->alert, ALERTIF_HITGROUND );
+            loc_pchr->hitready = bfalse;
+        }
+
+        // Special considerations for slippy surfaces
+        if ( loc_penviro->is_slippy )
+        {
+            if ( NULL != pplatform || map_twist_flat[loc_penviro->grid_twist] )
+            {
+                // Reset jumping on flat areas of slippiness
+                if ( loc_penviro->grounded && 0 == loc_pchr->jump_time )
+                {
+                    loc_pchr->jump_number = loc_pchr->jump_number_reset;
+                }
+            }
+        }
+        else if ( loc_penviro->grounded && 0 == loc_pchr->jump_time )
+        {
+            // Reset jumping
+            loc_pchr->jump_number = loc_pchr->jump_number_reset;
+        }
+    }
+
+    //---- properties of the "ground" we are standing on
+
+    // assume the ground isn't moving
+    fvec3_self_clear( loc_penviro->ground_vel.v );
+
+    // assume we have the normal friction with the ground
+    loc_penviro->ground_fric = loc_penviro->friction_hrz;
+
+    // are we attached to a platform?
+    if ( NULL != pplatform )
+    {
+        // use the platform's up vector and platstick for the friction
+        loc_penviro->ground_fric = platstick;
+        loc_penviro->ground_vel  = pplatform->vel;
+    }
+    else if ( !loc_pchr->alive || loc_pchr->isitem )
+    {
+        // make "dead" objects and items have lots of friction with the ground
+        loc_penviro->ground_fric = 0.5f;
+    }
+
+    // the velocity difference relative to the ground causes acceleration
+    loc_penviro->ground_diff = fvec3_sub( loc_penviro->ground_vel.v, loc_pchr->vel.v );
+
+    return pbdl;
+}
+
+//--------------------------------------------------------------------------------------------
+chr_bundle_t * move_one_character_do_fluid_friction( chr_bundle_t * pbdl )
+{
+    chr_t             * loc_pchr;
+    chr_environment_t * loc_penviro;
+    phys_data_t       * loc_pphys;
+
+    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
+
+    // alias some variables
+    loc_pchr    = pbdl->chr_ptr;
+    loc_penviro = &(loc_pchr->enviro);
+    loc_pphys   = &(loc_pchr->phys);
+
+    // no fluid friction for "mario platforms"
+    if ( loc_pchr->platform && loc_pchr->is_flying_platform && INFINITE_WEIGHT == loc_pphys->weight ) return pbdl;
+
+    // no fluid friction if you are riding or being carried
+    if ( IS_ATTACHED_PCHR(loc_pchr) ) return pbdl;
+
+    // Apply fluid friction from last time
+    {
+        fvec3_t _tmp_vec = VECT3(
+            -loc_pchr->vel.x * ( 1.0f - loc_penviro->fluid_friction_hrz ), 
+            -loc_pchr->vel.y * ( 1.0f - loc_penviro->fluid_friction_hrz ), 
+            -loc_pchr->vel.z * ( 1.0f - loc_penviro->fluid_friction_vrt ) ); 
+
+        phys_data_accumulate_avel( loc_pphys, _tmp_vec.v );
+    }
+
+    return pbdl;
+}
+
+//--------------------------------------------------------------------------------------------
+chr_bundle_t * move_one_character_do_voluntary_flying( chr_bundle_t * pbdl )
+{
+    chr_t             * loc_pchr;
+    chr_environment_t * loc_penviro;
+    orientation_t     * loc_pori;
+
+    float lift, throttle, maxspeed, speed_lerp, jump_lerp, tmp_flt, throttle_scale;
+    float max_control, max_throttle, max_lift;
+    float fluid_factor_222, fluid_factor;
+    float yaw_factor;
+
+    fvec3_t fly_up, fly_rt, fly_fw;
+    fvec3_t mdl_up, mdl_rt, mdl_fw;
+    fvec3_t acc_up, acc_rt, acc_fw, acc;
+    fvec3_t loc_latch;
+
+    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
+
+    // alias some variables
+    loc_pchr    = pbdl->chr_ptr;
+    loc_penviro = &(loc_pchr->enviro);
+    loc_pori    = &(loc_pchr->ori);
+
+    // auto-control a variety of factors based on the transition between running and flying
+    jump_lerp = (float)loc_pchr->jump_time / (float)JUMP_DELAY;
+    jump_lerp = CLIP( jump_lerp, 0.0f, 1.0f );
+
+    // determine the net effect of the air friction on terminal velocity using the v2.22 method
+    fluid_factor_222 = airfriction / ( 1.0f - airfriction );
+
+    // determine the factor for the fluid we are actually flying through
+    fluid_factor     = loc_penviro->fluid_friction_vrt / (1.0f - loc_penviro->fluid_friction_vrt);
+
+    // let the flying speed be roughly 10x the running speed...
+    throttle_scale = 3.0f;
+
+    // scale the effectiveness of the throttle so that it won't make your speed go crazy in thin atmospheres
+    if( fluid_factor > fluid_factor_222 )
+    {
+        throttle_scale *= fluid_factor_222 / fluid_factor;
+    }
+
+    // the control surfaces can't exert maxaccel, so reduce their power
+    max_control  = loc_pchr->maxaccel * 0.2f;
+    max_throttle = loc_pchr->maxaccel * throttle_scale;
+    max_lift     = -gravity + max_control;
+
+    // the model's frame of reference
+    mdl_up = mat_getChrUp( loc_pchr->inst.matrix );
+    mdl_rt = mat_getChrRight( loc_pchr->inst.matrix );
+    mdl_fw = mat_getChrForward( loc_pchr->inst.matrix );
+
+    // a frame of reference for flying
+    fly_fw = fvec3_normalize( mdl_fw.v );
+    fly_up = fvec3_normalize( mdl_up.v );
+    fly_rt = fvec3_normalize( mdl_rt.v );
+
+    // determine a "maximum speed" using the v2.22 method
+    maxspeed = loc_pchr->maxaccel * fluid_factor_222;
+
+    // calculate a speed lerp so that the controls can have more effect when the 
+    // object is moving faster
+    speed_lerp = 0.0f;
+    if( maxspeed > 0.0f && fvec3_length_abs( loc_pchr->vel.v ) > 0.0f )
+    {
+        speed_lerp = fvec3_dot_product( mdl_fw.v, loc_pchr->vel.v ) / maxspeed;
+
+        // give the character a minimum of traction in the air (0.1)
+        speed_lerp = CLIP( ABS(speed_lerp), 0.1f, 1.0f );
+    }
+
+    // initialize the control vector to 0
+    fvec3_self_clear( loc_latch.v );
+
+    // interpret the latch similar to an aeroplane's controls
+    if( loc_pchr->latch.raw_valid )
+    {
+        throttle = (HAS_SOME_BITS(loc_pchr->latch.raw_b, LATCHBUTTON_JUMP ) ? 1.0f : 0.0f);
+
+        // interpolate between the "taking off" conditions (max throttle, max climb, straight ahead )
+        // and the player's control of the flying 
+        loc_latch.x += (1.0f - jump_lerp) * loc_pchr->latch.raw.x;
+        loc_latch.y += (1.0f - jump_lerp) * loc_pchr->latch.raw.y;
+        loc_latch.z += throttle;
+    }
+
+    // clear the sum of the accelerations
+    fvec3_self_clear( acc.v );
+
+    // determine the amount of acceleration in various directions
+    // the lift and yaw are limited by the speed of the object
+    acc_fw = fvec3_scale( fly_fw.v, loc_latch.z * max_throttle );
+
+    // yaw effect
+    tmp_flt = fvec3_dot_product( fly_rt.v, loc_pchr->vel.v );
+    yaw_factor = ABS(tmp_flt) / maxspeed;
+    acc_rt = fvec3_scale( fly_rt.v, - tmp_flt * 0.2f * (1.0f - jump_lerp) * CLIP( yaw_factor, 0.0f, 1.0f ) );
+
+    // angle of attack effects
+    tmp_flt = fvec3_dot_product( fly_up.v, loc_pchr->vel.v );
+    lift    = SGN(tmp_flt) * tmp_flt * tmp_flt / maxspeed / maxspeed * max_lift;
+    lift    = CLIP(lift, -max_lift, max_lift);
+    acc_up  = fvec3_scale( fly_up.v, lift  - tmp_flt * 0.2f * (1.0f - jump_lerp)  );
+
+    // sum up the accelerations
+    fvec3_self_sum( acc.v, acc_rt.v );
+    fvec3_self_sum( acc.v, acc_up.v );
+    fvec3_self_sum( acc.v, acc_fw.v );
+
+    // flying attitude controls
+    // (float)TRIG_TABLE_SIZE / TARGET_UPS / 3.0f means that at maximum control, you should be able
+    // co complete one rotation in 3 seconds
+
+    // pitch
+    loc_pori->map_facing_y += loc_latch.y * 0.125f * (float)TRIG_TABLE_SIZE / TARGET_UPS * (1.0f - jump_lerp);
+
+    // roll
+    loc_pori->map_facing_x += loc_latch.x * 0.5f * (float)TRIG_TABLE_SIZE / TARGET_UPS * (1.0f - jump_lerp);
+
+    // set the desired acceleration
+    loc_penviro->chr_acc = acc;
+
+    // fake the desired velocity
+    loc_penviro->chr_vel = fvec3_add( loc_pchr->vel.v, acc.v );
+
+    return pbdl;
+    //return move_one_character_limit_flying( pbdl );
+}
+
+//--------------------------------------------------------------------------------------------
+chr_bundle_t * move_one_character_do_voluntary( chr_bundle_t * pbdl )
+{
+    // do voluntary motion
+
+    chr_t             * loc_pchr;
+    phys_data_t       * loc_pphys;
+    chr_environment_t * loc_penviro;
+
+    bool_t is_player, use_latch;
+
+    fvec2_t loc_latch;
+    float speed_max, acc_old;
+    float dv2;
+
+    bool_t sneak_mode_active = bfalse;
+
+    fvec3_t total_vel;
+
+    if ( NULL == pbdl || NULL == pbdl->chr_ptr ) return pbdl;
+
+    // alias some variables
+    loc_pchr    = pbdl->chr_ptr;
+    loc_penviro = &(loc_pchr->enviro);
+    loc_pphys   = &(loc_pchr->phys);
+
+    // clear the outputs of this routine every time through
+    fvec3_self_clear( loc_penviro->chr_acc.v );
+    fvec3_self_clear( loc_penviro->chr_vel.v );
+
+    // non-active characters do not move themselves
+    if( !ACTIVE_PCHR( loc_pchr ) ) return pbdl;
+
+    // if it is attached to another character, there is no voluntary motion
+    if ( IS_ATTACHED_PCHR( loc_pchr ) ) return pbdl;
+
+    // if we are flying, interpret the controls differently
+    if( loc_pchr->is_flying_jump )
+    {
+        return move_one_character_do_voluntary_flying( pbdl );
+    }
+
+    // should we use the character's latch info?
+    use_latch = loc_pchr->alive && !loc_pchr->isitem && loc_pchr->latch.trans_valid;
+    if( !use_latch ) return pbdl;
+
+    // is this character a player?
+    is_player = VALID_PLA( loc_pchr->is_which_player );
+
+    // Make a copy of the character's latch
+    loc_latch.x = loc_pchr->latch.trans.x;
+    loc_latch.y = loc_pchr->latch.trans.y;
+
+    // Reverse movements for daze
+    if ( loc_pchr->dazetime > 0 )
+    {
+        loc_latch.x = -loc_latch.x;
+        loc_latch.y = -loc_latch.y;
+    }
+
+    // Switch x and y for grog
+    if ( loc_pchr->grogtime > 0 )
+    {
+        SWAP( float, loc_latch.x, loc_latch.y );
+    }
+
+    // this is the maximum speed that a character could go under the v2.22 system
+    speed_max = loc_pchr->maxaccel;
+    if( 0.0f != airfriction && 1.0f != airfriction )
+    {
+        speed_max = loc_pchr->maxaccel * airfriction / ( 1.0f - airfriction );
+    }
+
+    // handle sneaking
+    sneak_mode_active = bfalse;
+    if ( is_player )
+    {
+        // determine whether the user is hitting the "sneak button"
+        player_t * ppla = PlaStack.lst + loc_pchr->is_which_player;
+
+        if( HAS_SOME_BITS(ppla->device.bits, INPUT_BITS_KEYBOARD ) )
+        {
+            // use the shift keys to enter sneak mode
+            sneak_mode_active = SDLKEYDOWN( SDLK_LSHIFT ) || SDLKEYDOWN( SDLK_RSHIFT );
+        }
+    }
+
+    if( sneak_mode_active )
+    {
+        // sneak mode
+        loc_pchr->maxaccel      = loc_pchr->maxaccel_reset * 0.33f;
+        loc_pchr->movement_bits = CHR_MOVEMENT_BITS_SNEAK | CHR_MOVEMENT_BITS_STOP;
+    }
+    else
+    {
+        // non-sneak mode
+        loc_pchr->movement_bits = (unsigned)(~CHR_MOVEMENT_BITS_SNEAK);
+        loc_pchr->maxaccel      = loc_pchr->maxaccel_reset;
+    }
+
+    // determine the character's desired velocity from the latch
+    if ( 0.0f != fvec2_length_abs( loc_latch.v ) )
+    {
+        float scale;
+
+        dv2 = fvec2_dot_product( loc_latch.v, loc_latch.v );
+
+        // determine how response of the character to the latch
+        scale = 1.0f;
+        if ( is_player )
+        {
+            float dv;
+            player_t * ppla = PlaStack.lst + loc_pchr->is_which_player;
+
+            dv = SQRT( dv2 );
+            if( dv < 1.0f )
+            {
+                // this function makes the control have a kind of dead zone near the center and a
+                // have less sensitivity near "full throttle"
+                scale = dv2 * ( 3.0f - 2.0f * dv );
+            }
+            else
+            {
+                scale = 1.0f / dv;
+            }
+
+            // determine whether the character is sneaking
+            if( !HAS_SOME_BITS(ppla->device.bits, INPUT_BITS_KEYBOARD ) )
+            {
+                sneak_mode_active = ( dv * scale < 1.0f / 3.0f );
+            }
+        }
+        else
+        {
+            if( dv2 > 1.0f )
+            {
+                scale = 1.0f / SQRT( dv2 );
+            }
+        }
+
+        // adjust the latch values
+        loc_latch.x *= scale;
+        loc_latch.y *= scale;
+
+        // determine the correct speed
+        loc_penviro->chr_vel.x = speed_max * loc_latch.x;
+        loc_penviro->chr_vel.y = speed_max * loc_latch.y;
+    }
+
+    // add the special "limp" effect
+    if ( 0 != (chr_get_framefx( loc_pchr ) & MADFX_STOP) )
+    {
+        fvec3_self_clear( loc_penviro->chr_vel.v );
+    }
+
+    // get the actual desired character velocity by adding in the speed of the ground
+    total_vel = fvec3_add( loc_penviro->ground_vel.v, loc_penviro->chr_vel.v );
+
+    // get the desired acceleration from the difference between the desired velocity and the actual velocity
+    loc_penviro->chr_acc = fvec3_sub( total_vel.v, loc_pchr->vel.v );
+
+    // Also, fight acceleration from collisions and everything else.
+    // This function call must be done before gravity is added in.
+    // TODO: this is making objects on platforms behave a bit strangely. They are wobbling back and forth
+    // because of the acceleration of both objects.
+    {
+        fvec3_t vec_tmp = fvec3_scale( loc_pphys->avel.v, -0.5f );
+
+        fvec3_self_sum( loc_penviro->chr_acc.v, vec_tmp.v );
+    }
+
+    // limit the acceleration to maxaccel
+    acc_old = 0.0f;
+    if( fvec3_length_abs(loc_penviro->chr_acc.v) > 0.0f )
+    {
+        acc_old = fvec3_length( loc_penviro->chr_acc.v );
+    }
+
+    // if the character is not flying, fix the desired acceleration so that it is roughly parallel to the ground
+    if( !IS_FLYING_PCHR( loc_pchr ) && acc_old > 0.0f )
+    {
+        // remove any voluntary motion that is in the character's "up" direction
+        if( 1.0f == ABS(loc_penviro->walk_nrm.z) )
+        {
+            loc_penviro->chr_acc.z = 0.0f;
+        }
+        else
+        {
+            float dot;
+
+            dot = fvec3_dot_product( loc_penviro->chr_acc.v, loc_penviro->walk_nrm.v );
+
+            if( 0.0f != dot )
+            {
+                loc_penviro->chr_acc.x -= dot * loc_penviro->walk_nrm.x;
+                loc_penviro->chr_acc.y -= dot * loc_penviro->walk_nrm.y;
+                loc_penviro->chr_acc.z -= dot * loc_penviro->walk_nrm.z;
+            }
+        }
+
+        // try to make the length the same as the original acceleration
+        if( fvec3_length_abs(loc_penviro->chr_acc.v) > 0.0f )
+        {
+            fvec3_self_normalize_to( loc_penviro->chr_acc.v, acc_old );
+        }
+    }
+
+    // limit the acceleration to "maxaccel"
+    if( acc_old > 0.0f )
+    {
+        // since the changes in velocity this round are not applied until next round,
+        // there is an added factor of "airfriction" that is applied to the character's
+        // speed before the acceleration actually shows up in a change in position
+        float adj_accel = loc_pchr->maxaccel / airfriction;
+
+        if( acc_old > adj_accel )
+        {
+            loc_penviro->chr_acc.x *= adj_accel / acc_old;
+            loc_penviro->chr_acc.y *= adj_accel / acc_old;
+            loc_penviro->chr_acc.z *= adj_accel / acc_old;
+        }
+    }
+
+    return pbdl;
+}
+
+//--------------------------------------------------------------------------------------------
+chr_bundle_t * move_one_character_do_involuntary( chr_bundle_t * pbdl )
+{
+    /// Do the "non-physics" motion that the character has no control over
+
+    bool_t use_latch;
+
+    chr_t             * loc_pchr;
+    chr_environment_t * loc_penviro;
+
+    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
+
+    // alias some variables
+    loc_pchr    = pbdl->chr_ptr;
+    loc_penviro = &(loc_pchr->enviro);
+
+    // should we use the character's latch info?
+    use_latch = loc_pchr->alive && !loc_pchr->isitem && loc_pchr->latch.trans_valid;
+    
+    // if we are not using the latch info
+    if( !use_latch )
+    {
+        if( !IS_FLYING_PCHR(loc_pchr) )
+        {
+            loc_penviro->chr_acc = fvec3_sub( loc_penviro->ground_vel.v, loc_pchr->vel.v );
+        }
+    }
+
+    //if ( loc_pchr->alive && !loc_pchr->isitem )
+    //{
+    //    // Assume that the object acts like a vehicle; acceleration from the side is
+    //    // resisted by the tires
+
+    //    float vlerp = 0.0f;
+
+    //    if( fvec3_length_abs(local_diff.v) > 0.0f )
+    //    {
+    //        float maxspeed, maxspeed2, vel2;
+
+    //        if( 1.0f != airfriction )
+    //        {
+    //            maxspeed = loc_pchr->maxaccel * airfriction / ( 1.0f - airfriction );
+    //            maxspeed = CLIP( maxspeed, 0.0f, 1000.0f );
+    //        }
+    //        else
+    //        {
+    //            maxspeed = 1000.0f;
+    //        }
+
+    //        maxspeed2 = maxspeed * maxspeed;
+    //        vel2      = fvec3_dot_product( local_diff.v, local_diff.v );
+
+    //        vlerp = vel2 / maxspeed2;
+    //        vlerp = CLIP( vlerp, 0.0f, 1.0f );
+    //    }
+
+    //    if ( vlerp > 0.0f )
+    //    {
+    //        float  ftmp;
+    //        fvec3_t vfront, diff_side;
+
+    //        //---- get the "bad" velocity (perpendicular to the direction of motion)
+    //        vfront = mat_getChrRight( loc_pchr->inst.matrix );
+    //        fvec3_self_normalize( vfront.v );
+    //        ftmp   = fvec3_dot_product( local_diff.v, vfront.v );
+
+    //        // what is the "sideways" velocity?
+    //        diff_side.x = local_diff.x - ftmp * vfront.x;
+    //        diff_side.y = local_diff.y - ftmp * vfront.y;
+    //        diff_side.z = local_diff.z - ftmp * vfront.z;
+
+    //        // remove the amount of velocity diference in the sideways direction
+    //        //local_diff.x -= diff_side.x * vlerp;
+    //        //local_diff.y -= diff_side.y * vlerp;
+    //    }
+    //}
+
+    return pbdl;
+}
+
+//--------------------------------------------------------------------------------------------
+chr_bundle_t * move_one_character_do_orientation( chr_bundle_t * pbdl )
+{
+    // do voluntary motion
+
+    CHR_REF             loc_ichr;
+    chr_t             * loc_pchr;
+    chr_environment_t * loc_penviro;
+    ai_state_t        * loc_pai;
+
+    bool_t can_control_direction;
+
+    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
+
+    // alias some variables
+    loc_pchr    = pbdl->chr_ptr;
+    loc_ichr    = pbdl->chr_ref;
+    loc_penviro = &(loc_pchr->enviro);
+    loc_pai     = &(loc_pchr->ai);
+
+    // set the old orientation
+    loc_pchr->ori_old = loc_pchr->ori;
+
+    // handle the special case of a mounted character.
+    // the actual matrix is generated by the attachment points, but the scripts still use
+    // the orientation values
+    if ( INGAME_CHR( loc_pchr->attachedto ) ) 
+    {
+        chr_t * pmount = ChrList.lst + loc_pchr->attachedto;
+
+        loc_pchr->ori = pmount->ori;
+
+        return pbdl;
+    }
+
+    // can the character control its direction?
+    can_control_direction = bfalse;
+    if( IS_FLYING_PCHR( loc_pchr ) || TURNMODE_SPIN == loc_pchr->turnmode )
+    {
+        can_control_direction = btrue;
+    }
+    else
+    {
+        can_control_direction = loc_penviro->walk_lerp < 1.0f;
+    }
+
+    if( can_control_direction )
+    {
+        fvec3_t loc_vel = ZERO_VECT3, loc_chr_vel = ZERO_VECT3;
+        bool_t  use_latch;
+
+        // "dead" characters and items do not adjust their ori.facing_z
+        use_latch = loc_pchr->alive && !loc_pchr->isitem && loc_pchr->latch.trans_valid;
+
+        // make an exception for TURNMODE_SPIN == loc_pchr->turnmode
+        if( TURNMODE_SPIN == loc_pchr->turnmode ) use_latch = btrue;
+
+        // determine the velocities relative to the character's "ground" (if it exists)
+        fvec3_self_clear( loc_vel.v );
+
+        if( IS_FLYING_PCHR( loc_pchr ) || loc_penviro->walk_lerp > 1.0f )
+        {
+            // this velocity is relative to "still air"
+            loc_vel = loc_pchr->vel;
+        }
+        else
+        {
+            fvec3_t tmp_vec1, tmp_vec2;
+
+            // As the character approaches the ground, make the velocity vector relative to the
+            // ground
+
+            // get the actial velocity relative to the ground
+            tmp_vec1 = fvec3_scale( loc_penviro->ground_diff.v, -(1.0f - loc_penviro->walk_lerp) );
+            tmp_vec2 = fvec3_scale( loc_pchr->vel.v,            loc_penviro->walk_lerp );
+
+            fvec3_self_sum( loc_vel.v, tmp_vec1.v );
+            fvec3_self_sum( loc_vel.v, tmp_vec2.v );
+        }
+
+        // the desired velocity is already relative to whatever ground the character is interacting with
+        loc_chr_vel = loc_penviro->chr_vel;
+
+        // apply changes to ori.facing_z
+        if( use_latch )
+        {
+            float speed_max, speed_lerp;
+            int loc_turnmode = loc_pchr->turnmode;
+
+            // this is the maximum speed that a character could go under the v2.22 system
+            speed_max  = loc_pchr->maxaccel * airfriction / ( 1.0f - airfriction );
+
+            if( loc_pchr->is_flying_jump )
+            {
+                loc_turnmode = TURNMODE_FLYING_JUMP;
+            }
+            else if ( loc_pchr->is_flying_platform && loc_turnmode != TURNMODE_SPIN )
+            {
+                loc_turnmode = TURNMODE_FLYING_PLATFORM;
+            }
+
+            speed_lerp = 0.0f;
+            if( fvec2_length_abs(loc_vel.v) > 0.0f )
+            {
+                if( 0.0f == speed_max )
+                {
+                    speed_lerp = 1.0f;
+                }
+                else
+                {
+                    speed_lerp = fvec2_dot_product( loc_vel.v, loc_vel.v ) / speed_max / speed_max;
+                }
+
+                speed_lerp = CLIP( speed_lerp, 0.0f, 1.0f );
+            }
+
+            // Determine the character rotation
+            switch ( loc_turnmode )
+            {
+                // Get direction from ACTUAL velocity
+            default:
+            case TURNMODE_VELOCITY:
+                {
+                    fvec2_t tmp_vel;
+
+                    // interpolate between the desired "actual velocity" and the backup "desired velocity"
+                    if( 0.0f == speed_lerp )
+                    {
+                        tmp_vel.x = loc_chr_vel.x;
+                        tmp_vel.y = loc_chr_vel.y;
+                    }
+                    else if( 1.0f == speed_lerp )
+                    {
+                        tmp_vel.x = loc_vel.x;
+                        tmp_vel.y = loc_vel.y;
+                    }
+                    else
+                    {
+                        tmp_vel.x = speed_lerp * loc_vel.x + (1.0f - speed_lerp ) * loc_chr_vel.x;
+                        tmp_vel.y = speed_lerp * loc_vel.y + (1.0f - speed_lerp ) * loc_chr_vel.y;
+                    }
+
+                    if ( fvec2_length_abs( tmp_vel.v ) > TURN_SPEED )
+                    {
+                        if ( VALID_PLA( loc_pchr->is_which_player ) )
+                        {
+                            // Players turn quickly
+                            loc_pchr->ori.facing_z += terp_dir( loc_pchr->ori.facing_z, vec_to_facing( tmp_vel.x , tmp_vel.y ), 2 );
+                        }
+                        else
+                        {
+                            // AI turn slowly
+                            loc_pchr->ori.facing_z += terp_dir( loc_pchr->ori.facing_z, vec_to_facing( tmp_vel.x , tmp_vel.y ), 8 );
+                        }
+                    }
+                }
+                break;
+
+                // Get direction from the DESIRED acceleration
+            case TURNMODE_ACCELERATION:
+                {
+                    fvec2_t tmp_vel;
+
+                    // interpolate between the desired "desired acceleration" and the backup "actual acceleration"
+                    if( 0.0f == speed_lerp )
+                    {
+                        tmp_vel.x = loc_penviro->acc.x;
+                        tmp_vel.y = loc_penviro->acc.y;
+                    }
+                    else if( 1.0f == speed_lerp )
+                    {
+                        tmp_vel.x = loc_penviro->chr_acc.x;
+                        tmp_vel.y = loc_penviro->chr_acc.y;
+                    }
+                    else
+                    {
+                        tmp_vel.x = speed_lerp * loc_penviro->chr_acc.x + (1.0f - speed_lerp ) * loc_penviro->acc.x;
+                        tmp_vel.y = speed_lerp * loc_penviro->chr_acc.y + (1.0f - speed_lerp ) * loc_penviro->acc.y;
+                    }
+
+                    if ( fvec2_length_abs( tmp_vel.v ) > WATCH_SPEED )
+                    {
+                        loc_pchr->ori.facing_z += terp_dir( loc_pchr->ori.facing_z, vec_to_facing( tmp_vel.x , tmp_vel.y ), 8 );
+                    }
+                }
+                break;
+
+                // Face the target
+            case TURNMODE_WATCHTARGET:
+                {
+                    if ( loc_ichr != loc_pai->target )
+                    {
+                        fvec2_t loc_diff;
+
+                        loc_diff.x = ChrList.lst[loc_pai->target].pos.x - loc_pchr->pos.x;
+                        loc_diff.y = ChrList.lst[loc_pai->target].pos.y - loc_pchr->pos.y;
+
+                        if( fvec2_length_abs( loc_diff.v ) > WATCH_SPEED )
+                        {
+                            loc_pchr->ori.facing_z += terp_dir( loc_pchr->ori.facing_z, vec_to_facing( loc_diff.x, loc_diff.y ), 8 );
+                        }
+                    }
+                }
+                break;
+
+                // Otherwise make it spin
+            case TURNMODE_SPIN:
+                {
+                    loc_pchr->ori.facing_z += SPINRATE;
+                }
+                break;
+
+            case TURNMODE_FLYING_PLATFORM:
+            case TURNMODE_FLYING_JUMP:
+                //{
+                //    fvec2_t loc_vel;
+
+                //    // interpolate between the desired "actual velocity" and the backup "desired velocity"
+                //    if( 0.0f == speed_lerp )
+                //    {
+                //        loc_vel.x = loc_chr_vel.x;
+                //        loc_vel.y = loc_chr_vel.y;
+                //    }
+                //    else if( 1.0f == speed_lerp )
+                //    {
+                //        loc_vel.x = loc_vel.x;
+                //        loc_vel.y = loc_vel.y;
+                //    }
+                //    else
+                //    {
+                //        loc_vel.x = speed_lerp * loc_vel.x + (1.0f - speed_lerp ) * loc_chr_vel.x;
+                //        loc_vel.y = speed_lerp * loc_vel.y + (1.0f - speed_lerp ) * loc_chr_vel.y;
+                //    }
+
+                //    if ( fvec2_length_abs( loc_vel.v ) > FLYING_SPEED )
+                //    {
+                //        loc_pchr->ori.facing_z += terp_dir( loc_pchr->ori.facing_z, vec_to_facing( loc_vel.x , loc_vel.y ), 16 );
+                //    }
+                //}
+                break;
+            }
+        }
+
+    }
+    // Characters with sticky butts lie on the surface of the mesh
+    if ( loc_penviro->walk_lerp < 1.0f && !loc_pchr->is_flying_jump && !loc_pchr->is_flying_platform  )
+    {
+        FACING_T new_facing_x = MAP_TURN_OFFSET, new_facing_y = MAP_TURN_OFFSET;
+
+        float loc_lerp = CLIP(loc_penviro->walk_lerp, 0.0f, 1.0f);
+        float fkeep = ( 7.0f + loc_lerp ) / 8.0f;
+        float fnew  = ( 1.0f - loc_lerp ) / 8.0f;
+
+        if( loc_pchr->stickybutt || !loc_pchr->alive || loc_pchr->isitem )
+        {
+            new_facing_x = map_twist_x[loc_penviro->grid_twist];
+            new_facing_y = map_twist_y[loc_penviro->grid_twist];
+        }
+
+        if( new_facing_x != loc_pchr->ori.map_facing_x )
+        {
+            loc_pchr->ori.map_facing_x = loc_pchr->ori.map_facing_x * fkeep + new_facing_x * fnew;
+        }
+
+        if( new_facing_y != loc_pchr->ori.map_facing_y )
+        {
+            loc_pchr->ori.map_facing_y = loc_pchr->ori.map_facing_y * fkeep + new_facing_y * fnew;
+        }
+    }
+
+    return pbdl;
+}
+
+//--------------------------------------------------------------------------------------------
+chr_bundle_t * move_one_character_do_z_motion( chr_bundle_t * pbdl )
+{
+    chr_t             * loc_pchr;
+    phys_data_t       * loc_pphys;
+    chr_environment_t * loc_penviro;
+
+    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
+
+    // aliases for easier notiation
+    loc_pchr    = pbdl->chr_ptr;
+    loc_pphys   = &(loc_pchr->phys);
+    loc_penviro = &(loc_pchr->enviro);
+
+    //---- do z acceleration
+    if ( loc_pchr->is_flying_platform )
+    {
+        phys_data_accumulate_avel_index( loc_pphys, ( loc_penviro->fly_level + loc_pchr->fly_height - loc_pchr->pos.z ) * FLYDAMPEN, kZ );
+    }
+    else
+    {
+        phys_data_accumulate_avel_index( loc_pphys, gravity, kZ );
+    }
+
+    return pbdl;
+}
+
+//--------------------------------------------------------------------------------------------
+chr_bundle_t * move_one_character_do_animation( chr_bundle_t * pbdl )
 {
     float dflip, flip_diff;
 
-    chr_instance_t * pinst;
-    CHR_REF          ichr;
+    chr_t          * loc_pchr;
+    chr_instance_t * loc_pinst;
+    CHR_REF          loc_ichr;
 
-    if ( NULL == pchr ) return;
-    ichr  = GET_REF_PCHR( pchr );
-    pinst = &( pchr->inst );
+    if ( NULL == pbdl || !INGAME_PCHR(pbdl->chr_ptr) ) return pbdl;
+
+    // alias some variables
+    loc_pchr  = pbdl->chr_ptr;
+    loc_ichr  = pbdl->chr_ref;
+    loc_pinst = &( loc_pchr->inst );
 
     // Animate the character.
     // Right now there are 50/4 = 12.5 animation frames per second
-    dflip       = 0.25f * pinst->rate;
-    flip_diff = fmod(pinst->flip, 0.25f) + dflip;
+    dflip       = 0.25f * loc_pinst->rate;
+    flip_diff = fmod(loc_pinst->flip, 0.25f) + dflip;
 
     while ( flip_diff >= 0.25f )
     {
         flip_diff -= 0.25f;
 
         // update the lips
-        pinst->ilip   = ( pinst->ilip + 1 ) % 4;
-        pinst->flip  += 0.25f;
+        loc_pinst->ilip   = ( loc_pinst->ilip + 1 ) % 4;
+        loc_pinst->flip  += 0.25f;
 
         // handle frame FX for the new frame
-        if ( 3 == pinst->ilip )
+        if ( 3 == loc_pinst->ilip )
         {
-            chr_handle_madfx( pchr );
+            chr_handle_madfx( loc_pchr );
         }
 
-        if ( 0 == pinst->ilip )
+        if ( 0 == loc_pinst->ilip )
         {
-            if( rv_success == chr_increment_frame( pchr ) )
+            if( rv_success == chr_increment_frame( loc_pchr ) )
             {
-                pinst->flip = fmod(pinst->flip, 1.0f);
+                loc_pinst->flip = fmod(loc_pinst->flip, 1.0f);
             }
             else
             {
@@ -7336,24 +6923,24 @@ void move_one_character_do_animation( chr_t * pchr )
         int ilip_new;
 
         // update the lips
-        pinst->flip  += flip_diff;
-        ilip_new      = ((int)floor( pinst->flip * 4 )) % 4;
+        loc_pinst->flip  += flip_diff;
+        ilip_new      = ((int)floor( loc_pinst->flip * 4 )) % 4;
 
-        if( ilip_new != pinst->ilip )
+        if( ilip_new != loc_pinst->ilip )
         {
-            pinst->ilip = ilip_new;
+            loc_pinst->ilip = ilip_new;
 
             // handle frame FX for the new frame
-            if ( 3 == pinst->ilip )
+            if ( 3 == loc_pinst->ilip )
             {
-                chr_handle_madfx( pchr );
+                chr_handle_madfx( loc_pchr );
             }
 
-            if ( 0 == pinst->ilip )
+            if ( 0 == loc_pinst->ilip )
             {
-                if( rv_success == chr_increment_frame( pchr ) )
+                if( rv_success == chr_increment_frame( loc_pchr ) )
                 {
-                    pinst->flip = fmod(pinst->flip, 1.0f);
+                    loc_pinst->flip = fmod(loc_pinst->flip, 1.0f);
                 }
                 else
                 {
@@ -7363,54 +6950,414 @@ void move_one_character_do_animation( chr_t * pchr )
         }
     }
 
-    set_character_animation_rate( pchr );
+    set_character_animation_rate( loc_pchr );
+
+    return pbdl;
 }
 
 //--------------------------------------------------------------------------------------------
-void move_one_character( chr_t * pchr )
+chr_bundle_t * move_one_character_limit_flying( chr_bundle_t * pbdl )
 {
-    if ( !ACTIVE_PCHR( pchr ) ) return;
+    // this should only be called by move_one_character_do_floor() after the 
+    // normal acceleration has been killed
 
-    if ( pchr->pack.is_packed ) return;
+    fvec3_t total_acc;
 
-    // save the acceleration from the last time-step
-    pchr->enviro.acc = fvec3_sub( pchr->vel.v, pchr->vel_old.v );
+    chr_t             * loc_pchr;
+    chr_environment_t * loc_penviro;
+    phys_data_t       * loc_pphys;
 
-    // Character's old location
-    pchr->pos_old          = chr_get_pos( pchr );
-    pchr->vel_old          = pchr->vel;
-    pchr->ori_old.facing_z = pchr->ori.facing_z;
+    return pbdl;
 
-    pchr->enviro.new_vx = pchr->vel.x;
-    pchr->enviro.new_vy = pchr->vel.y;
+    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
 
-    move_one_character_get_environment( pchr );
+    // alias some variables
+    loc_pchr    = pbdl->chr_ptr;
+    loc_penviro = &(loc_pchr->enviro);
+    loc_pphys   = &(loc_pchr->phys);
 
-    // do friction with the floor before voluntary motion
-    move_one_character_do_floor_friction( pchr );
+    if( !IS_FLYING_PCHR( loc_pchr ) ) return pbdl;
 
-    move_one_character_do_voluntary( pchr );
+    total_acc = loc_penviro->chr_acc;
 
-    chr_do_latch_button( pchr );
-
-    move_one_character_do_z_motion( pchr );
-
-    move_one_character_integrate_motion( pchr );
-
-    move_one_character_do_animation( pchr );
-
-    // Characters with sticky butts lie on the surface of the mesh
-    if ( pchr->stickybutt || !pchr->alive )
+    // at this point, flying platforms are not like flying carpets or planes, just the silly levetating platforms, "mario platforms"
+    if( loc_pchr->is_flying_jump )
     {
-        float fkeep = ( 7 + pchr->enviro.zlerp ) / 8.0f;
-        float fnew  = ( 1 - pchr->enviro.zlerp ) / 8.0f;
+        float   chr_vel_len, chr_vel_len2;
+        fvec3_t total_acc_para, total_acc_perp;
 
-        if ( fnew > 0 )
+        // find the difference between the desired acceleration and the external accelerations
+        total_acc = fvec3_sub( loc_penviro->chr_acc.v, loc_pphys->avel.v );
+
+        chr_vel_len = chr_vel_len2 = 0.0f;
+        if( fvec3_length_abs( loc_pchr->vel.v ) > 0.0f )
         {
-            pchr->ori.map_facing_x = pchr->ori.map_facing_x * fkeep + map_twist_x[pchr->enviro.twist] * fnew;
-            pchr->ori.map_facing_y = pchr->ori.map_facing_y * fkeep + map_twist_y[pchr->enviro.twist] * fnew;
+            fvec3_t chr_vel_nrm;
+
+            chr_vel_len  = fvec3_length( loc_pchr->vel.v );
+            chr_vel_len2 = chr_vel_len * chr_vel_len;
+
+            chr_vel_nrm = fvec3_normalize( loc_pchr->vel.v );
+
+            fvec3_decompose( total_acc.v, chr_vel_nrm.v, total_acc_para.v, total_acc_perp.v );
+        }
+
+        //--- limit the maximum power of the flying object
+        if( chr_vel_len > 0.0f )
+        {
+            float max_power = loc_pchr->maxaccel * loc_pchr->maxaccel / ( 1.0f - airfriction );
+
+            float loc_power = - loc_pchr->vel.z * gravity + ( 1.0f - airfriction ) * chr_vel_len2 + fvec3_dot_product(loc_pchr->vel.v, total_acc.v);
+
+            if( loc_power > max_power )
+            {
+                float term, total_acc_para_len;
+
+                // work backwards to get the fvec3_dot_product(loc_pchr->vel.v, total_acc.v) term from the previous equation
+                term = loc_power - ( - loc_pchr->vel.z * gravity + ( 1.0f - airfriction ) * chr_vel_len2 );
+
+                // since fvec3_dot_product(loc_pchr->vel.v, total_acc.v) == chr_vel_len * total_acc_para_len
+                total_acc_para_len = term / chr_vel_len;
+
+                if( ABS(total_acc_para_len) > 0.0f )
+                {
+                    // limit the tangential acceleration
+                    fvec3_self_normalize_to( total_acc.v, ABS(total_acc_para_len) );
+                }
+                else
+                {
+                    // elimiate the tangential acceleration
+                    fvec3_self_clear( total_acc_para.v );
+                }
+            }
+        }
+
+        total_acc = fvec3_add( total_acc_para.v, total_acc_perp.v );
+
+        //---- limit the maximum aerodynamic force on a flying object
+        if( fvec3_length_abs( total_acc.v ) > 0.0f )
+        {
+            float max_force = loc_pchr->maxaccel / ( 1.0f - airfriction );
+
+            float total_acc_len = fvec3_length( total_acc.v );
+
+            if( total_acc_len > max_force )
+            {
+                fvec3_self_normalize_to( total_acc.v, max_force );
+            }
         }
     }
+
+    return pbdl;
+}
+
+//--------------------------------------------------------------------------------------------
+chr_bundle_t * move_one_character_do_jump( chr_bundle_t * pbdl )
+{
+    chr_t             * loc_pchr;
+    chr_environment_t * loc_penviro;
+    phys_data_t       * loc_pphys;
+
+    fvec3_t total_acc, total_acc_para, total_acc_perp;
+    float coeff_para, coeff_perp;
+
+    float jump_lerp, fric_lerp;
+
+    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
+
+    // alias some variables
+    loc_pchr    = pbdl->chr_ptr;
+    loc_penviro = &(loc_pchr->enviro);
+    loc_pphys   = &(loc_pchr->phys);
+
+    if( IS_FLYING_PCHR(loc_pchr) ) return pbdl;
+
+    // determine whether a character has recently jumped
+    jump_lerp = (float)loc_pchr->jump_time / (float)JUMP_DELAY;
+    jump_lerp = CLIP(jump_lerp, 0.0f, 1.0f);   
+
+    // if we have not jumped, there's nothing to do
+    if( 0.0f == jump_lerp ) return pbdl;
+
+    // determine the amount of acceleration necessary to get the desired acceleration
+    total_acc = fvec3_sub( loc_penviro->chr_acc.v, loc_pphys->avel.v );
+
+    if( 0.0f == fvec3_length_abs(total_acc.v) ) return pbdl;
+
+    // decompose this into acceleration parallel and perpendicular to the ground
+    fvec3_decompose( total_acc.v, loc_penviro->walk_nrm.v, total_acc_perp.v, total_acc_para.v );
+
+    // the strength of the player's control over a jumping character is small and
+    // diminshes over the time of the jump
+    fric_lerp = traction_min * jump_lerp * (1.0f - loc_penviro->walk_lerp);
+
+    // "jumping traction" is mostly only parallel to the ground
+    coeff_para = 1.0f;
+    coeff_perp = 1.0f - loc_penviro->walk_lerp;
+
+    // scale the acceleration
+    fvec3_self_scale( total_acc_para.v, fric_lerp * coeff_para );
+    fvec3_self_scale( total_acc_perp.v, fric_lerp * coeff_perp );
+
+    // determine the total acceleration
+    total_acc = fvec3_add( total_acc_para.v, total_acc_perp.v );
+
+    // apply the jumping control
+    phys_data_accumulate_avel( loc_pphys, total_acc.v );
+
+    return pbdl;
+}
+
+//--------------------------------------------------------------------------------------------
+chr_bundle_t * move_one_character_do_flying( chr_bundle_t * pbdl )
+{
+    chr_t             * loc_pchr;
+    chr_environment_t * loc_penviro;
+    phys_data_t       * loc_pphys;
+
+    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
+
+    // alias some variables
+    loc_pchr    = pbdl->chr_ptr;
+    loc_penviro = &(loc_pchr->enviro);
+    loc_pphys   = &(loc_pchr->phys);
+
+    if( !IS_FLYING_PCHR(loc_pchr) || IS_ATTACHED_PCHR(loc_pchr) ) return pbdl;
+
+    // apply the flying forces
+    phys_data_accumulate_avel( loc_pphys, loc_penviro->chr_acc.v );    
+
+    return pbdl;
+}
+
+//--------------------------------------------------------------------------------------------
+chr_bundle_t * move_one_character_do_floor( chr_bundle_t * pbdl )
+{
+    /// @details BB@> Friction is complicated when you want to have sliding characters :P
+    ///
+    /// @note really, for this to work properly, all the friction interaction should be stored in a list
+    /// and then acted on after the main loop in move_all_characters() has been completed for all objects.
+
+    // a "typical" maximum speed
+    const float speed_max_typical      = 8.0f;
+    const float friction_magnification = 4.0f;
+
+    chr_t             * loc_pchr;
+    chr_environment_t * loc_penviro;
+    phys_data_t       * loc_pphys;
+
+    chr_t             * pplatform = NULL;
+
+    fvec3_t total_acc, total_acc_para, total_acc_perp, normal_acc, traction_acc;
+
+    bool_t is_scenery_object;
+    float scenery_grip;
+
+    float  fric_lerp;
+
+    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
+
+    // alias some variables
+    loc_pchr    = pbdl->chr_ptr;
+    loc_penviro = &(loc_pchr->enviro);
+    loc_pphys   = &(loc_pchr->phys);
+
+    // no floor friction if you are riding or being carried
+    if ( IS_ATTACHED_PCHR(loc_pchr) ) return pbdl;
+
+    // exempt "mario platforms" from interaction with the floor
+    if( loc_pchr->is_flying_platform && INFINITE_WEIGHT == loc_pphys->weight ) return pbdl;
+
+    pplatform = NULL;
+    if( ACTIVE_CHR(loc_pchr->onwhichplatform_ref) )
+    {
+        pplatform = ChrList.lst + loc_pchr->onwhichplatform_ref;
+    }
+
+    // determine whether the object is part of the scenery
+    is_scenery_object = ( INFINITE_WEIGHT == loc_pphys->weight );
+    scenery_grip = is_scenery_object ? 1.0f : (float)loc_pphys->weight / (float)MAX_WEIGHT;
+    scenery_grip = CLIP(scenery_grip, 0.0f, 1.0f);
+
+    // apply the acceleration from the "normal force"
+    phys_data_apply_normal_acceleration( loc_pphys, loc_penviro->walk_nrm, 1.0f - scenery_grip, loc_penviro->walk_lerp, &normal_acc );
+
+    // determine how much influence the floor has on the object
+    fric_lerp = 1.0f - loc_penviro->walk_lerp;
+
+    // if we're not in touch with the ground, there is no walking
+    if( 0.0f == fric_lerp ) return pbdl;
+
+    // if there is no friction with the ground, nothing to do
+    if( loc_penviro->ground_fric >= 1.0f ) return pbdl;
+
+    // determine the amount of acceleration necessary to get the desired acceleration
+    total_acc = fvec3_sub( loc_penviro->chr_acc.v, loc_pphys->avel.v );
+
+    // if there is no total acceleration, there's nothing to do
+    if( 0.0f == fvec3_length_abs(total_acc.v) ) return pbdl;
+
+    // decompose this into acceleration parallel and perpendicular to the ground
+    fvec3_decompose( total_acc.v, loc_penviro->walk_nrm.v, total_acc_perp.v, total_acc_para.v );
+
+    // determine an amount of "minimum traction"
+    traction_acc = fvec3_scale( total_acc_para.v, traction_min );
+
+    // any traction away from the ground was calculated in move_one_character_do_jump()
+    fvec3_self_scale( traction_acc.v, fric_lerp );
+
+    // if there is no normal_acc, then there is no ordinary traction
+    if( 0.0f == fvec3_length_abs(normal_acc.v) )
+    {
+        fvec3_self_clear( total_acc_para.v );
+    }
+    else
+    {
+        float   est_max_friction_acc;
+        float   coefficient, normal_acc_len, max_fric_acc;
+
+        //---- use the static coefficient of friction
+
+        // the max acceleration from static friction is proportional to the normal acceleration 
+        normal_acc_len = fvec3_length(normal_acc.v);
+
+        // find a "maximum" amount of deceleration due to friction for this object
+        est_max_friction_acc = - speed_max_typical * LOG( loc_penviro->ground_fric );
+
+        // the default amount of floor friction is too weak, boost it a little
+        est_max_friction_acc *= friction_magnification;
+
+        // determine an effective coefficient of static friction
+        coefficient = fric_lerp * loc_penviro->traction * est_max_friction_acc / ABS(gravity);
+
+        // determine the maximum amount of acceleration from static friction
+        max_fric_acc = coefficient * normal_acc_len;
+
+        // infinite weight objects can never slip
+        if( is_scenery_object || fvec3_length( total_acc_para.v ) <= max_fric_acc )
+        {
+            loc_penviro->is_slipping = bfalse;
+
+            {
+                fvec3_t tmp_vec1, tmp_vec2;
+                
+                tmp_vec1 = fvec3_scale( loc_penviro->ground_diff.v, 0.1f );
+                tmp_vec2 = fvec3_scale( loc_penviro->legs_vel.v, 0.9f );
+
+                loc_penviro->legs_vel = fvec3_add( tmp_vec1.v, tmp_vec2.v );
+            }
+        }
+        else
+        {
+            //---- use a dynamic coefficient of friction
+
+            loc_penviro->is_slipping = btrue;
+
+            // recompute the max_fric_acc with the "slippy" coefficient of friction
+            est_max_friction_acc *= 0.5f;
+            coefficient           = fric_lerp * loc_penviro->traction * est_max_friction_acc  / ABS(gravity);
+            max_fric_acc          = coefficient * normal_acc_len;
+
+            // we are slipping
+            fvec3_self_normalize_to( total_acc_para.v, max_fric_acc );
+
+            {
+                fvec3_t tmp_vec1, tmp_vec2;
+                
+                tmp_vec1 = fvec3_scale( loc_penviro->chr_vel.v, 0.1f );
+                tmp_vec2 = fvec3_scale( loc_penviro->legs_vel.v, 0.9f );
+
+                loc_penviro->legs_vel = fvec3_add( tmp_vec1.v, tmp_vec2.v );
+            }
+        }
+
+        // scale this amount to take into account the fact that traction_acc was removed from it earlier
+        fvec3_self_scale( total_acc_para.v, 1.0f - traction_min );
+    }
+
+    // apply the floor friction
+    phys_data_accumulate_avel( loc_pphys, total_acc_para.v );
+    //phys_data_accumulate_avel( loc_pphys, traction_acc.v   );
+
+    // we should apply the acceleration to the floor in the opposite direction
+    // make ordinary "plaforms" immune
+    if( NULL != pplatform && !pplatform->is_flying_platform )
+    {
+        float wta, wtb;
+
+        character_physics_get_mass_pair( loc_pchr, pplatform, &wta, &wtb );
+
+        // take the relative "masses" into account
+        if( INFINITE_WEIGHT != wtb && 0.0f != wta )
+        {
+            float   factor = wta / (wtb + pplatform->holdingweight);
+            fvec3_t plat_acc_para = fvec3_scale( total_acc_para.v, - factor );
+
+            phys_data_accumulate_avel( &(pplatform->phys), plat_acc_para.v );
+        }
+    }
+
+    return pbdl;
+}
+
+//--------------------------------------------------------------------------------------------
+chr_bundle_t *  move_one_character( chr_bundle_t * pbdl )
+{
+    chr_t      * loc_pchr;
+
+    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
+
+    // alias some variables
+    loc_pchr = pbdl->chr_ptr;
+
+    if ( IS_ATTACHED_PCHR(loc_pchr) ) return pbdl;
+
+    // save the acceleration from the last time-step
+    loc_pchr->enviro.acc = fvec3_sub( loc_pchr->vel.v, loc_pchr->vel_old.v );
+
+    // Character's old location
+    loc_pchr->pos_old          = chr_get_pos( loc_pchr );
+    loc_pchr->vel_old          = loc_pchr->vel;
+    loc_pchr->ori_old.facing_z = loc_pchr->ori.facing_z;
+
+    if( loc_pchr->latch.trans_valid )
+    {
+        // make the object want to continue its current motion, unless this is overridden
+        loc_pchr->enviro.chr_vel = loc_pchr->vel;
+    }
+
+    move_one_character_get_environment( pbdl, NULL );
+
+    move_one_character_do_fluid_friction( pbdl );
+
+    // determine how the character would *like* to move
+    move_one_character_do_voluntary( pbdl );
+
+    // apply gravitational an buoyancy effects
+    move_one_character_do_z_motion( pbdl );
+
+    // determine how the character is being *forced* to move
+    move_one_character_do_involuntary( pbdl );
+
+    // read and apply any latch buttons
+    chr_do_latch_button( pbdl );
+
+    // allow the character to control its flight
+    move_one_character_do_flying( pbdl );
+
+    // allow the character to have some additional control over jumping
+    move_one_character_do_jump( pbdl );
+
+    // determine how the character can *actually* move
+    move_one_character_do_floor( pbdl );
+
+    // do the character animation and apply any MADFX found in the animation frames
+    move_one_character_do_animation( pbdl );
+
+    // set the rotation angles for the character
+    move_one_character_do_orientation( pbdl );
+
+    return pbdl;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -7423,11 +7370,13 @@ void move_all_characters( void )
     // Move every character
     CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
     {
+        chr_bundle_t bdl;
+
         // prime the environment
         pchr->enviro.air_friction = air_friction;
         pchr->enviro.ice_friction = ice_friction;
 
-        move_one_character( pchr );
+        move_one_character( chr_bundle_set( &bdl, pchr ) );
     }
     CHR_END_LOOP();
 
@@ -7437,6 +7386,7 @@ void move_all_characters( void )
     make_all_character_matrices( update_wld != 0 );
 }
 
+//--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 void cleanup_all_characters()
 {
@@ -7466,7 +7416,7 @@ void cleanup_all_characters()
 }
 
 //--------------------------------------------------------------------------------------------
-void bump_all_characters_update_counters()
+void increment_all_character_update_counters()
 {
     CHR_REF cnt;
 
@@ -7557,7 +7507,6 @@ bool_t is_invictus_direction( FACING_T direction, const CHR_REF by_reference cha
     {
         is_invictus = btrue;
     }
-
 
     return is_invictus;
 }
@@ -7682,7 +7631,7 @@ bool_t chr_instance_set_mad( chr_instance_t * pinst, const MAD_REF by_reference 
     /// @details BB@> try to set the model used by the character instance.
     ///     If this fails, it leaves the old data. Just to be safe it
     ///     would be best to check whether the old modes is valid, and
-    ///     if not, the data chould be set to safe values...
+    ///     if not, the data should be set to safe values...
 
     mad_t * pmad;
     bool_t updated = bfalse;
@@ -7732,7 +7681,7 @@ bool_t chr_instance_set_mad( chr_instance_t * pinst, const MAD_REF by_reference 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_instance_update_ref( chr_instance_t * pinst, float floor_level, bool_t need_matrix )
+bool_t chr_instance_update_ref( chr_instance_t * pinst, float grid_level, bool_t need_matrix )
 {
     int trans_temp;
 
@@ -7741,7 +7690,7 @@ bool_t chr_instance_update_ref( chr_instance_t * pinst, float floor_level, bool_
     if ( need_matrix )
     {
         // reflect the ordinary matrix
-        apply_reflection_matrix( pinst, floor_level );
+        apply_reflection_matrix( pinst, grid_level );
     }
 
     trans_temp = 255;
@@ -7750,7 +7699,7 @@ bool_t chr_instance_update_ref( chr_instance_t * pinst, float floor_level, bool_
         float pos_z;
 
         // determine the reflection alpha
-        pos_z = floor_level - pinst->ref.matrix.CNV( 3, 2 );
+        pos_z = grid_level - pinst->ref.matrix.CNV( 3, 2 );
         if ( pos_z < 0 ) pos_z = 0;
 
         trans_temp -= (( int )pos_z ) >> 1;
@@ -7867,10 +7816,10 @@ bool_t ai_add_order( ai_state_t * pai, Uint32 value, Uint16 counter )
 
     if ( NULL == pai ) return bfalse;
 
-    // this function is only truely valid if there is no other order
+    // this function is only truly valid if there is no other order
     retval = HAS_NO_BITS( pai->alert, ALERTIF_ORDERED );
 
-    SET_BIT( pai->alert, ALERTIF_ORDERED );
+    ADD_BITS( pai->alert, ALERTIF_ORDERED );
     pai->order_value   = value;
     pai->order_counter = counter;
 
@@ -7900,7 +7849,7 @@ BBOARD_REF chr_add_billboard( const CHR_REF by_reference ichr, Uint32 lifetime_s
 
     pchr->ibillboard = BillboardList_get_free( lifetime_secs );
 
-    // attachr the billboard to the character
+    // attach the billboard to the character
     if ( INVALID_BILLBOARD != pchr->ibillboard )
     {
         billboard_data_t * pbb = BillboardList.lst + pchr->ibillboard;
@@ -8088,7 +8037,7 @@ const char * chr_get_dir_name( const CHR_REF by_reference ichr )
     else
     {
         pro_t * ppro = ProList.lst + pchr->profile_ref;
-		
+
         // copy the character's data.txt path
         strncpy( buffer, ppro->name, SDL_arraysize( buffer ) );
     }
@@ -8099,26 +8048,25 @@ const char * chr_get_dir_name( const CHR_REF by_reference ichr )
 //--------------------------------------------------------------------------------------------
 egoboo_rv chr_update_collision_size( chr_t * pchr, bool_t update_matrix )
 {
-    ///< @detalis BB@> use this function to update the pchr->chr_prt_cv and  pchr->chr_chr_cv with
+    ///< @details BB@> use this function to update the pchr->prt_cv and  pchr->chr_min_cv with
     ///<       values that reflect the best possible collision volume
     ///<
     ///< @note This function takes quite a bit of time, so it must only be called when the
     ///< vertices change because of an animation or because the matrix changes.
     ///<
-    ///< @todo it might be possible to cache the src[] array used in this function.
+    ///< @todo it might be possible to cache the src_vrts[] array used in this function.
     ///< if the matrix changes, then you would not need to recalculate this data...
 
-    int       vcount;   // the actual number of vertices, in case the object is square
-    fvec4_t   src[16];  // for the upper and lower octagon points
-    fvec4_t   dst[16];  // for the upper and lower octagon points
+    int       cnt;
+    int       vrt_count;   // the actual number of vertices, in case the object is square
+    fvec4_t   src_vrts[16];  // for the upper and lower octagon points
+    fvec4_t   dst_vrts[16];  // for the upper and lower octagon points
 
-    oct_bb_t bsrc;
+    oct_bb_t bsrc, bdst;
 
     mad_t * pmad;
-    oct_bb_t * pbmp;
 
     if ( !DEFINED_PCHR( pchr ) ) return rv_error;
-    pbmp = &( pchr->chr_chr_cv );
 
     pmad = chr_get_pmad( GET_REF_PCHR( pchr ) );
     if ( NULL == pmad ) return rv_error;
@@ -8144,16 +8092,97 @@ egoboo_rv chr_update_collision_size( chr_t * pchr, bool_t update_matrix )
     memcpy( &bsrc, &( pchr->inst.bbox ), sizeof( bsrc ) );
 
     // convert the corners of the level 1 bounding box to a point cloud
-    vcount = oct_bb_to_points( &bsrc, src, 16 );
+    vrt_count = oct_bb_to_points( &bsrc, src_vrts, 16 );
 
     // transform the new point cloud
-    TransformVertices( &( pchr->inst.matrix ), src, dst, vcount );
+    TransformVertices( &( pchr->inst.matrix ), src_vrts, dst_vrts, vrt_count );
 
     // convert the new point cloud into a level 1 bounding box
-    points_to_oct_bb( pbmp, dst, vcount );
+    points_to_oct_bb( &bdst, dst_vrts, vrt_count );
+
+    //---- set the bounding boxes
+    pchr->chr_cv     = bdst;
+    pchr->chr_min_cv = bdst;
+    pchr->chr_max_cv = bdst;
+
+    // only use pchr->bump.size if it was overridden in data.txt through the [MODL] expansion
+    if( pchr->bump_stt.size >= 0.0f )
+    {
+        pchr->chr_cv.mins[OCT_X ] = -pchr->bump.size;
+        pchr->chr_cv.mins[OCT_Y ] = -pchr->bump.size;
+        pchr->chr_cv.maxs[OCT_X ] =  pchr->bump.size;
+        pchr->chr_cv.maxs[OCT_Y ] =  pchr->bump.size;
+
+        pchr->chr_min_cv.mins[OCT_X ] = MAX(pchr->chr_min_cv.mins[OCT_X ], -pchr->bump.size );
+        pchr->chr_min_cv.mins[OCT_Y ] = MAX(pchr->chr_min_cv.mins[OCT_Y ], -pchr->bump.size );
+        pchr->chr_min_cv.maxs[OCT_X ] = MIN(pchr->chr_min_cv.maxs[OCT_X ],  pchr->bump.size );
+        pchr->chr_min_cv.maxs[OCT_Y ] = MIN(pchr->chr_min_cv.maxs[OCT_Y ],  pchr->bump.size );
+
+        pchr->chr_max_cv.mins[OCT_X ] = MIN(pchr->chr_max_cv.mins[OCT_X ], -pchr->bump.size );
+        pchr->chr_max_cv.mins[OCT_Y ] = MIN(pchr->chr_max_cv.mins[OCT_Y ], -pchr->bump.size );
+        pchr->chr_max_cv.maxs[OCT_X ] = MAX(pchr->chr_max_cv.maxs[OCT_X ],  pchr->bump.size );
+        pchr->chr_max_cv.maxs[OCT_Y ] = MAX(pchr->chr_max_cv.maxs[OCT_Y ],  pchr->bump.size );
+    }
+
+    // only use pchr->bump.size_big if it was overridden in data.txt through the [MODL] expansion
+    if( pchr->bump_stt.size_big >= 0.0f )
+    {
+        pchr->chr_cv.mins[OCT_YX] = -pchr->bump.size_big;
+        pchr->chr_cv.mins[OCT_XY] = -pchr->bump.size_big;
+        pchr->chr_cv.maxs[OCT_YX] =  pchr->bump.size_big;
+        pchr->chr_cv.maxs[OCT_XY] =  pchr->bump.size_big;
+
+        pchr->chr_min_cv.mins[OCT_YX] = MAX(pchr->chr_min_cv.mins[OCT_YX], -pchr->bump.size_big );
+        pchr->chr_min_cv.mins[OCT_XY] = MAX(pchr->chr_min_cv.mins[OCT_XY], -pchr->bump.size_big );
+        pchr->chr_min_cv.maxs[OCT_YX] = MIN(pchr->chr_min_cv.maxs[OCT_YX], pchr->bump.size_big );
+        pchr->chr_min_cv.maxs[OCT_XY] = MIN(pchr->chr_min_cv.maxs[OCT_XY], pchr->bump.size_big );
+
+        pchr->chr_max_cv.mins[OCT_YX] = MIN(pchr->chr_max_cv.mins[OCT_YX], -pchr->bump.size_big );
+        pchr->chr_max_cv.mins[OCT_XY] = MIN(pchr->chr_max_cv.mins[OCT_XY], -pchr->bump.size_big );
+        pchr->chr_max_cv.maxs[OCT_YX] = MAX(pchr->chr_max_cv.maxs[OCT_YX], pchr->bump.size_big );
+        pchr->chr_max_cv.maxs[OCT_XY] = MAX(pchr->chr_max_cv.maxs[OCT_XY], pchr->bump.size_big );
+    }
+
+    // only use pchr->bump.height if it was overridden in data.txt through the [MODL] expansion
+    if( pchr->bump_stt.height >= 0.0f )
+    {
+        pchr->chr_cv.mins[OCT_Z ] = 0.0f;
+        pchr->chr_cv.maxs[OCT_Z ] = pchr->bump.height * pchr->fat;
+
+        pchr->chr_min_cv.mins[OCT_Z ] = MAX(pchr->chr_min_cv.mins[OCT_Z ], 0.0f );
+        pchr->chr_min_cv.maxs[OCT_Z ] = MIN(pchr->chr_min_cv.maxs[OCT_Z ], pchr->bump.height   * pchr->fat );
+
+        pchr->chr_max_cv.mins[OCT_Z ] = MIN(pchr->chr_max_cv.mins[OCT_Z ], 0.0f );
+        pchr->chr_max_cv.maxs[OCT_Z ] = MAX(pchr->chr_max_cv.maxs[OCT_Z ], pchr->bump.height   * pchr->fat );
+    }
+
+    // raise the upper bound for platforms
+    if( pchr->platform )
+    {
+        pchr->chr_max_cv.maxs[OCT_Z] += PLATTOLERANCE;
+    }
+
+    // make sure all the bounding coordinates are valid
+    for( cnt = 0; cnt < OCT_COUNT; cnt++ )
+    {
+        if( pchr->chr_cv.mins[cnt] >= pchr->chr_cv.maxs[cnt] )
+        {
+            pchr->chr_cv.mins[cnt] = pchr->chr_cv.maxs[cnt] = 0.0f;
+        }
+
+        if( pchr->chr_min_cv.mins[cnt] >= pchr->chr_min_cv.maxs[cnt] )
+        {
+            pchr->chr_min_cv.mins[cnt] = pchr->chr_min_cv.maxs[cnt] = 0.0f;
+        }
+
+        if( pchr->chr_max_cv.mins[cnt] >= pchr->chr_max_cv.maxs[cnt] )
+        {
+            pchr->chr_max_cv.mins[cnt] = pchr->chr_max_cv.maxs[cnt] = 0.0f;
+        }
+    }
 
     // convert the level 1 bounding box to a level 0 bounding box
-    oct_bb_downgrade( pbmp, pchr->bump, &( pchr->bump_1 ), &( pchr->chr_prt_cv ) );
+    oct_bb_downgrade( &bdst, pchr->bump_stt, pchr->bump, &( pchr->bump_1 ), NULL );
 
     return rv_success;
 }
@@ -8172,7 +8201,7 @@ const char* describe_value( float value, float maxval, int * rank_ptr )
 
     if ( cfg.feedback == FEEDBACK_NUMBER )
     {
-        snprintf( retval, SDL_arraysize( retval ), "%2.1f", FP8_TO_FLOAT( value ) );
+        snprintf( retval, SDL_arraysize( retval ), "%2.1f", SFP8_TO_FLOAT( (int)value ) );
         return retval;
     }
 
@@ -8212,7 +8241,7 @@ const char* describe_damage( float value, float maxval, int * rank_ptr )
 
     if ( cfg.feedback == FEEDBACK_NUMBER )
     {
-        snprintf( retval, SDL_arraysize( retval ), "%2.1f", FP8_TO_FLOAT( value ) );
+        snprintf( retval, SDL_arraysize( retval ), "%2.1f", SFP8_TO_FLOAT( (int)value ) );
         return retval;
     }
 
@@ -8255,7 +8284,7 @@ const char* describe_wounds( float max, float current )
 
     if ( cfg.feedback == FEEDBACK_NUMBER )
     {
-        snprintf( retval, SDL_arraysize( retval ), "%2.1f", FP8_TO_FLOAT( current ) );
+        snprintf( retval, SDL_arraysize( retval ), "%2.1f", SFP8_TO_FLOAT( (int)current ) );
         return retval;
     }
 
@@ -8298,8 +8327,8 @@ TX_REF chr_get_icon_ref( const CHR_REF by_reference item )
     // what do we need to draw?
     is_spell_fx = (NO_SKIN_OVERRIDE != pitem_cap->spelleffect_type);       // the value of spelleffect_type == the skin of the book or -1 for not a spell effect
     is_book     = (SPELLBOOK == pitem->profile_ref);
-    draw_book   = ( is_book || ( is_spell_fx && !pitem->draw_icon ) /*|| ( is_spell_fx && MAX_CHR != pitem->attachedto )*/ ) && ( bookicon_count > 0 );	//>ZF> uncommented a part because this caused a icon bug when you were morphed and mounted
-	
+    draw_book   = ( is_book || ( is_spell_fx && !pitem->draw_icon ) /*|| ( is_spell_fx && MAX_CHR != pitem->attachedto )*/ ) && ( bookicon_count > 0 );    //>ZF> uncommented a part because this caused a icon bug when you were morphed and mounted
+    
     if ( !draw_book )
     {
         iskin = pitem->skin;
@@ -8513,7 +8542,7 @@ bool_t ai_state_set_changed( ai_state_t * pai )
 
     if ( HAS_NO_BITS( pai->alert, ALERTIF_CHANGED ) )
     {
-        SET_BIT( pai->alert, ALERTIF_CHANGED );
+        ADD_BITS( pai->alert, ALERTIF_CHANGED );
         retval = btrue;
     }
 
@@ -8671,12 +8700,12 @@ bool_t chr_get_matrix_cache( chr_t * pchr, matrix_cache_t * mc_tmp )
             // make sure we have the latst info from the target
             chr_update_matrix( pmount, btrue );
 
-            // just in case the mounts's matrix cannot be corrected
+            // just in case the mount's matrix cannot be corrected
             // then treat it as if it is not mounted... yuck
             if ( pmount->inst.matrix_cache.matrix_valid )
             {
                 mc_tmp->valid     = btrue;
-                SET_BIT( mc_tmp->type_bits, MAT_WEAPON );        // add in the weapon data
+                ADD_BITS( mc_tmp->type_bits, MAT_WEAPON );        // add in the weapon data
 
                 mc_tmp->grip_chr  = pchr->attachedto;
                 mc_tmp->grip_slot = pchr->inwhich_slot;
@@ -8692,7 +8721,7 @@ bool_t chr_get_matrix_cache( chr_t * pchr, matrix_cache_t * mc_tmp )
             chr_t * ptarget = ChrList.lst + itarget;
 
             mc_tmp->valid   = btrue;
-            SET_BIT( mc_tmp->type_bits, MAT_CHARACTER );  // add in the MAT_CHARACTER-type data for the object we are "connected to"
+            ADD_BITS( mc_tmp->type_bits, MAT_CHARACTER );  // add in the MAT_CHARACTER-type data for the object we are "connected to"
 
             mc_tmp->rotate.x = CLIP_TO_16BITS( ptarget->ori.map_facing_x - MAP_TURN_OFFSET );
             mc_tmp->rotate.y = CLIP_TO_16BITS( ptarget->ori.map_facing_y - MAP_TURN_OFFSET );
@@ -8804,7 +8833,7 @@ bool_t apply_one_weapon_matrix( chr_t * pweap, matrix_cache_t * mc_tmp )
     if ( !INGAME_CHR( mc_tmp->grip_chr ) ) return bfalse;
     pholder = ChrList.lst + mc_tmp->grip_chr;
 
-    // make sure that the matrix is invalid incase of an error
+    // make sure that the matrix is invalid in case of an error
     pweap_mcache->matrix_valid = bfalse;
 
     // grab the grip points in world coordinates
@@ -8836,7 +8865,7 @@ bool_t apply_one_weapon_matrix( chr_t * pweap, matrix_cache_t * mc_tmp )
 
         // add in the appropriate mods
         // this is a hybrid character and weapon matrix
-        SET_BIT( mc_tmp->type_bits, MAT_CHARACTER );
+        ADD_BITS( mc_tmp->type_bits, MAT_CHARACTER );
 
         // treat it like a normal character matrix
         apply_one_character_matrix( pweap, mc_tmp );
@@ -8860,9 +8889,18 @@ bool_t apply_one_character_matrix( chr_t * pchr, matrix_cache_t * mc_tmp )
 
     if ( !DEFINED_PCHR( pchr ) ) return bfalse;
 
-    pchr->inst.matrix = ScaleXYZRotateXYZTranslate( mc_tmp->self_scale.x, mc_tmp->self_scale.y, mc_tmp->self_scale.z,
-        TO_TURN( mc_tmp->rotate.z ), TO_TURN( mc_tmp->rotate.x ), TO_TURN( mc_tmp->rotate.y ),
-        mc_tmp->pos.x, mc_tmp->pos.y, mc_tmp->pos.z );
+    if( pchr->stickybutt )
+    {
+        pchr->inst.matrix = ScaleXYZRotateXYZTranslate_SpaceFixed( mc_tmp->self_scale.x, mc_tmp->self_scale.y, mc_tmp->self_scale.z,
+            TO_TURN( mc_tmp->rotate.z ), TO_TURN( mc_tmp->rotate.x ), TO_TURN( mc_tmp->rotate.y ),
+            mc_tmp->pos.x, mc_tmp->pos.y, mc_tmp->pos.z );
+    }
+    else
+    {
+        pchr->inst.matrix = ScaleXYZRotateXYZTranslate_BodyFixed( mc_tmp->self_scale.x, mc_tmp->self_scale.y, mc_tmp->self_scale.z,
+            TO_TURN( mc_tmp->rotate.z ), TO_TURN( mc_tmp->rotate.x ), TO_TURN( mc_tmp->rotate.y ),
+            mc_tmp->pos.x, mc_tmp->pos.y, mc_tmp->pos.z );
+    }
 
     memcpy( &( pchr->inst.matrix_cache ), mc_tmp, sizeof( matrix_cache_t ) );
 
@@ -8872,9 +8910,9 @@ bool_t apply_one_character_matrix( chr_t * pchr, matrix_cache_t * mc_tmp )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t apply_reflection_matrix( chr_instance_t * pinst, float floor_level )
+bool_t apply_reflection_matrix( chr_instance_t * pinst, float grid_level )
 {
-    /// @detalis BB@> Generate the extra data needed to display a reflection for this character
+    /// @details BB@> Generate the extra data needed to display a reflection for this character
 
     if ( NULL == pinst ) return bfalse;
 
@@ -8890,7 +8928,7 @@ bool_t apply_reflection_matrix( chr_instance_t * pinst, float floor_level )
         pinst->ref.matrix.CNV( 0, 2 ) = -pinst->ref.matrix.CNV( 0, 2 );
         pinst->ref.matrix.CNV( 1, 2 ) = -pinst->ref.matrix.CNV( 1, 2 );
         pinst->ref.matrix.CNV( 2, 2 ) = -pinst->ref.matrix.CNV( 2, 2 );
-        pinst->ref.matrix.CNV( 3, 2 ) = 2 * floor_level - pinst->ref.matrix.CNV( 3, 2 );
+        pinst->ref.matrix.CNV( 3, 2 ) = 2 * grid_level - pinst->ref.matrix.CNV( 3, 2 );
     }
 
     return pinst->ref.matrix_valid;
@@ -8899,7 +8937,7 @@ bool_t apply_reflection_matrix( chr_instance_t * pinst, float floor_level )
 //--------------------------------------------------------------------------------------------
 bool_t apply_matrix_cache( chr_t * pchr, matrix_cache_t * mc_tmp )
 {
-    /// @detalis BB@> request that the info in the matrix cache mc_tmp, be used to
+    /// @details BB@> request that the info in the matrix cache mc_tmp, be used to
     ///               make a matrix for the character pchr.
 
     bool_t applied = bfalse;
@@ -8921,7 +8959,7 @@ bool_t apply_matrix_cache( chr_t * pchr, matrix_cache_t * mc_tmp )
             make_one_character_matrix( GET_REF_PCHR( pchr ) );
 
             // recover the matrix_cache values from the character
-            SET_BIT( mcache->type_bits, MAT_CHARACTER );
+            ADD_BITS( mcache->type_bits, MAT_CHARACTER );
             if ( mcache->matrix_valid )
             {
                 mcache->valid     = btrue;
@@ -8950,7 +8988,7 @@ bool_t apply_matrix_cache( chr_t * pchr, matrix_cache_t * mc_tmp )
 
     if ( applied )
     {
-        apply_reflection_matrix( &( pchr->inst ), pchr->enviro.floor_level );
+        apply_reflection_matrix( &( pchr->inst ), pchr->enviro.grid_level );
     }
 
     return applied;
@@ -8962,7 +9000,7 @@ int cmp_matrix_cache( const void * vlhs, const void * vrhs )
     /// @details BB@> check for differences between the data pointed to
     ///     by vlhs and vrhs, assuming that they point to matrix_cache_t data.
     ///
-    ///    The function is implemented this way so that in pronciple
+    ///    The function is implemented this way so that in principle
     ///    if could be used in a function like qsort().
     ///
     ///    We could almost certainly make something easier and quicker by
@@ -9164,7 +9202,7 @@ bool_t ai_state_set_bumplast( ai_state_t * pself, const CHR_REF by_reference ich
     if ( pself->bumplast != ichr ||  update_wld > pself->bumplast_time + TARGET_UPS / 5 )
     {
         pself->bumplast_time = update_wld;
-        SET_BIT( pself->alert, ALERTIF_BUMPED );
+        ADD_BITS( pself->alert, ALERTIF_BUMPED );
     }
     pself->bumplast = ichr;
 
@@ -9253,7 +9291,7 @@ CHR_REF chr_holding_idsz( const CHR_REF by_reference ichr, IDSZ idsz )
 //--------------------------------------------------------------------------------------------
 CHR_REF chr_has_item_idsz( const CHR_REF by_reference ichr, IDSZ idsz, bool_t equipped, CHR_REF * pack_last )
 {
-    /// @detalis BB@> is ichr holding an item matching idsz, or is such an item in his pack?
+    /// @details BB@> is ichr holding an item matching idsz, or is such an item in his pack?
     ///               return the index of the found item, or MAX_CHR if not found. Also return
     ///               the previous pack item in *pack_last, or MAX_CHR if it was not in a pack.
 
@@ -9290,7 +9328,7 @@ CHR_REF chr_has_item_idsz( const CHR_REF by_reference ichr, IDSZ idsz, bool_t eq
 //--------------------------------------------------------------------------------------------
 bool_t chr_can_see_object( const CHR_REF by_reference ichr, const CHR_REF by_reference iobj )
 {
-    /// @detalis BB@> can ichr see iobj?
+    /// @details BB@> can ichr see iobj?
 
     chr_t * pchr, * pobj;
     int     light, self_light, enviro_light;
@@ -9309,7 +9347,7 @@ bool_t chr_can_see_object( const CHR_REF by_reference ichr, const CHR_REF by_ref
     }
     alpha = CLIP( alpha, 0, 255 );
 
-	/// @note ZF@> Invictus characters can always see through darkness (spells, items, quest handlers, etc.)
+    /// @note ZF@> Invictus characters can always see through darkness (spells, items, quest handlers, etc.)
     if ( pchr->invictus && alpha >= INVISIBLE ) return btrue;
 
     enviro_light = ( alpha * pobj->inst.max_light ) * INV_FF;
@@ -9321,8 +9359,8 @@ bool_t chr_can_see_object( const CHR_REF by_reference ichr, const CHR_REF by_ref
         light *= pchr->darkvision_level + 1;
     }
 
-	//Scenery, spells and quest objects can always see through darkness
-	if( pchr->invictus ) light *= 20;
+    //Scenery, spells and quest objects can always see through darkness
+    if( pchr->invictus ) light *= 20;
 
     return light >= INVISIBLE;
 }
@@ -9330,7 +9368,7 @@ bool_t chr_can_see_object( const CHR_REF by_reference ichr, const CHR_REF by_ref
 //--------------------------------------------------------------------------------------------
 int chr_get_price( const CHR_REF by_reference ichr )
 {
-    /// @detalis BB@> determine the correct price for an item
+    /// @details BB@> determine the correct price for an item
 
     CAP_REF icap;
     Uint16  iskin;
@@ -9383,9 +9421,9 @@ void chr_set_floor_level( chr_t * pchr, float level )
 {
     if ( !DEFINED_PCHR( pchr ) ) return;
 
-    if ( level != pchr->enviro.floor_level )
+    if ( level != pchr->enviro.grid_level )
     {
-        pchr->enviro.floor_level = level;
+        pchr->enviro.grid_level = level;
         apply_reflection_matrix( &( pchr->inst ), level );
     }
 }
@@ -9397,7 +9435,7 @@ void chr_set_redshift( chr_t * pchr, int rs )
 
     pchr->inst.redshift = rs;
 
-    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.floor_level, bfalse );
+    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -9407,7 +9445,7 @@ void chr_set_grnshift( chr_t * pchr, int gs )
 
     pchr->inst.grnshift = gs;
 
-    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.floor_level, bfalse );
+    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -9417,7 +9455,7 @@ void chr_set_blushift( chr_t * pchr, int bs )
 
     pchr->inst.blushift = bs;
 
-    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.floor_level, bfalse );
+    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -9427,7 +9465,7 @@ void chr_set_sheen( chr_t * pchr, int sheen )
 
     pchr->inst.sheen = sheen;
 
-    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.floor_level, bfalse );
+    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -9437,7 +9475,7 @@ void chr_set_alpha( chr_t * pchr, int alpha )
 
     pchr->inst.alpha = CLIP( alpha, 0, 255 );
 
-    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.floor_level, bfalse );
+    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -9445,12 +9483,29 @@ void chr_set_light( chr_t * pchr, int light )
 {
     if ( !DEFINED_PCHR( pchr ) ) return;
 
-	pchr->inst.light = CLIP( light, 0, 255 );
-	
-	//This prevents players from becoming completely invisible
-    if( VALID_PLA(pchr->is_which_player) )  pchr->inst.light = MAX( 128, pchr->inst.light );
+    pchr->inst.light = CLIP( light, 0, 255 );
 
-    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.floor_level, bfalse );
+    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
+}
+
+//--------------------------------------------------------------------------------------------
+void chr_set_fly_height( chr_t * pchr, float height )
+{
+    if ( !DEFINED_PCHR( pchr ) ) return;
+
+    pchr->fly_height = height;
+
+    pchr->is_flying_platform = ( 0.0f != pchr->fly_height );
+}
+
+//--------------------------------------------------------------------------------------------
+void chr_set_jump_number_reset( chr_t * pchr, int number )
+{
+    if ( !DEFINED_PCHR( pchr ) ) return;
+
+    pchr->jump_number_reset = number;
+
+    pchr->can_fly_jump = ( JUMP_NUMBER_INFINITE == pchr->jump_number_reset );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -9490,7 +9545,7 @@ void chr_instance_get_tint( chr_instance_t * pinst, GLfloat * tint, BIT_FIELD bi
         local_blushift = pinst->blushift;
     }
 
-    // modify these values based on local characte abilities
+    // modify these values based on local character abilities
     local_alpha = get_local_alpha( local_alpha );
     local_light = get_local_light( local_light );
 
@@ -9542,7 +9597,7 @@ void chr_instance_get_tint( chr_instance_t * pinst, GLfloat * tint, BIT_FIELD bi
 
     if ( HAS_SOME_BITS( bits, CHR_PHONG ) )
     {
-        // phong is essentially the same as light, but it is the
+        // Phong is essentially the same as light, but it is the
         // sheen that sets the effect
 
         float amount;
@@ -9606,30 +9661,34 @@ CHR_REF chr_get_lowest_attachment( const CHR_REF by_reference ichr, bool_t non_i
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_get_mass_pair( chr_t * pchr_a, chr_t * pchr_b, float * wta, float * wtb )
+bool_t character_physics_get_mass_pair( chr_t * pchr_a, chr_t * pchr_b, float * wta, float * wtb )
 {
     /// @details BB@> calculate a "mass" for each object, taking into account possible infinite masses.
 
     float loc_wta, loc_wtb;
+    bool_t infinite_weight;
 
     if ( !ACTIVE_PCHR( pchr_a ) || !ACTIVE_PCHR( pchr_b ) ) return bfalse;
 
     if ( NULL == wta ) wta = &loc_wta;
     if ( NULL == wtb ) wtb = &loc_wtb;
 
-    *wta = ( INFINITE_WEIGHT == pchr_a->phys.weight ) ? -( float )INFINITE_WEIGHT : pchr_a->phys.weight;
-    *wtb = ( INFINITE_WEIGHT == pchr_b->phys.weight ) ? -( float )INFINITE_WEIGHT : pchr_b->phys.weight;
+    infinite_weight = (pchr_a->platform && pchr_a->is_flying_platform) || (INFINITE_WEIGHT == pchr_a->phys.weight);
+    *wta = infinite_weight ? -( float )INFINITE_WEIGHT : pchr_a->phys.weight;
 
-    if ( *wta == 0 && *wtb == 0 )
+    infinite_weight = (pchr_b->platform && pchr_b->is_flying_platform) || (INFINITE_WEIGHT == pchr_b->phys.weight);
+    *wtb = infinite_weight ? -( float )INFINITE_WEIGHT : pchr_b->phys.weight;
+
+    if ( 0.0f == *wta && 0.0f == *wtb )
     {
         *wta = *wtb = 1;
     }
-    else if ( *wta == 0 )
+    else if ( 0.0f == *wta )
     {
         *wta = 1;
         *wtb = -( float )INFINITE_WEIGHT;
     }
-    else if ( *wtb == 0 )
+    else if ( 0.0f == *wtb )
     {
         *wtb = 1;
         *wta = -( float )INFINITE_WEIGHT;
@@ -9652,8 +9711,8 @@ bool_t chr_get_mass_pair( chr_t * pchr_a, chr_t * pchr_b, float * wta, float * w
     else
     {
         // adjust the weights to respect bumpdampen
-        ( *wta ) /= pchr_a->phys.bumpdampen;
-        ( *wtb ) /= pchr_b->phys.bumpdampen;
+        if( -( float )INFINITE_WEIGHT != *wta ) *wta /= pchr_a->phys.bumpdampen;
+        if( -( float )INFINITE_WEIGHT != *wtb ) *wtb /= pchr_b->phys.bumpdampen;
     }
 
     return btrue;
@@ -9685,10 +9744,10 @@ bool_t chr_can_mount( const CHR_REF by_reference ichr_a, const CHR_REF by_refere
     action_mi = mad_get_action( chr_get_imad( ichr_a ), ACTION_MI );
     has_ride_anim = ( ACTION_COUNT != action_mi && !ACTION_IS_TYPE( action_mi, D ) );
 
-    is_valid_rider_a = !pchr_a->isitem && pchr_a->alive && 0 == pchr_a->flyheight &&
-        !INGAME_CHR( pchr_a->attachedto ) && has_ride_anim;
+    is_valid_rider_a = !pchr_a->isitem && pchr_a->alive && !IS_FLYING_PCHR(pchr_a) &&
+        !IS_ATTACHED_PCHR( pchr_a ) && has_ride_anim;
 
-    is_valid_mount_b = pchr_b->ismount && pchr_b->alive &&
+    is_valid_mount_b = pchr_b->ismount && pchr_b->alive && !pchr_b->pack.is_packed && 
         pcap_b->slotvalid[SLOT_LEFT] && !INGAME_CHR( pchr_b->holdingwhich[SLOT_LEFT] );
 
     return is_valid_rider_a && is_valid_mount_b;
@@ -9951,4 +10010,1307 @@ bool_t chr_set_maxaccel( chr_t * pchr, float new_val )
     pchr->maxaccel = ftmp * pchr->maxaccel_reset;
 
     return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+chr_bundle_t * chr_bundle_ctor( chr_bundle_t * pbundle )
+{
+    if( NULL == pbundle ) return NULL;
+
+    pbundle->chr_ref = (CHR_REF) MAX_CHR;
+    pbundle->chr_ptr = NULL;
+
+    pbundle->cap_ref = (CAP_REF) MAX_CAP;
+    pbundle->cap_ptr = NULL;
+
+    pbundle->pro_ref = (PRO_REF) MAX_PROFILE;
+    pbundle->pro_ptr = NULL;
+
+    return pbundle;
+}
+
+//--------------------------------------------------------------------------------------------
+chr_bundle_t * chr_bundle_validate( chr_bundle_t * pbundle )
+{
+    if( NULL == pbundle ) return NULL;
+
+    // get the character info from the reference or the pointer
+    if( ALLOCATED_CHR(pbundle->chr_ref) )
+    {
+        pbundle->chr_ptr = ChrList.lst + pbundle->chr_ref;
+    }
+    else if( NULL != pbundle->chr_ptr )
+    {
+        pbundle->chr_ref = GET_REF_PCHR( pbundle->chr_ptr );
+    }
+    else
+    {
+        pbundle->chr_ref = MAX_CHR;
+        pbundle->chr_ptr = NULL;
+    }
+
+    if( NULL == pbundle->chr_ptr ) goto chr_bundle_validate_fail;
+
+    // get the profile info
+    pbundle->pro_ref = pbundle->chr_ptr->profile_ref;
+    if( !LOADED_PRO(pbundle->pro_ref) ) goto chr_bundle_validate_fail;
+
+    pbundle->pro_ptr = ProList.lst + pbundle->pro_ref;
+
+    // get the cap info
+    pbundle->cap_ref = pbundle->pro_ptr->icap;
+
+    if( !LOADED_CAP(pbundle->cap_ref) ) goto chr_bundle_validate_fail;
+    pbundle->cap_ptr = CapStack.lst + pbundle->cap_ref;
+
+    return pbundle;
+
+chr_bundle_validate_fail:
+
+    return chr_bundle_ctor( pbundle );
+}
+
+//--------------------------------------------------------------------------------------------
+chr_bundle_t * chr_bundle_set( chr_bundle_t * pbundle, chr_t * pchr )
+{
+    if( NULL == pbundle ) return NULL;
+
+    // blank out old data
+    pbundle = chr_bundle_ctor( pbundle );
+
+    if( NULL == pbundle || NULL == pchr ) return pbundle;
+
+    // set the particle pointer
+    pbundle->chr_ptr = pchr;
+
+    // validate the particle data
+    pbundle = chr_bundle_validate( pbundle );
+
+    return pbundle;
+}
+
+//--------------------------------------------------------------------------------------------
+void character_physics_initialize()
+{
+    CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
+    {
+        phys_data_blank_accumulators( &(pchr->phys) );
+    }
+    CHR_END_LOOP();
+}
+//--------------------------------------------------------------------------------------------
+bool_t chr_bump_mesh_attached( chr_bundle_t * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
+{
+    return bfalse;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t chr_bump_mesh( chr_bundle_t * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
+{
+    chr_t             * loc_pchr;
+    cap_t             * loc_pcap;
+    phys_data_t       * loc_pphys;
+    chr_environment_t * loc_penviro;
+
+    fvec3_t save_apos_plat;
+    fvec3_t save_avel;
+    float   dampen;
+    float   diff;
+    bool_t  needs_update = bfalse;
+
+    // does the bundle exist?
+    if( NULL == pbdl ) return bfalse;
+
+    // some aliases to make the notation easier
+    loc_pchr    = pbdl->chr_ptr;
+    if( NULL == loc_pchr ) return bfalse;
+
+    loc_pcap    = pbdl->cap_ptr;
+    if( NULL == loc_pcap ) return bfalse;
+
+    loc_pphys   = &(loc_pchr->phys);
+    loc_penviro = &(loc_pchr->enviro);
+
+    // save some parameters
+    save_apos_plat = loc_pphys->apos_plat;
+    save_avel      = loc_pphys->avel;
+
+    // limit the dampen to a reasonable value
+    dampen = CLIP( loc_pphys->dampen, 0.0f, 1.0f );
+
+    // interaction with the mesh
+    if ( test_pos.z < loc_penviro->grid_level )
+    {
+        float final_pos_z = loc_penviro->walk_level;
+        float final_vel_z = test_vel.z;
+
+        // make hitting the floor be the termination condition for "jump flying"
+        loc_pchr->is_flying_jump = bfalse;
+
+        // reflect the final velocity off the surface
+        final_vel_z = test_vel.z;
+        if( final_vel_z < 0.0f )
+        {
+            final_vel_z *= -dampen;
+        }
+        
+        // determine some special cases
+        if ( ABS( final_vel_z ) < STOPBOUNCING )
+        {
+            // STICK!
+            // make the object come to rest on the surface rather than bouncing forever
+            final_vel_z = 0.0f;
+        }
+        else
+        {
+            // BOUNCE!
+            // reflect the position off of the floor
+            diff        = loc_penviro->walk_level - test_pos.z;
+            final_pos_z = loc_penviro->walk_level + diff;
+        }
+
+        phys_data_accumulate_avel_index     (loc_pphys, (final_vel_z - test_vel.z) / dt, kZ );
+        phys_data_accumulate_apos_plat_index(loc_pphys, final_pos_z - test_pos.z,        kZ );
+    }
+
+    // has there been an adjustment?
+    needs_update = (fvec3_dist_abs( save_apos_plat.v, loc_pphys->apos_plat.v ) != 0.0f) ||
+                   (fvec3_dist_abs( save_avel.v, loc_pphys->avel.v ) * dt != 0.0f) ;
+
+    return needs_update;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t chr_bump_grid_attached( chr_bundle_t * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
+{
+    return bfalse;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t chr_bump_grid( chr_bundle_t * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
+{
+    chr_t             * loc_pchr;
+    cap_t             * loc_pcap;
+    phys_data_t       * loc_pphys;
+    chr_environment_t * loc_penviro;
+
+    fvec3_t save_apos_plat, save_avel;
+    float   pressure;
+    float   bumpdampen;
+    bool_t  diff_function_called = bfalse;
+    bool_t  needs_test = bfalse, updated_2d = bfalse;
+    Uint32  flags = 0;
+
+    bool_t  found_nrm  = bfalse;
+    fvec2_t nrm        = ZERO_VECT2;
+
+    bool_t  found_safe = bfalse;
+    fvec3_t safe_pos   = ZERO_VECT3;
+
+    bool_t  found_diff = bfalse;
+    fvec2_t diff       = ZERO_VECT2;
+
+    breadcrumb_t * bc         = NULL;
+
+    // does the bundle exist?
+    if( NULL == pbdl ) return bfalse;
+
+    // some aliases to make the notation easier
+    loc_pchr = pbdl->chr_ptr;
+    if( NULL == loc_pchr ) return bfalse;
+
+    loc_pcap = pbdl->cap_ptr;
+    if( NULL == loc_pcap ) return bfalse;
+
+    loc_pphys   = &(loc_pchr->phys);
+    loc_penviro = &(loc_pchr->enviro);
+
+    // save some parameters
+    save_apos_plat = loc_pphys->apos_plat;
+    save_avel      = loc_pphys->avel;
+
+    // limit the bumpdampen to a reasonable value
+    bumpdampen = CLIP( loc_pphys->bumpdampen, 0.0f, 1.0f );
+    bumpdampen = ( bumpdampen + 1.0f ) / 2.0f;
+
+    if( !chr_test_wall( loc_pchr, test_pos.v ) ) 
+    {
+        // no interaction with the grid flags
+        return bfalse;
+    }
+
+    // actually calculate the interaction with the wall
+    flags = chr_hit_wall( loc_pchr, test_pos.v, nrm.v, &pressure );
+
+    // how is the character hitting the wall?
+    if ( 0.0f == pressure )
+    {
+        // oops the chr_test_wall() detected a false interaction with the grid flags...
+        return bfalse;
+    }
+
+    // try to get the correct "outward" pressure from nrm
+    if( !found_nrm && fvec2_length_abs(nrm.v) > 0.0f )
+    {
+        found_nrm = btrue;
+    }
+
+    if( !found_diff && loc_pchr->safe_valid )
+    {
+        if( !found_safe )
+        {
+            found_safe = btrue;
+            safe_pos   = loc_pchr->safe_pos;
+        }
+
+        diff.x = loc_pchr->safe_pos.x - loc_pchr->pos.x;
+        diff.y = loc_pchr->safe_pos.y - loc_pchr->pos.y;
+
+        if( fvec2_length_abs(diff.v) > 0.0f )
+        {
+            found_diff = btrue;
+        }
+    }
+
+    // try to get a diff from a breadcrumb
+    if( !found_diff )
+    {
+        bc = chr_get_last_breadcrumb( loc_pchr );
+
+        if( NULL != bc && bc->valid )
+        {
+            if( !found_safe )
+            {
+                found_safe = btrue;
+                safe_pos   = loc_pchr->safe_pos;
+            }
+
+            diff.x = bc->pos.x - loc_pchr->pos.x;
+            diff.y = bc->pos.y - loc_pchr->pos.y;
+
+            if( fvec2_length_abs(diff.v) > 0.0f )
+            {
+                found_diff = btrue;
+            }
+        }
+    }
+
+    // try to get a normal from the mesh_get_diff() function
+    if( !found_nrm )
+    {
+        fvec2_t diff;
+
+        diff = chr_get_diff( loc_pchr, test_pos.v, pressure );
+        diff_function_called = btrue;
+
+        nrm.x = diff.x;
+        nrm.y = diff.y;
+
+        if( fvec2_length_abs(nrm.v) > 0.0f )
+        {
+            found_nrm = btrue;
+        }
+    }
+
+    if( !found_diff )
+    {
+        // try to get the diff from the character velocity
+        diff.x = test_vel.x;
+        diff.y = test_vel.y;
+
+        // make sure that the diff is in the same direction as the velocity
+        if( fvec2_dot_product(diff.v, nrm.v) < 0.0f  )
+        {
+            diff.x *= -1.0f;
+            diff.y *= -1.0f;
+        }
+
+        if( fvec2_length_abs(diff.v) > 0.0f )
+        {
+            found_diff = btrue;
+        }
+    }
+
+    if( !found_nrm )
+    {
+        // After all of our best efforts, we can't generate a normal to the wall.
+        // This can happen if the object is completely inside a wall,
+        // (like if it got pushed in there) or if a passage closed around it.
+        // Just teleport the character to a "safe" position.
+
+        if( !found_safe && NULL == bc )
+        {
+            bc = chr_get_last_breadcrumb( loc_pchr );
+
+            if( NULL != bc && bc->valid )
+            {
+                found_safe = btrue;
+                safe_pos   = loc_pchr->safe_pos;
+            }
+        }
+
+        if( !found_safe )
+        {
+            // the only safe position is the spawn point???
+            found_safe = btrue;
+            safe_pos = loc_pchr->pos_stt;
+        }
+
+        {
+            fvec3_t _tmp_vec = fvec3_sub(  safe_pos.v , test_pos.v );
+            phys_data_accumulate_apos_plat( loc_pphys, _tmp_vec.v );
+        }
+    }
+    else if( found_diff && found_nrm )
+    {
+        const float tile_fraction = 0.1f;
+        float ftmp, dot, pressure_old, pressure_new;
+        fvec3_t new_pos, save_pos;
+        float nrm2;
+
+        fvec2_t v_perp = ZERO_VECT2;
+        fvec2_t diff_perp = ZERO_VECT2;
+
+        nrm2 = fvec2_dot_product( nrm.v, nrm.v );
+
+        save_pos = test_pos;
+
+        // make the diff point "out"
+        dot = fvec2_dot_product( diff.v, nrm.v );
+        if( dot < 0.0f )
+        {
+            diff.x *= -1.0f;
+            diff.y *= -1.0f;
+            dot    *= -1.0f;
+        }
+
+        // find the part of the diff that is parallel to the normal
+        diff_perp.x = nrm.x * dot / nrm2;
+        diff_perp.y = nrm.y * dot / nrm2;
+
+        // normalize the diff_perp so that it is at most tile_fraction of a grid in any direction
+        ftmp = MAX(ABS(diff_perp.x),ABS(diff_perp.y));
+        if( ftmp > 0.0f )
+        {
+            diff_perp.x *= tile_fraction * GRID_SIZE / ftmp;
+            diff_perp.y *= tile_fraction * GRID_SIZE / ftmp;
+        }
+
+        // try moving the character
+        new_pos = test_pos;
+        new_pos.x += diff_perp.x * pressure;
+        new_pos.y += diff_perp.y * pressure;
+
+        // determine whether the pressure is less at this location
+        pressure_old = chr_get_mesh_pressure( loc_pchr, save_pos.v );
+        pressure_new = chr_get_mesh_pressure( loc_pchr, new_pos.v );
+
+        if( pressure_new < pressure_old )
+        {
+            // !!success!!
+            fvec3_t _tmp_vec = fvec3_sub( new_pos.v , test_pos.v );
+            phys_data_accumulate_apos_plat( loc_pphys, _tmp_vec.v );
+        }
+        else
+        {
+            // !!failure!! restore the saved position
+            fvec3_t _tmp_vec = fvec3_sub( save_pos.v , test_pos.v );
+            phys_data_accumulate_apos_plat( loc_pphys, _tmp_vec.v );
+        }
+
+        dot = fvec2_dot_product( test_vel.v, nrm.v );
+        if( dot < 0.0f )
+        {
+            v_perp.x = nrm.x * dot / nrm2;
+            v_perp.y = nrm.y * dot / nrm2;
+
+            {
+                fvec3_t _tmp_vec = VECT3( v_perp.x, v_perp.y, 0.0f );
+                fvec3_self_scale( _tmp_vec.v, - (1.0f + bumpdampen) * pressure / dt );
+                phys_data_accumulate_avel( loc_pphys, _tmp_vec.v );
+            }
+        }
+    }
+
+    needs_test = (fvec3_dist_abs( save_apos_plat.v, loc_pphys->apos_plat.v ) != 0.0f) ||
+                  (fvec3_dist_abs( save_avel.v, loc_pphys->avel.v ) * dt != 0.0f) ;
+
+    return needs_test || updated_2d;
+}
+
+//--------------------------------------------------------------------------------------------
+void character_physics_finalize_one( chr_bundle_t * pbdl, float dt )
+{
+    bool_t bumped_mesh = bfalse, bumped_grid  = bfalse, needs_update = bfalse;
+
+    fvec3_t test_pos, test_vel;
+
+    // aliases for easier notation
+    chr_t * loc_pchr;
+    phys_data_t * loc_pphys;
+
+    if( NULL == pbdl ) return;
+
+    // alias these parameter for easier notation
+    loc_pchr   = pbdl->chr_ptr;
+    loc_pphys  = &(loc_pchr->phys);
+
+    // do the "integration" of the accumulators
+    // work on test_pos and test velocity instead of the actual character position and velocity
+    test_pos = chr_get_pos( loc_pchr );
+    test_vel = loc_pchr->vel; 
+    phys_data_integrate_accumulators( &test_pos, &test_vel, loc_pphys, dt );
+
+    // bump the character with the mesh
+    bumped_mesh = bfalse;
+    if( ACTIVE_CHR(loc_pchr->attachedto) )
+    {
+        bumped_mesh = chr_bump_mesh_attached( pbdl, test_pos, test_vel, dt );
+    }
+    else
+    {
+        bumped_mesh = chr_bump_mesh( pbdl, test_pos, test_vel, dt );
+    }
+
+    // if the character hit the mesh, re-do the "integration" of the accumulators again,
+    // to make sure that it does not go through the mesh
+    if( bumped_mesh )
+    {
+        test_pos = chr_get_pos( loc_pchr );
+        test_vel = loc_pchr->vel; 
+        phys_data_integrate_accumulators( &test_pos, &test_vel, loc_pphys, dt );
+    }
+
+    // bump the character with the grid flags
+    bumped_grid = bfalse;
+    if( ACTIVE_CHR(loc_pchr->attachedto) )
+    {
+        bumped_grid = chr_bump_grid_attached( pbdl, test_pos, test_vel, dt );
+    }
+    else
+    {
+        bumped_grid = chr_bump_grid( pbdl, test_pos, test_vel, dt );
+    }
+
+    // if the character hit the grid, re-do the "integration" of the accumulators again,
+    // to make sure that it does not go through the grid
+    if( bumped_grid )
+    {
+        test_pos = chr_get_pos( loc_pchr );
+        test_vel = loc_pchr->vel; 
+        phys_data_integrate_accumulators( &test_pos, &test_vel, loc_pphys, dt );
+    }
+
+    // do a special "non-physics" update
+    if ( loc_pchr->is_flying_platform && test_pos.z < 0.0f )
+    {
+        test_pos.z = 0.0f;  // Don't fall in pits...
+    }
+
+    // determine whether there is any need to update the character's safe position
+    needs_update = bumped_mesh || bumped_grid;
+
+    // update the character's position and velocity
+    chr_set_pos( loc_pchr, test_pos.v );
+    loc_pchr->vel = test_vel;
+
+    // we need to test the validity of the current position every 8 frames or so,
+    // no matter what
+    if ( !needs_update )
+    {
+        // make a timer that is individual for each object
+        Uint32 chr_update = loc_pchr->obj_base.guid + update_wld;
+
+        needs_update = ( 0 == ( chr_update & 7 ) );
+    }
+
+    if ( needs_update )
+    {
+        chr_update_safe( loc_pchr, needs_update );
+    }
+}
+
+
+//--------------------------------------------------------------------------------------------
+void character_physics_finalize_all( float dt )
+{
+    // accumulate the accumulators
+    CHR_BEGIN_LOOP_ACTIVE( ichr, pchr )
+    {
+        chr_bundle_t bdl;
+
+        // create a bundle for the character data
+        if( NULL == chr_bundle_set( &bdl, pchr ) ) continue;
+
+        character_physics_finalize_one( &bdl, dt );
+    }
+    CHR_END_LOOP();
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t chr_update_breadcrumb_raw( chr_t * pchr )
+{
+    breadcrumb_t bc;
+    bool_t retval = bfalse;
+
+    if( !ALLOCATED_PCHR( pchr ) ) return bfalse;
+
+    breadcrumb_init_chr( &bc, pchr );
+
+    if( bc.valid )
+    {
+        retval = breadcrumb_list_add( &(pchr->crumbs), &bc );
+    }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t chr_update_breadcrumb( chr_t * pchr, bool_t force )
+{
+    Uint32 new_grid;
+    bool_t retval = bfalse;
+    bool_t needs_update = bfalse;
+    breadcrumb_t * bc_ptr, bc;
+
+    if( !ALLOCATED_PCHR(pchr) ) return bfalse;
+
+    bc_ptr = breadcrumb_list_last_valid( &(pchr->crumbs) );
+    if( NULL == bc_ptr )
+    {
+        force  = btrue;
+        bc_ptr = &bc;
+        breadcrumb_init_chr( bc_ptr, pchr );
+    }
+
+    if( force )
+    {
+        needs_update = btrue;
+    }
+    else
+    {
+        new_grid = mesh_get_tile( PMesh, pchr->pos.x, pchr->pos.y );
+
+        if( INVALID_TILE == new_grid )
+        {
+            if( ABS(pchr->pos.x - bc_ptr->pos.x) > GRID_SIZE ||
+                ABS(pchr->pos.y - bc_ptr->pos.y) > GRID_SIZE )
+            {
+                needs_update = btrue;
+            }
+        }
+        else if ( new_grid != bc_ptr->grid )
+        {
+            needs_update = btrue;
+        }
+    }
+
+    if( needs_update )
+    {
+        retval = chr_update_breadcrumb_raw( pchr );
+    }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+breadcrumb_t * chr_get_last_breadcrumb( chr_t * pchr )
+{
+    if( !ALLOCATED_PCHR(pchr) ) return NULL;
+
+    if( 0 == pchr->crumbs.count ) return NULL;
+
+    return breadcrumb_list_last_valid( &(pchr->crumbs) );
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t chr_update_safe_raw( chr_t * pchr )
+{
+    bool_t retval = bfalse;
+
+    bool_t hit_a_wall;
+
+    if( !ALLOCATED_PCHR( pchr ) ) return bfalse;
+
+    hit_a_wall = chr_hit_wall( pchr, NULL, NULL, NULL );
+    if( !hit_a_wall )
+    {
+        pchr->safe_valid = btrue;
+        pchr->safe_pos   = chr_get_pos( pchr );
+        pchr->safe_time  = update_wld;
+        pchr->safe_grid  = mesh_get_tile(PMesh, pchr->pos.x, pchr->pos.y);
+
+        retval = btrue;
+    }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t chr_update_safe( chr_t * pchr, bool_t force )
+{
+    Uint32 new_grid;
+    bool_t retval = bfalse;
+    bool_t needs_update = bfalse;
+
+    if( !ALLOCATED_PCHR(pchr) ) return bfalse;
+
+    if( force || !pchr->safe_valid )
+    {
+        needs_update = btrue;
+    }
+    else
+    {
+        new_grid = mesh_get_tile( PMesh, pchr->pos.x, pchr->pos.y );
+
+        if( INVALID_TILE == new_grid )
+        {
+            if( ABS(pchr->pos.x - pchr->safe_pos.x) > GRID_SIZE ||
+                ABS(pchr->pos.y - pchr->safe_pos.y) > GRID_SIZE )
+            {
+                needs_update = btrue;
+            }
+        }
+        else if ( new_grid != pchr->safe_grid )
+        {
+            needs_update = btrue;
+        }
+    }
+
+    if( needs_update )
+    {
+        retval = chr_update_safe_raw( pchr );
+    }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t chr_get_safe( chr_t * pchr, fvec3_base_t pos_v )
+{
+    bool_t found = bfalse;
+    fvec3_t loc_pos;
+
+    if( !ALLOCATED_PCHR(pchr) ) return bfalse;
+
+    // handle optional parameters
+    if( NULL == pos_v ) pos_v = loc_pos.v;
+
+    if( !found && pchr->safe_valid )
+    {
+        if( !chr_hit_wall( pchr, NULL, NULL, NULL ) )
+        {
+            found = btrue;
+            memmove( pos_v, pchr->safe_pos.v, sizeof(fvec3_base_t) );
+        }
+    }
+
+    if( !found )
+    {
+        breadcrumb_t * bc;
+
+        bc = breadcrumb_list_last_valid( &(pchr->crumbs) );
+
+        if ( NULL != bc )
+        {
+            found = btrue;
+            memmove( pos_v, bc->pos.v, sizeof(fvec3_base_t) );
+        }
+    }
+
+    // maybe there is one last fallback after this? we could check the character's current position?
+    if( !found )
+    {
+        log_debug("Uh oh! We could not find a valid non-wall position for %s!\n", chr_get_pcap(pchr->ai.index)->name);
+    }
+
+    return found;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+void latch_game_init( latch_game_t * platch )
+{
+    if ( NULL == platch ) return;
+
+    memset( platch, 0, sizeof(*platch) );
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t pack_validate( pack_t * ppack )
+{
+    int      cnt;
+    pack_t * parent_pack_ptr;
+    CHR_REF  item_ref;
+
+    if( NULL == ppack ) return bfalse;
+    ppack->is_packed  = bfalse;
+    ppack->was_packed = bfalse;
+
+    // limit the number of objects in the pack to less than the total number of objects...
+    ppack->count = MIN(ppack->count, MAX_CHR-1);
+
+    parent_pack_ptr = ppack;
+    item_ref        = ppack->next;
+    for( cnt = 0; cnt < ppack->count && DEFINED_CHR(item_ref); cnt++ )
+    {
+        chr_t  * item_ptr      = ChrList.lst + item_ref;
+        pack_t * item_pack_ptr = &(item_ptr->pack);
+
+        // make sure that the item "pack" is working as a stored item and not a
+        // sub-pack
+        item_pack_ptr->count     = 0;
+        item_pack_ptr->is_packed = btrue;
+
+        // is this item allowed to be packed?
+        if( !item_ptr->isitem )
+        {
+            // how did this get in a pack?
+            log_warning( "pack_validate() - The item %s is in a pack, even though it is not tagged as an item.\n", item_ptr->obj_base._name );
+
+            // remove the item from the pack
+            parent_pack_ptr->next     = item_pack_ptr->next;
+
+            // re-initialize the item's "pack"
+            item_pack_ptr->next       = (CHR_REF)MAX_CHR;
+            item_pack_ptr->was_packed = item_pack_ptr->is_packed;
+            item_pack_ptr->is_packed  = bfalse;
+        }
+        else
+        {       
+            parent_pack_ptr = item_pack_ptr;
+        }
+
+        // update the reference
+        item_ref = parent_pack_ptr->next;
+    }
+
+    // Did the loop terminate properly?
+    if( MAX_CHR != item_ref && !DEFINED_CHR(item_ref) )
+    {
+        // There was corrupt data in the pack list.
+        log_warning( "pack_validate() - Found a bad pack and am fixing it.\n" );
+
+        if( parent_pack_ptr == ppack )
+        {
+            ppack->count = 0;
+        }
+        else
+        {
+            parent_pack_ptr->next = (CHR_REF)MAX_CHR;
+        }
+    }
+
+    // update the pack count to the actual number of objects in the pack
+    ppack->count = cnt;
+
+    // make sure that the ppack->next matches ppack->count
+    if( 0 == ppack->count )
+    {
+        ppack->next = (CHR_REF)MAX_CHR;
+    }
+
+    // make sure that the ppack->count matches ppack->next
+    if( !DEFINED_CHR( ppack->next ) )
+    {
+        ppack->count = 0;
+        ppack->next  = (CHR_REF)MAX_CHR;
+    }
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t pack_add_item( pack_t * ppack, CHR_REF item )
+{
+    chr_t  * pitem;
+    pack_t * pitem_pack;
+
+    // make sure the pack is valid
+    if( !pack_validate( ppack ) ) return bfalse;
+
+    // make sure that the item is valid
+    if ( !DEFINED_CHR( item ) ) return bfalse;
+    pitem      = ChrList.lst + item;
+    pitem_pack = &( pitem->pack );
+
+    // is this item packed in another pack?
+    if( pitem_pack->is_packed )
+    {
+        log_warning( "pack_add_item() - Trying to add a packed item (%s) to a pack.\n", pitem->obj_base._name );
+
+        return bfalse;
+    }
+
+    // does this item have packed objects of its own?
+    if( 0 != pitem_pack->count || MAX_CHR != pitem_pack->next )
+    {
+        log_warning( "pack_add_item() - Trying to add an item (%s) to a pack that has a sub-pack.\n", pitem->obj_base._name );
+
+        return bfalse;
+    }
+
+    // is the item even an item?
+    if( !pitem->isitem )
+    {
+        log_warning( "pack_add_item() - Trying to add a non-item %s to a pack.\n", pitem->obj_base._name );
+    }
+
+    // add the item to the front of the pack's linked list
+    pitem_pack->next = ppack->next;
+    ppack->next      = item;
+    ppack->count++;
+
+    // tag the item as packed
+    pitem_pack->was_packed = pitem_pack->is_packed;
+    pitem_pack->is_packed  = btrue;
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t pack_remove_item( pack_t * ppack, CHR_REF iparent, CHR_REF iitem )
+{
+    CHR_REF old_next;
+    chr_t * pitem, * pparent;
+
+    // make sure the pack is valid
+    if( !pack_validate( ppack ) ) return bfalse;
+
+    // convert the iitem it to a pointer
+    old_next = ( CHR_REF )MAX_CHR;
+    pitem    = NULL;
+    if ( DEFINED_CHR( iitem ) )
+    {
+        pitem    = ChrList.lst + iitem;
+        old_next = pitem->pack.next;
+    }
+
+    // convert the pparent it to a pointer
+    pparent = NULL;
+    if ( DEFINED_CHR( iparent ) )
+    {
+        pparent = ChrList.lst + iparent;
+    }
+
+    // Remove the item from the pack
+    if ( NULL != pitem )
+    {
+        pitem->pack.was_packed = pitem->pack.is_packed;
+        pitem->pack.is_packed  = bfalse;
+        pitem->pack.next       = (CHR_REF)MAX_CHR;
+    }
+
+    // adjust the parent's next
+    if ( NULL != pparent )
+    {
+        pparent->pack.next = old_next;
+    }
+
+    // just re-validate the pack to get the correct count
+    pack_validate( ppack );
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t chr_inventory_add_item( const CHR_REF by_reference item, const CHR_REF by_reference character )
+{
+    chr_t * pchr, * pitem;
+    cap_t * pitem_cap;
+    bool_t  slot_found, pack_added;
+    int     slot_index;
+    int     cnt;
+
+    if ( !INGAME_CHR( item ) ) return bfalse;
+    pitem = ChrList.lst + item;
+
+    // don't allow sub-inventories
+    if ( pitem->pack.is_packed || pitem->isequipped ) return bfalse;
+
+    pitem_cap = pro_get_pcap( pitem->profile_ref );
+    if ( NULL == pitem_cap ) return bfalse;
+
+    if ( !INGAME_CHR( character ) ) return bfalse;
+    pchr = ChrList.lst + character;
+
+    // don't allow sub-inventories
+    if ( pchr->pack.is_packed || pchr->isequipped ) return bfalse;
+
+    slot_found = bfalse;
+    slot_index = 0;
+    for ( cnt = 0; cnt < INVEN_COUNT; cnt++ )
+    {
+        if ( IDSZ_NONE == inventory_idsz[cnt] ) continue;
+
+        if ( inventory_idsz[cnt] == pitem_cap->idsz[IDSZ_PARENT] )
+        {
+            slot_index = cnt;
+            slot_found = btrue;
+        }
+    }
+
+    if ( slot_found )
+    {
+        if ( INGAME_CHR( pchr->holdingwhich[slot_index] ) )
+        {
+            pchr->inventory[slot_index] = ( CHR_REF )MAX_CHR;
+        }
+    }
+
+    pack_added = chr_pack_add_item( item, character );
+    if ( slot_found && pack_added )
+    {
+        pchr->inventory[slot_index] = item;
+    }
+
+    return pack_added;
+}
+
+//--------------------------------------------------------------------------------------------
+CHR_REF chr_inventory_remove_item( const CHR_REF by_reference ichr, grip_offset_t grip_off, bool_t ignorekurse )
+{
+    chr_t * pchr;
+    CHR_REF iitem;
+    int     cnt;
+
+    if ( !INGAME_CHR( ichr ) ) return ( CHR_REF )MAX_CHR;
+    pchr = ChrList.lst + ichr;
+
+    // make sure the pack is not empty
+    if ( 0 == pchr->pack.count || MAX_CHR == pchr->pack.next ) return ( CHR_REF )MAX_CHR;
+
+    // do not allow sub inventories
+    if ( pchr->pack.is_packed || pchr->isitem  ) return ( CHR_REF )MAX_CHR;
+
+    // grab the first item from the pack
+    iitem = chr_pack_get_item( ichr, grip_off, ignorekurse );
+    if ( !INGAME_CHR( iitem ) ) return ( CHR_REF )MAX_CHR;
+
+    // remove it from the "equipped" slots
+    if ( DEFINED_CHR( iitem ) )
+    {
+        for ( cnt = 0; cnt < INVEN_COUNT; cnt++ )
+        {
+            if ( iitem == pchr->inventory[cnt] )
+            {
+                pchr->inventory[cnt]          = ( CHR_REF )MAX_CHR;
+                ChrList.lst[iitem].isequipped = bfalse;
+                break;
+            }
+        }
+    }
+
+    return iitem;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+CHR_REF chr_pack_has_a_stack( const CHR_REF by_reference item, const CHR_REF by_reference character )
+{
+    /// @details ZZ@> This function looks in the character's pack for an item similar
+    ///    to the one given.  If it finds one, it returns the similar item's
+    ///    index number, otherwise it returns MAX_CHR.
+
+    CHR_REF istack;
+    Uint16  id;
+    bool_t  found;
+
+    chr_t * pitem;
+    cap_t * pitem_cap;
+
+    found  = bfalse;
+    istack = ( CHR_REF )MAX_CHR;
+
+    if ( !INGAME_CHR( item ) ) return istack;
+    pitem = ChrList.lst + item;
+    pitem_cap = chr_get_pcap( item );
+
+    if ( pitem_cap->isstackable )
+    {
+        PACK_BEGIN_LOOP( istack, ChrList.lst[character].pack.next )
+        {
+            if ( INGAME_CHR( istack ) )
+            {
+                chr_t * pstack     = ChrList.lst + istack;
+                cap_t * pstack_cap = chr_get_pcap( istack );
+
+                found = pstack_cap->isstackable;
+
+                if ( pstack->ammo >= pstack->ammomax )
+                {
+                    found = bfalse;
+                }
+
+                // you can still stack something even if the profiles don't match exactly,
+                // but they have to have all the same IDSZ properties
+                if ( found && ( pstack->profile_ref != pitem->profile_ref ) )
+                {
+                    for ( id = 0; id < IDSZ_COUNT && found; id++ )
+                    {
+                        if ( chr_get_idsz( istack, id ) != chr_get_idsz( item, id ) )
+                        {
+                            found = bfalse;
+                        }
+                    }
+                }
+            }
+
+            if ( found ) break;
+        }
+        PACK_END_LOOP( istack );
+
+        if ( !found )
+        {
+            istack = ( CHR_REF )MAX_CHR;
+        }
+    }
+
+    return istack;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t chr_pack_add_item( const CHR_REF by_reference item, const CHR_REF by_reference character )
+{
+    /// @details ZZ@> This function puts an item inside a character's pack
+
+    CHR_REF stack;
+    int     newammo;
+
+    chr_t  * pchr, * pitem;
+    cap_t  * pchr_cap,  * pitem_cap;
+    pack_t * pchr_pack, * pitem_pack;
+
+    if ( !INGAME_CHR( character ) ) return bfalse;
+    pchr      = ChrList.lst + character;
+    pchr_pack = &( pchr->pack );
+    pchr_cap  = chr_get_pcap( character );
+
+    if ( !INGAME_CHR( item ) ) return bfalse;
+    pitem      = ChrList.lst + item;
+    pitem_pack = &( pitem->pack );
+    pitem_cap  = chr_get_pcap( item );
+
+    // Make sure everything is hunkydori
+    if ( pitem_pack->is_packed || pchr_pack->is_packed || pchr->isitem )
+        return bfalse;
+
+    stack = chr_pack_has_a_stack( item, character );
+    if ( INGAME_CHR( stack ) )
+    {
+        // We found a similar, stackable item in the pack
+
+        chr_t  * pstack      = ChrList.lst + stack;
+        cap_t  * pstack_cap  = chr_get_pcap( stack );
+
+        // reveal the name of the item or the stack
+        if ( pitem->nameknown || pstack->nameknown )
+        {
+            pitem->nameknown  = btrue;
+            pstack->nameknown = btrue;
+        }
+
+        // reveal the usage of the item or the stack
+        if ( pitem_cap->usageknown || pstack_cap->usageknown )
+        {
+            pitem_cap->usageknown  = btrue;
+            pstack_cap->usageknown = btrue;
+        }
+
+        // add the item ammo to the stack
+        newammo = pitem->ammo + pstack->ammo;
+        if ( newammo <= pstack->ammomax )
+        {
+            // All transferred, so kill the in hand item
+            pstack->ammo = newammo;
+            if ( INGAME_CHR( pitem->attachedto ) )
+            {
+                detach_character_from_mount( item, btrue, bfalse );
+            }
+
+            chr_request_terminate( item );
+        }
+        else
+        {
+            // Only some were transferred,
+            pitem->ammo     = pitem->ammo + pstack->ammo - pstack->ammomax;
+            pstack->ammo    = pstack->ammomax;
+            ADD_BITS( pchr->ai.alert, ALERTIF_TOOMUCHBAGGAGE );
+        }
+    }
+    else
+    {
+        // Make sure we have room for another item
+        if ( pchr_pack->count >= MAXNUMINPACK )
+        {
+            ADD_BITS( pchr->ai.alert, ALERTIF_TOOMUCHBAGGAGE );
+            return bfalse;
+        }
+
+        // Take the item out of hand
+        if ( INGAME_CHR( pitem->attachedto ) )
+        {
+            detach_character_from_mount( item, btrue, bfalse );
+
+            // clear the dropped flag
+            REMOVE_BITS( pitem->ai.alert, ALERTIF_DROPPED );
+        }
+
+        // Remove the item from play
+        pitem->hitready        = bfalse;
+
+        // Insert the item into the pack as the first one
+        pack_add_item( pchr_pack, item );
+
+        // fix the flags
+        if ( pitem_cap->isequipment )
+        {
+            ADD_BITS( pitem->ai.alert, ALERTIF_PUTAWAY );  // same as ALERTIF_ATLASTWAYPOINT;
+        }
+    }
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t chr_pack_remove_item( CHR_REF ichr, CHR_REF iparent, CHR_REF iitem )
+{
+    chr_t  * pchr;
+    pack_t * pchr_pack;
+
+    bool_t removed;
+
+    if ( !DEFINED_CHR( ichr ) ) return bfalse;
+    pchr = ChrList.lst + ichr;
+    pchr_pack = &( pchr->pack );
+
+    // remove it from the pack
+    removed = pack_remove_item( pchr_pack, iparent, iitem );
+
+    // unequip the item
+    if ( removed && DEFINED_CHR( iitem ) )
+    {
+        ChrList.lst[iitem].isequipped = bfalse;
+    }
+
+    return removed;
+}
+//--------------------------------------------------------------------------------------------
+CHR_REF chr_pack_get_item( const CHR_REF by_reference chr_ref, grip_offset_t grip_off, bool_t ignorekurse )
+{
+    /// @details ZZ@> This function takes the last item in the chrcharacter's pack and puts
+    ///    it into the designated hand.  It returns the item_ref or MAX_CHR.
+
+    CHR_REF tmp_ref, item_ref, parent_ref;
+    chr_t  * pchr, * item_ptr, *parent_ptr;
+    pack_t * chr_pack_ptr, * item_pack_ptr, *parent_pack_ptr;
+
+
+    // does the chr_ref exist?
+    if ( !DEFINED_CHR( chr_ref ) ) return bfalse;
+    pchr         = ChrList.lst + chr_ref;
+    chr_pack_ptr = &( pchr->pack );
+
+    // Can the chr_ref have a pack?
+    if ( chr_pack_ptr->is_packed || pchr->isitem ) return ( CHR_REF )MAX_CHR;
+
+    // is the pack empty?
+    if ( MAX_CHR == chr_pack_ptr->next || 0 == chr_pack_ptr->count ) 
+    {
+        return ( CHR_REF )MAX_CHR;
+    }
+
+    // Find the last item_ref in the pack
+    parent_ref = chr_ref;
+    item_ref   = chr_ref;
+    PACK_BEGIN_LOOP( tmp_ref, chr_pack_ptr->next )
+    {
+        parent_ref = item_ref;
+        item_ref   = tmp_ref;
+    }
+    PACK_END_LOOP( tmp_ref );
+
+    // did we find anything?
+    if ( chr_ref == item_ref || MAX_CHR == item_ref ) return bfalse;
+
+    // convert the item_ref it to a pointer
+    item_ptr      = NULL;
+    item_pack_ptr = NULL;
+    if ( DEFINED_CHR( item_ref ) )
+    {
+        item_ptr = ChrList.lst + item_ref;
+        item_pack_ptr = &( item_ptr->pack );
+    }
+
+    // did we find a valid item?
+    if ( NULL == item_ptr )
+    {
+        chr_pack_remove_item( chr_ref, parent_ref, item_ref );
+
+        return bfalse;
+    }
+
+    // convert the parent_ptr it to a pointer
+    parent_ptr      = NULL;
+    parent_pack_ptr = NULL;
+    if ( DEFINED_CHR( parent_ref ) )
+    {
+        parent_ptr      = ChrList.lst + parent_ref;
+        parent_pack_ptr = &( parent_ptr->pack );
+    }
+
+    // Figure out what to do with it
+    if ( item_ptr->iskursed && item_ptr->isequipped && !ignorekurse )
+    {
+        // The equipped item cannot be taken off, move the item to the front
+        // of the pack
+
+        // remove the item from the list
+        parent_pack_ptr->next = item_pack_ptr->next;
+        item_pack_ptr->next   = (CHR_REF)MAX_CHR;
+
+        // Add the item to the front of the list
+        item_pack_ptr->next = chr_pack_ptr->next;
+        chr_pack_ptr->next  = item_ref;
+
+        // Flag the last item_ref as not removed
+        ADD_BITS( item_ptr->ai.alert, ALERTIF_NOTTAKENOUT );  // Same as ALERTIF_NOTPUTAWAY
+
+        // let the calling function know that we didn't find anything 
+        item_ref = ( CHR_REF )MAX_CHR;
+    }
+    else
+    {
+        // Remove the last item from the pack
+        chr_pack_remove_item( chr_ref, parent_ref, item_ref );
+        ADD_BITS( item_ptr->ai.alert, ALERTIF_TAKENOUT );
+
+        // Attach the item to the correct grip
+        attach_character_to_mount( item_ref, chr_ref, grip_off );
+
+        // remove the ALERTIF_GRABBED flag that is generated by attach_character_to_mount()
+        REMOVE_BITS( item_ptr->ai.alert, ALERTIF_GRABBED );
+    }
+
+    // use this function to make sure the pack count is valid
+    pack_validate(chr_pack_ptr);
+
+    return item_ref;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t chr_is_over_water( chr_t *pchr )
+{
+    /// @details ZF@> This function returns true if the character is over a water tile
+
+    if ( !DEFINED_PCHR( pchr ) ) return bfalse;
+
+	if( !water.is_water || !mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) ) return bfalse; 
+
+    return 0 != mesh_test_fx( PMesh, pchr->onwhichgrid, MPDFX_WATER );
 }

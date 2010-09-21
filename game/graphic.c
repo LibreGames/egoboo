@@ -366,7 +366,7 @@ void gfx_system_begin()
     gfx_init_SDL_graphics();
     ogl_init();
 
-    // initialize the gfx data dtructures
+    // initialize the gfx data structures
     BillboardList_free_all();
     TxTexture_init_all();
 
@@ -522,10 +522,10 @@ void gfx_init_SDL_graphics()
     // will cause SDL_SetVideoMode to fail with:
     // "Unable to set video mode: Couldn't find matching GLX visual"
     if ( cfg.scrd_req == 32 ) cfg.scrd_req = 24;
-	if ( cfg.scrz_req == 32 ) cfg.scrz_req = 24;
+    if ( cfg.scrz_req == 32 ) cfg.scrz_req = 24;
 
 #endif
-	
+    
     // the flags to pass to SDL_SetVideoMode
     sdl_vparam.width                     = cfg.scrx_req;
     sdl_vparam.height                    = cfg.scry_req;
@@ -540,8 +540,8 @@ void gfx_init_SDL_graphics()
     sdl_vparam.gl_att.multi_buffers      = ( cfg.multisamples > 1 ) ? 1 : 0;
     sdl_vparam.gl_att.multi_samples      = cfg.multisamples;
     sdl_vparam.gl_att.accelerated_visual = GL_TRUE;
-	
-	ogl_vparam.dither         = cfg.use_dither ? GL_TRUE : GL_FALSE;
+
+    ogl_vparam.dither         = cfg.use_dither ? GL_TRUE : GL_FALSE;
     ogl_vparam.antialiasing   = GL_TRUE;
     ogl_vparam.perspective    = cfg.use_perspective ? GL_NICEST : GL_FASTEST;
     ogl_vparam.shading        = GL_SMOOTH;
@@ -924,8 +924,8 @@ int draw_one_xp_bar( int x, int y, Uint8 ticks )
         {
             GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.bottom ); GL_DEBUG( glVertex2i )(( cnt * width ) + x,         y + height );
             GL_DEBUG( glTexCoord2f )( txrect.right, txrect.bottom ); GL_DEBUG( glVertex2i )(( cnt * width ) + x + width, y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.right, txrect.top ); GL_DEBUG( glVertex2i )(( cnt * width ) + x + width, y );
-            GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.top ); GL_DEBUG( glVertex2i )(( cnt * width ) + x,         y );
+            GL_DEBUG( glTexCoord2f )( txrect.right, txrect.top    ); GL_DEBUG( glVertex2i )(( cnt * width ) + x + width, y );
+            GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.top    ); GL_DEBUG( glVertex2i )(( cnt * width ) + x,         y );
         }
         GL_DEBUG_END();
     }
@@ -1289,10 +1289,10 @@ int draw_status( const CHR_REF by_reference character, int x, int y )
     pcap = chr_get_pcap( character );
     if ( NULL == pcap ) return y;
 
-    life     = FP8_TO_INT( pchr->life );
-    lifemax  = FP8_TO_INT( pchr->lifemax );
-    mana     = FP8_TO_INT( pchr->mana );
-    manamax  = FP8_TO_INT( pchr->manamax );
+    life     = SFP8_TO_SINT( pchr->life );
+    lifemax  = SFP8_TO_SINT( pchr->lifemax );
+    mana     = SFP8_TO_SINT( pchr->mana );
+    manamax  = SFP8_TO_SINT( pchr->manamax );
 
     // grab the character's display name
     readtext = ( char * )chr_get_name( character, CHRNAME_CAPITAL );
@@ -1373,7 +1373,7 @@ int draw_all_status( int y )
 //--------------------------------------------------------------------------------------------
 void draw_map()
 {
-    int cnt;
+    size_t cnt;
 
     // Map display
     if ( !mapvalid || !mapon ) return;
@@ -1481,21 +1481,21 @@ int draw_fps( int y )
     {
         y = _draw_string_raw( 0, y, "%2.3f FPS, %2.3f UPS, Update lag = %d", stabilized_fps, stabilized_ups, update_lag );
 
-#if defined(_DEBUG)
+#if EGO_DEBUG
 
-#    if defined(DEBUG_BSP) && defined(_DEBUG)
-        y = _draw_string_raw( 0, y, "BSP chr %d/%d - BSP prt %d/%d", BSP_chr_count, MAX_CHR - chr_count_free(), BSP_prt_count, maxparticles - prt_count_free() );
+#    if defined(DEBUG_BSP) && EGO_DEBUG
+        y = _draw_string_raw( 0, y, "BSP chr %d/%d - BSP prt %d/%d", BSP_chr_count, MAX_CHR - chr_count_free(), BSP_prt_count, maxparticles - PrtList_count_free() );
         y = _draw_string_raw( 0, y, "BSP collisions %d", CHashList_inserted );
         y = _draw_string_raw( 0, y, "chr-mesh tests %04d - prt-mesh tests %04d", chr_stoppedby_tests + chr_pressure_tests, prt_stoppedby_tests + prt_pressure_tests );
 #    endif
 
-#if defined(DEBUG_RENDERLIST) && defined(_DEBUG)
+#if defined(DEBUG_RENDERLIST) && EGO_DEBUG
         y = _draw_string_raw( 0, y, "Renderlist tiles %d/%d", renderlist.all_count, PMesh->info.tiles_count  );
 #endif
 
-#    if defined(DEBUG_PROFILE_DISPLAY) && defined(_DEBUG)
+#    if defined(DEBUG_PROFILE_DISPLAY) && EGO_DEBUG
 
-#        if defined(DEBUG_PROFILE_RENDER) && defined(_DEBUG)
+#        if defined(DEBUG_PROFILE_RENDER) && EGO_DEBUG
         y = _draw_string_raw( 0, y, "estimated max FPS %2.3f UPS %4.2f GFX %4.2f", est_max_fps, est_max_ups, est_max_gfx );
         y = _draw_string_raw( 0, y, "gfx:total %2.4f, render:total %2.4f", est_render_time, time_draw_scene );
         y = _draw_string_raw( 0, y, "render:init %2.4f,  render:mesh %2.4f", time_render_scene_init, time_render_scene_mesh );
@@ -1503,7 +1503,7 @@ int draw_fps( int y )
         y = _draw_string_raw( 0, y, "render:trans %2.4f", time_render_scene_trans );
 #        endif
 
-#        if defined(DEBUG_PROFILE_MESH) && defined(_DEBUG)
+#        if defined(DEBUG_PROFILE_MESH) && EGO_DEBUG
         y = _draw_string_raw( 0, y, "mesh:total %2.4f", time_render_scene_mesh );
         y = _draw_string_raw( 0, y, "mesh:dolist_sort %2.4f, mesh:ndr %2.4f", time_render_scene_mesh_dolist_sort , time_render_scene_mesh_ndr );
         y = _draw_string_raw( 0, y, "mesh:drf_back %2.4f, mesh:ref %2.4f", time_render_scene_mesh_drf_back, time_render_scene_mesh_ref );
@@ -1511,7 +1511,7 @@ int draw_fps( int y )
         y = _draw_string_raw( 0, y, "mesh:render_shadows %2.4f", time_render_scene_mesh_render_shadows );
 #        endif
 
-#        if defined(DEBUG_PROFILE_INIT) && defined(_DEBUG)
+#        if defined(DEBUG_PROFILE_INIT) && EGO_DEBUG
         y = _draw_string_raw( 0, y, "init:total %2.4f", time_render_scene_init );
         y = _draw_string_raw( 0, y, "init:renderlist_make %2.4f, init:dolist_make %2.4f", time_render_scene_init_renderlist_make, time_render_scene_init_dolist_make );
         y = _draw_string_raw( 0, y, "init:do_grid_lighting %2.4f, init:light_fans %2.4f", time_render_scene_init_do_grid_dynalight, time_render_scene_init_light_fans );
@@ -1568,6 +1568,11 @@ int draw_help( int y )
 //--------------------------------------------------------------------------------------------
 int draw_debug( int y )
 {
+    CHR_REF ichr;
+
+    ichr = PlaStack.lst[( PLA_REF )0].index;
+    y = _draw_string_raw( 0, y, "PLA0 speed %2.4f%s", fvec3_length(ChrList.lst[ichr].vel.v), ChrList.lst[ichr].enviro.is_slipping ? " - slipping" : "" );
+
     if ( !cfg.dev_mode ) return y;
 
     if ( SDLKEYDOWN( SDLK_F5 ) )
@@ -1605,7 +1610,7 @@ int draw_debug( int y )
         STRING text;
 
         y = _draw_string_raw( 0, y, "!!!DEBUG MODE-6!!!" );
-        y = _draw_string_raw( 0, y, "~~FREEPRT %d", prt_count_free() );
+        y = _draw_string_raw( 0, y, "~~FREEPRT %d", PrtList_count_free() );
         y = _draw_string_raw( 0, y, "~~FREECHR %d", chr_count_free() );
         y = _draw_string_raw( 0, y, "~~MACHINE %d", local_machine );
         if ( PMod->exportvalid ) snprintf( text, SDL_arraysize( text ), "~~EXPORT: TRUE" );
@@ -1618,17 +1623,17 @@ int draw_debug( int y )
         // y = _draw_string_raw( 0, y, "~~FOGAFF %d", fog_data.affects_water );
     }
 
-    if ( SDLKEYDOWN( SDLK_F7 ) )
-    {
-        // White debug mode
-        y = _draw_string_raw( 0, y, "!!!DEBUG MODE-7!!!" );
-        y = _draw_string_raw( 0, y, "CAM <%f, %f, %f, %f>", PCamera->mView.CNV( 0, 0 ), PCamera->mView.CNV( 1, 0 ), PCamera->mView.CNV( 2, 0 ), PCamera->mView.CNV( 3, 0 ) );
-        y = _draw_string_raw( 0, y, "CAM <%f, %f, %f, %f>", PCamera->mView.CNV( 0, 1 ), PCamera->mView.CNV( 1, 1 ), PCamera->mView.CNV( 2, 1 ), PCamera->mView.CNV( 3, 1 ) );
-        y = _draw_string_raw( 0, y, "CAM <%f, %f, %f, %f>", PCamera->mView.CNV( 0, 2 ), PCamera->mView.CNV( 1, 2 ), PCamera->mView.CNV( 2, 2 ), PCamera->mView.CNV( 3, 2 ) );
-        y = _draw_string_raw( 0, y, "CAM <%f, %f, %f, %f>", PCamera->mView.CNV( 0, 3 ), PCamera->mView.CNV( 1, 3 ), PCamera->mView.CNV( 2, 3 ), PCamera->mView.CNV( 3, 3 ) );
-        y = _draw_string_raw( 0, y, "CAM center <%f, %f>", PCamera->center.x, PCamera->center.y );
-        y = _draw_string_raw( 0, y, "CAM turn %d %d", PCamera->turn_mode, PCamera->turn_time );
-    }
+    //if ( SDLKEYDOWN( SDLK_F7 ) )
+    //{
+    //    // White debug mode
+    //    y = _draw_string_raw( 0, y, "!!!DEBUG MODE-7!!!" );
+    //    y = _draw_string_raw( 0, y, "CAM <%f, %f, %f, %f>", PCamera->mView.CNV( 0, 0 ), PCamera->mView.CNV( 1, 0 ), PCamera->mView.CNV( 2, 0 ), PCamera->mView.CNV( 3, 0 ) );
+    //    y = _draw_string_raw( 0, y, "CAM <%f, %f, %f, %f>", PCamera->mView.CNV( 0, 1 ), PCamera->mView.CNV( 1, 1 ), PCamera->mView.CNV( 2, 1 ), PCamera->mView.CNV( 3, 1 ) );
+    //    y = _draw_string_raw( 0, y, "CAM <%f, %f, %f, %f>", PCamera->mView.CNV( 0, 2 ), PCamera->mView.CNV( 1, 2 ), PCamera->mView.CNV( 2, 2 ), PCamera->mView.CNV( 3, 2 ) );
+    //    y = _draw_string_raw( 0, y, "CAM <%f, %f, %f, %f>", PCamera->mView.CNV( 0, 3 ), PCamera->mView.CNV( 1, 3 ), PCamera->mView.CNV( 2, 3 ), PCamera->mView.CNV( 3, 3 ) );
+    //    y = _draw_string_raw( 0, y, "CAM center <%f, %f>", PCamera->center.x, PCamera->center.y );
+    //    y = _draw_string_raw( 0, y, "CAM turn %d %d", PCamera->turn_mode, PCamera->turn_time );
+    //}
 
     return y;
 }
@@ -1900,6 +1905,8 @@ void render_shadow( const CHR_REF by_reference character )
     /// @details ZZ@> This function draws a NIFTY shadow
     GLvertex v[4];
 
+    const float size_factor = 1.5f;
+
     TX_REF  itex;
     int     itex_style;
     float   x, y;
@@ -1908,11 +1915,11 @@ void render_shadow( const CHR_REF by_reference character )
     float   alpha, alpha_umbra, alpha_penumbra;
     chr_t * pchr;
 
-    if ( character >= MAX_CHR || !INGAME_CHR( character ) || ChrList.lst[character].pack.is_packed ) return;
+    if ( IS_PACKED_CHR( character ) ) return;
     pchr = ChrList.lst + character;
 
     // if the character is hidden, not drawn at all, so no shadow
-    if ( pchr->is_hidden || pchr->shadow_size == 0 ) return;
+    if ( pchr->is_hidden || 0 == pchr->shadow_size ) return;
 
     // no shadow if off the mesh
     if ( !mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) ) return;
@@ -1921,40 +1928,38 @@ void render_shadow( const CHR_REF by_reference character )
     if ( TILE_IS_FANOFF( PMesh->tmem.tile_list[pchr->onwhichgrid] ) ) return;
 
     // no shadow if completely transparent
-    alpha = ( 255 == pchr->inst.light ) ? pchr->inst.alpha  * INV_FF : ( pchr->inst.alpha - pchr->inst.light ) * INV_FF;
+    alpha = ( 255 == pchr->inst.light ) ? pchr->inst.alpha * INV_FF : ( pchr->inst.alpha - pchr->inst.light ) * INV_FF;
 
     /// @test ZF@> The previous test didn't work, but this one does
     //if ( alpha * 255 < 1 ) return;
-    if ( pchr->inst.light <= INVISIBLE || pchr->inst.alpha <= INVISIBLE ) return;
+    //if ( pchr->inst.light <= INVISIBLE || pchr->inst.alpha <= INVISIBLE ) return;
+    if ( alpha <= 0.0f ) return;
 
     // much reduced shadow if on a reflective tile
     if ( 0 != mesh_test_fx( PMesh, pchr->onwhichgrid, MPDFX_DRAWREF ) )
     {
         alpha *= 0.1f;
     }
-    if ( alpha < INV_FF ) return;
 
     // Original points
-    level = pchr->enviro.floor_level;
-    level += SHADOWRAISE;
-    height = pchr->inst.matrix.CNV( 3, 2 ) - level;
+    level  = pchr->enviro.grid_level + SHADOWRAISE;
+    height = (pchr->pos.z + pchr->chr_cv.maxs[kZ]) - level;
     if ( height < 0 ) height = 0;
 
-    size_umbra    = 1.5f * ( pchr->bump.size - height / 30.0f );
-    size_penumbra = 1.5f * ( pchr->bump.size + height / 30.0f );
+    size_umbra    = size_factor * ( pchr->bump_1.size - height / 30.0f );
+    size_penumbra = size_factor * ( pchr->bump_1.size + height / 30.0f );
 
-    alpha *= 0.3f;
-    alpha_umbra = alpha_penumbra = alpha;
-    if ( height > 0 )
+    alpha_umbra = alpha_penumbra = alpha * 0.3f;
+    if ( height > 0.0f )
     {
-        float factor_penumbra = ( 1.5f ) * (( pchr->bump.size ) / size_penumbra );
-        float factor_umbra    = ( 1.5f ) * (( pchr->bump.size ) / size_umbra );
+        float factor_penumbra = size_factor * (( pchr->bump_1.size ) / size_penumbra );
+        float factor_umbra    = size_factor * (( pchr->bump_1.size ) / size_umbra );
 
         factor_umbra    = MAX( 1.0f, factor_umbra );
         factor_penumbra = MAX( 1.0f, factor_penumbra );
 
-        alpha_umbra    *= 1.0f / factor_umbra / factor_umbra / 1.5f;
-        alpha_penumbra *= 1.0f / factor_penumbra / factor_penumbra / 1.5f;
+        alpha_umbra    *= 1.0f / factor_umbra / factor_umbra / size_factor;
+        alpha_penumbra *= 1.0f / factor_penumbra / factor_penumbra / size_factor;
 
         alpha_umbra    = CLIP( alpha_umbra,    0.0f, 1.0f );
         alpha_penumbra = CLIP( alpha_penumbra, 0.0f, 1.0f );
@@ -1983,7 +1988,7 @@ void render_shadow( const CHR_REF by_reference character )
     v[3].tex[SS] = CALCULATE_PRT_U0( itex_style, 238 );
     v[3].tex[TT] = CALCULATE_PRT_V1( itex_style, 255 );
 
-    if ( size_penumbra > 0 )
+    if ( size_penumbra > 0.0f )
     {
         v[0].pos[XX] = x + size_penumbra;
         v[0].pos[YY] = y - size_penumbra;
@@ -2004,7 +2009,7 @@ void render_shadow( const CHR_REF by_reference character )
         render_shadow_sprite( alpha_penumbra, v );
     };
 
-    if ( size_umbra > 0 )
+    if ( size_umbra > 0.0f )
     {
         v[0].pos[XX] = x + size_umbra;
         v[0].pos[YY] = y - size_umbra;
@@ -2039,7 +2044,7 @@ void render_bad_shadow( const CHR_REF by_reference character )
     float   level, height, height_factor, alpha;
     chr_t * pchr;
 
-    if ( character >= MAX_CHR || !INGAME_CHR( character ) || ChrList.lst[character].pack.is_packed ) return;
+    if ( IS_PACKED_CHR( character ) ) return;
     pchr = ChrList.lst + character;
 
     // if the character is hidden, not drawn at all, so no shadow
@@ -2066,7 +2071,7 @@ void render_bad_shadow( const CHR_REF by_reference character )
     if ( alpha < INV_FF ) return;
 
     // Original points
-    level = pchr->enviro.floor_level;
+    level = pchr->enviro.grid_level;
     level += SHADOWRAISE;
     height = pchr->inst.matrix.CNV( 3, 2 ) - level;
     height_factor = 1.0f - height / ( pchr->shadow_size * 5.0f );
@@ -2239,7 +2244,8 @@ void render_scene_mesh( renderlist_t * prlist )
 {
     /// @details BB@> draw the mesh and any reflected objects
 
-    int cnt;
+    size_t      cnt;
+    signed      rcnt;
     ego_mpd_t * pmesh;
 
     if ( NULL == prlist ) return;
@@ -2316,20 +2322,21 @@ void render_scene_mesh( renderlist_t * prlist )
                 GL_DEBUG( glEnable )( GL_DEPTH_TEST );    // GL_ENABLE_BIT - do not draw hidden surfaces
                 GL_DEBUG( glDepthFunc )( GL_LEQUAL );     // GL_DEPTH_BUFFER_BIT - surfaces must be closer to the camera to be drawn
 
-                for ( cnt = (( int )dolist_count ) - 1; cnt >= 0; cnt-- )
+                // this must be done with a signed iterator or it will fail horribly
+                for ( rcnt = (( signed )dolist_count ) - 1; rcnt >= 0; rcnt-- )
                 {
-                    if ( TOTAL_MAX_PRT == dolist[cnt].iprt && INGAME_CHR( dolist[cnt].ichr ) )
+                    if ( TOTAL_MAX_PRT == dolist[rcnt].iprt && INGAME_CHR( dolist[rcnt].ichr ) )
                     {
                         CHR_REF ichr;
                         Uint32 itile;
 
                         GL_DEBUG( glEnable )( GL_CULL_FACE );   // GL_ENABLE_BIT - cull backward facing faces
-                        GL_DEBUG( glFrontFace )( GL_CCW );      // GL_POLYGON_BIT - use couter-clockwise orientation to determine backfaces
+                        GL_DEBUG( glFrontFace )( GL_CCW );      // GL_POLYGON_BIT - use counter-clockwise orientation to determine backfaces
 
                         GL_DEBUG( glEnable )( GL_BLEND );                 // GL_ENABLE_BIT - allow transparent objects
                         GL_DEBUG( glBlendFunc )( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );  // GL_COLOR_BUFFER_BIT - use the alpha channel to modulate the transparency
 
-                        ichr  = dolist[cnt].ichr;
+                        ichr  = dolist[rcnt].ichr;
                         itile = ChrList.lst[ichr].onwhichgrid;
 
                         if ( mesh_grid_is_valid( pmesh, itile ) && ( 0 != mesh_test_fx( pmesh, itile, MPDFX_DRAWREF ) ) )
@@ -2338,11 +2345,11 @@ void render_scene_mesh( renderlist_t * prlist )
                             render_one_mad_ref( ichr );
                         }
                     }
-                    else if ( MAX_CHR == dolist[cnt].ichr && DISPLAY_PRT( dolist[cnt].iprt ) )
+                    else if ( MAX_CHR == dolist[rcnt].ichr && DISPLAY_PRT( dolist[rcnt].iprt ) )
                     {
                         Uint32 itile;
                         PRT_REF iprt;
-                        iprt = dolist[cnt].iprt;
+                        iprt = dolist[rcnt].iprt;
                         itile = PrtList.lst[iprt].onwhichgrid;
 
                         GL_DEBUG( glDisable )( GL_CULL_FACE );
@@ -2414,7 +2421,7 @@ void render_scene_mesh( renderlist_t * prlist )
         PROFILE_END( render_scene_mesh_drf_solid );
     }
 
-#if defined(RENDER_HMAP) && defined(_DEBUG)
+#if defined(RENDER_HMAP) && EGO_DEBUG
     //------------------------------
     // render the heighmap
     for ( cnt = 0; cnt < prlist->all_count; cnt++ )
@@ -2515,7 +2522,7 @@ void render_scene_trans()
 {
     /// @details BB@> draw transparent objects
 
-    int cnt;
+    signed rcnt;
     GLXvector4f tint;
 
     // set the the transparency parameters
@@ -2525,11 +2532,12 @@ void render_scene_trans()
     GL_DEBUG( glDepthFunc )( GL_LEQUAL );                 // GL_DEPTH_BUFFER_BIT
 
     // Now render all transparent and light objects
-    for ( cnt = (( int )dolist_count ) - 1; cnt >= 0; cnt-- )
+    // this must be iterated with a signed variable or it fails horribly
+    for ( rcnt = (( signed )dolist_count ) - 1; rcnt >= 0; rcnt-- )
     {
-        if ( TOTAL_MAX_PRT == dolist[cnt].iprt && INGAME_CHR( dolist[cnt].ichr ) )
+        if ( TOTAL_MAX_PRT == dolist[rcnt].iprt && INGAME_CHR( dolist[rcnt].ichr ) )
         {
-            CHR_REF  ichr = dolist[cnt].ichr;
+            CHR_REF  ichr = dolist[rcnt].ichr;
             chr_t * pchr = ChrList.lst + ichr;
             chr_instance_t * pinst = &( pchr->inst );
 
@@ -2566,9 +2574,9 @@ void render_scene_trans()
                 render_one_mad( ichr, tint, CHR_PHONG );
             }
         }
-        else if ( MAX_CHR == dolist[cnt].ichr && DISPLAY_PRT( dolist[cnt].iprt ) )
+        else if ( MAX_CHR == dolist[rcnt].ichr && DISPLAY_PRT( dolist[rcnt].iprt ) )
         {
-            render_one_prt_trans( dolist[cnt].iprt );
+            render_one_prt_trans( dolist[rcnt].iprt );
         }
     }
 }
@@ -2634,11 +2642,11 @@ void render_scene( ego_mpd_t * pmesh, camera_t * pcam )
     }
     PROFILE_END( render_scene_trans );
 
-#if defined(_DEBUG)
+#if EGO_DEBUG
     //render_all_prt_attachment();
 #endif
 
-#if defined(_DEBUG) && defined(DEBUG_PRT_BBOX)
+#if EGO_DEBUG && defined(DEBUG_PRT_BBOX)
     render_all_prt_bbox();
 #endif
 
@@ -2822,10 +2830,10 @@ void render_world_overlay( const TX_REF by_reference texture )
     vforw_wind.x = ilayer->tx_add.x;
     vforw_wind.y = ilayer->tx_add.y;
     vforw_wind.z = 0;
-    vforw_wind = fvec3_normalize( vforw_wind.v );
+    fvec3_self_normalize( vforw_wind.v );
 
     vforw_cam = mat_getCamForward( PCamera->mView );
-    vforw_cam = fvec3_normalize( vforw_cam.v );
+    fvec3_self_normalize( vforw_cam.v );
 
     // make the texture begin to disappear if you are not looking straight down
     ftmp = fvec3_dot_product( vforw_wind.v, vforw_cam.v );
@@ -3319,7 +3327,7 @@ bool_t billboard_data_update( billboard_data_t * pbb )
     chr_getMatUp( pchr, &vup );
 
     height = pchr->bump.height;
-    offset = MIN( pchr->bump.height * 0.5f, pchr->bump.size );
+    offset = MIN( pchr->bump_1.height * 0.5f, pchr->bump_1.size );
 
     pos_new.x = pchr->pos.x + vup.x * ( height + offset );
     pos_new.y = pchr->pos.y + vup.y * ( height + offset );
@@ -3430,7 +3438,7 @@ void BillboardList_update_all()
             is_invalid = btrue;
         }
 
-        if ( !INGAME_CHR( pbb->ichr ) || INGAME_CHR( ChrList.lst[pbb->ichr].attachedto ) )
+        if ( !INGAME_CHR( pbb->ichr ) || IS_ATTACHED_PCHR( ChrList.lst + pbb->ichr ) )
         {
             is_invalid = btrue;
         }
@@ -3520,9 +3528,10 @@ bool_t BillboardList_free_one( size_t ibb )
 
     billboard_data_free( pbb );
 
-#if defined(_DEBUG)
+#if EGO_DEBUG
     {
-        int cnt;
+        size_t cnt;
+
         // determine whether this texture is already in the list of free textures
         // that is an error
         for ( cnt = 0; cnt < BillboardList.free_count; cnt++ )
@@ -3567,7 +3576,7 @@ bool_t render_billboard( camera_t * pcam, billboard_data_t * pbb, float scale )
     if ( NULL == pbb || !pbb->valid ) return bfalse;
 
     // do not display for objects that are mounted or being held
-    if ( INGAME_CHR( pbb->ichr ) && INGAME_CHR( ChrList.lst[pbb->ichr].attachedto ) ) return bfalse;
+    if ( INGAME_CHR( pbb->ichr ) && IS_ATTACHED_PCHR( ChrList.lst + pbb->ichr ) ) return bfalse;
 
     ptex = TxTexture_get_ptr( pbb->tex_ref );
 
@@ -3846,7 +3855,7 @@ bool_t render_oct_bb( oct_bb_t * bb, bool_t draw_square, bool_t draw_diamond )
             float p1_x, p1_y;
             float p2_x, p2_y;
 
-            GL_DEBUG( glColor4f ) ( 0.5, 1, 1, 0.1 );
+            GL_DEBUG( glColor4f ) ( 0.5f, 1.0f, 1.0f, 0.1f );
 
             p1_x = 0.5f * ( bb->maxs[OCT_XY] - bb->maxs[OCT_YX] );
             p1_y = 0.5f * ( bb->maxs[OCT_XY] + bb->maxs[OCT_YX] );
@@ -3903,7 +3912,7 @@ bool_t render_oct_bb( oct_bb_t * bb, bool_t draw_square, bool_t draw_diamond )
         // SQUARE BBOX
         if ( draw_square )
         {
-            GL_DEBUG( glColor4f ) ( 1, 0.5, 1, 0.1 );
+            GL_DEBUG( glColor4f ) ( 1.0f, 0.5f, 1.0f, 0.1f );
 
             // XZ FACE, min Y
             GL_DEBUG(glBegin) ( GL_QUADS );
@@ -4047,7 +4056,7 @@ void dolist_make( ego_mpd_t * pmesh )
 {
     /// @details ZZ@> This function finds the characters that need to be drawn and puts them in the list
 
-    int cnt;
+    size_t cnt;
     CHR_REF ichr;
 
     // Remove everyone from the dolist
@@ -4067,7 +4076,12 @@ void dolist_make( ego_mpd_t * pmesh )
     // Now fill it up again
     for ( ichr = 0; ichr < MAX_CHR; ichr++ )
     {
-        if ( INGAME_CHR( ichr ) && !ChrList.lst[ichr].pack.is_packed )
+        chr_t * pchr;
+
+        if( !INGAME_CHR( ichr ) ) continue;
+        pchr = ChrList.lst + ichr;
+
+        if ( !pchr->pack.is_packed )
         {
             // Add the character
             dolist_add_chr( pmesh, ichr );
@@ -4334,7 +4348,7 @@ void renderlist_make( ego_mpd_t * pmesh, camera_t * pcam )
     {
         from = rightlist[cnt-1];  to = rightlist[cnt];
         x = corner_x[from];
-         x+=128;
+        x += 128;
         divx = corner_y[to] - corner_y[from];
         stepx = 0;
         if ( divx > 0 )
@@ -4381,7 +4395,7 @@ void renderlist_make( ego_mpd_t * pmesh, camera_t * pcam )
             tlist[cnt].inrenderlist       = btrue;
 
             // if the tile was not in the renderlist last frame, then we need to force a lighting update of this tile
-            if ( tlist[cnt].inrenderlist_frame < frame_all - 1 )
+            if ( tlist[cnt].inrenderlist_frame < (signed)frame_all - 1 )
             {
                 tlist[cnt].needs_lighting_update = btrue;
             }
@@ -4608,8 +4622,8 @@ void load_basic_textures( /* const char *modname */ )
     TxTexture_load_one_vfs( "mp_data/watertop", ( TX_REF )TX_WATER_TOP, TRANSCOLOR );
     TxTexture_load_one_vfs( "mp_data/waterlow", ( TX_REF )TX_WATER_LOW, TRANSCOLOR );
 
-    // Texture 7 is the phong map
-    TxTexture_load_one_vfs( "mp_data/phong", ( TX_REF )TX_PHONG, TRANSCOLOR );
+    // Texture 7 is the Phong map
+    TxTexture_load_one_vfs( "mp_data/Phong", ( TX_REF )TX_PHONG, TRANSCOLOR );
 
     PROFILE_RESET( render_scene_init );
     PROFILE_RESET( render_scene_mesh );
@@ -4729,7 +4743,7 @@ void load_graphics()
         GL_DEBUG( glDisable )( GL_DITHER );
     }
 
-    // Enable gourad shading? (Important!)
+    // Enable Gouraud shading? (Important!)
     GL_DEBUG( glShadeModel )( gfx.shading );
 
     // Enable antialiasing?
@@ -4991,9 +5005,9 @@ void _flip_pages()
 
     gfx_update_timers();
 
-    if ( screenshot_requested )
+    if ( EProc->screenshot_requested )
     {
-        screenshot_requested = bfalse;
+        EProc->screenshot_requested = bfalse;
 
         // take the screenshot NOW, since we have just updated the screen buffer
         if ( !dump_screenshot() )
@@ -5030,7 +5044,7 @@ void light_fans( renderlist_t * prlist )
     if ( NULL == prlist ) return;
 
 #if defined(CLIP_ALL_LIGHT_FANS)
-    // update all visible fans once every 4 uodates
+    // update all visible fans once every 4 updates
     if ( 0 != ( frame_all & 0x03 ) ) return;
 #endif
 
@@ -5222,7 +5236,7 @@ bool_t sum_global_lighting( lighting_vector_t lighting )
 {
     /// @details BB@> do ambient lighting. if the module is inside, the ambient lighting
     /// is reduced by up to a factor of 8. It is still kept just high enough
-    /// so that ordnary objects will not be made invisible. This was breaking some of the AIs
+    /// so that ordinary objects will not be made invisible. This was breaking some of the AIs
 
     int cnt;
     float glob_amb;
@@ -5434,7 +5448,7 @@ void do_grid_lighting( ego_mpd_t * pmesh, camera_t * pcam )
                 reg[reg_count].reference = cnt;
                 reg_count++;
 
-                // determine the maxumum bounding box that encloses all valid lights
+                // determine the maximum bounding box that encloses all valid lights
                 light_bound.xmin = MIN( light_bound.xmin, ftmp.xmin );
                 light_bound.xmax = MAX( light_bound.xmax, ftmp.xmax );
                 light_bound.ymin = MIN( light_bound.ymin, ftmp.ymin );
@@ -5583,3 +5597,4 @@ void gfx_reload_all_textures()
     TxTitleImage_reload_all();
     TxTexture_reload_all();
 }
+

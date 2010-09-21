@@ -12,14 +12,14 @@ Level rating ( *, **, ***, ****, or ***** )  		: ***
 
 
 // Module summary ( Must be 8 lines...  Each line mush have at least an _ )
-:A_paladin_named_Keldorn_has_turned
-:evil_and_joined_the_mysterious
-:necromancers_who_have_appeared.
-:He_has_captured_Lord_Hagen_and
-:taken_him_prisoner_in_a_dungeon
-:hideout_at_the_outskirts_of_the_
-:Bishopian_Plains._You_are_to_kill
-:Keldorn_and_rescue_the_Lord!
+:Sir_Keldorn,_the_infanous_anti-paladin,
+:has_joined_forces_with_the_mysterious
+:necromancers_appearing_across_Lorule.
+:_
+:He_has_improsoned_Lord_Hagen_in_a_dungeon
+:hideout_somewhere_in_the_Bishopian_Plains.
+:_
+:Kill_Sir_Keldorn_and_rescue_Lord_Hagen!
 
 
 // Module expansion IDSZs ( with a colon in front )

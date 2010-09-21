@@ -68,12 +68,17 @@ typedef enum e_egoboo_rv egoboo_rv;
 typedef Uint32 UFP8_T;
 typedef Sint32 SFP8_T;
 
-#define FP8_TO_FLOAT(V1)   ( (float)(V1) * INV_0100 )
-#define FLOAT_TO_FP8(V1)   ( (Uint32)((V1) * (float)(0x0100) ) )
-#define FP8_TO_INT(V1)     ( (V1) >> 8 )                      ///< fast version of V1 / 256
-#define INT_TO_FP8(V1)     ( (V1) << 8 )                      ///< fast version of V1 * 256
-#define FP8_MUL(V1, V2)    ( ((V1)*(V2)) >> 8 )               ///< this may overflow if V1 or V2 have non-zero bits in their upper 8 bits
-#define FP8_DIV(V1, V2)    ( ((V1)<<8) / (V2) )               ///< this  will fail if V1 has bits in the upper 8 bits
+// unsigned versions
+#define UFP8_TO_FLOAT(V1)  ( ((float)((unsigned)(V1))) * INV_0100 )
+#define FLOAT_TO_UFP8(V1)  ( (unsigned)( ((unsigned)(V1)) * (float)(0x0100) ) ) 
+#define UFP8_TO_UINT(V1)   ( ((unsigned)(V1)) >> 8 )                           ///< fast version of V1 / 256
+#define UINT_TO_UFP8(V1)   ( ((unsigned)(V1)) << 8 )                           ///< fast version of V1 * 256
+
+// signed versions
+#define SFP8_TO_FLOAT(V1)  ( ((float)((signed)(V1))) * INV_0100 )
+#define FLOAT_TO_SFP8(V1)  ( (signed)( ((signed)(V1)) * (float)(0x0100) ) ) 
+#define SFP8_TO_SINT(V1)   ( (V1) < 0 ? -((signed)UFP8_TO_UINT(-V1)) : (signed)UFP8_TO_UINT(V1) )
+#define SINT_TO_SFP8(V1)   ( (V1) < 0 ? -((signed)UINT_TO_UFP8(-V1)) : (signed)UINT_TO_UFP8(V1) )
 
 //--------------------------------------------------------------------------------------------
 // the type for the 16-bit value used to stor angles
@@ -94,18 +99,18 @@ typedef Sint32 SFP16_T;
 
 //--------------------------------------------------------------------------------------------
 // BIT FIELDS
-typedef Uint32 BIT_FIELD;								///< A big string supporting 32 bits
-#define FULL_BIT_FIELD		0x7FFFFFFF					///< A bit string where all bits are flagged as 1
-#define EMPTY_BIT_FIELD		0							///< A bit string where all bits are flagged as 0
-#define FILL_BIT_FIELD(XX)	XX = FULL_BIT_FIELD			///< Fills up all bits in a bit pattern
-#define RESET_BIT_FIELD(XX) XX = EMPTY_BIT_FIELD		///< Resets all bits in a BIT_FIELD to 0		
+typedef Uint32 BIT_FIELD;                                ///< A big string supporting 32 bits
+#define FULL_BIT_FIELD        ((BIT_FIELD)(~0))            ///< A bit string where all bits are flagged as 1
+#define EMPTY_BIT_FIELD         0                            ///< A bit string where all bits are flagged as 0
+#define FILL_BIT_FIELD(XX)    (XX) = FULL_BIT_FIELD        ///< Fills up all bits in a bit pattern
+#define CLEAR_BIT_FIELD(XX) (XX) = 0                    ///< Resets all bits in a BIT_FIELD to 0        
 
-#if !defined(SET_BIT)
-	#define SET_BIT(XX, YY) XX |= YY
+#if !defined(ADD_BITS)
+    #define ADD_BITS(XX, YY) (XX) |= (YY)
 #endif
 
-#if !defined(UNSET_BIT)
-	#define UNSET_BIT(XX, YY) XX &= ~YY
+#if !defined(REMOVE_BITS)
+    #define REMOVE_BITS(XX, YY) (XX) &= ~(YY)
 #endif
 
 #if !defined(BOOL_TO_BIT)
@@ -145,7 +150,8 @@ typedef struct s_irect
     int right;
     int top;
     int bottom;
-} irect_t;
+}
+ irect_t;
 
 bool_t irect_point_inside( irect_t * prect, int   ix, int   iy );
 
@@ -155,7 +161,8 @@ typedef struct s_frect
     float right;
     float top;
     float bottom;
-} frect_t;
+}
+ frect_t;
 
 bool_t frect_point_inside( frect_t * prect, float fx, float fy );
 
@@ -233,16 +240,15 @@ typedef char STRING[256];
 //--------------------------------------------------------------------------------------------
 
 /// The latch used by the input system
-struct s_latch
+struct s_latch_input
 {
-    float          x;         ///< the x input
-    float          y;         ///< the y input
-    BIT_FIELD      b;         ///< the button bits
+    float     raw[2];
+    float     dir[2];
+    BIT_FIELD b;         ///< the raw bits corresponding to various buttons
 };
+typedef struct s_latch_input latch_input_t;
 
-typedef struct s_latch latch_t;
-
-void latch_init( latch_t * platch );
+void latch_input_init( latch_input_t * platch );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -280,8 +286,8 @@ typedef Uint16 REF_T;
     struct s_c_list__##TYPE__##NAME           \
     {                                         \
         unsigned update_guid;                 \
-        int      used_count;                  \
-        int      free_count;                  \
+        size_t   used_count;                  \
+        size_t   free_count;                  \
         size_t   used_ref[COUNT];             \
         size_t   free_ref[COUNT];             \
         C_DECLARE_T_ARY(TYPE, lst, COUNT);    \
@@ -326,8 +332,8 @@ typedef Uint16 REF_T;
 #define DECLARE_DYNAMIC_ARY(ARY_T, ELEM_T) \
     struct s_DYNAMIC_ARY_##ARY_T \
     { \
-        size_t alloc; \
-        int    top;  \
+        size_t   alloc; \
+        size_t   top;  \
         ELEM_T * ary; \
     }; \
     typedef struct s_DYNAMIC_ARY_##ARY_T ARY_T##_t; \
@@ -357,7 +363,7 @@ typedef Uint16 REF_T;
     size_t ARY_T##_get_top( ARY_T##_t * pary )                { return (NULL == pary->ary) ? 0 : pary->top; } \
     size_t ARY_T##_get_size( ARY_T##_t * pary )               { return (NULL == pary->ary) ? 0 : pary->alloc; } \
     \
-    ELEM_T * ARY_T##_pop_back( ARY_T##_t * pary )              { if( NULL == pary || pary->top < 1 ) return NULL; --pary->top; return &(pary->ary[pary->top]); } \
+    ELEM_T * ARY_T##_pop_back( ARY_T##_t * pary )              { if( NULL == pary || 0 == pary->top ) return NULL; --pary->top; return &(pary->ary[pary->top]); } \
     bool_t   ARY_T##_push_back( ARY_T##_t * pary, ELEM_T val ) { bool_t retval = bfalse; if( NULL == pary ) return bfalse; if (pary->top < pary->alloc) { pary->ary[pary->top] = val; pary->top++; retval = btrue; } return retval; }
 
 //--------------------------------------------------------------------------------------------

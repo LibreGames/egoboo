@@ -100,7 +100,7 @@ enum NetworkConstant
 enum NetworkMessage
 {
     NET_TRANSFER_FILE       = 10001,  // Packet contains a file.
-    NET_TRANSFER_OK         = 10002,  // Acknowledgement packet for a file send
+    NET_TRANSFER_OK         = 10002,  // Acknowledgment packet for a file send
     NET_CREATE_DIRECTORY    = 10003,  // Tell the peer to create the named directory
     NET_DONE_SENDING_FILES  = 10009,  // Sent when there are no more files to send.
     NET_NUM_FILES_TO_SEND   = 10010  // Let the other person know how many files you're sending
@@ -110,7 +110,8 @@ enum NetworkMessage
 typedef struct NetPlayerInfo
 {
     int playerSlot;
-} NetPlayerInfo;
+}
+ NetPlayerInfo;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -140,12 +141,13 @@ typedef struct NetFileTransfer
     char sourceName[NET_MAX_FILE_NAME];
     char destName[NET_MAX_FILE_NAME];
     ENetPeer *target;
-} NetFileTransfer;
+}
+ NetFileTransfer;
 
 /// Network file transfer queue
 static NetFileTransfer net_transferStates[NET_MAX_FILE_TRANSFERS];
 static int net_numFileTransfers = 0;  ///< Queue count
-static int net_fileTransferHead = 0;  ///< Queue start indicx
+static int net_fileTransferHead = 0;  ///< Queue start index
 static int net_fileTransferTail = 0;  ///< Queue end index
 static int net_waitingForXferAck = 0; ///< Queue state
 
@@ -512,7 +514,7 @@ void net_sendPacketToPeer( ENetPeer *peer )
 //--------------------------------------------------------------------------------------------
 void net_sendPacketToPeerGuaranteed( ENetPeer *peer )
 {
-    /// @details JF@> This funciton sends a packet to a given peer, with guaranteed delivery
+    /// @details JF@> This function sends a packet to a given peer, with guaranteed delivery
 
     ENetPacket *packet = enet_packet_create( packetbuffer, packetsize, 0 );
     enet_peer_send( peer, NET_GUARANTEED_CHANNEL, packet );
@@ -914,7 +916,7 @@ void cl_talkToHost()
         {
             if ( PlaStack.lst[player].valid && PlaStack.lst[player].device.bits != INPUT_BITS_NONE )
             {
-                SET_BIT( PlaStack.lst[player].local_latch.b, LATCHBUTTON_RESPAWN );  // Press the respawn button...
+                ADD_BITS( PlaStack.lst[player].local_latch.b, LATCHBUTTON_RESPAWN );  // Press the respawn button...
             }
 
             player++;
@@ -933,9 +935,11 @@ void cl_talkToHost()
             if ( PlaStack.lst[player].valid && PlaStack.lst[player].device.bits != INPUT_BITS_NONE )
             {
                 packet_addUnsignedByte( REF_TO_INT( player ) );                      // The player index
+                packet_addSignedShort( PlaStack.lst[player].local_latch.raw[kX]*LATCH_TO_FFFF );  // Raw control value
+                packet_addSignedShort( PlaStack.lst[player].local_latch.raw[kY]*LATCH_TO_FFFF );  // Raw control value
+                packet_addSignedShort( PlaStack.lst[player].local_latch.dir[kX]*LATCH_TO_FFFF );  // Player motion
+                packet_addSignedShort( PlaStack.lst[player].local_latch.dir[kY]*LATCH_TO_FFFF );  // Player motion
                 packet_addUnsignedInt( PlaStack.lst[player].local_latch.b );             // Player button states
-                packet_addSignedShort( PlaStack.lst[player].local_latch.x*SHORTLATCH );  // Player motion
-                packet_addSignedShort( PlaStack.lst[player].local_latch.y*SHORTLATCH );  // Player motion
             }
         }
 
@@ -973,9 +977,11 @@ void sv_talkToRemotes()
                 if ( !PlaStack.lst[player].valid ) continue;
 
                 packet_addUnsignedByte( REF_TO_INT( player ) );                      // The player index
+                packet_addSignedShort( PlaStack.lst[player].local_latch.raw[kX]*LATCH_TO_FFFF );  // Player motion
+                packet_addSignedShort( PlaStack.lst[player].local_latch.raw[kY]*LATCH_TO_FFFF );  // Player motion
+                packet_addSignedShort( PlaStack.lst[player].local_latch.dir[kX]*LATCH_TO_FFFF );  // Player motion
+                packet_addSignedShort( PlaStack.lst[player].local_latch.dir[kY]*LATCH_TO_FFFF );  // Player motion
                 packet_addUnsignedInt( PlaStack.lst[player].local_latch.b );        // Player button states
-                packet_addSignedShort( PlaStack.lst[player].local_latch.x*SHORTLATCH );  // Player motion
-                packet_addSignedShort( PlaStack.lst[player].local_latch.y*SHORTLATCH );  // Player motion
 
                 player++;
             }
@@ -1007,8 +1013,10 @@ void sv_talkToRemotes()
                 ptlatch->button = ppla->local_latch.b;
 
                 // reduce the resolution of the motion to match the network packets
-                ptlatch->x = floor( ppla->local_latch.x * SHORTLATCH ) / SHORTLATCH;
-                ptlatch->y = floor( ppla->local_latch.y * SHORTLATCH ) / SHORTLATCH;
+                ptlatch->raw[kX] = floor( ppla->local_latch.raw[kX] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
+                ptlatch->raw[kY] = floor( ppla->local_latch.raw[kY] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
+                ptlatch->dir[kX] = floor( ppla->local_latch.dir[kX] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
+                ptlatch->dir[kY] = floor( ppla->local_latch.dir[kY] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
 
                 ptlatch->time = true_update;
 
@@ -1020,7 +1028,7 @@ void sv_talkToRemotes()
             {
                 int loc_lag = update_wld - ppla->tlatch[index].time  + 1;
 
-                if ( loc_lag > numplatimes )
+                if ( loc_lag > 0 && (Uint32)loc_lag > numplatimes )
                 {
                     numplatimes = loc_lag;
                 }
@@ -1030,7 +1038,7 @@ void sv_talkToRemotes()
 }
 
 //--------------------------------------------------------------------------------------------
-void pla_add_tlatch( const PLA_REF by_reference iplayer, Uint32 time, latch_t net_latch )
+void pla_add_tlatch( const PLA_REF by_reference iplayer, Uint32 time, latch_input_t net_latch )
 {
     player_t * ppla;
 
@@ -1039,10 +1047,12 @@ void pla_add_tlatch( const PLA_REF by_reference iplayer, Uint32 time, latch_t ne
 
     if ( ppla->tlatch_count >= MAXLAG ) return;
 
-    ppla->tlatch[ ppla->tlatch_count ].button = net_latch.b;
-    ppla->tlatch[ ppla->tlatch_count ].x      = net_latch.x;
-    ppla->tlatch[ ppla->tlatch_count ].y      = net_latch.y;
-    ppla->tlatch[ ppla->tlatch_count ].time   = time;
+    ppla->tlatch[ ppla->tlatch_count ].raw[kX] = net_latch.raw[kX];
+    ppla->tlatch[ ppla->tlatch_count ].raw[kY] = net_latch.raw[kY];
+    ppla->tlatch[ ppla->tlatch_count ].dir[kX] = net_latch.dir[kX];
+    ppla->tlatch[ ppla->tlatch_count ].dir[kY] = net_latch.dir[kY];
+    ppla->tlatch[ ppla->tlatch_count ].button  = net_latch.b;
+    ppla->tlatch[ ppla->tlatch_count ].time    = time;
 
     ppla->tlatch_count++;
 }
@@ -1091,14 +1101,16 @@ void net_handlePacket( ENetEvent *event )
             {
                 while ( packet_remainingSize() > 0 )
                 {
-                    latch_t tmp_latch;
+                    latch_input_t tmp_latch;
 
                     player = packet_readUnsignedByte();
                     time   = packet_readUnsignedInt();
 
-                    tmp_latch.b = packet_readUnsignedInt();
-                    tmp_latch.x = packet_readSignedShort() / SHORTLATCH;
-                    tmp_latch.y = packet_readSignedShort() / SHORTLATCH;
+                    tmp_latch.raw[kX] = packet_readSignedShort() * FFFF_TO_LATCH;
+                    tmp_latch.raw[kY] = packet_readSignedShort() * FFFF_TO_LATCH;
+                    tmp_latch.dir[kX] = packet_readSignedShort() * FFFF_TO_LATCH;
+                    tmp_latch.dir[kY] = packet_readSignedShort() * FFFF_TO_LATCH;
+                    tmp_latch.b       = packet_readUnsignedInt();
 
                     pla_add_tlatch( player, time, tmp_latch );
                 }
@@ -1484,9 +1496,11 @@ void net_handlePacket( ENetEvent *event )
                     while ( packet_remainingSize() > 0 )
                     {
                         player = packet_readUnsignedByte();
-                        PlaStack.lst[player].tlatch[time].button = packet_readUnsignedInt();
-                        PlaStack.lst[player].tlatch[time].x      = packet_readSignedShort() / SHORTLATCH;
-                        PlaStack.lst[player].tlatch[time].y      = packet_readSignedShort() / SHORTLATCH;
+                        PlaStack.lst[player].tlatch[time].raw[kX] = packet_readSignedShort() * FFFF_TO_LATCH;
+                        PlaStack.lst[player].tlatch[time].raw[kY] = packet_readSignedShort() * FFFF_TO_LATCH;
+                        PlaStack.lst[player].tlatch[time].dir[kX] = packet_readSignedShort() * FFFF_TO_LATCH;
+                        PlaStack.lst[player].tlatch[time].dir[kY] = packet_readSignedShort() * FFFF_TO_LATCH;
+                        PlaStack.lst[player].tlatch[time].button  = packet_readUnsignedInt();
                     }
 
                     nexttimestamp = stamp + 1;
@@ -1548,165 +1562,199 @@ void listen_for_packets()
 }
 
 //--------------------------------------------------------------------------------------------
-void unbuffer_player_latches()
+void unbuffer_one_player_latch_network( player_t * ppla )
+{
+    // get the "network" latch for each valid player
+
+    Uint32 latch_count, tnc;
+    latch_input_t tmp_latch;
+    time_latch_t * tlatch_list;
+
+    if( NULL == ppla ) return;
+
+    tlatch_list = ppla->tlatch;
+
+    // copy the latch from last time
+    tmp_latch = ppla->net_latch;
+
+    // what are the minimum and maximum indices that can be applies this update?
+    for ( tnc = 0; tnc < ppla->tlatch_count; tnc++ )
+    {
+        int dt;
+
+        dt = update_wld - tlatch_list[tnc].time;
+
+        if ( dt < 0 )
+            break;
+    }
+    latch_count = tnc;
+
+    if ( latch_count == 1 )
+    {
+        // there is just one valid latch
+        tmp_latch.raw[kX] = tlatch_list[0].raw[kX];
+        tmp_latch.raw[kY] = tlatch_list[0].raw[kY];
+        tmp_latch.dir[kX] = tlatch_list[0].dir[kX];
+        tmp_latch.dir[kY] = tlatch_list[0].dir[kY];
+        tmp_latch.b       = tlatch_list[0].button;
+
+        //log_info( "<<%1.4f, %1.4f>, 0x%x>, Just one latch for %s\n", tmp_latch.x, tmp_latch.y, tmp_latch.b, ChrList.lst[ppla->index].Name );
+    }
+    else if ( latch_count > 1 )
+    {
+        int weight, weight_sum;
+        int dt;
+
+        // estimate the best latch value by weighting latches that are back in time
+        // by dt*dt. This estimates the effect of actually integrating the position over
+        // that much time without the hastle of actually integrating the trajectory.
+
+        // blank the current latch so that we can sum the latch values
+        latch_input_init( &( tmp_latch ) );
+
+        // apply the latch
+        weight_sum = 0;
+        for ( tnc = 0; tnc < latch_count; tnc++ )
+        {
+            dt = update_wld - tlatch_list[tnc].time;
+
+            weight      = ( dt + 1 ) * ( dt + 1 );
+
+            weight_sum  += weight;
+            tmp_latch.raw[kX] += tlatch_list[tnc].raw[kX] * weight;
+            tmp_latch.raw[kY] += tlatch_list[tnc].raw[kY] * weight;
+            tmp_latch.dir[kX] += tlatch_list[tnc].dir[kX] * weight;
+            tmp_latch.dir[kY] += tlatch_list[tnc].dir[kY] * weight;
+            ADD_BITS( tmp_latch.b, tlatch_list[tnc].button );
+        }
+
+        numplatimes = MAX( numplatimes, latch_count );
+        if ( weight_sum > 0.0f )
+        {
+            tmp_latch.raw[kX] /= ( float )weight_sum;
+            tmp_latch.raw[kY] /= ( float )weight_sum;
+            tmp_latch.dir[kX] /= ( float )weight_sum;
+            tmp_latch.dir[kY] /= ( float )weight_sum;
+        }
+
+        //log_info( "<<%1.4f, %1.4f>, 0x%x>, %d, multiple latches for %s\n", tmp_latch.x, tmp_latch.y, tmp_latch.b, latch_count, ChrList.lst[ppla->index].Name );
+    }
+    else
+    {
+        // there are no valid latches
+        // do nothing. this lets the old value of the latch persist.
+        // this might be a decent guess as to what to do if a packet was
+        // dropped?
+        //log_info( "<<%1.4f, %1.4f>, 0x%x>, latch dead reckoning for %s\n", tmp_latch.x, tmp_latch.y, tmp_latch.b, ChrList.lst[ppla->index].Name );
+    }
+
+    if ( latch_count >= ppla->tlatch_count )
+    {
+        // we have emptied all of the latches
+        ppla->tlatch_count = 0;
+    }
+    else if ( latch_count > 0 )
+    {
+        int index;
+
+        // concatenate the list
+        for ( tnc = latch_count, index = 0; tnc < ppla->tlatch_count; tnc++, index++ )
+        {
+            tlatch_list[index].raw[kX] = tlatch_list[tnc].raw[kX];
+            tlatch_list[index].raw[kY] = tlatch_list[tnc].raw[kY];
+            tlatch_list[index].dir[kX] = tlatch_list[tnc].dir[kX];
+            tlatch_list[index].dir[kY] = tlatch_list[tnc].dir[kY];
+            tlatch_list[index].button  = tlatch_list[tnc].button;
+            tlatch_list[index].time    = tlatch_list[tnc].time;
+        }
+        ppla->tlatch_count = index;
+    }
+
+    // fix the network latch
+    ppla->net_latch = tmp_latch;
+}
+
+//--------------------------------------------------------------------------------------------
+void unbuffer_one_player_latch_set( player_t * ppla )
+{
+    chr_t * pchr;
+
+    if( NULL == ppla ) return;
+
+    if ( !INGAME_CHR( ppla->index ) ) return;
+    pchr = ChrList.lst + ppla->index;
+
+    pchr->latch.raw_valid = btrue;
+    pchr->latch.raw.x     = ppla->net_latch.raw[kX];
+    pchr->latch.raw.y     = ppla->net_latch.raw[kY];
+    pchr->latch.raw_b     = ppla->net_latch.b;
+
+    pchr->latch.trans_valid = btrue;
+    pchr->latch.trans.x     = ppla->net_latch.dir[kX];
+    pchr->latch.trans.y     = ppla->net_latch.dir[kY];
+    pchr->latch.trans.z     = 0.0f;
+    pchr->latch.trans_b     = ppla->net_latch.b;
+}
+
+//--------------------------------------------------------------------------------------------
+void unbuffer_one_player_latch_respawn( player_t * ppla )
+{
+    chr_t * pchr;
+
+    if( NULL == ppla ) return;
+
+    if ( !INGAME_CHR( ppla->index ) ) return;
+    pchr = ChrList.lst + ppla->index;
+
+    if ( cfg.difficulty < GAME_HARD && HAS_SOME_BITS( pchr->latch.trans_b, LATCHBUTTON_RESPAWN ) && PMod->respawnvalid )
+    {
+        if ( !pchr->alive && 0 == revivetimer )
+        {
+            respawn_character( ppla->index );
+            TeamStack.lst[pchr->team].leader = ppla->index;
+            ADD_BITS( pchr->ai.alert, ALERTIF_CLEANEDUP );
+
+            // cost some experience for doing this...  never lose a level
+            pchr->experience *= EXPKEEP;
+            if ( cfg.difficulty > GAME_EASY ) pchr->money *= EXPKEEP;
+        }
+
+        // remove all latches other than latchbutton_respawn
+        REMOVE_BITS( pchr->latch.trans_b, LATCHBUTTON_RESPAWN );
+    }
+}
+
+//--------------------------------------------------------------------------------------------
+void unbuffer_all_player_latches()
 {
     /// @details ZZ@> This function sets character latches based on player input to the host
 
     PLA_REF ipla;
-    CHR_REF character;
 
     // if ( PMod->rtscontrol ) { numplatimes--; return; }
-
-    // get the "network" latch for each valid player
+    
     numplatimes = 0;
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        Uint32 latch_count, tnc;
-        latch_t tmp_latch;
-        player_t * ppla;
-        time_latch_t * tlatch_list;
-
         if ( !PlaStack.lst[ipla].valid ) continue;
-        ppla = PlaStack.lst + ipla;
-        tlatch_list = ppla->tlatch;
 
-        // copy the latch from last time
-        tmp_latch = ppla->net_latch;
-
-        // what are the minimum and maximum indices that can be applies this update?
-        for ( tnc = 0; tnc < ppla->tlatch_count; tnc++ )
-        {
-            int dt;
-
-            dt = update_wld - tlatch_list[tnc].time;
-
-            if ( dt < 0 )
-                break;
-        }
-        latch_count = tnc;
-
-        if ( latch_count == 1 )
-        {
-            // there is just one valid latch
-            tmp_latch.x = tlatch_list[0].x;
-            tmp_latch.y = tlatch_list[0].y;
-            tmp_latch.b = tlatch_list[0].button;
-
-            //log_info( "<<%1.4f, %1.4f>, 0x%x>, Just one latch for %s\n", tmp_latch.x, tmp_latch.y, tmp_latch.b, ChrList.lst[ppla->index].Name );
-        }
-        else if ( latch_count > 1 )
-        {
-            int weight, weight_sum;
-            int dt;
-
-            // estimate the best latch value by weighting latches that are back in time
-            // by dt*dt. This estimates the effect of actually integrating the position over
-            // that much time without the hastle of actually integrating the trajectory.
-
-            // blank the current latch so that we can sum the latch values
-            latch_init( &( tmp_latch ) );
-
-            // apply the latch
-            weight_sum = 0;
-            for ( tnc = 0; tnc < latch_count; tnc++ )
-            {
-                dt = update_wld - tlatch_list[tnc].time;
-
-                weight      = ( dt + 1 ) * ( dt + 1 );
-
-                weight_sum  += weight;
-                tmp_latch.x += tlatch_list[tnc].x * weight;
-                tmp_latch.y += tlatch_list[tnc].y * weight;
-                SET_BIT( tmp_latch.b, tlatch_list[tnc].button );
-            }
-
-            numplatimes = MAX( numplatimes, latch_count );
-            if ( weight_sum > 0.0f )
-            {
-                tmp_latch.x /= ( float )weight_sum;
-                tmp_latch.y /= ( float )weight_sum;
-            }
-
-            //log_info( "<<%1.4f, %1.4f>, 0x%x>, %d, multiple latches for %s\n", tmp_latch.x, tmp_latch.y, tmp_latch.b, latch_count, ChrList.lst[ppla->index].Name );
-        }
-        else
-        {
-            // there are no valid latches
-            // do nothing. this lets the old value of the latch persist.
-            // this might be a decent guess as to what to do if a packet was
-            // dropped?
-            //log_info( "<<%1.4f, %1.4f>, 0x%x>, latch dead reckoning for %s\n", tmp_latch.x, tmp_latch.y, tmp_latch.b, ChrList.lst[ppla->index].Name );
-        }
-
-        if ( latch_count >= ppla->tlatch_count )
-        {
-            // we have emptied all of the latches
-            ppla->tlatch_count = 0;
-        }
-        else if ( latch_count > 0 )
-        {
-            int index;
-
-            // concatenate the list
-            for ( tnc = latch_count, index = 0; tnc < ppla->tlatch_count; tnc++, index++ )
-            {
-                tlatch_list[index].x      = tlatch_list[tnc].x;
-                tlatch_list[index].y      = tlatch_list[tnc].y;
-                tlatch_list[index].button = tlatch_list[tnc].button;
-                tlatch_list[index].time   = tlatch_list[tnc].time;
-            }
-            ppla->tlatch_count = index;
-        }
-
-        // fix the network latch
-        ppla->net_latch = tmp_latch;
+        unbuffer_one_player_latch_network( PlaStack.lst + ipla );
     }
 
     // set the player latch
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        chr_t * pchr;
-        player_t * ppla;
-
         if ( !PlaStack.lst[ipla].valid ) continue;
-        ppla = PlaStack.lst + ipla;
 
-        character = PlaStack.lst[ipla].index;
-        if ( !INGAME_CHR( character ) ) continue;
-        pchr = ChrList.lst + character;
-
-        pchr->latch = ppla->net_latch;
+        unbuffer_one_player_latch_set( PlaStack.lst + ipla );
     }
 
     // Let players respawn
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        chr_t * pchr;
-        player_t * ppla;
-
         if ( !PlaStack.lst[ipla].valid ) continue;
-        ppla = PlaStack.lst + ipla;
 
-        character = PlaStack.lst[ipla].index;
-        if ( !INGAME_CHR( character ) ) continue;
-        pchr = ChrList.lst + character;
-
-        if ( cfg.difficulty < GAME_HARD && HAS_SOME_BITS( pchr->latch.b, LATCHBUTTON_RESPAWN ) && PMod->respawnvalid )
-        {
-            if ( !pchr->alive && 0 == revivetimer )
-            {
-                respawn_character( character );
-                TeamStack.lst[pchr->team].leader = character;
-                SET_BIT( pchr->ai.alert, ALERTIF_CLEANEDUP );
-
-                // cost some experience for doing this...  never lose a level
-                pchr->experience *= EXPKEEP;
-                if ( cfg.difficulty > GAME_EASY ) pchr->money *= EXPKEEP;
-            }
-
-            // remove all latches other than latchbutton_respawn
-            UNSET_BIT( pchr->latch.b, LATCHBUTTON_RESPAWN );
-        }
+        unbuffer_one_player_latch_respawn( PlaStack.lst + ipla );
     }
 }
 
@@ -1928,7 +1976,8 @@ int sv_hostGame()
 /*void turn_on_service( int service )
 {
     /// ZZ@> This function turns on a network service ( IPX, TCP, serial, modem )
-}*/
+}
+*/
 
 //--------------------------------------------------------------------------------------------
 int  net_pendingFileTransfers()
@@ -2108,10 +2157,12 @@ void tlatch_ary_init( time_latch_t ary[], size_t len )
 
     for ( cnt = 0; cnt < len; cnt++ )
     {
-        ary[cnt].x      = 0;
-        ary[cnt].y      = 0;
-        ary[cnt].button = 0;
-        ary[cnt].time   = ( Uint32 )( ~0 );
+        ary[cnt].raw[kX] = 0;
+        ary[cnt].raw[kY] = 0;
+        ary[cnt].dir[kX] = 0;
+        ary[cnt].dir[kY] = 0;
+        ary[cnt].button  = 0;
+        ary[cnt].time    = ( Uint32 )( ~0 );
     }
 }
 
@@ -2138,16 +2189,16 @@ void player_init( player_t * ppla )
     input_device_init( &( ppla->device ) );
 
     // initialize the latches
-    latch_init( &( ppla->local_latch ) );
-    latch_init( &( ppla->net_latch ) );
+    latch_input_init( &( ppla->local_latch ) );
+    latch_input_init( &( ppla->net_latch ) );
 
     // initialize the tlatch array
     tlatch_ary_init( ppla->tlatch, MAXLAG );
 }
 
 //--------------------------------------------------------------------------------------------
-// Sustain old movements to ease mouse play
-void input_device_add_latch( input_device_t * pdevice, float newx, float newy )
+// Sustain old movements to smooth play
+void input_device_add_latch( input_device_t * pdevice, latch_input_t latch )
 {
     float dist;
 
@@ -2155,16 +2206,28 @@ void input_device_add_latch( input_device_t * pdevice, float newx, float newy )
 
     pdevice->latch_old = pdevice->latch;
 
-    pdevice->latch.x = pdevice->latch.x * pdevice->sustain + newx * pdevice->cover;
-    pdevice->latch.y = pdevice->latch.y * pdevice->sustain + newy * pdevice->cover;
+    pdevice->latch.raw[kX] = pdevice->latch_old.raw[kX] * pdevice->sustain + latch.raw[kX] * pdevice->cover;
+    pdevice->latch.raw[kY] = pdevice->latch_old.raw[kY] * pdevice->sustain + latch.raw[kY] * pdevice->cover;
 
-    // make sure that the latch never overflows
-    dist = pdevice->latch.x * pdevice->latch.x + pdevice->latch.y * pdevice->latch.y;
+    dist = pdevice->latch.raw[kX] * pdevice->latch.raw[kX] + pdevice->latch.raw[kY] * pdevice->latch.raw[kY];
     if ( dist > 1.0f )
     {
         float scale = 1.0f / SQRT( dist );
 
-        pdevice->latch.x *= scale;
-        pdevice->latch.y *= scale;
+        pdevice->latch.raw[kX] *= scale;
+        pdevice->latch.raw[kY] *= scale;
+    }
+
+    pdevice->latch.dir[kX] = pdevice->latch_old.dir[kX] * pdevice->sustain + latch.dir[kX] * pdevice->cover;
+    pdevice->latch.dir[kY] = pdevice->latch_old.dir[kY] * pdevice->sustain + latch.dir[kY] * pdevice->cover;
+
+    // make sure that the latch never overflows
+    dist = pdevice->latch.dir[kX] * pdevice->latch.dir[kX] + pdevice->latch.dir[kY] * pdevice->latch.dir[kY];
+    if ( dist > 1.0f )
+    {
+        float scale = 1.0f / SQRT( dist );
+
+        pdevice->latch.dir[kX] *= scale;
+        pdevice->latch.dir[kY] *= scale;
     }
 }

@@ -4515,3 +4515,345 @@ done = find_target_in_block( x, y, chrx, chry, facing, onlyfriends, anyone, team
 
     return MAX_CHR;
 }
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t move_one_character_integrate_motion_attached( chr_bundle_t * pbdl )
+{
+    Uint32 chr_update;
+
+    chr_t * loc_pchr;
+
+    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return bfalse;
+
+    // alias some variables
+    loc_pchr = pbdl->chr_ptr;
+
+    // make a timer that is individual for each object
+    chr_update = loc_pchr->obj_base.guid + update_wld;
+
+    if (  0 == ( chr_update & 7 ) )
+    {
+        chr_update_safe( loc_pchr, btrue );
+    }
+
+    return btrue;
+}
+
+--------------------------------------------------------------------------------------------
+bool_t move_one_character_integrate_motion( chr_bundle_t * pbdl )
+{
+    /// @details BB@> Figure out the next position of the character.
+    ///    Include collisions with the mesh in this step.
+
+    CHR_REF  ichr;
+    ai_state_t * pai;
+
+    float   bumpdampen;
+    bool_t  needs_test, updated_2d;
+
+    fvec3_t tmp_pos;
+
+    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return bfalse;
+
+    if( ACTIVE_CHR(loc_pchr->attachedto) )
+    {
+        return move_one_character_integrate_motion_attached( loc_pchr );
+    }
+
+    tmp_pos = chr_get_pos( loc_pchr );
+
+    pai = &( loc_pchr->ai );
+    ichr = pai->index;
+
+    bumpdampen = CLIP( loc_pchr->phys.bumpdampen, 0.0f, 1.0f );
+    bumpdampen = ( bumpdampen + 1.0f ) / 2.0f;
+
+    // interaction with the mesh
+    //if ( ABS( loc_pchr->vel.z ) > 0.0f )
+    {
+        tmp_pos.z += loc_pchr->vel.z;
+        LOG_NAN( tmp_pos.z );
+        if ( tmp_pos.z < loc_pchr->enviro.grid_level )
+        {
+            loc_pchr->vel.z *= -loc_pchr->phys.bumpdampen;
+
+            if ( ABS( loc_pchr->vel.z ) < STOPBOUNCING )
+            {
+                loc_pchr->vel.z = 0.0f;
+                tmp_pos.z = loc_pchr->enviro.walk_level;
+            }
+            else
+            {
+                float diff = loc_pchr->enviro.walk_level - tmp_pos.z;
+                tmp_pos.z = loc_pchr->enviro.walk_level + diff;
+            }
+        }
+    }
+
+    // fixes to the z-position
+    if ( loc_pchr->is_flying_platform )
+    {
+        if ( tmp_pos.z < 0.0f ) tmp_pos.z = 0.0f;  // Don't fall in pits...
+    }
+
+    updated_2d = bfalse;
+    needs_test = bfalse;
+
+    // interaction with the grid flags
+    updated_2d = bfalse;
+    needs_test = bfalse;
+    //if ( fvec2_length_abs( loc_pchr->vel.v ) > 0.0f )
+    {
+        float old_x, old_y, new_x, new_y;
+
+        old_x = tmp_pos.x; LOG_NAN( old_x );
+        old_y = tmp_pos.y; LOG_NAN( old_y );
+
+        new_x = old_x + loc_pchr->vel.x; LOG_NAN( new_x );
+        new_y = old_y + loc_pchr->vel.y; LOG_NAN( new_y );
+
+        tmp_pos.x = new_x;
+        tmp_pos.y = new_y;
+
+        if ( !chr_test_wall( loc_pchr, tmp_pos.v ) )
+        {
+            updated_2d = btrue;
+        }
+        else
+        {
+            fvec2_t nrm;
+            float   pressure;
+            bool_t diff_function_called = bfalse;
+
+            chr_hit_wall( loc_pchr, tmp_pos.v, nrm.v, &pressure );
+
+            // how is the character hitting the wall?
+            if ( 0.0f != pressure )
+            {
+                bool_t         found_nrm  = bfalse;
+                bool_t         found_safe = bfalse;
+                fvec3_t        safe_pos   = ZERO_VECT3;
+
+                bool_t         found_diff = bfalse;
+                fvec2_t        diff       = ZERO_VECT2;
+
+                breadcrumb_t * bc         = NULL;
+
+                // try to get the correct "outward" pressure from nrm
+                if( !found_nrm && fvec2_length_abs(nrm.v) > 0.0f )
+                {
+                    found_nrm = btrue;
+                }
+
+                if( !found_diff && loc_pchr->safe_valid )
+                {
+                    if( !found_safe )
+                    {
+                        found_safe = btrue;
+                        safe_pos   = loc_pchr->safe_pos;
+                    }
+
+                    diff.x = loc_pchr->safe_pos.x - loc_pchr->pos.x;
+                    diff.y = loc_pchr->safe_pos.y - loc_pchr->pos.y;
+
+                    if( fvec2_length_abs(diff.v) > 0.0f )
+                    {
+                        found_diff = btrue;
+                    }
+                }
+
+                // try to get a diff from a breadcrumb
+                if( !found_diff )
+                {
+                    bc = chr_get_last_breadcrumb( loc_pchr );
+
+                    if( NULL != bc && bc->valid )
+                    {
+                        if( !found_safe )
+                        {
+                            found_safe = btrue;
+                            safe_pos   = loc_pchr->safe_pos;
+                        }
+
+                        diff.x = bc->pos.x - loc_pchr->pos.x;
+                        diff.y = bc->pos.y - loc_pchr->pos.y;
+
+                        if( fvec2_length_abs(diff.v) > 0.0f )
+                        {
+                            found_diff = btrue;
+                        }
+                    }
+                }
+
+                // try to get a normal from the mesh_get_diff() function
+                if( !found_nrm )
+                {
+                    fvec2_t diff;
+
+                    diff = chr_get_diff( loc_pchr, tmp_pos.v, pressure );
+                    diff_function_called = btrue;
+
+                    nrm.x = diff.x;
+                    nrm.y = diff.y;
+
+                    if( fvec2_length_abs(nrm.v) > 0.0f )
+                    {
+                        found_nrm = btrue;
+                    }
+                }
+
+                if( !found_diff )
+                {
+                    // try to get the diff from the character velocity
+                    diff.x = loc_pchr->vel.x;
+                    diff.y = loc_pchr->vel.y;
+
+                    // make sure that the diff is in the same direction as the velocity
+                    if( fvec2_dot_product(diff.v, nrm.v) < 0.0f  )
+                    {
+                        diff.x *= -1.0f;
+                        diff.y *= -1.0f;
+                    }
+
+                    if( fvec2_length_abs(diff.v) > 0.0f )
+                    {
+                        found_diff = btrue;
+                    }
+                }
+
+                if( !found_nrm )
+                {
+                    // After all of our best efforts, we can't generate a normal to the wall.
+                    // This can happen if the object is completely inside a wall,
+                    // (like if it got pushed in there) or if a passage closed around it.
+                    // Just teleport the character to a "safe" position.
+
+                    if( !found_safe && NULL == bc )
+                    {
+                        bc = chr_get_last_breadcrumb( loc_pchr );
+
+                        if( NULL != bc && bc->valid )
+                        {
+                            found_safe = btrue;
+                            safe_pos   = loc_pchr->safe_pos;
+                        }
+                    }
+
+                    if( !found_safe )
+                    {
+                        // the only safe position is the spawn point???
+                        found_safe = btrue;
+                        safe_pos = loc_pchr->pos_stt;
+                    }
+
+                    tmp_pos = safe_pos;
+                }
+                else if( found_diff && found_nrm )
+                {
+                    const float tile_fraction = 0.1f;
+                    float ftmp, dot, pressure_old, pressure_new;
+                    fvec3_t save_pos;
+                    float nrm2;
+
+                    fvec2_t v_perp = ZERO_VECT2;
+                    fvec2_t diff_perp = ZERO_VECT2;
+
+                    nrm2 = fvec2_dot_product( nrm.v, nrm.v );
+
+                    save_pos = tmp_pos;
+
+                    // make the diff point "out"
+                    dot = fvec2_dot_product( diff.v, nrm.v );
+                    if( dot < 0.0f )
+                    {
+                        diff.x *= -1.0f;
+                        diff.y *= -1.0f;
+                        dot    *= -1.0f;
+                    }
+
+                    // find the part of the diff that is parallel to the normal
+                    diff_perp.x = nrm.x * dot / nrm2;
+                    diff_perp.y = nrm.y * dot / nrm2;
+
+                    // normalize the diff_perp so that it is at most tile_fraction of a grid in any direction
+                    ftmp = MAX(ABS(diff_perp.x),ABS(diff_perp.y));
+                    if( ftmp > 0.0f )
+                    {
+                        diff_perp.x *= tile_fraction * GRID_SIZE / ftmp;
+                        diff_perp.y *= tile_fraction * GRID_SIZE / ftmp;
+                    }
+
+                    // try moving the character
+                    tmp_pos.x += diff_perp.x * pressure;
+                    tmp_pos.y += diff_perp.y * pressure;
+
+                    // determine whether the pressure is less at this location
+                    pressure_old = chr_get_mesh_pressure( loc_pchr, save_pos.v );
+                    pressure_new = chr_get_mesh_pressure( loc_pchr, tmp_pos.v );
+
+                    if( pressure_new < pressure_old )
+                    {
+                        // !!success!!
+                        needs_test = ( tmp_pos.x != save_pos.x ) || ( tmp_pos.y != save_pos.y );
+                    }
+                    else
+                    {
+                        // !!failure!! restore the saved position
+                        tmp_pos = save_pos;
+                    }
+
+                    dot = fvec2_dot_product( loc_pchr->vel.v, nrm.v );
+                    if( dot < 0.0f )
+                    {
+                        float bumpdampen;
+                        cap_t * pcap = chr_get_pcap( GET_REF_PCHR(loc_pchr) );
+
+                        bumpdampen = 0.0f;
+                        if( NULL == pcap )
+                        {
+                            bumpdampen = pcap->bumpdampen;
+                        }
+                        v_perp.x = nrm.x * dot / nrm2;
+                        v_perp.y = nrm.y * dot / nrm2;
+
+                        phys_data_accumulate_avel_index( loc_pphys,  - (1.0f + bumpdampen) * v_perp.x * pressure, kX );
+                        phys_data_accumulate_avel_index( loc_pphys,  - (1.0f + bumpdampen) * v_perp.y * pressure, kY );
+                    }
+                }
+            }
+        }
+    }
+
+    chr_set_pos( loc_pchr, tmp_pos.v );
+
+    // we need to test the validity of the current position every 8 frames or so,
+    // no matter what
+    if ( !needs_test )
+    {
+        // make a timer that is individual for each object
+        Uint32 chr_update = loc_pchr->obj_base.guid + update_wld;
+
+        needs_test = ( 0 == ( chr_update & 7 ) );
+    }
+
+    if ( needs_test || updated_2d )
+    {
+        chr_update_safe( loc_pchr, needs_test );
+    }
+
+    return btrue;
+}
+
+--------------------------------------------------------------------------------------------
+void resize_all_characters()
+{
+    /// @details ZZ@> This function makes the characters get bigger or smaller, depending
+    ///    on their fat_goto and fat_goto_time. Spellbooks do not resize
+
+    CHR_BEGIN_LOOP_ACTIVE( ichr, pchr )
+    {
+        resize_one_character( pchr );
+    }
+    CHR_END_LOOP();
+}

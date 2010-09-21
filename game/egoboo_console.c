@@ -357,7 +357,7 @@ SDL_bool egoboo_console_draw( egoboo_console_t * pcon )
 
         if ( CSTR_END != pcon->output_buffer[0] )
         {
-            int i;
+            signed rcnt;
 
             // grab the line offsets
             console_line_count = 0;
@@ -378,11 +378,12 @@ SDL_bool egoboo_console_draw( egoboo_console_t * pcon )
             }
 
             // draw the last output line and work backwards
-            for ( i = (( int )console_line_count ) - 1; i >= 0 && height > 0 ; i-- )
+            // this must be iterated with a signed variable or it fails horribly
+            for ( rcnt = (( int )console_line_count ) - 1; rcnt >= 0 && height > 0 ; rcnt-- )
             {
-                size_t len = MIN( 1023, console_line_lengths[i] );
+                size_t len = MIN( 1023, console_line_lengths[rcnt] );
 
-                strncpy( buffer, pcon->output_buffer + console_line_offsets[i], len );
+                strncpy( buffer, pcon->output_buffer + console_line_offsets[rcnt], len );
                 buffer[len] = CSTR_END;
 
                 fnt_getTextSize( pcon->pfont, buffer, &text_w, &text_h );
@@ -675,7 +676,7 @@ void init_scancodes()
     // do the basic translation
     for ( i = 0; i < SDLK_LAST; i++ )
     {
-        // SDL uses ascii values for it's virtual scancodes
+        // SDL uses ascii values for its virtual scancodes
         scancode_to_ascii[i] = i;
         if ( i < 255 )
         {
@@ -711,3 +712,4 @@ void init_scancodes()
     scancode_to_ascii_shift[SDLK_BACKSLASH]    = '|';
     scancode_to_ascii_shift[SDLK_SLASH]        = '?';
 }
+

@@ -41,8 +41,9 @@
 #include "egoboo_setup.h"
 #include "egoboo_fileutil.h"
 #include "egoboo_strutil.h"
-#include "egoboo_math.h"
 #include "egoboo.h"
+
+#include "egoboo_math.inl"
 
 #include "SDL_extensions.h"
 
@@ -171,7 +172,7 @@ void input_read_joystick( int which )
     int dead_zone = 0x8000 / 10;
     int i, button_count, x, y;
     device_joystick_t * pjoy;
-    if ( which + INPUT_DEVICE_JOY > input_device_count ) return;
+    if ( which < 0 || (Uint32)(which + INPUT_DEVICE_JOY) > input_device_count ) return;
     if ( !joy[which].on ) return;
 
     pjoy = joy + which;
@@ -205,7 +206,7 @@ void input_read_joystick( int which )
     pjoy->b = 0;
     for ( i = 0; i < button_count; i++ )
     {
-        SET_BIT( pjoy->b, pjoy->button[i] << i  );
+        ADD_BITS( pjoy->b, pjoy->button[i] << i  );
     }
 
     return;
@@ -262,7 +263,7 @@ void input_read()
             case SDL_VIDEORESIZE:
                 if ( SDL_VIDEORESIZE == evt.resize.type )
                 {
-                    // The video has been resized.
+                    // The video has been re-sized.
                     // If the game is active, some camera info mught need to be recalculated
                     // and possibly the auto-formatting for the menu system and the ui system
                     // The ui will handle its own issues.
@@ -461,3 +462,4 @@ bool_t cursor_wheel_event_pending()
 
     return cursor.wheel_event;
 }
+
