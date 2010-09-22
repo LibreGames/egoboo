@@ -151,13 +151,13 @@ void camera_make_matrix( camera_t * pcam )
 
     //--- pre-compute some camera vectors
     pcam->vfw = mat_getCamForward( pcam->mView );
-    pcam->vfw = fvec3_normalize( pcam->vfw.v );
+    fvec3_self_normalize( pcam->vfw.v );
 
     pcam->vup = mat_getCamUp( pcam->mView );
-    pcam->vup = fvec3_normalize( pcam->vup.v );
+    fvec3_self_normalize( pcam->vup.v );
 
     pcam->vrt = mat_getCamRight( pcam->mView );
-    pcam->vrt = fvec3_normalize( pcam->vrt.v );
+    fvec3_self_normalize( pcam->vrt.v );
 }
 
 //--------------------------------------------------------------------------------------------

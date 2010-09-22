@@ -1038,26 +1038,28 @@ bool_t oct_bb_intersection( oct_bb_t src1, oct_bb_t src2, oct_bb_t * pdst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t oct_bb_add_vector( oct_bb_t src, fvec3_t vec, oct_bb_t * pdst )
+bool_t oct_bb_add_vector( const oct_bb_t src, const fvec3_base_t vec, oct_bb_t * pdst )
 {
     /// @details BB@> shift the bounding box by the vector vec
 
     if ( NULL == pdst ) return bfalse;
 
-    pdst->mins[OCT_X]  = src.mins[OCT_X] + vec.x;
-    pdst->maxs[OCT_X]  = src.maxs[OCT_X] + vec.x;
+    if ( NULL == vec ) return btrue;
 
-    pdst->mins[OCT_Y]  = src.mins[OCT_Y] + vec.y;
-    pdst->maxs[OCT_Y]  = src.maxs[OCT_Y] + vec.y;
+    pdst->mins[OCT_X]  = src.mins[OCT_X] + vec[kX];
+    pdst->maxs[OCT_X]  = src.maxs[OCT_X] + vec[kX];
 
-    pdst->mins[OCT_XY] = src.mins[OCT_XY] + ( vec.x + vec.y );
-    pdst->maxs[OCT_XY] = src.maxs[OCT_XY] + ( vec.x + vec.y );
+    pdst->mins[OCT_Y]  = src.mins[OCT_Y] + vec[kY];
+    pdst->maxs[OCT_Y]  = src.maxs[OCT_Y] + vec[kY];
 
-    pdst->mins[OCT_YX] = src.mins[OCT_YX] + ( -vec.x + vec.y );
-    pdst->maxs[OCT_YX] = src.maxs[OCT_YX] + ( -vec.x + vec.y );
+    pdst->mins[OCT_XY] = src.mins[OCT_XY] + ( vec[kX] + vec[kY] );
+    pdst->maxs[OCT_XY] = src.maxs[OCT_XY] + ( vec[kX] + vec[kY] );
 
-    pdst->mins[OCT_Z]  = src.mins[OCT_Z] + vec.z;
-    pdst->maxs[OCT_Z]  = src.maxs[OCT_Z] + vec.z;
+    pdst->mins[OCT_YX] = src.mins[OCT_YX] + ( -vec[kX] + vec[kY] );
+    pdst->maxs[OCT_YX] = src.maxs[OCT_YX] + ( -vec[kX] + vec[kY] );
+
+    pdst->mins[OCT_Z]  = src.mins[OCT_Z] + vec[kZ];
+    pdst->maxs[OCT_Z]  = src.maxs[OCT_Z] + vec[kZ];
 
     return btrue;
 }

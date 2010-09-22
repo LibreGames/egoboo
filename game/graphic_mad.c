@@ -53,6 +53,8 @@ static void draw_one_grip( chr_instance_t * pinst, mad_t * pmad, int slot );
 static void chr_draw_grips( chr_t * pchr );
 static void chr_draw_attached_grip( chr_t * pchr );
 static void render_chr_bbox( chr_t * pchr );
+static void render_chr_grips( chr_t * pchr );
+static void render_chr_points( chr_t * pchr );
 
 static egoboo_rv chr_instance_update_vlst_cache( chr_instance_t * pinst, int vmax, int vmin, bool_t force, bool_t vertices_match, bool_t frames_match );
 
@@ -441,18 +443,14 @@ bool_t render_one_mad( const CHR_REF by_reference character, GLXvector4f tint, B
     }
 
 #if EGO_DEBUG && defined(DEBUG_CHR_BBOX)
+
     // don't draw the debug stuff for reflections
     if ( 0 == ( bits & CHR_REFLECT ) )
     {
         render_chr_bbox( pchr );
+        render_chr_grips( pchr );
+        //render_chr_points( pchr );
     }
-
-    // the grips of all objects
-    //chr_draw_attached_grip( pchr );
-
-    // draw all the vertices of an object
-    //GL_DEBUG( glPointSize( 5 ) );
-    //draw_points( pchr, 0, pro_get_pmad(pchr->inst.imad)->md2_data.vertex_lst );
 #endif
 
     return retval;
@@ -531,12 +529,12 @@ bool_t render_one_mad_ref( const CHR_REF by_reference ichr )
 //--------------------------------------------------------------------------------------------
 void render_chr_bbox( chr_t * pchr )
 {
-    PLA_REF ipla;
+    //PLA_REF ipla;
     bool_t render_player_platforms;
 
     if ( !ACTIVE_PCHR( pchr ) ) return;
 
-    render_player_platforms = pchr->platform;
+    render_player_platforms = bfalse; // pchr->platform;
     //for( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     //{
     //    CHR_REF ichr;
@@ -560,7 +558,7 @@ void render_chr_bbox( chr_t * pchr )
         {
             oct_bb_t bb;
 
-            oct_bb_add_vector( pchr->chr_min_cv, pchr->pos, &bb );
+            oct_bb_add_vector( pchr->chr_min_cv, pchr->pos.v, &bb );
 
             GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
             render_oct_bb( &bb, btrue, btrue );
@@ -568,11 +566,47 @@ void render_chr_bbox( chr_t * pchr )
         GL_DEBUG( glEnable )( GL_TEXTURE_2D );
     }
 
-    // the grips and vertrices of all objects
+    // the grips and vertices of all objects
     if ( cfg.dev_mode && SDLKEYDOWN( SDLK_F6 ) )
     {
         chr_draw_attached_grip( pchr );
 
+        // draw all the vertices of an object
+        //GL_DEBUG( glPointSize( 5 ) );
+        //draw_points( pchr, 0, pchr->inst.vrt_count );
+    }
+}
+
+//--------------------------------------------------------------------------------------------
+void render_chr_grips( chr_t * pchr )
+{
+    bool_t render_mount_grip;
+
+    if ( !ACTIVE_PCHR( pchr ) ) return;
+
+    render_mount_grip = pchr->ismount;
+
+    // draw the object's "saddle"  as a part of the graphics debug mode F7
+    if ( cfg.dev_mode && render_mount_grip )
+    {
+        draw_one_grip( &( pchr->inst ), chr_get_pmad( pchr->obj_base.index ), SLOT_LEFT );
+    }
+
+    // the grips and vertices of all objects
+    if ( cfg.dev_mode && SDLKEYDOWN( SDLK_F6 ) )
+    {
+        chr_draw_attached_grip( pchr );
+    }
+}
+//--------------------------------------------------------------------------------------------
+void render_chr_points( chr_t * pchr )
+{
+
+    if ( !ACTIVE_PCHR( pchr ) ) return;
+
+    // the grips and vertices of all objects
+    if ( cfg.dev_mode && SDLKEYDOWN( SDLK_F6 ) )
+    {
         // draw all the vertices of an object
         GL_DEBUG( glPointSize( 5 ) );
         draw_points( pchr, 0, pchr->inst.vrt_count );
@@ -715,7 +749,7 @@ void chr_draw_attached_grip( chr_t * pchr )
 
     if ( !ACTIVE_PCHR( pchr ) ) return;
 
-    if ( !INGAME_CHR( pchr->attachedto ) ) return;
+    if ( !DEFINED_CHR( pchr->attachedto ) ) return;
     pholder = ChrList.lst + pchr->attachedto;
 
     pholder_cap = pro_get_pcap( pholder->profile_ref );

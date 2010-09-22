@@ -190,7 +190,7 @@ bool_t oct_bb_intersection( oct_bb_t src1, oct_bb_t src2, oct_bb_t * pdst );
 int    oct_bb_to_points( oct_bb_t * pbmp, fvec4_t pos[], size_t pos_count );
 void   points_to_oct_bb( oct_bb_t * pbmp, fvec4_t pos[], size_t pos_count );
 
-bool_t oct_bb_add_vector( oct_bb_t src, fvec3_t vec, oct_bb_t * pdst );
+bool_t oct_bb_add_vector( const oct_bb_t src, const fvec3_base_t vec, oct_bb_t * pdst );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

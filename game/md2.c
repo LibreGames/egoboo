@@ -277,7 +277,7 @@ void md2_scale_model( MD2_Model_t * pmd2, float scale_x, float scale_y, float sc
             pframe->vertex_lst[tnc].nrm.y *= SGN( scale_y );
             pframe->vertex_lst[tnc].nrm.z *= SGN( scale_z );
 
-            pframe->vertex_lst[tnc].nrm = fvec3_normalize( pframe->vertex_lst[tnc].nrm.v );
+            fvec3_self_normalize( pframe->vertex_lst[tnc].nrm.v );
 
             oct_vec_ctor( opos, pframe->vertex_lst[tnc].pos );
 

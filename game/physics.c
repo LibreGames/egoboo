@@ -332,8 +332,8 @@ bool_t phys_intersect_oct_bb( oct_bb_t src1_orig, fvec3_t pos1, fvec3_t vel1, oc
         tmp_max = CLIP( *tmax, 0.0f, 1.0f );
 
         // shift the source bounding boxes to be centered on the given positions
-        oct_bb_add_vector( src1_orig, pos1, &src1 );
-        oct_bb_add_vector( src2_orig, pos2, &src2 );
+        oct_bb_add_vector( src1_orig, pos1.v, &src1 );
+        oct_bb_add_vector( src2_orig, pos2.v, &src2 );
 
         // determine the expanded collision volumes for both objects
         phys_expand_oct_bb( src1, vel1, tmp_min, tmp_max, &exp1 );
@@ -387,7 +387,7 @@ bool_t phys_expand_oct_bb( oct_bb_t src, fvec3_t vel, float tmin, float tmax, oc
         pos_min.z = vel.z * tmin;
 
         // adjust the bounding box to take in the position at the next step
-        if ( !oct_bb_add_vector( src, pos_min, &tmp_min ) ) return bfalse;
+        if ( !oct_bb_add_vector( src, pos_min.v, &tmp_min ) ) return bfalse;
     }
 
     // determine the bounding volume at t == tmax
@@ -404,7 +404,7 @@ bool_t phys_expand_oct_bb( oct_bb_t src, fvec3_t vel, float tmin, float tmax, oc
         pos_max.z = vel.z * tmax;
 
         // adjust the bounding box to take in the position at the next step
-        if ( !oct_bb_add_vector( src, pos_max, &tmp_max ) ) return bfalse;
+        if ( !oct_bb_add_vector( src, pos_max.v, &tmp_max ) ) return bfalse;
     }
 
     // determine bounding box for the range of times
@@ -429,7 +429,7 @@ bool_t phys_expand_chr_bb( chr_t * pchr, float tmin, float tmax, oct_bb_t * pdst
     tmp_oct1 = pchr->chr_max_cv;
 
     // add in the current position to the bounding volume
-    oct_bb_add_vector( tmp_oct1, pchr->pos, &tmp_oct2 );
+    oct_bb_add_vector( tmp_oct1, pchr->pos.v, &tmp_oct2 );
 
     // stretch the bounding volume to cover the path of the object
     return phys_expand_oct_bb( tmp_oct2, pchr->vel, tmin, tmax, pdst );
@@ -446,7 +446,10 @@ bool_t phys_expand_prt_bb( prt_t * pprt, float tmin, float tmax, oct_bb_t * pdst
     if ( !ACTIVE_PPRT( pprt ) ) return bfalse;
 
     // add in the current position to the bounding volume
-    oct_bb_add_vector( pprt->prt_cv, prt_get_pos(pprt), &tmp_oct );
+    {
+        fvec3_t _tmp_vec = prt_get_pos(pprt);
+        oct_bb_add_vector( pprt->prt_cv, _tmp_vec.v, &tmp_oct );
+    }
 
     // stretch the bounding volume to cover the path of the object
     return phys_expand_oct_bb( tmp_oct, pprt->vel, tmin, tmax, pdst );

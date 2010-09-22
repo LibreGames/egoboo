@@ -1079,9 +1079,9 @@ bool_t do_chr_mount_detection( const CHR_REF by_reference ichr_a, const CHR_REF 
 
     // determine the grip properties
     {
-        Uint16  grip_verts[4];
-        fvec4_t grip_cloud[8];
-        fvec3_t grip_vecs[3];
+        Uint16    grip_verts[4];
+        fvec3_t   grip_vecs[3];
+        oct_bb_t  tmp_cv;
 
         int vertex = ( int )(pmount_inst->vrt_count) - ( int )GRIP_LEFT;
         vertex = MAX( 0, vertex );
@@ -1102,15 +1102,6 @@ bool_t do_chr_mount_detection( const CHR_REF by_reference ichr_a, const CHR_REF 
         // Calculate grip point locations with linear interpolation and other silly things
         convert_grip_to_local_points( pmount, grip_verts, grip_points );
 
-        // correct the 4th component
-        for(cnt=0; cnt<GRIP_VERTS; cnt++)
-        {
-            grip_points[cnt].x *= 2.0f;
-            grip_points[cnt].y *= 2.0f;
-            grip_points[cnt].z *= 2.0f;
-            grip_points[cnt].w  = 1.0f;
-        }
-
         // Do the transform the vertices for the grip's "up" vector
         TransformVertices( &( pmount_inst->matrix ), grip_points, grip_nupoints, 4 );
 
@@ -1120,27 +1111,23 @@ bool_t do_chr_mount_detection( const CHR_REF by_reference ichr_a, const CHR_REF 
             grip_vecs[cnt] = fvec3_sub( grip_nupoints[cnt + 1].v, grip_nupoints[0].v );
         }
 
-        for( cnt = 0; cnt<8; cnt++ )
-        {
-            int   tnc;
-            float sgn_x, sgn_y, sgn_z;
-
-            sgn_x = (cnt & 1) ? 1.0f : -1.0f;
-            sgn_y = (cnt & 2) ? 1.0f : -1.0f;
-            sgn_z = (cnt & 4) ? 1.0f : -1.0f;
-
-            for( tnc = 0; tnc<3; tnc++ )
-            {
-                grip_cloud[cnt].v[tnc] = grip_nupoints[0].v[tnc] + sgn_x * grip_vecs[0].v[tnc] + sgn_y * grip_vecs[1].v[tnc] + sgn_z * grip_vecs[2].v[tnc];
-            }
-            grip_cloud[cnt].w = 1.0f;
-        }
-
         // grab the grip's "up" vector
         grip_up = fvec3_normalize( grip_vecs[2].v );
 
-        // estimate the "size" of the grip by the points used to make it
-        points_to_oct_bb( &grip_cv, grip_cloud, 8 );
+        // use a standard size for the grip
+        for( cnt = 0; cnt<OCT_COUNT; cnt++ )
+        {
+            tmp_cv.mins[cnt] = -15 * pmount->fat;
+            tmp_cv.maxs[cnt] =  15 * pmount->fat;
+        }
+
+        tmp_cv.mins[OCT_XY] *= SQRT_TWO;
+        tmp_cv.maxs[OCT_XY] *= SQRT_TWO;
+        tmp_cv.mins[OCT_YX] *= SQRT_TWO;
+        tmp_cv.maxs[OCT_YX] *= SQRT_TWO;
+
+        // add in the "origin" of the grip
+        oct_bb_add_vector( tmp_cv, grip_nupoints[0].v, &grip_cv);
     }
 
     // determine if the rider is falling on the grip
@@ -1283,14 +1270,14 @@ bool_t do_chr_platform_detection( const CHR_REF by_reference ichr_a, const CHR_R
     if ( platform_a )
     {
         oct_vec_ctor( opos_object, pchr_b->pos );
-        oct_bb_add_vector( pchr_a->chr_min_cv, pchr_a->pos, &platform_min_cv );
-        oct_bb_add_vector( pchr_a->chr_max_cv, pchr_a->pos, &platform_max_cv );
+        oct_bb_add_vector( pchr_a->chr_min_cv, pchr_a->pos.v, &platform_min_cv );
+        oct_bb_add_vector( pchr_a->chr_max_cv, pchr_a->pos.v, &platform_max_cv );
     }
     else if ( platform_b )
     {
         oct_vec_ctor( opos_object, pchr_a->pos );
-        oct_bb_add_vector( pchr_b->chr_min_cv, pchr_b->pos, &platform_min_cv );
-        oct_bb_add_vector( pchr_b->chr_max_cv, pchr_b->pos, &platform_max_cv );
+        oct_bb_add_vector( pchr_b->chr_min_cv, pchr_b->pos.v, &platform_min_cv );
+        oct_bb_add_vector( pchr_b->chr_max_cv, pchr_b->pos.v, &platform_max_cv );
     }
 
     // initialize the overlap depths
@@ -1390,8 +1377,8 @@ bool_t do_prt_platform_detection( const PRT_REF by_reference iprt_a, const CHR_R
     // The surface that the object will rest on is given by chr_min_cv.maxs[OCT_Z],
     // not chr_max_cv.maxs[OCT_Z] or chr_cv.maxs[OCT_Z]
     oct_vec_ctor( opos_object, pprt_a->pos );
-    oct_bb_add_vector( pchr_b->chr_min_cv, pchr_b->pos, &platform_min_cv );
-    oct_bb_add_vector( pchr_b->chr_max_cv, pchr_b->pos, &platform_max_cv );
+    oct_bb_add_vector( pchr_b->chr_min_cv, pchr_b->pos.v, &platform_min_cv );
+    oct_bb_add_vector( pchr_b->chr_max_cv, pchr_b->pos.v, &platform_max_cv );
 
     // initialize the overlap depths
     odepth[OCT_Z] = odepth[OCT_X] = odepth[OCT_Y] = odepth[OCT_XY] = odepth[OCT_YX] = 0.0f;
@@ -2251,8 +2238,8 @@ bool_t do_chr_chr_collision_interaction( CoNode_t * d, chr_bundle_t *pbdl_a, chr
         tmp_max = d->tmin + (d->tmax - d->tmin) * 0.1f;
 
         // shift the source bounding boxes to be centered on the given positions
-        oct_bb_add_vector( loc_pchr_a->chr_min_cv, loc_pchr_a->pos, &src1 );
-        oct_bb_add_vector( loc_pchr_b->chr_min_cv, loc_pchr_b->pos, &src2 );
+        oct_bb_add_vector( loc_pchr_a->chr_min_cv, loc_pchr_a->pos.v, &src1 );
+        oct_bb_add_vector( loc_pchr_b->chr_min_cv, loc_pchr_b->pos.v, &src2 );
 
         // determine the expanded collision volumes for both objects
         phys_expand_oct_bb( src1, loc_pchr_a->vel, tmp_min, tmp_max, &exp1 );
