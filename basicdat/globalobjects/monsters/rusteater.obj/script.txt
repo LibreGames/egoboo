@@ -5,6 +5,37 @@ IfSpawned
   SetState
 
 //------------------------------------------------------------------------------
+//Content > 0 means we got poisoned by eating a kursed item
+tmpx = selfcontent
+tmpy = 0
+IfXIsMoreThanY
+  tmpargument = selfcontent - 1
+  SetContent
+  
+  //Deal 4 posion damage to ourselves each update
+  SetTargetToOwner
+  tmpargument = 4
+  tmpdistance = DAMAGEEVIL
+  TargetDamageSelf
+  HealSelf
+  
+  //Make us green
+  tmpargument = 2
+  SetGreenShift
+  tmpargument = -2
+  SetRedShift
+  SetBlueShift
+  
+  //End poison effect?
+  tmpargument = 0
+  IfContentIs
+    tmpargument = 2
+    SetGreenShift
+    tmpargument = -2
+    SetRedShift
+    SetBlueShift
+
+//------------------------------------------------------------------------------
 // ZZ> Shhh.... I'm sleeping
 IfStateIs8
   IfTimeOut
@@ -59,6 +90,18 @@ IfScoredAHit
       IfTargetHasVulnerabilityID
         tmpargument = 3
         SendMessage
+        
+        //We get poisoned if we eat kursed stuff
+        IfTargetIsKursed
+          tmpargument = 1500            //30 seconds
+          SetContent
+          tmpargument = 4
+          SendMessage
+          SetOldTarget                  //Make them the poisoner
+          SetTargetToWhoeverWasHit
+          SetOwnerToTarget
+          SetTargetToOldTarget
+          
         PoofTarget
         tmpx = selfx
         tmpy = selfy
@@ -66,12 +109,24 @@ IfScoredAHit
         tmpargument = 5
         SpawnExactParticle
       Else
-        SetTargetToOldTarget
+        SetTargetToWhoeverWasHit
         SetTargetToTargetRightHand
           tmpargument = [RUST]
           IfTargetHasVulnerabilityID
             tmpargument = 3
             SendMessage
+            
+            //We get poisoned if we eat kursed stuff
+            IfTargetIsKursed
+              tmpargument = 1500            //30 seconds
+              SetContent
+              tmpargument = 4
+              SendMessage
+              SetOldTarget                  //Make them the poisoner
+              SetTargetToWhoeverWasHit
+              SetOwnerToTarget
+              SetTargetToOldTarget
+              
             PoofTarget
             tmpx = selfx
             tmpy = selfy
@@ -79,7 +134,7 @@ IfScoredAHit
             tmpargument = 5
             SpawnExactParticle
     Else
-      SetTargetToOldTarget
+      SetTargetToWhoeverWasHit
       SetTargetToTargetRightHand
         tmpargument = [RUST]
         IfTargetHasVulnerabilityID

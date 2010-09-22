@@ -10857,7 +10857,7 @@ bool_t pack_add_item( pack_t * ppack, CHR_REF item )
     // is the item even an item?
     if( !pitem->isitem )
     {
-        log_warning( "pack_add_item() - Trying to add a non-item %s to a pack.\n", pitem->obj_base._name );
+        log_debug( "pack_add_item() - Trying to add a non-item %s to a pack.\n", pitem->obj_base._name );
     }
 
     // add the item to the front of the pack's linked list

@@ -1,5 +1,7 @@
 Credits to Penguinflyer5234, Seth, Khaos89 and Octagon this release!
 Version 2.8.0b (08.09.2010)
+- New Feature: Another rewrite of the Physics engine!
+- Update: Rust Eaters now get sick if they eat Kursed items.
 - Update: Homing particles will now try to target riders instead of their mounts.
 - Update: There is now an option in the Audio Menu to disable the sound of all footsteps.
 - Update: Halved the mana cost for Book of Enchant and Book of Size.
@@ -9,6 +11,8 @@ Version 2.8.0b (08.09.2010)
 - Update: Various modules are now slightly darker than before.
 - Update: Money is easier to pick up now.
 - Update: Kite Shields now have a small chance to be Kursed.
+- Bugfix: A number of grammar and spelling fixes.
+- Bugfix: The Rune of Resist Elements can now properly be deactivated.
 - Bugfix: Fixed the local Setup file not being read properly.
 - Bugfix: Fixed quest progression not being saved properly.
 - Bugfix: Spellbooks can no longer be burned in shops! This fixes multiple exploits.
