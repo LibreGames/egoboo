@@ -863,34 +863,34 @@ int draw_one_xp_bar( int x, int y, Uint8 ticks )
     ticks = MIN( ticks, NUMTICK );
 
     gfx_enable_texturing();               // Enable texture mapping
-    GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+    GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
 
     // Draw the tab (always colored)
     oglx_texture_Bind( TxTexture_get_ptr(( TX_REF )TX_XP_BAR ) );
 
-    txrect.left   = 0;
-    txrect.right  = 32.00f / 128;
-    txrect.top    = XPTICK / 16;
-    txrect.bottom = XPTICK * 2 / 16;
+    txrect.left   = 0.0f;
+    txrect.right  = 32 / 128.0f;
+    txrect.top    = XPTICK / 16.0f;
+    txrect.bottom = XPTICK * 2.0f / 16.0f;
 
-    width = 16;
+    width  = 16;
     height = XPTICK;
 
     GL_DEBUG( glBegin )( GL_QUADS );
     {
         GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.bottom ); GL_DEBUG( glVertex2i )( x,         y + height );
         GL_DEBUG( glTexCoord2f )( txrect.right, txrect.bottom ); GL_DEBUG( glVertex2i )( x + width, y + height );
-        GL_DEBUG( glTexCoord2f )( txrect.right, txrect.top ); GL_DEBUG( glVertex2i )( x + width, y );
-        GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.top ); GL_DEBUG( glVertex2i )( x,         y );
+        GL_DEBUG( glTexCoord2f )( txrect.right, txrect.top    ); GL_DEBUG( glVertex2i )( x + width, y );
+        GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.top    ); GL_DEBUG( glVertex2i )( x,         y );
     }
     GL_DEBUG_END();
     x += 16;
 
     // Draw the filled ones
-    txrect.left   = 0;
-    txrect.right  = 32.00f / 128;
-    txrect.top    = XPTICK / 16;
-    txrect.bottom = XPTICK * 2 / 16;
+    txrect.left   = 0.0f;
+    txrect.right  = 32 / 128.0f;
+    txrect.top    = XPTICK / 16.0f;
+    txrect.bottom = XPTICK * 2.0f / 16.0f;
 
     width  = XPTICK;
     height = XPTICK;
@@ -902,19 +902,19 @@ int draw_one_xp_bar( int x, int y, Uint8 ticks )
         {
             GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.bottom ); GL_DEBUG( glVertex2i )(( cnt * width ) + x,         y + height );
             GL_DEBUG( glTexCoord2f )( txrect.right, txrect.bottom ); GL_DEBUG( glVertex2i )(( cnt * width ) + x + width, y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.right, txrect.top ); GL_DEBUG( glVertex2i )(( cnt * width ) + x + width, y );
-            GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.top ); GL_DEBUG( glVertex2i )(( cnt * width ) + x,         y );
+            GL_DEBUG( glTexCoord2f )( txrect.right, txrect.top    ); GL_DEBUG( glVertex2i )(( cnt * width ) + x + width, y );
+            GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.top    ); GL_DEBUG( glVertex2i )(( cnt * width ) + x,         y );
         }
         GL_DEBUG_END();
     }
 
     // Draw the remaining empty ones
-    txrect.left   = 0;
-    txrect.right  = 32.00f / 128;
-    txrect.top    = 0;
-    txrect.bottom = XPTICK / 16;
+    txrect.left   = 0.0f;
+    txrect.right  = 32 / 128.0f;
+    txrect.top    = 0.0f;
+    txrect.bottom = XPTICK / 16.0f;
 
-    width = XPTICK;
+    width  = XPTICK;
     height = XPTICK;
 
     for ( /*nothing*/; cnt < NUMTICK; cnt++ )
