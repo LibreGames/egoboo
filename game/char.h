@@ -651,6 +651,7 @@ void    drop_all_idsz( const CHR_REF by_reference character, IDSZ idsz_min, IDSZ
 bool_t  drop_all_items( const CHR_REF by_reference character );
 bool_t  character_grab_stuff( const CHR_REF by_reference chara, grip_offset_t grip, bool_t people );
 
+bool_t  export_one_character_quest_vfs( const char *szSaveName, const CHR_REF by_reference character );
 bool_t  export_one_character_name_vfs( const char *szSaveName, const CHR_REF by_reference character );
 bool_t  export_one_character_profile_vfs( const char *szSaveName, const CHR_REF by_reference character );
 bool_t  export_one_character_skin_vfs( const char *szSaveName, const CHR_REF by_reference character );

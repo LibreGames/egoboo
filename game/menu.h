@@ -91,9 +91,10 @@ enum e_menu_retvals
 /// data for caching the which players may be loaded
 struct s_load_player_info
 {
-    STRING name;              ///< the object's name
-    STRING dir;               ///< the object's full path
-    TX_REF tx_ref;            ///< the index of the texture
+    STRING name;					///< the object's name
+    STRING dir;						///< the object's full path
+    TX_REF tx_ref;					///< the index of the texture
+	quest_t quest_log[MAX_QUESTS];	///< all the quests this player has
 
     chop_definition_t chop;   ///< put this here so we can generate a name without loading an entire profile
 };

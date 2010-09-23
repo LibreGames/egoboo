@@ -2108,7 +2108,7 @@ CHR_REF pla_get_ichr( const PLA_REF by_reference iplayer )
 {
     player_t * pplayer;
 
-    if ( iplayer >= MAX_PLAYER || !PlaStack.lst[iplayer].valid ) return ( CHR_REF )MAX_CHR;
+    if ( !VALID_PLA( iplayer ) ) return ( CHR_REF )MAX_CHR;
     pplayer = PlaStack.lst + iplayer;
 
     if ( !INGAME_CHR( pplayer->index ) ) return ( CHR_REF )MAX_CHR;
@@ -2117,11 +2117,24 @@ CHR_REF pla_get_ichr( const PLA_REF by_reference iplayer )
 }
 
 //--------------------------------------------------------------------------------------------
+player_t* ichr_get_ppla( const CHR_REF by_reference ichr )
+{
+    PLA_REF iplayer;
+
+    if ( !INGAME_CHR( ichr ) ) return NULL;
+	iplayer = ChrList.lst[ichr].is_which_player;
+	
+    if ( !VALID_PLA( iplayer ) ) return NULL;
+    
+    return PlaStack.lst + iplayer;
+}
+
+//--------------------------------------------------------------------------------------------
 chr_t  * pla_get_pchr( const PLA_REF by_reference iplayer )
 {
     player_t * pplayer;
 
-    if ( iplayer >= MAX_PLAYER || !PlaStack.lst[iplayer].valid ) return NULL;
+    if ( !VALID_PLA( iplayer ) ) return NULL;
     pplayer = PlaStack.lst + iplayer;
 
     if ( !INGAME_CHR( pplayer->index ) ) return NULL;

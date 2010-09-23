@@ -24,10 +24,22 @@
 
 #include "egoboo_typedef.h"
 
-/// Quest system
-#define QUEST_BEATEN         -1
-#define QUEST_NONE           -2
 
-bool_t quest_add_idsz_vfs( const char *player_directory, const IDSZ idsz );
-int    quest_modify_idsz_vfs( const char *player_directory, const IDSZ idsz, const int adjustment );
-int    quest_check_vfs( const char *player_directory, const IDSZ idsz, bool_t import_chr );
+/// The definition of a quest
+struct s_quest
+{
+	IDSZ quest_id;
+	int	 quest_level;
+};
+typedef struct s_quest quest_t;
+
+/// Quest system
+#define QUEST_BEATEN         0x7FFFFF	//Same as MAX_INT
+#define QUEST_NONE           -1
+#define MAX_QUESTS			 64			//Max number of quests a player can have
+
+void quest_log_download( quest_t *pquest_log, const char* player_directory );
+bool_t quest_log_upload( quest_t *pquest_log, const char *player_directory );
+int quest_set_level( quest_t *pquest_log, IDSZ idsz, int adjustment );
+int quest_get_level( quest_t *pquest_log, IDSZ idsz );
+bool_t quest_add( quest_t *pquest_log, IDSZ idsz, int level );

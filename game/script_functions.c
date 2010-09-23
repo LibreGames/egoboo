@@ -6932,18 +6932,20 @@ Uint8 scr_get_TargetDamageType( script_state_t * pstate, ai_state_bundle_t * pbd
 Uint8 scr_AddQuest( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
 {
     // AddQuest( tmpargument = "quest idsz" )
-    /// @details ZF@> This function adds a quest idsz set in tmpargument into the Targets quest.txt
+    /// @details ZF@> This function adds a quest idsz set in tmpargument into the targets quest.txt to 0
 
     chr_t * pself_target;
+	PLA_REF ipla;
 
     SCRIPT_FUNCTION_BEGIN();
 
     SCRIPT_REQUIRE_TARGET( pself_target );
 
     returncode = bfalse;
-    if ( VALID_PLA( pself_target->is_which_player ) && quest_add_idsz_vfs( chr_get_dir_name( pself->target ), pstate->argument ) )
+	ipla = pself_target->is_which_player;
+    if ( VALID_PLA( ipla ) )
     {
-        returncode = btrue;
+		returncode = quest_add( PlaStack.lst[ipla].quest_log, pstate->argument, 0 );
     }
 
     SCRIPT_FUNCTION_END();
@@ -6952,32 +6954,28 @@ Uint8 scr_AddQuest( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
 //--------------------------------------------------------------------------------------------
 Uint8 scr_BeatQuestAllPlayers( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
 {
-    // IfBeatQuestAllPlayers()
+    // BeatQuestAllPlayers()
     /// @details ZF@> This function marks a IDSZ in the targets quest.txt as beaten
+	///               returns true if at least one quest got marked as beaten.
 
     PLA_REF ipla;
-    int beat_quest_count, player_count;
 
     SCRIPT_FUNCTION_BEGIN();
 
     returncode = bfalse;
-    for ( beat_quest_count = 0, player_count = 0, ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
         CHR_REF ichr;
         if ( !PlaStack.lst[ipla].valid ) continue;
 
-        player_count++;
-
         ichr = PlaStack.lst[ipla].index;
         if ( !INGAME_CHR( ichr ) ) continue;
-
-        if ( QUEST_BEATEN == quest_modify_idsz_vfs( chr_get_dir_name( ichr ), ( IDSZ )pstate->argument, QUEST_BEATEN ) )
+		
+		if ( QUEST_BEATEN == quest_set_level( PlaStack.lst[ipla].quest_log, ( IDSZ )pstate->argument, QUEST_BEATEN ) )
         {
-            beat_quest_count++;
+            returncode = btrue;
         }
     }
-
-    returncode = (beat_quest_count > 0 ) && (beat_quest_count >= player_count);
 
     SCRIPT_FUNCTION_END();
 }
@@ -6991,15 +6989,17 @@ Uint8 scr_TargetHasQuest( script_state_t * pstate, ai_state_bundle_t * pbdl_self
 
     int iTmp;
     chr_t * pself_target;
+	PLA_REF ipla;
 
     SCRIPT_FUNCTION_BEGIN();
 
     SCRIPT_REQUIRE_TARGET( pself_target );
 
     returncode = bfalse;
-    if ( VALID_PLA( pchr->is_which_player ) )
+	ipla = pchr->is_which_player;
+    if ( VALID_PLA( ipla ) )
     {
-        iTmp = quest_check_vfs( chr_get_dir_name( pself->target ), pstate->argument, btrue );
+		iTmp = quest_get_level( PlaStack.lst[ipla].quest_log, pstate->argument );
         if ( QUEST_NONE != iTmp )
         {
             pstate->distance = iTmp;
@@ -7018,18 +7018,17 @@ Uint8 scr_set_QuestLevel( script_state_t * pstate, ai_state_bundle_t * pbdl_self
     /// tmpargument specifies quest idsz (tmpargument) and the adjustment (tmpdistance, which may be negative)
 
     chr_t * pself_target;
-    int     new_quest_level;
+	PLA_REF ipla;
 
     SCRIPT_FUNCTION_BEGIN();
 
     SCRIPT_REQUIRE_TARGET( pself_target );
 
     returncode = bfalse;
-    if ( VALID_PLA( pself_target->is_which_player ) && pstate->distance != 0 )
+	ipla = pself_target->is_which_player;
+    if ( VALID_PLA( ipla ) && pstate->distance != 0 )
     {
-        new_quest_level = quest_modify_idsz_vfs( chr_get_dir_name( pself->target ), pstate->argument, pstate->distance );
-
-        returncode = (QUEST_NONE != new_quest_level);
+		returncode = QUEST_NONE != quest_set_level( PlaStack.lst[ipla].quest_log, pstate->argument, pstate->distance );
     }
 
     SCRIPT_FUNCTION_END();
@@ -7043,32 +7042,25 @@ Uint8 scr_AddQuestAllPlayers( script_state_t * pstate, ai_state_bundle_t * pbdl_
     /// The quest level Is set to tmpdistance if the level Is not already higher
 
     PLA_REF ipla;
-    int player_count, success_count;
+    int success_count;
 
     SCRIPT_FUNCTION_BEGIN();
 
     returncode = btrue;
-    for ( player_count = 0, success_count = 0, ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    for ( success_count = 0, ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
         CHR_REF ichr;
-        int new_quest_level;
 
         if ( !PlaStack.lst[ipla].valid ) continue;
 
         ichr = PlaStack.lst[ipla].index;
         if ( !INGAME_CHR( ichr ) ) continue;
 
-        player_count++;
-
-        // Try to add it if not already there
-        quest_add_idsz_vfs( chr_get_dir_name( ichr ) , pstate->argument );
-
-        // Not beaten yet, set level to tmpdistance
-        new_quest_level = quest_modify_idsz_vfs( chr_get_dir_name( ichr ), pstate->argument, pstate->distance );
-        if(QUEST_NONE != new_quest_level) success_count++;
+        // Try to add it or replace it if this one is higher
+		if( quest_add( PlaStack.lst[ipla].quest_log, pstate->argument, pstate->distance ) ) success_count++;
     }
 
-    returncode = (success_count > 0) && (success_count >= player_count);
+    returncode = success_count > 0;
 
     SCRIPT_FUNCTION_END();
 }

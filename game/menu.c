@@ -4579,16 +4579,16 @@ bool_t mnu_test_by_index( const MOD_REF by_reference modnumber, size_t buffer_le
 
     // First check if we are in developers mode or that the right module has been beaten before
     allowed = bfalse;
-    if ( cfg.dev_mode || module_has_idsz_vfs( pmod->base.reference, pmod->base.quest_idsz, buffer_len, buffer ) )
+	if ( cfg.dev_mode || module_has_idsz_vfs( pmod->base.reference, pmod->base.unlockquest.quest_id, buffer_len, buffer ) )
     {
         allowed = btrue;
     }
-    else
+	else if( pmod->base.importamount > 0 )
     {
-        // If that did not work, then check all selected players directories
+        // If that did not work, then check all selected players directories, but only if it isn't a starter module
         for ( cnt = 0; cnt < mnu_selectedPlayerCount; cnt++ )
         {
-            if ( pmod->base.quest_level <= quest_check_vfs( loadplayer[mnu_selectedPlayer[cnt]].dir, pmod->base.quest_idsz, bfalse ) )
+			if ( pmod->base.unlockquest.quest_level <= quest_get_level( loadplayer[mnu_selectedPlayer[cnt]].quest_log, pmod->base.unlockquest.quest_id ) ) //ZF> TODO: quest_check_vfs( loadplayer[mnu_selectedPlayer[cnt]].dir, pmod->base.unlockquest.quest_id ) )
             {
                 allowed = btrue;
                 break;
@@ -5221,6 +5221,9 @@ bool_t loadplayer_import_one( const char * foundfile )
 
     snprintf( filename, SDL_arraysize( filename ), "%s/icon%d", foundfile, skin );
     pinfo->tx_ref = TxTexture_load_one_vfs( filename, ( TX_REF )INVALID_TX_TEXTURE, INVALID_KEY );
+
+	// quest info
+	quest_log_download( pinfo->quest_log, pinfo->dir ); 
 
     // load the chop data
     snprintf( filename, SDL_arraysize( filename ), "%s/naming.txt", foundfile );

@@ -318,9 +318,9 @@ void export_one_character( const CHR_REF by_reference character, const CHR_REF b
     snprintf( tofile, SDL_arraysize( tofile ),   "%s/credits.txt", todir );
     vfs_copyFile( fromfile, tofile );
 
-    snprintf( fromfile, SDL_arraysize( fromfile ), "%s/quest.txt", fromdir );
-    snprintf( tofile, SDL_arraysize( tofile ),   "%s/quest.txt", todir );
-    vfs_copyFile( fromfile, tofile );
+    // Build the QUEST.TXT file
+    snprintf( tofile, SDL_arraysize( tofile ), "%s/quest.txt", todir );
+    export_one_character_quest_vfs( tofile, character );
 
     // Copy all of the particle files
     for ( tnc = 0; tnc < MAX_PIP_PER_PROFILE; tnc++ )
@@ -1495,7 +1495,7 @@ bool_t check_target( chr_t * psrc, const CHR_REF by_reference ichr_test, IDSZ id
     if( HAS_SOME_BITS( targeting_bits, TARGET_SKILL ) && !check_skills( ichr_test, idsz ) ) return bfalse;
 
     //Require player to have specific quest?
-    if ( HAS_SOME_BITS( targeting_bits, TARGET_QUEST ) && 0 <= quest_check_vfs( chr_get_dir_name( ichr_test ), idsz, btrue ) ) return bfalse;
+	if ( HAS_SOME_BITS( targeting_bits, TARGET_QUEST ) && QUEST_NONE != quest_get_level( PlaStack.lst[ptst->is_which_player].quest_log, idsz ) ) return bfalse;
 
     is_hated = team_hates_team( psrc->team, ptst->team );
     hates_me = team_hates_team( ptst->team, psrc->team );
@@ -3508,7 +3508,7 @@ void attach_all_particles()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t add_player( const CHR_REF by_reference character, const PLA_REF by_reference player, Uint32 device_bits )
+bool_t add_player( const CHR_REF by_reference character, const PLA_REF by_reference player, BIT_FIELD device_bits )
 {
     /// @details ZZ@> This function adds a player, returning bfalse if it fails, btrue otherwise
 
@@ -3521,6 +3521,8 @@ bool_t add_player( const CHR_REF by_reference character, const PLA_REF by_refere
         player_init( ppla );
 
         ChrList.lst[character].is_which_player = player;
+		quest_log_download( ppla->quest_log, chr_get_dir_name( character) );
+
         ppla->index           = character;
         ppla->valid           = btrue;
         ppla->device.bits     = device_bits;

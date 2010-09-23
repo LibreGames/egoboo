@@ -23,6 +23,7 @@
 /// @brief Skeleton for Egoboo networking
 
 #include "egoboo_typedef.h"
+#include "quest.h"
 
 //--------------------------------------------------------------------------------------------
 // Network stuff
@@ -111,6 +112,9 @@ struct s_player
     /// Local latch, set by set_one_player_latch(), read by sv_talkToRemotes()
     latch_input_t           local_latch;
 
+	// quest log for this player
+	quest_t		   quest_log[MAX_QUESTS];		  ///< lists all the characters quests
+
     // Timed latches
     Uint32                  tlatch_count;
     time_latch_t            tlatch[MAXLAG];
@@ -134,6 +138,7 @@ void           player_init( player_t * ppla );
 void           pla_reinit( player_t * ppla );
 CHR_REF        pla_get_ichr( const PLA_REF by_reference iplayer );
 struct s_chr * pla_get_pchr( const PLA_REF by_reference iplayer );
+player_t*	   ichr_get_ppla( const CHR_REF by_reference ichr );
 
 //--------------------------------------------------------------------------------------------
 

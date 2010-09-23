@@ -2293,6 +2293,20 @@ chr_t * resize_one_character( chr_t * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
+bool_t export_one_character_quest_vfs( const char *szSaveName, const CHR_REF by_reference character )
+{
+    /// @details ZZ@> This function makes the naming.txt file for the character
+	player_t *ppla;
+	
+	if ( !INGAME_CHR( character ) ) return bfalse;
+
+	ppla = ichr_get_ppla( character );
+	if( ppla == NULL ) return bfalse;
+
+    return quest_log_upload( ppla->quest_log, szSaveName );
+}
+
+//--------------------------------------------------------------------------------------------
 bool_t export_one_character_name_vfs( const char *szSaveName, const CHR_REF by_reference character )
 {
     /// @details ZZ@> This function makes the naming.txt file for the character
