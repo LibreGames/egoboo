@@ -4579,7 +4579,7 @@ bool_t mnu_test_by_index( const MOD_REF by_reference modnumber, size_t buffer_le
 
     // First check if we are in developers mode or that the right module has been beaten before
     allowed = bfalse;
-	if ( cfg.dev_mode || module_has_idsz_vfs( pmod->base.reference, pmod->base.unlockquest.quest_id, buffer_len, buffer ) )
+	if ( cfg.dev_mode || module_has_idsz_vfs( pmod->base.reference, pmod->base.unlockquest.id, buffer_len, buffer ) )
     {
         allowed = btrue;
     }
@@ -4588,7 +4588,7 @@ bool_t mnu_test_by_index( const MOD_REF by_reference modnumber, size_t buffer_le
         // If that did not work, then check all selected players directories, but only if it isn't a starter module
         for ( cnt = 0; cnt < mnu_selectedPlayerCount; cnt++ )
         {
-			if ( pmod->base.unlockquest.quest_level <= quest_get_level( loadplayer[mnu_selectedPlayer[cnt]].quest_log, pmod->base.unlockquest.quest_id ) )
+			if ( pmod->base.unlockquest.level <= quest_get_level( loadplayer[mnu_selectedPlayer[cnt]].quest_log, pmod->base.unlockquest.id ) )
             {
                 allowed = btrue;
                 break;

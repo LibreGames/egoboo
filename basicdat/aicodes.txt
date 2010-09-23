@@ -399,6 +399,8 @@ The symbol itself follows
 :F 383 IfTargetIsFacingSelf
 :F 384 DrawBillboard
 :F 385 SetTargetToBlahInPassage
+:F 386 IfLevelUp
+:F 387 GiveSkillToTarget
 :C 001 BLAHDEAD
 :C 002 BLAHENEMIES
 :C 004 BLAHFRIENDS

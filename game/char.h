@@ -472,21 +472,10 @@ struct s_chr
     chr_instance_t inst;                          ///< the render data
 
     // Skills
-    int           shieldproficiency;            ///< Can it use shields?
-    int           canjoust;
-    int           canuseadvancedweapons;
-    int           see_invisible_level;
-    int           canseekurse;
-    int           canusedivine;
-    int           canusearcane;
-    int           canusetech;
-    int           candisarm;
-    int           canbackstab;
-    int           canusepoison;
-    int           canread;
-    int           hascodeofconduct;
     int           darkvision_level;
-    int           darkvision_level_base;
+	int           see_kurse_level;
+	int           see_invisible_level;
+    IDSZ_node_t	  skills[MAX_IDSZ_MAP_SIZE];
 
     /// collision info
 

@@ -113,7 +113,7 @@ struct s_player
     latch_input_t           local_latch;
 
 	// quest log for this player
-	quest_t		   quest_log[MAX_QUESTS];		  ///< lists all the characters quests
+	IDSZ_node_t				quest_log[MAX_IDSZ_MAP_SIZE];		  ///< lists all the characters quests
 
     // Timed latches
     Uint32                  tlatch_count;

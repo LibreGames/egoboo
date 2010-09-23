@@ -23,6 +23,7 @@
 ///              I think we should also implement a similar system for skill IDSZ.
 
 #include "quest.h"
+#include "IDSZ_map.h"
 #include "log.h"
 
 #include "egoboo_fileutil.h"
@@ -30,56 +31,55 @@
 #include "egoboo.h"
 
 //--------------------------------------------------------------------------------------------
-//"private" functions
-quest_t* _quest_find( quest_t *pquest_log, IDSZ idsz );
-
-
-//--------------------------------------------------------------------------------------------
-void quest_log_download_vfs( quest_t *pquest_log, const char* player_directory )
+void quest_log_download_vfs( IDSZ_node_t *pquest_log, const char* player_directory )
 {
 	/// @details ZF@> Reads a quest.txt for a player and turns it into a data structure
 	///				  we can use. If the file isn't found, the quest log will be initialized as empty.
-	int quest_cnt = 0;
     vfs_FILE *fileread;
     STRING newloadname;
+
+	if( pquest_log == NULL ) return;
 
 	// Figure out the file path
 	snprintf( newloadname, SDL_arraysize( newloadname ), "%s/quest.txt", player_directory );
     fileread = vfs_openRead( newloadname );
+
+	idsz_map_init( pquest_log );
 
     if ( NULL != fileread )
 	{
 		// Load each IDSZ
 		while ( goto_colon( NULL, fileread, btrue ) )
 		{
-			if( quest_cnt + 1 == MAX_QUESTS )
+			bool_t success;
+			IDSZ idsz = fget_idsz( fileread );
+			int level = fget_int( fileread );
+
+			//Try to add a single quest to the map
+			success = idsz_map_add( pquest_log, idsz, level );
+			
+			//Stop here if it failed
+			if( !success )
 			{
-				log_warning("No more room for more quests. Consider increasing MAX_QUESTS (currently %i)", MAX_QUESTS);
+				log_warning("Unable to load all quests. (%s)", newloadname);
 				break;
 			}
-
-			//Load a single quest
-			pquest_log[quest_cnt].quest_id = fget_idsz( fileread );
-			pquest_log[quest_cnt].quest_level = fget_int( fileread );
-
-			quest_cnt++;
 		}
 
 		// Close up after we are done with it
 		vfs_close( fileread );
 	}
-
-	// Terminate the end of the list with a IDSZ_NONE quest
-	pquest_log[quest_cnt].quest_id		= IDSZ_NONE;
-	pquest_log[quest_cnt].quest_level	= QUEST_NONE;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t quest_log_upload_vfs( quest_t *pquest_log, const char *player_directory )
+bool_t quest_log_upload_vfs( IDSZ_node_t *pquest_log, const char *player_directory )
 {
 	/// @details ZF@> This exports quest_log data into a quest.txt file
     vfs_FILE *filewrite;
-	int i;
+	int iterator;
+	IDSZ_node_t *pquest;
+
+	if( pquest_log == NULL ) return bfalse;
 
 	//Write a new quest file with all the quests
 	filewrite = vfs_openWrite( player_directory );
@@ -93,13 +93,16 @@ bool_t quest_log_upload_vfs( quest_t *pquest_log, const char *player_directory )
     vfs_printf( filewrite, "// This file keeps order of all the quests for this player\n" );
     vfs_printf( filewrite, "// The number after the IDSZ shows the quest level. %i means it is completed.", QUEST_BEATEN );
 
-	for( i = 0; i < MAX_QUESTS; i++ )
+	//Iterate through every element in the IDSZ map
+	iterator = 0;
+	pquest = idsz_map_iterate( pquest_log, &iterator );
+	while( pquest != NULL )
 	{
-		// Reached the end of the quest list?
-		if( pquest_log[i].quest_id == IDSZ_NONE ) break;
-
 		// Write every single quest to the quest log
-		vfs_printf( filewrite, "\n:[%4s] %i", undo_idsz( pquest_log[i].quest_id ), pquest_log[i].quest_level );
+		vfs_printf( filewrite, "\n:[%4s] %i", undo_idsz( pquest->id ), pquest->level );
+
+		//Get the next element
+		pquest = idsz_map_iterate( pquest_log, &iterator );
 	}
 
 	// Clean up and return
@@ -108,99 +111,44 @@ bool_t quest_log_upload_vfs( quest_t *pquest_log, const char *player_directory )
 }
 
 //--------------------------------------------------------------------------------------------
-int quest_set_level( quest_t *pquest_log, IDSZ idsz, int adjustment )
+int quest_set_level( IDSZ_node_t *pquest_log, IDSZ idsz, int adjustment )
 {
 	///@details	ZF@> This function will modify the quest level for the specified quest with adjustment
 	///			and return the new quest_level total. It will return QUEST_NONE if the quest was 
 	///			not found or if it was already beaten.
-	quest_t *quest = _quest_find( pquest_log, idsz );
+	IDSZ_node_t *pquest = idsz_map_get( pquest_log, idsz );
 
 	// Could not find the quest
-	if( quest == NULL ) return QUEST_NONE;
+	if( pquest == NULL ) return QUEST_NONE;
 
 	// Don't modify quests that are already beaten
-	if( quest->quest_level == QUEST_BEATEN ) return QUEST_NONE;
+	if( pquest->level == QUEST_BEATEN ) return QUEST_NONE;
 	
 	// Modify the quest level for that specific quest
-	if( adjustment == QUEST_BEATEN ) quest->quest_level = QUEST_BEATEN;
-	else							 quest->quest_level = CLIP(quest->quest_level + adjustment, 0, QUEST_BEATEN);
+	if( adjustment == QUEST_BEATEN ) pquest->level = QUEST_BEATEN;
+	else							 pquest->level = CLIP(pquest->level + adjustment, 0, QUEST_BEATEN);
 
-	return quest->quest_level;
+	return pquest->level;
 }
 
 //--------------------------------------------------------------------------------------------
-int quest_get_level( quest_t *pquest_log, IDSZ idsz )
+int quest_get_level( IDSZ_node_t *pquest_log, IDSZ idsz )
 {
 	///@details ZF@> Returns the quest level for the specified quest IDSZ.
 	///				 It will return QUEST_NONE if the quest was not found or if the quest was beaten.
-	quest_t *pquest = _quest_find( pquest_log, idsz );
+	IDSZ_node_t *pquest = idsz_map_get( pquest_log, idsz );
 
-	if( pquest == NULL || pquest->quest_level == QUEST_BEATEN ) return QUEST_NONE;
+	if( pquest == NULL || pquest->level == QUEST_BEATEN ) return QUEST_NONE;
 	
-	return pquest->quest_level;
+	return pquest->level;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t quest_add( quest_t *pquest_log, IDSZ idsz, int level )
+bool_t quest_add( IDSZ_node_t *pquest_log, IDSZ idsz, int level )
 {
 	///@details ZF@> This adds a new quest to the quest log. If the quest is already in there, the higher quest
 	///				 level of either the old and new one will be kept.
-	int i;
+	if( level >= QUEST_BEATEN ) return bfalse;
 
-	if( idsz == IDSZ_NONE || level <= QUEST_NONE || level >= QUEST_BEATEN ) return bfalse;
-
-	for( i = 0; i < MAX_QUESTS; i++ )
-	{
-		//Trying to add a quest to a full quest list?
-		if( i + 1 == MAX_QUESTS )
-		{
-			log_warning("quest_add() - No more room for new quests (failed to add [%s]). Consider increasing MAX_QUESTS (currently %i)", MAX_QUESTS, undo_idsz(idsz) );
-			return bfalse;
-		}
-
-		// Overwrite existing quest
-		if( pquest_log[i].quest_id == idsz )
-		{
-			// But only if the new quest level is higher than the previous one
-			if( pquest_log[i].quest_level >= level ) return bfalse;
-
-			pquest_log[i].quest_level = level;
-			return btrue;
-		}
-
-		// Simply append the new quest to pquest_log if we reached the end of the list
-		if( pquest_log[i].quest_id == IDSZ_NONE )
-		{
-			// Move the list termination down one step
-			pquest_log[i+1].quest_id    = pquest_log[i].quest_id;
-			pquest_log[i+1].quest_level = pquest_log[i].quest_level;
-
-			//Add the new quest
-			pquest_log[i].quest_id = idsz;
-			pquest_log[i].quest_level = level;
-			return btrue;
-		}
-	}
-
-	return bfalse;
-}
-
-//--------------------------------------------------------------------------------------------
-quest_t* _quest_find( quest_t *pquest_log, IDSZ idsz )
-{
-	///@details ZF@> Returns a pointer to the quest_t if it was found in the pquest_log or NULL if it wasn't found
-	int i;
-
-	if( IDSZ_NONE == idsz || pquest_log == NULL )	return NULL;
-
-	for( i = 0; i < MAX_QUESTS; i++)
-	{
-		//Reached the end of the list without finding the quest
-		if ( pquest_log[i].quest_id == IDSZ_NONE )	return NULL;
-		
-		//Did we find the quest?
-		if ( pquest_log[i].quest_id == idsz ) return &pquest_log[i];
-	}
-
-	return NULL;
+	return idsz_map_add( pquest_log, idsz, level );
 }

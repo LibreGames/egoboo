@@ -2068,6 +2068,43 @@ DrawBillboard
     tmpargument = 8         //Message 8
     tmpturn = WHITE         //Message color
     DrawBillboard
+--------------------------------------------------------------------------------
+SetTargetToBlahInPassage
+    // This function sets the target to whatever object with the specified bits
+    // in tmpdistance is blocking the given passage. This function lets passage rectangles be used as event triggers
+   	// Note that this function also trigges if the character itself (passage owner) is in the passage.
+
+    IfTimeOut
+      tmpargument = 50    //Check once every second
+      SetTime
+      
+      tmpargument = passage                                 //Which passage ID
+      tmpdistance = BLAHFRIENDS + BLAHENEMIES + BLAHQUEST   //Anyone with the quest
+      tmpturn = [MAIN]                                      //Which quest IDSZ to look for
+      SetTargetToBlahInPassage
+        OpenPassage
+      Else
+        ClosePassage
+--------------------------------------------------------------------------------
+IfLevelUp
+  //This function proceeds if the character gained a level this update
+  IfLevelUp
+    tmpargument = targetmaxlife
+    HealSelf
+--------------------------------------------------------------------------------
+GiveSkillToTarget
+  //This function permanently gives the target character a skill specified in tmpargument
+  //The skill level is set to tmpdistance. This function will improve existing skills if
+  //they already have the skill specified in tmpargument.
+  IfLevelUp
+    tmpx = selflevel
+    tmpy = 1              //Level 2 character
+    IfXIsEqualToY
+      SetTargetToSelf
+      tmpargument = [DARK]
+      tmpdistance = 4
+      GiveSkillToTarget   //Permanently gain level 4 darkvision
+--------------------------------------------------------------------------------
 
 CONSTANTS
 -------------------------------------------------------------------------------- 

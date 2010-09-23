@@ -6880,8 +6880,8 @@ Uint8 scr_Backstabbed( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    returncode = bfalse;
-    if ( !pchr->hascodeofconduct && HAS_SOME_BITS( pself->alert, ALERTIF_ATTACKED ) )
+    returncode = bfalse; 
+    if ( HAS_SOME_BITS( pself->alert, ALERTIF_ATTACKED ) )
     {
         if ( pself->directionlast >= ATK_BEHIND - 8192 && pself->directionlast < ATK_BEHIND + 8192 )
         {
@@ -7517,7 +7517,7 @@ Uint8 scr_TargetCanSeeKurses( script_state_t * pstate, ai_state_bundle_t * pbdl_
 
     SCRIPT_REQUIRE_TARGET( pself_target );
 
-    returncode = pself_target->canseekurse;
+	returncode = pself_target->see_kurse_level != 0;
 
     SCRIPT_FUNCTION_END();
 }
@@ -7785,10 +7785,12 @@ Uint8 scr_GiveSkillToTarget( script_state_t * pstate, ai_state_bundle_t * pbdl_s
 {
     // GiveSkillToTarget( tmpargument = "skill_IDSZ", tmpdistance = "skill_level" )
     /// @details ZF@> This function permanently gives the target character a skill
-    SCRIPT_FUNCTION_BEGIN();
+    chr_t *ptarget;
+	SCRIPT_FUNCTION_BEGIN();
 
-	//ZF> !!TODO!! Implement new dynamic skill system so that this won't be that much work to implement?
-	returncode = bfalse;
+	SCRIPT_REQUIRE_TARGET( ptarget );
+
+	returncode = idsz_map_add( ptarget->skills, pstate->argument, pstate->distance );
 
 	SCRIPT_FUNCTION_END();
 }

@@ -339,10 +339,11 @@ bool_t remove_enchant( const ENC_REF by_reference ienc, ENC_REF * enc_parent )
         if ( INGAME_CHR( itarget ) )
         {
             chr_t * ptarget = ChrList.lst + penc->target_ref;
+			bool_t cap_can_see_kurses = NULL != idsz_map_get( chr_get_pcap( itarget )->skills, MAKE_IDSZ('C', 'K','U','R') );
 
-            if ( peve->seekurse && !chr_get_pcap( itarget )->canseekurse )
+			if ( peve->seekurse && !cap_can_see_kurses )
             {
-                ptarget->canseekurse = bfalse;
+				ptarget->see_kurse_level = bfalse;
             }
         }
     }
@@ -883,7 +884,7 @@ enc_t * enc_config_do_init( enc_t * penc )
     // Allow them to see kurses?
     if ( peve->seekurse && NULL != ptarget )
     {
-        ptarget->canseekurse = btrue;
+		ptarget->see_kurse_level = btrue;
     }
 
     return penc;
@@ -1857,7 +1858,8 @@ ENC_REF cleanup_enchant_list( const ENC_REF by_reference ienc, ENC_REF * enc_par
         // break the loop. this will only happen if the list is messed up.
         EncList.lst[enc_now].nextenchant_ref = (ENC_REF) MAX_ENC;
 
-        EGOBOO_ASSERT( bfalse );
+		log_warning("cleanup_enchant_list() - The enchantment list is corrupt!\n");
+        //EGOBOO_ASSERT( bfalse );
     }
 
     return first_valid_enchant;

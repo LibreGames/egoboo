@@ -734,12 +734,12 @@ int update_game()
                 local_seeinvis_level = MAX( local_seeinvis_level, pchr->see_invisible_level );
             }
 
-            if ( pchr->canseekurse )
+			if ( pchr->see_kurse_level > 0 )
             {
                 local_seekurse = btrue;
             }
 
-            if ( pchr->darkvision_level )
+            if ( pchr->darkvision_level > 0 )
             {
                 local_seedark_level = MAX( local_seedark_level, pchr->darkvision_level );
             }
@@ -2472,7 +2472,7 @@ void show_magic_status( int statindex )
     // Enchantment status
     debug_printf( "~See Invisible: %s~~See Kurses: %s",
                   pchr->see_invisible_level ? "Yes" : "No",
-                  pchr->canseekurse ? "Yes" : "No" );
+                  pchr->see_kurse_level     ? "Yes" : "No" );
 
     debug_printf( "~Channel Life: %s~~Waterwalking: %s",
                   pchr->canchannel ? "Yes" : "No",
@@ -3565,7 +3565,7 @@ void let_all_characters_think()
 
         ai_state_bundle_t bdl_ai;
 
-        bool_t is_crushed, is_cleanedup, can_think;
+        bool_t is_crushed, is_cleanedup, gained_level, can_think;
 
         if( NULL == ai_state_bundle_set( &bdl_ai, pchr ) ) continue;
 
@@ -3576,21 +3576,25 @@ void let_all_characters_think()
         // check for actions that must always be handled
         is_cleanedup = HAS_SOME_BITS( pself->alert, ALERTIF_CLEANEDUP );
         is_crushed   = HAS_SOME_BITS( pself->alert, ALERTIF_CRUSHED );
+        gained_level = HAS_SOME_BITS( pself->alert, ALERTIF_LEVELUP );
 
         // let the script run sometimes even if the item is in your backpack
         can_think = !pchr->pack.is_packed || pcap->isequipment;
 
-        // only let dead/destroyed things think if they have been crushed/cleanedup
-        if (( pchr->alive && can_think ) || is_crushed || is_cleanedup )
+        // only let dead/destroyed things think if they have been crushed/cleanedup or gained a level
+        if (( pchr->alive && can_think ) || is_crushed || is_cleanedup || gained_level )
         {
             // Figure out alerts that weren't already set
             set_alerts( &bdl_ai );
 
             // Cleaned up characters shouldn't be alert to anything else
-            if ( is_cleanedup )  { pchr->ai.alert = ALERTIF_CLEANEDUP; /*pchr->ai.timer = update_wld + 1;*/ }
+            if ( is_cleanedup )  pchr->ai.alert = ALERTIF_CLEANEDUP;
 
             // Crushed characters shouldn't be alert to anything else
             if ( is_crushed )  { pself->alert = ALERTIF_CRUSHED; pself->timer = update_wld + 1; }
+
+			// Level up characters shouldn't be alert to anything else
+            if ( is_cleanedup )  pchr->ai.alert = ALERTIF_LEVELUP;
 
             scr_run_chr_script( &bdl_ai );
         }

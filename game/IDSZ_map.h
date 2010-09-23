@@ -19,19 +19,27 @@
 //*
 //********************************************************************************************
 
-/// @file quest.h
-/// @brief read/write/modify the quest.txt file
+/// @file IDSZ_map.h
+/// @brief 
 
 #include "egoboo_typedef.h"
-#include "IDSZ_map.h"
 
-/// Quest system
-#define QUEST_BEATEN         0x7FFFFFFF	//Same as MAX_INT
-#define QUEST_NONE           -1
+/// The definition of a single IDSZ element in a IDSZ map
+struct s_IDSZ_node
+{
+	IDSZ id;
+	int	 level;
+};
+typedef struct s_IDSZ_node IDSZ_node_t;
+
+//Constants
+#define IDSZ_NOT_FOUND           -1
+#define MAX_IDSZ_MAP_SIZE		 64
 
 // Public functions
-void quest_log_download_vfs( IDSZ_node_t *pquest_log, const char* player_directory );
-bool_t quest_log_upload_vfs( IDSZ_node_t *pquest_log, const char *player_directory );
-int quest_set_level( IDSZ_node_t *pquest_log, IDSZ idsz, int adjustment );
-int quest_get_level( IDSZ_node_t *pquest_log, IDSZ idsz );
-bool_t quest_add( IDSZ_node_t *pquest_log, IDSZ idsz, int level );
+IDSZ_node_t* idsz_map_get( IDSZ_node_t *pidsz_map, IDSZ idsz );
+bool_t idsz_map_add( IDSZ_node_t *pidsz_map, IDSZ idsz, int level );
+void idsz_map_init( IDSZ_node_t *pidsz_map );
+
+IDSZ_node_t* idsz_map_iterate( IDSZ_node_t *pidsz_map, int *iterator );
+void idsz_map_copy( IDSZ_node_t *pcopy_from, IDSZ_node_t *pcopy_to );

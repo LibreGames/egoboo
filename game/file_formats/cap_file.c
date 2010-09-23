@@ -74,8 +74,8 @@ cap_t * cap_init( cap_t * pcap )
     // More stuff I forgot
     pcap->stoppedby  = MPDFX_IMPASS;
 
-    // Skills
     pcap->spelleffect_type = NO_SKIN_OVERRIDE;
+	idsz_map_init( pcap->skills );
 
     return pcap;
 }
@@ -371,7 +371,6 @@ cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
     while ( goto_colon( NULL, fileread, btrue ) )
     {
         idsz = fget_idsz( fileread );
-
         if      ( idsz == MAKE_IDSZ( 'D', 'R', 'E', 'S' ) ) ADD_BITS( pcap->skindressy, 1 << fget_int( fileread ) );
         else if ( idsz == MAKE_IDSZ( 'G', 'O', 'L', 'D' ) ) pcap->money = fget_int( fileread );
         else if ( idsz == MAKE_IDSZ( 'S', 'T', 'U', 'K' ) ) pcap->resistbumpspawn = (0 != (1 - fget_int( fileread )));
@@ -384,7 +383,6 @@ cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
         else if ( idsz == MAKE_IDSZ( 'S', 'Q', 'U', 'A' ) ) pcap->bump_sizebig = pcap->bump_size * 2;
         else if ( idsz == MAKE_IDSZ( 'I', 'C', 'O', 'N' ) ) pcap->draw_icon = ( 0 != fget_int( fileread ) );
         else if ( idsz == MAKE_IDSZ( 'S', 'H', 'A', 'D' ) ) pcap->forceshadow = ( 0 != fget_int( fileread ) );
-        else if ( idsz == MAKE_IDSZ( 'C', 'K', 'U', 'R' ) ) pcap->canseekurse = fget_int( fileread );
         else if ( idsz == MAKE_IDSZ( 'S', 'K', 'I', 'N' ) ) pcap->skin_override = fget_int( fileread ) & 3;
         else if ( idsz == MAKE_IDSZ( 'C', 'O', 'N', 'T' ) ) pcap->content_override = fget_int( fileread );
         else if ( idsz == MAKE_IDSZ( 'S', 'T', 'A', 'T' ) ) pcap->state_override = fget_int( fileread );
@@ -402,21 +400,6 @@ cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
         else if ( idsz == MAKE_IDSZ( 'I', 'N', 'T', 'D' ) ) pcap->int_bonus = fget_float( fileread );
         else if ( idsz == MAKE_IDSZ( 'W', 'I', 'S', 'D' ) ) pcap->wis_bonus = fget_float( fileread );
         else if ( idsz == MAKE_IDSZ( 'D', 'E', 'X', 'D' ) ) pcap->dex_bonus = fget_float( fileread );
-
-        // Read Skills
-        else if ( idsz == MAKE_IDSZ( 'A', 'W', 'E', 'P' ) ) pcap->canuseadvancedweapons = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'S', 'H', 'P', 'R' ) ) pcap->shieldproficiency = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'J', 'O', 'U', 'S' ) ) pcap->canjoust = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'W', 'M', 'A', 'G' ) ) pcap->canusearcane = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'H', 'M', 'A', 'G' ) ) pcap->canusedivine = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'T', 'E', 'C', 'H' ) ) pcap->canusetech = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'D', 'I', 'S', 'A' ) ) pcap->candisarm = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'S', 'T', 'A', 'B' ) ) pcap->canbackstab = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'P', 'O', 'I', 'S' ) ) pcap->canusepoison = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'R', 'E', 'A', 'D' ) ) pcap->canread = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'C', 'O', 'D', 'E' ) ) pcap->hascodeofconduct = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'D', 'A', 'R', 'K' ) ) pcap->darkvision_level = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'B', 'L', 'O', 'C' ) ) pcap->block_rating = fget_int( fileread );
 
         // get some model customization
         else if ( idsz == MAKE_IDSZ( 'M', 'O', 'D', 'L' ) )
@@ -446,7 +429,17 @@ cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
                 }
             }
         }
+
+		//If it is none of the predefined IDSZ extensions then add it as a new skill
+		idsz_map_add( pcap->skills, idsz, fget_int( fileread ) );
     }
+
+	//@TODO: ZF> This skill is handled a bit different for now
+	{
+		IDSZ_node_t *pskill = idsz_map_get( pcap->skills, MAKE_IDSZ( 'B', 'L', 'O', 'C' ) );
+		if( pskill != NULL ) pcap->block_rating = pskill->level;
+	}
+
     vfs_close( fileread );
 
     //log_info( "load_one_character_profile_vfs() - loaded icap %s (%d)\n", pcap->classname, icap );
@@ -778,47 +771,21 @@ bool_t save_one_cap_file_vfs( const char * szSaveName, const char * szTemplateNa
     fput_expansion_float( filewrite, "", MAKE_IDSZ( 'M', 'A', 'N', 'A' ), UFP8_TO_FLOAT( pcap->mana_spawn ) );
 
     // Copy all skill expansions
-    if ( pcap->shieldproficiency > 0 )
-        fput_expansion( filewrite, "", MAKE_IDSZ( 'S', 'H', 'P', 'R' ), pcap->shieldproficiency );
+	{
+		IDSZ_node_t *pidsz;
+		int iterator;
 
-    if ( pcap->canuseadvancedweapons > 0 )
-        fput_expansion( filewrite, "", MAKE_IDSZ( 'A', 'W', 'E', 'P' ), pcap->canuseadvancedweapons );
+		iterator = 0;
+		pidsz = idsz_map_iterate( pcap->skills, &iterator );
+		while( pidsz != NULL )
+		{
+			//Write that skill into the file
+			fput_expansion( filewrite, "", pidsz->id, pidsz->level );
 
-    if ( pcap->canjoust > 0 )
-        fput_expansion( filewrite, "", MAKE_IDSZ( 'J', 'O', 'U', 'S' ), pcap->canjoust );
-
-    if ( pcap->candisarm > 0 )
-        fput_expansion( filewrite, "", MAKE_IDSZ( 'D', 'I', 'S', 'A' ), pcap->candisarm );
-
-    if ( pcap->canseekurse > 0 )
-        fput_expansion( filewrite, "", MAKE_IDSZ( 'C', 'K', 'U', 'R' ), pcap->canseekurse );
-
-    if ( pcap->canusepoison > 0 )
-        fput_expansion( filewrite, "", MAKE_IDSZ( 'P', 'O', 'I', 'S' ), pcap->canusepoison );
-
-    if ( pcap->canread > 0 )
-        fput_expansion( filewrite, "", MAKE_IDSZ( 'R', 'E', 'A', 'D' ), pcap->canread );
-
-    if ( pcap->canbackstab > 0 )
-        fput_expansion( filewrite, "", MAKE_IDSZ( 'S', 'T', 'A', 'B' ), pcap->canbackstab );
-
-    if ( pcap->canusedivine > 0 )
-        fput_expansion( filewrite, "", MAKE_IDSZ( 'H', 'M', 'A', 'G' ), pcap->canusedivine );
-
-    if ( pcap->canusearcane > 0 )
-        fput_expansion( filewrite, "", MAKE_IDSZ( 'W', 'M', 'A', 'G' ), pcap->canusearcane );
-
-    if ( pcap->canusetech > 0 )
-        fput_expansion( filewrite, "", MAKE_IDSZ( 'T', 'E', 'C', 'H' ), pcap->canusetech );
-
-    if ( pcap->hascodeofconduct > 0 )
-        fput_expansion( filewrite, "", MAKE_IDSZ( 'C', 'O', 'D', 'E' ), pcap->hascodeofconduct );
-
-    if ( pcap->darkvision_level > 0 )
-        fput_expansion( filewrite, "", MAKE_IDSZ( 'D', 'A', 'R', 'K' ), pcap->darkvision_level );
-
-    if ( pcap->block_rating > 0 )
-        fput_expansion( filewrite, "", MAKE_IDSZ( 'B', 'L', 'O', 'C' ), pcap->block_rating );
+			//Get the next IDSZ from the map
+			pidsz = idsz_map_iterate( pcap->skills, &iterator );
+		}
+	}
 
     // dump the rest of the template file
     template_flush( filetemp, filewrite );
