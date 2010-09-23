@@ -2100,6 +2100,7 @@ void do_level_up( const CHR_REF by_reference character )
             // do the level up
             pchr->experiencelevel++;
             xpneeded = pcap->experience_forlevel[curlevel];
+			ADD_BITS(pchr->ai.alert, ALERTIF_LEVELUP );
 
             // The character is ready to advance...
             if ( VALID_PLA( pchr->is_which_player ) )
@@ -2303,7 +2304,7 @@ bool_t export_one_character_quest_vfs( const char *szSaveName, const CHR_REF by_
 	ppla = ichr_get_ppla( character );
 	if( ppla == NULL ) return bfalse;
 
-    return quest_log_upload( ppla->quest_log, szSaveName );
+    return quest_log_upload_vfs( ppla->quest_log, szSaveName );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -5501,6 +5502,8 @@ chr_bundle_t * chr_do_latch_button( chr_bundle_t * pbdl )
 //--------------------------------------------------------------------------------------------
 bool_t chr_handle_madfx( chr_t * pchr )
 {
+	///@details This handles special commands an animation frame might execute, for example 
+	///         grabbing stuff or spawning attack particles.
     CHR_REF ichr;
     Uint32 framefx;
 
@@ -5686,7 +5689,7 @@ float set_character_animation_rate( chr_t * pchr )
     // get the rate based on the speed data in data.txt
     action = ACTION_DA;
     lip    = LIPDA;
-    if( ABS(speed) > 0.0f )
+    if( ABS(speed) > 1.0f )
     {
         int             anim_count;
         chr_anim_data_t anim_info[CHR_MOVEMENT_COUNT];
@@ -5729,8 +5732,15 @@ float set_character_animation_rate( chr_t * pchr )
 
         if( ACTION_WA != pmad->action_map[ACTION_WA] )
         {
-            // no specific walk animation exists
+            // no specific sneak animation exists
             anim_info[CHR_MOVEMENT_SNEAK].allowed = bfalse;
+
+			//ZF> small fix here, if there is no sneak animation, try to default to normal walk with reduced animation speed
+			if( HAS_SOME_BITS(pchr->movement_bits, CHR_MOVEMENT_BITS_SNEAK ) )
+			{
+				anim_info[CHR_MOVEMENT_WALK].allowed = btrue;
+				anim_info[CHR_MOVEMENT_WALK].speed *= 2;
+			}
         }
 
         if( ACTION_WB != pmad->action_map[ACTION_WB] )
@@ -5741,7 +5751,7 @@ float set_character_animation_rate( chr_t * pchr )
 
         if( ACTION_WC != pmad->action_map[ACTION_WC] )
         {
-            // no specific walk animation exists
+            // no specific run animation exists
             anim_info[CHR_MOVEMENT_RUN].allowed = bfalse;
         }
 

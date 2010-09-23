@@ -3027,7 +3027,7 @@ bool_t do_chr_prt_collision_damage( chr_t * pchr, prt_t * pprt, chr_prt_collsion
     // Do confuse effects
     if ( pdata->ppip->grogtime > 0 && pdata->pcap->canbegrogged )
     {
-        ADD_BITS( pchr->ai.alert, ALERTIF_GROGGED );
+        ADD_BITS( pchr->ai.alert, ALERTIF_CONFUSED );
         if ( pdata->ppip->grogtime > pchr->grogtime )
         {
             pchr->grogtime = MAX( 0, pchr->grogtime + pdata->ppip->grogtime );
@@ -3035,7 +3035,7 @@ bool_t do_chr_prt_collision_damage( chr_t * pchr, prt_t * pprt, chr_prt_collsion
     }
     if ( pdata->ppip->dazetime > 0 && pdata->pcap->canbedazed )
     {
-        ADD_BITS( pchr->ai.alert, ALERTIF_DAZED );
+        ADD_BITS( pchr->ai.alert, ALERTIF_CONFUSED );
         if ( pdata->ppip->dazetime > pchr->dazetime )
         {
             pchr->dazetime = MAX( 0, pchr->dazetime + pdata->ppip->dazetime );

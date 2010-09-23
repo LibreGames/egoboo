@@ -2551,29 +2551,14 @@ Uint8 scr_TooMuchBaggage( script_state_t * pstate, ai_state_bundle_t * pbdl_self
 }
 
 //--------------------------------------------------------------------------------------------
-Uint8 scr_Grogged( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
+Uint8 scr_Confused( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
 {
-    // IfGrogged()
-    /// @details ZZ@> This function proceeds if the character has been grogged ( a type of
-    /// confusion ) this update
+    // IfConfused() or IfGrogged() or IfDazed()
+    /// @details ZZ@> This function proceeds if the character has been either grogged or dazed this update
 
     SCRIPT_FUNCTION_BEGIN();
 
-    returncode = HAS_SOME_BITS( pself->alert, ALERTIF_GROGGED );
-
-    SCRIPT_FUNCTION_END();
-}
-
-//--------------------------------------------------------------------------------------------
-Uint8 scr_Dazed( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
-{
-    // IfDazed()
-    /// @details ZZ@> This function proceeds if the character has been dazed ( a type of
-    /// confusion ) this update
-
-    SCRIPT_FUNCTION_BEGIN();
-
-    returncode = HAS_SOME_BITS( pself->alert, ALERTIF_DAZED );
+    returncode = HAS_SOME_BITS( pself->alert, ALERTIF_CONFUSED );
 
     SCRIPT_FUNCTION_END();
 }
@@ -7741,9 +7726,10 @@ Uint8 scr_DrawBillboard( script_state_t * pstate, ai_state_bundle_t * pbdl_self 
 //--------------------------------------------------------------------------------------------
 Uint8 scr_set_TargetToBlahInPassage( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
 {
-    // SetTargetToBlahInPassage()
+    // SetTargetToBlahInPassage( tmpargument = "passage", tmpdistance = "targeting_bits", tmpturn = "idsz" )
     /// @details ZF@> This function sets the target to whatever object with the specified bits
     /// in tmpdistance is blocking the given passage. This function lets passage rectangles be used as event triggers
+	/// Note that this function also trigges if the character itself (passage owner) is in the passage.
 
     CHR_REF ichr;
 
@@ -7781,6 +7767,32 @@ Uint8 scr_TargetIsFacingSelf( script_state_t * pstate, ai_state_bundle_t * pbdl_
 
     SCRIPT_FUNCTION_END();
 }
+
+//--------------------------------------------------------------------------------------------
+Uint8 scr_LevelUp( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
+{
+    // IfLevelUp()
+    /// @details ZF@> This function proceeds if the character gained a new level this update
+    SCRIPT_FUNCTION_BEGIN();
+
+	returncode = HAS_SOME_BITS( pself->alert, ALERTIF_LEVELUP );
+
+	SCRIPT_FUNCTION_END();
+}
+
+//--------------------------------------------------------------------------------------------
+Uint8 scr_GiveSkillToTarget( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
+{
+    // GiveSkillToTarget( tmpargument = "skill_IDSZ", tmpdistance = "skill_level" )
+    /// @details ZF@> This function permanently gives the target character a skill
+    SCRIPT_FUNCTION_BEGIN();
+
+	//ZF> !!TODO!! Implement new dynamic skill system so that this won't be that much work to implement?
+	returncode = bfalse;
+
+	SCRIPT_FUNCTION_END();
+}
+
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

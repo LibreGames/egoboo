@@ -314,6 +314,7 @@ int action_which( char cTmp )
 
     switch ( toupper( cTmp ) )
     {
+		case 'W':								//ZF> Attack animation WALK is used for doing nothing (for example charging spells)
         case 'D': action = ACTION_DA; break;
         case 'U': action = ACTION_UA; break;
         case 'T': action = ACTION_TA; break;
@@ -325,8 +326,7 @@ int action_which( char cTmp )
         case 'F': action = ACTION_FA; break;
         case 'P': action = ACTION_PA; break;
         case 'Z': action = ACTION_ZA; break;
-            // case 'W': action = ACTION_WA; break;   //ZF> Can't do this, attack animation WALK is used for doing nothing (for example charging spells)
-        case 'H': action = ACTION_HA; break;
+		case 'H': action = ACTION_HA; break;
         case 'K': action = ACTION_KA; break;
         default:  action = ACTION_DA; break;
     }

@@ -9,14 +9,10 @@ MAJOR BUGS:
 - Menu interface bug in Linux see -> http://a.imageshack.us/img829/5305/ego11.png
 
 GENERAL BUGS:
-- Sneaking without a Sneak animation avalible makes the character do no animation at all.
 - Movement is a bit difficult after jumping.
-- When movement speed is low, move animations are twitchy.
-- You can no longer mount Hot Dogs.
 - The Missile spell did not spawn missiles in Adventurer Starter.
 - Seems to be a draw offset for shadows and reflections.
 - Picking up a torch makes the torch being held as if it was on the floor until you use it at least once.
-- XP bars no longer work.
 - Braziers tend to hurt nearby characters too easily.
 - Stalkers in Shadow Palace are not spawned.
 - Basically, Combat Blessing is extremely buggy. It sometimes sets the users life somewhere next to 0 (empty health bar), though it never kills the user itself. Also, it sometimes puts out torches while charging. Also, the divine light effect it casts is sometimes invisible and it sometimes makes grubs (and others? Haven't tested...) invulnerable to your attacks and you invulnerable to theirs (team change?) 

@@ -600,8 +600,8 @@ Uint8 scr_run_function( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
                 case FIFINWATER: returncode = scr_InWater( pstate, pbdl_ai ); break;
                 case FIFBORED: returncode = scr_Bored( pstate, pbdl_ai ); break;
                 case FIFTOOMUCHBAGGAGE: returncode = scr_TooMuchBaggage( pstate, pbdl_ai ); break;
-                case FIFGROGGED: returncode = scr_Grogged( pstate, pbdl_ai ); break;
-                case FIFDAZED: returncode = scr_Dazed( pstate, pbdl_ai ); break;
+                case FIFGROGGED: returncode = scr_Confused( pstate, pbdl_ai ); break;
+                case FIFDAZED: returncode = scr_Confused( pstate, pbdl_ai ); break;
                 case FIFTARGETHASSPECIALID: returncode = scr_TargetHasSpecialID( pstate, pbdl_ai ); break;
                 case FPRESSTARGETLATCHBUTTON: returncode = scr_PressTargetLatchButton( pstate, pbdl_ai ); break;
                 case FIFINVISIBLE: returncode = scr_Invisible( pstate, pbdl_ai ); break;
@@ -873,6 +873,9 @@ Uint8 scr_run_function( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
                 case FIFTARGETISFACINGSELF:  returncode = scr_TargetIsFacingSelf( pstate, pbdl_ai ); break;
                 case FDRAWBILLBOARD:         returncode = scr_DrawBillboard( pstate, pbdl_ai ); break;
                 case FSETTARGETTOFIRSTBLAHINPASSAGE: returncode = scr_set_TargetToBlahInPassage( pstate, pbdl_ai ); break;
+
+				case FIFLEVELUP:			returncode = scr_LevelUp( pstate, pbdl_ai ); break;
+                case FGIVESKILLTOTARGET:	returncode = scr_GiveSkillToTarget( pstate, pbdl_ai ); break;
 
                 // if none of the above, skip the line and log an error
                 default:

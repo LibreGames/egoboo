@@ -172,8 +172,7 @@ Uint8 scr_Changed( struct s_script_state * pstate, struct s_ai_state_bundle * pb
 Uint8 scr_InWater( struct s_script_state * pstate, struct s_ai_state_bundle * pbdl_self );
 Uint8 scr_Bored( struct s_script_state * pstate, struct s_ai_state_bundle * pbdl_self );
 Uint8 scr_TooMuchBaggage( struct s_script_state * pstate, struct s_ai_state_bundle * pbdl_self );
-Uint8 scr_Grogged( struct s_script_state * pstate, struct s_ai_state_bundle * pbdl_self );
-Uint8 scr_Dazed( struct s_script_state * pstate, struct s_ai_state_bundle * pbdl_self );
+Uint8 scr_Confused( struct s_script_state * pstate, struct s_ai_state_bundle * pbdl_self );
 Uint8 scr_TargetHasSpecialID( struct s_script_state * pstate, struct s_ai_state_bundle * pbdl_self );
 Uint8 scr_PressTargetLatchButton( struct s_script_state * pstate, struct s_ai_state_bundle * pbdl_self );
 Uint8 scr_Invisible( struct s_script_state * pstate, struct s_ai_state_bundle * pbdl_self );
@@ -442,3 +441,5 @@ Uint8 scr_SetTargetSize( struct s_script_state * pstate, struct s_ai_state_bundl
 Uint8 scr_DrawBillboard( struct s_script_state * pstate, struct s_ai_state_bundle * pbdl_self );
 Uint8 scr_set_TargetToBlahInPassage( struct s_script_state * pstate, struct s_ai_state_bundle * pbdl_self );
 Uint8 scr_TargetIsFacingSelf( struct s_script_state * pstate, struct s_ai_state_bundle * pbdl_self );
+Uint8 scr_LevelUp( struct s_script_state * pstate, struct s_ai_state_bundle * pbdl_self );
+Uint8 scr_GiveSkillToTarget( struct s_script_state * pstate, struct s_ai_state_bundle * pbdl_self );

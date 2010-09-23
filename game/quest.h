@@ -34,12 +34,13 @@ struct s_quest
 typedef struct s_quest quest_t;
 
 /// Quest system
-#define QUEST_BEATEN         0x7FFFFF	//Same as MAX_INT
+#define QUEST_BEATEN         0x7FFFFFFF	//Same as MAX_INT
 #define QUEST_NONE           -1
 #define MAX_QUESTS			 64			//Max number of quests a player can have
 
-void quest_log_download( quest_t *pquest_log, const char* player_directory );
-bool_t quest_log_upload( quest_t *pquest_log, const char *player_directory );
+// Public functions
+void quest_log_download_vfs( quest_t *pquest_log, const char* player_directory );
+bool_t quest_log_upload_vfs( quest_t *pquest_log, const char *player_directory );
 int quest_set_level( quest_t *pquest_log, IDSZ idsz, int adjustment );
 int quest_get_level( quest_t *pquest_log, IDSZ idsz );
 bool_t quest_add( quest_t *pquest_log, IDSZ idsz, int level );

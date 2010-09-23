@@ -3521,7 +3521,7 @@ bool_t add_player( const CHR_REF by_reference character, const PLA_REF by_refere
         player_init( ppla );
 
         ChrList.lst[character].is_which_player = player;
-		quest_log_download( ppla->quest_log, chr_get_dir_name( character) );
+		quest_log_download_vfs( ppla->quest_log, chr_get_dir_name( character) );
 
         ppla->index           = character;
         ppla->valid           = btrue;

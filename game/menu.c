@@ -4588,7 +4588,7 @@ bool_t mnu_test_by_index( const MOD_REF by_reference modnumber, size_t buffer_le
         // If that did not work, then check all selected players directories, but only if it isn't a starter module
         for ( cnt = 0; cnt < mnu_selectedPlayerCount; cnt++ )
         {
-			if ( pmod->base.unlockquest.quest_level <= quest_get_level( loadplayer[mnu_selectedPlayer[cnt]].quest_log, pmod->base.unlockquest.quest_id ) ) //ZF> TODO: quest_check_vfs( loadplayer[mnu_selectedPlayer[cnt]].dir, pmod->base.unlockquest.quest_id ) )
+			if ( pmod->base.unlockquest.quest_level <= quest_get_level( loadplayer[mnu_selectedPlayer[cnt]].quest_log, pmod->base.unlockquest.quest_id ) )
             {
                 allowed = btrue;
                 break;
@@ -5211,8 +5211,6 @@ bool_t loadplayer_import_one( const char * foundfile )
 
     pinfo = loadplayer + loadplayer_count;
 
-    snprintf( pinfo->dir, SDL_arraysize( pinfo->dir ), "%s", str_convert_slash_net(( char* )foundfile, strlen( foundfile ) ) );
-
     snprintf( filename, SDL_arraysize( filename ), "%s/skin.txt", foundfile );
     skin = read_skin_vfs( filename );
 
@@ -5223,7 +5221,8 @@ bool_t loadplayer_import_one( const char * foundfile )
     pinfo->tx_ref = TxTexture_load_one_vfs( filename, ( TX_REF )INVALID_TX_TEXTURE, INVALID_KEY );
 
 	// quest info
-	quest_log_download( pinfo->quest_log, pinfo->dir ); 
+    snprintf( pinfo->dir, SDL_arraysize( pinfo->dir ), "%s", str_convert_slash_net(( char* )foundfile, strlen( foundfile ) ) );
+	quest_log_download_vfs( pinfo->quest_log, pinfo->dir ); 
 
     // load the chop data
     snprintf( filename, SDL_arraysize( filename ), "%s/naming.txt", foundfile );
