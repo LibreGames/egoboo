@@ -434,11 +434,6 @@ cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
 		idsz_map_add( pcap->skills, idsz, fget_int( fileread ) );
     }
 
-	//@TODO: ZF> This skill is handled a bit different for now
-	{
-		IDSZ_node_t *pskill = idsz_map_get( pcap->skills, MAKE_IDSZ( 'B', 'L', 'O', 'C' ) );
-		if( pskill != NULL ) pcap->block_rating = pskill->level;
-	}
 
     vfs_close( fileread );
 

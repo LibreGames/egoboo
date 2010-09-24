@@ -479,8 +479,6 @@ Uint8 scr_AddWaypoint( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
     /// @details ZZ@> This function tells the character where to move next
 
     fvec3_t pos;
-    /* fvec3_t nrm;
-    float   pressure; */
 
     SCRIPT_FUNCTION_BEGIN();
 
@@ -981,9 +979,13 @@ Uint8 scr_TargetHasSkillID( script_state_t * pstate, ai_state_bundle_t * pbdl_se
     // IfTargetHasSkillID( tmpargument = "skill idsz" )
     /// @details ZZ@> This function proceeds if ID matches tmpargument
 
+	chr_t *pself_target;
+
     SCRIPT_FUNCTION_BEGIN();
 
-    returncode = ( 0 != check_skills( pself->target, ( IDSZ )pstate->argument ) );
+	SCRIPT_REQUIRE_TARGET( pself_target );
+
+    returncode = ( 0 != chr_get_skill( pself_target, ( IDSZ )pstate->argument ) );
 
     SCRIPT_FUNCTION_END();
 }
@@ -6738,14 +6740,10 @@ Uint8 scr_TargetHasNotFullMana( script_state_t * pstate, ai_state_bundle_t * pbd
 //--------------------------------------------------------------------------------------------
 Uint8 scr_EnableListenSkill( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
 {
-    // EnableListenSkill()
-    /// @details ZF@> This function increases range from which sound can be heard by 33%
+    /// @details ZF@> TODO: deprecated, replace this function with something else
 
-    SCRIPT_FUNCTION_BEGIN();
-
-    local_listening = btrue;
-
-    SCRIPT_FUNCTION_END();
+	log_warning( "Deprecated script function used (EnableListenSkill).\n" );
+	return bfalse;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -6875,19 +6873,24 @@ Uint8 scr_Backstabbed( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
     // IfBackstabbed()
     /// @details ZF@> Proceeds if HitFromBehind, target has [STAB] skill and damage dealt is physical
     /// automatically fails if attacker has a code of conduct
-
-    Uint16 sTmp = 0;
-
     SCRIPT_FUNCTION_BEGIN();
 
+	//Now check if it really was backstabbed
     returncode = bfalse; 
     if ( HAS_SOME_BITS( pself->alert, ALERTIF_ATTACKED ) )
     {
+		//Who is the dirty backstabber?
+		chr_t * pattacker = ChrList.lst + pself->attacklast;
+		if ( !ACTIVE_PCHR( pattacker ) ) return bfalse;
+
+		//Only if hit from behind
         if ( pself->directionlast >= ATK_BEHIND - 8192 && pself->directionlast < ATK_BEHIND + 8192 )
         {
-            if ( check_skills( pself->attacklast, MAKE_IDSZ( 'S', 'T', 'A', 'B' ) ) )
+			//And require the backstab skill
+            if ( chr_get_skill( pattacker, MAKE_IDSZ( 'S', 'T', 'A', 'B' ) ) )
             {
-                sTmp = pself->damagetypelast;
+				//Finally we require it to be physical damage!
+                Uint16 sTmp = sTmp = pself->damagetypelast;
                 if ( sTmp == DAMAGE_CRUSH || sTmp == DAMAGE_POKE || sTmp == DAMAGE_SLASH ) returncode = btrue;
             }
         }

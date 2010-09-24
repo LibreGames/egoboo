@@ -5205,6 +5205,9 @@ bool_t loadplayer_import_one( const char * foundfile )
     LOAD_PLAYER_INFO * pinfo;
     int skin = 0;
 
+	//ZF> Debug info to get this to work on Linux
+	log_info("loadplayer_import_one() - Importing one object from (%s).\n", vfs_resolveReadFilename( foundfile ) );
+
     if ( !VALID_CSTR( foundfile ) || !vfs_exists( foundfile ) ) return bfalse;
 
     if ( loadplayer_count >= MAXLOADPLAYER ) return bfalse;

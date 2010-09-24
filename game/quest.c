@@ -51,7 +51,7 @@ void quest_log_download_vfs( IDSZ_node_t *pquest_log, const char* player_directo
 		// Load each IDSZ
 		while ( goto_colon( NULL, fileread, btrue ) )
 		{
-			bool_t success;
+			egoboo_rv success;
 			IDSZ idsz = fget_idsz( fileread );
 			int level = fget_int( fileread );
 
@@ -72,14 +72,14 @@ void quest_log_download_vfs( IDSZ_node_t *pquest_log, const char* player_directo
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t quest_log_upload_vfs( IDSZ_node_t *pquest_log, const char *player_directory )
+egoboo_rv quest_log_upload_vfs( IDSZ_node_t *pquest_log, const char *player_directory )
 {
 	/// @details ZF@> This exports quest_log data into a quest.txt file
     vfs_FILE *filewrite;
 	int iterator;
 	IDSZ_node_t *pquest;
 
-	if( pquest_log == NULL ) return bfalse;
+	if( pquest_log == NULL ) return rv_error;
 
 	//Write a new quest file with all the quests
 	filewrite = vfs_openWrite( player_directory );
@@ -87,7 +87,7 @@ bool_t quest_log_upload_vfs( IDSZ_node_t *pquest_log, const char *player_directo
 	if ( !filewrite )
     {
         log_warning( "Cannot create quest file! (%s)\n", player_directory );
-        return bfalse;
+        return rv_fail;
     }
 
     vfs_printf( filewrite, "// This file keeps order of all the quests for this player\n" );
@@ -107,7 +107,7 @@ bool_t quest_log_upload_vfs( IDSZ_node_t *pquest_log, const char *player_directo
 
 	// Clean up and return
     vfs_close( filewrite );
-    return btrue;
+    return rv_success;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -144,11 +144,11 @@ int quest_get_level( IDSZ_node_t *pquest_log, IDSZ idsz )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t quest_add( IDSZ_node_t *pquest_log, IDSZ idsz, int level )
+egoboo_rv quest_add( IDSZ_node_t *pquest_log, IDSZ idsz, int level )
 {
 	///@details ZF@> This adds a new quest to the quest log. If the quest is already in there, the higher quest
 	///				 level of either the old and new one will be kept.
-	if( level >= QUEST_BEATEN ) return bfalse;
+	if( level >= QUEST_BEATEN ) return rv_fail;
 
 	return idsz_map_add( pquest_log, idsz, level );
 }

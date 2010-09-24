@@ -31,7 +31,7 @@
 
 // Public functions
 void quest_log_download_vfs( IDSZ_node_t *pquest_log, const char* player_directory );
-bool_t quest_log_upload_vfs( IDSZ_node_t *pquest_log, const char *player_directory );
+egoboo_rv quest_log_upload_vfs( IDSZ_node_t *pquest_log, const char *player_directory );
 int quest_set_level( IDSZ_node_t *pquest_log, IDSZ idsz, int adjustment );
 int quest_get_level( IDSZ_node_t *pquest_log, IDSZ idsz );
-bool_t quest_add( IDSZ_node_t *pquest_log, IDSZ idsz, int level );
+egoboo_rv quest_add( IDSZ_node_t *pquest_log, IDSZ idsz, int level );

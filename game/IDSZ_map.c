@@ -27,6 +27,7 @@
 #include "egoboo_vfs.h"
 #include "egoboo.h"
 
+
 //--------------------------------------------------------------------------------------------
 void idsz_map_init( IDSZ_node_t *pidsz_map )
 {
@@ -35,13 +36,15 @@ void idsz_map_init( IDSZ_node_t *pidsz_map )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t idsz_map_add( IDSZ_node_t *pidsz_map, IDSZ idsz, int level )
+egoboo_rv idsz_map_add( IDSZ_node_t *pidsz_map, IDSZ idsz, int level )
 {
 	/// @details ZF> Adds a single IDSZ with the specified level to the map. If it already exists
 	///              in the map, the higher of the two level values will be used.
 	int i;
 
-	if( idsz == IDSZ_NONE || level < 0 ) return bfalse;
+	if( pidsz_map == NULL || level < 0 ) return rv_error;
+
+	if( idsz == IDSZ_NONE ) return rv_fail;
 
 	for( i = 0; i < MAX_IDSZ_MAP_SIZE; i++ )
 	{
@@ -49,17 +52,17 @@ bool_t idsz_map_add( IDSZ_node_t *pidsz_map, IDSZ idsz, int level )
 		if( i + 1 == MAX_IDSZ_MAP_SIZE )
 		{
 			log_warning("idsz_map_add() - Failed to add [%s] to an IDSZ_map. Consider increasing MAX_IDSZ_MAP_SIZE (currently %i)\n", MAX_IDSZ_MAP_SIZE, undo_idsz(idsz) );
-			return bfalse;
+			return rv_error;
 		}
 
 		// Overwrite existing quest
 		if( pidsz_map[i].id == idsz )
 		{
 			// But only if the new quest level is higher than the previous one
-			if( pidsz_map[i].level >= level ) return bfalse;
+			if( pidsz_map[i].level >= level ) return rv_fail;
 
 			pidsz_map[i].level = level;
-			return btrue;
+			return rv_success;
 		}
 
 		// Simply append the new quest to pquest_log if we reached the end of the list
@@ -72,11 +75,11 @@ bool_t idsz_map_add( IDSZ_node_t *pidsz_map, IDSZ idsz, int level )
 			//Add the new quest
 			pidsz_map[i].id = idsz;
 			pidsz_map[i].level = level;
-			return btrue;
+			return rv_success;
 		}
 	}
 
-	return bfalse;
+	return rv_fail;
 }
 
 //--------------------------------------------------------------------------------------------

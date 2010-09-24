@@ -125,6 +125,7 @@ EXTERN unsigned        frame_all   EQ( 0 );             ///< The total number of
 EXTERN unsigned        frame_fps   EQ( 0 );             ///< The number of frames drawn this second
 EXTERN Uint32          clock_enc_stat  EQ( 0 );         ///< For character stat regeneration
 EXTERN Uint32          clock_chr_stat  EQ( 0 );         ///< For enchant stat regeneration
+EXTERN Uint32          clock_shared_stat  EQ( 0 );      ///< For shared abilities and local_players_dead
 EXTERN Uint32          clock_pit   EQ( 0 );             ///< For pit kills
 EXTERN bool_t          outofsync   EQ( 0 );
 EXTERN unsigned        true_update EQ( 0 );
@@ -164,8 +165,8 @@ EXTERN bool_t console_done EQ( bfalse );                   ///< Input text from 
 
 EXTERN int                       local_seeinvis_level    EQ( 0 );
 EXTERN int                       local_seedark_level     EQ( 0 );
-EXTERN bool_t                    local_seekurse          EQ( bfalse );
-EXTERN bool_t                    local_listening         EQ( bfalse );  ///< Players with listen skill?
+EXTERN int                       local_seekurse          EQ( 0 );
+EXTERN int                       local_listening         EQ( 0 );  ///< Players with listen skill?
 EXTERN bool_t                    local_noplayers;                    ///< Are there any local players?
 
 //--------------------------------------------------------------------------------------------

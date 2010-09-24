@@ -339,9 +339,8 @@ bool_t remove_enchant( const ENC_REF by_reference ienc, ENC_REF * enc_parent )
         if ( INGAME_CHR( itarget ) )
         {
             chr_t * ptarget = ChrList.lst + penc->target_ref;
-			bool_t cap_can_see_kurses = NULL != idsz_map_get( chr_get_pcap( itarget )->skills, MAKE_IDSZ('C', 'K','U','R') );
-
-			if ( peve->seekurse && !cap_can_see_kurses )
+			
+			if ( peve->seekurse && !chr_get_skill( ptarget, MAKE_IDSZ( 'C', 'K', 'U', 'R' ) ) )
             {
 				ptarget->see_kurse_level = bfalse;
             }

@@ -31,9 +31,7 @@ IfSpawned
 //Auto jump over corpses (Mobility skill)
 tmpx = selflevel
 tmpy = 2          //Need level 3
-IfXIsLessThanY
-  DoNothing
-Else
+IfXIsMoreThanY
   IfBumped
     SetTargetToWhoeverBumped
     IfTargetIsAlive
@@ -69,11 +67,17 @@ IfScoredAHit
           PlaySound
 
 //-----------------------------------------------------------------------------
-//Listen skill
-tmpx = selflevel
-tmpy = 3            //At least level 5
-IfXIsMoreThanY
-  EnableListenSkill
+//Gain new skills on level up
+IfLevelUp  
+
+  //Listen skill
+  tmpx = selflevel
+  tmpy = 3            //Level 5
+  IfXIsEqualToY
+    SetTargetToSelf
+    tmpargument = [LIST]
+    tmpdistance = 1
+    GiveSkillToTarget
   
 //------------------------------------------------------------------------------
 //Activate master acrobacy if enough xp gained
@@ -183,23 +187,13 @@ IfXIsMoreThanY
     SetState    
 
 //-----------------------------------------------------------------------------
-// ZZ> Auto jump over corpses
-IfBumped
-  SetTargetToWhoeverBumped
-  IfTargetIsAlive
-    GetState
-  Else
-    tmpargument = LATCHJUMP
-    PressLatchButton
-
-//-----------------------------------------------------------------------------
-// ZZ> Gong sound
+//Gong sound
 IfCleanedUp
   tmpargument = 2
   PlayFullSound
 
 //------------------------------------------------------------------------------
-// ZZ> Yell at player
+//Yell at player
 IfTooMuchBaggage
   tmpargument = 7
   SendMessageNear

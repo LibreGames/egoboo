@@ -278,6 +278,9 @@ void export_one_character( const CHR_REF by_reference character, const CHR_REF b
         }
     }
 
+	//ZF> Debug info to get this to work on Linux
+	log_info("export_one_character() - Exporting one object from (%s) to (%s).\n", vfs_resolveReadFilename(fromdir), vfs_resolveWriteFilename(todir) );
+
     // Make the directory
     vfs_mkdir( todir );
 
@@ -694,94 +697,104 @@ int update_game()
     int update_loop_cnt;
     PLA_REF ipla;
 
-    // Check for all local players being dead
-    local_allpladead     = bfalse;
-    local_seeinvis_level = 0;
-    local_seekurse       = bfalse;
-    local_seedark_level  = 0;
+	//This stuff doesn't happen so often so it can be safely throttled
+	if ( clock_shared_stat >= ONESECOND )
+	{
+		//Reset timer
+		clock_shared_stat -= ONESECOND;
 
-    numplayer = 0;
-    numdead = numalive = 0;
-    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
-    {
-        CHR_REF ichr;
-        chr_t * pchr;
+		// Check for all local players being dead and update shared player abilities
+		local_allpladead      = bfalse;
+		local_seeinvis_level  = 0;
+		local_seekurse        = 0;
+		local_seedark_level   = 0;
+		local_listening       = 0;
 
-        if ( !PlaStack.lst[ipla].valid ) continue;
+		numplayer = 0;
+		numdead = numalive = 0;
+		for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+		{
+			CHR_REF ichr;
+			chr_t * pchr;
 
-        // fix bad players
-        ichr = PlaStack.lst[ipla].index;
-        if ( !INGAME_CHR( ichr ) )
-        {
-            PlaStack.lst[ipla].index = ( CHR_REF )MAX_CHR;
-            PlaStack.lst[ipla].valid = bfalse;
-            continue;
-        }
-        pchr = ChrList.lst + ichr;
+			if ( !PlaStack.lst[ipla].valid ) continue;
 
-        // count the total number of players
-        numplayer++;
+			// fix bad players
+			ichr = PlaStack.lst[ipla].index;
+			if ( !INGAME_CHR( ichr ) )
+			{
+				PlaStack.lst[ipla].index = ( CHR_REF )MAX_CHR;
+				PlaStack.lst[ipla].valid = bfalse;
+				continue;
+			}
+			pchr = ChrList.lst + ichr;
 
-        // only interested in local players
-        if ( INPUT_BITS_NONE == PlaStack.lst[ipla].device.bits ) continue;
+			// count the total number of players
+			numplayer++;
 
-        if ( pchr->alive )
-        {
-            numalive++;
+			// only interested in local players
+			if ( INPUT_BITS_NONE == PlaStack.lst[ipla].device.bits ) continue;
 
-            if ( pchr->see_invisible_level > 0 )
-            {
-                local_seeinvis_level = MAX( local_seeinvis_level, pchr->see_invisible_level );
-            }
+			if ( pchr->alive )
+			{
+				numalive++;
 
-			if ( pchr->see_kurse_level > 0 )
-            {
-                local_seekurse = btrue;
-            }
+				if ( pchr->see_invisible_level > 0 )
+				{
+					local_seeinvis_level = MAX( local_seeinvis_level, pchr->see_invisible_level );
+				}
 
-            if ( pchr->darkvision_level > 0 )
-            {
-                local_seedark_level = MAX( local_seedark_level, pchr->darkvision_level );
-            }
-        }
-        else
-        {
-            numdead++;
-        }
-    }
+				if ( pchr->see_kurse_level > 0 )
+				{
+					local_seekurse = MAX( local_seekurse, pchr->see_kurse_level );
+				}
 
-    // Did everyone die?
-    if ( numdead >= local_numlpla )
-    {
-        local_allpladead = btrue;
-    }
+				if ( pchr->darkvision_level > 0 )
+				{
+					local_seedark_level = MAX( local_seedark_level, pchr->darkvision_level );
+				}
 
-    // check for autorespawn
-    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
-    {
-        CHR_REF ichr;
-        chr_t * pchr;
+				local_listening = MAX( local_listening, chr_get_skill( pchr, MAKE_IDSZ('L', 'I', 'S', 'T') ) );				
+			}
+			else
+			{
+				numdead++;
+			}
+		}
 
-        if ( !PlaStack.lst[ipla].valid ) continue;
+		// Did everyone die?
+		if ( numdead >= local_numlpla )
+		{
+			local_allpladead = btrue;
+		}
 
-        ichr = PlaStack.lst[ipla].index;
-        if ( !INGAME_CHR( ichr ) ) continue;
-        pchr = ChrList.lst + ichr;
+		// check for autorespawn
+		for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+		{
+			CHR_REF ichr;
+			chr_t * pchr;
 
-        if ( !pchr->alive )
-        {
-            if ( cfg.difficulty < GAME_HARD && local_allpladead && SDLKEYDOWN( SDLK_SPACE ) && PMod->respawnvalid && 0 == revivetimer )
-            {
-                respawn_character( ichr );
-                pchr->experience *= EXPKEEP;        // Apply xp Penalty
+			if ( !PlaStack.lst[ipla].valid ) continue;
 
-                if ( cfg.difficulty > GAME_EASY )
-                {
-                    pchr->money *= EXPKEEP;        // Apply money loss
-                }
-            }
-        }
-    }
+			ichr = PlaStack.lst[ipla].index;
+			if ( !INGAME_CHR( ichr ) ) continue;
+			pchr = ChrList.lst + ichr;
+
+			if ( !pchr->alive )
+			{
+				if ( cfg.difficulty < GAME_HARD && local_allpladead && SDLKEYDOWN( SDLK_SPACE ) && PMod->respawnvalid && 0 == revivetimer )
+				{
+					respawn_character( ichr );
+					pchr->experience *= EXPKEEP;        // Apply xp Penalty
+
+					if ( cfg.difficulty > GAME_EASY )
+					{
+						pchr->money *= EXPKEEP;        // Apply money loss
+					}
+				}
+			}
+		}
+	}
 
     PROFILE_BEGIN( talk_to_remotes );
     {
@@ -843,6 +856,7 @@ int update_game()
                 clock_wld += UPDATE_SKIP;
                 clock_enc_stat++;
                 clock_chr_stat++;
+                clock_shared_stat++;
 
                 // Reset the respawn timer
                 if ( revivetimer > 0 ) revivetimer--;
@@ -988,6 +1002,7 @@ void reset_timers()
     clock_wld = 0;
     clock_enc_stat = 0;
     clock_chr_stat = 0;
+    clock_shared_stat = 0;
     clock_pit = 0;
 
     update_wld = 0;
@@ -1492,7 +1507,7 @@ bool_t check_target( chr_t * psrc, const CHR_REF by_reference ichr_test, IDSZ id
     if ( !chr_can_see_object( GET_REF_PCHR( psrc ), ichr_test ) ) return bfalse;
 
     //Need specific skill? ([NONE] always passes)
-    if( HAS_SOME_BITS( targeting_bits, TARGET_SKILL ) && !check_skills( ichr_test, idsz ) ) return bfalse;
+    if( HAS_SOME_BITS( targeting_bits, TARGET_SKILL ) && !chr_get_skill( ptst, idsz ) ) return bfalse;
 
     //Require player to have specific quest?
 	if ( HAS_SOME_BITS( targeting_bits, TARGET_QUEST ) && QUEST_NONE != quest_get_level( PlaStack.lst[ptst->is_which_player].quest_log, idsz ) ) return bfalse;

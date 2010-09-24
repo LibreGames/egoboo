@@ -34,11 +34,11 @@ typedef struct s_IDSZ_node IDSZ_node_t;
 
 //Constants
 #define IDSZ_NOT_FOUND           -1
-#define MAX_IDSZ_MAP_SIZE		 64
+#define MAX_IDSZ_MAP_SIZE		 32
 
 // Public functions
 IDSZ_node_t* idsz_map_get( IDSZ_node_t *pidsz_map, IDSZ idsz );
-bool_t idsz_map_add( IDSZ_node_t *pidsz_map, IDSZ idsz, int level );
+egoboo_rv idsz_map_add( IDSZ_node_t *pidsz_map, IDSZ idsz, int level );
 void idsz_map_init( IDSZ_node_t *pidsz_map );
 
 IDSZ_node_t* idsz_map_iterate( IDSZ_node_t *pidsz_map, int *iterator );

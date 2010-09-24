@@ -337,11 +337,6 @@ struct s_cap
     // skill system
 	IDSZ_node_t  skills[MAX_IDSZ_MAP_SIZE];
     int			see_invisible_level;             ///< Can it see invisible?
-	int			block_rating;
-
-/*    
-    int       canseekurse;                     ///< Can it see kurses?
-*/
 
     // random stuff
     bool_t       stickybutt;                    ///< Stick to the ground?

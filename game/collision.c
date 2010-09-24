@@ -2779,9 +2779,9 @@ bool_t do_chr_prt_collision_deflect( chr_t * pchr, prt_t * pprt, chr_prt_collsio
             }
 
             //Blocked!
-            spawn_defense_ping( pchr, pprt->owner_ref );    
+            spawn_defense_ping( pchr, pprt->owner_ref );
             chr_make_text_billboard( GET_REF_PCHR(pchr), "Blocked!", text_color, tint, lifetime, (BIT_FIELD)bb_opt_all );
-                
+
             //If the attack was blocked by a shield, then check if the block caused a knockback
             if( chr_is_invictus && ACTION_IS_TYPE( pchr->inst.action_which, P ) )
             {
@@ -2811,18 +2811,18 @@ bool_t do_chr_prt_collision_deflect( chr_t * pchr, prt_t * pprt, chr_prt_collsio
                 // Now we have the block rating and know the enemy
                 if( INGAME_CHR( pprt->owner_ref )&& using_shield )
                 {
-                    cap_t *pcap = chr_get_pcap( GET_REF_PCHR(pchr) );
-                    cap_t *pshield = chr_get_pcap( item );
+                    chr_t *pshield = ChrList.lst + item;
                     chr_t *pattacker = ChrList.lst + pprt->owner_ref;
-                    int block_rating;
-                    int attacker_str, defender_str;
+                    int total_block_rating;
 
-                    attacker_str = SFP8_TO_SINT( pattacker->strength ) * 4;            //-4% per attacker strength
-                    defender_str = SFP8_TO_SINT( pchr->strength )      * 2;            //+2% per defender strength
-                    block_rating = pshield->block_rating + pcap->block_rating;        //use the character block skill plus the base block rating of the shield
+					//use the character block skill plus the base block rating of the shield and adjust for strength
+                    total_block_rating = chr_get_skill( pchr, MAKE_IDSZ( 'B', 'L', 'O', 'C' ) );
+					total_block_rating += chr_get_skill( pshield, MAKE_IDSZ( 'B', 'L', 'O', 'C' ) );
+					total_block_rating -= SFP8_TO_SINT( pattacker->strength ) * 4;            //-4% per attacker strength
+					total_block_rating += SFP8_TO_SINT( pchr->strength )      * 2;            //+2% per defender strength
 
                     //Now determine the result of the block
-                    if( generate_randmask( 1, 100 ) - defender_str <= block_rating - attacker_str )
+                    if( generate_randmask( 1, 100 ) <= total_block_rating )
                     {
                         //Defender won, the block holds
                         //Add a small stun to the attacker for about 0.8 seconds

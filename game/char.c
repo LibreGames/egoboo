@@ -2446,7 +2446,6 @@ bool_t chr_download_cap( chr_t * pchr, cap_t * pcap )
     /// @details BB@> grab all of the data from the data.txt file
 
     int iTmp, tnc;
-	IDSZ_node_t *pskill;
 
     if ( !DEFINED_PCHR( pchr ) ) return bfalse;
 
@@ -2473,16 +2472,10 @@ bool_t chr_download_cap( chr_t * pchr, cap_t * pcap )
         pchr->iskursed = ( generate_irand_pair( loc_rand ) <= pcap->kursechance );
     }
 
-    // Enchant stuff
-    pchr->see_invisible_level = pcap->see_invisible_level;
-
     // Skillz
 	idsz_map_copy( pcap->skills, pchr->skills );
-
-	// @TODO: ZF> Darkvision skill is handled a bit differently for now
-	pskill = idsz_map_get( pcap->skills, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );
-	pchr->darkvision_level = 0;
-	if(	pskill != NULL )	pchr->darkvision_level = pskill->level;
+	pchr->darkvision_level = chr_get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );
+    pchr->see_invisible_level = pcap->see_invisible_level;
 
     // Ammo
     pchr->ammomax = pcap->ammomax;
@@ -4609,13 +4602,8 @@ void change_character( const CHR_REF by_reference ichr, const PRO_REF by_referen
 
     // change the skillz, too, jack!
 	idsz_map_copy( pcap_new->skills, pchr->skills );
-
-	// @TODO: ZF> Darkvision skill is handled a bit differently for now
-	{
-		IDSZ_node_t *pskill = idsz_map_get( pcap_new->skills, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );
-		pchr->darkvision_level = 0;
-		if(	pskill != NULL )	pchr->darkvision_level = pskill->level;
-	}
+	pchr->darkvision_level = chr_get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );
+    pchr->see_invisible_level = pcap_new->see_invisible_level;
 
     /// @note BB@> changing this could be disastrous, in case you can't un-morph yourself???
     /// pchr->canusearcane          = pcap_new->canusearcane;
@@ -4876,11 +4864,13 @@ int restock_ammo( const CHR_REF by_reference character, IDSZ idsz )
 }
 
 //--------------------------------------------------------------------------------------------
-int check_skills( const CHR_REF by_reference who, IDSZ whichskill )
+int chr_get_skill( chr_t *pchr, IDSZ whichskill )
 {
-    // @details ZF@> This checks if the specified character has the required skill.
-    //               Also checks Skill expansions. Returns the level of the skill.
+    /// @details ZF@> This returns the skill level for the specified skill or 0 if the character doesn't
+	///				  have the skill. Also checks the skill IDSZ.
 	IDSZ_node_t *pskill;
+
+	if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
 
     //Any [NONE] IDSZ returns always "true"
     if ( IDSZ_NONE == whichskill ) return 1;
@@ -4888,22 +4878,22 @@ int check_skills( const CHR_REF by_reference who, IDSZ whichskill )
 	//Do not allow poison or backstab skill if we are restricted by code of conduct
     if ( MAKE_IDSZ( 'P', 'O', 'I', 'S' ) == whichskill || MAKE_IDSZ( 's', 'T', 'A', 'B' ) == whichskill )
 	{
-		if( NULL != idsz_map_get( ChrList.lst[who].skills, MAKE_IDSZ( 'C', 'O', 'D', 'E' ) ) ) return 0;
+		if( NULL != idsz_map_get( pchr->skills, MAKE_IDSZ( 'C', 'O', 'D', 'E' ) ) ) return 0;
 	}
 
     // First check the character Skill ID matches
     // Then check for expansion skills too.
-    if ( chr_get_idsz( who, IDSZ_SKILL )  == whichskill ) return 1;
+	if ( chr_get_idsz( pchr->ai.index, IDSZ_SKILL )  == whichskill ) return 1;
 
 	// Simply return the skill level if we have the skill
-	pskill = idsz_map_get( ChrList.lst[who].skills, whichskill );
+	pskill = idsz_map_get( pchr->skills, whichskill );
 	if( pskill != NULL ) return pskill->level;
 
 	// Truesight allows reading
     if ( MAKE_IDSZ( 'R', 'E', 'A', 'D' ) == whichskill )
 	{
-		pskill = idsz_map_get( ChrList.lst[who].skills, MAKE_IDSZ( 'C', 'K', 'U', 'R' ) );
-		if( pskill != NULL && ChrList.lst[who].see_invisible_level > 0 ) return ChrList.lst[who].see_invisible_level + pskill->level;
+		pskill = idsz_map_get( pchr->skills, MAKE_IDSZ( 'C', 'K', 'U', 'R' ) );
+		if( pskill != NULL && pchr->see_invisible_level > 0 ) return pchr->see_invisible_level + pskill->level;
 	}
 
 	//Skill not found
@@ -4949,12 +4939,8 @@ bool_t update_chr_darkvision( const CHR_REF by_reference character )
 
     if ( life_regen < 0 )
     {
-        int tmp_level = ( 10 * -life_regen ) / pchr->lifemax;
-		int base_level = 0;
-
-		//Check for any existing natural darkvision first
-		IDSZ_node_t *pskill = idsz_map_get( pchr->skills, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );
-		if( pskill != NULL ) base_level = pskill->level;
+        int tmp_level = ( 10 * -life_regen ) / pchr->lifemax;						//Darkvision gained by poison
+		int base_level = chr_get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );	//Natural darkvision
 
 		//Use the better of the two darkvision abilities
         pchr->darkvision_level = MAX( base_level, tmp_level );
@@ -5037,7 +5023,7 @@ bool_t chr_do_latch_attack( chr_t * pchr, slot_t which_slot )
         // Then check if a skill is needed
         if ( pweapon_cap->needskillidtouse )
         {
-            if ( 0 == check_skills( ichr, chr_get_idsz( iweapon, IDSZ_SKILL ) ) )
+            if ( !chr_get_skill( pchr, chr_get_idsz( iweapon, IDSZ_SKILL ) ) )
             {
                 allowedtoattack = bfalse;
             }
