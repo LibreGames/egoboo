@@ -935,7 +935,7 @@ bool_t phys_apply_normal_acceleration( fvec3_base_t acc, fvec3_base_t nrm, float
             dot = fvec3_decompose( acc, nrm, perp.v, para.v );
         }
 
-        // kill the acceleration perpendicular to the ground to take the net effect of the 
+        // kill the acceleration perpendicular to the ground to take the net effect of the
         // ground's "normal force" into account
         if( dot < 0.0f && 1.0f != perp_factor )
         {
@@ -967,7 +967,7 @@ bool_t phys_apply_normal_acceleration( fvec3_base_t acc, fvec3_base_t nrm, float
         // apply the normal acceleration
         fvec3_self_sum( acc, pnrm_acc->v );
     }
-    
+
     return btrue;
 }
 
@@ -1022,7 +1022,7 @@ bool_t phys_data_apply_normal_acceleration( phys_data_t * pphys, fvec3_t nrm, fl
     /// @note BB@> don't apply this to the platform accumulator since it has some special "physics"
     ///     like sucking an object onto the platform, which keeps object attached
     ///     when a platform starts to descend
-   
+
     if( NULL == pphys ) return bfalse;
 
     // use a short-cut if the vectors are going to be scaled to 0.0f, anyway

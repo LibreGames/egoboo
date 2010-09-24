@@ -29,49 +29,42 @@
 
 #include "egoboo_strutil.h"
 
-typedef int ConfigFile_retval;
-#define ConfigFile_succeed  1
-#define ConfigFile_fail 0
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+typedef enum ConfigFile_retval_enum ConfigFile_retval;
+enum ConfigFile_retval_enum
+{
+    ConfigFile_fail     = 0,
+    ConfigFile_succeed  = 1
+};
 
-#define MAX_CONFIG_SECTION_LENGTH    64
-#define MAX_CONFIG_KEY_LENGTH      64
-#define MAX_CONFIG_VALUE_LENGTH      256
-#define MAX_CONFIG_COMMENTARY_LENGTH  256
+enum
+{
+    MAX_CONFIG_SECTION_LENGTH    = 64,
+    MAX_CONFIG_KEY_LENGTH        = 64,
+    MAX_CONFIG_VALUE_LENGTH      = 256,
+    MAX_CONFIG_COMMENTARY_LENGTH = 256
+};
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 /// A single value in the congiguration file, specified by ["TAG"] = "VALUE"
 typedef struct s_ConfigFileValue ConfigFileValue_t;
-typedef struct s_ConfigFileValue
-{
-    char KeyName[MAX_CONFIG_KEY_LENGTH];
-    char *Value;
-    char *Commentary;
-    ConfigFileValue_t *NextValue;
-}
- *ConfigFileValuePtr_t;
+typedef ConfigFileValue_t *      ConfigFileValuePtr_t;
 
+
+//--------------------------------------------------------------------------------------------
 /// One section of the congiguration file, delimited by {"BLAH"}
 typedef struct s_ConfigFileSection ConfigFileSection_t;
-typedef struct s_ConfigFileSection
-{
-    char SectionName[MAX_CONFIG_SECTION_LENGTH];
-    ConfigFileSection_t  *NextSection;
-    ConfigFileValuePtr_t  FirstValue;
-}
- *ConfigFileSectionPtr_t;
+typedef ConfigFileSection_t      * ConfigFileSectionPtr_t;
 
+//--------------------------------------------------------------------------------------------
 /// The congiguration file
 typedef struct s_ConfigFile ConfigFile_t;
-typedef struct s_ConfigFile
-{
-    FILE  *f;
-    char   filename[256];
+typedef ConfigFile_t *      ConfigFilePtr_t;
 
-    ConfigFileSectionPtr_t  ConfigSectionList;
-    ConfigFileSectionPtr_t  CurrentSection;
-    ConfigFileValuePtr_t    CurrentValue;
-}
- *ConfigFilePtr_t;
-
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 extern ConfigFilePtr_t   ConfigFile_create();
 extern ConfigFile_retval ConfigFile_destroy( ConfigFilePtr_t * ptmp );
 

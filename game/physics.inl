@@ -372,7 +372,6 @@ INLINE bool_t phys_data_accumulate_apos_coll( phys_data_t * pdata, const fvec3_b
     return fvec3_self_sum( pdata->apos_coll.v, acc );
 }
 
-
 //--------------------------------------------------------------------------------------------
 INLINE bool_t phys_data_accumulate_apos_plat( phys_data_t * pdata, const fvec3_base_t acc )
 {

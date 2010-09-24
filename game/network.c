@@ -1732,7 +1732,7 @@ void unbuffer_all_player_latches()
     PLA_REF ipla;
 
     // if ( PMod->rtscontrol ) { numplatimes--; return; }
-    
+
     numplatimes = 0;
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
@@ -2117,15 +2117,15 @@ CHR_REF pla_get_ichr( const PLA_REF by_reference iplayer )
 }
 
 //--------------------------------------------------------------------------------------------
-player_t* ichr_get_ppla( const CHR_REF by_reference ichr )
+player_t* chr_get_ppla( const CHR_REF by_reference ichr )
 {
     PLA_REF iplayer;
 
     if ( !INGAME_CHR( ichr ) ) return NULL;
-	iplayer = ChrList.lst[ichr].is_which_player;
-	
+    iplayer = ChrList.lst[ichr].is_which_player;
+
     if ( !VALID_PLA( iplayer ) ) return NULL;
-    
+
     return PlaStack.lst + iplayer;
 }
 
@@ -2180,19 +2180,39 @@ void tlatch_ary_init( time_latch_t ary[], size_t len )
 }
 
 //--------------------------------------------------------------------------------------------
-void pla_reinit( player_t * ppla )
+player_t * pla_reinit( player_t * ppla )
 {
-    if ( NULL == ppla ) return;
+    if ( NULL == ppla ) return ppla;
 
-    ppla->valid       = bfalse;
-    ppla->index       = ( CHR_REF )MAX_CHR;
-    ppla->device.bits = INPUT_BITS_NONE;
+    if( ppla->valid )
+    {
+        ppla = pla_dtor( ppla );
+    }
+
+    return pla_ctor( ppla );
 }
 
 //--------------------------------------------------------------------------------------------
-void player_init( player_t * ppla )
+player_t * pla_dtor( player_t * ppla )
 {
-    if ( NULL == ppla ) return;
+    if ( NULL == ppla ) return ppla;
+
+    //---- skeleton for using a ConfigFile to save quests
+    // close any ConfigFile
+    // ConfigFile_destroy( &(ppla->quest_file) );
+
+    // turn off the player
+    ppla->valid       = bfalse;
+    ppla->index       = ( CHR_REF )MAX_CHR;
+    ppla->device.bits = INPUT_BITS_NONE;
+
+    return ppla;
+}
+
+//--------------------------------------------------------------------------------------------
+player_t * pla_ctor( player_t * ppla )
+{
+    if ( NULL == ppla ) return ppla;
 
     memset( ppla, 0, sizeof( *ppla ) );
 
@@ -2207,6 +2227,8 @@ void player_init( player_t * ppla )
 
     // initialize the tlatch array
     tlatch_ary_init( ppla->tlatch, MAXLAG );
+
+    return ppla;
 }
 
 //--------------------------------------------------------------------------------------------

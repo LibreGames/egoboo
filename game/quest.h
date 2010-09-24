@@ -23,15 +23,28 @@
 /// @brief read/write/modify the quest.txt file
 
 #include "egoboo_typedef.h"
-#include "IDSZ_map.h"
+#include "file_formats/configfile.h"
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+// BB> use this forward declaration of the "struct s_IDSZ_node" instead of including
+// "IDSZ_map.h" to remove possible circular dependencies
+
+struct s_IDSZ_node;
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 /// Quest system
-#define QUEST_BEATEN         0x7FFFFFFF	//Same as MAX_INT
+#define QUEST_BEATEN         0x7FFFFFFF    //Same as MAX_INT
 #define QUEST_NONE           -1
 
 // Public functions
-void quest_log_download_vfs( IDSZ_node_t *pquest_log, const char* player_directory );
-egoboo_rv quest_log_upload_vfs( IDSZ_node_t *pquest_log, const char *player_directory );
-int quest_set_level( IDSZ_node_t *pquest_log, IDSZ idsz, int adjustment );
-int quest_get_level( IDSZ_node_t *pquest_log, IDSZ idsz );
-egoboo_rv quest_add( IDSZ_node_t *pquest_log, IDSZ idsz, int level );
+egoboo_rv quest_log_download_vfs( struct s_IDSZ_node *pquest_log, const char* player_directory );
+bool_t quest_log_upload_vfs( struct s_IDSZ_node *pquest_log, const char *player_directory );
+int quest_set_level( struct s_IDSZ_node *pquest_log, IDSZ idsz, int adjustment );
+int quest_get_level( struct s_IDSZ_node *pquest_log, IDSZ idsz );
+bool_t quest_add( struct s_IDSZ_node *pquest_log, IDSZ idsz, int level );
+
+ConfigFilePtr_t quest_file_open( const char *player_directory );
+egoboo_rv       quest_file_export( ConfigFilePtr_t pfile );
+egoboo_rv       quest_file_close( ConfigFilePtr_t * ppfile, bool_t export );

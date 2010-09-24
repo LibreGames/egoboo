@@ -65,6 +65,35 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+// make the actual definition of these structs opaque
+
+typedef struct s_ConfigFileValue
+{
+    char KeyName[MAX_CONFIG_KEY_LENGTH];
+    char *Value;
+    char *Commentary;
+    ConfigFileValue_t *NextValue;
+};
+
+struct s_ConfigFileSection
+{
+    char SectionName[MAX_CONFIG_SECTION_LENGTH];
+    ConfigFileSection_t  *NextSection;
+    ConfigFileValuePtr_t  FirstValue;
+};
+
+struct s_ConfigFile
+{
+    FILE  *f;
+    char   filename[256];
+
+    ConfigFileSectionPtr_t  ConfigSectionList;
+    ConfigFileSectionPtr_t  CurrentSection;
+    ConfigFileValuePtr_t    CurrentValue;
+};
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 
 // util
 static void ConfigFileString_Encode( char *pStr );

@@ -366,8 +366,8 @@ void fput_action( vfs_FILE* filewrite, const char* text, Uint8 action )
 
     switch ( action )
     {
-        case ACTION_WA:													//WALK duplicates DANCE here		
-		case ACTION_DA: vfs_printf( filewrite, "DANCE\n" );   break;
+        case ACTION_WA:                                                    //WALK duplicates DANCE here
+        case ACTION_DA: vfs_printf( filewrite, "DANCE\n" );   break;
         case ACTION_UA: vfs_printf( filewrite, "UNARMED\n" ); break;
         case ACTION_TA: vfs_printf( filewrite, "THRUST\n" );  break;
         case ACTION_CA: vfs_printf( filewrite, "CHOP\n" );    break;

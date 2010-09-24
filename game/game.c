@@ -704,96 +704,96 @@ int update_game()
 		clock_shared_stat -= ONESECOND;
 
 		// Check for all local players being dead and update shared player abilities
-		local_allpladead      = bfalse;
-		local_seeinvis_level  = 0;
+    local_allpladead     = bfalse;
+    local_seeinvis_level = 0;
 		local_seekurse        = 0;
-		local_seedark_level   = 0;
+    local_seedark_level  = 0;
 		local_listening       = 0;
 
-		numplayer = 0;
-		numdead = numalive = 0;
-		for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
-		{
-			CHR_REF ichr;
-			chr_t * pchr;
+    numplayer = 0;
+    numdead = numalive = 0;
+    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    {
+        CHR_REF ichr;
+        chr_t * pchr;
 
-			if ( !PlaStack.lst[ipla].valid ) continue;
+        if ( !PlaStack.lst[ipla].valid ) continue;
 
-			// fix bad players
-			ichr = PlaStack.lst[ipla].index;
-			if ( !INGAME_CHR( ichr ) )
-			{
-				PlaStack.lst[ipla].index = ( CHR_REF )MAX_CHR;
-				PlaStack.lst[ipla].valid = bfalse;
-				continue;
-			}
-			pchr = ChrList.lst + ichr;
+        // fix bad players
+        ichr = PlaStack.lst[ipla].index;
+        if ( !INGAME_CHR( ichr ) )
+        {
+            PlaStack.lst[ipla].index = ( CHR_REF )MAX_CHR;
+            PlaStack.lst[ipla].valid = bfalse;
+            continue;
+        }
+        pchr = ChrList.lst + ichr;
 
-			// count the total number of players
-			numplayer++;
+        // count the total number of players
+        numplayer++;
 
-			// only interested in local players
-			if ( INPUT_BITS_NONE == PlaStack.lst[ipla].device.bits ) continue;
+        // only interested in local players
+        if ( INPUT_BITS_NONE == PlaStack.lst[ipla].device.bits ) continue;
 
-			if ( pchr->alive )
-			{
-				numalive++;
+        if ( pchr->alive )
+        {
+            numalive++;
 
-				if ( pchr->see_invisible_level > 0 )
-				{
-					local_seeinvis_level = MAX( local_seeinvis_level, pchr->see_invisible_level );
-				}
+            if ( pchr->see_invisible_level > 0 )
+            {
+                local_seeinvis_level = MAX( local_seeinvis_level, pchr->see_invisible_level );
+            }
 
 				if ( pchr->see_kurse_level > 0 )
-				{
+            {
 					local_seekurse = MAX( local_seekurse, pchr->see_kurse_level );
-				}
+            }
 
-				if ( pchr->darkvision_level > 0 )
-				{
-					local_seedark_level = MAX( local_seedark_level, pchr->darkvision_level );
-				}
+            if ( pchr->darkvision_level > 0 )
+            {
+                local_seedark_level = MAX( local_seedark_level, pchr->darkvision_level );
+            }
 
 				local_listening = MAX( local_listening, chr_get_skill( pchr, MAKE_IDSZ('L', 'I', 'S', 'T') ) );				
-			}
-			else
-			{
-				numdead++;
-			}
-		}
+        }
+        else
+        {
+            numdead++;
+        }
+    }
 
-		// Did everyone die?
-		if ( numdead >= local_numlpla )
-		{
-			local_allpladead = btrue;
-		}
+    // Did everyone die?
+    if ( numdead >= local_numlpla )
+    {
+        local_allpladead = btrue;
+    }
 
-		// check for autorespawn
-		for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
-		{
-			CHR_REF ichr;
-			chr_t * pchr;
+    // check for autorespawn
+    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    {
+        CHR_REF ichr;
+        chr_t * pchr;
 
-			if ( !PlaStack.lst[ipla].valid ) continue;
+        if ( !PlaStack.lst[ipla].valid ) continue;
 
-			ichr = PlaStack.lst[ipla].index;
-			if ( !INGAME_CHR( ichr ) ) continue;
-			pchr = ChrList.lst + ichr;
+        ichr = PlaStack.lst[ipla].index;
+        if ( !INGAME_CHR( ichr ) ) continue;
+        pchr = ChrList.lst + ichr;
 
-			if ( !pchr->alive )
-			{
-				if ( cfg.difficulty < GAME_HARD && local_allpladead && SDLKEYDOWN( SDLK_SPACE ) && PMod->respawnvalid && 0 == revivetimer )
-				{
-					respawn_character( ichr );
-					pchr->experience *= EXPKEEP;        // Apply xp Penalty
+        if ( !pchr->alive )
+        {
+            if ( cfg.difficulty < GAME_HARD && local_allpladead && SDLKEYDOWN( SDLK_SPACE ) && PMod->respawnvalid && 0 == revivetimer )
+            {
+                respawn_character( ichr );
+                pchr->experience *= EXPKEEP;        // Apply xp Penalty
 
-					if ( cfg.difficulty > GAME_EASY )
-					{
-						pchr->money *= EXPKEEP;        // Apply money loss
-					}
-				}
-			}
-		}
+                if ( cfg.difficulty > GAME_EASY )
+                {
+                    pchr->money *= EXPKEEP;        // Apply money loss
+                }
+            }
+        }
+    }
 	}
 
     PROFILE_BEGIN( talk_to_remotes );
@@ -1426,8 +1426,8 @@ CHR_REF prt_find_target( float pos_x, float pos_y, float pos_z, FACING_T facing,
 
         if ( !pchr->alive || pchr->isitem || pchr->pack.is_packed ) continue;
 
-		// prefer targeting riders over the mount itself
-		if( pchr->ismount && (INGAME_CHR(pchr->holdingwhich[SLOT_LEFT]) || INGAME_CHR(pchr->holdingwhich[SLOT_RIGHT])) ) continue;
+        // prefer targeting riders over the mount itself
+        if( pchr->ismount && (INGAME_CHR(pchr->holdingwhich[SLOT_LEFT]) || INGAME_CHR(pchr->holdingwhich[SLOT_RIGHT])) ) continue;
 
         // ignore invictus
         if ( pchr->invictus ) continue;
@@ -1510,7 +1510,7 @@ bool_t check_target( chr_t * psrc, const CHR_REF by_reference ichr_test, IDSZ id
     if( HAS_SOME_BITS( targeting_bits, TARGET_SKILL ) && !chr_get_skill( ptst, idsz ) ) return bfalse;
 
     //Require player to have specific quest?
-	if ( HAS_SOME_BITS( targeting_bits, TARGET_QUEST ) && QUEST_NONE != quest_get_level( PlaStack.lst[ptst->is_which_player].quest_log, idsz ) ) return bfalse;
+    if ( HAS_SOME_BITS( targeting_bits, TARGET_QUEST ) && QUEST_NONE != quest_get_level( PlaStack.lst[ptst->is_which_player].quest_log, idsz ) ) return bfalse;
 
     is_hated = team_hates_team( psrc->team, ptst->team );
     hates_me = team_hates_team( ptst->team, psrc->team );
@@ -1617,7 +1617,7 @@ CHR_REF chr_find_target( chr_t * psrc, float max_dist, IDSZ idsz, BIT_FIELD targ
 
         diff  = fvec3_sub( psrc->pos.v, ptst->pos.v );
         dist2 = fvec3_dot_product( diff.v, diff.v );
-        
+
         if (( 0 == max_dist2 || dist2 <= max_dist2 ) && ( MAX_CHR == best_target || dist2 < best_dist2 ) )
         {
             //Invictus chars do not need a line of sight
@@ -3532,11 +3532,14 @@ bool_t add_player( const CHR_REF by_reference character, const PLA_REF by_refere
     if ( VALID_PLA_RANGE( player ) && !PlaStack.lst[player].valid )
     {
         player_t * ppla = PlaStack.lst + player;
-
-        player_init( ppla );
+        
+        pla_reinit( ppla );
 
         ChrList.lst[character].is_which_player = player;
-		quest_log_download_vfs( ppla->quest_log, chr_get_dir_name( character) );
+        quest_log_download_vfs( ppla->quest_log, chr_get_dir_name(character) );
+
+        //---- skeleton for using a ConfigFile to save quests
+        // ppla->quest_file = quest_file_open( chr_get_dir_name(character) );
 
         ppla->index           = character;
         ppla->valid           = btrue;
@@ -3608,7 +3611,7 @@ void let_all_characters_think()
             // Crushed characters shouldn't be alert to anything else
             if ( is_crushed )  { pself->alert = ALERTIF_CRUSHED; pself->timer = update_wld + 1; }
 
-			// Level up characters shouldn't be alert to anything else
+            // Level up characters shouldn't be alert to anything else
             if ( is_cleanedup )  pchr->ai.alert = ALERTIF_LEVELUP;
 
             scr_run_chr_script( &bdl_ai );
@@ -4655,7 +4658,6 @@ bool_t game_module_setup( game_module_t * pinst, mod_file_t * pdata, const char 
     pinst->respawnvalid   = ( bfalse != pdata->respawnvalid );
     pinst->respawnanytime = ( RESPAWN_ANYTIME == pdata->respawnvalid );
 
-
     strncpy( pinst->loadname, loadname, SDL_arraysize( pinst->loadname ) );
 
     pinst->active = bfalse;
@@ -5315,7 +5317,7 @@ void disenchant_character( const CHR_REF by_reference cnt )
 void cleanup_character_enchants( chr_t * pchr )
 {
     if( NULL == pchr ) return;
-    
+
     // clean up the enchant list
     pchr->firstenchant = cleanup_enchant_list( pchr->firstenchant, &(pchr->firstenchant) );
 }

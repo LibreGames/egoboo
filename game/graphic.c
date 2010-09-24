@@ -525,7 +525,7 @@ void gfx_init_SDL_graphics()
     if ( cfg.scrz_req == 32 ) cfg.scrz_req = 24;
 
 #endif
-    
+
     // the flags to pass to SDL_SetVideoMode
     sdl_vparam.width                     = cfg.scrx_req;
     sdl_vparam.height                    = cfg.scry_req;

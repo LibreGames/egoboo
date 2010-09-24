@@ -124,7 +124,7 @@ int do_ego_proc_begin( ego_process_t * eproc )
         {
             log_info( "Loaded the default setup file \"%s\".\n", tmpname );
         }
-        else 
+        else
         {
             log_error("Could not load setup settings: \"%s\"\n", tmpname);
         }

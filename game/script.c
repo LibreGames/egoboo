@@ -303,7 +303,7 @@ void scr_run_chr_script( ai_state_bundle_t * pbdl_ai )
         {
             float horiz_len2 = pchr->latch.trans.x * pchr->latch.trans.x + pchr->latch.trans.y * pchr->latch.trans.y;
             float vert_len2  = pchr->latch.trans.z * pchr->latch.trans.z;
-            
+
             if ( vert_len2 > 1.0f && vert_len2 >= horiz_len2 )
             {
                 scale = 1.0f / ABS( pchr->latch.trans.z );
@@ -874,8 +874,8 @@ Uint8 scr_run_function( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
                 case FDRAWBILLBOARD:         returncode = scr_DrawBillboard( pstate, pbdl_ai ); break;
                 case FSETTARGETTOFIRSTBLAHINPASSAGE: returncode = scr_set_TargetToBlahInPassage( pstate, pbdl_ai ); break;
 
-				case FIFLEVELUP:			returncode = scr_LevelUp( pstate, pbdl_ai ); break;
-                case FGIVESKILLTOTARGET:	returncode = scr_GiveSkillToTarget( pstate, pbdl_ai ); break;
+                case FIFLEVELUP:            returncode = scr_LevelUp( pstate, pbdl_ai ); break;
+                case FGIVESKILLTOTARGET:    returncode = scr_GiveSkillToTarget( pstate, pbdl_ai ); break;
 
                 // if none of the above, skip the line and log an error
                 default:

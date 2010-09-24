@@ -62,7 +62,7 @@ mod_file_t * module_load_info_vfs( const char * szLoadName, mod_file_t * pmod )
     // Read basic data
     fget_next_name( fileread, pmod->longname, sizeof( pmod->longname ) );
     fget_next_string( fileread, pmod->reference, SDL_arraysize( pmod->reference ) );
-	pmod->unlockquest.id    = fget_next_idsz( fileread );
+    pmod->unlockquest.id    = fget_next_idsz( fileread );
     pmod->unlockquest.level = fget_int( fileread );
 
     pmod->importamount = fget_next_int( fileread );

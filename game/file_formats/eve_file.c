@@ -402,5 +402,3 @@ bool_t save_one_enchant_file_vfs( const char* szLoadName, const char * szTemplat
     return btrue;
 }
 
-
-

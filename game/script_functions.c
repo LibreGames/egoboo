@@ -6876,7 +6876,7 @@ Uint8 scr_Backstabbed( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
     SCRIPT_FUNCTION_BEGIN();
 
 	//Now check if it really was backstabbed
-    returncode = bfalse; 
+    returncode = bfalse;
     if ( HAS_SOME_BITS( pself->alert, ALERTIF_ATTACKED ) )
     {
 		//Who is the dirty backstabber?
@@ -6923,17 +6923,17 @@ Uint8 scr_AddQuest( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
     /// @details ZF@> This function adds a quest idsz set in tmpargument into the targets quest.txt to 0
 
     chr_t * pself_target;
-	PLA_REF ipla;
+    PLA_REF ipla;
 
     SCRIPT_FUNCTION_BEGIN();
 
     SCRIPT_REQUIRE_TARGET( pself_target );
 
     returncode = bfalse;
-	ipla = pself_target->is_which_player;
+    ipla = pself_target->is_which_player;
     if ( VALID_PLA( ipla ) )
     {
-		returncode = quest_add( PlaStack.lst[ipla].quest_log, pstate->argument, 0 );
+        returncode = quest_add( PlaStack.lst[ipla].quest_log, pstate->argument, 0 );
     }
 
     SCRIPT_FUNCTION_END();
@@ -6944,7 +6944,7 @@ Uint8 scr_BeatQuestAllPlayers( script_state_t * pstate, ai_state_bundle_t * pbdl
 {
     // BeatQuestAllPlayers()
     /// @details ZF@> This function marks a IDSZ in the targets quest.txt as beaten
-	///               returns true if at least one quest got marked as beaten.
+    ///               returns true if at least one quest got marked as beaten.
 
     PLA_REF ipla;
 
@@ -6958,8 +6958,8 @@ Uint8 scr_BeatQuestAllPlayers( script_state_t * pstate, ai_state_bundle_t * pbdl
 
         ichr = PlaStack.lst[ipla].index;
         if ( !INGAME_CHR( ichr ) ) continue;
-		
-		if ( QUEST_BEATEN == quest_set_level( PlaStack.lst[ipla].quest_log, ( IDSZ )pstate->argument, QUEST_BEATEN ) )
+
+        if ( QUEST_BEATEN == quest_set_level( PlaStack.lst[ipla].quest_log, ( IDSZ )pstate->argument, QUEST_BEATEN ) )
         {
             returncode = btrue;
         }
@@ -6977,17 +6977,17 @@ Uint8 scr_TargetHasQuest( script_state_t * pstate, ai_state_bundle_t * pbdl_self
 
     int iTmp;
     chr_t * pself_target;
-	PLA_REF ipla;
+    PLA_REF ipla;
 
     SCRIPT_FUNCTION_BEGIN();
 
     SCRIPT_REQUIRE_TARGET( pself_target );
 
     returncode = bfalse;
-	ipla = pchr->is_which_player;
+    ipla = pchr->is_which_player;
     if ( VALID_PLA( ipla ) )
     {
-		iTmp = quest_get_level( PlaStack.lst[ipla].quest_log, pstate->argument );
+        iTmp = quest_get_level( PlaStack.lst[ipla].quest_log, pstate->argument );
         if ( QUEST_NONE != iTmp )
         {
             pstate->distance = iTmp;
@@ -7006,17 +7006,17 @@ Uint8 scr_set_QuestLevel( script_state_t * pstate, ai_state_bundle_t * pbdl_self
     /// tmpargument specifies quest idsz (tmpargument) and the adjustment (tmpdistance, which may be negative)
 
     chr_t * pself_target;
-	PLA_REF ipla;
+    PLA_REF ipla;
 
     SCRIPT_FUNCTION_BEGIN();
 
     SCRIPT_REQUIRE_TARGET( pself_target );
 
     returncode = bfalse;
-	ipla = pself_target->is_which_player;
+    ipla = pself_target->is_which_player;
     if ( VALID_PLA( ipla ) && pstate->distance != 0 )
     {
-		returncode = QUEST_NONE != quest_set_level( PlaStack.lst[ipla].quest_log, pstate->argument, pstate->distance );
+        returncode = QUEST_NONE != quest_set_level( PlaStack.lst[ipla].quest_log, pstate->argument, pstate->distance );
     }
 
     SCRIPT_FUNCTION_END();
@@ -7045,7 +7045,7 @@ Uint8 scr_AddQuestAllPlayers( script_state_t * pstate, ai_state_bundle_t * pbdl_
         if ( !INGAME_CHR( ichr ) ) continue;
 
         // Try to add it or replace it if this one is higher
-		if( quest_add( PlaStack.lst[ipla].quest_log, pstate->argument, pstate->distance ) ) success_count++;
+        if( quest_add( PlaStack.lst[ipla].quest_log, pstate->argument, pstate->distance ) ) success_count++;
     }
 
     returncode = success_count > 0;
@@ -7520,7 +7520,7 @@ Uint8 scr_TargetCanSeeKurses( script_state_t * pstate, ai_state_bundle_t * pbdl_
 
     SCRIPT_REQUIRE_TARGET( pself_target );
 
-	returncode = pself_target->see_kurse_level != 0;
+    returncode = pself_target->see_kurse_level != 0;
 
     SCRIPT_FUNCTION_END();
 }
@@ -7732,7 +7732,7 @@ Uint8 scr_set_TargetToBlahInPassage( script_state_t * pstate, ai_state_bundle_t 
     // SetTargetToBlahInPassage( tmpargument = "passage", tmpdistance = "targeting_bits", tmpturn = "idsz" )
     /// @details ZF@> This function sets the target to whatever object with the specified bits
     /// in tmpdistance is blocking the given passage. This function lets passage rectangles be used as event triggers
-	/// Note that this function also trigges if the character itself (passage owner) is in the passage.
+    /// Note that this function also trigges if the character itself (passage owner) is in the passage.
 
     CHR_REF ichr;
 
@@ -7778,9 +7778,9 @@ Uint8 scr_LevelUp( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
     /// @details ZF@> This function proceeds if the character gained a new level this update
     SCRIPT_FUNCTION_BEGIN();
 
-	returncode = HAS_SOME_BITS( pself->alert, ALERTIF_LEVELUP );
+    returncode = HAS_SOME_BITS( pself->alert, ALERTIF_LEVELUP );
 
-	SCRIPT_FUNCTION_END();
+    SCRIPT_FUNCTION_END();
 }
 
 //--------------------------------------------------------------------------------------------
@@ -7789,17 +7789,19 @@ Uint8 scr_GiveSkillToTarget( script_state_t * pstate, ai_state_bundle_t * pbdl_s
     // GiveSkillToTarget( tmpargument = "skill_IDSZ", tmpdistance = "skill_level" )
     /// @details ZF@> This function permanently gives the target character a skill
     chr_t *ptarget;
-	SCRIPT_FUNCTION_BEGIN();
+    egoboo_rv rv;
 
-	SCRIPT_REQUIRE_TARGET( ptarget );
+    SCRIPT_FUNCTION_BEGIN();
 
-	returncode = idsz_map_add( ptarget->skills, pstate->argument, pstate->distance );
+    SCRIPT_REQUIRE_TARGET( ptarget );
 
-	SCRIPT_FUNCTION_END();
+    rv = idsz_map_add( ptarget->skills, pstate->argument, pstate->distance );
+
+    returncode = (rv_success == rv);
+
+    SCRIPT_FUNCTION_END();
 }
 
-
-//--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 bool_t _break_passage( int mesh_fx_or, int become, int frames, int starttile, const PASS_REF by_reference passage, int *ptilex, int *ptiley )

@@ -297,7 +297,6 @@ INLINE float fvec2_length( const fvec2_base_t A )
     return SQRT(A2);
 }
 
-
 //--------------------------------------------------------------------------------------------
 INLINE fvec2_t fvec2_sub( const fvec2_base_t A, const fvec2_base_t B )
 {
@@ -491,7 +490,7 @@ INLINE fvec3_t fvec3_normalize( const fvec3_base_t vec )
 INLINE bool_t  fvec3_self_normalize( fvec3_base_t A )
 {
     if( NULL == A ) return bfalse;
-    
+
     if ( 0.0f != fvec3_length_abs( A ) )
     {
         float len2 = A[kX] * A[kX] + A[kY] * A[kY] + A[kZ] * A[kZ];
@@ -510,7 +509,7 @@ INLINE bool_t  fvec3_self_normalize( fvec3_base_t A )
 INLINE bool_t fvec3_self_normalize_to( fvec3_base_t vec, float B  )
 {
     if( NULL == vec ) return bfalse;
-    
+
     if( 0.0f == B )
     {
         fvec3_self_clear( vec );
@@ -909,8 +908,6 @@ INLINE fmat_4x4_t ScaleXYZRotateXYZTranslate_SpaceFixed( const float scale_x, co
     return ret;
 }
 
-
-
 //--------------------------------------------------------------------------------------------
 INLINE fmat_4x4_t ScaleXYZRotateXYZTranslate_BodyFixed( const float scale_x, const float scale_y, const float scale_z, const Uint16 turn_z, const Uint16 turn_x, const Uint16 turn_y, const float translate_x, const float translate_y, const float translate_z )
 {
@@ -959,8 +956,6 @@ INLINE fmat_4x4_t ScaleXYZRotateXYZTranslate_BodyFixed( const float scale_x, con
     ret.CNV( 3, 1 ) = translate_y;
     ret.CNV( 3, 2 ) = translate_z;
     ret.CNV( 3, 3 ) = 1.0f;
-
-
 
     return ret;
 }

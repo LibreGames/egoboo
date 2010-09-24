@@ -198,7 +198,6 @@ enum e_chr_movement_bits
 #define IS_PACKED_CHR(ICHR)   ( !DEFINED_CHR(ICHR) ? bfalse : ChrList.lst[ICHR].pack.is_packed )
 #define IS_ATTACHED_CHR(ICHR) ( !DEFINED_CHR(ICHR) ? bfalse : (DEFINED_CHR(ChrList.lst[ICHR].attachedto) || ChrList.lst[ICHR].pack.is_packed) )
 
-
 #define IS_FLYING_PCHR(PCHR) ( !DEFINED_PCHR(PCHR) ? bfalse : ((PCHR)->is_flying_jump || (PCHR)->is_flying_platform) )
 #define IS_PACKED_PCHR(PCHR) ( !DEFINED_PCHR(PCHR) ? bfalse : (PCHR)->pack.is_packed )
 #define IS_ATTACHED_PCHR(PCHR)  ( !DEFINED_PCHR(PCHR) ? bfalse : (DEFINED_CHR((PCHR)->attachedto) || (PCHR)->pack.is_packed) )
@@ -473,9 +472,9 @@ struct s_chr
 
     // Skills
     int           darkvision_level;
-	int           see_kurse_level;
-	int           see_invisible_level;
-    IDSZ_node_t	  skills[MAX_IDSZ_MAP_SIZE];
+    int           see_kurse_level;
+    int           see_invisible_level;
+    IDSZ_node_t      skills[MAX_IDSZ_MAP_SIZE];
 
     /// collision info
 
@@ -595,7 +594,6 @@ void reset_character_accel( const CHR_REF by_reference character );
 bool_t detach_character_from_mount( const CHR_REF by_reference character, Uint8 ignorekurse, Uint8 doshop );
 
 bool_t remove_item_from_pack( const CHR_REF by_reference pack_holder, const CHR_REF by_reference item_ref );
-
 
 void flash_character_height( const CHR_REF by_reference character, Uint8 valuelow, Sint16 low, Uint8 valuehigh, Sint16 high );
 void flash_character( const CHR_REF by_reference character, Uint8 value );

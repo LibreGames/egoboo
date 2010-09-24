@@ -75,7 +75,7 @@ cap_t * cap_init( cap_t * pcap )
     pcap->stoppedby  = MPDFX_IMPASS;
 
     pcap->spelleffect_type = NO_SKIN_OVERRIDE;
-	idsz_map_init( pcap->skills );
+    idsz_map_init( pcap->skills );
 
     return pcap;
 }
@@ -430,8 +430,8 @@ cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
             }
         }
 
-		//If it is none of the predefined IDSZ extensions then add it as a new skill
-		idsz_map_add( pcap->skills, idsz, fget_int( fileread ) );
+        //If it is none of the predefined IDSZ extensions then add it as a new skill
+        idsz_map_add( pcap->skills, idsz, fget_int( fileread ) );
     }
 
 
@@ -766,21 +766,21 @@ bool_t save_one_cap_file_vfs( const char * szSaveName, const char * szTemplateNa
     fput_expansion_float( filewrite, "", MAKE_IDSZ( 'M', 'A', 'N', 'A' ), UFP8_TO_FLOAT( pcap->mana_spawn ) );
 
     // Copy all skill expansions
-	{
-		IDSZ_node_t *pidsz;
-		int iterator;
+    {
+        IDSZ_node_t *pidsz;
+        int iterator;
 
-		iterator = 0;
-		pidsz = idsz_map_iterate( pcap->skills, &iterator );
-		while( pidsz != NULL )
-		{
-			//Write that skill into the file
-			fput_expansion( filewrite, "", pidsz->id, pidsz->level );
+        iterator = 0;
+        pidsz = idsz_map_iterate( pcap->skills, &iterator );
+        while( pidsz != NULL )
+        {
+            //Write that skill into the file
+            fput_expansion( filewrite, "", pidsz->id, pidsz->level );
 
-			//Get the next IDSZ from the map
-			pidsz = idsz_map_iterate( pcap->skills, &iterator );
-		}
-	}
+            //Get the next IDSZ from the map
+            pidsz = idsz_map_iterate( pcap->skills, &iterator );
+        }
+    }
 
     // dump the rest of the template file
     template_flush( filetemp, filewrite );

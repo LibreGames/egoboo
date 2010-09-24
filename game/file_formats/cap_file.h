@@ -23,6 +23,7 @@
 /// @details routines for reading and writing the character profile file data.txt
 
 #include "egoboo_typedef.h"
+
 #include "IDSZ_map.h"
 
 //--------------------------------------------------------------------------------------------
@@ -193,12 +194,12 @@ struct s_cap
     int          state_override;                 ///< 0 for normal
     int          content_override;               ///< 0 for normal
 
-    IDSZ         idsz[IDSZ_COUNT];              ///< ID strings
+    IDSZ         idsz[IDSZ_COUNT];                   ///< ID strings
 
     // inventory
-    Uint8        ammomax;                       ///< Ammo stuff
+    Uint8        ammomax;                        ///< Ammo stuff
     Uint8        ammo;
-    Sint16       money;                         ///< Money
+    Sint16       money;                          ///< Money
 
     // character stats
     Uint8        gender;                        ///< Gender
@@ -335,8 +336,8 @@ struct s_cap
     int          blud_pip;                       ///< What kind of blud?
 
     // skill system
-	IDSZ_node_t  skills[MAX_IDSZ_MAP_SIZE];
-    int			see_invisible_level;             ///< Can it see invisible?
+    IDSZ_node_t  skills[MAX_IDSZ_MAP_SIZE];
+    int          see_invisible_level;             ///< Can it see invisible?
 
     // random stuff
     bool_t       stickybutt;                    ///< Stick to the ground?

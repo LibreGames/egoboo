@@ -23,7 +23,8 @@
 /// @brief Skeleton for Egoboo networking
 
 #include "egoboo_typedef.h"
-#include "quest.h"
+#include "IDSZ_map.h"
+#include "configfile.h"
 
 //--------------------------------------------------------------------------------------------
 // Network stuff
@@ -99,6 +100,7 @@ void input_device_init( input_device_t * pdevice );
 void input_device_add_latch( input_device_t * pdevice, latch_input_t latch );
 
 //--------------------------------------------------------------------------------------------
+#define INVALID_PLAYER MAX_PLAYER
 
 /// The state of a player
 struct s_player
@@ -112,8 +114,11 @@ struct s_player
     /// Local latch, set by set_one_player_latch(), read by sv_talkToRemotes()
     latch_input_t           local_latch;
 
-	// quest log for this player
-	IDSZ_node_t				quest_log[MAX_IDSZ_MAP_SIZE];		  ///< lists all the characters quests
+    // quest log for this player
+    IDSZ_node_t             quest_log[MAX_IDSZ_MAP_SIZE];          ///< lists all the character's quests
+
+    //---- skeleton for using a ConfigFile to save quests
+    //ConfigFilePtr_t         quest_file;
 
     // Timed latches
     Uint32                  tlatch_count;
@@ -124,21 +129,19 @@ struct s_player
 };
 typedef struct s_player player_t;
 
-extern int                     local_numlpla;                                   ///< Number of local players
-
-#define INVALID_PLAYER MAX_PLAYER
-
 DECLARE_STACK_EXTERN( player_t, PlaStack, MAX_PLAYER );                         ///< Stack for keeping track of players
+extern int local_numlpla;                                   ///< Number of local players
 
 #define VALID_PLA_RANGE(IPLA) ( ((IPLA) >= 0) && ((IPLA) < MAX_PLAYER) )
 #define VALID_PLA(IPLA)       ( VALID_PLA_RANGE(IPLA) && ((IPLA) < PlaStack.count) && PlaStack.lst[IPLA].valid )
 #define INVALID_PLA(IPLA)     ( !VALID_PLA_RANGE(IPLA) || ((IPLA) >= PlaStack.count)|| !PlaStack.lst[IPLA].valid )
 
-void           player_init( player_t * ppla );
-void           pla_reinit( player_t * ppla );
+player_t *     pla_ctor( player_t * ppla );
+player_t *     pla_dtor( player_t * ppla );
+player_t *     pla_reinit( player_t * ppla );
 CHR_REF        pla_get_ichr( const PLA_REF by_reference iplayer );
 struct s_chr * pla_get_pchr( const PLA_REF by_reference iplayer );
-player_t*	   ichr_get_ppla( const CHR_REF by_reference ichr );
+player_t*      chr_get_ppla( const CHR_REF by_reference ichr );
 
 //--------------------------------------------------------------------------------------------
 

@@ -37,7 +37,8 @@
 #include "game.h"
 #include "texture.h"
 #include "ui.h"
-#include "collision.h"                    //Only or detach_character_from_platform()
+#include "collision.h"                    // Only for detach_character_from_platform()
+#include "quest.h"
 
 #include "egoboo_vfs.h"
 #include "egoboo_setup.h"
@@ -1418,7 +1419,6 @@ void attach_character_to_mount( const CHR_REF by_reference iitem, const CHR_REF 
     pitem->hitready = bfalse;
 }
 
-
 //--------------------------------------------------------------------------------------------
 void drop_all_idsz( const CHR_REF by_reference character, IDSZ idsz_min, IDSZ idsz_max )
 {
@@ -1432,7 +1432,7 @@ void drop_all_idsz( const CHR_REF by_reference character, IDSZ idsz_min, IDSZ id
     if ( !INGAME_CHR( character ) ) return;
     pchr = ChrList.lst + character;
 
-    if ( pchr->pos.z <= ( PITDEPTH >> 1 ) ) 
+    if ( pchr->pos.z <= ( PITDEPTH >> 1 ) )
     {
         // Don't lose items in pits...
         return;
@@ -1885,7 +1885,7 @@ void character_swipe( const CHR_REF by_reference ichr, slot_t slot )
 
             turn = TO_TURN( pchr->ori.facing_z + ATK_BEHIND );
             {
-                fvec3_t _tmp_vec = VECT3(turntocos[ turn ] * velocity, turntocos[ turn ] * velocity, DROPZVEL ); 
+                fvec3_t _tmp_vec = VECT3(turntocos[ turn ] * velocity, turntocos[ turn ] * velocity, DROPZVEL );
                 phys_data_accumulate_avel( &(pthrown->phys), _tmp_vec.v );
             }
 
@@ -2100,7 +2100,7 @@ void do_level_up( const CHR_REF by_reference character )
             // do the level up
             pchr->experiencelevel++;
             xpneeded = pcap->experience_forlevel[curlevel];
-			ADD_BITS(pchr->ai.alert, ALERTIF_LEVELUP );
+            ADD_BITS(pchr->ai.alert, ALERTIF_LEVELUP );
 
             // The character is ready to advance...
             if ( VALID_PLA( pchr->is_which_player ) )
@@ -2297,12 +2297,12 @@ chr_t * resize_one_character( chr_t * pchr )
 bool_t export_one_character_quest_vfs( const char *szSaveName, const CHR_REF by_reference character )
 {
     /// @details ZZ@> This function makes the naming.txt file for the character
-	player_t *ppla;
-	
-	if ( !INGAME_CHR( character ) ) return bfalse;
+    player_t *ppla;
 
-	ppla = ichr_get_ppla( character );
-	if( ppla == NULL ) return bfalse;
+    if ( !INGAME_CHR( character ) ) return bfalse;
+
+    ppla = chr_get_ppla( character );
+    if( ppla == NULL ) return bfalse;
 
     return quest_log_upload_vfs( ppla->quest_log, szSaveName );
 }
@@ -2416,7 +2416,7 @@ bool_t chr_upload_cap( chr_t * pchr, cap_t * pcap )
     pcap->ammo    = pchr->ammo;
 
     // update any skills that have been learned
-	idsz_map_copy( pcap->skills, pchr->skills );
+    idsz_map_copy( pcap->skills, pchr->skills );
 
     // Enchant stuff
     pcap->see_invisible_level = pchr->see_invisible_level;
@@ -2473,7 +2473,7 @@ bool_t chr_download_cap( chr_t * pchr, cap_t * pcap )
     }
 
     // Skillz
-	idsz_map_copy( pcap->skills, pchr->skills );
+    idsz_map_copy( pcap->skills, pchr->skills );
 	pchr->darkvision_level = chr_get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );
     pchr->see_invisible_level = pcap->see_invisible_level;
 
@@ -2947,7 +2947,7 @@ int damage_character_hurt( chr_bundle_t * pbdl, int base_damage, int actual_dama
 
     // Only actual_damage if not invincible
     if( loc_pchr->damagetime > 0 && !ignore_invictus ) return 0;
-    
+
     loc_pchr->life -= actual_damage;
 
     // Taking actual_damage action
@@ -3055,15 +3055,15 @@ int damage_character( const CHR_REF by_reference character, FACING_T direction,
     base_damage   = actual_damage;
     actual_damage = actual_damage >> GET_DAMAGE_RESIST( loc_pchr->damagemodifier[damagetype] );
 
-	// Increase electric damage when in water
-	if( damagetype == DAMAGE_ZAP && chr_is_over_water( loc_pchr ) )
-	{
-		// Only if actually in the water
-		if ( loc_pchr->pos.z <= water.surface_level )
+    // Increase electric damage when in water
+    if( damagetype == DAMAGE_ZAP && chr_is_over_water( loc_pchr ) )
+    {
+        // Only if actually in the water
+        if ( loc_pchr->pos.z <= water.surface_level )
         {
-			actual_damage = actual_damage << 1;		/// @note: ZF> Is double damage too much?
+            actual_damage = actual_damage << 1;        /// @note: ZF> Is double damage too much?
         }
-	}
+    }
 
     // Allow actual_damage to be dealt to mana (mana shield spell)
     if ( HAS_SOME_BITS(loc_pchr->damagemodifier[damagetype], DAMAGEMANA) )
@@ -3108,7 +3108,7 @@ int damage_character( const CHR_REF by_reference character, FACING_T direction,
     loc_pai->directionlast  = direction;
 
     // Check for characters who are immune to this damage, no need to continue if they have
-    immune_to_damage = (actual_damage > 0 && actual_damage <= loc_pchr->damagethreshold) || HAS_SOME_BITS(loc_pchr->damagemodifier[damagetype], DAMAGEINVICTUS); 
+    immune_to_damage = (actual_damage > 0 && actual_damage <= loc_pchr->damagethreshold) || HAS_SOME_BITS(loc_pchr->damagemodifier[damagetype], DAMAGEINVICTUS);
     if ( immune_to_damage )
     {
         //Dark green text
@@ -3126,7 +3126,7 @@ int damage_character( const CHR_REF by_reference character, FACING_T direction,
     if ( actual_damage > 0 )
     {
         // Hard mode deals 25% extra actual damage to players!
-        if ( cfg.difficulty >= GAME_HARD && VALID_PLA( loc_pchr->is_which_player ) && !VALID_PLA(ChrList.lst[attacker].is_which_player) ) 
+        if ( cfg.difficulty >= GAME_HARD && VALID_PLA( loc_pchr->is_which_player ) && !VALID_PLA(ChrList.lst[attacker].is_which_player) )
         {
             actual_damage *= 1.25f;
         }
@@ -3134,12 +3134,12 @@ int damage_character( const CHR_REF by_reference character, FACING_T direction,
         // Easy mode deals 25% extra actual damage by players and 25% less to players
         if ( cfg.difficulty <= GAME_EASY )
         {
-            if (  VALID_PLA(ChrList.lst[attacker].is_which_player) && !VALID_PLA( loc_pchr->is_which_player ) ) 
+            if (  VALID_PLA(ChrList.lst[attacker].is_which_player) && !VALID_PLA( loc_pchr->is_which_player ) )
             {
                 actual_damage *= 1.25f;
             }
 
-            if ( !VALID_PLA(ChrList.lst[attacker].is_which_player) &&  VALID_PLA( loc_pchr->is_which_player ) ) 
+            if ( !VALID_PLA(ChrList.lst[attacker].is_which_player) &&  VALID_PLA( loc_pchr->is_which_player ) )
             {
                 actual_damage *= 0.75f;
             }
@@ -3697,7 +3697,7 @@ chr_t * chr_config_do_active( chr_t * pchr )
     }
 
     // Down jump timer
-    if ( pchr->jump_time > 0 && ( INGAME_CHR(pchr->attachedto) || pchr->jump_ready || pchr->jump_number > 0) ) 
+    if ( pchr->jump_time > 0 && ( INGAME_CHR(pchr->attachedto) || pchr->jump_ready || pchr->jump_number > 0) )
     {
         pchr->jump_time--;
     }
@@ -4601,7 +4601,7 @@ void change_character( const CHR_REF by_reference ichr, const PRO_REF by_referen
     pchr->light_base       = pcap_new->light;
 
     // change the skillz, too, jack!
-	idsz_map_copy( pcap_new->skills, pchr->skills );
+    idsz_map_copy( pcap_new->skills, pchr->skills );
 	pchr->darkvision_level = chr_get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );
     pchr->see_invisible_level = pcap_new->see_invisible_level;
 
@@ -4868,36 +4868,36 @@ int chr_get_skill( chr_t *pchr, IDSZ whichskill )
 {
     /// @details ZF@> This returns the skill level for the specified skill or 0 if the character doesn't
 	///				  have the skill. Also checks the skill IDSZ.
-	IDSZ_node_t *pskill;
+    IDSZ_node_t *pskill;
 
 	if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
 
     //Any [NONE] IDSZ returns always "true"
     if ( IDSZ_NONE == whichskill ) return 1;
 
-	//Do not allow poison or backstab skill if we are restricted by code of conduct
+    //Do not allow poison or backstab skill if we are restricted by code of conduct
     if ( MAKE_IDSZ( 'P', 'O', 'I', 'S' ) == whichskill || MAKE_IDSZ( 's', 'T', 'A', 'B' ) == whichskill )
-	{
+    {
 		if( NULL != idsz_map_get( pchr->skills, MAKE_IDSZ( 'C', 'O', 'D', 'E' ) ) ) return 0;
-	}
+    }
 
     // First check the character Skill ID matches
     // Then check for expansion skills too.
 	if ( chr_get_idsz( pchr->ai.index, IDSZ_SKILL )  == whichskill ) return 1;
 
-	// Simply return the skill level if we have the skill
+    // Simply return the skill level if we have the skill
 	pskill = idsz_map_get( pchr->skills, whichskill );
-	if( pskill != NULL ) return pskill->level;
+    if( pskill != NULL ) return pskill->level;
 
-	// Truesight allows reading
+    // Truesight allows reading
     if ( MAKE_IDSZ( 'R', 'E', 'A', 'D' ) == whichskill )
-	{
+    {
 		pskill = idsz_map_get( pchr->skills, MAKE_IDSZ( 'C', 'K', 'U', 'R' ) );
 		if( pskill != NULL && pchr->see_invisible_level > 0 ) return pchr->see_invisible_level + pskill->level;
-	}
+    }
 
-	//Skill not found
-	return 0;
+    //Skill not found
+    return 0;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4942,7 +4942,7 @@ bool_t update_chr_darkvision( const CHR_REF by_reference character )
         int tmp_level = ( 10 * -life_regen ) / pchr->lifemax;						//Darkvision gained by poison
 		int base_level = chr_get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );	//Natural darkvision
 
-		//Use the better of the two darkvision abilities
+        //Use the better of the two darkvision abilities
         pchr->darkvision_level = MAX( base_level, tmp_level );
     }
 
@@ -4969,7 +4969,6 @@ void update_all_characters()
     }
 
 }
-
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -5241,7 +5240,6 @@ chr_bundle_t * chr_do_latch_button( chr_bundle_t * pbdl )
         jump_vel   = 0.0f;
         jump_pos   = 0.0f;
 
-
         if ( INGAME_CHR( loc_pchr->attachedto ) )
         {
             // Jump from our mount
@@ -5315,7 +5313,7 @@ chr_bundle_t * chr_do_latch_button( chr_bundle_t * pbdl )
             }
 
             // down the jump counter
-            if ( JUMP_NUMBER_INFINITE != loc_pchr->jump_number_reset && loc_pchr->jump_number >= 0 ) 
+            if ( JUMP_NUMBER_INFINITE != loc_pchr->jump_number_reset && loc_pchr->jump_number >= 0 )
             {
                 loc_pchr->jump_number--;
             }
@@ -5469,14 +5467,12 @@ chr_bundle_t * chr_do_latch_button( chr_bundle_t * pbdl )
     return pbdl;
 }
 
-
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 bool_t chr_handle_madfx( chr_t * pchr )
 {
-	///@details This handles special commands an animation frame might execute, for example 
-	///         grabbing stuff or spawning attack particles.
+    ///@details This handles special commands an animation frame might execute, for example
+    ///         grabbing stuff or spawning attack particles.
     CHR_REF ichr;
     Uint32 framefx;
 
@@ -5708,12 +5704,12 @@ float set_character_animation_rate( chr_t * pchr )
             // no specific sneak animation exists
             anim_info[CHR_MOVEMENT_SNEAK].allowed = bfalse;
 
-			//ZF> small fix here, if there is no sneak animation, try to default to normal walk with reduced animation speed
-			if( HAS_SOME_BITS(pchr->movement_bits, CHR_MOVEMENT_BITS_SNEAK ) )
-			{
-				anim_info[CHR_MOVEMENT_WALK].allowed = btrue;
-				anim_info[CHR_MOVEMENT_WALK].speed *= 2;
-			}
+            //ZF> small fix here, if there is no sneak animation, try to default to normal walk with reduced animation speed
+            if( HAS_SOME_BITS(pchr->movement_bits, CHR_MOVEMENT_BITS_SNEAK ) )
+            {
+                anim_info[CHR_MOVEMENT_WALK].allowed = btrue;
+                anim_info[CHR_MOVEMENT_WALK].speed *= 2;
+            }
         }
 
         if( ACTION_WB != pmad->action_map[ACTION_WB] )
@@ -5893,7 +5889,7 @@ chr_bundle_t * move_one_character_get_environment( chr_bundle_t * pbdl, chr_envi
 
     if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
 
-    // alias some variables    
+    // alias some variables
     loc_pchr  = pbdl->chr_ptr;
     loc_pphys = &(loc_pchr->phys);
     loc_pai   = &(loc_pchr->ai);
@@ -6016,7 +6012,7 @@ chr_bundle_t * move_one_character_get_environment( chr_bundle_t * pbdl, chr_envi
     }
 
     //---- friction
-    
+
     // give "mario platforms" a special exemption from vertical air friction
     // otherwise they will stop bouncing
     if ( loc_pchr->is_flying_platform && loc_pchr->platform && INFINITE_WEIGHT == loc_pphys->weight )
@@ -6121,9 +6117,9 @@ chr_bundle_t * move_one_character_do_fluid_friction( chr_bundle_t * pbdl )
     // Apply fluid friction from last time
     {
         fvec3_t _tmp_vec = VECT3(
-            -loc_pchr->vel.x * ( 1.0f - loc_penviro->fluid_friction_hrz ), 
-            -loc_pchr->vel.y * ( 1.0f - loc_penviro->fluid_friction_hrz ), 
-            -loc_pchr->vel.z * ( 1.0f - loc_penviro->fluid_friction_vrt ) ); 
+            -loc_pchr->vel.x * ( 1.0f - loc_penviro->fluid_friction_hrz ),
+            -loc_pchr->vel.y * ( 1.0f - loc_penviro->fluid_friction_hrz ),
+            -loc_pchr->vel.z * ( 1.0f - loc_penviro->fluid_friction_vrt ) );
 
         phys_data_accumulate_avel( loc_pphys, _tmp_vec.v );
     }
@@ -6192,7 +6188,7 @@ chr_bundle_t * move_one_character_do_voluntary_flying( chr_bundle_t * pbdl )
     // determine a "maximum speed" using the v2.22 method
     maxspeed = loc_pchr->maxaccel * fluid_factor_222;
 
-    // calculate a speed lerp so that the controls can have more effect when the 
+    // calculate a speed lerp so that the controls can have more effect when the
     // object is moving faster
     speed_lerp = 0.0f;
     if( maxspeed > 0.0f && fvec3_length_abs( loc_pchr->vel.v ) > 0.0f )
@@ -6212,7 +6208,7 @@ chr_bundle_t * move_one_character_do_voluntary_flying( chr_bundle_t * pbdl )
         throttle = (HAS_SOME_BITS(loc_pchr->latch.raw_b, LATCHBUTTON_JUMP ) ? 1.0f : 0.0f);
 
         // interpolate between the "taking off" conditions (max throttle, max climb, straight ahead )
-        // and the player's control of the flying 
+        // and the player's control of the flying
         loc_latch.x += (1.0f - jump_lerp) * loc_pchr->latch.raw.x;
         loc_latch.y += (1.0f - jump_lerp) * loc_pchr->latch.raw.y;
         loc_latch.z += throttle;
@@ -6505,7 +6501,7 @@ chr_bundle_t * move_one_character_do_involuntary( chr_bundle_t * pbdl )
 
     // should we use the character's latch info?
     use_latch = loc_pchr->alive && !loc_pchr->isitem && loc_pchr->latch.trans_valid;
-    
+
     // if we are not using the latch info
     if( !use_latch )
     {
@@ -6593,7 +6589,7 @@ chr_bundle_t * move_one_character_do_orientation( chr_bundle_t * pbdl )
     // handle the special case of a mounted character.
     // the actual matrix is generated by the attachment points, but the scripts still use
     // the orientation values
-    if ( INGAME_CHR( loc_pchr->attachedto ) ) 
+    if ( INGAME_CHR( loc_pchr->attachedto ) )
     {
         chr_t * pmount = ChrList.lst + loc_pchr->attachedto;
 
@@ -6955,7 +6951,7 @@ chr_bundle_t * move_one_character_do_animation( chr_bundle_t * pbdl )
 //--------------------------------------------------------------------------------------------
 chr_bundle_t * move_one_character_limit_flying( chr_bundle_t * pbdl )
 {
-    // this should only be called by move_one_character_do_floor() after the 
+    // this should only be called by move_one_character_do_floor() after the
     // normal acceleration has been killed
 
     fvec3_t total_acc;
@@ -7071,7 +7067,7 @@ chr_bundle_t * move_one_character_do_jump( chr_bundle_t * pbdl )
 
     // determine whether a character has recently jumped
     jump_lerp = (float)loc_pchr->jump_time / (float)JUMP_DELAY;
-    jump_lerp = CLIP(jump_lerp, 0.0f, 1.0f);   
+    jump_lerp = CLIP(jump_lerp, 0.0f, 1.0f);
 
     // if we have not jumped, there's nothing to do
     if( 0.0f == jump_lerp ) return pbdl;
@@ -7122,7 +7118,7 @@ chr_bundle_t * move_one_character_do_flying( chr_bundle_t * pbdl )
     if( !IS_FLYING_PCHR(loc_pchr) || IS_ATTACHED_PCHR(loc_pchr) ) return pbdl;
 
     // apply the flying forces
-    phys_data_accumulate_avel( loc_pphys, loc_penviro->chr_acc.v );    
+    phys_data_accumulate_avel( loc_pphys, loc_penviro->chr_acc.v );
 
     return pbdl;
 }
@@ -7215,7 +7211,7 @@ chr_bundle_t * move_one_character_do_floor( chr_bundle_t * pbdl )
 
         //---- use the static coefficient of friction
 
-        // the max acceleration from static friction is proportional to the normal acceleration 
+        // the max acceleration from static friction is proportional to the normal acceleration
         normal_acc_len = fvec3_length(normal_acc.v);
 
         // find a "maximum" amount of deceleration due to friction for this object
@@ -7237,7 +7233,7 @@ chr_bundle_t * move_one_character_do_floor( chr_bundle_t * pbdl )
 
             {
                 fvec3_t tmp_vec1, tmp_vec2;
-                
+
                 tmp_vec1 = fvec3_scale( loc_penviro->ground_diff.v, 0.1f );
                 tmp_vec2 = fvec3_scale( loc_penviro->legs_vel.v, 0.9f );
 
@@ -7260,7 +7256,7 @@ chr_bundle_t * move_one_character_do_floor( chr_bundle_t * pbdl )
 
             {
                 fvec3_t tmp_vec1, tmp_vec2;
-                
+
                 tmp_vec1 = fvec3_scale( loc_penviro->chr_vel.v, 0.1f );
                 tmp_vec2 = fvec3_scale( loc_penviro->legs_vel.v, 0.9f );
 
@@ -8325,7 +8321,7 @@ TX_REF chr_get_icon_ref( const CHR_REF by_reference item )
     is_spell_fx = (NO_SKIN_OVERRIDE != pitem_cap->spelleffect_type);       // the value of spelleffect_type == the skin of the book or -1 for not a spell effect
     is_book     = (SPELLBOOK == pitem->profile_ref);
     draw_book   = ( is_book || ( is_spell_fx && !pitem->draw_icon ) /*|| ( is_spell_fx && MAX_CHR != pitem->attachedto )*/ ) && ( bookicon_count > 0 );    //>ZF> uncommented a part because this caused a icon bug when you were morphed and mounted
-    
+
     if ( !draw_book )
     {
         iskin = pitem->skin;
@@ -9744,7 +9740,7 @@ bool_t chr_can_mount( const CHR_REF by_reference ichr_a, const CHR_REF by_refere
     is_valid_rider_a = !pchr_a->isitem && pchr_a->alive && !IS_FLYING_PCHR(pchr_a) &&
         !IS_ATTACHED_PCHR( pchr_a ) && has_ride_anim;
 
-    is_valid_mount_b = pchr_b->ismount && pchr_b->alive && !pchr_b->pack.is_packed && 
+    is_valid_mount_b = pchr_b->ismount && pchr_b->alive && !pchr_b->pack.is_packed &&
         pcap_b->slotvalid[SLOT_LEFT] && !INGAME_CHR( pchr_b->holdingwhich[SLOT_LEFT] );
 
     return is_valid_rider_a && is_valid_mount_b;
@@ -10151,7 +10147,7 @@ bool_t chr_bump_mesh( chr_bundle_t * pbdl, fvec3_t test_pos, fvec3_t test_vel, f
         {
             final_vel_z *= -dampen;
         }
-        
+
         // determine some special cases
         if ( ABS( final_vel_z ) < STOPBOUNCING )
         {
@@ -10231,7 +10227,7 @@ bool_t chr_bump_grid( chr_bundle_t * pbdl, fvec3_t test_pos, fvec3_t test_vel, f
     bumpdampen = CLIP( loc_pphys->bumpdampen, 0.0f, 1.0f );
     bumpdampen = ( bumpdampen + 1.0f ) / 2.0f;
 
-    if( !chr_test_wall( loc_pchr, test_pos.v ) ) 
+    if( !chr_test_wall( loc_pchr, test_pos.v ) )
     {
         // no interaction with the grid flags
         return bfalse;
@@ -10456,7 +10452,7 @@ void character_physics_finalize_one( chr_bundle_t * pbdl, float dt )
     // do the "integration" of the accumulators
     // work on test_pos and test velocity instead of the actual character position and velocity
     test_pos = chr_get_pos( loc_pchr );
-    test_vel = loc_pchr->vel; 
+    test_vel = loc_pchr->vel;
     phys_data_integrate_accumulators( &test_pos, &test_vel, loc_pphys, dt );
 
     // bump the character with the mesh
@@ -10475,7 +10471,7 @@ void character_physics_finalize_one( chr_bundle_t * pbdl, float dt )
     if( bumped_mesh )
     {
         test_pos = chr_get_pos( loc_pchr );
-        test_vel = loc_pchr->vel; 
+        test_vel = loc_pchr->vel;
         phys_data_integrate_accumulators( &test_pos, &test_vel, loc_pphys, dt );
     }
 
@@ -10495,7 +10491,7 @@ void character_physics_finalize_one( chr_bundle_t * pbdl, float dt )
     if( bumped_grid )
     {
         test_pos = chr_get_pos( loc_pchr );
-        test_vel = loc_pchr->vel; 
+        test_vel = loc_pchr->vel;
         phys_data_integrate_accumulators( &test_pos, &test_vel, loc_pphys, dt );
     }
 
@@ -10527,7 +10523,6 @@ void character_physics_finalize_one( chr_bundle_t * pbdl, float dt )
         chr_update_safe( loc_pchr, needs_update );
     }
 }
-
 
 //--------------------------------------------------------------------------------------------
 void character_physics_finalize_all( float dt )
@@ -10778,7 +10773,7 @@ bool_t pack_validate( pack_t * ppack )
             item_pack_ptr->is_packed  = bfalse;
         }
         else
-        {       
+        {
             parent_pack_ptr = item_pack_ptr;
         }
 
@@ -11207,7 +11202,6 @@ CHR_REF chr_pack_get_item( const CHR_REF by_reference chr_ref, grip_offset_t gri
     chr_t  * pchr, * item_ptr, *parent_ptr;
     pack_t * chr_pack_ptr, * item_pack_ptr, *parent_pack_ptr;
 
-
     // does the chr_ref exist?
     if ( !DEFINED_CHR( chr_ref ) ) return bfalse;
     pchr         = ChrList.lst + chr_ref;
@@ -11217,7 +11211,7 @@ CHR_REF chr_pack_get_item( const CHR_REF by_reference chr_ref, grip_offset_t gri
     if ( chr_pack_ptr->is_packed || pchr->isitem ) return ( CHR_REF )MAX_CHR;
 
     // is the pack empty?
-    if ( MAX_CHR == chr_pack_ptr->next || 0 == chr_pack_ptr->count ) 
+    if ( MAX_CHR == chr_pack_ptr->next || 0 == chr_pack_ptr->count )
     {
         return ( CHR_REF )MAX_CHR;
     }
@@ -11278,7 +11272,7 @@ CHR_REF chr_pack_get_item( const CHR_REF by_reference chr_ref, grip_offset_t gri
         // Flag the last item_ref as not removed
         ADD_BITS( item_ptr->ai.alert, ALERTIF_NOTTAKENOUT );  // Same as ALERTIF_NOTPUTAWAY
 
-        // let the calling function know that we didn't find anything 
+        // let the calling function know that we didn't find anything
         item_ref = ( CHR_REF )MAX_CHR;
     }
     else
@@ -11307,7 +11301,7 @@ bool_t chr_is_over_water( chr_t *pchr )
 
     if ( !DEFINED_PCHR( pchr ) ) return bfalse;
 
-	if( !water.is_water || !mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) ) return bfalse; 
+    if( !water.is_water || !mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) ) return bfalse;
 
     return 0 != mesh_test_fx( PMesh, pchr->onwhichgrid, MPDFX_WATER );
 }

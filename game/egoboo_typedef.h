@@ -59,7 +59,6 @@ enum e_egoboo_rv
     rv_fail    = bfalse,
     rv_success = btrue
 };
-
 typedef enum e_egoboo_rv egoboo_rv;
 
 //--------------------------------------------------------------------------------------------
@@ -70,13 +69,13 @@ typedef Sint32 SFP8_T;
 
 // unsigned versions
 #define UFP8_TO_FLOAT(V1)  ( ((float)((unsigned)(V1))) * INV_0100 )
-#define FLOAT_TO_UFP8(V1)  ( (unsigned)( ((unsigned)(V1)) * (float)(0x0100) ) ) 
+#define FLOAT_TO_UFP8(V1)  ( (unsigned)( ((unsigned)(V1)) * (float)(0x0100) ) )
 #define UFP8_TO_UINT(V1)   ( ((unsigned)(V1)) >> 8 )                           ///< fast version of V1 / 256
 #define UINT_TO_UFP8(V1)   ( ((unsigned)(V1)) << 8 )                           ///< fast version of V1 * 256
 
 // signed versions
 #define SFP8_TO_FLOAT(V1)  ( ((float)((signed)(V1))) * INV_0100 )
-#define FLOAT_TO_SFP8(V1)  ( (signed)( ((signed)(V1)) * (float)(0x0100) ) ) 
+#define FLOAT_TO_SFP8(V1)  ( (signed)( ((signed)(V1)) * (float)(0x0100) ) )
 #define SFP8_TO_SINT(V1)   ( (V1) < 0 ? -((signed)UFP8_TO_UINT(-V1)) : (signed)UFP8_TO_UINT(V1) )
 #define SINT_TO_SFP8(V1)   ( (V1) < 0 ? -((signed)UINT_TO_UFP8(-V1)) : (signed)UINT_TO_UFP8(V1) )
 
@@ -103,7 +102,7 @@ typedef Uint32 BIT_FIELD;                                ///< A big string suppo
 #define FULL_BIT_FIELD        ((BIT_FIELD)(~0))            ///< A bit string where all bits are flagged as 1
 #define EMPTY_BIT_FIELD         0                            ///< A bit string where all bits are flagged as 0
 #define FILL_BIT_FIELD(XX)    (XX) = FULL_BIT_FIELD        ///< Fills up all bits in a bit pattern
-#define CLEAR_BIT_FIELD(XX) (XX) = 0                    ///< Resets all bits in a BIT_FIELD to 0        
+#define CLEAR_BIT_FIELD(XX) (XX) = 0                    ///< Resets all bits in a BIT_FIELD to 0
 
 #if !defined(ADD_BITS)
     #define ADD_BITS(XX, YY) (XX) |= (YY)
@@ -209,6 +208,8 @@ void floats_to_pair( float vmin, float vmax, IPair * ppair );
 //--------------------------------------------------------------------------------------------
 // IDSZ
 typedef Uint32 IDSZ;
+
+#define IDSZ_DEFINED
 
 #if !defined(MAKE_IDSZ)
 #define MAKE_IDSZ(C0,C1,C2,C3)     \

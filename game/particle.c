@@ -1332,8 +1332,8 @@ prt_bundle_t * move_one_particle_do_fluid_friction( prt_bundle_t * pbdl_prt )
         }
     }
 
-    //Light isnt affected by the wind
-    else if( loc_pprt->type != SPRITE_LIGHT )
+    //Light isn't affected by the wind
+    else if( SPRITE_LIGHT != loc_pprt->type )
     {
         // this is a normal particle
         if( loc_pprt->inwater )
@@ -1440,7 +1440,7 @@ prt_bundle_t * move_one_particle_do_homing( prt_bundle_t * pbdl_prt )
             fvec3_t _tmp_vec_2 = fvec3_scale( vdiff.v, loc_ppip->homingaccel * loc_ppip->homingfriction );
 
             fvec3_self_sum( _tmp_vec_1.v, _tmp_vec_2.v );
-            
+
             phys_data_accumulate_avel( loc_pphys, _tmp_vec_1.v );
         }
     }
@@ -1636,7 +1636,7 @@ prt_bundle_t * move_one_particle_do_floor( prt_bundle_t * pbdl_prt )
         // apply the acceleration from the "normal force"
         phys_data_apply_normal_acceleration( loc_pphys, vup, 1.0f, loc_penviro->floor_lerp, NULL );
     }
- 
+
     return pbdl_prt;
 }
 
@@ -3078,7 +3078,7 @@ prt_bundle_t *  prt_bump_mesh( prt_bundle_t * pbdl, fvec3_t test_pos, fvec3_t te
     phys_data_t       * loc_pphys;
 
     fvec3_t final_vel, final_pos;
-    fvec3_t save_apos_plat, save_avel; 
+    fvec3_t save_apos_plat, save_avel;
     fvec3_t old_pos;
 
     // handle optional parameters
@@ -3253,7 +3253,7 @@ prt_bundle_t *  prt_bump_mesh( prt_bundle_t * pbdl, fvec3_t test_pos, fvec3_t te
 
     *pbumped_mesh = (fvec3_dist_abs( save_apos_plat.v, loc_pphys->apos_plat.v ) != 0.0f) ||
                     (fvec3_dist_abs( save_avel.v, loc_pphys->avel.v ) * dt != 0.0f) ;
-    
+
     return pbdl;
 }
 
@@ -3276,7 +3276,7 @@ prt_bundle_t *  prt_bump_grid( prt_bundle_t * pbdl, fvec3_t test_pos, fvec3_t te
     phys_data_t       * loc_pphys;
 
     fvec3_t final_vel, final_pos;
-    fvec3_t save_apos_plat, save_avel; 
+    fvec3_t save_apos_plat, save_avel;
     fvec3_t old_pos;
 
     BIT_FIELD  hit_bits;
@@ -3450,7 +3450,7 @@ prt_bundle_t *  prt_bump_grid( prt_bundle_t * pbdl, fvec3_t test_pos, fvec3_t te
 
     *pbumped_grid = (fvec3_dist_abs( save_apos_plat.v, loc_pphys->apos_plat.v ) != 0.0f) ||
                     (fvec3_dist_abs( save_avel.v, loc_pphys->avel.v ) * dt != 0.0f) ;
-    
+
     return pbdl;
 }
 
@@ -3479,11 +3479,11 @@ egoboo_rv particle_physics_finalize_one( prt_bundle_t * pbdl, float dt )
 
     // work on test_pos and test velocity instead of the actual particle position and velocity
     test_pos = prt_get_pos( loc_pprt );
-    test_vel = loc_pprt->vel; 
+    test_vel = loc_pprt->vel;
 
     // do the "integration" of the accumulators
     test_pos = prt_get_pos( loc_pprt );
-    test_vel = loc_pprt->vel; 
+    test_vel = loc_pprt->vel;
     phys_data_integrate_accumulators( &test_pos, &test_vel, loc_pphys, dt );
 
     // bump the particles with the mesh
@@ -3503,7 +3503,7 @@ egoboo_rv particle_physics_finalize_one( prt_bundle_t * pbdl, float dt )
     if( bumped_mesh )
     {
         test_pos = prt_get_pos( loc_pprt );
-        test_vel = loc_pprt->vel; 
+        test_vel = loc_pprt->vel;
         phys_data_integrate_accumulators( &test_pos, &test_vel, loc_pphys, dt );
     }
 
@@ -3523,7 +3523,7 @@ egoboo_rv particle_physics_finalize_one( prt_bundle_t * pbdl, float dt )
     if( bumped_grid )
     {
         test_pos = prt_get_pos( loc_pprt );
-        test_vel = loc_pprt->vel; 
+        test_vel = loc_pprt->vel;
         phys_data_integrate_accumulators( &test_pos, &test_vel, loc_pphys, dt );
     }
 

@@ -78,14 +78,15 @@
 			IntermediateDirectory="Release"
 			ConfigurationType="1"
 			CharacterSet="2"
-			WholeProgramOptimization="TRUE">
+			WholeProgramOptimization="FALSE">
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="4"
-				GlobalOptimizations="TRUE"
+				GlobalOptimizations="FALSE"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="FALSE"
 				FavorSizeOrSpeed="1"
+				EnableFiberSafeOptimizations="FALSE"
 				WholeProgramOptimization="FALSE"
 				OptimizeForProcessor="3"
 				OptimizeForWindowsApplication="TRUE"
@@ -97,11 +98,11 @@
 				EnableEnhancedInstructionSet="2"
 				UsePrecompiledHeader="0"
 				BrowseInformation="1"
-				WarningLevel="3"
+				WarningLevel="4"
 				Detect64BitPortabilityProblems="FALSE"
 				DebugInformationFormat="3"
-				CompileAs="0"
-				UndefinePreprocessorDefinitions="_DEBUG"/>
+				CompileAs="1"
+				ShowIncludes="FALSE"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
@@ -112,8 +113,8 @@
 				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="TRUE"
 				SubSystem="1"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
+				OptimizeReferences="1"
+				EnableCOMDATFolding="1"
 				LinkTimeCodeGeneration="FALSE"
 				TargetMachine="1"/>
 			<Tool
@@ -320,6 +321,9 @@
 				RelativePath=".\graphic_prt.c">
 			</File>
 			<File
+				RelativePath=".\IDSZ_map.c">
+			</File>
+			<File
 				RelativePath=".\lighting.c">
 			</File>
 			<File
@@ -419,6 +423,9 @@
 			</File>
 			<File
 				RelativePath=".\graphic_prt.h">
+			</File>
+			<File
+				RelativePath=".\IDSZ_map.h">
 			</File>
 			<File
 				RelativePath=".\lighting.h">

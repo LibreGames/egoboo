@@ -29,122 +29,141 @@
 
 
 //--------------------------------------------------------------------------------------------
-void idsz_map_init( IDSZ_node_t *pidsz_map )
+//--------------------------------------------------------------------------------------------
+IDSZ_node_t * idsz_map_init( IDSZ_node_t * pidsz_map )
 {
-	pidsz_map[0].id = IDSZ_NONE;
-	pidsz_map[0].level = IDSZ_NOT_FOUND;
+    if( NULL == pidsz_map ) return pidsz_map;
+
+    pidsz_map[0].id = IDSZ_NONE;
+    pidsz_map[0].level = IDSZ_NOT_FOUND;
+
+    return pidsz_map;
 }
 
 //--------------------------------------------------------------------------------------------
 egoboo_rv idsz_map_add( IDSZ_node_t *pidsz_map, IDSZ idsz, int level )
 {
-	/// @details ZF> Adds a single IDSZ with the specified level to the map. If it already exists
-	///              in the map, the higher of the two level values will be used.
-	int i;
+    /// @details ZF> Adds a single IDSZ with the specified level to the map. If it already exists
+    ///              in the map, the higher of the two level values will be used.
 
-	if( pidsz_map == NULL || level < 0 ) return rv_error;
+    int i;
 
-	if( idsz == IDSZ_NONE ) return rv_fail;
+    if( NULL == pidsz_map ) return rv_error;
 
-	for( i = 0; i < MAX_IDSZ_MAP_SIZE; i++ )
-	{
-		//Trying to add a quest to a full quest list?
-		if( i + 1 == MAX_IDSZ_MAP_SIZE )
-		{
-			log_warning("idsz_map_add() - Failed to add [%s] to an IDSZ_map. Consider increasing MAX_IDSZ_MAP_SIZE (currently %i)\n", MAX_IDSZ_MAP_SIZE, undo_idsz(idsz) );
-			return rv_error;
-		}
+    if( idsz == IDSZ_NONE || level < 0 ) return rv_fail;
 
-		// Overwrite existing quest
-		if( pidsz_map[i].id == idsz )
-		{
-			// But only if the new quest level is higher than the previous one
+    for( i = 0; i < MAX_IDSZ_MAP_SIZE; i++ )
+    {
+        //Trying to add a idsz to a full idsz list?
+        if( MAX_IDSZ_MAP_SIZE == i + 1 )
+        {
+            log_warning("idsz_map_add() - Failed to add [%s] to an IDSZ_map. Consider increasing MAX_IDSZ_MAP_SIZE (currently %i)\n", MAX_IDSZ_MAP_SIZE, undo_idsz(idsz) );
+            return rv_fail;
+        }
+
+        // Overwrite existing idsz
+        if( idsz == pidsz_map[i].id )
+        {
+            // But only if the new idsz level is higher than the previous one
 			if( pidsz_map[i].level >= level ) return rv_fail;
 
-			pidsz_map[i].level = level;
-			return rv_success;
-		}
+            pidsz_map[i].level = level;
 
-		// Simply append the new quest to pquest_log if we reached the end of the list
-		if( pidsz_map[i].id == IDSZ_NONE )
-		{
-			// Move the list termination down one step
-			pidsz_map[i+1].id    = pidsz_map[i].id;
-			pidsz_map[i+1].level = pidsz_map[i].level;
+            return rv_success;
+        }
 
-			//Add the new quest
-			pidsz_map[i].id = idsz;
-			pidsz_map[i].level = level;
-			return rv_success;
-		}
-	}
+        // Simply append the new idsz to pidsz_map if we reached the end of the list
+        if( IDSZ_NONE == pidsz_map[i].id )
+        {
+            // Move the list termination down one step
+            pidsz_map[i+1].id    = pidsz_map[i].id;
+            pidsz_map[i+1].level = pidsz_map[i].level;
 
-	return rv_fail;
+            //Add the new idsz
+            pidsz_map[i].id    = idsz;
+            pidsz_map[i].level = level;
+
+            return rv_success;
+        }
+    }
+
+    return rv_fail;
 }
 
 //--------------------------------------------------------------------------------------------
 IDSZ_node_t* idsz_map_get( IDSZ_node_t *pidsz_map, IDSZ idsz )
 {
-	/// @details ZF> This function returns a pointer to the IDSZ_node_t from the IDSZ specified
-	///              or NULL if it wasn't found in the map.
-	int iterator;
-	IDSZ_node_t* pidsz;
+    /// @details ZF> This function returns a pointer to the IDSZ_node_t from the IDSZ specified
+    ///              or NULL if it wasn't found in the map.
+    int iterator;
+    IDSZ_node_t* pidsz;
 
-	if( IDSZ_NONE == idsz || pidsz_map == NULL ) return NULL;
+    if( NULL == pidsz_map || IDSZ_NONE == idsz ) return NULL;
 
-	iterator = 0;
-	pidsz = idsz_map_iterate( pidsz_map, &iterator );
-	while( pidsz != NULL )
-	{
-		//Did we find the quest?
-		if( pidsz->id == idsz ) return pidsz;
+    // initialize the loop
+    iterator = 0;
+    pidsz = idsz_map_iterate( pidsz_map, &iterator );
 
-		//Get the next element
-		pidsz = idsz_map_iterate( pidsz_map, &iterator );
-	}
+    // iterate the map
+    while( pidsz != NULL )
+    {
+        // Did we find the idsz?
+        if( pidsz->id == idsz ) return pidsz;
 
-	return NULL;
+        // Get the next element
+        pidsz = idsz_map_iterate( pidsz_map, &iterator );
+    }
+
+    return NULL;
 }
 
 //--------------------------------------------------------------------------------------------
-IDSZ_node_t* idsz_map_iterate( IDSZ_node_t *pidsz_map, int *iterator )
+IDSZ_node_t* idsz_map_iterate( IDSZ_node_t *pidsz_map, int *iterator_ptr )
 {
-	/// @details ZF> This function iterates through a map containing any number of IDSZ_node_t
-	///              Returns NULL if there are no more elements to iterate.
-	int step = *iterator;
+    /// @details ZF> This function iterates through a map containing any number of IDSZ_node_t
+    ///              Returns NULL if there are no more elements to iterate.
+    int step;
 
-	//Reached the end of the list without finding the quest
-	if ( step >= MAX_IDSZ_MAP_SIZE || step < 0 ) return NULL;
+    if( NULL == pidsz_map || NULL == iterator_ptr ) return NULL; 
 
-	if( pidsz_map == NULL || pidsz_map[step].id == IDSZ_NONE ) return NULL;
+    step = *iterator_ptr;
 
-	//Return the next IDSZ found
-	( *iterator )++;
-	return &pidsz_map[step];
+    // Reached the end of the list without finding a matching idsz
+    if ( step >= MAX_IDSZ_MAP_SIZE || step < 0 ) return NULL;
+
+    // Found the end of the list
+    if( IDSZ_NONE == pidsz_map[step].id ) return NULL;
+
+    // Return the next IDSZ found
+    ( *iterator_ptr )++;
+
+    return pidsz_map + step;
 }
 
 //--------------------------------------------------------------------------------------------
-void idsz_map_copy( IDSZ_node_t *pcopy_from, IDSZ_node_t *pcopy_to )
+egoboo_rv idsz_map_copy( IDSZ_node_t *pcopy_from, IDSZ_node_t *pcopy_to )
 {
-	///@details ZF@> This function copies one set of IDSZ map to another IDSZ map (exact)
-	if( pcopy_from == NULL || pcopy_to == NULL ) return;
+    ///@details ZF@> This function copies one set of IDSZ map to another IDSZ map (exact)
+    if( pcopy_from == NULL || pcopy_to == NULL ) return rv_error;
 
-	//memcpy() is probably a lot more efficient than copying each element individually
-	memcpy( pcopy_to, pcopy_from, sizeof(pcopy_to) ); 
+    // memcpy() is probably a lot more efficient than copying each element individually
+    memcpy( pcopy_to, pcopy_from, sizeof(pcopy_to) );
 
-	/*
-	int iterator = 0;
-	IDSZ_node_t *pidsz;
+    return rv_success;
 
-	//First clear the array we are copying to
-	idsz_map_init( pcopy_to );
+    /*
+    int iterator = 0;
+    IDSZ_node_t *pidsz;
 
-	//Iterate and copy each element exact
-	pidsz = idsz_map_iterate( pcopy_from, &iterator );
-	while( pidsz != NULL )
-	{
-		idsz_map_add( pcopy_to, pidsz->id, pidsz->level );
-		pidsz = idsz_map_iterate( pcopy_from, &iterator );
-	}
-	*/
+    //First clear the array we are copying to
+    idsz_map_init( pcopy_to );
+
+    //Iterate and copy each element exact
+    pidsz = idsz_map_iterate( pcopy_from, &iterator );
+    while( pidsz != NULL )
+    {
+        idsz_map_add( pcopy_to, pidsz->id, pidsz->level );
+        pidsz = idsz_map_iterate( pcopy_from, &iterator );
+    }
+    */
 }

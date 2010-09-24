@@ -2198,7 +2198,7 @@ int doInputOptions( float deltaTime )
                                         for ( tag = 0; tag < scantag_count; tag++ )
                                         {
                                             if ( scantag[tag].value < 0 || scantag[tag].value >= SDLK_NUMLOCK ) continue;
-                                            
+
                                             if( SDLKEYDOWN( (Uint32)scantag[tag].value ) )
                                             {
                                                 pcontrol->tag    = scantag[tag].value;
@@ -2499,7 +2499,7 @@ int doGameOptions( float deltaTime )
                 case GAME_EASY: snprintf( Cdifficulty, SDL_arraysize( Cdifficulty ), "Forgiving" ); break;
 
                 default: cfg.difficulty = GAME_NORMAL; /* fall through */
-				case GAME_NORMAL:  snprintf( Cdifficulty, SDL_arraysize( Cdifficulty ), "Challenging" ); break;
+                case GAME_NORMAL:  snprintf( Cdifficulty, SDL_arraysize( Cdifficulty ), "Challenging" ); break;
             }
             sz_buttons[0] = Cdifficulty;
 
@@ -2778,7 +2778,7 @@ int doAudioOptions( float deltaTime )
         "N/A",        // Sound channels
         "N/A",        // Sound buffer
         "N/A",        // Sound quality
-        "N/A",		  // Play footsteps
+        "N/A",          // Play footsteps
         "Save Settings",
         ""
     };
@@ -2930,13 +2930,13 @@ int doAudioOptions( float deltaTime )
                 sz_buttons[6] = cfg.sound_highquality ? "Normal" : "High";
             }
 
-			//Footfall sounds
+            //Footfall sounds
             ui_drawTextBox( menuFont, "Footstep Sounds:", buttonLeft + 300, GFX_HEIGHT - 235, 0, 0, 20 );
-			if ( BUTTON_UP == ui_doButton( 8, sz_buttons[7], menuFont, buttonLeft + 450, GFX_HEIGHT - 235, 100, 30 ) )
-			{
-				cfg.sound_footfall = !cfg.sound_footfall;
-				sz_buttons[7] = cfg.sound_footfall ? "Enabled" : "Disabled";
-			}
+            if ( BUTTON_UP == ui_doButton( 8, sz_buttons[7], menuFont, buttonLeft + 450, GFX_HEIGHT - 235, 100, 30 ) )
+            {
+                cfg.sound_footfall = !cfg.sound_footfall;
+                sz_buttons[7] = cfg.sound_footfall ? "Enabled" : "Disabled";
+            }
 
             //Save settings
             if ( BUTTON_UP == ui_doButton( 9, sz_buttons[8], menuFont, buttonLeft, GFX_HEIGHT - 60, 200, 30 ) )
@@ -3287,13 +3287,12 @@ int doVideoOptions( float deltaTime )
             }
             else sz_buttons[but_shadow] = "Off";
 
-
 #if defined(__unix__)
             //Clip linux defaults to valid values so that the game doesn't crash on startup
             if ( cfg.scrz_req == 32 ) cfg.scrz_req = 24;
             if ( cfg.scrd_req == 32 ) cfg.scrd_req = 24;
 #endif
-            
+
             if ( cfg.scrz_req != 32 && cfg.scrz_req != 16 && cfg.scrz_req != 24 )
             {
                 cfg.scrz_req = 16;              // Set to default
@@ -3543,7 +3542,6 @@ int doVideoOptions( float deltaTime )
                 {
                     cfg.scrz_req += 8;
                 }
-
 
 #if defined(__unix__)
                 if ( cfg.scrz_req > 24 ) cfg.scrz_req = 8;            //Linux max is 24
@@ -4579,16 +4577,16 @@ bool_t mnu_test_by_index( const MOD_REF by_reference modnumber, size_t buffer_le
 
     // First check if we are in developers mode or that the right module has been beaten before
     allowed = bfalse;
-	if ( cfg.dev_mode || module_has_idsz_vfs( pmod->base.reference, pmod->base.unlockquest.id, buffer_len, buffer ) )
+    if ( cfg.dev_mode || module_has_idsz_vfs( pmod->base.reference, pmod->base.unlockquest.id, buffer_len, buffer ) )
     {
         allowed = btrue;
     }
-	else if( pmod->base.importamount > 0 )
+    else if( pmod->base.importamount > 0 )
     {
         // If that did not work, then check all selected players directories, but only if it isn't a starter module
         for ( cnt = 0; cnt < mnu_selectedPlayerCount; cnt++ )
         {
-			if ( pmod->base.unlockquest.level <= quest_get_level( loadplayer[mnu_selectedPlayer[cnt]].quest_log, pmod->base.unlockquest.id ) )
+            if ( pmod->base.unlockquest.level <= quest_get_level( loadplayer[mnu_selectedPlayer[cnt]].quest_log, pmod->base.unlockquest.id ) )
             {
                 allowed = btrue;
                 break;
@@ -5223,9 +5221,9 @@ bool_t loadplayer_import_one( const char * foundfile )
     snprintf( filename, SDL_arraysize( filename ), "%s/icon%d", foundfile, skin );
     pinfo->tx_ref = TxTexture_load_one_vfs( filename, ( TX_REF )INVALID_TX_TEXTURE, INVALID_KEY );
 
-	// quest info
+    // quest info
     snprintf( pinfo->dir, SDL_arraysize( pinfo->dir ), "%s", str_convert_slash_net(( char* )foundfile, strlen( foundfile ) ) );
-	quest_log_download_vfs( pinfo->quest_log, pinfo->dir ); 
+    quest_log_download_vfs( pinfo->quest_log, pinfo->dir );
 
     // load the chop data
     snprintf( filename, SDL_arraysize( filename ), "%s/naming.txt", foundfile );

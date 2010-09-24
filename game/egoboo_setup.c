@@ -126,8 +126,8 @@ void egoboo_config_init( egoboo_config_t * pcfg )
     pcfg->sound_volume          = 75;          // Volume of sounds played
     pcfg->sound_channel_count   = 16;      // Max number of sounds playing at the same time
     pcfg->sound_buffer_size     = 2048;
-	pcfg->sound_highquality		= bfalse;			// High quality sounds
-	pcfg->sound_footfall		= btrue;			// Play footstep sounds
+    pcfg->sound_highquality        = bfalse;            // High quality sounds
+    pcfg->sound_footfall        = btrue;            // Play footstep sounds
 
     // {GAME}
     pcfg->message_count_req     = 6;
@@ -167,13 +167,13 @@ bool_t setup_read_vfs( const char* filename )
 
     if ( INVALID_CSTR( filename ) ) return bfalse;
 
-    fs_ensureUserFile( filename, bfalse );	
+    fs_ensureUserFile( filename, bfalse );
     snprintf( path_str, SDL_arraysize( path_str ), "%s" SLASH_STR "%s", fs_getUserDirectory(), filename );
 
-	//Copy the new path to the global path string
+    //Copy the new path to the global path string
     strncpy( _config_filename, path_str, SDL_arraysize( _config_filename ) );
-	
-	// do NOT force the file to open in a read directory if it doesn't exist. this will cause a failure in
+
+    // do NOT force the file to open in a read directory if it doesn't exist. this will cause a failure in
     // linux if the directory is read-only
     lConfigSetup = LoadConfigFile( _config_filename, bfalse );
 
@@ -336,7 +336,7 @@ bool_t setup_download( egoboo_config_t * pcfg )
     GetKey_bool( "HIGH_SOUND_QUALITY", pcfg->sound_highquality, cfg_default.sound_highquality );
     pcfg->sound_highquality_base = pcfg->sound_highquality;
 
-	// Footsteps?
+    // Footsteps?
     GetKey_bool( "ENABLE_FOOTSTEPS", pcfg->sound_footfall, cfg_default.sound_footfall );
 
     //*********************************************
@@ -554,7 +554,7 @@ bool_t setup_upload( egoboo_config_t * pcfg )
     // Extra high sound quality
     SetKey_bool( "HIGH_SOUND_QUALITY", pcfg->sound_highquality );
 
-	// Footsteps?
+    // Footsteps?
     SetKey_bool( "ENABLE_FOOTSTEPS", pcfg->sound_footfall );
 
     //*********************************************
@@ -628,6 +628,4 @@ bool_t setup_upload( egoboo_config_t * pcfg )
 
     return btrue;
 }
-
-
 

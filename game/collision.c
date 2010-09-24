@@ -1081,7 +1081,7 @@ bool_t do_chr_mount_detection( const CHR_REF by_reference ichr_a, const CHR_REF 
     {
         Uint16    grip_verts[4];
         fvec3_t   grip_vecs[3];
-        oct_bb_t  tmp_cv;
+        oct_bb_t  tmp_cv = OCT_BB_INIT_VALS;
 
         int vertex = ( int )(pmount_inst->vrt_count) - ( int )GRIP_LEFT;
         vertex = MAX( 0, vertex );
@@ -1581,7 +1581,7 @@ void bump_all_objects( obj_BSP_t * pbsp )
 
     // prepare the collision node list for tracking object interactions
     if( rv_success == bump_prepare(pbsp) )
-    {        
+    {
         // set up all object(s) bumping
         bump_begin();
 
@@ -1916,7 +1916,7 @@ egoboo_rv do_chr_platform_physics( CoNode_t * d, chr_bundle_t *pbdl_item, chr_bu
     vnrm = fvec3_dot_product( vdiff.v, platform_up.v );
 
     // if the character is moving too fast relative to the platform, then bounce instead of attaching
-    if( ABS(vnrm) > max_vnrm ) 
+    if( ABS(vnrm) > max_vnrm )
     {
         goto do_chr_platform_physics_fail;
     }
@@ -2517,7 +2517,7 @@ bool_t do_chr_chr_collision( CoNode_t * d )
     ichr_a = bdl_a.chr_ref;
     pchr_a = bdl_a.chr_ptr;
 
-    // make sure the item is not packed, 
+    // make sure the item is not packed,
     // though it should never have been entered into the collision BSP if it was
     if( pchr_a->pack.is_packed ) return bfalse;
 
@@ -2528,7 +2528,7 @@ bool_t do_chr_chr_collision( CoNode_t * d )
     ichr_b = bdl_b.chr_ref;
     pchr_b = bdl_b.chr_ptr;
 
-    // make sure the item is not packed, 
+    // make sure the item is not packed,
     // though it should never have been entered into the collision BSP if it was
     if( pchr_b->pack.is_packed ) return bfalse;
 
@@ -2826,13 +2826,13 @@ bool_t do_chr_prt_collision_deflect( chr_t * pchr, prt_t * pprt, chr_prt_collsio
                     {
                         //Defender won, the block holds
                         //Add a small stun to the attacker for about 0.8 seconds
-                        pattacker->reloadtime += 40;                
+                        pattacker->reloadtime += 40;
                     }
                     else
                     {
                         //Attacker broke the block and batters away the shield
                         //Time to raise shield again (about 0.8 seconds)
-                        pchr->reloadtime += 40;    
+                        pchr->reloadtime += 40;
                         sound_play_chunk( pchr->pos, g_wavelist[GSND_SHIELDBLOCK] );
                     }
                 }
@@ -3409,10 +3409,10 @@ bool_t do_chr_prt_collision( CoNode_t * d )
         // Check reaffirmation of particles
         if ( pchr_a->reaffirmdamagetype == pprt_b->damagetype )
         {
-			cap_t *pcap_a = chr_get_pcap( pchr_a->ai.index );
+            cap_t *pcap_a = chr_get_pcap( pchr_a->ai.index );
 
-			//This prevents books in shops from being burned
-			if ( pchr_a->isshopitem && pcap_a->spelleffect_type != NO_SKIN_OVERRIDE ) 
+            //This prevents books in shops from being burned
+            if ( pchr_a->isshopitem && pcap_a->spelleffect_type != NO_SKIN_OVERRIDE )
             {
                 retval = ( 0 != reaffirm_attached_particles( ichr_a ) );
             }
