@@ -91,13 +91,13 @@ egoboo_rv quest_file_close( ConfigFilePtr_t * ppfile, bool_t export )
     {
         log_warning( "quest_file_close() - could not successfully close quest.txt\n" );
     }
-    
+
     return (NULL == *ppfile) && (rv_success == export_rv) ? rv_success : rv_fail;
 }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-egoboo_rv quest_log_download_vfs( IDSZ_node_t *pquest_log, const char* player_directory )
+egoboo_rv quest_log_download_vfs( IDSZ_node_t quest_log[], const char* player_directory )
 {
     /// @details ZF@> Reads a quest.txt for a player and turns it into a data structure
     ///               we can use. If the file isn't found, the quest log will be initialized as empty.
@@ -105,14 +105,16 @@ egoboo_rv quest_log_download_vfs( IDSZ_node_t *pquest_log, const char* player_di
     vfs_FILE *fileread;
     STRING newloadname;
 
-    if( pquest_log == NULL ) return rv_error;
+    if( quest_log == NULL ) return rv_error;
+
+    // blank out the existing map
+    idsz_map_init( quest_log );
 
     // Figure out the file path
     snprintf( newloadname, SDL_arraysize( newloadname ), "%s/quest.txt", player_directory );
+
+    // try to open the file
     fileread = vfs_openRead( newloadname );
-
-    idsz_map_init( pquest_log );
-
     if ( NULL == fileread ) return rv_success;
 
     // Load each IDSZ
@@ -124,7 +126,7 @@ egoboo_rv quest_log_download_vfs( IDSZ_node_t *pquest_log, const char* player_di
         int  level = fget_int( fileread );
 
         //Try to add a single quest to the map
-        rv = idsz_map_add( pquest_log, idsz, level );
+        rv = idsz_map_add( quest_log, SDL_arraysize(quest_log), idsz, level );
 
         //Stop here if it failed
         if( rv_error != rv )
@@ -146,19 +148,18 @@ egoboo_rv quest_log_download_vfs( IDSZ_node_t *pquest_log, const char* player_di
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv quest_log_upload_vfs( IDSZ_node_t *pquest_log, const char *player_directory )
+egoboo_rv quest_log_upload_vfs( IDSZ_node_t quest_log[], const char *player_directory )
 {
     /// @details ZF@> This exports quest_log data into a quest.txt file
     vfs_FILE *filewrite;
     int iterator;
     IDSZ_node_t *pquest;
 
-	if( pquest_log == NULL ) return rv_error;
+    if( quest_log == NULL ) return rv_error;
 
     //Write a new quest file with all the quests
     filewrite = vfs_openWrite( player_directory );
-
-    if ( !filewrite )
+    if ( NULL == filewrite )
     {
         log_warning( "Cannot create quest file! (%s)\n", player_directory );
         return rv_fail;
@@ -169,14 +170,14 @@ egoboo_rv quest_log_upload_vfs( IDSZ_node_t *pquest_log, const char *player_dire
 
     //Iterate through every element in the IDSZ map
     iterator = 0;
-    pquest = idsz_map_iterate( pquest_log, &iterator );
+    pquest = idsz_map_iterate( quest_log, SDL_arraysize(quest_log), &iterator );
     while( pquest != NULL )
     {
         // Write every single quest to the quest log
         vfs_printf( filewrite, "\n:[%4s] %i", undo_idsz( pquest->id ), pquest->level );
 
         //Get the next element
-        pquest = idsz_map_iterate( pquest_log, &iterator );
+        pquest = idsz_map_iterate( quest_log, SDL_arraysize(quest_log), &iterator );
     }
 
     // Clean up and return
@@ -185,44 +186,83 @@ egoboo_rv quest_log_upload_vfs( IDSZ_node_t *pquest_log, const char *player_dire
 }
 
 //--------------------------------------------------------------------------------------------
-int quest_set_level( IDSZ_node_t *pquest_log, IDSZ idsz, int adjustment )
+int quest_set_level( IDSZ_node_t quest_log[], size_t quest_log_len, IDSZ idsz, int level )
+{
+    ///@details    ZF@> This function will set the quest level for the specified quest
+    ///            and return the new quest_level. It will return QUEST_NONE if the quest was
+    ///            not found.
+
+    IDSZ_node_t *pquest = NULL;
+
+    // find the quest
+    pquest = idsz_map_get( quest_log, quest_log_len, idsz );
+    if( pquest == NULL ) return QUEST_NONE;
+
+    // make a copy of the quest's level
+    pquest->level = level;
+
+    return level;
+}
+
+//--------------------------------------------------------------------------------------------
+int quest_adjust_level( IDSZ_node_t quest_log[], size_t quest_log_len, IDSZ idsz, int adjustment )
 {
     ///@details    ZF@> This function will modify the quest level for the specified quest with adjustment
     ///            and return the new quest_level total. It will return QUEST_NONE if the quest was
     ///            not found or if it was already beaten.
-    IDSZ_node_t *pquest = idsz_map_get( pquest_log, idsz );
 
-    // Could not find the quest
+    int          src_level = QUEST_NONE;
+    int          dst_level = QUEST_NONE;
+    IDSZ_node_t *pquest    = NULL;
+
+    // find the quest
+    pquest = idsz_map_get( quest_log, quest_log_len, idsz );
     if( pquest == NULL ) return QUEST_NONE;
 
-    // Don't modify quests that are already beaten
-    if( pquest->level == QUEST_BEATEN ) return QUEST_NONE;
+    // make a copy of the quest's level
+    src_level = pquest->level;
 
-    // Modify the quest level for that specific quest
-    if( adjustment == QUEST_BEATEN ) pquest->level = QUEST_BEATEN;
-    else                             pquest->level = CLIP(pquest->level + adjustment, 0, QUEST_BEATEN);
+    // figure out what the dst_level is
+    if( QUEST_BEATEN == src_level )
+    {
+        // Don't modify quests that are already beaten
+        dst_level = src_level;
+    }
+    else
+    {
+        // if the quest "doesn't exist" make the src_level 0
+        if( QUEST_NONE   == src_level ) src_level = 0;
 
-    return pquest->level;
+        // Modify the quest level for that specific quest
+        if( adjustment == QUEST_MAXVAL ) dst_level = QUEST_BEATEN;
+        else                             dst_level = MAX( 0, src_level + adjustment );
+
+        // set the quest level
+        pquest->level = dst_level;
+    }
+
+    return dst_level;
 }
 
 //--------------------------------------------------------------------------------------------
-int quest_get_level( IDSZ_node_t *pquest_log, IDSZ idsz )
+int quest_get_level( IDSZ_node_t quest_log[], size_t quest_log_len, IDSZ idsz )
 {
     ///@details ZF@> Returns the quest level for the specified quest IDSZ.
     ///                 It will return QUEST_NONE if the quest was not found or if the quest was beaten.
-    IDSZ_node_t *pquest = idsz_map_get( pquest_log, idsz );
 
-    if( pquest == NULL || pquest->level == QUEST_BEATEN ) return QUEST_NONE;
+    IDSZ_node_t *pquest;
+
+    pquest = idsz_map_get( quest_log, quest_log_len, idsz );
+    if( pquest == NULL ) return QUEST_NONE;
 
     return pquest->level;
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv quest_add( IDSZ_node_t *pquest_log, IDSZ idsz, int level )
+egoboo_rv quest_add( IDSZ_node_t quest_log[], size_t quest_log_len, IDSZ idsz, int level )
 {
     ///@details ZF@> This adds a new quest to the quest log. If the quest is already in there, the higher quest
     ///                 level of either the old and new one will be kept.
-	if( level >= QUEST_BEATEN ) return rv_fail;
 
-    return idsz_map_add( pquest_log, idsz, level );
+    return idsz_map_add( quest_log, quest_log_len, idsz, level );
 }

@@ -27,6 +27,7 @@
 #include "hash.h"
 #include "game.h"
 #include "SDL_extensions.h"
+#include "network.h"
 
 #include "char.inl"
 #include "particle.inl"
@@ -2711,7 +2712,7 @@ bool_t do_chr_prt_collision_deflect( chr_t * pchr, prt_t * pprt, chr_prt_collsio
     ppip = PipStack.lst + pprt->pip_ref;
 
     /// @note ZF@> Simply ignore characters with invictus for now, it causes some strange effects
-    if ( pchr->invictus ) return btrue;
+    if ( IS_INVICTUS_PCHR_RAW( pchr ) ) return btrue;
 
     // find the "attack direction" of the particle
     direction = vec_to_facing( pchr->pos.x - pprt->pos.x, pchr->pos.y - pprt->pos.y );
@@ -2815,11 +2816,11 @@ bool_t do_chr_prt_collision_deflect( chr_t * pchr, prt_t * pprt, chr_prt_collsio
                     chr_t *pattacker = ChrList.lst + pprt->owner_ref;
                     int total_block_rating;
 
-					//use the character block skill plus the base block rating of the shield and adjust for strength
+                    //use the character block skill plus the base block rating of the shield and adjust for strength
                     total_block_rating = chr_get_skill( pchr, MAKE_IDSZ( 'B', 'L', 'O', 'C' ) );
-					total_block_rating += chr_get_skill( pshield, MAKE_IDSZ( 'B', 'L', 'O', 'C' ) );
-					total_block_rating -= SFP8_TO_SINT( pattacker->strength ) * 4;            //-4% per attacker strength
-					total_block_rating += SFP8_TO_SINT( pchr->strength )      * 2;            //+2% per defender strength
+                    total_block_rating += chr_get_skill( pshield, MAKE_IDSZ( 'B', 'L', 'O', 'C' ) );
+                    total_block_rating -= SFP8_TO_SINT( pattacker->strength ) * 4;            //-4% per attacker strength
+                    total_block_rating += SFP8_TO_SINT( pchr->strength )      * 2;            //+2% per defender strength
 
                     //Now determine the result of the block
                     if( generate_randmask( 1, 100 ) <= total_block_rating )
@@ -3194,7 +3195,7 @@ bool_t do_chr_prt_collision_bump( chr_t * pchr, prt_t * pprt, chr_prt_collsion_d
     if ( !ACTIVE_PPRT( pprt ) ) return bfalse;
 
     // if the particle was deflected, then it can't bump the character
-    if ( pchr->invictus || pprt->attachedto_ref == GET_REF_PCHR( pchr ) ) return bfalse;
+    if ( IS_INVICTUS_PCHR_RAW( pchr ) || pprt->attachedto_ref == GET_REF_PCHR( pchr ) ) return bfalse;
 
     prt_belongs_to_chr = ( GET_REF_PCHR( pchr ) == pprt->owner_ref );
 

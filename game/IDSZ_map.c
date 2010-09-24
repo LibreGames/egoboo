@@ -27,82 +27,100 @@
 #include "egoboo_vfs.h"
 #include "egoboo.h"
 
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-IDSZ_node_t * idsz_map_init( IDSZ_node_t * pidsz_map )
+IDSZ_node_t * idsz_map_init( IDSZ_node_t * idsz_map )
 {
-    if( NULL == pidsz_map ) return pidsz_map;
+    if( NULL == idsz_map ) return idsz_map;
 
-    pidsz_map[0].id = IDSZ_NONE;
-    pidsz_map[0].level = IDSZ_NOT_FOUND;
+    idsz_map[0].id = IDSZ_NONE;
+    idsz_map[0].level = IDSZ_NOT_FOUND;
 
-    return pidsz_map;
+    return idsz_map;
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv idsz_map_add( IDSZ_node_t *pidsz_map, IDSZ idsz, int level )
+egoboo_rv idsz_map_add( IDSZ_node_t idsz_map[], size_t idsz_map_len, IDSZ idsz, int level )
 {
     /// @details ZF> Adds a single IDSZ with the specified level to the map. If it already exists
     ///              in the map, the higher of the two level values will be used.
 
-    int i;
+    egoboo_rv rv = rv_error;
+    size_t    i;
 
-    if( NULL == pidsz_map ) return rv_error;
+    if( NULL == idsz_map ) return rv_error;
 
-    if( idsz == IDSZ_NONE || level < 0 ) return rv_fail;
+    // we must allow the function to add any level of IDSZ, otherwize we cannot
+    // add beaten quests, skills with negative levels, etc.
+    if( IDSZ_NONE == idsz ) return rv_fail;
 
-    for( i = 0; i < MAX_IDSZ_MAP_SIZE; i++ )
+    for( i = 0; i < idsz_map_len; i++ )
     {
-        //Trying to add a idsz to a full idsz list?
-        if( MAX_IDSZ_MAP_SIZE == i + 1 )
+        // the end of the list?
+        if( IDSZ_NONE == idsz_map[i].id ) break;
+
+        // found a matching idsz?
+        if( idsz == idsz_map[i].id )
         {
-            log_warning("idsz_map_add() - Failed to add [%s] to an IDSZ_map. Consider increasing MAX_IDSZ_MAP_SIZE (currently %i)\n", MAX_IDSZ_MAP_SIZE, undo_idsz(idsz) );
-            return rv_fail;
+            // But only if the new idsz level is "better" than the previous one
+            if( (level > 0 && idsz_map[i].level >= level) ||
+                (level < 0 && idsz_map[i].level <= level) )
+            {
+                rv = rv_fail;
+            }
+            else
+            {
+                rv = rv_success;
+
+                idsz_map[i].level = level;
+            }
+
+            break;
+        }
+    }
+
+    //Trying to add a idsz to a full idsz list?
+    if( idsz_map_len == i )
+    {
+        log_warning("idsz_map_add() - Failed to add [%s] to an IDSZ_map. Consider increasing idsz_map_len (currently %i)\n", idsz_map_len, undo_idsz(idsz) );
+        return rv_fail;
+    }
+    else if( IDSZ_NONE == idsz_map[i].id )
+    {
+        // Reached the end of the list. Simply append the new idsz to idsz_map
+
+        int tail = i+1;
+
+        // Set the termination down one step, if that step exists
+        if( tail < idsz_map_len )
+        {
+            idsz_map[tail].id    = IDSZ_NONE;
+            idsz_map[tail].level = IDSZ_NOT_FOUND;
         }
 
-        // Overwrite existing idsz
-        if( idsz == pidsz_map[i].id )
-        {
-            // But only if the new idsz level is higher than the previous one
-			if( pidsz_map[i].level >= level ) return rv_fail;
+        //Add the new idsz
+        idsz_map[i].id    = idsz;
+        idsz_map[i].level = level;
 
-            pidsz_map[i].level = level;
-
-            return rv_success;
-        }
-
-        // Simply append the new idsz to pidsz_map if we reached the end of the list
-        if( IDSZ_NONE == pidsz_map[i].id )
-        {
-            // Move the list termination down one step
-            pidsz_map[i+1].id    = pidsz_map[i].id;
-            pidsz_map[i+1].level = pidsz_map[i].level;
-
-            //Add the new idsz
-            pidsz_map[i].id    = idsz;
-            pidsz_map[i].level = level;
-
-            return rv_success;
-        }
+        rv = rv_success;
     }
 
     return rv_fail;
 }
 
 //--------------------------------------------------------------------------------------------
-IDSZ_node_t* idsz_map_get( IDSZ_node_t *pidsz_map, IDSZ idsz )
+IDSZ_node_t* idsz_map_get( IDSZ_node_t idsz_map[], size_t idsz_map_len, IDSZ idsz )
 {
     /// @details ZF> This function returns a pointer to the IDSZ_node_t from the IDSZ specified
     ///              or NULL if it wasn't found in the map.
     int iterator;
     IDSZ_node_t* pidsz;
 
-    if( NULL == pidsz_map || IDSZ_NONE == idsz ) return NULL;
+    if( NULL == idsz_map || IDSZ_NONE == idsz ) return NULL;
 
     // initialize the loop
     iterator = 0;
-    pidsz = idsz_map_iterate( pidsz_map, &iterator );
+    pidsz = idsz_map_iterate( idsz_map, idsz_map_len, &iterator );
 
     // iterate the map
     while( pidsz != NULL )
@@ -111,33 +129,33 @@ IDSZ_node_t* idsz_map_get( IDSZ_node_t *pidsz_map, IDSZ idsz )
         if( pidsz->id == idsz ) return pidsz;
 
         // Get the next element
-        pidsz = idsz_map_iterate( pidsz_map, &iterator );
+        pidsz = idsz_map_iterate( idsz_map, idsz_map_len, &iterator );
     }
 
     return NULL;
 }
 
 //--------------------------------------------------------------------------------------------
-IDSZ_node_t* idsz_map_iterate( IDSZ_node_t *pidsz_map, int *iterator_ptr )
+IDSZ_node_t* idsz_map_iterate( IDSZ_node_t idsz_map[], size_t idsz_map_len, int *iterator_ptr )
 {
     /// @details ZF> This function iterates through a map containing any number of IDSZ_node_t
     ///              Returns NULL if there are no more elements to iterate.
     int step;
 
-    if( NULL == pidsz_map || NULL == iterator_ptr ) return NULL; 
+    if( NULL == idsz_map || NULL == iterator_ptr ) return NULL;
 
     step = *iterator_ptr;
 
     // Reached the end of the list without finding a matching idsz
-    if ( step >= MAX_IDSZ_MAP_SIZE || step < 0 ) return NULL;
+    if ( step >= idsz_map_len || step < 0 ) return NULL;
 
     // Found the end of the list
-    if( IDSZ_NONE == pidsz_map[step].id ) return NULL;
+    if( IDSZ_NONE == idsz_map[step].id ) return NULL;
 
     // Return the next IDSZ found
     ( *iterator_ptr )++;
 
-    return pidsz_map + step;
+    return idsz_map + step;
 }
 
 //--------------------------------------------------------------------------------------------

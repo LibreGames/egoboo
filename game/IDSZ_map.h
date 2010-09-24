@@ -42,9 +42,9 @@ struct s_IDSZ_node
 typedef struct s_IDSZ_node IDSZ_node_t;
 
 // Public functions
-IDSZ_node_t* idsz_map_init( IDSZ_node_t *pidsz_map );
-IDSZ_node_t* idsz_map_get ( IDSZ_node_t *pidsz_map, IDSZ idsz );
-egoboo_rv    idsz_map_add ( IDSZ_node_t *pidsz_map, IDSZ idsz, int level );
+IDSZ_node_t* idsz_map_init( IDSZ_node_t pidsz_map[] );
+IDSZ_node_t* idsz_map_get ( IDSZ_node_t pidsz_map[], size_t idsz_map_len, IDSZ idsz );
+egoboo_rv    idsz_map_add ( IDSZ_node_t idsz_map[], size_t idsz_map_len, IDSZ idsz, int level );
 
-IDSZ_node_t* idsz_map_iterate( IDSZ_node_t *pidsz_map, int *iterator );
-egoboo_rv    idsz_map_copy   ( IDSZ_node_t *pcopy_from, IDSZ_node_t *pcopy_to );
+IDSZ_node_t* idsz_map_iterate( IDSZ_node_t pidsz_map[], size_t idsz_map_len, int *iterator );
+egoboo_rv    idsz_map_copy   ( IDSZ_node_t pcopy_from[], IDSZ_node_t *pcopy_to );

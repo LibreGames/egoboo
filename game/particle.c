@@ -27,9 +27,9 @@
 #include "log.h"
 #include "sound.h"
 #include "camera.h"
-#include "mesh.inl"
 #include "game.h"
 #include "mesh.h"
+#include "network.h"
 
 #include "egoboo_setup.h"
 #include "egoboo_fileutil.h"
@@ -42,6 +42,7 @@
 #include "mad.h"
 #include "profile.inl"
 #include "physics.inl"
+#include "mesh.inl"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -1794,7 +1795,7 @@ int spawn_bump_particles( const CHR_REF by_reference character, const PRT_REF by
         //
         // however, it seems that the bump particles in game rarely attach more than
         // one bump particle
-        if ( amount != 0 && !pcap->resistbumpspawn && !pchr->invictus && GET_DAMAGE_RESIST( pchr->damagemodifier[pprt->damagetype] ) )
+        if ( amount != 0 && !pcap->resistbumpspawn && !IS_INVICTUS_PCHR_RAW( pchr ) && GET_DAMAGE_RESIST( pchr->damagemodifier[pprt->damagetype] ) )
         {
             int grip_verts, vertices;
             int slot_count;

@@ -108,6 +108,10 @@ struct s_player
     bool_t                  valid;                    ///< Player used?
     CHR_REF                 index;                    ///< Which character?
 
+    /// special play modes from nethack
+    bool_t wizard_mode;
+    bool_t explore_mode;
+
     /// the buffered input from the local input devices
     input_device_t          device;
 

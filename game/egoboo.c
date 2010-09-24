@@ -193,6 +193,7 @@ int do_ego_proc_begin( ego_process_t * eproc )
 int do_ego_proc_running( ego_process_t * eproc )
 {
     bool_t menu_valid, game_valid;
+    bool_t mod_ctrl = bfalse, mod_shift = bfalse;
 
     if ( !process_validate( PROC_PBASE( eproc ) ) ) return -1;
 
@@ -227,6 +228,8 @@ int do_ego_proc_running( ego_process_t * eproc )
 
     // read the input values
     input_read();
+    mod_ctrl  = SDLKEYDOWN( SDLK_LCTRL  ) || SDLKEYDOWN( SDLK_RCTRL  );
+    mod_shift = SDLKEYDOWN( SDLK_LSHIFT ) || SDLKEYDOWN( SDLK_RSHIFT );
 
     if ( pickedmodule_ready && !process_running( PROC_PBASE( MProc ) ) )
     {
@@ -240,7 +243,7 @@ int do_ego_proc_running( ego_process_t * eproc )
     }
 
     // Test the panic button
-    if ( SDLKEYDOWN( SDLK_q ) && SDLKEYDOWN( SDLK_LCTRL ) )
+    if ( SDLKEYDOWN( SDLK_q ) && mod_ctrl )
     {
         // terminate the program
         process_kill( PROC_PBASE( eproc ) );
@@ -277,20 +280,72 @@ int do_ego_proc_running( ego_process_t * eproc )
         eproc->screenshot_requested = btrue;
     }
 
-    if ( cfg.dev_mode && SDLKEYDOWN( SDLK_F9 ) && NULL != PMod && PMod->active )
+    if ( cfg.dev_mode && SDLKEYDOWN( SDLK_F9 ) && mod_shift )
+    {
+        // toggle explore_mode for all players
+        PLA_REF ipla;
+
+        for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+        {
+            player_t * ppla = PlaStack.lst + ipla;
+
+            if ( !ppla->valid ) continue;
+
+            ppla->explore_mode = !ppla->explore_mode;
+        }
+
+        log_info( "Toggling explore mode\n" );
+    }
+
+    if ( cfg.dev_mode && SDLKEYDOWN( SDLK_F9 ) && mod_ctrl )
+    {
+        // toggle wizard_mode for all players
+        PLA_REF ipla;
+
+        for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+        {
+            player_t * ppla = PlaStack.lst + ipla;
+
+            if ( !ppla->valid ) continue;
+
+            ppla->wizard_mode = !ppla->wizard_mode;
+        }
+
+        log_info( "Toggling wizard mode\n" );
+    }
+
+    if ( cfg.dev_mode && SDLKEYDOWN( SDLK_F9 ) && !(mod_shift || mod_ctrl) && NULL != PMod && PMod->active )
     {
         // super secret "I win" button
         //PMod->beat        = btrue;
         //PMod->exportvalid = btrue;
 
-        CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
+        CHR_BEGIN_LOOP_ACTIVE( itarget, ptarget )
         {
-            if ( !VALID_PLA( pchr->is_which_player ) )
+            // don't kill players
+            if ( !VALID_PLA( ptarget->is_which_player ) )
             {
-                kill_character( cnt, ( CHR_REF )511, bfalse );
+                PLA_REF ipla;
+
+                // only kill characters that the players hate
+                for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+                {
+                    chr_t    * pchr = NULL;
+
+                    pchr = pla_get_pchr( ipla );
+                    if ( NULL == pchr ) continue;
+
+                    if( team_hates_team(pchr->baseteam, ptarget->team ) )
+                    {
+                       kill_character( itarget, ( CHR_REF )511, bfalse );
+                       break;
+                    }
+                }
             }
         }
         CHR_END_LOOP();
+
+        log_info( "\"I WIN!\" button\n" );
     }
 
     // handle an escape by passing it on to all active sub-processes

@@ -431,9 +431,8 @@ cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
         }
 
         //If it is none of the predefined IDSZ extensions then add it as a new skill
-        idsz_map_add( pcap->skills, idsz, fget_int( fileread ) );
+        idsz_map_add( pcap->skills, SDL_arraysize(pcap->skills), idsz, fget_int( fileread ) );
     }
-
 
     vfs_close( fileread );
 
@@ -771,14 +770,14 @@ bool_t save_one_cap_file_vfs( const char * szSaveName, const char * szTemplateNa
         int iterator;
 
         iterator = 0;
-        pidsz = idsz_map_iterate( pcap->skills, &iterator );
+        pidsz = idsz_map_iterate( pcap->skills, SDL_arraysize(pcap->skills), &iterator );
         while( pidsz != NULL )
         {
             //Write that skill into the file
             fput_expansion( filewrite, "", pidsz->id, pidsz->level );
 
             //Get the next IDSZ from the map
-            pidsz = idsz_map_iterate( pcap->skills, &iterator );
+            pidsz = idsz_map_iterate( pcap->skills, SDL_arraysize(pcap->skills), &iterator );
         }
     }
 

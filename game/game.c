@@ -278,8 +278,8 @@ void export_one_character( const CHR_REF by_reference character, const CHR_REF b
         }
     }
 
-	//ZF> Debug info to get this to work on Linux
-	log_info("export_one_character() - Exporting one object from (%s) to (%s).\n", vfs_resolveReadFilename(fromdir), vfs_resolveWriteFilename(todir) );
+    //ZF> Debug info to get this to work on Linux
+    log_info("export_one_character() - Exporting one object from (%s) to (%s).\n", vfs_resolveReadFilename(fromdir), vfs_resolveWriteFilename(todir) );
 
     // Make the directory
     vfs_mkdir( todir );
@@ -697,18 +697,18 @@ int update_game()
     int update_loop_cnt;
     PLA_REF ipla;
 
-	//This stuff doesn't happen so often so it can be safely throttled
-	if ( clock_shared_stat >= ONESECOND )
-	{
-		//Reset timer
-		clock_shared_stat -= ONESECOND;
+    //This stuff doesn't happen so often so it can be safely throttled
+    if ( clock_shared_stat >= ONESECOND )
+    {
+        //Reset timer
+        clock_shared_stat -= ONESECOND;
 
-		// Check for all local players being dead and update shared player abilities
+        // Check for all local players being dead and update shared player abilities
     local_allpladead     = bfalse;
     local_seeinvis_level = 0;
-		local_seekurse        = 0;
+        local_seekurse        = 0;
     local_seedark_level  = 0;
-		local_listening       = 0;
+        local_listening       = 0;
 
     numplayer = 0;
     numdead = numalive = 0;
@@ -744,9 +744,9 @@ int update_game()
                 local_seeinvis_level = MAX( local_seeinvis_level, pchr->see_invisible_level );
             }
 
-				if ( pchr->see_kurse_level > 0 )
+                if ( pchr->see_kurse_level > 0 )
             {
-					local_seekurse = MAX( local_seekurse, pchr->see_kurse_level );
+                    local_seekurse = MAX( local_seekurse, pchr->see_kurse_level );
             }
 
             if ( pchr->darkvision_level > 0 )
@@ -754,7 +754,7 @@ int update_game()
                 local_seedark_level = MAX( local_seedark_level, pchr->darkvision_level );
             }
 
-				local_listening = MAX( local_listening, chr_get_skill( pchr, MAKE_IDSZ('L', 'I', 'S', 'T') ) );				
+                local_listening = MAX( local_listening, chr_get_skill( pchr, MAKE_IDSZ('L', 'I', 'S', 'T') ) );
         }
         else
         {
@@ -794,7 +794,7 @@ int update_game()
             }
         }
     }
-	}
+    }
 
     PROFILE_BEGIN( talk_to_remotes );
     {
@@ -1430,7 +1430,7 @@ CHR_REF prt_find_target( float pos_x, float pos_y, float pos_z, FACING_T facing,
         if( pchr->ismount && (INGAME_CHR(pchr->holdingwhich[SLOT_LEFT]) || INGAME_CHR(pchr->holdingwhich[SLOT_RIGHT])) ) continue;
 
         // ignore invictus
-        if ( pchr->invictus ) continue;
+        if ( IS_INVICTUS_PCHR_RAW( pchr ) ) continue;
 
         // we are going to give the player a break and not target things that
         // can't be damaged, unless the particle is homing. If it homes in,
@@ -1507,16 +1507,29 @@ bool_t check_target( chr_t * psrc, const CHR_REF by_reference ichr_test, IDSZ id
     if ( !chr_can_see_object( GET_REF_PCHR( psrc ), ichr_test ) ) return bfalse;
 
     //Need specific skill? ([NONE] always passes)
-    if( HAS_SOME_BITS( targeting_bits, TARGET_SKILL ) && !chr_get_skill( ptst, idsz ) ) return bfalse;
+    if( HAS_SOME_BITS( targeting_bits, TARGET_SKILL ) && 0 != chr_get_skill( ptst, idsz ) ) return bfalse;
 
     //Require player to have specific quest?
-    if ( HAS_SOME_BITS( targeting_bits, TARGET_QUEST ) && QUEST_NONE != quest_get_level( PlaStack.lst[ptst->is_which_player].quest_log, idsz ) ) return bfalse;
+    if( HAS_SOME_BITS( targeting_bits, TARGET_QUEST ) && VALID_PLA(ptst->is_which_player) )
+    {
+        int quest_level = QUEST_NONE;
+        player_t * ppla = PlaStack.lst + ptst->is_which_player;
+
+        quest_level = quest_get_level( ppla->quest_log, SDL_arraysize(ppla->quest_log), idsz );
+
+        // find only active quests?
+        // this makes it backward-compatible with zefz's version
+        if ( quest_level < 0 ) return bfalse;
+    }
 
     is_hated = team_hates_team( psrc->team, ptst->team );
     hates_me = team_hates_team( ptst->team, psrc->team );
 
     // Target neutral items? (still target evil items, could be pets)
-    if ( (ptst->isitem || ptst->invictus) && !HAS_SOME_BITS(targeting_bits, TARGET_ITEMS) ) return bfalse;
+    if ( (ptst->isitem || IS_INVICTUS_PCHR_RAW(ptst) ) && !HAS_SOME_BITS(targeting_bits, TARGET_ITEMS) )
+    {
+        return bfalse;
+    }
 
     // Only target those of proper team. Skip this part if it's a item
     if( !ptst->isitem )
@@ -1621,7 +1634,7 @@ CHR_REF chr_find_target( chr_t * psrc, float max_dist, IDSZ idsz, BIT_FIELD targ
         if (( 0 == max_dist2 || dist2 <= max_dist2 ) && ( MAX_CHR == best_target || dist2 < best_dist2 ) )
         {
             //Invictus chars do not need a line of sight
-            if ( !psrc->invictus )
+            if ( !IS_INVICTUS_PCHR_RAW( psrc ) )
             {
                 // set the line-of-sight source
                 los_info.x1 = ptst->pos.x;
@@ -1689,7 +1702,7 @@ void do_damage_tiles()
         if ( INGAME_CHR( pchr->attachedto ) ) continue;
 
         // don't do direct damage to invulnerable objects
-        if ( pchr->invictus ) continue;
+        if ( IS_INVICTUS_PCHR_RAW( pchr ) ) continue;
 
         //@todo: sound of lava sizzling and such
         //distance = ABS( PCamera->track_pos.x - pchr->pos.x ) + ABS( PCamera->track_pos.y - pchr->pos.y );
@@ -1748,7 +1761,7 @@ void update_pits()
             CHR_BEGIN_LOOP_ACTIVE( ichr, pchr )
             {
                 // Is it a valid character?
-                if ( pchr->invictus || !pchr->alive ) continue;
+                if ( IS_INVICTUS_PCHR_RAW( pchr ) || !pchr->alive ) continue;
 
                 if ( IS_ATTACHED_PCHR( pchr ) ) continue;
 
@@ -3532,7 +3545,7 @@ bool_t add_player( const CHR_REF by_reference character, const PLA_REF by_refere
     if ( VALID_PLA_RANGE( player ) && !PlaStack.lst[player].valid )
     {
         player_t * ppla = PlaStack.lst + player;
-        
+
         pla_reinit( ppla );
 
         ChrList.lst[character].is_which_player = player;

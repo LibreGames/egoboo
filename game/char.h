@@ -194,13 +194,25 @@ enum e_chr_movement_bits
     CHR_MOVEMENT_BITS_RUN   = 1 << CHR_MOVEMENT_RUN
 };
 
-#define IS_FLYING_CHR(ICHR)   ( !DEFINED_CHR(ICHR) ? bfalse : (ChrList.lst[ICHR].is_flying_jump || ChrList.lst[ICHR].is_flying_platform) )
-#define IS_PACKED_CHR(ICHR)   ( !DEFINED_CHR(ICHR) ? bfalse : ChrList.lst[ICHR].pack.is_packed )
-#define IS_ATTACHED_CHR(ICHR) ( !DEFINED_CHR(ICHR) ? bfalse : (DEFINED_CHR(ChrList.lst[ICHR].attachedto) || ChrList.lst[ICHR].pack.is_packed) )
+// no bounds checking
+#define IS_FLYING_CHR_RAW(ICHR)   ( (ChrList.lst[ICHR].is_flying_jump || ChrList.lst[ICHR].is_flying_platform) )
+#define IS_PACKED_CHR_RAW(ICHR)   ( ChrList.lst[ICHR].pack.is_packed )
+#define IS_ATTACHED_CHR_RAW(ICHR) ( (DEFINED_CHR(ChrList.lst[ICHR].attachedto) || ChrList.lst[ICHR].pack.is_packed) )
 
-#define IS_FLYING_PCHR(PCHR) ( !DEFINED_PCHR(PCHR) ? bfalse : ((PCHR)->is_flying_jump || (PCHR)->is_flying_platform) )
-#define IS_PACKED_PCHR(PCHR) ( !DEFINED_PCHR(PCHR) ? bfalse : (PCHR)->pack.is_packed )
-#define IS_ATTACHED_PCHR(PCHR)  ( !DEFINED_PCHR(PCHR) ? bfalse : (DEFINED_CHR((PCHR)->attachedto) || (PCHR)->pack.is_packed) )
+#define IS_INVICTUS_PCHR_RAW(PCHR) ( ( VALID_PLA( (PCHR)->is_which_player ) ? PlaStack.lst[(PCHR)->is_which_player].wizard_mode : bfalse ) || (PCHR)->invictus )
+#define IS_FLYING_PCHR_RAW(PCHR)   ( ((PCHR)->is_flying_jump || (PCHR)->is_flying_platform) )
+#define IS_PACKED_PCHR_RAW(PCHR)   ( (PCHR)->pack.is_packed )
+#define IS_ATTACHED_PCHR_RAW(PCHR) ( (DEFINED_CHR((PCHR)->attachedto) || (PCHR)->pack.is_packed) )
+
+// bounds checking
+#define IS_FLYING_CHR(ICHR)   ( !DEFINED_CHR(ICHR) ? bfalse : IS_FLYING_CHR_RAW(ICHR)   )
+#define IS_PACKED_CHR(ICHR)   ( !DEFINED_CHR(ICHR) ? bfalse : IS_PACKED_CHR_RAW(ICHR)   )
+#define IS_ATTACHED_CHR(ICHR) ( !DEFINED_CHR(ICHR) ? bfalse : IS_ATTACHED_CHR_RAW(ICHR) )
+
+#define IS_INVICTUS_PCHR(PCHR) ( !DEFINED_PCHR(PCHR) ? bfalse : IS_INVICTUS_PCHR_RAW(PCHR) )
+#define IS_FLYING_PCHR(PCHR)   ( !DEFINED_PCHR(PCHR) ? bfalse : IS_FLYING_PCHR_RAW(PCHR)   )
+#define IS_PACKED_PCHR(PCHR)   ( !DEFINED_PCHR(PCHR) ? bfalse : IS_PACKED_PCHR_RAW(PCHR)   )
+#define IS_ATTACHED_PCHR(PCHR) ( !DEFINED_PCHR(PCHR) ? bfalse : IS_ATTACHED_PCHR_RAW(PCHR) )
 
 //------------------------------------
 // Team variables

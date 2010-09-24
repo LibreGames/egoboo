@@ -52,7 +52,6 @@ enum
 typedef struct s_ConfigFileValue ConfigFileValue_t;
 typedef ConfigFileValue_t *      ConfigFileValuePtr_t;
 
-
 //--------------------------------------------------------------------------------------------
 /// One section of the congiguration file, delimited by {"BLAH"}
 typedef struct s_ConfigFileSection ConfigFileSection_t;

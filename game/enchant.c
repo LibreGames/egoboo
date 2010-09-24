@@ -23,19 +23,21 @@
 
 #include "enchant.inl"
 
-#include "char.inl"
 #include "mad.h"
-#include "particle.inl"
-#include "profile.inl"
 
 #include "sound.h"
 #include "camera.h"
 #include "game.h"
 #include "script_functions.h"
 #include "log.h"
+#include "network.h"
 
 #include "egoboo_fileutil.h"
 #include "egoboo.h"
+
+#include "char.inl"
+#include "particle.inl"
+#include "profile.inl"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -294,7 +296,7 @@ bool_t remove_enchant( const ENC_REF by_reference ienc, ENC_REF * enc_parent )
     {
         chr_t * povl = ChrList.lst + overlay_ref;
 
-        if ( povl->invictus )
+        if ( IS_INVICTUS_PCHR_RAW( povl ) )
         {
             chr_get_pteam_base( overlay_ref )->morale++;
         }
@@ -340,7 +342,7 @@ bool_t remove_enchant( const ENC_REF by_reference ienc, ENC_REF * enc_parent )
         {
             chr_t * ptarget = ChrList.lst + penc->target_ref;
 
-			if ( peve->seekurse && !chr_get_skill( ptarget, MAKE_IDSZ( 'C', 'K', 'U', 'R' ) ) )
+            if ( peve->seekurse && !chr_get_skill( ptarget, MAKE_IDSZ( 'C', 'K', 'U', 'R' ) ) )
             {
                 ptarget->see_kurse_level = bfalse;
             }
@@ -356,7 +358,11 @@ bool_t remove_enchant( const ENC_REF by_reference ienc, ENC_REF * enc_parent )
     if ( INGAME_CHR( itarget ) && NULL != peve && peve->killtargetonend )
     {
         chr_t * ptarget = ChrList.lst + itarget;
-        if ( ptarget->invictus )  chr_get_pteam_base( itarget )->morale++;
+
+        if ( IS_INVICTUS_PCHR_RAW( ptarget ) )
+        {
+            chr_get_pteam_base( itarget )->morale++;
+        }
 
         kill_character( itarget, ( CHR_REF )MAX_CHR, btrue );
     }

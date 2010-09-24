@@ -2185,7 +2185,7 @@ void give_experience( const CHR_REF by_reference character, int amount, xp_type 
     //No xp to give
     if ( 0 == amount ) return;
 
-    if ( !pchr->invictus || override_invictus )
+    if ( !IS_INVICTUS_PCHR_RAW( pchr ) || override_invictus )
     {
         float intadd = ( SFP8_TO_SINT( pchr->intelligence ) - 10.0f ) / 200.0f;
         float wisadd = ( SFP8_TO_SINT( pchr->wisdom )       - 10.0f ) / 400.0f;
@@ -2474,7 +2474,7 @@ bool_t chr_download_cap( chr_t * pchr, cap_t * pcap )
 
     // Skillz
     idsz_map_copy( pcap->skills, pchr->skills );
-	pchr->darkvision_level = chr_get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );
+    pchr->darkvision_level = chr_get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );
     pchr->see_invisible_level = pcap->see_invisible_level;
 
     // Ammo
@@ -2724,7 +2724,7 @@ bool_t heal_character( const CHR_REF by_reference character, const CHR_REF by_re
     pchr_h = ChrList.lst + healer;
 
     //Don't heal dead and invincible stuff
-    if ( !pchr->alive || ( pchr->invictus && !ignore_invictus ) ) return bfalse;
+    if ( !pchr->alive || ( IS_INVICTUS_PCHR_RAW( pchr ) && !ignore_invictus ) ) return bfalse;
 
     //This actually heals the character
     pchr->life = CLIP( pchr->life, pchr->life + ABS( amount ), pchr->lifemax );
@@ -2841,7 +2841,7 @@ void kill_character( const CHR_REF by_reference ichr, const CHR_REF by_reference
     pchr = ChrList.lst + ichr;
 
     //No need to continue is there?
-    if ( !pchr->alive || ( pchr->invictus && !ignore_invictus ) ) return;
+    if ( !pchr->alive || ( IS_INVICTUS_PCHR_RAW( pchr ) && !ignore_invictus ) ) return;
 
     pcap = pro_get_pcap( pchr->profile_ref );
     if ( NULL == pcap ) return;
@@ -3420,7 +3420,7 @@ chr_t * chr_config_do_init( chr_t * pchr )
     // Team stuff
     pchr->team     = loc_team;
     pchr->baseteam = loc_team;
-    if ( !pchr->invictus )  TeamStack.lst[loc_team].morale++;
+    if ( !IS_INVICTUS_PCHR_RAW( pchr ) )  TeamStack.lst[loc_team].morale++;
 
     // Firstborn becomes the leader
     if ( TeamStack.lst[loc_team].leader == NOLEADER )
@@ -4165,7 +4165,7 @@ void respawn_character( const CHR_REF by_reference character )
     pchr->ori.map_facing_y = MAP_TURN_OFFSET;  // These two mean on level surface
     pchr->ori.map_facing_x = MAP_TURN_OFFSET;
     if ( NOLEADER == TeamStack.lst[pchr->team].leader )  TeamStack.lst[pchr->team].leader = character;
-    if ( !pchr->invictus )  TeamStack.lst[pchr->baseteam].morale++;
+    if ( !IS_INVICTUS_PCHR_RAW( pchr ) )  TeamStack.lst[pchr->baseteam].morale++;
 
     // start the character out in the "dance" animation
     chr_start_anim( pchr, ACTION_DA, btrue, btrue );
@@ -4602,7 +4602,7 @@ void change_character( const CHR_REF by_reference ichr, const PRO_REF by_referen
 
     // change the skillz, too, jack!
     idsz_map_copy( pcap_new->skills, pchr->skills );
-	pchr->darkvision_level = chr_get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );
+    pchr->darkvision_level = chr_get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );
     pchr->see_invisible_level = pcap_new->see_invisible_level;
 
     /// @note BB@> changing this could be disastrous, in case you can't un-morph yourself???
@@ -4793,7 +4793,7 @@ void switch_team( const CHR_REF by_reference character, const TEAM_REF by_refere
 
     if ( !INGAME_CHR( character ) || team >= TEAM_MAX ) return;
 
-    if ( !ChrList.lst[character].invictus )
+    if ( !IS_INVICTUS_PCHR_RAW( ChrList.lst + character ) )
     {
         if ( chr_get_pteam_base( character )->morale > 0 ) chr_get_pteam_base( character )->morale--;
         TeamStack.lst[team].morale++;
@@ -4867,10 +4867,10 @@ int restock_ammo( const CHR_REF by_reference character, IDSZ idsz )
 int chr_get_skill( chr_t *pchr, IDSZ whichskill )
 {
     /// @details ZF@> This returns the skill level for the specified skill or 0 if the character doesn't
-	///				  have the skill. Also checks the skill IDSZ.
+    ///                  have the skill. Also checks the skill IDSZ.
     IDSZ_node_t *pskill;
 
-	if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
+    if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
 
     //Any [NONE] IDSZ returns always "true"
     if ( IDSZ_NONE == whichskill ) return 1;
@@ -4878,22 +4878,34 @@ int chr_get_skill( chr_t *pchr, IDSZ whichskill )
     //Do not allow poison or backstab skill if we are restricted by code of conduct
     if ( MAKE_IDSZ( 'P', 'O', 'I', 'S' ) == whichskill || MAKE_IDSZ( 's', 'T', 'A', 'B' ) == whichskill )
     {
-		if( NULL != idsz_map_get( pchr->skills, MAKE_IDSZ( 'C', 'O', 'D', 'E' ) ) ) return 0;
+        if( NULL != idsz_map_get( pchr->skills, SDL_arraysize(pchr->skills), MAKE_IDSZ( 'C', 'O', 'D', 'E' ) ) )
+        {
+            return 0;
+        }
     }
 
     // First check the character Skill ID matches
     // Then check for expansion skills too.
-	if ( chr_get_idsz( pchr->ai.index, IDSZ_SKILL )  == whichskill ) return 1;
+    if ( chr_get_idsz( pchr->ai.index, IDSZ_SKILL )  == whichskill )
+    {
+        return 1;
+    }
 
     // Simply return the skill level if we have the skill
-	pskill = idsz_map_get( pchr->skills, whichskill );
-    if( pskill != NULL ) return pskill->level;
+    pskill = idsz_map_get( pchr->skills, SDL_arraysize(pchr->skills), whichskill );
+    if( pskill != NULL )
+    {
+        return pskill->level;
+    }
 
     // Truesight allows reading
     if ( MAKE_IDSZ( 'R', 'E', 'A', 'D' ) == whichskill )
     {
-		pskill = idsz_map_get( pchr->skills, MAKE_IDSZ( 'C', 'K', 'U', 'R' ) );
-		if( pskill != NULL && pchr->see_invisible_level > 0 ) return pchr->see_invisible_level + pskill->level;
+        pskill = idsz_map_get( pchr->skills, SDL_arraysize(pchr->skills), MAKE_IDSZ( 'C', 'K', 'U', 'R' ) );
+        if( pskill != NULL && pchr->see_invisible_level > 0 )
+        {
+            return pchr->see_invisible_level + pskill->level;
+        }
     }
 
     //Skill not found
@@ -4939,8 +4951,8 @@ bool_t update_chr_darkvision( const CHR_REF by_reference character )
 
     if ( life_regen < 0 )
     {
-        int tmp_level = ( 10 * -life_regen ) / pchr->lifemax;						//Darkvision gained by poison
-		int base_level = chr_get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );	//Natural darkvision
+        int tmp_level = ( 10 * -life_regen ) / pchr->lifemax;                        //Darkvision gained by poison
+        int base_level = chr_get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );    //Natural darkvision
 
         //Use the better of the two darkvision abilities
         pchr->darkvision_level = MAX( base_level, tmp_level );
@@ -7445,7 +7457,7 @@ bool_t is_invictus_direction( FACING_T direction, const CHR_REF by_reference cha
     if ( NULL == pcap ) return btrue;
 
     // if the invictus flag is set, we are invictus
-    if ( pchr->invictus ) return btrue;
+    if ( IS_INVICTUS_PCHR_RAW( pchr ) ) return btrue;
 
     // if the effect is shield piercing, ignore shielding
     if ( HAS_SOME_BITS( effects, DAMFX_NBLOC ) ) return bfalse;
@@ -9341,7 +9353,7 @@ bool_t chr_can_see_object( const CHR_REF by_reference ichr, const CHR_REF by_ref
     alpha = CLIP( alpha, 0, 255 );
 
     /// @note ZF@> Invictus characters can always see through darkness (spells, items, quest handlers, etc.)
-    if ( pchr->invictus && alpha >= INVISIBLE ) return btrue;
+    if ( IS_INVICTUS_PCHR_RAW( pchr ) && alpha >= INVISIBLE ) return btrue;
 
     enviro_light = ( alpha * pobj->inst.max_light ) * INV_FF;
     self_light   = ( pobj->inst.light == 255 ) ? 0 : pobj->inst.light;
@@ -9353,7 +9365,7 @@ bool_t chr_can_see_object( const CHR_REF by_reference ichr, const CHR_REF by_ref
     }
 
     //Scenery, spells and quest objects can always see through darkness
-    if( pchr->invictus ) light *= 20;
+    if( IS_INVICTUS_PCHR_RAW( pchr ) ) light *= 20;
 
     return light >= INVISIBLE;
 }

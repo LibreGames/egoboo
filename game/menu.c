@@ -4583,15 +4583,27 @@ bool_t mnu_test_by_index( const MOD_REF by_reference modnumber, size_t buffer_le
     }
     else if( pmod->base.importamount > 0 )
     {
+        int player_count = 0;
+        int player_allowed = 0;
+
         // If that did not work, then check all selected players directories, but only if it isn't a starter module
         for ( cnt = 0; cnt < mnu_selectedPlayerCount; cnt++ )
         {
-            if ( pmod->base.unlockquest.level <= quest_get_level( loadplayer[mnu_selectedPlayer[cnt]].quest_log, pmod->base.unlockquest.id ) )
+            int                quest_level = QUEST_NONE;
+            LOAD_PLAYER_INFO * ploadplayer = loadplayer + mnu_selectedPlayer[cnt];
+
+            player_count++;
+
+            quest_level = quest_get_level( ploadplayer->quest_log, SDL_arraysize(ploadplayer->quest_log), pmod->base.unlockquest.id );
+
+            // find beaten quests or quests with proper level
+            if ( quest_level <= QUEST_BEATEN || pmod->base.unlockquest.level <= quest_level )
             {
-                allowed = btrue;
-                break;
+                player_allowed++;
             }
         }
+
+        allowed = (player_allowed == player_count);
     }
 
     return allowed;
@@ -5203,8 +5215,8 @@ bool_t loadplayer_import_one( const char * foundfile )
     LOAD_PLAYER_INFO * pinfo;
     int skin = 0;
 
-	//ZF> Debug info to get this to work on Linux
-	log_info("loadplayer_import_one() - Importing one object from (%s).\n", vfs_resolveReadFilename( foundfile ) );
+    //ZF> Debug info to get this to work on Linux
+    log_info("loadplayer_import_one() - Importing one object from (%s).\n", vfs_resolveReadFilename( foundfile ) );
 
     if ( !VALID_CSTR( foundfile ) || !vfs_exists( foundfile ) ) return bfalse;
 
