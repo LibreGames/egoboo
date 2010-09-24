@@ -154,10 +154,9 @@ Kursed chance  : 0
 Footfall sound : -1
 Jump sound     : -1
 
-:[GOLD] 2	//Book skin
 :[RANG] 1	//Ranged weapon
 :[SQUA] 1	//Square based
 :[HIDE] 0	//Dont show in hand
 :[ICON] 0	//Always show icon
 :[PLAT] 1	//Platform
-:[BOOK] 1
+:[BOOK] 2

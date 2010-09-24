@@ -423,18 +423,13 @@ void add_shop_passage( const CHR_REF by_reference owner, const PASS_REF by_refer
         if ( !INGAME_CHR( ichr ) ) continue;
         pchr = ChrList.lst + ichr;
 
-        if ( !IS_ATTACHED_PCHR( pchr ) && pchr->isitem )
+        if ( pchr->isitem )
         {
             if ( object_is_in_passage( ShopStack.lst[ishop].passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
             {
                 pchr->isshopitem = btrue;               // Full value
                 pchr->iskursed   = bfalse;              // Shop items are never kursed
-
-                // Identify cheap items in a shop
-                if ( chr_get_price( ichr ) <= SHOP_IDENTIFY )
-                {
-                    pchr->nameknown  = btrue;
-                }
+                pchr->nameknown  = btrue;
             }
         }
     }

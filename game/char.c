@@ -1384,7 +1384,9 @@ void attach_character_to_mount( const CHR_REF by_reference iitem, const CHR_REF 
     }
     else if ( pitem->alive )
     {
-        chr_play_action( pitem, ACTION_MM + slot, bfalse );
+        chr_play_action( pitem, ACTION_MM + slot, bfalse );		//ZF> hmm, here is the torch holding bug. Removing
+		pitem->inst.frame_lst = pitem->inst.frame_nxt;			//the interpolation seems to fix it...
+
         if ( pitem->isitem )
         {
             // Item grab
@@ -2502,10 +2504,15 @@ bool_t chr_download_cap( chr_t * pchr, cap_t * pcap )
 
     // Skin
     pchr->skin = 0;
-    if ( pcap->skin_override != NO_SKIN_OVERRIDE )
+	if ( pcap->spelleffect_type != NO_SKIN_OVERRIDE )
+    {
+        pchr->skin = pcap->spelleffect_type % MAX_SKIN;
+    }
+    else if ( pcap->skin_override != NO_SKIN_OVERRIDE )
     {
         pchr->skin = pcap->skin_override % MAX_SKIN;
     }
+
 
     // Damage
     pchr->defense = pcap->defense[pchr->skin];
@@ -3525,7 +3532,7 @@ chr_t * chr_config_do_init( chr_t * pchr )
     }
 
     // is the object part of a shop's inventory?
-    if ( !IS_ATTACHED_PCHR( pchr ) && pchr->isitem )
+    if ( pchr->isitem )
     {
         SHOP_REF ishop;
 
@@ -3540,12 +3547,7 @@ chr_t * chr_config_do_init( chr_t * pchr )
             {
                 pchr->isshopitem = btrue;               // Full value
                 pchr->iskursed   = bfalse;              // Shop items are never kursed
-
-                // Identify cheap items in a shop
-                if ( chr_get_price( ichr ) <= SHOP_IDENTIFY )
-                {
-                    pchr->nameknown  = btrue;
-                }
+                pchr->nameknown  = btrue;
                 break;
             }
         }

@@ -60,6 +60,8 @@ IfStateIs0
         IfHeldInLeftHand
           tmpargument = ACTIONZA
         TargetDoAction
+        tmpargument = 25
+        SetReloadTime
         
         IfUsageIsKnown
           DoNothing

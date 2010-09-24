@@ -1002,7 +1002,7 @@ void reset_timers()
     clock_wld = 0;
     clock_enc_stat = 0;
     clock_chr_stat = 0;
-    clock_shared_stat = 0;
+    clock_shared_stat = ONESECOND;		//ZF> This one should timeout on module startup so start at ONESECOND
     clock_pit = 0;
 
     update_wld = 0;
@@ -2680,6 +2680,7 @@ bool_t chr_setup_apply( const CHR_REF by_reference ichr, spawn_file_info_t *pinf
 
         ADD_BITS( pchr->ai.alert, ALERTIF_GRABBED );  // Make spellbooks change
         pchr->attachedto = pinfo->parent;  // Make grab work
+
         scr_run_chr_script( ai_state_bundle_set( &tmp_bdl_ai, pchr ) );  // Empty the grabbed messages
 
         pchr->attachedto = ( CHR_REF )MAX_CHR;  // Fix grab
@@ -4882,9 +4883,6 @@ bool_t do_shop_drop( const CHR_REF by_reference idropper, const CHR_REF by_refer
     chr_t * pdropper, * pitem;
     bool_t inshop;
 
-    // ?? lol what ??
-    if ( idropper == iitem ) return bfalse;
-
     if ( !INGAME_CHR( iitem ) ) return bfalse;
     pitem = ChrList.lst + iitem;
 
@@ -4898,9 +4896,6 @@ bool_t do_shop_drop( const CHR_REF by_reference idropper, const CHR_REF by_refer
 
         int ix = pitem->pos.x / GRID_SIZE;
         int iy = pitem->pos.y / GRID_SIZE;
-
-        // This is a hack that makes spellbooks in shops cost correctly
-        if ( pdropper->isshopitem ) pitem->isshopitem = btrue;
 
         iowner = shop_get_owner( ix, iy );
         if ( INGAME_CHR( iowner ) )

@@ -3163,12 +3163,12 @@ int doVideoOptions( float deltaTime )
         but_shadow           ,    // Shadows
         but_zbuffer          ,    // Z bit
         but_maxlights        ,    // Fog
-        but_3dfx             ,    // 3D effects
+        but_3dfx             ,    // Special effects
         but_multiwater       ,    // Multi water layer
         but_widescreen       ,    // Widescreen
         but_screensize       ,    // Screen resolution
         but_save             ,
-        but_maxparticles      ,  // Max particles
+        but_maxparticles     ,  // Max particles
         but_end,
 
         but_last
@@ -3330,8 +3330,7 @@ int doVideoOptions( float deltaTime )
                 sz_buttons[but_3dfx] = "Off";
             }
 
-            if ( cfg.twolayerwater_allowed ) sz_buttons[but_multiwater] = "On";
-            else sz_buttons[but_multiwater] = "Off";
+			sz_buttons[but_multiwater] = cfg.twolayerwater_allowed ? "High" : "Low";
 
             snprintf( Cmaxparticles, SDL_arraysize( Cmaxparticles ), "%i", cfg.particle_count_req );     // Convert the integer to a char we can use
             sz_buttons[but_maxparticles] = Cmaxparticles;
@@ -3576,7 +3575,7 @@ int doVideoOptions( float deltaTime )
             }
 
             // Perspective correction, overlay, underlay and Phong mapping
-            ui_drawTextBox( menuFont, "3D Effects:", buttonLeft + 300, GFX_HEIGHT - 250, 0, 0, 20 );
+            ui_drawTextBox( menuFont, "Special Effects:", buttonLeft + 300, GFX_HEIGHT - 250, 0, 0, 20 );
             if ( BUTTON_UP == ui_doButton( 10, sz_buttons[but_3dfx], menuFont, buttonLeft + 450, GFX_HEIGHT - 250, 100, 30 ) )
             {
                 if ( cfg.use_phong && cfg.use_perspective && cfg.overlay_allowed && cfg.background_allowed )
@@ -3612,19 +3611,11 @@ int doVideoOptions( float deltaTime )
             }
 
             // Water Quality
-            ui_drawTextBox( menuFont, "Good Water:", buttonLeft + 300, GFX_HEIGHT - 215, 0, 0, 20 );
+            ui_drawTextBox( menuFont, "Water Quality:", buttonLeft + 300, GFX_HEIGHT - 215, 0, 0, 20 );
             if ( BUTTON_UP == ui_doButton( 11, sz_buttons[but_multiwater], menuFont, buttonLeft + 450, GFX_HEIGHT - 215, 100, 30 ) )
             {
-                if ( cfg.twolayerwater_allowed )
-                {
-                    sz_buttons[but_multiwater] = "Off";
-                    cfg.twolayerwater_allowed = bfalse;
-                }
-                else
-                {
-                    sz_buttons[but_multiwater] = "On";
-                    cfg.twolayerwater_allowed = btrue;
-                }
+				cfg.twolayerwater_allowed = !cfg.twolayerwater_allowed;
+				sz_buttons[but_fullscreen] = cfg.fullscreen_req ? "True" : "False";
             }
 
             // Max particles

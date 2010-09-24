@@ -6,13 +6,12 @@ Thanks!
 
 MAJOR BUGS:
 - Importing still doesn't work on Linux
-- Menu interface bug in Linux see -> http://a.imageshack.us/img829/5305/ego11.png
 
 GENERAL BUGS:
+- Menu interface when using large resolutions -> http://a.imageshack.us/img829/5305/ego11.png
 - Movement is a bit difficult after jumping.
 - The Missile spell did not spawn missiles in Adventurer Starter.
-- Seems to be a draw offset for shadows and reflections.
-- Picking up a torch makes the torch being held as if it was on the floor until you use it at least once.
+- Seems to be a draw offset for reflections.
 - Braziers tend to hurt nearby characters too easily.
 - Stalkers in Shadow Palace are not spawned.
 - Basically, Combat Blessing is extremely buggy. It sometimes sets the users life somewhere next to 0 (empty health bar), though it never kills the user itself. Also, it sometimes puts out torches while charging. Also, the divine light effect it casts is sometimes invisible and it sometimes makes grubs (and others? Haven't tested...) invulnerable to your attacks and you invulnerable to theirs (team change?) 
@@ -36,7 +35,6 @@ GENERAL BUGS:
 - Exploit: You can assassinate characters with bear traps. 
 - Identify doesn't properly work - the scroll is always reported as wasted, and the name of the object isn't made known. Tested with the bracelet at Sand Palace and the kursed broadsword of Ice Palace. 
 - The fire breath from the dogs can and will hurt the rider. 
-- There seems to be a texture allocation bug when Restarting a module. Some objects get the skins of other objects. 
 
 BUGS RELATED TO PARTICLE END SPAWN:
 - Probably a physics problem, but blood does not dry out very quickly. This is especially noticeable in the Elf module. 
@@ -65,7 +63,6 @@ COSMETIC/TRIVIAL
 - Darkvision skill does not work in Shadow Palace. It is still pitch black. I mostly used missiles for lighting my way... 
 - Stealing does not work - if you grab something while invisible or stealthy, the shopkeeper tells you you would lack the money or takes the price as if you were visible. 
 - There is a graphical "hiccup" when you change armor. This also occurs when you transform. 
-- When you drop the green spell books, they appear as red. I seem to recall a similar problem in the wizard module. 
 - SetFrame doesnt seem to work properly. (see mosquitoes, they are stuck in one frame)
 - Shadow Palace (often) and Ice Palace (rarely) get a warning: WARN: spawn_one_enchant() - failed because the required enchant owner cannot be found. 
 - Ghouls in Shadow Palace rise either extremely fast or not at all. 

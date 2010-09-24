@@ -1915,7 +1915,7 @@ void render_shadow( const CHR_REF by_reference character )
     float   alpha, alpha_umbra, alpha_penumbra;
     chr_t * pchr;
 
-    if ( IS_PACKED_CHR( character ) ) return;
+    if ( IS_ATTACHED_CHR( character ) ) return;
     pchr = ChrList.lst + character;
 
     // if the character is hidden, not drawn at all, so no shadow
@@ -2044,7 +2044,7 @@ void render_bad_shadow( const CHR_REF by_reference character )
     float   level, height, height_factor, alpha;
     chr_t * pchr;
 
-    if ( IS_PACKED_CHR( character ) ) return;
+    if ( IS_ATTACHED_CHR( character ) ) return;
     pchr = ChrList.lst + character;
 
     // if the character is hidden, not drawn at all, so no shadow

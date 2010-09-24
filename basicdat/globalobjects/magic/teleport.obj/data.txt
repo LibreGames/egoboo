@@ -157,7 +157,6 @@ Jump sound     : -1
 
 // Expansions
 :[HIDE] 0	//Hide in hand
-:[GOLD] 2	//Book skin
 :[SQUA] 1	//Square formed, not round
 :[ICON] 0	//Show icon (If name not known)
 :[PLAT] 1	//Platfrom object

@@ -245,7 +245,7 @@ int mad_get_action( const MAD_REF by_reference imad, int action )
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 mad_get_actionfx( const MAD_REF by_reference imad, int action )
+BIT_FIELD mad_get_actionfx( const MAD_REF by_reference imad, int action )
 {
     BIT_FIELD retval = EMPTY_BIT_FIELD;
     int cnt;

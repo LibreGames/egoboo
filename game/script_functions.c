@@ -2325,7 +2325,6 @@ Uint8 scr_BecomeSpell( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
     change_character( pself->index, ( PRO_REF )pself->content, 0, ENC_LEAVE_NONE );
 
     // set the spell effect parameters
-    pchr->money    = iskin;
     pself->content = 0;
     pself->state   = 0;
 
@@ -2352,12 +2351,17 @@ Uint8 scr_BecomeSpellbook( script_state_t * pstate, ai_state_bundle_t * pbdl_sel
 
     PRO_REF  old_profile;
     mad_t * pmad;
+	int iskin;
 
     SCRIPT_FUNCTION_BEGIN();
+	
+	//Figure out what this spellbook looks like
+	iskin = 0;
+	if ( NULL != pbdl_self->cap_ptr ) iskin = pbdl_self->cap_ptr->spelleffect_type;
 
     // convert the spell effect to a spellbook
     old_profile = pchr->profile_ref;
-    change_character( pself->index, ( PRO_REF )SPELLBOOK, pchr->money % MAX_SKIN, ENC_LEAVE_NONE );
+    change_character( pself->index, ( PRO_REF )SPELLBOOK, iskin, ENC_LEAVE_NONE );
 
     // Reset the spellbook state so it doesn't burn up
     pself->state   = 0;

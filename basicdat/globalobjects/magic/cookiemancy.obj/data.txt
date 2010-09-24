@@ -194,16 +194,8 @@ Sound of Jump ( -1 for none )			: -1
 
 
 // Expansions
-:[GOLD] 3
 :[HIDE] 0
-:[PLAT] 1
-:[SKIN] 0
-:[ICON] 0
-:[PLAT] 1
-:[SKIN] 0
-:[CONT] 0
-:[STAT] 0
-:[BOOK] 1
+:[BOOK] 3
 
 //-Notes------------------------------------------------------------------------
 // Money, items, skin, name, team, and position are all set at spawn time

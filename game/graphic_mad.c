@@ -1018,8 +1018,7 @@ egoboo_rv chr_instance_needs_update( chr_instance_t * pinst, int vmin, int vmax,
 
     flips_match = ( ABS( psave->flip - pinst->flip ) < flip_tolerance );
 
-    *frames_match = ( pinst->frame_nxt == pinst->frame_lst && psave->frame_nxt == pinst->frame_nxt && psave->frame_lst == pinst->frame_lst ) ||
-                    ( flips_match && psave->frame_nxt == pinst->frame_nxt && psave->frame_lst == pinst->frame_lst );
+    *frames_match = ( ( flips_match || pinst->frame_nxt == pinst->frame_lst ) && psave->frame_nxt == pinst->frame_nxt && psave->frame_lst == pinst->frame_lst );
 
     return ( !( *verts_match ) || !( *frames_match ) ) ? rv_success : rv_fail;
 }
