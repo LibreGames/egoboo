@@ -537,14 +537,10 @@ void render_chr_bbox( chr_t * pchr )
     render_player_platforms = bfalse; // pchr->platform;
     //for( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     //{
-    //    CHR_REF ichr;
+    //    chr_t * pplayer_chr = pla_get_pchr(ipla);
+    //    if( NULL == pplayer_chr ) continue;
 
-    //    if( !VALID_PLA(ipla) ) continue;
-
-    //    ichr = PlaStack.lst[ipla].index;
-    //    if( !INGAME_CHR(ichr) ) continue;
-
-    //    if( pchr->obj_base.index == ChrList.lst[ichr].onwhichplatform_ref )
+    //    if( pchr->obj_base.index == pplayer_chr->onwhichplatform_ref )
     //    {
     //        render_player_platforms = btrue;
     //        break;

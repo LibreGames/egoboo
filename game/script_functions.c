@@ -2351,13 +2351,13 @@ Uint8 scr_BecomeSpellbook( script_state_t * pstate, ai_state_bundle_t * pbdl_sel
 
     PRO_REF  old_profile;
     mad_t * pmad;
-	int iskin;
+    int iskin;
 
     SCRIPT_FUNCTION_BEGIN();
-	
-	//Figure out what this spellbook looks like
-	iskin = 0;
-	if ( NULL != pbdl_self->cap_ptr ) iskin = pbdl_self->cap_ptr->spelleffect_type;
+
+    //Figure out what this spellbook looks like
+    iskin = 0;
+    if ( NULL != pbdl_self->cap_ptr ) iskin = pbdl_self->cap_ptr->spelleffect_type;
 
     // convert the spell effect to a spellbook
     old_profile = pchr->profile_ref;
@@ -6926,6 +6926,7 @@ Uint8 scr_AddQuest( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
     // AddQuest( tmpargument = "quest idsz" )
     /// @details ZF@> This function adds a quest idsz set in tmpargument into the targets quest.txt to 0
 
+    int quest_level = QUEST_NONE;
     chr_t * pself_target;
     PLA_REF ipla;
 
@@ -6933,12 +6934,15 @@ Uint8 scr_AddQuest( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
 
     SCRIPT_REQUIRE_TARGET( pself_target );
 
-    returncode = bfalse;
     ipla = pself_target->is_which_player;
     if ( VALID_PLA( ipla ) )
     {
-        returncode = quest_add( PlaStack.lst[ipla].quest_log, SDL_arraysize(PlaStack.lst[ipla].quest_log), pstate->argument, 0 );
+        player_t * ppla = PlaStack.lst + ipla;
+
+        quest_level = quest_add( ppla->quest_log, SDL_arraysize(ppla->quest_log), pstate->argument, 0 );
     }
+
+    returncode = (0 == quest_level);
 
     SCRIPT_FUNCTION_END();
 }
@@ -7045,26 +7049,25 @@ Uint8 scr_AddQuestAllPlayers( script_state_t * pstate, ai_state_bundle_t * pbdl_
     /// The quest level Is set to tmpdistance if the level Is not already higher
 
     PLA_REF ipla;
-    int success_count;
+    int success_count, player_count;
 
     SCRIPT_FUNCTION_BEGIN();
 
     returncode = btrue;
-    for ( success_count = 0, ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    for ( player_count = 0, success_count = 0, ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        CHR_REF ichr;
+        int quest_level;
         player_t * ppla = PlaStack.lst + ipla;
 
-        if ( !ppla->valid ) continue;
-
-        ichr = ppla->index;
-        if ( !INGAME_CHR( ichr ) ) continue;
+        if ( !ppla->valid || !INGAME_CHR( ppla->index ) ) continue;
+        player_count++;
 
         // Try to add it or replace it if this one is higher
-        if( quest_add( ppla->quest_log, SDL_arraysize(ppla->quest_log), pstate->argument, pstate->distance ) ) success_count++;
+        quest_level = quest_add( ppla->quest_log, SDL_arraysize(ppla->quest_log), pstate->argument, pstate->distance );
+        if( QUEST_NONE != quest_level ) success_count++;
     }
 
-    returncode = success_count > 0;
+    returncode = (player_count > 0) && (success_count >= player_count);
 
     SCRIPT_FUNCTION_END();
 }

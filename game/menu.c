@@ -3330,7 +3330,7 @@ int doVideoOptions( float deltaTime )
                 sz_buttons[but_3dfx] = "Off";
             }
 
-			sz_buttons[but_multiwater] = cfg.twolayerwater_allowed ? "High" : "Low";
+            sz_buttons[but_multiwater] = cfg.twolayerwater_allowed ? "High" : "Low";
 
             snprintf( Cmaxparticles, SDL_arraysize( Cmaxparticles ), "%i", cfg.particle_count_req );     // Convert the integer to a char we can use
             sz_buttons[but_maxparticles] = Cmaxparticles;
@@ -3614,8 +3614,8 @@ int doVideoOptions( float deltaTime )
             ui_drawTextBox( menuFont, "Water Quality:", buttonLeft + 300, GFX_HEIGHT - 215, 0, 0, 20 );
             if ( BUTTON_UP == ui_doButton( 11, sz_buttons[but_multiwater], menuFont, buttonLeft + 450, GFX_HEIGHT - 215, 100, 30 ) )
             {
-				cfg.twolayerwater_allowed = !cfg.twolayerwater_allowed;
-				sz_buttons[but_fullscreen] = cfg.fullscreen_req ? "True" : "False";
+                cfg.twolayerwater_allowed = !cfg.twolayerwater_allowed;
+                sz_buttons[but_fullscreen] = cfg.fullscreen_req ? "True" : "False";
             }
 
             // Max particles
@@ -5226,7 +5226,7 @@ bool_t loadplayer_import_one( const char * foundfile )
 
     // quest info
     snprintf( pinfo->dir, SDL_arraysize( pinfo->dir ), "%s", str_convert_slash_net(( char* )foundfile, strlen( foundfile ) ) );
-    quest_log_download_vfs( pinfo->quest_log, pinfo->dir );
+    quest_log_download_vfs( pinfo->quest_log, SDL_arraysize( pinfo->quest_log ), pinfo->dir );
 
     // load the chop data
     snprintf( filename, SDL_arraysize( filename ), "%s/naming.txt", foundfile );

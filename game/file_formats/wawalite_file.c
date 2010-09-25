@@ -269,7 +269,7 @@ wawalite_data_t * read_wawalite_fog( vfs_FILE * fileread, wawalite_data_t * pdat
 
     if ( NULL == fileread ) return pdata;
 
-    // Read unnecessary data...  Only read if it exists...
+    // Read optional data, only if it exists...
     if ( goto_colon( NULL, fileread, btrue ) )
     {
         pdata->fog.found         = btrue;
@@ -483,7 +483,7 @@ bool_t write_wawalite_fog( vfs_FILE * filewrite, wawalite_data_t * pdata )
 {
     if ( NULL == filewrite || NULL == pdata ) return bfalse;
 
-    // write optional data...  Only read if it exists...
+    // Write optional data, if it exists...
     if ( !pdata->fog.found ) return btrue;
 
     vfs_printf( filewrite, "\n\n// Fog Expansion...  Leave this out for no fog...\n" );

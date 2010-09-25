@@ -97,7 +97,7 @@ egoboo_rv quest_file_close( ConfigFilePtr_t * ppfile, bool_t export )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-egoboo_rv quest_log_download_vfs( IDSZ_node_t quest_log[], const char* player_directory )
+egoboo_rv quest_log_download_vfs( IDSZ_node_t quest_log[], size_t quest_log_len, const char* player_directory )
 {
     /// @details ZF@> Reads a quest.txt for a player and turns it into a data structure
     ///               we can use. If the file isn't found, the quest log will be initialized as empty.
@@ -126,7 +126,7 @@ egoboo_rv quest_log_download_vfs( IDSZ_node_t quest_log[], const char* player_di
         int  level = fget_int( fileread );
 
         //Try to add a single quest to the map
-        rv = idsz_map_add( quest_log, SDL_arraysize(quest_log), idsz, level );
+        rv = idsz_map_add( quest_log, quest_log_len, idsz, level );
 
         //Stop here if it failed
         if( rv_error != rv )
@@ -148,7 +148,7 @@ egoboo_rv quest_log_download_vfs( IDSZ_node_t quest_log[], const char* player_di
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv quest_log_upload_vfs( IDSZ_node_t quest_log[], const char *player_directory )
+egoboo_rv quest_log_upload_vfs( IDSZ_node_t quest_log[], size_t quest_log_len, const char *player_directory )
 {
     /// @details ZF@> This exports quest_log data into a quest.txt file
     vfs_FILE *filewrite;
@@ -170,14 +170,14 @@ egoboo_rv quest_log_upload_vfs( IDSZ_node_t quest_log[], const char *player_dire
 
     //Iterate through every element in the IDSZ map
     iterator = 0;
-    pquest = idsz_map_iterate( quest_log, SDL_arraysize(quest_log), &iterator );
+    pquest = idsz_map_iterate( quest_log, quest_log_len, &iterator );
     while( pquest != NULL )
     {
         // Write every single quest to the quest log
         vfs_printf( filewrite, "\n:[%4s] %i", undo_idsz( pquest->id ), pquest->level );
 
         //Get the next element
-        pquest = idsz_map_iterate( quest_log, SDL_arraysize(quest_log), &iterator );
+        pquest = idsz_map_iterate( quest_log, quest_log_len, &iterator );
     }
 
     // Clean up and return

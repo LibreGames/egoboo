@@ -227,11 +227,13 @@ bool_t link_push_module()
 
         hero_spawn_data_t * phero;
 
-        if ( !PlaStack.lst[ipla].valid ) continue;
+        player_t * ppla = PlaStack.lst + ipla;
+
+        if ( !ppla->valid ) continue;
 
         // Is it alive?
-        ichr = PlaStack.lst[ipla].index;
-        if ( !INGAME_CHR( ichr ) ) continue;
+        if ( !INGAME_CHR( ppla->index ) ) continue;
+        ichr = ppla->index;
         pchr = ChrList.lst + ichr;
 
         if ( pentry->hero_count < LINK_HEROES_MAX )

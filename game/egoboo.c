@@ -137,7 +137,7 @@ int do_ego_proc_begin( ego_process_t * eproc )
     ego_init_SDL();
     gfx_system_begin();
     console_begin();
-    net_initialize();
+    network_system_begin();
 
     log_info( "Initializing SDL_Image version %d.%d.%d... ", SDL_IMAGE_MAJOR_VERSION, SDL_IMAGE_MINOR_VERSION, SDL_IMAGE_PATCHLEVEL );
     GLSetup_SupportedFormats();
@@ -547,10 +547,7 @@ void memory_cleanUp( void )
     ui_end();
 
     // shut down the network
-    if ( PNet->on )
-    {
-        net_shutDown();
-    }
+    network_system_end();
 
     // shut down the clock services
     clk_destroy( &_gclock );

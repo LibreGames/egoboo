@@ -296,8 +296,9 @@ void check_passage_music()
         for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
         {
             chr_t * pchr;
+            player_t * ppla = PlaStack.lst + ipla;
 
-            character = PlaStack.lst[ipla].index;
+            character = ppla->index;
 
             if ( !INGAME_CHR( character ) ) continue;
             pchr = ChrList.lst + character;
@@ -429,7 +430,18 @@ void add_shop_passage( const CHR_REF by_reference owner, const PASS_REF by_refer
             {
                 pchr->isshopitem = btrue;               // Full value
                 pchr->iskursed   = bfalse;              // Shop items are never kursed
-                pchr->nameknown  = btrue;
+
+                // Identify only cheap items in a shop
+                // BB> not all shop items should be identified.
+                // I guess there could be a minor exploit with casters identifying a book, then
+                // leaving the module and re-identifying the book.
+                // An answer would be to reduce the XP based on the some quality of the book and the character's level?
+                // Maybe give the spell books levels, and if your character's level is above the spellbook level, no XP for identifying it?
+
+                if ( chr_get_price( ichr ) <= SHOP_IDENTIFY )
+                {
+                    pchr->nameknown  = btrue;
+                }
             }
         }
     }

@@ -1440,14 +1440,15 @@ void draw_map()
             PLA_REF iplayer;
             for ( iplayer = 0; iplayer < MAX_PLAYER; iplayer++ )
             {
-                if ( !PlaStack.lst[iplayer].valid ) continue;
+                player_t * ppla = PlaStack.lst + iplayer;
+                if ( !ppla->valid ) continue;
 
-                if ( INPUT_BITS_NONE != PlaStack.lst[iplayer].device.bits )
+                if ( INPUT_BITS_NONE != ppla->device.bits && INGAME_CHR( ppla->index ) )
                 {
-                    CHR_REF ichr = PlaStack.lst[iplayer].index;
-                    if ( INGAME_CHR( ichr ) && ChrList.lst[ichr].alive )
+                    chr_t * pchr = ChrList.lst + ppla->index;
+                    if( pchr->alive )
                     {
-                        draw_blip( 0.75f, COLOR_WHITE, ChrList.lst[ichr].pos.x, ChrList.lst[ichr].pos.y, btrue );
+                        draw_blip( 0.75f, COLOR_WHITE, pchr->pos.x, pchr->pos.y, btrue );
                     }
                 }
             }
@@ -1566,45 +1567,74 @@ int draw_help( int y )
 }
 
 //--------------------------------------------------------------------------------------------
+int draw_debug_character( CHR_REF ichr, int y )
+{
+    chr_t   *pchr;
+
+    if( !DEFINED_CHR(ichr) ) return y;
+    pchr = ChrList.lst + ichr;
+
+    return y;
+}
+
+//--------------------------------------------------------------------------------------------
+int draw_debug_player( PLA_REF ipla, int y )
+{
+    player_t * ppla;
+
+    if( !VALID_PLA(ipla) ) return y;
+    ppla = PlaStack.lst + ipla;
+
+    if( DEFINED_CHR(ppla->index) )
+    {
+        CHR_REF ichr = ppla->index;
+        chr_t  *pchr = ChrList.lst + ichr;
+
+        y = _draw_string_raw( 0, y, "~~PLA%d DEF %d %d %d %d %d %d %d %d", REF_TO_INT(ipla),
+            GET_DAMAGE_RESIST(pchr->damagemodifier[DAMAGE_SLASH]),
+            GET_DAMAGE_RESIST(pchr->damagemodifier[DAMAGE_CRUSH]),
+            GET_DAMAGE_RESIST(pchr->damagemodifier[DAMAGE_POKE ]),
+            GET_DAMAGE_RESIST(pchr->damagemodifier[DAMAGE_HOLY ]),
+            GET_DAMAGE_RESIST(pchr->damagemodifier[DAMAGE_EVIL ]),
+            GET_DAMAGE_RESIST(pchr->damagemodifier[DAMAGE_FIRE ]),
+            GET_DAMAGE_RESIST(pchr->damagemodifier[DAMAGE_ICE  ]),
+            GET_DAMAGE_RESIST(pchr->damagemodifier[DAMAGE_ZAP  ]) );
+
+        y = _draw_string_raw( 0, y, "~~PLA%d %5.1f %5.1f", REF_TO_INT(ipla), pchr->pos.x / GRID_SIZE, pchr->pos.y / GRID_SIZE );
+    }
+
+    return y;
+}
+
+//--------------------------------------------------------------------------------------------
 int draw_debug( int y )
 {
-    CHR_REF ichr;
-
-    ichr = PlaStack.lst[( PLA_REF )0].index;
-    y = _draw_string_raw( 0, y, "PLA0 speed %2.4f%s", fvec3_length(ChrList.lst[ichr].vel.v), ChrList.lst[ichr].enviro.is_slipping ? " - slipping" : "" );
+    PLA_REF ipla;
 
     if ( !cfg.dev_mode ) return y;
 
-    if ( SDLKEYDOWN( SDLK_F5 ) )
+    // draw the character's speed
+    ipla = ( PLA_REF )0;
+    if( VALID_PLA(ipla) )
     {
-        CHR_REF ichr;
-        PLA_REF ipla;
+        player_t * ppla = PlaStack.lst + ipla;
+        if( DEFINED_CHR(ppla->index) )
+        {
+            chr_t * pchr = ChrList.lst + ppla->index;
 
-        // Debug information
-        y = _draw_string_raw( 0, y, "!!!DEBUG MODE-5!!!" );
-        y = _draw_string_raw( 0, y, "~~CAM %f %f %f", PCamera->pos.x, PCamera->pos.y, PCamera->pos.z );
-
-        ipla = ( PLA_REF )0;
-        ichr = PlaStack.lst[ipla].index;
-        y = _draw_string_raw( 0, y, "~~PLA0DEF %d %d %d %d %d %d %d %d",
-            ChrList.lst[ichr].damagemodifier[DAMAGE_SLASH] & 3,
-            ChrList.lst[ichr].damagemodifier[DAMAGE_CRUSH] & 3,
-            ChrList.lst[ichr].damagemodifier[DAMAGE_POKE ] & 3,
-            ChrList.lst[ichr].damagemodifier[DAMAGE_HOLY ] & 3,
-            ChrList.lst[ichr].damagemodifier[DAMAGE_EVIL ] & 3,
-            ChrList.lst[ichr].damagemodifier[DAMAGE_FIRE ] & 3,
-            ChrList.lst[ichr].damagemodifier[DAMAGE_ICE  ] & 3,
-            ChrList.lst[ichr].damagemodifier[DAMAGE_ZAP  ] & 3 );
-
-        ichr = PlaStack.lst[ipla].index;
-        y = _draw_string_raw( 0, y, "~~PLA0 %5.1f %5.1f", ChrList.lst[ichr].pos.x / GRID_SIZE, ChrList.lst[ichr].pos.y / GRID_SIZE );
-
-        ipla = ( PLA_REF )1;
-        ichr = PlaStack.lst[ipla].index;
-        y = _draw_string_raw( 0, y, "~~PLA1 %5.1f %5.1f", ChrList.lst[ichr].pos.x / GRID_SIZE, ChrList.lst[ichr].pos.y / GRID_SIZE );
+            y = _draw_string_raw( 0, y, "PLA%d hspeed %2.4f vspeed %2.4f %s", REF_TO_INT(ipla), fvec2_length(pchr->vel.v), pchr->vel.z, pchr->enviro.is_slipping ? " - slipping" : "" );
+        }
     }
 
-    if ( SDLKEYDOWN( SDLK_F6 ) )
+    if ( SDLKEYDOWN( SDLK_F5 )  )
+    {
+        y = _draw_string_raw( 0, y, "!!!DEBUG MODE-5!!!" );
+        y = draw_debug_player( ( PLA_REF )0, y );
+        y = draw_debug_player( ( PLA_REF )1, y );
+        y = draw_debug_player( ( PLA_REF )2, y );
+    }
+
+    if ( SDLKEYDOWN( SDLK_F6 )  )
     {
         // More debug information
         STRING text;
@@ -1627,6 +1657,7 @@ int draw_debug( int y )
     //{
     //    // White debug mode
     //    y = _draw_string_raw( 0, y, "!!!DEBUG MODE-7!!!" );
+    //    y = _draw_string_raw( 0, y, "CAM <%f, %f, %f>", PCamera->pos.x, PCamera->pos.y, PCamera->pos.z );
     //    y = _draw_string_raw( 0, y, "CAM <%f, %f, %f, %f>", PCamera->mView.CNV( 0, 0 ), PCamera->mView.CNV( 1, 0 ), PCamera->mView.CNV( 2, 0 ), PCamera->mView.CNV( 3, 0 ) );
     //    y = _draw_string_raw( 0, y, "CAM <%f, %f, %f, %f>", PCamera->mView.CNV( 0, 1 ), PCamera->mView.CNV( 1, 1 ), PCamera->mView.CNV( 2, 1 ), PCamera->mView.CNV( 3, 1 ) );
     //    y = _draw_string_raw( 0, y, "CAM <%f, %f, %f, %f>", PCamera->mView.CNV( 0, 2 ), PCamera->mView.CNV( 1, 2 ), PCamera->mView.CNV( 2, 2 ), PCamera->mView.CNV( 3, 2 ) );

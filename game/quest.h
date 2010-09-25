@@ -41,8 +41,8 @@ struct s_IDSZ_node;
 #define QUEST_MAXVAL         0x7FFFFFFF  // maximum positive integer
 
 // Public functions
-egoboo_rv quest_log_download_vfs( struct s_IDSZ_node quest_log[], const char* player_directory );
-bool_t    quest_log_upload_vfs( struct s_IDSZ_node quest_log[], const char *player_directory );
+egoboo_rv quest_log_download_vfs( struct s_IDSZ_node quest_log[], size_t quest_log_len, const char* player_directory );
+egoboo_rv quest_log_upload_vfs( struct s_IDSZ_node quest_log[], size_t quest_log_len, const char *player_directory );
 int       quest_set_level( struct s_IDSZ_node quest_log[], size_t quest_log_len, IDSZ idsz, int level );
 int       quest_adjust_level( struct s_IDSZ_node quest_log[], size_t quest_log_len, IDSZ idsz, int adjustment );
 int       quest_get_level( struct s_IDSZ_node quest_log[], size_t quest_log_len, IDSZ idsz );

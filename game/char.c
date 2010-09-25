@@ -1384,8 +1384,8 @@ void attach_character_to_mount( const CHR_REF by_reference iitem, const CHR_REF 
     }
     else if ( pitem->alive )
     {
-        chr_play_action( pitem, ACTION_MM + slot, bfalse );		//ZF> hmm, here is the torch holding bug. Removing
-		pitem->inst.frame_lst = pitem->inst.frame_nxt;			//the interpolation seems to fix it...
+        chr_play_action( pitem, ACTION_MM + slot, bfalse );        //ZF> hmm, here is the torch holding bug. Removing
+        pitem->inst.frame_lst = pitem->inst.frame_nxt;            //the interpolation seems to fix it...
 
         if ( pitem->isitem )
         {
@@ -2306,7 +2306,7 @@ bool_t export_one_character_quest_vfs( const char *szSaveName, const CHR_REF by_
     ppla = chr_get_ppla( character );
     if( ppla == NULL ) return bfalse;
 
-    return quest_log_upload_vfs( ppla->quest_log, szSaveName );
+    return quest_log_upload_vfs( ppla->quest_log, SDL_arraysize( ppla->quest_log ), szSaveName );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2418,7 +2418,7 @@ bool_t chr_upload_cap( chr_t * pchr, cap_t * pcap )
     pcap->ammo    = pchr->ammo;
 
     // update any skills that have been learned
-    idsz_map_copy( pcap->skills, pchr->skills );
+    idsz_map_copy( pchr->skills, SDL_arraysize(pchr->skills), pcap->skills );
 
     // Enchant stuff
     pcap->see_invisible_level = pchr->see_invisible_level;
@@ -2475,7 +2475,7 @@ bool_t chr_download_cap( chr_t * pchr, cap_t * pcap )
     }
 
     // Skillz
-    idsz_map_copy( pcap->skills, pchr->skills );
+    idsz_map_copy( pcap->skills, SDL_arraysize(pcap->skills), pchr->skills );
     pchr->darkvision_level = chr_get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );
     pchr->see_invisible_level = pcap->see_invisible_level;
 
@@ -2504,7 +2504,7 @@ bool_t chr_download_cap( chr_t * pchr, cap_t * pcap )
 
     // Skin
     pchr->skin = 0;
-	if ( pcap->spelleffect_type != NO_SKIN_OVERRIDE )
+    if ( pcap->spelleffect_type != NO_SKIN_OVERRIDE )
     {
         pchr->skin = pcap->spelleffect_type % MAX_SKIN;
     }
@@ -2512,7 +2512,6 @@ bool_t chr_download_cap( chr_t * pchr, cap_t * pcap )
     {
         pchr->skin = pcap->skin_override % MAX_SKIN;
     }
-
 
     // Damage
     pchr->defense = pcap->defense[pchr->skin];
@@ -4603,7 +4602,7 @@ void change_character( const CHR_REF by_reference ichr, const PRO_REF by_referen
     pchr->light_base       = pcap_new->light;
 
     // change the skillz, too, jack!
-    idsz_map_copy( pcap_new->skills, pchr->skills );
+    idsz_map_copy( pcap_new->skills, SDL_arraysize(pcap_new->skills), pchr->skills );
     pchr->darkvision_level = chr_get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );
     pchr->see_invisible_level = pcap_new->see_invisible_level;
 

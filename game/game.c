@@ -383,12 +383,14 @@ void export_all_players( bool_t require_local )
     // Check each player
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        is_local = ( 0 != PlaStack.lst[ipla].device.bits );
+        player_t * ppla = PlaStack.lst + ipla;
+        if ( !ppla->valid ) continue;
+
+        is_local = ( 0 != ppla->device.bits );
         if ( require_local && !is_local ) continue;
-        if ( !PlaStack.lst[ipla].valid ) continue;
 
         // Is it alive?
-        character = PlaStack.lst[ipla].index;
+        character = ppla->index;
         if ( !INGAME_CHR( character ) || !ChrList.lst[character].alive ) continue;
 
         // Export the character
@@ -518,9 +520,12 @@ void statlist_sort()
 
     for ( ipla = 0; ipla < PlaStack.count; ipla++ )
     {
-        if ( PlaStack.lst[ipla].valid && PlaStack.lst[ipla].device.bits != INPUT_BITS_NONE )
+        player_t * ppla = PlaStack.lst + ipla;
+        if ( !ppla->valid ) continue;
+
+        if ( INPUT_BITS_NONE != ppla->device.bits )
         {
-            statlist_move_to_top( PlaStack.lst[ipla].index );
+            statlist_move_to_top( ppla->index );
         }
     }
 }
@@ -716,24 +721,28 @@ int update_game()
     {
         CHR_REF ichr;
         chr_t * pchr;
+        player_t * ppla;
 
-        if ( !PlaStack.lst[ipla].valid ) continue;
+        // ignore ivalid players
+        ppla = PlaStack.lst + ipla;
+        if ( !ppla->valid ) continue;
 
         // fix bad players
-        ichr = PlaStack.lst[ipla].index;
-        if ( !INGAME_CHR( ichr ) )
+        if ( !INGAME_CHR( ppla->index ) )
         {
-            PlaStack.lst[ipla].index = ( CHR_REF )MAX_CHR;
-            PlaStack.lst[ipla].valid = bfalse;
+            pla_dtor( ppla );
             continue;
         }
+
+        // alias some variables
+        ichr = ppla->index;
         pchr = ChrList.lst + ichr;
 
         // count the total number of players
         numplayer++;
 
         // only interested in local players
-        if ( INPUT_BITS_NONE == PlaStack.lst[ipla].device.bits ) continue;
+        if ( INPUT_BITS_NONE == ppla->device.bits ) continue;
 
         if ( pchr->alive )
         {
@@ -774,10 +783,12 @@ int update_game()
         CHR_REF ichr;
         chr_t * pchr;
 
-        if ( !PlaStack.lst[ipla].valid ) continue;
+        player_t * ppla = PlaStack.lst + ipla;
+        if ( !ppla->valid ) continue;
 
-        ichr = PlaStack.lst[ipla].index;
-        if ( !INGAME_CHR( ichr ) ) continue;
+        if ( !INGAME_CHR( ppla->index ) ) continue;
+
+        ichr = ppla->index;
         pchr = ChrList.lst + ichr;
 
         if ( !pchr->alive )
@@ -1002,7 +1013,7 @@ void reset_timers()
     clock_wld = 0;
     clock_enc_stat = 0;
     clock_chr_stat = 0;
-    clock_shared_stat = ONESECOND;		//ZF> This one should timeout on module startup so start at ONESECOND
+    clock_shared_stat = ONESECOND;        //ZF> This one should timeout on module startup so start at ONESECOND
     clock_pit = 0;
 
     update_wld = 0;
@@ -1589,12 +1600,15 @@ CHR_REF chr_find_target( chr_t * psrc, float max_dist, IDSZ idsz, BIT_FIELD targ
     if ( HAS_SOME_BITS( targeting_bits, TARGET_PLAYERS ) )
     {
         PLA_REF ipla;
-
         for ( ipla = 0; ipla < MAX_PLAYER; ipla ++ )
         {
-            if ( !PlaStack.lst[ipla].valid || !INGAME_CHR( PlaStack.lst[ipla].index ) ) continue;
+            player_t * ppla = PlaStack.lst + ipla;
 
-            search_list[search_list_size] = PlaStack.lst[ipla].index;
+            if ( !ppla->valid ) continue;
+
+            if( !INGAME_CHR( ppla->index ) ) continue;
+
+            search_list[search_list_size] = ppla->index;
             search_list_size++;
         }
     }
@@ -1823,72 +1837,99 @@ void do_weather_spawn_particles()
 {
     /// @details ZZ@> This function drops snowflakes or rain or whatever, also swings the camera
 
-    int    cnt;
-    bool_t foundone;
+    bool_t   spawn_one    = bfalse;
 
     if ( weather.time > 0 )
     {
         weather.time--;
         if ( 0 == weather.time )
         {
+            spawn_one = btrue;
             weather.time = weather.timer_reset;
+        }
+    }
 
-            // Find a valid player
-            foundone = bfalse;
-            for ( cnt = 0; cnt < MAX_PLAYER; cnt++ )
+    if( spawn_one )
+    {
+        int        cnt;
+        PLA_REF    weather_ipla = MAX_PLAYER;
+        player_t * weather_ppla = NULL;
+        chr_t    * weather_pchr = NULL;
+        PRT_REF    weather_iprt = TOTAL_MAX_PRT;
+
+        if( !VALID_PLA(weather.iplayer) )
+        {
+            weather.iplayer = MAX_PLAYER;
+        }
+
+        // Find a valid player
+        weather_ipla = weather.iplayer;
+        weather_ppla = NULL;
+        weather_pchr = NULL;
+        for ( cnt = 0; cnt < MAX_PLAYER; cnt++ )
+        {
+            player_t * tmp_ppla = NULL;
+            chr_t    * tmp_pchr = NULL;
+
+            weather_ipla = ( PLA_REF )(( REF_TO_INT( weather_ipla ) + 1 ) % MAX_PLAYER );
+
+            tmp_ppla = PlaStack.lst + weather_ipla;
+            if( !tmp_ppla->valid ) continue;
+
+            if( !INGAME_CHR( tmp_ppla->index ) ) continue;
+            tmp_pchr = ChrList.lst + tmp_ppla->index;
+
+            // no weather if in a pack
+            if( tmp_pchr->pack.is_packed ) continue;
+
+            weather_ppla = tmp_ppla;
+            weather_pchr = tmp_pchr;
+        }
+
+        // Did we find one?
+        if ( NULL != weather_ppla )
+        {
+            weather.iplayer = weather_ipla;
+        }
+
+        // if the character valid, spawn a weather particle over its head
+        weather_iprt = TOTAL_MAX_PRT;
+        if( NULL != weather_pchr )
+        {
+            weather_iprt = spawn_one_particle_global( weather_pchr->pos, ATK_FRONT, weather.particle, 0 );
+        }
+
+        // is the particle valid?
+        if ( ALLOCATED_PRT( weather_iprt ) )
+        {
+            prt_t * pprt = PrtList.lst + weather_iprt;
+
+            bool_t destroy_particle = bfalse;
+
+            if ( weather.over_water && !prt_is_over_water( weather_iprt ) )
             {
-                weather.iplayer = ( PLA_REF )(( REF_TO_INT( weather.iplayer ) + 1 ) % MAX_PLAYER );
-                if ( PlaStack.lst[weather.iplayer].valid )
+                destroy_particle = btrue;
+            }
+            else if ( prt_test_wall( pprt, NULL ) )
+            {
+                destroy_particle = btrue;
+            }
+            else
+            {
+                // Weather particles spawned at the edge of the map look ugly, so don't spawn them there
+                if ( pprt->pos.x < EDGE || pprt->pos.x > PMesh->gmem.edge_x - EDGE )
                 {
-                    foundone = btrue;
-                    break;
+                    destroy_particle = btrue;
+                }
+                else if ( pprt->pos.y < EDGE || pprt->pos.y > PMesh->gmem.edge_y - EDGE )
+                {
+                    destroy_particle = btrue;
                 }
             }
 
-            // Did we find one?
-            if ( foundone )
+            if ( destroy_particle )
             {
-                // Yes, but is the character valid?
-                CHR_REF ichr = PlaStack.lst[weather.iplayer].index;
-                if ( INGAME_CHR( ichr ) && !ChrList.lst[ichr].pack.is_packed )
-                {
-                    chr_t * pchr = ChrList.lst + ichr;
-
-                    // Yes, so spawn over that character
-                    PRT_REF particle = spawn_one_particle_global( pchr->pos, ATK_FRONT, weather.particle, 0 );
-                    if ( ALLOCATED_PRT( particle ) )
-                    {
-                        prt_t * pprt = PrtList.lst + particle;
-
-                        bool_t destroy_particle = bfalse;
-
-                        if ( weather.over_water && !prt_is_over_water( particle ) )
-                        {
-                            destroy_particle = btrue;
-                        }
-                        else if ( prt_test_wall( pprt, NULL ) )
-                        {
-                            destroy_particle = btrue;
-                        }
-                        else
-                        {
-                            // Weather particles spawned at the edge of the map look ugly, so don't spawn them there
-                            if ( pprt->pos.x < EDGE || pprt->pos.x > PMesh->gmem.edge_x - EDGE )
-                            {
-                                destroy_particle = btrue;
-                            }
-                            else if ( pprt->pos.y < EDGE || pprt->pos.y > PMesh->gmem.edge_y - EDGE )
-                            {
-                                destroy_particle = btrue;
-                            }
-                        }
-
-                        if ( destroy_particle )
-                        {
-                            PrtList_free_one( particle );
-                        }
-                    }
-                }
+                PrtList_free_one( weather_iprt );
             }
         }
     }
@@ -2184,16 +2225,20 @@ void check_stats()
         else if ( SDLKEYDOWN( SDLK_4 ) )  docheat = 3;
 
         //Apply the cheat if valid
-        if ( INGAME_CHR( PlaStack.lst[docheat].index ) )
+        if ( VALID_PLA(docheat) )
         {
-            Uint32 xpgain;
-            chr_t * pchr = ChrList.lst + PlaStack.lst[docheat].index;
-            cap_t * pcap = pro_get_pcap( pchr->profile_ref );
+            player_t * ppla = PlaStack.lst + docheat;
+            if( INGAME_CHR( ppla->index ) )
+            {
+                Uint32  xpgain;
+                chr_t * pchr = ChrList.lst + ppla->index;
+                cap_t * pcap = pro_get_pcap( pchr->profile_ref );
 
-            //Give 10% of XP needed for next level
-            xpgain = 0.1f * ( pcap->experience_forlevel[MIN( pchr->experiencelevel+1, MAXLEVEL )] - pcap->experience_forlevel[pchr->experiencelevel] );
-            give_experience( pchr->ai.index, xpgain, XP_DIRECT, btrue );
-            stat_check_delay = 1;
+                //Give 10% of XP needed for next level
+                xpgain = 0.1f * ( pcap->experience_forlevel[MIN( pchr->experiencelevel+1, MAXLEVEL )] - pcap->experience_forlevel[pchr->experiencelevel] );
+                give_experience( pchr->ai.index, xpgain, XP_DIRECT, btrue );
+                stat_check_delay = 1;
+            }
         }
     }
 
@@ -2208,15 +2253,16 @@ void check_stats()
         else if ( SDLKEYDOWN( SDLK_4 ) )  docheat = 3;
 
         //Apply the cheat if valid
-        if ( INGAME_CHR( PlaStack.lst[docheat].index ) )
+        if ( VALID_PLA(docheat) )
         {
-            cap_t * pcap;
-            chr_t * pchr = ChrList.lst + PlaStack.lst[docheat].index;
-            pcap = pro_get_pcap( pchr->profile_ref );
+            player_t * ppla = PlaStack.lst + docheat;
 
-            //Heal 1 life
-            heal_character( pchr->ai.index, pchr->ai.index, 256, btrue );
-            stat_check_delay = 1;
+            if( INGAME_CHR( ppla->index ) )
+            {
+                //Heal 1 life
+                heal_character( ppla->index, ppla->index, 256, btrue );
+                stat_check_delay = 1;
+            }
         }
     }
 
@@ -3367,7 +3413,7 @@ bool_t game_begin_module( const char * modname, Uint32 seed )
     if ( cfg.dev_mode ) log_madused_vfs( "/debug/slotused.txt" );
 
     // initialize the network
-    net_initialize();
+    network_system_begin();
     net_sayHello();
 
     // start the module
@@ -3408,15 +3454,16 @@ bool_t game_update_imports()
     // export all of the players directly from memory straight to the "import" dir
     for ( player = 0, ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        size_t player_idx;
+        size_t     player_idx = MAX_PLAYER;
+        player_t * ppla       = PlaStack.lst + ipla;
 
-        if ( !PlaStack.lst[ipla].valid ) continue;
+        if ( !ppla->valid ) continue;
 
         // Is it alive?
-        character = PlaStack.lst[ipla].index;
+        character = ppla->index;
         if ( !INGAME_CHR( character ) ) continue;
 
-        is_local = ( INPUT_BITS_NONE != PlaStack.lst[ipla].device.bits );
+        is_local = ( INPUT_BITS_NONE != ppla->device.bits );
 
         // find the saved copy of the players that are in memory right now
         for ( tnc = 0; tnc < loadplayer_count; tnc++ )
@@ -3436,7 +3483,7 @@ bool_t game_update_imports()
         // grab the controls from the currently loaded players
         // calculate the slot from the current player count
         player_idx = REF_TO_INT( player );
-        local_import_control[player_idx] = PlaStack.lst[ipla].device.bits;
+        local_import_control[player_idx] = ppla->device.bits;
         local_import_slot[player_idx]    = REF_TO_INT( player ) * MAXIMPORTPERPLAYER;
         player++;
 
@@ -3541,40 +3588,47 @@ bool_t add_player( const CHR_REF by_reference character, const PLA_REF by_refere
 {
     /// @details ZZ@> This function adds a player, returning bfalse if it fails, btrue otherwise
 
-    bool_t retval = bfalse;
+    player_t * ppla = NULL;
+    chr_t    * pchr = NULL;
 
-    if ( VALID_PLA_RANGE( player ) && !PlaStack.lst[player].valid )
+    if( !VALID_PLA_RANGE( player ) ) return bfalse;
+    ppla = PlaStack.lst + player;
+
+    // does the player already exist?
+    if( ppla->valid ) return bfalse;
+
+    // re-construct the players
+    pla_reinit( ppla );
+
+    if( !DEFINED_CHR(character) ) return bfalse;
+    pchr = ChrList.lst + character;
+
+    // set the reference to the player
+    pchr->is_which_player = player;
+
+    // download the quest info
+    quest_log_download_vfs( ppla->quest_log, SDL_arraysize(ppla->quest_log), chr_get_dir_name(character) );
+
+    //---- skeleton for using a ConfigFile to save quests
+    // ppla->quest_file = quest_file_open( chr_get_dir_name(character) );
+
+    ppla->index       = character;
+    ppla->valid       = btrue;
+    ppla->device.bits = device_bits;
+
+    if ( device_bits != EMPTY_BIT_FIELD )
     {
-        player_t * ppla = PlaStack.lst + player;
+        local_noplayers = bfalse;
+        pchr->islocalplayer = btrue;
+        local_numlpla++;
 
-        pla_reinit( ppla );
-
-        ChrList.lst[character].is_which_player = player;
-        quest_log_download_vfs( ppla->quest_log, chr_get_dir_name(character) );
-
-        //---- skeleton for using a ConfigFile to save quests
-        // ppla->quest_file = quest_file_open( chr_get_dir_name(character) );
-
-        ppla->index           = character;
-        ppla->valid           = btrue;
-        ppla->device.bits     = device_bits;
-
-        if ( device_bits != EMPTY_BIT_FIELD )
-        {
-            local_noplayers = bfalse;
-            ChrList.lst[character].islocalplayer = btrue;
-            local_numlpla++;
-
-            // reset the camera
-            camera_reset_target( PCamera, PMesh );
-        }
-
-        PlaStack.count++;
-
-        retval = btrue;
+        // reset the camera
+        camera_reset_target( PCamera, PMesh );
     }
 
-    return retval;
+    PlaStack.count++;
+
+    return btrue;
 }
 
 //--------------------------------------------------------------------------------------------

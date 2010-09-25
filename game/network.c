@@ -54,6 +54,10 @@ static net_instance_t gnet = { bfalse, bfalse, bfalse, bfalse, bfalse };
 
 static bool_t net_instance_init( net_instance_t * pnet );
 
+static void PlaStack_init();
+static void PlaStack_reinit();
+static void PlaStack_dtor();
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 INSTANTIATE_STACK( ACCESS_TYPE_NONE, player_t, PlaStack, MAX_PLAYER );
@@ -157,6 +161,35 @@ static size_t   transferSize = 0;
 // Receiving files
 static NetFileTransfer net_receiveState;
 
+static bool_t _network_system_init = bfalse;
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+void network_system_begin( void )
+{
+    if( !_network_system_init )
+    {
+        PlaStack_init();
+        net_initialize();
+
+        _network_system_init = btrue;
+
+        atexit( network_system_end );
+    }
+}
+
+//--------------------------------------------------------------------------------------------
+void network_system_end( void )
+{
+    if( _network_system_init )
+    {
+        PlaStack_dtor();
+        net_shutDown();
+
+        _network_system_init = bfalse;
+    }
+}
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 void close_session()
@@ -224,6 +257,7 @@ void net_startNewPacket()
     packetsize = 0;
 }
 
+//--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 void packet_addUnsignedByte( Uint8 uc )
 {
@@ -910,16 +944,15 @@ void cl_talkToHost()
          && cfg.difficulty < GAME_HARD
          && !console_mode )
     {
-        player = 0;
-
-        while ( player < MAX_PLAYER )
+        for ( player = 0; player < MAX_PLAYER; player++ )
         {
-            if ( PlaStack.lst[player].valid && PlaStack.lst[player].device.bits != INPUT_BITS_NONE )
-            {
-                ADD_BITS( PlaStack.lst[player].local_latch.b, LATCHBUTTON_RESPAWN );  // Press the respawn button...
-            }
+            player_t * ppla = PlaStack.lst + player;
+            if( !ppla->valid ) continue;
 
-            player++;
+            if ( INPUT_BITS_NONE != ppla->device.bits )
+            {
+                ADD_BITS( ppla->local_latch.b, LATCHBUTTON_RESPAWN );  // Press the respawn button...
+            }
         }
     }
 
@@ -931,15 +964,18 @@ void cl_talkToHost()
 
         for ( player = 0; player < MAX_PLAYER; player++ )
         {
+            player_t * ppla = PlaStack.lst + player;
+            if( !ppla->valid ) continue;
+
             // Find the local players
-            if ( PlaStack.lst[player].valid && PlaStack.lst[player].device.bits != INPUT_BITS_NONE )
+            if ( INPUT_BITS_NONE != ppla->device.bits )
             {
                 packet_addUnsignedByte( REF_TO_INT( player ) );                      // The player index
-                packet_addSignedShort( PlaStack.lst[player].local_latch.raw[kX]*LATCH_TO_FFFF );  // Raw control value
-                packet_addSignedShort( PlaStack.lst[player].local_latch.raw[kY]*LATCH_TO_FFFF );  // Raw control value
-                packet_addSignedShort( PlaStack.lst[player].local_latch.dir[kX]*LATCH_TO_FFFF );  // Player motion
-                packet_addSignedShort( PlaStack.lst[player].local_latch.dir[kY]*LATCH_TO_FFFF );  // Player motion
-                packet_addUnsignedInt( PlaStack.lst[player].local_latch.b );             // Player button states
+                packet_addSignedShort( ppla->local_latch.raw[kX]*LATCH_TO_FFFF );  // Raw control value
+                packet_addSignedShort( ppla->local_latch.raw[kY]*LATCH_TO_FFFF );  // Raw control value
+                packet_addSignedShort( ppla->local_latch.dir[kX]*LATCH_TO_FFFF );  // Player motion
+                packet_addSignedShort( ppla->local_latch.dir[kY]*LATCH_TO_FFFF );  // Player motion
+                packet_addUnsignedInt( ppla->local_latch.b );             // Player button states
             }
         }
 
@@ -974,16 +1010,16 @@ void sv_talkToRemotes()
             // Send all player latches...
             for ( player = 0; player < MAX_PLAYER; player++ )
             {
-                if ( !PlaStack.lst[player].valid ) continue;
+                player_t * ppla = PlaStack.lst + player;
+
+                if ( !ppla->valid ) continue;
 
                 packet_addUnsignedByte( REF_TO_INT( player ) );                      // The player index
-                packet_addSignedShort( PlaStack.lst[player].local_latch.raw[kX]*LATCH_TO_FFFF );  // Player motion
-                packet_addSignedShort( PlaStack.lst[player].local_latch.raw[kY]*LATCH_TO_FFFF );  // Player motion
-                packet_addSignedShort( PlaStack.lst[player].local_latch.dir[kX]*LATCH_TO_FFFF );  // Player motion
-                packet_addSignedShort( PlaStack.lst[player].local_latch.dir[kY]*LATCH_TO_FFFF );  // Player motion
-                packet_addUnsignedInt( PlaStack.lst[player].local_latch.b );        // Player button states
-
-                player++;
+                packet_addSignedShort( ppla->local_latch.raw[kX]*LATCH_TO_FFFF );  // Player motion
+                packet_addSignedShort( ppla->local_latch.raw[kY]*LATCH_TO_FFFF );  // Player motion
+                packet_addSignedShort( ppla->local_latch.dir[kX]*LATCH_TO_FFFF );  // Player motion
+                packet_addSignedShort( ppla->local_latch.dir[kY]*LATCH_TO_FFFF );  // Player motion
+                packet_addUnsignedInt( ppla->local_latch.b );        // Player button states
             }
 
             // Send the packet
@@ -1000,10 +1036,9 @@ void sv_talkToRemotes()
         {
             int index;
             Uint32 cnt;
-            player_t * ppla;
+            player_t * ppla = PlaStack.lst + player;
 
-            if ( !PlaStack.lst[player].valid ) continue;
-            ppla = PlaStack.lst + player;
+            if ( !ppla->valid ) continue;
 
             index = ppla->tlatch_count;
             if ( index < MAXLAG )
@@ -1496,11 +1531,25 @@ void net_handlePacket( ENetEvent *event )
                     while ( packet_remainingSize() > 0 )
                     {
                         player = packet_readUnsignedByte();
-                        PlaStack.lst[player].tlatch[time].raw[kX] = packet_readSignedShort() * FFFF_TO_LATCH;
-                        PlaStack.lst[player].tlatch[time].raw[kY] = packet_readSignedShort() * FFFF_TO_LATCH;
-                        PlaStack.lst[player].tlatch[time].dir[kX] = packet_readSignedShort() * FFFF_TO_LATCH;
-                        PlaStack.lst[player].tlatch[time].dir[kY] = packet_readSignedShort() * FFFF_TO_LATCH;
-                        PlaStack.lst[player].tlatch[time].button  = packet_readUnsignedInt();
+                        if( VALID_PLA(player) )
+                        {
+                            player_t * ppla = PlaStack.lst + player;
+
+                            ppla->tlatch[time].raw[kX] = packet_readSignedShort() * FFFF_TO_LATCH;
+                            ppla->tlatch[time].raw[kY] = packet_readSignedShort() * FFFF_TO_LATCH;
+                            ppla->tlatch[time].dir[kX] = packet_readSignedShort() * FFFF_TO_LATCH;
+                            ppla->tlatch[time].dir[kY] = packet_readSignedShort() * FFFF_TO_LATCH;
+                            ppla->tlatch[time].button  = packet_readUnsignedInt();
+                        }
+                        else
+                        {
+                            // dump the data
+                            packet_readSignedShort();
+                            packet_readSignedShort();
+                            packet_readSignedShort();
+                            packet_readSignedShort();
+                            packet_readUnsignedInt();
+                        }
                     }
 
                     nexttimestamp = stamp + 1;
@@ -1736,25 +1785,28 @@ void unbuffer_all_player_latches()
     numplatimes = 0;
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        if ( !PlaStack.lst[ipla].valid ) continue;
+        player_t * ppla = PlaStack.lst + ipla;
+        if ( !ppla->valid ) continue;
 
-        unbuffer_one_player_latch_network( PlaStack.lst + ipla );
+        unbuffer_one_player_latch_network( ppla );
     }
 
     // set the player latch
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        if ( !PlaStack.lst[ipla].valid ) continue;
+        player_t * ppla = PlaStack.lst + ipla;
+        if ( !ppla->valid ) continue;
 
-        unbuffer_one_player_latch_set( PlaStack.lst + ipla );
+        unbuffer_one_player_latch_set( ppla );
     }
 
     // Let players respawn
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        if ( !PlaStack.lst[ipla].valid ) continue;
+        player_t * ppla = PlaStack.lst + ipla;
+        if ( !ppla->valid ) continue;
 
-        unbuffer_one_player_latch_respawn( PlaStack.lst + ipla );
+        unbuffer_one_player_latch_respawn( ppla );
     }
 }
 
@@ -1763,6 +1815,8 @@ void net_initialize()
 {
     /// @details ZZ@> This starts up the network and logs whatever goes on
 
+    PLA_REF ipla;
+
     gnet.serviceon = bfalse;
     numsession = 0;
     numservice = 0;
@@ -1770,11 +1824,11 @@ void net_initialize()
     net_instance_init( &gnet );
 
     // Clear all the state variables to 0 to start.
-    memset( net_playerPeers, 0, sizeof( ENetPeer* ) * MAX_PLAYER );
-    memset( net_playerInfo, 0, sizeof( NetPlayerInfo ) * MAX_PLAYER );
-    memset( packetbuffer, 0, MAXSENDSIZE * sizeof( Uint8 ) );
-    memset( net_transferStates, 0, sizeof( NetFileTransfer ) * NET_MAX_FILE_TRANSFERS );
-    memset( &net_receiveState, 0, sizeof( NetFileTransfer ) );
+    memset( net_playerPeers, 0, sizeof( net_playerPeers ) );
+    memset( net_playerInfo, 0, sizeof( net_playerInfo ) );
+    memset( packetbuffer, 0, sizeof(packetbuffer) );
+    memset( net_transferStates, 0, sizeof( net_transferStates ) );
+    memset( &net_receiveState, 0, sizeof( net_receiveState ) );
 
     sv_last_frame = ( Uint32 )~0;
 
@@ -2145,17 +2199,7 @@ chr_t  * pla_get_pchr( const PLA_REF by_reference iplayer )
 //--------------------------------------------------------------------------------------------
 void net_reset_players()
 {
-    PLA_REF cnt;
-
-    // Reset the initial player data and latches
-    for ( cnt = 0; cnt < MAX_PLAYER; cnt++ )
-    {
-        memset( PlaStack.lst + cnt, 0, sizeof( player_t ) );
-
-        // reset the device
-        input_device_init( &( PlaStack.lst[cnt].device ) );
-    }
-    PlaStack.count        = 0;
+    PlaStack_reinit();
 
     nexttimestamp = (( Uint32 )~0 );
     numplatimes   = 0;
@@ -2265,4 +2309,49 @@ void input_device_add_latch( input_device_t * pdevice, latch_input_t latch )
         pdevice->latch.dir[kX] *= scale;
         pdevice->latch.dir[kY] *= scale;
     }
+}
+
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+void PlaStack_init()
+{
+    // construct the player stack
+
+    PLA_REF ipla;
+
+    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    {
+        pla_ctor( PlaStack.lst + ipla );
+    }
+    PlaStack.count = 0;
+}
+
+//--------------------------------------------------------------------------------------------
+void PlaStack_dtor()
+{
+    // deconstruct the player stack
+
+    PLA_REF ipla;
+
+    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    {
+        pla_dtor( PlaStack.lst + ipla );
+    }
+    PlaStack.count = 0;
+}
+
+//--------------------------------------------------------------------------------------------
+void PlaStack_reinit()
+{
+    // deconstruct the player stack
+
+    PLA_REF ipla;
+
+    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    {
+        pla_reinit( PlaStack.lst + ipla );
+    }
+    PlaStack.count = 0;
 }

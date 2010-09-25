@@ -194,6 +194,9 @@ extern Uint32                  numplatimes;
 // Networking functions
 //--------------------------------------------------------------------------------------------
 
+void network_system_begin( void );
+void network_system_end( void );
+
 void listen_for_packets();
 void unbuffer_all_player_latches();
 void close_session();
