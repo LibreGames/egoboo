@@ -7053,7 +7053,7 @@ Uint8 scr_AddQuestAllPlayers( script_state_t * pstate, ai_state_bundle_t * pbdl_
 
     SCRIPT_FUNCTION_BEGIN();
 
-    returncode = btrue;
+    returncode = bfalse;
     for ( player_count = 0, success_count = 0, ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
         int quest_level;

@@ -3919,7 +3919,7 @@ int doGamePaused( float deltaTime )
             menuState = MM_Entering;
 
             if ( PMod->exportvalid && !local_stats.allpladead ) buttons[0] = "Save and Exit";
-            else												buttons[0] = "Quit Module";
+            else                                                buttons[0] = "Quit Module";
 
             mnu_SlidyButton_init( 1.0f, buttons );
 

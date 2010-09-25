@@ -167,21 +167,21 @@ EXTERN bool_t console_done EQ( bfalse );                   ///< Input text from 
 //Shared stats
 struct local_shared_stats_s
 {
-	int		seeinvis_level;
-	int     seedark_level;
-	int		grog_level;
-	int		daze_level;
-	int     seekurse_level;
-	int     listen_level;				  ///< Players with listen skill?
+    int        seeinvis_level;
+    int     seedark_level;
+    int        grog_level;
+    int        daze_level;
+    int     seekurse_level;
+    int     listen_level;                  ///< Players with listen skill?
 
-	bool_t  allpladead;					  ///< Has everyone died?
+    bool_t  allpladead;                      ///< Has everyone died?
 
     //ESP ability
-	TEAM_REF sense_enemy_team;
-	IDSZ     sense_enemy_ID;
+    TEAM_REF sense_enemy_team;
+    IDSZ     sense_enemy_ID;
 
-	//TODO: ZF> Dont think this one is supposed to be in here
-	bool_t  noplayers;                    ///< Are there any local players?
+    //TODO: ZF> Dont think this one is supposed to be in here
+    bool_t  noplayers;                    ///< Are there any local players?
 };
 typedef struct local_shared_stats_s local_shared_stats_t;
 local_shared_stats_t local_stats;

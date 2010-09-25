@@ -991,8 +991,7 @@ bool_t do_chr_mount_detection( const CHR_REF by_reference ichr_a, const CHR_REF 
 {
     size_t cnt;
 
-    fvec4_t grip_points[4], grip_nupoints[4];
-    fvec3_t grip_up, vdiff;
+    fvec3_t grip_up, grip_origin, vdiff, pdiff;
 
     chr_t * pchr_a, * pchr_b;
     chr_t * pmount, * prider;
@@ -1003,8 +1002,7 @@ bool_t do_chr_mount_detection( const CHR_REF by_reference ichr_a, const CHR_REF 
 
     float   vnrm;
 
-    oct_vec_t opos_rider;
-    oct_bb_t  grip_cv;
+    oct_bb_t  grip_cv, rider_cv;
 
     oct_vec_t odepth;
     float z_overlap;
@@ -1080,18 +1078,34 @@ bool_t do_chr_mount_detection( const CHR_REF by_reference ichr_a, const CHR_REF 
 
     // determine the grip properties
     {
+        int       grip_count;
         Uint16    grip_verts[4];
-        fvec3_t   grip_vecs[3];
         oct_bb_t  tmp_cv = OCT_BB_INIT_VALS;
+        int       vertex;
 
-        int vertex = ( int )(pmount_inst->vrt_count) - ( int )GRIP_LEFT;
-        vertex = MAX( 0, vertex );
+        // use a standard size for the grip
+        for( cnt = 0; cnt<OCT_Z; cnt++ )
+        {
+            tmp_cv.mins[cnt] = -15 * pmount->fat * 2;
+            tmp_cv.maxs[cnt] =  15 * pmount->fat * 2;
+        }
+
+        // make the vertical dimension something like 1/2 of a human character height
+        tmp_cv.mins[OCT_Z] = 0;
+        tmp_cv.maxs[OCT_Z] = 60 * pmount->fat;
+
+        tmp_cv.mins[OCT_XY] *= SQRT_TWO;
+        tmp_cv.maxs[OCT_XY] *= SQRT_TWO;
+        tmp_cv.mins[OCT_YX] *= SQRT_TWO;
+        tmp_cv.maxs[OCT_YX] *= SQRT_TWO;
 
         // do the automatic vertex update
+        vertex = ( int )(pmount_inst->vrt_count) - ( int )GRIP_LEFT;
+        vertex = MAX( 0, vertex );
         chr_instance_update_vertices( pmount_inst, vertex, vertex + GRIP_LEFT, bfalse );
 
         // calculate the grip vertices
-        for(cnt=0; cnt<GRIP_VERTS && vertex + cnt < pmount_inst->vrt_count; cnt++)
+        for(grip_count = 0, cnt=0; cnt<GRIP_VERTS && vertex + cnt < pmount_inst->vrt_count; grip_count++, cnt++)
         {
             grip_verts[cnt] = vertex + cnt;
         }
@@ -1100,44 +1114,77 @@ bool_t do_chr_mount_detection( const CHR_REF by_reference ichr_a, const CHR_REF 
             grip_verts[cnt] = 0xFFFF;
         }
 
-        // Calculate grip point locations with linear interpolation and other silly things
-        convert_grip_to_local_points( pmount, grip_verts, grip_points );
+        // assume the worst
+        fvec3_self_clear( grip_origin.v );
 
-        // Do the transform the vertices for the grip's "up" vector
-        TransformVertices( &( pmount_inst->matrix ), grip_points, grip_nupoints, 4 );
-
-        // determine the grip vectors
-        for( cnt = 0; cnt<3; cnt++ )
+        // calculate grip_origin and grip_up
+        if( 4 == grip_count )
         {
-            grip_vecs[cnt] = fvec3_sub( grip_nupoints[cnt + 1].v, grip_nupoints[0].v );
+            fvec4_t grip_points[4], grip_nupoints[4];
+            fvec3_t grip_vecs[3];
+
+            // Calculate grip point locations with linear interpolation and other silly things
+            convert_grip_to_local_points( pmount, grip_verts, grip_points );
+
+            // Do the transform the vertices for the grip's "up" vector
+            TransformVertices( &( pmount_inst->matrix ), grip_points, grip_nupoints, 4 );
+
+            // determine the grip vectors
+            for( cnt = 0; cnt<3; cnt++ )
+            {
+                grip_vecs[cnt] = fvec3_sub( grip_nupoints[cnt + 1].v, grip_nupoints[0].v );
+            }
+
+            // grab the grip's "up" vector
+            grip_up = fvec3_normalize( grip_vecs[2].v );
+
+            // grab the origin of the grip
+            grip_origin.x = grip_nupoints[0].x;
+            grip_origin.y = grip_nupoints[0].y;
+            grip_origin.z = grip_nupoints[0].z;
         }
-
-        // grab the grip's "up" vector
-        grip_up = fvec3_normalize( grip_vecs[2].v );
-
-        // use a standard size for the grip
-        for( cnt = 0; cnt<OCT_COUNT; cnt++ )
+        else if( 0 == grip_count )
         {
-            tmp_cv.mins[cnt] = -15 * pmount->fat;
-            tmp_cv.maxs[cnt] =  15 * pmount->fat;
-        }
+            // grab the grip's "up" vector
+            grip_up.x = grip_up.y = 0.0f;
+            grip_up.z = -SGN(gravity);
 
-        tmp_cv.mins[OCT_XY] *= SQRT_TWO;
-        tmp_cv.maxs[OCT_XY] *= SQRT_TWO;
-        tmp_cv.mins[OCT_YX] *= SQRT_TWO;
-        tmp_cv.maxs[OCT_YX] *= SQRT_TWO;
+            // grab the origin of the grip
+            grip_origin = chr_get_pos( pmount );
+        }
+        else if( grip_count > 0 )
+        {
+            fvec4_t grip_points[4], grip_nupoints[4];
+
+            // Calculate grip point locations with linear interpolation and other silly things
+            convert_grip_to_local_points( pmount, grip_verts, grip_points );
+
+            // Do the transform the vertices for the grip's origin
+            TransformVertices( &( pmount_inst->matrix ), grip_points, grip_nupoints, 1 );
+
+            // grab the grip's "up" vector
+            grip_up.x = grip_up.y = 0.0f;
+            grip_up.z = -SGN(gravity);
+
+            // grab the origin of the grip
+            grip_origin.x = grip_nupoints[0].x;
+            grip_origin.y = grip_nupoints[0].y;
+            grip_origin.z = grip_nupoints[0].z;
+        }
 
         // add in the "origin" of the grip
-        oct_bb_add_vector( tmp_cv, grip_nupoints[0].v, &grip_cv);
+        oct_bb_add_vector( tmp_cv, grip_origin.v, &grip_cv );
     }
 
     // determine if the rider is falling on the grip
+    // maybe not "falling", but just approaching?
     vdiff = fvec3_sub( prider->vel.v, pmount->vel.v );
-    vnrm = fvec3_dot_product( vdiff.v, grip_up.v );
+    pdiff = fvec3_sub( prider->pos.v, grip_origin.v );
+    vnrm = fvec3_dot_product( vdiff.v, pdiff.v );
     if( vnrm >= 0.0f ) return bfalse;
 
     // convert the rider foot position to an oct vector
-    oct_vec_ctor( opos_rider, prider->pos );
+    oct_bb_add_vector( prider->chr_min_cv, prider->pos.v, &rider_cv );
 
     // initialize the overlap depths
     odepth[OCT_Z] = odepth[OCT_X] = odepth[OCT_Y] = odepth[OCT_XY] = odepth[OCT_YX] = 0.0f;
@@ -1145,7 +1192,7 @@ bool_t do_chr_mount_detection( const CHR_REF by_reference ichr_a, const CHR_REF 
     // Calculate the interaction depths. The size of the rider doesn't matter.
     for( cnt = 0; cnt < OCT_COUNT; cnt ++)
     {
-        odepth[cnt] = MIN( grip_cv.maxs[cnt] - opos_rider[cnt], opos_rider[cnt] - grip_cv.mins[cnt] );
+        odepth[cnt] = MIN(grip_cv.maxs[cnt], rider_cv.maxs[cnt]) - MAX(grip_cv.mins[cnt], rider_cv.mins[cnt]);
         if( odepth[cnt] <= 0.0f ) return bfalse;
     }
 

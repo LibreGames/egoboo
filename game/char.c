@@ -3588,10 +3588,10 @@ chr_t * chr_config_do_active( chr_t * pchr )
     if( NULL == pchr ) return pchr;
     ichr = GET_REF_PCHR( pchr );
 
-    //then do status updates
+    // then do status updates
     chr_update_hide( pchr );
 
-    //Don't do items that are in inventory
+    // Don't do items that are in inventory
     if ( pchr->pack.is_packed ) return pchr;
 
     pcap = pro_get_pcap( pchr->profile_ref );
@@ -3662,7 +3662,7 @@ chr_t * chr_config_do_active( chr_t * pchr )
     // the following functions should not be done the first time through the update loop
     if ( 0 == update_wld ) return pchr;
 
-    // Do timers and such
+    //---- Do timers and such
 
     // decrement the dismount timer
     if ( pchr->dismount_timer > 0 )
@@ -3680,10 +3680,6 @@ chr_t * chr_config_do_active( chr_t * pchr )
     {
         pchr->reloadtime--;
     }
-
-    // Texture movement
-    pchr->inst.uoffset += pchr->uoffvel;
-    pchr->inst.voffset += pchr->voffvel;
 
     // Down that ol' damage timer
     if ( pchr->damagetime > 0 )
@@ -3703,7 +3699,11 @@ chr_t * chr_config_do_active( chr_t * pchr )
         pchr->jump_time--;
     }
 
-    // Do stats once every second
+    //---- Texture movement
+    pchr->inst.uoffset += pchr->uoffvel;
+    pchr->inst.voffset += pchr->voffvel;
+
+    //---- Do stats once every second
     if ( clock_chr_stat >= ONESECOND )
     {
         // check for a level up
@@ -5283,7 +5283,7 @@ chr_bundle_t * chr_do_latch_button( chr_bundle_t * pbdl )
                 // enter jump-flying mode?
                 loc_pchr->is_flying_jump = !loc_pchr->enviro.inwater;
 
-                can_jump = btrue;
+                can_jump = !loc_pchr->is_flying_jump;
             }
             else if ( loc_pchr->jump_ready || (loc_pchr->jump_number_reset > 1 && 0 == loc_pchr->jump_time) )
             {
@@ -6048,6 +6048,17 @@ chr_bundle_t * move_one_character_get_environment( chr_bundle_t * pbdl, chr_envi
     {
         // Flying
         loc_pchr->jump_ready = bfalse;
+    }
+    else if ( DEFINED_CHR(loc_pchr->attachedto) )
+    {
+        // Mounted
+        loc_pchr->jump_ready = btrue;
+
+        if ( 0 == loc_pchr->jump_time )
+        {
+            // Reset jumping
+            loc_pchr->jump_number = MIN(1, loc_pchr->jump_number_reset);
+        }
     }
     else
     {

@@ -223,7 +223,7 @@ void export_one_character( const CHR_REF by_reference character, const CHR_REF b
     STRING todirname;
     STRING todirfullname;
 
-	 //ZF> Debug info to get this to work on Linux
+     //ZF> Debug info to get this to work on Linux
     log_info("export_one_character() - Okay, I intend to export a character now.\n");
 
     if( !PMod->exportvalid ) return;
@@ -380,7 +380,7 @@ void export_all_players( bool_t require_local )
     // Stop if export isn't valid
     if ( !PMod->exportvalid ) return;
 
-	log_info("export_all_players() - Exporting all player characters.\n");
+    log_info("export_all_players() - Exporting all player characters.\n");
 
     // Check each player
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
@@ -711,14 +711,14 @@ int update_game()
         clock_shared_stat -= ONESECOND;
 
         // Check for all local players being dead and update shared player abilities
-		game_reset_local_shared_stats();
+        game_reset_local_shared_stats();
 
-		numplayer = 0;
-		numdead = numalive = 0;
-		for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
-		{
-			CHR_REF ichr;
-			chr_t * pchr;
+        numplayer = 0;
+        numdead = numalive = 0;
+        for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+        {
+            CHR_REF ichr;
+            chr_t * pchr;
         player_t * ppla;
 
         // ignore ivalid players
@@ -736,52 +736,52 @@ int update_game()
         ichr = ppla->index;
         pchr = ChrList.lst + ichr;
 
-			// count the total number of players
-			numplayer++;
+            // count the total number of players
+            numplayer++;
 
         // only interested in local players
         if ( INPUT_BITS_NONE == ppla->device.bits ) continue;
 
-			if ( pchr->alive )
-			{
-				numalive++;
+            if ( pchr->alive )
+            {
+                numalive++;
 
-				if ( pchr->see_invisible_level > 0 )
-				{
-					local_stats.seeinvis_level = MAX( local_stats.seeinvis_level, pchr->see_invisible_level );
-				}
+                if ( pchr->see_invisible_level > 0 )
+                {
+                    local_stats.seeinvis_level = MAX( local_stats.seeinvis_level, pchr->see_invisible_level );
+                }
 
-				if ( pchr->see_kurse_level > 0 )
-				{
-					local_stats.seekurse_level = MAX( local_stats.seekurse_level, pchr->see_kurse_level );
-				}
+                if ( pchr->see_kurse_level > 0 )
+                {
+                    local_stats.seekurse_level = MAX( local_stats.seekurse_level, pchr->see_kurse_level );
+                }
 
-				if ( pchr->darkvision_level > 0 )
-				{
-					local_stats.seedark_level = MAX( local_stats.seedark_level, pchr->darkvision_level );
-				}
+                if ( pchr->darkvision_level > 0 )
+                {
+                    local_stats.seedark_level = MAX( local_stats.seedark_level, pchr->darkvision_level );
+                }
 
-				if ( pchr->grogtime > 0 )
-				{
-					local_stats.grog_level += pchr->grogtime;
-				}
+                if ( pchr->grogtime > 0 )
+                {
+                    local_stats.grog_level += pchr->grogtime;
+                }
 
-				if( pchr->dazetime > 0 )
-				{
-					local_stats.daze_level += pchr->dazetime;
-				}
+                if( pchr->dazetime > 0 )
+                {
+                    local_stats.daze_level += pchr->dazetime;
+                }
 
-				local_stats.listen_level = MAX( local_stats.listen_level, chr_get_skill( pchr, MAKE_IDSZ('L', 'I', 'S', 'T') ) );
-			}
-		else
-		{
-			numdead++;
-		}
-	}
-	
-	//Dampen groggyness if not all players are grogged (this assumes they all share the same camera view)
-	local_stats.grog_level /= numalive;
-	local_stats.daze_level /= numalive;
+                local_stats.listen_level = MAX( local_stats.listen_level, chr_get_skill( pchr, MAKE_IDSZ('L', 'I', 'S', 'T') ) );
+            }
+        else
+        {
+            numdead++;
+        }
+    }
+
+    //Dampen groggyness if not all players are grogged (this assumes they all share the same camera view)
+    local_stats.grog_level /= numalive;
+    local_stats.daze_level /= numalive;
 
     // Did everyone die?
     if ( numdead >= local_numlpla )
@@ -1946,7 +1946,7 @@ void do_weather_spawn_particles()
         }
     }
 
-	PCamera->swing = (PCamera->swing + PCamera->swingrate ) & 0x3FFF;
+    PCamera->swing = (PCamera->swing + PCamera->swingrate ) & 0x3FFF;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -3446,7 +3446,7 @@ egoboo_rv game_update_imports()
     CHR_REF character;
     PLA_REF player, ipla;
     STRING srcPlayer, srcDir, destDir;
-	egoboo_rv retval = rv_success;
+    egoboo_rv retval = rv_success;
 
     // reload all of the available players
     mnu_player_check_import( "mp_players", btrue );
@@ -3481,7 +3481,7 @@ egoboo_rv game_update_imports()
 
         if ( tnc == loadplayer_count )
         {
-			retval = rv_fail;
+            retval = rv_fail;
             log_warning( "game_update_imports() - cannot find exported file for \"%s\" (\"%s\") \n", ChrList.lst[character].obj_base._name, str_encode_path( ChrList.lst[character].Name ) ) ;
             continue;
         }
@@ -3620,7 +3620,7 @@ bool_t add_player( const CHR_REF by_reference character, const PLA_REF by_refere
 
     if ( device_bits != EMPTY_BIT_FIELD )
     {
-		local_stats.noplayers = bfalse;
+        local_stats.noplayers = bfalse;
         pchr->islocalplayer = btrue;
         local_numlpla++;
 
@@ -3723,14 +3723,14 @@ void game_end_menu( menu_process_t * mproc )
 //--------------------------------------------------------------------------------------------
 void game_finish_module()
 {
-	// do the normal export to save all the player settings, do this before game_update_imports()
+    // do the normal export to save all the player settings, do this before game_update_imports()
     export_all_players( btrue );
 
     // export all the local and remote characters
     game_update_imports();
 
     // quit the old module
-    //game_quit_module();		//ZF> I think this not needed because this is done elswhere?
+    //game_quit_module();        //ZF> I think this not needed because this is done elswhere?
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4395,15 +4395,15 @@ bool_t do_line_of_sight( line_of_sight_info_t * plos )
 
 void game_reset_local_shared_stats()
 {
-	//ZF> Reset all non essentional local_stats. This is done every second or so
-	//    to update these values.
-	local_stats.allpladead		= bfalse;
-	local_stats.daze_level		= 0;
-	local_stats.grog_level		= 0;
-	local_stats.listen_level	= 0;
-	local_stats.seedark_level	= 0;
-	local_stats.seeinvis_level	= 0;
-	local_stats.seekurse_level	= 0;
+    //ZF> Reset all non essentional local_stats. This is done every second or so
+    //    to update these values.
+    local_stats.allpladead        = bfalse;
+    local_stats.daze_level        = 0;
+    local_stats.grog_level        = 0;
+    local_stats.listen_level    = 0;
+    local_stats.seedark_level    = 0;
+    local_stats.seeinvis_level    = 0;
+    local_stats.seekurse_level    = 0;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4412,9 +4412,9 @@ void game_reset_players()
     /// @details ZZ@> This function clears the player list data
 
     // Reset the local data stuff
-	game_reset_local_shared_stats();
-	local_stats.sense_enemy_team = (TEAM_REF) TEAM_MAX;
-	local_stats.sense_enemy_ID   = IDSZ_NONE;
+    game_reset_local_shared_stats();
+    local_stats.sense_enemy_team = (TEAM_REF) TEAM_MAX;
+    local_stats.sense_enemy_ID   = IDSZ_NONE;
 
     net_reset_players();
 }

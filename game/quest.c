@@ -102,6 +102,7 @@ egoboo_rv quest_log_download_vfs( IDSZ_node_t quest_log[], size_t quest_log_len,
     /// @details ZF@> Reads a quest.txt for a player and turns it into a data structure
     ///               we can use. If the file isn't found, the quest log will be initialized as empty.
 
+    egoboo_rv retval = rv_success;
     vfs_FILE *fileread;
     STRING newloadname;
 
@@ -118,9 +119,10 @@ egoboo_rv quest_log_download_vfs( IDSZ_node_t quest_log[], size_t quest_log_len,
     if ( NULL == fileread ) return rv_success;
 
     // Load each IDSZ
+    retval = rv_success;
     while ( goto_colon( NULL, fileread, btrue ) )
     {
-        bool_t rv;
+        egoboo_rv rv;
 
         IDSZ idsz = fget_idsz( fileread );
         int  level = fget_int( fileread );
@@ -129,14 +131,16 @@ egoboo_rv quest_log_download_vfs( IDSZ_node_t quest_log[], size_t quest_log_len,
         rv = idsz_map_add( quest_log, quest_log_len, idsz, level );
 
         //Stop here if it failed
-        if( rv_error != rv )
+        if( rv_error == rv )
         {
             log_warning( "quest_log_download_vfs() - Encountered an error while trying to add a quest. (%s)\n", newloadname);
+            retval = rv;
             break;
         }
-        else if ( rv_fail != rv )
+        else if ( rv_fail == rv )
         {
             log_warning( "quest_log_download_vfs() - Unable to load all quests. (%s)\n", newloadname);
+            retval = rv;
             break;
         }
     }
@@ -144,7 +148,7 @@ egoboo_rv quest_log_download_vfs( IDSZ_node_t quest_log[], size_t quest_log_len,
     // Close up after we are done with it
     vfs_close( fileread );
 
-    return rv_success;
+    return retval;
 }
 
 //--------------------------------------------------------------------------------------------

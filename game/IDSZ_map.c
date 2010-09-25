@@ -129,7 +129,7 @@ IDSZ_node_t* idsz_map_get( const IDSZ_node_t idsz_map[], const size_t idsz_map_l
     while( pidsz != NULL )
     {
         // Did we find the idsz?
-        if( pidsz->id == idsz ) 
+        if( pidsz->id == idsz )
         {
             found_node = pidsz;
             break;
@@ -160,7 +160,7 @@ IDSZ_node_t* idsz_map_iterate( const IDSZ_node_t idsz_map[], const size_t idsz_m
     if ( step < 0  || (size_t)step >= idsz_map_len ) return NULL;
 
     // Found the end of the list?
-    if( IDSZ_NONE == idsz_map[step].id ) 
+    if( IDSZ_NONE == idsz_map[step].id )
     {
         // yes, set the return values to their terminal states
         node          = NULL;

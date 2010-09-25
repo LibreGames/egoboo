@@ -1390,7 +1390,7 @@ void draw_map()
         GL_DEBUG( glBlendFunc )( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );  // GL_COLOR_BUFFER_BIT
 
         // If one of the players can sense enemies via EMP, draw them as blips on the map
-		if ( TEAM_MAX != local_stats.sense_enemy_ID )
+        if ( TEAM_MAX != local_stats.sense_enemy_ID )
         {
             CHR_REF ichr;
 
@@ -1406,10 +1406,10 @@ void draw_map()
                 if ( NULL == pcap ) continue;
 
                 // Show only teams that will attack the player
-				if ( team_hates_team( pchr->team, local_stats.sense_enemy_team ) )
+                if ( team_hates_team( pchr->team, local_stats.sense_enemy_team ) )
                 {
                     // Only if they match the required IDSZ ([NONE] always works)
-					if ( local_stats.sense_enemy_ID == IDSZ_NONE ||
+                    if ( local_stats.sense_enemy_ID == IDSZ_NONE ||
                         local_stats.sense_enemy_ID == pcap->idsz[IDSZ_PARENT] ||
                         local_stats.sense_enemy_ID == pcap->idsz[IDSZ_TYPE  ] )
                     {
