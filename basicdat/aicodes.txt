@@ -351,8 +351,8 @@ The symbol itself follows
 :F 329 SpawnPoofSpeedSpacingDamage
 :F 330 GiveExperienceToGoodTeam
 :F 331 DoNothing
-:F 332 DazeTarget
-:F 333 GrogTarget
+:F 332 GrogTarget
+:F 333 DazeTarget
 :F 334 EnableRespawn
 :F 335 DisableRespawn
 :F 336 DispelTargetEnchantID

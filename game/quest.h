@@ -46,7 +46,7 @@ egoboo_rv quest_log_upload_vfs( struct s_IDSZ_node quest_log[], size_t quest_log
 int       quest_set_level( struct s_IDSZ_node quest_log[], size_t quest_log_len, IDSZ idsz, int level );
 int       quest_adjust_level( struct s_IDSZ_node quest_log[], size_t quest_log_len, IDSZ idsz, int adjustment );
 int       quest_get_level( struct s_IDSZ_node quest_log[], size_t quest_log_len, IDSZ idsz );
-bool_t    quest_add( struct s_IDSZ_node quest_log[], size_t quest_log_len, IDSZ idsz, int level );
+egoboo_rv quest_add( struct s_IDSZ_node quest_log[], size_t quest_log_len, IDSZ idsz, int level );
 
 ConfigFilePtr_t quest_file_open( const char *player_directory );
 egoboo_rv       quest_file_export( ConfigFilePtr_t pfile );

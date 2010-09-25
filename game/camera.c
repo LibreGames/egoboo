@@ -139,12 +139,46 @@ void camera_make_matrix( camera_t * pcam )
 {
     /// @details ZZ@> This function sets pcam->mView to the camera's location and rotation
 
+	float local_swingamp = pcam->swingamp;
+
+	//Swing the camera if players are groggy
+	if( local_stats.grog_level > 0 ) 
+	{
+		float zoom_add;
+		pcam->swing = ( pcam->swing + 120 ) & 0x3FFF;
+		local_swingamp = MAX( local_swingamp, 0.175f );
+
+		zoom_add = ( local_stats.grog_level % 2 == 0 ? 1 : - 1 ) * CAM_TURN_KEY*local_stats.grog_level * 0.35f;
+		pcam->zaddgoto = CLIP( pcam->zaddgoto + zoom_add,CAM_ZADD_MIN, CAM_ZADD_MAX );
+	}
+	
+	//Rotate camera if they are dazed
+	if( local_stats.daze_level > 0 ) 
+	{
+		pcam->turnadd = local_stats.daze_level * CAM_TURN_KEY;
+	}
+	
+
     pcam->mView = MatrixMult( Translate( pcam->pos.x, -pcam->pos.y, pcam->pos.z ), pcam->mViewSave );  // xgg
-    if ( pcam->swingamp > 0.001f )
+    if ( local_swingamp > 0.001f )
     {
-        pcam->roll = turntosin[pcam->swing] * pcam->swingamp;
+        pcam->roll = turntosin[pcam->swing] * local_swingamp;
         pcam->mView = MatrixMult( RotateY( pcam->roll ), pcam->mView );
     }
+
+	//If the camera stops swinging for some reason, slowly return to original position
+	else if ( pcam->roll != 0 )
+	{
+		pcam->roll *= 0.985f;			//Decay factor
+        pcam->mView = MatrixMult( RotateY( pcam->roll ), pcam->mView );
+
+		//Come to a standstill at some point
+		if( ABS( pcam->roll ) < 0.001f ) 
+		{
+			pcam->roll = 0;
+			pcam->swing = 0;
+		}
+	}
 
     pcam->mView = MatrixMult( RotateZ( pcam->turn_z_rad ), pcam->mView );
     pcam->mView = MatrixMult( RotateX( pcam->turnupdown ), pcam->mView );

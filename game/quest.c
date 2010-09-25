@@ -131,12 +131,12 @@ egoboo_rv quest_log_download_vfs( IDSZ_node_t quest_log[], size_t quest_log_len,
         //Stop here if it failed
         if( rv_error != rv )
         {
-            log_warning( "quest_log_download_vfs() - Encountered an error while trying to add a quest. (%s)", newloadname);
+            log_warning( "quest_log_download_vfs() - Encountered an error while trying to add a quest. (%s)\n", newloadname);
             break;
         }
         else if ( rv_fail != rv )
         {
-            log_warning( "quest_log_download_vfs() - Unable to load all quests. (%s)", newloadname);
+            log_warning( "quest_log_download_vfs() - Unable to load all quests. (%s)\n", newloadname);
             break;
         }
     }

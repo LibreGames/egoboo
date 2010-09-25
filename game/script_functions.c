@@ -7083,13 +7083,13 @@ Uint8 scr_AddBlipAllEnemies( script_state_t * pstate, ai_state_bundle_t * pbdl_s
 
     if ( INGAME_CHR( pself->target ) )
     {
-        local_senseenemiesTeam = chr_get_iteam( pself->target );
-        local_senseenemiesID   = pstate->argument;
+        local_stats.sense_enemy_team = chr_get_iteam( pself->target );
+        local_stats.sense_enemy_ID   = pstate->argument;
     }
     else
     {
-        local_senseenemiesTeam = ( TEAM_REF )TEAM_MAX;
-        local_senseenemiesID   = IDSZ_NONE;
+        local_stats.sense_enemy_team = ( TEAM_REF )TEAM_MAX;
+        local_stats.sense_enemy_ID   = IDSZ_NONE;
     }
 
     SCRIPT_FUNCTION_END();

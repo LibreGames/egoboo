@@ -1390,7 +1390,7 @@ void draw_map()
         GL_DEBUG( glBlendFunc )( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );  // GL_COLOR_BUFFER_BIT
 
         // If one of the players can sense enemies via EMP, draw them as blips on the map
-        if ( TEAM_MAX != local_senseenemiesTeam )
+		if ( TEAM_MAX != local_stats.sense_enemy_ID )
         {
             CHR_REF ichr;
 
@@ -1406,12 +1406,12 @@ void draw_map()
                 if ( NULL == pcap ) continue;
 
                 // Show only teams that will attack the player
-                if ( team_hates_team( pchr->team, local_senseenemiesTeam ) )
+				if ( team_hates_team( pchr->team, local_stats.sense_enemy_team ) )
                 {
                     // Only if they match the required IDSZ ([NONE] always works)
-                    if ( local_senseenemiesID == IDSZ_NONE ||
-                        local_senseenemiesID == pcap->idsz[IDSZ_PARENT] ||
-                        local_senseenemiesID == pcap->idsz[IDSZ_TYPE  ] )
+					if ( local_stats.sense_enemy_ID == IDSZ_NONE ||
+                        local_stats.sense_enemy_ID == pcap->idsz[IDSZ_PARENT] ||
+                        local_stats.sense_enemy_ID == pcap->idsz[IDSZ_TYPE  ] )
                     {
                         // Inside the map?
                         if ( pchr->pos.x < PMesh->gmem.edge_x && pchr->pos.y < PMesh->gmem.edge_y )
@@ -1696,7 +1696,7 @@ int draw_game_status( int y )
 
     if ( numplayer > 0 )
     {
-        if ( local_allpladead || PMod->respawnanytime )
+        if ( local_stats.allpladead || PMod->respawnanytime )
         {
             if ( PMod->respawnvalid && cfg.difficulty < GAME_HARD )
             {
@@ -4827,7 +4827,7 @@ void do_chr_flashing()
         }
 
         // Do blacking
-        if ( HAS_NO_BITS( true_frame, SEEKURSEAND ) && local_seekurse && ChrList.lst[ichr].iskursed )
+        if ( HAS_NO_BITS( true_frame, SEEKURSEAND ) && local_stats.seekurse_level && ChrList.lst[ichr].iskursed )
         {
             flash_character( ichr, 0 );
         }
@@ -5254,9 +5254,9 @@ float get_ambient_level()
 
     // determine the minimum ambient, based on darkvision
     min_amb = INVISIBLE;
-    if ( local_seedark_level > 0 )
+    if ( local_stats.seedark_level > 0 )
     {
-        min_amb = 52.0f * light_a * ( 1 + local_seedark_level );
+        min_amb = 52.0f * light_a * ( 1 + local_stats.seedark_level );
     }
 
     return MAX( glob_amb, min_amb );

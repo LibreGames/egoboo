@@ -1,5 +1,6 @@
 Credits to Penguinflyer5234, Seth, Khaos89 and Octagon this release!
 Version 2.8.1 (??.??.2010)
+- New Feature: Added special camera effects whenever a player gets dazed or grogged.
 - Update: Complete rewrite of the Physics engine that fixed numerous physics issues.
 - Update: Complete rewrite of the Quest System. The quest system is much more stable and efficient now.
 - Update: Rust Eaters now get sick if they eat Kursed items.
@@ -12,6 +13,7 @@ Version 2.8.1 (??.??.2010)
 - Update: Various modules are now slightly darker than before.
 - Update: Money is easier to pick up now.
 - Update: Kite Shields now have a small chance to be Kursed.
+- Bugfix: Fixed bug where Grogging and Dazing was inverted.
 - Bugfix: A number of grammar and spelling fixes.
 - Bugfix: The Rune of Resist Elements can now properly be deactivated.
 - Bugfix: Fixed the local Setup file not being read properly.

@@ -71,7 +71,7 @@ void    ChrList_dtor();
 
 CHR_REF ChrList_allocate( const CHR_REF by_reference override );
 
-bool_t  ChrList_free_one( const CHR_REF by_reference ichr );
+egoboo_rv  ChrList_free_one( const CHR_REF by_reference ichr );
 void    ChrList_free_all();
 
 bool_t  ChrList_add_used( const CHR_REF by_reference ichr );
@@ -81,4 +81,4 @@ void    ChrList_update_used();
 void    ChrList_cleanup();
 
 bool_t ChrList_add_activation( CHR_REF ichr );
-bool_t ChrList_add_termination( CHR_REF ichr );
+egoboo_rv ChrList_add_termination( CHR_REF ichr );

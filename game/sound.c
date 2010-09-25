@@ -522,7 +522,7 @@ int _calculate_volume( fvec3_t   diff )
     dist2 = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
 
     // adjust for the local_listening skill
-    if ( local_listening > 0 ) dist2 *= 0.66f * 0.66f;
+    if ( local_stats.listen_level > 0 ) dist2 *= 0.66f * 0.66f;
 
     volume  = 255 * render_size / ( render_size + dist2 );
     volume  = ( volume * snd.soundvolume ) / 100;

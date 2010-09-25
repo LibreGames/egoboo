@@ -902,7 +902,7 @@ void free_all_chraracters()
     // free_all_players
     PlaStack.count = 0;
     local_numlpla = 0;
-    local_noplayers = btrue;
+    local_stats.noplayers = btrue;
 
     // free_all_stats
     StatusList_count = 0;

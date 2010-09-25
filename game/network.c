@@ -939,7 +939,7 @@ void cl_talkToHost()
 
     // Let the players respawn
     if ( SDLKEYDOWN( SDLK_SPACE )
-         && ( local_allpladead || PMod->respawnanytime )
+         && ( local_stats.allpladead || PMod->respawnanytime )
          && PMod->respawnvalid
          && cfg.difficulty < GAME_HARD
          && !console_mode )
@@ -1814,9 +1814,6 @@ void unbuffer_all_player_latches()
 void net_initialize()
 {
     /// @details ZZ@> This starts up the network and logs whatever goes on
-
-    PLA_REF ipla;
-
     gnet.serviceon = bfalse;
     numsession = 0;
     numservice = 0;

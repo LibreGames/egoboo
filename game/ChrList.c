@@ -49,7 +49,7 @@ static size_t  ChrList_get_free();
 
 static bool_t ChrList_remove_used( const CHR_REF by_reference ichr );
 static bool_t ChrList_remove_used_index( int index );
-static bool_t ChrList_add_free( const CHR_REF by_reference ichr );
+static egoboo_rv ChrList_add_free( const CHR_REF by_reference ichr );
 static bool_t ChrList_remove_free( const CHR_REF by_reference ichr );
 static bool_t ChrList_remove_free_index( int index );
 
@@ -197,22 +197,22 @@ void ChrList_update_used()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ChrList_free_one( const CHR_REF by_reference ichr )
+egoboo_rv ChrList_free_one( const CHR_REF by_reference ichr )
 {
-    /// @details ZZ@> This function sticks a character back on the free enchant stack
+    /// @details ZZ@> This function sticks a character back on the free character stack
     ///
     /// @note Tying ALLOCATED_CHR() and POBJ_TERMINATE() to ChrList_free_one()
     /// should be enough to ensure that no character is freed more than once
 
-    bool_t retval;
+    egoboo_rv retval;
     chr_t * pchr;
     ego_object_base_t * pbase;
 
-    if ( !ALLOCATED_CHR( ichr ) ) return bfalse;
+    if ( !ALLOCATED_CHR( ichr ) ) return rv_fail;
     pchr = ChrList.lst + ichr;
 
     pbase = POBJ_GET_PBASE( pchr );
-    if( NULL == pbase ) return bfalse;
+    if( NULL == pbase ) return rv_error;
 
 #if (DEBUG_SCRIPT_LEVEL > 0) && defined(DEBUG_PROFILE) && EGO_DEBUG
     chr_log_script_time( ichr );
@@ -228,7 +228,7 @@ bool_t ChrList_free_one( const CHR_REF by_reference ichr )
     {
         // deallocate any dynamically allocated memory
         pchr = chr_config_deinitialize( pchr, 100 );
-        if ( NULL == pchr ) return bfalse;
+        if ( NULL == pchr ) return rv_error;
 
         if( pbase->in_used_list )
         {
@@ -237,7 +237,7 @@ bool_t ChrList_free_one( const CHR_REF by_reference ichr )
 
         if( pbase->in_free_list )
         {
-            retval = btrue;
+            retval = rv_success;
         }
         else
         {
@@ -246,7 +246,7 @@ bool_t ChrList_free_one( const CHR_REF by_reference ichr )
 
         // character "destructor"
         pchr = chr_dtor( pchr );
-        if ( NULL == pchr ) return bfalse;
+        if ( NULL == pchr ) return rv_error;
     }
 
     return retval;
@@ -312,22 +312,22 @@ int ChrList_get_free_list_index( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ChrList_add_free( const CHR_REF by_reference ichr )
+egoboo_rv ChrList_add_free( const CHR_REF by_reference ichr )
 {
-    bool_t retval;
+    egoboo_rv retval;
 
-    if( !VALID_CHR_RANGE(ichr) ) return bfalse;
+    if( !VALID_CHR_RANGE(ichr) ) return rv_error;
 
 #if EGO_DEBUG && defined(DEBUG_CHR_LIST)
     if( ChrList_get_free_list_index(ichr) > 0 )
     {
-        return bfalse;
+        return rv_error;
     }
 #endif
 
     EGOBOO_ASSERT( !ChrList.lst[ichr].obj_base.in_free_list );
 
-    retval = bfalse;
+    retval = rv_fail;
     if( ChrList.free_count < MAX_CHR )
     {
         ChrList.free_ref[ChrList.free_count] = ichr;
@@ -337,7 +337,7 @@ bool_t ChrList_add_free( const CHR_REF by_reference ichr )
 
         ChrList.lst[ichr].obj_base.in_free_list = btrue;
 
-        retval = btrue;
+        retval = rv_success;
     }
 
     return retval;
@@ -597,18 +597,18 @@ bool_t ChrList_add_activation( CHR_REF ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ChrList_add_termination( CHR_REF ichr )
+egoboo_rv ChrList_add_termination( CHR_REF ichr )
 {
-    bool_t retval = bfalse;
+    egoboo_rv retval = rv_fail;
 
-    if( !VALID_CHR_RANGE(ichr) ) return bfalse;
+    if( !VALID_CHR_RANGE(ichr) ) return rv_fail;
 
     if( chr_termination_count < MAX_CHR )
     {
         chr_termination_list[chr_termination_count] = ichr;
         chr_termination_count++;
 
-        retval = btrue;
+        retval = rv_success;
     }
 
     // at least mark the object as "waiting to be terminated"

@@ -296,10 +296,6 @@ extern pit_info_t pits;
 
 extern FACING_T  glo_useangle;                                        ///< actually still used
 
-/// Sense enemies
-extern TEAM_REF local_senseenemiesTeam;
-extern IDSZ     local_senseenemiesID;
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
@@ -307,7 +303,7 @@ extern IDSZ     local_senseenemiesID;
 void   game_quit_module();
 
 /// the hook for exporting all the current players and reloading them
-bool_t game_update_imports();
+egoboo_rv game_update_imports();
 void   game_finish_module();
 bool_t game_begin_module( const char * modname, Uint32 seed );
 
