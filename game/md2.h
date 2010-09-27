@@ -51,7 +51,7 @@ typedef struct s_ego_md2_vertex
 #endif
 
 }
- MD2_Vertex_t;
+MD2_Vertex_t;
 
 //--------------------------------------------------------------------------------------------
 typedef struct s_ego_md2_texcoord
@@ -63,7 +63,7 @@ typedef struct s_ego_md2_texcoord
 #endif
 
 }
- MD2_TexCoord_t;
+MD2_TexCoord_t;
 
 //--------------------------------------------------------------------------------------------
 typedef struct s_ego_md2_frame
@@ -84,7 +84,7 @@ typedef struct s_ego_md2_frame
 #endif
 
 }
- MD2_Frame_t;
+MD2_Frame_t;
 
 //--------------------------------------------------------------------------------------------
 typedef id_md2_triangle_t MD2_Triangle_t;

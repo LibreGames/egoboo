@@ -133,8 +133,8 @@ EXTERN unsigned        true_frame  EQ( 0 );
 EXTERN signed          update_lag  EQ( 0 );
 EXTERN bool_t          soundon  EQ( btrue );              ///< Is the sound alive?
 
-EXTERN bool_t          pickedmodule_ready EQ(bfalse);   ///< Is there a new picked module?
-EXTERN int             pickedmodule_index EQ(-1);       ///< The module index number
+EXTERN bool_t          pickedmodule_ready EQ( bfalse ); ///< Is there a new picked module?
+EXTERN int             pickedmodule_index EQ( -1 );     ///< The module index number
 EXTERN STRING          pickedmodule_path;               ///< The picked module's full path name
 EXTERN STRING          pickedmodule_name;               ///< The picked module's short name
 EXTERN STRING          pickedmodule_write_path;         ///< The picked module's path name relative to the userdata directory
@@ -212,15 +212,15 @@ typedef struct s_ego_process ego_process_t;
 
 extern ego_process_t * EProc;
 
-void ego_init_SDL_base(void);
+void ego_init_SDL_base( void );
 
 EXTERN bool_t single_frame_mode EQ( bfalse );
 EXTERN bool_t single_frame_keyready EQ( btrue );
 EXTERN bool_t single_frame_requested EQ( bfalse );
 EXTERN bool_t single_update_requested EQ( bfalse );
 
-void egoboo_clear_vfs_paths(void);
-void egoboo_setup_vfs_paths(void);
+void egoboo_clear_vfs_paths( void );
+void egoboo_setup_vfs_paths( void );
 
 Uint32 egoboo_get_ticks( void );
 

@@ -46,7 +46,7 @@ void sys_fs_init();
 //--------------------------------------------------------------------------------------------
 void fs_init()
 {
-    if( _fs_initialized ) return;
+    if ( _fs_initialized ) return;
 
     sys_fs_init();
 

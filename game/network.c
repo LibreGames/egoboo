@@ -115,7 +115,7 @@ typedef struct NetPlayerInfo
 {
     int playerSlot;
 }
- NetPlayerInfo;
+NetPlayerInfo;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -146,7 +146,7 @@ typedef struct NetFileTransfer
     char destName[NET_MAX_FILE_NAME];
     ENetPeer *target;
 }
- NetFileTransfer;
+NetFileTransfer;
 
 /// Network file transfer queue
 static NetFileTransfer net_transferStates[NET_MAX_FILE_TRANSFERS];
@@ -167,7 +167,7 @@ static bool_t _network_system_init = bfalse;
 //--------------------------------------------------------------------------------------------
 void network_system_begin( void )
 {
-    if( !_network_system_init )
+    if ( !_network_system_init )
     {
         PlaStack_init();
         net_initialize();
@@ -181,7 +181,7 @@ void network_system_begin( void )
 //--------------------------------------------------------------------------------------------
 void network_system_end( void )
 {
-    if( _network_system_init )
+    if ( _network_system_init )
     {
         PlaStack_dtor();
         net_shutDown();
@@ -947,7 +947,7 @@ void cl_talkToHost()
         for ( player = 0; player < MAX_PLAYER; player++ )
         {
             player_t * ppla = PlaStack.lst + player;
-            if( !ppla->valid ) continue;
+            if ( !ppla->valid ) continue;
 
             if ( INPUT_BITS_NONE != ppla->device.bits )
             {
@@ -965,7 +965,7 @@ void cl_talkToHost()
         for ( player = 0; player < MAX_PLAYER; player++ )
         {
             player_t * ppla = PlaStack.lst + player;
-            if( !ppla->valid ) continue;
+            if ( !ppla->valid ) continue;
 
             // Find the local players
             if ( INPUT_BITS_NONE != ppla->device.bits )
@@ -1063,7 +1063,7 @@ void sv_talkToRemotes()
             {
                 int loc_lag = update_wld - ppla->tlatch[index].time  + 1;
 
-                if ( loc_lag > 0 && (Uint32)loc_lag > numplatimes )
+                if ( loc_lag > 0 && ( Uint32 )loc_lag > numplatimes )
                 {
                     numplatimes = loc_lag;
                 }
@@ -1365,8 +1365,8 @@ void net_handlePacket( ENetEvent *event )
                 // Check to see if the module exists
                 if ( -1 != pickedmodule_index )
                 {
-                    strncpy( pickedmodule_path,       mnu_ModList_get_vfs_path ( pickedmodule_index ), SDL_arraysize( pickedmodule_path       ) );
-                    strncpy( pickedmodule_name,       mnu_ModList_get_name     ( pickedmodule_index ), SDL_arraysize( pickedmodule_name       ) );
+                    strncpy( pickedmodule_path,       mnu_ModList_get_vfs_path( pickedmodule_index ), SDL_arraysize( pickedmodule_path ) );
+                    strncpy( pickedmodule_name,       mnu_ModList_get_name( pickedmodule_index ), SDL_arraysize( pickedmodule_name ) );
                     strncpy( pickedmodule_write_path, mnu_ModList_get_dest_path( pickedmodule_index ), SDL_arraysize( pickedmodule_write_path ) );
 
                     pickedmodule_ready = btrue;
@@ -1531,7 +1531,7 @@ void net_handlePacket( ENetEvent *event )
                     while ( packet_remainingSize() > 0 )
                     {
                         player = packet_readUnsignedByte();
-                        if( VALID_PLA(player) )
+                        if ( VALID_PLA( player ) )
                         {
                             player_t * ppla = PlaStack.lst + player;
 
@@ -1619,7 +1619,7 @@ void unbuffer_one_player_latch_network( player_t * ppla )
     latch_input_t tmp_latch;
     time_latch_t * tlatch_list;
 
-    if( NULL == ppla ) return;
+    if ( NULL == ppla ) return;
 
     tlatch_list = ppla->tlatch;
 
@@ -1728,7 +1728,7 @@ void unbuffer_one_player_latch_set( player_t * ppla )
 {
     chr_t * pchr;
 
-    if( NULL == ppla ) return;
+    if ( NULL == ppla ) return;
 
     if ( !INGAME_CHR( ppla->index ) ) return;
     pchr = ChrList.lst + ppla->index;
@@ -1750,7 +1750,7 @@ void unbuffer_one_player_latch_respawn( player_t * ppla )
 {
     chr_t * pchr;
 
-    if( NULL == ppla ) return;
+    if ( NULL == ppla ) return;
 
     if ( !INGAME_CHR( ppla->index ) ) return;
     pchr = ChrList.lst + ppla->index;
@@ -1823,7 +1823,7 @@ void net_initialize()
     // Clear all the state variables to 0 to start.
     memset( net_playerPeers, 0, sizeof( net_playerPeers ) );
     memset( net_playerInfo, 0, sizeof( net_playerInfo ) );
-    memset( packetbuffer, 0, sizeof(packetbuffer) );
+    memset( packetbuffer, 0, sizeof( packetbuffer ) );
     memset( net_transferStates, 0, sizeof( net_transferStates ) );
     memset( &net_receiveState, 0, sizeof( net_receiveState ) );
 
@@ -2225,7 +2225,7 @@ player_t * pla_reinit( player_t * ppla )
 {
     if ( NULL == ppla ) return ppla;
 
-    if( ppla->valid )
+    if ( ppla->valid )
     {
         ppla = pla_dtor( ppla );
     }

@@ -81,7 +81,7 @@ camera_t * camera_ctor( camera_t * pcam )
     pcam->zgoto        =  800;
     pcam->turn_z_rad   = -PI / 4.0f;
     pcam->turn_z_one   = pcam->turn_z_rad / TWO_PI;
-    pcam->ori.facing_z = CLIP_TO_16BITS( ( int )( pcam->turn_z_one * (float)0x00010000 ) ) ;
+    pcam->ori.facing_z = CLIP_TO_16BITS(( int )( pcam->turn_z_one * ( float )0x00010000 ) ) ;
     pcam->turnadd      =  0;
     pcam->sustain      =  0.60f;
     pcam->turnupdown   = ( float )( PI / 4 );
@@ -142,18 +142,18 @@ void camera_make_matrix( camera_t * pcam )
     float local_swingamp = pcam->swingamp;
 
     //Swing the camera if players are groggy
-    if( local_stats.grog_level > 0 )
+    if ( local_stats.grog_level > 0 )
     {
         float zoom_add;
         pcam->swing = ( pcam->swing + 120 ) & 0x3FFF;
         local_swingamp = MAX( local_swingamp, 0.175f );
 
-        zoom_add = ( local_stats.grog_level % 2 == 0 ? 1 : - 1 ) * CAM_TURN_KEY*local_stats.grog_level * 0.35f;
-        pcam->zaddgoto = CLIP( pcam->zaddgoto + zoom_add,CAM_ZADD_MIN, CAM_ZADD_MAX );
+        zoom_add = ( local_stats.grog_level % 2 == 0 ? 1 : - 1 ) * CAM_TURN_KEY * local_stats.grog_level * 0.35f;
+        pcam->zaddgoto = CLIP( pcam->zaddgoto + zoom_add, CAM_ZADD_MIN, CAM_ZADD_MAX );
     }
 
     //Rotate camera if they are dazed
-    if( local_stats.daze_level > 0 )
+    if ( local_stats.daze_level > 0 )
     {
         pcam->turnadd = local_stats.daze_level * CAM_TURN_KEY;
     }
@@ -172,7 +172,7 @@ void camera_make_matrix( camera_t * pcam )
         pcam->mView = MatrixMult( RotateY( pcam->roll ), pcam->mView );
 
         //Come to a standstill at some point
-        if( ABS( pcam->roll ) < 0.001f )
+        if ( ABS( pcam->roll ) < 0.001f )
         {
             pcam->roll = 0;
             pcam->swing = 0;
@@ -601,7 +601,7 @@ void camera_reset( camera_t * pcam, ego_mpd_t * pmesh )
     pcam->zgoto        = 1500;
     pcam->turn_z_rad   = -PI / 4.0f;
     pcam->turn_z_one   = pcam->turn_z_rad / TWO_PI;
-    pcam->ori.facing_z = CLIP_TO_16BITS( ( int )( pcam->turn_z_one * (float)0x00010000 ) ) ;
+    pcam->ori.facing_z = CLIP_TO_16BITS(( int )( pcam->turn_z_one * ( float )0x00010000 ) ) ;
     pcam->turnupdown   = PI / 4.0f;
     pcam->roll         = 0;
 

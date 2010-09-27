@@ -37,13 +37,13 @@ ConfigFilePtr_t quest_file_open( const char *player_directory )
     STRING          newloadname = EMPTY_CSTR;
     ConfigFilePtr_t retval      = NULL;
 
-    if( !VALID_CSTR(player_directory) ) return NULL;
+    if ( !VALID_CSTR( player_directory ) ) return NULL;
 
     // Figure out the file path
     snprintf( newloadname, SDL_arraysize( newloadname ), "%s/quest.txt", player_directory );
 
     retval = LoadConfigFile( newloadname, bfalse );
-    if( NULL == retval )
+    if ( NULL == retval )
     {
         retval = ConfigFile_create();
     }
@@ -57,7 +57,7 @@ egoboo_rv quest_file_export( ConfigFilePtr_t pfile )
     egoboo_rv         rv      = rv_error;
     ConfigFile_retval save_rv = ConfigFile_succeed;
 
-    if( NULL == pfile ) return rv_error;
+    if ( NULL == pfile ) return rv_error;
 
     save_rv = SaveConfigFile( pfile );
 
@@ -71,13 +71,13 @@ egoboo_rv quest_file_close( ConfigFilePtr_t * ppfile, bool_t export )
 {
     egoboo_rv export_rv = rv_success;
 
-    if( NULL == ppfile || NULL == *ppfile ) return rv_error;
+    if ( NULL == ppfile || NULL == *ppfile ) return rv_error;
 
-    if( export )
+    if ( export )
     {
         export_rv = quest_file_export( *ppfile );
 
-        if( rv_error == export_rv )
+        if ( rv_error == export_rv )
         {
             log_warning( "quest_file_close() - error writing quest.txt\n" );
         }
@@ -87,12 +87,12 @@ egoboo_rv quest_file_close( ConfigFilePtr_t * ppfile, bool_t export )
         }
     }
 
-    if( ConfigFile_succeed != ConfigFile_destroy( ppfile ) )
+    if ( ConfigFile_succeed != ConfigFile_destroy( ppfile ) )
     {
         log_warning( "quest_file_close() - could not successfully close quest.txt\n" );
     }
 
-    return (NULL == *ppfile) && (rv_success == export_rv) ? rv_success : rv_fail;
+    return ( NULL == *ppfile ) && ( rv_success == export_rv ) ? rv_success : rv_fail;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -106,7 +106,7 @@ egoboo_rv quest_log_download_vfs( IDSZ_node_t quest_log[], size_t quest_log_len,
     vfs_FILE *fileread;
     STRING newloadname;
 
-    if( quest_log == NULL ) return rv_error;
+    if ( quest_log == NULL ) return rv_error;
 
     // blank out the existing map
     idsz_map_init( quest_log );
@@ -131,15 +131,15 @@ egoboo_rv quest_log_download_vfs( IDSZ_node_t quest_log[], size_t quest_log_len,
         rv = idsz_map_add( quest_log, quest_log_len, idsz, level );
 
         //Stop here if it failed
-        if( rv_error == rv )
+        if ( rv_error == rv )
         {
-            log_warning( "quest_log_download_vfs() - Encountered an error while trying to add a quest. (%s)\n", newloadname);
+            log_warning( "quest_log_download_vfs() - Encountered an error while trying to add a quest. (%s)\n", newloadname );
             retval = rv;
             break;
         }
         else if ( rv_fail == rv )
         {
-            log_warning( "quest_log_download_vfs() - Unable to load all quests. (%s)\n", newloadname);
+            log_warning( "quest_log_download_vfs() - Unable to load all quests. (%s)\n", newloadname );
             retval = rv;
             break;
         }
@@ -159,7 +159,7 @@ egoboo_rv quest_log_upload_vfs( IDSZ_node_t quest_log[], size_t quest_log_len, c
     int iterator;
     IDSZ_node_t *pquest;
 
-    if( quest_log == NULL ) return rv_error;
+    if ( quest_log == NULL ) return rv_error;
 
     //Write a new quest file with all the quests
     filewrite = vfs_openWrite( player_directory );
@@ -175,7 +175,7 @@ egoboo_rv quest_log_upload_vfs( IDSZ_node_t quest_log[], size_t quest_log_len, c
     //Iterate through every element in the IDSZ map
     iterator = 0;
     pquest = idsz_map_iterate( quest_log, quest_log_len, &iterator );
-    while( pquest != NULL )
+    while ( pquest != NULL )
     {
         // Write every single quest to the quest log
         vfs_printf( filewrite, "\n:[%4s] %i", undo_idsz( pquest->id ), pquest->level );
@@ -200,7 +200,7 @@ int quest_set_level( IDSZ_node_t quest_log[], size_t quest_log_len, IDSZ idsz, i
 
     // find the quest
     pquest = idsz_map_get( quest_log, quest_log_len, idsz );
-    if( pquest == NULL ) return QUEST_NONE;
+    if ( pquest == NULL ) return QUEST_NONE;
 
     // make a copy of the quest's level
     pquest->level = level;
@@ -221,13 +221,13 @@ int quest_adjust_level( IDSZ_node_t quest_log[], size_t quest_log_len, IDSZ idsz
 
     // find the quest
     pquest = idsz_map_get( quest_log, quest_log_len, idsz );
-    if( pquest == NULL ) return QUEST_NONE;
+    if ( pquest == NULL ) return QUEST_NONE;
 
     // make a copy of the quest's level
     src_level = pquest->level;
 
     // figure out what the dst_level is
-    if( QUEST_BEATEN == src_level )
+    if ( QUEST_BEATEN == src_level )
     {
         // Don't modify quests that are already beaten
         dst_level = src_level;
@@ -235,10 +235,10 @@ int quest_adjust_level( IDSZ_node_t quest_log[], size_t quest_log_len, IDSZ idsz
     else
     {
         // if the quest "doesn't exist" make the src_level 0
-        if( QUEST_NONE   == src_level ) src_level = 0;
+        if ( QUEST_NONE   == src_level ) src_level = 0;
 
         // Modify the quest level for that specific quest
-        if( adjustment == QUEST_MAXVAL ) dst_level = QUEST_BEATEN;
+        if ( adjustment == QUEST_MAXVAL ) dst_level = QUEST_BEATEN;
         else                             dst_level = MAX( 0, src_level + adjustment );
 
         // set the quest level
@@ -257,7 +257,7 @@ int quest_get_level( IDSZ_node_t quest_log[], size_t quest_log_len, IDSZ idsz )
     IDSZ_node_t *pquest;
 
     pquest = idsz_map_get( quest_log, quest_log_len, idsz );
-    if( pquest == NULL ) return QUEST_NONE;
+    if ( pquest == NULL ) return QUEST_NONE;
 
     return pquest->level;
 }

@@ -258,7 +258,7 @@ bool_t phys_intersect_oct_bb( oct_bb_t src1_orig, fvec3_t pos1, fvec3_t vel1, oc
     // cycle through the coordinates to see when the two volumes might coincide
     found = bfalse;
     *tmin = *tmax = -1.0f;
-    if( 0.0f == fvec3_dist_abs(vel1.v, vel2.v) )
+    if ( 0.0f == fvec3_dist_abs( vel1.v, vel2.v ) )
     {
         // no relative motion, so avoid the loop to save time
         failure_count = OCT_COUNT;
@@ -269,7 +269,7 @@ bool_t phys_intersect_oct_bb( oct_bb_t src1_orig, fvec3_t pos1, fvec3_t vel1, oc
         {
             egoboo_rv retval;
 
-            if( PHYS_CLOSE_TOLERANCE_NONE != test_platform )
+            if ( PHYS_CLOSE_TOLERANCE_NONE != test_platform )
             {
                 retval = oct_bb_intersect_close_index( index, src1_orig, opos1, ovel1, src2_orig, opos2, ovel2, &tmp_min, &tmp_max );
             }
@@ -306,7 +306,7 @@ bool_t phys_intersect_oct_bb( oct_bb_t src1_orig, fvec3_t pos1, fvec3_t vel1, oc
         }
     }
 
-    if( OCT_COUNT == failure_count )
+    if ( OCT_COUNT == failure_count )
     {
         // No relative motion on any axis.
         // Just say that they are interacting for the whole frame
@@ -322,10 +322,10 @@ bool_t phys_intersect_oct_bb( oct_bb_t src1_orig, fvec3_t pos1, fvec3_t vel1, oc
         if ( *tmin > 1.0f || *tmax < 0.0f ) return bfalse;
 
         // limit the negative values of time to the start of the module
-        if( (*tmin) + update_wld < 0 ) *tmin = -((Sint32)update_wld);
+        if (( *tmin ) + update_wld < 0 ) *tmin = -(( Sint32 )update_wld );
     }
 
-    if( NULL != pdst )
+    if ( NULL != pdst )
     {
         // clip the interaction time to just one frame
         tmp_min = CLIP( *tmin, 0.0f, 1.0f );
@@ -447,7 +447,7 @@ bool_t phys_expand_prt_bb( prt_t * pprt, float tmin, float tmax, oct_bb_t * pdst
 
     // add in the current position to the bounding volume
     {
-        fvec3_t _tmp_vec = prt_get_pos(pprt);
+        fvec3_t _tmp_vec = prt_get_pos( pprt );
         oct_bb_add_vector( pprt->prt_cv, _tmp_vec.v, &tmp_oct );
     }
 
@@ -459,21 +459,21 @@ bool_t phys_expand_prt_bb( prt_t * pprt, float tmin, float tmax, oct_bb_t * pdst
 //--------------------------------------------------------------------------------------------
 breadcrumb_t * breadcrumb_init_chr( breadcrumb_t * bc, chr_t * pchr )
 {
-    if( NULL == bc ) return bc;
+    if ( NULL == bc ) return bc;
 
-    memset( bc, 0, sizeof(breadcrumb_t) );
+    memset( bc, 0, sizeof( breadcrumb_t ) );
     bc->time = update_wld;
 
-    if( NULL == pchr ) return bc;
+    if ( NULL == pchr ) return bc;
 
     bc->bits   = pchr->stoppedby;
     bc->radius = pchr->bump_1.size;
-    bc->pos.x  = (floor(pchr->pos.x / GRID_SIZE) + 0.5f) * GRID_SIZE;
-    bc->pos.y  = (floor(pchr->pos.y / GRID_SIZE) + 0.5f) * GRID_SIZE;
+    bc->pos.x  = ( floor( pchr->pos.x / GRID_SIZE ) + 0.5f ) * GRID_SIZE;
+    bc->pos.y  = ( floor( pchr->pos.y / GRID_SIZE ) + 0.5f ) * GRID_SIZE;
     bc->pos.z  = pchr->pos.z;
 
     bc->grid   = mesh_get_tile( PMesh, bc->pos.x, bc->pos.y );
-    bc->valid  = (0 == mesh_test_wall(PMesh, bc->pos.v, bc->radius, bc->bits, NULL));
+    bc->valid  = ( 0 == mesh_test_wall( PMesh, bc->pos.v, bc->radius, bc->bits, NULL ) );
 
     bc->id = breadcrumb_guid++;
 
@@ -486,15 +486,15 @@ breadcrumb_t * breadcrumb_init_prt( breadcrumb_t * bc, prt_t * pprt )
     BIT_FIELD bits = 0;
     pip_t * ppip;
 
-    if( NULL == bc ) return bc;
+    if ( NULL == bc ) return bc;
 
-    memset( bc, 0, sizeof(breadcrumb_t) );
+    memset( bc, 0, sizeof( breadcrumb_t ) );
     bc->time = update_wld;
 
-    if( NULL == pprt ) return bc;
+    if ( NULL == pprt ) return bc;
 
-    ppip = prt_get_ppip( GET_REF_PPRT(pprt) );
-    if( NULL == ppip ) return bc;
+    ppip = prt_get_ppip( GET_REF_PPRT( pprt ) );
+    if ( NULL == ppip ) return bc;
 
     bits = MPDFX_IMPASS;
     if ( 0 != ppip->bump_money ) ADD_BITS( bits, MPDFX_WALL );
@@ -502,12 +502,12 @@ breadcrumb_t * breadcrumb_init_prt( breadcrumb_t * bc, prt_t * pprt )
     bc->bits   = bits;
     bc->radius = pprt->bump_real.size;
 
-    bc->pos = prt_get_pos(pprt);
-    bc->pos.x  = (floor(bc->pos.x / GRID_SIZE) + 0.5f) * GRID_SIZE;
-    bc->pos.y  = (floor(bc->pos.y / GRID_SIZE) + 0.5f) * GRID_SIZE;
+    bc->pos = prt_get_pos( pprt );
+    bc->pos.x  = ( floor( bc->pos.x / GRID_SIZE ) + 0.5f ) * GRID_SIZE;
+    bc->pos.y  = ( floor( bc->pos.y / GRID_SIZE ) + 0.5f ) * GRID_SIZE;
 
     bc->grid   = mesh_get_tile( PMesh, bc->pos.x, bc->pos.y );
-    bc->valid  = (0 == mesh_test_wall(PMesh, bc->pos.v, bc->radius, bc->bits, NULL));
+    bc->valid  = ( 0 == mesh_test_wall( PMesh, bc->pos.v, bc->radius, bc->bits, NULL ) );
 
     bc->id = breadcrumb_guid++;
 
@@ -520,14 +520,14 @@ int breadcrumb_cmp( const void * lhs, const void * rhs )
     // comparison to sort from oldest to newest
     int retval;
 
-    breadcrumb_t * bc_lhs = (breadcrumb_t *)lhs;
-    breadcrumb_t * bc_rhs = (breadcrumb_t *)rhs;
+    breadcrumb_t * bc_lhs = ( breadcrumb_t * )lhs;
+    breadcrumb_t * bc_rhs = ( breadcrumb_t * )rhs;
 
-    retval = (int)((Sint64)bc_rhs->time - (Sint64)bc_lhs->time);
+    retval = ( int )(( Sint64 )bc_rhs->time - ( Sint64 )bc_lhs->time );
 
-    if( 0 == retval )
+    if ( 0 == retval )
     {
-        retval = (int)((Sint64)bc_rhs->id - (Sint64)bc_lhs->id);
+        retval = ( int )(( Sint64 )bc_rhs->id - ( Sint64 )bc_lhs->id );
     }
 
     return retval;
@@ -537,21 +537,21 @@ int breadcrumb_cmp( const void * lhs, const void * rhs )
 //--------------------------------------------------------------------------------------------
 bool_t breadcrumb_list_full( breadcrumb_list_t *  lst )
 {
-    if( NULL == lst || !lst->on ) return btrue;
+    if ( NULL == lst || !lst->on ) return btrue;
 
-    lst->count = CLIP(lst->count, 0, MAX_BREADCRUMB);
+    lst->count = CLIP( lst->count, 0, MAX_BREADCRUMB );
 
-    return (lst->count >= MAX_BREADCRUMB);
+    return ( lst->count >= MAX_BREADCRUMB );
 }
 
 //--------------------------------------------------------------------------------------------
 bool_t breadcrumb_list_empty( breadcrumb_list_t * lst )
 {
-    if( NULL == lst || !lst->on ) return btrue;
+    if ( NULL == lst || !lst->on ) return btrue;
 
-    lst->count = CLIP(lst->count, 0, MAX_BREADCRUMB);
+    lst->count = CLIP( lst->count, 0, MAX_BREADCRUMB );
 
-    return (0 == lst->count);
+    return ( 0 == lst->count );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -559,19 +559,19 @@ void breadcrumb_list_compact( breadcrumb_list_t * lst )
 {
     int cnt, tnc;
 
-    if( NULL == lst || !lst->on ) return;
+    if ( NULL == lst || !lst->on ) return;
 
     // compact the list of breadcrumbs
-    for( cnt = 0, tnc = 0; cnt < lst->count; cnt ++)
+    for ( cnt = 0, tnc = 0; cnt < lst->count; cnt ++ )
     {
         breadcrumb_t * bc_src = lst->lst + cnt;
         breadcrumb_t * bc_dst = lst->lst + tnc;
 
-        if( bc_src->valid )
+        if ( bc_src->valid )
         {
-            if( bc_src != bc_dst )
+            if ( bc_src != bc_dst )
             {
-                memcpy( bc_dst, bc_src, sizeof(breadcrumb_t) );
+                memcpy( bc_dst, bc_src, sizeof( breadcrumb_t ) );
             }
 
             tnc++;
@@ -585,20 +585,20 @@ void breadcrumb_list_validate( breadcrumb_list_t * lst )
 {
     int cnt, invalid_cnt;
 
-    if( NULL == lst || !lst->on ) return;
+    if ( NULL == lst || !lst->on ) return;
 
     // invalidate all bad breadcrumbs
-    for( cnt = 0, invalid_cnt = 0; cnt < lst->count; cnt ++)
+    for ( cnt = 0, invalid_cnt = 0; cnt < lst->count; cnt ++ )
     {
         breadcrumb_t * bc = lst->lst + cnt;
 
-        if( !bc->valid )
+        if ( !bc->valid )
         {
             invalid_cnt++;
         }
         else
         {
-            if( 0 != mesh_test_wall(PMesh, bc->pos.v, bc->radius, bc->bits, NULL ) )
+            if ( 0 != mesh_test_wall( PMesh, bc->pos.v, bc->radius, bc->bits, NULL ) )
             {
                 bc->valid = bfalse;
                 invalid_cnt++;
@@ -607,15 +607,15 @@ void breadcrumb_list_validate( breadcrumb_list_t * lst )
     }
 
     // clean up the list
-    if( invalid_cnt > 0 )
+    if ( invalid_cnt > 0 )
     {
         breadcrumb_list_compact( lst );
     }
 
     // sort the values from lowest to highest
-    if( lst->count > 1 )
+    if ( lst->count > 1 )
     {
-        qsort( lst->lst, lst->count, sizeof(breadcrumb_t), breadcrumb_cmp );
+        qsort( lst->lst, lst->count, sizeof( breadcrumb_t ), breadcrumb_cmp );
     }
 }
 
@@ -624,11 +624,11 @@ breadcrumb_t * breadcrumb_list_last_valid( breadcrumb_list_t * lst )
 {
     breadcrumb_t * retval = NULL;
 
-    if( NULL == lst || !lst->on ) return NULL;
+    if ( NULL == lst || !lst->on ) return NULL;
 
     breadcrumb_list_validate( lst );
 
-    if( !breadcrumb_list_empty( lst ) )
+    if ( !breadcrumb_list_empty( lst ) )
     {
         retval = lst->lst + 0;
     }
@@ -644,15 +644,15 @@ breadcrumb_t * breadcrumb_list_newest( breadcrumb_list_t * lst )
     Uint32         old_time = 0xFFFFFFFF;
     breadcrumb_t * old_ptr = NULL;
 
-    if( NULL == lst || !lst->on ) return NULL;
+    if ( NULL == lst || !lst->on ) return NULL;
 
-    for( cnt = 0; cnt < lst->count; cnt ++)
+    for ( cnt = 0; cnt < lst->count; cnt ++ )
     {
         breadcrumb_t * bc = lst->lst + cnt;
 
-        if( !bc->valid ) continue;
+        if ( !bc->valid ) continue;
 
-        if( NULL == old_ptr )
+        if ( NULL == old_ptr )
         {
             old_ptr  = bc;
             old_time = bc->time;
@@ -661,16 +661,16 @@ breadcrumb_t * breadcrumb_list_newest( breadcrumb_list_t * lst )
         }
     }
 
-    for( cnt++; cnt < lst->count; cnt++)
+    for ( cnt++; cnt < lst->count; cnt++ )
     {
         int tmp;
         breadcrumb_t * bc = lst->lst + cnt;
 
-        if( !bc->valid ) continue;
+        if ( !bc->valid ) continue;
 
         tmp = breadcrumb_cmp( old_ptr, bc );
 
-        if( tmp < 0 )
+        if ( tmp < 0 )
         {
             old_ptr  = bc;
             old_time = bc->time;
@@ -690,15 +690,15 @@ breadcrumb_t * breadcrumb_list_oldest( breadcrumb_list_t * lst )
     Uint32         old_time = 0xFFFFFFFF;
     breadcrumb_t * old_ptr = NULL;
 
-    if( NULL == lst || !lst->on ) return NULL;
+    if ( NULL == lst || !lst->on ) return NULL;
 
-    for( cnt = 0; cnt < lst->count; cnt ++)
+    for ( cnt = 0; cnt < lst->count; cnt ++ )
     {
         breadcrumb_t * bc = lst->lst + cnt;
 
-        if( !bc->valid ) continue;
+        if ( !bc->valid ) continue;
 
-        if( NULL == old_ptr )
+        if ( NULL == old_ptr )
         {
             old_ptr  = bc;
             old_time = bc->time;
@@ -707,16 +707,16 @@ breadcrumb_t * breadcrumb_list_oldest( breadcrumb_list_t * lst )
         }
     }
 
-    for( cnt++; cnt < lst->count; cnt++)
+    for ( cnt++; cnt < lst->count; cnt++ )
     {
         int tmp;
         breadcrumb_t * bc = lst->lst + cnt;
 
-        if( !bc->valid ) continue;
+        if ( !bc->valid ) continue;
 
         tmp = breadcrumb_cmp( old_ptr, bc );
 
-        if( tmp > 0 )
+        if ( tmp > 0 )
         {
             old_ptr  = bc;
             old_time = bc->time;
@@ -736,15 +736,15 @@ breadcrumb_t * breadcrumb_list_oldest_grid( breadcrumb_list_t * lst, Uint32 matc
     Uint32         old_time = 0xFFFFFFFF;
     breadcrumb_t * old_ptr = NULL;
 
-    if( NULL == lst || !lst->on ) return NULL;
+    if ( NULL == lst || !lst->on ) return NULL;
 
-    for( cnt = 0; cnt < lst->count; cnt ++)
+    for ( cnt = 0; cnt < lst->count; cnt ++ )
     {
         breadcrumb_t * bc = lst->lst + cnt;
 
-        if( !bc->valid ) continue;
+        if ( !bc->valid ) continue;
 
-        if( (NULL == old_ptr) && (bc->grid == match_grid) )
+        if (( NULL == old_ptr ) && ( bc->grid == match_grid ) )
         {
             old_ptr  = bc;
             old_time = bc->time;
@@ -753,17 +753,17 @@ breadcrumb_t * breadcrumb_list_oldest_grid( breadcrumb_list_t * lst, Uint32 matc
         }
     }
 
-    for( cnt++; cnt < lst->count; cnt++)
+    for ( cnt++; cnt < lst->count; cnt++ )
     {
         int tmp;
 
         breadcrumb_t * bc = lst->lst + cnt;
 
-        if( !bc->valid ) continue;
+        if ( !bc->valid ) continue;
 
         tmp = breadcrumb_cmp( old_ptr, bc );
 
-        if( (tmp > 0) && (bc->grid == match_grid) )
+        if (( tmp > 0 ) && ( bc->grid == match_grid ) )
         {
             old_ptr  = bc;
             old_time = bc->time;
@@ -780,12 +780,12 @@ breadcrumb_t * breadcrumb_list_alloc( breadcrumb_list_t * lst )
 {
     breadcrumb_t * retval = NULL;
 
-    if( breadcrumb_list_full(lst) )
+    if ( breadcrumb_list_full( lst ) )
     {
         breadcrumb_list_compact( lst );
     }
 
-    if( breadcrumb_list_full(lst) )
+    if ( breadcrumb_list_full( lst ) )
     {
         retval = breadcrumb_list_oldest( lst );
     }
@@ -807,36 +807,36 @@ bool_t breadcrumb_list_add( breadcrumb_list_t * lst, breadcrumb_t * pnew )
     bool_t retval;
     breadcrumb_t * pold, *ptmp;
 
-    if( NULL == lst || !lst->on) return bfalse;
+    if ( NULL == lst || !lst->on ) return bfalse;
 
-    if( NULL == pnew ) return bfalse;
+    if ( NULL == pnew ) return bfalse;
 
-    for( cnt = 0, invalid_cnt = 0; cnt < lst->count; cnt ++)
+    for ( cnt = 0, invalid_cnt = 0; cnt < lst->count; cnt ++ )
     {
         breadcrumb_t * bc = lst->lst + cnt;
 
-        if( !bc->valid )
+        if ( !bc->valid )
         {
             invalid_cnt++;
             break;
         }
     }
 
-    if( invalid_cnt > 0 )
+    if ( invalid_cnt > 0 )
     {
         breadcrumb_list_compact( lst );
     }
 
     // find the newest tile with the same grid position
     ptmp = breadcrumb_list_newest( lst );
-    if( NULL != ptmp && ptmp->valid )
+    if ( NULL != ptmp && ptmp->valid )
     {
-        if( ptmp->grid == pnew->grid )
+        if ( ptmp->grid == pnew->grid )
         {
-            if( INVALID_TILE == ptmp->grid )
+            if ( INVALID_TILE == ptmp->grid )
             {
                 // both are off the map, so determine the difference in distance
-                if( ABS(ptmp->pos.x - pnew->pos.x) < GRID_SIZE && ABS(ptmp->pos.y - pnew->pos.y) < GRID_SIZE )
+                if ( ABS( ptmp->pos.x - pnew->pos.x ) < GRID_SIZE && ABS( ptmp->pos.y - pnew->pos.y ) < GRID_SIZE )
                 {
                     // not far enough apart
                     pold = ptmp;
@@ -850,14 +850,14 @@ bool_t breadcrumb_list_add( breadcrumb_list_t * lst, breadcrumb_t * pnew )
         }
     }
 
-    if( breadcrumb_list_full(lst) )
+    if ( breadcrumb_list_full( lst ) )
     {
         // the list is full, so we have to reuse an element
 
         // try the oldest element at this grid position
         pold = breadcrumb_list_oldest_grid( lst, pnew->grid );
 
-        if( NULL == pold )
+        if ( NULL == pold )
         {
             // not found, so find the oldest breadcrumb
             pold = breadcrumb_list_oldest( lst );
@@ -872,7 +872,7 @@ bool_t breadcrumb_list_add( breadcrumb_list_t * lst, breadcrumb_t * pnew )
 
     // assign the data to the list element
     retval = bfalse;
-    if( NULL != pold )
+    if ( NULL != pold )
     {
         *pold = *pnew;
 
@@ -888,19 +888,19 @@ bool_t phys_apply_normal_acceleration( fvec3_base_t acc, fvec3_base_t nrm, float
 {
     fvec3_t sum = ZERO_VECT3;
 
-    if( NULL == acc || NULL == nrm ) return bfalse;
+    if ( NULL == acc || NULL == nrm ) return bfalse;
 
     // clear the normal acceleration here
     fvec3_self_clear( pnrm_acc->v );
 
     // if there is no acceleration, there is nothing to do
-    if( 0.0f == fvec3_length_abs( acc ) ) return btrue;
+    if ( 0.0f == fvec3_length_abs( acc ) ) return btrue;
 
     // if the object scale factors are 1, there is nothing to do
-    if( 1.0f == perp_factor && 1.0f == para_factor ) return btrue;
+    if ( 1.0f == perp_factor && 1.0f == para_factor ) return btrue;
 
     // make a shortcut for the simple case of both scale factors being zero
-    if( 0.0f == perp_factor && 0.0 == para_factor )
+    if ( 0.0f == perp_factor && 0.0 == para_factor )
     {
         fvec3_self_clear( sum.v );
     }
@@ -909,14 +909,14 @@ bool_t phys_apply_normal_acceleration( fvec3_base_t acc, fvec3_base_t nrm, float
         float   dot;
         fvec3_t para = ZERO_VECT3, perp = ZERO_VECT3;
 
-        if( 0.0f == fvec3_length_abs( nrm ) )
+        if ( 0.0f == fvec3_length_abs( nrm ) )
         {
             nrm[kX] = nrm[kY] = 0.0f;
-            nrm[kZ] = -SGN(gravity);
+            nrm[kZ] = -SGN( gravity );
         }
 
         // perpendicular to the ground
-        if( 1.0f == ABS(nrm[kZ]) )
+        if ( 1.0f == ABS( nrm[kZ] ) )
         {
             dot = acc[kZ] * nrm[kZ];
 
@@ -937,13 +937,13 @@ bool_t phys_apply_normal_acceleration( fvec3_base_t acc, fvec3_base_t nrm, float
 
         // kill the acceleration perpendicular to the ground to take the net effect of the
         // ground's "normal force" into account
-        if( dot < 0.0f && 1.0f != perp_factor )
+        if ( dot < 0.0f && 1.0f != perp_factor )
         {
             fvec3_self_scale( perp.v, perp_factor );
         }
 
         // scale the parallel vector
-        if( 1.0f != para_factor )
+        if ( 1.0f != para_factor )
         {
             fvec3_self_scale( para.v, para_factor );
         }
@@ -953,7 +953,7 @@ bool_t phys_apply_normal_acceleration( fvec3_base_t acc, fvec3_base_t nrm, float
     }
 
     // make a shortcut for the simple case
-    if( NULL == pnrm_acc )
+    if ( NULL == pnrm_acc )
     {
         acc[kX] = sum.v[kX];
         acc[kY] = sum.v[kY];
@@ -979,12 +979,12 @@ bool_t phys_data_integrate_accumulators( fvec3_t * ppos, fvec3_t * pvel, phys_da
     fvec3_t loc_vel = ZERO_VECT3;
     fvec3_t displacement = ZERO_VECT3;
 
-    if( NULL == pdata ) return bfalse;
-    if( 0.0f == dt    ) return btrue;
+    if ( NULL == pdata ) return bfalse;
+    if ( 0.0f == dt ) return btrue;
 
     // handle optional parameters
-    if( NULL == ppos ) ppos = &loc_pos;
-    if( NULL == pvel ) pvel = &loc_vel;
+    if ( NULL == ppos ) ppos = &loc_pos;
+    if ( NULL == pvel ) pvel = &loc_vel;
 
     // sum the displacements
     displacement = fvec3_add( pdata->apos_plat.v, pdata->apos_coll.v );
@@ -1023,10 +1023,10 @@ bool_t phys_data_apply_normal_acceleration( phys_data_t * pphys, fvec3_t nrm, fl
     ///     like sucking an object onto the platform, which keeps object attached
     ///     when a platform starts to descend
 
-    if( NULL == pphys ) return bfalse;
+    if ( NULL == pphys ) return bfalse;
 
     // use a short-cut if the vectors are going to be scaled to 0.0f, anyway
-    if( 0.0f == para_factor && 0.0f == perp_factor )
+    if ( 0.0f == para_factor && 0.0f == perp_factor )
     {
         fvec3_self_clear( pphys->apos_coll.v );
         // fvec3_self_clear( pphys->apos_plat.v );
@@ -1034,12 +1034,12 @@ bool_t phys_data_apply_normal_acceleration( phys_data_t * pphys, fvec3_t nrm, fl
     else
     {
 
-        phys_apply_normal_acceleration( pphys->apos_coll.v, nrm.v, para_factor, perp_factor, NULL     );
+        phys_apply_normal_acceleration( pphys->apos_coll.v, nrm.v, para_factor, perp_factor, NULL );
         // phys_apply_normal_acceleration( pphys->apos_plat.v, nrm.v, para_factor, perp_factor, NULL     );
     }
 
     // can't use the same short-cut this calculation because we my still need to know nrm_acc
-    if( 0.0f == para_factor && 0.0f == perp_factor && NULL == pnrm_acc )
+    if ( 0.0f == para_factor && 0.0f == perp_factor && NULL == pnrm_acc )
     {
         fvec3_self_clear( pphys->avel.v );
     }

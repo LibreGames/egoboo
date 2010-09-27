@@ -811,7 +811,7 @@ int doSinglePlayerMenu( float deltaTime )
 
             if ( mnu_draw_background )
             {
-                ui_drawImage( 0, &background, GFX_WIDTH  - background.imgW, 0, 0, 0, NULL);
+                ui_drawImage( 0, &background, GFX_WIDTH  - background.imgW, 0, 0, 0, NULL );
             }
 
             // "Copyright" text
@@ -846,21 +846,21 @@ int doSinglePlayerMenu( float deltaTime )
 //--------------------------------------------------------------------------------------------
 static int cmp_mod_ref_mult = 1;
 
-int cmp_mod_ref(const void * vref1, const void * vref2)
+int cmp_mod_ref( const void * vref1, const void * vref2 )
 {
     /// @details BB@> Sort MOD REF values based on the rank of the module that they point to.
     ///               Trap all stupid values.
 
-    MOD_REF * pref1 = (MOD_REF * )vref1;
-    MOD_REF * pref2 = (MOD_REF * )vref2;
+    MOD_REF * pref1 = ( MOD_REF * )vref1;
+    MOD_REF * pref2 = ( MOD_REF * )vref2;
 
     int retval = 0;
 
-    if( NULL == pref1 && NULL == pref2 )
+    if ( NULL == pref1 && NULL == pref2 )
     {
         return 0;
     }
-    else if( NULL == pref1 )
+    else if ( NULL == pref1 )
     {
         return 1;
     }
@@ -869,11 +869,11 @@ int cmp_mod_ref(const void * vref1, const void * vref2)
         return -1;
     }
 
-    if( *pref1 > mnu_ModList.count && *pref2 > mnu_ModList.count )
+    if ( *pref1 > mnu_ModList.count && *pref2 > mnu_ModList.count )
     {
         return 0;
     }
-    else if( *pref1 > mnu_ModList.count )
+    else if ( *pref1 > mnu_ModList.count )
     {
         return 1;
     }
@@ -883,18 +883,18 @@ int cmp_mod_ref(const void * vref1, const void * vref2)
     }
 
     // if they are beaten, float them to the end of the list
-    retval = (int)mnu_ModList.lst[*pref1].base.beaten - (int)mnu_ModList.lst[*pref2].base.beaten;
+    retval = ( int )mnu_ModList.lst[*pref1].base.beaten - ( int )mnu_ModList.lst[*pref2].base.beaten;
 
-    if( 0 == retval )
+    if ( 0 == retval )
     {
         // I want to uot the "newest" == "hardest" modules at the front, but this should be opposite for
         // beginner modules
-        retval = cmp_mod_ref_mult * strncmp(mnu_ModList.lst[*pref1].base.rank, mnu_ModList.lst[*pref2].base.rank, RANKSIZE );
+        retval = cmp_mod_ref_mult * strncmp( mnu_ModList.lst[*pref1].base.rank, mnu_ModList.lst[*pref2].base.rank, RANKSIZE );
     }
 
-    if( 0 == retval )
+    if ( 0 == retval )
     {
-        retval = strncmp(mnu_ModList.lst[*pref1].base.longname, mnu_ModList.lst[*pref2].base.longname, sizeof(STRING) );
+        retval = strncmp( mnu_ModList.lst[*pref1].base.longname, mnu_ModList.lst[*pref2].base.longname, sizeof( STRING ) );
     }
 
     return retval;
@@ -925,7 +925,7 @@ int doChooseModule( float deltaTime )
     {
         case MM_Begin:
 
-            if( !module_list_valid )
+            if ( !module_list_valid )
             {
                 mnu_load_all_module_info();
             }
@@ -946,10 +946,10 @@ int doChooseModule( float deltaTime )
 
             // Figure out at what offset we want to draw the module menu.
             moduleMenuOffsetX = ( GFX_WIDTH  - 640 ) / 2;
-            moduleMenuOffsetX = MAX(0,moduleMenuOffsetX);
+            moduleMenuOffsetX = MAX( 0, moduleMenuOffsetX );
 
             moduleMenuOffsetY = ( GFX_HEIGHT - 480 ) / 2;
-            moduleMenuOffsetY = MAX(0,moduleMenuOffsetY);
+            moduleMenuOffsetY = MAX( 0, moduleMenuOffsetY );
 
             menuState = MM_Entering;
 
@@ -958,7 +958,7 @@ int doChooseModule( float deltaTime )
         case MM_Entering:
             menuState = MM_Running;
 
-            if( !module_list_valid )
+            if ( !module_list_valid )
             {
                 mnu_load_all_module_info();
                 mnu_load_all_module_images_vfs();
@@ -996,23 +996,23 @@ int doChooseModule( float deltaTime )
             // sort the modules by difficulty. easiest to hardest for starting a new character
             // hardest to easiest for loading a module
             cmp_mod_ref_mult = start_new_player ? 1 : -1;
-            qsort( validModules, numValidModules, sizeof(MOD_REF), cmp_mod_ref );
+            qsort( validModules, numValidModules, sizeof( MOD_REF ), cmp_mod_ref );
 
             // load background depending on current filter
-            if( start_new_player )
+            if ( start_new_player )
             {
                 ego_texture_load_vfs( &background, "mp_data/menu/menu_advent", TRANSCOLOR );
             }
-            else switch( mnu_moduleFilter )
-            {
-                case FILTER_MAIN: ego_texture_load_vfs( &background, "mp_data/menu/menu_draco", TRANSCOLOR ); break;
-                case FILTER_SIDE: ego_texture_load_vfs( &background, "mp_data/menu/menu_sidequest", TRANSCOLOR ); break;
-                case FILTER_TOWN: ego_texture_load_vfs( &background, "mp_data/menu/menu_town", TRANSCOLOR ); break;
-                case FILTER_FUN:  ego_texture_load_vfs( &background, "mp_data/menu/menu_funquest", TRANSCOLOR ); break;
+            else switch ( mnu_moduleFilter )
+                {
+                    case FILTER_MAIN: ego_texture_load_vfs( &background, "mp_data/menu/menu_draco", TRANSCOLOR ); break;
+                    case FILTER_SIDE: ego_texture_load_vfs( &background, "mp_data/menu/menu_sidequest", TRANSCOLOR ); break;
+                    case FILTER_TOWN: ego_texture_load_vfs( &background, "mp_data/menu/menu_town", TRANSCOLOR ); break;
+                    case FILTER_FUN:  ego_texture_load_vfs( &background, "mp_data/menu/menu_funquest", TRANSCOLOR ); break;
 
-                default:
-                case FILTER_OFF: ego_texture_load_vfs( &background, "mp_data/menu/menu_allquest", TRANSCOLOR ); break;
-            }
+                    default:
+                    case FILTER_OFF: ego_texture_load_vfs( &background, "mp_data/menu/menu_allquest", TRANSCOLOR ); break;
+                }
 
             // set the tip text
             if ( 0 == numValidModules )
@@ -1035,7 +1035,7 @@ int doChooseModule( float deltaTime )
                 GLXvector4f beat_tint = { 0.5f, 0.25f, 0.25f, 1.0f };
                 GLXvector4f normal_tint = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-                if( !module_list_valid )
+                if ( !module_list_valid )
                 {
                     mnu_load_all_module_info();
                     mnu_load_all_module_images_vfs();
@@ -1105,7 +1105,7 @@ int doChooseModule( float deltaTime )
                 // Draw buttons for the modules that can be selected
                 x = 93;
                 y = 20;
-                for ( i = startIndex; i < MIN(startIndex + 3, numValidModules); i++ )
+                for ( i = startIndex; i < MIN( startIndex + 3, numValidModules ); i++ )
                 {
                     // fix the menu images in case one or more of them are undefined
                     MOD_REF          imod       = validModules[i];
@@ -1114,7 +1114,7 @@ int doChooseModule( float deltaTime )
 
                     GLfloat * img_tint = normal_tint;
 
-                    if( mnu_ModList.lst[imod].base.beaten )
+                    if ( mnu_ModList.lst[imod].base.beaten )
                     {
                         img_tint = beat_tint;
                     }
@@ -1125,7 +1125,7 @@ int doChooseModule( float deltaTime )
                     }
 
                     //Draw a text over the image explaining what it means
-                    if( mnu_ModList.lst[imod].base.beaten )
+                    if ( mnu_ModList.lst[imod].base.beaten )
                     {
                         ui_drawTextBox( NULL, "BEATEN", moduleMenuOffsetX + x + 32, moduleMenuOffsetY + y + 64, 64, 30, 20 );
                     }
@@ -1144,19 +1144,19 @@ int doChooseModule( float deltaTime )
                     char  * carat = buffer, * carat_end = buffer + SDL_arraysize( buffer );
                     MOD_REF imodule = validModules[selectedModule];
 
-                    mod_file_t * pmod = &(mnu_ModList.lst[imodule].base);
+                    mod_file_t * pmod = &( mnu_ModList.lst[imodule].base );
 
                     GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
 
                     name_string = "Unnamed";
-                    if( CSTR_END != pmod->longname[0] )
+                    if ( CSTR_END != pmod->longname[0] )
                     {
                         name_string = pmod->longname;
                     }
                     carat += snprintf( carat, carat_end - carat - 1, "%s\n", name_string );
 
                     rank_string = "Unranked";
-                    if( CSTR_END != pmod->rank[0] )
+                    if ( CSTR_END != pmod->rank[0] )
                     {
                         rank_string = pmod->rank;
                     }
@@ -1222,34 +1222,34 @@ int doChooseModule( float deltaTime )
                     ui_doButton( 55, filterText, NULL, moduleMenuOffsetX + 327, moduleMenuOffsetY + 390, 200, 30 );
 
                     // use the ">" button to change since we are already using arrows to indicate "spin control"-like widgets
-                    click_button = (BUTTON_UP == ui_doButton( 56, ">", NULL, moduleMenuOffsetX + 532, moduleMenuOffsetY + 390, 30, 30 ) );
+                    click_button = ( BUTTON_UP == ui_doButton( 56, ">", NULL, moduleMenuOffsetX + 532, moduleMenuOffsetY + 390, 30, 30 ) );
 
-                    if( click_button )
+                    if ( click_button )
                     {
                         //Reload the modules with the new filter
                         menuState = MM_Entering;
 
                         //Swap to the next filter
-                        mnu_moduleFilter = CLIP(mnu_moduleFilter, FILTER_NORMAL_BEGIN, FILTER_NORMAL_END);
+                        mnu_moduleFilter = CLIP( mnu_moduleFilter, FILTER_NORMAL_BEGIN, FILTER_NORMAL_END );
 
                         mnu_moduleFilter++;
 
-                        if( mnu_moduleFilter > FILTER_NORMAL_END ) mnu_moduleFilter = FILTER_NORMAL_BEGIN;
+                        if ( mnu_moduleFilter > FILTER_NORMAL_END ) mnu_moduleFilter = FILTER_NORMAL_BEGIN;
 
-                        switch( mnu_moduleFilter )
+                        switch ( mnu_moduleFilter )
                         {
-                        case FILTER_MAIN:    filterText = "Main Quest";       break;
-                        case FILTER_SIDE:    filterText = "Sidequests";       break;
-                        case FILTER_TOWN:    filterText = "Towns and Cities"; break;
-                        case FILTER_FUN:     filterText = "Fun Modules";      break;
-                        case FILTER_STARTER: filterText = "Starter Modules";  break;
+                            case FILTER_MAIN:    filterText = "Main Quest";       break;
+                            case FILTER_SIDE:    filterText = "Sidequests";       break;
+                            case FILTER_TOWN:    filterText = "Towns and Cities"; break;
+                            case FILTER_FUN:     filterText = "Fun Modules";      break;
+                            case FILTER_STARTER: filterText = "Starter Modules";  break;
                         default: case FILTER_OFF:     filterText = "All Modules";      break;
                         }
                     }
                 }
 
                 // the tool-tip text
-                GL_DEBUG( glColor4f ) ( 1, 1, 1, 1 );
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
                 ui_drawTextBox( menuFont, tipText, tipTextLeft, tipTextTop, 0, 0, 20 );
             }
             break;
@@ -1276,8 +1276,8 @@ int doChooseModule( float deltaTime )
                 // Save the name of the module that we've picked
                 pickedmodule_index = selectedModule;
 
-                strncpy( pickedmodule_path,       mnu_ModList_get_vfs_path ( pickedmodule_index ), SDL_arraysize( pickedmodule_path       ) );
-                strncpy( pickedmodule_name,       mnu_ModList_get_name     ( pickedmodule_index ), SDL_arraysize( pickedmodule_name       ) );
+                strncpy( pickedmodule_path,       mnu_ModList_get_vfs_path( pickedmodule_index ), SDL_arraysize( pickedmodule_path ) );
+                strncpy( pickedmodule_name,       mnu_ModList_get_name( pickedmodule_index ), SDL_arraysize( pickedmodule_name ) );
                 strncpy( pickedmodule_write_path, mnu_ModList_get_dest_path( pickedmodule_index ), SDL_arraysize( pickedmodule_write_path ) );
 
                 if ( !game_choose_module( selectedModule, -1 ) )
@@ -1421,7 +1421,7 @@ bool_t doChoosePlayer_show_stats( int player, int mode, int x, int y, int width,
         if ( LOADED_CAP( icap ) )
         {
             cap_t * pcap = CapStack.lst + icap;
-            Uint8 skin = (Uint8)MAX( 0, pcap->skin_override );
+            Uint8 skin = ( Uint8 )MAX( 0, pcap->skin_override );
 
             ui_drawButton( UI_Nothing, x, y, width, height, NULL );
 
@@ -1441,13 +1441,13 @@ bool_t doChoosePlayer_show_stats( int player, int mode, int x, int y, int width,
             // Life and mana (can be less than maximum if not in easy mode)
             if ( cfg.difficulty >= GAME_NORMAL )
             {
-                fnt_drawText( menuFont, NULL, x1, y1, "Life: %d/%d", MIN( (signed)UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from ), ( int )pcap->life_stat.val.from ); y1 += 20;
-                y1 = draw_one_bar( pcap->lifecolor, x1, y1, (signed)UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from );
+                fnt_drawText( menuFont, NULL, x1, y1, "Life: %d/%d", MIN(( signed )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from ), ( int )pcap->life_stat.val.from ); y1 += 20;
+                y1 = draw_one_bar( pcap->lifecolor, x1, y1, ( signed )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from );
 
                 if ( pcap->mana_stat.val.from > 0 )
                 {
-                    fnt_drawText( menuFont, NULL, x1, y1, "Mana: %d/%d", MIN( (signed)UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from ), ( int )pcap->mana_stat.val.from ); y1 += 20;
-                    y1 = draw_one_bar( pcap->manacolor, x1, y1, (signed)UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from );
+                    fnt_drawText( menuFont, NULL, x1, y1, "Mana: %d/%d", MIN(( signed )UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from ), ( int )pcap->mana_stat.val.from ); y1 += 20;
+                    y1 = draw_one_bar( pcap->manacolor, x1, y1, ( signed )UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from );
                 }
             }
             else
@@ -1688,11 +1688,11 @@ int doChoosePlayer( float deltaTime )
                 mnu_widgetList[m].text = loadplayer[player].name;
                 if ( INVALID_PLAYER != splayer )
                 {
-                    ADD_BITS( mnu_widgetList[m].state, UI_BITS_CLICKED);
+                    ADD_BITS( mnu_widgetList[m].state, UI_BITS_CLICKED );
                 }
                 else
                 {
-                    REMOVE_BITS( mnu_widgetList[m].state, UI_BITS_CLICKED);
+                    REMOVE_BITS( mnu_widgetList[m].state, UI_BITS_CLICKED );
                 }
 
                 if ( BUTTON_DOWN == ui_doWidget( mnu_widgetList + m ) )
@@ -1878,8 +1878,8 @@ int doChoosePlayer( float deltaTime )
                     snprintf( destDir, SDL_arraysize( destDir ), "/import/temp%04d.obj", local_import_slot[i] );
                     vfs_copyDirectory( srcDir, destDir );
 
-					//ZF> Linux debug info
-					log_info("game_initialize_imports() - copying from %s to %s\n", srcDir, destDir);
+                    //ZF> Linux debug info
+                    log_info( "game_initialize_imports() - copying from %s to %s\n", srcDir, destDir );
 
                     // Copy all of the character's items to the import directory
                     for ( j = 0; j < MAXIMPORTOBJECTS; j++ )
@@ -2118,13 +2118,13 @@ int doInputOptions( float deltaTime )
             // Grab the key/button input from the selected device
             if ( waitingforinput != -1 )
             {
-                if ( NULL == pdevice || idevice < 0 || (Uint32)idevice >= input_device_count )
+                if ( NULL == pdevice || idevice < 0 || ( Uint32 )idevice >= input_device_count )
                 {
                     waitingforinput = -1;
                 }
                 else
                 {
-                    if ( waitingforinput < 0 || (size_t)waitingforinput >= pdevice->count )
+                    if ( waitingforinput < 0 || ( size_t )waitingforinput >= pdevice->count )
                     {
                         // invalid input range for this device
                         waitingforinput = -1;
@@ -2157,7 +2157,7 @@ int doInputOptions( float deltaTime )
                                 {
                                     if ( scantag[tag].value < 0 || scantag[tag].value >= SDLK_NUMLOCK ) continue;
 
-                                    if( SDLKEYDOWN( (Uint32)scantag[tag].value ) )
+                                    if ( SDLKEYDOWN(( Uint32 )scantag[tag].value ) )
                                     {
                                         pcontrol->tag    = scantag[tag].value;
                                         pcontrol->is_key = btrue;
@@ -2176,7 +2176,7 @@ int doInputOptions( float deltaTime )
                                         {
                                             if ( scantag[tag].value < 0 || scantag[tag].value >= SDLK_NUMLOCK ) continue;
 
-                                            if ( SDLKEYDOWN( (Uint32)scantag[tag].value ) )
+                                            if ( SDLKEYDOWN(( Uint32 )scantag[tag].value ) )
                                             {
                                                 pcontrol->tag    = scantag[tag].value;
                                                 pcontrol->is_key = btrue;
@@ -2202,7 +2202,7 @@ int doInputOptions( float deltaTime )
                                         {
                                             if ( scantag[tag].value < 0 || scantag[tag].value >= SDLK_NUMLOCK ) continue;
 
-                                            if( SDLKEYDOWN( (Uint32)scantag[tag].value ) )
+                                            if ( SDLKEYDOWN(( Uint32 )scantag[tag].value ) )
                                             {
                                                 pcontrol->tag    = scantag[tag].value;
                                                 pcontrol->is_key = btrue;
@@ -3199,7 +3199,7 @@ int doVideoOptions( float deltaTime )
         case MM_Begin:
 
             // set up the button text
-            for ( cnt = 0; cnt <but_last; cnt++ ) sz_buttons[cnt] = "N/A";
+            for ( cnt = 0; cnt < but_last; cnt++ ) sz_buttons[cnt] = "N/A";
             sz_buttons[but_end] = "";
 
             // set up menu variables
@@ -4507,7 +4507,7 @@ TX_REF mnu_get_icon_ref( const CAP_REF by_reference icap, const TX_REF by_refere
     pitem_cap = CapStack.lst + icap;
 
     // what do we need to draw?
-    is_spell_fx = (NO_SKIN_OVERRIDE != pitem_cap->spelleffect_type);
+    is_spell_fx = ( NO_SKIN_OVERRIDE != pitem_cap->spelleffect_type );
     is_book     = ( SPELLBOOK == icap );
     draw_book   = ( is_book || is_spell_fx ) && ( bookicon_count > 0 );
 
@@ -4575,7 +4575,7 @@ bool_t mnu_test_by_index( const MOD_REF by_reference modnumber, size_t buffer_le
     {
         allowed = btrue;
     }
-    else if( pmod->base.importamount > 0 )
+    else if ( pmod->base.importamount > 0 )
     {
         int player_count = 0;
         int player_allowed = 0;
@@ -4588,7 +4588,7 @@ bool_t mnu_test_by_index( const MOD_REF by_reference modnumber, size_t buffer_le
 
             player_count++;
 
-            quest_level = quest_get_level( ploadplayer->quest_log, SDL_arraysize(ploadplayer->quest_log), pmod->base.unlockquest.id );
+            quest_level = quest_get_level( ploadplayer->quest_log, SDL_arraysize( ploadplayer->quest_log ), pmod->base.unlockquest.id );
 
             // find beaten quests or quests with proper level
             if ( quest_level <= QUEST_BEATEN || pmod->base.unlockquest.level <= quest_level )
@@ -4597,7 +4597,7 @@ bool_t mnu_test_by_index( const MOD_REF by_reference modnumber, size_t buffer_le
             }
         }
 
-        allowed = (player_allowed == player_count);
+        allowed = ( player_allowed == player_count );
     }
 
     return allowed;
@@ -4617,7 +4617,7 @@ bool_t mnu_test_by_name( const char *szModName )
     retval = bfalse;
     if ( modnumber >= 0 )
     {
-        retval = mnu_test_by_index( ( MOD_REF )modnumber, 0, NULL );
+        retval = mnu_test_by_index(( MOD_REF )modnumber, 0, NULL );
     }
 
     return retval;
@@ -4674,7 +4674,7 @@ void mnu_load_all_module_info()
             snprintf( pmod->dest_path, SDL_arraysize( pmod->dest_path ), "/%s", vfs_ModPath + 3 );
 
             // same problem as above
-            strncpy( pmod->name, vfs_ModPath + 11, SDL_arraysize(pmod->name) );
+            strncpy( pmod->name, vfs_ModPath + 11, SDL_arraysize( pmod->name ) );
         };
 
         ctxt = vfs_findNext( &ctxt );
@@ -5125,13 +5125,13 @@ bool_t mnu_Selected_add_input( int loadplayer_idx, BIT_FIELD input_bits )
             if ( i == selected_index )
             {
                 // add in the selected bits for the selected loadplayer_idx
-                ADD_BITS( mnu_selectedInput[i], input_bits);
+                ADD_BITS( mnu_selectedInput[i], input_bits );
                 retval = btrue;
             }
             else
             {
                 // remove the selectd bits from all other players
-                REMOVE_BITS( mnu_selectedInput[i], input_bits);
+                REMOVE_BITS( mnu_selectedInput[i], input_bits );
             }
         }
     }
@@ -5210,7 +5210,7 @@ bool_t loadplayer_import_one( const char * foundfile )
     int skin = 0;
 
     //ZF> Debug info to get this to work on Linux
-    log_info("loadplayer_import_one() - Importing one object from (%s).\n", vfs_resolveReadFilename( foundfile ) );
+    log_info( "loadplayer_import_one() - Importing one object from (%s).\n", vfs_resolveReadFilename( foundfile ) );
 
     if ( !VALID_CSTR( foundfile ) || !vfs_exists( foundfile ) ) return bfalse;
 

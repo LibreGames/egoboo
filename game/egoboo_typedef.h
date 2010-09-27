@@ -105,11 +105,11 @@ typedef Uint32 BIT_FIELD;                                ///< A big string suppo
 #define CLEAR_BIT_FIELD(XX) (XX) = 0                    ///< Resets all bits in a BIT_FIELD to 0
 
 #if !defined(ADD_BITS)
-    #define ADD_BITS(XX, YY) (XX) |= (YY)
+#define ADD_BITS(XX, YY) (XX) |= (YY)
 #endif
 
 #if !defined(REMOVE_BITS)
-    #define REMOVE_BITS(XX, YY) (XX) &= ~(YY)
+#define REMOVE_BITS(XX, YY) (XX) &= ~(YY)
 #endif
 
 #if !defined(BOOL_TO_BIT)
@@ -150,7 +150,7 @@ typedef struct s_irect
     int top;
     int bottom;
 }
- irect_t;
+irect_t;
 
 bool_t irect_point_inside( irect_t * prect, int   ix, int   iy );
 
@@ -161,7 +161,7 @@ typedef struct s_frect
     float top;
     float bottom;
 }
- frect_t;
+frect_t;
 
 bool_t frect_point_inside( frect_t * prect, float fx, float fy );
 

@@ -140,17 +140,17 @@ bool_t BSP_aabb_lhs_contains_rhs( BSP_aabb_t * psrc1, BSP_aabb_t * psrc2 )
 
     if ( NULL == psrc1 || NULL == psrc2 ) return bfalse;
 
-    min_dim = MIN(psrc2->dim, psrc1->dim);
-    if( min_dim <= 0 ) return bfalse;
+    min_dim = MIN( psrc2->dim, psrc1->dim );
+    if ( min_dim <= 0 ) return bfalse;
 
     for ( cnt = 0; cnt < min_dim; cnt++ )
     {
         // inverted aabb?
-        if( psrc1->maxs.ary[cnt] < psrc1->mins.ary[cnt] )
+        if ( psrc1->maxs.ary[cnt] < psrc1->mins.ary[cnt] )
             return bfalse;
 
         // inverted aabb?
-        if( psrc2->maxs.ary[cnt] < psrc2->mins.ary[cnt] )
+        if ( psrc2->maxs.ary[cnt] < psrc2->mins.ary[cnt] )
             return bfalse;
 
         if ( psrc2->maxs.ary[cnt] > psrc1->maxs.ary[cnt] )
@@ -174,25 +174,25 @@ bool_t BSP_aabb_overlap( BSP_aabb_t * psrc1, BSP_aabb_t * psrc2 )
 
     if ( NULL == psrc1 || NULL == psrc2 ) return bfalse;
 
-    min_dim = MIN(psrc2->dim, psrc1->dim);
-    if( min_dim <= 0 ) return bfalse;
+    min_dim = MIN( psrc2->dim, psrc1->dim );
+    if ( min_dim <= 0 ) return bfalse;
 
     for ( cnt = 0; cnt < min_dim; cnt++ )
     {
         float minval, maxval;
 
         // inverted aabb?
-        if( psrc1->maxs.ary[cnt] < psrc1->mins.ary[cnt] )
+        if ( psrc1->maxs.ary[cnt] < psrc1->mins.ary[cnt] )
             return bfalse;
 
         // inverted aabb?
-        if( psrc2->maxs.ary[cnt] < psrc2->mins.ary[cnt] )
+        if ( psrc2->maxs.ary[cnt] < psrc2->mins.ary[cnt] )
             return bfalse;
 
-        minval = MAX(psrc1->mins.ary[cnt],psrc2->mins.ary[cnt]);
-        maxval = MIN(psrc1->maxs.ary[cnt],psrc2->maxs.ary[cnt]);
+        minval = MAX( psrc1->mins.ary[cnt], psrc2->mins.ary[cnt] );
+        maxval = MIN( psrc1->maxs.ary[cnt], psrc2->maxs.ary[cnt] );
 
-        if( maxval < minval ) return bfalse;
+        if ( maxval < minval ) return bfalse;
     }
 
     return btrue;
@@ -452,7 +452,7 @@ bool_t BSP_branch_insert_leaf( BSP_branch_t * B, BSP_leaf_t * n )
 //--------------------------------------------------------------------------------------------
 bool_t  BSP_branch_insert_branch( BSP_branch_t * B, int index, BSP_branch_t * B2 )
 {
-    if ( NULL == B || index < 0 || (size_t)index >= B->child_count ) return bfalse;
+    if ( NULL == B || index < 0 || ( size_t )index >= B->child_count ) return bfalse;
 
     if ( NULL == B2 ) return bfalse;
 

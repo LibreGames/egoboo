@@ -126,7 +126,7 @@ int do_ego_proc_begin( ego_process_t * eproc )
         }
         else
         {
-            log_error("Could not load setup settings: \"%s\"\n", tmpname);
+            log_error( "Could not load setup settings: \"%s\"\n", tmpname );
         }
     }
 
@@ -145,7 +145,7 @@ int do_ego_proc_begin( ego_process_t * eproc )
     // read all the scantags
     scantag_read_all_vfs( "mp_data/scancode.txt" );
 
-    if( fs_ensureUserFile( "controls.txt", btrue ) )
+    if ( fs_ensureUserFile( "controls.txt", btrue ) )
     {
         input_settings_load_vfs( "/controls.txt" );
     }
@@ -228,7 +228,7 @@ int do_ego_proc_running( ego_process_t * eproc )
 
     // read the input values
     input_read();
-    mod_ctrl  = SDLKEYDOWN( SDLK_LCTRL  ) || SDLKEYDOWN( SDLK_RCTRL  );
+    mod_ctrl  = SDLKEYDOWN( SDLK_LCTRL ) || SDLKEYDOWN( SDLK_RCTRL );
     mod_shift = SDLKEYDOWN( SDLK_LSHIFT ) || SDLKEYDOWN( SDLK_RSHIFT );
 
     if ( pickedmodule_ready && !process_running( PROC_PBASE( MProc ) ) )
@@ -249,7 +249,7 @@ int do_ego_proc_running( ego_process_t * eproc )
         process_kill( PROC_PBASE( eproc ) );
     }
 
-    if( cfg.dev_mode )
+    if ( cfg.dev_mode )
     {
         if ( !SDLKEYDOWN( SDLK_F10 ) )
         {
@@ -257,7 +257,7 @@ int do_ego_proc_running( ego_process_t * eproc )
         }
         else if ( single_frame_keyready && SDLKEYDOWN( SDLK_F10 ) )
         {
-            if( !single_frame_mode )
+            if ( !single_frame_mode )
             {
                 single_frame_mode = btrue;
             }
@@ -314,7 +314,7 @@ int do_ego_proc_running( ego_process_t * eproc )
         log_info( "Toggling wizard mode\n" );
     }
 
-    if ( cfg.dev_mode && SDLKEYDOWN( SDLK_F9 ) && !(mod_shift || mod_ctrl) && NULL != PMod && PMod->active )
+    if ( cfg.dev_mode && SDLKEYDOWN( SDLK_F9 ) && !( mod_shift || mod_ctrl ) && NULL != PMod && PMod->active )
     {
         // super secret "I win" button
         //PMod->beat        = btrue;
@@ -335,10 +335,10 @@ int do_ego_proc_running( ego_process_t * eproc )
                     pchr = pla_get_pchr( ipla );
                     if ( NULL == pchr ) continue;
 
-                    if( team_hates_team(pchr->baseteam, ptarget->team ) )
+                    if ( team_hates_team( pchr->baseteam, ptarget->team ) )
                     {
-                       kill_character( itarget, ( CHR_REF )511, bfalse );
-                       break;
+                        kill_character( itarget, ( CHR_REF )511, bfalse );
+                        break;
                     }
                 }
             }
@@ -635,7 +635,7 @@ void console_begin()
     ///     otherwise sdl_scr.x == sdl_scr.y == 0 and the screen will be defined to
     ///     have no area...
 
-    SDL_Rect blah = {0, 0, (Uint16)sdl_scr.x, (Uint16)(sdl_scr.y / 4)};
+    SDL_Rect blah = {0, 0, ( Uint16 )sdl_scr.x, ( Uint16 )( sdl_scr.y / 4 )};
 
 #if defined(USE_LUA_CONSOLE)
     _top_con = lua_console_create( NULL, blah );
@@ -766,7 +766,7 @@ Uint32 egoboo_get_ticks( void )
 {
     Uint32 ticks = 0;
 
-    if( single_frame_mode )
+    if ( single_frame_mode )
     {
         ticks = UPDATE_SKIP * update_wld;
     }

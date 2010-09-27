@@ -184,13 +184,13 @@ bool_t pro_init( pro_t * pobj )
     //---- reset everything to safe values
     memset( pobj, 0, sizeof( *pobj ) );
 
-    pobj->icap = (CAP_REF) MAX_CAP;
-    pobj->imad = (MAD_REF) MAX_MAD;
-    pobj->ieve = (EVE_REF) MAX_EVE;
+    pobj->icap = ( CAP_REF ) MAX_CAP;
+    pobj->imad = ( MAD_REF ) MAX_MAD;
+    pobj->ieve = ( EVE_REF ) MAX_EVE;
 
     for ( cnt = 0; cnt < MAX_PIP_PER_PROFILE; cnt++ )
     {
-        pobj->prtpip[cnt] = (PIP_REF) MAX_PIP;
+        pobj->prtpip[cnt] = ( PIP_REF ) MAX_PIP;
     }
 
     chop_definition_init( &( pobj->chop ) );
@@ -242,7 +242,7 @@ size_t ProList_pop_free( int idx )
 
     size_t retval;
 
-    if ( idx >= 0 && (size_t)idx < ProList.free_count )
+    if ( idx >= 0 && ( size_t )idx < ProList.free_count )
     {
         // move the index idx to the top
         int idx_top, idx_bottom;
@@ -656,7 +656,7 @@ bool_t release_one_local_pips( const PRO_REF by_reference iobj )
     for ( cnt = 0; cnt < MAX_PIP_PER_PROFILE; cnt++ )
     {
         release_one_pip( pobj->prtpip[cnt] );
-        pobj->prtpip[cnt] = (PIP_REF) MAX_PIP;
+        pobj->prtpip[cnt] = ( PIP_REF ) MAX_PIP;
     }
 
     return btrue;
@@ -680,7 +680,7 @@ void release_all_local_pips()
         for ( cnt = 0; cnt < MAX_PIP_PER_PROFILE; cnt++ )
         {
             release_one_pip( pobj->prtpip[cnt] );
-            pobj->prtpip[cnt] = (PIP_REF) MAX_PIP;
+            pobj->prtpip[cnt] = ( PIP_REF ) MAX_PIP;
         }
     }
 }
@@ -1303,7 +1303,7 @@ bool_t obj_BSP_insert_prt( obj_BSP_t * pbsp, prt_bundle_t * pbdl_prt )
     if ( NULL == pbsp ) return bfalse;
     ptree = &( pbsp->tree );
 
-    if( NULL == pbdl_prt ) return bfalse;
+    if ( NULL == pbdl_prt ) return bfalse;
     loc_pprt = pbdl_prt->prt_ptr;
     loc_ppip = pbdl_prt->pip_ptr;
 
@@ -1321,7 +1321,7 @@ bool_t obj_BSP_insert_prt( obj_BSP_t * pbsp, prt_bundle_t * pbdl_prt )
 
     does_status_effect = ( 0 != loc_ppip->grogtime ) || ( 0 != loc_ppip->dazetime );
     needs_bump     = loc_ppip->end_bump || loc_ppip->end_ground || ( loc_ppip->bumpspawn_amount > 0 ) || ( 0 != loc_ppip->bump_money );
-    has_bump_size  = (0 != loc_ppip->bump_size) && (0 != loc_ppip->bump_height);
+    has_bump_size  = ( 0 != loc_ppip->bump_size ) && ( 0 != loc_ppip->bump_height );
 
     does_special_effect = loc_ppip->causepancake;
 

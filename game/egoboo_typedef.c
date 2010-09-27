@@ -94,7 +94,7 @@ void latch_input_init( latch_input_t * platch )
 {
     if ( NULL == platch ) return;
 
-    memset( platch, 0, sizeof(*platch) );
+    memset( platch, 0, sizeof( *platch ) );
 }
 
 //--------------------------------------------------------------------------------------------

@@ -4532,7 +4532,7 @@ bool_t move_one_character_integrate_motion_attached( chr_bundle_t * pbdl )
     // make a timer that is individual for each object
     chr_update = loc_pchr->obj_base.guid + update_wld;
 
-    if (  0 == ( chr_update & 7 ) )
+    if ( 0 == ( chr_update & 7 ) )
     {
         chr_update_safe( loc_pchr, btrue );
     }
@@ -4556,7 +4556,7 @@ bool_t move_one_character_integrate_motion( chr_bundle_t * pbdl )
 
     if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return bfalse;
 
-    if( ACTIVE_CHR(loc_pchr->attachedto) )
+    if ( ACTIVE_CHR( loc_pchr->attachedto ) )
     {
         return move_one_character_integrate_motion_attached( loc_pchr );
     }
@@ -4641,14 +4641,14 @@ bool_t move_one_character_integrate_motion( chr_bundle_t * pbdl )
                 breadcrumb_t * bc         = NULL;
 
                 // try to get the correct "outward" pressure from nrm
-                if( !found_nrm && fvec2_length_abs(nrm.v) > 0.0f )
+                if ( !found_nrm && fvec2_length_abs( nrm.v ) > 0.0f )
                 {
                     found_nrm = btrue;
                 }
 
-                if( !found_diff && loc_pchr->safe_valid )
+                if ( !found_diff && loc_pchr->safe_valid )
                 {
-                    if( !found_safe )
+                    if ( !found_safe )
                     {
                         found_safe = btrue;
                         safe_pos   = loc_pchr->safe_pos;
@@ -4657,20 +4657,20 @@ bool_t move_one_character_integrate_motion( chr_bundle_t * pbdl )
                     diff.x = loc_pchr->safe_pos.x - loc_pchr->pos.x;
                     diff.y = loc_pchr->safe_pos.y - loc_pchr->pos.y;
 
-                    if( fvec2_length_abs(diff.v) > 0.0f )
+                    if ( fvec2_length_abs( diff.v ) > 0.0f )
                     {
                         found_diff = btrue;
                     }
                 }
 
                 // try to get a diff from a breadcrumb
-                if( !found_diff )
+                if ( !found_diff )
                 {
                     bc = chr_get_last_breadcrumb( loc_pchr );
 
-                    if( NULL != bc && bc->valid )
+                    if ( NULL != bc && bc->valid )
                     {
-                        if( !found_safe )
+                        if ( !found_safe )
                         {
                             found_safe = btrue;
                             safe_pos   = loc_pchr->safe_pos;
@@ -4679,7 +4679,7 @@ bool_t move_one_character_integrate_motion( chr_bundle_t * pbdl )
                         diff.x = bc->pos.x - loc_pchr->pos.x;
                         diff.y = bc->pos.y - loc_pchr->pos.y;
 
-                        if( fvec2_length_abs(diff.v) > 0.0f )
+                        if ( fvec2_length_abs( diff.v ) > 0.0f )
                         {
                             found_diff = btrue;
                         }
@@ -4687,7 +4687,7 @@ bool_t move_one_character_integrate_motion( chr_bundle_t * pbdl )
                 }
 
                 // try to get a normal from the mesh_get_diff() function
-                if( !found_nrm )
+                if ( !found_nrm )
                 {
                     fvec2_t diff;
 
@@ -4697,50 +4697,50 @@ bool_t move_one_character_integrate_motion( chr_bundle_t * pbdl )
                     nrm.x = diff.x;
                     nrm.y = diff.y;
 
-                    if( fvec2_length_abs(nrm.v) > 0.0f )
+                    if ( fvec2_length_abs( nrm.v ) > 0.0f )
                     {
                         found_nrm = btrue;
                     }
                 }
 
-                if( !found_diff )
+                if ( !found_diff )
                 {
                     // try to get the diff from the character velocity
                     diff.x = loc_pchr->vel.x;
                     diff.y = loc_pchr->vel.y;
 
                     // make sure that the diff is in the same direction as the velocity
-                    if( fvec2_dot_product(diff.v, nrm.v) < 0.0f  )
+                    if ( fvec2_dot_product( diff.v, nrm.v ) < 0.0f )
                     {
                         diff.x *= -1.0f;
                         diff.y *= -1.0f;
                     }
 
-                    if( fvec2_length_abs(diff.v) > 0.0f )
+                    if ( fvec2_length_abs( diff.v ) > 0.0f )
                     {
                         found_diff = btrue;
                     }
                 }
 
-                if( !found_nrm )
+                if ( !found_nrm )
                 {
                     // After all of our best efforts, we can't generate a normal to the wall.
                     // This can happen if the object is completely inside a wall,
                     // (like if it got pushed in there) or if a passage closed around it.
                     // Just teleport the character to a "safe" position.
 
-                    if( !found_safe && NULL == bc )
+                    if ( !found_safe && NULL == bc )
                     {
                         bc = chr_get_last_breadcrumb( loc_pchr );
 
-                        if( NULL != bc && bc->valid )
+                        if ( NULL != bc && bc->valid )
                         {
                             found_safe = btrue;
                             safe_pos   = loc_pchr->safe_pos;
                         }
                     }
 
-                    if( !found_safe )
+                    if ( !found_safe )
                     {
                         // the only safe position is the spawn point???
                         found_safe = btrue;
@@ -4749,7 +4749,7 @@ bool_t move_one_character_integrate_motion( chr_bundle_t * pbdl )
 
                     tmp_pos = safe_pos;
                 }
-                else if( found_diff && found_nrm )
+                else if ( found_diff && found_nrm )
                 {
                     const float tile_fraction = 0.1f;
                     float ftmp, dot, pressure_old, pressure_new;
@@ -4765,7 +4765,7 @@ bool_t move_one_character_integrate_motion( chr_bundle_t * pbdl )
 
                     // make the diff point "out"
                     dot = fvec2_dot_product( diff.v, nrm.v );
-                    if( dot < 0.0f )
+                    if ( dot < 0.0f )
                     {
                         diff.x *= -1.0f;
                         diff.y *= -1.0f;
@@ -4777,8 +4777,8 @@ bool_t move_one_character_integrate_motion( chr_bundle_t * pbdl )
                     diff_perp.y = nrm.y * dot / nrm2;
 
                     // normalize the diff_perp so that it is at most tile_fraction of a grid in any direction
-                    ftmp = MAX(ABS(diff_perp.x),ABS(diff_perp.y));
-                    if( ftmp > 0.0f )
+                    ftmp = MAX( ABS( diff_perp.x ), ABS( diff_perp.y ) );
+                    if ( ftmp > 0.0f )
                     {
                         diff_perp.x *= tile_fraction * GRID_SIZE / ftmp;
                         diff_perp.y *= tile_fraction * GRID_SIZE / ftmp;
@@ -4792,7 +4792,7 @@ bool_t move_one_character_integrate_motion( chr_bundle_t * pbdl )
                     pressure_old = chr_get_mesh_pressure( loc_pchr, save_pos.v );
                     pressure_new = chr_get_mesh_pressure( loc_pchr, tmp_pos.v );
 
-                    if( pressure_new < pressure_old )
+                    if ( pressure_new < pressure_old )
                     {
                         // !!success!!
                         needs_test = ( tmp_pos.x != save_pos.x ) || ( tmp_pos.y != save_pos.y );
@@ -4804,21 +4804,21 @@ bool_t move_one_character_integrate_motion( chr_bundle_t * pbdl )
                     }
 
                     dot = fvec2_dot_product( loc_pchr->vel.v, nrm.v );
-                    if( dot < 0.0f )
+                    if ( dot < 0.0f )
                     {
                         float bumpdampen;
-                        cap_t * pcap = chr_get_pcap( GET_REF_PCHR(loc_pchr) );
+                        cap_t * pcap = chr_get_pcap( GET_REF_PCHR( loc_pchr ) );
 
                         bumpdampen = 0.0f;
-                        if( NULL == pcap )
+                        if ( NULL == pcap )
                         {
                             bumpdampen = pcap->bumpdampen;
                         }
                         v_perp.x = nrm.x * dot / nrm2;
                         v_perp.y = nrm.y * dot / nrm2;
 
-                        phys_data_accumulate_avel_index( loc_pphys,  - (1.0f + bumpdampen) * v_perp.x * pressure, kX );
-                        phys_data_accumulate_avel_index( loc_pphys,  - (1.0f + bumpdampen) * v_perp.y * pressure, kY );
+                        phys_data_accumulate_avel_index( loc_pphys,  - ( 1.0f + bumpdampen ) * v_perp.x * pressure, kX );
+                        phys_data_accumulate_avel_index( loc_pphys,  - ( 1.0f + bumpdampen ) * v_perp.y * pressure, kY );
                     }
                 }
             }

@@ -67,7 +67,7 @@
 //--------------------------------------------------------------------------------------------
 // make the actual definition of these structs opaque
 
-typedef struct s_ConfigFileValue
+struct s_ConfigFileValue
 {
     char KeyName[MAX_CONFIG_KEY_LENGTH];
     char *Value;

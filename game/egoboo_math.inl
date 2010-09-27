@@ -110,7 +110,7 @@ INLINE float *   mat_getTranslate_v( const fmat_4x4_t mat );
 //--------------------------------------------------------------------------------------------
 INLINE FACING_T vec_to_facing( float dx, float dy )
 {
-    return (FACING_T)(( ATAN2( dy, dx ) + PI ) * RAD_TO_TURN);
+    return ( FACING_T )(( ATAN2( dy, dx ) + PI ) * RAD_TO_TURN );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -281,7 +281,7 @@ INLINE float fvec2_length_abs( const fvec2_base_t A )
 {
     if ( NULL == A ) return 0.0f;
 
-    return ABS(A[kX]) + ABS(A[kY]);
+    return ABS( A[kX] ) + ABS( A[kY] );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -291,9 +291,9 @@ INLINE float fvec2_length( const fvec2_base_t A )
 
     if ( NULL == A ) return 0.0f;
 
-    A2 = A[kX]*A[kX] + A[kY]*A[kY];
+    A2 = A[kX] * A[kX] + A[kY] * A[kY];
 
-    return SQRT(A2);
+    return SQRT( A2 );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -310,7 +310,7 @@ INLINE fvec2_t fvec2_sub( const fvec2_base_t A, const fvec2_base_t B )
 //--------------------------------------------------------------------------------------------
 INLINE float fvec2_dist_abs( const fvec2_base_t A, const fvec2_base_t B )
 {
-    return ABS(A[kX] - B[kX]) + ABS(A[kY] - B[kY]);
+    return ABS( A[kX] - B[kX] ) + ABS( A[kY] - B[kY] );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -318,7 +318,7 @@ INLINE fvec2_t fvec2_scale( const fvec2_base_t A, const float B )
 {
     fvec2_t tmp = ZERO_VECT2;
 
-    if( NULL == A || 0.0f == B ) return tmp;
+    if ( NULL == A || 0.0f == B ) return tmp;
 
     tmp.v[kX] = A[kX] * B;
     tmp.v[kY] = A[kY] * B;
@@ -385,7 +385,7 @@ INLINE bool_t fvec3_self_scale( fvec3_base_t A, const float B )
 //--------------------------------------------------------------------------------------------
 INLINE bool_t fvec3_self_sum( fvec3_base_t A, const fvec3_base_t B )
 {
-    if( NULL == A || NULL == B ) return bfalse;
+    if ( NULL == A || NULL == B ) return bfalse;
 
     A[kX] += B[kX];
     A[kY] += B[kY];
@@ -399,7 +399,7 @@ INLINE float fvec3_length_abs( const fvec3_base_t A )
 {
     if ( NULL == A ) return 0.0f;
 
-    return ABS(A[kX]) + ABS(A[kY]) + ABS(A[kZ]);
+    return ABS( A[kX] ) + ABS( A[kY] ) + ABS( A[kZ] );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -409,7 +409,7 @@ INLINE float fvec3_length_2( const fvec3_base_t A )
 
     if ( NULL == A ) return 0.0f;
 
-    A2 = A[kX]*A[kX] + A[kY]*A[kY] + A[kZ]*A[kZ];
+    A2 = A[kX] * A[kX] + A[kY] * A[kY] + A[kZ] * A[kZ];
 
     return A2;
 }
@@ -421,9 +421,9 @@ INLINE float fvec3_length( const fvec3_base_t A )
 
     if ( NULL == A ) return 0.0f;
 
-    A2 = A[kX]*A[kX] + A[kY]*A[kY] + A[kZ]*A[kZ];
+    A2 = A[kX] * A[kX] + A[kY] * A[kY] + A[kZ] * A[kZ];
 
-    return SQRT(A2);
+    return SQRT( A2 );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -455,7 +455,7 @@ INLINE fvec3_t fvec3_scale( const fvec3_base_t A, const float B )
 {
     fvec3_t tmp = ZERO_VECT3;
 
-    if( NULL == A || 0.0f == B ) return tmp;
+    if ( NULL == A || 0.0f == B ) return tmp;
 
     tmp.v[kX] = A[kX] * B;
     tmp.v[kY] = A[kY] * B;
@@ -470,7 +470,7 @@ INLINE fvec3_t fvec3_normalize( const fvec3_base_t vec )
     float len2, inv_len;
     fvec3_t tmp = ZERO_VECT3;
 
-    if( NULL == vec ) return tmp;
+    if ( NULL == vec ) return tmp;
 
     if ( 0.0f == fvec3_length_abs( vec ) ) return tmp;
 
@@ -488,7 +488,7 @@ INLINE fvec3_t fvec3_normalize( const fvec3_base_t vec )
 //--------------------------------------------------------------------------------------------
 INLINE bool_t  fvec3_self_normalize( fvec3_base_t A )
 {
-    if( NULL == A ) return bfalse;
+    if ( NULL == A ) return bfalse;
 
     if ( 0.0f != fvec3_length_abs( A ) )
     {
@@ -505,11 +505,11 @@ INLINE bool_t  fvec3_self_normalize( fvec3_base_t A )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t fvec3_self_normalize_to( fvec3_base_t vec, float B  )
+INLINE bool_t fvec3_self_normalize_to( fvec3_base_t vec, float B )
 {
-    if( NULL == vec ) return bfalse;
+    if ( NULL == vec ) return bfalse;
 
-    if( 0.0f == B )
+    if ( 0.0f == B )
     {
         fvec3_self_clear( vec );
         return btrue;
@@ -549,20 +549,20 @@ INLINE float fvec3_decompose( const fvec3_base_t A, const fvec3_base_t NRM, fvec
     float dot;
 
     // error trapping
-    if( NULL == A || NULL == NRM ) return 0.0f;
+    if ( NULL == A || NULL == NRM ) return 0.0f;
 
     // if this is true, there is no reason to run this function
     dot = fvec3_dot_product( A, NRM );
 
-    if( 0.0f == dot )
+    if ( 0.0f == dot )
     {
         // handle optional parameters
-        if( NULL == PARA && NULL == PERP )
+        if ( NULL == PARA && NULL == PERP )
         {
             // no point in doing anything
             return 0.0f;
         }
-        else if( NULL == PARA )
+        else if ( NULL == PARA )
         {
             PERP[kX] = A[kX];
             PERP[kY] = A[kY];
@@ -588,12 +588,12 @@ INLINE float fvec3_decompose( const fvec3_base_t A, const fvec3_base_t NRM, fvec
     else
     {
         // handle optional parameters
-        if( NULL == PARA && NULL == PERP )
+        if ( NULL == PARA && NULL == PERP )
         {
             // no point in doing anything
             return 0.0f;
         }
-        else if( NULL == PARA )
+        else if ( NULL == PARA )
         {
             PERP[kX] = A[kX] - dot * NRM[kX];
             PERP[kY] = A[kY] - dot * NRM[kY];
@@ -623,7 +623,7 @@ INLINE float fvec3_decompose( const fvec3_base_t A, const fvec3_base_t NRM, fvec
 //--------------------------------------------------------------------------------------------
 INLINE float fvec3_dist_abs( const fvec3_base_t A, const fvec3_base_t B )
 {
-    return ABS(A[kX] - B[kX]) + ABS(A[kY] - B[kY]) + ABS(A[kZ] - B[kZ]);
+    return ABS( A[kX] - B[kX] ) + ABS( A[kY] - B[kY] ) + ABS( A[kZ] - B[kZ] );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -891,12 +891,12 @@ INLINE fmat_4x4_t ScaleXYZRotateXYZTranslate_SpaceFixed( const float scale_x, co
 
     ret.CNV( 1, 0 ) = scale_y * ( -sz * cy );
     ret.CNV( 1, 1 ) = scale_y * ( -sz * sy * sx + cz * cx );
-    ret.CNV( 1, 2 ) = scale_y * (  sz * sy * cx + cz * sx );
+    ret.CNV( 1, 2 ) = scale_y * ( sz * sy * cx + cz * sx );
     ret.CNV( 1, 3 ) = 0.0f;
 
     ret.CNV( 2, 0 ) = scale_z * ( sy );
     ret.CNV( 2, 1 ) = scale_z * ( -cy * sx );
-    ret.CNV( 2, 2 ) = scale_z * (  cy * cx );
+    ret.CNV( 2, 2 ) = scale_z * ( cy * cx );
     ret.CNV( 2, 3 ) = 0.0f;
 
     ret.CNV( 3, 0 ) = translate_x;
@@ -938,10 +938,10 @@ INLINE fmat_4x4_t ScaleXYZRotateXYZTranslate_BodyFixed( const float scale_x, con
 
     ret.CNV( 0, 0 ) = scale_x * ( cz * cy - sz * sy * sx );
     ret.CNV( 0, 1 ) = scale_x * ( sz * cy + cz * sy * sx );
-    ret.CNV( 0, 2 ) = scale_x * (-cx * sy );
+    ret.CNV( 0, 2 ) = scale_x * ( -cx * sy );
     ret.CNV( 0, 3 ) = 0.0f;
 
-    ret.CNV( 1, 0 ) = scale_y * (-sz * cx );
+    ret.CNV( 1, 0 ) = scale_y * ( -sz * cx );
     ret.CNV( 1, 1 ) = scale_y * ( cz * cx );
     ret.CNV( 1, 2 ) = scale_y * ( sx );
     ret.CNV( 1, 3 ) = 0.0f;

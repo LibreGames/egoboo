@@ -433,7 +433,7 @@ bool_t render_one_mad( const CHR_REF by_reference character, GLXvector4f tint, B
 
     if ( pchr->is_hidden ) return bfalse;
 
-    if ( pchr->inst.enviro || HAS_SOME_BITS(bits, CHR_PHONG) )
+    if ( pchr->inst.enviro || HAS_SOME_BITS( bits, CHR_PHONG ) )
     {
         retval = render_one_mad_enviro( character, tint, bits );
     }
@@ -548,7 +548,7 @@ void render_chr_bbox( chr_t * pchr )
     //}
 
     // draw the object bounding box as a part of the graphics debug mode F7
-    if ( cfg.dev_mode && (SDLKEYDOWN( SDLK_F7 ) || render_player_platforms) )
+    if ( cfg.dev_mode && ( SDLKEYDOWN( SDLK_F7 ) || render_player_platforms ) )
     {
         GL_DEBUG( glDisable )( GL_TEXTURE_2D );
         {
@@ -629,15 +629,15 @@ void draw_points( chr_t * pchr, int vrt_offset, int verts )
     vmax = vmin + verts;
 
     if ( vmin < 0 || vmax < 0 ) return;
-    if ( (size_t)vmin > pchr->inst.vrt_count || (size_t)vmax > pchr->inst.vrt_count ) return;
+    if (( size_t )vmin > pchr->inst.vrt_count || ( size_t )vmax > pchr->inst.vrt_count ) return;
 
     texture_1d_enabled = GL_DEBUG( glIsEnabled )( GL_TEXTURE_1D );
     texture_2d_enabled = GL_DEBUG( glIsEnabled )( GL_TEXTURE_2D );
 
     // disable the texturing so all the points will be white,
     // not the texture color of the last vertex we drawn
-    if ( texture_1d_enabled ) GL_DEBUG( glDisable ) ( GL_TEXTURE_1D );
-    if ( texture_2d_enabled ) GL_DEBUG( glDisable ) ( GL_TEXTURE_2D );
+    if ( texture_1d_enabled ) GL_DEBUG( glDisable )( GL_TEXTURE_1D );
+    if ( texture_2d_enabled ) GL_DEBUG( glDisable )( GL_TEXTURE_2D );
 
     GL_DEBUG( glMatrixMode )( GL_MODELVIEW );
     GL_DEBUG( glPushMatrix )();
@@ -647,7 +647,7 @@ void draw_points( chr_t * pchr, int vrt_offset, int verts )
     {
         for ( cnt = vmin; cnt < vmax; cnt++ )
         {
-            GL_DEBUG( glVertex3fv ) ( pchr->inst.vrt_lst[cnt].pos );
+            GL_DEBUG( glVertex3fv )( pchr->inst.vrt_lst[cnt].pos );
         }
     }
     GL_DEBUG_END();
@@ -655,8 +655,8 @@ void draw_points( chr_t * pchr, int vrt_offset, int verts )
     GL_DEBUG( glMatrixMode )( GL_MODELVIEW );
     GL_DEBUG( glPopMatrix )();
 
-    if ( texture_1d_enabled ) GL_DEBUG( glEnable ) ( GL_TEXTURE_1D );
-    if ( texture_2d_enabled ) GL_DEBUG( glEnable ) ( GL_TEXTURE_2D );
+    if ( texture_1d_enabled ) GL_DEBUG( glEnable )( GL_TEXTURE_1D );
+    if ( texture_2d_enabled ) GL_DEBUG( glEnable )( GL_TEXTURE_2D );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -669,8 +669,8 @@ void draw_one_grip( chr_instance_t * pinst, mad_t * pmad, int slot )
 
     // disable the texturing so all the points will be white,
     // not the texture color of the last vertex we drawn
-    if ( texture_1d_enabled ) GL_DEBUG( glDisable ) ( GL_TEXTURE_1D );
-    if ( texture_2d_enabled ) GL_DEBUG( glDisable ) ( GL_TEXTURE_2D );
+    if ( texture_1d_enabled ) GL_DEBUG( glDisable )( GL_TEXTURE_1D );
+    if ( texture_2d_enabled ) GL_DEBUG( glDisable )( GL_TEXTURE_2D );
 
     GL_DEBUG( glMatrixMode )( GL_MODELVIEW );
     GL_DEBUG( glPushMatrix )();
@@ -681,8 +681,8 @@ void draw_one_grip( chr_instance_t * pinst, mad_t * pmad, int slot )
     GL_DEBUG( glMatrixMode )( GL_MODELVIEW );
     GL_DEBUG( glPopMatrix )();
 
-    if ( texture_1d_enabled ) GL_DEBUG( glEnable ) ( GL_TEXTURE_1D );
-    if ( texture_2d_enabled ) GL_DEBUG( glEnable ) ( GL_TEXTURE_2D );
+    if ( texture_1d_enabled ) GL_DEBUG( glEnable )( GL_TEXTURE_1D );
+    if ( texture_2d_enabled ) GL_DEBUG( glEnable )( GL_TEXTURE_2D );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -704,7 +704,7 @@ void _draw_one_grip_raw( chr_instance_t * pinst, mad_t * pmad, int slot )
     vmin = ( int )pinst->vrt_count - ( int )slot_to_grip_offset(( slot_t )slot );
     vmax = vmin + GRIP_VERTS;
 
-    if ( vmin >= 0 && vmax >= 0 && (size_t)vmax <= pinst->vrt_count )
+    if ( vmin >= 0 && vmax >= 0 && ( size_t )vmax <= pinst->vrt_count )
     {
         fvec3_t   src, dst, diff;
 
@@ -724,16 +724,16 @@ void _draw_one_grip_raw( chr_instance_t * pinst, mad_t * pmad, int slot )
                 dst.y = src.y + 3 * diff.y;
                 dst.z = src.z + 3 * diff.z;
 
-                GL_DEBUG( glColor4fv ) ( col_ary[cnt-1] );
+                GL_DEBUG( glColor4fv )( col_ary[cnt-1] );
 
-                GL_DEBUG( glVertex3fv ) ( src.v );
-                GL_DEBUG( glVertex3fv ) ( dst.v );
+                GL_DEBUG( glVertex3fv )( src.v );
+                GL_DEBUG( glVertex3fv )( dst.v );
             }
         }
         GL_DEBUG_END();
     }
 
-    GL_DEBUG( glColor4f ) ( 1, 1, 1, 1 );
+    GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -779,8 +779,8 @@ void chr_draw_grips( chr_t * pchr )
 
     // disable the texturing so all the points will be white,
     // not the texture color of the last vertex we drawn
-    if ( texture_1d_enabled ) GL_DEBUG( glDisable ) ( GL_TEXTURE_1D );
-    if ( texture_2d_enabled ) GL_DEBUG( glDisable ) ( GL_TEXTURE_2D );
+    if ( texture_1d_enabled ) GL_DEBUG( glDisable )( GL_TEXTURE_1D );
+    if ( texture_2d_enabled ) GL_DEBUG( glDisable )( GL_TEXTURE_2D );
 
     GL_DEBUG( glMatrixMode )( GL_MODELVIEW );
     GL_DEBUG( glPushMatrix )();
@@ -801,8 +801,8 @@ void chr_draw_grips( chr_t * pchr )
     GL_DEBUG( glMatrixMode )( GL_MODELVIEW );
     GL_DEBUG( glPopMatrix )();
 
-    if ( texture_1d_enabled ) GL_DEBUG( glEnable ) ( GL_TEXTURE_1D );
-    if ( texture_2d_enabled ) GL_DEBUG( glEnable ) ( GL_TEXTURE_2D );
+    if ( texture_1d_enabled ) GL_DEBUG( glEnable )( GL_TEXTURE_1D );
+    if ( texture_2d_enabled ) GL_DEBUG( glEnable )( GL_TEXTURE_2D );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1014,7 +1014,7 @@ egoboo_rv chr_instance_needs_update( chr_instance_t * pinst, int vmin, int vmax,
 
     flips_match = ( ABS( psave->flip - pinst->flip ) < flip_tolerance );
 
-    *frames_match = ( ( flips_match || pinst->frame_nxt == pinst->frame_lst ) && psave->frame_nxt == pinst->frame_nxt && psave->frame_lst == pinst->frame_lst );
+    *frames_match = (( flips_match || pinst->frame_nxt == pinst->frame_lst ) && psave->frame_nxt == pinst->frame_nxt && psave->frame_lst == pinst->frame_lst );
 
     return ( !( *verts_match ) || !( *frames_match ) ) ? rv_success : rv_fail;
 }
@@ -1050,12 +1050,12 @@ egoboo_rv chr_instance_update_vertices( chr_instance_t * pinst, int vmin, int vm
 
     // make sure we have valid data
     md2_vertices = md2_get_numVertices( pmd2 );
-    if( md2_vertices < 0 )
+    if ( md2_vertices < 0 )
     {
         log_error( "chr_instance_update_vertices() - md2 model has negative number of vertices.... is it corrupted?\n" );
     }
 
-    if ( pinst->vrt_count != (size_t)md2_vertices )
+    if ( pinst->vrt_count != ( size_t )md2_vertices )
     {
         log_error( "chr_instance_update_vertices() - character instance vertex data does not match its md2\n" );
     }

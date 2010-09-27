@@ -39,7 +39,7 @@ typedef enum e_feedback
     FEEDBACK_TEXT,              //Descriptive text
     FEEDBACK_NUMBER             //Show the damage as a number
 }
- FEEDBACK_TYPE;
+FEEDBACK_TYPE;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

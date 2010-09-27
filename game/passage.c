@@ -50,7 +50,7 @@ void PassageStack_free_all()
 //--------------------------------------------------------------------------------------------
 int PasageStack_get_free()
 {
-    int ipass = (PASS_REF) MAX_PASS;
+    int ipass = ( PASS_REF ) MAX_PASS;
 
     if ( PassageStack.count < MAX_PASS )
     {
@@ -78,7 +78,7 @@ void ShopStack_free_all()
 //--------------------------------------------------------------------------------------------
 int ShopStack_get_free()
 {
-    int ishop = (PASS_REF) MAX_PASS;
+    int ishop = ( PASS_REF ) MAX_PASS;
 
     if ( ShopStack.count < MAX_PASS )
     {
@@ -241,7 +241,7 @@ CHR_REF who_is_blocking_passage( const PASS_REF by_reference passage, const CHR_
             // It needs to have a specific item as well
             else
             {
-                  CHR_REF item;
+                CHR_REF item;
 
                 // I: Check left hand
                 if ( chr_is_type_idsz( pchr->holdingwhich[SLOT_LEFT], require_item ) )
@@ -338,15 +338,15 @@ bool_t close_passage( const PASS_REF by_reference passage )
         CHR_REF crushedcharacters[MAX_CHR];
 
         // Make sure it isn't blocked
-        for( character = 0; character < MAX_CHR; character++ )
+        for ( character = 0; character < MAX_CHR; character++ )
         {
             chr_t *pchr;
 
-            if( !INGAME_CHR(character) ) continue;
+            if ( !INGAME_CHR( character ) ) continue;
             pchr = ChrList.lst + character;
 
             //Don't do held items
-            if( IS_ATTACHED_PCHR( pchr ) ) continue;
+            if ( IS_ATTACHED_PCHR( pchr ) ) continue;
 
             if ( 0.0f != pchr->bump_stt.size )
             {

@@ -358,6 +358,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="EncList.h" />
+		<Unit filename="IDSZ_map.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="IDSZ_map.h" />
 		<Unit filename="PrtList.c">
 			<Option compilerVar="CC" />
 		</Unit>

@@ -618,7 +618,7 @@ int sound_play_chunk_full( Mix_Chunk * pchunk )
     channel = Mix_PlayChannel( -1, pchunk, 0 );
 
     // we are still limited by the global sound volume
-    Mix_Volume( channel, (128*snd.soundvolume) / 100 );
+    Mix_Volume( channel, ( 128*snd.soundvolume ) / 100 );
 
     return channel;
 }

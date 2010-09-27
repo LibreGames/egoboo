@@ -202,7 +202,7 @@ bool_t setup_write()
     if ( INVALID_CSTR( _config_filename ) ) return bfalse;
 
     success = ConfigFile_succeed == SaveConfigFileAs( lConfigSetup, _config_filename );
-    if( !success ) log_warning("Failed to save setup.txt!\n");
+    if ( !success ) log_warning( "Failed to save setup.txt!\n" );
 
     return success;
 }

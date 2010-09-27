@@ -28,7 +28,7 @@ typedef struct ClientState_t
 {
     int dummy;
 }
- ClientState_t;
+ClientState_t;
 
 // Globally accesible client state
 extern ClientState_t ClientState;

@@ -223,10 +223,10 @@ void export_one_character( const CHR_REF by_reference character, const CHR_REF b
     STRING todirname;
     STRING todirfullname;
 
-     //ZF> Debug info to get this to work on Linux
-    log_info("export_one_character() - Okay, I intend to export a character now.\n");
+    //ZF> Debug info to get this to work on Linux
+    log_info( "export_one_character() - Okay, I intend to export a character now.\n" );
 
-    if( !PMod->exportvalid ) return;
+    if ( !PMod->exportvalid ) return;
 
     // Don't export enchants
     disenchant_character( character );
@@ -279,7 +279,7 @@ void export_one_character( const CHR_REF by_reference character, const CHR_REF b
     }
 
     //ZF> Debug info to get this to work on Linux
-    log_info("export_one_character() - Exporting one object from (%s) to (%s).\n", vfs_resolveReadFilename(fromdir), vfs_resolveWriteFilename(todir) );
+    log_info( "export_one_character() - Exporting one object from (%s) to (%s).\n", vfs_resolveReadFilename( fromdir ), vfs_resolveWriteFilename( todir ) );
 
     // Make the directory
     vfs_mkdir( todir );
@@ -380,7 +380,7 @@ void export_all_players( bool_t require_local )
     // Stop if export isn't valid
     if ( !PMod->exportvalid ) return;
 
-    log_info("export_all_players() - Exporting all player characters.\n");
+    log_info( "export_all_players() - Exporting all player characters.\n" );
 
     // Check each player
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
@@ -719,28 +719,28 @@ int update_game()
         {
             CHR_REF ichr;
             chr_t * pchr;
-        player_t * ppla;
+            player_t * ppla;
 
-        // ignore ivalid players
-        ppla = PlaStack.lst + ipla;
-        if ( !ppla->valid ) continue;
+            // ignore ivalid players
+            ppla = PlaStack.lst + ipla;
+            if ( !ppla->valid ) continue;
 
-        // fix bad players
-        if ( !INGAME_CHR( ppla->index ) )
-        {
-            pla_dtor( ppla );
-            continue;
-        }
+            // fix bad players
+            if ( !INGAME_CHR( ppla->index ) )
+            {
+                pla_dtor( ppla );
+                continue;
+            }
 
-        // alias some variables
-        ichr = ppla->index;
-        pchr = ChrList.lst + ichr;
+            // alias some variables
+            ichr = ppla->index;
+            pchr = ChrList.lst + ichr;
 
             // count the total number of players
             numplayer++;
 
-        // only interested in local players
-        if ( INPUT_BITS_NONE == ppla->device.bits ) continue;
+            // only interested in local players
+            if ( INPUT_BITS_NONE == ppla->device.bits ) continue;
 
             if ( pchr->alive )
             {
@@ -766,57 +766,57 @@ int update_game()
                     local_stats.grog_level += pchr->grogtime;
                 }
 
-                if( pchr->dazetime > 0 )
+                if ( pchr->dazetime > 0 )
                 {
                     local_stats.daze_level += pchr->dazetime;
                 }
 
-                local_stats.listen_level = MAX( local_stats.listen_level, chr_get_skill( pchr, MAKE_IDSZ('L', 'I', 'S', 'T') ) );
+                local_stats.listen_level = MAX( local_stats.listen_level, chr_get_skill( pchr, MAKE_IDSZ( 'L', 'I', 'S', 'T' ) ) );
             }
-        else
-        {
-            numdead++;
-        }
-    }
-
-    //Dampen groggyness if not all players are grogged (this assumes they all share the same camera view)
-    local_stats.grog_level /= numalive;
-    local_stats.daze_level /= numalive;
-
-    // Did everyone die?
-    if ( numdead >= local_numlpla )
-    {
-        local_stats.allpladead = btrue;
-    }
-
-    // check for autorespawn
-    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
-    {
-        CHR_REF ichr;
-        chr_t * pchr;
-
-        player_t * ppla = PlaStack.lst + ipla;
-        if ( !ppla->valid ) continue;
-
-        if ( !INGAME_CHR( ppla->index ) ) continue;
-
-        ichr = ppla->index;
-        pchr = ChrList.lst + ichr;
-
-        if ( !pchr->alive )
-        {
-            if ( cfg.difficulty < GAME_HARD && local_stats.allpladead && SDLKEYDOWN( SDLK_SPACE ) && PMod->respawnvalid && 0 == revivetimer )
+            else
             {
-                respawn_character( ichr );
-                pchr->experience *= EXPKEEP;        // Apply xp Penalty
+                numdead++;
+            }
+        }
 
-                if ( cfg.difficulty > GAME_EASY )
+        //Dampen groggyness if not all players are grogged (this assumes they all share the same camera view)
+        local_stats.grog_level /= numalive;
+        local_stats.daze_level /= numalive;
+
+        // Did everyone die?
+        if ( numdead >= local_numlpla )
+        {
+            local_stats.allpladead = btrue;
+        }
+
+        // check for autorespawn
+        for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+        {
+            CHR_REF ichr;
+            chr_t * pchr;
+
+            player_t * ppla = PlaStack.lst + ipla;
+            if ( !ppla->valid ) continue;
+
+            if ( !INGAME_CHR( ppla->index ) ) continue;
+
+            ichr = ppla->index;
+            pchr = ChrList.lst + ichr;
+
+            if ( !pchr->alive )
+            {
+                if ( cfg.difficulty < GAME_HARD && local_stats.allpladead && SDLKEYDOWN( SDLK_SPACE ) && PMod->respawnvalid && 0 == revivetimer )
                 {
-                    pchr->money *= EXPKEEP;        // Apply money loss
+                    respawn_character( ichr );
+                    pchr->experience *= EXPKEEP;        // Apply xp Penalty
+
+                    if ( cfg.difficulty > GAME_EASY )
+                    {
+                        pchr->money *= EXPKEEP;        // Apply money loss
+                    }
                 }
             }
         }
-    }
     }
 
     PROFILE_BEGIN( talk_to_remotes );
@@ -1179,7 +1179,7 @@ int do_game_proc_running( game_process_t * gproc )
     if ( gproc->base.paused ) return 0;
 
     gproc->ups_ticks_now = SDL_GetTicks();
-    if ( (!single_frame_mode && gproc->ups_ticks_now > gproc->ups_ticks_next) || (single_frame_mode && single_update_requested) )
+    if (( !single_frame_mode && gproc->ups_ticks_now > gproc->ups_ticks_next ) || ( single_frame_mode && single_update_requested ) )
     {
         // UPS limit
         gproc->ups_ticks_next = gproc->ups_ticks_now + UPDATE_SKIP / 4;
@@ -1275,7 +1275,7 @@ int do_game_proc_running( game_process_t * gproc )
 
     // Do the display stuff
     gproc->fps_ticks_now = SDL_GetTicks();
-    if ( (!single_frame_mode && gproc->fps_ticks_now > gproc->fps_ticks_next) || (single_frame_mode && single_frame_requested) )
+    if (( !single_frame_mode && gproc->fps_ticks_now > gproc->fps_ticks_next ) || ( single_frame_mode && single_frame_requested ) )
     {
         // FPS limit
         float  frameskip = ( float )TICKS_PER_SEC / ( float )cfg.framelimit;
@@ -1450,7 +1450,7 @@ CHR_REF prt_find_target( float pos_x, float pos_y, float pos_z, FACING_T facing,
         if ( !pchr->alive || pchr->isitem || pchr->pack.is_packed ) continue;
 
         // prefer targeting riders over the mount itself
-        if( pchr->ismount && (INGAME_CHR(pchr->holdingwhich[SLOT_LEFT]) || INGAME_CHR(pchr->holdingwhich[SLOT_RIGHT])) ) continue;
+        if ( pchr->ismount && ( INGAME_CHR( pchr->holdingwhich[SLOT_LEFT] ) || INGAME_CHR( pchr->holdingwhich[SLOT_RIGHT] ) ) ) continue;
 
         // ignore invictus
         if ( IS_INVICTUS_PCHR_RAW( pchr ) ) continue;
@@ -1509,36 +1509,36 @@ bool_t check_target( chr_t * psrc, const CHR_REF by_reference ichr_test, IDSZ id
     ptst = ChrList.lst + ichr_test;
 
     // Skip hidden characters
-    if( ptst->is_hidden ) return bfalse;
+    if ( ptst->is_hidden ) return bfalse;
 
     // Players only?
-    if ( ( HAS_SOME_BITS(targeting_bits, TARGET_PLAYERS) || HAS_SOME_BITS(targeting_bits, TARGET_QUEST) ) && !VALID_PLA(ptst->is_which_player) ) return bfalse;
+    if (( HAS_SOME_BITS( targeting_bits, TARGET_PLAYERS ) || HAS_SOME_BITS( targeting_bits, TARGET_QUEST ) ) && !VALID_PLA( ptst->is_which_player ) ) return bfalse;
 
     // Skip held objects
     if ( IS_ATTACHED_PCHR( ptst ) ) return bfalse;
 
     // Allow to target ourselves?
-    if ( psrc == ptst && HAS_NO_BITS(targeting_bits, TARGET_SELF ) ) return bfalse;
+    if ( psrc == ptst && HAS_NO_BITS( targeting_bits, TARGET_SELF ) ) return bfalse;
 
     // Don't target our holder if we are an item and being held
-    if( psrc->isitem && psrc->attachedto == GET_REF_PCHR(ptst) ) return bfalse;
+    if ( psrc->isitem && psrc->attachedto == GET_REF_PCHR( ptst ) ) return bfalse;
 
     // Allow to target dead stuff stuff?
-    if ( ptst->alive == HAS_SOME_BITS(targeting_bits, TARGET_DEAD) ) return bfalse;
+    if ( ptst->alive == HAS_SOME_BITS( targeting_bits, TARGET_DEAD ) ) return bfalse;
 
     // Don't target invisible stuff, unless we can actually see them
     if ( !chr_can_see_object( GET_REF_PCHR( psrc ), ichr_test ) ) return bfalse;
 
     //Need specific skill? ([NONE] always passes)
-    if( HAS_SOME_BITS( targeting_bits, TARGET_SKILL ) && 0 != chr_get_skill( ptst, idsz ) ) return bfalse;
+    if ( HAS_SOME_BITS( targeting_bits, TARGET_SKILL ) && 0 != chr_get_skill( ptst, idsz ) ) return bfalse;
 
     //Require player to have specific quest?
-    if( HAS_SOME_BITS( targeting_bits, TARGET_QUEST ) && VALID_PLA(ptst->is_which_player) )
+    if ( HAS_SOME_BITS( targeting_bits, TARGET_QUEST ) && VALID_PLA( ptst->is_which_player ) )
     {
         int quest_level = QUEST_NONE;
         player_t * ppla = PlaStack.lst + ptst->is_which_player;
 
-        quest_level = quest_get_level( ppla->quest_log, SDL_arraysize(ppla->quest_log), idsz );
+        quest_level = quest_get_level( ppla->quest_log, SDL_arraysize( ppla->quest_log ), idsz );
 
         // find only active quests?
         // this makes it backward-compatible with zefz's version
@@ -1549,16 +1549,16 @@ bool_t check_target( chr_t * psrc, const CHR_REF by_reference ichr_test, IDSZ id
     hates_me = team_hates_team( ptst->team, psrc->team );
 
     // Target neutral items? (still target evil items, could be pets)
-    if ( (ptst->isitem || IS_INVICTUS_PCHR_RAW(ptst) ) && !HAS_SOME_BITS(targeting_bits, TARGET_ITEMS) )
+    if (( ptst->isitem || IS_INVICTUS_PCHR_RAW( ptst ) ) && !HAS_SOME_BITS( targeting_bits, TARGET_ITEMS ) )
     {
         return bfalse;
     }
 
     // Only target those of proper team. Skip this part if it's a item
-    if( !ptst->isitem )
+    if ( !ptst->isitem )
     {
-        if ( ( HAS_NO_BITS(targeting_bits, TARGET_ENEMIES) && is_hated ) ) return bfalse;
-        if ( ( HAS_NO_BITS(targeting_bits, TARGET_FRIENDS) && !is_hated ) ) return bfalse;
+        if (( HAS_NO_BITS( targeting_bits, TARGET_ENEMIES ) && is_hated ) ) return bfalse;
+        if (( HAS_NO_BITS( targeting_bits, TARGET_FRIENDS ) && !is_hated ) ) return bfalse;
     }
 
     // these options are here for ideas of ways to mod this function
@@ -1579,11 +1579,11 @@ bool_t check_target( chr_t * psrc, const CHR_REF by_reference ichr_test, IDSZ id
 
         if ( match_idsz )
         {
-            if ( !HAS_SOME_BITS(targeting_bits, TARGET_INVERTID) ) retval = btrue;
+            if ( !HAS_SOME_BITS( targeting_bits, TARGET_INVERTID ) ) retval = btrue;
         }
         else
         {
-            if ( HAS_SOME_BITS(targeting_bits, TARGET_INVERTID) ) retval = btrue;
+            if ( HAS_SOME_BITS( targeting_bits, TARGET_INVERTID ) ) retval = btrue;
         }
     }
 
@@ -1618,7 +1618,7 @@ CHR_REF chr_find_target( chr_t * psrc, float max_dist, IDSZ idsz, BIT_FIELD targ
 
             if ( !ppla->valid ) continue;
 
-            if( !INGAME_CHR( ppla->index ) ) continue;
+            if ( !INGAME_CHR( ppla->index ) ) continue;
 
             search_list[search_list_size] = ppla->index;
             search_list_size++;
@@ -1702,7 +1702,7 @@ void do_damage_tiles()
         if ( pchr->is_hidden || !pchr->alive ) continue;
 
         // if you are being held by something, you are protected
-        if ( IS_ATTACHED_PCHR(pchr) ) continue;
+        if ( IS_ATTACHED_PCHR( pchr ) ) continue;
 
         // are we on a damage tile?
         if ( !mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) ) continue;
@@ -1861,7 +1861,7 @@ void do_weather_spawn_particles()
         }
     }
 
-    if( spawn_one )
+    if ( spawn_one )
     {
         int        cnt;
         PLA_REF    weather_ipla = MAX_PLAYER;
@@ -1869,7 +1869,7 @@ void do_weather_spawn_particles()
         chr_t    * weather_pchr = NULL;
         PRT_REF    weather_iprt = TOTAL_MAX_PRT;
 
-        if( !VALID_PLA(weather.iplayer) )
+        if ( !VALID_PLA( weather.iplayer ) )
         {
             weather.iplayer = MAX_PLAYER;
         }
@@ -1886,13 +1886,13 @@ void do_weather_spawn_particles()
             weather_ipla = ( PLA_REF )(( REF_TO_INT( weather_ipla ) + 1 ) % MAX_PLAYER );
 
             tmp_ppla = PlaStack.lst + weather_ipla;
-            if( !tmp_ppla->valid ) continue;
+            if ( !tmp_ppla->valid ) continue;
 
-            if( !INGAME_CHR( tmp_ppla->index ) ) continue;
+            if ( !INGAME_CHR( tmp_ppla->index ) ) continue;
             tmp_pchr = ChrList.lst + tmp_ppla->index;
 
             // no weather if in a pack
-            if( tmp_pchr->pack.is_packed ) continue;
+            if ( tmp_pchr->pack.is_packed ) continue;
 
             weather_ppla = tmp_ppla;
             weather_pchr = tmp_pchr;
@@ -1906,7 +1906,7 @@ void do_weather_spawn_particles()
 
         // if the character valid, spawn a weather particle over its head
         weather_iprt = TOTAL_MAX_PRT;
-        if( NULL != weather_pchr )
+        if ( NULL != weather_pchr )
         {
             weather_iprt = spawn_one_particle_global( weather_pchr->pos, ATK_FRONT, weather.particle, 0 );
         }
@@ -1946,7 +1946,7 @@ void do_weather_spawn_particles()
         }
     }
 
-    PCamera->swing = (PCamera->swing + PCamera->swingrate ) & 0x3FFF;
+    PCamera->swing = ( PCamera->swing + PCamera->swingrate ) & 0x3FFF;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2237,10 +2237,10 @@ void check_stats()
         else if ( SDLKEYDOWN( SDLK_4 ) )  docheat = 3;
 
         //Apply the cheat if valid
-        if ( VALID_PLA(docheat) )
+        if ( VALID_PLA( docheat ) )
         {
             player_t * ppla = PlaStack.lst + docheat;
-            if( INGAME_CHR( ppla->index ) )
+            if ( INGAME_CHR( ppla->index ) )
             {
                 Uint32  xpgain;
                 chr_t * pchr = ChrList.lst + ppla->index;
@@ -2265,11 +2265,11 @@ void check_stats()
         else if ( SDLKEYDOWN( SDLK_4 ) )  docheat = 3;
 
         //Apply the cheat if valid
-        if ( VALID_PLA(docheat) )
+        if ( VALID_PLA( docheat ) )
         {
             player_t * ppla = PlaStack.lst + docheat;
 
-            if( INGAME_CHR( ppla->index ) )
+            if ( INGAME_CHR( ppla->index ) )
             {
                 //Heal 1 life
                 heal_character( ppla->index, ppla->index, 256, btrue );
@@ -2428,16 +2428,16 @@ void show_armor( int statindex )
 
     // Armor Stats
     debug_printf( "~DEF: %d  SLASH:%3d~CRUSH:%3d POKE:%3d", 255 - pcap->defense[skinlevel],
-                  GET_DAMAGE_RESIST(pcap->damagemodifier[DAMAGE_SLASH][skinlevel]),
-                  GET_DAMAGE_RESIST(pcap->damagemodifier[DAMAGE_CRUSH][skinlevel]),
-                  GET_DAMAGE_RESIST(pcap->damagemodifier[DAMAGE_POKE ][skinlevel]) );
+                  GET_DAMAGE_RESIST( pcap->damagemodifier[DAMAGE_SLASH][skinlevel] ),
+                  GET_DAMAGE_RESIST( pcap->damagemodifier[DAMAGE_CRUSH][skinlevel] ),
+                  GET_DAMAGE_RESIST( pcap->damagemodifier[DAMAGE_POKE ][skinlevel] ) );
 
     debug_printf( "~HOLY:~%i~EVIL:~%i~FIRE:~%i~ICE:~%i~ZAP:~%i",
-                  GET_DAMAGE_RESIST(pcap->damagemodifier[DAMAGE_HOLY][skinlevel]),
-                  GET_DAMAGE_RESIST(pcap->damagemodifier[DAMAGE_EVIL][skinlevel]),
-                  GET_DAMAGE_RESIST(pcap->damagemodifier[DAMAGE_FIRE][skinlevel]),
-                  GET_DAMAGE_RESIST(pcap->damagemodifier[DAMAGE_ICE ][skinlevel]),
-                  GET_DAMAGE_RESIST(pcap->damagemodifier[DAMAGE_ZAP ][skinlevel]) );
+                  GET_DAMAGE_RESIST( pcap->damagemodifier[DAMAGE_HOLY][skinlevel] ),
+                  GET_DAMAGE_RESIST( pcap->damagemodifier[DAMAGE_EVIL][skinlevel] ),
+                  GET_DAMAGE_RESIST( pcap->damagemodifier[DAMAGE_FIRE][skinlevel] ),
+                  GET_DAMAGE_RESIST( pcap->damagemodifier[DAMAGE_ICE ][skinlevel] ),
+                  GET_DAMAGE_RESIST( pcap->damagemodifier[DAMAGE_ZAP ][skinlevel] ) );
 
     debug_printf( "~Type: %s", ( pcap->skindressy & ( 1 << skinlevel ) ) ? "Light Armor" : "Heavy Armor" );
 
@@ -2474,7 +2474,7 @@ bool_t get_chr_regeneration( chr_t * pchr, int * pliferegen, int * pmanaregen )
     ( *pliferegen ) = pchr->life_return;
 
     // Don't forget to add gains and costs from enchants
-    ENC_BEGIN_LOOP_ACTIVE ( enchant, penc )
+    ENC_BEGIN_LOOP_ACTIVE( enchant, penc )
     {
         if ( penc->target_ref == ichr )
         {
@@ -2517,16 +2517,16 @@ void show_full_status( int statindex )
     // Armor Stats
     debug_printf( "~DEF: %d  SLASH:%3d~CRUSH:%3d POKE:%3d",
                   255 - pchr->defense,
-                  GET_DAMAGE_RESIST(pchr->damagemodifier[DAMAGE_SLASH]),
-                  GET_DAMAGE_RESIST(pchr->damagemodifier[DAMAGE_CRUSH]),
-                  GET_DAMAGE_RESIST(pchr->damagemodifier[DAMAGE_POKE ]) );
+                  GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_SLASH] ),
+                  GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_CRUSH] ),
+                  GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_POKE ] ) );
 
     debug_printf( "~HOLY: %i~~EVIL:~%i~FIRE:~%i~ICE:~%i~ZAP: ~%i",
-                  GET_DAMAGE_RESIST(pchr->damagemodifier[DAMAGE_HOLY]),
-                  GET_DAMAGE_RESIST(pchr->damagemodifier[DAMAGE_EVIL]),
-                  GET_DAMAGE_RESIST(pchr->damagemodifier[DAMAGE_FIRE]),
-                  GET_DAMAGE_RESIST(pchr->damagemodifier[DAMAGE_ICE ]),
-                  GET_DAMAGE_RESIST(pchr->damagemodifier[DAMAGE_ZAP ]) );
+                  GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_HOLY] ),
+                  GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_EVIL] ),
+                  GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_FIRE] ),
+                  GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_ICE ] ),
+                  GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_ZAP ] ) );
 
     get_chr_regeneration( pchr, &liferegen, &manaregen );
 
@@ -2573,7 +2573,7 @@ void show_magic_status( int statindex )
         case MISSILE_NORMAL : missile_str = "None";    break;
     }
 
-    debug_printf( "~Flying: %s~~Missile Protection: %s", IS_FLYING_PCHR(pchr) ? "Yes" : "No", missile_str );
+    debug_printf( "~Flying: %s~~Missile Protection: %s", IS_FLYING_PCHR( pchr ) ? "Yes" : "No", missile_str );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -3253,7 +3253,7 @@ int reaffirm_attached_particles( const CHR_REF by_reference character )
             prt_t * pprt = PrtList.lst + particle;
 
             pprt = place_particle_at_vertex( pprt, character, pprt->attachedto_vrt_off );
-            if( NULL == pprt ) continue;
+            if ( NULL == pprt ) continue;
 
             number_added++;
             number_attached++;
@@ -3454,9 +3454,9 @@ egoboo_rv game_update_imports()
 
     // build the import directory using the player info
     vfs_empty_import_directory();
-	if ( !vfs_mkdir( "/import" ) )
+    if ( !vfs_mkdir( "/import" ) )
     {
-		log_warning( "game_update_imports() - Could not create the import folder. (%s)\n", vfs_getError() );
+        log_warning( "game_update_imports() - Could not create the import folder. (%s)\n", vfs_getError() );
     }
 
 
@@ -3554,14 +3554,14 @@ bool_t attach_one_particle( prt_bundle_t * pbdl_prt )
     prt_t * pprt;
     chr_t * pchr;
 
-    if( NULL == pbdl_prt ) return bfalse;
+    if ( NULL == pbdl_prt ) return bfalse;
     pprt = pbdl_prt->prt_ptr;
 
     if ( !INGAME_CHR( pbdl_prt->prt_ptr->attachedto_ref ) ) return bfalse;
     pchr = ChrList.lst + pbdl_prt->prt_ptr->attachedto_ref;
 
     pprt = place_particle_at_vertex( pprt, pprt->attachedto_ref, pprt->attachedto_vrt_off );
-    if( NULL == pprt ) return bfalse;
+    if ( NULL == pprt ) return bfalse;
 
     // the previous function can inactivate a particle
     if ( ACTIVE_PPRT( pprt ) )
@@ -3597,23 +3597,23 @@ bool_t add_player( const CHR_REF by_reference character, const PLA_REF by_refere
     player_t * ppla = NULL;
     chr_t    * pchr = NULL;
 
-    if( !VALID_PLA_RANGE( player ) ) return bfalse;
+    if ( !VALID_PLA_RANGE( player ) ) return bfalse;
     ppla = PlaStack.lst + player;
 
     // does the player already exist?
-    if( ppla->valid ) return bfalse;
+    if ( ppla->valid ) return bfalse;
 
     // re-construct the players
     pla_reinit( ppla );
 
-    if( !DEFINED_CHR(character) ) return bfalse;
+    if ( !DEFINED_CHR( character ) ) return bfalse;
     pchr = ChrList.lst + character;
 
     // set the reference to the player
     pchr->is_which_player = player;
 
     // download the quest info
-    quest_log_download_vfs( ppla->quest_log, SDL_arraysize(ppla->quest_log), chr_get_dir_name(character) );
+    quest_log_download_vfs( ppla->quest_log, SDL_arraysize( ppla->quest_log ), chr_get_dir_name( character ) );
 
     //---- skeleton for using a ConfigFile to save quests
     // ppla->quest_file = quest_file_open( chr_get_dir_name(character) );
@@ -3659,7 +3659,7 @@ void let_all_characters_think()
 
         bool_t is_crushed, is_cleanedup, gained_level, can_think;
 
-        if( NULL == ai_state_bundle_set( &bdl_ai, pchr ) ) continue;
+        if ( NULL == ai_state_bundle_set( &bdl_ai, pchr ) ) continue;
 
         // use some aliases to ease the notation
         pcap  = bdl_ai.cap_ptr;
@@ -4417,7 +4417,7 @@ void game_reset_players()
 
     // Reset the local data stuff
     game_reset_local_shared_stats();
-    local_stats.sense_enemy_team = (TEAM_REF) TEAM_MAX;
+    local_stats.sense_enemy_team = ( TEAM_REF ) TEAM_MAX;
     local_stats.sense_enemy_ID   = IDSZ_NONE;
 
     net_reset_players();
@@ -4683,7 +4683,7 @@ bool_t upload_phys_data( wawalite_physics_t * pdata )
     gravity        = pdata->gravity;
 
     // estimate a value for platstick
-    platstick = MIN(slippyfriction, noslipfriction);
+    platstick = MIN( slippyfriction, noslipfriction );
     platstick = platstick  * platstick;
 
     return btrue;
@@ -4844,7 +4844,7 @@ wawalite_data_t * read_wawalite( /* const char *modname */ )
     fvec3_self_clear( waterspeed.v );
 
     ilayer = wawalite_data.water.layer + 0;
-    if( wawalite_data.water.background_req )
+    if ( wawalite_data.water.background_req )
     {
         // this is a bit complicated.
         // it is the best I can do at reverse engineering what I did in render_world_background()
@@ -4854,8 +4854,8 @@ wawalite_data_t * read_wawalite( /* const char *modname */ )
 
         windspeed_count++;
 
-        windspeed.x += -ilayer->tx_add.x * GRID_SIZE / (wawalite_data.water.backgroundrepeat / default_bg_repeat) * (cam_height + 1.0f / ilayer->dist.x) / cam_height;
-        windspeed.y += -ilayer->tx_add.y * GRID_SIZE / (wawalite_data.water.backgroundrepeat / default_bg_repeat) * (cam_height + 1.0f / ilayer->dist.y) / cam_height;
+        windspeed.x += -ilayer->tx_add.x * GRID_SIZE / ( wawalite_data.water.backgroundrepeat / default_bg_repeat ) * ( cam_height + 1.0f / ilayer->dist.x ) / cam_height;
+        windspeed.y += -ilayer->tx_add.y * GRID_SIZE / ( wawalite_data.water.backgroundrepeat / default_bg_repeat ) * ( cam_height + 1.0f / ilayer->dist.y ) / cam_height;
         windspeed.z += -0;
     }
     else
@@ -4868,7 +4868,7 @@ wawalite_data_t * read_wawalite( /* const char *modname */ )
     }
 
     ilayer = wawalite_data.water.layer + 1;
-    if( wawalite_data.water.overlay_req )
+    if ( wawalite_data.water.overlay_req )
     {
         windspeed_count++;
 
@@ -4885,18 +4885,18 @@ wawalite_data_t * read_wawalite( /* const char *modname */ )
         waterspeed.z += -0;
     }
 
-    if( waterspeed_count > 1 )
+    if ( waterspeed_count > 1 )
     {
-        waterspeed.x /= (float)waterspeed_count;
-        waterspeed.y /= (float)waterspeed_count;
-        waterspeed.z /= (float)waterspeed_count;
+        waterspeed.x /= ( float )waterspeed_count;
+        waterspeed.y /= ( float )waterspeed_count;
+        waterspeed.z /= ( float )waterspeed_count;
     }
 
-    if( windspeed_count > 1 )
+    if ( windspeed_count > 1 )
     {
-        windspeed.x /= (float)windspeed_count;
-        windspeed.y /= (float)windspeed_count;
-        windspeed.z /= (float)windspeed_count;
+        windspeed.x /= ( float )windspeed_count;
+        windspeed.y /= ( float )windspeed_count;
+        windspeed.z /= ( float )windspeed_count;
     }
 
     return &wawalite_data;
@@ -5388,7 +5388,7 @@ void disenchant_character( const CHR_REF by_reference cnt )
     while ( MAX_ENC != pchr->firstenchant )
     {
         // do not let disenchant_character() get stuck in an infinite loop if there is an error
-        if ( !remove_enchant( pchr->firstenchant, &(pchr->firstenchant) ) )
+        if ( !remove_enchant( pchr->firstenchant, &( pchr->firstenchant ) ) )
         {
             break;
         }
@@ -5398,8 +5398,8 @@ void disenchant_character( const CHR_REF by_reference cnt )
 //--------------------------------------------------------------------------------------------
 void cleanup_character_enchants( chr_t * pchr )
 {
-    if( NULL == pchr ) return;
+    if ( NULL == pchr ) return;
 
     // clean up the enchant list
-    pchr->firstenchant = cleanup_enchant_list( pchr->firstenchant, &(pchr->firstenchant) );
+    pchr->firstenchant = cleanup_enchant_list( pchr->firstenchant, &( pchr->firstenchant ) );
 }

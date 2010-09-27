@@ -85,7 +85,7 @@ typedef enum e_turn_modes
     TURNMODE_FLYING_PLATFORM,
     TURNMODE_COUNT
 }
- TURN_MODE;
+TURN_MODE;
 
 #define MANARETURNSHIFT     44                    ///< ChrList.lst[ichr].manareturn/MANARETURNSHIFT = mana regen per second
 

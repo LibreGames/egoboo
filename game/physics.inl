@@ -343,17 +343,17 @@ INLINE bool_t get_depth_2( oct_bb_t cv_a, fvec3_t pos_a, oct_bb_t cv_b, fvec3_t 
 //--------------------------------------------------------------------------------------------
 INLINE void phys_data_blank_accumulators( phys_data_t * pdata )
 {
-    if( NULL == pdata ) return;
+    if ( NULL == pdata ) return;
 
     fvec3_self_clear( pdata->apos_plat.v );
     fvec3_self_clear( pdata->apos_coll.v );
-    fvec3_self_clear( pdata->avel.v      );
+    fvec3_self_clear( pdata->avel.v );
 }
 
 //--------------------------------------------------------------------------------------------
 INLINE bool_t phys_data_accumulate_avel( phys_data_t * pdata, const fvec3_base_t acc )
 {
-    if( NULL == pdata ) return bfalse;
+    if ( NULL == pdata ) return bfalse;
 
     //if( fvec3_length_abs(acc) > 100.0f )
     //    acc[kX] = 0.0f;
@@ -364,7 +364,7 @@ INLINE bool_t phys_data_accumulate_avel( phys_data_t * pdata, const fvec3_base_t
 //--------------------------------------------------------------------------------------------
 INLINE bool_t phys_data_accumulate_apos_coll( phys_data_t * pdata, const fvec3_base_t acc )
 {
-    if( NULL == pdata ) return bfalse;
+    if ( NULL == pdata ) return bfalse;
 
     //if( fvec3_length_abs(acc) > 100.0f )
     //    acc[kX] = 0.0f;
@@ -375,7 +375,7 @@ INLINE bool_t phys_data_accumulate_apos_coll( phys_data_t * pdata, const fvec3_b
 //--------------------------------------------------------------------------------------------
 INLINE bool_t phys_data_accumulate_apos_plat( phys_data_t * pdata, const fvec3_base_t acc )
 {
-    if( NULL == pdata ) return bfalse;
+    if ( NULL == pdata ) return bfalse;
 
     //if( fvec3_length_abs(acc) > 100.0f )
     //    acc[kX] = 0.0f;
@@ -388,14 +388,14 @@ INLINE bool_t phys_data_accumulate_avel_index( phys_data_t * pdata, const float 
 {
     bool_t retval = bfalse;
 
-    if( NULL == pdata ) return bfalse;
+    if ( NULL == pdata ) return bfalse;
 
-    if( 0.0f == acc ) return btrue;
+    if ( 0.0f == acc ) return btrue;
 
     //if( ABS(acc) > 100.0f )
     //    acc = 0.0f;
 
-    if( index >= 0 && index <= kZ )
+    if ( index >= 0 && index <= kZ )
     {
         pdata->avel.v[index] += acc;
         retval = btrue;
@@ -409,14 +409,14 @@ INLINE bool_t phys_data_accumulate_apos_coll_index( phys_data_t * pdata, const f
 {
     bool_t retval = bfalse;
 
-    if( NULL == pdata ) return bfalse;
+    if ( NULL == pdata ) return bfalse;
 
-    if( 0.0f == acc ) return btrue;
+    if ( 0.0f == acc ) return btrue;
 
     //if( ABS(acc) > 100.0f )
     //    acc = 0.0f;
 
-    if( index >= 0 && index <= kZ )
+    if ( index >= 0 && index <= kZ )
     {
         pdata->apos_coll.v[index] += acc;
         retval = btrue;
@@ -430,14 +430,14 @@ INLINE bool_t phys_data_accumulate_apos_plat_index( phys_data_t * pdata, const f
 {
     bool_t retval = bfalse;
 
-    if( NULL == pdata ) return bfalse;
+    if ( NULL == pdata ) return bfalse;
 
-    if( 0.0f == acc ) return btrue;
+    if ( 0.0f == acc ) return btrue;
 
     //if( ABS(acc) > 100.0f )
     //    acc = 0.0f;
 
-    if( index >= 0 && index <= kZ )
+    if ( index >= 0 && index <= kZ )
     {
         pdata->apos_plat.v[index] += acc;
         retval = btrue;

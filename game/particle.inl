@@ -104,17 +104,17 @@ INLINE bool_t prt_set_size( prt_t * pprt, int size )
         }
 
         // make sure that the virtual bumper size is at least as big as what is in the pip file
-        pprt->bump_padded.size     = MAX( pprt->bump_real.size,     ppip->bump_size            );
+        pprt->bump_padded.size     = MAX( pprt->bump_real.size,     ppip->bump_size );
         pprt->bump_padded.size_big = MAX( pprt->bump_real.size_big, ppip->bump_size * SQRT_TWO );
-        pprt->bump_padded.height   = MAX( pprt->bump_real.height,   ppip->bump_height          );
+        pprt->bump_padded.height   = MAX( pprt->bump_real.height,   ppip->bump_height );
 
-        pprt->bump_min.size        = MIN( pprt->bump_real.size,     ppip->bump_size            );
+        pprt->bump_min.size        = MIN( pprt->bump_real.size,     ppip->bump_size );
         pprt->bump_min.size_big    = MIN( pprt->bump_real.size_big, ppip->bump_size * SQRT_TWO );
-        pprt->bump_min.height      = MIN( pprt->bump_real.height,   ppip->bump_height          );
+        pprt->bump_min.height      = MIN( pprt->bump_real.height,   ppip->bump_height );
     }
 
     // use the padded bumper to figure out the prt_cv
-    bumper_to_oct_bb_0( pprt->bump_padded, &( pprt->prt_cv     ) );
+    bumper_to_oct_bb_0( pprt->bump_padded, &( pprt->prt_cv ) );
     bumper_to_oct_bb_0( pprt->bump_min,    &( pprt->prt_min_cv ) );
 
     return btrue;

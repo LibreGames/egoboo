@@ -257,7 +257,7 @@ bool_t TxReqList_free_one( int ireq )
         // that is an error
         for ( cnt = 0; cnt < TxReqList.free_count; cnt++ )
         {
-            if ( (TREQ_REF)ireq == TxReqList.free_ref[cnt] ) return bfalse;
+            if (( TREQ_REF )ireq == TxReqList.free_ref[cnt] ) return bfalse;
         }
     }
 #endif

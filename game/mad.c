@@ -259,12 +259,12 @@ BIT_FIELD mad_get_actionfx( const MAD_REF by_reference imad, int action )
     md2 = MadStack.lst[imad].md2_ptr;
     if ( NULL == md2 ) return 0;
 
-    if( action < 0 || action >= ACTION_COUNT ) return 0;
+    if ( action < 0 || action >= ACTION_COUNT ) return 0;
 
-    if( !pmad->action_valid[action] ) return 0;
+    if ( !pmad->action_valid[action] ) return 0;
 
     frame_lst = ( MD2_Frame_t * )md2_get_Frames( md2 );
-    for( cnt = pmad->action_stt[action]; cnt <= pmad->action_end[action]; cnt++ )
+    for ( cnt = pmad->action_stt[action]; cnt <= pmad->action_end[action]; cnt++ )
     {
         pframe = frame_lst + cnt;
 

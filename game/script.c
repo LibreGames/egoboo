@@ -137,7 +137,7 @@ void scr_run_chr_script( ai_state_bundle_t * pbdl_ai )
     // make sure that the scripting module is initialized
     scripting_system_begin();
 
-    if( NULL == pbdl_ai || NULL == pbdl_ai->chr_ptr ) return;
+    if ( NULL == pbdl_ai || NULL == pbdl_ai->chr_ptr ) return;
 
     // alias a couple of pointers to make the notation easier to read
     pai  = pbdl_ai->ai_state_ptr;
@@ -299,7 +299,7 @@ void scr_run_chr_script( ai_state_bundle_t * pbdl_ai )
         }
 
         scale = 1.0f;
-        if( pchr->latch.trans_valid && fvec3_length_abs( pchr->latch.trans.v ) > 0.0f )
+        if ( pchr->latch.trans_valid && fvec3_length_abs( pchr->latch.trans.v ) > 0.0f )
         {
             float horiz_len2 = pchr->latch.trans.x * pchr->latch.trans.x + pchr->latch.trans.y * pchr->latch.trans.y;
             float vert_len2  = pchr->latch.trans.z * pchr->latch.trans.z;
@@ -314,7 +314,7 @@ void scr_run_chr_script( ai_state_bundle_t * pbdl_ai )
             }
         }
 
-        if( 1.0f != scale )
+        if ( 1.0f != scale )
         {
             fvec3_self_scale( pchr->latch.trans.v, scale );
         }
@@ -440,7 +440,7 @@ Uint8 scr_run_function( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
     Uint8        returncode;
     ai_state_t * pself;
 
-    if( NULL == pstate || NULL == pbdl_ai || NULL == pbdl_ai->ai_state_ptr ) return bfalse;
+    if ( NULL == pstate || NULL == pbdl_ai || NULL == pbdl_ai->ai_state_ptr ) return bfalse;
 
     // use aliases to simplify the notation
     pself = pbdl_ai->ai_state_ptr;
@@ -877,7 +877,7 @@ Uint8 scr_run_function( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
                 case FIFLEVELUP:            returncode = scr_LevelUp( pstate, pbdl_ai ); break;
                 case FGIVESKILLTOTARGET:    returncode = scr_GiveSkillToTarget( pstate, pbdl_ai ); break;
 
-                // if none of the above, skip the line and log an error
+                    // if none of the above, skip the line and log an error
                 default:
                     log_message( "SCRIPT ERROR: scr_run_function() - ai script %d - unhandled script function %d\n", pself->type, valuecode );
                     returncode = bfalse;
@@ -942,20 +942,20 @@ void scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
     chr_t * pchr = NULL, * ptarget = NULL, * powner = NULL;
     ai_state_t * pself;
 
-    if( NULL == pstate || NULL == pbdl_ai || NULL == pbdl_ai->ai_state_ptr ) return;
+    if ( NULL == pstate || NULL == pbdl_ai || NULL == pbdl_ai->ai_state_ptr ) return;
 
-    if( !DEFINED_CHR( pbdl_ai->chr_ref ) ) return;
+    if ( !DEFINED_CHR( pbdl_ai->chr_ref ) ) return;
 
     // use an alias to make the notation easier
     pchr  = pbdl_ai->chr_ptr;
     pself = pbdl_ai->ai_state_ptr;
 
-    if( DEFINED_CHR( pself->target ) )
+    if ( DEFINED_CHR( pself->target ) )
     {
         ptarget = ChrList.lst + pself->target;
     }
 
-    if( DEFINED_CHR( pself->owner ) )
+    if ( DEFINED_CHR( pself->owner ) )
     {
         powner = ChrList.lst + pself->owner;
     }
@@ -1044,29 +1044,29 @@ void scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
 
             case VARTARGETX:
                 varname = "TARGETX";
-                iTmp = (NULL == ptarget) ? 0 : ptarget->pos.x;
+                iTmp = ( NULL == ptarget ) ? 0 : ptarget->pos.x;
                 break;
 
             case VARTARGETY:
                 varname = "TARGETY";
-                iTmp = (NULL == ptarget) ? 0 : ptarget->pos.y;
+                iTmp = ( NULL == ptarget ) ? 0 : ptarget->pos.y;
                 break;
 
             case VARTARGETDISTANCE:
                 varname = "TARGETDISTANCE";
-                if( NULL == ptarget )
+                if ( NULL == ptarget )
                 {
                     iTmp = 0x7FFFFFFF;
                 }
                 else
                 {
-                    iTmp = fvec2_dist_abs(ptarget->pos.v, pchr->pos.v );
+                    iTmp = fvec2_dist_abs( ptarget->pos.v, pchr->pos.v );
                 }
                 break;
 
             case VARTARGETTURN:
                 varname = "TARGETTURN";
-                iTmp = (NULL == ptarget) ? 0 : ptarget->ori.facing_z;
+                iTmp = ( NULL == ptarget ) ? 0 : ptarget->ori.facing_z;
                 break;
 
             case VARLEADERX:
@@ -1159,7 +1159,7 @@ void scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
 
             case VARTARGETTURNTO:
                 varname = "TARGETTURNTO";
-                if( NULL == ptarget )
+                if ( NULL == ptarget )
                 {
                     iTmp = 0;
                 }
@@ -1204,32 +1204,32 @@ void scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
 
             case VARTARGETSTR:
                 varname = "TARGETSTR";
-                iTmp = (NULL == ptarget) ? 0 : ptarget->strength;
+                iTmp = ( NULL == ptarget ) ? 0 : ptarget->strength;
                 break;
 
             case VARTARGETWIS:
                 varname = "TARGETWIS";
-                iTmp = (NULL == ptarget) ? 0 : ptarget->wisdom;
+                iTmp = ( NULL == ptarget ) ? 0 : ptarget->wisdom;
                 break;
 
             case VARTARGETINT:
                 varname = "TARGETINT";
-                iTmp = (NULL == ptarget) ? 0 : ptarget->intelligence;
+                iTmp = ( NULL == ptarget ) ? 0 : ptarget->intelligence;
                 break;
 
             case VARTARGETDEX:
                 varname = "TARGETDEX";
-                iTmp = (NULL == ptarget) ? 0 : ptarget->dexterity;
+                iTmp = ( NULL == ptarget ) ? 0 : ptarget->dexterity;
                 break;
 
             case VARTARGETLIFE:
                 varname = "TARGETLIFE";
-                iTmp = (NULL == ptarget) ? 0 : ptarget->life;
+                iTmp = ( NULL == ptarget ) ? 0 : ptarget->life;
                 break;
 
             case VARTARGETMANA:
                 varname = "TARGETMANA";
-                if( NULL == ptarget )
+                if ( NULL == ptarget )
                 {
                     iTmp = 0;
                 }
@@ -1243,22 +1243,22 @@ void scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
 
             case VARTARGETLEVEL:
                 varname = "TARGETLEVEL";
-                iTmp = (NULL == ptarget) ? 0 : ptarget->experiencelevel;
+                iTmp = ( NULL == ptarget ) ? 0 : ptarget->experiencelevel;
                 break;
 
             case VARTARGETSPEEDX:
                 varname = "TARGETSPEEDX";
-                iTmp = (NULL == ptarget) ? 0 : ABS( ptarget->vel.x );
+                iTmp = ( NULL == ptarget ) ? 0 : ABS( ptarget->vel.x );
                 break;
 
             case VARTARGETSPEEDY:
                 varname = "TARGETSPEEDY";
-                iTmp = (NULL == ptarget) ? 0 : ABS( ptarget->vel.y );
+                iTmp = ( NULL == ptarget ) ? 0 : ABS( ptarget->vel.y );
                 break;
 
             case VARTARGETSPEEDZ:
                 varname = "TARGETSPEEDZ";
-                iTmp = (NULL == ptarget) ? 0 : ABS( ptarget->vel.z );
+                iTmp = ( NULL == ptarget ) ? 0 : ABS( ptarget->vel.z );
                 break;
 
             case VARSELFSPAWNX:
@@ -1308,7 +1308,7 @@ void scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
 
             case VARTARGETMANAFLOW:
                 varname = "TARGETMANAFLOW";
-                iTmp = (NULL == ptarget) ? 0 : ptarget->manaflow;
+                iTmp = ( NULL == ptarget ) ? 0 : ptarget->manaflow;
                 break;
 
             case VARSELFATTACHED:
@@ -1333,12 +1333,12 @@ void scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
 
             case VARTARGETALTITUDE:
                 varname = "TARGETALTITUDE";
-                iTmp = (NULL == ptarget) ? 0 : ptarget->pos.z - ptarget->enviro.grid_level;
+                iTmp = ( NULL == ptarget ) ? 0 : ptarget->pos.z - ptarget->enviro.grid_level;
                 break;
 
             case VARTARGETZ:
                 varname = "TARGETZ";
-                iTmp = (NULL == ptarget) ? 0 : ptarget->pos.z;
+                iTmp = ( NULL == ptarget ) ? 0 : ptarget->pos.z;
                 break;
 
             case VARSELFINDEX:
@@ -1348,22 +1348,22 @@ void scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
 
             case VAROWNERX:
                 varname = "OWNERX";
-                iTmp = (NULL == powner) ? 0 : powner->pos.x;
+                iTmp = ( NULL == powner ) ? 0 : powner->pos.x;
                 break;
 
             case VAROWNERY:
                 varname = "OWNERY";
-                iTmp = (NULL == powner) ? 0 : powner->pos.y;
+                iTmp = ( NULL == powner ) ? 0 : powner->pos.y;
                 break;
 
             case VAROWNERTURN:
                 varname = "OWNERTURN";
-                iTmp = (NULL == powner) ? 0 : powner->ori.facing_z;
+                iTmp = ( NULL == powner ) ? 0 : powner->ori.facing_z;
                 break;
 
             case VAROWNERDISTANCE:
                 varname = "OWNERDISTANCE";
-                if( NULL == powner )
+                if ( NULL == powner )
                 {
                     iTmp = 0x7FFFFFFF;
                 }
@@ -1375,7 +1375,7 @@ void scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
 
             case VAROWNERTURNTO:
                 varname = "OWNERTURNTO";
-                if( NULL == powner )
+                if ( NULL == powner )
                 {
                     iTmp = 0;
                 }
@@ -1404,7 +1404,7 @@ void scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
 
             case VARTARGETEXP:
                 varname = "TARGETEXP";
-                iTmp = (NULL == ptarget) ? 0 : ptarget->experience;
+                iTmp = ( NULL == ptarget ) ? 0 : ptarget->experience;
                 break;
 
             case VARSELFAMMO:
@@ -1414,17 +1414,17 @@ void scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
 
             case VARTARGETAMMO:
                 varname = "TARGETAMMO";
-                iTmp = (NULL == ptarget) ? 0 : ptarget->ammo;
+                iTmp = ( NULL == ptarget ) ? 0 : ptarget->ammo;
                 break;
 
             case VARTARGETMONEY:
                 varname = "TARGETMONEY";
-                iTmp = (NULL == ptarget) ? 0 : ptarget->money;
+                iTmp = ( NULL == ptarget ) ? 0 : ptarget->money;
                 break;
 
             case VARTARGETTURNAWAY:
                 varname = "TARGETTURNAWAY";
-                if( NULL == ptarget )
+                if ( NULL == ptarget )
                 {
                     iTmp = 0;
                 }
@@ -1442,7 +1442,7 @@ void scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
 
             case VARTARGETRELOADTIME:
                 varname = "TARGETRELOADTIME";
-                iTmp = (NULL == ptarget) ? 0 : ptarget->reloadtime;
+                iTmp = ( NULL == ptarget ) ? 0 : ptarget->reloadtime;
                 break;
 
             case VARSPAWNDISTANCE:
@@ -1452,18 +1452,18 @@ void scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
 
             case VARTARGETMAXLIFE:
                 varname = "TARGETMAXLIFE";
-                iTmp = (NULL == ptarget) ? 0 : ptarget->lifemax;
+                iTmp = ( NULL == ptarget ) ? 0 : ptarget->lifemax;
                 break;
 
             case VARTARGETTEAM:
                 varname = "TARGETTEAM";
-                iTmp = (NULL == ptarget) ? 0 : ptarget->team;
+                iTmp = ( NULL == ptarget ) ? 0 : ptarget->team;
                 //iTmp = REF_TO_INT( chr_get_iteam( pself->target ) );
                 break;
 
             case VARTARGETARMOR:
                 varname = "TARGETARMOR";
-                iTmp = (NULL == ptarget) ? 0 : ptarget->skin;
+                iTmp = ( NULL == ptarget ) ? 0 : ptarget->skin;
                 break;
 
             case VARDIFFICULTY:
@@ -1646,7 +1646,7 @@ bool_t waypoint_list_push( waypoint_list_t * plst, float x, float y, float z )
     if ( NULL == plst ) return bfalse;
 
     level = 0.0f;
-    if( INVALID_TILE != mesh_get_tile(PMesh, x, y ) )
+    if ( INVALID_TILE != mesh_get_tile( PMesh, x, y ) )
     {
         level = mesh_get_level( PMesh, x, y );
     }
@@ -1766,7 +1766,7 @@ void set_alerts( ai_state_bundle_t * pbdl_ai )
     bool_t            at_waypoint;
 
     // if the bundle does not exist, return
-    if( NULL == pbdl_ai ) return;
+    if ( NULL == pbdl_ai ) return;
 
     // invalid characters do not think
     if ( NULL == pbdl_ai || !INGAME_CHR( pbdl_ai->chr_ref ) ) return;
@@ -1931,18 +1931,18 @@ ai_state_t * ai_state_dtor( ai_state_t * pself )
 //--------------------------------------------------------------------------------------------
 ai_state_bundle_t * ai_state_bundle_ctor( ai_state_bundle_t * pbundle )
 {
-    if( NULL == pbundle ) return NULL;
+    if ( NULL == pbundle ) return NULL;
 
-    pbundle->ai_state_ref = (REF_T) MAX_AI;
+    pbundle->ai_state_ref = ( REF_T ) MAX_AI;
     pbundle->ai_state_ptr = NULL;
 
-    pbundle->chr_ref = (CHR_REF) MAX_CHR;
+    pbundle->chr_ref = ( CHR_REF ) MAX_CHR;
     pbundle->chr_ptr = NULL;
 
-    pbundle->cap_ref = (CAP_REF) MAX_CAP;
+    pbundle->cap_ref = ( CAP_REF ) MAX_CAP;
     pbundle->cap_ptr = NULL;
 
-    pbundle->pro_ref = (PRO_REF) MAX_PROFILE;
+    pbundle->pro_ref = ( PRO_REF ) MAX_PROFILE;
     pbundle->pro_ptr = NULL;
 
     return pbundle;
@@ -1951,14 +1951,14 @@ ai_state_bundle_t * ai_state_bundle_ctor( ai_state_bundle_t * pbundle )
 //--------------------------------------------------------------------------------------------
 ai_state_bundle_t * ai_state_bundle_validate( ai_state_bundle_t * pbundle )
 {
-    if( NULL == pbundle ) return NULL;
+    if ( NULL == pbundle ) return NULL;
 
     // get the character info from the reference or the pointer
-    if( ALLOCATED_CHR(pbundle->chr_ref) )
+    if ( ALLOCATED_CHR( pbundle->chr_ref ) )
     {
         pbundle->chr_ptr = ChrList.lst + pbundle->chr_ref;
     }
-    else if( NULL != pbundle->chr_ptr )
+    else if ( NULL != pbundle->chr_ptr )
     {
         pbundle->chr_ref = GET_REF_PCHR( pbundle->chr_ptr );
     }
@@ -1968,23 +1968,23 @@ ai_state_bundle_t * ai_state_bundle_validate( ai_state_bundle_t * pbundle )
         pbundle->chr_ptr = NULL;
     }
 
-    if( NULL == pbundle->chr_ptr ) goto ai_state_bundle_validate_fail;
+    if ( NULL == pbundle->chr_ptr ) goto ai_state_bundle_validate_fail;
 
     // get the profile info
     pbundle->pro_ref = pbundle->chr_ptr->profile_ref;
-    if( !LOADED_PRO(pbundle->pro_ref) ) goto ai_state_bundle_validate_fail;
+    if ( !LOADED_PRO( pbundle->pro_ref ) ) goto ai_state_bundle_validate_fail;
 
     pbundle->pro_ptr = ProList.lst + pbundle->pro_ref;
 
     // get the cap info
     pbundle->cap_ref = pbundle->pro_ptr->icap;
 
-    if( !LOADED_CAP(pbundle->cap_ref) ) goto ai_state_bundle_validate_fail;
+    if ( !LOADED_CAP( pbundle->cap_ref ) ) goto ai_state_bundle_validate_fail;
     pbundle->cap_ptr = CapStack.lst + pbundle->cap_ref;
 
     // get the script info
     pbundle->ai_state_ref = pbundle->chr_ptr->ai.type;
-    pbundle->ai_state_ptr = &(pbundle->chr_ptr->ai);
+    pbundle->ai_state_ptr = &( pbundle->chr_ptr->ai );
 
     return pbundle;
 
@@ -1996,12 +1996,12 @@ ai_state_bundle_validate_fail:
 //--------------------------------------------------------------------------------------------
 ai_state_bundle_t * ai_state_bundle_set( ai_state_bundle_t * pbundle, chr_t * pchr )
 {
-    if( NULL == pbundle ) return NULL;
+    if ( NULL == pbundle ) return NULL;
 
     // blank out old data
     pbundle = ai_state_bundle_ctor( pbundle );
 
-    if( NULL == pbundle || NULL == pchr ) return pbundle;
+    if ( NULL == pbundle || NULL == pchr ) return pbundle;
 
     // set the particle pointer
     pbundle->chr_ptr = pchr;

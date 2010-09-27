@@ -508,7 +508,7 @@ void fput_expansion_float( vfs_FILE* filewrite, const char* text, IDSZ idsz, flo
     /// @details ZF@> This function mimics vfs_printf in spitting out
     ///    damage/stat pairs for floating point values
 
-    vfs_printf( filewrite, "%s: [%s] %4.2f\n", text, undo_idsz( idsz), value );
+    vfs_printf( filewrite, "%s: [%s] %4.2f\n", text, undo_idsz( idsz ), value );
 }
 
 //--------------------------------------------------------------------------------------------

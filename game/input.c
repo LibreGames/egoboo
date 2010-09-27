@@ -172,7 +172,7 @@ void input_read_joystick( int which )
     int dead_zone = 0x8000 / 10;
     int i, button_count, x, y;
     device_joystick_t * pjoy;
-    if ( which < 0 || (Uint32)(which + INPUT_DEVICE_JOY) > input_device_count ) return;
+    if ( which < 0 || ( Uint32 )( which + INPUT_DEVICE_JOY ) > input_device_count ) return;
     if ( !joy[which].on ) return;
 
     pjoy = joy + which;
@@ -206,7 +206,7 @@ void input_read_joystick( int which )
     pjoy->b = 0;
     for ( i = 0; i < button_count; i++ )
     {
-        ADD_BITS( pjoy->b, pjoy->button[i] << i  );
+        ADD_BITS( pjoy->b, pjoy->button[i] << i );
     }
 
     return;

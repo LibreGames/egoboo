@@ -159,7 +159,7 @@ Uint8 scr_set_Alert( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    ADD_BITS( pself->alert, pstate->argument);
+    ADD_BITS( pself->alert, pstate->argument );
 
     SCRIPT_FUNCTION_END();
 }
@@ -223,7 +223,7 @@ Uint8 scr_ClearBit( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
     returncode = bfalse;
     if ( pstate->y >= 0 && pstate->y < 32 )
     {
-        REMOVE_BITS(pstate->x, 1 << pstate->y);
+        REMOVE_BITS( pstate->x, 1 << pstate->y );
         returncode = btrue;
     }
 
@@ -257,7 +257,7 @@ Uint8 scr_set_Bits( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    ADD_BITS(pstate->x, pstate->y);
+    ADD_BITS( pstate->x, pstate->y );
 
     SCRIPT_FUNCTION_END();
 }
@@ -271,7 +271,7 @@ Uint8 scr_ClearBits( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    REMOVE_BITS(pstate->x, pstate->y);
+    REMOVE_BITS( pstate->x, pstate->y );
 
     SCRIPT_FUNCTION_END();
 }
@@ -1281,7 +1281,7 @@ Uint8 scr_CostTargetItemID( script_state_t * pstate, ai_state_bundle_t * pbdl_se
             // Poof the item
 
             // remove it from a pack, if it was packed
-            pack_remove_item( &(ChrList.lst[ichr].pack), pack_last, item );
+            pack_remove_item( &( ChrList.lst[ichr].pack ), pack_last, item );
 
             // Drop from hand, if held
             detach_character_from_mount( item, btrue, bfalse );
@@ -1434,14 +1434,14 @@ Uint8 scr_TargetCanOpenStuff( script_state_t * pstate, ai_state_bundle_t * pbdl_
     {
         CHR_REF iheld = pself_target->holdingwhich[SLOT_LEFT];
 
-        if( DEFINED_CHR(iheld) )
+        if ( DEFINED_CHR( iheld ) )
         {
             // can the rider open the
             returncode = ChrList.lst[iheld].openstuff;
         }
     }
 
-    if( !returncode )
+    if ( !returncode )
     {
         // if a rider can't openstuff, can the target openstuff?
         returncode = pself_target->openstuff;
@@ -2113,7 +2113,7 @@ Uint8 scr_SpawnParticle( script_state_t * pstate, ai_state_bundle_t * pbdl_self 
         place_particle_at_vertex( pprt, pself->index, pstate->distance );
         pprt->attachedto_ref = ( CHR_REF )MAX_CHR;
 
-        tmp_pos = prt_get_pos(pprt);
+        tmp_pos = prt_get_pos( pprt );
 
         // Correct X, Y, Z spacing
         tmp_pos.z += PipStack.lst[pprt->pip_ref].spacing_vrt_pair.base;
@@ -2486,7 +2486,7 @@ Uint8 scr_set_TargetToWideEnemy( script_state_t * pstate, ai_state_bundle_t * pb
     CHR_REF ichr;
     SCRIPT_FUNCTION_BEGIN();
 
-    ichr = ichr = chr_find_target( pchr, WIDE, IDSZ_NONE, TARGET_ENEMIES );
+    ichr = chr_find_target( pchr, WIDE, IDSZ_NONE, TARGET_ENEMIES );
 
     if ( INGAME_CHR( ichr ) )
     {
@@ -3105,7 +3105,7 @@ Uint8 scr_UndoEnchant( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    if( INGAME_ENC(pchr->undoenchant) )
+    if ( INGAME_ENC( pchr->undoenchant ) )
     {
         returncode = remove_enchant( pchr->undoenchant, NULL );
     }
@@ -4338,11 +4338,11 @@ Uint8 scr_set_SpeedPercent( script_state_t * pstate, ai_state_bundle_t * pbdl_se
     reset_character_accel( pself->index );
 
     fvalue = pstate->argument / 100.0f;
-    fvalue = MAX(0.0f, fvalue);
+    fvalue = MAX( 0.0f, fvalue );
 
     pchr->maxaccel = pchr->maxaccel_reset * fvalue;
 
-    if( pchr->maxaccel < 0.33f )
+    if ( pchr->maxaccel < 0.33f )
     {
         // only sneak
         pchr->movement_bits = CHR_MOVEMENT_BITS_SNEAK | CHR_MOVEMENT_BITS_STOP;
@@ -4350,7 +4350,7 @@ Uint8 scr_set_SpeedPercent( script_state_t * pstate, ai_state_bundle_t * pbdl_se
     else
     {
         // everything but sneak
-        pchr->movement_bits = (unsigned)(~CHR_MOVEMENT_BITS_SNEAK);
+        pchr->movement_bits = ( unsigned )( ~CHR_MOVEMENT_BITS_SNEAK );
     }
 
     SCRIPT_FUNCTION_END();
@@ -4469,9 +4469,9 @@ Uint8 scr_PlaySoundVolume( script_state_t * pstate, ai_state_bundle_t * pbdl_sel
             int channel;
             channel = sound_play_chunk( pchr->pos_old, chr_get_chunk_ptr( pchr, pstate->argument ) );
 
-            if( channel != INVALID_SOUND_CHANNEL )
+            if ( channel != INVALID_SOUND_CHANNEL )
             {
-                Mix_Volume( channel, (128*pstate->distance) / 100 );
+                Mix_Volume( channel, ( 128*pstate->distance ) / 100 );
             }
         }
     }
@@ -5785,7 +5785,7 @@ Uint8 scr_TargetIsFlying( script_state_t * pstate, ai_state_bundle_t * pbdl_self
 
     SCRIPT_REQUIRE_TARGET( pself_target );
 
-    returncode = IS_FLYING_PCHR(pself_target);
+    returncode = IS_FLYING_PCHR( pself_target );
 
     SCRIPT_FUNCTION_END();
 }
@@ -6276,7 +6276,7 @@ Uint8 scr_DisenchantTarget( script_state_t * pstate, ai_state_bundle_t * pbdl_se
 
     SCRIPT_REQUIRE_TARGET( pself_target );
 
-    returncode = (pself_target->firstenchant != MAX_ENC);
+    returncode = ( pself_target->firstenchant != MAX_ENC );
 
     disenchant_character( pself->target );
 
@@ -6746,7 +6746,7 @@ Uint8 scr_EnableListenSkill( script_state_t * pstate, ai_state_bundle_t * pbdl_s
 {
     /// @details ZF@> TODO: deprecated, replace this function with something else
 
-	log_warning( "Deprecated script function used (EnableListenSkill) in %s.\n", pbdl_self->chr_ptr->Name );
+    log_warning( "Deprecated script function used (EnableListenSkill) in %s.\n", pbdl_self->chr_ptr->Name );
     return bfalse;
 }
 
@@ -6939,10 +6939,10 @@ Uint8 scr_AddQuest( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
     {
         player_t * ppla = PlaStack.lst + ipla;
 
-        quest_level = quest_add( ppla->quest_log, SDL_arraysize(ppla->quest_log), pstate->argument, 0 );
+        quest_level = quest_add( ppla->quest_log, SDL_arraysize( ppla->quest_log ), pstate->argument, 0 );
     }
 
-    returncode = (0 == quest_level);
+    returncode = ( 0 == quest_level );
 
     SCRIPT_FUNCTION_END();
 }
@@ -6969,7 +6969,7 @@ Uint8 scr_BeatQuestAllPlayers( script_state_t * pstate, ai_state_bundle_t * pbdl
         ichr = ppla->index;
         if ( !INGAME_CHR( ichr ) ) continue;
 
-        if ( QUEST_BEATEN == quest_adjust_level( ppla->quest_log, SDL_arraysize(ppla->quest_log), ( IDSZ )pstate->argument, QUEST_MAXVAL ) )
+        if ( QUEST_BEATEN == quest_adjust_level( ppla->quest_log, SDL_arraysize( ppla->quest_log ), ( IDSZ )pstate->argument, QUEST_MAXVAL ) )
         {
             returncode = btrue;
         }
@@ -6999,7 +6999,7 @@ Uint8 scr_TargetHasQuest( script_state_t * pstate, ai_state_bundle_t * pbdl_self
     {
         player_t * ppla = PlaStack.lst + ipla;
 
-        quest_level = quest_get_level( ppla->quest_log, SDL_arraysize(ppla->quest_log), pstate->argument );
+        quest_level = quest_get_level( ppla->quest_log, SDL_arraysize( ppla->quest_log ), pstate->argument );
     }
 
     // only find active quests
@@ -7033,7 +7033,7 @@ Uint8 scr_set_QuestLevel( script_state_t * pstate, ai_state_bundle_t * pbdl_self
         int        quest_level = QUEST_NONE;
         player_t * ppla        = PlaStack.lst + ipla;
 
-        quest_level = quest_adjust_level( ppla->quest_log, SDL_arraysize(ppla->quest_log), pstate->argument, pstate->distance );
+        quest_level = quest_adjust_level( ppla->quest_log, SDL_arraysize( ppla->quest_log ), pstate->argument, pstate->distance );
 
         returncode = QUEST_NONE != quest_level;
     }
@@ -7063,11 +7063,11 @@ Uint8 scr_AddQuestAllPlayers( script_state_t * pstate, ai_state_bundle_t * pbdl_
         player_count++;
 
         // Try to add it or replace it if this one is higher
-        quest_level = quest_add( ppla->quest_log, SDL_arraysize(ppla->quest_log), pstate->argument, pstate->distance );
-        if( QUEST_NONE != quest_level ) success_count++;
+        quest_level = quest_add( ppla->quest_log, SDL_arraysize( ppla->quest_log ), pstate->argument, pstate->distance );
+        if ( QUEST_NONE != quest_level ) success_count++;
     }
 
-    returncode = (player_count > 0) && (success_count >= player_count);
+    returncode = ( player_count > 0 ) && ( success_count >= player_count );
 
     SCRIPT_FUNCTION_END();
 }
@@ -7172,7 +7172,7 @@ Uint8 scr_SpawnAttachedCharacter( script_state_t * pstate, ai_state_bundle_t * p
     {
         chr_t * pchild = ChrList.lst + ichr;
 
-        Uint8 grip = (Uint8)CLIP( pstate->distance, ATTACH_INVENTORY, ATTACH_RIGHT );
+        Uint8 grip = ( Uint8 )CLIP( pstate->distance, ATTACH_INVENTORY, ATTACH_RIGHT );
 
         if ( grip == ATTACH_INVENTORY )
         {
@@ -7560,7 +7560,7 @@ Uint8 scr_DispelTargetEnchantID( script_state_t * pstate, ai_state_bundle_t * pb
     if ( pself_target->alive )
     {
         // Check all enchants to see if they are removed
-        returncode = remove_all_enchants_with_idsz(pself->target, pstate->argument );
+        returncode = remove_all_enchants_with_idsz( pself->target, pstate->argument );
     }
 
     SCRIPT_FUNCTION_END();
@@ -7708,7 +7708,7 @@ Uint8 scr_DrawBillboard( script_state_t * pstate, ai_state_bundle_t * pbdl_self 
     SCRIPT_FUNCTION_BEGIN();
 
     returncode = bfalse;
-    if( LOADED_PRO(pchr->profile_ref) )
+    if ( LOADED_PRO( pchr->profile_ref ) )
     {
         SDL_Color text_color = {0xFF, 0xFF, 0xFF, 0xFF};
         int message_number, message_index;
@@ -7724,9 +7724,9 @@ Uint8 scr_DrawBillboard( script_state_t * pstate, ai_state_bundle_t * pbdl_self 
 
         //Figure out which color to use
         GLfloat *do_tint;
-        switch( pstate->turn )
+        switch ( pstate->turn )
         {
-        default:
+            default:
             case COLOR_WHITE:    do_tint = tint_white;    break;
             case COLOR_RED:        do_tint = tint_red;        break;
             case COLOR_PURPLE:    do_tint = tint_purple;    break;
@@ -7739,7 +7739,7 @@ Uint8 scr_DrawBillboard( script_state_t * pstate, ai_state_bundle_t * pbdl_self 
         message_index  = MessageOffset.ary[message_number];
         ptext = message_buffer + message_index;
 
-        returncode = NULL != chr_make_text_billboard( pself->index, ptext, text_color, do_tint, pstate->distance, (BIT_FIELD)bb_opt_all );
+        returncode = NULL != chr_make_text_billboard( pself->index, ptext, text_color, do_tint, pstate->distance, ( BIT_FIELD )bb_opt_all );
     }
 
     SCRIPT_FUNCTION_END();
@@ -7814,9 +7814,9 @@ Uint8 scr_GiveSkillToTarget( script_state_t * pstate, ai_state_bundle_t * pbdl_s
 
     SCRIPT_REQUIRE_TARGET( ptarget );
 
-    rv = idsz_map_add( ptarget->skills, SDL_arraysize(ptarget->skills), pstate->argument, pstate->distance );
+    rv = idsz_map_add( ptarget->skills, SDL_arraysize( ptarget->skills ), pstate->argument, pstate->distance );
 
-    returncode = (rv_success == rv);
+    returncode = ( rv_success == rv );
 
     SCRIPT_FUNCTION_END();
 }
@@ -7850,7 +7850,7 @@ bool_t _break_passage( int mesh_fx_or, int become, int frames, int starttile, co
         if ( IS_ATTACHED_PCHR( pchr ) ) continue;
 
         // nothing flying
-        if ( IS_FLYING_PCHR(pchr) ) continue;
+        if ( IS_FLYING_PCHR( pchr ) ) continue;
 
         lerp_z = ( pchr->pos.z - pchr->enviro.grid_level ) / DAMAGERAISE;
         lerp_z = 1.0f - CLIP( lerp_z, 0.0f, 1.0f );

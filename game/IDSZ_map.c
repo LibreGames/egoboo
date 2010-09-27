@@ -31,7 +31,7 @@
 //--------------------------------------------------------------------------------------------
 IDSZ_node_t * idsz_map_init( IDSZ_node_t * idsz_map )
 {
-    if( NULL == idsz_map ) return idsz_map;
+    if ( NULL == idsz_map ) return idsz_map;
 
     idsz_map[0].id = IDSZ_NONE;
     idsz_map[0].level = IDSZ_NOT_FOUND;
@@ -48,23 +48,23 @@ egoboo_rv idsz_map_add( IDSZ_node_t idsz_map[], const size_t idsz_map_len, const
     egoboo_rv rv = rv_error;
     size_t    i;
 
-    if( NULL == idsz_map ) return rv_error;
+    if ( NULL == idsz_map ) return rv_error;
 
     // we must allow the function to add any level of IDSZ, otherwize we cannot
     // add beaten quests, skills with negative levels, etc.
-    if( IDSZ_NONE == idsz ) return rv_fail;
+    if ( IDSZ_NONE == idsz ) return rv_fail;
 
-    for( i = 0; i < idsz_map_len; i++ )
+    for ( i = 0; i < idsz_map_len; i++ )
     {
         // the end of the list?
-        if( IDSZ_NONE == idsz_map[i].id ) break;
+        if ( IDSZ_NONE == idsz_map[i].id ) break;
 
         // found a matching idsz?
-        if( idsz == idsz_map[i].id )
+        if ( idsz == idsz_map[i].id )
         {
             // But only if the new idsz level is "better" than the previous one
-            if( (level > 0 && idsz_map[i].level >= level) ||
-                (level < 0 && idsz_map[i].level <= level) )
+            if (( level > 0 && idsz_map[i].level >= level ) ||
+                ( level < 0 && idsz_map[i].level <= level ) )
             {
                 rv = rv_fail;
             }
@@ -80,20 +80,20 @@ egoboo_rv idsz_map_add( IDSZ_node_t idsz_map[], const size_t idsz_map_len, const
     }
 
     //Trying to add a idsz to a full idsz list?
-    if( idsz_map_len == i )
+    if ( idsz_map_len == i )
     {
-        log_warning("idsz_map_add() - Failed to add [%s] to an IDSZ_map. Consider increasing idsz_map_len (currently %i)\n", undo_idsz(idsz), idsz_map_len );
+        log_warning( "idsz_map_add() - Failed to add [%s] to an IDSZ_map. Consider increasing idsz_map_len (currently %i)\n", undo_idsz( idsz ), idsz_map_len );
 
         rv = rv_fail;
     }
-    else if( IDSZ_NONE == idsz_map[i].id )
+    else if ( IDSZ_NONE == idsz_map[i].id )
     {
         // Reached the end of the list. Simply append the new idsz to idsz_map
 
-        size_t tail = i+1;
+        size_t tail = i + 1;
 
         // Set the termination down one step, if that step exists
-        if( tail < idsz_map_len )
+        if ( tail < idsz_map_len )
         {
             idsz_map[tail].id    = IDSZ_NONE;
             idsz_map[tail].level = IDSZ_NOT_FOUND;
@@ -119,17 +119,17 @@ IDSZ_node_t* idsz_map_get( const IDSZ_node_t idsz_map[], const size_t idsz_map_l
     IDSZ_node_t* pidsz;
     IDSZ_node_t* found_node = NULL;
 
-    if( NULL == idsz_map || IDSZ_NONE == idsz ) return NULL;
+    if ( NULL == idsz_map || IDSZ_NONE == idsz ) return NULL;
 
     // initialize the loop
     iterator = 0;
     pidsz = idsz_map_iterate( idsz_map, idsz_map_len, &iterator );
 
     // iterate the map
-    while( pidsz != NULL )
+    while ( pidsz != NULL )
     {
         // Did we find the idsz?
-        if( pidsz->id == idsz )
+        if ( pidsz->id == idsz )
         {
             found_node = pidsz;
             break;
@@ -151,16 +151,16 @@ IDSZ_node_t* idsz_map_iterate( const IDSZ_node_t idsz_map[], const size_t idsz_m
     int          step = 0;
     IDSZ_node_t *node = NULL;
 
-    if( NULL == idsz_map || NULL == iterator_ptr ) return NULL;
+    if ( NULL == idsz_map || NULL == iterator_ptr ) return NULL;
 
     // alias the variable
     step = *iterator_ptr;
 
     // Reached the end of the list without finding a matching idsz
-    if ( step < 0  || (size_t)step >= idsz_map_len ) return NULL;
+    if ( step < 0  || ( size_t )step >= idsz_map_len ) return NULL;
 
     // Found the end of the list?
-    if( IDSZ_NONE == idsz_map[step].id )
+    if ( IDSZ_NONE == idsz_map[step].id )
     {
         // yes, set the return values to their terminal states
         node          = NULL;
@@ -181,10 +181,10 @@ egoboo_rv idsz_map_copy( const IDSZ_node_t map_src[], const size_t src_len, IDSZ
 {
     ///@details ZF@> This function copies one set of IDSZ map to another IDSZ map (exact)
 
-    if( map_src == NULL || map_dst == NULL || 0 == src_len ) return rv_error;
+    if ( map_src == NULL || map_dst == NULL || 0 == src_len ) return rv_error;
 
     // memcpy() is probably a lot more efficient than copying each element individually
-    memmove( map_dst, map_src, sizeof(IDSZ_node_t) * src_len );
+    memmove( map_dst, map_src, sizeof( IDSZ_node_t ) * src_len );
 
     return rv_success;
 

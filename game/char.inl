@@ -169,7 +169,7 @@ INLINE bool_t team_hates_team( const TEAM_REF by_reference ipredator_team, const
 
     if ( ipredator_team >= TEAM_MAX || iprey_team >= TEAM_MAX ) return bfalse;
 
-    return TeamStack.lst[ipredator_team].hatesteam[ REF_TO_INT( iprey_team ) ];
+    return TeamStack.lst[ipredator_team].hatesteam[ REF_TO_INT( iprey_team )];
 }
 
 //--------------------------------------------------------------------------------------------
@@ -553,9 +553,9 @@ INLINE void chr_init_size( chr_t * pchr, cap_t * pcap )
 
     pchr->fat_stt           = pcap->size;
     pchr->shadow_size_stt   = pcap->shadow_size;
-    pchr->bump_stt.size     = (pcap->bump_override_size    ? 1.0f : -1.0f ) * pcap->bump_size;
-    pchr->bump_stt.size_big = (pcap->bump_override_sizebig ? 1.0f : -1.0f ) * pcap->bump_sizebig;
-    pchr->bump_stt.height   = (pcap->bump_override_height  ? 1.0f : -1.0f ) * pcap->bump_height;
+    pchr->bump_stt.size     = ( pcap->bump_override_size    ? 1.0f : -1.0f ) * pcap->bump_size;
+    pchr->bump_stt.size_big = ( pcap->bump_override_sizebig ? 1.0f : -1.0f ) * pcap->bump_sizebig;
+    pchr->bump_stt.height   = ( pcap->bump_override_height  ? 1.0f : -1.0f ) * pcap->bump_height;
 
     pchr->fat                = pchr->fat_stt;
     pchr->shadow_size_save   = pchr->shadow_size_stt;
