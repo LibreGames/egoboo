@@ -1861,7 +1861,7 @@ int doChoosePlayer( float deltaTime )
                 vfs_empty_import_directory();
                 if ( !vfs_mkdir( "import" ) )
                 {
-                    log_warning( "game_update_imports() - Could not create the import folder. (%s)\n", vfs_getError() );
+                    log_warning( "game_initialize_imports() - Could not create the import folder. (%s)\n", vfs_getError() );
                 }
 
                 // set up the slots and the import stuff for the selected players
@@ -1877,6 +1877,9 @@ int doChoosePlayer( float deltaTime )
                     strncpy( srcDir, loadplayer[selectedPlayer].dir, SDL_arraysize( srcDir ) );
                     snprintf( destDir, SDL_arraysize( destDir ), "/import/temp%04d.obj", local_import_slot[i] );
                     vfs_copyDirectory( srcDir, destDir );
+
+					//ZF> Linux debug info
+					log_info("game_initialize_imports() - copying from %s to %s\n", srcDir, destDir);
 
                     // Copy all of the character's items to the import directory
                     for ( j = 0; j < MAXIMPORTOBJECTS; j++ )

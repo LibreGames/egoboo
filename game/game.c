@@ -3454,7 +3454,11 @@ egoboo_rv game_update_imports()
 
     // build the import directory using the player info
     vfs_empty_import_directory();
-    vfs_mkdir( "/import" );
+	if ( !vfs_mkdir( "/import" ) )
+    {
+		log_warning( "game_update_imports() - Could not create the import folder. (%s)\n", vfs_getError() );
+    }
+
 
     // export all of the players directly from memory straight to the "import" dir
     for ( player = 0, ipla = 0; ipla < MAX_PLAYER; ipla++ )
