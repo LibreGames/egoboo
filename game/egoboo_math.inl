@@ -91,7 +91,6 @@ INLINE fmat_4x4_t RotateX( const float rads );
 INLINE fmat_4x4_t RotateY( const float rads );
 INLINE fmat_4x4_t RotateZ( const float rads );
 INLINE fmat_4x4_t ScaleXYZ( const float sizex, const float sizey, const float sizez );
-INLINE fmat_4x4_t ScaleXYZRotateXYZTranslate( const float scale_x, const float scale_y, const float scale_z, const Uint16 turn_z, const Uint16 turn_x, const Uint16 turn_y, const float translate_x, const float translate_y, const float translate_z );
 INLINE fmat_4x4_t FourPoints( const fvec4_base_t ori, const fvec4_base_t wid, const fvec4_base_t frw, const fvec4_base_t upx, const float scale );
 INLINE fmat_4x4_t ViewMatrix( const fvec3_base_t   from, const fvec3_base_t   at, const fvec3_base_t   world_up, const float roll );
 INLINE fmat_4x4_t ProjectionMatrix( const float near_plane, const float far_plane, const float fov );

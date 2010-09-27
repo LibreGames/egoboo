@@ -430,7 +430,7 @@ cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
         }
 
         //If it is none of the predefined IDSZ extensions then add it as a new skill
-        idsz_map_add( pcap->skills, SDL_arraysize(pcap->skills), idsz, fget_int( fileread ) );
+        else idsz_map_add( pcap->skills, SDL_arraysize(pcap->skills), idsz, fget_int( fileread ) );
     }
 
     vfs_close( fileread );

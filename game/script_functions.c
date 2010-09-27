@@ -6746,7 +6746,7 @@ Uint8 scr_EnableListenSkill( script_state_t * pstate, ai_state_bundle_t * pbdl_s
 {
     /// @details ZF@> TODO: deprecated, replace this function with something else
 
-    log_warning( "Deprecated script function used (EnableListenSkill).\n" );
+	log_warning( "Deprecated script function used (EnableListenSkill) in %s.\n", pbdl_self->chr_ptr->Name );
     return bfalse;
 }
 

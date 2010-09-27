@@ -2370,7 +2370,7 @@ bool_t chr_upload_cap( chr_t * pchr, cap_t * pcap )
     }
 
     // Other junk
-    pcap->fly_height   = pchr->fly_height;
+    pcap->fly_height  = pchr->fly_height;
     pcap->alpha       = pchr->alpha_base;
     pcap->light       = pchr->light_base;
     pcap->flashand    = pchr->flashand;

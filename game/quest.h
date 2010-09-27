@@ -38,7 +38,7 @@ struct s_IDSZ_node;
 #define QUEST_MINVAL         -2
 #define QUEST_BEATEN         -2
 #define QUEST_NONE           -1
-#define QUEST_MAXVAL         0x7FFFFFFF  // maximum positive integer
+#define QUEST_MAXVAL         0x7FFFFFFF  // maximum positive signed integer
 
 // Public functions
 egoboo_rv quest_log_download_vfs( struct s_IDSZ_node quest_log[], size_t quest_log_len, const char* player_directory );

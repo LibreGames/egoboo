@@ -22,9 +22,9 @@
 /// @details ZF> This could be done more optimal with a proper HashMap allowing O(1) speed instead of O(n)
 ///              I think we should also implement a similar system for skill IDSZ.
 
+#include "IDSZ_map.h"
 #include "quest.h"
 #include "log.h"
-#include "IDSZ_map.h"
 
 #include "egoboo_fileutil.h"
 #include "egoboo_vfs.h"

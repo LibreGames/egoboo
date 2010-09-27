@@ -10,7 +10,7 @@ EGO_SRC  := \
 	egoboo_console.c egoboo_endian.c egoboo_fileutil.c \
 	egoboo_math.c egoboo_setup.c egoboo_strutil.c egoboo_typedef.c \
 	egoboo_vfs.c enchant.c file_common.c font_bmp.c font_ttf.c game.c \
-	graphic.c graphic_fan.c graphic_mad.c graphic_prt.c hash.c ISDZ_map.c \
+	graphic.c graphic_fan.c graphic_mad.c graphic_prt.c hash.c IDSZ_map.c \
 	input.c lighting.c link.c log.c mad.c md2.c menu.c mesh.c network.c \
 	particle.c passage.c profile.c quest.c script.c script_compile.c \
 	script_functions.c server.c sound.c texture.c ui.c egoboo.c physics.c\
