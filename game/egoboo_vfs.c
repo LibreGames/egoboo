@@ -620,7 +620,6 @@ const char * vfs_resolveWriteFilename( const char * src_filename )
     snprintf( szFname, SDL_arraysize( szFname ), "%s" SLASH_STR "%s", write_dir, szTemp );
 
     // make sure that the slashes are correct for this system, and that they are not doubled
-
     return str_convert_slash_sys( szFname, SDL_arraysize( szFname ) );
 }
 

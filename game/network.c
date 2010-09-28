@@ -1856,6 +1856,8 @@ void net_initialize()
 //--------------------------------------------------------------------------------------------
 void net_shutDown()
 {
+    if ( !gnet.on ) return;
+
     log_info( "net_shutDown: Turning off networking.\n" );
     enet_deinitialize();
 }

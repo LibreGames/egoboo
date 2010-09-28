@@ -1876,10 +1876,10 @@ int doChoosePlayer( float deltaTime )
                     // Copy the character to the import directory
                     strncpy( srcDir, loadplayer[selectedPlayer].dir, SDL_arraysize( srcDir ) );
                     snprintf( destDir, SDL_arraysize( destDir ), "/import/temp%04d.obj", local_import_slot[i] );
-                    vfs_copyDirectory( srcDir, destDir );
-
-                    //ZF> Linux debug info
-                    log_info( "game_initialize_imports() - copying from %s to %s\n", srcDir, destDir );
+                    if( !vfs_copyDirectory( srcDir, destDir ) )
+					{
+						log_warning( "game_initialize_imports() - Failed to copy a import character \"%s\" to \"%s\" (%s)\n", srcDir, destDir, vfs_getError() );
+					}
 
                     // Copy all of the character's items to the import directory
                     for ( j = 0; j < MAXIMPORTOBJECTS; j++ )
@@ -5208,9 +5208,6 @@ bool_t loadplayer_import_one( const char * foundfile )
     STRING filename;
     LOAD_PLAYER_INFO * pinfo;
     int skin = 0;
-
-    //ZF> Debug info to get this to work on Linux
-    log_info( "loadplayer_import_one() - Importing one object from (%s).\n", vfs_resolveReadFilename( foundfile ) );
 
     if ( !VALID_CSTR( foundfile ) || !vfs_exists( foundfile ) ) return bfalse;
 

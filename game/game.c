@@ -223,9 +223,6 @@ void export_one_character( const CHR_REF by_reference character, const CHR_REF b
     STRING todirname;
     STRING todirfullname;
 
-    //ZF> Debug info to get this to work on Linux
-    log_info( "export_one_character() - Okay, I intend to export a character now.\n" );
-
     if ( !PMod->exportvalid ) return;
 
     // Don't export enchants
@@ -277,9 +274,6 @@ void export_one_character( const CHR_REF by_reference character, const CHR_REF b
             vfs_removeDirectoryAndContents( tofile, btrue );
         }
     }
-
-    //ZF> Debug info to get this to work on Linux
-    log_info( "export_one_character() - Exporting one object from (%s) to (%s).\n", vfs_resolveReadFilename( fromdir ), vfs_resolveWriteFilename( todir ) );
 
     // Make the directory
     vfs_mkdir( todir );

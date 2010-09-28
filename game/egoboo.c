@@ -92,8 +92,6 @@ ego_process_t     * EProc   = &_eproc;
 //--------------------------------------------------------------------------------------------
 int do_ego_proc_begin( ego_process_t * eproc )
 {
-    const char * tmpname = NULL;
-
     // initialize the virtual filesystem first
     vfs_init();
     egoboo_setup_vfs_paths();
@@ -111,24 +109,7 @@ int do_ego_proc_begin( ego_process_t * eproc )
     _gclock = clk_create( "global clock", -1 );
 
     // read the "setup.txt" file
-    tmpname = vfs_resolveWriteFilename( "setup.txt" );
-    if ( setup_read_vfs( tmpname ) )
-    {
-        log_info( "Loaded local setup file \"%s\".\n", tmpname );
-    }
-    else
-    {
-        //Try load the default local setup.txt instead
-        tmpname = "/setup.txt";
-        if ( setup_read_vfs( tmpname ) )
-        {
-            log_info( "Loaded the default setup file \"%s\".\n", tmpname );
-        }
-        else
-        {
-            log_error( "Could not load setup settings: \"%s\"\n", tmpname );
-        }
-    }
+    setup_read_vfs();
 
     // download the "setup.txt" values into the cfg struct
     setup_download( &cfg );
