@@ -111,7 +111,7 @@ mod_file_t * module_load_info_vfs( const char * szLoadName, mod_file_t * pmod )
         IDSZ idsz = fget_idsz( fileread );
 
         // Read module type
-        if ( idsz == MAKE_IDSZ( 'T', 'Y', 'P', 'E' ) )
+        if ( MAKE_IDSZ( 'T', 'Y', 'P', 'E' ) == idsz )
         {
             // grab the expansion value
             cTmp = fget_first_letter( fileread );
@@ -123,7 +123,7 @@ mod_file_t * module_load_info_vfs( const char * szLoadName, mod_file_t * pmod )
             else if ( 'F' == toupper( cTmp ) )  pmod->moduletype = FILTER_FUN;
             else if ( 'S' == toupper( cTmp ) )  pmod->moduletype = FILTER_STARTER;
         }
-        else if ( idsz == MAKE_IDSZ( 'B', 'E', 'A', 'T' ) )
+        else if ( MAKE_IDSZ( 'B', 'E', 'A', 'T' ) == idsz )
         {
             pmod->beaten = btrue;
         }

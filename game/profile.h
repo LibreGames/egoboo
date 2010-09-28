@@ -157,7 +157,6 @@ struct s_obj_BSP
     // the BSP of characters for character-character and character-particle interactions
     BSP_tree_t   tree;
 };
-
 typedef struct s_obj_BSP obj_BSP_t;
 
 bool_t obj_BSP_ctor( obj_BSP_t * pbsp, struct s_mpd_BSP * pmesh_bsp );

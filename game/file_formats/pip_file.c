@@ -225,21 +225,21 @@ pip_t * load_one_pip_file_vfs( const char *szLoadName, pip_t * ppip )
     {
         idsz = fget_idsz( fileread );
 
-        if ( idsz == MAKE_IDSZ( 'T', 'U', 'R', 'N' ) )         ADD_BITS( ppip->damfx, DAMFX_NONE );        //ZF> This line doesn't do anything?
-        else if ( idsz == MAKE_IDSZ( 'A', 'R', 'M', 'O' ) )  ADD_BITS( ppip->damfx, DAMFX_ARMO );
-        else if ( idsz == MAKE_IDSZ( 'B', 'L', 'O', 'C' ) )  ADD_BITS( ppip->damfx, DAMFX_NBLOC );
-        else if ( idsz == MAKE_IDSZ( 'A', 'R', 'R', 'O' ) )  ADD_BITS( ppip->damfx, DAMFX_ARRO );
-        else if ( idsz == MAKE_IDSZ( 'T', 'I', 'M', 'E' ) )  ADD_BITS( ppip->damfx, DAMFX_TIME );
-        else if ( idsz == MAKE_IDSZ( 'Z', 'S', 'P', 'D' ) )  ppip->zaimspd = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'F', 'S', 'N', 'D' ) )  ppip->end_sound_floor = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'W', 'S', 'N', 'D' ) )  ppip->end_sound_wall = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'W', 'E', 'N', 'D' ) )  ppip->end_wall = ( 0 != fget_int( fileread ) );
-        else if ( idsz == MAKE_IDSZ( 'P', 'U', 'S', 'H' ) )  ppip->allowpush = ( 0 != fget_int( fileread ) );
-        else if ( idsz == MAKE_IDSZ( 'D', 'L', 'E', 'V' ) )  ppip->dynalight.level_add = fget_int( fileread ) / 1000.0f;
-        else if ( idsz == MAKE_IDSZ( 'D', 'R', 'A', 'D' ) )  ppip->dynalight.falloff_add = fget_int( fileread ) / 1000.0f;
-        else if ( idsz == MAKE_IDSZ( 'I', 'D', 'A', 'M' ) )  ppip->intdamagebonus = ( 0 != fget_int( fileread ) );
-        else if ( idsz == MAKE_IDSZ( 'W', 'D', 'A', 'M' ) )  ppip->wisdamagebonus = ( 0 != fget_int( fileread ) );
-        else if ( idsz == MAKE_IDSZ( 'O', 'R', 'N', 'T' ) )
+        if ( MAKE_IDSZ( 'T', 'U', 'R', 'N' ) == idsz )         ADD_BITS( ppip->damfx, DAMFX_NONE );        //ZF> This line doesn't do anything?
+        else if ( MAKE_IDSZ( 'A', 'R', 'M', 'O' ) == idsz )  ADD_BITS( ppip->damfx, DAMFX_ARMO );
+        else if ( MAKE_IDSZ( 'B', 'L', 'O', 'C' ) == idsz )  ADD_BITS( ppip->damfx, DAMFX_NBLOC );
+        else if ( MAKE_IDSZ( 'A', 'R', 'R', 'O' ) == idsz )  ADD_BITS( ppip->damfx, DAMFX_ARRO );
+        else if ( MAKE_IDSZ( 'T', 'I', 'M', 'E' ) == idsz )  ADD_BITS( ppip->damfx, DAMFX_TIME );
+        else if ( MAKE_IDSZ( 'Z', 'S', 'P', 'D' ) == idsz )  ppip->zaimspd = fget_int( fileread );
+        else if ( MAKE_IDSZ( 'F', 'S', 'N', 'D' ) == idsz )  ppip->end_sound_floor = fget_int( fileread );
+        else if ( MAKE_IDSZ( 'W', 'S', 'N', 'D' ) == idsz )  ppip->end_sound_wall = fget_int( fileread );
+        else if ( MAKE_IDSZ( 'W', 'E', 'N', 'D' ) == idsz )  ppip->end_wall = ( 0 != fget_int( fileread ) );
+        else if ( MAKE_IDSZ( 'P', 'U', 'S', 'H' ) == idsz )  ppip->allowpush = ( 0 != fget_int( fileread ) );
+        else if ( MAKE_IDSZ( 'D', 'L', 'E', 'V' ) == idsz )  ppip->dynalight.level_add = fget_int( fileread ) / 1000.0f;
+        else if ( MAKE_IDSZ( 'D', 'R', 'A', 'D' ) == idsz )  ppip->dynalight.falloff_add = fget_int( fileread ) / 1000.0f;
+        else if ( MAKE_IDSZ( 'I', 'D', 'A', 'M' ) == idsz )  ppip->intdamagebonus = ( 0 != fget_int( fileread ) );
+        else if ( MAKE_IDSZ( 'W', 'D', 'A', 'M' ) == idsz )  ppip->wisdamagebonus = ( 0 != fget_int( fileread ) );
+        else if ( MAKE_IDSZ( 'O', 'R', 'N', 'T' ) == idsz )
         {
             char cTmp = fget_first_letter( fileread );
             switch ( toupper( cTmp ) )

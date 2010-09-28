@@ -370,38 +370,38 @@ cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
     while ( goto_colon( NULL, fileread, btrue ) )
     {
         idsz = fget_idsz( fileread );
-        if ( idsz == MAKE_IDSZ( 'D', 'R', 'E', 'S' ) ) ADD_BITS( pcap->skindressy, 1 << fget_int( fileread ) );
-        else if ( idsz == MAKE_IDSZ( 'G', 'O', 'L', 'D' ) ) pcap->money = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'S', 'T', 'U', 'K' ) ) pcap->resistbumpspawn = ( 0 != ( 1 - fget_int( fileread ) ) );
-        else if ( idsz == MAKE_IDSZ( 'P', 'A', 'C', 'K' ) ) pcap->istoobig = !( 0 != fget_int( fileread ) );
-        else if ( idsz == MAKE_IDSZ( 'V', 'A', 'M', 'P' ) ) pcap->reflect = !( 0 != fget_int( fileread ) );
-        else if ( idsz == MAKE_IDSZ( 'D', 'R', 'A', 'W' ) ) pcap->alwaysdraw = ( 0 != fget_int( fileread ) );
-        else if ( idsz == MAKE_IDSZ( 'R', 'A', 'N', 'G' ) ) pcap->isranged = ( 0 != fget_int( fileread ) );
-        else if ( idsz == MAKE_IDSZ( 'H', 'I', 'D', 'E' ) ) pcap->hidestate = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'E', 'Q', 'U', 'I' ) ) pcap->isequipment = ( 0 != fget_int( fileread ) );
-        else if ( idsz == MAKE_IDSZ( 'S', 'Q', 'U', 'A' ) ) pcap->bump_sizebig = pcap->bump_size * 2;
-        else if ( idsz == MAKE_IDSZ( 'I', 'C', 'O', 'N' ) ) pcap->draw_icon = ( 0 != fget_int( fileread ) );
-        else if ( idsz == MAKE_IDSZ( 'S', 'H', 'A', 'D' ) ) pcap->forceshadow = ( 0 != fget_int( fileread ) );
-        else if ( idsz == MAKE_IDSZ( 'S', 'K', 'I', 'N' ) ) pcap->skin_override = fget_int( fileread ) & 3;
-        else if ( idsz == MAKE_IDSZ( 'C', 'O', 'N', 'T' ) ) pcap->content_override = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'S', 'T', 'A', 'T' ) ) pcap->state_override = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'L', 'E', 'V', 'L' ) ) pcap->level_override = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'P', 'L', 'A', 'T' ) ) pcap->canuseplatforms = ( 0 != fget_int( fileread ) );
-        else if ( idsz == MAKE_IDSZ( 'R', 'I', 'P', 'P' ) ) pcap->ripple = ( 0 != fget_int( fileread ) );
-        else if ( idsz == MAKE_IDSZ( 'V', 'A', 'L', 'U' ) ) pcap->isvaluable = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'L', 'I', 'F', 'E' ) ) pcap->life_spawn = 256.0f * fget_float( fileread );
-        else if ( idsz == MAKE_IDSZ( 'M', 'A', 'N', 'A' ) ) pcap->mana_spawn = 256.0f * fget_float( fileread );
-        else if ( idsz == MAKE_IDSZ( 'B', 'O', 'O', 'K' ) ) pcap->spelleffect_type = fget_int( fileread ) % MAX_SKIN;
-        else if ( idsz == MAKE_IDSZ( 'F', 'A', 'S', 'T' ) ) pcap->attack_fast = ( 0 != fget_int( fileread ) );
+        if ( MAKE_IDSZ( 'D', 'R', 'E', 'S' ) == idsz ) ADD_BITS( pcap->skindressy, 1 << fget_int( fileread ) );
+        else if ( MAKE_IDSZ( 'G', 'O', 'L', 'D' ) == idsz ) pcap->money = fget_int( fileread );
+        else if ( MAKE_IDSZ( 'S', 'T', 'U', 'K' ) == idsz ) pcap->resistbumpspawn = ( 0 != ( 1 - fget_int( fileread ) ) );
+        else if ( MAKE_IDSZ( 'P', 'A', 'C', 'K' ) == idsz ) pcap->istoobig = !( 0 != fget_int( fileread ) );
+        else if ( MAKE_IDSZ( 'V', 'A', 'M', 'P' ) == idsz ) pcap->reflect = !( 0 != fget_int( fileread ) );
+        else if ( MAKE_IDSZ( 'D', 'R', 'A', 'W' ) == idsz ) pcap->alwaysdraw = ( 0 != fget_int( fileread ) );
+        else if ( MAKE_IDSZ( 'R', 'A', 'N', 'G' ) == idsz ) pcap->isranged = ( 0 != fget_int( fileread ) );
+        else if ( MAKE_IDSZ( 'H', 'I', 'D', 'E' ) == idsz ) pcap->hidestate = fget_int( fileread );
+        else if ( MAKE_IDSZ( 'E', 'Q', 'U', 'I' ) == idsz ) pcap->isequipment = ( 0 != fget_int( fileread ) );
+        else if ( MAKE_IDSZ( 'S', 'Q', 'U', 'A' ) == idsz ) pcap->bump_sizebig = pcap->bump_size * 2;
+        else if ( MAKE_IDSZ( 'I', 'C', 'O', 'N' ) == idsz ) pcap->draw_icon = ( 0 != fget_int( fileread ) );
+        else if ( MAKE_IDSZ( 'S', 'H', 'A', 'D' ) == idsz ) pcap->forceshadow = ( 0 != fget_int( fileread ) );
+        else if ( MAKE_IDSZ( 'S', 'K', 'I', 'N' ) == idsz ) pcap->skin_override = fget_int( fileread ) & 3;
+        else if ( MAKE_IDSZ( 'C', 'O', 'N', 'T' ) == idsz ) pcap->content_override = fget_int( fileread );
+        else if ( MAKE_IDSZ( 'S', 'T', 'A', 'T' ) == idsz ) pcap->state_override = fget_int( fileread );
+        else if ( MAKE_IDSZ( 'L', 'E', 'V', 'L' ) == idsz ) pcap->level_override = fget_int( fileread );
+        else if ( MAKE_IDSZ( 'P', 'L', 'A', 'T' ) == idsz ) pcap->canuseplatforms = ( 0 != fget_int( fileread ) );
+        else if ( MAKE_IDSZ( 'R', 'I', 'P', 'P' ) == idsz ) pcap->ripple = ( 0 != fget_int( fileread ) );
+        else if ( MAKE_IDSZ( 'V', 'A', 'L', 'U' ) == idsz ) pcap->isvaluable = fget_int( fileread );
+        else if ( MAKE_IDSZ( 'L', 'I', 'F', 'E' ) == idsz ) pcap->life_spawn = 256.0f * fget_float( fileread );
+        else if ( MAKE_IDSZ( 'M', 'A', 'N', 'A' ) == idsz ) pcap->mana_spawn = 256.0f * fget_float( fileread );
+        else if ( MAKE_IDSZ( 'B', 'O', 'O', 'K' ) == idsz ) pcap->spelleffect_type = fget_int( fileread ) % MAX_SKIN;
+        else if ( MAKE_IDSZ( 'F', 'A', 'S', 'T' ) == idsz ) pcap->attack_fast = ( 0 != fget_int( fileread ) );
 
         //Damage bonuses from stats
-        else if ( idsz == MAKE_IDSZ( 'S', 'T', 'R', 'D' ) ) pcap->str_bonus = fget_float( fileread );
-        else if ( idsz == MAKE_IDSZ( 'I', 'N', 'T', 'D' ) ) pcap->int_bonus = fget_float( fileread );
-        else if ( idsz == MAKE_IDSZ( 'W', 'I', 'S', 'D' ) ) pcap->wis_bonus = fget_float( fileread );
-        else if ( idsz == MAKE_IDSZ( 'D', 'E', 'X', 'D' ) ) pcap->dex_bonus = fget_float( fileread );
+        else if ( MAKE_IDSZ( 'S', 'T', 'R', 'D' ) == idsz ) pcap->str_bonus = fget_float( fileread );
+        else if ( MAKE_IDSZ( 'I', 'N', 'T', 'D' ) == idsz ) pcap->int_bonus = fget_float( fileread );
+        else if ( MAKE_IDSZ( 'W', 'I', 'S', 'D' ) == idsz ) pcap->wis_bonus = fget_float( fileread );
+        else if ( MAKE_IDSZ( 'D', 'E', 'X', 'D' ) == idsz ) pcap->dex_bonus = fget_float( fileread );
 
         // get some model customization
-        else if ( idsz == MAKE_IDSZ( 'M', 'O', 'D', 'L' ) )
+        else if ( MAKE_IDSZ( 'M', 'O', 'D', 'L' ) == idsz )
         {
             STRING tmp_buffer;
             if ( fget_string( fileread, tmp_buffer, SDL_arraysize( tmp_buffer ) ) )
@@ -435,7 +435,7 @@ cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
 
     vfs_close( fileread );
 
-    //log_info( "load_one_character_profile_vfs() - loaded icap %s (%d)\n", pcap->classname, icap );
+    //log_info( "load_one_character_profile_vfs() - loaded cap \"%s\"(%d)\n", pcap->classname, icap );
 
     return pcap;
 }

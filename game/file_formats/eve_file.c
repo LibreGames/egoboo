@@ -185,15 +185,15 @@ eve_t * load_one_enchant_file_vfs( const char* szLoadName, eve_t * peve )
     {
         idsz = fget_idsz( fileread );
 
-        if ( idsz == MAKE_IDSZ( 'A', 'M', 'O', 'U' ) ) peve->contspawn_amount = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'T', 'Y', 'P', 'E' ) ) peve->contspawn_pip = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'T', 'I', 'M', 'E' ) ) peve->contspawn_delay = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'F', 'A', 'C', 'E' ) ) peve->contspawn_facingadd = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'S', 'E', 'N', 'D' ) ) peve->endsound_index = fget_int( fileread );
-        else if ( idsz == MAKE_IDSZ( 'S', 'T', 'A', 'Y' ) ) peve->stayifnoowner = ( 0 != fget_int( fileread ) );
-        else if ( idsz == MAKE_IDSZ( 'O', 'V', 'E', 'R' ) ) peve->spawn_overlay = ( 0 != fget_int( fileread ) );
-        else if ( idsz == MAKE_IDSZ( 'C', 'K', 'U', 'R' ) ) peve->seekurse = ( 0 != fget_int( fileread ) );
-        else if ( idsz == MAKE_IDSZ( 'D', 'E', 'A', 'D' ) ) peve->stayiftargetdead = ( 0 != fget_int( fileread ) );
+        if ( MAKE_IDSZ( 'A', 'M', 'O', 'U' ) == idsz ) peve->contspawn_amount = fget_int( fileread );
+        else if ( MAKE_IDSZ( 'T', 'Y', 'P', 'E' ) == idsz ) peve->contspawn_pip = fget_int( fileread );
+        else if ( MAKE_IDSZ( 'T', 'I', 'M', 'E' ) == idsz ) peve->contspawn_delay = fget_int( fileread );
+        else if ( MAKE_IDSZ( 'F', 'A', 'C', 'E' ) == idsz ) peve->contspawn_facingadd = fget_int( fileread );
+        else if ( MAKE_IDSZ( 'S', 'E', 'N', 'D' ) == idsz ) peve->endsound_index = fget_int( fileread );
+        else if ( MAKE_IDSZ( 'S', 'T', 'A', 'Y' ) == idsz ) peve->stayifnoowner = ( 0 != fget_int( fileread ) );
+        else if ( MAKE_IDSZ( 'O', 'V', 'E', 'R' ) == idsz ) peve->spawn_overlay = ( 0 != fget_int( fileread ) );
+        else if ( MAKE_IDSZ( 'C', 'K', 'U', 'R' ) == idsz ) peve->seekurse = ( 0 != fget_int( fileread ) );
+        else if ( MAKE_IDSZ( 'D', 'E', 'A', 'D' ) == idsz ) peve->stayiftargetdead = ( 0 != fget_int( fileread ) );
     }
 
     // All done ( finally )

@@ -56,6 +56,8 @@ bool_t       BSP_aabb_from_oct_bb( BSP_aabb_t * pdst, oct_bb_t * psrc );
 //--------------------------------------------------------------------------------------------
 struct s_BSP_leaf
 {
+    bool_t              inserted;
+
     struct s_BSP_leaf * next;
     int                 data_type;
     void              * data;

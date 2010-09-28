@@ -467,131 +467,6 @@ bool_t detect_chr_prt_interaction_valid( const CHR_REF by_reference ichr_a, cons
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t add_chr_chr_interaction( CHashList_t * pchlst, const CHR_REF by_reference ichr_a, const CHR_REF by_reference ichr_b, CoNode_ary_t * pcn_lst, HashNode_ary_t * phn_lst )
-{
-    Uint32 hashval = 0;
-    int count;
-    bool_t found;
-
-    hash_node_t * n;
-    CoNode_t    * d;
-
-    if ( NULL == pchlst || NULL == pcn_lst || NULL == phn_lst ) return bfalse;
-
-    // there is no situation in the game where we allow characters to interact with themselves
-    if ( ichr_a == ichr_b ) return bfalse;
-
-    // create a hash that is order-independent
-    hashval = MAKE_HASH( REF_TO_INT( ichr_a ), REF_TO_INT( ichr_b ) );
-
-    found = bfalse;
-    count = pchlst->subcount[hashval];
-    if ( count > 0 )
-    {
-        int i;
-
-        // this hash already exists. check to see if the binary collision exists, too
-        n = pchlst->sublist[hashval];
-        for ( i = 0; i < count; i++ )
-        {
-            d = ( CoNode_t * )( n->data );
-
-            // make sure to test both orders
-            if (( d->chra == ichr_a && d->chrb == ichr_b ) || ( d->chra == ichr_b && d->chrb == ichr_a ) )
-            {
-                found = btrue;
-                break;
-            }
-        }
-    }
-
-    // insert this collision
-    if ( !found )
-    {
-        // pick a free collision data
-        EGOBOO_ASSERT( CoNode_ary_get_top( pcn_lst ) < CHR_MAX_COLLISIONS );
-        d = CoNode_ary_pop_back( pcn_lst );
-
-        // fill it in
-        CoNode_ctor( d );
-        d->chra = ichr_a;
-        d->chrb = ichr_b;
-
-        // generate a new hash node
-        EGOBOO_ASSERT( HashNode_ary_get_top( phn_lst ) < COLLISION_HASH_NODES );
-        n = HashNode_ary_pop_back( phn_lst );
-
-        hash_node_ctor( n, ( void* )d );
-
-        // insert the node
-        pchlst->subcount[hashval]++;
-        pchlst->sublist[hashval] = hash_node_insert_before( pchlst->sublist[hashval], n );
-    }
-
-    return !found;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t add_chr_prt_interaction( CHashList_t * pchlst, const CHR_REF by_reference ichr_a, const PRT_REF by_reference iprt_b, CoNode_ary_t * pcn_lst, HashNode_ary_t * phn_lst )
-{
-    bool_t found;
-    int    count;
-    Uint32 hashval = 0;
-
-    hash_node_t * n;
-    CoNode_t    * d;
-
-    if ( NULL == pchlst ) return bfalse;
-
-    // create a hash that is order-independent
-    hashval = MAKE_HASH( REF_TO_INT( ichr_a ), REF_TO_INT( iprt_b ) );
-
-    found = bfalse;
-    count = pchlst->subcount[hashval];
-    if ( count > 0 )
-    {
-        int i ;
-
-        // this hash already exists. check to see if the binary collision exists, too
-        n = pchlst->sublist[hashval];
-        for ( i = 0; i < count; i++ )
-        {
-            d = ( CoNode_t * )( n->data );
-            if ( d->chra == ichr_a && d->prtb == iprt_b )
-            {
-                found = btrue;
-                break;
-            }
-        }
-    }
-
-    // insert this collision
-    if ( !found )
-    {
-        // pick a free collision data
-        EGOBOO_ASSERT( CoNode_ary_get_top( pcn_lst ) < CHR_MAX_COLLISIONS );
-        d = CoNode_ary_pop_back( pcn_lst );
-
-        // fill it in
-        CoNode_ctor( d );
-        d->chra = ichr_a;
-        d->prtb = iprt_b;
-
-        // generate a new hash node
-        EGOBOO_ASSERT( HashNode_ary_get_top( phn_lst ) < COLLISION_HASH_NODES );
-        n = HashNode_ary_pop_back( phn_lst );
-
-        hash_node_ctor( n, ( void* )d );
-
-        // insert the node
-        pchlst->subcount[hashval]++;
-        pchlst->sublist[hashval] = hash_node_insert_before( pchlst->sublist[hashval], n );
-    }
-
-    return !found;
-}
-
-//--------------------------------------------------------------------------------------------
 bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary_t * cn_lst, HashNode_ary_t * hn_lst )
 {
     ego_mpd_info_t * mi;
@@ -609,9 +484,10 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary_t * cn_lst, HashN
 
     //---- find the character/particle interactions
 
-    // Find the character-character interactions. Use the ChrList.used_ref, for a change
+    // Find the character-character interactions. 
+    // Loop only through the list of objects that are both active and in the BSP tree
     CHashList_inserted = 0;
-    CHR_BEGIN_LOOP_ACTIVE( ichr_a, pchr_a )
+    CHR_BEGIN_LOOP_BSP( ichr_a, pchr_a )
     {
         oct_bb_t   tmp_oct;
 
@@ -643,6 +519,7 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary_t * cn_lst, HashN
                 pleaf = _coll_leaf_lst.ary[j];
                 if ( NULL == pleaf ) continue;
 
+                // assume the worst
                 do_insert = bfalse;
 
                 coll_ref = pleaf->index;
@@ -3574,3 +3451,128 @@ void update_all_platform_attachments()
     update_all_chr_platform_attachments();
     update_all_prt_platform_attachments();
 }
+
+//--------------------------------------------------------------------------------------------
+//bool_t add_chr_chr_interaction( CHashList_t * pchlst, const CHR_REF by_reference ichr_a, const CHR_REF by_reference ichr_b, CoNode_ary_t * pcn_lst, HashNode_ary_t * phn_lst )
+//{
+//    Uint32 hashval = 0;
+//    int count;
+//    bool_t found;
+//
+//    hash_node_t * n;
+//    CoNode_t    * d;
+//
+//    if ( NULL == pchlst || NULL == pcn_lst || NULL == phn_lst ) return bfalse;
+//
+//    // there is no situation in the game where we allow characters to interact with themselves
+//    if ( ichr_a == ichr_b ) return bfalse;
+//
+//    // create a hash that is order-independent
+//    hashval = MAKE_HASH( REF_TO_INT( ichr_a ), REF_TO_INT( ichr_b ) );
+//
+//    found = bfalse;
+//    count = pchlst->subcount[hashval];
+//    if ( count > 0 )
+//    {
+//        int i;
+//
+//        // this hash already exists. check to see if the binary collision exists, too
+//        n = pchlst->sublist[hashval];
+//        for ( i = 0; i < count; i++ )
+//        {
+//            d = ( CoNode_t * )( n->data );
+//
+//            // make sure to test both orders
+//            if (( d->chra == ichr_a && d->chrb == ichr_b ) || ( d->chra == ichr_b && d->chrb == ichr_a ) )
+//            {
+//                found = btrue;
+//                break;
+//            }
+//        }
+//    }
+//
+//    // insert this collision
+//    if ( !found )
+//    {
+//        // pick a free collision data
+//        EGOBOO_ASSERT( CoNode_ary_get_top( pcn_lst ) < CHR_MAX_COLLISIONS );
+//        d = CoNode_ary_pop_back( pcn_lst );
+//
+//        // fill it in
+//        CoNode_ctor( d );
+//        d->chra = ichr_a;
+//        d->chrb = ichr_b;
+//
+//        // generate a new hash node
+//        EGOBOO_ASSERT( HashNode_ary_get_top( phn_lst ) < COLLISION_HASH_NODES );
+//        n = HashNode_ary_pop_back( phn_lst );
+//
+//        hash_node_ctor( n, ( void* )d );
+//
+//        // insert the node
+//        pchlst->subcount[hashval]++;
+//        pchlst->sublist[hashval] = hash_node_insert_before( pchlst->sublist[hashval], n );
+//    }
+//
+//    return !found;
+//}
+
+//--------------------------------------------------------------------------------------------
+//bool_t add_chr_prt_interaction( CHashList_t * pchlst, const CHR_REF by_reference ichr_a, const PRT_REF by_reference iprt_b, CoNode_ary_t * pcn_lst, HashNode_ary_t * phn_lst )
+//{
+//    bool_t found;
+//    int    count;
+//    Uint32 hashval = 0;
+//
+//    hash_node_t * n;
+//    CoNode_t    * d;
+//
+//    if ( NULL == pchlst ) return bfalse;
+//
+//    // create a hash that is order-independent
+//    hashval = MAKE_HASH( REF_TO_INT( ichr_a ), REF_TO_INT( iprt_b ) );
+//
+//    found = bfalse;
+//    count = pchlst->subcount[hashval];
+//    if ( count > 0 )
+//    {
+//        int i ;
+//
+//        // this hash already exists. check to see if the binary collision exists, too
+//        n = pchlst->sublist[hashval];
+//        for ( i = 0; i < count; i++ )
+//        {
+//            d = ( CoNode_t * )( n->data );
+//            if ( d->chra == ichr_a && d->prtb == iprt_b )
+//            {
+//                found = btrue;
+//                break;
+//            }
+//        }
+//    }
+//
+//    // insert this collision
+//    if ( !found )
+//    {
+//        // pick a free collision data
+//        EGOBOO_ASSERT( CoNode_ary_get_top( pcn_lst ) < CHR_MAX_COLLISIONS );
+//        d = CoNode_ary_pop_back( pcn_lst );
+//
+//        // fill it in
+//        CoNode_ctor( d );
+//        d->chra = ichr_a;
+//        d->prtb = iprt_b;
+//
+//        // generate a new hash node
+//        EGOBOO_ASSERT( HashNode_ary_get_top( phn_lst ) < COLLISION_HASH_NODES );
+//        n = HashNode_ary_pop_back( phn_lst );
+//
+//        hash_node_ctor( n, ( void* )d );
+//
+//        // insert the node
+//        pchlst->subcount[hashval]++;
+//        pchlst->sublist[hashval] = hash_node_insert_before( pchlst->sublist[hashval], n );
+//    }
+//
+//    return !found;
+//}

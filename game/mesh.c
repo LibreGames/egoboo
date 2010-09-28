@@ -2117,10 +2117,11 @@ int mesh_BSP_collide( mesh_BSP_t * pbsp, BSP_aabb_t * paabb, BSP_leaf_pary_t * c
     if ( NULL == pbsp || NULL == paabb ) return 0;
 
     if ( NULL == colst ) return 0;
+
     colst->top = 0;
+
     if ( 0 == colst->alloc ) return 0;
 
-    // collide with any "infinite" nodes
     return BSP_tree_collide( &( pbsp->tree ), paabb, colst );
 }
 

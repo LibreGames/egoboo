@@ -1253,6 +1253,18 @@ bool_t obj_BSP_insert_chr( obj_BSP_t * pbsp, chr_t * pchr )
 
     if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
 
+    // no interactions with hidden objects
+    if ( pchr->is_hidden ) 
+        return bfalse;
+    
+    // no interactions with packed objects
+    if ( pchr->pack.is_packed ) 
+        return bfalse;
+
+    // no interaction with objects of zero size
+    if( 0 == pchr->bump_stt.size )
+        return bfalse;
+
     if ( NULL == pbsp ) return bfalse;
     ptree = &( pbsp->tree );
 
@@ -1367,16 +1379,19 @@ bool_t obj_BSP_empty( obj_BSP_t * pbsp )
     BSP_tree_clear_nodes( &( pbsp->tree ), btrue );
 
     // unlink all used character nodes
+    BSP_chr_count = 0;
     for ( ichr = 0; ichr < MAX_CHR; ichr++ )
     {
-        ChrList.lst[ichr].bsp_leaf.next = NULL;
+        ChrList.lst[ichr].bsp_leaf.next     = NULL;
+        ChrList.lst[ichr].bsp_leaf.inserted = bfalse;
     }
 
     // unlink all used particle nodes
     BSP_prt_count = 0;
     for ( iprt = 0; iprt < TOTAL_MAX_PRT; iprt++ )
     {
-        PrtList.lst[iprt].bsp_leaf.next = NULL;
+        PrtList.lst[iprt].bsp_leaf.next     = NULL;
+        PrtList.lst[iprt].bsp_leaf.inserted = bfalse;
     }
 
     return btrue;
@@ -1431,9 +1446,14 @@ int obj_BSP_collide( obj_BSP_t * pbsp, BSP_aabb_t * paabb, BSP_leaf_pary_t * col
     /// @details BB@> fill the collision list with references to tiles that the object volume may overlap.
     //      Return the number of collisions found.
 
-    if ( NULL == pbsp || NULL == paabb || NULL == colst ) return 0;
+    if ( NULL == pbsp || NULL == paabb ) return 0;
 
-    // infinite nodes
+    if ( NULL == colst ) return 0;
+
+    colst->top = 0;
+
+    if ( 0 == colst->alloc ) return 0;
+
     return BSP_tree_collide( &( pbsp->tree ), paabb, colst );
 }
 
