@@ -307,17 +307,17 @@ int wallmakeMakeTile(int fan, int is_floor, WALLMAKER_INFO_T *wi)
     }
 
     /* -------- Now return the list of walls needed to change (including middle) -- */
-    wi[8].pos  = wi[WALLMAKE_MIDDLE].pos;
-    wi[8].type = wi[WALLMAKE_MIDDLE].type;
-    wi[8].dir  = wi[WALLMAKE_MIDDLE].dir;
+    wi[9].pos  = wi[WALLMAKE_MIDDLE].pos;
+    wi[9].type = wi[WALLMAKE_MIDDLE].type;
+    wi[9].dir  = wi[WALLMAKE_MIDDLE].dir;
 
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < 9; i++) {
+    
         wi[i].pos  = wi[AdjacentCheck[i]].pos;
         wi[i].type = wi[AdjacentCheck[i]].type;
         wi[i].dir  = wi[AdjacentCheck[i]].dir;
 
     }
-
 
     return 9;
 

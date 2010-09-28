@@ -55,6 +55,7 @@
 
 /* --------- Other values ------- */
 #define EDITMAIN_MAX_MAPSIZE  64
+#define EDITMAIN_MAXSELECT    25        /* Maximum fans to be selected  */
 
 /* ---- Flags to toggle --------- */
 #define EDITMAIN_TOGGLE_DRAWMODE    1
@@ -68,6 +69,8 @@
 typedef struct {
 
     int  fan_chosen;    /* Actual chosen fan for info or editing */
+    int  num_fan_selected;
+    int  fan_selected[EDITMAIN_MAXSELECT + 1];
     int  tx, ty;        /* Position of fan as x/y on map    */
     char display_flags; /* For display in main editor       */
     char draw_mode;     /* For copy into mesh - struct      */

@@ -2,7 +2,7 @@
 *  SDLGL.H                                                                     *
 *	- Entrypoint for the library, starts the menu-loop.		                   *
 *									                                           *
-*   Copyright (C) 2001-2010  Paul Mueller <pmtech@swissonline.ch>              *
+*   Copyright (C) 2001  Paul Mueller <pmtech@swissonline.ch>                   *
 *                                                                              *
 *   This program is free software; you can redistribute it and/or modify       *
 *   it under the terms of the GNU General Public License as published by       *
@@ -126,8 +126,9 @@ typedef unsigned short wchar_t;
 #define SDLGL_KEY_MOUMIDDLE     2001
 #define SDLGL_KEY_MOURIGHT      2002
 #define SDLGL_KEY_MOUMOVE       2004
-#define SDLGL_KEY_MOULDBLCLICK  2011
-#define SDLGL_KEY_MOURDBLCLICK  2012
+#define SDLGL_KEY_MOULDRAG      2005
+#define SDLGL_KEY_MOUMDRAG      2006
+#define SDLGL_KEY_MOURDRAG      2007
 #define SDLGL_KEY_ANY           2030    /* Hand any key to given function */
 
 /* ----- Focusstate for focus field -------- */

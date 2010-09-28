@@ -21,7 +21,11 @@
 *   You should have received a copy of the GNU General Public License          *
 *   along with this program; if not, write to the Free Software                *
 *   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. *
+*                                                                              *
+*                                                                              *
+* Last change: 2010-08-01                                                      *
 *******************************************************************************/
+
 
 /******************************************************************************
 * INCLUDES                                                                    *
@@ -292,7 +296,7 @@ static int sdlglITranslateKeyboardInput(SDLGL_EVENT *event, char pressed)
 
     SDLGL_CMDKEY *sk, *sk_list;
     int i;
-    unsigned char mask = 0;
+    unsigned char mask;
     
 
     /* 1) Check if there are command keys to translate */
@@ -300,7 +304,7 @@ static int sdlglITranslateKeyboardInput(SDLGL_EVENT *event, char pressed)
     if (! sk_list) {
 
         return 0;
- 
+        
     }
     
     /* 2) Check if there's a code to translate */
@@ -442,7 +446,7 @@ static void sdlglITranslateMouseInput(SDLGL_EVENT *event, SDLGL_FIELD *fields, i
 {
 
     static SDLGL_FIELD *MouseArea = DefaultArea; /* Never NULL   */ 
-    static int tooltipticks = 0;
+    static tooltipticks = 0;
     
     SDLGL_FIELD *base;              /* Save base    */
 
@@ -452,12 +456,16 @@ static void sdlglITranslateMouseInput(SDLGL_EVENT *event, SDLGL_FIELD *fields, i
     /* Adjust the mouse position to the graphics size of screen */
     event -> mou.x = event -> mou.x * mainConfig.displaywidth / mainConfig.scrwidth;
     event -> mou.y = event -> mou.y * mainConfig.displayheight / mainConfig.scrheight;
+    /* Adjust the movement value, too */
+    event -> movex = event -> movex * mainConfig.displaywidth / mainConfig.scrwidth;
+    event -> movey = event -> movey * mainConfig.displayheight / mainConfig.scrheight;
     
-    switch(event -> modflags) {
+    switch(event -> sdlcode) {
 
         case SDL_BUTTON_LEFT:
             event -> sdlcode = SDLGL_KEY_MOULEFT;
             break;
+            
         case SDL_BUTTON_MIDDLE:
             event -> sdlcode = SDLGL_KEY_MOUMIDDLE;
             break;
@@ -504,13 +512,8 @@ static void sdlglITranslateMouseInput(SDLGL_EVENT *event, SDLGL_FIELD *fields, i
                     
                 }
                 else {
-                    /* Same area as last call */
-                    if (moved) {
-                    
-                        MouseArea -> fstate |= SDLGL_FSTATE_MOUDRAG; 
+                    /* Same area as last call: Dragged in this Input-Rectangle... */
 
-                    }
-                    
                     tooltipticks += event -> tickspassed;
                     
                     if (tooltipticks >= mainConfig.tooltiptime) {
@@ -523,25 +526,25 @@ static void sdlglITranslateMouseInput(SDLGL_EVENT *event, SDLGL_FIELD *fields, i
                 
                 if (event -> pressed) {
                 
-                    switch (event -> modflags) {  	        /* button       */
+                    switch (event -> sdlcode) {  	        /* button       */
 
-                      	case SDL_BUTTON_LEFT:
-                        case SDL_BUTTON_RIGHT:
+                      	case SDLGL_KEY_MOULEFT:
+                        case SDLGL_KEY_MOURIGHT:
                             if (FocusArea != fields) {
                                 /* Change focus */
                                 FocusArea -> fstate &= (unsigned char)(~SDLGL_FSTATE_HASFOCUS);
                                 fields -> fstate    |= SDLGL_FSTATE_HASFOCUS;
                                 FocusArea           = fields;
                             }
-                            event -> field      = fields;	/* Save pointer on actual SDLGL_FIELD */ 
+                            event -> field      = fields;	/* Save pointer on actual SDLGL_FIELD */
                             event -> sdlgl_type = fields -> sdlgl_type;
                             event -> code       = fields -> code;
-                            event -> sub_code   = fields -> sub_code;  
+                            event -> sub_code   = fields -> sub_code;
                             break;
-                        /* Generate no code, if no mouse button is pressed */    
+                        /* Generate no code, if no mouse button is pressed */
 
-                    }   
-                    
+                    }
+
                 }
 
                 return; /* Event generated */
@@ -615,17 +618,18 @@ static int sdlglICheckInput(SDLGL_EVENT *inpevent)
                     inpevent -> mou.y  = event.motion.y;
                     inpevent -> movex  = event.motion.xrel;
                     inpevent -> movey  = event.motion.yrel;
+                    /* TODO: Set 'inpevent -> modflags = ' */
                     /* Now translate the input */
                     if (event.motion.state & SDL_BUTTON_LMASK) {
 
                         inpevent -> pressed  = 1;
-                        inpevent -> modflags = SDL_BUTTON_LEFT;                               
+                        inpevent -> sdlcode  = SDLGL_KEY_MOULDRAG;                               
 
                     }
                     else if (event.motion.state & SDL_BUTTON_RMASK) {
 
                         inpevent -> pressed  = 1;
-                        inpevent -> modflags = SDL_BUTTON_RIGHT;
+                        inpevent -> sdlcode  = SDLGL_KEY_MOURDRAG;    
 
                     }
                     else {
@@ -635,29 +639,21 @@ static int sdlglICheckInput(SDLGL_EVENT *inpevent)
                         inpevent -> sdlcode  = SDLGL_KEY_MOUMOVE;
 
                     }
-                    /* TODO: Support LDRAG for slider */
                     sdlglITranslateMouseInput(inpevent,
                      				          InputStack[InputStackIdx].InputArea,
                                               1);
                     break;
 
                 case SDL_MOUSEBUTTONDOWN:
+                    /* Click only on mouse release ==> Button up */
+                    break;
                 case SDL_MOUSEBUTTONUP:
                     inpevent -> mou.x    = event.button.x;
                     inpevent -> mou.y    = event.button.y;
                     inpevent -> movex    = 0;
                     inpevent -> movey    = 0;
-                    inpevent -> modflags = event.button.button;
-                    if (event.type == SDL_MOUSEBUTTONDOWN) {
-                    
-                        inpevent -> pressed = 1;
-                        
-                    }
-                    else {
-                    
-                        inpevent -> pressed = 0;
-                        
-                    }
+                    inpevent -> sdlcode  = event.button.button;                                   
+                    inpevent -> pressed  = 1;                    
 
                     sdlglITranslateMouseInput(inpevent,
                     				          InputStack[InputStackIdx].InputArea,
@@ -1751,7 +1747,7 @@ void sdlglInputRemove(char block_sign)
  *     block_sign: To set, replaces possible existing block
  *     psrc *:     Fields to add to Input-Fields.
  *     x, y:       Start at this position on screen (add to given pos)
- *                 (< 0: center it) 
+ *                 (< 0: center it)
  */
 void sdlglInputAdd(char block_sign, SDLGL_FIELD *psrc, int x, int y)
 {
@@ -1763,24 +1759,24 @@ void sdlglInputAdd(char block_sign, SDLGL_FIELD *psrc, int x, int y)
 
     /* 1) Check for valid 'block_sign'          */
     if (! block_sign) {
-    
+
         return;
-    
+
     }
-    
+
     /* 2) Get fields pointer                    */
     pdest = InputStack[InputStackIdx].InputArea;
     if (! pdest ) {
 
         return;
 
-    }    
-    
-    /* 3) Remove possible existing input fields of same type */   
+    }
+
+    /* 3) Remove possible existing input fields of same type */
     sdlglInputRemove(block_sign);
-    
+
     /* 4) Check, if theres enough space left to copy new Input-Fields  */
-    num_act   = sdlglICountFields(pdest);;
+    num_act   = sdlglICountFields(pdest);
     num_total = InputStack[InputStackIdx].num_total;
 
     /* 5) Count the fields, that should be copied   */
@@ -1788,7 +1784,7 @@ void sdlglInputAdd(char block_sign, SDLGL_FIELD *psrc, int x, int y)
 
     /* 6) Copy the fields, if there's enough space  */
     if ((num_total - num_act) >= num_src) {
-            
+
         sdlglAdjustRectToScreen(&psrc -> rect, &center_pos, SDLGL_FRECT_SCRCENTER);
         if (x < 0) {
             x = center_pos.x;
@@ -1797,16 +1793,15 @@ void sdlglInputAdd(char block_sign, SDLGL_FIELD *psrc, int x, int y)
             y = center_pos.y;
         }
     
-        pend = sdlglIFindTypeInAreas(0, pdest);           
-                 
+        pend = sdlglIFindTypeInAreas(0, pdest);
+        
         while(psrc -> sdlgl_type != 0) {
 
             memcpy(pend, psrc,  sizeof(SDLGL_FIELD));
-            /* Adjust x,y, if needed */
-            pend -> rect.x += x;    
-            pend -> rect.y += y;
             /* Set block_sign' for handling 'remove' */
             pend -> block_sign = block_sign;
+            pend -> rect.x += x;
+            pend -> rect.y += y;
             pend++;
             psrc++;
 

@@ -1,3 +1,10 @@
+2010-09-20 <bitnapper>
+- Prepared code for choosing multiple tiles
+- Update of code for 'mouse-click' sensing
+
+2010-09-20 <bitnapper>
+- Fixed choosing of tiles, if map size is not a power of two (example 'Griffin Tower')
+
 2010-09-13 <bitnapper>
 - Additional wallmaker code
 - Bugfixes in code for creation of new maps

@@ -371,15 +371,14 @@ static void editor2DMap(SDLGL_EVENT *event)
                                       field -> rect.w, field -> rect.h, 1);
                 }
                 else if (pEditState -> edit_mode == EDITMAIN_EDIT_SIMPLE) {
-
-                    if (event -> modflags == SDL_BUTTON_LEFT) {
+                    if (event -> sdlcode == SDLGL_KEY_MOULEFT) {
                         /* Replace type of chosen fan by new type of fan    */
                         /* or set a wall in 'simple' mode                   */
                         editmainChooseFan(event -> mou.x, event -> mou.y,
                                           field -> rect.w, field -> rect.h, 0);
                         editmainFanSet(0);
                     }
-                    else if (event -> modflags == SDL_BUTTON_RIGHT) {
+                    else if (event -> sdlcode == SDLGL_KEY_MOURIGHT) {
                         /* Set a floor fan in 'simple' edit mode */
                         editmainChooseFan(event -> mou.x, event -> mou.y,
                                           field -> rect.w, field -> rect.h, 0);
@@ -387,12 +386,12 @@ static void editor2DMap(SDLGL_EVENT *event)
                     }
                 }
                 else if (pEditState -> edit_mode == EDITMAIN_EDIT_FREE) {
-                    if (event -> modflags == SDL_BUTTON_LEFT) {
+                    if (event -> sdlcode == SDLGL_KEY_MOULEFT) {
                         editmainChooseFan(event -> mou.x, event -> mou.y,
                                           field -> rect.w, field -> rect.h, 0);
                         editmainFanSet(0);   /* Set the fan */
                     }
-                    else if (event -> modflags == SDL_BUTTON_RIGHT) {
+                    else if (event -> sdlcode == SDLGL_KEY_MOURIGHT) {
                         editmainChooseFan(event -> mou.x, event -> mou.y,
                                           field -> rect.w, field -> rect.h, 0);
                     }

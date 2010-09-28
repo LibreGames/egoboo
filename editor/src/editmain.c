@@ -57,6 +57,7 @@
 
 #define EDITMAIN_MAXSPAWN    500        /* Maximum Lines in spawn list  */
 #define EDITMAIN_MAXPASSAGE   50
+    
 
 /*******************************************************************************
 * TYPEDEFS							                                           *
@@ -892,11 +893,8 @@ int editmainMap(int command)
             break;
             
         case EDITMAIN_SETFANPROPERTY:
-            /* Do update the chosen texture */
             Mesh.fan[EditState.fan_chosen].tx_no = EditState.ft.tx_no;
-            /* Do update on flags */
             Mesh.fan[EditState.fan_chosen].fx = EditState.ft.fx;
-            /* TODO: Do update on fan vertices, fan type */
             break;
  
     }
@@ -998,6 +996,7 @@ void editmainChooseFan(int cx, int cy, int w, int h, int get_info)
 {
 
     int fan_no;
+    int tw;
     int x, y, i;
     int old_tx, old_ty;
 
@@ -1007,8 +1006,9 @@ void editmainChooseFan(int cx, int cy, int w, int h, int get_info)
     old_ty = EditState.ty;
 
     /* Save it as x/y-position, too */
-    EditState.tx = Mesh.tiles_x * cx / w;
-    EditState.ty = Mesh.tiles_y * cy / h;
+    tw = w / Mesh.tiles_x;      /* Calculate rectangle size for mouse */
+    EditState.tx = cx / tw;
+    EditState.ty = cy / tw;
 
     fan_no = (EditState.ty * Mesh.tiles_x) + EditState.tx;
 
@@ -1023,7 +1023,6 @@ void editmainChooseFan(int cx, int cy, int w, int h, int get_info)
         }
         else {
             /* 'Move' actual 'fd'-data to new position */
-            /* Now move it to the chosen position */
             x = (EditState.tx - old_tx) * 128;
             y = (EditState.ty - old_ty) * 128;
 
