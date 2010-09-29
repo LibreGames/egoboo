@@ -630,7 +630,7 @@ void free_one_character_in_game( const CHR_REF by_reference character )
         if ( pai->target == character )
         {
             ADD_BITS( pai->alert, ALERTIF_TARGETKILLED );
-            pai->target = cnt;
+            pai->target = MAX_CHR;
         }
 
         if ( chr_get_pteam( cnt )->leader == character )
@@ -728,7 +728,7 @@ prt_t * place_particle_at_vertex( prt_t * pprt, const CHR_REF by_reference chara
         vertex = 0;
         if ( NULL != pmad )
         {
-            vertex = (( int )pchr->inst.vrt_count ) - vertex_offset;
+            vertex = (( signed )pchr->inst.vrt_count ) - vertex_offset;
 
             // do the automatic update
             chr_instance_update_vertices( &( pchr->inst ), vertex, vertex, bfalse );
@@ -922,7 +922,7 @@ float chr_get_mesh_pressure( chr_t * pchr, float test_pos[] )
     if ( NULL == test_pos ) test_pos = pchr->pos.v;
 
     // calculate the radius based on whether the character is on camera
-    // ZF> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
+    /// @note ZF@> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
     radius = 0.0f;
     if ( mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) )
     {
@@ -958,7 +958,7 @@ fvec2_t chr_get_diff( chr_t * pchr, float test_pos[], float center_pressure )
     if ( NULL == test_pos ) test_pos = pchr->pos.v;
 
     // calculate the radius based on whether the character is on camera
-    // ZF> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
+    /// @note ZF@> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
     radius = 0.0f;
     if ( mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) )
     {
@@ -997,7 +997,7 @@ BIT_FIELD chr_hit_wall( chr_t * pchr, float test_pos[], float nrm[], float * pre
     if ( NULL == test_pos ) test_pos = pchr->pos.v;
 
     // calculate the radius based on whether the character is on camera
-    // ZF> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
+    /// @note ZF@> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
     radius = 0.0f;
     if ( mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) )
     {
@@ -1033,7 +1033,7 @@ bool_t chr_test_wall( chr_t * pchr, float test_pos[] )
     if ( 0.0f == pchr->bump_stt.size || INFINITE_WEIGHT == pchr->phys.weight ) return bfalse;
 
     // calculate the radius based on whether the character is on camera
-    // ZF> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
+    /// @note ZF@> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
     radius = 0.0f;
     if ( mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) )
     {
@@ -1384,8 +1384,10 @@ void attach_character_to_mount( const CHR_REF by_reference iitem, const CHR_REF 
     }
     else if ( pitem->alive )
     {
-        chr_play_action( pitem, ACTION_MM + slot, bfalse );        //ZF> hmm, here is the torch holding bug. Removing
-        pitem->inst.frame_lst = pitem->inst.frame_nxt;            //the interpolation seems to fix it...
+        /// @note ZF@> hmm, here is the torch holding bug. Removing
+        /// the interpolation seems to fix it...
+        chr_play_action( pitem, ACTION_MM + slot, bfalse );
+        pitem->inst.frame_lst = pitem->inst.frame_nxt;
 
         if ( pitem->isitem )
         {
@@ -2184,7 +2186,7 @@ void give_experience( const CHR_REF by_reference character, int amount, xp_type 
     pcap = chr_get_pcap( character );
     if ( NULL == pcap ) return;
 
-    //No xp to give
+    // No xp to give
     if ( 0 == amount ) return;
 
     if ( !IS_INVICTUS_PCHR_RAW( pchr ) || override_invictus )
@@ -2721,18 +2723,18 @@ bool_t heal_character( const CHR_REF by_reference character, const CHR_REF by_re
     /// @details ZF@> This function gives some pure life points to the target, ignoring any resistances and so forth
     chr_t * pchr, *pchr_h;
 
-    //Setup the healed character
+    // Setup the healed character
     if ( !INGAME_CHR( character ) ) return bfalse;
     pchr = ChrList.lst + character;
 
-    //Setup the healer
+    // Setup the healer
     if ( !INGAME_CHR( healer ) ) return bfalse;
     pchr_h = ChrList.lst + healer;
 
-    //Don't heal dead and invincible stuff
+    // Don't heal dead and invincible stuff
     if ( !pchr->alive || ( IS_INVICTUS_PCHR_RAW( pchr ) && !ignore_invictus ) ) return bfalse;
 
-    //This actually heals the character
+    // This actually heals the character
     pchr->life = CLIP( pchr->life, pchr->life + ABS( amount ), pchr->lifemax );
 
     // Set alerts, but don't alert that we healed ourselves
@@ -2846,7 +2848,7 @@ void kill_character( const CHR_REF by_reference ichr, const CHR_REF by_reference
     if ( !DEFINED_CHR( ichr ) ) return;
     pchr = ChrList.lst + ichr;
 
-    //No need to continue is there?
+    // No need to continue is there?
     if ( !pchr->alive || ( IS_INVICTUS_PCHR_RAW( pchr ) && !ignore_invictus ) ) return;
 
     pcap = pro_get_pcap( pchr->profile_ref );
@@ -2870,17 +2872,18 @@ void kill_character( const CHR_REF by_reference ichr, const CHR_REF by_reference
     // Give kill experience
     experience = pcap->experience_worth + ( pchr->experience * pcap->experience_exchange );
 
-    // distribute experience to the attacker
-    if ( INGAME_CHR( killer ) )
-    {
-        // Set target
-        pchr->ai.target = killer;
-        if ( killer_team == TEAM_DAMAGE || killer_team == TEAM_NULL )  pchr->ai.target = ichr;
+    // Set target
+    pchr->ai.target = INGAME_CHR( killer ) ? killer : MAX_CHR;
+    if ( killer_team == TEAM_DAMAGE ) pchr->ai.target = MAX_CHR;
+    if ( killer_team == TEAM_NULL   ) pchr->ai.target = ichr;
 
+    // distribute experience to the attacker
+    if ( MAX_CHR != pchr->ai.target )
+    {
         // Award experience for kill?
         if ( team_hates_team( killer_team, pchr->team ) )
         {
-            //Check for special hatred
+            // Check for special hatred
             if ( chr_get_idsz( killer, IDSZ_HATE ) == chr_get_idsz( ichr, IDSZ_PARENT ) ||
                  chr_get_idsz( killer, IDSZ_HATE ) == chr_get_idsz( ichr, IDSZ_TYPE ) )
             {
@@ -2892,8 +2895,8 @@ void kill_character( const CHR_REF by_reference ichr, const CHR_REF by_reference
         }
     }
 
-    //Set various alerts to let others know it has died
-    //and distribute experience to whoever needs it
+    // Set various alerts to let others know it has died
+    // and distribute experience to whoever needs it
     ADD_BITS( pchr->ai.alert, ALERTIF_KILLED );
 
     CHR_BEGIN_LOOP_ACTIVE( tnc, plistener )
@@ -3067,7 +3070,8 @@ int damage_character( const CHR_REF by_reference character, FACING_T direction,
         // Only if actually in the water
         if ( loc_pchr->pos.z <= water.surface_level )
         {
-            actual_damage = actual_damage << 1;        /// @note: ZF> Is double damage too much?
+            /// @note ZF@> Is double damage too much?
+            actual_damage = actual_damage << 1;
         }
     }
 
@@ -3117,7 +3121,7 @@ int damage_character( const CHR_REF by_reference character, FACING_T direction,
     immune_to_damage = ( actual_damage > 0 && actual_damage <= loc_pchr->damagethreshold ) || HAS_SOME_BITS( loc_pchr->damagemodifier[damagetype], DAMAGEINVICTUS );
     if ( immune_to_damage )
     {
-        //Dark green text
+        // Dark green text
         const float lifetime = 3;
         SDL_Color text_color = {0xFF, 0xFF, 0xFF, 0xFF};
         GLXvector4f tint  = { 0.0f, 0.5f, 0.00f, 1.00f };
@@ -4649,7 +4653,7 @@ void change_character( const CHR_REF by_reference ichr, const PRO_REF by_referen
         }
     }
 
-    //Physics
+    // Physics
     pchr->phys.bumpdampen     = pcap_new->bumpdampen;
 
     if ( CAP_INFINITE_WEIGHT == pcap_new->weight )
@@ -4717,7 +4721,8 @@ void change_character( const CHR_REF by_reference ichr, const PRO_REF by_referen
 
     // Reaffirm them particles...
     pchr->reaffirmdamagetype = pcap_new->attachedprt_reaffirmdamagetype;
-    //reaffirm_attached_particles( ichr );              /// @note ZF@> so that books don't burn when dropped
+    /// @note ZF@> remove this line so that books don't burn when dropped
+    //reaffirm_attached_particles( ichr );
     new_attached_prt_count = number_of_attached_particles( ichr );
 
     ai_state_set_changed( &( pchr->ai ) );
@@ -4873,10 +4878,10 @@ int chr_get_skill( chr_t *pchr, IDSZ whichskill )
 
     if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
 
-    //Any [NONE] IDSZ returns always "true"
+    // Any [NONE] IDSZ returns always "true"
     if ( IDSZ_NONE == whichskill ) return 1;
 
-    //Do not allow poison or backstab skill if we are restricted by code of conduct
+    // Do not allow poison or backstab skill if we are restricted by code of conduct
     if ( MAKE_IDSZ( 'P', 'O', 'I', 'S' ) == whichskill || MAKE_IDSZ( 's', 'T', 'A', 'B' ) == whichskill )
     {
         if ( NULL != idsz_map_get( pchr->skills, SDL_arraysize( pchr->skills ), MAKE_IDSZ( 'C', 'O', 'D', 'E' ) ) )
@@ -4909,7 +4914,7 @@ int chr_get_skill( chr_t *pchr, IDSZ whichskill )
         }
     }
 
-    //Skill not found
+    // Skill not found
     return 0;
 }
 
@@ -4940,7 +4945,7 @@ bool_t update_chr_darkvision( const CHR_REF by_reference character )
         enc_next = EncList.lst[enc_now].nextenchant_ref;
         peve = enc_get_peve( enc_now );
 
-        //Is it true poison?
+        // Is it true poison?
         if ( NULL != peve && MAKE_IDSZ( 'H', 'E', 'A', 'L' ) == peve->removedbyidsz )
         {
             life_regen += EncList.lst[enc_now].target_life;
@@ -4952,10 +4957,10 @@ bool_t update_chr_darkvision( const CHR_REF by_reference character )
 
     if ( life_regen < 0 )
     {
-        int tmp_level = ( 10 * -life_regen ) / pchr->lifemax;                        //Darkvision gained by poison
-        int base_level = chr_get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );    //Natural darkvision
+        int tmp_level  = -( 10 * life_regen ) / pchr->lifemax;                        // Darkvision gained by poison
+        int base_level = chr_get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );    // Natural darkvision
 
-        //Use the better of the two darkvision abilities
+        // Use the better of the two darkvision abilities
         pchr->darkvision_level = MAX( base_level, tmp_level );
     }
 
@@ -5172,7 +5177,7 @@ bool_t chr_do_latch_attack( chr_t * pchr, slot_t which_slot )
                         }
                     }
 
-                    //Determine the attack speed (how fast we play the animation)
+                    // Determine the attack speed (how fast we play the animation)
                     pchr->inst.rate = 0.125f;                       // base attack speed
                     pchr->inst.rate += chr_dex / 40;                // +0.25f for every 10 dexterity
 
@@ -5191,7 +5196,7 @@ bool_t chr_do_latch_attack( chr_t * pchr, slot_t which_slot )
                         else if ( ACTION_IS_TYPE( action, X ) ) base_reload_time += 100;    // Xbow     (Crossbow)
                         else if ( ACTION_IS_TYPE( action, F ) ) base_reload_time += 50;     // Flinged  (Unused)
 
-                        //it is possible to have so high dex to eliminate all reload time
+                        // it is possible to have so high dex to eliminate all reload time
                         if ( base_reload_time > 0 ) pweapon->reloadtime += base_reload_time;
                     }
                 }
@@ -5208,7 +5213,7 @@ bool_t chr_do_latch_attack( chr_t * pchr, slot_t which_slot )
         }
     }
 
-    //Reset boredom timer if the attack succeeded
+    // Reset boredom timer if the attack succeeded
     if ( retval )
     {
         pchr->boretime = BORETIME;
@@ -5238,9 +5243,9 @@ chr_bundle_t * chr_do_latch_button( chr_bundle_t * pbdl )
     loc_pphys   = &( loc_pchr->phys );
     loc_pai     = &( loc_pchr->ai );
 
-    if ( !loc_pchr->alive || 0 == loc_pchr->latch.trans_b ) return pbdl;
+    if ( !loc_pchr->alive || 0 == loc_pchr->latch.trans.b ) return pbdl;
 
-    if ( HAS_SOME_BITS( loc_pchr->latch.trans_b, LATCHBUTTON_JUMP ) && 0 == loc_pchr->jump_time )
+    if ( HAS_SOME_BITS( loc_pchr->latch.trans.b, LATCHBUTTON_JUMP ) && 0 == loc_pchr->jump_time )
     {
         int ijump;
 
@@ -5296,7 +5301,7 @@ chr_bundle_t * chr_do_latch_button( chr_bundle_t * pbdl )
             {
                 if ( loc_pchr->enviro.inwater || loc_pchr->enviro.is_slippy )
                 {
-                    jump_delay = JUMP_DELAY * 4;         //To prevent 'bunny jumping' in water
+                    jump_delay = JUMP_DELAY * 4;         // To prevent 'bunny jumping' in water
                     jump_vel = JUMP_SPEED_WATER;
                 }
                 else
@@ -5343,10 +5348,8 @@ chr_bundle_t * chr_do_latch_button( chr_bundle_t * pbdl )
         }
     }
 
-    if ( HAS_SOME_BITS( loc_pchr->latch.trans_b, LATCHBUTTON_ALTLEFT ) && loc_pchr->inst.action_ready && 0 == loc_pchr->reloadtime )
+    if ( HAS_SOME_BITS( loc_pchr->latch.trans.b, LATCHBUTTON_ALTLEFT ) && loc_pchr->inst.action_ready && 0 == loc_pchr->reloadtime )
     {
-        //loc_pchr->latch.trans_b &= ~LATCHBUTTON_ALTLEFT;
-
         loc_pchr->reloadtime = GRABDELAY;
         if ( !INGAME_CHR( loc_pchr->holdingwhich[SLOT_LEFT] ) )
         {
@@ -5360,10 +5363,8 @@ chr_bundle_t * chr_do_latch_button( chr_bundle_t * pbdl )
         }
     }
 
-    if ( HAS_SOME_BITS( loc_pchr->latch.trans_b, LATCHBUTTON_ALTRIGHT ) && loc_pchr->inst.action_ready && 0 == loc_pchr->reloadtime )
+    if ( HAS_SOME_BITS( loc_pchr->latch.trans.b, LATCHBUTTON_ALTRIGHT ) && loc_pchr->inst.action_ready && 0 == loc_pchr->reloadtime )
     {
-        //loc_pchr->latch.trans_b &= ~LATCHBUTTON_ALTRIGHT;
-
         loc_pchr->reloadtime = GRABDELAY;
         if ( !INGAME_CHR( loc_pchr->holdingwhich[SLOT_RIGHT] ) )
         {
@@ -5377,10 +5378,8 @@ chr_bundle_t * chr_do_latch_button( chr_bundle_t * pbdl )
         }
     }
 
-    if ( HAS_SOME_BITS( loc_pchr->latch.trans_b, LATCHBUTTON_PACKLEFT ) && loc_pchr->inst.action_ready && 0 == loc_pchr->reloadtime )
+    if ( HAS_SOME_BITS( loc_pchr->latch.trans.b, LATCHBUTTON_PACKLEFT ) && loc_pchr->inst.action_ready && 0 == loc_pchr->reloadtime )
     {
-        //loc_pchr->latch.trans_b &= ~LATCHBUTTON_PACKLEFT;
-
         loc_pchr->reloadtime = PACKDELAY;
         item = loc_pchr->holdingwhich[SLOT_LEFT];
 
@@ -5420,10 +5419,8 @@ chr_bundle_t * chr_do_latch_button( chr_bundle_t * pbdl )
         chr_play_action( loc_pchr, ACTION_MG, bfalse );
     }
 
-    if ( HAS_SOME_BITS( loc_pchr->latch.trans_b, LATCHBUTTON_PACKRIGHT ) && loc_pchr->inst.action_ready && 0 == loc_pchr->reloadtime )
+    if ( HAS_SOME_BITS( loc_pchr->latch.trans.b, LATCHBUTTON_PACKRIGHT ) && loc_pchr->inst.action_ready && 0 == loc_pchr->reloadtime )
     {
-        //loc_pchr->latch.trans_b &= ~LATCHBUTTON_PACKRIGHT;
-
         loc_pchr->reloadtime = PACKDELAY;
         item = loc_pchr->holdingwhich[SLOT_RIGHT];
         if ( INGAME_CHR( item ) )
@@ -5465,15 +5462,12 @@ chr_bundle_t * chr_do_latch_button( chr_bundle_t * pbdl )
 
     // LATCHBUTTON_LEFT and LATCHBUTTON_RIGHT are mutually exclusive
     attack_handled = bfalse;
-    if ( !attack_handled && HAS_SOME_BITS( loc_pchr->latch.trans_b, LATCHBUTTON_LEFT ) && 0 == loc_pchr->reloadtime )
+    if ( !attack_handled && HAS_SOME_BITS( loc_pchr->latch.trans.b, LATCHBUTTON_LEFT ) && 0 == loc_pchr->reloadtime )
     {
-        //loc_pchr->latch.trans_b &= ~LATCHBUTTON_LEFT;
         attack_handled = chr_do_latch_attack( loc_pchr, SLOT_LEFT );
     }
-    if ( !attack_handled && HAS_SOME_BITS( loc_pchr->latch.trans_b, LATCHBUTTON_RIGHT ) && 0 == loc_pchr->reloadtime )
+    if ( !attack_handled && HAS_SOME_BITS( loc_pchr->latch.trans.b, LATCHBUTTON_RIGHT ) && 0 == loc_pchr->reloadtime )
     {
-        //loc_pchr->latch.trans_b &= ~LATCHBUTTON_RIGHT;
-
         attack_handled = chr_do_latch_attack( loc_pchr, SLOT_RIGHT );
     }
 
@@ -5717,7 +5711,7 @@ float set_character_animation_rate( chr_t * pchr )
             // no specific sneak animation exists
             anim_info[CHR_MOVEMENT_SNEAK].allowed = bfalse;
 
-            //ZF> small fix here, if there is no sneak animation, try to default to normal walk with reduced animation speed
+            /// @note ZF@> small fix here, if there is no sneak animation, try to default to normal walk with reduced animation speed
             if ( HAS_SOME_BITS( pchr->movement_bits, CHR_MOVEMENT_BITS_SNEAK ) )
             {
                 anim_info[CHR_MOVEMENT_WALK].allowed = btrue;
@@ -6229,12 +6223,12 @@ chr_bundle_t * move_one_character_do_voluntary_flying( chr_bundle_t * pbdl )
     // interpret the latch similar to an aeroplane's controls
     if ( loc_pchr->latch.raw_valid )
     {
-        throttle = ( HAS_SOME_BITS( loc_pchr->latch.raw_b, LATCHBUTTON_JUMP ) ? 1.0f : 0.0f );
+        throttle = ( HAS_SOME_BITS( loc_pchr->latch.raw.b, LATCHBUTTON_JUMP ) ? 1.0f : 0.0f );
 
         // interpolate between the "taking off" conditions (max throttle, max climb, straight ahead )
         // and the player's control of the flying
-        loc_latch.x += ( 1.0f - jump_lerp ) * loc_pchr->latch.raw.x;
-        loc_latch.y += ( 1.0f - jump_lerp ) * loc_pchr->latch.raw.y;
+        loc_latch.x += ( 1.0f - jump_lerp ) * loc_pchr->latch.raw.dir[kX];
+        loc_latch.y += ( 1.0f - jump_lerp ) * loc_pchr->latch.raw.dir[kY];
         loc_latch.z += throttle;
     }
 
@@ -6282,6 +6276,12 @@ chr_bundle_t * move_one_character_do_voluntary_flying( chr_bundle_t * pbdl )
 }
 
 //--------------------------------------------------------------------------------------------
+chr_bundle_t * move_one_character_do_voluntary_riding( chr_bundle_t * pbdl )
+{
+    return pbdl;
+}
+
+//--------------------------------------------------------------------------------------------
 chr_bundle_t * move_one_character_do_voluntary( chr_bundle_t * pbdl )
 {
     // do voluntary motion
@@ -6292,7 +6292,7 @@ chr_bundle_t * move_one_character_do_voluntary( chr_bundle_t * pbdl )
 
     bool_t is_player, use_latch;
 
-    fvec2_t loc_latch;
+    fvec3_t loc_latch;
     float speed_max, acc_old;
     float dv2;
 
@@ -6315,7 +6315,10 @@ chr_bundle_t * move_one_character_do_voluntary( chr_bundle_t * pbdl )
     if ( !ACTIVE_PCHR( loc_pchr ) ) return pbdl;
 
     // if it is attached to another character, there is no voluntary motion
-    if ( IS_ATTACHED_PCHR( loc_pchr ) ) return pbdl;
+    if ( IS_ATTACHED_PCHR( loc_pchr ) )
+    {
+        return move_one_character_do_voluntary_riding( pbdl );
+    }
 
     // if we are flying, interpret the controls differently
     if ( loc_pchr->is_flying_jump )
@@ -6331,21 +6334,9 @@ chr_bundle_t * move_one_character_do_voluntary( chr_bundle_t * pbdl )
     is_player = VALID_PLA( loc_pchr->is_which_player );
 
     // Make a copy of the character's latch
-    loc_latch.x = loc_pchr->latch.trans.x;
-    loc_latch.y = loc_pchr->latch.trans.y;
-
-    // Reverse movements for daze
-    if ( loc_pchr->dazetime > 0 )
-    {
-        loc_latch.x = -loc_latch.x;
-        loc_latch.y = -loc_latch.y;
-    }
-
-    // Switch x and y for grog
-    if ( loc_pchr->grogtime > 0 )
-    {
-        SWAP( float, loc_latch.x, loc_latch.y );
-    }
+    loc_latch.x = loc_pchr->latch.trans.dir[kX];
+    loc_latch.y = loc_pchr->latch.trans.dir[kY];
+    loc_latch.z = loc_pchr->latch.trans.dir[kZ];
 
     // this is the maximum speed that a character could go under the v2.22 system
     speed_max = loc_pchr->maxaccel;
@@ -6382,11 +6373,11 @@ chr_bundle_t * move_one_character_do_voluntary( chr_bundle_t * pbdl )
     }
 
     // determine the character's desired velocity from the latch
-    if ( 0.0f != fvec2_length_abs( loc_latch.v ) )
+    if ( 0.0f != fvec3_length_abs( loc_latch.v ) )
     {
         float scale;
 
-        dv2 = fvec2_dot_product( loc_latch.v, loc_latch.v );
+        dv2 = fvec3_length_2( loc_latch.v );
 
         // determine how response of the character to the latch
         scale = 1.0f;
@@ -6422,12 +6413,10 @@ chr_bundle_t * move_one_character_do_voluntary( chr_bundle_t * pbdl )
         }
 
         // adjust the latch values
-        loc_latch.x *= scale;
-        loc_latch.y *= scale;
+        fvec3_self_scale( loc_latch.v, scale );
 
         // determine the correct speed
-        loc_penviro->chr_vel.x = speed_max * loc_latch.x;
-        loc_penviro->chr_vel.y = speed_max * loc_latch.y;
+        loc_penviro->chr_vel = fvec3_scale( loc_latch.v, speed_max );
     }
 
     // add the special "limp" effect
@@ -7185,10 +7174,14 @@ chr_bundle_t * move_one_character_do_floor( chr_bundle_t * pbdl )
     // exempt "mario platforms" from interaction with the floor
     if ( loc_pchr->is_flying_platform && INFINITE_WEIGHT == loc_pphys->weight ) return pbdl;
 
+    fric_lerp = 1.0f;
     pplatform = NULL;
     if ( ACTIVE_CHR( loc_pchr->onwhichplatform_ref ) )
     {
         pplatform = ChrList.lst + loc_pchr->onwhichplatform_ref;
+
+        // if the character has just dismounted from this platform, then there is less friction
+        fric_lerp *= calc_dismount_lerp( loc_pchr, pplatform );
     }
 
     // determine whether the object is part of the scenery
@@ -7200,7 +7193,7 @@ chr_bundle_t * move_one_character_do_floor( chr_bundle_t * pbdl )
     phys_data_apply_normal_acceleration( loc_pphys, loc_penviro->walk_nrm, 1.0f - scenery_grip, loc_penviro->walk_lerp, &normal_acc );
 
     // determine how much influence the floor has on the object
-    fric_lerp = 1.0f - loc_penviro->walk_lerp;
+    fric_lerp *= 1.0f - loc_penviro->walk_lerp;
 
     // if we're not in touch with the ground, there is no walking
     if ( 0.0f == fric_lerp ) return pbdl;
@@ -7477,7 +7470,7 @@ bool_t is_invictus_direction( FACING_T direction, const CHR_REF by_reference cha
     // if the character's frame is invictus, then check the angles
     if ( HAS_SOME_BITS( chr_get_framefx( pchr ), MADFX_INVICTUS ) )
     {
-        //I Frame
+        // I Frame
         direction -= pcap->iframefacing;
         left       = ( FACING_T )(( int )0x00010000 - ( int )pcap->iframeangle );
         right      = pcap->iframeangle;
@@ -8026,6 +8019,78 @@ const char * chr_get_name( const CHR_REF by_reference ichr, Uint32 bits )
 }
 
 //--------------------------------------------------------------------------------------------
+const char * chr_get_gender_possessive( const CHR_REF by_reference ichr, char buffer[], size_t buffer_len )
+{
+    static STRING szTmp = EMPTY_CSTR;
+    chr_t * pchr;
+
+    if( NULL == buffer )
+    {
+        buffer = szTmp;
+        buffer_len = SDL_arraysize(szTmp);
+    }
+    if( 0 == buffer_len ) return buffer;
+
+    if ( !DEFINED_CHR(ichr) )
+    {
+        buffer[0] = CSTR_END;
+        return buffer;
+    }
+    pchr = ChrList.lst + ichr;
+
+    if ( GENDER_FEMALE == pchr->gender )
+    {
+        snprintf( buffer, buffer_len, "her" );
+    }
+    else if ( GENDER_MALE == pchr->gender )
+    {
+        snprintf( buffer, buffer_len, "his" );
+    }
+    else
+    {
+        snprintf( buffer, buffer_len, "its" );
+    }
+
+    return buffer;
+}
+
+//--------------------------------------------------------------------------------------------
+const char * chr_get_gender_name( const CHR_REF by_reference ichr, char buffer[], size_t buffer_len )
+{
+    static STRING szTmp = EMPTY_CSTR;
+    chr_t * pchr;
+
+    if( NULL == buffer )
+    {
+        buffer = szTmp;
+        buffer_len = SDL_arraysize(szTmp);
+    }
+    if( 0 == buffer_len ) return buffer;
+
+    if ( !DEFINED_CHR(ichr) )
+    {
+        buffer[0] = CSTR_END;
+        return buffer;
+    }
+    pchr = ChrList.lst + ichr;
+
+    if ( GENDER_FEMALE == pchr->gender )
+    {
+        snprintf( buffer, buffer_len, "female " );
+    }
+    else if ( GENDER_MALE == pchr->gender )
+    {
+        snprintf( buffer, buffer_len, "male " );
+    }
+    else
+    {
+        snprintf( buffer, buffer_len, " " );
+    }
+
+    return buffer;
+}
+
+//--------------------------------------------------------------------------------------------
 const char * chr_get_dir_name( const CHR_REF by_reference ichr )
 {
     static STRING buffer = EMPTY_CSTR;
@@ -8288,14 +8353,14 @@ const char* describe_wounds( float max, float current )
     static STRING retval;
     float fval;
 
-    //Is it already dead?
+    // Is it already dead?
     if ( current <= 0 )
     {
         strcpy( retval, "Dead!" );
         return retval;
     }
 
-    //Calculate the percentage
+    // Calculate the percentage
     if ( max == 0 ) return NULL;
     fval = ( current / max ) * 100;
 
@@ -8344,7 +8409,9 @@ TX_REF chr_get_icon_ref( const CHR_REF by_reference item )
     // what do we need to draw?
     is_spell_fx = ( NO_SKIN_OVERRIDE != pitem_cap->spelleffect_type );     // the value of spelleffect_type == the skin of the book or -1 for not a spell effect
     is_book     = ( SPELLBOOK == pitem->profile_ref );
-    draw_book   = ( is_book || ( is_spell_fx && !pitem->draw_icon ) /*|| ( is_spell_fx && MAX_CHR != pitem->attachedto )*/ ) && ( bookicon_count > 0 );    //>ZF> uncommented a part because this caused a icon bug when you were morphed and mounted
+
+    /// @note ZF@> uncommented a part because this caused a icon bug when you were morphed and mounted
+    draw_book   = ( is_book || ( is_spell_fx && !pitem->draw_icon ) /*|| ( is_spell_fx && MAX_CHR != pitem->attachedto )*/ ) && ( bookicon_count > 0 );
 
     if ( !draw_book )
     {
@@ -8638,7 +8705,7 @@ int get_grip_verts( Uint16 grip_verts[], const CHR_REF by_reference imount, int 
     if ( 0 == pmount->inst.vrt_count ) return 0;
 
     //---- set the proper weapongrip vertices
-    tnc = ( int )pmount->inst.vrt_count - ( int )vrt_offset;
+    tnc = ( signed )pmount->inst.vrt_count - ( signed )vrt_offset;
 
     // if the starting vertex is less than 0, just take the first vertex
     if ( tnc < 0 )
@@ -9376,7 +9443,7 @@ bool_t chr_can_see_object( const CHR_REF by_reference ichr, const CHR_REF by_ref
         light *= pchr->darkvision_level + 1;
     }
 
-    //Scenery, spells and quest objects can always see through darkness
+    // Scenery, spells and quest objects can always see through darkness
     if ( IS_INVICTUS_PCHR_RAW( pchr ) ) light *= 20;
 
     return light >= INVISIBLE;
@@ -11328,4 +11395,38 @@ bool_t chr_is_over_water( chr_t *pchr )
     if ( !water.is_water || !mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) ) return bfalse;
 
     return 0 != mesh_test_fx( PMesh, pchr->onwhichgrid, MPDFX_WATER );
+}
+
+//--------------------------------------------------------------------------------------------
+float calc_dismount_lerp( const chr_t * pchr_a, const chr_t * pchr_b )
+{
+    /// @details BB@> generate a "lerp" for characters that have dismounted
+
+    CHR_REF ichr_a, ichr_b;
+    float dismount_lerp_a, dismount_lerp_b;
+    bool_t found = bfalse;
+
+    if( !DEFINED_PCHR(pchr_a) ) return 0.0f;
+    ichr_a = GET_REF_PCHR( pchr_a );
+
+    if( !DEFINED_PCHR(pchr_b) ) return 0.0f;
+    ichr_b = GET_REF_PCHR( pchr_b );
+
+    dismount_lerp_a = 1.0f;
+    if ( pchr_a->dismount_timer > 0 && pchr_a->dismount_object == ichr_b )
+    {
+        dismount_lerp_a = (float)pchr_a->dismount_timer / (float)PHYS_DISMOUNT_TIME;
+        dismount_lerp_a = 1.0f - CLIP( dismount_lerp_a, 0.0f, 1.0f );
+        found = (1.0f != dismount_lerp_a);
+    }
+
+    dismount_lerp_b = 1.0f;
+    if ( pchr_b->dismount_timer > 0 && pchr_b->dismount_object == ichr_a )
+    {
+        dismount_lerp_b = (float)pchr_b->dismount_timer / (float)PHYS_DISMOUNT_TIME;
+        dismount_lerp_b = 1.0f - CLIP( dismount_lerp_b, 0.0f, 1.0f );
+        found = (1.0f != dismount_lerp_b);
+    }
+
+    return !found ? 1.0f : dismount_lerp_a * dismount_lerp_b;
 }

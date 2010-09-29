@@ -628,5 +628,3 @@ bool_t sum_dyna_lighting( dynalight_t * pdyna, lighting_vector_t lighting, fvec3
     return btrue;
 }
 
-
-

@@ -162,13 +162,13 @@ bool_t setup_quit()
 egoboo_rv setup_read_vfs()
 {
     /// @details BB@> read the local setup file. The function will automatically copy the default setup
-	///               file if it isn't found in the local folder. 
+	///               file if it isn't found in the local folder.
 	///				  @TODO: create a completely new setup file if the default one also doesn't exist!
 
 	// Read the local setup.txt
     fs_ensureUserFile( "setup.txt", btrue );
     snprintf( _config_filename, SDL_arraysize( _config_filename ), "%s" SLASH_STR "setup.txt", fs_getUserDirectory() );
-	
+
     // do NOT force the file to open in a read directory if it doesn't exist. this will cause a failure in
     // linux if the directory is read-only
     lConfigSetup = LoadConfigFile( _config_filename, bfalse );
@@ -358,7 +358,7 @@ bool_t setup_download( egoboo_config_t * pcfg )
     if ( 'N' == toupper( lTempStr[0] ) )  pcfg->difficulty = GAME_NORMAL;
     if ( 'H' == toupper( lTempStr[0] ) )  pcfg->difficulty = GAME_HARD;
 
-    //Feedback
+    // Feedback
     GetKey_int( "FEEDBACK", lTempInt, cfg_default.feedback );
     pcfg->feedback = ( FEEDBACK_TYPE )lTempInt;
 

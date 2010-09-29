@@ -523,11 +523,11 @@ int breadcrumb_cmp( const void * lhs, const void * rhs )
     breadcrumb_t * bc_lhs = ( breadcrumb_t * )lhs;
     breadcrumb_t * bc_rhs = ( breadcrumb_t * )rhs;
 
-    retval = ( int )(( Sint64 )bc_rhs->time - ( Sint64 )bc_lhs->time );
+    retval = ( signed )(( Sint64 )bc_rhs->time - ( Sint64 )bc_lhs->time );
 
     if ( 0 == retval )
     {
-        retval = ( int )(( Sint64 )bc_rhs->id - ( Sint64 )bc_lhs->id );
+        retval = ( signed )(( Sint64 )bc_rhs->id - ( Sint64 )bc_lhs->id );
     }
 
     return retval;

@@ -75,7 +75,7 @@ typedef enum e_enchant_set enum_enchant_set;
 
 //--------------------------------------------------------------------------------------------
 
-/// A list of all the variables that can be affested by rnchant add
+/// A list of all the variables that can be affected by enchant add
 enum e_enchant_add
 {
     ADDJUMPPOWER = 0,

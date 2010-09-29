@@ -690,10 +690,10 @@ void _draw_one_grip_raw( chr_instance_t * pinst, mad_t * pmad, int slot )
 {
     int vmin, vmax, cnt;
 
-    float red[4] = {1, 0, 0, 1};
-    float grn[4] = {0, 1, 0, 1};
-    float blu[4] = {0, 0, 1, 1};
-    float * col_ary[3];
+    GLXvector4f red = {1, 0, 0, 1};
+    GLXvector4f grn = {0, 1, 0, 1};
+    GLXvector4f blu = {0, 0, 1, 1};
+    GLfloat  * col_ary[3];
 
     col_ary[0] = red;
     col_ary[1] = grn;
@@ -701,21 +701,21 @@ void _draw_one_grip_raw( chr_instance_t * pinst, mad_t * pmad, int slot )
 
     if ( NULL == pinst || NULL == pmad ) return;
 
-    vmin = ( int )pinst->vrt_count - ( int )slot_to_grip_offset(( slot_t )slot );
+    vmin = ( signed )pinst->vrt_count - ( signed )slot_to_grip_offset(( slot_t )slot );
     vmax = vmin + GRIP_VERTS;
 
     if ( vmin >= 0 && vmax >= 0 && ( size_t )vmax <= pinst->vrt_count )
     {
         fvec3_t   src, dst, diff;
 
+        src.x = pinst->vrt_lst[vmin].pos[XX];
+        src.y = pinst->vrt_lst[vmin].pos[YY];
+        src.z = pinst->vrt_lst[vmin].pos[ZZ];
+
         GL_DEBUG( glBegin )( GL_LINES );
         {
             for ( cnt = 1; cnt < GRIP_VERTS; cnt++ )
             {
-                src.x = pinst->vrt_lst[vmin].pos[XX];
-                src.y = pinst->vrt_lst[vmin].pos[YY];
-                src.z = pinst->vrt_lst[vmin].pos[ZZ];
-
                 diff.x = pinst->vrt_lst[vmin+cnt].pos[XX] - src.x;
                 diff.y = pinst->vrt_lst[vmin+cnt].pos[YY] - src.y;
                 diff.z = pinst->vrt_lst[vmin+cnt].pos[ZZ] - src.z;
@@ -997,7 +997,7 @@ egoboo_rv chr_instance_needs_update( chr_instance_t * pinst, int vmin, int vmax,
     if ( !psave->valid ) return rv_success;
 
     // get the last valid vertex from the chr_instance
-    maxvert = (( int )pinst->vrt_count ) - 1;
+    maxvert = (( signed )pinst->vrt_count ) - 1;
 
     // check to make sure the lower bound of the saved data is valid.
     // it is initialized to an invalid value (psave->vmin = psave->vmax = -1)
@@ -1061,7 +1061,7 @@ egoboo_rv chr_instance_update_vertices( chr_instance_t * pinst, int vmin, int vm
     }
 
     // get the vertex list size from the chr_instance
-    maxvert = (( int )pinst->vrt_count ) - 1;
+    maxvert = (( signed )pinst->vrt_count ) - 1;
 
     // handle the default parameters
     if ( vmin < 0 ) vmin = 0;
@@ -1189,7 +1189,7 @@ egoboo_rv chr_instance_update_vlst_cache( chr_instance_t * pinst, int vmax, int 
     vlst_cache_t * psave;
 
     if ( NULL == pinst ) return rv_error;
-    maxvert = (( int )pinst->vrt_count ) - 1;
+    maxvert = (( signed )pinst->vrt_count ) - 1;
     psave   = &( pinst->save );
 
     // the save_vmin and save_vmax is the most complex
@@ -1222,7 +1222,7 @@ egoboo_rv chr_instance_update_vlst_cache( chr_instance_t * pinst, int vmax, int 
         // The clean vertices should be the union of the sets of the vertices updated this time
         // and the ones updated last time.
         //
-        //If these ranges are disjoint, then only one of them can be saved. Choose the larger set
+        // If these ranges are disjoint, then only one of them can be saved. Choose the larger set
 
         if ( vmax >= psave->vmin && vmin <= psave->vmax )
         {

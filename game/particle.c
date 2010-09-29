@@ -346,8 +346,9 @@ prt_t * prt_config_do_init( prt_t * pprt )
             pprt->target_ref = prt_find_target( pdata->pos.x, pdata->pos.y, pdata->pos.z, loc_facing, pdata->ipip, pdata->team, loc_chr_origin, pdata->oldtarget );
             if ( DEFINED_CHR( pprt->target_ref ) && !ppip->homing )
             {
-                loc_facing -= glo_useangle;        // ZF> ?What does this do?!
-                // BB> glo_useangle is the angle found in prt_find_target()
+                loc_facing -= glo_useangle;
+                /// @note ZF@> ?What does this do?!
+                /// @note BB@> glo_useangle is the angle found in prt_find_target()
             }
 
             // Correct loc_facing for dexterity...
@@ -1021,7 +1022,7 @@ fvec2_t prt_get_diff( prt_t * pprt, float test_pos[], float center_pressure )
     if ( NULL == test_pos ) return retval;
 
     // calculate the radius based on whether the particle is on camera
-    // ZF> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
+    /// @note ZF@> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
     radius = 0.0f;
     if ( mesh_grid_is_valid( PMesh, pprt->onwhichgrid ) )
     {
@@ -1333,7 +1334,7 @@ prt_bundle_t * move_one_particle_do_fluid_friction( prt_bundle_t * pbdl_prt )
         }
     }
 
-    //Light isn't affected by the wind
+    // Light isn't affected by the wind
     else if ( SPRITE_LIGHT != loc_pprt->type )
     {
         // this is a normal particle
@@ -1475,8 +1476,8 @@ prt_bundle_t * move_one_particle_do_z_motion( prt_bundle_t * pbdl_prt )
     loc_penviro = &( loc_pprt->enviro );
     loc_pphys   = &( loc_pprt->phys );
 
-    //ZF> We really can't do gravity for Light! A lot of magical effects and attacks in the game depend on being able
-    //    to move forward in a straight line without being dragged down into the dust!
+    /// @note ZF@> We really can't do gravity for Light! A lot of magical effects and attacks in the game depend on being able
+    ///            to move forward in a straight line without being dragged down into the dust!
     if ( loc_pprt->type == SPRITE_LIGHT || loc_pprt->is_homing || INGAME_CHR( loc_pprt->attachedto_ref ) ) return pbdl_prt;
 
     loc_zlerp = CLIP( loc_penviro->floor_lerp, 0.0f, 1.0f );
@@ -1870,7 +1871,7 @@ int spawn_bump_particles( const CHR_REF by_reference character, const PRT_REF by
                     int     bestvertex;
 
                     bestvertex   = 0;
-                    bestdistance = 0xFFFFFFFF;         //Really high number
+                    bestdistance = 0xFFFFFFFF;         // Really high number
 
                     for ( cnt = 0; cnt < vertices; cnt++ )
                     {
@@ -2282,7 +2283,8 @@ prt_bundle_t * prt_do_bump_damage( prt_bundle_t * pbdl_prt )
     if ( 0 != ( update_count & 31 ) ) return pbdl_prt;
 
     // do nothing if the particle is hidden
-    //if ( loc_pprt->is_hidden ) return;        //ZF> This is already checked in prt_update_ingame()
+    /// @note ZF@> This is already checked in prt_update_ingame()
+    //if ( loc_pprt->is_hidden ) return;
 
     // we must be attached to something
     ichr = loc_pprt->attachedto_ref;
@@ -2355,19 +2357,19 @@ int prt_do_contspawn( prt_bundle_t * pbdl_prt )
             {
                 // Inherit velocities from the particle we were spawned from, but only if it wasn't attached to something
 
-                // ZF> I have disabled this at the moment. This is what caused the erratic particle movement for the Adventurer Torch
-                // BB> taking out the test works, though  I should have checked vs. loc_pprt->attached_ref, anyway,
-                //     since we already specified that the particle is not attached in the function call :P
-                //if( !ACTIVE_CHR( loc_pprt->attachedto_ref ) )
-                /*{
+                /// @note ZF@> I have disabled this at the moment. This is what caused the erratic particle movement for the Adventurer Torch
+                /// @note BB@> taking out the test works, though  I should have checked vs. loc_pprt->attached_ref, anyway,
+                ///            since we already specified that the particle is not attached in the function call :P
+                /*if( !ACTIVE_CHR( loc_pprt->attachedto_ref ) )
+                {
                     PrtList.lst[prt_child].vel.x += loc_pprt->vel.x;
                     PrtList.lst[prt_child].vel.y += loc_pprt->vel.y;
                     PrtList.lst[prt_child].vel.z += loc_pprt->vel.z;
                 }*/
-                // ZF> I have again disabled this. Is this really needed? It wasn't implemented before and causes
-                //     many, many, many issues with all particles around the game.
+                /// @note ZF@> I have again disabled this. Is this really needed? It wasn't implemented before and causes
+                ///     many, many, many issues with all particles around the game.
 
-                //Keep count of how many were actually spawned
+                // Keep count of how many were actually spawned
                 spawn_count++;
             }
 

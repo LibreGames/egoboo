@@ -492,10 +492,10 @@ Uint8 scr_AddWaypoint( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
 
 #if defined(REQUIRE_GOOD_WAYPOINTS)
 
-    // ZF> I have uncommented the "unsafe" waypoint code for now. It caused many AI problems since many AI scripts depend on actually moving
-    //    towards an unsafe point. This should not be a problem since we have a mesh collision code anwyays?
-    // BB> the problem was that characters like Brom and Mim would set a waypoint inside a wall and then never be able to reach it,
-    //     so they would just keep bumping into the wall and do nothing else (unless maybe attacked or something)
+    /// @note ZF@> I have uncommented the "unsafe" waypoint code for now. It caused many AI problems since many AI scripts depend on actually moving
+    ///            towards an unsafe point. This should not be a problem since we have a mesh collision code anwyays?
+    /// @note BB@> the problem was that characters like Brom and Mim would set a waypoint inside a wall and then never be able to reach it,
+    ///            so they would just keep bumping into the wall and do nothing else (unless maybe attacked or something)
 
     if ( pbdl_self->cap_ptr->weight == 255 || !mesh_hit_wall( PMesh, pos.v, pchr->bump.size, pchr->stoppedby, nrm.v, &pressure ) )
     {
@@ -1629,7 +1629,7 @@ Uint8 scr_PressLatchButton( script_state_t * pstate, ai_state_bundle_t * pbdl_se
 
     SCRIPT_FUNCTION_BEGIN();
 
-    ADD_BITS( pchr->latch.trans_b, pstate->argument );
+    ADD_BITS( pchr->latch.trans.b, pstate->argument );
 
     SCRIPT_FUNCTION_END();
 }
@@ -2355,7 +2355,7 @@ Uint8 scr_BecomeSpellbook( script_state_t * pstate, ai_state_bundle_t * pbdl_sel
 
     SCRIPT_FUNCTION_BEGIN();
 
-    //Figure out what this spellbook looks like
+    // Figure out what this spellbook looks like
     iskin = 0;
     if ( NULL != pbdl_self->cap_ptr ) iskin = pbdl_self->cap_ptr->spelleffect_type;
 
@@ -2372,7 +2372,7 @@ Uint8 scr_BecomeSpellbook( script_state_t * pstate, ai_state_bundle_t * pbdl_sel
 
     if ( NULL != pmad )
     {
-        //Do dropped animation
+        // Do dropped animation
         int tmp_action = mad_get_action( pchr->inst.imad, ACTION_JB );
 
         if ( rv_success == chr_start_anim( pchr, tmp_action, bfalse, btrue ) )
@@ -2603,7 +2603,7 @@ Uint8 scr_PressTargetLatchButton( script_state_t * pstate, ai_state_bundle_t * p
 
     SCRIPT_REQUIRE_TARGET( pself_target );
 
-    ADD_BITS( pself_target->latch.trans_b, pstate->argument );
+    ADD_BITS( pself_target->latch.trans.b, pstate->argument );
 
     SCRIPT_FUNCTION_END();
 }
@@ -3085,7 +3085,7 @@ Uint8 scr_KillTarget( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
 
     ichr = pself->index;
 
-    //Weapons don't kill people, people kill people...
+    // Weapons don't kill people, people kill people...
     if ( INGAME_CHR( pchr->attachedto ) && !ChrList.lst[pchr->attachedto].ismount )
     {
         ichr = pchr->attachedto;
@@ -4260,7 +4260,7 @@ Uint8 scr_PoofTarget( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
     SCRIPT_REQUIRE_TARGET( pself_target );
 
     returncode = bfalse;
-    if ( INVALID_PLA( pself_target->is_which_player ) )                //Do not poof players
+    if ( INVALID_PLA( pself_target->is_which_player ) )                // Do not poof players
     {
         returncode = btrue;
         if ( pself->target == pself->index )
@@ -6879,21 +6879,21 @@ Uint8 scr_Backstabbed( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
     /// automatically fails if attacker has a code of conduct
     SCRIPT_FUNCTION_BEGIN();
 
-    //Now check if it really was backstabbed
+    // Now check if it really was backstabbed
     returncode = bfalse;
     if ( HAS_SOME_BITS( pself->alert, ALERTIF_ATTACKED ) )
     {
-        //Who is the dirty backstabber?
+        // Who is the dirty backstabber?
         chr_t * pattacker = ChrList.lst + pself->attacklast;
         if ( !ACTIVE_PCHR( pattacker ) ) return bfalse;
 
-        //Only if hit from behind
+        // Only if hit from behind
         if ( pself->directionlast >= ATK_BEHIND - 8192 && pself->directionlast < ATK_BEHIND + 8192 )
         {
-            //And require the backstab skill
+            // And require the backstab skill
             if ( chr_get_skill( pattacker, MAKE_IDSZ( 'S', 'T', 'A', 'B' ) ) )
             {
-                //Finally we require it to be physical damage!
+                // Finally we require it to be physical damage!
                 Uint16 sTmp = sTmp = pself->damagetypelast;
                 if ( sTmp == DAMAGE_CRUSH || sTmp == DAMAGE_POKE || sTmp == DAMAGE_SLASH ) returncode = btrue;
             }
@@ -7112,7 +7112,7 @@ Uint8 scr_PitsFall( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
     }
     else
     {
-        pits.kill = btrue;          //make it kill instead
+        pits.kill = btrue;          // make it kill instead
     }
 
     SCRIPT_FUNCTION_END();
@@ -7187,13 +7187,13 @@ Uint8 scr_SpawnAttachedCharacter( script_state_t * pstate, ai_state_bundle_t * p
 
                 pchild->attachedto = ( CHR_REF )MAX_CHR;  // Fix grab
 
-                //Set some AI values
+                // Set some AI values
                 pself->child = ichr;
                 pchild->ai.passage = pself->passage;
                 pchild->ai.owner   = pself->owner;
             }
 
-            //No more room!
+            // No more room!
             else
             {
                 chr_request_terminate( ichr );
@@ -7213,13 +7213,13 @@ Uint8 scr_SpawnAttachedCharacter( script_state_t * pstate, ai_state_bundle_t * p
                 // Handle the "grabbed" messages
                 scr_run_chr_script( ai_state_bundle_set( &tmp_bdl_ai, pchild ) );
 
-                //Set some AI values
+                // Set some AI values
                 pself->child = ichr;
                 pchild->ai.passage = pself->passage;
                 pchild->ai.owner   = pself->owner;
             }
 
-            //Grip is already used
+            // Grip is already used
             else
             {
                 chr_request_terminate( ichr );
@@ -7431,7 +7431,7 @@ Uint8 scr_ModuleHasIDSZ( script_state_t * pstate, ai_state_bundle_t * pbdl_self 
 
     SCRIPT_FUNCTION_BEGIN();
 
-    ///use message.txt to send the module name
+    // use message.txt to send the module name
     message_number = ppro->message_start + pstate->argument;
     message_index  = MessageOffset.ary[message_number];
     ptext = message_buffer + message_index;
@@ -7714,7 +7714,7 @@ Uint8 scr_DrawBillboard( script_state_t * pstate, ai_state_bundle_t * pbdl_self 
         int message_number, message_index;
         char *ptext;
 
-        //List of avalible colours
+        // List of avalible colours
         GLXvector4f tint_red  = { 1.00f, 0.25f, 0.25f, 1.00f };
         GLXvector4f tint_purple = { 0.88f, 0.75f, 1.00f, 1.00f };
         GLXvector4f tint_white = { 1.00f, 1.00f, 1.00f, 1.00f };
@@ -7722,7 +7722,7 @@ Uint8 scr_DrawBillboard( script_state_t * pstate, ai_state_bundle_t * pbdl_self 
         GLXvector4f tint_green = { 0.25f, 1.00f, 0.25f, 1.00f };
         GLXvector4f tint_blue = { 0.25f, 0.25f, 1.00f, 1.00f };
 
-        //Figure out which color to use
+        // Figure out which color to use
         GLfloat *do_tint;
         switch ( pstate->turn )
         {

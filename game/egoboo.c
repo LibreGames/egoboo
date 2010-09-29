@@ -118,7 +118,7 @@ int do_ego_proc_begin( ego_process_t * eproc )
     ego_init_SDL();
     gfx_system_begin();
     console_begin();
-    network_system_begin();
+    network_system_begin( &cfg );
 
     log_info( "Initializing SDL_Image version %d.%d.%d... ", SDL_IMAGE_MAJOR_VERSION, SDL_IMAGE_MINOR_VERSION, SDL_IMAGE_PATCHLEVEL );
     GLSetup_SupportedFormats();
@@ -173,6 +173,10 @@ int do_ego_proc_begin( ego_process_t * eproc )
 //--------------------------------------------------------------------------------------------
 int do_ego_proc_running( ego_process_t * eproc )
 {
+    static bool_t _explore_mode_keyready = btrue;
+    static bool_t _wizard_mode_keyready  = btrue;
+    static bool_t _i_win_keyready        = btrue;
+
     bool_t menu_valid, game_valid;
     bool_t mod_ctrl = bfalse, mod_shift = bfalse;
 
@@ -261,72 +265,106 @@ int do_ego_proc_running( ego_process_t * eproc )
         eproc->screenshot_requested = btrue;
     }
 
-    if ( cfg.dev_mode && SDLKEYDOWN( SDLK_F9 ) && mod_shift )
+    if( cfg.dev_mode && keyb.on )
     {
-        // toggle explore_mode for all players
-        PLA_REF ipla;
+        bool_t explore_mode_key = SDLKEYDOWN( SDLK_F9 ) && mod_shift && !mod_ctrl;
 
-        for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+        if ( !explore_mode_key )
         {
-            player_t * ppla = PlaStack.lst + ipla;
-
-            if ( !ppla->valid ) continue;
-
-            ppla->explore_mode = !ppla->explore_mode;
+            _explore_mode_keyready = btrue;
         }
-
-        log_info( "Toggling explore mode\n" );
-    }
-
-    if ( cfg.dev_mode && SDLKEYDOWN( SDLK_F9 ) && mod_ctrl )
-    {
-        // toggle wizard_mode for all players
-        PLA_REF ipla;
-
-        for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+        else if ( _explore_mode_keyready )
         {
-            player_t * ppla = PlaStack.lst + ipla;
+            // toggle explore_mode for all players
+            PLA_REF ipla;
 
-            if ( !ppla->valid ) continue;
+            _explore_mode_keyready = bfalse;
 
-            ppla->wizard_mode = !ppla->wizard_mode;
-        }
-
-        log_info( "Toggling wizard mode\n" );
-    }
-
-    if ( cfg.dev_mode && SDLKEYDOWN( SDLK_F9 ) && !( mod_shift || mod_ctrl ) && NULL != PMod && PMod->active )
-    {
-        // super secret "I win" button
-        //PMod->beat        = btrue;
-        //PMod->exportvalid = btrue;
-
-        CHR_BEGIN_LOOP_ACTIVE( itarget, ptarget )
-        {
-            // don't kill players
-            if ( !VALID_PLA( ptarget->is_which_player ) )
+            for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
             {
-                PLA_REF ipla;
+                player_t * ppla = PlaStack.lst + ipla;
 
-                // only kill characters that the players hate
-                for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+                if ( !ppla->valid ) continue;
+
+                ppla->explore_mode = !ppla->explore_mode;
+            }
+
+            log_info( "Toggling explore mode\n" );
+        }
+    }
+
+    if( cfg.dev_mode && keyb.on )
+    {
+        bool_t wizard_mode_key = SDLKEYDOWN( SDLK_F9 ) && mod_ctrl && !mod_shift;
+
+        if ( !wizard_mode_key )
+        {
+            _wizard_mode_keyready = btrue;
+        }
+        else if ( _wizard_mode_keyready )
+        {
+            // toggle wizard_mode for all players
+            PLA_REF ipla;
+
+            _wizard_mode_keyready = bfalse;
+
+            for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+            {
+                player_t * ppla = PlaStack.lst + ipla;
+
+                if ( !ppla->valid ) continue;
+
+                ppla->wizard_mode = !ppla->wizard_mode;
+            }
+
+            log_info( "Toggling wizard mode\n" );
+        }
+    }
+
+    if ( cfg.dev_mode && keyb.on && NULL != PMod && PMod->active )
+    {
+        bool_t i_win_key = SDLKEYDOWN( SDLK_F9 ) && !mod_shift && !mod_ctrl;
+
+        if ( !i_win_key )
+        {
+            _i_win_keyready = btrue;
+        }
+        else if ( _i_win_keyready )
+        {
+            // super secret "I win" button
+
+            //PMod->beat        = btrue;
+            //PMod->exportvalid = btrue;
+
+            CHR_BEGIN_LOOP_ACTIVE( itarget, ptarget )
+            {
+                // don't kill players
+                if ( !VALID_PLA( ptarget->is_which_player ) )
                 {
-                    chr_t    * pchr = NULL;
+                    PLA_REF ipla;
 
-                    pchr = pla_get_pchr( ipla );
-                    if ( NULL == pchr ) continue;
-
-                    if ( team_hates_team( pchr->baseteam, ptarget->team ) )
+                    // only kill characters that the players hate
+                    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
                     {
-                        kill_character( itarget, ( CHR_REF )511, bfalse );
-                        break;
+                        chr_t    * pchr = NULL;
+
+                        pchr = pla_get_pchr( ipla );
+                        if ( NULL == pchr ) continue;
+
+                        if ( team_hates_team( pchr->baseteam, ptarget->team ) )
+                        {
+                            kill_character( itarget, ( CHR_REF )511, bfalse );
+                            break;
+                        }
                     }
                 }
             }
-        }
-        CHR_END_LOOP();
+            CHR_END_LOOP();
 
-        log_info( "\"I WIN!\" button\n" );
+            _i_win_keyready = bfalse;
+
+            log_info( "\"I WIN!\" button\n" );
+        }
     }
 
     // handle an escape by passing it on to all active sub-processes
@@ -733,7 +771,8 @@ void egoboo_setup_vfs_paths()
     vfs_add_mount_point( fs_getUserDirectory(), "players", "mp_players", 1 );
 
     // Create a mount point for the /data/players directory
-    //vfs_add_mount_point( fs_getDataDirectory(), "players", "mp_players", 1 );        //ZF> Let's remove the local players folder since it caused so many problems for people
+    /// @note ZF@> Let's remove the local players folder since it caused so many problems for people
+    //vfs_add_mount_point( fs_getDataDirectory(), "players", "mp_players", 1 );
 
     // Create a mount point for the /user/import directory
     vfs_add_mount_point( fs_getUserDirectory(), "import", "mp_import", 1 );

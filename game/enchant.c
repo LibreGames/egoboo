@@ -690,29 +690,32 @@ void enc_apply_add( const ENC_REF by_reference ienc, int value_idx, const EVE_RE
             break;
 
         case ADDDEFENSE:
+            /// @note ZF@> why limit min to 55?
             newvalue = ptarget->defense;
             valuetoadd = peve->addvalue[value_idx];
-            getadd( 55, newvalue, 255, &valuetoadd );  // Don't fix again!  //ZF> why limit min to 55?
+            getadd( 55, newvalue, 255, &valuetoadd );  // Don't fix again!
             ptarget->defense += valuetoadd;
             fvaluetoadd = valuetoadd;
             break;
 
         case ADDMANA:
+            /// @note ZF@> bit of a problem here, we don't want players to heal or lose life by requipping magic ornaments
             newvalue = ptarget->manamax;
             valuetoadd = peve->addvalue[value_idx];
             getadd( 0, newvalue, PERFECTBIG, &valuetoadd );
             ptarget->manamax += valuetoadd;
-            //ptarget->mana    += valuetoadd;                        //ZF> bit of a problem here, we don't want players to heal or lose life by requipping magic ornaments
+            //ptarget->mana    += valuetoadd;
             ptarget->mana = CLIP( ptarget->mana, 0, ptarget->manamax );
             fvaluetoadd = valuetoadd;
             break;
 
         case ADDLIFE:
+            /// @note ZF@> bit of a problem here, we don't want players to heal or lose life by requipping magic ornaments
             newvalue = ptarget->lifemax;
             valuetoadd = peve->addvalue[value_idx];
             getadd( LOWSTAT, newvalue, PERFECTBIG, &valuetoadd );
             ptarget->lifemax += valuetoadd;
-            //ptarget->life += valuetoadd;                        //ZF> bit of a problem here, we don't want players to heal or lose life by requipping magic ornaments
+            //ptarget->life += valuetoadd;
             ptarget->life = CLIP( ptarget->life, 1, ptarget->lifemax );
             fvaluetoadd = valuetoadd;
             break;
@@ -1864,7 +1867,6 @@ ENC_REF cleanup_enchant_list( const ENC_REF by_reference ienc, ENC_REF * enc_par
         EncList.lst[enc_now].nextenchant_ref = ( ENC_REF ) MAX_ENC;
 
         log_warning( "cleanup_enchant_list() - The enchantment list is corrupt!\n" );
-        //EGOBOO_ASSERT( bfalse );
     }
 
     return first_valid_enchant;
@@ -1894,7 +1896,7 @@ void cleanup_all_enchants()
             enc_lst = &( ChrList.lst[penc->target_ref].firstenchant );
         }
 
-        //try to determine if the owner exists and is alive
+        // try to determine if the owner exists and is alive
         valid_owner = bfalse;
         if ( INGAME_CHR( penc->owner_ref ) )
         {

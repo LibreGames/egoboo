@@ -63,7 +63,7 @@ static void mad_heal_actions( const MAD_REF by_reference imad, const char * load
 //--------------------------------------------------------------------------------------------
 //static void md2_fix_normals( const MAD_REF by_reference imad );
 //static void md2_get_transvertices( const MAD_REF by_reference imad );
-// static int  vertexconnected( md2_ogl_commandlist_t * pclist, int vertex );
+//static int  vertexconnected( md2_ogl_commandlist_t * pclist, int vertex );
 
 static mad_t * mad_ctor( mad_t * pmad );
 static mad_t * mad_dtor( mad_t * pmad );
@@ -314,7 +314,9 @@ int action_which( char cTmp )
 
     switch ( toupper( cTmp ) )
     {
-        case 'W':                                //ZF> Attack animation WALK is used for doing nothing (for example charging spells)
+        /// @note ZF@> Attack animation WALK is used for doing nothing (for example charging spells)
+        ///            Make it default to ACTION_DA in this case.
+        case 'W': action = ACTION_DA; break;
         case 'D': action = ACTION_DA; break;
         case 'U': action = ACTION_UA; break;
         case 'T': action = ACTION_TA; break;

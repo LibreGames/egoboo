@@ -225,7 +225,10 @@ pip_t * load_one_pip_file_vfs( const char *szLoadName, pip_t * ppip )
     {
         idsz = fget_idsz( fileread );
 
-        if ( MAKE_IDSZ( 'T', 'U', 'R', 'N' ) == idsz )         ADD_BITS( ppip->damfx, DAMFX_NONE );        //ZF> This line doesn't do anything?
+        /// @note ZF@> Does this line doesn't do anything?
+        /// @note BB@> Should it be "ppip->damfx = DAMFX_NONE"?
+        if ( MAKE_IDSZ( 'T', 'U', 'R', 'N' ) == idsz )       ADD_BITS( ppip->damfx, DAMFX_NONE );
+
         else if ( MAKE_IDSZ( 'A', 'R', 'M', 'O' ) == idsz )  ADD_BITS( ppip->damfx, DAMFX_ARMO );
         else if ( MAKE_IDSZ( 'B', 'L', 'O', 'C' ) == idsz )  ADD_BITS( ppip->damfx, DAMFX_NBLOC );
         else if ( MAKE_IDSZ( 'A', 'R', 'R', 'O' ) == idsz )  ADD_BITS( ppip->damfx, DAMFX_ARRO );

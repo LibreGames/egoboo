@@ -59,7 +59,7 @@ enum e_global_tx_type
 #define TX_TEXTURE_COUNT   (2*(MAX_TEXTURE + MAX_ICON))
 #define INVALID_TX_TEXTURE TX_TEXTURE_COUNT
 
-/// declare special arrays of textures
+// declare special arrays of textures
 DECLARE_LIST_EXTERN( oglx_texture_t, TxTexture, TX_TEXTURE_COUNT );
 
 //--------------------------------------------------------------------------------------------

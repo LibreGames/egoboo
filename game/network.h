@@ -22,9 +22,11 @@
 /// @file network.h
 /// @brief Skeleton for Egoboo networking
 
-#include "egoboo_typedef.h"
 #include "IDSZ_map.h"
 #include "configfile.h"
+
+#include "egoboo_typedef.h"
+#include "egoboo_setup.h"
 
 //--------------------------------------------------------------------------------------------
 // Network stuff
@@ -75,7 +77,8 @@
 struct s_time_latch
 {
     float     raw[2];
-    float     dir[2];
+
+    float     dir[3];
     BIT_FIELD button;
 
     Uint32    time;
@@ -145,22 +148,23 @@ player_t *     pla_dtor( player_t * ppla );
 player_t *     pla_reinit( player_t * ppla );
 CHR_REF        pla_get_ichr( const PLA_REF by_reference iplayer );
 struct s_chr * pla_get_pchr( const PLA_REF by_reference iplayer );
+latch_2d_t     pla_convert_latch_2d( const PLA_REF by_reference iplayer, const by_reference latch_2d_t src  );
+
 player_t*      chr_get_ppla( const CHR_REF by_reference ichr );
 
+//--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// The state of the network code used in old-egoboo
 struct s_net_instance
 {
-    bool_t  on;                      ///< Try to connect?
+    bool_t  initialized;             ///< Is Networking initialized?
     bool_t  serviceon;               ///< Do I need to free the interface?
     bool_t  hostactive;              ///< Hosting?
     bool_t  readytostart;            ///< Ready to hit the Start Game button?
     bool_t  waitingforplayers;       ///< Has everyone talked to the host?
 };
 typedef struct s_net_instance net_instance_t;
-
-extern net_instance_t * PNet;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -194,18 +198,18 @@ extern Uint32                  numplatimes;
 // Networking functions
 //--------------------------------------------------------------------------------------------
 
-void network_system_begin( void );
+const net_instance_t * network_get_instance();
+bool_t                 network_initialized();
+bool_t                 network_get_host_active();
+bool_t                 network_set_host_active( bool_t state );
+bool_t                 network_waiting_for_players();
+
+void network_system_begin( egoboo_config_t * pcfg );
 void network_system_end( void );
 
 void listen_for_packets();
 void unbuffer_all_player_latches();
 void close_session();
-
-void net_initialize();
-void net_shutDown();
-void net_logf( const char *format, ... );
-
-void net_startNewPacket();
 
 void packet_addUnsignedByte( Uint8 uc );
 void packet_addSignedByte( Sint8 sc );

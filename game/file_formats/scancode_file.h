@@ -27,7 +27,7 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-/// Key/Control input definitions
+// Key/Control input definitions
 #define MAXTAG              256                     ///< Number of tags in scancode.txt
 #define TAGSIZE              32                     ///< Size of each tag
 

@@ -366,7 +366,7 @@ void fput_action( vfs_FILE* filewrite, const char* text, Uint8 action )
 
     switch ( action )
     {
-        case ACTION_WA:                                                    //WALK duplicates DANCE here
+        case ACTION_WA:                                                    // WALK duplicates DANCE here
         case ACTION_DA: vfs_printf( filewrite, "DANCE\n" );   break;
         case ACTION_UA: vfs_printf( filewrite, "UNARMED\n" ); break;
         case ACTION_TA: vfs_printf( filewrite, "THRUST\n" );  break;
@@ -1028,7 +1028,7 @@ int read_skin_vfs( const char *filename )
     fileread = vfs_openRead( filename );
     if ( !fileread ) return skin;
 
-    //Read the contents
+    // Read the contents
     skin = fget_next_int( fileread );
     skin %= MAX_SKIN;
 

@@ -145,10 +145,10 @@ void scr_run_chr_script( ai_state_bundle_t * pbdl_ai )
 
     // clear the latches on every single object
     pchr->latch.raw_valid = bfalse;
-    fvec2_self_clear( pchr->latch.raw.v );
+    fvec2_self_clear( pchr->latch.raw.dir );
 
     pchr->latch.trans_valid = bfalse;
-    fvec3_self_clear( pchr->latch.trans.v );
+    fvec3_self_clear( pchr->latch.trans.dir );
 
     // has the time for this pbdl_ai->chr_ref to die come and gone?
     if ( pai->poof_time >= 0 && pai->poof_time <= ( Sint32 )update_wld ) return;
@@ -225,11 +225,11 @@ void scr_run_chr_script( ai_state_bundle_t * pbdl_ai )
     // Clear the button latches
     if ( !VALID_PLA( pchr->is_which_player ) )
     {
-        CLEAR_BIT_FIELD( pchr->latch.trans_b );
+        CLEAR_BIT_FIELD( pchr->latch.trans.b );
     }
 
     // Reset the target if it can't be seen
-    if (( pai->target != pai->index ) && !chr_can_see_object( pbdl_ai->chr_ref, pai->target ) )
+    if (( pai->target != MAX_CHR ) && ( pai->target != pai->index ) && !chr_can_see_object( pbdl_ai->chr_ref, pai->target ) )
     {
         pai->target = pai->index;
     }
@@ -291,22 +291,26 @@ void scr_run_chr_script( ai_state_bundle_t * pbdl_ai )
         else if ( pai->wp_valid )
         {
             // Normal AI
+            fvec3_t vec_tmp;
             pchr->latch.raw_valid = bfalse;
-            fvec2_self_clear( pchr->latch.raw.v );
+            fvec2_self_clear( pchr->latch.raw.dir );
 
-            pchr->latch.trans_valid = btrue;
-            pchr->latch.trans = fvec3_sub( pai->wp, pchr->pos.v );
+            vec_tmp = fvec3_sub( pai->wp, pchr->pos.v );
+            pchr->latch.trans_valid   = btrue;
+            pchr->latch.trans.dir[kX] = vec_tmp.v[kX];
+            pchr->latch.trans.dir[kY] = vec_tmp.v[kY];
+            pchr->latch.trans.dir[kZ] = vec_tmp.v[kZ];
         }
 
         scale = 1.0f;
-        if ( pchr->latch.trans_valid && fvec3_length_abs( pchr->latch.trans.v ) > 0.0f )
+        if ( pchr->latch.trans_valid && fvec3_length_abs( pchr->latch.trans.dir ) > 0.0f )
         {
-            float horiz_len2 = pchr->latch.trans.x * pchr->latch.trans.x + pchr->latch.trans.y * pchr->latch.trans.y;
-            float vert_len2  = pchr->latch.trans.z * pchr->latch.trans.z;
+            float horiz_len2 = pchr->latch.trans.dir[kX] * pchr->latch.trans.dir[kX] + pchr->latch.trans.dir[kY] * pchr->latch.trans.dir[kY];
+            float vert_len2  = pchr->latch.trans.dir[kZ] * pchr->latch.trans.dir[kZ];
 
             if ( vert_len2 > 1.0f && vert_len2 >= horiz_len2 )
             {
-                scale = 1.0f / ABS( pchr->latch.trans.z );
+                scale = 1.0f / ABS( pchr->latch.trans.dir[kZ] );
             }
             else if ( horiz_len2 > 1.0f && horiz_len2 > vert_len2 )
             {
@@ -316,7 +320,7 @@ void scr_run_chr_script( ai_state_bundle_t * pbdl_ai )
 
         if ( 1.0f != scale )
         {
-            fvec3_self_scale( pchr->latch.trans.v, scale );
+            fvec3_self_scale( pchr->latch.trans.dir, scale );
         }
     }
 

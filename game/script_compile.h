@@ -23,8 +23,8 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+// AI stuff
 
-/// AI stuff
 #define AISMAXLOADSIZE      (1024*1024)            ///< For parsing AI scripts
 #define AISMAXCOMPILESIZE   (MAX_AI*4096/4)        ///< For parsing AI scripts
 #define MAXLINESIZE         1024

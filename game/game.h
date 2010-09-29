@@ -107,7 +107,7 @@ extern game_process_t * GProc;
 #define WATERFRAMEAND (MAXWATERFRAME-1)
 #define WATERPOINTS 4                               ///< Points in a water fan
 
-//Inventory stuff
+// Inventory stuff
 #define MAXINVENTORY        6
 #define MAXIMPORTOBJECTS    (MAXINVENTORY + 2)      ///< left hand + right hand + MAXINVENTORY
 #define MAXIMPORTPERPLAYER  (1 + MAXIMPORTOBJECTS)  ///< player + MAXIMPORTOBJECTS
@@ -299,35 +299,35 @@ extern FACING_T  glo_useangle;                                        ///< actua
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-/// the hook for deinitializing an old module
+// the hook for deinitializing an old module
 void   game_quit_module();
 
-/// the hook for exporting all the current players and reloading them
+// the hook for exporting all the current players and reloading them
 egoboo_rv game_update_imports();
 void   game_finish_module();
 bool_t game_begin_module( const char * modname, Uint32 seed );
 
-/// Exporting stuff
+// Exporting stuff
 void export_one_character( const CHR_REF by_reference character, const CHR_REF by_reference owner, int number, bool_t is_local );
 void export_all_players( bool_t require_local );
 
-/// Messages
+// Messages
 void show_stat( int statindex );
 void show_armor( int statindex );
 void show_full_status( int statindex );
 void show_magic_status( int statindex );
 
-/// End Text
+// End Text
 void reset_end_text();
 
-/// Particles
+// Particles
 int     number_of_attached_particles( const CHR_REF by_reference character );
 int     spawn_bump_particles( const CHR_REF by_reference character, const PRT_REF by_reference particle );
 struct s_prt * place_particle_at_vertex( struct s_prt * pprt, const CHR_REF by_reference character, int vertex_offset );
 void    disaffirm_attached_particles( const CHR_REF by_reference character );
 int     reaffirm_attached_particles( const CHR_REF by_reference character );
 
-/// Statlist
+// Statlist
 void statlist_add( const CHR_REF by_reference character );
 void statlist_move_to_top( const CHR_REF by_reference character );
 void statlist_sort();
@@ -336,15 +336,15 @@ void statlist_sort();
 void   set_one_player_latch( const PLA_REF by_reference player );
 bool_t add_player( const CHR_REF by_reference character, const PLA_REF by_reference player, Uint32 device );
 
-/// AI targeting
+// AI targeting
 CHR_REF chr_find_target( struct s_chr * psrc, float max_dist, IDSZ idsz, BIT_FIELD targeting_bits );
 CHR_REF prt_find_target( float pos_x, float pos_y, float pos_z, FACING_T facing,
                          const PIP_REF by_reference particletype, const TEAM_REF by_reference team, const CHR_REF by_reference donttarget, const CHR_REF by_reference oldtarget );
 
-/// object initialization
+// object initialization
 void  free_all_objects( void );
 
-/// Data
+// Data
 struct s_ego_mpd * set_PMesh( struct s_ego_mpd * pmpd );
 struct s_camera  * set_PCamera( struct s_camera * pcam );
 

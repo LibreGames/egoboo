@@ -35,9 +35,9 @@ enum e_game_difficulty
 // What feedback does the user want
 typedef enum e_feedback
 {
-    FEEDBACK_OFF = 0,           //None
-    FEEDBACK_TEXT,              //Descriptive text
-    FEEDBACK_NUMBER             //Show the damage as a number
+    FEEDBACK_OFF = 0,           // None
+    FEEDBACK_TEXT,              // Descriptive text
+    FEEDBACK_NUMBER             // Show the damage as a number
 }
 FEEDBACK_TYPE;
 

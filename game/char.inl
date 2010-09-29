@@ -69,6 +69,7 @@ INLINE ai_state_t     * chr_get_pai( const CHR_REF by_reference ichr );
 INLINE chr_instance_t * chr_get_pinstance( const CHR_REF by_reference ichr );
 
 INLINE IDSZ chr_get_idsz( const CHR_REF by_reference ichr, int type );
+INLINE latch_2d_t chr_convert_latch_2d( const chr_t * pchr, const by_reference latch_2d_t src );
 
 INLINE void chr_update_size( chr_t * pchr );
 INLINE void chr_init_size( chr_t * pchr, cap_t * pcap );
@@ -641,3 +642,25 @@ INLINE void chr_set_height( chr_t * pchr, float height )
     chr_update_size( pchr );
 }
 
+//--------------------------------------------------------------------------------------------
+INLINE latch_2d_t chr_convert_latch_2d( const chr_t * pchr, const by_reference latch_2d_t src )
+{
+    latch_2d_t dst = src;
+
+    if( !DEFINED_PCHR(pchr) ) return dst;
+
+    // Reverse movements for daze
+    if ( pchr->dazetime > 0 )
+    {
+        dst.dir[kX] = -dst.dir[kX];
+        dst.dir[kY] = -dst.dir[kY];
+    }
+
+    // Switch x and y for grog
+    if ( pchr->grogtime > 0 )
+    {
+        SWAP( float, dst.dir[kX], dst.dir[kY] );
+    }
+
+    return dst;
+}

@@ -142,7 +142,7 @@ INLINE CHR_REF prt_get_iowner( const PRT_REF by_reference iprt, int depth )
     prt_t * pprt;
 
     // be careful because this can be recursive
-    if ( depth > ( int )maxparticles - ( int )PrtList.free_count ) return ( CHR_REF )MAX_CHR;
+    if ( depth > ( signed )maxparticles - ( signed )PrtList.free_count ) return ( CHR_REF )MAX_CHR;
 
     if ( !DEFINED_PRT( iprt ) ) return ( CHR_REF )MAX_CHR;
     pprt = PrtList.lst + iprt;

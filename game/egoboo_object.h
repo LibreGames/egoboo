@@ -134,7 +134,7 @@ ego_object_base_t * ego_object_dtor( ego_object_base_t * pbase );
             ego_object_spawn_depth++;\
         }\
     }\
-     
+
 #define POBJ_END_SPAWN( PDATA ) \
     if( NULL != PDATA && (PDATA)->obj_base.allocated ) \
     {\
@@ -144,7 +144,7 @@ ego_object_base_t * ego_object_dtor( ego_object_base_t * pbase );
             ego_object_spawn_depth--;\
         }\
     }\
-     
+
 /// Is the object flagged as requesting termination?
 #define FLAG_ALLOCATED_PBASE( PBASE ) ( ( (PBASE)->allocated ) && (ego_object_invalid != (PBASE)->state) )
 /// Is the object allocated?

@@ -49,7 +49,7 @@ struct Font
     TTF_Font *ttfFont;
 
     GLuint texture;
-    GLfloat texCoords[4];
+    GLXvector4f texCoords;
 };
 
 //--------------------------------------------------------------------------------------------

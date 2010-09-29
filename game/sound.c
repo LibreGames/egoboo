@@ -595,7 +595,7 @@ int sound_play_chunk_looped( fvec3_t pos, Mix_Chunk * pchunk, int loops, const C
                 LoopedList_add( pchunk, channel, owner );
             }
 
-            //Set left/right panning
+            // Set left/right panning
             _update_channel_volume( channel, volume, diff );
         }
     }
@@ -1168,7 +1168,7 @@ void sound_free_chunk( Mix_Chunk * pchunk )
 //--------------------------------------------------------------------------------------------
 int get_current_song_playing()
 {
-    //ZF> This gives read access to the private variable 'songplaying'
+    /// @details ZF@> This gives read access to the private variable 'songplaying'
     return songplaying;
 }
 

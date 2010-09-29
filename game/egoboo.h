@@ -43,7 +43,7 @@
 #include <SDL.h>
 #include <SDL_opengl.h>
 
-/// The following magic allows this include to work in multiple files
+// The following magic allows this include to work in multiple files
 #if defined(DECLARE_GLOBALS)
 #    define EXTERN
 #    define EQ(x) = x
@@ -57,7 +57,7 @@
 #define NOSPARKLE           255                     ///< Don't sparkle icons
 #define SPELLBOOK           127                     ///< The spellbook model
 
-/// Messaging stuff
+// Messaging stuff
 #define MAX_MESSAGE         8                       ///< Number of messages
 #define MAXTOTALMESSAGE     4096
 #define MESSAGESIZE         80
@@ -112,7 +112,7 @@ EXTERN float           stabilized_ups        EQ( TARGET_UPS );
 EXTERN float           stabilized_ups_sum    EQ( 0 );
 EXTERN float           stabilized_ups_weight EQ( 0 );
 
-/// Timers
+// Timers
 EXTERN signed          ticks_last  EQ( 0 );
 EXTERN signed          ticks_now   EQ( 0 );
 EXTERN signed          clock_stt   EQ( 0 );             ///< GetTickCount at start
@@ -139,24 +139,24 @@ EXTERN STRING          pickedmodule_path;               ///< The picked module's
 EXTERN STRING          pickedmodule_name;               ///< The picked module's short name
 EXTERN STRING          pickedmodule_write_path;         ///< The picked module's path name relative to the userdata directory
 
-/// Respawning
+// Respawning
 EXTERN int                      revivetimer EQ( 0 );
 
-/// Imports
+// Imports
 EXTERN int                     local_import_count;                     ///< Number of imports from this machine
 EXTERN BIT_FIELD               local_import_control[16];             ///< Input bits for each imported player
 EXTERN int                     local_import_slot[16];                ///< For local imports
 
-/// Setup values
+// Setup values
 EXTERN bool_t                  messageon      EQ( btrue );         ///< Messages?
 EXTERN int                     maxmessage     EQ( MAX_MESSAGE );
 EXTERN int                     wraptolerance  EQ( 80 );            ///< Status bar
 EXTERN bool_t                  wateron        EQ( btrue );         ///< Water overlays?
 EXTERN bool_t                  fpson          EQ( btrue );         ///< Show FPS?
 
-/// EWWWW. GLOBALS ARE EVIL.
+// EWWWW. GLOBALS ARE EVIL.
 
-/// KEYBOARD
+// KEYBOARD
 EXTERN bool_t console_mode EQ( bfalse );                   ///< Input text from keyboard?
 EXTERN bool_t console_done EQ( bfalse );                   ///< Input text from keyboard finished?
 
@@ -164,7 +164,7 @@ EXTERN bool_t console_done EQ( bfalse );                   ///< Input text from 
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//Shared stats
+// Shared stats
 struct local_shared_stats_s
 {
     int        seeinvis_level;
@@ -176,11 +176,11 @@ struct local_shared_stats_s
 
     bool_t  allpladead;                      ///< Has everyone died?
 
-    //ESP ability
+    // ESP ability
     TEAM_REF sense_enemy_team;
     IDSZ     sense_enemy_ID;
 
-    //TODO: ZF> Dont think this one is supposed to be in here
+    /// @todo ZF@> Dont think this one is supposed to be in here
     bool_t  noplayers;                    ///< Are there any local players?
 };
 typedef struct local_shared_stats_s local_shared_stats_t;

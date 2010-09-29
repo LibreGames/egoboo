@@ -481,11 +481,11 @@ MD2_Model_t* md2_load( const char * szFilename, MD2_Model_t* mdl )
             }
         }
 
-        //make sure to copy the frame name!
+        // make sure to copy the frame name!
         strncpy( model->m_frames[i].name, frame_header.name, 16 );
     }
 
-    //Load up the pre-computed OpenGL optimizations
+    // Load up the pre-computed OpenGL optimizations
     if ( md2_header.size_glcmds > 0 )
     {
         Uint32            cmd_cnt = 0;
@@ -493,7 +493,7 @@ MD2_Model_t* md2_load( const char * szFilename, MD2_Model_t* mdl )
         MD2_GLCommand_t * cmd     = NULL;
         fseek( f, md2_header.offset_glcmds, SEEK_SET );
 
-        //count the commands
+        // count the commands
         cmd_size = 0;
         while ( cmd_size < md2_header.size_glcmds )
         {
@@ -510,7 +510,7 @@ MD2_Model_t* md2_load( const char * szFilename, MD2_Model_t* mdl )
             cmd = MD2_GLCommand_create();
             cmd->command_count = commands;
 
-            //set the GL drawing mode
+            // set the GL drawing mode
             if ( cmd->command_count > 0 )
             {
                 cmd->gl_mode = GL_TRIANGLE_STRIP;
@@ -521,14 +521,14 @@ MD2_Model_t* md2_load( const char * szFilename, MD2_Model_t* mdl )
                 cmd->gl_mode = GL_TRIANGLE_FAN;
             }
 
-            //allocate the data
+            // allocate the data
             cmd->data = EGOBOO_NEW_ARY( id_glcmd_packed_t, cmd->command_count );
 
-            //read in the data
+            // read in the data
             fread( cmd->data, sizeof( id_glcmd_packed_t ), cmd->command_count, f );
             cmd_size += ( sizeof( id_glcmd_packed_t ) * cmd->command_count ) / sizeof( Uint32 );
 
-            //translate the data, if necessary
+            // translate the data, if necessary
 #if SDL_BYTEORDER != SDL_LIL_ENDIAN
             {
                 int i;

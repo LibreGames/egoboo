@@ -94,7 +94,7 @@ TURN_MODE;
 #define FLYING_SPEED           1.0f                  ///< Tolerance for TURNMODE_FLY_*
 #define SPINRATE            200                      ///< How fast spinners spin
 
-/// The vertex offsets for the various grips
+// The vertex offsets for the various grips
 enum e_grip_offset
 {
     GRIP_ORIGIN    =               0,                ///< Spawn attachments at the center
@@ -115,37 +115,37 @@ slot_t        grip_offset_to_slot( grip_offset_t grip );
 #define NO_SKIN_OVERRIDE    -1                      ///< For import
 #define HURTDAMAGE           256                    ///< Minimum damage for hurt animation
 
-//Dismounting
+// Dismounting
 #define DISMOUNTZVEL        16
 #define DISMOUNTZVELFLY     4
 #define PHYS_DISMOUNT_TIME  (TICKS_PER_SEC*0.05f)          ///< time delay for full object-object interaction (approximately 0.05 second)
 
-//Knockbacks
+// Knockbacks
 #define REEL                7600.0f     ///< Dampen for melee knock back
 #define REELBASE            0.35f
 
-//Water
+// Water
 #define RIPPLETOLERANCE     60          ///< For deep water
 #define SPLASHTOLERANCE     10
 #define RIPPLEAND           15          ///< How often ripples spawn
 
-/// Stats
+// Stats
 #define LOWSTAT             256                     ///< Worst...
 #define PERFECTSTAT         (60*256)                ///< Maximum stat without magic effects
 #define PERFECTBIG          (100*256)               ///< Perfect life or mana...
 #define HIGHSTAT            (100*256)               ///< Absolute max adding enchantments as well
 
-/// Throwing
+// Throwing
 #define THROWFIX            30.0f                    ///< To correct thrown velocities
 #define MINTHROWVELOCITY    15.0f
 #define MAXTHROWVELOCITY    75.0f
 
-/// Inventory
+// Inventory
 #define MAXNUMINPACK        6                       ///< Max number of items to carry in pack
 #define PACKDELAY           25                      ///< Time before inventory rotate again
 #define GRABDELAY           25                      ///< Time before grab again
 
-/// Z velocity
+// Z velocity
 #define FLYDAMPEN            0.001f                    ///< Leveling rate for fliers
 #define JUMP_DELAY           20                      ///< Time between jumps
 #define JUMP_SPEED_WATER     25                        ///< How good we jump in water
@@ -159,7 +159,7 @@ slot_t        grip_offset_to_slot( grip_offset_t grip );
 #define DROPZVEL             7
 #define DROPXYVEL            12
 
-//Timer resets
+// Timer resets
 #define DAMAGETILETIME      32                            ///< Invincibility time
 #define DAMAGETIME          32                            ///< Invincibility time
 #define DEFENDTIME          24                            ///< Invincibility time
@@ -248,12 +248,10 @@ typedef struct s_team team_t;
 struct s_latch_game
 {
     bool_t     raw_valid; ///< does this latch have any valid data in it?
-    fvec2_t    raw;       ///< the raw control settings
-    BIT_FIELD  raw_b;     ///< the raw control action bits
+    latch_2d_t raw;       ///< the raw control settings
 
     bool_t     trans_valid; ///< does this latch have any valid data in it?
-    fvec3_t    trans;       ///< the translated control values, relative to the camera
-    BIT_FIELD  trans_b;     ///< the translated action bits
+    latch_3d_t trans;       ///< the translated control values, relative to the camera
 };
 typedef struct s_latch_game latch_game_t;
 
@@ -343,7 +341,7 @@ struct s_chr
 
     // character state
     ai_state_t     ai;              ///< ai data
-    latch_game_t   latch;
+    latch_game_t   latch;           ///< the latch data
 
     // character stats
     STRING         Name;            ///< My name
@@ -669,6 +667,9 @@ const char * chr_get_name( const CHR_REF by_reference ichr, Uint32 bits );
 const char * chr_get_dir_name( const CHR_REF by_reference ichr );
 int chr_get_skill( chr_t *pchr, IDSZ whichskill );
 
+const char * chr_get_gender_possessive( const CHR_REF by_reference ichr, char buffer[], size_t buffer_len );
+const char * chr_get_gender_name( const CHR_REF by_reference ichr, char buffer[], size_t buffer_len );
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 struct s_chr_bundle
@@ -781,5 +782,7 @@ void   character_physics_finalize_all( float dt );
 bool_t character_physics_get_mass_pair( chr_t * pchr_a, chr_t * pchr_b, float * wta, float * wtb );
 
 bool_t chr_is_over_water( chr_t *pchr );
+
+float calc_dismount_lerp( const chr_t * pchr_a, const chr_t * pchr_b );
 
 #define CHAR_H

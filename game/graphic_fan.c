@@ -476,5 +476,3 @@ void animate_tiles()
     }
 }
 
-
-

@@ -19,7 +19,7 @@
 
 /// @file quest.c
 /// @brief Handles functions that modify quest.txt files and the players quest log
-/// @details ZF> This could be done more optimal with a proper HashMap allowing O(1) speed instead of O(n)
+/// @details ZF@> This could be done more optimal with a proper HashMap allowing O(1) speed instead of O(n)
 ///              I think we should also implement a similar system for skill IDSZ.
 
 #include "IDSZ_map.h"
@@ -127,10 +127,10 @@ egoboo_rv quest_log_download_vfs( IDSZ_node_t quest_log[], size_t quest_log_len,
         IDSZ idsz = fget_idsz( fileread );
         int  level = fget_int( fileread );
 
-        //Try to add a single quest to the map
+        // Try to add a single quest to the map
         rv = idsz_map_add( quest_log, quest_log_len, idsz, level );
 
-        //Stop here if it failed
+        // Stop here if it failed
         if ( rv_error == rv )
         {
             log_warning( "quest_log_download_vfs() - Encountered an error while trying to add a quest. (%s)\n", newloadname );
@@ -161,7 +161,7 @@ egoboo_rv quest_log_upload_vfs( IDSZ_node_t quest_log[], size_t quest_log_len, c
 
     if ( quest_log == NULL ) return rv_error;
 
-    //Write a new quest file with all the quests
+    // Write a new quest file with all the quests
     filewrite = vfs_openWrite( player_directory );
     if ( NULL == filewrite )
     {
@@ -172,7 +172,7 @@ egoboo_rv quest_log_upload_vfs( IDSZ_node_t quest_log[], size_t quest_log_len, c
     vfs_printf( filewrite, "// This file keeps order of all the quests for this player\n" );
     vfs_printf( filewrite, "// The number after the IDSZ shows the quest level. %i means it is completed.", QUEST_BEATEN );
 
-    //Iterate through every element in the IDSZ map
+    // Iterate through every element in the IDSZ map
     iterator = 0;
     pquest = idsz_map_iterate( quest_log, quest_log_len, &iterator );
     while ( pquest != NULL )
@@ -180,7 +180,7 @@ egoboo_rv quest_log_upload_vfs( IDSZ_node_t quest_log[], size_t quest_log_len, c
         // Write every single quest to the quest log
         vfs_printf( filewrite, "\n:[%4s] %i", undo_idsz( pquest->id ), pquest->level );
 
-        //Get the next element
+        // Get the next element
         pquest = idsz_map_iterate( quest_log, quest_log_len, &iterator );
     }
 

@@ -115,15 +115,15 @@ int obj_registry_entity_cmp( const void * pleft, const void * pright );
 /// OPENGL VERTEX
 struct s_GLvertex
 {
-    GLfloat pos[4];
-    GLfloat nrm[3];
-    GLfloat env[2];
+    GLXvector4f pos;
+    GLXvector3f nrm;
+    GLXvector2f env;
 
-    GLfloat tex[2];
-    GLfloat col_dir[4];
-    GLint   color_dir;   ///< the vertex-dependent, directional lighting
+    GLXvector2f tex;
+    GLXvector4f col_dir;
+    GLint       color_dir;   ///< the vertex-dependent, directional lighting
 
-    GLfloat col[4];      ///< the total vertex-dependent lighting (ambient + directional)
+    GLXvector4f col;      ///< the total vertex-dependent lighting (ambient + directional)
 
 #if defined(__cplusplus)
     s_GLvertex() { memset( this, 0, sizeof( *this ) ); }
@@ -241,8 +241,8 @@ bool_t gfx_synch_config( gfx_config_t * pgfx, struct s_egoboo_config * pcfg );
 extern obj_registry_entity_t dolist[DOLIST_SIZE];             ///< List of which characters to draw
 extern size_t                dolist_count;                  ///< How many in the list
 
-/// Minimap stuff
-#define MAXBLIP        128                          ///<Max blips on the screen
+// Minimap stuff
+#define MAXBLIP        128                          ///< Max blips on the screen
 extern Uint8           mapon;
 extern Uint8           mapvalid;
 extern Uint8           youarehereon;

@@ -84,8 +84,8 @@ enum e_xp_type
 };
 typedef enum e_xp_type xp_type;
 
-/// BB@> enumerated "speech" soun
-/// @details We COULD ge the scripts to classify which
+/// BB@> enumerated "speech" sounds
+/// @details We COULD get the scripts to classify which
 /// sound to use for the "ouch", the "too much baggage", etc.
 /// also some left-over sounds from the RTS days, but they might be useful if an NPC
 /// uses messages to control his minions.

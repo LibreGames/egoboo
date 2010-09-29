@@ -240,7 +240,7 @@ cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
                 case 'M':    pcap->damagemodifier[damagetype][cnt] |= DAMAGEMANA;            break;
                 case 'I':    pcap->damagemodifier[damagetype][cnt] |= DAMAGEINVICTUS;        break;
 
-                    //F is nothing
+                    // F is nothing
                 default: break;
             }
         }
@@ -339,7 +339,8 @@ cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
         pcap->skincost[cnt] = fget_next_int( fileread );
     }
 
-    pcap->str_bonus = fget_next_float( fileread );            //ZF> Deprecated, but keep here for backwards compatability
+    /// @note ZF@> Deprecated, but keep here for backwards compatability
+    pcap->str_bonus = fget_next_float( fileread );
 
     // Another memory lapse
     pcap->ridercanattack = !fget_next_bool( fileread );
@@ -394,7 +395,7 @@ cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
         else if ( MAKE_IDSZ( 'B', 'O', 'O', 'K' ) == idsz ) pcap->spelleffect_type = fget_int( fileread ) % MAX_SKIN;
         else if ( MAKE_IDSZ( 'F', 'A', 'S', 'T' ) == idsz ) pcap->attack_fast = ( 0 != fget_int( fileread ) );
 
-        //Damage bonuses from stats
+        // Damage bonuses from stats
         else if ( MAKE_IDSZ( 'S', 'T', 'R', 'D' ) == idsz ) pcap->str_bonus = fget_float( fileread );
         else if ( MAKE_IDSZ( 'I', 'N', 'T', 'D' ) == idsz ) pcap->int_bonus = fget_float( fileread );
         else if ( MAKE_IDSZ( 'W', 'I', 'S', 'D' ) == idsz ) pcap->wis_bonus = fget_float( fileread );
@@ -429,7 +430,7 @@ cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
             }
         }
 
-        //If it is none of the predefined IDSZ extensions then add it as a new skill
+        // If it is none of the predefined IDSZ extensions then add it as a new skill
         else idsz_map_add( pcap->skills, SDL_arraysize( pcap->skills ), idsz, fget_int( fileread ) );
     }
 
@@ -471,7 +472,7 @@ bool_t save_one_cap_file_vfs( const char * szSaveName, const char * szTemplateNa
         filetemp = template_open_vfs( "mp_data/templates/data.txt" );
     }
 
-    //did we find a template file?
+    // did we find a template file?
     if ( NULL == filetemp )
     {
         vfs_close( filewrite );
@@ -772,10 +773,10 @@ bool_t save_one_cap_file_vfs( const char * szSaveName, const char * szTemplateNa
         pidsz = idsz_map_iterate( pcap->skills, SDL_arraysize( pcap->skills ), &iterator );
         while ( pidsz != NULL )
         {
-            //Write that skill into the file
+            // Write that skill into the file
             fput_expansion( filewrite, "", pidsz->id, pidsz->level );
 
-            //Get the next IDSZ from the map
+            // Get the next IDSZ from the map
             pidsz = idsz_map_iterate( pcap->skills, SDL_arraysize( pcap->skills ), &iterator );
         }
     }

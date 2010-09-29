@@ -27,18 +27,22 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-// BB> use this forward declaration of the "struct s_IDSZ_node" instead of including
-// "IDSZ_map.h" to remove possible circular dependencies
+/// @note BB@> use this forward declaration of the "struct s_IDSZ_node" instead of including
+/// "IDSZ_map.h" to remove possible circular dependencies
 
 struct s_IDSZ_node;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-/// Quest system
-#define QUEST_MINVAL         -2
-#define QUEST_BEATEN         -2
-#define QUEST_NONE           -1
-#define QUEST_MAXVAL         0x7FFFFFFF  // maximum positive signed integer
+/// Quest system values
+enum e_quest_values
+{
+    QUEST_BEATEN         = -2,
+    QUEST_NONE           = -1,
+
+    QUEST_MINVAL         = QUEST_BEATEN,
+    QUEST_MAXVAL         = 0x7FFFFFFF  // maximum positive signed integer
+};
 
 // Public functions
 egoboo_rv quest_log_download_vfs( struct s_IDSZ_node quest_log[], size_t quest_log_len, const char* player_directory );

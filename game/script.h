@@ -34,7 +34,7 @@ struct s_object_profile;
 #define MSGDISTANCE         2000                    ///< Range for SendMessageNear
 #define PITNOSOUND          -256                    ///< Stop sound at bottom of pits...
 
-/// These are for FindPath function only
+// These are for FindPath function only
 #define   MOVE_MELEE  300
 #define   MOVE_RANGED  600
 #define   MOVE_DISTANCE 175
@@ -42,10 +42,10 @@ struct s_object_profile;
 #define   MOVE_CHARGE  111
 #define   MOVE_FOLLOW  0
 
-/// Camera bounds/edge of the map
+// Camera bounds/edge of the map
 #define EDGE                128
 
-/// AI targeting
+// AI targeting
 #define NEARBY      3*GRID_SIZE    ///< 3 tiles away
 #define WIDE        6*GRID_SIZE    ///< 6 tiles away
 #define NEAREST     0              ///< unlimited range
@@ -196,7 +196,7 @@ bool_t       ai_state_ensure_wp( ai_state_t * pself );
 //--------------------------------------------------------------------------------------------
 
 /// The state of the scripting system
-/// @delails It is not persistent between one evaluation of a script and another
+/// @details It is not persistent between one evaluation of a script and another
 struct s_script_state
 {
     int     x;

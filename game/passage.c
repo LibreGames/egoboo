@@ -226,10 +226,10 @@ CHR_REF who_is_blocking_passage( const PASS_REF by_reference passage, const CHR_
         // don't do scenery objects unless we allow items
         if ( !HAS_SOME_BITS( targeting_bits, TARGET_ITEMS ) && pchr->phys.weight == INFINITE_WEIGHT ) continue;
 
-        //Check if the object has the requirements
+        // Check if the object has the requirements
         if ( !check_target( psrc, character, idsz, targeting_bits ) ) continue;
 
-        //Now check if it actually is inside the passage area
+        // Now check if it actually is inside the passage area
         if ( object_is_in_passage( passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
         {
             // Found a live one, do we need to check for required items as well?
@@ -345,7 +345,7 @@ bool_t close_passage( const PASS_REF by_reference passage )
             if ( !INGAME_CHR( character ) ) continue;
             pchr = ChrList.lst + character;
 
-            //Don't do held items
+            // Don't do held items
             if ( IS_ATTACHED_PCHR( pchr ) ) continue;
 
             if ( 0.0f != pchr->bump_stt.size )
@@ -432,11 +432,11 @@ void add_shop_passage( const CHR_REF by_reference owner, const PASS_REF by_refer
                 pchr->iskursed   = bfalse;              // Shop items are never kursed
 
                 // Identify only cheap items in a shop
-                // BB> not all shop items should be identified.
-                // I guess there could be a minor exploit with casters identifying a book, then
-                // leaving the module and re-identifying the book.
-                // An answer would be to reduce the XP based on the some quality of the book and the character's level?
-                // Maybe give the spell books levels, and if your character's level is above the spellbook level, no XP for identifying it?
+                /// @note BB@> not all shop items should be identified.
+                /// I guess there could be a minor exploit with casters identifying a book, then
+                /// leaving the module and re-identifying the book.
+                /// An answer would be to reduce the XP based on the some quality of the book and the character's level?
+                /// Maybe give the spell books levels, and if your character's level is above the spellbook level, no XP for identifying it?
 
                 if ( chr_get_price( ichr ) <= SHOP_IDENTIFY )
                 {

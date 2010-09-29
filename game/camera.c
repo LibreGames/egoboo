@@ -143,7 +143,7 @@ void camera_make_matrix( camera_t * pcam )
     float local_swingamp = pcam->swingamp;
 
 	//Fade out the motion blur
-	if( pcam->motion_blur > 0 ) 
+	if( pcam->motion_blur > 0 )
 	{
 		pcam->motion_blur *= 0.99f; //Decay factor
 		if ( pcam->motion_blur < 0.001f ) pcam->motion_blur = 0;
@@ -156,7 +156,7 @@ void camera_make_matrix( camera_t * pcam )
         pcam->swing = ( pcam->swing + 120 ) & 0x3FFF;
         local_swingamp = MAX( local_swingamp, 0.175f );
 
-        zoom_add = ( local_stats.grog_level % 2 == 0 ? 1 : - 1 ) * CAM_TURN_KEY * local_stats.grog_level * 0.35f;
+        zoom_add = ( 0 == (local_stats.grog_level % 2) ? 1 : - 1 ) * CAM_TURN_KEY * local_stats.grog_level * 0.35f;
         pcam->zaddgoto = CLIP( pcam->zaddgoto + zoom_add, CAM_ZADD_MIN, CAM_ZADD_MAX );
 		pcam->motion_blur = MIN( 1.00f, 0.6f + 0.075f * local_stats.grog_level );
     }
@@ -176,13 +176,13 @@ void camera_make_matrix( camera_t * pcam )
         pcam->mView = MatrixMult( RotateY( pcam->roll ), pcam->mView );
     }
 
-    //If the camera stops swinging for some reason, slowly return to original position
+    // If the camera stops swinging for some reason, slowly return to original position
     else if ( pcam->roll != 0 )
     {
         pcam->roll *= 0.9875f;            //Decay factor
         pcam->mView = MatrixMult( RotateY( pcam->roll ), pcam->mView );
 
-        //Come to a standstill at some point
+        // Come to a standstill at some point
         if ( ABS( pcam->roll ) < 0.001f )
         {
             pcam->roll = 0;
@@ -372,7 +372,7 @@ void camera_move( camera_t * pcam, ego_mpd_t * pmesh )
                 weight1 = fvec3_dot_product( pchr->vel.v, pchr->vel.v );
 
                 // make another weight based on button-pushing
-                weight2 = ( 0 == pchr->latch.trans_b ) ? 0 : 127;
+                weight2 = ( 0 == pchr->latch.trans.b ) ? 0 : 127;
 
                 // I would weight this by the amount of damage that the character just sustained,
                 // but there is no real way to do this?

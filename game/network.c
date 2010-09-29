@@ -50,13 +50,19 @@ static int  numfilesent = 0;                            // For network copy
 static int  numfileexpected = 0;                        // For network copy
 static int  numplayerrespond = 0;
 
-static net_instance_t gnet = { bfalse, bfalse, bfalse, bfalse, bfalse };
+static net_instance_t _gnet = { bfalse, bfalse, bfalse, bfalse, bfalse };
 
 static bool_t net_instance_init( net_instance_t * pnet );
 
 static void PlaStack_init();
 static void PlaStack_reinit();
 static void PlaStack_dtor();
+
+static void net_initialize( egoboo_config_t * pcfg );
+static void net_shutDown();
+static void net_logf( const char *format, ... );
+
+static void net_startNewPacket();
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -83,8 +89,6 @@ int     playersready  = 0;         // Number of players ready to start
 int     playersloaded = 0;
 
 Uint32 sv_last_frame = ( Uint32 )~0;
-
-net_instance_t * PNet = &gnet;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -165,12 +169,12 @@ static bool_t _network_system_init = bfalse;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void network_system_begin( void )
+void network_system_begin( egoboo_config_t * pcfg )
 {
     if ( !_network_system_init )
     {
         PlaStack_init();
-        net_initialize();
+        net_initialize( pcfg );
 
         _network_system_init = btrue;
 
@@ -192,6 +196,62 @@ void network_system_end( void )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+const net_instance_t * network_get_instance()
+{
+    net_instance_t * retval = NULL;
+
+    if( !_network_system_init ) return NULL;
+
+    // if it is not initialized, give it one more try
+    if( !_gnet.initialized )
+    {
+        net_initialize( &cfg );
+    }
+
+    if( _gnet.initialized )
+    {
+        retval = &_gnet;
+    }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t network_initialized()
+{
+    if( !_network_system_init ) return bfalse;
+
+    return _gnet.initialized;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t network_get_host_active()
+{
+    if( !_network_system_init ) return bfalse;
+
+    return _gnet.hostactive;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t network_set_host_active( bool_t state )
+{
+    if( !_network_system_init ) return bfalse;
+
+    _gnet.hostactive = state;
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t network_waiting_for_players()
+{
+    if( !_network_system_init || !_gnet.initialized ) return bfalse;
+
+    return _gnet.waitingforplayers;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 void close_session()
 {
     size_t i, numPeers;
@@ -199,7 +259,7 @@ void close_session()
 
     /// @details ZZ@> This function gets the computer out of a network game
 
-    if ( gnet.on )
+    if ( _gnet.initialized )
     {
         if ( net_amHost )
         {
@@ -601,7 +661,7 @@ void net_copyFileToAllPlayersOld_vfs( const char *source, const char *dest )
     char cTmp;
 
     log_info( "net_copyFileToAllPlayers: %s, %s\n", source, dest );
-    if ( gnet.on && gnet.hostactive )
+    if ( _gnet.initialized && _gnet.hostactive )
     {
         fileisdir = vfs_isDirectory( source );
         if ( fileisdir )
@@ -675,7 +735,7 @@ void net_copyFileToHost( const char *source, const char *dest )
     /// @details JF@> New function merely queues up a new file to be sent
 
     // If this is the host, just copy the file locally
-    if ( gnet.hostactive )
+    if ( _gnet.hostactive )
     {
         // Simulate a network transfer
         if ( vfs_isDirectory( source ) )
@@ -729,7 +789,7 @@ void net_copyFileToHostOld_vfs( const char *source, const char *dest )
 
     log_info( "net_copyFileToHost: " );
     fileisdir = vfs_isDirectory( source );
-    if ( gnet.hostactive )
+    if ( _gnet.hostactive )
     {
         // Simulate a network transfer
         if ( fileisdir )
@@ -908,17 +968,17 @@ void net_sayHello()
 {
     /// @details ZZ@> This function lets everyone know we're here
 
-    if ( !gnet.on )
+    if ( !_gnet.initialized )
     {
-        gnet.waitingforplayers = bfalse;
+        _gnet.waitingforplayers = bfalse;
     }
-    else if ( gnet.hostactive )
+    else if ( _gnet.hostactive )
     {
         log_info( "net_sayHello: Server saying hello.\n" );
         playersloaded++;
         if ( playersloaded >= numplayer )
         {
-            gnet.waitingforplayers = bfalse;
+            _gnet.waitingforplayers = bfalse;
         }
     }
     else
@@ -957,7 +1017,7 @@ void cl_talkToHost()
     }
 
     // Start talkin'
-    if ( gnet.on && !gnet.hostactive /*&& !PMod->rtscontrol*/ )
+    if ( _gnet.initialized && !_gnet.hostactive /*&& !PMod->rtscontrol*/ )
     {
         net_startNewPacket();
         packet_addUnsignedShort( TO_HOST_LATCH );        // The message header
@@ -971,10 +1031,14 @@ void cl_talkToHost()
             if ( INPUT_BITS_NONE != ppla->device.bits )
             {
                 packet_addUnsignedByte( REF_TO_INT( player ) );                      // The player index
+
                 packet_addSignedShort( ppla->local_latch.raw[kX]*LATCH_TO_FFFF );  // Raw control value
                 packet_addSignedShort( ppla->local_latch.raw[kY]*LATCH_TO_FFFF );  // Raw control value
+
                 packet_addSignedShort( ppla->local_latch.dir[kX]*LATCH_TO_FFFF );  // Player motion
                 packet_addSignedShort( ppla->local_latch.dir[kY]*LATCH_TO_FFFF );  // Player motion
+                packet_addSignedShort( ppla->local_latch.dir[kZ]*LATCH_TO_FFFF );  // Player motion
+
                 packet_addUnsignedInt( ppla->local_latch.b );             // Player button states
             }
         }
@@ -996,9 +1060,9 @@ void sv_talkToRemotes()
     if ( update_wld == sv_last_frame ) return;
     sv_last_frame = update_wld;
 
-    if ( gnet.hostactive )
+    if ( _gnet.hostactive )
     {
-        if ( gnet.on )
+        if ( _gnet.initialized )
         {
             time = true_update + lag;
 
@@ -1015,10 +1079,14 @@ void sv_talkToRemotes()
                 if ( !ppla->valid ) continue;
 
                 packet_addUnsignedByte( REF_TO_INT( player ) );                      // The player index
+
                 packet_addSignedShort( ppla->local_latch.raw[kX]*LATCH_TO_FFFF );  // Player motion
                 packet_addSignedShort( ppla->local_latch.raw[kY]*LATCH_TO_FFFF );  // Player motion
+
                 packet_addSignedShort( ppla->local_latch.dir[kX]*LATCH_TO_FFFF );  // Player motion
                 packet_addSignedShort( ppla->local_latch.dir[kY]*LATCH_TO_FFFF );  // Player motion
+                packet_addSignedShort( ppla->local_latch.dir[kZ]*LATCH_TO_FFFF );  // Player motion
+
                 packet_addUnsignedInt( ppla->local_latch.b );        // Player button states
             }
 
@@ -1050,8 +1118,10 @@ void sv_talkToRemotes()
                 // reduce the resolution of the motion to match the network packets
                 ptlatch->raw[kX] = floor( ppla->local_latch.raw[kX] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
                 ptlatch->raw[kY] = floor( ppla->local_latch.raw[kY] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
+
                 ptlatch->dir[kX] = floor( ppla->local_latch.dir[kX] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
                 ptlatch->dir[kY] = floor( ppla->local_latch.dir[kY] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
+                ptlatch->dir[kZ] = floor( ppla->local_latch.dir[kZ] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
 
                 ptlatch->time = true_update;
 
@@ -1084,8 +1154,11 @@ void pla_add_tlatch( const PLA_REF by_reference iplayer, Uint32 time, latch_inpu
 
     ppla->tlatch[ ppla->tlatch_count ].raw[kX] = net_latch.raw[kX];
     ppla->tlatch[ ppla->tlatch_count ].raw[kY] = net_latch.raw[kY];
+
     ppla->tlatch[ ppla->tlatch_count ].dir[kX] = net_latch.dir[kX];
     ppla->tlatch[ ppla->tlatch_count ].dir[kY] = net_latch.dir[kY];
+    ppla->tlatch[ ppla->tlatch_count ].dir[kZ] = net_latch.dir[kZ];
+
     ppla->tlatch[ ppla->tlatch_count ].button  = net_latch.b;
     ppla->tlatch[ ppla->tlatch_count ].time    = time;
 
@@ -1120,19 +1193,19 @@ void net_handlePacket( ENetEvent *event )
 
         case TO_HOST_MODULEOK:
             log_info( "TO_HOSTMODULEOK\n" );
-            if ( gnet.hostactive )
+            if ( _gnet.hostactive )
             {
                 playersready++;
                 if ( playersready >= numplayer )
                 {
-                    gnet.readytostart = btrue;
+                    _gnet.readytostart = btrue;
                 }
             }
             break;
 
         case TO_HOST_LATCH:
             log_info( "TO_HOST_LATCH\n" );
-            if ( gnet.hostactive )
+            if ( _gnet.hostactive )
             {
                 while ( packet_remainingSize() > 0 )
                 {
@@ -1143,8 +1216,11 @@ void net_handlePacket( ENetEvent *event )
 
                     tmp_latch.raw[kX] = packet_readSignedShort() * FFFF_TO_LATCH;
                     tmp_latch.raw[kY] = packet_readSignedShort() * FFFF_TO_LATCH;
+
                     tmp_latch.dir[kX] = packet_readSignedShort() * FFFF_TO_LATCH;
                     tmp_latch.dir[kY] = packet_readSignedShort() * FFFF_TO_LATCH;
+                    tmp_latch.dir[kZ] = packet_readSignedShort() * FFFF_TO_LATCH;
+
                     tmp_latch.b       = packet_readUnsignedInt();
 
                     pla_add_tlatch( player, time, tmp_latch );
@@ -1155,13 +1231,13 @@ void net_handlePacket( ENetEvent *event )
 
         case TO_HOST_IM_LOADED:
             log_info( "TO_HOST_IMLOADED\n" );
-            if ( gnet.hostactive )
+            if ( _gnet.hostactive )
             {
                 playersloaded++;
                 if ( playersloaded == numplayer )
                 {
                     // Let the games begin...
-                    gnet.waitingforplayers = bfalse;
+                    _gnet.waitingforplayers = bfalse;
                     net_startNewPacket();
                     packet_addUnsignedShort( TO_REMOTE_START );
                     net_sendPacketToAllPlayersGuaranteed();
@@ -1171,7 +1247,7 @@ void net_handlePacket( ENetEvent *event )
 
         case TO_HOST_RTS:
             log_info( "TO_HOST_RTS\n" );
-            if ( gnet.hostactive )
+            if ( _gnet.hostactive )
             {
                 /*whichorder = get_empty_order();
                 if(whichorder < MAXORDER)
@@ -1323,7 +1399,7 @@ void net_handlePacket( ENetEvent *event )
 
         case TO_HOST_DIR:
             log_info( "TO_HOST_DIR\n" );
-            if ( gnet.hostactive )
+            if ( _gnet.hostactive )
             {
                 packet_readString( filename, 255 );
                 vfs_mkdir( filename );
@@ -1332,7 +1408,7 @@ void net_handlePacket( ENetEvent *event )
 
         case TO_HOST_FILESENT:
             log_info( "TO_HOST_FILESENT\n" );
-            if ( gnet.hostactive )
+            if ( _gnet.hostactive )
             {
                 numfileexpected += packet_readUnsignedInt();
                 numplayerrespond++;
@@ -1341,7 +1417,7 @@ void net_handlePacket( ENetEvent *event )
 
         case TO_REMOTE_FILESENT:
             log_info( "TO_REMOTE_FILESENT\n" );
-            if ( !gnet.hostactive )
+            if ( !_gnet.hostactive )
             {
                 numfileexpected += packet_readUnsignedInt();
                 numplayerrespond++;
@@ -1350,7 +1426,7 @@ void net_handlePacket( ENetEvent *event )
 
         case TO_REMOTE_MODULE:
             log_info( "TO_REMOTE_MODULE\n" );
-            if ( !gnet.hostactive && !gnet.readytostart )
+            if ( !_gnet.hostactive && !_gnet.readytostart )
             {
                 PMod->seed = packet_readUnsignedInt();
                 packet_readString( filename, 255 );
@@ -1372,7 +1448,7 @@ void net_handlePacket( ENetEvent *event )
                     pickedmodule_ready = btrue;
 
                     // Make ourselves ready
-                    gnet.readytostart = btrue;
+                    _gnet.readytostart = btrue;
 
                     // Tell the host we're ready
                     net_startNewPacket();
@@ -1385,7 +1461,7 @@ void net_handlePacket( ENetEvent *event )
                     pickedmodule_ready = bfalse;
 
                     // Halt the process
-                    gnet.readytostart = bfalse;
+                    _gnet.readytostart = bfalse;
 
                     // Tell the host we're not ready
                     net_startNewPacket();
@@ -1397,15 +1473,15 @@ void net_handlePacket( ENetEvent *event )
 
         case TO_REMOTE_START:
             log_info( "TO_REMOTE_START\n" );
-            if ( !gnet.hostactive )
+            if ( !_gnet.hostactive )
             {
-                gnet.waitingforplayers = bfalse;
+                _gnet.waitingforplayers = bfalse;
             }
             break;
 
         case TO_REMOTE_RTS:
             log_info( "TO_REMOTE_RTS\n" );
-            if ( !gnet.hostactive )
+            if ( !_gnet.hostactive )
             {
                 /*    whichorder = get_empty_order();
                     if(whichorder < MAXORDER)
@@ -1428,7 +1504,7 @@ void net_handlePacket( ENetEvent *event )
 
         case TO_REMOTE_FILE:
             log_info( "TO_REMOTE_FILE\n" );
-            if ( !gnet.hostactive )
+            if ( !_gnet.hostactive )
             {
                 packet_readString( filename, 255 );
                 newfilesize = packet_readUnsignedInt();
@@ -1489,7 +1565,7 @@ void net_handlePacket( ENetEvent *event )
 
         case TO_REMOTE_DIR:
             log_info( "TO_REMOTE_DIR\n" );
-            if ( !gnet.hostactive )
+            if ( !_gnet.hostactive )
             {
                 packet_readString( filename, 255 );
                 vfs_mkdir( filename );
@@ -1498,7 +1574,7 @@ void net_handlePacket( ENetEvent *event )
 
         case TO_REMOTE_LATCH:
             log_info( "TO_REMOTE_LATCH\n" );
-            if ( !gnet.hostactive )
+            if ( !_gnet.hostactive )
             {
                 stamp = packet_readUnsignedInt();
                 time = stamp & LAGAND;
@@ -1537,8 +1613,11 @@ void net_handlePacket( ENetEvent *event )
 
                             ppla->tlatch[time].raw[kX] = packet_readSignedShort() * FFFF_TO_LATCH;
                             ppla->tlatch[time].raw[kY] = packet_readSignedShort() * FFFF_TO_LATCH;
+
                             ppla->tlatch[time].dir[kX] = packet_readSignedShort() * FFFF_TO_LATCH;
                             ppla->tlatch[time].dir[kY] = packet_readSignedShort() * FFFF_TO_LATCH;
+                            ppla->tlatch[time].dir[kZ] = packet_readSignedShort() * FFFF_TO_LATCH;
+
                             ppla->tlatch[time].button  = packet_readUnsignedInt();
                         }
                         else
@@ -1566,7 +1645,7 @@ void listen_for_packets()
     ///    lists...
 
     ENetEvent event;
-    if ( gnet.on )
+    if ( _gnet.initialized )
     {
         // Listen for new messages
         while ( enet_host_service( net_myHost, &event, 0 ) != 0 )
@@ -1611,7 +1690,7 @@ void listen_for_packets()
 }
 
 //--------------------------------------------------------------------------------------------
-void unbuffer_one_player_latch_network( player_t * ppla )
+void unbuffer_one_player_latch_do_network( player_t * ppla )
 {
     // get the "network" latch for each valid player
 
@@ -1643,8 +1722,11 @@ void unbuffer_one_player_latch_network( player_t * ppla )
         // there is just one valid latch
         tmp_latch.raw[kX] = tlatch_list[0].raw[kX];
         tmp_latch.raw[kY] = tlatch_list[0].raw[kY];
+
         tmp_latch.dir[kX] = tlatch_list[0].dir[kX];
         tmp_latch.dir[kY] = tlatch_list[0].dir[kY];
+        tmp_latch.dir[kZ] = tlatch_list[0].dir[kZ];
+
         tmp_latch.b       = tlatch_list[0].button;
 
         //log_info( "<<%1.4f, %1.4f>, 0x%x>, Just one latch for %s\n", tmp_latch.x, tmp_latch.y, tmp_latch.b, ChrList.lst[ppla->index].Name );
@@ -1670,10 +1752,14 @@ void unbuffer_one_player_latch_network( player_t * ppla )
             weight      = ( dt + 1 ) * ( dt + 1 );
 
             weight_sum  += weight;
+
             tmp_latch.raw[kX] += tlatch_list[tnc].raw[kX] * weight;
             tmp_latch.raw[kY] += tlatch_list[tnc].raw[kY] * weight;
+
             tmp_latch.dir[kX] += tlatch_list[tnc].dir[kX] * weight;
             tmp_latch.dir[kY] += tlatch_list[tnc].dir[kY] * weight;
+            tmp_latch.dir[kZ] += tlatch_list[tnc].dir[kZ] * weight;
+
             ADD_BITS( tmp_latch.b, tlatch_list[tnc].button );
         }
 
@@ -1682,8 +1768,10 @@ void unbuffer_one_player_latch_network( player_t * ppla )
         {
             tmp_latch.raw[kX] /= ( float )weight_sum;
             tmp_latch.raw[kY] /= ( float )weight_sum;
+
             tmp_latch.dir[kX] /= ( float )weight_sum;
             tmp_latch.dir[kY] /= ( float )weight_sum;
+            tmp_latch.dir[kZ] /= ( float )weight_sum;
         }
 
         //log_info( "<<%1.4f, %1.4f>, 0x%x>, %d, multiple latches for %s\n", tmp_latch.x, tmp_latch.y, tmp_latch.b, latch_count, ChrList.lst[ppla->index].Name );
@@ -1711,8 +1799,11 @@ void unbuffer_one_player_latch_network( player_t * ppla )
         {
             tlatch_list[index].raw[kX] = tlatch_list[tnc].raw[kX];
             tlatch_list[index].raw[kY] = tlatch_list[tnc].raw[kY];
+
             tlatch_list[index].dir[kX] = tlatch_list[tnc].dir[kX];
             tlatch_list[index].dir[kY] = tlatch_list[tnc].dir[kY];
+            tlatch_list[index].dir[kZ] = tlatch_list[tnc].dir[kZ];
+
             tlatch_list[index].button  = tlatch_list[tnc].button;
             tlatch_list[index].time    = tlatch_list[tnc].time;
         }
@@ -1724,7 +1815,7 @@ void unbuffer_one_player_latch_network( player_t * ppla )
 }
 
 //--------------------------------------------------------------------------------------------
-void unbuffer_one_player_latch_set( player_t * ppla )
+void unbuffer_one_player_latch_download( player_t * ppla )
 {
     chr_t * pchr;
 
@@ -1734,19 +1825,19 @@ void unbuffer_one_player_latch_set( player_t * ppla )
     pchr = ChrList.lst + ppla->index;
 
     pchr->latch.raw_valid = btrue;
-    pchr->latch.raw.x     = ppla->net_latch.raw[kX];
-    pchr->latch.raw.y     = ppla->net_latch.raw[kY];
-    pchr->latch.raw_b     = ppla->net_latch.b;
+    pchr->latch.raw.dir[kX] = ppla->net_latch.raw[kX];
+    pchr->latch.raw.dir[kY] = ppla->net_latch.raw[kY];
+    pchr->latch.raw.b       = ppla->net_latch.b;
 
     pchr->latch.trans_valid = btrue;
-    pchr->latch.trans.x     = ppla->net_latch.dir[kX];
-    pchr->latch.trans.y     = ppla->net_latch.dir[kY];
-    pchr->latch.trans.z     = 0.0f;
-    pchr->latch.trans_b     = ppla->net_latch.b;
+    pchr->latch.trans.dir[kX] = ppla->net_latch.dir[kX];
+    pchr->latch.trans.dir[kY] = ppla->net_latch.dir[kY];
+    pchr->latch.trans.dir[kZ] = ppla->net_latch.dir[kZ];
+    pchr->latch.trans.b       = ppla->net_latch.b;
 }
 
 //--------------------------------------------------------------------------------------------
-void unbuffer_one_player_latch_respawn( player_t * ppla )
+void unbuffer_one_player_latch_do_respawn( player_t * ppla )
 {
     chr_t * pchr;
 
@@ -1755,7 +1846,7 @@ void unbuffer_one_player_latch_respawn( player_t * ppla )
     if ( !INGAME_CHR( ppla->index ) ) return;
     pchr = ChrList.lst + ppla->index;
 
-    if ( cfg.difficulty < GAME_HARD && HAS_SOME_BITS( pchr->latch.trans_b, LATCHBUTTON_RESPAWN ) && PMod->respawnvalid )
+    if ( cfg.difficulty < GAME_HARD && HAS_SOME_BITS( pchr->latch.trans.b, LATCHBUTTON_RESPAWN ) && PMod->respawnvalid )
     {
         if ( !pchr->alive && 0 == revivetimer )
         {
@@ -1769,7 +1860,7 @@ void unbuffer_one_player_latch_respawn( player_t * ppla )
         }
 
         // remove all latches other than latchbutton_respawn
-        REMOVE_BITS( pchr->latch.trans_b, LATCHBUTTON_RESPAWN );
+        REMOVE_BITS( pchr->latch.trans.b, LATCHBUTTON_RESPAWN );
     }
 }
 
@@ -1788,7 +1879,7 @@ void unbuffer_all_player_latches()
         player_t * ppla = PlaStack.lst + ipla;
         if ( !ppla->valid ) continue;
 
-        unbuffer_one_player_latch_network( ppla );
+        unbuffer_one_player_latch_do_network( ppla );
     }
 
     // set the player latch
@@ -1797,7 +1888,7 @@ void unbuffer_all_player_latches()
         player_t * ppla = PlaStack.lst + ipla;
         if ( !ppla->valid ) continue;
 
-        unbuffer_one_player_latch_set( ppla );
+        unbuffer_one_player_latch_download( ppla );
     }
 
     // Let players respawn
@@ -1806,19 +1897,20 @@ void unbuffer_all_player_latches()
         player_t * ppla = PlaStack.lst + ipla;
         if ( !ppla->valid ) continue;
 
-        unbuffer_one_player_latch_respawn( ppla );
+        unbuffer_one_player_latch_do_respawn( ppla );
     }
 }
 
 //--------------------------------------------------------------------------------------------
-void net_initialize()
+void net_initialize( egoboo_config_t * pcfg )
 {
     /// @details ZZ@> This starts up the network and logs whatever goes on
-    gnet.serviceon = bfalse;
+
+    // assume the worst
     numsession = 0;
     numservice = 0;
 
-    net_instance_init( &gnet );
+    net_instance_init( &_gnet );
 
     // Clear all the state variables to 0 to start.
     memset( net_playerPeers, 0, sizeof( net_playerPeers ) );
@@ -1829,20 +1921,23 @@ void net_initialize()
 
     sv_last_frame = ( Uint32 )~0;
 
-    if ( gnet.on )
+    if ( NULL != pcfg && pcfg->network_allowed )
     {
         // initialize enet
         log_info( "net_initialize: Initializing enet... " );
-        if ( enet_initialize() != 0 )
+        if ( 0 != enet_initialize() )
         {
             log_info( "Failure!\n" );
-            gnet.on = bfalse;
-            gnet.serviceon = 0;
+
+            _gnet.initialized = bfalse;
+            _gnet.serviceon = 0;
         }
         else
         {
             log_info( "Success!\n" );
-            gnet.serviceon = btrue;
+
+            _gnet.initialized = btrue;
+            _gnet.serviceon = btrue;
             numservice = 1;
         }
     }
@@ -1856,7 +1951,7 @@ void net_initialize()
 //--------------------------------------------------------------------------------------------
 void net_shutDown()
 {
-    if ( !gnet.on ) return;
+    if ( !_gnet.initialized ) return;
 
     log_info( "net_shutDown: Turning off networking.\n" );
     enet_deinitialize();
@@ -1870,7 +1965,7 @@ void find_open_sessions()
 
     DPSESSIONDESC2      sessionDesc;
     HRESULT             hr;
-    if(gnet.on)
+    if(_gnet.initialized)
       {
     numsession = 0;
     if(globalnetworkerr)  vfs_printf(globalnetworkerr, "  Looking for open games...\n");
@@ -1941,7 +2036,7 @@ int cl_joinGame( const char* hostname )
 
     ENetAddress address;
     ENetEvent event;
-    if ( gnet.on )
+    if ( _gnet.initialized )
     {
         log_info( "cl_joinGame: Creating client network connection... " );
         // Create my host thingamabober
@@ -1998,7 +2093,7 @@ int sv_hostGame()
     /// @details ZZ@> This function tries to host a new session
 
     ENetAddress address;
-    if ( gnet.on )
+    if ( _gnet.initialized )
     {
         // Try to create a new session
         address.host = ENET_HOST_ANY;
@@ -2017,7 +2112,7 @@ int sv_hostGame()
         net_amHost = btrue;
 
         // Moved from net_sayHello because there they cause a race issue
-        gnet.waitingforplayers = btrue;
+        _gnet.waitingforplayers = btrue;
         playersloaded = 0;
     }
 
@@ -2136,7 +2231,7 @@ void net_send_message()
 
     if ( console_mode || !console_done ) return;
 
-    // if(gnet.on)
+    // if(_gnet.initialized)
     // {
     //   start_building_packet();
     //   add_packet_us(TO_ANY_TEXT);
@@ -2196,6 +2291,21 @@ chr_t  * pla_get_pchr( const PLA_REF by_reference iplayer )
 }
 
 //--------------------------------------------------------------------------------------------
+latch_2d_t pla_convert_latch_2d( const PLA_REF by_reference iplayer, const by_reference latch_2d_t src )
+{
+    latch_2d_t dst = LATCH_2D_INIT;
+    player_t * ppla;
+
+    if( !VALID_PLA(iplayer) ) return dst;
+    ppla = PlaStack.lst + iplayer;
+
+    // is there a valid character?
+    if( !DEFINED_CHR(ppla->index) ) return dst;
+
+    return chr_convert_latch_2d( ChrList.lst + ppla->index, src );
+}
+
+//--------------------------------------------------------------------------------------------
 void net_reset_players()
 {
     PlaStack_reinit();
@@ -2213,10 +2323,11 @@ void tlatch_ary_init( time_latch_t ary[], size_t len )
 
     for ( cnt = 0; cnt < len; cnt++ )
     {
-        ary[cnt].raw[kX] = 0;
-        ary[cnt].raw[kY] = 0;
-        ary[cnt].dir[kX] = 0;
-        ary[cnt].dir[kY] = 0;
+        ary[cnt].raw[kX] = 0.0f;
+        ary[cnt].raw[kY] = 0.0f;
+        ary[cnt].dir[kX] = 0.0f;
+        ary[cnt].dir[kY] = 0.0f;
+        ary[cnt].dir[kZ] = 0.0f;
         ary[cnt].button  = 0;
         ary[cnt].time    = ( Uint32 )( ~0 );
     }
@@ -2298,15 +2409,17 @@ void input_device_add_latch( input_device_t * pdevice, latch_input_t latch )
 
     pdevice->latch.dir[kX] = pdevice->latch_old.dir[kX] * pdevice->sustain + latch.dir[kX] * pdevice->cover;
     pdevice->latch.dir[kY] = pdevice->latch_old.dir[kY] * pdevice->sustain + latch.dir[kY] * pdevice->cover;
+    pdevice->latch.dir[kZ] = pdevice->latch_old.dir[kZ] * pdevice->sustain + latch.dir[kZ] * pdevice->cover;
 
     // make sure that the latch never overflows
-    dist = pdevice->latch.dir[kX] * pdevice->latch.dir[kX] + pdevice->latch.dir[kY] * pdevice->latch.dir[kY];
+    dist = pdevice->latch.dir[kX] * pdevice->latch.dir[kX] + pdevice->latch.dir[kY] * pdevice->latch.dir[kY] + pdevice->latch.dir[kZ] * pdevice->latch.dir[kZ];
     if ( dist > 1.0f )
     {
         float scale = 1.0f / SQRT( dist );
 
         pdevice->latch.dir[kX] *= scale;
         pdevice->latch.dir[kY] *= scale;
+        pdevice->latch.dir[kZ] *= scale;
     }
 }
 

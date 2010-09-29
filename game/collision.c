@@ -431,10 +431,6 @@ bool_t detect_chr_chr_interaction_valid( const CHR_REF by_reference ichr_a, cons
     // don't interact with your mount, or your held items
     if ( ichr_a == pchr_b->attachedto || ichr_b == pchr_a->attachedto ) return bfalse;
 
-    // handle the dismount exception
-    if ( pchr_a->dismount_timer > 0 && pchr_a->dismount_object == ichr_b ) return bfalse;
-    if ( pchr_b->dismount_timer > 0 && pchr_b->dismount_object == ichr_a ) return bfalse;
-
     return btrue;
 }
 
@@ -484,7 +480,7 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary_t * cn_lst, HashN
 
     //---- find the character/particle interactions
 
-    // Find the character-character interactions. 
+    // Find the character-character interactions.
     // Loop only through the list of objects that are both active and in the BSP tree
     CHashList_inserted = 0;
     CHR_BEGIN_LOOP_BSP( ichr_a, pchr_a )
@@ -720,149 +716,6 @@ bool_t fill_bumplists( obj_BSP_t * pbsp )
     return btrue;
 }
 
-////--------------------------------------------------------------------------------------------
-//bool_t do_mounts( const CHR_REF by_reference ichr_a, const CHR_REF by_reference ichr_b )
-//{
-//    float xa, ya, za;
-//    float xb, yb, zb;
-//
-//    chr_t * pchr_a, * pchr_b;
-//    cap_t * pcap_a, * pcap_b;
-//
-//    bool_t mount_a, mount_b;
-//    float  dx, dy, dist;
-//    float  depth_z;
-//
-//    bool_t collide_x  = bfalse;
-//    bool_t collide_y  = bfalse;
-//    bool_t collide_xy = bfalse;
-//
-//    bool_t mounted;
-//
-//    // make sure that A is valid
-//    if ( !INGAME_CHR( ichr_a ) ) return bfalse;
-//    pchr_a = ChrList.lst + ichr_a;
-//
-//    pcap_a = chr_get_pcap( ichr_a );
-//    if ( NULL == pcap_a ) return bfalse;
-//
-//    // make sure that B is valid
-//    if ( !INGAME_CHR( ichr_b ) ) return bfalse;
-//    pchr_b = ChrList.lst + ichr_b;
-//
-//    pcap_b = chr_get_pcap( ichr_b );
-//    if ( NULL == pcap_b ) return bfalse;
-//
-//    // can either of these objects mount the other?
-//    mount_a = chr_can_mount( ichr_b, ichr_a );
-//    mount_b = chr_can_mount( ichr_a, ichr_b );
-//
-//    if ( !mount_a && !mount_b ) return bfalse;
-//
-//    //Ready for position calulations
-//    xa = pchr_a->pos.x;
-//    ya = pchr_a->pos.y;
-//    za = pchr_a->pos.z;
-//
-//    xb = pchr_b->pos.x;
-//    yb = pchr_b->pos.y;
-//    zb = pchr_b->pos.z;
-//
-//    mounted = bfalse;
-//    if ( !mounted && mount_b && ( pchr_a->vel.z - pchr_b->vel.z ) < 0 )
-//    {
-//        // A falling on B?
-//        fvec4_t   point[1], nupoint[1];
-//
-//        // determine the actual location of the mount point
-//        {
-//            int vertex;
-//            chr_instance_t * pinst = &( pchr_b->inst );
-//
-//            vertex = (( int )pinst->vrt_count ) - GRIP_LEFT;
-//
-//            // do the automatic update
-//            chr_instance_update_vertices( pinst, vertex, vertex, bfalse );
-//
-//            // Calculate grip point locations with linear interpolation and other silly things
-//            point[0].x = pinst->vrt_lst[vertex].pos[XX];
-//            point[0].y = pinst->vrt_lst[vertex].pos[YY];
-//            point[0].z = pinst->vrt_lst[vertex].pos[ZZ];
-//            point[0].w = 1.0f;
-//
-//            // Do the transform
-//            TransformVertices( &( pinst->matrix ), point, nupoint, 1 );
-//        }
-//
-//        dx = ABS( xa - nupoint[0].x );
-//        dy = ABS( ya - nupoint[0].y );
-//        dist = dx + dy;
-//        depth_z = za - nupoint[0].z;
-//
-//        if ( depth_z >= -MOUNTTOLERANCE && depth_z <= MOUNTTOLERANCE )
-//        {
-//            // estimate the collisions this frame
-//            collide_x  = ( dx <= pchr_a->bump.size * 2 );
-//            collide_y  = ( dy <= pchr_a->bump.size * 2 );
-//            collide_xy = ( dist <= pchr_a->bump.size_big * 2 );
-//
-//            if ( collide_x && collide_y && collide_xy )
-//            {
-//                attach_character_to_mount( ichr_a, ichr_b, GRIP_ONLY );
-//                mounted = INGAME_CHR( pchr_a->attachedto );
-//            }
-//        }
-//    }
-//
-//    if ( !mounted && mount_a && ( pchr_b->vel.z - pchr_a->vel.z ) < 0 )
-//    {
-//        // B falling on A?
-//
-//        fvec4_t   point[1], nupoint[1];
-//
-//        // determine the actual location of the mount point
-//        {
-//            int vertex;
-//            chr_instance_t * pinst = &( pchr_a->inst );
-//
-//            vertex = (( int )pinst->vrt_count ) - GRIP_LEFT;
-//
-//            // do the automatic update
-//            chr_instance_update_vertices( pinst, vertex, vertex, bfalse );
-//
-//            // Calculate grip point locations with linear interpolation and other silly things
-//            point[0].x = pinst->vrt_lst[vertex].pos[XX];
-//            point[0].y = pinst->vrt_lst[vertex].pos[YY];
-//            point[0].z = pinst->vrt_lst[vertex].pos[ZZ];
-//            point[0].w = 1.0f;
-//
-//            // Do the transform
-//            TransformVertices( &( pinst->matrix ), point, nupoint, 1 );
-//        }
-//
-//        dx = ABS( xb - nupoint[0].x );
-//        dy = ABS( yb - nupoint[0].y );
-//        dist = dx + dy;
-//        depth_z = zb - nupoint[0].z;
-//
-//        if ( depth_z >= -MOUNTTOLERANCE && depth_z <= MOUNTTOLERANCE )
-//        {
-//            // estimate the collisions this frame
-//            collide_x  = ( dx <= pchr_b->bump.size * 2 );
-//            collide_y  = ( dy <= pchr_b->bump.size * 2 );
-//            collide_xy = ( dist <= pchr_b->bump.size_big * 2 );
-//
-//            if ( collide_x && collide_y && collide_xy )
-//            {
-//                attach_character_to_mount( ichr_b, ichr_a, GRIP_ONLY );
-//                mounted = INGAME_CHR( pchr_a->attachedto );
-//            }
-//        }
-//    }
-//
-//    return mounted;
-//}
-
 //--------------------------------------------------------------------------------------------
 bool_t do_chr_mount_detection( const CHR_REF by_reference ichr_a, const CHR_REF by_reference ichr_b )
 {
@@ -956,7 +809,7 @@ bool_t do_chr_mount_detection( const CHR_REF by_reference ichr_a, const CHR_REF 
     // determine the grip properties
     {
         int       grip_count;
-        Uint16    grip_verts[4];
+        Uint16    grip_verts[GRIP_VERTS];
         oct_bb_t  tmp_cv = OCT_BB_INIT_VALS;
         int       vertex;
 
@@ -977,7 +830,7 @@ bool_t do_chr_mount_detection( const CHR_REF by_reference ichr_a, const CHR_REF 
         tmp_cv.maxs[OCT_YX] *= SQRT_TWO;
 
         // do the automatic vertex update
-        vertex = ( int )( pmount_inst->vrt_count ) - ( int )GRIP_LEFT;
+        vertex = ( signed )( pmount_inst->vrt_count ) - ( signed )GRIP_LEFT;
         vertex = MAX( 0, vertex );
         chr_instance_update_vertices( pmount_inst, vertex, vertex + GRIP_LEFT, bfalse );
 
@@ -997,14 +850,14 @@ bool_t do_chr_mount_detection( const CHR_REF by_reference ichr_a, const CHR_REF 
         // calculate grip_origin and grip_up
         if ( 4 == grip_count )
         {
-            fvec4_t grip_points[4], grip_nupoints[4];
+            fvec4_t grip_points[GRIP_VERTS], grip_nupoints[GRIP_VERTS];
             fvec3_t grip_vecs[3];
 
             // Calculate grip point locations with linear interpolation and other silly things
             convert_grip_to_local_points( pmount, grip_verts, grip_points );
 
             // Do the transform the vertices for the grip's "up" vector
-            TransformVertices( &( pmount_inst->matrix ), grip_points, grip_nupoints, 4 );
+            TransformVertices( &( pmount_inst->matrix ), grip_points, grip_nupoints, GRIP_VERTS );
 
             // determine the grip vectors
             for ( cnt = 0; cnt < 3; cnt++ )
@@ -1031,7 +884,7 @@ bool_t do_chr_mount_detection( const CHR_REF by_reference ichr_a, const CHR_REF 
         }
         else if ( grip_count > 0 )
         {
-            fvec4_t grip_points[4], grip_nupoints[4];
+            fvec4_t grip_points[GRIP_VERTS], grip_nupoints[GRIP_VERTS];
 
             // Calculate grip point locations with linear interpolation and other silly things
             convert_grip_to_local_points( pmount, grip_verts, grip_points );
@@ -2102,7 +1955,7 @@ bool_t do_chr_chr_collision_interaction( CoNode_t * d, chr_bundle_t *pbdl_a, chr
     loc_pchr_b = pbdl_b->chr_ptr;
     loc_pcap_b = pbdl_b->cap_ptr;
 
-    //skip objects that are inside inventories
+    // skip objects that are inside inventories
     if ( loc_pchr_a->pack.is_packed || loc_pchr_b->pack.is_packed ) return bfalse;
 
     interaction_strength = 1.0f;
@@ -2110,6 +1963,9 @@ bool_t do_chr_chr_collision_interaction( CoNode_t * d, chr_bundle_t *pbdl_a, chr
     // ghosts don't interact much
     interaction_strength *= loc_pchr_a->inst.alpha * INV_FF;
     interaction_strength *= loc_pchr_b->inst.alpha * INV_FF;
+
+    // are we interacting with a previous mount?
+    interaction_strength *= calc_dismount_lerp( loc_pchr_a, loc_pchr_b );
 
     // ensure that we have a collision volume
     if ( oct_bb_empty( d->cv ) )
@@ -2656,7 +2512,7 @@ bool_t do_chr_prt_collision_deflect( chr_t * pchr, prt_t * pprt, chr_prt_collsio
     pdata->mana_paid = bfalse;
     if ( chr_is_invictus || ( prt_wants_deflection && chr_can_deflect ) )
     {
-        //Initialize for the billboard
+        // Initialize for the billboard
         const float lifetime = 3;
         SDL_Color text_color = {0xFF, 0xFF, 0xFF, 0xFF};
         GLXvector4f tint  = { 0.0f, 0.75f, 1.00f, 1.00f };
@@ -2703,11 +2559,11 @@ bool_t do_chr_prt_collision_deflect( chr_t * pchr, prt_t * pprt, chr_prt_collsio
                 pprt->facing = vec_to_facing( pprt->vel.x , pprt->vel.y );
             }
 
-            //Blocked!
+            // Blocked!
             spawn_defense_ping( pchr, pprt->owner_ref );
             chr_make_text_billboard( GET_REF_PCHR( pchr ), "Blocked!", text_color, tint, lifetime, ( BIT_FIELD )bb_opt_all );
 
-            //If the attack was blocked by a shield, then check if the block caused a knockback
+            // If the attack was blocked by a shield, then check if the block caused a knockback
             if ( chr_is_invictus && ACTION_IS_TYPE( pchr->inst.action_which, P ) )
             {
                 bool_t using_shield;
@@ -2740,23 +2596,23 @@ bool_t do_chr_prt_collision_deflect( chr_t * pchr, prt_t * pprt, chr_prt_collsio
                     chr_t *pattacker = ChrList.lst + pprt->owner_ref;
                     int total_block_rating;
 
-                    //use the character block skill plus the base block rating of the shield and adjust for strength
+                    // use the character block skill plus the base block rating of the shield and adjust for strength
                     total_block_rating = chr_get_skill( pchr, MAKE_IDSZ( 'B', 'L', 'O', 'C' ) );
                     total_block_rating += chr_get_skill( pshield, MAKE_IDSZ( 'B', 'L', 'O', 'C' ) );
                     total_block_rating -= SFP8_TO_SINT( pattacker->strength ) * 4;            //-4% per attacker strength
                     total_block_rating += SFP8_TO_SINT( pchr->strength )      * 2;            //+2% per defender strength
 
-                    //Now determine the result of the block
+                    // Now determine the result of the block
                     if ( generate_randmask( 1, 100 ) <= total_block_rating )
                     {
-                        //Defender won, the block holds
-                        //Add a small stun to the attacker for about 0.8 seconds
+                        // Defender won, the block holds
+                        // Add a small stun to the attacker for about 0.8 seconds
                         pattacker->reloadtime += 40;
                     }
                     else
                     {
-                        //Attacker broke the block and batters away the shield
-                        //Time to raise shield again (about 0.8 seconds)
+                        // Attacker broke the block and batters away the shield
+                        // Time to raise shield again (about 0.8 seconds)
                         pchr->reloadtime += 40;
                         sound_play_chunk( pchr->pos, g_wavelist[GSND_SHIELDBLOCK] );
                     }
@@ -2988,7 +2844,7 @@ bool_t do_chr_prt_collision_damage( chr_t * pchr, prt_t * pprt, chr_prt_collsion
             direction = vec_to_facing( pprt->vel.x , pprt->vel.y );
             direction = pchr->ori.facing_z - direction + ATK_BEHIND;
 
-            //These things only apply if the particle has an owner
+            // These things only apply if the particle has an owner
             if ( INGAME_CHR( pprt->owner_ref ) )
             {
                 CHR_REF item;
@@ -3015,7 +2871,7 @@ bool_t do_chr_prt_collision_damage( chr_t * pchr, prt_t * pprt, chr_prt_collsion
                     loc_damage.rand *= 1.00f + percent;
                 }
 
-                //Steal some life
+                // Steal some life
                 if ( pprt->lifedrain > 0 )
                 {
                     drain = pchr->life;
@@ -3024,7 +2880,7 @@ bool_t do_chr_prt_collision_damage( chr_t * pchr, prt_t * pprt, chr_prt_collsion
                     powner->life = MIN( powner->life + drain, powner->lifemax );
                 }
 
-                //Steal some mana
+                // Steal some mana
                 if ( pprt->manadrain > 0 )
                 {
                     drain = pchr->mana;
@@ -3037,7 +2893,7 @@ bool_t do_chr_prt_collision_damage( chr_t * pchr, prt_t * pprt, chr_prt_collsion
                 ADD_BITS( powner->ai.alert, ALERTIF_SCOREDAHIT );
                 powner->ai.hitlast = GET_REF_PCHR( pchr );
 
-                //Tell the weapons who the attacker hit last
+                // Tell the weapons who the attacker hit last
                 item = powner->holdingwhich[SLOT_LEFT];
                 if ( INGAME_CHR( item ) )
                 {
@@ -3054,7 +2910,7 @@ bool_t do_chr_prt_collision_damage( chr_t * pchr, prt_t * pprt, chr_prt_collsion
             // handle vulnerabilities, double the damage
             if ( chr_has_vulnie( GET_REF_PCHR( pchr ), pprt->profile_ref ) )
             {
-                //Double the damage
+                // Double the damage
                 loc_damage.base = ( loc_damage.base << 1 );
                 loc_damage.rand = ( loc_damage.rand << 1 ) | 1;
 
@@ -3175,7 +3031,7 @@ bool_t do_chr_prt_collision_handle_bump( chr_t * pchr, prt_t * pprt, chr_prt_col
     // Catch on fire
     spawn_bump_particles( GET_REF_PCHR( pchr ), GET_REF_PPRT( pprt ) );
 
-    //handle some special particle interactions
+    // handle some special particle interactions
     if ( pdata->ppip->end_bump )
     {
         if ( pdata->ppip->bump_money )
@@ -3336,7 +3192,7 @@ bool_t do_chr_prt_collision( CoNode_t * d )
         {
             cap_t *pcap_a = chr_get_pcap( pchr_a->ai.index );
 
-            //This prevents books in shops from being burned
+            // This prevents books in shops from being burned
             if ( pchr_a->isshopitem && pcap_a->spelleffect_type != NO_SKIN_OVERRIDE )
             {
                 retval = ( 0 != reaffirm_attached_particles( ichr_a ) );
@@ -3575,4 +3431,147 @@ void update_all_platform_attachments()
 //    }
 //
 //    return !found;
+//}
+
+////--------------------------------------------------------------------------------------------
+//bool_t do_mounts( const CHR_REF by_reference ichr_a, const CHR_REF by_reference ichr_b )
+//{
+//    float xa, ya, za;
+//    float xb, yb, zb;
+//
+//    chr_t * pchr_a, * pchr_b;
+//    cap_t * pcap_a, * pcap_b;
+//
+//    bool_t mount_a, mount_b;
+//    float  dx, dy, dist;
+//    float  depth_z;
+//
+//    bool_t collide_x  = bfalse;
+//    bool_t collide_y  = bfalse;
+//    bool_t collide_xy = bfalse;
+//
+//    bool_t mounted;
+//
+//    // make sure that A is valid
+//    if ( !INGAME_CHR( ichr_a ) ) return bfalse;
+//    pchr_a = ChrList.lst + ichr_a;
+//
+//    pcap_a = chr_get_pcap( ichr_a );
+//    if ( NULL == pcap_a ) return bfalse;
+//
+//    // make sure that B is valid
+//    if ( !INGAME_CHR( ichr_b ) ) return bfalse;
+//    pchr_b = ChrList.lst + ichr_b;
+//
+//    pcap_b = chr_get_pcap( ichr_b );
+//    if ( NULL == pcap_b ) return bfalse;
+//
+//    // can either of these objects mount the other?
+//    mount_a = chr_can_mount( ichr_b, ichr_a );
+//    mount_b = chr_can_mount( ichr_a, ichr_b );
+//
+//    if ( !mount_a && !mount_b ) return bfalse;
+//
+//    // Ready for position calulations
+//    xa = pchr_a->pos.x;
+//    ya = pchr_a->pos.y;
+//    za = pchr_a->pos.z;
+//
+//    xb = pchr_b->pos.x;
+//    yb = pchr_b->pos.y;
+//    zb = pchr_b->pos.z;
+//
+//    mounted = bfalse;
+//    if ( !mounted && mount_b && ( pchr_a->vel.z - pchr_b->vel.z ) < 0 )
+//    {
+//        // A falling on B?
+//        fvec4_t   point[1], nupoint[1];
+//
+//        // determine the actual location of the mount point
+//        {
+//            int vertex;
+//            chr_instance_t * pinst = &( pchr_b->inst );
+//
+//            vertex = (( signed )pinst->vrt_count ) - GRIP_LEFT;
+//
+//            // do the automatic update
+//            chr_instance_update_vertices( pinst, vertex, vertex, bfalse );
+//
+//            // Calculate grip point locations with linear interpolation and other silly things
+//            point[0].x = pinst->vrt_lst[vertex].pos[XX];
+//            point[0].y = pinst->vrt_lst[vertex].pos[YY];
+//            point[0].z = pinst->vrt_lst[vertex].pos[ZZ];
+//            point[0].w = 1.0f;
+//
+//            // Do the transform
+//            TransformVertices( &( pinst->matrix ), point, nupoint, 1 );
+//        }
+//
+//        dx = ABS( xa - nupoint[0].x );
+//        dy = ABS( ya - nupoint[0].y );
+//        dist = dx + dy;
+//        depth_z = za - nupoint[0].z;
+//
+//        if ( depth_z >= -MOUNTTOLERANCE && depth_z <= MOUNTTOLERANCE )
+//        {
+//            // estimate the collisions this frame
+//            collide_x  = ( dx <= pchr_a->bump.size * 2 );
+//            collide_y  = ( dy <= pchr_a->bump.size * 2 );
+//            collide_xy = ( dist <= pchr_a->bump.size_big * 2 );
+//
+//            if ( collide_x && collide_y && collide_xy )
+//            {
+//                attach_character_to_mount( ichr_a, ichr_b, GRIP_ONLY );
+//                mounted = INGAME_CHR( pchr_a->attachedto );
+//            }
+//        }
+//    }
+//
+//    if ( !mounted && mount_a && ( pchr_b->vel.z - pchr_a->vel.z ) < 0 )
+//    {
+//        // B falling on A?
+//
+//        fvec4_t   point[1], nupoint[1];
+//
+//        // determine the actual location of the mount point
+//        {
+//            int vertex;
+//            chr_instance_t * pinst = &( pchr_a->inst );
+//
+//            vertex = (( signed )pinst->vrt_count ) - GRIP_LEFT;
+//
+//            // do the automatic update
+//            chr_instance_update_vertices( pinst, vertex, vertex, bfalse );
+//
+//            // Calculate grip point locations with linear interpolation and other silly things
+//            point[0].x = pinst->vrt_lst[vertex].pos[XX];
+//            point[0].y = pinst->vrt_lst[vertex].pos[YY];
+//            point[0].z = pinst->vrt_lst[vertex].pos[ZZ];
+//            point[0].w = 1.0f;
+//
+//            // Do the transform
+//            TransformVertices( &( pinst->matrix ), point, nupoint, 1 );
+//        }
+//
+//        dx = ABS( xb - nupoint[0].x );
+//        dy = ABS( yb - nupoint[0].y );
+//        dist = dx + dy;
+//        depth_z = zb - nupoint[0].z;
+//
+//        if ( depth_z >= -MOUNTTOLERANCE && depth_z <= MOUNTTOLERANCE )
+//        {
+//            // estimate the collisions this frame
+//            collide_x  = ( dx <= pchr_b->bump.size * 2 );
+//            collide_y  = ( dy <= pchr_b->bump.size * 2 );
+//            collide_xy = ( dist <= pchr_b->bump.size_big * 2 );
+//
+//            if ( collide_x && collide_y && collide_xy )
+//            {
+//                attach_character_to_mount( ichr_b, ichr_a, GRIP_ONLY );
+//                mounted = INGAME_CHR( pchr_a->attachedto );
+//            }
+//        }
+//    }
+//
+//    return mounted;
 //}

@@ -40,7 +40,6 @@ INLINE FACING_T vec_to_facing( float dx, float dy );
 INLINE void     facing_to_vec( FACING_T facing, float * dx, float * dy );
 
 // rotation functions
-/// Math
 INLINE int terp_dir( FACING_T majordir, FACING_T minordir, int weight );
 
 // limiting functions
@@ -142,13 +141,13 @@ INLINE int terp_dir( FACING_T majordir, FACING_T minordir, int weight )
     // Align major direction with 0
     diff = ( int )minordir - ( int )majordir;
 
-    if ( diff <= -0x8000L )
+    if ( diff <= -( int )0x8000L )
     {
-        diff += 0x00010000L;
+        diff += ( int )0x00010000L;
     }
-    else if ( diff >= 0x8000L )
+    else if ( diff >= ( int )0x8000L )
     {
-        diff -= 0x00010000L;
+        diff -= ( int )0x00010000L;
     }
 
     return diff / weight;
@@ -910,7 +909,7 @@ INLINE fmat_4x4_t ScaleXYZRotateXYZTranslate_SpaceFixed( const float scale_x, co
 //--------------------------------------------------------------------------------------------
 INLINE fmat_4x4_t ScaleXYZRotateXYZTranslate_BodyFixed( const float scale_x, const float scale_y, const float scale_z, const Uint16 turn_z, const Uint16 turn_x, const Uint16 turn_y, const float translate_x, const float translate_y, const float translate_z )
 {
-    // BB> Transpose the SpaceFixed representation and invert the angles to get the BodyFixed representation
+    /// @details BB@> Transpose the SpaceFixed representation and invert the angles to get the BodyFixed representation
 
     fmat_4x4_t ret;
 
@@ -1123,5 +1122,4 @@ INLINE void  TransformVertices( const fmat_4x4_t *pMatrix, const fvec4_t *pSourc
         }
     }
 }
-
 

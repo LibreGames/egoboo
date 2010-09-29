@@ -46,8 +46,8 @@ enum e_vfs_serach_bits
     VFS_SEARCH_ALL  = VFS_SEARCH_DIR | VFS_SEARCH_FILE
 };
 
-/// physfs does not distinguish between these functions
-/// but if we change the package we are using, it might care...
+// physfs does not distinguish between these functions
+// but if we change the package we are using, it might care...
 #define vfs_delete_directory vfs_delete_file
 
 /// use this ugly thing, since there is no other way to hide the actual structure of the vfs_FILE...
@@ -57,8 +57,8 @@ typedef struct vfs_FILE vfs_FILE;
 /// will be called automatically at program termination
 void vfs_init();
 
-/// these functions open in "binary mode" this means that they are reading using
-/// physfs and not using the c stdio routines
+// these functions open in "binary mode" this means that they are reading using
+// physfs and not using the c stdio routines
 vfs_FILE * vfs_openReadB( const char * filename );
 vfs_FILE * vfs_openWriteB( const char * filename );
 vfs_FILE * vfs_openAppendB( const char * filename );
@@ -93,7 +93,7 @@ int    vfs_read_Uint32( vfs_FILE * pfile, Uint32 * val );
 int    vfs_read_Sint64( vfs_FILE * pfile, Sint64 * val );
 int    vfs_read_Uint64( vfs_FILE * pfile, Uint64 * val );
 
-/// the file searching routines
+// the file searching routines
 char ** vfs_enumerateFiles( const char * dir_name );
 void    vfs_freeList( void * listVar );
 

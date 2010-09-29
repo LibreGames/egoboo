@@ -139,11 +139,11 @@ INSTANTIATE_STACK_STATIC( mnu_module_t, mnu_ModList, MAX_MODULE );
 /// The data that menu.c uses to store the users' choice of players
 struct s_GameTips
 {
-    //These are loaded only once
+    // These are loaded only once
     Uint8  count;                         //< Number of global tips loaded
     STRING hint[MENU_MAX_GAMETIPS];       //< The global hints/tips
 
-    //These are loaded for every module
+    // These are loaded for every module
     Uint8  local_count;                   //< Number of module specific tips loaded
     STRING local_hint[MENU_MAX_GAMETIPS]; //< Module specific hints and tips
 };
@@ -795,7 +795,7 @@ int doSinglePlayerMenu( float deltaTime )
             }
             if ( SDLKEYDOWN( SDLK_ESCAPE ) || BUTTON_UP == ui_doButton( 3, sz_buttons[2], NULL, buttonLeft, buttonTop + 35 * 2, 200, 30 ) )
             {
-                menuChoice = 3;     //back
+                menuChoice = 3;     // back
             }
             if ( menuChoice != 0 )
             {
@@ -1066,7 +1066,7 @@ int doChooseModule( float deltaTime )
                     cursor_finish_wheel_event();
                 }
 
-                //Allow arrow keys to scroll as well
+                // Allow arrow keys to scroll as well
                 if ( SDLKEYDOWN( SDLK_RIGHT ) )
                 {
                     if ( keycooldown == 0 )
@@ -1124,7 +1124,7 @@ int doChooseModule( float deltaTime )
                         selectedModule = i;
                     }
 
-                    //Draw a text over the image explaining what it means
+                    // Draw a text over the image explaining what it means
                     if ( mnu_ModList.lst[imod].base.beaten )
                     {
                         ui_drawTextBox( NULL, "BEATEN", moduleMenuOffsetX + x + 32, moduleMenuOffsetY + y + 64, 64, 30, 20 );
@@ -1213,7 +1213,7 @@ int doChooseModule( float deltaTime )
                     menuState = MM_Leaving;
                 }
 
-                //Do the module filter button
+                // Do the module filter button
                 if ( !start_new_player )
                 {
                     bool_t click_button;
@@ -1226,10 +1226,10 @@ int doChooseModule( float deltaTime )
 
                     if ( click_button )
                     {
-                        //Reload the modules with the new filter
+                        // Reload the modules with the new filter
                         menuState = MM_Entering;
 
-                        //Swap to the next filter
+                        // Swap to the next filter
                         mnu_moduleFilter = CLIP( mnu_moduleFilter, FILTER_NORMAL_BEGIN, FILTER_NORMAL_END );
 
                         mnu_moduleFilter++;
@@ -1425,7 +1425,7 @@ bool_t doChoosePlayer_show_stats( int player, int mode, int x, int y, int width,
 
             ui_drawButton( UI_Nothing, x, y, width, height, NULL );
 
-            //Character level and class
+            // Character level and class
             GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
 
             // fix class name capitalization
@@ -1463,7 +1463,7 @@ bool_t doChoosePlayer_show_stats( int player, int mode, int x, int y, int width,
             }
             y1 += 20;
 
-            //SWID
+            // SWID
             fnt_drawText( menuFont, NULL, x1, y1, "Stats" ); y1 += 20;
             fnt_drawText( menuFont, NULL, x1, y1, "  Str: %s (%d)", describe_value( pcap->strength_stat.val.from,     60, NULL ), ( int )pcap->strength_stat.val.from ); y1 += 20;
             fnt_drawText( menuFont, NULL, x1, y1, "  Wis: %s (%d)", describe_value( pcap->wisdom_stat.val.from,       60, NULL ), ( int )pcap->wisdom_stat.val.from ); y1 += 20;
@@ -2543,7 +2543,7 @@ int doGameOptions( float deltaTime )
             // Show FPS
             sz_buttons[4] = cfg.fps_allowed ? "On" : "Off";
 
-            //Billboard feedback
+            // Billboard feedback
             if ( !cfg.feedback ) sz_buttons[5] = "Disabled";
             else
             {
@@ -2933,7 +2933,7 @@ int doAudioOptions( float deltaTime )
                 sz_buttons[6] = cfg.sound_highquality ? "Normal" : "High";
             }
 
-            //Footfall sounds
+            // Footfall sounds
             ui_drawTextBox( menuFont, "Footstep Sounds:", buttonLeft + 300, GFX_HEIGHT - 235, 0, 0, 20 );
             if ( BUTTON_UP == ui_doButton( 8, sz_buttons[7], menuFont, buttonLeft + 450, GFX_HEIGHT - 235, 100, 30 ) )
             {
@@ -2941,7 +2941,7 @@ int doAudioOptions( float deltaTime )
                 sz_buttons[7] = cfg.sound_footfall ? "Enabled" : "Disabled";
             }
 
-            //Save settings
+            // Save settings
             if ( BUTTON_UP == ui_doButton( 9, sz_buttons[8], menuFont, buttonLeft, GFX_HEIGHT - 60, 200, 30 ) )
             {
                 // synchronize the config values with the various game subsystems
@@ -3291,7 +3291,7 @@ int doVideoOptions( float deltaTime )
             else sz_buttons[but_shadow] = "Off";
 
 #if defined(__unix__)
-            //Clip linux defaults to valid values so that the game doesn't crash on startup
+            // Clip linux defaults to valid values so that the game doesn't crash on startup
             if ( cfg.scrz_req == 32 ) cfg.scrz_req = 24;
             if ( cfg.scrd_req == 32 ) cfg.scrd_req = 24;
 #endif
@@ -3546,9 +3546,9 @@ int doVideoOptions( float deltaTime )
                 }
 
 #if defined(__unix__)
-                if ( cfg.scrz_req > 24 ) cfg.scrz_req = 8;            //Linux max is 24
+                if ( cfg.scrz_req > 24 ) cfg.scrz_req = 8;            // Linux max is 24
 #else
-                if ( cfg.scrz_req > 32 ) cfg.scrz_req = 8;            //Others can have up to 32 bit!
+                if ( cfg.scrz_req > 32 ) cfg.scrz_req = 8;            // Others can have up to 32 bit!
 #endif
 
                 snprintf( Cscrz, SDL_arraysize( Cscrz ), "%d", cfg.scrz_req );
@@ -4910,15 +4910,15 @@ void mnu_GameTip_load_global_vfs()
     {
         if ( goto_colon( NULL, fileread, btrue ) )
         {
-            //Read the line
+            // Read the line
             fget_string( fileread, buffer, SDL_arraysize( buffer ) );
             strcpy( mnu_GameTip.hint[cnt], buffer );
 
-            //Make it look nice
+            // Make it look nice
             str_decode( mnu_GameTip.hint[cnt], SDL_arraysize( mnu_GameTip.hint[cnt] ), mnu_GameTip.hint[cnt] );
             //str_add_linebreaks( mnu_GameTip.hint[cnt], SDL_arraysize( mnu_GameTip.hint[cnt] ), 50 );
 
-            //Keep track of how many we have total
+            // Keep track of how many we have total
             mnu_GameTip.count++;
         }
     }
@@ -4948,15 +4948,15 @@ bool_t mnu_GameTip_load_local_vfs()
     {
         if ( goto_colon( NULL, fileread, btrue ) )
         {
-            //Read the line
+            // Read the line
             fget_string( fileread, buffer, SDL_arraysize( buffer ) );
             strcpy( mnu_GameTip.local_hint[cnt], buffer );
 
-            //Make it look nice
+            // Make it look nice
             str_decode( mnu_GameTip.local_hint[cnt], SDL_arraysize( mnu_GameTip.local_hint[cnt] ), mnu_GameTip.local_hint[cnt] );
             //str_add_linebreaks( mnu_GameTip.local_hint[cnt], SDL_arraysize( mnu_GameTip.local_hint[cnt] ), 50 );
 
-            //Keep track of how many we have total
+            // Keep track of how many we have total
             mnu_GameTip.local_count++;
         }
     }

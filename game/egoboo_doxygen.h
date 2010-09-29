@@ -106,6 +106,7 @@
  *  <LI><P>claforte&gt; = unknown</P>
  *  <LI><P>xgg = unknown</P>
  *  <LI><P>HUK = unknown</P>
+ *  <LI><P>JJ&gt; = unknown</P>
  * </UL>
  *
  * <P>We have been very careful to maintain a proper &quot;chain of

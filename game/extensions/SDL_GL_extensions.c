@@ -90,7 +90,7 @@ SDL_bool SDL_GL_uploadSurface( SDL_Surface *surface, GLuint tx_id, GLfloat *texC
 {
     int tx_w, tx_h;
 
-    GLfloat local_texCoords[4];
+    GLXvector4f local_texCoords;
 
     if ( NULL == surface ) return SDL_FALSE;
 
@@ -252,7 +252,12 @@ SDLX_video_parameters_t * SDL_GL_set_mode( SDLX_video_parameters_t * v_old, SDLX
         SDL_GL_report_mode( retval );
 
         // set the opengl parameters
-        gl_new->multisample     = GL_FALSE;		//ZF> Multisampling is always disabled?
+
+        /// @note ZF@> Multisampling is always disabled?
+        /// @note BB@> This only occurs if SDLX_set_mode() fails. We are just assuming that
+        ///            multisample was the problem, since it seemed at the time to be a big
+        ///            issue for lots of users
+        gl_new->multisample     = GL_FALSE;
         gl_new->multisample_arb = GL_FALSE;
         if ( NULL != retval->surface && retval->flags.opengl )
         {
@@ -440,6 +445,4 @@ GLuint SDL_GL_convert_surface( GLenum binding, SDL_Surface * surface, GLint wrap
 
     return binding;
 }
-
-
 

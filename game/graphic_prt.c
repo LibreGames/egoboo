@@ -684,7 +684,7 @@ void draw_one_attachment_point( chr_instance_t * pinst, mad_t * pmad, int vrt_of
 
     if ( NULL == pinst || NULL == pmad ) return;
 
-    vrt = ( int )pinst->vrt_count - ( int )vrt_offset;
+    vrt = ( signed )pinst->vrt_count - ( signed )vrt_offset;
 
     if ( vrt < 0 || vrt >= pinst->vrt_count ) return;
 

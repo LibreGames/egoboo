@@ -1075,7 +1075,7 @@ bool_t chop_load_vfs( chop_data_t * pdata, const char *szLoadname, chop_definiti
             {
                 int itmp;
                 pdefinition->section[which_section].size  = section_count;
-                itmp = ( int )pdata->chop_count - ( int )section_count;
+                itmp = ( signed )pdata->chop_count - ( signed )section_count;
                 pdefinition->section[which_section].start = MAX( 0, itmp );
             }
 
@@ -1104,7 +1104,7 @@ bool_t chop_load_vfs( chop_data_t * pdata, const char *szLoadname, chop_definiti
     {
         int itmp;
         pdefinition->section[which_section].size  = section_count;
-        itmp = ( int )pdata->chop_count - ( int )section_count;
+        itmp = ( signed )pdata->chop_count - ( signed )section_count;
         pdefinition->section[which_section].start = MAX( 0, itmp );
     }
 
@@ -1254,11 +1254,11 @@ bool_t obj_BSP_insert_chr( obj_BSP_t * pbsp, chr_t * pchr )
     if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
 
     // no interactions with hidden objects
-    if ( pchr->is_hidden ) 
+    if ( pchr->is_hidden )
         return bfalse;
-    
+
     // no interactions with packed objects
-    if ( pchr->pack.is_packed ) 
+    if ( pchr->pack.is_packed )
         return bfalse;
 
     // no interaction with objects of zero size

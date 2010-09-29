@@ -210,8 +210,8 @@ const char* vfs_getVersion()
     PHYSFS_Version version;
     static STRING buffer = EMPTY_CSTR;
 
-    //PHYSFS_getLinkedVersion(&version);        //Linked version number
-    PHYSFS_VERSION( &version );         //Compiled version number
+    //PHYSFS_getLinkedVersion(&version);        // Linked version number
+    PHYSFS_VERSION( &version );         // Compiled version number
     snprintf( buffer, SDL_arraysize( buffer ), "%d.%d.%d", version.major, version.minor, version.patch );
 
     return buffer;
@@ -494,7 +494,7 @@ const char * _vfs_potential_mount_point( const char * some_path, const char ** p
 //--------------------------------------------------------------------------------------------
 void vfs_listSearchPaths()
 {
-    //JJ> Lists all search paths that PhysFS uses (for debug use)
+    /// JJ@> Lists all search paths that PhysFS uses (for debug use)
 
     char **i;
 
@@ -2340,7 +2340,7 @@ int vfs_remove_mount_point( const char * mount_point )
         PHYSFS_removeFromSearchPath( _vfs_mount_info[cnt].full_path );
 
         // remove the mount info from this index
-        // PF> we remove it even if PHYSFS_removeFromSearchPath() fails or else we might get an infinite loop
+        /// @note PF@> we remove it even if PHYSFS_removeFromSearchPath() fails or else we might get an infinite loop
         if ( _vfs_mount_info_remove( cnt ) ) retval++;
 
         cnt = _vfs_mount_info_matches( mount_point, NULL );

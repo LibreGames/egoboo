@@ -32,7 +32,7 @@
 
 #define MAXPARTICLEIMAGE                256         ///< Number of particle images ( frames )
 
-/// Physics
+// Physics
 #define STOPBOUNCINGPART                5.0f         ///< To make particles stop bouncing
 
 DECLARE_STACK_EXTERN( pip_t, PipStack, MAX_PIP );

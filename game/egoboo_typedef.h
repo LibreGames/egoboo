@@ -240,12 +240,36 @@ typedef char STRING[256];
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
+/// The basic 2d latch
+struct s_latch_2d
+{
+    float     dir[2];
+    BIT_FIELD b;         ///< the raw bits corresponding to various buttons
+};
+typedef struct s_latch_2d latch_2d_t;
+
+#define LATCH_2D_INIT { {0.0f,0.0f}, EMPTY_BIT_FIELD }
+
+/// The basic 3d latch
+struct s_latch_3d
+{
+    float     dir[3];
+    BIT_FIELD b;         ///< the raw bits corresponding to various buttons
+};
+typedef struct s_latch_3d latch_3d_t;
+
+#define LATCH_3D_INIT { {0.0f,0.0f,0.0f}, EMPTY_BIT_FIELD }
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
 /// The latch used by the input system
 struct s_latch_input
 {
-    float     raw[2];
-    float     dir[2];
-    BIT_FIELD b;         ///< the raw bits corresponding to various buttons
+    float     raw[2];    ///< the raw position of the "joystick axes"
+    BIT_FIELD b;         ///< the raw state of the "joystick buttons"
+
+    float     dir[3];    ///< the translated direction relative to the camera
 };
 typedef struct s_latch_input latch_input_t;
 

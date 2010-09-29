@@ -18,7 +18,7 @@
 //*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
 //*
 //********************************************************************************************
-///
+
 /// @file md2.h
 /// @brief Md2 Model display routines
 /// @details Adapted from "Tactics - MD2_Model.h" by Jonathan Fischer

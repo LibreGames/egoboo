@@ -38,7 +38,7 @@ struct s_mesh_wall_data;
 
 #define MAXMESHBLOCKY             (( MAXMESHTILEY >> (BLOCK_BITS-TILE_BITS) )+1)  ///< max blocks in the y direction
 
-/// mesh physics
+// mesh physics
 #define SLIDE                           0.04f         ///< Acceleration for steep hills
 #define SLIDEFIX                        0.08f         ///< To make almost flat surfaces flat
 #define TWIST_FLAT                      119
@@ -249,7 +249,7 @@ ego_mpd_t * mesh_ctor( ego_mpd_t * pmesh );
 ego_mpd_t * mesh_dtor( ego_mpd_t * pmesh );
 ego_mpd_t * mesh_renew( ego_mpd_t * pmesh );
 
-/// loading/saving
+// loading/saving
 ego_mpd_t * mesh_load( const char *modname, ego_mpd_t * pmesh );
 
 void   mesh_make_twist();

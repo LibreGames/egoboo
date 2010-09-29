@@ -698,10 +698,10 @@ int update_game()
     int update_loop_cnt;
     PLA_REF ipla;
 
-    //This stuff doesn't happen so often so it can be safely throttled
+    // This stuff doesn't happen so often so it can be safely throttled
     if ( clock_shared_stat >= ONESECOND )
     {
-        //Reset timer
+        // Reset timer
         clock_shared_stat -= ONESECOND;
 
         // Check for all local players being dead and update shared player abilities
@@ -773,12 +773,12 @@ int update_game()
             }
         }
 
-        //Dampen groggyness if not all players are grogged (this assumes they all share the same camera view)
-		if( numalive > 0 )
-		{
-			local_stats.grog_level /= numalive;
-			local_stats.daze_level /= numalive;
-		}
+        // Dampen groggyness if not all players are grogged (this assumes they all share the same camera view)
+        if( 0 != numalive )
+        {
+            local_stats.grog_level /= numalive;
+            local_stats.daze_level /= numalive;
+        }
 
         // Did everyone die?
         if ( numdead >= local_numlpla )
@@ -897,7 +897,7 @@ int update_game()
     est_update_game_time = 0.9 * est_update_game_time + 0.1 * est_single_update_time * update_loop_cnt;
     est_max_game_ups     = 0.9 * est_max_game_ups     + 0.1 * 1.0 / est_update_game_time;
 
-    if ( PNet->on )
+    if ( network_initialized() )
     {
         if ( numplatimes == 0 )
         {
@@ -905,7 +905,7 @@ int update_game()
             // Make it go slower so it doesn't happen again
             clock_wld += 25;
         }
-        if ( numplatimes > 3 && !PNet->hostactive )
+        if ( numplatimes > 3 && !network_get_host_active() )
         {
             // The host has too many messages, and is probably experiencing control
             // lag...  Speed it up so it gets closer to sync
@@ -937,7 +937,7 @@ void game_update_timers()
     {
         // for a local game, force the function to ignore the accumulation of time
         // until you re-join the game
-        if ( !PNet->on )
+        if ( !network_initialized() )
         {
             ticks_last = ticks_now;
             update_was_paused = btrue;
@@ -961,7 +961,7 @@ void game_update_timers()
         clock_diff = MIN( clock_diff, 10 * UPDATE_SKIP );
     }
 
-    if ( PNet->on )
+    if ( network_initialized() )
     {
         // if the network game is on, there really is no real "pause"
         // so we can always measure the game time from the first clock reading
@@ -1022,7 +1022,7 @@ void reset_timers()
     clock_wld = 0;
     clock_enc_stat = 0;
     clock_chr_stat = 0;
-    clock_shared_stat = ONESECOND;        //ZF> This one should timeout on module startup so start at ONESECOND
+    clock_shared_stat = ONESECOND;        /// @note ZF@> This one should timeout on module startup so start at ONESECOND
     clock_pit = 0;
 
     update_wld = 0;
@@ -1110,7 +1110,7 @@ int do_game_proc_begin( game_process_t * gproc )
     profile_system_begin();
 
     // do some graphics initialization
-    //make_lightdirectionlookup();
+    // make_lightdirectionlookup();
     make_enviro();
     camera_ctor( PCamera );
 
@@ -1184,7 +1184,7 @@ int do_game_proc_running( game_process_t * gproc )
         PROFILE_BEGIN( game_update_loop );
         {
             // This is the control loop
-            if ( PNet->on && console_done )
+            if ( network_initialized() && console_done )
             {
                 net_send_message();
             }
@@ -1193,7 +1193,7 @@ int do_game_proc_running( game_process_t * gproc )
             game_update_timers();
 
             // do the updates
-            if ( gproc->mod_paused && !PNet->on )
+            if ( gproc->mod_paused && !network_initialized() )
             {
                 clock_wld = clock_all;
             }
@@ -1235,7 +1235,7 @@ int do_game_proc_running( game_process_t * gproc )
                 }
                 PROFILE_END2( check_passage_music );
 
-                if ( PNet->waitingforplayers )
+                if ( network_waiting_for_players() )
                 {
                     clock_wld = clock_all;
                 }
@@ -1526,10 +1526,10 @@ bool_t check_target( chr_t * psrc, const CHR_REF by_reference ichr_test, IDSZ id
     // Don't target invisible stuff, unless we can actually see them
     if ( !chr_can_see_object( GET_REF_PCHR( psrc ), ichr_test ) ) return bfalse;
 
-    //Need specific skill? ([NONE] always passes)
+    // Need specific skill? ([NONE] always passes)
     if ( HAS_SOME_BITS( targeting_bits, TARGET_SKILL ) && 0 != chr_get_skill( ptst, idsz ) ) return bfalse;
 
-    //Require player to have specific quest?
+    // Require player to have specific quest?
     if ( HAS_SOME_BITS( targeting_bits, TARGET_QUEST ) && VALID_PLA( ptst->is_which_player ) )
     {
         int quest_level = QUEST_NONE;
@@ -1564,7 +1564,7 @@ bool_t check_target( chr_t * psrc, const CHR_REF by_reference ichr_test, IDSZ id
     is_predator  = !is_hated &&  hates_me;
     is_mutual    =  is_hated &&  hates_me;
 
-    //This is the last and final step! Check for specific IDSZ too?
+    // This is the last and final step! Check for specific IDSZ too?
     if ( IDSZ_NONE == idsz )
     {
         retval = btrue;
@@ -1656,7 +1656,7 @@ CHR_REF chr_find_target( chr_t * psrc, float max_dist, IDSZ idsz, BIT_FIELD targ
 
         if (( 0 == max_dist2 || dist2 <= max_dist2 ) && ( MAX_CHR == best_target || dist2 < best_dist2 ) )
         {
-            //Invictus chars do not need a line of sight
+            // Invictus chars do not need a line of sight
             if ( !IS_INVICTUS_PCHR_RAW( psrc ) )
             {
                 // set the line-of-sight source
@@ -1667,7 +1667,7 @@ CHR_REF chr_find_target( chr_t * psrc, float max_dist, IDSZ idsz, BIT_FIELD targ
                 if ( do_line_of_sight( &los_info ) ) continue;
             }
 
-            //Set the new best target found
+            // Set the new best target found
             best_target = ichr_test;
             best_dist2  = dist2;
         }
@@ -1728,7 +1728,7 @@ void do_damage_tiles()
         if ( IS_INVICTUS_PCHR_RAW( pchr ) ) continue;
 
         //@todo: sound of lava sizzling and such
-        //distance = ABS( PCamera->track_pos.x - pchr->pos.x ) + ABS( PCamera->track_pos.y - pchr->pos.y );
+        // distance = ABS( PCamera->track_pos.x - pchr->pos.x ) + ABS( PCamera->track_pos.y - pchr->pos.y );
 
         //if ( distance < damagetile.min_distance )
         //{
@@ -1762,12 +1762,12 @@ void update_pits()
 
     if ( pits.kill || pits.teleport )
     {
-        //Decrease the timer
+        // Decrease the timer
         if ( clock_pit > 0 ) clock_pit--;
 
         if ( clock_pit == 0 )
         {
-            //Reset timer
+            // Reset timer
             clock_pit = 20;
 
             // Kill any particles that fell in a pit, if they die in water...
@@ -1952,9 +1952,9 @@ void set_one_player_latch( const PLA_REF by_reference player )
     /// @details ZZ@> This function converts input readings to latch settings, so players can
     ///    move around
 
-    Uint16 turnsin;
-    float dist, scale;
-    float fsin, fcos;
+    TURN_T        cam_turn;
+    float         fsin, fcos, dist, scale;
+    fvec3_t       vcam_fwd, vcam_rgt;
     latch_input_t sum;
 
     chr_t          * pchr;
@@ -1976,20 +1976,47 @@ void set_one_player_latch( const PLA_REF by_reference player )
     latch_input_init( &( sum ) );
 
     // generate the transforms relative to the camera
-    turnsin = TO_TURN( PCamera->ori.facing_z );
-    fsin    = turntosin[ turnsin ];
-    fcos    = turntocos[ turnsin ];
+    cam_turn = TO_TURN( PCamera->ori.facing_z );
+    fsin = turntosin[cam_turn];
+    fcos = turntocos[cam_turn];
+
+    //vcam_fwd = mat_getCamForward( PCamera->mView );
+    vcam_fwd.x = fsin;
+    vcam_fwd.y = fcos;
+    vcam_fwd.z = 0.0f;
+
+    //vcam_rgt = mat_getCamRight  ( PCamera->mView );
+    vcam_rgt.x = fcos;
+    vcam_rgt.y = -fsin;
+    vcam_rgt.z = 0.0f;
 
     // Mouse routines
     if ( HAS_SOME_BITS( pdevice->bits, INPUT_BITS_MOUSE ) && mous.on )
     {
-        fvec2_t joy_pos = ZERO_VECT2, joy_new = ZERO_VECT2;
+        latch_2d_t joy_latch = LATCH_2D_INIT;
+        fvec3_t    joy_latch_trans = ZERO_VECT3;
+
+        // Read buttons
+        if ( control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_JUMP ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_JUMP );
+        if ( control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_LEFT_USE ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_LEFT );
+        if ( control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_LEFT_GET ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_ALTLEFT );
+        if ( control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_LEFT_PACK ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_PACKLEFT );
+        if ( control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_RIGHT_USE ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_RIGHT );
+        if ( control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_RIGHT_GET ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_ALTRIGHT );
+        if ( control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_RIGHT_PACK ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_PACKRIGHT );
 
         if (( CAM_TURN_GOOD == PCamera->turn_mode && 1 == local_numlpla ) ||
             !control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_CAMERA ) )  // Don't allow movement in camera control mode
         {
             dist = SQRT( mous.x * mous.x + mous.y * mous.y );
-            if ( dist > 0 )
+            if ( dist > 0.0f )
             {
                 scale = mous.sense / dist;
                 if ( dist < mous.sense )
@@ -1998,180 +2025,195 @@ void set_one_player_latch( const PLA_REF by_reference player )
                 }
 
                 scale = scale / mous.sense;
-                joy_pos.x = mous.x * scale;
-                joy_pos.y = mous.y * scale;
+                joy_latch.dir[kX] = mous.x * scale;
+                joy_latch.dir[kY] = mous.y * scale;
 
                 if ( CAM_TURN_GOOD == PCamera->turn_mode &&
-                     1 == local_numlpla &&
-                     control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_CAMERA ) == 0 )  joy_pos.x = 0;
+                    1 == local_numlpla &&
+                    control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_CAMERA ) == 0 )  joy_latch.dir[kX] = 0;
 
-                joy_new.x = ( joy_pos.x * fcos + joy_pos.y * fsin );
-                joy_new.y = ( -joy_pos.x * fsin + joy_pos.y * fcos );
+                joy_latch = chr_convert_latch_2d( pchr, joy_latch );
+
+                joy_latch_trans.x = joy_latch.dir[kX] * vcam_rgt.x + joy_latch.dir[kY] * vcam_fwd.x;
+                joy_latch_trans.y = joy_latch.dir[kX] * vcam_rgt.y + joy_latch.dir[kY] * vcam_fwd.y;
+                joy_latch_trans.z = joy_latch.dir[kX] * vcam_rgt.z + joy_latch.dir[kY] * vcam_fwd.z;
             }
         }
 
-        sum.raw[kX] += joy_pos.x;
-        sum.raw[kY] += joy_pos.y;
+        // add the latch values to the sum
+        sum.raw[kX] += joy_latch.dir[kX];
+        sum.raw[kY] += joy_latch.dir[kY];
 
-        sum.dir[kX] += joy_new.x;
-        sum.dir[kY] += joy_new.y;
+        sum.dir[kX] += joy_latch_trans.x;
+        sum.dir[kY] += joy_latch_trans.y;
+        sum.dir[kZ] += joy_latch_trans.z;
 
-        // Read buttons
-        if ( control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_JUMP ) )
-            ADD_BITS( sum.b, LATCHBUTTON_JUMP );
-        if ( control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_LEFT_USE ) )
-            ADD_BITS( sum.b, LATCHBUTTON_LEFT );
-        if ( control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_LEFT_GET ) )
-            ADD_BITS( sum.b, LATCHBUTTON_ALTLEFT );
-        if ( control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_LEFT_PACK ) )
-            ADD_BITS( sum.b, LATCHBUTTON_PACKLEFT );
-        if ( control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_RIGHT_USE ) )
-            ADD_BITS( sum.b, LATCHBUTTON_RIGHT );
-        if ( control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_RIGHT_GET ) )
-            ADD_BITS( sum.b, LATCHBUTTON_ALTRIGHT );
-        if ( control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_RIGHT_PACK ) )
-            ADD_BITS( sum.b, LATCHBUTTON_PACKRIGHT );
+        ADD_BITS( sum.b, joy_latch.b );
     }
 
     // Joystick A routines
     if ( HAS_SOME_BITS( pdevice->bits, INPUT_BITS_JOYA ) && joy[0].on )
     {
-        fvec2_t joy_pos = ZERO_VECT2, joy_new = ZERO_VECT2;
+        latch_2d_t joy_latch = LATCH_2D_INIT;
+        fvec3_t joy_latch_trans = ZERO_VECT3;
+
+        // Read buttons
+        if ( control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_JUMP ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_JUMP );
+        if ( control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_LEFT_USE ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_LEFT );
+        if ( control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_LEFT_GET ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_ALTLEFT );
+        if ( control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_LEFT_PACK ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_PACKLEFT );
+        if ( control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_RIGHT_USE ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_RIGHT );
+        if ( control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_RIGHT_GET ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_ALTRIGHT );
+        if ( control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_RIGHT_PACK ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_PACKRIGHT );
 
         if (( CAM_TURN_GOOD == PCamera->turn_mode && 1 == local_numlpla ) ||
             !control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_CAMERA ) )
         {
-            joy_pos.x = joy[0].x;
-            joy_pos.y = joy[0].y;
+            joy_latch.dir[kX] = joy[0].x;
+            joy_latch.dir[kY] = joy[0].y;
 
-            dist = joy_pos.x * joy_pos.x + joy_pos.y * joy_pos.y;
+            dist = joy_latch.dir[kX] * joy_latch.dir[kX] + joy_latch.dir[kY] * joy_latch.dir[kY];
             if ( dist > 1.0f )
             {
                 scale = 1.0f / SQRT( dist );
-                joy_pos.x *= scale;
-                joy_pos.y *= scale;
+                joy_latch.dir[kX] *= scale;
+                joy_latch.dir[kY] *= scale;
             }
 
             if ( CAM_TURN_GOOD == PCamera->turn_mode &&
-                 1 == local_numlpla &&
-                 !control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_CAMERA ) )  joy_pos.x = 0;
+                1 == local_numlpla &&
+                !control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_CAMERA ) )  joy_latch.dir[kX] = 0;
 
-            joy_new.x = ( joy_pos.x * fcos + joy_pos.y * fsin );
-            joy_new.y = ( -joy_pos.x * fsin + joy_pos.y * fcos );
+            joy_latch = chr_convert_latch_2d( pchr, joy_latch );
+
+            joy_latch_trans.x = joy_latch.dir[kX] * vcam_rgt.x + joy_latch.dir[kY] * vcam_fwd.x;
+            joy_latch_trans.y = joy_latch.dir[kX] * vcam_rgt.y + joy_latch.dir[kY] * vcam_fwd.y;
+            joy_latch_trans.z = joy_latch.dir[kX] * vcam_rgt.z + joy_latch.dir[kY] * vcam_fwd.z;
         }
 
-        sum.raw[kX] += joy_pos.x;
-        sum.raw[kY] += joy_pos.y;
+        // add the latch values to the sum
+        sum.raw[kX] += joy_latch.dir[kX];
+        sum.raw[kY] += joy_latch.dir[kY];
 
-        sum.dir[kX] += joy_new.x;
-        sum.dir[kY] += joy_new.y;
+        sum.dir[kX] += joy_latch_trans.x;
+        sum.dir[kY] += joy_latch_trans.y;
+        sum.dir[kZ] += joy_latch_trans.z;
 
-        // Read buttons
-        if ( control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_JUMP ) )
-            ADD_BITS( sum.b, LATCHBUTTON_JUMP );
-        if ( control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_LEFT_USE ) )
-            ADD_BITS( sum.b, LATCHBUTTON_LEFT );
-        if ( control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_LEFT_GET ) )
-            ADD_BITS( sum.b, LATCHBUTTON_ALTLEFT );
-        if ( control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_LEFT_PACK ) )
-            ADD_BITS( sum.b, LATCHBUTTON_PACKLEFT );
-        if ( control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_RIGHT_USE ) )
-            ADD_BITS( sum.b, LATCHBUTTON_RIGHT );
-        if ( control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_RIGHT_GET ) )
-            ADD_BITS( sum.b, LATCHBUTTON_ALTRIGHT );
-        if ( control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_RIGHT_PACK ) )
-            ADD_BITS( sum.b, LATCHBUTTON_PACKRIGHT );
+        ADD_BITS( sum.b, joy_latch.b );
     }
 
     // Joystick B routines
     if ( HAS_SOME_BITS( pdevice->bits, INPUT_BITS_JOYB ) && joy[1].on )
     {
-        fvec2_t joy_pos = ZERO_VECT2, joy_new = ZERO_VECT2;
+        latch_2d_t joy_latch = LATCH_2D_INIT;
+        fvec3_t joy_latch_trans = ZERO_VECT3;
+
+        // Read buttons
+        if ( control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_JUMP ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_JUMP );
+        if ( control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_LEFT_USE ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_LEFT );
+        if ( control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_LEFT_GET ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_ALTLEFT );
+        if ( control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_LEFT_PACK ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_PACKLEFT );
+        if ( control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_RIGHT_USE ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_RIGHT );
+        if ( control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_RIGHT_GET ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_ALTRIGHT );
+        if ( control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_RIGHT_PACK ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_PACKRIGHT );
 
         if (( CAM_TURN_GOOD == PCamera->turn_mode && 1 == local_numlpla ) ||
             !control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_CAMERA ) )
         {
-            joy_pos.x = joy[1].x;
-            joy_pos.y = joy[1].y;
+            joy_latch.dir[kX] = joy[1].x;
+            joy_latch.dir[kY] = joy[1].y;
 
-            dist = joy_pos.x * joy_pos.x + joy_pos.y * joy_pos.y;
+            dist = joy_latch.dir[kX] * joy_latch.dir[kX] + joy_latch.dir[kY] * joy_latch.dir[kY];
             if ( dist > 1.0f )
             {
                 scale = 1.0f / SQRT( dist );
-                joy_pos.x *= scale;
-                joy_pos.y *= scale;
+                joy_latch.dir[kX] *= scale;
+                joy_latch.dir[kY] *= scale;
             }
 
             if ( CAM_TURN_GOOD == PCamera->turn_mode &&
-                 1 == local_numlpla &&
-                 !control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_CAMERA ) )  joy_pos.x = 0;
+                1 == local_numlpla &&
+                !control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_CAMERA ) )  joy_latch.dir[kX] = 0;
 
-            joy_new.x = ( joy_pos.x * fcos + joy_pos.y * fsin );
-            joy_new.y = ( -joy_pos.x * fsin + joy_pos.y * fcos );
+            joy_latch = chr_convert_latch_2d( pchr, joy_latch );
+
+            joy_latch_trans.x = joy_latch.dir[kX] * vcam_rgt.x + joy_latch.dir[kY] * vcam_fwd.x;
+            joy_latch_trans.y = joy_latch.dir[kX] * vcam_rgt.y + joy_latch.dir[kY] * vcam_fwd.y;
+            joy_latch_trans.z = joy_latch.dir[kX] * vcam_rgt.z + joy_latch.dir[kY] * vcam_fwd.z;
         }
 
-        sum.raw[kX] += joy_pos.x;
-        sum.raw[kY] += joy_pos.y;
+        // add the latch values to the sum
+        sum.raw[kX] += joy_latch.dir[kX];
+        sum.raw[kY] += joy_latch.dir[kY];
 
-        sum.dir[kX] += joy_new.x;
-        sum.dir[kY] += joy_new.y;
+        sum.dir[kX] += joy_latch_trans.x;
+        sum.dir[kY] += joy_latch_trans.y;
+        sum.dir[kZ] += joy_latch_trans.z;
 
-        // Read buttons
-        if ( control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_JUMP ) )
-            ADD_BITS( sum.b, LATCHBUTTON_JUMP );
-        if ( control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_LEFT_USE ) )
-            ADD_BITS( sum.b, LATCHBUTTON_LEFT );
-        if ( control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_LEFT_GET ) )
-            ADD_BITS( sum.b, LATCHBUTTON_ALTLEFT );
-        if ( control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_LEFT_PACK ) )
-            ADD_BITS( sum.b, LATCHBUTTON_PACKLEFT );
-        if ( control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_RIGHT_USE ) )
-            ADD_BITS( sum.b, LATCHBUTTON_RIGHT );
-        if ( control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_RIGHT_GET ) )
-            ADD_BITS( sum.b, LATCHBUTTON_ALTRIGHT );
-        if ( control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_RIGHT_PACK ) )
-            ADD_BITS( sum.b, LATCHBUTTON_PACKRIGHT );
+        ADD_BITS( sum.b, joy_latch.b );
     }
 
     // Keyboard routines
     if ( HAS_SOME_BITS( pdevice->bits, INPUT_BITS_KEYBOARD ) && keyb.on )
     {
-        fvec2_t joy_pos = ZERO_VECT2, joy_new = ZERO_VECT2;
+        latch_2d_t joy_latch = LATCH_2D_INIT;
+        fvec3_t joy_latch_trans = ZERO_VECT3;
+
+        // Read buttons
+        if ( control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_JUMP ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_JUMP );
+        if ( control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_LEFT_USE ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_LEFT );
+        if ( control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_LEFT_GET ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_ALTLEFT );
+        if ( control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_LEFT_PACK ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_PACKLEFT );
+        if ( control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_RIGHT_USE ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_RIGHT );
+        if ( control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_RIGHT_GET ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_ALTRIGHT );
+        if ( control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_RIGHT_PACK ) )
+            ADD_BITS( joy_latch.b, LATCHBUTTON_PACKRIGHT );
 
         if (( CAM_TURN_GOOD == PCamera->turn_mode && 1 == local_numlpla ) ||
             !control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_CAMERA ) )
         {
-            joy_pos.x = ( control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_RIGHT ) - control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_LEFT ) );
-            joy_pos.y = ( control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_DOWN ) - control_is_pressed( INPUT_DEVICE_KEYBOARD,  CONTROL_UP ) );
+            joy_latch.dir[kX] = ( control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_RIGHT ) - control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_LEFT ) );
+            joy_latch.dir[kY] = ( control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_DOWN ) - control_is_pressed( INPUT_DEVICE_KEYBOARD,  CONTROL_UP ) );
 
             if ( CAM_TURN_GOOD == PCamera->turn_mode &&
-                 1 == local_numlpla )  joy_pos.x = 0;
+                1 == local_numlpla )  joy_latch.dir[kX] = 0;
 
-            joy_new.x = ( joy_pos.x * fcos + joy_pos.y * fsin );
-            joy_new.y = ( -joy_pos.x * fsin + joy_pos.y * fcos );
+            joy_latch = chr_convert_latch_2d( pchr, joy_latch );
+
+            joy_latch_trans.x = joy_latch.dir[kX] * vcam_rgt.x + joy_latch.dir[kY] * vcam_fwd.x;
+            joy_latch_trans.y = joy_latch.dir[kX] * vcam_rgt.y + joy_latch.dir[kY] * vcam_fwd.y;
+            joy_latch_trans.z = joy_latch.dir[kX] * vcam_rgt.z + joy_latch.dir[kY] * vcam_fwd.z;
         }
 
-        sum.raw[kX] += joy_pos.x;
-        sum.raw[kY] += joy_pos.y;
+        // add the latch values to the sum
+        sum.raw[kX] += joy_latch.dir[kX];
+        sum.raw[kY] += joy_latch.dir[kY];
 
-        sum.dir[kX] += joy_new.x;
-        sum.dir[kY] += joy_new.y;
+        sum.dir[kX] += joy_latch_trans.x;
+        sum.dir[kY] += joy_latch_trans.y;
+        sum.dir[kZ] += joy_latch_trans.z;
 
-        // Read buttons
-        if ( control_is_pressed( INPUT_DEVICE_KEYBOARD,  CONTROL_JUMP ) )
-            sum.b |= LATCHBUTTON_JUMP;
-        if ( control_is_pressed( INPUT_DEVICE_KEYBOARD,  CONTROL_LEFT_USE ) )
-            sum.b |= LATCHBUTTON_LEFT;
-        if ( control_is_pressed( INPUT_DEVICE_KEYBOARD,  CONTROL_LEFT_GET ) )
-            sum.b |= LATCHBUTTON_ALTLEFT;
-        if ( control_is_pressed( INPUT_DEVICE_KEYBOARD,  CONTROL_LEFT_PACK ) )
-            sum.b |= LATCHBUTTON_PACKLEFT;
-        if ( control_is_pressed( INPUT_DEVICE_KEYBOARD,  CONTROL_RIGHT_USE ) )
-            sum.b |= LATCHBUTTON_RIGHT;
-        if ( control_is_pressed( INPUT_DEVICE_KEYBOARD,  CONTROL_RIGHT_GET ) )
-            sum.b |= LATCHBUTTON_ALTRIGHT;
-        if ( control_is_pressed( INPUT_DEVICE_KEYBOARD,  CONTROL_RIGHT_PACK ) )
-            sum.b |= LATCHBUTTON_PACKRIGHT;
+        ADD_BITS( sum.b, joy_latch.b );
     }
 
     // add in some sustain
@@ -2233,7 +2275,7 @@ void check_stats()
         else if ( SDLKEYDOWN( SDLK_3 ) )  docheat = 2;
         else if ( SDLKEYDOWN( SDLK_4 ) )  docheat = 3;
 
-        //Apply the cheat if valid
+        // Apply the cheat if valid
         if ( VALID_PLA( docheat ) )
         {
             player_t * ppla = PlaStack.lst + docheat;
@@ -2243,7 +2285,7 @@ void check_stats()
                 chr_t * pchr = ChrList.lst + ppla->index;
                 cap_t * pcap = pro_get_pcap( pchr->profile_ref );
 
-                //Give 10% of XP needed for next level
+                // Give 10% of XP needed for next level
                 xpgain = 0.1f * ( pcap->experience_forlevel[MIN( pchr->experiencelevel+1, MAXLEVEL )] - pcap->experience_forlevel[pchr->experiencelevel] );
                 give_experience( pchr->ai.index, xpgain, XP_DIRECT, btrue );
                 stat_check_delay = 1;
@@ -2261,14 +2303,14 @@ void check_stats()
         else if ( SDLKEYDOWN( SDLK_3 ) )  docheat = 2;
         else if ( SDLKEYDOWN( SDLK_4 ) )  docheat = 3;
 
-        //Apply the cheat if valid
+        // Apply the cheat if valid
         if ( VALID_PLA( docheat ) )
         {
             player_t * ppla = PlaStack.lst + docheat;
 
             if ( INGAME_CHR( ppla->index ) )
             {
-                //Heal 1 life
+                // Heal 1 life
                 heal_character( ppla->index, ppla->index, 256, btrue );
                 stat_check_delay = 1;
             }
@@ -2358,12 +2400,7 @@ void show_stat( int statindex )
                 int itmp;
                 const char * gender_str;
 
-                gender_str = "";
-                switch ( pchr->gender )
-                {
-                    case GENDER_MALE: gender_str = "male "; break;
-                    case GENDER_FEMALE: gender_str = "female "; break;
-                }
+                gender_str = chr_get_gender_name( character, NULL, 0 );
 
                 level = 1 + pchr->experiencelevel;
                 itmp = level % 10;
@@ -2767,7 +2804,7 @@ bool_t chr_setup_apply( const CHR_REF by_reference ichr, spawn_file_info_t *pinf
         chr_t *pitem;
         pchr->nameknown = btrue;
 
-        //Unkurse both inhand items
+        // Unkurse both inhand items
         if ( INGAME_CHR( pchr->holdingwhich[SLOT_LEFT] ) )
         {
             pitem = ChrList.lst + ichr;
@@ -3422,7 +3459,7 @@ bool_t game_begin_module( const char * modname, Uint32 seed )
     if ( cfg.dev_mode ) log_madused_vfs( "/debug/slotused.txt" );
 
     // initialize the network
-    network_system_begin();
+    network_system_begin( &cfg );
     net_sayHello();
 
     // start the module
@@ -3455,7 +3492,6 @@ egoboo_rv game_update_imports()
     {
         log_warning( "game_update_imports() - Could not create the import folder. (%s)\n", vfs_getError() );
     }
-
 
     // export all of the players directly from memory straight to the "import" dir
     for ( player = 0, ipla = 0; ipla < MAX_PLAYER; ipla++ )
@@ -3731,7 +3767,8 @@ void game_finish_module()
     game_update_imports();
 
     // quit the old module
-    //game_quit_module();        //ZF> I think this not needed because this is done elswhere?
+    /// @note ZF@> I think this not needed because this is done elswhere?
+    //game_quit_module();
 }
 
 //--------------------------------------------------------------------------------------------
@@ -3883,13 +3920,21 @@ void expand_escape_codes( const CHR_REF by_reference ichr, script_state_t * psta
     STRING szTmp;
 
     chr_t      * pchr, *ptarget, *powner;
-    ai_state_t * pai;
+    cap_t      * pchr_cap, *ptarget_cap, *powner_cap;
+    CHR_REF      itarget, iowner;
+    ai_state_t * pchr_ai;
 
-    pchr    = !INGAME_CHR( ichr ) ? NULL : ChrList.lst + ichr;
-    pai     = ( NULL == pchr )    ? NULL : &( pchr->ai );
+    pchr     = !INGAME_CHR( ichr ) ? NULL : ChrList.lst + ichr;
+    pchr_ai  = ( NULL == pchr )    ? NULL : &( pchr->ai );
+    pchr_cap = chr_get_pcap( ichr );
 
-    ptarget = (( NULL == pai ) || !INGAME_CHR( pai->target ) ) ? pchr : ChrList.lst + pai->target;
-    powner  = (( NULL == pai ) || !INGAME_CHR( pai->owner ) ) ? pchr : ChrList.lst + pai->owner;
+    itarget     = ( NULL == pchr_ai ) ? MAX_CHR : pchr_ai->target;
+    ptarget     = !INGAME_CHR( itarget ) ? NULL : ChrList.lst + itarget;
+    ptarget_cap = chr_get_pcap( itarget );
+
+    iowner     = ( NULL == pchr_ai ) ? MAX_CHR : pchr_ai->owner;
+    powner     = !INGAME_CHR( iowner ) ? NULL : ChrList.lst + iowner;
+    powner_cap = chr_get_pcap( iowner );
 
     cnt = 0;
     while ( CSTR_END != *src && src < src_end && dst < dst_end )
@@ -3924,38 +3969,32 @@ void expand_escape_codes( const CHR_REF by_reference ichr, script_state_t * psta
 
                 case 'c':  // Class name
                     {
-                        if ( NULL != pchr )
+                        if ( NULL != pchr_cap )
                         {
-                            ebuffer     = chr_get_pcap( ichr )->classname;
-                            ebuffer_end = ebuffer + SDL_arraysize( chr_get_pcap( ichr )->classname );
+                            ebuffer     = pchr_cap->classname;
+                            ebuffer_end = ebuffer + SDL_arraysize( pchr_cap->classname );
                         }
                     }
                     break;
 
                 case 't':  // Target name
                     {
-                        if ( NULL != pai )
-                        {
-                            snprintf( szTmp, SDL_arraysize( szTmp ), "%s", chr_get_name( pai->target, CHRNAME_ARTICLE ) );
-                        }
+                        snprintf( szTmp, SDL_arraysize( szTmp ), "%s", chr_get_name( itarget, CHRNAME_ARTICLE ) );
                     }
                     break;
 
                 case 'o':  // Owner name
                     {
-                        if ( NULL != pai )
-                        {
-                            snprintf( szTmp, SDL_arraysize( szTmp ), "%s", chr_get_name( pai->owner, CHRNAME_ARTICLE ) );
-                        }
+                        snprintf( szTmp, SDL_arraysize( szTmp ), "%s", chr_get_name( iowner, CHRNAME_ARTICLE ) );
                     }
                     break;
 
                 case 's':  // Target class name
                     {
-                        if ( NULL != ptarget )
+                        if ( NULL != ptarget_cap )
                         {
-                            ebuffer     = chr_get_pcap( pai->target )->classname;
-                            ebuffer_end = ebuffer + SDL_arraysize( chr_get_pcap( pai->target )->classname );
+                            ebuffer     = ptarget_cap->classname;
+                            ebuffer_end = ebuffer + SDL_arraysize( ptarget_cap->classname );
                         }
                     }
                     break;
@@ -3965,10 +4004,10 @@ void expand_escape_codes( const CHR_REF by_reference ichr, script_state_t * psta
                 case '2':
                 case '3': // Target's skin name
                     {
-                        if ( NULL != ptarget )
+                        if ( NULL != ptarget_cap )
                         {
-                            ebuffer = chr_get_pcap( pai->target )->skinname[( *src )-'0'];
-                            ebuffer_end = ebuffer + SDL_arraysize( chr_get_pcap( pai->target )->skinname[( *src )-'0'] );
+                            ebuffer     = ptarget_cap->skinname[( *src )-'0'];
+                            ebuffer_end = ebuffer + SDL_arraysize( ptarget_cap->skinname[( *src )-'0'] );
                         }
                     }
                     break;
@@ -4007,61 +4046,19 @@ void expand_escape_codes( const CHR_REF by_reference ichr, script_state_t * psta
 
                 case 'p':  // Character's possessive
                     {
-                        if ( NULL != pchr )
-                        {
-                            if ( pchr->gender == GENDER_FEMALE )
-                            {
-                                snprintf( szTmp, SDL_arraysize( szTmp ), "her" );
-                            }
-                            else if ( pchr->gender == GENDER_MALE )
-                            {
-                                snprintf( szTmp, SDL_arraysize( szTmp ), "his" );
-                            }
-                            else
-                            {
-                                snprintf( szTmp, SDL_arraysize( szTmp ), "its" );
-                            }
-                        }
+                        chr_get_gender_possessive( ichr, szTmp, SDL_arraysize( szTmp ) );
                     }
                     break;
 
                 case 'm':  // Character's gender
                     {
-                        if ( NULL != pchr )
-                        {
-                            if ( pchr->gender == GENDER_FEMALE )
-                            {
-                                snprintf( szTmp, SDL_arraysize( szTmp ), "female " );
-                            }
-                            else if ( pchr->gender == GENDER_MALE )
-                            {
-                                snprintf( szTmp, SDL_arraysize( szTmp ), "male " );
-                            }
-                            else
-                            {
-                                snprintf( szTmp, SDL_arraysize( szTmp ), " " );
-                            }
-                        }
+                        chr_get_gender_name( ichr, szTmp, SDL_arraysize( szTmp ) );
                     }
                     break;
 
                 case 'g':  // Target's possessive
                     {
-                        if ( NULL != ptarget )
-                        {
-                            if ( ptarget->gender == GENDER_FEMALE )
-                            {
-                                snprintf( szTmp, SDL_arraysize( szTmp ), "her" );
-                            }
-                            else if ( ptarget->gender == GENDER_MALE )
-                            {
-                                snprintf( szTmp, SDL_arraysize( szTmp ), "his" );
-                            }
-                            else
-                            {
-                                snprintf( szTmp, SDL_arraysize( szTmp ), "its" );
-                            }
-                        }
+                        chr_get_gender_possessive( itarget, szTmp, SDL_arraysize( szTmp ) );
                     }
                     break;
 
@@ -4396,8 +4393,8 @@ bool_t do_line_of_sight( line_of_sight_info_t * plos )
 
 void game_reset_local_shared_stats()
 {
-    //ZF> Reset all non essentional local_stats. This is done every second or so
-    //    to update these values.
+    /// @note ZF@> Reset all non essentional local_stats. This is done every second or so
+    ///            to update these values.
     local_stats.allpladead        = bfalse;
     local_stats.daze_level        = 0;
     local_stats.grog_level        = 0;
@@ -4790,7 +4787,7 @@ bool_t game_module_start( game_module_t * pinst )
     pinst->randsave = rand();
     randindex = rand() % RANDIE_COUNT;
 
-    PNet->hostactive = btrue; // very important or the input will not work
+    network_set_host_active( btrue ); // very important or the input will not work
 
     return btrue;
 }
@@ -4805,7 +4802,7 @@ bool_t game_module_stop( game_module_t * pinst )
     pinst->active      = bfalse;
 
     // network stuff
-    PNet->hostactive  = bfalse;
+    network_set_host_active( bfalse );
 
     return btrue;
 }
@@ -4938,11 +4935,15 @@ Uint8 get_local_light( int light )
 {
     if ( 0xFFL == light ) return light;
 
-    //if ( local_seedark_level > 0 )                //ZF> Why should Darkvision reveal invisible?
-    if ( local_stats.seeinvis_level > 0 )
+    /// @note ZF@> Why should Darkvision reveal invisible?
+    /// @note BB@> It doesn't. INVISIBLE doesn't have anything to do with invisibility,
+    ///            it is just a generic threshold for whether an object can be visible to a character.
+    ///            If it is actually magically invisible, then that is handled elsewhere.
+
+    if ( local_stats.seedark_level > 0 )
     {
         light = MAX( light, INVISIBLE );
-//        light *= local_seeinvis_level + 1;
+        light *= local_stats.seedark_level + 1;
     }
 
     return CLIP( light, 0, 254 );
@@ -5223,9 +5224,9 @@ float get_mesh_max_vertex_2( ego_mpd_t * pmesh, chr_t * pchr )
     int ix_off[4] = {1, 1, 0, 0};
     int iy_off[4] = {0, 1, 1, 0};
 
-    float pos_x[4];
-    float pos_y[4];
-    float zmax;
+    fvec4_base_t pos_x;
+    fvec4_base_t pos_y;
+    float        zmax;
 
     for ( corner = 0; corner < 4; corner++ )
     {

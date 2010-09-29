@@ -498,7 +498,7 @@ void gfx_init_SDL_graphics()
 
 #if !defined(__APPLE__)
     {
-        //Setup the cute windows manager icon, don't do this on Mac
+        // Setup the cute windows manager icon, don't do this on Mac
         SDL_Surface *theSurface;
         char * fname = "icon.bmp";
         STRING fileload;
@@ -710,14 +710,14 @@ void draw_blip( float sizeFactor, Uint8 color, int x, int y, bool_t mini_map )
     frect_t txrect;
     float   width, height;
 
-    //Adjust the position values so that they fit inside the minimap
+    // Adjust the position values so that they fit inside the minimap
     if ( mini_map )
     {
         x = x * MAPSIZE / PMesh->gmem.edge_x;
         y = ( y * MAPSIZE / PMesh->gmem.edge_y ) + sdl_scr.y - MAPSIZE;
     }
 
-    //Now draw it
+    // Now draw it
     if ( x > 0 && y > 0 )
     {
         oglx_texture_t * ptex = TxTexture_get_ptr(( TX_REF )TX_BLIP );
@@ -1255,7 +1255,7 @@ int draw_character_xp_bar( const CHR_REF by_reference character, int x, int y )
     pcap = pro_get_pcap( pchr->profile_ref );
     if ( NULL == pcap ) return y;
 
-    //Draw the small XP progress bar
+    // Draw the small XP progress bar
     if ( pchr->experiencelevel < MAXLEVEL )
     {
         Uint8  curlevel    = pchr->experiencelevel + 1;
@@ -1336,7 +1336,7 @@ int draw_status( const CHR_REF by_reference character, int x, int y )
     // skip to the next row
     y += 32;
 
-    //Draw the small XP progress bar
+    // Draw the small XP progress bar
     y = draw_character_xp_bar( character, x + 16, y );
 
     // Draw the life bar
@@ -1692,8 +1692,7 @@ int draw_timer( int y )
 //--------------------------------------------------------------------------------------------
 int draw_game_status( int y )
 {
-
-    if ( PNet->waitingforplayers )
+    if ( network_waiting_for_players() )
     {
         y = _draw_string_raw( 0, y, "Waiting for players... " );
     }
@@ -3044,12 +3043,12 @@ bool_t dump_screenshot()
 
         if ( NULL == temp )
         {
-            //Something went wrong
+            // Something went wrong
             SDL_FreeSurface( temp );
             return bfalse;
         }
 
-        //Now lock the surface so that we can read it
+        // Now lock the surface so that we can read it
         if ( -1 != SDL_LockSurface( temp ) )
         {
             SDL_Rect rect;
@@ -3407,7 +3406,7 @@ bool_t billboard_data_printf_ttf( billboard_data_t * pbb, Font *font, SDL_Color 
     va_list args;
     int rv;
     oglx_texture_t * ptex;
-    float texCoords[4];
+    fvec4_base_t     texCoords;
 
     if ( NULL == pbb || !pbb->valid ) return bfalse;
 

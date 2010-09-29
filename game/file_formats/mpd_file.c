@@ -223,7 +223,7 @@ mpd_t * mpd_load( const char *loadname, mpd_t * pmesh )
     }
 
     // Read the number of vertices
-    fread( &itmp, 4, 1, fileread );  pinfo->vertcount   = ( int )ENDIAN_INT32( itmp );
+    fread( &itmp, 4, 1, fileread );  pinfo->vertcount   = ( size_t )ENDIAN_INT32( itmp );
 
     // grab the tiles in x and y
     fread( &itmp, 4, 1, fileread );  pinfo->tiles_x = ( int )ENDIAN_INT32( itmp );

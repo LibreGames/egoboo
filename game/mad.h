@@ -54,7 +54,7 @@ enum
     MADFX_POOF           = ( 1 << 11 )                     ///< P  Poof the character
 };
 
-/// Animation walking
+// Animation walking
 #define LIPDA               0                       ///< For smooth transitions 'tween
 #define LIPWA               1                       ///<  walking rates
 #define LIPWB               2
@@ -62,7 +62,7 @@ enum
 
 #define MAX_PIP_PER_PROFILE               13                                      ///< Max part*.txt per object
 
-/// This stuff is for actions
+// This stuff is for actions
 #define NOACTION            0xFFFF                     ///< Action not valid for this character
 
 /// The various model actions

@@ -734,7 +734,7 @@ BSP_tree_t * BSP_tree_ctor( BSP_tree_t * t, Sint32 dim, Sint32 depth )
 
     t->depth = depth;
 
-    //initialize the free list
+    // initialize the free list
     t->branch_free.top = 0;
     t->branch_used.top = 0;
     for ( cnt = 0; cnt < t->branch_all.alloc; cnt++ )
@@ -1526,7 +1526,7 @@ bool_t BSP_generate_aabb_child( BSP_aabb_t * psrc, int index, BSP_aabb_t * pdst 
     {
         float maxval, minval;
 
-        tnc = (( int )psrc->dim ) - 1 - cnt;
+        tnc = (( signed )psrc->dim ) - 1 - cnt;
 
         if ( 0 == ( index & ( 1 << tnc ) ) )
         {
