@@ -259,6 +259,7 @@ prt_t * prt_config_do_init( prt_t * pprt )
     Uint32  prt_lifetime;
     fvec3_t tmp_pos;
     Uint16  turn;
+    float   loc_spdlimit;
 
     FACING_T loc_facing;
     CHR_REF loc_chr_origin;
@@ -516,23 +517,26 @@ prt_t * prt_config_do_init( prt_t * pprt )
     pprt->is_homing = ppip->homing && !DEFINED_CHR( pprt->attachedto_ref );
 
     // estimate some parameters for buoyancy and air resistance
-    if ( 0.0f == ppip->spdlimit )
+    loc_spdlimit = ppip->spdlimit;
+    if ( 0.0f == loc_spdlimit ) loc_spdlimit = -STANDARD_GRAVITY / (1.0f - air_friction);
+
     {
-        pprt->buoyancy       = 0.0f;
-        pprt->air_resistance = 1.0f;
-    }
-    else
-    {
-        const float buoyancy_min = 0.0f;
-        const float buoyancy_max = 2.0f * ABS( gravity );
+        const float buoyancy_min       = 0.0f;
+        const float buoyancy_max       = 2.0f * ABS( STANDARD_GRAVITY );
         const float air_resistance_min = 0.0f;
         const float air_resistance_max = 1.0f;
 
-        pprt->buoyancy = -ppip->spdlimit * ( 1.0f - air_friction ) - gravity;
+        // find the buoyancy, assuming that the air_resistance of the particle
+        // is equal to air_friction at standard gravity
+        pprt->buoyancy = -loc_spdlimit * ( 1.0f - air_friction ) - STANDARD_GRAVITY;
         pprt->buoyancy = CLIP(pprt->buoyancy, buoyancy_min, buoyancy_max );
 
-        pprt->air_resistance  = 1.0f - ( pprt->buoyancy + gravity ) / -ppip->spdlimit / air_friction;
+        // determine if there is any left-over air resistance
+        pprt->air_resistance  = 1.0f - ( pprt->buoyancy + STANDARD_GRAVITY ) / -loc_spdlimit;
         pprt->air_resistance = CLIP( pprt->air_resistance, air_resistance_min, air_resistance_max );
+
+        pprt->air_resistance /= air_friction;
+        pprt->air_resistance = CLIP( pprt->air_resistance, 0.0f, 1.0f );
     }
 
     prt_set_size( pprt, ppip->size_base );
@@ -1318,39 +1322,20 @@ prt_bundle_t * move_one_particle_do_fluid_friction( prt_bundle_t * pbdl_prt )
     // assume no acceleration
     fvec3_self_clear( fluid_acc.v );
 
-    // Apply fluid friction for all particles
-    if ( loc_pprt->buoyancy > 0.0f )
+    // Light isn't affected by fluid velocity
+    if ( SPRITE_LIGHT != loc_pprt->type )
     {
-        float buoyancy_friction = air_friction * loc_pprt->air_resistance;
+        float loc_fluid_friction = loc_penviro->fluid_friction_hrz * loc_pprt->air_resistance;
 
-        // this is a buoyant particle, like smoke
         if ( loc_pprt->inwater )
         {
-            float water_friction = POW( buoyancy_friction, 2.0f );
-
             fluid_acc = fvec3_sub( waterspeed.v, loc_pprt->vel.v );
-            fvec3_self_scale( fluid_acc.v, 1.0f - water_friction );
+            fvec3_self_scale( fluid_acc.v, 1.0f - loc_fluid_friction );
         }
         else
         {
             fluid_acc = fvec3_sub( windspeed.v, loc_pprt->vel.v );
-            fvec3_self_scale( fluid_acc.v, 1.0f - buoyancy_friction );
-        }
-    }
-
-    // Light isn't affected by the wind
-    else if ( SPRITE_LIGHT != loc_pprt->type )
-    {
-        // this is a normal particle
-        if ( loc_pprt->inwater )
-        {
-            fluid_acc = fvec3_sub( waterspeed.v, loc_pprt->vel.v );
-            fvec3_self_scale( fluid_acc.v, 1.0f - loc_penviro->fluid_friction_hrz * loc_pprt->air_resistance );
-        }
-        else
-        {
-            fluid_acc = fvec3_sub( windspeed.v, loc_pprt->vel.v );
-            fvec3_self_scale( fluid_acc.v, 1.0f - loc_penviro->fluid_friction_hrz * loc_pprt->air_resistance );
+            fvec3_self_scale( fluid_acc.v, 1.0f - loc_fluid_friction );
         }
     }
 
@@ -1489,7 +1474,7 @@ prt_bundle_t * move_one_particle_do_z_motion( prt_bundle_t * pbdl_prt )
     // Do particle buoyancy. This is kinda BS the way it is calculated
     if ( loc_pprt->buoyancy > 0.0f )
     {
-        float loc_buoyancy = loc_pprt->buoyancy;
+        float loc_buoyancy = loc_pprt->buoyancy  + (STANDARD_GRAVITY - gravity);
 
         if ( loc_zlerp < 1.0f )
         {
