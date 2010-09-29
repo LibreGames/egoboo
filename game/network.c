@@ -2465,3 +2465,77 @@ void PlaStack_reinit()
     }
     PlaStack.count = 0;
 }
+
+//--------------------------------------------------------------------------------------------
+void PlaStack_toggle_all_explore()
+{
+    PLA_REF ipla;
+
+    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    {
+        player_t * ppla = PlaStack.lst + ipla;
+
+        if ( !ppla->valid ) continue;
+
+        ppla->explore_mode = !ppla->explore_mode;
+    }
+}
+
+//--------------------------------------------------------------------------------------------
+void PlaStack_toggle_all_wizard()
+{
+    PLA_REF ipla;
+
+    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    {
+        player_t * ppla = PlaStack.lst + ipla;
+
+        if ( !ppla->valid ) continue;
+
+        ppla->wizard_mode = !ppla->wizard_mode;
+    }
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t PlaStack_has_explore()
+{
+    bool_t  retval = bfalse;
+    PLA_REF ipla;
+
+    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    {
+        player_t * ppla = PlaStack.lst + ipla;
+
+        if ( !ppla->valid ) continue;
+
+        if( ppla->explore_mode )
+        {
+            retval = btrue;
+            break;
+        }
+    }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t PlaStack_has_wizard()
+{
+    bool_t  retval = bfalse;
+    PLA_REF ipla;
+
+    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    {
+        player_t * ppla = PlaStack.lst + ipla;
+
+        if ( !ppla->valid ) continue;
+
+        if( ppla->wizard_mode )
+        {
+            retval = btrue;
+            break;
+        }
+    }
+
+    return retval;
+}

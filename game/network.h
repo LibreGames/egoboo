@@ -249,3 +249,8 @@ void stop_players_from_joining();
 void net_reset_players();
 
 void tlatch_ary_init( time_latch_t ary[], size_t len );
+
+void   PlaStack_toggle_all_explore();
+void   PlaStack_toggle_all_wizard();
+bool_t PlaStack_has_explore();
+bool_t PlaStack_has_wizard();

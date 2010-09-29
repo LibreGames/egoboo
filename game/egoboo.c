@@ -265,6 +265,7 @@ int do_ego_proc_running( ego_process_t * eproc )
         eproc->screenshot_requested = btrue;
     }
 
+    // handle the explore mode
     if( cfg.dev_mode && keyb.on )
     {
         bool_t explore_mode_key = SDLKEYDOWN( SDLK_F9 ) && mod_shift && !mod_ctrl;
@@ -275,24 +276,15 @@ int do_ego_proc_running( ego_process_t * eproc )
         }
         else if ( _explore_mode_keyready )
         {
-            // toggle explore_mode for all players
-            PLA_REF ipla;
-
             _explore_mode_keyready = bfalse;
 
-            for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
-            {
-                player_t * ppla = PlaStack.lst + ipla;
-
-                if ( !ppla->valid ) continue;
-
-                ppla->explore_mode = !ppla->explore_mode;
-            }
+            PlaStack_toggle_all_explore();
 
             log_info( "Toggling explore mode\n" );
         }
     }
 
+    // handle the wizard mode
     if( cfg.dev_mode && keyb.on )
     {
         bool_t wizard_mode_key = SDLKEYDOWN( SDLK_F9 ) && mod_ctrl && !mod_shift;
@@ -303,25 +295,16 @@ int do_ego_proc_running( ego_process_t * eproc )
         }
         else if ( _wizard_mode_keyready )
         {
-            // toggle wizard_mode for all players
-            PLA_REF ipla;
-
             _wizard_mode_keyready = bfalse;
 
-            for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
-            {
-                player_t * ppla = PlaStack.lst + ipla;
-
-                if ( !ppla->valid ) continue;
-
-                ppla->wizard_mode = !ppla->wizard_mode;
-            }
+            PlaStack_toggle_all_wizard();
 
             log_info( "Toggling wizard mode\n" );
         }
     }
 
-    if ( cfg.dev_mode && keyb.on && NULL != PMod && PMod->active )
+    // handle the "i win"
+    if ( PlaStack_has_wizard() && keyb.on && NULL != PMod && PMod->active )
     {
         bool_t i_win_key = SDLKEYDOWN( SDLK_F9 ) && !mod_shift && !mod_ctrl;
 

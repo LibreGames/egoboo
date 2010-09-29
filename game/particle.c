@@ -523,12 +523,16 @@ prt_t * prt_config_do_init( prt_t * pprt )
     }
     else
     {
+        const float buoyancy_min = 0.0f;
+        const float buoyancy_max = 2.0f * ABS( gravity );
+        const float air_resistance_min = 0.0f;
+        const float air_resistance_max = 1.0f;
+
         pprt->buoyancy = -ppip->spdlimit * ( 1.0f - air_friction ) - gravity;
-        if ( pprt->buoyancy < 0.0f ) pprt->buoyancy = 0.0f;
-        if ( pprt->buoyancy > 2.0f * ABS( gravity ) ) pprt->buoyancy = 2.0f * ABS( gravity );
+        pprt->buoyancy = CLIP(pprt->buoyancy, buoyancy_min, buoyancy_max );
 
         pprt->air_resistance  = 1.0f - ( pprt->buoyancy + gravity ) / -ppip->spdlimit / air_friction;
-        if ( pprt->air_resistance < 1.0f ) pprt->air_resistance = 1.0f;
+        pprt->air_resistance = CLIP( pprt->air_resistance, air_resistance_min, air_resistance_max );
     }
 
     prt_set_size( pprt, ppip->size_base );
