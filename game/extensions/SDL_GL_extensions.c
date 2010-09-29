@@ -252,7 +252,7 @@ SDLX_video_parameters_t * SDL_GL_set_mode( SDLX_video_parameters_t * v_old, SDLX
         SDL_GL_report_mode( retval );
 
         // set the opengl parameters
-        gl_new->multisample     = GL_FALSE;
+        gl_new->multisample     = GL_FALSE;		//ZF> Multisampling is always disabled?
         gl_new->multisample_arb = GL_FALSE;
         if ( NULL != retval->surface && retval->flags.opengl )
         {

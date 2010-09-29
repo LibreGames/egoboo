@@ -774,8 +774,11 @@ int update_game()
         }
 
         //Dampen groggyness if not all players are grogged (this assumes they all share the same camera view)
-        local_stats.grog_level /= numalive;
-        local_stats.daze_level /= numalive;
+		if( numalive > 0 )
+		{
+			local_stats.grog_level /= numalive;
+			local_stats.daze_level /= numalive;
+		}
 
         // Did everyone die?
         if ( numdead >= local_numlpla )
