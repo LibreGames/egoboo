@@ -36,27 +36,8 @@
 #define EDITDRAW_OBJ_CHAR   0x02    /* Characters (MD2)                 */
 #define EDITDRAW_OBJ_PART   0x03    /* Particles (can be transparent)   */
 
-
 #define EDITDRAW_MAXSPAWNPOS    600 /* Maximum for drawing lists        */
 #define EDITDRAW_MAXPASSAGE     512
-
-/*******************************************************************************
-* TYPEDEFS							                                           *
-*******************************************************************************/
-
-typedef struct {
-
-	float x, y, z;
-
-} EDITDRAW_SPAWNPOS_T;
-
-typedef struct {
-
-	int no;		            /* Eventuell für Farbe oder Beschriftung  verwenden	*/ 
-	int fan_no;	            /* Pro Passage können mehrere Fans vorhanden sein	*/
-	/* char *passage_name */ /* Eventuell als Hilfe, um welche Passage es sich handelt ? */
-
-} EDITDRAW_PASSAGE_T;
 
 /*******************************************************************************
 * CODE 								                                           *
@@ -64,12 +45,9 @@ typedef struct {
 
 COMMAND_T *editdrawInitData(void);
 void editdrawFreeData(void);
-void editdraw3DView(MESH_T *mesh, int chosen_fan, FANDATA_T *ft, COMMAND_T *fd);
-void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int chosen_fan);
+void editdraw3DView(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, int *chosen_fan);
+void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int *chosen_fan);
 void editdraw2DTex(int x, int y, int w, int h, unsigned char tx_no, char tx_big); 
 void editdrawAdjustCamera(int tx, int ty);
-/* ------ Hand over additional drawing data ------------ */
-void editdrawSetPassage(EDITDRAW_PASSAGE_T *psg);
-void editdrawSetSpawn(EDITDRAW_SPAWNPOS_T *sp);	
 
 #endif  /* _EDITDRAW_H_ */

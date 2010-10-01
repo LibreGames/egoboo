@@ -1,8 +1,10 @@
+2010-10-01 <bitnapper>
+- Prepared display of multiple chosen fans in map
+- Further work on 'simple' edit mode
+
 2010-09-20 <bitnapper>
 - Prepared code for choosing multiple tiles
 - Update of code for 'mouse-click' sensing
-
-2010-09-20 <bitnapper>
 - Fixed choosing of tiles, if map size is not a power of two (example 'Griffin Tower')
 
 2010-09-13 <bitnapper>

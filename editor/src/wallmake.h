@@ -48,8 +48,8 @@
 
 typedef struct {
 
-    int  pos;       /* Position of fan                      */
-    char type;      /* Old fan type                         */
+    int  pos;       /* Position of fan (-1: off map)        */
+    char type;      /* Actual/new type of fan               */
     char dir;       /* Direction the fan has to rotated to  */   
     
 } WALLMAKER_INFO_T;
@@ -58,6 +58,6 @@ typedef struct {
 * CODE 								                                           *
 *******************************************************************************/
 
-int wallmakeMakeTile(int fan, int is_floor, WALLMAKER_INFO_T *wi);
+int wallmakeMakeTile(int is_floor, WALLMAKER_INFO_T *wi);
 
 #endif  /* _WALLMAKE_H_ */

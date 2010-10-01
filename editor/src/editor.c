@@ -414,7 +414,7 @@ static void editor2DMap(SDLGL_EVENT *event)
         case EDITOR_2DMAP_FANROTATE:
             /* Rotate the chosen fan type */
             if (pEditState -> edit_mode > 0) {
-                editmainMap(EDITMAIN_ROTFAN);
+                editmainMap(EDITMAIN_ROTFAN, 0);
             }
             break;
 
@@ -450,11 +450,11 @@ static int editorFileMenu(char which)
 
     switch(which) {
         case EDITOR_FILE_LOAD:
-            editmainMap(EDITMAIN_LOADMAP);
+            editmainMap(EDITMAIN_LOADMAP, 0);
             break;
             
         case EDITOR_FILE_SAVE:
-            editmainMap(EDITMAIN_SAVEMAP);
+            editmainMap(EDITMAIN_SAVEMAP, 0);
             break;
             
         case EDITOR_FILE_EXIT:
@@ -558,7 +558,7 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
     sdlgl3dMoveObjects(event -> secondspassed);
 
     /* Draw the 3D-View before the 2D-Screen */
-    editmainMap(EDITMAIN_DRAWMAP);
+    editmainMap(EDITMAIN_DRAWMAP, 0);
 
     /* ---- Prepare drawing in 2D-Mode ---- */
     glPolygonMode(GL_FRONT, GL_FILL);
@@ -688,7 +688,7 @@ static int editorInputHandler(SDLGL_EVENT *event)
             case EDITOR_FILE:
                 return editorFileMenu(event -> sub_code);
             case EDITOR_MAP:
-                if (! editmainMap(event -> sub_code)) {
+                if (! editmainMap(event -> sub_code, 0)) {
                     /* TODO: Display message, what has gone wrong   */
                     /* TODO: Close menu, if menu-point is chosen    */
                 }
@@ -746,7 +746,7 @@ static int editorInputHandler(SDLGL_EVENT *event)
 
             case EDITOR_FANUPDATE:
                 if (event -> sub_code == 0) {
-                    editmainMap(EDITMAIN_SETFANPROPERTY);
+                    editmainMap(EDITMAIN_SETFANPROPERTY, 0);
                 }
                 else {
                     sdlglInputRemove(EDITOR_FANDLG);
@@ -792,7 +792,7 @@ static void editorStart(void)
 {
 
     /* Initalize the maze editor */    
-    pEditState = editmainInit(NewMapSize);
+    pEditState = editmainInit(NewMapSize, 256, 256);
     
     /* Display initally chosen values */    
     editorSetMenuViewToggle();

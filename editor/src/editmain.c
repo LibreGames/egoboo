@@ -105,6 +105,8 @@ typedef struct {
 static MESH_T Mesh;
 static COMMAND_T *pCommands;
 static EDITMAIN_STATE_T EditState;
+static PassageFan[EDITMAIN_MAXSELECT + 2];  /* List of fans of actual chosen passage */
+static SpawnFan[EDITMAIN_MAXSELECT + 2];    /* List of fans of actual chosen spawn point */
 
 /* -------------Data for Spawn-Points ---------------- */
 static EDITMAIN_SPAWNPT_T SpawnObjects[EDITMAIN_MAXSPAWN + 2];
@@ -165,9 +167,73 @@ static FANDATA_T PresetTiles[] = {
 
 };
 
+/* ------ Data for checking of adjacent tiles -------- */
+static EDITMAIN_XY AdjacentXY[8] = {
+
+    {  0, -1 }, { +1, -1 }, { +1,  0 }, { +1, +1 },
+    {  0, +1 }, { -1, +1 }, { -1,  0 }, { -1, -1 }
+
+};
+
 /*******************************************************************************
 * CODE 								                                           *
 *******************************************************************************/
+
+/*
+ * Name:
+ *     editmainGetAdjacent
+ * Description:
+ *     Creates a list of fans which are adjacent to given 'fan'. 
+ *     If a fan is of map, the field is filled by a value of -1.
+ *     The list starts from 'North', clockwise.
+ *     -------
+ *     |7|0|1|
+ *     |-+-+-|
+ *     |6| |2|
+ *     |-+-+-|
+ *     |5|4|3|
+ *     -------
+ * Input:
+ *     mesh*:      Pointer on mesh with info about map size
+ *     fan:        To find the adjacent tiles for  
+ *     adjacent *: Where to return the list of fan-positions 
+ * Output: 
+ *     Number of adjacent tiles 
+ */
+static int editmainGetAdjacent(MESH_T *mesh, int fan, int adjacent[8])
+{
+
+    int dir, adj_pos;
+    int num_adj;
+    EDITMAIN_XY src_xy, dest_xy;
+    
+    
+    num_adj = 0;            /* Count them */
+    for (dir = 0; dir < 8; dir++) {
+    
+        adj_pos = -1;       /* Assume invalid */
+
+        src_xy.x = fan % mesh -> tiles_x;
+        src_xy.y = fan / mesh -> tiles_x;
+        
+        dest_xy.x = src_xy.x + AdjacentXY[dir].x;
+        dest_xy.y = src_xy.y + AdjacentXY[dir].y;
+        
+        if ((dest_xy.x >= 0) && (dest_xy.x < mesh -> tiles_x)
+            && (dest_xy.y >= 0) && (dest_xy.y < mesh -> tiles_y)) {
+
+            adj_pos = (dest_xy.y * mesh -> tiles_x) + dest_xy.x;
+            num_adj++;
+
+        }
+
+        adjacent[dir] = adj_pos;       /* Starting north */
+
+    }
+
+    return num_adj;
+
+}
 
 /*
  * Name:
@@ -184,7 +250,7 @@ static void editmainSetFanStart(MESH_T *mesh)
 
     for (fan_no = 0, vertex_no = 0; fan_no < mesh -> numfan; fan_no++) {
 
-        mesh -> vrtstart[fan_no] = vertex_no;	
+        mesh -> vrtstart[fan_no] = vertex_no;
         mesh -> visible[fan_no]  = 1;
         vertex_no += pCommands[mesh -> fan[fan_no].type & 0x1F].numvertices;
 
@@ -244,6 +310,46 @@ static int editmainFanAdd(MESH_T *mesh, int fan, int x, int y, int zadd)
 
 /*
  * Name:
+ *     editmainFanUpdateProperties
+ * Description:
+ *     This function updates the properties of the fan with'fan_no':
+ *     Flags, Texture and Fx 
+ * Input:
+ *     mesh *:       Pointer on mesh to handle
+ *     edit_state *: Pointer on edit state, holding all data needed for work
+ *     fan_no *:     Number of fan(s) to make update on properties
+ *     which:        Which properties to set  (1: FX 2: Texture, 3: All)
+ */
+static void editmainFanUpdateProperties(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int *fan_no, int which)
+{
+
+    FANDATA_T *act_ft;
+
+
+    while(*fan_no > 0) {
+
+        act_ft = &mesh -> fan[*fan_no];
+
+        if (which & 1) {
+
+            act_ft -> fx = edit_state -> ft.fx;
+
+        }
+        if (which & 2) {
+            /* Do an update on the 'static' data of the fan */
+            act_ft -> tx_no    = edit_state -> ft.tx_no;
+            act_ft -> tx_flags = edit_state -> ft.tx_flags;
+        }
+
+        fan_no++;
+
+    }
+
+
+}
+
+/*
+ * Name:
  *     editmainDoFanUpdate
  * Description:
  *     This function updates the fan at given 'fan 'with the
@@ -251,7 +357,7 @@ static int editmainFanAdd(MESH_T *mesh, int fan, int x, int y, int zadd)
  *     If the type has changed, the vertice data is updated.
  * Input:
  *     mesh *:       Pointer on mesh to handle
- *     edit_state *: Pointer on edit state, holding all data neede for work
+ *     edit_state *: Pointer on edit state, holding all data needed for work
  *     tx, ty:       Position of tile in units
  * Output:
  *    Fan could be updated, yes/no
@@ -265,9 +371,12 @@ static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int t
     int vrt_diff, vrt_size;
     int src_vtx, dst_vtx;
     int vertex;
+    int fan_no;
 
 
-    act_ft = &mesh -> fan[edit_state -> fan_chosen];
+    fan_no = edit_state -> fan_selected[0];
+
+    act_ft = &mesh -> fan[fan_no];
     act_fd = &pCommands[act_ft -> type & 0x1F];
 
     /* Do an update on the 'static' data of the fan */
@@ -306,8 +415,8 @@ static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int t
         act_ft -> type = edit_state -> ft.type;
 
         /* Copy from start vertex of next fan */
-        src_vtx = mesh -> vrtstart[edit_state -> fan_chosen] + act_fd -> numvertices;
-        dst_vtx = mesh -> vrtstart[edit_state -> fan_chosen] + edit_state -> fd.numvertices;
+        src_vtx = mesh -> vrtstart[fan_no] + act_fd -> numvertices;
+        dst_vtx = mesh -> vrtstart[fan_no] + edit_state -> fd.numvertices;
         /* Number of vertices to copy */
         vrt_size = (mesh -> numvert - src_vtx + 1) * sizeof(int);
         /* Add/remove vertices -- update it's numbers */
@@ -322,7 +431,7 @@ static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int t
     }
 
     /* Fill in the vertex values from type definition */
-    vertex = mesh -> vrtstart[edit_state -> fan_chosen];
+    vertex = mesh -> vrtstart[fan_no];
     for (cnt = 0; cnt < edit_state -> fd.numvertices; cnt++) {
         /* Replace actual values by new values */
         mesh -> vrtx[vertex] = tx + edit_state -> fd.vtx[cnt].x;
@@ -376,8 +485,8 @@ static void editmainFanTypeRotate(int type, COMMAND_T *dest, char dir)
             result_x = (cos(angle) * dest -> vtx[cnt].x - sin(angle) * dest -> vtx[cnt].y);
             result_y = (sin(angle) * dest -> vtx[cnt].x + cos(angle) * dest -> vtx[cnt].y);
             /* And store it back */
-            dest -> vtx[cnt].x = result_x;
-            dest -> vtx[cnt].y = result_y;
+            dest -> vtx[cnt].x = ceil(result_x);
+            dest -> vtx[cnt].y = ceil(result_y);
             /* And move it back to start position */
             dest -> vtx[cnt].x += 64.0;
             dest -> vtx[cnt].y += 64.0;
@@ -386,7 +495,6 @@ static void editmainFanTypeRotate(int type, COMMAND_T *dest, char dir)
 
     }
 
-    /* Otherwise no rotation is needed */
 }
 
 
@@ -617,46 +725,23 @@ static void editmainCalcVrta(MESH_T *mesh)
 static void editmainCreateWallMakeInfo(MESH_T *mesh, int fan, WALLMAKER_INFO_T *wi)
 {
 
-    int mid_x, mid_y;
-    int tx, ty;
-    int x, y;
-    int index;
-    int pos;
+    int adjacent[8];
+    int i;
     
-    mid_x = fan % mesh -> tiles_x;
-    mid_y = fan / mesh -> tiles_x;
     
-    /* Now create a square 5 x 5 of tile info */
-    index = 0;
-    for (y = -2; y < 3; y++) {
+    wi[0].pos  = fan;
+    wi[0].type = mesh -> fan[fan].type;
+    wi[0].dir  = 0;
     
-        for (x = -2; x < 3; x++) {
-        
-            tx  = mid_x + x;
-            ty  = mid_y + y; 
-                        
-            if ((tx >= 0) && (tx < mesh -> tiles_x)
-                && (ty >= 0) && (ty < mesh -> tiles_y)) {
-
-                wi[index].pos  = (ty * mesh -> tiles_x) + tx;
-                wi[index].type = mesh -> fan[wi[index].pos].type;
-                
-            }
-            else {
-
-                wi[index].pos  =  -1;
-                wi[index].type = WALLMAKE_TOP;  /* Handle as wall */
-
-            }
-
-            wi[index].dir = 0;      /* Initialize with default value */
-            
-            index++;
-
-        }
-
-    }
-
+    editmainGetAdjacent(mesh, fan, adjacent);
+    for (i = 0; i < 8; i++) {
+    
+        wi[i + 1].pos  = adjacent[i];
+        wi[i + 1].type = mesh -> fan[adjacent[i]].type;
+        wi[i + 1].dir  = 0;
+    
+    }  
+   
 }
 
 /*                                             
@@ -667,9 +752,8 @@ static void editmainCreateWallMakeInfo(MESH_T *mesh, int fan, WALLMAKER_INFO_T *
  * Input:
  *     mesh*: Pointer on mesh to get the info from
  *     wi *:  Array from wallmaker to create walls from
- *     num_fan: Number of fans in 'wi'-array
  */
-static void editmainTranslateWallMakeInfo(MESH_T *mesh, WALLMAKER_INFO_T *wi, int num_fan)
+static void editmainTranslateWallMakeInfo(MESH_T *mesh, WALLMAKER_INFO_T *wi)
 {
 
     int i;
@@ -677,10 +761,11 @@ static void editmainTranslateWallMakeInfo(MESH_T *mesh, WALLMAKER_INFO_T *wi, in
 	int tx, ty;
     
 
-    for (i = 0; i < num_fan; i++) {
+    for (i = 0; i < 9; i++) {
 
-        if (wi[i].pos >= 0) {
+        if (wi[i].pos >= 0 && wi[i].type != WALLMAKE_FLOOR) {
 
+        
             /* -- Do update in any case */
 			type_no = wi[i].type;
                 
@@ -715,58 +800,105 @@ static void editmainTranslateWallMakeInfo(MESH_T *mesh, WALLMAKER_INFO_T *wi, in
  *
  */
 static void editmainLoadAdditionalData(void)
-{
+{   
     
-    EDITDRAW_PASSAGE_T psg[EDITDRAW_MAXPASSAGE + 2];
-    EDITDRAW_SPAWNPOS_T sp[EDITDRAW_MAXSPAWNPOS + 2];
-    EDITMAIN_PASSAGE_T *ppsg;
-    EDITMAIN_SPAWNPT_T *psp;
-    int i, psg_no;
-    int x, y;
-        
-
     sdlglcfgReadEgoboo("module/passage.txt", &PassageRec);
     sdlglcfgReadEgoboo("module/spawn.txt", &SpawnRec);
-    /* ----- Translate passage data to data usable by 'editdraw'  ----- */
-    i = 0;
-    psg_no = 1;
-    ppsg = &Passages[psg_no];
-    while(ppsg -> line_name[0] > 0) {
-        for (y = ppsg -> topleft.y; y <= ppsg -> topleft.y; y++) {
-            for (x = ppsg -> topleft.y; x <= ppsg -> topleft.x; x++) {
-                psg[i].no     = psg_no;
-                psg[i].fan_no = (y * Mesh.tiles_x) +  x;
-                i++;
+    /* --- Set flag, if passages / spawn points are loaded at all   */
+    if (Passages[1].line_name[0] > 0) {
+        EditState.psg_no = 1;
+    }
+    else {
+        EditState.psg_no = 1;
+    }
+    
+    if (SpawnObjects[1].line_name[0] > 0) {
+        EditState.spawnpos_no = 1;
+    }
+    else {
+        EditState.spawnpos_no = 0;
+    }          
+
+}
+
+/*                                             
+ * Name:
+ *     editmainChoosePassage
+ * Description:
+ *     If 'dir' = 0, then the list index is reset 
+ *     Loads additional data needed for map. SPAWN-Points an Passages
+ * Input:
+ *     dir:   Move index into this direction 
+ */
+static int editmainChoosePassage(int dir)
+{
+
+    if (EditState.psg_no > 0) {
+        /* If a passage at all */
+        if (dir == 0) {
+            EditState.psg_no = 1;
+        }
+        else if (dir > 0) {
+            if (Passages[EditState.psg_no + 1].line_name[0] > 0) {
+                EditState.psg_no++;
             }
         }
-        /* ----- */
-        ppsg++;
-        psg_no++;
-    }
-
-    psg[i].no = -1;     /* Sign end of list */
-    
-    /* ---- Translate spawn position data to data usable by 'editdraw' ----- */
-    psp = &SpawnObjects[1];
-    while(psp -> line_name[0] > 0) {
-        if (psp -> x_pos > 0.1) {
-            sp[i].x = psp -> x_pos;
-            sp[i].y = psp -> y_pos;
-            sp[i].z = psp -> z_pos;
+        else if (dir < 0) {
+            if (EditState.psg_no > 1) {
+                EditState.psg_no--;
+            }
         }
-        /* ----- */
-        psp++;
-        i++;
+        if (dir != 0) {
+            /* TODO: Fill the list of fan numbers for this passage */
+            PassageFan[0] = -1;
+        }
+        return 1;
+    }
+    
+    PassageFan[0] = -1;
+    
+    return 0;
+    
+}
+
+/*                                             
+ * Name:
+ *     editmainChooseSpawnPos
+ * Description:
+ *     Loads additional data needed for map. SPAWN-Points an Passages 
+ * Input:
+ *     dir:   Move index into this direction
+ */
+static int editmainChooseSpawnPos(int dir)
+{
+
+    if (EditState.spawnpos_no > 0) {
+        /* If a spawn point at all */
+        if (dir == 0) {
+            EditState.spawnpos_no = 1;
+        }
+        else if (dir > 0) {
+            if (SpawnObjects[EditState.spawnpos_no + 1].line_name[0] > 0) {
+                EditState.spawnpos_no++;
+            }            
+        }
+        else if (dir < 0) {
+            if (EditState.spawnpos_no > 1) {
+                EditState.spawnpos_no--;
+            }
+        }
+        if (dir != 0) {
+            /* TODO: Fill the list of fan numbers for this spawn pos */
+
+            SpawnFan[0] = -1;       /* No fan at all */
+        }
+        return 1;
     }
 
-    sp[i].x = -0.1;     /* Sign end of list */
-
-    /* TODO: Now hand the passage data to the draw code */
-    /*
-    editdrawSetPassage(psg);
-    editdrawSetSpawn(sp);
-    */
-
+    SpawnFan[0] = -1;       /* No fan at all */
+    
+    return 0;    
+    
 }
 
 /* ========================================================================== */
@@ -783,19 +915,20 @@ static void editmainLoadAdditionalData(void)
  * Output:
  *     Pointer on EditState
  */
-EDITMAIN_STATE_T *editmainInit(int map_size)
+EDITMAIN_STATE_T *editmainInit(int map_size, int minimap_w, int minimap_h)
 {
 
     pCommands = editdrawInitData();
      
     memset(&EditState, 0, sizeof(EDITMAIN_STATE_T));
 
-    EditState.display_flags |= EDITMAIN_SHOW2DMAP;
-    EditState.fan_chosen    = -1;   /* No fan chosen                        */
-    EditState.ft.type       = -1;   /* No fan-type chosen                   */    
-    EditState.map_size      = map_size;
-
-    EditState.draw_mode     = (EDIT_MODE_SOLID | EDIT_MODE_TEXTURED | EDIT_MODE_LIGHTMAX);
+    EditState.display_flags   |= EDITMAIN_SHOW2DMAP;
+    EditState.fan_selected[0] = -1;   /* No fan chosen                        */
+    EditState.ft.type         = -1;   /* No fan-type chosen                   */    
+    EditState.map_size        = map_size;
+    EditState.minimap_w       = minimap_w;
+    EditState.minimap_h       = minimap_h;
+    EditState.draw_mode       = (EDIT_MODE_SOLID | EDIT_MODE_TEXTURED | EDIT_MODE_LIGHTMAX);
 
     return &EditState;
     
@@ -824,10 +957,11 @@ void editmainExit(void)
  *      Does the work for editing and sets edit states, if needed 
  * Input:
  *      command:  What to do
+ *      info:     additional info for command
  * Output:
  *      Result of given command
  */
-int editmainMap(int command)
+int editmainMap(int command, int info)
 {
 
     int cnt, x, y;
@@ -836,7 +970,7 @@ int editmainMap(int command)
     switch(command) {
 
         case EDITMAIN_DRAWMAP:
-            editdraw3DView(&Mesh, EditState.fan_chosen, &EditState.ft, &EditState.fd);
+            editdraw3DView(&Mesh, &EditState.ft, &EditState.fd, EditState.fan_selected);
             return 1;
 
         case EDITMAIN_NEWFLATMAP:
@@ -866,7 +1000,7 @@ int editmainMap(int command)
             return editfileSaveMapMesh(&Mesh, EditState.msg);
 
         case EDITMAIN_ROTFAN:
-            if (-1 != EditState.fan_chosen) {
+            if (-1 != EditState.fan_selected[0]) {
                 EditState.fan_dir++;
                 EditState.fan_dir &= 0x03;
 
@@ -886,16 +1020,20 @@ int editmainMap(int command)
             return 1;
 
         case EDITMAIN_UPDATEFAN:
-            editmainDoFanUpdate(&Mesh, 
-                                &EditState, 
-                                EditState.tx * 128.0,
-                                EditState.ty * 128.0);
+            /* Update on a single fan */
+            editmainDoFanUpdate(&Mesh, &EditState, EditState.tx * 128, EditState.ty * 128);
+            break;
+
+        case EDITMAIN_SETFANPROPERTY:
+            /* Can be an update on multiple fans properties */
+            editmainFanUpdateProperties(&Mesh, &EditState, EditState.fan_selected, info);
             break;
             
-        case EDITMAIN_SETFANPROPERTY:
-            Mesh.fan[EditState.fan_chosen].tx_no = EditState.ft.tx_no;
-            Mesh.fan[EditState.fan_chosen].fx = EditState.ft.fx;
-            break;
+        case EDITMAIN_CHOOSEPASSAGE:
+            return editmainChoosePassage(info);
+            
+        case EDITMAIN_CHOOSESPAWNPOS:
+            return editmainChooseSpawnPos(info);
  
     }
 
@@ -916,7 +1054,7 @@ int editmainMap(int command)
 void editmainDrawMap2D(int x, int y, int w, int h)
 { 
     
-    editdraw2DMap(&Mesh, x, y, w, h, EditState.fan_chosen);
+    editdraw2DMap(&Mesh, x, y, w, h, EditState.fan_selected);
 
 }
 
@@ -934,6 +1072,11 @@ void editmainDrawMap2D(int x, int y, int w, int h)
 char editmainToggleFlag(int which, unsigned char flag)
 {
 
+    int fan_no;
+
+
+    fan_no = EditState.fan_selected[0];
+
     switch(which) {
 
         case EDITMAIN_TOGGLE_DRAWMODE:
@@ -944,11 +1087,11 @@ char editmainToggleFlag(int which, unsigned char flag)
             break;
 
         case EDITMAIN_TOGGLE_FX:
-            if (EditState.fan_chosen >= 0 && EditState.fan_chosen < Mesh.numfan){
+            if (fan_no >= 0 && fan_no < Mesh.numfan){
                 /* Toggle it in chosen fan */
-                Mesh.fan[EditState.fan_chosen].fx ^= flag;
+                Mesh.fan[fan_no].fx ^= flag;
                 /* Now copy the actual state for display    */
-                EditState.ft.fx = Mesh.fan[EditState.fan_chosen].fx;
+                EditState.ft.fx = Mesh.fan[fan_no].fx;
             }
             else {
                 EditState.ft.fx = 0;
@@ -956,10 +1099,10 @@ char editmainToggleFlag(int which, unsigned char flag)
             break;
 
         case EDITMAIN_TOGGLE_TXHILO:
-            if (EditState.fan_chosen >= 0) {
-                Mesh.fan[EditState.fan_chosen].tx_flags ^= flag;
+            if (fan_no >= 0) {
+                Mesh.fan[fan_no].tx_flags ^= flag;
                 /* And copy it for display */
-                EditState.ft.tx_flags = Mesh.fan[EditState.fan_chosen].tx_flags;
+                EditState.ft.tx_flags = Mesh.fan[fan_no].tx_flags;
             }
             break;
 
@@ -996,7 +1139,7 @@ void editmainChooseFan(int cx, int cy, int w, int h, int get_info)
 {
 
     int fan_no;
-    int tw;
+    int tw, th;
     int x, y, i;
     int old_tx, old_ty;
 
@@ -1007,14 +1150,17 @@ void editmainChooseFan(int cx, int cy, int w, int h, int get_info)
 
     /* Save it as x/y-position, too */
     tw = w / Mesh.tiles_x;      /* Calculate rectangle size for mouse */
+    th = h / Mesh.tiles_x;
     EditState.tx = cx / tw;
-    EditState.ty = cy / tw;
+    EditState.ty = cy / th;
 
     fan_no = (EditState.ty * Mesh.tiles_x) + EditState.tx;
 
     if (fan_no >= 0 && fan_no < Mesh.numfan) {
 
-        EditState.fan_chosen = fan_no;
+        EditState.fan_selected[0] = fan_no;
+        EditState.fan_selected[1] = -1;
+        
         /* And fill it into 'EditState' for display, if asked for */
         if (get_info) {
 
@@ -1136,7 +1282,7 @@ void editmainChooseFanType(int dir, char *fan_name)
 void editmain2DTex(int x, int y, int w, int h)
 {
 
-    if (EditState.fan_chosen >= 0) {
+    if (EditState.fan_selected[0] >= 0) {
 
         editdraw2DTex(x, y, w, h,
                       EditState.ft.tx_no,
@@ -1160,11 +1306,13 @@ void editmain2DTex(int x, int y, int w, int h)
 int editmainFanSet(char is_floor)
 {
 
-    int num_fan;
     WALLMAKER_INFO_T wi[30];            /* List of fans to create */
+    int fan_no;
 
 
-    if (EditState.fan_chosen >= 0) {
+    fan_no = EditState.fan_selected[0];
+
+    if (fan_no >= 0) {
 
         if (EditState.edit_mode == EDITMAIN_EDIT_NONE) {
             return 1;       /* Do nothing, is view-mode */
@@ -1173,13 +1321,13 @@ int editmainFanSet(char is_floor)
         if (EditState.edit_mode == EDITMAIN_EDIT_SIMPLE) {
         
             /* Get a list of fans surrounding this one */
-            editmainCreateWallMakeInfo(&Mesh, EditState.fan_chosen, wi);
+            editmainCreateWallMakeInfo(&Mesh, fan_no, wi);
             
-            num_fan = wallmakeMakeTile(EditState.fan_chosen, is_floor, wi);
-            /* Create tiles from WALLMAKER_INFO_T */
-            editmainTranslateWallMakeInfo(&Mesh, wi, num_fan);
-
-            return num_fan;
+            if (wallmakeMakeTile(is_floor, wi)) {
+                /* Create tiles from WALLMAKER_INFO_T */
+                editmainTranslateWallMakeInfo(&Mesh, wi);
+                return 1;
+            }
 
         }
         else if (EditState.edit_mode == EDITMAIN_EDIT_FREE) {
