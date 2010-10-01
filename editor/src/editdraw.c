@@ -675,8 +675,7 @@ static void editdrawChosenFanType(FANDATA_T *ft, COMMAND_T *fd)
 static void editdrawTransparentFan2D(MESH_T *mesh, SDLGL_RECT *tilesize, int *fan_no, int col_no, unsigned char trans)
 {
 
-    SDLGL_RECT draw_rect;
-    int rx2, ry2;
+    int rx, ry, rx2, ry2;
     unsigned char color[4];
      
      
@@ -697,17 +696,17 @@ static void editdrawTransparentFan2D(MESH_T *mesh, SDLGL_RECT *tilesize, int *fa
    
     while(*fan_no >= 0) {
 
-        draw_rect.x = tilesize -> x + ((*fan_no % mesh -> tiles_x) * tilesize -> w);
-        draw_rect.y = tilesize -> y + ((*fan_no / mesh -> tiles_x) * tilesize -> h);
+        rx = tilesize -> x + ((*fan_no % mesh -> tiles_x) * tilesize -> w);
+        ry = tilesize -> y + ((*fan_no / mesh -> tiles_x) * tilesize -> h);
 
-        rx2 = draw_rect.x + draw_rect.w;
-        ry2 = draw_rect.y + draw_rect.h;
+        rx2 = rx + tilesize -> w;
+        ry2 = ry + tilesize -> h;
 
         glBegin(GL_TRIANGLE_FAN);
-            glVertex2i(draw_rect.x,  ry2);
+            glVertex2i(rx,  ry2);
             glVertex2i(rx2, ry2);
-            glVertex2i(rx2, draw_rect.y);
-            glVertex2i(draw_rect.x,  draw_rect.y);
+            glVertex2i(rx2, ry);
+            glVertex2i(rx,  ry);
         glEnd();
 
         fan_no++;
@@ -965,7 +964,7 @@ static void editdrawMap(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, int *chosen_
     */
     
     /* Sign fan, if chosen */
-    if (chosen_fan >= 0) {  
+    if (*chosen_fan >= 0) {  
 
         editdrawTransparentFan3D(mesh, chosen_fan, SDLGL_COL_YELLOW, 128);
     

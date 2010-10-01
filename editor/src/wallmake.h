@@ -48,7 +48,7 @@
 
 typedef struct {
 
-    int  pos;       /* Position of fan (-1: off map)        */
+    int  fan_no;    /* Number of fan (-1: off map)          */
     char type;      /* Actual/new type of fan               */
     char dir;       /* Direction the fan has to rotated to  */   
     

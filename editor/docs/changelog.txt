@@ -1,6 +1,8 @@
 2010-10-01 <bitnapper>
 - Prepared display of multiple chosen fans in map
 - Further work on 'simple' edit mode
+- Bugfixes in code for 'simple' edit mode
+- 'Carve out' works from solid with floor, patterns have to be tested
 
 2010-09-20 <bitnapper>
 - Prepared code for choosing multiple tiles

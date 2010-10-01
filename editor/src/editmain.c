@@ -268,11 +268,10 @@ static void editmainSetFanStart(MESH_T *mesh)
  *     mesh*: Pointer on mesh to handle
  *     fan:   Number of fan to allocate vertices for
  *     x, y:  Position of fan
- *     zadd:  Elevation to add to given default z-value
  * Output:
  *    Fan could be added, yes/no
  */
-static int editmainFanAdd(MESH_T *mesh, int fan, int x, int y, int zadd)
+static int editmainFanAdd(MESH_T *mesh, int fan, int x, int y)
 {
 
     COMMAND_T *ft;
@@ -293,7 +292,7 @@ static int editmainFanAdd(MESH_T *mesh, int fan, int x, int y, int zadd)
 
             mesh -> vrtx[vertex] = x + ft -> vtx[cnt].x;
             mesh -> vrty[vertex] = y + ft -> vtx[cnt].y;
-            mesh -> vrtz[vertex] = zadd + ft -> vtx[cnt].z;
+            mesh -> vrtz[vertex] = ft -> vtx[cnt].z;
             vertex++;
 
         }
@@ -358,11 +357,12 @@ static void editmainFanUpdateProperties(MESH_T *mesh, EDITMAIN_STATE_T *edit_sta
  * Input:
  *     mesh *:       Pointer on mesh to handle
  *     edit_state *: Pointer on edit state, holding all data needed for work
- *     tx, ty:       Position of tile in units
+ *     fan_no:       Do an update of this fan
+ *     tx, ty:       Position of tile in tilex/y
  * Output:
  *    Fan could be updated, yes/no
  */
-static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int tx, int ty)
+static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int fan_no, int tx, int ty)
 {
 
     COMMAND_T *act_fd;
@@ -371,10 +371,7 @@ static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int t
     int vrt_diff, vrt_size;
     int src_vtx, dst_vtx;
     int vertex;
-    int fan_no;
 
-
-    fan_no = edit_state -> fan_selected[0];
 
     act_ft = &mesh -> fan[fan_no];
     act_fd = &pCommands[act_ft -> type & 0x1F];
@@ -383,6 +380,10 @@ static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int t
     act_ft -> tx_no    = edit_state -> ft.tx_no;
     act_ft -> tx_flags = edit_state -> ft.tx_flags;
     act_ft -> fx       = edit_state -> ft.fx;
+
+    /* Now change tile pos to position in units */
+    tx *= 128;
+    ty *= 128;
 
     if (act_ft -> type == edit_state -> ft.type) {
 
@@ -552,7 +553,7 @@ void editmainCompleteMapData(MESH_T *mesh)
 static int editmainCreateNewMap(MESH_T *mesh, int which)
 {
 
-    int x, y, fan, zadd;
+    int x, y, fan;
     char fan_fx, fan_type;
     unsigned char tx_no;
 
@@ -570,13 +571,12 @@ static int editmainCreateNewMap(MESH_T *mesh, int which)
         fan_type = WALLMAKE_TOP;
         fan_fx   = (MPDFX_WALL | MPDFX_IMPASS);   /* All impassable walls       */
         tx_no    = EDITMAIN_TOP_TILE;
-        zadd     = 192;
     }
     else {
         fan_fx   = 0;
         fan_type = WALLMAKE_FLOOR;
         tx_no    = EDITMAIN_DEFAULT_TILE;
-        zadd     = 0;
+
     }
 
     fan = 0;
@@ -588,7 +588,7 @@ static int editmainCreateNewMap(MESH_T *mesh, int which)
             mesh -> fan[fan].fx    = fan_fx;
             mesh -> fan[fan].tx_no = tx_no;
 
-            if (! editmainFanAdd(mesh, fan, x*EDITMAIN_TILEDIV, y*EDITMAIN_TILEDIV, zadd))
+            if (! editmainFanAdd(mesh, fan, x*EDITMAIN_TILEDIV, y*EDITMAIN_TILEDIV))
             {
                 sprintf(EditState.msg, "%s", "NOT ENOUGH VERTICES!!!");
                 return 0;
@@ -729,16 +729,16 @@ static void editmainCreateWallMakeInfo(MESH_T *mesh, int fan, WALLMAKER_INFO_T *
     int i;
     
     
-    wi[0].pos  = fan;
-    wi[0].type = mesh -> fan[fan].type;
-    wi[0].dir  = 0;
+    wi[0].fan_no = fan;
+    wi[0].type   = mesh -> fan[fan].type;
+    wi[0].dir    = 0;
     
     editmainGetAdjacent(mesh, fan, adjacent);
     for (i = 0; i < 8; i++) {
     
-        wi[i + 1].pos  = adjacent[i];
-        wi[i + 1].type = mesh -> fan[adjacent[i]].type;
-        wi[i + 1].dir  = 0;
+        wi[i + 1].fan_no = adjacent[i];
+        wi[i + 1].type   = mesh -> fan[adjacent[i]].type;
+        wi[i + 1].dir    = 0;
     
     }  
    
@@ -763,26 +763,28 @@ static void editmainTranslateWallMakeInfo(MESH_T *mesh, WALLMAKER_INFO_T *wi)
 
     for (i = 0; i < 9; i++) {
 
-        if (wi[i].pos >= 0 && wi[i].type != WALLMAKE_FLOOR) {
-
+        if (wi[i].fan_no >= 0) {
         
             /* -- Do update in any case */
 			type_no = wi[i].type;
                 
             EditState.ft.type     = type_no;
             EditState.ft.tx_flags = 0;
+            EditState.ft.fx       = pCommands[type_no & 0x1F].default_fx;
             EditState.ft.tx_no    = pCommands[type_no & 0x1F].default_tx_no;
-            EditState.fan_dir     = wi[i].dir;  
+            EditState.fan_dir     = wi[i].dir;
+
+            memcpy(&EditState.fd, &pCommands[type_no & 0x1F], sizeof(COMMAND_T));
             
-            tx = wi[i].pos % mesh -> tiles_x;
-			ty = wi[i].pos / mesh -> tiles_x;
+            tx = (wi[i].fan_no % mesh -> tiles_x);
+			ty = (wi[i].fan_no / mesh -> tiles_x);
             
             editmainFanTypeRotate(EditState.ft.type,
                                   &EditState.fd,
                                   EditState.fan_dir);
-            
-            editmainDoFanUpdate(mesh, &EditState, tx, ty);
 
+            editmainDoFanUpdate(mesh, &EditState, wi[i].fan_no, tx, ty);
+            
         }
 
     }
@@ -1021,7 +1023,9 @@ int editmainMap(int command, int info)
 
         case EDITMAIN_UPDATEFAN:
             /* Update on a single fan */
-            editmainDoFanUpdate(&Mesh, &EditState, EditState.tx * 128, EditState.ty * 128);
+            editmainDoFanUpdate(&Mesh, &EditState,
+                                EditState.fan_selected[0],
+                                EditState.tx, EditState.ty);
             break;
 
         case EDITMAIN_SETFANPROPERTY:
@@ -1331,7 +1335,9 @@ int editmainFanSet(char is_floor)
 
         }
         else if (EditState.edit_mode == EDITMAIN_EDIT_FREE) {
-            return editmainDoFanUpdate(&Mesh, &EditState, EditState.tx, EditState.ty);
+            return editmainDoFanUpdate(&Mesh, &EditState,
+                                       EditState.fan_selected[0],
+                                       EditState.tx, EditState.ty);
         }
     }
 

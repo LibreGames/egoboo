@@ -82,6 +82,10 @@
 #define EDITOR_FANTEX_DEC       ((char)3)
 #define EDITOR_FANTEX_INC       ((char)4)
 
+#define EDITOR_FANUPDATE_FLAGS  ((char)1)
+#define EDITOR_FANUPDATE_TEX    ((char)2)
+#define EDITOR_FANUPDATE_CLOSE  ((char)3)   /* Close window with properties */
+
 #define EDITOR_MAPDLG_SOLID     ((char)1)
 #define EDITOR_MAPDLG_SIZE      ((char)2)
 #define EDITOR_MAPDLG_DECSIZE   ((char)3)
@@ -218,6 +222,7 @@ static SDLGL_FIELD FanInfoDlg[] = {
     { SDLGL_TYPE_SLI_AL,   { 190, 210,  16,  16 }, EDITOR_FANTEX, EDITOR_FANTEX_DEC },
     { SDLGL_TYPE_SLI_AR,   { 222, 210,  16,  16 }, EDITOR_FANTEX, EDITOR_FANTEX_INC },
     /* -------- Buttons for 'Cancel' and 'Update' ----- */
+    /* TODO: Extend to 'Update Flags', 'Update Texture', 'Update all' */
     { SDLGL_TYPE_BUTTON,   {   4, 220, 56, 16 }, EDITOR_FANUPDATE, 0, "Update"},
     { SDLGL_TYPE_BUTTON,   { 268, 220, 48, 16 }, EDITOR_FANUPDATE, 1, "Close"},
     { 0 }
@@ -746,7 +751,9 @@ static int editorInputHandler(SDLGL_EVENT *event)
 
             case EDITOR_FANUPDATE:
                 if (event -> sub_code == 0) {
-                    editmainMap(EDITMAIN_SETFANPROPERTY, 0);
+                    /* Flags and texture */
+                    /* TODO: Different sub-codes for FX, Texture and all */
+                    editmainMap(EDITMAIN_SETFANPROPERTY, 3);
                 }
                 else {
                     sdlglInputRemove(EDITOR_FANDLG);
