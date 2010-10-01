@@ -198,7 +198,7 @@ int do_ego_proc_running( ego_process_t * eproc )
     {
         // menu settings
         SDL_WM_GrabInput( SDL_GRAB_OFF );
-        SDL_ShowCursor( SDL_ENABLE );
+        SDL_ShowCursor( SDL_DISABLE );
     }
     else
     {

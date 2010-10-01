@@ -33,6 +33,16 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+#define UI_MAX_JOYSTICKS 8
+#define UI_CONTROL_TIMER 100
+
+struct s_ui_control_info
+{
+    int    timer;
+    float  scr[2];
+    float  vrt[2];
+};
+typedef struct s_ui_control_info ui_control_info_t;
 
 /// The data to describe the UI state
 struct UiContext
@@ -41,10 +51,15 @@ struct UiContext
     ui_id_t active;
     ui_id_t hot;
 
-    // Basic mouse state
-    float mouseX, mouseY;
-    int   mouseReleased;
-    int   mousePressed;
+    // info on the mouse control
+    ui_control_info_t mouse;
+    ui_control_info_t joy;
+    ui_control_info_t joys[UI_MAX_JOYSTICKS];
+
+    // Basic cursor state
+    float cursor_X, cursor_Y;
+    int   cursor_Released;
+    int   cursor_Pressed;
 
     STRING defaultFontName;
     float  defaultFontSize;
@@ -63,18 +78,25 @@ struct UiContext
 
 static struct UiContext ui_context;
 
-GLfloat ui_white_color[]  = {1.00f, 1.00f, 1.00f, 1.00f};
+static const GLfloat ui_white_color[]  = {1.00f, 1.00f, 1.00f, 1.00f};
 
-GLfloat ui_active_color[]  = {0.00f, 0.00f, 0.90f, 0.60f};
-GLfloat ui_hot_color[]     = {0.54f, 0.00f, 0.00f, 1.00f};
-GLfloat ui_normal_color[]  = {0.66f, 0.00f, 0.00f, 0.60f};
+static const GLfloat ui_active_color[]  = {0.00f, 0.00f, 0.90f, 0.60f};
+static const GLfloat ui_hot_color[]     = {0.54f, 0.00f, 0.00f, 1.00f};
+static const GLfloat ui_normal_color[]  = {0.66f, 0.00f, 0.00f, 0.60f};
 
-GLfloat ui_active_color2[] = {0.00f, 0.45f, 0.45f, 0.60f};
-GLfloat ui_hot_color2[]    = {0.00f, 0.28f, 0.28f, 1.00f};
-GLfloat ui_normal_color2[] = {0.33f, 0.00f, 0.33f, 0.60f};
+static const GLfloat ui_active_color2[] = {0.00f, 0.45f, 0.45f, 0.60f};
+static const GLfloat ui_hot_color2[]    = {0.00f, 0.28f, 0.28f, 1.00f};
+static const GLfloat ui_normal_color2[] = {0.33f, 0.00f, 0.33f, 0.60f};
 
-static void ui_virtual_to_screen( float vx, float vy, float *rx, float *ry );
-static void ui_screen_to_virtual( float rx, float ry, float *vx, float *vy );
+static void ui_virtual_to_screen_abs( float vx, float vy, float *rx, float *ry );
+static void ui_screen_to_virtual_abs( float rx, float ry, float *vx, float *vy );
+
+static void ui_virtual_to_screen_rel( float vx, float vy, float *rx, float *ry );
+static void ui_screen_to_virtual_rel( float rx, float ry, float *vx, float *vy );
+
+static void ui_joy_init();
+static void ui_cursor_update();
+static bool_t ui_joy_set(SDL_JoyAxisEvent * evt_ptr );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -92,6 +114,8 @@ int ui_begin( const char *default_font, int default_font_size )
     strncpy( ui_context.defaultFontName, default_font, SDL_arraysize( ui_context.defaultFontName ) );
 
     ui_set_virtual_screen( sdl_scr.x, sdl_scr.y, sdl_scr.x, sdl_scr.y );
+
+    ui_joy_init();
 
     return 1;
 }
@@ -128,21 +152,28 @@ bool_t ui_handleSDLEvent( SDL_Event *evt )
     handled = btrue;
     switch ( evt->type )
     {
+        case SDL_JOYBUTTONDOWN:
         case SDL_MOUSEBUTTONDOWN:
-            ui_context.mouseReleased = 0;
-            ui_context.mousePressed = 1;
-
+            ui_context.cursor_Released = 0;
+            ui_context.cursor_Pressed = 1;
             break;
 
+        case SDL_JOYBUTTONUP:
         case SDL_MOUSEBUTTONUP:
-            ui_context.mousePressed = 0;
-            ui_context.mouseReleased = 1;
-
+            ui_context.cursor_Pressed = 0;
+            ui_context.cursor_Released = 1;
             break;
 
         case SDL_MOUSEMOTION:
             // convert the screen coordinates to our "virtual coordinates"
-            ui_screen_to_virtual( evt->motion.x, evt->motion.y, &( ui_context.mouseX ), &( ui_context.mouseY ) );
+            ui_context.mouse.scr[0] = evt->motion.x;
+            ui_context.mouse.vrt[1] = evt->motion.y;
+            ui_screen_to_virtual_abs( ui_context.mouse.scr[0], ui_context.mouse.vrt[1], &(ui_context.mouse.vrt[0]), &(ui_context.mouse.vrt[1]) );
+            ui_context.mouse.timer  = 2 * UI_CONTROL_TIMER;
+            break;
+
+        case SDL_JOYAXISMOTION:
+            ui_joy_set( &(evt->jaxis) );
             break;
 
         case SDL_VIDEORESIZE:
@@ -195,11 +226,34 @@ void ui_beginFrame( float deltaTime )
 
     // hotness gets reset at the start of each frame
     ui_context.hot = UI_Nothing;
+
+    // update the cursor position
+    ui_cursor_update();
 }
 
 //--------------------------------------------------------------------------------------------
 void ui_endFrame()
 {
+    // Draw the cursor last
+    float x1,y1,x2,y2;
+
+    GL_DEBUG( glDisable )( GL_TEXTURE_2D );
+
+    ui_virtual_to_screen_abs( ui_context.cursor_X-5, ui_context.cursor_Y-5, &x1, &y1 );
+    ui_virtual_to_screen_abs( ui_context.cursor_X+5, ui_context.cursor_Y+5, &x2, &y2 );
+
+    GL_DEBUG( glColor4f )( 1,1,1,1 );
+    GL_DEBUG( glBegin )( GL_QUADS );
+    {
+        GL_DEBUG( glVertex2f )( x1, y1 );
+        GL_DEBUG( glVertex2f )( x1, y2 );
+        GL_DEBUG( glVertex2f )( x2, y2 );
+        GL_DEBUG( glVertex2f )( x2, y1 );
+    }
+    GL_DEBUG_END();
+
+    GL_DEBUG( glEnable )( GL_TEXTURE_2D );
+
     // Restore the OpenGL matrices to what they were
     GL_DEBUG( glMatrixMode )( GL_PROJECTION );
     GL_DEBUG( glPopMatrix )();
@@ -211,7 +265,7 @@ void ui_endFrame()
     ATTRIB_POP( "ui_endFrame" );
 
     // Clear input states at the end of the frame
-    ui_context.mousePressed = ui_context.mouseReleased = 0;
+    ui_context.cursor_Pressed = ui_context.cursor_Released = 0;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -222,7 +276,7 @@ int ui_mouseInside( float vx, float vy, float vwidth, float vheight )
 
     vright  = vx + vwidth;
     vbottom = vy + vheight;
-    if ( vx <= ui_context.mouseX && vy <= ui_context.mouseY && ui_context.mouseX <= vright && ui_context.mouseY <= vbottom )
+    if ( vx <= ui_context.cursor_X && vy <= ui_context.cursor_Y && ui_context.cursor_X <= vright && ui_context.cursor_Y <= vbottom )
     {
         return 1;
     }
@@ -316,7 +370,7 @@ ui_buttonValues ui_buttonBehavior( ui_id_t id, float vx, float vy, float vwidth,
     // Check to see if the button gets cursor_clicked on
     if ( ui_context.active == id )
     {
-        if ( ui_context.mouseReleased == 1 )
+        if ( ui_context.cursor_Released == 1 )
         {
             if ( ui_context.hot == id ) result = BUTTON_UP;
 
@@ -325,7 +379,7 @@ ui_buttonValues ui_buttonBehavior( ui_id_t id, float vx, float vy, float vwidth,
     }
     else if ( ui_context.hot == id )
     {
-        if ( ui_context.mousePressed == 1 )
+        if ( ui_context.cursor_Pressed == 1 )
         {
             if ( ui_context.hot == id ) result = BUTTON_DOWN;
 
@@ -350,7 +404,7 @@ ui_buttonValues ui_WidgetBehavior( ui_Widget_t * pWidget )
     // Check to see if the button gets cursor_clicked on
     if ( ui_context.active == pWidget->id )
     {
-        if ( ui_context.mouseReleased == 1 )
+        if ( ui_context.cursor_Released == 1 )
         {
             // mouse button up
             if ( ui_context.active == pWidget->id ) result = BUTTON_UP;
@@ -360,7 +414,7 @@ ui_buttonValues ui_WidgetBehavior( ui_Widget_t * pWidget )
     }
     else if ( ui_context.hot == pWidget->id )
     {
-        if ( ui_context.mousePressed == 1 )
+        if ( ui_context.cursor_Pressed == 1 )
         {
             // mouse button down
             if ( ui_context.hot == pWidget->id ) result = BUTTON_DOWN;
@@ -402,8 +456,8 @@ void ui_drawButton( ui_id_t id, float vx, float vy, float vwidth, float vheight,
     }
 
     // convert the virtual coordinates to screen coordinates
-    ui_virtual_to_screen( vx, vy, &x1, &y1 );
-    ui_virtual_to_screen( vx + vwidth, vy + vheight, &x2, &y2 );
+    ui_virtual_to_screen_abs( vx, vy, &x1, &y1 );
+    ui_virtual_to_screen_abs( vx + vwidth, vy + vheight, &x2, &y2 );
 
     GL_DEBUG( glColor4fv )( pcolor );
     GL_DEBUG( glBegin )( GL_QUADS );
@@ -447,8 +501,8 @@ void ui_drawImage( ui_id_t id, oglx_texture_t *img, float vx, float vy, float vw
         ty = ( float ) oglx_texture_GetImageHeight( img ) / ( float ) oglx_texture_GetTextureHeight( img );
 
         // convert the virtual coordinates to screen coordinates
-        ui_virtual_to_screen( vx, vy, &x1, &y1 );
-        ui_virtual_to_screen( vx + vw, vy + vh, &x2, &y2 );
+        ui_virtual_to_screen_abs( vx, vy, &x1, &y1 );
+        ui_virtual_to_screen_abs( vx + vw, vy + vh, &x2, &y2 );
 
         // Draw the image
         oglx_texture_Bind( img );
@@ -540,8 +594,8 @@ void ui_drawTextBox( Font * font, const char *text, float vx, float vy, float vw
     if ( NULL == font ) font = ui_getFont();
 
     // convert the virtual coordinates to screen coordinates
-    ui_virtual_to_screen( vx, vy, &x1, &y1 );
-    ui_virtual_to_screen( vx + vwidth, vy + vheight, &x2, &y2 );
+    ui_virtual_to_screen_abs( vx, vy, &x1, &y1 );
+    ui_virtual_to_screen_abs( vx + vwidth, vy + vheight, &x2, &y2 );
     spacing = ui_context.ah * vspacing;
 
     // draw using screen coordinates
@@ -569,8 +623,8 @@ ui_buttonValues ui_doButton( ui_id_t id, const char *text, Font * font, float vx
         float x1, x2, y1, y2;
 
         // convert the virtual coordinates to screen coordinates
-        ui_virtual_to_screen( vx, vy, &x1, &y1 );
-        ui_virtual_to_screen( vx + vwidth, vy + vheight, &x2, &y2 );
+        ui_virtual_to_screen_abs( vx, vy, &x1, &y1 );
+        ui_virtual_to_screen_abs( vx + vwidth, vy + vheight, &x2, &y2 );
 
         // find the vwidth & vheight of the text to be drawn, so that it can be centered inside
         // the button
@@ -628,8 +682,8 @@ ui_buttonValues ui_doImageButtonWithText( ui_id_t id, oglx_texture_t *img, const
         float x1, x2, y1, y2;
 
         // convert the virtual coordinates to screen coordinates
-        ui_virtual_to_screen( vx, vy, &x1, &y1 );
-        ui_virtual_to_screen( vx + vwidth, vy + vheight, &x2, &y2 );
+        ui_virtual_to_screen_abs( vx, vy, &x1, &y1 );
+        ui_virtual_to_screen_abs( vx + vwidth, vy + vheight, &x2, &y2 );
 
         // find the vwidth & vheight of the text to be drawn, so that it can be centered inside
         // the button
@@ -685,8 +739,8 @@ ui_buttonValues ui_doWidget( ui_Widget_t * pw )
         float x1, x2, y1, y2;
 
         // convert the virtual coordinates to screen coordinates
-        ui_virtual_to_screen( pw->vx, pw->vy, &x1, &y1 );
-        ui_virtual_to_screen( pw->vx + pw->vwidth, pw->vy + pw->vheight, &x2, &y2 );
+        ui_virtual_to_screen_abs( pw->vx, pw->vy, &x1, &y1 );
+        ui_virtual_to_screen_abs( pw->vx + pw->vwidth, pw->vy + pw->vheight, &x2, &y2 );
 
         GL_DEBUG( glColor3f )( 1, 1, 1 );
 
@@ -791,7 +845,7 @@ bool_t ui_widgetSetMask( ui_Widget_t * pw, BIT_FIELD mbits )
 }
 
 //--------------------------------------------------------------------------------------------
-void ui_virtual_to_screen( float vx, float vy, float * rx, float * ry )
+void ui_virtual_to_screen_abs( float vx, float vy, float * rx, float * ry )
 {
     /// @details BB@> convert "virtual" screen positions into "real" space
 
@@ -800,13 +854,32 @@ void ui_virtual_to_screen( float vx, float vy, float * rx, float * ry )
 }
 
 //--------------------------------------------------------------------------------------------
-void ui_screen_to_virtual( float rx, float ry, float *vx, float *vy )
+void ui_screen_to_virtual_abs( float rx, float ry, float *vx, float *vy )
 {
     /// @details BB@> convert "real" mouse positions into "virtual" space
 
     *vx = ui_context.iaw * rx + ui_context.ibw;
     *vy = ui_context.iah * ry + ui_context.ibh;
 }
+
+//--------------------------------------------------------------------------------------------
+void ui_virtual_to_screen_rel( float vx, float vy, float * rx, float * ry )
+{
+    /// @details BB@> convert "virtual" screen positions into "real" space
+
+    *rx = ui_context.aw * vx;
+    *ry = ui_context.ah * vy;
+}
+
+//--------------------------------------------------------------------------------------------
+void ui_screen_to_virtual_rel( float rx, float ry, float *vx, float *vy )
+{
+    /// @details BB@> convert "real" mouse positions into "virtual" space
+
+    *vx = ui_context.iaw * rx;
+    *vy = ui_context.iah * ry;
+}
+
 
 //--------------------------------------------------------------------------------------------
 void ui_set_virtual_screen( float vw, float vh, float ww, float wh )
@@ -860,3 +933,139 @@ Font * ui_loadFont( const char * font_name, float vpointSize )
     return fnt_loadFont( font_name, pointSize );
 }
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+void ui_joy_init()
+{
+    int cnt;
+
+    for( cnt = 0; cnt < UI_MAX_JOYSTICKS; cnt++ )
+    {
+        memset( ui_context.joys + cnt, 0, sizeof(ui_control_info_t) );
+    }
+
+    memset( &(ui_context.joy), 0, sizeof(ui_control_info_t) );
+
+    memset( &(ui_context.mouse), 0, sizeof(ui_control_info_t) );
+}
+
+//--------------------------------------------------------------------------------------------
+void ui_cursor_update()
+{
+    int   cnt;
+
+    ui_control_info_t * pctrl = NULL;
+
+    // assume no one is in control
+    pctrl = NULL;
+
+    // find the best most controlling joystick
+    for( cnt = 0; cnt < UI_MAX_JOYSTICKS; cnt++ )
+    {
+        ui_control_info_t * pinfo = ui_context.joys + cnt;
+
+        if( pinfo->timer <= 0 ) continue;
+
+        if( (NULL == pctrl) || (pinfo->timer > pctrl->timer) )
+        {
+            pctrl = pinfo;
+        }
+    }
+
+    // update the ui_context.joy device
+    if( NULL != pctrl )
+    {
+        ui_context.joy.timer   = pctrl->timer;
+
+        ui_context.joy.vrt[0] += pctrl->vrt[0];
+        ui_context.joy.vrt[1] += pctrl->vrt[1];
+        ui_virtual_to_screen_abs( ui_context.joy.vrt[0], ui_context.joy.vrt[1], &(ui_context.joy.scr[0]), &(ui_context.joy.scr[1]) );
+
+        pctrl = &(ui_context.joy);
+    }
+
+    // find out whether the mouse or the joystick is the better controller
+    if( NULL == pctrl )
+    {
+        pctrl = &(ui_context.mouse);
+    }
+    else if( ui_context.mouse.timer >  pctrl->timer )
+    {
+        pctrl = &(ui_context.mouse);
+    }
+
+    if( NULL != pctrl )
+    {
+        ui_context.cursor_X = 0.5f * ui_context.cursor_X + 0.5f * pctrl->vrt[0];
+        ui_context.cursor_Y = 0.5f * ui_context.cursor_Y + 0.5f * pctrl->vrt[1];
+    }
+
+    // decrement the joy timers
+    for( cnt = 0; cnt < UI_MAX_JOYSTICKS; cnt++ )
+    {
+        ui_control_info_t * pinfo = ui_context.joys + cnt;
+
+        if( pinfo->timer > 0 )
+        {
+            pinfo->timer--;
+        }
+    }
+
+    // decrement the mouse timer
+    if( ui_context.mouse.timer > 0 )
+    {
+        ui_context.mouse.timer--;
+    }
+
+    // decrement the joy timer
+    if( ui_context.joy.timer > 0 )
+    {
+        ui_context.joy.timer--;
+    }
+
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t ui_joy_set(SDL_JoyAxisEvent * evt_ptr )
+{
+    const int   dead_zone = 0x8000 >> 4;
+    const float sensitivity = 10.0f;
+
+    ui_control_info_t * pctrl   = NULL;
+    bool_t          updated = bfalse;
+    int             value   = 0;
+
+    if( NULL == evt_ptr || SDL_JOYAXISMOTION != evt_ptr->type ) return bfalse;
+    value   = evt_ptr->value;
+
+    // check the correct range of the events
+    if( evt_ptr->which >= UI_MAX_JOYSTICKS ) return btrue;
+    pctrl = ui_context.joys + evt_ptr->which;
+
+    updated = bfalse;
+    if( evt_ptr->axis < 2 )
+    {
+        float old_diff, new_diff;
+
+        // make a dead zone
+        if ( value > dead_zone ) value -= dead_zone;
+        else if ( value < -dead_zone ) value += dead_zone;
+        else value = 0;
+
+        // update the info
+        old_diff = pctrl->scr[evt_ptr->axis];
+        new_diff = (float)value / ( float )( 0x8000 - dead_zone ) * sensitivity;
+        pctrl->scr[evt_ptr->axis] = new_diff;
+
+        updated = (old_diff != new_diff);
+    }
+
+    if( updated )
+    {
+        ui_screen_to_virtual_rel( pctrl->scr[0], pctrl->scr[1], &(pctrl->vrt[0]), &(pctrl->vrt[1]) );
+
+        pctrl->timer = UI_CONTROL_TIMER;
+    }
+
+    return (NULL != pctrl) && (pctrl->timer > 0);
+}

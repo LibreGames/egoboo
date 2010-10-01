@@ -22,6 +22,7 @@
 /// @details
 
 #include "input.h"
+#include "SDL_extensions.h"
 
 #include "controls_file.h"
 
@@ -370,8 +371,15 @@ void input_read()
                     }
                 }
                 break;
+
+            default:
+                break;
         }
     }
+
+    // log info on certain events (turned off by default)
+    /// @note BB@> foud out I could not get info about USB devices being added or removed from the system... :(
+    SDLX_Log_Event( &evt );
 
     // Get immediate mode state for the rest of the game
     input_read_keyboard();

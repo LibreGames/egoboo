@@ -203,8 +203,17 @@ extern "C"
     FILE * SDLX_set_stdout( FILE * pfile );
 
     /// Dump the info on the given surface to whatever FILE SDL_extensions is using for stdout
-    void   SDLX_report_mode( SDL_Surface * surface, SDLX_video_parameters_t * v );
+    void SDLX_report_mode( SDL_Surface * surface, SDLX_video_parameters_t * v );
+
+    /// Turn even logging on or off for each event type
+    void SDLX_Event_Log_Mask_set_event( Uint8 type, unsigned value );
+
+    /// Log selected SDL_Events
+    bool_t SDLX_Log_Event( SDL_Event * evt_ptr );
+
+
 
 #if defined(__cplusplus)
 };
 #endif
+
