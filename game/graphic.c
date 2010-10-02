@@ -243,7 +243,7 @@ static void gfx_end_2d( void );
 static void light_fans( renderlist_t * prlist );
 static void render_water( renderlist_t * prlist );
 
-static void   gfx_make_dynalist( camera_t * pcam );
+static void gfx_make_dynalist( camera_t * pcam );
 
 //--------------------------------------------------------------------------------------------
 // MODULE "PRIVATE" FUNCTIONS
@@ -4349,7 +4349,7 @@ void renderlist_make( ego_mpd_t * pmesh, camera_t * pcam )
     grid_y = corner_y[0] >> TILE_BITS;
     row = 0;
     cnt = 1;
-    while ( cnt < leftnum )
+	for( cnt = 1; cnt < leftnum; cnt++ )
     {
         from = leftlist[cnt-1];  to = leftlist[cnt];
         x = corner_x[from];
@@ -4377,16 +4377,13 @@ void renderlist_make( ego_mpd_t * pmesh, camera_t * pcam )
             x += stepx;
             grid_y++;
         }
-
-        cnt++;
     }
     numrow = row;
 
     // Make the right edge ( rowrun )
     grid_y = corner_y[0] >> TILE_BITS;
     row = 0;
-    cnt = 1;
-    while ( cnt < rightnum )
+	for( cnt = 1; cnt < rightnum; cnt++ )
     {
         from = rightlist[cnt-1];  to = rightlist[cnt];
         x = corner_x[from];
@@ -4415,8 +4412,6 @@ void renderlist_make( ego_mpd_t * pmesh, camera_t * pcam )
             x += stepx;
             grid_y++;
         }
-
-        cnt++;
     }
 
     if ( numrow != row )
@@ -4638,6 +4633,9 @@ bool_t load_all_global_icons()
     result = INVALID_TX_TEXTURE != TxTexture_load_one_vfs( "mp_data/mousicon", ( TX_REF )ICON_MOUS, INVALID_KEY );
     result = INVALID_TX_TEXTURE != TxTexture_load_one_vfs( "mp_data/joyaicon", ( TX_REF )ICON_JOYA, INVALID_KEY );
     result = INVALID_TX_TEXTURE != TxTexture_load_one_vfs( "mp_data/joybicon", ( TX_REF )ICON_JOYB, INVALID_KEY );
+	
+	// Spit out a warning if needed
+	if( !result ) log_warning( "Could not load all global icons!\n" );
 
     return result;
 }
@@ -4735,6 +4733,18 @@ void load_map()
     {
         mapvalid = btrue;
     }
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t load_cursor()
+{
+	/// ZF> Loads any cursor bitmaps
+    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/cursor", ( TX_REF )TX_CURSOR, INVALID_KEY ))
+    {
+        log_warning( "Blip bitmap not loaded! (\"mp_data/blip\")\n" );
+        return bfalse;
+    }
+    return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -5304,7 +5314,7 @@ bool_t sum_global_lighting( lighting_vector_t lighting )
 //--------------------------------------------------------------------------------------------
 // SEMI OBSOLETE FUNCTIONS
 //--------------------------------------------------------------------------------------------
-void draw_cursor()
+/*void draw_cursor()
 {
     /// ZZ@> This function implements a mouse cursor
 
@@ -5321,7 +5331,7 @@ void draw_cursor()
     }
     // Needed when done with text mode
     gfx_end_text();
-}
+}*/
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

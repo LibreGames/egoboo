@@ -198,7 +198,7 @@ static int do_game_proc_leaving( game_process_t * gproc );
 
 // misc
 static bool_t game_begin_menu( menu_process_t * mproc, which_menu_t which );
-static void   game_end_menu( menu_process_t * mproc );
+//static void   game_end_menu( menu_process_t * mproc );
 
 static void   do_game_hud();
 
@@ -3116,13 +3116,11 @@ void game_load_global_assets()
     // load a bunch of assets that are used in the module
 
     // Load all the global icons
-    if ( !load_all_global_icons() )
-    {
-        log_warning( "Could not load all global icons!\n" );
-    }
+    load_all_global_icons();
     load_blips();
     load_bars();
     font_bmp_load_vfs( "mp_data/font", "mp_data/font.txt" );
+	load_cursor();
 }
 
 //--------------------------------------------------------------------------------------------
@@ -3746,7 +3744,7 @@ bool_t game_begin_menu( menu_process_t * mproc, which_menu_t which )
 }
 
 //--------------------------------------------------------------------------------------------
-void game_end_menu( menu_process_t * mproc )
+/*void game_end_menu( menu_process_t * mproc )
 {
     mnu_end_menu();
 
@@ -3755,7 +3753,7 @@ void game_end_menu( menu_process_t * mproc )
         process_resume( PROC_PBASE( MProc ) );
         GProc->menu_depth = -1;
     }
-}
+}*/
 
 //--------------------------------------------------------------------------------------------
 void game_finish_module()

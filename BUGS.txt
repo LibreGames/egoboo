@@ -4,10 +4,42 @@ at: http://egoboo.sourceforge.net/forum/
 
 Thanks!
 
-MAJOR BUGS:
-- Importing still doesn't work on Linux
+Elf module: 
+1: There is only one færie. 
+2: The færie(s) will never change directions. 
+3: Torches do not burn tipis anymore. 
+4: I saw one instance where the lumpkin captain accidentally killed itself, likely by touching a brazier. 
+5: I noticed that when attacking, I might switch directions after hitting something. That is rather random but it is most noticeable when attacking tipis with a lit torch. 
+6: The torches act very strangely! If you swing an unlit torch at a brazier, it does not appear to light, but it sometimes has the same sounds as a lit torch. 
+7: Sometimes you can clip through the lumpkins. 
+8: Sometimes when you kill an enemy, the games looks like it crashed. When I press CTRL+ALT+DEL and try to end Egoboo, the game reverts back to normal. Also: if the game freezes, you can click, wait, and then Egoboo will go back to normal. 
+9: Occasionally, you can hit a tipi behind you (ghost attack). This is most noticeable in the tipi center, if you stand between the two blue tipis and hit one in-front of you, you'll hit the one behind. (I have a pic' of this) 
+10: I noticed when you kill the lumpkin captain, most of the lumpkins will charge at you. Is this intended? 
+11: I think mosquitoes can fly into the fort. Was that intended too? 
+12: Very strange one: when I destroyed an orange tipi, I died and most of the screen went black! (I have a pic') 
+Here is the log. (In a spoiler to save space.) 
+
+Wizard module: 
+13: The reflections are very weird. They literally go above the floor. 
+14: Mephits will never change directions. 
+15: The black mephit probably spawns in the incorrect room. 
+16: Am I wrong, or was there something else in the chest with the red diamond? 
+17: The “light-balls” have no sound effects. 
+18: On book-stands: sometimes books will flip open for a second. 
+19: Sometimes coins will land on pillars. That is frustrating. 
+
+Adventurer module:
+21: Brom & Mim behave strangely when near the green cube. They hesitate to attack it; sometimes Mim will swipe her mace at Brom.
+22: When hitting the green cube, the key will go on top of it rather than outside it.
+23: The mouse (animal) is very problematic. When mounted, it will not move unless it is pushed by other characters. You cannot get off of it; jumping causes the mouse to jump. Attacks might not work right either. I noticed that when attacking with the left hand, the character will soon start saying “hi-ya” rapidly.
+Also the mouse's shadow shrinks and grows constantly.
+24: The mimic is not facing the right direction. Also Brom will immediately attack it.
+25: Is it me or can you never fire off a light-ball?
+26: I think the book still spawns again. The color also changes when you drop it.
+27: I still cannot find the grub-on-the-spit.
 
 GENERAL BUGS:
+- I still cannot get characters to load after their module is finished.
 - Menu interface when using large resolutions -> http://a.imageshack.us/img829/5305/ego11.png
 - Movement is a bit difficult after jumping.
 - The Missile spell did not spawn missiles in Adventurer Starter.
@@ -37,6 +69,7 @@ GENERAL BUGS:
 - The fire breath from the dogs can and will hurt the rider. 
 
 BUGS RELATED TO PARTICLE END SPAWN:
+- Coins lost their sound effects. Was this intended?
 - Probably a physics problem, but blood does not dry out very quickly. This is especially noticeable in the Elf module. 
 - The rune of confusion is broken. The first time the spell is used there is a purple cloud created for aiming. After using it a second time, there's no cloud displayed. 
 - Need magic sparks for the sporks.

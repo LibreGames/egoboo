@@ -24,6 +24,7 @@
 
 #include "ui.h"
 #include "graphic.h"
+#include "texture.h"
 
 #include "ogl_debug.h"
 #include "SDL_extensions.h"
@@ -235,13 +236,18 @@ void ui_beginFrame( float deltaTime )
 void ui_endFrame()
 {
     // Draw the cursor last
-    float x1,y1,x2,y2;
+    float x, y;
 
+    ui_virtual_to_screen_abs( ui_context.cursor_X-5, ui_context.cursor_Y-5, &x, &y );
+
+	//Draw the cursor, but only if it inside the screen
+	draw_one_icon( ( TX_REF )TX_CURSOR, x, y, NOSPARKLE );
+
+/*
+	float x1,y1,x2,y2;
     GL_DEBUG( glDisable )( GL_TEXTURE_2D );
-
     ui_virtual_to_screen_abs( ui_context.cursor_X-5, ui_context.cursor_Y-5, &x1, &y1 );
     ui_virtual_to_screen_abs( ui_context.cursor_X+5, ui_context.cursor_Y+5, &x2, &y2 );
-
     GL_DEBUG( glColor4f )( 1,1,1,1 );
     GL_DEBUG( glBegin )( GL_QUADS );
     {
@@ -252,7 +258,9 @@ void ui_endFrame()
     }
     GL_DEBUG_END();
 
+
     GL_DEBUG( glEnable )( GL_TEXTURE_2D );
+*/
 
     // Restore the OpenGL matrices to what they were
     GL_DEBUG( glMatrixMode )( GL_PROJECTION );

@@ -68,9 +68,6 @@ struct Font;
 extern int GFX_WIDTH;
 extern int GFX_HEIGHT;
 
-//#define GFX_WIDTH                       800         ///< 640
-//#define GFX_HEIGHT                      600         ///< 480
-
 #define SHADOWRAISE                       5
 
 /// The supported colors of bars and blips
@@ -82,7 +79,8 @@ enum e_color
     COLOR_GREEN,
     COLOR_BLUE,
     COLOR_PURPLE,
-    COLOR_MAX
+    COLOR_MAX,
+	NOSPARKLE = COLOR_MAX
 };
 
 //--------------------------------------------------------------------------------------------
@@ -377,7 +375,7 @@ int  draw_wrap_string( const char *szText, int x, int y, int maxx );
 int  draw_status( const CHR_REF by_reference character, int x, int y );
 void draw_text();
 void draw_one_character_icon( const CHR_REF by_reference item, int x, int y, bool_t draw_ammo );
-void draw_cursor();
+//void draw_cursor();
 void draw_blip( float sizeFactor, Uint8 color, int x, int y, bool_t mini_map );
 void draw_all_lines( struct s_camera * pcam );
 
@@ -413,6 +411,7 @@ void delete_all_graphics();
 void release_all_profile_textures();
 
 void   load_graphics();
+bool_t load_cursor();
 bool_t load_blips();
 void   load_bars();
 void   load_map();

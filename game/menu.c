@@ -2095,7 +2095,7 @@ int doInputOptions( float deltaTime )
             tipText_set_position( menuFont, "Change input settings here.", 20 );
 
             // Load the global icons (keyboard, mouse, etc.)
-            if ( !load_all_global_icons() ) log_warning( "Could not load all global icons!\n" );
+            load_all_global_icons();
 
         case MM_Entering:
             // do buttons sliding in animation, and background fading in

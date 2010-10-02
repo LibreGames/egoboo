@@ -163,10 +163,12 @@ egoboo_rv setup_read_vfs()
 {
     /// @details BB@> read the local setup file. The function will automatically copy the default setup
 	///               file if it isn't found in the local folder.
-	///				  @TODO: create a completely new setup file if the default one also doesn't exist!
 
+	
+	///	@TODO: ZF> We do not need a default setup.txt file which we copy. If the setup.txt file is missing, we should simply
+	///            create a new one with the default values. This should make life easier.
 	// Read the local setup.txt
-    fs_ensureUserFile( "setup.txt", btrue );
+	fs_ensureUserFile( "setup.txt", btrue );
     snprintf( _config_filename, SDL_arraysize( _config_filename ), "%s" SLASH_STR "setup.txt", fs_getUserDirectory() );
 
     // do NOT force the file to open in a read directory if it doesn't exist. this will cause a failure in
