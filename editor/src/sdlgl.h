@@ -159,6 +159,7 @@ typedef unsigned short wchar_t;
 #define SDLGL_TYPE_BUTTON      0x0F     /* Simple Button                    */
 #define SDLGL_TYPE_HORCHOOSE   0x10
 #define SDLGL_TYPE_PROGBAR     0x11
+#define SDLGL_TYPE_STRING      0x12 
 #define SDLGL_TYPE_MENU        0x20     /* Drawing menu strings             */  
                                        
 /* --- Special 'codes' for special movements if input is cleared --- */

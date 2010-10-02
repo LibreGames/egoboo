@@ -36,16 +36,14 @@
 *******************************************************************************/
 
 #define EDITMAIN_DRAWMAP     0
-#define EDITMAIN_NEWFLATMAP  1
 #define EDITMAIN_NEWSOLIDMAP 2
 #define EDITMAIN_LOADMAP     3
 #define EDITMAIN_SAVEMAP     4
 #define EDITMAIN_ROTFAN      5      /* Rotates the actual chosen fan if browsing        */ 
 #define EDITMAIN_UPDATEFAN   6      /* Does an update on the actual fan from 'new_fan'  */
-#define EDITMAIN_EDITSTATE   7      /* Change the state for editing                     */
-#define EDITMAIN_SETFANPROPERTY 8   /* Set the properties of a fan (fx and texture)     */       
-#define EDITMAIN_CHOOSEPASSAGE  9   /* Choose a passage, if passages are loaded         */
-#define EDITMAIN_CHOOSESPAWNPOS 10  /* Choose a spawn pos, if span positions are loaded */
+#define EDITMAIN_SETFANPROPERTY 7   /* Set the properties of a fan (fx and texture)     */       
+#define EDITMAIN_CHOOSEPASSAGE  8   /* Choose a passage, if passages are loaded         */
+#define EDITMAIN_CHOOSESPAWNPOS 9   /* Choose a spawn pos, if span positions are loaded */
 
 /* ---------- Edit-Flags -------- */
 #define EDITMAIN_SHOW2DMAP 0x01         /* Display the 2DMap        */
@@ -53,7 +51,10 @@
 /* --- Edit-States (how to set fans) */ 
 #define EDITMAIN_EDIT_NONE      0x00
 #define EDITMAIN_EDIT_SIMPLE    0x01
-#define EDITMAIN_EDIT_FREE      0x02
+#define EDITMAIN_EDIT_FREE      0x02    /* Edit complete single chosen fan      */
+#define EDITMAIN_EDIT_FX        0x03    /* Edit FX-Flags of chosen fan(s)       */
+#define EDITMAIN_EDIT_TEXTURE   0x04    /* Edit the textures of chosen fan(s)   */
+#define EDITMAIN_EDIT_MAX       0x04    /* Maximum number of edit states        */
 
 /* --------- Other values ------- */
 #define EDITMAIN_MAX_MAPSIZE  64
@@ -61,8 +62,10 @@
 
 /* ---- Flags to toggle --------- */
 #define EDITMAIN_TOGGLE_DRAWMODE    1
-#define EDITMAIN_TOGGLE_FX          2
-#define EDITMAIN_TOGGLE_TXHILO      3
+#define EDITMAIN_TOGGLE_EDITSTATE   2
+#define EDITMAIN_TOGGLE_FANTEXSIZE  3 
+#define EDITMAIN_TOGGLE_FANTEXNO    4 
+#define EDITMAIN_TOGGLE_FANFX       5
 
 /*******************************************************************************
 * TYPEDEFS							                                           *
@@ -88,6 +91,41 @@ typedef struct {
 
 } EDITMAIN_STATE_T;
 
+typedef struct {
+
+    int x, y;
+
+} EDITMAIN_XY;
+
+typedef struct {
+
+    char line_name[25];         /* Only for information purposes */
+    EDITMAIN_XY topleft;
+    EDITMAIN_XY bottomright;
+    char open;
+    char shoot_trough;
+    char slippy_close;
+    
+} EDITMAIN_PASSAGE_T;
+
+typedef struct {
+
+    char line_name[25];
+    char item_name[20+1];
+    int  slot_no;           /* Use it for coloring the bounding boxes */
+    float x_pos, y_pos, z_pos;
+    char view_dir;
+    int  money;
+    int  skin;
+    int  pas;
+    int  con;
+    int  lvl;
+    char stt;
+    char gho;
+    char team;
+    
+} EDITMAIN_SPAWNPT_T;     /* Spawn-Point for display on map. From 'spawn.txt' */
+
 /*******************************************************************************
 * CODE 								                                           *
 *******************************************************************************/
@@ -95,14 +133,13 @@ typedef struct {
 EDITMAIN_STATE_T *editmainInit(int map_size, int minimap_w, int minimap_h);
 void editmainExit(void);
 int  editmainMap(int command, int info);
-void editmainDrawMap2D(int x, int y, int w, int h);
+void editmainDrawMap2D(int x, int y);
 char editmainToggleFlag(int which, unsigned char flag);
-void editmainChooseFan(int cx, int cy, int w, int h, int get_info);
+void editmainChooseFan(int cx, int cy, int w, int h, int is_floor);
 char *editmainFanTypeName(int type_no);
 void editmainChooseFanType(int dir, char *fan_name);
 void editmain2DTex(int x, int y, int w, int h);
-int  editmainFanSet(char is_floor);
-void editmainChooseTex(int cx, int cy, int w, int h, int big);
+void editmainChooseTex(int cx, int cy, int w, int h);
 
 #endif /* _EDITMAIN_H_	*/
 

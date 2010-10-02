@@ -1,3 +1,11 @@
+2010-10-02 <bitnapper>
+- Extended draw code for display of chosen passages and spawn points
+- Compacted the editor code for choosing a fan in minimap
+- Compacted code  for editor if 'EditState' is used
+- Border tiles can not be chosen in 'simple mode'
+- Border is drawn around minimap
+- Update of ToDo-List
+
 2010-10-01 <bitnapper>
 - Prepared display of multiple chosen fans in map
 - Further work on 'simple' edit mode

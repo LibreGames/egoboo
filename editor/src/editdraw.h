@@ -36,17 +36,14 @@
 #define EDITDRAW_OBJ_CHAR   0x02    /* Characters (MD2)                 */
 #define EDITDRAW_OBJ_PART   0x03    /* Particles (can be transparent)   */
 
-#define EDITDRAW_MAXSPAWNPOS    600 /* Maximum for drawing lists        */
-#define EDITDRAW_MAXPASSAGE     512
-
 /*******************************************************************************
 * CODE 								                                           *
 *******************************************************************************/
 
 COMMAND_T *editdrawInitData(void);
 void editdrawFreeData(void);
-void editdraw3DView(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, int *chosen_fan);
-void editdraw2DMap(MESH_T *mesh, int x, int y, int w, int h, int *chosen_fan);
+void editdraw3DView(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, int *chosen, int *psg, int *spawn);
+void editdraw2DMap(MESH_T *mesh, int x, int y, int *chosen, int *psg, int *spawn);
 void editdraw2DTex(int x, int y, int w, int h, unsigned char tx_no, char tx_big); 
 void editdrawAdjustCamera(int tx, int ty);
 

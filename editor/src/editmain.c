@@ -57,47 +57,7 @@
 
 #define EDITMAIN_MAXSPAWN    500        /* Maximum Lines in spawn list  */
 #define EDITMAIN_MAXPASSAGE   50
-    
-
-/*******************************************************************************
-* TYPEDEFS							                                           *
-*******************************************************************************/
-
-typedef struct {
-
-    int x, y;
-
-} EDITMAIN_XY;
-
-typedef struct {
-
-    char line_name[25];         /* Only for information purposes */
-    EDITMAIN_XY topleft;
-    EDITMAIN_XY bottomright;
-    char open;
-    char shoot_trough;
-    char slippy_close;
-    
-} EDITMAIN_PASSAGE_T;
-
-typedef struct {
-
-    char line_name[25];
-    char item_name[20+1];
-    int  slot_no;           /* Use it for coloring the bounding boxes */
-    float x_pos, y_pos, z_pos;
-    char view_dir;
-    int  money;
-    int  skin;
-    int  pas;
-    int  con;
-    int  lvl;
-    char stt;
-    char gho;
-    char team;
-    
-} EDITMAIN_SPAWNPT_T;     /* Spawn-Point for display on map. From 'spawn.txt' */
-
+  
 /*******************************************************************************
 * DATA							                                               *
 *******************************************************************************/
@@ -548,45 +508,31 @@ void editmainCompleteMapData(MESH_T *mesh)
  *     depending on 'which'
  * Input:
  *     mesh *: Pointer on mesh  to fill with default values
- *     which:  Type of map to create : EDITMAIN_NEWFLATMAP / EDITMAIN_NEWSOLIDMAP
  */
-static int editmainCreateNewMap(MESH_T *mesh, int which)
+static int editmainCreateNewMap(MESH_T *mesh)
 {
 
     int x, y, fan;
-    char fan_fx, fan_type;
-    unsigned char tx_no;
 
 
     memset(mesh, 0, sizeof(MESH_T));
 
     mesh -> tiles_x     = EditState.map_size;
     mesh -> tiles_y     = EditState.map_size;
+    mesh -> minimap_w   = EditState.minimap_w;
+    mesh -> minimap_h   = EditState.minimap_h;
+    
     mesh -> numvert     = 0;                         /* Vertices used in map    */
     mesh -> numfreevert = MAXTOTALMESHVERTICES - 10; /* Vertices left in memory */
-
-    /* ------- Init for flat ---- */
-    if (which == EDITMAIN_NEWSOLIDMAP) {
-        /* All 'top' tiles */
-        fan_type = WALLMAKE_TOP;
-        fan_fx   = (MPDFX_WALL | MPDFX_IMPASS);   /* All impassable walls       */
-        tx_no    = EDITMAIN_TOP_TILE;
-    }
-    else {
-        fan_fx   = 0;
-        fan_type = WALLMAKE_FLOOR;
-        tx_no    = EDITMAIN_DEFAULT_TILE;
-
-    }
 
     fan = 0;
     for (y = 0; y < mesh -> tiles_y; y++) {
 
         for (x = 0; x < mesh -> tiles_x; x++) {
 
-            mesh -> fan[fan].type  = fan_type;
-            mesh -> fan[fan].fx    = fan_fx;
-            mesh -> fan[fan].tx_no = tx_no;
+            mesh -> fan[fan].type  = WALLMAKE_TOP;
+            mesh -> fan[fan].fx    = (MPDFX_WALL | MPDFX_IMPASS);
+            mesh -> fan[fan].tx_no = EDITMAIN_TOP_TILE;
 
             if (! editmainFanAdd(mesh, fan, x*EDITMAIN_TILEDIV, y*EDITMAIN_TILEDIV))
             {
@@ -903,6 +849,60 @@ static int editmainChooseSpawnPos(int dir)
     
 }
 
+/*
+ * Name:
+ *     editmainFanSet
+ * Description:
+ *     Sets a fan at the actual chosen position, depending on edit_state.
+ *     Does an update on given fan. Including changed number of vertices,
+ *     if needed.
+ * Input:
+ *     is_floor:   Set floor in simple mode, else set wall
+ */
+static int editmainFanSet(int is_floor)
+{
+
+    WALLMAKER_INFO_T wi[12];            /* List of fans to create */
+    int fan_no;
+
+
+    fan_no = EditState.fan_selected[0];
+
+    if (fan_no >= 0) {
+
+        if (EditState.edit_mode == EDITMAIN_EDIT_NONE) {
+            EditState.fd.numvertices = 0;   /* But set fan type to invalid  */
+            return 1;                       /* Do nothing, is view-mode     */
+        }
+
+        if (EditState.edit_mode == EDITMAIN_EDIT_SIMPLE) {
+
+            if (EditState.tx > 0 && EditState.ty > 0
+                && EditState.tx < (Mesh.tiles_x - 1)
+                && EditState.ty < (Mesh.tiles_y - 1))  {
+
+                /* Get a list of fans surrounding this one */
+                editmainCreateWallMakeInfo(&Mesh, fan_no, wi);
+
+                if (wallmakeMakeTile(is_floor, wi)) {
+                    /* Create tiles from WALLMAKER_INFO_T */
+                    editmainTranslateWallMakeInfo(&Mesh, wi);
+                    EditState.fd.numvertices = 0;
+                    return 1;
+                }
+            }
+
+        }
+        else if (EditState.edit_mode == EDITMAIN_EDIT_FREE) {
+            return editmainDoFanUpdate(&Mesh, &EditState,
+                                       EditState.fan_selected[0],
+                                       EditState.tx, EditState.ty);
+        }
+    }
+
+    return 0;
+}
+
 /* ========================================================================== */
 /* ========================= PUBLIC FUNCTIONS =============================== */
 /* ========================================================================== */
@@ -931,6 +931,10 @@ EDITMAIN_STATE_T *editmainInit(int map_size, int minimap_w, int minimap_h)
     EditState.minimap_w       = minimap_w;
     EditState.minimap_h       = minimap_h;
     EditState.draw_mode       = (EDIT_MODE_SOLID | EDIT_MODE_TEXTURED | EDIT_MODE_LIGHTMAX);
+
+    /* Additional fans, that can be chosen */
+    PassageFan[0] = -1;
+    SpawnFan[0]   = -1;
 
     return &EditState;
     
@@ -968,16 +972,18 @@ int editmainMap(int command, int info)
 
     int cnt, x, y;
 
-
+                                       
     switch(command) {
 
         case EDITMAIN_DRAWMAP:
-            editdraw3DView(&Mesh, &EditState.ft, &EditState.fd, EditState.fan_selected);
+            editdraw3DView(&Mesh, &EditState.ft, &EditState.fd,
+                           EditState.fan_selected,
+                           PassageFan,
+                           SpawnFan);
             return 1;
 
-        case EDITMAIN_NEWFLATMAP:
         case EDITMAIN_NEWSOLIDMAP:
-            if (editmainCreateNewMap(&Mesh, command)) {
+            if (editmainCreateNewMap(&Mesh)) {
 
                 editmainCompleteMapData(&Mesh);
                 return 1;
@@ -1002,22 +1008,25 @@ int editmainMap(int command, int info)
             return editfileSaveMapMesh(&Mesh, EditState.msg);
 
         case EDITMAIN_ROTFAN:
-            if (-1 != EditState.fan_selected[0]) {
-                EditState.fan_dir++;
-                EditState.fan_dir &= 0x03;
+            if (EditState.edit_mode == EDITMAIN_EDIT_FREE) {
+                /* Rotate the chosen fan type, if active edit mode */
+                if (-1 != EditState.fan_selected[0]) {
+                    EditState.fan_dir++;
+                    EditState.fan_dir &= 0x03;
 
-                editmainFanTypeRotate(EditState.ft.type,
-                                      &EditState.fd,
-                                      EditState.fan_dir);
-                /* Now translate the fan to chosen fan position */
-                x = EditState.tx * 128;
-                y = EditState.ty * 128;
+                    editmainFanTypeRotate(EditState.ft.type,
+                                          &EditState.fd,
+                                          EditState.fan_dir);
+                    /* Now translate the fan to chosen fan position */
+                    x = EditState.tx * 128;
+                    y = EditState.ty * 128;
 
-                for (cnt = 0; cnt < EditState.fd.numvertices; cnt++) {
-                    EditState.fd.vtx[cnt].x += x;
-                    EditState.fd.vtx[cnt].y += y;
+                    for (cnt = 0; cnt < EditState.fd.numvertices; cnt++) {
+                        EditState.fd.vtx[cnt].x += x;
+                        EditState.fd.vtx[cnt].y += y;
+                    }
+
                 }
-
             }
             return 1;
 
@@ -1051,14 +1060,22 @@ int editmainMap(int command, int info)
  * Description:
  *      Draws the map as 2D-Map into given rectangle
  * Input:
- *      command: What to do
+ *      x, y: Where to draw on screen
  * Output:
  *      Result of given command
  */
-void editmainDrawMap2D(int x, int y, int w, int h)
+void editmainDrawMap2D(int x, int y)
 { 
+    if (EditState.display_flags & EDITMAIN_SHOW2DMAP) {
     
-    editdraw2DMap(&Mesh, x, y, w, h, EditState.fan_selected);
+        Mesh.minimap_w = EditState.minimap_w;
+        Mesh.minimap_h = EditState.minimap_h;
+
+        editdraw2DMap(&Mesh, x, y,
+                      EditState.fan_selected,
+                      PassageFan,
+                      SpawnFan);
+    }
 
 }
 
@@ -1076,41 +1093,17 @@ void editmainDrawMap2D(int x, int y, int w, int h)
 char editmainToggleFlag(int which, unsigned char flag)
 {
 
-    int fan_no;
-
-
-    fan_no = EditState.fan_selected[0];
-
+    char tex_no;
+    
+    
     switch(which) {
 
         case EDITMAIN_TOGGLE_DRAWMODE:
-            /* Change it in actual map */
-            Mesh.draw_mode ^= flag;
-            /* Show it in edit_state */
-            EditState.draw_mode = Mesh.draw_mode;
+            Mesh.draw_mode ^= flag;                 /* Change it in actual map */
+            EditState.draw_mode = Mesh.draw_mode;   /* Show it in edit_state */
             break;
 
-        case EDITMAIN_TOGGLE_FX:
-            if (fan_no >= 0 && fan_no < Mesh.numfan){
-                /* Toggle it in chosen fan */
-                Mesh.fan[fan_no].fx ^= flag;
-                /* Now copy the actual state for display    */
-                EditState.ft.fx = Mesh.fan[fan_no].fx;
-            }
-            else {
-                EditState.ft.fx = 0;
-            }
-            break;
-
-        case EDITMAIN_TOGGLE_TXHILO:
-            if (fan_no >= 0) {
-                Mesh.fan[fan_no].tx_flags ^= flag;
-                /* And copy it for display */
-                EditState.ft.tx_flags = Mesh.fan[fan_no].tx_flags;
-            }
-            break;
-
-        case EDITMAIN_EDITSTATE:
+        case EDITMAIN_TOGGLE_EDITSTATE:
             if (flag == 0) {
                 EditState.edit_mode = 0;
             }
@@ -1120,7 +1113,37 @@ char editmainToggleFlag(int which, unsigned char flag)
                     EditState.edit_mode = 0;
                 }
             }
+            if (EditState.edit_mode != EDITMAIN_EDIT_FREE) {
+                EditState.fd.numvertices = 0;   /* Hide the chosen fan */
+            }
             return EditState.edit_mode;
+            
+        case EDITMAIN_TOGGLE_FANTEXSIZE:
+            EditState.ft.type ^= 0x20;  /* Switch 'size' flag */
+            break;
+            
+        case EDITMAIN_TOGGLE_FANTEXNO:
+            tex_no = (char)(EditState.ft.tx_no >> 6);
+            
+            if (flag == 0xFF) {
+                tex_no--;
+                if (tex_no < 0) {
+                    tex_no = 3;
+                }
+            }
+            else if (flag == 0x01) {
+                tex_no++;
+                if (tex_no > 3) {
+                    tex_no = 0;
+                }
+            }
+            EditState.ft.tx_no &= 0x3F;
+            EditState.ft.tx_no |= (char)((tex_no & 0x03) << 6);
+            break;
+
+        case EDITMAIN_TOGGLE_FANFX:
+            EditState.ft.fx ^= flag;
+            break;
 
     }
 
@@ -1133,13 +1156,14 @@ char editmainToggleFlag(int which, unsigned char flag)
  *     editmainChooseFan
  * Description:
  *     Choose a fan from given position in rectangle of size w/h.
- *     Does an update on the 'EditState'
+ *     Does an update on the 'EditState'.
+ *     Fills info about chosen fan into Edit-State, depending on Edit-State
  * Input:
  *     cx, cy:   Position chosen
  *     w, h:     Extent of rectangle
- *     get_info: Get info from chosen fan yes/no
+ *     is_floor: Sets a fan, depending on 'EditState.edit_mode'
  */
-void editmainChooseFan(int cx, int cy, int w, int h, int get_info)
+void editmainChooseFan(int cx, int cy, int w, int h, int is_floor)
 {
 
     int fan_no;
@@ -1147,7 +1171,13 @@ void editmainChooseFan(int cx, int cy, int w, int h, int get_info)
     int x, y, i;
     int old_tx, old_ty;
 
-
+    
+    if (! EditState.display_flags & EDITMAIN_SHOW2DMAP) {
+        EditState.fd.numvertices = 0;
+        /* Map not visible, invalid command */
+        return;
+    }
+    
     /* ------------------------- */
     old_tx = EditState.tx;
     old_ty = EditState.ty;
@@ -1165,14 +1195,11 @@ void editmainChooseFan(int cx, int cy, int w, int h, int get_info)
         EditState.fan_selected[0] = fan_no;
         EditState.fan_selected[1] = -1;
         
-        /* And fill it into 'EditState' for display, if asked for */
-        if (get_info) {
+        /* Get the info about the chosen fan */
+        memcpy(&EditState.ft, &Mesh.fan[fan_no], sizeof(FANDATA_T));
 
-            memcpy(&EditState.ft, &Mesh.fan[fan_no], sizeof(FANDATA_T));
-
-        }
-        else {
-            /* 'Move' actual 'fd'-data to new position */
+        if (EditState.fd.numvertices > 0) {
+            /* 'Move' actual 'fd'-data to new position, if available */
             x = (EditState.tx - old_tx) * 128;
             y = (EditState.ty - old_ty) * 128;
 
@@ -1180,7 +1207,10 @@ void editmainChooseFan(int cx, int cy, int w, int h, int get_info)
                 EditState.fd.vtx[i].x += x;
                 EditState.fd.vtx[i].y += y;
             }
+            
         }
+        
+        editmainFanSet(is_floor);
 
         /* And now set camera to move/look at this position */
         editdrawAdjustCamera(EditState.tx, EditState.ty);         
@@ -1242,35 +1272,36 @@ void editmainChooseFanType(int dir, char *fan_name)
         /* Start browsing */
         EditState.bft_no = 0;
     }
-    else if (dir == -1) {
-        if (EditState.bft_no > 0) {
-            EditState.bft_no--;
-        }
-    }
     else {
-        if (EditState.bft_no < EDITMAIN_PRESET_MAX) {
-            EditState.bft_no++;
-        }
-        else {  /* Wrap around */
-            EditState.bft_no = 0;    
+        if (EditState.edit_mode == EDITMAIN_EDIT_FREE) {
+            if (EditState.bft_no < EDITMAIN_PRESET_MAX) {
+                EditState.bft_no++;
+            }
+            else {  /* Wrap around */
+                EditState.bft_no = 0;    
+            }
         }
     }
 
-    memcpy(&EditState.ft, &PresetTiles[EditState.bft_no], sizeof(FANDATA_T));
-    memcpy(&EditState.fd, &pCommands[EditState.ft.type & 0x1F], sizeof(COMMAND_T));
+    if (EditState.edit_mode == EDITMAIN_EDIT_FREE) {
 
-    /* Now move it to the chosen position */
-    x = EditState.tx * 128;
-    y = EditState.ty * 128;
+        memcpy(&EditState.ft, &PresetTiles[EditState.bft_no], sizeof(FANDATA_T));
+        memcpy(&EditState.fd, &pCommands[EditState.ft.type & 0x1F], sizeof(COMMAND_T));
 
-    for (i = 0; i < EditState.fd.numvertices; i++) {
-        EditState.fd.vtx[i].x += x;
-        EditState.fd.vtx[i].y += y;
+        /* Now move it to the chosen position */
+        x = EditState.tx * 128;
+        y = EditState.ty * 128;
+
+        for (i = 0; i < EditState.fd.numvertices; i++) {
+            EditState.fd.vtx[i].x += x;
+            EditState.fd.vtx[i].y += y;
+        }
+
+        EditState.fan_dir = 0;
+
+        sprintf(fan_name, "%s", editmainFanTypeName(EditState.ft.type & 0x1F));
+        
     }
-
-    EditState.fan_dir = 0;
-
-    sprintf(fan_name, "%s", editmainFanTypeName(EditState.ft.type & 0x1F));
 
 }
 
@@ -1298,54 +1329,6 @@ void editmain2DTex(int x, int y, int w, int h)
 
 /*
  * Name:
- *     editmainFanSet
- * Description:
- *     Sets a fan at the actual chosen position, depending on edit_state. 
- *     Does an update on given fan. Including changed number of vertices,
- *     if needed.
- * Input:
- *     edit_state: How to handle the command 
- *     is_floor:   Set floor in simple mode       
- */
-int editmainFanSet(char is_floor)
-{
-
-    WALLMAKER_INFO_T wi[30];            /* List of fans to create */
-    int fan_no;
-
-
-    fan_no = EditState.fan_selected[0];
-
-    if (fan_no >= 0) {
-
-        if (EditState.edit_mode == EDITMAIN_EDIT_NONE) {
-            return 1;       /* Do nothing, is view-mode */
-        }               
-        
-        if (EditState.edit_mode == EDITMAIN_EDIT_SIMPLE) {
-        
-            /* Get a list of fans surrounding this one */
-            editmainCreateWallMakeInfo(&Mesh, fan_no, wi);
-            
-            if (wallmakeMakeTile(is_floor, wi)) {
-                /* Create tiles from WALLMAKER_INFO_T */
-                editmainTranslateWallMakeInfo(&Mesh, wi);
-                return 1;
-            }
-
-        }
-        else if (EditState.edit_mode == EDITMAIN_EDIT_FREE) {
-            return editmainDoFanUpdate(&Mesh, &EditState,
-                                       EditState.fan_selected[0],
-                                       EditState.tx, EditState.ty);
-        }
-    }
-
-    return 0;
-}
-
-/*
- * Name:
  *     editmainChooseTex
  * Description:
  *     Choses Texture from square with given coordinates 'cx/cy' from
@@ -1355,7 +1338,7 @@ int editmainFanSet(char is_floor)
  *     cx, cy: Chosen point in rectangle
  *     w,h:    Extent of rectangle
  */
-void editmainChooseTex(int cx, int cy, int w, int h, int big)
+void editmainChooseTex(int cx, int cy, int w, int h)
 {
 
     int tex_x, tex_y;
@@ -1367,7 +1350,7 @@ void editmainChooseTex(int cx, int cy, int w, int h, int big)
     tex_x = 8 * cx / w;
     tex_y = 8 * cy / h;
     
-    if (big) {
+    if (EditState.ft.type & 0x20) {
         if (tex_x > 6) tex_x = 6;
         if (tex_y > 6) tex_y = 6;
     }
