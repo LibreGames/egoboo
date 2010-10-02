@@ -166,7 +166,7 @@ static int editmainGetAdjacent(MESH_T *mesh, int fan, int adjacent[8])
     int dir, adj_pos;
     int num_adj;
     EDITMAIN_XY src_xy, dest_xy;
-    
+
     
     num_adj = 0;            /* Count them */
     for (dir = 0; dir < 8; dir++) {
@@ -458,7 +458,51 @@ static void editmainFanTypeRotate(int type, COMMAND_T *dest, char dir)
 
 }
 
+/*
+ * Name:
+ *     editmainWeldXY
+ * Description:
+ *     'Welds' the nearest vertices of both given fans.
+ *     The vertice-values of 'fan_no2' are adjusted to these of 'fan_no1'
+ * Input:
+ *     mesh *: Pointer on mesh
+ *     fan_no1,
+ *     fan__no2: Number of fans to weld the vertices for
+ */
+static void editmainWeldXY(MESH_T *mesh, int fan_no1, int fan_no2)
+{
 
+    int cnt1, cnt2;
+    float xdiff, ydiff, tdiff;     /* Difference of vertices */
+    int vtx1, vtx2;
+    int numvertices1, numvertices2;
+
+
+    numvertices1 = pCommands[mesh -> fan[fan_no1].type & 0x1F].numvertices;
+    numvertices2 = pCommands[mesh -> fan[fan_no2].type & 0x1F].numvertices;
+
+    vtx1 = mesh -> vrtstart[fan_no1];
+
+    for (cnt1 = 0; cnt1 < numvertices1; cnt1++) {
+        /* Compare all vertices of first fan with this of second fan */
+        vtx2 = mesh -> vrtstart[fan_no2];
+
+        for (cnt2 = 0; cnt2 < numvertices2; cnt2++) {
+            /* Look for vertex in distance... */
+            xdiff = mesh -> vrtx[vtx1] - mesh -> vrtx[vtx2];
+            ydiff = mesh -> vrty[vtx1] - mesh -> vrty[vtx2];
+            tdiff = xdiff + ydiff;
+
+            if (tdiff > -2.0 && tdiff < 2.0) {
+                mesh -> vrtx[vtx2] = mesh -> vrtx[vtx1];
+                mesh -> vrty[vtx2] = mesh -> vrty[vtx1];
+            }
+            vtx2++;
+        }
+        vtx1++;
+    }
+
+}
 
 /*
  * Name:
@@ -702,10 +746,11 @@ static void editmainCreateWallMakeInfo(MESH_T *mesh, int fan, WALLMAKER_INFO_T *
 static void editmainTranslateWallMakeInfo(MESH_T *mesh, WALLMAKER_INFO_T *wi)
 {
 
-    int i;
+    int i, i2;
     char type_no;
 	int tx, ty;
-    
+    int fan_no2;
+
 
     for (i = 0; i < 9; i++) {
 
@@ -713,7 +758,7 @@ static void editmainTranslateWallMakeInfo(MESH_T *mesh, WALLMAKER_INFO_T *wi)
         
             /* -- Do update in any case */
 			type_no = wi[i].type;
-                
+
             EditState.ft.type     = type_no;
             EditState.ft.tx_flags = 0;
             EditState.ft.fx       = pCommands[type_no & 0x1F].default_fx;
@@ -721,16 +766,24 @@ static void editmainTranslateWallMakeInfo(MESH_T *mesh, WALLMAKER_INFO_T *wi)
             EditState.fan_dir     = wi[i].dir;
 
             memcpy(&EditState.fd, &pCommands[type_no & 0x1F], sizeof(COMMAND_T));
-            
+
             tx = (wi[i].fan_no % mesh -> tiles_x);
 			ty = (wi[i].fan_no / mesh -> tiles_x);
-            
+
             editmainFanTypeRotate(EditState.ft.type,
                                   &EditState.fd,
                                   EditState.fan_dir);
 
             editmainDoFanUpdate(mesh, &EditState, wi[i].fan_no, tx, ty);
-            
+            i2 = i + 1;
+            if (i2 > 8) {
+                i2 = 0;
+            }
+            /* Only weld if both tiles are walls */
+            if (wi[i].type > 1 && wi[i2].type > 1) {
+                editmainWeldXY(mesh, wi[i].fan_no,  wi[i2].fan_no);
+            }
+
         }
 
     }

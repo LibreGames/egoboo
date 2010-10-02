@@ -5,6 +5,7 @@
 - Border tiles can not be chosen in 'simple mode'
 - Border is drawn around minimap
 - Update of ToDo-List
+- Added 'Weld-Code' for map vertices which is used in 'simple' edit mode
 
 2010-10-01 <bitnapper>
 - Prepared display of multiple chosen fans in map
