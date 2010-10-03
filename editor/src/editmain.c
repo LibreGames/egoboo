@@ -272,38 +272,43 @@ static int editmainFanAdd(MESH_T *mesh, int fan, int x, int y)
  *     editmainFanUpdateProperties
  * Description:
  *     This function updates the properties of the fan with'fan_no':
- *     Flags, Texture and Fx 
+ *     Flags, Texture and Fx. Does the update un the properties depending on
+ *     the actual 'EditState.edit_mode'
  * Input:
  *     mesh *:       Pointer on mesh to handle
  *     edit_state *: Pointer on edit state, holding all data needed for work
  *     fan_no *:     Number of fan(s) to make update on properties
- *     which:        Which properties to set  (1: FX 2: Texture, 3: All)
  */
-static void editmainFanUpdateProperties(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int *fan_no, int which)
+static void editmainFanUpdateProperties(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int *fan_no)
 {
 
     FANDATA_T *act_ft;
+    char em;
 
 
-    while(*fan_no > 0) {
+    em = edit_state -> edit_mode;
+    if (em == EDITMAIN_EDIT_FX || em == EDITMAIN_EDIT_TEXTURE) {
 
-        act_ft = &mesh -> fan[*fan_no];
+        while(*fan_no > 0) {
 
-        if (which & 1) {
+            act_ft = &mesh -> fan[*fan_no];
 
-            act_ft -> fx = edit_state -> ft.fx;
+            if (em == EDITMAIN_EDIT_FX) {
+
+                act_ft -> fx = edit_state -> ft.fx;
+
+            }
+            else if (em == EDITMAIN_EDIT_TEXTURE) {
+                /* Do an update on the 'static' data of the fan */
+                act_ft -> tx_no    = edit_state -> ft.tx_no;
+                act_ft -> tx_flags = edit_state -> ft.tx_flags;
+            }
+
+            fan_no++;
 
         }
-        if (which & 2) {
-            /* Do an update on the 'static' data of the fan */
-            act_ft -> tx_no    = edit_state -> ft.tx_no;
-            act_ft -> tx_flags = edit_state -> ft.tx_flags;
-        }
-
-        fan_no++;
 
     }
-
 
 }
 
@@ -443,11 +448,13 @@ static void editmainFanTypeRotate(int type, COMMAND_T *dest, char dir)
             dest -> vtx[cnt].x -= 64.0;
             dest -> vtx[cnt].y -= 64.0;
             /* And now rotate it */
-            result_x = (cos(angle) * dest -> vtx[cnt].x - sin(angle) * dest -> vtx[cnt].y);
-            result_y = (sin(angle) * dest -> vtx[cnt].x + cos(angle) * dest -> vtx[cnt].y);
+            result_x = (cos(angle) * (double)dest -> vtx[cnt].x
+                        - sin(angle) * (double)dest -> vtx[cnt].y);
+            result_y = (sin(angle) * (double)dest -> vtx[cnt].x
+                        + cos(angle) * (double)dest -> vtx[cnt].y);
             /* And store it back */
-            dest -> vtx[cnt].x = ceil(result_x);
-            dest -> vtx[cnt].y = ceil(result_y);
+            dest -> vtx[cnt].x = floor(result_x);
+            dest -> vtx[cnt].y = floor(result_y);
             /* And move it back to start position */
             dest -> vtx[cnt].x += 64.0;
             dest -> vtx[cnt].y += 64.0;
@@ -473,7 +480,7 @@ static void editmainWeldXY(MESH_T *mesh, int fan_no1, int fan_no2)
 {
 
     int cnt1, cnt2;
-    float xdiff, ydiff, tdiff;     /* Difference of vertices */
+    float xdiff, ydiff;     /* Difference of vertices */
     int vtx1, vtx2;
     int numvertices1, numvertices2;
 
@@ -488,14 +495,17 @@ static void editmainWeldXY(MESH_T *mesh, int fan_no1, int fan_no2)
         vtx2 = mesh -> vrtstart[fan_no2];
 
         for (cnt2 = 0; cnt2 < numvertices2; cnt2++) {
-            /* Look for vertex in distance... */
-            xdiff = mesh -> vrtx[vtx1] - mesh -> vrtx[vtx2];
-            ydiff = mesh -> vrty[vtx1] - mesh -> vrty[vtx2];
-            tdiff = xdiff + ydiff;
+            if (mesh -> vrtz[vtx1] == mesh -> vrtz[vtx2]) {
+                /* Look for vertex in distance... */
+                xdiff = mesh -> vrtx[vtx1] - mesh -> vrtx[vtx2];
+                ydiff = mesh -> vrty[vtx1] - mesh -> vrty[vtx2];
+                if (xdiff < 0) xdiff = -xdiff;
+                if (ydiff < 0) ydiff = -ydiff;
 
-            if (tdiff > -2.0 && tdiff < 2.0) {
-                mesh -> vrtx[vtx2] = mesh -> vrtx[vtx1];
-                mesh -> vrty[vtx2] = mesh -> vrty[vtx1];
+                if ((xdiff + ydiff) < 12.0) {
+                    mesh -> vrtx[vtx2] = mesh -> vrtx[vtx1];
+                    mesh -> vrty[vtx2] = mesh -> vrty[vtx1];
+                }
             }
             vtx2++;
         }
@@ -596,14 +606,14 @@ static int editmainCreateNewMap(MESH_T *mesh)
 
 /*
  * Name:
- *     editfileSetVrta
+ *     editmainSetVrta
  * Description:
  *     Set the 'vrta'-value for given vertex
  * Input:
  *     mesh *: Pointer on mesh  to handle
  *     vert:   Number of vertex to set
  */
-static int editfileSetVrta(MESH_T *mesh, int vert)
+static int editmainSetVrta(MESH_T *mesh, int vert)
 {
     /* TODO: Get all needed functions from cartman code */
     int newa, x, y, z;
@@ -621,6 +631,8 @@ static int editfileSetVrta(MESH_T *mesh, int vert)
     // Directional light
     brx = x + 64;
     bry = y + 64;
+
+    newa = 60;
     /*
     brz = get_level(brx, y) +
           get_level(x, bry) +
@@ -664,7 +676,8 @@ static int editfileSetVrta(MESH_T *mesh, int vert)
 
     return newa;
     */
-    return 60;
+
+    return newa;
 }
 
 /*
@@ -689,7 +702,7 @@ static void editmainCalcVrta(MESH_T *mesh)
         
         for (cnt = 0; cnt < num; cnt++) {
         
-            editfileSetVrta(mesh, vert);
+            editmainSetVrta(mesh, vert);
             vert++;
             
         }
@@ -749,7 +762,6 @@ static void editmainTranslateWallMakeInfo(MESH_T *mesh, WALLMAKER_INFO_T *wi)
     int i, i2;
     char type_no;
 	int tx, ty;
-    int fan_no2;
 
 
     for (i = 0; i < 9; i++) {
@@ -775,22 +787,35 @@ static void editmainTranslateWallMakeInfo(MESH_T *mesh, WALLMAKER_INFO_T *wi)
                                   EditState.fan_dir);
 
             editmainDoFanUpdate(mesh, &EditState, wi[i].fan_no, tx, ty);
-            i2 = i + 1;
-            if (i2 > 8) {
-                i2 = 0;
-            }
-            /* Only weld if both tiles are walls */
-            if (wi[i].type > 1 && wi[i2].type > 1) {
-                editmainWeldXY(mesh, wi[i].fan_no,  wi[i2].fan_no);
-            }
 
         }
 
     }
 
+    /* Weld the new generated walls to middle tile */
+    for (i = 1; i < 9; i++) {
+        editmainWeldXY(mesh, wi[0].fan_no,  wi[i].fan_no);
+
+    }
+
+    /* Weld the new generated walls with each other */
+    for (i = 0; i < 9; i++) {
+        i2 = i + 1;
+        if (i2 > 8) {
+            i2 = 0;
+        }
+        /* Only weld if both tiles are walls */
+        if (wi[i].type > 1 && wi[i2].type > 1) {
+            editmainWeldXY(mesh, wi[i].fan_no,  wi[i2].fan_no);
+        }
+
+    }
+
+
+
 }
 
-/*                                             
+/*
  * Name:
  *     editmainLoadAdditionalData
  * Description:
@@ -1083,16 +1108,9 @@ int editmainMap(int command, int info)
             }
             return 1;
 
-        case EDITMAIN_UPDATEFAN:
-            /* Update on a single fan */
-            editmainDoFanUpdate(&Mesh, &EditState,
-                                EditState.fan_selected[0],
-                                EditState.tx, EditState.ty);
-            break;
-
         case EDITMAIN_SETFANPROPERTY:
             /* Can be an update on multiple fans properties */
-            editmainFanUpdateProperties(&Mesh, &EditState, EditState.fan_selected, info);
+            editmainFanUpdateProperties(&Mesh, &EditState, EditState.fan_selected);
             break;
             
         case EDITMAIN_CHOOSEPASSAGE:
@@ -1162,7 +1180,7 @@ char editmainToggleFlag(int which, unsigned char flag)
             }
             else {
                 EditState.edit_mode++;
-                if (EditState.edit_mode > 2) {
+                if (EditState.edit_mode >= EDITMAIN_EDIT_MAX) {
                     EditState.edit_mode = 0;
                 }
             }
@@ -1260,9 +1278,9 @@ void editmainChooseFan(int cx, int cy, int w, int h, int is_floor)
                 EditState.fd.vtx[i].x += x;
                 EditState.fd.vtx[i].y += y;
             }
-            
+
         }
-        
+
         editmainFanSet(is_floor);
 
         /* And now set camera to move/look at this position */
@@ -1353,7 +1371,7 @@ void editmainChooseFanType(int dir, char *fan_name)
         EditState.fan_dir = 0;
 
         sprintf(fan_name, "%s", editmainFanTypeName(EditState.ft.type & 0x1F));
-        
+
     }
 
 }
@@ -1375,7 +1393,7 @@ void editmain2DTex(int x, int y, int w, int h)
         editdraw2DTex(x, y, w, h,
                       EditState.ft.tx_no,
                       (char)(EditState.ft.type & COMMAND_TEXTUREHI_FLAG));
-        
+
     }
     
 }

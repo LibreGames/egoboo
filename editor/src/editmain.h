@@ -40,10 +40,9 @@
 #define EDITMAIN_LOADMAP     3
 #define EDITMAIN_SAVEMAP     4
 #define EDITMAIN_ROTFAN      5      /* Rotates the actual chosen fan if browsing        */ 
-#define EDITMAIN_UPDATEFAN   6      /* Does an update on the actual fan from 'new_fan'  */
-#define EDITMAIN_SETFANPROPERTY 7   /* Set the properties of a fan (fx and texture)     */       
-#define EDITMAIN_CHOOSEPASSAGE  8   /* Choose a passage, if passages are loaded         */
-#define EDITMAIN_CHOOSESPAWNPOS 9   /* Choose a spawn pos, if span positions are loaded */
+#define EDITMAIN_SETFANPROPERTY 6   /* Set the properties of a fan (fx and texture)     */       
+#define EDITMAIN_CHOOSEPASSAGE  7   /* Choose a passage, if passages are loaded         */
+#define EDITMAIN_CHOOSESPAWNPOS 8   /* Choose a spawn pos, if span positions are loaded */
 
 /* ---------- Edit-Flags -------- */
 #define EDITMAIN_SHOW2DMAP 0x01         /* Display the 2DMap        */

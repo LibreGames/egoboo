@@ -1,3 +1,7 @@
+2010-10-03 <bitnapper>
+- Some bugfixes in 'welding' code for simple Mode
+- Added edit modes for changes of multiple 'FX' and 'Texture' properties of fan(s)
+
 2010-10-02 <bitnapper>
 - Extended draw code for display of chosen passages and spawn points
 - Compacted the editor code for choosing a fan in minimap

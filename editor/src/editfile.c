@@ -257,6 +257,9 @@ int editfileSaveMapMesh(MESH_T *mesh, char *msg)
 
             }
 
+            /* Write the light values */
+            fwrite(&mesh -> vrta[0], 1, mesh -> numvert, filewrite);   // !!!BAD!!!
+
             return numwritten;
 
         }
