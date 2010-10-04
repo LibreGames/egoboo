@@ -475,18 +475,22 @@ static void editmainFanTypeRotate(int type, COMMAND_T *dest, char dir)
  *     mesh *: Pointer on mesh
  *     fan_no1,
  *     fan__no2: Number of fans to weld the vertices for
+ * Output:
+ *     Number of Vertices welded 
  */
-static void editmainWeldXY(MESH_T *mesh, int fan_no1, int fan_no2)
+static int editmainWeldXY(MESH_T *mesh, int fan_no1, int fan_no2)
 {
 
     int cnt1, cnt2;
     float xdiff, ydiff;     /* Difference of vertices */
     int vtx1, vtx2;
     int numvertices1, numvertices2;
+    int num_welded;
 
 
     numvertices1 = pCommands[mesh -> fan[fan_no1].type & 0x1F].numvertices;
     numvertices2 = pCommands[mesh -> fan[fan_no2].type & 0x1F].numvertices;
+    num_welded   = 0;
 
     vtx1 = mesh -> vrtstart[fan_no1];
 
@@ -499,18 +503,22 @@ static void editmainWeldXY(MESH_T *mesh, int fan_no1, int fan_no2)
                 /* Look for vertex in distance... */
                 xdiff = mesh -> vrtx[vtx1] - mesh -> vrtx[vtx2];
                 ydiff = mesh -> vrty[vtx1] - mesh -> vrty[vtx2];
+                
                 if (xdiff < 0) xdiff = -xdiff;
                 if (ydiff < 0) ydiff = -ydiff;
 
                 if ((xdiff + ydiff) < 12.0) {
                     mesh -> vrtx[vtx2] = mesh -> vrtx[vtx1];
                     mesh -> vrty[vtx2] = mesh -> vrty[vtx1];
+                    num_welded++;
                 }
             }
             vtx2++;
         }
         vtx1++;
     }
+    
+    return num_welded;
 
 }
 
@@ -1180,7 +1188,7 @@ char editmainToggleFlag(int which, unsigned char flag)
             }
             else {
                 EditState.edit_mode++;
-                if (EditState.edit_mode >= EDITMAIN_EDIT_MAX) {
+                if (EditState.edit_mode > EDITMAIN_EDIT_MAX) {
                     EditState.edit_mode = 0;
                 }
             }

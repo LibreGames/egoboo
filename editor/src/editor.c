@@ -139,7 +139,7 @@ static char *EditTypeNames[EDITMAIN_EDIT_MAX + 1] = {
     "Edit Single Fan",
     "Edit Fan-FX",
     "Edit Fan-Texture"
-};         
+};
 
 static SDLGL_CMDKEY EditorCmd[] = {
 

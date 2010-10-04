@@ -1,3 +1,8 @@
+2010-10-04 <bitnapper>
+- 'Weld'-Code is OK. 
+- The generated texture values for the 'Inner Edge' are not correct :(
+- Worked on texture coordinates for sub-parts ('Inner edge' still doesn't fit well)
+
 2010-10-03 <bitnapper>
 - Some bugfixes in 'welding' code for simple Mode
 - Added edit modes for changes of multiple 'FX' and 'Texture' properties of fan(s)

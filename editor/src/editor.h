@@ -108,11 +108,11 @@ typedef struct {
 
 typedef struct {
 
-    int pt[3];              /* Point x / y / z                  */
-    unsigned char a;        /* Ambient lighting                 */
-    unsigned char l;        /* Light intensity (not used yet)   */
+    float x, x, z;          /* Vertex x / y / z                     */           
+    unsigned char a;        /* Ambient lighting                     */
+    unsigned char l;        /* Light intensity (used for drawing)   */
 
-} MESH_VTXI_T;              /* Planned for later adjustement how to store vertices */
+} MESH_VTX_T;              /* Planned for later adjustement how to store vertices */
 
 typedef struct {
 

@@ -1041,12 +1041,31 @@ COMMAND_T *editdrawInitData(void)
  	
         for (cnt = 0; cnt < (mcmd -> numvertices * 2); cnt += 2) {
 
-         	mcmd -> uv[cnt]     = ((.6/32)+(mcmd -> uv[cnt]*30.8/32))/8;
-         	mcmd -> uv[cnt + 1] = ((.6/32)+(mcmd -> uv[cnt + 1]*30.8/32))/8;
-         	/* Do for big tiles too */
-         	mcmd -> biguv[cnt]     = ((.6/64)+(mcmd -> biguv[cnt]*62.8/64))/4;
-         	mcmd -> biguv[cnt + 1] = ((.6/64)+(mcmd -> biguv[cnt + 1]*62.8/64))/4;
-            /* FIXME: Adjust the texture offsets by +/- 0.001 */
+            if (mcmd -> uv[cnt] == 0.00) {
+                mcmd -> uv[cnt]    = 0.001;
+                mcmd -> biguv[cnt] = 0.001; 
+            }
+            else if (mcmd -> uv[cnt] == 1.00) {
+                mcmd -> uv[cnt]    = 0.124;
+                mcmd -> biguv[cnt] = 0.249;
+            }
+            else {
+                mcmd -> uv[cnt]    *= 0.125; 
+                mcmd -> biguv[cnt] *= 0.250;
+            }  
+            /* Do it for the 'V' measure, too */    
+            if (mcmd -> uv[cnt + 1] == 0.00) {
+                mcmd -> uv[cnt + 1]    = 0.001;
+                mcmd -> biguv[cnt + 1] = 0.001; 
+            }
+            else if (mcmd -> uv[cnt + 1] == 1.00) {
+                mcmd -> uv[cnt + 1]    = 0.124;
+                mcmd -> biguv[cnt + 1] = 0.249;
+            }
+            else {
+                mcmd -> uv[cnt + 1]    *= 0.125;
+                mcmd -> biguv[cnt + 1] *= 0.250;    
+            }  
      	
      	}
      	
