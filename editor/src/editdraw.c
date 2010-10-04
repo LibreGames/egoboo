@@ -1041,32 +1041,11 @@ COMMAND_T *editdrawInitData(void)
  	
         for (cnt = 0; cnt < (mcmd -> numvertices * 2); cnt += 2) {
 
-            if (mcmd -> uv[cnt] == 0.00) {
-                mcmd -> uv[cnt]    = 0.001;
-                mcmd -> biguv[cnt] = 0.001; 
-            }
-            else if (mcmd -> uv[cnt] == 1.00) {
-                mcmd -> uv[cnt]    = 0.124;
-                mcmd -> biguv[cnt] = 0.249;
-            }
-            else {
-                mcmd -> uv[cnt]    *= 0.125; 
-                mcmd -> biguv[cnt] *= 0.250;
-            }  
-            /* Do it for the 'V' measure, too */    
-            if (mcmd -> uv[cnt + 1] == 0.00) {
-                mcmd -> uv[cnt + 1]    = 0.001;
-                mcmd -> biguv[cnt + 1] = 0.001; 
-            }
-            else if (mcmd -> uv[cnt + 1] == 1.00) {
-                mcmd -> uv[cnt + 1]    = 0.124;
-                mcmd -> biguv[cnt + 1] = 0.249;
-            }
-            else {
-                mcmd -> uv[cnt + 1]    *= 0.125;
-                mcmd -> biguv[cnt + 1] *= 0.250;    
-            }  
-     	
+            mcmd -> uv[cnt]        *= 0.125;
+            mcmd -> uv[cnt + 1]    *= 0.125;
+            mcmd -> biguv[cnt]     *= 0.250;
+            mcmd -> biguv[cnt + 1] *= 0.250;                     
+                 	
      	}
      	
      	mcmd++;
@@ -1077,8 +1056,8 @@ COMMAND_T *editdrawInitData(void)
     for (entry = 0; entry < (EDITDRAW_MAXWALLSUBTEX * 2); entry += 2) {
 
         // Make tile texture offsets
-        MeshTileOffUV[entry]     = (((entry / 2) & 7) * 0.125) + 0.001;
-        MeshTileOffUV[entry + 1] = (((entry / 2) / 8) * 0.125) + 0.001;
+        MeshTileOffUV[entry]     = (((entry / 2) & 7) * 0.125);
+        MeshTileOffUV[entry + 1] = (((entry / 2) / 8) * 0.125);
 
     }
 

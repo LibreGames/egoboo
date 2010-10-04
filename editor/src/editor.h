@@ -108,7 +108,7 @@ typedef struct {
 
 typedef struct {
 
-    float x, x, z;          /* Vertex x / y / z                     */           
+    float x, y, z;          /* Vertex x / y / z                     */           
     unsigned char a;        /* Ambient lighting                     */
     unsigned char l;        /* Light intensity (used for drawing)   */
 
