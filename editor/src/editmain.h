@@ -36,7 +36,7 @@
 *******************************************************************************/
 
 #define EDITMAIN_DRAWMAP     0
-#define EDITMAIN_NEWSOLIDMAP 2
+#define EDITMAIN_NEWMAP      2
 #define EDITMAIN_LOADMAP     3
 #define EDITMAIN_SAVEMAP     4
 #define EDITMAIN_ROTFAN      5      /* Rotates the actual chosen fan if browsing        */ 
@@ -134,7 +134,8 @@ void editmainExit(void);
 int  editmainMap(int command, int info);
 void editmainDrawMap2D(int x, int y);
 char editmainToggleFlag(int which, unsigned char flag);
-void editmainChooseFan(int cx, int cy, int w, int h, int is_floor);
+void editmainChooseFan(int cx, int cy, int is_floor);
+void editmainChooseFanExt(int cx, int cy, int cw, int ch, int is_floor);
 char *editmainFanTypeName(int type_no);
 void editmainChooseFanType(int dir, char *fan_name);
 void editmain2DTex(int x, int y, int w, int h);

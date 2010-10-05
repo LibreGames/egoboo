@@ -50,22 +50,22 @@
 
 /* Menu commands -- Don't collid with 3D-Commands */
 #define EDITOR_FILE     ((char)101)
-#define EDITOR_MAP      ((char)102)
-#define EDITOR_FANFX    ((char)103)
-#define EDITOR_TOOLS    ((char)104)         /* Tools for the map    */
-#define EDITOR_SETTINGS ((char)105)
-#define EDITOR_2DMAP    ((char)106)         /* Displayed map */
-#define EDITOR_FANTEX   ((char)107)
-#define EDITOR_FANDLG   ((char)108)         /* Result of fan dialog         */
-#define EDITOR_CAMERA   ((char)109)         /* Movement of camera           */
-#define EDITOR_MAPDLG   ((char)110)         /* Settings for new map         */
-#define EDITOR_FANPROPERTY  ((char)111)     /* Properties of chosen fan(s)  */
-#define EDITOR_SHOWMAP      ((char)112)
+#define EDITOR_FANFX    ((char)102)
+#define EDITOR_TOOLS    ((char)103)         /* Tools for the map    */
+#define EDITOR_SETTINGS ((char)104)
+#define EDITOR_2DMAP    ((char)105)         /* Displayed map */
+#define EDITOR_FANTEX   ((char)106)
+#define EDITOR_FANDLG   ((char)107)         /* Result of fan dialog         */
+#define EDITOR_CAMERA   ((char)108)         /* Movement of camera           */
+#define EDITOR_MAPDLG   ((char)109)         /* Settings for new map         */
+#define EDITOR_FANPROPERTY  ((char)110)     /* Properties of chosen fan(s)  */
+#define EDITOR_SHOWMAP      ((char)111)
 
 /* Sub-Commands */
 #define EDITOR_FILE_LOAD  ((char)1)
 #define EDITOR_FILE_SAVE  ((char)2)
-#define EDITOR_FILE_EXIT  ((char)3)
+#define EDITOR_FILE_NEW   ((char)3) 
+#define EDITOR_FILE_EXIT  ((char)4)
 
 #define EDITOR_2DMAP_CHOOSEFAN  ((char)1)
 #define EDITOR_2DMAP_FANINFO    ((char)2)
@@ -89,8 +89,6 @@
 #define EDITOR_MAPDLG_OK        ((char)6)
 
 #define EDITOR_TOOL_TILE        ((char)1)
-
-#define EDITOR_MAP_TOGGLEVIEW   ((char)10)
 
 /* ------- Drawing types ----- */
 #define EDITOR_DRAW2DMAP    ((char)SDLGL_TYPE_MENU + 10)
@@ -172,9 +170,8 @@ static SDLGL_FIELD MainMenu[EDITOR_MAXFLD + 2] = {
     /* 'Code' needed in menu-background' for support of 'mouse-over'    */
     { SDLGL_TYPE_STD,   {   0, 0, 800, 16 }, -1 },           /* Menu-Background  */
     { SDLGL_TYPE_MENU,  {   4, 4, 32, 8 }, EDITOR_FILE,     0, "File" },
-    { SDLGL_TYPE_MENU,  {  44, 4, 24, 8 }, EDITOR_MAP,      0, "Map" },
-    { SDLGL_TYPE_MENU,  {  76, 4, 64, 8 }, EDITOR_SETTINGS, 0, "Settings" },
-    { SDLGL_TYPE_MENU,  { 148, 4, 32, 8 }, EDITOR_TOOLS,    0, "Tools" },
+    { SDLGL_TYPE_MENU,  {  44, 4, 64, 8 }, EDITOR_SETTINGS, 0, "Settings" },
+    { SDLGL_TYPE_MENU,  { 116, 4, 40, 8 }, EDITOR_TOOLS,    0, "Tools" },
     { 0 }
 
 };
@@ -182,13 +179,11 @@ static SDLGL_FIELD MainMenu[EDITOR_MAXFLD + 2] = {
 /* ------ Sub-Menus ------- */
 static SDLGL_FIELD SubMenu[] = {
     /* File-Menu */
-    { SDLGL_TYPE_STD,  {   0, 16, 72, 56 }, EDITOR_FILE, -1 },  /* Menu-Background */
+    { SDLGL_TYPE_STD,  {   0, 16, 88, 72 }, EDITOR_FILE, -1 },  /* Menu-Background */
     { SDLGL_TYPE_MENU, {   4, 20, 64,  8 }, EDITOR_FILE, EDITOR_FILE_LOAD, "Load..." },
     { SDLGL_TYPE_MENU, {   4, 36, 64,  8 }, EDITOR_FILE, EDITOR_FILE_SAVE, "Save" },
-    { SDLGL_TYPE_MENU, {   4, 52, 64,  8 }, EDITOR_FILE, EDITOR_FILE_EXIT, "Exit" },
-    /* Map-Menu */
-    { SDLGL_TYPE_STD,  {  40, 16, 80, 24 }, EDITOR_MAP, -1 },   /* Menu-Background */
-    { SDLGL_TYPE_MENU, {  44, 20, 72,  8 }, EDITOR_MAP, EDITMAIN_NEWSOLIDMAP,  "New" },
+    { SDLGL_TYPE_MENU, {   4, 52, 64,  8 }, EDITOR_FILE, EDITOR_FILE_NEW, "New..." },
+    { SDLGL_TYPE_MENU, {   4, 68, 64,  8 }, EDITOR_FILE, EDITOR_FILE_EXIT, "Exit" },   
     /* Settings menu for view */
     { SDLGL_TYPE_STD,  {  68, 16, 136, 56 }, EDITOR_SETTINGS, -1 },   /* Menu-Background */
     { SDLGL_TYPE_MENU, {  72, 20, 128,  8 }, EDITOR_SETTINGS, EDIT_MODE_SOLID,    "[ ] Draw Solid" },
@@ -224,9 +219,8 @@ static SDLGL_FIELD FanInfoDlg[] = {
 };
 
 /* Prepared dialog for setting values for maps */
-static SDLGL_FIELD MapInfoDlg[] = {
+static SDLGL_FIELD MapDlg[] = {
     { SDLGL_TYPE_BUTTON,   {   0,  16, 240, 112 }, 0, 0, "New Map" },
-    { SDLGL_TYPE_CHECKBOX, {   8,  40,  40,   8 }, EDITOR_MAPDLG, EDITOR_MAPDLG_SOLID, "Solid" },
     { SDLGL_TYPE_EDIT,     {   8,  72,  40,  16 }, EDITOR_MAPDLG, 0, "Size" },
     { SDLGL_TYPE_SLI_AL,   {   8,  72,  16,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_DECSIZE },
     { SDLGL_TYPE_SLI_AR,   { 120,  72,  16,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_INCSIZE },
@@ -340,9 +334,9 @@ static void editorSetToggleChar(unsigned char is_set, char *name)
  */
 static void editorSetMenuViewToggle(void)
 {
-    editorSetToggleChar((char)(pEditState -> draw_mode & EDIT_MODE_SOLID), SubMenu[7].pdata);
-    editorSetToggleChar((char)(pEditState -> draw_mode & EDIT_MODE_TEXTURED), SubMenu[7 + 1].pdata);
-    editorSetToggleChar((char)(pEditState -> draw_mode & EDIT_MODE_LIGHTMAX), SubMenu[7 + 2].pdata);
+    editorSetToggleChar((char)(pEditState -> draw_mode & EDIT_MODE_SOLID), SubMenu[6].pdata);
+    editorSetToggleChar((char)(pEditState -> draw_mode & EDIT_MODE_TEXTURED), SubMenu[6 + 1].pdata);
+    editorSetToggleChar((char)(pEditState -> draw_mode & EDIT_MODE_LIGHTMAX), SubMenu[6 + 2].pdata);
 }
 
 /*
@@ -356,28 +350,36 @@ static void editorSetMenuViewToggle(void)
 static void editor2DMap(SDLGL_EVENT *event)
 {
 
-    SDLGL_FIELD *field;
     int is_floor;
 
 
     switch(event -> sub_code) {
 
         case EDITOR_2DMAP_CHOOSEFAN:
-            field = event -> field;
-            
             is_floor = -1;
-            
             if (event -> sdlcode == SDLGL_KEY_MOULEFT) {
                 is_floor = 0; 
             }    
             else if (event -> sdlcode == SDLGL_KEY_MOURIGHT) {
                 is_floor = 1;
             }
-            
+            /* TODO: Chose dragging mouse */
+            /* 
+            else if (event -> sdlcode == SDLGL_KEY_MOULDRAG) { 
+                is_floor = 0; 
+                editmainChooseFanExt(event -> mou.x, event -> mou.y,
+                                     event -> mou.w, event -> mou.h, 1);
+            }
+            else if (event -> sdlcode == SDLGL_KEY_MOURDRAG)  {
+                is_floor = 1;        /* Flag for 'ext'
+                editmainChooseFanExt(event -> mou.x, event -> mou.y,
+                                     event -> mou.w, event -> mou.h, 1);
+            }
+            */
             if (is_floor >= 0) {            
-                editmainChooseFan(event -> mou.x, event -> mou.y,
-                                  field -> rect.w, field -> rect.h, is_floor);
-            }               
+                editmainChooseFan(event -> mou.x, event -> mou.y, is_floor);
+            }    
+            /*  /  */        
             break;
         case EDITOR_2DMAP_FANINFO:
             if (event -> pressed) {
@@ -416,6 +418,9 @@ static void editor2DMap(SDLGL_EVENT *event)
 static int editorFileMenu(char which)
 {
 
+    int edit_mode;
+
+
     switch(which) {
         case EDITOR_FILE_LOAD:
             editmainMap(EDITMAIN_LOADMAP, 0);
@@ -425,6 +430,31 @@ static int editorFileMenu(char which)
             editmainMap(EDITMAIN_SAVEMAP, 0);
             break;
 
+        case EDITOR_FILE_NEW:
+            /* TODO: Open Dialog for map size */
+            /*
+            if (Map2DState & event -> sub_code) {
+                sdlglInputAdd(EDITOR_MAPDLG, MapDlg, 20, 20);
+            }
+            else {
+                sdlglInputRemove(EDITOR_FANDLG);
+            }
+            */
+            if (! editmainMap(EDITMAIN_NEWMAP, 0)) {
+                /* TODO: Display message, what has gone wrong   */
+                /* TODO: Close menu, if menu-point is chosen    */
+            }
+            else {
+                /* Do additional actions */
+                editmainChooseFan(1, 1, 0);
+                Map2DState |= EDITOR_2DMAP_FANINFO;
+                sdlglInputAdd(EDITOR_FANDLG, FanInfoDlg, 20, 20);
+                /* Type of edit: 'No Edit', 'Simple Edit', 'Free Edit' */
+                edit_mode = editmainToggleFlag(EDITMAIN_TOGGLE_EDITSTATE, 1);
+                sprintf(EditTypeStr, "%s", EditTypeNames[edit_mode]);
+            }
+            break;
+            
         case EDITOR_FILE_EXIT:
             return SDLGL_INPUT_EXIT;
 
@@ -627,7 +657,6 @@ static int editorInputHandler(SDLGL_EVENT *event)
 {
 
     SDLGL_FIELD *field;
-    char edit_mode;
 
     
     if (event -> code > 0) {
@@ -650,22 +679,6 @@ static int editorInputHandler(SDLGL_EVENT *event)
             case EDITOR_FILE:
                 return editorFileMenu(event -> sub_code);
                 
-            case EDITOR_MAP:
-                if (! editmainMap(event -> sub_code, 0)) {
-                    /* TODO: Display message, what has gone wrong   */
-                    /* TODO: Close menu, if menu-point is chosen    */
-                }
-                else {
-                    /* Do additional actions */
-                    editmainChooseFan(1, 1, 256, 256, 0);
-                    Map2DState |= EDITOR_2DMAP_FANINFO;
-                    sdlglInputAdd(EDITOR_FANDLG, FanInfoDlg, 20, 20);
-                    /* Type of edit: 'No Edit', 'Simple Edit', 'Free Edit' */
-                    edit_mode = editmainToggleFlag(EDITMAIN_TOGGLE_EDITSTATE, 1);
-                    sprintf(EditTypeStr, "%s", EditTypeNames[edit_mode]);
-                }
-                break;
-
             case EDITOR_SHOWMAP:
                 pEditState -> display_flags ^= EDITMAIN_SHOW2DMAP;
                 break;

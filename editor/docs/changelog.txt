@@ -1,3 +1,9 @@
+2010-10-05 <bitnapper>
+- Moved 'New Map' to 'File'-Menu
+- Added function for choosing/setting multiple tiles
+- Adjusted patterns for setting wall
+- Prepared editor code for choosing multiple tiles
+
 2010-10-04 <bitnapper>
 - 'Weld'-Code is OK. 
 - The generated texture values for the 'Inner Edge' are not correct :(

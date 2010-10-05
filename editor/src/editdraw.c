@@ -1052,12 +1052,12 @@ COMMAND_T *editdrawInitData(void)
  	
  	}     
 
-    // Make tile texture offsets
-    for (entry = 0; entry < (EDITDRAW_MAXWALLSUBTEX * 2); entry += 2) {
+    // Make tile texture start offsets
+     for (entry = 0; entry < (EDITDRAW_MAXWALLSUBTEX * 2); entry += 2) {
 
         // Make tile texture offsets
-        MeshTileOffUV[entry]     = (((entry / 2) & 7) * 0.125);
-        MeshTileOffUV[entry + 1] = (((entry / 2) / 8) * 0.125);
+        MeshTileOffUV[entry]     = (((entry / 2) & 7) * 0.1257);    /* 0.1255 */
+        MeshTileOffUV[entry + 1] = (((entry / 2) / 8) * 0.1257);    /* 0.1255 */
 
     }
 

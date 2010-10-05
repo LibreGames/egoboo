@@ -54,43 +54,23 @@ typedef struct {
 * DATA							                                               *
 *******************************************************************************/
 
-/* Patterns for case wall is in set: For each adjacent tile 3 patterns */
-static WALLMAKE_PATTERN_T PatternsW[WALLMAKE_NUMPATTERN_WALL] = {
-    /* Patterns for adjacent walls, if wall is set at center, special handling  */
-    /* --- 0 -- */
-    { 0x83, 0x01, WALLMAKE_WALL,  WALLMAKE_NORTH },
-    /* --- 1 -- */
-    { 0x07, 0x07, WALLMAKE_EDGEO, WALLMAKE_NORTH }, /* 'EDGEO' and direction are info for handling */
-    /* --- 2 -- */
-    { 0x0E, 0x0E, WALLMAKE_WALL,  WALLMAKE_EAST },
-    /* --- 3 -- */
-    { 0x1C, 0x1C, WALLMAKE_EDGEO, WALLMAKE_EAST }, 
-    /* --- 4 -- */
-    { 0x38, 0x38, WALLMAKE_WALL,  WALLMAKE_SOUTH },
-    /* --- 5 -- */
-    { 0x70, 0x70, WALLMAKE_EDGEO, WALLMAKE_SOUTH }, 
-    /* --- 6 -- */
-    { 0xE0, 0xE0, WALLMAKE_WALL,  WALLMAKE_WEST  }, 
-    /* --- 7 -- */
-    { 0xC1, 0xC1, WALLMAKE_EDGEO, WALLMAKE_WEST  } 
-   
-};
-
-static WALLMAKE_PATTERN_T PatternsMW[WALLMAKE_NUMPATTERN_MIDWALL] = {
+static WALLMAKE_PATTERN_T PatternsW[WALLMAKE_NUMPATTERN_MIDWALL] = {
     /* Patterns for adjustment of tile type wall, if wall is set at center  */
     { 0xFF, 0xFF, WALLMAKE_TOP,   WALLMAKE_NORTH },
-    { 0x83, 0x00, WALLMAKE_WALL,  WALLMAKE_NORTH },    
-    { 0x07, 0x00, WALLMAKE_EDGEO, WALLMAKE_NORTH }, 
-    { 0x07, 0x05, WALLMAKE_EDGEI, WALLMAKE_WEST },
-    { 0x0E, 0x00, WALLMAKE_WALL,  WALLMAKE_EAST },
-    { 0x1C, 0x00, WALLMAKE_EDGEO, WALLMAKE_EAST },
-    { 0x1C, 0x14, WALLMAKE_EDGEI, WALLMAKE_NORTH }, 
-    { 0x38, 0x00, WALLMAKE_WALL,  WALLMAKE_SOUTH }, 
-    { 0x70, 0x00, WALLMAKE_EDGEO, WALLMAKE_SOUTH },     
-    { 0x70, 0x50, WALLMAKE_EDGEI, WALLMAKE_EAST },
-    { 0xE0, 0x00, WALLMAKE_WALL,  WALLMAKE_WEST },
-    { 0xC1, 0x00, WALLMAKE_EDGEO, WALLMAKE_WEST },
-    { 0xC1, 0x41, WALLMAKE_EDGEI, WALLMAKE_SOUTH }
+    /* Single 'open' tile */
+    { 0xFF, 0x7F, WALLMAKE_WALL,  WALLMAKE_NORTH },  
+    { 0xFF, 0xBF, WALLMAKE_EDGEI, WALLMAKE_WEST },
+    { 0xFF, 0xDF, WALLMAKE_WALL,  WALLMAKE_EAST},  
+    { 0xFF, 0xEF, WALLMAKE_EDGEI, WALLMAKE_NORTH }, 
+    { 0xFF, 0xF7, WALLMAKE_WALL,  WALLMAKE_SOUTH },  
+    { 0xFF, 0xFB, WALLMAKE_EDGEI, WALLMAKE_EAST },
+    { 0xFF, 0xFD, WALLMAKE_WALL,  WALLMAKE_WEST },   
+    { 0xFF, 0xFE, WALLMAKE_EDGEI, WALLMAKE_SOUTH },
+    /* Edge open tile */  
+    { 0x05, 0x00, WALLMAKE_EDGEO, WALLMAKE_NORTH }, 
+    { 0x14, 0x00, WALLMAKE_EDGEO, WALLMAKE_EAST },   
+    { 0x50, 0x00, WALLMAKE_EDGEO, WALLMAKE_SOUTH }, 
+    { 0x41, 0x00, WALLMAKE_EDGEO, WALLMAKE_WEST } 
 };
 
 /* Patterns for case floor is in set: For each adjacent tile 3 patterns */
@@ -191,10 +171,10 @@ static void wallmakeWall(char pattern, WALLMAKER_INFO_T *wi)
     /* Adjust center wall based on given 'pattern' */
     for (i = 0; i < WALLMAKE_NUMPATTERN_MIDWALL; i++) {
 
-        if ((pattern & PatternsMW[i].mask) == PatternsMW[i].comp) {
+        if ((pattern & PatternsW[i].mask) == PatternsW[i].comp) {
 
-            wi[0].type = PatternsMW[i].type;
-            wi[0].dir  = PatternsMW[i].dir;
+            wi[0].type = PatternsW[i].type;
+            wi[0].dir  = PatternsW[i].dir;
             break;
         }
 

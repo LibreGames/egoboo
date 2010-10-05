@@ -1068,7 +1068,7 @@ int editmainMap(int command, int info)
                            SpawnFan);
             return 1;
 
-        case EDITMAIN_NEWSOLIDMAP:
+        case EDITMAIN_NEWMAP:
             if (editmainCreateNewMap(&Mesh)) {
 
                 editmainCompleteMapData(&Mesh);
@@ -1237,12 +1237,12 @@ char editmainToggleFlag(int which, unsigned char flag)
  *     Choose a fan from given position in rectangle of size w/h.
  *     Does an update on the 'EditState'.
  *     Fills info about chosen fan into Edit-State, depending on Edit-State
+ *     Uses 'minimap_w' and 'minimap_h' for choosing the value
  * Input:
  *     cx, cy:   Position chosen
- *     w, h:     Extent of rectangle
  *     is_floor: Sets a fan, depending on 'EditState.edit_mode'
  */
-void editmainChooseFan(int cx, int cy, int w, int h, int is_floor)
+void editmainChooseFan(int cx, int cy, int is_floor)
 {
 
     int fan_no;
@@ -1257,13 +1257,21 @@ void editmainChooseFan(int cx, int cy, int w, int h, int is_floor)
         return;
     }
     
+    /* TODO: If already multiple fans selected, do an update on given fan, depending on Edit-State */
+    /* 
+        if (EditState.fan_selected[1] >= 0) {
+            editmainFanSet(is_floor); 
+            EditState.fan_selected[1] = -1;
+        }
+    */
+    
     /* ------------------------- */
     old_tx = EditState.tx;
     old_ty = EditState.ty;
 
     /* Save it as x/y-position, too */
-    tw = w / Mesh.tiles_x;      /* Calculate rectangle size for mouse */
-    th = h / Mesh.tiles_x;
+    tw = Mesh.minimap_w / Mesh.tiles_x;      /* Calculate rectangle size for mouse */
+    th = Mesh.minimap_h / Mesh.tiles_y;
     EditState.tx = cx / tw;
     EditState.ty = cy / th;
 
@@ -1296,6 +1304,61 @@ void editmainChooseFan(int cx, int cy, int w, int h, int is_floor)
 
     }
 
+}
+
+/*
+ * Name:
+ *     editmainChooseFanExt
+ * Description:
+ *     Choose multiple fans from given position in rectangle of size w/h.
+ *     Does an update on the 'EditState'.
+ *     Fills info about chosen fan into Edit-State, depending on Edit-State
+ *     Uses 'minimap_w' and 'minimap_h' for choosing the value
+ * Input:
+ *     cx, cy:   Position chosen
+ *     cw, ch:   Rectangle chosen in minimap 
+ *     is_floor: Sets a fan, depending on 'EditState.edit_mode'
+ */
+void editmainChooseFanExt(int cx, int cy, int cw, int ch, int is_floor)
+{
+
+    int fan_no;
+    int tw, th;
+    int tx, ty;
+    int lcw;
+    int x, y, i;
+    int num_select;
+    
+    
+    tw = Mesh.minimap_w / Mesh.tiles_x;      /* Calculate rectangle size for mouse */
+    th = Mesh.minimap_h / Mesh.tiles_y;
+    num_select = 0;
+    
+    while(ch > 0) {
+        lcw = cw;
+        while(lcw > 0) {
+            tx = cx / tw;
+            ty = cy / th;
+            if (tx > 0 && tx < (Mesh.tiles_x -1) && ty > 0 && ty < (Mesh.tiles_y -1)) {
+            
+                EditState.fan_selected[num_select] = (ty * Mesh.tiles_x) + tx;
+                num_select++;
+                if (num_select >= EDITMAIN_MAXSELECT) {
+                    EditState.fan_selected[num_select] = -1;    /* Sign end of list */
+                    return;
+                } 
+                
+            }
+            
+            lcw -= tw;
+            cx += th;
+            
+        }
+        
+        ch -= th;
+        cy += th;
+    }
+    
 }
 
 /*

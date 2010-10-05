@@ -167,9 +167,21 @@ typedef unsigned short wchar_t;
 #define SDLGL_INPUT_GETOVER      0x71   /* Field got mouse-over             */     
 #define SDLGL_INPUT_MOUSEMOVE    0x72   /* Mouse moved over input-field     */ 
 #define SDLGL_INPUT_MOUSEDRAG    0x73   /* Mouse dragged over input-field   */ 
-#define SDLGL_INPUT_LOSEFOCUS    0x74
+#define SDLGL_INPUT_LOSEFOCUS    0x74   /* For Edit-Fields                  */
 #define SDLGL_INPUT_GETFOCUS     0x75   
 #define SDLGL_INPUT_CLEANUP      0x7E
+
+/* -- Codes for edit/print SDLGL_TYPE_EDIT / SDLGL_TYPE_STRING (sub_code) --- */
+#define SDLGL_VAL_NONE    ((char)0)
+#define SDLGL_VAL_CHAR    ((char)1)
+#define SDLGL_VAL_UCHAR   ((char)2)
+#define SDLGL_VAL_SHORT   ((char)3)
+#define SDLGL_VAL_USHORT  ((char)4)
+#define SDLGL_VAL_INT     ((char)5)
+#define SDLGL_VAL_UINT    ((char)6)
+#define SDLGL_VAL_FLOAT   ((char)7)
+#define SDLGL_VAL_STRING  ((char)8)
+#define SDLGL_VAL_ONECHAR ((char)9)       /* Edit / print a single char */
                                             
 /*******************************************************************************
 * GLOBAL TYPEDEFS							                                   *
