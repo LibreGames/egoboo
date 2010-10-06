@@ -1,4 +1,10 @@
 2010-10-05 <bitnapper>
+- Adjusted code for choosing multiple fans
+- Adjusted editor code for choose dragging
+- Some more wallmaker code and patterns
+- Choosing and setting multiple floor tiles
+
+2010-10-05 <bitnapper>
 - Moved 'New Map' to 'File'-Menu
 - Added function for choosing/setting multiple tiles
 - Adjusted patterns for setting wall

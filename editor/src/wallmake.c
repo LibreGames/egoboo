@@ -171,7 +171,7 @@ static void wallmakeWall(char pattern, WALLMAKER_INFO_T *wi)
     /* Adjust center wall based on given 'pattern' */
     for (i = 0; i < WALLMAKE_NUMPATTERN_MIDWALL; i++) {
 
-        if ((pattern & PatternsW[i].mask) == PatternsW[i].comp) {
+        if ((pattern & PatternsW[i].mask) == 0) {
 
             wi[0].type = PatternsW[i].type;
             wi[0].dir  = PatternsW[i].dir;
@@ -179,18 +179,7 @@ static void wallmakeWall(char pattern, WALLMAKER_INFO_T *wi)
         }
 
     }
-    
-    wi++;
-
-    for(i = 0; i < 8; i++) {
-
-        /* TODO: Set type depending on actual type in info */
-        /*
-            wi[i].type = pw[j].type;
-            wi[i].dir  = pw[j].dir;
-        */       
-            
-    }
+    /* The surrounding walls have to be set by the caller */
 
 }
 
@@ -216,7 +205,9 @@ static void wallmakeWall(char pattern, WALLMAKER_INFO_T *wi)
  *     This is used for the pattern recognition 
  * Input:
  *     is_floor: True: Set a floor, otherwie create a wall
- *     wi *:     List of adjacent tiles[1..8], 0: Has to be the middle tile 
+ *     wi *:     List of adjacent tiles[1..8], 0: Has to be the middle tile
+ * Output:
+ *     Number of walss to generate in list
  */
 int wallmakeMakeTile(int is_floor, WALLMAKER_INFO_T *wi)
 {
@@ -242,11 +233,11 @@ int wallmakeMakeTile(int is_floor, WALLMAKER_INFO_T *wi)
             /* No change at all */
             return 0;
         }
-        
+
         wi[0].type = WALLMAKE_TOP;    /* Set a 'top' tile for start, if wall */
 
     }
- 
+
 
     pattern = 0;
     for (dir = 1, flag = 0x01; dir < 9; dir++, flag <<= 0x01) {
@@ -260,14 +251,14 @@ int wallmakeMakeTile(int is_floor, WALLMAKER_INFO_T *wi)
 
         /* Handle creating floor */
         wallmakeFloor(pattern, &wi[1]);
+        return 9;
 
     }
     else {
 
         /* Handle creating a wall, center position needed for adjustment */
         wallmakeWall(pattern, wi);
+        return 1;           /* Only middle one is adjusted */
     }
-    
-    return 1;
 
 }

@@ -761,10 +761,11 @@ static void editmainCreateWallMakeInfo(MESH_T *mesh, int fan, WALLMAKER_INFO_T *
  * Description:
  *     Translates the given wallmaker info into fans on map 
  * Input:
- *     mesh*: Pointer on mesh to get the info from
- *     wi *:  Array from wallmaker to create walls from
+ *     mesh*:    Pointer on mesh to get the info from
+ *     wi *:     Array from wallmaker to create walls from
+ *     num_tile: Number of tiles to generate
  */
-static void editmainTranslateWallMakeInfo(MESH_T *mesh, WALLMAKER_INFO_T *wi)
+static void editmainTranslateWallMakeInfo(MESH_T *mesh, WALLMAKER_INFO_T *wi, int num_tile)
 {
 
     int i, i2;
@@ -772,7 +773,7 @@ static void editmainTranslateWallMakeInfo(MESH_T *mesh, WALLMAKER_INFO_T *wi)
 	int tx, ty;
 
 
-    for (i = 0; i < 9; i++) {
+    for (i = 0; i < num_tile; i++) {
 
         if (wi[i].fan_no >= 0) {
         
@@ -801,7 +802,7 @@ static void editmainTranslateWallMakeInfo(MESH_T *mesh, WALLMAKER_INFO_T *wi)
     }
 
     /* Weld the new generated walls to middle tile */
-    for (i = 1; i < 9; i++) {
+    for (i = 1; i < num_tile; i++) {
         editmainWeldXY(mesh, wi[0].fan_no,  wi[i].fan_no);
 
     }
@@ -814,12 +815,10 @@ static void editmainTranslateWallMakeInfo(MESH_T *mesh, WALLMAKER_INFO_T *wi)
         }
         /* Only weld if both tiles are walls */
         if (wi[i].type > 1 && wi[i2].type > 1) {
-            editmainWeldXY(mesh, wi[i].fan_no,  wi[i2].fan_no);
+            editmainWeldXY(mesh, wi[i].fan_no, wi[i2].fan_no);
         }
 
     }
-
-
 
 }
 
@@ -943,16 +942,15 @@ static int editmainChooseSpawnPos(int dir)
  *     Does an update on given fan. Including changed number of vertices,
  *     if needed.
  * Input:
- *     is_floor:   Set floor in simple mode, else set wall
+ *     fan_no:   Set this fan
+ *     is_floor: Set floor in simple mode, else set wall
  */
-static int editmainFanSet(int is_floor)
+static int editmainFanSet(int fan_no, int is_floor)
 {
 
     WALLMAKER_INFO_T wi[12];            /* List of fans to create */
-    int fan_no;
+    int num_wall;
 
-
-    fan_no = EditState.fan_selected[0];
 
     if (fan_no >= 0) {
 
@@ -970,9 +968,10 @@ static int editmainFanSet(int is_floor)
                 /* Get a list of fans surrounding this one */
                 editmainCreateWallMakeInfo(&Mesh, fan_no, wi);
 
-                if (wallmakeMakeTile(is_floor, wi)) {
+                num_wall = wallmakeMakeTile(is_floor, wi);
+                if (num_wall) {
                     /* Create tiles from WALLMAKER_INFO_T */
-                    editmainTranslateWallMakeInfo(&Mesh, wi);
+                    editmainTranslateWallMakeInfo(&Mesh, wi, num_wall);
                     EditState.fd.numvertices = 0;
                     return 1;
                 }
@@ -1011,8 +1010,9 @@ EDITMAIN_STATE_T *editmainInit(int map_size, int minimap_w, int minimap_h)
     memset(&EditState, 0, sizeof(EDITMAIN_STATE_T));
 
     EditState.display_flags   |= EDITMAIN_SHOW2DMAP;
-    EditState.fan_selected[0] = -1;   /* No fan chosen                        */
-    EditState.ft.type         = -1;   /* No fan-type chosen                   */    
+    EditState.fan_selected[0] = -1;   /* No fan chosen          */
+    EditState.fan_selected[0] = -1;   /* No multiple fan chosen */
+    EditState.ft.type         = -1;   /* No fan-type chosen     */
     EditState.map_size        = map_size;
     EditState.minimap_w       = minimap_w;
     EditState.minimap_h       = minimap_h;
@@ -1072,6 +1072,8 @@ int editmainMap(int command, int info)
             if (editmainCreateNewMap(&Mesh)) {
 
                 editmainCompleteMapData(&Mesh);
+                /* Maybe initialize here the  chosen fan to
+                   none or 0 instead by caller */ 
                 return 1;
 
             }
@@ -1238,6 +1240,7 @@ char editmainToggleFlag(int which, unsigned char flag)
  *     Does an update on the 'EditState'.
  *     Fills info about chosen fan into Edit-State, depending on Edit-State
  *     Uses 'minimap_w' and 'minimap_h' for choosing the value
+ *     Set a an, if 'is_floor' >= 0
  * Input:
  *     cx, cy:   Position chosen
  *     is_floor: Sets a fan, depending on 'EditState.edit_mode'
@@ -1245,26 +1248,29 @@ char editmainToggleFlag(int which, unsigned char flag)
 void editmainChooseFan(int cx, int cy, int is_floor)
 {
 
-    int fan_no;
+    int fan_no, *pfan;
     int tw, th;
     int x, y, i;
     int old_tx, old_ty;
 
-    
+
     if (! EditState.display_flags & EDITMAIN_SHOW2DMAP) {
         EditState.fd.numvertices = 0;
         /* Map not visible, invalid command */
         return;
     }
-    
-    /* TODO: If already multiple fans selected, do an update on given fan, depending on Edit-State */
-    /* 
-        if (EditState.fan_selected[1] >= 0) {
-            editmainFanSet(is_floor); 
-            EditState.fan_selected[1] = -1;
+
+    /* ------- Set  multiple tiles, if more the one is chosen --------- */
+    if (EditState.fan_selected[0] >= 0 && EditState.fan_selected[1] >= 0) {
+        pfan = EditState.fan_selected;
+        while(*pfan >= 0) {
+            editmainFanSet(*pfan, is_floor);
+            pfan++;
         }
-    */
-    
+        EditState.fan_selected[1] = -1;
+        /* Reset number of chosen fan, because it's done */
+        return;
+    }
     /* ------------------------- */
     old_tx = EditState.tx;
     old_ty = EditState.ty;
@@ -1281,7 +1287,7 @@ void editmainChooseFan(int cx, int cy, int is_floor)
 
         EditState.fan_selected[0] = fan_no;
         EditState.fan_selected[1] = -1;
-        
+
         /* Get the info about the chosen fan */
         memcpy(&EditState.ft, &Mesh.fan[fan_no], sizeof(FANDATA_T));
 
@@ -1297,10 +1303,12 @@ void editmainChooseFan(int cx, int cy, int is_floor)
 
         }
 
-        editmainFanSet(is_floor);
+        if (is_floor >= 0) {
+            editmainFanSet(fan_no, is_floor);
+        }
 
         /* And now set camera to move/look at this position */
-        editdrawAdjustCamera(EditState.tx, EditState.ty);         
+        editdrawAdjustCamera(EditState.tx, EditState.ty);
 
     }
 
@@ -1314,51 +1322,54 @@ void editmainChooseFan(int cx, int cy, int is_floor)
  *     Does an update on the 'EditState'.
  *     Fills info about chosen fan into Edit-State, depending on Edit-State
  *     Uses 'minimap_w' and 'minimap_h' for choosing the value
+ *     What is set is 'triggered' on release of mouse (editmainChooseFan)
  * Input:
  *     cx, cy:   Position chosen
- *     cw, ch:   Rectangle chosen in minimap 
- *     is_floor: Sets a fan, depending on 'EditState.edit_mode'
+ *     cw, ch:   Rectangle chosen in minimap
  */
-void editmainChooseFanExt(int cx, int cy, int cw, int ch, int is_floor)
+void editmainChooseFanExt(int cx, int cy, int cw, int ch)
 {
 
-    int fan_no;
     int tw, th;
-    int tx, ty;
-    int lcw;
-    int x, y, i;
+    int tx1, ty1, tx2, ty2;
+    int ltx;
     int num_select;
-    
-    
+
+
     tw = Mesh.minimap_w / Mesh.tiles_x;      /* Calculate rectangle size for mouse */
     th = Mesh.minimap_h / Mesh.tiles_y;
+
+    tx1 = cx / tw;
+    ty1 = cy / th;
+    tx2 = (cx + cw) / tw;
+    ty2 = (cy + ch) / th;
+
     num_select = 0;
-    
-    while(ch > 0) {
-        lcw = cw;
-        while(lcw > 0) {
-            tx = cx / tw;
-            ty = cy / th;
-            if (tx > 0 && tx < (Mesh.tiles_x -1) && ty > 0 && ty < (Mesh.tiles_y -1)) {
-            
-                EditState.fan_selected[num_select] = (ty * Mesh.tiles_x) + tx;
-                num_select++;
-                if (num_select >= EDITMAIN_MAXSELECT) {
-                    EditState.fan_selected[num_select] = -1;    /* Sign end of list */
-                    return;
-                } 
-                
-            }
-            
-            lcw -= tw;
-            cx += th;
-            
-        }
-        
-        ch -= th;
-        cy += th;
+
+    while(ty1 < ty2) {
+        if (ty1 > 0 && ty1 < (Mesh.tiles_y -1)) {
+            /* If 'ty' in map */
+            ltx = tx1;
+            while(ltx < tx2) {
+                if (ltx > 0 && ltx < (Mesh.tiles_x - 1) && ty1 > 0 && ty1 < (Mesh.tiles_y - 1)) {
+
+                    EditState.fan_selected[num_select] = (ty1 * Mesh.tiles_x) + ltx;
+                    num_select++;
+                    if (num_select >= EDITMAIN_MAXSELECT) {
+                        EditState.fan_selected[num_select] = -1;    /* Sign end of list */
+                        /* TODO: Do update of fans, depending on EditInfo.edit_state'   */
+                        return;
+                    }
+
+                }
+                ltx++;
+            } /* while(lcx < cx2) */
+        } /* if 'ty' in map */
+        ty1++;
     }
-    
+
+    EditState.fan_selected[num_select] = -1;
+
 }
 
 /*

@@ -98,6 +98,7 @@
 * DATA									                                       *
 *******************************************************************************/
 
+static SDLGL_RECT DragRect;
 /* Map-Size of 8 for test purposes -- 2010-08-19 / bitnapper */
 static int NewMapSize = 8;         /* Inital mapsize for new maps */
 
@@ -350,36 +351,38 @@ static void editorSetMenuViewToggle(void)
 static void editor2DMap(SDLGL_EVENT *event)
 {
 
-    int is_floor;
-
-
     switch(event -> sub_code) {
 
         case EDITOR_2DMAP_CHOOSEFAN:
-            is_floor = -1;
             if (event -> sdlcode == SDLGL_KEY_MOULEFT) {
-                is_floor = 0; 
-            }    
-            else if (event -> sdlcode == SDLGL_KEY_MOURIGHT) {
-                is_floor = 1;
+                DragRect.w = 0;
+                DragRect.h = 0;
+                editmainChooseFan(event -> mou.x, event -> mou.y, 0);
             }
-            /* TODO: Chose dragging mouse */
-            /* 
-            else if (event -> sdlcode == SDLGL_KEY_MOULDRAG) { 
-                is_floor = 0; 
-                editmainChooseFanExt(event -> mou.x, event -> mou.y,
-                                     event -> mou.w, event -> mou.h, 1);
+            else if (event -> sdlcode == SDLGL_KEY_MOURIGHT) {
+                DragRect.w = 0;
+                DragRect.h = 0;
+                editmainChooseFan(event -> mou.x, event -> mou.y, 1);
+            }   /* Choose dragging mouse */
+            else if (event -> sdlcode == SDLGL_KEY_MOULDRAG) {
+                DragRect.w += event -> mou.w;
+                DragRect.h += event -> mou.h;
+                DragRect.x = event -> mou.x - DragRect.w;
+                DragRect.y = event -> mou.y - DragRect.h;
+                editmainChooseFanExt(DragRect.x, DragRect.y,
+                                     DragRect.w, DragRect.h);
             }
             else if (event -> sdlcode == SDLGL_KEY_MOURDRAG)  {
-                is_floor = 1;        /* Flag for 'ext'
-                editmainChooseFanExt(event -> mou.x, event -> mou.y,
-                                     event -> mou.w, event -> mou.h, 1);
+                DragRect.w += event -> mou.w;
+                DragRect.h += event -> mou.h;
+                DragRect.x = event -> mou.x - DragRect.w;
+                DragRect.y = event -> mou.y - DragRect.h;
+                editmainChooseFanExt(DragRect.x, DragRect.y,
+                                     DragRect.w, DragRect.h);
+                sprintf(StatusBar, "Mousedrag: X: %d, Y: %d W: %d. H: %d",
+                                   DragRect.x, DragRect.y,
+                                   DragRect.w, DragRect.h);
             }
-            */
-            if (is_floor >= 0) {            
-                editmainChooseFan(event -> mou.x, event -> mou.y, is_floor);
-            }    
-            /*  /  */        
             break;
         case EDITOR_2DMAP_FANINFO:
             if (event -> pressed) {
@@ -446,7 +449,7 @@ static int editorFileMenu(char which)
             }
             else {
                 /* Do additional actions */
-                editmainChooseFan(1, 1, 0);
+                editmainChooseFan(1, 1, -1);
                 Map2DState |= EDITOR_2DMAP_FANINFO;
                 sdlglInputAdd(EDITOR_FANDLG, FanInfoDlg, 20, 20);
                 /* Type of edit: 'No Edit', 'Simple Edit', 'Free Edit' */

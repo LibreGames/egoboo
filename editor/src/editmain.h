@@ -135,7 +135,7 @@ int  editmainMap(int command, int info);
 void editmainDrawMap2D(int x, int y);
 char editmainToggleFlag(int which, unsigned char flag);
 void editmainChooseFan(int cx, int cy, int is_floor);
-void editmainChooseFanExt(int cx, int cy, int cw, int ch, int is_floor);
+void editmainChooseFanExt(int cx, int cy, int cw, int ch);
 char *editmainFanTypeName(int type_no);
 void editmainChooseFanType(int dir, char *fan_name);
 void editmain2DTex(int x, int y, int w, int h);

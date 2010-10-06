@@ -440,9 +440,8 @@ static int sdlglITranslateKeyboardInput(SDLGL_EVENT *event, char pressed)
  * Input:
  *     event:     Pointer on an inputevent, holding the mouse variables.
  *     inputdesc: Pointer onSDLGL_INPUT's to check for mouse input.
- *     moved:     Mouse moved while input
  */
-static void sdlglITranslateMouseInput(SDLGL_EVENT *event, SDLGL_FIELD *fields, int moved)
+static void sdlglITranslateMouseInput(SDLGL_EVENT *event, SDLGL_FIELD *fields)
 {
 
     static SDLGL_FIELD *MouseArea = DefaultArea; /* Never NULL   */ 
@@ -451,14 +450,14 @@ static void sdlglITranslateMouseInput(SDLGL_EVENT *event, SDLGL_FIELD *fields, i
     SDLGL_FIELD *base;              /* Save base    */
 
 
-    event -> field = 0;             /* Assume none  */       
+    event -> field = 0;             /* Assume none  */
 
     /* Adjust the mouse position to the graphics size of screen */
     event -> mou.x = event -> mou.x * mainConfig.displaywidth / mainConfig.scrwidth;
     event -> mou.y = event -> mou.y * mainConfig.displayheight / mainConfig.scrheight;
     /* Adjust the movement value, too */
-    event -> movex = event -> movex * mainConfig.displaywidth / mainConfig.scrwidth;
-    event -> movey = event -> movey * mainConfig.displayheight / mainConfig.scrheight;
+    event -> mou.w = event -> mou.w * mainConfig.displaywidth / mainConfig.scrwidth;
+    event -> mou.h = event -> mou.h * mainConfig.displayheight / mainConfig.scrheight;
     
     switch(event -> sdlcode) {
 
@@ -475,7 +474,7 @@ static void sdlglITranslateMouseInput(SDLGL_EVENT *event, SDLGL_FIELD *fields, i
             break;
             
         default:
-            event -> sdlcode = 0;
+            /* Is a mouse drag event */
             break;
 
     }
@@ -483,7 +482,7 @@ static void sdlglITranslateMouseInput(SDLGL_EVENT *event, SDLGL_FIELD *fields, i
     base = fields;
 
     if (fields) {
-        
+
         /* Search from top to bottom */
         while (fields -> sdlgl_type != 0) {
 
@@ -494,57 +493,48 @@ static void sdlglITranslateMouseInput(SDLGL_EVENT *event, SDLGL_FIELD *fields, i
         while (fields > base) {
 
             fields--;
-            
-            /* FIXME: Add NEW handling of keyboard based on fields -> sdlgl_type 
+
+            /* FIXME: Add NEW handling of keyboard based on fields -> sdlgl_type
                E.g. SDLGL_TYPE_EDIT + SDLGL_TYPE_DRAG */
 
             /* if the mouse has to be checked */
-            if (fields -> code && mainIPosInRect(fields, event)) {                
+            if (fields -> code && mainIPosInRect(fields, event)) {
 
                 /* Support-flag for tooltips */
                 if (MouseArea != fields) {
-                
+
                     /* Change active mouse-over-area */
                     MouseArea -> fstate &= (unsigned char)(~SDLGL_FSTATE_CLEAR);
-                    MouseArea = fields;              
-                    MouseArea -> fstate |= SDLGL_FSTATE_MOUSEOVER; 
+                    MouseArea = fields;
+                    MouseArea -> fstate |= SDLGL_FSTATE_MOUSEOVER;
                     tooltipticks = 0;
-                    
+
                 }
                 else {
                     /* Same area as last call: Dragged in this Input-Rectangle... */
 
                     tooltipticks += event -> tickspassed;
-                    
+
                     if (tooltipticks >= mainConfig.tooltiptime) {
-                    
-                        MouseArea -> fstate |= SDLGL_FSTATE_TOOLTIP;     
-                    
+
+                        MouseArea -> fstate |= SDLGL_FSTATE_TOOLTIP;
+
                     }
-                    
+
                 }
-                
-                if (event -> pressed) {
-                
-                    switch (event -> sdlcode) {  	        /* button       */
 
-                      	case SDLGL_KEY_MOULEFT:
-                        case SDLGL_KEY_MOURIGHT:
-                            if (FocusArea != fields) {
+                if (event -> pressed && event -> sdlcode) { /* it's an active field */
+
+                    if (FocusArea != fields) {
                                 /* Change focus */
-                                FocusArea -> fstate &= (unsigned char)(~SDLGL_FSTATE_HASFOCUS);
-                                fields -> fstate    |= SDLGL_FSTATE_HASFOCUS;
-                                FocusArea           = fields;
-                            }
-                            event -> field      = fields;	/* Save pointer on actual SDLGL_FIELD */
-                            event -> sdlgl_type = fields -> sdlgl_type;
-                            event -> code       = fields -> code;
-                            event -> sub_code   = fields -> sub_code;
-                            break;
-                        /* Generate no code, if no mouse button is pressed */
-
+                        FocusArea -> fstate &= (unsigned char)(~SDLGL_FSTATE_HASFOCUS);
+                        fields -> fstate    |= SDLGL_FSTATE_HASFOCUS;
+                        FocusArea           = fields;
                     }
-
+                    event -> field      = fields;	/* Save pointer on actual SDLGL_FIELD */
+                    event -> sdlgl_type = fields -> sdlgl_type;
+                    event -> code       = fields -> code;
+                    event -> sub_code   = fields -> sub_code;
                 }
 
                 return; /* Event generated */
@@ -552,7 +542,7 @@ static void sdlglITranslateMouseInput(SDLGL_EVENT *event, SDLGL_FIELD *fields, i
             } /* if in rectangle */
 
         } /* while (fields > base) */
-        
+
         /* Mouse off all fields -- Reset 'mouse-over' */
         MouseArea -> fstate &= (unsigned char)(~SDLGL_FSTATE_CLEAR);
         MouseArea = DefaultArea;
@@ -614,50 +604,49 @@ static int sdlglICheckInput(SDLGL_EVENT *inpevent)
                 	return SDLGL_INPUT_EXIT;
 
                 case SDL_MOUSEMOTION:
-                    inpevent -> mou.x  = event.motion.x;
-                    inpevent -> mou.y  = event.motion.y;
-                    inpevent -> movex  = event.motion.xrel;
-                    inpevent -> movey  = event.motion.yrel;
+                    inpevent -> mou.x = event.motion.x;
+                    inpevent -> mou.y = event.motion.y;
+                    inpevent -> mou.w = event.motion.xrel;
+                    inpevent -> mou.h = event.motion.yrel;
                     /* TODO: Set 'inpevent -> modflags = ' */
                     /* Now translate the input */
                     if (event.motion.state & SDL_BUTTON_LMASK) {
 
                         inpevent -> pressed  = 1;
-                        inpevent -> sdlcode  = SDLGL_KEY_MOULDRAG;                               
+                        inpevent -> sdlcode  = SDLGL_KEY_MOULDRAG;
 
                     }
                     else if (event.motion.state & SDL_BUTTON_RMASK) {
 
                         inpevent -> pressed  = 1;
-                        inpevent -> sdlcode  = SDLGL_KEY_MOURDRAG;    
+                        inpevent -> sdlcode  = SDLGL_KEY_MOURDRAG;
 
                     }
                     else {
 
-                        /* Button don't care, no command */
+                        /* Button don't care, no command, but mark 'mouse over' */
                         inpevent -> pressed  = 0;
                         inpevent -> sdlcode  = SDLGL_KEY_MOUMOVE;
 
                     }
                     sdlglITranslateMouseInput(inpevent,
-                     				          InputStack[InputStackIdx].InputArea,
-                                              1);
+                     				          InputStack[InputStackIdx].InputArea);
                     break;
 
                 case SDL_MOUSEBUTTONDOWN:
                     /* Click only on mouse release ==> Button up */
+                    /* May be start of drag action               */
                     break;
                 case SDL_MOUSEBUTTONUP:
-                    inpevent -> mou.x    = event.button.x;
-                    inpevent -> mou.y    = event.button.y;
-                    inpevent -> movex    = 0;
-                    inpevent -> movey    = 0;
-                    inpevent -> sdlcode  = event.button.button;                                   
-                    inpevent -> pressed  = 1;                    
+                    inpevent -> mou.x   = event.button.x;
+                    inpevent -> mou.y   = event.button.y;
+                    inpevent -> mou.w   = 0;
+                    inpevent -> mou.h   = 0;
+                    inpevent -> sdlcode = event.button.button;
+                    inpevent -> pressed = 1;
 
                     sdlglITranslateMouseInput(inpevent,
-                    				          InputStack[InputStackIdx].InputArea,
-                                              0);
+                    				          InputStack[InputStackIdx].InputArea);
                     break;
 
                 case SDL_KEYDOWN:
@@ -1602,7 +1591,7 @@ void sdlglInputSetFocus(SDLGL_FIELD *field, int dir)
         while(fptr -> sdlgl_type != 0) {
 
             fptr -> fstate = 0;
-            
+
             if (fptr == field) {
                             
                 FocusArea = fptr;
@@ -1728,7 +1717,7 @@ void sdlglInputRemove(char block_sign)
             return;
             
         }
-        
+
         fields++;
 
     }   

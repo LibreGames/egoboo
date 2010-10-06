@@ -59,8 +59,8 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
     	1,    		/*  1 Command               */
     	{ 4 },		/* Commandsize (how much vertices per command)  */
     	{ 1, 2, 3, 0 },
-    	{ 0.001, 0.001, 0.124, 0.001, 0.124, 0.124, 0.001, 0.124 },
-        { 0.001, 0.001, 0.249, 0.001, 0.249, 0.249, 0.001, 0.249 },
+    	{ 0.00, 0.00, 1.00, 0.00, 1.00, 1.00, 0.00, 1.00 },
+        { 0.00, 0.00, 1.00, 0.00, 1.00, 1.00, 0.00, 1.00 },
         { {  0, 0.00, 0.00,   0.00,   0.00, 0.00 },
           {  3, 1.00, 0.00, 128.00,   0.00, 0.00 },
           { 15, 1.00, 1.00, 128.00, 128.00, 0.00 },
@@ -74,8 +74,8 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         1,
         { 4 },
         { 0, 1, 2, 3 },
-        { 0.001, 0.001, 0.124, 0.001, 0.124, 0.124, 0.001, 0.124 },
-        { 0.001, 0.001, 0.249, 0.001, 0.249, 0.249, 0.001, 0.249 },
+        { 0.00, 0.00, 1.00, 0.00, 1.00, 1.00, 0.001, 1.00 },
+        { 0.00, 0.00, 1.00, 0.00, 1.00, 1.00, 0.001, 1.00 },
         { {  0, 0.00, 0.00,   0.00,   0.00, 192.00 },
           {  3, 1.00, 0.00, 128.00,   0.00, 192.00 },
           { 15, 1.00, 1.00, 128.00, 128.00, 192.00 },
@@ -90,8 +90,8 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
         1,
         { 6 },
         { 4, 3, 0, 1, 2, 3 },
-        { 0.001, 0.001, 0.124, 0.001, 0.124, 0.124, 0.001, 0.124, 0.0625, 0.0625 },
-        { 0.001, 0.001, 0.249, 0.001, 0.249, 0.249, 0.001, 0.249, 0.125, 0.125 },
+        { 0.00, 0.00, 1.00, 0.00, 1.00, 1.00, 0.00, 1.00, 0.50, 0.50 },
+        { 0.00, 0.00, 1.00, 0.00, 1.00, 1.00, 0.00, 1.00, 0.50, 0.50 },
         { {  0, 0.00, 0.00,   0.00,   0.00, 0.00 },
           {  3, 1.00, 0.00, 128.00,   0.00, 0.00 },
           { 15, 1.00, 1.00, 128.00, 128.00, 0.00 },
@@ -1034,17 +1034,15 @@ COMMAND_T *editdrawInitData(void)
     int entry, cnt;
 
 
-    mcmd = &MeshCommand[3];
+    mcmd = MeshCommand;
 
     /* Correct all of them silly texture positions for seamless tiling */
-	for (entry = 2; entry < (MAXMESHTYPE/2); entry++) {
+	for (entry = 0; entry < (MAXMESHTYPE/2); entry++) {
  	
-        for (cnt = 0; cnt < (mcmd -> numvertices * 2); cnt += 2) {
+        for (cnt = 0; cnt < (mcmd -> numvertices * 2); cnt++) {
 
-            mcmd -> uv[cnt]        *= 0.125;
-            mcmd -> uv[cnt + 1]    *= 0.125;
-            mcmd -> biguv[cnt]     *= 0.250;
-            mcmd -> biguv[cnt + 1] *= 0.250;                     
+            mcmd -> uv[cnt]    *= 0.1216;
+            mcmd -> biguv[cnt] *= 0.2471;
                  	
      	}
      	
@@ -1056,8 +1054,8 @@ COMMAND_T *editdrawInitData(void)
      for (entry = 0; entry < (EDITDRAW_MAXWALLSUBTEX * 2); entry += 2) {
 
         // Make tile texture offsets
-        MeshTileOffUV[entry]     = (((entry / 2) & 7) * 0.1257);    /* 0.1255 */
-        MeshTileOffUV[entry + 1] = (((entry / 2) / 8) * 0.1257);    /* 0.1255 */
+        MeshTileOffUV[entry]     = (((entry / 2) & 7) * 0.1255);    
+        MeshTileOffUV[entry + 1] = (((entry / 2) / 8) * 0.1255);   
 
     }
 

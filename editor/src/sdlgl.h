@@ -155,11 +155,12 @@ typedef unsigned short wchar_t;
 #define SDLGL_TYPE_SLI_AL      0x0B     /* Arrow left, Arrow right          */
 #define SDLGL_TYPE_SLI_AR      0x0C
 #define SDLGL_TYPE_SLI_ELEMENT 0x0D 
-#define SDLGL_TYPE_SLIDER      0x0E
-#define SDLGL_TYPE_BUTTON      0x0F     /* Simple Button                    */
-#define SDLGL_TYPE_HORCHOOSE   0x10
-#define SDLGL_TYPE_PROGBAR     0x11
-#define SDLGL_TYPE_STRING      0x12 
+#define SDLGL_TYPE_SLIDERV     0x0E     /* Vertical slider                  */
+#define SDLGL_TYPE_SLIDERH     0x0F     /* Horizontal slider button         */ 
+#define SDLGL_TYPE_BUTTON      0x10     /* Simple Button                    */
+#define SDLGL_TYPE_HORCHOOSE   0x11
+#define SDLGL_TYPE_PROGBAR     0x12
+#define SDLGL_TYPE_STRING      0x13 
 #define SDLGL_TYPE_MENU        0x20     /* Drawing menu strings             */  
                                        
 /* --- Special 'codes' for special movements if input is cleared --- */
@@ -257,8 +258,8 @@ typedef struct {
                     /* if on such a rectagle.		            */
                     /* Else position from left top of           */
                     /* screen for DRAW-Event                    */
-    int  movex,     /* Distance the mouse has moved since       */
-         movey;     /* last event. For drag events.             */
+                    /* w / h : Distance the mouse has moved     */
+                    /* since last event. For drag events.       */
 			        /* --------- Additional info -------------- */
     int   tickspassed;	  /* Ticks passed since last call of input  */
     float secondspassed;  /* Seconds passed since last call         */   
