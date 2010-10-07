@@ -36,7 +36,7 @@
 * CODE 								                                           *
 *******************************************************************************/
 
-void editFileSetVertStart(MESH_T *mesh);
+void editfileSetWorkDir(char *dir_name);
 int  editfileLoadMapMesh(MESH_T *mesh, char *msg);
 int  editfileSaveMapMesh(MESH_T *mesh, char *msg);
 

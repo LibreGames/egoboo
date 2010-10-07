@@ -99,8 +99,8 @@
 *******************************************************************************/
 
 static SDLGL_RECT DragRect;
-/* Map-Size of 8 for test purposes -- 2010-08-19 / bitnapper */
-static int NewMapSize = 8;         /* Inital mapsize for new maps */
+static int  NewMapSize = 32;         /* Inital mapsize for new maps */
+static char EditorWorkDir[256];
 
 static SDLGL_CONFIG SdlGlConfig = {
 
@@ -123,6 +123,7 @@ static SDLGLCFG_NAMEDVALUE CfgValues[] = {
     { SDLGLCFG_VAL_INT, &SdlGlConfig.screenmode, "screenmode" },
     { SDLGLCFG_VAL_INT, &SdlGlConfig.debugmode, "debugmode" },
     { SDLGLCFG_VAL_INT, &NewMapSize, "mapsize" },
+    { SDLGLCFG_VAL_STRING, &EditorWorkDir[0], "workdir", 120 },
     { 0 }
 
 };
@@ -186,13 +187,13 @@ static SDLGL_FIELD SubMenu[] = {
     { SDLGL_TYPE_MENU, {   4, 52, 64,  8 }, EDITOR_FILE, EDITOR_FILE_NEW, "New..." },
     { SDLGL_TYPE_MENU, {   4, 68, 64,  8 }, EDITOR_FILE, EDITOR_FILE_EXIT, "Exit" },   
     /* Settings menu for view */
-    { SDLGL_TYPE_STD,  {  68, 16, 136, 56 }, EDITOR_SETTINGS, -1 },   /* Menu-Background */
-    { SDLGL_TYPE_MENU, {  72, 20, 128,  8 }, EDITOR_SETTINGS, EDIT_MODE_SOLID,    "[ ] Draw Solid" },
-    { SDLGL_TYPE_MENU, {  72, 36, 128,  8 }, EDITOR_SETTINGS, EDIT_MODE_TEXTURED, "[ ] Draw Texture"  },
-    { SDLGL_TYPE_MENU, {  72, 52, 128,  8 }, EDITOR_SETTINGS, EDIT_MODE_LIGHTMAX, "[ ] Max Light" },
+    { SDLGL_TYPE_STD,  {  40, 16, 136, 56 }, EDITOR_SETTINGS, -1 },   /* Menu-Background */
+    { SDLGL_TYPE_MENU, {  44, 20, 128,  8 }, EDITOR_SETTINGS, EDIT_MODE_SOLID,    "[ ] Draw Solid" },
+    { SDLGL_TYPE_MENU, {  44, 36, 128,  8 }, EDITOR_SETTINGS, EDIT_MODE_TEXTURED, "[ ] Draw Texture"  },
+    { SDLGL_TYPE_MENU, {  44, 52, 128,  8 }, EDITOR_SETTINGS, EDIT_MODE_LIGHTMAX, "[ ] Max Light" },
     /* Tools-Menu */
-    { SDLGL_TYPE_STD,  { 144, 16, 128, 16 }, EDITOR_TOOLS, -1 },   /* Menu-Background */
-    { SDLGL_TYPE_MENU, { 148, 20, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_TILE, "Tile Properties" },
+    { SDLGL_TYPE_STD,  { 116, 16, 128, 16 }, EDITOR_TOOLS, -1 },   /* Menu-Background */
+    { SDLGL_TYPE_MENU, { 124, 20, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_TILE, "Tile Properties" },
     { 0 }
 };
 
@@ -214,7 +215,6 @@ static SDLGL_FIELD FanInfoDlg[] = {
     { SDLGL_TYPE_SLI_AR,   { 222, 210,  16,  16 }, EDITOR_FANTEX, EDITOR_FANTEX_INC },
     /* -------- Buttons for 'Cancel' and 'Update' ----- */
     { SDLGL_TYPE_BUTTON,   { 220,  20, 96, 16 }, EDITOR_FANPROPERTY, EDITOR_FANPROPERTY_EDITMODE, "Change Mode"},
-    { SDLGL_TYPE_BUTTON,   {   4, 220, 56, 16 }, EDITOR_FANPROPERTY, EDITOR_FANPROPERTY_UPDATE, "Update"},
     { SDLGL_TYPE_BUTTON,   { 268, 220, 48, 16 }, EDITOR_FANPROPERTY, EDITOR_FANPROPERTY_CLOSE, "Close"},
     { 0 }
 };
@@ -379,9 +379,6 @@ static void editor2DMap(SDLGL_EVENT *event)
                 DragRect.y = event -> mou.y - DragRect.h;
                 editmainChooseFanExt(DragRect.x, DragRect.y,
                                      DragRect.w, DragRect.h);
-                sprintf(StatusBar, "Mousedrag: X: %d, Y: %d W: %d. H: %d",
-                                   DragRect.x, DragRect.y,
-                                   DragRect.w, DragRect.h);
             }
             break;
         case EDITOR_2DMAP_FANINFO:
@@ -452,9 +449,9 @@ static int editorFileMenu(char which)
                 editmainChooseFan(1, 1, -1);
                 Map2DState |= EDITOR_2DMAP_FANINFO;
                 sdlglInputAdd(EDITOR_FANDLG, FanInfoDlg, 20, 20);
-                /* Type of edit: 'No Edit', 'Simple Edit', 'Free Edit' */
                 edit_mode = editmainToggleFlag(EDITMAIN_TOGGLE_EDITSTATE, 1);
                 sprintf(EditTypeStr, "%s", EditTypeNames[edit_mode]);
+                editmainFanTypeName(EditActFanName);
             }
             break;
             
@@ -464,37 +461,6 @@ static int editorFileMenu(char which)
     }
 
     return SDLGL_INPUT_OK;
-
-}
-
-/*
- * Name:
- *     editorSetEditMode
- * Description:
- *     Handles the state settings for the editor
- * Input:
- *     None
- */
-static void editorSetEditMode(void)
-{
-
-    char edit_mode;
-
-
-    edit_mode = editmainToggleFlag(EDITMAIN_TOGGLE_EDITSTATE, 1);
-    sprintf(EditTypeStr, "%s", EditTypeNames[edit_mode]);
-
-    if (edit_mode > 0) {
-
-        editmainChooseFanType(0, StatusBar);    /* Switched on */
-
-        if (edit_mode == EDITMAIN_EDIT_FREE) {
-            sprintf(StatusBar, "%s", "Browsing Fan-Types. Use space key.");
-        }
-    }
-    else {
-        editmainChooseFanType(-2, StatusBar);   /* Switched off */
-    }
 
 }
 
@@ -660,6 +626,7 @@ static int editorInputHandler(SDLGL_EVENT *event)
 {
 
     SDLGL_FIELD *field;
+    char edit_mode;
 
     
     if (event -> code > 0) {
@@ -711,11 +678,9 @@ static int editorInputHandler(SDLGL_EVENT *event)
 
             case EDITOR_FANPROPERTY:
                 if (event -> sub_code == EDITOR_FANPROPERTY_EDITMODE) {
-                    editorSetEditMode();
-                }
-                else if (event -> sub_code == EDITOR_FANPROPERTY_UPDATE) {
-                    editmainMap(EDITMAIN_SETFANPROPERTY, 0);
-                }
+                    edit_mode = editmainToggleFlag(EDITMAIN_TOGGLE_EDITSTATE, 1);
+                    sprintf(EditTypeStr, "%s", EditTypeNames[edit_mode]);
+                }                
                 else {
                     sdlglInputRemove(EDITOR_FANDLG);
                 }

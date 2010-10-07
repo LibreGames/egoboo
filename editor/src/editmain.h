@@ -41,8 +41,8 @@
 #define EDITMAIN_SAVEMAP     4
 #define EDITMAIN_ROTFAN      5      /* Rotates the actual chosen fan if browsing        */ 
 #define EDITMAIN_SETFANPROPERTY 6   /* Set the properties of a fan (fx and texture)     */       
-#define EDITMAIN_CHOOSEPASSAGE  7   /* Choose a passage, if passages are loaded         */
-#define EDITMAIN_CHOOSESPAWNPOS 8   /* Choose a spawn pos, if span positions are loaded */
+#define EDITMAIN_CHOOSEPASSAGE  6   /* Choose a passage, if passages are loaded         */
+#define EDITMAIN_CHOOSESPAWNPOS 7   /* Choose a spawn pos, if span positions are loaded */
 
 /* ---------- Edit-Flags -------- */
 #define EDITMAIN_SHOW2DMAP 0x01         /* Display the 2DMap        */
@@ -136,7 +136,7 @@ void editmainDrawMap2D(int x, int y);
 char editmainToggleFlag(int which, unsigned char flag);
 void editmainChooseFan(int cx, int cy, int is_floor);
 void editmainChooseFanExt(int cx, int cy, int cw, int ch);
-char *editmainFanTypeName(int type_no);
+void editmainFanTypeName(char *fan_name);
 void editmainChooseFanType(int dir, char *fan_name);
 void editmain2DTex(int x, int y, int w, int h);
 void editmainChooseTex(int cx, int cy, int w, int h);

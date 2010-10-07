@@ -52,7 +52,7 @@
 
 static float DefaultUV[] = { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00 };
 static COMMAND_T MeshCommand[MAXMESHTYPE] = {
-    {  "0: Two Faced Ground",
+    {  "0: Ground Tile",
         0,          /* Default FX: None         */
         1,          /* Default texture          */
         4,		    /* Total number of vertices */
@@ -67,7 +67,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
           { 12, 0.00, 1.00,   0.00, 128.00, 0.00 }
         }
     },
-    {   "1: Two Faced Top",             /* Top-Tile for 'simple' edit mode  */
+    {   "1: Top Tile",             /* Top-Tile for 'simple' edit mode  */
         (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX:                      */
         63,                             /* Default texture                  */
     	4,
@@ -181,7 +181,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
     },
     {   "6: Blank", 0, 0, 0 },
     {   "7: Blank", 0, 0, 0 },
-    {   "8: Six Faced Wall (WE)",
+    {   "8: Wall Straight (WE)",
         (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX       */
         63 + 33,                        /* Default texture  */
 	    8,
@@ -316,7 +316,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
           {  6, 0.66, 0.33,  84.00,  42.00, 0.00 }
         }
     },
-    {   "16: Ten Faced Wall (WS)",
+    {   "16: Wall Outer Edge (WS)",
         (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX       */
         63 + 51,                        /* Default texture  */
     	10,
@@ -395,7 +395,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] = {
           {  9, 0.33, 0.66,  42.00,  84.00, 0.00 }
         }
     },
-    {   "19:  Ten Faced Wall (ES)",
+    {   "19: Wall Inner Edge (ES)",
         (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX       */
         63 +  1,                        /* Default texture  */
 	    10,
@@ -1041,8 +1041,8 @@ COMMAND_T *editdrawInitData(void)
  	
         for (cnt = 0; cnt < (mcmd -> numvertices * 2); cnt++) {
 
-            mcmd -> uv[cnt]    *= 0.1216;
-            mcmd -> biguv[cnt] *= 0.2471;
+            mcmd -> uv[cnt]    *= 0.1211;   /* 31 / 256 */
+            mcmd -> biguv[cnt] *= 0.2461;   /* 63 / 256 */
                  	
      	}
      	
@@ -1053,9 +1053,8 @@ COMMAND_T *editdrawInitData(void)
     // Make tile texture start offsets
      for (entry = 0; entry < (EDITDRAW_MAXWALLSUBTEX * 2); entry += 2) {
 
-        // Make tile texture offsets
-        MeshTileOffUV[entry]     = (((entry / 2) & 7) * 0.1255);    
-        MeshTileOffUV[entry + 1] = (((entry / 2) / 8) * 0.1255);   
+        MeshTileOffUV[entry]     = (((entry / 2) & 7) * 0.125);    
+        MeshTileOffUV[entry + 1] = (((entry / 2) / 8) * 0.125);   
 
     }
 
@@ -1229,6 +1228,23 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, int *chosen, int *psg, int *spawn
     /* ------------ Draw chosen spawn position --------------- */
     if (*spawn >= 0) {
         editdrawTransparentFan2D(mesh, &draw_rect, spawn, SDLGL_COL_BLUE, 128);
+    }
+
+    /* ------------ Draw grid for easier editing ------- */
+    draw_rect.x = x;
+    draw_rect.y = y;
+
+    for (h = 0; h < mesh -> tiles_y; h++) {
+
+        for (w = 0; w < mesh -> tiles_x; w++) {
+            sdlglstrDrawRectColNo(&draw_rect, SDLGL_COL_GREEN, 0);
+            draw_rect.x += draw_rect.w;
+        }
+
+        /* Next line    */
+        draw_rect.x = x;
+        draw_rect.y += draw_rect.h;
+
     }
     /* ---------- Draw border for 2D-Map ---------- */
     draw_rect2.x = x;

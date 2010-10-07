@@ -269,51 +269,6 @@ static int editmainFanAdd(MESH_T *mesh, int fan, int x, int y)
 
 /*
  * Name:
- *     editmainFanUpdateProperties
- * Description:
- *     This function updates the properties of the fan with'fan_no':
- *     Flags, Texture and Fx. Does the update un the properties depending on
- *     the actual 'EditState.edit_mode'
- * Input:
- *     mesh *:       Pointer on mesh to handle
- *     edit_state *: Pointer on edit state, holding all data needed for work
- *     fan_no *:     Number of fan(s) to make update on properties
- */
-static void editmainFanUpdateProperties(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int *fan_no)
-{
-
-    FANDATA_T *act_ft;
-    char em;
-
-
-    em = edit_state -> edit_mode;
-    if (em == EDITMAIN_EDIT_FX || em == EDITMAIN_EDIT_TEXTURE) {
-
-        while(*fan_no > 0) {
-
-            act_ft = &mesh -> fan[*fan_no];
-
-            if (em == EDITMAIN_EDIT_FX) {
-
-                act_ft -> fx = edit_state -> ft.fx;
-
-            }
-            else if (em == EDITMAIN_EDIT_TEXTURE) {
-                /* Do an update on the 'static' data of the fan */
-                act_ft -> tx_no    = edit_state -> ft.tx_no;
-                act_ft -> tx_flags = edit_state -> ft.tx_flags;
-            }
-
-            fan_no++;
-
-        }
-
-    }
-
-}
-
-/*
- * Name:
  *     editmainDoFanUpdate
  * Description:
  *     This function updates the fan at given 'fan 'with the
@@ -323,11 +278,10 @@ static void editmainFanUpdateProperties(MESH_T *mesh, EDITMAIN_STATE_T *edit_sta
  *     mesh *:       Pointer on mesh to handle
  *     edit_state *: Pointer on edit state, holding all data needed for work
  *     fan_no:       Do an update of this fan
- *     tx, ty:       Position of tile in tilex/y
  * Output:
  *    Fan could be updated, yes/no
  */
-static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int fan_no, int tx, int ty)
+static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int fan_no)
 {
 
     COMMAND_T *act_fd;
@@ -336,6 +290,7 @@ static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int f
     int vrt_diff, vrt_size;
     int src_vtx, dst_vtx;
     int vertex;
+    int tx, ty;
 
 
     act_ft = &mesh -> fan[fan_no];
@@ -347,8 +302,8 @@ static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_STATE_T *edit_state, int f
     act_ft -> fx       = edit_state -> ft.fx;
 
     /* Now change tile pos to position in units */
-    tx *= 128;
-    ty *= 128;
+    tx = (fan_no % mesh -> tiles_x) * 128;
+    ty = (fan_no / mesh -> tiles_x) * 128;
 
     if (act_ft -> type == edit_state -> ft.type) {
 
@@ -750,7 +705,7 @@ static void editmainCreateWallMakeInfo(MESH_T *mesh, int fan, WALLMAKER_INFO_T *
         wi[i + 1].fan_no = adjacent[i];
         wi[i + 1].type   = mesh -> fan[adjacent[i]].type;
         wi[i + 1].dir    = 0;
-    
+
     }  
    
 }
@@ -770,8 +725,7 @@ static void editmainTranslateWallMakeInfo(MESH_T *mesh, WALLMAKER_INFO_T *wi, in
 
     int i, i2;
     char type_no;
-	int tx, ty;
-
+    
 
     for (i = 0; i < num_tile; i++) {
 
@@ -788,14 +742,11 @@ static void editmainTranslateWallMakeInfo(MESH_T *mesh, WALLMAKER_INFO_T *wi, in
 
             memcpy(&EditState.fd, &pCommands[type_no & 0x1F], sizeof(COMMAND_T));
 
-            tx = (wi[i].fan_no % mesh -> tiles_x);
-			ty = (wi[i].fan_no / mesh -> tiles_x);
-
             editmainFanTypeRotate(EditState.ft.type,
                                   &EditState.fd,
                                   EditState.fan_dir);
 
-            editmainDoFanUpdate(mesh, &EditState, wi[i].fan_no, tx, ty);
+            editmainDoFanUpdate(mesh, &EditState, wi[i].fan_no);
 
         }
 
@@ -978,10 +929,25 @@ static int editmainFanSet(int fan_no, int is_floor)
             }
 
         }
-        else if (EditState.edit_mode == EDITMAIN_EDIT_FREE) {
-            return editmainDoFanUpdate(&Mesh, &EditState,
-                                       EditState.fan_selected[0],
-                                       EditState.tx, EditState.ty);
+        else if (EditState.edit_mode == EDITMAIN_EDIT_FREE && ! is_floor) {
+            memcpy(&EditState.fd, &pCommands[EditState.ft.type & 0x1F], sizeof(COMMAND_T));
+            editmainFanTypeRotate(EditState.ft.type,
+                                  &EditState.fd,
+                                  EditState.fan_dir);
+
+            editmainDoFanUpdate(&Mesh, &EditState, EditState.fan_selected[0]);
+            /* TODO: Now move the display of chosen fan type to actual position */
+
+        }
+        else if (EditState.edit_mode == EDITMAIN_EDIT_FX) {
+            /* Do an update on the FX-Flags */
+            Mesh.fan[fan_no].fx = EditState.ft.fx;
+
+        }
+        else if (EditState.edit_mode == EDITMAIN_EDIT_TEXTURE) {
+            /* Change the texture */
+            Mesh.fan[fan_no].tx_no    = EditState.ft.tx_no;
+            Mesh.fan[fan_no].tx_flags = EditState.ft.tx_flags;
         }
     }
 
@@ -1117,11 +1083,6 @@ int editmainMap(int command, int info)
                 }
             }
             return 1;
-
-        case EDITMAIN_SETFANPROPERTY:
-            /* Can be an update on multiple fans properties */
-            editmainFanUpdateProperties(&Mesh, &EditState, EditState.fan_selected);
-            break;
             
         case EDITMAIN_CHOOSEPASSAGE:
             return editmainChoosePassage(info);
@@ -1175,6 +1136,7 @@ char editmainToggleFlag(int which, unsigned char flag)
 {
 
     char tex_no;
+    char fan_name[255];
     
     
     switch(which) {
@@ -1194,7 +1156,11 @@ char editmainToggleFlag(int which, unsigned char flag)
                     EditState.edit_mode = 0;
                 }
             }
-            if (EditState.edit_mode != EDITMAIN_EDIT_FREE) {
+            if (EditState.edit_mode == EDITMAIN_EDIT_FREE) {
+                /* Initialize the chosen fan    */
+                editmainChooseFanType(0, fan_name);
+            }
+            else {
                 EditState.fd.numvertices = 0;   /* Hide the chosen fan */
             }
             return EditState.edit_mode;
@@ -1289,16 +1255,22 @@ void editmainChooseFan(int cx, int cy, int is_floor)
         EditState.fan_selected[1] = -1;
 
         /* Get the info about the chosen fan */
-        memcpy(&EditState.ft, &Mesh.fan[fan_no], sizeof(FANDATA_T));
+        if (EditState.edit_mode == EDITMAIN_EDIT_NONE) {
+            /* In info-mode return the properties of the chosen fan */
+            memcpy(&EditState.ft, &Mesh.fan[fan_no], sizeof(FANDATA_T));
+        }
+        else {
+            /* Adjust position of display for 'Free' Mode */
+            if (EditState.fd.numvertices > 0) {
+                /* 'Move' actual 'fd'-data to new position, if available */
+                x = (EditState.tx - old_tx) * 128;
+                y = (EditState.ty - old_ty) * 128;
 
-        if (EditState.fd.numvertices > 0) {
-            /* 'Move' actual 'fd'-data to new position, if available */
-            x = (EditState.tx - old_tx) * 128;
-            y = (EditState.ty - old_ty) * 128;
+                for (i = 0; i < EditState.fd.numvertices; i++) {
+                    EditState.fd.vtx[i].x += x;
+                    EditState.fd.vtx[i].y += y;
+                }
 
-            for (i = 0; i < EditState.fd.numvertices; i++) {
-                EditState.fd.vtx[i].x += x;
-                EditState.fd.vtx[i].y += y;
             }
 
         }
@@ -1346,7 +1318,7 @@ void editmainChooseFanExt(int cx, int cy, int cw, int ch)
 
     num_select = 0;
 
-    while(ty1 < ty2) {
+    while(ty1 <= ty2) {
         if (ty1 > 0 && ty1 < (Mesh.tiles_y -1)) {
             /* If 'ty' in map */
             ltx = tx1;
@@ -1378,23 +1350,30 @@ void editmainChooseFanExt(int cx, int cy, int cw, int ch)
  * Description:
  *     Returns the description of given fan-type 
  * Input:
- *     type_no: Number of fan type
+ *     fan_name *: Where to return the name of the actual fan type
  * Output:
- *     Pointer on a valid string, may be empty 
+ *     Pointer on a valid string, may be empty
  */
-char *editmainFanTypeName(int type_no)
+void editmainFanTypeName(char *fan_name)
 {
 
-    if (type_no >= 0 && type_no < MAXMESHTYPE) {
+    char type_no;
+
+
+    if (EditState.ft.type >= 0) {
+
+        type_no = (char)(EditState.ft.type & 0x1F);
 
         if (pCommands[type_no & 0x1F].name != 0) {
         
-            return pCommands[type_no & 0x1F].name;
-        
+            sprintf(fan_name, "%s", pCommands[type_no & 0x1F].name);
+            return;
+
         }
-    
+
     }
-    return "";
+
+    fan_name[0] = 0;
 
 }
 
@@ -1415,46 +1394,39 @@ void editmainChooseFanType(int dir, char *fan_name)
     int  x, y;
 
 
-    if (dir == -2) {
-        /* Reset browsing */
-        EditState.bft_no = -1;
+    if (EditState.edit_mode != EDITMAIN_EDIT_FREE) {
+        /* Do that only in 'Free' Mode */
         fan_name[0] = 0;
         return;
     }
-    else if (dir == 0) {
+    if (dir == 0) {
         /* Start browsing */
         EditState.bft_no = 0;
     }
     else {
-        if (EditState.edit_mode == EDITMAIN_EDIT_FREE) {
-            if (EditState.bft_no < EDITMAIN_PRESET_MAX) {
-                EditState.bft_no++;
-            }
-            else {  /* Wrap around */
-                EditState.bft_no = 0;    
-            }
+        if (EditState.bft_no < EDITMAIN_PRESET_MAX) {
+            EditState.bft_no++;
+        }
+        else {  /* Wrap around */
+            EditState.bft_no = 0;
         }
     }
 
-    if (EditState.edit_mode == EDITMAIN_EDIT_FREE) {
+    EditState.fan_dir = 0;
 
-        memcpy(&EditState.ft, &PresetTiles[EditState.bft_no], sizeof(FANDATA_T));
-        memcpy(&EditState.fd, &pCommands[EditState.ft.type & 0x1F], sizeof(COMMAND_T));
+    memcpy(&EditState.ft, &PresetTiles[EditState.bft_no], sizeof(FANDATA_T));
+    memcpy(&EditState.fd, &pCommands[EditState.ft.type & 0x1F], sizeof(COMMAND_T));
 
-        /* Now move it to the chosen position */
-        x = EditState.tx * 128;
-        y = EditState.ty * 128;
+    /* Now move it to the chosen position */
+    x = EditState.tx * 128;
+    y = EditState.ty * 128;
 
-        for (i = 0; i < EditState.fd.numvertices; i++) {
-            EditState.fd.vtx[i].x += x;
-            EditState.fd.vtx[i].y += y;
-        }
-
-        EditState.fan_dir = 0;
-
-        sprintf(fan_name, "%s", editmainFanTypeName(EditState.ft.type & 0x1F));
-
+    for (i = 0; i < EditState.fd.numvertices; i++) {
+        EditState.fd.vtx[i].x += x;
+        EditState.fd.vtx[i].y += y;
     }
+
+    editmainFanTypeName(fan_name);
 
 }
 

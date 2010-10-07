@@ -22,37 +22,53 @@ in the 3D-Window<br>
 - For the map geometry, the data for the fan type is 'hard-coded' as 'preset'
 <br>
 - Tile-Size is 128 Units<br>
-- New maps are 8x8 Tiles for test purposes<br>
+- Map size for new maps is read from the configuration file<br>
 - Inital map size can be set in the CONFIG-File with the value "mapsize"<br>
 - Tile flags and texture data can be changed using the 'Update' button in the
 fan info dialog<br>
 - 'Simple' editing needs test of functionality<br>
 </p>
-
-<p><b>General Keyboard-Commands</b><br>
+<p>
+  <b>General Keyboard-Commands</b><br>
 - ESC quits program<br>
 - LEFT-CONTROL-m: Shows/hides 2D-Map, if a map is loaded<br>
-- 'I' : Toggles Display of information about chosen fan<br>
 - 2D Map: Mouse Right-Click: Set Floor tile / Mouse left-Click: Set Wall Tile
 <br>
-- Edit modes:<br>
-  <u>'Free'</u>:</p>
-<ul>
-  <li>Mouse Left Click: Set chosen Fan-Type</li>
-  <li>Mouse Right: Choose Tile for setting fan type</li>
-  <li>Key 'R': Rotate chosen fan type</li>
-  <li>Space: Browse trough List of 'Standard'-Fans<br>
-  </li>
-</ul>
-To start with editing a fan must be chosen and the Info-Window for the
-fan-type must be toggled on using the key 'I'.<br>
-<br>
-  <u>'Simple'</u>:
-<ul>
-  <li>Mouse Left Click: Set a wall tile</li>
-  <li>Mouse Right Click: Set a floor tile</li>
-</ul>
-The surrounding tiles are adjusted 'automagically' <br>
+<p>
+  <b>Editing</b><br>
+  For editing, the dialog for the tile properties has to be open. 
+  Here it can be switched between the different edit modes.<br>
+  The following edit modes are available.
+</p>
+<p>
+   <b>Fan Info (No Edit)</b><br>
+   If a tile is chosen in the 2D-Map, the info about the tile with flags and textures are displayed.<br>
+   It works only in 'single-tile-mode'.
+</p>
+<p>
+  <b>Edit Simple Mode</b><br>
+  - Click/drag with right mouse button: Changes all chosen tiles to bottom tiles<br>
+  - Click/drag with left mouse button:  Changes all chosen tiles to wall tiles<br>
+  The adjacent tiles are adjusted as well as possible<br>
+</p>
+<p>
+  <b>Edit Single Fan</b><br>
+  - Click with right mosue button: Choose tile<br>
+  - Click with left mouse button: The chosen tile is set to the tile type with flags and texture as 
+    displayed in the properties dialog<br>
+  <br>
+  Commands for preparing / choosing tiles in free mode:<br>
+  SPACE-Key: Browses troug the five possible different tile types to set<br>
+  R-Key: Rotates the chosen tile type as needed<br>
+</p>
+<p>
+  <b>Edit Fan-FX</b><br>
+  - Click/drag with right mouse button: Set all chosen tiles to FX displayed in properties dialog<br>
+</p>
+<p>
+  <b>Edit Fan-Texture</b><br>
+  - Click/drag with right mouse button: Set all chosen tiles to Texture displayed in properties dialog<br>
+</p>
 
 
 <p><b>Camera movement commands</b><br>
@@ -95,7 +111,7 @@ is oriented:<br>
 2: South<br>
 3: West</p>
 <br>
-Date: 2010-09-11 / bitnapper<br>
+Date: 2010-10-07 / bitnapper<br>
 <br>
 <br>
 </body>

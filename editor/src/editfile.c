@@ -25,7 +25,8 @@
 
 #include <stdio.h>
 
-#include "editdraw.h"
+
+#include "editor.h"
 
 
 #include "editfile.h"     /* Own header */
@@ -38,6 +39,12 @@
 #define MAPID               0x4470614d  /*  The string... MapD  */
 #define EDITFILE_ZADJUST    16.0        /* Read/Write Z-Value   */
                                         /* Cartman uses 4 bit fixed point for Z */
+                                        
+/*******************************************************************************
+* DATA 								                                           *
+*******************************************************************************/
+
+static char EditFileWorkDir[256] = "module/";
 
 /*******************************************************************************
 * CODE 								                                           *
@@ -104,9 +111,48 @@ static void editfileMakeTwist(MESH_T *mesh)
 
 }
 
+/*
+ * Name:
+ *     editfileMakeFileName
+ * Description:
+ *     Generates a filename with path. Path is taken from
+ * Input:
+ *     mesh*: Pointer on mesh to set twists for
+ */
+ static char *editfileMakeFileName(char *fname)
+ {
+ 
+    static char file_name[512];
+
+
+    sprintf(file_name, "%s%s", EditFileWorkDir, fname);
+
+    return file_name;
+    
+ }
+
 /* ========================================================================== */
 /* ============================= THE PUBLIC ROUTINES ======================== */
 /* ========================================================================== */
+
+/*
+ * Name:
+ *     editfileSetWorkDir
+ * Description:
+ *     Sets the work directory for the file functions 
+ *     Loads the map mesh into the data pointed on
+ * Input:
+ *     mesh*: Pointer on mesh to load
+ *     msg *: Pointer on buffer for a message 
+ * Output:
+ *     Mesh could be loaded yes/no
+ */
+void editfileSetWorkDir(char *dir_name)
+{
+
+    sprintf(EditFileWorkDir, "%s/", dir_name);
+
+}
 
 /*
  * Name:
@@ -129,7 +175,7 @@ int editfileLoadMapMesh(MESH_T *mesh, char *msg)
     int numfan;
 
 
-    fileread = fopen("module/level.mpd", "rb");
+    fileread = fopen(editfileMakeFileName("level.mpd"), "rb");
 
     if (NULL == fileread)
     {
@@ -218,7 +264,7 @@ int editfileSaveMapMesh(MESH_T *mesh, char *msg)
 
         numwritten = 0;
 
-        filewrite = fopen("module/level.mpd", "wb");
+        filewrite = fopen(editfileMakeFileName("level.mpd"), "wb");
         if (filewrite) {
 
             itmp = MAPID;

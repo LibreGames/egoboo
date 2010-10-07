@@ -1,4 +1,12 @@
-2010-10-05 <bitnapper>
+2010-10-07 <bitnapper>
+- Removed 'Update' from Tile-Properties-Dialog
+- Moved further checks about Edit-Mode of the editor-frontend
+- Compacted some code
+- Added work-directory in configuration-file 
+- Added grid in 2D-Map for easier creation of maps by concept maps
+- Update of How-To documentation
+
+2010-10-06 <bitnapper>
 - Adjusted code for choosing multiple fans
 - Adjusted editor code for choose dragging
 - Some more wallmaker code and patterns
