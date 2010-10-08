@@ -37,7 +37,7 @@
 *******************************************************************************/
 
 #define SDLGL3D_CAMERA_EXTENT  15.0
-#define SDLGL3D_CAMERA_FOV     60.0   
+#define SDLGL3D_I_CAMERA_FOV 60.0 /* Instead of 90.0 degrees */ 
 
 /* ------- */
 #define SDLGL3D_I_MAXVISITILES (9 + 7 + 5 + 3 + 3 + 3 + 9 + 9 + 11)
@@ -70,33 +70,35 @@ typedef struct {
 
     /* Type of camera and size of frustum for zooming */
     int   type;
-    float viewwidth;
-    float aspect_ratio;         /* For zoom and setup of frustum        */
-    float zmin, zmax;
+    SDLGL3D_FRUSTUM f;          /* Frustum data, including info for visibility */
     float cameradist;           /* Distance behind object for third person camera */
     SDLGL3D_OBJECT *object;     /* The object the camera is attached to           */
     SDLGL3D_OBJECT campos;
     /* Frustum data for calculation of visibility */
-    float nx[3], ny[3];         /* Normals of the side lines. They should point in towards the viewable area. */
-    float leftangle, rightangle;
-    float fow;
-    char bound;                 /* Camera is bound to an x,y-rectangle  */
-    float bx, by, bx2, by2;
+    char  bound;                /* Camera is bound to an x,y-rectangle  */
+    float bx, by, bx2, by2;    
     
-
 } SDLGL3D_CAMERA;
 
 /*****************************************************************************
 * DATA								             *
 *****************************************************************************/
 
+/* ---- Additional info to calculate visbility on base of tiles */
+static int MapW = 32;
+static int MapH = 32;
+static float TileSize = 128.0;      /* For tiles visible in FOV */
 /* This are the cameras. 0: Standard camera */
 static SDLGL3D_CAMERA Camera[4] = {
-
     { SDLGL3D_CAMERATYPE_THIRDPERSON,
-      SDLGL3D_I_VIEWWIDTH, SDLGL3D_I_ASPECTRATIO,
-      SDLGL3D_I_ZMIN, SDLGL3D_I_ZMAX,
-      800.0 }
+      {
+        SDLGL3D_I_CAMERA_FOV, /* Field of view */
+        SDLGL3D_I_VIEWWIDTH,
+        SDLGL3D_I_ASPECTRATIO, /* Aspect ration of view-plane */
+	    SDLGL3D_I_ZMIN, SDLGL3D_I_ZMAX,
+ 	  },
+ 	  800.0
+    }
 
 };
 
@@ -114,37 +116,70 @@ static SDLGL3D_OBJECT Object_List[SDLGL3D_MAXOBJECT + 62];  /* List of objects t
  *	Sets the normals of the frustum boundaries using the given parameters.
  * Input:
  *      SDLGL3D_CAMERA *: Camera with frustum to fill with the values. Holding the
- *                   cameras position, too
- *      FOV:	      Field of view for this frustum
- * Code from: Game Programming Gems, Section 4, Chapter 11
+ *                        cameras position, too and the FOV-Value
+  * Code from: Game Programming Gems, Section 4, Chapter 11
  *	      "Loose Octrees"
  *	       -thatcher 4/6/2000 Copyright Thatcher Ulrich
  */
-static void sdlgl3dSetupFrustumNormals(SDLGL3D_CAMERA *cam, float FOV)
+static void sdlgl3dSetupFrustumNormals(SDLGL3D_CAMERA *cam)
 {
 
+    SDLGL3D_OBJECT *obj;
     int rotz;
+    float minx, miny, maxx, maxy;
+    float nx1, ny1, nx2, ny2, camx, camy;
 
-    
+
     if (cam -> type == SDLGL3D_CAMERATYPE_FIRSTPERSON) {
-        rotz = cam -> object -> rot[2];
+        obj = cam -> object;
+
     }
     else {
-        rotz = cam -> campos.rot[2];
+        obj = &cam -> campos;
     }
 
-    cam -> rightangle = rotz - FOV/2;
-    cam -> leftangle  = rotz + FOV/2;
+    rotz = obj -> rot[2];
+    camx = obj -> pos[0];
+    camy = obj -> pos[1];
 
-    cam -> nx[0] = sin(DEG2RAD(cam -> rightangle));
-    cam -> ny[0] = cos(DEG2RAD(cam -> rightangle));
+    cam -> f.rightangle = rotz - cam -> f.fov/2;
+    cam -> f.leftangle  = rotz + cam -> f.fov/2;
 
-    cam -> nx[1] = sin(DEG2RAD(cam -> leftangle));
-    cam -> ny[1] = cos(DEG2RAD(cam -> leftangle));
+    cam -> f.nx[0] = sin(DEG2RAD(cam -> f.rightangle));
+    cam -> f.ny[0] = cos(DEG2RAD(cam -> f.rightangle));
 
-    cam -> nx[2] = sin(DEG2RAD(rotz));
-    cam -> ny[2] = cos(DEG2RAD(rotz));
+    cam -> f.nx[1] = sin(DEG2RAD(cam -> f.leftangle));
+    cam -> f.ny[1] = cos(DEG2RAD(cam -> f.leftangle));
 
+    cam -> f.nx[2] = sin(DEG2RAD(rotz));
+    cam -> f.ny[2] = cos(DEG2RAD(rotz));
+
+    /* ------ Calculate the bounding rectangle of the frustum -------- */
+    nx1 = cam -> f.nx[0] * cam -> f.zmax;
+    ny1 = cam -> f.ny[0] * cam -> f.zmax;
+    nx2 = cam -> f.nx[1] * cam -> f.zmax;
+    ny2 = cam -> f.ny[1] * cam -> f.zmax;
+
+    minx = MIN(nx1, nx2);
+    miny = MIN(ny1, ny2);
+    /* And now theres the position of the camer itself  */
+    minx = MIN(minx, camx);
+    miny = MIN(miny, camy);
+
+    maxx = MAX(nx1, nx2);
+    maxy = MAX(ny1, ny2);
+    maxx = MAX(maxx, camx);
+    maxy = MAX(maxy, camy);
+    /* ------ And now writ it into the frustum info after binding to map --- */
+    if (minx < 0) minx = 0;
+    if (miny < 0) miny = 0;
+    if (maxx > (MapW * TileSize)) maxx = (MapW * TileSize);
+    if (maxy > (MapH * TileSize)) maxx = (MapH * TileSize);
+    cam -> f.vx1 = minx;
+    cam -> f.vy1 = miny;
+    cam -> f.vx2 = maxx;
+    cam -> f.vy2 = maxy;
+    
 }
 
 /*
@@ -162,7 +197,7 @@ static void sdlgl3dSetupFrustumNormals(SDLGL3D_CAMERA *cam, float FOV)
  *	       -thatcher 4/6/2000 Copyright Thatcher Ulrich
  */
 static char CheckBoxAgainstFrustum(float cx, float cy, float HalfSize,
-                                   SDLGL3D_CAMERA *f, int posx, int posy)
+                                   SDLGL3D_FRUSTUM *f, int posx, int posy)
 {
     int	OrCodes = 0, AndCodes = ~0;
 
@@ -347,15 +382,15 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, char move_cmd, float 
             break;
 
         case SDLGL3D_MOVE_ZOOMOUT:
-            Camera[0].viewwidth  += (5.0 * secondspassed);
+            Camera[0].f.viewwidth  += (5.0 * secondspassed);
             /* TODO: Set a maximum for zoom out */
             break;   
         case SDLGL3D_MOVE_ZOOMIN:
             /* Zoom in: Reduce size of view */
-            Camera[0].viewwidth  -= (5.0 * secondspassed);
-            if (Camera[0].viewwidth < SDLGL3D_I_VIEWMINWIDTH) {
+            Camera[0].f.viewwidth  -= (5.0 * secondspassed);
+            if (Camera[0].f.viewwidth < SDLGL3D_I_VIEWMINWIDTH) {
 
-                Camera[0].viewwidth = SDLGL3D_I_VIEWMINWIDTH;
+                Camera[0].f.viewwidth = SDLGL3D_I_VIEWMINWIDTH;
 
             }
             break;
@@ -371,7 +406,7 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, char move_cmd, float 
         /* FIXME: Move camera according to movement of attached object */
         sdlgl3dIMoveAttachedCamera(&Camera[0]);
         /* If the camera was moved, set the frustum normals... */
-        sdlgl3dSetupFrustumNormals(&Camera[0], SDLGL3D_CAMERA_FOV);
+        sdlgl3dSetupFrustumNormals(&Camera[0]);
 
         /* And recalculate the display list */
 
@@ -404,10 +439,10 @@ SDLGL3D_OBJECT *sdlgl3dBegin(int camera_no, int solid)
     glLoadIdentity();
 
     /* Set the view mode */
-    viewwidth  = Camera[camera_no].viewwidth / 2;
-    viewheight = (viewwidth * Camera[camera_no].aspect_ratio) / 2;
+    viewwidth  = Camera[camera_no].f.viewwidth / 2;
+    viewheight = (viewwidth * Camera[camera_no].f.aspect_ratio);
     
-    glFrustum(viewwidth, -viewwidth, -viewheight, viewheight, Camera[camera_no].zmin, Camera[camera_no].zmax);
+    glFrustum(viewwidth, -viewwidth, -viewheight, viewheight, Camera[camera_no].f.zmin, Camera[camera_no].f.zmax);
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -505,7 +540,7 @@ void sdlgl3dAttachCameraToObj(int object_no, char camtype)
     Camera[0].type = camtype;
 
     /* Set the frustum normals... */
-    sdlgl3dSetupFrustumNormals(&Camera[0], SDLGL3D_CAMERA_FOV);
+    sdlgl3dSetupFrustumNormals(&Camera[0]);
 
 }
 
@@ -537,9 +572,10 @@ void sdlgl3dInitCamera(int camera_no, int rotx, int roty, int rotz, float aspect
     Camera[camera_no].campos.speed   = 300.0;  /* Speed of camera in units / second    */
     Camera[camera_no].campos.turnvel =  60.0;  /* Degrees per second                   */
     
-    Camera[camera_no].aspect_ratio = aspect_ratio;
+    Camera[camera_no].f.aspect_ratio = aspect_ratio;
+    Camera[camera_no].f.fov = SDLGL3D_I_CAMERA_FOV; /* TODO: To be set by caller.. */
     /* If the camera was moved, set the frustum normals... */
-    sdlgl3dSetupFrustumNormals(&Camera[camera_no], SDLGL3D_CAMERA_FOV);
+    sdlgl3dSetupFrustumNormals(&Camera[camera_no]);
 
 }
 
@@ -570,27 +606,16 @@ void sdlgl3dBindCamera(int camera_no, float x, float y, float x2, float y2)
  *     Initializes the 3D-Camera. Moves the camera to given position with
  *     given rotations.
  * Input:
- *     Number of camera to get info for
- *     nx *, ny *: Where to return the frustum normals
- *     zmax *:     Where to return the distance of far plane      
+ *     camera_no:  Number of camera to get info for
+ *     f *:        Where to return the data about hte frustum
  * Output:
  *      Pointer on camera position
  */
-SDLGL3D_OBJECT *sdlgl3dGetCameraInfo(int camera_no, float *nx, float *ny, float *zmax)
+SDLGL3D_OBJECT *sdlgl3dGetCameraInfo(int camera_no, SDLGL3D_FRUSTUM *f)
 {
 
-    int i;
-    
-    
-    for (i = 0; i < 3; i++) {
-        /* Return frustum normals */
-        nx[i] = Camera[camera_no].nx[i]; 
-        ny[i] = Camera[camera_no].ny[i];
-        
-    }
-    
-    (*zmax) = Camera[camera_no].zmax;
-    
+    memcpy(f, &Camera[camera_no].f, sizeof(SDLGL3D_FRUSTUM));
+
     return &Camera[camera_no].campos;
 
 }
@@ -683,7 +708,7 @@ void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z, int relati
         Camera[camera_no].campos.pos[SDLGL3D_Z] = z;
     }
     /* Adjust the frustum normals */
-    sdlgl3dSetupFrustumNormals(&Camera[camera_no], SDLGL3D_CAMERA_FOV);
+    sdlgl3dSetupFrustumNormals(&Camera[camera_no]);
 
 }
 
@@ -778,7 +803,7 @@ void sdlgl3dMoveObjects(float secondspassed)
         }
 
         /* If the camera was moved, set the frustum normals... */
-        sdlgl3dSetupFrustumNormals(&Camera[0], SDLGL3D_CAMERA_FOV);
+        sdlgl3dSetupFrustumNormals(&Camera[0]);
 
         if (Camera[0].bound) {
             /* TODO: Do not bind if attached to an object */
@@ -799,4 +824,22 @@ void sdlgl3dMoveObjects(float secondspassed)
 
     }
 
+}
+
+/*
+ * Name:
+ *     sdlgl3dInitVisiMap
+ * Description:
+ *     To check visibility by map squares, the visibility infos have to be handed over 
+ * Input:
+ *      map_w, map_h: Size of map in tiles 
+ *      tile_size:    Size of single tile in units 
+ */
+void sdlgl3dInitVisiMap(int map_w, int map_h, float tile_size)
+{
+
+    MapW     = map_w;
+    MapH     = map_h;
+    TileSize = tile_size;      /* For tiles visible in FOV */
+    
 }

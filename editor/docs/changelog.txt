@@ -1,3 +1,7 @@
+2010-10-08 <bitnapper>
+- Refactorized it code for setting data for chosen tile in 'free' mode
+- Prepared code for better rendering of 3D-View
+
 2010-10-07 <bitnapper>
 - Removed 'Update' from Tile-Properties-Dialog
 - Moved further checks about Edit-Mode of the editor-frontend

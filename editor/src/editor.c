@@ -546,14 +546,14 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
                 break;
 
             case SDLGL_TYPE_STRING:
-                sdlglstrSetColorNo(SDLGLSTR_COL_WHITE);
+                sdlglstrSetColorNo(SDLGL_COL_WHITE);
                 sdlglstrString(&fields -> rect, fields -> pdata);
                 break;
                 
             case SDLGL_TYPE_MENU:                    
                 if (fields -> fstate & SDLGL_FSTATE_MOUSEOVER) {
 
-                    color = SDLGLSTR_COL_RED;
+                    color = SDLGL_COL_RED;
 
                     if (fields -> code > 0 && fields -> sub_code == 0) {
 
@@ -564,7 +564,7 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
                 }
                 else {
 
-                    color = SDLGLSTR_COL_WHITE;
+                    color = SDLGL_COL_WHITE;
 
                 }
 

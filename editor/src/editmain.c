@@ -887,6 +887,40 @@ static int editmainChooseSpawnPos(int dir)
 
 /*
  * Name:
+ *     editmainUpdateChosenFreeFan
+ * Description:
+ *     Sets the data for the chosen tile type for 'free' mode  
+ * Input:
+ *     None, uses dataa in'EditState' and 'Mesh' for work 
+ */
+static void editmainUpdateChosenFreeFan(void)
+{
+
+    int cnt, tx, ty;
+    
+    
+    if (-1 != EditState.fan_selected[0]) {
+                    
+        /* Get copy at original position */
+        memcpy(&EditState.fd, &pCommands[EditState.ft.type & 0x1F], sizeof(COMMAND_T));
+        editmainFanTypeRotate(EditState.ft.type,
+                              &EditState.fd,
+                              EditState.fan_dir);
+        /* Now translate the fan to chosen fan position */
+        tx = (EditState.fan_selected[0] % Mesh.tiles_x) * 128;
+        ty = (EditState.fan_selected[0] / Mesh.tiles_x) * 128;
+
+        for (cnt = 0; cnt < EditState.fd.numvertices; cnt++) {
+            EditState.fd.vtx[cnt].x += tx;
+            EditState.fd.vtx[cnt].y += ty;
+        }
+
+    }
+
+}
+
+/*
+ * Name:
  *     editmainFanSet
  * Description:
  *     Sets a fan at the actual chosen position, depending on edit_state.
@@ -929,14 +963,17 @@ static int editmainFanSet(int fan_no, int is_floor)
             }
 
         }
-        else if (EditState.edit_mode == EDITMAIN_EDIT_FREE && ! is_floor) {
-            memcpy(&EditState.fd, &pCommands[EditState.ft.type & 0x1F], sizeof(COMMAND_T));
-            editmainFanTypeRotate(EditState.ft.type,
-                                  &EditState.fd,
-                                  EditState.fan_dir);
-
-            editmainDoFanUpdate(&Mesh, &EditState, EditState.fan_selected[0]);
-            /* TODO: Now move the display of chosen fan type to actual position */
+        else if (EditState.edit_mode == EDITMAIN_EDIT_FREE) {
+            if (is_floor) {
+                editmainUpdateChosenFreeFan();
+            }
+            else {
+                memcpy(&EditState.fd, &pCommands[EditState.ft.type & 0x1F], sizeof(COMMAND_T));
+                editmainFanTypeRotate(EditState.ft.type,
+                                      &EditState.fd,
+                                      EditState.fan_dir);
+                editmainDoFanUpdate(&Mesh, &EditState, EditState.fan_selected[0]);
+            }
 
         }
         else if (EditState.edit_mode == EDITMAIN_EDIT_FX) {
@@ -1021,9 +1058,6 @@ void editmainExit(void)
  */
 int editmainMap(int command, int info)
 {
-
-    int cnt, x, y;
-
                                        
     switch(command) {
 
@@ -1038,8 +1072,9 @@ int editmainMap(int command, int info)
             if (editmainCreateNewMap(&Mesh)) {
 
                 editmainCompleteMapData(&Mesh);
+                sdlgl3dInitVisiMap(Mesh.tiles_x, Mesh.tiles_y, 128.0);
                 /* Maybe initialize here the  chosen fan to
-                   none or 0 instead by caller */ 
+                   none or 0 instead by caller */
                 return 1;
 
             }
@@ -1050,8 +1085,9 @@ int editmainMap(int command, int info)
             if (editfileLoadMapMesh(&Mesh, EditState.msg)) {
 
                 editmainCompleteMapData(&Mesh);
+                sdlgl3dInitVisiMap(Mesh.tiles_x, Mesh.tiles_y, 128.0);
                 /* -------- Now read the data for spawn points and passages */
-                editmainLoadAdditionalData();
+                editmainLoadAdditionalData();                
                 return 1;
 
             }
@@ -1064,23 +1100,9 @@ int editmainMap(int command, int info)
         case EDITMAIN_ROTFAN:
             if (EditState.edit_mode == EDITMAIN_EDIT_FREE) {
                 /* Rotate the chosen fan type, if active edit mode */
-                if (-1 != EditState.fan_selected[0]) {
-                    EditState.fan_dir++;
-                    EditState.fan_dir &= 0x03;
-
-                    editmainFanTypeRotate(EditState.ft.type,
-                                          &EditState.fd,
-                                          EditState.fan_dir);
-                    /* Now translate the fan to chosen fan position */
-                    x = EditState.tx * 128;
-                    y = EditState.ty * 128;
-
-                    for (cnt = 0; cnt < EditState.fd.numvertices; cnt++) {
-                        EditState.fd.vtx[cnt].x += x;
-                        EditState.fd.vtx[cnt].y += y;
-                    }
-
-                }
+                EditState.fan_dir++;
+                EditState.fan_dir &= 0x03;
+                editmainUpdateChosenFreeFan();
             }
             return 1;
             
@@ -1216,8 +1238,6 @@ void editmainChooseFan(int cx, int cy, int is_floor)
 
     int fan_no, *pfan;
     int tw, th;
-    int x, y, i;
-    int old_tx, old_ty;
 
 
     if (! EditState.display_flags & EDITMAIN_SHOW2DMAP) {
@@ -1238,8 +1258,6 @@ void editmainChooseFan(int cx, int cy, int is_floor)
         return;
     }
     /* ------------------------- */
-    old_tx = EditState.tx;
-    old_ty = EditState.ty;
 
     /* Save it as x/y-position, too */
     tw = Mesh.minimap_w / Mesh.tiles_x;      /* Calculate rectangle size for mouse */
@@ -1262,17 +1280,8 @@ void editmainChooseFan(int cx, int cy, int is_floor)
         else {
             /* Adjust position of display for 'Free' Mode */
             if (EditState.fd.numvertices > 0) {
-                /* 'Move' actual 'fd'-data to new position, if available */
-                x = (EditState.tx - old_tx) * 128;
-                y = (EditState.ty - old_ty) * 128;
-
-                for (i = 0; i < EditState.fd.numvertices; i++) {
-                    EditState.fd.vtx[i].x += x;
-                    EditState.fd.vtx[i].y += y;
-                }
-
+                editmainUpdateChosenFreeFan();
             }
-
         }
 
         if (is_floor >= 0) {

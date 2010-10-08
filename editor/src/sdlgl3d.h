@@ -250,7 +250,7 @@
 
 typedef float SDLGL3D_VECTOR[3];  /* For X, Y, Z coordinates of vector.  */
 
-typedef struct SDLGL3D_OBJECT_TYPE {
+typedef struct {
 
     char    obj_type;          /* > 0. Callers side identification     */
                                /* 0: End of list for SDLGL3D           */
@@ -278,12 +278,13 @@ typedef struct SDLGL3D_OBJECT_TYPE {
 
 typedef struct {
 
-    float fow;
+    float fov;
     float viewwidth;
     float aspect_ratio;         /* For zoom and setup of frustum        */
     float zmin, zmax;           
-    float nx[3], ny[3];           
+    float nx[3], ny[3];              
     float leftangle, rightangle;
+    float vx1, vy1, vx2, vy2;   /* Bounding rectangle of field of view  */
 
 } SDLGL3D_FRUSTUM;
 
@@ -296,12 +297,13 @@ void sdlgl3dEnd(void);
 void sdlgl3dAttachCameraToObj(int obj_no, char camtype);
 void sdlgl3dInitCamera(int camera_no, int rotx, int roty, int rotz, float aspect_ratio);
 void sdlgl3dBindCamera(int camera_no, float x, float y, float x2, float y2); 
-SDLGL3D_OBJECT *sdlgl3dGetCameraInfo(int camera_no, float *nx, float *ny, float *zmax);
+SDLGL3D_OBJECT *sdlgl3dGetCameraInfo(int camera_no, SDLGL3D_FRUSTUM *f);
 void sdlgl3dInitObject(SDLGL3D_OBJECT *moveobj);
 void sdlgl3dManageCamera(int camera_no, char move_cmd, char set, char speed_modifier);
 void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z, int relative);
 void sdlgl3dManageObject(int obj_no, char move_cmd, char set);
 void sdlgl3dMoveObjects(float secondspassed);
+void sdlgl3dInitVisiMap(int map_w, int map_h, float tile_size);
 /* TODO:
     --- List of objects for drawing by caller, sorted from farest to nearest ---
     int sdlgl3dVisibleObjects(SDLGL3D_OBJECT **objects);

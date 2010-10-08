@@ -36,24 +36,6 @@
 #define SDLGLSTR_FONT8	   1	/* Font 8 Points width and 8 Points height */
 #define SDLGLSTR_FONTSPACE 2    /* Font 8 Points width and 8 Points height */
 
-/* Fontcolors */
-#define SDLGLSTR_COL_BLACK 	       0
-#define SDLGLSTR_COL_BLUE	       1
-#define SDLGLSTR_COL_GREEN 	       2
-#define SDLGLSTR_COL_CYAN 	       3
-#define SDLGLSTR_COL_RED 	       4
-#define SDLGLSTR_COL_MAGENTA 	   5
-#define SDLGLSTR_COL_BROWN 	       6
-#define SDLGLSTR_COL_LIGHTGREY     7
-#define SDLGLSTR_COL_DARKGRAY 	   8
-#define SDLGLSTR_COL_LIGHTBLUE     9
-#define SDLGLSTR_COL_LIGHTGREEN   10
-#define SDLGLSTR_COL_LIGHTCYAN    11
-#define SDLGLSTR_COL_LIGHTRED     12
-#define SDLGLSTR_COL_LIGHTMAGENTA 13
-#define SDLGLSTR_COL_YELLOW 	  14
-#define SDLGLSTR_COL_WHITE 	      15
-
 /* Flags for drawing routines */
 #define SDLGLSTR_FINVISIBLE   0x80000000    /* Is invisible                 */
 #define SDLGLSTR_FHIGHLIGHT   0x40000000    /* is highlighted               */
@@ -126,6 +108,8 @@ void sdlglstrStringToRect(SDLGL_RECT *rect, char *string);
 void sdlglstrDrawButton(SDLGL_RECT *rect, char *text, int flags);
 void sdlglstrDrawEditField(SDLGL_RECT *rect, char *text, int curpos);
 void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int flags);
+SDLGL_FIELD *sdlglstrDrawField(SDLGL_FIELD *field);
+void sdlglstrPrintValue(SDLGL_RECT *rect, void *value, int which); 
 
 /* Additional function for user defined fonts and styles */
 int  sdlglstrSetFont(int fontno);

@@ -981,33 +981,33 @@ static void editdraw2DCameraPos(int x, int y, int tw, int th)
 {
 
     SDLGL3D_OBJECT *campos;
-    float nx[4], ny[4];         /* For the frustum normals              */
-    float zmax;                 /* Far plane: Extent of frustum normals */
+    SDLGL3D_FRUSTUM f;          /* Information about the frustum        */
     SDLGL_RECT draw_rect;
-    
-    
+    int zmax;
+
+
     /* TODO: Calculate now hardcoded value of '32.0' */
-    campos = sdlgl3dGetCameraInfo(0, &nx[0], &ny[0], &zmax);
+    campos = sdlgl3dGetCameraInfo(0, &f);
 
     draw_rect.x = x + (campos -> pos[0] / tw);
     draw_rect.y = y + (campos -> pos[1] / th);
-    zmax /= tw;       /* Fixme: Do correct division -- resive by diff to full*/
+    zmax = f.zmax / tw;       /* Fixme: Do correct division -- resive by diff to full*/
 
     /* Now draw the camera angle */
     glBegin(GL_LINES);
         sdlglSetColor(SDLGL_COL_LIGHTGREEN);
         glVertex2i(draw_rect.x, draw_rect.y);       /* Right edge of frustum */
-        glVertex2i(draw_rect.x + (nx[0] * zmax),
-                   draw_rect.y + (ny[0] * zmax));
+        glVertex2i(draw_rect.x + (f.nx[0] * zmax),
+                   draw_rect.y + (f.ny[0] * zmax));
 
         sdlglSetColor(SDLGL_COL_LIGHTRED);          /* Left edge of frustum */
         glVertex2i(draw_rect.x, draw_rect.y);
-        glVertex2i(draw_rect.x + (nx[1] * zmax),
-                   draw_rect.y + (ny[1] * zmax));
+        glVertex2i(draw_rect.x + (f.nx[1] * zmax),
+                   draw_rect.y + (f.ny[1] * zmax));
         sdlglSetColor(SDLGL_COL_WHITE);
-        glVertex2i(draw_rect.x, draw_rect.y);       /* Direction */
-        glVertex2i(draw_rect.x + (nx[2] * zmax),
-                   draw_rect.y + (ny[2] * zmax));
+        glVertex2i(draw_rect.x, draw_rect.y);       /* Direction            */
+        glVertex2i(draw_rect.x + (f.nx[2] * zmax),
+                   draw_rect.y + (f.ny[2] * zmax));
     glEnd();
 
 }
