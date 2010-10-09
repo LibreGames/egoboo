@@ -55,11 +55,6 @@
 #define SDLGLSTR_USERCOLOR 21
 #define SDLGLSTR_MAXCOLOR  20
 
-
-/* Styles */
-/* ------ Styles -------- */
-#define SDLGLSTR_MAXSTYLE 10
-
 /* Internal constants */
 #define SDLGLSTR_FIELDBORDER  4	/* Width of border in pixels 		        */
 #define SDLGLSTR_SPECIALDIST 12	/* Distance between start of special field  */
@@ -470,29 +465,26 @@ static FONT _wFonts[SDLGLSTR_MAXFONT] = {
 
 };
 
+static SDLGLSTR_STYLE BasicStyle = {
 
-/* Different styles for drawing */
-static SDLGLSTR_STYLE Styles[SDLGLSTR_MAXSTYLE] = {
-    /* SDLGLSTR_STYLEBLUE	*/
-    { SDLGLSTR_FONT8,
-      {  80, 196, 252 },        /* Color of buttons mid            */
-      {  80, 136, 252 },        /* Color of buttons topside        */
-      {  56,  60, 220 },        /* Color of buttons bottomside     */
+      SDLGLSTR_FONT8,
+      {  64, 157, 201 },        /* Color of buttons mid            */
+      {  64, 109, 201 },        /* Color of buttons topside        */
+      {  45,  48, 176 },        /* Color of buttons bottomside     */
       { 255, 255, 255 },	    /* Color of non highlighted text   */
       { 100, 100, 100 },        /* Color of non highlighted hotkey */
       { 170,   0,   0 },	    /* Color of highlighted text       */
       { 170,   0, 100 },	    /* Color of highlighted hotkey     */
       {   0,   0,   0 },	    /* Color for label text in dialog  */
       {  40,  32, 172 },	    /* Color for scrollbox background  */
-      { 255, 255, 255 },	    /* Color for labels in map	   */
+      { 255, 255, 255 },	    /* Color for labels in map	       */
       {   0,   0,   0 }         /* Color for the shadow for mapl.  */
-    }
 
 };
 
 static SDLGLSTR_STYLE ActualStyle = {
 
-      SDLGLSTR_FONT8,  
+      SDLGLSTR_FONT8,
       {  64, 157, 201 },        /* Color of buttons mid            */
       {  64, 109, 201 },        /* Color of buttons topside        */
       {  45,  48, 176 },        /* Color of buttons bottomside     */
@@ -990,44 +982,6 @@ void sdlglstrChar(SDLGL_RECT *pos, char c)
 
 /*
  * Name:
- *     sdlglstrStringStyle
- * Description:
- *     Prints the string with the given style. No highlighting.
- * Input:
- *     pos *:     Pointer on SDLGL_RECT, holding drawing position
- *     text:      String to print
- *     highlight: Draw text highlighted, yes/no
- *
- */
-void sdlglstrStringStyle(SDLGL_RECT *pos, char *text, int highlight)
-{
-
-    SDLGLSTR_STYLE *style = &ActualStyle;
-    unsigned char *textcolor,
-    		  *hotkeycolor;
-
-    if (highlight) {
-
-        textcolor   = style -> texthi;
-        hotkeycolor = style -> hotkeyhi;
-
-    }
-    else {
-
-    	textcolor   = style -> textlo;
-        hotkeycolor = style -> hotkeylo;
-
-    }
-
-    ActFont = style -> fontno;
-
-    sdlglstrIString(pos, text, textcolor, hotkeycolor);
-
-}
-
-
-/*
- * Name:
  *     sdlglstrStringToRect
  * Description:
  *     Prints the string into the given rectangle. In case the string
@@ -1057,7 +1011,7 @@ void sdlglstrStringToRect(SDLGL_RECT *rect, char *string)
     if (! string) {
 
         return;	/* Just for the case ... */
-        
+
     }
 
 
@@ -1541,12 +1495,12 @@ void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int info)
  * Input:
  *     field * : Pointer on fields to print 
  * Output:
- *     Pointer on first field which is not an SDLGL_TYPE 
+ *     Pointer on next field which is not an SDLGL_TYPE_... 
  */
 SDLGL_FIELD *sdlglstrDrawField(SDLGL_FIELD *field)
 {
 
-    unsigned char *textcolor;   
+    unsigned char *textcolor;
     
     
     ActFont = ActualStyle.fontno;
@@ -1563,6 +1517,16 @@ SDLGL_FIELD *sdlglstrDrawField(SDLGL_FIELD *field)
                 }
                 sdlglstrIString(&field -> rect, field -> pdata, textcolor, textcolor);
                 break;
+
+            /*
+            case SDLGL_TYPE_STRING:
+                ActFont = style -> fontno;
+                sdlglstrIString(pos, text, textcolor, hotkeycolor);
+                break;
+            */
+            default:
+                /* Unknown type, to be drawn by caller  */
+                return field;
                 
         }
         
@@ -1738,48 +1702,20 @@ void sdlglstrAddFont(unsigned char * font, int fontw, int fonth, int fontno)
 
 /*
  * Name:
- *     sdlglstrInitDrawStyle
- * Function:
- *     Replaces the style with the given number by the data from
- *     argument. If the number of the style is < 0 or >= MAXSTYLE,
- *     then no action is taken.
- * Input:
- *     styleno: Number of style to replace.
- *     style:   Pointer on a struct with style data.
- */
-void sdlglstrInitDrawStyle(int styleno, SDLGLSTR_STYLE *style)
-{
-
-    if ((styleno > 0) && (styleno < SDLGLSTR_MAXSTYLE)) {
-
-        memcpy(&Styles[styleno], style, sizeof(SDLGLSTR_STYLE));
-        
-    }
-
-}
-
-/*
- * Name:
  *     sdlglstrSetDrawStyle
  * Function:
- *     Sets the style with the given number as the actual drawing style.
- *     This style is used for all
- *     Replaces the style with the given number by the data from
- *     argument. If the number of the style is < 0 or >= MAXSTYLE,
- *     then no action is taken.
+ *     Overwrites the 'ActualStyle' with the style goven in argument
  * Input:
- *     styleno: Number of style to set for drawing.
+ *     style:   Pointer on a struct with style data.
  */
-void sdlglstrSetDrawStyle(int styleno)
+void sdlglstrSetDrawStyle(SDLGLSTR_STYLE *style)
 {
-
-    if ((styleno > 0) && (styleno < SDLGLSTR_MAXSTYLE)) {
-
-        memcpy(&ActualStyle, &Styles[styleno], sizeof(SDLGLSTR_STYLE));
-        
+    if (style) {
+        memcpy(&ActualStyle, style, sizeof(SDLGLSTR_STYLE));
     }
-
+    else {
+        /* Reset it to default */
+        memcpy(&ActualStyle, &BasicStyle, sizeof(SDLGLSTR_STYLE));
+    }
 }
-
-
 

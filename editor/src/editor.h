@@ -57,9 +57,6 @@
 #define MPDFX_DAMAGE    0x40    
 #define MPDFX_SLIPPY    0x80    
 
-#define INVALID_BLOCK ((unsigned int )(~0))
-#define INVALID_TILE  ((unsigned int )(~0))
-
 #define COMMAND_TEXTUREHI_FLAG 0x20
 
 // Editor modes: How to draw the map
@@ -110,7 +107,6 @@ typedef struct {
 
     float x, y, z;          /* Vertex x / y / z                     */           
     unsigned char a;        /* Ambient lighting                     */
-    unsigned char l;        /* Light intensity (used for drawing)   */
 
 } MESH_VTX_T;              /* Planned for later adjustement how to store vertices */
 
@@ -131,17 +127,16 @@ typedef struct {
     float edgey;                
     float edgez;                
 
-    FANDATA_T fan[MAXMESHFAN];                  // Fan desription            
-    unsigned char twist[MAXMESHFAN];            // Surface normal
+    FANDATA_T fan[MAXMESHFAN];                      // Fan desription            
+    unsigned char twist[MAXMESHFAN];                // Surface normal
     
-    float vrtx[MAXTOTALMESHVERTICES + 10];             // Vertex position
-    float vrty[MAXTOTALMESHVERTICES + 10];             //
-    float vrtz[MAXTOTALMESHVERTICES + 10];             // Vertex elevation
+    float vrtx[MAXTOTALMESHVERTICES + 10];          // Vertex position
+    float vrty[MAXTOTALMESHVERTICES + 10];          //
+    float vrtz[MAXTOTALMESHVERTICES + 10];          // Vertex elevation
     
-    unsigned char vrta[MAXTOTALMESHVERTICES + 10];   // Vertex base light, 0=unused
+    unsigned char vrta[MAXTOTALMESHVERTICES + 10];  // Vertex base light, 0=unused
     
-    int  vrtstart[MAXMESHFAN];                  // First vertex of given fan  
-    char visible[MAXTOTALMESHVERTICES + 10];         // Is visible yes/no
+    int  vrtstart[MAXMESHFAN];                      // First vertex of given fan  
 
 } MESH_T;
 

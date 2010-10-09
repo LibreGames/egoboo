@@ -945,7 +945,7 @@ static void editdrawMap(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, int *chosen,
     /* ------------ Draw actual chosen passage ---------------------- */
     if (*psg >= 0) {  
 
-        editdrawTransparentFan3D(mesh, psg, SDLGL_COL_BLUE, 128);
+        editdrawTransparentFan3D(mesh, psg, SDLGL_COL_GREEN, 128);
     
     }
     /* ------------ Draw actual chosen spawn position --------------- */

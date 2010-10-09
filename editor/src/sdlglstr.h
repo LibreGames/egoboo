@@ -116,8 +116,7 @@ int  sdlglstrSetFont(int fontno);
 void sdlglstrSetColorNo(int colorno);
 void sdlglstrSetColor(unsigned char r, unsigned char g, unsigned char b);
 void sdlglstrAddFont(unsigned char *font, int fontw, int fonth, int fontno);
-void sdlglstrInitDrawStyle(int styleno, SDLGLSTR_STYLE *style);
-void sdlglstrSetDrawStyle(int styleno);
+void sdlglstrSetDrawStyle(SDLGLSTR_STYLE *style);
 
 /* Additional drawing functions */
 void sdlglstrDrawRect(SDLGL_RECT *rect, unsigned char *color, int filled);

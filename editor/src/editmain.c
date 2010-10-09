@@ -57,14 +57,26 @@
 
 #define EDITMAIN_MAXSPAWN    500        /* Maximum Lines in spawn list  */
 #define EDITMAIN_MAXPASSAGE   50
+
+#define EDITMAIN_MAXLIGHT    100        /* Maximum number of lights     */  
+#define EDITMAIN_FADEBORDER   64        /* Darkness at the edge of map  */
   
 /*******************************************************************************
 * DATA							                                               *
 *******************************************************************************/
 
+/* ----------- Lights ---------- */
+static int LightAmbi    = 22;
+static int LightAmbiCut = 1;
+static int LightDirect  = 16;
+static int NumLight     = 0;
+static LIGHT_T LightList[EDITMAIN_MAXLIGHT + 2];
+
 static MESH_T Mesh;
 static COMMAND_T *pCommands;
+
 static EDITMAIN_STATE_T EditState;
+
 static PassageFan[EDITMAIN_MAXSELECT + 2];  /* List of fans of actual chosen passage */
 static SpawnFan[EDITMAIN_MAXSELECT + 2];    /* List of fans of actual chosen spawn point */
 
@@ -211,7 +223,6 @@ static void editmainSetFanStart(MESH_T *mesh)
     for (fan_no = 0, vertex_no = 0; fan_no < mesh -> numfan; fan_no++) {
 
         mesh -> vrtstart[fan_no] = vertex_no;
-        mesh -> visible[fan_no]  = 1;
         vertex_no += pCommands[mesh -> fan[fan_no].type & 0x1F].numvertices;
 
     }
@@ -580,11 +591,9 @@ static int editmainSetVrta(MESH_T *mesh, int vert)
 {
     /* TODO: Get all needed functions from cartman code */
     int newa, x, y, z;
-    int brx, bry;
-    /*
-    int , brz, deltaz, dist, cnt;
+    int brz, deltaz, cnt;
     int newlevel, distance, disx, disy;
-    */
+    /* int brx, bry, dist; */ 
 
     /* To make life easier  */
     x = mesh -> vrtx[vert];
@@ -592,55 +601,54 @@ static int editmainSetVrta(MESH_T *mesh, int vert)
     z = mesh -> vrtz[vert];
 
     // Directional light
+    /*
     brx = x + 64;
     bry = y + 64;
 
-    newa = 60;
-    /*
     brz = get_level(brx, y) +
           get_level(x, bry) +
           get_level(x + 46, y + 46);
+    */
+    
+    brz = z;
     if (z < -128) z = -128;
     if (brz < -128) brz = -128;
     deltaz = z + z + z - brz;
-    newa = (deltaz * direct >> 8);
+    newa = (deltaz * LightDirect >> 8);
 
     // Point lights !!!BAD!!!
     newlevel = 0;
-    cnt = 0;
-    while (cnt < numlight)
-    {
-        disx = x - light_lst[cnt].x;
-        disy = y - light_lst[cnt].y;
-        distance = sqrt(disx * disx + disy * disy);
-        if (distance < light_lst[cnt].radius)
+    for (cnt = 0; cnt < NumLight; cnt++) {
+        disx = x - LightList[cnt].x;
+        disy = y - LightList[cnt].y;
+        distance = (disx * disx) + (disy * disy);
+        if (distance < (LightList[cnt].radius * LightList[cnt].radius))
         {
-            newlevel += ((light_lst[cnt].level * (light_lst[cnt].radius - distance)) / light_lst[cnt].radius);
+            newlevel += ((LightList[cnt].level * (LightList[cnt].radius - distance)) / LightList[cnt].radius);
         }
-        cnt++;
     }
     newa += newlevel;
 
     // Bounds
-    if (newa < -ambicut) newa = -ambicut;
-    newa += ambi;
+    if (newa < -LightAmbiCut) newa = -LightAmbiCut;
+    newa += LightAmbi;
     if (newa <= 0) newa = 1;
     if (newa > 255) newa = 255;
-    mesh -> vrta[vert] = newa;
+    mesh -> vrta[vert] = (unsigned char)newa;
 
     // Edge fade
+    /*
     dist = dist_from_border(mesh  -> vrtx[vert], mesh -> vrty[vert]);
-    if (dist <= FADEBORDER)
+    if (dist <= EDITMAIN_FADEBORDER)
     {
-        newa = newa * dist / FADEBORDER;
-        if (newa == VERTEXUNUSED)  newa = 1;
+        newa = newa * dist / EDITMAIN_FADEBORDER;
+        if (newa == 0)  newa = 1;
         mesh  ->  vrta[vert] = newa;
     }
-
-    return newa;
     */
 
     return newa;
+
 }
 
 /*

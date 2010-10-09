@@ -1,3 +1,7 @@
+2010-10-09 <bitnapper>
+- Prepared support for lights and calculation of lighting
+- Adjusted patterns for setting walls in 'simple mode'
+
 2010-10-08 <bitnapper>
 - Refactorized it code for setting data for chosen tile in 'free' mode
 - Prepared code for better rendering of 3D-View

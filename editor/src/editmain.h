@@ -75,6 +75,7 @@ typedef struct {
     int  fan_selected[EDITMAIN_MAXSELECT + 1];    
     int  psg_no;        /* > 0: Number of passage chosen        */
     int  spawnpos_no;   /* > 0: Number of spawn position chosen */
+    int  light_no;      /* > 0: Number of light chosen          */ 
     int  minimap_w,
          minimap_h;
     int  tx, ty;        /* Position of fan as x/y on map    */
@@ -124,6 +125,13 @@ typedef struct {
     char team;
     
 } EDITMAIN_SPAWNPT_T;     /* Spawn-Point for display on map. From 'spawn.txt' */
+
+typedef struct {
+    int           x;
+    int           y;
+    unsigned char level;
+    int           radius;
+} LIGHT_T;
 
 /*******************************************************************************
 * CODE 								                                           *
