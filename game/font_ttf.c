@@ -209,7 +209,7 @@ display_item_t * fnt_print_raw( display_item_t * display_src, TTF_Font * ttf_ptr
         // upload the texture
         display_src = display_item_validate_texture( display_src );
 
-        if ( !SDL_GL_uploadSurface( tmp_surface, display_item_texture_name(display_src), display_item_texCoords(display_src) ) )
+        if ( !SDL_GL_uploadSurface( tmp_surface, display_item_texture_name( display_src ), display_item_texCoords( display_src ) ) )
         {
             print_error = btrue;
             goto fnt_print_raw_finish;
@@ -222,7 +222,7 @@ fnt_print_raw_finish:
     if ( NULL != display_src && NULL != tmp_surface )
     {
         frect_t * prect = display_item_prect( display_src );
-        if( NULL != prect )
+        if ( NULL != prect )
         {
             prect->w = tmp_surface->w;
             prect->h = tmp_surface->h;
@@ -275,7 +275,7 @@ display_item_t * fnt_drawText_raw( display_item_t *tx_ptr, TTF_Font * font_ptr, 
     if ( NULL != tx_ptr )
     {
         frect_t * prect = display_item_prect( tx_ptr );
-        if( NULL != prect )
+        if ( NULL != prect )
         {
             // set the position of the display
             prect->x = x;

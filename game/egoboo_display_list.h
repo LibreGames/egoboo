@@ -46,7 +46,7 @@ extern GLboolean        display_item_set_bound( display_item_t *, GLint x, GLint
 extern GLboolean        display_item_adjust_bound( display_item_t *, GLfloat dx, GLfloat dy );
 
 /// Tell the display_item that it does not own its resources
-extern GLboolean       display_item_release_ownership( display_item_t *);
+extern GLboolean       display_item_release_ownership( display_item_t * );
 
 /// Set the texture that the display_item is using
 extern GLuint display_item_set_texture( display_item_t *, GLuint tex_name, GLboolean owner );
@@ -55,7 +55,7 @@ extern GLuint display_item_set_texture( display_item_t *, GLuint tex_name, GLboo
 extern GLuint display_item_set_list( display_item_t *, GLuint list_name, GLboolean owner );
 
 /// Draw a display_item_t directly to the screen
-extern GLboolean       display_item_draw( display_item_t *);
+extern GLboolean       display_item_draw( display_item_t * );
 
 //--------------------------------------------------------------------------------------------
 /// forward declaration for an opaque struct implementing an OpenGL-like display list

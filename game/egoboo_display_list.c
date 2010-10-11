@@ -50,7 +50,7 @@ struct s_display_item
 };
 
 static GLboolean _display_item_invalidate_texture( display_item_t * item_ptr );
-static GLboolean _display_item_invalidate_list   ( display_item_t * item_ptr );
+static GLboolean _display_item_invalidate_list( display_item_t * item_ptr );
 
 //--------------------------------------------------------------------------------------------
 GLboolean _display_item_invalidate_texture( display_item_t * item_ptr )
@@ -59,13 +59,13 @@ GLboolean _display_item_invalidate_texture( display_item_t * item_ptr )
 
     GLboolean retval = GL_FALSE;
 
-    if( NULL == item_ptr ) return GL_FALSE;
+    if ( NULL == item_ptr ) return GL_FALSE;
 
-    if( item_ptr->own_texture )
+    if ( item_ptr->own_texture )
     {
-        if( INVALID_GL_ID != item_ptr->texture_name )
+        if ( INVALID_GL_ID != item_ptr->texture_name )
         {
-            GL_DEBUG( glDeleteTextures ) ( 1, &(item_ptr->texture_name) );
+            GL_DEBUG( glDeleteTextures )( 1, &( item_ptr->texture_name ) );
             retval = GL_TRUE;
         }
 
@@ -83,13 +83,13 @@ GLboolean _display_item_invalidate_list( display_item_t * item_ptr )
 
     GLboolean retval = GL_FALSE;
 
-    if( NULL == item_ptr ) return GL_FALSE;
+    if ( NULL == item_ptr ) return GL_FALSE;
 
-    if( item_ptr->own_texture )
+    if ( item_ptr->own_texture )
     {
-        if( INVALID_GL_ID != item_ptr->texture_name )
+        if ( INVALID_GL_ID != item_ptr->texture_name )
         {
-            GL_DEBUG( glDeleteLists ) ( item_ptr->list_name, 1 );
+            GL_DEBUG( glDeleteLists )( item_ptr->list_name, 1 );
             retval = GL_TRUE;
         }
 
@@ -147,10 +147,10 @@ GLboolean display_item_release_ownership( display_item_t * item_ptr )
 {
     GLboolean retval = GL_FALSE;
 
-    if( NULL == item_ptr ) return GL_FALSE;
+    if ( NULL == item_ptr ) return GL_FALSE;
 
     // will it accomplish anything?
-    if( item_ptr->own_texture && INVALID_GL_ID != item_ptr->texture_name )
+    if ( item_ptr->own_texture && INVALID_GL_ID != item_ptr->texture_name )
     {
         retval = GL_TRUE;
     }
@@ -159,7 +159,7 @@ GLboolean display_item_release_ownership( display_item_t * item_ptr )
     item_ptr->own_texture = GL_FALSE;
 
     // will it accomplish anything?
-    if( item_ptr->own_list && INVALID_GL_ID != item_ptr->list_name )
+    if ( item_ptr->own_list && INVALID_GL_ID != item_ptr->list_name )
     {
         retval = GL_TRUE;
     }
@@ -179,7 +179,7 @@ display_item_t * display_item_validate_texture( display_item_t * item_ptr )
 
     if ( INVALID_GL_ID == item_ptr->texture_name )
     {
-        GL_DEBUG( glGenTextures )( 1, &(item_ptr->texture_name) );
+        GL_DEBUG( glGenTextures )( 1, &( item_ptr->texture_name ) );
         item_ptr->own_texture = GL_TRUE;
     }
 
@@ -270,7 +270,7 @@ GLuint display_item_set_texture( display_item_t * item_ptr, GLuint tex_name, GLb
     item_ptr->texture_name = tex_name;
 
     // set the texture ownership
-    if( owner )
+    if ( owner )
     {
         // move the ownership to this display item
         item_ptr->own_texture = GL_TRUE;
@@ -297,7 +297,7 @@ GLuint display_item_set_list( display_item_t * item_ptr, GLuint list_name, GLboo
     item_ptr->list_name = list_name;
 
     // set the list ownership
-    if( owner )
+    if ( owner )
     {
         // move the ownership to this display item
         item_ptr->own_list = GL_TRUE;
@@ -333,7 +333,7 @@ GLboolean display_item_draw_texture( display_item_t * item_ptr )
 
     // If there is no valid texture return false.
     // @note !!!! This is not egoboo's normal behavior !!!!
-    // Things like buttons and other "blank" textures are implemented 
+    // Things like buttons and other "blank" textures are implemented
     // by binding INVALID_GL_ID as a texture
     if ( INVALID_GL_ID == item_ptr->texture_name ) return GL_FALSE;
 
@@ -380,7 +380,7 @@ GLboolean display_item_draw( display_item_t * item_ptr )
 
     if ( NULL == item_ptr ) return GL_FALSE;
 
-    if( INVALID_GL_ID == item_ptr->texture_name && INVALID_GL_ID != item_ptr->list_name )
+    if ( INVALID_GL_ID == item_ptr->texture_name && INVALID_GL_ID != item_ptr->list_name )
     {
         // clearly, a display list item
         retval = display_item_draw_list( item_ptr );

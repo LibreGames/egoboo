@@ -80,7 +80,7 @@ enum e_color
     COLOR_BLUE,
     COLOR_PURPLE,
     COLOR_MAX,
-	NOSPARKLE = COLOR_MAX
+    NOSPARKLE = COLOR_MAX
 };
 
 //--------------------------------------------------------------------------------------------

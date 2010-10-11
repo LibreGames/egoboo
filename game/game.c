@@ -3119,7 +3119,7 @@ void game_load_global_assets()
     load_all_global_icons();
     load_blips();
     load_bars();
-	load_cursor();
+    load_cursor();
     font_bmp_load_vfs( "mp_data/font", "mp_data/font.txt" );
 }
 

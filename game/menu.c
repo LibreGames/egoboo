@@ -102,18 +102,18 @@ typedef struct s_SlidyButtonState SlidyButtonState_t;
 /// the data to display a chosen player in the load player menu
 struct s_ChoosePlayer_element
 {
-    CAP_REF cap_ref;          ///< the index of the cap_t
-    TX_REF  tx_ref;           ///< the index of the icon texture
-    chop_definition_t chop;   ///< put this here so we can generate a name without loading an entire profile
+    CAP_REF           cap_ref;   ///< the index of the cap_t
+    TX_REF            tx_ref;    ///< the index of the icon texture
+    chop_definition_t chop;      ///< put this here so we can generate a name without loading an entire profile
 };
 typedef struct s_ChoosePlayer_element ChoosePlayer_element_t;
 
 #define PLAYER_ELEMENT_INIT \
-{ \
-    /* cap_ref */ MAX_CAP,             \
-    /* tx_ref  */ INVALID_TX_TEXTURE,  \
-    /* chop    */ CHOP_DEFINITION_INIT \
-}
+    { \
+        /* cap_ref */ MAX_CAP,             \
+        /* tx_ref  */ INVALID_TX_TEXTURE,  \
+        /* chop    */ CHOP_DEFINITION_INIT \
+    }
 
 //--------------------------------------------------------------------------------------------
 
@@ -125,7 +125,7 @@ struct s_ChoosePlayer_profiles
 };
 typedef struct s_ChoosePlayer_profiles ChoosePlayer_profiles_t;
 
-#define PLAYER_PROFILES_INIT { 0, PLAYER_ELEMENT_INIT }
+#define PLAYER_PROFILES_INIT { 0, {PLAYER_ELEMENT_INIT} }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -689,7 +689,6 @@ int doMainMenu( float deltaTime )
     static int menuState = MM_Begin;
     static oglx_texture_t background;
     static oglx_texture_t logo;
-    static display_list_t * copyright_display_ptr;
     static SlidyButtonState_t but_state = { NULL };
     static int menuChoice = 0;
     static SDL_Rect bg_rect, logo_rect;
@@ -981,7 +980,6 @@ int doSinglePlayerMenu( float deltaTime )
     static int menuState = MM_Begin;
     static oglx_texture_t background;
     static int menuChoice;
-    static display_list_t * copyright_display_ptr;
     static SlidyButtonState_t but_state = { NULL };
 
     enum e_buttons
@@ -1927,23 +1925,23 @@ struct s_doChoosePlayer_stats_info
 typedef struct s_doChoosePlayer_stats_info doChoosePlayer_stats_info_t;
 
 #define PLAYER_STATS_INFO_INIT                  \
-{                                               \
-    /* objects     */   PLAYER_PROFILES_INIT,   \
-    /* player      */   -1,                     \
-    /* player_last */   -1,                     \
-    /* item_ptr    */   NULL                    \
-}
+    {                                               \
+        /* objects     */   PLAYER_PROFILES_INIT,   \
+        /* player      */   -1,                     \
+        /* player_last */   -1,                     \
+        /* item_ptr    */   NULL                    \
+    }
 
 //--------------------------------------------------------------------------------------------
 doChoosePlayer_stats_info_t * doChoosePlayer_stats_info_ctor( doChoosePlayer_stats_info_t * ptr )
 {
-    if( NULL == ptr ) 
+    if ( NULL == ptr )
     {
-        ptr = EGOBOO_NEW(doChoosePlayer_stats_info_t);
+        ptr = EGOBOO_NEW( doChoosePlayer_stats_info_t );
     }
 
     // clear the data
-    memset( ptr, 0, sizeof(*ptr) );
+    memset( ptr, 0, sizeof( *ptr ) );
 
     // set special data
     ptr->player      = -1;
@@ -1955,11 +1953,11 @@ doChoosePlayer_stats_info_t * doChoosePlayer_stats_info_ctor( doChoosePlayer_sta
 //--------------------------------------------------------------------------------------------
 doChoosePlayer_stats_info_t * doChoosePlayer_stats_info_dtor( doChoosePlayer_stats_info_t * ptr, bool_t owner )
 {
-    if( NULL == ptr ) return ptr;
+    if ( NULL == ptr ) return ptr;
 
     ptr->item_ptr   = display_item_free( ptr->item_ptr, btrue );
 
-    if( !owner )
+    if ( !owner )
     {
         ptr = doChoosePlayer_stats_info_ctor( ptr );
     }
@@ -1974,12 +1972,12 @@ doChoosePlayer_stats_info_t * doChoosePlayer_stats_info_dtor( doChoosePlayer_sta
 //--------------------------------------------------------------------------------------------
 doChoosePlayer_stats_info_t * doChoosePlayer_load_stats( doChoosePlayer_stats_info_t * ptr, int player, int mode )
 {
-    if( NULL == ptr )
+    if ( NULL == ptr )
     {
         ptr = doChoosePlayer_stats_info_ctor( ptr );
     }
 
-    if( NULL == ptr ) return ptr;
+    if ( NULL == ptr ) return ptr;
 
     ptr->player_last = ptr->player;
     ptr->player      = player;
@@ -2020,15 +2018,15 @@ doChoosePlayer_stats_info_t * doChoosePlayer_render_stats( doChoosePlayer_stats_
 
     GLuint list_index = INVALID_GL_ID;
 
-    if( NULL == ptr )
+    if ( NULL == ptr )
     {
         ptr = doChoosePlayer_stats_info_ctor( ptr );
     }
 
-    if( NULL == ptr ) return ptr;
+    if ( NULL == ptr ) return ptr;
 
     // make sure we have a valid display_item
-    if( NULL == ptr->item_ptr )
+    if ( NULL == ptr->item_ptr )
     {
         ptr->item_ptr = display_item_new();
     }
@@ -2038,16 +2036,16 @@ doChoosePlayer_stats_info_t * doChoosePlayer_render_stats( doChoosePlayer_stats_
 
     // is the list_name valid?
     list_index = display_item_list_name( ptr->item_ptr );
-    if( INVALID_GL_ID == list_index )
+    if ( INVALID_GL_ID == list_index )
     {
         // there was an error. we have no use for the ptr->item_ptr
         ptr->item_ptr = display_item_free( ptr->item_ptr, btrue );
     }
 
     // start capturing the ogl commands
-    if( INVALID_GL_ID != list_index )
+    if ( INVALID_GL_ID != list_index )
     {
-        glNewList(list_index, GL_COMPILE);
+        glNewList( list_index, GL_COMPILE );
     }
 
     {
@@ -2155,7 +2153,7 @@ doChoosePlayer_stats_info_t * doChoosePlayer_render_stats( doChoosePlayer_stats_
         }
     }
 
-    if( INVALID_GL_ID != list_index )
+    if ( INVALID_GL_ID != list_index )
     {
         GL_DEBUG_END_LIST();
     }
@@ -2536,7 +2534,7 @@ int doChoosePlayer( float deltaTime )
                         //    last_player = player;
                         //    new_player  = btrue;
                         //}
-                        //else 
+                        //else
 
                         // remove a selected player by clicking on its button
                         if ( HAS_NO_BITS( mnu_widgetList[m].latch_state, UI_LATCH_CLICKED ) && mnu_Selected_check_loadplayer( player ) )
@@ -2609,7 +2607,7 @@ int doChoosePlayer( float deltaTime )
                                     control_added = btrue;
                                 }
 
-                                if( player_added && control_added )
+                                if ( player_added && control_added )
                                 {
                                     last_player_old = last_player;
                                     last_player = player;
@@ -2623,7 +2621,7 @@ int doChoosePlayer( float deltaTime )
                                 mnu_Selected_remove_input( player, BitsInput[j] );
 
                                 // was the player removed?
-                                if( INVALID_PLAYER == mnu_Selected_get_loadplayer( player ) )
+                                if ( INVALID_PLAYER == mnu_Selected_get_loadplayer( player ) )
                                 {
                                     last_player_old = last_player;
                                     last_player = -1;
@@ -2653,11 +2651,11 @@ int doChoosePlayer( float deltaTime )
                 }
 
                 // has the player been updated?
-                if( last_player_old != last_player )
+                if ( last_player_old != last_player )
                 {
                     last_player_old = last_player;
 
-                    if( -1 == last_player )
+                    if ( -1 == last_player )
                     {
                         // the player has been dismissed
 
@@ -2698,7 +2696,7 @@ int doChoosePlayer( float deltaTime )
                 //}
 
                 // draw the stats
-                if( NULL != stats_info.item_ptr )
+                if ( NULL != stats_info.item_ptr )
                 {
                     display_item_draw( stats_info.item_ptr );
                 }
@@ -3362,7 +3360,6 @@ int doOptionsInput( float deltaTime )
     static int menuState = MM_Begin;
     static int menuChoice = 0;
     static int waitingforinput = -1;
-    static display_item_t * fnt_tx_ptr = NULL;
     static SlidyButtonState_t but_state = { NULL };
 
     enum e_buttons
@@ -4173,9 +4170,8 @@ int doOptionsGame( float deltaTime )
     static int menuState = MM_Begin;
     static oglx_texture_t background;
     static int menuChoice = 0;
-    static display_item_t * fnt_tx_ptr = NULL;
     static SlidyButtonState_t but_state = { NULL };
-    static difficulty_old = 0;
+    static int difficulty_old = 0;
 
     int cnt;
 
@@ -4678,7 +4674,6 @@ int doOptionsAudio( float deltaTime )
     static int menuState = MM_Begin;
     static oglx_texture_t background;
     static int menuChoice = 0;
-    static display_item_t * fnt_tx_ptr = NULL;
     static SlidyButtonState_t but_state = { NULL };
 
     bool_t old_sound_allowed       = cfg.sound_allowed;
@@ -5572,7 +5567,6 @@ int doOptionsVideo( float deltaTime )
     static int menuState = MM_Begin;
     static oglx_texture_t background;
     static int    menuChoice = 0;
-    static display_item_t * fnt_tx_ptr = NULL;
 
     static bool_t widescreen;
     static float  aspect_ratio;
@@ -6175,9 +6169,7 @@ static ShowResultsState_t * doShowResults_finish( ShowResultsState_t * ps, float
 //--------------------------------------------------------------------------------------------
 int doShowResults( float deltaTime )
 {
-    static display_item_t * txt_tx_ptr = NULL;
     static TTF_Font      * ttf_ptr;
-    static display_item_t * fnt_tx_ptr = NULL;
 
     static int     menuState = MM_Begin;
     static int     count;
@@ -6696,7 +6688,6 @@ int doShowEndgame( float deltaTime )
     static int menuState = MM_Begin;
     static int menuChoice = 0;
     static int x, y, w, h;
-    static display_item_t *fnt_tx_ptr = NULL;
     static SlidyButtonState_t but_state = { NULL };
 
     enum
@@ -7739,7 +7730,7 @@ SlidyButtonState_t * SlidyButtonState_init( SlidyButtonState_t * pstate, float l
 
     // set the correct parameters
     pstate->lerp      = lerp;
-    pstate->but_text  = ( char** )( NULL == button_text ? NULL : button_text + id_start );
+    pstate->but_text  = ( char* )( NULL == button_text ? NULL : button_text + id_start );
     pstate->but       = ( NULL == button_widget ) ? NULL : button_widget + id_start;
     pstate->but_count = count;
 
@@ -7919,7 +7910,7 @@ bool_t mnu_Selected_add_input( int loadplayer_idx, BIT_FIELD input_bits )
             if ( i == selected_index )
             {
                 // add in the selected bits for the selected loadplayer_idx
-                retval = ( 0 != input_bits ) && (input_bits != (input_bits & mnu_selectedInput[i]));
+                retval = ( 0 != input_bits ) && ( input_bits != ( input_bits & mnu_selectedInput[i] ) );
                 ADD_BITS( mnu_selectedInput[i], input_bits );
             }
             else
@@ -7965,7 +7956,7 @@ bool_t mnu_Selected_remove_input( int loadplayer_idx, Uint32 input_bits )
         {
             bool_t removing_bits = bfalse;
             bool_t removing_player = bfalse;
-            
+
             removing_bits = HAS_SOME_BITS( input_bits, mnu_selectedInput[i] );
 
             REMOVE_BITS( mnu_selectedInput[i], input_bits );

@@ -1071,7 +1071,7 @@ bool_t SDLX_Log_SysWMEvent( SDL_SysWMEvent * evt_ptr )
 
     if ( 0 == _event_log_mask.all || 0 == _event_log_mask.syswm ) return btrue;
 
-    fprintf( LOCAL_STDOUT,  "SDL_SysWMEvent - msg %d\n", evt_ptr->msg );
+    fprintf( LOCAL_STDOUT,  "SDL_SysWMEvent - msg 0x%p\n", evt_ptr->msg );
 
     return btrue;
 }

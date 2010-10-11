@@ -164,8 +164,8 @@ egoboo_rv setup_read_vfs()
     /// @details BB@> read the local setup file. The function will automatically copy the default setup
     ///               file if it isn't found in the local folder.
     ///
-	///	@TODO: ZF@> We do not need a default setup.txt file which we copy. If the setup.txt file is missing, we should simply
-	///            create a new one with the default values. This should make life easier.
+    /// @TODO: ZF@> We do not need a default setup.txt file which we copy. If the setup.txt file is missing, we should simply
+    ///            create a new one with the default values. This should make life easier.
     ///
     /// @TODO: BB@> The reason that you might want a file is that it is not hard coded, and could be
     ///             changed without re-compiling. The "default" parameters here are mostly for

@@ -60,7 +60,7 @@ static void PlaStack_dtor();
 
 static void net_initialize( egoboo_config_t * pcfg );
 static void net_shutDown();
-static void net_logf( const char *format, ... );
+//static void net_logf( const char *format, ... );
 
 static void net_startNewPacket();
 

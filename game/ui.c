@@ -240,10 +240,10 @@ void ui_draw_cursor_icon( TX_REF icon_ref )
 {
     float x, y;
 
-    ui_virtual_to_screen_abs( ui_context.cursor_X-5, ui_context.cursor_Y-5, &x, &y );
+    ui_virtual_to_screen_abs( ui_context.cursor_X - 5, ui_context.cursor_Y - 5, &x, &y );
 
-	//Draw the cursor, but only if it inside the screen
-	draw_one_icon( icon_ref, x, y, NOSPARKLE );
+    //Draw the cursor, but only if it inside the screen
+    draw_one_icon( icon_ref, x, y, NOSPARKLE );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -316,7 +316,7 @@ void ui_draw_cursor()
     TX_REF           ico_ref = ( TX_REF )TX_CURSOR;
     oglx_texture_t * ptex    = TxTexture_get_ptr( ico_ref );
 
-    if( NULL == ptex )
+    if ( NULL == ptex )
     {
         ui_draw_cursor_ogl();
     }
@@ -624,7 +624,7 @@ void ui_Widget_drawButton( ui_Widget_t * pw )
 
         bool_t st_active, st_hot;
 
-        st_active = 0 != ( ui_Widget_LatchMaskTest( pw, UI_LATCH_CLICKED   ) & pw->latch_state );
+        st_active = 0 != ( ui_Widget_LatchMaskTest( pw, UI_LATCH_CLICKED ) & pw->latch_state );
         st_hot    = 0 != ( ui_Widget_LatchMaskTest( pw, UI_LATCH_MOUSEOVER ) & pw->latch_state );
 
         if ( ui_active || st_active )

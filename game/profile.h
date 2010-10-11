@@ -99,7 +99,7 @@ typedef struct s_chop_definition chop_definition_t;
 
 chop_definition_t * chop_definition_init( chop_definition_t * pdefinition );
 
-#define CHOP_DEFINITION_INIT { CHOP_SECTION_INIT }
+#define CHOP_DEFINITION_INIT { {CHOP_SECTION_INIT} }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

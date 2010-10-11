@@ -77,7 +77,7 @@ struct s_ui_Widget
     oglx_texture_t *img;
 
     // which latches to keep track of
-    BIT_FIELD       latch_mask;          
+    BIT_FIELD       latch_mask;
     Uint32          latch_state;
 
     BIT_FIELD       display_mask;        // which elements to display

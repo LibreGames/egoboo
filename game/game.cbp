@@ -410,6 +410,10 @@
 		</Unit>
 		<Unit filename="egoboo_console.h" />
 		<Unit filename="egoboo_console.inl" />
+		<Unit filename="egoboo_display_list.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="egoboo_display_list.h" />
 		<Unit filename="egoboo_doxygen.h" />
 		<Unit filename="egoboo_endian.c">
 			<Option compilerVar="CC" />

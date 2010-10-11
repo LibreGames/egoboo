@@ -766,10 +766,10 @@ void draw_one_icon( const TX_REF by_reference icontype, int x, int y, Uint8 spar
 
     oglx_texture_Bind( ptex );
 
-    txrect.xmin = ( float )iconrect.xmin / (float)ICON_SIZE;
-    txrect.xmax = ( float )iconrect.xmax / (float)ICON_SIZE;
-    txrect.ymin = ( float )iconrect.ymin / (float)ICON_SIZE;
-    txrect.ymax = ( float )iconrect.ymax / (float)ICON_SIZE;
+    txrect.xmin = ( float )iconrect.xmin / ( float )ICON_SIZE;
+    txrect.xmax = ( float )iconrect.xmax / ( float )ICON_SIZE;
+    txrect.ymin = ( float )iconrect.ymin / ( float )ICON_SIZE;
+    txrect.ymax = ( float )iconrect.ymax / ( float )ICON_SIZE;
 
     width  = iconrect.xmax - iconrect.xmin;
     height = iconrect.ymax - iconrect.ymin;
@@ -4367,7 +4367,7 @@ void renderlist_make( ego_mpd_t * pmesh, camera_t * pcam )
     grid_y = corner_y[0] >> TILE_BITS;
     row = 0;
     cnt = 1;
-	for( cnt = 1; cnt < leftnum; cnt++ )
+    for ( cnt = 1; cnt < leftnum; cnt++ )
     {
         from = leftlist[cnt-1];  to = leftlist[cnt];
         x = corner_x[from];
@@ -4401,7 +4401,7 @@ void renderlist_make( ego_mpd_t * pmesh, camera_t * pcam )
     // Make the right edge ( rowrun )
     grid_y = corner_y[0] >> TILE_BITS;
     row = 0;
-	for( cnt = 1; cnt < rightnum; cnt++ )
+    for ( cnt = 1; cnt < rightnum; cnt++ )
     {
         from = rightlist[cnt-1];  to = rightlist[cnt];
         x = corner_x[from];
@@ -4644,33 +4644,33 @@ bool_t load_all_global_icons()
     bool_t result = btrue;
 
     // Now load every icon
-    if( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/nullicon", ( TX_REF )ICON_NULL, INVALID_KEY ) )
+    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/nullicon", ( TX_REF )ICON_NULL, INVALID_KEY ) )
     {
         result = bfalse;
     }
 
-    if( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/keybicon", ( TX_REF )ICON_KEYB, INVALID_KEY ) )
+    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/keybicon", ( TX_REF )ICON_KEYB, INVALID_KEY ) )
     {
         result = bfalse;
     }
 
-    if( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/mousicon", ( TX_REF )ICON_MOUS, INVALID_KEY ) )
+    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/mousicon", ( TX_REF )ICON_MOUS, INVALID_KEY ) )
     {
         result = bfalse;
     }
 
-    if( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/joyaicon", ( TX_REF )ICON_JOYA, INVALID_KEY ) )
+    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/joyaicon", ( TX_REF )ICON_JOYA, INVALID_KEY ) )
     {
         result = bfalse;
     }
 
-    if( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/joybicon", ( TX_REF )ICON_JOYB, INVALID_KEY ) )
+    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/joybicon", ( TX_REF )ICON_JOYB, INVALID_KEY ) )
     {
         result = bfalse;
     }
 
-	// Spit out a warning if needed
-	if( !result ) 
+    // Spit out a warning if needed
+    if ( !result )
     {
         log_warning( "Could not load all global icons!\n" );
     }
@@ -4776,11 +4776,11 @@ void load_map()
 //--------------------------------------------------------------------------------------------
 bool_t load_cursor()
 {
-	/// @details ZF@> Loads any cursor bitmaps
+    /// @details ZF@> Loads any cursor bitmaps
 
     bool_t retval = btrue;
 
-    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/cursor", ( TX_REF )TX_CURSOR, INVALID_KEY ))
+    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/cursor", ( TX_REF )TX_CURSOR, INVALID_KEY ) )
     {
         log_warning( "Blip bitmap not loaded! (\"mp_data/cursor\")\n" );
         retval = bfalse;

@@ -23,7 +23,7 @@
 
 #include "SDL_md2.h"
 #include "egoboo_vfs.h"
-#include "SDL_stdinc.h"	//For SDL_calloc and SDL_free
+#include "SDL_stdinc.h" //For SDL_calloc and SDL_free
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
