@@ -24,6 +24,7 @@
 #include "file_formats/module_file.h"
 #include "mesh.h"
 #include "mad.h"
+#include "font_ttf.h"
 
 #include "egoboo.h"
 
@@ -37,7 +38,7 @@ struct s_egoboo_config;
 struct s_chr_instance;
 struct s_oglx_texture_parameters;
 struct s_egoboo_config;
-struct Font;
+struct s_display_item;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -65,8 +66,7 @@ struct Font;
 #define DONTFLASH                       255
 #define SEEKURSEAND                     31          ///< Blacking flash
 
-extern int GFX_WIDTH;
-extern int GFX_HEIGHT;
+#define ICON_SIZE                       32
 
 #define SHADOWRAISE                       5
 
@@ -267,29 +267,29 @@ enum e_bb_opt
 /// Any graphics that can be composited onto a SDL_surface can be used
 struct s_billboard_data
 {
-    bool_t    valid;        ///< has the billboard data been initialized?
+    bool_t      valid;        ///< has the billboard data been initialized?
 
-    Uint32    time;         ///< the time when the billboard will expire
-    TX_REF    tex_ref;      ///< our texture index
-    fvec3_t   pos;          ///< the position of the bottom-missile of the box
+    Uint32      time;         ///< the time when the billboard will expire
+    TX_REF      tex_ref;      ///< our texture index
+    fvec3_t     pos;          ///< the position of the bottom-missile of the box
 
-    CHR_REF   ichr;         ///< the character we are attached to
+    CHR_REF     ichr;         ///< the character we are attached to
 
-    GLXvector4f tint;       ///< a color to modulate the billboard's r,g,b, and a channels
-    GLXvector4f tint_add;   ///< the change in tint per update
+    GLXvector4f tint;         ///< a color to modulate the billboard's r,g,b, and a channels
+    GLXvector4f tint_add;     ///< the change in tint per update
 
-    GLXvector4f offset;     ///< an offset to the billboard's position in world coordinates
-    GLXvector4f offset_add; ///<
+    GLXvector4f offset;       ///< an offset to the billboard's position in world coordinates
+    GLXvector4f offset_add;   ///<
 
-    float       size;
-    float       size_add;
+    float       size;         ///< the size of the billboard
+    float       size_add;     ///< the size change per update
 };
 typedef struct s_billboard_data billboard_data_t;
 
 billboard_data_t * billboard_data_init( billboard_data_t * pbb );
 bool_t             billboard_data_free( billboard_data_t * pbb );
 bool_t             billboard_data_update( billboard_data_t * pbb );
-bool_t             billboard_data_printf_ttf( billboard_data_t * pbb, struct Font *font, SDL_Color color, const char * format, ... );
+bool_t             billboard_data_printf_ttf( billboard_data_t * pbb, TTF_Font *font, SDL_Color color, const char * format, ... );
 
 DECLARE_LIST_EXTERN( billboard_data_t, BillboardList, BILLBOARD_COUNT );
 
@@ -340,6 +340,9 @@ extern float time_render_scene_mesh_ref;
 extern float time_render_scene_mesh_ref_chr;
 extern float time_render_scene_mesh_drf_solid;
 extern float time_render_scene_mesh_render_shadows;
+
+extern int GFX_WIDTH;
+extern int GFX_HEIGHT;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

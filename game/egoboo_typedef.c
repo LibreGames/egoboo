@@ -67,23 +67,70 @@ const char * undo_idsz( IDSZ idsz )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t irect_point_inside( irect_t * prect, int   ix, int   iy )
+bool_t frect_union( const frect_t * src1, const frect_t * src2, frect_t * dst )
 {
-    if ( NULL == prect ) return bfalse;
+    if ( NULL == dst ) return bfalse;
 
-    if ( ix < prect->left || ix > prect->right  + 1 ) return bfalse;
-    if ( iy < prect->top  || iy > prect->bottom + 1 ) return bfalse;
+    if ( NULL == src1 && NULL == src2 )
+    {
+        memset( dst, 0, sizeof( frect_t ) );
+    }
+    else if ( NULL == src1 )
+    {
+        memmove( src2, dst, sizeof( frect_t ) );
+    }
+    else if ( NULL == src2 )
+    {
+        memmove( src1, dst, sizeof( frect_t ) );
+    }
+    else
+    {
+        float x1, y1, x2, y2;
+        float x3, y3, x4, y4;
+
+        x1 = src1->x;
+        y1 = src1->y;
+        x2 = src1->x + src1->w;
+        y2 = src1->y + src1->h;
+
+        x3 = src2->x;
+        y3 = src2->y;
+        x4 = src2->x + src2->w;
+        y4 = src2->y + src2->h;
+
+        x1 = MIN( x1, x3 );
+        y1 = MIN( y1, y3 );
+        x2 = MAX( x2, x4 );
+        y2 = MAX( y2, y4 );
+
+        dst->x = x1;
+        dst->y = y1;
+        dst->w = x2 - x1;
+        dst->h = y2 - y1;
+    }
 
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t frect_point_inside( frect_t * prect, float fx, float fy )
+//--------------------------------------------------------------------------------------------
+bool_t irect_point_inside( ego_irect_t * prect, int   ix, int   iy )
 {
     if ( NULL == prect ) return bfalse;
 
-    if ( fx < prect->left || fx > prect->right ) return bfalse;
-    if ( fy < prect->top  || fy > prect->bottom ) return bfalse;
+    if ( ix < prect->xmin || ix > prect->xmax + 1 ) return bfalse;
+    if ( iy < prect->ymin || iy > prect->ymax + 1 ) return bfalse;
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t frect_point_inside( ego_frect_t * prect, float fx, float fy )
+{
+    if ( NULL == prect ) return bfalse;
+
+    if ( fx < prect->xmin || fx > prect->xmax ) return bfalse;
+    if ( fy < prect->ymin || fy > prect->ymax ) return bfalse;
 
     return btrue;
 }

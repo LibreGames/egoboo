@@ -725,7 +725,6 @@ bool_t do_chr_mount_detection( const CHR_REF by_reference ichr_a, const CHR_REF 
 
     chr_t * pchr_a, * pchr_b;
     chr_t * pmount, * prider;
-    chr_instance_t * pmount_inst;
 
     bool_t mount_updated = bfalse;
     bool_t mount_a, mount_b;
@@ -803,112 +802,20 @@ bool_t do_chr_mount_detection( const CHR_REF by_reference ichr_a, const CHR_REF 
     }
     if ( NULL == pmount || NULL == prider ) return bfalse;
 
-    // alias this variable for notation simplicity
-    pmount_inst = &( pmount->inst );
-
     // determine the grip properties
-    {
-        int       grip_count;
-        Uint16    grip_verts[GRIP_VERTS];
-        oct_bb_t  tmp_cv = OCT_BB_INIT_VALS;
-        int       vertex;
-
-        // use a standard size for the grip
-        for ( cnt = 0; cnt < OCT_Z; cnt++ )
-        {
-            tmp_cv.mins[cnt] = -15 * pmount->fat * 2;
-            tmp_cv.maxs[cnt] =  15 * pmount->fat * 2;
-        }
-
-        // make the vertical dimension something like 1/2 of a human character height
-        tmp_cv.mins[OCT_Z] = 0;
-        tmp_cv.maxs[OCT_Z] = 60 * pmount->fat;
-
-        tmp_cv.mins[OCT_XY] *= SQRT_TWO;
-        tmp_cv.maxs[OCT_XY] *= SQRT_TWO;
-        tmp_cv.mins[OCT_YX] *= SQRT_TWO;
-        tmp_cv.maxs[OCT_YX] *= SQRT_TWO;
-
-        // do the automatic vertex update
-        vertex = ( signed )( pmount_inst->vrt_count ) - ( signed )GRIP_LEFT;
-        vertex = MAX( 0, vertex );
-        chr_instance_update_vertices( pmount_inst, vertex, vertex + GRIP_LEFT, bfalse );
-
-        // calculate the grip vertices
-        for ( grip_count = 0, cnt = 0; cnt < GRIP_VERTS && vertex + cnt < pmount_inst->vrt_count; grip_count++, cnt++ )
-        {
-            grip_verts[cnt] = vertex + cnt;
-        }
-        for ( /* nothing */ ; cnt < GRIP_VERTS; cnt++ )
-        {
-            grip_verts[cnt] = 0xFFFF;
-        }
-
-        // assume the worst
-        fvec3_self_clear( grip_origin.v );
-
-        // calculate grip_origin and grip_up
-        if ( 4 == grip_count )
-        {
-            fvec4_t grip_points[GRIP_VERTS], grip_nupoints[GRIP_VERTS];
-            fvec3_t grip_vecs[3];
-
-            // Calculate grip point locations with linear interpolation and other silly things
-            convert_grip_to_local_points( pmount, grip_verts, grip_points );
-
-            // Do the transform the vertices for the grip's "up" vector
-            TransformVertices( &( pmount_inst->matrix ), grip_points, grip_nupoints, GRIP_VERTS );
-
-            // determine the grip vectors
-            for ( cnt = 0; cnt < 3; cnt++ )
-            {
-                grip_vecs[cnt] = fvec3_sub( grip_nupoints[cnt + 1].v, grip_nupoints[0].v );
-            }
-
-            // grab the grip's "up" vector
-            grip_up = fvec3_normalize( grip_vecs[2].v );
-
-            // grab the origin of the grip
-            grip_origin.x = grip_nupoints[0].x;
-            grip_origin.y = grip_nupoints[0].y;
-            grip_origin.z = grip_nupoints[0].z;
-        }
-        else if ( 0 == grip_count )
-        {
-            // grab the grip's "up" vector
-            grip_up.x = grip_up.y = 0.0f;
-            grip_up.z = -SGN( gravity );
-
-            // grab the origin of the grip
-            grip_origin = chr_get_pos( pmount );
-        }
-        else if ( grip_count > 0 )
-        {
-            fvec4_t grip_points[GRIP_VERTS], grip_nupoints[GRIP_VERTS];
-
-            // Calculate grip point locations with linear interpolation and other silly things
-            convert_grip_to_local_points( pmount, grip_verts, grip_points );
-
-            // Do the transform the vertices for the grip's origin
-            TransformVertices( &( pmount_inst->matrix ), grip_points, grip_nupoints, 1 );
-
-            // grab the grip's "up" vector
-            grip_up.x = grip_up.y = 0.0f;
-            grip_up.z = -SGN( gravity );
-
-            // grab the origin of the grip
-            grip_origin.x = grip_nupoints[0].x;
-            grip_origin.y = grip_nupoints[0].y;
-            grip_origin.z = grip_nupoints[0].z;
-        }
-
-        // add in the "origin" of the grip
-        oct_bb_add_vector( tmp_cv, grip_origin.v, &grip_cv );
-    }
+    calc_grip_cv( pmount, GRIP_LEFT, &grip_cv, grip_origin.v, grip_up.v );
 
     // determine if the rider is falling on the grip
-    // maybe not "falling", but just approaching?
+    // (maybe not "falling", but just approaching?)
+
+    // standing on the ground?
+    if ( prider->enviro.grounded ) return bfalse;
+
+    // falling?
     vdiff = fvec3_sub( prider->vel.v, pmount->vel.v );
+    if ( vdiff.z > 0.0f ) return bfalse;
+
+    // approaching?
     pdiff = fvec3_sub( prider->pos.v, grip_origin.v );
     vnrm = fvec3_dot_product( vdiff.v, pdiff.v );
     if ( vnrm >= 0.0f ) return bfalse;
@@ -3306,6 +3213,122 @@ void update_all_platform_attachments()
 
     update_all_chr_platform_attachments();
     update_all_prt_platform_attachments();
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t calc_grip_cv( chr_t * pmount, int grip_offset, oct_bb_t * grip_cv_ptr, fvec3_base_t grip_origin_ary, fvec3_base_t grip_up_ary )
+{
+    /// @details BB@> use a standard size for the grip
+
+    // take the character size from the adventurer model
+    const float default_chr_height = 88.0f;
+    const float default_chr_radius = 22.0f;
+
+    chr_instance_t * pmount_inst;
+
+    int       grip_count;
+    Uint16    grip_verts[GRIP_VERTS];
+
+    int       vertex, cnt;
+    oct_bb_t  tmp_cv = OCT_BB_INIT_VALS;
+
+    if ( NULL == grip_cv_ptr || !DEFINED_PCHR( pmount ) ) return bfalse;
+
+    // alias this variable for notation simplicity
+    pmount_inst = &( pmount->inst );
+
+    // tune the grip radius
+    for ( cnt = 0; cnt < OCT_Z; cnt++ )
+    {
+        tmp_cv.mins[cnt] = -default_chr_radius * pmount->fat * 0.5f;
+        tmp_cv.maxs[cnt] =  default_chr_radius * pmount->fat * 0.5f;
+    }
+
+    // tune the vertical extent of the grip so that a character can mount
+    // a chocobone and hide in a pot
+    tmp_cv.mins[OCT_Z] = -default_chr_height * pmount->fat * 1.5f;
+    tmp_cv.maxs[OCT_Z] =  default_chr_height * pmount->fat * 0.5f;
+
+    // make the grip into a cylinder-like shape
+    tmp_cv.mins[OCT_XY] *= SQRT_TWO;
+    tmp_cv.maxs[OCT_XY] *= SQRT_TWO;
+    tmp_cv.mins[OCT_YX] *= SQRT_TWO;
+    tmp_cv.maxs[OCT_YX] *= SQRT_TWO;
+
+    // do the automatic vertex update
+    vertex = ( signed )( pmount_inst->vrt_count ) - ( signed )grip_offset;
+    vertex = MAX( 0, vertex );
+    chr_instance_update_vertices( pmount_inst, vertex, vertex + grip_offset, bfalse );
+
+    // calculate the grip vertices
+    for ( grip_count = 0, cnt = 0; cnt < GRIP_VERTS && ( size_t )( vertex + cnt ) < pmount_inst->vrt_count; grip_count++, cnt++ )
+    {
+        grip_verts[cnt] = vertex + cnt;
+    }
+    for ( /* nothing */ ; cnt < GRIP_VERTS; cnt++ )
+    {
+        grip_verts[cnt] = 0xFFFF;
+    }
+
+    // assume the worst
+    fvec3_self_clear( grip_origin_ary );
+
+    // calculate grip_origin_ary and grip_up_ary
+    if ( 4 == grip_count )
+    {
+        fvec4_t grip_points[GRIP_VERTS], grip_nupoints[GRIP_VERTS];
+        fvec3_t grip_vecs[3];
+
+        // Calculate grip point locations with linear interpolation and other silly things
+        convert_grip_to_local_points( pmount, grip_verts, grip_points );
+
+        // Do the transform the vertices for the grip's "up" vector
+        TransformVertices( &( pmount_inst->matrix ), grip_points, grip_nupoints, GRIP_VERTS );
+
+        // determine the grip vectors
+        for ( cnt = 0; cnt < 3; cnt++ )
+        {
+            grip_vecs[cnt] = fvec3_sub( grip_nupoints[cnt + 1].v, grip_nupoints[0].v );
+        }
+
+        // grab the grip's "up" vector
+        fvec3_base_assign( grip_up_ary, fvec3_normalize( grip_vecs[2].v ) );
+
+        // grab the origin of the grip
+        fvec3_base_copy( grip_origin_ary, grip_nupoints[0].v );
+    }
+    else if ( 0 == grip_count )
+    {
+        // grab the grip's "up" vector
+        grip_up_ary[kX] = grip_up_ary[kY] = 0.0f;
+        grip_up_ary[kZ] = -SGN( gravity );
+
+        // grab the origin of the grip
+        fvec3_base_assign( grip_origin_ary, chr_get_pos( pmount ) );
+    }
+    else if ( grip_count > 0 )
+    {
+        fvec4_t grip_points[GRIP_VERTS], grip_nupoints[GRIP_VERTS];
+
+        // Calculate grip point locations with linear interpolation and other silly things
+        convert_grip_to_local_points( pmount, grip_verts, grip_points );
+
+        // Do the transform the vertices for the grip's origin
+        TransformVertices( &( pmount_inst->matrix ), grip_points, grip_nupoints, 1 );
+
+        // grab the grip's "up" vector
+        grip_up_ary[kX] = grip_up_ary[kY] = 0.0f;
+        grip_up_ary[kZ] = -SGN( gravity );
+
+        // grab the origin of the grip
+        fvec3_base_copy( grip_origin_ary, grip_nupoints[0].v );
+    }
+
+    // add in the "origin" of the grip
+    oct_bb_add_vector( tmp_cv, grip_origin_ary, grip_cv_ptr );
+
+    return btrue;
 }
 
 //--------------------------------------------------------------------------------------------

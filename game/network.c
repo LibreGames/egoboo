@@ -200,15 +200,15 @@ const net_instance_t * network_get_instance()
 {
     net_instance_t * retval = NULL;
 
-    if( !_network_system_init ) return NULL;
+    if ( !_network_system_init ) return NULL;
 
     // if it is not initialized, give it one more try
-    if( !_gnet.initialized )
+    if ( !_gnet.initialized )
     {
         net_initialize( &cfg );
     }
 
-    if( _gnet.initialized )
+    if ( _gnet.initialized )
     {
         retval = &_gnet;
     }
@@ -219,7 +219,7 @@ const net_instance_t * network_get_instance()
 //--------------------------------------------------------------------------------------------
 bool_t network_initialized()
 {
-    if( !_network_system_init ) return bfalse;
+    if ( !_network_system_init ) return bfalse;
 
     return _gnet.initialized;
 }
@@ -227,7 +227,7 @@ bool_t network_initialized()
 //--------------------------------------------------------------------------------------------
 bool_t network_get_host_active()
 {
-    if( !_network_system_init ) return bfalse;
+    if ( !_network_system_init ) return bfalse;
 
     return _gnet.hostactive;
 }
@@ -235,7 +235,7 @@ bool_t network_get_host_active()
 //--------------------------------------------------------------------------------------------
 bool_t network_set_host_active( bool_t state )
 {
-    if( !_network_system_init ) return bfalse;
+    if ( !_network_system_init ) return bfalse;
 
     _gnet.hostactive = state;
 
@@ -245,7 +245,7 @@ bool_t network_set_host_active( bool_t state )
 //--------------------------------------------------------------------------------------------
 bool_t network_waiting_for_players()
 {
-    if( !_network_system_init || !_gnet.initialized ) return bfalse;
+    if ( !_network_system_init || !_gnet.initialized ) return bfalse;
 
     return _gnet.waitingforplayers;
 }
@@ -2296,11 +2296,11 @@ latch_2d_t pla_convert_latch_2d( const PLA_REF by_reference iplayer, const by_re
     latch_2d_t dst = LATCH_2D_INIT;
     player_t * ppla;
 
-    if( !VALID_PLA(iplayer) ) return dst;
+    if ( !VALID_PLA( iplayer ) ) return dst;
     ppla = PlaStack.lst + iplayer;
 
     // is there a valid character?
-    if( !DEFINED_CHR(ppla->index) ) return dst;
+    if ( !DEFINED_CHR( ppla->index ) ) return dst;
 
     return chr_convert_latch_2d( ChrList.lst + ppla->index, src );
 }
@@ -2508,7 +2508,7 @@ bool_t PlaStack_has_explore()
 
         if ( !ppla->valid ) continue;
 
-        if( ppla->explore_mode )
+        if ( ppla->explore_mode )
         {
             retval = btrue;
             break;
@@ -2530,7 +2530,7 @@ bool_t PlaStack_has_wizard()
 
         if ( !ppla->valid ) continue;
 
-        if( ppla->wizard_mode )
+        if ( ppla->wizard_mode )
         {
             retval = btrue;
             break;

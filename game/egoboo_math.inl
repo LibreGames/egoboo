@@ -53,6 +53,8 @@ INLINE int generate_randmask( int base, int mask );
 
 // vector functions
 INLINE bool_t  fvec2_self_clear( fvec2_base_t A );
+INLINE bool_t  fvec2_base_copy( fvec2_base_t A, fvec2_base_t B );
+INLINE bool_t  fvec2_base_assign( fvec2_base_t A, fvec2_t B );
 INLINE float   fvec2_length( const fvec2_base_t A );
 INLINE float   fvec2_length_abs( const fvec2_base_t A );
 INLINE bool_t  fvec2_self_scale( fvec2_base_t A, const float B );
@@ -63,6 +65,8 @@ INLINE float   fvec2_dot_product( const fvec2_base_t A, const fvec2_base_t B );
 INLINE float   fvec3_dist_abs( const fvec3_base_t A, const fvec3_base_t B );
 
 INLINE bool_t  fvec3_self_clear( fvec3_base_t A );
+INLINE bool_t  fvec3_base_copy( fvec3_base_t A, fvec3_base_t B );
+INLINE bool_t  fvec3_base_assign( fvec3_base_t A, fvec3_t B );
 INLINE bool_t  fvec3_self_scale( fvec3_base_t A, const float B );
 INLINE bool_t  fvec3_self_sum( fvec3_base_t A, const fvec3_base_t B );
 INLINE bool_t  fvec3_self_normalize( fvec3_base_t A );
@@ -265,6 +269,30 @@ INLINE bool_t fvec2_self_clear( fvec2_base_t A )
 }
 
 //--------------------------------------------------------------------------------------------
+INLINE bool_t fvec2_base_copy( fvec2_base_t A, fvec2_base_t B )
+{
+    if ( NULL == A ) return bfalse;
+
+    if ( NULL == B ) return fvec2_self_clear( A );
+
+    A[kX] = B[kX];
+    A[kY] = B[kY];
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE bool_t  fvec2_base_assign( fvec2_base_t A, fvec2_t B )
+{
+    if ( NULL == A ) return bfalse;
+
+    A[kX] = B.v[kX];
+    A[kY] = B.v[kY];
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
 INLINE bool_t fvec2_self_scale( fvec2_base_t A, const float B )
 {
     if ( NULL == A ) return bfalse;
@@ -365,6 +393,32 @@ INLINE bool_t fvec3_self_clear( fvec3_base_t A )
     if ( NULL == A ) return bfalse;
 
     A[kX] = A[kY] = A[kZ] = 0.0f;
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE bool_t fvec3_base_copy( fvec3_base_t A, fvec3_base_t B )
+{
+    if ( NULL == A ) return bfalse;
+
+    if ( NULL == B ) return fvec3_self_clear( A );
+
+    A[kX] = B[kX];
+    A[kY] = B[kY];
+    A[kZ] = B[kZ];
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE bool_t  fvec3_base_assign( fvec3_base_t A, fvec3_t B )
+{
+    if ( NULL == A ) return bfalse;
+
+    A[kX] = B.v[kX];
+    A[kY] = B.v[kY];
+    A[kZ] = B.v[kZ];
 
     return btrue;
 }

@@ -72,7 +72,7 @@ enum e_menu_states
 };
 
 #define MENU_STACK_COUNT   256
-#define MAXWIDGET          100
+#define WIDGET_MAX         100
 #define MENU_MAX_GAMETIPS  100
 
 //--------------------------------------------------------------------------------------------
@@ -80,12 +80,21 @@ enum e_menu_states
 // "Slidy" buttons used in some of the menus.  They're shiny.
 struct s_SlidyButtonState
 {
-    char **buttons;
+    // string data
+    const char ** but_text;
+
+    // widget data
+    ui_Widget_t * but;
+    size_t        but_count;
+
+    // time
     float lerp;
+
+    // formatting
     int top;
     int left;
 };
-typedef struct s_SlidyButtonState mnu_SlidyButtonState_t;
+typedef struct s_SlidyButtonState SlidyButtonState_t;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -99,6 +108,13 @@ struct s_ChoosePlayer_element
 };
 typedef struct s_ChoosePlayer_element ChoosePlayer_element_t;
 
+#define PLAYER_ELEMENT_INIT \
+{ \
+    /* cap_ref */ MAX_CAP,             \
+    /* tx_ref  */ INVALID_TX_TEXTURE,  \
+    /* chop    */ CHOP_DEFINITION_INIT \
+}
+
 //--------------------------------------------------------------------------------------------
 
 /// The data that menu.c uses to store the users' choice of players
@@ -108,6 +124,8 @@ struct s_ChoosePlayer_profiles
     ChoosePlayer_element_t pro_data[MAXIMPORTPERPLAYER + 1];   ///< the profile data
 };
 typedef struct s_ChoosePlayer_profiles ChoosePlayer_profiles_t;
+
+#define PLAYER_PROFILES_INIT { 0, PLAYER_ELEMENT_INIT }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -160,7 +178,7 @@ static which_menu_t mnu_whichMenu = emnu_Main;
 
 static module_filter_t mnu_moduleFilter = FILTER_OFF;
 
-static ui_Widget_t mnu_widgetList[MAXWIDGET];
+static ui_Widget_t mnu_widgetList[WIDGET_MAX];
 
 static int selectedModule = -1;
 
@@ -168,11 +186,13 @@ static int selectedModule = -1;
 static const char * copyrightText = "Welcome to Egoboo!\nhttp://egoboo.sourceforge.net\nVersion " VERSION "\n";
 static int  copyrightLeft = 0;
 static int  copyrightTop  = 0;
+static display_list_t * copyrightText_tx_ptr = NULL;
 
 /* Options info text variables.  Change these to change how the options text appears */
 static const char * tipText = "Put a tip in this box";
-static int tipTextLeft = 0;
-static int tipTextTop  = 0;
+static int tipText_left = 0;
+static int tipText_top  = 0;
+static display_list_t * tipText_tx = NULL;
 
 /* Button position for the "easy" menus, like the main one */
 static int buttonLeft = 0;
@@ -188,8 +208,6 @@ static int     mnu_selectedPlayer[MAX_PLAYER] = {0};
 
 static GameTips_t mnu_GameTip = { 0 };
 
-static mnu_SlidyButtonState_t mnu_SlidyButtonState = { NULL };
-
 //--------------------------------------------------------------------------------------------
 // declaration of public variables
 //--------------------------------------------------------------------------------------------
@@ -204,7 +222,10 @@ bool_t           start_new_player  = bfalse;
 bool_t           module_list_valid = bfalse;
 
 /* The font used for drawing text.  It's smaller than the button font */
-Font *menuFont = NULL;
+#define MAX_MENU_DISPLAY 20
+#define COPYRIGHT_DISPLAY 0
+display_list_t * menuTextureList_ptr = NULL;
+TTF_Font          * menuFont    = NULL;
 
 bool_t mnu_draw_background = btrue;
 
@@ -222,9 +243,9 @@ static which_menu_t mnu_stack_peek();
 static void         mnu_stack_clear();
 
 // Implementation of the mnu_SlidyButton array
-static void mnu_SlidyButton_init( float lerp, const char *button_text[] );
-static void mnu_SlidyButton_update_all( float deltaTime );
-static void mnu_SlidyButton_draw_all();
+static SlidyButtonState_t * SlidyButtonState_init( SlidyButtonState_t * pstate, float lerp, int id_start, const char *button_text[], ui_Widget_t * button_widget );
+static SlidyButtonState_t * SlidyButtonState_update_all( SlidyButtonState_t * pstate, float deltaTime );
+static SlidyButtonState_t * SlidyButtonState_draw_all( SlidyButtonState_t * pstate );
 
 // implementation of the mnu_Selected* arrays
 static bool_t  mnu_Selected_check_loadplayer( int loadplayer_idx );
@@ -243,10 +264,10 @@ static void             TxTitleImage_dtor();
 static oglx_texture_t * TxTitleImage_get_ptr( const TX_REF by_reference itex );
 
 // tipText functions
-static void tipText_set_position( Font * font, const char * text, int spacing );
+static void tipText_set_position( TTF_Font * font, const char * text, int spacing );
 
 // copyrightText functions
-static void copyrightText_set_position( Font * font, const char * text, int spacing );
+static void copyrightText_set_position( TTF_Font * font, const char * text, int spacing );
 
 // implementation of "private" ModList functions
 static void mnu_ModList_release_images();
@@ -501,6 +522,9 @@ int menu_system_begin()
         return 0;
     }
 
+    // allocate the menuTextureList
+    menuTextureList_ptr = display_list_ctor( menuTextureList_ptr, MAX_MENU_DISPLAY );
+
     // Figure out where to draw the copyright text
     copyrightText_set_position( menuFont, copyrightText, 20 );
 
@@ -528,8 +552,10 @@ void menu_system_end()
     if ( NULL != menuFont )
     {
         fnt_freeFont( menuFont );
-        menuFont = NULL;
     }
+
+    // deallocate the menuTextureList
+    menuTextureList_ptr = display_list_dtor( menuTextureList_ptr, btrue );
 
     // destruct the TxTitleImage array
     TxTitleImage_dtor();
@@ -561,18 +587,130 @@ int mnu_get_menu_depth()
 //--------------------------------------------------------------------------------------------
 // Implementations of the various menus
 //--------------------------------------------------------------------------------------------
+
+#define BASE_MENU_STATE        \
+    int            state;      \
+    int            choice;     \
+    oglx_texture_t background
+
+#define MENU_BUTTONS(CNT)            \
+    ui_Widget_t    w_buttons[CNT];   \
+    const char    *sz_buttons[CNT+1]
+
+#define MENU_LABELS(CNT)             \
+    ui_Widget_t    w_labels[CNT];    \
+    const char    *sz_labels[CNT+1]
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct s_MainState
+{
+    BASE_MENU_STATE;
+};
+typedef struct s_MainState MainState_t;
+
+//--------------------------------------------------------------------------------------------
+static MainState_t *MainState_ctor( MainState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static MainState_t *MainState_dtor( MainState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static MainState_t * doMainMenu_begin( MainState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    ps = MainState_ctor( ps );
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static MainState_t * doMainMenu_entering( MainState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static MainState_t * doMainMenu_running( MainState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static MainState_t * doMainMenu_leaving( MainState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static MainState_t * doMainMenu_finish( MainState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    ps = MainState_ctor( ps );
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
 int doMainMenu( float deltaTime )
 {
     static int menuState = MM_Begin;
     static oglx_texture_t background;
     static oglx_texture_t logo;
-
-    // static float lerp;
+    static display_list_t * copyright_display_ptr;
+    static SlidyButtonState_t but_state = { NULL };
     static int menuChoice = 0;
     static SDL_Rect bg_rect, logo_rect;
 
-    /* Button labels.  Defined here for consistency's sake, rather than leaving them as constants */
-    static const char *sz_buttons[] =
+    int cnt;
+
+    enum e_buttons
+    {
+        but_new,
+        but_load,
+        but_options,
+        but_quit,
+        but_count,
+        but_sz_count
+    };
+
+    // button widgets
+    static ui_Widget_t w_buttons[but_count];
+
+    // Button labels.  Defined here for consistency's sake, rather than leaving them as constants
+    static const char *sz_buttons[but_sz_count] =
     {
         "New Game",
         "Load Game",
@@ -589,135 +727,166 @@ int doMainMenu( float deltaTime )
         case MM_Begin:
 
             menuChoice = 0;
-            menuState = MM_Entering;
 
-            // load the menu image
-            ego_texture_load_vfs( &background, "mp_data/menu/menu_main", INVALID_KEY );
+            {
+                for ( cnt = 0; cnt < but_count; cnt++ )
+                {
+                    // clear the data
+                    memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
+                    ui_Widget_set_id( w_buttons + cnt, cnt );
+                }
 
-            // load the logo image
-            ego_texture_load_vfs( &logo,       "mp_data/menu/menu_logo", INVALID_KEY );
+                // load the menu image
+                ego_texture_load_vfs( &background, "mp_data/menu/menu_main", INVALID_KEY );
 
-            // calculate the centered position of the background
-            fminw = ( float ) MIN( GFX_WIDTH , background.imgW ) / ( float ) background.imgW;
-            fminh = ( float ) MIN( GFX_HEIGHT, background.imgH ) / ( float ) background.imgW;
-            fmin  = MIN( fminw, fminh );
+                // load the logo image
+                ego_texture_load_vfs( &logo,       "mp_data/menu/menu_logo", INVALID_KEY );
 
-            bg_rect.w = background.imgW * fmin;
-            bg_rect.h = background.imgH * fmin;
-            bg_rect.x = ( GFX_WIDTH  - bg_rect.w ) * 0.5f;
-            bg_rect.y = ( GFX_HEIGHT - bg_rect.h ) * 0.5f;
+                // calculate the centered position of the background
+                fminw = ( float ) MIN( GFX_WIDTH , background.imgW ) / ( float ) background.imgW;
+                fminh = ( float ) MIN( GFX_HEIGHT, background.imgH ) / ( float ) background.imgW;
+                fmin  = MIN( fminw, fminh );
 
-            // calculate the position of the logo
-            fmin  = MIN( bg_rect.w * 0.5f / logo.imgW, bg_rect.h * 0.5f / logo.imgH );
+                bg_rect.w = background.imgW * fmin;
+                bg_rect.h = background.imgH * fmin;
+                bg_rect.x = ( GFX_WIDTH  - bg_rect.w ) * 0.5f;
+                bg_rect.y = ( GFX_HEIGHT - bg_rect.h ) * 0.5f;
 
-            logo_rect.x = bg_rect.x;
-            logo_rect.y = bg_rect.y;
-            logo_rect.w = logo.imgW * fmin;
-            logo_rect.h = logo.imgH * fmin;
+                // calculate the position of the logo
+                fmin  = MIN( bg_rect.w * 0.5f / logo.imgW, bg_rect.h * 0.5f / logo.imgH );
 
-            mnu_SlidyButton_init( 1.0f, sz_buttons );
+                logo_rect.x = bg_rect.x;
+                logo_rect.y = bg_rect.y;
+                logo_rect.w = logo.imgW * fmin;
+                logo_rect.h = logo.imgH * fmin;
+
+                SlidyButtonState_init( &but_state, 1.0f, 0, sz_buttons, w_buttons );
+
+                // "Copyright" text
+                copyrightText_set_position( menuFont, copyrightText, 20 );
+            }
+
             // let this fall through into MM_Entering
+            menuState = MM_Entering;
 
         case MM_Entering:
             // do buttons sliding in animation, and background fading in
             // background
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 - mnu_SlidyButtonState.lerp );
-
-            if ( mnu_draw_background )
             {
-                ui_drawImage( 0, &background, bg_rect.x,   bg_rect.y,   bg_rect.w,   bg_rect.h, NULL );
-                ui_drawImage( 0, &logo,       logo_rect.x, logo_rect.y, logo_rect.w, logo_rect.h, NULL );
-            }
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
 
-            // "Copyright" text
-            ui_drawTextBox( menuFont, copyrightText, copyrightLeft, copyrightTop, 0, 0, 20 );
+                if ( mnu_draw_background )
+                {
+                    ui_drawImage( 0, &background, bg_rect.x,   bg_rect.y,   bg_rect.w,   bg_rect.h, NULL );
+                    ui_drawImage( 0, &logo,       logo_rect.x, logo_rect.y, logo_rect.w, logo_rect.h, NULL );
+                }
 
-            mnu_SlidyButton_draw_all();
-            mnu_SlidyButton_update_all( -deltaTime );
+                // "Copyright" text
+                display_list_draw( copyrightText_tx_ptr );
 
-            // Let lerp wind down relative to the time elapsed
-            if ( mnu_SlidyButtonState.lerp <= 0.0f )
-            {
-                menuState = MM_Running;
+                SlidyButtonState_draw_all( &but_state );
+                SlidyButtonState_update_all( &but_state, -deltaTime );
+
+                // Let lerp wind down relative to the time elapsed
+                if ( but_state.lerp <= 0.0f )
+                {
+                    menuState = MM_Running;
+                }
             }
             break;
 
         case MM_Running:
+
             // Do normal run
-            // Background
+            {
+                // Background
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
 
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+                if ( mnu_draw_background )
+                {
+                    ui_drawImage( 0, &background, bg_rect.x,   bg_rect.y,   bg_rect.w,   bg_rect.h, NULL );
+                    ui_drawImage( 0, &logo,       logo_rect.x, logo_rect.y, logo_rect.w, logo_rect.h, NULL );
+                }
 
-            if ( mnu_draw_background )
-            {
-                ui_drawImage( 0, &background, bg_rect.x,   bg_rect.y,   bg_rect.w,   bg_rect.h, NULL );
-                ui_drawImage( 0, &logo,       logo_rect.x, logo_rect.y, logo_rect.w, logo_rect.h, NULL );
-            }
+                // "Copyright" text
+                display_list_draw( copyrightText_tx_ptr );
 
-            // "Copyright" text
-            ui_drawTextBox( menuFont, copyrightText, copyrightLeft, copyrightTop, 0, 0, 20 );
-
-            // Buttons
-            if ( BUTTON_UP == ui_doButton( 1, sz_buttons[0], NULL, buttonLeft, buttonTop, 200, 30 ) )
-            {
-                // begin single player stuff
-                menuChoice = 1;
-            }
-            if ( BUTTON_UP == ui_doButton( 2, sz_buttons[1], NULL, buttonLeft, buttonTop + 35, 200, 30 ) )
-            {
-                // begin multi player stuff
-                menuChoice = 2;
-            }
-            if ( BUTTON_UP == ui_doButton( 3, sz_buttons[2], NULL, buttonLeft, buttonTop + 35 * 2, 200, 30 ) )
-            {
-                // go to options menu
-                menuChoice = 3;
-            }
-            if ( SDLKEYDOWN( SDLK_ESCAPE ) || BUTTON_UP == ui_doButton( 4, sz_buttons[3], NULL, buttonLeft, buttonTop + 35 * 3, 200, 30 ) )
-            {
-                // quit game
-                menuChoice = 4;
-            }
-            if ( menuChoice != 0 )
-            {
-                menuState = MM_Leaving;
-                mnu_SlidyButton_init( 0.0f, sz_buttons );
+                // Buttons
+                if ( BUTTON_UP == ui_doWidget( w_buttons + but_new ) )
+                {
+                    // begin single player stuff
+                    menuChoice = 1;
+                }
+                if ( BUTTON_UP == ui_doWidget( w_buttons + but_load ) )
+                {
+                    // begin multi player stuff
+                    menuChoice = 2;
+                }
+                if ( BUTTON_UP == ui_doWidget( w_buttons + but_options ) )
+                {
+                    // go to options menu
+                    menuChoice = 3;
+                }
+                if ( SDLKEYDOWN( SDLK_ESCAPE ) || BUTTON_UP == ui_doWidget( w_buttons + but_quit ) )
+                {
+                    // quit game
+                    menuChoice = 4;
+                }
+                if ( menuChoice != 0 )
+                {
+                    menuState = MM_Leaving;
+                    SlidyButtonState_init( &but_state, 0.0f, 0, sz_buttons, w_buttons );
+                }
             }
             break;
 
         case MM_Leaving:
             // Do buttons sliding out and background fading
             // Do the same stuff as in MM_Entering, but backwards
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 - mnu_SlidyButtonState.lerp );
 
-            if ( mnu_draw_background )
             {
-                ui_drawImage( 0, &background, bg_rect.x,   bg_rect.y,   bg_rect.w,   bg_rect.h, NULL );
-                ui_drawImage( 0, &logo,       logo_rect.x, logo_rect.y, logo_rect.w, logo_rect.h, NULL );
-            }
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
 
-            // "Copyright" text
-            ui_drawTextBox( menuFont, copyrightText, copyrightLeft, copyrightTop, 0, 0, 20 );
+                if ( mnu_draw_background )
+                {
+                    ui_drawImage( 0, &background, bg_rect.x,   bg_rect.y,   bg_rect.w,   bg_rect.h, NULL );
+                    ui_drawImage( 0, &logo,       logo_rect.x, logo_rect.y, logo_rect.w, logo_rect.h, NULL );
+                }
 
-            // Buttons
-            mnu_SlidyButton_draw_all();
-            mnu_SlidyButton_update_all( deltaTime );
-            if ( mnu_SlidyButtonState.lerp >= 1.0f )
-            {
-                menuState = MM_Finish;
+                // "Copyright" text
+                display_list_draw( copyrightText_tx_ptr );
+
+                // Buttons
+                SlidyButtonState_draw_all( &but_state );
+                SlidyButtonState_update_all( &but_state, deltaTime );
+                if ( but_state.lerp >= 1.0f )
+                {
+                    menuState = MM_Finish;
+                }
             }
             break;
 
         case MM_Finish:
-            // Free the background texture; don't need to hold onto it
-            oglx_texture_Release( &background );
-            menuState = MM_Begin;  // Make sure this all resets next time
+            {
+                // Free the background texture; don't need to hold onto it
+                oglx_texture_Release( &background );
+
+                // free the widgets
+                for ( cnt = 0; cnt < but_count; cnt++ )
+                {
+                    ui_Widget_free( w_buttons + cnt );
+                }
+
+                // Set the next menu to load
+                result = menuChoice;
+            }
 
             // reset the ui
             ui_Reset();
 
-            // Set the next menu to load
-            result = menuChoice;
+            // make sure that if we come back to this menu, it resets properly
+            menuState = MM_Begin;
+
             break;
     };
 
@@ -725,13 +894,109 @@ int doMainMenu( float deltaTime )
 }
 
 //--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct s_SinglePlayerState
+{
+    BASE_MENU_STATE;
+};
+typedef struct s_SinglePlayerState SinglePlayerState_t;
+
+//--------------------------------------------------------------------------------------------
+static SinglePlayerState_t *SinglePlayerState_ctor( SinglePlayerState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static SinglePlayerState_t *SinglePlayerState_dtor( SinglePlayerState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static SinglePlayerState_t * doSinglePlayerMenu_begin( SinglePlayerState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    ps = SinglePlayerState_ctor( ps );
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static SinglePlayerState_t * doSinglePlayerMenu_entering( SinglePlayerState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static SinglePlayerState_t * doSinglePlayerMenu_running( SinglePlayerState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static SinglePlayerState_t * doSinglePlayerMenu_leaving( SinglePlayerState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static SinglePlayerState_t * doSinglePlayerMenu_finish( SinglePlayerState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    ps = SinglePlayerState_ctor( ps );
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
 int doSinglePlayerMenu( float deltaTime )
 {
     static int menuState = MM_Begin;
     static oglx_texture_t background;
     static int menuChoice;
+    static display_list_t * copyright_display_ptr;
+    static SlidyButtonState_t but_state = { NULL };
 
-    static const char *sz_buttons[] =
+    enum e_buttons
+    {
+        but_new,
+        but_load,
+        but_back,
+        but_count,
+        but_sz_count
+    };
+
+    // button widgets
+    static ui_Widget_t w_buttons[but_count];
+
+    static const char *sz_buttons[but_sz_count] =
     {
         "New Player",
         "Load Saved Player",
@@ -740,37 +1005,54 @@ int doSinglePlayerMenu( float deltaTime )
     };
 
     int result = 0;
+    int cnt;
 
     switch ( menuState )
     {
         case MM_Begin:
-            // Load resources for this menu
-            ego_texture_load_vfs( &background, "mp_data/menu/menu_advent", TRANSCOLOR );
+
             menuChoice = 0;
 
-            menuState = MM_Entering;
-
-            mnu_SlidyButton_init( 1.0f, sz_buttons );
-
-            // Let this fall through
-
-        case MM_Entering:
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 - mnu_SlidyButtonState.lerp );
-
-            // Draw the background image
-            if ( mnu_draw_background )
             {
-                ui_drawImage( 0, &background, GFX_WIDTH  - background.imgW, 0, 0, 0, NULL );
+                for ( cnt = 0; cnt < but_count; cnt++ )
+                {
+                    // clear the data
+                    memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
+                    ui_Widget_set_id( w_buttons + cnt, cnt );
+                }
+
+                // Load resources for this menu
+                ego_texture_load_vfs( &background, "mp_data/menu/menu_advent", TRANSCOLOR );
+
+                SlidyButtonState_init( &but_state, 1.0f, 0, sz_buttons, w_buttons );
+
+                // "Copyright" text
+                copyrightText_set_position( menuFont, copyrightText, 20 );
             }
 
-            // "Copyright" text
-            ui_drawTextBox( menuFont, copyrightText, copyrightLeft, copyrightTop, 0, 0, 20 );
+            // let this fall through into MM_Entering
+            menuState = MM_Entering;
 
-            mnu_SlidyButton_draw_all();
-            mnu_SlidyButton_update_all( -deltaTime );
-            if ( mnu_SlidyButtonState.lerp <= 0.0f )
-                menuState = MM_Running;
+        case MM_Entering:
+            {
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
 
+                // Draw the background image
+                if ( mnu_draw_background )
+                {
+                    ui_drawImage( 0, &background, GFX_WIDTH  - background.imgW, 0, 0, 0, NULL );
+                }
+
+                // "Copyright" text
+                display_list_draw( copyrightText_tx_ptr );
+
+                SlidyButtonState_draw_all( &but_state );
+                SlidyButtonState_update_all( &but_state, -deltaTime );
+                if ( but_state.lerp <= 0.0f )
+                {
+                    menuState = MM_Running;
+                }
+            }
             break;
 
         case MM_Running:
@@ -782,62 +1064,73 @@ int doSinglePlayerMenu( float deltaTime )
             }
 
             // "Copyright" text
-            ui_drawTextBox( menuFont, copyrightText, copyrightLeft, copyrightTop, 0, 0, 20 );
+            display_list_draw( copyrightText_tx_ptr );
 
             // Buttons
-            if ( BUTTON_UP == ui_doButton( 1, sz_buttons[0], NULL, buttonLeft, buttonTop, 200, 30 ) )
+            if ( BUTTON_UP == ui_doWidget( w_buttons + but_new ) )
             {
                 menuChoice = 1;
             }
-            if ( BUTTON_UP == ui_doButton( 2, sz_buttons[1], NULL, buttonLeft, buttonTop + 35, 200, 30 ) )
+            if ( BUTTON_UP == ui_doWidget( w_buttons + but_load ) )
             {
                 menuChoice = 2;
             }
-            if ( SDLKEYDOWN( SDLK_ESCAPE ) || BUTTON_UP == ui_doButton( 3, sz_buttons[2], NULL, buttonLeft, buttonTop + 35 * 2, 200, 30 ) )
+            if ( SDLKEYDOWN( SDLK_ESCAPE ) || BUTTON_UP == ui_doWidget( w_buttons + but_back ) )
             {
                 menuChoice = 3;     // back
             }
             if ( menuChoice != 0 )
             {
                 menuState = MM_Leaving;
-                mnu_SlidyButton_init( 0.0f, sz_buttons );
+                SlidyButtonState_init( &but_state, 0.0f, 0, sz_buttons, w_buttons );
             }
             break;
 
         case MM_Leaving:
             // Do buttons sliding out and background fading
             // Do the same stuff as in MM_Entering, but backwards
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 - mnu_SlidyButtonState.lerp );
-
-            if ( mnu_draw_background )
             {
-                ui_drawImage( 0, &background, GFX_WIDTH  - background.imgW, 0, 0, 0, NULL );
-            }
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
 
-            // "Copyright" text
-            ui_drawTextBox( menuFont, copyrightText, copyrightLeft, copyrightTop, 0, 0, 20 );
+                if ( mnu_draw_background )
+                {
+                    ui_drawImage( 0, &background, GFX_WIDTH  - background.imgW, 0, 0, 0, NULL );
+                }
 
-            mnu_SlidyButton_draw_all();
-            mnu_SlidyButton_update_all( deltaTime );
-            if ( mnu_SlidyButtonState.lerp >= 1.0f )
-            {
-                menuState = MM_Finish;
+                // "Copyright" text
+                display_list_draw( copyrightText_tx_ptr );
+
+                SlidyButtonState_draw_all( &but_state );
+                SlidyButtonState_update_all( &but_state, deltaTime );
+                if ( but_state.lerp >= 1.0f )
+                {
+                    menuState = MM_Finish;
+                }
             }
             break;
 
         case MM_Finish:
-            // Release the background texture
-            oglx_texture_Release( &background );
+            {
+                // Release the background texture
+                oglx_texture_Release( &background );
+
+                // free the widgets
+                for ( cnt = 0; cnt < but_count; cnt++ )
+                {
+                    ui_Widget_free( w_buttons + cnt );
+                }
+
+                // Set the next menu to load
+                result = menuChoice;
+            }
 
             // reset the ui
             ui_Reset();
 
-            // Set the next menu to load
-            result = menuChoice;
-
-            // And make sure that if we come back to this menu, it resets
-            // properly
+            // make sure that if we come back to this menu, it resets properly
             menuState = MM_Begin;
+
+            break;
     }
 
     return result;
@@ -900,6 +1193,181 @@ int cmp_mod_ref( const void * vref1, const void * vref2 )
     return retval;
 }
 
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t doChooseModule_update_description( ui_Widget_t * lab_ptr, MOD_REF validModules[], size_t validModules_size, int selectedModule )
+{
+    int i;
+
+    if ( NULL == lab_ptr ) return bfalse;
+
+    if ( selectedModule < 0 || ( size_t )selectedModule >= validModules_size || validModules[selectedModule] <= 0 || selectedModule > validModules[selectedModule] )
+    {
+        ui_Widget_set_text( lab_ptr, menuFont, 0, NULL );
+    }
+    else
+    {
+        char    buffer[1024]  = EMPTY_CSTR;
+        const char * rank_string, * name_string;
+        char  * carat = buffer, * carat_end = buffer + SDL_arraysize( buffer );
+        MOD_REF imodule = validModules[selectedModule];
+
+        mod_file_t * pmod = &( mnu_ModList.lst[imodule].base );
+
+        name_string = "Unnamed";
+        if ( CSTR_END != pmod->longname[0] )
+        {
+            name_string = pmod->longname;
+        }
+        carat += snprintf( carat, carat_end - carat - 1, "%s\n", name_string );
+
+        rank_string = "Unranked";
+        if ( CSTR_END != pmod->rank[0] )
+        {
+            rank_string = pmod->rank;
+        }
+        carat += snprintf( carat, carat_end - carat - 1, "Difficulty: %s\n", rank_string );
+
+        if ( pmod->maxplayers > 1 )
+        {
+            if ( pmod->minplayers == pmod->maxplayers )
+            {
+                carat += snprintf( carat, carat_end - carat - 1, "%d Players\n", pmod->minplayers );
+            }
+            else
+            {
+                carat += snprintf( carat, carat_end - carat - 1, "%d - %d Players\n", pmod->minplayers, pmod->maxplayers );
+            }
+        }
+        else
+        {
+            if ( 0 != pmod->importamount )
+            {
+                carat += snprintf( carat, carat_end - carat - 1, "Single Player\n" );
+            }
+            else
+            {
+                carat += snprintf( carat, carat_end - carat - 1, "Starter Module\n" );
+            }
+        }
+        carat += snprintf( carat, carat_end - carat - 1, " \n" );
+
+        for ( i = 0; i < SUMMARYLINES; i++ )
+        {
+            carat += snprintf( carat, carat_end - carat - 1, "%s\n", pmod->summary[i] );
+        }
+
+        // Draw a text box
+        GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+        ui_Widget_set_text( lab_ptr, menuFont, 0, buffer );
+    }
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doChooseModule_update_filter_label( ui_Widget_t * lab_ptr, int which )
+{
+    if ( NULL == lab_ptr ) return bfalse;
+
+    switch ( which )
+    {
+        case FILTER_MAIN:    ui_Widget_set_text( lab_ptr, menuFont, 0, "Main Quest" );       break;
+        case FILTER_SIDE:    ui_Widget_set_text( lab_ptr, menuFont, 0, "Sidequests" );       break;
+        case FILTER_TOWN:    ui_Widget_set_text( lab_ptr, menuFont, 0, "Towns and Cities" ); break;
+        case FILTER_FUN:     ui_Widget_set_text( lab_ptr, menuFont, 0, "Fun Modules" );      break;
+        case FILTER_STARTER: ui_Widget_set_text( lab_ptr, menuFont, 0, "Starter Modules" );  break;
+        default:
+        case FILTER_OFF:     ui_Widget_set_text( lab_ptr, menuFont, 0, "All Modules" );      break;
+    }
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct s_ChooseModuleState
+{
+    BASE_MENU_STATE;
+};
+typedef struct s_ChooseModuleState ChooseModuleState_t;
+
+//--------------------------------------------------------------------------------------------
+static ChooseModuleState_t *ChooseModuleState_ctor( ChooseModuleState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static ChooseModuleState_t *ChooseModuleState_dtor( ChooseModuleState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static ChooseModuleState_t * doChooseModule_begin( ChooseModuleState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    ps = ChooseModuleState_ctor( ps );
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static ChooseModuleState_t * doChooseModule_entering( ChooseModuleState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static ChooseModuleState_t * doChooseModule_running( ChooseModuleState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static ChooseModuleState_t * doChooseModule_leaving( ChooseModuleState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static ChooseModuleState_t * doChooseModule_finish( ChooseModuleState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    ps = ChooseModuleState_ctor( ps );
+
+    return ps;
+};
+
 //--------------------------------------------------------------------------------------------
 int doChooseModule( float deltaTime )
 {
@@ -908,14 +1376,61 @@ int doChooseModule( float deltaTime )
     static oglx_texture_t background;
     static int menuState = MM_Begin;
     static int startIndex;
-    static Uint8 keycooldown;
-    static char* filterText = "All Modules";
+    static Uint8 keycooldown = 0;
 
     static int numValidModules;
     static MOD_REF validModules[MAX_MODULE];
 
     static int moduleMenuOffsetX;
     static int moduleMenuOffsetY;
+
+    static display_list_t * description_lst_ptr = NULL;
+    static display_list_t * tip_lst_ptr = NULL;
+    static display_item_t     * beaten_tx_ptr = NULL;
+
+    enum e_buttons
+    {
+        but_filter_fwd,
+        but_fwd,
+        but_bck,
+        but_select,
+        but_exit,
+        but_count,
+        but_sz_count
+    };
+
+    // initial button strings
+    static const char * sz_buttons[but_sz_count] =
+    {
+        ">",             // but_filter_fwd
+        "->",            // but_fwd
+        "<-",            // but_bck
+        "Select Module", // but_select
+        "Back",          // but_exit
+        ""
+    };
+
+    enum e_labels
+    {
+        lab_description,
+        lab_filter,
+        lab_count,
+        lab_sz_count
+    };
+
+    // initial button strings
+    static const char * sz_labels[lab_sz_count] =
+    {
+        "",               // lab_description
+        "All Modules",    // lab_filter
+        NULL
+    };
+
+    static ui_Widget_t w_buttons[but_count];
+    static ui_Widget_t w_labels [lab_count];
+
+    static int    selectedModule_old    = -1;
+    static bool_t selectedModule_update = bfalse;
 
     int result = 0;
     int i, x, y;
@@ -924,110 +1439,163 @@ int doChooseModule( float deltaTime )
     switch ( menuState )
     {
         case MM_Begin:
-
-            if ( !module_list_valid )
             {
-                mnu_load_all_module_info();
+
+                if ( !module_list_valid )
+                {
+                    mnu_load_all_module_info();
+                }
+
+                // allocate the list for the discription
+                display_list_ctor( description_lst_ptr, MAX_MENU_DISPLAY );
+
+                // allocate the list for the tip
+                display_list_ctor( tip_lst_ptr, MAX_MENU_DISPLAY );
+
+                // Reload all modules, something might be unlocked
+                mnu_load_all_module_images_vfs();
+
+                // Reset which module we are selecting
+                startIndex            = 0;
+                selectedModule        = -1;
+                selectedModule_old    = -1;
+                selectedModule_update = bfalse;
+                keycooldown           = 0;
+
+                // blank out the valid modules
+                numValidModules = 0;
+                for ( i = 0; i < MAX_MODULE; i++ )
+                {
+                    memset( validModules + i, 0, sizeof( MOD_REF ) );
+                }
+
+                // initialize the buttons
+                for ( i = 0; i < but_count; i++ )
+                {
+                    memset( w_buttons + i, 0, sizeof( ui_Widget_t ) );
+
+                    ui_Widget_set_id( w_buttons + i, i );
+                    ui_Widget_set_text( w_buttons + i, NULL, 0, sz_buttons[i] );
+                }
+
+                // initialize the labels
+                for ( i = 0; i < lab_count; i++ )
+                {
+                    memset( w_labels + i, 0, sizeof( ui_Widget_t ) );
+
+                    ui_Widget_set_id( w_labels + i, UI_Nothing );
+                    ui_Widget_set_text( w_labels + i, NULL, 0, sz_labels[i] );
+                }
+
+                // Figure out at what offset we want to draw the module menu.
+                moduleMenuOffsetX = ( GFX_WIDTH  - 640 ) / 2;
+                moduleMenuOffsetX = MAX( 0, moduleMenuOffsetX );
+
+                moduleMenuOffsetY = ( GFX_HEIGHT - 480 ) / 2;
+                moduleMenuOffsetY = MAX( 0, moduleMenuOffsetY );
+
+                // set the widget positions
+                ui_Widget_set_button( w_buttons + but_bck, moduleMenuOffsetX + 20, moduleMenuOffsetY + 74, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_fwd, moduleMenuOffsetX + 590, moduleMenuOffsetY + 74, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_exit, moduleMenuOffsetX + 327, moduleMenuOffsetY + 208, 200, 30 );
+                ui_Widget_set_button( w_buttons + but_select, moduleMenuOffsetX + 327, moduleMenuOffsetY + 173, 200, 30 );
+                ui_Widget_set_button( w_buttons + but_filter_fwd, moduleMenuOffsetX + 532, moduleMenuOffsetY + 390, -1, -1 );
+
+                // set the label positions
+                ui_Widget_set_bound( w_labels + lab_filter, moduleMenuOffsetX + 327, moduleMenuOffsetY + 390, 200, 30 );
+                ui_Widget_set_button( w_labels + lab_description, moduleMenuOffsetX + 21, moduleMenuOffsetY + 173, 291, 250 );
+
+                // initialize the module description
+                doChooseModule_update_description( w_labels + lab_description, validModules, SDL_arraysize( validModules ), selectedModule );
+
+                // initialize the module filter text
+                doChooseModule_update_filter_label( w_labels + lab_filter, mnu_moduleFilter );
+
+                beaten_tx_ptr = ui_updateText( beaten_tx_ptr, menuFont, 0, 0, "BEATEN" );
             }
 
-            // Reload all modules, something might be unlocked
-            mnu_load_all_module_images_vfs();
-
-            // Reset which module we are selecting
-            startIndex = 0;
-            selectedModule = -1;
-
-            // blank out the valid modules
-            numValidModules = 0;
-            for ( i = 0; i < MAX_MODULE; i++ )
-            {
-                memset( validModules + i, 0, sizeof( MOD_REF ) );
-            }
-
-            // Figure out at what offset we want to draw the module menu.
-            moduleMenuOffsetX = ( GFX_WIDTH  - 640 ) / 2;
-            moduleMenuOffsetX = MAX( 0, moduleMenuOffsetX );
-
-            moduleMenuOffsetY = ( GFX_HEIGHT - 480 ) / 2;
-            moduleMenuOffsetY = MAX( 0, moduleMenuOffsetY );
-
+            // let this fall through into MM_Entering
             menuState = MM_Entering;
 
-            // fall through...
-
         case MM_Entering:
-            menuState = MM_Running;
-
-            if ( !module_list_valid )
             {
-                mnu_load_all_module_info();
-                mnu_load_all_module_images_vfs();
-            }
-
-            // Find the modules that we want to allow loading for.  If start_new_player
-            // is true, we want ones that don't allow imports (e.g. starter modules).
-            // Otherwise, we want modules that allow imports
-            numValidModules = 0;
-            for ( imod = 0; imod < mnu_ModList.count; imod++ )
-            {
-                // if this module is not valid given the game options and the
-                // selected players, skip it
-                if ( !mnu_test_by_index( imod, 0, NULL ) ) continue;
-
-                if ( start_new_player && 0 == mnu_ModList.lst[imod].base.importamount )
+                if ( !module_list_valid )
                 {
-                    // starter module
-                    validModules[numValidModules] = REF_TO_INT( imod );
-                    numValidModules++;
+                    mnu_load_all_module_info();
+                    mnu_load_all_module_images_vfs();
+                }
+
+                // Find the modules that we want to allow loading for.  If start_new_player
+                // is true, we want ones that don't allow imports (e.g. starter modules).
+                // Otherwise, we want modules that allow imports
+                numValidModules = 0;
+                for ( imod = 0; imod < mnu_ModList.count; imod++ )
+                {
+                    // if this module is not valid given the game options and the
+                    // selected players, skip it
+                    if ( !mnu_test_by_index( imod, 0, NULL ) ) continue;
+
+                    if ( start_new_player && 0 == mnu_ModList.lst[imod].base.importamount )
+                    {
+                        // starter module
+                        validModules[numValidModules] = REF_TO_INT( imod );
+                        numValidModules++;
+                    }
+                    else
+                    {
+                        if ( FILTER_OFF != mnu_moduleFilter && mnu_ModList.lst[imod].base.moduletype != mnu_moduleFilter ) continue;
+                        if ( mnu_selectedPlayerCount > mnu_ModList.lst[imod].base.importamount ) continue;
+                        if ( mnu_selectedPlayerCount < mnu_ModList.lst[imod].base.minplayers ) continue;
+                        if ( mnu_selectedPlayerCount > mnu_ModList.lst[imod].base.maxplayers ) continue;
+
+                        // regular module
+                        validModules[numValidModules] = REF_TO_INT( imod );
+                        numValidModules++;
+                    }
+                }
+
+                // sort the modules by difficulty. easiest to hardest for starting a new character
+                // hardest to easiest for loading a module
+                cmp_mod_ref_mult = start_new_player ? 1 : -1;
+                qsort( validModules, numValidModules, sizeof( MOD_REF ), cmp_mod_ref );
+
+                // load background depending on current filter
+                if ( start_new_player )
+                {
+                    ego_texture_load_vfs( &background, "mp_data/menu/menu_advent", TRANSCOLOR );
                 }
                 else
                 {
-                    if ( FILTER_OFF != mnu_moduleFilter && mnu_ModList.lst[imod].base.moduletype != mnu_moduleFilter ) continue;
-                    if ( mnu_selectedPlayerCount > mnu_ModList.lst[imod].base.importamount ) continue;
-                    if ( mnu_selectedPlayerCount < mnu_ModList.lst[imod].base.minplayers ) continue;
-                    if ( mnu_selectedPlayerCount > mnu_ModList.lst[imod].base.maxplayers ) continue;
+                    switch ( mnu_moduleFilter )
+                    {
+                        case FILTER_MAIN: ego_texture_load_vfs( &background, "mp_data/menu/menu_draco", TRANSCOLOR ); break;
+                        case FILTER_SIDE: ego_texture_load_vfs( &background, "mp_data/menu/menu_sidequest", TRANSCOLOR ); break;
+                        case FILTER_TOWN: ego_texture_load_vfs( &background, "mp_data/menu/menu_town", TRANSCOLOR ); break;
+                        case FILTER_FUN:  ego_texture_load_vfs( &background, "mp_data/menu/menu_funquest", TRANSCOLOR ); break;
 
-                    // regular module
-                    validModules[numValidModules] = REF_TO_INT( imod );
-                    numValidModules++;
+                        default:
+                        case FILTER_OFF: ego_texture_load_vfs( &background, "mp_data/menu/menu_allquest", TRANSCOLOR ); break;
+                    }
                 }
-            }
 
-            // sort the modules by difficulty. easiest to hardest for starting a new character
-            // hardest to easiest for loading a module
-            cmp_mod_ref_mult = start_new_player ? 1 : -1;
-            qsort( validModules, numValidModules, sizeof( MOD_REF ), cmp_mod_ref );
-
-            // load background depending on current filter
-            if ( start_new_player )
-            {
-                ego_texture_load_vfs( &background, "mp_data/menu/menu_advent", TRANSCOLOR );
-            }
-            else switch ( mnu_moduleFilter )
+                // set the tip text
+                if ( 0 == numValidModules )
                 {
-                    case FILTER_MAIN: ego_texture_load_vfs( &background, "mp_data/menu/menu_draco", TRANSCOLOR ); break;
-                    case FILTER_SIDE: ego_texture_load_vfs( &background, "mp_data/menu/menu_sidequest", TRANSCOLOR ); break;
-                    case FILTER_TOWN: ego_texture_load_vfs( &background, "mp_data/menu/menu_town", TRANSCOLOR ); break;
-                    case FILTER_FUN:  ego_texture_load_vfs( &background, "mp_data/menu/menu_funquest", TRANSCOLOR ); break;
-
-                    default:
-                    case FILTER_OFF: ego_texture_load_vfs( &background, "mp_data/menu/menu_allquest", TRANSCOLOR ); break;
+                    tipText_set_position( menuFont, "Sorry, there are no valid games!\n Please press the \"Back\" button.", 20 );
+                }
+                else if ( numValidModules <= 3 )
+                {
+                    tipText_set_position( menuFont, "Press an icon to select a game.", 20 );
+                }
+                else
+                {
+                    tipText_set_position( menuFont, "Press an icon to select a game.\nUse the mouse wheel or the \"<-\" and \"->\" buttons to scroll.", 20 );
                 }
 
-            // set the tip text
-            if ( 0 == numValidModules )
-            {
-                tipText_set_position( menuFont, "Sorry, there are no valid games!\n Please press the \"Back\" button.", 20 );
+                // set the position of the module description "button"
+                ui_Widget_set_button( w_labels + lab_description, moduleMenuOffsetX + 21, moduleMenuOffsetY + 173, 291, 230 );
             }
-            else if ( numValidModules <= 3 )
-            {
-                tipText_set_position( menuFont, "Press an icon to select a game.", 20 );
-            }
-            else
-            {
-                tipText_set_position( menuFont, "Press an icon to select a game.\nUse the mouse wheel or the \"<-\" and \"->\" buttons to scroll.", 20 );
-            }
-
+            menuState = MM_Running;
             // fall through for now...
 
         case MM_Running:
@@ -1089,11 +1657,11 @@ int doChooseModule( float deltaTime )
                 // Draw the arrows to pick modules
                 if ( numValidModules > 3 )
                 {
-                    if ( BUTTON_UP == ui_doButton( 1051, "<-", NULL, moduleMenuOffsetX + 20, moduleMenuOffsetY + 74, 30, 30 ) )
+                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_bck ) )
                     {
                         startIndex--;
                     }
-                    if ( BUTTON_UP == ui_doButton( 1052, "->", NULL, moduleMenuOffsetX + 590, moduleMenuOffsetY + 74, 30, 30 ) )
+                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_fwd ) )
                     {
                         startIndex++;
                     }
@@ -1114,91 +1682,44 @@ int doChooseModule( float deltaTime )
 
                     GLfloat * img_tint = normal_tint;
 
+                    // was the module beaten?
                     if ( mnu_ModList.lst[imod].base.beaten )
                     {
                         img_tint = beat_tint;
                     }
 
-                    if ( ui_doImageButton( i, ptex, moduleMenuOffsetX + x, moduleMenuOffsetY + y, 138, 138, img_tint ) )
+                    // move the button id up by 1000, so it will not interfere with the other buttons...
+                    // ?? another option would be to make these widgets ??
+                    if ( BUTTON_DOWN == ui_doImageButton( 1000 + i, ptex, moduleMenuOffsetX + x, moduleMenuOffsetY + y, 138, 138, img_tint ) )
                     {
-                        selectedModule = i;
+                        selectedModule_old = selectedModule;
+                        selectedModule     = i;
                     }
 
                     // Draw a text over the image explaining what it means
                     if ( mnu_ModList.lst[imod].base.beaten )
                     {
-                        ui_drawTextBox( NULL, "BEATEN", moduleMenuOffsetX + x + 32, moduleMenuOffsetY + y + 64, 64, 30, 20 );
+                        ui_drawText( beaten_tx_ptr, moduleMenuOffsetX + x + 32, moduleMenuOffsetY + y + 64 );
                     }
 
                     x += 138 + 20;  // Width of the button, and the spacing between buttons
                 }
 
-                // Draw an empty button as the backdrop for the module text
-                ui_drawButton( UI_Nothing, moduleMenuOffsetX + 21, moduleMenuOffsetY + 173, 291, 250, NULL );
-
                 // Draw the text description of the selected module
-                if ( selectedModule > -1 && selectedModule < MAX_MODULE && validModules[selectedModule] >= 0 )
+                if ( selectedModule_old != selectedModule )
                 {
-                    char    buffer[1024]  = EMPTY_CSTR;
-                    const char * rank_string, * name_string;
-                    char  * carat = buffer, * carat_end = buffer + SDL_arraysize( buffer );
-                    MOD_REF imodule = validModules[selectedModule];
+                    selectedModule_old = selectedModule;
 
-                    mod_file_t * pmod = &( mnu_ModList.lst[imodule].base );
-
-                    GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
-
-                    name_string = "Unnamed";
-                    if ( CSTR_END != pmod->longname[0] )
-                    {
-                        name_string = pmod->longname;
-                    }
-                    carat += snprintf( carat, carat_end - carat - 1, "%s\n", name_string );
-
-                    rank_string = "Unranked";
-                    if ( CSTR_END != pmod->rank[0] )
-                    {
-                        rank_string = pmod->rank;
-                    }
-                    carat += snprintf( carat, carat_end - carat - 1, "Difficulty: %s\n", rank_string );
-
-                    if ( pmod->maxplayers > 1 )
-                    {
-                        if ( pmod->minplayers == pmod->maxplayers )
-                        {
-                            carat += snprintf( carat, carat_end - carat - 1, "%d Players\n", pmod->minplayers );
-                        }
-                        else
-                        {
-                            carat += snprintf( carat, carat_end - carat - 1, "%d - %d Players\n", pmod->minplayers, pmod->maxplayers );
-                        }
-                    }
-                    else
-                    {
-                        if ( 0 != pmod->importamount )
-                        {
-                            carat += snprintf( carat, carat_end - carat - 1, "Single Player\n" );
-                        }
-                        else
-                        {
-                            carat += snprintf( carat, carat_end - carat - 1, "Starter Module\n" );
-                        }
-                    }
-                    carat += snprintf( carat, carat_end - carat - 1, " \n" );
-
-                    for ( i = 0; i < SUMMARYLINES; i++ )
-                    {
-                        carat += snprintf( carat, carat_end - carat - 1, "%s\n", pmod->summary[i] );
-                    }
-
-                    // Draw a text box
-                    ui_drawTextBox( menuFont, buffer, moduleMenuOffsetX + 21, moduleMenuOffsetY + 173, 291, 230, 20 );
+                    doChooseModule_update_description( w_labels + lab_description, validModules, SDL_arraysize( validModules ), selectedModule );
                 }
+
+                // draw the description
+                ui_doWidget( w_labels + lab_description );
 
                 // And draw the next & back buttons
                 if ( selectedModule > -1 )
                 {
-                    if ( SDLKEYDOWN( SDLK_RETURN ) || BUTTON_UP == ui_doButton( 53, "Select Module", NULL, moduleMenuOffsetX + 327, moduleMenuOffsetY + 173, 200, 30 ) )
+                    if ( SDLKEYDOWN( SDLK_RETURN ) || BUTTON_UP == ui_doWidget( w_buttons + but_select ) )
                     {
                         // go to the next menu with this module selected
                         selectedModule = REF_TO_INT( validModules[selectedModule] );
@@ -1206,7 +1727,7 @@ int doChooseModule( float deltaTime )
                     }
                 }
 
-                if ( SDLKEYDOWN( SDLK_ESCAPE ) || BUTTON_UP == ui_doButton( 54, "Back", NULL, moduleMenuOffsetX + 327, moduleMenuOffsetY + 208, 200, 30 ) )
+                if ( SDLKEYDOWN( SDLK_ESCAPE ) || BUTTON_UP == ui_doWidget( w_buttons + but_exit ) )
                 {
                     // Signal doMenu to go back to the previous menu
                     selectedModule = -1;
@@ -1218,11 +1739,11 @@ int doChooseModule( float deltaTime )
                 {
                     bool_t click_button;
 
-                    // only display the filter name
-                    ui_doButton( 55, filterText, NULL, moduleMenuOffsetX + 327, moduleMenuOffsetY + 390, 200, 30 );
+                    // display the filter name
+                    ui_doWidget( w_labels + lab_filter );
 
                     // use the ">" button to change since we are already using arrows to indicate "spin control"-like widgets
-                    click_button = ( BUTTON_UP == ui_doButton( 56, ">", NULL, moduleMenuOffsetX + 532, moduleMenuOffsetY + 390, 30, 30 ) );
+                    click_button = ( BUTTON_UP == ui_doWidget( w_buttons + but_filter_fwd ) );
 
                     if ( click_button )
                     {
@@ -1231,69 +1752,82 @@ int doChooseModule( float deltaTime )
 
                         // Swap to the next filter
                         mnu_moduleFilter = CLIP( mnu_moduleFilter, FILTER_NORMAL_BEGIN, FILTER_NORMAL_END );
-
                         mnu_moduleFilter++;
 
                         if ( mnu_moduleFilter > FILTER_NORMAL_END ) mnu_moduleFilter = FILTER_NORMAL_BEGIN;
 
-                        switch ( mnu_moduleFilter )
-                        {
-                            case FILTER_MAIN:    filterText = "Main Quest";       break;
-                            case FILTER_SIDE:    filterText = "Sidequests";       break;
-                            case FILTER_TOWN:    filterText = "Towns and Cities"; break;
-                            case FILTER_FUN:     filterText = "Fun Modules";      break;
-                            case FILTER_STARTER: filterText = "Starter Modules";  break;
-                        default: case FILTER_OFF:     filterText = "All Modules";      break;
-                        }
+                        doChooseModule_update_filter_label( w_labels + lab_filter, mnu_moduleFilter );
                     }
                 }
-
-                // the tool-tip text
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
-                ui_drawTextBox( menuFont, tipText, tipTextLeft, tipTextTop, 0, 0, 20 );
             }
             break;
 
         case MM_Leaving:
+
             menuState = MM_Finish;
             // fall through for now
 
         case MM_Finish:
-            oglx_texture_Release( &background );
-
-            pickedmodule_index         = -1;
-            pickedmodule_path[0]       = CSTR_END;
-            pickedmodule_name[0]       = CSTR_END;
-            pickedmodule_write_path[0] = CSTR_END;
-
-            menuState = MM_Begin;
-            if ( selectedModule == -1 )
             {
-                result = -1;
-            }
-            else
-            {
-                // Save the name of the module that we've picked
-                pickedmodule_index = selectedModule;
+                oglx_texture_Release( &background );
 
-                strncpy( pickedmodule_path,       mnu_ModList_get_vfs_path( pickedmodule_index ), SDL_arraysize( pickedmodule_path ) );
-                strncpy( pickedmodule_name,       mnu_ModList_get_name( pickedmodule_index ), SDL_arraysize( pickedmodule_name ) );
-                strncpy( pickedmodule_write_path, mnu_ModList_get_dest_path( pickedmodule_index ), SDL_arraysize( pickedmodule_write_path ) );
+                // deallocate the list for the discription
+                display_list_ctor( description_lst_ptr, MAX_MENU_DISPLAY );
 
-                if ( !game_choose_module( selectedModule, -1 ) )
+                // initialize dthe buttons
+                for ( i = 0; i < but_count; i++ )
                 {
-                    log_warning( "Tried to select an invalid module. index == %d\n", selectedModule );
+                    ui_Widget_free( w_buttons + i );
+                }
+
+                // initialize the labels
+                for ( i = 0; i < lab_count; i++ )
+                {
+                    ui_Widget_free( w_labels + i );
+                }
+
+                // free all other textures
+                beaten_tx_ptr = display_item_free( beaten_tx_ptr, btrue );;
+
+                // deallocate the list for the tip
+                display_list_ctor( tip_lst_ptr, MAX_MENU_DISPLAY );
+
+                pickedmodule_index         = -1;
+                pickedmodule_path[0]       = CSTR_END;
+                pickedmodule_name[0]       = CSTR_END;
+                pickedmodule_write_path[0] = CSTR_END;
+
+                if ( selectedModule == -1 )
+                {
                     result = -1;
                 }
                 else
                 {
-                    pickedmodule_ready = btrue;
-                    result = ( PMod->importamount > 0 ) ? 1 : 2;
+                    // Save the name of the module that we've picked
+                    pickedmodule_index = selectedModule;
+
+                    strncpy( pickedmodule_path,       mnu_ModList_get_vfs_path( pickedmodule_index ), SDL_arraysize( pickedmodule_path ) );
+                    strncpy( pickedmodule_name,       mnu_ModList_get_name( pickedmodule_index ), SDL_arraysize( pickedmodule_name ) );
+                    strncpy( pickedmodule_write_path, mnu_ModList_get_dest_path( pickedmodule_index ), SDL_arraysize( pickedmodule_write_path ) );
+
+                    if ( !game_choose_module( selectedModule, -1 ) )
+                    {
+                        log_warning( "Tried to select an invalid module. index == %d\n", selectedModule );
+                        result = -1;
+                    }
+                    else
+                    {
+                        pickedmodule_ready = btrue;
+                        result = ( PMod->importamount > 0 ) ? 1 : 2;
+                    }
                 }
             }
 
             // reset the ui
             ui_Reset();
+
+            // make sure that if we come back to this menu, it resets properly
+            menuState = MM_Begin;
 
             break;
     }
@@ -1381,29 +1915,94 @@ bool_t doChoosePlayer_load_profiles( int player, ChoosePlayer_profiles_t * pro_l
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doChoosePlayer_show_stats( int player, int mode, int x, int y, int width, int height )
+//--------------------------------------------------------------------------------------------
+struct s_doChoosePlayer_stats_info
 {
-    int i, x1, y1;
+    ChoosePlayer_profiles_t objects;
+    int                     player;
+    int                     player_last;
+    display_item_t        * item_ptr;
+};
 
-    static ChoosePlayer_profiles_t objects = { 0 };
+typedef struct s_doChoosePlayer_stats_info doChoosePlayer_stats_info_t;
 
-    if ( player < 0 ) mode = 1;
+#define PLAYER_STATS_INFO_INIT                  \
+{                                               \
+    /* objects     */   PLAYER_PROFILES_INIT,   \
+    /* player      */   -1,                     \
+    /* player_last */   -1,                     \
+    /* item_ptr    */   NULL                    \
+}
+
+//--------------------------------------------------------------------------------------------
+doChoosePlayer_stats_info_t * doChoosePlayer_stats_info_ctor( doChoosePlayer_stats_info_t * ptr )
+{
+    if( NULL == ptr ) 
+    {
+        ptr = EGOBOO_NEW(doChoosePlayer_stats_info_t);
+    }
+
+    // clear the data
+    memset( ptr, 0, sizeof(*ptr) );
+
+    // set special data
+    ptr->player      = -1;
+    ptr->player_last = -1;
+
+    return ptr;
+}
+
+//--------------------------------------------------------------------------------------------
+doChoosePlayer_stats_info_t * doChoosePlayer_stats_info_dtor( doChoosePlayer_stats_info_t * ptr, bool_t owner )
+{
+    if( NULL == ptr ) return ptr;
+
+    ptr->item_ptr   = display_item_free( ptr->item_ptr, btrue );
+
+    if( !owner )
+    {
+        ptr = doChoosePlayer_stats_info_ctor( ptr );
+    }
+    else
+    {
+        EGOBOO_DELETE( ptr );
+    }
+
+    return ptr;
+}
+
+//--------------------------------------------------------------------------------------------
+doChoosePlayer_stats_info_t * doChoosePlayer_load_stats( doChoosePlayer_stats_info_t * ptr, int player, int mode )
+{
+    if( NULL == ptr )
+    {
+        ptr = doChoosePlayer_stats_info_ctor( ptr );
+    }
+
+    if( NULL == ptr ) return ptr;
+
+    ptr->player_last = ptr->player;
+    ptr->player      = player;
+
+    if ( ptr->player < 0 ) mode = 1;
 
     // handle the profile data
     switch ( mode )
     {
-        case 0: // load new player data
+        case 0: // load new ptr->player data
 
-            if ( !doChoosePlayer_load_profiles( player, &objects ) )
+            if ( !doChoosePlayer_load_profiles( ptr->player, &ptr->objects ) )
             {
-                player = -1;
+                ptr->player_last = ptr->player;
+                ptr->player      = -1;
             }
             break;
 
         case 1: // unload player data
 
-            player = -1;
-            objects.count = 0;
+            ptr->player_last   = ptr->player;
+            ptr->player        = -1;
+            ptr->objects.count = 0;
 
             // release all of the temporary profiles
             release_all_profiles();
@@ -1411,101 +2010,144 @@ bool_t doChoosePlayer_show_stats( int player, int mode, int x, int y, int width,
             break;
     }
 
-    // do the actual display
-    x1 = x + 25;
-    y1 = y + 25;
-    if ( player >= 0 && objects.count > 0 )
+    return ptr;
+}
+
+//--------------------------------------------------------------------------------------------
+doChoosePlayer_stats_info_t * doChoosePlayer_render_stats( doChoosePlayer_stats_info_t * ptr, int x, int y, int width, int height )
+{
+    int i, x1, y1;
+
+    GLuint list_index = INVALID_GL_ID;
+
+    if( NULL == ptr )
     {
-        CAP_REF icap = objects.pro_data[0].cap_ref;
+        ptr = doChoosePlayer_stats_info_ctor( ptr );
+    }
 
-        if ( LOADED_CAP( icap ) )
+    if( NULL == ptr ) return ptr;
+
+    // make sure we have a valid display_item
+    if( NULL == ptr->item_ptr )
+    {
+        ptr->item_ptr = display_item_new();
+    }
+
+    // make sure that the ptr->item_ptr is primed for a display list
+    ptr->item_ptr = display_item_validate_list( ptr->item_ptr );
+
+    // is the list_name valid?
+    list_index = display_item_list_name( ptr->item_ptr );
+    if( INVALID_GL_ID == list_index )
+    {
+        // there was an error. we have no use for the ptr->item_ptr
+        ptr->item_ptr = display_item_free( ptr->item_ptr, btrue );
+    }
+
+    // start capturing the ogl commands
+    if( INVALID_GL_ID != list_index )
+    {
+        glNewList(list_index, GL_COMPILE);
+    }
+
+    {
+        // do the actual display
+        x1 = x + 25;
+        y1 = y + 25;
+        if ( ptr->player >= 0 && ptr->objects.count > 0 )
         {
-            cap_t * pcap = CapStack.lst + icap;
-            Uint8 skin = ( Uint8 )MAX( 0, pcap->skin_override );
+            CAP_REF icap = ptr->objects.pro_data[0].cap_ref;
 
-            ui_drawButton( UI_Nothing, x, y, width, height, NULL );
-
-            // Character level and class
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
-
-            // fix class name capitalization
-            pcap->classname[0] = toupper( pcap->classname[0] );
-            fnt_drawText( menuFont, NULL, x1, y1, "A level %d %s", pcap->level_override + 1, pcap->classname );
-            y1 += 20;
-
-            // Armor
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
-            fnt_drawText( menuFont, NULL, x1, y1, "Wearing %s %s", pcap->skinname[skin], HAS_SOME_BITS( pcap->skindressy, 1 << skin ) ? "(Light)" : "(Heavy)" );
-            y1 += 40;
-
-            // Life and mana (can be less than maximum if not in easy mode)
-            if ( cfg.difficulty >= GAME_NORMAL )
+            if ( LOADED_CAP( icap ) )
             {
-                fnt_drawText( menuFont, NULL, x1, y1, "Life: %d/%d", MIN(( signed )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from ), ( int )pcap->life_stat.val.from ); y1 += 20;
-                y1 = draw_one_bar( pcap->lifecolor, x1, y1, ( signed )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from );
+                cap_t * pcap = CapStack.lst + icap;
+                Uint8 skin = ( Uint8 )MAX( 0, pcap->skin_override );
 
-                if ( pcap->mana_stat.val.from > 0 )
+                ui_drawButton( UI_Nothing, x, y, width, height, NULL );
+
+                // Character level and class
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+
+                // fix class name capitalization
+                pcap->classname[0] = toupper( pcap->classname[0] );
+                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "A level %d %s", pcap->level_override + 1, pcap->classname );
+
+                // Armor
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 40, "Wearing %s %s", pcap->skinname[skin], HAS_SOME_BITS( pcap->skindressy, 1 << skin ) ? "(Light)" : "(Heavy)" );
+
+                // Life and mana (can be less than maximum if not in easy mode)
+                if ( cfg.difficulty >= GAME_NORMAL )
                 {
-                    fnt_drawText( menuFont, NULL, x1, y1, "Mana: %d/%d", MIN(( signed )UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from ), ( int )pcap->mana_stat.val.from ); y1 += 20;
-                    y1 = draw_one_bar( pcap->manacolor, x1, y1, ( signed )UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from );
-                }
-            }
-            else
-            {
-                fnt_drawText( menuFont, NULL, x1, y1, "Life: %d", ( int )pcap->life_stat.val.from ); y1 += 20;
-                y1 = draw_one_bar( pcap->lifecolor, x1, y1, ( int )pcap->life_stat.val.from, ( int )pcap->life_stat.val.from );
+                    y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Life: %d/%d", MIN(( signed )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from ), ( int )pcap->life_stat.val.from );
+                    y1 = draw_one_bar( pcap->lifecolor, x1, y1, ( signed )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from );
 
-                if ( pcap->mana_stat.val.from > 0 )
-                {
-                    fnt_drawText( menuFont, NULL, x1, y1, "Mana: %d", ( int )pcap->mana_stat.val.from ); y1 += 20;
-                    y1 = draw_one_bar( pcap->manacolor, x1, y1, ( int )pcap->mana_stat.val.from, ( int )pcap->mana_stat.val.from );
-                }
-            }
-            y1 += 20;
-
-            // SWID
-            fnt_drawText( menuFont, NULL, x1, y1, "Stats" ); y1 += 20;
-            fnt_drawText( menuFont, NULL, x1, y1, "  Str: %s (%d)", describe_value( pcap->strength_stat.val.from,     60, NULL ), ( int )pcap->strength_stat.val.from ); y1 += 20;
-            fnt_drawText( menuFont, NULL, x1, y1, "  Wis: %s (%d)", describe_value( pcap->wisdom_stat.val.from,       60, NULL ), ( int )pcap->wisdom_stat.val.from ); y1 += 20;
-            fnt_drawText( menuFont, NULL, x1, y1, "  Int: %s (%d)", describe_value( pcap->intelligence_stat.val.from, 60, NULL ), ( int )pcap->intelligence_stat.val.from ); y1 += 20;
-            fnt_drawText( menuFont, NULL, x1, y1, "  Dex: %s (%d)", describe_value( pcap->dexterity_stat.val.from,    60, NULL ), ( int )pcap->dexterity_stat.val.from ); y1 += 20;
-            y1 += 20;
-
-            if ( objects.count > 1 )
-            {
-                ChoosePlayer_element_t * pdata;
-
-                fnt_drawText( menuFont, NULL, x1, y1, "Inventory" ); y1 += 20;
-
-                for ( i = 1; i < objects.count; i++ )
-                {
-                    pdata = objects.pro_data + i;
-
-                    icap = pdata->cap_ref;
-                    if ( LOADED_CAP( icap ) )
+                    if ( pcap->mana_stat.val.from > 0 )
                     {
-                        TX_REF  icon_ref;
-                        cap_t * pcap = CapStack.lst + icap;
+                        y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Mana: %d/%d", MIN(( signed )UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from ), ( int )pcap->mana_stat.val.from );
+                        y1 = draw_one_bar( pcap->manacolor, x1, y1, ( signed )UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from );
+                    }
+                }
+                else
+                {
+                    y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Life: %d", ( int )pcap->life_stat.val.from );
+                    y1 = draw_one_bar( pcap->lifecolor, x1, y1, ( int )pcap->life_stat.val.from, ( int )pcap->life_stat.val.from );
 
-                        STRING itemname;
-                        if ( pcap->nameknown ) strncpy( itemname, chop_create( &chop_mem, &( pdata->chop ) ), SDL_arraysize( itemname ) );
-                        else                   strncpy( itemname, pcap->classname,   SDL_arraysize( itemname ) );
+                    if ( pcap->mana_stat.val.from > 0 )
+                    {
+                        y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Mana: %d", ( int )pcap->mana_stat.val.from );
+                        y1 = draw_one_bar( pcap->manacolor, x1, y1, ( int )pcap->mana_stat.val.from, ( int )pcap->mana_stat.val.from );
+                    }
+                }
+                y1 += 20;
 
-                        icon_ref = mnu_get_icon_ref( icap, pdata->tx_ref );
+                // SWID
+                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Stats" );
+                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Str: %s (%d)", describe_value( pcap->strength_stat.val.from,     60, NULL ), ( int )pcap->strength_stat.val.from );
+                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Wis: %s (%d)", describe_value( pcap->wisdom_stat.val.from,       60, NULL ), ( int )pcap->wisdom_stat.val.from );
+                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Int: %s (%d)", describe_value( pcap->intelligence_stat.val.from, 60, NULL ), ( int )pcap->intelligence_stat.val.from );
+                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Dex: %s (%d)", describe_value( pcap->dexterity_stat.val.from,    60, NULL ), ( int )pcap->dexterity_stat.val.from );
 
-                        draw_one_icon( icon_ref, x1, y1, NOSPARKLE );
+                y1 += 20;
 
-                        if ( icap == SLOT_LEFT + 1 )
+                if ( ptr->objects.count > 1 )
+                {
+                    ChoosePlayer_element_t * pdata;
+
+                    y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Inventory" );
+
+                    for ( i = 1; i < ptr->objects.count; i++ )
+                    {
+                        pdata = ptr->objects.pro_data + i;
+
+                        icap = pdata->cap_ref;
+                        if ( LOADED_CAP( icap ) )
                         {
-                            fnt_drawText( menuFont, NULL, x1 + 32, y1 + 6, "  Left: %s", itemname ); y1 += 32;
-                        }
-                        else if ( icap == SLOT_RIGHT + 1 )
-                        {
-                            fnt_drawText( menuFont, NULL, x1 + 32, y1 + 6, "  Right: %s", itemname ); y1 += 32;
-                        }
-                        else
-                        {
-                            fnt_drawText( menuFont, NULL, x1 + 32, y1 + 6, "  Item: %s", itemname ); y1 += 32;
+                            TX_REF  icon_ref;
+                            cap_t * pcap = CapStack.lst + icap;
+
+                            STRING itemname;
+                            if ( pcap->nameknown ) strncpy( itemname, chop_create( &chop_mem, &( pdata->chop ) ), SDL_arraysize( itemname ) );
+                            else                   strncpy( itemname, pcap->classname,   SDL_arraysize( itemname ) );
+
+                            icon_ref = mnu_get_icon_ref( icap, pdata->tx_ref );
+                            draw_one_icon( icon_ref, x1 + 8, y1, NOSPARKLE );
+
+                            if ( icap == SLOT_LEFT + 1 )
+                            {
+                                ui_drawTextBoxImmediate( menuFont, x1 + ICON_SIZE + 8, y1 + 6, ICON_SIZE, "  Left: %s", itemname );
+                                y1 += ICON_SIZE;
+                            }
+                            else if ( icap == SLOT_RIGHT + 1 )
+                            {
+                                ui_drawTextBoxImmediate( menuFont, x1 + ICON_SIZE + 8, y1 + 6, ICON_SIZE, "  Right: %s", itemname );
+                                y1 += ICON_SIZE;
+                            }
+                            else
+                            {
+                                ui_drawTextBoxImmediate( menuFont, x1 + ICON_SIZE + 8, y1 + 6, ICON_SIZE, "  Item: %s", itemname );
+                                y1 += ICON_SIZE;
+                            }
                         }
                     }
                 }
@@ -1513,19 +2155,153 @@ bool_t doChoosePlayer_show_stats( int player, int mode, int x, int y, int width,
         }
     }
 
+    if( INVALID_GL_ID != list_index )
+    {
+        GL_DEBUG_END_LIST();
+    }
+
+    return ptr;
+}
+
+//--------------------------------------------------------------------------------------------
+void doChoosePlayer_update_players( int numVertical, int startIndex, ui_Widget_t lst[], size_t lst_size )
+{
+    int lplayer, splayer;
+    int i;
+    size_t w;
+
+    for ( i = 0; i < numVertical; i++ )
+    {
+        size_t m = i * 5;
+        if ( m > lst_size ) continue;
+
+        lplayer = i + startIndex;
+        if ( lplayer >= loadplayer_count ) continue;
+
+        splayer = mnu_Selected_get_loadplayer( lplayer );
+
+        // set the character image
+        ui_Widget_set_img( lst + m, TxTexture_get_ptr( loadplayer[lplayer].tx_ref ) );
+
+        // set the character name
+        w = ( NULL == lst[m].img ) ? 0 : lst[m].img->imgW;
+        ui_Widget_set_text( lst + m, menuFont, w, loadplayer[lplayer].name );
+    }
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doChoosePlayer_update_select_button( ui_Widget_t * but_ptr, int count )
+{
+    if ( NULL == but_ptr ) return bfalse;
+
+    if ( count <= 0 )
+    {
+        ui_Widget_set_text( but_ptr, NULL, 0, NULL );
+    }
+    else if ( 1 == count )
+    {
+        ui_Widget_set_text( but_ptr, NULL, 0, "Select Player" );
+    }
+    else
+    {
+        ui_Widget_set_text( but_ptr, NULL, 0, "Select Players" );
+    }
+
     return btrue;
 }
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct s_ChoosePlayerState
+{
+    BASE_MENU_STATE;
+};
+typedef struct s_ChoosePlayerState ChoosePlayerState_t;
+
+//--------------------------------------------------------------------------------------------
+static ChoosePlayerState_t *ChoosePlayerState_ctor( ChoosePlayerState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static ChoosePlayerState_t *ChoosePlayerState_dtor( ChoosePlayerState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static ChoosePlayerState_t * doChoosePlayer_begin( ChoosePlayerState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    ps = ChoosePlayerState_ctor( ps );
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static ChoosePlayerState_t * doChoosePlayer_entering( ChoosePlayerState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static ChoosePlayerState_t * doChoosePlayer_running( ChoosePlayerState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static ChoosePlayerState_t * doChoosePlayer_leaving( ChoosePlayerState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static ChoosePlayerState_t * doChoosePlayer_finish( ChoosePlayerState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    ps = ChoosePlayerState_ctor( ps );
+
+    return ps;
+};
 
 //--------------------------------------------------------------------------------------------
 int doChoosePlayer( float deltaTime )
 {
     static int menuState = MM_Begin;
     static oglx_texture_t background;
-    int result = 0;
-    int i, j, x, y;
-    STRING srcDir, destDir;
-    static int    startIndex = 0;
-    static int    last_player = -1;
+    static SlidyButtonState_t but_state = { NULL };
+
+    static int    startIndex_old = 0, startIndex = 0;
+    static int    last_player_old = -1;
+    static int    last_player     = -1;
     static bool_t new_player = bfalse;
 
     const int x0 = 20, y0 = 20, icon_size = 42, text_width = 175, button_repeat = 47;
@@ -1534,372 +2310,496 @@ int doChoosePlayer( float deltaTime )
     static Uint32 BitsInput[4];
     static bool_t device_on[4];
 
-    static const char * button_text[] = { "N/A", "Back", ""};
+    enum e_buttons
+    {
+        but_select,
+        but_back,
+        but_count,
+        but_sz_count
+    };
+
+    // button widgets
+    static ui_Widget_t  w_buttons[but_count];
+
+    static const char * sz_buttons[but_sz_count] =
+    {
+        "N/A",          // but_select
+        "Back",         // but_back
+        ""
+    };
+
+    static int mnu_selectedPlayerCount_old = -1;
+
+    static doChoosePlayer_stats_info_t stats_info = PLAYER_STATS_INFO_INIT;
+
+    int result = 0;
+    int i, j, x, y;
+    STRING srcDir, destDir;
+    int cnt;
 
     switch ( menuState )
     {
         case MM_Begin:
-            TxTexture_free_one(( TX_REF )TX_BARS );
-
-            mnu_selectedPlayerCount = 0;
-            mnu_selectedPlayer[0] = 0;
-
-            TxTexture_load_one_vfs( "mp_data/nullicon", ( TX_REF )ICON_NULL, INVALID_KEY );
-
-            TxTexture_load_one_vfs( "mp_data/keybicon", ( TX_REF )ICON_KEYB, INVALID_KEY );
-            BitsInput[0] = INPUT_BITS_KEYBOARD;
-            device_on[0] = keyb.on;
-
-            TxTexture_load_one_vfs( "mp_data/mousicon", ( TX_REF )ICON_MOUS, INVALID_KEY );
-            BitsInput[1] = INPUT_BITS_MOUSE;
-            device_on[1] = mous.on;
-
-            TxTexture_load_one_vfs( "mp_data/joyaicon", ( TX_REF )ICON_JOYA, INVALID_KEY );
-            BitsInput[2] = INPUT_BITS_JOYA;
-            device_on[2] = joy[0].on;
-
-            TxTexture_load_one_vfs( "mp_data/joybicon", ( TX_REF )ICON_JOYB, INVALID_KEY );
-            BitsInput[3] = INPUT_BITS_JOYB;
-            device_on[3] = joy[1].on;
-
-            ego_texture_load_vfs( &background, "mp_data/menu/menu_sleepy", TRANSCOLOR );
-
-            TxTexture_load_one_vfs( "mp_data/bars", ( TX_REF )TX_BARS, INVALID_KEY );
-
-            // load information for all the players that could be imported
-            mnu_player_check_import( "mp_players", btrue );
-
-            // reset button 0, or it will mess up the menu.
-            // must do it before mnu_SlidyButton_init()
-            button_text[0] = "N/A";
-
-            mnu_SlidyButton_init( 1.0f, button_text );
-
-            numVertical   = ( buttonTop - y0 ) / button_repeat - 1;
-            numHorizontal = 1;
-
-            x = x0;
-            y = y0;
-            for ( i = 0; i < numVertical; i++ )
             {
-                int m = i * 5;
+                doChoosePlayer_stats_info_ctor( &stats_info );
 
-                ui_initWidget( mnu_widgetList + m, m, NULL, NULL, NULL, x, y, text_width, icon_size );
-                ui_widgetAddMask( mnu_widgetList + m, UI_BITS_CLICKED );
+                last_player_old = -1;
+                last_player     = -1;
 
-                for ( j = 0, m++; j < 4; j++, m++ )
+                for ( cnt = 0; cnt < WIDGET_MAX; cnt++ )
                 {
-                    ui_initWidget( mnu_widgetList + m, m, menuFont, NULL, TxTexture_get_ptr(( TX_REF )( ICON_KEYB + j ) ), x + text_width + j*icon_size, y, icon_size, icon_size );
-                    ui_widgetAddMask( mnu_widgetList + m, UI_BITS_CLICKED );
+                    memset( mnu_widgetList + cnt, 0, sizeof( ui_Widget_t ) );
+                    ui_Widget_set_id( mnu_widgetList + cnt, 1000 + cnt );
+                }
+
+                for ( cnt = 0; cnt < but_count; cnt++ )
+                {
+                    memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
+                    ui_Widget_set_id( w_buttons + cnt, cnt );
+                    ui_Widget_set_text( w_buttons + cnt, NULL, 0, sz_buttons[cnt] );
+                }
+
+                TxTexture_free_one(( TX_REF )TX_BARS );
+
+                startIndex_old              =
+                    startIndex                  = 0;
+                mnu_selectedPlayerCount_old =
+                    mnu_selectedPlayerCount     = 0;
+                mnu_selectedPlayer[0]       = 0;
+
+                TxTexture_load_one_vfs( "mp_data/nullicon", ( TX_REF )ICON_NULL, INVALID_KEY );
+
+                TxTexture_load_one_vfs( "mp_data/keybicon", ( TX_REF )ICON_KEYB, INVALID_KEY );
+                BitsInput[0] = INPUT_BITS_KEYBOARD;
+                device_on[0] = keyb.on;
+
+                TxTexture_load_one_vfs( "mp_data/mousicon", ( TX_REF )ICON_MOUS, INVALID_KEY );
+                BitsInput[1] = INPUT_BITS_MOUSE;
+                device_on[1] = mous.on;
+
+                TxTexture_load_one_vfs( "mp_data/joyaicon", ( TX_REF )ICON_JOYA, INVALID_KEY );
+                BitsInput[2] = INPUT_BITS_JOYA;
+                device_on[2] = joy[0].on;
+
+                TxTexture_load_one_vfs( "mp_data/joybicon", ( TX_REF )ICON_JOYB, INVALID_KEY );
+                BitsInput[3] = INPUT_BITS_JOYB;
+                device_on[3] = joy[1].on;
+
+                ego_texture_load_vfs( &background, "mp_data/menu/menu_sleepy", TRANSCOLOR );
+
+                TxTexture_load_one_vfs( "mp_data/bars", ( TX_REF )TX_BARS, INVALID_KEY );
+
+                // load information for all the players that could be imported
+                mnu_player_check_import( "mp_players", btrue );
+
+                // reset button 0, or it will mess up the menu.
+                // must do it before SlidyButtonState_init()
+                sz_buttons[but_select] = "N/A";
+                SlidyButtonState_init( &but_state, 1.0f, 0, sz_buttons, w_buttons );
+
+                // how many players can we pack into the available screen area?
+                numVertical   = ( buttonTop - y0 ) / button_repeat - 1;
+                numHorizontal = 1;
+
+                x = x0;
+                y = y0;
+                for ( i = 0; i < numVertical; i++ )
+                {
+                    int m = i * 5;
+                    int player = i + startIndex;
+
+                    if ( player >= loadplayer_count ) continue;
+
+                    ui_Widget_set_button( mnu_widgetList + m, x, y, text_width, icon_size );
+                    ui_Widget_LatchMaskAdd( mnu_widgetList + m, UI_LATCH_CLICKED );
+
+                    for ( j = 0, m++; j < 4; j++, m++ )
+                    {
+                        int k = ICON_KEYB + j;
+                        oglx_texture_t * img = TxTexture_get_ptr(( TX_REF )k );
+
+                        ui_Widget_set_button( mnu_widgetList + m, x + text_width + j*icon_size, y, icon_size, icon_size );
+                        ui_Widget_set_img( mnu_widgetList + m, img );
+                        ui_Widget_LatchMaskAdd( mnu_widgetList + m, UI_LATCH_CLICKED );
+                    };
+
+                    y += button_repeat;
                 };
 
-                y += button_repeat;
-            };
+                doChoosePlayer_update_players( numVertical, startIndex, mnu_widgetList, SDL_arraysize( mnu_widgetList ) );
 
-            if ( loadplayer_count < 10 )
-            {
-                tipText_set_position( menuFont, "Choose an input device to select your player(s)", 20 );
-            }
-            else
-            {
-                tipText_set_position( menuFont, "Choose an input device to select your player(s)\nUse the mouse wheel to scroll.", 20 );
-            }
-
-            menuState = MM_Entering;
-            // fall through
-
-        case MM_Entering:
-
-            /*GL_DEBUG(glColor4f)(1, 1, 1, 1 - mnu_SlidyButtonState.lerp );
-            mnu_SlidyButton_draw_all();
-            mnu_SlidyButton_update_all( -deltaTime );
-            // Let lerp wind down relative to the time elapsed
-            if ( mnu_SlidyButtonState.lerp <= 0.0f )
-            {
-                menuState = MM_Running;
-            }*/
-
-            // Simply fall through
-            // menuState = MM_Running;
-            // break;
-
-        case MM_Running:
-            // Figure out how many players we can show without scrolling
-
-            if ( 0 == mnu_selectedPlayerCount )
-            {
-                button_text[0] = "";
-            }
-            else if ( 1 == mnu_selectedPlayerCount )
-            {
-                button_text[0] = "Select Player";
-            }
-            else
-            {
-                button_text[0] = "Select Players";
-            }
-
-            // Draw the background
-            x = ( GFX_WIDTH  / 2 ) - ( background.imgW / 2 );
-            y = GFX_HEIGHT - background.imgH;
-
-            if ( mnu_draw_background )
-            {
-                ui_drawImage( 0, &background, x, y, 0, 0, NULL );
-            }
-
-            // use the mouse wheel to scan the characters
-            if ( cursor_wheel_event_pending() )
-            {
-                if ( cursor.z > 0 )
+                if ( loadplayer_count < 10 )
                 {
-                    if ( startIndex + numVertical < loadplayer_count )
-                    {
-                        startIndex++;
-                    }
-                }
-                else if ( cursor.z < 0 )
-                {
-                    if ( startIndex > 0 )
-                    {
-                        startIndex--;
-                    }
-                }
-
-                cursor_finish_wheel_event();
-            }
-
-            // Draw the player selection buttons
-            x = x0;
-            y = y0;
-            for ( i = 0; i < numVertical; i++ )
-            {
-                int player;
-                int splayer;
-                int m = i * 5;
-
-                player = i + startIndex;
-                if ( player >= loadplayer_count ) continue;
-
-                splayer = mnu_Selected_get_loadplayer( player );
-
-                // do the character button
-                mnu_widgetList[m].img  = TxTexture_get_ptr( loadplayer[player].tx_ref );
-                mnu_widgetList[m].text = loadplayer[player].name;
-                if ( INVALID_PLAYER != splayer )
-                {
-                    ADD_BITS( mnu_widgetList[m].state, UI_BITS_CLICKED );
+                    tipText_set_position( menuFont, "Choose an input device to select your player(s)", 20 );
                 }
                 else
                 {
-                    REMOVE_BITS( mnu_widgetList[m].state, UI_BITS_CLICKED );
+                    tipText_set_position( menuFont, "Choose an input device to select your player(s)\nUse the mouse wheel to scroll.", 20 );
+                }
+            }
+
+            // let this fall through into MM_Entering
+            menuState = MM_Entering;
+
+        case MM_Entering:
+            {
+                //GL_DEBUG(glColor4f)(1, 1, 1, 1 - but_state.lerp );
+                //SlidyButtonState_draw_all( &but_state );
+                //SlidyButtonState_update_all( &but_state, -deltaTime );
+                //// Let lerp wind down relative to the time elapsed
+                //if ( but_state.lerp <= 0.0f )
+                //{
+                //    menuState = MM_Running;
+                //}
+            }
+
+            // Simply fall through
+            menuState = MM_Running;
+
+        case MM_Running:
+            {
+                // Draw the background
+                x = ( GFX_WIDTH  / 2 ) - ( background.imgW / 2 );
+                y = GFX_HEIGHT - background.imgH;
+
+                if ( mnu_draw_background )
+                {
+                    ui_drawImage( 0, &background, x, y, 0, 0, NULL );
                 }
 
-                if ( BUTTON_DOWN == ui_doWidget( mnu_widgetList + m ) )
+                // Update the select button, if necessary
+                if ( mnu_selectedPlayerCount_old != mnu_selectedPlayerCount )
                 {
-                    if ( HAS_SOME_BITS( mnu_widgetList[m].state, UI_BITS_CLICKED ) && !mnu_Selected_check_loadplayer( player ) )
+                    mnu_selectedPlayerCount_old = mnu_selectedPlayerCount;
+
+                    doChoosePlayer_update_select_button( w_buttons + but_select, mnu_selectedPlayerCount );
+                }
+
+                // use the mouse wheel to scan the characters
+                if ( cursor_wheel_event_pending() )
+                {
+                    if ( cursor.z > 0 )
                     {
-                        // button has become cursor_clicked
-                        // mnu_Selected_add(player);
-                        last_player = player;
-                        new_player  = btrue;
-                    }
-                    else if ( HAS_NO_BITS( mnu_widgetList[m].state, UI_BITS_CLICKED ) && mnu_Selected_check_loadplayer( player ) )
-                    {
-                        // button has become unclicked
-                        if ( mnu_Selected_remove( player ) )
+                        if ( startIndex + numVertical < loadplayer_count )
                         {
-                            last_player = -1;
+                            startIndex_old = startIndex;
+                            startIndex++;
                         }
                     }
+                    else if ( cursor.z < 0 )
+                    {
+                        if ( startIndex > 0 )
+                        {
+                            startIndex_old = startIndex;
+                            startIndex--;
+                        }
+                    }
+
+                    cursor_finish_wheel_event();
                 }
 
-                // do each of the input buttons
-                for ( j = 0, m++; j < 4; j++, m++ )
+                if ( startIndex_old != startIndex )
                 {
-                    /// @note check for devices being turned on and off each time
-                    /// technically we COULD recognize joysticks being inserted and removed while the
-                    /// game is running but we don't. I will set this up to handle such future behavior
-                    /// anyway :)
-                    switch ( j )
-                    {
-                        case INPUT_DEVICE_KEYBOARD: device_on[j] = keyb.on; break;
-                        case INPUT_DEVICE_MOUSE:    device_on[j] = mous.on; break;
-                        case INPUT_DEVICE_JOY_A:  device_on[j] = joy[0].on; break;
-                        case INPUT_DEVICE_JOY_B:  device_on[j] = joy[1].on; break;
-                        default: device_on[j] = bfalse;
-                    }
+                    startIndex_old = startIndex;
+                    doChoosePlayer_update_players( numVertical, startIndex, mnu_widgetList, SDL_arraysize( mnu_widgetList ) );
+                }
 
-                    // replace any not on device with a null icon
-                    if ( !device_on[j] )
-                    {
-                        mnu_widgetList[m].img = TxTexture_get_ptr(( TX_REF )ICON_NULL );
+                // Draw the player selection buttons
+                x = x0;
+                y = y0;
+                for ( i = 0; i < numVertical; i++ )
+                {
+                    int player;
+                    int splayer;
+                    int m = i * 5;
 
-                        // draw the widget, even though it will not do anything
-                        // the menu would looks funny if odd columns missing
-                        ui_doWidget( mnu_widgetList + m );
-                    }
+                    player = i + startIndex;
+                    if ( player >= loadplayer_count ) continue;
 
-                    // make the button states reflect the chosen input devices
-                    if ( INVALID_PLAYER == splayer || HAS_NO_BITS( mnu_selectedInput[ splayer ], BitsInput[j] ) )
+                    splayer = mnu_Selected_get_loadplayer( player );
+
+                    if ( INVALID_PLAYER != splayer )
                     {
-                        REMOVE_BITS( mnu_widgetList[m].state, UI_BITS_CLICKED );
+                        ADD_BITS( mnu_widgetList[m].latch_state, UI_LATCH_CLICKED );
                     }
-                    else if ( HAS_SOME_BITS( mnu_selectedInput[splayer], BitsInput[j] ) )
+                    else
                     {
-                        ADD_BITS( mnu_widgetList[m].state, UI_BITS_CLICKED );
+                        REMOVE_BITS( mnu_widgetList[m].latch_state, UI_LATCH_CLICKED );
                     }
 
                     if ( BUTTON_DOWN == ui_doWidget( mnu_widgetList + m ) )
                     {
-                        if ( HAS_SOME_BITS( mnu_widgetList[m].state, UI_BITS_CLICKED ) )
-                        {
-                            // button has become cursor_clicked
-                            if ( INVALID_PLAYER == splayer )
-                            {
-                                if ( mnu_Selected_add( player ) )
-                                {
-                                    last_player = player;
-                                    new_player  = btrue;
-                                }
-                            }
-                            if ( mnu_Selected_add_input( player, BitsInput[j] ) )
-                            {
-                                last_player = player;
-                                new_player  = btrue;
-                            }
-                        }
-                        else if ( INVALID_PLAYER != splayer && HAS_NO_BITS( mnu_widgetList[m].state, UI_BITS_CLICKED ) )
+                        //if ( HAS_SOME_BITS( mnu_widgetList[m].latch_state, UI_LATCH_CLICKED ) && !mnu_Selected_check_loadplayer( player ) )
+                        //{
+                        //    // button has become clicked
+                        //    last_player_old = last_player;
+                        //    last_player = player;
+                        //    new_player  = btrue;
+                        //}
+                        //else 
+
+                        // remove a selected player by clicking on its button
+                        if ( HAS_NO_BITS( mnu_widgetList[m].latch_state, UI_LATCH_CLICKED ) && mnu_Selected_check_loadplayer( player ) )
                         {
                             // button has become unclicked
-                            if ( mnu_Selected_remove_input( player, BitsInput[j] ) )
+                            if ( mnu_Selected_remove( player ) )
                             {
+                                last_player_old = last_player;
                                 last_player = -1;
                             }
                         }
                     }
-                }
-            }
 
-            // Buttons for going ahead
-
-            // Continue
-            if ( mnu_selectedPlayerCount != 0 )
-            {
-                if ( SDLKEYDOWN( SDLK_RETURN ) || BUTTON_UP == ui_doButton( 100, button_text[0], NULL, buttonLeft, buttonTop, 200, 30 ) )
-                {
-                    menuState = MM_Leaving;
-                }
-            }
-
-            // Back
-            if ( SDLKEYDOWN( SDLK_ESCAPE ) || BUTTON_UP == ui_doButton( 101, button_text[1], NULL, buttonLeft, buttonTop + 35, 200, 30 ) )
-            {
-                mnu_selectedPlayerCount = 0;
-                menuState = MM_Leaving;
-            }
-
-            // show the stats
-            if ( -1 != last_player )
-            {
-                if ( new_player )
-                {
-                    // load and display the new player data
-                    new_player = bfalse;
-                    doChoosePlayer_show_stats( last_player, 0, GFX_WIDTH - 400, 10, 350, GFX_HEIGHT - 60 );
-                }
-                else
-                {
-                    // just display the new player data
-                    doChoosePlayer_show_stats( last_player, 2, GFX_WIDTH - 400, 10, 350, GFX_HEIGHT - 60 );
-                }
-            }
-            else
-            {
-                doChoosePlayer_show_stats( last_player, 1, GFX_WIDTH - 100, 10, 100, GFX_HEIGHT - 60 );
-            }
-
-            // tool-tip text
-            ui_drawTextBox( menuFont, tipText, tipTextLeft, tipTextTop, 0, 0, 20 );
-
-            break;
-
-        case MM_Leaving:
-            /*
-            // Do buttons sliding out and background fading
-            // Do the same stuff as in MM_Entering, but backwards
-            GL_DEBUG(glColor4f)(1, 1, 1, 1 - mnu_SlidyButtonState.lerp );
-            // Buttons
-            mnu_SlidyButton_draw_all();
-            mnu_SlidyButton_update_all( deltaTime );
-            if ( mnu_SlidyButtonState.lerp >= 1.0f )
-            {
-                menuState = MM_Finish;
-            }
-            */
-
-            // Simply fall through
-            //  menuState = MM_Finish;
-            //  break;
-
-        case MM_Finish:
-
-            // release all of the temporary profiles
-            doChoosePlayer_show_stats( -1, 1, 0, 0, 0, 0 );
-
-            oglx_texture_Release( &background );
-            TxTexture_free_one(( TX_REF )TX_BARS );
-
-            menuState = MM_Begin;
-            if ( 0 == mnu_selectedPlayerCount )
-            {
-                result = -1;
-            }
-            else
-            {
-                // Build the import directory
-                vfs_empty_import_directory();
-                if ( !vfs_mkdir( "import" ) )
-                {
-                    log_warning( "game_initialize_imports() - Could not create the import folder. (%s)\n", vfs_getError() );
-                }
-
-                // set up the slots and the import stuff for the selected players
-                local_import_count = mnu_selectedPlayerCount;
-                for ( i = 0; i < local_import_count; i++ )
-                {
-                    selectedPlayer = mnu_selectedPlayer[i];
-
-                    local_import_control[i] = mnu_selectedInput[i];
-                    local_import_slot[i]    = i * MAXIMPORTPERPLAYER;
-
-                    // Copy the character to the import directory
-                    strncpy( srcDir, loadplayer[selectedPlayer].dir, SDL_arraysize( srcDir ) );
-                    snprintf( destDir, SDL_arraysize( destDir ), "/import/temp%04d.obj", local_import_slot[i] );
-                    if( !vfs_copyDirectory( srcDir, destDir ) )
-					{
-						log_warning( "game_initialize_imports() - Failed to copy a import character \"%s\" to \"%s\" (%s)\n", srcDir, destDir, vfs_getError() );
-					}
-
-                    // Copy all of the character's items to the import directory
-                    for ( j = 0; j < MAXIMPORTOBJECTS; j++ )
+                    // do each of the input buttons
+                    for ( j = 0, m++; j < 4; j++, m++ )
                     {
-                        snprintf( srcDir, SDL_arraysize( srcDir ), "%s/%d.obj", loadplayer[selectedPlayer].dir, j );
-
-                        // make sure the source directory exists
-                        if ( vfs_isDirectory( srcDir ) )
+                        /// @note check for devices being turned on and off each time
+                        /// technically we COULD recognize joysticks being inserted and removed while the
+                        /// game is running but we don't. I will set this up to handle such future behavior
+                        /// anyway :)
+                        switch ( j )
                         {
-                            snprintf( destDir, SDL_arraysize( destDir ), "/import/temp%04d.obj", local_import_slot[i] + j + 1 );
-                            vfs_copyDirectory( srcDir, destDir );
+                            case INPUT_DEVICE_KEYBOARD: device_on[j] = keyb.on; break;
+                            case INPUT_DEVICE_MOUSE:    device_on[j] = mous.on; break;
+                            case INPUT_DEVICE_JOY_A:    device_on[j] = joy[0].on; break;
+                            case INPUT_DEVICE_JOY_B:    device_on[j] = joy[1].on; break;
+                            default: device_on[j] = bfalse;
+                        }
+
+                        // replace any not on device with a null icon
+                        if ( !device_on[j] )
+                        {
+                            mnu_widgetList[m].img = TxTexture_get_ptr(( TX_REF )ICON_NULL );
+
+                            // draw the widget, even though it will not do anything
+                            // the menu would looks funny if odd columns missing
+                            ui_doWidget( mnu_widgetList + m );
+                        }
+
+                        // make the button states reflect the chosen input devices
+                        if ( INVALID_PLAYER == splayer || HAS_NO_BITS( mnu_selectedInput[ splayer ], BitsInput[j] ) )
+                        {
+                            REMOVE_BITS( mnu_widgetList[m].latch_state, UI_LATCH_CLICKED );
+                        }
+                        else if ( HAS_SOME_BITS( mnu_selectedInput[splayer], BitsInput[j] ) )
+                        {
+                            ADD_BITS( mnu_widgetList[m].latch_state, UI_LATCH_CLICKED );
+                        }
+
+                        if ( BUTTON_DOWN == ui_doWidget( mnu_widgetList + m ) )
+                        {
+                            if ( HAS_SOME_BITS( mnu_widgetList[m].latch_state, UI_LATCH_CLICKED ) )
+                            {
+                                bool_t player_added  = bfalse;
+                                bool_t control_added = bfalse;
+
+                                // button has become cursor_clicked
+                                player_added = bfalse;
+                                if ( INVALID_PLAYER == splayer )
+                                {
+                                    if ( mnu_Selected_add( player ) )
+                                    {
+                                        player_added = btrue;
+                                    }
+                                }
+
+                                control_added = bfalse;
+                                if ( mnu_Selected_add_input( player, BitsInput[j] ) )
+                                {
+                                    control_added = btrue;
+                                }
+
+                                if( player_added && control_added )
+                                {
+                                    last_player_old = last_player;
+                                    last_player = player;
+                                    new_player  = btrue;
+                                }
+                            }
+                            else if ( INVALID_PLAYER != splayer && HAS_NO_BITS( mnu_widgetList[m].latch_state, UI_LATCH_CLICKED ) )
+                            {
+                                // button has become unclicked
+                                // will remove the player if no inputs are selected
+                                mnu_Selected_remove_input( player, BitsInput[j] );
+
+                                // was the player removed?
+                                if( INVALID_PLAYER == mnu_Selected_get_loadplayer( player ) )
+                                {
+                                    last_player_old = last_player;
+                                    last_player = -1;
+                                    new_player  = bfalse;
+                                }
+                            }
                         }
                     }
                 }
 
-                result = 1;
+                // Buttons for going ahead
+
+                // Continue
+                if ( mnu_selectedPlayerCount != 0 )
+                {
+                    if ( SDLKEYDOWN( SDLK_RETURN ) || BUTTON_UP == ui_doWidget( w_buttons + but_select ) )
+                    {
+                        menuState = MM_Leaving;
+                    }
+                }
+
+                // Back
+                if ( SDLKEYDOWN( SDLK_ESCAPE ) || BUTTON_UP == ui_doWidget( w_buttons + but_back ) )
+                {
+                    mnu_selectedPlayerCount = 0;
+                    menuState = MM_Leaving;
+                }
+
+                // has the player been updated?
+                if( last_player_old != last_player )
+                {
+                    last_player_old = last_player;
+
+                    if( -1 == last_player )
+                    {
+                        // the player has been dismissed
+
+                        // unload the player and release the rendering info
+                        doChoosePlayer_load_stats( &stats_info, last_player, 1 );
+
+                        // get rid of the data
+                        stats_info.item_ptr = display_item_free( stats_info.item_ptr, btrue );
+                    }
+                    else
+                    {
+                        // we have a new player, load the stats and render them
+                        doChoosePlayer_load_stats( &stats_info, last_player, 0 );
+
+                        doChoosePlayer_render_stats( &stats_info, GFX_WIDTH - 400, 10, 350, GFX_HEIGHT - 60 );
+                    }
+
+                }
+
+                //// show the stats
+                //if ( -1 != last_player )
+                //{
+                //    if ( new_player )
+                //    {
+                //        // load and display the new player data
+                //        new_player = bfalse;
+                //        rendered_stats_ptr = doChoosePlayer_show_stats( rendered_stats_ptr, last_player, 0, GFX_WIDTH - 400, 10, 350, GFX_HEIGHT - 60 );
+                //    }
+                //    else
+                //    {
+                //        // just display the new player data
+                //        rendered_stats_ptr = doChoosePlayer_show_stats( rendered_stats_ptr, last_player, 2, GFX_WIDTH - 400, 10, 350, GFX_HEIGHT - 60 );
+                //    }
+                //}
+                //else
+                //{
+                //    rendered_stats_ptr = doChoosePlayer_show_stats( rendered_stats_ptr, last_player, 1, GFX_WIDTH - 100, 10, 100, GFX_HEIGHT - 60 );
+                //}
+
+                // draw the stats
+                if( NULL != stats_info.item_ptr )
+                {
+                    display_item_draw( stats_info.item_ptr );
+                }
+
+                // tool-tip text
+                display_list_draw( tipText_tx );
+            }
+            break;
+
+        case MM_Leaving:
+            // Do buttons sliding out and background fading
+            // Do the same stuff as in MM_Entering, but backwards
+            {
+                //GL_DEBUG(glColor4f)(1, 1, 1, 1 - but_state.lerp );
+
+                //// Buttons
+                //SlidyButtonState_draw_all( &but_state );
+                //SlidyButtonState_update_all( &but_state, deltaTime );
+                //if ( but_state.lerp >= 1.0f )
+                //{
+                //    menuState = MM_Finish;
+                //}
+            }
+
+            // Simply fall through
+            menuState = MM_Finish;
+
+        case MM_Finish:
+            {
+                // unload the player(s)
+                doChoosePlayer_load_stats( &stats_info, -1, 1 );
+
+                // free all allocated resources
+                doChoosePlayer_stats_info_dtor( &stats_info, bfalse );
+
+                oglx_texture_Release( &background );
+                TxTexture_free_one(( TX_REF )TX_BARS );
+
+                for ( cnt = 0; cnt < WIDGET_MAX; cnt++ )
+                {
+                    ui_Widget_free( mnu_widgetList + cnt );
+                }
+
+                for ( cnt = 0; cnt < but_count; cnt++ )
+                {
+                    ui_Widget_free( w_buttons + cnt );
+                }
+
+                if ( 0 == mnu_selectedPlayerCount )
+                {
+                    result = -1;
+                }
+                else
+                {
+                    // Build the import directory
+                    vfs_empty_import_directory();
+                    if ( !vfs_mkdir( "import" ) )
+                    {
+                        log_warning( "game_initialize_imports() - Could not create the import folder. (%s)\n", vfs_getError() );
+                    }
+
+                    // set up the slots and the import stuff for the selected players
+                    local_import_count = mnu_selectedPlayerCount;
+                    for ( i = 0; i < local_import_count; i++ )
+                    {
+                        selectedPlayer = mnu_selectedPlayer[i];
+
+                        local_import_control[i] = mnu_selectedInput[i];
+                        local_import_slot[i]    = i * MAXIMPORTPERPLAYER;
+
+                        // Copy the character to the import directory
+                        strncpy( srcDir, loadplayer[selectedPlayer].dir, SDL_arraysize( srcDir ) );
+                        snprintf( destDir, SDL_arraysize( destDir ), "/import/temp%04d.obj", local_import_slot[i] );
+                        if ( !vfs_copyDirectory( srcDir, destDir ) )
+                        {
+                            log_warning( "game_initialize_imports() - Failed to copy a import character \"%s\" to \"%s\" (%s)\n", srcDir, destDir, vfs_getError() );
+                        }
+
+                        // Copy all of the character's items to the import directory
+                        for ( j = 0; j < MAXIMPORTOBJECTS; j++ )
+                        {
+                            snprintf( srcDir, SDL_arraysize( srcDir ), "%s/%d.obj", loadplayer[selectedPlayer].dir, j );
+
+                            // make sure the source directory exists
+                            if ( vfs_isDirectory( srcDir ) )
+                            {
+                                snprintf( destDir, SDL_arraysize( destDir ), "/import/temp%04d.obj", local_import_slot[i] + j + 1 );
+                                vfs_copyDirectory( srcDir, destDir );
+                            }
+                        }
+                    }
+
+                    result = 1;
+                }
             }
 
             // reset the ui
             ui_Reset();
+
+            // make sure that if we come back to this menu, it resets properly
+            menuState = MM_Begin;
 
             break;
     }
@@ -1908,13 +2808,110 @@ int doChoosePlayer( float deltaTime )
 }
 
 //--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct s_OptionsState
+{
+    BASE_MENU_STATE;
+};
+typedef struct s_OptionsState OptionsState_t;
+
+//--------------------------------------------------------------------------------------------
+static OptionsState_t *OptionsState_ctor( OptionsState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static OptionsState_t *OptionsState_dtor( OptionsState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static OptionsState_t * doOptions_begin( OptionsState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    ps = OptionsState_ctor( ps );
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsState_t * doOptions_entering( OptionsState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsState_t * doOptions_running( OptionsState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsState_t * doOptions_leaving( OptionsState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsState_t * doOptions_finish( OptionsState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    ps = OptionsState_ctor( ps );
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
 int doOptions( float deltaTime )
 {
     static int menuState = MM_Begin;
     static oglx_texture_t background;
     static int menuChoice = 0;
+    static SlidyButtonState_t but_state = { NULL };
 
-    static const char *sz_buttons[] =
+    enum e_buttons
+    {
+        but_game,
+        but_audio,
+        but_input,
+        but_video,
+        but_back,
+        but_count,
+        but_sz_count
+    };
+
+    // button widgets
+    static ui_Widget_t w_buttons[but_count];
+
+    static const char *sz_buttons[but_sz_count] =
     {
         "Game Options",
         "Audio Options",
@@ -1925,38 +2922,52 @@ int doOptions( float deltaTime )
     };
 
     int result = 0;
+    int cnt;
 
     switch ( menuState )
     {
         case MM_Begin:
-            // set up menu variables
-            ego_texture_load_vfs( &background, "mp_data/menu/menu_gnome", TRANSCOLOR );
             menuChoice = 0;
-            menuState = MM_Entering;
 
-            tipText_set_position( menuFont, "Change your audio, input and video\nsettings here.", 20 );
+            {
+                for ( cnt = 0; cnt < but_count; cnt++ )
+                {
+                    // clear the data
+                    memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
+                    ui_Widget_set_id( w_buttons + cnt, cnt );
+                }
 
-            mnu_SlidyButton_init( 1.0f, sz_buttons );
+                // set up menu variables
+                ego_texture_load_vfs( &background, "mp_data/menu/menu_gnome", TRANSCOLOR );
+
+                tipText_set_position( menuFont, "Change your audio, input and video\nsettings here.", 20 );
+
+                SlidyButtonState_init( &but_state, 1.0f, 0, sz_buttons, w_buttons );
+            }
+
             // let this fall through into MM_Entering
+            menuState = MM_Entering;
 
         case MM_Entering:
             // do buttons sliding in animation, and background fading in
             // background
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 - mnu_SlidyButtonState.lerp );
-
-            // Draw the background
-            if ( mnu_draw_background )
             {
-                ui_drawImage( 0, &background, ( GFX_WIDTH  - background.imgW ), 0, 0, 0, NULL );
-            }
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
 
-            mnu_SlidyButton_draw_all();
-            mnu_SlidyButton_update_all( -deltaTime );
+                // Draw the background
+                if ( mnu_draw_background )
+                {
+                    ui_drawImage( 0, &background, ( GFX_WIDTH  - background.imgW ), 0, 0, 0, NULL );
+                }
 
-            // Let lerp wind down relative to the time elapsed
-            if ( mnu_SlidyButtonState.lerp <= 0.0f )
-            {
-                menuState = MM_Running;
+                SlidyButtonState_draw_all( &but_state );
+                SlidyButtonState_update_all( &but_state, -deltaTime );
+
+                // Let lerp wind down relative to the time elapsed
+                if ( but_state.lerp <= 0.0f )
+                {
+                    menuState = MM_Running;
+                }
             }
             break;
 
@@ -1971,70 +2982,83 @@ int doOptions( float deltaTime )
             }
 
             // "Options" text
-            ui_drawTextBox( menuFont, tipText, tipTextLeft, tipTextTop, 0, 0, 20 );
+            display_list_draw( tipText_tx );
 
             // Buttons
-            if ( BUTTON_UP == ui_doButton( 1, sz_buttons[0], NULL, buttonLeft, buttonTop, 200, 30 ) )
+            if ( BUTTON_UP == ui_doWidget( w_buttons + but_game ) )
             {
                 // game options
                 menuChoice = 5;
             }
-            if ( BUTTON_UP == ui_doButton( 2, sz_buttons[1], NULL, buttonLeft, buttonTop + 35, 200, 30 ) )
+
+            if ( BUTTON_UP == ui_doWidget( w_buttons + but_audio ) )
             {
                 // audio options
                 menuChoice = 1;
             }
-            if ( BUTTON_UP == ui_doButton( 3, sz_buttons[2], NULL, buttonLeft, buttonTop + 35 * 2, 200, 30 ) )
+
+            if ( BUTTON_UP == ui_doWidget( w_buttons + but_input ) )
             {
                 // input options
                 menuChoice = 2;
             }
-            if ( BUTTON_UP == ui_doButton( 4, sz_buttons[3], NULL, buttonLeft, buttonTop + 35 * 3, 200, 30 ) )
+
+            if ( BUTTON_UP == ui_doWidget( w_buttons + but_video ) )
             {
                 // video options
                 menuChoice = 3;
             }
-            if ( SDLKEYDOWN( SDLK_ESCAPE ) || BUTTON_UP == ui_doButton( 5, sz_buttons[4], NULL, buttonLeft, buttonTop + 35 * 4, 200, 30 ) )
+
+            if ( SDLKEYDOWN( SDLK_ESCAPE ) || BUTTON_UP == ui_doWidget( w_buttons + but_back ) )
             {
                 // back to main menu
                 menuChoice = 4;
             }
+
             if ( menuChoice != 0 )
             {
                 menuState = MM_Leaving;
-                mnu_SlidyButton_init( 0.0f, sz_buttons );
+                SlidyButtonState_init( &but_state, 0.0f, 0, sz_buttons, w_buttons );
             }
             break;
 
         case MM_Leaving:
             // Do buttons sliding out and background fading
             // Do the same stuff as in MM_Entering, but backwards
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 - mnu_SlidyButtonState.lerp );
 
-            if ( mnu_draw_background )
             {
-                ui_drawImage( 0, &background, ( GFX_WIDTH  - background.imgW ), 0, 0, 0, NULL );
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+
+                if ( mnu_draw_background )
+                {
+                    ui_drawImage( 0, &background, ( GFX_WIDTH  - background.imgW ), 0, 0, 0, NULL );
+                }
+
+                // Buttons
+                SlidyButtonState_draw_all( &but_state );
+                SlidyButtonState_update_all( &but_state, deltaTime );
+                if ( but_state.lerp >= 1.0f )
+                {
+                    menuState = MM_Finish;
+                }
             }
 
-            // Buttons
-            mnu_SlidyButton_draw_all();
-            mnu_SlidyButton_update_all( deltaTime );
-            if ( mnu_SlidyButtonState.lerp >= 1.0f )
-            {
-                menuState = MM_Finish;
-            }
             break;
 
         case MM_Finish:
-            // Free the background texture; don't need to hold onto it
-            oglx_texture_Release( &background );
-            menuState = MM_Begin;  // Make sure this all resets next time
+            {
+                // Free the background texture; don't need to hold onto it
+                oglx_texture_Release( &background );
+
+                result = menuChoice;
+            }
 
             // reset the ui
             ui_Reset();
 
-            // Set the next menu to load
-            result = menuChoice;
+            // make sure that if we come back to this menu, it resets properly
+            menuState = MM_Begin;
+
             break;
     }
 
@@ -2042,37 +3066,418 @@ int doOptions( float deltaTime )
 }
 
 //--------------------------------------------------------------------------------------------
-int doInputOptions( float deltaTime )
+bool_t doOptionsInput_update_one_button( ui_Widget_t lab_lst[], size_t lab_lst_size, device_controls_t * pdevice, int which )
 {
-    static int menuState = MM_Begin;
-    static int menuChoice = 0;
-    static int waitingforinput = -1;
+    // update the name of a specific control
 
-    static STRING inputOptionsButtons[CONTROL_COMMAND_COUNT + 2];
+    const char * sz_tag;
 
-    Sint8  result = 0;
-    static Uint32 player = 0;
+    if ( which < 0 || ( size_t )which > lab_lst_size ) return bfalse;
 
-    Uint32              i;
+    // get a name for this control
+    sz_tag = NULL;
+    if ( NULL != pdevice && ( size_t )which < pdevice->count )
+    {
+        sz_tag = scantag_get_string( pdevice->device, pdevice->control[which].tag, pdevice->control[which].is_key );
+    }
+
+    // set the label text
+    ui_Widget_set_text( lab_lst + which, menuFont, 0, sz_tag );
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doOptionsInput_update_all_buttons( ui_Widget_t lab_lst[], size_t lab_lst_size, device_controls_t * pdevice, int waitingforinput )
+{
+    int i;
+
+    if ( NULL == lab_lst || 0 == lab_lst_size ) return bfalse;
+
+    // update all control names
+    for ( i = CONTROL_BEGIN; i <= CONTROL_END; i++ )
+    {
+        if ( i == waitingforinput ) continue;
+
+        doOptionsInput_update_one_button( lab_lst, lab_lst_size, pdevice, i );
+    }
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+int doOptionsInput_update_control( ui_Widget_t lab_lst[], size_t lab_lst_size, int idevice, int which )
+{
+    // Grab the key/button input from the selected device
+
+    device_controls_t * pdevice;
+    control_t         * pcontrol;
+    int                 tag;
+    int                 retval = which;
+
+    // valid device?
+    if ( idevice < 0 || ( Uint32 )idevice >= input_device_count ) return -1;
+    pdevice = controls + idevice;
+
+    // waiting for any spicific control?
+    if ( which < 0 ) return -1;
+    pcontrol = pdevice->control + which;
+
+    // is the button available on this device?
+    if (( size_t )which >= pdevice->count ) return -1;
+
+    if ( idevice >= INPUT_DEVICE_JOY )
+    {
+        int ijoy = idevice - INPUT_DEVICE_JOY;
+
+        if ( ijoy < MAXJOYSTICK )
+        {
+            // is a joy button combo activated?
+            for ( tag = 0; tag < scantag_count && -1 != retval; tag++ )
+            {
+                if ( 0 != scantag[tag].value && ( Uint32 )scantag[tag].value == joy[ijoy].b )
+                {
+                    pcontrol->tag    = ( Uint32 )scantag[tag].value;
+                    pcontrol->is_key = bfalse;
+                    retval           = -1;
+                }
+            }
+
+            // is a joy key activated?
+            for ( tag = 0; tag < scantag_count && -1 != retval; tag++ )
+            {
+                if ( scantag[tag].value < 0 || scantag[tag].value >= SDLK_NUMLOCK ) continue;
+
+                if ( SDLKEYDOWN(( Uint32 )scantag[tag].value ) )
+                {
+                    pcontrol->tag    = scantag[tag].value;
+                    pcontrol->is_key = btrue;
+                    retval           = -1;
+                }
+            }
+        }
+    }
+    else
+    {
+        switch ( idevice )
+        {
+            case INPUT_DEVICE_KEYBOARD:
+                {
+                    // is a keyboard key activated?
+                    for ( tag = 0; tag < scantag_count && -1 != retval; tag++ )
+                    {
+                        if ( scantag[tag].value < 0 || scantag[tag].value >= SDLK_NUMLOCK ) continue;
+
+                        if ( SDLKEYDOWN(( Uint32 )scantag[tag].value ) )
+                        {
+                            pcontrol->tag    = scantag[tag].value;
+                            pcontrol->is_key = btrue;
+                            retval           = -1;
+                        }
+                    }
+                }
+                break;
+
+            case INPUT_DEVICE_MOUSE:
+                {
+                    // is a mouse button combo activated?
+                    for ( tag = 0; tag < scantag_count && -1 != retval; tag++ )
+                    {
+                        if ( 0 != scantag[tag].value && ( Uint32 )scantag[tag].value == mous.b )
+                        {
+                            pcontrol->tag    = scantag[tag].value;
+                            pcontrol->is_key = bfalse;
+                            retval           = -1;
+                        }
+                    }
+
+                    // is a mouse key activated?
+                    for ( tag = 0; tag < scantag_count && -1 != retval; tag++ )
+                    {
+                        if ( scantag[tag].value < 0 || scantag[tag].value >= SDLK_NUMLOCK ) continue;
+
+                        if ( SDLKEYDOWN(( Uint32 )scantag[tag].value ) )
+                        {
+                            pcontrol->tag    = scantag[tag].value;
+                            pcontrol->is_key = btrue;
+                            retval           = -1;
+                        }
+                    }
+                }
+                break;
+        }
+    }
+
+    if ( -1 == retval )
+    {
+        doOptionsInput_update_one_button( lab_lst, lab_lst_size, pdevice, which );
+    }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doOptionsInput_update_player( ui_Widget_t * but_ptr, int player )
+{
     Sint32              idevice, iicon;
     device_controls_t * pdevice;
+    oglx_texture_t    * img;
+
+    if ( NULL == but_ptr ) return bfalse;
 
     pdevice = NULL;
-    if ( player < input_device_count )
+    if ( player >= 0 && ( Uint32 )player < input_device_count )
     {
         pdevice = controls + player;
     };
 
-    idevice = player;
-    if ( NULL == pdevice )
+    idevice = -1;
+    if ( NULL != pdevice )
     {
-        idevice = -1;
+        idevice = pdevice->device;
     }
 
-    iicon = MIN( 4, idevice );
-    if ( idevice < 0 )
+    iicon = -1;
+    if ( idevice >= 0 )
     {
-        iicon = -1;
+        iicon = idevice;
+
+        if ( iicon >= 2 )
+        {
+            int ijoy = iicon - 2;
+            ijoy %= 2;
+            iicon = ijoy + 2;
+        }
+    }
+
+    // The select button image
+    if ( iicon < 0 )
+    {
+        img = TxTexture_get_ptr(( TX_REF )ICON_NULL );
+    }
+    else
+    {
+        img = TxTexture_get_ptr(( TX_REF )( ICON_KEYB + iicon ) );
+    }
+    ui_Widget_set_img( but_ptr, img );
+
+    // The select button text
+    if ( iicon < 0 )
+    {
+        ui_Widget_set_text( but_ptr, NULL, -1, "Select Player..." );
+    }
+    else
+    {
+        ui_Widget_set_text( but_ptr, NULL, -1, "Player %i", player + 1 );
+    }
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct s_OptionsInputState
+{
+    BASE_MENU_STATE;
+};
+typedef struct s_OptionsInputState OptionsInputState_t;
+
+//--------------------------------------------------------------------------------------------
+static OptionsInputState_t *OptionsInputState_ctor( OptionsInputState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static OptionsInputState_t *OptionsInputState_dtor( OptionsInputState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static OptionsInputState_t * doOptionsInput_begin( OptionsInputState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    ps = OptionsInputState_ctor( ps );
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsInputState_t * doOptionsInput_entering( OptionsInputState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsInputState_t * doOptionsInput_running( OptionsInputState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsInputState_t * doOptionsInput_leaving( OptionsInputState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsInputState_t * doOptionsInput_finish( OptionsInputState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    ps = OptionsInputState_ctor( ps );
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+int doOptionsInput( float deltaTime )
+{
+    static int menuState = MM_Begin;
+    static int menuChoice = 0;
+    static int waitingforinput = -1;
+    static display_item_t * fnt_tx_ptr = NULL;
+    static SlidyButtonState_t but_state = { NULL };
+
+    enum e_buttons
+    {
+        but_jump   = CONTROL_JUMP,
+        but_luse   = CONTROL_LEFT_USE,
+        but_lget   = CONTROL_LEFT_GET,
+        but_lpack  = CONTROL_LEFT_PACK,
+        but_ruse   = CONTROL_RIGHT_USE,
+        but_rget   = CONTROL_RIGHT_GET,
+        but_rpack  = CONTROL_RIGHT_PACK,
+        but_cam    = CONTROL_CAMERA,
+        but_cleft  = CONTROL_CAMERA_LEFT,
+        but_cright = CONTROL_CAMERA_RIGHT,
+        but_cin    = CONTROL_CAMERA_IN,
+        but_cout   = CONTROL_CAMERA_OUT,
+        but_up     = CONTROL_UP,
+        but_down   = CONTROL_DOWN,
+        but_left   = CONTROL_LEFT,
+        but_right  = CONTROL_RIGHT,
+        but_player,
+        but_save,
+        but_count,
+        but_sz_count
+    };
+
+    static const char * sz_buttons[but_sz_count] =
+    {
+        "...",              // but_jump   = CONTROL_JUMP,
+        "...",              // but_luse   = CONTROL_LEFT_USE,
+        "...",              // but_lget   = CONTROL_LEFT_GET,
+        "...",              // but_lpack  = CONTROL_LEFT_PACK,
+        "...",              // but_ruse   = CONTROL_RIGHT_USE,
+        "...",              // but_rget   = CONTROL_RIGHT_GET,
+        "...",              // but_rpack  = CONTROL_RIGHT_PACK,
+        "...",              // but_cam    = CONTROL_CAMERA,
+        "...",              // but_cleft  = CONTROL_CAMERA_LEFT,
+        "...",              // but_cright = CONTROL_CAMERA_RIGHT,
+        "...",              // but_cin    = CONTROL_CAMERA_IN,
+        "...",              // but_cout   = CONTROL_CAMERA_OUT,
+        "...",              // but_up     = CONTROL_UP,
+        "...",              // but_down   = CONTROL_DOWN,
+        "...",              // but_left   = CONTROL_LEFT,
+        "...",              // but_right  = CONTROL_RIGHT,
+        "Player ?",         // but_player
+        "Save Settings",    // but_save
+        ""
+    };
+
+
+    static ui_Widget_t w_buttons [but_count];
+
+    enum e_labels
+    {
+        lab_jump   = but_jump,
+        lab_luse   = but_luse,
+        lab_lget   = but_lget,
+        lab_lpack  = but_lpack,
+        lab_ruse   = but_ruse,
+        lab_rget   = but_rget,
+        lab_rpack  = but_rpack,
+        lab_cam    = but_cam,
+        lab_cleft  = but_cleft,
+        lab_cright = but_cright,
+        lab_cin    = but_cin,
+        lab_cout   = but_cout,
+        lab_up     = but_up,
+        lab_down   = but_down,
+        lab_left   = but_left,
+        lab_right  = but_right,
+        lab_count,
+        lab_sz_count
+    };
+
+    static ui_Widget_t w_labels  [lab_count];
+
+    static const char * sz_labels[lab_sz_count] =
+    {
+        "Jump:",              // lab_jump   = CONTROL_JUMP,
+        "Use:",               // lab_luse   = CONTROL_LEFT_USE,
+        "Get/Drop:",          // lab_lget   = CONTROL_LEFT_GET,
+        "Inventory:",         // lab_lpack  = CONTROL_LEFT_PACK,
+        "Use:",               // lab_ruse   = CONTROL_RIGHT_USE,
+        "Get/Drop:",          // lab_rget   = CONTROL_RIGHT_GET,
+        "Inventory:",         // lab_rpack  = CONTROL_RIGHT_PACK,
+        "Camera:",            // lab_cam    = CONTROL_CAMERA,
+        "Rotate Left:",       // lab_cleft  = CONTROL_CAMERA_LEFT,
+        "Rotate Right:",      // lab_cright = CONTROL_CAMERA_RIGHT,
+        "Zoom In:",           // lab_cin    = CONTROL_CAMERA_IN,
+        "Zoom Out:",          // lab_cout   = CONTROL_CAMERA_OUT,
+        "Up:",                // lab_up     = CONTROL_UP,
+        "Down:",              // lab_down   = CONTROL_DOWN,
+        "Left:",              // lab_left   = CONTROL_LEFT,
+        "Right:",             // lab_right  = CONTROL_RIGHT,
+        ""
+    };
+
+    static int player = 0;
+
+    int result = 0;
+    int cnt;
+
+    Sint32              idevice;
+    device_controls_t * pdevice;
+
+    pdevice = NULL;
+    if ( player >= 0 && ( Uint32 )player < input_device_count )
+    {
+        pdevice = controls + player;
+    }
+
+    idevice = -1;
+    if ( NULL != pdevice )
+    {
+        idevice = pdevice->device;
     }
 
     switch ( menuState )
@@ -2080,364 +3485,441 @@ int doInputOptions( float deltaTime )
         case MM_Begin:
             // set up menu variables
             menuChoice = 0;
-            menuState = MM_Entering;
-            // let this fall through into MM_Entering
-
-            waitingforinput = -1;
-
-            for ( i = 0; i < CONTROL_COMMAND_COUNT; i++ )
             {
-                inputOptionsButtons[i][0] = CSTR_END;
+                waitingforinput = -1;
+
+                // initialize the buttons
+                for ( cnt = 0; cnt < but_count; cnt++ )
+                {
+                    // clear the data
+                    memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
+                    ui_Widget_set_id( w_buttons + cnt, cnt );
+                    ui_Widget_set_text( w_buttons + cnt, NULL, 0, sz_buttons[cnt] );
+                }
+
+                // initialize the labels
+                for ( cnt = 0; cnt < lab_count; cnt++ )
+                {
+                    // set up the w_labels
+                    memset( w_labels  + cnt, 0, sizeof( ui_Widget_t ) );
+                    ui_Widget_set_id( w_labels + cnt, UI_Nothing );
+                    ui_Widget_set_text( w_labels + cnt, menuFont, 0, sz_labels[cnt] );
+                }
+
+                tipText_set_position( menuFont, "Change input settings here.", 20 );
+
+                // Load the global icons (keyboard, mouse, etc.)
+                load_all_global_icons();
             }
-            strncpy( inputOptionsButtons[i++], "Player 1", sizeof( STRING ) );
-            strncpy( inputOptionsButtons[i++], "Save Settings", sizeof( STRING ) );
 
-            tipText_set_position( menuFont, "Change input settings here.", 20 );
-
-            // Load the global icons (keyboard, mouse, etc.)
-            load_all_global_icons();
+            // let this fall through into MM_Entering
+            menuState = MM_Entering;
 
         case MM_Entering:
             // do buttons sliding in animation, and background fading in
             // background
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 - mnu_SlidyButtonState.lerp );
+            {
+                // set the positions for the active buttons
+                ui_Widget_set_bound( w_labels  + lab_luse,   buttonLeft + 000, GFX_HEIGHT - 490, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_luse,   buttonLeft + 150, GFX_HEIGHT - 490, 140, 30 );
 
-            // Fall trough
+                ui_Widget_set_bound( w_labels  + lab_lget,   buttonLeft + 000, GFX_HEIGHT - 455, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_lget,   buttonLeft + 150, GFX_HEIGHT - 455, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_lpack,  buttonLeft + 000, GFX_HEIGHT - 420, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_lpack,  buttonLeft + 150, GFX_HEIGHT - 420, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_ruse,   buttonLeft + 300, GFX_HEIGHT - 490, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_ruse,   buttonLeft + 450, GFX_HEIGHT - 490, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_rget,   buttonLeft + 300, GFX_HEIGHT - 455, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_rget,   buttonLeft + 450, GFX_HEIGHT - 455, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_rpack,  buttonLeft + 300, GFX_HEIGHT - 420, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_rpack,  buttonLeft + 450, GFX_HEIGHT - 420, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_jump,   buttonLeft + 000, GFX_HEIGHT - 315, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_jump,   buttonLeft + 150, GFX_HEIGHT - 315, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_up,     buttonLeft + 000, GFX_HEIGHT - 280, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_up,     buttonLeft + 150, GFX_HEIGHT - 280, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_down,   buttonLeft + 000, GFX_HEIGHT - 245, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_down,   buttonLeft + 150, GFX_HEIGHT - 245, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_left,   buttonLeft + 000, GFX_HEIGHT - 210, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_left,   buttonLeft + 150, GFX_HEIGHT - 210, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_right,  buttonLeft + 000, GFX_HEIGHT - 175, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_right,  buttonLeft + 150, GFX_HEIGHT - 175, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_cam,    buttonLeft + 300, GFX_HEIGHT - 315, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_cam,    buttonLeft + 450, GFX_HEIGHT - 315, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_cin,    buttonLeft + 300, GFX_HEIGHT - 280, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_cin,    buttonLeft + 450, GFX_HEIGHT - 280, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_cout,   buttonLeft + 300, GFX_HEIGHT - 245, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_cout,   buttonLeft + 450, GFX_HEIGHT - 245, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_cleft,  buttonLeft + 300, GFX_HEIGHT - 210, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_cleft,  buttonLeft + 450, GFX_HEIGHT - 210, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_cright, buttonLeft + 300, GFX_HEIGHT - 175, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_cright, buttonLeft + 450, GFX_HEIGHT - 175, 140, 30 );
+
+                // set the player button position
+                ui_Widget_set_button( w_buttons + but_player, buttonLeft + 300, GFX_HEIGHT -  90, 140, 50 );
+
+                // set images for widgets
+                doOptionsInput_update_player( w_buttons + but_player, player );
+
+                // set up the "slidy button"
+                SlidyButtonState_init( &but_state, 0.0f, but_save, sz_buttons, w_buttons );
+
+                // initialize the text for all buttons
+                doOptionsInput_update_all_buttons( w_buttons, but_right + 1, pdevice, waitingforinput );
+            }
+
+            // Fall trough ?
             menuState = MM_Running;
             break;
 
         case MM_Running:
             // Do normal run
-            // Background
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
-            ui_drawTextBox( menuFont, "ATK_LEFT HAND", buttonLeft, GFX_HEIGHT - 470, 0, 0, 20 );
-
-            // Are we waiting for input?
-            if ( SDLKEYDOWN( SDLK_ESCAPE ) ) waitingforinput = -1;  // Someone pressed abort
-
-            // Grab the key/button input from the selected device
-            if ( waitingforinput != -1 )
             {
-                if ( NULL == pdevice || idevice < 0 || ( Uint32 )idevice >= input_device_count )
+                // Background
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+
+                // make sure to update the input
+                input_read();
+
+                // Someone pressed abort?
+                if ( -1 != waitingforinput && SDLKEYDOWN( SDLK_ESCAPE ) )
                 {
+                    doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
                     waitingforinput = -1;
                 }
-                else
+
+                // Update a control, if we are waiting for one
+                waitingforinput = doOptionsInput_update_control( w_buttons, but_right + 1, idevice, waitingforinput );
+
+                // Left hand
+                ui_drawTextBoxImmediate( NULL, buttonLeft, GFX_HEIGHT - 525, 20, "LEFT HAND", NULL );
+                if ( NULL != w_buttons[but_luse].tx_lst )
                 {
-                    if ( waitingforinput < 0 || ( size_t )waitingforinput >= pdevice->count )
+                    ui_doWidget( w_labels + lab_luse );
+                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_luse ) )
                     {
-                        // invalid input range for this device
-                        waitingforinput = -1;
-                    }
-                    else
-                    {
-                        control_t * pcontrol;
-                        int         tag;
+                        // update the previous button
+                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
-                        // make sure to update the input
-                        input_read();
-
-                        pcontrol = pdevice->control + waitingforinput;
-                        if ( idevice >= INPUT_DEVICE_JOY )
-                        {
-                            int ijoy = idevice - INPUT_DEVICE_JOY;
-                            if ( ijoy < MAXJOYSTICK )
-                            {
-                                for ( tag = 0; tag < scantag_count; tag++ )
-                                {
-                                    if ( 0 != scantag[tag].value && ( Uint32 )scantag[tag].value == joy[ijoy].b )
-                                    {
-                                        pcontrol->tag    = ( Uint32 )scantag[tag].value;
-                                        pcontrol->is_key = bfalse;
-                                        waitingforinput  = -1;
-                                    }
-                                }
-
-                                for ( tag = 0; tag < scantag_count; tag++ )
-                                {
-                                    if ( scantag[tag].value < 0 || scantag[tag].value >= SDLK_NUMLOCK ) continue;
-
-                                    if ( SDLKEYDOWN(( Uint32 )scantag[tag].value ) )
-                                    {
-                                        pcontrol->tag    = scantag[tag].value;
-                                        pcontrol->is_key = btrue;
-                                        waitingforinput = -1;
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            switch ( idevice )
-                            {
-                                case INPUT_DEVICE_KEYBOARD:
-                                    {
-                                        for ( tag = 0; tag < scantag_count; tag++ )
-                                        {
-                                            if ( scantag[tag].value < 0 || scantag[tag].value >= SDLK_NUMLOCK ) continue;
-
-                                            if ( SDLKEYDOWN(( Uint32 )scantag[tag].value ) )
-                                            {
-                                                pcontrol->tag    = scantag[tag].value;
-                                                pcontrol->is_key = btrue;
-                                                waitingforinput = -1;
-                                            }
-                                        }
-                                    }
-                                    break;
-
-                                case INPUT_DEVICE_MOUSE:
-                                    {
-                                        for ( tag = 0; tag < scantag_count; tag++ )
-                                        {
-                                            if ( 0 != scantag[tag].value && ( Uint32 )scantag[tag].value == mous.b )
-                                            {
-                                                pcontrol->tag    = scantag[tag].value;
-                                                pcontrol->is_key = bfalse;
-                                                waitingforinput = -1;
-                                            }
-                                        }
-
-                                        for ( tag = 0; tag < scantag_count; tag++ )
-                                        {
-                                            if ( scantag[tag].value < 0 || scantag[tag].value >= SDLK_NUMLOCK ) continue;
-
-                                            if ( SDLKEYDOWN(( Uint32 )scantag[tag].value ) )
-                                            {
-                                                pcontrol->tag    = scantag[tag].value;
-                                                pcontrol->is_key = btrue;
-                                                waitingforinput = -1;
-                                            }
-                                        }
-                                    }
-                                    break;
-                            }
-                        }
-
+                        // set the new button
+                        waitingforinput = but_luse;
+                        ui_Widget_set_text( w_buttons + but_luse, menuFont, 0, "..." );
                     }
                 }
-            }
-            if ( NULL != pdevice && waitingforinput == -1 )
-            {
-                // update the control names
-                for ( i = CONTROL_BEGIN; i <= CONTROL_END && i < pdevice->count; i++ )
-                {
-                    const char * tag = scantag_get_string( pdevice->device, pdevice->control[i].tag, pdevice->control[i].is_key );
 
-                    strncpy( inputOptionsButtons[i], tag, sizeof( STRING ) );
-                }
-                for ( /* nothing */; i <= CONTROL_END ; i++ )
+                if ( NULL != w_buttons[but_lget].tx_lst )
                 {
-                    inputOptionsButtons[i][0] = CSTR_END;
-                }
-            }
 
-            // Left hand
-            if ( CSTR_END != inputOptionsButtons[CONTROL_LEFT_USE][0] )
-            {
-                ui_drawTextBox( menuFont, "Use:", buttonLeft, GFX_HEIGHT - 440, 0, 0, 20 );
-                if ( BUTTON_UP == ui_doButton( 1, inputOptionsButtons[CONTROL_LEFT_USE], menuFont, buttonLeft + 100, GFX_HEIGHT - 440, 140, 30 ) )
-                {
-                    waitingforinput = CONTROL_LEFT_USE;
-                    strncpy( inputOptionsButtons[CONTROL_LEFT_USE], "...", sizeof( STRING ) );
-                }
-            }
-            if ( CSTR_END != inputOptionsButtons[CONTROL_LEFT_GET][0] )
-            {
-                ui_drawTextBox( menuFont, "Get/Drop:", buttonLeft, GFX_HEIGHT - 410, 0, 0, 20 );
-                if ( BUTTON_UP == ui_doButton( 2, inputOptionsButtons[CONTROL_LEFT_GET], menuFont, buttonLeft + 100, GFX_HEIGHT - 410, 140, 30 ) )
-                {
-                    waitingforinput = CONTROL_LEFT_GET;
-                    strncpy( inputOptionsButtons[CONTROL_LEFT_GET], "...", sizeof( STRING ) );
-                }
-            }
-            if ( CSTR_END != inputOptionsButtons[CONTROL_LEFT_PACK][0] )
-            {
-                ui_drawTextBox( menuFont, "Inventory:", buttonLeft, GFX_HEIGHT - 380, 0, 0, 20 );
-                if ( BUTTON_UP == ui_doButton( 3, inputOptionsButtons[CONTROL_LEFT_PACK], menuFont, buttonLeft + 100, GFX_HEIGHT - 380, 140, 30 ) )
-                {
-                    waitingforinput = CONTROL_LEFT_PACK;
-                    strncpy( inputOptionsButtons[CONTROL_LEFT_PACK], "...", sizeof( STRING ) );
-                }
-            }
+                    ui_doWidget( w_labels + lab_lget );
+                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_lget ) )
+                    {
+                        // update the previous button
+                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
-            // Right hand
-            ui_drawTextBox( menuFont, "ATK_RIGHT HAND", buttonLeft + 300, GFX_HEIGHT - 470, 0, 0, 20 );
-            if ( CSTR_END != inputOptionsButtons[CONTROL_RIGHT_USE][0] )
-            {
-                ui_drawTextBox( menuFont, "Use:", buttonLeft + 300, GFX_HEIGHT - 440, 0, 0, 20 );
-                if ( BUTTON_UP == ui_doButton( 4, inputOptionsButtons[CONTROL_RIGHT_USE], menuFont, buttonLeft + 400, GFX_HEIGHT - 440, 140, 30 ) )
-                {
-                    waitingforinput = CONTROL_RIGHT_USE;
-                    strncpy( inputOptionsButtons[CONTROL_RIGHT_USE], "...", sizeof( STRING ) );
+                        // set the new button
+                        waitingforinput = but_lget;
+                        ui_Widget_set_text( w_buttons + but_lget, menuFont, 0, "..." );
+                    }
                 }
-            }
-            if ( CSTR_END != inputOptionsButtons[CONTROL_RIGHT_GET][0] )
-            {
-                ui_drawTextBox( menuFont, "Get/Drop:", buttonLeft + 300, GFX_HEIGHT - 410, 0, 0, 20 );
-                if ( BUTTON_UP == ui_doButton( 5, inputOptionsButtons[CONTROL_RIGHT_GET], menuFont, buttonLeft + 400, GFX_HEIGHT - 410, 140, 30 ) )
-                {
-                    waitingforinput = CONTROL_RIGHT_GET;
-                    strncpy( inputOptionsButtons[CONTROL_RIGHT_GET], "...", sizeof( STRING ) );
-                }
-            }
-            if ( CSTR_END != inputOptionsButtons[CONTROL_RIGHT_PACK][0] )
-            {
-                ui_drawTextBox( menuFont, "Inventory:", buttonLeft + 300, GFX_HEIGHT - 380, 0, 0, 20 );
-                if ( BUTTON_UP == ui_doButton( 6, inputOptionsButtons[CONTROL_RIGHT_PACK], menuFont, buttonLeft + 400, GFX_HEIGHT - 380, 140, 30 ) )
-                {
-                    waitingforinput = CONTROL_RIGHT_PACK;
-                    strncpy( inputOptionsButtons[CONTROL_RIGHT_PACK], "...", sizeof( STRING ) );
-                }
-            }
 
-            // Controls
-            ui_drawTextBox( menuFont, "CONTROLS", buttonLeft, GFX_HEIGHT - 320, 0, 0, 20 );
-            if ( CSTR_END != inputOptionsButtons[CONTROL_JUMP][0] )
-            {
-                ui_drawTextBox( menuFont, "Jump:", buttonLeft, GFX_HEIGHT - 290, 0, 0, 20 );
-                if ( BUTTON_UP == ui_doButton( 7, inputOptionsButtons[CONTROL_JUMP], menuFont, buttonLeft + 100, GFX_HEIGHT - 290, 140, 30 ) )
+                if ( NULL != w_buttons[but_lpack].tx_lst )
                 {
-                    waitingforinput = CONTROL_JUMP;
-                    strncpy( inputOptionsButtons[CONTROL_JUMP], "...", sizeof( STRING ) );
-                }
-            }
-            if ( CSTR_END != inputOptionsButtons[CONTROL_UP][0] )
-            {
-                ui_drawTextBox( menuFont, "Up:", buttonLeft, GFX_HEIGHT - 260, 0, 0, 20 );
-                if ( BUTTON_UP == ui_doButton( 8, inputOptionsButtons[CONTROL_UP], menuFont, buttonLeft + 100, GFX_HEIGHT - 260, 140, 30 ) )
-                {
-                    waitingforinput = CONTROL_UP;
-                    strncpy( inputOptionsButtons[CONTROL_UP], "...", sizeof( STRING ) );
-                }
-            }
-            if ( CSTR_END != inputOptionsButtons[CONTROL_DOWN][0] )
-            {
-                ui_drawTextBox( menuFont, "Down:", buttonLeft, GFX_HEIGHT - 230, 0, 0, 20 );
-                if ( BUTTON_UP == ui_doButton( 9, inputOptionsButtons[CONTROL_DOWN], menuFont, buttonLeft + 100, GFX_HEIGHT - 230, 140, 30 ) )
-                {
-                    waitingforinput = CONTROL_DOWN;
-                    strncpy( inputOptionsButtons[CONTROL_DOWN], "...", sizeof( STRING ) );
-                }
-            }
-            if ( CSTR_END != inputOptionsButtons[CONTROL_LEFT][0] )
-            {
-                ui_drawTextBox( menuFont, "Left:", buttonLeft, GFX_HEIGHT - 200, 0, 0, 20 );
-                if ( BUTTON_UP == ui_doButton( 10, inputOptionsButtons[CONTROL_LEFT], menuFont, buttonLeft + 100, GFX_HEIGHT - 200, 140, 30 ) )
-                {
-                    waitingforinput = CONTROL_LEFT;
-                    strncpy( inputOptionsButtons[CONTROL_LEFT], "...", sizeof( STRING ) );
-                }
-            }
-            if ( CSTR_END != inputOptionsButtons[CONTROL_RIGHT][0] )
-            {
-                ui_drawTextBox( menuFont, "Right:", buttonLeft, GFX_HEIGHT - 170, 0, 0, 20 );
-                if ( BUTTON_UP == ui_doButton( 11, inputOptionsButtons[CONTROL_RIGHT], menuFont, buttonLeft + 100, GFX_HEIGHT - 170, 140, 30 ) )
-                {
-                    waitingforinput = CONTROL_RIGHT;
-                    strncpy( inputOptionsButtons[CONTROL_RIGHT], "...", sizeof( STRING ) );
-                }
-            }
+                    ui_doWidget( w_labels + lab_lpack );
+                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_lpack ) )
+                    {
+                        // update the previous button
+                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
-            // Controls
-            ui_drawTextBox( menuFont, "CAMERA CONTROL", buttonLeft + 300, GFX_HEIGHT - 320, 0, 0, 20 );
-            if ( CSTR_END != inputOptionsButtons[CONTROL_CAMERA_IN][0] )
-            {
-                ui_drawTextBox( menuFont, "Zoom In:", buttonLeft + 300, GFX_HEIGHT - 290, 0, 0, 20 );
-                if ( BUTTON_UP == ui_doButton( 12, inputOptionsButtons[CONTROL_CAMERA_IN], menuFont, buttonLeft + 450, GFX_HEIGHT - 290, 140, 30 ) )
-                {
-                    waitingforinput = CONTROL_CAMERA_IN;
-                    strncpy( inputOptionsButtons[CONTROL_CAMERA_IN], "...", sizeof( STRING ) );
+                        // set the new button
+                        waitingforinput = but_lpack;
+                        ui_Widget_set_text( w_buttons + but_lpack, menuFont, 0, "..." );
+                    }
                 }
-            }
-            else
-            {
-                // single button camera control
-                ui_drawTextBox( menuFont, "Camera:", buttonLeft + 300, GFX_HEIGHT - 290, 0, 0, 20 );
-                if ( BUTTON_UP == ui_doButton( 12, inputOptionsButtons[CONTROL_CAMERA], menuFont, buttonLeft + 450, GFX_HEIGHT - 290, 140, 30 ) )
-                {
-                    waitingforinput = CONTROL_CAMERA;
-                    strncpy( inputOptionsButtons[CONTROL_CAMERA], "...", sizeof( STRING ) );
-                }
-            }
-            if ( CSTR_END != inputOptionsButtons[CONTROL_CAMERA_OUT][0] )
-            {
-                ui_drawTextBox( menuFont, "Zoom Out:", buttonLeft + 300, GFX_HEIGHT - 260, 0, 0, 20 );
-                if ( BUTTON_UP == ui_doButton( 13, inputOptionsButtons[CONTROL_CAMERA_OUT], menuFont, buttonLeft + 450, GFX_HEIGHT - 260, 140, 30 ) )
-                {
-                    waitingforinput = CONTROL_CAMERA_OUT;
-                    strncpy( inputOptionsButtons[CONTROL_CAMERA_OUT], "...", sizeof( STRING ) );
-                }
-            }
-            if ( CSTR_END != inputOptionsButtons[CONTROL_CAMERA_LEFT][0] )
-            {
-                ui_drawTextBox( menuFont, "Rotate Left:", buttonLeft + 300, GFX_HEIGHT - 230, 0, 0, 20 );
-                if ( BUTTON_UP == ui_doButton( 14, inputOptionsButtons[CONTROL_CAMERA_LEFT], menuFont, buttonLeft + 450, GFX_HEIGHT - 230, 140, 30 ) )
-                {
-                    waitingforinput = CONTROL_CAMERA_LEFT;
-                    strncpy( inputOptionsButtons[CONTROL_CAMERA_LEFT], "...", sizeof( STRING ) );
-                }
-            }
-            if ( CSTR_END != inputOptionsButtons[CONTROL_CAMERA_RIGHT][0] )
-            {
-                ui_drawTextBox( menuFont, "Rotate Right:", buttonLeft + 300, GFX_HEIGHT - 200, 0, 0, 20 );
-                if ( BUTTON_UP == ui_doButton( 15, inputOptionsButtons[CONTROL_CAMERA_RIGHT], menuFont, buttonLeft + 450, GFX_HEIGHT - 200, 140, 30 ) )
-                {
-                    waitingforinput = CONTROL_CAMERA_RIGHT;
-                    strncpy( inputOptionsButtons[CONTROL_CAMERA_RIGHT], "...", sizeof( STRING ) );
-                }
-            }
 
-            // The select player button
-            if ( iicon < 0 )
-            {
-                if ( BUTTON_UP == ui_doButton( 16, "Select Player...", NULL, buttonLeft + 300, GFX_HEIGHT - 90, 140, 50 ) )
+                // Right hand
+                ui_drawTextBoxImmediate( NULL, buttonLeft + 300, GFX_HEIGHT - 525, 20, "RIGHT HAND" );
+                if ( NULL != w_buttons[but_ruse].tx_lst )
                 {
+                    ui_doWidget( w_labels + lab_ruse );
+                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_ruse ) )
+                    {
+                        // update the previous button
+                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+
+                        // set the new button
+                        waitingforinput = but_ruse;
+                        ui_Widget_set_text( w_buttons + but_ruse, menuFont, 0, "..." );
+                    }
+                }
+
+                if ( NULL != w_buttons[but_rget].tx_lst )
+                {
+
+                    ui_doWidget( w_labels + lab_rget );
+                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_rget ) )
+                    {
+                        // update the previous button
+                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+
+                        // set the new button
+                        waitingforinput = but_rget;
+                        ui_Widget_set_text( w_buttons + but_rget, menuFont, 0, "..." );
+                    }
+                }
+
+                if ( NULL != w_buttons[but_rpack].tx_lst )
+                {
+                    ui_doWidget( w_labels + lab_rpack );
+                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_rpack ) )
+                    {
+                        // update the previous button
+                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+
+                        // set the new button
+                        waitingforinput = but_rpack;
+                        ui_Widget_set_text( w_buttons + but_rpack, menuFont, 0, "..." );
+                    }
+                }
+
+                // Controls
+                ui_drawTextBoxImmediate( NULL, buttonLeft, GFX_HEIGHT - 350, 20, "CONTROLS" );
+                if ( NULL != w_buttons[but_jump].tx_lst )
+                {
+                    ui_doWidget( w_labels + lab_jump );
+                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_jump ) )
+                    {
+                        // update the previous button
+                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+
+                        // set the new button
+                        waitingforinput = but_jump;
+                        ui_Widget_set_text( w_buttons + but_jump, menuFont, 0, "..." );
+                    }
+                }
+
+                if ( NULL != w_buttons[but_up].tx_lst )
+                {
+                    ui_Widget_set_text( w_labels + lab_up, menuFont, 0, "Up:" );
+                    ui_Widget_set_bound( w_labels + lab_up, buttonLeft, GFX_HEIGHT - 280, -1, 30 );
+                    ui_doWidget( w_labels + lab_up );
+                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_up ) )
+                    {
+                        // update the previous button
+                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+
+                        // set the new button
+                        waitingforinput = but_up;
+                        ui_Widget_set_text( w_buttons + but_up, menuFont, 0, "..." );
+                    }
+                }
+
+                if ( NULL != w_buttons[but_down].tx_lst )
+                {
+                    ui_doWidget( w_labels + lab_down );
+                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_down ) )
+                    {
+                        // update the previous button
+                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+
+                        // set the new button
+                        waitingforinput = but_down;
+                        ui_Widget_set_text( w_buttons + but_down, menuFont, 0, "..." );
+                    }
+                }
+
+                if ( NULL != w_buttons[but_left].tx_lst )
+                {
+                    ui_doWidget( w_labels + lab_left );
+                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_left ) )
+                    {
+                        // update the previous button
+                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+
+                        // set the new button
+                        waitingforinput = but_left;
+                        ui_Widget_set_text( w_buttons + but_left, menuFont, 0, "..." );
+                    }
+                }
+
+                if ( NULL != w_buttons[but_right].tx_lst )
+                {
+                    ui_doWidget( w_labels + lab_right );
+                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_right ) )
+                    {
+                        // update the previous button
+                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+
+                        // set the new button
+                        waitingforinput = but_right;
+                        ui_Widget_set_text( w_buttons + but_right, menuFont, 0, "..." );
+                    }
+                }
+
+                // Controls
+                ui_drawTextBoxImmediate( NULL, buttonLeft + 300, GFX_HEIGHT - 350, 20, "CAMERA CONTROL" );
+                if ( NULL != w_buttons[but_cam].tx_lst )
+                {
+                    // single button camera control
+                    ui_doWidget( w_labels + lab_cam );
+                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_cam ) )
+                    {
+                        // update the previous button
+                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+
+                        // set the new button
+                        waitingforinput = but_cam;
+                        ui_Widget_set_text( w_buttons + but_cam, menuFont, 0, "..." );
+                    }
+                }
+
+                if ( NULL != w_buttons[but_cin].tx_lst )
+                {
+                    ui_doWidget( w_labels + lab_cin );
+                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_cin ) )
+                    {
+                        // update the previous button
+                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+
+                        // set the new button
+                        waitingforinput = but_cin;
+                        ui_Widget_set_text( w_buttons + but_cin, menuFont, 0, "..." );
+                    }
+                }
+
+                if ( NULL != w_buttons[but_cout].tx_lst )
+                {
+                    ui_doWidget( w_labels + lab_cout );
+                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_cout ) )
+                    {
+                        // update the previous button
+                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+
+                        // set the new button
+                        waitingforinput = but_cout;
+                        ui_Widget_set_text( w_buttons + but_cout, menuFont, 0, "..." );
+                    }
+                }
+
+                if ( NULL != w_buttons[but_cleft].tx_lst )
+                {
+                    ui_doWidget( w_labels + lab_cleft );
+                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_cleft ) )
+                    {
+                        // update the previous button
+                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+
+                        // set the new button
+                        waitingforinput = but_cleft;
+                        ui_Widget_set_text( w_buttons + but_cleft, menuFont, 0, "..." );
+                    }
+                }
+
+                if ( NULL != w_buttons[but_cright].tx_lst )
+                {
+                    ui_doWidget( w_labels + lab_cright );
+                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_cright ) )
+                    {
+                        // update the previous button
+                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+
+                        // set the new button
+                        waitingforinput = but_cright;
+                        ui_Widget_set_text( w_buttons + but_cright, menuFont, 0, "..." );
+                    }
+                }
+
+                if ( BUTTON_UP == ui_doWidget( w_buttons + but_player ) )
+                {
+                    int new_player;
+                    new_player = CLIP( player, -1, MAX( 0, ( int )input_device_count - 1 ) );
+                    new_player++;
+
+                    if ( new_player >= 0 && ( Uint32 )new_player >= input_device_count ) new_player = 0;
+
+                    if ( new_player != player )
+                    {
+                        player = new_player;
+
+                        pdevice = NULL;
+                        if ( player >= 0 && ( Uint32 )player < input_device_count )
+                        {
+                            pdevice = controls + player;
+                        }
+
+                        idevice = -1;
+                        if ( NULL != pdevice )
+                        {
+                            idevice = pdevice->device;
+                        }
+
+                        doOptionsInput_update_player( w_buttons + but_player, player );
+
+                        // update all buttons for this player
+                        doOptionsInput_update_all_buttons( w_buttons, but_right + 1, pdevice, waitingforinput );
+                    }
+                }
+
+                // Save settings button
+                if ( BUTTON_UP == ui_doWidget( w_buttons + but_save ) )
+                {
+                    // save settings and go back
                     player = 0;
-                }
-            }
-            else if ( BUTTON_UP ==  ui_doImageButtonWithText( 16, TxTexture_get_ptr(( TX_REF )( ICON_KEYB + iicon ) ), inputOptionsButtons[CONTROL_COMMAND_COUNT+0], menuFont, buttonLeft + 300, GFX_HEIGHT - 90, 140, 50 ) )
-            {
-                if ( input_device_count > 0 )
-                {
-                    player++;
-                    player %= input_device_count;
+                    input_settings_save_vfs( "controls.txt" );
+                    menuState = MM_Leaving;
                 }
 
-                snprintf( inputOptionsButtons[CONTROL_COMMAND_COUNT+0], sizeof( STRING ), "Player %i", player + 1 );
+                // tool-tip text
+                display_list_draw( tipText_tx );
             }
-
-            // Save settings button
-            if ( BUTTON_UP == ui_doButton( 17, inputOptionsButtons[CONTROL_COMMAND_COUNT+1], menuFont, buttonLeft, GFX_HEIGHT - 60, 200, 30 ) )
-            {
-                // save settings and go back
-                player = 0;
-                input_settings_save_vfs( "controls.txt" );
-                menuState = MM_Leaving;
-            }
-
-            // tool-tip text
-            ui_drawTextBox( menuFont, tipText, tipTextLeft, tipTextTop, 0, 0, 20 );
-
             break;
 
         case MM_Leaving:
             // Do buttons sliding out and background fading
             // Do the same stuff as in MM_Entering, but backwards
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 - mnu_SlidyButtonState.lerp );
+            {
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+            }
 
             // Fall trough
             menuState = MM_Finish;
             break;
 
         case MM_Finish:
-            menuState = MM_Begin;  // Make sure this all resets next time
+            {
+                // free the widgets
+                for ( cnt = 0; cnt < but_count; cnt++ )
+                {
+                    ui_Widget_free( w_buttons + cnt );
+                }
+
+                for ( cnt = 0; cnt < lab_count; cnt++ )
+                {
+                    ui_Widget_free( w_labels + cnt );
+                }
+
+                // Set the next menu to load
+                result = 1;
+            }
 
             // reset the ui
             ui_Reset();
 
-            // Set the next menu to load
-            result = 1;
+            // make sure that if we come back to this menu, it resets properly
+            menuState = MM_Begin;
+
             break;
     }
 
@@ -2445,257 +3927,496 @@ int doInputOptions( float deltaTime )
 }
 
 //--------------------------------------------------------------------------------------------
-int doGameOptions( float deltaTime )
+//--------------------------------------------------------------------------------------------
+static bool_t doOptionsGame_update_difficulty( ui_Widget_t * but_ptr, ui_Widget_t * desc_ptr, int difficulty );
+static bool_t doOptionsGame_update_message_count( ui_Widget_t * lab_ptr, int message_count );
+static bool_t doOptionsGame_update_message_duration( ui_Widget_t * lab_ptr, Uint16 duration );
+static bool_t doOptionsGame_update_cam_autoturn( ui_Widget_t * lab_ptr, Uint8 turn );
+static bool_t doOptionsGame_update_fps( ui_Widget_t * lab_ptr, bool_t allowed );
+static bool_t doOptionsGame_update_feedback( ui_Widget_t * lab_ptr, FEEDBACK_TYPE type );
+
+//--------------------------------------------------------------------------------------------
+bool_t doOptionsGame_update_difficulty( ui_Widget_t * but_ptr, ui_Widget_t * desc_ptr, int difficulty )
+{
+    // Fill out the difficulty description, and the button caption
+
+    bool_t retval = bfalse;
+
+    if ( NULL == but_ptr || NULL == desc_ptr ) return bfalse;
+
+    retval = btrue;
+    switch ( difficulty )
+    {
+        case GAME_EASY:
+            ui_Widget_set_text( but_ptr, menuFont, 0, "Forgiving" );
+            ui_Widget_set_text( desc_ptr, menuFont, 0,
+                                "FORGIVING (Easy)\n"
+                                " - Players gain no bonus XP \n"
+                                " - 15%% XP loss upon death\n"
+                                " - Monsters take 25%% extra damage by players\n"
+                                " - Players take 25%% less damage by monsters\n"
+                                " - Halves the chance for Kursed items\n"
+                                " - Cannot unlock the final level in this mode\n"
+                                " - Life and Mana is refilled after quitting a module" );
+            break;
+
+        case GAME_NORMAL:
+            ui_Widget_set_text( but_ptr, menuFont, 0, "Challenging" );
+            ui_Widget_set_text( desc_ptr, menuFont, 0,
+                                "CHALLENGING (Normal)\n"
+                                " - Players gain 10%% bonus XP \n"
+                                " - 15%% XP loss upon death \n"
+                                " - 15%% money loss upon death" );
+            break;
+
+        case GAME_HARD:
+            ui_Widget_set_text( but_ptr, menuFont, 0, "Punishing" );
+            ui_Widget_set_text( desc_ptr, menuFont, 0,
+                                "PUNISHING (Hard)\n"
+                                " - Monsters award 20%% extra xp! \n"
+                                " - 15%% XP loss upon death\n"
+                                " - 15%% money loss upon death\n"
+                                " - No respawning\n"
+                                " - Channeling life can kill you\n"
+                                " - Players take 25%% more damage\n"
+                                " - Doubles the chance for Kursed items" );
+            break;
+
+        default:
+            ui_Widget_set_text( but_ptr, menuFont, 0, NULL );
+            ui_Widget_set_text( desc_ptr, menuFont, 0, NULL );
+            retval = bfalse;
+    }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doOptionsGame_update_message_count( ui_Widget_t * lab_ptr, int message_count )
+{
+    bool_t retval;
+
+    if ( NULL == lab_ptr ) return bfalse;
+
+    if ( 0 == message_count )
+    {
+        retval = ui_Widget_set_text( lab_ptr, NULL, 0, "None" );
+    }
+    else
+    {
+        retval = ui_Widget_set_text( lab_ptr, NULL, 0, "%i", message_count );
+    }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doOptionsGame_update_message_duration( ui_Widget_t * lab_ptr, Uint16 duration )
+{
+    bool_t retval;
+
+    if ( NULL == lab_ptr ) return bfalse;
+
+    if ( duration <= 100 )
+    {
+        retval = ui_Widget_set_text( lab_ptr, NULL, 0, "Short" );
+    }
+    else if ( duration <= 150 )
+    {
+        retval = ui_Widget_set_text( lab_ptr, NULL, 0, "Normal" );
+    }
+    else
+    {
+        retval = ui_Widget_set_text( lab_ptr, NULL, 0, "Long" );
+    }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doOptionsGame_update_cam_autoturn( ui_Widget_t * lab_ptr, Uint8 turn )
+{
+    bool_t retval;
+
+    if ( NULL == lab_ptr ) return bfalse;
+
+    if ( CAM_TURN_GOOD == turn )
+    {
+        retval = ui_Widget_set_text( lab_ptr, NULL, 0, "Off" );
+    }
+    else if ( turn )
+    {
+        retval = ui_Widget_set_text( lab_ptr, NULL, 0, "Fast" );
+    }
+    else
+    {
+        retval = ui_Widget_set_text( lab_ptr, NULL, 0, "On" );
+    }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doOptionsGame_update_fps( ui_Widget_t * lab_ptr, bool_t allowed )
+{
+    if ( NULL == lab_ptr ) return bfalse;
+
+    return ui_Widget_set_text( lab_ptr, NULL, 0, allowed ? "On" : "Off" );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doOptionsGame_update_feedback( ui_Widget_t * lab_ptr, FEEDBACK_TYPE type )
+{
+    bool_t retval;
+
+    if ( NULL == lab_ptr ) return bfalse;
+
+    // Billboard feedback
+    switch ( type )
+    {
+        case FEEDBACK_OFF:    retval = ui_Widget_set_text( lab_ptr, NULL, 0, "Disabled" ); break;
+        case FEEDBACK_TEXT:   retval = ui_Widget_set_text( lab_ptr, NULL, 0, "Enabled" ); break;
+        case FEEDBACK_NUMBER: retval = ui_Widget_set_text( lab_ptr, NULL, 0, "Debug" ); break;
+        default: retval = ui_Widget_set_text( lab_ptr, NULL, 0, "Unknown" ); break;
+    }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct s_OptionsGameState
+{
+    BASE_MENU_STATE;
+};
+typedef struct s_OptionsGameState OptionsGameState_t;
+
+//--------------------------------------------------------------------------------------------
+static OptionsGameState_t *OptionsGameState_ctor( OptionsGameState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static OptionsGameState_t *OptionsGameState_dtor( OptionsGameState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static OptionsGameState_t * doOptionsGame_begin( OptionsGameState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    ps = OptionsGameState_ctor( ps );
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsGameState_t * doOptionsGame_entering( OptionsGameState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsGameState_t * doOptionsGame_running( OptionsGameState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsGameState_t * doOptionsGame_leaving( OptionsGameState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsGameState_t * doOptionsGame_finish( OptionsGameState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    ps = OptionsGameState_ctor( ps );
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+int doOptionsGame( float deltaTime )
 {
     /// @details Game options menu
 
     static int menuState = MM_Begin;
     static oglx_texture_t background;
     static int menuChoice = 0;
+    static display_item_t * fnt_tx_ptr = NULL;
+    static SlidyButtonState_t but_state = { NULL };
+    static difficulty_old = 0;
 
-    static STRING Cdifficulty;
-    static STRING Cmaxmessage;
-    static const char *sz_buttons[] =
+    int cnt;
+
+    // button widgets
+    enum e_buttons
     {
-        "N/A",        // Difficulty
-        "N/A",        // Max messages
-        "N/A",        // Message duration
-        "N/A",        // Autoturn camera
-        "N/A",        // Show FPS
-        "N/A",        // Feedback
-        "Save Settings",
+        but_difficulty,       // Difficulty
+        but_msg_count,        // Max messages
+        but_msg_duration,     // Message duration
+        but_autoturn,         // Autoturn camera
+        but_fps,              // Show FPS
+        but_feedback,         // Feedback
+        but_save,             // Save button
+        but_count,
+        but_sz_count
+    };
+
+    static const char *sz_buttons[but_sz_count] =
+    {
+        "N/A",            // but_difficulty
+        "N/A",            // but_msg_count
+        "N/A",            // but_msg_duration
+        "N/A",            // but_autoturn
+        "N/A",            // but_fps
+        "N/A",            // but_feedback
+        "Save Settings",  // but_save
         ""
     };
 
-    char szDifficulty[4096] = EMPTY_CSTR;
+    static ui_Widget_t w_buttons[but_count];
+
+    enum e_labels
+    {
+        lab_difficulty   = but_difficulty,
+        lab_msg_count    = but_msg_count,
+        lab_msg_duration = but_msg_duration,
+        lab_autoturn     = but_autoturn,
+        lab_fps          = but_fps,
+        lab_feedback     = but_feedback,
+        lab_diff_desc,
+        lab_count,
+        lab_sz_count
+    };
+
+    static ui_Widget_t w_labels [lab_count];
+
+    static const char *sz_labels[lab_sz_count] =
+    {
+        "Game Difficulty:",     // lab_difficulty
+        "Max  Messages:",       // lab_msg_count
+        "Message Duration:",    // lab_msg_duration
+        "Autoturn Camera:",     // lab_autoturn
+        "Display FPS:",         // lab_fps
+        "Floating Text:",       // lab_feedback
+        "N/A",                  // lab_diff_desc
+        ""
+    };
+
     int  result = 0;
+    int i;
 
     switch ( menuState )
     {
         case MM_Begin:
             // set up menu variables
-            ego_texture_load_vfs( &background, "mp_data/menu/menu_fairy", TRANSCOLOR );
 
             menuChoice = 0;
-            menuState = MM_Entering;
+            {
+                for ( cnt = 0; cnt < but_count; cnt++ )
+                {
+                    // set up the w_buttons
+                    memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
+                    ui_Widget_set_id( w_buttons + cnt, ( ui_id_t )cnt );
+                    ui_Widget_set_text( w_buttons + cnt, NULL, 0, sz_buttons[cnt] );
+                }
 
-            tipText_set_position( menuFont, "Change game settings here.", 20 );
+                for ( cnt = 0; cnt < lab_count; cnt++ )
+                {
+                    // set up the w_labels
+                    memset( w_labels  + cnt, 0, sizeof( ui_Widget_t ) );
+                    ui_Widget_set_id( w_labels + cnt, UI_Nothing );
+                    ui_Widget_set_text( w_labels + cnt, menuFont, 0, sz_labels[cnt] );
+                }
 
-            mnu_SlidyButton_init( 1.0f, sz_buttons );
+                // load the background image
+                ego_texture_load_vfs( &background, "mp_data/menu/menu_fairy", TRANSCOLOR );
+
+                difficulty_old = cfg.difficulty;
+
+                // auto-format the tip text
+                tipText_set_position( menuFont, "Change game settings here.", 20 );
+
+                // auto-format the slidy buttons
+                SlidyButtonState_init( &but_state, 1.0f, but_save, sz_buttons, w_buttons );
+
+                // set some special text
+                doOptionsGame_update_difficulty( w_buttons + but_difficulty, w_labels + lab_diff_desc, cfg.difficulty );
+
+                // auto-format the buttons and labels
+                for ( i = but_difficulty; i <= but_feedback; i++ )
+                {
+                    int j = GFX_HEIGHT - ( but_feedback - but_difficulty + 5 ) * 35 + i * 35;
+
+                    ui_Widget_set_button( w_buttons + i, buttonLeft + 515, j, 100, 30 );
+                    ui_Widget_set_bound( w_labels  + i, buttonLeft + 350, j, -1, -1 );
+                }
+
+                // custom format buttons and labels
+                ui_Widget_set_bound( w_labels + lab_diff_desc,  buttonLeft + 150, 50, -1, -1 );
+                ui_Widget_set_bound( w_labels + lab_difficulty, buttonLeft,       50, -1, -1 );
+            }
+
             // let this fall through into MM_Entering
+            menuState = MM_Entering;
 
         case MM_Entering:
             // do buttons sliding in animation, and background fading in
             // background
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 - mnu_SlidyButtonState.lerp );
-
-            // Draw the background
-            if ( mnu_draw_background )
             {
-                ui_drawImage( 0, &background, ( GFX_WIDTH  / 2 ) + ( background.imgW / 2 ), GFX_HEIGHT - background.imgH, 0, 0, NULL );
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+
+                // Draw the background
+                if ( mnu_draw_background )
+                {
+                    ui_drawImage( 0, &background, ( GFX_WIDTH  / 2 ) + ( background.imgW / 2 ), GFX_HEIGHT - background.imgH, 0, 0, NULL );
+                }
+
+                doOptionsGame_update_message_count( w_buttons + but_msg_count, cfg.message_count_req );
+                doOptionsGame_update_message_duration( w_buttons + but_msg_duration, cfg.message_duration );
+                doOptionsGame_update_cam_autoturn( w_buttons + but_autoturn, cfg.autoturncamera );
+                doOptionsGame_update_fps( w_buttons + but_fps, cfg.fps_allowed );
+                doOptionsGame_update_feedback( w_buttons + but_feedback, cfg.feedback );
             }
 
-            // Load the current settings
-            switch ( cfg.difficulty )
-            {
-                case GAME_HARD: snprintf( Cdifficulty, SDL_arraysize( Cdifficulty ), "Punishing" ); break;
-                case GAME_EASY: snprintf( Cdifficulty, SDL_arraysize( Cdifficulty ), "Forgiving" ); break;
-
-                default: cfg.difficulty = GAME_NORMAL; /* fall through */
-                case GAME_NORMAL:  snprintf( Cdifficulty, SDL_arraysize( Cdifficulty ), "Challenging" ); break;
-            }
-            sz_buttons[0] = Cdifficulty;
-
-            maxmessage = CLIP( maxmessage, 4, MAX_MESSAGE );
-            if ( maxmessage == 0 )
-            {
-                snprintf( Cmaxmessage, SDL_arraysize( Cmaxmessage ), "None" );          // Set to default
-            }
-            else
-            {
-                snprintf( Cmaxmessage, SDL_arraysize( Cmaxmessage ), "%i", maxmessage );
-            }
-            sz_buttons[1] = Cmaxmessage;
-
-            // Message duration
-            if ( cfg.message_duration <= 100 )
-            {
-                sz_buttons[2] = "Short";
-            }
-            else if ( cfg.message_duration <= 150 )
-            {
-                sz_buttons[2] = "Normal";
-            }
-            else
-            {
-                sz_buttons[2] = "Long";
-            }
-
-            // Autoturn camera
-            if ( CAM_TURN_GOOD == cfg.autoturncamera )        sz_buttons[3] = "Fast";
-            else if ( CAM_TURN_AUTO == cfg.autoturncamera )   sz_buttons[3] = "On";
-            else
-            {
-                sz_buttons[3] = "Off";
-                cfg.autoturncamera = CAM_TURN_NONE;
-            }
-
-            // Show FPS
-            sz_buttons[4] = cfg.fps_allowed ? "On" : "Off";
-
-            // Billboard feedback
-            if ( !cfg.feedback ) sz_buttons[5] = "Disabled";
-            else
-            {
-                if ( cfg.feedback == FEEDBACK_TEXT ) sz_buttons[5] = "Enabled";
-                else                              sz_buttons[5] = "Debug";
-            }
-
-            // Fall trough
+            // Fall trough?
             menuState = MM_Running;
             break;
 
         case MM_Running:
             // Do normal run
-            // Background
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
-
-            if ( mnu_draw_background )
             {
-                ui_drawImage( 0, &background, ( GFX_WIDTH  / 2 ) - ( background.imgW / 2 ), GFX_HEIGHT - background.imgH, 0, 0, NULL );
-            }
+                // Background
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
 
-            ui_drawTextBox( menuFont, "Game Difficulty:", buttonLeft, 50, 0, 0, 20 );
-
-            // Buttons
-            if ( !PMod->active && BUTTON_UP == ui_doButton( 1, sz_buttons[0], menuFont, buttonLeft + 150, 50, 150, 30 ) )
-            {
-                // Increase difficulty
-                cfg.difficulty++;
-                switch ( cfg.difficulty )
+                if ( mnu_draw_background )
                 {
-                    case GAME_NORMAL: snprintf( Cdifficulty, SDL_arraysize( Cdifficulty ), "Challenging" ); break;
-                    case GAME_HARD: snprintf( Cdifficulty, SDL_arraysize( Cdifficulty ), "Punishing" ); break;
-                default: case GAME_EASY:
-                        {
-                            snprintf( Cdifficulty, SDL_arraysize( Cdifficulty ), "Forgiving" );
-                            cfg.difficulty = GAME_EASY;
-                            break;
-                        }
-                }
-                sz_buttons[0] = Cdifficulty;
-            }
-
-            // Now do difficulty description. Currently it's handled very bad, but it works.
-            switch ( cfg.difficulty )
-            {
-                case GAME_EASY:
-                    strncpy( szDifficulty, "FORGIVING (Easy)\n - Players gain no bonus XP \n - 15%% XP loss upon death\n - Monsters take 25%% extra damage by players\n - Players take 25%% less damage by monsters\n - Halves the chance for Kursed items\n - Cannot unlock the final level in this mode\n - Life and Mana is refilled after quitting a module", SDL_arraysize( szDifficulty ) );
-                    break;
-                case GAME_NORMAL:
-                    strncpy( szDifficulty, "CHALLENGING (Normal)\n - Players gain 10%% bonus XP \n - 15%% XP loss upon death \n - 15%% money loss upon death", SDL_arraysize( szDifficulty ) );
-                    break;
-                case GAME_HARD:
-                    strncpy( szDifficulty, "PUNISHING (Hard)\n - Monsters award 20%% extra xp! \n - 15%% XP loss upon death\n - 15%% money loss upon death\n - No respawning\n - Channeling life can kill you\n - Players take 25%% more damage\n - Doubles the chance for Kursed items", SDL_arraysize( szDifficulty ) );
-                    break;
-            }
-            str_add_linebreaks( szDifficulty, SDL_arraysize( szDifficulty ), 30 );
-            ui_drawTextBox( menuFont, szDifficulty, buttonLeft, 100, 0, 0, 20 );
-
-            // Text messages
-            ui_drawTextBox( menuFont, "Max  Messages:", buttonLeft + 350, 50, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 2, sz_buttons[1], menuFont, buttonLeft + 515, 50, 75, 30 ) )
-            {
-                cfg.message_count_req++;
-                if ( cfg.message_count_req > MAX_MESSAGE ) cfg.message_count_req = 0;
-                if ( cfg.message_count_req < 4 && cfg.message_count_req != 0 ) cfg.message_count_req = 4;
-
-                if ( 0 == cfg.message_count_req )
-                {
-                    snprintf( Cmaxmessage, SDL_arraysize( Cmaxmessage ), "None" );
-                }
-                else
-                {
-                    snprintf( Cmaxmessage, SDL_arraysize( Cmaxmessage ), "%i", cfg.message_count_req );   // Convert integer to a char we can use
+                    ui_drawImage( 0, &background, ( GFX_WIDTH / 2 ) - ( background.imgW / 2 ), GFX_HEIGHT - background.imgH, 0, 0, NULL );
                 }
 
-                sz_buttons[1] = Cmaxmessage;
-            }
+                // Module difficulty
+                ui_doWidget( w_labels + lab_difficulty );
+                ui_doWidget( w_labels + lab_diff_desc );
+                ui_doWidget( w_labels  + lab_difficulty );
+                if ( !PMod->active && BUTTON_UP == ui_doWidget( w_buttons + but_difficulty ) )
+                {
+                    cfg.difficulty = CLIP( cfg.difficulty, 0, GAME_HARD );
 
-            // Message time
-            ui_drawTextBox( menuFont, "Message Duration:", buttonLeft + 350, 100, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 3, sz_buttons[2], menuFont, buttonLeft + 515, 100, 100, 30 ) )
-            {
-                if ( cfg.message_duration <= 0 )
-                {
-                    cfg.message_duration = 100;
+                    // Increase difficulty
+                    cfg.difficulty++;
+                    if ( cfg.difficulty > GAME_HARD ) cfg.difficulty = 0;
+
+                    // handle the difficulty description
+                    doOptionsGame_update_difficulty( w_buttons + but_difficulty, w_labels + lab_diff_desc, cfg.difficulty );
                 }
-                else
+
+                // Text messages
+                ui_doWidget( w_labels + lab_msg_count );
+                if ( BUTTON_UP == ui_doWidget( w_buttons + but_msg_count ) )
                 {
+                    cfg.message_count_req = CLIP( cfg.message_count_req, 0, MAX_MESSAGE - 1 );
+
+                    cfg.message_count_req++;
+                    if ( cfg.message_count_req > MAX_MESSAGE ) cfg.message_count_req = 0;
+                    if ( cfg.message_count_req < 4 && cfg.message_count_req != 0 ) cfg.message_count_req = 4;
+
+                    // handle the difficulty description
+                    doOptionsGame_update_message_count( w_buttons + but_msg_count, cfg.message_count_req );
+                }
+
+                // Message time
+                ui_doWidget( w_labels + lab_msg_duration );
+                if ( BUTTON_UP == ui_doWidget( w_buttons + but_msg_duration ) )
+                {
+                    cfg.message_duration = CLIP( cfg.message_duration, 0, 250 );
                     cfg.message_duration += 50;
+
+                    if ( cfg.message_duration >= 250 )
+                    {
+                        cfg.message_duration = 50;
+                    }
+
+                    doOptionsGame_update_message_duration( w_buttons + but_msg_duration, cfg.message_duration );
                 }
 
-                if ( cfg.message_duration >= 250 )
+                // Autoturn camera
+                ui_doWidget( w_labels + lab_autoturn );
+                if ( BUTTON_UP == ui_doWidget( w_buttons + but_autoturn ) )
                 {
-                    cfg.message_duration = 100;
+                    if ( CAM_TURN_GOOD == cfg.autoturncamera )
+                    {
+                        cfg.autoturncamera = CAM_TURN_NONE;
+                    }
+                    else if ( cfg.autoturncamera )
+                    {
+                        cfg.autoturncamera = CAM_TURN_GOOD;
+                    }
+                    else
+                    {
+                        cfg.autoturncamera = CAM_TURN_AUTO;
+                    }
+
+                    doOptionsGame_update_cam_autoturn( w_buttons + but_autoturn, cfg.autoturncamera );
                 }
 
-                if ( cfg.message_duration <= 100 )
+                // Show the fps?
+                ui_doWidget( w_labels + lab_fps );
+                if ( BUTTON_UP == ui_doWidget( w_buttons + but_fps ) )
                 {
-                    sz_buttons[2] = "Short";
-                }
-                else if ( cfg.message_duration <= 150 )
-                {
-                    sz_buttons[2] = "Normal";
-                }
-                else
-                {
-                    sz_buttons[2] = "Long";
-                }
-            }
+                    cfg.fps_allowed = !cfg.fps_allowed;
 
-            // Autoturn camera
-            ui_drawTextBox( menuFont, "Autoturn Camera:", buttonLeft + 350, 150, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 4, sz_buttons[3], menuFont, buttonLeft + 515, 150, 100, 30 ) )
-            {
-                if ( CAM_TURN_GOOD == cfg.autoturncamera )
-                {
-                    sz_buttons[3] = "Off";
-                    cfg.autoturncamera = CAM_TURN_NONE;
+                    doOptionsGame_update_fps( w_buttons + but_fps, cfg.fps_allowed );
                 }
-                else if ( cfg.autoturncamera )
-                {
-                    sz_buttons[3] = "Fast";
-                    cfg.autoturncamera = CAM_TURN_GOOD;
-                }
-                else
-                {
-                    sz_buttons[3] = "On";
-                    cfg.autoturncamera = CAM_TURN_AUTO;
-                }
-            }
 
-            // Show the fps?
-            ui_drawTextBox( menuFont, "Display FPS:", buttonLeft + 350, 200, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 5, sz_buttons[4], menuFont, buttonLeft + 515, 200, 100, 30 ) )
-            {
-                cfg.fps_allowed = !cfg.fps_allowed;
-                if ( cfg.fps_allowed )   sz_buttons[4] = "On";
-                else                     sz_buttons[4] = "Off";
-            }
+                // Feedback
+                ui_doWidget( w_labels + lab_feedback );
+                if ( BUTTON_UP == ui_doWidget( w_buttons + but_feedback ) )
+                {
+                    cfg.feedback = CLIP( cfg.feedback, 0, FEEDBACK_COUNT - 1 );
 
-            // Feedback
-            ui_drawTextBox( menuFont, "Floating Text:", buttonLeft + 350, 250, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 6, sz_buttons[5], menuFont, buttonLeft + 515, 250, 75, 30 ) )
-            {
-                if ( cfg.dev_mode )
-                {
-                    cfg.feedback = ( FEEDBACK_TYPE )( cfg.feedback + 1 );
-                    if ( cfg.feedback > FEEDBACK_NUMBER ) cfg.feedback = FEEDBACK_OFF;
-                }
-                else
-                {
-                    if ( FEEDBACK_OFF == cfg.feedback )
+                    if ( cfg.dev_mode )
+                    {
+                        // increment the type
+                        cfg.feedback = ( FEEDBACK_TYPE )( cfg.feedback + 1 );
+
+                        // make the list wrap around
+                        if ( cfg.feedback >= FEEDBACK_COUNT )
+                        {
+                            cfg.feedback = FEEDBACK_OFF;
+                        }
+                    }
+                    else if ( FEEDBACK_OFF == cfg.feedback )
                     {
                         cfg.feedback = FEEDBACK_TEXT;
                     }
@@ -2703,41 +4424,38 @@ int doGameOptions( float deltaTime )
                     {
                         cfg.feedback = FEEDBACK_OFF;
                     }
+
+                    doOptionsGame_update_feedback( w_buttons + but_feedback, cfg.feedback );
                 }
 
-                switch ( cfg.feedback )
+                // Save settings
+                if ( BUTTON_UP == ui_doWidget( w_buttons + but_save ) )
                 {
-                    case FEEDBACK_OFF:    sz_buttons[5] = "Disabled"; break;
-                    case FEEDBACK_TEXT:   sz_buttons[5] = "Enabled";  break;
-                    case FEEDBACK_NUMBER: sz_buttons[5] = "Debug";    break;
+                    // synchronize the config values with the various game subsystems
+                    setup_synch( &cfg );
+
+                    // save the setup file
+                    setup_upload( &cfg );
+                    setup_write();
+
+                    menuState = MM_Leaving;
                 }
+
+                // tool-tip text
+                display_list_draw( tipText_tx );
             }
-
-            // Save settings
-            if ( BUTTON_UP == ui_doButton( 7, sz_buttons[6], menuFont, buttonLeft, GFX_HEIGHT - 60, 200, 30 ) )
-            {
-                // synchronize the config values with the various game subsystems
-                setup_synch( &cfg );
-
-                // save the setup file
-                setup_upload( &cfg );
-                setup_write();
-
-                menuState = MM_Leaving;
-            }
-
-            // tool-tip text
-            ui_drawTextBox( menuFont, tipText, tipTextLeft, tipTextTop, 0, 0, 20 );
             break;
 
         case MM_Leaving:
             // Do buttons sliding out and background fading
             // Do the same stuff as in MM_Entering, but backwards
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 - mnu_SlidyButtonState.lerp );
-
-            if ( mnu_draw_background )
             {
-                ui_drawImage( 0, &background, ( GFX_WIDTH  / 2 ) + ( background.imgW / 2 ), GFX_HEIGHT - background.imgH, 0, 0, NULL );
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+
+                if ( mnu_draw_background )
+                {
+                    ui_drawImage( 0, &background, ( GFX_WIDTH  / 2 ) + ( background.imgW / 2 ), GFX_HEIGHT - background.imgH, 0, 0, NULL );
+                }
             }
 
             // Fall trough
@@ -2745,15 +4463,35 @@ int doGameOptions( float deltaTime )
             break;
 
         case MM_Finish:
-            // Free the background texture; don't need to hold onto it
-            oglx_texture_Release( &background );
-            menuState = MM_Begin;  // Make sure this all resets next time
+            // free all allocated data
+            {
+                // Free the background texture; don't need to hold onto it
+                oglx_texture_Release( &background );
+
+                // free the widgets
+                for ( cnt = 0; cnt < but_count; cnt++ )
+                {
+                    ui_Widget_free( w_buttons + cnt );
+                }
+
+                for ( cnt = 0; cnt < lab_count; cnt++ )
+                {
+                    ui_Widget_free( w_labels  + cnt );
+                }
+
+                ui_Widget_free( w_labels + lab_diff_desc );
+                ui_Widget_free( w_labels + lab_difficulty );
+
+                // Set the next menu to load
+                result = 1;
+            }
 
             // reset the ui
             ui_Reset();
 
-            // Set the next menu to load
-            result = 1;
+            // make sure that if we come back to this menu, it resets properly
+            menuState = MM_Begin;
+
             break;
     }
 
@@ -2761,78 +4499,345 @@ int doGameOptions( float deltaTime )
 }
 
 //--------------------------------------------------------------------------------------------
-int doAudioOptions( float deltaTime )
+//--------------------------------------------------------------------------------------------
+bool_t doOptionsAudio_update_sound_on( ui_Widget_t * but_ptr, bool_t val )
+{
+    if ( NULL == but_ptr ) return bfalse;
+
+    return ui_Widget_set_text( but_ptr, NULL, 0, val ? "On" : "Off" );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doOptionsAudio_update_sound_volume( ui_Widget_t * but_ptr, Uint8 val )
+{
+    if ( NULL == but_ptr ) return bfalse;
+
+    return ui_Widget_set_text( but_ptr, NULL, 0, "%i", val );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doOptionsAudio_update_music_on( ui_Widget_t * but_ptr, bool_t val )
+{
+    if ( NULL == but_ptr ) return bfalse;
+
+    return ui_Widget_set_text( but_ptr, NULL, 0, val ? "On" : "Off" );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doOptionsAudio_update_music_volume( ui_Widget_t * but_ptr, Uint8 val )
+{
+    if ( NULL == but_ptr ) return bfalse;
+
+    return ui_Widget_set_text( but_ptr, NULL, 0, "%i", val );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doOptionsAudio_update_sound_channels( ui_Widget_t * but_ptr, Uint16 val )
+{
+    if ( NULL == but_ptr ) return bfalse;
+
+    return ui_Widget_set_text( but_ptr, NULL, 0, "%i", val );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doOptionsAudio_update_buffer_size( ui_Widget_t * but_ptr, Uint16 val )
+{
+    if ( NULL == but_ptr ) return bfalse;
+
+    return ui_Widget_set_text( but_ptr, NULL, 0, "%i", val );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doOptionsAudio_update_quality( ui_Widget_t * but_ptr, bool_t val )
+{
+    if ( NULL == but_ptr ) return bfalse;
+
+    return ui_Widget_set_text( but_ptr, NULL, 0, val ?  "Normal" : "High" );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doOptionsAudio_update_footfall( ui_Widget_t * but_ptr, bool_t val )
+{
+    if ( NULL == but_ptr ) return bfalse;
+
+    return ui_Widget_set_text( but_ptr, NULL, 0, val ? "Enabled" : "Disabled" );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doOptionsAudio_update_settings( egoboo_config_t * pcfg )
+{
+    if ( NULL == pcfg ) return bfalse;
+
+    // synchronize the config values with the various game subsystems
+    setup_synch( pcfg );
+
+    // save the setup file
+    setup_upload( pcfg );
+    setup_write();
+
+    // Reload the sound system
+    sound_restart();
+
+    // Do we restart the music?
+    if ( pcfg->music_allowed )
+    {
+        load_all_music_sounds_vfs();
+        fade_in_music( musictracksloaded[songplaying] );
+    }
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct s_OptionsAudioState
+{
+    BASE_MENU_STATE;
+};
+typedef struct s_OptionsAudioState OptionsAudioState_t;
+
+//--------------------------------------------------------------------------------------------
+static OptionsAudioState_t *OptionsAudioState_ctor( OptionsAudioState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static OptionsAudioState_t *OptionsAudioState_dtor( OptionsAudioState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static OptionsAudioState_t * doOptionsAudio_begin( OptionsAudioState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    ps = OptionsAudioState_ctor( ps );
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsAudioState_t * doOptionsAudio_entering( OptionsAudioState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsAudioState_t * doOptionsAudio_running( OptionsAudioState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsAudioState_t * doOptionsAudio_leaving( OptionsAudioState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsAudioState_t * doOptionsAudio_finish( OptionsAudioState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    ps = OptionsAudioState_ctor( ps );
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+int doOptionsAudio( float deltaTime )
 {
     /// @details Audio options menu
 
     static int menuState = MM_Begin;
     static oglx_texture_t background;
     static int menuChoice = 0;
-    static STRING Cmaxsoundchannel;
-    static STRING Cbuffersize;
-    static STRING Csoundvolume;
-    static STRING Cmusicvolume;
-    static const char *sz_buttons[] =
+    static display_item_t * fnt_tx_ptr = NULL;
+    static SlidyButtonState_t but_state = { NULL };
+
+    bool_t old_sound_allowed       = cfg.sound_allowed;
+    Uint8  old_sound_volume        = cfg.sound_volume;
+    bool_t old_music_allowed       = cfg.music_allowed;
+    Uint8  old_music_volume        = cfg.music_volume;
+    Uint16 old_sound_channel_count = cfg.sound_channel_count;
+    Uint16 old_sound_buffer_size   = cfg.sound_buffer_size;
+    bool_t old_sound_highquality   = cfg.sound_highquality;
+    bool_t old_sound_footfall      = cfg.sound_footfall;
+
+    // button widgets
+    enum e_buttons
     {
-        "N/A",        // Enable sound
-        "N/A",        // Sound volume
-        "N/A",        // Enable music
-        "N/A",        // Music volume
-        "N/A",        // Sound channels
-        "N/A",        // Sound buffer
-        "N/A",        // Sound quality
-        "N/A",          // Play footsteps
-        "Save Settings",
+        but_on,
+        but_vol,
+        but_mus_on,
+        but_mus_vol,
+        but_channels,
+        but_buffer,
+        but_quality,
+        but_footsteps,
+        but_save,
+        but_count,
+        but_sz_count
+    };
+
+    static const char *sz_buttons[but_sz_count] =
+    {
+        "N/A",              // but_on
+        "N/A",              // but_vol
+        "N/A",              // but_mus_on
+        "N/A",              // but_mus_vol
+        "N/A",              // but_channels
+        "N/A",              // but_buffer
+        "N/A",              // but_quality
+        "N/A",              // but_footsteps
+        "Save Settings",    // but_save
         ""
     };
 
+
+    static ui_Widget_t w_buttons[but_count];
+
+    // label widgets
+    enum e_labels
+    {
+        lab_on,
+        lab_vol,
+        lab_mus_on,
+        lab_mus_vol,
+        lab_channels,
+        lab_buffer,
+        lab_quality,
+        lab_footsteps,
+        lab_count,
+        lab_sz_count
+    };
+
+    static const char *sz_labels[lab_sz_count] =
+    {
+        "Sound:",           // lab_on        - Enable sound
+        "Sound Volume:",    // lab_vol       - Sound volume
+        "Music:",           // lab_mus_on    - Enable music
+        "Music Volume:",    // lab_mus_vol   - Music volume
+        "Sound Channels:",  // lab_channels  - Sound channels
+        "Buffer Size:",     // lab_buffer    - Sound buffer
+        "Sound Quality:",   // lab_quality   - Sound quality
+        "Footstep Sounds:", // lab_footsteps - Play footsteps
+        ""
+    };
+
+    static ui_Widget_t w_labels[lab_count];
+
+
     int result = 0;
+    int cnt;
 
     switch ( menuState )
     {
         case MM_Begin:
-            // set up menu variables
-            ego_texture_load_vfs( &background, "mp_data/menu/menu_sound", TRANSCOLOR );
-
             menuChoice = 0;
-            menuState = MM_Entering;
 
-            tipText_set_position( menuFont, "Change audio settings here.", 20 );
+            {
+                // set up the w_buttons
+                for ( cnt = 0; cnt < but_count; cnt++ )
+                {
+                    memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
+                    ui_Widget_set_id( w_buttons + cnt, cnt );
+                    ui_Widget_set_text( w_buttons + cnt, NULL, 0, sz_buttons[cnt] );
+                }
 
-            mnu_SlidyButton_init( 1.0f, sz_buttons );
+                // set up the w_labels
+                for ( cnt = 0; cnt < lab_count; cnt++ )
+                {
+                    memset( w_labels  + cnt, 0, sizeof( ui_Widget_t ) );
+                    ui_Widget_set_id( w_labels + cnt, UI_Nothing );
+                    ui_Widget_set_text( w_labels + cnt, menuFont, 0, sz_labels[cnt] );
+                }
+
+                // set up menu variables
+                ego_texture_load_vfs( &background, "mp_data/menu/menu_sound", TRANSCOLOR );
+
+                tipText_set_position( menuFont, "Change audio settings here.", 20 );
+
+                SlidyButtonState_init( &but_state, 1.0f, but_save, sz_buttons, w_buttons );
+
+                // Format the buttons
+                ui_Widget_set_bound( w_labels  + lab_on,        buttonLeft + 000, GFX_HEIGHT - 455, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_on,        buttonLeft + 150, GFX_HEIGHT - 455, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_vol,       buttonLeft + 000, GFX_HEIGHT - 420, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_vol,       buttonLeft + 150, GFX_HEIGHT - 420, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_mus_on,    buttonLeft + 000, GFX_HEIGHT - 350, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_mus_on,    buttonLeft + 150, GFX_HEIGHT - 350, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_mus_vol,   buttonLeft + 000, GFX_HEIGHT - 315, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_mus_vol,   buttonLeft + 150, GFX_HEIGHT - 315, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_footsteps, buttonLeft + 000, GFX_HEIGHT - 245, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_footsteps, buttonLeft + 150, GFX_HEIGHT - 245, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_channels,  buttonLeft + 000, GFX_HEIGHT - 210, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_channels,  buttonLeft + 150, GFX_HEIGHT - 210, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_buffer,    buttonLeft + 000, GFX_HEIGHT - 175, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_buffer,    buttonLeft + 150, GFX_HEIGHT - 175, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_quality,   buttonLeft + 000, GFX_HEIGHT - 140, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_quality,   buttonLeft + 150, GFX_HEIGHT - 140, 140, 30 );
+            }
+
             // let this fall through into MM_Entering
+            menuState = MM_Entering;
 
         case MM_Entering:
             // do buttons sliding in animation, and background fading in
-            // background
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 - mnu_SlidyButtonState.lerp );
-
-            // Draw the background
-            if ( mnu_draw_background )
             {
-                ui_drawImage( 0, &background, ( GFX_WIDTH  - background.imgW ), 0, 0, 0, NULL );
+                // copy these values on entering
+                old_sound_allowed       = cfg.sound_allowed;
+                old_sound_volume        = cfg.sound_volume;
+                old_music_allowed       = cfg.music_allowed;
+                old_music_volume        = cfg.music_volume;
+                old_sound_channel_count = cfg.sound_channel_count;
+                old_sound_buffer_size   = cfg.sound_buffer_size;
+                old_sound_highquality   = cfg.sound_highquality;
+                old_sound_footfall      = cfg.sound_footfall;
+
+                // update button text
+                doOptionsAudio_update_sound_on( w_buttons + but_on,        cfg.sound_allowed );
+                doOptionsAudio_update_sound_volume( w_buttons + but_vol,       cfg.sound_volume );
+                doOptionsAudio_update_music_on( w_buttons + but_mus_on,    cfg.music_allowed );
+                doOptionsAudio_update_music_volume( w_buttons + but_mus_vol,   cfg.music_volume );
+                doOptionsAudio_update_sound_channels( w_buttons + but_channels,  cfg.sound_channel_count );
+                doOptionsAudio_update_buffer_size( w_buttons + but_buffer,    cfg.sound_buffer_size );
+                doOptionsAudio_update_quality( w_buttons + but_quality,   cfg.sound_highquality );
+                doOptionsAudio_update_footfall( w_buttons + but_footsteps, cfg.sound_footfall );
             }
-
-            // Load the current settings
-            sz_buttons[0] = cfg.sound_allowed ? "On" : "Off";
-
-            snprintf( Csoundvolume, SDL_arraysize( Csoundvolume ), "%i", cfg.sound_volume );
-            sz_buttons[1] = Csoundvolume;
-
-            sz_buttons[2] = cfg.music_allowed ? "On" : "Off";
-
-            snprintf( Cmusicvolume, SDL_arraysize( Cmusicvolume ), "%i", cfg.music_volume );
-            sz_buttons[3] = Cmusicvolume;
-
-            snprintf( Cmaxsoundchannel, SDL_arraysize( Cmaxsoundchannel ), "%i", cfg.sound_channel_count );
-            sz_buttons[4] = Cmaxsoundchannel;
-
-            snprintf( Cbuffersize, SDL_arraysize( Cbuffersize ), "%i", cfg.sound_buffer_size );
-            sz_buttons[5] = Cbuffersize;
-
-            sz_buttons[6] = cfg.sound_highquality ?  "Normal" : "High";
-
-            sz_buttons[7] = cfg.sound_footfall ? "Enabled" : "Disabled";
 
             // Fall trough
             menuState = MM_Running;
@@ -2840,143 +4845,161 @@ int doAudioOptions( float deltaTime )
 
         case MM_Running:
             // Do normal run
-            // Background
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
-
-            if ( mnu_draw_background )
             {
-                ui_drawImage( 0, &background, ( GFX_WIDTH  - background.imgW ), 0, 0, 0, NULL );
-            }
+                // Background
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
 
-            ui_drawTextBox( menuFont, "Sound:", buttonLeft, GFX_HEIGHT - 270, 0, 0, 20 );
-
-            // Buttons
-            if ( BUTTON_UP == ui_doButton( 1, sz_buttons[0], menuFont, buttonLeft + 150, GFX_HEIGHT - 270, 100, 30 ) )
-            {
-                cfg.sound_allowed = !cfg.sound_allowed;
-                sz_buttons[0] = cfg.sound_allowed ? "On" : "Off";
-            }
-
-            ui_drawTextBox( menuFont, "Sound Volume:", buttonLeft, GFX_HEIGHT - 235, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 2, sz_buttons[1], menuFont, buttonLeft + 150, GFX_HEIGHT - 235, 100, 30 ) )
-            {
-                cfg.sound_volume += 5;
-                if ( cfg.sound_volume > 100 ) cfg.sound_volume = 0;
-
-                snprintf( Csoundvolume, SDL_arraysize( Csoundvolume ), "%i", cfg.sound_volume );
-                sz_buttons[1] = Csoundvolume;
-            }
-
-            ui_drawTextBox( menuFont, "Music:", buttonLeft, GFX_HEIGHT - 165, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 3, sz_buttons[2], menuFont, buttonLeft + 150, GFX_HEIGHT - 165, 100, 30 ) )
-            {
-                cfg.music_allowed = !cfg.music_allowed;
-                sz_buttons[2] = cfg.music_allowed ? "On" : "Off";
-            }
-
-            ui_drawTextBox( menuFont, "Music Volume:", buttonLeft, GFX_HEIGHT - 130, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 4, sz_buttons[3], menuFont, buttonLeft + 150, GFX_HEIGHT - 130, 100, 30 ) )
-            {
-                cfg.music_volume += 5;
-                if ( cfg.music_volume > 100 ) cfg.music_volume = 0;
-
-                snprintf( Cmusicvolume, SDL_arraysize( Cmusicvolume ), "%i", cfg.music_volume );
-                sz_buttons[3] = Cmusicvolume;
-            }
-
-            ui_drawTextBox( menuFont, "Sound Channels:", buttonLeft + 300, GFX_HEIGHT - 200, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 5, sz_buttons[4], menuFont, buttonLeft + 450, GFX_HEIGHT - 200, 100, 30 ) )
-            {
-                if ( cfg.sound_channel_count < 8 )
+                // Draw the background
+                if ( mnu_draw_background )
                 {
-                    cfg.sound_channel_count = 8;
-                }
-                else
-                {
-                    cfg.sound_channel_count <<= 1;
+                    ui_drawImage( 0, &background, GFX_WIDTH  - background.imgW, 0, 0, 0, NULL );
                 }
 
-                if ( cfg.sound_channel_count > 128 )
+                // Buttons
+                ui_doWidget( w_labels + lab_on );
+                if ( BUTTON_UP == ui_doWidget( w_buttons + but_on ) )
                 {
-                    cfg.sound_channel_count = 8;
+                    cfg.sound_allowed = !cfg.sound_allowed;
+
+                    if ( old_sound_allowed != cfg.sound_allowed )
+                    {
+                        old_sound_allowed = cfg.sound_allowed;
+                        doOptionsAudio_update_sound_on( w_buttons + but_on,        cfg.sound_allowed );
+                    }
                 }
 
-                snprintf( Cmaxsoundchannel, SDL_arraysize( Cmaxsoundchannel ), "%i", cfg.sound_channel_count );
-                sz_buttons[4] = Cmaxsoundchannel;
-            }
+                ui_doWidget( w_labels + lab_vol );
+                if ( BUTTON_UP == ui_doWidget( w_buttons + but_vol ) )
+                {
+                    cfg.sound_volume += 5;
+                    if ( cfg.sound_volume > 100 ) cfg.sound_volume = 0;
 
-            ui_drawTextBox( menuFont, "Buffer Size:", buttonLeft + 300, GFX_HEIGHT - 165, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 6, sz_buttons[5], menuFont, buttonLeft + 450, GFX_HEIGHT - 165, 100, 30 ) )
-            {
-                if ( cfg.sound_buffer_size < 512 )
-                {
-                    cfg.sound_buffer_size = 512;
-                }
-                else
-                {
-                    cfg.sound_buffer_size <<= 1;
+                    if ( old_sound_volume != cfg.sound_volume )
+                    {
+                        old_sound_volume = cfg.sound_volume;
+                        doOptionsAudio_update_sound_volume( w_buttons + but_vol,       cfg.sound_volume );
+                    }
                 }
 
-                if ( cfg.sound_buffer_size > 8196 )
+                ui_doWidget( w_labels + lab_mus_on );
+                if ( BUTTON_UP == ui_doWidget( w_buttons + but_mus_on ) )
                 {
-                    cfg.sound_buffer_size = 512;
+                    cfg.music_allowed = !cfg.music_allowed;
+
+                    if ( old_music_allowed != cfg.music_allowed )
+                    {
+                        old_music_allowed = cfg.music_allowed;
+                        doOptionsAudio_update_music_on( w_buttons + but_mus_on,    cfg.music_allowed );
+                    }
                 }
 
-                snprintf( Cbuffersize, SDL_arraysize( Cbuffersize ), "%i", cfg.sound_buffer_size );
-                sz_buttons[5] = Cbuffersize;
-            }
-
-            ui_drawTextBox( menuFont, "Sound Quality:", buttonLeft + 300, GFX_HEIGHT - 130, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 7, sz_buttons[6], menuFont, buttonLeft + 450, GFX_HEIGHT - 130, 100, 30 ) )
-            {
-                cfg.sound_highquality = !cfg.sound_highquality;
-                sz_buttons[6] = cfg.sound_highquality ? "Normal" : "High";
-            }
-
-            // Footfall sounds
-            ui_drawTextBox( menuFont, "Footstep Sounds:", buttonLeft + 300, GFX_HEIGHT - 235, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 8, sz_buttons[7], menuFont, buttonLeft + 450, GFX_HEIGHT - 235, 100, 30 ) )
-            {
-                cfg.sound_footfall = !cfg.sound_footfall;
-                sz_buttons[7] = cfg.sound_footfall ? "Enabled" : "Disabled";
-            }
-
-            // Save settings
-            if ( BUTTON_UP == ui_doButton( 9, sz_buttons[8], menuFont, buttonLeft, GFX_HEIGHT - 60, 200, 30 ) )
-            {
-                // synchronize the config values with the various game subsystems
-                setup_synch( &cfg );
-
-                // save the setup file
-                setup_upload( &cfg );
-                setup_write();
-
-                // Reload the sound system
-                sound_restart();
-
-                // Do we restart the music?
-                if ( cfg.music_allowed )
+                ui_doWidget( w_labels + lab_mus_vol );
+                if ( BUTTON_UP == ui_doWidget( w_buttons + but_mus_vol ) )
                 {
-                    load_all_music_sounds_vfs();
-                    fade_in_music( musictracksloaded[songplaying] );
+                    cfg.music_volume += 5;
+                    if ( cfg.music_volume > 100 ) cfg.music_volume = 0;
+
+                    if ( old_music_volume != cfg.music_volume )
+                    {
+                        old_music_volume = cfg.music_volume;
+                        doOptionsAudio_update_music_volume( w_buttons + but_mus_vol,   cfg.music_volume );
+                    }
                 }
 
-                menuState = MM_Leaving;
+                ui_doWidget( w_labels + lab_channels );
+                if ( BUTTON_UP == ui_doWidget( w_buttons + but_channels ) )
+                {
+                    if ( cfg.sound_channel_count < 8 )
+                    {
+                        cfg.sound_channel_count = 8;
+                    }
+                    else
+                    {
+                        cfg.sound_channel_count <<= 1;
+                    }
+
+                    if ( cfg.sound_channel_count > 128 )
+                    {
+                        cfg.sound_channel_count = 8;
+                    }
+
+                    if ( old_sound_channel_count != cfg.sound_channel_count )
+                    {
+                        old_sound_buffer_size = cfg.sound_channel_count;
+                        doOptionsAudio_update_sound_channels( w_buttons + but_channels,  cfg.sound_channel_count );
+                    }
+                }
+
+                ui_doWidget( w_labels + lab_buffer );
+                if ( BUTTON_UP == ui_doWidget( w_buttons + but_buffer ) )
+                {
+                    if ( cfg.sound_buffer_size < 512 )
+                    {
+                        cfg.sound_buffer_size = 512;
+                    }
+                    else
+                    {
+                        cfg.sound_buffer_size <<= 1;
+                    }
+
+                    if ( cfg.sound_buffer_size > 8196 )
+                    {
+                        cfg.sound_buffer_size = 512;
+                    }
+
+                    if ( old_sound_buffer_size != cfg.sound_buffer_size )
+                    {
+                        old_sound_buffer_size = cfg.sound_buffer_size;
+                        doOptionsAudio_update_buffer_size( w_buttons + but_buffer,    cfg.sound_buffer_size );
+                    }
+                }
+
+                ui_doWidget( w_labels + lab_quality );
+                if ( BUTTON_UP == ui_doWidget( w_buttons + but_quality ) )
+                {
+                    cfg.sound_highquality = !cfg.sound_highquality;
+
+                    if ( old_sound_highquality != cfg.sound_highquality )
+                    {
+                        old_sound_highquality = cfg.sound_highquality;
+                        doOptionsAudio_update_quality( w_buttons + but_quality,   cfg.sound_highquality );
+                    }
+                }
+
+                ui_doWidget( w_labels + lab_footsteps );
+                if ( BUTTON_UP == ui_doWidget( w_buttons + but_footsteps ) )
+                {
+                    cfg.sound_footfall = !cfg.sound_footfall;
+
+                    if ( old_sound_footfall != cfg.sound_footfall )
+                    {
+                        old_sound_footfall = cfg.sound_footfall;
+                        doOptionsAudio_update_footfall( w_buttons + but_footsteps, cfg.sound_footfall );
+                    }
+                }
+
+                // Save settings
+                if ( BUTTON_UP == ui_doWidget( w_buttons + but_save ) )
+                {
+                    doOptionsAudio_update_settings( &cfg );
+                    menuState = MM_Leaving;
+                }
+
+                // tool-tip text
+                display_list_draw( tipText_tx );
             }
-
-            // tool-tip text
-            ui_drawTextBox( menuFont, tipText, tipTextLeft, tipTextTop, 0, 0, 20 );
-
             break;
 
         case MM_Leaving:
             // Do buttons sliding out and background fading
             // Do the same stuff as in MM_Entering, but backwards
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 - mnu_SlidyButtonState.lerp );
-
-            if ( mnu_draw_background )
             {
-                ui_drawImage( 0, &background, ( GFX_WIDTH  - background.imgW ), 0, 0, 0, NULL );
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+
+                if ( mnu_draw_background )
+                {
+                    ui_drawImage( 0, &background, ( GFX_WIDTH  - background.imgW ), 0, 0, 0, NULL );
+                }
             }
 
             // Fall trough
@@ -2984,15 +5007,31 @@ int doAudioOptions( float deltaTime )
             break;
 
         case MM_Finish:
-            // Free the background texture; don't need to hold onto it
-            oglx_texture_Release( &background );
-            menuState = MM_Begin;  // Make sure this all resets next time
+            {
+                // Free the background texture; don't need to hold onto it
+                oglx_texture_Release( &background );
+
+                // release the widgets
+                for ( cnt = 0; cnt < but_count; cnt++ )
+                {
+                    ui_Widget_free( w_buttons + cnt );
+                }
+
+                for ( cnt = 0; cnt < lab_count; cnt++ )
+                {
+                    ui_Widget_free( w_labels + cnt );
+                }
+
+                // Set the next menu to load
+                result = 1;
+            }
 
             // reset the ui
             ui_Reset();
 
-            // Set the next menu to load
-            result = 1;
+            // make sure that if we come back to this menu, it resets properly
+            menuState = MM_Begin;
+
             break;
     }
 
@@ -3000,7 +5039,7 @@ int doAudioOptions( float deltaTime )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_coerce_aspect_ratio( int width, int height, float * pratio, STRING * psz_ratio )
+bool_t doOptionsVideo_coerce_aspect_ratio( int width, int height, float * pratio, STRING * psz_ratio )
 {
     /// @details BB@> coerce the aspect ratio of the screen to some standard size
 
@@ -3041,7 +5080,7 @@ bool_t doVideoOptions_coerce_aspect_ratio( int width, int height, float * pratio
 }
 
 //--------------------------------------------------------------------------------------------
-int doVideoOptions_fix_fullscreen_resolution( egoboo_config_t * pcfg, SDLX_screen_info_t * psdl_scr, STRING * psz_screen_size )
+int doOptionsVideo_fix_fullscreen_resolution( egoboo_config_t * pcfg, SDLX_screen_info_t * psdl_scr, STRING * psz_screen_size )
 {
     STRING     sz_aspect_ratio = "unknown";
     float      req_screen_area  = ( float )pcfg->scrx_req * ( float )pcfg->scry_req;
@@ -3050,7 +5089,7 @@ int doVideoOptions_fix_fullscreen_resolution( egoboo_config_t * pcfg, SDLX_scree
 
     float       aspect_ratio;
 
-    doVideoOptions_coerce_aspect_ratio( pcfg->scrx_req, pcfg->scry_req, &aspect_ratio, &sz_aspect_ratio );
+    doOptionsVideo_coerce_aspect_ratio( pcfg->scrx_req, pcfg->scry_req, &aspect_ratio, &sz_aspect_ratio );
 
     found_rect = NULL;
     pprect = psdl_scr->video_mode_list;
@@ -3140,7 +5179,7 @@ int doVideoOptions_fix_fullscreen_resolution( egoboo_config_t * pcfg, SDLX_scree
 
                 // unknown
             default:
-                doVideoOptions_coerce_aspect_ratio( pcfg->scrx_req, pcfg->scry_req, &aspect_ratio, &sz_aspect_ratio );
+                doOptionsVideo_coerce_aspect_ratio( pcfg->scrx_req, pcfg->scry_req, &aspect_ratio, &sz_aspect_ratio );
                 break;
         }
     }
@@ -3151,46 +5190,393 @@ int doVideoOptions_fix_fullscreen_resolution( egoboo_config_t * pcfg, SDLX_scree
 }
 
 //--------------------------------------------------------------------------------------------
-int doVideoOptions( float deltaTime )
+//--------------------------------------------------------------------------------------------
+struct s_OptionsVideoState
+{
+    BASE_MENU_STATE;
+};
+typedef struct s_OptionsVideoState OptionsVideoState_t;
+
+//--------------------------------------------------------------------------------------------
+static OptionsVideoState_t *OptionsVideoState_ctor( OptionsVideoState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static OptionsVideoState_t *OptionsVideoState_dtor( OptionsVideoState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static OptionsVideoState_t * doOptionsVideo_begin( OptionsVideoState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    ps = OptionsVideoState_ctor( ps );
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsVideoState_t * doOptionsVideo_entering( OptionsVideoState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsVideoState_t * doOptionsVideo_running( OptionsVideoState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsVideoState_t * doOptionsVideo_leaving( OptionsVideoState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsVideoState_t * doOptionsVideo_finish( OptionsVideoState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    ps = OptionsVideoState_ctor( ps );
+
+    return ps;
+};
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t doVideoOptions_update_antialiasing( ui_Widget_t * but_ptr, Uint8 val )
+{
+    bool_t retval = bfalse;
+
+    if ( NULL == but_ptr ) return bfalse;
+
+    if ( 0 == val )
+    {
+        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Off" );
+    }
+    else
+    {
+        retval = ui_Widget_set_text( but_ptr, NULL, 0, "X%i", val );
+    }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doVideoOptions_update_texture_filter( ui_Widget_t * but_ptr, Uint8 val )
+{
+    bool_t retval = bfalse;
+
+    if ( NULL == but_ptr ) return bfalse;
+
+    retval = bfalse;
+
+    if ( val >= TX_ANISOTROPIC )
+    {
+        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Ansiotropic %i", val - TX_ANISOTROPIC );
+    }
+    else switch ( val )
+        {
+            case TX_UNFILTERED:
+                retval = ui_Widget_set_text( but_ptr, NULL, 0, "Unfiltered" );
+                break;
+
+            case TX_LINEAR:
+                retval = ui_Widget_set_text( but_ptr, NULL, 0, "Linear" );
+                break;
+
+            case TX_MIPMAP:
+                retval = ui_Widget_set_text( but_ptr, NULL, 0, "Mipmap" );
+                break;
+
+            case TX_BILINEAR:
+                retval = ui_Widget_set_text( but_ptr, NULL, 0, "Bilinear" );
+                break;
+
+            case TX_TRILINEAR_1:
+                retval = ui_Widget_set_text( but_ptr, NULL, 0, "Trilinear 1" );
+                break;
+
+            case TX_TRILINEAR_2:
+                retval = ui_Widget_set_text( but_ptr, NULL, 0, "Trilinear 2" );
+                break;
+
+            default:
+                retval = ui_Widget_set_text( but_ptr, NULL, 0, "Unknown" );
+                break;
+        }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doVideoOptions_update_dither( ui_Widget_t * but_ptr, bool_t val )
+{
+    if ( NULL == but_ptr ) return bfalse;
+
+    return ui_Widget_set_text( but_ptr, NULL, 0, val ? "Yes" : "No" );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doVideoOptions_update_fullscreen( ui_Widget_t * but_ptr, bool_t val )
+{
+    if ( NULL == but_ptr ) return bfalse;
+
+    return ui_Widget_set_text( but_ptr, NULL, 0, val ? "True" : "False" );;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doVideoOptions_update_reflections( ui_Widget_t * but_ptr, bool_t allowed, bool_t do_prt, Uint8 fade )
+{
+    bool_t retval = bfalse;
+
+    if ( NULL == but_ptr ) return bfalse;
+
+    if ( !allowed )
+    {
+        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Off" );
+    }
+    else if ( !do_prt )
+    {
+        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Low" );
+    }
+    else if ( 0 == fade )
+    {
+        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Medium" );
+    }
+    else
+    {
+        retval = ui_Widget_set_text( but_ptr, NULL, 0, "High" );
+    }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doVideoOptions_update_shadows( ui_Widget_t * but_ptr, bool_t allowed, bool_t sprite )
+{
+    bool_t retval = bfalse;
+
+    if ( NULL == but_ptr ) return bfalse;
+
+    if ( !allowed )
+    {
+        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Off" );
+    }
+    else if ( sprite )
+    {
+        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Normal" );
+    }
+    else
+    {
+        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Best" );
+    }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doVideoOptions_update_z_buffer( ui_Widget_t * but_ptr, int val )
+{
+    if ( NULL == but_ptr ) return bfalse;
+
+    return ui_Widget_set_text( but_ptr, NULL, 0, "%d", val );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doVideoOptions_update_max_lights( ui_Widget_t * but_ptr, int val )
+{
+    if ( NULL == but_ptr ) return bfalse;
+
+    return ui_Widget_set_text( but_ptr, NULL, 0, "%i", val );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doVideoOptions_update_3d_effects( ui_Widget_t * but_ptr, bool_t use_phong, bool_t use_perspective, bool_t overlay_allowed, bool_t background_allowed )
+{
+    bool_t retval = bfalse;
+
+    if ( NULL == but_ptr ) return bfalse;
+
+    if ( use_phong && use_perspective && overlay_allowed && background_allowed )
+    {
+        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Off" );
+    }
+    else if ( !use_phong )
+    {
+        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Okay" );
+    }
+    else if ( !use_perspective && overlay_allowed && background_allowed )
+    {
+        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Superb" );
+    }
+    else
+    {
+        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Good" );
+    }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doVideoOptions_update_water_quality( ui_Widget_t * but_ptr, bool_t val )
+{
+    if ( NULL == but_ptr ) return bfalse;
+
+    return ui_Widget_set_text( but_ptr, NULL, 0, val ? "True" : "False" );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doVideoOptions_update_max_particles( ui_Widget_t * but_ptr, Uint16 val )
+{
+    if ( NULL == but_ptr ) return bfalse;
+
+    return ui_Widget_set_text( but_ptr, NULL, 0, "%i", val );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doVideoOptions_update_widescreen( ui_Widget_t * but_ptr, bool_t val )
+{
+    if ( NULL == but_ptr ) return bfalse;
+
+    return ui_Widget_set_text( but_ptr, NULL, 0, val ? "X" : NULL );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doVideoOptions_update_resolution( ui_Widget_t * but_ptr, int x, int y )
+{
+    if ( NULL == but_ptr ) return bfalse;
+
+    return ui_Widget_set_text( but_ptr, NULL, 0, "%ix%i", x, y );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t doOptionsVideo_update_settings( egoboo_config_t * pcfg )
+{
+    if ( NULL == pcfg ) return bfalse;
+
+    // synchronize the config values with the various game subsystems
+    setup_synch( pcfg );
+
+    // save the setup file
+    setup_upload( pcfg );
+    setup_write();
+
+    // Reload some of the graphics
+    load_graphics();
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+int doOptionsVideo( float deltaTime )
 {
     /// @details Video options menu
 
-    enum
+    const int max_anisotropic = 16;
+
+    static SlidyButtonState_t but_state = { NULL };
+
+    enum e_buttons
     {
         but_antialiasing =  0,  // Antialaising
-        but_unused           ,    // Unused button
-        but_dither           ,    // Fast & ugly
-        but_fullscreen       ,    // Fullscreen
-        but_reflections      ,    // Reflections
-        but_filtering        ,    // Texture filtering
-        but_shadow           ,    // Shadows
-        but_zbuffer          ,    // Z bit
-        but_maxlights        ,    // Fog
-        but_3dfx             ,    // Special effects
-        but_multiwater       ,    // Multi water layer
-        but_widescreen       ,    // Widescreen
-        but_screensize       ,    // Screen resolution
-        but_save             ,
+        but_dither           ,  // Fast & ugly
+        but_fullscreen       ,  // Fullscreen
+        but_reflections      ,  // Reflections
+        but_filtering        ,  // Texture filtering
+        but_shadow           ,  // Shadows
+        but_zbuffer          ,  // Z bit
+        but_maxlights        ,  // Fog
+        but_3dfx             ,  // Special effects
+        but_multiwater       ,  // Multi water layer
+        but_widescreen       ,  // Widescreen
+        but_screensize       ,  // Screen resolution
         but_maxparticles     ,  // Max particles
-        but_end,
+        but_save             ,
+        but_count,
+        but_sz_count
+    };
 
-        but_last
+    static ui_Widget_t w_buttons[but_count];
+    static const char *sz_buttons[but_sz_count];
+
+    enum e_labels
+    {
+        lab_antialiasing = but_antialiasing,
+        lab_dither       = but_dither,
+        lab_fullscreen   = but_fullscreen,
+        lab_reflections  = but_reflections,
+        lab_filtering    = but_filtering,
+        lab_shadow       = but_shadow,
+        lab_zbuffer      = but_zbuffer,
+        lab_maxlights    = but_maxlights,
+        lab_3dfx         = but_3dfx,
+        lab_multiwater   = but_multiwater,
+        lab_widescreen   = but_widescreen,
+        lab_screensize   = but_screensize,
+        lab_maxparticles = but_maxparticles,
+        lab_count,
+        lab_sz_count
+    };
+
+    // button widgets
+    static ui_Widget_t w_labels [lab_count];
+    static const char *sz_labels[lab_sz_count] =
+    {
+        "Antialiasing:",            // lab_antialiasing
+        "Dithering:",               // lab_dither
+        "Fullscreen:",              // lab_fullscreen
+        "Reflections:",             // lab_reflections
+        "Texture Filtering:",        // lab_filtering
+        "Shadows:",                 // lab_shadow
+        "Z Bit:",                   // lab_zbuffer
+        "Max Lights:",              // lab_maxlights
+        "Special Effects:",         // lab_3dfx
+        "Water Quality:",           // lab_multiwater
+        "Widescreen:",              // lab_widescreen
+        "Resolution:",              // lab_screensize
+        "Max Particles:",           // lab_maxparticles
+        ""
     };
 
     static int menuState = MM_Begin;
     static oglx_texture_t background;
     static int    menuChoice = 0;
-    static STRING Cantialiasing;
-    static STRING Cmaxlights;
-    static STRING Cscrz;
-    static STRING Cmaxparticles;
-    static STRING Cmaxdyna;
+    static display_item_t * fnt_tx_ptr = NULL;
 
     static bool_t widescreen;
     static float  aspect_ratio;
     static STRING sz_screen_size;
-
-    static const char *sz_buttons[but_last];
 
     int cnt, result = 0;
 
@@ -3198,165 +5584,158 @@ int doVideoOptions( float deltaTime )
     {
         case MM_Begin:
 
-            // set up the button text
-            for ( cnt = 0; cnt < but_last; cnt++ ) sz_buttons[cnt] = "N/A";
-            sz_buttons[but_end] = "";
-
-            // set up menu variables
-            ego_texture_load_vfs( &background, "mp_data/menu/menu_video", TRANSCOLOR );
-
             menuChoice = 0;
-            menuState = MM_Entering;
+            {
+                // initialize most of the the sz_buttons ary
+                for ( cnt = 0; cnt < but_count; cnt++ )
+                {
+                    // initialize most of the the sz_buttons ary
+                    sz_buttons[cnt] = "N/A";
+                }
+                sz_buttons[but_save] = "Save Settings";
+                sz_buttons[but_sz_count-1] = "";
 
-            tipText_set_position( menuFont, "Change video settings here.", 20 );
+                // set up the w_buttons
+                for ( cnt = 0; cnt < but_count; cnt++ )
+                {
+                    // clear the data
+                    memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
 
-            mnu_SlidyButton_init( 1.0f, sz_buttons );
+                    ui_Widget_set_id( w_buttons  + cnt, cnt );
+                    ui_Widget_set_text( w_buttons + cnt, NULL, 0, sz_buttons[cnt] );
+                }
+
+                // set up the w_labels
+                for ( cnt = 0; cnt < lab_count; cnt++ )
+                {
+                    memset( w_labels  + cnt, 0, sizeof( ui_Widget_t ) );
+                    ui_Widget_set_id( w_labels  + cnt, UI_Nothing );
+                    ui_Widget_set_text( w_labels + cnt, menuFont, 0, sz_labels[cnt] );
+                }
+
+                // set up menu variables
+                ego_texture_load_vfs( &background, "mp_data/menu/menu_video", TRANSCOLOR );
+
+                tipText_set_position( menuFont, "Change video settings here.", 20 );
+
+                ui_Widget_set_bound( w_labels  + lab_antialiasing, buttonLeft + 000, GFX_HEIGHT - 245, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_antialiasing, buttonLeft + 150, GFX_HEIGHT - 245, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_dither,       buttonLeft + 000, GFX_HEIGHT - 175, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_dither,       buttonLeft + 150, GFX_HEIGHT - 175, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_fullscreen,   buttonLeft + 000, GFX_HEIGHT - 140, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_fullscreen,   buttonLeft + 150, GFX_HEIGHT - 140, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_reflections,  buttonLeft + 000, GFX_HEIGHT - 280, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_reflections,  buttonLeft + 150, GFX_HEIGHT - 280, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_filtering,    buttonLeft + 000, GFX_HEIGHT - 315, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_filtering,    buttonLeft + 150, GFX_HEIGHT - 315, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_shadow,       buttonLeft + 000, GFX_HEIGHT - 385, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_shadow,       buttonLeft + 150, GFX_HEIGHT - 385, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_zbuffer,      buttonLeft + 300, GFX_HEIGHT - 350, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_zbuffer,      buttonLeft + 450, GFX_HEIGHT - 350, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_maxlights,    buttonLeft + 300, GFX_HEIGHT - 315, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_maxlights,    buttonLeft + 450, GFX_HEIGHT - 315, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_3dfx,         buttonLeft + 300, GFX_HEIGHT - 280, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_3dfx,         buttonLeft + 450, GFX_HEIGHT - 280, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_multiwater,   buttonLeft + 300, GFX_HEIGHT - 245, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_multiwater,   buttonLeft + 450, GFX_HEIGHT - 245, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_maxparticles, buttonLeft + 300, GFX_HEIGHT - 210, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_maxparticles, buttonLeft + 450, GFX_HEIGHT - 210, 140, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_widescreen,   buttonLeft + 300, GFX_HEIGHT - 105, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_widescreen,   buttonLeft + 450, GFX_HEIGHT - 105, 30, 30 );
+
+                ui_Widget_set_bound( w_labels  + lab_screensize,   buttonLeft + 300, GFX_HEIGHT - 140, -1, 30 );
+                ui_Widget_set_button( w_buttons + but_screensize,   buttonLeft + 450, GFX_HEIGHT - 140, 140, 30 );
+
+                SlidyButtonState_init( &but_state, 1.0f, but_save, sz_buttons, w_buttons );
+            }
+
             // let this fall through into MM_Entering
+            menuState = MM_Entering;
 
         case MM_Entering:
             // do buttons sliding in animation, and background fading in
             // background
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 - mnu_SlidyButtonState.lerp );
-
-            // Draw the background
-            if ( mnu_draw_background )
             {
-                ui_drawImage( 0, &background, ( GFX_WIDTH  - background.imgW ), 0, 0, 0, NULL );
-            }
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
 
-            // Load all the current video settings
-            if ( cfg.multisamples == 0 ) strncpy( Cantialiasing , "Off", SDL_arraysize( Cantialiasing ) );
-            else snprintf( Cantialiasing, SDL_arraysize( Cantialiasing ), "X%i", cfg.multisamples );
-            sz_buttons[but_antialiasing] = Cantialiasing;
-
-            // Texture filtering
-            switch ( cfg.texturefilter_req )
-            {
-                case TX_UNFILTERED:
-                    sz_buttons[but_filtering] = "Unfiltered";
-                    break;
-                case TX_LINEAR:
-                    sz_buttons[but_filtering] = "Linear";
-                    break;
-                case TX_MIPMAP:
-                    sz_buttons[but_filtering] = "Mipmap";
-                    break;
-                case TX_BILINEAR:
-                    sz_buttons[but_filtering] = "Bilinear";
-                    break;
-                case TX_TRILINEAR_1:
-                    sz_buttons[but_filtering] = "Trilinear 1";
-                    break;
-                case TX_TRILINEAR_2:
-                    sz_buttons[but_filtering] = "Trilinear 2";
-                    break;
-                case TX_ANISOTROPIC:
-                    sz_buttons[but_filtering] = "Ansiotropic";
-                    break;
-                default:                  // Set to defaults
-                    sz_buttons[but_filtering] = "Linear";
-                    cfg.texturefilter_req = TX_LINEAR;
-                    break;
-            }
-
-            sz_buttons[but_dither] = cfg.use_dither ? "Yes" : "No";
-
-            sz_buttons[but_fullscreen] = cfg.fullscreen_req ? "True" : "False";
-
-            if ( cfg.reflect_allowed )
-            {
-                sz_buttons[but_reflections] = "Low";
-                if ( cfg.reflect_prt )
+                // Draw the background
+                if ( mnu_draw_background )
                 {
-                    sz_buttons[but_reflections] = "Medium";
-                    if ( cfg.reflect_fade == 0 )
-                    {
-                        sz_buttons[but_reflections] = "High";
-                    }
+                    ui_drawImage( 0, &background, ( GFX_WIDTH  - background.imgW ), 0, 0, 0, NULL );
                 }
-            }
-            else
-            {
-                sz_buttons[but_reflections] = "Off";
-            }
 
-            if ( cfg.shadow_allowed )
-            {
-                sz_buttons[but_shadow] = "Normal";
-                if ( !cfg.shadow_sprite )
+                // make the but_maxparticles inactive if the module is running
+                if ( PMod->active )
                 {
-                    sz_buttons[but_shadow] = "Best";
+                    ui_Widget_set_id( w_buttons + but_maxparticles, UI_Nothing );
                 }
-            }
-            else sz_buttons[but_shadow] = "Off";
 
+                // limit some initial values
 #if defined(__unix__)
-            // Clip linux defaults to valid values so that the game doesn't crash on startup
-            if ( cfg.scrz_req == 32 ) cfg.scrz_req = 24;
-            if ( cfg.scrd_req == 32 ) cfg.scrd_req = 24;
+                // Clip linux defaults to valid values so that the game doesn't crash on startup
+                if ( cfg.scrz_req == 32 ) cfg.scrz_req = 24;
+                if ( cfg.scrd_req == 32 ) cfg.scrd_req = 24;
 #endif
 
-            if ( cfg.scrz_req != 32 && cfg.scrz_req != 16 && cfg.scrz_req != 24 )
-            {
-                cfg.scrz_req = 16;              // Set to default
-            }
-            snprintf( Cscrz, SDL_arraysize( Cscrz ), "%i", cfg.scrz_req );     // Convert the integer to a char we can use
-            sz_buttons[but_zbuffer] = Cscrz;
+                if ( cfg.texturefilter_req > TX_ANISOTROPIC + max_anisotropic ) cfg.texturefilter_req = 0;
 
-            snprintf( Cmaxlights, SDL_arraysize( Cmaxlights ), "%i", cfg.dyna_count_req );
-            sz_buttons[but_maxlights] = Cmaxlights;
-
-            if ( cfg.use_phong )
-            {
-                sz_buttons[but_3dfx] = "Okay";
-                if ( cfg.overlay_allowed && cfg.background_allowed )
+                if ( cfg.scrz_req != 32 && cfg.scrz_req != 16 && cfg.scrz_req != 24 )
                 {
-                    sz_buttons[but_3dfx] = "Good";
-                    if ( cfg.use_perspective )
-                    {
-                        sz_buttons[but_3dfx] = "Superb";
-                    }
+                    cfg.scrz_req = 16;              // Set to default
                 }
-                else                            // Set to defaults
+
+                if ( cfg.fullscreen_req && NULL != sdl_scr.video_mode_list )
                 {
-                    cfg.use_perspective    = bfalse;
-                    cfg.background_allowed = bfalse;
-                    cfg.overlay_allowed    = bfalse;
-                    sz_buttons[but_3dfx] = "Off";
+                    doOptionsVideo_fix_fullscreen_resolution( &cfg, &sdl_scr, &sz_screen_size );
+
+                    aspect_ratio = ( float )cfg.scrx_req / ( float )cfg.scry_req;
+                    widescreen = ( aspect_ratio > ( 4.0f / 3.0f ) );
                 }
+                else
+                {
+                    aspect_ratio = ( float )cfg.scrx_req / ( float )cfg.scry_req;
+                    widescreen = ( aspect_ratio > ( 4.0f / 3.0f ) );
+                }
+
+                // Load all the current video settings
+                doVideoOptions_update_antialiasing( w_buttons + but_antialiasing, cfg.multisamples );
+
+                // Texture filtering
+                doVideoOptions_update_texture_filter( w_buttons + but_filtering, cfg.texturefilter_req );
+
+                doVideoOptions_update_dither( w_buttons + but_dither, cfg.use_dither );
+
+                doVideoOptions_update_fullscreen( w_buttons + but_fullscreen, cfg.fullscreen_req );
+
+                doVideoOptions_update_reflections( w_buttons + but_reflections, cfg.reflect_allowed, cfg.reflect_prt, cfg.reflect_fade );
+
+                doVideoOptions_update_shadows( w_buttons + but_shadow, cfg.shadow_allowed, cfg.shadow_sprite );
+
+                doVideoOptions_update_z_buffer( w_buttons + but_zbuffer, cfg.scrz_req );
+
+                doVideoOptions_update_max_lights( w_buttons + but_maxlights, cfg.dyna_count_req );
+
+                doVideoOptions_update_3d_effects( w_buttons + but_3dfx, cfg.use_phong, cfg.use_perspective, cfg.overlay_allowed, cfg.background_allowed );
+
+                doVideoOptions_update_water_quality( w_buttons + but_multiwater, cfg.twolayerwater_allowed );
+
+                doVideoOptions_update_max_particles( w_buttons + but_maxparticles, cfg.particle_count_req );
+
+                doVideoOptions_update_widescreen( w_buttons + but_widescreen, widescreen );
+
+                doVideoOptions_update_resolution( w_buttons + but_screensize, cfg.scrx_req, cfg.scry_req );
             }
-            else                              // Set to defaults
-            {
-                cfg.use_perspective    = bfalse;
-                cfg.background_allowed = bfalse;
-                cfg.overlay_allowed    = bfalse;
-                sz_buttons[but_3dfx] = "Off";
-            }
-
-            sz_buttons[but_multiwater] = cfg.twolayerwater_allowed ? "High" : "Low";
-
-            snprintf( Cmaxparticles, SDL_arraysize( Cmaxparticles ), "%i", cfg.particle_count_req );     // Convert the integer to a char we can use
-            sz_buttons[but_maxparticles] = Cmaxparticles;
-
-            if ( cfg.fullscreen_req && NULL != sdl_scr.video_mode_list )
-            {
-                doVideoOptions_fix_fullscreen_resolution( &cfg, &sdl_scr, &sz_screen_size );
-                sz_buttons[but_screensize] = sz_screen_size;
-
-                aspect_ratio = ( float )cfg.scrx_req / ( float )cfg.scry_req;
-                widescreen = ( aspect_ratio > ( 4.0f / 3.0f ) );
-            }
-            else
-            {
-                snprintf( sz_screen_size, sizeof( sz_screen_size ), "%dx%d", cfg.scrx_req, cfg.scry_req );
-                sz_buttons[but_screensize] = sz_screen_size;
-
-                aspect_ratio = ( float )cfg.scrx_req / ( float )cfg.scry_req;
-                widescreen = ( aspect_ratio > ( 4.0f / 3.0f ) );
-            }
-
-            if ( widescreen ) sz_buttons[but_widescreen] = "X";
-            else             sz_buttons[but_widescreen] = " ";
 
             menuState = MM_Running;
             break;
@@ -3372,169 +5751,122 @@ int doVideoOptions( float deltaTime )
             }
 
             // Antialiasing Button
-            ui_drawTextBox( menuFont, "Antialiasing:", buttonLeft, GFX_HEIGHT - 215, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 1, sz_buttons[but_antialiasing], menuFont, buttonLeft + 150, GFX_HEIGHT - 215, 100, 30 ) )
+            ui_doWidget( w_labels + lab_antialiasing );
+            if ( BUTTON_UP == ui_doWidget( w_buttons + but_antialiasing ) )
             {
                 // make the multi-sampling even
 
-                if ( cfg.multisamples < 0 )
+                // set some arbitrary limit
+                cfg.multisamples = CLIP( cfg.multisamples, 0, EGO_MAX_MULTISAMPLES );
+
+                // iterate the the multisamples through the valid values (0,1,2,4,8,...)
+                if ( cfg.multisamples <= 1 )
                 {
-                    cfg.multisamples = 0;
+                    cfg.multisamples = 2;
                 }
                 else
                 {
-                    cfg.multisamples += 1;
+                    cfg.multisamples <<= 1;
                 }
 
-                // set some arbitrary limit
-                if ( cfg.multisamples > 4 ) cfg.multisamples = 0;
+                // wrap it around
+                if ( cfg.multisamples > EGO_MAX_MULTISAMPLES ) cfg.multisamples = 0;
 
-                if ( cfg.multisamples == 0 ) strncpy( Cantialiasing , "Off", SDL_arraysize( Cantialiasing ) );
-                else snprintf( Cantialiasing, SDL_arraysize( Cantialiasing ), "X%i", cfg.multisamples );
-
-                sz_buttons[but_antialiasing] = Cantialiasing;
+                // update the button
+                doVideoOptions_update_antialiasing( w_buttons + but_antialiasing, cfg.multisamples );
             }
 
             // Dithering
-            ui_drawTextBox( menuFont, "Dithering:", buttonLeft, GFX_HEIGHT - 145, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 3, sz_buttons[but_dither], menuFont, buttonLeft + 150, GFX_HEIGHT - 145, 100, 30 ) )
+            ui_doWidget( w_labels + lab_dither );
+            if ( BUTTON_UP == ui_doWidget( w_buttons + but_dither ) )
             {
                 cfg.use_dither = !cfg.use_dither;
-                sz_buttons[but_dither] = cfg.use_dither ? "Yes" : "No";
+
+                doVideoOptions_update_dither( w_buttons + but_dither, cfg.use_dither );
             }
 
             // Fullscreen
-            ui_drawTextBox( menuFont, "Fullscreen:", buttonLeft, GFX_HEIGHT - 110, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 4, sz_buttons[but_fullscreen], menuFont, buttonLeft + 150, GFX_HEIGHT - 110, 100, 30 ) )
+            ui_doWidget( w_labels + lab_fullscreen );
+            if ( BUTTON_UP == ui_doWidget( w_buttons + but_fullscreen ) )
             {
                 cfg.fullscreen_req = !cfg.fullscreen_req;
 
-                sz_buttons[but_fullscreen] = cfg.fullscreen_req ? "True" : "False";
+                doVideoOptions_update_fullscreen( w_buttons + but_fullscreen, cfg.fullscreen_req );
             }
 
             // Reflection
-            ui_drawTextBox( menuFont, "Reflections:", buttonLeft, GFX_HEIGHT - 250, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 5, sz_buttons[but_reflections], menuFont, buttonLeft + 150, GFX_HEIGHT - 250, 100, 30 ) )
+            ui_doWidget( w_labels + lab_reflections );
+            if ( BUTTON_UP == ui_doWidget( w_buttons + but_reflections ) )
             {
-
                 if ( cfg.reflect_allowed && cfg.reflect_fade == 0 && cfg.reflect_prt )
                 {
                     cfg.reflect_allowed = bfalse;
+                    cfg.reflect_fade    = 255;
+                    cfg.reflect_prt     = bfalse;
+                }
+                else if ( cfg.reflect_allowed && !cfg.reflect_prt )
+                {
                     cfg.reflect_fade = 255;
-                    cfg.reflect_prt = bfalse;
-                    sz_buttons[but_reflections] = "Off";
+                    cfg.reflect_prt  = btrue;
+                }
+                else if ( cfg.reflect_allowed && cfg.reflect_fade == 255 && cfg.reflect_prt )
+                {
+                    cfg.reflect_fade = 0;
                 }
                 else
                 {
-                    if ( cfg.reflect_allowed && !cfg.reflect_prt )
-                    {
-                        sz_buttons[but_reflections] = "Medium";
-                        cfg.reflect_fade = 255;
-                        cfg.reflect_prt = btrue;
-                    }
-                    else
-                    {
-                        if ( cfg.reflect_allowed && cfg.reflect_fade == 255 && cfg.reflect_prt )
-                        {
-                            sz_buttons[but_reflections] = "High";
-                            cfg.reflect_fade = 0;
-                        }
-                        else
-                        {
-                            cfg.reflect_allowed = btrue;
-                            cfg.reflect_fade = 255;
-                            sz_buttons[but_reflections] = "Low";
-                            cfg.reflect_prt = bfalse;
-                        }
-                    }
+                    cfg.reflect_allowed = btrue;
+                    cfg.reflect_fade    = 255;
+                    cfg.reflect_prt     = bfalse;
                 }
+
+                doVideoOptions_update_reflections( w_buttons + but_reflections, cfg.reflect_allowed, cfg.reflect_prt, cfg.reflect_fade );
             }
 
             // Texture Filtering
-            ui_drawTextBox( menuFont, "Texture Filtering:", buttonLeft, GFX_HEIGHT - 285, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 6, sz_buttons[but_filtering], menuFont, buttonLeft + 150, GFX_HEIGHT - 285, 130, 30 ) )
+            ui_doWidget( w_labels + lab_filtering );
+            if ( BUTTON_UP == ui_doWidget( w_buttons + but_filtering ) )
             {
-                if ( cfg.texturefilter_req < TX_UNFILTERED )
-                {
-                    cfg.texturefilter_req = TX_UNFILTERED;
-                }
-                else
-                {
-                    cfg.texturefilter_req = ( TX_FILTERS )(( int )cfg.texturefilter_req + 1 );
-                }
+                cfg.texturefilter_req = CLIP( cfg.texturefilter_req, TX_UNFILTERED, TX_ANISOTROPIC + max_anisotropic );
 
-                if ( cfg.texturefilter_req > TX_ANISOTROPIC )
+                cfg.texturefilter_req++;
+
+                if ( cfg.texturefilter_req > TX_ANISOTROPIC + max_anisotropic )
                 {
                     cfg.texturefilter_req = TX_UNFILTERED;
                 }
 
-                switch ( cfg.texturefilter_req )
-                {
-
-                    case TX_UNFILTERED:
-                        sz_buttons[but_filtering] = "Unfiltered";
-                        break;
-
-                    case TX_LINEAR:
-                        sz_buttons[but_filtering] = "Linear";
-                        break;
-
-                    case TX_MIPMAP:
-                        sz_buttons[but_filtering] = "Mipmap";
-                        break;
-
-                    case TX_BILINEAR:
-                        sz_buttons[but_filtering] = "Bilinear";
-                        break;
-
-                    case TX_TRILINEAR_1:
-                        sz_buttons[but_filtering] = "Trilinear 1";
-                        break;
-
-                    case TX_TRILINEAR_2:
-                        sz_buttons[but_filtering] = "Trilinear 2";
-                        break;
-
-                    case TX_ANISOTROPIC:
-                        sz_buttons[but_filtering] = "Anisotropic";
-                        break;
-
-                    default:
-                        cfg.texturefilter_req = TX_UNFILTERED;
-                        sz_buttons[but_filtering] = "Unfiltered";
-                        break;
-                }
+                doVideoOptions_update_texture_filter( w_buttons + but_filtering, cfg.texturefilter_req );
             }
 
             // Shadows
-            ui_drawTextBox( menuFont, "Shadows:", buttonLeft, GFX_HEIGHT - 320, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 7, sz_buttons[but_shadow], menuFont, buttonLeft + 150, GFX_HEIGHT - 320, 100, 30 ) )
+            ui_doWidget( w_labels + lab_shadow );
+            if ( BUTTON_UP == ui_doWidget( w_buttons + but_shadow ) )
             {
                 if ( cfg.shadow_allowed && !cfg.shadow_sprite )
                 {
                     cfg.shadow_allowed = bfalse;
                     cfg.shadow_sprite = bfalse;                // Just in case
-                    sz_buttons[but_shadow] = "Off";
                 }
                 else
                 {
                     if ( cfg.shadow_allowed && cfg.shadow_sprite )
                     {
-                        sz_buttons[but_shadow] = "Best";
                         cfg.shadow_sprite = bfalse;
                     }
                     else
                     {
                         cfg.shadow_allowed = btrue;
                         cfg.shadow_sprite = btrue;
-                        sz_buttons[but_shadow] = "Normal";
                     }
                 }
+
+                doVideoOptions_update_shadows( w_buttons + but_shadow, cfg.shadow_allowed, cfg.shadow_sprite );
             }
 
             // Z bit
-            ui_drawTextBox( menuFont, "Z Bit:", buttonLeft + 300, GFX_HEIGHT - 320, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 8, sz_buttons[but_zbuffer], menuFont, buttonLeft + 450, GFX_HEIGHT - 320, 100, 30 ) )
+            ui_doWidget( w_labels + lab_zbuffer );
+            if ( BUTTON_UP == ui_doWidget( w_buttons + but_zbuffer ) )
             {
                 if ( cfg.scrz_req < 0 )
                 {
@@ -3551,35 +5883,25 @@ int doVideoOptions( float deltaTime )
                 if ( cfg.scrz_req > 32 ) cfg.scrz_req = 8;            // Others can have up to 32 bit!
 #endif
 
-                snprintf( Cscrz, SDL_arraysize( Cscrz ), "%d", cfg.scrz_req );
-                sz_buttons[but_zbuffer] = Cscrz;
+                doVideoOptions_update_z_buffer( w_buttons + but_zbuffer, cfg.scrz_req );
             }
 
             // Max dynamic lights
-            ui_drawTextBox( menuFont, "Max Lights:", buttonLeft + 300, GFX_HEIGHT - 285, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 9, sz_buttons[but_maxlights], menuFont, buttonLeft + 450, GFX_HEIGHT - 285, 100, 30 ) )
+            ui_doWidget( w_labels + lab_maxlights );
+            if ( BUTTON_UP == ui_doWidget( w_buttons + but_maxlights ) )
             {
-                if ( cfg.dyna_count_req < 8 )
-                {
-                    cfg.dyna_count_req = 8;
-                }
-                else
-                {
-                    cfg.dyna_count_req += 8;
-                }
+                cfg.dyna_count_req = CLIP( cfg.dyna_count_req, 8, TOTAL_MAX_DYNA - 1 );
 
-                if ( cfg.dyna_count_req > TOTAL_MAX_DYNA )
-                {
-                    cfg.dyna_count_req = 8;
-                }
+                cfg.dyna_count_req += 8;
 
-                snprintf( Cmaxdyna, SDL_arraysize( Cmaxdyna ), "%d", cfg.dyna_count_req );
-                sz_buttons[but_maxlights] = Cmaxdyna;
+                if ( cfg.dyna_count_req > TOTAL_MAX_DYNA ) cfg.dyna_count_req = 8;
+
+                doVideoOptions_update_max_lights( w_buttons + but_maxlights, cfg.dyna_count_req );
             }
 
             // Perspective correction, overlay, underlay and Phong mapping
-            ui_drawTextBox( menuFont, "Special Effects:", buttonLeft + 300, GFX_HEIGHT - 250, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 10, sz_buttons[but_3dfx], menuFont, buttonLeft + 450, GFX_HEIGHT - 250, 100, 30 ) )
+            ui_doWidget( w_labels + lab_3dfx );
+            if ( BUTTON_UP == ui_doWidget( w_buttons + but_3dfx ) )
             {
                 if ( cfg.use_phong && cfg.use_perspective && cfg.overlay_allowed && cfg.background_allowed )
                 {
@@ -3587,68 +5909,49 @@ int doVideoOptions( float deltaTime )
                     cfg.use_perspective    = bfalse;
                     cfg.overlay_allowed    = bfalse;
                     cfg.background_allowed = bfalse;
-                    sz_buttons[but_3dfx] = "Off";
+                }
+                else if ( !cfg.use_phong )
+                {
+                    cfg.use_phong = btrue;
+                }
+                else if ( !cfg.use_perspective && cfg.overlay_allowed && cfg.background_allowed )
+                {
+                    cfg.use_perspective = btrue;
                 }
                 else
                 {
-                    if ( !cfg.use_phong )
-                    {
-                        sz_buttons[but_3dfx] = "Okay";
-                        cfg.use_phong = btrue;
-                    }
-                    else
-                    {
-                        if ( !cfg.use_perspective && cfg.overlay_allowed && cfg.background_allowed )
-                        {
-                            sz_buttons[but_3dfx] = "Superb";
-                            cfg.use_perspective = btrue;
-                        }
-                        else
-                        {
-                            cfg.overlay_allowed = btrue;
-                            cfg.background_allowed = btrue;
-                            sz_buttons[but_3dfx] = "Good";
-                        }
-                    }
+                    cfg.overlay_allowed = btrue;
+                    cfg.background_allowed = btrue;
                 }
+
+                doVideoOptions_update_3d_effects( w_buttons + but_3dfx, cfg.use_phong, cfg.use_perspective, cfg.overlay_allowed, cfg.background_allowed );
             }
 
             // Water Quality
-            ui_drawTextBox( menuFont, "Water Quality:", buttonLeft + 300, GFX_HEIGHT - 215, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 11, sz_buttons[but_multiwater], menuFont, buttonLeft + 450, GFX_HEIGHT - 215, 100, 30 ) )
+            ui_doWidget( w_labels + lab_multiwater );
+            if ( BUTTON_UP == ui_doWidget( w_buttons + but_multiwater ) )
             {
                 cfg.twolayerwater_allowed = !cfg.twolayerwater_allowed;
-                sz_buttons[but_fullscreen] = cfg.fullscreen_req ? "True" : "False";
+
+                doVideoOptions_update_water_quality( w_buttons + but_multiwater, cfg.twolayerwater_allowed );
             }
 
             // Max particles
-            ui_drawTextBox( menuFont, "Max Particles:", buttonLeft + 300, GFX_HEIGHT - 180, 0, 0, 20 );
+            ui_doWidget( w_labels + lab_maxparticles );
+            if ( BUTTON_UP == ui_doWidget( w_buttons + but_maxparticles ) )
+            {
+                cfg.particle_count_req = CLIP( cfg.particle_count_req, 128, TOTAL_MAX_PRT - 1 );
 
-            if ( PMod->active )
-            {
-                snprintf( Cmaxparticles, SDL_arraysize( Cmaxparticles ), "%i (%i currently used)", maxparticles, maxparticles - PrtList_count_free() );
-                ui_drawTextBox( menuFont, Cmaxparticles, buttonLeft + 450, GFX_HEIGHT - 180, 0, 100, 30 );
-            }
-            else if ( BUTTON_UP == ui_doButton( 15, sz_buttons[but_maxparticles], menuFont, buttonLeft + 450, GFX_HEIGHT - 180, 100, 30 ) )
-            {
-                if ( cfg.particle_count_req < 256 )
-                {
-                    cfg.particle_count_req = 256;
-                }
-                else
-                {
-                    cfg.particle_count_req += 128;
-                }
+                cfg.particle_count_req += 128;
 
                 if ( cfg.particle_count_req > TOTAL_MAX_PRT ) cfg.particle_count_req = 256;
 
-                snprintf( Cmaxparticles, SDL_arraysize( Cmaxparticles ), "%i", cfg.particle_count_req );  // Convert integer to a char we can use
-                sz_buttons[but_maxparticles] =  Cmaxparticles;
+                doVideoOptions_update_max_particles( w_buttons + but_maxparticles, cfg.particle_count_req );
             }
 
             // Widescreen
-            ui_drawTextBox( menuFont, "Widescreen:", buttonLeft + 300, GFX_HEIGHT - 70, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 12, sz_buttons[but_widescreen], menuFont, buttonLeft + 450, GFX_HEIGHT - 70, 25, 25 ) )
+            ui_doWidget( w_labels + lab_widescreen );
+            if ( BUTTON_UP == ui_doWidget( w_buttons + but_widescreen ) )
             {
                 bool_t old_widescreen = widescreen;
 
@@ -3658,28 +5961,27 @@ int doVideoOptions( float deltaTime )
                 if ( old_widescreen )
                 {
                     // switch the display from widescreen to non-widescreen
-                    sz_buttons[but_widescreen] = " ";
 
                     // Set to default non-widescreen resolution
                     cfg.scrx_req = 800;
                     cfg.scry_req = 600;
-                    sz_buttons[but_screensize] = "800x600";
                 }
                 else
                 {
                     // switch the display from non-widescreen to widescreen
-                    sz_buttons[but_widescreen] = "X";
 
                     // Set to "default" widescreen resolution
                     cfg.scrx_req = 960;
                     cfg.scry_req = 600;
-                    sz_buttons[but_screensize] = "960x600";
                 }
+
+                doVideoOptions_update_widescreen( w_buttons + but_widescreen, widescreen );
+                doVideoOptions_update_resolution( w_buttons + but_screensize, cfg.scrx_req, cfg.scry_req );
             }
 
             // Screen Resolution
-            ui_drawTextBox( menuFont, "Resolution:", buttonLeft + 300, GFX_HEIGHT - 110, 0, 0, 20 );
-            if ( BUTTON_UP == ui_doButton( 13, sz_buttons[but_screensize], menuFont, buttonLeft + 450, GFX_HEIGHT - 110, 125, 30 ) )
+            ui_doWidget( w_labels + lab_screensize );
+            if ( BUTTON_UP == ui_doWidget( w_buttons + but_screensize ) )
             {
                 float req_area;
 
@@ -3709,59 +6011,47 @@ int doVideoOptions( float deltaTime )
                 if ( cfg.fullscreen_req && NULL != sdl_scr.video_mode_list )
                 {
                     // coerce the screen size to a valid fullscreen mode
-                    doVideoOptions_fix_fullscreen_resolution( &cfg, &sdl_scr, &sz_screen_size );
+                    doOptionsVideo_fix_fullscreen_resolution( &cfg, &sdl_scr, &sz_screen_size );
                 }
-                else
-                {
-                    // just accept whatever we are given
-                    snprintf( sz_screen_size, sizeof( sz_screen_size ), "%dx%d", cfg.scrx_req, cfg.scry_req );
-                }
-
-                sz_buttons[but_screensize] = sz_screen_size;
 
                 aspect_ratio = ( float )cfg.scrx_req / ( float )cfg.scry_req;
 
                 // 1.539 is "half way" between normal aspect ratio (4/3) and anamorphic (16/9)
                 widescreen = ( aspect_ratio > ( 1.539f ) );
 
-                if ( widescreen ) sz_buttons[but_widescreen] = "X";
-                else              sz_buttons[but_widescreen] = " ";
+                doVideoOptions_update_widescreen( w_buttons + but_widescreen, widescreen );
+                doVideoOptions_update_resolution( w_buttons + but_screensize, cfg.scrx_req, cfg.scry_req );
             }
 
             // Save settings button
-            if ( BUTTON_UP == ui_doButton( 14, "Save Settings", NULL, buttonLeft, GFX_HEIGHT - 60, 200, 30 ) )
+            if ( BUTTON_UP == ui_doWidget( w_buttons + but_save ) )
             {
+                doOptionsVideo_update_settings( &cfg );
+
                 menuChoice = 1;
-
-                // synchronize the config values with the various game subsystems
-                setup_synch( &cfg );
-
-                // save the setup file
-                setup_upload( &cfg );
-                setup_write();
-
-                // Reload some of the graphics
-                load_graphics();
             }
+
             if ( menuChoice != 0 )
             {
                 menuState = MM_Leaving;
-                mnu_SlidyButton_init( 0.0f, sz_buttons );
+                SlidyButtonState_init( &but_state, 0.0f, but_save, sz_buttons, w_buttons );
             }
 
             // tool-tip text
-            ui_drawTextBox( menuFont, tipText, tipTextLeft, tipTextTop, 0, 0, 20 );
-
+            display_list_draw( tipText_tx );
             break;
 
         case MM_Leaving:
-            // Do buttons sliding out and background fading
-            // Do the same stuff as in MM_Entering, but backwards
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 - mnu_SlidyButtonState.lerp );
 
-            if ( mnu_draw_background )
             {
-                ui_drawImage( 0, &background, ( GFX_WIDTH  - background.imgW ), 0, 0, 0, NULL );
+                // Do buttons sliding out and background fading
+                // Do the same stuff as in MM_Entering, but backwards
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+
+                if ( mnu_draw_background )
+                {
+                    ui_drawImage( 0, &background, ( GFX_WIDTH  - background.imgW ), 0, 0, 0, NULL );
+                }
             }
 
             // Fall trough
@@ -3769,15 +6059,31 @@ int doVideoOptions( float deltaTime )
             break;
 
         case MM_Finish:
-            // Free the background texture; don't need to hold onto it
-            oglx_texture_Release( &background );
-            menuState = MM_Begin;  // Make sure this all resets next time
+            {
+                // Free the background texture; don't need to hold onto it
+                oglx_texture_Release( &background );
+
+                // free the widgets
+                for ( cnt = 0; cnt < but_count; cnt++ )
+                {
+                    ui_Widget_free( w_buttons + cnt );
+                }
+
+                for ( cnt = 0; cnt < lab_count; cnt++ )
+                {
+                    ui_Widget_free( w_labels  + cnt );
+                }
+
+                // Set the next menu to load
+                result = menuChoice;
+            }
 
             // reset the ui
             ui_Reset();
 
-            // Set the next menu to load
-            result = menuChoice;
+            // make sure that if we come back to this menu, it resets properly
+            menuState = MM_Begin;
+
             break;
     }
 
@@ -3785,9 +6091,94 @@ int doVideoOptions( float deltaTime )
 }
 
 //--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct s_ShowResultsState
+{
+    BASE_MENU_STATE;
+};
+typedef struct s_ShowResultsState ShowResultsState_t;
+
+//--------------------------------------------------------------------------------------------
+static ShowResultsState_t *ShowResultsState_ctor( ShowResultsState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static ShowResultsState_t *ShowResultsState_dtor( ShowResultsState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static ShowResultsState_t * doShowResults_begin( ShowResultsState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    ps = ShowResultsState_ctor( ps );
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static ShowResultsState_t * doShowResults_entering( ShowResultsState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static ShowResultsState_t * doShowResults_running( ShowResultsState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static ShowResultsState_t * doShowResults_leaving( ShowResultsState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static ShowResultsState_t * doShowResults_finish( ShowResultsState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    ps = ShowResultsState_ctor( ps );
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
 int doShowResults( float deltaTime )
 {
-    static Font   *font;
+    static display_item_t * txt_tx_ptr = NULL;
+    static TTF_Font      * ttf_ptr;
+    static display_item_t * fnt_tx_ptr = NULL;
+
     static int     menuState = MM_Begin;
     static int     count;
     static char*   game_hint;
@@ -3802,9 +6193,8 @@ int doShowResults( float deltaTime )
                 Uint8 i;
                 char * carat = buffer, * carat_end = buffer + SDL_arraysize( buffer );
 
-                font = ui_getFont();
+                ttf_ptr = ui_getFont();
                 count = 0;
-                menuState = MM_Entering;
 
                 // Prepeare the summary text
                 for ( i = 0; i < SUMMARYLINES; i++ )
@@ -3823,9 +6213,12 @@ int doShowResults( float deltaTime )
                     else if ( mnu_GameTip.count > 0 )     game_hint = mnu_GameTip.hint[rand() % mnu_GameTip.count];
                 }
             }
-            // pass through
+
+            // let this fall through into MM_Entering
+            menuState = MM_Entering;
 
         case MM_Entering:
+
             menuState = MM_Running;
             // pass through
 
@@ -3837,23 +6230,25 @@ int doShowResults( float deltaTime )
                 GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
 
                 // the module name
-                ui_drawTextBox( font, mnu_ModList.lst[( MOD_REF )selectedModule].base.longname, 50, 80, 291, 230, 20 );
+                menuTextureList_ptr = ui_updateTextBox( menuTextureList_ptr, menuFont, 50, 80, 20, mnu_ModList.lst[( MOD_REF )selectedModule].base.longname );
+                ui_drawTextBox( menuTextureList_ptr, 50, 80, 291, 230 );
 
                 // Draw a text box
-                ui_drawTextBox( menuFont, buffer, 50, 120, 291, 230, 20 );
+                menuTextureList_ptr = ui_updateTextBox( menuTextureList_ptr, menuFont, 50, 120, 20, buffer );
+                ui_drawTextBox( menuTextureList_ptr, 50, 120, 291, 230 );
 
                 // Loading game... please wait
-                fnt_getTextSize( font, "Loading module...", &text_w, &text_h );
-                fnt_drawText( font, NULL, ( GFX_WIDTH / 2 ) - text_w / 2, GFX_HEIGHT - 200, "Loading module..." );
+                fnt_getTextSize( ttf_ptr, &text_w, &text_h, "Loading module..." );
+                ui_drawTextBoxImmediate( ttf_ptr, ( GFX_WIDTH / 2 ) - text_w / 2, GFX_HEIGHT - 200, 20, "Loading module..." );
 
                 // Draw the game tip
                 if ( VALID_CSTR( game_hint ) )
                 {
-                    fnt_getTextSize( menuFont, "GAME TIP", &text_w, &text_h );
-                    fnt_drawText( menuFont, NULL, ( GFX_WIDTH / 2 )  - text_w / 2, GFX_HEIGHT - 150, "GAME TIP" );
+                    fnt_getTextSize( menuFont, &text_w, &text_h, "GAME TIP" );
+                    ui_drawTextBoxImmediate( menuFont, ( GFX_WIDTH / 2 )  - text_w / 2, GFX_HEIGHT - 150, 20, "GAME TIP" );
 
-                    fnt_getTextSize( menuFont, game_hint, &text_w, &text_h );       /// @todo ZF@> : this doesn't work as I intended, fnt_get_TextSize() does not take line breaks into account
-                    ui_drawTextBox( menuFont, game_hint, ( GFX_WIDTH / 2 ) - text_w / 2, GFX_HEIGHT - 110, GFX_WIDTH + 150, GFX_HEIGHT, 20 );
+                    fnt_getTextSize( menuFont, &text_w, &text_h, game_hint );       /// @todo ZF@> : this doesn't work as I intended, ui_get_TextSize() does not take line breaks into account
+                    ui_drawTextBoxImmediate( menuFont, GFX_WIDTH / 2 - text_w / 2, GFX_HEIGHT - 110, 20, game_hint );
                 }
 
                 // keep track of the iterations through this section for a timer
@@ -3866,30 +6261,129 @@ int doShowResults( float deltaTime )
             break;
 
         case MM_Leaving:
+
             menuState = MM_Finish;
             // pass through
 
         case MM_Finish:
-            menuResult = 1;
-            menuState  = MM_Begin;
+            {
+                menuResult = 1;
+            }
+
+            // reset the ui
+            ui_Reset();
+
+            // make sure that if we come back to this menu, it resets properly
+            menuState = MM_Begin;
+
+            break;
     }
 
     return menuResult;
 }
 
 //--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct s_NotImplementedState
+{
+    BASE_MENU_STATE;
+};
+typedef struct s_NotImplementedState NotImplementedState_t;
+
+//--------------------------------------------------------------------------------------------
+static NotImplementedState_t *NotImplementedState_ctor( NotImplementedState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static NotImplementedState_t *NotImplementedState_dtor( NotImplementedState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static NotImplementedState_t * doNotImplemented_begin( NotImplementedState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    ps = NotImplementedState_ctor( ps );
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static NotImplementedState_t * doNotImplemented_entering( NotImplementedState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static NotImplementedState_t * doNotImplemented_running( NotImplementedState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static NotImplementedState_t * doNotImplemented_leaving( NotImplementedState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static NotImplementedState_t * doNotImplemented_finish( NotImplementedState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    ps = NotImplementedState_ctor( ps );
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
 int doNotImplemented( float deltaTime )
 {
     int x, y;
     int w, h;
+
+    ui_Widget_t w_buttons[1];
     char notImplementedMessage[] = "Not implemented yet!  Check back soon!";
 
-    fnt_getTextSize( ui_getFont(), notImplementedMessage, &w, &h );
+    fnt_getTextSize( ui_getFont(), &w, &h, notImplementedMessage );
     w += 50; // add some space on the sides
 
     x = GFX_WIDTH  / 2 - w / 2;
     y = GFX_HEIGHT / 2 - 17;
-    if ( BUTTON_UP == ui_doButton( 1, notImplementedMessage, NULL, x, y, w, 30 ) )
+
+    ui_Widget_set_id( w_buttons + 0, 0 );
+    ui_Widget_set_text( w_buttons + 0, menuFont, 0, notImplementedMessage );
+    ui_Widget_set_button( w_buttons + 0, x, y, w, -1 );
+
+    if ( BUTTON_UP == ui_doWidget( w_buttons + 0 ) )
     {
         return 1;
     }
@@ -3898,12 +6392,108 @@ int doNotImplemented( float deltaTime )
 }
 
 //--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct s_GamePausedState
+{
+    BASE_MENU_STATE;
+};
+typedef struct s_GamePausedState GamePausedState_t;
+
+//--------------------------------------------------------------------------------------------
+static GamePausedState_t *GamePausedState_ctor( GamePausedState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static GamePausedState_t *GamePausedState_dtor( GamePausedState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static GamePausedState_t * doGamePaused_begin( GamePausedState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    ps = GamePausedState_ctor( ps );
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static GamePausedState_t * doGamePaused_entering( GamePausedState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static GamePausedState_t * doGamePaused_running( GamePausedState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static GamePausedState_t * doGamePaused_leaving( GamePausedState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static GamePausedState_t * doGamePaused_finish( GamePausedState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    ps = GamePausedState_ctor( ps );
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
 int doGamePaused( float deltaTime )
 {
     static int menuState = MM_Begin;
     static int menuChoice = 0;
+    static SlidyButtonState_t but_state = { NULL };
 
-    static const char * buttons[] =
+    enum
+    {
+        but_quit,
+        but_restart,
+        but_return,
+        but_options,
+        but_count,
+        but_sz_count
+    };
+
+    // button widgets
+    static ui_Widget_t w_buttons[but_count];
+
+    static const char * sz_buttons[but_sz_count] =
     {
         "Quit Module",
         "Restart Module",
@@ -3919,21 +6509,35 @@ int doGamePaused( float deltaTime )
         case MM_Begin:
             // set up menu variables
             menuChoice = 0;
+
+            {
+
+                for ( cnt = 0; cnt < but_count; cnt++ )
+                {
+                    // clear the data
+                    memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
+                    ui_Widget_set_id( w_buttons + cnt, cnt );
+                }
+
+                if ( PMod->exportvalid && !local_stats.allpladead ) sz_buttons[0] = "Save and Exit";
+                else                                                sz_buttons[0] = "Quit Module";
+
+                SlidyButtonState_init( &but_state, 1.0f, 0, sz_buttons, w_buttons );
+            }
+
+            // let this fall through into MM_Entering
             menuState = MM_Entering;
 
-            if ( PMod->exportvalid && !local_stats.allpladead ) buttons[0] = "Save and Exit";
-            else                                                buttons[0] = "Quit Module";
-
-            mnu_SlidyButton_init( 1.0f, buttons );
-
         case MM_Entering:
-            mnu_SlidyButton_draw_all();
-            mnu_SlidyButton_update_all( -deltaTime );
-
-            // Let lerp wind down relative to the time elapsed
-            if ( mnu_SlidyButtonState.lerp <= 0.0f )
             {
-                menuState = MM_Running;
+                SlidyButtonState_draw_all( &but_state );
+                SlidyButtonState_update_all( &but_state, -deltaTime );
+
+                // Let lerp wind down relative to the time elapsed
+                if ( but_state.lerp <= 0.0f )
+                {
+                    menuState = MM_Running;
+                }
             }
             break;
 
@@ -3945,7 +6549,7 @@ int doGamePaused( float deltaTime )
             // Buttons
             for ( cnt = 0; cnt < 4; cnt ++ )
             {
-                if ( BUTTON_UP == ui_doButton( cnt + 1, buttons[cnt], NULL, buttonLeft, buttonTop + ( cnt * 35 ), 200, 30 ) )
+                if ( BUTTON_UP == ui_doWidget( w_buttons + cnt ) )
                 {
                     // audio options
                     menuChoice = cnt + 1;
@@ -3958,33 +6562,46 @@ int doGamePaused( float deltaTime )
             if ( menuChoice != 0 )
             {
                 menuState = MM_Leaving;
-                mnu_SlidyButton_init( 0.0f, buttons );
+                SlidyButtonState_init( &but_state, 0.0f, 0, sz_buttons, w_buttons );
             }
             break;
 
         case MM_Leaving:
-            // Do buttons sliding out and background fading
+            // Do sz_buttons sliding out and background fading
             // Do the same stuff as in MM_Entering, but backwards
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 - mnu_SlidyButtonState.lerp );
-
-            // Buttons
-            mnu_SlidyButton_draw_all();
-            mnu_SlidyButton_update_all( deltaTime );
-            if ( mnu_SlidyButtonState.lerp >= 1.0f )
             {
-                menuState = MM_Finish;
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+
+                // Buttons
+                SlidyButtonState_draw_all( &but_state );
+                SlidyButtonState_update_all( &but_state, deltaTime );
+                if ( but_state.lerp >= 1.0f )
+                {
+                    menuState = MM_Finish;
+                }
             }
             break;
 
         case MM_Finish:
-            // Free the background texture; don't need to hold onto it
-            menuState = MM_Begin;  // Make sure this all resets next time
+            {
+                // Free the background texture; don't need to hold onto it
+
+                // free the widgets
+                for ( cnt = 0; cnt < but_count; cnt++ )
+                {
+                    ui_Widget_free( w_buttons + cnt );
+                }
+
+                // Set the next menu to load
+                result = menuChoice;
+            }
 
             // reset the ui
             ui_Reset();
 
-            // Set the next menu to load
-            result = menuChoice;
+            // make sure that if we come back to this menu, it resets properly
+            menuState = MM_Begin;
+
             break;
     }
 
@@ -3992,14 +6609,107 @@ int doGamePaused( float deltaTime )
 }
 
 //--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct s_ShowEndgameState
+{
+    BASE_MENU_STATE;
+};
+typedef struct s_ShowEndgameState ShowEndgameState_t;
+
+//--------------------------------------------------------------------------------------------
+static ShowEndgameState_t *ShowEndgameState_ctor( ShowEndgameState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static ShowEndgameState_t *ShowEndgameState_dtor( ShowEndgameState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static ShowEndgameState_t * doShowEndgame_begin( ShowEndgameState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    ps = ShowEndgameState_ctor( ps );
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static ShowEndgameState_t * doShowEndgame_entering( ShowEndgameState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static ShowEndgameState_t * doShowEndgame_running( ShowEndgameState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static ShowEndgameState_t * doShowEndgame_leaving( ShowEndgameState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static ShowEndgameState_t * doShowEndgame_finish( ShowEndgameState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    ps = ShowEndgameState_ctor( ps );
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
 int doShowEndgame( float deltaTime )
 {
     static int menuState = MM_Begin;
     static int menuChoice = 0;
     static int x, y, w, h;
-    static Font *font;
+    static display_item_t *fnt_tx_ptr = NULL;
+    static SlidyButtonState_t but_state = { NULL };
 
-    static const char * buttons[] =
+    enum
+    {
+        but_exit,
+        but_count,
+        but_sz_count
+    };
+
+    // button widgets
+    static ui_Widget_t w_buttons[but_count];
+
+    static const char * sz_buttons[but_sz_count] =
     {
         "BLAH",
         ""
@@ -4011,38 +6721,49 @@ int doShowEndgame( float deltaTime )
     switch ( menuState )
     {
         case MM_Begin:
+            {
+                for ( cnt = 0; cnt < but_count; cnt++ )
+                {
+                    // clear the data
+                    memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
+                    ui_Widget_set_id( w_buttons + cnt, cnt );
+                }
+
+                SlidyButtonState_init( &but_state, 1.0f, 0, sz_buttons, w_buttons );
+
+                if ( PMod->exportvalid )
+                {
+                    sz_buttons[but_exit] = "Save and Exit";
+                }
+                else
+                {
+                    sz_buttons[but_exit] = "Exit Game";
+                }
+
+                x = 70;
+                y = 70;
+                w = GFX_WIDTH  - 2 * x;
+                h = GFX_HEIGHT - 2 * y;
+            }
+
+            // let this fall through into MM_Entering
             menuState = MM_Entering;
-            font = ui_getFont();
-
-            mnu_SlidyButton_init( 1.0f, buttons );
-
-            if ( PMod->exportvalid )
-            {
-                buttons[0] = "Save and Exit";
-            }
-            else
-            {
-                buttons[0] = "Exit Game";
-            }
-
-            x = 70;
-            y = 70;
-            w = GFX_WIDTH  - 2 * x;
-            h = GFX_HEIGHT - 2 * y;
 
         case MM_Entering:
-
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 - mnu_SlidyButtonState.lerp );
-
-            ui_drawTextBox( NULL, endtext, x, y, w, h, 20 );
-            mnu_SlidyButton_draw_all();
-
-            mnu_SlidyButton_update_all( -deltaTime );
-
-            // Let lerp wind down relative to the time elapsed
-            if ( mnu_SlidyButtonState.lerp <= 0.0f )
             {
-                menuState = MM_Running;
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+
+                menuTextureList_ptr = ui_updateTextBox( menuTextureList_ptr, menuFont, x, y, 20, endtext );
+                ui_drawTextBox( menuTextureList_ptr, x, y, w, h );
+                SlidyButtonState_draw_all( &but_state );
+
+                SlidyButtonState_update_all( &but_state, -deltaTime );
+
+                // Let lerp wind down relative to the time elapsed
+                if ( but_state.lerp <= 0.0f )
+                {
+                    menuState = MM_Running;
+                }
             }
             break;
 
@@ -4052,7 +6773,7 @@ int doShowEndgame( float deltaTime )
             // Buttons
             for ( cnt = 0; cnt < 1; cnt ++ )
             {
-                if ( BUTTON_UP == ui_doButton( cnt + 1, buttons[cnt], NULL, buttonLeft, buttonTop + ( cnt * 35 ), 200, 30 ) )
+                if ( BUTTON_UP == ui_doWidget( w_buttons + cnt ) )
                 {
                     // audio options
                     menuChoice = cnt + 1;
@@ -4067,23 +6788,27 @@ int doShowEndgame( float deltaTime )
                 menuState = MM_Leaving;
             }
 
-            ui_drawTextBox( NULL, endtext, x, y, w, h, 20 );
+            menuTextureList_ptr = ui_updateTextBox( menuTextureList_ptr, menuFont, x, y, 20, endtext );
+            ui_drawTextBox( menuTextureList_ptr, x, y, w, h );
 
             break;
 
         case MM_Leaving:
-            // Do buttons sliding out and background fading
+            // Do sz_buttons sliding out and background fading
             // Do the same stuff as in MM_Entering, but backwards
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 - mnu_SlidyButtonState.lerp );
-
-            ui_drawTextBox( NULL, endtext, x, y, w, h, 20 );
-
-            // Buttons
-            mnu_SlidyButton_draw_all();
-            mnu_SlidyButton_update_all( deltaTime );
-            if ( mnu_SlidyButtonState.lerp >= 1.0f )
             {
-                menuState = MM_Finish;
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+
+                menuTextureList_ptr = ui_updateTextBox( menuTextureList_ptr, menuFont, x, y, 20, endtext );
+                ui_drawTextBox( menuTextureList_ptr, x, y, w, h );
+
+                // Buttons
+                SlidyButtonState_draw_all( &but_state );
+                SlidyButtonState_update_all( &but_state, deltaTime );
+                if ( but_state.lerp >= 1.0f )
+                {
+                    menuState = MM_Finish;
+                }
             }
             break;
 
@@ -4126,11 +6851,23 @@ int doShowEndgame( float deltaTime )
                     process_kill( PROC_PBASE( GProc ) );
                 }
 
-                menuState = MM_Begin;
+                // free the widgets
+                for ( cnt = 0; cnt < but_count; cnt++ )
+                {
+                    ui_Widget_free( w_buttons + cnt );
+                }
 
                 // Set the next menu to load
                 retval = menuChoice;
             }
+
+            // reset the ui
+            ui_Reset();
+
+            // make sure that if we come back to this menu, it resets properly
+            menuState = MM_Begin;
+
+            break;
     }
 
     return retval;
@@ -4221,7 +6958,7 @@ int doMenu( float deltaTime )
             break;
 
         case emnu_GameOptions:
-            result = doGameOptions( deltaTime );
+            result = doOptionsGame( deltaTime );
             if ( result != 0 )
             {
                 mnu_end_menu();
@@ -4230,7 +6967,7 @@ int doMenu( float deltaTime )
             break;
 
         case emnu_AudioOptions:
-            result = doAudioOptions( deltaTime );
+            result = doOptionsAudio( deltaTime );
             if ( result != 0 )
             {
                 mnu_end_menu();
@@ -4239,7 +6976,7 @@ int doMenu( float deltaTime )
             break;
 
         case emnu_VideoOptions:
-            result = doVideoOptions( deltaTime );
+            result = doOptionsVideo( deltaTime );
             if ( result != 0 )
             {
                 mnu_end_menu();
@@ -4248,7 +6985,7 @@ int doMenu( float deltaTime )
             break;
 
         case emnu_InputOptions:
-            result = doInputOptions( deltaTime );
+            result = doOptionsInput( deltaTime );
             if ( result != 0 )
             {
                 mnu_end_menu();
@@ -4367,10 +7104,10 @@ void autoformat_init_tip_text()
     tipText = NULL;
 
     // Draw the options text to the right of the buttons
-    tipTextLeft = 280;
+    tipText_left = 280;
 
     // And relative to the bottom of the screen
-    tipTextTop = GFX_HEIGHT;
+    tipText_top = GFX_HEIGHT;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4389,30 +7126,35 @@ void autoformat_init_copyright_text()
 //--------------------------------------------------------------------------------------------
 // Implementation of tipText
 //--------------------------------------------------------------------------------------------
-void tipText_set_position( Font * font, const char * text, int spacing )
+void tipText_set_position( TTF_Font * font, const char * text, int spacing )
 {
     int w, h;
+    const char * new_text = NULL;
 
     autoformat_init_tip_text();
 
     if ( NULL == text ) return;
 
-    fnt_getTextBoxSize( font, text, spacing, &w, &h );
+    new_text = fnt_getTextBoxSize( font, spacing, &w, &h, text );
 
     // set the text
-    tipText = text;
+    tipText = new_text;
 
     // Draw the options text to the right of the buttons
-    tipTextLeft = 280;
+    tipText_left = 280;
 
     // And relative to the bottom of the screen
-    tipTextTop = GFX_HEIGHT - h - spacing;
+    tipText_top = GFX_HEIGHT - h - spacing;
+
+    // actually set the texture
+    GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+    tipText_tx = ui_updateTextBox_literal( tipText_tx, menuFont, tipText_left, tipText_top, 20, tipText );
 }
 
 //--------------------------------------------------------------------------------------------
 // Implementation of copyrightText
 //--------------------------------------------------------------------------------------------
-void copyrightText_set_position( Font * font, const char * text, int spacing )
+void copyrightText_set_position( TTF_Font * font, const char * text, int spacing )
 {
     int w, h;
 
@@ -4424,7 +7166,7 @@ void copyrightText_set_position( Font * font, const char * text, int spacing )
     copyrightLeft = 0;
 
     // Figure out where to draw the copyright text
-    fnt_getTextBoxSize( font, text, 20, &w, &h );
+    fnt_getTextBoxSize( font, 20, &w, &h, text );
 
     // set the text
     copyrightText = text;
@@ -4434,6 +7176,9 @@ void copyrightText_set_position( Font * font, const char * text, int spacing )
 
     // And relative to the bottom of the screen
     copyrightTop = GFX_HEIGHT - h - spacing;
+
+    // set the rendered ogl texture
+    copyrightText_tx_ptr = ui_updateTextBox( copyrightText_tx_ptr, menuFont, copyrightLeft, copyrightTop, 20, copyrightText );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4845,7 +7590,7 @@ TX_REF TxTitleImage_load_one_vfs( const char *szLoadName )
     if ( TxTitleImage.count >= TITLE_TEXTURE_COUNT ) return ( TX_REF )INVALID_TITLE_TEXTURE;
 
     itex  = ( TX_REF )TxTitleImage.count;
-    if ( INVALID_TX_ID != ego_texture_load_vfs( TxTitleImage.lst + itex, szLoadName, INVALID_KEY ) )
+    if ( INVALID_GL_ID != ego_texture_load_vfs( TxTitleImage.lst + itex, szLoadName, INVALID_KEY ) )
     {
         TxTitleImage.count++;
     }
@@ -4969,40 +7714,89 @@ bool_t mnu_GameTip_load_local_vfs()
 //--------------------------------------------------------------------------------------------
 // Implementation of the mnu_SlidyButton array
 //--------------------------------------------------------------------------------------------
-void mnu_SlidyButton_init( float lerp, const char *button_text[] )
+SlidyButtonState_t * SlidyButtonState_init( SlidyButtonState_t * pstate, float lerp, int id_start, const char *button_text[], ui_Widget_t * button_widget )
 {
-    int i;
+    size_t i, count;
+
+    if ( NULL == pstate ) return pstate;
+
+    // clear the state
+    memset( pstate, 0, sizeof( *pstate ) );
 
     autoformat_init_slidy_buttons();
 
-    // Figure out where to draw the buttons
-    for ( i = 0; button_text[i][0] != 0; i++ )
+    // return if there is no valid text
+    if ( NULL == button_text || NULL == button_text[0] || '\0' == button_text[0][0] ) return pstate;
+
+    // Figure out where to start drawing the buttons
+    for ( count = 0, i = id_start; NULL != button_text[i] && '\0' != button_text[i][0]; count++, i++ )
     {
         buttonTop -= 35;
     }
 
-    mnu_SlidyButtonState.lerp = lerp;
-    mnu_SlidyButtonState.buttons = ( char** )button_text;
-}
+    // if there are no buttons, return
+    if ( 0 == count ) return pstate;
 
-//--------------------------------------------------------------------------------------------
-void mnu_SlidyButton_update_all( float deltaTime )
-{
-    mnu_SlidyButtonState.lerp += ( deltaTime * 1.5f );
-}
+    // set the correct parameters
+    pstate->lerp      = lerp;
+    pstate->but_text  = ( char** )( NULL == button_text ? NULL : button_text + id_start );
+    pstate->but       = ( NULL == button_widget ) ? NULL : button_widget + id_start;
+    pstate->but_count = count;
 
-//--------------------------------------------------------------------------------------------
-void mnu_SlidyButton_draw_all()
-{
-    int i;
-
-    for ( i = 0; mnu_SlidyButtonState.buttons[i][0] != 0; i++ )
+    // if there are widgets
+    if ( NULL != button_widget )
     {
-        int x = buttonLeft - ( 360 - i * 35 )  * mnu_SlidyButtonState.lerp;
-        int y = buttonTop + ( i * 35 );
+        // automatically configure the widgets
+        for ( i = 0; i < count; i++ )
+        {
+            size_t          j = i + id_start;
+            ui_Widget_t * pw  = button_widget + j;
+            const char *  txt = ( NULL == button_text ) ? NULL : button_text[j];
 
-        ui_doButton( UI_Nothing, mnu_SlidyButtonState.buttons[i], NULL, x, y, 200, 30 );
+            ui_Widget_set_id( pw, j );
+            ui_Widget_set_button( pw, buttonLeft, buttonTop + i * 35, 200, 30 );
+            ui_Widget_set_text( pw, NULL, 20, txt );
+        }
     }
+
+    return pstate;
+}
+
+//--------------------------------------------------------------------------------------------
+SlidyButtonState_t * SlidyButtonState_update_all( SlidyButtonState_t * pstate, float deltaTime )
+{
+    size_t i;
+
+    if ( NULL == pstate ) return pstate;
+
+    pstate->lerp += ( deltaTime * 1.5f );
+
+    for ( i = 0; i < pstate->but_count; i++ )
+    {
+        ui_Widget_t * pw = pstate->but + i;
+
+        float x = buttonLeft - ( 360 - i * 35 )  * pstate->lerp;
+        float y = pw->vy;
+
+        ui_Widget_set_pos( pw, x, y );
+    }
+
+    return pstate;
+}
+
+//--------------------------------------------------------------------------------------------
+SlidyButtonState_t * SlidyButtonState_draw_all( SlidyButtonState_t * pstate )
+{
+    size_t i;
+
+    if ( NULL == pstate ) return pstate;
+
+    for ( i = 0; i < pstate->but_count; i++ )
+    {
+        ui_doWidget( pstate->but + i );
+    }
+
+    return pstate;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -5125,8 +7919,8 @@ bool_t mnu_Selected_add_input( int loadplayer_idx, BIT_FIELD input_bits )
             if ( i == selected_index )
             {
                 // add in the selected bits for the selected loadplayer_idx
+                retval = ( 0 != input_bits ) && (input_bits != (input_bits & mnu_selectedInput[i]));
                 ADD_BITS( mnu_selectedInput[i], input_bits );
-                retval = btrue;
             }
             else
             {
@@ -5169,6 +7963,11 @@ bool_t mnu_Selected_remove_input( int loadplayer_idx, Uint32 input_bits )
     {
         if ( mnu_selectedPlayer[i] == loadplayer_idx )
         {
+            bool_t removing_bits = bfalse;
+            bool_t removing_player = bfalse;
+            
+            removing_bits = HAS_SOME_BITS( input_bits, mnu_selectedInput[i] );
+
             REMOVE_BITS( mnu_selectedInput[i], input_bits );
 
             // This part is not so tricky as in mnu_Selected_add_input.
@@ -5176,12 +7975,13 @@ bool_t mnu_Selected_remove_input( int loadplayer_idx, Uint32 input_bits )
             // tested in the loop because we are using the break command to
             // break out of the loop immediately
 
+            removing_player = bfalse;
             if ( INPUT_BITS_NONE == mnu_selectedInput[i] )
             {
-                mnu_Selected_remove( loadplayer_idx );
+                removing_player = mnu_Selected_remove( loadplayer_idx );
             }
 
-            retval = btrue;
+            retval = removing_bits || removing_player;
 
             break;
         }
@@ -5269,4 +8069,3 @@ void mnu_player_check_import( const char *dirname, bool_t initialize )
     }
     vfs_findClose( &ctxt );
 }
-

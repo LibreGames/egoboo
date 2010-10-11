@@ -1390,8 +1390,8 @@ bool_t BSP_leaf_list_insert( BSP_leaf_t ** lst, size_t * pcount, BSP_leaf_t * n 
         bool_t found = bfalse;
 
         for ( cnt = 0, ptmp = *lst;
-            NULL != ptmp->next && cnt < *pcount && !found;
-            cnt++, ptmp = ptmp->next )
+              NULL != ptmp->next && cnt < *pcount && !found;
+              cnt++, ptmp = ptmp->next )
         {
             // do not insert duplicates, or we have a big problem
             if ( n == ptmp )
@@ -1401,7 +1401,7 @@ bool_t BSP_leaf_list_insert( BSP_leaf_t ** lst, size_t * pcount, BSP_leaf_t * n 
             }
         }
 
-        if( !found )
+        if ( !found )
         {
             EGOBOO_ASSERT( NULL == ptmp->next );
 
@@ -1410,7 +1410,7 @@ bool_t BSP_leaf_list_insert( BSP_leaf_t ** lst, size_t * pcount, BSP_leaf_t * n 
 
             // insert the node at the end of the list
             ptmp->next  = n;
-            *pcount     = (*pcount) + 1;
+            *pcount     = ( *pcount ) + 1;
             n->inserted = btrue;
 
             retval = btrue;
@@ -1479,7 +1479,7 @@ bool_t BSP_leaf_list_collide( BSP_leaf_t * leaf_lst, size_t leaf_count, BSP_aabb
 
         EGOBOO_ASSERT( pleaf->data_type > -1 );
 
-        if( !pleaf->inserted )
+        if ( !pleaf->inserted )
         {
             // hmmm.... what to do?
             log_warning( "BSP_leaf_list_collide() - a node in a leaf list is claiming to not be inserted\n" );

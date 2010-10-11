@@ -106,14 +106,14 @@ bool_t open_passage( const PASS_REF by_reference passage )
     useful = !ppass->open;
     ppass->open = btrue;
 
-    if ( ppass->area.top <= ppass->area.bottom )
+    if ( ppass->area.ymin <= ppass->area.ymax )
     {
         useful = ( !ppass->open );
         ppass->open = btrue;
 
-        for ( y = ppass->area.top; y <= ppass->area.bottom; y++ )
+        for ( y = ppass->area.ymin; y <= ppass->area.ymax; y++ )
         {
-            for ( x = ppass->area.left; x <= ppass->area.right; x++ )
+            for ( x = ppass->area.xmin; x <= ppass->area.xmax; x++ )
             {
                 fan = mesh_get_tile_int( PMesh, x, y );
                 mesh_clear_fx( PMesh, fan, MPDFX_WALL | MPDFX_IMPASS );
@@ -136,9 +136,9 @@ void flash_passage( const PASS_REF by_reference passage, Uint8 color )
     if ( INVALID_PASSAGE( passage ) ) return;
     ppass = PassageStack.lst + passage;
 
-    for ( y = ppass->area.top; y <= ppass->area.bottom; y++ )
+    for ( y = ppass->area.ymin; y <= ppass->area.ymax; y++ )
     {
-        for ( x = ppass->area.left; x <= ppass->area.right; x++ )
+        for ( x = ppass->area.xmin; x <= ppass->area.xmax; x++ )
         {
             fan = mesh_get_tile_int( PMesh, x, y );
 
@@ -158,16 +158,16 @@ bool_t point_is_in_passage( const PASS_REF by_reference passage, float xpos, flo
     /// @details ZF@> This return btrue if the specified X and Y coordinates are within the passage
 
     passage_t * ppass;
-    frect_t tmp_rect;
+    ego_frect_t tmp_rect;
 
     if ( INVALID_PASSAGE( passage ) ) return bfalse;
     ppass = PassageStack.lst + passage;
 
     // Passage area
-    tmp_rect.left   = ppass->area.left * GRID_SIZE;
-    tmp_rect.top    = ppass->area.top * GRID_SIZE;
-    tmp_rect.right  = ( ppass->area.right + 1 ) * GRID_SIZE;
-    tmp_rect.bottom = ( ppass->area.bottom + 1 ) * GRID_SIZE;
+    tmp_rect.xmin   = ppass->area.xmin * GRID_SIZE;
+    tmp_rect.ymin    = ppass->area.ymin * GRID_SIZE;
+    tmp_rect.xmax  = ( ppass->area.xmax + 1 ) * GRID_SIZE;
+    tmp_rect.ymax = ( ppass->area.ymax + 1 ) * GRID_SIZE;
 
     return frect_point_inside( &tmp_rect, xpos, ypos );
 }
@@ -179,17 +179,17 @@ bool_t object_is_in_passage( const PASS_REF by_reference passage, float xpos, fl
     ///     radius is how much offset we allow outside the passage
 
     passage_t * ppass;
-    frect_t tmp_rect;
+    ego_frect_t tmp_rect;
 
     if ( INVALID_PASSAGE( passage ) ) return bfalse;
     ppass = PassageStack.lst + passage;
 
     // Passage area
     radius += CLOSETOLERANCE;
-    tmp_rect.left   = ( ppass->area.left          * GRID_SIZE ) - radius;
-    tmp_rect.top    = ( ppass->area.top           * GRID_SIZE ) - radius;
-    tmp_rect.right  = (( ppass->area.right + 1 )  * GRID_SIZE ) + radius;
-    tmp_rect.bottom = (( ppass->area.bottom + 1 ) * GRID_SIZE ) + radius;
+    tmp_rect.xmin = ( ppass->area.xmin        * GRID_SIZE ) - radius;
+    tmp_rect.ymin = ( ppass->area.ymin        * GRID_SIZE ) - radius;
+    tmp_rect.xmax = (( ppass->area.xmax + 1 ) * GRID_SIZE ) + radius;
+    tmp_rect.ymax = (( ppass->area.ymax + 1 ) * GRID_SIZE ) + radius;
 
     return frect_point_inside( &tmp_rect, xpos, ypos );
 }
@@ -376,9 +376,9 @@ bool_t close_passage( const PASS_REF by_reference passage )
 
     // Close it off
     ppass->open = bfalse;
-    for ( y = ppass->area.top; y <= ppass->area.bottom; y++ )
+    for ( y = ppass->area.ymin; y <= ppass->area.ymax; y++ )
     {
-        for ( x = ppass->area.left; x <= ppass->area.right; x++ )
+        for ( x = ppass->area.xmin; x <= ppass->area.xmax; x++ )
         {
             fan = mesh_get_tile_int( PMesh, x, y );
             mesh_add_fx( PMesh, fan, ppass->mask );
@@ -462,14 +462,14 @@ void add_passage( passage_t * pdata )
     if ( ipass >= MAX_PASS ) return;
     ppass = PassageStack.lst + ipass;
 
-    ppass->area.left      = CLIP( pdata->area.left, 0, PMesh->info.tiles_x - 1 );
-    ppass->area.top      = CLIP( pdata->area.top, 0, PMesh->info.tiles_y - 1 );
+    ppass->area.xmin  = CLIP( pdata->area.xmin, 0, PMesh->info.tiles_x - 1 );
+    ppass->area.ymin  = CLIP( pdata->area.ymin, 0, PMesh->info.tiles_y - 1 );
 
-    ppass->area.right  = CLIP( pdata->area.right, 0, PMesh->info.tiles_x - 1 );
-    ppass->area.bottom  = CLIP( pdata->area.bottom, 0, PMesh->info.tiles_y - 1 );
+    ppass->area.xmax  = CLIP( pdata->area.xmax, 0, PMesh->info.tiles_x - 1 );
+    ppass->area.ymax  = CLIP( pdata->area.ymax, 0, PMesh->info.tiles_y - 1 );
 
-    ppass->mask          = pdata->mask;
-    ppass->music         = pdata->music;
+    ppass->mask       = pdata->mask;
+    ppass->music      = pdata->music;
 
     // Is it open or closed?
     if ( pdata->open )

@@ -53,10 +53,10 @@ bool_t scan_passage_file( vfs_FILE * fileread, passage_t * ppass )
     found = bfalse;
     if ( goto_colon( NULL, fileread, btrue ) )
     {
-        ppass->area.left   = fget_int( fileread );
-        ppass->area.top    = fget_int( fileread );
-        ppass->area.right  = fget_int( fileread );
-        ppass->area.bottom = fget_int( fileread );
+        ppass->area.xmin = fget_int( fileread );
+        ppass->area.ymin = fget_int( fileread );
+        ppass->area.xmax = fget_int( fileread );
+        ppass->area.ymax = fget_int( fileread );
 
         ppass->open = fget_bool( fileread );
 

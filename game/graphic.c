@@ -113,12 +113,12 @@ static int         dyna_list_count = 0;           // Number of dynamic lights
 static dynalight_t dyna_list[TOTAL_MAX_DYNA];
 
 // Interface stuff
-static irect_t             iconrect;                   // The 32x32 icon rectangle
+static ego_irect_t         iconrect;                   // The 32x32 icon rectangle
 
-static irect_t             tabrect[NUMBAR];            // The tab rectangles
-static irect_t             barrect[NUMBAR];            // The bar rectangles
-static irect_t             bliprect[COLOR_MAX];        // The blip rectangles
-static irect_t             maprect;                    // The map rectangle
+static ego_irect_t         tabrect[NUMBAR];            // The tab rectangles
+static ego_irect_t         barrect[NUMBAR];            // The bar rectangles
+static ego_irect_t         bliprect[COLOR_MAX];        // The blip rectangles
+static ego_irect_t         maprect;                    // The map rectangle
 
 static bool_t             gfx_page_flip_requested  = bfalse;
 static bool_t             gfx_page_clear_requested = btrue;
@@ -466,9 +466,9 @@ int ogl_init()
     GL_DEBUG( glTexGeni )( GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP );  // Set The Texture Generation Mode For S To Sphere Mapping (NEW)
     GL_DEBUG( glTexGeni )( GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP );  // Set The Texture Generation Mode For T To Sphere Mapping (NEW)
 
-	//Initialize the motion blur buffer
-	GL_DEBUG( glClearAccum )( 0.0, 0.0, 0.0, 1.0 );
-	GL_DEBUG( glClear )( GL_ACCUM_BUFFER_BIT );
+    //Initialize the motion blur buffer
+    GL_DEBUG( glClearAccum )( 0.0, 0.0, 0.0, 1.0 );
+    GL_DEBUG( glClear )( GL_ACCUM_BUFFER_BIT );
 
     // Load the current graphical settings
     // load_graphics();
@@ -707,7 +707,7 @@ int debug_printf( const char *format, ... )
 void draw_blip( float sizeFactor, Uint8 color, int x, int y, bool_t mini_map )
 {
     /// @details ZZ@> This function draws a single blip
-    frect_t txrect;
+    ego_frect_t txrect;
     float   width, height;
 
     // Adjust the position values so that they fit inside the minimap
@@ -728,23 +728,23 @@ void draw_blip( float sizeFactor, Uint8 color, int x, int y, bool_t mini_map )
 
         oglx_texture_Bind( ptex );
 
-        txrect.left   = ( float )bliprect[color].left   / ( float )oglx_texture_GetTextureWidth( ptex );
-        txrect.right  = ( float )bliprect[color].right  / ( float )oglx_texture_GetTextureWidth( ptex );
-        txrect.top    = ( float )bliprect[color].top    / ( float )oglx_texture_GetTextureHeight( ptex );
-        txrect.bottom = ( float )bliprect[color].bottom / ( float )oglx_texture_GetTextureHeight( ptex );
+        txrect.xmin = ( float )bliprect[color].xmin / ( float )oglx_texture_GetTextureWidth( ptex );
+        txrect.xmax = ( float )bliprect[color].xmax / ( float )oglx_texture_GetTextureWidth( ptex );
+        txrect.ymin = ( float )bliprect[color].ymin / ( float )oglx_texture_GetTextureHeight( ptex );
+        txrect.ymax = ( float )bliprect[color].ymax / ( float )oglx_texture_GetTextureHeight( ptex );
 
-        width  = bliprect[color].right  - bliprect[color].left;
-        height = bliprect[color].bottom - bliprect[color].top;
+        width  = bliprect[color].xmax - bliprect[color].xmin;
+        height = bliprect[color].ymax - bliprect[color].ymin;
 
         width  *= sizeFactor;
         height *= sizeFactor;
 
         GL_DEBUG( glBegin )( GL_QUADS );
         {
-            GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.bottom ); GL_DEBUG( glVertex2f )( x - ( width / 2 ), y + ( height / 2 ) );
-            GL_DEBUG( glTexCoord2f )( txrect.right, txrect.bottom ); GL_DEBUG( glVertex2f )( x + ( width / 2 ), y + ( height / 2 ) );
-            GL_DEBUG( glTexCoord2f )( txrect.right, txrect.top ); GL_DEBUG( glVertex2f )( x + ( width / 2 ), y - ( height / 2 ) );
-            GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.top ); GL_DEBUG( glVertex2f )( x - ( width / 2 ), y - ( height / 2 ) );
+            GL_DEBUG( glTexCoord2f )( txrect.xmin,  txrect.ymax ); GL_DEBUG( glVertex2f )( x - ( width / 2 ), y + ( height / 2 ) );
+            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2f )( x + ( width / 2 ), y + ( height / 2 ) );
+            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin ); GL_DEBUG( glVertex2f )( x + ( width / 2 ), y - ( height / 2 ) );
+            GL_DEBUG( glTexCoord2f )( txrect.xmin,  txrect.ymin ); GL_DEBUG( glVertex2f )( x - ( width / 2 ), y - ( height / 2 ) );
         }
         GL_DEBUG_END();
     }
@@ -754,9 +754,10 @@ void draw_blip( float sizeFactor, Uint8 color, int x, int y, bool_t mini_map )
 void draw_one_icon( const TX_REF by_reference icontype, int x, int y, Uint8 sparkle )
 {
     /// @details ZZ@> This function draws an icon
+
     int     position, blip_x, blip_y;
     int     width, height;
-    frect_t txrect;
+    ego_frect_t txrect;
 
     oglx_texture_t * ptex = TxTexture_get_ptr( icontype );
 
@@ -765,20 +766,20 @@ void draw_one_icon( const TX_REF by_reference icontype, int x, int y, Uint8 spar
 
     oglx_texture_Bind( ptex );
 
-    txrect.left   = (( float )iconrect.left ) / 32.0f;
-    txrect.right  = (( float )iconrect.right ) / 32.0f;
-    txrect.top    = (( float )iconrect.top ) / 32.0f;
-    txrect.bottom = (( float )iconrect.bottom ) / 32.0f;
+    txrect.xmin = ( float )iconrect.xmin / (float)ICON_SIZE;
+    txrect.xmax = ( float )iconrect.xmax / (float)ICON_SIZE;
+    txrect.ymin = ( float )iconrect.ymin / (float)ICON_SIZE;
+    txrect.ymax = ( float )iconrect.ymax / (float)ICON_SIZE;
 
-    width  = iconrect.right  - iconrect.left;
-    height = iconrect.bottom - iconrect.top;
+    width  = iconrect.xmax - iconrect.xmin;
+    height = iconrect.ymax - iconrect.ymin;
 
     GL_DEBUG( glBegin )( GL_QUADS );
     {
-        GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.bottom ); GL_DEBUG( glVertex2i )( x,         y + height );
-        GL_DEBUG( glTexCoord2f )( txrect.right, txrect.bottom ); GL_DEBUG( glVertex2i )( x + width, y + height );
-        GL_DEBUG( glTexCoord2f )( txrect.right, txrect.top ); GL_DEBUG( glVertex2i )( x + width, y );
-        GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.top ); GL_DEBUG( glVertex2i )( x,         y );
+        GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2i )( x,         y + height );
+        GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2i )( x + width, y + height );
+        GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin ); GL_DEBUG( glVertex2i )( x + width, y );
+        GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymin ); GL_DEBUG( glVertex2i )( x,         y );
     }
     GL_DEBUG_END();
 
@@ -862,7 +863,7 @@ int draw_one_xp_bar( int x, int y, Uint8 ticks )
 
     int width, height;
     Uint8 cnt;
-    frect_t txrect;
+    ego_frect_t txrect;
 
     ticks = MIN( ticks, NUMTICK );
 
@@ -872,29 +873,29 @@ int draw_one_xp_bar( int x, int y, Uint8 ticks )
     // Draw the tab (always colored)
     oglx_texture_Bind( TxTexture_get_ptr(( TX_REF )TX_XP_BAR ) );
 
-    txrect.left   = 0.0f;
-    txrect.right  = 32 / 128.0f;
-    txrect.top    = XPTICK / 16.0f;
-    txrect.bottom = XPTICK * 2.0f / 16.0f;
+    txrect.xmin   = 0.0f;
+    txrect.xmax  = 32 / 128.0f;
+    txrect.ymin    = XPTICK / 16.0f;
+    txrect.ymax = XPTICK * 2.0f / 16.0f;
 
     width  = 16;
     height = XPTICK;
 
     GL_DEBUG( glBegin )( GL_QUADS );
     {
-        GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.bottom ); GL_DEBUG( glVertex2i )( x,         y + height );
-        GL_DEBUG( glTexCoord2f )( txrect.right, txrect.bottom ); GL_DEBUG( glVertex2i )( x + width, y + height );
-        GL_DEBUG( glTexCoord2f )( txrect.right, txrect.top ); GL_DEBUG( glVertex2i )( x + width, y );
-        GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.top ); GL_DEBUG( glVertex2i )( x,         y );
+        GL_DEBUG( glTexCoord2f )( txrect.xmin,  txrect.ymax ); GL_DEBUG( glVertex2i )( x,         y + height );
+        GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2i )( x + width, y + height );
+        GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin ); GL_DEBUG( glVertex2i )( x + width, y );
+        GL_DEBUG( glTexCoord2f )( txrect.xmin,  txrect.ymin ); GL_DEBUG( glVertex2i )( x,         y );
     }
     GL_DEBUG_END();
     x += 16;
 
     // Draw the filled ones
-    txrect.left   = 0.0f;
-    txrect.right  = 32 / 128.0f;
-    txrect.top    = XPTICK / 16.0f;
-    txrect.bottom = XPTICK * 2.0f / 16.0f;
+    txrect.xmin   = 0.0f;
+    txrect.xmax  = 32 / 128.0f;
+    txrect.ymin    = XPTICK / 16.0f;
+    txrect.ymax = XPTICK * 2.0f / 16.0f;
 
     width  = XPTICK;
     height = XPTICK;
@@ -904,19 +905,19 @@ int draw_one_xp_bar( int x, int y, Uint8 ticks )
         oglx_texture_Bind( TxTexture_get_ptr(( TX_REF )TX_XP_BAR ) );
         GL_DEBUG( glBegin )( GL_QUADS );
         {
-            GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.bottom ); GL_DEBUG( glVertex2i )(( cnt * width ) + x,         y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.right, txrect.bottom ); GL_DEBUG( glVertex2i )(( cnt * width ) + x + width, y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.right, txrect.top ); GL_DEBUG( glVertex2i )(( cnt * width ) + x + width, y );
-            GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.top ); GL_DEBUG( glVertex2i )(( cnt * width ) + x,         y );
+            GL_DEBUG( glTexCoord2f )( txrect.xmin,  txrect.ymax ); GL_DEBUG( glVertex2i )(( cnt * width ) + x,         y + height );
+            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2i )(( cnt * width ) + x + width, y + height );
+            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin ); GL_DEBUG( glVertex2i )(( cnt * width ) + x + width, y );
+            GL_DEBUG( glTexCoord2f )( txrect.xmin,  txrect.ymin ); GL_DEBUG( glVertex2i )(( cnt * width ) + x,         y );
         }
         GL_DEBUG_END();
     }
 
     // Draw the remaining empty ones
-    txrect.left   = 0.0f;
-    txrect.right  = 32 / 128.0f;
-    txrect.top    = 0.0f;
-    txrect.bottom = XPTICK / 16.0f;
+    txrect.xmin   = 0.0f;
+    txrect.xmax  = 32 / 128.0f;
+    txrect.ymin    = 0.0f;
+    txrect.ymax = XPTICK / 16.0f;
 
     width  = XPTICK;
     height = XPTICK;
@@ -926,10 +927,10 @@ int draw_one_xp_bar( int x, int y, Uint8 ticks )
         oglx_texture_Bind( TxTexture_get_ptr(( TX_REF )TX_XP_BAR ) );
         GL_DEBUG( glBegin )( GL_QUADS );
         {
-            GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.bottom ); GL_DEBUG( glVertex2i )(( cnt * width ) + x,         y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.right, txrect.bottom ); GL_DEBUG( glVertex2i )(( cnt * width ) + x + width, y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.right, txrect.top ); GL_DEBUG( glVertex2i )(( cnt * width ) + x + width, y );
-            GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.top ); GL_DEBUG( glVertex2i )(( cnt * width ) + x,         y );
+            GL_DEBUG( glTexCoord2f )( txrect.xmin,  txrect.ymax ); GL_DEBUG( glVertex2i )(( cnt * width ) + x,         y + height );
+            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2i )(( cnt * width ) + x + width, y + height );
+            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin ); GL_DEBUG( glVertex2i )(( cnt * width ) + x + width, y );
+            GL_DEBUG( glTexCoord2f )( txrect.xmin,  txrect.ymin ); GL_DEBUG( glVertex2i )(( cnt * width ) + x,         y );
         }
         GL_DEBUG_END();
     }
@@ -944,7 +945,7 @@ int draw_one_bar( Uint8 bartype, int x, int y, int ticks, int maxticks )
 
     int     noticks;
     int     width, height;
-    frect_t txrect;
+    ego_frect_t txrect;
 
     if ( maxticks <= 0 || ticks < 0 || bartype > NUMBAR ) return y;
 
@@ -954,20 +955,20 @@ int draw_one_bar( Uint8 bartype, int x, int y, int ticks, int maxticks )
     // Draw the tab
     oglx_texture_Bind( TxTexture_get_ptr(( TX_REF )TX_BARS ) );
 
-    txrect.left   = tabrect[bartype].left   / 128.0f;
-    txrect.right  = tabrect[bartype].right  / 128.0f;
-    txrect.top    = tabrect[bartype].top    / 128.0f;
-    txrect.bottom = tabrect[bartype].bottom / 128.0f;
+    txrect.xmin = tabrect[bartype].xmin / 128.0f;
+    txrect.xmax = tabrect[bartype].xmax / 128.0f;
+    txrect.ymin = tabrect[bartype].ymin / 128.0f;
+    txrect.ymax = tabrect[bartype].ymax / 128.0f;
 
-    width  = tabrect[bartype].right  - tabrect[bartype].left;
-    height = tabrect[bartype].bottom - tabrect[bartype].top;
+    width  = tabrect[bartype].xmax - tabrect[bartype].xmin;
+    height = tabrect[bartype].ymax - tabrect[bartype].ymin;
 
     GL_DEBUG( glBegin )( GL_QUADS );
     {
-        GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.bottom ); GL_DEBUG( glVertex2i )( x,         y + height );
-        GL_DEBUG( glTexCoord2f )( txrect.right, txrect.bottom ); GL_DEBUG( glVertex2i )( x + width, y + height );
-        GL_DEBUG( glTexCoord2f )( txrect.right, txrect.top ); GL_DEBUG( glVertex2i )( x + width, y );
-        GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.top ); GL_DEBUG( glVertex2i )( x,         y );
+        GL_DEBUG( glTexCoord2f )( txrect.xmin,  txrect.ymax ); GL_DEBUG( glVertex2i )( x,         y + height );
+        GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2i )( x + width, y + height );
+        GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin ); GL_DEBUG( glVertex2i )( x + width, y );
+        GL_DEBUG( glTexCoord2f )( txrect.xmin,  txrect.ymin ); GL_DEBUG( glVertex2i )( x,         y );
     }
     GL_DEBUG_END();
 
@@ -983,22 +984,22 @@ int draw_one_bar( Uint8 bartype, int x, int y, int ticks, int maxticks )
 
     while ( ticks >= NUMTICK )
     {
-        barrect[bartype].right = BARX;
+        barrect[bartype].xmax = BARX;
 
-        txrect.left   = barrect[bartype].left   / 128.0f;
-        txrect.right  = barrect[bartype].right  / 128.0f;
-        txrect.top    = barrect[bartype].top    / 128.0f;
-        txrect.bottom = barrect[bartype].bottom / 128.0f;
+        txrect.xmin = barrect[bartype].xmin / 128.0f;
+        txrect.xmax = barrect[bartype].xmax / 128.0f;
+        txrect.ymin = barrect[bartype].ymin / 128.0f;
+        txrect.ymax = barrect[bartype].ymax / 128.0f;
 
-        width  = barrect[bartype].right - barrect[bartype].left;
-        height = barrect[bartype].bottom - barrect[bartype].top;
+        width  = barrect[bartype].xmax - barrect[bartype].xmin;
+        height = barrect[bartype].ymax - barrect[bartype].ymin;
 
         GL_DEBUG( glBegin )( GL_QUADS );
         {
-            GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.bottom ); GL_DEBUG( glVertex2i )( x,         y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.right, txrect.bottom ); GL_DEBUG( glVertex2i )( x + width, y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.right, txrect.top ); GL_DEBUG( glVertex2i )( x + width, y );
-            GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.top ); GL_DEBUG( glVertex2i )( x,         y );
+            GL_DEBUG( glTexCoord2f )( txrect.xmin,  txrect.ymax ); GL_DEBUG( glVertex2i )( x,         y + height );
+            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2i )( x + width, y + height );
+            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin ); GL_DEBUG( glVertex2i )( x + width, y );
+            GL_DEBUG( glTexCoord2f )( txrect.xmin,  txrect.ymin ); GL_DEBUG( glVertex2i )( x,         y );
         }
         GL_DEBUG_END();
 
@@ -1011,22 +1012,22 @@ int draw_one_bar( Uint8 bartype, int x, int y, int ticks, int maxticks )
     if ( maxticks > 0 )
     {
         // Draw the filled ones
-        barrect[bartype].right = ( ticks << 3 ) + TABX;
+        barrect[bartype].xmax = ( ticks << 3 ) + TABX;
 
-        txrect.left   = barrect[bartype].left   / 128.0f;
-        txrect.right  = barrect[bartype].right  / 128.0f;
-        txrect.top    = barrect[bartype].top    / 128.0f;
-        txrect.bottom = barrect[bartype].bottom / 128.0f;
+        txrect.xmin   = barrect[bartype].xmin   / 128.0f;
+        txrect.xmax  = barrect[bartype].xmax  / 128.0f;
+        txrect.ymin    = barrect[bartype].ymin    / 128.0f;
+        txrect.ymax = barrect[bartype].ymax / 128.0f;
 
-        width = barrect[bartype].right - barrect[bartype].left;
-        height = barrect[bartype].bottom - barrect[bartype].top;
+        width = barrect[bartype].xmax - barrect[bartype].xmin;
+        height = barrect[bartype].ymax - barrect[bartype].ymin;
 
         GL_DEBUG( glBegin )( GL_QUADS );
         {
-            GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.bottom ); GL_DEBUG( glVertex2i )( x,         y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.right, txrect.bottom ); GL_DEBUG( glVertex2i )( x + width, y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.right, txrect.top ); GL_DEBUG( glVertex2i )( x + width, y );
-            GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.top ); GL_DEBUG( glVertex2i )( x,         y );
+            GL_DEBUG( glTexCoord2f )( txrect.xmin,  txrect.ymax ); GL_DEBUG( glVertex2i )( x,         y + height );
+            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2i )( x + width, y + height );
+            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin ); GL_DEBUG( glVertex2i )( x + width, y );
+            GL_DEBUG( glTexCoord2f )( txrect.xmin,  txrect.ymin ); GL_DEBUG( glVertex2i )( x,         y );
         }
         GL_DEBUG_END();
 
@@ -1034,23 +1035,23 @@ int draw_one_bar( Uint8 bartype, int x, int y, int ticks, int maxticks )
         noticks = maxticks - ticks;
         if ( noticks > ( NUMTICK - ticks ) ) noticks = ( NUMTICK - ticks );
 
-        barrect[0].right = ( noticks << 3 ) + TABX;
+        barrect[0].xmax = ( noticks << 3 ) + TABX;
         oglx_texture_Bind( TxTexture_get_ptr(( TX_REF )TX_BARS ) );
 
-        txrect.left   = barrect[0].left   / 128.0f;
-        txrect.right  = barrect[0].right  / 128.0f;
-        txrect.top    = barrect[0].top    / 128.0f;
-        txrect.bottom = barrect[0].bottom / 128.0f;
+        txrect.xmin = barrect[0].xmin / 128.0f;
+        txrect.xmax = barrect[0].xmax / 128.0f;
+        txrect.ymin = barrect[0].ymin / 128.0f;
+        txrect.ymax = barrect[0].ymax / 128.0f;
 
-        width = barrect[0].right - barrect[0].left;
-        height = barrect[0].bottom - barrect[0].top;
+        width  = barrect[0].xmax - barrect[0].xmin;
+        height = barrect[0].ymax - barrect[0].ymin;
 
         GL_DEBUG( glBegin )( GL_QUADS );
         {
-            GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.bottom ); GL_DEBUG( glVertex2i )(( ticks << 3 ) + x,         y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.right, txrect.bottom ); GL_DEBUG( glVertex2i )(( ticks << 3 ) + x + width, y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.right, txrect.top ); GL_DEBUG( glVertex2i )(( ticks << 3 ) + x + width, y );
-            GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.top ); GL_DEBUG( glVertex2i )(( ticks << 3 ) + x,         y );
+            GL_DEBUG( glTexCoord2f )( txrect.xmin,  txrect.ymax ); GL_DEBUG( glVertex2i )(( ticks << 3 ) + x,         y + height );
+            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2i )(( ticks << 3 ) + x + width, y + height );
+            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin ); GL_DEBUG( glVertex2i )(( ticks << 3 ) + x + width, y );
+            GL_DEBUG( glTexCoord2f )( txrect.xmin,  txrect.ymin ); GL_DEBUG( glVertex2i )(( ticks << 3 ) + x,         y );
         }
         GL_DEBUG_END();
 
@@ -1061,22 +1062,22 @@ int draw_one_bar( Uint8 bartype, int x, int y, int ticks, int maxticks )
     // Draw full rows of empty ticks
     while ( maxticks >= NUMTICK )
     {
-        barrect[0].right = BARX;
+        barrect[0].xmax = BARX;
 
-        txrect.left   = barrect[0].left   / 128.0f;
-        txrect.right  = barrect[0].right  / 128.0f;
-        txrect.top    = barrect[0].top    / 128.0f;
-        txrect.bottom = barrect[0].bottom / 128.0f;
+        txrect.xmin = barrect[0].xmin / 128.0f;
+        txrect.xmax = barrect[0].xmax / 128.0f;
+        txrect.ymin = barrect[0].ymin / 128.0f;
+        txrect.ymax = barrect[0].ymax / 128.0f;
 
-        width = barrect[0].right - barrect[0].left;
-        height = barrect[0].bottom - barrect[0].top;
+        width  = barrect[0].xmax - barrect[0].xmin;
+        height = barrect[0].ymax - barrect[0].ymin;
 
         GL_DEBUG( glBegin )( GL_QUADS );
         {
-            GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.bottom );   GL_DEBUG( glVertex2i )( x,         y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.right, txrect.bottom );   GL_DEBUG( glVertex2i )( x + width, y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.right, txrect.top );   GL_DEBUG( glVertex2i )( x + width, y );
-            GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.top );   GL_DEBUG( glVertex2i )( x,         y );
+            GL_DEBUG( glTexCoord2f )( txrect.xmin,  txrect.ymax );   GL_DEBUG( glVertex2i )( x,         y + height );
+            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax );   GL_DEBUG( glVertex2i )( x + width, y + height );
+            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin );   GL_DEBUG( glVertex2i )( x + width, y );
+            GL_DEBUG( glTexCoord2f )( txrect.xmin,  txrect.ymin );   GL_DEBUG( glVertex2i )( x,         y );
         }
         GL_DEBUG_END();
 
@@ -1087,23 +1088,23 @@ int draw_one_bar( Uint8 bartype, int x, int y, int ticks, int maxticks )
     // Draw the last of the empty ones
     if ( maxticks > 0 )
     {
-        barrect[0].right = ( maxticks << 3 ) + TABX;
+        barrect[0].xmax = ( maxticks << 3 ) + TABX;
         oglx_texture_Bind( TxTexture_get_ptr(( TX_REF )TX_BARS ) );
 
-        txrect.left   = barrect[0].left   / 128.0f;
-        txrect.right  = barrect[0].right  / 128.0f;
-        txrect.top    = barrect[0].top    / 128.0f;
-        txrect.bottom = barrect[0].bottom / 128.0f;
+        txrect.xmin   = barrect[0].xmin   / 128.0f;
+        txrect.xmax  = barrect[0].xmax  / 128.0f;
+        txrect.ymin    = barrect[0].ymin    / 128.0f;
+        txrect.ymax = barrect[0].ymax / 128.0f;
 
-        width = barrect[0].right - barrect[0].left;
-        height = barrect[0].bottom - barrect[0].top;
+        width = barrect[0].xmax - barrect[0].xmin;
+        height = barrect[0].ymax - barrect[0].ymin;
 
         GL_DEBUG( glBegin )( GL_QUADS );
         {
-            GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.bottom ); GL_DEBUG( glVertex2i )( x,         y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.right, txrect.bottom ); GL_DEBUG( glVertex2i )( x + width, y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.right, txrect.top ); GL_DEBUG( glVertex2i )( x + width, y );
-            GL_DEBUG( glTexCoord2f )( txrect.left,  txrect.top ); GL_DEBUG( glVertex2i )( x,         y );
+            GL_DEBUG( glTexCoord2f )( txrect.xmin,  txrect.ymax ); GL_DEBUG( glVertex2i )( x,         y + height );
+            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2i )( x + width, y + height );
+            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin ); GL_DEBUG( glVertex2i )( x + width, y );
+            GL_DEBUG( glTexCoord2f )( txrect.xmin,  txrect.ymin ); GL_DEBUG( glVertex2i )( x,         y );
         }
         GL_DEBUG_END();
 
@@ -2969,13 +2970,13 @@ void render_world( camera_t * pcam )
             render_world_overlay(( TX_REF )TX_WATER_TOP ); // TX_WATER_TOP is watertop.bmp
         }
 
-		if( pcam->motion_blur > 0 )
-		{
-			//Do motion blur
-			GL_DEBUG( glAccum )( GL_MULT, pcam->motion_blur );
-			GL_DEBUG( glAccum )( GL_ACCUM, 1.00f-pcam->motion_blur );
-			GL_DEBUG( glAccum )( GL_RETURN, 1.0 );
-		}
+        if ( pcam->motion_blur > 0 )
+        {
+            //Do motion blur
+            GL_DEBUG( glAccum )( GL_MULT, pcam->motion_blur );
+            GL_DEBUG( glAccum )( GL_ACCUM, 1.00f - pcam->motion_blur );
+            GL_DEBUG( glAccum )( GL_RETURN, 1.0 );
+        }
     }
     gfx_end_3d();
 }
@@ -3401,32 +3402,49 @@ bool_t billboard_data_update( billboard_data_t * pbb )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t billboard_data_printf_ttf( billboard_data_t * pbb, Font *font, SDL_Color color, const char * format, ... )
+bool_t billboard_data_printf_ttf( billboard_data_t * pbb, TTF_Font *font, SDL_Color color, const char * format, ... )
 {
-    va_list args;
-    int rv;
-    oglx_texture_t * ptex;
-    fvec4_base_t     texCoords;
+    va_list          args      = NULL;
+    oglx_texture_t * oglx_ptex = NULL;
+    display_item_t  * fnt_ptex  = NULL;
+    frect_t        * prect     = NULL;
 
+    // check for bad input data
     if ( NULL == pbb || !pbb->valid ) return bfalse;
 
     // release any existing texture in case there is an error
-    ptex = TxTexture_get_ptr( pbb->tex_ref );
-    oglx_texture_Release( ptex );
+    oglx_ptex = TxTexture_get_ptr( pbb->tex_ref );
+    oglx_texture_Release( oglx_ptex );
 
+    // pring the text to an ogl texture
     va_start( args, format );
-    rv = fnt_vprintf( font, color, &( ptex->surface ), ptex->base.binding, texCoords, format, args );
+    fnt_ptex = fnt_vprintf( fnt_ptex, font, color, format, args );
     va_end( args );
 
-    ptex->base_valid = bfalse;
-    oglx_grab_texture_state( GL_TEXTURE_2D, 0, ptex );
+    // if there was an error, quit
+    if ( NULL == fnt_ptex ) return bfalse;
 
-    ptex->alpha = 1.0f;
-    ptex->imgW  = ptex->surface->w;
-    ptex->imgH  = ptex->surface->h;
-    strncpy( ptex->name, "billboard text", SDL_arraysize( ptex->name ) );
+    prect = display_item_prect( fnt_ptex );
 
-    return ( rv >= 0 );
+    // set some basic texture parameters
+    oglx_ptex->base.binding = display_item_texture_name( fnt_ptex );
+    oglx_ptex->base_valid   = bfalse;
+    strncpy( oglx_ptex->name, "billboard text", SDL_arraysize( oglx_ptex->name ) );
+
+    // grab a bunch of info from ogl about the texture
+    oglx_grab_texture_state( GL_TEXTURE_2D, 0, oglx_ptex );
+    oglx_ptex->alpha = 1.0f;
+    oglx_ptex->imgW  = prect->w;
+    oglx_ptex->imgH  = prect->h;
+
+    // transfer ownership of the fnt_ptex's resources to oglx_ptex.
+    // now, freeing fnt_ptex won't get rid of the resource
+    display_item_release_ownership( fnt_ptex );
+
+    // we own this pointer, so delete it completely
+    fnt_ptex = display_item_free( fnt_ptex, btrue );
+
+    return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4498,10 +4516,10 @@ void init_icon_data()
 {
     /// @details ZZ@> This function sets the icon pointers to NULL
 
-    iconrect.left = 0;
-    iconrect.right = 32;
-    iconrect.top = 0;
-    iconrect.bottom = 32;
+    iconrect.xmin = 0;
+    iconrect.xmax = ICON_SIZE;
+    iconrect.ymin = 0;
+    iconrect.ymax = ICON_SIZE;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4512,16 +4530,15 @@ void init_bar_data()
     // Initialize the life and mana bars
     for ( cnt = 0; cnt < NUMBAR; cnt++ )
     {
-        tabrect[cnt].left = 0;
-        tabrect[cnt].right = TABX;
-        tabrect[cnt].top = cnt * BARY;
-        tabrect[cnt].bottom = ( cnt + 1 ) * BARY;
+        tabrect[cnt].xmin = 0;
+        tabrect[cnt].xmax = TABX;
+        tabrect[cnt].ymin = cnt * BARY;
+        tabrect[cnt].ymax = ( cnt + 1 ) * BARY;
 
-        barrect[cnt].left = TABX;
-        barrect[cnt].right = BARX;  // This is reset whenever a bar is drawn
-        barrect[cnt].top = tabrect[cnt].top;
-        barrect[cnt].bottom = tabrect[cnt].bottom;
-
+        barrect[cnt].xmin = TABX;
+        barrect[cnt].xmax = BARX;  // This is reset whenever a bar is drawn
+        barrect[cnt].ymin = tabrect[cnt].ymin;
+        barrect[cnt].ymax = tabrect[cnt].ymax;
     }
 }
 
@@ -4533,10 +4550,10 @@ void init_blip_data()
     // Set up the rectangles
     for ( cnt = 0; cnt < COLOR_MAX; cnt++ )
     {
-        bliprect[cnt].left   = cnt * BLIPSIZE;
-        bliprect[cnt].right  = cnt * BLIPSIZE + BLIPSIZE;
-        bliprect[cnt].top    = 0;
-        bliprect[cnt].bottom = BLIPSIZE;
+        bliprect[cnt].xmin = cnt * BLIPSIZE;
+        bliprect[cnt].xmax = cnt * BLIPSIZE + BLIPSIZE;
+        bliprect[cnt].ymin = 0;
+        bliprect[cnt].ymax = BLIPSIZE;
     }
 
     youarehereon = bfalse;
@@ -4549,10 +4566,10 @@ void init_map_data()
     /// @details ZZ@> This function releases all the map images
 
     // Set up the rectangles
-    maprect.left   = 0;
-    maprect.right  = MAPSIZE;
-    maprect.top    = 0;
-    maprect.bottom = MAPSIZE;
+    maprect.xmin = 0;
+    maprect.xmax = MAPSIZE;
+    maprect.ymin = 0;
+    maprect.ymax = MAPSIZE;
 
     mapvalid = bfalse;
     mapon    = bfalse;
@@ -4624,18 +4641,39 @@ bool_t load_all_global_icons()
 {
     /// @details ZF@> Load all the global icons used in all modules
 
-    // Setup
-    bool_t result = bfalse;
+    bool_t result = btrue;
 
     // Now load every icon
-    result = INVALID_TX_TEXTURE != TxTexture_load_one_vfs( "mp_data/nullicon", ( TX_REF )ICON_NULL, INVALID_KEY );
-    result = INVALID_TX_TEXTURE != TxTexture_load_one_vfs( "mp_data/keybicon", ( TX_REF )ICON_KEYB, INVALID_KEY );
-    result = INVALID_TX_TEXTURE != TxTexture_load_one_vfs( "mp_data/mousicon", ( TX_REF )ICON_MOUS, INVALID_KEY );
-    result = INVALID_TX_TEXTURE != TxTexture_load_one_vfs( "mp_data/joyaicon", ( TX_REF )ICON_JOYA, INVALID_KEY );
-    result = INVALID_TX_TEXTURE != TxTexture_load_one_vfs( "mp_data/joybicon", ( TX_REF )ICON_JOYB, INVALID_KEY );
-	
+    if( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/nullicon", ( TX_REF )ICON_NULL, INVALID_KEY ) )
+    {
+        result = bfalse;
+    }
+
+    if( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/keybicon", ( TX_REF )ICON_KEYB, INVALID_KEY ) )
+    {
+        result = bfalse;
+    }
+
+    if( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/mousicon", ( TX_REF )ICON_MOUS, INVALID_KEY ) )
+    {
+        result = bfalse;
+    }
+
+    if( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/joyaicon", ( TX_REF )ICON_JOYA, INVALID_KEY ) )
+    {
+        result = bfalse;
+    }
+
+    if( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/joybicon", ( TX_REF )ICON_JOYB, INVALID_KEY ) )
+    {
+        result = bfalse;
+    }
+
 	// Spit out a warning if needed
-	if( !result ) log_warning( "Could not load all global icons!\n" );
+	if( !result ) 
+    {
+        log_warning( "Could not load all global icons!\n" );
+    }
 
     return result;
 }
@@ -4738,13 +4776,17 @@ void load_map()
 //--------------------------------------------------------------------------------------------
 bool_t load_cursor()
 {
-	/// ZF> Loads any cursor bitmaps
+	/// @details ZF@> Loads any cursor bitmaps
+
+    bool_t retval = btrue;
+
     if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/cursor", ( TX_REF )TX_CURSOR, INVALID_KEY ))
     {
-        log_warning( "Blip bitmap not loaded! (\"mp_data/blip\")\n" );
-        return bfalse;
+        log_warning( "Blip bitmap not loaded! (\"mp_data/cursor\")\n" );
+        retval = bfalse;
     }
-    return btrue;
+
+    return retval;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -5314,26 +5356,25 @@ bool_t sum_global_lighting( lighting_vector_t lighting )
 //--------------------------------------------------------------------------------------------
 // SEMI OBSOLETE FUNCTIONS
 //--------------------------------------------------------------------------------------------
-/*void draw_cursor()
-{
-    /// ZZ@> This function implements a mouse cursor
+//void draw_cursor()
+//{
+//    /// ZZ@> This function implements a mouse cursor
+//
+//    if ( cursor.x < 6 )  cursor.x = 6;
+//    if ( cursor.x > sdl_scr.x - 16 )  cursor.x = sdl_scr.x - 16;
+//
+//    if ( cursor.y < 8 )  cursor.y = 8;
+//    if ( cursor.y > sdl_scr.y - 24 )  cursor.y = sdl_scr.y - 24;
+//
+//    // Needed to setup text mode
+//    gfx_begin_text();
+//    {
+//        draw_one_font( 95, cursor.x - 5, cursor.y - 7 );
+//    }
+//    // Needed when done with text mode
+//    gfx_end_text();
+//}
 
-    if ( cursor.x < 6 )  cursor.x = 6;
-    if ( cursor.x > sdl_scr.x - 16 )  cursor.x = sdl_scr.x - 16;
-
-    if ( cursor.y < 8 )  cursor.y = 8;
-    if ( cursor.y > sdl_scr.y - 24 )  cursor.y = sdl_scr.y - 24;
-
-    // Needed to setup text mode
-    gfx_begin_text();
-    {
-        draw_one_font( 95, cursor.x - 5, cursor.y - 7 );
-    }
-    // Needed when done with text mode
-    gfx_end_text();
-}*/
-
-//--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 void gfx_make_dynalist( camera_t * pcam )
 {

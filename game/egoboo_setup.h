@@ -33,16 +33,20 @@ enum e_game_difficulty
 
 //--------------------------------------------------------------------------------------------
 // What feedback does the user want
-typedef enum e_feedback
+enum e_feedback
 {
-    FEEDBACK_OFF = 0,           // None
-    FEEDBACK_TEXT,              // Descriptive text
-    FEEDBACK_NUMBER             // Show the damage as a number
-}
-FEEDBACK_TYPE;
+    FEEDBACK_OFF = 0,           ///< None
+    FEEDBACK_TEXT,              ///< Descriptive text
+    FEEDBACK_NUMBER,            ///< Show the damage as a number
+    FEEDBACK_COUNT
+};
+typedef enum e_feedback FEEDBACK_TYPE;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+
+// set a value for the
+#define EGO_MAX_MULTISAMPLES 32
 
 /// The internal representation of the data in "settings.txt"
 struct s_egoboo_config
@@ -66,11 +70,11 @@ struct s_egoboo_config
     bool_t                  background_allowed;        ///< Allow large background?
     bool_t                  fog_allowed;
     bool_t                  gourard_req;               ///< Gouraud shading?
-    Uint8                   multisamples;          ///< Antialiasing?
-    Uint8                   texturefilter_req;             ///< Texture filtering?
+    Uint8                   multisamples;              ///< Antialiasing?
+    Uint8                   texturefilter_req;         ///< Texture filtering?
     int                     dyna_count_req;            ///< Max number of lights to draw
     Sint32                  framelimit;
-    Uint16                  particle_count_req;                              ///< max number of particles
+    Uint16                  particle_count_req;        ///< max number of particles
 
     // {SOUND}
     bool_t                  sound_allowed;

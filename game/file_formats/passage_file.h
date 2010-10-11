@@ -38,10 +38,10 @@
 struct s_passage
 {
     // Passage positions
-    irect_t area;
-    Sint8   music;                ///< Music track appointed to the specific passage
-    Uint8   mask;                 ///< Is it IMPASSABLE, SLIPPERY or whatever
-    bool_t  open;                 ///< Is the passage open?
+    ego_irect_t area;
+    Sint8       music;                ///< Music track appointed to the specific passage
+    Uint8       mask;                 ///< Is it IMPASSABLE, SLIPPERY or whatever
+    bool_t      open;                 ///< Is the passage open?
 };
 
 typedef struct s_passage passage_t;

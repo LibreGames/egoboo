@@ -103,7 +103,7 @@ void font_bmp_load_vfs( const char* szBitmap, const char* szSpacing )
     fileread = vfs_openRead( szSpacing );
     if ( NULL == fileread )
     {
-        log_error( "Font spacing not avalible! (%i, %i)\n", xsize, ysize );
+        log_error( "display_item_t spacing not avalible! (%i, %i)\n", xsize, ysize );
     }
 
     y = 0;

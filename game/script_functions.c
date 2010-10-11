@@ -7956,12 +7956,12 @@ Uint8 _find_grid_in_passage( const int x0, const int y0, const int tiletype, con
     x = x0 >> TILE_BITS;
     y = y0 >> TILE_BITS;
 
-    if ( x < ppass->area.left )  x = ppass->area.left;
-    if ( y < ppass->area.top )  y = ppass->area.top;
+    if ( x < ppass->area.xmin )  x = ppass->area.xmin;
+    if ( y < ppass->area.ymin )  y = ppass->area.ymin;
 
-    if ( y < ppass->area.bottom )
+    if ( y < ppass->area.ymax )
     {
-        for ( /*nothing*/; x <= ppass->area.right; x++ )
+        for ( /*nothing*/; x <= ppass->area.xmax; x++ )
         {
             fan = mesh_get_tile_int( PMesh, x, y );
 
@@ -7980,9 +7980,9 @@ Uint8 _find_grid_in_passage( const int x0, const int y0, const int tiletype, con
     }
 
     // Do all remaining rows
-    for ( /* nothing */; y <= ppass->area.bottom; y++ )
+    for ( /* nothing */; y <= ppass->area.ymax; y++ )
     {
-        for ( x = ppass->area.left; x <= ppass->area.right; x++ )
+        for ( x = ppass->area.xmin; x <= ppass->area.xmax; x++ )
         {
             fan = mesh_get_tile_int( PMesh, x, y );
 

@@ -21,7 +21,7 @@
 
 /// @file collision.h
 
-#include "egoboo_typedef.h"
+#include "egoboo_math.h"
 
 #include "hash.h"
 #include "bbox.h"
@@ -31,6 +31,7 @@
 struct s_obj_BSP;
 struct s_chr;
 struct s_prt;
+struct s_oct_bb;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -95,5 +96,7 @@ void bump_all_objects( struct s_obj_BSP * pbsp );
 
 bool_t detach_character_from_platform( struct s_chr * pchr );
 bool_t detach_particle_from_platform( struct s_prt * pprt );
+
+bool_t calc_grip_cv( struct s_chr * pmount, int grip_offset, struct s_oct_bb * grip_cv_ptr, fvec3_base_t grip_origin_ary, fvec3_base_t grip_up_ary );
 
 void update_all_platform_attachments();

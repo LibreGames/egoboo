@@ -552,6 +552,14 @@ extern "C"
     glEnd(); \
     glGetError();
 
+#    define GL_DEBUG_END_LIST() \
+    handle_gl_error(); \
+    next_cmd = "UNKNOWN"; \
+    next_line = -1; \
+    next_file = "UNKNOWN"; \
+    glEndList(); \
+    glGetError();
+
 #else
 
     /// this macro is set to do nothing if USE_GL_DEBUG is not defined
@@ -559,6 +567,8 @@ extern "C"
 
     /// this macro is set to the normal glEnd() USE_GL_DEBUG is not defined
 #    define GL_DEBUG_END() glEnd();
+
+#    define GL_DEBUG_END_LIST() glEndList();
 
 #endif
 

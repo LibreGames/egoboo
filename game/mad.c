@@ -314,8 +314,8 @@ int action_which( char cTmp )
 
     switch ( toupper( cTmp ) )
     {
-        /// @note ZF@> Attack animation WALK is used for doing nothing (for example charging spells)
-        ///            Make it default to ACTION_DA in this case.
+            /// @note ZF@> Attack animation WALK is used for doing nothing (for example charging spells)
+            ///            Make it default to ACTION_DA in this case.
         case 'W': action = ACTION_DA; break;
         case 'D': action = ACTION_DA; break;
         case 'U': action = ACTION_UA; break;

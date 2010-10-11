@@ -1262,7 +1262,7 @@ bool_t obj_BSP_insert_chr( obj_BSP_t * pbsp, chr_t * pchr )
         return bfalse;
 
     // no interaction with objects of zero size
-    if( 0 == pchr->bump_stt.size )
+    if ( 0 == pchr->bump_stt.size )
         return bfalse;
 
     if ( NULL == pbsp ) return bfalse;

@@ -2875,7 +2875,7 @@ void kill_character( const CHR_REF by_reference ichr, const CHR_REF by_reference
     // Set target
     pchr->ai.target = INGAME_CHR( killer ) ? killer : MAX_CHR;
     if ( killer_team == TEAM_DAMAGE ) pchr->ai.target = MAX_CHR;
-    if ( killer_team == TEAM_NULL   ) pchr->ai.target = ichr;
+    if ( killer_team == TEAM_NULL ) pchr->ai.target = ichr;
 
     // distribute experience to the attacker
     if ( MAX_CHR != pchr->ai.target )
@@ -8024,14 +8024,14 @@ const char * chr_get_gender_possessive( const CHR_REF by_reference ichr, char bu
     static STRING szTmp = EMPTY_CSTR;
     chr_t * pchr;
 
-    if( NULL == buffer )
+    if ( NULL == buffer )
     {
         buffer = szTmp;
-        buffer_len = SDL_arraysize(szTmp);
+        buffer_len = SDL_arraysize( szTmp );
     }
-    if( 0 == buffer_len ) return buffer;
+    if ( 0 == buffer_len ) return buffer;
 
-    if ( !DEFINED_CHR(ichr) )
+    if ( !DEFINED_CHR( ichr ) )
     {
         buffer[0] = CSTR_END;
         return buffer;
@@ -8060,14 +8060,14 @@ const char * chr_get_gender_name( const CHR_REF by_reference ichr, char buffer[]
     static STRING szTmp = EMPTY_CSTR;
     chr_t * pchr;
 
-    if( NULL == buffer )
+    if ( NULL == buffer )
     {
         buffer = szTmp;
-        buffer_len = SDL_arraysize(szTmp);
+        buffer_len = SDL_arraysize( szTmp );
     }
-    if( 0 == buffer_len ) return buffer;
+    if ( 0 == buffer_len ) return buffer;
 
-    if ( !DEFINED_CHR(ichr) )
+    if ( !DEFINED_CHR( ichr ) )
     {
         buffer[0] = CSTR_END;
         return buffer;
@@ -11406,26 +11406,26 @@ float calc_dismount_lerp( const chr_t * pchr_a, const chr_t * pchr_b )
     float dismount_lerp_a, dismount_lerp_b;
     bool_t found = bfalse;
 
-    if( !DEFINED_PCHR(pchr_a) ) return 0.0f;
+    if ( !DEFINED_PCHR( pchr_a ) ) return 0.0f;
     ichr_a = GET_REF_PCHR( pchr_a );
 
-    if( !DEFINED_PCHR(pchr_b) ) return 0.0f;
+    if ( !DEFINED_PCHR( pchr_b ) ) return 0.0f;
     ichr_b = GET_REF_PCHR( pchr_b );
 
     dismount_lerp_a = 1.0f;
     if ( pchr_a->dismount_timer > 0 && pchr_a->dismount_object == ichr_b )
     {
-        dismount_lerp_a = (float)pchr_a->dismount_timer / (float)PHYS_DISMOUNT_TIME;
+        dismount_lerp_a = ( float )pchr_a->dismount_timer / ( float )PHYS_DISMOUNT_TIME;
         dismount_lerp_a = 1.0f - CLIP( dismount_lerp_a, 0.0f, 1.0f );
-        found = (1.0f != dismount_lerp_a);
+        found = ( 1.0f != dismount_lerp_a );
     }
 
     dismount_lerp_b = 1.0f;
     if ( pchr_b->dismount_timer > 0 && pchr_b->dismount_object == ichr_a )
     {
-        dismount_lerp_b = (float)pchr_b->dismount_timer / (float)PHYS_DISMOUNT_TIME;
+        dismount_lerp_b = ( float )pchr_b->dismount_timer / ( float )PHYS_DISMOUNT_TIME;
         dismount_lerp_b = 1.0f - CLIP( dismount_lerp_b, 0.0f, 1.0f );
-        found = (1.0f != dismount_lerp_b);
+        found = ( 1.0f != dismount_lerp_b );
     }
 
     return !found ? 1.0f : dismount_lerp_a * dismount_lerp_b;

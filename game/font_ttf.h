@@ -24,7 +24,12 @@
 /// to do its business. This depends on Freetype 2 & OpenGL.
 
 #include <SDL.h>
-#include <SDL_opengl.h>
+#include <SDL_ttf.h>
+
+#include "egoboo_display_list.h"
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 
 #define FNT_NUM_FONT_CHARACTERS 94
 #define FNT_SMALL_FONT_SIZE 12
@@ -32,22 +37,46 @@
 #define FNT_LARGE_FONT_SIZE 20
 #define FNT_MAX_FONTS 8
 
-typedef struct Font Font;
-
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 extern int      fnt_init();
 
-extern Font    *fnt_loadFont( const char *fileName, int pointSize );
-extern void    fnt_freeFont( Font *font );
+extern TTF_Font * fnt_loadFont( const char *fileName, int pointSize );
+extern void       fnt_freeFont( TTF_Font *font );
 
-extern void    fnt_drawTextBox( Font *font, SDL_Surface ** ppSurface, int x, int y, int width, int height, int spacing, const char *format, ... );
-extern void    fnt_drawText( Font *font, SDL_Surface ** ppSurface, int x, int y, const char *format, ... );
+/// Convert the formatted text to an ogl texture
+extern display_item_t * fnt_convertText( display_item_t *tx_ptr, TTF_Font * ttf_ptr, const char *format, ... );
+/// The variable argument version of fnt_convertText()
+extern display_item_t * fnt_vconvertText( display_item_t *tx_ptr, TTF_Font * ttf_ptr, const char *format, va_list args );
+/// The not formatted version of fnt_convertText()
+extern display_item_t * fnt_convertText_literal( display_item_t *tx_ptr, TTF_Font * ttf_ptr, const char *text );
+
+/// Convert the formatted text to an ogl texture for each line of the text
+extern int fnt_convertTextBox( display_list_t * tx_lst, TTF_Font * ttf_ptr, int width, int height, int spacing, const char *format, ... );
+/// The variable argument version of fnt_convertTextBox()
+extern int fnt_vconvertTextBox( display_list_t * tx_lst, TTF_Font * ttf_ptr, int x, int y, int spacing, const char *format, va_list args );
+/// Convert un-formatted text to an ogl texture for each line of the text
+extern int fnt_convertTextBox_literal( display_list_t * tx_lst, TTF_Font * ttf_ptr, int width, int height, int spacing, const char *text );
 
 /// Only works properly on a single line of text
-extern void    fnt_getTextSize( Font *font, const char *text, int *width, int *height );
+extern const char * fnt_getTextSize( TTF_Font * ttf_ptr, int *pwidth, int *pheight, const char *format, ... );
+/// The variable argument version of fnt_getTextSize()
+extern const char * fnt_vgetTextSize( TTF_Font * ttf_ptr, int *pwidth, int *pheight, const char *format, va_list args );
+
 /// Works for multiple-line strings, using the user-supplied spacing
-extern void    fnt_getTextBoxSize( Font *font, const char *text, int spacing, int *width, int *height );
+extern const char * fnt_getTextBoxSize( TTF_Font * ttf_ptr, int spacing, int *pwidth, int *pheight, const char *format, ... );
+/// The variable argument version of fnt_getTextBoxSize()
+extern const char * fnt_vgetTextBoxSize( TTF_Font * ttf_ptr, int spacing, int *pwidth, int *pheight, const char *format, va_list args );
 
 /// handle variable arguments to print text to a GL texture
-extern int fnt_vprintf( Font *font, SDL_Color color, SDL_Surface ** ppSurface, GLuint itex, float texCoords[], const char *format, va_list args );
+extern display_item_t * fnt_vprintf( display_item_t * tx_ptr, TTF_Font * ttf_ptr, SDL_Color color, const char *format, va_list args );
+
+/// handle print text to a GL texture
+extern display_item_t * fnt_print( display_item_t * tx_ptr, TTF_Font * ttf_ptr, SDL_Color color, const char *text );
+
+
+extern display_list_t * fnt_vappend_text( display_list_t * tx_lst, TTF_Font * ttf_ptr, int x, int y, const char *format, va_list args );
+extern display_list_t * fnt_append_text( display_list_t * tx_lst, TTF_Font * ttf_ptr, int x, int y, const char *format, ... );
+extern display_list_t * fnt_append_text_literal( display_list_t * tx_lst, TTF_Font * ttf_ptr, int x, int y, const char *text );
 
 #define egoboo_Font_h

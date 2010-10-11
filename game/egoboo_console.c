@@ -295,6 +295,7 @@ SDL_bool egoboo_console_draw( egoboo_console_t * pcon )
     size_t console_line_offsets[1024];
     size_t console_line_lengths[1024];
     char * pstr;
+    display_item_t * ptex;
 
     SDL_Rect * pwin;
     SDL_Surface * surf = SDL_GetVideoSurface();
@@ -351,9 +352,11 @@ SDL_bool egoboo_console_draw( egoboo_console_t * pcon )
         strncat( buffer, pcon->buffer, 1022 );
         buffer[1022] = CSTR_END;
 
-        fnt_getTextSize( pcon->pfont, buffer, &text_w, &text_h );
+        fnt_getTextSize( pcon->pfont, &text_w, &text_h, buffer );
         height -= text_h;
-        fnt_drawText( pcon->pfont, NULL, pwin->x, height - text_h, buffer );
+        ptex = fnt_convertText( NULL, pcon->pfont, buffer );
+        display_item_set_pos( ptex, pwin->x, height - text_h );
+        display_item_draw( ptex );
 
         if ( CSTR_END != pcon->output_buffer[0] )
         {
@@ -386,9 +389,11 @@ SDL_bool egoboo_console_draw( egoboo_console_t * pcon )
                 strncpy( buffer, pcon->output_buffer + console_line_offsets[rcnt], len );
                 buffer[len] = CSTR_END;
 
-                fnt_getTextSize( pcon->pfont, buffer, &text_w, &text_h );
+                fnt_getTextSize( pcon->pfont, &text_w, &text_h, buffer );
                 height -= text_h;
-                fnt_drawText( pcon->pfont, NULL, pwin->x, height - text_h, buffer );
+                ptex = fnt_convertText( NULL, pcon->pfont, buffer );
+                display_item_set_pos( ptex, pwin->x, height - text_h );
+                display_item_draw( ptex );
             }
         }
 

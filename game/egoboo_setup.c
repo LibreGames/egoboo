@@ -162,42 +162,46 @@ bool_t setup_quit()
 egoboo_rv setup_read_vfs()
 {
     /// @details BB@> read the local setup file. The function will automatically copy the default setup
-	///               file if it isn't found in the local folder.
-
-	
-	///	@TODO: ZF> We do not need a default setup.txt file which we copy. If the setup.txt file is missing, we should simply
+    ///               file if it isn't found in the local folder.
+    ///
+	///	@TODO: ZF@> We do not need a default setup.txt file which we copy. If the setup.txt file is missing, we should simply
 	///            create a new one with the default values. This should make life easier.
-	// Read the local setup.txt
-	fs_ensureUserFile( "setup.txt", btrue );
+    ///
+    /// @TODO: BB@> The reason that you might want a file is that it is not hard coded, and could be
+    ///             changed without re-compiling. The "default" parameters here are mostly for
+    ///             a kind of constructor for conformance with c++...
+
+    // Read the local setup.txt
+    fs_ensureUserFile( "setup.txt", btrue );
     snprintf( _config_filename, SDL_arraysize( _config_filename ), "%s" SLASH_STR "setup.txt", fs_getUserDirectory() );
 
     // do NOT force the file to open in a read directory if it doesn't exist. this will cause a failure in
     // linux if the directory is read-only
     lConfigSetup = LoadConfigFile( _config_filename, bfalse );
 
-	//Did something go wrong?
-	if( NULL == lConfigSetup )
-	{
-        log_error( "Could not load setup settings: \"%s\"\n", _config_filename );
-		return rv_error;
-	}
-
-	log_info( "Loaded setup file - \"%s\".\n", _config_filename );
-
-/*
-    // if the file can't be opened, try to create something
+    //Did something go wrong?
     if ( NULL == lConfigSetup )
     {
-        // this will actually create the file within the write directory
-        // more of a hack than an ideal solution
-        vfs_FILE * ftmp = vfs_openAppend( _config_filename );
-        vfs_close( ftmp );
-
-        // now try to read it from the write directory (which should be ahead of all the
-        // read directories on the search path
-        lConfigSetup = LoadConfigFile( vfs_resolveReadFilename( _config_filename ), bfalse );
+        log_error( "Could not load setup settings: \"%s\"\n", _config_filename );
+        return rv_error;
     }
-*/
+
+    log_info( "Loaded setup file - \"%s\".\n", _config_filename );
+
+    /*
+        // if the file can't be opened, try to create something
+        if ( NULL == lConfigSetup )
+        {
+            // this will actually create the file within the write directory
+            // more of a hack than an ideal solution
+            vfs_FILE * ftmp = vfs_openAppend( _config_filename );
+            vfs_close( ftmp );
+
+            // now try to read it from the write directory (which should be ahead of all the
+            // read directories on the search path
+            lConfigSetup = LoadConfigFile( vfs_resolveReadFilename( _config_filename ), bfalse );
+        }
+    */
     return rv_success;
 }
 
@@ -294,7 +298,7 @@ bool_t setup_download( egoboo_config_t * pcfg )
     GetKey_int( "ANTIALIASING", pcfg->multisamples, cfg_default.multisamples );
 
     // coerce a "valid" multisample value
-    pcfg->multisamples = CLIP( pcfg->multisamples, 0, 4 );
+    pcfg->multisamples = CLIP( pcfg->multisamples, 0, EGO_MAX_MULTISAMPLES );
 
     // Do we do texture filtering?
     GetKey_string( "TEXTURE_FILTERING", lTempStr, 24, "LINEAR" );

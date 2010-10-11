@@ -267,7 +267,7 @@ int do_ego_proc_running( ego_process_t * eproc )
     }
 
     // handle the explore mode
-    if( cfg.dev_mode && keyb.on )
+    if ( cfg.dev_mode && keyb.on )
     {
         bool_t explore_mode_key = SDLKEYDOWN( SDLK_F9 ) && mod_shift && !mod_ctrl;
 
@@ -286,7 +286,7 @@ int do_ego_proc_running( ego_process_t * eproc )
     }
 
     // handle the wizard mode
-    if( cfg.dev_mode && keyb.on )
+    if ( cfg.dev_mode && keyb.on )
     {
         bool_t wizard_mode_key = SDLKEYDOWN( SDLK_F9 ) && mod_ctrl && !mod_shift;
 

@@ -46,7 +46,7 @@ struct s_egoboo_console
     egoboo_console_callback_t    run_func;
     void                       * run_data;
 
-    Font * pfont;
+    TTF_Font * pfont;
 
     SDL_bool on;
 

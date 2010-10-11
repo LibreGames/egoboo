@@ -86,7 +86,7 @@ camera_t * camera_ctor( camera_t * pcam )
     pcam->sustain      =  0.60f;
     pcam->turnupdown   = ( float )( PI / 4 );
     pcam->roll         =  0;
-	pcam->motion_blur  =  0;
+    pcam->motion_blur  =  0;
 
     pcam->mView       = pcam->mViewSave = ViewMatrix( t1.v, t2.v, t3.v, 0 );
     pcam->mProjection = ProjectionMatrix( .001f, 2000.0f, ( float )( CAM_FOV * PI / 180 ) ); // 60 degree CAM_FOV
@@ -142,11 +142,11 @@ void camera_make_matrix( camera_t * pcam )
 
     float local_swingamp = pcam->swingamp;
 
-	//Fade out the motion blur
-	if( pcam->motion_blur > 0 )
-	{
-		pcam->motion_blur *= 0.99f; //Decay factor
-		if ( pcam->motion_blur < 0.001f ) pcam->motion_blur = 0;
+    //Fade out the motion blur
+    if ( pcam->motion_blur > 0 )
+    {
+        pcam->motion_blur *= 0.99f; //Decay factor
+        if ( pcam->motion_blur < 0.001f ) pcam->motion_blur = 0;
     }
 
     //Swing the camera if players are groggy and apply motion blur
@@ -156,19 +156,19 @@ void camera_make_matrix( camera_t * pcam )
         pcam->swing = ( pcam->swing + 120 ) & 0x3FFF;
         local_swingamp = MAX( local_swingamp, 0.175f );
 
-        zoom_add = ( 0 == (local_stats.grog_level % 2) ? 1 : - 1 ) * CAM_TURN_KEY * local_stats.grog_level * 0.35f;
+        zoom_add = ( 0 == ( local_stats.grog_level % 2 ) ? 1 : - 1 ) * CAM_TURN_KEY * local_stats.grog_level * 0.35f;
         pcam->zaddgoto = CLIP( pcam->zaddgoto + zoom_add, CAM_ZADD_MIN, CAM_ZADD_MAX );
-		pcam->motion_blur = MIN( 1.00f, 0.6f + 0.075f * local_stats.grog_level );
+        pcam->motion_blur = MIN( 1.00f, 0.6f + 0.075f * local_stats.grog_level );
     }
 
     //Rotate camera if they are dazed and apply motion blur
     if ( local_stats.daze_level > 0 )
     {
         pcam->turnadd = local_stats.daze_level * CAM_TURN_KEY;
-		pcam->motion_blur = MIN( 1.00f, 0.6f + 0.075f * local_stats.daze_level );
+        pcam->motion_blur = MIN( 1.00f, 0.6f + 0.075f * local_stats.daze_level );
     }
 
-	//Apply camera swinging
+    //Apply camera swinging
     pcam->mView = MatrixMult( Translate( pcam->pos.x, -pcam->pos.y, pcam->pos.z ), pcam->mViewSave );  // xgg
     if ( local_swingamp > 0.001f )
     {
@@ -615,7 +615,7 @@ void camera_reset( camera_t * pcam, ego_mpd_t * pmesh )
     pcam->ori.facing_z = CLIP_TO_16BITS(( int )( pcam->turn_z_one * ( float )0x00010000 ) ) ;
     pcam->turnupdown   = PI / 4.0f;
     pcam->roll         = 0;
-	pcam->motion_blur  = 0;
+    pcam->motion_blur  = 0;
 
     // make sure you are looking at the players
     camera_reset_target( pcam, pmesh );

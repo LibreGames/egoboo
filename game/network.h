@@ -148,7 +148,7 @@ player_t *     pla_dtor( player_t * ppla );
 player_t *     pla_reinit( player_t * ppla );
 CHR_REF        pla_get_ichr( const PLA_REF by_reference iplayer );
 struct s_chr * pla_get_pchr( const PLA_REF by_reference iplayer );
-latch_2d_t     pla_convert_latch_2d( const PLA_REF by_reference iplayer, const by_reference latch_2d_t src  );
+latch_2d_t     pla_convert_latch_2d( const PLA_REF by_reference iplayer, const by_reference latch_2d_t src );
 
 player_t*      chr_get_ppla( const CHR_REF by_reference ichr );
 

@@ -143,27 +143,21 @@ typedef Uint32 BIT_FIELD;                                ///< A big string suppo
 
 //--------------------------------------------------------------------------------------------
 // RECTANGLE
-typedef struct s_irect
+struct s_irect
 {
-    int left;
-    int right;
-    int top;
-    int bottom;
-}
-irect_t;
+    float x, y;
+    float w, h;
+};
+typedef struct s_irect irect_t;
 
-bool_t irect_point_inside( irect_t * prect, int   ix, int   iy );
-
-typedef struct s_frect
+struct s_frect
 {
-    float left;
-    float right;
-    float top;
-    float bottom;
-}
-frect_t;
+    float x, y;
+    float w, h;
+};
+typedef struct s_frect frect_t;
 
-bool_t frect_point_inside( frect_t * prect, float fx, float fy );
+bool_t frect_union( const frect_t * src1, const frect_t * src2, frect_t * dst );
 
 //--------------------------------------------------------------------------------------------
 // Rectangle types
@@ -175,12 +169,16 @@ struct s_ego_irect
 };
 typedef struct s_ego_irect ego_irect_t;
 
+bool_t irect_point_inside( ego_irect_t * prect, int   ix, int   iy );
+
 struct s_ego_frect
 {
     float xmin, ymin;
     float xmax, ymax;
 };
 typedef struct s_ego_frect ego_frect_t;
+
+bool_t frect_point_inside( ego_frect_t * prect, float fx, float fy );
 
 //--------------------------------------------------------------------------------------------
 // PAIR AND RANGE

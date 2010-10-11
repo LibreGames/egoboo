@@ -213,7 +213,7 @@ TX_REF TxTexture_load_one_vfs( const char *filename, const TX_REF by_reference i
     if ( retval >= 0 && retval < TX_TEXTURE_COUNT )
     {
         Uint32 txid = ego_texture_load_vfs( TxTexture.lst + retval, filename, key );
-        if ( INVALID_TX_ID == txid )
+        if ( INVALID_GL_ID == txid )
         {
             TxTexture_free_one( retval );
             retval = INVALID_TX_TEXTURE;

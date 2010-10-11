@@ -774,7 +774,6 @@ FILE * SDLX_set_stdout( FILE * pfile )
     return pfile_old;
 }
 
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 struct s_SDLX_Event_Log_Mask
@@ -835,7 +834,7 @@ static bool_t SDLX_Log_Unknown( SDL_Event * evt_ptr );
 //--------------------------------------------------------------------------------------------
 void SDLX_Event_Log_Mask_set_event( Uint8 type, unsigned value )
 {
-    switch(type)
+    switch ( type )
     {
         case SDL_ACTIVEEVENT:
             _event_log_mask.active = value;
@@ -903,18 +902,18 @@ bool_t SDLX_Log_ActiveEvent( SDL_ActiveEvent * evt_ptr )
 {
     bool_t retval = bfalse;
 
-    if( NULL == evt_ptr ) return bfalse;
+    if ( NULL == evt_ptr ) return bfalse;
 
-    if( 0 == _event_log_mask.all || 0 == _event_log_mask.active ) return btrue;
+    if ( 0 == _event_log_mask.all || 0 == _event_log_mask.active ) return btrue;
 
     fprintf( LOCAL_STDOUT,  "SDL_ActiveEvent " );
 
     retval = btrue;
-    switch( evt_ptr->state )
+    switch ( evt_ptr->state )
     {
-        case SDL_APPMOUSEFOCUS: fprintf( LOCAL_STDOUT, "SDL_APPMOUSEFOCUS"); break;
-        case SDL_APPINPUTFOCUS: fprintf( LOCAL_STDOUT, "SDL_APPINPUTFOCUS"); break;
-        case SDL_APPACTIVE:     fprintf( LOCAL_STDOUT, "SDL_APPACTIVE");     break;
+        case SDL_APPMOUSEFOCUS: fprintf( LOCAL_STDOUT, "SDL_APPMOUSEFOCUS" ); break;
+        case SDL_APPINPUTFOCUS: fprintf( LOCAL_STDOUT, "SDL_APPINPUTFOCUS" ); break;
+        case SDL_APPACTIVE:     fprintf( LOCAL_STDOUT, "SDL_APPACTIVE" );     break;
         default:                fprintf( LOCAL_STDOUT,  "Unknown" ); retval = bfalse; break;
     }
 
@@ -928,26 +927,26 @@ bool_t SDLX_Log_KeyboardEvent( SDL_KeyboardEvent * evt_ptr )
 {
     bool_t retval = bfalse;
 
-    if( NULL == evt_ptr ) return bfalse;
+    if ( NULL == evt_ptr ) return bfalse;
 
-    if( 0 == _event_log_mask.all || 0 == _event_log_mask.key ) return btrue;
+    if ( 0 == _event_log_mask.all || 0 == _event_log_mask.key ) return btrue;
 
     fprintf( LOCAL_STDOUT,  "SDL_ActiveEvent " );
 
     retval = btrue;
-    switch( evt_ptr->type )
+    switch ( evt_ptr->type )
     {
-        case SDL_KEYDOWN: fprintf( LOCAL_STDOUT, "SDL_KEYDOWN"); break;
-        case SDL_KEYUP:   fprintf( LOCAL_STDOUT, "SDL_KEYUP"); break;
+        case SDL_KEYDOWN: fprintf( LOCAL_STDOUT, "SDL_KEYDOWN" ); break;
+        case SDL_KEYUP:   fprintf( LOCAL_STDOUT, "SDL_KEYUP" ); break;
         default:          fprintf( LOCAL_STDOUT,  "Unknown" ); retval = bfalse; break;
     }
 
-    if( retval )
+    if ( retval )
     {
-        switch( evt_ptr->state )
+        switch ( evt_ptr->state )
         {
-            case SDL_PRESSED:  fprintf( LOCAL_STDOUT, "SDL_PRESSED"); break;
-            case SDL_RELEASED: fprintf( LOCAL_STDOUT, "SDL_RELEASED"); break;
+            case SDL_PRESSED:  fprintf( LOCAL_STDOUT, "SDL_PRESSED" ); break;
+            case SDL_RELEASED: fprintf( LOCAL_STDOUT, "SDL_RELEASED" ); break;
             default:           fprintf( LOCAL_STDOUT,  "Unknown" ); retval = bfalse; break;
         }
     }
@@ -960,9 +959,9 @@ bool_t SDLX_Log_KeyboardEvent( SDL_KeyboardEvent * evt_ptr )
 //--------------------------------------------------------------------------------------------
 bool_t SDLX_Log_MouseMotionEvent( SDL_MouseMotionEvent * evt_ptr )
 {
-    if( NULL == evt_ptr ) return bfalse;
+    if ( NULL == evt_ptr ) return bfalse;
 
-    if( 0 == _event_log_mask.all || 0 == _event_log_mask.mousemotion ) return btrue;
+    if ( 0 == _event_log_mask.all || 0 == _event_log_mask.mousemotion ) return btrue;
 
     fprintf( LOCAL_STDOUT,  "SDL_MouseMotionEvent\n" );
 
@@ -974,17 +973,17 @@ bool_t SDLX_Log_MouseButtonEvent( SDL_MouseButtonEvent * evt_ptr )
 {
     bool_t retval = bfalse;
 
-    if( NULL == evt_ptr ) return bfalse;
+    if ( NULL == evt_ptr ) return bfalse;
 
-    if( 0 == _event_log_mask.all || 0 == _event_log_mask.mousebutton ) return btrue;
+    if ( 0 == _event_log_mask.all || 0 == _event_log_mask.mousebutton ) return btrue;
 
     fprintf( LOCAL_STDOUT,  "SDL_MouseButtonEvent " );
 
     retval = btrue;
-    switch( evt_ptr->type )
+    switch ( evt_ptr->type )
     {
-        case SDL_MOUSEBUTTONDOWN: fprintf( LOCAL_STDOUT, "SDL_MOUSEBUTTONDOWN"); break;
-        case SDL_MOUSEBUTTONUP:   fprintf( LOCAL_STDOUT, "SDL_MOUSEBUTTONUP");   break;
+        case SDL_MOUSEBUTTONDOWN: fprintf( LOCAL_STDOUT, "SDL_MOUSEBUTTONDOWN" ); break;
+        case SDL_MOUSEBUTTONUP:   fprintf( LOCAL_STDOUT, "SDL_MOUSEBUTTONUP" );   break;
         default:                  fprintf( LOCAL_STDOUT, "Unknown" ); retval = bfalse; break;
     }
 
@@ -996,9 +995,9 @@ bool_t SDLX_Log_MouseButtonEvent( SDL_MouseButtonEvent * evt_ptr )
 //--------------------------------------------------------------------------------------------
 bool_t SDLX_Log_JoyAxisEvent( SDL_JoyAxisEvent * evt_ptr )
 {
-    if( NULL == evt_ptr ) return bfalse;
+    if ( NULL == evt_ptr ) return bfalse;
 
-    if( 0 == _event_log_mask.all || 0 == _event_log_mask.joyaxismotion ) return btrue;
+    if ( 0 == _event_log_mask.all || 0 == _event_log_mask.joyaxismotion ) return btrue;
 
     fprintf( LOCAL_STDOUT,  "SDL_JoyAxisEvent\n" );
 
@@ -1008,9 +1007,9 @@ bool_t SDLX_Log_JoyAxisEvent( SDL_JoyAxisEvent * evt_ptr )
 //--------------------------------------------------------------------------------------------
 bool_t SDLX_Log_JoyBallEvent( SDL_JoyBallEvent * evt_ptr )
 {
-    if( NULL == evt_ptr ) return bfalse;
+    if ( NULL == evt_ptr ) return bfalse;
 
-    if( 0 == _event_log_mask.all || 0 == _event_log_mask.joyballmotion ) return btrue;
+    if ( 0 == _event_log_mask.all || 0 == _event_log_mask.joyballmotion ) return btrue;
 
     fprintf( LOCAL_STDOUT,  "SDL_JoyBallEvent\n" );
 
@@ -1020,9 +1019,9 @@ bool_t SDLX_Log_JoyBallEvent( SDL_JoyBallEvent * evt_ptr )
 //--------------------------------------------------------------------------------------------
 bool_t SDLX_Log_JoyHatEvent( SDL_JoyHatEvent * evt_ptr )
 {
-    if( NULL == evt_ptr ) return bfalse;
+    if ( NULL == evt_ptr ) return bfalse;
 
-    if( 0 == _event_log_mask.all || 0 == _event_log_mask.joyhatmotion ) return btrue;
+    if ( 0 == _event_log_mask.all || 0 == _event_log_mask.joyhatmotion ) return btrue;
 
     fprintf( LOCAL_STDOUT,  "SDL_JoyHatEvent\n" );
 
@@ -1034,18 +1033,17 @@ bool_t SDLX_Log_JoyButtonEvent( SDL_JoyButtonEvent * evt_ptr )
 {
     bool_t retval = bfalse;
 
-    if( 0 == _event_log_mask.all || 0 == _event_log_mask.joybutton ) return btrue;
+    if ( 0 == _event_log_mask.all || 0 == _event_log_mask.joybutton ) return btrue;
 
-
-    if( NULL == evt_ptr ) return bfalse;
+    if ( NULL == evt_ptr ) return bfalse;
 
     fprintf( LOCAL_STDOUT,  "SDL_JoyButtonEvent " );
 
     retval = btrue;
-    switch( evt_ptr->type )
+    switch ( evt_ptr->type )
     {
-        case SDL_JOYBUTTONDOWN: fprintf( LOCAL_STDOUT, "SDL_JOYBUTTONDOWN"); break;
-        case SDL_JOYBUTTONUP:   fprintf( LOCAL_STDOUT, "SDL_JOYBUTTONUP");   break;
+        case SDL_JOYBUTTONDOWN: fprintf( LOCAL_STDOUT, "SDL_JOYBUTTONDOWN" ); break;
+        case SDL_JOYBUTTONUP:   fprintf( LOCAL_STDOUT, "SDL_JOYBUTTONUP" );   break;
         default:                fprintf( LOCAL_STDOUT,  "Unknown" ); retval = bfalse; break;
     }
 
@@ -1057,9 +1055,9 @@ bool_t SDLX_Log_JoyButtonEvent( SDL_JoyButtonEvent * evt_ptr )
 //--------------------------------------------------------------------------------------------
 bool_t SDLX_Log_QuitEvent( SDL_QuitEvent * evt_ptr )
 {
-    if( NULL == evt_ptr ) return bfalse;
+    if ( NULL == evt_ptr ) return bfalse;
 
-    if( 0 == _event_log_mask.all || 0 == _event_log_mask.quit ) return btrue;
+    if ( 0 == _event_log_mask.all || 0 == _event_log_mask.quit ) return btrue;
 
     fprintf( LOCAL_STDOUT,  "SDL_QuitEvent\n" );
 
@@ -1069,9 +1067,9 @@ bool_t SDLX_Log_QuitEvent( SDL_QuitEvent * evt_ptr )
 //--------------------------------------------------------------------------------------------
 bool_t SDLX_Log_SysWMEvent( SDL_SysWMEvent * evt_ptr )
 {
-    if( NULL == evt_ptr ) return bfalse;
+    if ( NULL == evt_ptr ) return bfalse;
 
-    if( 0 == _event_log_mask.all || 0 == _event_log_mask.syswm ) return btrue;
+    if ( 0 == _event_log_mask.all || 0 == _event_log_mask.syswm ) return btrue;
 
     fprintf( LOCAL_STDOUT,  "SDL_SysWMEvent - msg %d\n", evt_ptr->msg );
 
@@ -1081,9 +1079,9 @@ bool_t SDLX_Log_SysWMEvent( SDL_SysWMEvent * evt_ptr )
 //--------------------------------------------------------------------------------------------
 bool_t SDLX_Log_ResizeEvent( SDL_ResizeEvent * evt_ptr )
 {
-    if( NULL == evt_ptr ) return bfalse;
+    if ( NULL == evt_ptr ) return bfalse;
 
-    if( 0 == _event_log_mask.all || 0 == _event_log_mask.videoresize ) return btrue;
+    if ( 0 == _event_log_mask.all || 0 == _event_log_mask.videoresize ) return btrue;
 
     fprintf( LOCAL_STDOUT,  "SDL_ResizeEvent\n" );
 
@@ -1093,9 +1091,9 @@ bool_t SDLX_Log_ResizeEvent( SDL_ResizeEvent * evt_ptr )
 //--------------------------------------------------------------------------------------------
 bool_t SDLX_Log_ExposeEvent( SDL_ExposeEvent * evt_ptr )
 {
-    if( NULL == evt_ptr ) return bfalse;
+    if ( NULL == evt_ptr ) return bfalse;
 
-    if( 0 == _event_log_mask.all || 0 == _event_log_mask.videoexpose ) return btrue;
+    if ( 0 == _event_log_mask.all || 0 == _event_log_mask.videoexpose ) return btrue;
 
     fprintf( LOCAL_STDOUT,  "SDL_ExposeEvent\n" );
 
@@ -1105,9 +1103,9 @@ bool_t SDLX_Log_ExposeEvent( SDL_ExposeEvent * evt_ptr )
 //--------------------------------------------------------------------------------------------
 bool_t SDLX_Log_UserEvent( SDL_UserEvent * evt_ptr )
 {
-    if( NULL == evt_ptr ) return bfalse;
+    if ( NULL == evt_ptr ) return bfalse;
 
-    if( 0 == _event_log_mask.all || 0 == _event_log_mask.user ) return btrue;
+    if ( 0 == _event_log_mask.all || 0 == _event_log_mask.user ) return btrue;
 
     fprintf( LOCAL_STDOUT,  "SDL_UserEvent - code %d\n", evt_ptr->code );
 
@@ -1117,9 +1115,9 @@ bool_t SDLX_Log_UserEvent( SDL_UserEvent * evt_ptr )
 //--------------------------------------------------------------------------------------------
 bool_t SDLX_Log_Unknown( SDL_Event * evt_ptr )
 {
-    if( NULL == evt_ptr ) return bfalse;
+    if ( NULL == evt_ptr ) return bfalse;
 
-    if( 0 == _event_log_mask.all || 0 == _event_log_mask.unknown ) return btrue;
+    if ( 0 == _event_log_mask.all || 0 == _event_log_mask.unknown ) return btrue;
 
     fprintf( LOCAL_STDOUT,  "SDLX_Log_Event() - unknown event %d\n", evt_ptr->type );
 
@@ -1131,69 +1129,69 @@ bool_t SDLX_Log_Event( SDL_Event * evt_ptr )
 {
     bool_t retval = bfalse;
 
-    if( NULL == evt_ptr ) return bfalse;
+    if ( NULL == evt_ptr ) return bfalse;
 
-    if( 0 == _event_log_mask.all ) return btrue;
+    if ( 0 == _event_log_mask.all ) return btrue;
 
-    switch( evt_ptr->type )
+    switch ( evt_ptr->type )
     {
-        case SDL_ACTIVEEVENT: 
-            retval = SDLX_Log_ActiveEvent( &(evt_ptr->active) ); 
+        case SDL_ACTIVEEVENT:
+            retval = SDLX_Log_ActiveEvent( &( evt_ptr->active ) );
             break;
 
         case SDL_KEYDOWN:
-        case SDL_KEYUP: 
-            retval = SDLX_Log_KeyboardEvent( &(evt_ptr->key) ); 
+        case SDL_KEYUP:
+            retval = SDLX_Log_KeyboardEvent( &( evt_ptr->key ) );
             break;
 
-        case SDL_MOUSEMOTION: 
-            retval = SDLX_Log_MouseMotionEvent( &(evt_ptr->motion) ); 
+        case SDL_MOUSEMOTION:
+            retval = SDLX_Log_MouseMotionEvent( &( evt_ptr->motion ) );
             break;
 
-        case SDL_MOUSEBUTTONDOWN: 
-        case SDL_MOUSEBUTTONUP:   
-            retval = SDLX_Log_MouseButtonEvent( &(evt_ptr->button) ); 
+        case SDL_MOUSEBUTTONDOWN:
+        case SDL_MOUSEBUTTONUP:
+            retval = SDLX_Log_MouseButtonEvent( &( evt_ptr->button ) );
             break;
 
-        case SDL_JOYAXISMOTION:   
-            retval = SDLX_Log_JoyAxisEvent( &(evt_ptr->jaxis) ); 
+        case SDL_JOYAXISMOTION:
+            retval = SDLX_Log_JoyAxisEvent( &( evt_ptr->jaxis ) );
             break;
 
-        case SDL_JOYBALLMOTION:   
-            retval = SDLX_Log_JoyBallEvent( &(evt_ptr->jball) ); 
+        case SDL_JOYBALLMOTION:
+            retval = SDLX_Log_JoyBallEvent( &( evt_ptr->jball ) );
             break;
 
-        case SDL_JOYHATMOTION:    
-            retval = SDLX_Log_JoyHatEvent( &(evt_ptr->jhat) ); 
+        case SDL_JOYHATMOTION:
+            retval = SDLX_Log_JoyHatEvent( &( evt_ptr->jhat ) );
             break;
 
-        case SDL_JOYBUTTONDOWN: 
-        case SDL_JOYBUTTONUP:     
-            retval = SDLX_Log_JoyButtonEvent( &(evt_ptr->jbutton) ); 
+        case SDL_JOYBUTTONDOWN:
+        case SDL_JOYBUTTONUP:
+            retval = SDLX_Log_JoyButtonEvent( &( evt_ptr->jbutton ) );
             break;
 
-        case SDL_QUIT:            
-            retval = SDLX_Log_QuitEvent( &(evt_ptr->quit) ); 
+        case SDL_QUIT:
+            retval = SDLX_Log_QuitEvent( &( evt_ptr->quit ) );
             break;
 
-        case SDL_SYSWMEVENT:     
-            retval = SDLX_Log_SysWMEvent( &(evt_ptr->syswm) ); 
+        case SDL_SYSWMEVENT:
+            retval = SDLX_Log_SysWMEvent( &( evt_ptr->syswm ) );
             break;
 
-        case SDL_VIDEORESIZE: 
-            retval = SDLX_Log_ResizeEvent( &(evt_ptr->resize) ); 
+        case SDL_VIDEORESIZE:
+            retval = SDLX_Log_ResizeEvent( &( evt_ptr->resize ) );
             break;
 
-        case SDL_VIDEOEXPOSE: 
-            retval = SDLX_Log_ExposeEvent( &(evt_ptr->expose) ); 
+        case SDL_VIDEOEXPOSE:
+            retval = SDLX_Log_ExposeEvent( &( evt_ptr->expose ) );
             break;
 
-        case SDL_USEREVENT: 
-            retval = SDLX_Log_UserEvent( &(evt_ptr->user) ); 
+        case SDL_USEREVENT:
+            retval = SDLX_Log_UserEvent( &( evt_ptr->user ) );
             break;
 
-        default: 
-            retval = SDLX_Log_Unknown( evt_ptr ); 
+        default:
+            retval = SDLX_Log_Unknown( evt_ptr );
             break;
     }
 

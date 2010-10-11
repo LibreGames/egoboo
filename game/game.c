@@ -198,7 +198,7 @@ static int do_game_proc_leaving( game_process_t * gproc );
 
 // misc
 static bool_t game_begin_menu( menu_process_t * mproc, which_menu_t which );
-//static void   game_end_menu( menu_process_t * mproc );
+static void   game_end_menu( menu_process_t * mproc );
 
 static void   do_game_hud();
 
@@ -774,7 +774,7 @@ int update_game()
         }
 
         // Dampen groggyness if not all players are grogged (this assumes they all share the same camera view)
-        if( 0 != numalive )
+        if ( 0 != numalive )
         {
             local_stats.grog_level /= numalive;
             local_stats.daze_level /= numalive;
@@ -2029,8 +2029,8 @@ void set_one_player_latch( const PLA_REF by_reference player )
                 joy_latch.dir[kY] = mous.y * scale;
 
                 if ( CAM_TURN_GOOD == PCamera->turn_mode &&
-                    1 == local_numlpla &&
-                    control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_CAMERA ) == 0 )  joy_latch.dir[kX] = 0;
+                     1 == local_numlpla &&
+                     control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_CAMERA ) == 0 )  joy_latch.dir[kX] = 0;
 
                 joy_latch = chr_convert_latch_2d( pchr, joy_latch );
 
@@ -2088,8 +2088,8 @@ void set_one_player_latch( const PLA_REF by_reference player )
             }
 
             if ( CAM_TURN_GOOD == PCamera->turn_mode &&
-                1 == local_numlpla &&
-                !control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_CAMERA ) )  joy_latch.dir[kX] = 0;
+                 1 == local_numlpla &&
+                 !control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_CAMERA ) )  joy_latch.dir[kX] = 0;
 
             joy_latch = chr_convert_latch_2d( pchr, joy_latch );
 
@@ -2146,8 +2146,8 @@ void set_one_player_latch( const PLA_REF by_reference player )
             }
 
             if ( CAM_TURN_GOOD == PCamera->turn_mode &&
-                1 == local_numlpla &&
-                !control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_CAMERA ) )  joy_latch.dir[kX] = 0;
+                 1 == local_numlpla &&
+                 !control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_CAMERA ) )  joy_latch.dir[kX] = 0;
 
             joy_latch = chr_convert_latch_2d( pchr, joy_latch );
 
@@ -2196,7 +2196,7 @@ void set_one_player_latch( const PLA_REF by_reference player )
             joy_latch.dir[kY] = ( control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_DOWN ) - control_is_pressed( INPUT_DEVICE_KEYBOARD,  CONTROL_UP ) );
 
             if ( CAM_TURN_GOOD == PCamera->turn_mode &&
-                1 == local_numlpla )  joy_latch.dir[kX] = 0;
+                 1 == local_numlpla )  joy_latch.dir[kX] = 0;
 
             joy_latch = chr_convert_latch_2d( pchr, joy_latch );
 
@@ -3115,12 +3115,12 @@ void game_load_global_assets()
 {
     // load a bunch of assets that are used in the module
 
-    // Load all the global icons
+    // Load all in-game resources
     load_all_global_icons();
     load_blips();
     load_bars();
-    font_bmp_load_vfs( "mp_data/font", "mp_data/font.txt" );
 	load_cursor();
+    font_bmp_load_vfs( "mp_data/font", "mp_data/font.txt" );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -3744,7 +3744,7 @@ bool_t game_begin_menu( menu_process_t * mproc, which_menu_t which )
 }
 
 //--------------------------------------------------------------------------------------------
-/*void game_end_menu( menu_process_t * mproc )
+void game_end_menu( menu_process_t * mproc )
 {
     mnu_end_menu();
 
@@ -3753,7 +3753,7 @@ bool_t game_begin_menu( menu_process_t * mproc, which_menu_t which )
         process_resume( PROC_PBASE( MProc ) );
         GProc->menu_depth = -1;
     }
-}*/
+}
 
 //--------------------------------------------------------------------------------------------
 void game_finish_module()

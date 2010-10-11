@@ -518,7 +518,7 @@ prt_t * prt_config_do_init( prt_t * pprt )
 
     // estimate some parameters for buoyancy and air resistance
     loc_spdlimit = ppip->spdlimit;
-    if ( 0.0f == loc_spdlimit ) loc_spdlimit = -STANDARD_GRAVITY / (1.0f - air_friction);
+    if ( 0.0f == loc_spdlimit ) loc_spdlimit = -STANDARD_GRAVITY / ( 1.0f - air_friction );
 
     {
         const float buoyancy_min       = 0.0f;
@@ -529,7 +529,7 @@ prt_t * prt_config_do_init( prt_t * pprt )
         // find the buoyancy, assuming that the air_resistance of the particle
         // is equal to air_friction at standard gravity
         pprt->buoyancy = -loc_spdlimit * ( 1.0f - air_friction ) - STANDARD_GRAVITY;
-        pprt->buoyancy = CLIP(pprt->buoyancy, buoyancy_min, buoyancy_max );
+        pprt->buoyancy = CLIP( pprt->buoyancy, buoyancy_min, buoyancy_max );
 
         // determine if there is any left-over air resistance
         pprt->air_resistance  = 1.0f - ( pprt->buoyancy + STANDARD_GRAVITY ) / -loc_spdlimit;
@@ -1474,7 +1474,7 @@ prt_bundle_t * move_one_particle_do_z_motion( prt_bundle_t * pbdl_prt )
     // Do particle buoyancy. This is kinda BS the way it is calculated
     if ( loc_pprt->buoyancy > 0.0f )
     {
-        float loc_buoyancy = loc_pprt->buoyancy  + (STANDARD_GRAVITY - gravity);
+        float loc_buoyancy = loc_pprt->buoyancy  + ( STANDARD_GRAVITY - gravity );
 
         if ( loc_zlerp < 1.0f )
         {

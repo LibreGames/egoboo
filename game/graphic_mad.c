@@ -22,12 +22,7 @@
 /// @details
 
 #include "graphic_mad.h"
-
-#include "profile.inl"
-#include "char.inl"
 #include "mad.h"
-
-#include "md2.inl"
 #include "id_md2.h"
 
 #include "log.h"
@@ -37,9 +32,14 @@
 #include "texture.h"
 #include "lighting.h"
 #include "network.h"
+#include "collision.h"
 
 #include "egoboo_setup.h"
 #include "egoboo.h"
+
+#include "profile.inl"
+#include "char.inl"
+#include "md2.inl"
 
 #include <SDL_opengl.h>
 
@@ -55,6 +55,8 @@ static void chr_draw_attached_grip( chr_t * pchr );
 static void render_chr_bbox( chr_t * pchr );
 static void render_chr_grips( chr_t * pchr );
 static void render_chr_points( chr_t * pchr );
+static bool_t render_chr_mount_cv( chr_t * pchr );
+static bool_t render_chr_grip_cv( chr_t * pchr, int grip_offset );
 
 static egoboo_rv chr_instance_update_vlst_cache( chr_instance_t * pinst, int vmax, int vmin, bool_t force, bool_t vertices_match, bool_t frames_match );
 
@@ -449,6 +451,7 @@ bool_t render_one_mad( const CHR_REF by_reference character, GLXvector4f tint, B
     {
         render_chr_bbox( pchr );
         render_chr_grips( pchr );
+        render_chr_mount_cv( pchr );
         //render_chr_points( pchr );
     }
 #endif
@@ -594,6 +597,38 @@ void render_chr_grips( chr_t * pchr )
         chr_draw_attached_grip( pchr );
     }
 }
+
+//--------------------------------------------------------------------------------------------
+bool_t render_chr_mount_cv( chr_t * pchr )
+{
+    if ( !DEFINED_PCHR( pchr ) ) return bfalse;
+
+    if ( !pchr->ismount ) return bfalse;
+
+    return render_chr_grip_cv( pchr, GRIP_LEFT );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t render_chr_grip_cv( chr_t * pchr, int grip_offset )
+{
+    bool_t retval;
+
+    fvec3_t grip_up, grip_origin;
+    oct_bb_t  grip_cv;
+
+    retval = calc_grip_cv( pchr, grip_offset, &grip_cv, grip_origin.v, grip_up.v );
+    if ( !retval ) return bfalse;
+
+    GL_DEBUG( glDisable )( GL_TEXTURE_2D );
+    {
+        GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+        render_oct_bb( &grip_cv, btrue, btrue );
+    }
+    GL_DEBUG( glEnable )( GL_TEXTURE_2D );
+
+    return btrue;
+}
+
 //--------------------------------------------------------------------------------------------
 void render_chr_points( chr_t * pchr )
 {

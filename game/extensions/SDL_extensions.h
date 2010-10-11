@@ -211,8 +211,6 @@ extern "C"
     /// Log selected SDL_Events
     bool_t SDLX_Log_Event( SDL_Event * evt_ptr );
 
-
-
 #if defined(__cplusplus)
 };
 #endif

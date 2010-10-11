@@ -54,6 +54,10 @@
 #    define EGO_DEBUG 0
 #endif
 
+// this line can be added to get some debugging features enabled in release mode
+// the compiler will complain
+//#define EGO_DEBUG 1
+
 // Some macro switches
 #undef  OLD_CAMERA_MODE       ///< Use the old camera style
 #undef  ENABLE_BODY_GRAB      ///< Enable the grabbing of bodies?

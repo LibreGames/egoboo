@@ -647,7 +647,7 @@ INLINE latch_2d_t chr_convert_latch_2d( const chr_t * pchr, const by_reference l
 {
     latch_2d_t dst = src;
 
-    if( !DEFINED_PCHR(pchr) ) return dst;
+    if ( !DEFINED_PCHR( pchr ) ) return dst;
 
     // Reverse movements for daze
     if ( pchr->dazetime > 0 )

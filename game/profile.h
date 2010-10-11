@@ -86,6 +86,8 @@ struct s_chop_section
 };
 typedef struct s_chop_section chop_section_t;
 
+#define CHOP_SECTION_INIT { /* size */ -1, /* start */ -1 }
+
 //--------------------------------------------------------------------------------------------
 
 /// Definition of the chop info needed to create a name
@@ -96,6 +98,8 @@ struct s_chop_definition
 typedef struct s_chop_definition chop_definition_t;
 
 chop_definition_t * chop_definition_init( chop_definition_t * pdefinition );
+
+#define CHOP_DEFINITION_INIT { CHOP_SECTION_INIT }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
