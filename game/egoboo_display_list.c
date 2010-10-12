@@ -527,12 +527,12 @@ display_item_t * display_list_get( display_list_t * list_ptr, GLsizei index )
 }
 
 //--------------------------------------------------------------------------------------------
-GLboolean display_list_bound( display_list_t * list_ptr, frect_t * ptmp )
+GLboolean display_list_pbound( display_list_t * list_ptr, frect_t * ptmp )
 {
     GLsizei          index;
     display_item_t * item_ptr;
-    frect_t       * prect;
-    GLboolean          found = GL_FALSE;
+    frect_t        * prect;
+    GLboolean        found = GL_FALSE;
 
     if ( NULL == list_ptr || NULL == ptmp ) return GL_FALSE;
 
@@ -625,7 +625,7 @@ display_item_t * display_list_append( display_list_t * list_ptr, display_item_t 
         pitem = NULL;
 
         // make sure we have a proper bounding rect
-        display_list_bound( list_ptr, NULL );
+        display_list_pbound( list_ptr, NULL );
     }
 
     return pitem;

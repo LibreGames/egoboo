@@ -35,9 +35,18 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+
+extern const ui_Just_t ui_just_nothing    = { UI_JUST_NON, UI_JUST_NON };
+extern const ui_Just_t ui_just_topleft    = { UI_JUST_LOW, UI_JUST_LOW };
+extern const ui_Just_t ui_just_topcenter  = { UI_JUST_LOW, UI_JUST_MID };
+extern const ui_Just_t ui_just_topright   = { UI_JUST_LOW, UI_JUST_HGH };
+extern const ui_Just_t ui_just_centered   = { UI_JUST_MID, UI_JUST_MID };
+extern const ui_Just_t ui_just_centerleft = { UI_JUST_MID, UI_JUST_LOW };
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 #define UI_MAX_JOYSTICKS 8
 #define UI_CONTROL_TIMER 100
-
 struct s_ui_control_info
 {
     int    timer;
@@ -240,9 +249,9 @@ void ui_draw_cursor_icon( TX_REF icon_ref )
 {
     float x, y;
 
-    ui_virtual_to_screen_abs( ui_context.cursor_X - 5, ui_context.cursor_Y - 5, &x, &y );
+    ui_virtual_to_screen_abs( ui_context.cursor_X - 1, ui_context.cursor_Y - 1, &x, &y );
 
-    //Draw the cursor, but only if it inside the screen
+    // Draw the cursor
     draw_one_icon( icon_ref, x, y, NOSPARKLE );
 }
 
@@ -702,7 +711,7 @@ float ui_drawTextBoxImmediate( TTF_Font * ttf_ptr, float vx, float vy, float spa
         int line_count;
 
         // set the texture position
-        display_list_bound( tmp_tx_lst, &bound );
+        display_list_pbound( tmp_tx_lst, &bound );
         ui_virtual_to_screen_abs( vx, vy, &x1, &y1 );
         display_list_adjust_bound( tmp_tx_lst, x1 - bound.x, y1 - bound.y );
 
@@ -891,7 +900,7 @@ int ui_drawTextBox( display_list_t * tx_lst, float vx, float vy, float vwidth, f
     {
         frect_t tmp;
 
-        if ( display_list_bound( tx_lst, &tmp ) )
+        if ( display_list_pbound( tx_lst, &tmp ) )
         {
             x2 = tmp.x + tmp.w;
             y2 = tmp.y + tmp.h;
@@ -1130,8 +1139,6 @@ bool_t ui_Widget_shrink( ui_Widget_t * pw2, ui_Widget_t * pw1, float pixels )
 //--------------------------------------------------------------------------------------------
 bool_t ui_Widget_init( ui_Widget_t * pw, ui_id_t id, TTF_Font * ttf_ptr, const char *text, oglx_texture_t *img, float vx, float vy, float vwidth, float vheight )
 {
-    int img_w = 0;
-
     if ( NULL == pw ) return bfalse;
 
     // use the default ui font?
@@ -1154,11 +1161,10 @@ bool_t ui_Widget_init( ui_Widget_t * pw, ui_id_t id, TTF_Font * ttf_ptr, const c
     pw->tx_lst = display_list_ctor( pw->tx_lst, MAX_WIDGET_TEXT );
 
     // set any image
-    ui_Widget_set_image( pw, img );
+    ui_Widget_set_img( pw, ui_just_centered, img );
 
     // set any text
-    img_w = ( NULL == pw->img ) ? 0 : pw->img->imgW;
-    ui_Widget_set_text( pw, ttf_ptr, img_w, text );
+    ui_Widget_set_text( pw, ui_just_topcenter, ttf_ptr, text );
 
     return btrue;
 }
@@ -1270,7 +1276,7 @@ bool_t ui_Widget_update_bound( ui_Widget_t * pw, frect_t * pbound )
     {
         frect_t tmp;
 
-        display_list_bound( pw->tx_lst, &tmp );
+        display_list_pbound( pw->tx_lst, &tmp );
 
         txt_w = tmp.w;
         txt_h = tmp.h;
@@ -1396,7 +1402,7 @@ bool_t ui_Widget_set_id( ui_Widget_t * pw, ui_id_t id )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget_set_img( ui_Widget_t * pw, oglx_texture_t *img )
+bool_t ui_Widget_set_img( ui_Widget_t * pw, const ui_Just_t just, oglx_texture_t *img )
 {
     if ( NULL == pw ) return bfalse;
 
@@ -1406,7 +1412,8 @@ bool_t ui_Widget_set_img( ui_Widget_t * pw, oglx_texture_t *img )
     if ( NULL == img ) return btrue;
 
     // set the image
-    pw->img = img;
+    pw->img      = img;
+    pw->img_just = just;
 
     // tell the ui to display the image
     ui_Widget_DisplayMaskAdd( pw, UI_DISPLAY_IMAGE );
@@ -1417,54 +1424,112 @@ bool_t ui_Widget_set_img( ui_Widget_t * pw, oglx_texture_t *img )
 //--------------------------------------------------------------------------------------------
 bool_t ui_Widget_update_text_pos( ui_Widget_t * pw )
 {
+    int   just;
+    float diff, new_x, new_y;
     float x1, x2, y1, y2;
-    float w, h;
-    float offset;
-    float text_x, text_y;
-    frect_t rect;
+    frect_t tx_bound, w_bound, w_vbound;
 
     if ( NULL == pw ) return bfalse;
 
-    if ( NULL == pw->tx_lst ) return btrue;
+    // if there is no justification info, just return
+    if( UI_JUST_NON == pw->tx_just.horz && UI_JUST_NON == pw->tx_just.vert ) return btrue;
 
-    // determine if we need to move the text_ptr over for an image
-    offset = 0;
-    if ( 0 != ui_Widget_DisplayMaskTest( pw, UI_DISPLAY_IMAGE ) && NULL != pw->img )
+    // get the widget bound in virtual coordinates
+    w_vbound.x = pw->vx;
+    w_vbound.y = pw->vy;
+    w_vbound.w = pw->vwidth;
+    w_vbound.h = pw->vheight;
+
+    // adjust the available region so that it is to the left of any image
+    if( 0 != ui_Widget_DisplayMaskTest( pw, UI_DISPLAY_IMAGE ) && NULL != pw->img )
     {
-        offset = pw->img->imgW * ui_context.aw;
+        w_vbound.x += 5 + pw->img->imgW;
+        w_vbound.w -= 5 + pw->img->imgW;
     }
 
-    // convert the virtual coordinates to screen coordinates
-    ui_virtual_to_screen_abs( pw->vx, pw->vy, &x1, &y1 );
-    ui_virtual_to_screen_abs( pw->vx + pw->vwidth, pw->vy + pw->vheight, &x2, &y2 );
-    w = x2 - x1;
-    h = y2 - y1;
-
-    display_list_bound( pw->tx_lst, &rect );
-
-    rect.w = MIN( rect.w, w );
-    rect.h = MIN( rect.h, h );
-
-    if ( w - ( offset + rect.w ) < 0 )
+    // shrink this region to make a 5 pixel border
+    if( 0 != ui_Widget_DisplayMaskTest( pw, UI_DISPLAY_IMAGE ) && NULL != pw->img )
     {
-        // not enough room or everything
-        text_x = x1 + offset;
-    }
-    else
-    {
-        text_x = ( w - ( offset + rect.w ) ) * 0.5f + ( x1 + offset );
+        w_vbound.x +=  5;
+        w_vbound.w -= 10;
+        w_vbound.y +=  5;
+        w_vbound.h -= 10;
     }
 
-    if ( h - rect.h < 0 )
+    // get the screen coordinates of the button
+    ui_virtual_to_screen_abs( w_vbound.x, w_vbound.y, &x1, &y1 );
+    ui_virtual_to_screen_abs( w_vbound.x + w_vbound.w, w_vbound.y + w_vbound.h, &x2, &y2 );
+
+    // get the widget bound in screen coordinates
+    w_bound.x = x1;
+    w_bound.y = y1;
+    w_bound.w = x2 - x1;
+    w_bound.h = y2 - y1;
+
+    // get the button bound in screen coordinates
+    display_list_pbound( pw->tx_lst, &tx_bound );
+
+    //---- do the x coordinate
+
+    // make an alias of this
+    just = pw->tx_just.horz;
+
+    // test whether the text will fit inside the allowed region
+    diff = w_bound.w - tx_bound.w;
+
+    // if not, default to left justified
+    if( diff < 0 ) just = UI_JUST_LOW;
+
+    switch( just )
     {
-        text_y = y1;
-    }
-    else
-    {
-        text_y = ( h - rect.h ) * 0.5f + y1;
+        default:
+        case UI_JUST_NON:
+        case UI_JUST_LOW:
+            new_x = w_bound.x;
+            break;
+
+        case UI_JUST_MID:
+            new_x = w_bound.x + diff * 0.5f;
+            break;
+
+        case UI_JUST_HGH:
+            new_x = (w_bound.x + w_bound.w) - tx_bound.w;
+            break;
     }
 
-    display_list_adjust_bound( pw->tx_lst, text_x - rect.x, text_y - rect.y );
+    new_x = MAX( new_x, pw->vx );
+
+    //---- do the y coordinate
+
+    // make an alias of this
+    just = pw->tx_just.vert;
+
+    // test whether the text will fit inside the allowed region
+    diff = w_bound.h - tx_bound.h;
+
+    // if not, default to top justified
+    if( diff < 0 ) just = UI_JUST_LOW;
+
+    switch( just )
+    {
+        default:
+        case UI_JUST_NON:
+        case UI_JUST_LOW:
+            new_y = w_bound.y;
+            break;
+
+        case UI_JUST_MID:
+            new_y = w_bound.y + diff * 0.5f;
+            break;
+
+        case UI_JUST_HGH:
+            new_y = (w_bound.y + w_bound.h) - tx_bound.h;
+            break;
+    }
+
+    new_y = MAX( new_y, pw->vy );
+
+    display_list_adjust_bound( pw->tx_lst, new_x - tx_bound.x, new_y - tx_bound.y );
 
     return btrue;
 }
@@ -1485,11 +1550,8 @@ bool_t ui_Widget_free( ui_Widget_t * pw )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget_set_vtext( ui_Widget_t * pw, TTF_Font * ttf_ptr, int voffset, const char * format, va_list args )
+bool_t ui_Widget_set_vtext( ui_Widget_t * pw, const ui_Just_t just, TTF_Font * ttf_ptr, const char * format, va_list args )
 {
-    float text_x, text_y;
-    int   text_w, text_h;
-    float offset;
     int lines = 0;
 
     if ( NULL == pw ) return bfalse;
@@ -1505,60 +1567,28 @@ bool_t ui_Widget_set_vtext( ui_Widget_t * pw, TTF_Font * ttf_ptr, int voffset, c
 
     // tell the widget not to dosplay text
     ui_Widget_DisplayMaskRemove( pw, UI_DISPLAY_TEXT );
+    pw->tx_just.horz = UI_JUST_NON;
+    pw->tx_just.vert = UI_JUST_NON;
 
     // Create the image and position it on the right hand side of any image
     if ( NULL != format && '\0' != format[0] )
     {
-        const char * text_ptr = NULL;
-        float x1, x2, y1, y2;
-        float w, h;
-
-        // determine if we need to move the text_ptr over for an image
-        offset = 0;
-        if ( 0 != ui_Widget_DisplayMaskTest( pw, UI_DISPLAY_IMAGE ) )
-        {
-            offset = voffset * ui_context.aw;
-        }
+        float x1, y1;
 
         // convert the virtual coordinates to screen coordinates
         ui_virtual_to_screen_abs( pw->vx, pw->vy, &x1, &y1 );
-        ui_virtual_to_screen_abs( pw->vx + pw->vwidth, pw->vy + pw->vheight, &x2, &y2 );
-        w = x2 - x1;
-        h = y2 - y1;
-
-        // find the width (x2-x1) & height (y2-y1) of the text_ptr to be drawn,
-        // so that it can be centered inside the button
-        text_ptr = fnt_vgetTextBoxSize( ttf_ptr, 20, &text_w, &text_h, format, args );
-
-        text_w = MIN( text_w, w );
-        text_h = MIN( text_h, h );
-
-        if ( w - ( offset + text_w ) < 0 )
-        {
-            // not enough room or everything
-            text_x = x1 + offset;
-        }
-        else
-        {
-            text_x = ( w - ( offset + text_w ) ) * 0.5f + ( x1 + offset );
-        }
-
-        if ( h - text_h < 0 )
-        {
-            text_y = y1;
-        }
-        else
-        {
-            text_y = ( h - text_h ) * 0.5f + y1;
-        }
 
         // ensure that we hae a display list
         pw->tx_lst = display_list_ctor( pw->tx_lst, MAX_WIDGET_TEXT );
 
         // actually convert the text_ptr ( use the text_ptr returned from fnt_vgetTextBoxSize() )
         GL_DEBUG( glColor3f )( 1, 1, 1 );
-        lines = fnt_convertTextBox_literal( pw->tx_lst, ttf_ptr, text_x, text_y, 20, text_ptr );
+        lines = fnt_vconvertTextBox( pw->tx_lst, ttf_ptr, x1, y1, 20, format, args );
 
+        // set the justification
+        pw->tx_just = just;
+
+        // adjust the text position
         ui_Widget_update_text_pos( pw );
     }
 
@@ -1572,7 +1602,7 @@ bool_t ui_Widget_set_vtext( ui_Widget_t * pw, TTF_Font * ttf_ptr, int voffset, c
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget_set_text( ui_Widget_t * pw, TTF_Font * ttf_ptr, int voffset, const char * format, ... )
+bool_t ui_Widget_set_text( ui_Widget_t * pw, const ui_Just_t just, TTF_Font * ttf_ptr, const char * format, ... )
 {
     /// @details BB@> render the text string to a ogl texture
 
@@ -1586,44 +1616,12 @@ bool_t ui_Widget_set_text( ui_Widget_t * pw, TTF_Font * ttf_ptr, int voffset, co
     }
 
     va_start( args, format );
-    retval = ui_Widget_set_vtext( pw, ttf_ptr, voffset, format, args );
+    retval = ui_Widget_set_vtext( pw, just, ttf_ptr, format, args );
     va_end( args );
 
+    ui_Widget_update_text_pos( pw );
+
     return retval;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t ui_Widget_set_image( ui_Widget_t * pw, oglx_texture_t * img )
-{
-    bool_t changed = bfalse;
-
-    if ( NULL == pw ) return bfalse;
-
-    changed = bfalse;
-    if ( pw->img != img )
-    {
-        changed = btrue;
-    }
-
-    // get rid of the old image, if necessary
-    if ( changed && NULL != pw->img )
-    {
-        oglx_texture_Release( pw->img );
-        pw->img = NULL;
-
-        ui_Widget_DisplayMaskRemove( pw, UI_DISPLAY_IMAGE );
-    }
-
-    // set the image
-    pw->img = img;
-
-    // turn on the display, if the image exists
-    if ( NULL != pw->img )
-    {
-        ui_Widget_DisplayMaskAdd( pw, UI_DISPLAY_IMAGE );
-    }
-
-    return img == pw->img;
 }
 
 //--------------------------------------------------------------------------------------------

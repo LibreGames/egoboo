@@ -68,7 +68,7 @@ extern display_list_t * display_list_clear( display_list_t * );
 extern GLsizei          display_list_size( display_list_t * );
 extern GLsizei          display_list_used( display_list_t * );
 extern display_item_t * display_list_get( display_list_t *, GLsizei index );
-extern GLboolean        display_list_bound( display_list_t *, frect_t * ptmp );
+extern GLboolean        display_list_pbound( display_list_t *, frect_t * ptmp );
 extern GLboolean        display_list_adjust_bound( display_list_t *, GLfloat dx, GLfloat dy );
 extern display_item_t * display_list_append( display_list_t *, display_item_t * pitem );
 /// Draw the elements of a display_list_t directly to the screen

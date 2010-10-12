@@ -369,17 +369,17 @@ void   dolist_make( ego_mpd_t * pmesh );
 bool_t dolist_add_chr( ego_mpd_t * pmesh, const CHR_REF by_reference ichr );
 bool_t dolist_add_prt( ego_mpd_t * pmesh, const PRT_REF by_reference iprt );
 
-void draw_one_icon( const TX_REF by_reference icontype, int x, int y, Uint8 sparkle );
-void draw_one_font( int fonttype, int x, int y );
-void draw_map_texture( int x, int y );
-int  draw_one_bar( Uint8 bartype, int x, int y, int ticks, int maxticks );
-int  draw_string( int x, int y, const char *format, ... );
-int  draw_wrap_string( const char *szText, int x, int y, int maxx );
-int  draw_status( const CHR_REF by_reference character, int x, int y );
+void draw_one_icon( const TX_REF by_reference icontype, float x, float y, Uint8 sparkle );
+void draw_one_font( int fonttype, float x, float y );
+void draw_map_texture( float x, float y );
+int  draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks );
+int  draw_string( float x, float y, const char *format, ... );
+int  draw_wrap_string( const char *szText, float x, float y, int maxx );
+int  draw_status( const CHR_REF by_reference character, float x, float y );
 void draw_text();
-void draw_one_character_icon( const CHR_REF by_reference item, int x, int y, bool_t draw_ammo );
+void draw_one_character_icon( const CHR_REF by_reference item, float x, float y, bool_t draw_ammo );
 //void draw_cursor();
-void draw_blip( float sizeFactor, Uint8 color, int x, int y, bool_t mini_map );
+void draw_blip( float sizeFactor, Uint8 color, float x, float y, bool_t mini_map );
 void draw_all_lines( struct s_camera * pcam );
 
 void   render_world( struct s_camera * pcam );

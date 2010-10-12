@@ -65,15 +65,40 @@ enum e_ui_display_bits
 
 #define MAX_WIDGET_TEXT 20
 
+enum e_ui_just
+{
+    UI_JUST_NON = 0,
+    UI_JUST_LOW,
+    UI_JUST_MID,
+    UI_JUST_HGH
+};
+
+
+struct s_ui_Just
+{
+    unsigned horz:2;
+    unsigned vert:2;
+};
+typedef struct s_ui_Just ui_Just_t;
+
+extern const ui_Just_t ui_just_nothing;
+extern const ui_Just_t ui_just_topleft;
+extern const ui_Just_t ui_just_topcenter;
+extern const ui_Just_t ui_just_topright;
+extern const ui_Just_t ui_just_centered;
+extern const ui_Just_t ui_just_centerleft;
+
 /// The data describing the state of a UI widget
 struct s_ui_Widget
 {
     ui_id_t         id;
 
     // text info
+    ui_Just_t        tx_just;
     display_list_t * tx_lst;
 
     // image info
+    ui_Just_t       img_just;
     oglx_texture_t *img;
 
     // which latches to keep track of
@@ -88,6 +113,7 @@ struct s_ui_Widget
     float         vwidth, vheight;
 };
 typedef struct s_ui_Widget ui_Widget_t;
+
 
 bool_t ui_Widget_free( ui_Widget_t * pw );
 bool_t ui_Widget_copy( ui_Widget_t * pw2, ui_Widget_t * pw1 );
@@ -104,13 +130,12 @@ bool_t    ui_Widget_DisplayMaskRemove( ui_Widget_t * pw, BIT_FIELD mbits );
 bool_t    ui_Widget_DisplayMaskSet( ui_Widget_t * pw, BIT_FIELD mbits );
 BIT_FIELD ui_Widget_DisplayMaskTest( ui_Widget_t * pw, BIT_FIELD mbits );
 
-bool_t ui_Widget_set_text( ui_Widget_t * pw, TTF_Font * ttf_ptr, int voffset, const char * format, ... );
-bool_t ui_Widget_set_image( ui_Widget_t * pw, oglx_texture_t * img );
+bool_t ui_Widget_set_text( ui_Widget_t * pw, const ui_Just_t just, TTF_Font * ttf_ptr, const char * format, ... );
+bool_t ui_Widget_set_img( ui_Widget_t * pw, const ui_Just_t just, oglx_texture_t *img );
 bool_t ui_Widget_set_bound( ui_Widget_t * pw, float x, float y, float w, float h );
 bool_t ui_Widget_set_button( ui_Widget_t * pw, float x, float y, float w, float h );
 bool_t ui_Widget_set_pos( ui_Widget_t * pw, float x, float y );
 bool_t ui_Widget_set_id( ui_Widget_t * pw, ui_id_t id );
-bool_t ui_Widget_set_img( ui_Widget_t * pw, oglx_texture_t *img );
 
 // Initialize or shut down the ui system
 int  ui_begin( const char *default_font, int default_font_size );

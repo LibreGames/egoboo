@@ -603,85 +603,85 @@ int mnu_get_menu_depth()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct s_MainState
-{
-    BASE_MENU_STATE;
-};
-typedef struct s_MainState MainState_t;
-
-//--------------------------------------------------------------------------------------------
-static MainState_t *MainState_ctor( MainState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static MainState_t *MainState_dtor( MainState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static MainState_t * doMainMenu_begin( MainState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    ps = MainState_ctor( ps );
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static MainState_t * doMainMenu_entering( MainState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static MainState_t * doMainMenu_running( MainState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static MainState_t * doMainMenu_leaving( MainState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static MainState_t * doMainMenu_finish( MainState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    ps = MainState_ctor( ps );
-
-    return ps;
-};
+//struct s_MainState
+//{
+//    BASE_MENU_STATE;
+//};
+//typedef struct s_MainState MainState_t;
+//
+////--------------------------------------------------------------------------------------------
+//static MainState_t *MainState_ctor( MainState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static MainState_t *MainState_dtor( MainState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static MainState_t * doMainMenu_begin( MainState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    ps = MainState_ctor( ps );
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static MainState_t * doMainMenu_entering( MainState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static MainState_t * doMainMenu_running( MainState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static MainState_t * doMainMenu_leaving( MainState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static MainState_t * doMainMenu_finish( MainState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    ps = MainState_ctor( ps );
+//
+//    return ps;
+//};
 
 //--------------------------------------------------------------------------------------------
 int doMainMenu( float deltaTime )
@@ -772,7 +772,7 @@ int doMainMenu( float deltaTime )
             // do buttons sliding in animation, and background fading in
             // background
             {
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
                 if ( mnu_draw_background )
                 {
@@ -844,7 +844,7 @@ int doMainMenu( float deltaTime )
             // Do the same stuff as in MM_Entering, but backwards
 
             {
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
                 if ( mnu_draw_background )
                 {
@@ -894,85 +894,85 @@ int doMainMenu( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct s_SinglePlayerState
-{
-    BASE_MENU_STATE;
-};
-typedef struct s_SinglePlayerState SinglePlayerState_t;
-
-//--------------------------------------------------------------------------------------------
-static SinglePlayerState_t *SinglePlayerState_ctor( SinglePlayerState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static SinglePlayerState_t *SinglePlayerState_dtor( SinglePlayerState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static SinglePlayerState_t * doSinglePlayerMenu_begin( SinglePlayerState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    ps = SinglePlayerState_ctor( ps );
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static SinglePlayerState_t * doSinglePlayerMenu_entering( SinglePlayerState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static SinglePlayerState_t * doSinglePlayerMenu_running( SinglePlayerState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static SinglePlayerState_t * doSinglePlayerMenu_leaving( SinglePlayerState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static SinglePlayerState_t * doSinglePlayerMenu_finish( SinglePlayerState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    ps = SinglePlayerState_ctor( ps );
-
-    return ps;
-};
+//struct s_SinglePlayerState
+//{
+//    BASE_MENU_STATE;
+//};
+//typedef struct s_SinglePlayerState SinglePlayerState_t;
+//
+////--------------------------------------------------------------------------------------------
+//static SinglePlayerState_t *SinglePlayerState_ctor( SinglePlayerState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static SinglePlayerState_t *SinglePlayerState_dtor( SinglePlayerState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static SinglePlayerState_t * doSinglePlayerMenu_begin( SinglePlayerState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    ps = SinglePlayerState_ctor( ps );
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static SinglePlayerState_t * doSinglePlayerMenu_entering( SinglePlayerState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static SinglePlayerState_t * doSinglePlayerMenu_running( SinglePlayerState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static SinglePlayerState_t * doSinglePlayerMenu_leaving( SinglePlayerState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static SinglePlayerState_t * doSinglePlayerMenu_finish( SinglePlayerState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    ps = SinglePlayerState_ctor( ps );
+//
+//    return ps;
+//};
 
 //--------------------------------------------------------------------------------------------
 int doSinglePlayerMenu( float deltaTime )
@@ -1033,7 +1033,7 @@ int doSinglePlayerMenu( float deltaTime )
 
         case MM_Entering:
             {
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
                 // Draw the background image
                 if ( mnu_draw_background )
@@ -1088,7 +1088,7 @@ int doSinglePlayerMenu( float deltaTime )
             // Do buttons sliding out and background fading
             // Do the same stuff as in MM_Entering, but backwards
             {
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
                 if ( mnu_draw_background )
                 {
@@ -1195,6 +1195,87 @@ int cmp_mod_ref( const void * vref1, const void * vref2 )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+//struct s_ChooseModuleState
+//{
+//    BASE_MENU_STATE;
+//};
+//typedef struct s_ChooseModuleState ChooseModuleState_t;
+//
+////--------------------------------------------------------------------------------------------
+//static ChooseModuleState_t *ChooseModuleState_ctor( ChooseModuleState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static ChooseModuleState_t *ChooseModuleState_dtor( ChooseModuleState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static ChooseModuleState_t * doChooseModule_begin( ChooseModuleState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    ps = ChooseModuleState_ctor( ps );
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static ChooseModuleState_t * doChooseModule_entering( ChooseModuleState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static ChooseModuleState_t * doChooseModule_running( ChooseModuleState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static ChooseModuleState_t * doChooseModule_leaving( ChooseModuleState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static ChooseModuleState_t * doChooseModule_finish( ChooseModuleState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    ps = ChooseModuleState_ctor( ps );
+//
+//    return ps;
+//};
+
+//--------------------------------------------------------------------------------------------
 bool_t doChooseModule_update_description( ui_Widget_t * lab_ptr, MOD_REF validModules[], size_t validModules_size, int selectedModule )
 {
     int i;
@@ -1203,7 +1284,7 @@ bool_t doChooseModule_update_description( ui_Widget_t * lab_ptr, MOD_REF validMo
 
     if ( selectedModule < 0 || ( size_t )selectedModule >= validModules_size || validModules[selectedModule] <= 0 || selectedModule > validModules[selectedModule] )
     {
-        ui_Widget_set_text( lab_ptr, menuFont, 0, NULL );
+        ui_Widget_set_text( lab_ptr, ui_just_topleft, menuFont, NULL );
     }
     else
     {
@@ -1259,7 +1340,7 @@ bool_t doChooseModule_update_description( ui_Widget_t * lab_ptr, MOD_REF validMo
 
         // Draw a text box
         GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
-        ui_Widget_set_text( lab_ptr, menuFont, 0, buffer );
+        ui_Widget_set_text( lab_ptr, ui_just_topleft, menuFont, buffer );
     }
 
     return btrue;
@@ -1272,99 +1353,17 @@ bool_t doChooseModule_update_filter_label( ui_Widget_t * lab_ptr, int which )
 
     switch ( which )
     {
-        case FILTER_MAIN:    ui_Widget_set_text( lab_ptr, menuFont, 0, "Main Quest" );       break;
-        case FILTER_SIDE:    ui_Widget_set_text( lab_ptr, menuFont, 0, "Sidequests" );       break;
-        case FILTER_TOWN:    ui_Widget_set_text( lab_ptr, menuFont, 0, "Towns and Cities" ); break;
-        case FILTER_FUN:     ui_Widget_set_text( lab_ptr, menuFont, 0, "Fun Modules" );      break;
-        case FILTER_STARTER: ui_Widget_set_text( lab_ptr, menuFont, 0, "Starter Modules" );  break;
+        case FILTER_MAIN:    ui_Widget_set_text( lab_ptr, ui_just_centerleft, menuFont, "Main Quest" );       break;
+        case FILTER_SIDE:    ui_Widget_set_text( lab_ptr, ui_just_centerleft, menuFont, "Sidequests" );       break;
+        case FILTER_TOWN:    ui_Widget_set_text( lab_ptr, ui_just_centerleft, menuFont, "Towns and Cities" ); break;
+        case FILTER_FUN:     ui_Widget_set_text( lab_ptr, ui_just_centerleft, menuFont, "Fun Modules" );      break;
+        case FILTER_STARTER: ui_Widget_set_text( lab_ptr, ui_just_centerleft, menuFont, "Starter Modules" );  break;
         default:
-        case FILTER_OFF:     ui_Widget_set_text( lab_ptr, menuFont, 0, "All Modules" );      break;
+        case FILTER_OFF:     ui_Widget_set_text( lab_ptr, ui_just_centerleft, menuFont, "All Modules" );      break;
     }
 
     return btrue;
 }
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-struct s_ChooseModuleState
-{
-    BASE_MENU_STATE;
-};
-typedef struct s_ChooseModuleState ChooseModuleState_t;
-
-//--------------------------------------------------------------------------------------------
-static ChooseModuleState_t *ChooseModuleState_ctor( ChooseModuleState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static ChooseModuleState_t *ChooseModuleState_dtor( ChooseModuleState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static ChooseModuleState_t * doChooseModule_begin( ChooseModuleState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    ps = ChooseModuleState_ctor( ps );
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static ChooseModuleState_t * doChooseModule_entering( ChooseModuleState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static ChooseModuleState_t * doChooseModule_running( ChooseModuleState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static ChooseModuleState_t * doChooseModule_leaving( ChooseModuleState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static ChooseModuleState_t * doChooseModule_finish( ChooseModuleState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    ps = ChooseModuleState_ctor( ps );
-
-    return ps;
-};
 
 //--------------------------------------------------------------------------------------------
 int doChooseModule( float deltaTime )
@@ -1473,7 +1472,7 @@ int doChooseModule( float deltaTime )
                     memset( w_buttons + i, 0, sizeof( ui_Widget_t ) );
 
                     ui_Widget_set_id( w_buttons + i, i );
-                    ui_Widget_set_text( w_buttons + i, NULL, 0, sz_buttons[i] );
+                    ui_Widget_set_text( w_buttons + i, ui_just_centerleft, NULL, sz_buttons[i] );
                 }
 
                 // initialize the labels
@@ -1482,7 +1481,7 @@ int doChooseModule( float deltaTime )
                     memset( w_labels + i, 0, sizeof( ui_Widget_t ) );
 
                     ui_Widget_set_id( w_labels + i, UI_Nothing );
-                    ui_Widget_set_text( w_labels + i, NULL, 0, sz_labels[i] );
+                    ui_Widget_set_text( w_labels + i, ui_just_centerleft, NULL, sz_labels[i] );
                 }
 
                 // Figure out at what offset we want to draw the module menu.
@@ -1970,6 +1969,88 @@ doChoosePlayer_stats_info_t * doChoosePlayer_stats_info_dtor( doChoosePlayer_sta
 }
 
 //--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+//struct s_ChoosePlayerState
+//{
+//    BASE_MENU_STATE;
+//};
+//typedef struct s_ChoosePlayerState ChoosePlayerState_t;
+//
+////--------------------------------------------------------------------------------------------
+//static ChoosePlayerState_t *ChoosePlayerState_ctor( ChoosePlayerState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static ChoosePlayerState_t *ChoosePlayerState_dtor( ChoosePlayerState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static ChoosePlayerState_t * doChoosePlayer_begin( ChoosePlayerState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    ps = ChoosePlayerState_ctor( ps );
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static ChoosePlayerState_t * doChoosePlayer_entering( ChoosePlayerState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static ChoosePlayerState_t * doChoosePlayer_running( ChoosePlayerState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static ChoosePlayerState_t * doChoosePlayer_leaving( ChoosePlayerState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static ChoosePlayerState_t * doChoosePlayer_finish( ChoosePlayerState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    ps = ChoosePlayerState_ctor( ps );
+//
+//    return ps;
+//};
+
+//--------------------------------------------------------------------------------------------
 doChoosePlayer_stats_info_t * doChoosePlayer_load_stats( doChoosePlayer_stats_info_t * ptr, int player, int mode )
 {
     if ( NULL == ptr )
@@ -2121,29 +2202,30 @@ doChoosePlayer_stats_info_t * doChoosePlayer_render_stats( doChoosePlayer_stats_
                         icap = pdata->cap_ref;
                         if ( LOADED_CAP( icap ) )
                         {
+                            const int icon_indent = 8;
                             TX_REF  icon_ref;
+                            STRING itemname;
                             cap_t * pcap = CapStack.lst + icap;
 
-                            STRING itemname;
                             if ( pcap->nameknown ) strncpy( itemname, chop_create( &chop_mem, &( pdata->chop ) ), SDL_arraysize( itemname ) );
                             else                   strncpy( itemname, pcap->classname,   SDL_arraysize( itemname ) );
 
                             icon_ref = mnu_get_icon_ref( icap, pdata->tx_ref );
-                            draw_one_icon( icon_ref, x1 + 8, y1, NOSPARKLE );
+                            draw_one_icon( icon_ref, x1 + icon_indent, y1, NOSPARKLE );
 
                             if ( icap == SLOT_LEFT + 1 )
                             {
-                                ui_drawTextBoxImmediate( menuFont, x1 + ICON_SIZE + 8, y1 + 6, ICON_SIZE, "  Left: %s", itemname );
+                                ui_drawTextBoxImmediate( menuFont, x1 + icon_indent + ICON_SIZE, y1 + 6, ICON_SIZE, "  Left: %s", itemname );
                                 y1 += ICON_SIZE;
                             }
                             else if ( icap == SLOT_RIGHT + 1 )
                             {
-                                ui_drawTextBoxImmediate( menuFont, x1 + ICON_SIZE + 8, y1 + 6, ICON_SIZE, "  Right: %s", itemname );
+                                ui_drawTextBoxImmediate( menuFont, x1 + icon_indent + ICON_SIZE, y1 + 6, ICON_SIZE, "  Right: %s", itemname );
                                 y1 += ICON_SIZE;
                             }
                             else
                             {
-                                ui_drawTextBoxImmediate( menuFont, x1 + ICON_SIZE + 8, y1 + 6, ICON_SIZE, "  Item: %s", itemname );
+                                ui_drawTextBoxImmediate( menuFont, x1 + icon_indent + ICON_SIZE, y1 + 6, ICON_SIZE, "  Item: %s", itemname );
                                 y1 += ICON_SIZE;
                             }
                         }
@@ -2166,7 +2248,6 @@ void doChoosePlayer_update_players( int numVertical, int startIndex, ui_Widget_t
 {
     int lplayer, splayer;
     int i;
-    size_t w;
 
     for ( i = 0; i < numVertical; i++ )
     {
@@ -2179,11 +2260,10 @@ void doChoosePlayer_update_players( int numVertical, int startIndex, ui_Widget_t
         splayer = mnu_Selected_get_loadplayer( lplayer );
 
         // set the character image
-        ui_Widget_set_img( lst + m, TxTexture_get_ptr( loadplayer[lplayer].tx_ref ) );
+        ui_Widget_set_img( lst + m, ui_just_centered, TxTexture_get_ptr( loadplayer[lplayer].tx_ref ) );
 
         // set the character name
-        w = ( NULL == lst[m].img ) ? 0 : lst[m].img->imgW;
-        ui_Widget_set_text( lst + m, menuFont, w, loadplayer[lplayer].name );
+        ui_Widget_set_text( lst + m, ui_just_centered, menuFont, loadplayer[lplayer].name );
     }
 }
 
@@ -2194,101 +2274,19 @@ bool_t doChoosePlayer_update_select_button( ui_Widget_t * but_ptr, int count )
 
     if ( count <= 0 )
     {
-        ui_Widget_set_text( but_ptr, NULL, 0, NULL );
+        ui_Widget_set_text( but_ptr, ui_just_centered, NULL, NULL );
     }
     else if ( 1 == count )
     {
-        ui_Widget_set_text( but_ptr, NULL, 0, "Select Player" );
+        ui_Widget_set_text( but_ptr, ui_just_centered, NULL, "Select Player" );
     }
     else
     {
-        ui_Widget_set_text( but_ptr, NULL, 0, "Select Players" );
+        ui_Widget_set_text( but_ptr, ui_just_centered, NULL, "Select Players" );
     }
 
     return btrue;
 }
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-struct s_ChoosePlayerState
-{
-    BASE_MENU_STATE;
-};
-typedef struct s_ChoosePlayerState ChoosePlayerState_t;
-
-//--------------------------------------------------------------------------------------------
-static ChoosePlayerState_t *ChoosePlayerState_ctor( ChoosePlayerState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static ChoosePlayerState_t *ChoosePlayerState_dtor( ChoosePlayerState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static ChoosePlayerState_t * doChoosePlayer_begin( ChoosePlayerState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    ps = ChoosePlayerState_ctor( ps );
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static ChoosePlayerState_t * doChoosePlayer_entering( ChoosePlayerState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static ChoosePlayerState_t * doChoosePlayer_running( ChoosePlayerState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static ChoosePlayerState_t * doChoosePlayer_leaving( ChoosePlayerState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static ChoosePlayerState_t * doChoosePlayer_finish( ChoosePlayerState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    ps = ChoosePlayerState_ctor( ps );
-
-    return ps;
-};
 
 //--------------------------------------------------------------------------------------------
 int doChoosePlayer( float deltaTime )
@@ -2354,7 +2352,7 @@ int doChoosePlayer( float deltaTime )
                 {
                     memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
                     ui_Widget_set_id( w_buttons + cnt, cnt );
-                    ui_Widget_set_text( w_buttons + cnt, NULL, 0, sz_buttons[cnt] );
+                    ui_Widget_set_text( w_buttons + cnt, ui_just_centerleft, NULL, sz_buttons[cnt] );
                 }
 
                 TxTexture_free_one(( TX_REF )TX_BARS );
@@ -2390,10 +2388,10 @@ int doChoosePlayer( float deltaTime )
                 // load information for all the players that could be imported
                 mnu_player_check_import( "mp_players", btrue );
 
-                // reset button 0, or it will mess up the menu.
+                // reset but_select, or it will mess up the menu.
                 // must do it before SlidyButtonState_init()
                 sz_buttons[but_select] = "N/A";
-                SlidyButtonState_init( &but_state, 1.0f, 0, sz_buttons, w_buttons );
+                SlidyButtonState_init( &but_state, 1.0f, but_back, sz_buttons, w_buttons );
 
                 // how many players can we pack into the available screen area?
                 numVertical   = ( buttonTop - y0 ) / button_repeat - 1;
@@ -2417,7 +2415,7 @@ int doChoosePlayer( float deltaTime )
                         oglx_texture_t * img = TxTexture_get_ptr(( TX_REF )k );
 
                         ui_Widget_set_button( mnu_widgetList + m, x + text_width + j*icon_size, y, icon_size, icon_size );
-                        ui_Widget_set_img( mnu_widgetList + m, img );
+                        ui_Widget_set_img( mnu_widgetList + m, ui_just_centered, img );
                         ui_Widget_LatchMaskAdd( mnu_widgetList + m, UI_LATCH_CLICKED );
                     };
 
@@ -2441,18 +2439,27 @@ int doChoosePlayer( float deltaTime )
 
         case MM_Entering:
             {
-                //GL_DEBUG(glColor4f)(1, 1, 1, 1 - but_state.lerp );
-                //SlidyButtonState_draw_all( &but_state );
-                //SlidyButtonState_update_all( &but_state, -deltaTime );
-                //// Let lerp wind down relative to the time elapsed
-                //if ( but_state.lerp <= 0.0f )
-                //{
-                //    menuState = MM_Running;
-                //}
-            }
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
-            // Simply fall through
-            menuState = MM_Running;
+                // Draw the background
+                x = ( GFX_WIDTH  / 2 ) - ( background.imgW / 2 );
+                y = GFX_HEIGHT - background.imgH;
+
+                if ( mnu_draw_background )
+                {
+                    ui_drawImage( 0, &background, x, y, 0, 0, NULL );
+                }
+
+                SlidyButtonState_draw_all( &but_state );
+                SlidyButtonState_update_all( &but_state, -deltaTime );
+
+                // Let lerp wind down relative to the time elapsed
+                if ( but_state.lerp <= 0.0f )
+                {
+                    menuState = MM_Running;
+                }
+            }
+            break;
 
         case MM_Running:
             {
@@ -2640,6 +2647,7 @@ int doChoosePlayer( float deltaTime )
                     if ( SDLKEYDOWN( SDLK_RETURN ) || BUTTON_UP == ui_doWidget( w_buttons + but_select ) )
                     {
                         menuState = MM_Leaving;
+                        SlidyButtonState_init( &but_state, 0.0f, but_back, sz_buttons, w_buttons );
                     }
                 }
 
@@ -2648,6 +2656,7 @@ int doChoosePlayer( float deltaTime )
                 {
                     mnu_selectedPlayerCount = 0;
                     menuState = MM_Leaving;
+                    SlidyButtonState_init( &but_state, 0.0f, but_back, sz_buttons, w_buttons );
                 }
 
                 // has the player been updated?
@@ -2710,19 +2719,26 @@ int doChoosePlayer( float deltaTime )
             // Do buttons sliding out and background fading
             // Do the same stuff as in MM_Entering, but backwards
             {
-                //GL_DEBUG(glColor4f)(1, 1, 1, 1 - but_state.lerp );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
-                //// Buttons
-                //SlidyButtonState_draw_all( &but_state );
-                //SlidyButtonState_update_all( &but_state, deltaTime );
-                //if ( but_state.lerp >= 1.0f )
-                //{
-                //    menuState = MM_Finish;
-                //}
+                // Draw the background
+                x = ( GFX_WIDTH  / 2 ) - ( background.imgW / 2 );
+                y = GFX_HEIGHT - background.imgH;
+
+                if ( mnu_draw_background )
+                {
+                    ui_drawImage( 0, &background, x, y, 0, 0, NULL );
+                }
+
+                // Buttons
+                SlidyButtonState_draw_all( &but_state );
+                SlidyButtonState_update_all( &but_state, deltaTime );
+                if ( but_state.lerp >= 1.0f )
+                {
+                    menuState = MM_Finish;
+                }
             }
-
-            // Simply fall through
-            menuState = MM_Finish;
+            break;
 
         case MM_Finish:
             {
@@ -2807,85 +2823,85 @@ int doChoosePlayer( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct s_OptionsState
-{
-    BASE_MENU_STATE;
-};
-typedef struct s_OptionsState OptionsState_t;
-
-//--------------------------------------------------------------------------------------------
-static OptionsState_t *OptionsState_ctor( OptionsState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static OptionsState_t *OptionsState_dtor( OptionsState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static OptionsState_t * doOptions_begin( OptionsState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    ps = OptionsState_ctor( ps );
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsState_t * doOptions_entering( OptionsState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsState_t * doOptions_running( OptionsState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsState_t * doOptions_leaving( OptionsState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsState_t * doOptions_finish( OptionsState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    ps = OptionsState_ctor( ps );
-
-    return ps;
-};
+//struct s_OptionsState
+//{
+//    BASE_MENU_STATE;
+//};
+//typedef struct s_OptionsState OptionsState_t;
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsState_t *OptionsState_ctor( OptionsState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsState_t *OptionsState_dtor( OptionsState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsState_t * doOptions_begin( OptionsState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    ps = OptionsState_ctor( ps );
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsState_t * doOptions_entering( OptionsState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsState_t * doOptions_running( OptionsState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsState_t * doOptions_leaving( OptionsState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsState_t * doOptions_finish( OptionsState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    ps = OptionsState_ctor( ps );
+//
+//    return ps;
+//};
 
 //--------------------------------------------------------------------------------------------
 int doOptions( float deltaTime )
@@ -2950,7 +2966,7 @@ int doOptions( float deltaTime )
             // do buttons sliding in animation, and background fading in
             // background
             {
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
                 // Draw the background
                 if ( mnu_draw_background )
@@ -3025,7 +3041,7 @@ int doOptions( float deltaTime )
             // Do the same stuff as in MM_Entering, but backwards
 
             {
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
                 if ( mnu_draw_background )
                 {
@@ -3064,6 +3080,88 @@ int doOptions( float deltaTime )
 }
 
 //--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct s_OptionsInputState
+{
+    BASE_MENU_STATE;
+};
+typedef struct s_OptionsInputState OptionsInputState_t;
+
+//--------------------------------------------------------------------------------------------
+static OptionsInputState_t *OptionsInputState_ctor( OptionsInputState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static OptionsInputState_t *OptionsInputState_dtor( OptionsInputState_t * ps )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+}
+
+//--------------------------------------------------------------------------------------------
+static OptionsInputState_t * doOptionsInput_begin( OptionsInputState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    ps = OptionsInputState_ctor( ps );
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsInputState_t * doOptionsInput_entering( OptionsInputState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsInputState_t * doOptionsInput_running( OptionsInputState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsInputState_t * doOptionsInput_leaving( OptionsInputState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
+static OptionsInputState_t * doOptionsInput_finish( OptionsInputState_t * ps, float deltaTime )
+{
+    if ( NULL == ps ) return ps;
+
+    /* BLAH */
+
+    ps = OptionsInputState_ctor( ps );
+
+    return ps;
+};
+
+//--------------------------------------------------------------------------------------------
 bool_t doOptionsInput_update_one_button( ui_Widget_t lab_lst[], size_t lab_lst_size, device_controls_t * pdevice, int which )
 {
     // update the name of a specific control
@@ -3080,7 +3178,7 @@ bool_t doOptionsInput_update_one_button( ui_Widget_t lab_lst[], size_t lab_lst_s
     }
 
     // set the label text
-    ui_Widget_set_text( lab_lst + which, menuFont, 0, sz_tag );
+    ui_Widget_set_text( lab_lst + which, ui_just_centered, menuFont, sz_tag );
 
     return btrue;
 }
@@ -3257,102 +3355,20 @@ bool_t doOptionsInput_update_player( ui_Widget_t * but_ptr, int player )
     {
         img = TxTexture_get_ptr(( TX_REF )( ICON_KEYB + iicon ) );
     }
-    ui_Widget_set_img( but_ptr, img );
+    ui_Widget_set_img( but_ptr, ui_just_centered, img );
 
     // The select button text
     if ( iicon < 0 )
     {
-        ui_Widget_set_text( but_ptr, NULL, -1, "Select Player..." );
+        ui_Widget_set_text( but_ptr, ui_just_centered, NULL, "Select Player..." );
     }
     else
     {
-        ui_Widget_set_text( but_ptr, NULL, -1, "Player %i", player + 1 );
+        ui_Widget_set_text( but_ptr, ui_just_centered, NULL, "Player %i", player + 1 );
     }
 
     return btrue;
 }
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-struct s_OptionsInputState
-{
-    BASE_MENU_STATE;
-};
-typedef struct s_OptionsInputState OptionsInputState_t;
-
-//--------------------------------------------------------------------------------------------
-static OptionsInputState_t *OptionsInputState_ctor( OptionsInputState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static OptionsInputState_t *OptionsInputState_dtor( OptionsInputState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static OptionsInputState_t * doOptionsInput_begin( OptionsInputState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    ps = OptionsInputState_ctor( ps );
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsInputState_t * doOptionsInput_entering( OptionsInputState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsInputState_t * doOptionsInput_running( OptionsInputState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsInputState_t * doOptionsInput_leaving( OptionsInputState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsInputState_t * doOptionsInput_finish( OptionsInputState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    ps = OptionsInputState_ctor( ps );
-
-    return ps;
-};
 
 //--------------------------------------------------------------------------------------------
 int doOptionsInput( float deltaTime )
@@ -3491,7 +3507,7 @@ int doOptionsInput( float deltaTime )
                     // clear the data
                     memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
                     ui_Widget_set_id( w_buttons + cnt, cnt );
-                    ui_Widget_set_text( w_buttons + cnt, NULL, 0, sz_buttons[cnt] );
+                    ui_Widget_set_text( w_buttons + cnt, ui_just_centerleft, NULL, sz_buttons[cnt] );
                 }
 
                 // initialize the labels
@@ -3500,8 +3516,11 @@ int doOptionsInput( float deltaTime )
                     // set up the w_labels
                     memset( w_labels  + cnt, 0, sizeof( ui_Widget_t ) );
                     ui_Widget_set_id( w_labels + cnt, UI_Nothing );
-                    ui_Widget_set_text( w_labels + cnt, menuFont, 0, sz_labels[cnt] );
+                    ui_Widget_set_text( w_labels + cnt, ui_just_centered, menuFont, sz_labels[cnt] );
                 }
+
+                // set up the "slidy button"
+                SlidyButtonState_init( &but_state, 0.0f, but_save, sz_buttons, w_buttons );
 
                 tipText_set_position( menuFont, "Change input settings here.", 20 );
 
@@ -3571,9 +3590,6 @@ int doOptionsInput( float deltaTime )
                 // set images for widgets
                 doOptionsInput_update_player( w_buttons + but_player, player );
 
-                // set up the "slidy button"
-                SlidyButtonState_init( &but_state, 0.0f, but_save, sz_buttons, w_buttons );
-
                 // initialize the text for all buttons
                 doOptionsInput_update_all_buttons( w_buttons, but_right + 1, pdevice, waitingforinput );
             }
@@ -3613,7 +3629,7 @@ int doOptionsInput( float deltaTime )
 
                         // set the new button
                         waitingforinput = but_luse;
-                        ui_Widget_set_text( w_buttons + but_luse, menuFont, 0, "..." );
+                        ui_Widget_set_text( w_buttons + but_luse, ui_just_centered, menuFont, "..." );
                     }
                 }
 
@@ -3628,7 +3644,7 @@ int doOptionsInput( float deltaTime )
 
                         // set the new button
                         waitingforinput = but_lget;
-                        ui_Widget_set_text( w_buttons + but_lget, menuFont, 0, "..." );
+                        ui_Widget_set_text( w_buttons + but_lget, ui_just_centered, menuFont, "..." );
                     }
                 }
 
@@ -3642,7 +3658,7 @@ int doOptionsInput( float deltaTime )
 
                         // set the new button
                         waitingforinput = but_lpack;
-                        ui_Widget_set_text( w_buttons + but_lpack, menuFont, 0, "..." );
+                        ui_Widget_set_text( w_buttons + but_lpack, ui_just_centered, menuFont, "..." );
                     }
                 }
 
@@ -3658,7 +3674,7 @@ int doOptionsInput( float deltaTime )
 
                         // set the new button
                         waitingforinput = but_ruse;
-                        ui_Widget_set_text( w_buttons + but_ruse, menuFont, 0, "..." );
+                        ui_Widget_set_text( w_buttons + but_ruse, ui_just_centered, menuFont, "..." );
                     }
                 }
 
@@ -3673,7 +3689,7 @@ int doOptionsInput( float deltaTime )
 
                         // set the new button
                         waitingforinput = but_rget;
-                        ui_Widget_set_text( w_buttons + but_rget, menuFont, 0, "..." );
+                        ui_Widget_set_text( w_buttons + but_rget, ui_just_centered, menuFont, "..." );
                     }
                 }
 
@@ -3687,7 +3703,7 @@ int doOptionsInput( float deltaTime )
 
                         // set the new button
                         waitingforinput = but_rpack;
-                        ui_Widget_set_text( w_buttons + but_rpack, menuFont, 0, "..." );
+                        ui_Widget_set_text( w_buttons + but_rpack, ui_just_centered, menuFont, "..." );
                     }
                 }
 
@@ -3703,14 +3719,12 @@ int doOptionsInput( float deltaTime )
 
                         // set the new button
                         waitingforinput = but_jump;
-                        ui_Widget_set_text( w_buttons + but_jump, menuFont, 0, "..." );
+                        ui_Widget_set_text( w_buttons + but_jump, ui_just_centered, menuFont, "..." );
                     }
                 }
 
                 if ( NULL != w_buttons[but_up].tx_lst )
                 {
-                    ui_Widget_set_text( w_labels + lab_up, menuFont, 0, "Up:" );
-                    ui_Widget_set_bound( w_labels + lab_up, buttonLeft, GFX_HEIGHT - 280, -1, 30 );
                     ui_doWidget( w_labels + lab_up );
                     if ( BUTTON_UP == ui_doWidget( w_buttons + but_up ) )
                     {
@@ -3719,7 +3733,7 @@ int doOptionsInput( float deltaTime )
 
                         // set the new button
                         waitingforinput = but_up;
-                        ui_Widget_set_text( w_buttons + but_up, menuFont, 0, "..." );
+                        ui_Widget_set_text( w_buttons + but_up, ui_just_centered, menuFont, "..." );
                     }
                 }
 
@@ -3733,7 +3747,7 @@ int doOptionsInput( float deltaTime )
 
                         // set the new button
                         waitingforinput = but_down;
-                        ui_Widget_set_text( w_buttons + but_down, menuFont, 0, "..." );
+                        ui_Widget_set_text( w_buttons + but_down, ui_just_centered, menuFont, "..." );
                     }
                 }
 
@@ -3747,7 +3761,7 @@ int doOptionsInput( float deltaTime )
 
                         // set the new button
                         waitingforinput = but_left;
-                        ui_Widget_set_text( w_buttons + but_left, menuFont, 0, "..." );
+                        ui_Widget_set_text( w_buttons + but_left, ui_just_centered, menuFont, "..." );
                     }
                 }
 
@@ -3761,7 +3775,7 @@ int doOptionsInput( float deltaTime )
 
                         // set the new button
                         waitingforinput = but_right;
-                        ui_Widget_set_text( w_buttons + but_right, menuFont, 0, "..." );
+                        ui_Widget_set_text( w_buttons + but_right, ui_just_centered, menuFont, "..." );
                     }
                 }
 
@@ -3778,7 +3792,7 @@ int doOptionsInput( float deltaTime )
 
                         // set the new button
                         waitingforinput = but_cam;
-                        ui_Widget_set_text( w_buttons + but_cam, menuFont, 0, "..." );
+                        ui_Widget_set_text( w_buttons + but_cam, ui_just_centered, menuFont, "..." );
                     }
                 }
 
@@ -3792,7 +3806,7 @@ int doOptionsInput( float deltaTime )
 
                         // set the new button
                         waitingforinput = but_cin;
-                        ui_Widget_set_text( w_buttons + but_cin, menuFont, 0, "..." );
+                        ui_Widget_set_text( w_buttons + but_cin, ui_just_centered, menuFont, "..." );
                     }
                 }
 
@@ -3806,7 +3820,7 @@ int doOptionsInput( float deltaTime )
 
                         // set the new button
                         waitingforinput = but_cout;
-                        ui_Widget_set_text( w_buttons + but_cout, menuFont, 0, "..." );
+                        ui_Widget_set_text( w_buttons + but_cout, ui_just_centered, menuFont, "..." );
                     }
                 }
 
@@ -3820,7 +3834,7 @@ int doOptionsInput( float deltaTime )
 
                         // set the new button
                         waitingforinput = but_cleft;
-                        ui_Widget_set_text( w_buttons + but_cleft, menuFont, 0, "..." );
+                        ui_Widget_set_text( w_buttons + but_cleft, ui_just_centered, menuFont, "..." );
                     }
                 }
 
@@ -3834,7 +3848,7 @@ int doOptionsInput( float deltaTime )
 
                         // set the new button
                         waitingforinput = but_cright;
-                        ui_Widget_set_text( w_buttons + but_cright, menuFont, 0, "..." );
+                        ui_Widget_set_text( w_buttons + but_cright, ui_just_centered, menuFont, "..." );
                     }
                 }
 
@@ -3887,7 +3901,7 @@ int doOptionsInput( float deltaTime )
             // Do buttons sliding out and background fading
             // Do the same stuff as in MM_Entering, but backwards
             {
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
             }
 
             // Fall trough
@@ -3933,6 +3947,87 @@ static bool_t doOptionsGame_update_fps( ui_Widget_t * lab_ptr, bool_t allowed );
 static bool_t doOptionsGame_update_feedback( ui_Widget_t * lab_ptr, FEEDBACK_TYPE type );
 
 //--------------------------------------------------------------------------------------------
+//struct s_OptionsGameState
+//{
+//    BASE_MENU_STATE;
+//};
+//typedef struct s_OptionsGameState OptionsGameState_t;
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsGameState_t *OptionsGameState_ctor( OptionsGameState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsGameState_t *OptionsGameState_dtor( OptionsGameState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsGameState_t * doOptionsGame_begin( OptionsGameState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    ps = OptionsGameState_ctor( ps );
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsGameState_t * doOptionsGame_entering( OptionsGameState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsGameState_t * doOptionsGame_running( OptionsGameState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsGameState_t * doOptionsGame_leaving( OptionsGameState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsGameState_t * doOptionsGame_finish( OptionsGameState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    ps = OptionsGameState_ctor( ps );
+//
+//    return ps;
+//};
+
+//--------------------------------------------------------------------------------------------
 bool_t doOptionsGame_update_difficulty( ui_Widget_t * but_ptr, ui_Widget_t * desc_ptr, int difficulty )
 {
     // Fill out the difficulty description, and the button caption
@@ -3945,8 +4040,8 @@ bool_t doOptionsGame_update_difficulty( ui_Widget_t * but_ptr, ui_Widget_t * des
     switch ( difficulty )
     {
         case GAME_EASY:
-            ui_Widget_set_text( but_ptr, menuFont, 0, "Forgiving" );
-            ui_Widget_set_text( desc_ptr, menuFont, 0,
+            ui_Widget_set_text( but_ptr, ui_just_centerleft, menuFont, "Forgiving" );
+            ui_Widget_set_text( desc_ptr, ui_just_topleft, menuFont,
                                 "FORGIVING (Easy)\n"
                                 " - Players gain no bonus XP \n"
                                 " - 15%% XP loss upon death\n"
@@ -3958,8 +4053,8 @@ bool_t doOptionsGame_update_difficulty( ui_Widget_t * but_ptr, ui_Widget_t * des
             break;
 
         case GAME_NORMAL:
-            ui_Widget_set_text( but_ptr, menuFont, 0, "Challenging" );
-            ui_Widget_set_text( desc_ptr, menuFont, 0,
+            ui_Widget_set_text( but_ptr, ui_just_centerleft, menuFont, "Challenging" );
+            ui_Widget_set_text( desc_ptr, ui_just_topleft, menuFont,
                                 "CHALLENGING (Normal)\n"
                                 " - Players gain 10%% bonus XP \n"
                                 " - 15%% XP loss upon death \n"
@@ -3967,8 +4062,8 @@ bool_t doOptionsGame_update_difficulty( ui_Widget_t * but_ptr, ui_Widget_t * des
             break;
 
         case GAME_HARD:
-            ui_Widget_set_text( but_ptr, menuFont, 0, "Punishing" );
-            ui_Widget_set_text( desc_ptr, menuFont, 0,
+            ui_Widget_set_text( but_ptr, ui_just_centerleft, menuFont, "Punishing" );
+            ui_Widget_set_text( desc_ptr, ui_just_topleft, menuFont,
                                 "PUNISHING (Hard)\n"
                                 " - Monsters award 20%% extra xp! \n"
                                 " - 15%% XP loss upon death\n"
@@ -3980,8 +4075,8 @@ bool_t doOptionsGame_update_difficulty( ui_Widget_t * but_ptr, ui_Widget_t * des
             break;
 
         default:
-            ui_Widget_set_text( but_ptr, menuFont, 0, NULL );
-            ui_Widget_set_text( desc_ptr, menuFont, 0, NULL );
+            ui_Widget_set_text( but_ptr, ui_just_nothing, NULL, NULL );
+            ui_Widget_set_text( desc_ptr, ui_just_nothing, NULL, NULL );
             retval = bfalse;
     }
 
@@ -3997,11 +4092,11 @@ bool_t doOptionsGame_update_message_count( ui_Widget_t * lab_ptr, int message_co
 
     if ( 0 == message_count )
     {
-        retval = ui_Widget_set_text( lab_ptr, NULL, 0, "None" );
+        retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "None" );
     }
     else
     {
-        retval = ui_Widget_set_text( lab_ptr, NULL, 0, "%i", message_count );
+        retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "%i", message_count );
     }
 
     return retval;
@@ -4016,15 +4111,15 @@ bool_t doOptionsGame_update_message_duration( ui_Widget_t * lab_ptr, Uint16 dura
 
     if ( duration <= 100 )
     {
-        retval = ui_Widget_set_text( lab_ptr, NULL, 0, "Short" );
+        retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "Short" );
     }
     else if ( duration <= 150 )
     {
-        retval = ui_Widget_set_text( lab_ptr, NULL, 0, "Normal" );
+        retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "Normal" );
     }
     else
     {
-        retval = ui_Widget_set_text( lab_ptr, NULL, 0, "Long" );
+        retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "Long" );
     }
 
     return retval;
@@ -4039,15 +4134,15 @@ bool_t doOptionsGame_update_cam_autoturn( ui_Widget_t * lab_ptr, Uint8 turn )
 
     if ( CAM_TURN_GOOD == turn )
     {
-        retval = ui_Widget_set_text( lab_ptr, NULL, 0, "Off" );
+        retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "Off" );
     }
     else if ( turn )
     {
-        retval = ui_Widget_set_text( lab_ptr, NULL, 0, "Fast" );
+        retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "Fast" );
     }
     else
     {
-        retval = ui_Widget_set_text( lab_ptr, NULL, 0, "On" );
+        retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "On" );
     }
 
     return retval;
@@ -4058,7 +4153,7 @@ bool_t doOptionsGame_update_fps( ui_Widget_t * lab_ptr, bool_t allowed )
 {
     if ( NULL == lab_ptr ) return bfalse;
 
-    return ui_Widget_set_text( lab_ptr, NULL, 0, allowed ? "On" : "Off" );
+    return ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, allowed ? "On" : "Off" );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4071,96 +4166,14 @@ bool_t doOptionsGame_update_feedback( ui_Widget_t * lab_ptr, FEEDBACK_TYPE type 
     // Billboard feedback
     switch ( type )
     {
-        case FEEDBACK_OFF:    retval = ui_Widget_set_text( lab_ptr, NULL, 0, "Disabled" ); break;
-        case FEEDBACK_TEXT:   retval = ui_Widget_set_text( lab_ptr, NULL, 0, "Enabled" ); break;
-        case FEEDBACK_NUMBER: retval = ui_Widget_set_text( lab_ptr, NULL, 0, "Debug" ); break;
-        default: retval = ui_Widget_set_text( lab_ptr, NULL, 0, "Unknown" ); break;
+        case FEEDBACK_OFF:    retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "Disabled" ); break;
+        case FEEDBACK_TEXT:   retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "Enabled" ); break;
+        case FEEDBACK_NUMBER: retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "Debug" ); break;
+        default: retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "Unknown" ); break;
     }
 
     return retval;
 }
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-struct s_OptionsGameState
-{
-    BASE_MENU_STATE;
-};
-typedef struct s_OptionsGameState OptionsGameState_t;
-
-//--------------------------------------------------------------------------------------------
-static OptionsGameState_t *OptionsGameState_ctor( OptionsGameState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static OptionsGameState_t *OptionsGameState_dtor( OptionsGameState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static OptionsGameState_t * doOptionsGame_begin( OptionsGameState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    ps = OptionsGameState_ctor( ps );
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsGameState_t * doOptionsGame_entering( OptionsGameState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsGameState_t * doOptionsGame_running( OptionsGameState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsGameState_t * doOptionsGame_leaving( OptionsGameState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsGameState_t * doOptionsGame_finish( OptionsGameState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    ps = OptionsGameState_ctor( ps );
-
-    return ps;
-};
 
 //--------------------------------------------------------------------------------------------
 int doOptionsGame( float deltaTime )
@@ -4245,7 +4258,7 @@ int doOptionsGame( float deltaTime )
                     // set up the w_buttons
                     memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
                     ui_Widget_set_id( w_buttons + cnt, ( ui_id_t )cnt );
-                    ui_Widget_set_text( w_buttons + cnt, NULL, 0, sz_buttons[cnt] );
+                    ui_Widget_set_text( w_buttons + cnt, ui_just_centerleft, NULL, sz_buttons[cnt] );
                 }
 
                 for ( cnt = 0; cnt < lab_count; cnt++ )
@@ -4253,7 +4266,7 @@ int doOptionsGame( float deltaTime )
                     // set up the w_labels
                     memset( w_labels  + cnt, 0, sizeof( ui_Widget_t ) );
                     ui_Widget_set_id( w_labels + cnt, UI_Nothing );
-                    ui_Widget_set_text( w_labels + cnt, menuFont, 0, sz_labels[cnt] );
+                    ui_Widget_set_text( w_labels + cnt, ui_just_centerleft, menuFont, sz_labels[cnt] );
                 }
 
                 // load the background image
@@ -4265,7 +4278,7 @@ int doOptionsGame( float deltaTime )
                 tipText_set_position( menuFont, "Change game settings here.", 20 );
 
                 // auto-format the slidy buttons
-                SlidyButtonState_init( &but_state, 1.0f, but_save, sz_buttons, w_buttons );
+                SlidyButtonState_init( &but_state, 0.0f, but_save, sz_buttons, w_buttons );
 
                 // set some special text
                 doOptionsGame_update_difficulty( w_buttons + but_difficulty, w_labels + lab_diff_desc, cfg.difficulty );
@@ -4291,7 +4304,7 @@ int doOptionsGame( float deltaTime )
             // do buttons sliding in animation, and background fading in
             // background
             {
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
                 // Draw the background
                 if ( mnu_draw_background )
@@ -4446,7 +4459,7 @@ int doOptionsGame( float deltaTime )
             // Do buttons sliding out and background fading
             // Do the same stuff as in MM_Entering, but backwards
             {
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
                 if ( mnu_draw_background )
                 {
@@ -4496,11 +4509,92 @@ int doOptionsGame( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+//struct s_OptionsAudioState
+//{
+//    BASE_MENU_STATE;
+//};
+//typedef struct s_OptionsAudioState OptionsAudioState_t;
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsAudioState_t *OptionsAudioState_ctor( OptionsAudioState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsAudioState_t *OptionsAudioState_dtor( OptionsAudioState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsAudioState_t * doOptionsAudio_begin( OptionsAudioState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    ps = OptionsAudioState_ctor( ps );
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsAudioState_t * doOptionsAudio_entering( OptionsAudioState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsAudioState_t * doOptionsAudio_running( OptionsAudioState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsAudioState_t * doOptionsAudio_leaving( OptionsAudioState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsAudioState_t * doOptionsAudio_finish( OptionsAudioState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    ps = OptionsAudioState_ctor( ps );
+//
+//    return ps;
+//};
+
+//--------------------------------------------------------------------------------------------
 bool_t doOptionsAudio_update_sound_on( ui_Widget_t * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, NULL, 0, val ? "On" : "Off" );
+    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, val ? "On" : "Off" );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4508,7 +4602,7 @@ bool_t doOptionsAudio_update_sound_volume( ui_Widget_t * but_ptr, Uint8 val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, NULL, 0, "%i", val );
+    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "%i", val );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4516,7 +4610,7 @@ bool_t doOptionsAudio_update_music_on( ui_Widget_t * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, NULL, 0, val ? "On" : "Off" );
+    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, val ? "On" : "Off" );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4524,7 +4618,7 @@ bool_t doOptionsAudio_update_music_volume( ui_Widget_t * but_ptr, Uint8 val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, NULL, 0, "%i", val );
+    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "%i", val );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4532,7 +4626,7 @@ bool_t doOptionsAudio_update_sound_channels( ui_Widget_t * but_ptr, Uint16 val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, NULL, 0, "%i", val );
+    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "%i", val );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4540,7 +4634,7 @@ bool_t doOptionsAudio_update_buffer_size( ui_Widget_t * but_ptr, Uint16 val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, NULL, 0, "%i", val );
+    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "%i", val );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4548,7 +4642,7 @@ bool_t doOptionsAudio_update_quality( ui_Widget_t * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, NULL, 0, val ?  "Normal" : "High" );
+    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, val ?  "Normal" : "High" );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4556,7 +4650,7 @@ bool_t doOptionsAudio_update_footfall( ui_Widget_t * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, NULL, 0, val ? "Enabled" : "Disabled" );
+    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, val ? "Enabled" : "Disabled" );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4583,88 +4677,6 @@ bool_t doOptionsAudio_update_settings( egoboo_config_t * pcfg )
 
     return btrue;
 }
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-struct s_OptionsAudioState
-{
-    BASE_MENU_STATE;
-};
-typedef struct s_OptionsAudioState OptionsAudioState_t;
-
-//--------------------------------------------------------------------------------------------
-static OptionsAudioState_t *OptionsAudioState_ctor( OptionsAudioState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static OptionsAudioState_t *OptionsAudioState_dtor( OptionsAudioState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static OptionsAudioState_t * doOptionsAudio_begin( OptionsAudioState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    ps = OptionsAudioState_ctor( ps );
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsAudioState_t * doOptionsAudio_entering( OptionsAudioState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsAudioState_t * doOptionsAudio_running( OptionsAudioState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsAudioState_t * doOptionsAudio_leaving( OptionsAudioState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsAudioState_t * doOptionsAudio_finish( OptionsAudioState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    ps = OptionsAudioState_ctor( ps );
-
-    return ps;
-};
 
 //--------------------------------------------------------------------------------------------
 int doOptionsAudio( float deltaTime )
@@ -4763,7 +4775,7 @@ int doOptionsAudio( float deltaTime )
                 {
                     memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
                     ui_Widget_set_id( w_buttons + cnt, cnt );
-                    ui_Widget_set_text( w_buttons + cnt, NULL, 0, sz_buttons[cnt] );
+                    ui_Widget_set_text( w_buttons + cnt, ui_just_centered, NULL, sz_buttons[cnt] );
                 }
 
                 // set up the w_labels
@@ -4771,7 +4783,7 @@ int doOptionsAudio( float deltaTime )
                 {
                     memset( w_labels  + cnt, 0, sizeof( ui_Widget_t ) );
                     ui_Widget_set_id( w_labels + cnt, UI_Nothing );
-                    ui_Widget_set_text( w_labels + cnt, menuFont, 0, sz_labels[cnt] );
+                    ui_Widget_set_text( w_labels + cnt, ui_just_centerleft, menuFont, sz_labels[cnt] );
                 }
 
                 // set up menu variables
@@ -4779,7 +4791,7 @@ int doOptionsAudio( float deltaTime )
 
                 tipText_set_position( menuFont, "Change audio settings here.", 20 );
 
-                SlidyButtonState_init( &but_state, 1.0f, but_save, sz_buttons, w_buttons );
+                SlidyButtonState_init( &but_state, 0.0f, but_save, sz_buttons, w_buttons );
 
                 // Format the buttons
                 ui_Widget_set_bound( w_labels  + lab_on,        buttonLeft + 000, GFX_HEIGHT - 455, -1, 30 );
@@ -4989,7 +5001,7 @@ int doOptionsAudio( float deltaTime )
             // Do buttons sliding out and background fading
             // Do the same stuff as in MM_Entering, but backwards
             {
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
                 if ( mnu_draw_background )
                 {
@@ -5032,6 +5044,88 @@ int doOptionsAudio( float deltaTime )
 
     return result;
 }
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+//struct s_OptionsVideoState
+//{
+//    BASE_MENU_STATE;
+//};
+//typedef struct s_OptionsVideoState OptionsVideoState_t;
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsVideoState_t *OptionsVideoState_ctor( OptionsVideoState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsVideoState_t *OptionsVideoState_dtor( OptionsVideoState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsVideoState_t * doOptionsVideo_begin( OptionsVideoState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    ps = OptionsVideoState_ctor( ps );
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsVideoState_t * doOptionsVideo_entering( OptionsVideoState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsVideoState_t * doOptionsVideo_running( OptionsVideoState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsVideoState_t * doOptionsVideo_leaving( OptionsVideoState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsVideoState_t * doOptionsVideo_finish( OptionsVideoState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    ps = OptionsVideoState_ctor( ps );
+//
+//    return ps;
+//};
 
 //--------------------------------------------------------------------------------------------
 bool_t doOptionsVideo_coerce_aspect_ratio( int width, int height, float * pratio, STRING * psz_ratio )
@@ -5185,90 +5279,6 @@ int doOptionsVideo_fix_fullscreen_resolution( egoboo_config_t * pcfg, SDLX_scree
 }
 
 //--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-struct s_OptionsVideoState
-{
-    BASE_MENU_STATE;
-};
-typedef struct s_OptionsVideoState OptionsVideoState_t;
-
-//--------------------------------------------------------------------------------------------
-static OptionsVideoState_t *OptionsVideoState_ctor( OptionsVideoState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static OptionsVideoState_t *OptionsVideoState_dtor( OptionsVideoState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static OptionsVideoState_t * doOptionsVideo_begin( OptionsVideoState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    ps = OptionsVideoState_ctor( ps );
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsVideoState_t * doOptionsVideo_entering( OptionsVideoState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsVideoState_t * doOptionsVideo_running( OptionsVideoState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsVideoState_t * doOptionsVideo_leaving( OptionsVideoState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsVideoState_t * doOptionsVideo_finish( OptionsVideoState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    ps = OptionsVideoState_ctor( ps );
-
-    return ps;
-};
-
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
 bool_t doVideoOptions_update_antialiasing( ui_Widget_t * but_ptr, Uint8 val )
 {
     bool_t retval = bfalse;
@@ -5277,11 +5287,11 @@ bool_t doVideoOptions_update_antialiasing( ui_Widget_t * but_ptr, Uint8 val )
 
     if ( 0 == val )
     {
-        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Off" );
+        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Off" );
     }
     else
     {
-        retval = ui_Widget_set_text( but_ptr, NULL, 0, "X%i", val );
+        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "X%i", val );
     }
 
     return retval;
@@ -5298,36 +5308,36 @@ bool_t doVideoOptions_update_texture_filter( ui_Widget_t * but_ptr, Uint8 val )
 
     if ( val >= TX_ANISOTROPIC )
     {
-        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Ansiotropic %i", val - TX_ANISOTROPIC );
+        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Ansiotropic %i", val - TX_ANISOTROPIC );
     }
     else switch ( val )
         {
             case TX_UNFILTERED:
-                retval = ui_Widget_set_text( but_ptr, NULL, 0, "Unfiltered" );
+                retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Unfiltered" );
                 break;
 
             case TX_LINEAR:
-                retval = ui_Widget_set_text( but_ptr, NULL, 0, "Linear" );
+                retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Linear" );
                 break;
 
             case TX_MIPMAP:
-                retval = ui_Widget_set_text( but_ptr, NULL, 0, "Mipmap" );
+                retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Mipmap" );
                 break;
 
             case TX_BILINEAR:
-                retval = ui_Widget_set_text( but_ptr, NULL, 0, "Bilinear" );
+                retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Bilinear" );
                 break;
 
             case TX_TRILINEAR_1:
-                retval = ui_Widget_set_text( but_ptr, NULL, 0, "Trilinear 1" );
+                retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Trilinear 1" );
                 break;
 
             case TX_TRILINEAR_2:
-                retval = ui_Widget_set_text( but_ptr, NULL, 0, "Trilinear 2" );
+                retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Trilinear 2" );
                 break;
 
             default:
-                retval = ui_Widget_set_text( but_ptr, NULL, 0, "Unknown" );
+                retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Unknown" );
                 break;
         }
 
@@ -5339,7 +5349,7 @@ bool_t doVideoOptions_update_dither( ui_Widget_t * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, NULL, 0, val ? "Yes" : "No" );
+    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, val ? "Yes" : "No" );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -5347,7 +5357,7 @@ bool_t doVideoOptions_update_fullscreen( ui_Widget_t * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, NULL, 0, val ? "True" : "False" );;
+    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, val ? "True" : "False" );;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -5359,19 +5369,19 @@ bool_t doVideoOptions_update_reflections( ui_Widget_t * but_ptr, bool_t allowed,
 
     if ( !allowed )
     {
-        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Off" );
+        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Off" );
     }
     else if ( !do_prt )
     {
-        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Low" );
+        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Low" );
     }
     else if ( 0 == fade )
     {
-        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Medium" );
+        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Medium" );
     }
     else
     {
-        retval = ui_Widget_set_text( but_ptr, NULL, 0, "High" );
+        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "High" );
     }
 
     return retval;
@@ -5386,15 +5396,15 @@ bool_t doVideoOptions_update_shadows( ui_Widget_t * but_ptr, bool_t allowed, boo
 
     if ( !allowed )
     {
-        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Off" );
+        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Off" );
     }
     else if ( sprite )
     {
-        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Normal" );
+        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Normal" );
     }
     else
     {
-        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Best" );
+        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Best" );
     }
 
     return retval;
@@ -5405,7 +5415,7 @@ bool_t doVideoOptions_update_z_buffer( ui_Widget_t * but_ptr, int val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, NULL, 0, "%d", val );
+    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "%d", val );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -5413,7 +5423,7 @@ bool_t doVideoOptions_update_max_lights( ui_Widget_t * but_ptr, int val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, NULL, 0, "%i", val );
+    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "%i", val );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -5425,19 +5435,19 @@ bool_t doVideoOptions_update_3d_effects( ui_Widget_t * but_ptr, bool_t use_phong
 
     if ( use_phong && use_perspective && overlay_allowed && background_allowed )
     {
-        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Off" );
+        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Off" );
     }
     else if ( !use_phong )
     {
-        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Okay" );
+        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Okay" );
     }
     else if ( !use_perspective && overlay_allowed && background_allowed )
     {
-        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Superb" );
+        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Superb" );
     }
     else
     {
-        retval = ui_Widget_set_text( but_ptr, NULL, 0, "Good" );
+        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Good" );
     }
 
     return retval;
@@ -5448,7 +5458,7 @@ bool_t doVideoOptions_update_water_quality( ui_Widget_t * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, NULL, 0, val ? "True" : "False" );
+    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, val ? "True" : "False" );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -5456,7 +5466,7 @@ bool_t doVideoOptions_update_max_particles( ui_Widget_t * but_ptr, Uint16 val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, NULL, 0, "%i", val );
+    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "%i", val );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -5464,7 +5474,7 @@ bool_t doVideoOptions_update_widescreen( ui_Widget_t * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, NULL, 0, val ? "X" : NULL );
+    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, val ? "X" : NULL );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -5472,7 +5482,7 @@ bool_t doVideoOptions_update_resolution( ui_Widget_t * but_ptr, int x, int y )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, NULL, 0, "%ix%i", x, y );
+    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "%ix%i", x, y );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -5596,7 +5606,7 @@ int doOptionsVideo( float deltaTime )
                     memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
 
                     ui_Widget_set_id( w_buttons  + cnt, cnt );
-                    ui_Widget_set_text( w_buttons + cnt, NULL, 0, sz_buttons[cnt] );
+                    ui_Widget_set_text( w_buttons + cnt, ui_just_centerleft, NULL, sz_buttons[cnt] );
                 }
 
                 // set up the w_labels
@@ -5604,7 +5614,7 @@ int doOptionsVideo( float deltaTime )
                 {
                     memset( w_labels  + cnt, 0, sizeof( ui_Widget_t ) );
                     ui_Widget_set_id( w_labels  + cnt, UI_Nothing );
-                    ui_Widget_set_text( w_labels + cnt, menuFont, 0, sz_labels[cnt] );
+                    ui_Widget_set_text( w_labels + cnt, ui_just_centerleft, menuFont, sz_labels[cnt] );
                 }
 
                 // set up menu variables
@@ -5651,7 +5661,7 @@ int doOptionsVideo( float deltaTime )
                 ui_Widget_set_bound( w_labels  + lab_screensize,   buttonLeft + 300, GFX_HEIGHT - 140, -1, 30 );
                 ui_Widget_set_button( w_buttons + but_screensize,   buttonLeft + 450, GFX_HEIGHT - 140, 140, 30 );
 
-                SlidyButtonState_init( &but_state, 1.0f, but_save, sz_buttons, w_buttons );
+                SlidyButtonState_init( &but_state, 0.0f, but_save, sz_buttons, w_buttons );
             }
 
             // let this fall through into MM_Entering
@@ -5661,7 +5671,7 @@ int doOptionsVideo( float deltaTime )
             // do buttons sliding in animation, and background fading in
             // background
             {
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
                 // Draw the background
                 if ( mnu_draw_background )
@@ -6040,7 +6050,7 @@ int doOptionsVideo( float deltaTime )
             {
                 // Do buttons sliding out and background fading
                 // Do the same stuff as in MM_Entering, but backwards
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
                 if ( mnu_draw_background )
                 {
@@ -6086,85 +6096,85 @@ int doOptionsVideo( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct s_ShowResultsState
-{
-    BASE_MENU_STATE;
-};
-typedef struct s_ShowResultsState ShowResultsState_t;
-
-//--------------------------------------------------------------------------------------------
-static ShowResultsState_t *ShowResultsState_ctor( ShowResultsState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static ShowResultsState_t *ShowResultsState_dtor( ShowResultsState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static ShowResultsState_t * doShowResults_begin( ShowResultsState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    ps = ShowResultsState_ctor( ps );
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static ShowResultsState_t * doShowResults_entering( ShowResultsState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static ShowResultsState_t * doShowResults_running( ShowResultsState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static ShowResultsState_t * doShowResults_leaving( ShowResultsState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static ShowResultsState_t * doShowResults_finish( ShowResultsState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    ps = ShowResultsState_ctor( ps );
-
-    return ps;
-};
+//struct s_ShowResultsState
+//{
+//    BASE_MENU_STATE;
+//};
+//typedef struct s_ShowResultsState ShowResultsState_t;
+//
+////--------------------------------------------------------------------------------------------
+//static ShowResultsState_t *ShowResultsState_ctor( ShowResultsState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static ShowResultsState_t *ShowResultsState_dtor( ShowResultsState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static ShowResultsState_t * doShowResults_begin( ShowResultsState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    ps = ShowResultsState_ctor( ps );
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static ShowResultsState_t * doShowResults_entering( ShowResultsState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static ShowResultsState_t * doShowResults_running( ShowResultsState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static ShowResultsState_t * doShowResults_leaving( ShowResultsState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static ShowResultsState_t * doShowResults_finish( ShowResultsState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    ps = ShowResultsState_ctor( ps );
+//
+//    return ps;
+//};
 
 //--------------------------------------------------------------------------------------------
 int doShowResults( float deltaTime )
@@ -6276,85 +6286,85 @@ int doShowResults( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct s_NotImplementedState
-{
-    BASE_MENU_STATE;
-};
-typedef struct s_NotImplementedState NotImplementedState_t;
-
-//--------------------------------------------------------------------------------------------
-static NotImplementedState_t *NotImplementedState_ctor( NotImplementedState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static NotImplementedState_t *NotImplementedState_dtor( NotImplementedState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static NotImplementedState_t * doNotImplemented_begin( NotImplementedState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    ps = NotImplementedState_ctor( ps );
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static NotImplementedState_t * doNotImplemented_entering( NotImplementedState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static NotImplementedState_t * doNotImplemented_running( NotImplementedState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static NotImplementedState_t * doNotImplemented_leaving( NotImplementedState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static NotImplementedState_t * doNotImplemented_finish( NotImplementedState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    ps = NotImplementedState_ctor( ps );
-
-    return ps;
-};
+//struct s_NotImplementedState
+//{
+//    BASE_MENU_STATE;
+//};
+//typedef struct s_NotImplementedState NotImplementedState_t;
+//
+////--------------------------------------------------------------------------------------------
+//static NotImplementedState_t *NotImplementedState_ctor( NotImplementedState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static NotImplementedState_t *NotImplementedState_dtor( NotImplementedState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static NotImplementedState_t * doNotImplemented_begin( NotImplementedState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    ps = NotImplementedState_ctor( ps );
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static NotImplementedState_t * doNotImplemented_entering( NotImplementedState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static NotImplementedState_t * doNotImplemented_running( NotImplementedState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static NotImplementedState_t * doNotImplemented_leaving( NotImplementedState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static NotImplementedState_t * doNotImplemented_finish( NotImplementedState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    ps = NotImplementedState_ctor( ps );
+//
+//    return ps;
+//};
 
 //--------------------------------------------------------------------------------------------
 int doNotImplemented( float deltaTime )
@@ -6372,7 +6382,7 @@ int doNotImplemented( float deltaTime )
     y = GFX_HEIGHT / 2 - 17;
 
     ui_Widget_set_id( w_buttons + 0, 0 );
-    ui_Widget_set_text( w_buttons + 0, menuFont, 0, notImplementedMessage );
+    ui_Widget_set_text( w_buttons + 0, ui_just_centered, menuFont, notImplementedMessage );
     ui_Widget_set_button( w_buttons + 0, x, y, w, -1 );
 
     if ( BUTTON_UP == ui_doWidget( w_buttons + 0 ) )
@@ -6385,85 +6395,85 @@ int doNotImplemented( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct s_GamePausedState
-{
-    BASE_MENU_STATE;
-};
-typedef struct s_GamePausedState GamePausedState_t;
-
-//--------------------------------------------------------------------------------------------
-static GamePausedState_t *GamePausedState_ctor( GamePausedState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static GamePausedState_t *GamePausedState_dtor( GamePausedState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static GamePausedState_t * doGamePaused_begin( GamePausedState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    ps = GamePausedState_ctor( ps );
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static GamePausedState_t * doGamePaused_entering( GamePausedState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static GamePausedState_t * doGamePaused_running( GamePausedState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static GamePausedState_t * doGamePaused_leaving( GamePausedState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static GamePausedState_t * doGamePaused_finish( GamePausedState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    ps = GamePausedState_ctor( ps );
-
-    return ps;
-};
+//struct s_GamePausedState
+//{
+//    BASE_MENU_STATE;
+//};
+//typedef struct s_GamePausedState GamePausedState_t;
+//
+////--------------------------------------------------------------------------------------------
+//static GamePausedState_t *GamePausedState_ctor( GamePausedState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static GamePausedState_t *GamePausedState_dtor( GamePausedState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static GamePausedState_t * doGamePaused_begin( GamePausedState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    ps = GamePausedState_ctor( ps );
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static GamePausedState_t * doGamePaused_entering( GamePausedState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static GamePausedState_t * doGamePaused_running( GamePausedState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static GamePausedState_t * doGamePaused_leaving( GamePausedState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static GamePausedState_t * doGamePaused_finish( GamePausedState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    ps = GamePausedState_ctor( ps );
+//
+//    return ps;
+//};
 
 //--------------------------------------------------------------------------------------------
 int doGamePaused( float deltaTime )
@@ -6562,7 +6572,7 @@ int doGamePaused( float deltaTime )
             // Do sz_buttons sliding out and background fading
             // Do the same stuff as in MM_Entering, but backwards
             {
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
                 // Buttons
                 SlidyButtonState_draw_all( &but_state );
@@ -6602,85 +6612,85 @@ int doGamePaused( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct s_ShowEndgameState
-{
-    BASE_MENU_STATE;
-};
-typedef struct s_ShowEndgameState ShowEndgameState_t;
-
-//--------------------------------------------------------------------------------------------
-static ShowEndgameState_t *ShowEndgameState_ctor( ShowEndgameState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static ShowEndgameState_t *ShowEndgameState_dtor( ShowEndgameState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static ShowEndgameState_t * doShowEndgame_begin( ShowEndgameState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    ps = ShowEndgameState_ctor( ps );
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static ShowEndgameState_t * doShowEndgame_entering( ShowEndgameState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static ShowEndgameState_t * doShowEndgame_running( ShowEndgameState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static ShowEndgameState_t * doShowEndgame_leaving( ShowEndgameState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static ShowEndgameState_t * doShowEndgame_finish( ShowEndgameState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    ps = ShowEndgameState_ctor( ps );
-
-    return ps;
-};
+//struct s_ShowEndgameState
+//{
+//    BASE_MENU_STATE;
+//};
+//typedef struct s_ShowEndgameState ShowEndgameState_t;
+//
+////--------------------------------------------------------------------------------------------
+//static ShowEndgameState_t *ShowEndgameState_ctor( ShowEndgameState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static ShowEndgameState_t *ShowEndgameState_dtor( ShowEndgameState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static ShowEndgameState_t * doShowEndgame_begin( ShowEndgameState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    ps = ShowEndgameState_ctor( ps );
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static ShowEndgameState_t * doShowEndgame_entering( ShowEndgameState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static ShowEndgameState_t * doShowEndgame_running( ShowEndgameState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static ShowEndgameState_t * doShowEndgame_leaving( ShowEndgameState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static ShowEndgameState_t * doShowEndgame_finish( ShowEndgameState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    ps = ShowEndgameState_ctor( ps );
+//
+//    return ps;
+//};
 
 //--------------------------------------------------------------------------------------------
 int doShowEndgame( float deltaTime )
@@ -6742,7 +6752,7 @@ int doShowEndgame( float deltaTime )
 
         case MM_Entering:
             {
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
                 menuTextureList_ptr = ui_updateTextBox( menuTextureList_ptr, menuFont, x, y, 20, endtext );
                 ui_drawTextBox( menuTextureList_ptr, x, y, w, h );
@@ -6777,6 +6787,7 @@ int doShowEndgame( float deltaTime )
             {
                 menuChoice = 1;
                 menuState = MM_Leaving;
+                SlidyButtonState_init( &but_state, 0.0f, 0, sz_buttons, w_buttons );
             }
 
             menuTextureList_ptr = ui_updateTextBox( menuTextureList_ptr, menuFont, x, y, 20, endtext );
@@ -6788,7 +6799,7 @@ int doShowEndgame( float deltaTime )
             // Do sz_buttons sliding out and background fading
             // Do the same stuff as in MM_Entering, but backwards
             {
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 - but_state.lerp );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
                 menuTextureList_ptr = ui_updateTextBox( menuTextureList_ptr, menuFont, x, y, 20, endtext );
                 ui_drawTextBox( menuTextureList_ptr, x, y, w, h );
@@ -7730,7 +7741,7 @@ SlidyButtonState_t * SlidyButtonState_init( SlidyButtonState_t * pstate, float l
 
     // set the correct parameters
     pstate->lerp      = lerp;
-    pstate->but_text  = ( char* )( NULL == button_text ? NULL : button_text + id_start );
+    pstate->but_text  = (const char **)( NULL == button_text ? NULL : button_text + id_start );
     pstate->but       = ( NULL == button_widget ) ? NULL : button_widget + id_start;
     pstate->but_count = count;
 
@@ -7744,9 +7755,12 @@ SlidyButtonState_t * SlidyButtonState_init( SlidyButtonState_t * pstate, float l
             ui_Widget_t * pw  = button_widget + j;
             const char *  txt = ( NULL == button_text ) ? NULL : button_text[j];
 
+            float x = buttonLeft - ( 360 - i * 35 )  * pstate->lerp;
+            float y = buttonTop + i * 35;
+
             ui_Widget_set_id( pw, j );
-            ui_Widget_set_button( pw, buttonLeft, buttonTop + i * 35, 200, 30 );
-            ui_Widget_set_text( pw, NULL, 20, txt );
+            ui_Widget_set_button( pw, x, y, 200, 30 );
+            ui_Widget_set_text( pw, ui_just_centered, NULL, txt );
         }
     }
 

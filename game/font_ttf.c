@@ -465,7 +465,7 @@ fnt_convertTextBox_literal_finish:
     else
     {
         // determine the bound of the list
-        display_list_bound( tx_lst, NULL );
+        display_list_pbound( tx_lst, NULL );
     }
 
     return cnt;
