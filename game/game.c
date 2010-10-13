@@ -2255,11 +2255,10 @@ void check_stats()
     }
 
     stat_check_delay -= 20;
-    if ( stat_check_delay > 0 )
-        return;
+    if ( stat_check_delay > 0 ) return;
 
     // Show map cheat
-    if ( cfg.dev_mode && SDLKEYDOWN( SDLK_m ) && SDLKEYDOWN( SDLK_LSHIFT ) && mapvalid )
+    if ( cfg.dev_mode && mapvalid && SDLKEYDOWN( SDLK_LSHIFT ) && SDLKEYDOWN( SDLK_m ) )
     {
         mapon = !mapon;
         youarehereon = btrue;

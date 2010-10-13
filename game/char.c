@@ -6649,7 +6649,7 @@ chr_bundle_t * move_one_character_do_orientation( chr_bundle_t * pbdl )
 
             // get the actial velocity relative to the ground
             tmp_vec1 = fvec3_sub( loc_pchr->vel.v, loc_penviro->ground_vel.v );
-            fvec3_self_scale( tmp_vec1.v, loc_penviro->walk_lerp        );
+            fvec3_self_scale( tmp_vec1.v, loc_penviro->walk_lerp );
 
             fvec3_self_sum( loc_vel.v, tmp_vec0.v );
             fvec3_self_sum( loc_vel.v, tmp_vec1.v );
@@ -6671,7 +6671,7 @@ chr_bundle_t * move_one_character_do_orientation( chr_bundle_t * pbdl )
             {
                 loc_turnmode = TURNMODE_FLYING_JUMP;
             }
-            else if ( loc_pchr->is_flying_platform && TURNMODE_SPIN != loc_turnmode)
+            else if ( loc_pchr->is_flying_platform && TURNMODE_SPIN != loc_turnmode )
             {
                 loc_turnmode = TURNMODE_FLYING_PLATFORM;
             }
@@ -6694,7 +6694,7 @@ chr_bundle_t * move_one_character_do_orientation( chr_bundle_t * pbdl )
             // Determine the character rotation
             switch ( loc_turnmode )
             {
-                // Get direction from ACTUAL velocity
+                    // Get direction from ACTUAL velocity
                 default:
                 case TURNMODE_FLYING_PLATFORM:
                 case TURNMODE_VELOCITY:
@@ -6734,7 +6734,7 @@ chr_bundle_t * move_one_character_do_orientation( chr_bundle_t * pbdl )
                     }
                     break;
 
-                // Get direction from the DESIRED acceleration
+                    // Get direction from the DESIRED acceleration
                 case TURNMODE_ACCELERATION:
                     {
                         fvec2_t tmp_vel;
@@ -6763,7 +6763,7 @@ chr_bundle_t * move_one_character_do_orientation( chr_bundle_t * pbdl )
                     }
                     break;
 
-                // Face the target
+                    // Face the target
                 case TURNMODE_WATCHTARGET:
                     {
                         if ( loc_ichr != loc_pai->target )
@@ -6781,41 +6781,41 @@ chr_bundle_t * move_one_character_do_orientation( chr_bundle_t * pbdl )
                     }
                     break;
 
-                // Otherwise make it spin
+                    // Otherwise make it spin
                 case TURNMODE_SPIN:
                     {
                         loc_pchr->ori.facing_z += SPINRATE;
                     }
                     break;
 
-                // at this point, the TURNMODE_FLYING_JUMP orientation is controled elsewhere
-                //case TURNMODE_FLYING_JUMP:
-                //    {
-                //        fvec2_t loc_vel;
+                    // at this point, the TURNMODE_FLYING_JUMP orientation is controled elsewhere
+                    //case TURNMODE_FLYING_JUMP:
+                    //    {
+                    //        fvec2_t loc_vel;
 
-                //        // interpolate between the desired "actual velocity" and the backup "desired velocity"
-                //        if( 0.0f == speed_lerp )
-                //        {
-                //            loc_vel.x = loc_chr_vel.x;
-                //            loc_vel.y = loc_chr_vel.y;
-                //        }
-                //        else if( 1.0f == speed_lerp )
-                //        {
-                //            loc_vel.x = loc_vel.x;
-                //            loc_vel.y = loc_vel.y;
-                //        }
-                //        else
-                //        {
-                //            loc_vel.x = speed_lerp * loc_vel.x + (1.0f - speed_lerp ) * loc_chr_vel.x;
-                //            loc_vel.y = speed_lerp * loc_vel.y + (1.0f - speed_lerp ) * loc_chr_vel.y;
-                //        }
+                    //        // interpolate between the desired "actual velocity" and the backup "desired velocity"
+                    //        if( 0.0f == speed_lerp )
+                    //        {
+                    //            loc_vel.x = loc_chr_vel.x;
+                    //            loc_vel.y = loc_chr_vel.y;
+                    //        }
+                    //        else if( 1.0f == speed_lerp )
+                    //        {
+                    //            loc_vel.x = loc_vel.x;
+                    //            loc_vel.y = loc_vel.y;
+                    //        }
+                    //        else
+                    //        {
+                    //            loc_vel.x = speed_lerp * loc_vel.x + (1.0f - speed_lerp ) * loc_chr_vel.x;
+                    //            loc_vel.y = speed_lerp * loc_vel.y + (1.0f - speed_lerp ) * loc_chr_vel.y;
+                    //        }
 
-                //        if ( fvec2_length_abs( loc_vel.v ) > FLYING_SPEED )
-                //        {
-                //            loc_pchr->ori.facing_z += terp_dir( loc_pchr->ori.facing_z, vec_to_facing( loc_vel.x , loc_vel.y ), 16 );
-                //        }
-                //    }
-                //    break;
+                    //        if ( fvec2_length_abs( loc_vel.v ) > FLYING_SPEED )
+                    //        {
+                    //            loc_pchr->ori.facing_z += terp_dir( loc_pchr->ori.facing_z, vec_to_facing( loc_vel.x , loc_vel.y ), 16 );
+                    //        }
+                    //    }
+                    //    break;
             }
         }
 
@@ -9229,7 +9229,7 @@ egoboo_rv chr_update_matrix( chr_t * pchr, bool_t update_size )
     matrix_cache_t *pchr_mc = NULL;
 
     if ( !DEFINED_PCHR( pchr ) ) return rv_error;
-    pchr_mc = &(pchr->inst.matrix_cache);
+    pchr_mc = &( pchr->inst.matrix_cache );
 
     // recursively make sure that any mount matrices are updated
     if ( DEFINED_CHR( pchr->attachedto ) )
@@ -11457,12 +11457,12 @@ bool_t chr_copy_enviro( chr_t * chr_psrc, chr_t * chr_pdst )
 
     chr_environment_t * psrc, * pdst;
 
-    if( NULL == chr_psrc || NULL == chr_pdst ) return bfalse;
+    if ( NULL == chr_psrc || NULL == chr_pdst ) return bfalse;
 
-    if( chr_psrc == chr_pdst ) return btrue;
+    if ( chr_psrc == chr_pdst ) return btrue;
 
-    psrc = &(chr_psrc->enviro);
-    pdst = &(chr_pdst->enviro);
+    psrc = &( chr_psrc->enviro );
+    pdst = &( chr_pdst->enviro );
 
     // use the special function to set the grid level
     // this must done first so that the character's reflection data is set properly
@@ -11470,7 +11470,7 @@ bool_t chr_copy_enviro( chr_t * chr_psrc, chr_t * chr_pdst )
 
     // now just copy the other data.
     // use memmove() in the odd case the regions overlap
-    memmove( psrc, pdst, sizeof(*psrc) );
+    memmove( psrc, pdst, sizeof( *psrc ) );
 
     return btrue;
 }

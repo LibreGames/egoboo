@@ -2355,10 +2355,10 @@ int doChoosePlayer( float deltaTime )
 
                 TxTexture_free_one(( TX_REF )TX_BARS );
 
-                startIndex_old              =
-                    startIndex                  = 0;
-                mnu_selectedPlayerCount_old =
-                    mnu_selectedPlayerCount     = 0;
+                startIndex_old              = 0;
+                startIndex                  = 0;
+                mnu_selectedPlayerCount_old = 0;
+                mnu_selectedPlayerCount     = 0;
                 mnu_selectedPlayer[0]       = 0;
 
                 TxTexture_load_one_vfs( "mp_data/nullicon", ( TX_REF )ICON_NULL, INVALID_KEY );
@@ -2389,7 +2389,7 @@ int doChoosePlayer( float deltaTime )
                 // reset but_select, or it will mess up the menu.
                 // must do it before SlidyButtonState_init()
                 sz_buttons[but_select] = "N/A";
-                SlidyButtonState_init( &but_state, 1.0f, but_back, sz_buttons, w_buttons );
+                SlidyButtonState_init( &but_state, 1.0f, but_select, sz_buttons, w_buttons );
 
                 // how many players can we pack into the available screen area?
                 numVertical   = ( buttonTop - y0 ) / button_repeat - 1;
