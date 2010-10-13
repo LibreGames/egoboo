@@ -238,7 +238,7 @@ void export_one_character( const CHR_REF by_reference character, const CHR_REF b
     if ( pcap->isitem && !pcap->cancarrytonextmodule ) return;
 
     // TWINK_BO.OBJ
-    snprintf( todirname, SDL_arraysize( todirname ), "%s", str_encode_path( ChrList.lst[owner].Name ) );
+    snprintf( todirname, SDL_arraysize( todirname ), "%s", str_encode_path( ChrList.lst[owner].name ) );
 
     // Is it a character or an item?
     if ( owner != character )
@@ -3119,8 +3119,12 @@ void game_load_global_assets()
     load_all_global_icons();
     load_blips();
     load_bars();
-    load_cursor();
+
+    // the in-game bitmap font
     font_bmp_load_vfs( "mp_data/font", "mp_data/font.txt" );
+
+    // the cursor for the in-game menus
+    load_cursor();
 }
 
 //--------------------------------------------------------------------------------------------
@@ -3209,6 +3213,9 @@ game_load_module_data_fail:
 
     // release any data that might have been allocated
     game_release_module_data();
+
+    // we are headed back to the menu, so make sure that we have a cursor for the ui
+    load_cursor();
 
     return bfalse;
 }
@@ -3313,6 +3320,9 @@ void game_quit_module()
     close_session();
 
     // reset the "ui" mouse state
+    load_cursor();
+
+    // make sure that we have a cursor for the ui
     cursor_reset();
 
     // re-initialize all game/module data
@@ -3508,7 +3518,7 @@ egoboo_rv game_update_imports()
         // find the saved copy of the players that are in memory right now
         for ( tnc = 0; tnc < loadplayer_count; tnc++ )
         {
-            if ( 0 == strcmp( loadplayer[tnc].name, ChrList.lst[character].Name ) )
+            if ( 0 == strcmp( loadplayer[tnc].name, ChrList.lst[character].name ) )
             {
                 break;
             }
@@ -3517,7 +3527,7 @@ egoboo_rv game_update_imports()
         if ( tnc == loadplayer_count )
         {
             retval = rv_fail;
-            log_warning( "game_update_imports() - cannot find exported file for \"%s\" (\"%s\") \n", ChrList.lst[character].obj_base._name, str_encode_path( ChrList.lst[character].Name ) ) ;
+            log_warning( "game_update_imports() - cannot find exported file for \"%s\" (\"%s\") \n", ChrList.lst[character].obj_base.base_name, str_encode_path( ChrList.lst[character].name ) ) ;
             continue;
         }
 

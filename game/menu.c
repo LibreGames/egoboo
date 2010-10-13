@@ -1191,8 +1191,6 @@ int cmp_mod_ref( const void * vref1, const void * vref2 )
     return retval;
 }
 
-
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 //struct s_ChooseModuleState
@@ -3425,7 +3423,6 @@ int doOptionsInput( float deltaTime )
         ""
     };
 
-
     static ui_Widget_t w_buttons [but_count];
 
     enum e_labels
@@ -4727,7 +4724,6 @@ int doOptionsAudio( float deltaTime )
         ""
     };
 
-
     static ui_Widget_t w_buttons[but_count];
 
     // label widgets
@@ -4759,7 +4755,6 @@ int doOptionsAudio( float deltaTime )
     };
 
     static ui_Widget_t w_labels[lab_count];
-
 
     int result = 0;
     int cnt;
@@ -7741,7 +7736,7 @@ SlidyButtonState_t * SlidyButtonState_init( SlidyButtonState_t * pstate, float l
 
     // set the correct parameters
     pstate->lerp      = lerp;
-    pstate->but_text  = (const char **)( NULL == button_text ? NULL : button_text + id_start );
+    pstate->but_text  = ( const char ** )( NULL == button_text ? NULL : button_text + id_start );
     pstate->but       = ( NULL == button_widget ) ? NULL : button_widget + id_start;
     pstate->but_count = count;
 

@@ -325,7 +325,7 @@ void ui_draw_cursor()
     TX_REF           ico_ref = ( TX_REF )TX_CURSOR;
     oglx_texture_t * ptex    = TxTexture_get_ptr( ico_ref );
 
-    if ( NULL == ptex )
+    if ( NULL == ptex || INVALID_GL_ID == ptex->base.binding )
     {
         ui_draw_cursor_ogl();
     }
@@ -1432,7 +1432,7 @@ bool_t ui_Widget_update_text_pos( ui_Widget_t * pw )
     if ( NULL == pw ) return bfalse;
 
     // if there is no justification info, just return
-    if( UI_JUST_NON == pw->tx_just.horz && UI_JUST_NON == pw->tx_just.vert ) return btrue;
+    if ( UI_JUST_NON == pw->tx_just.horz && UI_JUST_NON == pw->tx_just.vert ) return btrue;
 
     // get the widget bound in virtual coordinates
     w_vbound.x = pw->vx;
@@ -1441,14 +1441,14 @@ bool_t ui_Widget_update_text_pos( ui_Widget_t * pw )
     w_vbound.h = pw->vheight;
 
     // adjust the available region so that it is to the left of any image
-    if( 0 != ui_Widget_DisplayMaskTest( pw, UI_DISPLAY_IMAGE ) && NULL != pw->img )
+    if ( 0 != ui_Widget_DisplayMaskTest( pw, UI_DISPLAY_IMAGE ) && NULL != pw->img )
     {
         w_vbound.x += 5 + pw->img->imgW;
         w_vbound.w -= 5 + pw->img->imgW;
     }
 
     // shrink this region to make a 5 pixel border
-    if( 0 != ui_Widget_DisplayMaskTest( pw, UI_DISPLAY_IMAGE ) && NULL != pw->img )
+    if ( 0 != ui_Widget_DisplayMaskTest( pw, UI_DISPLAY_IMAGE ) && NULL != pw->img )
     {
         w_vbound.x +=  5;
         w_vbound.w -= 10;
@@ -1478,9 +1478,9 @@ bool_t ui_Widget_update_text_pos( ui_Widget_t * pw )
     diff = w_bound.w - tx_bound.w;
 
     // if not, default to left justified
-    if( diff < 0 ) just = UI_JUST_LOW;
+    if ( diff < 0 ) just = UI_JUST_LOW;
 
-    switch( just )
+    switch ( just )
     {
         default:
         case UI_JUST_NON:
@@ -1493,7 +1493,7 @@ bool_t ui_Widget_update_text_pos( ui_Widget_t * pw )
             break;
 
         case UI_JUST_HGH:
-            new_x = (w_bound.x + w_bound.w) - tx_bound.w;
+            new_x = ( w_bound.x + w_bound.w ) - tx_bound.w;
             break;
     }
 
@@ -1508,9 +1508,9 @@ bool_t ui_Widget_update_text_pos( ui_Widget_t * pw )
     diff = w_bound.h - tx_bound.h;
 
     // if not, default to top justified
-    if( diff < 0 ) just = UI_JUST_LOW;
+    if ( diff < 0 ) just = UI_JUST_LOW;
 
-    switch( just )
+    switch ( just )
     {
         default:
         case UI_JUST_NON:
@@ -1523,7 +1523,7 @@ bool_t ui_Widget_update_text_pos( ui_Widget_t * pw )
             break;
 
         case UI_JUST_HGH:
-            new_y = (w_bound.y + w_bound.h) - tx_bound.h;
+            new_y = ( w_bound.y + w_bound.h ) - tx_bound.h;
             break;
     }
 

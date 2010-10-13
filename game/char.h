@@ -344,7 +344,7 @@ struct s_chr
     latch_game_t   latch;           ///< the latch data
 
     // character stats
-    STRING         Name;            ///< My name
+    STRING         name;            ///< My name
     Uint8          gender;          ///< Gender
 
     Uint8          lifecolor;       ///< Bar color
@@ -713,7 +713,7 @@ bool_t chr_matrix_valid( chr_t * pchr );
 bool_t apply_reflection_matrix( chr_instance_t * pinst, float grid_level );
 
 // generic accessors
-void chr_set_floor_level( chr_t * pchr, float level );
+void chr_set_enviro_grid_level( chr_t * pchr, float level );
 void chr_set_redshift( chr_t * pchr, int rs );
 void chr_set_grnshift( chr_t * pchr, int gs );
 void chr_set_blushift( chr_t * pchr, int bs );
@@ -785,4 +785,7 @@ bool_t chr_is_over_water( chr_t *pchr );
 
 float calc_dismount_lerp( const chr_t * pchr_a, const chr_t * pchr_b );
 
+bool_t chr_copy_enviro( chr_t * chr_psrc, chr_t * chr_pdst );
+
 #define CHAR_H
+

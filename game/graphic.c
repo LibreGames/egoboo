@@ -316,7 +316,7 @@ int _va_draw_string( float x, float y, const char *format, va_list args )
             if ( '~' == cTmp )
             {
                 // Use squiggle for tab
-                x = ( ((int)x) & TABAND ) + TABADD;
+                x = ((( int )x ) & TABAND ) + TABADD;
             }
             else if ( '\n' == cTmp )
             {
@@ -1184,7 +1184,7 @@ int draw_wrap_string( const char *szText, float x, float y, int maxx )
             if ( '~' == cTmp )
             {
                 // Use squiggle for tab
-                x = ( ((int)x) & TABAND ) + TABADD;
+                x = ((( int )x ) & TABAND ) + TABADD;
             }
             else if ( '\n' == cTmp )
             {
@@ -4645,31 +4645,42 @@ bool_t load_all_global_icons()
 {
     /// @details ZF@> Load all the global icons used in all modules
 
+    const char * fname = NULL;
     bool_t result = btrue;
 
     // Now load every icon
-    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/nullicon", ( TX_REF )ICON_NULL, INVALID_KEY ) )
+    fname = "mp_data/nullicon";
+    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( fname, ( TX_REF )ICON_NULL, INVALID_KEY ) )
     {
+        log_warning( "Could not load icon file \"%s\"", fname );
         result = bfalse;
     }
 
-    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/keybicon", ( TX_REF )ICON_KEYB, INVALID_KEY ) )
+    fname = "mp_data/keybicon";
+    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( fname, ( TX_REF )ICON_KEYB, INVALID_KEY ) )
     {
+        log_warning( "Could not load icon file \"%s\"", fname );
         result = bfalse;
     }
 
-    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/mousicon", ( TX_REF )ICON_MOUS, INVALID_KEY ) )
+    fname = "mp_data/mousicon";
+    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( fname, ( TX_REF )ICON_MOUS, INVALID_KEY ) )
     {
+        log_warning( "Could not load icon file \"%s\"", fname );
         result = bfalse;
     }
 
-    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/joyaicon", ( TX_REF )ICON_JOYA, INVALID_KEY ) )
+    fname = "mp_data/joyaicon";
+    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( fname, ( TX_REF )ICON_JOYA, INVALID_KEY ) )
     {
+        log_warning( "Could not load icon file \"%s\"", fname );
         result = bfalse;
     }
 
-    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/joybicon", ( TX_REF )ICON_JOYB, INVALID_KEY ) )
+    fname = "mp_data/joybicon";
+    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( fname, ( TX_REF )ICON_JOYB, INVALID_KEY ) )
     {
+        log_warning( "Could not load icon file \"%s\"", fname );
         result = bfalse;
     }
 

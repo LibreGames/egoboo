@@ -272,7 +272,7 @@ prt_t * prt_config_do_init( prt_t * pprt )
     if ( !LOADED_PIP( pdata->ipip ) )
     {
         log_debug( "spawn_one_particle() - cannot spawn particle with invalid pip == %d (owner == %d(\"%s\"), profile == %d(\"%s\"))\n",
-                   REF_TO_INT( pdata->ipip ), REF_TO_INT( pdata->chr_origin ), DEFINED_CHR( pdata->chr_origin ) ? ChrList.lst[pdata->chr_origin].Name : "INVALID",
+                   REF_TO_INT( pdata->ipip ), REF_TO_INT( pdata->chr_origin ), DEFINED_CHR( pdata->chr_origin ) ? ChrList.lst[pdata->chr_origin].name : "INVALID",
                    REF_TO_INT( pdata->iprofile ), LOADED_PRO( pdata->iprofile ) ? ProList.lst[pdata->iprofile].name : "INVALID" );
 
         return NULL;
@@ -554,7 +554,7 @@ prt_t * prt_config_do_init( prt_t * pprt )
                "\n",
                iprt,
                update_wld, pprt->time_update, frame_all, pprt->time_frame,
-               loc_chr_origin, DEFINED_CHR( loc_chr_origin ) ? ChrList.lst[loc_chr_origin].Name : "INVALID",
+               loc_chr_origin, DEFINED_CHR( loc_chr_origin ) ? ChrList.lst[loc_chr_origin].name : "INVALID",
                pdata->ipip, ( NULL != ppip ) ? ppip->name : "INVALID", ( NULL != ppip ) ? ppip->comment : "",
                pdata->profile_ref, LOADED_PRO( pdata->profile_ref ) ? ProList.lst[pdata->profile_ref].name : "INVALID" );
 #endif
@@ -928,7 +928,7 @@ PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF by_refer
     if ( !LOADED_PIP( ipip ) )
     {
         log_debug( "spawn_one_particle() - cannot spawn particle with invalid pip == %d (owner == %d(\"%s\"), profile == %d(\"%s\"))\n",
-                   REF_TO_INT( ipip ), REF_TO_INT( chr_origin ), INGAME_CHR( chr_origin ) ? ChrList.lst[chr_origin].Name : "INVALID",
+                   REF_TO_INT( ipip ), REF_TO_INT( chr_origin ), INGAME_CHR( chr_origin ) ? ChrList.lst[chr_origin].name : "INVALID",
                    REF_TO_INT( iprofile ), LOADED_PRO( iprofile ) ? ProList.lst[iprofile].name : "INVALID" );
 
         return ( PRT_REF )TOTAL_MAX_PRT;
@@ -943,7 +943,7 @@ PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF by_refer
     {
 #if EGO_DEBUG && defined(DEBUG_PRT_LIST)
         log_debug( "spawn_one_particle() - cannot allocate a particle owner == %d(\"%s\"), pip == %d(\"%s\"), profile == %d(\"%s\")\n",
-                   chr_origin, INGAME_CHR( chr_origin ) ? ChrList.lst[chr_origin].Name : "INVALID",
+                   chr_origin, INGAME_CHR( chr_origin ) ? ChrList.lst[chr_origin].name : "INVALID",
                    ipip, LOADED_PIP( ipip ) ? PipStack.lst[ipip].name : "INVALID",
                    iprofile, LOADED_PRO( iprofile ) ? ProList.lst[iprofile].name : "INVALID" );
 #endif
@@ -1194,8 +1194,8 @@ prt_bundle_t * move_one_particle_get_environment( prt_bundle_t * pbdl_prt, prt_e
     if ( NULL == penviro ) penviro = &( loc_pprt->enviro );
 
     //---- particle "floor" level
-    penviro->grid_level = mesh_get_level( PMesh, loc_pprt->pos.x, loc_pprt->pos.y );
-    penviro->floor_level      = penviro->grid_level;
+    penviro->grid_level  = mesh_get_level( PMesh, loc_pprt->pos.x, loc_pprt->pos.y );
+    penviro->floor_level = penviro->grid_level;
 
     //---- The actual level of the character.
     //     Estimate platform attachment from whatever is in the onwhichplatform_ref variable from the

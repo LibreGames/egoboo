@@ -325,7 +325,6 @@ GLboolean display_item_adjust_bound( display_item_t * item_ptr, GLfloat dx, GLfl
     return GL_TRUE;
 }
 
-
 //--------------------------------------------------------------------------------------------
 GLboolean display_item_draw_texture( display_item_t * item_ptr )
 {

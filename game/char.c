@@ -568,7 +568,7 @@ void chr_log_script_time( const CHR_REF by_reference ichr )
     if ( NULL != ftmp )
     {
         fprintf( ftmp, "update == %d\tindex == %d\tname == \"%s\"\tclassname == \"%s\"\ttotal_time == %e\ttotal_calls == %f\n",
-                 update_wld, REF_TO_INT( ichr ), pchr->Name, pcap->classname,
+                 update_wld, REF_TO_INT( ichr ), pchr->name, pcap->classname,
                  pchr->ai._clktime, pchr->ai._clkcount );
         fflush( ftmp );
         fclose( ftmp );
@@ -1472,10 +1472,9 @@ void drop_all_idsz( const CHR_REF by_reference character, IDSZ idsz_min, IDSZ id
                     pitem->vel.x                  = turntocos[ turn ] * DROPXYVEL;
                     pitem->vel.y                  = turntosin[ turn ] * DROPXYVEL;
                     pitem->vel.z                  = DROPZVEL;
-                    pitem->enviro                 = pchr->enviro;
                     pitem->dismount_timer         = PHYS_DISMOUNT_TIME;
 
-                    chr_set_floor_level( pitem, pchr->enviro.grid_level );
+                    chr_copy_enviro( pitem, pchr );
                 }
             }
             else
@@ -1522,7 +1521,6 @@ bool_t drop_all_items( const CHR_REF by_reference character )
                 pitem->hitready           = btrue;
                 ADD_BITS( pitem->ai.alert, ALERTIF_DROPPED );
                 pitem->dismount_timer          = PHYS_DISMOUNT_TIME;
-                pitem->enviro                 = pchr->enviro;
                 pitem->onwhichplatform_ref    = pchr->onwhichplatform_ref;
                 pitem->onwhichplatform_update = pchr->onwhichplatform_update;
                 pitem->ori.facing_z           = direction + ATK_BEHIND;
@@ -1534,7 +1532,7 @@ bool_t drop_all_items( const CHR_REF by_reference character )
                 pitem->dismount_timer         = PHYS_DISMOUNT_TIME;
                 pitem->dismount_object        = character;
 
-                chr_set_floor_level( pitem, pchr->enviro.grid_level );
+                chr_copy_enviro( pitem, pchr );
             }
 
             direction += diradd;
@@ -1875,7 +1873,7 @@ void character_swipe( const CHR_REF by_reference ichr, slot_t slot )
     if ( !unarmed_attack && (( pweapon_cap->isstackable && pweapon->ammo > 1 ) || ACTION_IS_TYPE( pweapon->inst.action_which, F ) ) )
     {
         // Throw the weapon if it's stacked or a hurl animation
-        ithrown = spawn_one_character( pchr->pos, pweapon->profile_ref, chr_get_iteam( iholder ), 0, pchr->ori.facing_z, pweapon->Name, ( CHR_REF )MAX_CHR );
+        ithrown = spawn_one_character( pchr->pos, pweapon->profile_ref, chr_get_iteam( iholder ), 0, pchr->ori.facing_z, pweapon->name, ( CHR_REF )MAX_CHR );
         if ( INGAME_CHR( ithrown ) )
         {
             chr_t * pthrown = ChrList.lst + ithrown;
@@ -2318,7 +2316,7 @@ bool_t export_one_character_name_vfs( const char *szSaveName, const CHR_REF by_r
 
     if ( !INGAME_CHR( character ) ) return bfalse;
 
-    return chop_export_vfs( szSaveName, ChrList.lst[character].Name );
+    return chop_export_vfs( szSaveName, ChrList.lst[character].name );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -3372,6 +3370,7 @@ chr_t * chr_config_do_init( chr_t * pchr )
     CAP_REF  icap;
     TEAM_REF loc_team;
     int      tnc, iteam, kursechance;
+    float    level;
 
     cap_t * pcap;
     fvec3_t pos_tmp;
@@ -3486,18 +3485,8 @@ chr_t * chr_config_do_init( chr_t * pchr )
     pchr->fat_goto      = pchr->fat;
     pchr->fat_goto_time = 0;
 
-    // Set up position
-    pchr->enviro.grid_level = get_mesh_level( PMesh, pos_tmp.x, pos_tmp.y, pchr->waterwalk ) + RAISE;
-    pchr->enviro.walk_level = pchr->enviro.grid_level;
-    pchr->enviro.fly_level  = get_mesh_level( PMesh, pos_tmp.x, pos_tmp.y, btrue ) + RAISE;
-
-    if ( pchr->enviro.fly_level < 0.0f && ( pchr->is_flying_platform || pchr->is_flying_jump ) )
-    {
-        // fly above pits...
-        pchr->enviro.fly_level = 0.0f;
-    }
-
-    if ( pos_tmp.z < pchr->enviro.grid_level ) pos_tmp.z = pchr->enviro.grid_level;
+    // grab all of the environment information
+    chr_get_environment( pchr );
 
     chr_set_pos( pchr, pos_tmp.v );
 
@@ -3511,7 +3500,7 @@ chr_t * chr_config_do_init( chr_t * pchr )
     if ( CSTR_END == pchr->spawn_data.name[0] )
     {
         // Generate a random pchr->spawn_data.name
-        snprintf( pchr->Name, SDL_arraysize( pchr->Name ), "%s", pro_create_chop( pchr->spawn_data.profile ) );
+        snprintf( pchr->name, SDL_arraysize( pchr->name ), "%s", pro_create_chop( pchr->spawn_data.profile ) );
     }
     else
     {
@@ -3520,11 +3509,11 @@ chr_t * chr_config_do_init( chr_t * pchr )
 
         while ( tnc < MAXCAPNAMESIZE - 1 )
         {
-            pchr->Name[tnc] = pchr->spawn_data.name[tnc];
+            pchr->name[tnc] = pchr->spawn_data.name[tnc];
             tnc++;
         }
 
-        pchr->Name[tnc] = CSTR_END;
+        pchr->name[tnc] = CSTR_END;
     }
 
     // Particle attachments
@@ -3564,12 +3553,15 @@ chr_t * chr_config_do_init( chr_t * pchr )
 
     // initialize the character instance
     chr_spawn_instance( &( pchr->inst ), pchr->spawn_data.profile, pchr->spawn_data.skin );
+
+    // force the calculation of the matrix
     chr_update_matrix( pchr, btrue );
+
+    // force the instance to update
+    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.grid_level, btrue );
 
     // determine whether the object is hidden
     chr_update_hide( pchr );
-
-    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.grid_level, btrue );
 
 #if EGO_DEBUG && defined(DEBUG_WAYPOINTS)
     if ( !IS_ATTACHED_PCHR( pchr ) && INFINITE_WEIGHT != pchr->phys.weight && !pchr->safe_valid )
@@ -4721,8 +4713,10 @@ void change_character( const CHR_REF by_reference ichr, const PRO_REF by_referen
 
     // Reaffirm them particles...
     pchr->reaffirmdamagetype = pcap_new->attachedprt_reaffirmdamagetype;
+
     /// @note ZF@> remove this line so that books don't burn when dropped
     //reaffirm_attached_particles( ichr );
+
     new_attached_prt_count = number_of_attached_particles( ichr );
 
     ai_state_set_changed( &( pchr->ai ) );
@@ -5876,7 +5870,7 @@ bool_t chr_get_environment( chr_t * pchr )
 
     if ( NULL == pchr ) return bfalse;
 
-    retval = move_one_character_get_environment( chr_bundle_set( &bdl, pchr ), &( pchr->enviro ) );
+    retval = move_one_character_get_environment( chr_bundle_set( &bdl, pchr ), NULL );
 
     return NULL != retval;
 }
@@ -5892,6 +5886,7 @@ chr_bundle_t * move_one_character_get_environment( chr_bundle_t * pbdl, chr_envi
     chr_environment_t * loc_penviro;
     ai_state_t        * loc_pai;
 
+    float   grid_level, water_level;
     chr_t * pplatform = NULL;
 
     if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
@@ -5929,13 +5924,18 @@ chr_bundle_t * move_one_character_get_environment( chr_bundle_t * pbdl, chr_envi
     //---- set the character's various levels
 
     // character "floor" level
-    loc_penviro->grid_level = get_mesh_level( PMesh, loc_pchr->pos.x, loc_pchr->pos.y, bfalse ) + RAISE;
+    grid_level  = get_mesh_level( PMesh, loc_pchr->pos.x, loc_pchr->pos.y, bfalse );
+    water_level = get_mesh_level( PMesh, loc_pchr->pos.x, loc_pchr->pos.y, btrue );
+    chr_set_enviro_grid_level( loc_pchr, grid_level );
 
     // The actual level of the character.
-    loc_penviro->walk_level = loc_penviro->grid_level;
     if ( NULL != pplatform )
     {
         loc_penviro->walk_level = pplatform->pos.z + pplatform->chr_min_cv.maxs[OCT_Z];
+    }
+    else
+    {
+        loc_penviro->walk_level = loc_pchr->waterwalk ? water_level : grid_level;
     }
 
     // The flying height of the character, the maximum of tile level, platform level and water level
@@ -5949,11 +5949,6 @@ chr_bundle_t * move_one_character_get_environment( chr_bundle_t * pbdl, chr_envi
     {
         loc_penviro->fly_level = 0;  // fly above pits...
     }
-
-    //---- set the character's actual floor level
-    // use this function so that the reflections and some other stuff comes out correctly
-    // @note - using get_mesh_level() will actually force a water tile to have a reflection?
-    chr_set_floor_level( loc_pchr, loc_penviro->grid_level );
 
     //---- determine the character's various lerps after we have done everything to the character's levels we care to
 
@@ -6639,21 +6634,25 @@ chr_bundle_t * move_one_character_do_orientation( chr_bundle_t * pbdl )
         if ( IS_FLYING_PCHR( loc_pchr ) || loc_penviro->walk_lerp > 1.0f )
         {
             // this velocity is relative to "still air"
-            loc_vel = loc_pchr->vel;
+            loc_vel = fvec3_sub( loc_pchr->vel.v, windspeed.v );
         }
         else
         {
-            fvec3_t tmp_vec1, tmp_vec2;
+            fvec3_t tmp_vec0, tmp_vec1;
 
             // As the character approaches the ground, make the velocity vector relative to the
             // ground
 
-            // get the actial velocity relative to the ground
-            tmp_vec1 = fvec3_scale( loc_penviro->ground_diff.v, -( 1.0f - loc_penviro->walk_lerp ) );
-            tmp_vec2 = fvec3_scale( loc_pchr->vel.v,            loc_penviro->walk_lerp );
+            // get the actial velocity relative to the air
+            tmp_vec0 = fvec3_sub( loc_pchr->vel.v, windspeed.v );
+            fvec3_self_scale( tmp_vec0.v, 1.0f - loc_penviro->walk_lerp );
 
+            // get the actial velocity relative to the ground
+            tmp_vec1 = fvec3_sub( loc_pchr->vel.v, loc_penviro->ground_vel.v );
+            fvec3_self_scale( tmp_vec1.v, loc_penviro->walk_lerp        );
+
+            fvec3_self_sum( loc_vel.v, tmp_vec0.v );
             fvec3_self_sum( loc_vel.v, tmp_vec1.v );
-            fvec3_self_sum( loc_vel.v, tmp_vec2.v );
         }
 
         // the desired velocity is already relative to whatever ground the character is interacting with
@@ -6672,7 +6671,7 @@ chr_bundle_t * move_one_character_do_orientation( chr_bundle_t * pbdl )
             {
                 loc_turnmode = TURNMODE_FLYING_JUMP;
             }
-            else if ( loc_pchr->is_flying_platform && loc_turnmode != TURNMODE_SPIN )
+            else if ( loc_pchr->is_flying_platform && TURNMODE_SPIN != loc_turnmode)
             {
                 loc_turnmode = TURNMODE_FLYING_PLATFORM;
             }
@@ -6695,8 +6694,9 @@ chr_bundle_t * move_one_character_do_orientation( chr_bundle_t * pbdl )
             // Determine the character rotation
             switch ( loc_turnmode )
             {
-                    // Get direction from ACTUAL velocity
+                // Get direction from ACTUAL velocity
                 default:
+                case TURNMODE_FLYING_PLATFORM:
                 case TURNMODE_VELOCITY:
                     {
                         fvec2_t tmp_vel;
@@ -6734,7 +6734,7 @@ chr_bundle_t * move_one_character_do_orientation( chr_bundle_t * pbdl )
                     }
                     break;
 
-                    // Get direction from the DESIRED acceleration
+                // Get direction from the DESIRED acceleration
                 case TURNMODE_ACCELERATION:
                     {
                         fvec2_t tmp_vel;
@@ -6763,7 +6763,7 @@ chr_bundle_t * move_one_character_do_orientation( chr_bundle_t * pbdl )
                     }
                     break;
 
-                    // Face the target
+                // Face the target
                 case TURNMODE_WATCHTARGET:
                     {
                         if ( loc_ichr != loc_pai->target )
@@ -6781,41 +6781,41 @@ chr_bundle_t * move_one_character_do_orientation( chr_bundle_t * pbdl )
                     }
                     break;
 
-                    // Otherwise make it spin
+                // Otherwise make it spin
                 case TURNMODE_SPIN:
                     {
                         loc_pchr->ori.facing_z += SPINRATE;
                     }
                     break;
 
-                case TURNMODE_FLYING_PLATFORM:
-                case TURNMODE_FLYING_JUMP:
-                    //{
-                    //    fvec2_t loc_vel;
+                // at this point, the TURNMODE_FLYING_JUMP orientation is controled elsewhere
+                //case TURNMODE_FLYING_JUMP:
+                //    {
+                //        fvec2_t loc_vel;
 
-                    //    // interpolate between the desired "actual velocity" and the backup "desired velocity"
-                    //    if( 0.0f == speed_lerp )
-                    //    {
-                    //        loc_vel.x = loc_chr_vel.x;
-                    //        loc_vel.y = loc_chr_vel.y;
-                    //    }
-                    //    else if( 1.0f == speed_lerp )
-                    //    {
-                    //        loc_vel.x = loc_vel.x;
-                    //        loc_vel.y = loc_vel.y;
-                    //    }
-                    //    else
-                    //    {
-                    //        loc_vel.x = speed_lerp * loc_vel.x + (1.0f - speed_lerp ) * loc_chr_vel.x;
-                    //        loc_vel.y = speed_lerp * loc_vel.y + (1.0f - speed_lerp ) * loc_chr_vel.y;
-                    //    }
+                //        // interpolate between the desired "actual velocity" and the backup "desired velocity"
+                //        if( 0.0f == speed_lerp )
+                //        {
+                //            loc_vel.x = loc_chr_vel.x;
+                //            loc_vel.y = loc_chr_vel.y;
+                //        }
+                //        else if( 1.0f == speed_lerp )
+                //        {
+                //            loc_vel.x = loc_vel.x;
+                //            loc_vel.y = loc_vel.y;
+                //        }
+                //        else
+                //        {
+                //            loc_vel.x = speed_lerp * loc_vel.x + (1.0f - speed_lerp ) * loc_chr_vel.x;
+                //            loc_vel.y = speed_lerp * loc_vel.y + (1.0f - speed_lerp ) * loc_chr_vel.y;
+                //        }
 
-                    //    if ( fvec2_length_abs( loc_vel.v ) > FLYING_SPEED )
-                    //    {
-                    //        loc_pchr->ori.facing_z += terp_dir( loc_pchr->ori.facing_z, vec_to_facing( loc_vel.x , loc_vel.y ), 16 );
-                    //    }
-                    //}
-                    break;
+                //        if ( fvec2_length_abs( loc_vel.v ) > FLYING_SPEED )
+                //        {
+                //            loc_pchr->ori.facing_z += terp_dir( loc_pchr->ori.facing_z, vec_to_facing( loc_vel.x , loc_vel.y ), 16 );
+                //        }
+                //    }
+                //    break;
             }
         }
 
@@ -7313,31 +7313,35 @@ chr_bundle_t * move_one_character_do_floor( chr_bundle_t * pbdl )
 //--------------------------------------------------------------------------------------------
 chr_bundle_t *  move_one_character( chr_bundle_t * pbdl )
 {
-    chr_t      * loc_pchr;
+    chr_t * loc_pchr;
 
     if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
 
     // alias some variables
     loc_pchr = pbdl->chr_ptr;
 
-    if ( IS_ATTACHED_PCHR( loc_pchr ) ) return pbdl;
-
-    // save the acceleration from the last time-step
+    // calculate the acceleration from the last time-step
     loc_pchr->enviro.acc = fvec3_sub( loc_pchr->vel.v, loc_pchr->vel_old.v );
 
     // Character's old location
-    loc_pchr->pos_old          = chr_get_pos( loc_pchr );
-    loc_pchr->vel_old          = loc_pchr->vel;
-    loc_pchr->ori_old.facing_z = loc_pchr->ori.facing_z;
+    loc_pchr->pos_old = chr_get_pos( loc_pchr );
+    loc_pchr->vel_old = loc_pchr->vel;
+    loc_pchr->ori_old = loc_pchr->ori;
 
+    // determine the character's environment
+    // if this is not done, reflections will not update properly
+    move_one_character_get_environment( pbdl, NULL );
+
+    //---- none of the remaining functions are valid for attached characters
+    if ( IS_ATTACHED_PCHR( loc_pchr ) ) return pbdl;
+
+    // make the object want to continue its current motion, unless this is overridden
     if ( loc_pchr->latch.trans_valid )
     {
-        // make the object want to continue its current motion, unless this is overridden
         loc_pchr->enviro.chr_vel = loc_pchr->vel;
     }
 
-    move_one_character_get_environment( pbdl, NULL );
-
+    // apply the fluid friction for the object
     move_one_character_do_fluid_friction( pbdl );
 
     // determine how the character would *like* to move
@@ -7968,7 +7972,7 @@ const char * chr_get_name( const CHR_REF by_reference ichr, Uint32 bits )
 
         if ( pchr->nameknown )
         {
-            snprintf( szName, SDL_arraysize( szName ), "%s", pchr->Name );
+            snprintf( szName, SDL_arraysize( szName ), "%s", pchr->name );
         }
         else if ( NULL != pcap )
         {
@@ -8108,7 +8112,7 @@ const char * chr_get_dir_name( const CHR_REF by_reference ichr )
         EGOBOO_ASSERT( bfalse );
 
         // copy the character's data.txt path
-        strncpy( buffer, pchr->obj_base._name, SDL_arraysize( buffer ) );
+        strncpy( buffer, pchr->obj_base.base_name, SDL_arraysize( buffer ) );
 
         // the name should be "...some path.../data.txt"
         // grab the path
@@ -9000,12 +9004,11 @@ bool_t apply_reflection_matrix( chr_instance_t * pinst, float grid_level )
 
     if ( NULL == pinst ) return bfalse;
 
+    // invalidate the current matrix
     pinst->ref.matrix_valid = bfalse;
 
     // actually flip the matrix
-    pinst->ref.matrix_valid = pinst->matrix_cache.valid;
-
-    if ( pinst->ref.matrix_valid )
+    if ( pinst->matrix_cache.valid )
     {
         pinst->ref.matrix = pinst->matrix;
 
@@ -9013,6 +9016,8 @@ bool_t apply_reflection_matrix( chr_instance_t * pinst, float grid_level )
         pinst->ref.matrix.CNV( 1, 2 ) = -pinst->ref.matrix.CNV( 1, 2 );
         pinst->ref.matrix.CNV( 2, 2 ) = -pinst->ref.matrix.CNV( 2, 2 );
         pinst->ref.matrix.CNV( 3, 2 ) = 2 * grid_level - pinst->ref.matrix.CNV( 3, 2 );
+
+        pinst->ref.matrix_valid = btrue;
     }
 
     return pinst->ref.matrix_valid;
@@ -9217,21 +9222,34 @@ egoboo_rv chr_update_matrix( chr_t * pchr, bool_t update_size )
     ///
     ///     Return btrue if a new matrix is applied to the character, bfalse otherwise.
 
+    egoboo_rv      retval;
     bool_t         needs_update = bfalse;
     bool_t         applied      = bfalse;
     matrix_cache_t mc_tmp;
-    egoboo_rv      retval;
+    matrix_cache_t *pchr_mc = NULL;
 
     if ( !DEFINED_PCHR( pchr ) ) return rv_error;
+    pchr_mc = &(pchr->inst.matrix_cache);
 
     // recursively make sure that any mount matrices are updated
     if ( DEFINED_CHR( pchr->attachedto ) )
     {
+        egoboo_rv attached_update = rv_error;
+
+        attached_update = chr_update_matrix( ChrList.lst + pchr->attachedto, btrue );
+
         // if this fails, we should probably do something...
-        if ( rv_error == chr_update_matrix( ChrList.lst + pchr->attachedto, btrue ) )
+        if ( rv_error == attached_update )
         {
-            pchr->inst.matrix_cache.matrix_valid = bfalse;
-            return rv_error;
+            // there is an error so this matrix is not defined and no readon to go farther
+            pchr_mc->matrix_valid = bfalse;
+            return attached_update;
+        }
+        else if ( rv_success == attached_update )
+        {
+            // the holder/mount matrix has changed.
+            // this matrix is no longer valid.
+            pchr_mc->matrix_valid = bfalse;
         }
     }
 
@@ -9243,14 +9261,14 @@ egoboo_rv chr_update_matrix( chr_t * pchr, bool_t update_size )
     // Update the grip vertices no matter what (if they are used)
     if ( HAS_SOME_BITS( mc_tmp.type_bits, MAT_WEAPON ) && INGAME_CHR( mc_tmp.grip_chr ) )
     {
-        egoboo_rv retval;
+        egoboo_rv grip_retval;
         chr_t   * ptarget = ChrList.lst + mc_tmp.grip_chr;
 
         // has that character changes its animation?
-        retval = chr_instance_update_grip_verts( &( ptarget->inst ), mc_tmp.grip_verts, GRIP_VERTS );
+        grip_retval = chr_instance_update_grip_verts( &( ptarget->inst ), mc_tmp.grip_verts, GRIP_VERTS );
 
-        if ( rv_error   == retval ) return rv_error;
-        if ( rv_success == retval ) needs_update = btrue;
+        if ( rv_error   == grip_retval ) return rv_error;
+        if ( rv_success == grip_retval ) needs_update = btrue;
     }
 
     // if it is not the same, make a new matrix with the new data
@@ -9258,7 +9276,7 @@ egoboo_rv chr_update_matrix( chr_t * pchr, bool_t update_size )
     if ( needs_update )
     {
         // we know the matrix is not valid
-        pchr->inst.matrix_cache.matrix_valid = bfalse;
+        pchr_mc->matrix_valid = bfalse;
 
         applied = apply_matrix_cache( pchr, &mc_tmp );
     }
@@ -9501,13 +9519,14 @@ int chr_get_price( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-void chr_set_floor_level( chr_t * pchr, float level )
+void chr_set_enviro_grid_level( chr_t * pchr, float level )
 {
     if ( !DEFINED_PCHR( pchr ) ) return;
 
     if ( level != pchr->enviro.grid_level )
     {
         pchr->enviro.grid_level = level;
+
         apply_reflection_matrix( &( pchr->inst ), level );
     }
 }
@@ -10853,7 +10872,7 @@ bool_t pack_validate( pack_t * ppack )
         if ( !item_ptr->isitem )
         {
             // how did this get in a pack?
-            log_warning( "pack_validate() - The item %s is in a pack, even though it is not tagged as an item.\n", item_ptr->obj_base._name );
+            log_warning( "pack_validate() - The item %s is in a pack, even though it is not tagged as an item.\n", item_ptr->obj_base.base_name );
 
             // remove the item from the pack
             parent_pack_ptr->next     = item_pack_ptr->next;
@@ -10924,7 +10943,7 @@ bool_t pack_add_item( pack_t * ppack, CHR_REF item )
     // is this item packed in another pack?
     if ( pitem_pack->is_packed )
     {
-        log_warning( "pack_add_item() - Trying to add a packed item (%s) to a pack.\n", pitem->obj_base._name );
+        log_warning( "pack_add_item() - Trying to add a packed item (%s) to a pack.\n", pitem->obj_base.base_name );
 
         return bfalse;
     }
@@ -10932,7 +10951,7 @@ bool_t pack_add_item( pack_t * ppack, CHR_REF item )
     // does this item have packed objects of its own?
     if ( 0 != pitem_pack->count || MAX_CHR != pitem_pack->next )
     {
-        log_warning( "pack_add_item() - Trying to add an item (%s) to a pack that has a sub-pack.\n", pitem->obj_base._name );
+        log_warning( "pack_add_item() - Trying to add an item (%s) to a pack that has a sub-pack.\n", pitem->obj_base.base_name );
 
         return bfalse;
     }
@@ -10940,7 +10959,7 @@ bool_t pack_add_item( pack_t * ppack, CHR_REF item )
     // is the item even an item?
     if ( !pitem->isitem )
     {
-        log_debug( "pack_add_item() - Trying to add a non-item %s to a pack.\n", pitem->obj_base._name );
+        log_debug( "pack_add_item() - Trying to add a non-item %s to a pack.\n", pitem->obj_base.base_name );
     }
 
     // add the item to the front of the pack's linked list
@@ -11429,4 +11448,29 @@ float calc_dismount_lerp( const chr_t * pchr_a, const chr_t * pchr_b )
     }
 
     return !found ? 1.0f : dismount_lerp_a * dismount_lerp_b;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t chr_copy_enviro( chr_t * chr_psrc, chr_t * chr_pdst )
+{
+    /// BB@> do a deep copy on the character's enviro data
+
+    chr_environment_t * psrc, * pdst;
+
+    if( NULL == chr_psrc || NULL == chr_pdst ) return bfalse;
+
+    if( chr_psrc == chr_pdst ) return btrue;
+
+    psrc = &(chr_psrc->enviro);
+    pdst = &(chr_pdst->enviro);
+
+    // use the special function to set the grid level
+    // this must done first so that the character's reflection data is set properly
+    chr_set_enviro_grid_level( chr_pdst, psrc->grid_level );
+
+    // now just copy the other data.
+    // use memmove() in the odd case the regions overlap
+    memmove( psrc, pdst, sizeof(*psrc) );
+
+    return btrue;
 }

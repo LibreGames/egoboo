@@ -33,7 +33,7 @@ ego_object_base_t * ego_object_ctor( ego_object_base_t * pbase )
 
     memset( pbase, 0, sizeof( *pbase ) );
 
-    pbase->_name[0] = CSTR_END;
+    pbase->base_name[0] = CSTR_END;
     pbase->state    = ego_object_invalid;
 
     return pbase;
@@ -46,7 +46,7 @@ ego_object_base_t * ego_object_dtor( ego_object_base_t * pbase )
 
     memset( pbase, 0, sizeof( *pbase ) );
 
-    pbase->_name[0] = CSTR_END;
+    pbase->base_name[0] = CSTR_END;
     pbase->state    = ego_object_invalid;
 
     return pbase;

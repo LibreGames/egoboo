@@ -74,7 +74,6 @@ extern display_item_t * fnt_vprintf( display_item_t * tx_ptr, TTF_Font * ttf_ptr
 /// handle print text to a GL texture
 extern display_item_t * fnt_print( display_item_t * tx_ptr, TTF_Font * ttf_ptr, SDL_Color color, const char *text );
 
-
 extern display_list_t * fnt_vappend_text( display_list_t * tx_lst, TTF_Font * ttf_ptr, int x, int y, const char *format, va_list args );
 extern display_list_t * fnt_append_text( display_list_t * tx_lst, TTF_Font * ttf_ptr, int x, int y, const char *format, ... );
 extern display_list_t * fnt_append_text_literal( display_list_t * tx_lst, TTF_Font * ttf_ptr, int x, int y, const char *text );

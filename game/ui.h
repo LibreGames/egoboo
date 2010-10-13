@@ -73,11 +73,10 @@ enum e_ui_just
     UI_JUST_HGH
 };
 
-
 struct s_ui_Just
 {
-    unsigned horz:2;
-    unsigned vert:2;
+    unsigned horz: 2;
+    unsigned vert: 2;
 };
 typedef struct s_ui_Just ui_Just_t;
 
@@ -113,7 +112,6 @@ struct s_ui_Widget
     float         vwidth, vheight;
 };
 typedef struct s_ui_Widget ui_Widget_t;
-
 
 bool_t ui_Widget_free( ui_Widget_t * pw );
 bool_t ui_Widget_copy( ui_Widget_t * pw2, ui_Widget_t * pw1 );

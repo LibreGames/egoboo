@@ -517,7 +517,7 @@ Uint8 scr_AddWaypoint( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
                          "\tWaypoint location (in tiles) <%f,%f>\n"
                          "\tWall normal <%1.4f,%1.4f>\n"
                          "\tPressure %f\n",
-                         GET_REF_PCHR( pchr ), pchr->Name, pbdl_self->cap_ptr->name,
+                         GET_REF_PCHR( pchr ), pchr->name, pbdl_self->cap_ptr->name,
                          pself->wp_lst.head,
                          pos.x / GRID_SIZE, pos.y / GRID_SIZE,
                          nrm.x, nrm.y,
@@ -1842,7 +1842,7 @@ Uint8 scr_SpawnCharacter( script_state_t * pstate, ai_state_bundle_t * pbdl_self
     {
         if ( ichr > PMod->importamount * MAXIMPORTPERPLAYER )
         {
-            log_warning( "Object %s failed to spawn a copy of itself\n", pchr->obj_base._name );
+            log_warning( "Object %s failed to spawn a copy of itself\n", pchr->obj_base.base_name );
         }
     }
     else
@@ -5253,7 +5253,7 @@ Uint8 scr_SpawnCharacterXYZ( script_state_t * pstate, ai_state_bundle_t * pbdl_s
     {
         if ( ichr > PMod->importamount * MAXIMPORTPERPLAYER )
         {
-            log_warning( "Object %s failed to spawn a copy of itself\n", pchr->obj_base._name );
+            log_warning( "Object %s failed to spawn a copy of itself\n", pchr->obj_base.base_name );
         }
     }
     else
@@ -5309,7 +5309,7 @@ Uint8 scr_SpawnExactCharacterXYZ( script_state_t * pstate, ai_state_bundle_t * p
         {
             cap_t * pcap = pro_get_pcap( pchr->profile_ref );
 
-            log_warning( "Object \"%s\"(\"%s\") failed to spawn profile index %d\n", pchr->obj_base._name, NULL == pcap ? "INVALID" : pcap->classname, pstate->argument );
+            log_warning( "Object \"%s\"(\"%s\") failed to spawn profile index %d\n", pchr->obj_base.base_name, NULL == pcap ? "INVALID" : pcap->classname, pstate->argument );
         }
     }
     else
@@ -5805,7 +5805,7 @@ Uint8 scr_IdentifyTarget( script_state_t * pstate, ai_state_bundle_t * pbdl_self
     returncode = bfalse;
     ichr = pself->target;
     if ( ChrList.lst[ichr].ammomax != 0 )  ChrList.lst[ichr].ammoknown = btrue;
-    if ( 0 == strcmp( "Blah", ChrList.lst[ichr].Name ) )
+    if ( 0 == strcmp( "Blah", ChrList.lst[ichr].name ) )
     {
         returncode = !ChrList.lst[ichr].nameknown;
         ChrList.lst[ichr].nameknown = btrue;
@@ -6746,7 +6746,7 @@ Uint8 scr_EnableListenSkill( script_state_t * pstate, ai_state_bundle_t * pbdl_s
 {
     /// @details ZF@> TODO: deprecated, replace this function with something else
 
-    log_warning( "Deprecated script function used (EnableListenSkill) in %s.\n", pbdl_self->chr_ptr->Name );
+    log_warning( "Deprecated script function used (EnableListenSkill) in %s.\n", pbdl_self->chr_ptr->name );
     return bfalse;
 }
 
@@ -6789,7 +6789,7 @@ Uint8 scr_FollowLink( script_state_t * pstate, ai_state_bundle_t * pbdl_self )
     returncode = link_follow_modname( ptext, btrue );
     if ( !returncode )
     {
-        debug_printf( "That's too scary for %s", pchr->Name );
+        debug_printf( "That's too scary for %s", pchr->name );
     }
 
     SCRIPT_FUNCTION_END();
@@ -7165,7 +7165,7 @@ Uint8 scr_SpawnAttachedCharacter( script_state_t * pstate, ai_state_bundle_t * p
         {
             cap_t * pcap = pro_get_pcap( pchr->profile_ref );
 
-            log_warning( "Object \"%s\"(\"%s\") failed to spawn profile index %d\n", pchr->obj_base._name, NULL == pcap ? "IVALID" : pcap->classname, pstate->argument );
+            log_warning( "Object \"%s\"(\"%s\") failed to spawn profile index %d\n", pchr->obj_base.base_name, NULL == pcap ? "IVALID" : pcap->classname, pstate->argument );
         }
     }
     else

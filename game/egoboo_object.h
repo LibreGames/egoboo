@@ -53,7 +53,7 @@ typedef enum e_ego_object_state ego_object_state_t;
 struct s_ego_object_base
 {
     // basic object definitions
-    STRING             _name;     ///< what is its "_name"
+    STRING             base_name; ///< what is its name at creation. Probably related to the filename that generated it.
     size_t             index;     ///< what is the index position in the object list?
     ego_object_state_t state;     ///< what state is it in?
     Uint32             guid;      ///< a globally unique identifier
@@ -101,7 +101,7 @@ ego_object_base_t * ego_object_dtor( ego_object_base_t * pbase );
 #define POBJ_ACTIVATE( PDATA, NAME ) \
     if( NULL != PDATA && (PDATA)->obj_base.allocated && !(PDATA)->obj_base.kill_me && ego_object_invalid != (PDATA)->obj_base.state ) \
     { \
-        strncpy( (PDATA)->obj_base._name, NAME, SDL_arraysize((PDATA)->obj_base._name) ); \
+        strncpy( (PDATA)->obj_base.base_name, NAME, SDL_arraysize((PDATA)->obj_base.base_name) ); \
         (PDATA)->obj_base.state  = ego_object_active; \
     }
 
@@ -134,7 +134,7 @@ ego_object_base_t * ego_object_dtor( ego_object_base_t * pbase );
             ego_object_spawn_depth++;\
         }\
     }\
-     
+
 #define POBJ_END_SPAWN( PDATA ) \
     if( NULL != PDATA && (PDATA)->obj_base.allocated ) \
     {\
@@ -144,7 +144,7 @@ ego_object_base_t * ego_object_dtor( ego_object_base_t * pbase );
             ego_object_spawn_depth--;\
         }\
     }\
-     
+
 /// Is the object flagged as requesting termination?
 #define FLAG_ALLOCATED_PBASE( PBASE ) ( ( (PBASE)->allocated ) && (ego_object_invalid != (PBASE)->state) )
 /// Is the object allocated?
