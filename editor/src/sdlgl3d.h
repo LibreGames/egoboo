@@ -284,9 +284,17 @@ typedef struct {
     float zmin, zmax;           
     float nx[3], ny[3];              
     float leftangle, rightangle;
-    float vx1, vy1, vx2, vy2;   /* Bounding rectangle of field of view  */
+    int   vx1, vy1, vx2, vy2;   /* Bounding rectangle of field of view  */
+    int   num_visi_tile;        /* Number of tiles visible in FOV       */
 
 } SDLGL3D_FRUSTUM;
+
+typedef struct {
+    
+    int mid_x, mid_y;   /* Of tile, for distance sorting            */
+    int no;             /* Number of tile, for display by caller    */
+
+} SDLGL3D_VISITILE;
 
 /*******************************************************************************
 * CODE                                                                         *
@@ -304,6 +312,7 @@ void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z, int relati
 void sdlgl3dManageObject(int obj_no, char move_cmd, char set);
 void sdlgl3dMoveObjects(float secondspassed);
 void sdlgl3dInitVisiMap(int map_w, int map_h, float tile_size);
+SDLGL3D_VISITILE *sdlgl3dGetVisiTileList(int *num_tile);
 /* TODO:
     --- List of objects for drawing by caller, sorted from farest to nearest ---
     int sdlgl3dVisibleObjects(SDLGL3D_OBJECT **objects);

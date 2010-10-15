@@ -99,8 +99,9 @@
 *******************************************************************************/
 
 static SDLGL_RECT DragRect;
-static int  NewMapSize = 32;         /* Inital mapsize for new maps */
+static int  EditorMapSize = 32;         /* Inital mapsize for new maps      */
 static char EditorWorkDir[256];
+static char EditorActDlg = 0;           /* Number of actual dialog opened   */
 
 static SDLGL_CONFIG SdlGlConfig = {
 
@@ -122,7 +123,7 @@ static SDLGLCFG_NAMEDVALUE CfgValues[] = {
     { SDLGLCFG_VAL_INT, &SdlGlConfig.colordepth, "colordepth" },
     { SDLGLCFG_VAL_INT, &SdlGlConfig.screenmode, "screenmode" },
     { SDLGLCFG_VAL_INT, &SdlGlConfig.debugmode, "debugmode" },
-    { SDLGLCFG_VAL_INT, &NewMapSize, "mapsize" },
+    { SDLGLCFG_VAL_INT, &EditorMapSize, "mapsize" },
     { SDLGLCFG_VAL_STRING, &EditorWorkDir[0], "workdir", 120 },
     { 0 }
 
@@ -234,6 +235,44 @@ static SDLGL_FIELD MapDlg[] = {
 * CODE									                                       *
 *******************************************************************************/
 
+/*
+ * Name:
+ *     editorSetDialog
+ * Description:
+ *     Opens/Closes dialog with given number. 
+ * Input:
+ *     which: Which dialog to open/close
+ *     open:  Open it yes/no 
+ */
+static editorSetDialog(char which, char open)
+{
+
+    SDLGL_FIELD *dlg;
+    
+    
+    switch(which) {
+        case EDITOR_MAPDLG:
+            dlg = &MapDlg[0];
+            break;
+        case EDITOR_FANPROPERTY:    
+            dlg = &FanInfoDlg[0];
+            break;
+            /* TODO: Add dialogs for Passages and Spawn Points */ 
+        default:
+            return;
+    }
+
+    if (open) {
+        sdlglInputAdd(which, dlg, 20, 20);
+        EditorActDlg = which;
+    }
+    else {
+        sdlglInputRemove(which); 
+        EditorActDlg = 0;
+    }        
+    
+}
+
 /* =================== Map-Settings-Dialog ================ */
 
 
@@ -257,6 +296,11 @@ static void editorSetMenu(char which)
     char save_type;
 
 
+    /* -------- Don't handle menu, if a dialog is opened ---- */
+    if (EditorActDlg > 0) {
+        return;
+    }
+    
     if (MenuActualOpen != which) {
 
         sdlglInputRemove(MenuActualOpen);
@@ -387,10 +431,10 @@ static void editor2DMap(SDLGL_EVENT *event)
             }
             /* Add this Dialog at position */
             if (Map2DState & event -> sub_code) {
-                sdlglInputAdd(EDITOR_FANDLG, FanInfoDlg, 20, 20);
+                editorSetDialog(EDITOR_FANDLG, 1);
             }
             else {
-                sdlglInputRemove(EDITOR_FANDLG);
+                editorSetDialog(EDITOR_FANDLG, 0);
             }
             break;
         case EDITOR_2DMAP_FANROTATE:
@@ -725,7 +769,7 @@ static void editorStart(void)
 {
 
     /* Initalize the maze editor */    
-    pEditState = editmainInit(NewMapSize, 256, 256);
+    pEditState = editmainInit(EditorMapSize, 256, 256);
     
     /* Display initally chosen values */    
     editorSetMenuViewToggle();

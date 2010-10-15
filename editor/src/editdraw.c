@@ -912,13 +912,7 @@ static void editdrawMap(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, int *chosen,
 {
 
     int fan_no;
-
-
-    if (! mesh -> map_loaded) {
-
-        return;
-
-    }
+    
 
     glPolygonMode(GL_FRONT, mesh -> draw_mode & EDIT_MODE_SOLID ? GL_FILL : GL_LINE);
     glFrontFace(GL_CW); 
@@ -930,30 +924,45 @@ static void editdrawMap(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, int *chosen,
     /* Draw the map, using different edit flags           */
     /* Needs list of visible tiles
        ( which must be built every time after the camera moved) */
+    /* TODO: 
+        Draw first bottom tiles (and transparent fan, if on same fan)
+        Second draw walls (and transparent fan, if on same fan) 
+        After that draw ordered all tiles
+            if (wall) draw wall
+                ==> objects on same tile
+                ==> particles on same tile
+    */
+    /* =============== First draw bottom tiles ============== */
     for (fan_no = 0; fan_no < mesh -> numfan;  fan_no++) {
-
-        editdrawSingleFan(mesh, fan_no, 0);       
-
+        if (mesh -> fan[fan_no].type == 0) {
+            editdrawSingleFan(mesh, fan_no, 0);       
+        }
     }
+    /* ------------ Draw actual chosen passage -------------- */
+    if (*psg >= 0) {  
+
+        editdrawTransparentFan3D(mesh, psg, SDLGL_COL_GREEN, 128);
     
+    }
+    /* ------------ Draw actual chosen spawn position ------- */
+    if (*spawn >= 0) {  
+
+        editdrawTransparentFan3D(mesh, spawn, SDLGL_COL_RED, 128);
+    
+    } 
+    /* =============== First draw wall tiles ============== */
+    for (fan_no = 0; fan_no < mesh -> numfan;  fan_no++) {
+        if (mesh -> fan[fan_no].type != 0) {
+            editdrawSingleFan(mesh, fan_no, 0);       
+        }
+    }    
     /* ------------ Sign fan(s), if chosen ----------------------  */
     if (*chosen >= 0) {  
 
         editdrawTransparentFan3D(mesh, chosen, SDLGL_COL_YELLOW, 128);
     
     }
-    /* ------------ Draw actual chosen passage ---------------------- */
-    if (*psg >= 0) {  
-
-        editdrawTransparentFan3D(mesh, psg, SDLGL_COL_GREEN, 128);
-    
-    }
-    /* ------------ Draw actual chosen spawn position --------------- */
-    if (*spawn >= 0) {  
-
-        editdrawTransparentFan3D(mesh, spawn, SDLGL_COL_RED, 128);
-    
-    }      
+       
     
     if (mesh -> draw_mode & EDIT_MODE_TEXTURED) {
         glDisable(GL_TEXTURE_2D);
@@ -1137,8 +1146,11 @@ void editdraw3DView(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, int *chosen, int
         }      
         
     }
+    else {
     
-    editdrawMap(mesh, ft, fd, chosen, psg, spawn);     
+        editdrawMap(mesh, ft, fd, chosen, psg, spawn);     
+        
+    }
 
     sdlgl3dEnd();
 

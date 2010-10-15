@@ -40,7 +40,7 @@
 #define SDLGL3D_I_CAMERA_FOV 60.0 /* Instead of 90.0 degrees */ 
 
 /* ------- */
-#define SDLGL3D_I_MAXVISITILES (9 + 7 + 5 + 3 + 3 + 3 + 9 + 9 + 11)
+#define SDLGL3D_I_MAXVISITILES 128
 
 #define SDLGL3D_VISITILEDEPTH 5         /* Number of squares visible in depth */
 
@@ -104,10 +104,128 @@ static SDLGL3D_CAMERA Camera[4] = {
 
 static SDLGL3D_OBJECT Object_List[SDLGL3D_MAXOBJECT + 62];  /* List of objects to handle    */
 /* Additional objects are used for visible tiles */
+static int NumVisiTiles = 0;
+static SDLGL3D_VISITILE Visi_Tiles[SDLGL3D_I_MAXVISITILES + 2];
 
 /*******************************************************************************
 * CODE									                                       *
 *******************************************************************************/
+
+/*
+ * Name:
+ *     CheckBoxAgainstFrustum
+ * Description:
+ *      Given the box centered at (cx,cz) and extending +/- HalfSize units
+ *      along both axes, this function checks to see if the box overlaps the
+ *      given frustum.  If the box is totally outside the frustum, then
+ *     returns NOT_VISIBLE; if the box is totally inside the frustum, then
+ *     returns NO_CLIP; otherwise, returns SOME_CLIP.
+ *
+ * Code from: Game Programming Gems, Section 4, Chapter 11
+ *	      "Loose Octrees"
+ *	       -thatcher 4/6/2000 Copyright Thatcher Ulrich
+ */
+static char CheckBoxAgainstFrustum(int cx, int cy, int HalfSize,
+                                   SDLGL3D_FRUSTUM *f, int posx, int posy)
+{
+    int	OrCodes = 0, AndCodes = ~0;
+
+    int	i, j, k;
+
+    /* Check each box corner against each edge of the frustum. */
+    for (j = 0; j < 2; j++) {
+
+    	for (i = 0; i < 2; i++) {
+	        // int	mask = 1 << (j * 2 + i);
+
+    	    int x = cx + (i == 0 ? -HalfSize : HalfSize);
+	        int y = cy + (j == 0 ? -HalfSize : HalfSize);
+
+    	    /* Check the corner against the two sides of the frustum. */
+            int	Code = 0;
+	        int	Bit = 1;
+    	    for (k = 0; k < 3; k++, Bit <<= 1) {
+
+	        	 float dot = f -> nx[k] * (x - posx) + f -> ny[k] * (y - posy);
+
+	        	 if (dot < 0) {
+    		         // The point is outside this edge.
+	    	        Code |= Bit;
+		        }
+
+            }
+
+    	    OrCodes |= Code;
+	        AndCodes &= Code;
+        }
+
+    }
+
+    // Based on bit-codes, return culling results.
+    if (OrCodes == 0) {
+	    /* The box is completely within the frustum (no box vert is outside any frustum edge). */
+	    return NO_CLIP;
+    } else if (AndCodes != 0) {
+	/* All the box verts are outside one of the frustum edges.     */
+	    return NOT_VISIBLE;
+    } else {
+	    return SOME_CLIP;
+    }
+
+}
+
+/*
+ * Name:
+ *     sdlgl3dGetVisiTiles
+ * Description:
+ *     Calculates the tiles visible in FOV.
+ *     Fills in the array 'Visi_Tiles' 
+ * Input:
+ *     f *: Pointer on frustum to calc visible tiles for
+ * Output:
+ *     Number of visible tiles in frustum 
+ */
+static int sdlgl3dGetVisiTiles(SDLGL3D_FRUSTUM *f) 
+{
+
+    int tx1, ty1, tx2, ty2, ltx;         
+    
+    
+    NumVisiTiles = 0;
+    
+    tx1 = f -> vx1 / TileSize;
+    tx2 = f -> vx2 / TileSize;
+    ty1 = f -> vy1 / TileSize;
+    ty2 = f -> vy2 / TileSize;
+    
+    while(ty1 <= ty2) {
+        ltx = tx1;
+        while(ltx <= tx2) {
+            
+            Visi_Tiles[NumVisiTiles].no    = (ty1 * MapW) + ltx;
+            Visi_Tiles[NumVisiTiles].mid_x = (ltx * TileSize) + 64;
+            Visi_Tiles[NumVisiTiles].mid_y = (ty1 * TileSize) + 64;;
+            NumVisiTiles++;
+            if (NumVisiTiles >= (SDLGL3D_I_MAXVISITILES - 1)) {
+                Visi_Tiles[NumVisiTiles].no = -1;    /* Sign end of list */
+                return NumVisiTiles;
+            }
+            ltx++;
+        }
+        ty1++;
+    }
+    
+    Visi_Tiles[NumVisiTiles].no = -1;      /* Sign end of array */
+    
+    /* 
+        TODO: 
+            1. Only use tiles which are checked by 'CheckBoxAgainstFrustum()'
+            2. Sort tiles by distance from camx, camy ==> Far to Near   
+    */
+    
+    return NumVisiTiles;
+
+}
 
 /*
  * Name:
@@ -117,7 +235,7 @@ static SDLGL3D_OBJECT Object_List[SDLGL3D_MAXOBJECT + 62];  /* List of objects t
  * Input:
  *      SDLGL3D_CAMERA *: Camera with frustum to fill with the values. Holding the
  *                        cameras position, too and the FOV-Value
-  * Code from: Game Programming Gems, Section 4, Chapter 11
+ * Code from: Game Programming Gems, Section 4, Chapter 11
  *	      "Loose Octrees"
  *	       -thatcher 4/6/2000 Copyright Thatcher Ulrich
  */
@@ -179,69 +297,8 @@ static void sdlgl3dSetupFrustumNormals(SDLGL3D_CAMERA *cam)
     cam -> f.vy1 = miny;
     cam -> f.vx2 = maxx;
     cam -> f.vy2 = maxy;
-    
-}
-
-/*
- * Name:
- *     CheckBoxAgainstFrustum
- * Description:
- *      Given the box centered at (cx,cz) and extending +/- HalfSize units
- *      along both axes, this function checks to see if the box overlaps the
- *      given frustum.  If the box is totally outside the frustum, then
- *     returns NOT_VISIBLE; if the box is totally inside the frustum, then
- *     returns NO_CLIP; otherwise, returns SOME_CLIP.
- *
- * Code from: Game Programming Gems, Section 4, Chapter 11
- *	      "Loose Octrees"
- *	       -thatcher 4/6/2000 Copyright Thatcher Ulrich
- */
-static char CheckBoxAgainstFrustum(float cx, float cy, float HalfSize,
-                                   SDLGL3D_FRUSTUM *f, int posx, int posy)
-{
-    int	OrCodes = 0, AndCodes = ~0;
-
-    int	i, j, k;
-
-    /* Check each box corner against each edge of the frustum. */
-    for (j = 0; j < 2; j++) {
-
-    	for (i = 0; i < 2; i++) {
-	        // int	mask = 1 << (j * 2 + i);
-
-    	    float x = cx + (i == 0 ? -HalfSize : HalfSize);
-	        float y = cy + (j == 0 ? -HalfSize : HalfSize);
-
-    	    /* Check the corner against the two sides of the frustum. */
-            int	Code = 0;
-	        int	Bit = 1;
-    	    for (k = 0; k < 3; k++, Bit <<= 1) {
-
-	        	 float	dot = f -> nx[k] * (x - posx) + f -> ny[k] * (y - posy);
-
-	        	 if (dot < 0) {
-    		         // The point is outside this edge.
-	    	        Code |= Bit;
-		        }
-
-            }
-
-    	    OrCodes |= Code;
-	        AndCodes &= Code;
-        }
-
-    }
-
-    // Based on bit-codes, return culling results.
-    if (OrCodes == 0) {
-	    /* The box is completely within the frustum (no box vert is outside any frustum edge). */
-	    return NO_CLIP;
-    } else if (AndCodes != 0) {
-	/* All the box verts are outside one of the frustum edges.     */
-	    return NOT_VISIBLE;
-    } else {
-	    return SOME_CLIP;
-    }
+    /* ---------- Set up visible tiles ----- */
+    cam -> f.num_visi_tile = sdlgl3dGetVisiTiles(&cam -> f);
 
 }
 
@@ -841,5 +898,24 @@ void sdlgl3dInitVisiMap(int map_w, int map_h, float tile_size)
     MapW     = map_w;
     MapH     = map_h;
     TileSize = tile_size;      /* For tiles visible in FOV */
+    
+}
+
+/*
+ * Name:
+ *     sdlgl3dGetVisiTileList
+ * Description:
+ *     Returns the list of tiles visible in FOV 
+ * Input:
+ *      num_tile *:   Where to return the number of tiles in list   
+ * Output:
+ *      Pointer on list of visible tiles
+ */
+SDLGL3D_VISITILE *sdlgl3dGetVisiTileList(int *num_tile)
+{
+    
+    *num_tile = NumVisiTiles;
+    
+    return &Visi_Tiles[0];
     
 }

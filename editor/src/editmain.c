@@ -1346,7 +1346,6 @@ void editmainChooseFanExt(int cx, int cy, int cw, int ch)
                     num_select++;
                     if (num_select >= EDITMAIN_MAXSELECT) {
                         EditState.fan_selected[num_select] = -1;    /* Sign end of list */
-                        /* TODO: Do update of fans, depending on EditInfo.edit_state'   */
                         return;
                     }
 

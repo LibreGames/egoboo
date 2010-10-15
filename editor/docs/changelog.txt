@@ -1,3 +1,6 @@
+2010-10-10 <bitnapper>
+- Additional code for visibility check in frustum
+
 2010-10-09 <bitnapper>
 - Prepared support for lights and calculation of lighting
 - Adjusted patterns for setting walls in 'simple mode'
