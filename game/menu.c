@@ -274,7 +274,7 @@ static void mnu_ModList_release_images();
 void        mnu_ModList_release_all();
 
 // "process" management
-static int do_menu_proc_begin( menu_process_t * mproc );
+static int do_menu_proc_beginning( menu_process_t * mproc );
 static int do_menu_proc_running( menu_process_t * mproc );
 static int do_menu_proc_leaving( menu_process_t * mproc );
 
@@ -354,7 +354,7 @@ void mnu_stack_clear()
 //--------------------------------------------------------------------------------------------
 // The implementation of the menu process
 //--------------------------------------------------------------------------------------------
-int do_menu_proc_begin( menu_process_t * mproc )
+int do_menu_proc_beginning( menu_process_t * mproc )
 {
     // play some music
     sound_play_song( MENU_SONG, 0, -1 );
@@ -444,8 +444,8 @@ int do_menu_proc_run( menu_process_t * mproc, double frameDuration )
 
     switch ( mproc->base.state )
     {
-        case proc_begin:
-            proc_result = do_menu_proc_begin( mproc );
+        case proc_beginning:
+            proc_result = do_menu_proc_beginning( mproc );
 
             if ( 1 == proc_result )
             {
@@ -473,12 +473,12 @@ int do_menu_proc_run( menu_process_t * mproc, double frameDuration )
 
             if ( 1 == proc_result )
             {
-                mproc->base.state  = proc_finish;
+                mproc->base.state  = proc_finishing;
                 mproc->base.killme = bfalse;
             }
             break;
 
-        case proc_finish:
+        case proc_finishing:
             process_terminate( PROC_PBASE( mproc ) );
             break;
 
@@ -1355,6 +1355,7 @@ bool_t doChooseModule_update_filter_label( ui_Widget_t * lab_ptr, int which )
         case FILTER_SIDE:    ui_Widget_set_text( lab_ptr, ui_just_centerleft, menuFont, "Sidequests" );       break;
         case FILTER_TOWN:    ui_Widget_set_text( lab_ptr, ui_just_centerleft, menuFont, "Towns and Cities" ); break;
         case FILTER_FUN:     ui_Widget_set_text( lab_ptr, ui_just_centerleft, menuFont, "Fun Modules" );      break;
+        case FILTER_DEBUG:   ui_Widget_set_text( lab_ptr, ui_just_centerleft, menuFont, "Debugging" );        break;
         case FILTER_STARTER: ui_Widget_set_text( lab_ptr, ui_just_centerleft, menuFont, "Starter Modules" );  break;
         default:
         case FILTER_OFF:     ui_Widget_set_text( lab_ptr, ui_just_centerleft, menuFont, "All Modules" );      break;
@@ -1532,12 +1533,15 @@ int doChooseModule( float deltaTime )
 
                     if ( start_new_player && 0 == mnu_ModList.lst[imod].base.importamount )
                     {
+                        if ( FILTER_HIDDEN == mnu_ModList.lst[imod].base.moduletype )  continue;
+
                         // starter module
                         validModules[numValidModules] = REF_TO_INT( imod );
                         numValidModules++;
                     }
                     else
                     {
+                        if ( FILTER_HIDDEN == mnu_ModList.lst[imod].base.moduletype )  continue;
                         if ( FILTER_OFF != mnu_moduleFilter && mnu_ModList.lst[imod].base.moduletype != mnu_moduleFilter ) continue;
                         if ( mnu_selectedPlayerCount > mnu_ModList.lst[imod].base.importamount ) continue;
                         if ( mnu_selectedPlayerCount < mnu_ModList.lst[imod].base.minplayers ) continue;
@@ -1746,10 +1750,18 @@ int doChooseModule( float deltaTime )
                         menuState = MM_Entering;
 
                         // Swap to the next filter
-                        mnu_moduleFilter = CLIP( mnu_moduleFilter, FILTER_NORMAL_BEGIN, FILTER_NORMAL_END );
-                        mnu_moduleFilter++;
-
-                        if ( mnu_moduleFilter > FILTER_NORMAL_END ) mnu_moduleFilter = FILTER_NORMAL_BEGIN;
+                        if ( cfg.dev_mode )
+                        {
+                            mnu_moduleFilter = CLIP( mnu_moduleFilter, FILTER_NORMAL_BEGIN, FILTER_SPECIAL_END );
+                            mnu_moduleFilter++;
+                            if( mnu_moduleFilter > FILTER_SPECIAL_END ) mnu_moduleFilter = FILTER_NORMAL_BEGIN;
+                        }
+                        else
+                        {
+                            mnu_moduleFilter = CLIP( mnu_moduleFilter, FILTER_NORMAL_BEGIN, FILTER_NORMAL_END );
+                            mnu_moduleFilter++;
+                            if( mnu_moduleFilter > FILTER_NORMAL_END ) mnu_moduleFilter = FILTER_NORMAL_BEGIN;
+                        }
 
                         doChooseModule_update_filter_label( w_labels + lab_filter, mnu_moduleFilter );
                     }

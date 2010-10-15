@@ -769,12 +769,12 @@ bool_t  chr_update_safe( chr_t * pchr, bool_t force );
 bool_t  chr_get_safe( chr_t * pchr, fvec3_base_t pos );
 
 // global chr configuration functions
-chr_t * chr_run_config( chr_t * pchr );
-chr_t * chr_config_construct( chr_t * pprt, int max_iterations );
-chr_t * chr_config_initialize( chr_t * pprt, int max_iterations );
-chr_t * chr_config_activate( chr_t * pprt, int max_iterations );
-chr_t * chr_config_deinitialize( chr_t * pprt, int max_iterations );
-chr_t * chr_config_deconstruct( chr_t * pprt, int max_iterations );
+chr_t * chr_run_object( chr_t * pchr );
+chr_t * chr_run_object_construct( chr_t * pprt, int max_iterations );
+chr_t * chr_run_object_initialize( chr_t * pprt, int max_iterations );
+chr_t * chr_run_object_activate( chr_t * pprt, int max_iterations );
+chr_t * chr_run_object_deinitialize( chr_t * pprt, int max_iterations );
+chr_t * chr_run_object_deconstruct( chr_t * pprt, int max_iterations );
 
 // physics function
 void   character_physics_initialize();

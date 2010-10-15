@@ -305,6 +305,22 @@ typedef Uint16 REF_T;
 
 #define INVALID_UPDATE_GUID ((unsigned)(~((unsigned)0)))
 
+struct s_list_object_state
+{
+    size_t index;        ///< what is the index position in the object list?
+    bool_t allocated;    ///< The object has been allocated
+    bool_t in_free_list; ///< the object is currently in the free list
+    bool_t in_used_list; ///< the object is currently in the used list
+};
+typedef struct s_list_object_state list_object_state_t;
+
+list_object_state_t * list_object_state_ctor( list_object_state_t *, size_t index );
+list_object_state_t * list_object_state_dtor( list_object_state_t * );
+list_object_state_t * list_object_state_clear( list_object_state_t * );
+list_object_state_t * list_object_set_allocated( list_object_state_t *, bool_t val );
+list_object_state_t * list_object_set_used( list_object_state_t *, bool_t val );
+list_object_state_t * list_object_set_free( list_object_state_t *, bool_t val );
+
 #define C_DEFINE_LIST_TYPE(TYPE, NAME, COUNT) \
     struct s_c_list__##TYPE__##NAME           \
     {                                         \

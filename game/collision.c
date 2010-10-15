@@ -1039,7 +1039,7 @@ bool_t do_prt_platform_detection( const PRT_REF by_reference iprt_a, const CHR_R
     float hrz_overlap1, hrz_overlap2, hrz_overlap, vrt_overlap, overlap;
 
     // make sure that A is valid
-    if ( !DISPLAY_PRT( iprt_a ) ) return bfalse;
+    if ( !DEFINED_PRT( iprt_a ) ) return bfalse;
     pprt_a = PrtList.lst + iprt_a;
 
     // make sure that B is valid
@@ -1382,7 +1382,7 @@ bool_t bump_all_platforms( CoNode_ary_t * pcn_ary )
     }
     CHR_END_LOOP();
 
-    PRT_BEGIN_LOOP_DISPLAY( iprt, bdl_prt )
+    PRT_BEGIN_LOOP_USED( iprt, bdl_prt )
     {
         if ( MAX_CHR != bdl_prt.prt_ptr->onwhichplatform_ref && bdl_prt.prt_ptr->onwhichplatform_update < update_wld )
         {
@@ -2393,7 +2393,7 @@ bool_t do_chr_prt_collision_deflect( chr_t * pchr, prt_t * pprt, chr_prt_collsio
 
     if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
 
-    if ( !ACTIVE_PPRT( pprt ) ) return bfalse;
+    if ( !INGAME_PPRT( pprt ) ) return bfalse;
 
     if ( !LOADED_PIP( pprt->pip_ref ) ) return bfalse;
     ppip = PipStack.lst + pprt->pip_ref;
@@ -2543,7 +2543,7 @@ bool_t do_chr_prt_collision_recoil( chr_t * pchr, prt_t * pprt, chr_prt_collsion
 
     if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
 
-    if ( !ACTIVE_PPRT( pprt ) ) return bfalse;
+    if ( !INGAME_PPRT( pprt ) ) return bfalse;
 
     if ( 0.0f == fvec3_length_abs( pdata->impulse.v ) ) return btrue;
 
@@ -2695,7 +2695,7 @@ bool_t do_chr_prt_collision_damage( chr_t * pchr, prt_t * pprt, chr_prt_collsion
 
     if ( NULL == pdata ) return bfalse;
     if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
-    if ( !ACTIVE_PPRT( pprt ) ) return bfalse;
+    if ( !INGAME_PPRT( pprt ) ) return bfalse;
 
     // clean up the enchant list before doing anything
     cleanup_character_enchants( pchr );
@@ -2879,7 +2879,7 @@ bool_t do_chr_prt_collision_bump( chr_t * pchr, prt_t * pprt, chr_prt_collsion_d
 
     if ( NULL == pdata ) return bfalse;
     if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
-    if ( !ACTIVE_PPRT( pprt ) ) return bfalse;
+    if ( !INGAME_PPRT( pprt ) ) return bfalse;
 
     // if the particle was deflected, then it can't bump the character
     if ( IS_INVICTUS_PCHR_RAW( pchr ) || pprt->attachedto_ref == GET_REF_PCHR( pchr ) ) return bfalse;
@@ -2931,7 +2931,7 @@ bool_t do_chr_prt_collision_handle_bump( chr_t * pchr, prt_t * pprt, chr_prt_col
     if ( NULL == pdata || !pdata->prt_bumps_chr ) return bfalse;
 
     if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
-    if ( !ACTIVE_PPRT( pprt ) ) return bfalse;
+    if ( !INGAME_PPRT( pprt ) ) return bfalse;
 
     if ( !pdata->prt_bumps_chr ) return bfalse;
 
@@ -2988,7 +2988,7 @@ bool_t do_chr_prt_collision_init( chr_t * pchr, prt_t * pprt, chr_prt_collsion_d
     memset( pdata, 0, sizeof( *pdata ) );
 
     if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
-    if ( !ACTIVE_PPRT( pprt ) ) return bfalse;
+    if ( !INGAME_PPRT( pprt ) ) return bfalse;
 
     // initialize the collision data
     pdata->pcap = pro_get_pcap( pchr->profile_ref );
@@ -3143,7 +3143,7 @@ bool_t do_chr_prt_collision( CoNode_t * d )
     // terminate the particle if needed
     if ( cn_lst.terminate_particle )
     {
-        prt_request_terminate_ref( iprt_b );
+        prt_request_free_ref( iprt_b );
         retval = btrue;
     }
 
@@ -3199,7 +3199,7 @@ prt_bundle_t * update_prt_platform_attachment( prt_bundle_t * pbdl )
 //--------------------------------------------------------------------------------------------
 void update_all_prt_platform_attachments()
 {
-    PRT_BEGIN_LOOP_DISPLAY( cnt, bdl )
+    PRT_BEGIN_LOOP_USED( cnt, bdl )
     {
         update_prt_platform_attachment( &bdl );
     }

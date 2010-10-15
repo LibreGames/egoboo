@@ -57,7 +57,7 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-static int do_ego_proc_begin( ego_process_t * eproc );
+static int do_ego_proc_beginning( ego_process_t * eproc );
 static int do_ego_proc_running( ego_process_t * eproc );
 static int do_ego_proc_leaving( ego_process_t * eproc );
 static int do_ego_proc_run( ego_process_t * eproc, double frameDuration );
@@ -90,7 +90,7 @@ ego_process_t     * EProc   = &_eproc;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-int do_ego_proc_begin( ego_process_t * eproc )
+int do_ego_proc_beginning( ego_process_t * eproc )
 {
     // initialize the virtual filesystem first
     vfs_init();
@@ -433,8 +433,8 @@ int do_ego_proc_run( ego_process_t * eproc, double frameDuration )
 
     switch ( eproc->base.state )
     {
-        case proc_begin:
-            proc_result = do_ego_proc_begin( eproc );
+        case proc_beginning:
+            proc_result = do_ego_proc_beginning( eproc );
 
             if ( 1 == proc_result )
             {
@@ -462,12 +462,12 @@ int do_ego_proc_run( ego_process_t * eproc, double frameDuration )
 
             if ( 1 == proc_result )
             {
-                eproc->base.state  = proc_finish;
+                eproc->base.state  = proc_finishing;
                 eproc->base.killme = bfalse;
             }
             break;
 
-        case proc_finish:
+        case proc_finishing:
             process_terminate( PROC_PBASE( eproc ) );
             break;
     }
@@ -487,7 +487,7 @@ int SDL_main( int argc, char **argv )
     ego_process_init( EProc, argc, argv );
 
     // turn on all basic services
-    do_ego_proc_begin( EProc );
+    do_ego_proc_beginning( EProc );
 
     // run the processes
     request_clear_screen();

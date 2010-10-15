@@ -192,7 +192,7 @@ static void   game_reset_players();
 static void log_madused_vfs( const char *savename );
 
 // "process" management
-static int do_game_proc_begin( game_process_t * gproc );
+static int do_game_proc_beginning( game_process_t * gproc );
 static int do_game_proc_running( game_process_t * gproc );
 static int do_game_proc_leaving( game_process_t * gproc );
 
@@ -670,7 +670,7 @@ void initialize_all_objects()
 void finalize_all_object_physics( float dt )
 {
     character_physics_finalize_all( dt );
-    finalize_all_particle_physics( dt );
+    particle_physics_finalize_all( dt );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1082,7 +1082,7 @@ int game_do_menu( menu_process_t * mproc )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-int do_game_proc_begin( game_process_t * gproc )
+int do_game_proc_beginning( game_process_t * gproc )
 {
     BillboardList_init_all();
 
@@ -1380,8 +1380,8 @@ int do_game_proc_run( game_process_t * gproc, double frameDuration )
 
     switch ( gproc->base.state )
     {
-        case proc_begin:
-            proc_result = do_game_proc_begin( gproc );
+        case proc_beginning:
+            proc_result = do_game_proc_beginning( gproc );
 
             if ( 1 == proc_result )
             {
@@ -1409,12 +1409,12 @@ int do_game_proc_run( game_process_t * gproc, double frameDuration )
 
             if ( 1 == proc_result )
             {
-                gproc->base.state  = proc_finish;
+                gproc->base.state  = proc_finishing;
                 gproc->base.killme = bfalse;
             }
             break;
 
-        case proc_finish:
+        case proc_finishing:
             process_terminate( PROC_PBASE( gproc ) );
             process_resume( PROC_PBASE( MProc ) );
             break;
@@ -1775,7 +1775,7 @@ void update_pits()
             {
                 if ( prt_bdl.prt_ptr->pos.z < PITDEPTH && prt_bdl.pip_ptr->end_water )
                 {
-                    prt_request_terminate( &prt_bdl );
+                    prt_request_free( &prt_bdl );
                 }
             }
             PRT_END_LOOP();
@@ -1909,7 +1909,7 @@ void do_weather_spawn_particles()
         }
 
         // is the particle valid?
-        if ( ALLOCATED_PRT( weather_iprt ) )
+        if ( VALID_PRT( weather_iprt ) )
         {
             prt_t * pprt = PrtList.lst + weather_iprt;
 
@@ -3228,7 +3228,7 @@ void disaffirm_attached_particles( const CHR_REF by_reference character )
     {
         if ( prt_bdl.prt_ptr->attachedto_ref == character )
         {
-            prt_request_terminate( &prt_bdl );
+            prt_request_free( &prt_bdl );
         }
     }
     PRT_END_LOOP();
@@ -3286,7 +3286,7 @@ int reaffirm_attached_particles( const CHR_REF by_reference character )
     for ( attempts = 0; attempts < amount && number_attached < amount; attempts++ )
     {
         particle = spawn_one_particle( pchr->pos, 0, pchr->profile_ref, pcap->attachedprt_pip, character, GRIP_LAST + number_attached, chr_get_iteam( character ), character, ( PRT_REF )TOTAL_MAX_PRT, number_attached, ( CHR_REF )MAX_CHR );
-        if ( ALLOCATED_PRT( particle ) )
+        if ( VALID_PRT( particle ) )
         {
             prt_t * pprt = PrtList.lst + particle;
 
@@ -3622,7 +3622,7 @@ void attach_all_particles()
     /// @details ZZ@> This function attaches particles to their characters so everything gets
     ///    drawn right
 
-    PRT_BEGIN_LOOP_DISPLAY( cnt, prt_bdl )
+    PRT_BEGIN_LOOP_USED( cnt, prt_bdl )
     {
         attach_one_particle( &prt_bdl );
     }
@@ -5387,7 +5387,7 @@ void disenchant_character( const CHR_REF by_reference cnt )
 
     chr_t * pchr;
 
-    if ( !ALLOCATED_CHR( cnt ) ) return;
+    if ( !VALID_CHR( cnt ) ) return;
     pchr = ChrList.lst + cnt;
 
     while ( MAX_ENC != pchr->firstenchant )

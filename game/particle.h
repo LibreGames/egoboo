@@ -98,6 +98,7 @@ typedef struct s_prt_spawn_data prt_spawn_data_t;
 struct s_prt
 {
     ego_object_base_t obj_base;              ///< the "inheritance" from ego_object_base_t
+    bool_t            obj_base_display;      ///< a variable that would be added to a custom ego_object_base_t
 
     prt_spawn_data_t  spawn_data;
 
@@ -134,8 +135,8 @@ struct s_prt
     FACING_T rotate;                          ///< Rotation direction
     Sint16   rotate_add;                      ///< Rotation rate
 
-    UFP8_T  size_stt;                        ///< The initial size of particle (8.8-bit fixed point)
-    UFP8_T  size;                            ///< Size of particle (8.8-bit fixed point)
+    SFP8_T  size_stt;                        ///< The initial size of particle (8.8-bit fixed point)
+    SFP8_T  size;                            ///< Size of particle (8.8-bit fixed point)
     SFP8_T  size_add;                        ///< Change in size
 
     bool_t  inview;                          ///< Render this one?
@@ -200,6 +201,8 @@ typedef struct s_prt prt_t;
 extern int prt_stoppedby_tests;
 extern int prt_pressure_tests;
 
+prt_t * prt_object_set_limbo( prt_t * pbase, bool_t val );
+
 //--------------------------------------------------------------------------------------------
 struct s_prt_bundle
 {
@@ -222,7 +225,7 @@ void particle_system_begin();
 void particle_system_end();
 
 void initialize_particle_physics();
-void finalize_all_particle_physics( float dt );
+void particle_physics_finalize_all( float dt );
 
 void   init_all_pip();
 void   release_all_pip();
@@ -248,8 +251,8 @@ prt_t *   prt_dtor( prt_t * pprt );
 BIT_FIELD prt_hit_wall( prt_t * pprt, float test_pos[], float nrm[], float * pressure );
 bool_t    prt_test_wall( prt_t * pprt, float test_pos[] );
 bool_t    prt_is_over_water( const PRT_REF by_reference particle );
-bool_t    prt_request_terminate( prt_bundle_t * pbdl_prt );
-bool_t    prt_request_terminate_ref( const PRT_REF by_reference iprt );
+bool_t    prt_request_free( prt_bundle_t * pbdl_prt );
+bool_t    prt_request_free_ref( const PRT_REF by_reference iprt );
 void      prt_set_level( prt_t * pprt, float level );
 
 int     PrtList_count_free();
@@ -257,12 +260,12 @@ int     PrtList_count_free();
 PIP_REF load_one_particle_profile_vfs( const char *szLoadName, const PIP_REF by_reference pip_override );
 void    reset_particles();
 
-prt_t * prt_run_config( prt_t * pprt );
-prt_t * prt_config_construct( prt_t * pprt, int max_iterations );
-prt_t * prt_config_initialize( prt_t * pprt, int max_iterations );
-prt_t * prt_config_activate( prt_t * pprt, int max_iterations );
-prt_t * prt_config_deinitialize( prt_t * pprt, int max_iterations );
-prt_t * prt_config_deconstruct( prt_t * pprt, int max_iterations );
+prt_t * prt_run_object( prt_t * pprt );
+prt_t * prt_run_object_construct( prt_t * pprt, int max_iterations );
+prt_t * prt_run_object_initialize( prt_t * pprt, int max_iterations );
+prt_t * prt_run_object_activate( prt_t * pprt, int max_iterations );
+prt_t * prt_run_object_deinitialize( prt_t * pprt, int max_iterations );
+prt_t * prt_run_object_deconstruct( prt_t * pprt, int max_iterations );
 
 bool_t prt_set_pos( prt_t * pprt, fvec3_base_t pos );
 float * prt_get_pos_v( prt_t * pprt );

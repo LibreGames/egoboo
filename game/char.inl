@@ -424,7 +424,7 @@ INLINE bool_t chr_getMatUp( chr_t *pchr, fvec3_t   *pvec )
 {
     /// @details BB@> MAKE SURE the value it calculated relative to a valid matrix
 
-    if ( !ALLOCATED_PCHR( pchr ) ) return bfalse;
+    if ( !VALID_PCHR( pchr ) ) return bfalse;
 
     if ( NULL == pvec ) return bfalse;
 
@@ -451,7 +451,7 @@ INLINE bool_t chr_getMatRight( chr_t *pchr, fvec3_t   *pvec )
 {
     /// @details BB@> MAKE SURE the value it calculated relative to a valid matrix
 
-    if ( !ALLOCATED_PCHR( pchr ) ) return bfalse;
+    if ( !VALID_PCHR( pchr ) ) return bfalse;
 
     if ( NULL == pvec ) return bfalse;
 
@@ -479,7 +479,7 @@ INLINE bool_t chr_getMatForward( chr_t *pchr, fvec3_t   *pvec )
 {
     /// @details BB@> MAKE SURE the value it calculated relative to a valid matrix
 
-    if ( !ALLOCATED_PCHR( pchr ) ) return bfalse;
+    if ( !VALID_PCHR( pchr ) ) return bfalse;
 
     if ( NULL == pvec ) return bfalse;
 
@@ -507,7 +507,7 @@ INLINE bool_t chr_getMatTranslate( chr_t *pchr, fvec3_t   *pvec )
 {
     /// @details BB@> MAKE SURE the value it calculated relative to a valid matrix
 
-    if ( !ALLOCATED_PCHR( pchr ) ) return bfalse;
+    if ( !VALID_PCHR( pchr ) ) return bfalse;
 
     if ( NULL == pvec ) return bfalse;
 
@@ -534,7 +534,7 @@ INLINE void chr_update_size( chr_t * pchr )
 {
     /// @details BB@> Convert the base size values to the size values that are used in the game
 
-    if ( !ALLOCATED_PCHR( pchr ) ) return;
+    if ( !VALID_PCHR( pchr ) ) return;
 
     pchr->shadow_size   = pchr->shadow_size_save   * pchr->fat;
     pchr->bump.size     = pchr->bump_save.size     * pchr->fat;
@@ -549,7 +549,7 @@ INLINE void chr_init_size( chr_t * pchr, cap_t * pcap )
 {
     /// @details BB@> initialize the character size info
 
-    if ( !ALLOCATED_PCHR( pchr ) ) return;
+    if ( !VALID_PCHR( pchr ) ) return;
     if ( NULL == pcap || !pcap->loaded ) return;
 
     pchr->fat_stt           = pcap->size;

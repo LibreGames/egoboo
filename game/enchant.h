@@ -133,13 +133,13 @@ void    enc_remove_add( const ENC_REF by_reference  enchant_idx, int value_idx )
 
 bool_t enc_request_terminate( const ENC_REF by_reference  ienc );
 
-enc_t * enc_run_config( enc_t * penc );
+enc_t * enc_run_object( enc_t * penc );
 
-enc_t * enc_config_construct( enc_t * penc, int max_iterations );
-enc_t * enc_config_initialize( enc_t * penc, int max_iterations );
-enc_t * enc_config_activate( enc_t * penc, int max_iterations );
-enc_t * enc_config_deinitialize( enc_t * penc, int max_iterations );
-enc_t * enc_config_deconstruct( enc_t * penc, int max_iterations );
+enc_t * enc_run_object_construct( enc_t * penc, int max_iterations );
+enc_t * enc_run_object_initialize( enc_t * penc, int max_iterations );
+enc_t * enc_run_object_activate( enc_t * penc, int max_iterations );
+enc_t * enc_run_object_deinitialize( enc_t * penc, int max_iterations );
+enc_t * enc_run_object_deconstruct( enc_t * penc, int max_iterations );
 
 //#define  remove_all_character_enchants( PCHR ) remove_all_enchants_with_idsz( PCHR, IDSZ_NONE )
 

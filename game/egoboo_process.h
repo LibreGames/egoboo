@@ -34,12 +34,12 @@
 // The various states that a process can occupy
 enum e_process_states
 {
-    proc_invalid  = ego_state_invalid,
-    proc_begin    = ego_state_begin,
-    proc_entering = ego_state_entering,
-    proc_running  = ego_state_running,
-    proc_leaving  = ego_state_leaving,
-    proc_finish   = ego_state_finish
+    proc_invalid     = ego_action_invalid,
+    proc_beginning   = ego_action_beginning,
+    proc_entering    = ego_action_entering,
+    proc_running     = ego_action_running,
+    proc_leaving     = ego_action_leaving,
+    proc_finishing   = ego_action_finishing
 };
 typedef enum e_process_states process_state_t;
 

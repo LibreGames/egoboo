@@ -156,7 +156,7 @@ INLINE CHR_REF prt_get_iowner( const PRT_REF by_reference iprt, int depth )
         // make a check for a stupid looping structure...
         // cannot be sure you could never get a loop, though
 
-        if ( !ALLOCATED_PRT( pprt->parent_ref ) )
+        if ( !VALID_CHR( pprt->parent_ref ) )
         {
             // make sure that a non valid parent_ref is marked as non-valid
             pprt->parent_ref = TOTAL_MAX_PRT;

@@ -122,6 +122,7 @@ mod_file_t * module_load_info_vfs( const char * szLoadName, mod_file_t * pmod )
             else if ( 'T' == toupper( cTmp ) )  pmod->moduletype = FILTER_TOWN;
             else if ( 'F' == toupper( cTmp ) )  pmod->moduletype = FILTER_FUN;
             else if ( 'S' == toupper( cTmp ) )  pmod->moduletype = FILTER_STARTER;
+            else if ( 'D' == toupper( cTmp ) )  pmod->moduletype = cfg.dev_mode ? FILTER_DEBUG : FILTER_HIDDEN;
         }
         else if ( MAKE_IDSZ( 'B', 'E', 'A', 'T' ) == idsz )
         {

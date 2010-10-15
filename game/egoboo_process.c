@@ -44,7 +44,7 @@ bool_t process_start( process_t * proc )
     if ( proc->terminated || proc->state > proc_leaving )
     {
         // must re-initialize the process
-        proc->state = proc_begin;
+        proc->state = proc_beginning;
     }
     if ( proc->state > proc_entering )
     {
@@ -91,7 +91,7 @@ bool_t process_terminate( process_t * proc )
 
     proc->valid      = bfalse;
     proc->terminated = btrue;
-    proc->state      = proc_begin;
+    proc->state      = proc_beginning;
 
     return btrue;
 }

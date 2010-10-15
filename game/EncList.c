@@ -76,7 +76,7 @@ void EncList_init()
         memset( penc, 0, sizeof( *penc ) );
 
         // enchant "initializer"
-        ego_object_ctor( POBJ_GET_PBASE( penc ) );
+        ego_object_ctor( POBJ_GET_PBASE( penc ), ienc );
 
         EncList_add_free( ienc );
     }
@@ -89,7 +89,7 @@ void EncList_dtor()
 
     for ( cnt = 0; cnt < MAX_ENC; cnt++ )
     {
-        enc_config_deconstruct( EncList.lst + cnt, 100 );
+        enc_run_object_deconstruct( EncList.lst + cnt, 100 );
     }
 
     EncList.free_count = 0;
@@ -120,7 +120,7 @@ void EncList_prune_used()
             removed = EncList_remove_used_index( cnt );
         }
 
-        if ( removed && !EncList.lst[ienc].obj_base.in_free_list )
+        if ( removed && !EncList.lst[ienc].obj_base.lst_state.in_free_list )
         {
             EncList_add_free( ienc );
         }
@@ -146,7 +146,7 @@ void EncList_prune_free()
             removed = EncList_remove_free_index( cnt );
         }
 
-        if ( removed && !EncList.lst[ienc].obj_base.in_free_list )
+        if ( removed && !EncList.lst[ienc].obj_base.lst_state.in_free_list )
         {
             EncList_add_used( ienc );
         }
@@ -166,18 +166,23 @@ void EncList_update_used()
     // go through the enchant list to see if there are any dangling enchants
     for ( ienc = 0; ienc < MAX_ENC; ienc++ )
     {
-        if ( !ALLOCATED_ENC( ienc ) ) continue;
+        enc_t               * penc;
+        list_object_state_t * lst_obj_ptr;
+
+        if ( !VALID_ENC( ienc ) ) continue;
+        penc        = EncList.lst + ienc;
+        lst_obj_ptr = &( penc->obj_base.lst_state );
 
         if ( INGAME_ENC( ienc ) )
         {
-            if ( !EncList.lst[ienc].obj_base.in_used_list )
+            if ( !lst_obj_ptr->in_used_list )
             {
                 EncList_add_used( ienc );
             }
         }
         else if ( !DEFINED_ENC( ienc ) )
         {
-            if ( !EncList.lst[ienc].obj_base.in_free_list )
+            if ( !lst_obj_ptr->in_free_list )
             {
                 EncList_add_free( ienc );
             }
@@ -228,15 +233,15 @@ bool_t EncList_free_one( const ENC_REF by_reference ienc )
     else
     {
         // deallocate any dynamically allocated memory
-        penc = enc_config_deinitialize( penc, 100 );
+        penc = enc_run_object_deinitialize( penc, 100 );
         if ( NULL == penc ) return bfalse;
 
-        if ( pbase->in_used_list )
+        if ( pbase->lst_state.in_used_list )
         {
             EncList_remove_used( ienc );
         }
 
-        if ( pbase->in_free_list )
+        if ( pbase->lst_state.in_free_list )
         {
             retval = btrue;
         }
@@ -273,7 +278,7 @@ size_t EncList_get_free()
         if ( VALID_ENC_RANGE( retval ) )
         {
             // let the object know it is not in the free list any more
-            EncList.lst[retval].obj_base.in_free_list = bfalse;
+            list_object_set_free( &( EncList.lst[retval].obj_base.lst_state ), bfalse );
         }
     }
 
@@ -303,7 +308,7 @@ int EncList_get_free_list_index( const ENC_REF by_reference ienc )
     {
         if ( ienc == EncList.free_ref[cnt] )
         {
-            EGOBOO_ASSERT( EncList.lst[ienc].obj_base.in_free_list );
+            EGOBOO_ASSERT( EncList.lst[ienc].obj_base.lst_state.in_free_list );
             retval = cnt;
             break;
         }
@@ -326,7 +331,7 @@ bool_t EncList_add_free( const ENC_REF by_reference ienc )
     }
 #endif
 
-    EGOBOO_ASSERT( !EncList.lst[ienc].obj_base.in_free_list );
+    EGOBOO_ASSERT( !EncList.lst[ienc].obj_base.lst_state.in_free_list );
 
     retval = bfalse;
     if ( EncList.free_count < MAX_ENC )
@@ -336,7 +341,7 @@ bool_t EncList_add_free( const ENC_REF by_reference ienc )
         EncList.free_count++;
         EncList.update_guid++;
 
-        EncList.lst[ienc].obj_base.in_free_list = btrue;
+        list_object_set_free( &( EncList.lst[ienc].obj_base.lst_state ), btrue );
 
         retval = btrue;
     }
@@ -360,7 +365,7 @@ bool_t EncList_remove_free_index( int index )
     if ( VALID_ENC_RANGE( ienc ) )
     {
         // let the object know it is not in the list anymore
-        EncList.lst[ienc].obj_base.in_free_list = bfalse;
+        list_object_set_free( &( EncList.lst[ienc].obj_base.lst_state ), bfalse );
     }
 
     // shorten the list
@@ -397,7 +402,7 @@ int EncList_get_used_list_index( const ENC_REF by_reference ienc )
     {
         if ( ienc == EncList.used_ref[cnt] )
         {
-            EGOBOO_ASSERT( EncList.lst[ienc].obj_base.in_used_list );
+            EGOBOO_ASSERT( EncList.lst[ienc].obj_base.lst_state.in_used_list );
             retval = cnt;
             break;
         }
@@ -420,7 +425,7 @@ bool_t EncList_add_used( const ENC_REF by_reference ienc )
     }
 #endif
 
-    EGOBOO_ASSERT( !EncList.lst[ienc].obj_base.in_used_list );
+    EGOBOO_ASSERT( !EncList.lst[ienc].obj_base.lst_state.in_used_list );
 
     retval = bfalse;
     if ( EncList.used_count < MAX_ENC )
@@ -430,7 +435,7 @@ bool_t EncList_add_used( const ENC_REF by_reference ienc )
         EncList.used_count++;
         EncList.update_guid++;
 
-        EncList.lst[ienc].obj_base.in_used_list = btrue;
+        list_object_set_used( &( EncList.lst[ienc].obj_base.lst_state ), btrue );
 
         retval = btrue;
     }
@@ -454,7 +459,7 @@ bool_t EncList_remove_used_index( int index )
     if ( VALID_ENC_RANGE( ienc ) )
     {
         // let the object know it is not in the list anymore
-        EncList.lst[ienc].obj_base.in_used_list = bfalse;
+        list_object_set_used( &( EncList.lst[ienc].obj_base.lst_state ), bfalse );
     }
 
     // shorten the list
@@ -501,8 +506,8 @@ ENC_REF EncList_allocate( const ENC_REF by_reference override )
                 EncList.free_ref[override_index] = ienc;
 
                 // fix the in_free_list values
-                EncList.lst[ienc].obj_base.in_free_list = btrue;
-                EncList.lst[override].obj_base.in_free_list = bfalse;
+                list_object_set_free( &( EncList.lst[ienc].obj_base.lst_state ), btrue );
+                list_object_set_free( &( EncList.lst[override].obj_base.lst_state ), bfalse );
 
                 ienc = override;
             }
@@ -531,13 +536,13 @@ ENC_REF EncList_allocate( const ENC_REF by_reference override )
         }
 
         // allocate the new one
-        POBJ_ALLOCATE( EncList.lst +  ienc , REF_TO_INT( ienc ) );
+        POBJ_ALLOCATE( EncList.lst + ienc, ienc );
     }
 
-    if ( ALLOCATED_ENC( ienc ) )
+    if ( VALID_ENC( ienc ) )
     {
         // construct the new structure
-        enc_config_construct( EncList.lst + ienc, 100 );
+        enc_run_object_construct( EncList.lst + ienc, 100 );
     }
 
     return ienc;
@@ -555,13 +560,10 @@ void EncList_cleanup()
     {
         ENC_REF ienc = enc_activation_list[cnt];
 
-        if ( !ALLOCATED_ENC( ienc ) ) continue;
+        if ( !VALID_ENC( ienc ) ) continue;
         penc = EncList.lst + ienc;
 
-        if ( !penc->obj_base.turn_me_on ) continue;
-
-        penc->obj_base.on         = btrue;
-        penc->obj_base.turn_me_on = bfalse;
+        ego_object_grant_on( POBJ_GET_PBASE( penc ) );
     }
     enc_activation_count = 0;
 
@@ -592,7 +594,7 @@ bool_t EncList_add_activation( ENC_REF ienc )
         retval = btrue;
     }
 
-    EncList.lst[ienc].obj_base.turn_me_on = btrue;
+    EncList.lst[ienc].obj_base.req.turn_me_on = btrue;
 
     return retval;
 }

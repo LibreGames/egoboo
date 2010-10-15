@@ -101,11 +101,11 @@ static chr_t * resize_one_character( chr_t * pchr );
 
 static bool_t  chr_free( chr_t * pchr );
 
-static chr_t * chr_config_ctor( chr_t * pchr );
-static chr_t * chr_config_init( chr_t * pchr );
-static chr_t * chr_config_deinit( chr_t * pchr );
-static chr_t * chr_config_active( chr_t * pchr );
-static chr_t * chr_config_dtor( chr_t * pchr );
+static chr_t * chr_do_object_constructing( chr_t * pchr );
+static chr_t * chr_do_object_initializing( chr_t * pchr );
+static chr_t * chr_do_object_deinitializing( chr_t * pchr );
+static chr_t * chr_do_object_processing( chr_t * pchr );
+static chr_t * chr_do_object_destructing( chr_t * pchr );
 
 static int get_grip_verts( Uint16 grip_verts[], const CHR_REF by_reference imount, int vrt_offset );
 
@@ -167,7 +167,7 @@ bool_t chr_free( chr_t * pchr )
 {
     /// Free all allocated memory
 
-    if ( !ALLOCATED_PCHR( pchr ) )
+    if ( !VALID_PCHR( pchr ) )
     {
         EGOBOO_ASSERT( NULL == pchr->inst.vrt_lst );
         return bfalse;
@@ -205,14 +205,14 @@ chr_t * chr_ctor( chr_t * pchr )
 
     // grab the base object
     pbase = POBJ_GET_PBASE( pchr );
-    if ( NULL == pbase ) return NULL;
+    if ( !VALID_PBASE( pbase ) ) return NULL;
 
     //---- construct the character object
 
     // save the base object data
     memcpy( &save_base, pbase, sizeof( ego_object_base_t ) );
 
-    if ( ALLOCATED_PCHR( pchr ) )
+    if ( VALID_PCHR( pchr ) )
     {
         // deallocate any existing data
         chr_free( pchr );
@@ -762,7 +762,7 @@ prt_t * place_particle_at_vertex( prt_t * pprt, const CHR_REF by_reference chara
 
 place_particle_at_vertex_fail:
 
-    prt_request_terminate_ref( GET_REF_PPRT( pprt ) );
+    prt_request_free_ref( GET_REF_PPRT( pprt ) );
 
     return NULL;
 }
@@ -1920,7 +1920,7 @@ void character_swipe( const CHR_REF by_reference ichr, slot_t slot )
                 // will this mess up wands?
                 iparticle = spawn_one_particle( pweapon->pos, pchr->ori.facing_z, pweapon->profile_ref, pweapon_cap->attack_pip, iweapon, spawn_vrt_offset, chr_get_iteam( iholder ), iholder, ( PRT_REF )TOTAL_MAX_PRT, 0, ( CHR_REF )MAX_CHR );
 
-                if ( ALLOCATED_PRT( iparticle ) )
+                if ( VALID_PRT( iparticle ) )
                 {
                     fvec3_t tmp_pos;
                     prt_t * pprt = PrtList.lst + iparticle;
@@ -2230,7 +2230,7 @@ chr_t * resize_one_character( chr_t * pchr )
 {
     /// @details ZZ@> This function makes the characters get bigger or smaller, depending
     ///    on their fat_goto and fat_goto_time. Spellbooks do not resize
-    ///    BB@> assume that this will only be called from inside chr_config_do_active(),
+    ///    BB@> assume that this will only be called from inside chr_do_processing(),
     ///         so pchr is just right to be used here
 
     CHR_REF ichr;
@@ -2753,7 +2753,7 @@ void cleanup_one_character( chr_t * pchr )
     CHR_REF  ichr, itmp;
     SHOP_REF ishop;
 
-    if ( !ALLOCATED_PCHR( pchr ) ) return;
+    if ( !VALID_PCHR( pchr ) ) return;
     ichr = GET_REF_PCHR( pchr );
 
     pchr->sparkle = NOSPARKLE;
@@ -3364,7 +3364,7 @@ void ai_state_spawn( ai_state_t * pself, const CHR_REF by_reference index, const
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-chr_t * chr_config_do_init( chr_t * pchr )
+chr_t * chr_do_init( chr_t * pchr )
 {
     CHR_REF  ichr;
     CAP_REF  icap;
@@ -3382,16 +3382,13 @@ chr_t * chr_config_do_init( chr_t * pchr )
     pcap = pro_get_pcap( pchr->spawn_data.profile );
     if ( NULL == pcap )
     {
-        log_debug( "chr_config_do_init() - cannot initialize character.\n" );
+        log_debug( "chr_do_init() - cannot initialize character.\n" );
 
         return NULL;
     }
 
     // get the character profile index
     icap = pro_get_icap( pchr->spawn_data.profile );
-
-    // turn the character on here. you can't fail to spawn after this point.
-    POBJ_ACTIVATE( pchr, pcap->name );
 
     // make a copy of the data in pchr->spawn_data.pos
     pos_tmp = pchr->spawn_data.pos;
@@ -3575,7 +3572,7 @@ chr_t * chr_config_do_init( chr_t * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-chr_t * chr_config_do_active( chr_t * pchr )
+chr_t * chr_do_processing( chr_t * pchr )
 {
     cap_t * pcap;
     int     ripand;
@@ -3740,26 +3737,36 @@ chr_t * chr_config_do_active( chr_t * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
+chr_t * chr_do_deinit( chr_t * pchr )
+{
+    if ( NULL == pchr ) return pchr;
+
+    /* nothing to do yet */
+
+    return pchr;
+}
+
 //--------------------------------------------------------------------------------------------
-chr_t * chr_config_construct( chr_t * pchr, int max_iterations )
+//--------------------------------------------------------------------------------------------
+chr_t * chr_run_object_construct( chr_t * pchr, int max_iterations )
 {
     int                 iterations;
     ego_object_base_t * pbase;
 
     pbase = POBJ_GET_PBASE( pchr );
-    if ( NULL == pbase || !pbase->allocated ) return NULL;
+    if ( !VALID_PBASE( pbase ) ) return NULL;
 
     // if the character is already beyond this stage, deconstruct it and start over
-    if ( pbase->state > ( int )( ego_object_constructing + 1 ) )
+    if ( pbase->state.action > ( int )( ego_object_constructing + 1 ) )
     {
-        chr_t * tmp_chr = chr_config_deconstruct( pchr, max_iterations );
+        chr_t * tmp_chr = chr_run_object_deconstruct( pchr, max_iterations );
         if ( tmp_chr == pchr ) return NULL;
     }
 
     iterations = 0;
-    while ( NULL != pchr && pbase->state <= ego_object_constructing && iterations < max_iterations )
+    while ( NULL != pchr && pbase->state.action <= ego_object_constructing && iterations < max_iterations )
     {
-        chr_t * ptmp = chr_run_config( pchr );
+        chr_t * ptmp = chr_run_object( pchr );
         if ( ptmp != pchr ) return NULL;
         iterations++;
     }
@@ -3768,25 +3775,25 @@ chr_t * chr_config_construct( chr_t * pchr, int max_iterations )
 }
 
 //--------------------------------------------------------------------------------------------
-chr_t * chr_config_initialize( chr_t * pchr, int max_iterations )
+chr_t * chr_run_object_initialize( chr_t * pchr, int max_iterations )
 {
     int                 iterations;
     ego_object_base_t * pbase;
 
     pbase = POBJ_GET_PBASE( pchr );
-    if ( NULL == pbase || !pbase->allocated ) return NULL;
+    if ( !VALID_PBASE( pbase ) ) return NULL;
 
     // if the character is already beyond this stage, deconstruct it and start over
-    if ( pbase->state > ( int )( ego_object_initializing + 1 ) )
+    if ( pbase->state.action > ( int )( ego_object_initializing + 1 ) )
     {
-        chr_t * tmp_chr = chr_config_deconstruct( pchr, max_iterations );
+        chr_t * tmp_chr = chr_run_object_deconstruct( pchr, max_iterations );
         if ( tmp_chr == pchr ) return NULL;
     }
 
     iterations = 0;
-    while ( NULL != pchr && pbase->state <= ego_object_initializing && iterations < max_iterations )
+    while ( NULL != pchr && pbase->state.action <= ego_object_initializing && iterations < max_iterations )
     {
-        chr_t * ptmp = chr_run_config( pchr );
+        chr_t * ptmp = chr_run_object( pchr );
         if ( ptmp != pchr ) return NULL;
         iterations++;
     }
@@ -3795,31 +3802,31 @@ chr_t * chr_config_initialize( chr_t * pchr, int max_iterations )
 }
 
 //--------------------------------------------------------------------------------------------
-chr_t * chr_config_activate( chr_t * pchr, int max_iterations )
+chr_t * chr_run_object_activate( chr_t * pchr, int max_iterations )
 {
     int                 iterations;
     ego_object_base_t * pbase;
 
     pbase = POBJ_GET_PBASE( pchr );
-    if ( NULL == pbase || !pbase->allocated ) return NULL;
+    if ( !VALID_PBASE( pbase ) ) return NULL;
 
     // if the character is already beyond this stage, deconstruct it and start over
-    if ( pbase->state > ( int )( ego_object_active + 1 ) )
+    if ( pbase->state.action > ( int )( ego_object_processing + 1 ) )
     {
-        chr_t * tmp_chr = chr_config_deconstruct( pchr, max_iterations );
+        chr_t * tmp_chr = chr_run_object_deconstruct( pchr, max_iterations );
         if ( tmp_chr == pchr ) return NULL;
     }
 
     iterations = 0;
-    while ( NULL != pchr && pbase->state < ego_object_active && iterations < max_iterations )
+    while ( NULL != pchr && pbase->state.action < ego_object_processing && iterations < max_iterations )
     {
-        chr_t * ptmp = chr_run_config( pchr );
+        chr_t * ptmp = chr_run_object( pchr );
         if ( ptmp != pchr ) return NULL;
         iterations++;
     }
 
-    EGOBOO_ASSERT( pbase->state == ego_object_active );
-    if ( pbase->state == ego_object_active )
+    EGOBOO_ASSERT( pbase->state.action == ego_object_processing );
+    if ( pbase->state.action == ego_object_processing )
     {
         ChrList_add_used( GET_INDEX_PCHR( pchr ) );
     }
@@ -3828,28 +3835,28 @@ chr_t * chr_config_activate( chr_t * pchr, int max_iterations )
 }
 
 //--------------------------------------------------------------------------------------------
-chr_t * chr_config_deinitialize( chr_t * pchr, int max_iterations )
+chr_t * chr_run_object_deinitialize( chr_t * pchr, int max_iterations )
 {
     int                 iterations;
     ego_object_base_t * pbase;
 
     pbase = POBJ_GET_PBASE( pchr );
-    if ( NULL == pbase || !pbase->allocated ) return NULL;
+    if ( !VALID_PBASE( pbase ) ) return NULL;
 
     // if the character is already beyond this stage, deinitialize it
-    if ( pbase->state > ( int )( ego_object_deinitializing + 1 ) )
+    if ( pbase->state.action > ( int )( ego_object_deinitializing + 1 ) )
     {
         return pchr;
     }
-    else if ( pbase->state < ego_object_deinitializing )
+    else if ( pbase->state.action < ego_object_deinitializing )
     {
-        pbase->state = ego_object_deinitializing;
+        ego_object_end_processing( pbase );
     }
 
     iterations = 0;
-    while ( NULL != pchr && pbase->state <= ego_object_deinitializing && iterations < max_iterations )
+    while ( NULL != pchr && pbase->state.action <= ego_object_deinitializing && iterations < max_iterations )
     {
-        chr_t * ptmp = chr_run_config( pchr );
+        chr_t * ptmp = chr_run_object( pchr );
         if ( ptmp != pchr ) return NULL;
         iterations++;
     }
@@ -3858,29 +3865,29 @@ chr_t * chr_config_deinitialize( chr_t * pchr, int max_iterations )
 }
 
 //--------------------------------------------------------------------------------------------
-chr_t * chr_config_deconstruct( chr_t * pchr, int max_iterations )
+chr_t * chr_run_object_deconstruct( chr_t * pchr, int max_iterations )
 {
     int                 iterations;
     ego_object_base_t * pbase;
 
     pbase = POBJ_GET_PBASE( pchr );
-    if ( NULL == pbase || !pbase->allocated ) return NULL;
+    if ( !VALID_PBASE( pbase ) ) return NULL;
 
     // if the character is already beyond this stage, do nothing
-    if ( pbase->state > ( int )( ego_object_destructing + 1 ) )
+    if ( pbase->state.action > ( int )( ego_object_destructing + 1 ) )
     {
         return pchr;
     }
-    else if ( pbase->state < ego_object_deinitializing )
+    else if ( pbase->state.action < ego_object_deinitializing )
     {
         // make sure that you deinitialize before destructing
-        pbase->state = ego_object_deinitializing;
+        ego_object_end_processing( pbase );
     }
 
     iterations = 0;
-    while ( NULL != pchr && pbase->state <= ego_object_destructing && iterations < max_iterations )
+    while ( NULL != pchr && pbase->state.action <= ego_object_destructing && iterations < max_iterations )
     {
-        chr_t * ptmp = chr_run_config( pchr );
+        chr_t * ptmp = chr_run_object( pchr );
         if ( ptmp != pchr ) return NULL;
         iterations++;
     }
@@ -3890,53 +3897,47 @@ chr_t * chr_config_deconstruct( chr_t * pchr, int max_iterations )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-chr_t * chr_run_config( chr_t * pchr )
+chr_t * chr_run_object( chr_t * pchr )
 {
     ego_object_base_t * pbase;
 
     pbase = POBJ_GET_PBASE( pchr );
-    if ( NULL == pbase || !pbase->allocated ) return NULL;
+    if ( !VALID_PBASE( pbase ) ) return NULL;
 
     // set the object to deinitialize if it is not "dangerous" and if was requested
-    if ( pbase->kill_me )
+    if ( FLAG_REQ_TERMINATION_PBASE( pbase ) )
     {
-        if ( pbase->state > ego_object_constructing && pbase->state < ego_object_deinitializing )
-        {
-            pbase->state = ego_object_deinitializing;
-        }
-
-        pbase->kill_me = bfalse;
+        pbase = ego_object_grant_terminate( pbase );
     }
 
-    switch ( pbase->state )
+    switch ( pbase->state.action )
     {
         default:
-        case ego_object_invalid:
-            pchr = NULL;
+        case ego_object_nothing:
+            /* no operation */
             break;
 
         case ego_object_constructing:
-            pchr = chr_config_ctor( pchr );
+            pchr = chr_do_object_constructing( pchr );
             break;
 
         case ego_object_initializing:
-            pchr = chr_config_init( pchr );
+            pchr = chr_do_object_initializing( pchr );
             break;
 
-        case ego_object_active:
-            pchr = chr_config_active( pchr );
+        case ego_object_processing:
+            pchr = chr_do_object_processing( pchr );
             break;
 
         case ego_object_deinitializing:
-            pchr = chr_config_deinit( pchr );
+            pchr = chr_do_object_deinitializing( pchr );
             break;
 
         case ego_object_destructing:
-            pchr = chr_config_dtor( pchr );
+            pchr = chr_do_object_destructing( pchr );
             break;
 
         case ego_object_waiting:
-        case ego_object_terminated:
             /* do nothing */
             break;
     }
@@ -3945,7 +3946,7 @@ chr_t * chr_run_config( chr_t * pchr )
     {
         pbase->update_guid = INVALID_UPDATE_GUID;
     }
-    else if ( ego_object_active == pbase->state )
+    else if ( ego_object_processing == pbase->state.action )
     {
         pbase->update_guid = ChrList.update_guid;
     }
@@ -3954,7 +3955,7 @@ chr_t * chr_run_config( chr_t * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-chr_t * chr_config_ctor( chr_t * pchr )
+chr_t * chr_do_object_constructing( chr_t * pchr )
 {
     /// @details BB@> initialize the character data to safe values
     ///     since we use memset(..., 0, ...), all = 0, = false, and = 0.0f
@@ -3964,103 +3965,155 @@ chr_t * chr_config_ctor( chr_t * pchr )
 
     // grab the base object
     pbase = POBJ_GET_PBASE( pchr );
-    if ( NULL == pbase ) return NULL;
+    if ( !VALID_PBASE( pbase ) ) return NULL;
 
     // if we aren't in the correct state, abort.
     if ( !STATE_CONSTRUCTING_PBASE( pbase ) ) return pchr;
 
+    // run the constructor
     pchr = chr_ctor( pchr );
     if ( NULL == pchr ) return pchr;
 
-    // we are done constructing. move on to initializing.
-    pchr->obj_base.state = ego_object_initializing;
+    // move on to the next action
+    ego_object_end_constructing( pbase );
 
     return pchr;
 }
 
 //--------------------------------------------------------------------------------------------
-chr_t * chr_config_init( chr_t * pchr )
+chr_t * chr_do_object_initializing( chr_t * pchr )
 {
     ego_object_base_t * pbase;
 
+    // grab the base object
     pbase = POBJ_GET_PBASE( pchr );
-    if ( NULL == pbase ) return NULL;
+    if ( !VALID_PBASE( pbase ) ) return NULL;
 
+    // if we aren't in the correct state, abort.
     if ( !STATE_INITIALIZING_PBASE( pbase ) ) return pchr;
 
+    // tell the game that we're spawning something
     POBJ_BEGIN_SPAWN( pchr );
 
-    pchr = chr_config_do_init( pchr );
+    // run the initialization routine
+    pchr = chr_do_init( pchr );
     if ( NULL == pchr ) return NULL;
 
+    // request that we be turned on
+    pbase->req.turn_me_on = btrue;
+
+    // do something about being turned on
     if ( 0 == chr_loop_depth )
     {
-        pchr->obj_base.on = btrue;
+        ego_object_grant_on( pbase );
     }
     else
     {
-        ChrList_add_activation( GET_INDEX_PPRT( pchr ) );
+        ChrList_add_activation( GET_INDEX_PCHR( pchr ) );
     }
 
-    pbase->state = ego_object_active;
+    // move on to the next action
+    ego_object_end_initializing( pbase );
+
+    // this will only work after the object has been fully initialized
+    if ( !LOADED_CAP( pchr->spawn_data.profile ) )
+    {
+        POBJ_ACTIVATE( pchr, "*UNKNOWN*" );
+    }
+    else
+    {
+        cap_t * pcap = pro_get_pcap( pchr->profile_ref );
+        if ( NULL != pcap )
+        {
+            POBJ_ACTIVATE( pchr, pcap->name );
+        }
+    }
 
     return pchr;
 }
 
 //--------------------------------------------------------------------------------------------
-chr_t * chr_config_active( chr_t * pchr )
+chr_t * chr_do_object_processing( chr_t * pchr )
 {
     // there's nothing to configure if the object is active...
 
     ego_object_base_t * pbase;
 
+    // grab the base object
     pbase = POBJ_GET_PBASE( pchr );
-    if ( NULL == pbase || !pbase->allocated ) return NULL;
+    if ( !VALID_PBASE( pbase ) ) return NULL;
 
-    if ( !STATE_ACTIVE_PBASE( pbase ) ) return pchr;
+    // if we aren't in the correct state, abort.
+    if ( !STATE_PROCESSING_PBASE( pbase ) ) return pchr;
 
+    // do this here (instead of at the end of *_do_object_initializing()) so that
+    // we are sure that the object is actually "on"
     POBJ_END_SPAWN( pchr );
 
-    pchr = chr_config_do_active( pchr );
+    // run the main loop
+    pchr = chr_do_processing( pchr );
+    if ( NULL == pchr ) return NULL;
+
+    /* add stuff here */
 
     return pchr;
 }
 
 //--------------------------------------------------------------------------------------------
-chr_t * chr_config_deinit( chr_t * pchr )
+chr_t * chr_do_object_deinitializing( chr_t * pchr )
 {
     /// @details BB@> deinitialize the character data
 
     ego_object_base_t * pbase;
 
+    // grab the base object
     pbase = POBJ_GET_PBASE( pchr );
-    if ( NULL == pbase ) return NULL;
+    if ( !VALID_PBASE( pbase ) ) return NULL;
 
+    // if we aren't in the correct state, abort.
     if ( !STATE_DEINITIALIZING_PBASE( pbase ) ) return pchr;
 
+    // make sure that the spawn is terminated
     POBJ_END_SPAWN( pchr );
 
-    pbase->state = ego_object_destructing;
-    pbase->on    = bfalse;
+    // run a deinitialization routine
+    pchr = chr_do_deinit( pchr );
+    if ( NULL == pchr ) return NULL;
+
+    // move on to the next action
+    ego_object_end_deinitializing( pbase );
+
+    // make sure the object is off
+    pbase->state.on = bfalse;
 
     return pchr;
 }
 
 //--------------------------------------------------------------------------------------------
-chr_t * chr_config_dtor( chr_t * pchr )
+chr_t * chr_do_object_destructing( chr_t * pchr )
 {
     /// @details BB@> deinitialize the character data
 
     ego_object_base_t * pbase;
 
+    // grab the base object
     pbase = POBJ_GET_PBASE( pchr );
-    if ( NULL == pbase ) return NULL;
+    if ( !VALID_PBASE( pbase ) ) return NULL;
 
+    // if we aren't in the correct state, abort.
     if ( !STATE_DESTRUCTING_PBASE( pbase ) ) return pchr;
 
+    // make sure that the spawn is terminated
     POBJ_END_SPAWN( pchr );
 
-    return chr_dtor( pchr );
+    // run the destructor
+    pchr = chr_dtor( pchr );
+    if ( NULL == pchr ) return NULL;
+
+    // move on to the next action (dead)
+    ego_object_end_destructing( pbase );
+
+    return pchr;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4112,7 +4165,7 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF by_reference profile, co
     pchr->spawn_data.override = override;
 
     // actually force the character to spawn
-    chr_config_activate( pchr, 100 );
+    chr_run_object_activate( pchr, 100 );
 
 #if defined(DEBUG_OBJECT_SPAWN) && EGO_DEBUG
     {
@@ -4970,7 +5023,7 @@ void update_all_characters()
 
     for ( ichr = 0; ichr < MAX_CHR; ichr++ )
     {
-        chr_run_config( ChrList.lst + ichr );
+        chr_run_object( ChrList.lst + ichr );
     }
 
     // fix the stat timer
@@ -7412,7 +7465,7 @@ void cleanup_all_characters()
         chr_t * pchr;
         bool_t time_out;
 
-        if ( !ALLOCATED_CHR( cnt ) ) continue;
+        if ( !VALID_CHR( cnt ) ) continue;
         pchr = ChrList.lst + cnt;
 
         time_out = ( pchr->ai.poof_time >= 0 ) && ( pchr->ai.poof_time <= ( Sint32 )update_wld );
@@ -10049,7 +10102,7 @@ fvec3_t chr_get_pos( chr_t * pchr )
 {
     fvec3_t vtmp = ZERO_VECT3;
 
-    if ( !ALLOCATED_PCHR( pchr ) ) return vtmp;
+    if ( !VALID_PCHR( pchr ) ) return vtmp;
 
     return pchr->pos;
 }
@@ -10059,7 +10112,7 @@ float * chr_get_pos_v( chr_t * pchr )
 {
     static fvec3_t vtmp = ZERO_VECT3;
 
-    if ( !ALLOCATED_PCHR( pchr ) ) return vtmp.v;
+    if ( !VALID_PCHR( pchr ) ) return vtmp.v;
 
     return pchr->pos.v;
 }
@@ -10067,7 +10120,7 @@ float * chr_get_pos_v( chr_t * pchr )
 //--------------------------------------------------------------------------------------------
 bool_t chr_update_pos( chr_t * pchr )
 {
-    if ( !ALLOCATED_PCHR( pchr ) ) return bfalse;
+    if ( !VALID_PCHR( pchr ) ) return bfalse;
 
     pchr->onwhichgrid   = mesh_get_tile( PMesh, pchr->pos.x, pchr->pos.y );
     pchr->onwhichblock  = mesh_get_block( PMesh, pchr->pos.x, pchr->pos.y );
@@ -10086,7 +10139,7 @@ bool_t chr_set_pos( chr_t * pchr, fvec3_base_t pos )
 {
     bool_t retval = bfalse;
 
-    if ( !ALLOCATED_PCHR( pchr ) ) return retval;
+    if ( !VALID_PCHR( pchr ) ) return retval;
 
     retval = btrue;
 
@@ -10106,7 +10159,7 @@ bool_t chr_set_maxaccel( chr_t * pchr, float new_val )
     bool_t retval = bfalse;
     float ftmp;
 
-    if ( !ALLOCATED_PCHR( pchr ) ) return retval;
+    if ( !VALID_PCHR( pchr ) ) return retval;
 
     ftmp = pchr->maxaccel / pchr->maxaccel_reset;
     pchr->maxaccel_reset = new_val;
@@ -10139,7 +10192,7 @@ chr_bundle_t * chr_bundle_validate( chr_bundle_t * pbundle )
     if ( NULL == pbundle ) return NULL;
 
     // get the character info from the reference or the pointer
-    if ( ALLOCATED_CHR( pbundle->chr_ref ) )
+    if ( VALID_CHR( pbundle->chr_ref ) )
     {
         pbundle->chr_ptr = ChrList.lst + pbundle->chr_ref;
     }
@@ -10657,7 +10710,7 @@ bool_t chr_update_breadcrumb_raw( chr_t * pchr )
     breadcrumb_t bc;
     bool_t retval = bfalse;
 
-    if ( !ALLOCATED_PCHR( pchr ) ) return bfalse;
+    if ( !VALID_PCHR( pchr ) ) return bfalse;
 
     breadcrumb_init_chr( &bc, pchr );
 
@@ -10677,7 +10730,7 @@ bool_t chr_update_breadcrumb( chr_t * pchr, bool_t force )
     bool_t needs_update = bfalse;
     breadcrumb_t * bc_ptr, bc;
 
-    if ( !ALLOCATED_PCHR( pchr ) ) return bfalse;
+    if ( !VALID_PCHR( pchr ) ) return bfalse;
 
     bc_ptr = breadcrumb_list_last_valid( &( pchr->crumbs ) );
     if ( NULL == bc_ptr )
@@ -10720,7 +10773,7 @@ bool_t chr_update_breadcrumb( chr_t * pchr, bool_t force )
 //--------------------------------------------------------------------------------------------
 breadcrumb_t * chr_get_last_breadcrumb( chr_t * pchr )
 {
-    if ( !ALLOCATED_PCHR( pchr ) ) return NULL;
+    if ( !VALID_PCHR( pchr ) ) return NULL;
 
     if ( 0 == pchr->crumbs.count ) return NULL;
 
@@ -10735,7 +10788,7 @@ bool_t chr_update_safe_raw( chr_t * pchr )
 
     bool_t hit_a_wall;
 
-    if ( !ALLOCATED_PCHR( pchr ) ) return bfalse;
+    if ( !VALID_PCHR( pchr ) ) return bfalse;
 
     hit_a_wall = chr_hit_wall( pchr, NULL, NULL, NULL );
     if ( !hit_a_wall )
@@ -10758,7 +10811,7 @@ bool_t chr_update_safe( chr_t * pchr, bool_t force )
     bool_t retval = bfalse;
     bool_t needs_update = bfalse;
 
-    if ( !ALLOCATED_PCHR( pchr ) ) return bfalse;
+    if ( !VALID_PCHR( pchr ) ) return bfalse;
 
     if ( force || !pchr->safe_valid )
     {
@@ -10796,7 +10849,7 @@ bool_t chr_get_safe( chr_t * pchr, fvec3_base_t pos_v )
     bool_t found = bfalse;
     fvec3_t loc_pos;
 
-    if ( !ALLOCATED_PCHR( pchr ) ) return bfalse;
+    if ( !VALID_PCHR( pchr ) ) return bfalse;
 
     // handle optional parameters
     if ( NULL == pos_v ) pos_v = loc_pos.v;

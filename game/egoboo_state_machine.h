@@ -24,13 +24,13 @@
 //--------------------------------------------------------------------------------------------
 
 /// The various states that an egoboo state machine can occupy
-enum e_ego_states
+enum e_ego_actions
 {
-    ego_state_invalid = 0,  ///< A state to set the machine in if it is not valid.
-    ego_state_begin,        ///< The creation of the machine. Should be run once.
-    ego_state_entering,     ///< The initialization of the machine. An entry point for re-initializing an already created machine. Run as many times as needed.
-    ego_state_running,      ///< The normal state of a running machine. Run as many times as desired.
-    ego_state_leaving,      ///< The deinitialization of the machine. Run as many times as needed.
-    ego_state_finish        ///< The final destruction of the machine. Should be run once.
+    ego_action_invalid = 0,  ///< Nothing to do.
+    ego_action_beginning,    ///< The creation of the machine. Should be run once.
+    ego_action_entering,     ///< The initialization of the machine. An entry point for re-initializing an already created machine. Run as many times as needed.
+    ego_action_running,      ///< The normal actions of a running machine. Run as many times as desired.
+    ego_action_leaving,      ///< The deinitialization of the machine. Run as many times as needed.
+    ego_action_finishing     ///< The final destruction of the machine. Should be run once.
 };
-typedef enum e_ego_states ego_state_t;
+typedef enum e_ego_actions ego_actions_t;

@@ -43,11 +43,15 @@ enum e_module_filter
     FILTER_TOWN,                    ///< Only display Town modules
     FILTER_FUN,                     ///< Only fun modules (bumpercars!)
 
+    // special filters
+    FILTER_DEBUG,                   ///< Only modules used for debugging
+    FILTER_HIDDEN,                  ///< Modules that can't be seen
     FILTER_STARTER,                 ///< An extra filter for the starter modules
 
     // aliases
     FILTER_NORMAL_BEGIN = FILTER_OFF,
-    FILTER_NORMAL_END   = FILTER_FUN
+    FILTER_NORMAL_END   = FILTER_FUN,
+    FILTER_SPECIAL_END  = FILTER_STARTER
 };
 typedef enum e_module_filter module_filter_t;
 

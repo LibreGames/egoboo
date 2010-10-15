@@ -85,7 +85,7 @@ void PrtList_init()
         memset( pprt, 0, sizeof( *pprt ) );
 
         // particle "initializer"
-        ego_object_ctor( POBJ_GET_PBASE( pprt ) );
+        ego_object_ctor( POBJ_GET_PBASE( pprt ), iprt );
 
         PrtList_add_free( iprt );
     }
@@ -98,7 +98,7 @@ void PrtList_dtor()
 
     for ( cnt = 0; cnt < TOTAL_MAX_PRT; cnt++ )
     {
-        prt_config_deconstruct( PrtList.lst + cnt, 100 );
+        prt_run_object_deconstruct( PrtList.lst + cnt, 100 );
     }
 
     PrtList.free_count = 0;
@@ -129,7 +129,7 @@ void PrtList_prune_used()
             removed = PrtList_remove_used_index( cnt );
         }
 
-        if ( removed && !PrtList.lst[iprt].obj_base.in_free_list )
+        if ( removed && !PrtList.lst[iprt].obj_base.lst_state.in_free_list )
         {
             PrtList_add_free( iprt );
         }
@@ -155,7 +155,7 @@ void PrtList_prune_free()
             removed = PrtList_remove_free_index( cnt );
         }
 
-        if ( removed && !PrtList.lst[iprt].obj_base.in_free_list )
+        if ( removed && !PrtList.lst[iprt].obj_base.lst_state.in_free_list )
         {
             PrtList_add_used( iprt );
         }
@@ -175,16 +175,16 @@ void PrtList_update_used()
     {
         if ( !ALLOCATED_PRT( iprt ) ) continue;
 
-        if ( DISPLAY_PRT( iprt ) )
+        if ( INGAME_PRT_BASE( iprt ) )
         {
-            if ( !PrtList.lst[iprt].obj_base.in_used_list )
+            if ( !PrtList.lst[iprt].obj_base.lst_state.in_used_list )
             {
                 PrtList_add_used( iprt );
             }
         }
         else if ( !DEFINED_PRT( iprt ) )
         {
-            if ( !PrtList.lst[iprt].obj_base.in_free_list )
+            if ( !PrtList.lst[iprt].obj_base.lst_state.in_free_list )
             {
                 PrtList_add_free( iprt );
             }
@@ -227,19 +227,35 @@ bool_t PrtList_free_one( const PRT_REF by_reference iprt )
     if ( prt_loop_depth > 0 )
     {
         retval = PrtList_add_termination( iprt );
+
+        // invalidate the egoboo_object_state, so that module will
+        // ignore this object until we can actually remove the object
+        // from the list
+        if ( FLAG_VALID_PBASE( pbase ) )
+        {
+            ego_object_state_invalidate( &( pbase->state ) );
+        }
     }
     else
     {
+        // was the egoboo_object_state invalidated before being completely killed?
+        if ( !FLAG_KILLED_PBASE( pbase ) )
+        {
+            // turn it on again so that we can call the prt_run_object_*() functions
+            // properly
+            pbase->state.valid = btrue;
+        }
+
         // deallocate any dynamically allocated memory
-        pprt = prt_config_deinitialize( pprt, 100 );
+        pprt = prt_run_object_deinitialize( pprt, 100 );
         if ( NULL == pprt ) return bfalse;
 
-        if ( pbase->in_used_list )
+        if ( pbase->lst_state.in_used_list )
         {
             PrtList_remove_used( iprt );
         }
 
-        if ( pbase->in_free_list )
+        if ( pbase->lst_state.in_free_list )
         {
             retval = btrue;
         }
@@ -249,8 +265,11 @@ bool_t PrtList_free_one( const PRT_REF by_reference iprt )
         }
 
         // particle "destructor"
-        pprt = prt_config_deconstruct( pprt, 100 );
+        pprt = prt_run_object_deconstruct( pprt, 100 );
         if ( NULL == pprt ) return bfalse;
+
+        // let everyone know that that the object is completely gone
+        ego_object_invalidate( pbase );
     }
 
     return retval;
@@ -276,7 +295,7 @@ size_t PrtList_get_free()
         if ( VALID_PRT_RANGE( retval ) )
         {
             // let the object know it is not in the free list any more
-            PrtList.lst[retval].obj_base.in_free_list = bfalse;
+            list_object_set_free( &( PrtList.lst[retval].obj_base.lst_state ), bfalse );
         }
     }
 
@@ -412,13 +431,13 @@ PRT_REF PrtList_allocate( bool_t force )
         }
 
         // allocate the new one
-        POBJ_ALLOCATE( PrtList.lst +  iprt , REF_TO_INT( iprt ) );
+        POBJ_ALLOCATE( PrtList.lst + iprt, iprt );
     }
 
     if ( ALLOCATED_PRT( iprt ) )
     {
         // construct the new structure
-        prt_config_construct( PrtList.lst +  iprt, 100 );
+        prt_run_object_construct( PrtList.lst +  iprt, 100 );
     }
 
     return iprt;
@@ -450,7 +469,7 @@ int PrtList_get_free_list_index( const PRT_REF by_reference iprt )
     {
         if ( iprt == PrtList.free_ref[cnt] )
         {
-            EGOBOO_ASSERT( PrtList.lst[iprt].obj_base.in_free_list );
+            EGOBOO_ASSERT( PrtList.lst[iprt].obj_base.lst_state.in_free_list );
             retval = cnt;
             break;
         }
@@ -473,7 +492,7 @@ bool_t PrtList_add_free( const PRT_REF by_reference iprt )
     }
 #endif
 
-    EGOBOO_ASSERT( !PrtList.lst[iprt].obj_base.in_free_list );
+    EGOBOO_ASSERT( !PrtList.lst[iprt].obj_base.lst_state.in_free_list );
 
     retval = bfalse;
     if ( PrtList.free_count < maxparticles )
@@ -483,7 +502,7 @@ bool_t PrtList_add_free( const PRT_REF by_reference iprt )
         PrtList.free_count++;
         PrtList.update_guid++;
 
-        PrtList.lst[iprt].obj_base.in_free_list = btrue;
+        list_object_set_free( &( PrtList.lst[iprt].obj_base.lst_state ), btrue );
 
         retval = btrue;
     }
@@ -507,7 +526,7 @@ bool_t PrtList_remove_free_index( int index )
     if ( VALID_PRT_RANGE( iprt ) )
     {
         // let the object know it is not in the list anymore
-        PrtList.lst[iprt].obj_base.in_free_list = bfalse;
+        list_object_set_free( &( PrtList.lst[iprt].obj_base.lst_state ), bfalse );
     }
 
     // shorten the list
@@ -543,7 +562,7 @@ int PrtList_get_used_list_index( const PRT_REF by_reference iprt )
     {
         if ( iprt == PrtList.used_ref[cnt] )
         {
-            EGOBOO_ASSERT( PrtList.lst[iprt].obj_base.in_used_list );
+            EGOBOO_ASSERT( PrtList.lst[iprt].obj_base.lst_state.in_used_list );
             retval = cnt;
             break;
         }
@@ -566,7 +585,7 @@ bool_t PrtList_add_used( const PRT_REF by_reference iprt )
     }
 #endif
 
-    EGOBOO_ASSERT( !PrtList.lst[iprt].obj_base.in_used_list );
+    EGOBOO_ASSERT( !PrtList.lst[iprt].obj_base.lst_state.in_used_list );
 
     retval = bfalse;
     if ( PrtList.used_count < maxparticles )
@@ -576,7 +595,7 @@ bool_t PrtList_add_used( const PRT_REF by_reference iprt )
         PrtList.used_count++;
         PrtList.update_guid++;
 
-        PrtList.lst[iprt].obj_base.in_used_list = btrue;
+        list_object_set_used( &( PrtList.lst[iprt].obj_base.lst_state ), btrue );
 
         retval = btrue;
     }
@@ -600,7 +619,7 @@ bool_t PrtList_remove_used_index( int index )
     if ( VALID_PRT_RANGE( iprt ) )
     {
         // let the object know it is not in the list anymore
-        PrtList.lst[iprt].obj_base.in_used_list = bfalse;
+        list_object_set_used( &( PrtList.lst[iprt].obj_base.lst_state ), bfalse );
     }
 
     // shorten the list
@@ -640,10 +659,7 @@ void PrtList_cleanup()
         if ( !ALLOCATED_PRT( iprt ) ) continue;
         pprt = PrtList.lst + iprt;
 
-        if ( !pprt->obj_base.turn_me_on ) continue;
-
-        pprt->obj_base.on         = btrue;
-        pprt->obj_base.turn_me_on = bfalse;
+        ego_object_grant_on( POBJ_GET_PBASE( pprt ) );
     }
     prt_activation_count = 0;
 
@@ -674,7 +690,7 @@ bool_t PrtList_add_activation( PRT_REF iprt )
         retval = btrue;
     }
 
-    PrtList.lst[iprt].obj_base.turn_me_on = btrue;
+    PrtList.lst[iprt].obj_base.req.turn_me_on = btrue;
 
     return retval;
 }

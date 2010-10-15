@@ -149,7 +149,7 @@ size_t render_all_prt_begin( camera_t * pcam, prt_registry_entity_t reg[], size_
 
     // Original points
     numparticle = 0;
-    PRT_BEGIN_LOOP_DISPLAY( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_USED( iprt, prt_bdl )
     {
         prt_instance_t * pinst;
 
@@ -197,7 +197,7 @@ bool_t render_one_prt_solid( const PRT_REF by_reference iprt )
     prt_t * pprt;
     prt_instance_t * pinst;
 
-    if ( !DISPLAY_PRT( iprt ) ) return bfalse;
+    if ( !DEFINED_PRT( iprt ) ) return bfalse;
     pprt = PrtList.lst + iprt;
     pinst = &( pprt->inst );
 
@@ -276,7 +276,7 @@ bool_t render_one_prt_trans( const PRT_REF by_reference iprt )
     prt_t * pprt;
     prt_instance_t * pinst;
 
-    if ( !DISPLAY_PRT( iprt ) ) return bfalse;
+    if ( !DEFINED_PRT( iprt ) ) return bfalse;
     pprt = PrtList.lst + iprt;
     pinst = &( pprt->inst );
 
@@ -409,7 +409,7 @@ size_t render_all_prt_ref_begin( camera_t * pcam, prt_registry_entity_t reg[], s
 
     // Original points
     numparticle = 0;
-    PRT_BEGIN_LOOP_DISPLAY( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_USED( iprt, prt_bdl )
     {
         prt_instance_t * pinst;
 
@@ -454,7 +454,7 @@ bool_t render_one_prt_ref( const PRT_REF by_reference iprt )
     prt_t * pprt;
     prt_instance_t * pinst;
 
-    if ( !DISPLAY_PRT( iprt ) ) return bfalse;
+    if ( !DEFINED_PRT( iprt ) ) return bfalse;
 
     pprt = PrtList.lst + iprt;
     pinst = &( pprt->inst );
@@ -656,7 +656,7 @@ void render_all_prt_attachment()
 {
     GL_DEBUG( glDisable )( GL_BLEND );
 
-    PRT_BEGIN_LOOP_DISPLAY( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_USED( iprt, prt_bdl )
     {
         prt_draw_attached_point( &prt_bdl );
     }
@@ -666,7 +666,7 @@ void render_all_prt_attachment()
 //--------------------------------------------------------------------------------------------
 void render_all_prt_bbox()
 {
-    PRT_BEGIN_LOOP_DISPLAY( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_USED( iprt, prt_bdl )
     {
         render_prt_bbox( &prt_bdl );
     }
@@ -727,7 +727,7 @@ void prt_draw_attached_point( prt_bundle_t * pbdl_prt )
     if ( NULL == pbdl_prt ) return;
     loc_pprt = pbdl_prt->prt_ptr;
 
-    if ( !DISPLAY_PPRT( loc_pprt ) ) return;
+    if ( !INGAME_PPRT_BASE( loc_pprt ) ) return;
 
     if ( !INGAME_CHR( loc_pprt->attachedto_ref ) ) return;
     pholder = ChrList.lst + loc_pprt->attachedto_ref;
@@ -752,7 +752,7 @@ void prt_instance_update_all( camera_t * pcam )
     if ( instance_update == update_wld ) return;
     instance_update = update_wld;
 
-    PRT_BEGIN_LOOP_DISPLAY( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_USED( iprt, prt_bdl )
     {
         prt_instance_t * pinst;
 
@@ -783,7 +783,7 @@ void prt_instance_update_vertices( camera_t * pcam, prt_instance_t * pinst, prt_
     fvec3_t   vfwd, vup, vright;
     fvec3_t   vfwd_ref, vup_ref, vright_ref;
 
-    if ( NULL == pcam || !DISPLAY_PPRT( pprt ) ) return;
+    if ( NULL == pcam || !INGAME_PPRT_BASE( pprt ) ) return;
 
     if ( !LOADED_PIP( pprt->pip_ref ) ) return;
     ppip = PipStack.lst + pprt->pip_ref;
@@ -1156,7 +1156,7 @@ void prt_instance_update( camera_t * pcam, const PRT_REF by_reference particle, 
     prt_t * pprt;
     prt_instance_t * pinst;
 
-    if ( !DISPLAY_PRT( particle ) ) return;
+    if ( !INGAME_PRT_BASE( particle ) ) return;
     pprt = PrtList.lst + particle;
     pinst = &( pprt->inst );
 
@@ -1180,7 +1180,7 @@ void render_prt_bbox( prt_bundle_t * pbdl_prt )
     // only draw damaging particles
     if ( 0 == ABS( loc_pprt->damage.base ) + ABS( loc_pprt->damage.rand ) ) return;
 
-    if ( !DISPLAY_PPRT( loc_pprt ) ) return;
+    if ( !INGAME_PPRT_BASE( loc_pprt ) ) return;
 
     // draw the object bounding box as a part of the graphics debug mode F7
     if (( cfg.dev_mode && SDLKEYDOWN( SDLK_F7 ) ) || single_frame_mode )

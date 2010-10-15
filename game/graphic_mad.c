@@ -588,7 +588,7 @@ void render_chr_grips( chr_t * pchr )
     // draw the object's "saddle"  as a part of the graphics debug mode F7
     if ( cfg.dev_mode && render_mount_grip )
     {
-        draw_one_grip( &( pchr->inst ), chr_get_pmad( pchr->obj_base.index ), SLOT_LEFT );
+        draw_one_grip( &( pchr->inst ), chr_get_pmad( GET_REF_PCHR( pchr ) ), SLOT_LEFT );
     }
 
     // the grips and vertices of all objects

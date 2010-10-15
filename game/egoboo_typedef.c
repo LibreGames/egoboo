@@ -216,3 +216,66 @@ void floats_to_pair( float vmin, float vmax, IPair * ppair )
     range_to_pair( range_tmp, ppair );
 }
 
+//--------------------------------------------------------------------------------------------
+list_object_state_t * list_object_state_ctor( list_object_state_t * ptr, size_t index )
+{
+    if ( NULL == ptr ) return ptr;
+
+    list_object_state_clear( ptr );
+
+    ptr->index = index;
+
+    return ptr;
+}
+
+//--------------------------------------------------------------------------------------------
+list_object_state_t * list_object_state_dtor( list_object_state_t * ptr )
+{
+    if ( NULL == ptr ) return ptr;
+
+    list_object_state_clear( ptr );
+
+    return ptr;
+}
+
+//--------------------------------------------------------------------------------------------
+list_object_state_t * list_object_state_clear( list_object_state_t * ptr )
+{
+    if ( NULL == ptr ) return ptr;
+
+    memset( ptr, 0, sizeof( *ptr ) );
+
+    ptr->index = ( size_t )( ~0L );
+
+    return ptr;
+}
+
+//--------------------------------------------------------------------------------------------
+list_object_state_t * list_object_set_allocated( list_object_state_t * ptr, bool_t val )
+{
+    if ( NULL == ptr ) return ptr;
+
+    ptr->allocated = val;
+
+    return ptr;
+}
+
+//--------------------------------------------------------------------------------------------
+list_object_state_t * list_object_set_used( list_object_state_t * ptr, bool_t val )
+{
+    if ( NULL == ptr ) return ptr;
+
+    ptr->in_used_list = val;
+
+    return ptr;
+}
+
+//--------------------------------------------------------------------------------------------
+list_object_state_t * list_object_set_free( list_object_state_t * ptr, bool_t val )
+{
+    if ( NULL == ptr ) return ptr;
+
+    ptr->in_free_list = val;
+
+    return ptr;
+}

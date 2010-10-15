@@ -123,11 +123,11 @@ struct s_pip
     bool_t  force;                        ///< Force spawn?
     Uint8   type;                         ///< Transparency mode
     Uint8   numframes;                    ///< Number of frames
-    Uint8   image_base;                    ///< Starting image
-    IPair   image_add;                     ///< Frame rate
+    Uint8   image_base;                   ///< Starting image
+    IPair   image_add;                    ///< Frame rate
     int     time;                         ///< Time until end
     IPair   rotate_pair;                  ///< Rotation
-    Sint16  rotate_add;                    ///< Rotation rate
+    Sint16  rotate_add;                   ///< Rotation rate
     Uint16  size_base;                    ///< Size
     Sint16  size_add;                     ///< Size rate
     Sint8   soundspawn;                   ///< Beginning sound

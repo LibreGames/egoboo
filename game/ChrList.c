@@ -76,7 +76,7 @@ void ChrList_init()
         memset( pchr, 0, sizeof( *pchr ) );
 
         // character "initializer"
-        ego_object_ctor( POBJ_GET_PBASE( pchr ) );
+        ego_object_ctor( POBJ_GET_PBASE( pchr ), ichr );
 
         ChrList_add_free( ichr );
     }
@@ -89,7 +89,7 @@ void ChrList_dtor()
 
     for ( cnt = 0; cnt < MAX_CHR; cnt++ )
     {
-        chr_config_deconstruct( ChrList.lst + cnt, 100 );
+        chr_run_object_deconstruct( ChrList.lst + cnt, 100 );
     }
 
     ChrList.free_count = 0;
@@ -120,7 +120,7 @@ void ChrList_prune_used()
             removed = ChrList_remove_used_index( cnt );
         }
 
-        if ( removed && !ChrList.lst[ichr].obj_base.in_free_list )
+        if ( removed && !ChrList.lst[ichr].obj_base.lst_state.in_free_list )
         {
             ChrList_add_free( ichr );
         }
@@ -146,7 +146,7 @@ void ChrList_prune_free()
             removed = ChrList_remove_free_index( cnt );
         }
 
-        if ( removed && !ChrList.lst[ichr].obj_base.in_free_list )
+        if ( removed && !ChrList.lst[ichr].obj_base.lst_state.in_free_list )
         {
             ChrList_add_used( ichr );
         }
@@ -169,14 +169,14 @@ void ChrList_update_used()
 
         if ( INGAME_CHR( ichr ) )
         {
-            if ( !ChrList.lst[ichr].obj_base.in_used_list )
+            if ( !ChrList.lst[ichr].obj_base.lst_state.in_used_list )
             {
                 ChrList_add_used( ichr );
             }
         }
         else if ( !DEFINED_CHR( ichr ) )
         {
-            if ( !ChrList.lst[ichr].obj_base.in_free_list )
+            if ( !ChrList.lst[ichr].obj_base.lst_state.in_free_list )
             {
                 ChrList_add_free( ichr );
             }
@@ -227,15 +227,15 @@ egoboo_rv ChrList_free_one( const CHR_REF by_reference ichr )
     else
     {
         // deallocate any dynamically allocated memory
-        pchr = chr_config_deinitialize( pchr, 100 );
+        pchr = chr_run_object_deinitialize( pchr, 100 );
         if ( NULL == pchr ) return rv_error;
 
-        if ( pbase->in_used_list )
+        if ( pbase->lst_state.in_used_list )
         {
             ChrList_remove_used( ichr );
         }
 
-        if ( pbase->in_free_list )
+        if ( pbase->lst_state.in_free_list )
         {
             retval = rv_success;
         }
@@ -272,7 +272,7 @@ size_t ChrList_get_free()
         if ( VALID_CHR_RANGE( retval ) )
         {
             // let the object know it is not in the free list any more
-            ChrList.lst[retval].obj_base.in_free_list = bfalse;
+            list_object_set_free( &( ChrList.lst[retval].obj_base.lst_state ), bfalse );
         }
     }
 
@@ -302,7 +302,7 @@ int ChrList_get_free_list_index( const CHR_REF by_reference ichr )
     {
         if ( ichr == ChrList.free_ref[cnt] )
         {
-            EGOBOO_ASSERT( ChrList.lst[ichr].obj_base.in_free_list );
+            EGOBOO_ASSERT( ChrList.lst[ichr].obj_base.lst_state.in_free_list );
             retval = cnt;
             break;
         }
@@ -325,7 +325,7 @@ egoboo_rv ChrList_add_free( const CHR_REF by_reference ichr )
     }
 #endif
 
-    EGOBOO_ASSERT( !ChrList.lst[ichr].obj_base.in_free_list );
+    EGOBOO_ASSERT( !ChrList.lst[ichr].obj_base.lst_state.in_free_list );
 
     retval = rv_fail;
     if ( ChrList.free_count < MAX_CHR )
@@ -335,7 +335,7 @@ egoboo_rv ChrList_add_free( const CHR_REF by_reference ichr )
         ChrList.free_count++;
         ChrList.update_guid++;
 
-        ChrList.lst[ichr].obj_base.in_free_list = btrue;
+        list_object_set_free( &( ChrList.lst[ichr].obj_base.lst_state ), btrue );
 
         retval = rv_success;
     }
@@ -359,7 +359,7 @@ bool_t ChrList_remove_free_index( int index )
     if ( VALID_CHR_RANGE( ichr ) )
     {
         // let the object know it is not in the list anymore
-        ChrList.lst[ichr].obj_base.in_free_list = bfalse;
+        list_object_set_free( &( ChrList.lst[ichr].obj_base.lst_state ), bfalse );
     }
 
     // shorten the list
@@ -396,7 +396,7 @@ int ChrList_get_used_list_index( const CHR_REF by_reference ichr )
     {
         if ( ichr == ChrList.used_ref[cnt] )
         {
-            EGOBOO_ASSERT( ChrList.lst[ichr].obj_base.in_used_list );
+            EGOBOO_ASSERT( ChrList.lst[ichr].obj_base.lst_state.in_used_list );
             retval = cnt;
             break;
         }
@@ -419,7 +419,7 @@ bool_t ChrList_add_used( const CHR_REF by_reference ichr )
     }
 #endif
 
-    EGOBOO_ASSERT( !ChrList.lst[ichr].obj_base.in_used_list );
+    EGOBOO_ASSERT( !ChrList.lst[ichr].obj_base.lst_state.in_used_list );
 
     retval = bfalse;
     if ( ChrList.used_count < MAX_CHR )
@@ -429,7 +429,7 @@ bool_t ChrList_add_used( const CHR_REF by_reference ichr )
         ChrList.used_count++;
         ChrList.update_guid++;
 
-        ChrList.lst[ichr].obj_base.in_used_list = btrue;
+        list_object_set_used( &( ChrList.lst[ichr].obj_base.lst_state ), btrue );
 
         retval = btrue;
     }
@@ -453,7 +453,7 @@ bool_t ChrList_remove_used_index( int index )
     if ( VALID_CHR_RANGE( ichr ) )
     {
         // let the object know it is not in the list anymore
-        ChrList.lst[ichr].obj_base.in_used_list = bfalse;
+        list_object_set_used( &( ChrList.lst[ichr].obj_base.lst_state ), bfalse );
     }
 
     // shorten the list
@@ -500,8 +500,8 @@ CHR_REF ChrList_allocate( const CHR_REF by_reference override )
                 ChrList.free_ref[override_index] = ichr;
 
                 // fix the in_free_list values
-                ChrList.lst[ichr].obj_base.in_free_list = btrue;
-                ChrList.lst[override].obj_base.in_free_list = bfalse;
+                list_object_set_free( &( ChrList.lst[ichr].obj_base.lst_state ), btrue );
+                list_object_set_free( &( ChrList.lst[override].obj_base.lst_state ), bfalse );
 
                 ichr = override;
             }
@@ -521,22 +521,22 @@ CHR_REF ChrList_allocate( const CHR_REF by_reference override )
         }
     }
 
-    if ( VALID_CHR_RANGE( ichr ) )
+    // if the character is already being used, make sure to destroy the old one
+    if ( DEFINED_CHR( ichr ) )
     {
-        // if the character is already being used, make sure to destroy the old one
-        if ( DEFINED_CHR( ichr ) )
-        {
-            ChrList_free_one( ichr );
-        }
-
-        // allocate the new one
-        POBJ_ALLOCATE( ChrList.lst +  ichr , REF_TO_INT( ichr ) );
+        ChrList_free_one( ichr );
     }
 
-    if ( ALLOCATED_CHR( ichr ) )
+    if ( VALID_CHR_RANGE( ichr ) )
+    {
+        // allocate the new one
+        POBJ_ALLOCATE( ChrList.lst + ichr, ichr );
+    }
+
+    if ( VALID_CHR( ichr ) )
     {
         // construct the new structure
-        chr_config_construct( ChrList.lst + ichr, 100 );
+        chr_run_object_construct( ChrList.lst + ichr, 100 );
     }
 
     return ichr;
@@ -554,13 +554,10 @@ void ChrList_cleanup()
     {
         CHR_REF ichr = chr_activation_list[cnt];
 
-        if ( !ALLOCATED_CHR( ichr ) ) continue;
+        if ( !VALID_CHR( ichr ) ) continue;
         pchr = ChrList.lst + ichr;
 
-        if ( !pchr->obj_base.turn_me_on ) continue;
-
-        pchr->obj_base.on         = btrue;
-        pchr->obj_base.turn_me_on = bfalse;
+        ego_object_grant_on( POBJ_GET_PBASE( pchr ) );
     }
     chr_activation_count = 0;
 
@@ -591,7 +588,7 @@ bool_t ChrList_add_activation( CHR_REF ichr )
         retval = btrue;
     }
 
-    ChrList.lst[ichr].obj_base.turn_me_on = btrue;
+    ChrList.lst[ichr].obj_base.req.turn_me_on = btrue;
 
     return retval;
 }

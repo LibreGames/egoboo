@@ -32,19 +32,21 @@
 
 #define VALID_ENC_RANGE( IENC ) ( ((IENC) >= 0) && ((IENC) < MAX_ENC) )
 #define ALLOCATED_ENC( IENC )   ( VALID_ENC_RANGE( IENC ) && ALLOCATED_PBASE ( POBJ_GET_PBASE(EncList.lst + (IENC)) ) )
+#define VALID_ENC( IENC )       ( VALID_ENC_RANGE( IENC ) && VALID_PBASE ( POBJ_GET_PBASE(EncList.lst + (IENC)) ) )
 #define ACTIVE_ENC( IENC )      ( VALID_ENC_RANGE( IENC ) && ACTIVE_PBASE    ( POBJ_GET_PBASE(EncList.lst + (IENC)) ) )
 #define WAITING_ENC( IENC )     ( VALID_ENC_RANGE( IENC ) && WAITING_PBASE   ( POBJ_GET_PBASE(EncList.lst + (IENC)) ) )
 #define TERMINATED_ENC( IENC )  ( VALID_ENC_RANGE( IENC ) && TERMINATED_PBASE( POBJ_GET_PBASE(EncList.lst + (IENC)) ) )
 
-#define DEFINED_ENC( IENC )     ( VALID_ENC_RANGE( IENC ) && ALLOCATED_PBASE (POBJ_GET_PBASE(EncList.lst + (IENC)) ) && !TERMINATED_PBASE ( POBJ_GET_PBASE(EncList.lst + (IENC)) ) )
+#define DEFINED_ENC( IENC )     ( VALID_ENC_RANGE( IENC ) && VALID_PBASE (POBJ_GET_PBASE(EncList.lst + (IENC)) ) && !TERMINATED_PBASE ( POBJ_GET_PBASE(EncList.lst + (IENC)) ) )
 
 #define GET_INDEX_PENC( PENC )      ((size_t)GET_INDEX_POBJ( PENC, MAX_ENC ))
 #define GET_REF_PENC( PENC )        ((ENC_REF)GET_INDEX_PENC( PENC ))
 #define VALID_ENC_PTR( PENC )       ( (NULL != (PENC)) && VALID_ENC_RANGE( GET_REF_POBJ( PENC, MAX_ENC) ) )
 #define ALLOCATED_PENC( PENC )      ( VALID_ENC_PTR( PENC ) && ALLOCATED_PBASE( POBJ_GET_PBASE(PENC) ) )
+#define VALID_PENC( PENC )          ( VALID_ENC_PTR( PENC ) && VALID_PBASE( POBJ_GET_PBASE(PENC) ) )
 #define ACTIVE_PENC( PENC )         ( VALID_ENC_PTR( PENC ) && ACTIVE_PBASE( POBJ_GET_PBASE(PENC) ) )
 
-#define DEFINED_PENC( IENC )     ( VALID_ENC_PTR( PENC ) && ALLOCATED_PBASE(POBJ_GET_PBASE(PENC)) && !TERMINATED_PBASE (POBJ_GET_PBASE(PENC)) )
+#define DEFINED_PENC( IENC )     ( VALID_ENC_PTR( PENC ) && VALID_PBASE(POBJ_GET_PBASE(PENC)) && !TERMINATED_PBASE (POBJ_GET_PBASE(PENC)) )
 
 // Macros automate looping through the EncList. This hides code which defers the creation and deletion of
 // objects until the loop terminates, so that the length of the list will not change during the loop.

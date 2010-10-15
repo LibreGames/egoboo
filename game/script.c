@@ -1958,7 +1958,7 @@ ai_state_bundle_t * ai_state_bundle_validate( ai_state_bundle_t * pbundle )
     if ( NULL == pbundle ) return NULL;
 
     // get the character info from the reference or the pointer
-    if ( ALLOCATED_CHR( pbundle->chr_ref ) )
+    if ( VALID_CHR( pbundle->chr_ref ) )
     {
         pbundle->chr_ptr = ChrList.lst + pbundle->chr_ref;
     }

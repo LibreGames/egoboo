@@ -64,7 +64,7 @@
     chr_t * pchr; \
     pro_t * ppro; \
     Uint8 returncode = btrue; \
-    if( NULL == pstate || NULL == pbdl_self || !ALLOCATED_CHR(pbdl_self->chr_ref) ) return bfalse; \
+    if( NULL == pstate || NULL == pbdl_self || !VALID_CHR(pbdl_self->chr_ref) ) return bfalse; \
     pself = pbdl_self->ai_state_ptr; \
     pchr  = pbdl_self->chr_ptr; \
     ppro  = pbdl_self->pro_ptr;
@@ -74,7 +74,7 @@
 
 #define FUNCTION_BEGIN() \
     Uint8 returncode = btrue; \
-    if( !ALLOCATED_PCHR( pchr ) ) return bfalse;
+    if( !VALID_PCHR( pchr ) ) return bfalse;
 
 #define FUNCTION_END() \
     return returncode;
@@ -2103,7 +2103,7 @@ Uint8 scr_SpawnParticle( script_state_t * pstate, ai_state_bundle_t * pbdl_self 
 
     iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, ( PRT_REF )TOTAL_MAX_PRT, 0, ( CHR_REF )MAX_CHR );
 
-    returncode = ALLOCATED_PRT( iprt );
+    returncode = VALID_PRT( iprt );
     if ( returncode )
     {
         fvec3_t tmp_pos;
@@ -3873,7 +3873,7 @@ Uint8 scr_SpawnAttachedParticle( script_state_t * pstate, ai_state_bundle_t * pb
 
     iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, ( PRT_REF )TOTAL_MAX_PRT, 0, ( CHR_REF )MAX_CHR );
 
-    returncode = ALLOCATED_PRT( iprt );
+    returncode = VALID_PRT( iprt );
 
     SCRIPT_FUNCTION_END();
 }
@@ -3900,7 +3900,7 @@ Uint8 scr_SpawnExactParticle( script_state_t * pstate, ai_state_bundle_t * pbdl_
         iprt = spawn_one_particle( vtmp, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, ( CHR_REF )MAX_CHR, 0, pchr->team, ichr, ( PRT_REF )TOTAL_MAX_PRT, 0, ( CHR_REF )MAX_CHR );
     }
 
-    returncode = ALLOCATED_PRT( iprt );
+    returncode = VALID_PRT( iprt );
 
     SCRIPT_FUNCTION_END();
 }
@@ -4391,7 +4391,7 @@ Uint8 scr_SpawnAttachedSizedParticle( script_state_t * pstate, ai_state_bundle_t
     iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, ( PRT_REF )TOTAL_MAX_PRT, 0, ( CHR_REF )MAX_CHR );
     returncode = bfalse;
 
-    if ( ALLOCATED_PRT( iprt ) )
+    if ( VALID_PRT( iprt ) )
     {
         returncode = prt_set_size( PrtList.lst + iprt, pstate->turn );
     }
@@ -4500,7 +4500,7 @@ Uint8 scr_SpawnAttachedFacedParticle( script_state_t * pstate, ai_state_bundle_t
 
     iprt = spawn_one_particle( pchr->pos, CLIP_TO_16BITS( pstate->turn ), pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, ( PRT_REF )TOTAL_MAX_PRT, 0, ( CHR_REF )MAX_CHR );
 
-    returncode = ALLOCATED_PRT( iprt );
+    returncode = VALID_PRT( iprt );
 
     SCRIPT_FUNCTION_END();
 }
@@ -4882,7 +4882,7 @@ Uint8 scr_SpawnAttachedHolderParticle( script_state_t * pstate, ai_state_bundle_
 
     iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, ichr, pstate->distance, pchr->team, ichr, ( PRT_REF )TOTAL_MAX_PRT, 0, ( CHR_REF )MAX_CHR );
 
-    returncode = ALLOCATED_PRT( iprt );
+    returncode = VALID_PRT( iprt );
 
     SCRIPT_FUNCTION_END();
 }
@@ -5397,7 +5397,7 @@ Uint8 scr_SpawnExactChaseParticle( script_state_t * pstate, ai_state_bundle_t * 
         iprt = spawn_one_particle( vtmp, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, ( CHR_REF )MAX_CHR, 0, pchr->team, ichr, ( PRT_REF )TOTAL_MAX_PRT, 0, ( CHR_REF )MAX_CHR );
     }
 
-    returncode = ALLOCATED_PRT( iprt );
+    returncode = VALID_PRT( iprt );
 
     if ( returncode )
     {
@@ -6520,7 +6520,7 @@ Uint8 scr_SpawnExactParticleEndSpawn( script_state_t * pstate, ai_state_bundle_t
         iprt = spawn_one_particle( vtmp, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, ( CHR_REF )MAX_CHR, 0, pchr->team, ichr, ( PRT_REF )TOTAL_MAX_PRT, 0, ( CHR_REF )MAX_CHR );
     }
 
-    returncode = ALLOCATED_PRT( iprt );
+    returncode = VALID_PRT( iprt );
 
     if ( returncode )
     {

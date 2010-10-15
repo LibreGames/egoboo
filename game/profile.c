@@ -1423,7 +1423,7 @@ bool_t obj_BSP_fill( obj_BSP_t * pbsp )
 
     // insert the particles
     BSP_prt_count = 0;
-    PRT_BEGIN_LOOP_DISPLAY( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_USED( iprt, prt_bdl )
     {
         // reset a couple of things here
         prt_bdl.prt_ptr->targetplatform_ref     = ( CHR_REF )MAX_CHR;

@@ -990,6 +990,28 @@
 				RelativePath=".\platform\sys_win32.c">
 			</File>
 		</Filter>
+		<Filter
+			Name="basicdat init files"
+			Filter="">
+			<File
+				RelativePath="..\basicdat\actions.txt">
+			</File>
+			<File
+				RelativePath="..\basicdat\aicodes.txt">
+			</File>
+			<File
+				RelativePath="..\basicdat\fans.txt">
+			</File>
+			<File
+				RelativePath="..\basicdat\link.txt">
+			</File>
+			<File
+				RelativePath="..\basicdat\scancode.txt">
+			</File>
+			<File
+				RelativePath="..\basicdat\script.txt">
+			</File>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

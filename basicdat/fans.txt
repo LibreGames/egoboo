@@ -1,6 +1,5 @@
 Number of Fan Types: 26
 
-
  0  Two Faced Ground...
       Vertices: 4
         Ref: 0    U: 0.00    V: 0.00
@@ -14,7 +13,6 @@ Number of Fan Types: 26
           Vrt: 3
           Vrt: 0
 
-
  1  Two Faced Ground...
       Vertices: 4
         Ref: 0    U: 0.00    V: 0.00
@@ -27,7 +25,6 @@ Number of Fan Types: 26
           Vrt: 1
           Vrt: 2
           Vrt: 3
-
 
  2  Four Faced Ground...
       Vertices: 5
@@ -69,7 +66,6 @@ Number of Fan Types: 26
           Vrt: 6
           Vrt: 3
 
-
  4  Ten Face Pillar...
       Vertices: 8
         Ref: 0    U: 0.00    V: 0.00
@@ -97,7 +93,6 @@ Number of Fan Types: 26
           Vrt: 1
           Vrt: 2
           Vrt: 6
-
 
  5  Eighteen Faced Pillar...
       Vertices: 16
@@ -149,17 +144,13 @@ Number of Fan Types: 26
           Vrt: 2
           Vrt: 8
 
-
  6  Blank...
       Vertices: 0
       Commands: 0
 
-
  7  Blank...
       Vertices: 0
       Commands: 0
-
-
 
  8  Six Faced Wall (WE)...
       Vertices: 8
@@ -185,7 +176,6 @@ Number of Fan Types: 26
           Vrt: 0
           Vrt: 1
 
-
  9  Six Faced Wall (NS)...
       Vertices: 8
         Ref: 0    U: 0.00    V: 0.00
@@ -210,17 +200,13 @@ Number of Fan Types: 26
           Vrt: 1
           Vrt: 2
 
-
 10  Blank...
       Vertices: 0
       Commands: 0
 
-
 11  Blank...
       Vertices: 0
       Commands: 0
-
-
 
 12  Eight Faced Wall (W)...
       Vertices: 8
@@ -248,7 +234,6 @@ Number of Fan Types: 26
           Vrt: 5
           Vrt: 0
 
-
 13  Eight Faced Wall (N)...
       Vertices: 8
         Ref: 0    U: 0.00    V: 0.00
@@ -274,7 +259,6 @@ Number of Fan Types: 26
           Vrt: 6
           Vrt: 5
           Vrt: 1
-
 
 14  Eight Faced Wall (E)...
       Vertices: 8
@@ -302,7 +286,6 @@ Number of Fan Types: 26
           Vrt: 5
           Vrt: 2
 
-
 15  Eight Faced Wall (S)...
       Vertices: 8
         Ref: 0    U: 0.00    V: 0.00
@@ -328,7 +311,6 @@ Number of Fan Types: 26
           Vrt: 6
           Vrt: 5
           Vrt: 3
-
 
 16  Ten Faced Wall (WS)...
       Vertices: 10
@@ -360,7 +342,6 @@ Number of Fan Types: 26
           Vrt: 2
           Vrt: 4
 
-
 17  Ten Faced Wall (NW)...
       Vertices: 10
         Ref: 0    U: 0.00    V: 0.00
@@ -390,7 +371,6 @@ Number of Fan Types: 26
           Vrt: 2
           Vrt: 3
           Vrt: 6
-
 
 18  Ten Faced Wall (NE)...
       Vertices: 10
@@ -422,7 +402,6 @@ Number of Fan Types: 26
           Vrt: 0
           Vrt: 4
 
-
 19  Ten Faced Wall (ES)...
       Vertices: 10
         Ref: 0    U: 0.00    V: 0.00
@@ -452,8 +431,6 @@ Number of Fan Types: 26
           Vrt: 0
           Vrt: 1
           Vrt: 4
-
-
 
 20  Twelve Faced Wall (WSE)...
       Vertices: 12
@@ -492,7 +469,6 @@ Number of Fan Types: 26
           Vrt: 0
           Vrt: 1
 
-
 21  Twelve Faced Wall (NWS)...
       Vertices: 12
         Ref: 0    U: 0.00    V: 0.00
@@ -529,7 +505,6 @@ Number of Fan Types: 26
           Vrt: 5
           Vrt: 1
           Vrt: 2
-
 
 22  Twelve Faced Wall (ENW)...
       Vertices: 12
@@ -568,7 +543,6 @@ Number of Fan Types: 26
           Vrt: 2
           Vrt: 3
 
-
 23  Twelve Faced Wall (SEN)...
       Vertices: 12
         Ref: 0    U: 0.00    V: 0.00
@@ -605,7 +579,6 @@ Number of Fan Types: 26
           Vrt: 9
           Vrt: 3
           Vrt: 0
-
 
 24  Twelve Faced Stair (WE)...
       Vertices: 14
@@ -645,8 +618,6 @@ Number of Fan Types: 26
           Vrt: 8
           Vrt: 1
           Vrt: 2
-
-
 
 25  Twelve Faced Stair (NS)...
       Vertices: 14

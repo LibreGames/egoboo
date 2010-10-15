@@ -1701,8 +1701,7 @@ int draw_game_status( int y )
     {
         y = _draw_string_raw( 0, y, "Waiting for players... " );
     }
-
-    if ( numplayer > 0 )
+    else if ( numplayer > 0 )
     {
         if ( local_stats.allpladead || PMod->respawnanytime )
         {
@@ -1720,7 +1719,10 @@ int draw_game_status( int y )
             y = _draw_string_raw( 0, y, "VICTORY!  PRESS ESCAPE" );
         }
     }
-    else y = _draw_string_raw( 0, y, "ERROR: MISSING PLAYERS" );
+    else
+    {
+        y = _draw_string_raw( 0, y, "ERROR: MISSING PLAYERS" );
+    }
 
     return y;
 }
@@ -2384,7 +2386,7 @@ void render_scene_mesh( renderlist_t * prlist )
                             render_one_mad_ref( ichr );
                         }
                     }
-                    else if ( MAX_CHR == dolist[rcnt].ichr && DISPLAY_PRT( dolist[rcnt].iprt ) )
+                    else if ( MAX_CHR == dolist[rcnt].ichr && INGAME_PRT_BASE( dolist[rcnt].iprt ) )
                     {
                         Uint32 itile;
                         PRT_REF iprt;
@@ -2541,7 +2543,7 @@ void render_scene_solid()
                 render_one_mad( dolist[cnt].ichr, tint, CHR_SOLID );
             }
         }
-        else if ( MAX_CHR == dolist[cnt].ichr && DISPLAY_PRT( dolist[cnt].iprt ) )
+        else if ( MAX_CHR == dolist[cnt].ichr && INGAME_PRT_BASE( dolist[cnt].iprt ) )
         {
             GL_DEBUG( glDisable )( GL_CULL_FACE );
 
@@ -2613,7 +2615,7 @@ void render_scene_trans()
                 render_one_mad( ichr, tint, CHR_PHONG );
             }
         }
-        else if ( MAX_CHR == dolist[rcnt].ichr && DISPLAY_PRT( dolist[rcnt].iprt ) )
+        else if ( MAX_CHR == dolist[rcnt].ichr && INGAME_PRT_BASE( dolist[rcnt].iprt ) )
         {
             render_one_prt_trans( dolist[rcnt].iprt );
         }
@@ -4098,7 +4100,7 @@ bool_t dolist_add_prt( ego_mpd_t * pmesh, const PRT_REF by_reference iprt )
 
     if ( dolist_count >= DOLIST_SIZE ) return bfalse;
 
-    if ( !DISPLAY_PRT( iprt ) ) return bfalse;
+    if ( !DEFINED_PRT( iprt ) ) return bfalse;
     pprt = PrtList.lst + iprt;
     pinst = &( pprt->inst );
 
@@ -4152,7 +4154,7 @@ void dolist_make( ego_mpd_t * pmesh )
         }
     }
 
-    PRT_BEGIN_LOOP_DISPLAY( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_USED( iprt, prt_bdl )
     {
         if ( mesh_grid_is_valid( pmesh, prt_bdl.prt_ptr->onwhichgrid ) )
         {
@@ -4201,7 +4203,7 @@ void dolist_sort( camera_t * pcam, bool_t do_reflect )
 
             vtmp = fvec3_sub( pos_tmp.v, pcam->pos.v );
         }
-        else if ( MAX_CHR == dolist[cnt].ichr && DISPLAY_PRT( dolist[cnt].iprt ) )
+        else if ( MAX_CHR == dolist[cnt].ichr && INGAME_PRT_BASE( dolist[cnt].iprt ) )
         {
             PRT_REF iprt = dolist[cnt].iprt;
 
@@ -5032,11 +5034,11 @@ void do_clear_screen()
     bool_t try_clear;
 
     try_clear = bfalse;
-    if ( process_running( PROC_PBASE( GProc ) ) && PROC_PBASE( GProc )->state > proc_begin )
+    if ( process_running( PROC_PBASE( GProc ) ) && PROC_PBASE( GProc )->state > proc_beginning )
     {
         try_clear = gfx_page_clear_requested;
     }
-    else if ( process_running( PROC_PBASE( MProc ) ) && PROC_PBASE( MProc )->state > proc_begin )
+    else if ( process_running( PROC_PBASE( MProc ) ) && PROC_PBASE( MProc )->state > proc_beginning )
     {
         try_clear = gfx_page_clear_requested;
     }
@@ -5068,11 +5070,11 @@ void do_flip_pages()
     bool_t try_flip;
 
     try_flip = bfalse;
-    if ( process_running( PROC_PBASE( GProc ) ) && PROC_PBASE( GProc )->state > proc_begin )
+    if ( process_running( PROC_PBASE( GProc ) ) && PROC_PBASE( GProc )->state > proc_beginning )
     {
         try_flip = gfx_page_flip_requested;
     }
-    else if ( process_running( PROC_PBASE( MProc ) ) && PROC_PBASE( MProc )->state > proc_begin )
+    else if ( process_running( PROC_PBASE( MProc ) ) && PROC_PBASE( MProc )->state > proc_beginning )
     {
         try_flip = gfx_page_flip_requested;
     }
@@ -5403,7 +5405,7 @@ void gfx_make_dynalist( camera_t * pcam )
     // Don't really make a list, just set to visible or not
     dyna_list_count = 0;
     dyna_distancetobeat = 1e12;
-    PRT_BEGIN_LOOP_DISPLAY( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_USED( iprt, prt_bdl )
     {
         prt_bdl.prt_ptr->inview = bfalse;
 
