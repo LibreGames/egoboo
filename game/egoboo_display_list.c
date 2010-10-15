@@ -22,6 +22,7 @@
 /// @details
 
 #include "egoboo_display_list.h"
+#include "egoboo_typedef.h"
 
 #include "ogl_debug.h"
 

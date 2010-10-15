@@ -141,6 +141,6 @@ enc_t * enc_run_object_activate( enc_t * penc, int max_iterations );
 enc_t * enc_run_object_deinitialize( enc_t * penc, int max_iterations );
 enc_t * enc_run_object_deconstruct( enc_t * penc, int max_iterations );
 
-//#define  remove_all_character_enchants( PCHR ) remove_all_enchants_with_idsz( PCHR, IDSZ_NONE )
+#define  remove_all_character_enchants( ICHR ) remove_all_enchants_with_idsz( ICHR, IDSZ_NONE )
 
 #define ENCHANT_H

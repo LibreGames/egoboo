@@ -226,7 +226,7 @@ void export_one_character( const CHR_REF by_reference character, const CHR_REF b
     if ( !PMod->exportvalid ) return;
 
     // Don't export enchants
-    disenchant_character( character );
+    remove_all_character_enchants( character );
 
     pobj = chr_get_ppro( character );
     if ( NULL == pobj ) return;
@@ -3323,12 +3323,14 @@ void game_quit_module()
 
     // make sure that we have a cursor for the ui
     cursor_reset();
+	load_cursor();
 
     // re-initialize all game/module data
     game_reset_module_data();
 
     // finish whatever in-game song is playing
     sound_finish_sound();
+	sound_play_song( MENU_SONG, 0, -1 );
 
     // remove the module-dependent mount points from the vfs
     game_clear_vfs_paths();
@@ -5378,26 +5380,6 @@ egoboo_rv move_water( water_instance_t * pwater )
     }
 
     return rv_success;
-}
-
-//--------------------------------------------------------------------------------------------
-void disenchant_character( const CHR_REF by_reference cnt )
-{
-    /// @details ZZ@> This function removes all enchantments from a character
-
-    chr_t * pchr;
-
-    if ( !VALID_CHR( cnt ) ) return;
-    pchr = ChrList.lst + cnt;
-
-    while ( MAX_ENC != pchr->firstenchant )
-    {
-        // do not let disenchant_character() get stuck in an infinite loop if there is an error
-        if ( !remove_enchant( pchr->firstenchant, &( pchr->firstenchant ) ) )
-        {
-            break;
-        }
-    }
 }
 
 //--------------------------------------------------------------------------------------------

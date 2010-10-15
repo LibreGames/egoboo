@@ -1,6 +1,7 @@
 Credits to Penguinflyer5234, Seth, Khaos89 and Octagon this release!
 Version 2.8.1 (??.??.2010)
 - New Feature: Added special camera effects whenever a player gets dazed or grogged.
+- Update: Optimized menu rendering using pre-chaching. Menus should no longer lag or cause slowdowns.
 - Update: Added the ability to use a gamepad to control the cursor in the menu screens
 - Update: Complete rewrite of the Physics engine that fixed numerous physics issues.
 - Update: Complete rewrite of the Quest System. The quest system is much more stable and efficient now.

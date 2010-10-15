@@ -378,7 +378,6 @@ int  draw_wrap_string( const char *szText, float x, float y, int maxx );
 int  draw_status( const CHR_REF by_reference character, float x, float y );
 void draw_text();
 void draw_one_character_icon( const CHR_REF by_reference item, float x, float y, bool_t draw_ammo );
-//void draw_cursor();
 void draw_blip( float sizeFactor, Uint8 color, float x, float y, bool_t mini_map );
 void draw_all_lines( struct s_camera * pcam );
 

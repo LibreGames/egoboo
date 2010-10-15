@@ -276,6 +276,9 @@
     <ClCompile Include="IDSZ_map.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="egoboo_display_list.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bbox.h">
@@ -525,6 +528,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="IDSZ_map.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="egoboo_display_list.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

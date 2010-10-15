@@ -21,6 +21,7 @@
     <ClCompile Include="collision.c" />
     <ClCompile Include="egoboo.c" />
     <ClCompile Include="egoboo_console.c" />
+    <ClCompile Include="egoboo_display_list.c" />
     <ClCompile Include="egoboo_endian.c" />
     <ClCompile Include="egoboo_fileutil.c" />
     <ClCompile Include="egoboo_math.c" />
@@ -123,6 +124,7 @@
     <ClInclude Include="egoboo.h" />
     <ClInclude Include="egoboo_config.h" />
     <ClInclude Include="egoboo_console.h" />
+    <ClInclude Include="egoboo_display_list.h" />
     <ClInclude Include="egoboo_doxygen.h" />
     <ClInclude Include="egoboo_endian.h" />
     <ClInclude Include="egoboo_fileutil.h" />

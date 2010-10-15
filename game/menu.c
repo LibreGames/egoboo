@@ -2401,7 +2401,7 @@ int doChoosePlayer( float deltaTime )
                 // reset but_select, or it will mess up the menu.
                 // must do it before SlidyButtonState_init()
                 sz_buttons[but_select] = "N/A";
-                SlidyButtonState_init( &but_state, 1.0f, but_select, sz_buttons, w_buttons );
+                SlidyButtonState_init( &but_state, 0.0f, but_select, sz_buttons, w_buttons );
 
                 // how many players can we pack into the available screen area?
                 numVertical   = ( buttonTop - y0 ) / button_repeat - 1;
@@ -6260,12 +6260,16 @@ int doShowResults( float deltaTime )
                     ui_drawTextBoxImmediate( menuFont, GFX_WIDTH / 2 - text_w / 2, GFX_HEIGHT - 110, 20, game_hint );
                 }
 
+				//ZF> Disabling this counter will speed up load times quite a bit...
                 // keep track of the iterations through this section for a timer
-                count++;
+                /*
+				count++;
                 if ( count > UPDATE_SKIP )
                 {
                     menuState  = MM_Leaving;
                 }
+				*/
+                menuState  = MM_Leaving;
             }
             break;
 

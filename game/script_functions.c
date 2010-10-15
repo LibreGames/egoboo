@@ -6278,7 +6278,7 @@ Uint8 scr_DisenchantTarget( script_state_t * pstate, ai_state_bundle_t * pbdl_se
 
     returncode = ( pself_target->firstenchant != MAX_ENC );
 
-    disenchant_character( pself->target );
+    remove_all_character_enchants( pself->target );
 
     SCRIPT_FUNCTION_END();
 }

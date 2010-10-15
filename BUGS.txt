@@ -17,7 +17,6 @@ Elf module:
 10: I noticed when you kill the lumpkin captain, most of the lumpkins will charge at you. Is this intended? 
 11: I think mosquitoes can fly into the fort. Was that intended too? 
 12: Very strange one: when I destroyed an orange tipi, I died and most of the screen went black! (I have a pic') 
-Here is the log. (In a spoiler to save space.) 
 
 Wizard module: 
 13: The reflections are very weird. They literally go above the floor. 
@@ -39,7 +38,10 @@ Also the mouse's shadow shrinks and grows constantly.
 27: I still cannot find the grub-on-the-spit.
 
 GENERAL BUGS:
-- I still cannot get characters to load after their module is finished.
+- AI have a bit jittery movement sometimes.
+- Cannot dismount from mounts
+- Cannot use equipment while mounted.
+- There is still a part of the screen that isnt drawn.
 - Menu interface when using large resolutions -> http://a.imageshack.us/img829/5305/ego11.png
 - Movement is a bit difficult after jumping.
 - The Missile spell did not spawn missiles in Adventurer Starter.

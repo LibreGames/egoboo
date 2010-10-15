@@ -174,7 +174,7 @@ bool_t chr_free( chr_t * pchr )
     }
 
     // do some list clean-up
-    disenchant_character( GET_REF_PCHR( pchr ) );
+    remove_all_character_enchants( GET_REF_PCHR( pchr ) );
 
     // deallocate
     BillboardList_free_one( REF_TO_INT( pchr->ibillboard ) );
@@ -2801,7 +2801,7 @@ void cleanup_one_character( chr_t * pchr )
     // remove enchants from the character
     if ( pchr->life >= 0 )
     {
-        disenchant_character( ichr );
+        remove_all_character_enchants( ichr );
     }
     else
     {
@@ -3370,7 +3370,6 @@ chr_t * chr_do_init( chr_t * pchr )
     CAP_REF  icap;
     TEAM_REF loc_team;
     int      tnc, iteam, kursechance;
-    float    level;
 
     cap_t * pcap;
     fvec3_t pos_tmp;
@@ -4603,7 +4602,7 @@ void change_character( const CHR_REF by_reference ichr, const PRO_REF by_referen
     else if ( ENC_LEAVE_NONE == leavewhich )
     {
         // Remove all enchantments
-        disenchant_character( ichr );
+        remove_all_character_enchants( ichr );
     }
 
     // Stuff that must be set
@@ -10922,7 +10921,10 @@ bool_t pack_validate( pack_t * ppack )
         item_pack_ptr->is_packed = btrue;
 
         // is this item allowed to be packed?
-        if ( !item_ptr->isitem )
+		//Everything is allowed to be packed. Some monsters hide in chests
+		//and don't pop out until the chest is opened. This is true even if they
+		//aren't items, so allow non-items in packs.
+/*        if ( !item_ptr->isitem )
         {
             // how did this get in a pack?
             log_warning( "pack_validate() - The item %s is in a pack, even though it is not tagged as an item.\n", item_ptr->obj_base.base_name );
@@ -10935,7 +10937,8 @@ bool_t pack_validate( pack_t * ppack )
             item_pack_ptr->was_packed = item_pack_ptr->is_packed;
             item_pack_ptr->is_packed  = bfalse;
         }
-        else
+        else*/
+
         {
             parent_pack_ptr = item_pack_ptr;
         }
