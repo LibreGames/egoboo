@@ -2,16 +2,16 @@
 PREFIX	:= ${HOME}/.local
 
 EGO_SRC  := \
-	camera.c char.c client.c clock.c egoboo_console.c egoboo_endian.c \
-	egoboo_fileutil.c egoboo_math.c egoboo_setup.c egoboo_strutil.c \
-	egoboo_typedef.c egoboo_vfs.c enchant.c file_common.c \
-	font_bmp.c font_ttf.c game.c graphic.c graphic_fan.c \
-	graphic_mad.c graphic_prt.c input.c link.c log.c \
-	mad.c md2.c menu.c mesh.c network.c particle.c \
-	passage.c profile.c quest.c script.c script_compile.c \
-	script_functions.c server.c sound.c texture.c ui.c 
+	camera.cpp char.cpp client.cpp clock.cpp egoboo_console.cpp egoboo_endian.cpp \
+	egoboo_fileutil.cpp egoboo_math.cpp egoboo_setup.cpp egoboo_strutil.cpp \
+	egoboo_typedef.cpp egoboo_vfs.cpp enchant.cpp file_common.cpp \
+	font_bmp.cpp font_ttf.cpp game.cpp graphic.cpp graphic_fan.cpp \
+	graphic_mad.cpp graphic_prt.cpp input.cpp link.cpp log.cpp \
+	mad.cpp md2.cpp menu.cpp mesh.cpp network.cpp particle.cpp \
+	passage.cpp profile.cpp quest.cpp script.cpp script_compile.cpp \
+	script_functions.cpp server.cpp sound.cpp texture.cpp ui.cpp 
 
-EGO_LUA         := ego_wrap.c egoboo_console.c lua_console.c
+EGO_LUA         := ego_wrap.cpp egoboo_console.cpp lua_console.cpp
 EGO_PLATFORM    := platform/file_linux.c platform/sys_linux.c
 EGO_FILE_FORMAT := $(wildcard ./file_formats/*.c)
 EGO_EXTENSIONS  := $(wildcard ./extensions/*.c)

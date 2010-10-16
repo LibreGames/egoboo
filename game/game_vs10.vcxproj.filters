@@ -33,157 +33,157 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="bbox.c">
+    <ClCompile Include="bbox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="bsp.c">
+    <ClCompile Include="bsp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="camera.c">
+    <ClCompile Include="camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="char.c">
+    <ClCompile Include="char.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="client.c">
+    <ClCompile Include="client.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="clock.c">
+    <ClCompile Include="clock.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="collision.c">
+    <ClCompile Include="collision.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ego_wrap.c">
+    <ClCompile Include="ego_wrap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="egoboo.c">
+    <ClCompile Include="egoboo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="egoboo_console.c">
+    <ClCompile Include="egoboo_console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="egoboo_endian.c">
+    <ClCompile Include="egoboo_endian.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="egoboo_fileutil.c">
+    <ClCompile Include="egoboo_fileutil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="egoboo_math.c">
+    <ClCompile Include="egoboo_math.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="egoboo_process.c">
+    <ClCompile Include="egoboo_process.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="egoboo_setup.c">
+    <ClCompile Include="egoboo_setup.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="egoboo_strutil.c">
+    <ClCompile Include="egoboo_strutil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="egoboo_typedef.c">
+    <ClCompile Include="egoboo_typedef.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="egoboo_vfs.c">
+    <ClCompile Include="egoboo_vfs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="enchant.c">
+    <ClCompile Include="enchant.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="file_common.c">
+    <ClCompile Include="file_common.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="font_bmp.c">
+    <ClCompile Include="font_bmp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="font_ttf.c">
+    <ClCompile Include="font_ttf.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="game.c">
+    <ClCompile Include="game.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="graphic.c">
+    <ClCompile Include="graphic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="graphic_fan.c">
+    <ClCompile Include="graphic_fan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="graphic_mad.c">
+    <ClCompile Include="graphic_mad.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="graphic_prt.c">
+    <ClCompile Include="graphic_prt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="hash.c">
+    <ClCompile Include="hash.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="input.c">
+    <ClCompile Include="input.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="lighting.c">
+    <ClCompile Include="lighting.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="link.c">
+    <ClCompile Include="link.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="log.c">
+    <ClCompile Include="log.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="lua_console.c">
+    <ClCompile Include="lua_console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mad.c">
+    <ClCompile Include="mad.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="md2.c">
+    <ClCompile Include="md2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="menu.c">
+    <ClCompile Include="menu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mesh.c">
+    <ClCompile Include="mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="network.c">
+    <ClCompile Include="network.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="particle.c">
+    <ClCompile Include="particle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="passage.c">
+    <ClCompile Include="passage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="physics.c">
+    <ClCompile Include="physics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="profile.c">
+    <ClCompile Include="profile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="quest.c">
+    <ClCompile Include="quest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="rpc.c">
+    <ClCompile Include="rpc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="script.c">
+    <ClCompile Include="script.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="script_compile.c">
+    <ClCompile Include="script_compile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="script_functions.c">
+    <ClCompile Include="script_functions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="server.c">
+    <ClCompile Include="server.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="sound.c">
+    <ClCompile Include="sound.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="texture.c">
+    <ClCompile Include="texture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ui.c">
+    <ClCompile Include="ui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="extensions\ogl_debug.c">
@@ -204,7 +204,7 @@
     <ClCompile Include="extensions\SDL_extensions.c">
       <Filter>SDL Extensions</Filter>
     </ClCompile>
-    <ClCompile Include="egoboo_object.c">
+    <ClCompile Include="egoboo_object.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="platform\file_win.c">
@@ -264,19 +264,19 @@
     <ClCompile Include="file_formats\template.c">
       <Filter>File System\Source</Filter>
     </ClCompile>
-    <ClCompile Include="PrtList.c">
+    <ClCompile Include="PrtList.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ChrList.c">
+    <ClCompile Include="ChrList.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="EncList.c">
+    <ClCompile Include="EncList.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="IDSZ_map.c">
+    <ClCompile Include="IDSZ_map.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="egoboo_display_list.c">
+    <ClCompile Include="egoboo_display_list.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
