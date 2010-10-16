@@ -7,7 +7,7 @@ EGO_BIN := $(PROJ_NAME)
 
 EGO_SRC  := \
 	bbox.cpp bsp.cpp camera.cpp char.cpp client.cpp clock.cpp collision.cpp \
-	egoboo_console.cpp egoboo_display.cpp egoboo_endian.cpp egoboo_fileutil.cpp \
+	egoboo_console.c egoboo_display.cpp egoboo_endian.cpp egoboo_fileutil.cpp \
 	egoboo_math.cpp egoboo_setup.cpp egoboo_strutil.cpp egoboo_typedef.cpp \
 	egoboo_vfs.cpp enchant.cpp file_common.cpp font_bmp.cpp font_ttf.cpp game.cpp \
 	graphic.cpp graphic_fan.cpp graphic_mad.cpp graphic_prt.cpp hash.cpp IDSZ_map.cpp \

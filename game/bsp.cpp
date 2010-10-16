@@ -51,11 +51,9 @@ static bool_t BSP_leaf_list_collide( BSP_leaf_t * leaf_lst, size_t leaf_count, B
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-#if defined(__cplusplus)
 s_BSP_aabb::s_BSP_aabb() { memset( this, 0, sizeof( *this ) ); };
 s_BSP_aabb::s_BSP_aabb( size_t dim ) { BSP_aabb_ctor( this, dim ); };
 s_BSP_aabb::~s_BSP_aabb()  { BSP_aabb_dtor( this ); };
-#endif
 
 //--------------------------------------------------------------------------------------------
 BSP_aabb_t * BSP_aabb_ctor( BSP_aabb_t * pbb, size_t dim )
@@ -254,10 +252,8 @@ bool_t BSP_aabb_from_oct_bb( BSP_aabb_t * pdst, oct_bb_t * psrc )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-#if defined(__cplusplus)
 s_BSP_leaf::s_BSP_leaf() { memset( this, 0, sizeof( *this ) ); } ;
 s_BSP_leaf::~s_BSP_leaf() { BSP_leaf_dtor( this ); };
-#endif
 
 BSP_leaf_t * BSP_leaf_create( int dim, void * data, int type )
 {
@@ -314,11 +310,9 @@ bool_t BSP_leaf_dtor( BSP_leaf_t * L )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-#if defined(__cplusplus)
 s_BSP_branch::s_BSP_branch()           { memset( this, 0, sizeof( *this ) ); }
 s_BSP_branch::s_BSP_branch( size_t dim ) { BSP_branch_ctor( this, dim ); }
 s_BSP_branch::~s_BSP_branch()          { BSP_branch_dtor( this ); }
-#endif
 
 BSP_branch_t * BSP_branch_create( size_t dim )
 {
@@ -681,11 +675,9 @@ bool_t BSP_branch_collide( BSP_branch_t * pbranch, BSP_aabb_t * paabb, BSP_leaf_
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-#if defined(__cplusplus)
 s_BSP_tree::s_BSP_tree() { memset( this, 0, sizeof( *this ) ); }
 s_BSP_tree::s_BSP_tree( Sint32 dim, Sint32 depth ) { BSP_tree_ctor( this, dim, depth ); }
 s_BSP_tree::~s_BSP_tree() { BSP_tree_dtor( this ); }
-#endif
 
 bool_t BSP_tree_init_0( BSP_tree_t * t )
 {

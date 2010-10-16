@@ -20,7 +20,7 @@
     <ClCompile Include="clock.cpp" />
     <ClCompile Include="collision.cpp" />
     <ClCompile Include="egoboo.cpp" />
-    <ClCompile Include="egoboo_console.cpp" />
+    <ClCompile Include="egoboo_console.c" />
     <ClCompile Include="egoboo_display_list.cpp" />
     <ClCompile Include="egoboo_endian.cpp" />
     <ClCompile Include="egoboo_fileutil.cpp" />
@@ -73,7 +73,7 @@
     <ClCompile Include="lighting.cpp" />
     <ClCompile Include="link.cpp" />
     <ClCompile Include="log.cpp" />
-    <ClCompile Include="lua_console.cpp">
+    <ClCompile Include="lua_console.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>

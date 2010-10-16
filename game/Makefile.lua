@@ -2,7 +2,7 @@
 PREFIX	:= ${HOME}/.local
 
 EGO_SRC  := \
-	camera.cpp char.cpp client.cpp clock.cpp egoboo_console.cpp egoboo_endian.cpp \
+	camera.cpp char.cpp client.cpp clock.cpp egoboo_console.c egoboo_endian.cpp \
 	egoboo_fileutil.cpp egoboo_math.cpp egoboo_setup.cpp egoboo_strutil.cpp \
 	egoboo_typedef.cpp egoboo_vfs.cpp enchant.cpp file_common.cpp \
 	font_bmp.cpp font_ttf.cpp game.cpp graphic.cpp graphic_fan.cpp \
@@ -11,7 +11,7 @@ EGO_SRC  := \
 	passage.cpp profile.cpp quest.cpp script.cpp script_compile.cpp \
 	script_functions.cpp server.cpp sound.cpp texture.cpp ui.cpp 
 
-EGO_LUA         := ego_wrap.cpp egoboo_console.cpp lua_console.cpp
+EGO_LUA         := ego_wrap.cxx egoboo_console.c lua_console.c
 EGO_PLATFORM    := platform/file_linux.c platform/sys_linux.c
 EGO_FILE_FORMAT := $(wildcard ./file_formats/*.c)
 EGO_EXTENSIONS  := $(wildcard ./extensions/*.c)

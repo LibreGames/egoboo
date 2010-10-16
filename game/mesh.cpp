@@ -69,14 +69,7 @@ static float grid_get_mix( float u0, float u, float v0, float v );
 //--------------------------------------------------------------------------------------------
 ego_mpd_t   mesh;
 
-#if defined(__cplusplus)
 mesh_BSP_t mesh_BSP_root;
-#else
-mesh_BSP_t mesh_BSP_root =
-{
-    OCT_BB_INIT_VALS, DYNAMIC_ARY_INIT_VALS, BSP_TREE_INIT_VALS
-};
-#endif
 
 int mesh_mpdfx_tests = 0;
 int mesh_bound_tests = 0;
@@ -121,10 +114,8 @@ ego_mpd_info_t * mesh_info_dtor( ego_mpd_info_t * pinfo )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-#if defined(__cplusplus)
 s_tile_mem::s_tile_mem() { tile_mem_ctor( this ); }
 s_tile_mem::~s_tile_mem() { tile_mem_dtor( this ); }
-#endif
 
 tile_mem_t * tile_mem_ctor( tile_mem_t * pmem )
 {
@@ -149,10 +140,8 @@ tile_mem_t * tile_mem_dtor( tile_mem_t * pmem )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-#if defined(__cplusplus)
 s_ego_mpd::s_ego_mpd() { mesh_ctor( this ); }
 s_ego_mpd::~s_ego_mpd() { mesh_dtor( this ); }
-#endif
 
 ego_mpd_t * mesh_ctor( ego_mpd_t * pmesh )
 {
@@ -521,10 +510,8 @@ ego_mpd_t * mesh_load( const char *modname, ego_mpd_t * pmesh )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-#if defined(__cplusplus)
 s_grid_mem::s_grid_mem() { grid_mem_ctor( this ); }
 s_grid_mem::~s_grid_mem() { grid_mem_dtor( this ); }
-#endif
 
 grid_mem_t * grid_mem_ctor( grid_mem_t * pmem )
 {
@@ -1987,11 +1974,9 @@ ego_tile_info_t * ego_tile_info_alloc_ary( size_t count )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-#if defined(__cplusplus)
 s_mpd_BSP::s_mpd_BSP() { memset( this, 0, sizeof( *this ) ); }
 s_mpd_BSP::s_mpd_BSP( ego_mpd_t * pmesh ) { mesh_BSP_ctor( this, pmesh ); }
 s_mpd_BSP::~s_mpd_BSP()  { mesh_BSP_dtor( this ); }
-#endif
 
 mesh_BSP_t * mesh_BSP_ctor( mesh_BSP_t * pbsp, ego_mpd_t * pmesh )
 {

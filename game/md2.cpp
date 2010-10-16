@@ -46,11 +46,9 @@ static MD2_Frame_t * MD2_Frame_dtor( MD2_Frame_t * pframe );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-#if defined(__cplusplus)
 s_ego_md2_frame::s_ego_md2_frame()            { memset( this, 0, sizeof( *this ) ); }
 s_ego_md2_frame::s_ego_md2_frame( size_t size ) { MD2_Frame_ctor( this, size ); }
 s_ego_md2_frame::~s_ego_md2_frame()           { MD2_Frame_dtor( this ); }
-#endif
 
 MD2_Frame_t * MD2_Frame_ctor( MD2_Frame_t * pframe, size_t size )
 {
@@ -79,10 +77,8 @@ MD2_Frame_t * MD2_Frame_dtor( MD2_Frame_t * pframe )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-#if defined(__cplusplus)
 s_ego_md2_glcommand::s_ego_md2_glcommand() { MD2_GLCommand_ctor( this ); }
 s_ego_md2_glcommand::~s_ego_md2_glcommand() { MD2_GLCommand_dtor( this ); }
-#endif
 
 void MD2_GLCommand_ctor( MD2_GLCommand_t * m )
 {
@@ -153,10 +149,8 @@ void MD2_GLCommand_delete_list( MD2_GLCommand_t * command_ptr, int command_count
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-#if defined(__cplusplus)
 s_ego_md2_model::s_ego_md2_model() { md2_ctor( this ); }
 s_ego_md2_model::~s_ego_md2_model() { md2_dtor( this ); }
-#endif
 
 MD2_Model_t * md2_ctor( MD2_Model_t * m )
 {

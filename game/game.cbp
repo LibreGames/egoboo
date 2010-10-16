@@ -405,7 +405,7 @@
 		</Unit>
 		<Unit filename="egoboo.h" />
 		<Unit filename="egoboo_config.h" />
-		<Unit filename="egoboo_console.cpp">
+		<Unit filename="egoboo_console.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="egoboo_console.h" />
@@ -594,7 +594,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="log.h" />
-		<Unit filename="lua_console.cpp">
+		<Unit filename="lua_console.c">
 			<Option compilerVar="CC" />
 			<Option compile="0" />
 			<Option link="0" />

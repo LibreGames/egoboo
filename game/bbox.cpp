@@ -47,10 +47,8 @@ static int cv_point_data_cmp( const void * pleft, const void * pright );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-#if defined(__cplusplus)
 s_aabb_lst::s_aabb_lst() { aabb_lst_ctor( this ); }
 s_aabb_lst::~s_aabb_lst() { aabb_lst_dtor( this ); }
-#endif
 
 EGO_CONST aabb_lst_t * aabb_lst_ctor( aabb_lst_t * lst )
 {

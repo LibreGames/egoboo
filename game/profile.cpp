@@ -56,11 +56,7 @@ INSTANTIATE_STATIC_ARY( MessageOffsetAry, MessageOffset );
 Uint32  message_buffer_carat = 0;                           // Where to put letter
 char    message_buffer[MESSAGEBUFFERSIZE] = EMPTY_CSTR;     // The text buffer
 
-#if defined(__cplusplus)
 obj_BSP_t obj_BSP_root;
-#else
-obj_BSP_t obj_BSP_root = { BSP_TREE_INIT_VALS };
-#endif
 
 int BSP_chr_count = 0;
 int BSP_prt_count = 0;

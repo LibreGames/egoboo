@@ -558,7 +558,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\egoboo_console.cpp"
+				RelativePath=".\egoboo_console.c"
 				>
 			</File>
 			<File
@@ -570,7 +570,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\lua_console.cpp"
+				RelativePath=".\lua_console.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
