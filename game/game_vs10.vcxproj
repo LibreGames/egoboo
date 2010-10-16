@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -11,41 +11,41 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="bbox.c" />
-    <ClCompile Include="bsp.c" />
-    <ClCompile Include="camera.c" />
-    <ClCompile Include="char.c" />
-    <ClCompile Include="ChrList.c" />
-    <ClCompile Include="client.c" />
-    <ClCompile Include="clock.c" />
-    <ClCompile Include="collision.c" />
-    <ClCompile Include="egoboo.c" />
-    <ClCompile Include="egoboo_console.c" />
-    <ClCompile Include="egoboo_display_list.c" />
-    <ClCompile Include="egoboo_endian.c" />
-    <ClCompile Include="egoboo_fileutil.c" />
-    <ClCompile Include="egoboo_math.c" />
-    <ClCompile Include="egoboo_object.c" />
-    <ClCompile Include="egoboo_process.c" />
-    <ClCompile Include="egoboo_setup.c" />
-    <ClCompile Include="egoboo_strutil.c" />
-    <ClCompile Include="egoboo_typedef.c" />
-    <ClCompile Include="egoboo_vfs.c">
+    <ClCompile Include="bbox.cpp" />
+    <ClCompile Include="bsp.cpp" />
+    <ClCompile Include="camera.cpp" />
+    <ClCompile Include="char.cpp" />
+    <ClCompile Include="ChrList.cpp" />
+    <ClCompile Include="client.cpp" />
+    <ClCompile Include="clock.cpp" />
+    <ClCompile Include="collision.cpp" />
+    <ClCompile Include="egoboo.cpp" />
+    <ClCompile Include="egoboo_console.cpp" />
+    <ClCompile Include="egoboo_display_list.cpp" />
+    <ClCompile Include="egoboo_endian.cpp" />
+    <ClCompile Include="egoboo_fileutil.cpp" />
+    <ClCompile Include="egoboo_math.cpp" />
+    <ClCompile Include="egoboo_object.cpp" />
+    <ClCompile Include="egoboo_process.cpp" />
+    <ClCompile Include="egoboo_setup.cpp" />
+    <ClCompile Include="egoboo_strutil.cpp" />
+    <ClCompile Include="egoboo_typedef.cpp" />
+    <ClCompile Include="egoboo_vfs.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="ego_wrap.c">
+    <ClCompile Include="ego_wrap.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="enchant.c" />
-    <ClCompile Include="EncList.c" />
+    <ClCompile Include="enchant.cpp" />
+    <ClCompile Include="EncList.cpp" />
     <ClCompile Include="extensions\ogl_debug.c" />
     <ClCompile Include="extensions\ogl_extensions.c" />
     <ClCompile Include="extensions\ogl_include.c" />
     <ClCompile Include="extensions\ogl_texture.c" />
     <ClCompile Include="extensions\SDL_extensions.c" />
     <ClCompile Include="extensions\SDL_GL_extensions.c" />
-    <ClCompile Include="file_common.c" />
+    <ClCompile Include="file_common.cpp" />
     <ClCompile Include="file_formats\cap_file.c" />
     <ClCompile Include="file_formats\configfile.c" />
     <ClCompile Include="file_formats\controls_file.c" />
@@ -60,31 +60,31 @@
     <ClCompile Include="file_formats\spawn_file.c" />
     <ClCompile Include="file_formats\template.c" />
     <ClCompile Include="file_formats\wawalite_file.c" />
-    <ClCompile Include="font_bmp.c" />
-    <ClCompile Include="font_ttf.c" />
-    <ClCompile Include="game.c" />
-    <ClCompile Include="graphic.c" />
-    <ClCompile Include="graphic_fan.c" />
-    <ClCompile Include="graphic_mad.c" />
-    <ClCompile Include="graphic_prt.c" />
-    <ClCompile Include="hash.c" />
-    <ClCompile Include="IDSZ_map.c" />
-    <ClCompile Include="input.c" />
-    <ClCompile Include="lighting.c" />
-    <ClCompile Include="link.c" />
-    <ClCompile Include="log.c" />
-    <ClCompile Include="lua_console.c">
+    <ClCompile Include="font_bmp.cpp" />
+    <ClCompile Include="font_ttf.cpp" />
+    <ClCompile Include="game.cpp" />
+    <ClCompile Include="graphic.cpp" />
+    <ClCompile Include="graphic_fan.cpp" />
+    <ClCompile Include="graphic_mad.cpp" />
+    <ClCompile Include="graphic_prt.cpp" />
+    <ClCompile Include="hash.cpp" />
+    <ClCompile Include="IDSZ_map.cpp" />
+    <ClCompile Include="input.cpp" />
+    <ClCompile Include="lighting.cpp" />
+    <ClCompile Include="link.cpp" />
+    <ClCompile Include="log.cpp" />
+    <ClCompile Include="lua_console.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="mad.c" />
-    <ClCompile Include="md2.c" />
-    <ClCompile Include="menu.c" />
-    <ClCompile Include="mesh.c" />
-    <ClCompile Include="network.c" />
-    <ClCompile Include="particle.c" />
-    <ClCompile Include="passage.c" />
-    <ClCompile Include="physics.c" />
+    <ClCompile Include="mad.cpp" />
+    <ClCompile Include="md2.cpp" />
+    <ClCompile Include="menu.cpp" />
+    <ClCompile Include="mesh.cpp" />
+    <ClCompile Include="network.cpp" />
+    <ClCompile Include="particle.cpp" />
+    <ClCompile Include="passage.cpp" />
+    <ClCompile Include="physics.cpp" />
     <ClCompile Include="platform\file_linux.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -99,17 +99,17 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="platform\sys_win32.c" />
-    <ClCompile Include="profile.c" />
-    <ClCompile Include="PrtList.c" />
-    <ClCompile Include="quest.c" />
-    <ClCompile Include="rpc.c" />
-    <ClCompile Include="script.c" />
-    <ClCompile Include="script_compile.c" />
-    <ClCompile Include="script_functions.c" />
-    <ClCompile Include="server.c" />
-    <ClCompile Include="sound.c" />
-    <ClCompile Include="texture.c" />
-    <ClCompile Include="ui.c" />
+    <ClCompile Include="profile.cpp" />
+    <ClCompile Include="PrtList.cpp" />
+    <ClCompile Include="quest.cpp" />
+    <ClCompile Include="rpc.cpp" />
+    <ClCompile Include="script.cpp" />
+    <ClCompile Include="script_compile.cpp" />
+    <ClCompile Include="script_functions.cpp" />
+    <ClCompile Include="server.cpp" />
+    <ClCompile Include="sound.cpp" />
+    <ClCompile Include="texture.cpp" />
+    <ClCompile Include="ui.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\res\resource.h" />

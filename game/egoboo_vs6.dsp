@@ -94,155 +94,155 @@ LINK32=link.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=.\camera.c
+SOURCE=.\camera.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\char.c
+SOURCE=.\char.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\client.c
+SOURCE=.\client.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\clock.c
+SOURCE=.\clock.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\configfile.c
+SOURCE=.\configfile.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\egoboo_endian.c
+SOURCE=.\egoboo_endian.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\egoboo_math.c
+SOURCE=.\egoboo_math.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\egoboo_setup.c
+SOURCE=.\egoboo_setup.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\egoboo_strutil.c
+SOURCE=.\egoboo_strutil.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\enchant.c
+SOURCE=.\enchant.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\file_common.c
+SOURCE=.\file_common.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\file_linux.c
+SOURCE=.\file_linux.cpp
 # PROP Exclude_From_Build 1
 # End Source File
 # Begin Source File
 
-SOURCE=.\file_win.c
+SOURCE=.\file_win.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\font.c
+SOURCE=.\font.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\game.c
+SOURCE=.\game.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\gltexture.c
+SOURCE=.\gltexture.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\graphic.c
+SOURCE=.\graphic.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\graphic_fan.c
+SOURCE=.\graphic_fan.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\graphic_mad.c
+SOURCE=.\graphic_mad.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\graphic_prt.c
+SOURCE=.\graphic_prt.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\id_normals.c
+SOURCE=.\id_normals.cpp
 # PROP Exclude_From_Build 1
 # End Source File
 # Begin Source File
 
-SOURCE=.\input.c
+SOURCE=.\input.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\link.c
+SOURCE=.\link.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\log.c
+SOURCE=.\log.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\Md2.c
+SOURCE=.\Md2.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\menu.c
+SOURCE=.\menu.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\module.c
+SOURCE=.\module.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\network.c
+SOURCE=.\network.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\particle.c
+SOURCE=.\particle.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\passage.c
+SOURCE=.\passage.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\script.c
+SOURCE=.\script.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\server.c
+SOURCE=.\server.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\sound.c
+SOURCE=.\sound.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\sys_linux.c
+SOURCE=.\sys_linux.cpp
 # PROP Exclude_From_Build 1
 # End Source File
 # Begin Source File
 
-SOURCE=.\sys_mac.c
+SOURCE=.\sys_mac.cpp
 # PROP Exclude_From_Build 1
 # End Source File
 # Begin Source File
 
-SOURCE=.\sys_win32.c
+SOURCE=.\sys_win32.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\ui.c
+SOURCE=.\ui.cpp
 # End Source File
 # End Group
 # Begin Group "Header Files"

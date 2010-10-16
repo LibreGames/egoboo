@@ -146,55 +146,55 @@
 			Name="Core Source"
 			Filter="">
 			<File
-				RelativePath=".\bbox.c">
+				RelativePath=".\bbox.cpp">
 			</File>
 			<File
-				RelativePath=".\bsp.c">
+				RelativePath=".\bsp.cpp">
 			</File>
 			<File
-				RelativePath=".\clock.c">
+				RelativePath=".\clock.cpp">
 			</File>
 			<File
-				RelativePath=".\egoboo_display_list.c">
+				RelativePath=".\egoboo_display_list.cpp">
 			</File>
 			<File
-				RelativePath=".\egoboo_endian.c">
+				RelativePath=".\egoboo_endian.cpp">
 			</File>
 			<File
-				RelativePath=".\egoboo_fileutil.c">
+				RelativePath=".\egoboo_fileutil.cpp">
 			</File>
 			<File
-				RelativePath=".\egoboo_math.c">
+				RelativePath=".\egoboo_math.cpp">
 			</File>
 			<File
-				RelativePath=".\egoboo_object.c">
+				RelativePath=".\egoboo_object.cpp">
 			</File>
 			<File
-				RelativePath=".\egoboo_process.c">
+				RelativePath=".\egoboo_process.cpp">
 			</File>
 			<File
-				RelativePath=".\egoboo_setup.c">
+				RelativePath=".\egoboo_setup.cpp">
 			</File>
 			<File
-				RelativePath=".\egoboo_strutil.c">
+				RelativePath=".\egoboo_strutil.cpp">
 			</File>
 			<File
-				RelativePath=".\egoboo_typedef.c">
+				RelativePath=".\egoboo_typedef.cpp">
 			</File>
 			<File
-				RelativePath=".\font_bmp.c">
+				RelativePath=".\font_bmp.cpp">
 			</File>
 			<File
-				RelativePath=".\font_ttf.c">
+				RelativePath=".\font_ttf.cpp">
 			</File>
 			<File
-				RelativePath=".\hash.c">
+				RelativePath=".\hash.cpp">
 			</File>
 			<File
-				RelativePath=".\input.c">
+				RelativePath=".\input.cpp">
 			</File>
 			<File
-				RelativePath=".\log.c">
+				RelativePath=".\log.cpp">
 			</File>
 		</Filter>
 		<Filter
@@ -275,7 +275,7 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath=".\camera.c">
+				RelativePath=".\camera.cpp">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -284,16 +284,16 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\char.c">
+				RelativePath=".\char.cpp">
 			</File>
 			<File
-				RelativePath=".\ChrList.c">
+				RelativePath=".\ChrList.cpp">
 			</File>
 			<File
-				RelativePath=".\client.c">
+				RelativePath=".\client.cpp">
 			</File>
 			<File
-				RelativePath=".\collision.c">
+				RelativePath=".\collision.cpp">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -303,64 +303,64 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\egoboo.c">
+				RelativePath=".\egoboo.cpp">
 			</File>
 			<File
-				RelativePath=".\enchant.c">
+				RelativePath=".\enchant.cpp">
 			</File>
 			<File
-				RelativePath=".\EncList.c">
+				RelativePath=".\EncList.cpp">
 			</File>
 			<File
-				RelativePath=".\game.c">
+				RelativePath=".\game.cpp">
 			</File>
 			<File
-				RelativePath=".\graphic.c">
+				RelativePath=".\graphic.cpp">
 			</File>
 			<File
-				RelativePath=".\graphic_fan.c">
+				RelativePath=".\graphic_fan.cpp">
 			</File>
 			<File
-				RelativePath=".\graphic_mad.c">
+				RelativePath=".\graphic_mad.cpp">
 			</File>
 			<File
-				RelativePath=".\graphic_prt.c">
+				RelativePath=".\graphic_prt.cpp">
 			</File>
 			<File
-				RelativePath=".\IDSZ_map.c">
+				RelativePath=".\IDSZ_map.cpp">
 			</File>
 			<File
-				RelativePath=".\lighting.c">
+				RelativePath=".\lighting.cpp">
 			</File>
 			<File
-				RelativePath=".\link.c">
+				RelativePath=".\link.cpp">
 			</File>
 			<File
-				RelativePath=".\mad.c">
+				RelativePath=".\mad.cpp">
 			</File>
 			<File
-				RelativePath=".\Md2.c">
+				RelativePath=".\Md2.cpp">
 			</File>
 			<File
-				RelativePath=".\menu.c">
+				RelativePath=".\menu.cpp">
 			</File>
 			<File
-				RelativePath=".\mesh.c">
+				RelativePath=".\mesh.cpp">
 			</File>
 			<File
-				RelativePath=".\network.c">
+				RelativePath=".\network.cpp">
 			</File>
 			<File
-				RelativePath=".\particle.c">
+				RelativePath=".\particle.cpp">
 			</File>
 			<File
-				RelativePath=".\passage.c">
+				RelativePath=".\passage.cpp">
 			</File>
 			<File
-				RelativePath=".\physics.c">
+				RelativePath=".\physics.cpp">
 			</File>
 			<File
-				RelativePath=".\profile.c">
+				RelativePath=".\profile.cpp">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -369,22 +369,22 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\PrtList.c">
+				RelativePath=".\PrtList.cpp">
 			</File>
 			<File
-				RelativePath=".\rpc.c">
+				RelativePath=".\rpc.cpp">
 			</File>
 			<File
-				RelativePath=".\server.c">
+				RelativePath=".\server.cpp">
 			</File>
 			<File
-				RelativePath=".\sound.c">
+				RelativePath=".\sound.cpp">
 			</File>
 			<File
-				RelativePath=".\texture.c">
+				RelativePath=".\texture.cpp">
 			</File>
 			<File
-				RelativePath=".\ui.c">
+				RelativePath=".\ui.cpp">
 			</File>
 		</Filter>
 		<Filter
@@ -517,7 +517,7 @@
 				RelativePath=".\ego.i">
 			</File>
 			<File
-				RelativePath=".\ego_wrap.c">
+				RelativePath=".\ego_wrap.cpp">
 				<FileConfiguration
 					Name="Debug|Win32"
 					ExcludedFromBuild="TRUE">
@@ -532,7 +532,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\egoboo_console.c">
+				RelativePath=".\egoboo_console.cpp">
 			</File>
 			<File
 				RelativePath=".\egoboo_console.h">
@@ -541,7 +541,7 @@
 				RelativePath=".\egoboo_console.inl">
 			</File>
 			<File
-				RelativePath=".\lua_console.c">
+				RelativePath=".\lua_console.cpp">
 				<FileConfiguration
 					Name="Debug|Win32"
 					ExcludedFromBuild="TRUE">
@@ -607,7 +607,7 @@
 			Name="File System"
 			Filter="">
 			<File
-				RelativePath=".\egoboo_vfs.c">
+				RelativePath=".\egoboo_vfs.cpp">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -619,7 +619,7 @@
 				RelativePath=".\egoboo_vfs.h">
 			</File>
 			<File
-				RelativePath=".\file_common.c">
+				RelativePath=".\file_common.cpp">
 			</File>
 			<File
 				RelativePath=".\file_common.h">
@@ -719,7 +719,7 @@
 				Name="quest.txt"
 				Filter="">
 				<File
-					RelativePath=".\quest.c">
+					RelativePath=".\quest.cpp">
 				</File>
 				<File
 					RelativePath=".\quest.h">
@@ -780,19 +780,19 @@
 			Name="scripting system"
 			Filter="">
 			<File
-				RelativePath=".\script.c">
+				RelativePath=".\script.cpp">
 			</File>
 			<File
 				RelativePath=".\script.h">
 			</File>
 			<File
-				RelativePath=".\script_compile.c">
+				RelativePath=".\script_compile.cpp">
 			</File>
 			<File
 				RelativePath=".\script_compile.h">
 			</File>
 			<File
-				RelativePath=".\script_functions.c">
+				RelativePath=".\script_functions.cpp">
 			</File>
 			<File
 				RelativePath=".\script_functions.h">
@@ -808,7 +808,7 @@
 		<Filter
 			Name="Inspirational">
 			<File
-				RelativePath=".\MainLoop.c">
+				RelativePath=".\MainLoop.cpp">
 				<FileConfiguration
 					Name="Debug|Win32"
 					ExcludedFromBuild="TRUE">
@@ -823,7 +823,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\Task.c">
+				RelativePath=".\Task.cpp">
 				<FileConfiguration
 					Name="Debug|Win32"
 					ExcludedFromBuild="TRUE">
@@ -853,7 +853,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\Ticker.c">
+				RelativePath=".\Ticker.cpp">
 				<FileConfiguration
 					Name="Debug|Win32"
 					ExcludedFromBuild="TRUE">
@@ -883,7 +883,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\Timer.c">
+				RelativePath=".\Timer.cpp">
 				<FileConfiguration
 					Name="Debug|Win32"
 					ExcludedFromBuild="TRUE">
